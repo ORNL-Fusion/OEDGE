@@ -1,0 +1,18 @@
+C                                                                               
+      COMMON /DYNAM3/ TIZS,TIZ3,POWLS,LINES,PLRPS,ZEFFS,           
+     >  PLRP3,LIM5,SAVES,SDTXS,SDTYS,SDYXS,SDYYS,
+     >  SCTXS,SCTYS,
+     >  POWL3,LINE3
+      REAL TIZS  (MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                              
+      REAL TIZ3  (MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)               
+      REAL ZEFFS (MAXNXS,-MAXNYS:MAXNYS,6),  SAVES(MAXNXS,-2:MAXIZS+1)          
+      REAL POWLS (MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                              
+      REAL LINES (MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                              
+      REAL PLRPS (MAXNXS,-MAXNYS:MAXNYS,   MAXNLS)                              
+      REAL POWL3 (MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)               
+      REAL LINE3 (MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)               
+      REAL PLRP3 (MAXNXS,-MAXY3D:MAXY3D,   MAXNLS,-MAXNPS:MAXNPS)               
+      REAL LIM5  (MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS,MAXNTS)        
+      REAL SDTXS (MAXNXS,MAXIZS),SDTYS(-MAXNYS:MAXNYS,MAXIZS)                   
+      REAL SDYXS (MAXNXS,MAXIZS),SDYYS(-MAXNYS:MAXNYS,MAXIZS)                   
+      REAL SCTXS (MAXNXS,MAXNLS),SCTYS(-MAXNYS:MAXNYS,MAXNLS)

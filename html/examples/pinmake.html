@@ -1,0 +1,156 @@
+ <HTML>
+ <HEAD>
+   <TITLE> DIVIMP Input File </TITLE>
+   <STYLE TYPE="text/css">
+     BODY     { color:black; 
+                background:white }
+     A:link   { color:blue; 
+                text-decoration: none;
+                font-weight:normal}
+     A:active { color:green; 
+                text-decoration: none;
+                font-weight:bold}
+     A:visited{ color:red; 
+                text-decoration: none;
+                font-weight:normal}
+ 
+     H1       { font-weight:bold} 
+ 
+     H2       { font-weight:bold} 
+ 
+     H3       { font-weight:bold; 
+                color:crimson} 
+ </STYLE>
+ </HEAD>
+ <BODY>
+ <PRE># suffixes</PRE>
+ <PRE>.SUFFIXES: .o .p6a .u6a</PRE>
+ <PRE># defines</PRE>
+ <PRE>#</PRE>
+ <PRE># Compiler</PRE>
+ <PRE>#</PRE>
+ <PRE>F77=xlf</PRE>
+ <PRE>#</PRE>
+ <PRE># Default Architecture</PRE>
+ <PRE>#</PRE>
+ <PRE>ARCH=-qarch=com</PRE>
+ <PRE>#</PRE>
+ <PRE># Common block directory</PRE>
+ <PRE>#</PRE>
+ <PRE>IDIR=../pin6coms</PRE>
+ <PRE>#</PRE>
+ <PRE># Optimization and debugging flags</PRE>
+ <PRE># - turn off type checking 18/7/95 (ldh)</PRE>
+ <PRE>#</PRE>
+ <PRE>#OPTG= -g -bloadmap:loadmap -qextchk</PRE>
+ <PRE>#OPTG= -qextchk -bloadmap:loadmap</PRE>
+ <PRE>OPTG= -g -bloadmap:loadmap</PRE>
+ <PRE>#OPTO= -O -bloadmap:loadmap -qmaxmem=-1</PRE>
+ <PRE>OPTO= -O -bloadmap:loadmap</PRE>
+ <PRE>OPTOPPC= -O -bloadmap:loadmap</PRE>
+ <PRE>OPT = $(OPTG)</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE>OPTS= -NQ60000 -NT70000 -ND10000 -NA16384</PRE>
+ <PRE>#</PRE>
+ <PRE># Fortran compiler options</PRE>
+ <PRE>#</PRE>
+ <PRE>#FLAGS= $(OPT)  -qsource -qextchk -qhalt=W</PRE>
+ <PRE>#</PRE>
+ <PRE>FFLAGS= $(OPT)  -qsource -qhalt=W</PRE>
+ <PRE>#</PRE>
+ <PRE># Name of target to build</PRE>
+ <PRE>#</PRE>
+ <PRE>TARG=pin6O</PRE>
+ <PRE>TARGALT=pin6aO</PRE>
+ <PRE>TARGALTOPT=pin6aO</PRE>
+ <PRE>TARGOPT=pin6O</PRE>
+ <PRE>TARGDBG=pin6</PRE>
+ <PRE>TARGPWR2=pin6Opwr2</PRE>
+ <PRE>TARGPPC=pin6Oppc</PRE>
+ <PRE>TARGPWR=pin6Opwr</PRE>
+ <PRE>#</PRE>
+ <PRE># Other source directories</PRE>
+ <PRE>#</PRE>
+ <PRE>LSRC= ../comsrc/</PRE>
+ <PRE>DSRC= ../comsrc/</PRE>
+ <PRE>#</PRE>
+ <PRE># C-compiler</PRE>
+ <PRE>#</PRE>
+ <PRE>CC= cc</PRE>
+ <PRE>#</PRE>
+ <PRE># C-flags</PRE>
+ <PRE>#</PRE>
+ <PRE>CFLAGS= -g -qsource</PRE>
+ <PRE>#</PRE>
+ <PRE># Libraries</PRE>
+ <PRE>#</PRE>
+ <PRE>LIBS= -lxlf -lc -L../lib -lnag</PRE>
+ <PRE>#LIBS= -lxlf -lc -L/usr/local/lib/nag -lnag</PRE>
+ <PRE>#</PRE>
+ <PRE># Objects to compile</PRE>
+ <PRE>#</PRE>
+ <PRE>OBJECTS= pinpgxws.o linkpg.o crayibm.o nimbus.o intfac.o af2d.o \</PRE>
+ <PRE>         support0.o supportz.o adasutil.o harwell.o xsec.o adas.o \</PRE>
+ <PRE>         srpuf.o diffw.o supportd.o</PRE>
+ <PRE>#</PRE>
+ <PRE># rules</PRE>
+ <PRE>#</PRE>
+ <PRE> </PRE>
+ <PRE>.p6a.o:</PRE>
+ <PRE>	cp $*.p6a $*.f</PRE>
+ <PRE>	$(F77) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f</PRE>
+ <PRE>	rm $*.f</PRE>
+ <PRE> </PRE>
+ <PRE>.u6a.o:</PRE>
+ <PRE>	cp $*.u6a $*.f</PRE>
+ <PRE>	$(F77) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f</PRE>
+ <PRE>	rm $*.f</PRE>
+ <PRE> </PRE>
+ <PRE>$(TARG): $(OBJECTS)</PRE>
+ <PRE>	$(F77) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)</PRE>
+ <PRE> </PRE>
+ <PRE>#</PRE>
+ <PRE># Various MAKE targets for different platforms and optimization</PRE>
+ <PRE># levels - need to do an rm *.o to make sure that the whole</PRE>
+ <PRE># thing is recompiled - it could be set up to do this automatically</PRE>
+ <PRE># except for the one environment used for development.</PRE>
+ <PRE>#</PRE>
+ <PRE> </PRE>
+ <PRE>alt:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=com" "TARG=$(TARGALT)" "OPT=$(OPTG)"</PRE>
+ <PRE> </PRE>
+ <PRE>altopt:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=com" "TARG=$(TARGALTOPT)" "OPT=$(OPTO)"</PRE>
+ <PRE> </PRE>
+ <PRE>ppc:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=ppc" "TARG=$(TARGPPC)" "OPT=$(OPTOPPC)"</PRE>
+ <PRE> </PRE>
+ <PRE>ppcdbg:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=ppc" "TARG=$(TARGPPC)" "OPT=$(OPTG)"</PRE>
+ <PRE> </PRE>
+ <PRE>pwr2:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=pwr2" "TARG=$(TARGPWR2)" "OPT=$(OPTO)"</PRE>
+ <PRE> </PRE>
+ <PRE>pwr:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=pwr" "TARG=$(TARGPWR)" "OPT=$(OPTO)"</PRE>
+ <PRE> </PRE>
+ <PRE>dbg:</PRE>
+ <PRE>	$(MAKE) "TARG=$(TARGDBG)" "OPT=$(OPTG)"</PRE>
+ <PRE> </PRE>
+ <PRE>opt:</PRE>
+ <PRE>	$(MAKE) "ARCH=-qarch=com" "TARG=$(TARGOPT)" "OPT=$(OPTO)"</PRE>
+ <PRE> </PRE>
+ <PRE>#</PRE>
+ <PRE># Directions to make files with source in other directories.</PRE>
+ <PRE>#</PRE>
+ <PRE> </PRE>
+ <PRE>adas.o: $(DSRC)adas.u6a</PRE>
+ <PRE>	cp $(DSRC)adas.u6a adas.f</PRE>
+ <PRE>	$(F77) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c adas.f</PRE>
+ <PRE>	rm adas.f</PRE>
+ <PRE> </PRE>
+ <PRE>clean:</PRE>
+ <PRE>	rm *.o</PRE>
+ <PRE>	rm *.lst</PRE>
+ <PRE> </PRE>

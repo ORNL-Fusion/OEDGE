@@ -1,0 +1,12 @@
+c     -*-Fortran-*-
+c
+      integer maxcases,mxspts
+      parameter (maxcases=10,mxspts=100) 
+c
+      integer maxiter
+      real*8   econv,mconv,eps
+      parameter (econv=1.602192E-19,mconv=1.672614E-27,
+     >           eps=1.0E-8)
+      parameter (maxiter=1000)
+c
+

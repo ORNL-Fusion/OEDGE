@@ -1,0 +1,146 @@
+Some additional installation notes for DG and Carre
+
+1) DG requires motif - both libraries and headers - these can either be installed byrpm with openmotif and openmotif-devel if available 
+or by compilation and installation from source. The source can be found at www.openmotif.org. Version 2.3 seems to work. After installation from 
+source you may still need to link the headers from /usr/X11R6/include/Xm to /usr/include/Xm OR add the first directory to the include search path. 
+2) Carre requires the ncar graphics libraries. These can be downloaded from www.ncl.ucar.edu/Download or obtained locally if available. 
+According to the Carre documentation it can be built without requiring these libraries since stub routines are provided but I haven't checked
+how to do this. 
+
+
+
+
+
+Instructions on how to build a grid using dg and carre:
+
+1) Convert an efit equilibrium to dg format using equtrn/e2d
+2) Move the equilibrium to the working directory
+3) Start up dg
+4) Import the wall specification (Template) (ogr file)
+   - convert the template to elements
+5) Define structure and targets- use the mark command
+   Structure 
+    - includes all of the outer wall as well as the closed target structures 
+    - if a wall template was used to define the elements then elements will have
+      to be added to produce closed polygons for the inner and outer targets
+    - structure specification does not need to be contiguous
+    - gaps are REQUIRED between wall and target structures
+    - irregular points with 3 joins are apparently not allowed - these would usually
+      occur at the points where the target structure meets the walls. This limitation
+      may be dependent on the output mode selected. 
+   Targets 
+    - mark ONLY the plasma facing elements for the targets on the inside and outside
+    - mark and set each target separately
+    - the structure must include all elements that are specified as part of the targets 
+6) Import the equilibrium (import command on file menu)
+7) Import a topology file (SN, SN up, DN ...)
+   - this should allow DG to calculate the X-point and separatrix
+   - if the separatrix does not appear in the diagram it may be because the 
+     equilibrium mesh is not sufficiently fine - use the d2d (dg2dg) program to 
+     double the number of cells in each dimension of the magnetic equilibrium file
+     d2d <filein>.equ <fileout>.equ
+   - then delete the equilibrium from the model
+   - import the new equilibrium
+   - import the topology and see if the code finds the correct Xpoint and separatrix
+8) Add Surface tool to create an inner boundary flux surface in the core 
+   - this is required to create surfaces in the core
+8) Edit - Create - surfaces 
+   - the graphical display controls surface spacing 
+   - click to drag the line in the display to change the spacing of the surfaces
+   - specify the number of surfaces (called cells)
+   - generate surfaces for core, sol and pfz 
+   - number of pfz surfaces may need to be the same as the core for some applications
+9) Edit - Create - grid points
+   - the graphical display controls grid point spacing
+10) Define SOL/PFR Edges - Variables - Target specifications - 
+    - mark single elements where the edges of the SOL and PFZ grid will lie
+    - Targets number clockwise starting with 1 at lower left
+11) Commands - Check Variables 
+    - if structures or targets or other quantities are changed to address errors then 
+      it may be required to run Commands->Rebuild Carre Objects before outputting in Carre mode
+    - Also - there seems to be some issue between defining Additional Double Null Target surfaces
+      and proper definition of the structure - however since the test case was an upper single null
+      deletion of the Double Null relevant variables seemed to fix the reported structure error. 
+12) File - Save
+13) File - Output - to output carre files
+    - Note: the output option has to be set to carre
+    - Also - when building things you usually have to choose the automated
+      options when putting together a carre grid
+14) Use the lns shell script to link the dg output files into the carre directory
+15) Run Carre in the carre directory using "./carre -". 
+    - Note that carre in this case is a shell script with the same name as
+      the program 
+    - it runs fcrr to convert the dg files to carre format
+    - it runs carre to create the grid
+    - it runs traduit to translate the grid to the desired format - note that
+      the default carre script forces output option 4 - a b2-sonnet-carre-dg
+      output format. I edited the carre script to create carre-divimp which 
+      just defaults to the divimp output.  
+16) Carre can generate errors even if the dg input looks fine
+    - in one case the PFZ surfaces were at too acute an angle 
+      to the PFZ target/edge elements - so I had to modify the elements and 
+      rebuild the carre objects - bit of trial and error and the error messages
+      are obscure to say the least
+17) DG can sometimes have problems with various regions. In one case it could not properly draw
+    the PFZ surfaces - they were centered around a second O-point behind the divertor and
+    bounded by the back elements of the target structure.
+    - In this case it was possible to run Carre through the prep stage to generate the 
+      required input from the DG output files - then stop. Open the carre.dat file 
+      and edit the values specified for the region associated with the PFZ. The carre.dat
+      file is very simple and easy to edit. Number of grid points and surfaces are specified 
+      in each region along with delt values that control the spacing of the points. 
+    - the carre process can then be restarted using ./carre - and the (g) option selected for 
+      grid generation. Carre may complain about the delta values specified in each region - I 
+      think this often implies a grid generation problem due to structural issues or bad input 
+      values from DG. 
+    - Carre generates a grid connecting the two targets in the PFZ - a surface/ring starting on the 
+      outer target can not strike the outer target - thus the last ring in the PFZ can be controlled
+      by adjusting the target structures to limit the field line generation. Note that this does not
+      appear to be reciprocal in that the mesh seems to be constructed starting from the outer
+      target. 
+18) traduit is the code used to output a grid in a specific format. It reads in the carre output and 
+    generates an appropriate grid. Option 3 generates a SONNET/DIVIMP formatted grid. traduit asks for 
+    the name of the input file containing the grid data - this is usually the carre.out file. 
+19) Try running the grid on DIVIMP and see how it goes.
+
+
+
+
+Notes:
+- PSI calculations - PSI means different things in different codes. 
+- DG takes the EFIT PSI values and subtracts the PSI value at the separatrix called either psilim or psib
+b=boundary. This is then supposed to be in units of Wb/Rad. Carre takes the DG values of PSI and converts 
+it to units of Wb by multiplying by 2 PI. On the other hand - the normalized PSI value used at DIII-D is 
+calulated using the formula  PSI_norm = (PSI - PSImin)/(PSIsep-PSImin)  PSIsep=g.issbry   PSImin=g.ssimag
+where PSImin is the value of PSI at the magnetic axis. 
+- So to convert the PSI values in Carre to the normalized PSI used by DIII-D one needs to do the following
+
+(PSI - PSIsep) * 2 PI = PSI_carre
+
+PSI= PSI_carre/(2*PI) + PSIsep
+
+PSImin=PSI_min_carre/2PI + PSIsep
+
+PSI_norm = ( (PSI_carre/(2*PI)+PSIsep) - PSImin) / (PSIsep-PSImin)
+         = ( PSI_carre/(2*PI) + (PSIsep-PSImin)) / (PSIsep-PSImin)
+         = (PSI_carre/(2*PI))/(PSIsep-PSImin)  + 1.0
+
+PSI_norm = ( (PSI_carre/(2*PI)+PSIsep) - PSImin) / (PSIsep-PSImin)
+         = ( PSI_carre/(2*PI) + (PSIsep-PSImin)) / (PSIsep-PSImin)
+         = (PSI_carre/(2*PI))/(PSIsep-PSImin)  + 1.0
+         = (PSI_carre/(2PI) / (-PSImin_carre/(2PI) ) + 1.0
+         = PSI_carre/-PSImin_carre+ 1.0
+
+
+The difference between PSIsep-PSImin in the input and PSIsep_carre-PSImin_carre are the same except for the
+2 PI value - in addition PSIsep_carre=0.0 by definition. 
+
+Also, it is important to keep in mind that PSImin is the minimum PSI value over the entire EFIT and not the 
+minimum value on the grid. Thus, in order to calculate the appropriate PSI values in the Carre output 
+routine - it is necessary to load the equilibrium data and not just the mesh to be output. 
+
+
+- this is useful in order to modify Carre to print out the normalized PSI values for each target element
+when it generates the grid. 
+
+

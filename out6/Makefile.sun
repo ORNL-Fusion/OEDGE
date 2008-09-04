@@ -1,0 +1,40 @@
+# defines
+
+CC=cc
+FC=f90
+
+GHOST=/afs/ipp/common/soft/ghost_v8/@sys/lib
+
+VER=sun
+
+OUTMAIN=..
+COMMONS=$(OUTMAIN)/commons
+COMSRC =$(OUTMAIN)/comsrc
+OUTSRC =$(OUTMAIN)/out6/src
+COMF90SRC=$(COMSRC)/f90
+OUTF90SRC=$(OUTSRC)/f90
+
+VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
+
+# FFLAGS=-I$(COMMONS) -w -O -xlibmil -xlibmopt -ftrap=%none
+# CFLAGS=-I$(COMMONS) -w -O -xlibmil
+
+FFLAGS=-I$(COMMONS) -w -g -C -xlibmil -xlibmopt -ftrap=%none
+CFLAGS=-I$(COMMONS) -w -g    -xlibmil           
+
+F90FLAGS=$(FFLAGS)
+
+LIBS= -L$(GHOST) -lghost -lpostcl -L../lib/@sys -ljpeg
+
+TARG=out6
+
+include OBJECT_LIST
+
+# rules
+
+$(TARG): $(OBJECTS)
+	$(LINK.f) -o $(TARG) -Bstatic $(OBJECTS) $(LIBS)
+
+clean:
+	-rm *.o
+	-rm *.mod
