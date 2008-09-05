@@ -160,7 +160,7 @@ C
        PARAMETER ( L1    =  1 )                                         
 c slmod begin - new
        integer iread,lck
-       PARAMETER ( IREAD = 12 , LCK = 200 )
+       PARAMETER ( IREAD = 12 , LCK = 250 )
 c
 c       PARAMETER ( IREAD = 12 , LCK = 100 )
 c slmod end
@@ -222,8 +222,18 @@ c
 C
 C------DIMENSION CHECK--------------------------------------------------
 C
-       IF (LCK.LT.ITMAX) STOP
-     &    ' D2DATA ERROR: ITMAX > 100 (LCK): DECREASE ITMAX'
+c slmod begin
+       IF (LCK.LT.ITMAX) THEN 
+         WRITE(0,*)
+     &     'D2DATA ERROR: ITMAX > 100 (LCK): DECREASE ITMAX OR '//
+     &     'INCREASE LCK'
+         WRITE(0,*) 'ITMAX,LCK=',itmax,lck
+         STOP
+       ENDIF
+c
+c       IF (LCK.LT.ITMAX) STOP
+c     &    ' D2DATA ERROR: ITMAX > 100 (LCK): DECREASE ITMAX'
+c slmdo end
 C                                                                       
 C-----------------------------------------------------------------------
 C                                                                       

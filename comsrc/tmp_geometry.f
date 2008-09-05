@@ -124,25 +124,59 @@ c
 
       INTEGER ifilament
 
-      nfilament = 2
+      nfilament = 1
+      IF (ALLOCATED(filament)) DEALLOCATE(filament)  ! *** HACK *** Move elsewhere...
       ALLOCATE(filament(nfilament))
 
 
       ifilament = 1
       filament(ifilament)%crs_opt = 2              ! Outer midplane cross-section option
-      filament(ifilament)%crs_params(1) = 0.005D0  ! Radial extent, +/- (RAD) (m)
-      filament(ifilament)%crs_params(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
-      filament(ifilament)%crs_params(3) = 11.0D0   ! NRAD 
-      filament(ifilament)%crs_params(4) = 11.0D0   ! NPHI
-      filament(ifilament)%rad_position  = 0.020D0  ! Radial displacement (RHO) (m)
+      filament(ifilament)%crs_param(1) = 0.010D0  ! Radial extent, +/- (RAD) (m)
+      filament(ifilament)%crs_param(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
+      filament(ifilament)%crs_param(3) = 11.0D0   ! NRAD 
+      filament(ifilament)%crs_param(4) =  1.0D0   ! NPHI
 
-      ifilament = 2
-      filament(ifilament)%crs_opt = 2              ! Outer midplane cross-section option
-      filament(ifilament)%crs_params(1) = 0.005D0  ! Radial extent, +/- (RAD) (m)
-      filament(ifilament)%crs_params(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
-      filament(ifilament)%crs_params(3) = 11.0D0   ! NRAD 
-      filament(ifilament)%crs_params(4) = 11.0D0   ! NPHI
-      filament(ifilament)%rad_position  = -0.02D0  ! Radial displacement (RHO) (m)
+      filament(ifilament)%tor_opt = 1               ! Linear from t=p1 to p2, at v=p3
+      filament(ifilament)%tor_param(1) = 0.000D+00  ! t1 (s)
+      filament(ifilament)%tor_param(2) =  50.0D-06  ! t2 (s)
+      filament(ifilament)%tor_param(3) = 50.00D+03  ! v  (m s-1)  
+      filament(ifilament)%tor_position = 0.0D0 ! 4.1737918722121D0 ! 0.0D0 ! 4.173792D0  ! Toroidal location at t=t1 (degrees)
+      filament(ifilament)%tor_trigger = 0           ! Start immediately
+      
+      filament(ifilament)%rad_opt = 1               ! Linear from t=p1 to p2, at v=p3
+      filament(ifilament)%rad_param(1) = 0.000D+00  ! t1 (s)
+      filament(ifilament)%rad_param(2) = 100.0D-06  ! t2 (s)
+      filament(ifilament)%rad_param(3) = 1.000D+03  ! v  (m s-1)  
+      filament(ifilament)%rad_position = 0.0D0      ! Toroidal location at t=t1 (rho)
+      filament(ifilament)%rad_trigger = 1           ! Start when toroidal motion is no longer evaluated
+
+      filament(ifilament)%t_start = -1.0D0       ! Time when filament was initiated
+
+
+c      ifilament = 2
+c      filament(ifilament)%crs_opt = 2              ! Outer midplane cross-section option
+c      filament(ifilament)%crs_param(1) = 0.0050D0  ! Radial extent, +/- (RAD) (m)
+c      filament(ifilament)%crs_param(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
+c      filament(ifilament)%crs_param(3) = 11.0D0   ! NRAD 
+c      filament(ifilament)%crs_param(4) = 11.0D0   ! NPHI
+c      filament(ifilament)%rad_position  = 0.000D0  ! Radial displacement (RHO) (m)
+c      filament(ifilament)%tor_position  = 90.00D0  ! Toroidal displacement (degrees)
+
+c      ifilament = 1
+c      filament(ifilament)%crs_opt = 2              ! Outer midplane cross-section option
+c      filament(ifilament)%crs_param(1) = 0.005D0  ! Radial extent, +/- (RAD) (m)
+c      filament(ifilament)%crs_param(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
+c      filament(ifilament)%crs_param(3) = 11.0D0   ! NRAD 
+c      filament(ifilament)%crs_param(4) = 11.0D0   ! NPHI
+c      filament(ifilament)%rad_position  = 0.020D0  ! Radial displacement (RHO) (m)
+
+c      ifilament = 2
+c      filament(ifilament)%crs_opt = 2              ! Outer midplane cross-section option
+c      filament(ifilament)%crs_param(1) = 0.005D0  ! Radial extent, +/- (RAD) (m)
+c      filament(ifilament)%crs_param(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
+c      filament(ifilament)%crs_param(3) = 11.0D0   ! NRAD 
+c      filament(ifilament)%crs_param(4) = 11.0D0   ! NPHI
+c      filament(ifilament)%rad_position  = -0.02D0  ! Radial displacement (RHO) (m)
 
 
       RETURN
@@ -154,39 +188,116 @@ c
 c subroutine: SetupFilaments
 c
 c
-      SUBROUTINE SetupFilaments
+      SUBROUTINE SetupFilaments(t_global)
       USE mod_filament_params
       USE mod_filament
       IMPLICIT none
 
+      REAL*8, INTENT(IN) :: t_global
+
+      REAL FindSeparatrixRadius
+
       INTEGER ifilament,i1,i2,nrad,nphi,n,maxnphi,ikm,id,maxrad,
-     .        nrings,rings(MAX_IR)
-      REAL*8  rad,tor,frad,phi,fphi,rmid,xmin,frac,radpos,rad1
+     .        nrings,rings(MAX_IR),icell
+      REAL    x,y,z
+      REAL*8  rad,tor,frad,phi,fphi,rmid,xmin,frac,radpos,torpos,rad1,
+     .        rval,pval,rsep,x1,z1,ang,t,t_local,velocity,radius,arc,
+     .        angle,t_delta,displacement,
+     .        len1,len2,v(3,10000),scale
             
-
-c      nfilament = 1
-c      ALLOCATE(filament(nfilament))
-c      filament(nfilament)%crs_opt = 2
-c      filament(nfilament)%crs_params(1) = 0.005D0  ! Radial extent, +/- (RAD) (m)
-c      filament(nfilament)%crs_params(2) = 0.100D0  ! Toroidal extent +/- (TOR) (m)
-c      filament(nfilament)%crs_params(3) = 11.0D0   ! NRAD 
-c      filament(nfilament)%crs_params(4) = 11.0D0   ! NPHI
-c      filament(nfilament)%rad_position  = 0.020D0  ! Radial displacement (RHO) (m)
-
-
 ! Need a sub cross section radius, i.e. half the distance between, or can it be larger than the 
 ! actual distance between the chords, in particular now since I'm just assigning a uniform plasma
 ! across the cross section... whilst scanning down each chord each tetrahedron needs to be assigned
 ! a distance from the midplane... hey, need to crop each chord at this distance so that the filament
 ! can grow...  
 
+      rsep = DBLE(FindSeparatrixRadius(1))
+
       DO ifilament = 1, nfilament
 
-        rad = filament(ifilament)%crs_params(1)
-        tor = filament(ifilament)%crs_params(2)
-        radpos = filament(ifilament)%rad_position
+        IF (filament(ifilament)%t_start.EQ.-1.0D0) THEN
+          filament(ifilament)%t_start = t_global
+          filament(ifilament)%t_last  = 0.0D0
+        ENDIF
 
-c...  Setup cross-section vertex array:
+        t       = t_global - filament(ifilament)%t_start
+        t_delta = t - filament(ifilament)%t_last
+
+
+c            WRITE(0,*) '==TIME  :',t,t_global,
+c     .        filament(ifilament)%tor_param(1)
+
+
+c...    Set the size of the filament cross-section:
+        rad = filament(ifilament)%crs_param(1)   ! *** HACK *** Leave this fixed for now... 
+        tor = filament(ifilament)%crs_param(2)
+
+
+c...    Calculate centre-of-mass location of the filament:
+        radpos = filament(ifilament)%rad_position
+        torpos = filament(ifilament)%tor_position
+
+        angle = 0.0D0
+        SELECTCASE (filament(ifilament)%tor_opt)
+          CASE(0)
+          CASE(1)
+            IF ((t.LT.filament(ifilament)%tor_param(1)).OR.
+     .          (t.GT.filament(ifilament)%tor_param(2))) THEN
+              filament(ifilament)%tor_status = 0
+            ELSE
+              filament(ifilament)%tor_status = 1
+              velocity = filament(ifilament)%tor_param(3)
+              arc = velocity * t_delta 
+              radius = radpos + rsep
+              angle = arc / radius * 180.0D0 / DPI             
+            ENDIF
+          CASE DEFAULT
+            CALL ER('SetupFilaments','Unknown TOR_OPT',*99)
+        ENDSELECT
+        torpos = torpos + angle
+        WRITE(0,*) '==TORPOS:',
+     .    SNGL(t_delta),SNGL(angle),torpos
+
+c...    Update radial position:
+        displacement = 0.0D0
+        SELECTCASE (filament(ifilament)%rad_opt)
+          CASE(0)
+          CASE(1)
+            IF (filament(ifilament)%tor_status.EQ.1) THEN
+              filament(ifilament)%rad_status = 0
+            ELSE
+              filament(ifilament)%rad_status = 1
+              velocity = filament(ifilament)%rad_param(3)
+! *** LEFT OFF *** need to have a proper start time for the radial motion, perhaps 
+! setup for toroidal motion as well?
+! Then tag the output for each EIRENE iteration with a suffix, and update run_old, and then
+! find a way to load these particular data files into RAY... but need to do one at a time, so maybe
+! have a script that runs OUT a bunch of times for one case...
+! ****** Another bug when iterating and non-zero motion.  Try starting with 4.0 degree toroidal displacement and se
+! if there's a problem ****
+              displacement = velocity * t_delta 
+            ENDIF
+          CASE DEFAULT
+            CALL ER('SetupFilaments','Unknown TOR_OPT',*99)
+        ENDSELECT
+        radpos = radpos + displacement
+        WRITE(0,*) '==RADPOS:',
+     .    SNGL(t_delta),SNGL(displacement),SNGL(radpos)
+
+
+
+
+
+        filament(ifilament)%rad_position = radpos
+        filament(ifilament)%tor_position = torpos
+
+c...    Plasma:
+
+
+
+
+
+c...    Setup cross-section vertex array:
         SELECTCASE(filament(ifilament)%crs_opt)   
           CASE(0)
 c...        Debug:
@@ -231,12 +342,13 @@ c                WRITE(0,*) 'PAIN:',i1,i2,frad,fphi
      .            SNGL(filament(ifilament)%vtx(1:3,n))
               ENDDO
             ENDDO
+
           CASE(2)
 c...        Elliptical, but vertices are now set along radial segments, with
 c           even spacing and much lower frequency in the toroidal direction:
-            nrad = NINT(filament(ifilament)%crs_params(3))
-            nphi = NINT(filament(ifilament)%crs_params(4))
-            WRITE(0,*) 'NRAD,NPHI:',nrad,nphi
+            nrad = NINT(filament(ifilament)%crs_param(3))
+            nphi = NINT(filament(ifilament)%crs_param(4))
+c            WRITE(0,*) 'NRAD,NPHI,RSEP:',nrad,nphi,SNGL(rsep)
             n = 0
             DO i1 = 1, nphi
               IF (nphi.EQ.1) THEN
@@ -244,22 +356,38 @@ c           even spacing and much lower frequency in the toroidal direction:
               ELSE
                 fphi = DBLE(i1 - 1) / DBLE(nphi - 1)
               ENDIF
-              frad = COS(3.14159265D0 * (2.0D0 * fphi - 1.0D0) / 2.0D0)
-              WRITE(0,*) 'FRAD:',frad,MAX(1,NINT(nrad*frad)),fphi
+              frad = DCOS(DPI * (2.0D0 * fphi - 1.0D0) / 2.0D0)
+c              frad = COS(3.14159265D0 * (2.0D0 * fphi - 1.0D0) / 2.0D0)
+c              WRITE(0,*) 'FRAD:',frad,MAX(1,NINT(nrad*frad)),fphi
               maxrad = MAX(1,NINT(nrad*frad))
               DO i2 = 1, maxrad
                 IF (maxrad.EQ.1) THEN
                   frac = 0.0D0
                 ELSE
-                  frac =  2.0D0 * DBLE(i2 - 1) / DBLE(maxrad - 1) -1.0D0
+                  frac = 2.0D0 * DBLE(i2 - 1) / DBLE(maxrad - 1) - 1.0D0
                 ENDIF
-c                WRITE(0,*) '    :',frac,frac*rad*frad,
-c     .                             (1.0D0 - frad) * tor
                 n = n + 1
-                filament(ifilament)%vtx(1,n) = frac * frad*rad  + radpos
+                filament(ifilament)%vtx(1,n) = frac * frad*rad + 
+     .                                         radpos + rsep
                 filament(ifilament)%vtx(2,n) = 0.0D0
                 filament(ifilament)%vtx(3,n) = 2.0D0*(0.5D0-fphi) * tor
-                WRITE(0,*) 'FIL:',n,REAL(filament(ifilament)%vtx(1:3,n))
+c                WRITE(0,*) 'FIL:',n,
+c     .                      REAL(filament(ifilament)%vtx(1:1,n))-rsep,
+c     .                      REAL(filament(ifilament)%vtx(2:3,n))
+c...            Displace the filament toroidally:
+                ang = torpos
+                x1 = filament(ifilament)%vtx(1,n)
+                z1 = filament(ifilament)%vtx(3,n)
+                filament(ifilament)%vtx(1,n) = DCOS(ang) * x1 -
+     .                                         DSIN(ang) * z1
+                filament(ifilament)%vtx(3,n) = DSIN(ang) * x1 +
+     .                                         DCOS(ang) * z1
+c Debug:
+c                rval = DSQRT(filament(ifilament)%vtx(1,n)**2 + 
+c     .                       filament(ifilament)%vtx(3,n)**2)
+c                WRITE(0,*) '   :',n,
+c     .                      REAL(filament(ifilament)%vtx(1:3,n)),
+c     .                      REAL(rval)-rsep
               ENDDO
             ENDDO
  
@@ -270,39 +398,46 @@ c     .                             (1.0D0 - frad) * tor
         filament(ifilament)%nvtx  = n
         filament(ifilament)%ncell = n  ! *** HACK *** This is convenient, for now...
 
+c...    Project filament cross-section down onto the midplane:
 
 
-c...  Displace the filament:
-c        ikm = FindMidplaneCell(irsep)
-c        id = korpg(ikm,irsep)
-c        rmid = DBLE(MAX(rvertp(1,id),rvertp(4,id)))   ! *** HACK *** Crude, but it will have to do for now...
-c        DO i1 = 1, filament(ifilament)%nvtx
-c          filament(ifilament)%vtx(1,i1) = filament(ifilament)%vtx(1,i1) + 
-c     .                                    rmid
-c        ENDDO
+c...    Set the length of an individual field line associated with 
+c       a filament flux-tube:
+        IF (t.EQ.0.0D0) THEN
+c         Initialise:
+          DO icell = 1, filament(ifilament)%ncell  ! *** HACK *** As above...
+            x = SNGL(filament(ifilament)%vtx(1,icell))
+            y = 0.0
+            z = SNGL(filament(ifilament)%vtx(3,icell))
+            CALL TraceFieldLine_DIVIMP(x,y,z,2,3,len1,len2,
+     .                                 n,v,10000)  ! *** HACK *** (the 10000)
+            filament(ifilament)%lcell(1,icell) = len1
+            filament(ifilament)%lcell(2,icell) = len2
+          ENDDO
+        ELSE
+c         *** HACK *** Assumes that the number of flux-tubes and/or their distribution
+c                      doesn't change as the filament evolves...
 
-c        For now, the "x" coordinate is RHO
-
-
-c...    Project it down onto the midplane:
-
+        ENDIF
 
 c...    Identify which rings/tubes on the fluid grid are within striking
 c       distance of the filament:
-c        radscale = MAX(0.01D0,2.0D0 * rad / DBLE(nrad)) 
         DO i1 = 1, filament(ifilament)%nvtx
           rings = 0
-          rad1 = filament(ifilament)%vtx(1,i1) 
+          rad1 = DSQRT(filament(ifilament)%vtx(1,i1)**2 +  
+     .                 filament(ifilament)%vtx(3,i1)**2) - rsep
           CALL SelectGridRegion_DIVIMP(SNGL(rad1),nrings,rings,MAX_IR)
           filament(ifilament)%ir_space(0:MAX_IR,i1) = 0
           filament(ifilament)%ir_space(0       ,i1) = nrings
           filament(ifilament)%ir_space(1:nrings,i1) = rings(1:nrings)
-          WRITE(0,*) 'RINGS:',i1,
-     .               filament(ifilament)%ir_space(0:nrings,i1)
+c          WRITE(0,*) 'RINGS:',i1,
+c     .               filament(ifilament)%ir_space(0:nrings,i1)
         ENDDO
 
+c...    Update time stamp:
+        filament(ifilament)%t_last = t
 
-      ENDDO
+      ENDDO  ! Main filament loop
       
       RETURN
 99    STOP
@@ -1779,7 +1914,8 @@ c
 c
 c subroutine: TraceFieldLine_DIVIMP
 c
-      SUBROUTINE TraceFieldLine_DIVIMP(xin,yin,zin,mode,n,v,MAXN)
+      SUBROUTINE TraceFieldLine_DIVIMP(xin,yin,zin,mode,chop,
+     .                                 length1,length2,n,v,MAXN)
       IMPLICIT none
 
       INCLUDE 'params'
@@ -1789,22 +1925,26 @@ c
       INCLUDE 'slcom'
 
       INTEGER FindMidplaneCell
+      REAL    FindSeparatrixRadius
 
-      INTEGER, INTENT(IN) :: mode,MAXN
+      INTEGER, INTENT(IN) :: mode,MAXN,chop
       REAL   , INTENT(IN) :: xin,yin,zin
+      REAL*8              :: length1,length2
 c      INTEGER, INTENT(IN) :: region,mode,MAXN
 c      REAL   , INTENT(IN) :: rad_coord,in_phi
       INTEGER, INTENT(OUT) :: n
       REAL*8 , INTENT(OUT) :: v(3,MAXN)
 
       INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike
+      LOGICAL finished
+      REAL    rsep
       REAL*8  r(2),z(2),deltar,deltaz,deltac,deltap,phi,dphi,rval,pval,
      .        frac1,frac2,angle1,angle2,brat,rfrac,
-     .        rhoin,phiin,frac,rpos
+     .        rhoin,phiin,frac,rpos,rvalmin,zvalmin,zvalmax,
+     .        len1,len2,lenmax1,lenmax2
 
       REAL       TOL
       PARAMETER (TOL=1.0D-06)
-
 
 
       fp = 0
@@ -1815,11 +1955,58 @@ c      REAL   , INTENT(IN) :: rad_coord,in_phi
       IF (yin.NE.0.0) 
      .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
 
-
-      rhoin = xin  ! *** TEMP ***
-      phiin = zin  ! *** TEMP ***
+c...  Convert from Cartesean coordinates to RHO and PHI:
+      rsep = FindSeparatrixRadius(1)
+      rhoin = DBLE(SQRT(xin**2 + zin**2) - rsep)
+      IF (ABS(xin).LT.1.0E-06) THEN
+        phiin = 0.0D0
+      ELSE
+        phiin = DBLE(ATAN(zin / xin) * 180.0 / PI)
+      ENDIF
+c      rhoin = xin  ! *** TEMP ***
+c      phiin = zin  ! *** TEMP ***
+c      WRITE(0,*) '==INPUT:',rhoin,phiin
+c      WRITE(0,*) '       :',xin,zin,rsep
+c      STOP 'sdfsdf'
 
       n = 0
+
+      len1 = 0.0D0
+      len2 = 0.0D0
+
+      SELECTCASE (chop)
+        CASE(1)    ! No restrictions
+          rvalmin =  0.0D0
+          zvalmin = -1.0D+20
+          zvalmax =  1.0D+20
+          lenmax1 =  1.0D+20
+          lenmax2 =  1.0D+20
+        CASE(2:3)  ! No field lines above and below or inside the low field side, main plasma separatrix 
+          rvalmin = DBLE(rxp)
+          zvalmin =  1.0D+20
+          zvalmax = -1.0D+20
+          ir = irsep-1
+          DO ik = 1, nks(ir)-1
+            DO i1 = 1, 4
+              id = korpg(ik,ir)
+              zvalmin = MIN(zvalmin,DBLE(zvertp(i1,id)))
+              zvalmax = MAX(zvalmax,DBLE(zvertp(i1,id)))
+            ENDDO
+          ENDDO
+          lenmax1 = 1.0D+20
+          lenmax2 = 1.0D+20
+        CASE(4)  ! Restricted length...
+          rvalmin =  0.0D0
+          zvalmin = -1.0D+20
+          zvalmax =  1.0D+20
+          lenmax1 =  length1
+          lenmax2 =  length2
+        CASE DEFAULT
+          CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
+      ENDSELECT
+
+c      WRITE(0,*) 'CHOP:',chop,rvalmin,zvalmin,zvalmax
+
 
 c...  Find where we are on the outer midplane:
       DO ir = 2, irwall
@@ -1858,8 +2045,8 @@ c                WRITE(fp,*) rhoin,rho(ir,CELL1),rho(ir1,CELL1)
               CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
           ENDSELECT
 
-          WRITE(fp,'(A,2I6,3F10.4)') 
-     .      ' ==MIDPLANE:',ikm,ir,REAL(frac),REAL(rfrac),REAL(rhoin)
+c          WRITE(fp,'(A,2I6,3F10.4)') 
+c     .      ' ==MIDPLANE:',ikm,ir,REAL(frac),REAL(rfrac),REAL(rhoin)
           EXIT
         ENDIF
       ENDDO
@@ -1895,6 +2082,7 @@ c     .    'BRAT:',REAL(brat),REAL(r(1:2)),REAL(z(1:2))
         deltac = ABS(deltaz) / brat
         deltap = deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
+        finished = .FALSE.
         DO WHILE (angle1.LT.deltap)
           angle2 = MIN(angle1+dphi,deltap) 
           frac1 = angle1 / deltap
@@ -1905,14 +2093,36 @@ c     .    'BRAT:',REAL(brat),REAL(r(1:2)),REAL(z(1:2))
             v(1,n) = r(1)
             v(2,n) = z(1)
             v(3,n) = phi
+c...        Convert from r,z,phi to x,y,z (y okay already):
+            rval = v(1,n)
+            pval = v(3,n) * DBLE(PI) / 180.0D0
+            v(1,n) = rval * DCOS(pval)
+            v(3,n) = rval * DSIN(pval)
+c            WRITE(0,*) '==START OF FILAMENT:',SNGL(v(3,n)),SNGL(phi)
           ENDIF
           n = n + 1
           IF (n.GT.MAXN) CALL ER('TraceFieldLine_DIVIMP','N bust',*99)
           v(1,n) = r(1) + frac2 * deltar
           v(2,n) = z(1) + frac2 * deltaz
           v(3,n) = phi + angle2
+c...      Convert from r,z,phi to x,y,z (y okay already):
+          rval = v(1,n)
+          pval = v(3,n) * DBLE(PI) / 180.0D0
+          v(1,n) = rval * DCOS(pval)
+          v(3,n) = rval * DSIN(pval)
+          len1 = len1 + DSQRT((v(1,n)-v(1,n-1))**2 +
+     .                        (v(2,n)-v(2,n-1))**2 +
+     .                        (v(3,n)-v(3,n-1))**2)
+          IF ((               rval  .LE.rvalmin).OR.
+     .        (zxp.LT.0.0.AND.v(2,n).LE.zvalmin).OR.
+     .        (zxp.GT.0.0.AND.v(2,n).GE.zvalmax).OR.
+     .        (               len1  .GE.lenmax1)) THEN
+            finished = .TRUE.
+            EXIT
+          ENDIF
           angle1 = angle2
         ENDDO 
+        IF (finished) EXIT
         phi = phi + deltap
       ENDDO
 
@@ -1957,6 +2167,7 @@ c        brat = DBLE(bratio(ik,ir))
         deltac = ABS(deltaz) / brat
         deltap = -deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
+        finished = .FALSE.
         DO WHILE (angle1.GT.deltap)
           angle2 = MAX(angle1-dphi,deltap) 
           frac1 = angle1 / deltap
@@ -1966,22 +2177,50 @@ c        brat = DBLE(bratio(ik,ir))
           v(1,n) = r(1) + frac2 * deltar
           v(2,n) = z(1) + frac2 * deltaz
           v(3,n) = phi + angle2
+c...      Convert from r,z,phi to x,y,z (y okay already):
+          rval = v(1,n)
+          pval = v(3,n) * DBLE(PI) / 180.0D0
+          v(1,n) = rval * DCOS(pval)
+          v(3,n) = rval * DSIN(pval)
+          len2 = len2 + DSQRT((v(1,n)-v(1,n-1))**2 +
+     .                        (v(2,n)-v(2,n-1))**2 +
+     .                        (v(3,n)-v(3,n-1))**2)
+          IF ((               rval  .LE.rvalmin).OR.
+     .        (zxp.LT.0.0.AND.v(2,n).GE.zvalmax).OR.
+     .        (zxp.GT.0.0.AND.v(2,n).LE.zvalmin).OR.
+     .        (               len2 .GE.lenmax2 )) THEN
+            finished = .TRUE.
+            EXIT
+          ENDIF
           angle1 = angle2
         ENDDO 
+        IF (finished) EXIT
         phi = phi + deltap
       ENDDO
 
 c...  Convert from r,z,phi to x,y,z (y okay already):
-      DO i1 = 1, n
-        rval = v(1,i1)
-        pval = v(3,i1) * DBLE(PI) / 180.0D0
-        v(1,i1) = rval * DSIN(pval)
-        v(3,i1) = rval * DCOS(pval)
-c        WRITE(fp,*) ' V:',v(1:3,i1)
-      ENDDO
+c      DO i1 = 1, n
+c        rval = v(1,i1)
+c        pval = v(3,i1) * DBLE(PI) / 180.0D0
+c        v(1,i1) = rval * DSIN(pval)
+c        v(3,i1) = rval * DCOS(pval)
+cc        WRITE(fp,*) ' V:',v(1:3,i1)
+c      ENDDO
 
 c      WRITE(0,*) 'n:',n
 
+c      WRITE(0,*) 'LENGTH:',len1,len2
+
+      SELECTCASE (chop)
+        CASE(1)
+        CASE(2)
+        CASE(3)
+          length1 = len1
+          length2 = len2
+        CASE(4)
+        CASE DEFAULT
+          CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
+      ENDSELECT
 
       RETURN
  99   STOP

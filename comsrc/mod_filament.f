@@ -30,29 +30,42 @@ c
       TYPE, PUBLIC :: type_filament
         REAL*4    :: version = 1.0
 !       Timing:
-        REAL*8    :: start_time                           ! Time when the filament was born
-        REAL*8    :: t                                    ! Local time for filament (absolute time - start time)
+        REAL*8    :: t_start                              ! Time when the filament was born
+        REAL*8    :: t_last                               ! Time stamp when filament was last updated
 !       Plasma parameters:
-        REAL*8    :: ne(MAX_FIL_NCELL)                    ! Density scaling (m-3)
-        REAL*8    :: vb(MAX_FIL_NCELL)                    ! Parallel flow (m s-1)
-        REAL*8    :: te(MAX_FIL_NCELL)                    ! Te (eV)
-        REAL*8    :: ti(MAX_FIL_NCELL)                    ! Ti (eV)
+        REAL*4    :: ne(MAX_FIL_NCELL)                    ! Density scaling (m-3)
+        REAL*4    :: vb(MAX_FIL_NCELL)                    ! Parallel flow (m s-1)
+        REAL*4    :: te(MAX_FIL_NCELL)                    ! Te (eV)
+        REAL*4    :: ti(MAX_FIL_NCELL)                    ! Ti (eV)
+        REAL*4    :: ne0                                  ! Principle density parameter (m-3)
+        REAL*4    :: vb0                                  !     "     parallel flow (m s-1)
+        REAL*4    :: te0                                  !     "     Te (eV)
+        REAL*4    :: ti0                                  !     "     Ti (eV)
 !       Cross section parameters:
         INTEGER*4 :: crs_opt                              ! Option (1=circle)
-        REAL*8    :: crs_params(MAX_FIL_PARAMS)           ! 
-
-!       Evolution along the field line:
-        INTEGER*4 :: par_drift_opt                        ! Parallel momentum/flow option
-
-
+        REAL*8    :: crs_param(MAX_FIL_PARAMS)           ! 
+        INTEGER*4 :: crs_plasma                           ! Cross-field plasma model option
+!       Parallel evolution along the field line:
+        INTEGER*4 :: par_plasma                           ! Parallel plasma model option
+        INTEGER*4 :: par_length                           ! Extent of the filament at creation (t = 0) (1-"full", 2-outer)
+        INTEGER*4 :: par_growth                           ! Rate of expansion along the field line
+        REAL*8    :: par_growth_param(MAX_FIL_PARAMS)    ! ...parameters
+        INTEGER*4 :: par_growth_trigger                   ! When to start the parallel evolution of the filament
+        REAL*4    :: par_growth_delay                     ! Time delay to impose after the trigger is registered (s)
 !       Toroidal transport:
-
-
+        INTEGER*4 :: tor_opt                              ! Option
+        REAL*8    :: tor_param(MAX_FIL_PARAMS)           ! Parameters for transport function
+        INTEGER*4 :: tor_trigger                          ! Option for under what conditions to initiate transport
+        REAL*8    :: tor_trigger_param(MAX_FIL_PARAMS)   ! ...parameters
+        REAL*8    :: tor_delay                            ! Time delay before the transport is initiated
+        REAL*8    :: tor_position                         ! Current position for filament "center of mass"
+        INTEGER*4 :: tor_coordinate                       ! Coordinate used for tracking filament "center of mass"
+        INTEGER*4 :: tor_status                           ! Register current transport activity (0-inactive, 1-active)
 !       Radial transport:
         INTEGER*4 :: rad_opt                              ! Option
-        REAL*8    :: rad_params(MAX_FIL_PARAMS)           ! Parameters for transport function
-        INTEGER*4 :: rad_trigger_opt                      ! Option for under what conditions to initiate transport
-        REAL*8    :: rad_trigger_params(MAX_FIL_PARAMS)   ! Parameters
+        REAL*8    :: rad_param(MAX_FIL_PARAMS)           ! Parameters for transport function
+        INTEGER*4 :: rad_trigger                          ! Option for under what conditions to initiate transport
+        REAL*8    :: rad_trigger_param(MAX_FIL_PARAMS)   ! ...parameters
         REAL*8    :: rad_delay                            ! Time delay before the transport is initiated
         REAL*8    :: rad_position                         ! Current position for filament "center of mass"
         INTEGER*4 :: rad_coordinate                       ! Coordinate used for tracking filament "center of mass"
@@ -61,7 +74,8 @@ c
         INTEGER*4 :: ncell                                ! Number of cross-sectional cells in the filament model  ! INTEGER*2's?
         INTEGER*4 :: nvcell                               ! Number of vertices per cell
         INTEGER*4 :: vcell(MAX_FIL_VCELL,MAX_FIL_NCELL)   ! Index in VTX array of of the vertices for a particular cell
-        REAL*8    :: ccell(3,MAX_FIL_NCELL)               ! Cell centre... but should maybe be an INT pointer...
+        REAL*8    :: lcell(2,MAX_FIL_NCELL)               ! Length of the cell/tube along the magnetic field
+        REAL*8    :: lcell0(2,MAX_FIL_NCELL)              ! Initial length at t = 0
         INTEGER*4 :: nvtx                                 ! Total number of vertices used to represent the cross-section
         REAL*8    :: vtx(3,MAX_FIL_NVTX)                  ! Vertex data
         INTEGER   :: ir_space(0:MAX_IR,MAX_FIL_NCELL)     ! Range of flux rings to search when resolving tetrahedral mesh
@@ -76,8 +90,8 @@ c
      .  fil_time_opt,                    ! Option for keeping track of when filaments are launched 
      .  fil_trace_opt                    ! Option for field line tracing   
       REAL*4, PUBLIC :: 
-     .  fil_tor_params(MAX_FIL_PARAMS),  ! Parameters for toroidal distribution function 
-     .  fil_par_params(MAX_FIL_PARAMS),  ! Parameters for parallel extent fuction
+     .  fil_tor_param(MAX_FIL_PARAMS),  ! Parameters for toroidal distribution function 
+     .  fil_par_param(MAX_FIL_PARAMS),  ! Parameters for parallel extent fuction
      .  fil_time_start,                  ! Start time of filament clock for the first iteration of the simulation
      .  fil_time_delay,                  ! Delay before launching filaments
      .  fil_time_incriment,              ! Time increase between interations

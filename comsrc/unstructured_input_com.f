@@ -1825,9 +1825,11 @@ c
 c     Default value is S para (option 0)
 c
       ELSEIF (tag(1:3).EQ.'T35') THEN
-
-        CALL ReadI(line,drft_distopt,0,2,'Drift velocity range'//
-     >                                   ' specification (S,P or Z)')
+c slmod begin - *** TEMP ***
+c        CALL ReadI(line,drft_distopt,0,2,'Drift velocity range'//
+c     >                                   ' specification (S,P or Z)')
+        STOP 'OPTION TURNED OFF FOR NOW...'
+c slmod end
 c
 c        write(0,*) 'READIN: drft_distopt:',drft_distopt
 c
@@ -2341,9 +2343,11 @@ c              in the hydrocarbon molecules so it can be different
 c              from the background plasma 
 c
       elseif (Tag(1:3).eq.'H64') then
-        Call ReadR(line,input_HC_H_mass,1.0,3.0,
-     >     'Mass of the H isotope in HC molecules 1.0->3.0')
-
+c slmod begin - *** TEMP ***
+c        Call ReadR(line,input_HC_H_mass,1.0,3.0,
+c     >     'Mass of the H isotope in HC molecules 1.0->3.0')
+        STOP 'TURNING OFF FOR NOW...'
+c slmod end
 c
 c
 c jdemod
