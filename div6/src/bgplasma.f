@@ -1736,7 +1736,7 @@ c...       Calling EIRENE04/06:
              CASE(4)
                CALL WriteEireneFiles_04
              CASE(5)
-               CALL WriteEireneFiles_06
+               CALL WriteEireneFiles_06(iitersol)
            ENDSELECT
 
            IF (rel_opt.NE.0) THEN

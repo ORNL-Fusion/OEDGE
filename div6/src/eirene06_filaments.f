@@ -14,19 +14,18 @@ c
       USE mod_eirene06  ! *** TEMP ***
       IMPLICIT none
 
-      REAL FindSeparatrixRadius
+c      REAL FindSeparatrixRadius
 
       INTEGER iobj,iobj1,tmp_nobj,ifilament,ivtx,icell,iside,mode,iloop
 
-      INTEGER n,nir
-      REAL    x,y,z,rmid
-      REAL*8  v(3,10000),scale
+      INTEGER n,nir,nmid
+      REAL    x,y,z,rho,phi
+      REAL*8  len1,len2,v(3,10000),scale
       
 
       obj(1:nobj)%segment(1) = 0
 
 c      RETURN
-
 
       SELECTCASE (3)
         CASE(-1)
@@ -56,7 +55,8 @@ c      RETURN
           CALL CleanObjectArray
 
         CASE (2)
-          CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,n,v,10000)
+          CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,1.0E+20,1.0E+20,
+     .                               n,v,10000)
           CALL SelectTetrahedrons(n,v(1:3,1:n))
           tmp_nobj = nobj
           DO iobj = 1, tmp_nobj
@@ -65,10 +65,10 @@ c      RETURN
           CALL CleanObjectArray
 
         CASE (3)
-          CALL DefineFilaments 
-          CALL SetupFilaments 
+c          CALL DefineFilaments 
+c          CALL SetupFilaments(0.0D0)
 
-          rmid = FindSeparatrixRadius(1)
+c          rsep = FindSeparatrixRadius(1)
 
           DO iloop = 1, 2
             obj(1:nobj)%segment(1) = 0
@@ -89,19 +89,17 @@ c               subdivide them when looking for tetrahedron intersections, rathe
 c               filament cross-section...
                 ivtx = icell  ! *** HACK ***
                 x = SNGL(filament(ifilament)%vtx(1,ivtx))
-                y = 0.0D0
+                y = 0.0
                 z = SNGL(filament(ifilament)%vtx(3,ivtx))
-                IF (ABS(x+rmid).LT.1.0E-06) THEN
-                  z = 0.0
-                ELSE
-                  z = ATAN(z / (x + rmid)) * 180.0 / PI
-                ENDIF
+                len1 = filament(ifilament)%lcell(1,ivtx) 
+                len2 = filament(ifilament)%lcell(2,ivtx) 
                 WRITE(0,*) '==FILAMENT:',ifilament,ivtx,x,z
-
-c...            'x' is currently RHO and 'y' is PHI, but should really move to a proper
-c               cartesian input, to be fully general:
-                CALL TraceFieldLine_DIVIMP(x,y,z,2,n,v,10000)  ! *** HACK *** (the 10000)
-
+                CALL TraceFieldLine_DIVIMP(x,y,z,2,4,len1,len2,
+     .                                     n,v,10000)  ! *** HACK *** (the 10000)
+c                CALL TraceFieldLine_DIVIMP(rho,0.0,phi,2,2,1.0,1.0,
+c     .                                     n,v,10000)  ! *** HACK *** (the 10000)
+c                CALL TraceFieldLine_DIVIMP(x,y,z,2,2,1.0E+20,1.0E+20,
+c     .                                     n,v,10000)  ! *** HACK *** (the 10000)
                 CALL SelectTetrahedrons(n,v(1:3,1:n),mode,scale,
      .                 nir,filament(ifilament)%ir_space(1:nir,icell))
               ENDDO  ! TUBE

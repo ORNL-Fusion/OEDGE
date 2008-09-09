@@ -7,10 +7,11 @@ c
 c
 c
 c
-      SUBROUTINE WriteEireneFiles_06
+      SUBROUTINE WriteEireneFiles_06(iitersol)
       USE mod_eirene06
       USE mod_sol28_global
       USE mod_geometry
+      USE mod_filament
       IMPLICIT none
 
       include 'params'
@@ -18,11 +19,38 @@ c
       include 'comtor'
       INCLUDE 'slcom'
 
+      INTEGER, INTENT(IN) :: iitersol
+
       INTEGER ik,ir,in1,in2,i1,id,ik1,status
       LOGICAL saved_triangles,output
 
+      REAL*8 t  ! *** TEMP ***
+
+      DATA t /0.0D0/
       DATA saved_triangles /.FALSE./
       SAVE
+
+      IF (citersol.GT.0) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '---------------------------------'
+        WRITE(0,*) iitersol,SNGL(t),nfilament
+        WRITE(0,*) '---------------------------------'
+        WRITE(0,*) 
+        IF (t.EQ.0.0D0) CALL DefineFilaments 
+        CALL SetupFilaments(t)
+        t = t + 10.0D-06
+      ELSE
+        IF (t.EQ.0.0D0) CALL DefineFilaments 
+        CALL SetupFilaments(t)
+      ENDIF
+
+c      CALL DefineFilaments
+c      t = 1.0D0
+c      DO i1 = 1, 10
+c        CALL SetupFilaments(t)      
+c        t = t + 10.0D-6
+c      ENDDO
+c      STOP 'asshole'
 
       helium = .TRUE.
 
@@ -98,7 +126,7 @@ c     and tetrahedrons at the moment):
 
         CALL ALLOC_CELL(MAXNKS*nrs,nrs*2)
 
-        IF (saved_triangles) THEN
+        IF (saved_triangles.AND..NOT.tetrahedrons) THEN
           IF (tetrahedrons) THEN          
             STOP 'need to save plasma / target data with .raw'
           ELSE
@@ -638,7 +666,7 @@ c
       REAL*8  Bx,By,Bz,beta,brat,deltax,deltay,x(3),y(3)
 
 
-      WRITE(0,*) '  PROCESSING MAGNETIC GRID'
+      WRITE(0,*) 'PROCESSING MAGNETIC GRID'
 
 
 c...  Rough crack at e-potential:
@@ -699,6 +727,7 @@ c...      Radial cell surfaces:
           cell(ncell)%sideindex(1,2) = 23                         ! Side index for cell surface 2
           cell(ncell)%sideindex(1,4) = 14                         ! Side index for cell surface 4
 c...      Poloidal surfaces of note (targets):
+          cell(ncell)%sideindex(2,1:4) = 0
           IF (ir.GE.irsep) THEN
             IF (ik.EQ.1      ) cell(ncell)%sideindex(2,1) = IKLO  ! Target index for cell surface 1
             IF (ik.EQ.nks(ir)) cell(ncell)%sideindex(2,3) = IKHI  ! Target index for cell surface 3
@@ -748,24 +777,11 @@ c...      E&M quantities:
 
 
       IF (tetrahedrons) THEN
-
 c   *** HACK ***
         cell(1)%plasma(1) = 10.0                  ! Te (eV)
         cell(1)%plasma(2) = 10.0                  ! Ti (eV)
         cell(1)%plasma(3) = 5.0E+21               ! ni (eV) (ne=ni assumed at present)
-
-        WRITE(0,*) 
-        WRITE(0,*) '--------------------------------------------------'
-        WRITE(0,*) '       HARDCODING SURFACE FLUX FRACTION'
-        WRITE(0,*) '--------------------------------------------------'
-        WRITE(0,*) 
-c        fact = ECH * eirtorfrac / (24.0 * 2.0)  ! 13 * 2 is the number of tetrahedron sides
         fact = ECH
-c        fact = ECH / (REAL(ntorseg) * 2.0)  
-c        fact = ECH / (24.0 * 2.0)  ! 13 * 2 is the number of tetrahedron sides
-c        fact = ECH / (13.0 * 2.0)  ! 13 * 2 is the number of tetrahedron sides
-c        fact = ECH * (torus2 - torus1) / 360.0 / REAL(ntorseg) / 2.0 /   ! Use EIRTORFRAC
-c     .         eirsrcmul
       ELSE
         fact = ECH 
       ENDIF
@@ -800,6 +816,7 @@ c...  Specify target plasma quantities:
       ENDDO      
       ntardat = it
 
+      WRITE(0,*) 'DONE'
 
       RETURN
  99   STOP
@@ -1243,6 +1260,8 @@ c      pinrec = 0.0
           READ(fp,*,ERR=97) ndata                         ! Check...
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
 
+          WRITE(0,*) 'NDATA:',ndata,nobj
+
 c          READ(fp,'(A256)',END=10) buffer
 c          WRITE(0,*) 'BULK1:',TRIM(buffer)
 c          READ(buffer,*,ERR=97) ntally
@@ -1315,20 +1334,8 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
 
-          obj(1:nobj)%volume = 0.0D0  ! *** HACK FOR DALPHA ***
-
           DO WHILE (icount.LT.ndata)
             CALL NextLine(fp,ntally,icount,rdum)
-
-c *** LEFT OFF ***
-c Need to check that gmCalcTetrahedronVolume is working and then load up Dalpha
-c Do LOS integrations just with refined tetrahedrons
-c Compare m-tet-0003k LOS integration with one that doesn't have filaments
-c Need to improve connection map calculation for tetrahedron LOS code, and debug in general
-c ...
-
-            IF (ilin.EQ.1)            ! *** HACK FOR DALPHA ***
-     .        obj(icount)%volume = obj(icount)%volume + rdum(7)
 
             IF (fluid_ik(icount).NE.0) THEN
               ik = fluid_ik(icount)                          ! Should pull these from .transfer

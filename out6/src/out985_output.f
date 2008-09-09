@@ -207,7 +207,7 @@ c...  Input:
      .        brat,rfilament,rfrac
 
       INTEGER n
-      REAL*8  v(3,10000)
+      REAL*8  v(3,10000),len1,len2
 
       fp = 0
 
@@ -504,8 +504,10 @@ c...      Convert from r,z,phi to x,y,z (y okay already):
           ENDDO
 
         CASE (4)
-
-          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,n,v,10000)
+          len1 = 1.0D0
+          len2 = 1.0D0
+          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,2,len1,len2,
+     .                               n,v,10000)
           DO i1 = 1, n-1
             nsur = nsur + 1
             hsur(nsur) = -2
@@ -872,7 +874,7 @@ c...  Input:
 c      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
 
       INTEGER FindMidplaneCell
-      REAL    FindSeparatrixRadius
+c      REAL    FindSeparatrixRadius
 
       INTEGER nsur,iobj,isur,isrf,i1,i2,i3,ipts,ipts1,ipts2,pass,nx,ny,
      .        ix,iy,iver,count,fp,ntmp,nlight,isrf1,isrf2,status,
@@ -880,7 +882,7 @@ c      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
       LOGICAL cont,solid
       REAL    XXMIN,XXMAX,YYMIN,YYMAX,theta,theta1,theta2,
      .        xsur(MAXPOINTS),ysur(MAXPOINTS),frac,
-     .        xin,yin,zin,rmid
+     .        xin,yin,zin
       REAL*8  a(3),b(3),n(3),p1(3,6),p2(3,6),light(3,10),view(3),p3(3),
      .        mat(3,3),angle,deltax,deltay,res,xs1,xs2,ys1,ys2,
      .        dangle,ang,x1,z1,r,x,y,z,
@@ -894,7 +896,7 @@ c      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
 
 c      CALL THICK2(8)
 
-      solid = .FALSE.
+      solid = .TRUE.
 
       ALLOCATE(npts(0:MAXSURFACE))
       ALLOCATE(hsur(0:MAXSURFACE))
@@ -930,8 +932,8 @@ c...  Distance from observer to surface center:
 
         IF (.TRUE.) THEN
           CALL DefineFilaments
-          CALL SetupFilaments
-          rmid = FindSeparatrixRadius(1)
+          CALL SetupFilaments(0.0D0)
+c          rmid = FindSeparatrixRadius(1)
 
           DO ifilament = 1, nfilament
             DO i1 = 1, filament(ifilament)%nvtx
@@ -939,15 +941,12 @@ c...  Distance from observer to surface center:
               yin = 0.0
               zin = SNGL(filament(ifilament)%vtx(3,i1))
               WRITE(0,*) 'FILAMENT',i1,xin,zin
-              IF (ABS(xin+rmin).LT.1.0D-06) THEN
-                zin = 0.0
-              ELSE
-                zin = ATAN(zin / (xin+rmid)) * 180.0 / PI
-              ENDIF
-              WRITE(0,*) '        ',i1,xin,zin
               CALL GetSchematics(xin,yin,zin,
      .                           4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
      .                           nsur,npts,hsur,vsur)
+c              CALL GetSchematics(rin,0.0,pin,
+c     .                           4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
+c     .                           nsur,npts,hsur,vsur)
               npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
             ENDDO
           ENDDO
@@ -1006,9 +1005,9 @@ c     .                     nsur,npts,hsur,vsur)
 
 !        IF (ALLOCATED(obj))   DEALLOCATE(obj)  ! why is this still passed
 !        IF (ALLOCATED(pixel)) DEALLOCATE(pixel)
-        CALL DEALLOC_CHORD
-        IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
-        IF (ALLOCATED(srf)) DEALLOCATE(srf)
+!        CALL DEALLOC_CHORD
+!        IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+!        IF (ALLOCATED(srf)) DEALLOCATE(srf)
 
         CALL TestTetrahedrons(nsur,npts,vsur,hsur,
      .                        MAXSURFACE,MAXPOINTS,status)
@@ -1061,8 +1060,9 @@ c                WRITE(0,'(1X,A,3F10.4)') '  DATA:',vsur(1:3,3,nsur)
           
         ENDDO
  10     CONTINUE
+      ENDIF
 
-      ELSEIF (.TRUE.) THEN
+      IF (.TRUE.) THEN
 c...    Solid surfaces:
         DO iobj = 1, nobj
           DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)

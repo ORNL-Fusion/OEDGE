@@ -26,7 +26,7 @@ MODULES = precision.o parmmod.o ccona.o braeir.o cfplk.o clogau.o coutau.o cref.
 
 #MODULES= PRECISION.o avltree.o PARMMOD.o BRAEIR.o BRASCL.o BRASPOI.o CADGEO.o CAI.o CCONA.o CCOUPL.o CESTIM.o CFPLK.o CGEOM.o CGRID.o CGRPTL.o CINIT.o CLAST.o CLGIN.o CLMSUR.o CLOGAU.o COMNNL.o COMPRT.o COMSIG.o COMSOU.o COMSPL.o COMUSR.o COMXS.o COUTAU.o CPES.o CPL3D.o CPLMSK.o CPLOT.o CPOLYG.o CRAND.o CRECH.o CREF.o CREFMOD.o CSDVI_BGK.o CSDVI_COP.o CSDVI.o CSPEI.o CSPEZ.o CSTEP.o CTETRA.o CTEXT.o CTRCEI.o CTRIG.o CTSURF.o CUPD.o CZT1.o EIRBRA.o
 
-OBJECTS= assistant.o broadcast_dummy.o couple_C-Mod.o diagno.o file-handling.o geometry.o iterate.o main-routines.o mathematics.o nag-dummy.o output.o photons_light.o particle-tracing.o plotting.o sampling.o scoring.o startup-routines.o surface-processes.o tetrahedrons.o time-routines.o user_tri.o volume-processes.o fxdr_dummy.o x05baf.o
+OBJECTS= assistant.o broadcast_dummy.o couple_C-Mod.o diagno.o file-handling.o geometry.o iterate.o main-routines.o mathematics.o nag-dummy.o output.o photons_light.o particle-tracing.o plotting.o sampling.o scoring.o startup-routines.o surface-processes.o tetrahedrons.o time-routines.o user_tet.o volume-processes.o fxdr_dummy.o x05baf.o
 
 .f.o:
 	$(F77) $(FFLAGS) $(OPTS) $?

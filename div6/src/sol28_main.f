@@ -24,6 +24,7 @@ c
       fluid(ic1:ic2,ion)%ne = node(mnode)%ne
       fluid(ic1:ic2,ion)%te = node(mnode)%te
       fluid(ic1:ic2,ion)%ni = node(mnode)%ne
+      fluid(ic1:ic2,ion)%vi = 0.0
       fluid(ic1:ic2,ion)%ti = node(mnode)%ti(ion)
 
       RETURN

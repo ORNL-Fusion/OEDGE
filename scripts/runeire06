@@ -88,7 +88,7 @@
   mvc eirene.transfer $EXEDIR
   mvc eirene.out      $EXEDIR/$CASENAME.eirprn
   mvc gli.eps         $EXEDIR/$CASENAME.eps
-  mvc fort.1          $EXEDIR/$CASENAME.eirdat
+#  mvc fort.1          $EXEDIR/$CASENAME.eirdat
   mvc fort.13         $EXEDIR/eirene.13
   cpc fort.90         $EXEDIR/eirtrac.dat
 

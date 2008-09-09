@@ -206,7 +206,8 @@ c...    Collect connection map information:
           isrf = ABS(obj(iobj)%iside(iside))
           isrf1 (iside) = srf(isrf)%index(IND_SURFACE)             ! Surface (block 2A)
         ENDDO
-        IF (iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for toroidal surfaces...
+        IF (tetrahedrons.AND.
+     .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for toroidal end surfaces...
           isrf1(1) = 8  
         ENDIF
 c        IF (iobj1(2).EQ.0.AND.iside1(2).EQ.0.AND.isrf1(2).EQ.0) THEN   ! *HACK* temporary for toroidal surfaces...
@@ -253,7 +254,7 @@ c...  Header:
       DO iobj = istart, iend
         ipla = obj(iobj)%index(IND_PLASMA)
         WRITE(fp,'(I9,2F8.2,2X,1P,E10.2,2X,3E10.2,2X,
-     .             3E12.4,2X,E12.4,0P,6X,3I4)') iobj-istart+1,
+     .             3E12.4,2X,E12.4,0P,6X,3I4,I6)') iobj-istart+1,
      .    plasma(1,ipla),           ! Te (eV)
      .    plasma(2,ipla),           ! Ti (eV)
      .    plasma(3,ipla)*1.0E-06,   ! ne (cm-3)
@@ -266,7 +267,8 @@ c...  Header:
      .    tdata(iobj),  ! Ionisation rate from previous run (w or w/o photons)...
      .    obj(iobj)%index(IND_IK),
      .    obj(iobj)%index(IND_IR),
-     .    obj(iobj)%index(IND_IS)
+     .    obj(iobj)%index(IND_IS),
+     .    obj(iobj)%index(IND_PLASMA)
       ENDDO
 
       sumflux1= 0.0
@@ -323,7 +325,7 @@ c        IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE
         ir = obj(iobj)%index(IND_IR) 
         DO iside = 1, obj(iobj)%nside
           isrf = ABS(obj(iobj)%iside(iside))
-          IF (srf(isrf)%index(IND_TARGET).EQ.0) cycle
+          IF (srf(isrf)%index(IND_TARGET).EQ.0) CYCLE
 c...      Find corresponding target data, as set in ProcessFluidCode, based
 c         on the fluid code cell/ring indices:
           found = .FALSE.
@@ -335,7 +337,7 @@ c         on the fluid code cell/ring indices:
               frac = SNGL(tar_area(itarget) / tar_totarea(ik,ir))
 c              WRITE(0,*) 'FRAC:',frac,ik,ir
               WRITE(fp,'(I9,I6,1P,E10.2,0P,2F8.2,1P,2E10.2,0P,
-     .                   F6.2,1P,E10.2,0P,6X,2I4)') 
+     .                   F6.2,1P,E10.2,0P,6X,3I4)') 
 c...            Target quantities:
      .          iobj-istart+1,iside,    ! Triangle index and side index
      .          tardat(it,7 )*frac,     ! ion flux to surface for species 1 (Amps)
@@ -345,7 +347,7 @@ c...            Target quantities:
      .          tardat(it,10)*100.0,    ! v_para (cm s-1) (not read by EIRENE as yet)  
      .          tardat(it,11),          ! Mach no.        (not read)
      .          tardat(it,12)*1.0E-04,  ! jsat (A cm-2)   (not read)
-     .          ik,ir                   ! Fluid grid indices, for debugging only
+     .          ik,ir,iside             ! Fluid grid indices, for debugging only
 
 c helium
 c              WRITE(fp,'(I9,I6,1P,E10.2,0P,2F8.2,1P,2E10.2,0P,
@@ -1274,6 +1276,7 @@ c           Vertices:
               i1 = INT(REAL(itet-1)/2.0+0.51)                
               IF (output) WRITE(eirfp,*) 'IIII:',itet,i1
               newsrf%index = trysrf(ABS(try(itry)%iside(i1)))%index
+          
               IF (output) THEN
                 WRITE(eirfp,*) ' :',
      .            trysrf(ABS(try(itry)%iside(i1)))%index(1:3)
@@ -1314,12 +1317,12 @@ c...      Center of tetrahedron -- needs to be done properly:
           newobj%y = SNGL(0.25D0 * SUM(c(2,1:4)))
           newobj%z = SNGL(0.25D0 * SUM(c(3,1:4)))
 
-          IF (itry.EQ.1) THEN
-            WRITE(0,*) 'Cx:',c(1,1:4)
-            WRITE(0,*) 'Cy:',c(2,1:4)
-            WRITE(0,*) 'Cz:',c(3,1:4)
-            WRITE(0,*) 'Cen:',newobj%x,newobj%y,newobj%z
-          ENDIF
+c          IF (itry.EQ.1) THEN
+c            WRITE(0,*) 'Cx:',c(1,1:4)
+c            WRITE(0,*) 'Cy:',c(2,1:4)
+c            WRITE(0,*) 'Cz:',c(3,1:4)
+c            WRITE(0,*) 'Cen:',newobj%x,newobj%y,newobj%z
+c          ENDIF
 
 c...      Add object:
           idum1 = AddObject(newobj)
@@ -1661,11 +1664,12 @@ c...  Build list of regions:
 
 
 
-      WRITE(eirfp,*) '  BUILDING CONNECTION MAP' 
+      WRITE(eirfp,*) '  BUILDING CONNECTION MAP',ntri
 
 c...  Build connection map:
       DO i1 = 1, ntri
-
+        tri(i1)%map(1:3) = 0
+        tri(i1)%sid(1:3) = 0
         DO v1 = 1, 3
 
           v2 = v1 + 1
@@ -1759,9 +1763,12 @@ c...            Neighbour has been found, trigger exit condtion:
 
 c...  Map triangles to surfaces:     
       DO i1 = 1, ntri
+        tri(i1)%sur(1:3) = 0
         DO v1 = 1, 3
           v2 = v1 + 1
           IF (v1.EQ.3) v2 = 1          
+
+          tri(i1)%sur(v1) = 0
 
           DO i2 = 1, nsurface            
             IF     (surface(i2)%type.EQ.NON_DEFAULT_STANDARD) THEN
@@ -1938,6 +1945,11 @@ c
         ENDDO
         tri(i1+ntri)%type = VACUUM_GRID
         tri(i1+ntri)%zone = zone
+        tri(i1+ntri)%index = 0
+        tri(i1+ntri)%sideindex = 0
+        tri(i1+ntri)%plasma = 0.0
+        tri(i1+ntri)%bfield = 0.0
+        tri(i1+ntri)%efield = 0.0
       ENDDO
       CLOSE (fp) 
       ntri = ntri + idum1
@@ -2557,7 +2569,7 @@ c...  Dump plasma data:
 
 c...  Loading magnetic field data from idl/magnetics/b.pro for "field everywhere"
 c     grids for Detlev:
-      IF (.TRUE..AND..NOT.tetrahedrons) THEN
+      IF (.FALSE..AND..NOT.tetrahedrons) THEN
         OPEN(UNIT=fp ,FILE='objects.bfield',ACCESS='SEQUENTIAL',
      .       STATUS='OLD',ERR=95)      
         READ(fp,*)
@@ -2706,12 +2718,17 @@ c
 
       WRITE(eirfp,*) 'ASSIGNING PLASMA QUANTITIES'
 
+c      DO i1 = 1, ntri
+c        tri(i1)%plasma = 0.0
+c        tri(i1)%bfield = 0.0
+c        tri(i1)%efield = 0.0
+c      ENDDO
+
       DO i1 = 1, ntri
         DO i2 = 1, ncell
           IF (tri(i1)%type.EQ.MAGNETIC_GRID.AND.
      .        tri(i1)%index(1).EQ.cell(i2)%index(1).AND.
      .        tri(i1)%index(2).EQ.cell(i2)%index(2)) THEN     
-
             tri(i1)%plasma(1:6) = cell(i2)%plasma(1:6) 
             tri(i1)%bfield(1:3) = cell(i2)%bfield(1:3) 
             tri(i1)%efield(1:3) = cell(i2)%efield(1:3) 
@@ -2742,6 +2759,9 @@ c
       tri(ntri)%type = MAGNETIC_GRID 
       tri(ntri)%index(1) = cell(icell)%index(1)
       tri(ntri)%index(2) = cell(icell)%index(2)
+      tri(ntri)%sideindex(1,1:3) = 0
+      tri(ntri)%sideindex(2,1:3) = 0
+      tri(ntri)%sideindex(3,1:3) = 0
 
       RETURN
  99   STOP
@@ -3439,9 +3459,14 @@ c
       USE mod_eirene06
       IMPLICIT none
 
-      INTEGER   ntime
+      INTEGER   ntime,iteration
+      DATA iteration /0/
+      SAVE
 
-      WRITE(fp06,90) '*** 1. DATA FOR OPERATING MODE (OSM)'
+      iteration = iteration + 1
+
+      WRITE(fp06,'(A,I6)') 
+     .  '*** 1. DATA FOR OPERATING MODE (OSM), CALL ',iteration
 
       ntime = 0
       IF (dtimv.NE.0.0) ntime = 1
@@ -3484,7 +3509,7 @@ c
       USE mod_geometry
       USE mod_eirene06
       IMPLICIT none
-
+ 
       WRITE(fp06,90) '*** 2. DATA FOR STANDARD MESH (DIVIMP)'
 
       IF (tetrahedrons) THEN
