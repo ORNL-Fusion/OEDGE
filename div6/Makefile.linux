@@ -97,7 +97,10 @@ OPTO2= -O2  -Mlist -Mbyteswapio
 OPTO3= -O3  -Mlist -Mbyteswapio
 OPTOS= -O  -Mlist -Mbyteswapio -Msave
 OPTOG= -O -g -Mlist -Mbyteswapio
-#OPTO= -O -Mbyteswapio -Mlist
+#
+# Need base OPTO
+#
+OPTO= -O -Mbyteswapio -Mlist
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=
@@ -238,7 +241,7 @@ optieee:
 	$(MAKE)  "OPT=$(OPTKO)"
 
 opt1:
-	$(MAKE)  "OPT=$(OPTO)"
+	$(MAKE)  "OPT=$(OPTO1)"
 
 fast:
 	$(MAKE)  "OPT=$(OPTFAST)"
