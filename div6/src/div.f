@@ -1475,8 +1475,8 @@ c
         AVXPOS(M) = AVXPOS(M) + R * SPUTY
         AVYPOS(M) = AVYPOS(M) + Z * SPUTY
         AVATIZ(M) = AVATIZ(M) + SPUTY
-        write(0,'(a,5i6,5(1x,g12.5)') 'AVATIZ:',imp,ik,ir,iz,m,sputy,
-     >              avatiz(m),ratiz
+c        write(0,'(a,5i6,5(1x,g12.5)') 'AVATIZ:',imp,ik,ir,iz,m,sputy,
+c     >              avatiz(m),ratiz
         AVKPOS = AVKPOS + K * SPUTY
         AVSPOS = AVSPOS + MIN (S, SMAX-S) * SPUTY
         AVSMAX = AVSMAX + SMAX * SPUTY
