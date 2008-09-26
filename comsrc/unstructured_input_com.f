@@ -2344,9 +2344,9 @@ c              from the background plasma
 c
       elseif (Tag(1:3).eq.'H64') then
 c slmod begin - *** TEMP ***
-c        Call ReadR(line,input_HC_H_mass,1.0,3.0,
-c     >     'Mass of the H isotope in HC molecules 1.0->3.0')
-        STOP 'TURNING OFF FOR NOW...'
+        Call ReadR(line,input_HC_H_mass,1.0,3.0,
+     >     'Mass of the H isotope in HC molecules 1.0->3.0')
+c        STOP 'TURNING OFF FOR NOW...'
 c slmod end
 c
 c

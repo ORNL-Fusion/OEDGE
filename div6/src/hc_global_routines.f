@@ -690,7 +690,7 @@ c
 c
 c     jdemod 
 c
-c     H92 : input_HC_H_mass
+c     H64 : input_HC_H_mass
 c
 c     If this value has not been assigned through unstructured input - set it
 c     equal to the background plasma ion mass specified in the input file
