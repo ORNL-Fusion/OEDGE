@@ -933,7 +933,7 @@ c
      >             RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,NRAND,
      >             NEUTIM,RFAIL,NYMFS,STATUS)
         IF (NATIZ.EQ.0) GOTO 806
-c        WRITE(6,*) 'NEUT: ',NATIZ
+        WRITE(0,*) 'NEUT:NATIZ: ',NATIZ
 
       ELSE
         STATUS = 1
@@ -1475,6 +1475,8 @@ c
         AVXPOS(M) = AVXPOS(M) + R * SPUTY
         AVYPOS(M) = AVYPOS(M) + Z * SPUTY
         AVATIZ(M) = AVATIZ(M) + SPUTY
+        write(0,'(a,5i6,5(1x,g12.5)') 'AVATIZ:',imp,ik,ir,iz,m,sputy,
+     >              avatiz(m),ratiz
         AVKPOS = AVKPOS + K * SPUTY
         AVSPOS = AVSPOS + MIN (S, SMAX-S) * SPUTY
         AVSMAX = AVSMAX + SMAX * SPUTY
