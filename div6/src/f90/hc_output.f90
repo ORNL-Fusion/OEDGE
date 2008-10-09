@@ -107,14 +107,16 @@ Contains
     H_Isotope_Composition = 0 ! Set to all 0's to perform plasma mass averaged analysis for mass.
  
     ! Assign number of hydrocarbon species available.
-    !num_hcs = number_hc_species
+    num_hcs = number_hc_species
 
-    ! jdemod - hard coding these is bad practice - however I think 
-    If (HC_Higher_HCs_Option .eq. 0) Then
-       Num_HCs = 10
-    Else
-       Num_HCs = 58
-    End If
+    write(0,*) 'H_Output: Assigning NUM_HCs =',number_hc_species
+
+    ! jdemod - hard coding these is bad practice  
+    !If (HC_Higher_HCs_Option .eq. 0) Then
+    !   Num_HCs = 10
+    !Else
+    !   Num_HCs = 58
+    !End If
  
     ! Perform all output for all regions which particles were launched from.
     Do Launch_Reg = 1,Number_Regions
@@ -176,8 +178,10 @@ Contains
     !HC_Factor_B (-1) =  HC_Factor_A (-1) *  Neutral_Time_Step
     !HC_Factor_B (0) =  HC_Factor_A (0) *  Neutral_Time_Step
     
-    write(0,*) 'HC particles launched:',sum(neutral_launch_sum), sum(ion_launch_sum),sum(particle_launch_sum)
-    write(0,*) 'HC particle timesteps:',neutral_time_step,ion_time_step
+    write(0,'(a,8(1x,g12.5))') 'HC particles launched:',sum(neutral_launch_sum), sum(ion_launch_sum),&
+                                                      & sum(particle_launch_sum),sum(particle_relaunch_sum),&
+                                                      & pri_neut_launch, sec_neut_launch
+    !write(0,*) 'HC particle timesteps:',neutral_time_step,ion_time_step
     
  
     ! jdemod - neither of these values appears to be used or printed - in addition they 
