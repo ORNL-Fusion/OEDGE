@@ -1031,8 +1031,10 @@ c
       RMAIN = RMAIN1 + RMAIN2 + rmain3
       REXIT = REXIT1 + REXIT2 + rexit3
 c
-      write(6,'(a,7g12.5,2i6)') 'NEUT DATA:',rneut,ratiz,rstruk,rexit,
-     >                rcent,rfail,rwalln,nprod,nprod2
+      write(6,'(a,10g12.5)') 'NEUT DATA 1:',rneut,ratiz,rstruk,rexit,
+     >            rcent,rfail,rwalln,rtmax,rmain
+      write(6,'(a,10i6)') 'NEUT DATA 2:',nprod,nproda,nprod2,
+     >        nprod2a,natiz,natiz1,natiz2,natiz3
 
 
 c
