@@ -1,0 +1,643 @@
+C===================== HYDROGEN DIFFUSION IN WALLS =====================
+C.......................................................................
+      BLOCK DATA XDIFFW
+      IMPLICIT NONE
+C     .. PHYSICS PARAMETERS ..
+      REAL*8 KST,CTS,KTS,KD,KR0,KR1,X0,D,X1
+      INTEGER IKST1,ICHK
+      COMMON/CPAJEH/KST,CTS,KTS,KD,KR0,KR1,X0,D,X1,IKST1,ICHK
+      DATA  ICHK/0/
+C----   JOACHIM/1
+C     DATA KST/1.0D+4/,  CTS/3.8D+22/, KTS/0.0D0/,  KD/5.0D-13/,
+C    &     KR0/1.0D-18/, KR1/0.0D0  /, X0/3.0D-06/, D/ 1.0D-07/,
+C    &     X1/3.0D-04/,  IKST1/0/
+C----   JOACHIM/2
+      DATA KST/1.0D+4/,  CTS/3.8D+22/, KTS/0.0D0/,  KD/6.0D-13/,
+     &     KR0/1.0D-21/, KR1/1.0D-21/, X0/3.0D-06/, D/ 1.0D-10/,
+     &     X1/3.0D-04/,  IKST1/0/
+C----   PHILIP, LORNE, ... NUCL.FUS. VOL.33 NO.9(1993)1389
+C     DATA KST/1.0D+10/, CTS/1.0D+23/, KTS/1.0D+04/, KD/5.0D-13/,
+C    &     KR0/1.0D-17/, KR1/0.0D0  /, X0/8.0D-07/,  D/ 2.6D-12/,
+C    &     X1/8.0D-05/,  IKST1/0/
+      END
+C.......................................................................
+      SUBROUTINE DIFFW(IOPT,MH,NH,NP,FLUXIN,DT,RMAT,IERR,LOUT)
+C
+C  SOLVES THE SET OF DIFFUSION/RECOMBINATION EQUATIONS
+C  FOR IMPLANTED H-NEUTRALS IN SLAB GEOMETRY.
+C
+C----------------------------------------------------------------------
+C  I  IOPT      OPTION: 1: INITIALISE TO EMPTY WALL
+C                       3: INITIALISE TO FILLED TRAPS AND NO DISSOLVED
+C                       2: INITIALISE TO WALL SATURATED WITH FLUXIN
+C                       0: ADVANCE IN TIME
+C  I  MH        MAX. NUMBER OF HYDROGEN ISOTOPES
+C  I  NH        NUMBER OF HYDROGEN ISOTOPES
+C  I  NP        REQUESTED NUMBER OF GEOMETRY POINTS
+C               (MAY DIFFER FROM THE ACTUAL NUMBER -NX- OF POINTS USED)
+C  I  FLUXIN(N) ABSORPTION (IMPLANTATION) FLUX ON WALL (1/CM**2 S)
+C I/O DT        TIME STEP
+C  O  RMAT(N,N) DESORPTION FREQUENCY MATRIX
+C               RMAT(I,K) = FLUXOUT(I)/(FLUXIN(1)+FLUXIN(2)+..) SO THAT
+C               FLUXOUT(I) = RMAT(I,K)*FLUXIN(K)
+C  O  IERR      ERROR FLAG
+C  I  LOUT      OUTPUT STREAM
+C----------------------------------------------------------------------
+      IMPLICIT NONE
+C
+      INTEGER IOPT,MH,NH,NP,IERR,LOUT
+C
+      REAL*8 FLUXIN(MH),DT,RMAT(MH,MH)
+C
+C     .. PHYSICS PARAMETERS ..
+      REAL*8 KST,CTS,KTS,KD,KR0,KR1,X0,D,X1
+      INTEGER IKST1,ICHK
+      COMMON/CPAJEH/KST,CTS,KTS,KD,KR0,KR1,X0,D,X1,IKST1,ICHK
+C
+      INTEGER MI,MX
+      PARAMETER (MI=2, MX=64)
+C
+      REAL*8  CONC(2*MX*MI), TC, KR
+      SAVE CONC
+      REAL*8 CSCL
+      SAVE CSCL
+C
+      REAL*8 X,S
+      INTEGER NX, NI
+      COMMON/CDIFFW/S(MI),X(MX),NI,NX
+C
+      REAL*8 UNDEF
+      INTEGER INDEF,MTRY,NXPUT
+      PARAMETER (INDEF=-123456789, UNDEF=-1.23456789D+30, MTRY=100)
+C
+      INTEGER I1, IFAIL, NXSAV, NHSAV, INIT
+      DATA I1/INDEF/, NXSAV/INDEF/, NHSAV/INDEF/
+      INTEGER I,L,NTRY,J,IEXP
+      DATA IEXP/INDEF/
+      REAL*8 DX
+      REAL*8 DXL,DXR
+CT    REAL*8 TRAN1,TRAN2
+      REAL*8 CPT0,CPS0,CPT1,CPS1,CMIN,T0,TAU,STOT,SOUTL
+      PARAMETER (CMIN=1.0D+10)
+C
+      REAL*8 SUM1,SUM2,SUM3,SUM4
+C
+      CHARACTER*38 COPT(0:3)
+      DATA COPT/ 'ADVANCE IN TIME                       ' ,
+     &           'INITIALISE TO EMPTY WALL              ' ,
+     &           'INITIALISE TO WALL SATURATED FROM FLUX' ,
+     &           'INITIALISE TO FILLED TRAPS            ' /
+      CHARACTER*27 CFLX
+C
+      INTEGER IW
+      PARAMETER (IW=(12+2*MI*MX)*2*MI*MX+50)
+      REAL*8 W(IW),TOLM,TOL,TOLSAV
+      EXTERNAL PDES,D02EJY,D02EJX,D02EJW
+      PARAMETER (TOLM=1.0D-04)
+C
+      DATA TOL/UNDEF/,TAU/UNDEF/,DXR/UNDEF/,DXL/UNDEF/,KR/UNDEF/,
+     &     CPT0/UNDEF/,CPT1/UNDEF/,CPS0/UNDEF/,CPS1/UNDEF/
+C     FOR GETDIFFW
+C     INTEGER IGET,MP,NP
+      INTEGER IGET,MP
+      REAL*8 XC(MP),CNC(2,MP,MH),CP(4,MH),X0G,X1G
+C
+      LOGICAL LWPARM
+      DATA LWPARM/.TRUE./
+C
+      INTEGER LOC,IC,IX,IH
+      LOC(IC,IX,IH) = 2*NX*(IH-1) + 2*(IX-1)+IC
+C
+      DATA CSCL/1.0D0/
+C
+      IF(IOPT.LT.0 .OR. IOPT.GT.3) THEN
+        WRITE(LOUT,'(/'' ILLEGAL OPTION IN DIFFW'')')
+        CALL EXITX(LOUT)
+      ENDIF
+C
+      NXPUT = 0
+      IF(IOPT.NE.0) THEN
+        INIT = 1
+      ELSE
+        INIT = 0
+      ENDIF
+C
+    1 CONTINUE
+C
+      IF(ICHK.EQ.0) THEN
+        CSCL= CTS
+CT   &       /CTS
+C       NORMALISE CONCENTRATIONS TO CSCL, DISTANCES TO X0
+        CTS = CTS / CSCL
+        KD  = KD  * SQRT(CSCL)
+        KR0 = KR0 * CSCL
+        KR1 = KR1 * CSCL
+        D   = D   / X0**2
+        ICHK = 1
+      ENDIF
+C
+      IF(INIT.NE.0) THEN
+C                            INITIALISATION
+        CALL XUFLOW(0)
+        CALL X04AAF(1,LOUT)
+        NI = NH
+        IF(NI.LE.0 .OR. NI.GT.MI) THEN
+          WRITE(LOUT,'(/'' ***** ERROR IN DIFFW. NI='',I3)') NI
+          CALL EXITX(LOUT)
+        ENDIF
+C
+C            INITIALISE GEOMETRY
+C
+        IF(NXPUT.NE.0) THEN
+          NX = NXPUT
+        ELSE
+          NX = NP
+          NX = NX/4
+          NX = NX*4
+          NX = MAX(NX,8)
+        ENDIF
+C
+        IF(NX.GT.(MX/4)*4) THEN
+          WRITE(LOUT,*) ' **** WARNING.',NX,'-->',(MX/4)*4
+          NX = (MX/4)*4
+        ENDIF
+C
+        NXSAV = NX
+        NHSAV = NH
+C
+C       FINE GRID WITH NX/2 POINTS BETWEEN X=0 AND X=2,
+C       WITH (X(I1)+X(I1+1))/2=1 CORRESPONDING TO X0
+        I1 = NX/4
+C       DX = (2.0-0.0)/(FLOAT(NX)/2.0)
+        DX = 4.0D0/FLOAT(NX)
+        X(1) = DX*0.5D0
+        DO I = 2,2*I1
+          X(I) = X(I-1) + DX
+        ENDDO
+C       ONE MORE POINT FOR THE FINE GRID
+        I = 2*I1+1
+        X(I) = X(2*I1)+DX
+C
+C       COARSE GRID WITH NX/2-1 POINTS UP TO 1+X1/X0
+        I = 2*I1+2
+        X(I) = X(I-1)+DX*0.5D0
+        DX = (X1/X0-(1.0+DX))/FLOAT(NX/2-1)
+        X(I) = X(I)+DX*0.5D0
+        DO I = 2*I1+3,NX
+          X(I) = X(I-1) + DX
+        ENDDO
+        IF(.FALSE.) THEN
+          WRITE(LOUT,
+     &    '(/''   I   X(I-1/2)    X(I)    X(I+1/2)'')')
+          DO I=1,NX
+            IF(I.EQ.1) THEN
+              DXL = (X(I+1)-X(I))*0.5D0
+              DX  =  X(I+1)-X(I)
+              DXR = (X(I+1)-X(I))*0.5D0
+            ELSE IF(I.GT.1 .AND. I.LT.NX) THEN
+              DXL = (X(I)-X(I-1))*0.5D0
+              DX  = (X(I+1)-X(I-1))*0.5D0
+              DXR = (X(I+1)-X(I))*0.5D0
+            ELSE IF(I.EQ.NX) THEN
+              DXL = (X(I)-X(I-1))*0.5D0
+              DX  =  X(I)-X(I-1)
+              DXR = (X(I)-X(I-1))*0.5D0
+            ENDIF
+            WRITE(LOUT,'(1X,I3,1X,1P,3E10.2)')
+     &           I,X(I)-DXL,X(I),X(I)+DXR
+          ENDDO
+        ENDIF
+C
+        IF(NXPUT.NE.0) GOTO 300
+C
+C            INITIALISE WALL CONTENT
+        IERR = -1
+C
+        IF(IOPT.EQ.1) THEN
+C            INITIALISE TO FULLY DEPLETED WALL
+          TOL = TOLM
+          WRITE(LOUT,4) IOPT,COPT(IOPT)
+    4     FORMAT(/' HYDROGEN DIFFUSION IN WALLS'
+     +           /'  OPT',I2, ' - ',A)
+          IF(LWPARM) THEN
+            WRITE(LOUT,5) NX,X0,X1,TOL
+    5       FORMAT( ' NX  ',I3
+     +             /' X0  ',1P,E9.2,' CM'
+     +             /' X1  ',E9.2,' CM'
+     +             /' TOL ',E9.2)
+            WRITE(LOUT,6) KST,CTS*CSCL,KTS,KD/SQRT(CSCL),
+     &                    KR0/CSCL,KR1/CSCL,D*X0**2,IKST1
+            LWPARM=.FALSE.
+          ENDIF
+    6     FORMAT(/' KST',1P,E9.2,' S(-1)',9X,'CTS',E9.2,' CM(-3)',6X,
+     &             'KTS',E9.2,' S(-1)'/'  KD',E9.2,' CM(3/2)S(-1)',2X,
+     &             'KR0',E9.2,' CM(3)S(-1)',2X,
+     &             'KR1',E9.2,' CM(3)S(-1)'/'   D',E9.2,' CM(2)S(-1)',
+     &             4X,'IKST1',I2)
+          CPT0 = CMIN
+          CPS0 = CMIN
+          IF(IKST1.EQ.0) THEN
+            CPT1 = 0.0D+00
+          ELSE
+            CPT1 = CMIN
+          ENDIF
+          CPS1 = CMIN
+          IERR = 0
+        ELSE IF(IOPT.EQ.2) THEN
+C            INITIALISE TO WALL SATURATED WITH GIVEN H INFLUX
+          CPT0 = CMIN
+          CPS0 = CMIN
+          IF(IKST1.EQ.0) THEN
+            CPT1 = 0.0D+00
+          ELSE
+            CPT1 = CMIN
+          ENDIF
+          CPS1 = CMIN
+          IEXP = 8
+          TAU = 10.0D0**(-IEXP)
+          TOL = 1.0D-03
+          WRITE(CFLX,'(1P,3E9.2)') (FLUXIN(L),L=1,NH)
+          WRITE(LOUT,4) IOPT,COPT(2)//CFLX
+          IF(LWPARM) THEN
+            WRITE(LOUT,5) NX,X0,X1,TOL
+            WRITE(LOUT,6) KST,CTS*CSCL,KTS,KD/SQRT(CSCL),
+     &                    KR0/CSCL,KR1/CSCL,D*X0**2,IKST1
+            LWPARM=.FALSE.
+          ENDIF
+        ELSE IF(IOPT.EQ.3) THEN
+C            INITIALISE TO FILLED TRAPS BUT NO DISSOLVED H
+          TOL = TOLM
+          WRITE(LOUT,4) IOPT,COPT(3)
+          IF(LWPARM) THEN
+            WRITE(LOUT,5) NX,X0,X1,TOLM
+            WRITE(LOUT,6) KST,CTS*CSCL,KTS,KD/SQRT(CSCL),
+     &                    KR0/CSCL,KR1/CSCL,D*X0**2,IKST1
+            LWPARM=.FALSE.
+          ENDIF
+          CPT0 = CTS*CSCL
+          CPS0 = CMIN
+          IF(IKST1.EQ.0) THEN
+            CPT1 = 0.0D+00
+          ELSE
+            CPT1 = CTS*CSCL
+          ENDIF
+          CPS1 = CMIN
+          IERR = 0
+        ENDIF
+        DO L=1,NH
+          DO I = 1,NX
+            IF(X(I).LT.1.0D0) THEN
+              CONC(LOC(1,I,L)) = CPT0/CSCL
+              CONC(LOC(2,I,L)) = CPS0/CSCL
+            ELSE
+              CONC(LOC(1,I,L)) = CPT1/CSCL
+              CONC(LOC(2,I,L)) = CPS1/CSCL
+            ENDIF
+          ENDDO
+        ENDDO
+        IF(IERR.EQ.0) THEN
+C         NO EVOLUTION. JUST RETURN
+          RETURN
+        ENDIF
+      ELSE
+        TOL = TOLM
+        TAU = DT
+      ENDIF
+C
+C
+C                            EVOLVE IN TIME
+      IERR = -1
+      IF(NX.NE.NXSAV .OR. NH.NE.NHSAV) THEN
+        WRITE(LOUT,'(/'' ***** ERROR. DIFFW NOT INITIALISED'')')
+        CALL EXITX(LOUT)
+      ENDIF
+C
+      STOT = 0.0D0
+      DO L=1,NH
+        S(L) = FLUXIN(L) / (X0*CSCL)
+        STOT = STOT + S(L)
+      ENDDO
+C
+      TC = 0.0D0
+C
+      NTRY = 0
+      TOLSAV = TOL
+   10 CONTINUE
+      IF(NTRY.GT.MTRY) THEN
+        WRITE(LOUT,*) ' TOO MANY TRIES WITH D02EJF'
+        IERR=1
+        GOTO 90
+      ENDIF
+      IF(TOL.GT.1.0D0 .OR. TOL.LT.1.0D-10) THEN
+        IERR=1
+        GOTO 90
+      ENDIF
+      IFAIL = +1
+      CALL D02EJF(TC,TC+TAU,2*NI*NX,CONC(1),PDES,
+     &            D02EJY,TOL,'D',D02EJX,D02EJW,W(1),IW,IFAIL)
+      NTRY = NTRY+1
+      IF(IFAIL.EQ.0) THEN
+        TOL = ABS(TOL)
+        IERR = 0
+      ELSE IF(IFAIL.EQ.1) THEN
+        WRITE (LOUT,20) IFAIL,TOL,TC,TC+TAU
+        IF(TOL.LT.0.0D0) THEN
+          TOL=-0.5D0*TOL
+          GOTO 10
+        ELSE
+          IERR = 1
+        ENDIF
+      ELSE IF(IFAIL.EQ.2 .OR. IFAIL.EQ.3) THEN
+        WRITE (LOUT,20) IFAIL,TOL
+   20   FORMAT(' IFAIL =',I3,'  TOL=',1P,E12.3,:,' T0/1=',2E12.3)
+        TOL = ABS(TOL)*2.0D0
+        GOTO 10
+      ELSE
+        WRITE (LOUT,20) IFAIL,TOL
+        IERR =1
+      ENDIF
+      IF(IERR.NE.0) GOTO 90
+C
+C
+      DO L=1,NI
+        SOUTL = 0.0D0
+        DO I = 1,NX
+          IF(I.EQ.1) THEN
+            DX = X(2)-X(1)
+            KR = KR0
+          ELSE IF(I.GT.1 .AND. I.LE.I1) THEN
+            DX = (X(I+1)-X(I-1))*0.5D0
+            KR = KR0
+          ELSE IF(I.GT.I1 .AND. I.LT.NX) THEN
+            DX = (X(I+1)-X(I-1))*0.5D0
+            KR = KR1
+          ELSE IF(I.EQ.NX) THEN
+            DX = X(NX)-X(NX-1)
+            KR = KR1
+          ENDIF
+          DO J=1,NI
+            SOUTL = SOUTL + DX*KR*CONC(LOC(2,I,L))*CONC(LOC(2,I,J))
+          ENDDO
+        ENDDO
+        IF(STOT.LE.0.0D0) THEN
+C         FLUXIN=0. RMAT=INF
+          SOUTL = 1.0D+30
+        ELSE
+          SOUTL = SOUTL/STOT
+        ENDIF
+        DO J=1,NI
+          RMAT(L,J) = SOUTL
+        ENDDO
+      ENDDO
+C
+      IF(IOPT.EQ.2) THEN
+        SUM1 = 1.0D+30
+        DO L=1,NI
+C SUM2=RN(L)=FLUXOUT(L)/FLUXIN(L)
+          SUM2 = 0.0D0
+          DO J=1,NI
+            SUM2=SUM2+RMAT(L,J)*S(J)
+          ENDDO
+          SUM2=SUM2/S(L)
+          SUM1 = MIN(SUM1,SUM2)
+        ENDDO
+        IF(SUM1.LT.0.990D0) THEN
+          TOL = TOLSAV
+            IF(TAU.LT.600.0D0) THEN
+              IEXP = IEXP-1
+              TAU = 10.0D0**(-IEXP)
+              IF(TAU.GT.600.0D0) TAU = 600.0D0
+            ELSE
+              TAU =  600.0D0
+            ENDIF
+CW          WRITE(LOUT,*) ' IOPT=2, TC=',TC,' TAU=',TAU
+          GOTO 10
+        ENDIF
+      ENDIF
+C
+   90 DT = TC
+C
+  100 CONTINUE
+      RETURN
+C
+      ENTRY PRNPRFS
+      WRITE(LOUT,110) (I,I,I=1,NH)
+  110 FORMAT(/3X,'I',7X,'X',9X,'CT(',I1,')',7X,'CS(',I1,')'
+     &       :             ,7X,'CT(',I1,')',7X,'CS(',I1,')')
+      DO I=1,NX
+        WRITE(LOUT,120) (I,X(I),CONC(LOC(1,I,L)),
+     &                          CONC(LOC(2,I,L)),L=1,NH)
+      ENDDO
+  120 FORMAT(1X,I3,1P,E12.3,2E12.3)
+      RETURN
+C
+      ENTRY GETDIFFW(IGET,MP,NP,XC,MH,NH,CNC,CP,X0G,X1G,LOUT)
+C
+C     RETURNS PROFILE INFORMATION
+C----------------------------------------------------------------------
+C  I  IGET        1: RETURN CP
+C                 2:        XC,CNC
+C                 3:        CP,XC,CNC
+C  I  MP          MAXIMUM NO. OF POINTS
+C  O  NP          NO. OF POINTS USED
+C  I  XC(NP)      GRID POINTS (UNIT=X0G)
+C  I  NH          NO. OF H SPECIES (FOR CHECK)
+C  O  CNC(1,I,L)  DENSITY OF   TRAPPED H OF TYPE L AT XC(I)    (CM-3)
+C  O  CNC(2,I,L)     "        DISSOLVED           "
+C  O  CP(1,L)     DENSITY OF   TRAPPED H OF TYPE L IN IMPLANT. LAYER
+C  O  CP(2,L)        "        DISSOLVED      "         "
+C  O  CP(3,L)        "         TRAPPED       "     IN BULK
+C  O  CP(4,L)        "        DISSOLVED      "         "
+C  O  X0G         IMPLANTATATION LAYER DEPTH     (CM)
+C  O  X1G                      BULK      "
+C  I  LOUT        OUTPUT STREAM
+C----------------------------------------------------------------------
+      X0G = X0
+      X1G = X1
+      IF(NH.NE.NI) THEN
+        WRITE(LOUT,*) ' **** GETDIFFW. NH=',NH,' <> NI=',NI
+        CALL EXITX(LOUT)
+      ENDIF
+      IF(IGET.EQ.1 .OR.IGET.EQ.3) THEN
+        DO L=1,NH
+          SUM1 = 0.0D0
+          SUM2 = 0.0D0
+          SUM3 = 0.0D0
+          SUM4 = 0.0D0
+CT        TRAN1= 0.0D0
+CT        TRAN2= 0.0D0
+          DO I = 1,NX
+            IF(I.EQ.1) THEN
+              DX = X(2)-X(1)
+              SUM1 = SUM1 + CONC(LOC(1,I,L))*DX
+              SUM2 = SUM2 + CONC(LOC(2,I,L))*DX
+CT            TRAN1=TRAN1+DX
+            ELSE IF(I.GT.1 .AND. I.LE.I1) THEN
+              DX = (X(I+1)-X(I-1))*0.5D0
+              SUM1 = SUM1 + CONC(LOC(1,I,L))*DX
+              SUM2 = SUM2 + CONC(LOC(2,I,L))*DX
+CT            TRAN1=TRAN1+DX
+            ELSE IF(I.GT.I1 .AND. I.LT.NX) THEN
+              DX = (X(I+1)-X(I-1))*0.5D0
+              SUM3 = SUM3 + CONC(LOC(1,I,L))*DX
+              SUM4 = SUM4 + CONC(LOC(2,I,L))*DX
+CT            TRAN2=TRAN2+DX
+            ELSE IF(I.EQ.NX) THEN
+              DX = X(NX)-X(NX-1)
+              SUM3 = SUM3 + CONC(LOC(1,I,L))*DX
+              SUM4 = SUM4 + CONC(LOC(2,I,L))*DX
+CT            TRAN2=TRAN2+DX
+            ENDIF
+          ENDDO
+CW        WRITE(LOUT,*) ' SUMS=',SUM1,SUM2,SUM3,SUM4
+CT        WRITE(LOUT,*) ' TRAN1=XO=',TRAN1,' TRAN2=X1=',TRAN2
+          CP(1,L) = SUM1 /(X0/X0) * CSCL
+          CP(2,L) = SUM2 /(X0/X0) * CSCL
+          CP(3,L) = SUM3 /(X1/X0) * CSCL
+          CP(4,L) = SUM4 /(X1/X0) * CSCL
+        ENDDO
+      ENDIF
+      IF(IGET.EQ.2 .OR. IGET.EQ.3) THEN
+        IF(NX.GT.MP) THEN
+          WRITE(LOUT,*) ' **** GETDIFFW. NX > MP', NX,MP
+          CALL EXITX(LOUT)
+        ENDIF
+        NP = NX
+        DO I=1,NP
+          XC(I) = X(I)
+          DO L=1,NH
+            CNC(1,I,L) =  CONC(LOC(1,I,L))
+            CNC(2,I,L) =  CONC(LOC(2,I,L))
+          ENDDO
+        ENDDO
+      ENDIF
+      RETURN
+C
+      ENTRY PUTDIFFW(MP,NP,MH,NH,CNC,LOUT)
+C
+C     RESTORES PROFILE INFORMATION
+C----------------------------------------------------------------------
+C  I  MP          MAXIMUM NO. OF POINTS
+C  O  NP          NO. OF POINTS USED
+C  I  NH          NO. OF H SPECIES
+C  O  CNC(1,I,L)  DENSITY OF   TRAPPED H OF TYPE L AT XC(I)    (CM-3)
+C  O  CNC(2,I,L)     "        DISSOLVED           "
+C  I  LOUT        OUTPUT STREAM
+C----------------------------------------------------------------------
+      IF(NP.EQ.NXSAV .AND. NH.EQ.NHSAV) GOTO 300
+      IF(NP.LE.0 .OR. NP.GT.MX) THEN
+        WRITE(LOUT,*) ' **** PUTDIFFW. NP=',NP,'  < 1  OR  >',MX
+        CALL EXITX(LOUT)
+      ENDIF
+      NXPUT = NP
+      INIT = 1
+      GOTO 1
+C
+  300 CONTINUE
+      DO I=1,NP
+        DO L=1,NH
+          CONC(LOC(1,I,L)) = CNC(1,I,L)
+          CONC(LOC(2,I,L)) = CNC(2,I,L)
+        ENDDO
+      ENDDO
+      RETURN
+C
+      END
+C.......................................................................
+      SUBROUTINE PDES(T,CP,F)
+C
+      IMPLICIT NONE
+C------------
+CT    INTEGER LOUT
+CT    REAL*8 SUM1,SUM2,SUM3,SUM4,SUM5
+C------------
+C
+      INTEGER MI,MX
+      PARAMETER (MI=2, MX=64)
+      REAL*8 T, CP(2*MX*MI), F(2*MX*MI)
+C
+C     .. PHYSICS PARAMETERS ..
+      REAL*8 KST,CTS,KTS,KD,KR0,KR1,X0,D,X1
+      INTEGER IKST1,ICHK
+      COMMON/CPAJEH/KST,CTS,KTS,KD,KR0,KR1,X0,D,X1,IKST1,ICHK
+C
+      REAL*8 X,S
+      INTEGER NX, NI
+      COMMON/CDIFFW/S(MI),X(MX),NI,NX
+C
+C     .. LOCAL ..
+      INTEGER IH,IX,IC,L
+      REAL*8 CT,CS,SUMCT,SUMCS,SUMS,FCT,FCS,KR,DCR,DCL,H
+C
+      INTEGER LOC
+      LOC(IC,IX,IH) = 2*NX*(IH-1) + 2*(IX-1)+IC
+C
+C------------------
+CT    SUM1 = 0.0D0
+CT    SUM2 = 0.0D0
+CT    SUM3 = 0.0D0
+CT    SUM4 = 0.0D0
+CT    SUM5 = 0.0D0
+C------------------
+      DO IX=1,NX
+        SUMCT = 0.0D0
+        SUMCS = 0.0D0
+        SUMS  = 0.0D0
+        DO L=1,NI
+          SUMCT = SUMCT + CP(LOC(1,IX,L))
+          SUMCS = SUMCS + CP(LOC(2,IX,L))
+          SUMS  = SUMS  + S(L)
+        ENDDO
+        DO IH=1,NI
+          CT = CP(LOC(1,IX,IH))
+          CS = CP(LOC(2,IX,IH))
+          IF(X(IX).LT.1.0D0) THEN
+            FCT =   KST * CS * (1.0D0 - SUMCT/CTS)
+     &            - KTS * CT
+     &            - KD  * CT*SQRT(SUMS)
+            FCS =   S(IH)
+            KR  =   KR0
+          ELSE
+            IF(IKST1.EQ.0) THEN
+              FCT = 0.0D0
+            ELSE
+              FCT =   KST * CS * (1.0D0 - SUMCT/CTS)
+     &              - KTS * CT
+            ENDIF
+            FCS = 0.0D0
+            KR  = KR1
+          ENDIF
+          IF(IX.EQ.1) THEN
+            DCR=(CP(LOC(2,IX+1,IH))-CP(LOC(2,IX,IH)))/(X(IX+1)-X(IX))
+            DCL=0.0D0
+            H  =X(IX+1)-X(IX)
+          ELSE IF(IX.EQ.NX) THEN
+            DCR=0.0D0
+            DCL=(CP(LOC(2,IX,IH))-CP(LOC(2,IX-1,IH)))/(X(IX)-X(IX-1))
+            H  =X(IX)-X(IX-1)
+          ELSE
+            DCR=(CP(LOC(2,IX+1,IH))-CP(LOC(2,IX,IH)))/(X(IX+1)-X(IX))
+            DCL=(CP(LOC(2,IX,IH))-CP(LOC(2,IX-1,IH)))/(X(IX)-X(IX-1))
+            H  =(X(IX+1)-X(IX-1))*0.5D0
+          ENDIF
+          FCS = FCS - FCT - KR*CS*SUMCS + D*(DCR-DCL)/H
+          F(LOC(1,IX,IH)) = FCT
+          F(LOC(2,IX,IH)) = FCS
+C------------------
+CT        SUM1 = SUM1 + FCS*H
+CT        SUM2 = SUM2 - FCT*H
+CT        SUM3 = SUM3 - KR*CS*SUMCS*H
+CT        SUM4 = SUM4 + D*(DCR-DCL)/H*H
+CT        IF(X(IX).LT.1.0D0) SUM5 = SUM5 + S(IH)*H
+C------------------
+        ENDDO
+      ENDDO
+C
+      RETURN
+C
+CT    ENTRY SUMPDE(LOUT)
+CT    WRITE(LOUT,*) ' SUMPDE - SUM1,SUM2,SUM3,SUM4,SUM5,SUM',
+CT   &      SUM1,SUM2,SUM3,SUM4,SUM5,SUM1+SUM2+SUM3+SUM4
+CT    RETURN
+C
+      END

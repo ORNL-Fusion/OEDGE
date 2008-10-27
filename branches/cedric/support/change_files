@@ -1,0 +1,27 @@
+#!/bin/sh
+pgf90 UpdateInput.f -o uinput -O
+./uinput < d-105516-c2.d6i > d-105516-$12.d6i
+./uinput < d-105516-c3.d6i > d-105516-$13.d6i
+./uinput < d-105516-c4.d6i > d-105516-$14.d6i
+./uinput < d-105516-c5.d6i > d-105516-$15.d6i
+./uinput < d-105516-c6.d6i > d-105516-$16.d6i
+./uinput < d-105516-c7.d6i > d-105516-$17.d6i
+./uinput < d-105516-c8.d6i > d-105516-$18.d6i
+./uinput < d-105516-c9.d6i > d-105516-$19.d6i
+./uinput < d-105516-c10.d6i > d-105516-$110.d6i
+./uinput < d-105516-c11.d6i > d-105516-$111.d6i
+./uinput < d-105516-c12.d6i > d-105516-$112.d6i
+./uinput < d-105516-c13.d6i > d-105516-$113.d6i
+./uinput < d-105516-c14.d6i > d-105516-$114.d6i
+./uinput < d-105516-c15.d6i > d-105516-$115.d6i
+./uinput < d-105516-c16.d6i > d-105516-$116.d6i
+./uinput < d-105516-c17.d6i > d-105516-$117.d6i
+./uinput < d-105516-c18.d6i > d-105516-$118.d6i
+./uinput < d-105516-c19.d6i > d-105516-$119.d6i
+./uinput < d-105516-c20.d6i > d-105516-$120.d6i
+./uinput < d-105516-c21.d6i > d-105516-$121.d6i
+./uinput < d-105516-c22.d6i > d-105516-$122.d6i
+./uinput < d-105516-c23.d6i > d-105516-$123.d6i
+./uinput < d-105516-c24.d6i > d-105516-$124.d6i
+./uinput < d-105516-c25.d6i > d-105516-$125.d6i
+./uinput < d-105516-c26.d6i > d-105516-$126.d6i
