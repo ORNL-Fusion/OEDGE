@@ -1,23 +1,51 @@
 Some additional installation notes for DG and Carre
 
-1) DG requires motif - both libraries and headers - these can either be installed byrpm with openmotif and openmotif-devel if available 
-or by compilation and installation from source. The source can be found at www.openmotif.org. Version 2.3 seems to work. After installation from 
-source you may still need to link the headers from /usr/X11R6/include/Xm to /usr/include/Xm OR add the first directory to the include search path. 
-2) Carre requires the ncar graphics libraries. These can be downloaded from www.ncl.ucar.edu/Download or obtained locally if available. 
-According to the Carre documentation it can be built without requiring these libraries since stub routines are provided but I haven't checked
-how to do this. 
+1) DG requires motif - both libraries and headers - these can either be installed byrpm with openmotif and
+ openmotif-devel if available or by compilation and installation from source. The source can be found at www.openmotif.org.
+ Version 2.3 seems to work. After installation from source you may still need to link the headers from /usr/X11R6/include/Xm 
+ to /usr/include/Xm OR add the first directory to the include search path. 
 
+2) Carre requires the ncar graphics libraries. These can be downloaded from www.ncl.ucar.edu/Download or obtained 
+locally if available. According to the Carre documentation it can be built without requiring these libraries since 
+stub routines are provided but I haven't checked how to do this. 
+
+3) Both carre and dg can be built either separately or inside the SOLPS distribution - they use an external repository link
+and the code can be checked out from either place. Xavier recommends checking in code only to the stand alone repo for
+carre and divgeo 
+
+4) For building on RHEL5 with ncarg compiled using g77 - I had to link the g2c library to the gcc library area
+since the compiler did not seem to be picking it up automatically. 
+
+cd  /usr/lib/gcc/i386-redhat-linux/4.1.2
+ln -s ../../../libg2c.so.0.0.0 libg2c.so
+
+Then I had to edit the Makefile adding:
+
+LDEXTRA=-lg2c -lgcc
+
+I also had to set the SOLPS_LIB environment variable so that the mscl library could be found.
+
+The LDEXTRA line directs the compiler to include the gcc compatibility 
+libraries ... -lgcc might be redundant. 
+
+This allowed carre to build using a g77 compiled ncar library and pgf90 
+compiled carre source code.
 
 
 
 
 Instructions on how to build a grid using dg and carre:
 
-1) Convert an efit equilibrium to dg format using equtrn/e2d
+1) Convert an efit equilibrium to dg format using equtrn/e2d - or ef2dg if the script doesn't work
+1a) The grid resolution can be increased by running d2d (dg2dg) which doubles the resolution in each direction 
+    - this can be important for dg finding surfaces and Carre grid generation
+1b) Cropequ can be used to cut out pieces of the equilibrium - like a second center point or similar that can 
+    again cause problems with surface generation. 
 2) Move the equilibrium to the working directory
 3) Start up dg
 4) Import the wall specification (Template) (ogr file)
    - convert the template to elements
+   - units in the template file appear to be millimeters
 5) Define structure and targets- use the mark command
    Structure 
     - includes all of the outer wall as well as the closed target structures 
