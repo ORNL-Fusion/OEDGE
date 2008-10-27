@@ -1,0 +1,4 @@
+C     ORIGINAL = 'JETRSI.EDGE2D92.COMMONS(C01JAN27)'
+C
+      COMMON /PFDATA/ DENELE(3000),DENION(3000),TEMELE(3000),           00002180
+     &                TEMION(3000)                                      00002190

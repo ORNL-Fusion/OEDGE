@@ -1,0 +1,50 @@
+c     -*-Fortran-*- 
+c
+      common /edge2d/ e2dnbs, e2dvhs,e2dtibs,e2dtebs,e2des,
+     >                e2dion,e2datom,e2drec,e2dz0,e2diz0,
+     >                cre2d,e2dtarg,e2dmach,e2dbvel,e2dflux,
+     >                dthetag,drho,e2dnzs,e2dpowls,e2dlines,
+     >                cre2dizs,e2dtargopt,e2dareas,e2dvro,
+     >                e2dgdown,e2dgpara,e2dcxrec,e2dhrec,
+     >                e2dpedown,e2dpepara,e2dvts,
+     >                e2dpidown,e2dpipara,e2dnes,e2dvzs,
+     >                fc_target_calc_option,fc_v_calc_opt,
+     >                fc_te_calc_opt,fc_ti_calc_opt,fc_ne_calc_opt,
+     >                fc_v_interp_opt
+      save /edge2d/
+c
+c slmod end
+c...  Need target attribute in order to assign pointer in plot 987:
+      real, TARGET :: e2dnbs(maxnks,maxnrs),e2dvhs(maxnks,maxnrs),
+c
+c      real  e2dnbs(maxnks,maxnrs),e2dvhs(maxnks,maxnrs),
+c slmod begin
+     >      e2dtibs(maxnks,maxnrs),e2dtebs(maxnks,maxnrs),
+     >      e2des(maxnks,maxnrs),e2dion(maxnks,maxnrs),
+     >      e2dtarg(maxnrs,8,2),e2dmach(0:maxnks+1,maxnrs),
+     >      e2dbvel(maxnks+1,maxnrs),e2datom(maxnks,maxnrs),
+     >      e2dflux(maxnks+1,maxnrs),e2drec(maxnks,maxnrs),
+     >      e2dcxrec(maxnks,maxnrs),e2dhrec(maxnks,maxnrs),
+     >      dthetag(maxnks,maxnrs),drho(maxnks,maxnrs),
+     >      e2dnzs(maxnks,maxnrs,0:maxe2dizs),
+     >      e2dpowls(maxnks,maxnrs,0:maxe2dizs),
+     >      e2dlines(maxnks,maxnrs,0:maxe2dizs),
+     >      e2dareas(maxnks,maxnrs),e2dvro(maxnks,maxnrs),
+     >      e2dgdown(maxnks,maxnrs),e2dgpara(maxnks,maxnrs),
+     >      e2dpedown(maxnks,maxnrs),e2dpepara(maxnks,maxnrs),
+     >      e2dpidown(maxnks,maxnrs),e2dpipara(maxnks,maxnrs),
+     >      e2dz0(maxnks,maxnrs),e2diz0(maxnks,maxnrs),
+     >      e2dnes(maxnks,maxnrs),
+     >      e2dvzs(maxnks,maxnrs,0:maxe2dizs),
+     >      e2dvts(maxnrs,2,0:maxe2dizs) 
+c 
+      integer cre2d,cre2dizs,e2dtargopt
+c
+      integer fc_target_calc_option,fc_v_calc_opt,fc_te_calc_opt,
+     >        fc_ti_calc_opt,fc_ne_calc_opt,fc_v_interp_opt
+c
+
+
+
+
+

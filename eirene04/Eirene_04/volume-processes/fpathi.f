@@ -1,0 +1,273 @@
+C
+      FUNCTION FPATHI (K,CFLAG)
+C
+C   CALCULATE MEAN FREE PATH AND REACTION RATES FOR
+C   "BEAM TEST IONS" OF VELOCITY VEL IN MAXWELLIAN PLASMA-BACKGROUND
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CCONA
+      USE CLOGAU
+      USE CINIT
+      USE CZT1
+      USE COMPRT
+      USE COMXS
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(OUT) :: CFLAG(7,3)
+      INTEGER, INTENT(IN) :: K
+
+      REAL(DP) :: DENIO(NPLS), ZTI(NPLS)
+      REAL(DP) :: PVELQ(NPLSV)
+      REAL(DP) :: TBCX3(9), TBPI3(9), TBEL3(9)
+      REAL(DP) :: EPCX3(9), EPPI3(9), EPEL3(9)
+      REAL(DP) :: ELB, EXPO, FEPLCX3, ELAB, VEFF, CROSS, CXS, SIGMAX,
+     .          VX, VY, VZ, PVELQ0, FPATHI, TEEI, DENEL, FTABEI1, PLS,
+     .          TBCX, VEFFQ, FEELEI1, EHEAVY, FEHVDS1
+      INTEGER :: J, IF8, JAN, IREAC, IPL, IIO, IRDS, IIDS, KK, II,
+     .           IRCX, IICX, IIPI, I1, I2, IPLSTI, IPLSV
+C
+C  SET DEFAULTS: NO REACTIONS
+C
+      XSTOR=0.D0
+      XSTORV=0.D0
+c     DO I2=1,MSTOR2
+c       DO I1=1,MSTOR1
+c         XSTOR(I1,I2) = 0._DP
+c       END DO
+c     END DO
+c     DO I1=1,NSTORV
+c       XSTORV(I1) = 0._DP
+c     END DO
+      FPATHI=1.D10
+C
+      IF (LGVAC(K,0)) RETURN
+C
+C
+C   LOCAL PLASMA PARAMETERS
+C
+      DENEL=DEIN(K)
+      DO 2 IPLS=1,NPLSI
+        ZTI(IPLS)=ZT1(IPLS,K)
+2       DENIO(IPLS)=DIIN(IPLS,K)
+      TEEI=TEIN(K)
+      PVELQ0=VEL*VEL
+      DO 3 IPLS=1,NPLSV
+        IF (NLDRFT) THEN
+          IF (INDPRO(4) == 8) THEN
+            CALL VECUSR (2,VX,VY,VZ,IPLS)
+          ELSE
+            VX=VXIN(IPLS,K)
+            VY=VYIN(IPLS,K)
+            VZ=VZIN(IPLS,K)
+          END IF
+          PVELQ(IPLS)=(VELX*VEL-VX)**2+
+     .                (VELY*VEL-VY)**2+
+     .                (VELZ*VEL-VZ)**2
+        ELSE
+          PVELQ(IPLS)=PVELQ0
+        ENDIF
+3     CONTINUE
+C
+C
+C
+C  TEST ION ELECTR. IMP. RATE COEFFICIENT
+C
+      IF (LGIEI(IION,0).EQ.0.OR.LGVAC(K,NPLS+1)) GOTO 25
+      DO 10 IIDS=1,NIDSI(IION)
+        IRDS=LGIEI(IION,IIDS)
+        IF (MODCOL(1,2,NSPAM+IION,1).EQ.1) THEN
+          IF (NSTORDR >= NRAD) THEN
+            SIGVEI(IRDS)=TABDS1(IRDS,K)
+          ELSE
+            SIGVEI(IRDS)=FTABEI1(IRDS,K)
+          END IF
+        ELSE
+          GOTO 990
+        ENDIF
+C
+        IF (NSTORDR >= NRAD) THEN
+          ESIGEI(IRDS,5)=EELDS1(IRDS,K)
+          EHEAVY=EHVDS1(IRDS,K)
+        ELSE
+          ESIGEI(IRDS,5)=FEELEI1(IRDS,K)
+          EHEAVY=FEHVDS1(IRDS,K)
+        END IF
+C
+        ESIGEI(IRDS,1)=EATDS(IRDS,0,1)*E0+EATDS(IRDS,0,2)*EHEAVY
+        ESIGEI(IRDS,2)=EMLDS(IRDS,0,1)*E0+EMLDS(IRDS,0,2)*EHEAVY
+        ESIGEI(IRDS,3)=EIODS(IRDS,0,1)*E0+EIODS(IRDS,0,2)*EHEAVY
+        ESIGEI(IRDS,4)=EPLDS(IRDS,  1)*E0+EPLDS(IRDS,  2)*EHEAVY
+C
+        SIGEIT=SIGEIT+SIGVEI(IRDS)
+10    CONTINUE
+C
+C  IONIZATION OF TEST ION BY BULK ION IMPACT, ION SPEZIES IPLS=1,NPLSI
+C
+25    CONTINUE
+      DO 30 IIPI=1,NIPII(IION)
+        SIGVPI(IIPI)=0.
+        SIGPIT=SIGPIT+SIGVPI(IIPI)
+30    CONTINUE
+C
+C   CHARGE EXCHANGE RATE COEFFICIENT FOR TEST ION IION
+C   WITH BULK IONS OF SPEZIES IPLS=1,NPLSI
+C
+      IF (LGICX(IION,0,0).EQ.0.OR.LGVAC(K,0)) GOTO 50
+40    CONTINUE
+      DO 41 IICX=1,NICXI(IION)
+        IRCX=LGICX(IION,IICX,0)
+        IPLS=LGICX(IION,IICX,1)
+        IPLSTI=MPLSTI(IPLS)
+        IPLSV=MPLSV(IPLS)
+        IF (LGVAC(K,IPLS)) GOTO 41
+C
+        IF (MODCOL(3,2,NSPAM+IION,IPLS).EQ.1) THEN
+C  MAXWELL
+          IF (NSTORDR >= NRAD) THEN
+            SIGVCX(IRCX)=TABCX3(IRCX,K,1)
+          ELSE
+            KK=NREACX(IRCX)
+            PLS=TIINL(IPLSTI,K)+ADDCX(IRCX,IPLS)
+            TBCX = CREAC(9,1,KK)
+            DO II=8,1,-1
+              TBCX = TBCX*PLS + CREAC(II,1,KK)
+            END DO
+            TBCX=EXP(MAX(-100._DP,TBCX))*DIIN(IPLS,K)
+            SIGVCX(IRCX)=TBCX
+          END IF
+        ELSEIF (MODCOL(3,2,NSPAM+IION,IPLS).EQ.2) THEN
+C  BEAM - MAXWELL
+          IF (TIIN(IPLSTI,K).LT.TVAC) THEN
+            VEFFQ=PVELQ(IPLSV)
+            VEFF=SQRT(VEFFQ)
+            ELAB=LOG(VEFFQ)+DEFCX(IRCX)
+            IREAC=MODCOL(3,1,NSPAM+IION,IPLS)
+            CXS=CROSS(ELAB,IREAC,IRCX,'FPATHI CX')
+            SIGVCX(IRCX)=CXS*VEFF*DENIO(IPLS)
+          ELSE
+            IF (NSTORDR >= NRAD) THEN
+              TBCX3(1:NSTORDT) = TABCX3(IRCX,K,1:NSTORDT)
+              JAN=NSTORDT
+            ELSE
+              JAN=0
+            END IF
+            IF (JAN < 9) THEN
+              KK=NREACX(IRCX)
+              PLS=TIINL(IPLSTI,K)+ADDCX(IRCX,IPLS)
+              DO J=JAN+1,9
+                TBCX3(J)=CREAC(9,J,KK)
+                DO II=8,1,-1
+                  TBCX3(J)=TBCX3(J)*PLS+CREAC(II,J,KK)
+                END DO
+              END DO
+            END IF
+            IF (JAN < 1) TBCX3(1)=TBCX3(1)+DIINL(IPLS,K)
+C  MINIMUM ENERGY: 0.1EV
+            ELB=MAX(-2.3_DP,LOG(PVELQ(IPLSV))+EEFCX(IRCX))
+            EXPO=TBCX3(9)
+            DO 43 II=1,8
+              IF8=9-II
+              EXPO=EXPO*ELB+TBCX3(IF8)
+43          CONTINUE
+            SIGVCX(IRCX)=EXP(EXPO)
+          ENDIF
+        ELSEIF (MODCOL(3,2,NSPAM+IION,IPLS).EQ.3) THEN
+C  BEAM - BEAM
+          VEFFQ=ZTI(IPLS)+PVELQ(IPLSV)
+          VEFF=SQRT(VEFFQ)
+          ELAB=LOG(VEFFQ)+DEFCX(IRCX)
+          IREAC=MODCOL(3,1,NSPAM+IION,IPLS)
+          CXS=CROSS(ELAB,IREAC,IRCX,'FPATHI CX')
+          SIGVCX(IRCX)=CXS*VEFF*DENIO(IPLS)
+        ELSE
+          GOTO 992
+        ENDIF
+C
+        SIGCXT=SIGCXT+SIGVCX(IRCX)
+C
+        IF (MODCOL(3,4,NSPAM+IION,IPLS).EQ.1) THEN
+          IF (NSTORDR >= NRAD) THEN
+            ESIGCX(IRCX,1)=EPLCX3(IRCX,K,1)
+          ELSE
+            ESIGCX(IRCX,1)=FEPLCX3(IRCX,K)
+          END IF
+          CFLAG(3,1)=2
+        ELSEIF (MODCOL(3,4,NSPAM+IION,IPLS).EQ.2) THEN
+          IF (NSTORDR >= NRAD) THEN
+            EPCX3(1:NSTORDT) = EPLCX3(IRCX,K,1:NSTORDT)
+            JAN=NSTORDT
+          ELSE
+            JAN=0
+          END IF
+          IF (JAN < 9) THEN
+            KK=NELRCX(IRCX)
+            PLS=TIINL(IPLSTI,K)+ADDCX(IRCX,IPLS)
+            DO J=JAN+1,9
+              EPCX3(J)=CREAC(9,J,KK)
+              DO II=8,1,-1
+                EPCX3(J)=EPCX3(J)*PLS+CREAC(II,J,KK)
+              END DO
+            END DO
+          END IF
+          IF (JAN < 1) EPCX3(1)=EPCX3(1)+DIINL(IPLS,K)
+C  MINIMUM PROJECTILE ENERGY: 0.1 EV
+          ELB=MAX(-2.3_DP,LOG(PVELQ(IPLSV))+EEFCX(IRCX))
+          EXPO=EPCX3(9)
+          DO 45 II=1,8
+            IF8=9-II
+            EXPO=EXPO*ELB+EPCX3(IF8)
+45        CONTINUE
+          ESIGCX(IRCX,1)=EXP(EXPO)/SIGVCX(IRCX)
+          ESIGCX(IRCX,1)=ESIGCX(IRCX,1)+EDRIFT(IPLS,K)
+          CFLAG(3,1)=3
+        ELSE
+          GOTO 992
+        ENDIF
+41    CONTINUE
+C
+C
+50    CONTINUE
+C
+C     TOTAL
+C
+!      SIGMAX=MAXVAL(XSTOR(:,1:4))
+!      WHERE (XSTOR(:,1:4) .LE. SIGMAX*1.D-10 )
+!        XSTOR(:,1:4) = 0.D0
+!      END WHERE
+      SIGMAX=MAXVAL(XSTOR(1:mstor1,1:4))
+      WHERE (XSTOR(1:mstor1,1:4) .LE. SIGMAX*1.D-10 )
+        XSTOR(1:mstor1,1:4) = 0.D0
+      END WHERE
+c     DO I1=1,MSTOR1
+c       IF (XSTOR(I1,1) .LE. SIGMAX*1.D-10 ) XSTOR(I1,1) = 0._DP
+c       IF (XSTOR(I1,2) .LE. SIGMAX*1.D-10 ) XSTOR(I1,2) = 0._DP
+c       IF (XSTOR(I1,3) .LE. SIGMAX*1.D-10 ) XSTOR(I1,3) = 0._DP
+c       IF (XSTOR(I1,4) .LE. SIGMAX*1.D-10 ) XSTOR(I1,4) = 0._DP
+c     END DO
+C
+100   CONTINUE
+      SIGTOT=SIGPIT+SIGCXT+SIGEIT
+      IF (SIGTOT.GT.1.D-20) THEN
+        FPATHI=VEL/SIGTOT
+        ZMFPI=1./FPATHI
+      ENDIF
+C
+      RETURN
+990   CONTINUE
+      IIO=NSPAM+IION
+      WRITE (6,*) 'ERROR IN FPATHI: INCONSISTENT ELEC. IMP. DATA'
+      WRITE (6,*) 'IIO,MODCOL(1,J,IIO,1) '
+      WRITE (6,*) IION,(MODCOL(1,J,IIO,1),J=1,4)
+      CALL EXIT_OWN(1)
+992   CONTINUE
+      IIO=NSPAM+IION
+      WRITE (6,*) 'ERROR IN FPATHI: INCONSISTENT CHARGE EXCHANGE DATA'
+      WRITE (6,*) 'IIO,IPL,MODCOL(3,J,IIO,IPL) '
+      DO 994 IPL=1,NPLSI
+        WRITE (6,*) IION,IPL,(MODCOL(3,J,IIO,IPL),J=1,4)
+994   CONTINUE
+      CALL EXIT_OWN(1)
+      END

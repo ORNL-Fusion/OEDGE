@@ -1,0 +1,7 @@
+      COMMON /CPROF/ XPROF , RPROF , DEPROF, TEPROF
+     &             , DELAM , TELAM , NPROF
+C
+      INTEGER*4      NPROF
+      REAL*8         XPROF(MPROF)  , RPROF(MPROF)
+     &             , DEPROF(MPROF) , TEPROF(MPROF)
+     &             , DELAM         , TELAM
