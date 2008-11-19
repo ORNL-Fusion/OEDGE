@@ -152,6 +152,6 @@ c jdemod
       integer,parameter :: GEN_GRID = 7
 
 c...  Some global options of convenience:
-      LOGICAL, PARAMETER :: sloutput  = .FALSE.,   ! Selects SL screen output 
+      LOGICAL, PARAMETER :: sloutput  = .TRUE.,   ! Selects SL screen output 
      .                      ippchange = .TRUE.     ! Selects recent IPP Garching updates
 c slmod end

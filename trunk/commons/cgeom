@@ -35,10 +35,12 @@ c
       common /sreflect/  s_reflect_opt,s_reflect
       save /sreflect/
 
-      common /geo_flags/ inner_targid,outer_targid,xpoint_up 
+      common /geo_flags/ inner_targid,outer_targid,xpoint_up,
+     >                   add_virtual_cells_to_grid
       save /geo_flags/
 c
-      integer inner_targid, outer_targid, s_reflect_opt
+      integer inner_targid, outer_targid, s_reflect_opt,
+     >        add_virtual_cells_to_grid
       real s_reflect(maxnrs,2) 
 c
       common /sheath/ nsheath_vali,sheath_vali,nsheath_valo,sheath_valo

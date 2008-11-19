@@ -187,6 +187,14 @@ c
       CALL RDRARN(deflist,ndef,mxspts,0.0,real(maxnrs),.FALSE.,
      >            0.0,MACHHI,2,'DEFAULT SOLVER DATA',IERR)
 c
+c     Default plots to off - this can be changed in the calcsol_interface
+c     routine in solascv1.f
+c
+      graph = 0
+      graphaux = 0
+      graphvel = 0
+      graphran = 0.0
+c
 c      CALL RDI(graph,.TRUE., 0,.TRUE., 1,'GRAPH OPTION       ',IERR)
 c      CALL RDI(graphaux,.TRUE.,0,.TRUE.,1,'AUX GRAPH OPTION  ',IERR)
 c      CALL RDI(graphvel,.TRUE.,0,.TRUE.,1,'VEL GRAPH OPTION  ',IERR)
@@ -6796,9 +6804,9 @@ c     Endif for extra source
 c
       endif
 c
-      if (debug_s22)  
-     >    write(6,'(a,3(1x,g12.5))') 'GPERPF:',s,gperpf
-
+c      if (debug_s22) then
+c         write(6,'(a,g12.5,g12.5)') 'GPERPF:',s,gperpf
+c      endif
 c
       return
       end

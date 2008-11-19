@@ -9082,6 +9082,10 @@ c
             ylab = ylab(1:len) // '/M^2/S)'
          elseif (itype.eq.2) then 
             ylab = ylab(1:len) // '/M^2/S/SR)'
+         elseif (itype.eq.3) then 
+            ylab = ylab(1:len) // '/M^3/S/SR)'
+         elseif (itype.eq.4) then 
+            ylab = ylab(1:len) // '/CM^3/S/SR)'
          endif
 c
 c----------------------------------------------------------
@@ -9440,7 +9444,8 @@ c
 c
          if (itype.eq.0) then           
             BLAB = 'ADAS IMP PLRP'
-         elseif (itype.eq.1.or.itype.eq.2) then 
+         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
             BLAB = 'CODE ADAS IMP PLRP'
          endif
 c  
@@ -9452,7 +9457,8 @@ c
 c   
          if (itype.eq.0) then           
             BLAB = 'ADAS HYDROGENIC PLRP'
-         elseif (itype.eq.1.or.itype.eq.2) then 
+         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
             BLAB = 'CODE ADAS H PLRP'
          endif
 c  
@@ -9464,7 +9470,8 @@ c
 c   
          if (itype.eq.0) then           
             BLAB = 'CODE HALPHA'
-         elseif (itype.eq.1.or.itype.eq.2) then 
+         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
             BLAB = 'CODE CODE HALPHA'
          endif
 c  
@@ -9477,13 +9484,15 @@ c
          if (istate.eq.6) then 
             if (itype.eq.0) then           
                BLAB = 'EIRENE TOTAL HALPHA'
-            elseif (itype.eq.1.or.itype.eq.2) then 
+            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
                BLAB = 'CODE EIRENE TOT HALPHA'
             endif
          else
             if (itype.eq.0) then           
                write(blab,'(a,i4)') 'EIRENE HALPHA COMP=',istate
-            elseif (itype.eq.1.or.itype.eq.2) then 
+            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
                write(blab,'(a,i4)') 'CODE EIRENE HALPHA COMP=',istate
             endif
          endif
@@ -9497,13 +9506,16 @@ c
          if (istate.eq.6) then 
             if (itype.eq.0) then           
                BLAB = 'EIRENE TOTAL HGAMMA'
+            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
             elseif (itype.eq.1.or.itype.eq.2) then 
                BLAB = 'CODE EIRENE TOT HGAMMA'
             endif
          else
             if (itype.eq.0) then           
                write(blab,'(a,i4)') 'EIRENE HGAMMA COMP=',istate
-            elseif (itype.eq.1.or.itype.eq.2) then 
+            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+     >           itype.eq.4) then 
                write(blab,'(a,i4)') 'CODE EIRENE HGAMMA COMP=',istate
             endif
          endif
