@@ -659,6 +659,8 @@ c
 c
        elseif (iref.eq.321) then
 c
+c         Set IOPT=2 to get units of /m3/s/sr for emission plots
+c
           call plot_contour(iselect,istate,
      >                  iexpt,optval,
      >                  iopt,job,title,table,nplots,

@@ -9,7 +9,7 @@ c     developed by Wojciech Fundamenski. It loads source terms
 c     and boundary conditions into a set of one-dimensional arrays
 c     which are then passed to the solver which solves the fluid
 c     equations. This series is called iteratively - on the first
-c     iteration the solver uses soem assumptions to generate a seed
+c     iteration the solver uses some assumptions to generate a seed
 c     plasm solution.
 c
 c     David Elder             March 21, 1997

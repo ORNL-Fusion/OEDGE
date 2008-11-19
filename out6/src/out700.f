@@ -53,6 +53,7 @@ c
 c
 
       integer ikstart,ikend,nstep
+      integer id
       real dist
 
 
@@ -1559,6 +1560,13 @@ c            mVALS(nks(ir)+2,ip,3) =  mVALS(nks(ir)+2,ip,1)
 c
           endif
 c
+          id = idds(ir,2)
+          write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',1,ir,0.0,
+     >                  knds(id),kteds(id),
+     >                  kvds(id)*knds(id), 
+     >                  kvds(id)
+     >                  
+c
           DO IK = 1, NKS(IR)
 c
 c           E2D
@@ -1579,14 +1587,29 @@ c            MVALS(IK+in,ip,1) = kpress(ik,ir,1)
 c
 
 c
-            write(6,'(a,2i4,8(1x,g12.5))')  'COMP:',ik,ir,
-     >                  knbs(ik,ir),e2dnbs(ik,ir),
-     >                  kvhs(ik,ir),e2dvhs(ik,ir),
-     >                  ktibs(ik,ir),e2dtibs(ik,ir),
-     >                  ktebs(ik,ir),e2dtebs(ik,ir)
+c            write(6,'(a,2i4,9(1x,g12.5))')  'COMP:',ik,ir,kss(ik,ir),
+c     >                  knbs(ik,ir),e2dnbs(ik,ir),
+c    >                  kvhs(ik,ir),e2dvhs(ik,ir),
+c    >                  ktibs(ik,ir),e2dtibs(ik,ir),
+c     >                  ktebs(ik,ir),e2dtebs(ik,ir)
+c
+            write(6,'(a,2i4,9(1x,g12.5))')  'DATA:',ik,ir,kss(ik,ir),
+     >                  knbs(ik,ir),ktebs(ik,ir),
+     >                  kvhs(ik,ir)/qtim*knbs(ik,ir), 
+     >                  kvhs(ik,ir)/qtim
+     >                  
 c
 c
           enddo
+          id = idds(ir,1)
+          write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',nks(ir),ir,ksmaxs(ir),
+     >                  knds(id),kteds(id),
+     >                  kvds(id)*knds(id), 
+     >                  kvds(id)
+     >                  
+          
+
+
 C
         enddo
 c

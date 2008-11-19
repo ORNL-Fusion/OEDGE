@@ -1962,9 +1962,10 @@ c
 c     0 = stanard Sonnet grid = Default 
 c     1 = FRC version 1 - type of Sonnet grid 
 c         - used to set various FRC related options
+c     2 = sonnet grid without boundary cells
 c
       ELSEIF (tag(1:3).EQ.'G23') THEN
-        CALL ReadI(line,sonnet_grid_sub_type,0,1,'SONNET Grid '//
+        CALL ReadI(line,sonnet_grid_sub_type,0,2,'SONNET Grid '//
      >                                     'SUB-Type Option')
 c
 c -----------------------------------------------------------------------
@@ -2070,8 +2071,8 @@ c
 c
 c     G41: ZMIN,ZMAX of the subgrid region
 c
-
         CALL Read2R(line,sg_zmin,sg_zmax,-HI,HI,'SUBGRID ZMIN,ZMAX')
+c
 c
 c -----------------------------------------------------------------------
 c
