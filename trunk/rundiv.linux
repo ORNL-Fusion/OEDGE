@@ -515,6 +515,18 @@ if [[ -f temphc.txt ]] then
    mv temphc.txt $DIVRESDIR/$1.temphc
 fi
 #
+# Some additional files from the relax subroutine?
+#
+if [[ -f geomty.dat ]] then
+   mv  geomty.dat $DIVRESDIR/$1.geomty.dat
+fi
+if [[ -f plasma.dat ]] then
+   mv  plasma.dat $DIVRESDIR/$1.plasma.dat
+fi
+if [[ -f source.dat ]] then
+   mv  source.dat $DIVRESDIR/$1.source.dat
+fi
+#
 # EIRENE related output:
 #
 if [[ -f fort.81 ]] then
