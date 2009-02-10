@@ -5680,6 +5680,10 @@ c
       real rcent,zcent
       real rshift,zshift
       real brat
+c
+c     jdemod - Add factors to scale grid if desired
+c
+      real rscale_grid,zscale_grid
 c     
 c     double precision rvert(4),zvert(4)
 c     double precision rcent,zcent
@@ -5707,10 +5711,19 @@ c
       indexnadj = 0
       indexiradj = 0
       indexikadj = 0
-      rshift   = 0.0
-      zshift   = 0.0
+c
       nves = 0 
       npsi = 0
+c
+c     Init grid shift factors
+c
+      rshift   = 0.0
+      zshift   = 0.0
+c
+c     jdemod - Init grid scaling factors
+c
+      rscale_grid = 1.0
+      zscale_grid = 1.0
 c     
       max_ikold = 1
       ikold = 1
@@ -5806,6 +5819,21 @@ c
 c     
       endif
 c     
+c     
+c     jdemod - Check for grid scaling information
+c            - these values are used to scale up the cell and wall dimensions
+c            - the default values are 1.0
+c     
+      if (buffer(1:6).eq.'SCALE:'.or.
+     >     buffer(1:6).eq.'Scale:'.or.
+     >     buffer(1:6).eq.'scale:') then
+c     
+c     The data is RSCALE_GRID, ZSCALE_GRID
+c     
+         read (buffer(7:),*) rscale_grid,zscale_grid
+c     
+      endif
+c     
       if (buffer(4:8).ne.'=====') goto 100
 c     
       write(6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
@@ -5851,15 +5879,15 @@ c
       read(gridunit,9002,end=2000) rvert(1),zvert(1),rvert(4),zvert(4)
       read(gridunit,'(a)',end=2000) buffer
 c     
-c     Adjust all values for any grid shifts 
+c     Adjust all values for any grid shifts or scalings 
 c     
-      rcent = rcent + rshift
-      zcent = zcent + zshift
+      rcent = rscale_grid * (rcent + rshift)
+      zcent = zscale_grid * (zcent + zshift)
 c     
       do loop_cnt = 1,4
 c     
-         rvert(loop_cnt) = rvert(loop_cnt) + rshift
-         zvert(loop_cnt) = zvert(loop_cnt) + zshift
+         rvert(loop_cnt) = rscale_grid * (rvert(loop_cnt) + rshift)
+         zvert(loop_cnt) = zscale_grid * (zvert(loop_cnt) + zshift)
 c     
       end do    
 c     
@@ -6216,10 +6244,10 @@ c
          do in = 1,nves
             read(gridunit,*,end=4000) rves(in),zves(in)
 c     
-c     Need to apply same shift to neutral wall as to grid
+c     Need to apply same shift and scale to neutral wall as to grid
 c     
-            rves(in) = rves(in) + rshift
-            zves(in) = zves(in) + zshift
+            rves(in) = rscale_grid * (rves(in) + rshift)
+            zves(in) = zscale_grid * (zves(in) + zshift)
 c     
          end do
 
