@@ -17081,7 +17081,11 @@ c        Extract magnetic field - use target based magnetic field
 c        ratios but use first cell toroidal B-field for now since I don't
 c        know if BTS is defined for the virtual cells.
 c
-         if (kbfst(ir,it).le.0.0.or.kbfst(ir,it).ge.1.0.or.
+c        jdemod - bug here calculating MPS data
+c                 should just test kbfst <=1 
+c
+c         if (kbfst(ir,it).le.0.0.or.kbfst(ir,it).ge.1.0.or.
+         if (kbfst(ir,it).le.1.0.or.
      >      id.eq.1.or.id.eq.ndsin.or.id.eq.ndsin+1.or.id.eq.nds) then
             b_field = 0.0
             mps_thickness(ir,it) = 0.0
