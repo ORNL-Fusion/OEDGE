@@ -1917,6 +1917,14 @@ c
 c
                ENDIF
 c
+c
+c              jdemod - added update of wall deposition in the case of prompt deposition
+c
+c              Update wall deposition
+c
+               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)               
+
+c
 c              Exit due to prompt deposition 
 c
                ifate = 10

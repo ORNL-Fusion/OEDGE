@@ -466,9 +466,11 @@ c
 c
          IF (TOTSUM.GT.0.0) THEN 
             CALL PRC ('   - ANALYSIS BY TARGET SEGMENT :')
-            call prc ('   TARGET   WEIGHT   SELF  AV-SH    IMPACT'//
+            call prc ('   TARGET   WEIGHT       SELF      AV-SH '//
+     >                '       IMPACT'//
      >                '   AVERAGE DIST     AVERAGE      SHEATH')
-            call prc ('     IND    REDEP    SPUT  V-DROP   ENERGY'//
+            call prc ('     IND    REDEP        SPUT      V-DROP'//
+     >                '       ENERGY'//
      >                '     AT IONIZ    LARMOR RADIUS   THICKNESS')
             DO ID = 1,NDS
 c
@@ -482,8 +484,8 @@ c
 c
                IF (promptdeps(id,1).gt.0.0) then   
 c                 IPP/08 Krieger - changed formatting
-                  WRITE (COMMENT,'(3X,I4,1X,2(1x,g12.5),1x,g12.5,1x,
-     >                  g12.5,
+                  WRITE (COMMENT,'(3X,I4,1X,g12.5,1x,g12.3,
+     >                  1x,g12.5,1x,g12.5,
      >                  3(1x,g12.5))') id,promptdeps(id,1),
 c                  WRITE (COMMENT,'(3X,I4,1X,2(1x,F7.2),1x,f6.2,1x,
 c     >                  f9.2,
