@@ -1,0 +1,3485 @@
+      SUBROUTINE WRTDDA(DDA,IEXP,IERR)
+      IMPLICIT NONE
+      INTEGER   IEXP,IERR
+      CHARACTER DDA*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  WRTDDA:  READ DIAGNOSTIC GEOMETRY, CALCULATE SIGNALS AND WRITE   *
+C  *           TO PPF.                                                 *
+C  *                                                                   *
+C  *            LORNE HORTON  (JET)  JULY 1994                         *
+C  *                                                                   *
+C  *                                                                   *
+C  *  ERROR CODES:  IRCODE     ERROR IRCODE WRITING PPF (WRD1)         *
+C  *                10         UNRECOGNISED DDA NAME                   *
+C  *                10+IRCODE  ERROR IRCODE READING GEOMETRY (RDGT1,   *
+C  *                           RDGT2, RDGT3)                           *
+C  *                20+IRCODE  ERROR IRCODE READING SIGNAL DATA (RDSIG)*
+C  *                31         ERROR READING DTYPE DATA                *
+C  *                40         UNKNOWN DATA TYPE                       *
+C  *                50+IRCODE  ERROR IRCODE LOADING 3D GEOMETRY        *
+C  *                           (LD3DGM)                                *
+C  *                60+IRCODE  ERROR GENERATING OUTER MIDPLANE RADII   *
+C  *                           (RMIDPL)                                *
+C  *               100+IRCODE  ERROR LOADING ATOMIC DATA (LDADAS,      *
+C  *                           LDBREM)                                 *
+C  *                                                                   *
+C  *********************************************************************
+C
+C
+C---- COMMON BLOCKS - SPECIFIC TO DIVPPF FOR COMPATIBILITY WITH PPROC
+C                   - LOADED BY CALL TO LDCOMN
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+      INCLUDE (PPPLAS)
+C
+C---- GEOMETRY INPUT
+C
+      INTEGER   MAXGEOM,NGEOM
+      PARAMETER (MAXGEOM=20)
+      INTEGER   NUMTHE(MAXGEOM),AVPTS(MAXGEOM)
+      REAL      ROBS(MAXGEOM),POBS(MAXGEOM),ZOBS(MAXGEOM)
+      REAL      THEMIN(MAXGEOM),DTHE(MAXGEOM),THERES(MAXGEOM)
+      REAL      R1(MAXGEOM),Z1(MAXGEOM),R2(MAXGEOM),Z2(MAXGEOM)
+      REAL      DRES(MAXGEOM)
+      REAL      CX1(MAXGEOM),CY1(MAXGEOM),CZ1(MAXGEOM)
+      REAL      CX2(MAXGEOM),CY2(MAXGEOM),CZ2(MAXGEOM)
+C
+C---- DATATYPE PARAMETER INPUT
+C
+      INTEGER   IGEOM
+      INTEGER   ZNUC,IZ,ADASYR,ISELE,ISELR,ISELX
+      INTEGER   IIMP,IHYD
+C
+C---- FOR UNIX, THE USERID NAME HAS TO BE 80 CHARACTERS LONG
+C     THIS IS STILL TO BE TESTED ON THE MAINFRAME!!!!
+C
+      CHARACTER DDARD*4,DTYPE*4,ADASID*80,ADASEX*3
+C
+C---- PPF VARIABLES
+C
+      INTEGER   IXREF(MAXGEOM),ITREF
+      CHARACTER XUNITS*8,DUNITS*8,DTDESC*24
+C
+C---- VARIABLES FOR CUTS THROUGH TWO DIMENSIONAL PROFILES
+C
+      INTEGER   MXCUT,NCUT,NCUT2,NCUT3
+      PARAMETER (MXCUT = 100)
+      REAL      XCUT(MXCUT), YCUT(MXCUT), XCUT2(MXCUT),YCUT2(MXCUT)
+      REAL      XCUT3(MXCUT),YCUT3(MXCUT)
+C
+C---- DATA ARRAYS
+C
+      REAL      TOUTS(MAXTHE),TWIDS(MAXTHE),TVALS(MAXTHE),TVAL2(MAXTHE)
+      REAL      CVALS(MAXNKS,MAXNRS),CVAL2(MAXNKS,MAXNRS),DVALS(MAXNDS)
+      REAL      RVALS(MAXNRS), XVALS(MAXNRS), YVALS(MAXNRS)
+      REAL      COUTS(MAXTHE,MAXCH3,3),WRES(MAXCH3)
+C
+C---- COUNTERS, ETC.
+C
+      INTEGER   IRCODE
+      INTEGER   IK,IR,II,I,ID,J
+      INTEGER   ICLASS,MNIZS,MXIZS,IFAIL,ICALC
+      REAL      THEMNM,THEMAX,DIST,VNOR,ATAN2C
+      REAL      WLNGTH,SF
+      REAL      PCOEF(MAXNKS)
+      REAL      XBEAM,YBEAM,ZBEAM,LBEAM
+      REAL      X0,Y0,CX,CY,CZ
+      REAL      CS
+      CHARACTER XFESYM*2, YEAR*2
+      CHARACTER RECORD*72
+      EXTERNAL  ATAN2C
+C
+C---- READ DIAGNOSTIC GEOMETRY
+C
+      REWIND (LGEOM)
+      IF (DDA.EQ.'PT7D' .OR. DDA.EQ.'PT6D' .OR. DDA.EQ.'PL12' .OR.
+     >    DDA.EQ.'PB1 ' .OR. DDA.EQ.'PB3D' .OR. DDA.EQ.'PB4 ' .OR.
+     >    DDA.EQ.'PS6 ' .OR. DDA.EQ.'PS3 ' .OR. DDA.EQ.'PL31' .OR.
+     >    DDA.EQ.'PT2 ' .OR. DDA.EQ.'PT4 ' .OR. DDA.EQ.'PT1 ' .OR.
+     >    DDA.EQ.'PT3 ') THEN
+        CALL RDGT1(LGEOM,DDA,MAXGEOM,NGEOM,ROBS,ZOBS,THEMIN,DTHE,
+     >             NUMTHE,THERES,AVPTS,IRCODE)
+      ELSE IF (DDA.EQ.'PY6D' .OR. DDA.EQ.'PY63' .OR.
+     >         DDA.EQ.'PE9 ' .OR. DDA.EQ.'PK4D' .OR.
+     >         DDA.EQ.'PG6D' .OR. DDA.EQ.'PS7 ' .OR.
+     >         DDA.EQ.'PY3 ' .OR. DDA.EQ.'PY4D') THEN
+        CALL RDGT2(LGEOM,DDA,MAXGEOM,NGEOM,R1,Z1,R2,Z2,DRES,IRCODE)
+      ELSE IF (DDA.EQ.'PL11' .OR. DDA.EQ.'PY6P' .OR.
+     >         DDA.EQ.'PT6E') THEN
+        CALL RDGT3(LGEOM,DDA,MAXGEOM,NGEOM,ROBS,POBS,ZOBS,CX1,CY1,CZ1,
+     >             CX2,CY2,CZ2,NUMTHE,THERES,AVPTS,IRCODE)
+C
+C---- UNRECOGNISED DDA NAME
+C
+      ELSE
+        IERR = 10
+        RETURN
+      ENDIF
+      IF (IRCODE.NE.0) THEN
+        IERR = 10 + IRCODE
+        RETURN
+      ENDIF
+C
+      ITREF = -1
+      DO I = 1, NGEOM
+        IXREF(I) = -1
+      ENDDO
+C
+C---- READ NEXT SIGNAL TO PROCESS AND WRITE TO PPF
+C---- THE READ ROUTINE CHECKS THAT THE INPUT RECORD CORRESPONDS
+C---- TO THE CORRECT DDA AND RETURNS THE ENTIRE RECORD AS A
+C---- CHARACTER STRING SINCE THE PARAMETER LIST CAN HAVE DIFFERENT
+C---- MEANINGS FOR DIFFERENT DIAGNOSTICS
+C
+      REWIND (LDTYPE)
+  100 CALL RDSIG(LDTYPE,DDA,RECORD,IRCODE)
+      IF (IRCODE.EQ.-1) GOTO 200
+      IF (IRCODE.NE. 0) THEN
+        IERR = 20 + IRCODE
+        RETURN
+      ENDIF
+C
+C*****************************************
+C     SPECTROSCOPY IN A POLOIDAL PLANE   *
+C*****************************************
+C
+      IF (DDA.EQ.'PT7D' .OR. DDA.EQ.'PT6D' .OR. DDA.EQ.'PL12' .OR.
+     >    DDA.EQ.'PS3 ' .OR. DDA.EQ.'PL31' .OR. DDA.EQ.'PT2 ' .OR.
+     >    DDA.EQ.'PT4 ' .OR. DDA.EQ.'PT1 ' .OR. DDA.EQ.'PT3 ') THEN
+C
+C---- PARSE INPUT RECORD, CHECKING FOR BREMSSTRAHLUNG OR LINE EMISSION
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM, ZNUC
+C
+        IF (IGEOM.EQ.0) GOTO 100
+        IF (IGEOM.GT.NGEOM) THEN
+          WRITE (6,*) ' INVALID GEOMETRY!:  DDA = ',DDARD,' DTYPE = ',
+     >    DTYPE, ' IGEOM = ', IGEOM, ' NGEOM = ', NGEOM
+          GOTO 100
+        ENDIF
+C
+C---- CHECK EMITTING ION NULCEAR CHARGE; ZERO FOR BREMS. CALCULATION
+C---- -1 FOR F-F BREMS. ONLY (FOR TESTING)
+C
+        ICALC = 0
+        IF (ZNUC.EQ.0 .OR. ZNUC.EQ.-1) ICALC = -2 
+        IF (ZNUC.EQ.1) ICALC = -1
+        DO J = 1, NZS
+          IF (ZNUC.EQ.CION(J)) ICALC = J
+        ENDDO
+        IF (ICALC.EQ.0) GOTO 100
+C
+        IF (ZNUC.GT.0) THEN
+          READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM,
+     >           ZNUC, IZ, ADASID, ADASYR, ADASEX, 
+     >           ISELE, ISELR, ISELX
+C
+C---- CHECK EMITTING ION ELECTRONIC CHARGE
+C
+          IF (ZNUC.EQ.1 .AND. IZ.GT.0) THEN
+            GOTO 100
+          ELSE IF (IZ.GT.MIN(NIZS(ICALC),CION(ICALC)-1)) THEN
+            GOTO 100
+          ENDIF
+C
+C---- CHECK PEC SELECTOR BLOCKS
+C
+          IF (ISELE.EQ.0 .AND. ISELR.EQ.0 .AND. ISELX.EQ.0) GOTO 100
+C
+C---- ALLOW SWITCHING TO USERID AND/OR YEAR USED IN TRANSPORT CODE
+C
+          IF (ADASID.EQ.' ') THEN
+            IF (ZNUC.EQ.1) THEN
+              ADASID = USERIDH
+            ELSE
+              ADASID = USERIDZ(ICALC)
+            ENDIF
+          ENDIF
+          IF (ADASYR.EQ.-2) THEN
+            IF (ZNUC.EQ.1) THEN
+              ADASYR = IYEARH
+            ELSE
+              ADASYR = IYEARZ(ICALC)
+            ENDIF
+          ENDIF
+C
+        ELSE
+          READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM,
+     >           ZNUC, WLNGTH
+        ENDIF
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C
+C---- CREATE THETA VECTOR
+C
+        DO II = 1, NUMTHE(IGEOM)
+          TOUTS(II) = THEMIN(IGEOM) + (II-1)*DTHE(IGEOM)
+          TWIDS(II) = THERES(IGEOM)
+        ENDDO
+        THEMAX = TOUTS(NUMTHE(IGEOM))
+C
+C  LOAD ADAS-BASED EMISSION PROFILE
+C
+        IF (ZNUC.GT.0) THEN
+          CALL LDADAS(ZNUC,IZ,ICALC,ADASID,ADASYR,ADASEX,ISELE,ISELR,
+     >                ISELX,CVALS,WLNGTH,IRCODE)
+        ELSE IF (ZNUC.EQ.0) THEN
+          CALL LDBREM(WLNGTH,CVALS,IRCODE)
+        ELSE IF (ZNUC.EQ.-1) THEN
+          CALL LDBRFF(WLNGTH,CVALS,IRCODE)
+        ENDIF
+cdebug
+c       call prdmat(ktebs,maxnks,nks(irsep),nrs,irsep,irwall,
+c    >              jprgt,jplft,6,'te:')
+c       call prdmat(knebs,maxnks,nks(irsep),nrs,irsep,irwall,
+c    >              jprgt,jplft,6,'ne:')
+c       call prdmat(sdlims(1,1,iz,icalc),maxnks,nks(irsep),nrs,irsep,
+c    >              irwall,jprgt,jplft,6,'nz:')
+c       call prdmat(cvals,maxnks,nks(irsep),nrs,irsep,irwall,
+c    >              jprgt,jplft,6,'pec:')
+cdebug
+        IF (IRCODE.NE.0) THEN
+          IERR = 100 + IRCODE
+          RETURN
+        ENDIF
+C
+C---- INTEGRATE ALONG LINE-OF-SIGHT
+C
+        CALL LOSINT (TVALS,TOUTS,TWIDS,NUMTHE(IGEOM),
+     >               ROBS(IGEOM),ZOBS(IGEOM),AVPTS(IGEOM),CVALS)
+C
+C---- WRITE DIAGNOSTIC PPF
+C
+        XUNITS = 'DEGREES'
+        IF (ZNUC.GT.0) THEN
+          DUNITS = 'P/M2S'
+C
+C---- CONVERT TO UNITS IN EXPERIMENTAL PPFS
+C
+          IF (DDA.EQ.'PS3 ') THEN
+            IF (IEXP.EQ.1) THEN
+              DUNITS = 'P/CM2SSR'
+              SF = 1./(1.E4*4.*PI)
+              CALL SCALE(NUMTHE(IGEOM),TVALS,SF)
+              IF (NUMTHE(IGEOM).GT.1) THEN
+                XUNITS = 'M'
+                CALL RTARG(ISHOT,
+     >                     ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                     TOUTS)
+              ENDIF
+            ENDIF
+          ELSE IF (DDA.EQ.'PL12' .OR. DDA.EQ.'PT7D') THEN
+            IF (IEXP.EQ.1) THEN
+              XUNITS = 'M'
+                CALL RTARG(ISHOT,
+     >                     ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                     TOUTS)
+            ENDIF
+          ELSE IF (DDA.EQ.'PT3 ') THEN
+            IF (IEXP.EQ.1) THEN
+              DUNITS = 'P/CM2SSR'
+              SF = 1./(1.E4*4.*PI)
+              CALL SCALE(NUMTHE(IGEOM),TVALS,SF)
+              XUNITS = 'M'
+              CALL RZ0(-1.7,ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                   TOUTS)
+            ENDIF
+          ENDIF
+          DTDESC = 'KXXX ZZXX XXXXX.X ERX'
+          DTDESC(2:4) = DDA(2:4)
+          DTDESC(6:7) = XFESYM(ZNUC)
+          WRITE(DTDESC(8:9),'(I2)') IZ
+          WRITE(DTDESC(11:17),'(F7.1)') WLNGTH
+          IF (ISELE.EQ.0) DTDESC(19:19) = ' '
+          IF (ISELR.EQ.0) DTDESC(20:20) = ' '
+          IF (ISELX.EQ.0) DTDESC(21:21) = ' '
+        ELSE
+          DUNITS = 'P/M2SNM'
+C
+C---- CONVERT TO UNITS IN EXPERIMENTAL PPFS
+C
+          IF (DDA.EQ.'PS3 ') THEN
+            IF (IEXP.EQ.1) THEN
+              DUNITS = '/CM2SSRA'
+              SF = 1./(1.E5*4.*PI)
+              CALL SCALE(NUMTHE(IGEOM),TVALS,SF)
+              IF (NUMTHE(IGEOM).GT.1) THEN
+                XUNITS = 'M'
+                CALL RTARG(ISHOT,
+     >                     ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                     TOUTS)
+              ENDIF
+            ENDIF
+          ELSE IF (DDA.EQ.'PL12' .OR. DDA.EQ.'PT7D') THEN
+            IF (IEXP.EQ.1) THEN
+              XUNITS = 'M'
+                CALL RTARG(ISHOT,
+     >                     ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                     TOUTS)
+            ENDIF
+          ELSE IF (DDA.EQ.'PL31') THEN
+            IF (IEXP.EQ.1) THEN
+              DUNITS = 'DEG C'
+              DO I = 1, NUMTHE(IGEOM)
+                TVALS(I) = 8993./ALOG(5.749E23/TVALS(I) + 1) - 273.15
+              ENDDO
+              XUNITS = 'M'
+                CALL RTARG(ISHOT,
+     >                     ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                     TOUTS)
+            ENDIF
+          ELSE IF (DDA.EQ.'PT3 ') THEN
+            IF (IEXP.EQ.1) THEN
+              DUNITS = '/CM2SSRA'
+              SF = 1./(1.E5*4.*PI)
+              CALL SCALE(NUMTHE(IGEOM),TVALS,SF)
+              XUNITS = 'M'
+              CALL RZ0(-1.7,ROBS(IGEOM),ZOBS(IGEOM),NUMTHE(IGEOM),
+     >                 TOUTS)
+            ENDIF
+          ENDIF
+          DTDESC = 'KXXX BREM XXXXX.X'
+          DTDESC(2:4) = DDA(2:4)
+          WRITE(DTDESC(11:17),'(F7.1)') WLNGTH
+        ENDIF
+        WRITE(DTDESC(23:24),'(I2)') IGEOM
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NUMTHE(IGEOM),TOUTS,TVALS,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IERR.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C*************************
+C     KY6 LITHIUM BEAM   *
+C*************************
+C
+      ELSE IF (DDA.EQ.'PY63' .OR. DDA.EQ.'PY6D') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON TEMPERATURE
+C
+        IF (DTYPE.EQ.'TE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KY6 ELECTRON TEMP'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   ION TEMPERATURE
+C
+        ELSE IF (DTYPE.EQ.'TI  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KY6 ION TEMPERATURE'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTIBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   AVERAGE IMPURITY CHARGE
+C
+        ELSE IF (DTYPE.EQ.'AVEZ') THEN
+C
+C----   CHECK THAT IMPURITY DENSITIES EXIST
+C
+          IF (NZS.EQ.0) GOTO 100
+C
+          XUNITS = 'M'
+          DUNITS = ' '
+          DTDESC = 'KY6 AVERAGE IMP CHARGE'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = 0.0
+              CVAL2(IK,IR) = 0.0
+              DO J = 1, NZS
+                DO I = 0, NIZS(J)
+                  CVALS(IK,IR) = CVALS(IK,IR) + I*I*SDLIMS(IK,IR,I,J)
+                  CVAL2(IK,IR) = CVAL2(IK,IR) + SDLIMS(IK,IR,I,J)
+                ENDDO
+              ENDDO
+              IF (CVAL2(IK,IR).GT.0.0) THEN
+                CVALS(IK,IR) = SQRT(CVALS(IK,IR)/CVAL2(IK,IR))
+              ELSE
+                CVALS(IK,IR) = 0.0
+              ENDIF
+            ENDDO
+          ENDDO
+C
+C----   ELECTRON DENSITY
+C
+        ELSE IF (DTYPE.EQ.'NE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY6 ELECTRON DENSITY'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KNEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   TOTAL IMPURITY DENSITY
+C
+        ELSE IF (DTYPE.EQ.'NZ  ') THEN
+C
+C----   CHECK THAT IMPURITY DENSITIES EXIST
+C
+          IF (NZS.EQ.0) GOTO 100
+C
+C----   FOR NOW, USE THE FIRST IMPURITY
+C
+          ICALC = 1
+C
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY6 ZZ DENSITY'
+          DTDESC(5:6) = XFESYM(CION(ICALC))
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = 0.0
+              DO IZ = 0, NIZS(ICALC)
+                CVALS(IK,IR) = CVALS(IK,IR) + SDLIMS(IK,IR,IZ,ICALC)
+              ENDDO
+            ENDDO
+          ENDDO
+C
+C----   DENSITY OF A SPECIFIC CHARGE STATE
+C
+        ELSE IF (DTYPE(1:2).EQ.'NZ') THEN
+C
+C----   CHECK THAT IMPURITY DENSITIES EXIST
+C
+          IF (NZS.EQ.0) GOTO 100
+C
+C----   FOR NOW, USE THE FIRST IMPURITY
+C
+          ICALC = 1
+C
+          READ(DTYPE(3:4),'(I2)') IZ
+          IF (IZ.GT.NIZS(ICALC)) GOTO 100
+C
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY6 XX+?? DENSITY'
+          DTDESC(5:6) = XFESYM(CION(ICALC))
+          WRITE(DTDESC(8:9),'(I2)') IZ
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = SDLIMS(IK,IR,IZ,ICALC)
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG BEAM PATH
+C
+        CALL CUT (XCUT,YCUT,NCUT,MXCUT,CVALS,
+     >            R1(IGEOM),Z1(IGEOM),R2(IGEOM),Z2(IGEOM))
+C
+C---- CHECK TO SEE IF DIAGNOSTIC ENTERS PLASMA
+C
+        IF (NCUT.EQ.2 .AND. YCUT(1).EQ.0.0) THEN
+          WRITE(6,*)
+          WRITE(6,2000) IGEOM
+          WRITE(6,2010) DTYPE
+          GOTO 100
+        ENDIF
+C
+C---- CONVERT X VECTOR TO DISTANCE ABOVE THE MIDPLANE
+C
+        DIST = SQRT((R2(IGEOM)-R1(IGEOM))*(R2(IGEOM)-R1(IGEOM))
+     >        + (Z2(IGEOM)-Z1(IGEOM))*(Z2(IGEOM)-Z1(IGEOM)))
+        DO I = 1, NCUT
+          IF (Z1(IGEOM).NE.Z2(IGEOM))
+     >      XCUT(I) = Z1(IGEOM) + XCUT(I)/DIST*(Z2(IGEOM)-Z1(IGEOM))
+        ENDDO
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST TWO AND LAST TWO POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(3),YCUT(3),NCUT-4,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- SWITCH TO INCREASING X VECTOR TO SATISFY JETDSP
+C
+        NCUT3 = NCUT2
+        DO I = 1, NCUT2
+          IF (Z1(IGEOM).GT.Z2(IGEOM)) THEN
+            XCUT3(I) = XCUT2(NCUT2-I+1)
+            YCUT3(I) = YCUT2(NCUT2-I+1)
+          ELSE
+            XCUT3(I) = XCUT2(I)
+            YCUT3(I) = YCUT2(I)
+          ENDIF
+        ENDDO
+C
+C---- WRITE TO PPF
+C
+        WRITE(DTDESC(23:24),'(I2)') IGEOM
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NCUT3,XCUT3,YCUT3,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C**********************
+C     KE9 EDGE LIDAR  *
+C**********************
+C
+      ELSE IF (DDA.EQ.'PE9D') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON TEMPERATURE
+C
+        IF (DTYPE.EQ.'TE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KE9 ELECTRON TEMP'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   ELECTRON DENSITY
+C
+        ELSE IF (DTYPE.EQ.'NE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KE9 ELECTRON DENSITY'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KNEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG CHORD
+C
+        CALL CUT (XCUT,YCUT,NCUT,MXCUT,CVALS,
+     >            R1(IGEOM),Z1(IGEOM),R2(IGEOM),Z2(IGEOM))
+C
+C---- CHECK TO SEE IF DIAGNOSTIC ENTERS PLASMA
+C
+        IF (NCUT.EQ.2 .AND. YCUT(1).EQ.0.0) THEN
+          WRITE(6,*)
+          WRITE(6,2000) IGEOM
+          WRITE(6,2010) DTYPE
+          GOTO 100
+        ENDIF
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST TWO AND LAST TWO POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(3),YCUT(3),NCUT-4,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- WRITE TO PPF
+C
+        WRITE(DTDESC(23:24),'(I2)') IGEOM
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NCUT2,XCUT2,YCUT2,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C*******************************************
+C     SPECTROSCOPY IN GENERAL 3D GEOMETRY  *
+C*******************************************
+C
+      ELSE IF (DDA.EQ.'PL11' .OR. DDA.EQ.'PY6P' .OR.
+     >         DDA.EQ.'PT6E') THEN
+C
+C---- PARSE INPUT RECORD, CHECKING FOR BREMSSTRAHLUNG OR LINE EMISSION
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM, ZNUC
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- CHECK EMITTING ION NULCEAR CHARGE; ZERO FOR BREMS. CALCULATION
+C---- -1 FOR F-F BREMS. ONLY (FOR TESTING)
+C
+        ICALC = 0
+        IF (ZNUC.EQ.0 .OR. ZNUC.EQ.-1) ICALC = -2 
+        IF (ZNUC.EQ.1) ICALC = -1
+        DO J = 1, NZS
+          IF (ZNUC.EQ.CION(J)) ICALC = J
+        ENDDO
+        IF (ICALC.EQ.0) GOTO 100
+C
+        IF (ZNUC.GT.0) THEN
+          READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM,
+     >           ZNUC, IZ, ADASID, ADASYR, ADASEX, 
+     >           ISELE, ISELR, ISELX
+C
+C---- CHECK EMITTING ION ELECTRONIC CHARGE
+C
+          IF (ZNUC.EQ.1 .AND. IZ.GT.0) THEN
+            GOTO 100
+          ELSE IF (IZ.GT.MIN(NIZS(ICALC),CION(ICALC)-1)) THEN
+            GOTO 100
+          ENDIF
+C
+C---- CHECK PEC SELECTOR BLOCKS
+C
+          IF (ISELE.EQ.0 .AND. ISELR.EQ.0 .AND. ISELX.EQ.0) GOTO 100
+C
+C---- ALLOW SWITCHING TO USERID AND/OR YEAR USED IN TRANSPORT CODE
+C
+          IF (ADASID.EQ.' ') THEN
+            IF (ZNUC.EQ.1) THEN
+              ADASID = USERIDH
+            ELSE
+              ADASID = USERIDZ(ICALC)
+            ENDIF
+          ENDIF
+          IF (ADASYR.EQ.-2) THEN
+            IF (ZNUC.EQ.1) THEN
+              ADASYR = IYEARH
+            ELSE
+              ADASYR = IYEARZ(ICALC)
+            ENDIF
+          ENDIF
+C
+        ELSE
+          READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM,
+     >           ZNUC, WLNGTH
+        ENDIF
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C---- NORMALISE DIRECTIONAL COSINE VECTORS
+C
+        VNOR = (CX1(IGEOM)*CX1(IGEOM) + CY1(IGEOM)*CY1(IGEOM)
+     >        + CZ1(IGEOM)*CZ1(IGEOM))**0.5
+        IF (VNOR.NE.0.0) THEN
+          CX1(IGEOM) = CX1(IGEOM)/VNOR
+          CY1(IGEOM) = CY1(IGEOM)/VNOR
+          CZ1(IGEOM) = CZ1(IGEOM)/VNOR
+        ENDIF
+        VNOR = (CX2(IGEOM)*CX2(IGEOM) + CY2(IGEOM)*CY2(IGEOM)
+     >        + CZ2(IGEOM)*CZ2(IGEOM))**0.5
+        IF (VNOR.NE.0.0) THEN
+          CX2(IGEOM) = CX2(IGEOM)/VNOR
+          CY2(IGEOM) = CY2(IGEOM)/VNOR
+          CZ2(IGEOM) = CZ2(IGEOM)/VNOR
+        ENDIF
+C
+C---- LOAD 3D GEOMETRY
+C
+        CALL LD3DGM(CX1(IGEOM),CY1(IGEOM),CZ1(IGEOM),
+     >              CX2(IGEOM),CY2(IGEOM),CZ2(IGEOM),
+     >              NUMTHE(IGEOM),THERES(IGEOM),AVPTS(IGEOM),
+     >              TOUTS,TWIDS,THEMNM,THEMAX,COUTS,WRES,IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = 50 + IRCODE
+          RETURN
+        ENDIF
+C
+C  LOAD ADAS-BASED EMISSION PROFILE
+C
+        IF (ZNUC.GT.0) THEN
+          CALL LDADAS(ZNUC,IZ,ICALC,ADASID,ADASYR,ADASEX,ISELE,ISELR,
+     >                ISELX,CVALS,WLNGTH,IRCODE)
+        ELSE IF (ZNUC.EQ.0) THEN
+          CALL LDBREM(WLNGTH,CVALS,IRCODE)
+        ELSE IF (ZNUC.EQ.-1) THEN
+          CALL LDBRFF(WLNGTH,CVALS,IRCODE)
+        ENDIF
+        IF (IRCODE.NE.0) THEN
+          IERR = 100 + IRCODE
+          RETURN
+        ENDIF
+C
+C---- INTEGRATE ALONG LINE-OF-SIGHT
+C
+        CALL LOS3D (TVALS,ROBS(IGEOM),POBS(IGEOM),ZOBS(IGEOM),
+     >              COUTS,WRES,CVALS,NUMTHE(IGEOM),AVPTS(IGEOM))
+C
+C---- WRITE DIAGNOSTIC PPF
+C
+        XUNITS = 'DEGREES'
+        IF (ZNUC.GT.0) THEN
+          DUNITS = 'P/M2S'
+          DTDESC = 'KXXX ZZXX XXXXX.X ERX'
+          DTDESC(2:4) = DDA(2:4)
+          DTDESC(6:7) = XFESYM(ZNUC)
+          WRITE(DTDESC(8:9),'(I2)') IZ
+          WRITE(DTDESC(11:17),'(F7.1)') WLNGTH
+          IF (ISELE.EQ.0) DTDESC(19:19) = ' '
+          IF (ISELR.EQ.0) DTDESC(20:20) = ' '
+          IF (ISELX.EQ.0) DTDESC(21:21) = ' '
+        ELSE
+          DUNITS = 'P/M2SNM'
+          DTDESC = 'KXXX BREM XXXXX.X'
+          DTDESC(2:4) = DDA(2:4)
+          WRITE(DTDESC(11:17),'(F7.1)') WLNGTH
+        ENDIF
+        WRITE(DTDESC(23:24),'(I2)') IGEOM
+C
+C---- CONVERT TO UNITS IN EXPERIMENTAL PPFS
+C
+        IF (DDA.EQ.'PY6P') THEN
+          IF (IEXP.EQ.1) THEN
+            XUNITS = 'M'
+            XBEAM = 3.189
+            YBEAM = 0.643
+            X0 = ROBS(IGEOM)*COS(POBS(IGEOM))
+            Y0 = ROBS(IGEOM)*SIN(POBS(IGEOM))
+            DO I = 1, NUMTHE(IGEOM)
+              CX = COUTS(I,AVPTS(IGEOM),1)
+              CY = COUTS(I,AVPTS(IGEOM),2)
+              CZ = COUTS(I,AVPTS(IGEOM),3)
+              LBEAM = -(CX*(X0-XBEAM)+CY*(Y0-YBEAM))/(CX*CX+CY*CY)
+              TOUTS(I) = ZOBS(IGEOM) + LBEAM*CZ
+            ENDDO
+          ENDIF
+        ENDIF
+        IF (DDA.EQ.'PT6E') THEN
+           IF (IEXP.EQ.1) THEN
+             DUNITS = 'P/CM2SSR'
+             SF = 1./(1.E4*4.*PI)
+             CALL SCALE(NUMTHE(IGEOM),TVALS,SF)
+           ENDIF
+        ENDIF
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NUMTHE(IGEOM),TOUTS,TVALS,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IERR.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C************************************
+C     KB1, KB3, AND KB4 BOLOMETERS  *
+C************************************
+C
+      ELSE IF (DDA.EQ.'PB1 ' .OR. DDA.EQ.'PB3D' .OR. DDA.EQ.'PB4 ')
+     >  THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM,
+     >         IIMP, IHYD
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C
+C---- CREATE THETA VECTOR
+C
+        DO II = 1, NUMTHE(IGEOM)
+          TOUTS(II) = THEMIN(IGEOM) + (II-1)*DTHE(IGEOM)
+          TWIDS(II) = THERES(IGEOM)
+        ENDDO
+        THEMAX = TOUTS(NUMTHE(IGEOM))
+C
+C---- CALL ADAS AND BUILD TOTAL RADIATED POWER STAGE BY STAGE
+C
+        CALL RZERO(CVALS,MAXNKS*MAXNRS)
+C
+        DO IR = 1, NRS
+C
+C---- IMPURITY RADIATION: 0 = DON'T INCLUDE IN CALCULATION
+C----                     1 = CALCULATE FROM ADAS
+C----                     2 = USE ARTIFICIAL RADIATION PROFILE
+C----                     3 = CALCULATE INDIVIDUAL STATE CONTRIBUTION
+C----                         - IN THIS CASE THE HYDROGEN SWITCH IS
+C----                           USED TO SPECIFY THE IONISATION STATE
+C
+        IF (IIMP.EQ.1 .OR. IIMP.EQ.3) THEN
+          ICLASS = 5
+          DO J = 1, NZS
+            IF (IIMP.EQ.1) THEN
+              MNIZS = 0
+              MXIZS = MIN(CION(J)-1,NIZS(J))
+            ELSE IF (IHYD.LE.MIN(CION(J)-1,NIZS(J))) THEN
+              MNIZS = IHYD
+              MXIZS = IHYD
+            ELSE
+              MNIZS = 1
+              MXIZS = 0
+            ENDIF
+            DO IZ = MNIZS, MXIZS
+              CALL ADASRD(USERIDZ(J),IYEARZ(J),CION(J),IZ+1,ICLASS,
+     +                    NKS(IR),KTEBS(1,IR),KNEBS(1,IR),PCOEF,IFAIL)
+C
+C---- IF THE REQUESTED ATOMIC DATA IS NOT AVAILABLE, SKIP THIS SIGNAL
+C
+              IF (IFAIL.EQ.1) GOTO 100
+C
+              DO IK = 1, NKS(IR)
+                CVALS(IK,IR) = CVALS(IK,IR)
+     +                    + KNEBS(IK,IR)*SDLIMS(IK,IR,IZ,J)*PCOEF(IK)
+              ENDDO
+            ENDDO
+          ENDDO
+          ICLASS = 4
+          DO J = 1, NZS
+            IF (IIMP.EQ.1) THEN
+              MNIZS = 1
+              MXIZS = MIN(CION(J),NIZS(J))
+            ELSE IF (IHYD.LE.MIN(CION(J),NIZS(J))) THEN
+              MNIZS = IHYD
+              MXIZS = IHYD
+            ELSE
+              MNIZS = 1
+              MXIZS = 0
+            ENDIF
+            DO IZ = MNIZS, MXIZS
+              CALL ADASRD(USERIDZ(J),IYEARZ(J),CION(J),IZ,ICLASS,
+     +                    NKS(IR),KTEBS(1,IR),KNEBS(1,IR),PCOEF,IFAIL)
+C
+C---- IF THE REQUESTED ATOMIC DATA IS NOT AVAILABLE, SKIP THIS SIGNAL
+C
+              IF (IFAIL.EQ.1) GOTO 100
+C
+              DO IK = 1, NKS(IR)
+                CVALS(IK,IR) = CVALS(IK,IR)
+     +                    + KNEBS(IK,IR)*SDLIMS(IK,IR,IZ,J)*PCOEF(IK)
+              ENDDO
+            ENDDO
+          ENDDO
+        ELSE IF (IIMP.EQ.2) THEN
+          DO J = 1, NZS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = POWZ(IK,IR,J)
+            ENDDO
+          ENDDO
+        ENDIF
+C
+C---- REPEAT FOR HYDROGEN POWER: 0 = DON'T INCLUDE IN CALCULATION
+C----                            1 = CALCULATE FROM ADAS
+C
+        IF (IHYD.EQ.1 .AND. IIMP.NE.3) THEN
+          ICLASS = 5
+          CALL ADASRD(USERIDH,IYEARH,1,1,ICLASS,NKS(IR),
+     +                KTEBS(1,IR),KNEBS(1,IR),PCOEF,IFAIL)
+C
+C---- IF THE REQUESTED ATOMIC DATA IS NOT AVAILABLE, SKIP THIS SIGNAL
+C
+          IF (IFAIL.EQ.1) GOTO 100
+C
+          DO IK = 1, NKS(IR)
+            CVALS(IK,IR) = CVALS(IK,IR)
+     +                      + KNEBS(IK,IR)*PINATOM(IK,IR)*PCOEF(IK)
+          ENDDO
+          ICLASS = 4
+          CALL ADASRD(USERIDH,IYEARH,1,1,ICLASS,NKS(IR),
+     +                KTEBS(1,IR),KNEBS(1,IR),PCOEF,IFAIL)
+C
+C---- IF THE REQUESTED ATOMIC DATA IS NOT AVAILABLE, SKIP THIS SIGNAL
+C
+          IF (IFAIL.EQ.1) GOTO 100
+C
+          DO IK = 1, NKS(IR)
+            CVALS(IK,IR) = CVALS(IK,IR)
+     +                      + KNEBS(IK,IR)*KNBS(IK,IR)*PCOEF(IK)
+          ENDDO
+        ENDIF
+C
+        ENDDO
+C
+C---- INTEGRATE ALONG LINE-OF-SIGHT
+C
+        CALL LOSINT (TVALS,TOUTS,TWIDS,NUMTHE(IGEOM),
+     >               ROBS(IGEOM),ZOBS(IGEOM),AVPTS(IGEOM),CVALS)
+C
+C---- WRITE DIAGNOSTIC PPF
+C
+        XUNITS = 'DEGREES'
+        DUNITS = 'W/M2'
+C
+C---- CONVERT TO UNITS IN EXPERIMENTAL PPFS
+C
+        IF (DDA.EQ.'PB1 ') THEN
+          IF (IEXP.EQ.1) THEN
+            XUNITS = 'CHANNEL'
+            IF (IGEOM.EQ.1 .OR. IGEOM.EQ.3) THEN
+              DO I = 1, NUMTHE(IGEOM)
+                TOUTS(I) = I
+                TVAL2(I) = TVALS(NUMTHE(IGEOM) - I + 1)
+              ENDDO
+              DO I = 1, NUMTHE(IGEOM)
+                TVALS(I) = TVAL2(I)
+              ENDDO
+            ELSE IF (IGEOM.EQ.2) THEN
+              DO I = 1, NUMTHE(IGEOM)
+                TOUTS(I) = I
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDIF
+        DTDESC = 'KXXX CAMERA XXXX (ZH)'
+        DTDESC(2:4) = DDA(2:4)
+        DTDESC(13:16) = DTYPE
+        IF (IIMP.EQ.0) DTDESC(19:19) = ' '
+        IF (IHYD.EQ.0) DTDESC(20:20) = ' '
+        WRITE(DTDESC(23:24),'(I2)') IGEOM
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NUMTHE(IGEOM),TOUTS,TVALS,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IERR.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C******************************************
+C     KK4D ELECTRON CYCLOTRON ABSORPTION  *
+C******************************************
+C
+      ELSE IF (DDA.EQ.'PK4D') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON PRESSURE
+C
+        IF (DTYPE.EQ.'PE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV M-3'
+          DTDESC = 'KK4D ELECTRON PRES'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KNEBS(IK,IR) * KTEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG CHORD
+C
+        CALL CUT (XCUT,YCUT,NCUT,MXCUT,CVALS,
+     >            R1(IGEOM),Z1(IGEOM),R2(IGEOM),Z2(IGEOM))
+C
+C---- CHECK TO SEE IF DIAGNOSTIC ENTERS PLASMA
+C
+        IF (NCUT.EQ.2 .AND. YCUT(1).EQ.0.0) THEN
+          WRITE(6,*)
+          WRITE(6,2000) IGEOM
+          WRITE(6,2010) DTYPE
+          GOTO 100
+        ENDIF
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST TWO AND LAST TWO POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(3),YCUT(3),NCUT-4,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- WRITE TO PPF
+C
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NCUT2,XCUT2,YCUT2,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C************************************
+C     KG6D DIVERTOR INTERFEROMETER  *
+C************************************
+C
+      ELSE IF (DDA.EQ.'PG6D') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON DENSITY
+C
+        IF (DTYPE.EQ.'NE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-2'
+          DTDESC = 'KG6D ELECTRON DENSITY'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KNEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- CREATE THETA VECTOR (OF LENGTH ONE)
+C
+        NUMTHE(IGEOM) = 1
+        TOUTS(1) = ATAN2C(Z2(IGEOM)-Z1(IGEOM),R2(IGEOM)-R1(IGEOM))
+        TOUTS(1) = TOUTS(1)*RADDEG
+        TWIDS(1) = 0.0
+        THEMAX = TOUTS(1)
+C
+C---- INTEGRATE ALONG LINE-OF-SIGHT
+C
+        CALL LOSINT (TVALS,TOUTS,TWIDS,NUMTHE(IGEOM),
+     >               R1(IGEOM),Z1(IGEOM),1,CVALS)
+C
+C---- WRITE TO PPF
+C
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NUMTHE(IGEOM),TOUTS,TVALS,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C*********************************************
+C     KS7 EDGE CHARGE EXCHANGE SPECTROSCOPY  *
+C*********************************************
+C
+      ELSE IF (DDA.EQ.'PS7 ') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ION TEMPERATURE
+C
+        IF (DTYPE.EQ.'TI  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KS7 ION TEMPERATURE'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTIBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   IMPURITY DENSITY (FULLY IONISED)
+C
+        ELSE IF (DTYPE.EQ.'NZ  ') THEN
+C
+C----   FOR NOW, USE THE FIRST IMPURITY
+C
+          ICALC = 1
+C
+C----   CHECK THAT FULLY STRIPPED IMPURITY DENSITY IS AVAILABLE
+C
+          IF (NIZS(ICALC).LT.CION(ICALC)) GOTO 100
+C
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KS7 IMPURITY DENSITY'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = SDLIMS(IK,IR,CION(ICALC),ICALC)
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG CHORD
+C
+        CALL CUT (XCUT,YCUT,NCUT,MXCUT,CVALS,
+     >            R1(IGEOM),Z1(IGEOM),R2(IGEOM),Z2(IGEOM))
+C
+C---- CHECK TO SEE IF DIAGNOSTIC ENTERS PLASMA
+C
+        IF (NCUT.EQ.2 .AND. YCUT(1).EQ.0.0) THEN
+          WRITE(6,*)
+          WRITE(6,2000) IGEOM
+          WRITE(6,2010) DTYPE
+          GOTO 100
+        ENDIF
+C
+C---- CONVERT X VECTOR TO MAJOR RADIUS
+C
+        DIST = SQRT((R2(IGEOM)-R1(IGEOM))*(R2(IGEOM)-R1(IGEOM))
+     >        + (Z2(IGEOM)-Z1(IGEOM))*(Z2(IGEOM)-Z1(IGEOM)))
+        DO I = 1, NCUT
+          IF (R1(IGEOM).NE.R2(IGEOM))
+     >       XCUT(I) = R1(IGEOM) + XCUT(I)/DIST*(R2(IGEOM)-R1(IGEOM))
+        ENDDO
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST TWO AND LAST TWO POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(3),YCUT(3),NCUT-4,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- WRITE TO PPF
+C
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NCUT2,XCUT2,YCUT2,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C*******************************
+C     KY3 RECIPROCATING PROBE  *
+C*******************************
+C
+      ELSE IF (DDA.EQ.'PY3 ') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON TEMPERATURE
+C
+        IF (DTYPE.EQ.'TE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KY3 ELECTRON TEMP'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   ELECTRON DENSITY
+C
+        ELSE IF (DTYPE.EQ.'NE  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY3 ELECTRON DENSITY'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KNEBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   ION TEMPERATURE
+C
+        ELSE IF (DTYPE.EQ.'TI  ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV' 
+          DTDESC = 'KY3 ION TEMPERATURE'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CVALS(IK,IR) = KTIBS(IK,IR)
+            ENDDO
+          ENDDO
+C
+C----   ION SATURATION CURRENT
+C
+        ELSE IF (DTYPE.EQ.'ISAT') THEN
+          XUNITS = 'M'
+          DUNITS = 'A/M2'
+          DTDESC = 'KY3 ISAT'
+          DO IR = 1, NRS
+            DO IK = 1, NKS(IR)
+              CS = 9.79E3*SQRT((KTIBS(IK,IR)+CIZB*KTEBS(IK,IR))/CRMB)
+              CVALS(IK,IR) = 0.5*ECH*KNBS(IK,IR)*CS
+              DO J = 1,NZS
+                DO IZ = 1,NIZS(J)
+                  CVALS(IK,IR) = CVALS(IK,IR)
+     >                      + 0.5*ECH*IZ*SDLIMS(IK,IR,IZ,J)*CS
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG CHORD
+C
+        CALL CUT (XCUT,YCUT,NCUT,MXCUT,CVALS,
+     >            R1(IGEOM),Z1(IGEOM),R2(IGEOM),Z2(IGEOM))
+C
+C---- CHECK TO SEE IF DIAGNOSTIC ENTERS PLASMA
+C
+        IF (NCUT.EQ.2 .AND. YCUT(1).EQ.0.0) THEN
+          WRITE(6,*)
+          WRITE(6,2000) IGEOM
+          WRITE(6,2010) DTYPE
+          GOTO 100
+        ENDIF
+C
+C---- CONVERT X VECTOR TO DISTANCE ABOVE THE MIDPLANE
+C
+        DIST = SQRT((R2(IGEOM)-R1(IGEOM))*(R2(IGEOM)-R1(IGEOM))
+     >        + (Z2(IGEOM)-Z1(IGEOM))*(Z2(IGEOM)-Z1(IGEOM)))
+        DO I = 1, NCUT
+          IF (Z1(IGEOM).NE.Z2(IGEOM))
+     >      XCUT(I) = Z1(IGEOM) + XCUT(I)/DIST*(Z2(IGEOM)-Z1(IGEOM))
+        ENDDO
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST TWO AND LAST TWO POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(3),YCUT(3),NCUT-4,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- SWITCH TO INCREASING X VECTOR TO SATISFY JETDSP
+C
+        NCUT3 = NCUT2
+        DO I = 1, NCUT2
+          IF (Z1(IGEOM).GT.Z2(IGEOM)) THEN
+            XCUT3(I) = XCUT2(NCUT2-I+1)
+            YCUT3(I) = YCUT2(NCUT2-I+1)
+          ELSE
+            XCUT3(I) = XCUT2(I)
+            YCUT3(I) = YCUT2(I)
+          ENDIF
+        ENDDO
+C
+C---- WRITE TO PPF
+C
+        CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >             IXREF(IGEOM),ITREF,NCUT3,XCUT3,YCUT3,
+     >             XUNITS,DUNITS,DTDESC,
+     >             IRCODE)
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+C**********************************
+C     KY4D FIXED LANGMUIR PROBES  *
+C**********************************
+C
+      ELSE IF (DDA.EQ.'PY4D') THEN
+C
+C---- PARSE INPUT RECORD
+C
+        READ(RECORD,*,ERR=9999,END=9999) DDARD, DTYPE, IGEOM
+C
+        IF (IGEOM.EQ.0) GOTO 100
+C
+C---- SIMULATE DIAGNOSTIC SIGNAL
+C
+C----   ELECTRON TEMPERATURE
+C
+        IF (DTYPE.EQ.'TEI ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KY4D INNER TE'
+          DO ID = 1, NDS
+            DVALS(ID) = KTEDS(ID)
+          ENDDO
+        ELSE IF (DTYPE.EQ.'TEO ') THEN
+          XUNITS = 'M'
+          DUNITS = 'EV'
+          DTDESC = 'KY4D OUTER TE'
+          DO ID = 1, NDS
+            DVALS(ID) = KTEDS(ID)
+          ENDDO
+C
+C----   ELECTRON DENSITY
+C
+        ELSE IF (DTYPE.EQ.'NEI ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY4D INNER NE'
+          DO ID = 1, NDS
+            DVALS(ID) = KNEDS(ID)
+          ENDDO
+        ELSE IF (DTYPE.EQ.'NEO ') THEN
+          XUNITS = 'M'
+          DUNITS = 'M-3'
+          DTDESC = 'KY4D OUTER NE'
+          DO ID = 1, NDS
+            DVALS(ID) = KNEDS(ID)
+          ENDDO
+C
+C----   ION SATURATION CURRENT
+C
+        ELSE IF (DTYPE.EQ.'ISI ') THEN
+          XUNITS = 'M'
+          DUNITS = 'A/M2'
+          DTDESC = 'KY4D INNER ISAT'
+          DO ID = 1, NDS
+            DVALS(ID) = ECH*KNDS(ID)*ABS(KVDS(ID))
+            DO J = 1,NZS
+              DO IZ = 1,NIZS(J)
+                DVALS(ID) = DVALS(ID)
+     >                     + ECH*IZ*KNZDS(ID,IZ,J)*ABS(KVZDS(ID,IZ,J))
+              ENDDO
+            ENDDO
+          ENDDO
+        ELSE IF (DTYPE.EQ.'ISO ') THEN
+          XUNITS = 'M'
+          DUNITS = 'A/M2'
+          DTDESC = 'KY4D OUTER ISAT'
+          DO ID = 1, NDS
+            DVALS(ID) = ECH*KNDS(ID)*ABS(KVDS(ID))
+            DO J = 1,NZS
+              DO IZ = 1,NIZS(J)
+                DVALS(ID) = DVALS(ID)
+     >                     + ECH*IZ*KNZDS(ID,IZ,J)*ABS(KVZDS(ID,IZ,J))
+              ENDDO
+            ENDDO
+          ENDDO
+C
+C----   UNKNOWN DATA TYPE
+C
+        ELSE
+          IERR = 40
+          RETURN
+        ENDIF
+C
+C---- GET PROFILES ALONG TARGET (GEOMETRY 1 FOR INNER; 2 FOR OUTER)
+C
+        CALL TARGET (XCUT,YCUT,NCUT,MXCUT,DVALS,IGEOM)
+C
+C---- SMOOTH WITH DIAGNOSTIC RESOLUTION
+C---- FIRST AND LAST POINTS OUTSIDE COMPUTATIONAL GRID
+C
+        NCUT2 = MXCUT
+        CALL SMOOTH (XCUT(2),YCUT(2),NCUT-2,DRES(IGEOM),
+     >               XCUT2,YCUT2,NCUT2)
+C
+C---- FOR EXPERIMENTAL UNITS, CONVERT TO EFFECTIVE MIDPLANE RADIUS
+C
+        IF (IEXP.EQ.1) THEN
+          XUNITS = 'RMID (M)'
+          CALL RMIDPL(6,NRS,RVALS,IRCODE)
+          IF (IRCODE.NE.0) THEN
+            IERR = 60 + IRCODE
+            RETURN
+          ENDIF
+          IF (IGEOM.EQ.1) THEN
+            I = 0
+            DO IR = IRWALL,IRSEP,-1
+              ID = IDDS(IR,IGEOM)
+              I = I + 1
+              XVALS(I) = RVALS(IR)
+              YVALS(I) = DVALS(ID)
+            ENDDO
+            DO IR = NRS,IRTRAP,-1
+              ID = IDDS(IR,IGEOM)
+              I = I + 1
+              XVALS(I) = RVALS(IR)
+              YVALS(I) = DVALS(ID)
+            ENDDO
+          ELSE
+            I = 0
+            DO IR = IRTRAP,NRS
+              ID = IDDS(IR,IGEOM)
+              I = I + 1
+              XVALS(I) = RVALS(IR)
+              YVALS(I) = DVALS(ID)
+            ENDDO
+            DO IR = IRSEP,IRWALL
+              ID = IDDS(IR,IGEOM)
+              I = I + 1
+              XVALS(I) = RVALS(IR)
+              YVALS(I) = DVALS(ID)
+            ENDDO
+          ENDIF
+        ENDIF
+C
+C---- WRITE TO PPF
+C
+        IF (IEXP.EQ.0) THEN
+          CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >               IXREF(IGEOM),ITREF,NCUT2,XCUT2,YCUT2,
+     >               XUNITS,DUNITS,DTDESC,
+     >               IRCODE)
+        ELSE
+          CALL WRD1 (ISHOT,TSHOT,DDA,DTYPE,
+     >               IXREF(IGEOM),ITREF,I,XVALS,YVALS,
+     >               XUNITS,DUNITS,DTDESC,
+     >               IRCODE)
+        ENDIF
+        IF (IRCODE.NE.0) THEN
+          IERR = IRCODE
+          RETURN
+        ENDIF
+C
+      ENDIF
+      GOTO 100
+C
+  200 RETURN
+C
+ 9999 IERR = 31
+      RETURN
+C
+ 2000 FORMAT(1X,'GEOMETRY ',I2,' DOES NOT ENTER PLASMA!')
+ 2010 FORMAT(1X,'DATA TYPE ',A4,' WILL NOT BE WRITTEN')
+C
+      END
+C
+C
+C
+      SUBROUTINE LOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LOSINT:  INTEGRATE THE VARIABLE VS ALONG A FAN OF SIGHT LINES    *
+C  *           FROM A COMMON OBSERVATION POINT (ROBS,ZOBS).  SPATIAL   *
+C  *           RESOLUTION IS SIMULATED BY AN AVPTS-POINT AVERAGE OF    *
+C  *           A SET OF CHORDS SPANNING THE INTERVAL TWIDS.  AT THE    *
+C  *           MOMENT THERE ARE NO WEIGHTS ON THIS AVERAGING WHICH     *
+C  *           IMPLIES THAT WE ARE ASSUMING A RECTANGULAR, RATHER      *
+C  *           THAN A CIRCULAR, VIEWING CONE.  THE INTEGRAL IS         *
+C  *           PERFORMED BY FINDING THE PATH LENGTHS OF THE LOS IN     *
+C  *           EACH PLASMA CELL.                                       *
+C  *                                                                   *
+C  *            CHRIS FARRELL  (HUNTERSKIL)  MARCH 1989                *
+C  *            LORNE HORTON   (JET)         JULY  1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+cdebug
+c     include (ppplas)
+cdebug
+C
+      INTEGER NUMTHE,AVPTS
+      REAL    TVALS(MAXTHE),TOUTS(MAXTHE),TWIDS(MAXTHE),
+     >        ROBS,ZOBS,VS(MAXNKS,MAXNRS)
+C
+      INTEGER I,J,K,IK,IR,NINT,SIDE(2)
+      REAL    THETA,XB(2),WB(2),DIST(2)
+C
+      XB(1) = ROBS
+      XB(2) = ZOBS
+C
+C  LOOP OVER SIGHT LINES
+C
+      DO 200 I = 1, NUMTHE
+        TVALS(I) = 0.0
+C
+C  LOOP OVER CHORDS FOR AVERAGING
+C
+        DO 100 J = 1, AVPTS
+          IF (AVPTS.EQ.1) THEN
+            THETA = TOUTS(I)
+          ELSE
+            THETA = TOUTS(I) - 0.5*TWIDS(I) + (J-1)*TWIDS(I)/(AVPTS-1)
+          ENDIF
+          THETA = THETA*DEGRAD
+          WB(1) = COS(THETA)
+          WB(2) = SIN(THETA)
+C
+C  LOOP OVER PLASMA CELLS
+C
+          DO 20 IR = 1, NRS
+            DO 10 IK = 1, NKS(IR)
+C
+C  DON'T DOUBLE COUNT CELL AT END OF CORE RINGS
+C
+              IF (IK.EQ.NKS(IR).AND.IR.LT.IRSEP) GOTO 10
+              K = KORPG(IK,IR)
+              IF (K.EQ.0) GOTO 10
+              CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >                    XB,WB,NINT,DIST,SIDE)
+              IF (NINT.EQ.2 .AND. DIST(2).GT.0.0) THEN
+                IF (DIST(1).LT.0.0) THEN
+                  TVALS(I) = TVALS(I) + VS(IK,IR)*DIST(2)
+cdebug
+c                 write(6,*) ik,ir,vs(ik,ir),dist(2),tvals(i)
+c                 write(6,*) ik,ir,ktebs(ik,ir),knebs(ik,ir),
+c    >                       sdlims(ik,ir,0)
+cdebug
+                ELSE
+                  TVALS(I) = TVALS(I) + VS(IK,IR)*(DIST(2)-DIST(1))
+cdebug
+c                 write(6,*) ik,ir,vs(ik,ir),dist(2)-dist(1),tvals(i)
+c                 write(6,*) ik,ir,ktebs(ik,ir),knebs(ik,ir),
+c    >                       sdlims(ik,ir,0)
+cdebug
+                ENDIF
+              ENDIF
+   10       CONTINUE
+   20     CONTINUE
+  100   CONTINUE
+        TVALS(I) = TVALS(I) / AVPTS
+cdebug
+c       write(6,*) i,theta,tvals(i)
+cdebug
+  200 CONTINUE
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE LOS3D(TVALS,ROBS,POBS,ZOBS,COUTS,WRES,VS,NUMTHE,AVPTS)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LOS3D :  INTEGRATE THE VARIABLE VS ALONG NUMTHE SIGHT LINES      *
+C  *           FROM A COMMON OBSERVATION POINT (ROBS,ZOBS).  SPATIAL   *
+C  *           RESOLUTION IS SIMULATED BY 2*(2*AVPTS - 1) CHORDS       *
+C  *           WITHIN A CONE CENTERED ON EACH SIGHT LINE, AND ADDED    *
+C  *           WITH A WEIGHTING WRES.                                  *
+C  *                                                                   *
+C  *            CHRIS FARRELL  (HUNTERSKIL)  MARCH 1989                *
+C  *            LORNE HORTON   (JET)         JULY  1993                *
+C  *            JOHN O'ROURKE  (JET)         AUG   1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+C
+      INTEGER NUMTHE,AVPTS
+      INTEGER I,J,K,M,MCP,IFND,IR,IK,IV,IV1,IERR
+      REAL    TVALS(MAXTHE),
+     >        ROBS,POBS,ZOBS,VS(MAXNKS,MAXNRS)
+      REAL    COUTS(MAXTHE,MAXCH3,3),WRES(MAXCH3)
+C
+      REAL DEL,RUN,X,Y,Z,R,RUNMAX
+      REAL ANG,ANGT,ANGM,RV1,RV2,ZV1,ZV2
+      LOGICAL LIN
+C
+      M=2*(2*AVPTS - 1)
+      MCP=3*AVPTS - 1
+      DEL=0.001
+      RUNMAX=10000.
+C
+C  LOOP OVER SIGHT LINES
+C
+      DO 200 I = 1, NUMTHE
+        TVALS(I) = 0.0
+C
+C  LOOP OVER CHORDS FOR AVERAGING
+C
+        DO 100 J = 1, M
+C
+C  BECAUSE THE SIGHT CONE IS SCANNED TWICE (IN PERPENDICULAR DIRECTIONS)
+C  THE CENTRAL SIGHT LINE IS COUNTED TWICE -- NO NEED TO RECALCULATE IT
+C
+          IF (J.EQ.MCP) GOTO 100
+C
+C  BEGIN MOVING ALONG SIGHT LINE...
+C
+          RUN=0.
+          IK=0
+          IR=0
+          LIN = .FALSE.
+300       RUN=RUN+1.
+          X=ROBS*COS(POBS) + (RUN-0.5)*DEL*COUTS(I,J,1)
+          Y=ROBS*SIN(POBS) + (RUN-0.5)*DEL*COUTS(I,J,2)
+          Z=ZOBS           + (RUN-0.5)*DEL*COUTS(I,J,3)
+C
+C  ... UNTIL YOU HAVE REACHED A MAXIMUM NUMBER OF STEPS...
+C
+          IF (RUN.GT.RUNMAX) GOTO 99
+C
+C  ... OR UNTIL YOU HAVE ENTERED THE VESSEL AND THEN EXITED AGAIN
+C
+          R = (X*X + Y*Y)**0.5
+          IF(Z.LT.-2.1.OR.Z.GT.+2.1.OR.R.LT.+1.7.OR.R.GT.+4.3) THEN
+            IF (LIN) THEN
+              GOTO  99
+            ELSE
+              GOTO 300
+            ENDIF
+          ELSE
+            LIN = .TRUE.
+          ENDIF
+C
+C  FIND PLASMA CELL
+C
+          CALL GETCELL(R,Z,IK,IR,IERR)
+          IF (IERR.NE.0) THEN
+            WRITE(LERR,*) ' GETCELL ERROR - POINT NOT LOCATED: (R,Z)= ',
+     >                 R,Z
+            GOTO 300
+          ENDIF
+C
+C  ONLY POINTS IN THE PLASMA
+C
+          IF (IR.LE.0) GOTO 300
+C
+C  UPDATE INTEGRAL, COUNTING THE CENTRAL LINE TWICE
+C
+          TVALS(I) = TVALS(I) + VS(IK,IR)*DEL*WRES(J)
+          IF (J.EQ.AVPTS) TVALS(I) = TVALS(I) + VS(IK,IR)*DEL*WRES(J)
+cdebug
+c         write(6,*) r,z,ik,ir,vs(ik,ir),del,wres(j),tvals(i)
+cdebug
+C
+          GOTO 300
+   99     CONTINUE
+cdebug
+c         write(6,*) j,wres(j),tvals(i)
+cdebug
+  100   CONTINUE
+  200 CONTINUE
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE GETCELL(R,Z,IK,IR,IERR)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  GETCELL: FIND THE CELL WHICH CONTAINS THE GIVEN POINT (R,Z).     *
+C  *           THE INTEGERS IK AND IR ARE BOTH INPUT AND OUTPUT,       *
+C  *           AND SHOULD CONTAIN THE LAST KNOWN CELL ALONG A TRACK    *
+C  *           IN ORDER TO SPEED THE SEARCH PROCEDURE. IF THE INPUT    *
+C  *           POINT IS OUTSIDE THE PLASMA IK AND IR ARE RETURNED      *
+C  *           AS -1, IF THE POINT IS IN THE CENTRAL ESCAPE REGION     *
+C  *           IK = IR = -2 IS RETURNED.  IF THE ROUTINE FAILS TO      *
+C  *           LOCATE THE POINT IERR IS SET TO 1 AND IK = IR = 0.      *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+C
+      INTEGER IK,IR,IERR
+      REAL    R,Z
+C
+      INTEGER I,J,K
+      CHARACTER LEQUIL*72
+      LOGICAL INCELL,SETUP
+      DATA    SETUP/.TRUE./,LEQUIL/' '/
+C
+      INTEGER   IW,LND
+      PARAMETER (LND = 128, IW = 4*LND)
+      INTEGER   NP,NE,KIND,INDP(2,LND),INDE(2,LND),LP
+      REAL      WORKP(IW),WORKE(IW),
+     >          XP(2*(MAXNKS+MAXNRS)+1),YP(2*(MAXNKS+MAXNRS)+1),
+     >          XE(MAXNKS),YE(MAXNKS),
+     >          T,XD,YD,RESULT
+      DATA      KIND/1/,LP/-1/
+C
+C  WHEN TREATING MULTIPLE FILES FROM THE D.A.M.U. POST PROCESSOR
+C  THE EQUILIBRIUM MAY CHANGE.  CHECK FOR THIS AND REINITIALISE, IF
+C  NECESSARY.
+C
+      IF (LEQUIL.NE.EQUIL) THEN
+        SETUP = .TRUE.
+        LEQUIL = EQUIL
+      ENDIF
+C
+C  FIRST TIME IN, SETUP POLYGONS DEFINING PLASMA BOUNDARY AND
+C  ESCAPE REGION
+C
+      IF (SETUP) THEN
+C
+C  PLASMA BOUNDARY
+C
+        NP = 0
+        J = IRWALL - 1
+        DO I = 1,NKS(J)
+          K = KORPG(I,J)
+C  CHECK TO SEE IF VIRTUAL POINTS EXIST AT ENDS OF RINGS!
+          IF (K.NE.0) THEN
+            NP = NP + 1
+            XP(NP) = RVERTP(2,K)
+            YP(NP) = ZVERTP(2,K)
+          ENDIF
+        ENDDO
+        DO J = IRWALL-1,IRSEP,-1
+          NP = NP + 1
+          I = NKS(J)
+          K = KORPG(I,J)
+          IF (K.EQ.0) K = KORPG(I-1,J)
+          XP(NP) = RVERTP(3,K)
+          YP(NP) = ZVERTP(3,K)
+        ENDDO
+        DO J = NRS,IRTRAP+1,-1
+          NP = NP + 1
+          I = NKS(J)
+          K = KORPG(I,J)
+          IF (K.EQ.0) K = KORPG(I-1,J)
+          XP(NP) = RVERTP(3,K)
+          YP(NP) = ZVERTP(3,K)
+        ENDDO
+        J = IRTRAP + 1
+        DO I = NKS(J),1,-1
+          K = KORPG(I,J)
+          IF (K.NE.0) THEN
+            NP = NP + 1
+            XP(NP) = RVERTP(4,K)
+            YP(NP) = ZVERTP(4,K)
+          ENDIF
+        ENDDO
+        DO J = IRTRAP+1,NRS
+          NP = NP + 1
+          I = 1
+          K = KORPG(I,J)
+          IF (K.EQ.0) K = KORPG(I+1,J)
+          XP(NP) = RVERTP(1,K)
+          YP(NP) = ZVERTP(1,K)
+        ENDDO
+        DO J = IRSEP,IRWALL-1
+          NP = NP + 1
+          I = 1
+          K = KORPG(I,J)
+          IF (K.EQ.0) K = KORPG(I+1,J)
+          XP(NP) = RVERTP(1,K)
+          YP(NP) = ZVERTP(1,K)
+        ENDDO
+        NP = NP + 1
+        XP(NP) = RVERTP(2,K)
+        YP(NP) = ZVERTP(2,K)
+C
+C  ESCAPE REGION (NOTE THAT LAST CELL REPEATS FIRST)
+C
+        NE = 0
+        J = 2
+        DO I = 1,NKS(J)
+          NE = NE + 1
+          K = KORPG(I,J)
+          XE(NE) = RVERTP(4,K)
+          YE(NE) = ZVERTP(4,K)
+        ENDDO
+C
+C  INITIALISE REGIONS
+C
+        CALL GA15A(NP,KIND,WORKP,IW,INDP,LND,XP,YP,T,XD,YD,LP)
+        IF (INDP(1,1).GT.0) THEN
+          WRITE(6,*) ' GA15A ERROR ',INDP(1,1),' FOR PLASMA BOUNDARY'
+          STOP ' '
+        ENDIF
+        CALL GA15A(NE,KIND,WORKE,IW,INDE,LND,XE,YE,T,XD,YD,LP)
+        IF (INDE(1,1).GT.0) THEN
+          WRITE(6,*) ' GA15A ERROR ',INDE(1,1),' FOR ESCAPE REGION'
+          STOP ' '
+        ENDIF
+C
+        SETUP = .FALSE.
+      ENDIF
+C
+      IERR = 0
+C
+C  IF THERE IS A CURRENT CELL, CHECK IT AND ITS NEIGHBOURS
+C
+      IF (IK.GT.0) THEN
+C
+C  START WITH LAST KNOWN CELL
+C
+        IF (INCELL(R,Z,IK,IR)) RETURN
+C
+C  OTHERWISE, CHECK NEAREST NEIGHBOURS
+C
+        IF (INCELL(R,Z,IKINS(IK,IR),IRINS(IK,IR))) THEN
+          I  = IKINS(IK,IR)
+          IR = IRINS(IK,IR)
+          IK = I
+          RETURN
+        ENDIF
+        IF (INCELL(R,Z,IKOUTS(IK,IR),IROUTS(IK,IR))) THEN
+          I  = IKOUTS(IK,IR)
+          IR = IROUTS(IK,IR)
+          IK = I
+          RETURN
+        ENDIF
+        IF (IK.GT.1) THEN
+          IF (INCELL(R,Z,IK-1,IR)) THEN
+            IK = IK - 1
+            RETURN
+          ENDIF
+        ENDIF
+        IF (IK.LT.NKS(IR)) THEN
+          IF (INCELL(R,Z,IK+1,IR)) THEN
+            IK = IK + 1
+            RETURN
+          ENDIF
+        ENDIF
+      ENDIF
+C
+C  CHECK IF POINT IS IN PLASMA
+C
+      CALL GA15B(R,Z,RESULT,NP,KIND,WORKP,IW,INDP,LND,XP,YP,T,XD,YD,LP)
+      IF (RESULT.LE.0) THEN
+        IK = -1
+        IR = -1
+        RETURN
+      ENDIF
+C
+C  CHECK IF POINT IS IN ESCAPE REGION
+C
+      CALL GA15B(R,Z,RESULT,NE,KIND,WORKE,IW,INDE,LND,XE,YE,T,XD,YD,LP)
+      IF (RESULT.GE.0) THEN
+        IK = -2
+        IR = -2
+        RETURN
+      ENDIF
+C
+C  FINALLY, LOOP OVER PLASMA CELLS
+C
+      DO 20 J = 1, NRS
+        DO 10 I = 1, NKS(J)
+          IF (INCELL(R,Z,I,J)) THEN
+            IK = I
+            IR = J
+            RETURN
+          ENDIF
+   10   CONTINUE
+   20 CONTINUE
+C
+C  POINT STILL NOT FOUND
+C
+      IERR = 1
+      IK = 0
+      IR = 0
+      RETURN
+      END
+C
+C
+C
+      LOGICAL FUNCTION INCELL(R,Z,IK,IR)
+      IMPLICIT NONE
+      INTEGER IK,IR
+      REAL R,Z
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+      INTEGER K,IV,IV1
+      REAL*8 R8,Z8,ANG,ANGT,ANGM
+      REAL*8 RV1,ZV1,RV2,ZV2
+      REAL*8 PI8
+      DATA PI8/3.141592654D0/
+C
+      INCELL = .FALSE.
+C
+C  CALCULATE THE ANGLES SUBTENDED AT (R,Z)
+C  BY ADJOINING PAIRS OF VERTICES OF A GIVEN POLYGON.
+C  IF (R,Z) IS WITHIN THE POLYGON, THE SUM OF THE THREE
+C  SMALLEST ANGLES WILL BE GREATER THAN 180 DEGREES.
+C
+      K = KORPG(IK,IR)
+C
+C  VIRTUAL POINTS ARE OUTSIDE THE PLASMA AND HAVE NO POLYGON
+C  ASSOCIATED WITH THEM
+C
+      IF (K.EQ.0) RETURN
+C
+      R8 = R
+      Z8 = Z
+      ANGT=0.
+      ANGM=0.
+      DO 10 IV=1,4
+        IF(IV.LE.3)THEN
+          IV1=IV+1
+        ELSE
+          IV1=1
+        ENDIF
+        RV1=RVERTP(IV,K)
+        ZV1=ZVERTP(IV,K)
+        RV2=RVERTP(IV1,K)
+        ZV2=ZVERTP(IV1,K)
+        CALL ANGL(R8,Z8,RV1,ZV1,RV2,ZV2,ANG)
+        ANGT=ANGT+ANG
+        IF(ANG.GT.ANGM)ANGM=ANG
+   10 CONTINUE
+      ANGT=ANGT-ANGM
+      IF (ANGT.GE.PI8) INCELL = .TRUE.
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE ANGL(R0,Z0,R1,Z1,R2,Z2,ANG)
+      IMPLICIT NONE
+      REAL*8 R0,Z0,R1,Z1,R2,Z2,ANG,V1N,V2N,DOT
+      REAL*8 V1(2),V2(2)
+      V1(1)=R1-R0
+      V1(2)=Z1-Z0
+      V2(1)=R2-R0
+      V2(2)=Z2-Z0
+      V1N=( V1(1)*V1(1) + V1(2)*V1(2) )**0.5
+      V2N=( V2(1)*V2(1) + V2(2)*V2(2) )**0.5
+      IF(V1N.EQ.0..OR.V2N.EQ.0.)THEN
+        ANG=0.
+      ELSE
+        DOT=( V1(1)*V2(1) + V1(2)*V2(2) ) / (V1N*V2N)
+        IF(DOT.GT.1.)DOT=1.
+        IF(DOT.LT.-1.)DOT=-1.
+        ANG=DACOS(DOT)
+      ENDIF
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE INTERS (NV,RV,ZV,XB,WB,NINT,DIST,SIDE)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  INTERS:  FIND THE NUMBER OF INTERSECTIONS, IF ANY, BETWEEN A     *
+C  *           LINE DEFINED BY THE POINT XB AND THE DIRECTION COSINES  *
+C  *           WB WITH A POLYGON DEFINED BY ITS VERTICES               *
+C  *           (RV(I),ZV(I)),I=1,NV.  THE ALGORITHM IS TAKEN FROM THE  *
+C  *           NIMBUS ROUTINE G1.  POLYGONS ARE ASSUMED TO BE CONVEX   *
+C  *           SO THAT THERE MUST BE EITHER 0 OR 2 INTERSECTIONS.  IN  *
+C  *           ADDITION, IF INTERSECTIONS ARE FOUND, THE DISTANCE FROM *
+C  *           XB TO EACH IS RETURNED, AS IS THE SIDE OF THE POLYGON   *
+C  *           WHICH IS CROSSED IN EACH CASE.                          *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JULY  1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER NV,NINT,SIDE(2)
+      REAL    RV(NV),ZV(NV),XB(2),WB(2),DIST(2)
+C
+      INTEGER I,IP1,LR(2)
+      REAL XI,YI,XIP1,YIP1,D
+      REAL FNUM,DENO,T,XP,YP
+      REAL FMIN,FMAX,TT(2),EPS
+      DATA EPS/1.0E-5/
+C
+      NINT = 0
+      TT(1) = 0.0
+      DO 120 I = 1, NV
+        IF (NINT.EQ.2) GOTO 120
+        XI = RV(I)
+        YI = ZV(I)
+        IP1 = I + 1
+        IF (IP1.GT.NV) IP1 = 1
+        XIP1 = RV(IP1)
+        YIP1 = ZV(IP1)
+        D = YIP1 - YI
+        IF (D) 90,80,90
+   80   FNUM = YI - XB(2)
+        DENO = WB(2)
+        GOTO 100
+   90   D = (XIP1-XI)/D
+        FNUM = XI - XB(1) - D*(YI-XB(2))
+        DENO = WB(1) - D*WB(2)
+  100   IF (DENO) 110,120,110
+  110   T = FNUM/DENO
+        XP = XB(1) + WB(1)*T
+        IF (XI.EQ.XIP1) XP = XI
+        YP = XB(2) + WB(2)*T
+        IF (YI.EQ.YIP1) YP = YI
+        FMIN = AMIN1(XI,XIP1)
+        FMAX = AMAX1(XI,XIP1)
+        IF (XP.LT.FMIN .OR. XP.GT.FMAX) GO TO 120
+        FMIN = AMIN1(YI,YIP1)
+        FMAX = AMAX1(YI,YIP1)
+        IF (YP.LT.FMIN .OR. YP.GT.FMAX) GO TO 120
+        IF (NINT.EQ.1 .AND. ABS(T-TT(1)).LT.EPS) GO TO 120
+        NINT = NINT + 1
+        TT(NINT) = T
+        LR(NINT) = I
+  120 CONTINUE
+      IF (NINT.EQ.0) GO TO 170
+      DIST(1) = TT(1)
+      DIST(2) = TT(2)
+      SIDE(1) = LR(1)
+      SIDE(2) = LR(2)
+      IF (DIST(1).LT.DIST(2)) GO TO 170
+      DIST(1) = TT(2)
+      DIST(2) = TT(1)
+      SIDE(1) = LR(2)
+      SIDE(2) = LR(1)
+  170 CONTINUE
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE CUT (XCUT,YCUT,NCUT,MXCUT,VS,R1,Z1,R2,Z2)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  CUT:     RETURN THE PROFILE FORMED WHEN THE TWO-DIMENSIONAL      *
+C  *           DISTRIBUTION VS IS CUT BY A RAY STARTING AT THE POINT   *
+C  *           (R1,Z1) AND PROCEEDING TO THE POINT (R2,Z2).  THE       *
+C  *           X VECTOR IS THE DISTANCE FROM THE STARTING POINT WITH   *
+C  *           THE FIRST POINT AT (R1,Z1) AND THE LAST AT (R2,Z2).     *
+C  *           IF THE RAY DOES NOT INTERSECT THE PLASMA AT ALL, THEN   *
+C  *           THESE ARE THE ONLY TWO POINTS RETURNED AND NCUT=2.      *
+C  *           SINCE THE TWO END POINTS COULD BE IN THE SAME PLASMA    *
+C  *           CELL, THE TEST FOR NO INTERSECTIONS SHOULD BE NCUT=2    *
+C  *           AND YCUT(1)=0.0.  IF THE SUPPLIED VECTORS ARE NOT       *
+C  *           BIG ENOUGH THE PROFILE IS TRUNCATED AND                 *
+C  *           XCUT(NCUT=MXCUT) IS NOT AT (R2,Z2).                     *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JULY  1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+C
+      INTEGER NCUT,MXCUT
+      REAL    XCUT(MXCUT),YCUT(MXCUT),VS(MAXNKS,MAXNRS),R1,Z1,R2,Z2
+C
+      INTEGER IR,IK,K,NINT,SIDE(2),IRNEW,IKNEW,SMIN(2)
+      REAL    XB(2),WB(2),THETA,DIST(2),DMIN,DMAX,EPS,ATAN2C
+      DATA    EPS/1.0E-5/
+      EXTERNAL ATAN2C
+C
+C  MXCUT MUST AT LEAST BE LONG ENOUGH TO HOLD FIRST AND LAST POINTS!
+C
+      IF (MXCUT.LT.2) THEN
+        WRITE(LERR,*) ' ERROR IN CUT, MXCUT = ',MXCUT
+        STOP
+      ENDIF
+C
+      XB(1) = R1
+      XB(2) = Z1
+      DMAX = SQRT((R2-R1)*(R2-R1) + (Z2-Z1)*(Z2-Z1))
+      IF (DMAX.LE. EPS) THEN
+        WRITE(LERR,*) ' ERROR IN CUT, DMAX = ',DMAX
+        STOP
+      ENDIF
+      THETA = ATAN2C(Z2-Z1,R2-R1)
+      WB(1) = COS(THETA)
+      WB(2) = SIN(THETA)
+C
+C  IS THE STARTING POINT IN THE PLASMA?
+C
+      DO 20 IR = 1, NRS
+        DO 10 IK = 1, NKS(IR)
+          K = KORPG(IK,IR)
+          IF (K.EQ.0) GOTO 10
+          CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >                XB,WB,NINT,DIST,SIDE)
+          IF (NINT.EQ.2 .AND. DIST(1).LE.0.0 .AND. DIST(2).GE.0.0) THEN
+C  YES
+            NCUT = 1
+            XCUT(NCUT) = 0.0
+            YCUT(NCUT) = VS(IK,IR)
+CCC         WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+            IF (DIST(2).GT.EPS) THEN
+              IF (NCUT+1.GT.MXCUT) GOTO 999
+              IF (DIST(2).GT.DMAX) GOTO 900
+              NCUT = NCUT + 1
+              XCUT(NCUT) = DIST(2)-EPS
+              YCUT(NCUT) = VS(IK,IR)
+CCC           WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+            ENDIF
+            GOTO 30
+          ENDIF
+   10   CONTINUE
+   20 CONTINUE
+C  NO
+      NCUT = 1
+      XCUT(NCUT) = 0.0
+      YCUT(NCUT) = 0.0
+CCC   WRITE(LERR,*) -1,-1,XCUT(NCUT),YCUT(NCUT)
+      GOTO 50
+C
+C  FIND NEIGHBOURING CELL, IF ANY
+C
+   30 IF (SIDE(2).EQ.1) THEN
+C  BACKWARD
+        IF (IK.GT.1 .AND. KORPG(IK-1,IR).NE.0) THEN
+          IKNEW = IK - 1
+          IRNEW = IR
+        ELSE IF (IK.EQ.1 .AND. IR.LT.IRSEP) THEN
+          IKNEW = NKS(IR) - 1
+          IRNEW = IR
+        ELSE
+          GOTO 40
+        ENDIF
+      ELSE IF (SIDE(2).EQ.2) THEN
+C  OUTSIDE
+        IF (IROUTS(IK,IR).NE.IR .AND.
+     >      KORPG(IKOUTS(IK,IR),IROUTS(IK,IR)).NE.0) THEN
+          IKNEW = IKOUTS(IK,IR)
+          IRNEW = IROUTS(IK,IR)
+        ELSE
+          GOTO 40
+        ENDIF
+      ELSE IF (SIDE(2).EQ.3) THEN
+C  FORWARD
+        IF (IK.LT.NKS(IR) .AND. KORPG(IK+1,IR).NE.0) THEN
+          IKNEW = IK + 1
+          IRNEW = IR
+        ELSE IF (IK.EQ.NKS(IR) .AND. IR.LT.IRSEP) THEN
+          IKNEW = 2
+          IRNEW = IR
+        ELSE
+          GOTO 40
+        ENDIF
+      ELSE IF (SIDE(2).EQ.4) THEN
+C  INSIDE
+        IF (IRINS(IK,IR).NE.IR .AND.
+     >      KORPG(IKINS(IK,IR),IRINS(IK,IR)).NE.0) THEN
+          IKNEW = IKINS(IK,IR)
+          IRNEW = IRINS(IK,IR)
+        ELSE
+          GOTO 40
+        ENDIF
+      ENDIF
+C
+C  GET PATH THROUGH NEW CELL
+C
+      IK = IKNEW
+      IR = IRNEW
+      K = KORPG(IK,IR)
+      CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >            XB,WB,NINT,DIST,SIDE)
+      IF (NINT.NE.2) THEN
+CCC     WRITE(LERR,*) ' ERROR IN CUT, (IK,IR) = ',IK,IR,' NINT = ',NINT
+        STOP
+      ENDIF
+C
+C  IF PATH LENGTH IS GREATER THAN 2*EPS, ADD NEW POINTS TO PROFILE
+C
+      IF (DIST(2)-DIST(1).GT.2.0*EPS) THEN
+        IF (NCUT+1.GT.MXCUT) GOTO 999
+        IF (DIST(1)+EPS.GT.DMAX) GOTO 900
+        NCUT = NCUT + 1
+        XCUT(NCUT) = DIST(1) + EPS
+        YCUT(NCUT) = VS(IK,IR)
+CCC     WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+        IF (NCUT+1.GT.MXCUT) GOTO 999
+        IF (DIST(2).GT.DMAX) GOTO 900
+        NCUT = NCUT + 1
+        XCUT(NCUT) = DIST(2) - EPS
+        YCUT(NCUT) = VS(IK,IR)
+CCC     WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+      ENDIF
+C
+C  LOOP BACK TO FIND NEXT CELL
+C
+      GOTO 30
+C
+C  ADD EXIT POINT FROM PLASMA
+C
+   40 IF (NCUT+1.GT.MXCUT) GOTO 999
+      IF (DIST(2)+EPS.GT.DMAX) GOTO 800
+      NCUT = NCUT + 1
+      XCUT(NCUT) = DIST(2) + EPS
+      YCUT(NCUT) = 0.0
+CCC   WRITE(LERR,*) -IK,-IR,XCUT(NCUT),YCUT(NCUT)
+C
+C  FIND NEXT ENTRY TO PLASMA
+C
+   50 DMIN = HI
+      IKNEW = 0
+      IRNEW = 0
+      DO IR = 1,NRS
+        DO IK = 1,NKS(IR)
+          K = KORPG(IK,IR)
+          IF (K.EQ.0) GOTO 55
+          CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >                XB,WB,NINT,DIST,SIDE)
+          IF (NINT.EQ.2 .AND. DIST(2).GT.XCUT(NCUT)+EPS .AND.
+     >        DIST(2).LT.DMIN) THEN
+            DMIN = DIST(2)
+            IKNEW = IK
+            IRNEW = IR
+          ENDIF
+   55     CONTINUE
+        ENDDO
+      ENDDO
+C
+      IF (DMIN.LT.HI) THEN
+        IK = IKNEW
+        IR = IRNEW
+        K = KORPG(IK,IR)
+        CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >              XB,WB,NINT,DIST,SIDE)
+        IF (NINT.NE.2) THEN
+          WRITE(LERR,*)' ERROR IN CUT, (IK,IR) = ',IK,IR,' NINT = ',NINT
+          STOP
+        ENDIF
+C
+C  ADD ENTRY POINT TO PLASMA
+C
+        IF (NCUT+1.GT.MXCUT) GOTO 999
+        IF (DIST(1).GT.DMAX) GOTO 800
+        NCUT = NCUT + 1
+        XCUT(NCUT) = DIST(1) - EPS
+        YCUT(NCUT) = 0.0
+CCC     WRITE(LERR,*) -IK,-IR,XCUT(NCUT),YCUT(NCUT)
+C
+C  IF PATH LENGTH IS GREATER THAN 2*EPS, ADD NEW POINTS TO PROFILE
+C
+        IF (DIST(2)-DIST(1).GT.2.0*EPS) THEN
+          IF (NCUT+1.GT.MXCUT) GOTO 999
+          IF (DIST(1)+EPS.GT.DMAX) GOTO 900
+          NCUT = NCUT + 1
+          XCUT(NCUT) = DIST(1) + EPS
+          YCUT(NCUT) = VS(IK,IR)
+CCC       WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+          IF (NCUT+1.GT.MXCUT) GOTO 999
+          IF (DIST(2).GT.DMAX) GOTO 900
+          NCUT = NCUT + 1
+          XCUT(NCUT) = DIST(2) - EPS
+          YCUT(NCUT) = VS(IK,IR)
+CCC       WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+        ENDIF
+C
+C  LOOP BACK TO FIND NEXT CELL
+C
+        GOTO 30
+      ENDIF
+C
+C  NO MORE PLASMA; ADD END POINT AND RETURN
+C
+  800 IF (NCUT+1.GT.MXCUT) GOTO 999
+      NCUT = NCUT + 1
+      XCUT(NCUT) = DMAX
+      YCUT(NCUT) = 0.0
+CCC   WRITE(LERR,*) -1,-1,XCUT(NCUT),YCUT(NCUT)
+      GOTO 999
+C
+  900 NCUT = NCUT + 1
+      XCUT(NCUT) = DMAX
+      YCUT(NCUT) = VS(IK,IR)
+CCC   WRITE(LERR,*) IK,IR,XCUT(NCUT),YCUT(NCUT)
+C
+  999 CONTINUE
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE TARGET (XCUT,YCUT,NCUT,MXCUT,VS,IGEOM)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  TARGET:  RETURN THE PROFILE ALONG THE TARGET OF THE VARIABLE     *
+C  *           VS (DEFINED AT THE END OF EACH RING) AS A FUNCTION OF   *
+C  *           DISTANCE ALONG THE TARGET FROM THE SEPARATRIX.          *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JULY  1994                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+C
+      INTEGER NCUT,MXCUT,IGEOM
+      REAL    XCUT(MXCUT),YCUT(MXCUT),VS(MAXNDS)
+C
+      INTEGER ID,IR,I
+      REAL    EPS,DIST
+      DATA    EPS/1.0E-5/
+C
+      NCUT = 2*(NRS-IRTRAP+1) + 2*(IRWALL-IRSEP+1) + 2
+C
+C  CHECK THAT MXCUT IS LONG ENOUGH TO HOLD ENTIRE PROFILE
+C
+      IF (MXCUT.LT.NCUT) THEN
+        WRITE(LERR,*) ' ERROR IN TARGET, MXCUT = ',MXCUT
+        STOP
+      ENDIF
+C
+      DIST = 0.0
+      DO IR = NRS,IRTRAP,-1
+        ID = IDDS(IR,IGEOM)
+C
+        I = 2*(IR-IRTRAP+1) + 1
+        XCUT(I) = DIST - EPS
+        YCUT(I) = VS(ID)
+CC      WRITE(6,*) IR,ID,XCUT(I),YCUT(I),DIST
+C
+        I = I - 1
+        DIST = DIST - DDS2(ID)
+        XCUT(I) = DIST + EPS
+        YCUT(I) = VS(ID)
+CC      WRITE(6,*) IR,ID,XCUT(I),YCUT(I),DIST
+      ENDDO
+C
+      XCUT(1) = DIST - EPS
+      YCUT(1) = 0.0
+CC    WRITE(6,*) 0,0,XCUT(1),YCUT(1),DIST
+C
+      DIST = 0.0
+      DO IR = IRSEP,IRWALL
+        ID = IDDS(IR,IGEOM)
+C
+        I = 2*(NRS-IRTRAP+1+IR-IRSEP) + 2
+        XCUT(I) = DIST + EPS
+        YCUT(I) = VS(ID)
+CC      WRITE(6,*) IR,ID,XCUT(I),YCUT(I),DIST
+C
+        I = I + 1
+        DIST = DIST + DDS2(ID)
+        XCUT(I) = DIST - EPS
+        YCUT(I) = VS(ID)
+CC      WRITE(6,*) IR,ID,XCUT(I),YCUT(I),DIST
+      ENDDO
+C
+      XCUT(NCUT) = DIST + EPS
+      YCUT(NCUT) = 0.0
+CC    WRITE(6,*) 0,0,XCUT(NCUT),YCUT(NCUT),DIST
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE SMOOTH (XCUT,YCUT,NCUT,RES,XCUT2,YCUT2,NCUT2)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  SMOOTH:  TAKE A PROFILE GENERATED BY TAKING A CUT THROUGH        *
+C  *           A TWO DIMENSIONAL DISTRIBUTION AND SMOOTH IT TO         *
+C  *           SIMULATE A DIAGNOSTIC WITH A FINITE RESOLUTION.         *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     SEPTEMBER 1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER NCUT,NCUT2
+      REAL    RES,XCUT(NCUT),YCUT(NCUT),XCUT2(NCUT2),YCUT2(NCUT2)
+C
+      INTEGER I, J, K, N
+      REAL X, Y
+C
+C  EVENLY SPACED X-VECTOR
+C
+      DO I = 1, NCUT2
+        XCUT2(I) = XCUT(1) + (I-1)*(XCUT(NCUT)-XCUT(1))/(NCUT2-1)
+      ENDDO
+C
+C  Y-VECTOR
+C
+      DO I = 1, NCUT2
+        N = 0
+        Y = 0.0
+        DO J = -500,+500
+          X = XCUT2(I) + J*RES/1000.
+          IF (X.EQ.XCUT(NCUT)) THEN
+            Y = Y + YCUT(NCUT)
+            N = N + 1
+          ELSE
+            DO K = 1,NCUT-1
+              IF ((X.GE.XCUT(K) .AND. X.LT.XCUT(K+1)) .OR.
+     >            (X.LE.XCUT(K) .AND. X.GT.XCUT(K+1))) THEN
+              Y = Y + YCUT(K) + (YCUT(K+1)-YCUT(K))*(X-XCUT(K))
+     >                            /(XCUT(K+1)-XCUT(K))
+                N = N + 1
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDDO
+        IF (N.GT.0) THEN
+          YCUT2(I) = Y/N
+        ELSE
+          YCUT2(I) = 0.0
+        ENDIF
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      REAL FUNCTION ATAN2C (ARGZ,ARGR)
+      IMPLICIT LOGICAL (A-Z)
+      REAL ARGZ,ARGR
+      INCLUDE (PPPARA)
+C
+C     THIS ACTS AS AN ERROR-CHECKING FRONT-END TO THE ATAN2
+C     IMPLICIT FUNCTION. IT RETURNS APPROPRIATE ANGLE VALUES FOR
+C     EITHER OF THE ARGUMENTS EQUAL TO ZERO AND RETURNS A
+C     ZERO VALUE IF BOTH ARGUMENTS ARE EQUAL TO ZERO. SINCE
+C     THE TANGENT IS UNDEFINED IN THIS CASE.
+C
+C     D. ELDER  SEPTEMBER 1992
+C
+      IF (ARGZ.EQ.0.0) THEN
+         IF (ARGR.GT.0.0) THEN
+            ATAN2C = 0.0
+         ELSEIF (ARGR.LT.0.0) THEN
+            ATAN2C = PI
+         ELSE
+            ATAN2C = 0.0
+         ENDIF
+      ELSEIF (ARGR.EQ.0.0) THEN
+         IF (ARGZ.GT.0.0) THEN
+            ATAN2C = PI /2.0
+         ELSEIF (ARGZ.LT.0.0) THEN
+            ATAN2C = - PI /2.0
+         ELSE
+            ATAN2C = 0.0
+         ENDIF
+      ELSE
+         ATAN2C = ATAN2(ARGZ,ARGR)
+      ENDIF
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE LDADAS(CZ,IZ,JZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,
+     >                  ISELX,CVALS,WAVE,IRCODE)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LDADAS:  CODE TO LOAD THE REQUESTED LINE EMISSION PROFILE        *
+C  *           INTO THE MATRIX CVALS.  THE LINE IS SPECIFIED BY THE    *
+C  *           NUCLEAR CHARGE OF THE EMITTING ION, THE                 *
+C  *           CHARGE OF THE EMITTING IONISATION STATE, AN ID FLAG     *
+C  *           WHICH LOCATES THE INPUT FILE, AND THREE BLOCK SELECTOR  *
+C  *           NUMBERS, ONE EACH FOR EMISSION BY ELECTRON EXCITATION,  *
+C  *           RECOMBINATION FROM THE NEXT HIGHER IONISATION STATE,    *
+C  *           AND CHARGE EXCHANGE FROM THE NEXT HIGHER IONISATION     *
+C  *           STATE.  IN ADDITION TO THE EMISSION PROFILE, THE        *
+C  *           ROUTINE RETURNS THE WAVELENGTH OF THE TRANSITION AND    *
+C  *           AN ERROR CODE FROM THE ADAS EXTRACTION ROUTINE, SPEC.   *
+C  *           NOTE THAT THERE IS NO CHECKING OF THE SELECTOR NUMBERS! *
+C  *                                                                   *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+      INCLUDE (PPPLAS)
+C
+      INTEGER   CZ,IZ,JZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
+      REAL      WAVE,CVALS(MAXNKS,MAXNRS)
+      CHARACTER ADASID*(*),ADASEX*(*)
+C
+      INTEGER   IR,IK,IADAS,NPAIRS,IKK
+      REAL*8    TADAS(20),DADAS(20)
+      REAL*8    WLNGTH,PECAE(20),PECAR(20),PECAX(20)
+      LOGICAL*4 LTRNG(20),LDRNG(20)
+      CHARACTER ADASGR*8,ADASTY*80,PECTITLE*120
+      CHARACTER XFESYM*2
+C
+      WAVE = 0.0
+      IRCODE = 0
+      CALL XXUID(ADASID)
+      IF (ADASYR.GE.0) THEN
+        ADASGR = 'pec??#'//XFESYM(CZ)
+        WRITE(ADASGR(4:5),'(I2.2)') ADASYR
+      ELSE
+        ADASGR = '*'
+      ENDIF
+      ADASTY = '*'
+      CALL XXSPEC(ADASGR,ADASTY,ADASEX)
+C
+      DO IR = 1,NRS
+        DO IK = 1,NKS(IR),20
+          NPAIRS = MIN0(20,NKS(IR)-(IK-1))
+          DO IADAS = 1,NPAIRS
+            TADAS(IADAS) = DBLE(KTEBS(IK+(IADAS-1),IR))
+            DADAS(IADAS) = DBLE(1.E-6*KNEBS(IK+(IADAS-1),IR))
+          ENDDO
+C
+          CALL DZERO(PECAE,NPAIRS)
+          IF (ISELE.GT.0) THEN
+            CALL SPEC(ISELE,IZ,CZ,NPAIRS,TADAS,DADAS,
+     >                WLNGTH,PECAE,LTRNG,LDRNG,PECTITLE,IRCODE)
+            IF (IRCODE.NE.0) RETURN
+          ELSE IF (ISELE.EQ.-1) THEN
+C
+C  JUST LOAD EMISSION MEASURE FOR ISEL = -1
+C    - SINCE THIS VALUE CAN EXCEED THE UNIX SINGLE PRECISION LIMIT,
+C      WORK IN DENSITY UNITS OF 10**18
+C
+            CALL DINIT(PECAE,NPAIRS,1.D6*1.D-36)
+            WLNGTH = 0.0
+          ENDIF
+C
+          CALL DZERO(PECAR,NPAIRS)
+          IF (ISELR.GT.0) THEN
+            CALL SPEC(ISELR,IZ,CZ,NPAIRS,TADAS,DADAS,
+     >                WLNGTH,PECAR,LTRNG,LDRNG,PECTITLE,IRCODE)
+            IF (IRCODE.NE.0) RETURN
+          ELSE IF (ISELR.EQ.-1) THEN
+            CALL DINIT(PECAR,NPAIRS,1.D6*1.D-36)
+            WLNGTH = 0.0
+          ENDIF
+C
+C  FOR IMPURITIES USE THE THIRD SWITCH FOR CX, FOR HYDROGEN
+C  ADD IN A MOLECULAR CONTRIBUTION INSTEAD
+C
+          CALL DZERO(PECAX,NPAIRS)
+CLDH - USE ION TEMPERATURE FOR CX RATE
+          IF (CZ.GT.1.0) THEN
+            DO IADAS = 1,NPAIRS
+              TADAS(IADAS) = DBLE(KTIBS(IK+(IADAS-1),IR))
+            ENDDO
+          ENDIF
+CLDH
+          IF (ISELX.GT.0) THEN
+            CALL SPEC(ISELX,IZ,CZ,NPAIRS,TADAS,DADAS,
+     >                WLNGTH,PECAX,LTRNG,LDRNG,PECTITLE,IRCODE)
+            IF (IRCODE.NE.0) RETURN
+          ELSE IF (ISELX.EQ.-1) THEN
+            CALL DINIT(PECAX,NPAIRS,1.D6*1.D-36)
+            WLNGTH = 0.0
+          ENDIF
+C
+          DO IADAS = 1,NPAIRS
+            IKK = IK + (IADAS-1)
+            IF (CZ.GT.1.0) THEN
+              CVALS(IKK,IR) = 1.D-6*
+     >      ( PECAE(IADAS) * KNEBS(IKK,IR)   * SDLIMS(IKK,IR,IZ  ,JZ)
+     >      + PECAR(IADAS) * KNEBS(IKK,IR)   * SDLIMS(IKK,IR,IZ+1,JZ)
+     >      + PECAX(IADAS) * PINATOM(IKK,IR) * SDLIMS(IKK,IR,IZ+1,JZ))
+            ELSE
+C
+C---- HYDROGEN DENSITIES ARE IN DIFFERENT ARRAYS
+C
+              CVALS(IKK,IR) = 1.D-6*
+     >        ( PECAE(IADAS) * KNEBS(IKK,IR)   * PINATOM(IKK,IR)
+     >        + PECAR(IADAS) * KNEBS(IKK,IR)   * KNBS(IKK,IR)
+     >        + PECAX(IADAS) * KNEBS(IKK,IR)   * PINMOL(IKK,IR))
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+C
+      WAVE = WLNGTH
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE ADASRD(ADASID,IYEAR,IZ0,IZ1,ICLASS,NPTS,TE,NE,
+     >                  COEF,IFAIL)
+C
+C  READ THE REQUESTED RATE COEFFICIENT FROM THE ADAS MASTER ELEMENT
+C  FILES:
+C        ICLASS = 1: RECOMBINATION RATE COEFFICIENT
+C                 2: IONISATION RATE COEFFICIENT
+C                 3: CHARGE EXCHANGE RECOMBINATION COEFFICIENT
+C                 4: POWER COEF. FOR RECOMBINATION AND BREMSSTRAHLUNG
+C                 5: POWER COEFFICIENT FOR LINE RADIATION
+C                 6: POWER COEFFICIENT FOR CHARGE EXCHANGE
+C  THIS ROUTINE USES THE STANDARD ADAS EXTRACTION ROUTINE D2DATA AND
+C  REALLY ONLY PROVIDES A 'CLEAN' INTERFACE, TAKING CARE OF CHANGES
+C  IN UNITS AND IN PRECISION OF VARIABLES.  IF THE REQUESTED DATA
+C  DOESN'T EXIST IFAIL IS SET EQUAL TO 1 IN D2DATA.
+C
+      IMPLICIT NONE
+C
+      CHARACTER*(*) ADASID
+      INTEGER IYEAR, IZ0, IZ1, ICLASS, NPTS, IFAIL
+      REAL TE(NPTS), NE(NPTS), COEF(NPTS)
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+C
+      REAL*8 DTEV(MAXNKS), DDENS(MAXNKS), DTEVD(MAXADS),
+     >       DDENSD(MAXADS), DRCOFD(MAXADS,MAXADS,MAXADS),
+     >       ZDATA(MAXADS), DRCOFI(MAXNKS)
+      CHARACTER YEAR*2, TITLF*80
+      INTEGER IEVCUT, ITMAXD, IDMAXD, IZMAXD
+C
+      INTEGER I, J
+C
+C  LOAD THE REQUESTED YEAR INTO A CHARACTER VARIABLE
+C
+      WRITE(YEAR,'(I2.2)') IYEAR
+C
+      IEVCUT = 0
+      CALL XXUID(ADASID)
+C
+      DO J = 1, NPTS
+        DTEV(J) = DBLE(ALOG10(TE(J)))
+        DDENS(J) = DBLE(ALOG10(NE(J)*1.0E-6))
+      ENDDO
+      CALL D2DATA(YEAR, YEAR, TITLF, IFAIL,
+     >            IZ0, IZ1, ICLASS, NPTS, IEVCUT,
+     >            MAXADS, ITMAXD, IDMAXD, IZMAXD,
+     >            DTEV, DDENS,
+     >            DTEVD, DDENSD, DRCOFD, ZDATA,
+     >            DRCOFI)
+      IF (IFAIL.EQ.1) THEN
+        WRITE(LERR,1000) IZ0, IZ1,YEAR
+        RETURN
+      ENDIF
+C
+C  EXTRAPOLATED VALUES ARE RETURNED AS ZERO!
+C
+      DO J = 1, NPTS
+        IF (DRCOFI(J).NE.0.0) THEN
+          COEF(J) = 10.**SNGL(DRCOFI(J)) * 1.0E-6
+        ELSE
+          COEF(J) = 0.0
+        ENDIF
+      ENDDO
+C
+ 1000 FORMAT(' ERROR READING REQUESTED ATOMIC DATA!',/,
+     >       ' MASTER ELEMENT FILE FOR NUCLEAR CHARGE ',I2,
+     >       ' AND ION CHARGE ',I2,
+     >       ' WAS NOT FOUND IN YEAR ',A2)
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE LDBREM(WAVE,CVALS,IRCODE)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LDBREM:  CODE TO LOAD THE BREMSSTRAHLUNG EMISSION PROFILE        *
+C  *           INTO THE MATRIX CVALS.  THE WLNGTH OF THE MEASUREMENT   *
+C  *           IS SPECIFIED AS INPUT.                                  *
+C  *                                                                   *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         SEPTEMBER 1994            *
+C  *                                                                   *
+C  *            UPDATED 07/07/97  TO INCLUDE FREE-BOUND EMISSION       *
+C  *                              AND A BETTER ROUTINE FOR INCLUDING   *
+C  *                              THE IMPURITY CONTRIBUTIONS           *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+      INCLUDE (PPPLAS)
+C
+      INTEGER   IRCODE
+      REAL      WAVE,CVALS(MAXNKS,MAXNRS)
+C
+      INTEGER   IR, IK, IZ, J
+      REAL*8    CONTIN, WAVE8, NE, TEV, NH, NZ(0:MAXIZS,MAXNZS)
+C
+      WAVE8 = WAVE
+      DO IR = 1,NRS
+        DO IK = 1,NKS(IR)
+          NE = KNEBS(IK,IR)*1.0E-6
+          TEV = KTEBS(IK,IR)
+          NH = NE
+          DO J = 1, NZS
+            DO IZ = 0, CION(J)
+              IF (IZ.LE.NIZS(J)) THEN
+                NZ(IZ,J) = SDLIMS(IK,IR,IZ,J)*1.0E-6
+              ELSE
+                NZ(IZ,J) = 0.0
+              ENDIF
+              NH = NH - IZ*NZ(IZ,J)
+            ENDDO
+          ENDDO
+C
+C  REMEMBER TO CONVERT TO M**-3 AND NM**-1
+C
+          CVALS(IK,IR) = CONTIN(WAVE8, NE, TEV, NZS, MAXIZS, CION,
+     >                          NH, NZ)*1.0D7
+        ENDDO
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE LDBRFF(WAVE,CVALS,IRCODE)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LDBRFF:  CODE TO LOAD THE FREE-FREE BREMSSTRAHLUNG EMISSION      *
+C  *           PROFILE INTO THE MATRIX CVALS.  THE WLNGTH OF THE       *
+C  *           MEASUREMENT IS SPECIFIED AS INPUT.  THIS IS A SIMPLE    *
+C  *           MOD TO LDBREM WHICH CALLS CONTFF INSTEAD OF CONTIN AND  *
+C  *           IS MOSTLY FOR TESTING RATHER THAN FOR DIAGNOSTIC        *
+C  *           SIMULATION.                                             *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JULY 1997                 *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+      INCLUDE (PPPLAS)
+C
+      INTEGER   IRCODE
+      REAL      WAVE,CVALS(MAXNKS,MAXNRS)
+C
+      INTEGER   IR, IK, IZ, J
+      REAL*8    CONTFF, WAVE8, NE, TEV, NH, NZ(0:MAXIZS,MAXNZS)
+C
+      WAVE8 = WAVE
+      DO IR = 1,NRS
+        DO IK = 1,NKS(IR)
+          NE = KNEBS(IK,IR)*1.0E-6
+          TEV = KTEBS(IK,IR)
+          NH = NE
+          DO J = 1, NZS
+            DO IZ = 0, CION(J)
+              IF (IZ.LE.NIZS(J)) THEN
+                NZ(IZ,J) = SDLIMS(IK,IR,IZ,J)*1.0E-6
+              ELSE
+                NZ(IZ,J) = 0.0
+              ENDIF
+              NH = NH - IZ*NZ(IZ,J)
+            ENDDO
+          ENDDO
+C
+C  REMEMBER TO CONVERT TO M**-3 AND NM**-1
+C
+          CVALS(IK,IR) = CONTFF(WAVE8, NE, TEV, NZS, MAXIZS, CION,
+     >                          NH, NZ)*1.0D7
+        ENDDO
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE LD3DGM(CX1,CY1,CZ1,CX2,CY2,CZ2,NUMTHE,THERES,AVPTS,
+     >                  TOUTS,TWIDS,THEMIN,THEMAX,COUTS,WRES,IERR)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  LD3DGM:  CODE TO CALCULATE THE 3D GEOMETRY NECESSARY AS INPUT    *
+C  *           FOR CALLS TO LOS3D.  THE ROUTINE RETURNS A VECTOR       *
+C  *           OF ANGLES BETWEEN THE GIVEN VIEWING LINE AND THE FIRST  *
+C  *           (INPUT) VIEWING LINE, THE MINIMUM AND MAXIMUM VALUES    *
+C  *           OF THIS VECTOR, AND TWO MATRICES, COUTS AND WRES,       *
+C  *           THE DIRECTION COSINE VECTORS AND CORRESPONDING WEIGHTS  *
+C  *           WHICH ARE NECESSARY FOR THE SPATIAL AVERAGING IN LOS3D. *
+C  *                                                                   *
+C  *                                                                   *
+C  *            JOHN O'ROURKE  (JET)         SEPTEMBER 1993            *
+C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE   (PPPARA)
+      INTEGER   NUMTHE,AVPTS,IERR
+      REAL      CX1,CY1,CZ1,CX2,CY2,CZ2,THERES
+      REAL      TOUTS(NUMTHE),TWIDS(NUMTHE),THEMIN,THEMAX
+      REAL      COUTS(MAXTHE,MAXCH3,3),WRES(MAXCH3)
+C
+      INTEGER   II,MAV,IMAV,KM,I3
+      REAL      VNOR,VP(3),VN(3),DOT,TH3,DTHE
+      REAL      CTHN,THN,CTHC,CMATR(2,3),DETM,VT(3),FM,FKM,PHI,TPHI
+C
+C---- CHECK THAT NUMBER OF POINTS FOR AVERAGING FITS IN AVAILABLE STORAGE
+C
+        IF (2*(2*AVPTS-1).GT.MAXCH3) THEN
+          IERR = 2
+          RETURN
+        ENDIF
+C
+      IERR = 0
+      MAV=2*AVPTS - 1
+      FM=FLOAT(MAV)
+      PHI = THERES*DEGRAD/(FM)
+C
+C  THE ARRAY WILL SPAN BOTH DIRECTIONS ORTHOGONAL TO THE VIEWING
+C  LINE, VP AND VT, WITH M VECTORS IN EACH DIRECTION ( 2M VECTORS
+C  PER VIEWING LINE) AND WEIGHTS WRES CORRESPONDING TO THE SOLID
+C  ANGLE ASSOCIATED WITH EACH VECTOR.
+C
+      DO IMAV = 1,MAV
+        KM = 2*(IMAV-AVPTS)
+        FKM=ABS(FLOAT(KM))
+        IF(KM.NE.0)THEN
+          WRES(IMAV)=((FKM+1.)*(FKM+1.)-(FKM-1.)*(FKM-1.))/(4.*FM*FM)
+        ELSE
+          WRES(IMAV)=1./(2.*FM*FM)
+        ENDIF
+        WRES(IMAV+MAV)=WRES(IMAV)
+      ENDDO
+C
+C  VP, CROSS PRODUCT BETWEEN V1 AND V2
+C
+      VP(1)=CY1*CZ2 - CZ1*CY2
+      VP(2)=CZ1*CX2 - CX1*CZ2
+      VP(3)=CX1*CY2 - CY1*CX2
+      VNOR=(VP(1)*VP(1)+VP(2)*VP(2)+VP(3)*VP(3))**0.5
+      VP(1)=VP(1)/VNOR
+      VP(2)=VP(2)/VNOR
+      VP(3)=VP(3)/VNOR
+C
+C  DOT PRODUCT BETWEEN V1 AND V2
+C
+      DOT=CX1*CX2 + CY1*CY2 + CZ1*CZ2
+C
+C  ANGLE TH3 BETWEEN V1 AND V2
+C
+      IF(DOT.GT.1.)DOT=1.
+      IF(DOT.LT.-1.)DOT=-1.
+      TH3=ACOS(DOT)
+C
+C  ANGULAR INCREMENT DTHE
+C
+      DTHE = 0.0
+      IF (NUMTHE.GT.1) DTHE=TH3/(FLOAT(NUMTHE-1))
+C
+C  CREATE DIRECTIONAL COSINE ARRAY
+C
+      DO II = 1, NUMTHE
+C
+        TOUTS(II) = DTHE*(II-1)*RADDEG
+        TWIDS(II) = THERES
+        IF(II.EQ.1)THEN
+          VN(1)=CX1
+          VN(2)=CY1
+          VN(3)=CZ1
+        ELSEIF(II.EQ.NUMTHE)THEN
+          VN(1)=CX2
+          VN(2)=CY2
+          VN(3)=CZ2
+        ELSE
+C
+C  FOR EACH VIEWING LINE, II, CALCULATE THE CENTRAL
+C  DIRECTIONAL COSINE VECTOR, VN, FROM THE THREE CONDITIONS:
+C  (1) V1*VN = COS (THN)
+C  (2) V2*VN = COS (TH3-THN)
+C  (3) VP*VN = 0
+C
+          CTHN=COS(TOUTS(II)*DEGRAD)
+          IF(CTHN.GT.1.)CTHN=1.
+          IF(CTHN.LT.-1.)CTHN=-1.
+          THN=TOUTS(II)*DEGRAD
+          CTHC=COS(TH3-THN)
+          IF(VP(3).NE.0.)THEN
+            CMATR(1,1)=CX1*VP(3) - CZ1*VP(1)
+            CMATR(1,2)=CY1*VP(3) - CZ1*VP(2)
+            CMATR(1,3)=CTHN*VP(3)
+            CMATR(2,1)=CX2*VP(3) - CZ2*VP(1)
+            CMATR(2,2)=CY2*VP(3) - CZ2*VP(2)
+            CMATR(2,3)=CTHC*VP(3)
+            DETM=CMATR(1,1)*CMATR(2,2)-CMATR(2,1)*CMATR(1,2)
+            IF(DETM.EQ.0.)THEN
+              IERR = 1
+              RETURN
+            ELSE
+              VN(1)=(CMATR(2,2)*CMATR(1,3)-CMATR(1,2)*CMATR(2,3))/DETM
+              VN(2)=(CMATR(1,1)*CMATR(2,3)-CMATR(2,1)*CMATR(1,3))/DETM
+              VN(3)=-1.*(VP(1)*VN(1) + VP(2)*VN(2))/VP(3)
+            ENDIF
+          ELSEIF(VP(2).NE.0.)THEN
+            CMATR(1,1)=CX1*VP(2) - CY1*VP(1)
+            CMATR(1,2)=CZ1*VP(2) - CY1*VP(3)
+            CMATR(1,3)=CTHN*VP(2)
+            CMATR(2,1)=CX2*VP(2) - CY2*VP(1)
+            CMATR(2,2)=CZ2*VP(2) - CY2*VP(3)
+            CMATR(2,3)=CTHC*VP(2)
+            DETM=CMATR(1,1)*CMATR(2,2)-CMATR(2,1)*CMATR(1,2)
+            IF(DETM.EQ.0.)THEN
+              IERR = 1
+              RETURN
+            ELSE
+              VN(1)=(CMATR(2,2)*CMATR(1,3)-CMATR(1,2)*CMATR(2,3))/DETM
+              VN(3)=(CMATR(1,1)*CMATR(2,3)-CMATR(2,1)*CMATR(1,3))/DETM
+              VN(2)=-1.*(VP(1)*VN(1) + VP(3)*VN(3))/VP(2)
+            ENDIF
+          ELSE
+            VN(1)=0.
+            DETM=CY1*CZ2 - CZ1*CY2
+            IF(DETM.EQ.0.)THEN
+              IERR = 1
+              RETURN
+            ELSE
+              VN(2)=(CTHN*CZ2 - CTHC*CZ1)/DETM
+              VN(3)=(CTHC*CY1 - CTHN*CY2)/DETM
+            ENDIF
+          ENDIF
+        ENDIF
+C
+C  ABOUT EACH CENTRAL VECTOR DEFINE AN ARRAY OF VECTORS TO
+C  SIMULATE THE FINITE ANGULAR RESOLUTION, THERES.
+C
+C
+C  VT, CROSS PRODUCT BETWEEN VN AND VP
+C
+        VT(1)=VN(2)*VP(3) - VN(3)*VP(2)
+        VT(2)=VN(3)*VP(1) - VN(1)*VP(3)
+        VT(3)=VN(1)*VP(2) - VN(2)*VP(1)
+C
+C  DIRECTION COSINES
+C
+        DO IMAV = 1,MAV
+          KM = 2*(IMAV-AVPTS)
+          TPHI = TAN( KM*PHI )
+          VNOR = (1+TPHI*TPHI)**0.5
+          DO I3 =1,3
+            COUTS(II,IMAV,I3)  = (VN(I3)+TPHI*VP(I3))/VNOR
+            COUTS(II,IMAV+MAV,I3) = (VN(I3)+TPHI*VT(I3))/VNOR
+          ENDDO
+        ENDDO
+      ENDDO
+C
+      THEMIN=0.
+      THEMAX=TOUTS(NUMTHE)
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE SCALE (N,VEC,SF)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  SCALE:   SCALE A VECTOR BY A CONSTANT FACTOR.  USED TO CONVERT   *
+C  *           DIAGNOSTICS SIGNALS TO THE UNITS WRITTEN TO THE         *
+C  *           EXPERIMENTAL PPFS.                                      *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     FEBRUARY 1995                 *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER N
+      REAL    VEC(N),SF
+C
+      INTEGER I
+C
+      DO I = 1, N
+        VEC(I) = VEC(I) * SF
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RTARG (ISHOT,R0,Z0,N,VEC)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RTARG: CALL THE APPROPRIATE CONVERSION ROUTINE USING THE SHOT    *
+C  *         NUMBER TO DECIDE WHICH JET DIVERTOR GEOMETRY TO USE.      *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     JULY 1996                     *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER ISHOT,N
+      REAL    R0,Z0,VEC(N)
+C
+      IF (ISHOT.LE.35779) THEN
+        CALL RTARG93(R0,Z0,N,VEC)
+      ELSE
+        CALL RTARG96(R0,Z0,N,VEC)
+      ENDIF
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RTARG93 (R0,Z0,N,VEC)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RTARG93: CONVERT A VECTOR OF VIEWING ANGLES INTO A VECTOR OF     *
+C  *           MAJOR RADII OF INTERSECTIONS WITH THE HORIZONTAL        *
+C  *           PLATE OF THE 1993-94 JET MARK I DIVERTOR.               *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     FEBRUARY 1995                 *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER N
+      REAL    R0,Z0,VEC(N)
+C
+      INCLUDE (PPPARA)
+C
+      INTEGER I
+      REAL    THV,THT,R1,Z1,R2,Z2
+      REAL    D,DIN,DOUT
+      REAL    RL,ZL,RC,ZC,RR,ZR
+      REAL    ATAN2C
+      EXTERNAL ATAN2C
+      DATA    RL/2.281/,ZL/-1.783/,RC/2.678/,ZC/-1.734/,
+     >        RR/3.075/,ZR/-1.782/
+C
+      DO I = 1, N
+        THV = DEGRAD * VEC(I)
+C
+C---- START WITH INNER TARGET
+C
+        R1 = RL
+        Z1 = ZL
+        R2 = RC
+        Z2 = ZC
+        THT = ATAN2C(Z2-Z1,R2-R1)
+        IF (TAN(THV).EQ.TAN(THT)) THEN
+          DIN  = HI
+        ELSE
+          DIN  = ((R0-R1)*SIN(THT)-(Z0-Z1)*COS(THT)) / SIN(THV-THT)
+          IF (DIN.LT.0.0) DIN = HI
+        ENDIF
+C
+C---- OUTER TARGET
+C
+        R1 = RC
+        Z1 = ZC
+        R2 = RR
+        Z2 = ZR
+        THT = ATAN2C(Z2-Z1,R2-R1)
+        IF (TAN(THV).EQ.TAN(THT)) THEN
+          DOUT = HI
+        ELSE
+          DOUT = ((R0-R1)*SIN(THT)-(Z0-Z1)*COS(THT)) / SIN(THV-THT)
+          IF (DOUT.LT.0.0) DOUT = HI
+        ENDIF
+C
+        D = AMAX1(DIN,DOUT)
+        VEC(I) = R0 + D*COS(THV)
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RTARG96 (R0,Z0,N,VEC)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RTARG96: CONVERT A VECTOR OF VIEWING ANGLES INTO A VECTOR OF     *
+C  *           MAJOR RADII OF INTERSECTIONS WITH THE HORIZONTAL        *
+C  *           PLATE OF THE JET MARK IIA DIVERTOR.                     *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     JULY 1996                     *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER N
+      REAL    R0,Z0,VEC(N)
+C
+      INCLUDE (PPPARA)
+C
+      INTEGER I
+      REAL    THV,THT,R1,Z1,R2,Z2
+      REAL    D,DIN,DFLAT,DOUT
+      REAL    RL,ZL,RC1,ZC1,RC2,ZC2,RR,ZR
+      REAL    ATAN2C
+      EXTERNAL ATAN2C
+      DATA    RL /2.332/,ZL /-1.761/,RC1/2.579/,ZC1/-1.630/,
+     >        RC2/2.687/,ZC2/-1.630/,RR /2.971/,ZR /-1.764/
+C
+      DO I = 1, N
+        THV = DEGRAD * VEC(I)
+C
+C---- START WITH INNER TARGET
+C
+        R1 = RL
+        Z1 = ZL
+        R2 = RC1
+        Z2 = ZC1
+        THT = ATAN2C(Z2-Z1,R2-R1)
+        IF (TAN(THV).EQ.TAN(THT)) THEN
+          DIN = HI
+        ELSE
+          DIN =((R0-R1)*SIN(THT)-(Z0-Z1)*COS(THT)) / SIN(THV-THT)
+          IF (DIN.LT.0.0) DIN = HI
+        ENDIF
+C
+C---- OUTER TARGET
+C
+        R1 = RC2
+        Z1 = ZC2
+        R2 = RR
+        Z2 = ZR
+        THT = ATAN2C(Z2-Z1,R2-R1)
+        IF (TAN(THV).EQ.TAN(THT)) THEN
+          DOUT = HI
+        ELSE
+          DOUT =((R0-R1)*SIN(THT)-(Z0-Z1)*COS(THT)) / SIN(THV-THT)
+          IF (DOUT.LT.0.0) DOUT = HI
+        ENDIF
+C
+C---- CENTRAL FLAT
+C
+        R1 = RC1
+        Z1 = ZC1
+        R2 = RC2
+        Z2 = ZC2
+        THT = ATAN2C(Z2-Z1,R2-R1)
+        IF (TAN(THV).EQ.TAN(THT)) THEN
+          DFLAT = HI
+        ELSE
+          DFLAT =((R0-R1)*SIN(THT)-(Z0-Z1)*COS(THT)) / SIN(THV-THT)
+          IF (DFLAT.LT.0.0) DFLAT = HI
+        ENDIF
+C
+cdbg    write(6,*) din, dflat, dout
+cdbg    write(6,*) r0+din*cos(thv), r0+dflat*cos(thv), r0+dout*cos(thv)
+        D = AMAX1(DIN,DFLAT,DOUT)
+cdbg    write(6,*) d, r0+d*cos(thv)
+        VEC(I) = R0 + D*COS(THV)
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RZ0 (Z1,R0,Z0,N,VEC)
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RTARG96: CONVERT A VECTOR OF VIEWING ANGLES INTO A VECTOR OF     *
+C  *           MAJOR RADII OF INTERSECTIONS WITH A GIVEN HEIGHT, Z1    *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)     MARCH 1997                    *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER N
+      REAL    Z1,R0,Z0,VEC(N)
+C
+      INCLUDE (PPPARA)
+C
+      INTEGER I
+      REAL    THV
+C
+      DO I = 1, N
+        THV = DEGRAD * VEC(I)
+        IF (ABS(COS(THV)).LT.1.0E-5) THEN
+          VEC(I) = R0
+        ELSE
+          VEC(I) = R0 + (Z1-Z0)/TAN(THV)
+        ENDIF
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RMIDPL(IPRINT,N,DRMID,IERR)
+      IMPLICIT NONE
+      INTEGER IPRINT, N, IERR
+      REAL DRMID(N)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RMIDPL:  CALCULATES AND RETURNS THE EFFECTIVE OUTER MIDPLANE     *
+C  *           RADIUS FOR EACH RING.  FOR THE CORE AND SOL RINGS       *
+C  *           THIS IS STRAIGHTFORWARD.  FOR THE TRAP RINGS AN         *
+C  *           EXTRAPOLATION USING AN ASSUMED CONSTANT POLOIDAL FIELD  *
+C  *           IS USED.  THUS THIS MIDPLANE RADIUS IS EFFECTIVELY A    *
+C  *           MAPPING INTO FLUX SPACE.  THE CODE IS BASED ON THE      *
+C  *           ROUTINE CALCPG WHICH IS USED IN LPDISP FOR THE SAME     *
+C  *           PURPOSE.  THUS PROFILES FROM LPDISP AGAINST RMP CAN BE  *
+C  *           COMPARED TO THE PPFS GENERATED HERE.                    *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JUNE  1997                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPGEOM)
+C
+      INTEGER IR, IK, K, I, NINT, SIDE(2)
+      INTEGER IKMID(2,MAXNRS)
+      REAL    ROUTSTR, ZOUTSTR, RINNSTR, ZINNSTR
+      REAL    W, DW, R1, Z1, R2, Z2
+      REAL    DISTO(MAXNRS), DISTI(MAXNRS)
+      REAL    RMID(3,MAXNRS), BPOLMID(MAXNRS), PSIMID(MAXNRS)
+      REAL    ALPHA(MAXNRS), PSITAR(MAXNRS)
+      REAL    XB(2), WB(2), DIST(2)
+C
+      IERR = 0
+C
+C  STRIKE POINT POSITION:
+C
+      IR = IRSEP
+      IK = 2
+      K = KORPG(IK,IR)
+      ROUTSTR = RVERTP(1,K)
+      ZOUTSTR = ZVERTP(1,K)
+      IR = IRSEP
+      IK = NKS(IRSEP) - 1
+      K = KORPG(IK,IR)
+      RINNSTR = RVERTP(4,K)
+      ZINNSTR = ZVERTP(4,K)
+C
+C  DISTANCE TO ENDS OF SOL RINGS
+C
+      IK = 2
+      W = 0.0
+      DO IR = IRSEP, IRWALL-1
+        K = KORPG(IK,IR)
+        R1 = RVERTP(1,K)
+        Z1 = ZVERTP(1,K)
+        R2 = RVERTP(2,K)
+        Z2 = ZVERTP(2,K)
+        DW = SQRT((R2-R1)*(R2-R1)+(Z2-Z1)*(Z2-Z1))
+        DISTO(IR) = W + 0.5*DW
+        W = W + DW
+      ENDDO
+      DISTO(IRWALL) = W + 0.5*DW
+C
+      W = 0.0
+      DO IR = IRSEP, IRWALL-1
+        IK = NKS(IR) - 1
+        K = KORPG(IK,IR)
+        R1 = RVERTP(4,K)
+        Z1 = ZVERTP(4,K)
+        R2 = RVERTP(3,K)
+        Z2 = ZVERTP(3,K)
+        DW = SQRT((R2-R1)*(R2-R1)+(Z2-Z1)*(Z2-Z1))
+        DISTI(IR) = W + 0.5*DW
+        W = W + DW
+      ENDDO
+      DISTI(IRWALL) = W + 0.5*DW
+C
+      IK = 2
+      W = 0.0
+      DO IR = NRS, IRTRAP+1, -1
+        K = KORPG(IK,IR)
+        R1 = RVERTP(1,K)
+        Z1 = ZVERTP(1,K)
+        R2 = RVERTP(2,K)
+        Z2 = ZVERTP(2,K)
+        DW = SQRT((R2-R1)*(R2-R1)+(Z2-Z1)*(Z2-Z1))
+        DISTO(IR) = W - 0.5*DW
+        W = W - DW
+      ENDDO
+      DISTO(IRTRAP) = W - 0.5*DW
+C
+      W = 0.0
+      DO IR = NRS, IRTRAP+1, -1
+        IK = NKS(IR) - 1
+        K = KORPG(IK,IR)
+        R1 = RVERTP(4,K)
+        Z1 = ZVERTP(4,K)
+        R2 = RVERTP(3,K)
+        Z2 = ZVERTP(3,K)
+        DW = SQRT((R2-R1)*(R2-R1)+(Z2-Z1)*(Z2-Z1))
+        DISTI(IR) = W - 0.5*DW
+        W = W - DW
+      ENDDO
+      DISTI(IRTRAP) = W - 0.5*DW
+C
+C  OUTER MIDPLANE RADIUS
+C
+      XB(1) = R0
+      XB(2) = Z0
+      WB(1) = 1.0
+      WB(2) = 0.0
+      DO IR = 2, IRWALL-1
+        RMID(1,IR) = 1.0E30
+        RMID(2,IR) = -1.0E30
+C  SINCE THE RAY MIGHT MOVE FROM ONE CELL TO ANOTHER SEARCH ALL OF THEM
+        DO IK = 2, NKS(IR)-1
+          K = KORPG(IK,IR)
+          CALL INTERS(NVERTP(K),RVERTP(1,K),ZVERTP(1,K),
+     >                XB,WB,NINT,DIST,SIDE)
+          IF (NINT.EQ.2) THEN
+            DO I = 1, NINT
+              IF (DIST(I).GT.0.0 .AND. DIST(I).LT.RMID(1,IR)) THEN
+                IKMID(1,IR) = IK
+                RMID(1,IR) = DIST(I)
+              ENDIF
+              IF (DIST(I).GT.0.0 .AND. DIST(I).GT.RMID(2,IR)) THEN
+                IKMID(2,IR) = IK
+                RMID(2,IR) = DIST(I)
+              ENDIF
+            ENDDO
+          ELSE IF (NINT.NE.0) THEN
+            WRITE(IPRINT,1000) IR,IK,NINT
+            IERR = 1
+            RETURN
+          ENDIF
+        ENDDO
+        RMID(1,IR) = RMID(1,IR) + R0
+        RMID(2,IR) = RMID(2,IR) + R0
+        RMID(3,IR) = 0.5*(RMID(1,IR)+RMID(2,IR))
+      ENDDO
+      IKMID(1,1) = IKMID(1,2)
+      IKMID(2,1) = IKMID(1,2)
+      RMID(1,1) = RMID(1,2) - 2.0*(RMID(3,2)-RMID(1,2))
+      RMID(2,1) = RMID(1,2)
+      RMID(3,1) = 0.5*(RMID(1,1) + RMID(2,1))
+      IKMID(1,IRWALL) = IKMID(2,IRWALL-1)
+      IKMID(2,IRWALL) = IKMID(2,IRWALL-1)
+      RMID(1,IRWALL) = RMID(2,IRWALL-1)
+      RMID(2,IRWALL) = RMID(2,IRWALL-1)
+     >               + 2.0*(RMID(2,IRWALL-1)-RMID(3,IRWALL-1))
+      RMID(3,IRWALL) = 0.5*(RMID(1,IRWALL) + RMID(2,IRWALL))
+C
+C  POLOIDAL FIELD AND NORMALISED PSI AT OUTER MIDPLANE
+C
+      DO IR = 1, IRWALL
+        IF (IKMID(1,IR).EQ.IKMID(2,IR)) THEN
+          IK = IKMID(1,IR)
+          BPOLMID(IR) = BTS(IK,IR)*TAN(ASIN(SH(IK,IR)))
+          PSIMID(IR) = PSI(IK,IR)
+        ELSE
+          IK = IKMID(1,IR)
+          BPOLMID(IR) = BTS(IK,IR)*TAN(ASIN(SH(IK,IR)))
+          PSIMID(IR) = PSI(IK,IR)
+          IK = IKMID(2,IR)
+          BPOLMID(IR) = 0.5*(BPOLMID(IR) +
+     >              BTS(IK,IR)*TAN(ASIN(SH(IK,IR))))
+          PSIMID(IR) = 0.5*(PSIMID(IR) + PSI(IK,IR))
+        ENDIF
+      ENDDO
+C
+C  PSI NORMALISATION FACTOR (ALPHA)
+C
+      DO IR = 1, IRWALL
+        IF (IR.EQ.IRSEP) THEN
+          ALPHA(IR) = 0.0
+        ELSE
+          ALPHA(IR) = 2.0*PI*RMID(3,IRSEP)*BPOLMID(IRSEP)
+     +        *(RMID(3,IR)-RMID(3,IRSEP))/(PSIMID(IR)-PSIMID(IRSEP))
+        ENDIF
+      ENDDO
+C
+C  PSI ALONG THE TARGETS
+C
+      DO IR = IRSEP, NRS
+        PSITAR(IR) = 0.5*(PSI(2,IR)+PSI(NKS(IR)-1,IR))
+      ENDDO
+C
+C  EFFECTIVE DISTANCE FROM OUTER MIDPLANE
+C
+      DO IR = IRSEP, IRWALL
+        DRMID(IR) = RMID(3,IR) - RMID(1,IRSEP)
+      ENDDO
+      DO IR = IRTRAP, NRS
+        DRMID(IR) = ALPHA(IRWALL-1)*(PSITAR(IR)-PSITAR(IRSEP))
+     +            / (2.0*PI*RMID(3,IRSEP)*BPOLMID(IRSEP))
+        DRMID(IR) = DRMID(IR) + (RMID(3,IRSEP)-RMID(1,IRSEP))
+      ENDDO
+C
+C  ORIGINALLY PRINT OUTPUT, NOW FOR DEBUGGING    
+Cdebug
+C     WRITE(IPRINT,9000) EQUIL
+C     WRITE(IPRINT,9010) ROUTSTR, ZOUTSTR, RINNSTR, ZINNSTR, R0, Z0
+C     DO IR = IRSEP, NRS
+C       WRITE(IPRINT,9020) IR,DISTO(IR), DISTI(IR)
+C     ENDDO
+C     WRITE(IPRINT,9030)
+C     DO IR = 1, IRWALL
+C       WRITE(IPRINT,9040) IR, (IKMID(I,IR),I=1,2), (RMID(I,IR),I=1,3),
+C    +                   BPOLMID(IR), PSIMID(IR), ALPHA(IR)
+C     ENDDO
+C     WRITE(IPRINT,9050)
+C     DO IR = IRSEP, NRS
+C       WRITE(IPRINT,9060) IR, PSITAR(IR)
+C     ENDDO
+C     WRITE(IPRINT,9070)
+C     DO IR = IRSEP, NRS
+C       WRITE(IPRINT,9080) IR, DRMID(IR)
+C     ENDDO
+Cdebug
+ 1000 FORMAT(//,1X,'***** ERROR FINDING OUTER MIDPLANE RADII ! *****',
+     +        /,5X,'IR = ',I3, 'IK = ',I3, 'NINT = ',I3)
+ 9000 FORMAT(1X,'EQUILIBRIUM FILE: ',A)
+ 9010 FORMAT(SP,/,5X,'OUTER STRIKE POINT AT: (',F6.3,',',F6.3,')',
+     +          /,5X,'INNER STRIKE POINT AT: (',F6.3,',',F6.3,')',
+     +          /,5X,'MAGNETIC AXIS AT:      (',F6.3,',',F6.3,')',
+     +       //,5X,'DISTANCE FROM SEPARATRIX TO RING/TARGET',
+     +             ' INTERSECTION (M)',
+     +       /,6X,'IR',8X,'OUTER',10X,'INNER')
+ 9020 FORMAT(5X,I3,5X,1PE10.3,5X,E10.3)
+ 9030 FORMAT(SP,/,5X,'INFORMATION AT OUTER MIDPLANE:',
+     +      /,2X,'IR',1X,'IK1',1X,'IK2',
+     +      3X,'R(INNER)',3X,'R(OUTER)',2X,'R(CENTRE)',
+     +      5X,'BPOL',8X,'PSI',6X,'ALPHA')
+ 9040 FORMAT(3(1X,I3),6(1X,1PE10.3))
+ 9050 FORMAT(SP,/,5X,'INFORMATION AT TARGET:',
+     +      /,2X,'IR',6X,'PSI')
+ 9060 FORMAT(1X,I3,1X,1PE10.3)
+ 9070 FORMAT(SP,/,5X,'EFFECTIVE MIDPLANE DISTANCE:',
+     +      /,2X,'IR',4X,'DRMID')
+ 9080 FORMAT(1X,I3,1X,1PE10.3)
+C
+      RETURN
+      END

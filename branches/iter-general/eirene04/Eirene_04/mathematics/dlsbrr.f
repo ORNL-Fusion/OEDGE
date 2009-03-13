@@ -1,0 +1,31 @@
+
+
+
+
+
+      SUBROUTINE DLSBRR(NRA,NCA,A,LDA,B,TOL,X,RES,KBASIS)
+      USE PRECISION
+      IMPLICIT NONE
+      INTEGER NRA,NCA,LDA,KBASIS,I,J,IAA
+      REAL(DP) A(LDA,NCA),B(NRA),X(NCA),RES(NRA),TOL
+      REAL(DP), ALLOCATABLE :: Q(:,:),R(:)
+      INTEGER, ALLOCATABLE :: S(:)
+
+      ALLOCATE (Q(NRA+2,NCA+2))
+      ALLOCATE (R(NRA))
+      ALLOCATE (S(NRA))
+
+      DO 10,I=1,NRA
+         DO 20,J=1,NCA
+            Q(I,J) = A(I,J)
+20       CONTINUE
+         Q(I,NCA+1) = B(I)
+10    CONTINUE
+      CALL MA20A(Q,RES,X,R,S,NRA+2,NRA,NCA,TOL)
+      KBASIS = Q(NRA+1,NCA+2)
+
+      DEALLOCATE (Q)
+      DEALLOCATE (R)
+      DEALLOCATE (S)
+
+      END

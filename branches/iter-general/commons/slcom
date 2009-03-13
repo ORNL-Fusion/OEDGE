@@ -1,0 +1,661 @@
+c     -*-Fortran-*-
+c
+c   FOR GENERAL USE: MAXASC  = 5000
+c                    MAXNAS2 = 2000
+c
+c   FOR LARGE VACUUM GRIDS: MAXASC  = 20000 (PRESENTLY)
+c                           MAXNAS2 = 10000
+c
+c   THE DIFFERENCE IN THE SIZE OF THE DIVIMP/OUT EXECUTABLES FOR THE ABOVE 
+c   ARRAY SETS IS ABOUT 80 MB
+c
+c...MAXNAS2 should be the same as NLIM in PARMUSR
+c...NMOMCHA should be the same as NMOMCHA in EIRENE (HA! JUST CHECKED AND
+c   NMOMCHA IS NOT USED ANYWHERE IN DIVIMP -- REALLY MAXDATA IS 12+NMOMCHA)
+
+c
+c Parameters:
+c
+      INTEGER NONVIRTUAL,VIRTUAL,BEFORE,AFTER,BOUNDARY,
+     .        IKLO,IKHI,PERMANENT,TEMPORARY,
+     .        SIDE14,SIDE23,SIDE34,CELL1,TOTAL,SLOUT,EROUT,EIRIN,EIROUT,
+     .        DTOUT,PINOUT,PINOUT2,PINOUT3,LOGOUT,PINOUT4,
+     .        TARTOTAR,TARTOWAL,WALTOTAR,WALTOWAL,NULL,
+     .        COMPLETE,PARTIAL,MAXSTEP,MAXRITER,MAXERR,MAXNAS,MAXASD,
+     .        MAXDIS,MAXDATA,MAXBGK,MAXNAS2,MAXASD2,MAXASS,MAXTOR,
+     .        MAXFNT,MAXSTRDAT,MAXNAS3,
+     .        H_BALPHA,H_BGAMMA,H_BBETA,
+c             Number of momentum source channels.  This must be the same
+c             as NMOMCHA in EIRENE:
+     .        NMOMCHA,MAXTALLY,
+     .        MAXFLEX,MAXSTRATA,MAXPUFF,MAXVACREGION,MAXIONTIME,MAXBIN,
+     .        SOL1,PFZ,CORE,
+     .        CMOD,DIIID,JET,MAST
+
+      REAL    NIL,CENTER
+
+      PARAMETER (
+     .  NONVIRTUAL  = 1 , VIRTUAL  = 2 , BEFORE   = 3 , AFTER     =  4,
+     .  BOUNDARY    = -1,
+     .  PERMANENT   =  1, TEMPORARY = 2 ,
+     .  IKLO        = 1 , IKHI      = 2 ,
+     .  SIDE14      = 1 , SIDE23    = 2 , TOTAL    = 3 , SIDE34    =  4,
+     .  CELL1       = 3 ,
+     .  TARTOTAR    = 1 , TARTOWAL = 2 , WALTOTAR = 3 , WALTOWAL  =  4,
+
+     .  SLOUT       = 50 , EROUT    = 50, EIROUT   = 81, EIRIN     = 80,
+     .  DTOUT       = 7  , PINOUT   = 88, PINOUT2  = 89, LOGOUT    = 90,
+     .  PINOUT3     = 94 , PINOUT4  = 95,
+     .  NULL        = 0  ,
+     .  COMPLETE    = 1  , PARTIAL   = 2  ,
+     .  MAXSTEP     = 100, MAXRITER  = 100, MAXERR   = 10,
+     .  MAXASD      = 30 , MAXNAS    = 100, MAXDIS   = 16,
+     .  MAXPUFF     = 20 ,
+c...    Room for 15 momentum loss channels in MAXDATA, but only reading 1 
+c       channel currently:
+     .  MAXFNT      = 10 , MAXDATA   =  26  , NMOMCHA  =  1,
+     .  MAXBGK      = 30 , MAXNAS2   = 10000, MAXASD2  =  5, 
+     .                     MAXNAS3   = 1000 ,
+     .  MAXASS      = 10 , MAXTOR    = 50   ,
+     .  H_BALPHA    =  1 , H_BGAMMA  = 2    , H_BBETA = 3      ,
+     .  MAXFLEX     = 10 , MAXSTRATA = 10   , MAXVACREGION = 10, 
+     .  MAXIONTIME  = 40 , MAXBIN    = 30   , MAXTALLY     = 10,
+     .  MAXSTRDAT   = 50 , 
+     .  SOL1 = 1, PFZ = 2, CORE = 3,
+     .  CMOD = 1, DIIID = 2, JET = 3, MAST = 4
+     .  )
+
+      PARAMETER (
+     .  NIL        =  0.0,
+     .  CENTER     = -1.0
+     .  )
+
+      INTEGER    H_ION1     ,H_ION2     ,H_ION3     ,H_ION4,
+     .           H_ATM1     ,H_ATM2     ,H_ATM3     ,H_ATM4,
+     .           H_MOL1     ,H_MOL2     ,H_MOL3     ,H_MOL4,
+     .           H_MP1      ,H_MP2      ,H_MP3      ,H_MP4,
+     .           H_MP5      ,H_MP6      ,H_MP7      ,H_MP8,
+     .           H_MP9
+      PARAMETER (H_ION1 =  1,H_ION2 =  2,H_ION3 =  3,H_ION4 =  4,
+     .           H_ATM1 =  5,H_ATM2 =  6,H_ATM3 =  7,H_ATM4 =  8,
+     .           H_MOL1 =  9,H_MOL2 = 10,H_MOL3 = 11,H_MOL4 = 12,
+     .           H_MP1  = 13,H_MP2  = 14,H_MP3  = 15,H_MP4  = 16,
+     .           H_MP5  = 17,H_MP6  = 18,H_MP7  = 19,H_MP8  = 20,
+     .           H_MP9  = 21)
+
+      COMMON /SLCOM1/
+     .  pfluxe,pfluxi,intpowe,intpowi,powpei,intpei,powpmk,intpmk,
+     .  powesum,powisum,
+     .  dumpae1,dumpai1,dumsrc1,dumpei1,dumpei2,
+     .  actswpow2,actswion2,osm_store,osm_preopt,osm_recopt,osm_model,
+     .  osmbulkn,osmbulkte,osmbulkti,osmbulkv,optuser,
+     .  osmikshift,
+     .  NIJC,PIJC,
+     +  EFPOPT,FPXMAXL,FPTIML,FPXMAXH,FPTIMH,
+     +  DPERP6,WGDOPT,
+     +  DRFRAC,DRSPAN,IRDRFT,DRDECY,DRSOUR,DRFRFC,
+     +  SSPEED,DRTOFX,thesis,
+     .  tuprati,tuprat,plrati,plrat
+      save /SLCOM1/
+
+      COMMON /slcom2/
+     +  IDRING,supflx,ringtype,
+     +  IKBRKS,IKBRKE,NBR,
+     +  NBREAK,NBS,irorg2,virtag,
+     +  CGRIDTYPE,IRBREAK,ikbreak,IKTI2,IKTO2,idtarg,ndsdiv,
+     +  cgridst,vpolyp,vpolmin,
+     +  eirgrid,eirneut,eirgeom,eirdebug,eirtime,eirdata,eiradd,
+     .  eirmat1,eirmat2,eirtarg,wallpt2,eirtemp1,eirtemp2,eirbgk,
+     .  eircxd2,eiropacity,eirnstrata,eirstrata,eirph2,eirfuji,
+     .  eiralloc,eiracx,eird2ion,eird2dis,eirspdatmode,eirtrim,
+     .  eirpgdat,eirnpgdat,eirasdat,eirnasdat,eirspdat,eirnspdat,
+     .  eirres,eirnres,eirpuff,eirnpuff,eirpmode,eirntracks,eirniter,
+     .  eirrinteg,eireinteg,eirermin,eirtrc1,eirtrc2,eird2fu,eirzaa,
+     .  eiraout,eirnaout,eirtorfrac,eirnsdtor,eirsdtor,eirsdvol,
+     .  eirsrcmul,eirniontime,eiriontime,eirntally,
+     .  eirscale,eirnsection,eirntrans,eirtrans,eirfluxt,eirnttra,
+     .  eirnstrdat,eirstrdat,eirnstrai,eirnatmi,eirnmoli,eirstrlis,
+     .  eirntorseg,eirnlimi,haddi2,eirdtimv,eirtrin,eirtriik,eirtriir,
+     .  eirpho1,eirpho2,eirtri,eirntri,eirphoton,
+     .  setmach,muldensity,addtemp,
+     .  osm_ionfnt,
+     .  fradd,bkadd,     
+     .  cwcopt,cmodopt,stagopt,stopopt,stopopt2,stopopt3,
+     .  rflexopt,iflexopt,
+     .  virloc,
+     .  outwall,outplasma,outcell,outpoly,outgeom,outtarget,
+     .  outpin,pincode,outmode,
+     .  out_source,out_plasma,out_geom,
+     .  rho
+      save /SLCOM2/
+
+      COMMON /EIRENECOM/ eirtally
+      save /EIRENECOM/ 
+
+      COMMON /TAGCOM/ tagpinatom,tagmulrec
+      save /TAGCOM/
+
+      COMMON /slcom3/
+     .  prb_num,prb_te,prb_ti,prb_ne,prb_rho,prb_r,prb_z,prb_shift,
+     .  prb_align,prb_tag,
+     .  dip_te,dip_ti,dip_ne,dip_s,dip_v,dip_ik,
+     .  prp_te,prp_ti,prp_ne,
+     .  tarsource,tarshift,tarshiftopt,haldata,shot,slice_time,
+     .  hal_num,hal_ang,hal_val,hal_tag,
+     .  grd_minpl,grd_refine,grd_range,grd_shift,grd_thresh,
+     .  rel_opt  ,rel_frac,rel_count,rel_niter,rel_nstep ,rel_iter  ,
+     .  rel_step ,rel_pace,rel_data ,rel_ndata,rel_bound1,rel_bound2,
+     .  relmode,relreset,relseed,relexpdat,
+     .  rel_viter,osm_sympt,osm_symopt,osm_powopt,
+     .  osm_dp1,osm_dp2,osm_dp3,osm_dp4,osm_dp5,osm_dp6,osm_code,
+     .  rel_tol  ,rel_symfr,rel_prbfr , rel_mfsp,
+     .  rel_qemul,osm_peimul,osmikp,
+     .  rel_deltati,rel_dirtg,rel_hte,rel_hti,rel_hne,
+     .  rel_hproe  ,rel_hproi,osmmock
+      save /slcom3/
+
+      COMMON /slcom4/
+     .  slffric,osm_watch1,osm_watch2,osm_probe,osm_nflag,ikbound,
+     .  ikfluid,
+     .  lpdati2,lpdato2   ,nlpdati2,nlpdato2,
+     .  pinion2 ,pinqe2   ,pinrec2 ,pinqi2  ,pinenz2  ,pinenm2,
+     .  pinmol2 ,pinena2  ,pinmp2  ,pinatom2,pinalpha2,
+     .  pinionz2,pinz02   ,
+     .  pinline ,pinline2 ,pindata ,pindata2,mulrec,mulion,mulqei,
+     .  mulqer  ,mulrecl,
+     .  pinior  ,pinmpr   ,pinqir  ,pinqer  ,
+     .  pinior2 ,pinmpr2  ,pinqir2 ,pinqer2 ,
+     .  pinbgk  ,pinbgk2  ,pinasd  ,indasd,
+     .  pinmoi  ,pinstrata,pinploss,pinalgv,pinioncomp,
+     .  adp_opt,adp_region,adp_upper,adp_lower,osm_mode,
+     .  osm_range,s21_ndatai,s21_ndatao,s21_datai,s21_datao,
+     .  s22_ir,s22_l1,s22_nr,s22_maxs,s22_tr,s22_midnks,s21_mode,
+     .  ringuppr,ringmodel,osms28,osmns28,s22pfzion,
+     .  osms28over,osmns28over,s28sym
+      save /slcom4/
+
+       COMMON /slcom5/
+     .  osm_matchp,osm_matchs,osm_sfrac,osm_nfnt,
+     .  osm_testep,vacnseg,vacseg,vacregion,vacnpla,vacpla,
+     .  firstshape,machine
+       save /slcom5/
+
+       COMMON /CIOPTCOM/ orgcioptf,orgcioptg
+       save /CIOPTCOM/
+       INTEGER           orgcioptf,orgcioptg
+
+
+       COMMON /DISCOM/ disindex,dislev
+       save /DISCOM/
+       INTEGER disindex(MAXNRS)
+       REAL    dislev(MAXNRS)
+
+
+       LOGICAL firstshape
+       INTEGER machine
+
+c
+c Constants:
+c
+      REAL BZC
+      PARAMETER (BZC=1.38E-23)
+
+      INTEGER outmode
+c
+c What are these?
+c
+        INTEGER NIJC
+        REAL    PIJC(10)
+c
+c Extended far-periphery:
+c
+        INTEGER EFPOPT
+        REAL    FPXMAXL,FPTIML,FPXMAXH,FPTIMH
+c
+c New Dperp options:
+c
+        REAL    DPERP6
+        REAL    DRSPAN,DRFRAC,DRSOUR
+        INTEGER IRDRFT,DRDECY
+        REAL    DRFRFC(MAXNRS),SSPEED(MAXNKS,MAXNRS),DRTOFX
+        INTEGER NFR
+c
+c WGDOPT: 1-write background plasma to file
+c
+        INTEGER WGDOPT,optuser
+c
+c Cell width calculation option:
+c
+        INTEGER cwcopt
+c
+c Broken grid and degnerate grid variables:
+c
+      INTEGER CGRIDTYPE
+      INTEGER IKBRKS(4,MAXNRS),IKBRKE(4,MAXNRS),NBR,NBREAK(MAXNRS)
+      INTEGER NBS,irorg2(MAXNRS),IDRING(MAXNRS),supflx(2,MAXNRS),
+     .        ringtype(MAXNRS)
+      INTEGER IRBREAK,IKTI2(MAXNRS),IKTO2(MAXNRS),idtarg(MAXNDS),
+     .        ikbreak(MAXNRS)
+      INTEGER ndsdiv
+      INTEGER virtag(0:MAXNKS+1,0:MAXNRS)
+      INTEGER vpolyp,vpolmin
+c
+c OutputGrid related options:
+c
+      INTEGER outwall,outplasma,outcell,outpoly,outgeom,outtarget,
+     .        outpin,
+     .        out_source,out_plasma,out_geom
+c
+c EIRENE related options:
+c
+      CHARACTER*128 eirtally(MAXTALLY,10)
+      INTEGER cgridst,eirgrid,eirneut,eirgeom,fradd,bkadd,cmodopt,
+     .        stagopt,stopopt,stopopt2,stopopt3,
+     .        eirdebug,eirtime,eirdata,eiradd,eirniter,eirtrim,
+     .        eirmat1,eirmat2,pincode,eirnpgdat,eirbgk,eiropacity,
+     .        eircxd2,eirnasdat,eirnspdat,eirph2,eirnpuff,eirpmode,
+     .        eirnstrata,eirnres,eiracx,eird2ion,eird2dis,
+     .        eirntracks(1000),eiraout(MAXASD,10),eirnaout,
+     .        eirnsdtor,eirfuji,eirniontime,eirntally,eirntrans,
+     .        eirnstrdat,eirnatmi,eirnmoli,eirnstrai,eirnttra,
+c... Replace the 5000:
+     .        eirstrlis(MAXSTRDAT),eirntorseg,eirnlimi(5000),
+     .        eirtrin,eirtriik(MAXNKS*MAXNRS),eirtriir(MAXNKS*MAXNRS)
+      INTEGER iflexopt(MAXFLEX),eirnsection,haddi2,eirntri,eirphoton
+      REAL    rflexopt(MAXFLEX),eirres(7,6,MAXPINITER),eirrinteg,
+     .        eireinteg,eirermin,eirsdtor(MAXTOR),eirsdvol(MAXTOR),
+     .        eirsrcmul,eirstrata(MAXSTRATA,10),eiralloc,
+     .        eirtrans(MAXTOR,3),eirstrdat(MAXSTRDAT,MAXSTRATA,100),
+     .        eiriontime(MAXIONTIME,20+MAXBIN*3),eirscale(100),
+     .        eirfluxt(MAXSTRATA),setmach,muldensity,addtemp,
+     .        eirdtimv,
+     .        eirpho1(MAXNKS,MAXNRS),eirpho2(MAXNKS,MAXNRS),
+     .        eirtri(MAXNRS,20)
+c      REAL    rflexopt(MAXFLEX),eirres(20,MAXPINITER)
+
+
+c
+c EIRPGDAT:
+c   1 - gauge code, corresponding to a particular experimental gauge
+c         C-Mod:
+c            001
+c         DIII-D:
+c            101   PBF1
+c            102   PBF2
+c            103   PBF3
+c            104   PV1
+c            105   PR2
+c            106   VPLOWS
+c            107   PCM105BAF
+c            108   PCM240TOR
+c   2 - x coordinate for the gauge (m)
+c   3 - y coordinate (m)
+c   4 - toroidal location (degrees)
+c   5 - radius of gauge cylinder (m)
+c   6 - length of gauge cylinder (m)
+c   7 - experimental data
+c   8 - volume of gauge (m3)
+c
+c   9 - D2 energy density, raw data from EIRENE (eV cm-3)
+c  10 - D2 energy density ( ... MKS)
+c  11 - D2 energy denisty, relaxed (... MKS)
+c
+c  12 - D energy density, raw data from EIRENE (eV cm-3)
+c  13 - D energy density ( ... MKS)
+c  14 - D energy denisty, relaxed (... MKS)
+c
+c
+      REAL    eirtarg,eirtemp1,eirtemp2,eirzaa,eirtorfrac,
+     .        eirpgdat(MAXNAS,MAXASD),eirasdat(MAXNAS2,MAXASD),
+     .        eirspdat(MAXNAS3,MAXASD),eirpuff(MAXNAS,MAXPUFF)
+      INTEGER eirtrc1,eirtrc2,eird2fu,eirspdatmode
+c
+c Neutral wall stuff:
+c
+      REAL    wallpt2(MAXPTS,2)
+c
+c Grid:
+c
+      INTEGER virloc(MAXNRS,2)
+
+      INTEGER IN14,OUT23
+      PARAMETER (IN14 = 1, OUT23 = 2)
+
+
+      REAL    rho(MAXNRS,3)
+
+      INTEGER grd_refine
+      REAL    grd_minpl,grd_range,grd_shift,grd_thresh
+
+c
+c CMOD experimental data:
+c
+      INTEGER NUMPRB,MAXPRB,NUMHAL,MAXHAL,
+     .        BSIDE_ST,BTOP_ST,FSIDE,KBOT_ST,OFMP,IFMP,FSP1,D3D_RCP
+
+      PARAMETER (NUMPRB   = 3, MAXPRB   = 99,
+     .           NUMHAL   = 4, MAXHAL   = 64,
+     .           FSP1     = 1, IFMP     = 2 , OFMP  = 3 , D3D_RCP = 4,
+     .           BSIDE_ST = 1, BTOP_ST  = 2 , FSIDE = 3 , KBOT_ST = 4)
+
+      INTEGER      prb_num(NUMPRB)
+      REAL         prb_te (MAXPRB,NUMPRB),prb_ti (MAXPRB,NUMPRB),
+     .             prb_ne (MAXPRB,NUMPRB),prb_rho(MAXPRB,NUMPRB),
+     .             prb_r  (MAXPRB,NUMPRB),prb_z  (MAXPRB,NUMPRB)
+      CHARACTER*72 prb_tag(NUMPRB)
+
+      REAL    dip_te(MAXNRS,NUMPRB),dip_ti(MAXNRS,NUMPRB),
+     .        dip_ne(MAXNRS,NUMPRB),dip_s (MAXNRS,NUMPRB),
+     .        dip_v (MAXNRS,NUMPRB)
+      INTEGER dip_ik(MAXNRS,NUMPRB)
+
+      REAL prp_te(MAXNRS,NUMPRB),prp_ti(MAXNRS,NUMPRB),
+     .     prp_ne(MAXNRS,NUMPRB)
+c
+c
+c
+      INTEGER      hal_num(NUMHAL)
+      REAL         hal_ang(MAXHAL,NUMHAL),hal_val(MAXHAL,NUMHAL)
+      CHARACTER*72 hal_tag(NUMHAL)
+
+      INTEGER tarsource,haldata,shot,slice_time,prb_align,osmnppv,
+     .        tarshiftopt
+      REAL    prb_shift,tarshift(2)
+c
+c     Relaxation:
+c
+c
+c     rel_viter - number of iterations at each step for pressure comparison
+c                 option
+c
+      REAL    rel_frac,rel_pace,rel_data(MAXINS,15),rel_bound1,
+     .        rel_bound2,rel_tol,
+     .        rel_qemul(2,MAXNRS),osm_peimul(2,MAXNRS),
+c     .        osm_dp1(2,MAXNRS),osm_dp2(2,MAXNRS),osm_dp3(2,MAXNRS)
+     .        osm_dp1(2,MAXNRS),osm_dp2(2,MAXNRS),osm_dp3(2,MAXNRS),
+     .        osm_dp4(MAXNKS,MAXNRS),osm_dp5(2,MAXNRS),
+     .        osm_dp6(MAXNKS,MAXNRS),
+     .        osm_ionfnt(MAXFNT,3),
+     .        osm_testep,osmppv(MAXNRS,6)
+
+      REAL rel_dirtg(MAXNRS),rel_deltati(MAXNRS),
+     .     rel_hte  (MAXNRS),rel_hti    (MAXNRS),rel_hne(MAXNRS),
+     .     rel_hproe(3,MAXNRS),rel_hproi(3,MAXNRS),
+     .     rel_symfr(MAXNRS),rel_prbfr(2,MAXNRS),
+     .     rel_mfsp(2,MAXNRS),relexpdat(2,3,MAXNRS)
+
+      INTEGER rel_opt,rel_count,rel_niter,rel_nstep,rel_iter,rel_step,
+     .        nlpdati2,nlpdato2,rel_ndata,relmode,relreset,
+     .        rel_viter(0:MAXSTEP),osm_sympt(MAXNRS),osm_code(2,MAXNRS),
+c     .        osm_symopt,osm_powopt,osm_preopt,osm_recopt
+     .        osm_symopt,osm_powopt,osm_preopt,osm_recopt,osm_nfnt,
+     .        osm_model(2,MAXNRS),osmmock,osmikshift(2,MAXNRS)
+
+      REAL*8 relseed
+
+      REAL lpdati2(MAXINS,9),lpdato2(MAXINS,9)
+
+      REAL pinion2  (MAXNKS,MAXNRS),pinqe2   (MAXNKS,MAXNRS),
+     .     pinrec2  (MAXNKS,MAXNRS),pinqi2   (MAXNKS,MAXNRS),
+     .     pinmol2  (MAXNKS,MAXNRS),pinena2  (MAXNKS,MAXNRS),
+     .     pinenz2  (MAXNKS,MAXNRS),pinenm2  (MAXNKS,MAXNRS),
+     .     pinmp2   (MAXNKS,MAXNRS),
+     .     pinatom2 (MAXNKS,MAXNRS),pinalpha2(MAXNKS,MAXNRS),
+     .     pinionz2 (MAXNKS,MAXNRS),pinz02   (MAXNKS,MAXNRS)
+
+      REAL
+     .  pinline  (MAXNKS,MAXNRS,6,3)    ,pinline2(MAXNKS,MAXNRS,6,3),
+     .  pindata  (MAXNKS,MAXNRS,MAXDATA),
+     .  pindata2 (MAXNKS,MAXNRS,MAXDATA),
+     .  mulrec   (MAXNKS,MAXNRS)        ,mulion  (MAXNKS,MAXNRS),
+     .  mulrecl  (MAXNRS),
+     .  mulqei   (MAXNKS,MAXNRS)        ,mulqer  (MAXNKS,MAXNRS),
+     .  pinbgk   (MAXNKS,MAXNRS,MAXBGK*MAXTOR) ,
+     .  pinbgk2  (MAXNKS,MAXNRS,MAXBGK),
+     .  pinior   (MAXNKS,MAXNRS)        ,pinior2 (MAXNKS,MAXNRS),
+     .  pinmpr   (MAXNKS,MAXNRS)        ,pinmpr2 (MAXNKS,MAXNRS),
+     .  pinqir   (MAXNKS,MAXNRS)        ,pinqir2 (MAXNKS,MAXNRS),
+     .  pinqer   (MAXNKS,MAXNRS)        ,pinqer2 (MAXNKS,MAXNRS),
+     .  pinmoi   (MAXNKS,MAXNRS)        ,
+     .  pinstrata(MAXNKS,MAXNRS,3,MAXSTRATA),
+     .  pinploss (MAXNKS,MAXNRS,NMOMCHA),
+     .  pinalgv  (MAXNKS,MAXNRS,MAXTALLY),
+     .  pinioncomp(MAXNKS,MAXNRS,3)
+
+      INTEGER indasd
+
+      INTEGER    MAXASC     ,MAXASC3D    ,MAXASCDAT
+      PARAMETER (MAXASC=5000,MAXASC3D=200,MAXASCDAT=40000)
+
+      COMMON /ASCCOM/  asc_cell,asc_link,asc_nvp,asc_rvp,asc_zvp,
+     .                 asc_ncell,asc_grid,asc_region,asc_vol,asc_area,
+     .                 asc_nregion,asc_rstart,asc_rend,asccode,
+     .                 ascvertex,ascnvertex,ascdata,ascncut,
+     .                 asc_link3D,asc_nvp3D,asc_zmin3D,asc_zmax3D,
+     .                 asc_xvp3D ,asc_yvp3D,asc_zvp3D,asc_3Dmode
+      save /ASCCOM/
+      INTEGER
+     .  asc_ncell,asc_nregion,asccode,ascncut,asc_3Dmode,
+     .  asc_rstart(10),asc_rend(10),
+     .  asc_cell  (  MAXASC  ),asc_region(  MAXASC  ),
+     .  asc_link  (4,MAXASC  ),asc_grid  (2,MAXASC  ),
+     .  asc_nvp   (  MAXASC  ),ascnvertex(  MAXASC  ),
+     .  asc_link3D(6,MAXASC3D),asc_nvp3D (  MAXASC3D)
+      REAL
+     .  asc_rvp   (  8,MAXASC     ),asc_zvp   ( 8,MAXASC),
+     .  asc_vol   (    MAXASCDAT  ),ascvertex (80,MAXASC),
+     .  asc_area  (    MAXASCDAT  ),
+     .  ascdata   (    MAXASCDAT,5),
+     .  asc_zmin3D(    MAXASC3D   ),asc_zmax3D(    MAXASC3D),
+     .  asc_xvp3D (6,8,MAXASC3D   ),asc_yvp3D (6,8,MAXASC3D),
+     .  asc_zvp3D (6,8,MAXASC3D   )
+
+      REAL
+     .  pinasd(MAXASCDAT,MAXASD2,MAXASS,2)
+
+
+
+c
+c     Grid adaptation:
+c
+      INTEGER adp_opt,adp_region
+      REAL    adp_upper,adp_lower
+c
+c OSM options:
+c
+c
+c osm_nflag   - Flag to see if pressure is within allowed limits
+c
+      REAL osm_range,s21_datai(MAXNRS,20),s21_datao(MAXNRS,20),
+     .     s22_l1,s22_nr,s22_tr,s22_maxs,osm_sfrac(MAXNRS),
+     .     osmbulkn,osmbulkte,osmbulkti,osmbulkv,osms28(MAXNRS,20),
+     .     osms28over(MAXNRS,20)
+
+
+      INTEGER s21_ndatai,s21_ndatao,osm_store,osm_watch1,osm_watch2,
+     .        s22_ir    ,osm_probe, osm_nflag,ikbound(MAXNRS,2),
+     .        ikfluid(2,MAXNRS),s22pfzion,
+     .        osm_mode  ,s22_midnks,s21_mode,osm_matchs,osm_matchp,
+     .     osmikp(2,MAXNRS,5),ringmodel,osmns28,osmns28over,s28sym
+
+c.... SLFRRIC is really silly here: it is a copy of FFRIC in SOLCOMMON, but SOLCOMMON
+c     cannot be included in CalDensityPeak (at the moment) because TE1, etc. is declared
+c     in both.
+      REAL*8 ringuppr,slffric
+
+
+      INTEGER swpow2,swpow3,swion2
+      PARAMETER (SWPOW2 = 38,SWPOW3 = 39,SWION2 = 40)
+
+c...these 100's are MXSPTS in solparams... move later...
+      REAL*8
+     .  powesum,powisum,
+     .  dumpei1,dumpei2,dumpae1,dumpai1,dumsrc1,
+     .  actswpow2,actswion2,
+     .  pfluxi (100),pfluxe (100),powpei(100),powpmk(0:100),
+     .  intpowi(100),intpowe(100),intpei(100),intpmk(100)
+
+c
+c     Statistics:
+c
+
+      COMMON /TEMPCOM2/ err1,err2,tim1,tim2,serr2
+      save /TEMPCOM2/
+      INTEGER           err1,err2,tim1,tim2
+      REAL              serr2(2)
+
+
+      COMMON /IMAG/ simag1,simag2
+      save /IMAG/
+      REAL          simag1,simag2
+
+      COMMON /ERRCOM/ ierror,ikerror
+      save /ERRCOM/
+      INTEGER         ierror,ikerror(2,MAXNRS)
+
+
+c Dave's...
+      common /slcomd/ ne_opt,uedge_bg
+      save /slcomd/
+c
+c       New optional input parameters
+c
+        integer ne_opt, uedge_bg
+
+      COMMON /SLCOM6/
+     .  osmpar,osmmp  ,osmqe   ,osmqi, osmpot
+      save /SLCOM6/
+
+      REAL
+     .  osmpar(MAXNKS,MAXNRS),osmmp(MAXNKS,MAXNRS),
+     .  osmqe (MAXNKS,MAXNRS),osmqi(MAXNKS,MAXNRS),
+     .  osmpot(MAXNKS,MAXNRS)
+
+
+c
+c     jdemod - moved osmpmk2 to start of common to avoid
+c              alignment issue on some compilers
+c
+       COMMON /SLCOM7/ osmpmk2,
+     .  osmpei ,osmrad,osmmpi,osmmpe,
+     .  osmnppv,osmppv,
+     .  osmmp2 ,osmqe2  ,osmpei2 ,osmrad2 ,osmmpi2 ,osmmpe2,
+     .  osmcfp ,osmcfi  ,osmcfe  ,osmcfpflx,
+     .  osmcve ,osmcde  ,osmcvi ,osmcdi,
+c...   SOL27:
+     .  osmion,osmrec   ,osmpmk
+       save /SLCOM7/
+c
+c     jdemod
+c    .  , osmpmk2
+c
+      REAL
+     .     osmpei(MAXNKS,MAXNRS),osmpei2(MAXNKS,MAXNRS),
+     .     osmmp2(MAXNKS,MAXNRS),osmqi2 (MAXNKS,MAXNRS),
+     .     osmcfp(MAXNKS,MAXNRS),osmcfpflx(MAXNKS,MAXNRS,5),
+     .     osmcfi(MAXNKS,MAXNRS),	
+     .     osmcfe(MAXNKS,MAXNRS),	
+     .     osmcve(MAXNKS,MAXNRS),osmcde (MAXNKS,MAXNRS),
+     .     osmcvi(MAXNKS,MAXNRS),osmcdi (MAXNKS,MAXNRS),
+     .     osmrad(MAXNKS,MAXNRS),osmrad2(MAXNKS,MAXNRS),
+     .     osmmpi(MAXNKS,MAXNRS),osmmpi2(MAXNKS,MAXNRS),
+     .     osmmpe(MAXNKS,MAXNRS),osmmpe2(MAXNKS,MAXNRS),
+     .     osmqe2(MAXNKS,MAXNRS),
+     .     osmpmk(0:MAXNKS,MAXNRS),
+c...   SOL27:
+     .     osmion(MAXNKS,MAXNRS),osmrec (MAXNKS,MAXNRS) 
+
+
+      REAL*8 osmpmk2(0:MAXNKS,MAXNRS)
+
+      LOGICAL thesis
+      REAL    tuprati,tuprat,plrati,plrat
+
+      INTEGER vacnseg,vacregion(MAXVACREGION),vacnpla
+      REAL    vacseg(MAXNKS,6),vacpla(MAXNKS,10)
+
+      COMMON /INTSOURCE/ intion1,intrec1,intqi1,intqe1,intpei1,
+     .                   intcfp1,intcfe1,intcfi1,intmp1,intqe2,
+     .                   intrad1,intpmk1
+      save /INTSOURCE/
+      REAL intion1(MAXNKS+1,MAXNRS),intrec1(MAXNKS+1,MAXNRS),
+     .     intqi1 (MAXNKS+1,MAXNRS),intqe1 (MAXNKS+1,MAXNRS),
+     .     intpei1(MAXNKS+1,MAXNRS),intcfp1(MAXNKS+1,MAXNRS),
+     .     intcfe1(MAXNKS+1,MAXNRS),intcfi1(MAXNKS+1,MAXNRS),
+     .     intmp1 (MAXNKS+1,MAXNRS),intqe2 (MAXNKS+1,MAXNRS),
+     .     intrad1(MAXNKS+1,MAXNRS),intpmk1(MAXNKS+1,MAXNRS)
+
+
+      COMMON /SOL22COM1/ ionsum,ionsumt,       recsumt,cfpsum,cfpsumt,
+     .                   cfesum,cfesumt,cfisum,cfisumt,       qesumt ,
+     .                          qisumt ,peisum,peisumt,radsum,radsumt,
+     .                   pmksum,pmksumt,tifrac
+      REAL*8
+     .                   ionsum,ionsumt,       recsumt,cfpsum,cfpsumt,
+     .                   cfesum,cfesumt,cfisum,cfisumt,       qesumt ,
+     .                          qisumt ,peisum,peisumt,radsum,radsumt,
+     .                   pmksum,pmksumt,tifrac
+
+
+c...  Tags:
+      LOGICAL tagpinatom,tagmulrec
+
+c...  SOL28 options:
+      COMMON /SOL28COM/ 
+     .  s28fit,s28probe,s28probepfz,s28te,
+     .  s28ion   ,s28cfp     ,s28rec   ,s28mom   ,s28cfm   ,s28Ti   ,
+     .            s28cfpnt   ,s28cfpdrft,
+     .  s28tepfz,
+     .  s28ionpfz,s28cfppfz  ,s28recpfz,s28mompfz,s28cfmpfz,s28Tipfz,
+     .            s28cfppfznt,s28cfppfzdrft,
+     .  s28superdet   ,s28nemode   ,
+     .  s28superdetpfz,s28nemodepfz,
+     .  s28ionset,s28recset,s28momset,
+     .  s28ionsetpfz,s28recsetpfz,s28momsetpfz,
+     .  s28momfr,s28mode,s28b34,s28b34det,s28Tiratio,
+     .  s28ionfrac,s28recfrac,s28momTe,
+     .  s28momfrac,
+     .  s28ionbound   ,
+     .  s28ionboundpfz
+      save /SOL28COM/ 
+
+      INTEGER s28fit,s28probe,s28probepfz,s28te,
+     .  s28ion   ,s28cfp     ,s28rec   ,s28mom   ,s28cfm   ,s28Ti   ,
+     .            s28cfpnt   ,s28cfpdrft,
+     .  s28tepfz,
+     .  s28ionpfz,s28cfppfz  ,s28recpfz,s28mompfz,s28cfmpfz,s28Tipfz,
+     .            s28cfppfznt,s28cfppfzdrft,
+     .  s28superdet   ,s28nemode   ,
+     .  s28superdetpfz,s28nemodepfz
+      LOGICAL s28ionset,s28recset,s28momset,
+     .        s28ionsetpfz,s28recsetpfz,s28momsetpfz
+      REAL    s28momfr,s28mode,s28b34,s28b34det,s28Tiratio,
+     .  s28ionfrac(2,MAXNRS),s28recfrac(2,MAXNRS),
+     .  s28momfrac(2,MAXNRS),s28momTe,
+     .  s28ionbound   ,
+     .  s28ionboundpfz
+
+
+c...  Target data for interpolation:
+      COMMON /TARCOM/ tarinter,tarninter,tarintermode
+      save /TARCOM/
+
+      INTEGER tarninter(2)
+      REAL    tarinter(MAXNRS,10,2),tarintermode(2)
+
+c...  Grid related data:
+      COMMON /GRDCOM/ grdmod,grdnmod,psindat,psidat,quasidn,ikmidplane,
+     .       grdntreg,grdntseg,grdtseg
+      save /GRDCOM/
+      INTEGER grdnmod,psindat(2),ikmidplane(MAXNRS,2),
+     .        grdntreg(2),grdntseg(MAXNRS,2),grdtseg(MAXNRS,MAXNRS,2)
+      LOGICAL quasidn
+      REAL    grdmod(1000,10),psidat(MAXNRS+1,4)
+
+      COMMON /DEBUGCOM/ sldebug
+      save /DEBUGCOM/
+      INTEGER           sldebug
+
+      COMMON /GRIDCOM/ connected
+      save /GRIDCOM/
+      LOGICAL          connected

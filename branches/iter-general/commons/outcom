@@ -1,0 +1,334 @@
+c     -*-Fortran-*-
+c
+c---------------------------------------------------------------------
+c
+c     Include Steve's common blocks - not sure where they are needed 
+c
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+c
+c---------------------------------------------------------------------
+c
+c     Smoothing and graphics print options - to TRACE routines
+c
+c---------------------------------------------------------------------
+c
+      COMMON /NSMOOTH/ NUMSMOOTH,cgrprint
+      save /nsmooth/
+      INTEGER NUMSMOOTH,cgrprint
+c
+c---------------------------------------------------------------------
+c
+c     Ghost options?
+c
+c---------------------------------------------------------------------
+c
+      COMMON /GHOSTCOM/ iopt_ghost
+      save /GHOSTCOM/
+      INTEGER iopt_ghost
+c
+c---------------------------------------------------------------------
+c
+c     Input values to OUT  
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_input/ alphae,zadj,rxygrid,plrpopt
+      save /outcom_input/
+      real alphae
+      real zadj
+      integer rxygrid,plrpopt
+c
+c---------------------------------------------------------------------
+c
+c     Adding extra comments to plots:
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_extcom/ ncomments,extra_comments 
+      save /outcom_extcom/
+      character*30 extra_comments(10)
+      integer ncomments 
+c
+c---------------------------------------------------------------------
+c
+c     Colour and other plot characteristics
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_plotvals/ n_cols,col_opt,ngs,nplots,ismoth,izmin,
+     >                        izmax,iter,niters,nizs,clsup,
+     >                        magstep,mgst,mgnd,enldist,nplts,
+     >                        pltmax,pltmin,pltfact,
+     >                        pltmins,pltmaxs,mode
+      save /outcom_plotvals/
+      integer n_cols,col_opt
+      integer ngs,nplots,ismoth
+      integer izmin,izmax 
+      integer iter,niters,nizs
+      integer clsup
+      real magstep,mgst,mgnd
+      real enldist
+      integer nplts
+      REAL    PLTMAX,PLTMIN,pltfact
+      real pltmins(maxplts),pltmaxs(maxplts)
+      integer mode 
+c
+c     Secondary plot related variables - mostly related to LOS plots  
+c
+c
+      common/outcom_secondary_plotvals/ IGNORS,ITEC,NAVS,
+     >                  AVS,VMIN,VMAX,NUMTHE,AVPTS,ATYPE,
+     >                  ZOBS,ROBS,DRAD,DTHE,THEMIN,THEMAX,
+     >                  themin_start,
+     >                  theres,mfact,pswitch
+      save /outcom_secondary_plotvals/
+      INTEGER IGNORS(MAXNGS),ITEC,NAVS
+      REAL AVS(0:100),VMIN,VMAX
+      INTEGER NUMTHE,AVPTS,ATYPE
+      REAL ZOBS,ROBS,DRAD,DTHE,THEMIN,THEMAX,themin_start
+      real theres,mfact
+      LOGICAL PSWITCH             
+c
+c---------------------------------------------------------------------
+c
+c     CNGS - OPTION added to allow the number of contours to
+c     be externally specified. Slowly convert from fixed value
+c     that is hard-coded to this system.
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_contour/ cngs,cntropt,global_cngs,localcngs,
+     >                       icntr,minscale,maxscale,scalef
+      save /outcom_contour/
+      integer cngs,cntropt,global_cngs
+      integer localcngs
+      real minscale, maxscale
+      integer icntr
+      real scalef
+c
+c     Power Contour array declarations
+c
+      common/outcom_power_contours/ nconts,nclev,conts,
+     >                              clev,pradclev
+      save /outcom_power_contours/
+      integer nconts,nclev
+      real conts(maxpts),clev(maxpts)
+      real pradclev(0:maxizs+1)
+c
+c---------------------------------------------------------------------
+c
+c     Global scaling factors
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_factors/ facta,factb,ft,fp,fact
+      save /outcom_factors/
+      real FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+      real fp,ft
+      real fact
+c
+c---------------------------------------------------------------------
+c
+c     PLRP related data
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_plrp/ plams,pizs,pind,plrpcnt
+      save /outcom_plrp/
+      real PLAMS(-1:MAXPLRP)
+      INTEGER PIZS(-1:MAXPLRP),PIND(-1:MAXIZS+1),PLRPCNT
+c
+c---------------------------------------------------------------------
+c
+c     OUT string declarations - labels and data from the raw file
+c
+c---------------------------------------------------------------------
+c
+c     jdemod - the job string is actually read in from the raw
+c              data file - however, it has become common practice
+c              to use it for other comments since it is directly
+c              used in the call to DRAW. However, the original 
+c              information in the string includes the date, time 
+c              and divimp version number for the original run - which
+c              is worth - keeping. The job string is now copied to 
+c              job_saved after the call to GET. 
+c
+      common/outcom_strings/ title,job,job_saved,graph1,equil,
+     >                       XLAB,YLAB,XPOINT,
+     >                       TABLE,ZLABS,
+     >                       ref,plane,anly,nview,
+     >                       SMOOTH,NAME,ELABS,
+     >                       PLABS,KLAB,datatitle
+      save /outcom_strings/
+      CHARACTER TITLE*174,JOB*72,job_saved*72,GRAPH1*80
+      CHARACTER EQUIL*60
+C
+C---- CHARACTER ARRAYS FOR DRAW ROUTINES ETC
+C
+      CHARACTER*36 XLAB,YLAB,XPOINT
+      CHARACTER*36 TABLE,ZLABS(-2:MAXIZS+1)
+      character*44 ref,plane,anly,nview
+      CHARACTER*72 SMOOTH
+      CHARACTER*36 NAME,ELABS(MAXNGS)
+      character*36 PLABS(-2:MAXPLRP),KLAB              
+      character*60 datatitle
+c
+c---------------------------------------------------------------------
+c
+c     Content summaries
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_content/ core_content, core_area,
+     >         edge_content, edge_area, pp_content, pp_area,
+     >         div_content, div_area, main_content, main_area
+      save /outcom_content/
+      real    core_content, core_area
+      real    edge_content, edge_area
+      real    pp_content, pp_area
+      real    div_content, div_area
+      real    main_content, main_area
+c
+c---------------------------------------------------------------------
+c
+c     ADAS related data
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_adas/  TADAS,DADAS,
+     >                     PECAE,PECAR,PECAX,
+     >                     LTRNG,LDRNG,WLNGTH,
+     >                     ISELE,ISELR,ISELX,iseld,iseldef,
+     >                     IADAS,NPAIRS,IRCODE,adasyr,
+     >                     adasyr2,isele2,iselr2,iselx2,iseld2,
+     >                     iz_state,z_atom,iz_state2,z_atom2
+      save  /outcom_adas/
+      INTEGER ISELE,ISELR,ISELX,iseld,iseldef
+      INTEGER IADAS,NPAIRS,IRCODE
+      REAL*8 TADAS(20),DADAS(20)
+      REAL*8 PECAE(20),PECAR(20),PECAX(20)
+      LOGICAL*4 LTRNG(20),LDRNG(20)
+      REAL WLNGTH
+      integer   adasyr
+      integer   adasyr2,isele2,iselr2,iselx2,iseld2
+      integer   iz_state,z_atom,iz_state2,z_atom2
+c
+      common/outcom_adas_strings/ graph2,graph3,graph4,HLABS,
+     >                            blabs,ADASID,PECTITLE,PLABAD,
+     >                            adasex,ADASGR,ADASTY,
+     >                            graph5,adasid2,adasex2
+      save /outcom_adas_strings/
+      character graph2*80,graph3*80,graph4*80
+      CHARACTER*36 HLABS(0:2),blabs
+      CHARACTER ADASID*80,PECTITLE*120,PLABAD*36
+      character adasex*3
+      CHARACTER ADASGR*8,ADASTY*80
+      character graph5*80,adasid2*80,adasex2*3
+C
+c---------------------------------------------------------------------
+c
+c     Mean free path and scale length variables.
+c
+c---------------------------------------------------------------------
+c 
+      common/outcom_mfp/ lgradte,lgradti,lmfpii,lmfpee
+      save /outcom_mfp/
+      real lgradte(maxnks,maxnrs),lgradti(maxnks,maxnrs)
+      real lmfpii(maxnks,maxnrs),lmfpee(maxnks,maxnrs)
+c
+c---------------------------------------------------------------------
+c
+c     Output arrays for passing the calculated results to the 
+c     plotting routines.
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_outvals/ touts,twids,tvals,douts,dwids,dvals,
+     >                       kouts,kwids,kvals,louts,lwids,lvals,  
+     >                       cvalsa,plastmp,
+     >                       xouts,xwids,xvals,youts,ywids,yvals,
+     >                       cvals
+      save /outcom_outvals/
+      REAL TOUTS(MAXTHE),TWIDS(MAXTHE),TVALS(MAXTHE,MAXNGS)
+      REAL DOUTS(MAXNDS+2),DWIDS(MAXNDS+2),DVALS(MAXNDS+2,MAXNGS)
+      REAL KOUTS(MAXNKS),KWIDS(MAXNKS),KVALS(MAXNKS,MAXNGS)
+      REAL LOUTS(MAXSEG),LWIDS(MAXSEG),LVALS(MAXSEG,MAXNGS)
+      real cvalsa(maxnks,maxnrs)
+      REAL PLASTMP(MAXNKS,MAXNRS)
+c
+c     Old-style contour plots ...   
+c
+      REAL XOUTS(MAXGXS),XWIDS(MAXGXS),XVALS(MAXGXS,MAXNGS)
+      REAL YOUTS(MAXGYS),YWIDS(MAXGYS),YVALS(MAXGYS,MAXNGS)
+      REAL CVALS(MAXGXS,MAXGYS)
+c
+c---------------------------------------------------------------------
+c
+c     Values related to zoom or portion of 2D plot to be displayed 
+c
+c---------------------------------------------------------------------
+c
+      common/outcom_zoom/ xxmin,xxmax,yymin,yymax,xnear2,ynear2,
+     >                    xcen,ycen,
+     >                    zminp,zmaxp,zmode,xnear,ynear
+      save /outcom_zoom/
+      REAL    XXMIN,XXMAX,YYMIN,YYMAX
+      REAL    xnear2,ynear2,xcen,ycen
+      real    zminp,zmaxp
+      INTEGER zmode
+      real xnear,ynear
+c
+c---------------------------------------------------------------------
+c
+c     Experimental data related values 
+c     - used to hold a list of experimantal dataset indices to be 
+c       included on plots if possible
+c
+c---------------------------------------------------------------------
+c
+      integer max_expt_datasets
+      parameter (max_expt_datasets=10)
+      common /expt_data_list/ expt_nsets,expt_datasets
+      save /expt_data_list/
+      integer expt_nsets, expt_datasets(max_expt_datasets)
+c
+! ammod begin.
+!---------------------------------------------------------------------
+!
+! Values related to hydrocarbon outout.
+!
+!---------------------------------------------------------------------
+
+      common/outcom_hc/ Start_HC_Species, End_HC_Species
+      save /outcom_hc/
+      Integer :: Start_HC_Species
+      Integer :: End_HC_Species
+
+! ammod end.
+c
+c---------------------------------------------------------------------
+c
+c     Local variables  
+c
+c---------------------------------------------------------------------
+c
+      real atan2c
+      external atan2c
+      logical griderr
+
+
+      integer len, lenstr
+      external lenstr
+
+      REAL KTMP(MAXNKS,MAXNRS)
+
+c
+c     IPLOT - move to params
+c 
+      integer iplot
+      parameter (iplot=49)
+
+      CHARACTER XFESYM*2
+      external  xfesym
+

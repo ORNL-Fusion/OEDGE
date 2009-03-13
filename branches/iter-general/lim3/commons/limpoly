@@ -1,0 +1,10 @@
+c
+      common /limpoly/ npolyp,korpg,nvertp,xvertp,yvertp,
+     >                 kareas
+      integer npolyp
+      integer korpg(maxnxs,maxnys) 
+      integer nvertp(maxnxs*maxnys)
+      real xvertp(4,maxnxs*maxnys)  
+      real yvertp(4,maxnxs*maxnys)  
+      real kareas(maxnxs,maxnys) 
+c
