@@ -68,7 +68,7 @@ c slmod end
       CALL RDI (CIOPTK,.TRUE.,-1,.TRUE., 6,'PLASMA ION TEMP OPT  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE., 1,'TEB GRAD COEFF OPT   ',IERR)
       CALL RDI (CIOPTM,.TRUE., 0,.TRUE., 1,'TIB GRAD COEFF OPT   ',IERR)
-      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,10,'LIMITER EDGE OPT     ',IERR)        
+      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,11,'LIMITER EDGE OPT     ',IERR)        
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 2,'CX RECOMB OPT        ',IERR)        
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)        
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 1,'DIFFUSION TYPE OPTION',IERR)
@@ -493,6 +493,8 @@ C
 C                                                                               
       SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI)                                
       use eckstein_2002_yield_data
+      use variable_wall
+      use iter_bm
 C     
       implicit none 
 c
@@ -530,7 +532,24 @@ C-----------------------------------------------------------------------
       CALL PRB                                                                  
       CALL PRC  ('TORUS DIMENSIONS')                                            
       WRITE (7,9010) '  X POSITION OF CENTRE         A     (M)    ', CA         
-      WRITE (7,9010) '  X POSITION OF WALL           AW    (M)    ', CAW        
+
+      if (lim_wall_opt.eq.0) then 
+         call prc('   WALL OPTION 0: WALL LOCATED A'//
+     >            ' CONSTANT DISTANCE FROM LCFS')
+       WRITE (7,9010)'  X POSITION OF WALL           AW    (M)    ', CAW        
+      elseif (lim_wall_opt.eq.1) then 
+         call prc('   WALL OPTION 1: WALL LOCATION'//
+     >            ' IS A FUNCTION OF Y')
+         call prc('                  WALL IS A STRAIGHT LINE SEGMENT')
+         call prc('                  STARTING AT AW AT A SPECIFIED'//
+     >            ' Yin')
+         call prc('                  REACHING AWMIN AT YHALF (THE')
+         call prc('                  HALF WAY POINT BETWEEN LIMITERS')
+         call prr('                  Yin    = ',ywall_start)
+         call prr('                  AW     = ',caw)
+         call prr('                  AW-MIN = ',caw_min)
+      endif
+
       IF (CTHETB.EQ.90.0) THEN                                                  
       WRITE (7,9010) '  HALF LIMITER SEPARATION      L     (M)    ', CL         
       ELSE                                                                      
@@ -1327,6 +1346,29 @@ C-----------------------------------------------------------------------
        call prc('  LIMITER EDGE OPT 10: ITER LIMITER SHAPE')
        call prc('                       DEFINED BY:')
        call prc('                       X=-(0.04*Y**2 + 0.09*Y**4)')
+      elseif (ciopth.eq.11) then
+       call prc('  LIMITER EDGE OPT 10: ITER HALF LIMITER SHAPE')
+       call prc('                       DEFINED BY:')
+       call prc('                       '//
+     >               'X=- lam * ln(1 -/+ C*(Y - Y_re-entrant)/lam ))')
+       call prc('                       REMAPPED SO THAT LIMITER TIP')
+       call prc('                       IS AT Y=0 INSTEAD OF Y=Y_re')
+       call prc('                       ONLY A SINGLE TANGENCY POINT')
+       call prc('                       IS SUPPORTED')
+       call prc('                       INPUT PARAMETERS:')
+       call prr('                       Toroidal setback  = ',
+     >                                  rtor_setback)
+       call prr('                       Slot     setback  = ',
+     >                                  rslot_setback)
+       call prr('                       BM Toroidal half width    = ',
+     >                                  bm_tor_wid)
+       call prr('                       Slot Toroidal half width  = ',
+     >                                  slot_tor_wid)
+       call prr('                       Lambda_design  = ',
+     >                                  lambda_design)
+       call prc('                       DERIVED PARAMETERS:')
+       call prr('                       T_Re-entrant = Y_re = ', y_re)
+       call prr('                       C                   = ', c_lim)
       ENDIF                                                                     
 C                                                                               
       IF (CORECT.EQ.1)                                                          
@@ -2108,6 +2150,8 @@ C---- FIRST ITEM IS VERSION NUMBER (EG 3I/01) TO BE READ BACK
 C---- IN COLECT - IF AGREEMENT IS NOT FOUND THEN AN ERROR MESSAGE IS            
 C---- ISSUED.                                                                   
 C                                                                               
+      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
+c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
       WRITE (NOUT,IOSTAT=IOS)                                                   
      >        NXS,NYS,NQXSO,NQXSI,NQYS,NTS,NIZS,NLS,TITLE,JOB,IMODE             

@@ -20,6 +20,9 @@ CEXT=.c
 # VER=aix
 #
 VER=pgi
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=pgi
 #
 # Source file locations
 #
@@ -28,12 +31,15 @@ LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
 #
 OUTSRC =$(LIMMAIN)/out/src
+OUTF90SRC=$(OUTSRC)/f90
 COMSRC =$(LIMMAIN)/comsrc
+LIMF90COMSRC=$(COMSRC)/f90
+#
 DIVCOMSRC=$(DIVMAIN)/comsrc
 DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
 #
 #
-VPATH=$(OUTSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+VPATH=$(OUTSRC):$(OUTF90SRC):$(COMSRC):$(LIMF90COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
 
 #
 # Suffixes
@@ -47,6 +53,11 @@ VPATH=$(OUTSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
 #
 FCOMP=pgf90
 RM=rm -f
+#
+FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_pgi=pgf95
+#
 #
 # Optimization and debugging flags
 #
@@ -67,6 +78,16 @@ OPTC= -O $(EMU)
 OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
 OPTO= -O -Mbyteswapio -Mlist
 OPTS=
+#
+# LINUX - ABSOFT
+#
+OPT_ABSOFT = -g 
+OPT_ABSOFT_OPT = -O
+#
+# LINUX - INTEL
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O
 #
 OPT = $(OPTG)
 #
@@ -198,7 +219,17 @@ opt:
 	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3ds/SLCOM
 	$(MAKE)  "OPT=$(OPTG)" "IDIR=$(COMMONS)/sl_limcom3ds"
 
+abs:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT)" "VER=$(VER_ABSOFT)" 
 
+absopt:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT_OPT)" "VER=$(VER_ABSOFT)" 
+
+intel:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" 
+
+intelopt:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
 
@@ -208,6 +239,7 @@ altopt:
 clean:
 	$(RM) *.o
 	$(RM) *.lst
+	$(RM) *.mod
 
 
 

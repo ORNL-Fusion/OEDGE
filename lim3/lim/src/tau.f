@@ -1,5 +1,6 @@
       SUBROUTINE TAUIN1 (QTIM,NIZS,ICUT,                                        
      >                   FSRATE,IGEOM,NTBS,NTIBS,NNBS)                         
+      use variable_wall
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -92,6 +93,15 @@ C
       CALL EDGE (QXS,QEDGES,QTANS,QDISTS,NQXSO,CAW,CL,ICUT,CCUT,XSCALO,         
      >           WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,CORECT,
      >           XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)        
+
+C                                                                               
+C-----------------------------------------------------------------------        
+C                     SET UP VARIABLE CAW
+C-----------------------------------------------------------------------        
+c
+      call setup_wall (qys,nqys,cl,caw)
+
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C  SET DIFFUSION DECAY ETC, USING DPERP FACTORS                                 

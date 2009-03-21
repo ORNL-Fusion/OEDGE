@@ -34,6 +34,7 @@ c
 c ======================================================================
 c
       SUBROUTINE OutputDiag
+      implicit none
 
       INCLUDE   'params'                                                         
       INCLUDE   'dynam1'                                                        
@@ -44,7 +45,11 @@ c
       INCLUDE   'slcom'
 
       INTEGER II,SUM
-
+c
+c     jdemod - defined some variables
+c
+      integer iz,ix
+      real count
 
       WRITE(63,*) ' '
       WRITE(63,'(2A)') 'CASE: ',TITL2
@@ -65,9 +70,12 @@ c
       WRITE(63,'(A,I6)') 'Maximum ionisation state ',MIZS
 
       WRITE(63,*) ' '      
-      WRITE(63,'(A,3I4,A,G10.5,A,F10.3,A)') 'Ionisation rate peak (',
-     +  IXIRP,IYIRP,IPIRP,'): ',CRNBS(IXIRP,IYIRP),' m^-3, ',
-     +  CTEMBS(IXIRP,IYIRP),' eV'
+c
+c     jdemod - subscripts undefined
+c
+c      WRITE(63,'(A,3I4,A,G10.5,A,F10.3,A)') 'Ionisation rate peak (',
+c     +  IXIRP,IYIRP,IPIRP,'): ',CRNBS(IXIRP,IYIRP),' m^-3, ',
+c     +  CTEMBS(IXIRP,IYIRP),' eV'
 
       WRITE(63,*) ' '
       WRITE(63,*) 'Density integrated over all space:'
@@ -156,6 +164,10 @@ c
 c ======================================================================
 c
       SUBROUTINE GetProfiles
+c
+c     jdemod - add implicit none
+c
+      implicit none
 
       INCLUDE   'params'                                                         
       INCLUDE   'dynam1'
@@ -189,6 +201,11 @@ c
       INTEGER    MAXIX,MAXIP
       REAL       MAXE
 c
+c     jdemod - defined missing variables
+c
+      integer :: iy,iz,ip,ix,i,iqx
+
+c
 c Initialize arrays:
 c
       DO IY = -NYS,NYS 
@@ -196,7 +213,24 @@ c
           YPRO(IY,IZ)    = 0.0
         ENDDO
         NPRO(IY,1)  = 0.0
-        INJBINT(IY) = INJBINT(IY) / YWIDS(ABS(IY))
+
+c
+c       jdemod - fixed array bounds addressing error when iy=0 
+c              - also check for ywids(iy) = 0
+c
+        if (iy.ne.0) then 
+           if (ywids(abs(iy)).ne.0.0) then 
+              INJBINT(IY) = INJBINT(IY) / YWIDS(ABS(IY))
+           else
+              INJBINT(IY) = 0.0
+           endif
+        else
+           if (Ywids(1).ne.0.0) then 
+              INJBINT(IY) = INJBINT(IY) / YWIDS(1)
+           else
+              INJBINT(IY) = 0.0
+           endif
+        endif
       ENDDO    
       
       DO IP = -MAXNPS,MAXNPS
@@ -333,7 +367,13 @@ c Electron production rate integration:
 c
       DO IX = 1, MAXNXS
         DO IP = -MAXNPS+1, MAXNPS-1
-          EPRO(IX,IY) = 0.0
+
+c
+c         jdemod - fix bug in indexing of epro - IY -> IP
+c
+c          EPRO(IX,IY) = 0.0
+c
+          EPRO(IX,IP) = 0.0
 c
 c Have to make sure this is correct if last charge state is the highest:
 c      

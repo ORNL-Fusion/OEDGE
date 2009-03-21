@@ -777,6 +777,7 @@ C
 C
 C
       SUBROUTINE ADASRD(YEAR,IZ0,IZ1,ICLASS,NPTS,TE,NE,COEF)     
+      use error_handling
 C
 C  READ THE REQUESTED RATE COEFFICIENT FROM THE ADAS MASTER ELEMENT
 C  FILES:
@@ -822,7 +823,14 @@ C
 c     >            , LINTRP
      >            )
       IF (IFAIL.EQ.1) THEN
-        WRITE(6,1000) IZ0, IZ1,YEAR
+        !WRITE(6,1000) IZ0, IZ1,YEAR
+        !WRITE(7,1000) IZ0, IZ1,YEAR
+        !WRITE(0,1000) IZ0, IZ1,YEAR
+
+        write(error_message_data,1000) IZ0, IZ1,YEAR
+
+        call errmsg('ADASRD:',trim(error_message_data))
+
         STOP
       ENDIF
 C
@@ -836,7 +844,7 @@ C
         ENDIF
       ENDDO
 C
- 1000 FORMAT(' ERROR READING REQUESTED ATOMIC DATA!',/,
+ 1000 FORMAT(' ERROR READING REQUESTED ATOMIC DATA!',
      >       ' MASTER ELEMENT FILE FOR NUCLEAR CHARGE ',I2,
      >       ' AND ION CHARGE ',I2,
      >       ' WAS NOT FOUND IN YEAR ',A2)
