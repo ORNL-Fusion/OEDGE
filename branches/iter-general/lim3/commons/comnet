@@ -5,7 +5,9 @@ C
      >                OYCOORD,OYIQX,CDFLUX,OYMAX2,nerods3
       REAL    OYS(MAXOS),ODS(MAXOS),OYOUTS(MAXOS),ODOUTS(MAXOS)                 
       REAL    OYMAX,ODMAX,NEROXS(MAXNXS,5,3),NEROYS(MAXOS,6)
-      REAL    nerods3(maxos,-maxnps:maxnps,5)                    
+      ! jdemod - code expects nerods3 to be indexed to 6 - not sure why it was only 5
+      REAL    nerods3(maxos,-maxnps:maxnps,6)                    
+      !REAL    nerods3(maxos,-maxnps:maxnps,5)                    
       REAL    OYWIDS(MAXOS),ODWIDS(MAXOS),NERODS(MAXOS,5)                       
       REAL    WALLS(-MAXNYS:MAXNYS,-2:MAXIZS+1),DEPS(MAXNXS,MAXIZS+1,3)           
       REAL    OYCOORD(MAXOS,3),CDFLUX(MAXOS,3),OYMAX2(2)

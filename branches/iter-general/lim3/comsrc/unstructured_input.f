@@ -69,6 +69,8 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeUnstructuredInput
+      use iter_bm
+      use variable_wall
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -179,6 +181,40 @@ c              Shear_short_circuit_opt 1: P = CPCO * ( 2*ran-1) = (-CPCO,+CPCO)
 c
       shear_short_circuit_opt=0
 c
+c -----------------------------------------------------------------------
+c
+c     TAG L02: LIM Wall shape option - allow CAW to vary as a function of Y
+c              0 = off ... Wall = CAW
+c              1..n = on      CAW  = function of Y (option specifies function)
+c
+c              Option 1 = linear wall from CAW at ywall_start to 
+c                         CAW_MIN at YHALF (half way point between limiters)
+c
+      lim_wall_opt = 0
+c
+c     TAG L03: LIM Wall shape option - starting Y value for revised wall value
+c
+      ywall_start = 0.0
+
+c
+c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
+c
+      caw_min = HI
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L05 to L9: Limiter shape parameters for EDGE option 11 - ITER
+c     L05: rtor_setback - radial setback from LCFS at the toroidal half width of the BM
+c     L06: rslot_setback - radial setback from LCFS at slot half width
+c     L07: bm_tor_wid - toroidal half width of the BM (blanket module)
+c     L08: slot_tor_wid - toroidal half witdth of the center slot of BM 
+c     L09: lambda_design - design SOL decay length
+c
+      rtor_setback  = 0.07
+      rslot_setback = 0.01
+      bm_tor_wid    = 0.5954 
+      slot_tor_wid  = 0.03
+      lambda_design = 0.015
 c
 c -----------------------------------------------------------------------
 c
@@ -219,6 +255,8 @@ c
 c ======================================================================
 c
       SUBROUTINE ReadUnstructuredInput(line2)
+      use iter_bm
+      use variable_wall
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -386,6 +424,54 @@ c
       elseif (tag(1:3).EQ.'L01') THEN
         CALL ReadI(line,shear_short_circuit_opt,0,1,
      >                'Shear Short Circuit Option')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L02: LIM Wall shape option - allow CAW to vary as a function of Y
+c              0 = off ... Wall = CAW
+c              1..n = on      CAW  = function of Y (option specifies function)
+c
+c              Option 1 = linear wall from CAW at ywall_start to 
+c                         CAW_MIN at YHALF (half way point between limiters)
+c
+      elseif (tag(1:3).EQ.'L02') THEN
+        CALL ReadI(line,lim_wall_opt,0,1,'LIM wall option')
+c
+c     TAG L03: LIM Wall shape option - starting Y value for revised wall value
+c
+      elseif (tag(1:3).EQ.'L03') THEN
+        CALL ReadR(line,ywall_start,0.0,HI,
+     >               'Starting Y value for alternate wall')
+c
+c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
+c
+      elseif (tag(1:3).EQ.'L04') THEN
+        CALL ReadI(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L05 to L09: Limiter shape parameters for EDGE option 11 - ITER
+c     L03: rtor_setback - radial setback from LCFS at the toroidal half width of the BM
+c     L04: rslot_setback - radial setback from LCFS at slot half width
+c     L05: bm_tor_wid - toroidal half width of the BM (blanket module)
+c     L06: slot_tor_wid - toroidal half witdth of the center slot of BM 
+c     L07: lambda_design - design SOL decay length
+c
+      elseif (tag(1:3).EQ.'L05') THEN
+        CALL ReadR(line,rtor_setback,0.0,HI,
+     >          'Radial setback at BM edge (M)')
+      elseif (tag(1:3).EQ.'L06') THEN
+        CALL ReadR(line,rslot_setback,0.0,HI,
+     >                    'Radial setback at inner slot edge (M)')
+      elseif (tag(1:3).EQ.'L07') THEN
+        CALL ReadR(line,bm_tor_wid,0.0,HI,
+     >                    'Toroidal Half width of BM (M)')
+      elseif (tag(1:3).EQ.'L08') THEN
+        CALL ReadR(line,slot_tor_wid,0.0,HI,
+     >                    'Toroidal half width of slot (M)')
+      elseif (tag(1:3).EQ.'L09') THEN
+        CALL ReadR(line,lambda_design,0.0,HI,
+     >                    'Design decay length (M)')
 c
 c -----------------------------------------------------------------------
 c
@@ -629,7 +715,7 @@ c
 c
 c
       SUBROUTINE ReadR(line,rval,rmin,rmax,tag)
-
+      use error_handling
       IMPLICIT none
 
       CHARACTER line*72,tag*(*)
@@ -652,7 +738,9 @@ c
       WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',rval
 
       RETURN
-98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
+
+ 98   call errmsg('READR','Problem reading unstructured input')
+      WRITE(DATUNIT,*) 'Problem reading unstructured input'
 99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
       WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
       WRITE(DATUNIT,'(5X,A,3G10.3)')

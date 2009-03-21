@@ -460,6 +460,8 @@ c
       parameter (maxrev=100)
 c
 c  
+
+      write(0,*) 'READING INPUT FILE:'
 c
 c
 C                                                                               
@@ -471,6 +473,8 @@ C
 c
 c     LIM has the main version number in a different location  
 c
+      write (0,*) 'VERSION:',':',ios,':',trim(verse),':'
+
       read(verse,'(1x,i1,1x,i2)') vernum,revnum
 c
       version_code = vernum * maxrev + revnum
