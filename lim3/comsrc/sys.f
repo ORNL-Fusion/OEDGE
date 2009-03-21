@@ -138,7 +138,37 @@ C     CRAY : Interface to random no. initialiser system routine RANSET
 C
       SUBROUTINE RANINI (ISEED)
       INTEGER ISEED
-      CALL NEWSRAND (ISEED)
+c
+c     Initialization of the intrinsic generator is more complicated
+c     than previously implemented - 34 integers are typically 
+c     required - these are generated from one input seed value
+c     in this routine.
+c
+
+c
+      integer k,i
+      integer,allocatable :: temp_seed(:)
+
+      call random_seed(size=k)
+
+      write(6,*) 'Random seed:',iseed
+      write(6,*) 'Random seed size = ',k
+
+      allocate(temp_seed(k))
+
+      do i = 1,k
+         temp_seed(i) = int(iseed/i)
+      end do
+
+      write(6,*) 'Random Seed Used:',(temp_seed(i),i=1,k)
+
+      call random_seed(put=temp_seed)
+
+      deallocate(temp_seed)
+
+c
+c     write(6,*) 'Random seed:',iseed
+c     CALL NEWSRAND (ISEED)
 C
 C     CALL SRAND (ISEED ) FOR CRAY OR IBM DEFAULT GENERATOR
 C
@@ -149,21 +179,36 @@ C***********************************************************************
 C
 C     SURAND
 C     ======
-C     IBM  : ESSL library routine to generate vector of random numbers
-C     CRAY : Replace with calls to RANF generator within a vectorisable
-C            loop.
+C     IBM  : ESSL LIBRARY ROUTINE TO GENERATE VECTOR OF RANDOM NUMBERS
+C     CRAY : REPLACE WITH CALLS TO RANF GENERATOR WITHIN A VECTORISABLE
+C            LOOP.
 C
-      SUBROUTINE SURAND (SEED,NRANDS,RANDS)      
+      SUBROUTINE SURAND (SEED,NRANDS,CRANDS)
+      use rand_data
+      implicit none
       DOUBLE PRECISION SEED
-      INTEGER NRANDS  
-      REAL RANDS(NRANDS),NEWRAND
-      EXTERNAL NEWRAND
+      INTEGER NRANDS
+      integer j
+      REAL CRANDS(NRANDS)
+c
+c      real newrand
+c      EXTERNAL NEWRAND
+c
+
       DO 100 J = 1, NRANDS
-          RANDS(J) = NEWRAND()
-C         
+          call random_number(crands(j))
+c
+c          CRANDS(J) = NEWRAND()
+C
 C         RANJ(J) = RAND ()  FOR CRAY OR IBM USING DEFAULT GENERATOR
 C
   100 CONTINUE
+      
+c
+c     Update random number count
+c     
+      ran_used = ran_used + nrands
+
       RETURN
       END
 

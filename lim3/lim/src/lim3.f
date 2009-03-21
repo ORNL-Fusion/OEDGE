@@ -8,6 +8,8 @@ c slmod
      >                 DEFACT,NRAND,TITLE)           
 c     >                 DEFACT,NRAND)           
 c slmod end
+!      use iter_bm
+      use variable_wall
       IMPLICIT none                                                    
       INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -172,7 +174,10 @@ c
 c     Add some local variables related to calculating the scaling of the NERODS3 data
 c
       real pbnd1,pbnd2,local_pwid
-
+c
+c     Add iqy_tmp to support variable wall location
+c
+      integer :: iqy_tmp
 
 c
 c     ADD LOGICAL to record if splitting and rouletting is active to avoid
@@ -1543,12 +1548,24 @@ C
 C------------ UPDATE IQX VALUE.                                                 
 C                                                                               
               IQX  = MAX (INT(ALPHA*XSCALO), 1-NQXSO)                           
+c
+c             Calculate an IQY_TMP value to access CAW_QYS which gives the wall distance
+c             at a specific value of QYS - this IQY_TMP has a different meaning than the 
+c             IQY calculated below (which is relative to the limiter faces). 
+c
+              if (y.lt.0.0) then 
+                 IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+              else
+                 IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+              endif
+
 C                                                                               
 C------------ NOTE 151,270:  STOPPING CROSS FIELD TRANSPORT.                    
 C------------ ORIGINALLY, WHEN X REACHED -4 LAMBDA IT WAS BROUGHT BACK          
 C------------ TO 0.  FOR FLEXIBILITY, A CUTOFF IS NOW SPECIFIED IN              
 C------------ THE INPUT DATA - CAN BE SWITCHED OFF BY SETTING TO -99.0          
 C                                                                               
+
               IF (ALPHA.LT.CFTCUT) THEN                                         
                 CX    = 0.0                                                     
                 ALPHA = 0.0                                                     
@@ -1558,7 +1575,9 @@ C------------ ION HAS REACHED WALL AND IS ABSORBED
 C------------ SET TEMPERATURE TO SMALLEST POSSIBLE VALUE                        
 C------------ SCORE PARTICLE IN "WALLS" ARRAY (REDIM'D TO -NYS:NYS)             
 C                                                                               
-              ELSEIF (ALPHA.LE.CAW) THEN                                        
+c              ELSEIF (ALPHA.LE.CAW) THEN                                        
+c
+              ELSEIF (ALPHA.LE.CAW_QYS(IQY_TMP)) THEN                                        
                 CIAB   = 0                                                      
                 CVABS  = SVY / QFACT                                            
                 CTBIQX = CTEMBS(1,IY)                                           
@@ -1662,8 +1681,43 @@ C-------------- UPDATE ION VELOCITY, AFFECTED BY
 C-------------- ELECTRIC FIELD AND DRIFT VELOCITY                               
 C-------------- ION HAS COMPLETED OUTBOARD STEP   (MONUP1)                      
 C                                                                               
+c
+c           jdemod - WARNING - there is an inconsistency in the 
+c                    definition of IQY in the code. IQY is the
+c                    index into the underlying QYS and related
+c                    arrays. However, it appears that in the code
+c                    below IQY was at some point redefined to 
+c                    be a number of points between the limiter
+c                    surfaces along the field lines - thus the
+c                    use of EDGE1, EDGE2 and CYSCLS in the
+c                    calculation of IQY here. However, the related
+c                    variables that are indexed by IQY were NOT
+c                    changed to reflect this usage. 
+c                    e.g. CEYS(IQY), CVHYS(IQY) and QYS(IQY) are
+c                         all calculated without taking the 
+c                         location of the limiter edges into effect.
+c                    This means that the IQY value calculated here
+c                    does not match properly with these arrays - in
+c                    particular QYS. 
+c
+c                    On the other hand, the 
+c                    procedure here will map the IQY range between
+c                    limiter surfaces 1:1 onto the CEYS and CVHQYS
+c                    arrays thus allowing for a variable limiter
+c                    shape still mapping the first data point at IQY=1
+c                    to the limiter surface.
+c                    The dependencies in CEYS and CVHYS are typically
+c                    linear in QYS to CL and so would not change 
+c                    much if they were calculated properly for the 
+c                    actual limiter surface location. 
+c
+c                    The biggest concern is QYS - it can not be
+c                    properly indexed by IQY.                     
+c
+c
             SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
      >            CBETAI(CIZ) * CTIGS(IX,IY) 
+c
             IF (Y.GT.0.0) THEN                                              
               IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
@@ -1743,9 +1797,13 @@ C-----------------------------------------------------------------------
 C                                                                               
               DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
 c slmod begin
-              IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) 
-     +          DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
+              IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) then
+                 DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
      +                                 DSPUTY * DQFACT
+c              else
+c                 write(0,*) 'Warning: IP > MAXNPS or JY > NY3D :',
+c     >                      ip,maxnps,jy,ny3d
+              endif
 c
 c              IF (JY.LE.NY3D) DDLIM3(IX,IY,CIZ,IP) =   
 c     >           DDLIM3(IX,IY,CIZ,IP) + DSPUTY * DQFACT
@@ -3212,6 +3270,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)            
+      use error_handling
       IMPLICIT none                                                    
       REAL    OLDALP,ALPHA,OLDY,Y,XM,YM                                         
       INTEGER CIAB,IQX,IX,IOY,IOD                                               
@@ -3244,9 +3303,15 @@ C     INCLUDE (COMNET)
       REAL    XT,XB,YT,YB,EDGE1,EDGE2,DIST1,DIST2                               
       INTEGER K,IPOS                                                            
       LOGICAL THERE                                                             
+c
+      real :: xt_org,xb_org
 C                                                                               
       XT = OLDALP                                                               
       XB = ALPHA                                                                
+c
+      xt_org = xt
+      xb_org = xb
+c
       YT = OLDY                                                                 
       YB = Y                                                                    
       K  = 1                                                                    
@@ -3256,8 +3321,27 @@ C       WRITE (6,9001) ALPHA,Y,IQX,QEDGES(IQX,1),QEDGES(IQX,2),K,.TRUE.
       ENDIF                                                                     
 C                                                                               
   100 CONTINUE                                                                  
-      XM = 0.5 * (XT + XB)                                                      
-      YM = 0.5 * (YT + YB)                                                      
+
+      IF (XT.GT.0.0.AND.XB.GT.0.0) THEN 
+         write(error_message_data,
+     >               '(a,a,g18.10,a,g18.10,a,g18.10,a,g18.10)')
+     >  'HIT CALLED WHEN OLDALP and ALPHA both greater than 0.0:',
+     >               ' OLDALP =',oldalp,
+     >               ' ALPHA =',alpha,
+     >               ' OLDY =',oldy,
+     >               ' Y =',y
+         CALL errmsg('HIT:',error_message_data)
+
+
+         xm = 0.0 - 1.0e-10
+         xt = xm
+         xb = xm
+         YM = 0.5 * (YT + YB)                                                      
+      else
+         XM = 0.5 * (XT + XB)                                                      
+         YM = 0.5 * (YT + YB)                                                      
+      endif
+
       IQX = MAX (INT (XM*XSCALO), 1-NQXSO)                                      
 C                                                                               
       IF (IQX.GT.0) THEN                                                        
@@ -3288,6 +3372,24 @@ C       IF (DEBUGL) WRITE (6,9001) XM,YM,IQX,EDGE1,EDGE2,K,THERE
         IF ((.NOT.THERE) .OR. (K.LE.5)) GOTO 100                                
       ENDIF                                                                     
 C                                                                               
+      if (xm.gt.0.0) then 
+c
+c        correct error by causing impact at limiter tip
+c
+         write(error_message_data,'(a,5(a,g18.10),a)')
+     >        'Calculated XM greater than 0.0:',
+     >        ' XM = ',xm,' XB =',xb,' XT = ',xt,
+     >        ' XB_ORG =',xb_org,' XT_ORG = ',xt_org,
+     >        ' XM=MIN(XT_ORG,XB_ORG) Assigned'
+
+         CALL errmsg('HIT:',error_message_data)
+         !xm = 0.0-1.0e-10
+         xm = min(xb_org,xt_org)
+         IQX = MAX (INT (XM*XSCALO), 1-NQXSO)                                      
+         CALL EDGINT (XM,IQX,1,EDGE1,DIST1)                                      
+         CALL EDGINT (XM,IQX,2,EDGE2,DIST2)                                      
+      endif
+c
       IX = IPOS (XM, XS, NXS-1)                                                 
       IF (CIAB.EQ.-1 .OR. CIAB.EQ.2) THEN                                       
         YM  =-EDGE1 - 1.E-10                                                    
@@ -3298,6 +3400,11 @@ C
         IOY = IPOS ( EDGE2, OYS, MAXOS-1)                                       
         IOD = IPOS ( DIST2, ODS, MAXOS-1)                                       
       ENDIF                                                                     
+
+
+
+
+
       RETURN                                                                    
  9001 FORMAT(1X,'HIT: XM',F10.6,' YM',F10.5,:,                                  
      >  ' IQX',I6,' EDGES',2F10.6,I5,L2)                                        

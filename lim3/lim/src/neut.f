@@ -6,6 +6,7 @@ c
      >                 RSTRUK,              
      >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
+      use variable_wall
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -105,6 +106,11 @@ c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD
 c slmod
       REAL      PHI
 c slmod end
+c
+c     jdemod  - for wall options
+c
+      integer :: iqy_tmp 
+
 C                                                                               
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
 C
@@ -439,7 +445,7 @@ C
 C------ DEPENDING ON OPTION CHOSEN,  SELECT LAUNCH POSITION ON LIMITER          
 C------ EDGE AND DETERMINE IF LAUNCH IS A SECONDARY LAUNCH ...                  
 C------ NOTE: CNEUTB=3 CASE.  SET IQX=0 EVEN IF LAUNCH IS AT X0>0, SINCE        
-C------ WE LATER REQUIRE RMAX1(IQX) WHICH IS UNDEFINED FOR IQX>0...             
+C------ WE LATER REQUIRE RMAX1(IQX) WHICH IS UNDEFINED FOR IQX0>...             
 C------ IF RMAX=0 TO PREVENT A FAILED LAUNCH SELECT A NEW X POSITION ..         
 C------ FOR LARMOR RADIUS EFFECT, IQX=1 BECOMES A VALUE WITHIN {KQX,0}.         
 C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"           
@@ -546,18 +552,51 @@ c
 c slmod end
 C                                                                               
         ELSEIF (CNEUTB.EQ.4) THEN                                               
-          IQX = 1-NQXSO                                                         
-          X0  = QXS(IQX)                                                        
-  290     Y0  = RAN * CTWOL                                                     
-          IF (J.EQ.1) Y0 = -Y0                                                  
-          IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
-     >        (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
-     >        (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
-            NRAND = NRAND + 1                                                   
-            CALL SURAND (SEED, 1, RAN)                                          
-            GOTO 290                                                            
-          ENDIF                                                                 
-          THETA = PI/2.0                                                        
+c
+c         Wall launch - need to adjust for new wall options
+c
+          if (lim_wall_opt.eq.0) then  
+
+             IQX = 1-NQXSO                                                         
+             X0  = QXS(IQX)                                                        
+  290        Y0  = RAN * CTWOL                                                     
+             IF (J.EQ.1) Y0 = -Y0                                                  
+             IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
+     >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
+     >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               GOTO 290                                                            
+             ENDIF                                                                 
+             THETA = PI/2.0                                                        
+
+          elseif (lim_wall_opt.eq.1) then 
+
+
+ 291         Y0  = RAN * CTWOL                                                     
+
+             IQY_TMP = max(min(int(y0*yscale)+1,nqys),1)
+
+             X0 = caw_qys(iqy_tmp)
+
+             IQX = INT (X0 * XSCALO)                                             
+
+             IF (J.EQ.1) Y0 = -Y0                                                  
+             IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
+     >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
+     >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               GOTO 291                                                            
+             ENDIF                                                                 
+c
+c            Normal incidence needs to be corrected at some point for these wall options
+c
+             THETA = PI/2.0                                                        
+
+          endif
+
+
         ELSEIF (CNEUTB.EQ.6) THEN
           X0 = CXSC
           IQX = 0
@@ -991,6 +1030,7 @@ C
      >CALL LAUNCH (FSRATE,1,NPROD1,1,NATIZ1,RSTRK1,RRES1,                       
      >             RATIZ1,RNEUT1,RWALL1,RCENT1,RTMAX1,SEED,NRAND,               
      >             NEUTIM,RFAIL1,STATUS,MAT1,MATLIM,QMULTP)                     
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C       STORE PRIMARY DETAILS IN "IONISATION -1" POSITION IN ARRAYS             
@@ -1137,6 +1177,7 @@ C
 C     CHANGE THE VEL/ANG FLAG BACK TO ITS ORIGINAL VALUE
 C
       CNEUTC = TEMPOPT
+
 C
       RETURN                                                                    
 C                                                                               
@@ -1151,6 +1192,7 @@ C
       SUBROUTINE LAUNCH (FSRATE,LPROD,NPROD,LATIZ,NATIZ,SSTRUK,SRES,            
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
+      use variable_wall
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1240,10 +1282,17 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       REAL    VY0,VY02,OLDY
       REAL    MAXXP(2)
       INTEGER IPROD,IQX,IQY,IX,IY,IFATE,IP,IPOS,IT,NREJEC,KK,KKLIM              
+      integer :: iqy_tmp
       INTEGER JY,J,IOY,IOD                                                      
       CHARACTER FATE(6)*14                                                      
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
+
+c
+c     jdemod minimum rvalue to prevent division by zero errors
+c
+      real, parameter :: minrval = 1.0e-10
+      
 c slmod begin - N2 break
       LOGICAL N2STAT
       REAL    ENEW, VNEW,NFAST,N2Time
@@ -1289,6 +1338,7 @@ C
       CISTOT = 0.0                                                              
       CISMAX = 0.0                                                              
       IQY    = 0                                                                
+      iqy_tmp = 0
 C                                                                               
 C-----------------------------------------------------------------------        
 C        SET INITIAL VALUES FOR DIAGNOSTICS                                     
@@ -1419,6 +1469,7 @@ C
       NRAND = NRAND + 3 * NPROD                                                 
       KK    = 1000 * ISECT                                                      
       KKLIM = KK - 10                                                           
+
 C
 C     SET UP VELOCITIES FOR USE IN THE NEUTRAL INJECTION CASE 6
 C     - PARTICLES ARE INJECTED AT X0 IN +/-Y0 WITH ONE OF TWO
@@ -1457,6 +1508,21 @@ c slmod end
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
+        
+c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
+c     >       INT (X * XSCALI) + 1,INT (X * XSCALO),x,xscalo,xscali
+
+
+c       Calculate an IQY_TMP value to access CAW_QYS which gives the wall distance
+c       at a specific value of QYS - this IQY_TMP has a different meaning than the 
+c       IQY calculated below (which is relative to the limiter faces). 
+c
+        if (y.lt.0.0) then 
+           IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+        else
+           IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+        endif
+c
         IX    = IPOS (X, XS, NXS-1)                                             
         IY    = IPOS (ABSY, YS, NYS-1)                                          
         IF (Y.LT.0.0) IY = -IY                                                  
@@ -1467,6 +1533,7 @@ c slmod end
 c
 c        write(0,'(a,4i7,3(1x,g12.5))') 'LAUNCH:',iprod,ix,iy,ip,x,y,p
 C                                                                               
+
         RMAX  = RMAXS(IPROD)                                                    
         RESPUT= .FALSE.                                                         
         IF (RMAX.LT.0.0) THEN                                                   
@@ -1590,6 +1657,7 @@ C
         PTOT(J)  = PTOT(J) + ABS(P) * SPUTY                                     
         ATOT(J)  = ATOT(J) + (ANGLAN+TANLAN) * SPUTY                            
         RNEUT(J) = RNEUT(J) + SPUTY                                             
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C     CALCULATE LAUNCH VELOCITY.  FIRST SELECT RANDOM NUMBER IN THE             
@@ -1741,6 +1809,7 @@ C  ITERATE AROUND MOTION FOR EACH TIMESTEP UNTIL IONISATION OCCURS.
 C  GENERATE NEW SET OF RANDOMS WHEN OLD LOT ARE ALL USED UP                     
 C-----------------------------------------------------------------------        
 C                                                                               
+
   200   CONTINUE                                                                
         IF (KK.GT.KKLIM) THEN                                                   
           CALL SURAND (SEED, KK, RANV)                                          
@@ -1769,7 +1838,20 @@ C
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
-
+c
+c       Update IQY_TMP
+c
+        if (y.lt.0.0) then 
+           IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP-:',iqy_tmp,
+c     >               int((y+ctwol)*yscale)+1,
+c     >               y,ctwol,yscale,y+ctwol,(y+ctwol)*yscale
+        else
+           IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP+:',iqy_tmp,
+c     >               int((y+ctwol)*yscale)+1,
+c     >               y,ctwol,yscale,y*yscale
+        endif
 C                                                                               
 C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
 C------ OR SURVIVED UNTIL TIME CUTOFF POINT ...                                 
@@ -1777,11 +1859,16 @@ C------ WALLS ARRAY IS UPDATED
 C------ THE "IFATE" FLAG CAN BE USED WHEN PRINTING DEBUG MESSAGES WHICH         
 C------ ALLOW THE NEUTRALS TO BE TRACKED.  (WRITE 9003 STATEMENTS)              
 C                                                                               
-        IF (X.LE.CAW) THEN                                                      
-C
+        IF (X.LE.CAW_qys(iqy_tmp)) THEN                                                      
+
+c
 C         REFLECT NEUTRALS AT WALL IMPACT - IF OPTION ACTIVE
 C
           IF (NRFOPT.EQ.1) THEN 
+c
+c           jdemod - this is only correct for a flat wall - if an alternate wall option
+c                    is in use this should ideally be modified.  
+c
             DXVELF = -DXVELF 
           ELSE
             RWALLN(J) = RWALLN(J) + SPUTY                                         
@@ -1931,7 +2018,7 @@ c
 c
 c *** ARGH! *** Was I making this horrible mistake all along?  Should it really be VNEW?
 c
-c *** ARGH! *** Add some good fucking statistics to catch this kind of thing!
+c *** ARGH! *** Add some good ****** statistics to catch this kind of thing!
 
            DXVELF = DBLE (VNEW * SIN(beta) * COS(psi) * FSRATE)                      
            DYVELF = DBLE (VNEW * SIN(beta) * SIN(psi) * FSRATE)                      
@@ -2066,6 +2153,7 @@ C
          IFATE = 5                                                              
 C                                                                               
   899  CONTINUE                                                                 
+
        MAXXP(J) = MAX(MAXXP(J),X) 
        IF (DEBUGN.OR.(IFATE.EQ.6))                                              
      >   WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                  
@@ -2073,6 +2161,8 @@ C
        CISTOT = CISTOT + CIST * SPUTY                                           
        CISMAX = MAX (CISMAX, CIST)                                              
   900  CONTINUE                                                                 
+
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C      PRINT DIAGNOSTICS                                                        
@@ -2089,6 +2179,8 @@ C
       CALL PRI2 ('NUMBER OF NEUTRALS LAUNCHED        ',                         
      >           NINT(RNEUT (1)),    NINT(RNEUT (2)))                           
       ENDIF                                                                     
+
+
       IF (STATUS.LE.2) THEN                                                     
       CALL PRI2 ('NUMBER OF NEUTRALS REACHING WALL   ',                         
      >           NINT(RWALLN(1)),    NINT(RWALLN(2)))                           
@@ -2102,32 +2194,48 @@ C
      >           NINT(RFAIL (1)),    NINT(RFAIL (2)))                           
       CALL PRI2 ('NO OF VELOCITIES > VMAX (DISCARDED)',                         
      >           NINT(REJECT(1)),    NINT(REJECT(2)))                           
+
+
       CALL PRR2 ('AVERAGE X PRODUCTION POSITION (M)  ',                         
-     >           XTOT(1)/RNEUT(1),   XTOT(2)/RNEUT(2))                          
+     >           XTOT(1)/max(RNEUT(1),minrval),
+     >           XTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('MINIMUM X PRODUCTION POSITION (M)  ',                         
      >           XMIN(1),            XMIN(2))                                   
       CALL PRR2 ('MAXIMUM X PRODUCTION POSITION (M)  ',                         
      >           XMAX(1),            XMAX(2))                                   
       CALL PRR2 ('AVERAGE ABS(Y) PRODN POSITION (M)  ',                         
-     >           YTOT(1)/RNEUT(1),   YTOT(2)/RNEUT(2))                          
+     >           YTOT(1)/max(RNEUT(1),minrval),   
+     >           YTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('AVERAGE ABS(P) PRODN POSITION (M)  ',                         
-     >           PTOT(1)/RNEUT(1),   PTOT(2)/RNEUT(2))                          
+     >           PTOT(1)/max(RNEUT(1),minrval),
+     >           PTOT(2)/max(RNEUT(2),minrval))                          
       CALL PRR2 ('AVERAGE ANGLE AT PRODUCTION (DEGS) ',                         
-     >    RADDEG*ATOT(1)/RNEUT(1),   RADDEG*ATOT(2)/RNEUT(2))                   
+     >    RADDEG*ATOT(1)/max(RNEUT(1),minrval),
+     >    RADDEG*ATOT(2)/max(RNEUT(2),minrval))                   
+
       CALL PRR2 ('AVERAGE VELOCITY WITHOUT ANGLE FACT',                         
-     >           VTOTA(1)/RNEUT(1),  VTOTA(2)/RNEUT(2))                         
+     >           VTOTA(1)/max(RNEUT(1),minrval),
+     >           VTOTA(2)/max(RNEUT(2),minrval))                         
       CALL PRR2 ('MAXIMUM VELOCITY WITHOUT ANGLE FACT',                         
      >           VTOTAM(1),          VTOTAM(2))                                 
       CALL PRR2 ('AVERAGE ANGULAR VEL CORRECTION FACT',                         
-     >           VMULTT(1)/RNEUT(1), VMULTT(2)/RNEUT(2))                        
+     >           VMULTT(1)/max(RNEUT(1),minrval),
+     >           VMULTT(2)/max(RNEUT(2),minrval))                        
+
       CALL PRR2 ('MAXIMUM ANGULAR VEL CORRECTION FACT',                         
      >           VMULTM(1),          VMULTM(2))                                 
       CALL PRR2 ('AVERAGE VELOCITY AT PRODUCTION(M/S)',                         
-     >           VTOT(1)/RNEUT(1),   VTOT(2)/RNEUT(2))                          
+     >           VTOT(1)/max(RNEUT(1),minrval),
+     >           VTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('MAXIMUM VELOCITY AT PRODUCTION(M/S)',                         
      >           VTOTM(1),           VTOTM(2))                                  
+
       CALL PRR2 ('AVERAGE TEMP AT PRODUCTION (EV)    ',                         
-     >           ETOT(1)/RNEUT(1),   ETOT(2)/RNEUT(2))                          
+     >           ETOT(1)/max(RNEUT(1),minrval),
+     >           ETOT(2)/max(RNEUT(2),minrval))                          
       ENDIF                                                                     
 C                                                                               
       SNEUT  = RNEUT (1) + RNEUT (2)                                            
@@ -2138,32 +2246,43 @@ C
       SFAIL  = RFAIL (1) + RFAIL (2)                                            
       SATIZ  = RATIZ (1) + RATIZ (2)                                            
       SRES   = RRES  (1) + RRES  (2)                                            
-      CTEMSC =(EATIZ (1) + EATIZ (2)) / SATIZ                                   
+
+      CTEMSC =(EATIZ (1) + EATIZ (2)) / max(SATIZ,minrval)                                   
+
       CALL PRB                                                                  
       CALL PRI2 ('NUMBER OF NEUTRALS IONISED         ',                         
      >           NINT(RATIZ(1)),     NINT(RATIZ(2)))                            
 C                                                                               
       IF (SATIZ.GT.0.0 .AND. STATUS.LE.2) THEN                                  
+         
         CALL PRR2 ('AVERAGE X IONISATION POSITION (M)  ',                       
-     >             XATIZ(1)/RATIZ(1),   XATIZ(2)/RATIZ(2))                      
+     >             XATIZ(1)/max(RATIZ(1),minrval),
+     >             XATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('MAXIMUM X IONIZATION POSITION (M)  ',
      >              MAXXP(1) , MAXXP(2) )                 
         CALL PRR2 ('AVERAGE ABS(Y) IONIS POSITION (M)  ',                       
-     >             YATIZ(1)/RATIZ(1),   YATIZ(2)/RATIZ(2))                      
+     >             YATIZ(1)/max(RATIZ(1),minrval),
+     >             YATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE ABS(P) IONIS POSITION (M)  ',                       
-     >             PATIZ(1)/RATIZ(1),   PATIZ(2)/RATIZ(2))                      
+     >             PATIZ(1)/max(RATIZ(1),minrval),
+     >             PATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE ANGLE AT IONISATION (DEGS) ',                       
-     >      RADDEG*AATIZ(1)/RATIZ(1),   RADDEG*AATIZ(2)/RATIZ(2))               
+     >      RADDEG*AATIZ(1)/max(RATIZ(1),minrval),
+     >      RADDEG*AATIZ(2)/max(RATIZ(2),minrval))               
         CALL PRR2 ('AVERAGE VELOCITY AT IONISATION(M/S)',                       
-     >             VATIZ(1)/RATIZ(1),   VATIZ(2)/RATIZ(2))                      
+     >             VATIZ(1)/max(RATIZ(1),minrval),
+     >             VATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('MAXIMUM VELOCITY AT IONISATION(M/S)',                       
      >             VATIZM(1),           VATIZM(2))                              
         CALL PRR2 ('AVERAGE TEMP AT IONISATION (EV)    ',                       
-     >             EATIZ(1)/RATIZ(1),   EATIZ(2)/RATIZ(2))                      
+     >             EATIZ(1)/max(RATIZ(1),minrval),
+     >             EATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE TIME TO IONISATION (S)     ',                       
-     >             TATIZ(1)/RATIZ(1),   TATIZ(2)/RATIZ(2))                      
+     >             TATIZ(1)/max(RATIZ(1),minrval),
+     >             TATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('FRACTION OF IONISATIONS INBOARD    ',                       
-     >             FRACIN(1)/RATIZ(1),  FRACIN(2)/RATIZ(2))                     
+     >             FRACIN(1)/max(RATIZ(1),minrval),
+     >             FRACIN(2)/max(RATIZ(2),minrval))                     
       ENDIF                                                                     
 c slmod begin - N2 break
       IF (N2OPT.EQ.1) THEN
@@ -2207,6 +2326,7 @@ c slmod begin - N2 break
       ENDIF
 c slmod end
 C                                                                               
+
 
       WRITE (6,'(1X,A,I15)') 'AV. ITERS PER NEUT ',NINT(CISTOT/RPROD)           
       WRITE (6,'(1X,A,I15)') 'MAX ITERS ANY NEUT ',NINT(CISMAX)                 
