@@ -21,6 +21,8 @@ CEXT=.c
 #
 VER=pgi
 VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=pgi
 #
 # Source file locations
 #
@@ -52,6 +54,8 @@ FCOMP=pgf90
 RM=rm -f
 #
 FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_pgi=pgf95
 #
 # Optimization and debugging flags
 #
@@ -92,6 +96,11 @@ OPTS=
 #
 OPT_ABSOFT = -g 
 OPT_ABSOFT_OPT = -O
+#
+# LINUX - INTEL
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O
 #
 # SET options
 #
@@ -222,6 +231,12 @@ abs:
 
 absopt:
 	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT_OPT)" "VER=$(VER_ABSOFT)" 
+
+intel:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" 
+
+intelopt:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
