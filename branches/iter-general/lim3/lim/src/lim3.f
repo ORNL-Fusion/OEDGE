@@ -10,6 +10,7 @@ c     >                 DEFACT,NRAND)
 c slmod end
 !      use iter_bm
       use variable_wall
+      use yreflection
       IMPLICIT none                                                    
       INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -1284,6 +1285,19 @@ c                   DY1 contains all forces and velocity diffusive steps
 c
 c
               Y     = SNGL (DY1+DY2)                                            
+c
+c
+c             Check for Y-axis reflection 
+c
+c             cmir_refl_lower < 0
+c             cmir_refl_upper > 0
+c
+              if (yreflection_opt.ne.0) then 
+
+                 call test_reflection(y,oldy,svy)
+
+              endif
+
 c
 c slmod begin
               IF (DEBUGL) WRITE(78,'(I4,F7.1,13G12.5)') 
