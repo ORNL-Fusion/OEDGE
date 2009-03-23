@@ -1,8 +1,10 @@
 module error_handling
 
+  use divimp_types
+
   interface errmsg
 
-     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg
+     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg
 
   end interface
 
@@ -15,6 +17,8 @@ module error_handling
 
   integer,private :: err1=0,err2=6,err3=-1
   integer,private :: dbg1=6,dbg2=-1,dbg3=-1
+
+  character,public :: error_message_data*512
 
 contains
 
@@ -46,6 +50,35 @@ contains
   ! Error message handling routines
   !
 
+  subroutine basemsg(msg)
+    implicit none
+    character*(*) msg
+
+    integer len1,len2
+
+    len1 = len_trim(msg)
+
+    if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+    if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+    if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+
+
+  end subroutine basemsg
+
+  subroutine ubasemsg(unit,msg)
+    implicit none
+    character*(*) msg
+    integer :: unit
+
+    integer len1,len2
+
+    len1 = len_trim(msg)
+
+    write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+
+  end subroutine ubasemsg
+
+
   subroutine rerrmsg(msg,a,unit)
     implicit none
     character*(*) msg
@@ -71,7 +104,7 @@ contains
   subroutine r8errmsg(msg,a,unit)
     implicit none
     character*(*) msg
-    real*8 a
+    real(kind=R8) ::  a
     integer,optional :: unit
 
     integer len1,len2
@@ -180,7 +213,7 @@ contains
   subroutine r8dbgmsg(msg,a,unit)
     implicit none
     character*(*) msg
-    real*8 a
+    real (kind=R8) ::  a
     integer,optional :: unit
 
     integer len1,len2
