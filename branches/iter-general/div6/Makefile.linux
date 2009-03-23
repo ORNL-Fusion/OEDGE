@@ -287,11 +287,12 @@ intel:
 
 intelopt:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
 intel-iter:
-	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp"
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
 
 intelopt-iter:
-	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" 
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
