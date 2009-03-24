@@ -19,8 +19,8 @@ export ADASCENT=/work/projects/divimp/adas
 #
 VER=pgi
 RUNROOT=$HOME/divimp
-EXEROOT=/work/projects/divimp
-DATAROOT=/work/projects/divimp
+EXEROOT=/work/projects/divimp/divimp
+DATAROOT=/work/projects/divimp/divimp
 #
 #  Loctions of the various DIVIMP files 
 #
