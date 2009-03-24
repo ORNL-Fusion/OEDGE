@@ -98,7 +98,6 @@ FFLAGS= $(OPT)
 # Common block directory
 #
 IDIR=$(COMMONS)
-
 #
 # C-compiler
 #
