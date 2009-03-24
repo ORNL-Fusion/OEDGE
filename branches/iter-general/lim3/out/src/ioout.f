@@ -473,7 +473,7 @@ C
 c
 c     LIM has the main version number in a different location  
 c
-      write (0,*) 'VERSION:',':',ios,':',trim(verse),':'
+c      write (0,*) 'VERSION:',':',ios,':',trim(verse),':'
 
       read(verse,'(1x,i1,1x,i2)') vernum,revnum
 c
