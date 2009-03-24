@@ -18,7 +18,7 @@ c
      >  RADDEG=57.29577952,       EMI=1.602192E-19/1.672614E-27  ,  
      >  DEGRAD=1.745329252E-02,   ECH=1.602192E-19,        
      >  AMU=1.672614E-27         ,                         
-     >  HI=1.E38    ,LO=1.E-38   ,MACHHI=1.0E38 ,MACHLO=1.0E-37  )
+     >  HI=1.E37    ,LO=1.E-37   ,MACHHI=1.0E37 ,MACHLO=1.0E-37  )
 c
 c     Parameters related specifically to OUT
 c
