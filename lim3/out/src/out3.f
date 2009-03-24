@@ -113,7 +113,9 @@ C
       DOUBLE PRECISION DSUM(12),DDEPS,DSUM2(6)                               
       LOGICAL        SSS                                                        
       EXTERNAL       IPOS
-      DATA    BIGG / 1.E50 / ,  NIN / 8 /               
+c     jdemod - 1.0e50 is too large for R4 - use HI
+c      DATA    BIGG / 1.0e50 / ,  NIN / 8 /               
+      DATA    BIGG / HI / ,  NIN / 8 /               
 c
 c     Variables for LOS plots  
 c
