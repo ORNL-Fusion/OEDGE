@@ -234,7 +234,20 @@ c
       cmir_refl_lower = 0.0
       cmir_refl_upper = 0.0
       yreflection_event_count = 0.0
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      calc_3d_power = 1
 c
 c -----------------------------------------------------------------------
 c
@@ -522,6 +535,20 @@ c
         CALL ReadI(line,cmir_refl_upper,0.0,HI,
      >               'Y-reflection: Y>0 reflection boundary')
 c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      elseif (tag(1:3).EQ.'L13') THEN
+        CALL ReadI(line,calc_3d_power,0,1,'3D power calculation option')
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
