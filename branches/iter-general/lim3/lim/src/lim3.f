@@ -1770,29 +1770,39 @@ C    DO NOT NEED LINES  "430 CONTINUE" THROUGH TO "GOTO 440" FOR
 C    THE QUICKER STANDARD LIM VERSION WITH NO POLOIDAL DIFFUSION.               
 C-----------------------------------------------------------------------        
 C                                                                               
+c
+c             jdemod - change structure of these statements to address
+c                      intel fortran compiler issue
+c
               IF (.NOT.BIG) GOTO 450                                            
   430         CONTINUE                                                          
-                IF ((IP.LE.-MAXNPS).OR.(PS(IP-1).LT.P))GOTO 440                 
+                IF ((IP.LE.-MAXNPS))GOTO 440                 
+                IF ((PS(IP-1).LT.P))GOTO 440                 
                 IP = IP - 1                                                     
                 GOTO 430                                                        
   440         CONTINUE                                                          
-                IF ((IP.GE.MAXNPS) .OR. (PS(IP).GE.P)) GOTO 450                 
+                IF ((IP.GE.MAXNPS)) GOTO 450                 
+                IF ((PS(IP).GE.P)) GOTO 450                 
                 IP = IP + 1                                                     
                 GOTO 440                                                        
   450         CONTINUE                                                          
-                IF ((JY.LE.1) .OR. (YS(JY-1).LT.ABSY)) GOTO 460                 
+                IF ((JY.LE.1)) GOTO 460                 
+                IF ((YS(JY-1).LT.ABSY)) GOTO 460                 
                 JY = JY - 1                                                     
                 GOTO 450                                                        
   460         CONTINUE                                                          
-                IF ((JY.GE.NYS) .OR. (YS(JY).GE.ABSY)) GOTO 470                 
+                IF ((JY.GE.NYS)) GOTO 470                 
+                IF ((YS(JY).GE.ABSY)) GOTO 470                 
                 JY = JY + 1                                                     
                 GOTO 460                                                        
   470         CONTINUE                                                          
-                IF ((IX.LE.1).OR. (XS(IX-1).LT.ALPHA)) GOTO 480                 
+                IF ((IX.LE.1)) GOTO 480                 
+                IF ((XS(IX-1).LT.ALPHA)) GOTO 480                 
                 IX = IX - 1                                                     
                 GOTO 470                                                        
   480         CONTINUE                                                          
-                IF ((IX.GE.NXS).OR. (XS(IX).GE.ALPHA)) GOTO 490                 
+                IF ((IX.GE.NXS)) GOTO 490                 
+                IF ((XS(IX).GE.ALPHA)) GOTO 490                 
                 IX = IX + 1                                                     
                 GOTO 480                                                        
   490         CONTINUE                                                          

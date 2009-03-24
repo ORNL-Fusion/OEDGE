@@ -349,6 +349,7 @@ C
       RSAB = 0.0                                                                
       RTAB = 0.0                                                                
       RTAV = 0.0                                                                
+      RTBS = 0.0
       RAVA = 0.0                                                                
       RMACH = 0.0                                                               
       RENEGY = 0.0                                                              

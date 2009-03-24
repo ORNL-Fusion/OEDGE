@@ -115,7 +115,8 @@ C
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
 C
       IERR = 0
-
+      natiz1 = 0
+      natiz2 = 0
 C                                                                               
 C-----------------------------------------------------------------------        
 C       SET UP SECTION                                                          
@@ -1917,27 +1918,35 @@ C------ CHECKING THE IP BIN IS NOT NEEDED FOR THE STANDARD LIM VERSION.
 C                                                                               
         IF (.NOT.BIG) GOTO 450                                                  
   430   CONTINUE                                                                
-          IF ((IP.LE.-MAXNPS).OR.(PS(IP-1).LT.P))GOTO 440                       
+          IF (IP.LE.-MAXNPS)GOTO 440                       
+          IF (PS(IP-1).LT.P)GOTO 440                       
           IP = IP - 1                                                           
           GOTO 430                                                              
   440   CONTINUE                                                                
-          IF ((IP.GE.MAXNPS) .OR. (PS(IP).GE.P)) GOTO 450                       
+          IF ((IP.GE.MAXNPS)) GOTO 450                       
+          IF ((PS(IP).GE.P)) GOTO 450                       
           IP = IP + 1                                                           
           GOTO 440                                                              
   450   CONTINUE                                                                
-          IF ((IX.LE.1) .OR. (XS(IX-1).LT.X))    GOTO 460                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF (IX.LE.1)    GOTO 460                       
+          IF (XS(IX-1).LT.X)    GOTO 460                       
           IX = IX - 1                                                           
           GOTO 450                                                              
   460   CONTINUE                                                                
-          IF ((IX.GE.NXS) .OR. (XS(IX).GE.X))    GOTO 470                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF ((IX.GE.NXS))    GOTO 470                       
+          IF ((XS(IX).GE.X))    GOTO 470                       
           IX = IX + 1                                                           
           GOTO 460                                                              
   470   CONTINUE                                                                
-          IF ((JY.LE.1) .OR. (YS(JY-1).LT.ABSY)) GOTO 480                       
+          IF ((JY.LE.1)) GOTO 480                       
+          IF ((YS(JY-1).LT.ABSY)) GOTO 480                       
           JY = JY - 1                                                           
           GOTO 470                                                              
   480   CONTINUE                                                                
-          IF ((JY.GE.NYS) .OR. (YS(JY).GE.ABSY)) GOTO 490                       
+          IF ((JY.GE.NYS)) GOTO 490                       
+          IF ((YS(JY).GE.ABSY)) GOTO 490                       
           JY = JY + 1                                                           
           GOTO 480                                                              
   490   CONTINUE                                                                
