@@ -414,8 +414,11 @@ C
      >                   NINT(CIY0IZ(IZ)),NINT(CI2LIZ(IZ)))
 C                                                                               
          IF (CICABS(IZ).GT.0.0.OR.ZICABS(IZ).GT.0.0) THEN                       
-           CICABS(IZ) = MAX (CICABS(IZ), 1.E-50)                                
-           ZICABS(IZ) = MAX (ZICABS(IZ), 1.E-50)                                
+           ! jdemod - these fixed constants are too large for R*4 - should use the parameter LO=1.0e-37 for R4
+           !CICABS(IZ) = MAX (CICABS(IZ), 1.E-50)                                
+           !ZICABS(IZ) = MAX (ZICABS(IZ), 1.E-50)                                 
+           CICABS(IZ) = MAX (CICABS(IZ), LO)                                
+           ZICABS(IZ) = MAX (ZICABS(IZ), LO)                                 
            CALL PRR2 ('  TIME FIRST ION ABSORBED  (S)          ',               
      >                   QTIM*ZIFABS(IZ), QTIM*CIFABS(IZ))                      
            CALL PRR2 ('  TIME LAST ION ABSORBED  (S)           ',               

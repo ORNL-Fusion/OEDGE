@@ -325,7 +325,9 @@ C
         PS(IP)    = PS(IP-1) + CPSUB                                            
         PS(-1-IP) = PS(-IP)  - CPSUB                                            
   180 CONTINUE                                                                  
-      PS(MAXNPS) = 1.E75                                                        
+      ! jdemod Number too large - should use HI here (or MACHHI)
+      ! PS(MAXNPS) = 1.0E75                                                        
+      PS(MAXNPS) = HI                                                        
 C                                                                               
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
 C                                                                               
