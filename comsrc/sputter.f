@@ -955,9 +955,9 @@ c
      >               ' FOR CASE MATERIALS:'
       write(6,'(a)') '  ENERGY (eV)      Yphys        Yself'
 
-      do in = 1,100
+      do in = 1,200
 
-         energy = in * 10.0
+         energy = in * 5.0
 
          ! assume te=ti=0.0 for these print outs
          yphys = yield(matp,matt,energy,0.0,0.0) 

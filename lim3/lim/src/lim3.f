@@ -1726,7 +1726,7 @@ c                    much if they were calculated properly for the
 c                    actual limiter surface location. 
 c
 c                    The biggest concern is QYS - it can not be
-c                    properly indexed by IQY.                     
+c                    properly indexed by this IQY.                     
 c
 c
             SVG = CALPHE(CIZ) * CTEGS(IX,IY) +

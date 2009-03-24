@@ -699,6 +699,11 @@ c     Y =  -lam/C  * ( exp(-X/lam) -1 ) + Y_re-entrant  for Y > Y_re-entrant
 c     Y =   lam/C  * ( exp(-X/lam) -1 ) + Y_re-entrant  for Yslot < Y < Y_re_entrant
 c     
 c     NOTE: limiter shape is symmetric about Y_re-entrant except for different cutoffs.           
+c
+c     NOTE: on the slot setback side the limiter shape becomes flat for Yslot > Y > 0
+c           Ideally the slot at Y=0 should be closer to the separatrix than at the
+c           start of the slot setback - however, for now the code won't support this
+c           type of geometry so we will make it go almost flat relative to the LCFS.
 c     
 c     Calculate C and t_re-entrant parameters for the limiter shape from the following formulae:
 c     
@@ -763,7 +768,16 @@ c
             ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
             if (ytmp.gt.(y_re-slot_tor_wid)) then 
-               qedges(iqx,j) = y_re-slot_tor_wid
+c
+c               Adjust edge to vertical at y_re - this should give an almost
+c               flat top to the slot - however, need to check how the code
+c               works since I think qtans is calculated as the average of 
+c               adjacent segments and the launches take place at points which 
+c               could be problematic. 
+c
+c               qedges(iqx,j) = y_re-slot_tor_wid
+c
+               qedges(iqx,j) = y_re  
             else
                qedges(iqx,j) = ytmp
             endif
