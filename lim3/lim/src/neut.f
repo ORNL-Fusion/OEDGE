@@ -1407,8 +1407,11 @@ C
         EATIZ (J) = 0.0                                                         
         PATIZ (J) = 0.0                                                         
         REJECT(J) = 0.0                                                         
-        RNEUT (J) = 1.0E-50                                                     
-        RATIZ (J) = 1.0E-50                                                     
+        ! jdemod - these fixed constants are too large for R*4 - should use the parameter LO=1.0e-37 for R4
+        !RNEUT (J) = 1.0E-50                                                     
+        !RATIZ (J) = 1.0E-50                                                     
+        RNEUT (J) = LO                                                    
+        RATIZ (J) = LO                                                     
         RSTRUK(J) = 0.0                                                         
         RFAIL (J) = 0.0                                                         
         RRES  (J) = 0.0                                                         
