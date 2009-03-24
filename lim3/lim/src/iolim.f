@@ -2159,7 +2159,7 @@ C---- FIRST ITEM IS VERSION NUMBER (EG 3I/01) TO BE READ BACK
 C---- IN COLECT - IF AGREEMENT IS NOT FOUND THEN AN ERROR MESSAGE IS            
 C---- ISSUED.                                                                   
 C                                                                               
-      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
+c      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
 c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
       WRITE (NOUT,IOSTAT=IOS)                                                   
@@ -2684,7 +2684,6 @@ c
                write(6,*) ix,':',(ptracs(ix,iy,iz),iz=1,2)
  2100    continue     
       endif  
-      write(0,*) 'DEBUG: Finished DMPOUT'
 
 C                                                                               
  9999 RETURN                                                                    
