@@ -948,7 +948,7 @@ c
       real energy
       integer in
 
-      ! loop energy from 10 to 1000 eV in 10eV increments and calculate
+      ! loop energy from 5 to 500 eV in 5eV increments and calculate
       ! both the self sputtering and matp-> matt
 
       write(6,'(a)') 'CALCULATION OF TEST YIELDS'//
