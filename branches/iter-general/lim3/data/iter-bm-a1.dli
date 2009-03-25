@@ -10,6 +10,10 @@ $
 '*L07 ITER BM parameter:BM tor 1/2 wid: bm_tor_wid   '   0.5954
 '*L08 ITER BM parameter:Slot tor 1/2 wid:slot_tor_wid'   0.03
 '*L09 ITER BM parameter:lambda_design                '   0.015
+'*L10 Y reflection Option 0=off 1=on                 '     0
+'*L11 Y reflection location for Y<0                  '     0.0
+'*L12 Y reflection location for Y>0                  '     0.0
+'*L13 Calculate 3D power results 0=off 1=on          '     0
 '    Source Data Option 0-Nocorona 1-Adas            '     1
 '    USERID for ADAS H data (*=use central database) '   '*'
 '    Year for ADAS H data                            '    93
@@ -287,7 +291,7 @@ $
 '267 Yield Modifier Flag  -2 2ndry -1 primary 0 both   '    0
 'T307 Multiplier for Q sputtering parameter - primaries'    1.0
 'T307 Multiplier for Q sputtering parameter - second   '    1.0
-'    Debug NEUT    (0 off, >0 print every nth timestep)'    1
+'    Debug NEUT    (0 off, >0 print every nth timestep)'    0
 '    Debug LIM     (0 off, >0 print every nth timestep)'    0
 '    Debug TRACKS  (0 off, >0 record this # of tracks )'    0
 '    Random number seed  (0 generate new seed)         '    0
