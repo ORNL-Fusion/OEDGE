@@ -1347,7 +1347,7 @@ C-----------------------------------------------------------------------
        call prc('                       DEFINED BY:')
        call prc('                       X=-(0.04*Y**2 + 0.09*Y**4)')
       elseif (ciopth.eq.11) then
-       call prc('  LIMITER EDGE OPT 10: ITER HALF LIMITER SHAPE')
+       call prc('  LIMITER EDGE OPT 11: ITER HALF LIMITER SHAPE')
        call prc('                       DEFINED BY:')
        call prc('                       '//
      >               'X=- lam * ln(1 -/+ C*(Y - Y_re-entrant)/lam ))')
