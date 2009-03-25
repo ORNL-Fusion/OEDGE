@@ -21,6 +21,7 @@ contains
 
     real :: yabs,ytmp
 
+    caw_fnc = caw
 
     if (lim_wall_opt.eq.0) then 
        caw_fnc = caw

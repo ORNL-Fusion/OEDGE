@@ -480,7 +480,7 @@ c
 c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
 c
       elseif (tag(1:3).EQ.'L04') THEN
-        CALL ReadI(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
+        CALL ReadR(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
 c
 c -----------------------------------------------------------------------
 c
@@ -532,7 +532,7 @@ c
 c     TAG L12: Y > 0 Reflection location specification
 c
       elseif (tag(1:3).EQ.'L12') THEN
-        CALL ReadI(line,cmir_refl_upper,0.0,HI,
+        CALL ReadR(line,cmir_refl_upper,0.0,HI,
      >               'Y-reflection: Y>0 reflection boundary')
 c
 c -----------------------------------------------------------------------
