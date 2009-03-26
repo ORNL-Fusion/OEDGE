@@ -1294,7 +1294,7 @@ c             cmir_refl_upper > 0
 c
               if (yreflection_opt.ne.0) then 
 
-                 call test_reflection(y,oldy,svy)
+                 call check_reflection(y,oldy,svy,debugl)
 
               endif
 
@@ -3112,8 +3112,9 @@ c
       WRITE(6,*) '12:'
 C                                                                               
 C-----------------------------------------------------------------------        
-C     CALCULATE Z EFFECTIVE ETC OVER "NEAR" REGION... NOTE 107                        WRITE (datunit,'(1X,A,I7,4X,I7)') NAME,I1,I2
-
+C     CALCULATE Z EFFECTIVE ETC OVER "NEAR" REGION... NOTE 107                  
+c      WRITE (datunit,'(1X,A,I7,4X,I7)') NAME,I1,I2
+c
 C-----------------------------------------------------------------------        
 C                                                                               
 C---- THREE QUANTITIES PER BIN:  NIE,   ZB.NBT(X),   ZEFF                       

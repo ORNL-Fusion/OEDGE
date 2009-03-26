@@ -5,40 +5,65 @@ module yreflection
   integer :: yreflection_opt
   real :: cmir_refl_lower, cmir_refl_upper
   real :: yreflection_event_count = 0
+  real :: lim_sep
   save
 
 contains
 
-  subroutine test_reflection(y,oldy,svy)
+  subroutine init_reflection(ctwol)
+    implicit none
+    real :: ctwol
+
+    ! initialize data
+    yreflection_event_count = 0.0
+    lim_sep = ctwol
+
+  end subroutine init_reflection
+
+
+  subroutine check_reflection(y,oldy,svy,debugl)
     implicit none
     real :: y,oldy,svy
+    logical :: debugl
+    logical :: reflected
+    real :: y_org,oldy_org,svy_org
 
-    if (yreflection_opt.ne.0.and.(cmir_refl_lower.eq.0.0.or.cmir_refl_upper.eq.0.0)) then 
+    if (yreflection_opt.ne.0.and.(cmir_refl_lower.ge.0.0.or.cmir_refl_upper.le.0.0)) then 
        call errmsg('YREFLECTION:TEST_REFLECTION','Y-REFLECTION OPTION IS ON BUT REFLECTION&
                    & LOCATIONS HAVE NOT BEEN PROPERLY SPECIFIED : Y-REFLECTION DISABLED')
        yreflection_opt=0
        return
     endif
 
+    reflected = .false.
+    if (debugl) then 
+       y_org = y
+       oldy_org = oldy
+       svy_org = svy
+    endif
 
     if (y.lt.0) then 
        if ((oldy.gt.cmir_refl_lower).and.(y.le.cmir_refl_lower)) then 
           !
           !                   Reflection at lower (<0) mirror
           !
+          ! cmir_refl_lower is <0
 
-          y = cmir_refl_lower + abs(y-cmir_refl_lower)
+          y = cmir_refl_lower + abs(abs(y)+cmir_refl_lower)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
+          reflected = .true.
 
-       elseif ((oldy.lt.-cmir_refl_upper).and.(y.ge.-cmir_refl_upper)) then 
+       elseif ((oldy.lt.(-lim_sep+cmir_refl_upper)).and.(y.ge.(-lim_sep+cmir_refl_upper))) then 
           !
           !                   Reflection at second upper (< 0) mirror
           !
+          ! cmir_refl_upper is >0
           
-          y = -cmir_refl_upper - abs(y-cmir_refl_upper)
+          y = -lim_sep+cmir_refl_upper - abs(abs(y)-cmir_refl_upper)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
+          reflected = .true.
 
        endif
 
@@ -48,26 +73,30 @@ contains
           !                   Reflection at upper (>0) mirror
           !
 
-          y = cmir_refl_upper - abs(y-cmir_refl_upper)
+          y = cmir_refl_upper - abs(abs(y)-cmir_refl_upper)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
+          reflected = .true.
 
-
-       elseif ((oldy.gt.-cmir_refl_lower).and.(y.le.-cmir_refl_lower)) then 
+       elseif ((oldy.gt.(lim_sep+cmir_refl_lower)).and.(y.le.(lim_sep+cmir_refl_lower))) then 
           !
           !                   Reflection at second lower (>0) mirror
           !
 
-          y = -cmir_refl_lower + abs(y-cmir_refl_lower)
+          y = lim_sep + cmir_refl_lower + abs(abs(y)+cmir_refl_lower)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
-
+          reflected = .true.
 
        endif
     endif
 
+    if (debugl.and.reflected) then
+       write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION:',int(yreflection_event_count),y_org,oldy_org,y,oldy,svy_org,svy
+       call dbgmsg('CHECK_REFLECTION',error_message_data)
+    endif
 
-  end subroutine test_reflection
+  end subroutine check_reflection
 
 
 
