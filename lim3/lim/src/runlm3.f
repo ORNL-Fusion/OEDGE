@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
+      use yreflection
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -175,6 +176,10 @@ C
       CTWOL  = CL+CL                                                            
       CHALFL = 0.5 * CL                                                         
       C3HALFL= 1.5 * CL
+c
+c     jdemod - initialize the reflection option
+c
+      call init_reflection(ctwol)
 C                                                                               
 C---- CALCULATE SET OF X AND Y POSITIONS FOR WHICH                              
 C---- FACTORS ARE TO BE CALCULATED                                              

@@ -1371,6 +1371,40 @@ C-----------------------------------------------------------------------
        call prr('                       C                   = ', c_lim)
       ENDIF                                                                     
 C                                                                               
+      call prb
+c
+      if (lim_wall_opt.eq.0) then 
+         call prr('                       LIM WALL OPTION 0: WALL'//
+     >            ' IS AT A CONSTANT DISTANCE FROM THE LCFS: AW =',caw)
+      elseif (lim_wall_opt.eq.1) then 
+         call prc('                       LIM WALL OPTION 1: WALL'//
+     >            ' DISTANCE TO LCFS VARIES')
+         call prr('                                          WALL'//
+     >            ' STARTS AT A DISTANCE OF AW = ',caw)
+         call prr('                                          WALL'//
+     >            ' DISTANCE THEN CHANGES LINEARLY'//
+     >            ' STARTING AT Y = ',ywall_start)
+         call prr('                                          WALL'//
+     >            ' DISTANCE TO LCFS AT THE MID POINT BETWEEN '//
+     >            ' LIMITERS = ',caw_min)
+      endif
+c
+      call prb
+c
+      if (yreflection.eq.0) then 
+         call prc('                        Y REFLECTION OPT 0:'//
+     >            ' REFLECTION IN Y-AXIS MIRRORS IS OFF')
+      elseif (yreflection.eq.1) then 
+         call prc('                        Y REFLECTION OPT 1:'//
+     >            ' Y-AXIS REFLECTION IS ON AT TWO MIRROR'//
+     >            ' LOCATIONS: ONE EACH FOR Y>0 AND Y<0')
+         call prr('                                           '//
+     >            ' Y < 0 MIRROR LOCATION = ',cmir_refl_lower)
+         call prr('                                           '//
+     >            ' Y > 0 MIRROR LOCATION = ',cmir_refl_upper)
+      endif
+
+
       IF (CORECT.EQ.1)                                                          
      > WRITE (7,'(24X,''CURVATURE CORRECTED, RP='',F10.6)') RP                  
 C-----------------------------------------------------------------------        
