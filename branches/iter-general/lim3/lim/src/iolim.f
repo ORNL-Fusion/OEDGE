@@ -495,6 +495,7 @@ C
       use eckstein_2002_yield_data
       use variable_wall
       use iter_bm
+      use yreflection
 C     
       implicit none 
 c
@@ -1391,10 +1392,10 @@ c
 c
       call prb
 c
-      if (yreflection.eq.0) then 
+      if (yreflection_opt.eq.0) then 
          call prc('                        Y REFLECTION OPT 0:'//
      >            ' REFLECTION IN Y-AXIS MIRRORS IS OFF')
-      elseif (yreflection.eq.1) then 
+      elseif (yreflection_opt.eq.1) then 
          call prc('                        Y REFLECTION OPT 1:'//
      >            ' Y-AXIS REFLECTION IS ON AT TWO MIRROR'//
      >            ' LOCATIONS: ONE EACH FOR Y>0 AND Y<0')
