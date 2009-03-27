@@ -7,6 +7,7 @@ c
      >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
       use variable_wall
+      use yreflection
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -205,7 +206,13 @@ C---- A UNIFORM DISTRIBUTION BETWEEN  -Y(RL) < Y < +Y(RL)
 C                                                                               
       
 c      write(6,*) 'Before clarmr ipos'
-      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
+c
+c     jdemod - qxs is only assigned useful data starting a qxs(1-nqxso) - if 
+c              ipos is passed qxs(-nqxso) it does not work as intended since
+c              qxs(-nqxso) will be 0.0 which is larger than qxs(0)
+c
+      KQX = IPOS (-CLARMR, QXS(1-NQXSO), NQXSO-1) - NQXSO - 1                      
+c      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
 c      write(6,*) 'After clarmr ipos'
       IF (CNEUTB.NE.0) CLARMR = 0.0                                             
       IF (CLARMR.GT.0.0) THEN                                                   
@@ -368,10 +375,19 @@ C
       IF (CLARMR.GT.0.0) WRITE (7,9002)                                         
      >  QXS(1),CYMFPS(1,J),FLUX1(1,J),ENEGY1(1,J),                              
      >  YIELD1(1,J),FY1(1,J),FY1(1,J)*DELTAX/FYTOT1(J)                          
-      DO 100 IQX = 0, -NQXSO/2, MIN (-1,-NQXSO/25)                              
-        IF (YIELD1(IQX,J).GT.1.E-3) WRITE (7,9002)                              
+c
+c     write more complete data  
+c
+
+      DO 100 IQX = 0, -NQXSO, MIN (-1,-NQXSO/25)                              
+c        IF (YIELD1(IQX,J).GT.1.E-3) 
+        WRITE (7,9002)                              
      >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
      >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+        WRITE (6,9002)                              
+     >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
+     >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+
   100 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
@@ -561,7 +577,15 @@ c
              IQX = 1-NQXSO                                                         
              X0  = QXS(IQX)                                                        
   290        Y0  = RAN * CTWOL                                                     
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 290
+             endif
+
              IF (J.EQ.1) Y0 = -Y0                                                  
+
              IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
      >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
      >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
@@ -575,6 +599,12 @@ c
 
 
  291         Y0  = RAN * CTWOL                                                     
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 291
+             endif
 
              IQY_TMP = max(min(int(y0*yscale)+1,nqys),1)
 
@@ -591,7 +621,9 @@ c
                GOTO 291                                                            
              ENDIF                                                                 
 c
+c            jdemod 
 c            Normal incidence needs to be corrected at some point for these wall options
+c            NOTE: theta is not used in NEUT - it must be calculated/assigned in LAUNCH
 c
              THETA = PI/2.0                                                        
 
@@ -1194,6 +1226,7 @@ C
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
       use variable_wall
+      use yreflection
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1288,6 +1321,8 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       CHARACTER FATE(6)*14                                                      
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
+
+      real yvelf
 
 c
 c     jdemod minimum rvalue to prevent division by zero errors
@@ -1618,10 +1653,13 @@ C-----------------------------------------------------------------------
 C                                                                               
 c slmod
 
-        if (iqx.ge.0) then 
-           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+c
+c     Check for invalid IQX values
+c
+        if (iqx.gt.0) then 
+           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
-           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
         endif
 
@@ -1835,6 +1873,16 @@ C
         ENDIF                                                                   
         X = SNGL (DX)                                                           
         Y = SNGL (DY)                                                           
+
+c
+c     Check for y reflection - if it occurs also change the sign of dyvelf
+c
+        if (yreflection_opt.ne.0) then 
+           yvelf = sngl(dyvelf)
+           call check_reflection(y,oldy,yvelf,debugn)
+           dyvelf = dble(yvelf)
+        endif
+c
         P = SNGL (DP)                                                           
         ABSY = ABS (Y)                                                          
         IF (X.GE.0.0) THEN                                                      
@@ -1856,8 +1904,7 @@ c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP+:',iqy_tmp,
 c     >               int((y+ctwol)*yscale)+1,
 c     >               y,ctwol,yscale,y*yscale
         endif
-C                                                                               
-C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
+C                                                                               C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
 C------ OR SURVIVED UNTIL TIME CUTOFF POINT ...                                 
 C------ WALLS ARRAY IS UPDATED                                                  
 C------ THE "IFATE" FLAG CAN BE USED WHEN PRINTING DEBUG MESSAGES WHICH         
@@ -2422,7 +2469,7 @@ C  *  SUBLIMATION CASE  (SPUTTER OPTION 5).                            *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+      INCLUDE 'params'                                                        
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          

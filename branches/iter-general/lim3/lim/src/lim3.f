@@ -138,6 +138,8 @@ c
       REAL      ABSP
       REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
       REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
+
+      real      tmp_oldy, tmp_y
 c slmod begin
 c
 c Moved to common block SLCOM:
@@ -646,6 +648,16 @@ C
      >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
       ENDIF                                                                     
 C
+C      do in = 1,nymfs
+C         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+C     >                      cymfs(in,2),cymfs(in,3)
+C      end do
+
+c      do iqx=1-nqxso,0
+c         write(6,'(a,i8,10(1x,g12.5))') 
+c     >        'YMFS:',nymfs,qxs(iqx),CYMFPS(iqx,1),cymfps(iqx,2),
+c     >            cymfss(iqx,1),cymfss(iqx,2)
+c      end do
 C
 C
 
@@ -947,6 +959,9 @@ C
         ELSE                                                                    
           ALPHA = CX / (YY*CONO + 1.0)                                          
         ENDIF                                                                   
+c
+c        write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
+
         DSPUTY = DBLE (SPUTY)                                                   
 C                                                                               
 C  SPREADING: SPREAD OUT IONS BY A PARTIAL ITERATION                            
@@ -986,12 +1001,16 @@ C
                 J = 3
              ENDIF
           ENDIF
+
           CX = CX + FRQTIM *                                                  
      >           (SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RAN) + CXAFS(IQX,J))          
+
           NRAND = NRAND + 1                                                     
           Y      = Y + FRQTIM * SVYBIT * QTIM * QS(IQX)                         
           ABSY   = ABS (Y)                                                      
+
           YY = MOD (ABSY, CL)                                                   
+
           IF (YY.GT.CHALFL) YY = CL - YY                                        
           IF (CX.GE.0.0) THEN                                                   
             ALPHA = CX / (YY*CONI + 1.0)                                        
@@ -1297,7 +1316,6 @@ c
                  call check_reflection(y,oldy,svy,debugl)
 
               endif
-
 c
 c slmod begin
               IF (DEBUGL) WRITE(78,'(I4,F7.1,13G12.5)') 
@@ -1479,27 +1497,115 @@ C-------------- IF QTIM IS LARGE ITS POSSIBLE THAT ADDING 2L STILL
 C-------------- LEAVES THE PARTICLE OUTSIDE THE REGION OF INTEREST:             
 C-------------- CHECK FOR THIS AND ADD ANOTHER 2L IF NECESSARY ...              
 C                                                                               
-                IF (Y.LE.-CTWOL) THEN                                           
-  401             DY2 = DY2 + 2.0D0 * DWOL                                      
-                  Y   = SNGL (DY1+DY2)                                          
-                  IF (Y.LE.-CTWOL) GOTO 401                                     
-                  ABSY = ABS (Y)                                                
+
+               tmp_y = y
+               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl)
+               if (y.ne.tmp_y) then 
                   IF (CFLY2L) THEN                                              
                     CICY2L = CICY2L + SPUTY                                     
                     IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
                     CFLY2L = .FALSE.                                            
                   ENDIF                                                         
-                ELSEIF (Y.GE.CTWOL) THEN                                        
-  402             DY2 = DY2 - 2.0D0 * DWOL                                      
-                  Y   = SNGL (DY1+DY2)                                          
-                  IF (Y.GE.CTWOL) GOTO 402                                      
-                  ABSY = ABS (Y)                                                
-                  IF (CFLY2L) THEN                                              
-                    CICY2L = CICY2L + SPUTY                                     
-                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
-                    CFLY2L = .FALSE.                                            
-                  ENDIF                                                         
-                ENDIF                                                           
+               endif
+
+c
+c              tmp_oldy = oldy  
+c
+c                IF (Y.LE.-CTWOL) THEN                                           
+c  401             DY2 = DY2 + 2.0D0 * DWOL                                      
+c                  Y   = SNGL (DY1+DY2)                                          
+c                  tmp_oldy = tmp_oldy + 2.0d0 * dwol
+c                  IF (Y.LE.-CTWOL) GOTO 401                                     
+c
+c                  ABSY = ABS (Y)                                                
+c
+c                 jdemod 
+c
+c                 Need to make sure that a particle 
+c                 does not enter a reflected region
+c                 inside the confined plasma.
+c
+c                 The problem here is that the particle
+c                 can take very large parallel steps 
+c                 in the confined plasma due to the
+c                 time step multipliers. In addition, 
+c                 the new Y value has been calculated
+c                 by possible cycling several times through 
+c                 the region. So, in theory, the particle
+c                 could have experienced multiple reflections.
+c
+c                 This effect can only occur when the ion
+c                 makes parallel steps greater than the distance
+c                 to the mirror above or below ctwol. 
+c     
+c                 This will not fix an issue with multiple internal
+c                 reflections - on the other hand - this problem 
+c                 should only arise deep inboard where the distribution
+c                 along the field lines should be uniform anyway. 
+c        
+c                 AND - this problem should be avoidable using 
+c                 a smaller ion time step.
+c
+c                  if (reflection_opt.ne.0) then 
+c                   if (check_reflected_region(y)) then 
+c                     write(6,'(a,5(1x,g18.10))') 
+c     >               'REFLECTION ERROR INBOARD:',alpha,y,oldy
+c                     call check_reflection(y,tmp_oldy,svy,debugl)
+c
+c                     if (y.lt.-ctwol) then 
+c                        y = y+2.0*ctwol
+c                     elseif (y.gt.ctwol) then 
+c                        y = y-2.0*ctwol
+c                     endif
+c
+c                     if (check_reflected_region(y)) then 
+c                        CALL errmsg('LIM3: ION INBOARD:',
+c     >                     'ION HAS ENTERED MIRROR BOUNDED REGION')
+c                     endif
+c
+c                   endif  
+c                  endif
+c
+c                  IF (CFLY2L) THEN                                              
+c                    CICY2L = CICY2L + SPUTY                                     
+c                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
+c                    CFLY2L = .FALSE.                                            
+c                  ENDIF                                                         
+c                ELSEIF (Y.GE.CTWOL) THEN                                        
+c  402             DY2 = DY2 - 2.0D0 * DWOL                                      
+c                  Y   = SNGL (DY1+DY2)                                          
+c                  tmp_oldy = tmp_oldy - 2.0d0 * dwol
+c                  IF (Y.GE.CTWOL) GOTO 402                                      
+c
+c                  ABSY = ABS (Y)                                                
+c
+c                  if (reflection_opt.ne.0) then 
+c                   if (check_reflected_region(y)) then 
+c                     write(6,'(a,5(1x,g18.10))') 
+c     >               'REFLECTION ERROR INBOARD:',alpha,y,oldy
+c                     call check_reflection(y,tmp_oldy,svy,debugl)
+c
+c                     if (y.lt.-ctwol) then 
+c                        y = y+2.0*ctwol
+c                     elseif (y.gt.ctwol) then 
+c                        y = y-2.0*ctwol
+c                     endif
+c
+c                     if (check_reflected_region(y)) then 
+c                        CALL errmsg('LIM3: ION INBOARD:',
+c     >                     'ION HAS ENTERED MIRROR BOUNDED REGION')
+c                     endif
+c                     
+c                   endif
+c                  endif
+c
+c
+c                  IF (CFLY2L) THEN                                              
+c                    CICY2L = CICY2L + SPUTY                                     
+c                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
+c                    CFLY2L = .FALSE.                                            
+c                  ENDIF                                                         
+c                ENDIF                                                           
 C                                                                               
 C-------------- UPDATE ION VELOCITY                                             
 C-------------- MAY BE SUBJECT TO BACKGROUND FLOW VELOCITY AND ELECTRIC         
@@ -1555,6 +1661,27 @@ C       ION OUTBOARD
 C-----------------------------------------------------------------------        
 C                                                                               
             ELSE                                                                
+
+
+
+
+
+
+
+
+c
+c               jdemod - if poloidal extent limiters are in use 
+c                        in the SOL then need to check the +/-2L
+c                        boundaries which is not normally needed
+c                        in the SOL
+c
+               if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+               
+                  call check_y_boundary(y,oldy,absy,svy,alpha,
+     >                                  ctwol,debugl)
+
+               endif
+
 
               YYCON = YY*CONO + 1.0                                             
               ALPHA = CX / YYCON                                                
@@ -3291,6 +3418,112 @@ c slmod begin
 c slmod end
       RETURN                                                                    
       END                                                                       
+c     
+c     
+c     
+      subroutine check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl)
+      use error_handling
+      use yreflection
+      implicit none
+      real :: y,oldy,ctwol,absy,svy,alpha
+      logical :: debugl
+
+      
+      real :: tmp_oldy
+
+      tmp_oldy = oldy
+
+c     
+      IF (Y.LE.-CTWOL) THEN                                           
+ 401     continue
+         Y   = y + 2.0 * ctwol
+         tmp_oldy = tmp_oldy + 2.0 * ctwol
+         IF (Y.LE.-CTWOL) GOTO 401                                     
+
+
+c     
+c     jdemod 
+c     
+c     Need to make sure that a particle 
+c     does not enter a reflected region
+c     inside the confined plasma.
+c     
+c     The problem here is that the particle
+c     can take very large parallel steps 
+c     in the confined plasma due to the
+c     time step multipliers. In addition, 
+c     the new Y value has been calculated
+c     by possible cycling several times through 
+c     the region. So, in theory, the particle
+c     could have experienced multiple reflections.
+c     
+c     This effect can only occur when the ion
+c     makes parallel steps greater than the distance
+c     to the mirror above or below ctwol. 
+c     
+c     This will not fix an issue with multiple internal
+c     reflections - on the other hand - this problem 
+c     should only arise deep inboard where the distribution
+c     along the field lines should be uniform anyway. 
+c     
+c     AND - this problem should be avoidable using 
+c     a smaller ion time step.
+c     
+         if (yreflection_opt.ne.0) then 
+            if (check_reflected_region(y)) then 
+               write(6,'(a,5(1x,g18.10))') 
+     >              'REFLECTION ERROR INBOARD:',alpha,y,oldy
+               call check_reflection(y,tmp_oldy,svy,debugl)
+c     
+               if (y.lt.-ctwol) then 
+                  y = y+2.0*ctwol
+               elseif (y.gt.ctwol) then 
+                  y = y-2.0*ctwol
+               endif
+c     
+               if (check_reflected_region(y)) then 
+                  CALL errmsg('LIM3: ION INBOARD:',
+     >                 'ION HAS ENTERED MIRROR BOUNDED REGION')
+               endif
+
+            endif  
+         endif
+
+
+      ELSEIF (Y.GE.CTWOL) THEN                                        
+
+ 402     continue
+         Y   = Y - 2.0 * ctwol
+         tmp_oldy = tmp_oldy - 2.0 * ctwol
+         IF (Y.GE.CTWOL) GOTO 402                                      
+
+         if (yreflection_opt.ne.0) then 
+            if (check_reflected_region(y)) then 
+               write(6,'(a,5(1x,g18.10))') 
+     >              'REFLECTION ERROR INBOARD:',alpha,y,oldy
+               call check_reflection(y,tmp_oldy,svy,debugl)
+c     
+               if (y.lt.-ctwol) then 
+                  y = y+2.0*ctwol
+               elseif (y.gt.ctwol) then 
+                  y = y-2.0*ctwol
+               endif
+c     
+               if (check_reflected_region(y)) then 
+                  CALL errmsg('LIM3: ION INBOARD:',
+     >                 'ION HAS ENTERED MIRROR BOUNDED REGION')
+               endif
+               
+            endif
+         endif
+
+      ENDIF                                                           
+
+
+      ABSY = ABS (Y)                                                
+
+      return
+      end
 C                                                                               
 C                                                                               
 C                                                                               
@@ -3331,7 +3564,15 @@ C     INCLUDE (COMNET)
 c
       real :: xt_org,xb_org
 C                                                                               
-      XT = OLDALP                                                               
+c     jdemod - 
+c     Collision must be on limiter - therefore set XT to 0.0 if OLDALP > 0
+c      
+      if (oldalp.gt.0.0) then 
+         XT = 0.0
+      else
+         XT = oldalp
+      endif
+c
       XB = ALPHA                                                                
 c
       xt_org = xt
@@ -3340,6 +3581,7 @@ c
       YT = OLDY                                                                 
       YB = Y                                                                    
       K  = 1                                                                    
+c
       IF (DEBUGL) THEN                                                          
 C       WRITE (6,9001) OLDALP,OLDY                                              
 C       WRITE (6,9001) ALPHA,Y,IQX,QEDGES(IQX,1),QEDGES(IQX,2),K,.TRUE.         
@@ -3349,10 +3591,12 @@ C
 
       IF (XT.GT.0.0.AND.XB.GT.0.0) THEN 
          write(error_message_data,
-     >               '(a,a,g18.10,a,g18.10,a,g18.10,a,g18.10)')
+     >               '(a,10(a,g18.10))')
      >  'HIT CALLED WHEN OLDALP and ALPHA both greater than 0.0:',
      >               ' OLDALP =',oldalp,
      >               ' ALPHA =',alpha,
+     >               ' XT    =',xt,
+     >               ' XB    =',xb,
      >               ' OLDY =',oldy,
      >               ' Y =',y
          CALL errmsg('HIT:',error_message_data)
@@ -3369,7 +3613,14 @@ C
 
       IQX = MAX (INT (XM*XSCALO), 1-NQXSO)                                      
 C                                                                               
-      IF (IQX.GT.0) THEN                                                        
+c
+c     jdemod - changed (iqx.gt.0) to (iqx.ge.0) so that 0 values will not give a 
+c              match - this seems to cause the search algorithm to walk off the 
+c              end of the limiter and give an intersection with X>0
+c     Change back to gt 0 when max xt = 0.0 imposed
+c     
+c
+      IF (IQX.Gt.0) THEN                                                        
         XT    = XM                                                              
         YT    = YM                                                              
         THERE =.FALSE.                                                          
