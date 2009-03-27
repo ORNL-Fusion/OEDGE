@@ -3,6 +3,7 @@ c
       SUBROUTINE READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,
      >                   FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,
      >                   NYMFS,NCVS,NQS,NITERS)                                 
+      use error_handling
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -329,6 +330,13 @@ C---- READ IN YIELD MODIFIER FUNCTION AND FLAG
 C                                                                               
       CALL RDRARN(CYMFS,NYMFS,MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
      >                                      2,'SET OF X,M(X) VALS',IERR)        
+
+      if (cymfs(1,1).gt.cymfs(nymfs,1)) then 
+         call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
+     >       ' BE ENTERED IN ASCENDING ORDER IN X')
+         stop
+      endif
+
       CALL RDI(CYMFLG,.TRUE. ,-2 ,.TRUE. , 0,'YIELD MODIFIER FLAG',IERR)        
 C
 C---- READ IN Q SPUTTERING PARAMETER MULTIPLIER

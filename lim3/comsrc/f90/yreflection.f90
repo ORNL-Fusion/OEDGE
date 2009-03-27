@@ -20,6 +20,23 @@ contains
 
   end subroutine init_reflection
 
+  logical function check_reflected_region(y)
+    implicit none
+    real  ::  y,absy
+
+    ! check to see if the input y value lies in the region with mirrors on either side 
+    ! If it does then the particle can't be launched here or does not belong here and 
+    ! has leaked somehow.
+    
+    absy = abs(y)
+    check_reflected_region=.false.
+
+    if (y.ge.cmir_refl_upper.and.y.le.-cmir_refl_lower) then
+       check_reflected_region=.true.
+    endif
+
+  end function check_reflected_region
+
 
   subroutine check_reflection(y,oldy,svy,debugl)
     implicit none
@@ -95,6 +112,13 @@ contains
        write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION:',int(yreflection_event_count),y_org,oldy_org,y,oldy,svy_org,svy
        call dbgmsg('CHECK_REFLECTION',error_message_data)
     endif
+
+    if (check_reflected_region(y)) then 
+       write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
+                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
+       call errmsg('CHECK_REFLECTION: WARNING:',error_message_data)
+    endif
+
 
   end subroutine check_reflection
 

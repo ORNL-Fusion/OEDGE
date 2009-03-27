@@ -936,6 +936,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE EDGINT (X,IQX,J,E,D)                                           
+      use error_handling
       IMPLICIT none
       REAL    X,E,D                                                             
       INTEGER IQX,J                                                             
@@ -996,8 +997,10 @@ C
         DT = QDISTS(IQX,J)                                                      
         DB = QDISTS(IQX-1,J)                                                    
       ENDIF                                                                     
+      
       E = ET + (QT-X) / (QT-QB) * (EB-ET)                                       
       D = DT + (QT-X) / (QT-QB) * (DB-DT)                                       
+
 C                                                                               
   999 RETURN                                                                    
       END                                                                       
