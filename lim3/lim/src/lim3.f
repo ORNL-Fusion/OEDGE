@@ -182,6 +182,7 @@ c     Add iqy_tmp to support variable wall location
 c
       integer :: iqy_tmp
 
+      integer :: ierr
 c
 c     ADD LOGICAL to record if splitting and rouletting is active to avoid
 c     a bug if ALPHA > CXSPLS(IS) = 2*CA in one diffusive step  
@@ -195,7 +196,7 @@ c slmod begin
       REAL       IONCNT,IONPNT
       REAL       RAN1,RAN2,RGAUSS,VPARA,TPARA,VPARAT
       REAL       AVGTRAC    
-      REAL       TARGET
+      REAL       TARGET      
       CHARACTER  TITLE*80
 c slmod endC
 C                                                                               
@@ -1305,15 +1306,42 @@ c
 c
               Y     = SNGL (DY1+DY2)                                            
 c
+c             Check Y boundary limits
+c
+
+               tmp_y = y
+               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
+     >                               ierr)
+                if (ierr.eq.1) then 
+                  ! write some debugging info
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
 c
 c             Check for Y-axis reflection 
 c
 c             cmir_refl_lower < 0
 c             cmir_refl_upper > 0
 c
-              if (yreflection_opt.ne.0) then 
 
-                 call check_reflection(y,oldy,svy,debugl)
+              if (yreflection_opt.ne.0) then 
+                 if (abs(y).gt.ctwol) then 
+                    write(6,*) 'Y > CTWOL'
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                 endif
+
+                call check_reflection(y,oldy,svy,debugl,ierr)
+                if (ierr.eq.1) then 
+                  ! write some debugging info
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
 
               endif
 c
@@ -1499,7 +1527,17 @@ C-------------- CHECK FOR THIS AND ADD ANOTHER 2L IF NECESSARY ...
 C                                                                               
 
                tmp_y = y
-               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl)
+               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
+     >                               ierr)
+                if (ierr.eq.1) then 
+                  ! write some debugging info
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
+
+
                if (y.ne.tmp_y) then 
                   IF (CFLY2L) THEN                                              
                     CICY2L = CICY2L + SPUTY                                     
@@ -1678,7 +1716,14 @@ c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
                   call check_y_boundary(y,oldy,absy,svy,alpha,
-     >                                  ctwol,debugl)
+     >                                  ctwol,debugl,ierr)
+                if (ierr.eq.1) then 
+                  ! write some debugging info
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
 
                endif
 
@@ -3378,7 +3423,7 @@ C---- FORMATS ...
 C                                                                               
  9002 FORMAT(1X,I5,F9.1,12X,I4,4X,F10.6,10X,F10.5)                              
 c slmod
- 9003 FORMAT(1X,I5,F9.1,I4,I4,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
+ 9003 FORMAT(1X,I5,1x,F9.1,4(1x,I4),2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
      >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
 c
 c 9003 FORMAT(1X,I5,F9.1,I6,I6,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F8.2,            
@@ -3421,20 +3466,27 @@ c slmod end
 c     
 c     
 c     
-      subroutine check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl)
+      subroutine check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
+     >                           ierr)
       use error_handling
       use yreflection
       implicit none
       real :: y,oldy,ctwol,absy,svy,alpha
       logical :: debugl
-
+      integer :: ierr
       
       real :: tmp_oldy
 
       tmp_oldy = oldy
 
+      ierr = 0
 c     
+
       IF (Y.LE.-CTWOL) THEN                                           
+
+      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:1:',y,oldy,ctwol,svy,alpha
+
+
  401     continue
          Y   = y + 2.0 * ctwol
          tmp_oldy = tmp_oldy + 2.0 * ctwol
@@ -3472,9 +3524,9 @@ c
          if (yreflection_opt.ne.0) then 
             if (check_reflected_region(y)) then 
                write(6,'(a,5(1x,g18.10))') 
-     >              'REFLECTION ERROR INBOARD:',alpha,y,oldy
-               call check_reflection(y,tmp_oldy,svy,debugl)
-c     
+     >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
+               call check_reflection(y,tmp_oldy,svy,debugl,ierr)
+
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
                elseif (y.gt.ctwol) then 
@@ -3489,8 +3541,10 @@ c
             endif  
          endif
 
+      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:2:',y,oldy,ctwol,svy,alpha
 
       ELSEIF (Y.GE.CTWOL) THEN                                        
+      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:3:',y,oldy,ctwol,svy,alpha
 
  402     continue
          Y   = Y - 2.0 * ctwol
@@ -3500,8 +3554,8 @@ c
          if (yreflection_opt.ne.0) then 
             if (check_reflected_region(y)) then 
                write(6,'(a,5(1x,g18.10))') 
-     >              'REFLECTION ERROR INBOARD:',alpha,y,oldy
-               call check_reflection(y,tmp_oldy,svy,debugl)
+     >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
+               call check_reflection(y,tmp_oldy,svy,debugl,ierr)
 c     
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
@@ -3516,6 +3570,7 @@ c
                
             endif
          endif
+      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:4:',y,oldy,ctwol,svy,alpha
 
       ENDIF                                                           
 

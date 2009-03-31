@@ -262,11 +262,11 @@ C
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
         FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J)                            
 
-c        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
-c     >      flux1(iqx,j),flux2(iqx,j),
-c     >      enegy1(iqx,j),enegy2(iqx,j),
-c     >      yield1(iqx,j),yield2(iqx,j),
-c     >      fy1(iqx,j),fy2(iqx,j)
+        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
+     >      flux1(iqx,j),flux2(iqx,j),
+     >      enegy1(iqx,j),enegy2(iqx,j),
+     >      yield1(iqx,j),yield2(iqx,j),
+     >      fy1(iqx,j),fy2(iqx,j)
 c
 
    10 CONTINUE                                                                  
@@ -1329,6 +1329,7 @@ c     jdemod minimum rvalue to prevent division by zero errors
 c
       real, parameter :: minrval = 1.0e-10
       
+      integer :: ierr
 c slmod begin - N2 break
       LOGICAL N2STAT
       REAL    ENEW, VNEW,NFAST,N2Time
@@ -1879,7 +1880,13 @@ c     Check for y reflection - if it occurs also change the sign of dyvelf
 c
         if (yreflection_opt.ne.0) then 
            yvelf = sngl(dyvelf)
-           call check_reflection(y,oldy,yvelf,debugn)
+           call check_reflection(y,oldy,yvelf,debugn,ierr)
+           if (ierr.eq.1) then 
+              ! write some debugging info
+              WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
+     >         SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'NEUTRAL LAUNCH'                
+           endif
+
            dyvelf = dble(yvelf)
         endif
 c
