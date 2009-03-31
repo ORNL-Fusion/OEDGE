@@ -24,7 +24,7 @@ CEXT=.c
 VER=pgi
 VER_ABSOFT=abs
 VER_PGI=pgi
-VER_INTEL=pgi
+VER_INTEL=ifort
 #
 # Source file locations
 #
@@ -113,7 +113,7 @@ OPT_ABSOFT_OPT = -O
 # LINUX - INTEL
 #
 OPT_INTEL = -g -check all -debug all
-OPT_INTEL_OPT = -O
+OPT_INTEL_OPT = -O1 -g -traceback -debug all
 #
 OPT = $(OPTG)
 #
