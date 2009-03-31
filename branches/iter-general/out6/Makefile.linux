@@ -137,11 +137,13 @@ CFLAGS= $(OPTC) -I$(IDIR)
 # LINUX
 #
 #
+LIB_VER=
+#
 LOCAL_LIB=/usr/local/lib
-
+#
 LIB_INC= -L$(LOCAL_LIB)
-LIBSCOL= -lghost -lpostcl -ljpeg
-LIBSBW = -lghost -lpostsc -ljpeg
+LIBSCOL= -lghost$(LIB_VER) -lpostcl$(LIB_VER) -ljpeg
+LIBSBW = -lghost$(LIB_VER) -lpostsc$(LIB_VER) -ljpeg
 LIBSDEF= $(LIBSCOL)
 #
 LIBS=$(LIB_INC) $(LIBSDEF)
@@ -237,6 +239,12 @@ intel:
 
 intelopt:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
+intellib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+inteloptlib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
 
 intel-iter:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"

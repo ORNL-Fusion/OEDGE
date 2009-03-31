@@ -3913,7 +3913,8 @@ c
       rval = r
 
       WRITE(SLOUT,'(A)') line
-      WRITE(SLOUT,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
+      ! jdemod - change format so that number fits 
+      WRITE(SLOUT,'(5X,2A,I8,1P,E12.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
@@ -3953,7 +3954,8 @@ c
       ival = i
 
       WRITE(SLOUT,'(A)')        line
-      WRITE(SLOUT,'(5X,2A,I4)') tag,' = ',ival
+      ! jdemod - change format so that number fits 
+      WRITE(SLOUT,'(5X,2A,I8)') tag,' = ',ival
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
