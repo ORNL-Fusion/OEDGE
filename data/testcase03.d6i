@@ -469,7 +469,7 @@ $
 '      CEMAXF factor for sputtering velocities       '   1.0
 'TN521 Impact Energy for wall launch Vel. dist (eV)  '  100.0
 'TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    1 
-' ' 'TN408 Pin: reire99                              '
+' ' 'TN408 Pin: ./reire99                              '
 '      PIN Cell Area Option (IHCORR)                 '    1
 '      PIN Hybrid Wall Option 0=off 1,2=selection    '    0
 '      PIN Puffing Option - 0=off 1=on               '    2
