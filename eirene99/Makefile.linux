@@ -11,7 +11,9 @@ FFLAGS= -c -Munroll -Mnoframe
 FFLAGS_INTEL= -c
 
 OPT=-O
-OPT_INTEL=-O1
+OPT_INTEL=-g 
+#OPT_INTEL=-g -traceback -debug all -check bounds
+#OPT_INTEL=-O1 
 
 LOCAL_LIB=
 
