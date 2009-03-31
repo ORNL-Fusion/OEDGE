@@ -5,6 +5,7 @@ module yreflection
   integer :: yreflection_opt
   real :: cmir_refl_lower, cmir_refl_upper
   real :: yreflection_event_count = 0
+  real :: relocation_count = 0
   real :: lim_sep
   save
 
@@ -16,6 +17,7 @@ contains
 
     ! initialize data
     yreflection_event_count = 0.0
+    relocation_count = 0.0
     lim_sep = ctwol
 
   end subroutine init_reflection
@@ -38,12 +40,18 @@ contains
   end function check_reflected_region
 
 
-  subroutine check_reflection(y,oldy,svy,debugl)
+  subroutine check_reflection(y,oldy,svy,debugl,ierr)
     implicit none
     real :: y,oldy,svy
     logical :: debugl
+    integer :: ierr
+
     logical :: reflected
     real :: y_org,oldy_org,svy_org
+    real :: y_tmp
+
+    real :: ran
+    real,external :: getranf
 
     if (yreflection_opt.ne.0.and.(cmir_refl_lower.ge.0.0.or.cmir_refl_upper.le.0.0)) then 
        call errmsg('YREFLECTION:TEST_REFLECTION','Y-REFLECTION OPTION IS ON BUT REFLECTION&
@@ -52,12 +60,13 @@ contains
        return
     endif
 
+    ierr =0
     reflected = .false.
-    if (debugl) then 
+!    if (debugl) then 
        y_org = y
        oldy_org = oldy
        svy_org = svy
-    endif
+!    endif
 
     if (y.lt.0) then 
        if ((oldy.gt.cmir_refl_lower).and.(y.le.cmir_refl_lower)) then 
@@ -114,9 +123,22 @@ contains
     endif
 
     if (check_reflected_region(y)) then 
-       write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
-                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
-       call errmsg('CHECK_REFLECTION: WARNING:',error_message_data)
+       
+       !write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
+       !                                           & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
+       !call errmsg('CHECK REFLECTION:WARNING:',error_message_data)
+       
+       y_tmp = y
+
+       !ran = getranf()
+       !y = cmir_refl_lower + ran * (cmir_refl_upper-cmir_refl_lower)
+
+       relocation_count = relocation_count +1.0
+       write(error_message_data,'(a,i12,4(1x,g18.10))') 'REVISED Y COORDINATES:',int(relocation_count), y_org,oldy,y_tmp,y
+       call errmsg('CHECK_REFLECTION PARTICLE RELOCATED:',error_message_data)
+
+
+       ierr =1
     endif
 
 
