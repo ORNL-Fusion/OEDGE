@@ -189,9 +189,23 @@ c     a bug if ALPHA > CXSPLS(IS) = 2*CA in one diffusive step
 c
       logical   split  
 c
+c
       DOUBLE PRECISION DSPUTY,DTOTS(20),DTEMI,DQFACT,DELTAX                     
-      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DY1,DWOL,DSUM4               
-      DOUBLE PRECISION DY2,DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS),DIST             
+      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DWOL,DSUM4               
+      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS),DIST             
+c
+c      double precision dy1,dy2
+c     
+c     jdemod - change the calculation of the Yposition 
+c              At present, Y is recalculated at each time step by combining the 
+c              cumulative change in position stored in DY1 and DY2. In order for 
+c              reflection to work - a new variable called Y_position will hold the
+c              actual Y_posiiton and dy1, dy2 -> delta_y1, delta_y2 will be the 
+c              change in the current time step
+c
+c
+      double precision :: y_position,old_y_position,delta_y1,delta_y2
+c
 c slmod begin
       REAL       IONCNT,IONPNT
       REAL       RAN1,RAN2,RGAUSS,VPARA,TPARA,VPARAT
@@ -795,6 +809,7 @@ C
         TSTEPL = CSTEPL                                                         
         PORM   = -1.0 * PORM                                                    
         OLDY   = 0.0                                                            
+        old_y_position = 0.0
         OLDALP = 0.0                                                            
 c
 c       Initialize tracking variables - if debugt
@@ -1094,8 +1109,15 @@ C
 C------ SET INITIAL (X,Y) COORDINATES & TI IN DOUBLE PRECISION.                 
 C------ DY1 ACCUMULATES NON-DIFFUSIVE CHANGES, DY2 DIFFUSION CHANGES.           
 C                                                                               
-        DY1   = 0.0D0                                                           
-        DY2   = DBLE (Y)                                                        
+c     jdemod
+c
+c        DY1   = 0.0D0                                                           
+c        DY2   = DBLE (Y)                                                        
+c
+        delta_y1 = 0.0d0
+        delta_y2 = 0.0d0
+        Y_position = dble(Y)
+c
         QUANT = 0.0                                                             
         DTEMI = DBLE (CTEMI)                                                    
 C                                                                               
@@ -1271,12 +1293,24 @@ c slmod end
 C                                                                               
 C------------ UPDATE Y POSITION OF ION                                          
 C                                                                               
+c             jdemod - set Y_position to Y in case code has adjusted the Y value outside of the 
+c                      particle movement loop. The single precision Y variable holds the definitive
+c                      version of the particle Y position. The update only is performed in double
+c                      precision. 
+c
+              Y_position = dble(Y)
+              old_y_position = y_position
+c
+              absy=abs(y)
+c
               OLDY  = Y                                                         
+c
               IF (ABSY.LE.CYNEAR .OR. ABSY.GE.CYFAR) THEN                       
                 YFACT = CSINTB                                                  
               ELSE                                                              
                 YFACT = CSINTB * CLFACT                                         
               ENDIF                                                             
+c
               IF (SVYMIN.EQ.0.0) THEN
                  SVYMOD = SVY
               ELSE
@@ -1290,12 +1324,19 @@ C
               svybar(iqx) = svybar(iqx) + abs(svymod * QS(IQX)) * sputy
               svyacc(iqx) = svyacc(iqx) + sputy
 C
-              DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
+c             jdemod
+c
+              Delta_Y1 = DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
+c              DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
 
               IF (SPARA.GT.0.0) THEN                                            
                 KK  = KK + 1                                                    
                 SPARA = SPARA * YFACT                                           
-                DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
+c
+c               jdemod
+c
+                Delta_Y2 = DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
+c                DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
               ENDIF                                                             
 
 c
@@ -1304,28 +1345,19 @@ c             NOTE: DY2 contains the initial Y coordinate PLUS all spatial diffu
 c                   DY1 contains all forces and velocity diffusive steps   
 c
 c
-              Y     = SNGL (DY1+DY2)                                            
+              Y_position = Y_position + delta_y1 + delta_y2
+              Y     = SNGL (Y_position)                                            
 c
-c             Check Y boundary limits
 c
-
-               tmp_y = y
-               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
-     >                               ierr)
-                if (ierr.eq.1) then 
-                  ! write some debugging info
-                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
-     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
-               endif
-
+c             jdemod
 c
-c             Check for Y-axis reflection 
+c             Y-boundary is checked in the inboard/outboard code 
+c             because the constraints are different for the 
+c             different regions. Y boundary checking is not 
+c             desired outboard where a limiter surface is present. 
 c
-c             cmir_refl_lower < 0
-c             cmir_refl_upper > 0
+c             However - we can check for reflections here. 
 c
-
               if (yreflection_opt.ne.0) then 
                  if (abs(y).gt.ctwol) then 
                     write(6,*) 'Y > CTWOL'
@@ -1335,6 +1367,7 @@ c
                  endif
 
                 call check_reflection(y,oldy,svy,debugl,ierr)
+                !call check_reflection(y,oldy,svy,.true.,ierr)
                 if (ierr.eq.1) then 
                   ! write some debugging info
                  WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -1344,20 +1377,26 @@ c
 
 
               endif
+
+
+              ABSY  = ABS (Y)                                                   
+              YY    = MOD (ABSY, CL)                                            
+              IF (YY.GT.CHALFL) YY = CL - YY                                    
+
+
 c
 c slmod begin
               IF (DEBUGL) WRITE(78,'(I4,F7.1,13G12.5)') 
      +          IMP,CIST,
      +          Y,SVY,
-     +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,DY1,DY2,
+     +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,Delta_Y1,Delta_Y2,
      +          QS(IQX),DTEMI,QUANT,CFSS(IX,IY,CIZ),YFACT
 
 c              IF (IONCNT.EQ.10.OR.IONCNT.EQ.20) 
 c     +          WRITE(50,*) IONCNT,Y,ABS(Y-OLDY)
 c slmod end
-              ABSY  = ABS (Y)                                                   
-              YY    = MOD (ABSY, CL)                                            
-              IF (YY.GT.CHALFL) YY = CL - YY                                    
+
+
 
 C                                                                               
 C------------ UPDATE X POSITION OF ION, ALLOWING FOR ELONGATION                 
@@ -1527,17 +1566,19 @@ C-------------- CHECK FOR THIS AND ADD ANOTHER 2L IF NECESSARY ...
 C                                                                               
 
                tmp_y = y
+
                call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
      >                               ierr)
-                if (ierr.eq.1) then 
+               if (ierr.eq.1) then 
                   ! write some debugging info
-                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+                  WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                  WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
                endif
 
-
-
+               !
+               ! If crossed 2L 
+               !
                if (y.ne.tmp_y) then 
                   IF (CFLY2L) THEN                                              
                     CICY2L = CICY2L + SPUTY                                     
@@ -1700,13 +1741,6 @@ C-----------------------------------------------------------------------
 C                                                                               
             ELSE                                                                
 
-
-
-
-
-
-
-
 c
 c               jdemod - if poloidal extent limiters are in use 
 c                        in the SOL then need to check the +/-2L
@@ -1717,14 +1751,12 @@ c
                
                   call check_y_boundary(y,oldy,absy,svy,alpha,
      >                                  ctwol,debugl,ierr)
-                if (ierr.eq.1) then 
-                  ! write some debugging info
-                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+                  if (ierr.eq.1) then 
+                     ! write some debugging info
+                     WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                     WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
-               endif
-
-
+                  endif
                endif
 
 
@@ -2439,8 +2471,10 @@ C
             DIFFUS = L(1,IPUT)                                                  
             CFLRXA = L(2,IPUT)                                                  
             CFLY2L = L(3,IPUT)                                                  
-            DY1    = 0.0D0                                                      
-            DY2    = DBLE (Y)                                                   
+            Delta_Y1    = 0.0D0                                                      
+            Delta_Y2    = 0.0d0                                                   
+            Y_position = dble(y)
+
             ABSY   = ABS (Y)                                                    
             YY     = MOD (ABSY, CL)                                             
             IF (YY.GT.CHALFL) YY = CL - YY                                      
@@ -3424,7 +3458,7 @@ C
  9002 FORMAT(1X,I5,F9.1,12X,I4,4X,F10.6,10X,F10.5)                              
 c slmod
  9003 FORMAT(1X,I5,1x,F9.1,4(1x,I4),2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
-     >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
+     >  1P,G10.3,0P,F7.4,3(1x,I4),1X,A,:,I3,I4,F8.2)                                 
 c
 c 9003 FORMAT(1X,I5,F9.1,I6,I6,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F8.2,            
 c     >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
@@ -3484,47 +3518,23 @@ c
 
       IF (Y.LE.-CTWOL) THEN                                           
 
-      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:1:',y,oldy,ctwol,svy,alpha
-
-
  401     continue
          Y   = y + 2.0 * ctwol
          tmp_oldy = tmp_oldy + 2.0 * ctwol
          IF (Y.LE.-CTWOL) GOTO 401                                     
 
-
 c     
-c     jdemod 
+c        jdemod 
 c     
-c     Need to make sure that a particle 
-c     does not enter a reflected region
-c     inside the confined plasma.
-c     
-c     The problem here is that the particle
-c     can take very large parallel steps 
-c     in the confined plasma due to the
-c     time step multipliers. In addition, 
-c     the new Y value has been calculated
-c     by possible cycling several times through 
-c     the region. So, in theory, the particle
-c     could have experienced multiple reflections.
-c     
-c     This effect can only occur when the ion
-c     makes parallel steps greater than the distance
-c     to the mirror above or below ctwol. 
-c     
-c     This will not fix an issue with multiple internal
-c     reflections - on the other hand - this problem 
-c     should only arise deep inboard where the distribution
-c     along the field lines should be uniform anyway. 
-c     
-c     AND - this problem should be avoidable using 
-c     a smaller ion time step.
+c        Need to make sure that a particle 
+c        does not enter a reflected region
+c        inside the confined plasma.
 c     
          if (yreflection_opt.ne.0) then 
             if (check_reflected_region(y)) then 
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
+               !call check_reflection(y,tmp_oldy,svy,.true.,ierr)
                call check_reflection(y,tmp_oldy,svy,debugl,ierr)
 
                if (y.lt.-ctwol) then 
@@ -3541,10 +3551,7 @@ c
             endif  
          endif
 
-      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:2:',y,oldy,ctwol,svy,alpha
-
       ELSEIF (Y.GE.CTWOL) THEN                                        
-      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:3:',y,oldy,ctwol,svy,alpha
 
  402     continue
          Y   = Y - 2.0 * ctwol
@@ -3556,6 +3563,7 @@ c
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
                call check_reflection(y,tmp_oldy,svy,debugl,ierr)
+               !call check_reflection(y,tmp_oldy,svy,.true.,ierr)
 c     
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
@@ -3570,7 +3578,6 @@ c
                
             endif
          endif
-      write(6,'(a,6(1x,g12.5)') 'CHECK_Y_BND:4:',y,oldy,ctwol,svy,alpha
 
       ENDIF                                                           
 

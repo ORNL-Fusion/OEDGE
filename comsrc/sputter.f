@@ -1702,7 +1702,7 @@ c
 
       elseif (flux.ge.1.0e20) then 
 
-         temp_eff = temp_eff - 100.0
+         temp_eff = temp - 100.0
 
       else
 
