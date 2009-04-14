@@ -11,8 +11,8 @@ $
 '*L08 ITER BM parameter:Slot tor 1/2 wid:slot_tor_wid'   0.03
 '*L09 ITER BM parameter:lambda_design                '   0.015
 '*L10 Y reflection Option 0=off 1=on                 '     0
-'*L11 Y reflection location for Y<0                  '     0.0
-'*L12 Y reflection location for Y>0                  '     0.0
+'*L11 Y reflection location for Y<0                  '     0
+'*L12 Y reflection location for Y>0                  '     0
 '*L13 Calculate 3D power results 0=off 1=on          '     0
 '    Source Data Option 0-Nocorona 1-Adas            '     1
 '    USERID for ADAS H data (*=use central database) '   '*'

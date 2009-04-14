@@ -4,9 +4,15 @@ module yreflection
 
   integer :: yreflection_opt
   real :: cmir_refl_lower, cmir_refl_upper
+  real*8 :: cmir_refl_lower_dp, cmir_refl_upper_dp
   real :: yreflection_event_count = 0
   real :: relocation_count = 0
-  real :: lim_sep
+
+  real*8 :: lim_sep,deltay
+  real*8 :: minrefl
+
+
+  private :: lim_sep,cmir_refl_lower_dp,cmir_refl_upper_dp,minrefl
   save
 
 contains
@@ -19,36 +25,48 @@ contains
     yreflection_event_count = 0.0
     relocation_count = 0.0
     lim_sep = ctwol
+    
+    cmir_refl_lower_dp = cmir_refl_lower
+    cmir_refl_upper_dp = cmir_refl_upper
+
+    minrefl = 1.0d-7
 
   end subroutine init_reflection
 
   logical function check_reflected_region(y)
     implicit none
     real  ::  y,absy
+    real*8 :: ynew
 
     ! check to see if the input y value lies in the region with mirrors on either side 
     ! If it does then the particle can't be launched here or does not belong here and 
     ! has leaked somehow.
+
+    ynew = y
     
-    absy = abs(y)
     check_reflected_region=.false.
 
-    if (y.ge.cmir_refl_upper.and.y.le.-cmir_refl_lower) then
+    if ((ynew.ge.-lim_sep+cmir_refl_upper_dp.and.ynew.le.cmir_refl_lower_dp).or.&
+        (ynew.ge.cmir_refl_upper_dp.and.ynew.le.lim_sep+cmir_refl_lower_dp)) then
        check_reflected_region=.true.
     endif
+
 
   end function check_reflected_region
 
 
   subroutine check_reflection(y,oldy,svy,debugl,ierr)
     implicit none
-    real :: y,oldy,svy
+    real :: y,svy
+    real,intent(in) :: oldy
     logical :: debugl
     integer :: ierr
 
     logical :: reflected
     real :: y_org,oldy_org,svy_org
     real :: y_tmp
+    real*8 :: ynew,yprev
+
 
     real :: ran
     real,external :: getranf
@@ -62,54 +80,66 @@ contains
 
     ierr =0
     reflected = .false.
-!    if (debugl) then 
+
+    if (debugl) then 
        y_org = y
        oldy_org = oldy
        svy_org = svy
-!    endif
+    endif
 
-    if (y.lt.0) then 
-       if ((oldy.gt.cmir_refl_lower).and.(y.le.cmir_refl_lower)) then 
+    !
+    ! jdemod - perform intermediate calculations in double precision
+    !
+
+    yprev = dble(oldy)
+    ynew  = dble(y)
+
+    if (ynew.lt.0) then 
+       if ((yprev.gt.cmir_refl_lower_dp).and.(ynew.le.cmir_refl_lower_dp)) then 
           !
           !                   Reflection at lower (<0) mirror
           !
-          ! cmir_refl_lower is <0
 
-          y = cmir_refl_lower + abs(abs(y)+cmir_refl_lower)
+          deltay = (cmir_refl_lower_dp-ynew)
+          ynew = cmir_refl_lower_dp + max(deltay,minrefl)
+
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
 
-       elseif ((oldy.lt.(-lim_sep+cmir_refl_upper)).and.(y.ge.(-lim_sep+cmir_refl_upper))) then 
+       elseif ((yprev.lt.(-lim_sep+cmir_refl_upper_dp)).and.(ynew.ge.(-lim_sep+cmir_refl_upper_dp))) then 
           !
           !                   Reflection at second upper (< 0) mirror
           !
-          ! cmir_refl_upper is >0
-          
-          y = -lim_sep+cmir_refl_upper - abs(abs(y)-cmir_refl_upper)
+
+          deltay = (-lim_sep+cmir_refl_upper_dp-ynew)
+          ynew = -lim_sep+cmir_refl_upper_dp +  min(deltay,-minrefl)
+
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
 
        endif
 
-    elseif (y.ge.0) then 
-       if ((oldy.lt.cmir_refl_upper).and.(y.ge.cmir_refl_upper)) then 
+    elseif (ynew.ge.0) then 
+       if ((yprev.lt.cmir_refl_upper_dp).and.(ynew.ge.cmir_refl_upper_dp)) then 
           !
           !                   Reflection at upper (>0) mirror
           !
+          deltay = (cmir_refl_upper_dp - ynew)
+          ynew = cmir_refl_upper_dp + min(deltay,-minrefl)
 
-          y = cmir_refl_upper - abs(abs(y)-cmir_refl_upper)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
 
-       elseif ((oldy.gt.(lim_sep+cmir_refl_lower)).and.(y.le.(lim_sep+cmir_refl_lower))) then 
+       elseif ((yprev.gt.(lim_sep+cmir_refl_lower_dp)).and.(ynew.le.(lim_sep+cmir_refl_lower_dp))) then 
           !
           !                   Reflection at second lower (>0) mirror
           !
+          deltay = (lim_sep +cmir_refl_lower_dp-ynew)
+          ynew = lim_sep + cmir_refl_lower_dp + max(deltay,minrefl)
 
-          y = lim_sep + cmir_refl_lower + abs(abs(y)+cmir_refl_lower)
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
@@ -117,24 +147,29 @@ contains
        endif
     endif
 
+    y = sngl(ynew)
+
     if (debugl.and.reflected) then
-       write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION:',int(yreflection_event_count),y_org,oldy_org,y,oldy,svy_org,svy
+       write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION OCCURRED:',int(yreflection_event_count),y,oldy,svy,svy_org
        call dbgmsg('CHECK_REFLECTION',error_message_data)
     endif
 
     if (check_reflected_region(y)) then 
        
-       !write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
-       !                                           & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
-       !call errmsg('CHECK REFLECTION:WARNING:',error_message_data)
+       write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
+                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
+       call errmsg('CHECK REFLECTION:WARNING:',error_message_data)
        
        y_tmp = y
+       ran = getranf()
+       y = cmir_refl_lower + ran * (cmir_refl_upper-cmir_refl_lower)
 
-       !ran = getranf()
-       !y = cmir_refl_lower + ran * (cmir_refl_upper-cmir_refl_lower)
+       write(error_message_data,'(a,i10,l4,10(1x,g20.12))') 'REFLECTION:',int(yreflection_event_count),reflected,deltay,y_org,ynew,oldy_org,oldy,ynew,yprev,cmir_refl_lower_dp,cmir_refl_upper_dp
+       call dbgmsg('CHECK_REFLECTION',error_message_data)
 
        relocation_count = relocation_count +1.0
-       write(error_message_data,'(a,i12,4(1x,g18.10))') 'REVISED Y COORDINATES:',int(relocation_count), y_org,oldy,y_tmp,y
+
+       write(error_message_data,'(a,2i12,10(1x,g20.12))') 'REVISED Y COORDINATES:',int(relocation_count),int(yreflection_event_count), y_org,oldy,y_tmp,y,svy_org,svy
        call errmsg('CHECK_REFLECTION PARTICLE RELOCATED:',error_message_data)
 
 
