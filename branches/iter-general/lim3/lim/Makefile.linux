@@ -94,7 +94,7 @@ OPT_ABSOFT_OPT = -O
 # bug with loop vectorization at -O2 and above that causes a seg fault. 
 # - adding a write statement to an example affected loop stopped the seg fault.
 #
-OPT_INTEL = -g -check all -debug all
+OPT_INTEL = -g -check all -debug all -traceback
 OPT_INTEL_OPT = -O1 -traceback
 #
 OPT = $(OPTG)
