@@ -1548,7 +1548,23 @@ c slmod end
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
-        
+
+
+c
+c       Verify that the initial particle position is not inside a mirror region
+c
+        if (yreflection_opt.ne.0) then
+           if (check_reflected_region(y)) then 
+              call errmsg('NEUT:LAUNCH:','PARTICLE INITIAL POSITION'//
+     >            ' IS INSIDE MIRROR REGION:PARTICLE DISCARDED')
+
+              RFAIL(J) = RFAIL(J) + SPUTY                                           
+              IFATE = 6                                                             
+              GOTO 899                                                              
+           endif
+        endif
+
+c        
 c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
 c     >       INT (X * XSCALI) + 1,INT (X * XSCALO),x,xscalo,xscali
 
@@ -1880,14 +1896,20 @@ c     Check for y reflection - if it occurs also change the sign of dyvelf
 c
         if (yreflection_opt.ne.0) then 
            yvelf = sngl(dyvelf)
-           call check_reflection(y,oldy,yvelf,debugn,ierr)
+           call check_reflection(x,y,oldy,yvelf,debugn,ierr)
            if (ierr.eq.1) then 
               ! write some debugging info
               WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
-     >         SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'NEUTRAL LAUNCH'                
-           endif
+     >         SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'REFLECTED NEUTRAL'                
 
+
+           endif
+c
+c          Update particle position and velocity in case reflection occurred
+c
+           dy = dble(y)
            dyvelf = dble(yvelf)
+c
         endif
 c
         P = SNGL (DP)                                                           
