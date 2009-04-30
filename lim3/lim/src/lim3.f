@@ -1366,8 +1366,8 @@ c
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
                  endif
 
-                call check_reflection(y,oldy,svy,debugl,ierr)
-                !call check_reflection(y,oldy,svy,.true.,ierr)
+                call check_reflection(cx,y,oldy,svy,debugl,ierr)
+
                 if (ierr.eq.1) then 
                   ! write some debugging info
                  WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -1567,8 +1567,8 @@ C
 
                tmp_y = y
 
-               call check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
-     >                               ierr)
+               call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
+     >                               debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -1749,7 +1749,7 @@ c                        in the SOL
 c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
-                  call check_y_boundary(y,oldy,absy,svy,alpha,
+                  call check_y_boundary(cx,y,oldy,absy,svy,alpha,
      >                                  ctwol,debugl,ierr)
                   if (ierr.eq.1) then 
                      ! write some debugging info
@@ -3500,12 +3500,12 @@ c slmod end
 c     
 c     
 c     
-      subroutine check_y_boundary(y,oldy,absy,svy,alpha,ctwol,debugl,
-     >                           ierr)
+      subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
+     >                           debugl,ierr)
       use error_handling
       use yreflection
       implicit none
-      real :: y,oldy,ctwol,absy,svy,alpha
+      real :: cx,y,oldy,ctwol,absy,svy,alpha
       logical :: debugl
       integer :: ierr
       
@@ -3534,8 +3534,8 @@ c
             if (check_reflected_region(y)) then 
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
-               !call check_reflection(y,tmp_oldy,svy,.true.,ierr)
-               call check_reflection(y,tmp_oldy,svy,debugl,ierr)
+
+               call check_reflection(cx,y,tmp_oldy,svy,debugl,ierr)
 
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
@@ -3562,8 +3562,9 @@ c
             if (check_reflected_region(y)) then 
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
-               call check_reflection(y,tmp_oldy,svy,debugl,ierr)
-               !call check_reflection(y,tmp_oldy,svy,.true.,ierr)
+
+               call check_reflection(cx,y,tmp_oldy,svy,debugl,ierr)
+
 c     
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol

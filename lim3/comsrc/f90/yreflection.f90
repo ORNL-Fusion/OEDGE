@@ -55,9 +55,9 @@ contains
   end function check_reflected_region
 
 
-  subroutine check_reflection(y,oldy,svy,debugl,ierr)
+  subroutine check_reflection(x,y,oldy,svy,debugl,ierr)
     implicit none
-    real :: y,svy
+    real :: x,y,svy
     real,intent(in) :: oldy
     logical :: debugl
     integer :: ierr
@@ -156,15 +156,15 @@ contains
 
     if (check_reflected_region(y)) then 
        
-       write(error_message_data,'(a,3(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
-                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', y,oldy,svy
+       write(error_message_data,'(a,4(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
+                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', x,y,oldy,svy
        call errmsg('CHECK REFLECTION:WARNING:',error_message_data)
        
        y_tmp = y
        ran = getranf()
        y = cmir_refl_lower + ran * (cmir_refl_upper-cmir_refl_lower)
 
-       write(error_message_data,'(a,i10,l4,10(1x,g20.12))') 'REFLECTION:',int(yreflection_event_count),reflected,deltay,y_org,ynew,oldy_org,oldy,ynew,yprev,cmir_refl_lower_dp,cmir_refl_upper_dp
+       write(error_message_data,'(a,i10,l4,10(1x,g20.12))') 'REFLECTION:',int(yreflection_event_count),reflected,x,deltay,y_org,ynew,oldy_org,oldy,ynew,yprev,cmir_refl_lower_dp,cmir_refl_upper_dp
        call dbgmsg('CHECK_REFLECTION',error_message_data)
 
        relocation_count = relocation_count +1.0
