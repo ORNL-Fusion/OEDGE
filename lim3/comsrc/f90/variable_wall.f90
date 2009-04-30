@@ -27,10 +27,12 @@ contains
        caw_fnc = caw
     elseif (lim_wall_opt.eq.1) then 
 
-       yabs = abs(y)
-       if (yabs.gt.cl) then 
-          ytmp= 2.0*cl - yabs
+       ytmp = abs(y)
+
+       if (ytmp.gt.cl) then 
+          ytmp= 2.0*cl - ytmp
        endif
+
        
        if (ytmp.lt.ywall_start) then 
           caw_fnc = caw 
