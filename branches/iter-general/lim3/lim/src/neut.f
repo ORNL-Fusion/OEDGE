@@ -91,6 +91,9 @@ C     INCLUDE (CNEUT)
       INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       INCLUDE 'coords'
+c
+      include 'global_options'
+c      
       EXTERNAL VLAN                                                             
 C                                                                               
 c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD                    
@@ -843,6 +846,7 @@ C           CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE
 C           GIVEN Y POSITION FOR LAUNCH.
 C 
             CALL YEDGINT(Y0,X0,IQX,J,IERR)
+c
             XPRODS(NPROD1+IPROD) = X0                                         
             YPRODS(NPROD1+IPROD) = Y0                                          
             PPRODS(NPROD1+IPROD) = P0                                       
@@ -935,8 +939,9 @@ C
 C         CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE 
 C         GIVEN Y POSITION FOR LAUNCH.
 C 
+c
           CALL YEDGINT(Y0,X0,IQX,J,IERR) 
-c          write(6,*) 'after yedgint ipos'
+c
           IOY = IPOS(Y0,OYS,MAXOS-1)
           NEROYS(IOY,6) = NEROYS(IOY,6) + 1.0   
           XPRODS(NPROD1+IPROD) = X0                                         
@@ -968,8 +973,11 @@ C
 C     THIS IS CALCULATED ONLY IF ASKED FOR I.E. CDCALC = 1
 C
       CALL RZERO(CDFLUX,MAXOS*3)
-      WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
       IF (CDCALC.EQ.1) THEN 
+c
+        WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
         DO 310 IOY = 1,MAXOS
           CALL YEDGINT(OYOUTS(IOY),X0,IQX,J,IERR)
           IF (IERR.NE.0) THEN 
@@ -1008,7 +1016,9 @@ C
 C     CALCULATE FLUXES
 C
         NINIT = FLOAT(NPROD) - FLOAT(IMPADD) -FLOAT(IMPCF)
-        WRITE(6,*) 'NINIT:',NINIT 
+
+        WRITE(6,*) 'CDCALC1:NINIT:',NINIT 
+
         J = 1
         DO 314 IOY = 1,MAXOS
           IF (OYOUTS(IOY).LT.-OYMAX2(1).OR.OYOUTS(IOY).GT.OYMAX2(2)) 
@@ -1027,6 +1037,7 @@ C
             ENDIF 
             CDFLUX(IOY,3) = CDFLUX(IOY,1)+CDFLUX(IOY,2)
           ENDIF
+c
           WRITE(6,'(a,10(1x,g12.5))') 
      >      'IOY:FLUX1,OYCOORD2,CDF1:',IOY,
      >      FLUX1(OYIQX(IOY),J),OYCOORD(IOY,2),CDFLUX(IOY,1)
@@ -1035,15 +1046,22 @@ C
      >      YIELD1(OYIQX(IOY),J),NEROYS(IOY,6),FYTOT(J),NINIT,
      >      CDFLUX(IOY,2)
 314     CONTINUE 
-        WRITE(6,*) 'NINIT:' ,NINIT
-        DO 316 IOY = 1,MAXOS
+
+        WRITE(6,*) 'CDCALC2:NINIT:' ,NINIT
+
+        write(6,'(a)') 'OYCOORD DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':OYC:',OYCOORD(IOY,1),OYCOORD(IOY,2),
+     >             IOY,':OYCOORD:',OYCOORD(IOY,1),OYCOORD(IOY,2),
      >              OYCOORD(IOY,3),OYIQX(IOY)
+        end do 
+
+        write(6,'(a)') 'CDFLUX DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':CDF:',CDFLUX(IOY,1),CDFLUX(IOY,2),
+     >             IOY,':CDFLUX :',CDFLUX(IOY,1),CDFLUX(IOY,2),
      >              CDFLUX(IOY,3)
-316     CONTINUE
+        end do
       ENDIF
 C             
 C                                                                               

@@ -42,5 +42,7 @@ c    7   Case print out file (.dat)
 c    8   LIM raw data file (.raw)
 c    9   LIM/OUT input echo file (.inp)             
 c   13   Experimental Data file associated with this shot/grid ($3$4.experimemt,$3.experiment)
+c   26   OUT .grp output file
+c   49   OUT .plt output file
 c 
 c

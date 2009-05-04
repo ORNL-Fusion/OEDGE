@@ -120,6 +120,9 @@ C     INCLUDE   (SAVE)
 C     INCLUDE   (COMNET)                                                        
       INCLUDE   'crand'                                                         
 C     INCLUDE   (CRAND)                                                         
+c
+      include   'global_options'
+
 c slmod begin
       INCLUDE   'slcom'
 c slmod end
