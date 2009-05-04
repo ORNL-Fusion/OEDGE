@@ -879,12 +879,22 @@ C-----------------------------------------------------------------------
 C                                                                               
       CALL PRB                                                                  
       IF (MOD(IMISC/100000000,10).EQ.1) THEN                                    
-        CALL PRC ('GRAPH OF TEMPERATURES TB(X) WILL BE PLOTTED')                
-        REF = 'PLASMA TEMPERATURE'                                              
-        DO 300 IX = 1, NXS                                                      
+        CALL PRC('GRAPH OF ELECTRON TEMPERATURE TBE(X) WILL BE PLOTTED')                
+        REF = 'PLASMA ELECTRON TEMPERATURE'                                              
+        DO IX = 1, NXS                                                      
           XFUNS(IX,1) = CTEMBS(IX,-1)                                           
           XFUNS(IX,2) = CTEMBS(IX,1)                                            
-  300   CONTINUE                                                                
+        end do
+        CALL LIM_DRAW (XOUTS,XWIDS,XFUNS,MAXNXS,NXS,ANLY,                           
+     >    2,99,CAW,CA,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                              
+     >    JOB,TITLE,XLAB,FFLAB,ELABS(10),REF,NVIEW,PLANE,TABLE,1,2)             
+c
+        CALL PRC('GRAPH OF ION TEMPERATURE TBI(X) WILL BE PLOTTED')                
+        REF = 'PLASMA ION TEMPERATURE'                                              
+        DO IX = 1, NXS                                                      
+          XFUNS(IX,1) = CTEMBSI(IX,-1)                                           
+          XFUNS(IX,2) = CTEMBSI(IX,1)                                            
+        end do
         CALL LIM_DRAW (XOUTS,XWIDS,XFUNS,MAXNXS,NXS,ANLY,                           
      >    2,99,CAW,CA,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                              
      >    JOB,TITLE,XLAB,FFLAB,ELABS(10),REF,NVIEW,PLANE,TABLE,1,2)             
@@ -987,6 +997,21 @@ c
      >    JOB,TITLE,YLAB1,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
         plane = ' ' 
         nview  = ' '
+
+c
+c     Write out the erosion data
+c        
+        write(6,'(a)') 'EROSION AS A FUNCTION OF Y:'
+        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION' 
+        do io = 1,nos
+           write(6,'(4(4x,g18.8))') oyouts(io),neroys(io,1),
+     >            neroys(io,3),neroys(io,4)
+
+        end do
+
+
+
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
       IF (MOD(IMISC/100,10).EQ.1) THEN                                            
@@ -1535,7 +1560,12 @@ C---- CALCULATION IN DRAW INTEGRATED OVER -2L:2L BECOMES EFFECTIVELY
 C---- A VALUE FOR -L:L (SIMPLEST WAY TO DEAL WITH THIS I THINK!))               
 C---- CHANGED THIS DEC 88 : FIX IFL=7 TO DO THIS                                
 C                                                                               
-      IF (IVU.NE.0 .AND. (BREF.EQ.'2DX'.OR.BREF.EQ.'2NX'.OR.                    
+c
+c     jdemod - IVU has been given another meaning for the 2NX and 2DX plots
+c              it now selects the side of the limiter to plot if non-zero
+c
+c      IF (IVU.NE.0 .AND. (BREF.EQ.'2DX'.OR.BREF.EQ.'2NX'.OR.                    
+      IF (IVU.NE.0 .AND. (                    
      >  BREF(2:2).EQ.'Z'.OR.BREF(3:3).EQ.'P'.OR.BREF(3:3).EQ.'T'.OR.            
      >  BREF.EQ.'2WY'.OR.IFOLD.NE.0.OR.BREF(2:2).EQ.'Y'.OR.                     
      >  BREF(2:2).EQ.'T')) THEN                                                 
@@ -1555,23 +1585,30 @@ C
         ENDIF                                                                   
  1011 CONTINUE                                                                  
       IFL = 2                                                                   
+c
       IF (IVU.EQ.0.AND.IPLANE.EQ.99) IFL = 7                                    
 C                                                                               
-      IF (IVU.EQ.1) THEN                                                        
-        RV = RV1                                                                
-        XV = XV1                                                                
-        YV = YV1                                                                
-        WRITE (XVIEW,9001) RV,XV,YV                                             
-        WRITE (YVIEW,9001) RV,XV,YV                                             
-      ELSEIF (IVU.GE.2) THEN                                                    
-        RV = RV2                                                                
-        XV = XV2                                                                
-        YV = YV2                                                                
-        WRITE (XVIEW,9001) RV,XV,YV                                             
-        WRITE (YVIEW,9001) RV,XV,YV                                             
-        YLAB = YLAB2                                                            
-        IF (GRAPH(20:20).EQ.'Y') GRAPH(20:20) = 'T'                             
-      ENDIF                                                                     
+c     jdemod - do not set this up for 2DX or 2NX plots
+c     
+      if (.not.(BREF.EQ.'2DX'.OR.BREF.EQ.'2NX')) then 
+
+         IF (IVU.EQ.1) THEN                                                        
+           RV = RV1                                                                
+           XV = XV1                                                                
+           YV = YV1                                                                
+           WRITE (XVIEW,9001) RV,XV,YV                                             
+           WRITE (YVIEW,9001) RV,XV,YV                                             
+         ELSEIF (IVU.GE.2) THEN                                                    
+           RV = RV2                                                                
+           XV = XV2                                                                
+           YV = YV2                                                                
+           WRITE (XVIEW,9001) RV,XV,YV                                             
+           WRITE (YVIEW,9001) RV,XV,YV                                             
+           YLAB = YLAB2                                                            
+           IF (GRAPH(20:20).EQ.'Y') GRAPH(20:20) = 'T'                             
+         ENDIF                                                                     
+      endif
+
 C                                                                               
       YLIMIT = MIN (RV/3.0, YLIM)                                               
       NYSLIM = MIN (IPOS(YLIMIT,YS,NYS-1), NYS/2)                               
@@ -1755,8 +1792,15 @@ C-----------------------------------------------------------------------
 C                                                                               
       ELSEIF (BREF.EQ.'2DX') THEN                                               
 C     ===========================                                               
-        J = 1                                                                   
+c        J = 1                                                                   
+c
+         if (ivu.le.0) then 
+            j=1
+         else
+            j = ivu
+         endif
         IF (IFOLD.EQ.1) J = 3                                                   
+
  1090   IF (J.EQ.1) REF = 'DEPOSITION  Y < 0'                                   
         IF (J.EQ.2) REF = 'DEPOSITION  Y > 0'                                   
         IF (J.EQ.3) REF = 'DEPOSITION  Y<0 + Y>0'                               
@@ -1778,7 +1822,13 @@ C---- ALONG F(X) = 0 TO HELP SPOT WHERE NET EROSION IS OCCURING...
 C                                                                               
       ELSEIF (BREF.EQ.'2NX') THEN                                               
 C     ===========================                                               
-        J = 1                                                                   
+c        J = 1                                                                   
+c
+         if (ivu.le.0) then 
+            j=1
+         else
+            j = ivu
+         endif
         IF (IFOLD.EQ.1) J = 3                                                   
  1100   IF (J.EQ.1) REF = 'NET EROSION  Y < 0'                                  
         IF (J.EQ.2) REF = 'NET EROSION  Y > 0'                                  
@@ -1819,6 +1869,18 @@ c
         ENDIF                                                                   
 c
         nview = ' '
+c
+c     Write out the erosion data
+c        
+        write(6,'(a)') 'EROSION AS A FUNCTION OF Y:'
+        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION' 
+        do io = 1,nxs
+           write(6,'(8(4x,g18.8))') xs(io),neroxs(io,1,1),
+     >            neroxs(io,3,1),neroxs(io,4,1),neroxs(io,1,2),
+     >            neroxs(io,3,2),neroxs(io,4,2)
+        end do
+
 C                                                                               
       ELSEIF (BREF.EQ.'2WY') THEN                                               
 C     ===========================                                               

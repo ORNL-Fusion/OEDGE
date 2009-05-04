@@ -31,6 +31,9 @@ C     INCLUDE (COORDS)
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
 c
+      include 'global_options'
+
+c
 c slmod begin
       INCLUDE 'slcom'
 c slmog end

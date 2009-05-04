@@ -285,6 +285,12 @@ if [[ -f fort.26 ]] then
    mv fort.26 $LIMRESDIR/$1.grp
 fi 
 #
+#  Printed listing of 2D plot data
+#
+if [[ -f fort.49 ]] then
+   mv fort.49 $LIMRESDIR/$1.plt
+fi 
+#
 #
 # Clean-up
 #
