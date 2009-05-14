@@ -5,12 +5,14 @@ module yreflection
   integer :: yreflection_opt
   real :: cmir_refl_lower, cmir_refl_upper
   real*8 :: cmir_refl_lower_dp, cmir_refl_upper_dp
-  real :: yreflection_event_count = 0
-  real :: relocation_count = 0
+  real*8 :: yreflection_event_count = 0
+  real*8 :: relocation_count = 0
 
   real*8 :: lim_sep,deltay
   real*8 :: minrefl
 
+  real*8 :: yref_upper_cnt = 0.0
+  real*8 :: yref_lower_cnt = 0.0
 
   private :: lim_sep,cmir_refl_lower_dp,cmir_refl_upper_dp,minrefl
   save
@@ -24,6 +26,10 @@ contains
     ! initialize data
     yreflection_event_count = 0.0
     relocation_count = 0.0
+
+    yref_upper_cnt = 0.0
+    yref_lower_cnt = 0.0
+
     lim_sep = ctwol
     
     cmir_refl_lower_dp = cmir_refl_lower
@@ -106,6 +112,8 @@ contains
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
+          
+          yref_lower_cnt = yref_lower_cnt + 1.0
 
        elseif ((yprev.lt.(-lim_sep+cmir_refl_upper_dp)).and.(ynew.ge.(-lim_sep+cmir_refl_upper_dp))) then 
           !
@@ -118,6 +126,8 @@ contains
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
+
+          yref_upper_cnt = yref_upper_cnt + 1.0
 
        endif
 
@@ -133,6 +143,9 @@ contains
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
 
+          yref_upper_cnt = yref_upper_cnt + 1.0
+
+
        elseif ((yprev.gt.(lim_sep+cmir_refl_lower_dp)).and.(ynew.le.(lim_sep+cmir_refl_lower_dp))) then 
           !
           !                   Reflection at second lower (>0) mirror
@@ -143,6 +156,8 @@ contains
           svy = -svy
           yreflection_event_count = yreflection_event_count + 1.0
           reflected = .true.
+
+          yref_lower_cnt = yref_lower_cnt + 1.0
 
        endif
     endif
@@ -178,6 +193,29 @@ contains
 
 
   end subroutine check_reflection
+
+
+
+  subroutine pr_yref_stats
+    implicit none
+
+!
+! Print some statistics on yreflection events
+! 
+    if (yreflection_opt.ne.0) then 
+
+        call prb
+        call prc('  Summary of Y-Reflection events:')
+        call prr('  Total number of reflection events:',sngl(yreflection_event_count))
+        call prr('  Lower Mirror Location: ',cmir_refl_lower)
+        call prr('     - Total Reflections from lower mirror:',sngl(yref_lower_cnt))
+        call prr('  Upper Mirror Location: ',cmir_refl_upper)
+        call prr('     - Total Reflections from lower mirror:',sngl(yref_upper_cnt))
+        call prr('  Total number of relocated particles: ',sngl(relocation_count))
+
+    endif
+
+  end subroutine pr_yref_stats
 
 
 
