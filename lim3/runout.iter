@@ -146,6 +146,12 @@ if [[ -f fort.26 ]] then
 fi 
 #
 #
+#  Printed listing of 2D plot data
+#
+if [[ -f fort.49 ]] then
+   mv fort.49 $LIMRESDIR/$1.plta
+fi 
+#
 # Clean-up
 #
 if [[ -f $1.dat ]] then

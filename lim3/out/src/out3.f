@@ -506,21 +506,24 @@ c
 c
       endif 
 c
+c     jdemod - only modify the contents of nerods since that is the
+c              only array for which the mm/hr scalings are appropriate.
+c
 c     Modify contents of NEROXS, NEROYS, NERODS
 c
-      do ix = 1,maxnxs
-         do ii = 1,5
-            do j = 1,2
-              neroxs(ix,ii,j) = neroxs(ix,ii,j) * ero_scale
-            end do
-         end do
-      end do
+c      do ix = 1,maxnxs
+c         do ii = 1,5
+c            do j = 1,2
+c              neroxs(ix,ii,j) = neroxs(ix,ii,j) * ero_scale
+c            end do
+c         end do
+c      end do
 c
-      do io = 1,maxos
-         do ii = 1,6
-            neroys(io,ii) = neroys(io,ii) * ero_scale
-         end do
-      end do
+c      do io = 1,maxos
+c         do ii = 1,6
+c            neroys(io,ii) = neroys(io,ii) * ero_scale
+c         end do
+c      end do
 c
       do io = 1,maxos
          do ii = 1,5
@@ -988,13 +991,12 @@ C
         WRITE (ELABS(4)(16:30),'(''='',2F7.4)') DSUM(4),DSUM(9)                 
         WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)             
 c
-        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
 c
-c       Change FLAB to EROLAB
 c
         CALL LIM_DRAW (OYOUTS,OYWIDS,NEROYS,MAXOS,NOS,ANLY,                         
      >    5,99,-OMAX,OMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                        
-     >    JOB,TITLE,YLAB1,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
+     >    JOB,TITLE,YLAB1,FLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
         plane = ' ' 
         nview  = ' '
 
@@ -1183,14 +1185,12 @@ C
 1127    CONTINUE                                                                
         WRITE (ELABS(17)(22:30),'(''='',F8.4)')  DSUM(11)+DSUM(12)              
 c
-        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
-c
-c       Change FLAB to EROLAB
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
 c
 
         CALL LIM_DRAW (OYOUTS,OYWIDS,NEROYS(1,6),MAXOS,NOS,ANLY,                   
      >    1,99,-OMAX,OMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                        
-     >    JOB,TITLE,YLAB1,EROLAB,ELABS(17),REF,NVIEW,PLANE,TABLE,1,6)            
+     >    JOB,TITLE,YLAB1,FLAB,ELABS(17),REF,NVIEW,PLANE,TABLE,1,6)            
         nview = ' '
 
       ENDIF
@@ -1282,13 +1282,13 @@ C
         WRITE (ELABS(4)(16:30),'(''='',2F7.4)') DSUM(4),DSUM(9)                 
         WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)             
 c
-        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
 c
 c       Change FLAB to EROLAB
 c
         CALL LIM_DRAW (OYVOUT,OYVWID,NEROYS,MAXOS,NOS,ANLY,                         
      >    5,99,-OMAX,OMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                        
-     >    JOB,TITLE,YLAB5,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
+     >    JOB,TITLE,YLAB5,FLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
         plane = ' '
         nview = ' '
       ENDIF                                                                     
@@ -1358,13 +1358,12 @@ C
         WRITE (ELABS(4)(16:30),'(''='',2F7.4)') DSUM(4),DSUM(9)                 
         WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)             
 c
-        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
 c
-c       Change FLAB to EROLAB
-c
+
         CALL LIM_DRAW (OYVOUT,OYVWID,NEROYS,MAXOS,NOS,ANLY,                         
      >    5,0,-OMAX,OMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                        
-     >    JOB,TITLE,YLAB5,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
+     >    JOB,TITLE,YLAB5,FLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
         plane = ' '
         nview = ' '
       ENDIF                                                                     
@@ -1588,27 +1587,21 @@ C
 c
       IF (IVU.EQ.0.AND.IPLANE.EQ.99) IFL = 7                                    
 C                                                                               
-c     jdemod - do not set this up for 2DX or 2NX plots
-c     
-      if (.not.(BREF.EQ.'2DX'.OR.BREF.EQ.'2NX')) then 
-
-         IF (IVU.EQ.1) THEN                                                        
-           RV = RV1                                                                
-           XV = XV1                                                                
-           YV = YV1                                                                
-           WRITE (XVIEW,9001) RV,XV,YV                                             
-           WRITE (YVIEW,9001) RV,XV,YV                                             
-         ELSEIF (IVU.GE.2) THEN                                                    
-           RV = RV2                                                                
-           XV = XV2                                                                
-           YV = YV2                                                                
-           WRITE (XVIEW,9001) RV,XV,YV                                             
-           WRITE (YVIEW,9001) RV,XV,YV                                             
-           YLAB = YLAB2                                                            
-           IF (GRAPH(20:20).EQ.'Y') GRAPH(20:20) = 'T'                             
-         ENDIF                                                                     
-      endif
-
+      IF (IVU.EQ.1) THEN                                                        
+        RV = RV1                                                                
+        XV = XV1                                                                
+        YV = YV1                                                                
+        WRITE (XVIEW,9001) RV,XV,YV                                             
+        WRITE (YVIEW,9001) RV,XV,YV                                             
+      ELSEIF (IVU.GE.2) THEN                                                    
+        RV = RV2                                                                
+        XV = XV2                                                                
+        YV = YV2                                                                
+        WRITE (XVIEW,9001) RV,XV,YV                                             
+        WRITE (YVIEW,9001) RV,XV,YV                                             
+        YLAB = YLAB2                                                            
+        IF (GRAPH(20:20).EQ.'Y') GRAPH(20:20) = 'T'                             
+      ENDIF                                                                     
 C                                                                               
       YLIMIT = MIN (RV/3.0, YLIM)                                               
       NYSLIM = MIN (IPOS(YLIMIT,YS,NYS-1), NYS/2)                               
@@ -1792,13 +1785,8 @@ C-----------------------------------------------------------------------
 C                                                                               
       ELSEIF (BREF.EQ.'2DX') THEN                                               
 C     ===========================                                               
-c        J = 1                                                                   
+         J = 1                                                                   
 c
-         if (ivu.le.0) then 
-            j=1
-         else
-            j = ivu
-         endif
         IF (IFOLD.EQ.1) J = 3                                                   
 
  1090   IF (J.EQ.1) REF = 'DEPOSITION  Y < 0'                                   
@@ -1822,13 +1810,8 @@ C---- ALONG F(X) = 0 TO HELP SPOT WHERE NET EROSION IS OCCURING...
 C                                                                               
       ELSEIF (BREF.EQ.'2NX') THEN                                               
 C     ===========================                                               
-c        J = 1                                                                   
+        J = 1                                                                   
 c
-         if (ivu.le.0) then 
-            j=1
-         else
-            j = ivu
-         endif
         IF (IFOLD.EQ.1) J = 3                                                   
  1100   IF (J.EQ.1) REF = 'NET EROSION  Y < 0'                                  
         IF (J.EQ.2) REF = 'NET EROSION  Y > 0'                                  
@@ -1849,7 +1832,7 @@ c
         WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)                
 
 c
-        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
 c
 c       Change FLAB to EROLAB
 c
@@ -1857,11 +1840,11 @@ c
 
           CALL LIM_DRAW (XOUTS,XWIDS,NEROXS(1,1,J),MAXNXS,NXS,ANLY,                 
      >      5,JSMOTH,VMIN,VMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                   
-     >      JOB,TITLE,XLAB,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                
+     >      JOB,TITLE,XLAB,FLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                
         ELSEIF (IPLOT.EQ.2) THEN                                                
           CALL LIM_DRAW (XOUTS,XWIDS,NEROXS(1,4,J),MAXNXS,NXS,ANLY,                 
      >      2,JSMOTH,VMIN,VMAX,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                   
-     >      JOB,TITLE,EROLAB,FLAB,ELABS(4),REF,NVIEW,PLANE,TABLE,1,6)             
+     >      JOB,TITLE,XLAB,FLAB,ELABS(4),REF,NVIEW,PLANE,TABLE,1,6)             
         ENDIF                                                                   
         IF (J.EQ.1) THEN                                                        
           J = 2                                                                 
@@ -1881,6 +1864,165 @@ c
      >            neroxs(io,3,2),neroxs(io,4,2)
         end do
 
+C                                                                               
+C---- EROSION AND DEPOSITION ALONG THE Y-AXIS: NEROYS
+cC                                                                               
+C---- IPLOT USED SLIGHTLY DIFFERENTLY FOR NET EROSION GRAPHS:                   
+C---- IPLOT=1 MEANS PLOT USUAL UNNORMALISED GRAPH                               
+C---- IPLOT=2 MEANS PLOT NET EROSION CURVE ONLY (TO FILL WHOLE SCREEN)          
+C---- ROUTINE DRAW IS CALLED WITH IFL=6 TO GET A STRAIGHT LINE                  
+C---- ALONG F(X) = 0 TO HELP SPOT WHERE NET EROSION IS OCCURING...              
+C                                                                               
+      ELSEIF (BREF.EQ.'2NY') THEN                                               
+C     ===========================                                               
+c
+        CALL PRC ('GRAPH OF NET EROSION AGAINST Y WILL BE PLOTTED')             
+        WRITE (REF,'(A,I3,A)') 'NET EROSION  (',NOS,' PTS)'                     
+        CALL DZERO (DSUM, 10)                                                   
+c
+        DO IO = 1, NOS                                                      
+         DO  II = 1, 5                                                       
+          IF (NEROYS(IO,II).GT.0.0) THEN                                        
+           DSUM(II)   = DSUM(II)   + DBLE (NEROYS(IO,II)*OYWIDS(IO))            
+          ELSE                                                                  
+           DSUM(II+5) = DSUM(II+5) + DBLE (NEROYS(IO,II)*OYWIDS(IO))            
+          ENDIF                                                                 
+         end do
+        end do
+C
+C       ONLY CALCULATE INTEGRATION ACROSS FACE IF ystop > ystart
+C
+        IF (vmax.GT.vmin) THEN
+          istart = IPOS(vmin,OYS,NOS)
+          istop = IPOS(vmax,OYS,NOS)          
+          TOTDEPR = 0.0         
+          DO II = istart,istop
+             TOTDEPR = TOTDEPR + NEROYS(II,1)*OYWIDS(II)  
+          end do
+          TOTDEPR = TOTDEPR / (DSUM (1) + DSUM(6))
+          WRITE(PLANE,537) ystart,ystop,TOTDEPR
+ 537      FORMAT('FRACTION:',F7.3,',',F7.3,'=',F8.4)  
+        ENDIF
+C
+        WRITE (ELABS(1)(22:30),'(''='',F8.4)')  DSUM(1)+DSUM(6)                 
+        WRITE (ELABS(2)(22:30),'(''='',F8.4)')  DSUM(2)+DSUM(7)                 
+        WRITE (ELABS(3)(22:30),'(''='',F8.4)')  DSUM(3)+DSUM(8)                 
+        WRITE (ELABS(4)(16:30),'(''='',2F7.4)') DSUM(4),DSUM(9)                 
+        WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)             
+c
+c        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c
+c
+        CALL LIM_DRAW (OYOUTS,OYWIDS,NEROYS,MAXOS,NOS,ANLY,                         
+     >    5,99,vmin,vmax,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                        
+     >    JOB,TITLE,YLAB1,FLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
+        plane = ' ' 
+        nview  = ' '
+
+c
+c     Write out the erosion data
+c        
+        write(6,'(a)') 'EROSION AS A FUNCTION OF Y:'
+        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION' 
+        do io = 1,nos
+           write(6,'(4(4x,g18.8))') oyouts(io),neroys(io,1),
+     >            neroys(io,3),neroys(io,4)
+
+        end do
+
+C                                                                               
+C---- EROSION AND DEPOSITION ALONG THE LIMITER SURFACE: NERODS
+c
+C---- IPLOT USED SLIGHTLY DIFFERENTLY FOR NET EROSION GRAPHS:                   
+C---- IPLOT=1 MEANS PLOT USUAL UNNORMALISED GRAPH                               
+C---- IPLOT=2 MEANS PLOT NET EROSION CURVE ONLY (TO FILL WHOLE SCREEN)          
+C---- ROUTINE DRAW IS CALLED WITH IFL=6 TO GET A STRAIGHT LINE                  
+C---- ALONG F(X) = 0 TO HELP SPOT WHERE NET EROSION IS OCCURING...              
+C                                                                               
+      ELSEIF (BREF.EQ.'2ND') THEN                                               
+C     ===========================                                               
+
+        CALL PRC ('NET EROSION AGAINST DISTANCES ALONG SURFACE WILL BE P        
+     >LOTTED')                                                                  
+        WRITE (REF,'(A,I3,A)') 'NET EROSION  (',NOS,' PTS)'                     
+        CALL DZERO (DSUM, 10)                                                   
+
+        DO IO = 1, NOS                                                      
+         DO II = 1, 5                                                       
+          IF (NERODS(IO,II).GT.0.0) THEN                                        
+           DSUM(II)   = DSUM(II)   + DBLE (NERODS(IO,II)*ODWIDS(IO))            
+          ELSE                                                                  
+           DSUM(II+5) = DSUM(II+5) + DBLE (NERODS(IO,II)*ODWIDS(IO))            
+          ENDIF                                                                 
+         end do
+        end do
+c
+        WRITE (ELABS(1)(22:30),'(''='',F8.4)')  DSUM(1)+DSUM(6)                 
+        WRITE (ELABS(2)(22:30),'(''='',F8.4)')  DSUM(2)+DSUM(7)                 
+        WRITE (ELABS(3)(22:30),'(''='',F8.4)')  DSUM(3)+DSUM(8)                 
+        WRITE (ELABS(4)(16:30),'(''='',2F7.4)') DSUM(4),DSUM(9)                 
+        WRITE (ELABS(5)(16:30),'(''='',2F7.4)') DSUM(5),DSUM(10)                
+c
+        write(nview,'(a,1x,g12.5)') 'EROSION SCALING=',ero_scale
+c
+c       Change FLAB to EROLAB
+c
+        CALL LIM_DRAW (ODOUTS,ODWIDS,NERODS,MAXOS,NOS,ANLY,                         
+     >    5,99,vmin,vmax,-BIGG,BIGG,IGTS,ITEC,AVS,NAVS,                
+     >    JOB,TITLE,YLAB3,EROLAB,ELABS,REF,NVIEW,PLANE,TABLE,1,6)                 
+        nview = ' '
+c
+c     Write out the erosion data
+c        
+        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
+        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION' 
+c
+        do io = 1,nos
+           write(6,'(4(4x,g18.8))') odouts(io),nerods(io,1),
+     >            nerods(io,3),nerods(io,4)
+
+        end do
+
+c        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
+c        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+c     >            'TOTAL REMOVAL','NET EROSION' 
+c        do io = 1,nos
+c           write(6,'(8(4x,g18.8))') odouts(io),
+c     >            nerods(io,1),sum(nerods3(io,:,1)),
+c     >            nerods(io,3),sum(nerods3(io,:,3)),
+c     >            nerods(io,4),sum(nerods3(io,:,4))
+c
+c        end do
+
+c
+c       Write out the poloidally resolved data
+c
+c        write(6,'(a)') 'POLOIDALLY RESOLVED EROSION ALONG'//
+c     >                 ' LIMITER SURFACE:'
+c        write(6,'(a)')
+c        write(6,'(a)') 'TOTAL DEPOSITION:'
+c        write(6,'(13x,100(1x,g12.5))') 
+c     >              ((ps(ip)-pwids(ip)/2.0),ip=-maxnps,maxnps)
+c        do io = 1,nos
+c           write(6,'(101(1x,g12.5))') 
+c     >             odouts(io),(nerods3(io,ip,1),ip=-maxnps,maxnps)
+c        end do   
+c        write(6,'(a)')
+c        write(6,'(a)') 'TOTAL REMOVAL:'
+c        do io = 1,nos
+c           write(6,'(101(1x,g12.5))') 
+c     >             odouts(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
+c        end do   
+c        write(6,'(a)')
+c        write(6,'(a)') 'NET EROSION:'
+c        do io = 1,nos
+c           write(6,'(101(1x,g12.5))') 
+c     >             odouts(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)
+c        end do   
+c        write(6,'(a)')
+c
 C                                                                               
       ELSEIF (BREF.EQ.'2WY') THEN                                               
 C     ===========================                                               
