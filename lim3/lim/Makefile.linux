@@ -90,8 +90,12 @@ OPT_ABSOFT_OPT = -O
 #
 # LINUX - INTEL
 #
-OPT_INTEL = -g -check all -debug all
-OPT_INTEL_OPT = -O
+# Must use -O1 optimization since there seems to be an Intel compiler
+# bug with loop vectorization at -O2 and above that causes a seg fault. 
+# - adding a write statement to an example affected loop stopped the seg fault.
+#
+OPT_INTEL = -g -check all -debug all -traceback
+OPT_INTEL_OPT = -O1 -traceback
 #
 OPT = $(OPTG)
 #
@@ -125,8 +129,10 @@ CFLAGS= $(OPTC)
 #
 # LINUX
 #
+LIB_VER=
 LOCAL_LIB=/usr/local/lib
-LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
+#LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
+LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
 #
 # Name of target to build
@@ -237,6 +243,18 @@ intel:
 
 intelopt:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
+intellib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+inteloptlib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+intel-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
+
+intelopt-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"

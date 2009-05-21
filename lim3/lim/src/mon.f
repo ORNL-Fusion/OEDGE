@@ -305,6 +305,7 @@ C
 C                                                                               
       SUBROUTINE MONPRI (QTIM,FACT,VFLUID,NIZS,SDTZS,SDYZS,                     
      >                   STOTS,DOUTS,RIONS,CTBIN,CRMI)                          
+      use yreflection
       IMPLICIT  none
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
@@ -349,6 +350,7 @@ C
       RSAB = 0.0                                                                
       RTAB = 0.0                                                                
       RTAV = 0.0                                                                
+      RTBS = 0.0
       RAVA = 0.0                                                                
       RMACH = 0.0                                                               
       RENEGY = 0.0                                                              
@@ -414,8 +416,11 @@ C
      >                   NINT(CIY0IZ(IZ)),NINT(CI2LIZ(IZ)))
 C                                                                               
          IF (CICABS(IZ).GT.0.0.OR.ZICABS(IZ).GT.0.0) THEN                       
-           CICABS(IZ) = MAX (CICABS(IZ), 1.E-50)                                
-           ZICABS(IZ) = MAX (ZICABS(IZ), 1.E-50)                                
+           ! jdemod - these fixed constants are too large for R*4 - should use the parameter LO=1.0e-37 for R4
+           !CICABS(IZ) = MAX (CICABS(IZ), 1.E-50)                                
+           !ZICABS(IZ) = MAX (ZICABS(IZ), 1.E-50)                                 
+           CICABS(IZ) = MAX (CICABS(IZ), LO)                                
+           ZICABS(IZ) = MAX (ZICABS(IZ), LO)                                 
            CALL PRR2 ('  TIME FIRST ION ABSORBED  (S)          ',               
      >                   QTIM*ZIFABS(IZ), QTIM*CIFABS(IZ))                      
            CALL PRR2 ('  TIME LAST ION ABSORBED  (S)           ',               
@@ -632,5 +637,11 @@ C
 C                                                                               
       CALL PRC ('AVERAGE DELTA Y STEPS OUTBOARD (AS USED) (M)')                 
       WRITE (7,'((2X,6(I2,1P,E8.1)))') (IZ,SDYZS(IZ),IZ=1,NIZS)                 
+c
+c     Print yreflection statistics if the option is active
+c
+      call pr_yref_stats
+c
+
       RETURN                                                                    
       END                                                                       

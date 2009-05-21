@@ -287,6 +287,9 @@ C
      >  ' LINES REACHED.')                                                      
  9004 FORMAT(1X,'PLRP: LINE LAMBDA =',F7.1,' IS NOT USED AT PRESENT.')          
       END                                                                       
+c
+c
+c
       SUBROUTINE SPECTEMP (PLAMS,PIZS,NLS)      
 C
 C     THIS SUBROUTINE CALCULATES THE SPECTROSCOPIC TEMPERATURE
@@ -344,6 +347,11 @@ C
         IF (PIZS(K).NE.0.AND.PIZS(K).NE.-1) THEN
           DO 150 J = -NYS,NYS
             ABSJ = ABS(J)
+
+            ! jdemod ywids has no J=0 element - need to avoid executing this
+            !        code then
+            if (j.ne.0) then 
+
             DO 100 I = 1, IX
               FACTA = XWIDS(I)*XCYLS(I)*YWIDS(ABSJ)*DELPS(I,ABSJ)
               SCT(K,1)=SCT(K,1)+SNGL(DDTS(I,J,PIZS(K)))
@@ -358,6 +366,9 @@ C
               SCT(K,4) = SCT(K,4)+CTEMBS(I,J)*PLRPS(I,J,K)*FACTB
               INTPLRP(K,2) = INTPLRP(K,2) + PLRPS(I,J,K)*FACTB
  50         CONTINUE
+
+            endif
+
  150      CONTINUE
           INTPLRP(K,3) = INTPLRP(K,1)+INTPLRP(K,2) 
           SCT(K,3) = SCT(K,1)+SCT(K,2)

@@ -71,6 +71,7 @@ c
       SUBROUTINE InitializeUnstructuredInput
       use iter_bm
       use variable_wall
+      use yreflection
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -218,6 +219,38 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG L10 to L12: Inputs related to Y-Reflection option
+c
+c     L10: yreflection_opt: 0=off  1+ on : default = 0.0 or off
+c     L11: cmir_refl_lower - less than 0.0 - indicates location of Y<0 mirror
+c     L12: cmir_refl_upper - greater than 0.0 - indicates location of Y>0 mirror
+c     
+c     Default locations are also 0.0 for off - these MUST be specified to turn the 
+c     option on. 
+c
+c     yreflection_event_count - global initialization of counter to 0.0
+c
+      yreflection_opt = 0
+      cmir_refl_lower = 0.0
+      cmir_refl_upper = 0.0
+      yreflection_event_count = 0.0
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      calc_3d_power = 1
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q26:
 c
 c     Specification of a density multiplier (gradient) to be applied
@@ -257,6 +290,7 @@ c
       SUBROUTINE ReadUnstructuredInput(line2)
       use iter_bm
       use variable_wall
+      use yreflection
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -446,7 +480,7 @@ c
 c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
 c
       elseif (tag(1:3).EQ.'L04') THEN
-        CALL ReadI(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
+        CALL ReadR(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
 c
 c -----------------------------------------------------------------------
 c
@@ -473,6 +507,48 @@ c
         CALL ReadR(line,lambda_design,0.0,HI,
      >                    'Design decay length (M)')
 c
+c -----------------------------------------------------------------------
+c
+c     TAG L10 to L12: Inputs related to Y-Reflection option
+c
+c     L10: yreflection_opt: 0=off  1+ on : default = 0.0 or off
+c     L11: cmir_refl_lower - less than 0.0 - indicates location of Y<0 mirror
+c     L12: cmir_refl_upper - greater than 0.0 - indicates location of Y>0 mirror
+c     
+c     Default locations are also 0.0 for off - these MUST be specified to turn the 
+c     option on. 
+c
+c     L10: Y reflection option flag 
+c
+      elseif (tag(1:3).EQ.'L10') THEN
+        CALL ReadI(line,yreflection_opt,0,1,'Y-Reflection Option')
+c
+c     TAG L11: Y < 0 Reflection location specification
+c
+      elseif (tag(1:3).EQ.'L11') THEN
+        CALL ReadR(line,cmir_refl_lower,-HI,0.0,
+     >               'Y-reflection: Y<0 reflection boundary')
+c
+c     TAG L12: Y > 0 Reflection location specification
+c
+      elseif (tag(1:3).EQ.'L12') THEN
+        CALL ReadR(line,cmir_refl_upper,0.0,HI,
+     >               'Y-reflection: Y>0 reflection boundary')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      elseif (tag(1:3).EQ.'L13') THEN
+        CALL ReadI(line,calc_3d_power,0,1,'3D power calculation option')
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:

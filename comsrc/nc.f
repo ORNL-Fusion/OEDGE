@@ -49,6 +49,11 @@ CL                  C1.5     INTERPOLATED IONISATION LOSS COEFFICIENTS
 C VERSION 20/11/85 AVMA JET/OXFORD
        COMMON/COMAT5/
      R   RION  ,   P
+c
+c     jdemod - add save statement to help ensure data is retained
+c
+       save
+
        REAL
      R   RION(34,28,3)   ,   P(28,3)
 C-----------------------------------------------------------------------
@@ -4298,15 +4303,18 @@ C     ELECTRON DENSITY INSIDE INTERVAL
 C
 C     INTERVAL FOR TEMPERATURE INTERPOLATION
              ITE = (ZTELOG-TMINLG)/DTLOG + 1.99999
-             ITE = MAX0 (ITE,2)
-             ITE = MIN0 (ITE,NTE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             ITE = MAX (ITE,2)
+             ITE = MIN (ITE,NTE)
              ITE1= ITE-1
+             write(0,*) 'RRATES:TELOG:',ite,ite1
              ZINT= (TELOG(ITE)-ZTELOG)/(TELOG(ITE)-TELOG(ITE1))
 C
 C     INTERVAL FOR DENSITY INTERPOLATION
              INE = (ZNELOG-DMINLG)/DNLOG + 1.99999
-             INE = MAX0 (INE,2)
-             INE = MIN0 (INE,NNE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             INE = MAX (INE,2)
+             INE = MIN (INE,NNE)
              INE1= INE-1
              ZIND= (DENLOG(INE)-ZNELOG)/(DENLOG(INE)-DENLOG(INE1))
 C
@@ -4572,15 +4580,18 @@ C     VOLUME FACTOR DVOL IN CM**3
 C
 C     INTERVAL FOR TEMPERATURE INTERPOLATION
              ITE = (ZTELOG-TMINLG)/DTLOG + 1.99999
-             ITE = MAX0 (ITE,2)
-             ITE = MIN0 (ITE,NTE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             ITE = MAX (ITE,2)
+             ITE = MIN (ITE,NTE)
              ITE1= ITE-1
+
              ZINT= (TELOG(ITE)-ZTELOG)/(TELOG(ITE)-TELOG(ITE1))
 C
 C     INTERVAL FOR DENSITY INTERPOLATION
              INE = (ZNELOG-DMINLG)/DNLOG + 1.99999
-             INE = MAX0 (INE,2)
-             INE = MIN0 (INE,NNE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             INE = MAX (INE,2)
+             INE = MIN (INE,NNE)
              INE1= INE-1
              ZIND= (DENLOG(INE)-ZNELOG)/(DENLOG(INE)-DENLOG(INE1))
 C
@@ -4794,15 +4805,25 @@ C     VOLUME FACTOR DVOL IN CM**3
 C
 C     INTERVAL FOR TEMPERATURE INTERPOLATION
              ITE = (ZTELOG-TMINLG)/DTLOG + 1.99999
-             ITE = MAX0 (ITE,2)
-             ITE = MIN0 (ITE,NTE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             !ITE = MAX0 (ITE,2)
+             !ITE = MIN0 (ITE,NTE)
+             ITE = MAX (ITE,2)
+             ITE = MIN (ITE,NTE)
              ITE1= ITE-1
+
+             if (ite.lt.2) then 
+                write (0,*) 'RDLONG:TELOG:ITE,ITE1:',ite,ite1,nte,
+     >                     max(ite,2),min(ite,nte)
+             endif
+
              ZINT= (TELOG(ITE)-ZTELOG)/(TELOG(ITE)-TELOG(ITE1))
 C
 C     INTERVAL FOR DENSITY INTERPOLATION
              INE = (ZNELOG-DMINLG)/DNLOG + 1.99999
-             INE = MAX0 (INE,2)
-             INE = MIN0 (INE,NNE)
+             ! jdemod - need to change from max0 - it implies a certain integer kind these days
+             INE = MAX (INE,2)
+             INE = MIN (INE,NNE)
              INE1= INE-1
              ZIND= (DENLOG(INE)-ZNELOG)/(DENLOG(INE)-DENLOG(INE1))
 C

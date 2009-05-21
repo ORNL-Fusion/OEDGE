@@ -23,8 +23,11 @@ C     INCLUDE   (COMTOR)
 C     INCLUDE   (COORDS)                                                        
       INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
+c
+      include   'global_options'
+c
 c slmod
-      INCLUDE   "cadas"
+      INCLUDE   'cadas'
       INCLUDE   'slcom'
 c slmod end
 C                                              ,ICNT
@@ -619,6 +622,8 @@ C     INCLUDE   (COMTOR)
 C     INCLUDE   (COMXYT)                                                        
       INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
+c
+      include   'global_options'
 C                                                                               
       INTEGER   IQX,IZ,PMIZS,MAXIZ,J                                            
 C                                                                               
@@ -962,6 +967,8 @@ C     INCLUDE   (COMTOR)
 C     INCLUDE   (COMXYT)                                                        
       INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
+c
+      include   'global_options'
 C                                                                               
       INTEGER   MAXIZ,IZ                                                        
 C-----------------------------------------------------------------------        
