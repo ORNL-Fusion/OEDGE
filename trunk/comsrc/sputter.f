@@ -948,16 +948,16 @@ c
       real energy
       integer in
 
-      ! loop energy from 10 to 1000 eV in 10eV increments and calculate
+      ! loop energy from 5 to 500 eV in 5eV increments and calculate
       ! both the self sputtering and matp-> matt
 
       write(6,'(a)') 'CALCULATION OF TEST YIELDS'//
      >               ' FOR CASE MATERIALS:'
       write(6,'(a)') '  ENERGY (eV)      Yphys        Yself'
 
-      do in = 1,100
+      do in = 1,200
 
-         energy = in * 10.0
+         energy = in * 5.0
 
          ! assume te=ti=0.0 for these print outs
          yphys = yield(matp,matt,energy,0.0,0.0) 

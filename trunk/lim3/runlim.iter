@@ -14,12 +14,12 @@ fi
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=/home/david/divimp/adas
+export ADASCENT=/work/projects/divimp/adas
 #
 VER=pgi
-RUNROOT=$HOME/divimp/lim3
-EXEROOT=$HOME/divimp/lim3
-DATAROOT=$HOME/divimp/lim3
+RUNROOT=$HOME/lim
+EXEROOT=/work/projects/divimp/divimp/lim3
+DATAROOT=/work/projects/divimp/divimp/lim3
 #
 #  Loctions of the various LIM files 
 #

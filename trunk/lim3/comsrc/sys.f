@@ -212,3 +212,80 @@ c
       RETURN
       END
 
+c
+c
+c
+      real function getranf ()
+      use rand_data
+      implicit none
+c
+c     This routine interfaces with a C language routine which
+c     accesses the C-library random number generator. It is intended
+c     to ultimately replace surand2 for single random numbers - there 
+c     is no reason to pass the seed to the routine generating the 
+c     random numbers - only to the initialization routine. SURAND2 was
+c     created for historical reasons - since it mimics the calling
+c     convention of an IBM mainframe built-in function to generate 
+c     random numbers. Neither SURAND nor SURAND2 have any use for
+c     a seed value in their current incarnation. 
+c
+c     The value returned here is between 0.0 and 1.0
+c
+      REAL NEWRAND
+c
+c      EXTERNAL NEWRAND
+c
+      call random_number(newrand)
+      GETRANF = NEWRAND
+C
+C         RANJ(J) = RAND ()  FOR CRAY OR IBM USING DEFAULT GENERATOR
+C
+c
+c     Update random number count
+c     
+      ran_used = ran_used + 1.0
+c
+      RETURN
+      END
+c
+c
+c
+      subroutine getran (rand)
+      use rand_data
+      implicit none
+c
+c     This routine interfaces with a C language routine which
+c     accesses the C-library random number generator. It is intended
+c     to ultimately replace surand2 for single random numbers - there 
+c     is no reason to pass the seed to the routine generating the 
+c     random numbers - only to the initialization routine. SURAND2 was
+c     created for historical reasons - since it mimics the calling
+c     convention of an IBM mainframe built-in function to generate 
+c     random numbers. Neither SURAND nor SURAND2 have any use for
+c     a seed value in their current incarnation. 
+c
+c     The value returned here is between 0.0 and 1.0
+c
+c     Subroutine version of getran() function
+c
+      REAL rand
+c
+c      real newrand
+c      EXTERNAL NEWRAND
+c
+c
+      call random_number(rand)
+
+c
+c      RAND = NEWRAND()
+C
+C         RANJ(J) = RAND ()  FOR CRAY OR IBM USING DEFAULT GENERATOR
+C
+
+c
+c     Update random number count
+c     
+      ran_used = ran_used + 1.0
+c
+      RETURN
+      END

@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
+      use yreflection
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -175,6 +176,10 @@ C
       CTWOL  = CL+CL                                                            
       CHALFL = 0.5 * CL                                                         
       C3HALFL= 1.5 * CL
+c
+c     jdemod - initialize the reflection option
+c
+      call init_reflection(ctwol)
 C                                                                               
 C---- CALCULATE SET OF X AND Y POSITIONS FOR WHICH                              
 C---- FACTORS ARE TO BE CALCULATED                                              
@@ -325,7 +330,9 @@ C
         PS(IP)    = PS(IP-1) + CPSUB                                            
         PS(-1-IP) = PS(-IP)  - CPSUB                                            
   180 CONTINUE                                                                  
-      PS(MAXNPS) = 1.E75                                                        
+      ! jdemod Number too large - should use HI here (or MACHHI)
+      ! PS(MAXNPS) = 1.0E75                                                        
+      PS(MAXNPS) = HI                                                        
 C                                                                               
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
 C                                                                               

@@ -7,6 +7,7 @@ c
      >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
       use variable_wall
+      use yreflection
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -90,6 +91,9 @@ C     INCLUDE (CNEUT)
       INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       INCLUDE 'coords'
+c
+      include 'global_options'
+c      
       EXTERNAL VLAN                                                             
 C                                                                               
 c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD                    
@@ -115,7 +119,8 @@ C
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
 C
       IERR = 0
-
+      natiz1 = 0
+      natiz2 = 0
 C                                                                               
 C-----------------------------------------------------------------------        
 C       SET UP SECTION                                                          
@@ -204,7 +209,13 @@ C---- A UNIFORM DISTRIBUTION BETWEEN  -Y(RL) < Y < +Y(RL)
 C                                                                               
       
 c      write(6,*) 'Before clarmr ipos'
-      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
+c
+c     jdemod - qxs is only assigned useful data starting a qxs(1-nqxso) - if 
+c              ipos is passed qxs(-nqxso) it does not work as intended since
+c              qxs(-nqxso) will be 0.0 which is larger than qxs(0)
+c
+      KQX = IPOS (-CLARMR, QXS(1-NQXSO), NQXSO-1) - NQXSO - 1                      
+c      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
 c      write(6,*) 'After clarmr ipos'
       IF (CNEUTB.NE.0) CLARMR = 0.0                                             
       IF (CLARMR.GT.0.0) THEN                                                   
@@ -254,11 +265,11 @@ C
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
         FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J)                            
 
-c        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
-c     >      flux1(iqx,j),flux2(iqx,j),
-c     >      enegy1(iqx,j),enegy2(iqx,j),
-c     >      yield1(iqx,j),yield2(iqx,j),
-c     >      fy1(iqx,j),fy2(iqx,j)
+        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
+     >      flux1(iqx,j),flux2(iqx,j),
+     >      enegy1(iqx,j),enegy2(iqx,j),
+     >      yield1(iqx,j),yield2(iqx,j),
+     >      fy1(iqx,j),fy2(iqx,j)
 c
 
    10 CONTINUE                                                                  
@@ -367,10 +378,19 @@ C
       IF (CLARMR.GT.0.0) WRITE (7,9002)                                         
      >  QXS(1),CYMFPS(1,J),FLUX1(1,J),ENEGY1(1,J),                              
      >  YIELD1(1,J),FY1(1,J),FY1(1,J)*DELTAX/FYTOT1(J)                          
-      DO 100 IQX = 0, -NQXSO/2, MIN (-1,-NQXSO/25)                              
-        IF (YIELD1(IQX,J).GT.1.E-3) WRITE (7,9002)                              
+c
+c     write more complete data  
+c
+
+      DO 100 IQX = 0, -NQXSO, MIN (-1,-NQXSO/25)                              
+c        IF (YIELD1(IQX,J).GT.1.E-3) 
+        WRITE (7,9002)                              
      >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
      >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+        WRITE (6,9002)                              
+     >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
+     >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+
   100 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
@@ -560,7 +580,15 @@ c
              IQX = 1-NQXSO                                                         
              X0  = QXS(IQX)                                                        
   290        Y0  = RAN * CTWOL                                                     
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 290
+             endif
+
              IF (J.EQ.1) Y0 = -Y0                                                  
+
              IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
      >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
      >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
@@ -574,6 +602,12 @@ c
 
 
  291         Y0  = RAN * CTWOL                                                     
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 291
+             endif
 
              IQY_TMP = max(min(int(y0*yscale)+1,nqys),1)
 
@@ -590,7 +624,9 @@ c
                GOTO 291                                                            
              ENDIF                                                                 
 c
+c            jdemod 
 c            Normal incidence needs to be corrected at some point for these wall options
+c            NOTE: theta is not used in NEUT - it must be calculated/assigned in LAUNCH
 c
              THETA = PI/2.0                                                        
 
@@ -810,6 +846,7 @@ C           CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE
 C           GIVEN Y POSITION FOR LAUNCH.
 C 
             CALL YEDGINT(Y0,X0,IQX,J,IERR)
+c
             XPRODS(NPROD1+IPROD) = X0                                         
             YPRODS(NPROD1+IPROD) = Y0                                          
             PPRODS(NPROD1+IPROD) = P0                                       
@@ -902,8 +939,9 @@ C
 C         CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE 
 C         GIVEN Y POSITION FOR LAUNCH.
 C 
+c
           CALL YEDGINT(Y0,X0,IQX,J,IERR) 
-c          write(6,*) 'after yedgint ipos'
+c
           IOY = IPOS(Y0,OYS,MAXOS-1)
           NEROYS(IOY,6) = NEROYS(IOY,6) + 1.0   
           XPRODS(NPROD1+IPROD) = X0                                         
@@ -935,8 +973,11 @@ C
 C     THIS IS CALCULATED ONLY IF ASKED FOR I.E. CDCALC = 1
 C
       CALL RZERO(CDFLUX,MAXOS*3)
-      WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
       IF (CDCALC.EQ.1) THEN 
+c
+        WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
         DO 310 IOY = 1,MAXOS
           CALL YEDGINT(OYOUTS(IOY),X0,IQX,J,IERR)
           IF (IERR.NE.0) THEN 
@@ -975,7 +1016,9 @@ C
 C     CALCULATE FLUXES
 C
         NINIT = FLOAT(NPROD) - FLOAT(IMPADD) -FLOAT(IMPCF)
-        WRITE(6,*) 'NINIT:',NINIT 
+
+        WRITE(6,*) 'CDCALC1:NINIT:',NINIT 
+
         J = 1
         DO 314 IOY = 1,MAXOS
           IF (OYOUTS(IOY).LT.-OYMAX2(1).OR.OYOUTS(IOY).GT.OYMAX2(2)) 
@@ -994,6 +1037,7 @@ C
             ENDIF 
             CDFLUX(IOY,3) = CDFLUX(IOY,1)+CDFLUX(IOY,2)
           ENDIF
+c
           WRITE(6,'(a,10(1x,g12.5))') 
      >      'IOY:FLUX1,OYCOORD2,CDF1:',IOY,
      >      FLUX1(OYIQX(IOY),J),OYCOORD(IOY,2),CDFLUX(IOY,1)
@@ -1002,15 +1046,22 @@ C
      >      YIELD1(OYIQX(IOY),J),NEROYS(IOY,6),FYTOT(J),NINIT,
      >      CDFLUX(IOY,2)
 314     CONTINUE 
-        WRITE(6,*) 'NINIT:' ,NINIT
-        DO 316 IOY = 1,MAXOS
+
+        WRITE(6,*) 'CDCALC2:NINIT:' ,NINIT
+
+        write(6,'(a)') 'OYCOORD DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':OYC:',OYCOORD(IOY,1),OYCOORD(IOY,2),
+     >             IOY,':OYCOORD:',OYCOORD(IOY,1),OYCOORD(IOY,2),
      >              OYCOORD(IOY,3),OYIQX(IOY)
+        end do 
+
+        write(6,'(a)') 'CDFLUX DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':CDF:',CDFLUX(IOY,1),CDFLUX(IOY,2),
+     >             IOY,':CDFLUX :',CDFLUX(IOY,1),CDFLUX(IOY,2),
      >              CDFLUX(IOY,3)
-316     CONTINUE
+        end do
       ENDIF
 C             
 C                                                                               
@@ -1193,6 +1244,7 @@ C
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
       use variable_wall
+      use yreflection
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1288,11 +1340,14 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
 
+      real yvelf
+
 c
 c     jdemod minimum rvalue to prevent division by zero errors
 c
       real, parameter :: minrval = 1.0e-10
       
+      integer :: ierr
 c slmod begin - N2 break
       LOGICAL N2STAT
       REAL    ENEW, VNEW,NFAST,N2Time
@@ -1407,8 +1462,11 @@ C
         EATIZ (J) = 0.0                                                         
         PATIZ (J) = 0.0                                                         
         REJECT(J) = 0.0                                                         
-        RNEUT (J) = 1.0E-50                                                     
-        RATIZ (J) = 1.0E-50                                                     
+        ! jdemod - these fixed constants are too large for R*4 - should use the parameter LO=1.0e-37 for R4
+        !RNEUT (J) = 1.0E-50                                                     
+        !RATIZ (J) = 1.0E-50                                                     
+        RNEUT (J) = LO                                                    
+        RATIZ (J) = LO                                                     
         RSTRUK(J) = 0.0                                                         
         RFAIL (J) = 0.0                                                         
         RRES  (J) = 0.0                                                         
@@ -1508,7 +1566,23 @@ c slmod end
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
-        
+
+
+c
+c       Verify that the initial particle position is not inside a mirror region
+c
+        if (yreflection_opt.ne.0) then
+           if (check_reflected_region(y)) then 
+              call errmsg('NEUT:LAUNCH:','PARTICLE INITIAL POSITION'//
+     >            ' IS INSIDE MIRROR REGION:PARTICLE DISCARDED')
+
+              RFAIL(J) = RFAIL(J) + SPUTY                                           
+              IFATE = 6                                                             
+              GOTO 899                                                              
+           endif
+        endif
+
+c        
 c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
 c     >       INT (X * XSCALI) + 1,INT (X * XSCALO),x,xscalo,xscali
 
@@ -1614,10 +1688,13 @@ C-----------------------------------------------------------------------
 C                                                                               
 c slmod
 
-        if (iqx.ge.0) then 
-           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+c
+c     Check for invalid IQX values
+c
+        if (iqx.gt.0) then 
+           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
-           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
         endif
 
@@ -1831,6 +1908,28 @@ C
         ENDIF                                                                   
         X = SNGL (DX)                                                           
         Y = SNGL (DY)                                                           
+
+c
+c     Check for y reflection - if it occurs also change the sign of dyvelf
+c
+        if (yreflection_opt.ne.0) then 
+           yvelf = sngl(dyvelf)
+           call check_reflection(x,y,oldy,yvelf,debugn,ierr)
+           if (ierr.eq.1) then 
+              ! write some debugging info
+              WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
+     >         SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'REFLECTED NEUTRAL'                
+
+
+           endif
+c
+c          Update particle position and velocity in case reflection occurred
+c
+           dy = dble(y)
+           dyvelf = dble(yvelf)
+c
+        endif
+c
         P = SNGL (DP)                                                           
         ABSY = ABS (Y)                                                          
         IF (X.GE.0.0) THEN                                                      
@@ -1852,8 +1951,7 @@ c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP+:',iqy_tmp,
 c     >               int((y+ctwol)*yscale)+1,
 c     >               y,ctwol,yscale,y*yscale
         endif
-C                                                                               
-C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
+C                                                                               C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
 C------ OR SURVIVED UNTIL TIME CUTOFF POINT ...                                 
 C------ WALLS ARRAY IS UPDATED                                                  
 C------ THE "IFATE" FLAG CAN BE USED WHEN PRINTING DEBUG MESSAGES WHICH         
@@ -1914,27 +2012,35 @@ C------ CHECKING THE IP BIN IS NOT NEEDED FOR THE STANDARD LIM VERSION.
 C                                                                               
         IF (.NOT.BIG) GOTO 450                                                  
   430   CONTINUE                                                                
-          IF ((IP.LE.-MAXNPS).OR.(PS(IP-1).LT.P))GOTO 440                       
+          IF (IP.LE.-MAXNPS)GOTO 440                       
+          IF (PS(IP-1).LT.P)GOTO 440                       
           IP = IP - 1                                                           
           GOTO 430                                                              
   440   CONTINUE                                                                
-          IF ((IP.GE.MAXNPS) .OR. (PS(IP).GE.P)) GOTO 450                       
+          IF ((IP.GE.MAXNPS)) GOTO 450                       
+          IF ((PS(IP).GE.P)) GOTO 450                       
           IP = IP + 1                                                           
           GOTO 440                                                              
   450   CONTINUE                                                                
-          IF ((IX.LE.1) .OR. (XS(IX-1).LT.X))    GOTO 460                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF (IX.LE.1)    GOTO 460                       
+          IF (XS(IX-1).LT.X)    GOTO 460                       
           IX = IX - 1                                                           
           GOTO 450                                                              
   460   CONTINUE                                                                
-          IF ((IX.GE.NXS) .OR. (XS(IX).GE.X))    GOTO 470                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF ((IX.GE.NXS))    GOTO 470                       
+          IF ((XS(IX).GE.X))    GOTO 470                       
           IX = IX + 1                                                           
           GOTO 460                                                              
   470   CONTINUE                                                                
-          IF ((JY.LE.1) .OR. (YS(JY-1).LT.ABSY)) GOTO 480                       
+          IF ((JY.LE.1)) GOTO 480                       
+          IF ((YS(JY-1).LT.ABSY)) GOTO 480                       
           JY = JY - 1                                                           
           GOTO 470                                                              
   480   CONTINUE                                                                
-          IF ((JY.GE.NYS) .OR. (YS(JY).GE.ABSY)) GOTO 490                       
+          IF ((JY.GE.NYS)) GOTO 490                       
+          IF ((YS(JY).GE.ABSY)) GOTO 490                       
           JY = JY + 1                                                           
           GOTO 480                                                              
   490   CONTINUE                                                                
@@ -2410,7 +2516,7 @@ C  *  SUBLIMATION CASE  (SPUTTER OPTION 5).                            *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+      INCLUDE 'params'                                                        
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          

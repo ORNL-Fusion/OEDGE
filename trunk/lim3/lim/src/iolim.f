@@ -3,6 +3,7 @@ c
       SUBROUTINE READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,
      >                   FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,
      >                   NYMFS,NCVS,NQS,NITERS)                                 
+      use error_handling
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -29,6 +30,9 @@ C     INCLUDE (COMTAU)
 C     INCLUDE (COORDS)                                                          
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
+c
+      include 'global_options'
+
 c
 c slmod begin
       INCLUDE 'slcom'
@@ -329,6 +333,13 @@ C---- READ IN YIELD MODIFIER FUNCTION AND FLAG
 C                                                                               
       CALL RDRARN(CYMFS,NYMFS,MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
      >                                      2,'SET OF X,M(X) VALS',IERR)        
+
+      if (cymfs(1,1).gt.cymfs(nymfs,1)) then 
+         call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
+     >       ' BE ENTERED IN ASCENDING ORDER IN X')
+         stop
+      endif
+
       CALL RDI(CYMFLG,.TRUE. ,-2 ,.TRUE. , 0,'YIELD MODIFIER FLAG',IERR)        
 C
 C---- READ IN Q SPUTTERING PARAMETER MULTIPLIER
@@ -495,6 +506,7 @@ C
       use eckstein_2002_yield_data
       use variable_wall
       use iter_bm
+      use yreflection
 C     
       implicit none 
 c
@@ -1347,7 +1359,7 @@ C-----------------------------------------------------------------------
        call prc('                       DEFINED BY:')
        call prc('                       X=-(0.04*Y**2 + 0.09*Y**4)')
       elseif (ciopth.eq.11) then
-       call prc('  LIMITER EDGE OPT 10: ITER HALF LIMITER SHAPE')
+       call prc('  LIMITER EDGE OPT 11: ITER HALF LIMITER SHAPE')
        call prc('                       DEFINED BY:')
        call prc('                       '//
      >               'X=- lam * ln(1 -/+ C*(Y - Y_re-entrant)/lam ))')
@@ -1371,6 +1383,40 @@ C-----------------------------------------------------------------------
        call prr('                       C                   = ', c_lim)
       ENDIF                                                                     
 C                                                                               
+      call prb
+c
+      if (lim_wall_opt.eq.0) then 
+         call prr('                       LIM WALL OPTION 0: WALL'//
+     >            ' IS AT A CONSTANT DISTANCE FROM THE LCFS: AW =',caw)
+      elseif (lim_wall_opt.eq.1) then 
+         call prc('                       LIM WALL OPTION 1: WALL'//
+     >            ' DISTANCE TO LCFS VARIES')
+         call prr('                                          WALL'//
+     >            ' STARTS AT A DISTANCE OF AW = ',caw)
+         call prr('                                          WALL'//
+     >            ' DISTANCE THEN CHANGES LINEARLY'//
+     >            ' STARTING AT Y = ',ywall_start)
+         call prr('                                          WALL'//
+     >            ' DISTANCE TO LCFS AT THE MID POINT BETWEEN '//
+     >            ' LIMITERS = ',caw_min)
+      endif
+c
+      call prb
+c
+      if (yreflection_opt.eq.0) then 
+         call prc('                        Y REFLECTION OPT 0:'//
+     >            ' REFLECTION IN Y-AXIS MIRRORS IS OFF')
+      elseif (yreflection_opt.eq.1) then 
+         call prc('                        Y REFLECTION OPT 1:'//
+     >            ' Y-AXIS REFLECTION IS ON AT TWO MIRROR'//
+     >            ' LOCATIONS: ONE EACH FOR Y>0 AND Y<0')
+         call prr('                                           '//
+     >            ' Y < 0 MIRROR LOCATION = ',cmir_refl_lower)
+         call prr('                                           '//
+     >            ' Y > 0 MIRROR LOCATION = ',cmir_refl_upper)
+      endif
+
+
       IF (CORECT.EQ.1)                                                          
      > WRITE (7,'(24X,''CURVATURE CORRECTED, RP='',F10.6)') RP                  
 C-----------------------------------------------------------------------        
@@ -2124,6 +2170,10 @@ C     INCLUDE   (COMT2)
 C     INCLUDE   (COORDS)                                                        
       INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
+c
+c     jdemod - include ADAS to calculate the 3D POWL and LINE arrays
+      include   'cadas'
+c
 c slmod tmp
       INCLUDE 'comtau'
 c slmod end
@@ -2135,6 +2185,11 @@ C
       INTEGER   IOS,JBLOCK,IL,II,IP,J,KBLOCK,IT,IO                              
       INTEGER   IBLOCK,IQX,IX,IY,IZ,IYB,IYE,IZS,IZE,IQS,IQE                     
       DATA      IBLOCK / 1540 /                                                 
+      !
+      ! jdemod - initialization resulting from complaints by INTEL compiler
+      ! 
+      ios = 0
+      !
 c slmod tmp
       IF (CIOPTE.EQ.10) THEN
         WRITE (NOUT,IOSTAT=IOS) 'EMPTY'
@@ -2150,7 +2205,7 @@ C---- FIRST ITEM IS VERSION NUMBER (EG 3I/01) TO BE READ BACK
 C---- IN COLECT - IF AGREEMENT IS NOT FOUND THEN AN ERROR MESSAGE IS            
 C---- ISSUED.                                                                   
 C                                                                               
-      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
+c      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
 c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
       WRITE (NOUT,IOSTAT=IOS)                                                   
@@ -2244,6 +2299,7 @@ C
 C                                                                               
 C---- CHECK FOR ERRORS                                                          
 C                                                                               
+
       IF (IOS.NE.0) STOP                                                        
       JBLOCK = IBLOCK / (NXS+1)                                                 
       KBLOCK = JBLOCK / 2                                                       
@@ -2348,6 +2404,8 @@ C
            WRITE (NOUT) ((LIM5(IX,IY,IZ,IP,IT), IX=1,NXS), IY=IYB,IYE)          
  1200  CONTINUE                                                                 
       ENDIF                                                                     
+
+
 C
 C                                                                               
 C================= WRITE PLRPS  ARRAY TO DISC ==========================        
@@ -2398,6 +2456,14 @@ C-----------------------------------------------------------------------
 C   FOR EACH Y POINT IN TURN ....                                               
 C-----------------------------------------------------------------------        
 C                                                                               
+
+      if (calc_3d_power.eq.1) then 
+
+!
+!     Nocorona
+!
+      if (cdatopt.eq.0) then 
+
       DO 990 IY = -NY3D, NY3D                                                
         IF (IY.EQ.0) GOTO 990                                                   
         JY = IABS (IY)                                                          
@@ -2462,6 +2528,120 @@ C               LINE3
   985     CONTINUE                                                              
   990 CONTINUE                                                                  
 
+
+!
+!     ADAS
+!
+      elseif (cdatopt.eq.1) then
+
+C
+C------ GET POWER LOSS FROM ADAS DATA FILES. LOAD TOTAL LINE RADIATION
+C------ INTO LINES AND ADD RECOMBINATION AND BREMSSTRAHLUNG POWER TO
+C------ GET TOTAL RADIATIVE LOSSES
+C
+
+
+        write(year,'(i2.2)') iyearz
+        call xxuid(useridz)
+c
+      DO 1190 IY = -NYS,NYS
+C
+C---- LOAD POWER DATA ONE RING AT A TIME.
+C
+        IF (IY.EQ.0) GOTO 1190                                                   
+        JY = IABS (IY)                                                          
+C                                                                               
+
+        DO 1101 IX = 1, NXS   
+          PTESA(IX) = CTEMBS(IX,IY)
+          PNESA(IX) = CRNBS(IX,IY) * real(cizb)
+          PNBS(IX) =  CRNBS(IX,IY)
+c
+c         Set hydrogen density to zero for now - not available in LIM
+c          PNHS(IX) = pinaton(ik,ir)
+          pnhs(ix) = 0.0
+
+ 1101  CONTINUE
+
+
+        do ip = -maxnps,maxnps
+C
+
+        DO 1120 IX = 1, NXS
+          DO 1110 IZ = 0, NIZS
+            PNZSA(IX,IZ) = SNGL(DDLIM3(IX,IY,IZ,IP))
+ 1110     CONTINUE
+ 1120   CONTINUE
+
+
+
+        ICLASS = 5
+        !MIZS = MIN(CION-1,NIZS)
+        DO 1130 IZ = 0, NIZS
+          CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NXS,PTESA,PNESA,
+     +                PCOEF(1,IZ+1))
+c          CALL ADASRD(YEAR,YEARDF,CION,IZ+1,ICLASS,NKS(IR),PTESA,PNESA,
+c     +                PCOEF(1,IZ+1))
+
+          DO 1135 IX = 1, NXS
+            ! LINE3 -> TIZ3
+            TIZ3(IX,IY,IZ,IP) = PCOEF(IX,IZ+1)*PNESA(IX)*PNZSA(IX,IZ)
+
+            ! POWL3 -> LIM5
+            LIM5(IX,IY,IZ,IP,1) = TIZ3(IX,IY,IZ,IP)
+c
+c            write (6,'(a,3i5,3g16.8)') 'Debug DIV:',ir,ik,iz,
+c     >              pcoef(ik,iz+1),pnesa(ik),pnzsa(ik,iz)
+c            write (6,'(a,15x,3g16.8)') '      DIV:',
+c     >            lines(ik,ir,iz), powls(ik,ir,iz),ddlims(ik,ir,iz)
+c
+ 1135     CONTINUE
+ 1130   CONTINUE
+
+
+        ICLASS = 4
+        !MIZS = MIN(CION,NIZS)
+        DO 1140 IZ = 1, NIZS
+          CALL ADASRD(YEAR,CION,IZ,ICLASS,NXS,PTESA,PNESA,
+     +                PCOEF(1,IZ))
+c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NKS(IR),PTESA,PNESA,
+c     +                PCOEF(1,IZ))
+          DO 1145 IX = 1, NXS
+            LIM5(IX,IY,IZ,IP,1) = LIM5(IX,IY,IZ,IP,1)
+     +                        + PCOEF(IX,IZ)*PNESA(IX)*PNZSA(IX,IZ)
+ 1145     CONTINUE
+ 1140   CONTINUE
+C
+C------ DEAL WITH PRIMARY NEUTRALS STORED IN DDLIMS(,,-1)
+C
+        DO 1160 IX = 1, NXS
+          IF (DDLIMS(IX,IY,0).LE.0.0) THEN
+            TIZ3(IX,IY,-1,IP) = 0.0
+            LIM5(IX,IY,-1,IP,1) = 0.0
+          ELSE
+            LIM5(IX,IY,-1,IP,1) = LIM5(IX,IY,0,IP,1) *
+     +                    SNGL(DDLIM3(IX,IY,-1,IP) / DDLIM3(IX,IY,0,IP))
+            TIZ3(IX,IY,-1,IP) = TIZ3(IX,IY,0,IP) *
+     +                    SNGL(DDLIM3(IX,IY,-1,IP) / DDLIM3(IX,IY,0,IP))
+c
+c            write (6,'(a,3i5,3g16.8)') 'Debug POW:',ir,ik,iz,
+c     >              pcoef(ik,iz),pnesa(ik),pnzsa(ik,iz)
+c            write (6,'(a,15x,3g16.8)') '      POW:',
+c     >           lines(ik,ir,iz), powls(ik,ir,iz),ddlims(ik,ir,iz)
+c
+          ENDIF
+ 1160   CONTINUE
+
+      end do ! end of IP loop
+
+ 1190 CONTINUE
+
+
+
+      endif
+
+      endif  ! endif for calc_3d_power
+
                                                    
 C                                                                               
 C================= WRITE POWL3  ARRAY TO DISC ==========================        
@@ -2503,6 +2683,8 @@ C
 C                                                                               
 C============ WRITE ADDITIONAL QUANTITIES - UPDATES, ETC ===============        
 C                                                                               
+
+
       DO 1500 IQS = -NQXSO, NQXSI, IBLOCK-100                                   
         IQE = MIN (IQS+IBLOCK-100-1, NQXSI)                                     
         WRITE (NOUT,IOSTAT=IOS) (QXS(IQX),IQX=IQS,IQE)                          
@@ -2530,6 +2712,8 @@ C
         WRITE (NOUT) ((CTEMBSI(IX,IY), IX=1,NXS), IY=IYB,IYE)                  
         WRITE (NOUT) ((CRNBS (IX,IY), IX=1,NXS), IY=IYB,IYE)                    
  2000 CONTINUE                                                                  
+
+
 c
 c     Write out particle tracks for debugging - if cstept is greater 
 c     than zero - then particle tracks were accumulated.   
@@ -2546,6 +2730,7 @@ c
                write(6,*) ix,':',(ptracs(ix,iy,iz),iz=1,2)
  2100    continue     
       endif  
+
 C                                                                               
  9999 RETURN                                                                    
  9002 FORMAT(1X,'DUMP:     NXS   NYS  NQXSO NQXSI NQYS   NTS  NIZS  NLS'        

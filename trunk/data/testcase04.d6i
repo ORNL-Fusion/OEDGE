@@ -384,7 +384,7 @@ $
 $    Input option for PIN runs
 $
 '+H03    Run PIN from inside DIVIMP  ->TN408   0-no 1-yes'     0
-'+H04 ' 'PIN Cmd  : reire99                              '
+'+H04 ' 'PIN Cmd  : ./reire99                              '
 '+H05      PIN Cell area option              0-1 ->Manual'     1
 '+H06      PIN Hybrid wall option     0-off  1-4 ->Manual'     0
 '+H07      PIN Puffing option         0-off  1-2 ->Manual'     0

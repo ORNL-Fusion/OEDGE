@@ -8,6 +8,8 @@
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
+c
+      include   'global_options'
 
       INTEGER   NQXSO,ICUT(2),CIOPTH,CORECT                                     
       REAL      QXS(-MAXQXS:MAXQXS),QEDGES(-MAXQXS:0,2),CAW,CL,CCUT             
@@ -699,6 +701,11 @@ c     Y =  -lam/C  * ( exp(-X/lam) -1 ) + Y_re-entrant  for Y > Y_re-entrant
 c     Y =   lam/C  * ( exp(-X/lam) -1 ) + Y_re-entrant  for Yslot < Y < Y_re_entrant
 c     
 c     NOTE: limiter shape is symmetric about Y_re-entrant except for different cutoffs.           
+c
+c     NOTE: on the slot setback side the limiter shape becomes flat for Yslot > Y > 0
+c           Ideally the slot at Y=0 should be closer to the separatrix than at the
+c           start of the slot setback - however, for now the code won't support this
+c           type of geometry so we will make it go almost flat relative to the LCFS.
 c     
 c     Calculate C and t_re-entrant parameters for the limiter shape from the following formulae:
 c     
@@ -763,7 +770,16 @@ c
             ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
             if (ytmp.gt.(y_re-slot_tor_wid)) then 
-               qedges(iqx,j) = y_re-slot_tor_wid
+c
+c               Adjust edge to vertical at y_re - this should give an almost
+c               flat top to the slot - however, need to check how the code
+c               works since I think qtans is calculated as the average of 
+c               adjacent segments and the launches take place at points which 
+c               could be problematic. 
+c
+c               qedges(iqx,j) = y_re-slot_tor_wid
+c
+               qedges(iqx,j) = y_re  
             else
                qedges(iqx,j) = ytmp
             endif
@@ -822,11 +838,7 @@ c     >                                qedges(iqx,j)-qedges(iqx-1,j))
 
       ENDIF
 c     
-c      do iqx = 1-nqxso,0
-c         write(6,'(a,2i8,5(1x,g12.5))') 'QEDGE:',ciopth,iqx,
-c     >          qxs(iqx),qedges(iqx,1),qedges(iqx,2),
-c     >          qtans(iqx,1)*raddeg,qtans(iqx,2)*raddeg
-c      end do
+
 c     
 C     
 C     *********************************************************************        
@@ -834,10 +846,11 @@ C     *  CHANGE ICUT IF CCUT PARAMETER SPECIFIED ON INPUT STREAM REQUIRES *
 C     *  A DIFFERENT CUTOFF POSITION ... RESET CCUT TO HOLD EXACT VALUE.  *        
 C     *********************************************************************        
 C     
-      DO 900 J = 1, 2                                                           
-         DO 900 IQX = ICUT(J), 0                                                 
+      DO  J = 1, 2                                                           
+         DO IQX = ICUT(J), 0                                                 
             IF (QXS(IQX).LT.CCUT) ICUT(J) = ICUT(J) + 1                           
- 900     CONTINUE                                                                  
+         end do
+      end do
 C     
 C     *********************************************************************        
 C     *  CORRECT LIMITER SURFACE FOR PLASMA CURVATURE - NOTE 197.         *        
@@ -848,80 +861,99 @@ C     *  18/11/88 ADD TEMP(1),DR(1) DUMMY POINT SO THAT CURVATURE EFFECT  *
 C     *  IS CORRECTLY APPLIED AT THE LIMITER TIP.                         *        
 C     *********************************************************************        
 C     
-         IF (CORECT.EQ.1) THEN                                                     
-            DO 930 J = 1, 2                                                         
-               DO 910 IQX = 1-NQXSO, 0                                               
-                  TEMP(IQX) = QEDGES(IQX,J)                                           
-                  DR  (IQX) =-SQRT (QEDGES(IQX,J)**2 + (QXS(IQX)-RP)**2) + RP         
- 910           CONTINUE                                                              
-               TEMP(1) = 0.0                                                         
-               DR  (1) = 0.0                                                         
-               CALL FITTER (NQXSO+1,DR(1-NQXSO),TEMP(1-NQXSO),                       
-     >              NQXSO,QXS(1-NQXSO),QEDGES(1-NQXSO,J),'LINEAR')           
- 930        CONTINUE                                                                
-         ENDIF                                                                     
+      IF (CORECT.EQ.1) THEN                                                     
+         DO 930 J = 1, 2                                                         
+            DO 910 IQX = 1-NQXSO, 0                                               
+               TEMP(IQX) = QEDGES(IQX,J)                                           
+               DR  (IQX) =-SQRT (QEDGES(IQX,J)**2 
+     >                     + (QXS(IQX)-RP)**2) + RP         
+ 910        CONTINUE                                                              
+            TEMP(1) = 0.0                                                         
+            DR  (1) = 0.0                                                         
+            CALL FITTER (NQXSO+1,DR(1-NQXSO),TEMP(1-NQXSO),                       
+     >           NQXSO,QXS(1-NQXSO),QEDGES(1-NQXSO,J),'LINEAR')           
+ 930     CONTINUE                                                                
+      ENDIF                                                                     
 C     
 C     *********************************************************************        
 C     *  CALCULATE DISTANCES ALONG LIMITER SURFACE                        *        
 C     *********************************************************************        
 C     
-         FACT = (1.0/XSCALO)**2                                                    
-         QDISTS(0,1) = SQRT (QEDGES(0,1)**2 + FACT/4.0)                            
-         QDISTS(0,2) = SQRT (QEDGES(0,2)**2 + FACT/4.0)                            
-         DO 950 IQX = -1, 1-NQXSO, -1                                              
-            QDISTS(IQX,1) = QDISTS(IQX+1,1) +                                       
-     >           SQRT ((QEDGES(IQX,1)-QEDGES(IQX+1,1))**2 + FACT)                      
-            QDISTS(IQX,2) = QDISTS(IQX+1,2) +                                       
-     >           SQRT ((QEDGES(IQX,2)-QEDGES(IQX+1,2))**2 + FACT)                      
- 950     CONTINUE                                                                  
+      FACT = (1.0/XSCALO)**2                                                    
+      QDISTS(0,1) = SQRT (QEDGES(0,1)**2 + FACT/4.0)                            
+      QDISTS(0,2) = SQRT (QEDGES(0,2)**2 + FACT/4.0)                            
+      DO 950 IQX = -1, 1-NQXSO, -1                                              
+         QDISTS(IQX,1) = QDISTS(IQX+1,1) +                                       
+     >        SQRT ((QEDGES(IQX,1)-QEDGES(IQX+1,1))**2 + FACT)                      
+         QDISTS(IQX,2) = QDISTS(IQX+1,2) +                                       
+     >        SQRT ((QEDGES(IQX,2)-QEDGES(IQX+1,2))**2 + FACT)                      
+ 950  CONTINUE                                                                  
 C     
 C     *********************************************************************        
 C     *  CALCULATE OYS,ODS ARRAYS FOR NET EROSION OUTPUTS                 *        
 C     *********************************************************************        
 C     
-         OYMAX = 0.0                                                               
-         DO 960 J = 1, 2                                                           
-            DO 960 IQX = 1-NQXSO, 0                                                 
-               OYMAX2(J) = MAX (OYMAX2(J), QEDGES(IQX,J))                        
- 960        CONTINUE                                                                  
-            OYMAX = MAX(OYMAX2(1),OYMAX2(2))
-            WRITE(6,'(a,3(1x,g12.5))') 
-     >           'OYMAX,OYM2(1),OYM2(2):',OYMAX,OYMAX2(1),OYMAX2(2) 
-            ODMAX = MAX (QDISTS(1-NQXSO,1), QDISTS(1-NQXSO,2))                        
-            DO 970 IO = 1, MAXOS                                                      
-               OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
-               OYS(IO)    = (REAL(IO-MAXOS/2)-0.5) * OYWIDS(IO)                        
-               OYOUTS(IO) = OYS(IO) - 0.5 * OYWIDS(IO)                                 
-               ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
-               ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
-               ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
- 970        CONTINUE                                                                  
+      OYMAX = 0.0                                                               
+      DO J = 1, 2                                                           
+         DO IQX = 1-NQXSO, 0                                                 
+            OYMAX2(J) = MAX (OYMAX2(J), QEDGES(IQX,J))                        
+         end do
+      end do
+
+      OYMAX = MAX(OYMAX2(1),OYMAX2(2))
+      WRITE(6,'(a,3(1x,g12.5))') 
+     >     'OYMAX,OYM2(1),OYM2(2):',OYMAX,OYMAX2(1),OYMAX2(2) 
+
+      ODMAX = MAX (QDISTS(1-NQXSO,1), QDISTS(1-NQXSO,2))                        
+      WRITE(6,'(a,3(1x,g12.5))') 
+     >     'ODMAX,QD(1-N,1),QD(1-N,2):',ODMAX,
+     >       QDISTS(1-NQXSO,1), QDISTS(1-NQXSO,2)
+
+      DO IO = 1, MAXOS                                                      
+
+         OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
+         OYS(IO)    = (REAL(IO-MAXOS/2)-0.5) * OYWIDS(IO)                        
+         OYOUTS(IO) = OYS(IO) - 0.5 * OYWIDS(IO)                                 
+
+         ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
+         ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
+         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
+
+      end do
+
+c
 C     WRITE (6,9004) OYMAX,ODMAX,(IO,OYWIDS(IO),OYS(IO),OYOUTS(IO),             
 C     >  ODWIDS(IO),ODS(IO),ODOUTS(IO),IO=1,MAXOS)                               
 C     
-            WRITE (6,9003) (QXS(IQX),(PI-QTANS(IQX,1))/DEGRAD,                        
-     >        -QDISTS(IQX,1),-QEDGES(IQX,1),QEDGES(IQX,2),QDISTS(IQX,2),              
-     >         QTANS(IQX,2)/DEGRAD,IQX=0,-10,-1)                                       
-            RETURN                                                                    
+      if (cprint.eq.1.or.cprint.ge.9) then 
+         WRITE (6,9003) (QXS(IQX),(PI-QTANS(IQX,1))/DEGRAD,                        
+     >     -QDISTS(IQX,1),-QEDGES(IQX,1),QEDGES(IQX,2),QDISTS(IQX,2),              
+     >      QTANS(IQX,2)/DEGRAD,IQX=0,1-nqxso,-1)                                       
+      endif
+c
+      RETURN                                                                    
 C     
- 9000       FORMAT(1X,'EDGE: JC,SC,TC,GC,RP,ICUT()=',I5,1P,4G11.4,2I5)                
- 9001       FORMAT(1X,'EDGE: IQX',I6,' QXS',F7.4,' EDGE',F7.4,                        
-     >           ' THETA',F7.2,' TAN',F7.2,' J',I4,' T',F7.2,' S',F7.2,                  
-     >           ' X',F7.4,' Y',F7.4)                                                    
- 9002       FORMAT(1X,'EDGE: J',I4,' INT',I3,                                         
-     >           ' X',F7.4,' Y',F7.4,' S',F7.2,' T',F7.2,' DS',F7.2)                     
- 9003       FORMAT(//1X,                                                              
-     >      '       X      THETA1      DIST1       EDGE1       EDGE2  ',
-     >           '     DIST2    THETA2',/1X,                                             
-     >           79('-'),/,(1X,F11.7,F9.3,4F12.7,F9.3))                                  
- 9004       FORMAT(//1X,'EDGE: OYMAX=',F9.4,'  ODMAX=',F9.4,//1X,                     
+c     I/O Formatting
+c
+ 9000 FORMAT(1X,'EDGE: JC,SC,TC,GC,RP,ICUT()=',I5,1P,4G11.4,2I5)                
+ 9001 FORMAT(1X,'EDGE: IQX',I6,' QXS',F7.4,' EDGE',F7.4,                        
+     >     ' THETA',F7.2,' TAN',F7.2,' J',I4,' T',F7.2,' S',F7.2,                  
+     >     ' X',F7.4,' Y',F7.4)                                                    
+ 9002 FORMAT(1X,'EDGE: J',I4,' INT',I3,                                         
+     >     ' X',F7.4,' Y',F7.4,' S',F7.2,' T',F7.2,' DS',F7.2)                     
+ 9003 FORMAT(//1X,                                                              
+     >'       X      THETA1      DIST1       EDGE1       EDGE2  ',
+     >     '     DIST2    THETA2',/1X,                                             
+     >     79('-'),/,(1X,F11.7,F9.3,4F12.7,F9.3))                                  
+ 9004 FORMAT(//1X,'EDGE: OYMAX=',F9.4,'  ODMAX=',F9.4,//1X,                     
      >  '  IO     OYWIDS   OYS    OYOUTS    ODWIDS   ODS    ODOUTS',/1X,        
      >           65('-'),/,(1X,I5,6F9.4))                                                
-            END                                                                       
+      END                                                                       
 C                                                                               
 C                                                                               
 C                                                                               
       SUBROUTINE EDGINT (X,IQX,J,E,D)                                           
+      use error_handling
       IMPLICIT none
       REAL    X,E,D                                                             
       INTEGER IQX,J                                                             
@@ -982,8 +1014,10 @@ C
         DT = QDISTS(IQX,J)                                                      
         DB = QDISTS(IQX-1,J)                                                    
       ENDIF                                                                     
+      
       E = ET + (QT-X) / (QT-QB) * (EB-ET)                                       
       D = DT + (QT-X) / (QT-QB) * (DB-DT)                                       
+
 C                                                                               
   999 RETURN                                                                    
       END                                                                       
@@ -1047,8 +1081,10 @@ C
          IERR = 1
          IQX0 = 0
          X= 0.0
-         WRITE(6,'(''YEDGINT ERROR: X LAUNCH POSITION FOR Y='',G14.4,
-     >    '' NOT FOUND: (X,Y) = ('',G14.4,'',0.0) ASSUMED'')') Y,Y
+         WRITE(6,'(''YEDGINT ERROR: X LAUNCH POSITION'//
+     >             ' FOR Y='',G14.4,
+     >    '' NOT FOUND: (X,Y) = (0,0, '',G14.4,
+     >    '') ASSUMED'')') Y,Y
       ELSE
          ITER = 0
 100      IMID = INT((ISTRT+IEND)/2)            
@@ -1080,7 +1116,7 @@ C
                FRAC = 
      >          (ABSY-QEDGES(ISTRT,J))/(QEDGES(IEND,J)-QEDGES(ISTRT,J))
                X = (IQX0 - FRAC) / XSCALO
-            WRITE (6,'(a,g12.5,2i8,5(1x,g12.5))') 
+               WRITE (6,'(a,2x,g12.5,2i8,5(1x,g12.5))') 
      >          'DEBUG YINT: Y,IQX0,J,QE(IQX0),QE(IQX0-1),FRAC,X:' 
      >            ,Y,IQX0,J,QEDGES(IQX0,J),QEDGES(IQX0-1,J),FRAC,X
             ENDIF
