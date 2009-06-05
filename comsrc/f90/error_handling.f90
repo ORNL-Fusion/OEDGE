@@ -19,6 +19,7 @@ module error_handling
   integer,private :: dbg1=6,dbg2=-1,dbg3=-1
 
   character,public :: error_message_data*512
+  character,public :: debug_message_data*512
 
 contains
 

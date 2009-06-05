@@ -626,7 +626,7 @@ c
 c
 c            jdemod 
 c            Normal incidence needs to be corrected at some point for these wall options
-c            NOTE: theta is not used in NEUT - it must be calculated/assigned in LAUNCH
+c            NOTE: this theta is not used in NEUT - it must be calculated/assigned in LAUNCH
 c
              THETA = PI/2.0                                                        
 
@@ -1346,7 +1346,9 @@ c
 c     jdemod minimum rvalue to prevent division by zero errors
 c
       real, parameter :: minrval = 1.0e-10
-      
+      real*8 :: part_refl_cnt  ! tracking individual particle reflection counts off mirrors
+
+c      
       integer :: ierr
 c slmod begin - N2 break
       LOGICAL N2STAT
@@ -1581,6 +1583,11 @@ c
               GOTO 899                                                              
            endif
         endif
+c
+c       jdemod - Initialize particle reflection count
+c
+        part_refl_cnt = 0.0
+
 
 c        
 c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
@@ -1698,11 +1705,20 @@ c
      >                iqx,ix,iy,iprod,x,y,sputy
         endif
 
-        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4 .OR. CNEUTB.EQ.9 .OR.
+        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.9 .OR.
      +      CNEUTB.EQ.10) THEN   
+c        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4 .OR. CNEUTB.EQ.9 .OR.
+c     +      CNEUTB.EQ.10) THEN   
 c        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4) THEN                                  
 c slmod end
           TANTRU = PI / 2.0                                                     
+c
+c jdemod - set up wall launch to use actual wall normal
+c
+        elseif (cneutb.eq.4) then 
+           
+           tantru = PI/2.0 + sign((caw_qys_tans(iqy_tmp) -PI/2.0),y) 
+
         ELSEIF (FREEL) THEN
           TANTRU = 0.0 
         ELSEIF (Y.GE.0.0) THEN                                                  
@@ -1914,7 +1930,8 @@ c     Check for y reflection - if it occurs also change the sign of dyvelf
 c
         if (yreflection_opt.ne.0) then 
            yvelf = sngl(dyvelf)
-           call check_reflection(x,y,oldy,yvelf,debugn,ierr)
+           call check_reflection(x,y,oldy,yvelf,sputy,
+     >                           part_refl_cnt,1,debugn,ierr)
            if (ierr.eq.1) then 
               ! write some debugging info
               WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
