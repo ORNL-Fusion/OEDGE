@@ -179,7 +179,7 @@ C
 c
 c     jdemod - initialize the reflection option
 c
-      call init_reflection(ctwol)
+      call init_reflection(ctwol,ca,caw)
 C                                                                               
 C---- CALCULATE SET OF X AND Y POSITIONS FOR WHICH                              
 C---- FACTORS ARE TO BE CALCULATED                                              
