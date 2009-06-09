@@ -1,0 +1,21 @@
+c     -*-Fortran-*-
+c
+      integer ix,iy
+      real    xpts(2),ypts(4),xwid,ywid,xpt,ypt
+      data    ypts /0.80,0.55,0.30,0.05/
+      data    xpts /0.05, 0.55/
+      data    xwid /0.40/
+      data    ywid /0.15/  
+c
+c     Draw Box - Boxindex is 1 to 8
+c
+c     iy is 1 to 4
+c     ix is 1 to 2
+c
+      ix = 1
+      if (float(boxindex/2).eq.float(boxindex)/2.0) ix = 2
+c
+      iy =  (boxindex-1)/2 + 1
+c
+      xpt = xpts(ix)
+      ypt = ypts(iy)

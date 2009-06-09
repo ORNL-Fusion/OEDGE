@@ -1,0 +1,7 @@
+C                                                                               
+      COMMON /DYNAM1/ DDLIMS,DDLIM3,DDTS,DDYS                                   
+      DOUBLE PRECISION                                                          
+     >     DDLIMS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS),                             
+     >     DDLIM3(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS),              
+     >     DDTS  (MAXNXS,-MAXNYS:MAXNYS,MAXIZS),                                
+     >     DDYS  (MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                                 

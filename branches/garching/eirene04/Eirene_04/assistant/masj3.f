@@ -1,0 +1,10 @@
+C
+C*DK MASJ3
+      SUBROUTINE MASJ3 (A,I,J,K)
+      IMPLICIT NONE
+      CHARACTER(24), INTENT(IN) :: A
+      INTEGER, INTENT(IN) :: I, J, K
+      WRITE (6,60) A,I,J,K
+60    FORMAT (1X,A24,1X,3(I6,3X))
+      RETURN
+      END

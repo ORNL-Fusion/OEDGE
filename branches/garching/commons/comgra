@@ -1,0 +1,10 @@
+c     -*-Fortran-*-
+c
+c     Common block for graphics in OUT 
+c
+      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,NPLOTS,ISPOT
+      save /comgra/
+c
+      REAL            CXMIN,CXMAX,CYMIN,CYMAX
+      INTEGER         IPLOTS,NPLOTS,ISPOT
+c

@@ -1,0 +1,18 @@
+c     -*-Fortran-*-
+c                                                                       
+c     This common block contains the subsidiary XY array                
+c     declarations for use in the OUT program only. In order            
+c     to reduce the memory requirements for DIVIMP these are            
+c     set up in a separate common block.                                
+c                                                                       
+      common /grxy/ ikxys,irxys,ifxys                                   
+      save /grxy/
+c                                                                       
+      integer ikxys(maxixs,maxiys),irxys(maxixs,maxiys),                
+     >        ifxys(maxixs,maxiys)                                      
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
