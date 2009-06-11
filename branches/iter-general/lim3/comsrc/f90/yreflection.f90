@@ -30,6 +30,24 @@ module yreflection
 
   real*8,parameter :: minval = 1.0e-10
 
+
+!
+!     jdemod - add variables for keeping track of individual particle reflections
+!
+      real*8 :: part_refl_cnt
+      integer :: part_frame
+      integer :: part_mirror_state
+      
+      integer,parameter :: nframes = 11
+      real*8 :: frame_cnt(-nframes:nframes+1)
+
+
+      real*8 :: max_part_refl_cnt
+      real*8 :: tot_part_refl_cnt
+      real*8 :: tot_part
+      real*8 :: tot_refl_part
+
+
 contains
 
   subroutine init_reflection(ctwol,ca,caw)
@@ -61,6 +79,17 @@ contains
     refl_cnt_first = 0.0
     refl_pos_first = 0.0
 
+
+
+!
+!     Initialize reflection counters
+!
+      max_part_refl_cnt = 0.0
+      tot_part_refl_cnt = 0.0
+      tot_part = 0.0
+      tot_refl_part = 0.0
+
+
     !
     ! Check to see if valid input has been specified - if not - turn the option off
     !
@@ -75,6 +104,63 @@ contains
 
 
   end subroutine init_reflection
+
+  subroutine init_part_reflection
+    implicit none
+
+!
+!       jdemod - initialize particle reflection counter
+!     
+!
+!       Note: Frame data and mirror_state is not carried over between ions and neutrals at present. 
+!             This neutrals that start in a different frame will be reverted to the 0 frame when 
+!             started as ions. This effect should not be significant as long as the number of reflected
+!             neutrals is relatively low. If this is not the case then the frame and mirror_state may 
+!             need to be retained for each particle (neutral -> ion) 
+!             At the present time neutrals are not included in the summary data.
+!
+
+        part_refl_cnt = 0.0
+        part_frame = 0
+        part_mirror_state = 1
+
+  end subroutine init_part_reflection
+
+
+  subroutine update_part_refl_stats(sputy)
+    implicit none
+    real :: sputy
+    integer :: in
+!
+!       Record some reflection statistics
+!
+
+    if (yreflection_opt.ne.0) then 
+
+
+        max_part_refl_cnt = max(part_refl_cnt,max_part_refl_cnt)
+
+        tot_part_refl_cnt = tot_part_refl_cnt + part_refl_cnt * sputy
+
+        tot_part = tot_part + sputy
+
+        if (part_refl_cnt.gt.0.0) then 
+           tot_refl_part = tot_refl_part + sputy
+        endif
+
+        in =   max(min(part_frame,nframes+1),-nframes)
+        frame_cnt(in) = frame_cnt(in) + sputy
+
+
+        !write(0,'(a,3i10,g12.5)') 'FRAME:',in,part_frame,frame_cnt(in),sputy
+
+
+
+     endif
+
+  end subroutine update_part_refl_stats
+  
+
 
   logical function check_reflected_region(y)
     implicit none
@@ -109,7 +195,7 @@ contains
   end function check_reflected_region
 
 
-  subroutine check_reflection(x,y,oldy,svy,sputy,part_refl_cnt,part_type,debugl,ierr)
+  subroutine check_reflection(x,y,oldy,svy,sputy,part_type,debugl,ierr)
     implicit none
 
     !
@@ -119,8 +205,8 @@ contains
     real :: x,y,svy,sputy
     real,intent(in) :: oldy
 
-    real*8 :: part_refl_cnt
     integer,intent(in) :: part_type
+
     logical :: debugl
     integer :: ierr
 
@@ -251,6 +337,19 @@ contains
 
          endif
 
+         !
+         ! Update tracking of particle frame
+         !
+         
+         if (mirror.eq.upper) then 
+            part_frame = part_frame + part_mirror_state
+         elseif (mirror.eq.lower) then 
+            part_frame = part_frame - part_mirror_state
+         endif
+         part_mirror_state = -part_mirror_state
+
+
+
     endif 
 
 
@@ -288,13 +387,11 @@ contains
 
 
 
-  subroutine pr_yref_stats(tot_part,tot_refl_part,max_part_refl_cnt,tot_part_refl_cnt)
+  subroutine pr_yref_stats
     implicit none
 
-    real*8 :: tot_part,tot_refl_part,max_part_refl_cnt,tot_part_refl_cnt
-    
     character*512 :: output_message
-    integer in
+    integer in,bm
 
     real :: xmin, xmax
 !
@@ -386,6 +483,28 @@ contains
 
         call prb
         call prr('  Total number of relocated particles: ',sngl(relocation_count))
+        call prb
+
+        call prc('Non-local ion transport and deposition summary: Frames [0,1] are the local Limiter')
+        call prc('Table of frame index vs. particle weight at end of particle life')
+
+
+        write(output_message,'(a7,a7,a20)') 'Frame','LIM','Particles in Frame'
+        call prc(output_message)
+
+        do in = -nframes,nframes+1
+
+           if (in.lt.0) then 
+              bm = int((in-1)/2)
+           else
+              bm = int(in/2)
+           endif
+
+           write(output_message,'(1x,i6,1x,i6,4x,f18.3)') in,bm,frame_cnt(in)
+           call prc(output_message)
+
+        end do
+
 
     endif
 
