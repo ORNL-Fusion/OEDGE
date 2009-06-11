@@ -187,14 +187,6 @@ c
 
       integer :: ierr
 c
-c     jdemod - add a variable for keeping track of individual particle reflections
-c
-      real*8 :: part_refl_cnt
-      real*8 :: max_part_refl_cnt
-      real*8 :: tot_part_refl_cnt
-      real*8 :: tot_part
-      real*8 :: tot_refl_part
-c
 c     ADD LOGICAL to record if splitting and rouletting is active to avoid
 c     a bug if ALPHA > CXSPLS(IS) = 2*CA in one diffusive step  
 c
@@ -263,13 +255,6 @@ c slmod
         WRITE(0,*) 'Warning! Hard code adjustment to bin location',
      +             ' for DIVIMP ion profile.'
       ENDIF 
-c
-c     Initialize reflection counters
-c
-      max_part_refl_cnt = 0.0
-      tot_part_refl_cnt = 0.0
-      tot_part = 0.0
-      tot_refl_part = 0.0
 c
 
       DO II = 1, NBIN
@@ -822,6 +807,7 @@ C
       PORM   = -1.0                                                             
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
+c
       DO 800  IMP = 1, NATIZ                                                    
 
         IF (100*(IMP/100).EQ.IMP)                                               
@@ -832,9 +818,10 @@ C
         old_y_position = 0.0
         OLDALP = 0.0                                                            
 c
-c       jdemod - initialize particle reflection counter
-c     
-        part_refl_cnt = 0.0
+c       jdemod - initialize particle reflection
+c
+        call init_part_reflection
+
 c
 c       Initialize tracking variables - if debugt
 c
@@ -1396,7 +1383,7 @@ c
 
 
                 call check_reflection(cx,y,oldy,svy,sputy,
-     >                                part_refl_cnt,2,debugl,ierr)
+     >                                2,debugl,ierr)
 
 
                 if (ierr.eq.1) then 
@@ -1598,7 +1585,7 @@ C
                tmp_y = y
 
                call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               sputy,part_refl_cnt,debugl,ierr)
+     >                               sputy,debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -1780,7 +1767,7 @@ c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
                   call check_y_boundary(cx,y,oldy,absy,svy,alpha,
-     >                                  ctwol,sputy,part_refl_cnt,
+     >                                  ctwol,sputy,
      >                                  debugl,ierr)
                   if (ierr.eq.1) then 
                      ! write some debugging info
@@ -2400,6 +2387,15 @@ C
             RIONS(IZ) = RIONS(IZ) + SPUTY                                       
   792     CONTINUE                                                              
         ENDIF                                                                   
+
+
+        !
+        ! Update particle reflection statistics when this ion is finished. 
+        !
+
+        call update_part_refl_stats(sputy)
+
+
 C                                                                               
         IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
      >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,FATE(IFATE)            
@@ -2568,18 +2564,7 @@ C
            GOTO 805                                                             
          ENDIF                                                                  
         ENDIF                                                                   
-c
-c       Record some reflection statistics
-c
-        max_part_refl_cnt = max(part_refl_cnt,max_part_refl_cnt)
 
-        tot_part_refl_cnt = tot_part_refl_cnt + part_refl_cnt * sputy
-
-        tot_part = tot_part + sputy
-
-        if (part_refl_cnt.gt.0.0) then 
-           tot_refl_part = tot_refl_part + sputy
-        endif
         
 C                                                                               
 c     800 is the end of the main particle following loop
@@ -3500,8 +3485,7 @@ c
 c     Print yreflection statistics if the option is active
 c
 
-      call pr_yref_stats(tot_part,tot_refl_part,
-     >                   max_part_refl_cnt,tot_part_refl_cnt)
+      call pr_yref_stats
 c
 
 
@@ -3559,7 +3543,7 @@ c
 c     
 c     
       subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                            sputy,part_refl_cnt,debugl,ierr)
+     >                            sputy,debugl,ierr)
       use error_handling
       use yreflection
       !
@@ -3574,7 +3558,6 @@ c
       real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
       integer :: ierr
-      real*8 :: part_refl_cnt
       
       real :: tmp_oldy
 
@@ -3603,7 +3586,7 @@ c
      >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
 
                call check_reflection(cx,y,tmp_oldy,svy,sputy,
-     >                               part_refl_cnt,2,debugl,ierr)
+     >                               2,debugl,ierr)
 
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
@@ -3632,7 +3615,7 @@ c
      >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
 
                call check_reflection(cx,y,tmp_oldy,svy,sputy,
-     >                               part_refl_cnt,2,debugl,ierr)
+     >                               2,debugl,ierr)
 
 c     
                if (y.lt.-ctwol) then 

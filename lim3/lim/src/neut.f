@@ -1346,7 +1346,6 @@ c
 c     jdemod minimum rvalue to prevent division by zero errors
 c
       real, parameter :: minrval = 1.0e-10
-      real*8 :: part_refl_cnt  ! tracking individual particle reflection counts off mirrors
 
 c      
       integer :: ierr
@@ -1586,9 +1585,7 @@ c
 c
 c       jdemod - Initialize particle reflection count
 c
-        part_refl_cnt = 0.0
-
-
+        call init_part_reflection
 c        
 c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
 c     >       INT (X * XSCALI) + 1,INT (X * XSCALO),x,xscalo,xscali
@@ -1931,7 +1928,7 @@ c
         if (yreflection_opt.ne.0) then 
            yvelf = sngl(dyvelf)
            call check_reflection(x,y,oldy,yvelf,sputy,
-     >                           part_refl_cnt,1,debugn,ierr)
+     >                           1,debugn,ierr)
            if (ierr.eq.1) then 
               ! write some debugging info
               WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
