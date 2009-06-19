@@ -8,7 +8,7 @@ module yreflection
 
   real*8 :: relocation_count = 0
 
-  real*8 :: lim_sep,deltay
+  real*8 :: lim_sep  !,deltay
   real*8 :: minrefl
 
   real*8 :: yref_upper_cnt = 0.0
@@ -66,7 +66,9 @@ contains
     cmir_refl_lower_dp = cmir_refl_lower
     cmir_refl_upper_dp = cmir_refl_upper
 
-    minrefl = 1.0d-7
+    ! Can not use a fixed value for minimum reflection distance since the scale size of the system and thus rounding into single precision also change. 
+    !minrefl = 1.0d-7
+    minrefl = dble(lim_sep)/1.0d7
     
     x_central_limit = ca
     x_wall_limit = caw
@@ -185,9 +187,11 @@ contains
     !
 
     ynew = y
+    
+    ! Change reflected region test to not include particles exactly on the boundaries (gt,lt and not ge,le)
 
-    if ((ynew.ge.-lim_sep+cmir_refl_upper_dp.and.ynew.le.cmir_refl_lower_dp).or.&
-        (ynew.ge.cmir_refl_upper_dp.and.ynew.le.lim_sep+cmir_refl_lower_dp)) then
+    if ((ynew.gt.-lim_sep+cmir_refl_upper_dp.and.ynew.lt.cmir_refl_lower_dp).or.&
+        (ynew.gt.cmir_refl_upper_dp.and.ynew.lt.lim_sep+cmir_refl_lower_dp)) then
        check_reflected_region=.true.
     endif
 
@@ -214,10 +218,11 @@ contains
     !real :: y_org,oldy_org,svy_org
     real :: y_tmp
 
-    real*8 :: ynew,yprev
+    real*8 :: ynew,yprev,yorg
     
     integer :: mirror,ix
     real*8 :: last_refl_part_cnt 
+    real*8 :: deltay
 
 
     real :: ran
@@ -244,15 +249,17 @@ contains
     !
 
     yprev = dble(oldy)
+    yorg  = dble(y)
     ynew  = dble(y)
+    deltay = 0.0d0
 
-    if (ynew.lt.0) then 
-       if ((yprev.gt.cmir_refl_lower_dp).and.(ynew.le.cmir_refl_lower_dp)) then 
+    if (yorg.lt.0.0) then 
+       if ((yprev.gt.cmir_refl_lower_dp).and.(yorg.le.cmir_refl_lower_dp)) then 
           !
           !                   Reflection at lower (<0) mirror
           !
 
-          deltay = (cmir_refl_lower_dp-ynew)
+          deltay = (cmir_refl_lower_dp-yorg)
           ynew = cmir_refl_lower_dp + max(deltay,minrefl)
 
           svy = -svy
@@ -260,12 +267,12 @@ contains
           
           mirror = lower
 
-       elseif ((yprev.lt.(-lim_sep+cmir_refl_upper_dp)).and.(ynew.ge.(-lim_sep+cmir_refl_upper_dp))) then 
+       elseif ((yprev.lt.(-lim_sep+cmir_refl_upper_dp)).and.(yorg.ge.(-lim_sep+cmir_refl_upper_dp))) then 
           !
           !                   Reflection at second upper (< 0) mirror
           !
 
-          deltay = (-lim_sep+cmir_refl_upper_dp-ynew)
+          deltay = (-lim_sep+cmir_refl_upper_dp-yorg)
           ynew = -lim_sep+cmir_refl_upper_dp +  min(deltay,-minrefl)
 
           svy = -svy
@@ -275,12 +282,12 @@ contains
 
        endif
 
-    elseif (ynew.ge.0) then 
-       if ((yprev.lt.cmir_refl_upper_dp).and.(ynew.ge.cmir_refl_upper_dp)) then 
+    elseif (yorg.ge.0.0) then 
+       if ((yprev.lt.cmir_refl_upper_dp).and.(yorg.ge.cmir_refl_upper_dp)) then 
           !
           !                   Reflection at upper (>0) mirror
           !
-          deltay = (cmir_refl_upper_dp - ynew)
+          deltay = (cmir_refl_upper_dp - yorg)
           ynew = cmir_refl_upper_dp + min(deltay,-minrefl)
 
           svy = -svy
@@ -288,11 +295,11 @@ contains
 
           mirror = upper
 
-       elseif ((yprev.gt.(lim_sep+cmir_refl_lower_dp)).and.(ynew.le.(lim_sep+cmir_refl_lower_dp))) then 
+       elseif ((yprev.gt.(lim_sep+cmir_refl_lower_dp)).and.(yorg.le.(lim_sep+cmir_refl_lower_dp))) then 
           !
           !                   Reflection at second lower (>0) mirror
           !
-          deltay = (lim_sep +cmir_refl_lower_dp-ynew)
+          deltay = (lim_sep +cmir_refl_lower_dp-yorg)
           ynew = lim_sep + cmir_refl_lower_dp + max(deltay,minrefl)
 
           svy = -svy
@@ -349,33 +356,32 @@ contains
          part_mirror_state = -part_mirror_state
 
 
-
     endif 
 
 
     y = sngl(ynew)
 
     if (debugl.and.reflected) then
-       write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION OCCURRED:',int(yreflection_event_count),y,oldy,svy
+       write(error_message_data,'(a,i10,6(1x,g18.10))') 'REFLECTION OCCURRED:',int(yreflection_event_count),y,ynew,yorg,oldy,svy
        call dbgmsg('CHECK_REFLECTION',error_message_data)
     endif
 
     if (check_reflected_region(y)) then 
        
-       write(error_message_data,'(a,4(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION - '//&
-                                                  & 'TRY REDUCING SIMULATION TIMESTEPS AND MULTIPLIERS : DATA:', x,y,oldy,svy
+       write(error_message_data,'(a,6(1x,g18.10))') 'REFLECTED PARTICLE HAS ENTERED MIRROR REGION '//&
+                                                  & ': DATA:', x,y,yorg,oldy,svy
        call errmsg('CHECK REFLECTION:WARNING:',error_message_data)
        
        y_tmp = y
        ran = getranf()
        y = cmir_refl_lower + ran * (cmir_refl_upper-cmir_refl_lower)
 
-       write(error_message_data,'(a,i10,l4,10(1x,g20.12))') 'REFLECTION:',int(yreflection_event_count),reflected,x,deltay,ynew,oldy,ynew,yprev,cmir_refl_lower_dp,cmir_refl_upper_dp
+       write(error_message_data,'(a,i10,l4,10(1x,g20.12))') 'REFLECTION:',int(yreflection_event_count),reflected,x,deltay,ynew,oldy,yorg,yprev,cmir_refl_lower_dp,cmir_refl_upper_dp
        call dbgmsg('CHECK_REFLECTION',error_message_data)
 
        relocation_count = relocation_count +1.0
 
-       write(error_message_data,'(a,2i12,10(1x,g20.12))') 'REVISED Y COORDINATES:',int(relocation_count),int(yreflection_event_count),oldy,y_tmp,y,svy
+       write(error_message_data,'(a,2i12,10(1x,g20.12))') 'REVISED Y COORDINATES:',int(relocation_count),int(yreflection_event_count),y,y_tmp,ynew,yorg,oldy,deltay,svy
        call errmsg('CHECK_REFLECTION PARTICLE RELOCATED:',error_message_data)
 
 
