@@ -1,0 +1,8 @@
+C
+C
+      SUBROUTINE EXIT(ICC)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: ICC
+      CALL GREND
+      STOP
+      END

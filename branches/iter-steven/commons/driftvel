@@ -1,0 +1,29 @@
+c     -*-Fortran-*-
+c
+c     This common block holds the data related to the parallel 
+c     drift velocity options. 
+c
+c
+      common /driftvel_com/
+     >       CPDRFT,CDRFTV,drft_region,
+     >       cdrftv_start,cdrftv_end,
+     >       pol_drftv,
+!     >       imp_drftvel,bg_drftvel,
+     >       sdrft_start,sdrft_end,
+     >       ndrftvel,drftvel_machopt,
+     >       drft_distopt,
+     >       ringdrftvel,ringcs  
+      save /driftvel_com/
+c
+!      real IMP_DRFTVEL,BG_DRFTVEL,
+      real pol_drftv(maxnrs)
+      real sdrft_start(maxnrs),sdrft_end(maxnrs)
+c
+      real CDRFTV,cdrftv_start,cdrftv_end
+c
+      integer CPDRFT,drft_region,drft_distopt
+c
+      integer ndrftvel,drftvel_machopt
+c
+      real ringdrftvel(maxnrs,2),ringcs(maxnrs)
+c

@@ -1,0 +1,16 @@
+c     -*-Fortran-*-
+c
+c
+      common /ion_specs/ ik,ir,iz,s,theta,cross,r,z,
+     >                   ik_last,ir_last,s_last,cross_last,
+     >                   theta_last,r_last,z_last,
+     >                   oldtheta,oldcross,ikold,irold,ifate
+      save /ion_specs/
+c
+      integer ik,ir,iz,ik_last,ir_last
+      integer ikold,irold
+      integer ifate
+      real s,theta,cross,r,z
+      real s_last,theta_last,cross_last,r_last,z_last 
+      real oldtheta,oldcross
+c

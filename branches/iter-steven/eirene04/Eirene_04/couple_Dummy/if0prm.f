@@ -1,0 +1,12 @@
+C
+C
+      SUBROUTINE IF0PRM(IUNIN)
+      USE PRECISION
+      USE PARMMOD
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: IUNIN
+
+      NCOP=1
+      NCPV=1
+
+      END
