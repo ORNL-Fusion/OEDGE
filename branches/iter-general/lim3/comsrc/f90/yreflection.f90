@@ -28,7 +28,7 @@ module yreflection
   real*8 :: refl_cnt(-nxbins:nxbins,2,2),refl_pos(-nxbins:nxbins,2,2)
   real*8 :: refl_cnt_first(-nxbins:nxbins,2,2),refl_pos_first(-nxbins:nxbins,2,2)
 
-  real*8,parameter :: minval = 1.0e-10
+  real*8,parameter,private :: minval = 1.0e-10
 
 
 !

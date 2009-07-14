@@ -383,6 +383,7 @@ C
 C---- SETUP YS POSITIONS FOR PRINTOUTS                                          
 C                                                                               
       IY0    = 1                                                                
+      IY0LT  = -1
       IYL8   = IPOS (0.125*CL,YS, NYS-1)                                        
       IYL4   = IPOS (0.25*CL, YS, NYS-1)                                        
       IYL2   = IPOS (0.5*CL,  YS, NYS-1)                                        

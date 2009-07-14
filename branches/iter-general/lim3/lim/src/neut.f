@@ -111,6 +111,8 @@ c slmod
       REAL      PHI
 c slmod end
 c
+      real,parameter :: minval=1.0d-8
+c
 c     jdemod  - for wall options
 c
       integer :: iqy_tmp 
@@ -374,34 +376,50 @@ C
        CALL PRC ('SAMPLE PRIMARY FLUX AND YIELD DATA FOR Y > 0 SURFACE')        
        CALL PRC ('                                       *****        ')        
       ENDIF                                                                     
-      WRITE (7,9000)                                                            
+      WRITE (7,9003)                                                            
+c
       IF (CLARMR.GT.0.0) WRITE (7,9002)                                         
      >  QXS(1),CYMFPS(1,J),FLUX1(1,J),ENEGY1(1,J),                              
-     >  YIELD1(1,J),FY1(1,J),FY1(1,J)*DELTAX/FYTOT1(J)                          
+     >  YIELD1(1,J),FY1(1,J),
+     >  FY1(1,J)*DELTAX/max(FYTOT1(J),minval)
 c
 c     write more complete data  
 c
-
       DO 100 IQX = 0, -NQXSO, MIN (-1,-NQXSO/25)                              
+
 c        IF (YIELD1(IQX,J).GT.1.E-3) 
-        WRITE (7,9002)                              
+        WRITE (7,9005)                              
      >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
-     >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
-        WRITE (6,9002)                              
+     >    YIELD1(IQX,J),FY1(IQX,J),
+     >    FY1(IQX,J)*DELTAX/max(FYTOT1(J),minval),
+     >    (PI/2.0-QTANS(IQX,J))*RADDEG,
+     >    FY1(IQX,J)*SIN((PI/2.0-QTANS(IQX,J)))                         
+                  
+        WRITE (6,9005)                              
      >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
-     >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+     >    YIELD1(IQX,J),FY1(IQX,J),
+     >    FY1(IQX,J)*DELTAX/max(FYTOT1(J),minval),
+     >    (PI/2.0-QTANS(IQX,J))*RADDEG,
+     >    FY1(IQX,J)*SIN((PI/2.0-QTANS(IQX,J)))                          
+                  
 
   100 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
-      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*SINTB      ',FTOT1(J))           
+      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX            ',FTOT1(J))           
       IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN      
-        CALL PRR ('PRIMARY (HIGH) INTEGRATED FLUX*YPH*SINTB ',                  
+        CALL PRR ('PRIMARY (HIGH) INTEGRATED FLUX*YPH       ',                  
      >   FYTOT1(J) / (1.0+CQPL/(CQ(MAT1,MATLIM)*QMULTP)))          
-        CALL PRR ('PRIMARY (LOW)  INTEGRATED FLUX*YPL*SINTB ',                  
+        CALL PRR ('PRIMARY (LOW)  INTEGRATED FLUX*YPL       ',                  
      >   FYTOT1(J) - FYTOT1(J) / (1.0+CQPL/(CQ(MAT1,MATLIM)*QMULTP)))         
       ENDIF                                                                     
-      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*YIELD*SINTB',FYTOT1(J))          
+      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*YIELD      ',FYTOT1(J))          
+
+      if (csintb.ne.1.0) then 
+         call prr('TOROIDAL ANGLE FACTOR INCLUDED CALCULATIONS'//
+     >            ': CSINTB =',csintb)
+      endif
+
       IF (CNEUTD.EQ.2)                                                          
      >CALL PRR ('EXPECTED PROPORTION OF LAUNCHES          ',FRAC1(J))           
 C                                                                               
@@ -1170,9 +1188,11 @@ C
      >  QXS(1),CYMFSS(1,J),FLUX2(1,J),ENEGY2(1,J),                              
      >  YIELD2(1,J),FY2(1,J),FY2(1,J)*DELTAX/FYTOT2(J)                          
       DO 390 IQX = 0, -NQXSO/2, MIN (-1,-NQXSO/25)                              
+
         IF (YIELD2(IQX,J).GT.1.E-3) WRITE (7,9002)                              
      >    QXS(IQX),CYMFSS(IQX,J),FLUX2(IQX,J),ENEGY2(IQX,J),                    
      >    YIELD2(IQX,J),FY2(IQX,J),FY2(IQX,J)*DELTAX/FYTOT2(J)                  
+
   390 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
@@ -1236,6 +1256,11 @@ C
      >  ' FLUX*YIELD    FRACTION')                                              
  9001 FORMAT(1X,'    ',A16,1P,2(5X,G11.2))                                      
  9002 FORMAT(2X,F9.5,F7.3,1P,5(G11.2,1X))                                       
+
+ 9003 FORMAT(3X,' X POSN   YMF    FLUX        ENERGY      YIELD    ',           
+     >  ' FLUX*YIELD    FRACTION    B-ANGLE(TB)   FLUX*YIELD*SINTB')                                              
+ 9004 FORMAT(1X,'    ',A16,1P,2(5X,G11.2))                                      
+ 9005 FORMAT(2X,F9.5,F7.3,1P,7(G11.2,1X))                                       
       END                                                                       
 C                                                                               
 C                                                                               
@@ -1721,7 +1746,11 @@ c
         ELSEIF (Y.GE.0.0) THEN                                                  
           TANTRU = QTANS(IQX,2)                                                 
         ELSE                                                                    
+c
+c         jdemod - note that this is converted to PI - QTANS(IQX,1) below when TANGNT is calculated for Y < 0
+c
           TANTRU = QTANS(IQX,1)                                                 
+c
         ENDIF                                                                   
 C                                                                               
 C       TANLAN IS USED DIRECTLY IN VEL/ANG 12
