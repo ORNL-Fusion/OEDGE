@@ -571,7 +571,7 @@ c
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI)                                       
+        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)
 C                                                                               
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
