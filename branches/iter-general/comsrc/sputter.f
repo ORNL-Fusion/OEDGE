@@ -54,7 +54,16 @@ C
  
       DATA  ETH/
      &             53.0, 24.0, 22.0, 20.0,  0.0, 25.0,  0.0,
-     &             20.0,  9.0, 21.0, 30.0, 40.0, 25.0, 70.0,
+c
+c     jdemod - july 2009
+c
+c     Beryllium data.The Eth, Etf and Q values here have been 
+c     adjusted to the values used in 1990 LIM runs which matched
+c     the JET Be limiter experimental results.
+c     Numbers have been adjusted for D->Be and Be->Be
+c
+c     &            20.0,  9.0, 21.0, 30.0, 40.0, 25.0, 70.0,
+     &             20.0, 10.0, 21.0, 30.0, 40.0, 35.0, 70.0,
      &             55.0, 34.0, 30.0, 19.0,  0.0, 36.0,  0.0,
      &             35.0, 30.0, 30.0, 29.0, 42.0, 42.0,  0.0,
 CN    &             35.0, 30.0, 30.0, 29.0, 42.0, 42.0,  0.0,
@@ -70,7 +79,16 @@ CO    &             35.0, 28.0, 30.0, 29.0, 44.0, 44.0,  0.0,
  
       DATA ETF/
      &            1059.0,1097.0,1135.0,2448.0,10295.0,34545.0,15718.0,
-     &            256.0,282.0,308.0,780.0,4152.0,2208.0,6970.0,
+c
+c     jdemod - july 2009
+c
+c     Beryllium data.The Eth, Etf and Q values here have been 
+c     adjusted to the values used in 1990 LIM runs which matched
+c     the JET Be limiter experimental results.
+c     Numbers have been adjusted for D->Be and Be->Be
+c
+c     &           256.0, 282.0, 308.0, 780.0, 4152.0, 2208.0, 6970.0,
+     &            256.0, 280.0, 308.0, 780.0, 4152.0, 2210.0, 6970.0,
      &            2926.0,2971.0,3017.0,6292.0,22696.0,244619.0,32723.0,
      &            415.0,447.0,479.0,1087.0,5687.0,5687.0,9298.0,
 CN    &            415.0,447.0,479.0,1087.0,5687.0,5687.0,9298.0,
@@ -86,7 +104,16 @@ CO    &            415.0,446.0,479.0,1087.0,5680.0,5680.0,9298.0,
  
       DATA Q/
      &            0.043 ,0.093 ,0.2   ,0.34  ,0.0   ,5.4   ,0.0  ,
-     &            0.1   ,0.3   ,0.24  ,0.59  ,1.6   ,1.4   ,1.3  ,
+c
+c     jdemod - july 2009
+c
+c     Beryllium data.The Eth, Etf and Q values here have been 
+c     adjusted to the values used in 1990 LIM runs which matched
+c     the JET Be limiter experimental results.
+c     Numbers have been adjusted for D->Be and Be->Be
+c
+c     &           0.1   ,0.3   ,0.24  ,0.59  ,1.6   ,1.4   ,1.3  ,
+     &            0.1   ,0.27  ,0.24  ,0.59  ,1.6   ,0.94  ,1.3  ,
      &            0.1   ,0.23  ,0.35  ,0.81  ,0.0   ,17.0  ,0.0  ,
      &            0.035 ,0.1   ,0.20  ,0.32  ,1.5   ,1.5   ,0.0  ,
 CN    &            0.035 ,0.1   ,0.20  ,0.32  ,1.5   ,1.5   ,0.0  ,
@@ -313,10 +340,31 @@ C
          X1=ENERGY/CETF(MATP,MATT)
          X12=SQRT(X1)
          X2=CETH(MATP,MATT)/ENERGY
+c
          YIELD=CQ(MATP,MATT)*(3.441*X12*LOG(X1+2.718))/(1.0+6.355*
      1          X12+X1*(6.882*X12-1.708))*(1-X2)*(1-X2)*(1.0-X2**
      2          (2.0/3.0))
-                               ELSE
+c
+c     The 1984 Bohdansky paper has a typo - either equation 6.13
+c     or equation 6.16 is wrong. If eq 6.16 was correct then the 
+c     expression could be further simplified so I think 6.13 must
+c     be correct and the above equation for the yield is thus 
+c     correct. 
+c
+c     The following equation matches equation
+c     6.16 from page 64 of the Nuclear Fusion 1984 article
+c     by Langley, Bohdansky, Eckstein ... 
+c
+c     In the paper the expresion is (1-X2)**(2/3) not (1-X2**(2/3))
+c     However, this disagrees with eq 6.13 in the same paper so there
+c     is an inconsistency. 
+c
+c
+c         YIELD=CQ(MATP,MATT)*(3.441*X12*LOG(X1+2.718))/(1.0+6.355*
+c     1          X12+X1*(6.882*X12-1.708))*(1-X2)*(1-X2)*(1.0-X2)**
+c     2          (2.0/3.0)
+c
+      ELSE
          YIELD=0.0
       ENDIF
       RETURN
