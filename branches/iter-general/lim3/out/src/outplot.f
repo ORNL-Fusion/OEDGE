@@ -1122,7 +1122,7 @@ c
 c
             do ix = 1, nxs
 c
-               tmpplot(ix,iy) = plrps(ix,iy,istate)
+               tmpplot(ix,iy) = plrps(ix,iy,istate) * absfac
 c
             end do
 c
