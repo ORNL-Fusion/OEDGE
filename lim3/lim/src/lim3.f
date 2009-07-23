@@ -3043,7 +3043,9 @@ C
       DO 883 J = 1, 2                                                           
        DO 883 IX = 1, NXS                                                       
         NEROXS(IX,1,J) =-NEROXS(IX,1,J) / XWIDS(IX) * FACTA(0)                  
-        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(0)                 
         NEROXS(IX,3,J) = NEROXS(IX,3,J) / XWIDS(IX) * FACTA(0)                  
         NEROXS(IX,4,J) = NEROXS(IX,1,J) + NEROXS(IX,3,J)                        
         NEROXS(IX,5,J) = FACT * NEROXS(IX,1,J) + NEROXS(IX,3,J)                 
@@ -3060,14 +3062,18 @@ C
       DO 885 IO = 1, MAXOS                                                      
        IF (OYWIDS(IO).GT.0.0) THEN
         NEROYS(IO,1) =-NEROYS(IO,1) / OYWIDS(IO) * FACTA(0)                     
-        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(0)                    
         NEROYS(IO,3) = NEROYS(IO,3) / OYWIDS(IO) * FACTA(0)                     
        ENDIF
         NEROYS(IO,4) = NEROYS(IO,1) + NEROYS(IO,3)                              
         NEROYS(IO,5) = FACT * NEROYS(IO,1) + NEROYS(IO,3)                       
        IF (ODWIDS(IO).GT.0.0) THEN
         NERODS(IO,1) =-NERODS(IO,1) / ODWIDS(IO) * FACTA(0)                     
-        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(0)                    
         NERODS(IO,3) = NERODS(IO,3) / ODWIDS(IO) * FACTA(0)                     
 c
 c       Need to scale by the 3D bin width as well taking into account any 
@@ -3092,8 +3098,12 @@ c
 
            NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
+c     >                          / local_pwid * FACTA(-1)                    
            NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(-1)                    
+     >                          / local_pwid * FACTA(0)                    
+c
            NERODS3(IO,IP,3) = NERODS3(IO,IP,3) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
         end do
