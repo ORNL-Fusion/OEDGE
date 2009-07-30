@@ -541,6 +541,7 @@ c slmod end
 c      DATA RADDEG /57.29577952/                                                 
       INTEGER IX 
       integer iz,icxsc 
+      integer in
 
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
@@ -2135,6 +2136,67 @@ C-----------------------------------------------------------------------
      >     QMULTS)
       ENDIF
 c
+c----------------------------------------------------------
+c
+c    Self-sputtering option     
+c
+c----------------------------------------------------------
+c
+c     TAG I04:
+c
+c      if (cselfs.eq.0) then
+c        call prc ('  SELF-SPUTTER OPT 0 : SELF-SPUTTERING IS OFF')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c      elseif (cselfs.eq.1) then
+c        call prc ('  SELF-SPUTTER OPT 1 : SELF-SPUTTERING IS ON')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c       CALL PRC ('                       PROPER SELF-SPUTTERING USING AC
+c     >TUAL ZIMP')
+c       CALL PRC ('                       VALUES ON EXIT AND SAME VEL/ANG
+c     > FLAG.')
+c       CALL PRC ('                       EIMP=3TB.ZIMP+5.22E-9.MI.VEXIT.
+c     >VEXIT+2TI')
+c       CALL PRR ('                       EMAX=EIMP.  THRESHOLD YIELD=',
+c     >   CTRESH)
+c
+c      elseif (cselfs.eq.2) then
+c        call prc ('  SELF-SPUTTER OPT 2 : SELF-SPUTTERING IS ON')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c       CALL PRC ('                       SELF-SPUTTERING ENERGY IS FIXED
+c     >')
+c       CALL PRC ('                       FOR EACH SEGMENT WITH A FIXED Y
+c     >IELD.')
+c       call prr ('                       ENERGY FOR FIXED YIELD SPUTTERI
+c     >NG (eV) =',ctem1)
+c       CALL PRR ('                       THRESHOLD YIELD=',
+c     >   CTRESH)
+c      endif
+c
+
+
+
+c
 C-----------------------------------------------------------------------        
 c
 c     Sputtering particle impact energy option
@@ -2158,6 +2220,53 @@ c
        call prc ('                       THIS OVER-RIDES ALL SPUTTER OPT
      >IONS - EXCEPT 8')
       endif
+c
+c-----------------------------------------------------------------------
+c
+c   External sputtering flux and energy option: TAG L14 and L15
+c
+c-----------------------------------------------------------------------
+c
+      if (extfluxopt.eq.0) then 
+       CALL PRC ('  EXTERNAL FLUX OPT 0: OFF')
+       call prc ('                       LIMITER PRIMARY FLUX AND'//
+     >    ' ENERGY ARE DETERMINED FROM THE SPECIFIED BACKGROUND PLASMA')
+      else
+       CALL PRC ('  EXTERNAL FLUX OPT 1: ON')
+       call prc ('                       LIMITER PRIMARY FLUX AND'//
+     >    ' ENERGY ARE EXTERNALLY IMPOSED')
+       if (extfluxopt.eq.1) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF X')   
+       elseif (extfluxopt.eq.2) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF Y')   
+       elseif (extfluxopt.eq.3) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF D (DISTANCE ALONG SURFACE)')   
+       endif
+       call prc('                       NEGATIVE COORDINATE DATA'//
+     >          ' APPLIES TO THE Y<0 SIDE OF THE LIMITER')
+
+       call prb
+       call prc('    EXTERNALLY IMPOSED FLUX AND ENERGY DATA:')
+       if (extfluxopt.eq.1) then 
+         call prc('      X (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       elseif (extfluxopt.eq.2) then 
+         call prc('      Y (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       elseif (extfluxopt.eq.3) then 
+         call prc('      D (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       endif
+       do in = 1,nextfluxdata
+          write(coment,'(4x,g12.5,3x,e14.5,3x,f10.2)') 
+     >             extfluxdata(in,1),
+     >             extfluxdata(in,2),extfluxdata(in,3)
+          call prc(coment)
+       end do
+       call prb
+      endif
+
+
 
 C
 C-----------------------------------------------------------------------        

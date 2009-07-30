@@ -671,7 +671,8 @@ C
 C     THE FOLLOWING IS DONE IN TWO SEGMENTS - 1 FOR TFTR GRID MAPPED
 C     PLOTS AND ONE FOR THE STANDARD CASE. 
 C
-      write (6,'(a,4g12.5,i8)') 'tftrg:',tftrg,xmin,xmax,ymin,ymax,ifold
+c      write (6,'(a,i5,4g12.5,i8)') 'tftrg:',tftrg,
+c     >                        xmin,xmax,ymin,ymax,ifold
 
       if (tftrg.eq.0) then 
  
