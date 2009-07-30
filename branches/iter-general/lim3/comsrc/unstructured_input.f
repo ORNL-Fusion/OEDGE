@@ -165,7 +165,18 @@ c
 c     Set to standard as default
 c
       impact_energy_opt = 0
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG I04 : Self sputtering option (added to match feature in DIVIMP)
+c               This allows self-sputtering to be specified independently
+c               of the sputter option
+c               0 = off
+c               1 = on (default to match existing behaviour for most options)
+c               2 = on (fixed constant self-sputtering energy specified)
+c
+      cselfs = 1
+c
 c
 c -----------------------------------------------------------------------
 c
@@ -181,7 +192,7 @@ c
 c              Shear_short_circuit_opt 1: P = CPCO * ( 2*ran-1) = (-CPCO,+CPCO) 
 c
       shear_short_circuit_opt=0
-c
+cg
 c -----------------------------------------------------------------------
 c
 c     TAG L02: LIM Wall shape option - allow CAW to vary as a function of Y
@@ -250,6 +261,32 @@ c
       calc_3d_power = 1
 c
 c -----------------------------------------------------------------------
+c 
+c     TAG L14 and L15: Specified Sputtering flux and energy function
+c     
+c     L14: External flux option: extfluxopt
+c          0 = off (limiter plasma conditions used for surface fluxes)
+c          1 = external flux data specified in X
+c          2 = external flux data specified in Y
+c          3 = external flux data specified in D (distance along limiter surface)
+c
+c          Note: -X,-Y and -D data apply to the Y<0 side of the limiter
+c                 X, Y and  D data apply to the Y>0 side of the limiter
+c
+c     L14:
+c
+      extfluxopt = 0
+c
+c     L15: 
+c
+c     External flux and energy function in either X,Y or D space
+c        <coord>   <flux m-2s-1>    <Eimpact eV>
+c     extfluxdata
+c
+      nextfluxdata = 0
+      extfluxdata = 0.0
+c
+c -----------------------------------------------------------------------
 c
 c     TAG Q26:
 c
@@ -263,6 +300,9 @@ c
 c     Turned off by default 
 C
       nnbg = 0 
+c
+c -----------------------------------------------------------------------
+c
 C
 C
 C
@@ -549,6 +589,40 @@ c     data aren't needed the calculation can be turned off.
 c
       elseif (tag(1:3).EQ.'L13') THEN
         CALL ReadI(line,calc_3d_power,0,1,'3D power calculation option')
+c
+c
+c -----------------------------------------------------------------------
+c 
+c     TAG L14 and L15: Specified Sputtering flux and energy function
+c     
+c     L14: External flux option: extfluxopt
+c          0 = off (limiter plasma conditions used for surface fluxes)
+c          1 = external flux data specified in X
+c          2 = external flux data specified in Y
+c          3 = external flux data specified in D (distance along limiter surface)
+c
+c          Note: -X,-Y and -D data apply to the Y<0 side of the limiter
+c                 X, Y and  D data apply to the Y>0 side of the limiter
+c
+c     L14:
+c
+      elseif (tag(1:3).EQ.'L14') THEN
+        CALL ReadI(line,extfluxopt,0,3,'External sputtering flux'//
+     >         ' option')
+c
+c     L15: 
+c
+c     External flux and energy function in either X,Y or D space
+c        <coord>   <flux m-2s-1>    <Eimpact eV>
+c     extfluxdata
+c
+      elseif (tag(1:3).EQ.'L15') THEN
+c
+         CALL RDRARN(extfluxdata,nextfluxdata,
+     >               MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
+     >               2,'External sputtering flux data',IERR)
+
+c
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:

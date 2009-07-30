@@ -116,6 +116,12 @@ c
 c     jdemod  - for wall options
 c
       integer :: iqy_tmp 
+c
+c     jdemod - variables for the external flux data option
+c
+      integer :: in
+      real :: scale_fact,interp_fact,ext_coord
+c
 
 C                                                                               
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
@@ -245,33 +251,176 @@ C       1990, FEB 8,  DAVID ELDER
 C
         CS = 9.79E3 * SQRT (((QTEMBS(IQX,J)+QTEMBSI(IQX,J))/2)*
      >       (1.0+REAL(CIZB))/CRMB)                
-        FLUX1(IQX,J)  = QRNBS(IQX,J) * CS * CSINTB                              
-        FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
-        ENEGY1(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
+c
+        if (extfluxopt.eq.0) then 
+           FLUX1(IQX,J)  = QRNBS(IQX,J) * CS * CSINTB                              
+c
+           ENEGY1(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
      >                  (3.0*REAL(CIZB) * QTEMBS(IQX,J))             
-        ENEGY2(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
+           ENEGY2(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
      >                  (3.0*REAL(CBOMBZ) * QTEMBS(IQX,J))                
-        IF (CNEUTD.EQ.8) 
+           IF (CNEUTD.EQ.8) 
      >     ENEGY1(IQX,J) = 2.0*QTEMBS(IQX,J) + REAL(CIZB) * CVS(IQX,J)
-        IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J)                          
+c
+           IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J)                          
+c
+        else 
+c
+c          Determine flux from input data
+c
+c          ext_coord  = appropriate coordinate for external flux
+c                       lookup
+c
+c          scale_fact = needed scaling factor to map flux back to
+c                       X axis deltaX that is used in the code below
+c                       scale factor is 1.0 for input flux data 
+c                       specified as a function of X. A flux specified
+c                       as a function of Y will give zero flux for
+c                       vertical limiter elements. While one specified
+c                       as a function of X will give zero flux for 
+c                       horizontal elements. 
+c
+c
+           if (extfluxopt.eq.1) then
+c
+c             Note: use negative value so that j=1 side of limiter ends up with "-"ve and 
+c                   j=2 is "+"ve for interpolating the input data (a line below changes
+c                   the sign given to ext_coord for j=1 making sure it is negative. Both the 
+c                   Y and D coordinates are intrinsically "+" ve for both sides of the limiter
+c
+              ext_coord = -qxs(iqx)
+              scale_fact = 1.0
+
+           elseif (extfluxopt.eq.2) then 
+
+              ext_coord = qedges(iqx,j)
+
+              if (iqx.eq.(1-nqxso)) then
+                 scale_fact = abs(qedges(iqx+1,j)-qedges(iqx,j))/
+     >                          deltax
+              elseif (iqx.eq.1) then 
+                 scale_fact = abs(qedges(iqx,j)-qedges(iqx-1,j))/
+     >                          deltax
+
+              else
+                 scale_fact = (abs(qedges(iqx+1,j)-qedges(iqx,j))
+     >                        +abs(qedges(iqx,j)-qedges(iqx-1,j)))/
+     >                          (2.0*deltax)
+              endif
+
+           elseif (extfluxopt.eq.3) then 
+
+              ext_coord = qdists(iqx,j)
+
+              if (iqx.eq.(1-nqxso)) then
+                 scale_fact = abs(qdists(iqx+1,j)-qdists(iqx,j))/
+     >                          deltax
+              elseif (iqx.eq.1) then 
+                 scale_fact = abs(qdists(iqx,j)-qdists(iqx-1,j))/
+     >                          deltax
+
+              else
+                 scale_fact = (abs(qdists(iqx+1,j)-qdists(iqx,j))
+     >                        +abs(qdists(iqx,j)-qdists(iqx-1,j)))/
+     >                          (2.0*deltax)
+              endif
+
+           endif
+
+           if (cprint.eq.1.or.cprint.ge.9) then 
+              write(6,'(a,2i5,10(1x,g12.5))') 'SCALEF:',iqx,j,
+     >            scale_fact,deltax,scale_fact*deltax,
+     >            qdists(iqx-1,j),qdists(iqx,j),qdists(iqx+1,j),   
+     >            qedges(iqx-1,j),qedges(iqx,j),qedges(iqx+1,j)
+     
+
+           endif
+c
+           if (j.eq.1) ext_coord = -ext_coord
+c
+c          Look up external flux function index - linear interpolation
+c
+           in = ipos(ext_coord,extfluxdata(1,1),nextfluxdata)
+c
+           if (ext_coord.le.extfluxdata(1,1).or.
+     >         ext_coord.ge.extfluxdata(nextfluxdata,1)) then
+
+              flux1(iqx,j)  =  extfluxdata(in,2)* scale_fact
+
+              enegy1(iqx,j) = extfluxdata(in,3)
+
+              enegy2(iqx,j) = enegy1(iqx,j)
+
+           else
+c
+c             Interpolate
+c
+              interp_fact = (ext_coord - extfluxdata(in-1,1))/
+     >                      (extfluxdata(in,1)-extfluxdata(in-1,1))
+c
+c             flux
+c
+              flux1(iqx,j) = (extfluxdata(in-1,2) + interp_fact *
+     >                       (extfluxdata(in,2)-extfluxdata(in-1,2)))*
+     >                       scale_fact      
+c
+c             energy
+c
+
+              enegy1(iqx,j) = extfluxdata(in-1,3) + interp_fact *
+     >                       (extfluxdata(in,3)-extfluxdata(in-1,3))
+
+              enegy2(iqx,j) = enegy1(iqx,j)
+
+           endif
+
+           if (cprint.eq.1.or.cprint.ge.9) then 
+              write(6,'(a,3i5,12(1x,g12.5))') 'EXTFLUX:',iqx,j,in,
+     >            ext_coord,extfluxdata(in-1,1),extfluxdata(in,1),
+     >            interp_fact,extfluxdata(in-1,2), extfluxdata(in-1,2),
+     >            flux1(iqx,j),extfluxdata(in-1,3),extfluxdata(in-1,3),   
+     >            enegy1(iqx,j)
+           endif
+
+        endif
+
+c
+c       CFIMP is the self-sputtering fraction for co-bombardment by 
+c       background and impurity ions. It should be 0.0 if the sputter
+c       option is not set to 2 - this is set at the beginning of the
+c       neut routine above.
+c
+
+        FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
+c
+c       calculate yields
+c
+
         YIELD1(IQX,J) = YIELD (MAT1,MATLIM,ENEGY1(IQX,J),0.0,0.0)
      >                      *QMULTP*CYMFPS(IQX,J)           
+
         YIELD2(IQX,J) = YIELD (MAT2,MATLIM,ENEGY2(IQX,J),0.0,0.0) 
      >                     *QMULTS*CYMFSS(IQX,J)        
+
         IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN       
           YIELD1(IQX,J) = YIELD1(IQX,J)*(1.0+CQPL/
      >                    (CQ(MAT1,MATLIM)*QMULTP))            
           YIELD2(IQX,J) = YIELD2(IQX,J)*(1.0+CQSL/
      >                    (CQ(MAT2,MATLIM)*QMULTS))            
         ENDIF                                                                   
+
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
         FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J)                            
 
-        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
+        if (cprint.eq.1.or.cprint.ge.9) then 
+
+           write(6,'(a,2i9,12(1x,g12.5))') 'YIELD:',iqx,j,
      >      flux1(iqx,j),flux2(iqx,j),
      >      enegy1(iqx,j),enegy2(iqx,j),
      >      yield1(iqx,j),yield2(iqx,j),
      >      fy1(iqx,j),fy2(iqx,j)
+
+        endif
 c
 
    10 CONTINUE                                                                  
