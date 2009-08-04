@@ -247,6 +247,7 @@ c      New: pass Te, Ti to yield function; Krieger IPP/97
 c
        FUNCTION YIELD (MATP,MATT,ENERGY,Te,ti)
        use eckstein_2002_yield_data
+       use eckstein_2007_yield_data
        IMPLICIT none
        REAL YIELD,ENERGY,X1,X12,X2,te,ti
        INTEGER MATP,MATT
@@ -325,6 +326,39 @@ c
          endif
          return
 c
+      elseif (csputopt.eq.6) then 
+c
+c        This option calls yield routines based on Eckstein's
+c        2007 tabulation/parameterization of the sputtering yield data
+c
+c        This data has no explicit angular dependence the numbers are
+c        for normal incidence. 
+c
+c        The data in this routine is taken from 
+c
+! Topics in Applied Physics 110
+!
+! Behrisch and Eckstein (eds)
+!
+! "Sputtering by Particle Bombardment, Experiments and Computer Calculations from Threshold to MeV Energies"
+! 
+! Chapter "Sputtering Yields" by W. Eckstein, Springer 2007, pgs 33 - 186
+c
+c        At the present time only certain bombarding and target materials are supported - if an
+c        unsupported combination is specified then the data defaults to '96 
+c
+         if (eckstein2007_data_available) then 
+
+            yield = yield_2007(matp,matt,energy) 
+
+         else
+
+            yield = yld96(MATP,MATT,ENERGY)   
+
+         endif
+c
+         return
+c        
       endif
 c
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15

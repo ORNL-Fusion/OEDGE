@@ -9,6 +9,7 @@ c slmod
 c     >                 DEFACT,NRAND)           
 c slmod end
 !      use iter_bm
+      use eckstein_2007_yield_data
       use variable_wall
       use yreflection
       IMPLICIT none                                                    
@@ -545,9 +546,11 @@ c
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)THEN
         CALL SYLD96 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        call init_eckstein_2007(matlim,mat1)
       ENDIF
 c
 

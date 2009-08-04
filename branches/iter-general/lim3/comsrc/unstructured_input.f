@@ -390,9 +390,10 @@ c     2 - Eckstein IPP9/82 (1993)
 c     3 - Eckstein IPP9/82 + Adjustments from Garcia/Rosales-Roth 1996
 c     4 - specified constant yield
 c     5 - As 3 except a custom routine is used for W.  
+c     6 - 2007 Eckstein data where available - otherwise option 3
 c
 c
-        CALL ReadI(line,csputopt,1,5,'Sputter Data option')
+        CALL ReadI(line,csputopt,1,6,'Sputter Data option')
 c
 c
 c -----------------------------------------------------------------------
