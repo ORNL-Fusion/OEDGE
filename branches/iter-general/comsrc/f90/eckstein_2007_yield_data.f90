@@ -512,7 +512,7 @@ contains
        e0 = in * 10.0 + 10.0
        yieldp = yield_2007(init_matp,init_matt,e0)
        yields = yield_2007(6,init_matt,e0)
-       write(ounit,'(5x,f10.2,2(5x,g12.5)') e0,yieldp,yields
+       write(ounit,'(5x,f10.2,2(5x,g12.5))') e0,yieldp,yields
     end do
 
     call prb
