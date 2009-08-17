@@ -122,6 +122,10 @@ c
       integer :: in
       real :: scale_fact,interp_fact,ext_coord
 c
+c     jdemod - added variable to hold the probability for Y<0 launch
+c
+      real :: side_probability
+c
 
 C                                                                               
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
@@ -622,11 +626,25 @@ C
         PRIME  = .TRUE.                                                         
         SPREAD = .FALSE.                                                        
         RAN    = RANVA (IPROD)                                                  
-        IF (RAN.LE.FYTOT1(1)/(2.0*GYTOT1)) THEN                                 
+
+!
+!       jdemod - initial equal probability for wall launch on either side of limiter not related to 
+!       limiter fluxes
+!
+        if (cneutb.eq.4) then 
+           side_probability = 0.5
+        else
+           side_probability = FYTOT1(1)/(2.0*GYTOT1) 
+        endif
+!
+!       Test which side for launch
+!
+        IF (RAN.LE.side_probability) THEN                                 
           J = 1                                                                 
         ELSE                                                                    
           J = 2                                                                 
         ENDIF                                                                   
+c
         RAN = RANVB (IPROD)                                                     
 C                                                                               
 C------ DEPENDING ON OPTION CHOSEN,  SELECT LAUNCH POSITION ON LIMITER          
@@ -748,13 +766,14 @@ c
              X0  = QXS(IQX)                                                        
   290        Y0  = RAN * CTWOL                                                     
 c
-             if (check_reflected_region(Y0)) then 
-               NRAND = NRAND + 1                                                   
-               CALL SURAND (SEED, 1, RAN)                                          
-               goto 290
-             endif
-
-             IF (J.EQ.1) Y0 = -Y0                                                  
+c
+c            jdemod - for wall launches the initial Y position can not just be mirrored in the 
+c            Y axis since the limiter shapes on each side may be different. 
+c
+c
+c            IF (J.EQ.1) Y0 = -Y0                                                  
+c
+             IF (J.EQ.1) Y0 = Y0-CTWOL                                                  
 
              IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
      >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
@@ -763,6 +782,13 @@ c
                CALL SURAND (SEED, 1, RAN)                                          
                GOTO 290                                                            
              ENDIF                                                                 
+
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 290
+             endif
+
              THETA = PI/2.0                                                        
 
           elseif (lim_wall_opt.eq.1) then 
@@ -770,19 +796,20 @@ c
 
  291         Y0  = RAN * CTWOL                                                     
 c
-             if (check_reflected_region(Y0)) then 
-               NRAND = NRAND + 1                                                   
-               CALL SURAND (SEED, 1, RAN)                                          
-               goto 291
-             endif
-
              IQY_TMP = max(min(int(y0*yscale)+1,nqys),1)
 
              X0 = caw_qys(iqy_tmp)
 
-             IQX = INT (X0 * XSCALO)                                             
-
-             IF (J.EQ.1) Y0 = -Y0                                                  
+c
+c             IQX = INT (X0 * XSCALO)                                             
+c
+c            Need to check the limiter extent at the farthest extent
+c            where IQX=1-NQXSO
+c
+             IQX = 1-NQXSO
+c
+             IF (J.EQ.1) Y0 = Y0-CTWOL                                                  
+c
              IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
      >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
      >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
@@ -790,6 +817,16 @@ c
                CALL SURAND (SEED, 1, RAN)                                          
                GOTO 291                                                            
              ENDIF                                                                 
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 291
+             endif
+
+
+c             write(6,'(a,3(1x,i6),5(1x,g12.5))')'N:WALL LAUNCH:',nprod1,
+c     >                      iqy_tmp,iqx,x0,y0,yscale
 c
 c            jdemod 
 c            Normal incidence needs to be corrected at some point for these wall options
@@ -1770,10 +1807,14 @@ c       at a specific value of QYS - this IQY_TMP has a different meaning than t
 c       IQY calculated below (which is relative to the limiter faces). 
 c
         if (y.lt.0.0) then 
-           IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+           IQY_TMP = max(min(int((ctwol+y)*yscale)+1,nqys),1)
         else
            IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
         endif
+
+c
+c        write(6,'(a,3(1x,i6),5(1x,g12.5))') 'L:WALL LAUNCH:',
+c     >            iprod,iqy_tmp,iqx,x,y,yscale
 c
         IX    = IPOS (X, XS, NXS-1)                                             
         IY    = IPOS (ABSY, YS, NYS-1)                                          
@@ -1887,8 +1928,16 @@ c
 c jdemod - set up wall launch to use actual wall normal
 c
         elseif (cneutb.eq.4) then 
-           
-           tantru = PI/2.0 + sign((caw_qys_tans(iqy_tmp) -PI/2.0),y) 
+
+           if (lim_wall_opt.eq.0) then 
+              tantru = PI/2.0
+           elseif (lim_wall_opt.eq.1) then 
+              ! jdemod - this complex expression is used so that after the effect of the sign
+              !          change (Y.ge.0) in the code below the actual angle will be correct
+              !
+              tantru = PI/2.0 + sign((caw_qys_tans(iqy_tmp) -PI/2.0),-y) 
+              !tantru = caw_qys_tans(iqy_tmp)
+           endif
 
         ELSEIF (FREEL) THEN
           TANTRU = 0.0 
@@ -2059,6 +2108,11 @@ c slmod end
           WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
      >      SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'NEUTRAL LAUNCH'                
         ENDIF                                                                   
+
+c        write(6,'(a,3(1x,i6),5(1x,g12.5))') 'NEUTRAL LAUNCH:',
+c     >        iprod,iqx,iqy,
+c     >        dxvelf/fsrate,dyvelf/fsrate,vin,angle*raddeg,tangnt*raddeg
+
 C                                                                               
 C------ CHECK IF NEUTRAL IS GOING TO STRIKE LIMITER SURFACE                     
 C                                                                               
