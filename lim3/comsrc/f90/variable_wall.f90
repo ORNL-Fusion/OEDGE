@@ -109,12 +109,11 @@ contains
 
        caw_qys_tans(in) = (atan2c(dy1,dx1) + atan2c(dy2,dx2))/2.0 + PI/2.0
 
-       write(debug_message_data,'(i6,1x,g12.5)') in,caw_qys_tans(in)*RADDEG
+       write(debug_message_data,'(i6,3(1x,g12.5))') in,qys(in),caw_qys(in),caw_qys_tans(in)*RADDEG
 
-       call dbgmsg('CAW_QYS_TANS:',debug_message_data)
+       call dbgmsg('VARIABLE_WALL:SETUP_WALL:',debug_message_data)
 
     enddo
-
 
 
   end subroutine setup_wall
