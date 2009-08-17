@@ -1047,11 +1047,11 @@ c
 c     Write out the erosion data
 c        
         write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
-        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
-     >            'TOTAL REMOVAL','NET EROSION' 
+        write(6,'(5(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(4(4x,g18.8))') odouts(io),nerods(io,1),
-     >            nerods(io,3),nerods(io,4)
+           write(6,'(5(4x,g18.8))') odouts(io),nerods(io,1),
+     >            nerods(io,2),nerods(io,3),nerods(io,4)
 
         end do
 
@@ -1855,8 +1855,10 @@ c
 c
 c     Write out the erosion data
 c        
-        write(6,'(a)') 'EROSION AS A FUNCTION OF Y:'
-        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+        write(6,'(a)') 'EROSION AS A FUNCTION OF X:    Y<0    Y>0'
+        write(6,'(7(2x,a20))') 'X','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION',
+     >            'TOTAL DEPOSITION',
      >            'TOTAL REMOVAL','NET EROSION' 
         do io = 1,nxs
            write(6,'(8(4x,g18.8))') xs(io),neroxs(io,1,1),

@@ -179,7 +179,7 @@ C
 c
 c     jdemod - initialize the reflection option
 c
-      call init_reflection(ctwol)
+      call init_reflection(ctwol,ca,caw)
 C                                                                               
 C---- CALCULATE SET OF X AND Y POSITIONS FOR WHICH                              
 C---- FACTORS ARE TO BE CALCULATED                                              
@@ -383,6 +383,7 @@ C
 C---- SETUP YS POSITIONS FOR PRINTOUTS                                          
 C                                                                               
       IY0    = 1                                                                
+      IY0LT  = -1
       IYL8   = IPOS (0.125*CL,YS, NYS-1)                                        
       IYL4   = IPOS (0.25*CL, YS, NYS-1)                                        
       IYL2   = IPOS (0.5*CL,  YS, NYS-1)                                        

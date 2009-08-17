@@ -139,7 +139,7 @@ LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
 TARG=lim3O$(VER)
 TARGALT=lim3aO$(VER)
-
+TARGDBG=lim3Odbg$(VER)
 #
 # Objects to compile
 #
@@ -212,6 +212,9 @@ opt:
 32bitdbg:
 	$(MAKE)  "OPT=$(OPTG)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
 
+debug:
+	$(MAKE)  "OPT=$(OPTG)" "TARG=$(TARGDBG)"
+
 3dopt:
 	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3d/SLCOM
 	$(MAKE)  "OPT=$(OPTO)" "IDIR=$(COMMONS)/sl_limcom3d"
@@ -230,7 +233,6 @@ opt:
 3ds:
 	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3ds/SLCOM
 	$(MAKE)  "OPT=$(OPTG)" "IDIR=$(COMMONS)/sl_limcom3ds"
-
 
 abs:
 	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT)" "VER=$(VER_ABSOFT)" 

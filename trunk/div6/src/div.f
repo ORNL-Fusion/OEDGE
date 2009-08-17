@@ -11,6 +11,7 @@ c
 !      Use HC_WBC_Comp ! Records ion death statistics for WBC comparison.
 !      Use HC_Utilities ! Sheath E-field calc by Brooks.
 c
+      use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
 c
@@ -778,9 +779,11 @@ C
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)THEN
         CALL SYLD96 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        call init_eckstein_2007(mattar,matp)
       ENDIF
 c
 C

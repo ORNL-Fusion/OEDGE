@@ -9,6 +9,7 @@ c slmod
 c     >                 DEFACT,NRAND)           
 c slmod end
 !      use iter_bm
+      use eckstein_2007_yield_data
       use variable_wall
       use yreflection
       IMPLICIT none                                                    
@@ -255,6 +256,7 @@ c slmod
         WRITE(0,*) 'Warning! Hard code adjustment to bin location',
      +             ' for DIVIMP ion profile.'
       ENDIF 
+c
 
       DO II = 1, NBIN
         BSBIN(II) = BSBIN(II) + 0.5
@@ -544,9 +546,11 @@ c
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)THEN
         CALL SYLD96 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        call init_eckstein_2007(matlim,mat1)
       ENDIF
 c
 
@@ -570,7 +574,7 @@ c
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI)                                       
+        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)
 C                                                                               
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
@@ -806,7 +810,9 @@ C
       PORM   = -1.0                                                             
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
+c
       DO 800  IMP = 1, NATIZ                                                    
+
         IF (100*(IMP/100).EQ.IMP)                                               
      >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
         TSTEPL = CSTEPL                                                         
@@ -814,6 +820,11 @@ C
         OLDY   = 0.0                                                            
         old_y_position = 0.0
         OLDALP = 0.0                                                            
+c
+c       jdemod - initialize particle reflection
+c
+        call init_part_reflection
+
 c
 c       Initialize tracking variables - if debugt
 c
@@ -970,6 +981,7 @@ C
           SPUTY = 1.0                                                           
         ENDIF                                                                   
 C                                                                               
+
         ABSY = ABS (Y)                                                          
         YY = MOD (ABSY, CL)                                                     
         IF (YY.GT.CHALFL) YY = CL - YY                                          
@@ -1038,6 +1050,7 @@ C
           ENDIF                                                                 
         ENDIF                                                                   
 c
+c
         IX    = IPOS (ALPHA, XS, NXS-1)                                         
         IY    = IPOS (ABSY,  YS, NYS-1)                                         
 
@@ -1083,6 +1096,8 @@ C
           IFATE = 9                                                             
           GOTO 790                                                              
         ENDIF                                                                   
+
+
 C                                                                               
 C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
 C                                                                               
@@ -1369,7 +1384,10 @@ c
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
                  endif
 
-                call check_reflection(cx,y,oldy,svy,debugl,ierr)
+
+                call check_reflection(cx,y,oldy,svy,sputy,
+     >                                2,debugl,ierr)
+
 
                 if (ierr.eq.1) then 
                   ! write some debugging info
@@ -1377,7 +1395,6 @@ c
                  WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
                endif
-
 
               endif
 
@@ -1571,7 +1588,7 @@ C
                tmp_y = y
 
                call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               debugl,ierr)
+     >                               sputy,debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -1753,7 +1770,8 @@ c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
                   call check_y_boundary(cx,y,oldy,absy,svy,alpha,
-     >                                  ctwol,debugl,ierr)
+     >                                  ctwol,sputy,
+     >                                  debugl,ierr)
                   if (ierr.eq.1) then 
                      ! write some debugging info
                      WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -2372,6 +2390,15 @@ C
             RIONS(IZ) = RIONS(IZ) + SPUTY                                       
   792     CONTINUE                                                              
         ENDIF                                                                   
+
+
+        !
+        ! Update particle reflection statistics when this ion is finished. 
+        !
+
+        call update_part_refl_stats(sputy)
+
+
 C                                                                               
         IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
      >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,FATE(IFATE)            
@@ -2540,7 +2567,11 @@ C
            GOTO 805                                                             
          ENDIF                                                                  
         ENDIF                                                                   
+
+        
 C                                                                               
+c     800 is the end of the main particle following loop
+c
   800 CONTINUE                                                                  
 C                                                                               
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
@@ -3015,7 +3046,9 @@ C
       DO 883 J = 1, 2                                                           
        DO 883 IX = 1, NXS                                                       
         NEROXS(IX,1,J) =-NEROXS(IX,1,J) / XWIDS(IX) * FACTA(0)                  
-        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(0)                 
         NEROXS(IX,3,J) = NEROXS(IX,3,J) / XWIDS(IX) * FACTA(0)                  
         NEROXS(IX,4,J) = NEROXS(IX,1,J) + NEROXS(IX,3,J)                        
         NEROXS(IX,5,J) = FACT * NEROXS(IX,1,J) + NEROXS(IX,3,J)                 
@@ -3032,14 +3065,18 @@ C
       DO 885 IO = 1, MAXOS                                                      
        IF (OYWIDS(IO).GT.0.0) THEN
         NEROYS(IO,1) =-NEROYS(IO,1) / OYWIDS(IO) * FACTA(0)                     
-        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(0)                    
         NEROYS(IO,3) = NEROYS(IO,3) / OYWIDS(IO) * FACTA(0)                     
        ENDIF
         NEROYS(IO,4) = NEROYS(IO,1) + NEROYS(IO,3)                              
         NEROYS(IO,5) = FACT * NEROYS(IO,1) + NEROYS(IO,3)                       
        IF (ODWIDS(IO).GT.0.0) THEN
         NERODS(IO,1) =-NERODS(IO,1) / ODWIDS(IO) * FACTA(0)                     
-        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(0)                    
         NERODS(IO,3) = NERODS(IO,3) / ODWIDS(IO) * FACTA(0)                     
 c
 c       Need to scale by the 3D bin width as well taking into account any 
@@ -3064,8 +3101,12 @@ c
 
            NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
+c     >                          / local_pwid * FACTA(-1)                    
            NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(-1)                    
+     >                          / local_pwid * FACTA(0)                    
+c
            NERODS3(IO,IP,3) = NERODS3(IO,IP,3) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
         end do
@@ -3447,9 +3488,20 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGE                                     
 C-----------------------------------------------------------------------        
 C                                                                               
+
+
       IF (NIZS.GT.0)                                                            
      >     CALL MONPRI (QTIM,FACTA(1),VFLUID,NIZS,SDTZS,SDYZS,                  
      >           STOTS,DOUTS,RIONS,CTBIN,CRMI)                                  
+
+c
+c     Print yreflection statistics if the option is active
+c
+
+      call pr_yref_stats
+c
+
+
       CALL PRB                                                                  
       CALL PRI ('NUMBER OF NEUTRALS FOLLOWED   ',NINT(TNEUT))                   
       CALL PRI ('NUMBER OF IONS FOLLOWED       ',NINT(TATIZ))                   
@@ -3504,11 +3556,19 @@ c
 c     
 c     
       subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                           debugl,ierr)
+     >                            sputy,debugl,ierr)
       use error_handling
       use yreflection
+      !
+      ! This routine checks to see if the particle has reached the Y-bounds of the modeling
+      ! space and then adjusts the Y coordinate of the particle appropriately. 
+      ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
+      ! the mirrors at the specified Y values. 
+      !
+      !
+
       implicit none
-      real :: cx,y,oldy,ctwol,absy,svy,alpha
+      real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
       integer :: ierr
       
@@ -3538,7 +3598,8 @@ c
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
 
-               call check_reflection(cx,y,tmp_oldy,svy,debugl,ierr)
+               call check_reflection(cx,y,tmp_oldy,svy,sputy,
+     >                               2,debugl,ierr)
 
                if (y.lt.-ctwol) then 
                   y = y+2.0*ctwol
@@ -3566,7 +3627,8 @@ c
                write(6,'(a,5(1x,g18.10))') 
      >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
 
-               call check_reflection(cx,y,tmp_oldy,svy,debugl,ierr)
+               call check_reflection(cx,y,tmp_oldy,svy,sputy,
+     >                               2,debugl,ierr)
 
 c     
                if (y.lt.-ctwol) then 
