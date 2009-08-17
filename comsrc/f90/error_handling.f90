@@ -19,6 +19,7 @@ module error_handling
   integer,private :: dbg1=6,dbg2=-1,dbg3=-1
 
   character,public :: error_message_data*512
+  character,public :: debug_message_data*512
 
 contains
 
@@ -201,11 +202,11 @@ contains
     len1 = len_trim(msg)
 
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     endif
 
   end subroutine rdbgmsg
@@ -221,11 +222,11 @@ contains
     len1 = len_trim(msg)
 
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     endif
 
   end subroutine r8dbgmsg
@@ -241,11 +242,11 @@ contains
     len1 = len_trim(msg)
 
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
     endif
 
   end subroutine idbgmsg
@@ -262,11 +263,11 @@ contains
 
     if (present(unit)) then 
 
-       write(unit,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
+       write(unit,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
     endif
 
   end subroutine cdbgmsg
@@ -283,11 +284,11 @@ contains
     len2 = len_trim(a)
 
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
     else
-       if (dbg1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
-       if (dbg2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
-       if (dbg3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (dbg1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (dbg2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (dbg3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
     endif
 
   end subroutine crdbgmsg
