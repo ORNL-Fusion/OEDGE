@@ -2779,7 +2779,21 @@ C
  4110   CONTINUE                                                                
  4120  CONTINUE                                                                 
  4130 CONTINUE                                                                  
-      WRITE(6,*) '2:'
+
+c
+c     jdemod - symmetric contributions in the walls array
+c            - nys goes to -2L and nys to +2L 
+c            - the ranges -2L,0 maps directly onto 0,2L - they are the same
+c            - so data is combined and overlaid
+c            - I have no idea why this design decision was originally made
+c
+      do iz = -1,nizs
+         do iy = 1,nys
+            walls(iy,iz) = walls(iy,iz) + walls(-nys-1+iy,iz)
+            walls(-nys-1+iy,iz) = walls(iy,iz)
+         end do 
+      end do
+
 C                                                                               
 C====================== DDTS AND DDYS ARRAYS ===========================        
 C                                                                               

@@ -673,7 +673,9 @@ c     This option allows an absolute scaling factor for the LIM
 c     run results to be specified in the OUT routine. It's default
 c     value is zero.
 c
-        CALL ReadR(line,new_absfac,0.0,HI,
+c        CALL ReadR(line,new_absfac,0.0,HI,
+c     >                   'Imposed ABSFAC in OUT')
+        CALL ReadDP(line,new_absfac,0.0,HI,
      >                   'Imposed ABSFAC in OUT')
 c
 c -----------------------------------------------------------------------
@@ -861,6 +863,7 @@ c
       STOP
       END
 c
+c
 c ======================================================================
 c
 c
@@ -899,6 +902,45 @@ c
       STOP
       END
 c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadDP(line,dpval,rmin,rmax,tag)
+      use error_handling
+      IMPLICIT none
+
+      CHARACTER line*72,tag*(*)
+      REAL rmin,rmax
+      real*8 dpval
+
+      INCLUDE 'params'
+      INCLUDE 'slcom'
+
+      REAL*8 r
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,r
+
+      IF (r.LT.rmin.OR.r.GT.rmax)
+     .  CALL ER('ReadDP','Out of bounds: '//line,*99)
+
+      dpval = r
+
+      WRITE(DBGUNIT,'(A)')        line
+      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',dpval
+
+      RETURN
+
+ 98   call errmsg('READDP','Problem reading unstructured input')
+      WRITE(DATUNIT,*) 'Problem reading unstructured input'
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(DATUNIT,'(5X,A,3G10.3)')
+     .  'R,RVAL,RMIN,RMAX = ',r,dpval,rmin,rmax
+      STOP
+      END
+
 c
 c ======================================================================
 c

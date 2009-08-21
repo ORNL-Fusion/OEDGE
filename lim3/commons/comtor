@@ -84,8 +84,8 @@ c     In DIVIMP absfac is a real - should LIM be the same? Since all use of absf
 c     from this common block include - the declaration should remain consistent within LIM - however
 c     using real*8 here runs the risk that imported code might have an issue. 
 c
-c      real*8 absfac
       real*8 absfac
+c      real absfac
 c
 c     Common block for generic LIM related unstructured input
 c      
@@ -101,6 +101,9 @@ c
       common /out_unstruc/ new_absfac,erosion_scaling_opt
 c
       real*8 new_absfac
+c
+c      real new_absfac
+c
       integer erosion_scaling_opt
 
 
