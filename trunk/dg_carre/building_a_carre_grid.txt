@@ -39,6 +39,7 @@ Instructions on how to build a grid using dg and carre:
 1) Convert an efit equilibrium to dg format using equtrn/e2d - or ef2dg if the script doesn't work
 1a) The grid resolution can be increased by running d2d (dg2dg) which doubles the resolution in each direction 
     - this can be important for dg finding surfaces and Carre grid generation
+    - run using full path ~/dg-carre/DG/equtrn/e2d for example
 1b) Cropequ can be used to cut out pieces of the equilibrium - like a second center point or similar that can 
     again cause problems with surface generation. 
 2) Move the equilibrium to the working directory
