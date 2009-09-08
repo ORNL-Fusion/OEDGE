@@ -1935,7 +1935,18 @@ c
 c function: CalcPoint
 c
       INTEGER FUNCTION CalcPoint(ar,az,br,bz,cr,cz,t)
-
+c	   Cedric's comments:
+c	Calcpoint determines the fraction of the line segment A-B upon which the closest point on the line segment to 
+c	point C exists. Eg: If the line perpendicular to line segment A-B that intersects point C crosses A-B half 
+c	way between points A and B, then t = 0.5. If the perpendicular line crosses A, t = 0 and if the perpendicular 
+c	line crosses B, t = 1. The intersection can occur outside A-B in which case t<0 or t>1. 
+c
+c	Calcpoint = a flag integer to identify special cases/debugging info
+c	calcpoint = 1 if point C lies on A-B or within a tollerance
+c	calcpoint = 2 if point C lies off of A-B, and the perpendicular line crosses A-B
+c	calcpoint = 3 if point C lies off of A-B and the perpendicular line crosses beyond point A
+c	calcpoint = 0 if point C lies off of A-B and the perpendicular line crosses beyond point B
+c	END Cedric's comments
       IMPLICIT none
 
 c     Input:
