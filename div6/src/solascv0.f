@@ -469,7 +469,7 @@ c     .      conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
      .      pais(spts(i)),dumpai1,
      .      paes(spts(i)),dumpae1,
      .      peiv(i      ),dumpei1,
-     .      srcf(spts(i)),dumsrc1,
+     .      srcf(spts(i)),-1.0,
      .      pmomloss(spts(i),1,vb(i),te(i),ti(i)),note(i)
       ENDDO
 

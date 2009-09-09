@@ -14,7 +14,8 @@
      .          AddObject,
      .          MatchSurface,
      .          LoadObjects,
-     .          SaveGeometryData
+     .          SaveGeometryData,
+     .          SetupCell2Obj
    
       INTEGER, PUBLIC, PARAMETER :: MAX3DVER=4 ,     ! ...
      .                              MAX3DSIDE=6      ! ...this must be an even number, see type_object definition...
@@ -129,15 +130,21 @@
 
       INTEGER, PUBLIC :: geofp
 
+      INTEGER, PUBLIC, ALLOCATABLE :: 
+     .  obj_tube    (:)
+
       REAL*8, PUBLIC, ALLOCATABLE :: 
      .  obj_centroid(:,:),
      .  obj_phi     (:),
-     .  obj_volume  (:)
+     .  obj_volume  (:),
+     .  obj_distance(:,:)
 
       INTEGER, PUBLIC, PARAMETER :: 
-     .  MODE_OBJ_CENTRE = 1,  ! *** SHOULD CHANGE TO _CENTROID? ***
-     .  MODE_OBJ_PHI    = 2, 
-     .  MODE_OBJ_VOLUME = 3
+     .  MODE_OBJ_CENTRE   = 1,  ! *** SHOULD CHANGE TO _CENTROID? ***
+     .  MODE_OBJ_PHI      = 2, 
+     .  MODE_OBJ_VOLUME   = 3,
+     .  MODE_OBJ_TUBE     = 4,
+     .  MODE_OBJ_DISTANCE = 5
 
       INTEGER, PUBLIC, ALLOCATABLE :: 
      .  srf_obj     (:), 
@@ -151,6 +158,9 @@
      .  MODE_SRF_SIDE   = 102, 
      .  MODE_SRF_AREA   = 103,
      .  MODE_SRF_SUM    = 104
+
+      INTEGER, PUBLIC, ALLOCATABLE :: 
+     .  cell2obj(:)
 
       CONTAINS
 !
@@ -644,11 +654,26 @@
       WRITE(0,*) '    FILE NAME: >'//fname(1:LEN_TRIM(fname))//'<'
       RETURN
       END SUBROUTINE LoadObjects
+!
+! ----------------------------------------------------------------------
+!
+      SUBROUTINE SetupCell2Obj(ncell,index)
+      IMPLICIT none
 
+      INTEGER, INTENT(IN) :: ncell, index
+      INTEGER iobj
 
+      IF (ALLOCATED(cell2obj)) DEALLOCATE(cell2obj)
+      ALLOCATE(cell2obj(ncell))
+      DO iobj = 1, nobj
+        IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
+     .      grp(obj(iobj)%group)%type  .EQ.GRP_QUADRANGLE) 
+     .    cell2obj(obj(iobj)%index(index)) = iobj
+      ENDDO
 
-
-
+      RETURN
+99    STOP
+      END SUBROUTINE SetupCell2Obj
 !
 ! ======================================================================
 !

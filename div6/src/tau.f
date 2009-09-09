@@ -561,9 +561,9 @@ c               THETA(IK,IR) = theta(ik+1,ir)
                KBFS(IK,IR)  = kbfs(ik+1,ir)
 c slmod begin - new
                BRATIO(IK,IR) = BRATIO(IK+1,IR)
-               IF (ALLOCATED(sonnetik)) THEN
-                 sonnetik(ik,ir) = sonnetik(ik+1,ir)
-                 sonnetir(ik,ir) = sonnetir(ik+1,ir)
+               IF (ALLOCATED(divimp_ik)) THEN
+                 divimp_ik(ik,ir) = divimp_ik(ik+1,ir)
+                 divimp_ir(ik,ir) = divimp_ir(ik+1,ir)
                ENDIF
 c slmod end
                PSIFL(IK,IR) = psifl(ik+1,ir)
@@ -3885,7 +3885,10 @@ C
       REAL    S1,S2,S3,S4,RRS(5,5),ZZS(5,5),S,XX
       REAL    ACHK,RNGCHK,TOTCHK
       REAL    TOTA,TOTV,TOTA2,TOTV2,tmpval
-c
+c slmod begin
+      REAL*8  :: AREA_SUM
+      LOGICAL :: WARNING_MESSAGE = .TRUE.
+c slmod endc
       real    apara,apol,afact
 C
       TOTA   = 0.0
@@ -4064,6 +4067,7 @@ C---- AROUND THE PERIMETER.
 C
 c slmod begin
  205  CONTINUE
+      AREA_SUM = 0.0D0
 c slmod end
       KP = KORPG(IK,IR)
       KAREA2(IK,IR) = 0.0
@@ -4078,6 +4082,42 @@ c
 c       Ensure that the area is greater than zero.
 c
         KAREA2(IK,IR) = 0.5 * abs(KAREA2(IK,IR))
+c slmod begin
+        IF     (KAREA2(IK,IR).LT.-1.0E-10) THEN 
+          CALL ER('TAUVOL','Malformed cell detected, stopping',*99)       
+        ELSEIF (KAREA2(IK,IR).LT.1.0E-06) THEN 
+          IF (WARNING_MESSAGE) THEN
+            WRITE(0,*) 'WARNING: Small area cell detected, using '//
+     +                 'double precision calculation in TAUVOL'
+            WARNING_MESSAGE = .FALSE.
+          ENDIF
+          KAREA2(IK,IR) = 0.0
+          DO L = 1, NVERTP(KP)
+            LP1 = L + 1
+            IF (L.EQ.NVERTP(KP)) LP1 = 1
+            AREA_SUM = AREA_SUM + 
+     +                 DBLE(RVERTP(LP1,KP)) * DBLE(ZVERTP(L  ,KP)) -
+     +                 DBLE(RVERTP(L  ,KP)) * DBLE(ZVERTP(LP1,KP))
+c            AREA_SUM = AREA_SUM + DBLE(RVERTP(LP1,KP) * ZVERTP(L  ,KP))-
+c     +                            DBLE(RVERTP(L  ,KP) * ZVERTP(LP1,KP))
+            IF (.TRUE.) THEN
+              KAREA2(IK,IR)=KAREA2(IK,IR)+(RVERTP(LP1,KP)*ZVERTP(L,KP)
+     +                                   - RVERTP(L,KP)*ZVERTP(LP1,KP))
+              WRITE(6,*) 'WARNING: SMALL AREA CELL DETECTED'
+              WRITE(6,*) '  KAREA2:',ik,ir,l
+              WRITE(6,*) '        :',karea2(ik,ir)
+              WRITE(6,*) '        :',area_sum
+              WRITE(6,*) '        :',lp1,kp,rvertp(lp1,kp)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',RVERTP(LP1,KP)*ZVERTP(L,KP)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',lp1,kp,zvertp(lp1,kp)
+              WRITE(6,*) '        :',RVERTP(L,KP)*ZVERTP(LP1,KP)
+            ENDIF
+          ENDDO
+          KAREA2(IK,IR) = SNGL(0.5D0*AREA_SUM)
+        ENDIF
+c slmod end
       ENDIF
 c slmod begin
       IF (cgridopt.EQ.LINEAR_GRID) THEN
@@ -4230,6 +4270,10 @@ C
  9008 FORMAT(//1X,'TOTAL: ',13X,1P,5E10.3)
 C
       RETURN
+c slmod begin
+ 99   WRITE(0,*) '  IK,IR=',ik,ir
+      STOP
+c slmod end
       END
 c
 c

@@ -1612,6 +1612,9 @@ c
       subroutine PINEXE(title,equil,lpinopt,litersol,iitersol,
      >                  liter,tmpcsopt,tmpcioptf,lpinavail,
      >                  iiterpin)
+c slmod begin
+      USE mod_sol28_global
+c slmod end
       implicit none
       logical lpinopt,litersol,liter,lpinavail
       integer iitersol,tmpcsopt,tmpcioptf,iiterpin
@@ -1631,6 +1634,10 @@ c     Local variables
 c
       integer retcode,ik,ir
       real pintim
+c slmod begin
+      integer iparam
+      character pin_command*1024
+c slmod end
 c
 c     Initialization
 c
@@ -1731,7 +1738,7 @@ c
            ENDIF
 
         ELSEIF (pincode.EQ.4.OR.pincode.EQ.5) THEN
-c...       Calling EIRENE04/06:
+c...       Calling EIRENE04/06/07:
            SELECTCASE (pincode)
              CASE(4)
                CALL WriteEireneFiles_04
@@ -1752,8 +1759,18 @@ c...       Calling EIRENE04/06:
              WRITE(0     ,*) 'Calling EIRENE0x, iteration',iitersol
              WRITE(PINOUT,*) 'Calling EIRENE0x, iteration',iitersol
            ENDIF
-
-           CALL InvokePIN(actpin,pintim,retcode)
+c...       Pass iteration number to the EIRENE script if tetrahedrons
+c          are being called:  *** HACK *** special for filaments at the moment...
+           IF (citersol.GT.0.AND.
+     .         (eirgeom.EQ.3.OR.opt_eir%ntime.NE.0)) THEN
+             iparam = iitersol    
+           ELSE
+             iparam = -1
+           ENDIF
+           WRITE(pin_command,'(A,I5.3)') TRIM(actpin),iparam
+           WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
+           CALL InvokePIN(pin_command,pintim,retcode)
+c           CALL InvokePIN(actpin,pintim,retcode)
 
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
@@ -1766,7 +1783,7 @@ c...       Read PIN results:
              CASE(4)
                CALL ReadEireneResults_04
              CASE(5)
-               CALL ReadEireneResults_06
+               CALL ReadEireneResults_06(iitersol)
            ENDSELECT
 
 c

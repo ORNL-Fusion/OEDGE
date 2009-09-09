@@ -88,52 +88,107 @@ c
       USE mod_user
       IMPLICIT none
 
-      INTEGER ion,itube,icell,ic1,ic2
+      REAL GetCs2
 
-      INTEGER i1,ival(10)
-      REAL val(10)
+      INTEGER ion,itube,icell,ic1,ic2,itube1,itube2
+
+      INTEGER i1,ival(10),target
+      REAL val(10),rdum
 
       INTEGER, ALLOCATABLE :: it(:),ic(:)
+      REAL   , ALLOCATABLE :: cs(:)
 
       ion = 1
 
+      itube1 = 1
+      itube2 = ntube
+c      itube1 = 4
+c      itube2 = 4  ! ntube
+
       ALLOCATE(it(ncell))
       ALLOCATE(ic(ncell))
+      ALLOCATE(cs(ncell))
 
-      CALL inOpenInterface('osm.test.idl')
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.plasma')
 
-      DO itube = 1, ntube
+      DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
         ic2 = tube(itube)%cell_index(HI)
         DO icell = ic1, ic2
           it(icell) = itube
           ic(icell) = icell
+          cs(icell) = GetCs2(fluid(icell,ion)%te,fluid(icell,ion)%ti)
         ENDDO
 
 c....   Low index target:
+        target = LO
         CALL inPutData(itube,'TUBE','none')
-        CALL inPutData(0    ,'CELL','none')
+        CALL inPutData(-1   ,'CELL','none')
         CALL inPutData(0.0,'s','m')
-        CALL inPutData(tube(itube)%te(LO),'Te','eV')
-        CALL inPutData(tube(itube)%ne(LO),'ne','m-3')
+        CALL inPutData(-1.0,'sbnd1','m')
+        CALL inPutData(-1.0,'sbnd2','m')
+        CALL inPutData(tube(itube)%ne(target)    ,'ne','m-3')
+        CALL inPutData(tube(itube)%vi(target,ion),'vi','m s-1')
+        rdum = GetCs2(tube(itube)%te(target),tube(itube)%ti(target,ion))
+        CALL inPutData(rdum                      ,'cs','m s-1')
+        CALL inPutData(tube(itube)%te(target)    ,'te','eV')
+        CALL inPutData(tube(itube)%ti(target,ion),'ti','eV')
 c....   Cells centres:
         CALL inPutData(it(ic1:ic2),'TUBE','none')
         CALL inPutData(ic(ic1:ic2),'CELL','none')
         CALL inPutData(cell(ic1:ic2)%s,'s','m')
-        CALL inPutData(fluid(ic1:ic2,ion)%te,'Te','eV')
+        CALL inPutData(cell(ic1:ic2)%sbnd(1),'sbnd1','m')
+        CALL inPutData(cell(ic1:ic2)%sbnd(2),'sbnd2','m')
         CALL inPutData(fluid(ic1:ic2,ion)%ne,'ne','m-3')        
+        CALL inPutData(fluid(ic1:ic2,ion)%vi,'vi','m s-1')        
+        CALL inPutData(cs   (ic1:ic2)       ,'cs','m s-1')
+        CALL inPutData(fluid(ic1:ic2,ion)%te,'te','eV')
+        CALL inPutData(fluid(ic1:ic2,ion)%ti,'ti','eV')
 c....   High index target:
+        target = HI
         CALL inPutData(itube,'TUBE','none')
-        CALL inPutData(ic2+1,'CELL','none')
-        CALL inPutData(tube(itube)%smax,'s','m')
-        CALL inPutData(tube(itube)%te(HI),'Te','eV')
-        CALL inPutData(tube(itube)%ne(HI),'ne','m-3')
+        CALL inPutData(-1   ,'CELL','none')
+        CALL inPutData(tube(itube)%smax          ,'s' ,'m')
+        CALL inPutData(-1.0,'sbnd1','m')
+        CALL inPutData(-1.0,'sbnd2','m')
+        CALL inPutData(tube(itube)%ne(target)    ,'ne','m-3')
+        CALL inPutData(tube(itube)%vi(target,ion),'vi','m s-1')
+        rdum = GetCs2(tube(itube)%te(target),tube(itube)%ti(target,ion))
+        CALL inPutData(rdum                      ,'cs','m s-1')
+        CALL inPutData(tube(itube)%te(target)    ,'te','eV')
+        CALL inPutData(tube(itube)%ti(target,ion),'ti','eV')
+      ENDDO
+      CALL inCloseInterface 
+
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.sources')
+      DO itube = itube1, itube2
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)
+c....   Cells centres:
+        CALL inPutData(it(ic1:ic2),'TUBE','none')
+        CALL inPutData(ic(ic1:ic2),'CELL','none')
+        CALL inPutData(cell(ic1:ic2)%s,'s','m')
+        CALL inPutData(fluid(ic1:ic2,ion)%parsrc,'parsrc','???')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momsrc,'momsrc','???')        
+        CALL inPutData(fluid(ic1:ic2,ion)%enesrc,'enesrc','???')
+        CALL inPutData(fluid(ic1:ic2,ion)%eneion,'eneion','???')
+        CALL inPutData(fluid(ic1:ic2,ion)%eneano,'eneano','???')
+        CALL inPutData(fluid(ic1:ic2,ion)%enisrc,'enisrc','???')
       ENDDO
 
       CALL inCloseInterface 
 
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.params')
+      CALL inPutData(2.0,'flupar mass','amu')
+      CALL inCloseInterface 
+
+
       DEALLOCATE(it)
       DEALLOCATE(ic)
+      DEALLOCATE(cs)
 
       RETURN
  99   STOP
@@ -313,6 +368,7 @@ c
       RETURN
  99   STOP
       END
+c
 c ======================================================================
 c
 c main.f

@@ -67,18 +67,27 @@ c
       IMPLICIT none
       PRIVATE
 
-
+!     OSM options:
+!     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_osm
          REAL*4    :: version = 1.0
+
+!...     Applicability:
+         INTEGER   :: iteration(2)
+         INTEGER   :: tube(2)
 
 !...     I/O:
          INTEGER   :: log          ! Log file option
          INTEGER   :: logfp        ! File pointer for log file
          INTEGER   :: debug
 
-         INTEGER   :: osm_load        ! Load status
-         CHARACTER :: f_osm_load*512  ! Name of file to be loaded
-         CHARACTER :: f_osm_dir*512   ! 
+         INTEGER   :: osm_load         ! Load status
+         CHARACTER :: f_osm_dir*512    ! 
+         CHARACTER :: f_osm_load*512   ! Name of file to be loaded
+
+         INTEGER   :: f_grid_format    ! Format of equilibrium grid to be loaded
+         CHARACTER :: f_grid_file*512  ! Name of equilibrium grid to be loaded
+         INTEGER   :: f_grid_strip     ! Remove boundary cells (1=first and last cells, first and last rings)
 
 !...     Control:
          INTEGER   :: nflukin      ! Number of fluid-kinetic code iterations
@@ -89,10 +98,12 @@ c
          INTEGER   :: cosm         ! OSM flux-tube loop internal iteration number for this run
          INTEGER   :: cflukin      ! OSM-kinetic code (Eirene,DIVIMP) iteration number
 
-
 !...     Fluid solver:  
-         INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
+         INTEGER   :: sol_n
+         INTEGER   :: sol_tube  (2,100)
+         INTEGER   :: sol_option(  100)
 
+         INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
 
          INTEGER   :: p_ion(2)         ! Ionisation 
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
@@ -127,21 +138,46 @@ c
          REAL      :: s28mode          ! Node assignment routine
       ENDTYPE type_options_osm
 
+
+      TYPE, PUBLIC :: type_options_filament
+         REAL*4    :: version = 1.0
+
+         INTEGER   :: opt
+         INTEGER   :: clip
+         INTEGER   :: target_flux
+         REAL      :: start_time
+         REAL      :: time_step
+         REAL      :: scale(3)
+         REAL      :: length1
+         REAL      :: length2
+! Time of interest for non-iterating solution, i.e. advancement to a particular time where everything starts at t=0.0
+! Cross field dimention of filament grid refinement: 1 - initial pass, 2 - second pass, 3 - plasma assignment
+      ENDTYPE type_options_filament
+
+!     EIRENE options:
+!     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_eirene
          REAL*4    :: version = 1.0
 
 !...     i/o:
+         INTEGER   :: f_eirene_load     ! Load status of reference files
+         CHARACTER :: f_eirene_dir*512  ! Directory where EIRENE data files are located 
+         CHARACTER :: f_eirene_13*512   ! eirene.13
+         CHARACTER :: f_eirene_15*512   ! eirene.15 for time dependent runs
 
 !...     Options:    
          INTEGER   :: geom            ! geometry  2-triangles 3-tetrahedrons (toroidal)
          INTEGER   :: time            ! Execution time (CPU time in seconds)
          REAL      :: dtimv           ! ?
+         REAL      :: time0           ! ?
          INTEGER   :: opacity         ! Lyman alpha photon opacity option
          INTEGER   :: photons         ! Photon transport option
          INTEGER   :: trim            ! Fast ion surface collision database
          INTEGER   :: bgk             ! Neutral viscosity
          INTEGER   :: niter           ! Number of Eirene self-iterations
+         INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
+         INTEGER   :: ilspt           ! Sputering option
 
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
@@ -258,6 +294,8 @@ c
         REAL    :: rho
         REAL    :: psin
         REAL    :: metric(2)             ! Cross-field othogonality metric at ends of tube
+!...    3D:
+        REAL    :: dangle                ! Toroidal angle step when calculating 3D flux-tube
 !...    DIVIMP geometry data (temporary):
         REAL    :: bratio(2)             ! Field ratio (not totally correct)
         REAL    :: dds   (2)             ! Length of target segment (m)
@@ -279,6 +317,10 @@ c
         REAL    :: machno(2)
         REAL    :: pi(2,s28_MAXNION)       
         REAL    :: ti(2,s28_MAXNION)       
+        REAL    :: gamma(2,s28_MAXNION)       
+        REAL    :: qe(2,s28_MAXNION)
+        REAL    :: te_upstream(2,s28_MAXNION)
+        REAL    :: Psol(2,s28_MAXNION)
 !...    Cells:
         INTEGER :: cell_index(2)           ! Index of flux-tube in the CELL array
 !...    Store solution parameters for upstream bc work:
@@ -303,12 +345,18 @@ c
 !     Cells:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_cell
-        INTEGER :: ik                               ! Index of cell in standard 2D grid
+        INTEGER*2 :: ik                             ! Knot index of cell in standard 2D grid
+        INTEGER*2 :: ir                             ! Ring index
 !...    Geometry data:
         REAL    :: cencar(3)                        ! Cell caresian center in machine coordinates
         REAL    :: centor(3)                        ! Cell toroidal center in 'toroidal' coordinates
         REAL    :: vol                              ! Cell volume 
         INTEGER :: nside                            ! Number of sides for each cell: nside=6 usually
+!...    3D:
+        REAL    :: s_3D
+        REAL    :: sbnd_3D(2)
+        REAL    :: area_3D
+        REAL    :: volume_3D
 !         ...need some reference to location relative to x-point...
         REAL    :: s                                ! Distance of cell center along the magnetic field line (m), s=0 at inner target (LO index target)
         REAL    :: p                                ! Poloidal distance of cell center from inner target (LO index target)
@@ -457,6 +505,15 @@ c
 !
 ! ----------------------------------------------------------------------
 !
+      MODULE mod_options
+      USE mod_sol28      
+      IMPLICIT none
+
+      TYPE(type_options_filament) :: opt_fil
+      END MODULE mod_options
+!
+! ----------------------------------------------------------------------
+!
       MODULE mod_sol28_global
       USE mod_sol28      
       USE mod_geometry
@@ -480,9 +537,17 @@ c
 
 
 !...
-      TYPE(type_options_osm   ) :: opt
-      TYPE(type_options_eirene) :: opt_eir
+      TYPE(type_options_osm     ) :: opt
+      INTEGER, PARAMETER :: MAX_NOPT = 10
+      INTEGER nopt
+      TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
+      TYPE(type_options_eirene  ) :: opt_eir   ! *** ADD SIMILAR FUNCTIONALITY? ***
       INTEGER log, logfp
+
+!...  Nasty...
+      INTEGER, PARAMETER :: MAX_NITERATION = 1000
+      INTEGER               iiteration,niteration
+      CHARACTER*1024        iteration_buffer(MAX_NITERATION)
 
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
@@ -527,7 +592,7 @@ c
       LOGICAL, SAVE :: output
 
 
-      REAL*8, PARAMETER :: ECH = 1.602D-19, AMU = 1.67D-27
+      REAL*8, PARAMETER :: ECH = 1.6022D-19, AMU = 1.67D-27
 
 
       TYPE(type_options_osm), SAVE :: opt
@@ -537,7 +602,9 @@ c
       INTEGER, SAVE ::    
 c     .  opt_bc(2),             ! Method of assigning boundary conditions (1=target, 2=upstream)
 c     .  opt_p_ion(2),             
-     .  opt_p_ion_scale(2)
+     .  sol_option,
+     .  opt_p_ion_scale(2),
+     .  node_par_mode  (100)
 c     .  opt_p_rec(2),             
 c     .  opt_p_ano(2),              
 c     .  opt_p_radExB(2),   
