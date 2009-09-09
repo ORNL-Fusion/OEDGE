@@ -2049,35 +2049,37 @@ c
 
       INTEGER ir
 
-      INTEGER ik,id1,id2,i1
+      INTEGER ik,id1,id2,i1,irset
 
-      IF (ir.GE.irsep.AND.ir.LT.irwall) THEN
-
+      IF (ir.GE.irsep.AND.ir.LE.nrs) THEN
+c      IF (ir.GE.irsep.AND.ir.LT.irwall) THEN
 c...    This ring is to be cut in the middle, so add another ring to the grid
-c       at IR=IRWALL-1 that will serve as the outer half of the ring
-c       being cut:
-        CALL InsertRing(irwall,BEFORE,PERMANENT)
+c       at that will serve as the outer half of the ring being cut:
+        IF (ir.LT.irwall) THEN
+          CALL InsertRing(irwall,BEFORE,PERMANENT)
+          irset = irwall - 1
+        ELSE
+          CALL InsertRing(nrs,AFTER,PERMANENT)
+          irset = nrs
+        ENDIF
 
 c...    Setup geometric quantities for the new ring:
-        nks   (irwall-1) = nks(ir)
-        irorg2(irwall-1) = ir
-c        idring(irwall-1) = TARTOTAR 
-        idring(irwall-1) = TARTOTAR - 100
+        nks   (irset) = nks(ir)
+        irorg2(irset) = ir
+        idring(irset) = TARTOTAR - 100
 
         DO ik = 1, nks(ir)  
-
 c...      Copy cell geometry data for the ring.  Only a limited
 c         set of cell/ring data needs to be specified because
 c         the ring is being added shortly after the grid is read in,
 c         and before it is processed by OEDGE:
-
-          bratio(ik,irwall-1) = bratio(ik,ir)
-          kbfs  (ik,irwall-1) = kbfs  (ik,ir)                
-          rs    (ik,irwall-1) = rs    (ik,ir)
-          zs    (ik,irwall-1) = zs    (ik,ir)
+          bratio(ik,irset) = bratio(ik,ir)
+          kbfs  (ik,irset) = kbfs  (ik,ir)                
+          rs    (ik,irset) = rs    (ik,ir)
+          zs    (ik,irset) = zs    (ik,ir)
 
           id1 = korpg(ik,ir)
-          id2 = korpg(ik,irwall-1)
+          id2 = korpg(ik,irset)
           nvertp(id2) = nvertp(id1)
           DO i1 = 1, nvertp(id2)
             rvertp(i1,id2) = rvertp(i1,id1)
@@ -2085,7 +2087,7 @@ c         and before it is processed by OEDGE:
           ENDDO
         ENDDO
       ELSE 
-        CALL ER('DupeRing','Core and PFZ cut require work',*99)
+        CALL ER('DupeRing','Core ring duplication requires work',*99)
       ENDIF
 
       RETURN
@@ -2261,9 +2263,9 @@ c
         kss   (ik,ir) =  REAL(ik) - 0.5
         ksb   (ik,ir) =  REAL(ik)
 
-        IF (ALLOCATED(sonnetik)) THEN
-          sonnetik(ik,ir) = sonnetik(ik,irref)
-          sonnetir(ik,ir) = sonnetir(ik,irref)
+        IF (ALLOCATED(divimp_ik)) THEN
+          divimp_ik(ik,ir) = divimp_ik(ik,irref)
+          divimp_ir(ik,ir) = divimp_ir(ik,irref)
         ENDIF
       ENDDO
 c
@@ -2761,9 +2763,9 @@ c      pinvdist(ik,ir) = pinvdist(ikinf,ir)
         ENDDO
       ENDDO
 
-      IF (ALLOCATED(sonnetik)) THEN
-        sonnetik(ik,ir) = sonnetik(ikinf,ir)
-        sonnetir(ik,ir) = sonnetir(ikinf,ir)
+      IF (ALLOCATED(divimp_ik)) THEN
+        divimp_ik(ik,ir) = divimp_ik(ikinf,ir)
+        divimp_ir(ik,ir) = divimp_ir(ikinf,ir)
       ENDIF
 
 c
@@ -3366,9 +3368,9 @@ c      pinvdist(ik1,ir) =  pinvdist(ik2,irref)
       pinqir  (ik1,ir1) = pinqir  (ik2,ir2)
       pinqer  (ik1,ir1) = pinqer  (ik2,ir2)
 
-      IF (ALLOCATED(sonnetik)) THEN
-        sonnetik(ik1,ir1) = sonnetik(ik2,ir2)
-        sonnetir(ik1,ir1) = sonnetir(ik2,ir2)
+      IF (ALLOCATED(divimp_ik)) THEN
+        divimp_ik(ik1,ir1) = divimp_ik(ik2,ir2)
+        divimp_ir(ik1,ir1) = divimp_ir(ik2,ir2)
       ENDIF
 
       RETURN
@@ -5912,6 +5914,8 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'pindata'
  
       CHARACTER*(*) note
 
@@ -5919,7 +5923,7 @@ c...  For call to STORE:
       CHARACTER title*174,desc*1024,job*72,equil*60
       REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
-      INTEGER i1,i2,ik,ir,id,in
+      INTEGER i1,i2,ik,ir,id,in,iwall
 
 c...  Recalculate cell centers:
 c      DO ir = 1, nrs
@@ -5935,6 +5939,15 @@ c        ENDDO
 c      ENDDO
 
 c      CALL SetupGrid
+
+      nvesm = nwall
+      DO iwall = 1, nwall
+        jvesm(iwall) = 8
+        rvesm(iwall,1) = wallco(iwall ,1)
+        zvesm(iwall,1) = wallco(iwall ,2)
+        rvesm(iwall,2) = wallco(iwall+1,1)
+        zvesm(iwall,2) = wallco(iwall+1,2)
+      ENDDO 
 
       CALL SaveSolution
       CALL OutputData(86,note(1:LEN_TRIM(note)))
@@ -6877,8 +6890,10 @@ c...          Points at the centers of inner targets:
 c...          Points near the outer midplane:
               IF (ir.LE.irwall) THEN
                 DO ik = 1, nks(ir)
-                  IF (rs(ik,ir).GT.r0.AND.zs(ik  ,ir).GT.0.0.AND.      ! I think RS/ZS are properly defined here...
-     .                                    zs(ik+1,ir).LT.0.0) THEN
+                  IF (rs(ik,ir).GT.r0.AND.zs(ik  ,ir).GT.z0.AND.      ! I think RS/ZS are properly defined here...
+     .                                    zs(ik+1,ir).LT.z0) THEN
+c                  IF (rs(ik,ir).GT.r0.AND.zs(ik  ,ir).GT.0.0.AND.      ! I think RS/ZS are properly defined here...
+c     .                                    zs(ik+1,ir).LT.0.0) THEN
                     id = korpg(ik,ir)
                     WRITE(98,'(2I6,2F10.6)') ik,ir,
      .                0.5*(rvertp(3,id)+rvertp(4,id)),
@@ -8528,7 +8543,6 @@ c     jdemod
          WRITE(6,*) 'PUTTING GRID TOGETHER'
       endif
 c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
-      CALL ALLOC_SONNET_INDEX_GRID(MAXNKS,MAXNRS)
       id = 0
       DO ir = 1, nrs
         DO ik = 1, nks(ir)        
@@ -8544,8 +8558,8 @@ c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
             zvertp(i2,id) = knot(i1)%zv(i2)
           ENDDO
 c...      Store these in case B2 data from Rhozansky is being loaded:
-          sonnetik(ik,ir) = knot(i1)%ik 
-          sonnetir(ik,ir) = knot(i1)%ir
+          divimp_ik(ik,ir) = knot(i1)%ik 
+          divimp_ir(ik,ir) = knot(i1)%ir
         ENDDO
       ENDDO
 
@@ -9281,9 +9295,9 @@ c
           bratio(ik,ir) = bratio(ik-1,ir)
           kbfs  (ik,ir) = kbfs  (ik-1,ir)
           korpg (ik,ir) = korpg (ik-1,ir)
-          IF (ALLOCATED(sonnetik)) THEN
-            sonnetik(ik,ir) = sonnetik(ik-1,ir)
-            sonnetir(ik,ir) = sonnetir(ik-1,ir)
+          IF (ALLOCATED(divimp_ik)) THEN
+            divimp_ik(ik,ir) = divimp_ik(ik-1,ir)
+            divimp_ir(ik,ir) = divimp_ir(ik-1,ir)
           ENDIF
         ENDDO
         bratio(1,ir) = bratio(2,IR)

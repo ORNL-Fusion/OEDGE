@@ -839,7 +839,7 @@ c          IF (.TRUE.) THEN
 c            WRITE(0,*) 'CONVERTING PSIN TO R'
 
 c            IF (lblock(i).EQ.2.AND.MOD(REAL(lcount),2.0).EQ.0) THEN 
-c              edata(i1,1) = (edata(i1,1) - (-1.36600006)) *   ! left off  * HACK *
+c              edata(i1,1) = (edata(i1,1) - (-1.36600006)) *  
 c     .                      (0.226 / 0.281) + (-1.366)
 c            ENDIF
 
@@ -3913,8 +3913,7 @@ c
       rval = r
 
       WRITE(SLOUT,'(A)') line
-      ! jdemod - change format so that number fits 
-      WRITE(SLOUT,'(5X,2A,I8,1P,E12.2)') tag,' = ',ival,rval
+      WRITE(SLOUT,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
@@ -3954,8 +3953,7 @@ c
       ival = i
 
       WRITE(SLOUT,'(A)')        line
-      ! jdemod - change format so that number fits 
-      WRITE(SLOUT,'(5X,2A,I8)') tag,' = ',ival
+      WRITE(SLOUT,'(5X,2A,I4)') tag,' = ',ival
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
@@ -4865,7 +4863,6 @@ c
       DO ik = iks, ike
 
         IF     (tag.EQ.'MOCK P2') THEN
-c...LEFT OFF
           IF (iks.EQ.1.AND.ik.EQ.iks) THEN
             deltas = kss(1,ir) - ksb(0,ir)
             sval   = 0.5 * (kss(1,ir) + ksb(0,ir))
@@ -6360,6 +6357,12 @@ c...    Include end points as .TRUE.:
       ELSEIF (mode.EQ.2.OR.mode.EQ.3) THEN
 c...    Don't include end points as .TRUE.:
         DTOL = -1.0D-05
+      ELSEIF (mode.EQ.5) THEN
+c...    More strict than MODE.EQ.2 or MODE.EQ.3:
+        DTOL = -1.0D-06
+      ELSEIF (mode.EQ.6) THEN
+c...    Less strict than MODE.EQ.1:
+        DTOL = +1.0D-07
       ELSE
         CALL ER('PointOnLine','Invalid MODE',*99)
       ENDIF
@@ -6378,6 +6381,9 @@ c        test = test.AND.DABS(x(0)-x(2)).LT.DTOL  ! BUG
         test = test.AND.s.GT.0.0D0-DTOL.AND.s.LT.1.0D0+DTOL
       ENDIF
 
+      IF (output) WRITE(0,'(A,2F12.6,1P,E14.7,L2)') 
+     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
+
       IF (test) THEN
         IF (DABS(y(0)-y(1)).LT.DABS(DTOL)) THEN
           IF (output) THEN
@@ -6394,6 +6400,9 @@ c          test = test.AND.DABS(y(0)-y(2)).LT.DTOL ! BUG
         ENDIF
 c...    This requirement is a little more relaxed due to small cells:   ! *PERHAPS SCALE ACCORDING TO SIDE LENGTH?*
         IF (mode.NE.3.AND.mode.NE.4.AND.
+     .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
+     .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
+        IF (mode.EQ.6.AND.
      .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
      .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
       ENDIF

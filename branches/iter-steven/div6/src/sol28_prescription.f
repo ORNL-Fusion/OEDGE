@@ -3,6 +3,7 @@ c
 c ======================================================================
 c
       SUBROUTINE InterpolateTeProfile(mode)  ! Pass quantity to be interpolated... so that this routine is non-Te specific...
+      USE mod_sol28_params
       USE mod_sol28_solver
       IMPLICIT none
  
@@ -14,7 +15,8 @@ c
 
 c...  Find first node in series with Te specified:
       DO inode1 = 1, nnode
-        IF (node(inode1)%te.NE.0.0) EXIT
+        IF (node(inode1)%te.NE.0.0.OR.
+     .      (opt%bc(LO).EQ.3.AND.inode1.EQ.1)) EXIT
       ENDDO
       IF (inode1.GT.nnode) CALL ER('InterpolatePro','NODE1 bad',*99)
 
@@ -25,12 +27,16 @@ c     where Te is defined:
 
 c...    Find next node in series with Te data:        
         DO inode2 = inode1+1, nnode
-          IF (node(inode2)%te.NE.0.0) EXIT
+          IF (node(inode2)%te.NE.0.0.OR.
+     .        (opt%bc(HI).EQ.3.AND.inode2.EQ.nnode)) EXIT
         ENDDO
-        IF (inode1.GT.nnode) CALL ER('InterpolatePro','NODE2 bad',*99)
+        IF (inode1.GE.nnode) CALL ER('InterpolatePro','NODE2 bad',*99)
 
 c...    Check which side of the symmetry point the nodes are on
 c       and assign 's' (distance along magnetic field line) accordingly:
+c        WRITE(logfp,*) 'PRECRIP:',inode1,mnode,inode2,nnode
+c        WRITE(0    ,*) 'PRECRIP:',inode1,mnode,inode2,nnode
+
         IF     (inode1.LT.mnode.AND.inode2.LE.mnode) THEN
           target = LO
           s => sfor
@@ -48,12 +54,12 @@ c       and assign 's' (distance along magnetic field line) accordingly:
 
 c...    Cycle if...:  *** NOT GOOD ENOUGH SINCE YOU COULD HAVE Evolve... CALLED UPSTREAM
 c       OF THE TARGET IN A DEFINED REGION... what a mess...
-        IF ((mode.EQ.1.AND.node(in2)%par_mode.EQ.6.AND.
-     .       opt%bc(target).GE.2).OR.
-     .      (mode.EQ.2.AND.node(in2)%par_mode.NE.6)) THEN
-          inode1 = inode2
-          CYCLE
-        ENDIF
+c        IF ((mode.EQ.1.AND.node(in2)%par_mode.EQ.6.AND.
+c     .       opt%bc(target).GE.2).OR.
+c     .      (mode.EQ.2.AND.node(in2)%par_mode.NE.6)) THEN
+c          inode1 = inode2
+c          CYCLE
+c        ENDIF
 
 c...
         s1 = s(node(in1)%icell)
@@ -66,6 +72,7 @@ c...
         deltav = v2 - v1
         deltas = s2 - s1
 
+c        SELECTCASE (node_par_mode(in2)) 
         SELECTCASE (node(in2)%par_mode) 
           CASE (1)
 c...        Power law:
@@ -103,8 +110,10 @@ c...        Pleasant:
             ENDDO
           CASE (6)
 c...        Te evolution:
-            CALL EvolveTeProfile(in1,in2,s,target)
+            CALL CalculateTeProfile(in1,in2,s,target)
+c            CALL EvolveTeProfile(in1,in2,s,target)
           CASE DEFAULT
+c            WRITE(0,*) 'DAT:',in2,node_par_mode(in2)
             WRITE(0,*) 'DAT:',in2,node(in2)%par_mode
             STOP 'NO DEFAULT AS YET'
         ENDSELECT 

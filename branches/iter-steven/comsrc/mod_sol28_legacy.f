@@ -12,7 +12,7 @@ c
      .                      IKLO = 1    , IKHI = 2    , MAXNAS2  = 200,
      .                      MAXPTS = 500
 
-      REAL, PARAMETER :: PI = 3.141592, ECH = 1.602E-19
+      REAL, PARAMETER :: PI = 3.141592, ECH = 1.6022E-19
  
       INTEGER irsep,irtrap,nrs,nlpdato,nlpdati,idring(MAXNRS),
      .        lpdatsw,relmode,rel_step

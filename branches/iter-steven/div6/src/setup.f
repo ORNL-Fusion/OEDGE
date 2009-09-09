@@ -74,8 +74,8 @@ c...  Assign B2 data:
 
           IR_LOOP: DO ir1 = 1, numir
             DO ik1 = 1, numik
-              IF (sonnetik(ik,ir).EQ.ikindex(ik1).AND.
-     .            sonnetir(ik,ir).EQ.irindex(ir1)) THEN    
+              IF (divimp_ik(ik,ir).EQ.ikindex(ik1).AND.
+     .            divimp_ir(ik,ir).EQ.irindex(ir1)) THEN    
                 array(ik,ir) = b2dat(ik1,ir1)
                 EXIT IR_LOOP
               ENDIF
@@ -96,7 +96,7 @@ c...  Assign B2 data:
       DO ir = 1, nrs
         DO ik = 1, nks(ir)
           WRITE(SLOUT,*) 'GRIDMAP:',ik,ir,' * ',
-     .                   sonnetik(ik,ir),sonnetir(ik,ir)
+     .                   divimp_ik(ik,ir),divimp_ir(ik,ir)
         ENDDO
       ENDDO
 
@@ -123,7 +123,8 @@ c
 
       ALLOCATE(fluvol(MAXNKS,MAXNRS))
 
-      WRITE(0,*) 'LOADING SOLPS DATA'
+      CALL LoadSOLPSData_OSM
+      RETURN
 
 c...  Files from Sergey (SOLPS5.0, 007666 at 220 ms, drifts and no drifts):
 c	Sna_ion0  ionization source for neutrals
@@ -1961,28 +1962,32 @@ c     IKTO2 and IKTI2:
 c
 c...  Check first that IKTO and IKTI are correct:
       
-      id1 = korpg(ikto,irsep)      
-      id2 = korpg(ikti,irsep)
-      IF (ABS(rvertp(4,id1)-rvertp(1,id2)).GT.TOL.OR.
-     .    ABS(zvertp(4,id1)-zvertp(1,id2)).GT.TOL) THEN
+      IF (connected) THEN
+
+      ELSE
+        id1 = korpg(ikto,irsep)      
+        id2 = korpg(ikti,irsep)
+        IF (ABS(rvertp(4,id1)-rvertp(1,id2)).GT.TOL.OR.
+     .      ABS(zvertp(4,id1)-zvertp(1,id2)).GT.TOL) THEN
  
-        IF (sloutput) WRITE(0,*) 'WARNING: HEALING IKTO AND IKTI'
+          IF (sloutput) WRITE(0,*) 'WARNING: HEALING IKTO AND IKTI'
 
-c...    Find IKTO and IKTI from the separatrix ring:
-        ir = irsep
-        DO ik1 = 1, nks(ir)-2
-          id1 = korpg(ik1,ir)
-          DO ik2 = ik1+2, nks(ir)
-            id2 = korpg(ik2,ir)
-            IF (ABS(rvertp(4,id1)-rvertp(1,id2)).LT.TOL.AND.
-     .          ABS(zvertp(4,id1)-zvertp(1,id2)).LT.TOL) THEN
-              ikto = ik1
-              ikti = ik2
-            ENDIF
-          ENDDO
-        ENDDO        
+c...      Find IKTO and IKTI from the separatrix ring:
+          ir = irsep
+          DO ik1 = 1, nks(ir)-2
+            id1 = korpg(ik1,ir)
+            DO ik2 = ik1+2, nks(ir)
+              id2 = korpg(ik2,ir)
+              IF (ABS(rvertp(4,id1)-rvertp(1,id2)).LT.TOL.AND.
+     .            ABS(zvertp(4,id1)-zvertp(1,id2)).LT.TOL) THEN
+                ikto = ik1
+                ikti = ik2
+              ENDIF
+            ENDDO
+          ENDDO        
 
-c       CALL ER('GridSpace','IKTO and IKTI not consistent',*99)
+c         CALL ER('GridSpace','IKTO and IKTI not consistent',*99)
+        ENDIF
       ENDIF
 
       rxp = rvertp(4,korpg(ikto,irsep)) 
@@ -2137,8 +2142,10 @@ c
 
           a1 = DBLE(r0)
           b1 = DBLE(r0) - 100.0D0
-          a2 = 0.0D0
-          b2 = 0.0D0
+          a2 = DBLE(z0)
+          b2 = DBLE(z0)
+c          a2 = 0.0D0
+c          b2 = 0.0D0
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
           IF (tab.GE.0.0.AND.tab.LE.1.0.AND.
      .        tcd.GE.0.0.AND.tcd.LE.1.0) THEN
@@ -2148,8 +2155,10 @@ c
 
           a1 = DBLE(r0)
           b1 = DBLE(r0) + 100.0D0
-          a2 = 0.0D0
-          b2 = 0.0D0
+          a2 = DBLE(z0)
+          b2 = DBLE(z0)
+c          a2 = 0.0D0
+c          b2 = 0.0D0
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
           IF (tab.GE.0.0.AND.tab.LE.1.0.AND.
      .        tcd.GE.0.0.AND.tcd.LE.1.0) THEN
@@ -2182,12 +2191,14 @@ c      CALL RZero(rho,MAXNRS*3)
 c      CALL RZero(rhoin,MAXNRS)
 c      CALL RZero(rhoou,MAXNRS)
 
-      WRITE(SLOUT,*) 'CALCULATING RHO', r0
+      WRITE(SLOUT,*) 'CALCULATING RHO', r0,z0
 
       a1 = r0
-      a2 = 0.0
+      a2 = z0
+c      a2 = 0.0
       b1 = r0 + 100.0
-      b2 = 0.0
+      b2 = z0
+c      b2 = 0.0
 
       DO ir = 2, irwall-1
         DO ik = 1, nks(ir)
@@ -2225,10 +2236,11 @@ c      CALL RZero(rhoou,MAXNRS)
         ENDDO
       ENDDO
 
-
-
-
-      rhozero = rho(irsep,IN14)
+      IF (connected) THEN
+        rhozero = rho(irsep2,IN14) 
+      ELSE
+        rhozero = rho(irsep ,IN14)
+      ENDIF
 
       DO ir = 2, irwall-1
         IF (rho(ir,CELL1).NE.0.0) THEN
@@ -2283,7 +2295,11 @@ c     the outer midplane:
       b2 = 0.0D0
 
 c...  Find RHOZERO:
-      ir = irsep
+      IF (connected) THEN 
+        ir = irsep2
+      ELSE
+        ir = irsep
+      ENDIF
       rhozero = 0.0
       DO ik = 1, nks(ir)
         id = korpg(ik,ir)
@@ -2433,20 +2449,15 @@ c
       WRITE(EROUT,'(A,2I4)') 'IKO  IKI   = ',iko,iki
       WRITE(EROUT,'(A,2I4)') 'IKTO IKTI  = ',ikto,ikti
 
+      zvertp(4,id1) = 0.0
+      zvertp(4,id2) = 0.0
+
       WRITE(0,*) 'IRs:',irsep,irsep2,ir
       WRITE(0,*) 'IKs:',ikto,ikti
       WRITE(0,*) 'IKs:',ikto2(irsep2),ikti2(irsep2)
       CALL DumpGrid('Connected bastard')
       STOP 
       END
-
-
-
-
-
-
-
-
 c
 c ======================================================================
 c
@@ -2617,15 +2628,7 @@ c...  Set additional cell "plasma" values to EIRENE vacuum defaults:
       WRITE(50,*) 'Initialising unstructured input options: '
       WRITE(50,*) ' '
 
-      DPERP6 = 1.0
-      DRFRAC = 0.5
-      DRSPAN = 0.0
-      DRSOUR = 0.1
 
-      EFPOPT = 0
-      WGDOPT = 0
-      IRDRFT = IRWALL
-      DRDECY = 0
       cgridst  = 0
 
       CALL IZero(eiraout,MAXASD*10) 

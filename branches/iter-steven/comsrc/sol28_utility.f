@@ -39,10 +39,11 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadGrid(fname)
+      USE mod_sol28_params
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER i1,fp,ion
+      INTEGER i1,fp,ion     ,itarget,itube
       REAL    vgrid  ! Version number
       CHARACTER*(*) fname
 
@@ -88,6 +89,47 @@ c...  Check version numbers:
 
 c      WRITE(0,*) 'NTUBE:',ntube
 c      STOP 'sdgfsdsdg'
+
+
+      ion = 1
+
+      tube(1:ntube)%jsat  (LO,ion) = 0.0
+      tube(1:ntube)%machno(LO)     = 0.0
+      tube(1:ntube)%gamma (LO,ion) = 0.0
+      tube(1:ntube)%ne    (LO)     = 0.0
+      tube(1:ntube)%te    (LO)     = 0.0
+      tube(1:ntube)%ni    (LO,ion) = 0.0
+      tube(1:ntube)%vi    (LO,ion) = 0.0
+      tube(1:ntube)%ti    (LO,ion) = 0.0
+
+      tube(1:ntube)%jsat  (HI,ion) = 0.0
+      tube(1:ntube)%machno(HI)     = 0.0
+      tube(1:ntube)%gamma (HI,ion) = 0.0
+      tube(1:ntube)%ne    (HI)     = 0.0
+      tube(1:ntube)%te    (HI)     = 0.0
+      tube(1:ntube)%ni    (HI,ion) = 0.0
+      tube(1:ntube)%vi    (HI,ion) = 0.0
+      tube(1:ntube)%ti    (HI,ion) = 0.0
+
+      fluid(1:nfluid,ion)%ne = 0.0
+      fluid(1:nfluid,ion)%te = 0.0
+      fluid(1:nfluid,ion)%ni = 0.0
+      fluid(1:nfluid,ion)%vi = 0.0
+      fluid(1:nfluid,ion)%ti = 0.0
+
+c        WRITE(0,*) 'TARGET DATA 1:'
+c        DO itarget = LO, HI
+c          WRITE(0,*)
+c          DO itube = 1, ntube
+c            WRITE(0,'(I6,1P,E16.6,0P,2X,F6.2,2X,2F10.6,2X,F8.2)')
+c     .        itube,
+c     .        tube(itube)%jsat  (itarget,ion),
+c     .        tube(itube)%machno(itarget),
+c     .        tube(itube)%te    (itarget),
+c     .        tube(itube)%ti    (itarget,ion),
+c     .        tube(itube)%gamma (itarget,ion)
+c          ENDDO
+c        ENDDO
 
       RETURN
  98   CALL ER('LoadGrid','Problem loading OSM grid file',*99)
@@ -142,7 +184,10 @@ c
       USE mod_sol28_solver
       IMPLICIT none
 
-      INTEGER inode,ion
+      INTEGER, INTENT(IN) :: inode,ion
+
+      INTEGER target
+      REAL    te_node,ti_node
       REAL*8  pressure,p(2)
 
       pressure = 0.0D0
@@ -154,19 +199,40 @@ c
       ELSEIF (node(inode)%ne.NE.0.0.AND.
      .        node(inode)%pe.NE.0.0) THEN
         STOP 'NOT SURE WHAT TO DO'
-      ELSEIF (node(inode)%ne.GT.0.0) THEN
-        SELECTCASE (0)
-          CASE (0)
-            pressure = ECH * DBLE(node(inode)%ne *              ! Inadequate...v.NE.0
-     .                 (node(inode)%te + node(inode)%ti(ion)))  ! Account for kinetic ions 
-          CASEDEFAULT                                           ! NODE%TE may not be set... ion.NE.1            
-        ENDSELECT                                                         
-      ELSEIF (node(inode)%pe.GT.0.0) THEN
-        SELECTCASE (0)
-          CASE (0)
-            pressure = 2.0D0 * DBLE(node(inode)%pe) * ECH     ! See above
-          CASEDEFAULT 
-        ENDSELECT
+      ELSE
+        target = LO
+        IF (inode.GT.mnode) target = HI
+
+        IF ( opt%bc(target).EQ.3.0.OR.
+     .      (opt%bc(target).EQ.1.0.AND.
+     .       (node(inode)%te.LE.0.001.OR.node(inode)%ti(ion).LE.0.001)))
+     .    THEN
+          te_node = te(node(inode)%icell)
+          ti_node = ti(node(inode)%icell,ion)
+        ELSE
+          te_node = node(inode)%te
+          ti_node = node(inode)%ti(ion)
+        ENDIF
+        IF (te_node.LE.0.001.OR.ti_node.LE.0.001) 
+     .    CALL ER('GetNodePressure','Temperature data not found',*99)
+
+        IF (node(inode)%ne.GT.0.0) THEN
+          SELECTCASE (0)
+            CASE (0)
+              pressure = ECH * DBLE(node(inode)%ne *              ! Inadequate...v.NE.0
+     .                   (te_node + ti_node))  ! Account for kinetic ions 
+c     .                   (node(inode)%te + node(inode)%ti(ion)))  ! Account for kinetic ions 
+            CASEDEFAULT                                           ! NODE%TE may not be set... ion.NE.1            
+          ENDSELECT                                                         
+        ELSEIF (node(inode)%pe.GT.0.0) THEN
+          SELECTCASE (0)
+            CASE (0)
+              pressure = 2.0D0 * DBLE(node(inode)%pe) * ECH     ! See above
+            CASEDEFAULT 
+          ENDSELECT
+        ELSE
+          CALL ER('GetNodePressure','Unknown situation',*99)
+        ENDIF
       ENDIF
 
       GetNodePressure = pressure
@@ -177,14 +243,19 @@ c
 c
 c ======================================================================
 c
-      INTEGER FUNCTION GetNumberOfObjects()
+      INTEGER FUNCTION GetNumberOfObjects(filename)
       IMPLICIT none
 
+      CHARACTER, INTENT(IN) :: filename*(*)
+
       INTEGER   fp,idum1
-      CHARACTER buffer*256
+      CHARACTER buffer*256,fname*512
+
+      fname = TRIM(filename)
+      IF (TRIM(filename).EQ.'default') fname = 'eirene.transfer'      
 
       fp = 99
-      OPEN(UNIT=fp,FILE='eirene.transfer',ACCESS='SEQUENTIAL',
+      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
       DO WHILE (.TRUE.)
         READ(fp,'(A256)',END=10) buffer
@@ -206,20 +277,55 @@ c
 c
 c ======================================================================
 c
+      SUBROUTINE LoadTriangles_06
+      USE mod_eirene06
+      IMPLICIT none
+
+      INTEGER fp,i1,i2
+      REAL    version
+
+      fp = 99
+      OPEN(UNIT=fp,FILE='triangles.raw',ACCESS='SEQUENTIAL',
+     .     FORM='UNFORMATTED',STATUS='OLD',ERR=98)            
+      READ(fp,ERR=98) version,ntri,nver,nsurface
+
+      IF (version.NE.1.0)
+     .  CALL ER('LoadTriangles','Unsupporting version',*99)
+
+      CALL ALLOC_VERTEX(nver)
+      CALL ALLOC_SURFACE(nsurface)
+      CALL ALLOC_TRIANGLE(ntri)
+      READ(fp,ERR=98) (tri(i1),i1=1,ntri)
+      READ(fp,ERR=98) ((ver(i1,i2),i2=1,3),i1=1,nver)
+      READ(fp,ERR=98) (surface(i1),i1=1,nsurface)
+
+c      WRITE(0,*) 'LOADING TRIANGLES:',ntri,nver,nsurface
+
+c      READ(fp,ERR=98) tri,ver,add
+      CLOSE (fp)
+      
+      RETURN
+ 98   CALL ER('LoadTriangles_06','Problems reading data file',*99)
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       RECURSIVE SUBROUTINE LoadTriangleData(flag1,flag2,flag3,normalize,
-     .                                      tdata)
+     .                                      tdata,filename)
 c      USE mod_eirene04
       IMPLICIT none
 
-      INTEGER flag1,flag2,flag3,normalize
-      REAL    tdata(*)
+      INTEGER   flag1,flag2,flag3,normalize
+      REAL      tdata(*)
+      CHARACTER filename*(*)
 
       INTEGER GetNumberOfObjects
 
       INTEGER   fp,ntally,ndata,icount,i1,index(20),ntri,
      .          iblk,iatm,imol,iion,ipho,ilin
       REAL      rdum(30),volmin
-      CHARACTER buffer*256
+      CHARACTER buffer*256,fname*512
 
       REAL, ALLOCATABLE :: tvol(:)      
 
@@ -230,13 +336,16 @@ c      tdata = 0.0  ! Initialization... problem, size unknown...
       IF (normalize.EQ.1) THEN
 c...    Load volumes:
         volmin = 1.0E+20
-        ntri = GetNumberOfObjects()
+        ntri = GetNumberOfObjects(TRIM(filename))
         ALLOCATE(tvol(ntri))
-        CALL LoadTriangleData(7,0,4,0,tvol)
+        CALL LoadTriangleData(7,0,4,0,tvol,TRIM(filename))
       ENDIF
 
+      fname = TRIM(filename)
+      IF (TRIM(filename).EQ.'default') fname = 'eirene.transfer'
+
       fp = 99
-      OPEN(UNIT=fp,FILE='eirene.transfer',ACCESS='SEQUENTIAL',
+      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
 
       iblk = 0
@@ -470,6 +579,7 @@ c
       REAL GetCs
 
       INTEGER target,itube,ion
+      REAL    area
 
       IF (target.NE.LO.AND.target.NE.HI) 
      .  CALL ER('CalcFlux','Invalid target region',*99)
@@ -478,13 +588,24 @@ c
         CalcFlux = 0.0
       ELSE
         ion = 1
+
+        area = V_PI * (tube(itube)%rp (target) +
+     .                 tube(itube)%dds(target) * 0.5)**2 - 
+     .         V_PI * (tube(itube)%rp (target) -
+     .                 tube(itube)%dds(target) * 0.5)**2
+
+        WRITE(88,*) 'AREA:',area
+
+        area = 2.0 * V_PI * tube(itube)%rp (target) * 
+     .                      tube(itube)%dds(target)
+
+        WRITE(88,*) 'AREA:',area
+
         CalcFlux = tube(itube)%ni    (target,ion) * 
      .             tube(itube)%vi    (target,ion) * 
-     .             tube(itube)%dds   (target) * 
      .             tube(itube)%bratio(target) * 
-     .             2.0 * V_PI * 
-     .             tube(itube)%rp    (target) *
-     .             tube(itube)%costet(target)
+     .             tube(itube)%costet(target) *
+     .             area
 c        CalcFlux = knds(id) * kvds(id) * dds2(id) * brat *
 c     .             2.0 * PI * rp(id) * costet(id) * eirsrcmul * 
 c     .             eirtorfrac
@@ -515,7 +636,9 @@ c     result is m s-1
       z = 1.0
       a = 2.0
 
-      GetCs2 = 9.78817E+03 * SQRT(0.5 * (1.0 + a) * (te + ti) / z)
+      GetCs2 = SQRT((te + ti) * 1.60E-19 / (a * 1.67E-27))  ! Needs improvement... 
+
+c      GetCs2 = 9.78817E+03 * SQRT(0.5 * (1.0 + a) * (te + ti) / z)
 
       RETURN
 99    STOP
@@ -537,7 +660,7 @@ c
         vb = v
       ENDIF
 
-      GetJsat2 = ne * 1.602E-19 * vb
+      GetJsat2 = ne * 1.6022E-19 * vb
 
       RETURN
 99    STOP

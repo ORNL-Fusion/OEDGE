@@ -15,7 +15,7 @@
     
 !...  Reflection model:
       INTEGER, PUBLIC, PARAMETER :: GLOBAL = 1, 
-     .                             LOCAL  = 2
+     .                              LOCAL  = 2
     
 !...  Surface types:
       INTEGER, PUBLIC, PARAMETER :: MAGNETIC_GRID = 1, 
@@ -46,6 +46,8 @@
         INTEGER :: type,subtype,num,index(10),orientation,zone
         INTEGER :: iliin,ilside,ilswch,ilcol,ilcell,iltor,reflect
         REAL    :: ewall,material,recyct,recycf
+        INTEGER :: ilspt,isrs
+        REAL    :: recycs,recycc
         CHARACTER*256 :: surtxt
 !         Geometry:
         INTEGER :: nsur,nver
@@ -63,7 +65,7 @@
         INTEGER :: map(3)
         INTEGER :: sid(3)
         INTEGER :: sur(3)
-        REAL    :: bfield(3)
+        REAL    :: bfield(4)
         REAL    :: efield(3)
         REAL    :: plasma(20)  ! 20 = e_pot temp!
       ENDTYPE type_triangle
@@ -72,7 +74,7 @@
       TYPE, PUBLIC :: type_eirene_cell
         INTEGER :: type,index(10),sideindex(10,4),zone
         INTEGER :: surface(4)
-        REAL    :: bfield(3),efield(3),plasma(20),e_pot
+        REAL    :: bfield(4),efield(3),plasma(20),e_pot
         REAL*8  :: r(4),z(4)
       ENDTYPE type_eirene_cell
 
@@ -128,9 +130,9 @@ c...    Quantities set in EIRENE interface routines:
       INTEGER, PUBLIC, SAVE :: ntardat
       REAL, PUBLIC, ALLOCATABLE, SAVE :: tardat(:,:)
 
-      INTEGER, PUBLIC, SAVE :: nstrata
+      INTEGER, PUBLIC, SAVE :: nstrata,osm_nstrata
       REAL   , PUBLIC, SAVE :: alloc
-      TYPE(type_strata), PUBLIC, SAVE :: strata(100)
+      TYPE(type_strata), PUBLIC, SAVE :: strata(100),osm_strata(100)
       
 !...  Fluid code defined EIRENE geometry surfaces:
       INTEGER, PUBLIC, SAVE :: nsurface 
@@ -139,13 +141,12 @@ c...    Quantities set in EIRENE interface routines:
       
 !...  Triangles:
       INTEGER, PUBLIC, SAVE :: ntri,nver
-      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
+      REAL*8, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)  ! FIX ...need more precision...
+c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
       TYPE(type_triangle), PUBLIC, ALLOCATABLE, SAVE :: tri(:)
 
-
-      
 !...  Block  1 variables:
-      INTEGER, PUBLIC, SAVE :: time,niter,nfile
+      INTEGER, PUBLIC, SAVE :: time,niter,nfile,ncall,time_iteration
     
 !...  Block  3 variables:
       REAL, PUBLIC, SAVE :: wtemp,ttemp,wmater,tmater,torus1,torus2
@@ -158,9 +159,9 @@ c...    Quantities set in EIRENE interface routines:
       INTEGER, PUBLIC, SAVE :: trim_data
     
 !...  Block 13 variables:
-      INTEGER, PUBLIC, SAVE :: dtimv
+      REAL, PUBLIC, SAVE :: dtimv,time0
     
-      LOGICAL, PUBLIC, SAVE :: tetrahedrons, helium
+      LOGICAL, PUBLIC, SAVE :: tetrahedrons, helium, time_dependent
 
 !...  i/o:
       INTEGER, PUBLIC, SAVE :: eirfp 

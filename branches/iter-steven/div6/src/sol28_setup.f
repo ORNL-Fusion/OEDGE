@@ -16,7 +16,58 @@ c
 c
 c ======================================================================
 c
+      SUBROUTINE AssignReferenceSolution
+      USE mod_sol28
+      USE mod_sol28_global
+      IMPLICIT none
+
+      INTEGER ion
+
+c...  Copy data to REF_xxx variables:
+      ref_ntube  = ntube
+      ref_nion   = nion
+      ref_nfluid = nfluid
+      IF (ALLOCATED(ref_tube )) DEALLOCATE(ref_tube )
+      IF (ALLOCATED(ref_fluid)) DEALLOCATE(ref_fluid)
+      ALLOCATE(ref_tube (ntube))
+      ALLOCATE(ref_fluid(nfluid,nion))
+      ref_tube(1:ntube) = tube(1:ntube)
+      DO ion = 1, nion  
+        ref_fluid(1:nfluid,ion) = fluid(1:nfluid,ion)
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE UnzipFile(fname)
+      IMPLICIT none
+
+      CHARACTER fname*(*)
+
+      INTEGER   status
+      CHARACTER command*1024
+
+      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') THEN
+        command = 'unzip '//TRIM(fname)
+        CALL CIssue(TRIM(command),status)        
+        IF (status.NE.0) 
+     .    CALL ER('UnzipFiles','Dismal failure',*99)
+        fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
+      ENDIF
+
+      RETURN
+ 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      WRITE(0,*) '  COMMAND   = ',TRIM(command)
+      WRITE(0,*) '  ERROR     = ',status
+      END
+c
+c ======================================================================
+c
       SUBROUTINE LoadReferenceSolution(mode)
+      USE mod_sol28_params
       USE mod_sol28
       USE mod_sol28_global
       IMPLICIT none
@@ -30,7 +81,7 @@ c
         ref_ntube  = 1
         ref_nion   = 1
         ref_nfluid = 1
-        ALLOCATE(ref_tube  (ref_ntube))
+        ALLOCATE(ref_tube (ref_ntube))
         ALLOCATE(ref_fluid(ref_nfluid,ref_nion))
         RETURN
       ENDIF
@@ -48,13 +99,14 @@ c...  Copy file to run directory:
      .  CALL ER('LoadReferencePlasma','Unable to copy plasma file',*99)
 
 c...  Unzip file if necessary:
-      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') THEN
-        command = 'unzip '//TRIM(fname)
-        CALL CIssue(TRIM(command),status)        
-        IF (status.NE.0) 
-     .    CALL ER('LoadReferencePlasma','Unable to unzip file',*99)
-        fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
-      ENDIF
+      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') 
+     .  CALL UnzipFile(fname)
+c        command = 'unzip '//TRIM(fname)
+c        CALL CIssue(TRIM(command),status)        
+c        IF (status.NE.0) 
+c     .    CALL ER('LoadReferencePlasma','Unable to unzip file',*99)
+c        fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
+c      ENDIF
 
       SELECTCASE (mode)
         CASE (1) 
@@ -62,25 +114,13 @@ c...      Load reference solution:
           WRITE(0,*) 'LOADING REFERENCE PLASMA:'      
           WRITE(0,*) '  FILE NAME = ',TRIM(fname)
           CALL LoadGrid(TRIM(fname))
-
-c...      Copy data to REF_ variables:
-          ref_ntube  = ntube
-          ref_nion   = nion
-          ref_nfluid = nfluid
-          IF (ALLOCATED(ref_tube )) DEALLOCATE(ref_tube )
-          IF (ALLOCATED(ref_fluid)) DEALLOCATE(ref_fluid)
-          ALLOCATE(ref_tube (ntube))
-          ALLOCATE(ref_fluid(nfluid,nion))
-          ref_tube(1:ntube) = tube(1:ntube)
-          DO ion = 1, nion  
-            ref_fluid(1:nfluid,ion) = fluid(1:nfluid,ion)
-          ENDDO
-
+          CALL AssignReferenceSolution
         CASE DEFAULT
           CALL ER('LoadReferenceSolution','Unknown MODE',*99)
       ENDSELECT
 
-      WRITE(0,*) 'REFERENCE:',fluid(1:50,1)%parion   
+      WRITE(0,*) 'REFERENCE:',
+     . ref_fluid(tube(4)%cell_index(LO):tube(4)%cell_index(HI),1)%eneion   
 
 c...  Need to add a better clean-up of the reference solution somewhere,
 c     since it probably isn't needed all the time and might take up
@@ -117,7 +157,7 @@ c...  Local:
 
       INTEGER ir,ii,ind1,ind2,i1,i2,i3,region,method,ring,target
 
-      LOGICAL specific,apply,repeat
+      LOGICAL specific,apply,repeat,cycle_loop
       REAL    dum1,dum2,dum3,dum4,exp2,exp3,exp4,dpsin,psin0,frac,
      .        tedat(MAXNRS),tidat(MAXNRS),nedat(MAXNRS)
 
@@ -416,6 +456,17 @@ c...  Copy data to OSM arrays:
       DO itube = 1, ntube
         IF (itube.LT.grid%isep) CYCLE
 
+        cycle_loop = .TRUE.
+        DO i1 = 1, opt%sol_n
+          IF (itube.GE.opt%sol_tube(1,i1).AND.
+     .        itube.LE.opt%sol_tube(2,i1)) cycle_loop = .FALSE.
+        ENDDO
+        IF (cycle_loop) CYCLE
+
+c        WRITE(0,*) 'WHAT?',itube,opt%sol_n
+c        WRITE(0,*) 'WHAT?',i1,opt%sol_tube(1:2,1)
+c        WRITE(0,*) 'WHAT?',i1,opt_iteration(1)%sol_tube(1:2,1)
+
         DO ii = 1, nlpdato
 c          ishift = 1
 c          IF (itube.GE.grid%ipfz) ishift = 2
@@ -447,7 +498,10 @@ c          IF (NINT(lpdati(ii,1)).EQ.itube+ishift) THEN
 
 
       RETURN
- 99   STOP
+ 99   WRITE(0,*) '  I!,REGION       =',i1,region
+      WRITE(0,*) ' -NINT(TARINTER)  =',-NINT(tarinter(i1,3,region))
+      WRITE(0,*) '  GRDNTREG(REGION)=',grdntreg(region)
+      STOP
       END
 
 
@@ -613,7 +667,7 @@ c              WRITE(0,*) 'BUFFER -:',TRIM(buffer)
 c... 
       SELECTCASE (coord)
         CASE (3)
-          xval = tube(itube)%psin - shift  ! LEFT OFF
+          xval = tube(itube)%psin - shift 
         CASE (4)
           xval = tube(itube)%rho - shift
         CASE DEFAULT
@@ -637,6 +691,12 @@ c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
       ELSE
         CALL Fitter(ndata,vdata(1,xcol),vdata(1,ycol),
      .              1,xval,yval,'LINEAR')
+
+c        WRITE(88,*) 'FIT:',ndata
+c        WRITE(88,*) '   :',vdata(1:ndata,xcol)
+c        WRITE(88,*) '   :',vdata(1:ndata,ycol)
+c        WRITE(88,*) '   :',xval,yval
+
       ENDIF
 
 c      WRITE(0,*) 'XCOL,YCOL:',xcol,ycol
@@ -1061,20 +1121,20 @@ c                 that are listed in the input file:
 c...              Count how many fit data lines are to be processed in this group:
                   nfit = 0
                   DO i4 = i1+1, osmnnode
-                    IF (node(i4)%type.NE.0.0) EXIT
+                    IF (osmnode(i4)%type.NE.0.0) EXIT  
                     nfit = nfit + 1
                   ENDDO
-c                  WRITE(0,*) 'NFIT:',nfit
+c                  WRITE(logfp,*) 'NFIT:',nfit
 
                   DO i4 = 1, nfit
                     ifit = i1 + i4
 
-c                    WRITE(0,*) 'FIT:',osmnode(ifit)%fit_type
-c                    WRITE(0,*) '   :',osmnode(ifit)%fit_psin(1)
-c                    WRITE(0,*) '   :',osmnode(ifit)%fit_psin(2)
-c                    WRITE(0,*) '   :',osmnode(ifit)%fit_shift
-c                    WRITE(0,*) '   :',osmnode(ifit)%fit_quantity
-c                    WRITE(0,*) '   :',osmnode(ifit)%fit_p(1:6)
+c                    WRITE(logfp,*) 'FIT:',osmnode(ifit)%fit_type
+c                    WRITE(logfp,*) '   :',osmnode(ifit)%fit_psin(1)
+c                    WRITE(logfp,*) '   :',osmnode(ifit)%fit_psin(2)
+c                    WRITE(logfp,*) '   :',osmnode(ifit)%fit_shift
+c                    WRITE(logfp,*) '   :',osmnode(ifit)%fit_quantity
+c                    WRITE(logfp,*) '   :',osmnode(ifit)%fit_p(1:6)
 
                     IF     (osmnode(ifit)%fit_type.EQ.-1.0) THEN 
                       psin1 = psin0 - osmnode(ifit)%fit_psin(1)
@@ -1087,7 +1147,8 @@ c                     returned in IDL (ts.pro at the moment):
                       ELSE
                         psin2 = psin1
                       ENDIF
-                       SELECTCASE (NINT(osmnode(ifit)%fit_type))
+c                      WRITE(logfp,*) 'PSIN1,2:',psin1,psin2
+                      SELECTCASE (NINT(osmnode(ifit)%fit_type))
                         CASE ( 1)  ! Polynomial
                           val = osmnode(ifit)%fit_p(1)            +
      .                          osmnode(ifit)%fit_p(2) * psin2    +
@@ -1171,7 +1232,6 @@ c...  Assign cell indeces:
           IF (node_s(i1)%s.GE.cell(ic)%sbnd(1).AND.
      .        node_s(i1)%s.LE.cell(ic)%sbnd(2))THEN
             node_s(i1)%icell = ic - tube(it)%cell_index(LO) + 1
-c >>>>H? >>>>              IF (i1.EQ.3) s(3) = cell(ic)%s
           ENDIF
         ENDDO
       ENDDO
@@ -1394,6 +1454,8 @@ c...  Set low index target node Te,i:
 99    WRITE(0,*) ' ITUBE=',itube
       WRITE(0,*) ' MNODE=',mnode
       WRITE(0,*) ' NNODE=',nnode
+      WRITE(0,*) ' TYPE =',tube(itube)%type
+      WRITE(0,*) ' COORD=',coord
       STOP
       END
 

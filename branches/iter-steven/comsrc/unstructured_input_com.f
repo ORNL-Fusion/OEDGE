@@ -158,26 +158,19 @@ c
 c
 c
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'001') THEN
-        CALL ReadR(line,dperp6,0.0,100.0,'DPERP6')
+c      ELSEIF (TAG(1:3).EQ.'001') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'002') THEN
-        CALL ReadI(line,efpopt,0,1,'EFPOPT')
+c      ELSEIF (TAG(1:3).EQ.'002') THEN
 c -----------------------------------------------------------------------
 c      ELSEIF (TAG(1:3).EQ.'003') THEN
-c        CALL ReadI(line,wgdopt,0,1,'WGDOPT')
 c -----------------------------------------------------------------------
 c      ELSEIF (TAG(1:3).EQ.'004') THEN
-c        CALL ReadR(line,drspan,-HI,HI,'DRSPAN')
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'005') THEN
-        CALL ReadR(line,drfrac,-HI,HI,'DRFRAC')
+c      ELSEIF (TAG(1:3).EQ.'005') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'006') THEN
-        CALL ReadR(line,drsour,-HI,HI,'DRSOUR')
+c      ELSEIF (TAG(1:3).EQ.'006') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'007') THEN
-        CALL ReadI(line,drdecy,0,0,'DRDECY')
+c      ELSEIF (TAG(1:3).EQ.'007') THEN
 c -----------------------------------------------------------------------
       ELSEIF (TAG(1:3).EQ.'008') THEN
         CALL ReadI(line,outmode,0,3,'Output mode for user information')

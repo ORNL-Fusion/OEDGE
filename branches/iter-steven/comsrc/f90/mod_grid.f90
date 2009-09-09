@@ -1,53 +1,54 @@
-!     -*-F90-*-
-MODULE mod_grid
-  IMPLICIT none
-  PRIVATE
+!     -*-Fortran-*-
+      MODULE mod_grid
+      IMPLICIT none
+      PUBLIC
 
 
-
-  PUBLIC :: ALLOC_SONNET_INDEX_GRID, DEALLOC_SONNET_INDEX_GRID
-
+!      PUBLIC :: ALLOC_GRID, DEALLOC_GRID
 
 
-  !...  Variables to store the knot indices in the sonnet grid file, for use when
-  !     loading B2 data from Rhozansky:
-  INTEGER, PUBLIC, ALLOCATABLE, SAVE :: sonnetik(:,:),sonnetir(:,:)
+      TYPE type_grid_cell
+        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+        REAL*8  :: rcen,zcen,bratio,rv(4),zv(4)
+      ENDTYPE type_grid_cell
+
+      INTEGER, PARAMETER :: GRD_FORMAT_SONNET = 1
 
 
+      INTEGER   :: grd_format
+      CHARACTER :: grd_filename*1024
 
-CONTAINS
+!...  Variables to store the knot indices in the sonnet grid file, for use when
+!     loading B2 data from Rhozansky:
+
+      INTEGER, SAVE :: divimp_maxnks,divimp_maxnrs
+      INTEGER, ALLOCATABLE, SAVE :: divimp_ik(:,:),divimp_ir(:,:)
+
+      CONTAINS
+
+      SUBROUTINE ALLOC_GRID(MAXNKS,MAXNRS)
+      INTEGER, INTENT(IN) :: MAXNKS,MAXNRS
+      IF (ALLOCATED(divimp_ik)) THEN
+        WRITE(0,*) 'ERROR MOD_GRID: Grid arrays already allocated'
+        WRITE(0,*) 'HALTING CODE'
+        STOP
+      ELSE
+        ALLOCATE(divimp_ik(MAXNKS,MAXNRS))
+        ALLOCATE(divimp_ir(MAXNKS,MAXNRS))      
+        divimp_ik = 0
+        divimp_ir = 0
+      ENDIF
+      divimp_maxnks = MAXNKS
+      divimp_maxnrs = MAXNRS
+      RETURN
+      END SUBROUTINE ALLOC_GRID
+      
+
+      SUBROUTINE DEALLOC_GRID
+      IF (ALLOCATED(divimp_ik)) DEALLOCATE(divimp_ik)       
+      IF (ALLOCATED(divimp_ir)) DEALLOCATE(divimp_ir)       
+      RETURN
+      END SUBROUTINE DEALLOC_GRID
 
 
-
-  SUBROUTINE ALLOC_SONNET_INDEX_GRID(MAXNKS,MAXNRS)
-    INTEGER, INTENT(IN) :: MAXNKS,MAXNRS
-    !      INTEGER, INTENT(IN) :: nrs,nks(nrs)
-    !      INTEGER :: maxnks,ir
-    IF (ALLOCATED(sonnetik)) THEN
-       WRITE(0,*) 'ERROR MOD_GRID: Grid arrays already allocated'
-       WRITE(0,*) 'HALTING CODE'
-       STOP
-    ELSE
-       !        maxnks = 0                   ! Find shorthand way of doing this... 
-       !        DO ir = 1, nrs
-       !          maxnks = MAX(maxnks,nks(ir))
-       !        ENDDO
-       !        ALLOCATE(sonnetik(maxnks,nrs+3))       
-       !        ALLOCATE(sonnetir(maxnks,nrs+3))      
-       ALLOCATE(sonnetik(MAXNKS,MAXNRS))
-       ALLOCATE(sonnetir(MAXNKS,MAXNRS))      
-    ENDIF
-    RETURN
-  END SUBROUTINE ALLOC_SONNET_INDEX_GRID
-
-
-  SUBROUTINE DEALLOC_SONNET_INDEX_GRID
-    IF (ALLOCATED(sonnetik)) THEN
-       DEALLOCATE(sonnetik)       
-       DEALLOCATE(sonnetir)       
-    ENDIF
-    RETURN
-  END SUBROUTINE DEALLOC_SONNET_INDEX_GRID
-
-
-END MODULE mod_grid
+      END MODULE mod_grid
