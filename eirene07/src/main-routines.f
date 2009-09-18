@@ -283,18 +283,25 @@ C
 C  each internal iteration or time-step starts here
 101   CONTINUE
 c  re-initialize some "ifirst"-blocks
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: A',NSTRAI,FLUX(3:4),NFILEL
       CALL GRNXTB(3,'EIRENE.F')
 
       IF (MY_PE == 0) THEN
 
       TIMI=SECOND_OWN()
 C
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: B',NSTRAI,FLUX(3:4),NFILEL
       CALL INPUT
-
+c slmod begin
+c BUG (OR SOMETHING): I can't recall now (how sad) but when NFILE
+c slmod end
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: B.1',NSTRAI,FLUX(3:4),NFILEL
       CALL ALLOC_COUTAU
 C
 C  CHECK PARAMETER STATEMENTS, STORAGE REQUIREMENTS
 C
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: C',NSTRAI,FLUX(3:4),ITIMV,
+c     .                            NFILEL
       CALL SETPRM
 
       CALL ALLOC_CSTEP
@@ -304,6 +311,7 @@ C
       CALL ALLOC_CSDVI_COP
       CALL ALLOC_CLAST
 
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: D',NSTRAI,FLUX(3:4),NFILEL
       CALL STTXT1
 C
       TIME=SECOND_OWN()
@@ -460,6 +468,8 @@ C
       END IF   ! MY_PE == 0
 
       if (nprs > 1) CALL BROADCAST
+
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: E',NSTRAI,FLUX(3:4),NFILEL
 
       CALL MCARLO
 C
@@ -1548,6 +1558,9 @@ C
      .           INODES, J, ISEE, IPTSI, I1, I2, I3, IA, IT, IMCP,
      .           ISUM, NPX, IS, NEW_ITER, ISPC, IN
       INTEGER, EXTERNAL :: RANGET_EIRENE
+c slmod begin
+      INTEGER :: count = 0
+c slmod end
 C
       LOGICAL :: LGSTOP, NLPOLS, NLTORS
       DATA N2/2/
@@ -1953,6 +1966,14 @@ C  IS BIRTH PROCESS SURVIVED?
 C
 102       CONTINUE
 C  FOLLOW NEUTRAL PARTICLE
+c slmod begin
+c          WRITE(0,*) 'ISTRA,IPANU=',istra,ipanu
+c          IF (istra.EQ.2.AND.ipanu.EQ.15163) THEN
+c            count = count + 1
+c            IF (count.EQ.100) STOP 'HALTING EIRENE'
+c            trcgrd = .TRUE.
+c          ENDIF
+c slmod end           
           IF (ITYP.EQ.0.OR.ITYP.EQ.1.OR.ITYP.EQ.2) THEN
             CALL FOLNEUT
 C  FOLLOW TEST ION
@@ -2301,7 +2322,11 @@ c slmod end
         IESTR=ISTRA
         ISTRAA=ISTRA
         ISTRAE=ISTRA
-        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod begin
+        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER,IPANU)
+c
+c        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod end
         NEW_ITER=1
       ENDIF
 C
@@ -3752,7 +3777,16 @@ C
 
 C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
       FLXFAC(ISTR)=0.
-      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod begin
+      IF (SCALV(ISTR).LT.0.D0) THEN
+c...    Set the flux to a particular value:
+        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE',ISTR
+        FLUXT(ISTR)=-SCALV(ISTR)
+        IF (WTT.NE.0.D0) FLXFAC(ISTR)=FLUXT(ISTR)/WTT
+      ELSEIF (SCALV(ISTR).NE.0.D0) THEN
+c
+c      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod end
 C  NON DEFAULT SCALING OPTION
         IS=ISCLS(ISTR)
         IT=ISCLT(ISTR)
