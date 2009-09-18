@@ -400,7 +400,15 @@ C  RADIAL MESH
 C
         READ (IUNIN,6665) NLSLB,NLCRC,NLELL,NLTRI,NLPLG,
      .                    NLFEM,NLTET,NLGEN
-        READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+c slmod begin
+        IF (NLTET) THEN 
+          READ (IUNIN,6667) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+        ELSE
+          READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+        ENDIF
+c
+c        READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+c slmod end
         N1ST = MAX(N1ST,NR1ST)
         IF (NLPLG) NPLG = MAX(NPLG,NRPLG)
         IF (NLPLG) NPPART = MAX(NPPART,NPPLG)
@@ -727,7 +735,10 @@ C
      .        INDEX(ULINE,'CORONA')+
      .        INDEX(ULINE,'BOLTZMANN')+INDEX(ULINE,'COLRAD')
         IF (INMDL > 0) ICO = ICO + 1
+c        WRITE(0,*) 'DEBUG: NRC "'//TRIM(zeile)//'"'
+c        WRITE(0,*) 'DEBUG: NRC "'//zeile(33:35)//'"'
         READ (ZEILE(33:35),'(I3)') NRC
+c        WRITE(0,*) 'DEBUG: DONE'
         DO K=1,NRC
           READ (IUNIN,*)
           READ (IUNIN,*)
@@ -1184,6 +1195,9 @@ C
 6664  FORMAT (6E12.4)
 6665  FORMAT (12(5L1,1X))
 6666  FORMAT (12I6)
+c slmod begin
+6667  FORMAT (12I8)
+c slmod end
 
       END
 C ===== SOURCE: grid.f
@@ -2585,6 +2599,8 @@ cpb           and reaction cards
 cpb           example:   
 cpb           CFILE AMJUEL /home/boerner/Database/AMdata/amjuel.tex
 
+
+
       SUBROUTINE INPUT
 C
 C   READ INPUT DATA AND SET DEFAULT VALUES
@@ -3120,7 +3136,15 @@ C  RADIAL MESH
 C
         READ (IUNIN,6665) NLSLB,NLCRC,NLELL,NLTRI,NLPLG,NLFEM,NLTET,
      .                    NLGEN
-        READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+c slmod begin
+        IF (NLTET) THEN 
+          READ (IUNIN,6667) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+        ELSE
+          READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+        ENDIF
+c
+c        READ (IUNIN,6666) NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT,NCOOR
+c slmod end
         IF (INDGRD(1).LE.5) THEN
           IF (NLSLB.OR.NLCRC.OR.NLELL.OR.NLTRI) THEN
             READ (IUNIN,6664) RIA,RGA,RAA,RRA
@@ -4140,16 +4164,16 @@ C  Te profile
      .  READ (IUNIN,6664) TE0,TE1,TE2,TE3,TE4,TE5
 C  Ti profile(s)
       NPLSTI = 1
-      WRITE(0,*) 'NPLSTI=',nplsti
+c      WRITE(0,*) 'DEBUG: NPLSTI=',nplsti
       IF ((INDPRO(2) < 0) .OR. (INDPRO(2) > 9)) NPLSTI=NPLS
-      WRITE(0,*) 'NPLSTI=',nplsti,indpro(2),npls
+c      WRITE(0,*) 'DEBUG: NPLSTI=',nplsti,indpro(2),npls
       NLMLTI=NPLSTI > 1
       MPLSTI=1
       IF (NLMLTI) MPLSTI = (/ (I,I=1,NPLS) /)
       INDPRO(2)=IABS(INDPRO(2))
       IF (INDPRO(2) > 9) INDPRO(2) = MOD(INDPRO(2),10)
 c slmod begin - debug
-      WRITE(0,*) 'NPLSTI=',nplsti,indpro(2),nlmlti
+c      WRITE(0,*) 'NPLSTI=',nplsti,indpro(2),nlmlti,nfilel
 c      STOP 'sdfsd'
 c slmod end
       IF (INDPRO(2).LE.5.AND.NPLSI.GT.0) THEN
@@ -5316,7 +5340,12 @@ C
 C  READ INITIAL POPULATION FROM PREVIOUS RUN, OVERWRITE DEFAULTS
 C
         IPRNL=0
+c slmode begin
+c        WRITE(0,*) 'DEBUG: ITIMV A=',itimv,nfilel
+c        IF (NFILEJ.EQ.2.OR.(ITIMV.GT.1.AND.NFILEJ.EQ.3)) THEN
+c
         IF (NFILEJ.EQ.2.OR.NFILEJ.EQ.3) THEN
+c slmod end
           CALL RSNAP
           DTIMVO=DTIMV
 C
@@ -5388,6 +5417,9 @@ C
 6664  FORMAT (6E12.4)
 6665  FORMAT (12(5L1,1X))
 6666  FORMAT (12I6)
+c slmod begin
+6667  FORMAT (12I8)
+c slmod end
 66661 FORMAT (I3,1X,A6,1X,A4,A9,A3,2I3,3E12.4)
 66662 FORMAT (2E12.4,10I6)
 66664 FORMAT (I6,6X,5E12.4)
@@ -6341,7 +6373,7 @@ C  READ PLASMA BACKGROUND FROM EXTERNAL DATABASE (FT31) (NOT NLPLAS)
 C  OR FROM COMMON BRAEIR (NLPLAS)
         CALL IF1COP
       ENDIF
-
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.2=',nstrai,flux(3:4),nfilel
 !pb      TPB2=SECOND_OWN()     
 !pb      write (iunout,*) ' cpu-time fuer if1cop ',tpb2-tpb1
 !pb      tpb1 = tpb2
@@ -6362,6 +6394,7 @@ C
 !pb      write (iunout,*) ' cpu-time fuer intvol(voltal) ',tpb2-tpb1
 !pb      tpb1 = tpb2
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.3=',nstrai,flux(3:4),nfilel
       IF ((NFILEL.LE.1).OR.(NFILEL == 6)) THEN
 C
 C  SET PLASMA PARAMETERS AND SOURCE PARAMETERS
@@ -6420,6 +6453,7 @@ C
 C
 C  MODIFY SOME PLASMA DATA, USER SUPPLIED ROUTINE
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4=',nstrai,flux(3:4),nfilel
         CALL PLAUSR
 
 !pb      TPB2=SECOND_OWN()     
@@ -6429,6 +6463,8 @@ C
 C
 C  COMPUTE SOME 'DERIVED' PLASMA DATA PROFILES FROM THE INPUT PROFILES
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4.1=',nstrai,flux(3:4),
+c     .                            nfilel
         CALL PLASMA_DERIV(0)
 
 !pb      TPB2=SECOND_OWN()     
@@ -6437,12 +6473,15 @@ C
 C
 C  SET ATOMIC DATA TABLES
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4.2=',nstrai,flux(3:4),
+c     .                            nfilel
         CALL SETAMD(1)
 
 !pb      TPB2=SECOND_OWN()     
 !pb      write (iunout,*) ' cpu-time fuer setamd ',tpb2-tpb1
 !pb      tpb1 = tpb2
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4.3=',nstrai,flux(3),nfilel
         IF (NFILEL.EQ.1) CALL WRPLAM(TRCFLE,0)
         IF (NFILEL.EQ.6) CALL WRPLAM_XDR(TRCFLE,0)
 
@@ -6455,7 +6494,13 @@ C
 C
 C  READ PLASMA DATA, ATOMIC DATA, SOURCE DATA FROM FT13
 C
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4.4=',nstrai,flux(3:4)
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG:      =',nfilel
         IF ((NFILEL == 2) .OR. (NFILEL == 3)) THEN
+c slmod begin
+c BUG? Not sure why, but calling RPLAM sets FLUX(NSTRAI)=0.0 for
+c NTIME>0.  See the note in PLASMA_DERIV.
+c slmod end
           CALL RPLAM(TRCFLE,0)
         ELSEIF ((NFILEL == 7) .OR. (NFILEL == 8)) THEN
           CALL RPLAM_XDR(TRCFLE,0)
@@ -6464,10 +6509,11 @@ C
         ELSEIF (NFILEL == 9) THEN
           CALL RPLAM_XDR(TRCFLE,NFILEL)
         END IF
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.4.5=',nstrai,flux(3:4)
         CALL XSECTPH
 C
       ENDIF
-
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.5=',nstrai,flux(3:4)
 !pb      TPB2=SECOND_OWN()     
 !pb      write (iunout,*) ' cpu-time nach plasma definition ',tpb2-tpb1
 !pb      tpb1 = tpb2
@@ -6496,6 +6542,7 @@ C
      .                       TEXTS(NSPAMI+IPLS)
         END DO
       END DO
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.6=',nstrai,flux(3:4)
 C
 C  AT THIS POINT THE BACKGROUND MEDIUM DATA ARE ALL SET.
 C
@@ -6560,6 +6607,7 @@ C
       ENDIF
 
       CALL DEALLOC_BCKGRND
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.7=',nstrai,flux(3:4)
 C
       IF (NPHOTI > 0) CALL PH_INIT(3)
 
@@ -6581,7 +6629,7 @@ C
 !  determine number of background spectra
 
       NBACK_SPEC = 0
-
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.8=',nstrai,flux(3:4)
       DO J = 1, NADSPC
 !  spectrum in geometrical cell 
         IF (ESTIML(J)%PSPC%ISRFCLL == 2) THEN
@@ -6598,6 +6646,7 @@ C
 !pb      write (iunout,*) ' cpu-time am ende von input ',tpb2-tpb1
 !pb      tpb1 = tpb2
 
+c      IF (nstrai.GT.0) WRITE(0,*) 'DEBUG: C.9=',nstrai,flux(3:4)
 C
       RETURN
 C
@@ -6629,6 +6678,7 @@ C
       WRITE (iunout,*) 'SPECIFIC ZONES FOUND AT ZONE NO. ',I
       CALL EXIT_OWN(1)
       END
+
 C ===== SOURCE: mkcens.f
 !pb  18.12.06: definition of RPARTC changed
 C
@@ -6705,7 +6755,12 @@ C
 C
 C  READ INITIAL POPULATION FROM PREVIOUS RUN, OVERWRITE DEFAULTS
 C
+c slmod begin
+c        WRITE(0,*) 'DEBUG: ITIMV B=',itimv
+c      IF (NFILEJ.EQ.2.OR.(ITIMV.GT.1.AND.NFILEJ.EQ.3)) THEN
+c
       IF (NFILEJ.EQ.2.OR.NFILEJ.EQ.3) THEN
+c slmod end
 
 C  NEW TIMESTEP
         IF (DTIMVN.LE.0.D0) THEN
@@ -7313,7 +7368,8 @@ c  INDPRO=4:  read from stream DIO(IPLS)
 127     CALL PROFR (DIIN,1+0*NPLS+NPLSTI,NPLSI,NPLS,NSBOX)
         GOTO 1130
 1130  CONTINUE
-
+c      WRITE(0,*) 'DEBUG: PROUSR DIIN',diin(1,1)
+c      WRITE(0,*) 'DEBUG:            ',NPLS
 
 
 C  DRIFT VELOCITY
@@ -7513,6 +7569,10 @@ C  DEFAULT: ZERO
 157   CALL PROFR (ADIN,6+1*NPLS+NPLSTI+3*NPLSV,NAINI,NAIN,NSBOX)
       GOTO 1160
 1160  CONTINUE
+c slmod begin
+      CALL PROUSR (HELP,-999,0._DP,0._DP,0._DP,0._DP,
+     .             0._DP,0._DP,0._DP,0)       
+c slmod end
 C
 C
 C   SET VACUUM DATA IN ADDITIONAL REGIONS OUTSIDE THE
@@ -8203,6 +8263,11 @@ cdr      write (6,*) ' cputime for edrift, b_perp, etc. ',tpb2-tpb1
 cdr      tpb1 = tpb2
 
       IF ((NFILEL >=1) .AND. (NFILEL <=5)) THEN
+c slmod begin
+c BUG? This causes problems for NFILEL=1 and NTIME>0 since code in 
+c INPUT gets called for NFILEl=3 that sets FLUX(NSTRAI)=0.0, causing
+c ISTRAI=NSTRAI to be turned off.  See the note in INPUT (search for BUG).
+c slmod end
          NFILEL=3
          CALL WRPLAM(TRCFLE,0)
 !      ELSE
