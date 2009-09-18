@@ -1,0 +1,38 @@
+C
+C
+      SUBROUTINE HALDIS(TE,FRACT)
+C
+C  INPUT: TE(EV)
+C  OUTPUT: FRACT = FRACTION OF H ALPHA EMISSIONS PER PRODUCTION
+C                  OF H+ THROUGH DISSOCIATION OF H2 MOLECULES
+C                  FRACT= H+/PHOTON
+C                  TAKEN FROM:
+C                  D.HEIFETZ, ROLES OF THE ATOMIC PHYSICS OF H AND HE
+C                             IN EDGE PLASMAS
+C                  SPECIALISTS MEETING ON ATOMIC AND MOLECULAR DATA
+C                  FOR PLASMA EDGE STUDIES; IAEA, VIENNA, 1987
+C
+      USE PRECISION
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: TE
+      REAL(DP), INTENT(OUT) :: FRACT
+
+      REAL(DP) :: TED(13), FCD(13)
+      REAL(DP) :: Q
+      INTEGER :: II, IIM, J
+
+      DATA TED/0.,1.,2.,3.,4.,5.,10.,20.,50.,100.,200.,500.,1000./
+      DATA FCD/0.,0.,17.,30.,37.,40.,45.,47.,48.5,49.,49.5,49.5,49.5/
+
+      DO 10 J=2,13
+        II=J
+        IF (TED(II).GT.TE) GOTO 20
+10    CONTINUE
+20    IIM=II-1
+      Q=(FCD(II)-FCD(IIM))/(TED(II)-TED(IIM))
+      FRACT=Q*(TE-TED(IIM))+FCD(IIM)
+C
+      RETURN
+      END

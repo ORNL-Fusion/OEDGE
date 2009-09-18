@@ -570,8 +570,10 @@ c
       TYPE(type_drift   ), ALLOCATABLE, SAVE :: drift   (:,:) 
 
 !...  Reference plasma:
-      INTEGER, SAVE :: ref_ntube,ref_nion,ref_nfluid
-      TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
+!     jdemod - added ref_ncell and ref_cell - also added the save attribute
+      INTEGER, SAVE :: ref_ntube,ref_nion,ref_nfluid,ref_ncell
+      TYPE(type_tube), ALLOCATABLE, save :: ref_tube(:)
+      TYPE(type_cell), ALLOCATABLE, save :: ref_cell(:)
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
 
       END MODULE mod_sol28_global

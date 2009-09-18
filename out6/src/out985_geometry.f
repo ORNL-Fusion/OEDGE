@@ -258,7 +258,7 @@ c...  Project the point and polygon onto the closes plane:
 c      output = .TRUE.
 
 c
-      lastcp = 0.0
+      lastcp = 0.0D0
 c
       inpoly = .false.
 
@@ -335,13 +335,14 @@ c...         Need to know which surface for the side:
          cp = ( (x0-x1) * (y2-y1) ) - ( (y0-y1) * (x2-x1) )
 c
 c
-         if (v.eq.1.and.cp.ne.0.0) lastcp = cp
+         if (v.eq.1.and.cp.ne.0.0D0) lastcp = cp
 
          IF (status.EQ.1) THEN
             WRITE(0,'(A,2I6,2F12.6)') 'CP:',v,nextv,cp,lastcp
           ENDIF
+c         WRITE(6,'(A,3D18.6)') 'CP:',cp,lastcp,cp*lastcp
 c
-          if ((lastcp * cp).lt.0.0) GOTO 10
+          if ((lastcp * cp).lt.0.0D0) GOTO 10
 c
           if (cp.ne.0.0) lastcp = cp
 c
@@ -350,8 +351,9 @@ c
       inpoly = .true.
 
       IF (status.EQ.1) THEN
-         WRITE(0,'(A,2I6,2F12.6)') 'GOOD!'
+         WRITE(0,'(A)') 'GOOD!'
       ENDIF
+c      WRITE(6,'(A)') 'GOOD!'
 
  10   CONTINUE
 
@@ -644,6 +646,7 @@ c       intersection point is on the polygon:
 c...    This will always be satisfied, unless the chord and surface normal are orthogonal?
 
         IF (status.EQ.1) WRITE(0,*) 'U:',u
+c        WRITE(6,*) '  u:',u
 
         IF (u.GT.0.0D0.AND.u.LT.1.0D0+DTOL) THEN
 
@@ -782,10 +785,17 @@ c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
           d = -1.0D0         
           CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status) 
 
+c          WRITE(fp,*) 'D:',d(1:n)
+
           DO i4 = 1, n
             IF (ninter.LT.MAXINTER) THEN  
-              IF (d(i4).GT.1.0D-10) THEN  ! Don't include intersection where 
-                ninter = ninter + 1       ! the point is *on* a surface...
+
+              IF (obj(iobj)%gsur(iside).EQ.GT_TC.AND.  ! Don't include intersection where 
+     .            d(i4).GT.1.0D-10.OR.                 ! the point is *on* a surface...
+     .            obj(iobj)%gsur(iside).EQ.GT_TD.AND.  
+     .            d(i4).GT.1.0D-20) THEN
+c              IF (d(i4).GT.1.0D-10) THEN  
+                ninter = ninter + 1        
                 dinter(ninter) = d(i4)
                 vinter(1:3,ninter) = v(1:3,i4)
 

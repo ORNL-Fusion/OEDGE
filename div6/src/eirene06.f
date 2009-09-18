@@ -179,6 +179,7 @@ c...    Collect connection map information:
      .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for ITER
           isrf1(1) = 6  
         ENDIF
+        STOP 'SORT OUT THIS ANNOYING BUSINESS'
 c        IF (tetrahedrons.AND.   ! *** THIS ONE WAS ACTIVE MOST RECENTLY *** -SL, 12.08.09
 c    .       iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for MAST
 c         isrf1(1) = 8  
@@ -1597,7 +1598,7 @@ c...  Check if there are any malformed triangles:
       ENDDO
       IF (malformed) THEN
 c       This was being triggered with the ITER grid iterm.carre.105 because some cells
-c       near IRWALL were being incorrectly registeded as inside the current
+c       near IRWALL were being incorrectly registered as inside the current
 c       focus cell in ProcessFluidGrid, thanks to a lax DTOL in PointOnLine.  PointOnLine is a
 c       problem routine but I can't figure out a better solution as long as DIVIMP
 c       uses single precision REAL with RVERTP, etc., i.e. I need to use some DTOL threshold.
@@ -2865,7 +2866,7 @@ c...            Target quantities:
      .          ik1,ir1                 ! Fluid grid indices, for debugging only
 
               tot_flux = tot_flux + ABS(tardat(it,7))
-              WRITE(eirfp,*) 'FLUX 2:',it,tardat(it,7),tot_flux
+c              WRITE(eirfp,*) 'FLUX 2:',it,tardat(it,7),tot_flux
             ELSE
               CALL ER('WriteTriangleFiles','Target data appears to  '//
      .                'be over-specified',*99)
@@ -3144,8 +3145,9 @@ c     .          cell(i1)%index(1).EQ.1 .AND.
 c     .          cell(i1)%index(2).EQ.62.AND.
 c     .          (cell(i3)%index(2).EQ.63.OR.
 c     .           .FALSE.)) output = .TRUE.
-c            IF (i2.EQ.2.AND.cell(i3)%index(2).EQ.19) output = .TRUE.
-
+            IF (i2.EQ.1.AND.cell(i1)%index(1).EQ. 1.AND.               
+     .                      cell(i1)%index(2).EQ.83.AND.
+     .                      cell(i3)%index(2).EQ.82) output = .TRUE.
 
             IF (cell(i3)%index(1).EQ.1) THEN  ! *THIS MAY NOT WORK FOR EDGE2D*
 c...          Only check points 1 and 2 on the 1st cells of a given ring.  In theory, 
@@ -3157,13 +3159,15 @@ c             only points on side 23 of neighbouring cells need to be checked:
                 x(3) = cell(i3)%r(1)
                 y(3) = cell(i3)%z(1)
               ENDIF
-              IF (PointOnLine(x,y,s,t,2,output)) THEN
-                WRITE(eirfp,*) 'MORE CELLS FOUND:',i2,i3
+              IF (PointOnLine(x,y,s,t,7,output)) THEN
+c              IF (PointOnLine(x,y,s,t,2,output)) THEN
+                IF (output) WRITE(eirfp,*) 'MORE CELLS FOUND:',i2,i3
                 nlist(i2) = nlist(i2) + 1
                 xlist(nlist(i2),i2) = x(3)
                 ylist(nlist(i2),i2) = y(3)
                 slist(nlist(i2),i2) = s
               ENDIF
+              IF (output) WRITE(eirfp,*) 'CHECK 1',i3,s,t
             ENDIF
 c...        Check ...:
             IF (i2.EQ.1) THEN
@@ -3173,15 +3177,17 @@ c...        Check ...:
               x(3) = cell(i3)%r(4)
               y(3) = cell(i3)%z(4)
             ENDIF
-            IF (PointOnLine(x,y,s,t,5,output)) THEN
+            IF (PointOnLine(x,y,s,t,7,output)) THEN
 c            IF (PointOnLine(x,y,s,t,2,output)) THEN
-c              WRITE(eirfp,*) 'B:',i2,i3
+               IF (output) WRITE(eirfp,*) 'MORE CELLS FOUND 2:',i2,i3
+c             WRITE(eirfp,*) 'B:',i2,i3
               nlist(i2) = nlist(i2) + 1
               xlist(nlist(i2),i2) = x(3)
               ylist(nlist(i2),i2) = y(3)
               slist(nlist(i2),i2) = s
             ENDIF
-          ENDDO
+            IF (output) WRITE(eirfp,*) 'CHECK 2',i3,s,t 
+          ENDDO                                         
 c...
           nlist(i2) = nlist(i2) + 1
           xlist(nlist(i2),i2) = x(2)
@@ -3189,8 +3195,10 @@ c...
           slist(nlist(i2),i2) = 1.0D0
 
           IF (ntri.EQ.problem_triangle-1.OR.
-     .        ntri.EQ.problem_triangle-2) THEN
-            DO i3 = 1, nlist(i2)
+     .        ntri.EQ.problem_triangle-2.OR.
+     .        (i2.EQ.1.AND.cell(i1)%index(1).EQ. 1.AND.               
+     .                     cell(i1)%index(2).EQ.83)) THEN
+             DO i3 = 1, nlist(i2)
               WRITE(eirfp,'(A,I3,3F15.9)') 
      .          'LIST A:',i2,xlist(i3,i2),ylist(i3,i2),slist(i3,i2)
             ENDDO
@@ -3831,7 +3839,8 @@ c
       IF     (niter.GE.1) THEN
 c...    BGK or photons:
         WRITE(fp06,91) 2,0,time,nfile,0,niter,0,ntime,ntime0
-        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
+        WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  
+c        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
         WRITE(fp06,90) 'FFFFF FFFF'
       ELSEIF (.TRUE.) THEN
 c...    Standard (no BGK or photons):
@@ -3839,7 +3848,8 @@ c...    Standard (no BGK or photons):
 c        WRITE(fp06,91) 2,0,time,nfile,0,1,0,ntime
 c        WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  ! NGSTAL=1
 c        WRITE(fp06,91) 1,1,0,0,1,0,0,0,5  ! *** MEMORY SAVING ***
-        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
+        WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  
+c        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
         WRITE(fp06,90) 'TFFFF FFFF'
 c        WRITE(fp06,90) 'FFFFF FFFF'
       ELSE
@@ -4286,7 +4296,7 @@ c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,92)  95.0, 95.0,800.0,0.0,   0.0,750.0
         WRITE(fp06,92)  45.0, 20.0
 c        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
-        WRITE(fp06,91) 1,100,1,2,3,4,5,6,9,0,1
+        WRITE(fp06,91) 1,10,1,2,3,4,5,6,9,0,1
         WRITE(fp06,91) 0
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)
@@ -4681,7 +4691,11 @@ c
         WRITE(fp06,90) 'FFFFF'  
         WRITE(fp06,91) strata(i1)%npts,strata(i1)%ninitl,
      .                 strata(i1)%nemods,1
-        WRITE(fp06,92) strata(i1)%flux
+        IF (strata(i1)%flux.EQ.-999.0) THEN      ! *** HACK, FOR NOW... ***
+          WRITE(fp06,92) 1.0,-1.0E-10
+        ELSE
+          WRITE(fp06,92) strata(i1)%flux
+        ENDIF
         WRITE(fp06,90) strata(i1)%species_tag
         WRITE(fp06,91) strata(i1)%nspez
         WRITE(fp06,90) strata(i1)%distrib

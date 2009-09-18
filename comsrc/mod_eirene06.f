@@ -89,6 +89,7 @@ c...    Quantities set in OSM input file:
         INTEGER   :: species
         INTEGER   :: species_index
         REAL      :: energy
+        INTEGER   :: target
         INTEGER   :: range_cell(2)
         INTEGER   :: range_tube(2)
         REAL      :: cos

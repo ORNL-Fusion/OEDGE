@@ -7,7 +7,8 @@ c subroutine: DrawGrid
 c
 c
       SUBROUTINE DrawGrid(iopt1)
-      USE mod_eirene04
+      USE mod_eirene06_parameters ! 04
+      USE mod_eirene06
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
@@ -21,6 +22,9 @@ c
 
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
+
+      REAL       DTOL
+      PARAMETER (DTOL=1.0D-06)
 
       INTEGER iopt,i1,i2,nline,lastcolour,v1,v2,ik,ir,id,idum1
       LOGICAL drawseparatrix
@@ -53,7 +57,7 @@ c *TEMP*
             IF     (iopt.EQ.95) THEN
 
               IF (tri(i1)%type.EQ.VACUUM_GRID.AND.     ! Walls
-     .             tri(i1)%sur(v1).NE.0) THEN
+     .            tri(i1)%sur(v1).NE.0) THEN
                 nline = nline + 1
                 lcolour(nline) = ncols + 2
                 lines(nline,1)=tri(i1)%ver(v1)
@@ -167,22 +171,22 @@ c...    Remove duplicates:
           DO i2 = i1+1, nline
             IF (lines(i1,1).NE.-999.0.AND.lines(i2,1).NE.-999.0) THEN
 c * IMPROVE THIS CHECK! *
-              IF ((ABS(ver(lines(i1,1),1)-
-     .                 ver(lines(i2,2),1)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,1),2)-
-     .                 ver(lines(i2,2),2)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,2),1)-
-     .                 ver(lines(i2,1),1)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,2),2)-
-     .                 ver(lines(i2,1),2)).LT.TOL).OR.
-     .            (ABS(ver(lines(i1,1),1)-
-     .                 ver(lines(i2,1),1)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,1),2)-
-     .                 ver(lines(i2,1),2)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,2),1)-
-     .                 ver(lines(i2,2),1)).LT.TOL.AND.
-     .             ABS(ver(lines(i1,2),2)-
-     .                 ver(lines(i2,2),2)).LT.TOL)) THEN
+              IF ((DABS(ver(lines(i1,1),1)-
+     .                  ver(lines(i2,2),1)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,1),2)-
+     .                  ver(lines(i2,2),2)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,2),1)-
+     .                  ver(lines(i2,1),1)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,2),2)-
+     .                  ver(lines(i2,1),2)).LT.DTOL).OR.
+     .            (DABS(ver(lines(i1,1),1)-
+     .                  ver(lines(i2,1),1)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,1),2)-
+     .                  ver(lines(i2,1),2)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,2),1)-
+     .                  ver(lines(i2,2),1)).LT.DTOL.AND.
+     .             DABS(ver(lines(i1,2),2)-
+     .                  ver(lines(i2,2),2)).LT.DTOL)) THEN
                 IF (lcolour(i1).EQ.1) THEN
                   lines(i1,1) = -999.0
                 ELSE
@@ -218,8 +222,8 @@ c...    Plot polygons:
             CALL LINCOL(lcolour(i1)) 
             lastcolour = lcolour(i1)
           ENDIF
-          CALL POSITN(ver(lines(i1,1),1),ver(lines(i1,1),2))
-          CALL JOIN  (ver(lines(i1,2),1),ver(lines(i1,2),2))
+          CALL POSITN(SNGL(ver(lines(i1,1),1)),SNGL(ver(lines(i1,1),2)))
+          CALL JOIN  (SNGL(ver(lines(i1,2),1)),SNGL(ver(lines(i1,2),2)))
         ENDDO
         DEALLOCATE(lines)
         DEALLOCATE(lcolour)
@@ -423,11 +427,13 @@ c...    Text:
         DO rscale = 100.0, 0.0, -dscale
           qval = qmin + (qmax - qmin) * rscale / 100.0
 c          qval = qval / qmax
-          IF     (qmax.GT.0.1.AND.qmax.LE.1.0) THEN
+          IF     (qval.GT.-0.999.AND.qval.LT.10.0) THEN
+c          IF     (qmax.GT.0.1.AND.qmax.LE.1.0) THEN
             WRITE(nums,'(F3.1)') qval
-          ELSEIF ((qmax.GT. 1.0.AND.qmax.LE. 999.9).OR.
-     .            (qmax.LE.-1.0.AND.qmax.GT.-999.9)) THEN
-            WRITE(nums,'(F5.1)') qval
+          ELSEIF (ABS(qval).LT.999.0) THEN
+c          ELSEIF ((qmax.GT. 1.0.AND.qmax.LE. 999.9).OR.
+c     .            (qmax.LE.-1.0.AND.qmax.GT.-999.9)) THEN
+            WRITE(nums,'(I4)') NINT(qval)
           ELSE
             WRITE(nums,'(1P,E9.1)') qval
             yshift = .TRUE.
@@ -498,7 +504,7 @@ c * OLD *
 
       IF     (mode.EQ.1) THEN
 
-        frac = (qval - qmin) / (qmax - qmin)
+        frac = (qval - qmin) / (qmax - qmin + 1.0E-10)
         frac5 = 100.0*frac
         fmod5 = AMOD(frac5,2.0)
         frac = MIN(0.98,(frac5-fmod5)/100.0)
@@ -669,7 +675,8 @@ c
       SUBROUTINE Plot987(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
-      USE mod_eirene04
+      USE mod_eirene06_parameters
+      USE mod_eirene06 
       IMPLICIT none
 
       INCLUDE 'params'
@@ -685,6 +692,9 @@ c
 
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
+
+      REAL*8     DTOL
+      PARAMETER (DTOL=1.0D-06)
 
       INTEGER CH1
       REAL    GetMach
@@ -722,8 +732,10 @@ c...  ADAS:
       REAL      wlngth
 
       INTEGER numplots
-      REAL    dx,dy,dist
+      REAL    dx,dy,dist,save_map2x
       DATA    numplots /0/
+ 
+      LOGICAL :: reset_origin = .TRUE.
 
       SAVE
 
@@ -819,17 +831,19 @@ c          map2y = map1y + 0.40
 
       ELSE
         BACKSPACE 5
-
         dist = 0.70 ! 0.80
         dx = dist * (xxmax-xxmin) / (yymax-yymin)
-        map1x = 0.05 + REAL(numplots) * dx
+        IF (reset_origin) THEN
+          map1x = 0.05 
+        ELSE
+          map1x = save_map2x
+        ENDIF
+c        map1x = 0.05 + REAL(numplots) * dx
         map2x = map1x + dx
         map1y = 0.20
         map2y = map1y + dist
+        save_map2x = map2x
       ENDIF
-
-
-
 
       CALL FULL
 c      CALL THICK2(6)
@@ -849,12 +863,11 @@ c     .                  TABLE,XLABEL,YLABEL,
 c     .                  0,smooth,0,ANLY,1)
 
 
-      IF (iopt.LT.500) CALL LoadTriangles
+      IF (iopt.LT.500) CALL LoadTriangles_06  ! just LoadTriangles before...
 
 c...problem is some small triangles driving up the neutral density? ... check against magnetic 
 c grid neutral density plot? or check agains ionisation plot to see if scales are the same... 
 c...check .eirdat file...
-
 
       IF (iopt.GE.500) THEN
 
@@ -887,9 +900,13 @@ c...check .eirdat file...
             gdata => gdata1
           CASE (599) 
             gdata => e2dcxrec  ! Testing
+          CASE (600)  ! Atom density
+            gdata => pinatom
+          CASE (601)  ! Molecule density
+            gdata => pinmol
           CASE (700)  ! Mach no. (absolute)
-            DO ir = irsep, nrs
-c            DO ir = 2, nrs
+c            DO ir = irsep, nrs
+            DO ir = 2, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               DO ik = 1, nks(ir)
                 gdata1(ik,ir) = GetMach
@@ -897,10 +914,18 @@ c            DO ir = 2, nrs
               ENDDO
             ENDDO
             gdata => gdata1
-          CASE (710) 
+          CASE (708) 
             gdata1 = 0.0
             DO ir = irsep, nrs
 c            DO ir = 2, nrs
+              IF (idring(ir).EQ.BOUNDARY) CYCLE
+              gdata1(1:nks(ir),ir) = ktebs(1:nks(ir),ir)
+            ENDDO
+            gdata => gdata1
+          CASE (710) 
+            gdata1 = 0.0
+c            DO ir = irsep, nrs
+            DO ir = 2, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               gdata1(1:nks(ir),ir) = knbs(1:nks(ir),ir)
             ENDDO
@@ -996,7 +1021,6 @@ c...    Load up data:
 c       DO ir = irsep, nrs
         DO ir = 1, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
-
 c          IF (ir.LT.irsep.OR.ir.GE.irtrap) CYCLE
           IF ((iopt.EQ.520.OR.iopt.EQ.521.OR.iopt.EQ.522.OR.
      .         iopt.EQ.599).AND.
@@ -1019,38 +1043,38 @@ c          IF (ir.LT.irsep.OR.ir.GE.irtrap) CYCLE
 
         ALLOCATE(tdata(ntri))
         tdata = 0.0
-        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata)  ! D  density
-        IF (.TRUE..AND.iopt.EQ.1) THEN
+        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata,'default')  ! D  density
+        IF (.FALSE..AND.iopt.EQ.1) THEN
           DO i1 = 1, ntri 
-            IF (ver(tri(i1)%ver(1),1).GT.1.80) THEN
-c     .          ver(tri(i1)%ver(1),1).LT.1.98) THEN
-              IF (ver(tri(i1)%ver(1),2).LT.-1.80) 
+            IF (ver(tri(i1)%ver(1),1).GT.1.80D0) THEN
+c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
+              IF (ver(tri(i1)%ver(1),2).LT.-1.80D0) 
      .          WRITE(0,*) 'LOWER DIVERTOR n_D :',tdata(i1)
-              IF (ver(tri(i1)%ver(1),2).GT.-0.3.AND.
-     .            ver(tri(i1)%ver(1),2).LT. 0.3) 
+              IF (ver(tri(i1)%ver(1),2).GT.-0.3D0.AND.
+     .            ver(tri(i1)%ver(1),2).LT. 0.3D0) 
      .          WRITE(0,*) 'MIDPLANE       n_D :',tdata(i1)
-              IF (ver(tri(i1)%ver(1),2).GT. 1.80) 
+              IF (ver(tri(i1)%ver(1),2).GT. 1.80D0) 
      .          WRITE(0,*) 'UPPER DIVERTOR n_D :',tdata(i1)
             ENDIF
           ENDDO
         ENDIF
-        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1 ,1,tdata)  ! D2 density
-        IF (.TRUE..AND.iopt.EQ.2) THEN
+        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1 ,1,tdata,'default')  ! D2 density
+        IF (.FALSE..AND.iopt.EQ.2) THEN
           DO i1 = 1, ntri 
-            IF (ver(tri(i1)%ver(1),1).GT. 1.80) THEN
-              IF (ver(tri(i1)%ver(1),2).LT.-1.80) 
+            IF (ver(tri(i1)%ver(1),1).GT. 1.80D0) THEN
+              IF (ver(tri(i1)%ver(1),2).LT.-1.80D0) 
      .          WRITE(0,*) 'LOWER DIVERTOR n_D2:',tdata(i1)
-              IF (ver(tri(i1)%ver(1),2).GT.-0.3.AND.
-     .            ver(tri(i1)%ver(1),2).LT. 0.3) 
+              IF (ver(tri(i1)%ver(1),2).GT.-0.3D0.AND.
+     .            ver(tri(i1)%ver(1),2).LT. 0.3D0) 
      .          WRITE(0,*) 'MIDPLANE       n_D2:',tdata(i1)
-              IF (ver(tri(i1)%ver(1),2).GT. 1.80) 
+              IF (ver(tri(i1)%ver(1),2).GT. 1.80D0) 
      .          WRITE(0,*) 'UPPER DIVERTOR n_D2:',tdata(i1)
             ENDIF
           ENDDO
         ENDIF
 
-        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
-        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata)  ! Ionisation
+        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata,'default')  ! Dalpha
+        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata,'default')  ! Ionisation
 
         IF (iopt.EQ.4) THEN
           DO i1 = 1, ntri
@@ -1060,29 +1084,30 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98) THEN
           ENDDO
         ENDIF
 
-        IF (iopt.EQ.5 ) CALL LoadTriangleData(1,1,10,0,tdata)  ! D+ density
-        IF (iopt.EQ.6 ) CALL LoadTriangleData(1,1,15,0,tdata)  ! D+ temperature
-        IF (iopt.EQ.8 ) THEN                                   ! D2 pressure from D2 energy density
-          CALL LoadTriangleData(3,1,6,1,tdata) 
+        IF (iopt.EQ.5 ) CALL LoadTriangleData(1,1,10,0,tdata,'default')  ! D+ density
+        IF (iopt.EQ.6 ) CALL LoadTriangleData(1,1,15,0,tdata,'default')  ! D+ temperature
+        IF (iopt.EQ.8 ) THEN                                             ! D2 pressure from D2 energy density
+          CALL LoadTriangleData(3,1,6,1,tdata,'default') 
           fact = ECH * 0.667 * 7.502
 c          fact = ECH * 1.0E+06 * 7.502
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * fact
-
-            IF (ver(tri(i1)%ver(1),1).LT. 0.65.AND.
-     .          ver(tri(i1)%ver(1),2).LT.-0.62) THEN
+            IF (.FALSE..AND.
+     .          ver(tri(i1)%ver(1),1).LT. 0.65D0.AND.
+     .          ver(tri(i1)%ver(1),2).LT.-0.62D0) THEN
               WRITE(0,*) 'PRESSURE:',
      .          ver(tri(i1)%ver(1),1),ver(tri(i1)%ver(1),2),tdata(i1)
             ENDIF
 c            IF (tri(i1)%type.EQ.MAGNETIC_GRID) tdata(i1) = 0.0
           ENDDO
         ENDIF
-        IF (iopt.EQ.9 ) CALL LoadTriangleData(3,1,7,0,tdata)  ! D2 average energy
+        IF (iopt.EQ.9 ) CALL LoadTriangleData(3,1,7,0,tdata,'default')  ! D2 average energy
         IF (iopt.EQ.9) THEN
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * 0.667
-            IF (ver(tri(i1)%ver(1),1).LT. 0.65.AND.
-     .          ver(tri(i1)%ver(1),2).LT.-0.62) THEN
+            IF (.FALSE..AND.
+     .          ver(tri(i1)%ver(1),1).LT. 0.65D0.AND.
+     .          ver(tri(i1)%ver(1),2).LT.-0.62D0) THEN
               WRITE(0,*) 'AVG ENG:',
      .          ver(tri(i1)%ver(1),1),ver(tri(i1)%ver(1),2),tdata(i1)
             ENDIF
@@ -1091,26 +1116,26 @@ c            IF (tri(i1)%type.EQ.MAGNETIC_GRID) tdata(i1) = 0.0
 
         IF (iopt.EQ.10) THEN 
           ALLOCATE(tdata1(ntri))
-          CALL LoadTriangleData(2,1,1,1,tdata)   ! D  density
-          CALL LoadTriangleData(3,1,1,1,tdata1)  ! D2 density
+          CALL LoadTriangleData(2,1,1,1,tdata ,'default')  ! D  density
+          CALL LoadTriangleData(3,1,1,1,tdata1,'default')  ! D2 density
           tdata(1:ntri) = tdata(1:ntri) + 2.0 * tdata1(1:ntri)
           DEALLOCATE(tdata1)
         ENDIF
 
-        IF (iopt.EQ.21) CALL LoadTriangleData(2,1,1,0,tdata)  ! D  density, no volume scaling
-        IF (iopt.EQ.22) CALL LoadTriangleData(3,1,1,0,tdata)  ! D2 density, no volume scaling
-        IF (iopt.EQ.23) CALL LoadTriangleData(6,2,6,1,tdata)  ! Dgamma (total)
+        IF (iopt.EQ.21) CALL LoadTriangleData(2,1,1,0,tdata,'default')  ! D  density, no volume scaling
+        IF (iopt.EQ.22) CALL LoadTriangleData(3,1,1,0,tdata,'default')  ! D2 density, no volume scaling
+        IF (iopt.EQ.23) CALL LoadTriangleData(6,2,6,1,tdata,'default')  ! Dgamma (total)
 
-        IF (iopt.EQ.60) CALL LoadTriangleData(5,1,1,1,tdata)  ! Balmer alpha
-        IF (iopt.EQ.61) CALL LoadTriangleData(5,2,1,1,tdata)  ! Lyman alpha
-        IF (iopt.EQ.62) CALL LoadTriangleData(5,3,1,1,tdata)  ! Lyman beta
-        IF (iopt.EQ.63) CALL LoadTriangleData(5,4,1,1,tdata)  ! Lyman gamma
-        IF (iopt.EQ.64) CALL LoadTriangleData(5,5,1,1,tdata)  ! Lyman delta
-        IF (iopt.EQ.65) CALL LoadTriangleData(5,6,1,1,tdata)  ! Lyman epsilon
+        IF (iopt.EQ.60) CALL LoadTriangleData(5,1,1,1,tdata,'default')  ! Balmer alpha
+        IF (iopt.EQ.61) CALL LoadTriangleData(5,2,1,1,tdata,'default')  ! Lyman alpha
+        IF (iopt.EQ.62) CALL LoadTriangleData(5,3,1,1,tdata,'default')  ! Lyman beta
+        IF (iopt.EQ.63) CALL LoadTriangleData(5,4,1,1,tdata,'default')  ! Lyman gamma
+        IF (iopt.EQ.64) CALL LoadTriangleData(5,5,1,1,tdata,'default')  ! Lyman delta
+        IF (iopt.EQ.65) CALL LoadTriangleData(5,6,1,1,tdata,'default')  ! Lyman epsilon
 
-        IF (iopt.EQ.80) CALL LoadTriangleData(2,2,1,1,tdata)  ! He(1|1) density
-        IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata)  ! He(2|1)
-        IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata)  ! He(2|3)
+        IF (iopt.EQ.80) CALL LoadTriangleData(2,2,1,1,tdata,'default')  ! He(1|1) density
+        IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata,'default')  ! He(2|1)
+        IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata,'default')  ! He(2|3)
 
         ALLOCATE(nv(ntri))
         ALLOCATE(rv(3,ntri))
@@ -1128,13 +1153,12 @@ c...    Load up data:
           nc = nc + 1
           DO v1 = 1, 3
             nv(nc) = nv(nc) + 1
-            rv(v1,nc) = ver(tri(i1)%ver(v1),1)
-            zv(v1,nc) = ver(tri(i1)%ver(v1),2)
+            rv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),1))
+            zv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),2))
           ENDDO
           cq(nc) = tdata(i1)
         ENDDO
       ENDIF
-
 
 c...  Scale the data:
       IF (ALLOCATED(cq)) THEN
@@ -1169,7 +1193,7 @@ c...        Decide if the cell is within the viewing range:
           ENDDO
           IF (setqmin.AND.qmin.GT.-1.0E-10) qmin = MAX(qmin,0.01*qmax)
         ENDIF
-c        WRITE(0,*) 'QMIN,QMAX:',qmin,qmax
+        WRITE(0,*) 'QMIN,QMAX:',qmin,qmax
 
 c...    Draw polygons:
         CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
@@ -1227,11 +1251,11 @@ c...    Magnetic grid:
             IF     (idring(irouts(ik,ir)).EQ.BOUNDARY.OR.
      .              irouts(ik,ir).EQ.ir) THEN  ! The connection map for CDN is not working...
               nver = nver + 1
-              ver(nver,1) = rvertp(2,id)
-              ver(nver,2) = zvertp(2,id)
+              ver(nver,1) = DBLE(rvertp(2,id))
+              ver(nver,2) = DBLE(zvertp(2,id))
               nver = nver + 1
-              ver(nver,1) = rvertp(3,id)
-              ver(nver,2) = zvertp(3,id)
+              ver(nver,1) = DBLE(rvertp(3,id))
+              ver(nver,2) = DBLE(zvertp(3,id))
               nline = nline + 1
               lines(nline,1) = nver - 1
               lines(nline,2) = nver 
@@ -1239,11 +1263,11 @@ c...    Magnetic grid:
             ELSEIF (idring(irins(ik,ir)).EQ.BOUNDARY.OR.
      .              (ir.EQ.irsep.OR.ir.EQ.irsep2)) THEN
               nver = nver + 1
-              ver(nver,1) = rvertp(1,id)
-              ver(nver,2) = zvertp(1,id)
+              ver(nver,1) = DBLE(rvertp(1,id))
+              ver(nver,2) = DBLE(zvertp(1,id))
               nver = nver + 1
-              ver(nver,1) = rvertp(4,id)
-              ver(nver,2) = zvertp(4,id)
+              ver(nver,1) = DBLE(rvertp(4,id))
+              ver(nver,2) = DBLE(zvertp(4,id))
               nline = nline + 1
               lines(nline,1) = nver - 1
               lines(nline,2) = nver 
@@ -1260,11 +1284,11 @@ c...      Targets:
           IF (ir.GT.irsep) THEN
             id = korpg(1,ir)
             nver = nver + 1
-            ver(nver,1) = rvertp(1,id)
-            ver(nver,2) = zvertp(1,id)
+            ver(nver,1) = DBLE(rvertp(1,id))
+            ver(nver,2) = DBLE(zvertp(1,id))
             nver = nver + 1
-            ver(nver,1) = rvertp(2,id)
-            ver(nver,2) = zvertp(2,id)
+            ver(nver,1) = DBLE(rvertp(2,id))
+            ver(nver,2) = DBLE(zvertp(2,id))
             nline = nline + 1
             lines(nline,1) = nver - 1
             lines(nline,2) = nver 
@@ -1272,11 +1296,11 @@ c...      Targets:
 
             id = korpg(nks(ir),ir)
             nver = nver + 1
-            ver(nver,1) = rvertp(3,id)
-            ver(nver,2) = zvertp(3,id)
+            ver(nver,1) = DBLE(rvertp(3,id))
+            ver(nver,2) = DBLE(zvertp(3,id))
             nver = nver + 1
-            ver(nver,1) = rvertp(4,id)
-            ver(nver,2) = zvertp(4,id)
+            ver(nver,1) = DBLE(rvertp(4,id))
+            ver(nver,2) = DBLE(zvertp(4,id))
             nline = nline + 1
             lines(nline,1) = nver - 1
             lines(nline,2) = nver 
@@ -1290,11 +1314,11 @@ c...    Wall:
           IF (wallpt(i1,18).NE.0.0) CYCLE
 
           nver = nver + 1
-          ver(nver,1) = wallpt(i1,20)
-          ver(nver,2) = wallpt(i1,21)
+          ver(nver,1) = DBLE(wallpt(i1,20))
+          ver(nver,2) = DBLE(wallpt(i1,21))
           nver = nver + 1
-          ver(nver,1) = wallpt(i1,22)
-          ver(nver,2) = wallpt(i1,23)
+          ver(nver,1) = DBLE(wallpt(i1,22))
+          ver(nver,2) = DBLE(wallpt(i1,23))
           nline = nline + 1
           lines(nline,1) = nver - 1
           lines(nline,2) = nver 
@@ -1330,13 +1354,14 @@ c *TEMP*
                 lines(nline,2)=tri(i1)%ver(v2)
               ENDIF
 
-
             ELSEIF (iopt.EQ.96) THEN
 c             All triangles:
               nline = nline + 1
               lcolour(nline) = ncols + 1
               lines(nline,1)=tri(i1)%ver(v1)
               lines(nline,2)=tri(i1)%ver(v2)
+
+c              WRITE(0,*) 'VER:',i1,v1,tri(i1)%ver(v1),v2,tri(i1)%ver(v2)
 
             ELSEIF (iopt.EQ.97) THEN
               IF (i1.EQ.6268.OR.i1.EQ.6416) THEN
@@ -1348,7 +1373,8 @@ c             All triangles:
 
             ELSEIF (iopt.EQ.98) THEN
 
-c              IF (i1.NE.10687) CYCLE
+c              IF (i1.NE.1.AND.i1.NE.380.AND.
+c     .            i1.NE.423.AND.i1.NE.448.AND.i1.NE.450) CYCLE
 c              IF (tri(i1)%type.EQ.VACUUM_GRID) WRITE(0,*) ' *** VAC!'
 
               IF (tri(i1)%type.EQ.VACUUM_GRID) THEN
@@ -1418,35 +1444,38 @@ c     .             tri(i1)%sur(v1).GT.10)) THEN
               ENDIF
 
            ENDIF
-
 c            nline = nline + 1
 c            lines(nline,1)=tri(i1)%ver(v1)
 c            lines(nline,2)=tri(i1)%ver(v2)
-
           ENDDO
         ENDDO
 c...    Remove duplicates:
         DO i1 = 1, nline-1
           DO i2 = i1+1, nline
             IF (lines(i1,1).NE.-999.0.AND.lines(i2,1).NE.-999.0) THEN
+c              IF (lines(i1,1).LE.0.OR.lines(i1,2).LE.0.OR.
+c     .            lines(i2,1).LE.0.OR.lines(i2,2).LE.0) CYCLE
+c              IF (lines(i1,1).GT.288.OR.lines(i1,2).GT.288.OR.  
+c     .            lines(i2,1).GT.288.OR.lines(i2,2).GT.288) CYCLE
+
               IF
 c * IMPROVE THIS CHECK! *
-     .          ((ABS(ver(lines(i1,1),1)-
-     .                ver(lines(i2,2),1)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,1),2)-
-     .                ver(lines(i2,2),2)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,2),1)-
-     .                ver(lines(i2,1),1)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,2),2)-
-     .                ver(lines(i2,1),2)).LT.TOL).OR.
-     .           (ABS(ver(lines(i1,1),1)-
-     .                ver(lines(i2,1),1)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,1),2)-
-     .                ver(lines(i2,1),2)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,2),1)-
-     .                ver(lines(i2,2),1)).LT.TOL.AND.
-     .            ABS(ver(lines(i1,2),2)-
-     .                ver(lines(i2,2),2)).LT.TOL)) THEN
+     .          ((DABS(ver(lines(i1,1),1)-
+     .                 ver(lines(i2,2),1)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,1),2)-
+     .                 ver(lines(i2,2),2)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,2),1)-
+     .                 ver(lines(i2,1),1)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,2),2)-
+     .                 ver(lines(i2,1),2)).LT.DTOL).OR.
+     .           (DABS(ver(lines(i1,1),1)-
+     .                 ver(lines(i2,1),1)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,1),2)-
+     .                 ver(lines(i2,1),2)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,2),1)-
+     .                 ver(lines(i2,2),1)).LT.DTOL.AND.
+     .            DABS(ver(lines(i1,2),2)-
+     .                 ver(lines(i2,2),2)).LT.DTOL)) THEN
                 IF (lcolour(i1).EQ.1) THEN
                   lines(i1,1) = -999.0
                 ELSE
@@ -1484,8 +1513,14 @@ c...    Plot polygons:
             CALL LINCOL(lcolour(i1)) 
             lastcolour = lcolour(i1)
           ENDIF
-          CALL POSITN(ver(lines(i1,1),1),ver(lines(i1,1),2))
-          CALL JOIN  (ver(lines(i1,2),1),ver(lines(i1,2),2))
+
+c          IF (lines(i1,1).LE.0.OR.lines(i1,2).LE.0.OR.
+c     .        lines(i2,1).LE.0.OR.lines(i2,2).LE.0) CYCLE
+c          IF (lines(i1,1).GT.288.OR.lines(i1,2).GT.288.OR. 
+c     .        lines(i2,1).GT.288.OR.lines(i2,2).GT.288) CYCLE
+
+          CALL POSITN(SNGL(ver(lines(i1,1),1)),SNGL(ver(lines(i1,1),2)))
+          CALL JOIN  (SNGL(ver(lines(i1,2),1)),SNGL(ver(lines(i1,2),2)))
         ENDDO
 
 c...    Frame:
@@ -1514,10 +1549,12 @@ c...  Add a caption to the plot:
       IF   (cdum1(8:14).EQ.'Noframe'.OR.cdum1(8:12).EQ.'noframe'.OR.
      .      cdum1(8:14).EQ.'NOFRAME') THEN
         numplots = numplots + 1
+        reset_origin = .FALSE.
       ELSE
         numplots = 0
         BACKSPACE 5
         CALL FRAME
+        reset_origin = .TRUE.
       ENDIF
 
 c...  Clear arrays:

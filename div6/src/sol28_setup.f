@@ -26,15 +26,24 @@ c
 c...  Copy data to REF_xxx variables:
       ref_ntube  = ntube
       ref_nion   = nion
+      ref_ncell  = ncell  
       ref_nfluid = nfluid
+      IF (ncell.NE.nfluid) 
+     .  CALL ER('AssignReferenceSolution','NCELL.NE.NFLUID',*99)
       IF (ALLOCATED(ref_tube )) DEALLOCATE(ref_tube )
+      IF (ALLOCATED(ref_cell )) DEALLOCATE(ref_cell ) 
       IF (ALLOCATED(ref_fluid)) DEALLOCATE(ref_fluid)
       ALLOCATE(ref_tube (ntube))
+      ALLOCATE(ref_cell (ncell))
       ALLOCATE(ref_fluid(nfluid,nion))
       ref_tube(1:ntube) = tube(1:ntube)
       DO ion = 1, nion  
+        ref_cell (1:ncell)      = cell (1:ncell)
         ref_fluid(1:nfluid,ion) = fluid(1:nfluid,ion)
       ENDDO
+
+c      WRITE(0,*) 'REF:',fluid(1:100,1)%ne
+c      WRITE(0,*) 'REF:',ref_fluid(1:100,1)%ne
 
       RETURN
  99   STOP
@@ -50,13 +59,16 @@ c
       INTEGER   status
       CHARACTER command*1024
 
-      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') THEN
+      IF     (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') THEN
         command = 'unzip '//TRIM(fname)
-        CALL CIssue(TRIM(command),status)        
-        IF (status.NE.0) 
-     .    CALL ER('UnzipFiles','Dismal failure',*99)
         fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
+      ELSEIF (fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz' ) THEN
+        command = 'gunzip '//TRIM(fname)
+        fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)) = ' '
       ENDIF
+
+      CALL CIssue(TRIM(command),status)        
+      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
 
       RETURN
  99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
@@ -99,14 +111,9 @@ c...  Copy file to run directory:
      .  CALL ER('LoadReferencePlasma','Unable to copy plasma file',*99)
 
 c...  Unzip file if necessary:
-      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') 
+      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip'.OR.
+     .    fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz') 
      .  CALL UnzipFile(fname)
-c        command = 'unzip '//TRIM(fname)
-c        CALL CIssue(TRIM(command),status)        
-c        IF (status.NE.0) 
-c     .    CALL ER('LoadReferencePlasma','Unable to unzip file',*99)
-c        fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
-c      ENDIF
 
       SELECTCASE (mode)
         CASE (1) 
@@ -118,9 +125,6 @@ c...      Load reference solution:
         CASE DEFAULT
           CALL ER('LoadReferenceSolution','Unknown MODE',*99)
       ENDSELECT
-
-      WRITE(0,*) 'REFERENCE:',
-     . ref_fluid(tube(4)%cell_index(LO):tube(4)%cell_index(HI),1)%eneion   
 
 c...  Need to add a better clean-up of the reference solution somewhere,
 c     since it probably isn't needed all the time and might take up

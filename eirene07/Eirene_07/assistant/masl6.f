@@ -1,0 +1,12 @@
+C
+C*DK MASL6
+      SUBROUTINE MASL6 (A,B,C,D,E,F,G)
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      CHARACTER(36), INTENT(IN) :: A
+      LOGICAL, INTENT(IN) :: B, C, D, E, F, G
+      WRITE (iunout,60) A,B,C,D,E,F,G
+60    FORMAT (1X,A36,5X,6L3)
+      RETURN
+      END

@@ -1,0 +1,21 @@
+C
+C
+C     EIRENE VERSION '2004'  (Jan.2005)
+C
+C
+      PROGRAM EIRENE_MAIN
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP) :: DT
+      INTEGER :: ITNR
+C
+      CALL GRSTRT(35,8)
+C
+      DT=0._DP
+      ITNR=1
+      CALL EIRENE(DT,.FALSE.,.TRUE.,ITNR,.TRUE.)
+C
+      CALL GREND
+C
+      STOP
+      END
