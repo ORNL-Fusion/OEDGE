@@ -834,6 +834,67 @@ c..       Defunct:
           obj(nobj)%ipts(2,1)   = 0
           obj(nobj)%nmap(1)     = 0
 
+        CASE (-8)
+c...      DSF tile hole:
+          newvtx(1,1) =  0.985
+          newvtx(2,1) = -1.8285 ! -1.829  ! Moved it 0.5 mm up so it's above the tile
+          newvtx(3,1) = -0.199
+
+          newvtx(1,2) =  0.992
+          newvtx(2,2) = -1.8265 ! -1.827 
+          newvtx(3,2) = -0.164
+
+          newvtx(1,3) =  0.953
+          newvtx(2,3) = -1.8265 ! -1.827
+          newvtx(3,3) = -0.156
+
+          newvtx(1,4) =  0.947
+          newvtx(2,4) = -1.8285 ! -1.829
+          newvtx(3,4) = -0.192
+
+          newsrf%type = SP_PLANAR_POLYGON
+          newsrf%nvtx = 4
+          DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
+            newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+          ENDDO
+          idum1 = AddSurface(newsrf)
+
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'DSF IOBJ:',nobj
+
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',opt%obj_type(ielement)
           CALL ER('User_CustomObjects','Unknown option',*99)

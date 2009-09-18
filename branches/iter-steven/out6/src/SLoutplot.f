@@ -407,7 +407,7 @@ c...  Get T_D and T_D2 (crap):
       ALLOCATE(tdata(ntri))
 
       tdata = 0.0
-      CALL LoadTriangleData(2,1,7,0,tdata)  
+      CALL LoadTriangleData(2,1,7,0,tdata,'default')  
       t_d = 0.0
       DO itri = 1, ntri
         IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE        
@@ -418,7 +418,7 @@ c...  Get T_D and T_D2 (crap):
       t_d = t_d / 2.0
 
       tdata = 0.0
-      CALL LoadTriangleData(3,1,7,0,tdata)  
+      CALL LoadTriangleData(3,1,7,0,tdata,'default')  
       t_d2 = 0.0
       DO itri = 1, ntri
         IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE        

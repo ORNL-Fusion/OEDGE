@@ -1,0 +1,664 @@
+C
+C  *************************
+C  *                       *
+C  * INITIALIZATION PHASE  *
+C  *                       *
+C  *************************
+C
+C      SUBROUTINE SETPRM
+C
+      SUBROUTINE SETPRM
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE COMPRT, ONLY: IUNOUT
+      USE CESTIM
+      USE CPOLYG
+      USE CGRID
+      USE CGEOM
+      USE CSDVI
+      USE CLGIN
+      USE COUTAU
+      USE COMXS
+      USE CSPEI
+      USE CTEXT
+      USE CTRCEI
+
+      IMPLICIT NONE
+
+      REAL(DP) :: RSAVE
+      INTEGER :: ISAVE, NTESTP, J, NTEST, NTESTI, ITAL
+      LOGICAL :: LEXTALV(NTALV), LEXTALS(NTALS), 
+     .           LEXGENA, LEXGENM, LEXGENI, LEXGENPH
+C
+
+      IF (NSTORDT.LT.1 .OR. NSTORDT.GT.9) THEN
+        WRITE (iunout,*) 
+     .    'POSSIBLE STORAGE CONFLICT. NSTORDT OUT OF RANGE '
+        CALL EXIT_OWN(1)
+      ENDIF
+ 
+ 
+C  SWITCH OFF SOME VOLUME AVERAGED OUTPUT TALLIES AUTOMATICALLY; 
+C  TRY TO KEEP ONLY THOSE TALLIES THAT ARE NEEDED FOR THE TYPE OF 
+C  SPECIES PRESENT IN THE PARTICULAR CASE. 
+c   e.g.  no photon tallies unless photons are included (NPHOT>0) 
+c   e.g.  no test-ion tallies unless test ions are included (NION>0)   
+c   e.g.  no generation limit tallies unless there is, indeed a  
+c         generation limit activated   
+
+      LEXGENA  = ANY(NGENA(1:NATM) /= 0)
+      LEXGENM  = ANY(NGENM(1:NMOL) /= 0)
+      LEXGENI  = ANY(NGENI(1:NION) /= 0)
+      LEXGENPH = ANY(NGENPH(1:NPHOT) /= 0)
+
+      LEXTALV(1)  =  NATM>0
+      LEXTALV(2)  =  NMOL>0
+      LEXTALV(3)  =  NION>0
+      LEXTALV(4)  =  NPHOT>0
+      LEXTALV(5)  =  NATM>0
+      LEXTALV(6)  =  NMOL>0
+      LEXTALV(7)  =  NION>0
+      LEXTALV(8)  =  NPHOT>0 
+
+      LEXTALV(9)  =  NATM>0
+      LEXTALV(10) =  NATM>0
+      LEXTALV(11) = (NATM>0).and.(NMOL>0)
+      LEXTALV(12) = (NATM>0).and.(NION>0)
+      LEXTALV(13) = (NATM>0).and.(NPHOT>0)
+      LEXTALV(14) = (NATM>0).and.(NPLS>0) 
+
+      LEXTALV(15) =  NMOL>0
+      LEXTALV(16) = (NMOL>0).and.(NATM>0)
+      LEXTALV(17) =  NMOL>0
+      LEXTALV(18) = (NMOL>0).and.(NION>0)
+      LEXTALV(19) = (NMOL>0).and.(NPHOT>0)
+      LEXTALV(20) = (NMOL>0).and.(NPLS>0) 
+
+      LEXTALV(21) =  NION>0
+      LEXTALV(22) = (NION>0).and.(NATM>0)
+      LEXTALV(23) = (NION>0).and.(NMOL>0)
+      LEXTALV(24) =  NION>0
+      LEXTALV(25) = (NION>0).and.(NPHOT>0)
+      LEXTALV(26) = (NION>0).and.(NPLS>0) 
+
+      LEXTALV(27) =  NPHOT>0
+      LEXTALV(28) = (NPHOT>0).and.(NATM>0)
+      LEXTALV(29) = (NPHOT>0).and.(NMOL>0)
+      LEXTALV(30) = (NPHOT>0).and.(NION>0)
+      LEXTALV(31) =  NPHOT>0
+      LEXTALV(32) = (NPHOT>0).and.(NPLS>0) 
+
+      LEXTALV(33) =                NATM>0
+      LEXTALV(34) =                NATM>0
+      LEXTALV(35) = (NMOL>0) .and.(NATM>0)
+      LEXTALV(36) = (NION>0) .and.(NATM>0)
+      LEXTALV(37) = (NPHOT>0).and.(NATM>0)
+      LEXTALV(38) = (NPLS>0) .and.(NATM>0) 
+
+      LEXTALV(39) =                NMOL>0
+      LEXTALV(40) = (NATM>0) .and.(NMOL>0)
+      LEXTALV(41) =                NMOL>0
+      LEXTALV(42) = (NION>0) .and.(NMOL>0)
+      LEXTALV(43) = (NPHOT>0).and.(NMOL>0)
+      LEXTALV(44) = (NPLS>0) .and.(NMOL>0) 
+
+      LEXTALV(45) =                NION>0
+      LEXTALV(46) = (NATM>0) .and.(NION>0)
+      LEXTALV(47) = (NMOL>0) .and.(NION>0)
+      LEXTALV(48) =                NION>0
+      LEXTALV(49) = (NPHOT>0).and.(NION>0)
+      LEXTALV(50) = (NPLS>0) .and.(NION>0) 
+
+      LEXTALV(51) =               NPHOT>0
+      LEXTALV(52) = (NATM>0).and.(NPHOT>0)
+      LEXTALV(53) = (NMOL>0).and.(NPHOT>0)
+      LEXTALV(54) = (NION>0).and.(NPHOT>0)
+      LEXTALV(55) =               NPHOT>0
+      LEXTALV(56) = (NPLS<0).and.(NPHOT>0) 
+
+      LEXTALV(NTALA) = NADV>0
+      LEXTALV(NTALC) = NCLV>0
+      LEXTALV(NTALT) = NSNV>0
+      LEXTALV(NTALM) = NCPV>0
+      LEXTALV(NTALB) = NBGV>0
+      LEXTALV(NTALR) = NALV>0
+C  GENERATION LIMIT TALLIES 
+C  some of these tallies may be 
+c  turned off, depending upon whether generation limits 
+c  are activated or not.
+      LEXTALV(63) = NATM>0  .AND. LEXGENA
+      LEXTALV(64) = NMOL>0  .AND. LEXGENM
+      LEXTALV(65) = NION>0  .AND. LEXGENI
+      LEXTALV(66) = NPHOT>0 .AND. LEXGENPH
+      LEXTALV(67) = NATM>0  .AND. LEXGENA
+      LEXTALV(68) = NMOL>0  .AND. LEXGENM
+      LEXTALV(69) = NION>0  .AND. LEXGENI
+      LEXTALV(70) = NPHOT>0 .AND. LEXGENPH
+      LEXTALV(71) = NATM>0  .AND. LEXGENA
+      LEXTALV(72) = NMOL>0  .AND. LEXGENM
+      LEXTALV(73) = NION>0  .AND. LEXGENI
+      LEXTALV(74) = NPHOT>0 .AND. LEXGENPH 
+C  PRIMARY SOURCE RATES
+      LEXTALV(75) = NATM>0
+      LEXTALV(76) = NMOL>0
+      LEXTALV(77) = NION>0
+      LEXTALV(78) = NPHOT>0
+      LEXTALV(79) = NPLS>0 
+
+      LEXTALV(80) = NATM>0
+      LEXTALV(81) = NMOL>0
+      LEXTALV(82) = NION>0
+      LEXTALV(83) = NPHOT>0
+      LEXTALV(84) = NPLS>0
+
+      LEXTALV(85) = NATM>0
+      LEXTALV(86) = NMOL>0
+      LEXTALV(87) = NION>0
+      LEXTALV(88) = NPHOT>0
+      LEXTALV(89) = NATM>0
+      LEXTALV(90) = NMOL>0
+      LEXTALV(91) = NION>0
+      LEXTALV(92) = NPHOT>0
+      LEXTALV(93) = NATM>0
+      LEXTALV(94) = NMOL>0
+      LEXTALV(95) = NION>0
+      LEXTALV(96) = NPHOT>0
+      LEXTALV(97) = (NPLS>0) .AND. (NATM>0)
+      LEXTALV(98) = (NPLS>0) .AND. (NMOL>0)
+      LEXTALV(99) = (NPLS>0) .AND. (NION>0)
+      LEXTALV(100) = (NPLS>0) .AND. (NPHOT>0)
+      
+
+      LIVTALV = LEXTALV .AND. .NOT.LMISTALV
+      LMISTALV = LMISTALV .AND. LEXTALV
+
+      LEA = LEAAT .OR. LEAML .OR. LEAIO .OR. LEAPHT .OR. LEAPL
+      LEM = LEMAT .OR. LEMML .OR. LEMIO .OR. LEMPHT .OR. LEMPL
+      LEIO = LEIAT .OR. LEIML .OR. LEIIO .OR. LEIPHT .OR. LEIPL
+      LEPH = LEPHAT .OR. LEPHML .OR. LEPHIO .OR. LEPHPHT .OR. LEPHPL
+ 
+C 
+C  LEADING DIMENSIONS OF FIELDS IN COMMON BLOCK CESTIM AND COUTAU 
+C                (i.e. of volume- or surface averaged output tallies) 
+C 
+C  DENSITIES; ENERGY DENSITIES
+      NFIRST(1)=NATM
+      NFIRST(2)=NMOL
+      NFIRST(3)=NION
+      NFIRST(4)=NPHOT
+      NFIRST(5)=NATM
+      NFIRST(6)=NMOL
+      NFIRST(7)=NION
+      NFIRST(8)=NPHOT 
+C  PARTICLE SOURCES
+      NFIRST(9)=0
+      NFIRST(10)=NATM
+      NFIRST(11)=NMOL
+      NFIRST(12)=NION
+      NFIRST(13)=NPHOT
+      NFIRST(14)=NPLS
+      NFIRST(15)=0
+      NFIRST(16)=NATM
+      NFIRST(17)=NMOL
+      NFIRST(18)=NION
+      NFIRST(19)=NPHOT
+      NFIRST(20)=NPLS
+      NFIRST(21)=0
+      NFIRST(22)=NATM
+      NFIRST(23)=NMOL
+      NFIRST(24)=NION
+      NFIRST(25)=NPHOT
+      NFIRST(26)=NPLS
+      NFIRST(27)=0
+      NFIRST(28)=NATM
+      NFIRST(29)=NMOL
+      NFIRST(30)=NION
+      NFIRST(31)=NPHOT
+      NFIRST(32)=NPLS 
+C  ENERGY SOURCES
+      NFIRST(33)=0
+      NFIRST(34)=0
+      NFIRST(35)=0
+      NFIRST(36)=0
+      NFIRST(37)=0
+      NFIRST(38)=0
+      NFIRST(39)=0
+      NFIRST(40)=0
+      NFIRST(41)=0
+      NFIRST(42)=0
+      NFIRST(43)=0
+      NFIRST(44)=0
+      NFIRST(45)=0
+      NFIRST(46)=0
+      NFIRST(47)=0
+      NFIRST(48)=0
+      NFIRST(49)=0
+      NFIRST(50)=0
+      NFIRST(51)=0
+      NFIRST(52)=0
+      NFIRST(53)=0
+      NFIRST(54)=0
+      NFIRST(55)=0
+      NFIRST(56)=0
+      NFIRST(NTALA)=NADV
+      NFIRST(NTALC)=NCLV
+      NFIRST(NTALT)=NSNV
+      NFIRST(NTALM)=NCPV
+      NFIRST(NTALB)=NBGV
+      NFIRST(NTALR)=NALV
+C  GENERATION LIMIT TALLIES
+      NFIRST(63)=NATM
+      NFIRST(64)=NMOL
+      NFIRST(65)=NION
+      NFIRST(66)=NPHOT
+      NFIRST(67)=NATM
+      NFIRST(68)=NMOL
+      NFIRST(69)=NION
+      NFIRST(70)=NPHOT
+      NFIRST(71)=NATM
+      NFIRST(72)=NMOL
+      NFIRST(73)=NION
+      NFIRST(74)=NPHOT 
+C  PRIMARY SOURCE TALLIES
+      NFIRST(75)=NATM
+      NFIRST(76)=NMOL
+      NFIRST(77)=NION
+      NFIRST(78)=NPHOT
+      NFIRST(79)=NPLS
+      NFIRST(80)=0
+      NFIRST(81)=0
+      NFIRST(82)=0
+      NFIRST(83)=0
+      NFIRST(84)=0
+      NFIRST(85)=NATM
+      NFIRST(86)=NMOL
+      NFIRST(87)=NION
+      NFIRST(88)=NPHOT 
+      NFIRST(89)=NATM
+      NFIRST(90)=NMOL
+      NFIRST(91)=NION
+      NFIRST(92)=NPHOT 
+      NFIRST(93)=NATM
+      NFIRST(94)=NMOL
+      NFIRST(95)=NION
+      NFIRST(96)=NPHOT 
+      NFIRST(97)=NPLS
+      NFIRST(98)=NPLS
+      NFIRST(99)=NPLS
+      NFIRST(100)=NPLS 
+C
+C  NTALV=100 ?
+C
+      DO 1 J=1,NTALV
+        NFRSTI(J)=NFIRST(J)+1
+        IF (LIVTALV(J)) NFIRST(J)=MAX0(1,NFIRST(J))
+1     CONTINUE
+C
+      NADDI(1)=0
+      NADDV(1)=0
+      DO 2 J=2,NTALV
+        NADDI(J)=NADDI(J-1)+NFRSTI(J-1)
+2       NADDV(J)=NADDV(J-1)+NFIRST(J-1)
+C
+C  TOTAL NUMBER OF VOLUME AVERAGED TALLIES
+      NVOLTL=NADDV(NTALV)+NFIRST(NTALV)
+
+      NTEST=NADDV(NTALV)+NFIRST(NTALV)
+      NTESTI=NADDI(NTALV)+NFRSTI(NTALV)
+      NTEST=NTEST*NRTAL
+      NTESTI=NTESTI*NSTRAP
+
+
+      LEXTALS(1) =                (NATM>0)
+      LEXTALS(2) =                (NATM>0)
+      LEXTALS(3) = (NMOL>0)  .and.(NATM>0)
+      LEXTALS(4) = (NION>0)  .and.(NATM>0)
+      LEXTALS(5) = (NPHOT>0) .and.(NATM>0)
+      LEXTALS(6) = (NPLS>0)  .and.(NATM>0)  
+
+      LEXTALS(7) =                (NMOL>0) 
+      LEXTALS(8) = (NATM>0)  .and.(NMOL>0)
+      LEXTALS(9) =                (NMOL>0)
+      LEXTALS(10) =(NION>0)  .and.(NMOL>0)
+      LEXTALS(11) =(NPHOT>0) .and.(NMOL>0)
+      LEXTALS(12) =(NPLS>0)  .and.(NMOL>0) 
+
+      LEXTALS(13) =               (NION>0)
+      LEXTALS(14) =(NATM>0)  .and.(NION>0)
+      LEXTALS(15) =(NMOL>0)  .and.(NION>0)
+      LEXTALS(16) =               (NION>0)
+      LEXTALS(17) =(NPHOT>0) .and.(NION>0)
+      LEXTALS(18) =(NPLS>0)  .and.(NION>0) 
+
+      LEXTALS(19) =               (NPHOT>0)
+      LEXTALS(20) =(NATM>0)  .and.(NPHOT>0)
+      LEXTALS(21) =(NMOL>0)  .and.(NPHOT>0)
+      LEXTALS(22) =(NION>0)  .and.(NPHOT>0)
+      LEXTALS(23) =               (NPHOT>0)
+      LEXTALS(24) =(NPLS>0)  .and.(NPHOT>0) 
+
+      LEXTALS(25) = NPLS>0
+
+      LEXTALS(26) =               (NATM>0)
+      LEXTALS(27) =               (NATM>0)
+      LEXTALS(28) =(NMOL>0)  .and.(NATM>0) 
+      LEXTALS(29) =(NION>0)  .and.(NATM>0)
+      LEXTALS(30) =(NPHOT>0) .and.(NATM>0)
+      LEXTALS(31) =(NPLS>0)  .and.(NATM>0) 
+
+      LEXTALS(32) =               (NMOL>0)
+      LEXTALS(33) =(NATM>0)  .and.(NMOL>0)
+      LEXTALS(34) =               (NMOL>0)
+      LEXTALS(35) =(NION>0)  .and.(NMOL>0)
+      LEXTALS(36) =(NPHOT>0) .and.(NMOL>0)
+      LEXTALS(37) =(NPLS>0)  .and.(NMOL>0) 
+ 
+      LEXTALS(38) =               (NION>0)
+      LEXTALS(39) =(NATM>0)  .and.(NION>0)
+      LEXTALS(40) =(NMOL>0)  .and.(NION>0)
+      LEXTALS(41) =               (NION>0)
+      LEXTALS(42) =(NPHOT>0) .and.(NION>0)
+      LEXTALS(43) =(NPLS>0)  .and.(NION>0)
+      
+      LEXTALS(44) =               (NPHOT>0)
+      LEXTALS(45) =(NATM>0)  .and.(NPHOT>0)
+      LEXTALS(46) =(NMOL>0)  .and.(NPHOT>0)
+      LEXTALS(47) =(NION>0)  .and.(NPHOT>0)
+      LEXTALS(48) =               (NPHOT>0)
+      LEXTALS(49) =(NPLS>0)  .and.(NPHOT>0) 
+
+      LEXTALS(50) = NPLS>0
+C  SPUTTERED FLUXES; BY INCIDENT SPECIES
+      LEXTALS(51) = NATM>0
+      LEXTALS(52) = NMOL>0
+      LEXTALS(53) = NION>0
+      LEXTALS(54) = NPHOT>0
+      LEXTALS(55) = NPLS>0 
+C  SPUTTERED FLUX; TOTAL
+      LEXTALS(56) = .TRUE. 
+
+      LEXTALS(NTLSA) = NADS>0
+      LEXTALS(NTLSR) = NALS>0
+      LEXTALS(59) = NSPZ>0
+
+      LIVTALS = LEXTALS .AND. .NOT.LMISTALS
+      LMISTALS = LMISTALS .AND. LEXTALS
+C
+      NFRSTW(1)=NATM
+      NFRSTW(2)=NATM
+      NFRSTW(3)=NATM
+      NFRSTW(4)=NATM
+      NFRSTW(5)=NATM
+      NFRSTW(6)=NATM
+      NFRSTW(7)=NMOL
+      NFRSTW(8)=NMOL
+      NFRSTW(9)=NMOL
+      NFRSTW(10)=NMOL
+      NFRSTW(11)=NMOL
+      NFRSTW(12)=NMOL
+      NFRSTW(13)=NION
+      NFRSTW(14)=NION
+      NFRSTW(15)=NION
+      NFRSTW(16)=NION
+      NFRSTW(17)=NION
+      NFRSTW(18)=NION
+      NFRSTW(19)=NPHOT
+      NFRSTW(20)=NPHOT
+      NFRSTW(21)=NPHOT
+      NFRSTW(22)=NPHOT
+      NFRSTW(23)=NPHOT
+      NFRSTW(24)=NPHOT
+      NFRSTW(25)=NPLS
+
+      NFRSTW(26)=NATM
+      NFRSTW(27)=NATM
+      NFRSTW(28)=NATM
+      NFRSTW(29)=NATM
+      NFRSTW(30)=NATM
+      NFRSTW(31)=NATM
+      NFRSTW(32)=NMOL
+      NFRSTW(33)=NMOL
+      NFRSTW(34)=NMOL
+      NFRSTW(35)=NMOL
+      NFRSTW(36)=NMOL
+      NFRSTW(37)=NMOL
+      NFRSTW(38)=NION
+      NFRSTW(39)=NION
+      NFRSTW(40)=NION
+      NFRSTW(41)=NION
+      NFRSTW(42)=NION
+      NFRSTW(43)=NION
+      NFRSTW(44)=NPHOT
+      NFRSTW(45)=NPHOT
+      NFRSTW(46)=NPHOT
+      NFRSTW(47)=NPHOT
+      NFRSTW(48)=NPHOT
+      NFRSTW(49)=NPHOT
+      NFRSTW(50)=NPLS
+
+      NFRSTW(51)=NATM
+      NFRSTW(52)=NMOL
+      NFRSTW(53)=NION
+      NFRSTW(54)=NPHOT
+      NFRSTW(55)=NPLS
+      NFRSTW(56)=0
+      NFRSTW(NTLSA)=NADS
+      NFRSTW(NTLSR)=NALS
+      NFRSTW(59)=NSPZ
+C
+C  NTALS=59 ?
+C
+      DO 4 J=1,NTALS
+        NFRTWI(J)=NFRSTW(J)+1
+        IF (LIVTALS(J)) NFRSTW(J)=MAX0(1,NFRSTW(J))
+4     CONTINUE
+C
+      NDDWI(1)=0
+      NADDW(1)=0
+      DO 3 J=2,NTALS
+        NDDWI(J)=NDDWI(J-1)+NFRTWI(J-1)
+3       NADDW(J)=NADDW(J-1)+NFRSTW(J-1)
+
+C  TOTAL NUMBER OF SURFACE AVERAGED TALLIES
+      NSRFTL=NADDW(NTALS)+NFRSTW(NTALS)
+
+      NTEST=NADDW(NTALS)+NFRSTW(NTALS)
+      NTESTI=NDDWI(NTALS)+NFRTWI(NTALS)
+      NTEST=NTEST*NLMPGS
+      NTESTI=NTESTI*NSTRAP
+
+      CALL ALLOC_CESTIM(2)
+      CALL ASSOCIATE_CESTIM
+
+C
+C  CHECK LENGTH OF ARRAYS, WHICH ARE EQUIVALENZED TO OTHER ARRAYS
+C
+C
+      IF (.FALSE.) THEN
+      RSAVE=SGMS(NSD)
+      SGMS(NSD)=1.234567
+      IF (SDVI1(NSD,NRTAL+1).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NSDVI1?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      SGMS(NSD)=RSAVE
+C
+      RSAVE=SGMWS(NSDW)
+      SGMWS(NSDW)=1.234567
+      IF (SDVI2(NSDW,NLIMPS+1).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NSDVI2?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      SGMWS(NSDW)=RSAVE
+C
+      RSAVE=VGENPH(NPHOT,NRTAL)
+      VGENPH(NPHOT,NRTAL)=1.234567
+      IF (ESTIMV(NVOLTL,NRTAL).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NESTM1?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      VGENPH(NPHOT,NRTAL)=RSAVE
+C
+      RSAVE=SPUMP(NSPZ,NLMPGS)
+      SPUMP(NSPZ,NLMPGS)=1.234567
+      IF (ESTIMS(NSRFTL,NLMPGS).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NESTM2?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      SPUMP(NSPZ,NLMPGS)=RSAVE
+C
+C  NOW ATOMIC DATA ARRAYS: COMXS
+C
+      RSAVE=ZMFPI
+      ZMFPI=1.234567
+      IF (XSTORV(NSTORV).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NSTOR?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      ZMFPI=RSAVE
+C
+      RSAVE=VOLTOT
+      VOLTOT=1.234567
+      IF (RCGM1(NCGM1).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NCGM1?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      VOLTOT=RSAVE
+C
+      RSAVE=ZDF
+      ZDF=1.234567
+      IF (RCGRID(NCGRD).NE.1.234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NCGRD?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      ZDF=RSAVE
+C
+      ISAVE=NSBOX_TAL
+      NSBOX_TAL=1234567
+      IF (ICGRID(MCGRD).NE.1234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: MCGRD?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      NSBOX_TAL=ISAVE
+C
+      ISAVE=NPPLG
+      NPPLG=1234567
+      IF (ICPLYG(MCPLYG).NE.1234567) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: MCPLYG?'
+        CALL EXIT_OWN(1)
+      ENDIF
+      NPPLG=ISAVE
+      END IF
+C
+      NFRSTP(1)=0
+      NFRSTP(2)=NPLSTI
+      NFRSTP(3)=0
+      NFRSTP(4)=NPLS
+      NFRSTP(5)=NPLSV
+      NFRSTP(6)=NPLSV
+      NFRSTP(7)=NPLSV
+      NFRSTP(8)=0
+      NFRSTP(9)=0
+      NFRSTP(10)=0
+      NFRSTP(11)=0
+      NFRSTP(12)=NAIN
+      NFRSTP(13)=NPLS
+      NFRSTP(14)=0
+      NFRSTP(15)=NSPZMC
+      NFRSTP(16)=0
+      NFRSTP(17)=0
+C
+C  NTALI=17?
+C
+      DO 5 J=1,NTALI
+        NFRSTP(J)=MAX0(1,NFRSTP(J))
+5     CONTINUE
+C
+      NADDP(1)=0
+      DO 6 J=2,NTALI
+6       NADDP(J)=NADDP(J-1)+NFRSTP(J-1)
+      NTESTP=NADDP(NTALI)+NFRSTP(NTALI)
+      NTESTP=NTESTP*NRAD
+      IF (NTESTP.NE.NPLPRM) THEN
+        WRITE (iunout,*) 'PARAMETER ERROR DETECTED IN SETPRM: NPLPRM'
+        WRITE (iunout,*) 'NTESTP, NPLPRM ',NTESTP,NPLPRM
+        CALL EXIT_OWN(1)
+      ENDIF
+
+
+      IF (TRCTAL) THEN
+        CALL LEER(2)
+        WRITE(IUNOUT,*) 'VOLUME AVERAGED TALLIES CALCULATED IN THIS RUN'
+        CALL LEER(1)
+        WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+        DO ITAL=1,NTALV
+          IF (LIVTALV(ITAL))
+     .      WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTAL(1,ITAL)
+        END DO
+
+        IF (.NOT.ALL(LIVTALV)) THEN
+          CALL LEER(2)
+          WRITE(IUNOUT,*) 'VOLUME AVERAGED TALLIES NOT CALCULATED ',
+     .                    'IN THIS RUN'
+          CALL LEER(1)
+          WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+          DO ITAL=1,NTALV
+            IF (.NOT.LIVTALV(ITAL))
+     .        WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTAL(1,ITAL)
+          END DO
+        END IF
+
+        IF (ANY(LMISTALV)) THEN
+          CALL LEER(2)
+          WRITE(IUNOUT,*) 'VOLUME AVERAGED TALLIES EXPLICITELY ',
+     .                'SWITCHED OFF VIA INPUT FILE '
+          CALL LEER(1)
+          WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+          DO ITAL=1,NTALV
+            IF (LMISTALV(ITAL))
+     .        WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTAL(1,ITAL)
+          END DO
+        END IF
+        
+        CALL LEER(2)
+        WRITE(IUNOUT,*)'SURFACE AVERAGED TALLIES CALCULATED IN THIS RUN'
+        CALL LEER(1)
+        WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+        DO ITAL=1,NTALS
+          IF (LIVTALS(ITAL))
+     .      WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTLW(1,ITAL)
+        END DO
+
+        IF (.NOT.ALL(LIVTALS)) THEN
+          CALL LEER(2)
+          WRITE(IUNOUT,*) 'SURFACE AVERAGED TALLIES NOT CALCULATED ',
+     .                    'IN THIS RUN'
+          CALL LEER(1)
+          WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+          DO ITAL=1,NTALS
+            IF (.NOT.LIVTALS(ITAL))
+     .        WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTLW(1,ITAL)
+          END DO
+        END IF
+
+        IF (ANY(LMISTALS)) THEN
+          CALL LEER(2)
+          WRITE(IUNOUT,*) 'SURFACE AVERAGED TALLIES EXPLICITELY ',
+     .                'SWITCHED OFF VIA INPUT FILE '
+          CALL LEER(1)
+          WRITE(IUNOUT,'(A6,1X,A)') 'NO.','DESCRIPTION'
+          DO ITAL=1,NTALS
+            IF (LMISTALS(ITAL))
+     .        WRITE (IUNOUT,'(I6,1X,A72)') ITAL,TXTTLW(1,ITAL)
+          END DO
+        END IF
+        
+      END IF
+C
+      RETURN
+      END
+
+
+
+

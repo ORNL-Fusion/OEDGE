@@ -413,11 +413,15 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
      .        osm_strata(osm_nstrata)%species,
      .        osm_strata(osm_nstrata)%species_index,
      .        osm_strata(osm_nstrata)%sorene
-            IF     (osm_strata(osm_nstrata)%type.EQ.1.0) THEN
-              STOP 'NOT READY'
-            ELSEIF (osm_strata(osm_nstrata)%type.EQ.2.0) THEN
-              STOP 'NOT READY'
-            ELSEIF (osm_strata(osm_nstrata)%type.EQ.3.0) THEN
+            IF     (osm_strata(osm_nstrata)%type.EQ.1.0) THEN  ! Target surface flux
+              READ(buffer,*) rdum(1:7),
+     .          osm_strata(osm_nstrata)%target,
+     .          osm_strata(osm_nstrata)%txtsou
+            ELSEIF (osm_strata(osm_nstrata)%type.EQ.2.0) THEN  ! Volume recombination
+              READ(buffer,*) rdum(1:7),
+     .          osm_strata(osm_nstrata)%txtsou
+            ELSEIF (osm_strata(osm_nstrata)%type.EQ.3.0.OR.
+     .              osm_strata(osm_nstrata)%type.EQ.3.1) THEN  ! Point source injection (gas puff, beams)
               READ(buffer,*) rdum(1:7),
      .          osm_strata(osm_nstrata)%sorcos,
      .          osm_strata(osm_nstrata)%sormax,

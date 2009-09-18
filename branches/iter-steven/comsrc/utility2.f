@@ -6351,13 +6351,17 @@ c      PARAMETER (DTOL=1.0D-05)
       LOGICAL test,output
       REAL*8  x(0:2),y(0:2),s,t
 
+      INTEGER fp
+
+      fp = 88
+
       IF     (mode.EQ.1.OR.mode.EQ.4) THEN
 c...    Include end points as .TRUE.:
         DTOL = +1.0D-05
       ELSEIF (mode.EQ.2.OR.mode.EQ.3) THEN
 c...    Don't include end points as .TRUE.:
         DTOL = -1.0D-05
-      ELSEIF (mode.EQ.5) THEN
+      ELSEIF (mode.EQ.5.OR.mode.EQ.7) THEN
 c...    More strict than MODE.EQ.2 or MODE.EQ.3:
         DTOL = -1.0D-06
       ELSEIF (mode.EQ.6) THEN
@@ -6381,34 +6385,37 @@ c        test = test.AND.DABS(x(0)-x(2)).LT.DTOL  ! BUG
         test = test.AND.s.GT.0.0D0-DTOL.AND.s.LT.1.0D0+DTOL
       ENDIF
 
-      IF (output) WRITE(0,'(A,2F12.6,1P,E14.7,L2)') 
+      IF (output) WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
      .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
 
       IF (test) THEN
         IF (DABS(y(0)-y(1)).LT.DABS(DTOL)) THEN
           IF (output) THEN
-            WRITE(0,*) '  T1',y(0),DABS(DTOL)
-            WRITE(0,*) '  T1',y(1),DABS(y(0)-y(1))
-            WRITE(0,*) '  T1',y(2),DABS(y(0)-y(2))
+            WRITE(fp,*) '  T1',y(0),DABS(DTOL)
+            WRITE(fp,*) '  T1',y(1),DABS(y(0)-y(1))
+            WRITE(fp,*) '  T1',y(2),DABS(y(0)-y(2))
           ENDIF
           test = test.AND.DABS(y(0)-y(2)).LT.DABS(DTOL)
 c          test = test.AND.DABS(y(0)-y(2)).LT.DTOL ! BUG
         ELSE
-          IF (output) WRITE(0,*) '  T2'
           t = (y(2) - y(0)) / (y(1) - y(0))
           test = test.AND.t.GT.0.0D0-DTOL.AND.t.LT.1.0D0+DTOL
+          IF (output) WRITE(fp,*) '  T2',t,test
         ENDIF
 c...    This requirement is a little more relaxed due to small cells:   ! *PERHAPS SCALE ACCORDING TO SIDE LENGTH?*
-        IF (mode.NE.3.AND.mode.NE.4.AND.
+        IF ((mode.EQ.1.OR.mode.EQ.2.OR.mode.EQ.5.OR.mode.EQ.6).AND. 
+c        IF (mode.NE.3.AND.mode.NE.4.AND.
      .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
      .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
-        IF (mode.EQ.6.AND.
+        IF (mode.EQ.7.AND.
      .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
-     .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
+     .    test=test.AND.DABS(s-t).LT.1000.0D0*DABS(DTOL)
       ENDIF
 
-      IF (output) WRITE(0,'(A,2F12.6,1P,E14.7,L2)') 
-     .  'S&T:',s,t,DABS(s-t),test
+      IF (output) THEN
+        WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 'S&T:',s,t,DABS(s-t),test
+        WRITE(fp,*) 'LENGTH:',DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
+      ENDIF
 
       IF (.NOT.test) s = -1.0D0
 

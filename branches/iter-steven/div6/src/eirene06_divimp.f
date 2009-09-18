@@ -904,7 +904,7 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      INTEGER i1,type,nspez,nasor,i2,insor,istrata
+      INTEGER i1,type,nspez,nasor,i2,insor,is,target
       LOGICAL assign_LO,assign_HI,assign_volrec
 
       TYPE(type_strata) :: tmpstrata      
@@ -917,12 +917,12 @@ c...  Decide if default strata should be assigned:
       assign_LO     = .TRUE.
       assign_HI     = .TRUE.
       assign_volrec = .TRUE.
-      DO istrata = 1, nstrata 
-        IF (strata(istrata)%type         .EQ.1.0.AND.
-     .      strata(istrata)%range_cell(1).EQ.-1 ) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
-        IF (strata(istrata)%type         .EQ.1.0.AND.
-     .      strata(istrata)%range_cell(1).EQ.-2 ) assign_HI     =.FALSE.
-        IF (strata(istrata)%type         .EQ.2.0) assign_volrec =.FALSE.
+      DO is = 1, osm_nstrata 
+        IF (osm_strata(is)%type  .EQ.1.0.AND.
+     .      osm_strata(is)%target.EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
+        IF (osm_strata(is)%type  .EQ.1.0.AND.
+     .      osm_strata(is)%target.EQ.IKHI) assign_HI     =.FALSE.
+        IF (osm_strata(is)%type  .EQ.2.0 ) assign_volrec =.FALSE.
       ENDDO
 
       WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
@@ -1025,50 +1025,107 @@ c        strata(nstrata)%npts    = 100
       ENDIF
 
 c...  User specified neutral injection/puffing:
-      DO istrata = 1, nstrata
-        WRITE(0,*) 'STRATA:TYPE=',NINT(strata(istrata)%type)
 
-        SELECTCASE (NINT(strata(istrata)%type))
+      DO is = 1, osm_nstrata
+        WRITE(0,*) 'STRATA:TYPE=',NINT(osm_strata(is)%type)
+
+        SELECTCASE (NINT(osm_strata(is)%type))
           CASE (999)  ! For compatibility with old strata definition format, see below
           CASE (1)
+            target = osm_strata(is)%target
+            nstrata = nstrata + 1
+            strata(nstrata)%range_cell(1) = -1  ! No idea what this is for...
+            strata(nstrata)%type    = 1.0
+            strata(nstrata)%indsrc  = 1
+            strata(nstrata)%txtsou  = '* '//osm_strata(is)%txtsou
+            strata(nstrata)%npts    = osm_strata(is)%npts
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  3
+            strata(nstrata)%flux    = osm_strata(is)%flux
+            strata(nstrata)%species_tag = 'FFFT'
+            strata(nstrata)%nspez   =  1
+            strata(nstrata)%distrib = 'FFTFF'
+            strata(nstrata)%inum    =  1
+            strata(nstrata)%indim   =  4
+            IF (target.EQ.IKLO) strata(nstrata)%insor = -2
+            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 124.0
+            IF (target.EQ.IKLO) strata(nstrata)%sorind = 1.0
+            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
+            strata(nstrata)%nrsor   = -1
+            strata(nstrata)%nasor   =  0
+            strata(nstrata)%sorad   = 0.0
+            strata(nstrata)%sorene  = 3.0
+            strata(nstrata)%soreni  = 0.5
+            strata(nstrata)%sorcos  = 1.0
+            strata(nstrata)%sormax  = 90.0
           CASE (2)
+            nstrata = nstrata + 1
+            strata(nstrata)%type    = 2.0
+            strata(nstrata)%indsrc  = 1
+            strata(nstrata)%txtsou  = '* '//osm_strata(is)%txtsou
+            strata(nstrata)%npts    = osm_strata(is)%npts
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  3
+            strata(nstrata)%flux    = osm_strata(is)%flux
+            strata(nstrata)%species_tag = 'FFFT'
+            strata(nstrata)%nspez   =  1
+            strata(nstrata)%distrib = 'FFFTF'
+            strata(nstrata)%inum    =  1
+            strata(nstrata)%indim   =  4
+            strata(nstrata)%insor   =  5
+            strata(nstrata)%nasor   =  0
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 124.0
+            strata(nstrata)%sorind  = 0.0
+            strata(nstrata)%nrsor   = -1
+            strata(nstrata)%sorad   = 0.0
+            strata(nstrata)%sorene  = 3.0
+            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%sorcos  = 1.0
+            strata(nstrata)%sormax  = 90.0
           CASE (3)
-            IF (strata(istrata)%type.EQ.3.1) THEN  !***(small) hack***
+            IF (osm_strata(is)%type.EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
               insor = 2 ! 1
               nasor = 1
-              beam  = 1 ! Turn on beams in input file...
+              beam  = 1 ! Turn on beams in EIRENE input file...
             ELSE
               nspez = 1
               insor = 1
               nasor = 0
             ENDIF
-            strata(istrata)%indsrc  = -1
-            strata(istrata)%txtsou  = '* point injection, '//
-     .                                strata(istrata)%txtsou
-            strata(istrata)%ninitl  = -1
-            strata(istrata)%nemods  =  1
-            strata(istrata)%flux    = strata(istrata)%flux *
-     .                                strata(istrata)%flux_fraction
-            strata(istrata)%species_tag = 'FFFF'
-            i2 = strata(istrata)%species
-            strata(istrata)%species_tag(i2:i2) = 'T'
-            strata(istrata)%nspez   = nspez
-            strata(istrata)%distrib = 'TFFFF'
-            strata(istrata)%inum    = 0
-            strata(istrata)%indim   = 0
-            strata(istrata)%insor   = insor
-            strata(istrata)%sorwgt  = 1.0
-            strata(istrata)%sorlim  = 220.0
-            strata(istrata)%sorind  = 0.0
-            strata(istrata)%nrsor   = 0
-            strata(istrata)%nasor   = nasor
-            strata(istrata)%sorad(1:3) = strata(istrata)%sorad(1:3) *  ! Convert to cm
-     .                                   100.0  
-
-c            WRITE(0,*) strata(istrata)%sorad(1:3)
+            nstrata = nstrata + 1
+            strata(nstrata)%indsrc  = -1
+            strata(nstrata)%txtsou  = '* point injection, '//
+     .                                osm_strata(is)%txtsou
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  1
+            strata(nstrata)%npts    = osm_strata(is)%npts
+            strata(nstrata)%flux    = osm_strata(is)%flux *
+     .                                osm_strata(is)%flux_fraction
+            strata(nstrata)%species_tag = 'FFFF'
+            i2 = osm_strata(is)%species
+            strata(nstrata)%species_tag(i2:i2) = 'T'
+            strata(nstrata)%nspez   = nspez
+            strata(nstrata)%distrib = 'TFFFF'
+            strata(nstrata)%inum    = 0
+            strata(nstrata)%indim   = 0
+            strata(nstrata)%insor   = insor
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 220.0
+            strata(nstrata)%sorind  = 0.0
+            strata(nstrata)%nrsor   = 0
+            strata(nstrata)%nasor   = nasor
+            strata(nstrata)%sorad(1:6) =osm_strata(is)%sorad(1:6) *  ! Convert to cm
+     .                                  100.0  
+c            WRITE(0,*) strata(nstrata)%sorad(1:3)
 c            STOP 'sdgsdgd'
-            strata(istrata)%soreni  = 0.0
+            strata(nstrata)%sorene  = osm_strata(is)%sorene
+            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%sorcos  = osm_strata(is)%sorcos
+            strata(nstrata)%sormax  = osm_strata(is)%sormax
           CASE (4)  ! Puff wall surface (not working...)
             WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
             STOP 
@@ -1172,21 +1229,19 @@ c            strata(nstrata)%sorad =  0.0
 
 
 c...  TEMP: make sure regular strata come first until surface to strata mapping is done properly...
-      DO istrata = 1, nstrata
-        IF (strata(istrata)%type.GE.3.0) THEN
-          tmpstrata = strata(istrata)
-          DO i1 = istrata, nstrata-1
+      DO is = 1, nstrata
+        IF (strata(is)%type.GE.3.0) THEN
+          tmpstrata = strata(is)
+          DO i1 = is, nstrata-1
             strata(i1) = strata(i1+1)
           ENDDO
           strata(nstrata) = tmpstrata  
         ENDIF
       ENDDO
 
-
-      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
-      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
-      WRITE(0,*) 'STRATA:',alloc
-
+c      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
+c      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
+c      WRITE(0,*) 'STRATA:',alloc
 
 c      STOP 'sdgsgsdsdgsgd'
 
@@ -1195,12 +1250,12 @@ c      IF (time_dependent) THEN
 c        strata(1:3)%npts = 10
 c      ENDIF
 c      strata(1:3)%npts = 100000
-c      strata(2)%npts = 100000
+c      strata(1:3)%npts = 2
 c      strata(1:10)%ninitl = 11111 ! 22222 ! 99887
 
       RETURN
- 99   WRITE(0,*) '  INDEX =',istrata
-      WRITE(0,*) '  TYPE  =',strata(istrata)%type
+ 99   WRITE(0,*) '  INDEX =',is
+      WRITE(0,*) '  TYPE  =',strata(is)%type
       STOP
       END
 c
@@ -1255,21 +1310,25 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,
-     .        iblk,iatm,imol,iion,ipho,ilin,isur
-      LOGICAL goodeof,output
-      REAL    rdum(30),frac,norm,
+      INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,iside,in,iw, 
+     .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG)
+      LOGICAL goodeof,output,wall_ignored
+      REAL    rdum(30),frac,norm,len,cir,
      .        sumion,amps,pflux
       CHARACTER buffer*256,species*32,fname*1024
 
       INTEGER iobj,igrp
-      INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:)
-      REAL     , ALLOCATABLE :: tdata(:,:,:)
+      INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:),wall_in(:,:)
+      REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:)
 
-      output = .FALSE.
+      
+      wall_ignored = .FALSE.
+      output       = .TRUE.
 
       ALLOCATE(tdata(MAXNKS,MAXNRS,5))
+      ALLOCATE(tflux(MAXSEG,10))
       tdata = 0.0
+      tflux = 0.0
 
       IF (tetrahedrons) THEN
         ALLOCATE(fluid_ik(nobj))
@@ -1286,12 +1345,21 @@ c
       ELSE
         ALLOCATE(fluid_ik(ntri))
         ALLOCATE(fluid_ir(ntri))
+        ALLOCATE(wall_in(3,ntri))
         fluid_ik = 0
         fluid_ir = 0
+        wall_in  = 0
         DO iobj = 1, ntri
-          IF (tri(iobj)%type.EQ.MAGNETIC_GRID) THEN  
+          IF     (tri(iobj)%type.EQ.MAGNETIC_GRID) THEN  
             fluid_ik(iobj) = tri(iobj)%index(1)                   ! Should pull these from .transfer
             fluid_ir(iobj) = tri(iobj)%index(2)   
+            ik = fluid_ik(iobj)
+            ir = fluid_ir(iobj)
+            IF (ir.LT.irsep) CYCLE
+            IF (ik.EQ.1      ) wall_in(1:3,iobj) = nimindex(idds(ir,2))
+            IF (ik.EQ.nks(ir)) wall_in(1:3,iobj) = nimindex(idds(ir,1))
+          ELSEIF (tri(iobj)%type.EQ.VACUUM_GRID) THEN
+            wall_in(1:3,iobj) = tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
           ENDIF
         ENDDO
       ENDIF
@@ -1318,6 +1386,7 @@ c      pinrec = 0.0
      .  WRITE(0     ,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
       WRITE(PINOUT,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
 
+c...  Open the EIRENE data transfer file:
       fp = 99
       IF (citersol.GT.0.AND.
      .    (tetrahedrons.OR.time_dependent)) THEN
@@ -1328,34 +1397,22 @@ c      pinrec = 0.0
       OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
 
-
+c...  Read through the file:
       iblk = 0
       iatm = 0
       imol = 0
+      iion = 0
       ipho = 0
       ilin = 0
+      cvesm = 0
       DO WHILE (.TRUE.)
         READ(fp,'(A256)',END=10) buffer
-        IF     (buffer(1:16).EQ.'* BULK PARTICLES') THEN
-          IF (output) WRITE(0,*) '===BULK PARTICLES==='
+        IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
+          IF (output) WRITE(0,*) '===BULK PARTICLES: VOLUME TALLIES==='
           iblk = iblk + 1
-
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         ! Check...
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
-
-          WRITE(0,*) 'NDATA:',ndata,nobj
-
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK1:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) ntally
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK2:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) ndata                         
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK3:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)          
-
           icount = 0
           DO WHILE (icount.LT.ndata)
             CALL NextLine(fp,ntally,icount,rdum)
@@ -1372,9 +1429,37 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
             ENDIF
           ENDDO
           IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:12).EQ.'* TEST ATOMS') THEN
-          IF (output) WRITE(0,*) '===TEST ATOMS==='
+        ELSEIF (buffer(1:22).EQ.'* BULK PARTICLES - SUR') THEN
+          IF (output) WRITE(0,*) '===BULK PARTICLES: SURFACE===',iblk
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF (iblk.EQ.1) THEN                    ! Only for D, presumably the 1st atom species, need check...
+              tflux(in,3) = tflux(in,3) + rdum(2)  ! Bulk particle flux (s-1)
+              tflux(in,4) = tflux(in,4) + rdum(3)  ! Bulk energy flux   (eV s-1)
+              cvesm(in) = 1
+            ELSE
+              CALL ER('LoadEireneData_06','IBLK.GT.1, unexpected '//
+     .                'this is...',*99)
+            ENDIF
+            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+          ENDDO
+          IF (output) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:17).EQ.'* TEST ATOMS (VOL') THEN
           iatm = iatm + 1
+          IF (output) WRITE(0,*) '===TEST ATOMS: VOLUME TALLIES===',iatm
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
@@ -1390,8 +1475,39 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
             ENDIF
           ENDDO
           IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:16).EQ.'* TEST MOLECULES') THEN
-          IF (output) WRITE(0,*) '===TEST MOLECULES==='
+        ELSEIF (buffer(1:17).EQ.'* TEST ATOMS (SUR') THEN
+          IF (output) WRITE(0,*) '===TEST ATOMS: SURFACE FLUXES===',iatm
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+c            WRITE(0,*) 'WTF',iobj,iside,in
+c            WRITE(0,*) '   ',iobj,tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
+c            WRITE(0,*) '   ',iobj,
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF (iatm.EQ.1) THEN                    ! Only for D, presumably the 1st atom species, need check...
+              tflux(in,1) = tflux(in,1) + rdum(2)  ! Atom particle flux (s-1)
+              tflux(in,2) = tflux(in,2) + rdum(3)  ! Atom energy flux   (eV s-1)
+              cvesm(in) = 1
+            ELSE
+              CALL ER('LoadEireneData_06','IATM.GT.1, unexpected '//
+     .                'this is...',*99)
+            ENDIF
+            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+          ENDDO
+          IF (output) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:19).EQ.'* TEST MOLECULES (VOL') THEN
+          IF (output) WRITE(0,*) '===TEST MOLECULES: VOLUME TALLIES==='
           imol = imol + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -1408,7 +1524,41 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
             ENDIF
           ENDDO
           IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:11).EQ.'* TEST IONS') THEN
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - VOL') THEN
+          iion = iion + 1
+          IF (output) WRITE(0,*) '===TEST IONS: VOLUME TALLIES===',iion
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 0
+          DO WHILE (icount.LT.ndata)
+            CALL NextLine(fp,ntally,icount,rdum)
+          ENDDO
+          IF (output) WRITE(0,*) '===DONE (NO DATA STORED)==='
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - SUR') THEN
+          IF (output) WRITE(0,*) '===TEST IONS: SURFACE FLUXES===',iion
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF (iion.EQ.1) THEN                 
+            ELSE
+              CALL ER('LoadEireneData_06','IION.GT.1, unexpected '//
+     .                'this is...',*99)
+            ENDIF
+          ENDDO
+          IF (output) WRITE(0,*) '===DONE (NO DATA STORED==='
         ELSEIF (buffer(1:14).EQ.'* TEST PHOTONS') THEN
         ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
           IF (output) WRITE(0,*) '===LINE EMISSION==='
@@ -1472,30 +1622,26 @@ c...      Check volumes:
 
 c...  Relaxation into OSM arrays only?
 
-c...  Normalize quantities (need to be careful vis-a-vis relaxation):
+c...  Normalize volume quantities (need to be careful vis-a-vis relaxation):
       sumion = 0.0
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
-
         DO ik = 1, nks(ir)
           norm = 1.0 / kvols(ik,ir)
 c          norm = 1.0 / (kvols(ik,ir) * eirtorfrac)
 
 c...      Volume normalization:
           tdata(ik,ir,1:5) = tdata(ik,ir,1:5) / kvols(ik,ir)
-
 c...      Linear relaxation:
           pinion(ik,ir) = (1.0-frac)*pinion(ik,ir) + frac*tdata(ik,ir,1)
           pinrec(ik,ir) = (1.0-frac)*pinrec(ik,ir) + frac*tdata(ik,ir,2)
           pinmp (ik,ir) = (1.0-frac)*pinmp (ik,ir) + frac*tdata(ik,ir,3)
           pinqi (ik,ir) = (1.0-frac)*pinqi (ik,ir) + frac*tdata(ik,ir,4)
           pinqe (ik,ir) = (1.0-frac)*pinqe (ik,ir) + frac*tdata(ik,ir,5)
-
 c          pinion (ik,ir) = (1.0 - frac) * pinion(ik,ir) + 
 c     .                            frac  * tdata (ik,ir,1) / kvols(ik,ir)
 c          pinrec (ik,ir) = (1.0 - frac) * pinrec(ik,ir) + 
 c     .                                    tdata (ik,ir,2) / kvols(ik,ir)
-
 c...      Not relaxed, volume normalize:
           pinatom(ik,ir) = pinatom(ik,ir) * norm  !/ kvols(ik,ir)
           pinmol (ik,ir) = pinmol (ik,ir) * norm  !/ kvols(ik,ir)
@@ -1503,7 +1649,6 @@ c...      Not relaxed, volume normalize:
      .                                  norm  !kvols(ik,ir)
           pinline(ik,ir,1:6,H_BGAMMA) = pinline(ik,ir,1:6,H_BGAMMA) * !/
      .                                  norm  !kvols(ik,ir)
-
 c          DO i1 = 1, 6
 c            pinline(ik,ir,i1,H_BALPHA) = pinline(ik,ir,i1,H_BALPHA) /
 c    .                                    kvols(ik,ir)
@@ -1519,11 +1664,87 @@ c...
 
       WRITE(0,*) 'SUMION:',sumion
 
-      CALL OutputEIRENE(67,'WORKING WITH EIRENE06')
+c...  Assign wall fluxes (based on code in ReadWallFlux in 
+c     setup.f, for EIRENE99):
 
-c...  Make sure that the whole EIRENE data file was there:
-      IF (.NOT.goodeof)  CALL ER('LoadEireneData','Problem with '//
-     .                           'eirene.transfer file',*99)
+c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c     FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c     FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)
+c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+c
+      fluxhw = 0.0
+      flxhw2 = 0.0
+      flxhw3 = 0.0
+      flxhw4 = 0.0
+      flxhw5 = 0.0
+      flxhw6 = 0.0
+      flxhw7 = 0.0
+      flxhw8 = 0.0
+
+      DO iw = 1, nvesm+nvesp
+        cir = 2 * PI * 0.5 * (rvesm(iw,1) + rvesm(iw,2))
+        len = SQRT((rvesm(iw,1) - rvesm(iw,2))**2.0 +
+     .             (zvesm(iw,1) - zvesm(iw,2))**2.0)
+        fluxhw(iw) = 0.0  ! (adatp(i2,1,1) + mdatp(i2,1,1)) / len / cir
+        flxhw2(iw) = (tflux(iw,1) + tflux(iw,3)) / len / cir  ! ***
+        flxhw3(iw) = 0.0  ! pdatp(i2,1,1)     ! ***
+        flxhw4(iw) = 0.0  ! adatp(i2,1,1)     ! ***
+        flxhw5(iw) = tflux(iw,2) / (tflux(iw,1) + 1.0E-10) ! *** 
+        flxhw6(iw) = tflux(iw,1) / len / cir  ! ***
+        flxhw7(iw) = tflux(iw,4) / (tflux(iw,3) + 1.0E-10) ! *** 0.0  ! ***
+c...    If this is fixed on the EIRENE side so that it is no longer
+c       statistical, then the use of FLXHW8 in the CALC_TARGFLUXDATA 
+c       routine can be removed:
+        flxhw8(iw) = tflux(iw,3) / len / cir  !  * 1.602E-19  For hand checks...
+      ENDDO
+c...  Check that flux data was assigned to every wall/target segment:
+      DO iw = 1, nvesm+nvesp
+        IF (cvesm(iw).EQ.0) WRITE(0,*) 'WARNING: NO WALL FLUX DATA '//
+     .                                 'ASSGINED FOR SEGMENT ',iw
+      ENDDO
+c...  Not sure what PINCOR is about at the moment, so issue a warning
+c     if it is not unity:
+      IF (pincor.NE.1.0) THEN
+        CALL WN('LoadEireneData_06','PINCOR not unity, setting to 1.0')      
+        pincor = 1.0
+      ENDIF
+c...  Not sure the reason at the moment, but this is done in READPIN 
+c     and the _PIN arrays are referenced in TAU:
+      DO iw = 1, nvesm+nvesp
+        fluxhw(iw) = fluxhw(iw) * pincor
+        flxhw2(iw) = flxhw2(iw) * pincor
+        flxhw3(iw) = flxhw3(iw) * pincor
+        flxhw4(iw) = flxhw4(iw) * pincor
+        flxhw6(iw) = flxhw6(iw) * pincor
+c...    Copy wall flux data:
+        fluxhw_pin(iw) = fluxhw(iw)
+        flxhw2_pin(iw) = flxhw2(iw)
+        flxhw3_pin(iw) = flxhw3(iw)
+        flxhw4_pin(iw) = flxhw4(iw)
+        flxhw5_pin(iw) = flxhw5(iw)
+        flxhw6_pin(iw) = flxhw6(iw)
+c...    Copy vessel definitions:
+        jvesm_pin(iw)  = jvesm(iw)
+        DO in = 1,2
+          rvesm_pin(iw,in)  = rvesm(iw,in)
+          zvesm_pin(iw,in)  = zvesm(iw,in)
+        ENDDO
+      ENDDO
+c...  From READPIN:
+      IF ((wlpabs.EQ.2.OR.wlpabs.EQ.3).AND.cgeoopt.NE.-1) 
+     .  CALL ER('LoadEireneData_06','Probability data not passed '//
+     .                              'from EIRENE',*99)
+c...  Also from READPIN?
+      hcorr = 1.0  ! volume correction factor
+      hval  = 1.0  ! volume correction factor
+
+
+
+      CALL OutputEIRENE(67,'WORKING WITH EIRENE06')
 
 c...  Need to save data again since Dalpha has been loaded into OBJ:
 c      CALL SaveGeometryData('tetrahedrons.raw')
@@ -1531,16 +1752,31 @@ c      CALL SaveGeometryData('tetrahedrons.raw')
 c...  Clear arrays: 
       DEALLOCATE(fluid_ik)
       DEALLOCATE(fluid_ir)
+      DEALLOCATE(wall_in)
       DEALLOCATE(tdata)
+      DEALLOCATE(tflux)
       IF (ALLOCATED(tri)) DEALLOCATE(tri) ! Move earlier and pass index mapping to/from Eirene
       IF (ALLOCATED(obj)) DEALLOCATE(obj) ! *same* but need to make more selective
       IF (ALLOCATED(srf)) DEALLOCATE(srf) ! at some point since even fluid objects will be stored here... 
       IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
+c...  Output results of confidence checks:
+      IF (.NOT.goodeof)  CALL ER('LoadEireneData','Problem with '//
+     .                           'eirene.transfer file',*99)
+      IF (wall_ignored) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '**********************************************'
+        WRITE(0,*) '* FLUXES TO NON-STANDARD DIVIMP WALL IGNORED *'
+        WRITE(0,*) '**********************************************'
+        WRITE(0,*) 
+      ENDIF
+
       RETURN
  97   CALL ER('LoadEireneData_06','Problem reading data file',*99)
  98   CALL ER('LoadEireneData_06','Data file not found',*99)
- 99   WRITE(0,*) '  FILENAME= "'//TRIM(fname)//'"'
+ 99   WRITE(0,*) 'IOBJ =',icount
+      WRITE(0,*) 'ISIDE=',iside
+      WRITE(0,*) '  FILENAME= "'//TRIM(fname)//'"'
       STOP
       END
 c
