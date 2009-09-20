@@ -986,14 +986,15 @@ c     .   'rvesm1','zvesm1','rvesm2','zvesm2'
       ENDDO
 
       WRITE(fp,*)
-      WRITE(fp,'(A4,A6,10A10)') 'in','jvesm','rvesm1','zvesm1',
+      WRITE(fp,'(A4,A6,12A10)') 'in','jvesm','rvesm1','zvesm1',
      .                          'rvesm2','zvesm2','fluxhw','flxhw2',
-     .                          'flxhw3','flxhw4','flxhw5','flxhw6'
+     .                          'flxhw3','flxhw4','flxhw5','flxhw6',
+     .                          'flxhw7','flxhw8'
       DO in = 1, nvesm+nvesp
-        WRITE(fp,'(I4,I6,4F10.6,1P,6E10.2,0P)')
+        WRITE(fp,'(I4,I6,4F10.6,1P,8E10.2,0P)')
      .    in,jvesm(in),rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2),
      .    fluxhw(in),flxhw2(in),flxhw3(in),flxhw4(in),flxhw5(in),
-     .    flxhw6(in)
+     .    flxhw6(in),flxhw7(in),flxhw8(in)
       ENDDO
 
 
@@ -1031,7 +1032,7 @@ c     .   'rvesm1','zvesm1','rvesm2','zvesm2'
      .  '  '  ,'24','25','26','27','28','29','30','31'
 
       DO in = 1, wallpts
-        WRITE(fp,'(I4,7(1x,F10.5),1x,e12.3)')
+        WRITE(fp,'(I4,8F10.5)')
      .    in,(wallpt(in,ii),ii=24,31)
       ENDDO
 
@@ -1073,9 +1074,11 @@ c          IF (kvhs(ik,ir).LT.1.0) cs = cs / qtim
 
           WRITE(fp,'(2I3,1P,3E11.4,5E11.3,0P,3F10.4,A)') ik,ir,
      .      kbfs (ik,ir),bratio(ik,ir),kes(ik,ir),
-     .      kvhs(ik,ir)/qtim,knbs(ik,ir),knes(ik,ir),
+     .      kvhs(ik,ir),knbs(ik,ir),knes(ik,ir),
+c     .      kvhs(ik,ir)/qtim,knbs(ik,ir),knes(ik,ir),
      .      pinatom(ik,ir),pinmol(ik,ir)*2,
-     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
+     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
+c     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
      .      note(1:LEN_TRIM(note))
 
         ENDDO
@@ -1140,10 +1143,10 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A3,2A10,2A20,A20,A12,1X,A7)')
+        WRITE(fp,'(2A3,2A10,2A20,A20,A12,A8,1X,A7)')
      .    'ik','ir',
      .    'rs','zs','kss (/ max)','ksb (% max)',
-     .    'kps (/ max)','kpb',
+     .    'kps (/ max)','kpb','d_kpb',
      .    irtag(ir)
 
         IF (ir.LT.irsep) THEN
@@ -1166,15 +1169,17 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
-c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A)')
+c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
+          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
      .      ik,ir,
      .      rs (ik,ir),zs (ik,ir),
      .      kss(ik,ir),kss(ik,ir)/(ksmaxs(ir)+1.0E-10),
      .      ksb(ik,ir),(ksb(ik,ir)-ksb(ik-1,ir))/(ksmaxs(ir)+1.0E-10)*
      .                  100.0,
-     .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),kpb(ik,ir),
-     .      note(1:LEN_TRIM(note)),kss2(ik,ir)
+     .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),
+     .      kpb(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
+     .      note(1:LEN_TRIM(note))
+c     .      kss2(ik,ir)
 
         ENDDO
 
@@ -1213,7 +1218,7 @@ c...temp: korpg=0
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,I6,2I3,8F12.8,A)')
+          WRITE(fp,'(2I3,I6,2I3,8F12.7,A)')
      .      ik,ir,in,virtag(ik,ir),nvertp(in),
      .      rvertp(1,in),zvertp(1,in),rvertp(2,in),zvertp(2,in),
      .      rvertp(3,in),zvertp(3,in),rvertp(4,in),zvertp(4,in),

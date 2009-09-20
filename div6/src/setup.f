@@ -1356,8 +1356,6 @@ c
       REAL    dum1,dum2,dum3,dum4,exp2,exp3,exp4,dpsin,psin0,frac,
      .        tedat(MAXNRS),tidat(MAXNRS),nedat(MAXNRS)
 
-
-
       IF (connected) THEN
         WRITE(0,*) 'CHEATING ON PSITARG'
         DO ir = irsep, nrs
@@ -1372,7 +1370,7 @@ c
       WRITE(SLOUT,*) 'INTERPOLATING TARGET DATA'
 
 c...  Need to check that PSITARG is assigned:
-      IF (psitarg(irsep,2).EQ.0.0)
+      IF (psitarg(irsep,2).EQ.0.0) 
      .  CALL ER('InterpolateTargetData','PSITARG does not appear to '//
      .                                  'be assigned',*99)
 
