@@ -751,11 +751,12 @@ c
       INCLUDE 'params'
       INCLUDE 'comtor'
       INCLUDE 'cgeom'
+      INCLUDE 'dynam1'
       INCLUDE 'pindata'
       INCLUDE 'grbound'
       INCLUDE 'slcom'
 
-      INTEGER ik,ir,in,ii,i1,i2,id
+      INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
       CHARACTER*7   irtag(0:MAXNRS)
@@ -1101,14 +1102,14 @@ c     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A3,5A4,4A10,3A11,1X,A7)')
+        WRITE(fp,'(2A4,5A4,4A10,3A11,1X,A7)')
      .    'ik','ir','vt','iki','iri','iko','iro',
      .    'kinds','koutds',
      .    'finds','foutds','kvols','kareas','thetag',irtag(ir)
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(89X,F10.6,I4)') thetat(id),idds(ir,2)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,2)
         ENDIF
 
         DO ik = 1, nks(ir)
@@ -1121,7 +1122,7 @@ c     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
+          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
      .      ik,ir,virtag(ik,ir),
      .      ikins(ik,ir),irins (ik,ir),ikouts(ik,ir),irouts(ik,ir),
      .      kinds(ik,ir),koutds(ik,ir),finds (ik,ir),foutds(ik,ir),
@@ -1132,7 +1133,7 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(89X,F10.6,I4)') thetat(id),idds(ir,1)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,1)
         ENDIF
       ENDDO
 
@@ -1143,18 +1144,18 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A3,2A10,2A20,A20,A12,A8,1X,A7)')
+        WRITE(fp,'(2A4,2A10,2A20,A20,A12,A8,1X,A7)')
      .    'ik','ir',
      .    'rs','zs','kss (/ max)','ksb (% max)',
      .    'kps (/ max)','kpb','d_kpb',
      .    irtag(ir)
 
         IF (ir.LT.irsep) THEN
-          WRITE(fp,'(2I3,40X,F12.6,28X,F12.6)')
+          WRITE(fp,'(2I4,40X,F12.6,28X,F12.6)')
      .      0,ir,ksb(0,ir),kpb(0,ir)
         ELSE
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(2I3,2F10.6,20X,F12.6,28X,F12.6,A,I2,A)')
+          WRITE(fp,'(2I4,2F10.6,20X,F12.6,28X,F12.6,A,I2,A)')
      .      idds(ir,2),ir,rp(id),zp(id),ksb(0,ir),
      .      kpb(0,ir),' (',idds(ir,2),')'
         ENDIF
@@ -1170,7 +1171,7 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
 c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
-          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
+          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
      .      ik,ir,
      .      rs (ik,ir),zs (ik,ir),
      .      kss(ik,ir),kss(ik,ir)/(ksmaxs(ir)+1.0E-10),
@@ -1185,7 +1186,7 @@ c     .      kss2(ik,ir)
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(2I3,2F10.6,2X,F10.6,60X,A,I2,A)')
+          WRITE(fp,'(2I4,2F10.6,2X,F10.6,60X,A,I2,A)')
      .      idds(ir,1),ir,rp(id),zp(id),ksmaxs(ir),
      .      ' (',idds(ir,1),')'
         ENDIF
@@ -1226,7 +1227,37 @@ c...temp: korpg=0
         ENDDO
       ENDDO
 
-600   CONTINUE
+      IF (ctestsol.GE.0.0) THEN
+        IF (outmode.EQ.3) WRITE(0,*) 'OUTPUTDATA: IMPURITIES'
+        WRITE(fp,*)
+        WRITE(fp,*) 'DIVIMP IMPURITY DATA:'
+        DO ir = 1, nrs
+          WRITE(fp,*)
+          WRITE(fp,'(2A4,2A10,9A10,1X,A7)')
+     .      'ik','ir','r','z',
+     .      '1','2','3','4','5','10','15','20','25',
+     .      irtag(ir)
+          ike = nks(ir) 
+          IF (ir.LT.irsep) ike = nks(ir) - 1
+          DO ik = 1, ike
+            note = ' '
+            IF (ik.EQ.ikto2 (ir)) note = TRIM(note)//' IKTO2'
+            IF (ik.EQ.ikti2 (ir)) note = TRIM(note)//' IKTI2'
+            IF (ik.EQ.ikmids(ir)) note = TRIM(note)//' IKMIDS'
+            IF (ik.EQ.ikbound(ir,IKLO))
+     .        note = note(1:LEN_TRIM(note))//' IK1'
+            IF (ik.EQ.ikbound(ir,IKHI))
+     .        note = note(1:LEN_TRIM(note))//' IK2'
+            WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
+     .        ik,ir,
+     .        rs (ik,ir),zs (ik,ir),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+          ENDDO
+        ENDDO
+      ENDIF
+
+600   CONTINUE  ! ???
 
       CLOSE(fp)
 

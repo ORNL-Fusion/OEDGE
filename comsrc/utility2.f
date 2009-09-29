@@ -6349,7 +6349,7 @@ c      PARAMETER (DTOL=1.0D-05)
 
       INTEGER mode
       LOGICAL test,output
-      REAL*8  x(0:2),y(0:2),s,t
+      REAL*8  x(0:2),y(0:2),s,t,length
 
       INTEGER fp
 
@@ -6408,12 +6408,19 @@ c        IF (mode.NE.3.AND.mode.NE.4.AND.
      .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
      .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
         IF (mode.EQ.7.AND.
-     .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
-     .    test=test.AND.DABS(s-t).LT.1000.0D0*DABS(DTOL)
+     .      s.NE.-999.0D0.AND.t.NE.-999.0D0) THEN
+          length = DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
+          test=test.AND.DABS(s-t)/t.LT.MAX(0.001,0.001*0.1/length)
+c          test=test.AND.DABS(s-t).LT.1000.0D0*DABS(DTOL)
+        ENDIF
       ENDIF
 
       IF (output) THEN
-        WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 'S&T:',s,t,DABS(s-t),test
+        length = DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
+        WRITE(fp,'(A,L2)') 'S&T:',test
+        WRITE(fp,'(A,2F12.6,1P,E14.7)') 'S&T:',s,t,DABS(s-t)
+        WRITE(fp,'(A,2F12.6)') 'S&T:',DABS(s-t)/t,
+     .                                MAX(0.001,0.001*0.1/length)
         WRITE(fp,*) 'LENGTH:',DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
       ENDIF
 

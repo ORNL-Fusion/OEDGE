@@ -100,9 +100,10 @@ c...  Assign IKBOUNDS array:
 c...  Determine if SOL28 is going to be called:
       callsol28 = .FALSE.
       if (cioptf.eq.28) callsol28 = .TRUE.
-      if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) THEN
+      if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) then
         do id = 1, nbgplas
-          if (bgplasopt(id,5).eq.28.0) callsol28 = .TRUE.
+          if (bgplasopt(id,5).eq.28.0.or.bgplasopt(id,8).eq.28.0)
+     .      callsol28 = .TRUE.
         enddo
       endif
       if (callsol28.AND.s28mode.GE.4.0) CALL SetupSOL28

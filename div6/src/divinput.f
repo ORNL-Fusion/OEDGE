@@ -107,12 +107,7 @@ c     are needed in GETMODEL:
 c slmod end
       CALL RDRARN(BGPLASOPT,NBGPLAS,2*MAXNRS,-MACHHI,MACHHI,.FALSE.,
      >            0.0,MACHHI,7,'SET OF BG PLASMA OPTIONS BY RING',IERR)
-c slmod end
-c...  Option 3 added, for loading SOLPS2.5 data from Rhozansky:
-      call rdi (cre2d ,.TRUE., 0,.true.,3 ,'READ E2D BG FOR REF  ',ierr)
-c
-c      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
-c slmod begin
+      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
       call rdi (e2dtargopt,.TRUE., 0,.true.,6 ,'EDGE2D TARG COND',ierr)
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 9,'CX RECOMB OPT        ',IERR)
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)

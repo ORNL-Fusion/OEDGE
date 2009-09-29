@@ -29,6 +29,8 @@ c
       ENDDO
       CLOSE (fp)
 
+c      WRITE(0,*) 'REF:',fluid(1:100,1)%ne
+
       RETURN
  97   CALL ER('SaveGrid','Problem creating raw data file',*99)
  98   CALL ER('SaveGrid','Problem writing to raw data file',*99)
@@ -87,35 +89,38 @@ c...  Check version numbers:
 
       CLOSE (fp)
 
-c      WRITE(0,*) 'NTUBE:',ntube
+c      WRITE(0,*) 'NTUBE:',ntube,nfluid
+c      WRITE(0,*) 'REF LOAD:',fluid(1:100,1)%ne
 c      STOP 'sdgfsdsdg'
 
 
-      ion = 1
+      IF (.FALSE.) THEN
+        ion = 1
 
-      tube(1:ntube)%jsat  (LO,ion) = 0.0
-      tube(1:ntube)%machno(LO)     = 0.0
-      tube(1:ntube)%gamma (LO,ion) = 0.0
-      tube(1:ntube)%ne    (LO)     = 0.0
-      tube(1:ntube)%te    (LO)     = 0.0
-      tube(1:ntube)%ni    (LO,ion) = 0.0
-      tube(1:ntube)%vi    (LO,ion) = 0.0
-      tube(1:ntube)%ti    (LO,ion) = 0.0
+        tube(1:ntube)%jsat  (LO,ion) = 0.0
+        tube(1:ntube)%machno(LO)     = 0.0
+        tube(1:ntube)%gamma (LO,ion) = 0.0
+        tube(1:ntube)%ne    (LO)     = 0.0
+        tube(1:ntube)%te    (LO)     = 0.0
+        tube(1:ntube)%ni    (LO,ion) = 0.0
+        tube(1:ntube)%vi    (LO,ion) = 0.0
+        tube(1:ntube)%ti    (LO,ion) = 0.0
 
-      tube(1:ntube)%jsat  (HI,ion) = 0.0
-      tube(1:ntube)%machno(HI)     = 0.0
-      tube(1:ntube)%gamma (HI,ion) = 0.0
-      tube(1:ntube)%ne    (HI)     = 0.0
-      tube(1:ntube)%te    (HI)     = 0.0
-      tube(1:ntube)%ni    (HI,ion) = 0.0
-      tube(1:ntube)%vi    (HI,ion) = 0.0
-      tube(1:ntube)%ti    (HI,ion) = 0.0
+        tube(1:ntube)%jsat  (HI,ion) = 0.0
+        tube(1:ntube)%machno(HI)     = 0.0
+        tube(1:ntube)%gamma (HI,ion) = 0.0
+        tube(1:ntube)%ne    (HI)     = 0.0
+        tube(1:ntube)%te    (HI)     = 0.0
+        tube(1:ntube)%ni    (HI,ion) = 0.0
+        tube(1:ntube)%vi    (HI,ion) = 0.0
+        tube(1:ntube)%ti    (HI,ion) = 0.0
 
-      fluid(1:nfluid,ion)%ne = 0.0
-      fluid(1:nfluid,ion)%te = 0.0
-      fluid(1:nfluid,ion)%ni = 0.0
-      fluid(1:nfluid,ion)%vi = 0.0
-      fluid(1:nfluid,ion)%ti = 0.0
+        fluid(1:nfluid,ion)%ne = 0.0
+        fluid(1:nfluid,ion)%te = 0.0
+        fluid(1:nfluid,ion)%ni = 0.0
+        fluid(1:nfluid,ion)%vi = 0.0
+        fluid(1:nfluid,ion)%ti = 0.0
+      ENDIF
 
 c        WRITE(0,*) 'TARGET DATA 1:'
 c        DO itarget = LO, HI
@@ -169,9 +174,11 @@ c...  Solution arrays:
 c...  Reference solution:
       ref_nion   = 0
       ref_ntube  = 0
+      ref_ncell  = 0
       ref_nfluid = 0
       IF (ALLOCATED(ref_tube )) DEALLOCATE(ref_tube) 
       IF (ALLOCATED(ref_fluid)) DEALLOCATE(ref_fluid) 
+      IF (ALLOCATED(ref_cell )) DEALLOCATE(ref_cell) 
 
       RETURN
  99   STOP
@@ -324,12 +331,15 @@ c      USE mod_eirene04
 
       INTEGER   fp,ntally,ndata,icount,i1,index(20),ntri,
      .          iblk,iatm,imol,iion,ipho,ilin
+      LOGICAL   output
       REAL      rdum(30),volmin
       CHARACTER buffer*256,fname*512
 
       REAL, ALLOCATABLE :: tvol(:)      
 
-      WRITE(0,*) 'LOADTRIANGLEDATA:',flag1,flag2,flag3
+      output = .FALSE. 
+
+      IF (output) WRITE(0,*) 'LOADTRIANGLEDATA:',flag1,flag2,flag3
 
 c      tdata = 0.0  ! Initialization... problem, size unknown...
 
@@ -356,8 +366,8 @@ c...    Load volumes:
       DO WHILE (.TRUE.)
         READ(fp,'(A256)',END=10) buffer
 
-        IF     (buffer(1:16).EQ.'* BULK PARTICLES') THEN
-
+        IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           iblk = iblk + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -367,9 +377,9 @@ c...    Load volumes:
             CALL NextLine(fp,ntally,icount,rdum)
             IF (flag1.EQ.1.AND.flag2.EQ.iblk) tdata(icount)=rdum(flag3)
           ENDDO
-
-        ELSEIF (buffer(1:12).EQ.'* TEST ATOMS') THEN
-
+        ELSEIF (buffer(1:22).EQ.'* BULK PARTICLES - SUR') THEN
+        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           iatm = iatm + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -379,9 +389,9 @@ c...    Load volumes:
             CALL NextLine(fp,ntally,icount,rdum)
             IF (flag1.EQ.2.AND.flag2.EQ.iatm) tdata(icount)=rdum(flag3)
           ENDDO
-
-        ELSEIF (buffer(1:16).EQ.'* TEST MOLECULES') THEN
-
+        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - SUR') THEN
+        ELSEIF (buffer(1:22).EQ.'* TEST MOLECULES - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           imol = imol + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -391,10 +401,10 @@ c...    Load volumes:
             CALL NextLine(fp,ntally,icount,rdum)
             IF (flag1.EQ.3.AND.flag2.EQ.imol) tdata(icount)=rdum(flag3)
           ENDDO
-
-        ELSEIF (buffer(1:11).EQ.'* TEST IONS') THEN
-        ELSEIF (buffer(1:14).EQ.'* TEST PHOTONS') THEN
-
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - VOL') THEN
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - SUR') THEN
+        ELSEIF (buffer(1:20).EQ.'* TEST PHOTONS - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           ipho = ipho + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -404,9 +414,8 @@ c...    Load volumes:
             CALL NextLine(fp,ntally,icount,rdum)
             IF (flag1.EQ.5.AND.flag2.EQ.ipho) tdata(icount)=rdum(flag3)
           ENDDO
-
         ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
-
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           ilin = ilin + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata   
@@ -419,6 +428,7 @@ c...    Load volumes:
 
         ELSEIF (buffer(1:6 ).EQ.'* MISC') THEN
 c...      Check volumes:
+          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata   
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally-1)     ! TEMP WITH THE -1     
@@ -426,18 +436,15 @@ c...      Check volumes:
           DO WHILE (icount.LT.ndata)
             CALL NextLine(fp,ntally,icount,rdum)
             IF (flag1.EQ.7) tdata(icount) = rdum(flag3)
-
             IF (flag1.EQ.7.AND.flag3.EQ.4.AND.rdum(flag3).EQ.0.0) THEN
               WRITE(0,*) 'NULL TRIANGLE VOLUME:',icount
               STOP 'HALTING CODE'
 c              tdata(icount)=1.0E+10
             ENDIF
-
           ENDDO
-
         ELSEIF (buffer(1:1 ).EQ.'*') THEN
         ELSE
-c TEMP          CALL ER('LoadTriangleData','Problem with transfer file',*99)
+c          CALL ER('LoadTriangleData','Problem with transfer file',*99)
         ENDIF
       ENDDO
  10   CONTINUE
@@ -459,7 +466,7 @@ c...    Scale by triangle volume:
       STOP
  98   WRITE(0,*) 'WARNING: eirene.transfer DATA FILE NOT FOUND'
       RETURN
- 99   STOP
+ 99   WRITE(0,*) 'BUFFER: >'//TRIM(buffer)//'<'
       END
 c
 c ========================================================================
@@ -666,7 +673,72 @@ c
 99    STOP
       END
 
+c ======================================================================
+c
+c subroutine: ProcessIterationBlocks
+c
+c Moved here for compatilibity with OUT.
+c 
+      SUBROUTINE ProcessIterationBlocks
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_legacy
+      IMPLICIT none
 
+      LOGICAL GetLine
+      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
+
+      INTEGER   fp,i,idum1(1:5)
+      CHARACTER buffer*1024,cdum1*512
+
+      LOGICAL :: status = .TRUE., new_block = .FALSE.
+
+      opt%tube(1)      = 1
+      opt%tube(2)      = 1E+8
+      opt%iteration(1) = 1
+      opt%iteration(2) = 1E+8
+      nopt = 1
+      opt_iteration(1) = opt
+      IF (niteration.GT.0) THEN
+c...    Load data to selectively modify input options for particular 
+c       flux-tubes and iterations of the solver:
+        fp = -1
+        niteration = niteration + 1
+        iteration_buffer(niteration) = '''{999}'''
+        DO WHILE(GetLine(fp,buffer,WITH_TAG))
+c          WRITE(0,*) 'buffer >'//TRIM(buffer)//'<'                        
+c...      Isolate tag string:
+          DO i = 2, LEN_TRIM(buffer)
+            IF (buffer(i:i).EQ.'}') EXIT
+          ENDDO
+c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'                        
+          IF (buffer(3:i-1).EQ.'CON ITERATION DATA') THEN
+            status = .TRUE.
+            opt_iteration(nopt) = opt
+            nopt = nopt + 1
+            READ(buffer,*) cdum1,idum1(1:5)
+            IF (idum1(1).EQ.1) THEN
+              opt = opt_iteration(nopt-1)
+            ELSE
+              opt = opt_iteration(1)
+            ENDIF
+            opt%iteration(1:2) = idum1(2:3)
+            opt%tube     (1:2) = idum1(4:5)
+          ELSE
+            CALL ProcessInputTag(fp,i,buffer,status)
+          ENDIF
+          IF (.NOT.status) EXIT
+        ENDDO
+        opt_iteration(nopt) = opt
+        opt = opt_iteration(1)
+      ENDIF
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
 
 
 

@@ -2203,6 +2203,8 @@ c...  Assign defaults to surface properties:
       surface(nsurface)%recycf = defrecycf
       surface(nsurface)%ilspt = 0
       surface(nsurface)%isrs  = 0
+      surface(nsurface)%recycs = 1.0
+      surface(nsurface)%recycc = 1.0
 
       IF     (type.EQ.VESSEL_WALL) THEN
 
@@ -3091,7 +3093,7 @@ c      REAL    GetMach,GetJsat,GetFlux
       REAL*8  MaxTriangleAngle
 
       INTEGER i1,i2,i3,i4,nlist(2),ilist(50,2),problem_triangle
-      LOGICAL output,status,large_angle
+      LOGICAL output,status,large_angle,print_list
       REAL*8  x(3),y(3),s,t,xlist(0:50,2),ylist(0:50,2),slist(0:50,2)
 
 
@@ -3101,7 +3103,7 @@ c      REAL*8, ALLOCATABLE :: xvertex(:),yvertex(:)
 
       CALL OutputData(85,'Building super triangles')
 
-      problem_triangle = 7039
+      problem_triangle = -1 ! 7039
 
 c...  Process cells and build list of triangles and verticies:
       ntri = 0
@@ -3116,6 +3118,7 @@ c     .            cell(i1)%index(2).EQ.19 )) CYCLE
         ilist = 0
 
         DO i2 = 1, 2
+          print_list = .FALSE.
 c...      Build list of points on the 14 and 23 surfaces:
           IF (i2.EQ.1) THEN
             x(1) = cell(i1)%r(1)
@@ -3145,9 +3148,13 @@ c     .          cell(i1)%index(1).EQ.1 .AND.
 c     .          cell(i1)%index(2).EQ.62.AND.
 c     .          (cell(i3)%index(2).EQ.63.OR.
 c     .           .FALSE.)) output = .TRUE.
-            IF (i2.EQ.1.AND.cell(i1)%index(1).EQ. 1.AND.               
-     .                      cell(i1)%index(2).EQ.83.AND.
-     .                      cell(i3)%index(2).EQ.82) output = .TRUE.
+            IF (i2.EQ.1.AND.cell(i1)%index(1).EQ.20.AND.               
+     .                      cell(i1)%index(2).EQ.120.AND.
+     .                      cell(i3)%index(2).EQ.119) THEN
+              output = .TRUE.
+              print_list = .TRUE.
+            ENDIF
+            IF (output) WRITE(eirfp,*) '----------------'
 
             IF (cell(i3)%index(1).EQ.1) THEN  ! *THIS MAY NOT WORK FOR EDGE2D*
 c...          Only check points 1 and 2 on the 1st cells of a given ring.  In theory, 
@@ -3194,11 +3201,8 @@ c...
           ylist(nlist(i2),i2) = y(2)
           slist(nlist(i2),i2) = 1.0D0
 
-          IF (ntri.EQ.problem_triangle-1.OR.
-     .        ntri.EQ.problem_triangle-2.OR.
-     .        (i2.EQ.1.AND.cell(i1)%index(1).EQ. 1.AND.               
-     .                     cell(i1)%index(2).EQ.83)) THEN
-             DO i3 = 1, nlist(i2)
+          IF (print_list) THEN
+            DO i3 = 1, nlist(i2)
               WRITE(eirfp,'(A,I3,3F15.9)') 
      .          'LIST A:',i2,xlist(i3,i2),ylist(i3,i2),slist(i3,i2)
             ENDDO
@@ -3951,15 +3955,17 @@ c
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER ncra,ncrm,iscd1,iscd2,natmi
+      INTEGER ncra,ncrm,iscd1,iscd2,natmi,nreaci
 
       WRITE(fp06,90) '*** 4. DATA FOR SPECIES SPECIFICATION AND '//
      .               'ATOMIC PHYSICS MODULE (OSM)'
 
       IF     (.TRUE.) THEN
 
+        nreaci = 36
+
         WRITE(fp06,90) '* ATOMIC REACTION CARDS  NREACI='
-        WRITE(fp06,91) 35
+        WRITE(fp06,91) nreaci
         WRITE(fp06,95) '  1 AMJUEL H.4 2.1.5    EI ',0,1
         WRITE(fp06,95) '  2 CONST  H.4          EI ',0,1     ! Dummy ionisation rate
         WRITE(fp06,92) -200.0,0.0,0.0,0.0,0.0,0.0
@@ -4031,6 +4037,9 @@ c          CALL ER('WriteBlock04_06','Need to check BEAM setup',*99)
           WRITE(fp06,96) ' 34 AMJUEL H.1 3.1.6FJ  PI ',1,1,0.0,0.0,0.0  ! For beams...
           WRITE(fp06,95) ' 35 AMJUEL H.102.1.8     RC',0,1,1.36E+01     ! Rec e cooling...
         ENDIF
+        IF (.TRUE..OR.opt_eir%ilspt.EQ.2) THEN
+          WRITE(fp06,95) ' 36 AMJUEL H.2 2.26B0    EI',0,56,0.0
+        ENDIF            
 
         natmi = 1
         IF (beam.EQ.1) natmi = natmi + 1
@@ -4074,12 +4083,16 @@ c          CALL ER('WriteBlock04_06','Need to check BEAM setup',*99)
           WRITE(fp06,91) 34,114,114,  0,01001 
           WRITE(fp06,93) 0.0,4.0,0.0
         ENDIF
-        IF (opt_eir%ilspt.NE.0) THEN
+        IF     (opt_eir%ilspt.EQ.1) THEN
           WRITE(fp06,94) 2,'C       ',12,6,1,0,2,2,0,2
           WRITE(fp06,91) 6,115,214,0  ,00000
           WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
           WRITE(fp06,91) 7,114,111,214,01001
           WRITE(fp06,93) 0.0,0.0,0.0,0.0,1.0
+        ELSEIF (opt_eir%ilspt.EQ.2) THEN
+          WRITE(fp06,94) 2,'Fe      ',56,26,1,0,2,2,0,1
+          WRITE(fp06,91) 36,115,214,0,00000
+          WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
         ENDIF
 
         WRITE(fp06,90) '** 4b NEUTRAL MOLECULES SPECIES CARDS: NMOLI='
@@ -4296,7 +4309,7 @@ c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,92)  95.0, 95.0,800.0,0.0,   0.0,750.0
         WRITE(fp06,92)  45.0, 20.0
 c        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
-        WRITE(fp06,91) 1,10,1,2,3,4,5,6,9,0,1
+        WRITE(fp06,91) 1,20,1,2,3,4,5,6,9,0,1
         WRITE(fp06,91) 0
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)
@@ -4488,8 +4501,10 @@ c     nmass = NINT(crmb)
       WRITE(fp06,92) 35.0,0.0,0.0,0.0,1.0                      ! eirsrcmul*eirscale(11)
 c      WRITE(fp06,92) 16.0,0.0,0.0,0.0,1.0E-15                      ! No volume recombination
 
-      IF (opt_eir%ilspt.NE.0) THEN
+      IF     (opt_eir%ilspt.EQ.1) THEN
         WRITE(fp06,94) 2,'C+     ',12,6,1,1,2,2,0,0
+      ELSEIF (opt_eir%ilspt.EQ.2) THEN
+        WRITE(fp06,94) 2,'Fe+    ',56,26,1,1,2,2,0,0
       ENDIF
 
       ibgk = 0

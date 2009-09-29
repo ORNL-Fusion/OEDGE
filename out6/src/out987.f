@@ -714,10 +714,10 @@ c
 
       INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,
      .        nline,lastcolour,scaleopt,colouropt,posopt
-      LOGICAL setqmin,setqmax,inside 
+      LOGICAL setqmin,setqmax,inside,scale_set
       REAL    qmin,qmax,frac,frac5,fmod5,scalefact,fact,
      .        posx,posy,poswidth,posheight
-      CHARACTER scalelabel*512,cdum1*512,cdum2*512
+      CHARACTER label*512,cdum1*512,cdum2*512
 
       REAL, POINTER :: gdata(:,:)
 
@@ -780,10 +780,11 @@ c      CALL SLSET (0.05,0.95,0.05,0.95,
 c     .            xxmin,xxmax,yymin,yymax)
 c      CALL PSPACE (map1x,map2x,map1y,map2y)
 
+      scale_set = .FALSE.
       scaleopt   = 2
       colouropt  = 1
       scalefact  = 1.0
-      scalelabel = 'default'
+      label = 'default'
 
       qmin =  HI
       qmax = -HI
@@ -791,14 +792,15 @@ c...  Read scale information:
       READ(5,'(A512)') cdum1
       IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
      .      cdum1(8:12).EQ.'SCALE') THEN
+        scale_set = .TRUE.
         READ(cdum1,*) cdum2,scaleopt,colouropt,scalefact,qmin,qmax,
-     .                scalelabel
+     .                label
         IF (qmin.EQ.-99.0) qmin =  HI
         IF (qmax.EQ.-99.0) qmax = -HI
         WRITE(0,*) 'SCALE:',scaleopt,colouropt,scalefact,
-     .              scalelabel(1:LEN_TRIM(scalelabel))
-        IF (scalelabel.EQ.'default') 
-     .    scalelabel = graph(CH1(graph):LEN_TRIM(graph))
+     .              label(1:LEN_TRIM(label))
+        IF (label.EQ.'default') 
+     .    label = graph(CH1(graph):LEN_TRIM(graph))
       ELSE
         BACKSPACE 5
       ENDIF
@@ -868,11 +870,14 @@ c     .                  0,smooth,0,ANLY,1)
 c...problem is some small triangles driving up the neutral density? ... check against magnetic 
 c grid neutral density plot? or check agains ionisation plot to see if scales are the same... 
 c...check .eirdat file...
+      WRITE(0,*) 'DEBUG: IOPT',iopt
 
       IF (iopt.GE.500) THEN
 
         ALLOCATE(gdata1(MAXNKS,MAXNRS))
         gdata1 = 0.0
+
+        WRITE(0,*) 'DEBUG: IOPT',iopt
 
         SELECTCASE (iopt)
           CASE (501)
@@ -887,7 +892,7 @@ c...check .eirdat file...
             gdata => e2dtibs
           CASE (540) 
             gdata1 = 0.0
-            DO ir = 2, irsep-1
+            DO ir = 2, nrs ! irsep-1
               gdata1(1:nks(ir),ir) = pinion(1:nks(ir),ir)
             ENDDO
             gdata => gdata1
@@ -916,8 +921,8 @@ c            DO ir = irsep, nrs
             gdata => gdata1
           CASE (708) 
             gdata1 = 0.0
-            DO ir = irsep, nrs
-c            DO ir = 2, nrs
+c            DO ir = irsep, nrs
+            DO ir = 2, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               gdata1(1:nks(ir),ir) = ktebs(1:nks(ir),ir)
             ENDDO
@@ -932,15 +937,15 @@ c            DO ir = irsep, nrs
             gdata => gdata1
           CASE (720) 
             gdata1 = 0.0
-            DO ir = irsep, nrs
-c            DO ir = 2, nrs
+c            DO ir = irsep, nrs
+            DO ir = 2, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               gdata1(1:nks(ir),ir) = ktibs(1:nks(ir),ir)
             ENDDO
             gdata => gdata1
-          CASE DEFAULT 
-            IF (iopt.GE.600.AND.iopt.LE.699) THEN
-              iz = iopt - 600
+          CASE (800:875) 
+              WRITE(0,*) 'DEBUG: here 1'
+              iz = iopt - 800
               READ(5,'(A512)') cdum1
               WRITE(0,*) 'CDUM>'//cdum1(8:11)//'<'
               IF (cdum1(8:11).EQ.'Adas'.OR.cdum1(8:11).EQ.'ADAS'.OR.
@@ -952,7 +957,7 @@ c...            Load PLRP data from ADAS:
                 WRITE(0,*) 'ADAS SETTINGS:',adasid,adasyr,adasex
                 WRITE(0,*) '             :',isele,iselr,iselx,iseld
                 IF (IERR.NE.0) THEN
-                  WRITE(6,*) '984: ERROR READING ADAS DETAILS, '//
+                  WRITE(6,*) '987: ERROR READING ADAS DETAILS, '//
      .                       'IERR = ',IERR
                   IERR = 0
                   GOTO 99
@@ -963,6 +968,9 @@ c...            Load PLRP data from ADAS:
                 WRITE(0,*) 'ADAS DATA:',iz,wlngth,ircode
               ELSE
 c...            Load impurity density data:
+c                WRITE(0,*) 'DEBUG: here 2'
+c                   IF (iz.EQ.0) 
+c     .                WRITE(0,*) sdlims(1:nks(109),109,iz)
                 BACKSPACE 5
                 DO ir = 2, nrs
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -971,44 +979,10 @@ c...            Load impurity density data:
               ENDIF
 
               gdata => gdata1
-            ENDIF
+
+          CASE DEFAULT 
+            CALL ER('Plot987','Unrecognized option',*99)
         ENDSELECT
-
-c        IF (iopt.EQ.501) gdata => e2dion
-c        IF (iopt.EQ.502) gdata => e2drec
-c        IF (iopt.EQ.520) gdata => e2dnbs
-c        IF (iopt.EQ.521) gdata => e2dtebs
-c        IF (iopt.EQ.522) gdata => e2dtibs
-c...    Testing:
-c        IF (iopt.EQ.599) gdata => e2dcxrec
-c        IF (iopt.EQ.540) THEN
-c          ALLOCATE(gdata1(MAXNKS,MAXNRS))
-c          gdata1 = 0.0
-c          DO ir = 2, irsep-1
-c            gdata1(1:nks(ir),ir) = pinion(1:nks(ir),ir)
-c          ENDDO
-c          gdata => gdata1
-c        ENDIF
-c        IF (iopt.EQ.542) THEN
-c          ALLOCATE(gdata1(MAXNKS,MAXNRS))
-c          gdata1 = 0.0
-c          DO ir = 2, nrs
-c            IF (idring(ir).EQ.BOUNDARY) CYCLE
-c            gdata1(1:nks(ir),ir) = pinalpha(1:nks(ir),ir)
-c          ENDDO
-c          gdata => gdata1
-c        ENDIF
-c        IF (iopt.GE.600.AND.iopt.LE.699) THEN
-c          ALLOCATE(gdata1(MAXNKS,MAXNRS))
-c          gdata1 = 0.0
-c          izstate = iopt - 600
-c          DO ir = 2, nrs
-c            IF (idring(ir).EQ.BOUNDARY) CYCLE
-c            gdata1(1:nks(ir),ir) = MAX(0.0,sdlims(1:nks(ir),ir,izstate))
-c          ENDDO
-c          gdata => gdata1
-c        ENDIF
-
 
         ALLOCATE(nv(MAXNKS*MAXNRS))
         ALLOCATE(rv(4,MAXNKS*MAXNKS))
@@ -1075,8 +1049,7 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
 
         IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata,'default')  ! Dalpha
         IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata,'default')  ! Ionisation
-
-        IF (iopt.EQ.4) THEN
+        IF (.FALSE..AND.iopt.EQ.4) THEN
           DO i1 = 1, ntri
             IF (tri(i1)%type.EQ.MAGNETIC_GRID.AND.
      .          tri(i1)%index(2).GE.irsep)
@@ -1200,15 +1173,10 @@ c...    Draw polygons:
         CALL MAP   (CXMIN,CXMAX,CYMIN,CYMAX)
         CALL HSV
 c         hardscale = .TRUE.
-c... LEFT OFF -- MOVE frac CALCULATION TO SETCOL255, so that this is alway consistent! 
         DO i1 = 1, nc
-          IF (cq(i1).GE.qmin) THEN
-c            frac = (cq(i1) - qmin) / (qmax - qmin)
-c            frac5 = 100.0*frac
-c            fmod5 = AMOD(frac5,2.0)
-c            frac = MIN(0.98,(frac5-fmod5)/100.0)
-c            CALL SetCol255(frac,qmin,qmax)
+c          IF (cq(i1).GE.qmin) THEN
             CALL SetCol255_04(colouropt,cq(i1),qmin,qmax)
+c            CALL SetCol255_04(colouropt,cq(i1),qmin,qmax)
             CALL FILCOL(255)
             CALL LINCOL(255) 
 c            WRITE(6,*) 'PLOT:',rv(1,i1),zv(1,i1),cq(i1),nv(i1)
@@ -1216,11 +1184,15 @@ c            WRITE(6,*) '    :',rv(2,i1),zv(2,i1)
 c            WRITE(6,*) '    :',rv(3,i1),zv(3,i1)
 c            WRITE(6,*) '    :',rv(4,i1),zv(4,i1)
             CALL PTPLOT(rv(1,i1),zv(1,i1),1,nv(i1),1)
-          ENDIF
+c          ENDIF
         ENDDO
 
-        CALL DrawColourScale(scaleopt,colouropt,qmin,qmax,scalelabel)
-
+        IF (scale_set) THEN
+c...      Process tags:
+          IF (label(1:14).EQ.'<charge state>') 
+     .     WRITE(label,'(A,I2,A)') '+',iz,' '//label(15:LEN_TRIM(label))
+        ENDIF
+        CALL DrawColourScale(scaleopt,colouropt,qmin,qmax,label)
 
         IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
         DEALLOCATE(nv)
@@ -1568,5 +1540,6 @@ c...  Clear arrays:
       IF (ALLOCATED(lcolour)) DEALLOCATE(lcolour)
 
       RETURN
-99    STOP
+99    WRITE(0,*) 'IOPT =',iopt
+      STOP
       END

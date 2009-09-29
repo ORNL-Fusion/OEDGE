@@ -1036,7 +1036,7 @@ c...    Dump EIRENE reaction data to file:
       ELSEIF (iref.EQ.999) THEN
 
         call setup_col(n_cols,5)
-        CALL Development(iopt)
+        CALL Development(iopt,nizs)
         call setup_col(n_cols,col_opt)
 
 

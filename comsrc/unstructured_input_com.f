@@ -120,22 +120,25 @@ c -----------------------------------------------------------------------
           sol28_first = .FALSE.
         ENDIF
 c...    SOL28/OSM input options:
-        s28mode = 4.0
-        WRITE(buffer,'(A)') line
-c        WRITE(0,*) 'buffer:',buffer(1:100)
-c...    Isolate tag string:
-        DO itag = 2, LEN_TRIM(buffer)
-          IF (buffer(itag:itag).EQ.'}') EXIT
-        ENDDO
-c...    Remove the portion of the data line that comes after a comment
-c       character:
-        DO i1 = 1, LEN_TRIM(buffer)
-          IF (buffer(i1:i1).EQ.'$'.OR.buffer(i1:i1).EQ.'*') EXIT
-        ENDDO 
-        buffer(i1:LEN_TRIM(buffer)) = ' '
-        CALL ProcessInputTag(5,itag,buffer,status)
+        IF (line(3:5).EQ.'999') THEN   ! Not great...
+          CALL ProcessIterationBlocks
+        ELSE
+          s28mode = 4.0
+          WRITE(buffer,'(A)') line
+c          WRITE(0,*) 'buffer:',buffer(1:100)
+c...      Isolate tag string:
+          DO itag = 2, LEN_TRIM(buffer)
+            IF (buffer(itag:itag).EQ.'}') EXIT
+          ENDDO
+c...      Remove the portion of the data line that comes after a comment
+c         character:
+          DO i1 = 1, LEN_TRIM(buffer)
+            IF (buffer(i1:i1).EQ.'$'.OR.buffer(i1:i1).EQ.'*') EXIT
+          ENDDO 
+          buffer(i1:LEN_TRIM(buffer)) = ' '
+          CALL ProcessInputTag(5,itag,buffer,status)
+        ENDIF
         ntaglist = ntaglist - 1
-
 C
 C Series G
 C
@@ -222,10 +225,10 @@ c            eirtime = eirtime * 0.25
       ELSEIF (TAG(1:3).EQ.'021') THEN
         CALL ReadI(line,eirdata,0,1,'EIRENE input file')
       ELSEIF (TAG(1:3).EQ.'022') THEN
-        CALL ReadI(line,eirmat1,1,4,'EIRENE target material')
+        CALL ReadI(line,eirmat1,1,5,'EIRENE target material')
 c      ELSEIF (TAG(1:3).EQ.'023') THEN
       ELSEIF (TAG(1:3).EQ.'024') THEN
-        CALL ReadI(line,eirmat2,1,4,'EIRENE wall material')
+        CALL ReadI(line,eirmat2,1,5,'EIRENE wall material')
       ELSEIF (TAG(1:3).EQ.'058') THEN
 c...    Load data for EIRENE pressure gauge specifications (additional
 c       surface data):
