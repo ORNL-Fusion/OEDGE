@@ -16,7 +16,7 @@ c
 
  
       IF (log.GT.1) WRITE(logfp,*) 'CONSERVING MOMENTUM'
-  
+
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
 
@@ -273,7 +273,8 @@ c...    Between the outermost core ring and the separatrix:
 c...    In the PFZ but between the outermost core/PFZ tube and the separatrix:
         it2 = it1 
       ELSE
-        CALL ER('InterpolateReferencePlasma','Interpolation failed',*99)
+        CALL ER('InterpolateReferencePlasma','Interpolation of the '//
+     .          'reference plasma failed for OSM solver option 2',*99)
       ENDIF
       
       IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
@@ -910,6 +911,7 @@ c...  Output:
         WRITE(logfp,'(A,2I10)')   'SUPER       = ',opt%super
         WRITE(logfp,'(A,2I10)')   'P_REC       = ',opt%p_rec
         WRITE(logfp,'(A,2I10)')   'P_ION       = ',opt%p_ion
+        WRITE(logfp,'(A,2F10.4)') 'P_ION_EXP   = ',opt%p_ion_exp
         WRITE(logfp,'(A,2I10)')   'P_ION_SCALE = ',opt_p_ion_scale
         WRITE(logfp,'(A,2F10.2)') 'P_ION_FRAC  = ',opt%p_ion_frac
         WRITE(logfp,'(A,2I10)')   'P_ANO       = ',opt%p_ano

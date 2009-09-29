@@ -502,6 +502,8 @@ c
       SELECTCASE (buffer(3:itag-1))
         CASE('S P_ION')
           CALL ReadOptionI(buffer,2,opt%p_ion)
+        CASE('S P_ION_EXP')
+          CALL ReadOptionR(buffer,2,opt%p_ion_exp)
         CASE('S P_ION_FRAC')
           CALL ReadOptionR(buffer,2,opt%p_ion_frac)
         CASE('S P_REC')
@@ -805,9 +807,10 @@ c...  Input variables:
       niteration = 0
 
 c...  Output options:
-      opt%log = 0
-      log     = 1
-      logfp   = 88
+      log       = 1
+      logfp     = 88
+      opt%log   = log
+      opt%logfp = logfp
 
       opt%osm_load = 0
 
@@ -839,6 +842,7 @@ c...  OSM options:
 
       opt%pin_data   = .FALSE.
       opt%p_ion      = 3
+      opt%p_ion_exp  = 0.1
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
       opt%p_ano      = 2

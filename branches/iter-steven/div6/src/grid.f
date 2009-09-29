@@ -5173,7 +5173,7 @@ c on linear extrapolation...
 c...   End of GRDMOD loop:
 c      ENDDO
 
-        write(0,*) 'FINISHED SHAPETARGET:'
+      IF (.NOT.sloutput) write(0,*) 'FINISHED SHAPETARGET:'
 
       RETURN
 99    CONTINUE
@@ -5908,7 +5908,7 @@ c...  Clear arrays:
 
       RETURN
  96   WRITE(0,*) 'LoadGridData: Cannot find data file'
-      RETURN
+      GOTO 99
  98   CALL ER('LoadGridData','Error reading supplimental grid data '//
      .        'file',*99)
  99   STOP
