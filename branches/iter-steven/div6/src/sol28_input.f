@@ -112,63 +112,9 @@ c
 c
 c ======================================================================
 c
-      SUBROUTINE ProcessIterationBlocks
-      USE mod_sol28_params
-      USE mod_sol28_global
-      USE mod_legacy
-      IMPLICIT none
-
-      LOGICAL GetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
-
-      INTEGER   fp,i,idum1(1:5)
-      CHARACTER buffer*1024,cdum1*512
-
-      LOGICAL :: status = .TRUE., new_block = .FALSE.
-
-      opt%tube(1)      = 1
-      opt%tube(2)      = 1E+8
-      opt%iteration(1) = 1
-      opt%iteration(2) = 1E+8
-      nopt = 1
-      opt_iteration(1) = opt
-      IF (niteration.GT.0) THEN
-c...    Load data to selectively modify input options for particular 
-c       flux-tubes and iterations of the solver:
-        fp = -1
-        niteration = niteration + 1
-        iteration_buffer(niteration) = '''{999}'''
-        DO WHILE(GetLine(fp,buffer,WITH_TAG))
-c          WRITE(0,*) 'buffer >'//TRIM(buffer)//'<'                        
-c...      Isolate tag string:
-          DO i = 2, LEN_TRIM(buffer)
-            IF (buffer(i:i).EQ.'}') EXIT
-          ENDDO
-c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'                        
-          IF (buffer(3:i-1).EQ.'CON ITERATION DATA') THEN
-            status = .TRUE.
-            opt_iteration(nopt) = opt
-            nopt = nopt + 1
-            READ(buffer,*) cdum1,idum1(1:5)
-            IF (idum1(1).EQ.1) THEN
-              opt = opt_iteration(nopt-1)
-            ELSE
-              opt = opt_iteration(1)
-            ENDIF
-            opt%iteration(1:2) = idum1(2:3)
-            opt%tube     (1:2) = idum1(4:5)
-          ELSE
-            CALL ProcessInputTag(fp,i,buffer,status)
-          ENDIF
-          IF (.NOT.status) EXIT
-        ENDDO
-        opt_iteration(nopt) = opt
-        opt = opt_iteration(1)
-      ENDIF
-
-      RETURN
- 99   STOP
-      END
+c subroutine: ProcessIterationBlocks
+c
+c Moved to sol28_utility.f (in DIVIMP) for compatibility with OUT.
 c
 c ======================================================================
 c
@@ -245,7 +191,7 @@ c     miscellaneous:
 c      SELECTCASE (buffer(3:4))
         CASE ('C','CO')
           CALL LoadControlOption(fp,buffer,itag)
-        CASE ('E','EI')
+        CASE ('E','EI','EIR')
           CALL LoadEireneOption(fp,buffer,itag)
         CASE ('FI')
           CALL LoadFilamentOption(fp,buffer,itag)
@@ -398,7 +344,7 @@ c
       REAL      stratum_type,version,rdum(7)
 
       SELECTCASE (buffer(3:itag-1))
-        CASE('EIR CARBON SPUTTERING')
+        CASE('EIR IMPURITY SPUTTERING')
           CALL ReadOptionI(buffer,1,opt_eir%ilspt) 
         CASE('E NEUTRAL SOURCES')
           osm_nstrata = 0
@@ -416,6 +362,13 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
             IF     (osm_strata(osm_nstrata)%type.EQ.1.0) THEN  ! Target surface flux
               READ(buffer,*) rdum(1:7),
      .          osm_strata(osm_nstrata)%target,
+     .          osm_strata(osm_nstrata)%txtsou
+              osm_strata(osm_nstrata)%range_tube(1) = 1
+              osm_strata(osm_nstrata)%range_tube(2) = 99999
+            ELSEIF (osm_strata(osm_nstrata)%type.EQ.1.1) THEN  ! Target surface flux
+              READ(buffer,*) rdum(1:7),
+     .          osm_strata(osm_nstrata)%target,
+     .          osm_strata(osm_nstrata)%range_tube(1:2),
      .          osm_strata(osm_nstrata)%txtsou
             ELSEIF (osm_strata(osm_nstrata)%type.EQ.2.0) THEN  ! Volume recombination
               READ(buffer,*) rdum(1:7),
@@ -728,13 +681,15 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
           tarninter(HI) = 0
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             tarninter(HI) = tarninter(HI) + 1
-            READ(buffer,*) tarinter(tarninter(HI),1:4,HI)
+            CALL PadBufferR(15,buffer,0.0)
+            READ(buffer,*) tarinter(tarninter(HI),1:6,HI)
           ENDDO
         CASE('089')
           tarninter(LO) = 0
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             tarninter(LO) = tarninter(LO) + 1
-            READ(buffer,*) tarinter(tarninter(LO),1:4,LO)
+            CALL PadBufferR(15,buffer,0.0)
+            READ(buffer,*) tarinter(tarninter(LO),1:6,LO)
           ENDDO
         CASE('S74')
           node_data = .FALSE.
@@ -817,9 +772,9 @@ c...            Spacer, ignore:
           WRITE(88,*) 'DEBUG 11:',osmnode(11)%type,osmnode(11)%fit_type
 
 
-c          DO i1 = 1, osmnnode
-c            WRITE(0,*) 'nodes:',osmnode(i1)%type 
-c          ENDDO
+          DO i1 = 1, osmnnode
+            WRITE(logfp,*) 'nodes:',osmnode(i1)%type 
+          ENDDO
 
         CASE('030')
         CASE('E16')

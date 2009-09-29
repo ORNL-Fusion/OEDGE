@@ -1435,8 +1435,8 @@ c       R=0.0:
       i2 = 0
       DO i1 = 1, walln-1
 
-c       WRITE(0,*) '    MATCH:',i1-1,wallr1(MAX(1,i1-1),2),
-c     .                              wallz1(MAX(1,i1-1),2)
+       WRITE(pinout,*) '   SEARCH:',i1-1,wallr1(MAX(1,i1-1),2),
+     .                              wallz1(MAX(1,i1-1),2)
 
         DO i2 = i1, walln
 
@@ -1449,7 +1449,8 @@ c     .                              wallz1(MAX(1,i1-1),2)
 c     .         wallr1(i2,1).EQ.wallr1(MAX(1,i1-1),2).AND.
 c     .         wallz1(i2,1).EQ.wallz1(MAX(1,i1-1),2))) THEN
 
-c            WRITE(0,*) '         :',i2  ,wallr1(i2,1),wallz1(i2,1)
+            WRITE(pinout,*) '    MATCH:',i2  ,wallr1(i2,1),wallz1(i2,1)
+            WRITE(pinout,*) '         :',i2  ,wallr1(i2,2),wallz1(i2,2)
 
             holdr1 = wallr1(i1,1) 
             holdz1 = wallz1(i1,1) 
@@ -1639,6 +1640,7 @@ c...      Save distance and intersection point - intersection is temporary(eh?):
 
         IF (.TRUE.) THEN  
 c...      Assign RW and ZW:
+          IF (pcnt.GT.MAXPTS-3) CALL DumpGrid('Too many wall points')
           pcnt = pcnt + 1
           rw(pcnt) = r1
           zw(pcnt) = z1
@@ -1733,6 +1735,10 @@ c      ENDIF
 99    CONTINUE
       WRITE(0,*) '   I1   :',i1
       WRITE(0,*) '   R1,Z1:',wallr1(i1,2),wallz1(i1,2)
+      WRITE(pinout,*) '   R1,Z1:',wallr1(i1,2),wallz1(i1,2)
+      DO i1 = 1, walln
+        WRITE(pinout,*)  i1,(wallr1(i1,i2),wallz1(i1,i2),i2=1,2)
+      ENDDO
       CALL DumpGrid('UNABLE TO SEQUENCE NEUTRAL WALL')
       STOP
       END
@@ -2926,7 +2932,8 @@ c     .          'cut point in PFZ')
 c        WRITE(0,*) '    IK,IR=',ikcell,ir
 c      ENDIF
 
-      IF ((ir.EQ.irsep.OR.ir.GT.irtrap).AND.
+       IF ((ir.EQ.irsep.OR.ir.EQ.nrs).AND.
+c       IF ((ir.EQ.irsep.OR.ir.GT.irtrap).AND.
      .    (ikcell.EQ.ikto2(ir).OR.ikcell.EQ.ikti2(ir)-1))
      .  CALL ER('DeleteCell','Cannot delete cells near hard'//
      .                       ' cut points',*99)
@@ -5322,7 +5329,7 @@ c        DO ir = irsep, irwall-1
      .        ir1.LT.irwall.AND.ir.GT.irtrap.OR.
      .        ir1.GT.irtrap.AND.ir.LT.irwall) CYCLE
 
-          WRITE(0,*) 'ID1:',nks(ir1),ir1,irwall
+c          WRITE(0,*) 'ID1:',nks(ir1),ir1,irwall
 
           id1 = korpg(nks(ir1),ir1)
           id2 = korpg(nks(ir),ir)
@@ -5940,14 +5947,16 @@ c      ENDDO
 
 c      CALL SetupGrid
 
-      nvesm = nwall
-      DO iwall = 1, nwall
-        jvesm(iwall) = 8
-        rvesm(iwall,1) = wallco(iwall ,1)
-        zvesm(iwall,1) = wallco(iwall ,2)
-        rvesm(iwall,2) = wallco(iwall+1,1)
-        zvesm(iwall,2) = wallco(iwall+1,2)
-      ENDDO 
+      IF (nvesm.EQ.0) THEN
+        nvesm = nwall
+        DO iwall = 1, nwall
+          jvesm(iwall) = 8
+          rvesm(iwall,1) = wallco(iwall ,1)
+          zvesm(iwall,1) = wallco(iwall ,2)
+          rvesm(iwall,2) = wallco(iwall+1,1)
+          zvesm(iwall,2) = wallco(iwall+1,2)
+        ENDDO 
+      ENDIF
 
       CALL SaveSolution
       CALL OutputData(86,note(1:LEN_TRIM(note)))
@@ -6068,7 +6077,7 @@ c...        Calculate poloidal distribution of cells:
 
             tdist = 1.5 * grd_minpl * EXP(ploc(ik)/param)
 
-c            WRITE(0,*) 'TDIST:',tdist,pdist(ik)
+c            WRITE(0,*) 'TDIST:',tdist,pdist(ik),grd_minpl
                      
             IF (tdist.LT.pdist(ik).AND.
      .          (mode.EQ.3.OR.
@@ -6146,14 +6155,17 @@ c          ike = nks(ir)
 
 c        WRITE(0,*) 'IKS,IKE=',ir,mode,iks,ike
 
+        CALL CalcPolDist(ir,pdist,ploc)
         DO ik = ike, iks, -1
 c          IF (ir.EQ.irsep.AND.ik.LE.ikto3) ikto3 = ikto3 + 1
 c          IF (ir.EQ.irsep.AND.ik.LT.ikti3) ikti3 = ikti3 + 1
-          CALL SplitCell(ik,ir,0.5,status)
-c          WRITE(0,*) '  POLOIDAL:',ik,ir,status
-          IF (status.NE.0) 
-     .      CALL ER('PoloidalRefinement','Unable to refine grid',
-     .              *99)
+          IF (grd_minpl.LT.pdist(ik)) THEN
+            CALL SplitCell(ik,ir,0.5,status)
+c            WRITE(0,*) '  POLOIDAL:',ik,ir,status
+            IF (status.NE.0) 
+     .        CALL ER('PoloidalRefinement','Unable to refine grid',
+     .                *99)
+          ENDIF
         ENDDO
 
       ELSEIF (mode.EQ.10) THEN
@@ -6396,7 +6408,12 @@ c      WRITE(0,*) 'IRBREAK:',irbreak
 
       irbreak = 0
 
-      write(0,*) 'TAILORGRID:',grdnmod
+
+
+
+
+
+
 
 c      STOP 'sdfsdfsd'
 
@@ -6424,8 +6441,7 @@ c
 c.... Delete and split rings:
       DO i1 = 1, grdnmod
  
-        WRITE(0,*) 'GRDMOD:',i1,grdmod(i1,1)
-        WRITE(6,*) 'GRDMOD:',i1,grdmod(i1,1)
+c        WRITE(0,*) 'GRDMOD:',i1,grdmod(i1,1)
 
         IF     (grdmod(i1,1).EQ.3.0) THEN
 c...      Type = 1 - cut a ring
@@ -6525,11 +6541,6 @@ c...      Hack for thesis version:
 
       ENDDO
 
-
-      write(0,*) 'Finished mods:'
-
-      write(0,*) 'Setting up:'
-
       CALL SetupGrid
 
 c...  Recalculate cell centers:
@@ -6547,9 +6558,6 @@ c      ENDDO
 
 
 c...  The grid is most likely a mess, fix it:
-
-      write(0,*) 'Sequencing:'
-
       CALL SequenceGrid
 
 c...  Check if the core and PFZ are balanced (NOTE: this will not be an issue when
@@ -6614,8 +6622,6 @@ c...  Assign NBR:
       ENDIF
 
 
-      WRITE(0,*) 'IRBREAK,NBR=',irbreak,nbr
-
       IF (sloutput) WRITE(0,*) 'IRBREAK,NBR=',irbreak,nbr
 
 c      CALL BuildMap
@@ -6623,8 +6629,6 @@ c      CALL BuildMap
 c...  Split cells along broken target so that the nearest neighbour of the
 c     target cell is well defined:
 
-
-      write(0,*) 'Building map:'
 
       CALL BuildMap
 
@@ -6845,9 +6849,8 @@ c...        Poloidal refinement:
             IF (irs.EQ.-99) irs = irsep
             IF (ire.EQ.-99) ire = nrs
             DO ir = irs, ire
-              IF (ir.NE.0.AND.idring(MAX(1,ir)).EQ.BOUNDARY) CYCLE
-              CALL PoloidalRefinement(ir,NINT(grdmod(i1,2)),
-     .                                grdmod(i1,3))
+             IF (ir.NE.0.AND.idring(MAX(1,ir)).EQ.BOUNDARY) CYCLE
+             CALL PoloidalRefinement(ir,NINT(grdmod(i1,2)),grdmod(i1,3))
             ENDDO
           ENDIF
 
@@ -6857,7 +6860,7 @@ c...      Dump grid data to an external file:
      .          STATUS='NEW')      
           WRITE(98,*) 'SHOT: 119919   TIME: 3000'
           WRITE(98,'(2A6,2A10)') 'IK','IR','R (m)','Z (m)'
-          IF (.TRUE.) THEN
+          IF (.FALSE.) THEN
             DO ir = 1, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               DO ik = 1, nks(ir)
@@ -6892,8 +6895,6 @@ c...          Points near the outer midplane:
                 DO ik = 1, nks(ir)
                   IF (rs(ik,ir).GT.r0.AND.zs(ik  ,ir).GT.z0.AND.      ! I think RS/ZS are properly defined here...
      .                                    zs(ik+1,ir).LT.z0) THEN
-c                  IF (rs(ik,ir).GT.r0.AND.zs(ik  ,ir).GT.0.0.AND.      ! I think RS/ZS are properly defined here...
-c     .                                    zs(ik+1,ir).LT.0.0) THEN
                     id = korpg(ik,ir)
                     WRITE(98,'(2I6,2F10.6)') ik,ir,
      .                0.5*(rvertp(3,id)+rvertp(4,id)),
@@ -6952,6 +6953,14 @@ c...        Quick check:
             CALL ER('TailorGrid','Invalid .dat grid option',*99)
           ENDIF
 
+        ELSEIF (grdmod(i1,1).EQ.11.0) THEN
+c...      Another chance to delete rings, which are ordered now:
+          irs  = NINT(grdmod(i1,4))
+          ire  = NINT(grdmod(i1,5))
+          DO ir = MAX(irs,ire), MIN(irs,ire), -1
+            CALL DeleteRing(ir)
+          ENDDO
+
         ELSEIF (grdmod(i1,1).EQ.998.0) THEN
 c...      Pretend the grid wasn't modified:
           irbreak = 0
@@ -6973,8 +6982,9 @@ c          RETURN
         ELSEIF (grdmod(i1,1).EQ.999.0) THEN
 c...      Stop grid modifications and dump current grid state
 c         for plotting in OUT:
+          CALL BuildMap
+          CALL SetupGrid
           CALL DumpGrid('MODIFYING POLOIDAL DISTRIBUTION')
-
         ENDIF
 
       ENDDO
@@ -7083,9 +7093,6 @@ c      CALL DUMPGRID('TAILORGRI')
       IF (sloutput) WRITE(0,*) 'ADJUSTING X-POINT'
       rxp = rvertp(4,korpg(ikto,irsep))
       zxp = zvertp(4,korpg(ikto,irsep))
-
-      write(0,*) 'Finished Tailorgrid - '
-
 
       RETURN
 99    WRITE(0,*) 'IR=',ir,t1,id1

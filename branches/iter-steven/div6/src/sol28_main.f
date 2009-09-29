@@ -220,10 +220,9 @@ c
       REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
      .                   AMU = 1.67E-27
 
-
-
       INTEGER ion,it,it1,it2,ref_ic,ref_ic1,ref_ic2,int_ic1,int_ic2,
      .        i1,ic,ic1,ic2,itarget,n,i
+      LOGICAL output
       REAL    pfr,fr,
      .        val1(5,1000),val2(5,1000),val3(5,1000),val4(5,1000),
      .        val5(5,2),val6(5,2),
@@ -232,6 +231,8 @@ c
       REAL, ALLOCATABLE :: ref_pfr(:) 
 
       ion = 1
+
+      output = .FALSE.
 
 c...  Check that the reference plasma has been assigned:
       IF (ref_ntube.EQ.0) 
@@ -248,8 +249,10 @@ c     of the focus tube (ITUBE):
         IF (tube(itube)%rho.LT.ref_tube(it)%rho.AND.it2.EQ.-1) it2 = it
       ENDDO
 
-      WRITE(0,*) 'IT1,IT2',it1,it2
+      IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
 
+c...  Handle particular situations when the current focus tube is mapped
+c     onto the reference grid:
       IF (it1.NE.-1.AND.it2.NE.-1) THEN
 c...    All fine, do nothing:        
       ELSEIF (tube(itube)%type.EQ.GRD_SOL.AND.
@@ -273,7 +276,7 @@ c...    In the PFZ but between the outermost core/PFZ tube and the separatrix:
         CALL ER('InterpolateReferencePlasma','Interpolation failed',*99)
       ENDIF
       
-      WRITE(0,*) 'IT1,IT2',it1,it2
+      IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
 
       ic1 = tube(itube)%cell_index(LO)
       ic2 = tube(itube)%cell_index(HI)
@@ -338,11 +341,10 @@ c...      Volume fluid quantities:
           IF (i1.EQ.1) val3(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
           IF (i1.EQ.2) val4(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
  
-          IF (ic.LT.ic1+5)
+          IF (output.AND.ic.LT.ic1+5)
      .      WRITE(0,'(A,I6,2(I6,F10.4),1P,4E10.2,0P)') 
      .        'INT:',i1,i,pfr,int_ic1-ref_ic1+1,fr,
      .        val1(1,i),val2(1,i),val3(1,i),val4(1,i)
-
         ENDDO
 c...    Target data:
         IF (tube(itube)%type.NE.GRD_CORE) THEN
@@ -353,14 +355,14 @@ c...    Target data:
               val5(3,itarget) = ref_tube(it)%vi(itarget,ion)  
               val5(4,itarget) = ref_tube(it)%te(itarget)  
               val5(5,itarget) = ref_tube(it)%ti(itarget,ion)            
-              WRITE(0,*) 'ASSIGNING VAL5',it
+              IF (output) WRITE(0,*) 'ASSIGNING VAL5',it
             ELSE
               val6(1,itarget) = ref_tube(it)%ne(itarget)  
               val6(2,itarget) = ref_tube(it)%ni(itarget,ion)  
               val6(3,itarget) = ref_tube(it)%vi(itarget,ion)  
               val6(4,itarget) = ref_tube(it)%te(itarget)  
               val6(5,itarget) = ref_tube(it)%ti(itarget,ion)            
-              WRITE(0,*) 'ASSIGNING VAL6',it
+              IF (output) WRITE(0,*) 'ASSIGNING VAL6',it
             ENDIF
           ENDDO
         ENDIF
@@ -375,19 +377,18 @@ c     either side of the focus tube:
      .       (ref_tube(it2  )%rho - ref_tube(it1)%rho)
       ENDIF
 
-      WRITE(0,*) 'IT1,IT2,FR=',it1,it2,fr
-      WRITE(0,*) 'RHO(ITUBE)=',tube(itube)%rho
-      WRITE(0,*) 'RHO1,2    =',ref_tube(it1)%rho,ref_tube(it2)%rho
-
-
-
+      IF (output) THEN
+        WRITE(0,*) 'IT1,IT2,FR=',it1,it2,fr
+        WRITE(0,*) 'RHO(ITUBE)=',tube(itube)%rho
+        WRITE(0,*) 'RHO1,2    =',ref_tube(it1)%rho,ref_tube(it2)%rho
+      ENDIF
+  
 c...  Assign volume plasma data:
       fluid(ic1:ic2,ion)%ne = (1.0-fr) * val3(1,1:n) + fr * val4(1,1:n)
       fluid(ic1:ic2,ion)%ni = (1.0-fr) * val3(2,1:n) + fr * val4(2,1:n)
       fluid(ic1:ic2,ion)%vi = (1.0-fr) * val3(3,1:n) + fr * val4(3,1:n)
       fluid(ic1:ic2,ion)%te = (1.0-fr) * val3(4,1:n) + fr * val4(4,1:n) 
       fluid(ic1:ic2,ion)%ti = (1.0-fr) * val3(5,1:n) + fr * val4(5,1:n)
-  
 c...  Assign target data:
       IF (tube(itube)%type.NE.GRD_CORE) THEN
         DO it = LO, HI
@@ -396,7 +397,6 @@ c...  Assign target data:
           vi = (1.0 - fr) * val5(3,it) + fr * val6(3,it)        
           te = (1.0 - fr) * val5(4,it) + fr * val6(4,it)     
           ti = (1.0 - fr) * val5(5,it) + fr * val6(5,it)     
-
           mi = 2.0 * AMU                     ! *** hardcoded: not good ***
           cs = SQRT((te + ti) * ECH / mi)    ! Needs improvement... dediated function
           pe = ne * te * ECH                 ! Same...
@@ -416,17 +416,19 @@ c         of SOL28_V4:
           tube(itube)%qe         (it,ion) = -1.0  ! Pass from SOLPS
           tube(itube)%te_upstream(it,ion) = -1.0
 
-          WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
-     .      'TARGET:',it,itube,fr,
-     .      tube(itube)%ne(it),
-     .      tube(itube)%ni(it,ion),
-     .      tube(itube)%vi(it,ion),
-     .      tube(itube)%te(it),
-     .      tube(itube)%ti(it,ion)
-          WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
-     .      'VAL5  :',it,itube,fr,val5(1:5,it)
-          WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
-     .      'VAL6  :',it,itube,fr,val6(1:5,it)
+          IF (output) THEN
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'TARGET:',it,itube,fr,
+     .        tube(itube)%ne(it),
+     .        tube(itube)%ni(it,ion),
+     .        tube(itube)%vi(it,ion),
+     .        tube(itube)%te(it),
+     .        tube(itube)%ti(it,ion)
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'VAL5  :',it,itube,fr,val5(1:5,it)
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'VAL6  :',it,itube,fr,val6(1:5,it)
+          ENDIF
         ENDDO
       ENDIF
 
@@ -1510,20 +1512,6 @@ c      REAL    totsrc
         WRITE(logfp,*) 'TE   :',tube(itstart)%te(LO),
      .                          tube(itstart)%te(HI)
       ENDIF
-
-c      WRITE(0,*) 'REFERENCE:',
-c     . ref_fluid(tube(4)%cell_index(LO):
-c     .           tube(4)%cell_index(HI),1)%eneion   
-
-
-c      WRITE(logfp,*) 
-      ion = 1
-c      totsrc = 0.0
-c      DO i1 = 1, ncell
-c        totsrc = totsrc + fluid(i1,ion)%parsrc * cell(i1)%vol
-c      ENDDO
-c      WRITE(logfp,*) 'TOTSRC 2=',totsrc
-c      WRITE(logfp,*)
 
 
       IF (.TRUE.) CALL ListTargetData(logfp,'Before calling solver')

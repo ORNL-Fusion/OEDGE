@@ -114,10 +114,10 @@ c...  Individual plot setup:
 c...    p + H2 -> p+ H2 mean free path:
         standard = .TRUE.
         vacuum   = .TRUE.
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Beam'.OR.graph6(8:11).EQ.'BEAM'.OR.
-     .        graph6(8:11).EQ.'beam') THEN
-          READ(graph6,*) cdum1,ebeam
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Beam'.OR.dummy(8:11).EQ.'BEAM'.OR.
+     .        dummy(8:11).EQ.'beam') THEN
+          READ(dummy,*) cdum1,ebeam
         ELSE
           CALL ER('984','Expecting beam energy data line',*99)
         ENDIF
@@ -135,10 +135,10 @@ c...    e + H2 -> ... mean free path:
         standard = .TRUE.
         vacuum   = .TRUE.
 
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Beam'.OR.graph6(8:11).EQ.'BEAM'.OR.
-     .        graph6(8:11).EQ.'beam') THEN
-          READ(graph6,*) cdum1,ebeam
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Beam'.OR.dummy(8:11).EQ.'BEAM'.OR.
+     .        dummy(8:11).EQ.'beam') THEN
+          READ(dummy,*) cdum1,ebeam
         ELSE
           BACKSPACE 5
           ebeam = 99.0
@@ -160,10 +160,10 @@ c...    e + H -> 2E + H+ mean free path:
 c...    p + H2(v) -> H + H2+ MFP:
         standard = .TRUE.
         vacuum   = .TRUE.
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Beam'.OR.graph6(8:11).EQ.'BEAM'.OR.
-     .        graph6(8:11).EQ.'beam') THEN
-          READ(graph6,*) cdum1,ebeam
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Beam'.OR.dummy(8:11).EQ.'BEAM'.OR.
+     .        dummy(8:11).EQ.'beam') THEN
+          READ(dummy,*) cdum1,ebeam
         ELSE
           CALL ER('984','Expecting beam energy data line',*99)
         ENDIF
@@ -182,10 +182,10 @@ c...    e + H2+ -> H + H (MAR):
         standard = .TRUE.
         vacuum   = .TRUE.
 
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Beam'.OR.graph6(8:11).EQ.'BEAM'.OR.
-     .        graph6(8:11).EQ.'beam') THEN
-          READ(graph6,*) cdum1,ebeam
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Beam'.OR.dummy(8:11).EQ.'BEAM'.OR.
+     .        dummy(8:11).EQ.'beam') THEN
+          READ(dummy,*) cdum1,ebeam
         ELSE
           BACKSPACE 5
           ebeam = 99.0
@@ -201,10 +201,10 @@ c...    e + H2+ -> H + H+ + e (MAD):
         standard = .TRUE.
         vacuum   = .TRUE.
 
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Beam'.OR.graph6(8:11).EQ.'BEAM'.OR.
-     .        graph6(8:11).EQ.'beam') THEN
-          READ(graph6,*) cdum1,ebeam
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Beam'.OR.dummy(8:11).EQ.'BEAM'.OR.
+     .        dummy(8:11).EQ.'beam') THEN
+          READ(dummy,*) cdum1,ebeam
         ELSE
           BACKSPACE 5
           ebeam = 99.0
@@ -373,34 +373,33 @@ c...    Load external data array to be plotted:
 c...  Check if data is to be plotted below a specified Z value only:
       zlim = -HI
 c      zlim = HI
-      READ(5,'(A80)',END=10) graph6
-      IF   (graph6(8:11).EQ.'Zlim'.OR.graph6(8:11).EQ.'ZLIM'.OR.
-     .      graph6(8:11).EQ.'zlim') THEN
-        READ(graph6,*) cdum1,zlim
+      READ(5,'(A80)',END=10) dummy
+      IF   (dummy(8:11).EQ.'Zlim'.OR.dummy(8:11).EQ.'ZLIM'.OR.
+     .      dummy(8:11).EQ.'zlim') THEN
+        READ(dummy,*) cdum1,zlim
       ELSE
+c        WRITE(0,*) 'dummy zlim:',TRIM(dummy)
         BACKSPACE 5
       ENDIF
 10    CONTINUE
-
 c...  Check if data is to be plotted below a specified R value only:
       rlim = 0.0
-      READ(5,'(A80)',END=12) graph6
-      IF   (graph6(8:11).EQ.'Rlim'.OR.graph6(8:11).EQ.'RLIM'.OR.
-     .      graph6(8:11).EQ.'rlim') THEN
-        READ(graph6,*) cdum1,rlim
+      READ(5,'(A80)',END=12) dummy
+      IF   (dummy(8:11).EQ.'Rlim'.OR.dummy(8:11).EQ.'RLIM'.OR.
+     .      dummy(8:11).EQ.'rlim') THEN
+        READ(dummy,*) cdum1,rlim
       ELSE
+c        WRITE(0,*) 'dummy rlim:',TRIM(dummy)
         BACKSPACE 5
       ENDIF
 12    CONTINUE
 
-
-
       IF ((asc_3dmode.EQ.1.OR.asc_3dmode.EQ.2).AND.zval.EQ.-99.0) THEN
 c...    Look for zval data in OUT input file:
-        READ(5,'(A80)',END=15) graph6
-        IF   (graph6(8:11).EQ.'Zval'.OR.graph6(8:11).EQ.'ZVAL'.OR.
-     .        graph6(8:11).EQ.'zval') THEN
-          READ(graph6,*) cdum1,zval
+        READ(5,'(A80)',END=15) dummy
+        IF   (dummy(8:11).EQ.'Zval'.OR.dummy(8:11).EQ.'ZVAL'.OR.
+     .        dummy(8:11).EQ.'zval') THEN
+          READ(dummy,*) cdum1,zval
           IF (eirzaa.LT.0.0.AND.eirzaa.NE.-1.0) THEN
             zval = -zval / eirzaa * 360.0
             WRITE(char(29),'(A,F6.1,A)') 'Tval  = ',zval,' degrees'
@@ -408,6 +407,7 @@ c...    Look for zval data in OUT input file:
             WRITE(char(29),'(A,F6.3,A)') 'Tval  = ',zval,' m'
           ENDIF
         ELSE
+c          WRITE(0,*) 'dummy zval:',TRIM(dummy)
           BACKSPACE 5
         ENDIF
 15      CONTINUE
@@ -416,34 +416,47 @@ c...    Look for zval data in OUT input file:
       xval = -99.0
       IF (asc_3dmode.EQ.2) THEN
 c...    Look for xval data in OUT input file:
-        READ(5,'(A80)',END=20) graph6
-        IF   (graph6(8:11).EQ.'Xval'.OR.graph6(8:11).EQ.'XVAL'.OR.
-     .        graph6(8:11).EQ.'xval') THEN
-          READ(graph6,*) cdum1,xval
-          WRITE(char(29),'(A,F6.3,A)') 'Rval  = ',xval,' m'
+        READ(5,'(A80)',END=20) dummy
+        IF   (dummy(8:11).EQ.'Xval'.OR.dummy(8:11).EQ.'XVAL'.OR.
+     .        dummy(8:11).EQ.'xval') THEN
+          READ(dummy,*) cdum1,xval
+          WRITE(char(29),'(A,F6.3,A)') 'Xval  = ',xval,' m'
         ELSE
+c          WRITE(0,*) 'dummy zval:',TRIM(dummy)
           BACKSPACE 5
         ENDIF
 20      CONTINUE
       ENDIF
 
 c...  Check for vacuum cells that are to be avoided:
-25    READ(5,'(A80)',END=30) graph6
-      IF   (graph6(8:11).EQ.'Kill'.OR.graph6(8:11).EQ.'KILL'.OR.
-     .      graph6(8:11).EQ.'kill') THEN
-        READ(graph6,*) cdum1,idum1
+25    READ(5,'(A80)',END=30) dummy
+      IF   (dummy(8:11).EQ.'Kill'.OR.dummy(8:11).EQ.'KILL'.OR.
+     .      dummy(8:11).EQ.'kill') THEN
+        READ(dummy,*) cdum1,idum1
         avoid(idum1) = 1
         GOTO 25
       ELSE
+c        WRITE(0,*) 'dummy kill:',TRIM(dummy)
         BACKSPACE 5
       ENDIF
 30    CONTINUE
-
+      IF (iopt.EQ.79) THEN
+35      READ(5,'(A80)',END=40) dummy
+        IF (dummy(8:9).EQ.'Iz'.OR.dummy(8:9).EQ.'IZ'.OR.
+     .      dummy(8:9).EQ.'iz') THEN
+          READ(dummy,*) cdum1,iz
+        ELSE
+          CALL ER('Plot984','79: ionisations state not '//
+     .            'specified in the OUT input file',*99) 
+        ENDIF
+      ELSE
+        iz = iopt-70
+      ENDIF
+ 40   CONTINUE
 
 
       IF (standard) THEN
 c...    Assign polygons from standard grid:
-
         IF (eirnsdtor.GT.1.AND.xval.NE.-99.0) THEN
           istart = 1
           iend   = eirnsdtor
@@ -508,7 +521,6 @@ c...              Decide if cell is in the plotting region:
      .                y1.GE.yymin.AND.y1.LE.yymax) status = .TRUE.
                 ENDDO
               ENDIF
-
 
               IF (status) THEN
 c...            If the cell is in the plotting area, then add
@@ -579,7 +591,7 @@ c...              e + H -> 2e + H+:
                   vavg = SQRT((3.0 * tD * ECH) / (crmb * AMU))
                   cq(nc) = vavg / (ne * sigmav * 1.0E-06) 
                 ELSEIF (iopt.EQ.4) THEN
-c...  p + H2(v) -> H + H2+
+c...              p + H2(v) -> H + H2+
                   sigmavb = GetEAD(MAX(ti,tD2),0.0,18,'H.3 ')
                   IF (vbeam.EQ.99.0) THEN
                     tD2  = pinbgk(ik,ir,15+2+shift)
@@ -745,12 +757,14 @@ c...              Line radiation:
 
                 ELSEIF (iopt.GE.70.AND.iopt.LE.79) THEN
 c...              Impurity density for charge states 0 through 9:
-                  IF (iopt.EQ.79) THEN
+                  IF (iz.EQ.-1) THEN  ! Add up all the ionisation states and plot
                     DO iz = 1, cion
                       cq(nc) = cq(nc) + MAX(0.0,sdlims(ik,ir,iz))
                     ENDDO
                   ELSE
-                    cq(nc) = MAX(0.0,sdlims(ik,ir,iopt-70))
+                    cq(nc) = MAX(0.0,sdlims(ik,ir,iz))
+c                    IF (iz.EQ.0.AND.ik.EQ.1.AND.ir.EQ.109) 
+c     .                WRITE(0,*) sdlims(1:nks(109),109,iz)
                   ENDIF
 
                 ELSEIF (iopt.GE.80.AND.iopt.LE.89) THEN
@@ -1140,10 +1154,10 @@ c * THIS REALLY BLOWS.  NEED TO MERGE PLOTS 982 and 984
       ENDIF
 
 c...  Check scale adjustment:
-      READ(5,'(A80)') graph6
-      IF   (graph6(8:11).EQ.'Scal'.OR.graph6(8:11).EQ.'SCAL'.OR.
-     .      graph6(8:11).EQ.'scal') THEN
-        READ (graph6,*) cdum1,lmin,lmax
+      READ(5,'(A80)') dummy
+      IF   (dummy(8:11).EQ.'Scal'.OR.dummy(8:11).EQ.'SCAL'.OR.
+     .      dummy(8:11).EQ.'scal') THEN
+        READ (dummy,*) cdum1,lmin,lmax
         qmin = 10**lmin
         qmax = 10**lmax
       ELSE
@@ -1152,9 +1166,9 @@ c...  Check scale adjustment:
 
 
 c...  Check if a contour plot is to be plotted:
-      READ(5,'(A80)') graph6
-      IF   (graph6(8:11).EQ.'Cont'.OR.graph6(8:11).EQ.'CONT'.OR.
-     .      graph6(8:11).EQ.'cont') THEN
+      READ(5,'(A80)') dummy
+      IF   (dummy(8:11).EQ.'Cont'.OR.dummy(8:11).EQ.'CONT'.OR.
+     .      dummy(8:11).EQ.'cont') THEN
         BACKSPACE 5
         GOTO 100
       ELSE
@@ -1172,33 +1186,23 @@ c...  Draw polygons:
       DO i1 = 1, nc
         IF (cq(i1).GE.qmin) THEN
           frac = (LOG10(cq(i1)) - lmin) / (lmax - lmin)
-
           frac5 = 100.0 * 0.98 * frac
           fmod5 = AMOD(frac5,1.0)
           frac = (frac5 - fmod5) / 100.0
-
 c...dev
           bright = 1.0-(1.0-frac)**10        
-
           frac = (1.0 - frac) * 0.90
           frac = frac + 0.34
           IF (frac.GT.1.0) frac = frac - 1.0
 
 c...new
-          
-
           val = cq(i1)
-
 c         val = 1.5
-
-
           decade = REAL(INT(LOG10(val)))
           IF (val.LT.1.0) decade = decade - 1.0
           decval = 10.0**decade + LO
           val = (REAL(INT(val / decval)) + 0.5) * decval
-
           decval = 10.0**decade + LO
-
           IF (grayscale) THEN
             bright = 0.0
 c...         Colour:
@@ -1247,7 +1251,6 @@ c           STOP '2'
         ENDIF
       ENDDO
 
-
 c...  Finish off the plot boarder:
       CALL FULL
       CALL LINCOL(defcol)
@@ -1275,10 +1278,10 @@ c
  
         xres = 99
         yres = 99
-        READ(5,'(A80)') graph6
-        IF   (graph6(8:11).EQ.'Cres'.OR.graph6(8:11).EQ.'CRES'.OR.
-     .        graph6(8:11).EQ.'cres') THEN
-          READ(graph6,*) cdum1,xres,yres
+        READ(5,'(A80)') dummy
+        IF   (dummy(8:11).EQ.'Cres'.OR.dummy(8:11).EQ.'CRES'.OR.
+     .        dummy(8:11).EQ.'cres') THEN
+          READ(dummy,*) cdum1,xres,yres
         ELSE
           BACKSPACE 5
         ENDIF
@@ -1771,7 +1774,6 @@ c...  Draw scale:
       CALL FULL
       CALL HSV
 
-
       DO decade = lmin, lmax-1
         decval = 10.0**decade + LO
         DO val = 1.5*decval, 9.6*decval, decval
@@ -1779,33 +1781,26 @@ c...  Draw scale:
      .                  (lmax - lmin))
           t2a =         (LOG10(val + 0.5 * decval) - lmin) / 
      .                  (lmax - lmin)
-
           y1 = map1y + t1a * (map2y - map1y)
           y2 = map1y + t2a * (map2y - map1y)
 c          y1 = 0.42 + t1a * (0.82 - 0.42)
 c          y2 = 0.42 + t2a * (0.82 - 0.42)
-
 c...dev
 c          WRITE(0,*) 'VAL 2:',val
-
           hue = 1.0
           IF (grayscale) THEN
             bright = 0.0
-
 c...         Colour:
 c            frac = 0.66 * (LOG10(val) - lmin) / (lmax - lmin) + 0.34
 c            frac = 1.0 - frac + 0.34
-
             frac = (LOG10(val) - lmin) / (lmax - lmin)
             frac = 0.9 * frac + 0.1
-
             WRITE(0,'(A,5F10.3)') 
      .        'FRAC 2:',frac,decade,decval,val,LOG10(val)
           ELSEIF (lmax-lmin.LE.2) THEN
             bright = 1.0
             frac = REAL(decade - lmin) / REAL(lmax - 1 - lmin) * 0.40 
             frac = frac + (val - decval) / (8.5 * decval) * 0.40
-
             WRITE(0,*) 'FRAC 2:',frac,decade,decval,val
           ELSE
 c            hue = 0.5*(1.0 - (val - decval) / (8.5 * decval)) + 0.5
@@ -1814,23 +1809,19 @@ c            hue = SQRT(hue)
 c            bright = (val - decval) / (8.5 * decval) * 0.3 + 0.7
             frac = REAL(decade - lmin) / REAL(lmax - 1 - lmin) * 0.65 
           ENDIF
-
 c          WRITE(0,*) 'SCALE:',frac,bright,val,hue
-
           IF (grayscale) THEN
             CALL ColSet(0.0,0.0,1.0-frac,255)
           ELSE
             CALL ColSet(frac,hue,bright,255)
           ENDIF
-
-
           CALL FILCOL(255)
           CALL LINCOL(255)
-
 c...      Draw coloured box:
 c          DSPOT = 0.016
 c          CALL BOX (0.98-DSPOT,0.98+DSPOT,y1,y2)
-          DSPOT = (MAP2Y - MAP1Y) * 0.0373
+          DSPOT = (MAP2Y - MAP1Y) * 0.02
+c          DSPOT = (MAP2Y - MAP1Y) * 0.0373
           CALL BOX (MAP2X+0.03*(MAP2X-MAP1X),
      .              MAP2X+0.03*(MAP2X-MAP1X)+2.0*DSPOT,
      .              y1,y2)
@@ -1895,15 +1886,14 @@ c        CALL LINCOL(1)
 c        CALL SUPIMP('PARTIAL')      
 c      ENDIF
 
-
-
 c...  Add a comment to the plot:
 79    READ(5,'(A5000)') dummy
       IF   (dummy(8:11).EQ.'Cmnt'.OR.dummy(8:11).EQ.'cmnt'.OR.
      .      dummy(8:11).EQ.'CMNT') THEN
-      
         READ (dummy,*) cdum1,xpos,ypos,size,caption
-      
+        IF (TRIM(caption).EQ.'<charge state>') THEN
+          WRITE(caption,'(A,I2,1000X)') '+',iz
+        ENDIF
 c...    Annotate graph:
         CALL PSPACE (map1x,map2x,map1y,map2y)
         CALL MAP    (0.0,1.0,0.0,1.0)
@@ -1915,7 +1905,6 @@ c...    Another comment:
       ELSE
         BACKSPACE 5
       ENDIF
-
 
 c...  Add a caption to the plot:
       READ(5,'(A5000)') dummy
@@ -1974,5 +1963,6 @@ c      ENDDO
 
       RETURN
  9012 FORMAT(1X,'PLOT',I3,4X,A)
-99    STOP
+ 99   WRITE(0,*) 'DUMMY >'//TRIM(dummy)//'<'
+      STOP
       END

@@ -1016,8 +1016,10 @@ c sltmp
 
       DO 800  IMP = 1, NATIZ
 
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0) 
-     .    WRITE(0,*) 'debug imp:',imp
+        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+     .    WRITE(0,*) 'debug imp:',imp,natiz
+c        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0) 
+c     .    WRITE(0,*) 'debug imp:',imp
 
 c
 c       Particle initialization
@@ -4803,7 +4805,9 @@ c
          write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
      >       in * d_pinch_vel, d_pinch_v(in)
       end do 
-
+c slmod begin
+      CALL OutputData(87,'END OF DIV')
+c slmod end
 c
 c      if (cisterrcnt.ne.0) then 
 c         call prb

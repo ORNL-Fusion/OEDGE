@@ -1442,7 +1442,7 @@ c...    RELMODE=20 option, where RELMODE can be changed on the fly:
           status = .TRUE.
 
           IF (init.AND.relmode.EQ.2) THEN
-            CALL ISet(supflx,2*MAXNRS,1)
+            supflx = 1
             init = .FALSE.
           ENDIF
 

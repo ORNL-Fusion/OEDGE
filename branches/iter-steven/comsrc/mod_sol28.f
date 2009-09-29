@@ -525,9 +525,9 @@ c
      .                      IND_IR      = 2,  
      .                      IND_IS      = 3,  
      .                      IND_ZONE    = 4,  
-     .                      IND_FLUID   = 5,  
-     .                      IND_KINETIC = 6,  
-     .                      IND_NEUTRAL = 7,  
+     .                      IND_FLUID   = 5,  ! *** NEED TO ADD A FLAG IN THE OBJECT BEING CREATED
+     .                      IND_KINETIC = 6,  !     THAT IDENTIFIES WHERE IT WAS GENERATED, SINCE
+     .                      IND_NEUTRAL = 7,  !     THESE MAPPINGS ARE SOURCE DEPENDENT, I.E. THEY ARE DIFFERENCE IN mod_sol28 and mod_eirene06...
      .                      IND_FIELD   = 8,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
      .                      IND_CELL    = 9
 
@@ -560,7 +560,7 @@ c
       INTEGER, PARAMETER :: MAXNCELL = MAXNTUBE * 100
       INTEGER, SAVE :: nion,ncell,nfield,npin,nphoton,nfluid,nkinetic,
      .                 nimpurity,ndrift
-      TYPE(type_cell         ), ALLOCATABLE, SAVE :: cell    (:) 
+      TYPE(type_cell    ), ALLOCATABLE, SAVE :: cell    (:) 
       TYPE(type_field   ), ALLOCATABLE, SAVE :: field   (:) 
       TYPE(type_neutral ), ALLOCATABLE, SAVE :: pin     (:,:) 
       TYPE(type_photon  ), ALLOCATABLE, SAVE :: photon  (:,:) 
@@ -570,10 +570,9 @@ c
       TYPE(type_drift   ), ALLOCATABLE, SAVE :: drift   (:,:) 
 
 !...  Reference plasma:
-!     jdemod - added ref_ncell and ref_cell - also added the save attribute
-      INTEGER, SAVE :: ref_ntube,ref_nion,ref_nfluid,ref_ncell
-      TYPE(type_tube), ALLOCATABLE, save :: ref_tube(:)
-      TYPE(type_cell), ALLOCATABLE, save :: ref_cell(:)
+      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
+      TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
+      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
 
       END MODULE mod_sol28_global

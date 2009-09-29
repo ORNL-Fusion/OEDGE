@@ -4,6 +4,7 @@ c
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
 c slmod begin
       USE mod_grid
+      USE mod_solps
       use mtc
       use bfield
 c slmod end
@@ -1549,7 +1550,7 @@ c
             distin(ik,ir) = finds(ik,ir) * kinds(ik,ir) * cosali(ik,ir)
             distout(ik,ir)= foutds(ik,ir)* koutds(ik,ir)* cosalo(ik,ir)
 c
-            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9)then 
+            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then 
                write(6,'(a,2i6,10(1x,g12.5))') 'DISTS:', ik,ir,
      >                 distin(ik,ir),distout(ik,ir)
 c
@@ -2581,7 +2582,7 @@ c...  Load supplimental .RAW file(s) if requested:
 
 c...  Read in the results from a SOLPS/B2 simulation (from Rozhansky at
 c     the moment): 
-      IF (cre2d.EQ.3) CALL LoadSOLPSData
+      IF (nsolps_data.GT.0) CALL LoadSOLPSData
 
 c slmod end
 c
@@ -3888,7 +3889,7 @@ C
 c slmod begin
       REAL*8  :: AREA_SUM
       LOGICAL :: WARNING_MESSAGE = .TRUE.
-c slmod endc
+c slmod end
       real    apara,apol,afact
 C
       TOTA   = 0.0
@@ -5786,8 +5787,13 @@ c...  Check if it is a quasi-double-null grid:
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
-     .        indexiradj)
+         IF (.FALSE..AND.sloutput) THEN
+           CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
+     .                                 indexiradj)
+         ELSE
+           CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
+     .          indexiradj)
+         ENDIF
          GOTO 300
       ELSE
          BACKSPACE(gridunit)

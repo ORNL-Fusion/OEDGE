@@ -327,6 +327,7 @@ c
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
+                  WRITE(0,*) 'DEBUG: CALL TFY A'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
                endif
@@ -370,6 +371,7 @@ c
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
                   else
+                     IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY B'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
                   endif
@@ -383,6 +385,7 @@ c
 c
                   yieldsw = 1
 c
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY C'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
 c
@@ -486,6 +489,7 @@ c
                    call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,yieldsw,matp,matt)               
                 else
+                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY A'
                    call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
                 endif
@@ -527,6 +531,7 @@ c
                       call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,yieldsw,matp,matt)               
                    else
+                      IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY B'
                       call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
                    endif 
@@ -541,6 +546,7 @@ c
 c
                    yieldsw = 1
 c
+                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY C'
                    call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
 c
@@ -665,6 +671,7 @@ c
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY D'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
                endif
@@ -704,6 +711,7 @@ c
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
                   else
+                     IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY E'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
                   endif
@@ -716,6 +724,7 @@ c
 c
                   yieldsw = 1
 c
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY F'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
 c
@@ -819,6 +828,7 @@ c
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               2,yieldsw,matp,matt)               
                else 
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY D'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
                endif
@@ -857,6 +867,7 @@ c
                      call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,yieldsw,matp,matt)               
                   else
+                     IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY E'
                      call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
                   endif
@@ -869,6 +880,7 @@ c
 c
                   yieldsw = 1 
 c
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY F'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,yieldsw,matp,matt)               
 c
@@ -1031,10 +1043,8 @@ c
       RMAIN = RMAIN1 + RMAIN2 + rmain3
       REXIT = REXIT1 + REXIT2 + rexit3
 c
-      write(6,'(a,10g12.5)') 'NEUT DATA 1:',rneut,ratiz,rstruk,rexit,
-     >            rcent,rfail,rwalln,rtmax,rmain
-      write(6,'(a,10i6)') 'NEUT DATA 2:',nprod,nproda,nprod2,
-     >        nprod2a,natiz,natiz1,natiz2,natiz3
+      write(6,'(a,7g12.5,2i6)') 'NEUT DATA:',rneut,ratiz,rstruk,rexit,
+     >                rcent,rfail,rwalln,nprod,nprod2
 
 
 c
@@ -1051,12 +1061,14 @@ c
             call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,0,matp,matt)               
          else
+            IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY G'
             call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
          endif
 c
       elseif (cneutd.eq.2.or.cneutd.eq.5) then 
 c
+         IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY H'
          call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,1,matp,matt)               
       endif
@@ -1138,7 +1150,8 @@ c
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL
       REAL       SMAIN,SEXIT
 c slmod begin - temp
-      INTEGER incell,target_loss
+      INTEGER incell,target_loss,iteration_limit
+      LOGICAL :: iteration_warning = .FALSE.
 c slmod end
 C
       REAL       MTCSTRUK,MTCWALLN
@@ -1453,7 +1466,8 @@ C
 C
       DO 900 IPROD = 1, NPROD-LPROD+1
 c
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(iprod,100).EQ.0)   ! sltmp
+        IF (sloutput.AND.grdnmod.NE.0.AND.
+     .      MOD(iprod,MAX(1,(NPROD-LPROD+1)/10)).EQ.0)   ! sltmp
      .    WRITE(0,*) 'debug: iprod',iprod,NPROD-LPROD+1
 
         TSTEPN= CSTEPN
@@ -1462,6 +1476,7 @@ c
         Z     = YPRODS(IPROD+LPROD-1)
 
         IF (sloutput.AND.GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN        ! sltmp
+         IF (stopopt.LE.0) stopopt = 1
 c        IF (STOPOPT.LT.MAXNWS) THEN
 c          WRITE(0 ,*) 'DEBUG: WALKS',iprod,STOPOPT
 c          WRITE(50,*) 'DEBUG: WALKS',iprod,STOPOPT
@@ -1844,18 +1859,41 @@ c
 
           RAN = RANVC(IPROD)
           NREJEC = 0
+c slmod begin -25/09/2009
+c...      Not looking in detail at why RAN must be less than RANMAX, or
+c         how to avoid this in the code, but the 1000 iteration limit
+c         is turning out to be a problem for Fe sputtering in the ITER
+c         simluation, since RANMAX is on the order of 1E-03 and so a lot
+c         of particles can be lost simply from this arbitrary 1000 iteration
+c         limit.  So, increasing this based on the value of RANMAX (there's
+c         some headroom here anyway, surely, with modern computers):
+          ITERATION_LIMIT = MAX(1000,NINT(1.0/RANMAX)*1000)
+          IF (.NOT.ITERATION_WARNING.AND.ITERATION_LIMIT.GT.1E6) THEN
+            ITERATION_WARNING = .TRUE.
+            WRITE(0,*) 
+            WRITE(0,*) '*****************************************'
+            WRITE(0,*) '* NEUT ITERATION LIMIT GREATER THAN 1E6 *'
+            WRITE(0,*) '*****************************************'
+            WRITE(0,*) 'INTERATION_LIMIT=',ITERATION_LIMIT
+            WRITE(0,*) 'RANMAX          =',RANMAX
+          ENDIF
+c slmod end
   100     CONTINUE
           IF (RAN.GT.RANMAX) THEN
             REJECT(M) = REJECT(M) + SPUTY
             NREJEC = NREJEC + 1
             CALL SURAND2 (SEED, 1, RAN)
             NRAND = NRAND + 1  
-            IF (NREJEC.LT.1000) GOTO 100
+c slmod begin
+c...        See above:
+            IF (NREJEC.LT.ITERATION_LIMIT) GOTO 100
+c
+c            IF (NREJEC.LT.1000) GOTO 100
+c slmod end
             VIN   = 0.0
             TEMN  = 0.0
             RFAIL(M) = RFAIL(M) + SPUTY
             IFATE = 6
-
 ! ammod begin.       
 	    ! WBC comparison addition for neut (charge state 0) failed launch.
             Call global_hc_wbc_comp(0,CRMI,VIN,TEMN,SPUTY)
@@ -2542,7 +2580,7 @@ c
 
           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN       ! sltmp
 c          IF (STOPOPT.LT.MAXNWS) THEN
-            WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
+            IF (sloutput) WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
             WALKS(STOPOPT,1) = R
             WALKS(STOPOPT,2) = Z
             WALKS(STOPOPT+1,1) = HI
@@ -4058,7 +4096,11 @@ c
      >                             MTC_RSTRUK(1),MTC_RSTRUK(2))
       endif
 c
-      CALL PRI2 ('NO FAILED LAUNCHES (1000 DISCARDS) ',
+c slmod begin
+      CALL PRI2 ('NO FAILED LAUNCHES (100000 DISCARDS) ',
+c
+c      CALL PRI2 ('NO FAILED LAUNCHES (1000 DISCARDS) ',
+c slmod end
      >                             NINT(RFAIL (1)),NINT(RFAIL (2)))
       CALL PRI2 ('NO OF VELOCITIES > VMAX (DISCARDED)',
      >                             NINT(REJECT(1)),NINT(REJECT(2)))
@@ -4371,6 +4413,7 @@ c     -------------------------------------------------------
 C     
 C---- CALCULATE FLUXES AND YIELDS
 C     
+      WRITE(0,*) 'CALL TFY: looping over targets...',yieldsw
       DO ID = 1,NDS
         IK = IKDS(ID)
         IR = IRDS(ID)
@@ -4796,21 +4839,16 @@ c
 c                For Eirene99 use the atom flux directly reported by 
 c                Eirene instead of deriving it.  
 c  
-                 if (pincode.eq.2.or.pincode.eq.3) then 
+c slmod begin
+                 if (pincode.eq.2.or.pincode.eq.3.or.pincode.eq.4.or.
+     >               pincode.eq.5) then 
+c
+c                 if (pincode.eq.2.or.pincode.eq.3) then 
+c slmod end
 
                     fydata(in,1)=max(flxhw6(int(wallpt(in,17))),0.0)
 c
                  else
-c slmod begin - tmp
-                    IF (.NOT.warning.AND.pincode.GT.3) THEN
-                      WRITE(0,*)
-                      WRITE(0,*) '---------------------------'
-                      WRITE(0,*) '  EIRENE ATM FLUX NOT SUP. '
-                      WRITE(0,*) '---------------------------'
-                      WRITE(0,*)
-                      warning = .TRUE.
-                    ENDIF
-c slmod end                    
 c
                     fydata(in,1)=max(flxhw2(int(wallpt(in,17)))
      >                                    -ionflux,0.0)
@@ -5185,7 +5223,7 @@ c
                   IF (CNEUTD.EQ.1) THEN
                      EMAX = CEMAXF * fydata(id,2)
                   ELSEif (cneutd.ne.1) then
-                     if (northopt.eq.0.or.northopt.eq.2) then
+                    if (northopt.eq.0.or.northopt.eq.2) then
                         EMAX = CEMAXF * (fydata(id,2) * GAMBL - CEBD)
                      elseif (northopt.eq.1.or.northopt.eq.3) then
                         if (matt.le.ntars) then 
@@ -6026,6 +6064,7 @@ c
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,0,matp,matt)               
                else
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY G'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                endif
@@ -6037,6 +6076,7 @@ c
 c
 c              Chemical Sputtering On Walls 
 c
+               IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY H'
                call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,1,matp,matt)               
                 w1a = 0.0
@@ -6047,12 +6087,14 @@ c
 c
 c               Physical Sputtering On Walls 
 c
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY I'
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,0,matp,matt)               
                 w1a = totfydata(3,5) 
 c
 c               Chemical Sputtering On Walls 
 c
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY J'
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,1,matp,matt)               
                 w1 = totfydata(3,5) 
@@ -6143,6 +6185,7 @@ c
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                else
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY K'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                endif
@@ -6154,6 +6197,7 @@ c
 c
 c              Chemical Sputtering On Walls 
 c
+               IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY L'
                call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,1,matp,matt)               
                 w2a = 0.0
@@ -6164,12 +6208,14 @@ c
 c
 c               Physical Sputtering On Walls 
 c
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY M'
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,0,matp,matt)               
                 w2a = totfydata(3,5) 
 c
 c               Chemical Sputtering On Walls 
 c
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY N'
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,1,matp,matt)               
                 w2 = totfydata(3,5) 
