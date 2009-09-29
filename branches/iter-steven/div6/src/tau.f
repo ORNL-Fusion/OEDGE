@@ -5787,7 +5787,7 @@ c...  Check if it is a quasi-double-null grid:
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         IF (sloutput) THEN
+         IF (.FALSE..AND.sloutput) THEN
            CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                                 indexiradj)
          ELSE
