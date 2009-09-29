@@ -106,6 +106,7 @@ c
          INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
 
          INTEGER   :: p_ion(2)         ! Ionisation 
+         REAL      :: p_ion_exp(2)     ! Exponent for exponential decay of the ionisation source for P_ION = 3
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
          INTEGER   :: p_rec(2)         ! Volume recombination 
          INTEGER   :: p_ano(2)         ! Anomalous

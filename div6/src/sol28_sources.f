@@ -8,7 +8,7 @@ c
       IMPLICIT none
 
       INTEGER ion, target, ic1, ic2
-      REAL*8  source(icmax)
+      REAL*8  source(icmax),decay
 
       cnt_integrate = .TRUE.
  
@@ -64,13 +64,14 @@ c             PIN:
               WRITE(logfp,*) 'parion:',source(ic1:ic2)
             CASE (3)
 c             Prescribed:
-              IF (target.EQ.LO) THEN 
+c              IF (target.EQ.LO) THEN 
 c                CALL SpecifyDistribution(target,-1,0,2,10.D0,source)  ! PROMOTES SUPERSONIC TARGETS 
 c              WRITE(logfp,*) '--> IONSRC ',target
-                CALL SpecifyDistribution(target,-2,0,2,0.1D0,source) 
-              ELSE
-                CALL SpecifyDistribution(target,-2,0,2,0.1D0,source) 
-              ENDIF
+c                CALL SpecifyDistribution(target,-2,0,2,DBLE(opt%p_ion_frac(target)),source) 
+c              ELSE
+              decay = DBLE(opt%p_ion_exp(target))
+              CALL SpecifyDistribution(target,-2,0,2,decay,source)
+c              ENDIF
 c              WRITE(logfp,*) '--> DONE'
             CASEDEFAULT                                            
               CALL User_VolumeParIonSource(target,source)          
