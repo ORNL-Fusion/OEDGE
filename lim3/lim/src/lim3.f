@@ -3386,8 +3386,20 @@ C---- THE AVERAGE VALUES OVER THE "NEAR" REGION ARE SUMMED IN THE DTOTS
 C---- ARRAY BELOW, JUST OVER THE REGION 0:CXNEAR, -CYNEAR:CYNEAR.               
 C---- SEE ALSO NOTES 139, 221, 225, 288, 293                                    
 C                                                                               
-      DEFACT = 0.0D0                                                            
-      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT)         
+c
+c     jdemod
+c
+c     Change Default scaling factor to 1.0 so that data is scaled to 
+c     1 particle/s if a better scaling factor is not available     
+c
+c      DEFACT = 0.0D0                                                            
+
+      DEFACT = 1.0D0                                                            
+c
+c      jdemod - removed TATIZ/TNEUT scaling of the absolute factor
+c
+c      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT)         
+      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF)         
 c
 c     Assign DEFACT to ABSFAC which is in the common include file comtor 
 c     This is for compatibility with some DIVIMP code.
@@ -3399,11 +3411,14 @@ c
       call prb
       call prc(' CALCULATION OF "ABSOLUTE" FACTOR:')
       call prc(' FORMULA USED: ABSFAC ='//
-     >         ' 2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT')
+     >         ' 2.0*GTOT1*YEFF*CSEF')
+c      call prc(' FORMULA USED: ABSFAC ='//
+c     >         ' 2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT')
       call prr(' ABSFAC = ',real(absfac))
       call prr(' GTOT1  = ',gtot1)
       call prr(' YEFF   = ',yeff)
       call prr(' CSEF   = ',csef)
+      call prc(' For Refererence: ') 
       call pri(' TATIZ  = ',nint(tatiz))
       call pri(' TNEUT  = ',nint(tneut))
 c
