@@ -4349,7 +4349,7 @@ c
             absfac_neut = absfac 
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes since for 
+c           Note: the calculated absolute factor only makes sense for 
 c                 neutral launch cases - the various quantities are 
 c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
