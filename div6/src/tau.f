@@ -3,7 +3,7 @@ c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
 c slmod begin
-      USE mod_grid
+      USE mod_grid_divimp
       USE mod_solps
       use mtc
       use bfield
@@ -2582,7 +2582,7 @@ c...  Load supplimental .RAW file(s) if requested:
 
 c...  Read in the results from a SOLPS/B2 simulation (from Rozhansky at
 c     the moment): 
-      IF (nsolps_data.GT.0) CALL LoadSOLPSData
+      IF (solps_opt.GT.0) CALL LoadSOLPSData
 
 c slmod end
 c
@@ -5787,7 +5787,7 @@ c...  Check if it is a quasi-double-null grid:
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         IF (.FALSE..AND.sloutput) THEN
+         IF (sloutput) THEN
            CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                                 indexiradj)
          ELSE

@@ -1562,7 +1562,8 @@ c      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
 
       INTEGER i1,i2,i3,v1,v2,v3,v4,knot,ring,side,target,
      .        xupdate(10),yupdate(10),ix,iy,iscan,problem_triangle
-      LOGICAL test,output,malformed,dummy_test,surface_assigned
+      LOGICAL test,output,malformed,dummy_test, ! surface_assigned,
+     .        wall_assignment,grid_assignment
       REAL    xmin,xmax,ymin,ymax,xval,yval
       REAL*8  x(0:2),y(0:2),s,t
 
@@ -1571,6 +1572,9 @@ c      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
 
       DATA (xupdate(i1),i1=1,10) /0, -1,  0,  1, -1, 1, -1, 0, 1, 0/ , 
      .     (yupdate(i1),i1=1,10) /0, -1, -1, -1,  0, 0,  1, 1, 1, 0/
+
+
+      eir_pass = eir_pass + 1
   
       WRITE(eirfp,*) 'PROCESSING TRIANGLES'  
 
@@ -1867,7 +1871,9 @@ c...  Map triangles to surfaces:
      .    WRITE(eirfp,*) 'RING=',tri(i1)%index(1:2)
         tri(i1)%sur(1:3) = 0
         DO v1 = 1, 3
-          surface_assigned = .FALSE.
+c          surface_assigned = .FALSE.
+          wall_assignment = .FALSE.
+          grid_assignment = .FALSE.
 
           v2 = v1 + 1
           IF (v1.EQ.3) v2 = 1          
@@ -1888,9 +1894,16 @@ c...  Map triangles to surfaces:
      .                  surface(i2)%index(1).LE.ring   .AND.
      .                  surface(i2)%index(2).GE.ring   .AND.
      .                  surface(i2)%index(3).EQ.target) THEN
-                  tri(i1)%map(v1) = 0 ! This should only be set to 0 if the target is opaque...
-                  tri(i1)%sid(v1) = 0 ! ditto
-                  tri(i1)%sur(v1) = surface(i2)%num
+                  IF (wall_assignment) THEN
+                        CALL WN('ProcessTriangles_06','Wall '//
+     .                          'assignment for fluid cell')
+                    WRITE(0,*) '  STRATUM:',i1,tri(i1)%index(1:2)
+                  ELSE
+                    tri(i1)%map(v1) = 0 ! This should only be set to 0 if the target is opaque...
+                    tri(i1)%sid(v1) = 0 ! ditto
+                    tri(i1)%sur(v1) = surface(i2)%num
+                    grid_assignment = .TRUE.
+                  ENDIF
 
                 ELSEIF (surface(i2)%subtype.EQ.
      .                  MAGNETIC_GRID_BOUNDARY) THEN
@@ -1900,8 +1913,15 @@ c                  DO WHILE (surface(i2)%index(i3).NE.0)
      .                  surface(i2)%index(2).GE.knot.AND.
      .                  surface(i2)%index(3).EQ.ring.AND.
      .                  surface(i2)%index(4).EQ.side) THEN
-                      tri(i1)%sur(v1) = surface(i2)%num 
-                      EXIT
+                      IF (wall_assignment) THEN
+                        CALL WN('ProcessTriangles_06','Wall '//
+     .                          'assignment for fluid cell')
+                        WRITE(0,*) '  BOUNDARY:',i1,tri(i1)%index(1:2)
+                      ELSE
+                        tri(i1)%sur(v1) = surface(i2)%num 
+                        grid_assignment = .TRUE.
+                        EXIT
+                      ENDIF
                     ENDIF
 c                    i3 = i3 + 2
 c                  ENDDO
@@ -1953,10 +1973,10 @@ c                test = test.AND.PointOnLine(x,y,s,t,1,output)
 c...            Assign surface index, as appropriate:
                 IF (test) THEN
                   IF (i1.EQ.problem_triangle) WRITE(eirfp,*) '   DONE'
-                  IF (surface_assigned) 
+                  IF (wall_assignment.OR.grid_assignment) 
      .              CALL ER('ProcessTriangles_06','More than one '//
-     .                      'surface assignment identified',*98)
-                  surface_assigned = .TRUE.
+     .                      'surface assignment identified C',*98)
+                  wall_assignment = .TRUE.
                   IF (tri(i1)%map(v1).EQ.-1) THEN
                     tri(i1)%map(v1) = 0
                     tri(i1)%sid(v1) = 0
@@ -2016,7 +2036,8 @@ c           surface mapping than an actual design feature: - SL, 27.07.09
           ELSEIF (tri(i1)%map(v1).EQ.0) THEN
             IF ( tri(i1)%sur(v1).EQ.0.OR.
      .          (tri(i1)%sur(v1).NE.0.AND.
-     .           surface(MAX(1,tri(i1)%sur(v1)))%iliin.EQ.-1)) THEN 
+     .           surface(MAX(1,tri(i1)%sur(v1)))%iliin.EQ.-1.AND.
+     .           eir_pass.GT.1)) THEN
 c            IF (tri(i1)%map(v1).EQ.-1) THEN 
 c...          If this shows up again, it may be related to DTOL in PointOnLine:
 c             Indeed, it showed up again, with the ITER grid iterm.carre.105, see above note
@@ -2042,6 +2063,7 @@ c             related to malformed cells. -SL, 23.07.09
                 WRITE(eirfp,*) ' > subtype ',surface(i2)%subtype,
      .                             STRATUM,MAGNETIC_GRID_BOUNDARY
                 WRITE(eirfp,*) ' >   index ',surface(i2)%index(1:4)
+                WRITE(eirfp,*) ' >   index ',TRIM(surface(i2)%surtxt)
               ENDDO
 
               CALL WriteEireneTriangles
@@ -2087,31 +2109,6 @@ c
 
       INTEGER fp,i1,i2,idum1,idum2
 
-c
-c     Need to work from a list of additional surfaces that are loaded from the fluid
-c     code and from the existing triangle data set (the pre-defined sides), rather than
-c     from the fluid code grid as I have done here.  Perhaps just lost a selection 
-c     of line segments and order them, then build the domain.  The additional surfaces
-c     will have to be assigned a volume index in the input file -- that is how they will be
-c     selected... 
-c
-c     Only additional surfaces that are not part of a particular zone are passed to EIRENE
-c     as additional surfaces, the rest go as non-default standard surfaces (with reflection
-c     models specified...  
-c
-c     Additional surface has: OSM index, EIRENE zone index, non-default surface index (?) so
-c     that an additional surface that is part of a zone is not simply assigned as some 
-c     anonymouns part of the zone wall (?), ... should every wall segment be assigned its own
-c     non-default standard index, and then this used to map data back and forth? 
-c
-c     Need to assign a non-default standard surface for each region of IRWALL...
-c
-c     Need to generalize the reading of target data on the EIRENE side so that I have control 
-c     over strata definitions... 
-c
-c
-c
-
       fp = 99      
       OPEN(UNIT=fp,FILE='triangle.1.ele',ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)      
@@ -2129,9 +2126,9 @@ c
         tri(i1+ntri)%index = 0
         tri(i1+ntri)%sideindex = 0
         tri(i1+ntri)%plasma = 0.0
-        tri(i1+ntri)%plasma(1) = te
-        tri(i1+ntri)%plasma(2) = ti
-        tri(i1+ntri)%plasma(3) = ne
+        tri(i1+ntri)%plasma(1) = MAX(0.0,te)
+        tri(i1+ntri)%plasma(2) = MAX(0.0,ti)
+        tri(i1+ntri)%plasma(3) = MAX(0.0,ne)
         tri(i1+ntri)%bfield = 0.0
         tri(i1+ntri)%efield = 0.0
       ENDDO
@@ -2435,7 +2432,8 @@ c
       
       INTEGER code
 
-      REAL       DTOL
+      REAL*8     DTOL
+c      REAL       DTOL
       PARAMETER (DTOL=1.0D-07)
 
       INTEGER fp,i1,i2,i3,i4,i5,v1,v2,id,ik,ir,npts,
@@ -4336,8 +4334,11 @@ c
       IMPLICIT none
 
       INTEGER i1,nstsi,instsi,def_ilcell,ilcell,n
+      LOGICAL warning_reported
 
 c      WRITE(eirfp,*) 'WRITING BLOCK3a'
+
+      warning_reported = .FALSE.
 
       def_ilcell = 0
 
@@ -4366,6 +4367,20 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
      .                 surface(i1)%ilswch,0             ,
      .                 surface(i1)%iltor ,surface(i1)%ilcol ,
      .                 0,ilcell,0,0
+
+        WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+     .    i1,surface(i1)%ilspt,surface(i1)%reflect.EQ.LOCAL
+
+        IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2) THEN  ! Need to fix this...
+          warning_reported = .TRUE.
+          WRITE(0,*)
+          WRITE(0,*) '********************************************'
+          WRITE(0,*) '* NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT *' 
+          WRITE(0,*) '*       REPORTED TO OSM BY EIRENE          *' 
+          WRITE(0,*) '********************************************'
+          WRITE(0,*)
+        ENDIF
+
 
         IF (surface(i1)%reflect.EQ.LOCAL) THEN
           WRITE(fp06,91) 1,surface(i1)%ilspt,surface(i1)%isrs

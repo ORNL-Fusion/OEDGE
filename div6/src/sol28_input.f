@@ -346,47 +346,64 @@ c
       SELECTCASE (buffer(3:itag-1))
         CASE('EIR IMPURITY SPUTTERING')
           CALL ReadOptionI(buffer,1,opt_eir%ilspt) 
-        CASE('E NEUTRAL SOURCES')
-          osm_nstrata = 0
+        CASE('EIR VOID GRID')
+          opt_eir%nvoid = 0
           DO WHILE(GetLine(fp,buffer,NO_TAG))
-            osm_nstrata = osm_nstrata + 1
+            opt_eir%nvoid = opt_eir%nvoid + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
             READ(buffer,*) 
-     .        osm_strata(osm_nstrata)%type,
-     .        osm_strata(osm_nstrata)%npts,
-     .        osm_strata(osm_nstrata)%flux,
-     .        osm_strata(osm_nstrata)%flux_fraction,
-     .        osm_strata(osm_nstrata)%species,
-     .        osm_strata(osm_nstrata)%species_index,
-     .        osm_strata(osm_nstrata)%sorene
-            IF     (osm_strata(osm_nstrata)%type.EQ.1.0) THEN  ! Target surface flux
+     .        opt_eir%void_zone(    opt_eir%nvoid),
+     .        opt_eir%void_grid(1:2,opt_eir%nvoid),
+     .        opt_eir%void_wall(1:2,opt_eir%nvoid),
+     .        opt_eir%void_add (1:2,opt_eir%nvoid),
+     .        opt_eir%void_res (    opt_eir%nvoid),
+     .        opt_eir%void_hole(1:2,opt_eir%nvoid),
+     .        opt_eir%void_code(    opt_eir%nvoid),
+     .        opt_eir%void_ne  (    opt_eir%nvoid),
+     .        opt_eir%void_te  (    opt_eir%nvoid),
+     .        opt_eir%void_ti  (    opt_eir%nvoid)
+          ENDDO
+        CASE('E NEUTRAL SOURCES')
+          opt_eir%nstrata = 0
+          DO WHILE(GetLine(fp,buffer,NO_TAG))
+            opt_eir%nstrata = opt_eir%nstrata + 1
+c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
+            READ(buffer,*) 
+     .        opt_eir%type         (opt_eir%nstrata),
+     .        opt_eir%npts         (opt_eir%nstrata),
+     .        opt_eir%flux         (opt_eir%nstrata),
+     .        opt_eir%flux_fraction(opt_eir%nstrata),
+     .        opt_eir%species      (opt_eir%nstrata),
+     .        opt_eir%species_index(opt_eir%nstrata),
+     .        opt_eir%sorene       (opt_eir%nstrata)
+            IF     (opt_eir%type(opt_eir%nstrata).EQ.1.0) THEN  ! Target surface flux
               READ(buffer,*) rdum(1:7),
-     .          osm_strata(osm_nstrata)%target,
-     .          osm_strata(osm_nstrata)%txtsou
-              osm_strata(osm_nstrata)%range_tube(1) = 1
-              osm_strata(osm_nstrata)%range_tube(2) = 99999
-            ELSEIF (osm_strata(osm_nstrata)%type.EQ.1.1) THEN  ! Target surface flux
+     .          opt_eir%target(opt_eir%nstrata),
+     .          opt_eir%txtsou(opt_eir%nstrata)
+              opt_eir%range_tube(1,opt_eir%nstrata) = 1
+              opt_eir%range_tube(2,opt_eir%nstrata) = 99999
+            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.1.1) THEN  ! Target surface flux
               READ(buffer,*) rdum(1:7),
-     .          osm_strata(osm_nstrata)%target,
-     .          osm_strata(osm_nstrata)%range_tube(1:2),
-     .          osm_strata(osm_nstrata)%txtsou
-            ELSEIF (osm_strata(osm_nstrata)%type.EQ.2.0) THEN  ! Volume recombination
+     .          opt_eir%target        (opt_eir%nstrata),
+     .          opt_eir%range_tube(1:2,opt_eir%nstrata),
+     .          opt_eir%txtsou        (opt_eir%nstrata)
+            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.2.0) THEN  ! Volume recombination
               READ(buffer,*) rdum(1:7),
-     .          osm_strata(osm_nstrata)%txtsou
-            ELSEIF (osm_strata(osm_nstrata)%type.EQ.3.0.OR.
-     .              osm_strata(osm_nstrata)%type.EQ.3.1) THEN  ! Point source injection (gas puff, beams)
+     .          opt_eir%txtsou(opt_eir%nstrata)
+            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.3.0.OR.
+     .              opt_eir%type(opt_eir%nstrata).EQ.3.1) THEN  ! Point source injection (gas puff, beams)
               READ(buffer,*) rdum(1:7),
-     .          osm_strata(osm_nstrata)%sorcos,
-     .          osm_strata(osm_nstrata)%sormax,
-     .          osm_strata(osm_nstrata)%sorad(1:6),
-     .          osm_strata(osm_nstrata)%txtsou
+     .          opt_eir%sorcos   (opt_eir%nstrata),
+     .          opt_eir%sormax   (opt_eir%nstrata),
+     .          opt_eir%sorad(1:6,opt_eir%nstrata),
+     .          opt_eir%txtsou   (opt_eir%nstrata)
             ELSE
               CALL ER('LoadEireneOption','Unknown stratum type',*99)
             ENDIF
           ENDDO            
-c          WRITE(0,*) 'OSM_NSTRATA:',osm_nstrata,rdum(1:6)
-c          WRITE(0,*) 'OSM_NSTRATA:',osm_nstrata,
-c     .                              osm_strata(osm_nstrata)%sorad
+c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%strata,rdum(1:6)
+c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%nstrata,
+c     .                              opt_eir%sorad(opt_eir%nstrata)
 c          STOP
        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
@@ -581,6 +598,8 @@ c
       INTEGER  , INTENT(IN) :: fp,itag
       CHARACTER, INTENT(IN) :: buffer*(*)
 
+      CHARACTER cdum1*1024
+
       LOGICAL GetLine
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
@@ -592,6 +611,7 @@ c
      .              'already allocated, deallocating')
             DEALLOCATE(solps_data)
           ENDIF
+          READ(buffer,*) cdum1,solps_opt
           ALLOCATE(solps_data(MAX_SOLPS_DATA))
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             nsolps_data = nsolps_data + 1
@@ -684,14 +704,14 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             tarninter(HI) = tarninter(HI) + 1
             CALL PadBufferR(15,buffer,0.0)
-            READ(buffer,*) tarinter(tarninter(HI),1:6,HI)
+            READ(buffer,*) tarinter(tarninter(HI),1:4,HI)
           ENDDO
         CASE('089')
           tarninter(LO) = 0
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             tarninter(LO) = tarninter(LO) + 1
             CALL PadBufferR(15,buffer,0.0)
-            READ(buffer,*) tarinter(tarninter(LO),1:6,LO)
+            READ(buffer,*) tarinter(tarninter(LO),1:4,LO)
           ENDDO
         CASE('S74')
           node_data = .FALSE.
@@ -889,7 +909,18 @@ c...  Filament options:
       opt_fil%length2 = -99.0
 
 c...  Eirene options:
-      osm_nstrata = 0
+      opt_eir%nstrata = 0
+
+      opt_eir%nvoid = 0
+c      opt_eir%nvoid = 1
+c      opt_eir%void_zone(  1) =  -1
+c      opt_eir%void_grid(1,1) =   2
+c      opt_eir%void_grid(2,1) = 999
+c      opt_eir%void_res (  1) = 0.1
+c      opt_eir%void_code(  1) =  -1
+c      opt_eir%void_ne  (  1) = 0.0
+c      opt_eir%void_te  (  1) = 0.0
+c      opt_eir%void_ti  (  1) = 0.0
 
       opt_eir%time  = 30
       opt_eir%niter = 0
@@ -918,6 +949,7 @@ c...  Eirene options:
 
 
 c...  SOLPS related variables:
+      solps_opt = 0
       nsolps_data = 0
       IF (ALLOCATED(solps_data)) DEALLOCATE(solps_data)
       IF (ALLOCATED(map_divimp)) DEALLOCATE(map_divimp)

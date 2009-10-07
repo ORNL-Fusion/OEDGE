@@ -835,7 +835,7 @@ c   1 - power law               coordinate   index
 c   2 - exponential v0-v2       coordinate   index
 c   3 - exponential to infinity
 c   4 - from probe data         coordinate   probe number
-c   5 - something strange...
+c   5 - parameter fits
 c
 c   coord = 1 - linear on line segment
 c         = 2 - linear on line segment, but from first to last ring intersection

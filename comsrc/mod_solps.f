@@ -37,7 +37,7 @@ c
          REAL*4, ALLOCATABLE :: data(:)        ! Data
       ENDTYPE type_solps_data
 
-      INTEGER :: nsolps_data
+      INTEGER :: nsolps_data,solps_opt
       TYPE(type_solps_data), PUBLIC, ALLOCATABLE :: solps_data(:)
 
       INTEGER :: solps_maxik,solps_maxir

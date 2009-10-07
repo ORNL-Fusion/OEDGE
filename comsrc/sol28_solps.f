@@ -112,7 +112,7 @@ c
       SUBROUTINE LoadSOLPSData_OSM
       USE mod_sol28_global
       USE mod_solps
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       CHARACTER*16, PARAMETER ::

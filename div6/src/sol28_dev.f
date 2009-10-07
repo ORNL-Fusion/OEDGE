@@ -2,6 +2,468 @@ c     -*-Fortran-*-
 c
 c ====================================================================
 c
+      SUBROUTINE SetupVoidProcessing
+      USE mod_sol28_global
+      USE mod_eirene06_parameters
+      USE mod_eirene06
+      IMPLICIT none
+
+      INTEGER fp,ivoid,isrf
+
+      TYPE(type_options_eirene) :: opt_tmp
+
+
+      CALL ProcessVoid(-1)  ! Initialisation
+
+c      default_index = 0     
+c      DO ivoid = 1, opt_eir%nvoid
+c        IF (opt_eir%void_zone.EQ.-1) default_index = ivoid
+c      ENDDO
+
+c...  Assign defaults, if necessary:
+      IF (opt_eir%nvoid.EQ.1.AND.opt_eir%void_zone(1).EQ.-1) THEN
+        opt_eir%nvoid = 0
+        opt_tmp = opt_eir
+        DO isrf = 1, nsurface
+          IF (surface(isrf)%type    .NE.NON_DEFAULT_STANDARD  .OR.
+     .        surface(isrf)%subtype .NE.MAGNETIC_GRID_BOUNDARY.OR.
+     .        surface(isrf)%index(6).LT.opt_tmp%void_grid(1,1)) CYCLE
+              
+          opt_eir%nvoid = opt_eir%nvoid + 1
+
+          opt_eir%void_zone(  opt_eir%nvoid) = opt_eir%nvoid 
+          opt_eir%void_grid(:,opt_eir%nvoid) = -1
+          opt_eir%void_wall(:,opt_eir%nvoid) = -1
+          opt_eir%void_add (:,opt_eir%nvoid) = -1
+          opt_eir%void_res (  opt_eir%nvoid) = opt_tmp%void_res (  1)
+          opt_eir%void_hole(:,opt_eir%nvoid) = -1.0
+          opt_eir%void_code(  opt_eir%nvoid) = opt_tmp%void_code(  1)
+          opt_eir%void_ne  (  opt_eir%nvoid) = opt_tmp%void_ne  (  1)
+          opt_eir%void_te  (  opt_eir%nvoid) = opt_tmp%void_te  (  1)
+          opt_eir%void_ti  (  opt_eir%nvoid) = opt_tmp%void_ti  (  1)
+        ENDDO
+      ENDIF
+
+c...  Output:
+      fp = 0
+      WRITE(fp,*)
+      WRITE(fp,'(A)') 'EIRENE TRIANGLE GRID SETTINGS:'
+      WRITE(fp,'(A4,3(2X,A8),A10,2X,A20,2X,A4,2X,3A10)') 
+     .  'zone','grid1,2','wall1,2','add1,2','res','hole','code',
+     .  'ne','Te','Ti'
+      DO ivoid = 1, opt_eir%nvoid
+        WRITE(fp,'(I4,3(2X,2I4),F10.4,2X,2F10.4,I4,2X,1P,3E10.2,0P)') 
+     .    opt_eir%void_zone(    opt_eir%nvoid),
+     .    opt_eir%void_grid(1:2,opt_eir%nvoid),
+     .    opt_eir%void_wall(1:2,opt_eir%nvoid),
+     .    opt_eir%void_add (1:2,opt_eir%nvoid),
+     .    opt_eir%void_res (    opt_eir%nvoid),
+     .    opt_eir%void_hole(1:2,opt_eir%nvoid),
+     .    opt_eir%void_code(    opt_eir%nvoid),
+     .    opt_eir%void_ne  (    opt_eir%nvoid),
+     .    opt_eir%void_te  (    opt_eir%nvoid),
+     .    opt_eir%void_ti  (    opt_eir%nvoid)
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ====================================================================
+c
+      SUBROUTINE ProcessVoid(izone)
+      USE mod_sol28_global
+      USE mod_eirene06_parameters
+      USE mod_eirene06
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: izone
+
+      INTEGER, PARAMETER :: MAXNSEG = 10000, MAXNPTS = 20000
+      REAL*8 , PARAMETER :: DTOL=1.0D-07
+
+      INTEGER   fp,ivoid,isrf,isrf1,isrf2,i1,i2,itri,v1,v2,code,
+     .          nseg,seg(0:MAXNSEG,4),icnt,nhole,npts,pass,
+     .          i3,i4,i5,iseg1,iseg2,ilink,tmp_nseg
+      LOGICAL   output,cont,link
+      CHARACTER command*512
+      REAL      area,ne,te,ti,res(nsurface)
+      REAL*8    x1,x2,y1,y2,len,t,tstep,xhole(50),yhole(50),
+     .          pts(MAXNPTS,2),x3,x4,y3,y4,s12,s34
+
+      SAVE
+
+      IF (izone.EQ.-1) THEN
+        res = 0.0  
+        RETURN
+      ENDIF
+
+      output = .TRUE.
+      fp = 0
+
+      nseg = 0
+      seg  = 0
+      npts = 0       
+      nhole = 0
+      area = 0.0
+      ne = 0.0
+      te = 0.0
+      ti = 0.0
+
+      IF (output) WRITE(fp,*) 'HERE IN ASSEMBLE VOID',izone
+
+      DO ivoid = 1, opt_eir%nvoid
+        IF (opt_eir%void_zone(ivoid).NE.izone) CYCLE
+
+        IF (output) WRITE(fp,*) '  PROCESSING VOID SETUP',ivoid
+c       ----------------------------------------------------------------
+c...    Examine the outer radial boundary surfaces of the fluid grid and 
+c       collect the associated line segments:
+c
+c       Map the surface indices provided in the input file to the surface
+c       indices defined in the EIRENE setup code:
+        isrf1 = -1
+        isrf2 = -1
+        i1 = opt_eir%void_grid(1,ivoid)
+        i2 = opt_eir%void_grid(2,ivoid)
+        DO isrf = 1, nsurface
+          IF (output) WRITE(fp,*) 'GRID SURFACE:',isrf
+          IF (surface(isrf)%type   .NE.NON_DEFAULT_STANDARD  .OR.
+     .        surface(isrf)%subtype.NE.MAGNETIC_GRID_BOUNDARY) CYCLE
+          IF (output) WRITE(fp,*) 'GRID SURFACE: OK',
+     .                            surface(isrf)%index(6)
+          IF (isrf1.EQ.-1.AND.surface(isrf)%index(6).GE.i1) isrf1 = isrf
+          IF (                surface(isrf)%index(6).LE.i2) isrf2 = isrf
+        ENDDO
+
+c        IF (output) WRITE(fp,*) 'GRID:',ivoid,i1,i2,isrf1,isrf2
+
+c       The boundary surface indices have been identified, so search the
+c       list of triangles for sides that match up with these surfaces:
+        IF (isrf1.NE.-1.AND.isrf2.NE.-1) THEN
+          DO itri = 1, ntri
+            DO v1 = 1, 3
+              isrf = tri(itri)%sur(v1)
+              IF (isrf.EQ.0) CYCLE
+              IF (surface(isrf)%type    .EQ.NON_DEFAULT_STANDARD  .AND.
+     .            surface(isrf)%subtype .EQ.MAGNETIC_GRID_BOUNDARY.AND.
+     .            surface(isrf)%index(6).GT.0.AND. 
+     .            isrf.GE.isrf1.AND.isrf.LE.isrf2) THEN
+                nseg = nseg + 1
+                seg(nseg,1) = npts + 1
+                seg(nseg,2) = npts + 2
+                v2 = v1 + 1
+                IF (v1.EQ.3) v2 = 1
+                npts = npts + 1
+                pts(npts,1) = ver(tri(itri)%ver(v1),1) 
+                pts(npts,2) = ver(tri(itri)%ver(v1),2)
+                npts = npts + 1
+                pts(npts,1) = ver(tri(itri)%ver(v2),1)
+                pts(npts,2) = ver(tri(itri)%ver(v2),2)
+                IF (output) THEN
+                  WRITE(fp,'(A,5I6)') 'GRID:',nseg,itri,isrf,isrf1,isrf2
+                  WRITE(fp,*) '    PTS1=',pts(npts-1,1:2)
+                  WRITE(fp,*) '    PTS2=',pts(npts  ,1:2)
+                ENDIF
+              ENDIF
+            ENDDO              
+          ENDDO      
+        ENDIF
+
+c       ------------------------------------------------------------------
+c...    Search through the list of standard wall line segments and build
+c       a list for each zone that completes the individual voids:
+        i1 = opt_eir%void_wall(1,ivoid)
+        i2 = opt_eir%void_wall(2,ivoid)
+
+        IF     (i1.EQ.-1.AND.i2.EQ.-1) THEN
+c         Find the wall segments for this zone automatically -- just keep
+c         mindlessly filing through the wall segments until the path is 
+c         closed:
+          cont = .TRUE.
+          pass = 0
+          DO WHILE(cont)
+            pass = pass + 1
+            IF (pass.EQ.100) STOP 'NOT PASSING...'
+            cont = .FALSE.
+c           Check if there is already a link to this segment:
+            tmp_nseg = nseg
+            DO iseg1 = 1, tmp_nseg
+              IF (seg(iseg1,3).EQ.1) CYCLE
+c             Check both ends of the current focus segment:
+              DO ilink = 1, 2
+                link = .FALSE.
+                DO iseg2 = 1, nseg
+                  IF (iseg1.EQ.iseg2) CYCLE
+                  i3 = seg(iseg1,ilink)
+c                 Check both ends of the test segment:
+                  i4 = seg(iseg2,1)
+                  i5 = seg(iseg2,2)
+                  IF ((DABS(pts(i3,1)-pts(i4,1)).LT.DTOL.AND.
+     .                 DABS(pts(i3,2)-pts(i4,2)).LT.DTOL).OR.
+     .                (DABS(pts(i3,1)-pts(i5,1)).LT.DTOL.AND.
+     .                 DABS(pts(i3,2)-pts(i5,2)).LT.DTOL)) THEN
+                    link = .TRUE.
+                    IF (ilink.EQ.2) seg(iseg1,3) = 1
+                    EXIT
+                  ENDIF
+                ENDDO
+                IF (output) WRITE(0,*) '  PASS:',pass,iseg1,link
+                IF (.NOT.link) EXIT
+              ENDDO
+
+c             Both ends of the segment are attached so start
+c             looking at the next segment:
+              IF (link) CYCLE
+
+              cont = .TRUE.
+              DO isrf = 1, nsurface
+                IF (surface(isrf)%type.NE.VESSEL_WALL.OR.    
+     .              seg(iseg1,4).EQ.isrf) CYCLE
+                x1 = surface(isrf)%v(1,1)
+                y1 = surface(isrf)%v(2,1)
+                x2 = surface(isrf)%v(1,2)
+                y2 = surface(isrf)%v(2,2)
+                IF ((DABS(pts(i3,1)-x1).LT.DTOL.AND.
+     .               DABS(pts(i3,2)-y1).LT.DTOL).OR.
+     .              (DABS(pts(i3,1)-x2).LT.DTOL.AND.
+     .               DABS(pts(i3,2)-y2).LT.DTOL)) THEN
+
+                  IF (res(isrf).EQ.0.0) THEN
+                    res(isrf) = opt_eir%void_res(ivoid)
+                  ELSE
+                    WRITE(fp,*) 'ISRF,RES:',isrf,res(isrf)
+                    WRITE(fp,*) 'X1,Y1:',x1,y1
+                    WRITE(fp,*) 'X2,Y2:',x2,y2
+                    STOP 'NOT READY FOR THE RES...'
+                  ENDIF
+
+                  len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
+                  IF (len.GT.DBLE(res(isrf))) THEN
+                    tstep = 1.0D0 / DBLE(INT(len/DBLE(res(isrf))) + 1)
+                  ELSE
+                    tstep = 1.0D0
+                  ENDIF
+
+                  IF (output) THEN
+                    WRITE(fp,'(A,2I6,2X,2I6,2F10.4)') 
+     .                ' NEW WALL SEG:',iseg1,ilink, 
+     .                surface(isrf)%index(1:2),res(isrf),tstep
+
+                    WRITE(fp,*) '    I3    =',i3
+                    WRITE(fp,*) '    PTS1,2=',pts(i3,1:2)
+                    WRITE(fp,*) '    ISEG11=',pts(seg(iseg1,1),1:2)
+                    WRITE(fp,*) '    ISEG12=',pts(seg(iseg1,2),1:2)
+                    WRITE(fp,*) '    ISRF,RES:',isrf,res(isrf)
+                    WRITE(fp,*) '    X1,Y1:',x1,y1
+                    WRITE(fp,*) '    X2,Y2:',x2,y2
+
+c                    STOP 'dfsdfsd'
+                  ENDIF
+              
+c                  WRITE(eirfp,*) x1,y1
+c                  WRITE(eirfp,*) x2,y2
+                  DO t = 0.0D0, 0.9999999D0, tstep 
+                    nseg = nseg + 1
+                    seg(nseg,1) = npts + 1
+                    seg(nseg,2) = npts + 2
+                    seg(nseg,4) = isrf
+                    npts = npts + 1
+                    pts(npts,1) = x1 + t * (x2 - x1)             ! Orientation is correct
+                    pts(npts,2) = y1 + t * (y2 - y1) 
+                    npts = npts + 1
+                    pts(npts,1) = x1 + (t + tstep) * (x2 - x1) 
+                    pts(npts,2) = y1 + (t + tstep) * (y2 - y1)
+                  ENDDO
+                  EXIT
+                ENDIF
+              ENDDO
+              IF (isrf.EQ.nsurface+1) 
+     .          CALL ER('ProcessVoid','No link to wall surface',*99)
+            ENDDO
+
+          ENDDO
+        ELSEIF (i1.GT.0.AND.i2.GT.0) THEN
+c         Select the wall segments based on the index values in I1 and I2:
+c            DO i3 = 1, nsurface
+c              IF (surface(i3)%type.EQ.VESSEL_WALL.AND.
+c     .            ((eirtri(i2,2).EQ.2.0.AND.
+c     .              surface(i3)%index(1).GE.NINT(eirtri(i2,3)).AND.
+c     .              surface(i3)%index(1).LE.NINT(eirtri(i2,4))).OR.
+c     .             (eirtri(i2,2).EQ.3.0.AND.
+c     .              surface(i3)%index(2).GE.NINT(eirtri(i2,3)).AND.
+c     .              surface(i3)%index(2).LE.NINT(eirtri(i2,4))))) THEN
+          STOP 'WORKING ON IT'
+        ENDIF
+      ENDDO
+
+
+c...  Eliminate duplicate verticies:
+      DO i2 = 1, npts
+        DO i3 = i2+1, npts
+          IF (pts(i2,1).NE.-999.0.AND.
+     .        DABS(pts(i2,1)-pts(i3,1)).LT.DTOL.AND.
+     .        DABS(pts(i2,2)-pts(i3,2)).LT.DTOL) THEN
+            pts(i3,1) = -999.0
+            pts(i3,2) = -999.0
+            DO i4 = 1, nseg
+              IF (seg(i4,1).EQ.i3) seg(i4,1) = i2
+              IF (seg(i4,2).EQ.i3) seg(i4,2) = i2
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDDO
+c...  Delete points:
+      DO i2 = npts, 1, -1
+        IF (pts(i2,1).EQ.-999.0) THEN
+          DO i3 = i2, npts-1
+            pts(i3,1) = pts(i3+1,1)
+            pts(i3,2) = pts(i3+1,2)
+          ENDDO
+          DO i4 = 1, nseg
+            IF (seg(i4,1).GE.i2) seg(i4,1) = seg(i4,1) - 1
+            IF (seg(i4,2).GE.i2) seg(i4,2) = seg(i4,2) - 1
+          ENDDO
+          npts = npts - 1
+        ENDIF
+      ENDDO
+c...  Sort segments:
+      DO i2 = 1, nseg-1
+        DO i3 = i2+1, nseg
+          IF     (DABS(pts(seg(i2,2),1)-pts(seg(i3,1),1)).LT.DTOL.AND.
+     .            DABS(pts(seg(i2,2),2)-pts(seg(i3,1),2)).LT.DTOL) THEN
+            IF (i3.EQ.i2+1) THEN
+c...          Do nothing, all okay:
+              EXIT
+            ELSE
+              seg(0   ,1:4) = seg(i2+1,1:4)
+              seg(i2+1,1:4) = seg(i3  ,1:4)
+              seg(i3  ,1:4) = seg(0   ,1:4)
+              EXIT
+            ENDIF
+          ELSEIF (DABS(pts(seg(i2,2),1)-pts(seg(i3,2),1)).LT.DTOL.AND.
+     .            DABS(pts(seg(i2,2),2)-pts(seg(i3,2),2)).LT.DTOL) THEN
+            IF (i3.EQ.i2+1) THEN
+              seg(0 ,1) = seg(i3,1)
+              seg(i3,1) = seg(i3,2) ! Swap the order of the points
+              seg(i3,2) = seg(0 ,1)
+              EXIT
+            ELSE
+              seg(0   ,1:4) = seg(i2+1,1:4)
+              seg(i2+1,1  ) = seg(i3  ,2  )  ! Swap the order of the points
+              seg(i2+1,2  ) = seg(i3  ,1  )
+              seg(i2+1,3:4) = seg(i3  ,3:4)
+              seg(i3  ,1:4) = seg(0   ,1:4)
+              EXIT
+            ENDIF
+          ENDIF
+        ENDDO
+        IF (i3.EQ.nseg+1) 
+     .    CALL ER('ProcessVoid','Zone perimeter gap detected',*99)
+      ENDDO
+    
+      IF (output) THEN
+        DO i1 = 1, nseg
+          WRITE(fp,*) 'PERIMETER:',i1,pts(seg(i1,1),1:2)
+          WRITE(fp,*) '         :',i1,pts(seg(i1,2),1:2)
+        ENDDO
+      ENDIF
+
+
+c     ------------------------------------------------------------------
+c...  The perimeter of the void / zone is now defined, so look to see if 
+c     any additional line segments or holes should be included:     
+
+      DO ivoid = 1, opt_eir%nvoid
+        IF (opt_eir%void_zone(ivoid).NE.izone) CYCLE
+
+c...    Set requested triangle area:
+        IF (area.EQ.0.0.AND.opt_eir%void_res(ivoid).NE.0.0) 
+     .    area = 0.5 * opt_eir%void_res(ivoid)**2
+
+c...    Holes:
+        IF (opt_eir%void_hole(1,ivoid).NE.0.0.AND.
+     .      opt_eir%void_hole(2,ivoid).NE.0.0) THEN
+          nhole = nhole + 1
+          xhole(nhole) = opt_eir%void_hole(1,ivoid)
+          yhole(nhole) = opt_eir%void_hole(2,ivoid)
+        ENDIF
+
+c...    Plasma conditions for all triangles in zone -- but note that
+c       this does not imply any associated recycling in EIRENE:
+        IF (opt_eir%void_ne(ivoid).GT.0.0) THEN
+          ne = opt_eir%void_ne(ivoid)
+          te = opt_eir%void_te(ivoid)
+          ti = opt_eir%void_ti(ivoid)
+        ENDIF
+
+c...    Look for wall surfaces that are inside each zone:
+        DO isrf = 1, nsurface
+          IF (surface(isrf)%type.NE.VESSEL_WALL.OR.res(isrf).NE.0.0) 
+     .      CYCLE
+      
+          x1 = surface(isrf)%v(1,1)
+          y1 = surface(isrf)%v(2,1)          
+          x2 = x1 + 20.0D0
+          y2 = y1
+
+          DO i1 = 1, nseg
+            x3 = pts(seg(i1,1),1)
+            x4 = pts(seg(i1,1),2)
+            CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
+          ENDDO  
+     
+        ENDDO
+      ENDDO
+
+
+
+
+
+      fp = 99      
+      OPEN(UNIT=fp,FILE='triangle.poly',ACCESS='SEQUENTIAL',
+     .     STATUS='REPLACE',ERR=99)      
+      WRITE(fp,*) npts,2,1,0
+      DO i2 = 1, npts
+c        WRITE(fp,'(I6,2F12.7)') i2,pts(i2,1),pts(i2,2)
+        WRITE(fp,'(I6,2F19.14)') i2,pts(i2,1),pts(i2,2)
+      ENDDO
+      WRITE(fp,*) nseg,0
+      DO i2 = 1, nseg
+        IF (i2.EQ.nseg) THEN
+          WRITE(fp,'(4I6)') i2,seg(i2,1),seg(i2,2),0
+        ELSE
+          WRITE(fp,'(4I6)') i2,seg(i2,1),seg(i2,2),1
+        ENDIF
+      ENDDO
+      WRITE(fp,*) nhole
+      DO i2 = 1, nhole
+        WRITE(fp,'(I6,2F12.7)') i2,xhole(i2),yhole(i2)
+      ENDDO
+      CLOSE (fp)
+
+c...  Call triangle:
+      IF (area.EQ.0.0) area = 0.01
+      WRITE(command,10) 'triangle -p -q -a',area,' -Y triangle.poly'
+ 10   FORMAT(A,F10.8,A)
+      WRITE(eirfp,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
+      WRITE(0    ,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
+      CALL CIssue(command(1:LEN_TRIM(command)),code)
+      WRITE(eirfp,*) 'RETURN_CODE:',code
+
+      icnt = icnt + 1
+
+      CALL ReadPolyFile_06(izone,ne,te,ti)
+
+
+      RETURN
+ 99   WRITE(0,*) 'I3    =',i3
+      WRITE(0,*) 'PTS1,2=',pts(i3,1:2)
+      STOP
+      END
+c
+c ====================================================================
+c
       SUBROUTINE RoutineInDevelopment
       IMPLICIT none
       RETURN

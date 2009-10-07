@@ -21,6 +21,10 @@
       INTEGER, PUBLIC, PARAMETER :: MAGNETIC_GRID = 1, 
      .                              VACUUM_GRID   = 2
 
+!...  Array sizes:
+      INTEGER, PUBLIC, PARAMETER :: VOID_MAXNSEG =1000, 
+     .                              VOID_MAXNHOLE=100
+
       END MODULE MOD_EIRENE06_PARAMETERS
 !
 ! ======================================================================
@@ -70,6 +74,21 @@
         REAL    :: plasma(20)  ! 20 = e_pot temp!
       ENDTYPE type_triangle
 
+!     Void regions between the fluid grid and the first wall:
+      TYPE, PUBLIC :: type_void
+        INTEGER :: index
+        INTEGER :: index_boundary
+        REAL    :: resolution
+        REAL*8  :: seg_resolution(VOID_MAXNSEG)
+        INTEGER :: nseg_boundary
+        REAL*8  :: seg_boundary1 (2,VOID_MAXNSEG)
+        REAL*8  :: seg_boundary2 (2,VOID_MAXNSEG)
+        INTEGER :: nseg_interior
+        REAL*8  :: seg_interior1(2,VOID_MAXNSEG)
+        REAL*8  :: seg_interior2(2,VOID_MAXNSEG)
+        INTEGER :: nhole
+        REAL*8  :: hole(VOID_MAXNHOLE)         
+      ENDTYPE type_void
 
       TYPE, PUBLIC :: type_eirene_cell
         INTEGER :: type,index(10),sideindex(10,4),zone
@@ -131,9 +150,14 @@ c...    Quantities set in EIRENE interface routines:
       INTEGER, PUBLIC, SAVE :: ntardat
       REAL, PUBLIC, ALLOCATABLE, SAVE :: tardat(:,:)
 
-      INTEGER, PUBLIC, SAVE :: nstrata,osm_nstrata
+      INTEGER, PUBLIC, SAVE :: eir_pass
+
+      INTEGER, PUBLIC, SAVE :: nvoid
+      TYPE(type_void), PUBLIC, ALLOCATABLE, SAVE :: void(:)
+
+      INTEGER, PUBLIC, SAVE :: nstrata ! ,osm_nstrata
       REAL   , PUBLIC, SAVE :: alloc
-      TYPE(type_strata), PUBLIC, SAVE :: strata(100),osm_strata(100)
+      TYPE(type_strata), PUBLIC, SAVE :: strata(100) ! ,osm_strata(100)
       
 !...  Fluid code defined EIRENE geometry surfaces:
       INTEGER, PUBLIC, SAVE :: nsurface 

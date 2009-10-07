@@ -538,8 +538,8 @@ c
 
       INTEGER, INTENT(IN) :: mode
 
-      INTEGER ion
-      REAL*8  net,integral(10),ic1,ic2
+      INTEGER ion,ic1,ic2
+      REAL*8  net,integral(10)
 
 c...  Additive, so needs to be reset each time:
       SELECTCASE (mode)
