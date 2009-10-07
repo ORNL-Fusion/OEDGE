@@ -22,7 +22,7 @@ c
 
       INTEGER, INTENT(IN) :: iitersol
 
-      INTEGER   ik,ir,in1,in2,i1,id,ik1,status,i
+      INTEGER   ik,ir,in1,in2,i1,id,ik1,status,i,ivoid
       LOGICAL   saved_triangles,output
       CHARACTER fname*1024
 
@@ -146,6 +146,8 @@ c     specified in block 3 in the EIRENE input file:
 
       eirfp = 88
 
+      eir_pass = 0
+
       IF (eirtrim.NE.1) CALL ER('WriteEireneFiles','TRIM option '//
      .                          'not set',*99)
 
@@ -201,7 +203,14 @@ c...      Define Eirene particle sources:
 
 c...      Fills the voids outside the fluid grid with triangles (by calling
 c         the external program TRIANGLE):
-          CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
+          IF (opt_eir%nvoid.GT.0) THEN
+            CALL SetupVoidProcessing
+            DO ivoid = 1, opt_eir%nvoid
+              CALL ProcessVoid(opt_eir%void_zone(ivoid))
+            ENDDO
+          ELSE
+            CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
+          ENDIF
 
 c...      Re-builds connection map, taking into account the new triangles:
           CALL ProcessTriangles_06(0)
@@ -293,12 +302,198 @@ c
       INTEGER NewEireneSurface_06
 
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
-     .        type,index1,index2,ilside,ilswch,region,code,is
+     .        type,index1,index2,ilside,ilswch,region,code,is,nboundary
       LOGICAL assigned(2)
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        material,recycf,recyct,ilspt,isrs,recycs,recycc
 
       nsurface = 0
+
+c     ----------------------------------------------------------------------
+c...  Setup non-default standard surfaces related to the magnetic grid:
+c     ----------------------------------------------------------------------
+
+c...  Poloidal surfaces for Eirene strata (needs to be generalized to 
+c     allow more than 2 surface strata):
+      IF (.TRUE.) THEN
+c...    Determine the number of target strata that are defined:
+        assigned = .FALSE.
+        DO is = 1, opt_eir%nstrata
+          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+     .             opt_eir%target(is).EQ.IKLO) assigned(IKLO) =.TRUE.
+          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+     .             opt_eir%target(is).EQ.IKHI) assigned(IKHI) =.TRUE.
+        ENDDO
+c...    Define the default surfaces for the target strata, since target
+c       strata are not specifically assigned:
+        DO i1 = IKLO, IKHI 
+          IF (assigned(i1)) CYCLE
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* default target (OSM)'
+          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+          IF (cgridopt.EQ.LINEAR_GRID) THEN
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs-1               ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ELSE
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs                 ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ENDIF
+          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+        ENDDO
+c...    Loop over the user specified strata and assemble the 
+c       corresponding target surfaces:
+        DO is = 1, opt_eir%nstrata 
+          IF (NINT(opt_eir%type(is)).NE.1) CYCLE
+
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* user specified target (OSM)'
+          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+          surface(nsurface)%index(1:2) = opt_eir%range_tube(1:2,is) ! irsep                  ! Ring index start location of surface
+c          surface(nsurface)%index(2) = nrs                    ! Ring index end
+          surface(nsurface)%index(3) = opt_eir%target(is)  ! Target (IKLO=inner, IKHI=outer)
+          surface(nsurface)%index(5) = 0
+          surface(nsurface)%reflect = LOCAL                   ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+
+        ENDDO
+      ELSE
+        DO i1 = IKLO, IKHI 
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* default target (OSM)'
+          IF (cgridopt.EQ.LINEAR_GRID) THEN
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs-1               ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ELSE
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs                 ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ENDIF
+          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+          IF (surface(nsurface)%ilspt.NE.0) THEN
+            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
+            surface(nsurface)%recycs = 1.0
+            surface(nsurface)%recycc = 1.0
+          ENDIF
+        ENDDO
+      ENDIF
+
+c...  (Core boundary surface should ideally be set here (and not above).)
+      nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+      surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
+      nboundary = 1
+      IF (cgridopt.EQ.LINEAR_GRID) THEN
+        nboundary = nboundary +1
+        surface(nsurface)%surtxt   = '* core, reflecting (OSM)'
+        surface(nsurface)%index(1) = 1         
+        surface(nsurface)%index(2) = MAXNKS    
+        surface(nsurface)%index(3) = 2         
+        surface(nsurface)%index(4) = 14      
+        surface(nsurface)%index(5) = 0
+        surface(nsurface)%index(6) = nboundary
+        surface(nsurface)%iliin  = 1         
+        surface(nsurface)%ilcol  = 3         
+      ELSE
+        surface(nsurface)%surtxt   = '* core, absorbing (OSM)'
+        surface(nsurface)%index(1) = 1       ! Cell index start location of surface
+        surface(nsurface)%index(2) = MAXNKS  ! Cell index end   
+        surface(nsurface)%index(3) = 2       ! Ring in the magnetic grid 
+        surface(nsurface)%index(4) = 14      ! Radial surface of cell (1-4 cell side here)
+        surface(nsurface)%index(5) = 0
+        surface(nsurface)%index(6) = nboundary
+        surface(nsurface)%iliin  = 2         ! Reflection type (ILIIN=2 is 100% absorbing)
+        surface(nsurface)%ilcol  = 3         ! Colour of surface in EIRENE plots
+      ENDIF
+
+c...  Setup SOL radial boundary surfaces:
+      ik1 = 0
+      ik2 = 0
+      DO ik = 1, nks(irwall)-1
+c...
+        IF (ik1.EQ.0) ik1 = ik
+        IF ((ikins(ik,irwall).NE.ikins(ik+1,irwall)-1).OR.
+     .      (irins(ik,irwall).NE.irins(ik+1,irwall)  )) ik2 = ik
+        IF (ik.EQ.nks(irwall)-1.AND.ik2.EQ.0) ik2 = nks(irwall)
+
+        IF (ik2.NE.0) THEN
+          IF (irouts(ikins(ik1,irwall),irins(ik1,irwall)).EQ.
+     .        irwall) THEN
+            side = 23
+          ELSE
+            side = 14
+          ENDIF
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          nboundary = nboundary + 1
+          surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
+          surface(nsurface)%surtxt   = '* radial SOL (OSM)'
+          surface(nsurface)%index(1) = ikins(ik1,irwall)  ! Cell index start location of surface       
+          surface(nsurface)%index(2) = ikins(ik2,irwall)  ! Cell index end                             
+          surface(nsurface)%index(3) = irins(ik1,irwall)  ! Ring in the magnetic grid                  
+          surface(nsurface)%index(4) = side               ! Radial surface of cell
+          surface(nsurface)%index(5) = 0                                                                
+          surface(nsurface)%index(6) = nboundary                                                        
+          surface(nsurface)%iliin  = -1                   ! Reflection type (ILIIN=-1 is 100% transparent)
+          surface(nsurface)%ilcol  = 4                    ! Colour of surface in EIRENE plots
+          ik1 = 0
+          ik2 = 0
+        ENDIF
+      ENDDO
+
+c...  PFZ radial boundary:  
+      nboundary = nboundary + 1
+      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
+      ELSE
+        nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+        surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
+        surface(nsurface)%surtxt   = '* radial PFR (OSM)'
+        surface(nsurface)%index(1) = 1                         ! Cell index start location of surface       
+        surface(nsurface)%index(2) = MAXNKS                    ! Cell index end                             
+        surface(nsurface)%index(3) = irtrap + 1                ! Ring in the magnetic grid                  
+        surface(nsurface)%index(4) = 14                        ! Radial surface of cell (1-4 cell side here)
+        surface(nsurface)%index(5) = 0                                                                      
+        surface(nsurface)%index(6) = nboundary                                                        
+        surface(nsurface)%iliin  = -1                          ! Reflection type (ILIIN=-1 is 100% transparent)
+        surface(nsurface)%ilcol  = 4                           ! Colour of surface in EIRENE plots
+      ENDIF
+
+c     ------------------------------------------------------------------
+c     Add wall surfaces:
+c     ------------------------------------------------------------------
 
 c...  Load vessel wall segments from the default DIVIMP vessel 
 c     wall array (WALLPTS), clockwise wall is assumed:
@@ -432,181 +627,10 @@ c...
         ENDIF
       ENDDO
 
-c...  Non-default standard surfaces on the magnetic grid:
-c     *TEMP* move lower eventually -- here now to be compatible with block 3a surface index of core
-c     boundary in Detlev's reference input file...
-      nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-      surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
-      IF (cgridopt.EQ.LINEAR_GRID) THEN
-        surface(nsurface)%surtxt   = '* core, reflecting (OSM)'
-        surface(nsurface)%index(1) = 1         
-        surface(nsurface)%index(2) = MAXNKS    
-        surface(nsurface)%index(3) = 2         
-        surface(nsurface)%index(4) = 14      
-        surface(nsurface)%index(5) = 0
-        surface(nsurface)%iliin  = 1         
-        surface(nsurface)%ilcol  = 3         
-      ELSE
-        surface(nsurface)%surtxt   = '* core, absorbing (OSM)'
-        surface(nsurface)%index(1) = 1       ! Cell index start location of surface
-        surface(nsurface)%index(2) = MAXNKS  ! Cell index end   
-        surface(nsurface)%index(3) = 2       ! Ring in the magnetic grid 
-        surface(nsurface)%index(4) = 14      ! Radial surface of cell (1-4 cell side here)
-        surface(nsurface)%index(5) = 0
-        surface(nsurface)%iliin  = 2         ! Reflection type (ILIIN=2 is 100% absorbing)
-        surface(nsurface)%ilcol  = 3         ! Colour of surface in EIRENE plots
-      ENDIF
-
-c...  Poloidal surfaces for Eirene strata (needs to be generalized to 
-c     allow more than 2 surface strata):
-      IF (.TRUE.) THEN
-c...    Determine the number of target strata that are defined:
-        assigned = .FALSE.
-        DO is = 1, osm_nstrata 
-          IF (NINT(osm_strata(is)%type) .EQ.1.AND.
-     .             osm_strata(is)%target.EQ.IKLO) assigned(IKLO) =.TRUE.
-          IF (NINT(osm_strata(is)%type) .EQ.1.AND.
-     .             osm_strata(is)%target.EQ.IKHI) assigned(IKHI) =.TRUE.
-        ENDDO
-c...    Define the default surfaces for the target strata, since target
-c       strata are not specifically assigned:
-        DO i1 = IKLO, IKHI 
-          IF (assigned(i1)) CYCLE
-          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-          surface(nsurface)%subtype  = STRATUM
-          surface(nsurface)%surtxt   = '* default target (OSM)'
-          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
-          IF (cgridopt.EQ.LINEAR_GRID) THEN
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs-1               ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ELSE
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs                 ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ENDIF
-          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
-          surface(nsurface)%iliin  = 1
-          surface(nsurface)%ilside = 0
-          surface(nsurface)%ilswch = 0
-          surface(nsurface)%iltor  = 0  
-          surface(nsurface)%ilcell = 0
-          surface(nsurface)%ilcol  = 4
-          surface(nsurface)%material = tmater                ! Set surface material
-          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt
-        ENDDO
-c...    Loop over the user specified strata and assemble the 
-c       corresponding target surfaces:
-        DO is = 1, osm_nstrata 
-          IF (NINT(osm_strata(is)%type).NE.1) CYCLE
-
-          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-          surface(nsurface)%subtype  = STRATUM
-          surface(nsurface)%surtxt   = '* user specified target (OSM)'
-          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
-          surface(nsurface)%index(1:2) = osm_strata(is)%range_tube(1:2) ! irsep                  ! Ring index start location of surface
-c          surface(nsurface)%index(2) = nrs                    ! Ring index end
-          surface(nsurface)%index(3) = osm_strata(is)%target  ! Target (IKLO=inner, IKHI=outer)
-          surface(nsurface)%index(5) = 0
-          surface(nsurface)%reflect = LOCAL                   ! Set surface reflection model to LOCAL
-          surface(nsurface)%iliin  = 1
-          surface(nsurface)%ilside = 0
-          surface(nsurface)%ilswch = 0
-          surface(nsurface)%iltor  = 0  
-          surface(nsurface)%ilcell = 0
-          surface(nsurface)%ilcol  = 4
-          surface(nsurface)%material = tmater                ! Set surface material
-          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt
-
-        ENDDO
-      ELSE
-        DO i1 = IKLO, IKHI 
-          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-          surface(nsurface)%subtype  = STRATUM
-          surface(nsurface)%surtxt   = '* default target (OSM)'
-          IF (cgridopt.EQ.LINEAR_GRID) THEN
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs-1               ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ELSE
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs                 ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ENDIF
-          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
-          surface(nsurface)%iliin  = 1
-          surface(nsurface)%ilside = 0
-          surface(nsurface)%ilswch = 0
-          surface(nsurface)%iltor  = 0  
-          surface(nsurface)%ilcell = 0
-          surface(nsurface)%ilcol  = 4
-          surface(nsurface)%material = tmater                ! Set surface material
-          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt
-          IF (surface(nsurface)%ilspt.NE.0) THEN
-            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
-            surface(nsurface)%recycs = 1.0
-            surface(nsurface)%recycc = 1.0
-          ENDIF
-        ENDDO
-      ENDIF
-
-c...  (Core boundary surface should ideally be set here (and not above).)
-
-c...  Setup SOL radial boundary surfaces:
-      ik1 = 0
-      ik2 = 0
-      DO ik = 1, nks(irwall)-1
-c...
-        IF (ik1.EQ.0) ik1 = ik
-        IF ((ikins(ik,irwall).NE.ikins(ik+1,irwall)-1).OR.
-     .      (irins(ik,irwall).NE.irins(ik+1,irwall)  )) ik2 = ik
-        IF (ik.EQ.nks(irwall)-1.AND.ik2.EQ.0) ik2 = nks(irwall)
-
-        IF (ik2.NE.0) THEN
-          IF (irouts(ikins(ik1,irwall),irins(ik1,irwall)).EQ.
-     .        irwall) THEN
-            side = 23
-          ELSE
-            side = 14
-          ENDIF
-          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-          surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
-          surface(nsurface)%surtxt   = '* radial SOL (OSM)'
-          surface(nsurface)%index(1) = ikins(ik1,irwall)  ! Cell index start location of surface       
-          surface(nsurface)%index(2) = ikins(ik2,irwall)  ! Cell index end                             
-          surface(nsurface)%index(3) = irins(ik1,irwall)  ! Ring in the magnetic grid                  
-          surface(nsurface)%index(4) = side               ! Radial surface of cell
-          surface(nsurface)%index(5) = 0                                                                
-          surface(nsurface)%iliin  = -1                   ! Reflection type (ILIIN=-1 is 100% transparent)
-          surface(nsurface)%ilcol  = 4                    ! Colour of surface in EIRENE plots
-          ik1 = 0
-          ik2 = 0
-        ENDIF
-      ENDDO
-
-c...  PFZ radial boundary:  
-      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
-      ELSE
-        nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-        surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
-        surface(nsurface)%surtxt   = '* radial PFR (OSM)'
-        surface(nsurface)%index(1) = 1                         ! Cell index start location of surface       
-        surface(nsurface)%index(2) = MAXNKS                    ! Cell index end                             
-        surface(nsurface)%index(3) = irtrap + 1                ! Ring in the magnetic grid                  
-        surface(nsurface)%index(4) = 14                        ! Radial surface of cell (1-4 cell side here)
-        surface(nsurface)%index(5) = 0                                                                      
-        surface(nsurface)%iliin  = -1                          ! Reflection type (ILIIN=-1 is 100% transparent)
-        surface(nsurface)%ilcol  = 4                           ! Colour of surface in EIRENE plots
-      ENDIF
-
+c     ------------------------------------------------------------------
 c...  Over-ride default surface properties:
+c     ------------------------------------------------------------------
+
       DO i1 = 1, nsurface
         DO i2 = 1, eirnspdat
           type   = NINT(eirspdat(i2,1))
@@ -618,21 +642,24 @@ c...  Over-ride default surface properties:
           ENDIF
           IF (type.EQ.0) CYCLE
 
-c          WRITE(0,*) '-->',surface(i1)%index(1),surface(i1)%index(2),
-c     .      surface(i1)%type,index1,index2
+c          WRITE(0,*) '-->',i1,i2,
+c     .      eirspdat(i2,1),type,
+c     .      index1,index2
+c          WRITE(0,*) '  >',
+c     .      surface(i1)%type,surface(i1)%subtype,
+c     .      surface(i1)%index(1),surface(i1)%index(2) 
+c          WRITE(0,*) 
 
           IF ((surface(i1)%type   .EQ.NON_DEFAULT_STANDARD  .AND.   ! Code not tested as I forgot that
      .         surface(i1)%subtype.EQ.MAGNETIC_GRID_BOUNDARY.AND.   ! I was using the template directly
      .           eirspdat(i2,1).EQ.1.0.AND.
-c     .           type.EQ.1.AND.                                     ! for the case in question... *sigh*
      .           surface(i1)%index(3).GE.index1.AND.
      .           surface(i1)%index(3).LE.index2).OR.  ! *whew!*
-     .        (surface(i1)%type   .EQ.NON_DEFAULT_STANDARD  .AND.   
-     .         surface(i1)%subtype.EQ.STRATUM               .AND.   
+     .        (surface(i1)%type   .EQ.NON_DEFAULT_STANDARD.AND.   
+     .         surface(i1)%subtype.EQ.STRATUM             .AND.   
      .           eirspdat(i2,1).EQ.1.1.AND.
-c     .           type.EQ.1.AND.                                     
-     .           surface(i1)%index(3).GE.index1.AND.
-     .           surface(i1)%index(3).LE.index2).OR.  ! *whew!*
+     .           i1.GE.index1.AND.
+     .           i1.LE.index2).OR.  ! *whew!*
      .        (surface(i1)%type.EQ.VESSEL_WALL.AND.
      .         ((type.EQ.2.AND.
      .           surface(i1)%index(1).GE.index1.AND.
@@ -647,14 +674,15 @@ c     .           type.EQ.1.AND.
 
 c *** HACK ***
             IF (eirspdat(i2,8).LT.0.0) THEN
-              opt_eir%ilspt = -NINT(eirspdat(i2,8))
+              opt_eir%ilspt = -NINT(eirspdat(i2,8)) 
               surface(i1)%ilspt  = 2  
               surface(i1)%isrs   = 2   ! Species index of sputtered atom
               surface(i1)%recycs = 1.0
               surface(i1)%recycc = 1.0
 
               surface(i1)%recyct = 1.0
-              WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',opt_eir%ilspt
+              WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+     .          i1,surface(i1)%ilspt,opt_eir%ilspt
 c              surface(i1)%recyct = 0.0
 c              WRITE(0,*) '*** SPUTTERING ON IN EIRENE (ABSORBING '//
 c     .                   'SURFACE!) ***',opt_eir%ilspt
@@ -674,6 +702,7 @@ c     .                       surface(i1)%ilswch
           ENDIF
         ENDDO
       ENDDO
+
 c
 c     If the above surfaces are defined correctly, then the following
 c     should be the same for all plasma codes.
@@ -1023,18 +1052,18 @@ c
 c      STOP
 c      nstrata = 0
 
-      srcsrf = 1  ! This assumes that the first non-default standard surface is the core boundary...
+      srcsrf = 0 
 
 c...  Decide if default strata should be assigned:
       assign_LO     = .TRUE.
       assign_HI     = .TRUE.
       assign_volrec = .TRUE.
-      DO is = 1, osm_nstrata 
-        IF (NINT(osm_strata(is)%type)  .EQ.1.AND.
-     .           osm_strata(is)%target.EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
-        IF (NINT(osm_strata(is)%type)  .EQ.1.AND.
-     .           osm_strata(is)%target.EQ.IKHI) assign_HI     =.FALSE.
-        IF (     osm_strata(is)%type   .EQ.2.0) assign_volrec =.FALSE.
+      DO is = 1, opt_eir%nstrata
+        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+     .           opt_eir%target(is).EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
+        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+     .           opt_eir%target(is).EQ.IKHI) assign_HI     =.FALSE.
+        IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
       ENDDO
 
       WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
@@ -1139,23 +1168,23 @@ c        strata(nstrata)%npts    = 100
       ENDIF
 
 c...  User specified neutral injection/puffing:
-      DO is = 1, osm_nstrata
-        WRITE(0,*) 'STRATA:TYPE=',NINT(osm_strata(is)%type)
+      DO is = 1, opt_eir%nstrata
+        WRITE(0,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
 
-        SELECTCASE (NINT(osm_strata(is)%type))
+        SELECTCASE (NINT(opt_eir%type(is)))
           CASE (999)  ! For compatibility with old strata definition format, see below
           CASE (1)
             srcsrf = srcsrf + 1 
-            target = osm_strata(is)%target
+            target = opt_eir%target(is)
             nstrata = nstrata + 1
             strata(nstrata)%range_cell(1) = -1  ! No idea what this is for...
             strata(nstrata)%type    = 1.0
             strata(nstrata)%indsrc  = 1
-            strata(nstrata)%txtsou  = '* '//osm_strata(is)%txtsou
-            strata(nstrata)%npts    = osm_strata(is)%npts
+            strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
+            strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%ninitl  = -1
             strata(nstrata)%nemods  =  3
-            strata(nstrata)%flux    = osm_strata(is)%flux
+            strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
             strata(nstrata)%nspez   =  1
             strata(nstrata)%distrib = 'FFTFF'
@@ -1179,11 +1208,11 @@ c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
             nstrata = nstrata + 1
             strata(nstrata)%type    = 2.0
             strata(nstrata)%indsrc  = 1
-            strata(nstrata)%txtsou  = '* '//osm_strata(is)%txtsou
-            strata(nstrata)%npts    = osm_strata(is)%npts
+            strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
+            strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%ninitl  = -1
             strata(nstrata)%nemods  =  3
-            strata(nstrata)%flux    = osm_strata(is)%flux
+            strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
             strata(nstrata)%nspez   =  1
             strata(nstrata)%distrib = 'FFFTF'
@@ -1201,7 +1230,7 @@ c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
             strata(nstrata)%sorcos  = 1.0
             strata(nstrata)%sormax  = 90.0
           CASE (3)
-            IF (osm_strata(is)%type.EQ.3.1) THEN  ! *** (small) HACK ***
+            IF (opt_eir%type(is).EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
               insor = 2 ! 1
               nasor = 1
@@ -1214,14 +1243,14 @@ c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
             nstrata = nstrata + 1
             strata(nstrata)%indsrc  = -1
             strata(nstrata)%txtsou  = '* point injection, '//
-     .                                osm_strata(is)%txtsou
+     .                                opt_eir%txtsou(is)
             strata(nstrata)%ninitl  = -1
             strata(nstrata)%nemods  =  1
-            strata(nstrata)%npts    = osm_strata(is)%npts
-            strata(nstrata)%flux    = osm_strata(is)%flux *
-     .                                osm_strata(is)%flux_fraction
+            strata(nstrata)%npts    = opt_eir%npts(is)
+            strata(nstrata)%flux    = opt_eir%flux(is) *
+     .                                opt_eir%flux_fraction(is)
             strata(nstrata)%species_tag = 'FFFF'
-            i2 = osm_strata(is)%species
+            i2 = opt_eir%species(is)
             strata(nstrata)%species_tag(i2:i2) = 'T'
             strata(nstrata)%nspez   = nspez
             strata(nstrata)%distrib = 'TFFFF'
@@ -1233,14 +1262,14 @@ c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
             strata(nstrata)%sorind  = 0.0
             strata(nstrata)%nrsor   = 0
             strata(nstrata)%nasor   = nasor
-            strata(nstrata)%sorad(1:6) =osm_strata(is)%sorad(1:6) *  ! Convert to cm
+            strata(nstrata)%sorad(1:6) =opt_eir%sorad(1:6,is) *  ! Convert to cm
      .                                  100.0  
 c            WRITE(0,*) strata(nstrata)%sorad(1:3)
 c            STOP 'sdgsdgd'
-            strata(nstrata)%sorene  = osm_strata(is)%sorene
+            strata(nstrata)%sorene  = opt_eir%sorene(is)
             strata(nstrata)%soreni  = 0.0
-            strata(nstrata)%sorcos  = osm_strata(is)%sorcos
-            strata(nstrata)%sormax  = osm_strata(is)%sormax
+            strata(nstrata)%sorcos  = opt_eir%sorcos(is)
+            strata(nstrata)%sormax  = opt_eir%sormax(is)
           CASE (4)  ! Puff wall surface (not working...)
             WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
             STOP 

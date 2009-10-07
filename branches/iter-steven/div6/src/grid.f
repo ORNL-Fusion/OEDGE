@@ -2155,7 +2155,7 @@ c
 c
 c
       SUBROUTINE InsertRing(irref,mode,type)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -2583,7 +2583,7 @@ c bratio,kfbs,kvhs,knbs,ktibs,ktebs,kss,ksb,rs,zs,korpg,rvertp,zvertp
 c
 c
       SUBROUTINE InsertCell(ikcell,ir,mode,type)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 c
 c Input:
@@ -3281,7 +3281,7 @@ c subroutine: MoveCell
 c
 c
       SUBROUTINE MoveCell(ik1,ir1,ik2,ir2)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -7184,7 +7184,7 @@ c
 
          write(6,'(a,100i8)') 'FINDKNOT1:',
      >      nknot,NUMZONE,condition,index1,index2
-         write(6,'(a,100i8)') 'FINDKNOT2:',
+         write(6,'(a,100i8)') 'FINDKNOT:',
      >      izone
 c
          write(0,'(a,100i8)') 'FINDKNOT1:',
@@ -7441,7 +7441,7 @@ c      ENDDO
 c
 c ========================================================================
 c
-      SUBROUTINE MoveKnot(knot1,knot2)
+      SUBROUTINE MoveKnot(knot1,knot)
       IMPLICIT none
 
       TYPE type_cell
@@ -7449,22 +7449,22 @@ c
         REAL    :: rcen,zcen,bratio,rv(4),zv(4)
       ENDTYPE type_cell
 
-      TYPE(type_cell) :: knot1,knot2      
+      TYPE(type_cell) :: knot1,knot      
 
       INTEGER i1
 
-      knot2%index  = knot1%index
-      knot2%ik     = knot1%ik
-      knot2%ir     = knot1%ir
-      knot2%rzone  = knot1%rzone
-      knot2%zzone  = knot1%zzone
-      knot2%xpt    = knot1%xpt
-      knot2%rcen   = knot1%rcen
-      knot2%zcen   = knot1%zcen
-      knot2%bratio = knot1%bratio
+      knot%index  = knot1%index
+      knot%ik     = knot1%ik
+      knot%ir     = knot1%ir
+      knot%rzone  = knot1%rzone
+      knot%zzone  = knot1%zzone
+      knot%xpt    = knot1%xpt
+      knot%rcen   = knot1%rcen
+      knot%zcen   = knot1%zcen
+      knot%bratio = knot1%bratio
       DO i1 = 1, 4
-        knot2%rv(i1) = knot1%rv(i1)
-        knot2%zv(i1) = knot1%zv(i1)
+        knot%rv(i1) = knot1%rv(i1)
+        knot%zv(i1) = knot1%zv(i1)
       ENDDO
 
       RETURN
@@ -7475,7 +7475,7 @@ c ========================================================================
 c
       SUBROUTINE ReadGeneralisedGrid(gridunit,ik,ir,
      .                               rshift,zshift,indexiradj)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
@@ -9283,7 +9283,7 @@ c
 c    
 c
       SUBROUTINE AddPoloidalBoundaryCells
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       include 'params'

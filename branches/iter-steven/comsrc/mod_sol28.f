@@ -36,18 +36,22 @@
      .  ITY_KINETIC  =   2,   
      .  ST_STANDARD  =   1,   
      .  ST_NORMALIZE =   2,
-     .  GRD_SOL      =   1,
-     .  GRD_PFZ      =   2,
-     .  GRD_CORE     =   3,
+     .  GRD_SOL      =   1,  ! Should be consistent with the SOL1 definition in SLCOM in DIVIMP
+     .  GRD_PFZ      =   2,  !  same
+     .  GRD_CORE     =   3,  !  same
      .  GRD_TEST     =   4,
      .  GRD_BOUNDARY =  -1,
-     .  EIR_MAXNPUFF =  10
+     .  EIR_MAXNSTRATA = 100,
+     .  EIR_MAXNVOID   = 100
 
       REAL, PUBLIC, PARAMETER ::   
      .  RHI   = 1.0E+37, 
      .  RLO   = 1.0E-37,
      .  V_PI  = 3.141593,
      .  EPS10 = 1.0E-10
+
+      REAL*8, PUBLIC, PARAMETER ::   
+     .  DPS10 = 1.0D-15
 
 
       INTEGER, PUBLIC, PARAMETER ::  LO = 1, HI = 2, FULL = 3, TOTAL = 0
@@ -182,19 +186,56 @@ c
 
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
-         REAL      :: puff_type(EIR_MAXNPUFF)
-         INTEGER   :: puff_npts(EIR_MAXNPUFF)
-         REAL      :: puff_flux(EIR_MAXNPUFF)
-         REAL      :: puff_frac(EIR_MAXNPUFF)
-         INTEGER   :: puff_species(EIR_MAXNPUFF)
-         INTEGER   :: puff_index(EIR_MAXNPUFF)
-         INTEGER   :: puff_energy(EIR_MAXNPUFF)
-         INTEGER   :: puff_cosine_ind(EIR_MAXNPUFF)
-         INTEGER   :: puff_cosine_max(EIR_MAXNPUFF)
-         INTEGER   :: puff_pos(3,EIR_MAXNPUFF)
-         INTEGER   :: puff_vec(3,EIR_MAXNPUFF)
-         CHARACTER :: puff_note(EIR_MAXNPUFF)*1024
+!         REAL      :: puff_type   (EIR_MAXNPUFF)
+!         INTEGER   :: puff_npts   (EIR_MAXNPUFF)        ! *** IN USE? ***
+!         REAL      :: puff_flux   (EIR_MAXNPUFF)
+!         REAL      :: puff_frac   (EIR_MAXNPUFF)
+!         INTEGER   :: puff_species(EIR_MAXNPUFF)
+!         INTEGER   :: puff_index  (EIR_MAXNPUFF)
+!         INTEGER   :: puff_energy (EIR_MAXNPUFF)
+!         INTEGER   :: puff_cosine_ind(EIR_MAXNPUFF)
+!         INTEGER   :: puff_cosine_max(EIR_MAXNPUFF)
+!         INTEGER   :: puff_pos (3,EIR_MAXNPUFF)
+!         INTEGER   :: puff_vec (3,EIR_MAXNPUFF)
+!         CHARACTER :: puff_note(  EIR_MAXNPUFF)*1024
 
+c...    Strata:
+        INTEGER   :: nstrata 
+        REAL      :: type         (EIR_MAXNSTRATA)
+        INTEGER   :: Z            (EIR_MAXNSTRATA)           ! atomic number
+        INTEGER   :: A            (EIR_MAXNSTRATA)           ! atomic mass
+        INTEGER   :: npts         (EIR_MAXNSTRATA)
+        REAL      :: flux         (EIR_MAXNSTRATA)
+        REAL      :: flux_fraction(EIR_MAXNSTRATA)
+        INTEGER   :: species      (EIR_MAXNSTRATA)
+        INTEGER   :: species_index(EIR_MAXNSTRATA)
+        REAL      :: energy       (EIR_MAXNSTRATA)
+        INTEGER   :: target       (EIR_MAXNSTRATA)
+        INTEGER   :: range_cell (2,EIR_MAXNSTRATA)
+        INTEGER   :: range_tube (2,EIR_MAXNSTRATA)
+!        REAL      :: cos         
+!        REAL      :: cos_max     
+!        CHARACTER :: note*512    
+!        INTEGER   :: indsrc  ! ...
+        CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)
+!        INTEGER   :: ninitl       
+!        INTEGER   :: nemods       
+!        CHARACTER :: species_tag*4
+!        INTEGER   :: nspez
+!        CHARACTER :: distrib*5
+!        INTEGER   :: inum
+!        INTEGER   :: indim
+!        INTEGER   :: insor
+!        REAL      :: sorwgt
+        REAL      :: sorlim       (EIR_MAXNSTRATA)
+        REAL      :: sorind       (EIR_MAXNSTRATA)
+!        INTEGER   :: nrsor    
+!        INTEGER   :: nasor
+        REAL      :: sorad      (6,EIR_MAXNSTRATA)
+        REAL      :: sorene       (EIR_MAXNSTRATA)
+!        REAL      :: soreni   
+        REAL      :: sorcos       (EIR_MAXNSTRATA)
+        REAL      :: sormax       (EIR_MAXNSTRATA)
 
 !...     Geometry / structure:
          INTEGER   :: ntorseg         ! Number of toroidal segments for regular toroidal descretization
@@ -205,8 +246,22 @@ c
          INTEGER   :: mat2            ! Wall material?            
          REAL      :: ctargt          ! Target surface temperature
          REAL      :: cwallt          ! Wall surface temperature
-      ENDTYPE type_options_eirene
 
+
+!...     Voids between the fluid grid and the wall:
+         INTEGER   :: nvoid 
+         INTEGER   :: void_zone(  EIR_MAXNVOID)
+         INTEGER   :: void_grid(2,EIR_MAXNVOID)
+         INTEGER   :: void_wall(2,EIR_MAXNVOID)
+         INTEGER   :: void_add (2,EIR_MAXNVOID)
+         REAL      :: void_res (  EIR_MAXNVOID)
+         REAL      :: void_hole(2,EIR_MAXNVOID)
+         INTEGER   :: void_code(  EIR_MAXNVOID)
+         REAL      :: void_ne  (  EIR_MAXNVOID)
+         REAL      :: void_te  (  EIR_MAXNVOID)
+         REAL      :: void_ti  (  EIR_MAXNVOID)
+
+      ENDTYPE type_options_eirene
 !
 !
 !     Interpolation nodes:
@@ -285,7 +340,7 @@ c
         INTEGER :: region                ! core/SOL/PFZ/...
         INTEGER :: ir                    ! Radial index of tube ('ring number' in DIVIMP fluid grid)
         INTEGER :: it                    ! Toroidal index ('segment')
-        INTEGER :: type                  ! 'idring' in DIVIMP
+        INTEGER :: type                  ! 'idring' in DIVIMP -- *** useful? ***
 !...    Geometry data:
         INTEGER :: n                     ! Number of knots/cells in the flux-tube
         INTEGER :: ikti                       
@@ -352,7 +407,7 @@ c
         REAL    :: cencar(3)                        ! Cell caresian center in machine coordinates
         REAL    :: centor(3)                        ! Cell toroidal center in 'toroidal' coordinates
         REAL    :: vol                              ! Cell volume 
-        INTEGER :: nside                            ! Number of sides for each cell: nside=6 usually
+        INTEGER :: nside                            ! *** DELETE? *** Number of sides for each cell: nside=6 usually
 !...    3D:
         REAL    :: s_3D
         REAL    :: sbnd_3D(2)
@@ -363,8 +418,8 @@ c
         REAL    :: p                                ! Poloidal distance of cell center from inner target (LO index target)
         REAL    :: sbnd(2)                          ! 's' at ends of each cell
         REAL    :: pbnd(2)                          ! 'p' at ends of each cell
-        REAL    :: ds
-        REAL    :: dp
+        REAL    :: ds                               ! *** delete? ***
+        REAL    :: dp                               ! *** delete? ***
         REAL    :: metric                           ! Cross-field othogonality metric
         REAL    :: cfdist(s28_MAXSIDE)              ! Cross-field distance from cell center to side in machine coordinates
 !...    Cell side data:   (FOR DELETION!  DO NOT USE!)

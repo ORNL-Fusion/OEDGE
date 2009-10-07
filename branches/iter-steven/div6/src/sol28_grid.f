@@ -153,7 +153,7 @@ c      ENDDO
 
 
       volsrc = 0.0D0
-      region = 1  ! *** LEFT OFF ***
+      region = 1  
       DO i = 1, 1
         it = 4
         volsrc(region) = volsrc(region) + ParticleSource(it)
@@ -381,12 +381,23 @@ c ======================================================================
 c
       SUBROUTINE ProcessGrid
       USE mod_geometry
+      USE mod_grid
       USE mod_legacy
+      USE mod_sol28_params
+      USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER status, grd_load_method
+      INTEGER CalcPoint
+
+      INTEGER status, grd_load_method,ir,ik,iside,i1,i2,id,i,target
+      REAL    deltap,deltas
+      REAL*8  a(3),b(3),c(2,3),d(2,3),e(3),f(3),g(2,3),t(2),
+     .        a1,a2,b1,b2,c1,c2,shyp,sadj
+      TYPE(type_srf   ) newsrf
+      TYPE(type_object) newobj
 
       INTEGER, PARAMETER :: GRD_LOAD_NEW = 2, GRD_LOAD_OLD = 1
+
 
       grd_load_method = 2
 
@@ -394,6 +405,218 @@ c
       SELECTCASE (grd_load_method)
         CASE (GRD_LOAD_NEW)
           CALL LoadGeneralisedGrid
+c...      Assign geometry structures:
+          irsep      = grid_load%irsep      
+          irsep2     = grid_load%irsep2     
+          irwall     = grid_load%irwall     
+          irtrap     = grid_load%irtrap     
+          nrs        = grid_load%nrs        
+          ikti       = grid_load%ikti       
+          ikto       = grid_load%ikto       
+          nks(1:nrs) = grid_load%nks(1:nrs)    
+          IF (.TRUE.) THEN
+            WRITE(0,*) nrs        
+            WRITE(0,*) nknot
+            WRITE(0,*) irsep      
+            WRITE(0,*) irsep2     
+            WRITE(0,*) irwall     
+            WRITE(0,*) irtrap     
+            WRITE(0,*) ikti       
+            WRITE(0,*) ikto       
+            WRITE(0,*) nks(1:nrs)
+          ENDIF
+c...      Define arrays:
+          ntube     = nrs
+          ncell     = nknot
+          nion      = 1
+          nfield    = ncell
+          npin      = ncell
+          nphoton   = 1
+          ndrift    = 1
+          nkinetic  = 1     
+          nfluid    = ncell
+          nimpurity = 1
+          ALLOCATE(tube    (ntube ))
+          ALLOCATE(cell    (ncell ))
+          ALLOCATE(field   (nfield))
+          ALLOCATE(pin     (npin     ,nion))   ! *** REDUNDANT -- SHOULD USE kinetic? ***  Maybe not, since arrays may be different, ie one 3D, the other 2D?
+          ALLOCATE(photon  (nphoton  ,nion))   
+          ALLOCATE(drift   (ndrift   ,nion))
+          ALLOCATE(kinetic (nkinetic ,nion))  
+          ALLOCATE(fluid   (nfluid   ,nion))
+          ALLOCATE(impurity(nimpurity,nion))   ! *** REDUNDANT -- SHOULD USE kinetic? ***
+
+c...      Group association:
+          ngrp = 1
+          grp(1)%origin = GRP_MAGNETIC_GRID  ! *** NEED AddGroup and CopyGroup functions ***
+          grp(1)%type   = GRP_QUADRANGLE 
+
+c...      Set grid quantities:
+          grid%n    = nrs
+          grid%isep = irsep
+          grid%ipfz = irtrap 
+          grid%ikto = ikto
+          grid%ikti = ikti
+
+          nobj = 0
+          nsrf = 0
+          nvtx = 0
+          ncell = 0
+          DO ir = 1, nrs
+            tube(ir)%bratio = 0.0
+            tube(ir)%dds    = 0.0
+            tube(ir)%rp     = 0.0
+            tube(ir)%costet = 0.0
+c...
+            tube(ir)%region = GRD_PFZ
+            IF (ir.LE.irwall) tube(ir)%region = GRD_SOL
+            IF (ir.LT.irsep ) tube(ir)%region = GRD_CORE
+            tube(ir)%ir = ir + 1
+            IF (ir.GT.irtrap) tube(ir)%ir = tube(ir)%ir + 1
+            tube(ir)%n = nks(ir)
+            IF (ir.EQ.1) THEN
+              tube(ir)%cell_index(1) = 1
+            ELSE
+              tube(ir)%cell_index(1) = tube(ir-1)%cell_index(2) + 1
+            ENDIF
+            tube(ir)%cell_index(2) = tube(ir)%cell_index(1) + nks(ir)-1
+c...
+            cell(ncell+1)%pbnd = 0.0
+            cell(ncell+1)%sbnd = 0.0
+            DO ik = 1, nks(ir)
+              id = imap(ik,ir)
+              ncell = ncell + 1
+              cell(ncell)%ik        = ik
+              cell(ncell)%ir        = tube(ir)%ir
+              cell(ncell)%nside     = 4
+              cell(ncell)%cencar(1) = knot(id)%rcen
+              cell(ncell)%cencar(2) = knot(id)%zcen
+              cell(ncell)%cencar(3) = 0.0D0
+
+              field(ncell)%bratio = knot(id)%bratio
+
+              newobj%group         = ngrp
+              newobj%index(IND_IK) = ik
+              newobj%index(IND_IR) = ir
+              newobj%index(IND_IS) = 0
+              newobj%index(IND_CELL   ) = ncell
+              newobj%index(IND_FLUID  ) = ncell
+              newobj%index(IND_KINETIC) = ncell
+              newobj%index(IND_NEUTRAL) = ncell
+              newobj%index(IND_FIELD  ) = ncell
+              newobj%segment(1) = 0
+              newobj%phi        = 0.0
+              newobj%nside      = 4
+              DO iside = 1, 4
+                newsrf%type = SPR_LINE_SEGMENT
+                newsrf%obj  = ncell
+                newsrf%side = iside
+                newsrf%nvtx = 2
+                i1 = iside
+                i2 = iside + 1
+                IF (i2.EQ.5) i2 = 1
+                a(1) = knot(id)%rv(i1)
+                a(2) = knot(id)%zv(i1)
+                a(3) = 0.0D0
+                newsrf%ivtx(1) = AddVertex(a) 
+                b(1) = knot(id)%rv(i2)
+                b(2) = knot(id)%zv(i2)
+                b(3) = 0.0D0
+                newsrf%ivtx(2) = AddVertex(b) 
+                newobj%iside(iside) = AddSurface(newsrf)
+                IF (iside.EQ.1) THEN
+                  c(1,:) = a(:)
+                  c(2,:) = b(:)
+                ENDIF
+                IF (iside.EQ.3) THEN
+                  d(1,:) = a(:)
+                  d(2,:) = b(:)
+                ENDIF
+              ENDDO
+              nobj = AddObject(newobj)
+          
+              e(:) = 0.5D0 * (c(1,:) + c(2,:))
+              f(:) = 0.5D0 * (d(1,:) + d(2,:))
+
+              deltap = SNGL(DSQRT((e(1)-f(1))**2 + (e(2)-f(2))**2))
+              deltas = deltap / (field(ncell)%bratio + EPS10)
+
+              IF (ik.GT.1) THEN
+                cell(ncell)%pbnd(1) = cell(ncell-1)%pbnd(2)
+                cell(ncell)%sbnd(1) = cell(ncell-1)%sbnd(2)
+              ENDIF
+              cell(ncell)%p = cell(ncell)%pbnd(1) + 0.5 * deltap
+              cell(ncell)%s = cell(ncell)%sbnd(1) + 0.5 * deltas
+              cell(ncell)%pbnd(2) = cell(ncell)%pbnd(1) + deltap
+              cell(ncell)%sbnd(2) = cell(ncell)%sbnd(1) + deltas
+
+c...          Calculate target quantities:
+              target = 0
+              IF (ir.GE.irsep) THEN
+                IF     (ik.EQ.1      ) THEN
+                  target = LO
+                  a1 = e(1)
+                  a2 = e(2)
+                  g = c
+                ELSEIF (ik.EQ.nks(ir)) THEN
+                  target = HI
+                  a1 = f(1)
+                  a2 = f(2)
+                  g = d
+                ENDIF
+              ENDIF
+              IF (target.GT.0) THEN
+                b1 = knot(id)%rcen
+                b2 = knot(id)%zcen
+                DO i = 1, 2
+                  c1 = g(i,1)
+                  c2 = g(i,2)
+                  IF (CalcPoint(a1,a2,b1,b2,c1,c2,t(i)).LT.0) 
+     .              CALL ER('ProcessGrid','Intersection not found',*99)
+                ENDDO
+                IF (t(1).GT.t(2)) THEN
+                  c1 = g(1,1)
+                  c2 = g(1,2)
+                ELSE
+                  t(1) = t(2)
+                  c1 = g(2,1)
+                  c2 = g(2,2)
+                ENDIF
+                b1 = a1 + t(1) * (b1 - a1)
+                b2 = a2 + t(1) * (b2 - a2)
+                shyp = DSQRT((a1 - c1)**2 + (a2 - c2)**2)
+                sadj = DSQRT((b1 - c1)**2 + (b2 - c2)**2)
+
+                tube(ir)%bratio(target)=field(ncell)%bratio
+                tube(ir)%dds   (target)=SNGL(DSQRT((g(1,1)-g(2,1))**2 +
+     .                                             (g(1,2)-g(2,2))**2))
+                tube(ir)%rp    (target)=SNGL(a1)
+                tube(ir)%costet(target)=SNGL(sadj / (shyp + DPS10))
+c                IF (ir.EQ.13) THEN
+c                  WRITE(0,*) '--------------------'
+c                  WRITE(0,*) 'IR     =',ir
+c                  WRITE(0,*) 'target =',target
+c                  WRITE(0,*) 'C      =',c(1,1:2)
+c                  WRITE(0,*) 'D      =',d(1,1:2)
+c                  WRITE(0,*) 'G1     =',g(1,1:2)
+c                  WRITE(0,*) 'G2     =',g(2,1:2)
+c                  WRITE(0,*) 'DDS    =', tube(ir)%dds(target)
+c                ENDIF
+              ENDIF
+            ENDDO ! End of IK loop
+
+            tube(ir)%pmax = cell(ncell)%pbnd(2)
+            tube(ir)%smax = cell(ncell)%sbnd(2)
+          ENDDO
+
+ 
+
+          CALL DumpData_OSM('output.grid_load','Done loading the grid')
+
+          CALL WriteFluidGridGeometry
+
+          STOP 'whoa'
+
         CASE (GRD_LOAD_OLD)
           CALL LoadObjects('osm_geometry.raw',status)  ! Change to LoadGeometryObjects...
           IF (status.EQ.-1) 
@@ -407,7 +630,8 @@ c
       ENDSELECT
  
       RETURN
- 99   STOP
+ 99   WRITE(0,*) 'IK,IR,I=',ik,ir,i
+      STOP
       END
 c
 c
@@ -454,14 +678,16 @@ c                 should only occur at an Xpoint for two cells in the core/pfz
 c
 c
 c
-      RECURSIVE SUBROUTINE FindGridCell(nknot,knot,NUMZONE,izone,
+      RECURSIVE SUBROUTINE FindGridCell(NUMZONE,izone,
      .                                   condition,index1,index2)
+c      RECURSIVE SUBROUTINE FindGridCell(nknot,knot,NUMZONE,izone,
+c     .                                   condition,index1,index2)
       USE mod_grid
       IMPLICIT none
 
-      INTEGER nknot,index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
+      INTEGER index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
      .        condition
-      TYPE(type_grid_cell) :: knot(0:nknot)      
+c      TYPE(type_grid_cell) :: knot(0:nknot)      
 
       REAL*8, PARAMETER :: DTOL=1.0D-06
 
@@ -503,7 +729,7 @@ c          DO i2 = 1, nknot
 
             IF (i1.EQ.i2) CYCLE
 c...
-            IF     (condition.EQ.1.AND.
+            IF     (condition.EQ.XPT_SEARCH.AND.
      .              ABS(knot(i1)%rv(1)-knot(i2)%rv(1)).LT.DTOL.AND.
      .              ABS(knot(i1)%zv(1)-knot(i2)%zv(1)).LT.DTOL) THEN
 
@@ -527,7 +753,7 @@ c... *** WHAT'S THE POINT OF THIS? ***
               index2 = i2
               RETURN
 
-            ELSEIF (condition.EQ.2.AND.
+            ELSEIF (condition.EQ.R_INWARD.AND.
      .              ABS(knot(i1)%rv(1)-knot(i2)%rv(2)).LT.DTOL.AND.
      .              ABS(knot(i1)%zv(1)-knot(i2)%zv(2)).LT.DTOL.AND.
      .              ABS(knot(i1)%rv(4)-knot(i2)%rv(3)).LT.DTOL.AND.
@@ -541,7 +767,7 @@ c... *** WHAT'S THE POINT OF THIS? ***
               index2 = i2
               RETURN
 
-            ELSEIF (condition.EQ.3.AND.
+            ELSEIF (condition.EQ.P_FORWARD.AND.
      .              ABS(knot(i1)%rv(3)-knot(i2)%rv(2)).LT.DTOL.AND.
      .              ABS(knot(i1)%zv(3)-knot(i2)%zv(2)).LT.DTOL.AND.
      .              ABS(knot(i1)%rv(4)-knot(i2)%rv(1)).LT.DTOL.AND.
@@ -552,7 +778,7 @@ c... *** WHAT'S THE POINT OF THIS? ***
               ENDIF
               index2 = i2
               RETURN
-            ELSEIF (condition.EQ.4.AND.
+            ELSEIF (condition.EQ.R_OUTWARD.AND.
      .              ABS(knot(i1)%rv(2)-knot(i2)%rv(1)).LT.DTOL.AND.
      .              ABS(knot(i1)%zv(2)-knot(i2)%zv(1)).LT.DTOL.AND.
      .              ABS(knot(i1)%rv(3)-knot(i2)%rv(4)).LT.DTOL.AND.
@@ -567,7 +793,7 @@ c... *** WHAT'S THE POINT OF THIS? ***
               index2 = i2
               RETURN
 
-            ELSEIF (condition.EQ.5.AND.
+            ELSEIF (condition.EQ.P_BACKWARD.AND.
      .              ABS(knot(i1)%rv(1)-knot(i2)%rv(4)).LT.DTOL.AND.
      .              ABS(knot(i1)%zv(1)-knot(i2)%zv(4)).LT.DTOL.AND.
      .              ABS(knot(i1)%rv(2)-knot(i2)%rv(3)).LT.DTOL.AND.
@@ -647,13 +873,14 @@ c
 
       SUBROUTINE LoadGeneralisedGrid
       USE mod_grid
+      USE mod_sol28_global
       IMPLICIT none
 
 c...  Input:
       INTEGER grdfp
 
 c...  Output:
-      INTEGER irsep,irsep2,irwall,irtrap,nrs,ikti,ikto,nks(100)
+      INTEGER :: irsep,irsep2,irwall,irtrap,nrs,ikti,ikto,nks(1000)
       INTEGER ik,ir
       LOGICAL connected
       
@@ -661,7 +888,7 @@ c...  Output:
       REAL*8,  PARAMETER :: HI   = 1.0E+20
       REAL*8,  PARAMETER :: DTOL = 1.0D-07
 
-      INTEGER   nknot,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
+      INTEGER   i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
      .          i4,izone(NUMZONE+1,NUMZONE),newi1,icore(0:2,2),id,
      .          tmpnks,ir1,istart,fp,maxik,maxir,outfp,count
 
@@ -670,25 +897,13 @@ c...  Output:
       REAL*8    rvdp(4),zvdp(4),areadp
       CHARACTER buffer*1000
 
-      INTEGER, ALLOCATABLE :: imap(:,:)
-
-c     TYPE type_cell
-c     INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
-c     REAL    :: rcen,zcen,bratio,rv(4),zv(4)
-c     ENDTYPE type_cell
-      
-      TYPE(type_grid_cell),ALLOCATABLE :: knot(:)
-c     
-c     jdemod - flag for turning on and off debugging output
-c     
       output = .TRUE.
-
-      outfp = 0
+      outfp  = 0
 
 c...  Read the knot data:
 
       grd_format = 1
-      grd_filename = 'iterm.carre.105'
+      grd_filename = 'sonnet_13018_250.sm'  ! 'iterm.carre.105'  ! 'sonnet_13018_250.sm'   
       grdfp = 99
       OPEN(UNIT=grdfp,FILE=TRIM(grd_filename),ACCESS='SEQUENTIAL',
      .     ERR=98)     
@@ -719,7 +934,7 @@ c...    Scan the file to see how many cells are in the grid:
         nknot = nknot + 1
 c...    Setup arrays:
         ALLOCATE(knot(0:nknot))
-        ALLOCATE(imap(maxik,0:maxir))
+        ALLOCATE(imap(maxik,0:3*maxir))
         nknot = 0
 c...    Load grid:
         REWIND(grdfp)
@@ -766,15 +981,13 @@ c     ----------------------------------------------------------------
  
 c...  Delete zero volume cells:
 c     
-      IF (output) THEN
-        WRITE(outfp,*) 'REMOVING ZERO VOLUME CELLS'
-      ENDIF
+      IF (output) WRITE(outfp,*) 'REMOVING ZERO VOLUME CELLS'
       cell_deletion = .FALSE.
       i1 = 1
       DO WHILE(i1.LE.nknot)
-        IF     (.FALSE..AND.
-     .       (knot(i1)%ik.EQ.0.OR.knot(i1)%ik.EQ.maxik-1.OR. ! virtual cells on end of rings
-     .        knot(i1)%ir.EQ.0.OR.knot(i1)%ir.EQ.maxir-1)) THEN ! virtual rings
+        IF     (opt%f_grid_strip.EQ.1.AND.
+     .          (knot(i1)%ik.EQ.0.OR.knot(i1)%ik.EQ.maxik-1.OR. ! virtual cells on end of rings
+     .           knot(i1)%ir.EQ.0.OR.knot(i1)%ir.EQ.maxir-1)) THEN ! virtual rings
 c...      Forced removal of boundary cells (nuclear option):
           deleteknot = .TRUE.
         ELSEIF ((DABS(knot(i1)%rv(3)-knot(i1)%rv(2)).LT.DTOL.AND.
@@ -797,11 +1010,9 @@ c...      Cell to be kept, advance index:
 c...    The request has been made to delete the current cell:
         IF (deleteknot) THEN
           cell_deletion = .TRUE.
-          IF (output) THEN
-            WRITE(outfp,*) ' >',i1,knot(i1)%ik,knot(i1)%ir
-          ENDIF
+c          IF (output) WRITE(outfp,*) ' >',i1,knot(i1)%ik,knot(i1)%ir
           IF (i1.LT.nknot) THEN
-            DO i2 = i1, nknot
+            DO i2 = i1, nknot-1
               CALL MoveGridCell(knot(i2+1),knot(i2))
             ENDDO
           ENDIF
@@ -815,7 +1026,6 @@ c...    The request has been made to delete the current cell:
           WRITE(outfp,*) '  No cells deleted'
         ENDIF
       ENDIF
-
 c...  Cell integrity checks (need to come up with something better -- like
 c     something that looks for misshapen cells, i.e. XBC's):
       DO i1 = 1, nknot
@@ -834,7 +1044,7 @@ c...      Triangles, maybe:
       ENDDO
 
 c...  Global R,Z shifts:
-c       Not implemented yet
+c       Not implemented yet...
 
 c...  Assign cell zone assignment based on its spatial location in the
 c     grid.  This (dramatically) increases the speed of the search
@@ -895,23 +1105,20 @@ c...
          izone(NUMZONE+1,i1) = izone(1,i1+1)
       ENDDO
       izone(NUMZONE+1,NUMZONE) = nknot + 1
-
       IF (output) THEN
         WRITE(outfp,*) 'ZONE POPULATIONS:'
         DO i2 = 1, NUMZONE
           WRITE(0,'(4X,I6,2X,10I6)') i2,izone(1:NUMZONE+1,i2)
         ENDDO
       ENDIF
-
 c...  
-
 
 c...  Find and order the x-point cells:
 c     -------------------------------------------------------------------     
       nxpt = 0
       DO i1 = 1, nknot
         IF (knot(i1)%xpt.NE.0) CYCLE
-        CALL FindGridCell(nknot,knot,NUMZONE,izone,1,i1,i2)
+        CALL FindGridCell(NUMZONE,izone,XPT_SEARCH,i1,i2)
         IF (i2.NE.-1) THEN
           nxpt = nxpt + 1
           ixpt(nxpt,1) = i1
@@ -931,7 +1138,6 @@ c...  No x-points found, for some reason:
       IF (nxpt.GT.2) 
      .  CALL ER('LoadGeneralizedGrid','More than 2 x-points '//
      .          'identified, not good',*99)
-
 c...  
       cxpt = 0
       icore = 0
@@ -943,7 +1149,7 @@ c...
             i1 = newi1
             cxpt(i4,i3) = cxpt(i4,i3) + 1
             cont = .FALSE.
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,2,i1,i2)
+            CALL FindGridCell(NUMZONE,izone,R_INWARD,i1,i2)
             IF (i2.NE.-1) THEN
                cont = .TRUE.
                newi1 = i2 
@@ -957,7 +1163,7 @@ c         principal cell for this x-point pair, i.e. the one adjacent to the cor
           count = 0
           DO WHILE (count.LT.5000)  
             count = count + 1
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)  ! Move forward on a ring
+            CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)  ! Move forward on a ring
             IF     (i2.EQ.-1) THEN
 c             Neighbouring cell not found, so at the end of a ring, hence 
 c             somewhere in a private flux region:
@@ -997,7 +1203,6 @@ c...    Swap the cells, if necessary:
         WRITE(outfp,*) '   CXPT2 =',cxpt (1:nxpt,2)
         WRITE(outfp,*) '   ICORE2=',icore(1:nxpt,2)
       ENDIF
-
 c...  Check that the x-points are ordered properly, with the primary x-point
 c     at index 1, and whether or not the double-null grid is connected:
       connected = .FALSE.
@@ -1005,7 +1210,7 @@ c     at index 1, and whether or not the double-null grid is connected:
         swap = .FALSE.
         IF     (nxpt.GT.1.AND.cxpt(1,1).EQ.cxpt(2,1)) THEN
 c...      Connected grid indicated:
-          IF (knot(ixpt(1,1))%zcen.GT.0.0) swap = .TRUE.  ! Want lower x-point to be "primary"
+          IF (knot(ixpt(1,1))%zcen.GT.0.0) swap = .TRUE.  ! Want lower x-point to be "primary", as a convention
           connected = .TRUE.
         ELSEIF (nxpt.GT.1.AND.cxpt(1,1).GT.cxpt(2,1)) THEN
           swap = .TRUE.
@@ -1033,7 +1238,6 @@ c...  Location of the primary separatrix is known:
 c...  Build the core rings:
 c     ------------------------------------------------------------------
       IF (output) WRITE(outfp,*) 'PROCESSING CORE RINGS'
-
       nrs = 1
       ik = 1
       ir = 1
@@ -1043,7 +1247,7 @@ c     ------------------------------------------------------------------
         cont = .TRUE.
         DO WHILE(cont)
           cont = .FALSE.
-          CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)  ! Move forward
+          CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)  ! Move forward
           IF (i2.NE.-1) THEN
             IF (i2.NE.imap(1,ir)) THEN
               i1 = i2 
@@ -1052,7 +1256,7 @@ c     ------------------------------------------------------------------
               cont = .TRUE.
 c             IF (output) WRITE(0,*) 'CORE MAP:',ik,ir,i1
             ELSE
-c             Ring has closed on itself, finished here
+c             Ring has closed on itself, finished here:
             ENDIF
           ELSE
             CALL ER('LoadGeneralisedgrid','Cell sequence broken in '//
@@ -1061,7 +1265,7 @@ c             Ring has closed on itself, finished here
         ENDDO
         nks(ir) = ik
 c...    Step outward to the next ring, still in the core:        
-        CALL FindGridCell(nknot,knot,NUMZONE,izone,4,imap(1,ir),i2)  ! And to the left
+        CALL FindGridCell(NUMZONE,izone,R_OUTWARD,imap(1,ir),i2)  ! And to the left
         IF (i2.NE.-1) THEN        
           i1 = i2
           ik = 1
@@ -1081,10 +1285,9 @@ c...    Step outward to the next ring, still in the core:
 c...  SOL rings:
 c     ------------------------------------------------------------------
       IF (output) WRITE(outfp,*) 'PROCESSING SOL RINGS'
-
 c...  Step out of the core:
       i1 = imap(1,irsep-1)
-      CALL FindGridCell(nknot,knot,NUMZONE,izone,4,i1,i2)
+      CALL FindGridCell(NUMZONE,izone,R_OUTWARD,i1,i2)
       IF (i2.NE.-1) THEN  
 c...    We should be back at the primary x-point:
         IF (i2.NE.ixpt(1,1)) 
@@ -1093,11 +1296,11 @@ c...    We should be back at the primary x-point:
 c...    Move backward along the ring to find the target cell:
         i1 = i2
         DO WHILE(i2.NE.-1)
-          CALL FindGridCell(nknot,knot,NUMZONE,izone,5,i1,i2) ! Moving backward 
+          CALL FindGridCell(NUMZONE,izone,P_BACKWARD,i1,i2) ! Moving backward 
           IF (i2.NE.-1) i1 = i2
         ENDDO
       ELSE
-        CALL ER('LoadGeneralisedgrid','Radial step out from the '//
+        CALL ER('LoadGeneralisedGrid','Radial step out from the '//
      .          'core failed',*99)
       ENDIF
 c...  Target located, start mapping the SOL:
@@ -1108,20 +1311,20 @@ c...  Target located, start mapping the SOL:
       DO WHILE(cont)
         cont = .FALSE.
 c...    Move forward along the ring until the corresponding target is reached:
-        CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)
+        CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)
         IF (i2.NE.-1) THEN
           i1 = i2 
           ik = ik + 1
           imap(ik,ir) = i1
           cont = .TRUE.
-          IF (output) WRITE(0,*) 'SOL MAP (INNER):',ik,ir,i1
+c          IF (output) WRITE(0,*) 'SOL MAP (INNER):',ik,ir,i1
         ENDIF
         IF (.NOT.cont) THEN
 c...      Step radially outward if ring is finished, i.e. a cell has been reached
 c         for which no "next" cell is found when moving along the ring:
           nks(ir) = ik
           i1 = imap(1,ir)
-          CALL FindGridCell(nknot,knot,NUMZONE,izone,4,i1,i2)  ! Step radially          
+          CALL FindGridCell(NUMZONE,izone,R_OUTWARD,i1,i2)  ! Step radially          
           IF (i2.NE.-1) THEN
              i1 = i2
              ik = 1
@@ -1129,14 +1332,23 @@ c         for which no "next" cell is found when moving along the ring:
              imap(ik,ir) = i1
              cont = .TRUE.
           ELSE
-            CALL ER('LoadGeneralisedgrid','Radial step '//
-     .              'failed in the SOL',*99)
+c...        Finished here, no outward radial setup found:
+            EXIT 
+c            CALL ER('LoadGeneralisedgrid','Radial step '//
+c     .              'failed in the SOL',*99)
           ENDIF
         ENDIF
       ENDDO
       irwall = ir
       irtrap = ir + 1
       nrs = ir
+      IF (output) THEN
+        WRITE(outfp,*) ' SOL RINGS:'
+        WRITE(outfp,*) '  IRSEP =',irsep
+        WRITE(outfp,*) '  IRWALL=',irwall
+        WRITE(outfp,*) '  IRTRAP=',irtrap
+        WRITE(outfp,*) '  NRS   =',nrs
+      ENDIF
 
 c...  SOL rings associated with double-null grids:
 c     ------------------------------------------------------------------
@@ -1145,405 +1357,269 @@ c...    Find scrape-off layer rings that were not processed yet, which
 c       happens with double-null grids:
         IF (output) WRITE(outfp,*) 'DOUBLE NULL GRID, PROCESSING '// 
      .                             'REMAINDER OF SOL'
+
 c...    Register all cells that have been mapped to the grid:
         DO ir = 1, nrs
-          DO ik = 1, nks(ir)
-            knot(imap(ik,ir))%map = 1
-          ENDDO
+          knot(imap(1:nks(ir),ir))%map = 1
         ENDDO
 
 c...    Start from the last cell on the last core ring:
         i1=imap(nks(irsep-1),irsep-1) 
-c        i1 = imap(1,irsep-1)
-c        CALL FindGridCell(nknot,knot,NUMZONE,izone,5,i1,i2)
-c        IF (i2.EQ.-1) 
-c     .       CALL ER('LoadGeneralisedgrid','Core map problems',*99)
-c        i1 = i2
 
-c...    Move radially outward into the SOL:
-        CALL FindGridCell(nknot,knot,NUMZONE,izone,4,i1,i2)
+c...    Step radially outward into the SOL:
+        CALL FindGridCell(NUMZONE,izone,R_OUTWARD,i1,i2)
         IF (i2.NE.-1) THEN
           i1 = i2
           IF (knot(i2)%map.EQ.1) THEN  
-c...        Keep going until a cell with no assigned mapping is found:
+c...        Keep stepping outward until a cell with no assigned 
+c           mapping is found:
             cont = .TRUE.
             DO WHILE(cont)
               cont = .FALSE.
-              CALL FindGridCell(nknot,knot,NUMZONE,izone,4,i1,i2)
+              CALL FindGridCell(NUMZONE,izone,R_OUTWARD,i1,i2)
               IF (i2.NE.-1) THEN 
                 i1 = i2
                 IF (knot(i1)%map.NE.0) cont = .TRUE.
               ELSE
-
+                CALL ER('LoadGeneralisedGrid','Unable to locate '//
+     .                  'unassigned cell in the SOL',*99)
               ENDIF
             ENDDO
           ENDIF
         ELSE
-           CALL ER('LoadGeneralisedGrid','Bad IR step to SOL',*99)
+          CALL ER('LoadGeneralisedGrid','Bad radial step from '//
+     .            'core to SOL',*99)
         ENDIF
-
-
-c *** LEFT OFF ***
-
-c...  An unmapped cell has been found, proceed to target:
-         cont = .TRUE.
-         DO WHILE(cont)
-            cont = .FALSE.
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,5,i1,i2)
-            IF (i2.NE.-1) THEN 
-               i1 = i2
-               cont = .TRUE.
-            ENDIF
-         ENDDO
-
-c...  Target located, start mapping the low field SOL:
-         ik = 1
-         ir = nrs + 1
-         IF (connected) irsep2 = ir
-         imap(ik,ir) = i1
-         cont = .TRUE.
-         DO WHILE(cont)
-            cont = .FALSE.
-c...  Move along the ring:
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)
+c...    Proceed backward along the ring to the target:
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindGridCell(NUMZONE,izone,P_BACKWARD,i1,i2)
+          IF (i2.NE.-1) THEN 
+            i1 = i2
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+c...    Start mapping:
+        ik = 1
+        ir = nrs + 1
+        IF (connected) irsep2 = ir
+        imap(ik,ir) = i1
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+c...      Move forward along the ring:
+          CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)
+          IF (i2.NE.-1) THEN
+            i1 = i2 
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+          ENDIF
+c...      Step radially outward if ring is finished:
+          IF (.NOT.cont) THEN
+            nks(ir) = ik
+            i1 = imap(1,ir)
+            CALL FindGridCell(NUMZONE,izone,R_OUTWARD,i1,i2)          
             IF (i2.NE.-1) THEN
-               i1 = i2 
-               ik = ik + 1
-               imap(ik,ir) = i1
-               cont = .TRUE.
-c     
-c     jdemod
-               IF (output) then 
-                  WRITE(0,'(a,4i6,5(1x,g12.5))') 'OUTER SOL MAP:',
-     >                 ik,ir,i1,imap(1,ir),
-     >                 knot(i1)%rcen,knot(i1)%zcen
-                  WRITE(6,'(a,4i6,5(1x,g12.5))') 'OUTER SOL MAP:',
-     >                 ik,ir,i1,imap(1,ir),
-     >                 knot(i1)%rcen,knot(i1)%zcen
-               endif
-c     IF (output) WRITE(0,*) 'OUTER SOL MAP:',ik,ir,i1
+              i1 = i2
+              ik = 1
+              ir = ir + 1
+              imap(ik,ir) = i1
+              cont = .TRUE.
+            ELSE
+c...          Assume the outer boundary of the grid:
             ENDIF
-c...  Step radially outward if ring is finished:
-            IF (.NOT.cont) THEN
-c     
-c     jdemod
-               IF (output) then 
-                  WRITE(0,*) 'STEPPING OUT:',ik,ir,i1
-                  WRITE(6,*) 'STEPPING OUT:',ik,ir,i1
-               endif
-c     IF (output) WRITE(0,*) 'STEPPING OUT:',ik,ir,i1
-               nks(ir) = ik
-               i1 = imap(1,ir)
-               CALL FindGridCell(nknot,knot,NUMZONE,izone,4,i1,i2)          
-               IF (i2.NE.-1) THEN
-                  i1 = i2
-                  ik = 1
-                  ir = ir + 1
-                  imap(ik,ir) = i1
-                  cont = .TRUE.
-c     
-c     jdemod
-                  IF (output) then 
-                     WRITE(0,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
-                     WRITE(6,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
-                  endif
-c     IF (output) WRITE(0,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
-               ELSE
-c...  Assume the outer boundary of the grid:
-c     
-c     jdemod
-                  IF (output) then 
-                     WRITE(0,*) 'ASSUMING OUTER GRID BOUNDARY'
-                     WRITE(6,*) 'ASSUMING OUTER GRID BOUNDARY'
-                  endif
-c     IF (output) WRITE(0,*) 'ASSUMING OUTER GRID BOUNDARY'
-               ENDIF
-            ENDIF
-         ENDDO
-         irwall = ir
-         irtrap = ir + 1
-         nrs = ir
+          ENDIF
+        ENDDO
+        irwall = ir
+        irtrap = ir + 1
+        nrs = ir
+c...    Once again, register all knots that have been mapped 
+c       to the grid:
+        DO ir = 1, nrs
+          knot(imap(1:nks(ir),ir))%map = 1
+        ENDDO
 
-c...  Register all knots that have been mapped to the grid:
-         DO ir = 1, nrs
-            DO ik = 1, nks(ir)
-               knot(imap(ik,ir))%map = 1
-            ENDDO
-         ENDDO
-
-c     
-c     jdemod
-         IF (output) then 
-            WRITE(0,*) 'PROCESSING SECONDARY PFZ'
-            WRITE(6,*) 'PROCESSING SECONDARY PFZ'
-         endif
-c     IF (output) WRITE(0,*) 'PROCESSING SECONDARY PFZ'
-c...  Process the secondary x-point PFR, which is just considered part of the
-c     SOL for generalized grids:
-         i1 = knot(ixpt(2,1))%xpt
-c     i1 = ixpt(2)
-c...  Move into the PFR:
-         CALL FindGridCell(nknot,knot,NUMZONE,izone,2,i1,i2)
-         IF (i2.EQ.-1) 
-     .        CALL ER('LoadGeneralisedgrid','PFR2 problems',*99)
-         i1 = i2
-         ik = 1
-         ir = nrs + 1
-         imap(ik,ir) = i1
-
-c...  Proceed to target:
-c     
-c     jdemod
-         IF (output) then 
-            WRITE(0,*) 'LOOKING FOR TARGET'
-            WRITE(6,*) 'LOOKING FOR TARGET'
-         endif
-c     IF (output) WRITE(0,*) 'LOOKING FOR TARGET'
-         cont = .TRUE.
-         DO WHILE(cont)
-            cont = .FALSE.
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,5,i1,i2)
-c     
-c     jdemod
-            IF (output) then 
-               WRITE(0,*) 'MOVING',i1,i2,istart
-               WRITE(6,*) 'MOVING',i1,i2,istart
-            endif
-c     IF (output) WRITE(0,*) 'MOVING',i1,i2,istart
-            IF (i2.NE.-1) THEN 
-               i1 = i2
-               ik = ik + 1
-               imap(ik,ir) = i1
-               cont = .TRUE.
-            ENDIF
-         ENDDO
-         
-c...  Target located, start mapping the secondary PFR:
-c     
-c     jdemod
-         IF (output) then 
-            WRITE(0,*) 'TARGET LOCATED'
-            WRITE(6,*) 'TARGET LOCATED'
-         endif
-c     IF (output) WRITE(0,*) 'TARGET LOCATED'
-         ik = 1
-         ir = nrs + 1
-         imap(ik,ir) = i1
-         cont = .TRUE.
-         DO WHILE(cont)
-            cont = .FALSE.
-c...  Move along the ring:
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)
-c     
-c     jdemod
-            IF (output) then 
-               WRITE(0,*) 'MOVING',i1,i2
-               WRITE(6,*) 'MOVING',i1,i2
-            endif
-c     IF (output) WRITE(0,*) 'MOVING',i1,i2
+        IF (output) WRITE(outfp,*) 'PROCESSING SECONDARY PFZ'
+c...    Process the secondary x-point PFR, which is just considered part of the
+c       SOL for generalized grids:
+        i1 = knot(ixpt(2,1))%xpt
+c        i1 = ixpt(2,1)
+c...    Step radially from the secondary x-point into the PFR:
+        CALL FindGridCell(NUMZONE,izone,R_INWARD,i1,i2)
+        IF (i2.EQ.-1) CALL ER('LoadGeneralisedgrid','Unable to step '//
+     .                        'from the secondary x-pt to the PFR',*99)
+        i1 = i2
+        ik = 1
+        ir = nrs + 1
+        imap(ik,ir) = i1
+c...    Proceed along the ring to the target:
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindGridCell(NUMZONE,izone,P_BACKWARD,i1,i2)
+          IF (i2.NE.-1) THEN 
+            i1 = i2
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+c...    Start mapping:
+        ik = 1
+        ir = nrs + 1
+        imap(ik,ir) = i1
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)
+          IF (i2.NE.-1) THEN
+            i1 = i2 
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+          ENDIF
+c...      Step radially inward if ring is finished:
+          IF (.NOT.cont) THEN
+            nks(ir) = ik
+            i1 = imap(1,ir)
+            CALL FindGridCell(NUMZONE,izone,R_INWARD,i1,i2)          
             IF (i2.NE.-1) THEN
-               i1 = i2 
-               ik = ik + 1
-               imap(ik,ir) = i1
-               cont = .TRUE.
-c     
-c     jdemod
-               IF (output) then 
-                  WRITE(0,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
-                  WRITE(6,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
-               endif
-c     IF (output) WRITE(0,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
+              i1 = i2
+              ik = 1
+              ir = ir + 1
+              imap(ik,ir) = i1
+              cont = .TRUE.
+            ELSE
+c...          Assume the outer boundary of the grid:
             ENDIF
-c...  Step radially outward if ring is finished:
-            IF (.NOT.cont) THEN
-               nks(ir) = ik
-               i1 = imap(1,ir)
-               CALL FindGridCell(nknot,knot,NUMZONE,izone,2,i1,i2)          
-               IF (i2.NE.-1) THEN
-                  i1 = i2
-                  ik = 1
-                  ir = ir + 1
-                  imap(ik,ir) = i1
-                  cont = .TRUE.
-c     
-c     jdemod
-                  IF (output) then  
-                     WRITE(0,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
-     >                    knot(i1)%zcen
-                     WRITE(6,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
-     >                    knot(i1)%zcen
-                  endif
-c     IF (output) 
-c     .          WRITE(0,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
-c     .          knot(i1)%zcen
-               ELSE
-c...  Assume the outer boundary of the grid:
-               ENDIF
-            ENDIF
-         ENDDO
-         irwall = ir
-         irtrap = ir + 1
-         nrs = ir
-
-      ENDIF                     ! Done processing double-null rings
-
-
+          ENDIF
+        ENDDO
+        irwall = ir
+        irtrap = ir + 1
+        nrs    = ir
+      ENDIF  ! Done processing double-null rings
+c
 c...  Primary private flux zone (PFZ) rings:
 c     ------------------------------------------------------------------
-c     
       IF (output) WRITE(outfp,*) 'PROCESSING PRIMARY PFZ'
-
 
 c...  Process the primary x-point PFR:
       i1 = knot(ixpt(1,1))%xpt
-c...  Move into the PFR:
-      CALL FindGridCell(nknot,knot,NUMZONE,izone,2,i1,i2)
-      IF (i2.EQ.-1) 
-     .     CALL ER('LoadGeneralisedgrid','PFR1 problems',*99)
-c     
-c     jdemod
-      IF (output) then
-         WRITE(0,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
-         WRITE(6,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
-      endif
-c     IF (output) 
-c     .  WRITE(0,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
+c...  Move radially from the SOL into the PFR:
+      CALL FindGridCell(NUMZONE,izone,R_INWARD,i1,i2)
+      IF (i2.EQ.-1) CALL ER('LoadGeneralisedgrid','Failed to step '//
+     .                      'into the PFR from the SOL',*99)
       i1 = i2
-c...  Proceed to target:
-      cont = .TRUE.
+c...  Move backward on the ring until the target is found:
+      cont  = .TRUE.
       DO WHILE(cont)
-         cont = .FALSE.
-         CALL FindGridCell(nknot,knot,NUMZONE,izone,5,i1,i2)
-c     jdemod
-c     IF (output) then 
-c     WRITE(0,*) '  TO TARGET',i1,i2
-c     WRITE(0,*) '  TO TARGET',knot(i1)%index
-c     WRITE(0,*) '  TO TARGET',knot(i2)%index
-c     WRITE(6,*) '  TO TARGET',i1,i2
-c     WRITE(6,*) '  TO TARGET',knot(i1)%index
-c     WRITE(6,*) '  TO TARGET',knot(i2)%index
-c     endif
-c     IF (output) WRITE(0,*) '  TO TARGET',i1,i2
-c     IF (output) WRITE(0,*) '  TO TARGET',knot(i1)%index
-c     IF (output) WRITE(0,*) '  TO TARGET',knot(i2)%index
-c     STOP 'tet'
-         IF (i2.NE.-1) THEN 
-            i1 = i2
-            cont = .TRUE.
-         ENDIF
+        cont  = .FALSE.
+        CALL FindGridCell(NUMZONE,izone,P_BACKWARD,i1,i2)
+        IF (i2.NE.-1) THEN 
+          i1 = i2
+          cont = .TRUE.
+        ENDIF
       ENDDO
 c...  Target located, start mapping the primary PFR:
-c     
-c     jdemod
-      IF (output) then 
-         WRITE(0,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
-         WRITE(6,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
-      endif
-c     IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
       ik = 1
       ir = nrs + 1
       imap(ik,ir) = i1
       cont = .TRUE.
       DO WHILE(cont)
-         cont = .FALSE.
-c...  Move along the ring:
-         CALL FindGridCell(nknot,knot,NUMZONE,izone,3,i1,i2)
-         IF (i2.NE.-1) THEN
-            i1 = i2 
-            ik = ik + 1
-            imap(ik,ir) = i1
-            cont = .TRUE.
-c     jdemod
-c     IF (output) then 
-c     WRITE(0,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
-c     WRITE(6,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
-c     endif
-c     IF (output) WRITE(0,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
-         ENDIF
-c...  Step radially outward if ring is finished:
-         IF (.NOT.cont) THEN
-            nks(ir) = ik
-            i1 = imap(1,ir)
-            CALL FindGridCell(nknot,knot,NUMZONE,izone,2,i1,i2)          
-            IF (i2.NE.-1) THEN
-               i1 = i2
-               ik = 1
-               ir = ir + 1
-               imap(ik,ir) = i1
-               cont = .TRUE.
-c     
-c     jdemod
-               IF (output) then 
-                  WRITE(0,'(a,4i6,5(1x,g12.5))') 'PRIM PFZ MAP:',
-     >                 ik,ir,i1,imap(1,ir),
-     >                 knot(i1)%rcen,knot(i1)%zcen
-                  WRITE(6,'(a,4i6,5(1x,g12.5))') 'PRIM PFZ MAP:',
-     >                 ik,ir,i1,imap(1,ir),
-     >                 knot(i1)%rcen,knot(i1)%zcen
-               endif
-c     IF (output) 
-c     .        WRITE(0,*) '1ST PFR MAP NEW RING:',ik,ir,i1,knot(i1)%zcen
-            ELSE
-c...  Assume the outer boundary of the grid:
-            ENDIF
-c     jdemod
-            IF (output) then 
-               WRITE(0,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
-               WRITE(6,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
-            endif
-c     IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
-         ENDIF
+        cont = .FALSE.
+c...    Move forward along the ring:
+        CALL FindGridCell(NUMZONE,izone,P_FORWARD,i1,i2)
+        IF (i2.NE.-1) THEN
+          i1 = i2 
+          ik = ik + 1
+          imap(ik,ir) = i1
+          cont = .TRUE.
+        ENDIF
+c...    Step radially outward when the ring is finished:
+        IF (.NOT.cont) THEN
+          nks(ir) = ik
+          i1 = imap(1,ir)
+          CALL FindGridCell(NUMZONE,izone,R_INWARD,i1,i2)          
+          IF (i2.NE.-1) THEN
+             i1 = i2
+             ik = 1
+             ir = ir + 1
+             imap(ik,ir) = i1
+             cont = .TRUE.
+          ELSE
+c...        Assume the outer boundary of the grid:
+          ENDIF
+        ENDIF
       ENDDO
       nrs = ir
 
 c...  Need to reorder the rings in the primary PFZ:
       DO i1 = 0, (nrs-irtrap+1)/2-1
-c     
-c     jdemod
-         IF (output) then 
-            WRITE(0,*) 'I1???=',i1
-            WRITE(6,*) 'I1???=',i1
-         endif
-c     IF (output) WRITE(0,*) 'I1???=',i1
-         tmpnks = nks(irtrap+i1)
-         DO ik = 1, nks(irtrap+i1)
-            imap(ik,0) = imap(ik,irtrap+i1)
-         ENDDO
-         nks(irtrap+i1) = nks(nrs-i1)
-         DO ik = 1, nks(nrs-i1)
-            imap(ik,irtrap+i1) = imap(ik,nrs-i1)
-         ENDDO
-         nks(nrs-i1) = tmpnks
-         DO ik = 1, tmpnks
-            imap(ik,nrs-i1) = imap(ik,0)
-         ENDDO
+        tmpnks = nks(irtrap+i1)
+        imap(1:nks(irtrap+i1),0) = imap(1:nks(irtrap+i1),irtrap+i1)
+c        DO ik = 1, nks(irtrap+i1)
+c          imap(ik,0) = imap(ik,irtrap+i1)
+c        ENDDO
+        nks(irtrap+i1) = nks(nrs-i1)
+        imap(1:nks(nrs-i1),irtrap+i1) = imap(1:nks(nrs-i1),nrs-i1)
+c        DO ik = 1, nks(nrs-i1)
+c          imap(ik,irtrap+i1) = imap(ik,nrs-i1)
+c        ENDDO
+        nks(nrs-i1) = tmpnks
+        imap(1:tmpnks,nrs-i1) = imap(1:tmpnks,0)
+c        DO ik = 1, tmpnks
+c          imap(ik,nrs-i1) = imap(ik,0)
+c        ENDDO
       ENDDO
 
 c...  Find IKTO,IKTI:
       ikto = -1
       ikti = -1
       DO ik = 1, nks(irsep)
-         IF (connected) THEN
-            IF (imap(ik,irsep).EQ.ixpt(1,1)          ) ikto = ik ! Not sure this will always work...
-            IF (imap(ik,irsep).EQ.knot(ixpt(2,1))%xpt) ikti = ik - 1
+        IF (connected) THEN
+          IF (imap(ik,irsep).EQ.ixpt(1,1)          ) ikto = ik ! Not sure this will always work...
+          IF (imap(ik,irsep).EQ.knot(ixpt(2,1))%xpt) ikti = ik - 1
 c     IF (imap(ik,irsep).EQ.ixpt(1,1)) ikto = ik      ! Not sure this will always work...
 c     IF (imap(ik,irsep).EQ.ixpt(2,1)) ikti = ik - 1
 c     IF (imap(ik,irsep).EQ.knot(ixpt(2,1))%xpt) ikti = ik - 1  ! Not sure this will always work...
-         ELSE
-            IF (imap(ik,irsep).EQ.ixpt(1,1)          ) ikto = ik - 1
-            IF (imap(ik,irsep).EQ.knot(ixpt(1,1))%xpt) ikti = ik 
-         ENDIF
+        ELSE
+          IF (imap(ik,irsep).EQ.ixpt(1,1)          ) ikto = ik - 1
+          IF (imap(ik,irsep).EQ.knot(ixpt(1,1))%xpt) ikti = ik 
+        ENDIF
       ENDDO
       IF (ikto.EQ.-1.OR.ikti.EQ.-1)
      .     CALL ER('LoadGeneralisedgrid','IKTI or IKTO not found',*99)
 
 
+c...  Assign data to the global arrays:
+      grid_load%irsep      = irsep      
+      grid_load%irsep2     = irsep2     
+      grid_load%irwall     = irwall     
+      grid_load%irtrap     = irtrap     
+      grid_load%nrs        = nrs        
+      grid_load%ikti       = ikti       
+      grid_load%ikto       = ikto       
+      grid_load%nks(1:nrs) = nks(1:nrs)
+
+
+  *** LEFT OFF ***
+  Need to change the order of the rings for the double null grids, since they
+  don't conform to the ordering scheme where the inner (LO index) targets 
+  are sequential.  So, need to swap the second outer SOL region and the secondary
+  PFZ, and perhaps do some reordering. See m-hmr-0015z.ps ...
+
+  ALSO need to be able to delete rings at this stage, as is done for sonnet_13018_205.sm ... going to 
+  need some additional functions for this... 
+
       RETURN
  96   CALL ER('LoadGeneralisedgrid','Grid file not found',*99)
  97   CALL ER('LoadGeneralisedgrid','Unexpected end-of-file',*99)
  98   CALL ER('LoadGeneralisedgrid','Problem accessing grid file',*99)
- 99   WRITE(0,*) 'GRID:',TRIM(grd_filename)
-      WRITE(0,*) 'IXPT:',ixpt(1,1),ixpt(2,1)
+ 99   WRITE(0,*) 'GRID: ',TRIM(grd_filename)
+      WRITE(0,*) 'IXPT: ',ixpt(1,1),ixpt(2,1)
+      WRITE(0,*) 'IR  : ',ir
       STOP  
       END
 c

@@ -6,7 +6,7 @@ c subroutine: SetupToroidalSurfaces
 c
 c
       SUBROUTINE ReadSOLPSDataFile(filename,array)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'

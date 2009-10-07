@@ -3,6 +3,51 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE FluxSurfacesInTheSOL
+      USE mod_interface
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'slcom'
+
+      INTEGER ik,ir,id
+
+      WRITE(6,'(A)') '* FLUX SURFACES FOR SPENCER'
+      WRITE(6,'(A)') '* <rho (m)>'
+      WRITE(6,'(A)') '* <number of points>'
+      WRITE(6,'(A)') '* <index> <R (m)> <Z (m)>'
+      WRITE(6,'(A)') '*'
+
+      ir = irsep
+      WRITE(6,*) rho(ir,IN14)
+      WRITE(6,*) nks(ir)+1
+      DO ik = 1, nks(ir)
+        id = korpg(ik,ir)
+        WRITE(6,'(I6,2F12.6)') ik,rvertp(1,id),zvertp(1,id)
+      ENDDO
+      WRITE(6,'(I6,2F12.6)') ik,rvertp(4,id),zvertp(4,id)
+
+      DO ir = irsep+10, 82, 10
+        IF (rho(ir,IN14).EQ.0.0) CYCLE
+        WRITE(6,*) rho(ir,IN14)
+        WRITE(6,*) nks(ir)+1
+        DO ik = 1, nks(ir)
+          id = korpg(ik,ir)
+          WRITE(6,'(I6,2F12.6)') ik,rvertp(1,id),zvertp(1,id)
+        ENDDO
+        WRITE(6,'(I6,2F12.6)') ik,rvertp(4,id),zvertp(4,id)
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpDataToIDL
       USE mod_interface
       IMPLICIT none
@@ -2881,6 +2926,10 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.10) THEN
         WRITE(0,*) 'DUMING DATA TO IDL'
         CALL DumpDataToIDL
+        RETURN
+      ELSEIF (iopt.EQ.11) THEN
+        WRITE(0,*) 'FLUX SURFACES FOR SPENCER'
+        CALL FluxSurfacesInTheSOL
         RETURN
       ENDIF
      

@@ -1779,8 +1779,9 @@ c
 c
 c ========================================================================
 c
-      SUBROUTINE FindKnot_SL(nknot,knot,NUMZONE,izone,condition,
+      SUBROUTINE FindKnot_SL(NUMZONE,izone,condition,
      .                       index1,index2)
+      USE mod_grid
       IMPLICIT none
       INCLUDE 'params'  ! for SLOUTPUT
 c
@@ -1798,15 +1799,19 @@ c     Condition=4 finds knot 2=1 and knot 3=4 for test cell vs. other cells
 c
 c     Condition=5 finds knot 1=4 and knot 2=3 for test cell vs. other cells
 c
+c      TYPE type_grid_cell
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL*8  :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_grid_cell
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
 
-      TYPE type_cell_old
-        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
-        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
-      ENDTYPE type_cell_old
-
-      INTEGER nknot,index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
+      INTEGER index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
      .        condition
-      TYPE(type_cell_old) :: knot(0:nknot)      
+c      INTEGER nknot,index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
+c      TYPE(type_grid_cell) :: knot(0:nknot)      
 
       REAL*8, PARAMETER :: DTOL=1.0D-06
 
@@ -1896,14 +1901,14 @@ c
 c ========================================================================
 c
       SUBROUTINE MoveKnot_SL(knot1,knot2)
+      USE mod_grid
       IMPLICIT none
 
-      TYPE type_cell_old
-        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
-        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
-      ENDTYPE type_cell_old
-
-      TYPE(type_cell_old) :: knot1,knot2      
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
+      TYPE(type_grid_cell) :: knot1,knot2      
 
       INTEGER i1
 
@@ -1931,6 +1936,7 @@ c
      .                                  rshift,zshift,indexiradj)
       USE mod_sol28_global
       USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
@@ -1949,7 +1955,8 @@ c..TMP
       INTEGER, PARAMETER :: NUMZONE = 5
       REAL*8,  PARAMETER :: TOL = 1.0D-06
 
-      INTEGER   nknot,i1,i2,z1,r1,kind,nxpt,ixpt(0:2),cxpt(0:2),i3,
+      INTEGER   i1,i2,z1,r1,kind,nxpt,ixpt(0:2),cxpt(0:2),i3,
+c      INTEGER   nknot,i1,i2,z1,r1,kind,nxpt,ixpt(0:2),cxpt(0:2),i3,
      .          izone(NUMZONE+1,NUMZONE),newi1,icore(0:2),id,tmpnks,
      .          ikmax,irmax,ir1,istart,
      .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
@@ -1958,14 +1965,13 @@ c..TMP
       REAL*8    rvdp(4),zvdp(4),areadp
       CHARACTER buffer*1000
 
-      INTEGER, ALLOCATABLE :: imap(:,:)
+c      INTEGER, ALLOCATABLE :: imap(:,:)
 
-      TYPE type_cell_old
-        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
-        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
-      ENDTYPE type_cell_old
- 
-      TYPE(type_cell_old),ALLOCATABLE :: knot(:)
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
+c      TYPE(type_cell_old),ALLOCATABLE :: knot(:)
 
       output = .FALSE.
 
@@ -2206,7 +2212,7 @@ c
           EXIT
         ENDIF
 
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,1,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,1,i1,i2)
 
         IF (i2.NE.-1) THEN
 c
@@ -2305,7 +2311,7 @@ c              can no longer find a cell with a matching side then
 c              i2=-1 is returned and the code moves onto any other
 c              Xpoints. 
 c
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,2,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
 
           IF (i2.NE.-1) THEN
             cont = .TRUE.
@@ -2399,7 +2405,7 @@ c...  Start with the core rings:
         DO WHILE(cont)
           cont = .FALSE.
 c...      Move along the ring:
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,3,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
 c          WRITE(0,*) '>>>',i1,i2,ir,imap(1,ir)  
           IF (i2.NE.-1) THEN
             IF (i2.NE.imap(1,ir)) THEN
@@ -2421,7 +2427,7 @@ c              IF (output) WRITE(0,*) 'CORE MAP:',ik,ir,i1
         ENDDO
         nks(ir) = ik
 c...    Step outward, still in the core:        
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,imap(1,ir),i2)
+        CALL FindKnot_SL(NUMZONE,izone,4,imap(1,ir),i2)
         IF (i2.NE.-1) THEN        
           i1 = i2
           ik = 1
@@ -2446,14 +2452,14 @@ c
 
 c...  Step out of the core on the high field side:
       i1 = imap(1,irsep-1)
-      CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,i1,i2)
+      CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
       IF (i2.NE.-1) THEN  
 c...    Move down to the target:
         i1 = i2
         cont = .TRUE.
         DO WHILE(cont)
           cont = .FALSE.
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,5,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
           IF (i2.NE.-1) THEN 
             i1 = i2
             cont = .TRUE.
@@ -2470,7 +2476,7 @@ c...  Target located, start mapping the SOL:
       DO WHILE(cont)
         cont = .FALSE.
 c...    Move along the ring:
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,3,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
         IF (i2.NE.-1) THEN
           i1 = i2 
           ik = ik + 1
@@ -2488,7 +2494,7 @@ c...    Step radially outward if ring is finished:
         IF (.NOT.cont) THEN
           nks(ir) = ik
           i1 = imap(1,ir)
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,i1,i2)          
+          CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)          
           IF (i2.NE.-1) THEN
             i1 = i2
             ik = 1
@@ -2534,12 +2540,12 @@ c
 c...    Start with the first cell on the outer-most core ring and move to 
 c       the last cell on the same ring:
         i1 = imap(1,irsep-1)
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,5,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
         IF (i2.EQ.-1) 
      .    CALL ER('Readgeneralisedgrid','Core map problems',*99)
         i1 = i2
 c...    Move into the SOL:
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
         IF (i2.NE.-1) THEN
           i1 = i2
           IF (knot(i2)%map.EQ.1) THEN  
@@ -2548,7 +2554,7 @@ c           found:
             cont = .TRUE.
             DO WHILE(cont)
               cont = .FALSE.
-              CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,i1,i2)
+              CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
               IF (i2.NE.-1) THEN 
                 i1 = i2
                 IF (knot(i1)%map.NE.0) cont = .TRUE.
@@ -2566,7 +2572,7 @@ c...    An unmapped cell has been found, proceed to target:
         cont = .TRUE.
         DO WHILE(cont)
           cont = .FALSE.
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,5,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
           IF (i2.NE.-1) THEN 
             i1 = i2
             cont = .TRUE.
@@ -2582,7 +2588,7 @@ c...    Target located, start mapping the low field SOL:
         DO WHILE(cont)
           cont = .FALSE.
 c...      Move along the ring:
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,3,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
           IF (i2.NE.-1) THEN
             i1 = i2 
             ik = ik + 1
@@ -2607,7 +2613,7 @@ c           jdemod
 c            IF (output) WRITE(0,*) 'STEPPING OUT:',ik,ir,i1
             nks(ir) = ik
             i1 = imap(1,ir)
-            CALL FindKnot_SL(nknot,knot,NUMZONE,izone,4,i1,i2)          
+            CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)          
             IF (i2.NE.-1) THEN
               i1 = i2
               ik = 1
@@ -2663,7 +2669,7 @@ c       SOL for generalized grids:
         IF (output) WRITE(6,*) 'I1 XPT:',i1
 
 c...    Move into the PFR:
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,2,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
         IF (i2.EQ.-1) 
      .    CALL ER('Readgeneralisedgrid','PFR2 problems',*99)
         i1 = i2
@@ -2683,7 +2689,7 @@ c        IF (output) WRITE(0,*) 'LOOKING FOR TARGET'
         cont = .TRUE.
         DO WHILE(cont)
           cont = .FALSE.
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,5,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
 c
 c         jdemod
           IF (output) then 
@@ -2724,7 +2730,7 @@ c        IF (output) WRITE(0,*) 'TARGET LOCATED'
         DO WHILE(cont)
           cont = .FALSE.
 c...      Move along the ring:
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,3,i1,i2)
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
 c
 c         jdemod
           IF (output) then 
@@ -2749,7 +2755,7 @@ c...      Step radially outward if ring is finished:
           IF (.NOT.cont) THEN
             nks(ir) = ik
             i1 = imap(1,ir)
-            CALL FindKnot_SL(nknot,knot,NUMZONE,izone,2,i1,i2)          
+            CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)          
             IF (i2.NE.-1) THEN
               i1 = i2
               ik = 1
@@ -2843,7 +2849,7 @@ c      ELSE
         i1 = knot(ixpt(1))%xpt
 c      ENDIF
 c...  Move into the PFR:
-      CALL FindKnot_SL(nknot,knot,NUMZONE,izone,2,i1,i2)
+      CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
       IF (i2.EQ.-1) 
      .  CALL ER('Readgeneralisedgrid','PFR1 problems',*99)
 c
@@ -2861,7 +2867,7 @@ c...  Proceed to target:
       cont = .TRUE.
       DO WHILE(cont)
         cont = .FALSE.
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,5,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
 c        jdemod
 c        IF (output) then 
 c           WRITE(0,*) '  TO TARGET',i1,i2
@@ -2898,7 +2904,7 @@ c      IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
       DO WHILE(cont)
         cont = .FALSE.
 c...    Move along the ring:
-        CALL FindKnot_SL(nknot,knot,NUMZONE,izone,3,i1,i2)
+        CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
         IF (i2.NE.-1) THEN
           i1 = i2 
           ik = ik + 1
@@ -2915,7 +2921,7 @@ c...    Step radially outward if ring is finished:
         IF (.NOT.cont) THEN
           nks(ir) = ik
           i1 = imap(1,ir)
-          CALL FindKnot_SL(nknot,knot,NUMZONE,izone,2,i1,i2)          
+          CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)          
           IF (i2.NE.-1) THEN
             i1 = i2
             ik = 1
