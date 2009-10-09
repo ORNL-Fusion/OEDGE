@@ -1704,7 +1704,7 @@ c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
         READ(fp,*) i
         DO j = 1, i
           READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3)
-          IF (id.NE.5314) CYCLE
+          IF (id.NE.4438) CYCLE
 
 c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
           PVALS(4,1) = PVALS(1,1)

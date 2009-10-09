@@ -622,7 +622,14 @@ c...
             surface(nsurface)%v(2,2) =  DBLE(y2)
             surface(nsurface)%v(3,2) =  DBLE(z2)
           ENDDO
-        
+
+        ELSEIF (eirasdat(i1,1).EQ.15.0) THEN
+c...      Holes in the triangle grid, so not really a surface, but no 
+c         where else to put it:
+          nsurface = NewEireneSurface_06(HOLE_IN_GRID)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+          surface(nsurface)%v(1,1)   = DBLE(eirasdat(i1,2))
+          surface(nsurface)%v(2,1)   = DBLE(eirasdat(i1,3))
         ELSE
         ENDIF
       ENDDO
@@ -680,8 +687,8 @@ c *** HACK ***
               surface(i1)%recycs = 1.0
               surface(i1)%recycc = 1.0
 
-              surface(i1)%recyct = 1.0
-              WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+              surface(i1)%recyct = 0.0
+              WRITE(0,*) '*** SPUTTERING ON IN EIRENE, PUMPING! ***',
      .          i1,surface(i1)%ilspt,opt_eir%ilspt
 c              surface(i1)%recyct = 0.0
 c              WRITE(0,*) '*** SPUTTERING ON IN EIRENE (ABSORBING '//
@@ -1457,7 +1464,7 @@ c
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,iside,in,iw, 
      .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG)
-      LOGICAL goodeof,output,wall_ignored
+      LOGICAL goodeof,output,wall_ignored,warning_message
       REAL    rdum(30),frac,norm,len,cir,area,
      .        sumion,amps,pflux
       CHARACTER buffer*256,species*32,fname*1024
@@ -1501,7 +1508,7 @@ c
             ik = fluid_ik(iobj)
             ir = fluid_ir(iobj)
             IF (ir.LT.irsep) CYCLE
-            IF (ik.EQ.1      ) wall_in(1:3,iobj) = nimindex(idds(ir,2))
+            IF (ik.EQ.1      ) wall_in(1:3,iobj) = nimindex(idds(ir,2))  ! A problem in corners..?
             IF (ik.EQ.nks(ir)) wall_in(1:3,iobj) = nimindex(idds(ir,1))
           ELSEIF (tri(iobj)%type.EQ.VACUUM_GRID) THEN
             wall_in(1:3,iobj) = tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
@@ -1855,10 +1862,21 @@ c       routine can be removed:
         flxhw8(iw) = tflux(iw,3) / area  !  * 1.602E-19  For hand checks...
       ENDDO
 c...  Check that flux data was assigned to every wall/target segment:
+      warning_message = .FALSE.
       DO iw = 1, nvesm+nvesp
-        IF (cvesm(iw).EQ.0) WRITE(0,*) 'WARNING: NO WALL FLUX DATA '//
-     .                                 'ASSGINED FOR SEGMENT ',iw
+        IF (cvesm(iw).EQ.0) THEN
+          warning_message = .TRUE.
+          WRITE(eirfp,'(A,3I4)') 'WARNING: NO WALL FLUX DATA ASS'//
+     .                           'IGNED FOR SEGMENT ',iw,nvesm,nvesp
+        ENDIF
       ENDDO
+      IF (warning_message) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '*********************************************'
+        WRITE(0,*) '* NO FLUX DATA FOUND FOR SOME WALL SEGMENTS *'
+        WRITE(0,*) '*********************************************'
+        WRITE(0,*) 
+      ENDIF
 c...  Not sure what PINCOR is about at the moment, so issue a warning
 c     if it is not unity:
       IF (pincor.NE.1.0) THEN

@@ -71,6 +71,8 @@ c
       IMPLICIT none
       PRIVATE
 
+      LOGICAL, PUBLIC :: cell_modified, tube_modified  ! *** make PRIVATE when code update to use Alloc_cell, AddCell, etc and they are resident in this module
+
 !     OSM options:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_osm
@@ -585,7 +587,8 @@ c...    Strata:
      .                      IND_KINETIC = 6,  !     THAT IDENTIFIES WHERE IT WAS GENERATED, SINCE
      .                      IND_NEUTRAL = 7,  !     THESE MAPPINGS ARE SOURCE DEPENDENT, I.E. THEY ARE DIFFERENCE IN mod_sol28 and mod_eirene06...
      .                      IND_FIELD   = 8,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
-     .                      IND_CELL    = 9
+     .                      IND_CELL    = 9,
+     .                      IND_OBJECT  = OBJ_MAXNINDEX+1  ! Just for cell and tube finding in GetCell and and GetTube
 
       INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
@@ -630,6 +633,10 @@ c...    Strata:
       TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
       TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
+
+!...  Index mapping in GetObject and GetTube:
+      INTEGER, ALLOCATABLE, SAVE :: obj_index_map (:,:),
+     .                              tube_index_map(:,:)
 
       END MODULE mod_sol28_global
 !

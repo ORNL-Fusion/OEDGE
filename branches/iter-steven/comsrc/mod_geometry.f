@@ -3,6 +3,8 @@
       IMPLICIT none
       PRIVATE
 
+      LOGICAL, PUBLIC :: obj_modified, srf_modified, vtx_modified  ! *** make PRIVATE when the index mapping routines are moved to this module
+
       REAL*8, PUBLIC, PARAMETER :: D_DEGRAD=1.74532925199D-02
    
       PUBLIC :: Alloc_Vtx ,  
@@ -15,7 +17,9 @@
      .          MatchSurface,
      .          LoadObjects,
      .          SaveGeometryData,
-     .          SetupCell2Obj
+     .          SetupCell2Obj,
+     .          geoClean
+
    
       INTEGER, PUBLIC, PARAMETER :: MAX3DVER=4 ,     ! ...
      .                              MAX3DSIDE=6      ! ...this must be an even number, see type_object definition...
@@ -23,14 +27,15 @@
       INTEGER, PUBLIC, PARAMETER :: MP_INITIALIZE = 1, 
      .                              MP_INCREASE_SIZE = 2
    
-      INTEGER, PUBLIC, PARAMETER :: SPR_PLANAR_POLYGON = 4,
+      INTEGER, PUBLIC, PARAMETER :: SPR_PLANAR_POLYGON = 4,  ! *** CHANCE TO SRF_ from SPR_ ...
      .                              SPR_LINE_SEGMENT   = 5
    
       INTEGER, PUBLIC, PARAMETER :: GRP_TRIANGLE      = 1, 
      .                              GRP_TETRAHEDRON   = 2, 
      .                              GRP_QUADRANGLE    = 3, 
      .                              GRP_MAGNETIC_GRID = 20,
-     .                              GRP_VACUUM_GRID   = 21
+     .                              GRP_VACUUM_GRID   = 21,
+     .                              OBJ_MAXNINDEX     = 10
 
 !..   Vertex data:
       INTEGER, PARAMETER :: VTX_SIZE = 10000
@@ -94,7 +99,7 @@
       TYPE, PUBLIC :: type_object
 !       Association:
         INTEGER   :: group             ! Group association
-        INTEGER   :: index(10)         ! General index array
+        INTEGER   :: index(OBJ_MAXNINDEX)         ! General index array
 !        INTEGER   :: object           ! Absolute index in full geometry model
 !        INTEGER*2 :: group            ! Group association
 !        INTEGER*2 :: zone             ! Zone (for domain decomposition)
@@ -180,6 +185,8 @@
       REAL*8, ALLOCATABLE :: tmpvtx(:,:)
       INTEGER :: istat,i1
 
+      vtx_modified = .TRUE.
+
       SELECTCASE(mode)
 
         CASE (MP_INITIALIZE) 
@@ -244,6 +251,8 @@
       TYPE(type_srf), ALLOCATABLE :: tmpsrf(:)
       INTEGER :: istat
 
+      srf_modified = .TRUE.
+
       SELECTCASE (mode)
 
         CASE (MP_INITIALIZE)
@@ -296,7 +305,9 @@
       SUBROUTINE Alloc_obj(memsize,mode)
       INTEGER :: memsize,mode
       TYPE(type_object), ALLOCATABLE :: tmpobj(:)
-      INTEGER :: istat
+      INTEGER :: istat,iobj
+
+      obj_modified = .TRUE.
 
       SELECTCASE (mode)
 
@@ -309,6 +320,13 @@
             maxobj = memsize       
             IF (memsize.EQ.-1) maxobj = OBJ_SIZE
             ALLOCATE(obj(maxobj),STAT=istat)
+            DO iobj = 1, maxobj
+              obj(iobj)%index = 0
+              obj(iobj)%omap  = 0
+              obj(iobj)%smap  = 0
+              obj(iobj)%nside = 0
+              obj(iobj)%iside = 0
+            ENDDO  
             IF (istat.NE.0) THEN
               WRITE(0,*) 'ERROR ALLOC_OBJ: PROBLEM ALLOCATING OBJ '//
      .                   'ARRAY'
@@ -335,6 +353,13 @@
               maxobj = maxobj + memsize
             ENDIF
             ALLOCATE(obj(maxobj))
+            DO iobj = 1, maxobj
+              obj(iobj)%index = 0
+              obj(iobj)%omap  = 0
+              obj(iobj)%smap  = 0
+              obj(iobj)%nside = 0
+              obj(iobj)%iside = 0
+            ENDDO  
             IF (istat.NE.0) THEN
               WRITE(0,*) 'ERROR ALLOC_OBJ: CANNOT REALLOCATE OBJ'
               STOP      
@@ -386,6 +411,8 @@
       nvtx = nvtx + 1
       vtx(1:3,nvtx) = newvtx(1:3)
       AddVertex = nvtx
+
+      vtx_modified = .TRUE.
 
       RETURN
  99   STOP
@@ -496,6 +523,7 @@
         AddSurface = nsrf
       ENDIF
 
+      srf_modified = .TRUE.
 
       RETURN
  99   STOP
@@ -583,6 +611,8 @@
 
       AddObject = nobj
 
+      obj_modified = .TRUE.
+
       RETURN
  99   STOP
       END FUNCTION AddObject
@@ -657,7 +687,7 @@
 !
 ! ----------------------------------------------------------------------
 !
-      SUBROUTINE SetupCell2Obj(ncell,index)
+      SUBROUTINE SetupCell2Obj(ncell,index)   ! *** REPLACED *** by GetObject function, need to modify the code...
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: ncell, index
@@ -674,6 +704,20 @@
       RETURN
 99    STOP
       END SUBROUTINE SetupCell2Obj
+!
+! ----------------------------------------------------------------------
+!
+      SUBROUTINE geoClean
+      IMPLICIT none
+      nobj = 0
+      nsrf = 0
+      nvtx = 0
+      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
+      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
+      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+      RETURN
+99    STOP
+      END SUBROUTINE geoClean
 !
 ! ======================================================================
 !
