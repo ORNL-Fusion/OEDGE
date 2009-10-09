@@ -1142,6 +1142,7 @@ c target segments.  These kinds of modifications are made via the ...
 c array:
 c
       SUBROUTINE BuildNeutralWall
+      USE mod_geometry
       IMPLICIT none
 
       INCLUDE 'params'
@@ -1339,6 +1340,14 @@ c...      Debug: Save data and avoid attempted wall sequencing:
 c...      Leave the loop:
           EXIT
 
+        ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
+c...      Setup OSM geometry:
+          CALL MapRingstoTubes
+c...      Automated clipping:
+          CALL ClipWallToGrid(walln,wallr1,wallz1,MAXPTS+1)
+c...      Wipe the geometry arrays:
+          CALL geoClean
+          CALL osmClean
         ENDIF
       ENDDO
 
@@ -1362,7 +1371,6 @@ c          WRITE(0,*) 'DELETEING:',i1
         CALL OutputData(85,'Checking neutral wall')
         CALL DumpGrid('BUILDING WALL SEGMENT LIST')
       ENDIF
-
 
 
 c     Add target segments and tag them by assigning WALLC

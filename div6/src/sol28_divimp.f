@@ -22,12 +22,13 @@ c      RETURN
       IF (opt%osm_load.NE.0) CALL LoadReferenceSolution(1)
 
 c...  Clear geometry arrays:
-      nobj = 0
-      nsrf = 0
-      nvtx = 0
-      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+      CALL geoClean
+c      nobj = 0
+c      nsrf = 0
+c      nvtx = 0
+c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
+c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
+c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
       RETURN
  99   STOP
@@ -89,12 +90,13 @@ c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
 
 c...  Clear geometry arrays:
-      nobj = 0
-      nsrf = 0
-      nvtx = 0
-      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+      CALL geoClean
+c      nobj = 0
+c      nsrf = 0
+c      nvtx = 0
+c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
+c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
+c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
 c      CALL CleanUp
 
@@ -113,7 +115,7 @@ c...  Save solution:
       CALL SaveGrid('osm.raw')
 
 c...  Clear memory:
-      CALL CleanUp
+      CALL osmClean
 
       RETURN
  99   STOP
@@ -292,7 +294,6 @@ c
         ENDDO
         CLOSE(fp)
       ENDIF
-
 
 c *CRUDE* Should be elsewhere... can IDRING take the place of RINGTYPE for EIRENE04? 
       ringtype = 0
@@ -543,6 +544,16 @@ c...
 
 c...  Build connection map:
       CALL BuildConnectionMap(1,nobj)
+c...  Force idenfication of the radial boundaries in the OBJ connection
+c     map, since generalised grids with poorly defined cross-field nearest
+c     neighbours will come up with a 0 mapping, the same as for the grid
+c     boundaries:
+      DO iobj = 1, nobj
+        ik =obj(iobj)%index(IND_IK)
+        ir =obj(iobj)%index(IND_IR)
+        IF (idring(irins (ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(4) = -1
+        IF (idring(irouts(ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(2) = -1
+      ENDDO
 
 c...  Setup the old format SOL28 input data:
       osmns28 = osmnnode

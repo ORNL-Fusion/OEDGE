@@ -1890,25 +1890,23 @@ c          surface_assigned = .FALSE.
                 side   = tri(i1)%sideindex(1,v1)
                 target = tri(i1)%sideindex(2,v1)
 
-                IF     (surface(i2)%subtype .EQ.STRATUM.AND.
-     .                  surface(i2)%index(1).LE.ring   .AND.
-     .                  surface(i2)%index(2).GE.ring   .AND.
-     .                  surface(i2)%index(3).EQ.target) THEN
-                  IF (wall_assignment) THEN
-                        CALL WN('ProcessTriangles_06','Wall '//
-     .                          'assignment for fluid cell')
-                    WRITE(0,*) '  STRATUM:',i1,tri(i1)%index(1:2)
-                  ELSE
-                    tri(i1)%map(v1) = 0 ! This should only be set to 0 if the target is opaque...
-                    tri(i1)%sid(v1) = 0 ! ditto
-                    tri(i1)%sur(v1) = surface(i2)%num
-                    grid_assignment = .TRUE.
+                IF     (surface(i2)%subtype .EQ.STRATUM) THEN
+                  IF (surface(i2)%index(1).LE.ring.AND.
+     .                surface(i2)%index(2).GE.ring.AND.
+     .                surface(i2)%index(3).EQ.target) THEN
+                    IF (wall_assignment) THEN
+                          CALL WN('ProcessTriangles_06','Wall '//
+     .                            'assignment for fluid cell')
+                      WRITE(0,*) '  STRATUM:',i1,tri(i1)%index(1:2)
+                    ELSE
+                      tri(i1)%map(v1) = 0 ! This should only be set to 0 if the target is opaque...
+                      tri(i1)%sid(v1) = 0 ! ditto
+                      tri(i1)%sur(v1) = surface(i2)%num
+                      grid_assignment = .TRUE.
+                    ENDIF
                   ENDIF
-
                 ELSEIF (surface(i2)%subtype.EQ.
      .                  MAGNETIC_GRID_BOUNDARY) THEN
-c                  i3 = 1
-c                  DO WHILE (surface(i2)%index(i3).NE.0)
                     IF (surface(i2)%index(1).LE.knot.AND.
      .                  surface(i2)%index(2).GE.knot.AND.
      .                  surface(i2)%index(3).EQ.ring.AND.
@@ -1923,12 +1921,11 @@ c                  DO WHILE (surface(i2)%index(i3).NE.0)
                         EXIT
                       ENDIF
                     ENDIF
-c                    i3 = i3 + 2
-c                  ENDDO
-
-                ELSEIF (surface(i2)%subtype .EQ.ADDITIONAL) THEN ! *** WRONG PLACE ***?
+                ELSEIF (surface(i2)%subtype .EQ.ADDITIONAL) THEN
+c                 Do nothing, these represent the wall in EIRENE:
+                ELSE
+                  CALL ER('ProcessTriangles_06','Unknown subtype',*99)
                 ENDIF
-
               ENDIF
 
             ELSEIF (surface(i2)%type.EQ.VESSEL_WALL) THEN
@@ -1994,7 +1991,8 @@ c                    tri(i1)%sur(v1) = 4 ! Temp
                   ENDIF
                 ENDIF
               ENDIF
-
+            ELSEIF (surface(i2)%type.EQ.HOLE_IN_GRID) THEN
+c             Do nothing:
             ELSE
               CALL ER('ProcessTriangles_06','Invalid surface type',*99)
             ENDIF
@@ -2204,7 +2202,6 @@ c...  Assign defaults to surface properties:
       surface(nsurface)%recycc = 1.0
 
       IF     (type.EQ.VESSEL_WALL) THEN
-
         surface(nsurface)%surtxt   = '* vessel wall (default)'
         surface(nsurface)%reflect = LOCAL
         surface(nsurface)%ewall = -wtemp * 1.38E-23 / ECH
@@ -2217,13 +2214,15 @@ c...    Assume a 2-point line segment:
         surface(nsurface)%nver = 2
 
       ELSEIF (type.EQ.NON_DEFAULT_STANDARD) THEN
-
         surface(nsurface)%surtxt  = '* non-default standard (default)'
         surface(nsurface)%reflect = GLOBAL
         surface(nsurface)%ewall    = 0.0
         surface(nsurface)%material = 0.0
         surface(nsurface)%nsur = 0
         surface(nsurface)%nver = 0
+
+      ELSEIF (type.EQ.HOLE_IN_GRID) THEN
+        surface(nsurface)%surtxt  = '* hole in triangle grid'
 
       ELSE
         CALL ER('NewEireneSurface_06','Invalid type',*99)
@@ -4091,6 +4090,10 @@ c          CALL ER('WriteBlock04_06','Need to check BEAM setup',*99)
           WRITE(fp06,94) 2,'Fe      ',56,26,1,0,2,2,0,1
           WRITE(fp06,91) 36,115,214,0,00000
           WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
+        ELSEIF (opt_eir%ilspt.EQ.3) THEN
+          WRITE(fp06,94) 2,'W       ',184,74,1,0,2,2,0,1  ! This is not the correct data!
+          WRITE(fp06,91) 36,115,214,0,00000
+          WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
         ENDIF
 
         WRITE(fp06,90) '** 4b NEUTRAL MOLECULES SPECIES CARDS: NMOLI='
@@ -4520,6 +4523,8 @@ c      WRITE(fp06,92) 16.0,0.0,0.0,0.0,1.0E-15                      ! No volume 
         WRITE(fp06,94) 2,'C+     ',12,6,1,1,2,2,0,0
       ELSEIF (opt_eir%ilspt.EQ.2) THEN
         WRITE(fp06,94) 2,'Fe+    ',56,26,1,1,2,2,0,0
+      ELSEIF (opt_eir%ilspt.EQ.3) THEN
+        WRITE(fp06,94) 2,'W+     ',184,74,1,1,2,2,0,0
       ENDIF
 
       ibgk = 0
@@ -4669,6 +4674,7 @@ c
 c. *HARDCODED* Need to read the DIVIMP execution directory from an enviroment
 c              variable:
         WRITE(fp2,90) 'PATH  ./TRIM/'
+        WRITE(fp2,90) 'D_on_W'               
         WRITE(fp2,90) 'D_on_Mo'               
         WRITE(fp2,90) 'D_on_Fe'               
         WRITE(fp2,90) 'D_on_C'               

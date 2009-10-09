@@ -6,7 +6,8 @@
 
 !...  Surface types:
       INTEGER, PUBLIC, PARAMETER :: VESSEL_WALL          = 1, 
-     .                              NON_DEFAULT_STANDARD = 2
+     .                              NON_DEFAULT_STANDARD = 2,
+     .                              HOLE_IN_GRID         = 3  ! OK, not really a "surface"...
     
 !...  Non-default standard surface sub-types:
       INTEGER, PUBLIC, PARAMETER :: STRATUM                = 1, 

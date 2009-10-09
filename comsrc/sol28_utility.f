@@ -144,7 +144,7 @@ c        ENDDO
 c
 c ======================================================================
 c
-      SUBROUTINE CleanUp    ! Move to mod_osm.f
+      SUBROUTINE osmClean    ! Move to mod_osm.f
       USE mod_sol28_global
       IMPLICIT none
 

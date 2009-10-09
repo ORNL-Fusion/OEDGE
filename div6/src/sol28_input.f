@@ -340,7 +340,7 @@ c
       LOGICAL   GetLine
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
-      INTEGER   i1
+      INTEGER   i1,idum1
       REAL      stratum_type,version,rdum(7)
 
       SELECTCASE (buffer(3:itag-1))
@@ -351,17 +351,24 @@ c
           DO WHILE(GetLine(fp,buffer,NO_TAG))
             opt_eir%nvoid = opt_eir%nvoid + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
-            READ(buffer,*) 
-     .        opt_eir%void_zone(    opt_eir%nvoid),
-     .        opt_eir%void_grid(1:2,opt_eir%nvoid),
-     .        opt_eir%void_wall(1:2,opt_eir%nvoid),
-     .        opt_eir%void_add (1:2,opt_eir%nvoid),
-     .        opt_eir%void_res (    opt_eir%nvoid),
-     .        opt_eir%void_hole(1:2,opt_eir%nvoid),
-     .        opt_eir%void_code(    opt_eir%nvoid),
-     .        opt_eir%void_ne  (    opt_eir%nvoid),
-     .        opt_eir%void_te  (    opt_eir%nvoid),
-     .        opt_eir%void_ti  (    opt_eir%nvoid)
+            READ(buffer,*) idum1
+            IF (idum1.EQ.-2) THEN
+              READ(buffer,*) 
+     .          opt_eir%void_zone(    opt_eir%nvoid),
+     .          opt_eir%void_grid(1:2,opt_eir%nvoid)
+            ELSE
+              READ(buffer,*) 
+     .          opt_eir%void_zone(    opt_eir%nvoid),
+     .          opt_eir%void_grid(1:2,opt_eir%nvoid),
+     .          opt_eir%void_wall(1:2,opt_eir%nvoid),
+     .          opt_eir%void_add (1:2,opt_eir%nvoid),
+     .          opt_eir%void_res (    opt_eir%nvoid),
+     .          opt_eir%void_hole(1:2,opt_eir%nvoid),
+     .          opt_eir%void_code(    opt_eir%nvoid),
+     .          opt_eir%void_ne  (    opt_eir%nvoid),
+     .          opt_eir%void_te  (    opt_eir%nvoid),
+     .          opt_eir%void_ti  (    opt_eir%nvoid)
+            ENDIF
           ENDDO
         CASE('E NEUTRAL SOURCES')
           opt_eir%nstrata = 0
@@ -800,7 +807,7 @@ c...            Spacer, ignore:
 
         CASE('030')
         CASE('E16')
-        CASE('999')
+        CASE('999','EXIT')
           status = .FALSE.
        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
@@ -913,14 +920,17 @@ c...  Eirene options:
 
       opt_eir%nvoid = 0
 c      opt_eir%nvoid = 1
-c      opt_eir%void_zone(  1) =  -1
-c      opt_eir%void_grid(1,1) =   2
-c      opt_eir%void_grid(2,1) = 999
-c      opt_eir%void_res (  1) = 0.1
-c      opt_eir%void_code(  1) =  -1
-c      opt_eir%void_ne  (  1) = 0.0
-c      opt_eir%void_te  (  1) = 0.0
-c      opt_eir%void_ti  (  1) = 0.0
+c      opt_eir%void_zone(  1) =   -1
+c      opt_eir%void_grid(1,1) =    2
+c      opt_eir%void_grid(2,1) =  999
+c      opt_eir%void_wall(:,1) =   -1
+c      opt_eir%void_add (:,1) =   -1
+c      opt_eir%void_hole(:,1) = -1.0
+c      opt_eir%void_res (  1) =  0.1
+c      opt_eir%void_code(  1) =   -1
+c      opt_eir%void_ne  (  1) =  0.0
+c      opt_eir%void_te  (  1) =  0.0
+c      opt_eir%void_ti  (  1) =  0.0
 
       opt_eir%time  = 30
       opt_eir%niter = 0

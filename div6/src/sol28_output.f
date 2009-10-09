@@ -69,6 +69,137 @@ c...  Save solution:
 c
 c ======================================================================
 c
+      INTEGER FUNCTION GetTube(index,mode)
+      USE mod_geometry
+      USE mod_sol28_params  
+      USE mod_sol28_global  
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: index,mode
+
+      INTEGER GetObject
+
+      INTEGER fp,i1,ic,ic1,ic2,idim1,idim2,itube
+      INTEGER last_ncell,last_ntube 
+      DATA    last_ncell,last_ntube /0,0/ 
+ 
+      SAVE
+
+      fp = 0
+
+      GetTube = -1 
+
+      IF (ntube.EQ.0) RETURN
+
+      IF (.NOT.ALLOCATED(tube_index_map).OR.tube_modified.OR.
+     .    ncell.NE.last_ncell.OR.ntube.NE.last_ntube) THEN
+c...    Build the map:
+        WRITE(fp,*) 'MESSAGE GetTube: Building index map'
+        idim1 = MAX(ncell,nobj)
+        idim2 = 2
+        IF (ALLOCATED(tube_index_map)) DEALLOCATE(tube_index_map)
+        ALLOCATE(tube_index_map(-1:idim1,idim2))
+        tube_index_map(-1,:) = -1
+        tube_index_map(0:,:) =  0
+        DO ic = 1, idim1
+          IF (ic.LE.nobj) i1 = GetObject(ic,IND_CELL)
+          DO itube = 1, ntube
+            ic1 = tube(itube)%cell_index(LO)
+            ic2 = tube(itube)%cell_index(HI)
+            IF (ic.LE.nobj .AND.i1.GE.ic1.AND.i1.LE.ic2) 
+     .        tube_index_map(ic,1) = itube             
+            IF (ic.LE.ncell.AND.ic.GE.ic1.AND.ic.LE.ic2) 
+     .        tube_index_map(ic,2) = itube             
+          ENDDO
+        ENDDO
+        last_ncell = ncell
+        last_ntube = ntube
+        tube_modified = .FALSE.
+      ENDIF
+ 
+      SELECTCASE (mode)
+        CASE(IND_OBJECT)
+          IF (index.GT.nobj) CALL ER('GetTube','Object INDEX error',*99)
+          GetTube = tube_index_map(index,1)
+        CASE(IND_CELL)
+          IF (index.GT.ncell) CALL ER('GetTube','Cell INDEX error',*99)
+          GetTube = tube_index_map(index,2)
+        CASE DEFAULT
+          CALL ER('GetTube','Unknown MODE',*99)
+      ENDSELECT       
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      INTEGER FUNCTION GetObject(index,mode)
+      USE mod_geometry
+      USE mod_sol28_params  
+      USE mod_sol28_global  
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: index,mode
+
+      INTEGER idim1,idim2,iobj,i1,fp,imap
+      INTEGER last_ncell 
+
+      DATA last_ncell / -1 /
+
+      SAVE
+
+      fp = 0
+
+      GetObject = -1 
+
+      IF (nobj.EQ.0) RETURN
+
+      IF (.NOT.ALLOCATED(obj_index_map).OR.obj_modified.OR.
+     .    ncell.NE.last_ncell) THEN
+c...    Build the map:
+        WRITE(fp,*) 'MESSAGE GetObject: Building index map'
+        idim2 = OBJ_MAXNINDEX
+        idim1 = 0
+        DO iobj = 1, nobj  
+          IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID.OR.  ! Only for fluid grid objects
+     .        grp(obj(iobj)%group)%type  .NE.GRP_QUADRANGLE) CYCLE
+          DO i1 = 1, idim2
+            idim1 = MAX(idim1,obj(iobj)%index(i1))
+          ENDDO
+        ENDDO    
+        IF (ALLOCATED(obj_index_map)) DEALLOCATE(obj_index_map)
+        ALLOCATE(obj_index_map(idim1,idim2))
+        obj_index_map = 0
+        DO iobj = 1, nobj
+          IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID.OR.
+     .        grp(obj(iobj)%group)%type  .NE.GRP_QUADRANGLE) CYCLE
+          DO i1 = 1, idim2
+            imap = obj(iobj)%index(i1)
+            IF (imap.EQ.0) CYCLE
+            IF (i1.EQ.IND_IK.OR.i1.EQ.IND_IR.OR.i1.EQ.IND_IS) CYCLE
+c            WRITE(fp,*) 'GETOBJECT: ',iobj,i1,imap,obj_index_map(imap,i1)
+            IF (obj_index_map(imap,i1).EQ.0) THEN
+              obj_index_map(obj(iobj)%index(i1),i1) = iobj
+            ELSE
+c...          This simple mapping routine breaks down for 3D grids
+c             that use a toroidally symmetric plasma -- need to enhance...
+              CALL ER('GetObject','1:1 mapping voilation',*99)
+            ENDIF
+          ENDDO
+        ENDDO
+        last_ncell = ncell
+        obj_modified = .FALSE.
+      ENDIF
+
+      GetObject = obj_index_map(index,mode)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE DumpData_OSM(fname,title)
       USE mod_sol28_params
       USE mod_sol28_global
@@ -76,7 +207,9 @@ c
 
       CHARACTER*(*) fname,title 
 
-      INTEGER fp,it,ic,ion,i
+      INTEGER GetObject,GetTube
+
+      INTEGER fp,it,ic,ion,i,iobj
 
 
       CALL User_DumpData(fp,fname,title)
@@ -244,10 +377,29 @@ c
       ENDIF
 
       WRITE(fp,*)
-      WRITE(fp,'(A)') 'GEOMETRY DATA (FLUID GRID):'
+      WRITE(fp,'(A)') 'FLUID GRID MAP:'
+      IF (nobj.GT.0) THEN
+        DO it = 1, ntube
+          WRITE(fp,*)
+          WRITE(fp,10) '   TUBE =',it
+          WRITE(fp,'(3X,6A8,2X,2A9)') 
+     .      'Cell','Obj','Obj_12','Obj_23','Obj_34','Obj_41',
+     .      'Tube_41','Tube_23'
+          i = 0
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)        
+            i = i + 1
+            iobj = GetObject(ic,IND_CELL)
+            WRITE(fp,'(I3,6I8,2X,2I9)') i,ic,iobj,
+     .        obj(iobj)%omap(1:4),
+     .        GetTube(obj(iobj)%omap(4),IND_OBJECT), 
+     .        GetTube(obj(iobj)%omap(2),IND_OBJECT)
+          ENDDO
+        ENDDO      
+      ENDIF
+
 
       WRITE(fp,*)
-      WRITE(fp,'(A)') 'FIELD DATA:'
+      WRITE(fp,'(A)') 'VECTOR FIELD DATA:'
       IF (nfield.GT.0) THEN
         DO it = 1, ntube
           WRITE(fp,*)
@@ -259,7 +411,7 @@ c
           i = 0
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)        
             i = i + 1
-            WRITE(fp,'(I3,I8,5F11.5)') ic,
+            WRITE(fp,'(I3,I8,5F11.5)') i,ic,
      .        field(ic)%bratio,
      .        field(ic)%b,
      .        field(ic)%br,
