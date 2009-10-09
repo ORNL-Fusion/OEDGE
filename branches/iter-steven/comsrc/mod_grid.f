@@ -1,26 +1,10 @@
 !     -*-Fortran-*-
-      MODULE mod_grid
+      MODULE mod_grid_divimp
       IMPLICIT none
       PUBLIC
 
-
-!      PUBLIC :: ALLOC_GRID, DEALLOC_GRID
-
-
-      TYPE type_grid_cell
-        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
-        REAL*8  :: rcen,zcen,bratio,rv(4),zv(4)
-      ENDTYPE type_grid_cell
-
-      INTEGER, PARAMETER :: GRD_FORMAT_SONNET = 1
-
-
-      INTEGER   :: grd_format
-      CHARACTER :: grd_filename*1024
-
 !...  Variables to store the knot indices in the sonnet grid file, for use when
 !     loading B2 data from Rhozansky:
-
       INTEGER, SAVE :: divimp_maxnks,divimp_maxnrs
       INTEGER, ALLOCATABLE, SAVE :: divimp_ik(:,:),divimp_ir(:,:)
 
@@ -49,6 +33,56 @@
       IF (ALLOCATED(divimp_ir)) DEALLOCATE(divimp_ir)       
       RETURN
       END SUBROUTINE DEALLOC_GRID
+
+      END MODULE mod_grid_divimp
+!
+! ======================================================================
+!
+      MODULE mod_grid
+      IMPLICIT none
+      PUBLIC
+
+
+!      PUBLIC :: ALLOC_GRID, DEALLOC_GRID
+
+
+      TYPE type_grid_cell
+        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+        REAL*8  :: rcen,zcen,bratio,rv(4),zv(4)
+      ENDTYPE type_grid_cell
+
+      TYPE type_grid_body
+        INTEGER :: irsep
+        INTEGER :: irsep2
+        INTEGER :: irwall
+        INTEGER :: irtrap
+        INTEGER :: nrs
+        INTEGER :: ikti
+        INTEGER :: ikto
+        INTEGER :: nks(1000)
+      ENDTYPE type_grid_body
+
+      INTEGER, PARAMETER :: GRD_FORMAT_SONNET = 1,  
+     .                      XPT_SEARCH = 1,         
+     .                      R_INWARD   = 2,         
+     .                      P_FORWARD  = 3,         
+     .                      R_OUTWARD  = 4,         
+     .                      P_BACKWARD = 5        
+
+
+      INTEGER, ALLOCATABLE :: imap(:,:)
+
+      INTEGER :: nknot
+      TYPE(type_grid_cell),ALLOCATABLE :: knot(:)
+      TYPE(type_grid_body) :: grid_load
+
+      INTEGER   :: grd_format
+      CHARACTER :: grd_filename*1024
+
+!...  Variables to store the knot indices in the sonnet grid file, for use when
+!     loading B2 data from Rhozansky:
+!      INTEGER, SAVE :: divimp_maxnks,divimp_maxnrs
+!      INTEGER, ALLOCATABLE, SAVE :: divimp_ik(:,:),divimp_ir(:,:)
 
 
       END MODULE mod_grid
