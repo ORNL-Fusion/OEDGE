@@ -164,7 +164,7 @@ c
       INTEGER   KKLIM,KK,ICUT(2),NATIZ,NPROD,IP,IFATE,STATUS                    
       INTEGER   IPOS,IQX,IQY,IX,IY,IZ,MAXCIZ,IC,II,IOY,IOD,IO                   
       INTEGER   IMP,IMPLIM,MATLIM,J,JY,JX,IT,MPUT,IN
-      CHARACTER WHAT(51)*10,FATE(9)*16,STRING*21                                
+      CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
       REAL      POLODS(-MAXQXS:MAXQXS),TIMUSD,XM,YM                             
       REAL      SVPOLS(-MAXQXS:MAXQXS)
       REAL      RIONS(MAXIZS),STOTS(20)                                         
@@ -222,7 +222,8 @@ C
      >             'REACHED Y=2L',        'HIT Y=0 FROM Y<0',                   
      >             'REACHED Y=-2L',       'REACHED TIME CUT',                   
      >             'SPLITTING ION',       'ROULETTE DISCARD',                   
-     >             'CHARGE CHECK'/                                              
+     >             'CHARGE CHECK',        'X-ABSORPTION',
+     >             'Y-ABSORPTION'/                                              
 C                                                                               
       DATA  WHAT  /'  PRIMARY ',   ' SECONDARY',   ' TERTIARY ',                
      >             'QUATERNARY',   '  QUINARY ',   '  SIXTH   ',                
@@ -1366,6 +1367,20 @@ c
               Y_position = Y_position + delta_y1 + delta_y2
               Y     = SNGL (Y_position)                                            
 c
+c             jdemod - Check for Y absorption
+c
+              if (yabsorb_opt.ne.0) then 
+
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+
+                 if (ierr.eq.1) then 
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ifate = 11
+                   goto 790
+                endif 
+
+             endif
+
 c
 c             jdemod
 c
@@ -1376,6 +1391,8 @@ c             desired outboard where a limiter surface is present.
 c
 c             However - we can check for reflections here. 
 c
+
+
               if (yreflection_opt.ne.0) then 
                  if (abs(y).gt.ctwol) then 
                     write(6,*) 'Y > CTWOL'
@@ -1465,6 +1482,23 @@ C
                    CX = CX + SIGN(CDPSTP,CXCFS(IQX,J)-RANV(KK))
                 ENDIF
               ENDIF                
+c
+c             Add check for X absorption here
+c
+              if (xabsorb_opt.ne.0) then 
+                call check_x_absorption(cx,y,sputy,ciz,ierr)
+        
+               if (ierr.eq.1) then 
+c                 Particle absorbed - exit tracking loop - x absorption
+                  ifate = 10
+                  goto 790
+               
+               endif 
+
+              endif
+
+
+
 C                                                                               
 C------------ DO NOT NEED THE FOLLOWING TWO LINES FOR THE QUICK STANDARD        
 C------------ LIM VERSION WITH NO POLOIDAL DIFFUSION.  THEN KK WILL ONLY        
@@ -1588,12 +1622,17 @@ C
                tmp_y = y
 
                call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               sputy,debugl,ierr)
+     >                               sputy,ciz,debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
                   WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               elseif (ierr.eq.2) then
+                  ! particle Y-absorbed
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ifate = 11
+                   goto 790
                endif
 
                !
@@ -1770,16 +1809,21 @@ c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
                   call check_y_boundary(cx,y,oldy,absy,svy,alpha,
-     >                                  ctwol,sputy,
+     >                                  ctwol,sputy,ciz,
      >                                  debugl,ierr)
                   if (ierr.eq.1) then 
                      ! write some debugging info
                      WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
                      WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                  elseif (ierr.eq.2) then
+                     ! particle Y-absorbed
+c                  Particle absorbed - exit tracking loop - y absorption
+                     ifate = 11
+                     goto 790
                   endif
-               endif
 
+               endif
 
               YYCON = YY*CONO + 1.0                                             
               ALPHA = CX / YYCON                                                
@@ -3585,7 +3629,7 @@ c
 c     
 c     
       subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                            sputy,debugl,ierr)
+     >                            sputy,ciz,debugl,ierr)
       use error_handling
       use yreflection
       !
@@ -3599,7 +3643,7 @@ c
       implicit none
       real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
-      integer :: ierr
+      integer :: ierr,ciz
       
       real :: tmp_oldy
 
@@ -3607,13 +3651,31 @@ c
 
       ierr = 0
 c     
+c
+c     Check for crossing Y- absorbing surface before the y-coordinate are updated
+c
+c             jdemod - Check for Y absorption
+c
+              if (yabsorb_opt.ne.0) then 
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
 
+                 if (ierr.eq.1) then 
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ierr =2 
+                   return
+                endif 
+
+             endif
+
+c
       IF (Y.LE.-CTWOL) THEN                                           
 
  401     continue
          Y   = y + 2.0 * ctwol
          tmp_oldy = tmp_oldy + 2.0 * ctwol
          IF (Y.LE.-CTWOL) GOTO 401                                     
+
+
 
 c     
 c        jdemod 

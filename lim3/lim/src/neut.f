@@ -1547,7 +1547,7 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       INTEGER IPROD,IQX,IQY,IX,IY,IFATE,IP,IPOS,IT,NREJEC,KK,KKLIM              
       integer :: iqy_tmp
       INTEGER JY,J,IOY,IOD                                                      
-      CHARACTER FATE(6)*14                                                      
+      CHARACTER FATE(8)*14                                                      
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
 
@@ -1568,7 +1568,8 @@ C
 c      DATA PI   /3.141592654/,     RADDEG / 57.29577952 /                       
       DATA FATE /'REACHED WALL',           'REACHED CENTRE',                    
      >           'TIME = TMAX',            'STRUCK LIMITER',                    
-     >           'IONISED TO 1',           'FAILED LAUNCH'/                     
+     >           'IONISED TO 1',           'FAILED LAUNCH',
+     >           'X-ABSORPTION',           'Y-ABSORPTION'/                     
 C                                                                               
 C
 C     IF THE NEUTRAL LAUNCH OCCURS IN FREESPACE THEN SET THE
@@ -1794,7 +1795,7 @@ c
            endif
         endif
 c
-c       jdemod - Initialize particle reflection count
+c       jdemod - Initialize particle reflection counts
 c
         call init_part_reflection
 c        
@@ -2153,6 +2154,37 @@ C
         ENDIF                                                                   
         X = SNGL (DX)                                                           
         Y = SNGL (DY)                                                           
+
+c
+c     Check for exceeding an X absorbing surface
+c
+        if (xabsorb_opt.ne.0) then 
+           call check_x_absorption(x,y,sputy,0,ierr)
+        
+           if (ierr.eq.1) then 
+c            Particle absorbed - exit tracking loop - x absorption
+              ifate = 7
+              goto 899
+              
+           endif 
+
+        endif
+c
+c     Check for crossing a Y absorbing surface
+c
+        if (yabsorb_opt.ne.0) then 
+           call check_y_absorption(x,y,oldy,sputy,0,ierr)
+           
+
+           if (ierr.eq.1) then 
+c            Particle absorbed - exit tracking loop - y absorption
+              ifate = 8
+              goto 899
+
+              
+           endif 
+
+        endif
 
 c
 c     Check for y reflection - if it occurs also change the sign of dyvelf

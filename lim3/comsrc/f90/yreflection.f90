@@ -2,6 +2,28 @@ module yreflection
   use error_handling
   implicit none
 
+!
+! Absorbtion surfaces options
+!
+  integer :: xabsorb_opt, yabsorb_opt
+  integer :: yabsorb1_frame, yabsorb2_frame
+  real :: yabsorb1a, yabsorb2a, yabsorb1b, yabsorb2b,xabsorb
+!
+
+
+!
+! absorption statistics
+!
+
+  real*8 :: yabsorb1_cnt, yabsorb2_cnt, xabsorb_cnt
+  real*8 :: xabsorb_sputy, xabsorb_neut, xabsorb_ion, xabsorb_iz, xabsorb_yavg
+  real*8 :: yabsorb1_sputy, yabsorb1_neut, yabsorb1_ion, yabsorb1_iz, yabsorb1_xavg
+  real*8 :: yabsorb2_sputy, yabsorb2_neut, yabsorb2_ion, yabsorb2_iz, yabsorb2_xavg
+
+
+!
+! Reflection options
+!
   integer :: yreflection_opt
   real :: cmir_refl_lower, cmir_refl_upper
   real*8 :: cmir_refl_lower_dp, cmir_refl_upper_dp
@@ -29,6 +51,11 @@ module yreflection
   real*8 :: refl_cnt_first(-nxbins:nxbins,2,2),refl_pos_first(-nxbins:nxbins,2,2)
 
   real*8,parameter,private :: minval = 1.0e-10
+
+
+
+
+
 
 
 !
@@ -91,6 +118,52 @@ contains
       tot_part = 0.0
       tot_refl_part = 0.0
 
+!
+!     Initialize the absorbtion counters
+!
+      
+       yabsorb1_cnt = 0.0
+       yabsorb2_cnt = 0.0
+       xabsorb_cnt = 0.0
+
+!
+!      Initialize absorption statistics      
+!
+
+       xabsorb_sputy = 0.0
+       xabsorb_neut  = 0.0
+       xabsorb_ion   = 0.0
+       xabsorb_iz    = 0.0
+       xabsorb_yavg  = 0.0
+
+       yabsorb1_sputy= 0.0
+       yabsorb1_neut = 0.0
+       yabsorb1_ion  = 0.0 
+       yabsorb1_iz   = 0.0
+       yabsorb1_xavg = 0.0
+
+       yabsorb2_sputy= 0.0 
+       yabsorb2_neut = 0.0
+       yabsorb2_ion  = 0.0 
+       yabsorb2_iz   = 0.0
+       yabsorb2_xavg = 0.0
+
+!
+!     Set up the secondary absorbing surfaces outside the -L to L range
+!
+      if (yabsorb1a.gt.0.0) then 
+         yabsorb1b = yabsorb1a-lim_sep
+      else
+         yabsorb1b = yabsorb1a+lim_sep
+      endif
+
+      if (yabsorb2a.gt.0.0) then 
+         yabsorb2b = yabsorb2a-lim_sep
+      else
+         yabsorb2b = yabsorb2a+lim_sep
+      endif
+
+
 
     !
     ! Check to see if valid input has been specified - if not - turn the option off
@@ -100,12 +173,12 @@ contains
        call errmsg('YREFLECTION:TEST_REFLECTION','Y-REFLECTION OPTION IS ON BUT REFLECTION&
                    & LOCATIONS HAVE NOT BEEN PROPERLY SPECIFIED : Y-REFLECTION DISABLED')
        yreflection_opt=0
-       return
     endif
 
 
 
   end subroutine init_reflection
+
 
   subroutine init_part_reflection
     implicit none
@@ -197,7 +270,6 @@ contains
 
 
   end function check_reflected_region
-
 
   subroutine check_reflection(x,y,oldy,svy,sputy,part_type,debugl,ierr)
     implicit none
@@ -392,6 +464,133 @@ contains
   end subroutine check_reflection
 
 
+  subroutine check_x_absorption(x,y,sputy,iz,ierr)
+    implicit none
+    real :: x,y,sputy
+    integer :: iz
+    integer :: ierr
+
+!
+!   Given the X coordinate of the particle check for X absorption
+!
+!
+    ierr = 0
+
+    if (x.gt.xabsorb) then 
+       ierr =1 
+       xabsorb_cnt = xabsorb_cnt + 1.0
+       xabsorb_sputy = xabsorb_sputy + sputy
+       xabsorb_yavg = xabsorb_yavg + y
+
+       if (iz.eq.0) then 
+          xabsorb_neut = xabsorb_neut + sputy
+       else
+          xabsorb_ion = xabsorb_ion + sputy
+          xabsorb_iz = xabsorb_iz + sputy*iz
+       endif
+    endif
+
+
+  end subroutine check_x_absorption
+
+  subroutine check_y_absorption(x,y,oldy,sputy,iz,ierr)
+    implicit none
+    real :: x,y,oldy,sputy
+    integer :: ierr,iz
+
+!
+!   Given the change of the Y coordinate of the particle - check for Y absorption across surface - frame dependent
+!
+!
+!
+!   There may be 2 absorber surfaces - the number is controlled by the value of yabsorb opt ... data for absorb1 is checked first 
+!
+
+!                 if (y.gt.4.9.or.oldy.gt.4.9) then 
+!                    write(6,'(a,4(1x,g18.6),3i6)') 'Absorb check:',x,y,oldy,sputy,iz,part_frame,yabsorb1_frame
+!                 endif
+
+
+    ierr = 0
+    if (yabsorb_opt.ge.1.and.part_frame.eq.yabsorb1_frame) then 
+
+       !
+       ! Check to see if the particle has crossed either the primary absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
+       !
+
+       if (in_range(y,yabsorb1a,oldy).or.in_range(y,yabsorb1b,oldy)) then 
+
+          ierr = 1
+          yabsorb1_cnt = yabsorb1_cnt+1.0
+          yabsorb1_sputy = yabsorb1_sputy + sputy
+          yabsorb1_xavg = yabsorb1_xavg + x
+
+          if (iz.eq.0) then 
+             yabsorb1_neut = yabsorb1_neut + sputy
+          else
+             yabsorb1_ion = yabsorb1_ion + sputy
+             yabsorb1_iz = yabsorb1_iz + sputy*iz
+          endif
+
+       endif
+
+    endif
+
+
+    if (yabsorb_opt.ge.2.and.part_frame.eq.yabsorb2_frame) then 
+
+       !
+       ! Check to see if the particle has crossed either the primary absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
+       !
+
+       if (in_range(y,yabsorb2a,oldy).or.in_range(y,yabsorb2b,oldy)) then 
+
+          ierr = 1
+          yabsorb2_cnt = yabsorb2_cnt+1.0
+          yabsorb2_sputy = yabsorb2_sputy + sputy
+          yabsorb2_xavg = yabsorb2_xavg + x
+
+          if (iz.eq.0) then 
+             yabsorb2_neut = yabsorb2_neut + sputy
+          else
+             yabsorb2_ion = yabsorb2_ion + sputy
+             yabsorb2_iz = yabsorb2_iz + iz*sputy
+          endif
+
+       endif
+
+    endif
+    
+
+  end subroutine check_y_absorption
+
+
+  logical function in_range(y1,y0,y2) 
+    implicit none
+    real :: y0,y1,y2
+
+    if (y2.ge.y1) then 
+
+       if (y0.ge.y1.and.y0.le.y2) then 
+          in_range = .true.
+       else
+          in_range = .false.
+       endif
+
+    else
+
+       if (y0.le.y1.and.y0.ge.y2) then 
+          in_range = .true.
+       else
+          in_range = .false.
+       endif
+    endif
+
+!    if (y1.gt.4.9.or.y2.gt.4.9) then
+!       write(6,'(a,3(1x,g18.6),l6)') 'In range:',y1,y0,y2,in_range
+!    endif 
+
+  end function in_range
 
   subroutine pr_yref_stats
     implicit none
@@ -513,6 +712,67 @@ contains
 
 
     endif
+
+!
+!   Print absorption option statistics
+!
+    if (xabsorb_opt.ne.0) then 
+
+        call prb
+        call prc('  Summary of X-Absortpion events:')
+        call prr('  Location of X absorbing surface    :',xabsorb) 
+        call prr('  Total number of X-absorptions      :',sngl(xabsorb_cnt))
+        call prr('  Total weight of particles absorbed :',sngl(xabsorb_sputy))
+        call prr('    - neutrals                       :',sngl(xabsorb_neut))
+        call prr('    - ions                           :',sngl(xabsorb_ion))
+        call prr('  Average Y value at absorption      :',sngl(xabsorb_yavg/max(xabsorb_sputy,1.0d0)))
+        call prr('  Average ion charge at absorption   :',sngl(xabsorb_iz/max(xabsorb_ion,1.0d0)))
+        call prb
+
+    endif
+
+!
+    ! Print Y-absorption statistics  - first absorber
+!
+
+    if (yabsorb_opt.ge.1) then 
+
+        call prb
+        call prc('  Summary of Y-Absortpion events on first surface:')
+        call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb1a) 
+        call pri('  Frame containing first absorbing surface           :',yabsorb1_frame)
+        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb1_cnt))
+        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb1_sputy))
+        call prr('    - neutrals                                       :',sngl(yabsorb1_neut))
+        call prr('    - ions                                           :',sngl(yabsorb1_ion))
+        call prr('  Average X value at absorption                      :',sngl(yabsorb1_xavg/max(yabsorb1_sputy,1.0d0)))
+        call prr('  Average ion charge at absorption                   :',sngl(yabsorb1_iz/max(yabsorb1_ion,1.0d0)))
+        call prb
+        
+        write(6,'(a,5(1x,g18.6))') 'Yabsorb1:',yabsorb1a,yabsorb1_cnt,yabsorb1_sputy,yabsorb1_neut,yabsorb1_ion,yabsorb1_xavg,yabsorb1_iz
+
+    endif
+
+    ! Print Y-absorption statistics  - second absorber
+
+    if (yabsorb_opt.ge.2) then 
+
+        call prb
+        call prc('  Summary of Y-Absortpion events on second surface:')
+        call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb2a) 
+        call pri('  Frame containing second absorbing surface          :',yabsorb2_frame)
+        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb2_cnt))
+        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb2_sputy))
+        call prr('    - neutrals                                       :',sngl(yabsorb2_neut))
+        call prr('    - ions                                           :',sngl(yabsorb2_ion))
+        call prr('  Average X value at absorption                      :',sngl(yabsorb2_xavg/max(yabsorb2_sputy,1.0d0)))
+        call prr('  Average ion charge at absorption                   :',sngl(yabsorb2_iz/max(yabsorb2_ion,1.0d0)))
+        call prb
+
+        write(6,'(a,5(1x,g18.6))') 'Yabsorb1:',yabsorb2a,yabsorb2_cnt,yabsorb2_sputy,yabsorb2_neut,yabsorb2_ion,yabsorb2_xavg,yabsorb2_iz
+
+     endif
+
 
   end subroutine pr_yref_stats
 
