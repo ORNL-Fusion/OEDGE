@@ -72,7 +72,7 @@ c slmod end
       CALL RDI (CIOPTK,.TRUE.,-1,.TRUE., 7,'PLASMA ION TEMP OPT  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE., 1,'TEB GRAD COEFF OPT   ',IERR)
       CALL RDI (CIOPTM,.TRUE., 0,.TRUE., 1,'TIB GRAD COEFF OPT   ',IERR)
-      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,11,'LIMITER EDGE OPT     ',IERR)        
+      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,12,'LIMITER EDGE OPT     ',IERR)        
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 2,'CX RECOMB OPT        ',IERR)        
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)        
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 1,'DIFFUSION TYPE OPTION',IERR)
@@ -1448,6 +1448,75 @@ C-----------------------------------------------------------------------
        call prc('                       DERIVED PARAMETERS:')
        call prr('                       T_Re-entrant = Y_re = ', y_re)
        call prr('                       C                   = ', c_lim)
+      elseif (ciopth.eq.12) then
+       call prc('  LIMITER EDGE OPT 12: ITER HALF LIMITER SHAPE')
+       call prc('                       DEFINED BY:')
+       CALL prc('                       X = - (f(t) + g(p))')
+       call prc('                       Y = (t_re - t) / cos_beta')
+       call prc('                       '//
+     >      'f(t)=- lam * ln(1 -/+ C*(t - t_re-entrant)/lam ))')
+       call prc('                       g(p) = p**2 / (2 * rho_p_pol')
+
+       call prc('                       THIS INCLUDES THE EFFECT OF'//
+     >          ' MAGNETIC PITCH AND IS')
+       call prc('                       MAPPED SO THAT LIMITER TIP')
+       call prc('                       IS AT Y=0,X=0')
+       call prc('                       ONLY A SINGLE TANGENCY POINT')
+       call prc('                       IS SUPPORTED')
+       call prc('                       INPUT PARAMETERS:')
+       call prr('                       Toroidal setback  = ',
+     >                                  rtor_setback)
+       call prr('                       Slot     setback  = ',
+     >                                  rslot_setback)
+       call prr('                       BM Toroidal half width    = ',
+     >                                  bm_tor_wid)
+       call prr('                       Slot Toroidal half width  = ',
+     >                                  slot_tor_wid)
+       call prr('                       Lambda_design  = ',
+     >                                  lambda_design)
+       call prr('                       Bth/Bphi       =',
+     >              bth_bphi_ratio)
+       call prr('                       p_zero         =',p_0_value)
+       call prr('                       Rho_p_Pol      =',rho_p_pol)
+       call prr('                       R_ow           =',r_ow)
+       call prb
+       call prc('                       DERIVED PARAMETERS:')
+       call prr('                       Beta                =',lim_beta)
+       call prr('                       cos(Beta)           =',cos_beta)
+       call prr('                       T_Re-entrant        =', y_re)
+       call prr('                       C                   =', c_lim)
+       call prb
+       call prc('                       Shadow Locations:')
+       call prr('                       RR Neighbour BM Shadow'//
+     >                ' Depth = ', rr_shadow)
+       call prc('                       Re-entrant shadow :')    
+       call prr('                       Depth at +t_re = ',slot_shadow1)
+       call prr('                       Depth at -t_re = ',slot_shadow2)
+
+       call prb
+       call prc('                       X axis shifts to obtain'//
+     >          ' X,Y=0.0')
+       call prr('                       Y<0 shift = ',lim_xshift(1))
+       call prr('                       Y>0 shift = ',lim_xshift(2))
+       call prb
+       call prc('                       Revised shadow'//
+     >          ' locations with shift')
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' RR Neighbour BM Shadow = ',rr_shadow+lim_xshift(1))
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' Re-entrant shadow "+"  = ',slot_shadow1+lim_xshift(1))
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' Re-entrant shadow "-"  = ',slot_shadow2+lim_xshift(1))
+       call prb
+       call prc(' Note: The X-shift corrected "+" shadow should be 0.0')
+       call prc(' To determine re-entrant shadowing compare the "+"'//
+     >          ' and "-" values')
+       call prc(' These values are the depth or distance from'//
+     >          ' the FLFS to the surface at +/- t_re') 
+       call prc(' The smaller will fully shadow the larger while the '//
+     >          'larger shadows the difference in the two values')
+     
+
       ENDIF                                                                     
 C                                                                               
       call prb

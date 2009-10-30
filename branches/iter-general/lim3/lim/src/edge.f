@@ -649,7 +649,7 @@ c     * to work around this the limiter tip is mapped to (0, t_re-entrant)
 c     * and one half the limiter will become a slab at t=slot_tor_wid
 c     *
 c     * Code to handle a fully symmetric double tangency limiter shape is
-c     * in development. 
+c     * planned. 
 c     * 
 C     *                                                                   * 
 C     *       0...X...                                                    *        
@@ -752,7 +752,8 @@ c
             xtmp = abs(qxs(iqx))
             ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
-            if (ytmp.gt.bm_tor_wid-y_re) then 
+            if (xtmp.lt.-rtor_setback) then 
+c            if (ytmp.gt.bm_tor_wid-y_re) then 
                qedges(iqx,j) = bm_tor_wid-y_re
             else
                qedges(iqx,j) = ytmp
@@ -769,7 +770,9 @@ c
             xtmp = abs(qxs(iqx))
             ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
-            if (ytmp.gt.(y_re-slot_tor_wid)) then 
+            if (xtmp.lt.-rslot_setback) then 
+c
+c            if (ytmp.gt.(y_re-slot_toar_wid)) then 
 c
 c               Adjust edge to vertical at y_re - this should give an almost
 c               flat top to the slot - however, need to check how the code
@@ -835,6 +838,220 @@ c     >                                qedges(iqx,j)-qedges(iqx-1,j))
                endif
             end do
          end do
+
+
+
+
+
+c     
+C     
+C     *********************************************************************        
+C     *  EDGE12: ITER Blanket module  shape                               *
+c     *          The separation between the LCFS and the BM surface       *
+c     *          is defined by the equation:                              * 
+c     *                        
+c     *  X = f(t) + g(p)
+c     *  Y = (t - t_reentrant) / cos (beta)
+c     * f(t) = - lambda_design ln(1 -/+ C*(t - t_re-entrant)/lambda_design )  
+c     * g(p) = p**2 / (2* rho_pp)
+c     *
+c     * This limiter specification has two limiter tips at t=+/-t_re-entrant
+c     * which configuration is not supported in LIM at the moment. In order
+c     * to work around this the limiter tip is mapped to (0, t_re-entrant)
+c     * and one half the limiter will become a slab at t=slot_tor_wid
+c     *
+c     * Code to handle a fully symmetric double tangency limiter shape is
+c     * planned. 
+c     * 
+C     *                                                                   *
+C     *   David Elder Oct 28, 2009                                        *
+C     *                                                                   *        
+C     *********************************************************************        
+C     
+      ELSEIF (CIOPTH.EQ.12) THEN 
+C     
+c     
+c     Note: In Peter's notes and the ITER nomenclature - the variables are called
+c     Y for the parallel to field line distance and X for the radial distance. 
+c
+c     The limiter surface is defined in terms of t and p
+c     
+c     In this option the distance between the LCFS and the limiter surface is defined by
+c     the set of X,Y points determined from the following equations.
+c
+c      X = f(t) + g(p)
+c      Y = (t - t_reentrant) / cos (beta)
+c      f(t) = - lambda_design ln(1 -/+ C*(t - t_re-entrant)/lambda_design )  
+c      g(p) = p**2 / (2* rho_pp)
+c     
+c     where X is the radial distance to the limiter surface and Y is the distance along
+c     the field line from the limiter tip defined as Y=0.
+c     
+c     The Y axis stretches across the limiter surface which is defined in the t,p plane
+c     
+c     Keep in mind that the Y<0 and Y>0 limiter surfaces are specified with the same sign
+c     thus a symmetric limiter has the same 'sign' data stored in QEDGES and QTANS for each side 
+c     of the limiter. 
+c     
+c     It is not possible to analytically invert the X(Y) expression to obtain Y(X) needed by the 
+c     code. As a result, the code calculates a function X,Y numerically defining the surface
+c     and then uses interpolation to find appropriate values at the needed X coordinates on each side
+c     of the limiter. 
+c
+c
+c     NOTE: on the slot setback side the limiter shape becomes flat for +Yslot_setback < Y < +Y_reentrant
+c     
+c     Calculate C and t_re-entrant parameters for the limiter shape from the following formulae:
+c     
+c     
+c     y_re = t_re-entrant = bm_tor_wid * (1-exp(-rtor_setback/lambda_design)) + slot_tor_wid * (1-exp(-rslot_setback/lambda_design))/
+c     (( 1-exp(-rtor_setback/lambda_design)) + (1-exp(-rslot_setback/lambda_design)))
+c     
+c     C = C_inner = C_outer = lambda_design * (1-exp(-rtor_setback/lambda_design)) / (bm_tor_wid - t_re-entrant)
+c     
+c     Since LIM does not support two limiter tips at present we can only model 1/2 of the limiter. We do this by mapping 
+c     one limiter tip at y=y_re to y=0 and then we cut off the limiter at y=bm_tor_wid-y_re on one side and y=y_re-slot_tor_wid on the other.
+c     A fully symmetric limiter option might be possible if we can address the issue of the multiple surface degeneracy as a function of X. 
+c     
+c     
+
+         call calc_iter_limiter_parameters
+c        
+c         y_re = ( bm_tor_wid * (1-exp(-rtor_setback/lambda_design)) 
+c     >        +slot_tor_wid*(1-exp(-rslot_setback/lambda_design)))/
+c     >        ( (1-exp(-rtor_setback/lambda_design)) 
+c     >         +(1-exp(-rslot_setback/lambda_design)))
+c         c_lim = (lambda_design * (1-exp(-rtor_setback/lambda_design)))
+c     >        / (bm_tor_wid - y_re)
+c     
+         write(6,'(a,10(1x,g12.5))') 'EDGE OPTION 12: BM Parameters:',
+     >        rtor_setback,rslot_setback,bm_tor_wid,slot_tor_wid,
+     >        lambda_design,y_re,c_lim
+
+c
+c        Calculate the limiter shape function
+c
+c     
+c     Calculate QEDGES and QTANS: Extend limiter to Y=bm_tor_wid-y_re for "+"
+c     Extend limiter to Y=slot_toe_wid-y_re for "-" 
+c     
+         call calc_iter_limiter_shape
+
+C     
+C     USE THE J VARIABLE INSTEAD OF HARD-CODING 1 OR 2 SO THAT 
+C     MOVING TO AN ASYMMETRIC SITUATION WILL BE EASIER
+C     
+c     
+         ICUT(1) = 1-NQXSO
+         ICUT(2) = 1-NQXSO
+c     
+c     Apply the limiter shape to the First half Y<0 face though all Y values used are >0
+c     
+         J=1    
+         DO IQX = 1-NQXSO,0
+c
+            xtmp = qxs(iqx)           
+c
+c            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
+c
+            if (xtmp.lt.-rtor_setback) then 
+c
+c            if (ytmp.gt.bm_tor_wid-y_re) then 
+c               
+               qedges(iqx,j) = bm_tor_wid_y
+            else
+               qedges(iqx,j) = iter_limiter_shape(xtmp,j)
+            endif
+c     
+c     write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp
+c     
+         end do
+
+c     
+c     Apply the limiter shape to the Second half
+c     
+         J=2    
+         DO IQX = 1-NQXSO,0
+c
+            xtmp = qxs(iqx)
+c
+c            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
+c
+            if (xtmp.lt.-rslot_setback) then 
+c
+c            if (ytmp.gt.(y_re-slot_tor_wid)) then 
+c
+c               Adjust edge to vertical at y_re-slot_tor_wid - this should give an almost
+c               flat top to the slot - however, need to check how the code
+c               works since I think qtans is calculated as the average of 
+c               adjacent segments and the launches take place at points which 
+c               could be problematic. 
+c
+c               qedges(iqx,j) = y_re-slot_tor_wid
+c
+               qedges(iqx,j) = slot_tor_wid_y
+            else
+               qedges(iqx,j) = iter_limiter_shape(xtmp,j)
+            endif
+c     
+c     write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp
+c     
+         end do
+
+c
+c       After the limiter shape has been stored in QEDGES - clean up the limiter module
+c
+         call clean_up_iter_limiter_shape
+
+c     
+c     Calculate QTANS from QEDGES data
+c     
+c     Note: sign convention and calculation are copied from 
+c     other entries to remain consistent.
+c     
+         do j = 1,2
+            DO IQX = 1-NQXSO,0
+               if (iqx.eq.(1-nqxso)) then 
+                  if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
+                     qtans(iqx,j) = 0.0
+                  else
+                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                  endif
+
+               elseif (iqx.eq.0) then 
+c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
+c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
+                  if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
+                     qtans(iqx,j) = 0.0
+                  else
+                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                  endif
+c
+               else 
+c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
+c     >                                qedges(iqx+1,j)-qedges(iqx,j))
+c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
+c     >                                qedges(iqx,j)-qedges(iqx-1,j))
+                  if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
+                     theta1 = 0.0
+                  else
+                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                  endif
+                  if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
+                     theta2 = 0.0
+                  else
+                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                  endif
+                  qtans(iqx,j) = (theta1+theta2)/2.0
+               endif
+            end do
+         end do
+
+
 
       ENDIF
 c     
