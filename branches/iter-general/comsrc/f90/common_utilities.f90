@@ -1,4 +1,4 @@
-module divimp_utilities
+module common_utilities
   use error_handling
   implicit none
 
@@ -66,4 +66,4 @@ contains
 
   end subroutine swap
 
-end module divimp_utilities
+end module common_utilities
