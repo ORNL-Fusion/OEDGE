@@ -1,6 +1,6 @@
 module iter_bm
   use error_handling
-  use divimp_utilities
+  use common_utilities
   implicit none
 
   ! ITER BM shaping inputs
