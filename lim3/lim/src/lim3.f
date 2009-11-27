@@ -575,7 +575,7 @@ c
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)
+        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)
 C                                                                               
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
@@ -651,12 +651,22 @@ C---- CALCULATE INTERPOLATED/EXTRAPOLATED YMF AT EACH OUTBOARD X POSN.
 C---- DIFFERENT YIELD MODIFIERS FOR EACH SIDE OF Y = 0                          
 C---- FLAG DETERMINES WHETHER TO APPLY TO PRIMARIES, SECONDARIES, BOTH          
 C                                                                               
+c
+c     Set primary and secondary YMFs to 1.0 to start
+c
       DO 55 J = 1, 2                                                            
         DO 55 IQX = 1-NQXSO, 0                                                  
           CYMFPS(IQX,J) = 1.0                                                   
           CYMFSS(IQX,J) = 1.0                                                   
    55 CONTINUE                                                                  
 C                                                                               
+c     Calculating YMFs
+c
+c     cymfs(in,1) - X coordinate 
+c     cymfs(in,2) - Y<0 side data
+c     cymfs(in,3) - Y>0 side data
+c
+c
       IF (CYMFLG.NE.-2) THEN                                                    
         CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
      >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,1),'LINEAR')             
@@ -670,11 +680,38 @@ C
         CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
      >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
       ENDIF                                                                     
+c
+c     jdemod
+c
+c     if specific self-sputtering yields are specified they override the 
+c     cymflg flag specification. 
+c
+      if (ss_nymfs.gt.0) then
+         write(6,'(a)') 'Specified self-sputtering'//
+     >                  ' yield modifiers will be used:'
+         do in = 1,nymfs
+            write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+     >                      cymfs(in,2),cymfs(in,3)
+         end do
+c
+c        Apply yield modifiers to cymfss
+c
+        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,2),                               
+     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,1),'LINEAR')             
+        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,3),                               
+     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
+      endif
+
+
 C
-C      do in = 1,nymfs
-C         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
-C     >                      cymfs(in,2),cymfs(in,3)
-C      end do
+      do in = 1,nymfs
+         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+     >                      cymfs(in,2),cymfs(in,3)
+      end do
+      do in = 1,ss_nymfs
+         write(6,'(a,i6,10(1x,g12.5))') 'SS_CYMFS:',in,ss_cymfs(in,1),
+     >                      ss_cymfs(in,2),ss_cymfs(in,3)
+      end do
 
 c      do iqx=1-nqxso,0
 c         write(6,'(a,i8,10(1x,g12.5))') 
