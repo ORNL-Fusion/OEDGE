@@ -15,6 +15,9 @@ module iter_bm
   real :: bm_tor_wid_y,slot_tor_wid_y
   real :: rr_shadow,slot_shadow1,slot_shadow2
 
+  ! ITER BM derived quantities
+  real :: xtor_setback, xslot_setback
+
 
   ! ITER limiter shape
   integer, parameter :: npts = 1000
@@ -145,6 +148,17 @@ contains
 
        xtmp = -(ft+gp)
 
+       ! Need to record xtmp for the slot edge and the outer edge of the bm so that the 
+       ! edge locations of the limiter shape can be properly detected. These values will need
+       ! to be modified by the xshift value found below. 
+
+       if (in.eq.1) then 
+          xslot_setback = xtmp
+       elseif (in.eq.npts+1) then 
+          xtor_setback  = xtmp
+       endif
+
+
        write(6,'(a,i6,10(1x,g18.6))') 'LIM12:',in,t,p,ft,gp,ytmp,xtmp,y_re,delta_t
 
        if (ytmp.eq.0.0) then 
@@ -209,6 +223,10 @@ contains
     x_lim(in,2) = 0.0
     y_lim(in,2) = 0.0
 
+    ! Adjust x setback values for maxx
+    xslot_setback = xslot_setback - maxx
+    xtor_setback  = xtor_setback - maxx
+
 
     ! Re-order elements to ascending X values
 
@@ -225,6 +243,9 @@ contains
        call sort_arrays(0,cnts(2),x_lim(:,2),y_lim(:,2))       
 
     endif
+
+    write(6,'(a,2(2x,g12.5))') 'X Setback values (slot,tor)',xslot_setback, xtor_setback
+
 
     ! Print out the limiter shape 
 

@@ -840,9 +840,6 @@ c     >                                qedges(iqx,j)-qedges(iqx-1,j))
          end do
 
 
-
-
-
 c     
 C     
 C     *********************************************************************        
@@ -933,7 +930,7 @@ c        Calculate the limiter shape function
 c
 c     
 c     Calculate QEDGES and QTANS: Extend limiter to Y=bm_tor_wid-y_re for "+"
-c     Extend limiter to Y=slot_toe_wid-y_re for "-" 
+c     Extend limiter to Y=slot_tor_wid-y_re for "-" 
 c     
          call calc_iter_limiter_shape
 
@@ -954,7 +951,7 @@ c
 c
 c            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
-            if (xtmp.lt.-rtor_setback) then 
+            if (xtmp.lt.xtor_setback) then 
 c
 c            if (ytmp.gt.bm_tor_wid-y_re) then 
 c               
@@ -977,7 +974,7 @@ c
 c
 c            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
 c
-            if (xtmp.lt.-rslot_setback) then 
+            if (xtmp.lt.xslot_setback) then 
 c
 c            if (ytmp.gt.(y_re-slot_tor_wid)) then 
 c
