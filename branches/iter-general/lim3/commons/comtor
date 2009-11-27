@@ -65,10 +65,13 @@ c     unstructured input values.
 c
       common /sputdat/ csputopt,extra_sputter_angle,
      >                 cchemopt, const_yield, impact_energy_opt,
-     >                 init_y_coord,cselfs
+     >                 init_y_coord,cselfs,
+     >                 ss_nymfs,ss_cymfs
       integer csputopt,cchemopt,impact_energy_opt,cselfs
+      integer ss_nymfs
       real    extra_sputter_angle,init_y_coord
       real    const_yield        
+      real    ss_cymfs(maxins,3) 
 c
 c     Gradient multipliers
 c

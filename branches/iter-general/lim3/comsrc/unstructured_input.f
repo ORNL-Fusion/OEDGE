@@ -346,6 +346,15 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG L27: Optional self-sputtering yield modifier input
+c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
+c
+      ss_nymfs = 0
+      ss_cymfs = 1.0
+
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q26:
 c
 c     Specification of a density multiplier (gradient) to be applied
@@ -762,6 +771,24 @@ c
       elseif (tag(1:3).EQ.'L26') THEN
         CALL ReadR(line,r_ow,0.0,HI,
      >            'R value for calculating location of shadowline')
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L27: Optional self-sputtering yield modifier input
+c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
+c
+      elseif (tag(1:3).EQ.'L27') THEN
+
+         CALL RDRARN(ss_cymfs,ss_nymfs,
+     >               MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
+     >               2,'SET of SS YMF X,M(Y<0),M(Y>0)',IERR)
+         if (ss_cymfs(1,1).gt.ss_cymfs(ss_nymfs,1)) then 
+            call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
+     >       ' BE ENTERED IN ASCENDING ORDER IN X')
+            stop
+         endif
+
 c
 c -----------------------------------------------------------------------
 c

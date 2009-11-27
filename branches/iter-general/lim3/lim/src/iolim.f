@@ -332,7 +332,7 @@ C
 C---- READ IN YIELD MODIFIER FUNCTION AND FLAG                                  
 C                                                                               
       CALL RDRARN(CYMFS,NYMFS,MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
-     >                                      2,'SET OF X,M(X) VALS',IERR)        
+     >                             2,'SET OF X,M(Y<0),M(Y>0) VALS',IERR)        
 
       if (cymfs(1,1).gt.cymfs(nymfs,1)) then 
          call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
@@ -502,7 +502,7 @@ c slmod end
 C                                                                               
 C                                                                               
 C                                                                               
-      SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)                                
+      SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)                                
       use eckstein_2002_yield_data
       use eckstein_2007_yield_data
       use variable_wall
@@ -511,7 +511,7 @@ C
 C     
       implicit none 
 
-      integer :: nnbs,ntbs,ntibs
+      integer :: nnbs,ntbs,ntibs,nymfs
 c
       REAL      XSCALO,XSCALI
       INTEGER   NIZS 
@@ -2213,6 +2213,53 @@ C-----------------------------------------------------------------------
        CALL PRR('                       Q - MULT    (SECONDARIES)  = ', 
      >     QMULTS)
       ENDIF
+
+      call prb
+      call prc('   YIELD MODIFIER SPECIFICATIONS FROM INPUT:') 
+      call prb
+
+      call prc('   BASE YIELD MULTIPLIER IS 1.0 UNLESS'//
+     >             ' SPECIFIED OTHERWISE')
+      call prb
+
+      if (nymfs.gt.0) then 
+         if (cymflg.eq.-2) then 
+            call prc('   YMF FLAG OPTION -2 : BASE YMF'//
+     >             ' APPLIED TO SELF-SPUTTERING ONLY')
+         elseif (cymflg.eq.-1) then 
+            call prc('   YMF FLAG OPTION -1 : BASE YMF'//
+     >             ' APPLIED TO PRIMARY SPUTTERING ONLY')
+         elseif (cymflg.eq.0) then 
+            call prc('   YMF FLAG OPTION -2 : BASE YMF'//
+     >             ' APPLIED TO PRIMARY AND SELF-SPUTTERING')
+         endif
+         call prb
+         call prc ('   SPECIFIED SELF-SPUTTERING YIELD DATA:')
+         call prc ('     X (m)         YMF (Y<0)     YMF (Y>0) ') 
+         do in = 1,nymfs
+            write(coment,'(2x,3(2x,g12.5))') cymfs(in,1),
+     >            cymfs(in,2),cymfs(in,3)
+            call prc(coment)
+         end do
+         call prb
+      endif
+c
+      if (ss_nymfs.gt.0) then 
+         call prc ('   INPUT L27: SEPARATE SELF'//
+     >             ' SPUTTERING YIELDS HAVE BEEN'//
+     >             ' SPECIFIED AND ARE USED FOR SELF-SPUTTERING')
+         call prc ('              OVERRIDING THE YMF FLAG')
+         call prb
+         call prc ('   SPECIFIED SELF-SPUTTERING YIELD DATA:')
+         call prc ('     X (m)         YMF (Y<0)     YMF (Y>0) ') 
+         do in = 1,ss_nymfs
+            write(coment,'(2x,3(2x,g12.5))') ss_cymfs(in,1),
+     >            ss_cymfs(in,2),ss_cymfs(in,3)
+            call prc(coment)
+         end do
+         call prb
+      endif
+
 c
 c----------------------------------------------------------
 c
