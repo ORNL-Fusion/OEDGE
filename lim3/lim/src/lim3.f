@@ -1244,13 +1244,22 @@ c slmod begin - not sure what this does
                AVGTRAC = AVGTRAC + TPTRAC(TRACLEN-1,2) - 
      +                             TPTRAC(TRACLEN-2,2)
              ENDIF
+c
+c jdemod - the print out of the particle tracks can use a lot of space
+c          300Mb+ for a 6 particle debug for example - 6 particles from each 
+c          generation are printed. 
+c        - to allow collection of track information in the code without
+c          the overhead in the LIM file ... I have commented this out for
+c          now ... it could be added back with a specific print option 
+c          if that would help.  
+c
 c slmod end
-             write(6,'(a,i8,10(1x,g12.5))') 
-     >              'trac:',traclen-1,tptrac(traclen-1,1),
-     >              tptrac(traclen-1,2),
+c             write(6,'(a,i6,i8,10(1x,g12.5))') 
+c     >              'trac:',imp,traclen-1,tptrac(traclen-1,1),
+c     >              tptrac(traclen-1,2),
 c slmod
-     +             (tptrac(traclen-1,2)-tptrac(traclen-2,2)),
-     +             AVGTRAC/(TRACLEN-2)
+c     +             (tptrac(traclen-1,2)-tptrac(traclen-2,2)),
+c     +             AVGTRAC/(TRACLEN-2)
 c     >                  tptrac(traclen-1,2),bigtrac
 c slmod end
           endif

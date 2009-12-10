@@ -734,7 +734,7 @@ c
      >        lambda_design,y_re,c_lim
 c     
 c     Calculate QEDGES and QTANS: Extend limiter to Y=bm_tor_wid-y_re for "+"
-c     Extend limiter to Y=slot_toe_wid-y_re for "-" 
+c     Extend limiter to Y=slot_tor_wid-y_re for "-" 
 c     
 
 C     
@@ -749,8 +749,9 @@ c     First half
 c     
          J=1    
          DO IQX = 1-NQXSO,0
-            xtmp = abs(qxs(iqx))
-            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
+            xtmp = qxs(iqx)
+            ytmp = lambda_design/c_lim  * 
+     >             (1.0-exp(-abs(xtmp)/lambda_design))
 c
             if (xtmp.lt.-rtor_setback) then 
 c            if (ytmp.gt.bm_tor_wid-y_re) then 
@@ -759,7 +760,8 @@ c            if (ytmp.gt.bm_tor_wid-y_re) then
                qedges(iqx,j) = ytmp
             endif
 c     
-c     write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp
+            write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp,
+     >                                  qedges(iqx,j),-rtor_setback
 c     
          end do
 c     
@@ -767,8 +769,9 @@ c     Second half
 c     
          J=2    
          DO IQX = 1-NQXSO,0
-            xtmp = abs(qxs(iqx))
-            ytmp = lambda_design/c_lim  * (1.0-exp(-xtmp/lambda_design))
+            xtmp = qxs(iqx)
+            ytmp = lambda_design/c_lim  * 
+     >      (1.0-exp(-abs(xtmp)/lambda_design))
 c
             if (xtmp.lt.-rslot_setback) then 
 c
@@ -787,7 +790,8 @@ c
                qedges(iqx,j) = ytmp
             endif
 c     
-c     write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp
+            write(6,'(a,2i8,5(1x,g12.5))') 'edge calc:',j,iqx,xtmp,ytmp,
+     >                                  qedges(iqx,j),-rslot_setback
 c     
          end do
 
