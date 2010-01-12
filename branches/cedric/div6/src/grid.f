@@ -5164,6 +5164,7 @@ c on linear extrapolation...
 c...   End of GRDMOD loop:
 c      ENDDO
 
+        write(0,*) 'FINISHED SHAPETARGET:'
 
       RETURN
 99    CONTINUE
@@ -5318,7 +5319,8 @@ c        DO ir = irsep, irwall-1
           IF (ir1.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
      .        ir1.LT.irwall.AND.ir.GT.irtrap.OR.
      .        ir1.GT.irtrap.AND.ir.LT.irwall) CYCLE
-c          WRITE(0,*) 'ID1:',nks(ir1),ir1,irwall
+
+          WRITE(0,*) 'ID1:',nks(ir1),ir1,irwall
 
           id1 = korpg(nks(ir1),ir1)
           id2 = korpg(nks(ir),ir)
@@ -6381,12 +6383,7 @@ c      WRITE(0,*) 'IRBREAK:',irbreak
 
       irbreak = 0
 
-
-
-
-
-
-
+      write(0,*) 'TAILORGRID:',grdnmod
 
 c      STOP 'sdfsdfsd'
 
@@ -6414,7 +6411,8 @@ c
 c.... Delete and split rings:
       DO i1 = 1, grdnmod
  
-c        WRITE(0,*) 'GRDMOD:',i1,grdmod(i1,1)
+        WRITE(0,*) 'GRDMOD:',i1,grdmod(i1,1)
+        WRITE(6,*) 'GRDMOD:',i1,grdmod(i1,1)
 
         IF     (grdmod(i1,1).EQ.3.0) THEN
 c...      Type = 1 - cut a ring
@@ -6514,6 +6512,11 @@ c...      Hack for thesis version:
 
       ENDDO
 
+
+      write(0,*) 'Finished mods:'
+
+      write(0,*) 'Setting up:'
+
       CALL SetupGrid
 
 c...  Recalculate cell centers:
@@ -6531,6 +6534,9 @@ c      ENDDO
 
 
 c...  The grid is most likely a mess, fix it:
+
+      write(0,*) 'Sequencing:'
+
       CALL SequenceGrid
 
 c...  Check if the core and PFZ are balanced (NOTE: this will not be an issue when
@@ -6595,6 +6601,8 @@ c...  Assign NBR:
       ENDIF
 
 
+      WRITE(0,*) 'IRBREAK,NBR=',irbreak,nbr
+
       IF (sloutput) WRITE(0,*) 'IRBREAK,NBR=',irbreak,nbr
 
 c      CALL BuildMap
@@ -6602,6 +6610,8 @@ c      CALL BuildMap
 c...  Split cells along broken target so that the nearest neighbour of the
 c     target cell is well defined:
 
+
+      write(0,*) 'Building map:'
 
       CALL BuildMap
 
@@ -7059,6 +7069,9 @@ c      CALL DUMPGRID('TAILORGRI')
       rxp = rvertp(4,korpg(ikto,irsep))
       zxp = zvertp(4,korpg(ikto,irsep))
 
+      write(0,*) 'Finished Tailorgrid - '
+
+
       RETURN
 99    WRITE(0,*) 'IR=',ir,t1,id1
       WRITE(0,*) 'IK1,IR1,D1=',ik1,ir1,id1
@@ -7071,7 +7084,7 @@ c      CALL DUMPGRID('TAILORGRI')
       CALL DumpGrid('PROBLEM IN TAILORGRID')
       STOP
       END
-c
+c     END OF TAILORGRID
 c ========================================================================
 c ========================================================================
 c

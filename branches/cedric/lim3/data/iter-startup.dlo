@@ -2,6 +2,7 @@
 ' 91 OBSERVATION POSn: radius of curvature of B at origin Rv' 100.0             
 ' 91                   X coordinate                       Xv' 100.28            
 ' 91                   Y coordinate                       Yv'   2.00            
+'*O99 Erosion Scaling mm Be / hr                            '    1
 '170 Ylimit            Restrict Y to +/-min(Rv/3,L,this val)'  99.0            
 '114 IGNORE option' 'Give list of unwanted states below  (1 per line)'          
 '114 How many ionisation states to be ignored :-'   2                           

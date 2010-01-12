@@ -5,7 +5,7 @@
 #
 # 
 
-DIVSRC=/u/jde/divimp
+DIVSRC=$HOME/divimp
 
 DIVDIR=$HOME/divimp
 DIVRES=$DIVDIR/results

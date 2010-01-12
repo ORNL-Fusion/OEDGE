@@ -60,11 +60,14 @@ c
 
         IF (osm_mode.GE.1) THEN
           IF (ABS(errcode).EQ.1) THEN
+c
+c           jdemod - changed halflen to halfringlen
+c
             WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
      .        'SOL22: Low  ',ir,' (',deltat,' s)  E: ',err1,
      .        errstr(INT(errcode)),
-     .        simag1 / (halflen - soffset) * 100.0,' - ',
-     .        simag2 / (halflen - soffset) * 100.0,'%'
+     .        simag1 / (halfringlen - soffset) * 100.0,' - ',
+     .        simag2 / (halfringlen - soffset) * 100.0,'%'
           ELSE
             WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A)')
      .        'SOL22: Low  ',ir,
@@ -78,11 +81,14 @@ c
 
         IF (ABS(errcode).EQ.1) THEN
           per = (serr - soffset) / (spts(npts) - soffset) * 100.0
+c
+c           jdemod - changed halflen to halfringlen
+c
           WRITE(cdum2(LEN_TRIM(cdum2):128),
      .          '(A,2G8.1,A,I3,A,I3,A,F4.1)')
      .      '  '//errstr(ABS(errcode)),simag1,simag2,' (',
-     .        INT(simag1 / (halflen - soffset) * 100.0),'-',
-     .        INT(simag2 / (halflen - soffset) * 100.0),
+     .        INT(simag1 / (halfringlen - soffset) * 100.0),'-',
+     .        INT(simag2 / (halfringlen - soffset) * 100.0),
      .      '%)  O: ',actswerror
         ELSEIF (ABS(errcode).GT.0) THEN
           per = (serr - soffset) / (spts(npts) - soffset) * 100.0
@@ -129,11 +135,14 @@ c
 
         IF (osm_mode.GE.1) THEN
           IF (ABS(errcode).EQ.1) THEN
+c
+c           jdemod - changed halflen to halfringlen
+c
             WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
      .        'SOL22: High ',ir,' (',deltat,' s)  E: ',err2,
      .        errstr(INT(errcode)),
-     .        simag1 / (halflen - soffset) * 100.0,' - ',
-     .        simag2 / (halflen - soffset) * 100.0,'%'
+     .        simag1 / (halfringlen - soffset) * 100.0,' - ',
+     .        simag2 / (halfringlen - soffset) * 100.0,'%'
           ELSE
             WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A)')
      .        'SOL22: High ',ir,' (',deltat,' s)  E: ',err2,
@@ -147,11 +156,14 @@ c
 
         IF (ABS(errcode).EQ.1) THEN
           per = (serr - soffset) / (spts(npts) - soffset) * 100.0
+c
+c           jdemod - changed halflen to halfringlen
+c
           WRITE(cdum2(LEN_TRIM(cdum2):128),'(A,2G8.1,A,I3,A,I3,A,
      .                                       F4.1)')
      .      '  '//errstr(ABS(errcode)),simag1,simag2,' (',
-     .        INT(simag1 / (halflen - soffset) * 100.0),'-',
-     .        INT(simag2 / (halflen - soffset) * 100.0),
+     .        INT(simag1 / (halfringlen - soffset) * 100.0),'-',
+     .        INT(simag2 / (halfringlen - soffset) * 100.0),
      .      '%)  O: ',actswerror
         ELSEIF (ABS(errcode).GT.0) THEN
           per = (serr - soffset) / (spts(npts) - soffset) * 100.0
@@ -849,6 +861,12 @@ c            pinqe(ik,ir) = 0.1 * pinqe(ik,ir)
      .              region.EQ.IKHI.AND.ik.EQ.iks) THEN
                pinqe(ik,ir) = 0.0
             ELSE
+c
+c             jdemod - this assignment to pinqe would appear to make no
+c                      sense since it is assigning a length value to pinqe
+c                      presumably the length should be multiplied by some
+c                      sort of source term
+c
               pinqe(ik,ir) = -MAX(SNGL(0.15*ringlen-(s-soffset))
      .                            ,0.0)
 c              pinqe(ik,ir) = -MAX(SNGL(0.95*(halflen-soffset)-(s-soffset))

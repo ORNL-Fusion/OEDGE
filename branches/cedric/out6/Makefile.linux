@@ -21,6 +21,8 @@ CEXT=.c
 #
 VER=pgi
 VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
 #
 # Source file locations
 #
@@ -52,6 +54,8 @@ FCOMP=pgf90
 RM=rm -f
 #
 FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_pgi=pgf95
 #
 # Optimization and debugging flags
 #
@@ -93,6 +97,11 @@ OPTS=
 OPT_ABSOFT = -g 
 OPT_ABSOFT_OPT = -O
 #
+# LINUX - INTEL
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1 -g -traceback -debug all
+#
 # SET options
 #
 OPT = $(OPTG)
@@ -128,11 +137,13 @@ CFLAGS= $(OPTC) -I$(IDIR)
 # LINUX
 #
 #
+LIB_VER=
+#
 LOCAL_LIB=/usr/local/lib
-
+#
 LIB_INC= -L$(LOCAL_LIB)
-LIBSCOL= -lghost -lpostcl -ljpeg
-LIBSBW = -lghost -lpostsc -ljpeg
+LIBSCOL= -lghost$(LIB_VER) -lpostcl$(LIB_VER) -ljpeg
+LIBSBW = -lghost$(LIB_VER) -lpostsc$(LIB_VER) -ljpeg
 LIBSDEF= $(LIBSCOL)
 #
 LIBS=$(LIB_INC) $(LIBSDEF)
@@ -222,6 +233,24 @@ abs:
 
 absopt:
 	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT_OPT)" "VER=$(VER_ABSOFT)" 
+
+intel:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" 
+
+intelopt:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
+intellib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+inteloptlib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+intel-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
+
+intelopt-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"

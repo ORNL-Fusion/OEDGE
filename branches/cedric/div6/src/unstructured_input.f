@@ -494,10 +494,11 @@ c
       sg_rmin = 1.0
       sg_rmax = 1.5
 c
-c     G40: ZMIN and ZMAX values of the gridded region
+c     G41: ZMIN and ZMAX values of the gridded region
 c
       sg_zmin = 0.0
       sg_zmax = 1.4
+c
 c
 c -----------------------------------------------------------------------
 c

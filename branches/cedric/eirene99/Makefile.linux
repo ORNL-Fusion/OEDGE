@@ -2,11 +2,19 @@
 .SUFFIXES: .o .f
 
 F77=pgf90
+F77_INTEL=ifort
 # Let compiler determine the architecture unless a specific one is desired
 ARCH=
 #ARCH=-tp p6
+
 FFLAGS= -c -Munroll -Mnoframe 
+FFLAGS_INTEL= -c
+
 OPT=-O
+OPT_INTEL=-g 
+#OPT_INTEL=-g -traceback -debug all -check bounds
+#OPT_INTEL=-O1 
+
 LOCAL_LIB=
 
 #FFLAGS= -c -O2 -tp athlon -Munroll -Mnoframe -Mvect=prefetch
@@ -44,6 +52,9 @@ eirene64:
 
 eirenenative:
 	$(MAKE)  "ARCH=" 
+
+intel:
+	$(MAKE) "F77=$(F77_INTEL)" "FFLAGS=$(FFLAGS_INTEL)" "OPT=$(OPT_INTEL)"
 
 clean:
 	rm -f *.o

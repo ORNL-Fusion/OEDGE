@@ -6,6 +6,8 @@ c
      >                 RSTRUK,              
      >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
+      use variable_wall
+      use yreflection
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -89,6 +91,9 @@ C     INCLUDE (CNEUT)
       INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       INCLUDE 'coords'
+c
+      include 'global_options'
+c      
       EXTERNAL VLAN                                                             
 C                                                                               
 c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD                    
@@ -105,11 +110,29 @@ c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD
 c slmod
       REAL      PHI
 c slmod end
+c
+      real,parameter :: minval=1.0d-8
+c
+c     jdemod  - for wall options
+c
+      integer :: iqy_tmp 
+c
+c     jdemod - variables for the external flux data option
+c
+      integer :: in
+      real :: scale_fact,interp_fact,ext_coord
+c
+c     jdemod - added variable to hold the probability for Y<0 launch
+c
+      real :: side_probability
+c
+
 C                                                                               
 c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
 C
       IERR = 0
-
+      natiz1 = 0
+      natiz2 = 0
 C                                                                               
 C-----------------------------------------------------------------------        
 C       SET UP SECTION                                                          
@@ -198,7 +221,13 @@ C---- A UNIFORM DISTRIBUTION BETWEEN  -Y(RL) < Y < +Y(RL)
 C                                                                               
       
 c      write(6,*) 'Before clarmr ipos'
-      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
+c
+c     jdemod - qxs is only assigned useful data starting a qxs(1-nqxso) - if 
+c              ipos is passed qxs(-nqxso) it does not work as intended since
+c              qxs(-nqxso) will be 0.0 which is larger than qxs(0)
+c
+      KQX = IPOS (-CLARMR, QXS(1-NQXSO), NQXSO-1) - NQXSO - 1                      
+c      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
 c      write(6,*) 'After clarmr ipos'
       IF (CNEUTB.NE.0) CLARMR = 0.0                                             
       IF (CLARMR.GT.0.0) THEN                                                   
@@ -226,33 +255,176 @@ C       1990, FEB 8,  DAVID ELDER
 C
         CS = 9.79E3 * SQRT (((QTEMBS(IQX,J)+QTEMBSI(IQX,J))/2)*
      >       (1.0+REAL(CIZB))/CRMB)                
-        FLUX1(IQX,J)  = QRNBS(IQX,J) * CS * CSINTB                              
-        FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
-        ENEGY1(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
+c
+        if (extfluxopt.eq.0) then 
+           FLUX1(IQX,J)  = QRNBS(IQX,J) * CS * CSINTB                              
+c
+           ENEGY1(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
      >                  (3.0*REAL(CIZB) * QTEMBS(IQX,J))             
-        ENEGY2(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
+           ENEGY2(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
      >                  (3.0*REAL(CBOMBZ) * QTEMBS(IQX,J))                
-        IF (CNEUTD.EQ.8) 
+           IF (CNEUTD.EQ.8) 
      >     ENEGY1(IQX,J) = 2.0*QTEMBS(IQX,J) + REAL(CIZB) * CVS(IQX,J)
-        IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J)                          
+c
+           IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J)                          
+c
+        else 
+c
+c          Determine flux from input data
+c
+c          ext_coord  = appropriate coordinate for external flux
+c                       lookup
+c
+c          scale_fact = needed scaling factor to map flux back to
+c                       X axis deltaX that is used in the code below
+c                       scale factor is 1.0 for input flux data 
+c                       specified as a function of X. A flux specified
+c                       as a function of Y will give zero flux for
+c                       vertical limiter elements. While one specified
+c                       as a function of X will give zero flux for 
+c                       horizontal elements. 
+c
+c
+           if (extfluxopt.eq.1) then
+c
+c             Note: use negative value so that j=1 side of limiter ends up with "-"ve and 
+c                   j=2 is "+"ve for interpolating the input data (a line below changes
+c                   the sign given to ext_coord for j=1 making sure it is negative. Both the 
+c                   Y and D coordinates are intrinsically "+" ve for both sides of the limiter
+c
+              ext_coord = -qxs(iqx)
+              scale_fact = 1.0
+
+           elseif (extfluxopt.eq.2) then 
+
+              ext_coord = qedges(iqx,j)
+
+              if (iqx.eq.(1-nqxso)) then
+                 scale_fact = abs(qedges(iqx+1,j)-qedges(iqx,j))/
+     >                          deltax
+              elseif (iqx.eq.1) then 
+                 scale_fact = abs(qedges(iqx,j)-qedges(iqx-1,j))/
+     >                          deltax
+
+              else
+                 scale_fact = (abs(qedges(iqx+1,j)-qedges(iqx,j))
+     >                        +abs(qedges(iqx,j)-qedges(iqx-1,j)))/
+     >                          (2.0*deltax)
+              endif
+
+           elseif (extfluxopt.eq.3) then 
+
+              ext_coord = qdists(iqx,j)
+
+              if (iqx.eq.(1-nqxso)) then
+                 scale_fact = abs(qdists(iqx+1,j)-qdists(iqx,j))/
+     >                          deltax
+              elseif (iqx.eq.1) then 
+                 scale_fact = abs(qdists(iqx,j)-qdists(iqx-1,j))/
+     >                          deltax
+
+              else
+                 scale_fact = (abs(qdists(iqx+1,j)-qdists(iqx,j))
+     >                        +abs(qdists(iqx,j)-qdists(iqx-1,j)))/
+     >                          (2.0*deltax)
+              endif
+
+           endif
+
+           if (cprint.eq.1.or.cprint.ge.9) then 
+              write(6,'(a,2i5,10(1x,g12.5))') 'SCALEF:',iqx,j,
+     >            scale_fact,deltax,scale_fact*deltax,
+     >            qdists(iqx-1,j),qdists(iqx,j),qdists(iqx+1,j),   
+     >            qedges(iqx-1,j),qedges(iqx,j),qedges(iqx+1,j)
+     
+
+           endif
+c
+           if (j.eq.1) ext_coord = -ext_coord
+c
+c          Look up external flux function index - linear interpolation
+c
+           in = ipos(ext_coord,extfluxdata(1,1),nextfluxdata)
+c
+           if (ext_coord.le.extfluxdata(1,1).or.
+     >         ext_coord.ge.extfluxdata(nextfluxdata,1)) then
+
+              flux1(iqx,j)  =  extfluxdata(in,2)* scale_fact
+
+              enegy1(iqx,j) = extfluxdata(in,3)
+
+              enegy2(iqx,j) = enegy1(iqx,j)
+
+           else
+c
+c             Interpolate
+c
+              interp_fact = (ext_coord - extfluxdata(in-1,1))/
+     >                      (extfluxdata(in,1)-extfluxdata(in-1,1))
+c
+c             flux
+c
+              flux1(iqx,j) = (extfluxdata(in-1,2) + interp_fact *
+     >                       (extfluxdata(in,2)-extfluxdata(in-1,2)))*
+     >                       scale_fact      
+c
+c             energy
+c
+
+              enegy1(iqx,j) = extfluxdata(in-1,3) + interp_fact *
+     >                       (extfluxdata(in,3)-extfluxdata(in-1,3))
+
+              enegy2(iqx,j) = enegy1(iqx,j)
+
+           endif
+
+           if (cprint.eq.1.or.cprint.ge.9) then 
+              write(6,'(a,3i5,12(1x,g12.5))') 'EXTFLUX:',iqx,j,in,
+     >            ext_coord,extfluxdata(in-1,1),extfluxdata(in,1),
+     >            interp_fact,extfluxdata(in-1,2), extfluxdata(in-1,2),
+     >            flux1(iqx,j),extfluxdata(in-1,3),extfluxdata(in-1,3),   
+     >            enegy1(iqx,j)
+           endif
+
+        endif
+
+c
+c       CFIMP is the self-sputtering fraction for co-bombardment by 
+c       background and impurity ions. It should be 0.0 if the sputter
+c       option is not set to 2 - this is set at the beginning of the
+c       neut routine above.
+c
+
+        FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
+c
+c       calculate yields
+c
+
         YIELD1(IQX,J) = YIELD (MAT1,MATLIM,ENEGY1(IQX,J),0.0,0.0)
      >                      *QMULTP*CYMFPS(IQX,J)           
+
         YIELD2(IQX,J) = YIELD (MAT2,MATLIM,ENEGY2(IQX,J),0.0,0.0) 
      >                     *QMULTS*CYMFSS(IQX,J)        
+
         IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN       
           YIELD1(IQX,J) = YIELD1(IQX,J)*(1.0+CQPL/
      >                    (CQ(MAT1,MATLIM)*QMULTP))            
           YIELD2(IQX,J) = YIELD2(IQX,J)*(1.0+CQSL/
      >                    (CQ(MAT2,MATLIM)*QMULTS))            
         ENDIF                                                                   
+
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
         FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J)                            
 
-c        write(6,'(a,2i9,12(1x,g12.5))') 'Y:',iqx,j,
-c     >      flux1(iqx,j),flux2(iqx,j),
-c     >      enegy1(iqx,j),enegy2(iqx,j),
-c     >      yield1(iqx,j),yield2(iqx,j),
-c     >      fy1(iqx,j),fy2(iqx,j)
+        if (cprint.eq.1.or.cprint.ge.9) then 
+
+           write(6,'(a,2i9,12(1x,g12.5))') 'YIELD:',iqx,j,
+     >      flux1(iqx,j),flux2(iqx,j),
+     >      enegy1(iqx,j),enegy2(iqx,j),
+     >      yield1(iqx,j),yield2(iqx,j),
+     >      fy1(iqx,j),fy2(iqx,j)
+
+        endif
 c
 
    10 CONTINUE                                                                  
@@ -357,25 +529,50 @@ C
        CALL PRC ('SAMPLE PRIMARY FLUX AND YIELD DATA FOR Y > 0 SURFACE')        
        CALL PRC ('                                       *****        ')        
       ENDIF                                                                     
-      WRITE (7,9000)                                                            
+      WRITE (7,9003)                                                            
+c
       IF (CLARMR.GT.0.0) WRITE (7,9002)                                         
      >  QXS(1),CYMFPS(1,J),FLUX1(1,J),ENEGY1(1,J),                              
-     >  YIELD1(1,J),FY1(1,J),FY1(1,J)*DELTAX/FYTOT1(J)                          
-      DO 100 IQX = 0, -NQXSO/2, MIN (-1,-NQXSO/25)                              
-        IF (YIELD1(IQX,J).GT.1.E-3) WRITE (7,9002)                              
+     >  YIELD1(1,J),FY1(1,J),
+     >  FY1(1,J)*DELTAX/max(FYTOT1(J),minval)
+c
+c     write more complete data  
+c
+      DO 100 IQX = 0, -NQXSO, MIN (-1,-NQXSO/25)                              
+
+c        IF (YIELD1(IQX,J).GT.1.E-3) 
+        WRITE (7,9005)                              
      >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
-     >    YIELD1(IQX,J),FY1(IQX,J),FY1(IQX,J)*DELTAX/FYTOT1(J)                  
+     >    YIELD1(IQX,J),FY1(IQX,J),
+     >    FY1(IQX,J)*DELTAX/max(FYTOT1(J),minval),
+     >    (PI/2.0-QTANS(IQX,J))*RADDEG,
+     >    FY1(IQX,J)*SIN((PI/2.0-QTANS(IQX,J)))                         
+                  
+        WRITE (6,9005)                              
+     >    QXS(IQX),CYMFPS(IQX,J),FLUX1(IQX,J),ENEGY1(IQX,J),                    
+     >    YIELD1(IQX,J),FY1(IQX,J),
+     >    FY1(IQX,J)*DELTAX/max(FYTOT1(J),minval),
+     >    (PI/2.0-QTANS(IQX,J))*RADDEG,
+     >    FY1(IQX,J)*SIN((PI/2.0-QTANS(IQX,J)))                          
+                  
+
   100 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
-      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*SINTB      ',FTOT1(J))           
+      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX            ',FTOT1(J))           
       IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN      
-        CALL PRR ('PRIMARY (HIGH) INTEGRATED FLUX*YPH*SINTB ',                  
+        CALL PRR ('PRIMARY (HIGH) INTEGRATED FLUX*YPH       ',                  
      >   FYTOT1(J) / (1.0+CQPL/(CQ(MAT1,MATLIM)*QMULTP)))          
-        CALL PRR ('PRIMARY (LOW)  INTEGRATED FLUX*YPL*SINTB ',                  
+        CALL PRR ('PRIMARY (LOW)  INTEGRATED FLUX*YPL       ',                  
      >   FYTOT1(J) - FYTOT1(J) / (1.0+CQPL/(CQ(MAT1,MATLIM)*QMULTP)))         
       ENDIF                                                                     
-      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*YIELD*SINTB',FYTOT1(J))          
+      CALL PRR ('TOTAL PRIMARY INTEGRATED FLUX*YIELD      ',FYTOT1(J))          
+
+      if (csintb.ne.1.0) then 
+         call prr('TOROIDAL ANGLE FACTOR INCLUDED CALCULATIONS'//
+     >            ': CSINTB =',csintb)
+      endif
+
       IF (CNEUTD.EQ.2)                                                          
      >CALL PRR ('EXPECTED PROPORTION OF LAUNCHES          ',FRAC1(J))           
 C                                                                               
@@ -429,17 +626,31 @@ C
         PRIME  = .TRUE.                                                         
         SPREAD = .FALSE.                                                        
         RAN    = RANVA (IPROD)                                                  
-        IF (RAN.LE.FYTOT1(1)/(2.0*GYTOT1)) THEN                                 
+
+!
+!       jdemod - initial equal probability for wall launch on either side of limiter not related to 
+!       limiter fluxes
+!
+        if (cneutb.eq.4) then 
+           side_probability = 0.5
+        else
+           side_probability = FYTOT1(1)/(2.0*GYTOT1) 
+        endif
+!
+!       Test which side for launch
+!
+        IF (RAN.LE.side_probability) THEN                                 
           J = 1                                                                 
         ELSE                                                                    
           J = 2                                                                 
         ENDIF                                                                   
+c
         RAN = RANVB (IPROD)                                                     
 C                                                                               
 C------ DEPENDING ON OPTION CHOSEN,  SELECT LAUNCH POSITION ON LIMITER          
 C------ EDGE AND DETERMINE IF LAUNCH IS A SECONDARY LAUNCH ...                  
 C------ NOTE: CNEUTB=3 CASE.  SET IQX=0 EVEN IF LAUNCH IS AT X0>0, SINCE        
-C------ WE LATER REQUIRE RMAX1(IQX) WHICH IS UNDEFINED FOR IQX>0...             
+C------ WE LATER REQUIRE RMAX1(IQX) WHICH IS UNDEFINED FOR IQX0>...             
 C------ IF RMAX=0 TO PREVENT A FAILED LAUNCH SELECT A NEW X POSITION ..         
 C------ FOR LARMOR RADIUS EFFECT, IQX=1 BECOMES A VALUE WITHIN {KQX,0}.         
 C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"           
@@ -546,18 +757,86 @@ c
 c slmod end
 C                                                                               
         ELSEIF (CNEUTB.EQ.4) THEN                                               
-          IQX = 1-NQXSO                                                         
-          X0  = QXS(IQX)                                                        
-  290     Y0  = RAN * CTWOL                                                     
-          IF (J.EQ.1) Y0 = -Y0                                                  
-          IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
-     >        (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
-     >        (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
-            NRAND = NRAND + 1                                                   
-            CALL SURAND (SEED, 1, RAN)                                          
-            GOTO 290                                                            
-          ENDIF                                                                 
-          THETA = PI/2.0                                                        
+c
+c         Wall launch - need to adjust for new wall options
+c
+          if (lim_wall_opt.eq.0) then  
+
+             IQX = 1-NQXSO                                                         
+             X0  = QXS(IQX)                                                        
+  290        Y0  = RAN * CTWOL                                                     
+c
+c
+c            jdemod - for wall launches the initial Y position can not just be mirrored in the 
+c            Y axis since the limiter shapes on each side may be different. 
+c
+c
+c            IF (J.EQ.1) Y0 = -Y0                                                  
+c
+             IF (J.EQ.1) Y0 = Y0-CTWOL                                                  
+
+             IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
+     >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
+     >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               GOTO 290                                                            
+             ENDIF                                                                 
+
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 290
+             endif
+
+             THETA = PI/2.0                                                        
+
+          elseif (lim_wall_opt.eq.1) then 
+
+
+ 291         Y0  = RAN * CTWOL                                                     
+c
+             IQY_TMP = max(min(int(y0*yscale)+1,nqys),1)
+
+             X0 = caw_qys(iqy_tmp)
+
+c
+c             IQX = INT (X0 * XSCALO)                                             
+c
+c            Need to check the limiter extent at the farthest extent
+c            where IQX=1-NQXSO
+c
+             IQX = 1-NQXSO
+c
+             IF (J.EQ.1) Y0 = Y0-CTWOL                                                  
+c
+             IF ((Y0.LE.QEDGES(IQX,2)-CTWOL) .OR.                                  
+     >           (Y0.GE.-QEDGES(IQX,1).AND.Y0.LE.QEDGES(IQX,2)) .OR.               
+     >           (Y0.GE.CTWOL-QEDGES(IQX,1))) THEN                                 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               GOTO 291                                                            
+             ENDIF                                                                 
+c
+             if (check_reflected_region(Y0)) then 
+               NRAND = NRAND + 1                                                   
+               CALL SURAND (SEED, 1, RAN)                                          
+               goto 291
+             endif
+
+
+c             write(6,'(a,3(1x,i6),5(1x,g12.5))')'N:WALL LAUNCH:',nprod1,
+c     >                      iqy_tmp,iqx,x0,y0,yscale
+c
+c            jdemod 
+c            Normal incidence needs to be corrected at some point for these wall options
+c            NOTE: this theta is not used in NEUT - it must be calculated/assigned in LAUNCH
+c
+             THETA = PI/2.0                                                        
+
+          endif
+
+
         ELSEIF (CNEUTB.EQ.6) THEN
           X0 = CXSC
           IQX = 0
@@ -771,6 +1050,7 @@ C           CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE
 C           GIVEN Y POSITION FOR LAUNCH.
 C 
             CALL YEDGINT(Y0,X0,IQX,J,IERR)
+c
             XPRODS(NPROD1+IPROD) = X0                                         
             YPRODS(NPROD1+IPROD) = Y0                                          
             PPRODS(NPROD1+IPROD) = P0                                       
@@ -863,8 +1143,9 @@ C
 C         CALCULATE THE ACTUAL EDGE POSITION AND IQX BIN FROM THE 
 C         GIVEN Y POSITION FOR LAUNCH.
 C 
+c
           CALL YEDGINT(Y0,X0,IQX,J,IERR) 
-c          write(6,*) 'after yedgint ipos'
+c
           IOY = IPOS(Y0,OYS,MAXOS-1)
           NEROYS(IOY,6) = NEROYS(IOY,6) + 1.0   
           XPRODS(NPROD1+IPROD) = X0                                         
@@ -896,8 +1177,11 @@ C
 C     THIS IS CALCULATED ONLY IF ASKED FOR I.E. CDCALC = 1
 C
       CALL RZERO(CDFLUX,MAXOS*3)
-      WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
       IF (CDCALC.EQ.1) THEN 
+c
+        WRITE (6,*) 'NEUT:CDCALC : ',CDCALC
+c
         DO 310 IOY = 1,MAXOS
           CALL YEDGINT(OYOUTS(IOY),X0,IQX,J,IERR)
           IF (IERR.NE.0) THEN 
@@ -936,7 +1220,9 @@ C
 C     CALCULATE FLUXES
 C
         NINIT = FLOAT(NPROD) - FLOAT(IMPADD) -FLOAT(IMPCF)
-        WRITE(6,*) 'NINIT:',NINIT 
+
+        WRITE(6,*) 'CDCALC1:NINIT:',NINIT 
+
         J = 1
         DO 314 IOY = 1,MAXOS
           IF (OYOUTS(IOY).LT.-OYMAX2(1).OR.OYOUTS(IOY).GT.OYMAX2(2)) 
@@ -955,6 +1241,7 @@ C
             ENDIF 
             CDFLUX(IOY,3) = CDFLUX(IOY,1)+CDFLUX(IOY,2)
           ENDIF
+c
           WRITE(6,'(a,10(1x,g12.5))') 
      >      'IOY:FLUX1,OYCOORD2,CDF1:',IOY,
      >      FLUX1(OYIQX(IOY),J),OYCOORD(IOY,2),CDFLUX(IOY,1)
@@ -963,15 +1250,22 @@ C
      >      YIELD1(OYIQX(IOY),J),NEROYS(IOY,6),FYTOT(J),NINIT,
      >      CDFLUX(IOY,2)
 314     CONTINUE 
-        WRITE(6,*) 'NINIT:' ,NINIT
-        DO 316 IOY = 1,MAXOS
+
+        WRITE(6,*) 'CDCALC2:NINIT:' ,NINIT
+
+        write(6,'(a)') 'OYCOORD DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':OYC:',OYCOORD(IOY,1),OYCOORD(IOY,2),
+     >             IOY,':OYCOORD:',OYCOORD(IOY,1),OYCOORD(IOY,2),
      >              OYCOORD(IOY,3),OYIQX(IOY)
+        end do 
+
+        write(6,'(a)') 'CDFLUX DATA:'
+        DO IOY = 1,MAXOS
           WRITE(6,'(i8,a,5(1x,g12.5))') 
-     >             IOY,':CDF:',CDFLUX(IOY,1),CDFLUX(IOY,2),
+     >             IOY,':CDFLUX :',CDFLUX(IOY,1),CDFLUX(IOY,2),
      >              CDFLUX(IOY,3)
-316     CONTINUE
+        end do
       ENDIF
 C             
 C                                                                               
@@ -991,6 +1285,7 @@ C
      >CALL LAUNCH (FSRATE,1,NPROD1,1,NATIZ1,RSTRK1,RRES1,                       
      >             RATIZ1,RNEUT1,RWALL1,RCENT1,RTMAX1,SEED,NRAND,               
      >             NEUTIM,RFAIL1,STATUS,MAT1,MATLIM,QMULTP)                     
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C       STORE PRIMARY DETAILS IN "IONISATION -1" POSITION IN ARRAYS             
@@ -1079,9 +1374,11 @@ C
      >  QXS(1),CYMFSS(1,J),FLUX2(1,J),ENEGY2(1,J),                              
      >  YIELD2(1,J),FY2(1,J),FY2(1,J)*DELTAX/FYTOT2(J)                          
       DO 390 IQX = 0, -NQXSO/2, MIN (-1,-NQXSO/25)                              
+
         IF (YIELD2(IQX,J).GT.1.E-3) WRITE (7,9002)                              
      >    QXS(IQX),CYMFSS(IQX,J),FLUX2(IQX,J),ENEGY2(IQX,J),                    
      >    YIELD2(IQX,J),FY2(IQX,J),FY2(IQX,J)*DELTAX/FYTOT2(J)                  
+
   390 CONTINUE                                                                  
 C                                                                               
       CALL PRB                                                                  
@@ -1137,6 +1434,7 @@ C
 C     CHANGE THE VEL/ANG FLAG BACK TO ITS ORIGINAL VALUE
 C
       CNEUTC = TEMPOPT
+
 C
       RETURN                                                                    
 C                                                                               
@@ -1144,6 +1442,11 @@ C
      >  ' FLUX*YIELD    FRACTION')                                              
  9001 FORMAT(1X,'    ',A16,1P,2(5X,G11.2))                                      
  9002 FORMAT(2X,F9.5,F7.3,1P,5(G11.2,1X))                                       
+
+ 9003 FORMAT(3X,' X POSN   YMF    FLUX        ENERGY      YIELD    ',           
+     >  ' FLUX*YIELD    FRACTION    B-ANGLE(TB)   FLUX*YIELD*SINTB')                                              
+ 9004 FORMAT(1X,'    ',A16,1P,2(5X,G11.2))                                      
+ 9005 FORMAT(2X,F9.5,F7.3,1P,7(G11.2,1X))                                       
       END                                                                       
 C                                                                               
 C                                                                               
@@ -1151,6 +1454,8 @@ C
       SUBROUTINE LAUNCH (FSRATE,LPROD,NPROD,LATIZ,NATIZ,SSTRUK,SRES,            
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
+      use variable_wall
+      use yreflection
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1240,10 +1545,21 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       REAL    VY0,VY02,OLDY
       REAL    MAXXP(2)
       INTEGER IPROD,IQX,IQY,IX,IY,IFATE,IP,IPOS,IT,NREJEC,KK,KKLIM              
+      integer :: iqy_tmp
       INTEGER JY,J,IOY,IOD                                                      
       CHARACTER FATE(6)*14                                                      
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
+
+      real yvelf
+
+c
+c     jdemod minimum rvalue to prevent division by zero errors
+c
+      real, parameter :: minrval = 1.0e-10
+
+c      
+      integer :: ierr
 c slmod begin - N2 break
       LOGICAL N2STAT
       REAL    ENEW, VNEW,NFAST,N2Time
@@ -1289,6 +1605,7 @@ C
       CISTOT = 0.0                                                              
       CISMAX = 0.0                                                              
       IQY    = 0                                                                
+      iqy_tmp = 0
 C                                                                               
 C-----------------------------------------------------------------------        
 C        SET INITIAL VALUES FOR DIAGNOSTICS                                     
@@ -1357,8 +1674,11 @@ C
         EATIZ (J) = 0.0                                                         
         PATIZ (J) = 0.0                                                         
         REJECT(J) = 0.0                                                         
-        RNEUT (J) = 1.0E-50                                                     
-        RATIZ (J) = 1.0E-50                                                     
+        ! jdemod - these fixed constants are too large for R*4 - should use the parameter LO=1.0e-37 for R4
+        !RNEUT (J) = 1.0E-50                                                     
+        !RATIZ (J) = 1.0E-50                                                     
+        RNEUT (J) = LO                                                    
+        RATIZ (J) = LO                                                     
         RSTRUK(J) = 0.0                                                         
         RFAIL (J) = 0.0                                                         
         RRES  (J) = 0.0                                                         
@@ -1419,6 +1739,7 @@ C
       NRAND = NRAND + 3 * NPROD                                                 
       KK    = 1000 * ISECT                                                      
       KKLIM = KK - 10                                                           
+
 C
 C     SET UP VELOCITIES FOR USE IN THE NEUTRAL INJECTION CASE 6
 C     - PARTICLES ARE INJECTED AT X0 IN +/-Y0 WITH ONE OF TWO
@@ -1457,6 +1778,44 @@ c slmod end
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
+
+
+c
+c       Verify that the initial particle position is not inside a mirror region
+c
+        if (yreflection_opt.ne.0) then
+           if (check_reflected_region(y)) then 
+              call errmsg('NEUT:LAUNCH:','PARTICLE INITIAL POSITION'//
+     >            ' IS INSIDE MIRROR REGION:PARTICLE DISCARDED')
+
+              RFAIL(J) = RFAIL(J) + SPUTY                                           
+              IFATE = 6                                                             
+              GOTO 899                                                              
+           endif
+        endif
+c
+c       jdemod - Initialize particle reflection count
+c
+        call init_part_reflection
+c        
+c        write(0,'(a,i8,5g18.10)') 'IQX:',iqx,
+c     >       INT (X * XSCALI) + 1,INT (X * XSCALO),x,xscalo,xscali
+
+
+c       Calculate an IQY_TMP value to access CAW_QYS which gives the wall distance
+c       at a specific value of QYS - this IQY_TMP has a different meaning than the 
+c       IQY calculated below (which is relative to the limiter faces). 
+c
+        if (y.lt.0.0) then 
+           IQY_TMP = max(min(int((ctwol+y)*yscale)+1,nqys),1)
+        else
+           IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+        endif
+
+c
+c        write(6,'(a,3(1x,i6),5(1x,g12.5))') 'L:WALL LAUNCH:',
+c     >            iprod,iqy_tmp,iqx,x,y,yscale
+c
         IX    = IPOS (X, XS, NXS-1)                                             
         IY    = IPOS (ABSY, YS, NYS-1)                                          
         IF (Y.LT.0.0) IY = -IY                                                  
@@ -1467,6 +1826,7 @@ c slmod end
 c
 c        write(0,'(a,4i7,3(1x,g12.5))') 'LAUNCH:',iprod,ix,iy,ip,x,y,p
 C                                                                               
+
         RMAX  = RMAXS(IPROD)                                                    
         RESPUT= .FALSE.                                                         
         IF (RMAX.LT.0.0) THEN                                                   
@@ -1547,24 +1907,48 @@ C-----------------------------------------------------------------------
 C                                                                               
 c slmod
 
-        if (iqx.ge.0) then 
-           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+c
+c     Check for invalid IQX values
+c
+        if (iqx.gt.0) then 
+           write(6,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
-           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>=0:',
+           write(0,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
         endif
 
-        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4 .OR. CNEUTB.EQ.9 .OR.
+        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.9 .OR.
      +      CNEUTB.EQ.10) THEN   
+c        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4 .OR. CNEUTB.EQ.9 .OR.
+c     +      CNEUTB.EQ.10) THEN   
 c        IF (CNEUTB.EQ.3 .OR. CNEUTB.EQ.4) THEN                                  
 c slmod end
           TANTRU = PI / 2.0                                                     
+c
+c jdemod - set up wall launch to use actual wall normal
+c
+        elseif (cneutb.eq.4) then 
+
+           if (lim_wall_opt.eq.0) then 
+              tantru = PI/2.0
+           elseif (lim_wall_opt.eq.1) then 
+              ! jdemod - this complex expression is used so that after the effect of the sign
+              !          change (Y.ge.0) in the code below the actual angle will be correct
+              !
+              tantru = PI/2.0 + sign((caw_qys_tans(iqy_tmp) -PI/2.0),-y) 
+              !tantru = caw_qys_tans(iqy_tmp)
+           endif
+
         ELSEIF (FREEL) THEN
           TANTRU = 0.0 
         ELSEIF (Y.GE.0.0) THEN                                                  
           TANTRU = QTANS(IQX,2)                                                 
         ELSE                                                                    
+c
+c         jdemod - note that this is converted to PI - QTANS(IQX,1) below when TANGNT is calculated for Y < 0
+c
           TANTRU = QTANS(IQX,1)                                                 
+c
         ENDIF                                                                   
 C                                                                               
 C       TANLAN IS USED DIRECTLY IN VEL/ANG 12
@@ -1590,6 +1974,7 @@ C
         PTOT(J)  = PTOT(J) + ABS(P) * SPUTY                                     
         ATOT(J)  = ATOT(J) + (ANGLAN+TANLAN) * SPUTY                            
         RNEUT(J) = RNEUT(J) + SPUTY                                             
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C     CALCULATE LAUNCH VELOCITY.  FIRST SELECT RANDOM NUMBER IN THE             
@@ -1723,6 +2108,11 @@ c slmod end
           WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
      >      SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'NEUTRAL LAUNCH'                
         ENDIF                                                                   
+
+c        write(6,'(a,3(1x,i6),5(1x,g12.5))') 'NEUTRAL LAUNCH:',
+c     >        iprod,iqx,iqy,
+c     >        dxvelf/fsrate,dyvelf/fsrate,vin,angle*raddeg,tangnt*raddeg
+
 C                                                                               
 C------ CHECK IF NEUTRAL IS GOING TO STRIKE LIMITER SURFACE                     
 C                                                                               
@@ -1741,6 +2131,7 @@ C  ITERATE AROUND MOTION FOR EACH TIMESTEP UNTIL IONISATION OCCURS.
 C  GENERATE NEW SET OF RANDOMS WHEN OLD LOT ARE ALL USED UP                     
 C-----------------------------------------------------------------------        
 C                                                                               
+
   200   CONTINUE                                                                
         IF (KK.GT.KKLIM) THEN                                                   
           CALL SURAND (SEED, KK, RANV)                                          
@@ -1762,6 +2153,29 @@ C
         ENDIF                                                                   
         X = SNGL (DX)                                                           
         Y = SNGL (DY)                                                           
+
+c
+c     Check for y reflection - if it occurs also change the sign of dyvelf
+c
+        if (yreflection_opt.ne.0) then 
+           yvelf = sngl(dyvelf)
+           call check_reflection(x,y,oldy,yvelf,sputy,
+     >                           1,debugn,ierr)
+           if (ierr.eq.1) then 
+              ! write some debugging info
+              WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                 
+     >         SPUTY,(ANGLE+TANGNT)*RADDEG,IP,P,IT,'REFLECTED NEUTRAL'                
+
+
+           endif
+c
+c          Update particle position and velocity in case reflection occurred
+c
+           dy = dble(y)
+           dyvelf = dble(yvelf)
+c
+        endif
+c
         P = SNGL (DP)                                                           
         ABSY = ABS (Y)                                                          
         IF (X.GE.0.0) THEN                                                      
@@ -1769,19 +2183,36 @@ C
         ELSE                                                                    
           IQX = INT (X * XSCALO)                                                
         ENDIF                                                                   
-
-C                                                                               
-C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
+c
+c       Update IQY_TMP
+c
+        if (y.lt.0.0) then 
+           IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP-:',iqy_tmp,
+c     >               int((y+ctwol)*yscale)+1,
+c     >               y,ctwol,yscale,y+ctwol,(y+ctwol)*yscale
+        else
+           IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+c           write(6,'(a,2i8,6g18.10)'),'IQY_TMP+:',iqy_tmp,
+c     >               int((y+ctwol)*yscale)+1,
+c     >               y,ctwol,yscale,y*yscale
+        endif
+C                                                                               C------ CHECK IF NEUTRAL HAS REACHED WALL, REACHED CENTRE,                      
 C------ OR SURVIVED UNTIL TIME CUTOFF POINT ...                                 
 C------ WALLS ARRAY IS UPDATED                                                  
 C------ THE "IFATE" FLAG CAN BE USED WHEN PRINTING DEBUG MESSAGES WHICH         
 C------ ALLOW THE NEUTRALS TO BE TRACKED.  (WRITE 9003 STATEMENTS)              
 C                                                                               
-        IF (X.LE.CAW) THEN                                                      
-C
+        IF (X.LE.CAW_qys(iqy_tmp)) THEN                                                      
+
+c
 C         REFLECT NEUTRALS AT WALL IMPACT - IF OPTION ACTIVE
 C
           IF (NRFOPT.EQ.1) THEN 
+c
+c           jdemod - this is only correct for a flat wall - if an alternate wall option
+c                    is in use this should ideally be modified.  
+c
             DXVELF = -DXVELF 
           ELSE
             RWALLN(J) = RWALLN(J) + SPUTY                                         
@@ -1827,27 +2258,35 @@ C------ CHECKING THE IP BIN IS NOT NEEDED FOR THE STANDARD LIM VERSION.
 C                                                                               
         IF (.NOT.BIG) GOTO 450                                                  
   430   CONTINUE                                                                
-          IF ((IP.LE.-MAXNPS).OR.(PS(IP-1).LT.P))GOTO 440                       
+          IF (IP.LE.-MAXNPS)GOTO 440                       
+          IF (PS(IP-1).LT.P)GOTO 440                       
           IP = IP - 1                                                           
           GOTO 430                                                              
   440   CONTINUE                                                                
-          IF ((IP.GE.MAXNPS) .OR. (PS(IP).GE.P)) GOTO 450                       
+          IF ((IP.GE.MAXNPS)) GOTO 450                       
+          IF ((PS(IP).GE.P)) GOTO 450                       
           IP = IP + 1                                                           
           GOTO 440                                                              
   450   CONTINUE                                                                
-          IF ((IX.LE.1) .OR. (XS(IX-1).LT.X))    GOTO 460                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF (IX.LE.1)    GOTO 460                       
+          IF (XS(IX-1).LT.X)    GOTO 460                       
           IX = IX - 1                                                           
           GOTO 450                                                              
   460   CONTINUE                                                                
-          IF ((IX.GE.NXS) .OR. (XS(IX).GE.X))    GOTO 470                       
+          ! jdemod - accomodate Intel fortran - rewrite checks
+          IF ((IX.GE.NXS))    GOTO 470                       
+          IF ((XS(IX).GE.X))    GOTO 470                       
           IX = IX + 1                                                           
           GOTO 460                                                              
   470   CONTINUE                                                                
-          IF ((JY.LE.1) .OR. (YS(JY-1).LT.ABSY)) GOTO 480                       
+          IF ((JY.LE.1)) GOTO 480                       
+          IF ((YS(JY-1).LT.ABSY)) GOTO 480                       
           JY = JY - 1                                                           
           GOTO 470                                                              
   480   CONTINUE                                                                
-          IF ((JY.GE.NYS) .OR. (YS(JY).GE.ABSY)) GOTO 490                       
+          IF ((JY.GE.NYS)) GOTO 490                       
+          IF ((YS(JY).GE.ABSY)) GOTO 490                       
           JY = JY + 1                                                           
           GOTO 480                                                              
   490   CONTINUE                                                                
@@ -1931,7 +2370,7 @@ c
 c
 c *** ARGH! *** Was I making this horrible mistake all along?  Should it really be VNEW?
 c
-c *** ARGH! *** Add some good fucking statistics to catch this kind of thing!
+c *** ARGH! *** Add some good ****** statistics to catch this kind of thing!
 
            DXVELF = DBLE (VNEW * SIN(beta) * COS(psi) * FSRATE)                      
            DYVELF = DBLE (VNEW * SIN(beta) * SIN(psi) * FSRATE)                      
@@ -2066,6 +2505,7 @@ C
          IFATE = 5                                                              
 C                                                                               
   899  CONTINUE                                                                 
+
        MAXXP(J) = MAX(MAXXP(J),X) 
        IF (DEBUGN.OR.(IFATE.EQ.6))                                              
      >   WRITE (6,9003) IPROD,CIST,IQX,IQY,IX,IY,X,Y,VIN,TEMN,                  
@@ -2073,6 +2513,8 @@ C
        CISTOT = CISTOT + CIST * SPUTY                                           
        CISMAX = MAX (CISMAX, CIST)                                              
   900  CONTINUE                                                                 
+
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C      PRINT DIAGNOSTICS                                                        
@@ -2089,6 +2531,8 @@ C
       CALL PRI2 ('NUMBER OF NEUTRALS LAUNCHED        ',                         
      >           NINT(RNEUT (1)),    NINT(RNEUT (2)))                           
       ENDIF                                                                     
+
+
       IF (STATUS.LE.2) THEN                                                     
       CALL PRI2 ('NUMBER OF NEUTRALS REACHING WALL   ',                         
      >           NINT(RWALLN(1)),    NINT(RWALLN(2)))                           
@@ -2102,32 +2546,48 @@ C
      >           NINT(RFAIL (1)),    NINT(RFAIL (2)))                           
       CALL PRI2 ('NO OF VELOCITIES > VMAX (DISCARDED)',                         
      >           NINT(REJECT(1)),    NINT(REJECT(2)))                           
+
+
       CALL PRR2 ('AVERAGE X PRODUCTION POSITION (M)  ',                         
-     >           XTOT(1)/RNEUT(1),   XTOT(2)/RNEUT(2))                          
+     >           XTOT(1)/max(RNEUT(1),minrval),
+     >           XTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('MINIMUM X PRODUCTION POSITION (M)  ',                         
      >           XMIN(1),            XMIN(2))                                   
       CALL PRR2 ('MAXIMUM X PRODUCTION POSITION (M)  ',                         
      >           XMAX(1),            XMAX(2))                                   
       CALL PRR2 ('AVERAGE ABS(Y) PRODN POSITION (M)  ',                         
-     >           YTOT(1)/RNEUT(1),   YTOT(2)/RNEUT(2))                          
+     >           YTOT(1)/max(RNEUT(1),minrval),   
+     >           YTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('AVERAGE ABS(P) PRODN POSITION (M)  ',                         
-     >           PTOT(1)/RNEUT(1),   PTOT(2)/RNEUT(2))                          
+     >           PTOT(1)/max(RNEUT(1),minrval),
+     >           PTOT(2)/max(RNEUT(2),minrval))                          
       CALL PRR2 ('AVERAGE ANGLE AT PRODUCTION (DEGS) ',                         
-     >    RADDEG*ATOT(1)/RNEUT(1),   RADDEG*ATOT(2)/RNEUT(2))                   
+     >    RADDEG*ATOT(1)/max(RNEUT(1),minrval),
+     >    RADDEG*ATOT(2)/max(RNEUT(2),minrval))                   
+
       CALL PRR2 ('AVERAGE VELOCITY WITHOUT ANGLE FACT',                         
-     >           VTOTA(1)/RNEUT(1),  VTOTA(2)/RNEUT(2))                         
+     >           VTOTA(1)/max(RNEUT(1),minrval),
+     >           VTOTA(2)/max(RNEUT(2),minrval))                         
       CALL PRR2 ('MAXIMUM VELOCITY WITHOUT ANGLE FACT',                         
      >           VTOTAM(1),          VTOTAM(2))                                 
       CALL PRR2 ('AVERAGE ANGULAR VEL CORRECTION FACT',                         
-     >           VMULTT(1)/RNEUT(1), VMULTT(2)/RNEUT(2))                        
+     >           VMULTT(1)/max(RNEUT(1),minrval),
+     >           VMULTT(2)/max(RNEUT(2),minrval))                        
+
       CALL PRR2 ('MAXIMUM ANGULAR VEL CORRECTION FACT',                         
      >           VMULTM(1),          VMULTM(2))                                 
       CALL PRR2 ('AVERAGE VELOCITY AT PRODUCTION(M/S)',                         
-     >           VTOT(1)/RNEUT(1),   VTOT(2)/RNEUT(2))                          
+     >           VTOT(1)/max(RNEUT(1),minrval),
+     >           VTOT(2)/max(RNEUT(2),minrval))                          
+
       CALL PRR2 ('MAXIMUM VELOCITY AT PRODUCTION(M/S)',                         
      >           VTOTM(1),           VTOTM(2))                                  
+
       CALL PRR2 ('AVERAGE TEMP AT PRODUCTION (EV)    ',                         
-     >           ETOT(1)/RNEUT(1),   ETOT(2)/RNEUT(2))                          
+     >           ETOT(1)/max(RNEUT(1),minrval),
+     >           ETOT(2)/max(RNEUT(2),minrval))                          
       ENDIF                                                                     
 C                                                                               
       SNEUT  = RNEUT (1) + RNEUT (2)                                            
@@ -2138,32 +2598,43 @@ C
       SFAIL  = RFAIL (1) + RFAIL (2)                                            
       SATIZ  = RATIZ (1) + RATIZ (2)                                            
       SRES   = RRES  (1) + RRES  (2)                                            
-      CTEMSC =(EATIZ (1) + EATIZ (2)) / SATIZ                                   
+
+      CTEMSC =(EATIZ (1) + EATIZ (2)) / max(SATIZ,minrval)                                   
+
       CALL PRB                                                                  
       CALL PRI2 ('NUMBER OF NEUTRALS IONISED         ',                         
      >           NINT(RATIZ(1)),     NINT(RATIZ(2)))                            
 C                                                                               
       IF (SATIZ.GT.0.0 .AND. STATUS.LE.2) THEN                                  
+         
         CALL PRR2 ('AVERAGE X IONISATION POSITION (M)  ',                       
-     >             XATIZ(1)/RATIZ(1),   XATIZ(2)/RATIZ(2))                      
+     >             XATIZ(1)/max(RATIZ(1),minrval),
+     >             XATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('MAXIMUM X IONIZATION POSITION (M)  ',
      >              MAXXP(1) , MAXXP(2) )                 
         CALL PRR2 ('AVERAGE ABS(Y) IONIS POSITION (M)  ',                       
-     >             YATIZ(1)/RATIZ(1),   YATIZ(2)/RATIZ(2))                      
+     >             YATIZ(1)/max(RATIZ(1),minrval),
+     >             YATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE ABS(P) IONIS POSITION (M)  ',                       
-     >             PATIZ(1)/RATIZ(1),   PATIZ(2)/RATIZ(2))                      
+     >             PATIZ(1)/max(RATIZ(1),minrval),
+     >             PATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE ANGLE AT IONISATION (DEGS) ',                       
-     >      RADDEG*AATIZ(1)/RATIZ(1),   RADDEG*AATIZ(2)/RATIZ(2))               
+     >      RADDEG*AATIZ(1)/max(RATIZ(1),minrval),
+     >      RADDEG*AATIZ(2)/max(RATIZ(2),minrval))               
         CALL PRR2 ('AVERAGE VELOCITY AT IONISATION(M/S)',                       
-     >             VATIZ(1)/RATIZ(1),   VATIZ(2)/RATIZ(2))                      
+     >             VATIZ(1)/max(RATIZ(1),minrval),
+     >             VATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('MAXIMUM VELOCITY AT IONISATION(M/S)',                       
      >             VATIZM(1),           VATIZM(2))                              
         CALL PRR2 ('AVERAGE TEMP AT IONISATION (EV)    ',                       
-     >             EATIZ(1)/RATIZ(1),   EATIZ(2)/RATIZ(2))                      
+     >             EATIZ(1)/max(RATIZ(1),minrval),
+     >             EATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('AVERAGE TIME TO IONISATION (S)     ',                       
-     >             TATIZ(1)/RATIZ(1),   TATIZ(2)/RATIZ(2))                      
+     >             TATIZ(1)/max(RATIZ(1),minrval),
+     >             TATIZ(2)/max(RATIZ(2),minrval))                      
         CALL PRR2 ('FRACTION OF IONISATIONS INBOARD    ',                       
-     >             FRACIN(1)/RATIZ(1),  FRACIN(2)/RATIZ(2))                     
+     >             FRACIN(1)/max(RATIZ(1),minrval),
+     >             FRACIN(2)/max(RATIZ(2),minrval))                     
       ENDIF                                                                     
 c slmod begin - N2 break
       IF (N2OPT.EQ.1) THEN
@@ -2207,6 +2678,7 @@ c slmod begin - N2 break
       ENDIF
 c slmod end
 C                                                                               
+
 
       WRITE (6,'(1X,A,I15)') 'AV. ITERS PER NEUT ',NINT(CISTOT/RPROD)           
       WRITE (6,'(1X,A,I15)') 'MAX ITERS ANY NEUT ',NINT(CISMAX)                 
@@ -2290,7 +2762,7 @@ C  *  SUBLIMATION CASE  (SPUTTER OPTION 5).                            *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+      INCLUDE 'params'                                                        
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          

@@ -1,0 +1,8 @@
+c       -*-Fortran-*-
+c
+c	Common block for any options applying globally
+c
+
+	common /global_options/ cprint
+c
+	integer cprint
