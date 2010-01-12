@@ -1131,7 +1131,8 @@ c...  Vacuum grid options:
      .                -MACHHI,MACHHI,3,'Vacuum grid data 1.0',IERR)
 
           DO i1 = 1, vacnseg
-           WRITE(fp,'(A,1P,4F10.4)') 'VS: ',(vacseg(i1,i2),i2=1,4)
+           ! jdemod - changed to f12 due to some formatting errors in INTEL compiler
+           WRITE(fp,'(A,1P,4G12.4)') 'VS: ',(vacseg(i1,i2),i2=1,4)
           ENDDO
 
 c          iflexopt(2) = 20
@@ -1150,19 +1151,22 @@ c          iflexopt(2) = 20
      .                            'or 0.0',*99)
           ENDDO
           DO i1 = 1, vacnpla
-           WRITE(fp,'(A,1P,8F10.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
+           ! jdemod - changed to g12 due to some formatting errors in INTEL compiler
+           WRITE(fp,'(A,1P,8G12.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
           ENDDO
         ELSEIF (line(7:9).EQ.'1.2') THEN
           CALL RDRARN(vacpla,vacnpla,MAXNKS,-MACHHI,MACHHI,.FALSE.,
      .                -MACHHI,MACHHI,6,'Vacuum grid plasma 1.2',IERR)
           DO i1 = 1, vacnpla
-           WRITE(fp,'(A,1P,7F10.4)') 'VS: ',(vacpla(i1,i2),i2=1,7)
+           ! jdemod - changed to g12 due to some formatting errors in INTEL compiler
+           WRITE(fp,'(A,1P,7g12.4)') 'VS: ',(vacpla(i1,i2),i2=1,7)
           ENDDO
         ELSEIF (line(7:9).EQ.'1.1') THEN
           CALL RDRARN(vacpla,vacnpla,MAXNKS,-MACHHI,MACHHI,.FALSE.,
      .                -MACHHI,MACHHI,7,'Vacuum grid plasma 1.1',IERR)
           DO i1 = 1, vacnpla
-           WRITE(fp,'(A,1P,8F10.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
+           ! jdemod - changed to g12 due to some formatting errors in INTEL compiler
+           WRITE(fp,'(A,1P,8g12.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
           ENDDO
         ELSEIF (line(7:9).EQ.'1.0') THEN
           CALL RDRARN(vacpla,vacnpla,MAXNKS,-MACHHI,MACHHI,.FALSE.,
@@ -1175,7 +1179,8 @@ c...      Adjust input to make compatible with version 1.1:
             vacpla(i1,2) = vacpla(i1,1)
           ENDDO
           DO i1 = 1, vacnpla
-           WRITE(fp,'(A,1P,8F10.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
+           ! jdemod - changed to g12 due to some formatting errors in INTEL compiler
+           WRITE(fp,'(A,1P,8g12.4)') 'VS: ',(vacpla(i1,i2),i2=1,8)
           ENDDO
         ELSE
           CALL ER('RUI','Unsupported revision for V02 VACPLA',*99)
@@ -1962,9 +1967,10 @@ c
 c     0 = stanard Sonnet grid = Default 
 c     1 = FRC version 1 - type of Sonnet grid 
 c         - used to set various FRC related options
+c     2 = sonnet grid without boundary cells
 c
       ELSEIF (tag(1:3).EQ.'G23') THEN
-        CALL ReadI(line,sonnet_grid_sub_type,0,1,'SONNET Grid '//
+        CALL ReadI(line,sonnet_grid_sub_type,0,2,'SONNET Grid '//
      >                                     'SUB-Type Option')
 c
 c -----------------------------------------------------------------------
@@ -2070,8 +2076,8 @@ c
 c
 c     G41: ZMIN,ZMAX of the subgrid region
 c
-
         CALL Read2R(line,sg_zmin,sg_zmax,-HI,HI,'SUBGRID ZMIN,ZMAX')
+c
 c
 c -----------------------------------------------------------------------
 c

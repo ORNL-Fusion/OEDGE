@@ -1,5 +1,7 @@
 c -*-Fortran-*-
 C                                                                               
+c     jdemod - cprint moved to global_options
+c
       COMMON /COMTOR/ CA,    CAW,   CL,    CRMB,  CTBIN, CGTIN1,CLTIN1,         
      >                CTBOUL,CLTOUL,CNBIN, CGNIN1,CLNIN1,CNBOUL,CLNOUL,         
      >                CVIN,  CRDXO, CRDD,  CRMI,  CXSC,  CFIMP, CQS,            
@@ -10,7 +12,7 @@ C
      >    CDPOL, CPLSMA,CEYIN,CVHYIN,CSTEPN,CIZSET,CZENH,debugt,ptracl,          
      >    CEYOUT,CVHOUT,CISEED,CDIFOP,CTWOL, CYSTAG,CBOMBF,PTRACS,         
      >    CBOMBZ,CIRF,  CSEF,  CGTIN2,CGNIN2,CLTIN2,CLNIN2,CSTEPT,         
-     >    CEIN2, CPRINT,CSOLEF,CVCX,CYMFS, CTHETB,CSINTB,CVPOUT,CVXMIN,         
+     >    CEIN2, CSOLEF,CVCX,CYMFS, CTHETB,CSINTB,CVPOUT,CVXMIN,         
      >    CXSPLS,CNSPL, CTBOUG,CLTOUG,CNBOUG,CONI  ,CPRUL,CVXMAX,          
      >    CLNOUG,CLARMR,CKI   ,CTBI,  CHALFL,DEBUGN,CKO, SVYBAR,SVYACC,        
      >    CONO,CYMFLG,CFTCUT,CNBA  ,CGAMMA,CANAL ,CAP, VPV0,VPALPH,         
@@ -52,7 +54,7 @@ c
       integer         cioptj
       INTEGER         CMAXGENS,CDCALC,CDPERP,CVPOPT
       INTEGER         CIZB,CION,CIZSC,CIZEFF,CIZSET,CISEED,CDIFOP,CORECT        
-      INTEGER         CBOMBF,CBOMBZ,CPRINT,CNSPL,CYMFLG,CLPD,CBRK,CSTEPT
+      INTEGER         CBOMBF,CBOMBZ,CNSPL,CYMFLG,CLPD,CBRK,CSTEPT
       INTEGER         PTRACL(MAXT) 
       LOGICAL         DEBUGN,DEBUGL,debugt,CTICHG                        
 c
@@ -63,8 +65,8 @@ c     unstructured input values.
 c
       common /sputdat/ csputopt,extra_sputter_angle,
      >                 cchemopt, const_yield, impact_energy_opt,
-     >                 init_y_coord
-      integer csputopt,cchemopt,impact_energy_opt
+     >                 init_y_coord,cselfs
+      integer csputopt,cchemopt,impact_energy_opt,cselfs
       real    extra_sputter_angle,init_y_coord
       real    const_yield        
 c
@@ -87,9 +89,12 @@ c      real*8 absfac
 c
 c     Common block for generic LIM related unstructured input
 c      
-      common /lim_unstruc/ shear_short_circuit_opt
+      common /lim_unstruc/ shear_short_circuit_opt,calc_3d_power,
+     >                     extfluxopt,nextfluxdata,extfluxdata
 c
-      integer shear_short_circuit_opt
+      integer shear_short_circuit_opt,calc_3d_power,extfluxopt,
+     >        nextfluxdata
+      real extfluxdata(maxins,3)
 c
 c     Common block for OUT related unstructured input
 c

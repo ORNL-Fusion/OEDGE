@@ -2979,6 +2979,7 @@ c
 c
       SUBROUTINE PR_sim_options(NIZS,NIMPS,NIMPS2,nymfs)
       use eckstein_2002_yield_data
+      use eckstein_2007_yield_data
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -4187,11 +4188,20 @@ C-----------------------------------------------------------------------
              call prr('     - DATA SELECTED FOR INCIDENT ANGLE =',
      >                  extra_sputter_angle)
           endif
-          call print_eck2002_yields(7)
+          call print_eck2002_yields(datunit)
        elseif (cion.eq.74) then 
           ! W selected 
              CALL PRC ('    TUNGSTEN SPUTTERING DATA SELECTED:')
        endif
+      ELSEIF (CSPUTOPT.EQ.6) THEN
+       CALL PRC ('  SPUTTER SOURCE   6 : Based on Eckstein'//
+     >                               ' "Sputtering Yields" 2007')
+       call prc ('                       Defaults to '//
+     >      'Sputter data option 3 (modified  Eckstein IPP9/82 (1993))') 
+       call prc ('                       if 2007 data is unavailable')
+
+       call print_eck2007_yields(datunit)
+
       ENDIF
 C-----------------------------------------------------------------------
       IF     (CCHEMOPT.EQ.1) THEN

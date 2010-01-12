@@ -12,6 +12,9 @@ c
       use hc_get
       implicit none
 c
+c     jdemod - use optval as a scaling factor if it is greater than zero
+c
+c
       include 'params'
 c
       integer iselect,istate,iexpt,ierr 
@@ -67,9 +70,33 @@ c     Dummy arguments
 c
       real xouts(1),youts(1) 
 c
+c
+c     
+      integer itype
+      real scalef
+c     
+c
 c     Initialization
 c
       ierr = 0
+c
+c     Default type is contour plot (option 0) with standard units
+c
+      itype = 0
+      scalef = 1.0
+c
+c     If IOPT is 2 - then set up for giving units in /m3/s/sr
+c     NOTE: should only use IOPT=2 with appropriate ISELECT values
+c
+      if (iopt.eq.2) then 
+         itype=3
+         scalef = 1.0 / (4.0 * PI) 
+      elseif (iopt.eq.3) then 
+         itype=4
+         scalef = 1.0 / (4.0 * PI * 1.0e6) 
+      endif
+
+
 c
 c     Load additional contour plot parameters 
 c
@@ -151,7 +178,7 @@ c
          allocate(subgrid_raxis(sg_rdim),stat=iflag)
          allocate(subgrid_zaxis(sg_zdim),stat=iflag)
 
-         call load_subgrid_array(subgrid_data,iselect,istate,0,
+         call load_subgrid_array(subgrid_data,iselect,istate,itype,
      >                         smoothd,refd,plane,nizs,ierr)
 
          call calc_subgrid_axis(subgrid_raxis,sg_rmin,sg_rmax,sg_rdim)
@@ -180,13 +207,27 @@ c
 
 
             write(anly,'(a,1x,g12.5)') 'Photons/part:',photons_per_part
-c
+c            
+
          endif
 c
+c        Apply scaling factor if needed
+c
+         if (scalef.ne.1.0) then 
+            subgrid_data = subgrid_data * scalef
+         endif
 
       elseif (iselect.ne.0) then 
-         call load_divdata_array(tmpplot,iselect,istate,0,
+c
+         call load_divdata_array(tmpplot,iselect,istate,itype,
      >                         smoothd,refd,plane,nizs,ierr)
+c
+c        Apply scaling factor if needed
+c
+         if (scalef.ne.1.0) then 
+            tmpplot = tmpplot * scalef
+         endif
+c
       endif 
 c
 c     Check return code from data load and exit if non-zero   

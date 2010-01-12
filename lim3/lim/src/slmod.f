@@ -34,6 +34,7 @@ c
 c ======================================================================
 c
       SUBROUTINE OutputDiag
+      implicit none
 
       INCLUDE   'params'                                                         
       INCLUDE   'dynam1'                                                        
@@ -44,7 +45,11 @@ c
       INCLUDE   'slcom'
 
       INTEGER II,SUM
-
+c
+c     jdemod - defined some variables
+c
+      integer iz,ix
+      real count
 
       WRITE(63,*) ' '
       WRITE(63,'(2A)') 'CASE: ',TITL2
@@ -65,9 +70,12 @@ c
       WRITE(63,'(A,I6)') 'Maximum ionisation state ',MIZS
 
       WRITE(63,*) ' '      
-      WRITE(63,'(A,3I4,A,G10.5,A,F10.3,A)') 'Ionisation rate peak (',
-     +  IXIRP,IYIRP,IPIRP,'): ',CRNBS(IXIRP,IYIRP),' m^-3, ',
-     +  CTEMBS(IXIRP,IYIRP),' eV'
+c
+c     jdemod - subscripts undefined
+c
+c      WRITE(63,'(A,3I4,A,G10.5,A,F10.3,A)') 'Ionisation rate peak (',
+c     +  IXIRP,IYIRP,IPIRP,'): ',CRNBS(IXIRP,IYIRP),' m^-3, ',
+c     +  CTEMBS(IXIRP,IYIRP),' eV'
 
       WRITE(63,*) ' '
       WRITE(63,*) 'Density integrated over all space:'
@@ -156,6 +164,10 @@ c
 c ======================================================================
 c
       SUBROUTINE GetProfiles
+c
+c     jdemod - add implicit none
+c
+      implicit none
 
       INCLUDE   'params'                                                         
       INCLUDE   'dynam1'
@@ -189,6 +201,11 @@ c
       INTEGER    MAXIX,MAXIP
       REAL       MAXE
 c
+c     jdemod - defined missing variables
+c
+      integer :: iy,iz,ip,ix,i,iqx
+
+c
 c Initialize arrays:
 c
       DO IY = -NYS,NYS 
@@ -196,7 +213,24 @@ c
           YPRO(IY,IZ)    = 0.0
         ENDDO
         NPRO(IY,1)  = 0.0
-        INJBINT(IY) = INJBINT(IY) / YWIDS(ABS(IY))
+
+c
+c       jdemod - fixed array bounds addressing error when iy=0 
+c              - also check for ywids(iy) = 0
+c
+        if (iy.ne.0) then 
+           if (ywids(abs(iy)).ne.0.0) then 
+              INJBINT(IY) = INJBINT(IY) / YWIDS(ABS(IY))
+           else
+              INJBINT(IY) = 0.0
+           endif
+        else
+           if (Ywids(1).ne.0.0) then 
+              INJBINT(IY) = INJBINT(IY) / YWIDS(1)
+           else
+              INJBINT(IY) = 0.0
+           endif
+        endif
       ENDDO    
       
       DO IP = -MAXNPS,MAXNPS
@@ -222,7 +256,15 @@ c
             DO IX = 1, NXS
               DO IP = -MAXNPS, MAXNPS 
       
-               TMPVOL = XWIDS(IX) * YWIDS(ABS(IY))
+                 ! jdemod - YWIDS only defined for IY>0
+                 !          The width of IY=1 is from 0.0 to YS(1) - thus any array
+                 !          ranging from -NYS to +NYS should contain no data in the IY=0 element
+                 if (iy.ne.0) then 
+                  TMPVOL = XWIDS(IX) * YWIDS(ABS(IY))
+                 else
+                  TMPVOL = 0.0
+                 endif
+
                NUMSUM = NUMSUM + DDLIM3(IX,IY,IZ,IP) * TMPVOL
                VOLSUM = VOLSUM + TMPVOL
       
@@ -250,15 +292,18 @@ c
         YLENL = 0.0
         YLENR = 0.0
         DO IY = -0.5*NYS,0.5*NYS
-          IF (YS(ABS(IY)).LE.0.16.AND.IY.LT.0) THEN
+          ! jdemod - added test to avoid iy = 0 
+          if (iy.ne.0) then 
+            IF (YS(ABS(IY)).LE.0.16.AND.IY.LT.0) THEN
               YPROL = YPROL + (YPRO(IY,IZ)+YPRO(IY+NYS+1,IZ)) * 
      +                        YWIDS(ABS(IY))
               YLENL = YLENL + YWIDS(ABS(IY))
-          ELSEIF (YS(ABS(IY)).LE.0.16.AND.IY.GT.0) THEN
+            ELSEIF (YS(ABS(IY)).LE.0.16.AND.IY.GT.0) THEN
               YPROR = YPROR + (YPRO(IY,IZ)+YPRO(IY-NYS-1,IZ)) * 
      +                        YWIDS(ABS(IY))
               YLENR = YLENR + YWIDS(ABS(IY))
-          ENDIF
+            ENDIF
+          endif
 
         ENDDO
 
@@ -331,9 +376,16 @@ c
 c
 c Electron production rate integration:
 c
-      DO IX = 1, MAXNXS
+      ! jdemod - these lines do not work for ix = maxnxs - change ix loop to maxnxs-1 from maxnxs
+      DO IX = 1, MAXNXS-1
         DO IP = -MAXNPS+1, MAXNPS-1
-          EPRO(IX,IY) = 0.0
+
+c
+c         jdemod - fix bug in indexing of epro - IY -> IP
+c
+c          EPRO(IX,IY) = 0.0
+c
+          EPRO(IX,IP) = 0.0
 c
 c Have to make sure this is correct if last charge state is the highest:
 c      
@@ -365,7 +417,7 @@ c     +      cfizs(ix,iy,iz),epro(ix,ip)
           ENDDO
 
 
-      
+          ! jdemod - these lines do not work for ix = maxnxs
           IF (IP.LE.0) THEN
             EAREA(IX,IP) = (XS(IX+1)-XS(IX)) * (PS(-IP)-PS(-IP-1))
           ELSEIF (IP.GT.0) THEN
@@ -471,8 +523,16 @@ c
 
         DO IY= -0.5*NYS, 0.5*NYS
           IF (IY.LT.0) THEN
-            WRITE(63,'(I5,F9.4,$)') 
-     +        IY,-0.5*(YS(-IY)+YS(-IY-1))
+
+             ! jdemod - code appears to be wanting to write youts but is recalculating it and 
+             !          going outside the bounds of YS
+             if (iy.eq.-1) then
+              WRITE(63,'(I5,F9.4,$)') 
+     +          IY,-0.5*(YS(-IY))
+            else
+              WRITE(63,'(I5,F9.4,$)') 
+     +          IY,-0.5*(YS(-IY)+YS(-IY-1))
+            endif
 
             DO IZ = 0, MIZS
               WRITE(63,'(E10.3,$)') YPRO(IY,IZ)+YPRO(IY+NYS+1,IZ)
@@ -483,8 +543,17 @@ c     +      (YPRO(IY,0)+YPRO(IY+NYS+1,0))/PEAK1,
 c     +      (YPRO(IY,1)+YPRO(IY+NYS+1,1))/PEAK1,
 c     +      (YPRO(IY,3)+YPRO(IY+NYS+1,2))/PEAK1
           ELSEIF (IY.GT.0) THEN
-            WRITE(63,'(I5,F9.4,$)') 
-     +        IY,0.5*(YS(IY)+YS(IY-1))
+
+             ! jdemod - code appears to be wanting to write youts but is recalculating it and 
+             !          going outside the bounds of YS
+
+             if (iy.eq.1) then 
+                WRITE(63,'(I5,F9.4,$)') 
+     +           IY,0.5*(YS(IY))
+             else
+                WRITE(63,'(I5,F9.4,$)') 
+     +            IY,0.5*(YS(IY)+YS(IY-1))
+             endif
 
             DO IZ = 0, MIZS
               WRITE(63,'(E10.3,$)') YPRO(IY,IZ)+YPRO(IY-NYS-1,IZ)

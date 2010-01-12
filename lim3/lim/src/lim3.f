@@ -8,6 +8,10 @@ c slmod
      >                 DEFACT,NRAND,TITLE)           
 c     >                 DEFACT,NRAND)           
 c slmod end
+!      use iter_bm
+      use eckstein_2007_yield_data
+      use variable_wall
+      use yreflection
       IMPLICIT none                                                    
       INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -117,6 +121,9 @@ C     INCLUDE   (SAVE)
 C     INCLUDE   (COMNET)                                                        
       INCLUDE   'crand'                                                         
 C     INCLUDE   (CRAND)                                                         
+c
+      include   'global_options'
+
 c slmod begin
       INCLUDE   'slcom'
 c slmod end
@@ -135,6 +142,8 @@ c
       REAL      ABSP
       REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
       REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
+
+      real      tmp_oldy, tmp_y
 c slmod begin
 c
 c Moved to common block SLCOM:
@@ -172,22 +181,40 @@ c
 c     Add some local variables related to calculating the scaling of the NERODS3 data
 c
       real pbnd1,pbnd2,local_pwid
+c
+c     Add iqy_tmp to support variable wall location
+c
+      integer :: iqy_tmp
 
-
+      integer :: ierr
 c
 c     ADD LOGICAL to record if splitting and rouletting is active to avoid
 c     a bug if ALPHA > CXSPLS(IS) = 2*CA in one diffusive step  
 c
       logical   split  
 c
+c
       DOUBLE PRECISION DSPUTY,DTOTS(20),DTEMI,DQFACT,DELTAX                     
-      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DY1,DWOL,DSUM4               
-      DOUBLE PRECISION DY2,DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS),DIST             
+      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DWOL,DSUM4               
+      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS),DIST             
+c
+c      double precision dy1,dy2
+c     
+c     jdemod - change the calculation of the Yposition 
+c              At present, Y is recalculated at each time step by combining the 
+c              cumulative change in position stored in DY1 and DY2. In order for 
+c              reflection to work - a new variable called Y_position will hold the
+c              actual Y_posiiton and dy1, dy2 -> delta_y1, delta_y2 will be the 
+c              change in the current time step
+c
+c
+      double precision :: y_position,old_y_position,delta_y1,delta_y2
+c
 c slmod begin
       REAL       IONCNT,IONPNT
       REAL       RAN1,RAN2,RGAUSS,VPARA,TPARA,VPARAT
       REAL       AVGTRAC    
-      REAL       TARGET
+      REAL       TARGET      
       CHARACTER  TITLE*80
 c slmod endC
 C                                                                               
@@ -229,6 +256,7 @@ c slmod
         WRITE(0,*) 'Warning! Hard code adjustment to bin location',
      +             ' for DIVIMP ion profile.'
       ENDIF 
+c
 
       DO II = 1, NBIN
         BSBIN(II) = BSBIN(II) + 0.5
@@ -518,9 +546,11 @@ c
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)THEN
         CALL SYLD96 (MATLIM,MAT1,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        call init_eckstein_2007(matlim,mat1)
       ENDIF
 c
 
@@ -544,7 +574,7 @@ c
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI)                                       
+        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)
 C                                                                               
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
@@ -640,6 +670,16 @@ C
      >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
       ENDIF                                                                     
 C
+C      do in = 1,nymfs
+C         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+C     >                      cymfs(in,2),cymfs(in,3)
+C      end do
+
+c      do iqx=1-nqxso,0
+c         write(6,'(a,i8,10(1x,g12.5))') 
+c     >        'YMFS:',nymfs,qxs(iqx),CYMFPS(iqx,1),cymfps(iqx,2),
+c     >            cymfss(iqx,1),cymfss(iqx,2)
+c      end do
 C
 C
 
@@ -770,13 +810,21 @@ C
       PORM   = -1.0                                                             
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
+c
       DO 800  IMP = 1, NATIZ                                                    
+
         IF (100*(IMP/100).EQ.IMP)                                               
      >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
         TSTEPL = CSTEPL                                                         
         PORM   = -1.0 * PORM                                                    
         OLDY   = 0.0                                                            
+        old_y_position = 0.0
         OLDALP = 0.0                                                            
+c
+c       jdemod - initialize particle reflection
+c
+        call init_part_reflection
+
 c
 c       Initialize tracking variables - if debugt
 c
@@ -933,6 +981,7 @@ C
           SPUTY = 1.0                                                           
         ENDIF                                                                   
 C                                                                               
+
         ABSY = ABS (Y)                                                          
         YY = MOD (ABSY, CL)                                                     
         IF (YY.GT.CHALFL) YY = CL - YY                                          
@@ -941,6 +990,9 @@ C
         ELSE                                                                    
           ALPHA = CX / (YY*CONO + 1.0)                                          
         ENDIF                                                                   
+c
+c        write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
+
         DSPUTY = DBLE (SPUTY)                                                   
 C                                                                               
 C  SPREADING: SPREAD OUT IONS BY A PARTIAL ITERATION                            
@@ -980,12 +1032,16 @@ C
                 J = 3
              ENDIF
           ENDIF
+
           CX = CX + FRQTIM *                                                  
      >           (SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RAN) + CXAFS(IQX,J))          
+
           NRAND = NRAND + 1                                                     
           Y      = Y + FRQTIM * SVYBIT * QTIM * QS(IQX)                         
           ABSY   = ABS (Y)                                                      
+
           YY = MOD (ABSY, CL)                                                   
+
           IF (YY.GT.CHALFL) YY = CL - YY                                        
           IF (CX.GE.0.0) THEN                                                   
             ALPHA = CX / (YY*CONI + 1.0)                                        
@@ -993,6 +1049,7 @@ C
             ALPHA = CX / (YY*CONO + 1.0)                                        
           ENDIF                                                                 
         ENDIF                                                                   
+c
 c
         IX    = IPOS (ALPHA, XS, NXS-1)                                         
         IY    = IPOS (ABSY,  YS, NYS-1)                                         
@@ -1039,6 +1096,8 @@ C
           IFATE = 9                                                             
           GOTO 790                                                              
         ENDIF                                                                   
+
+
 C                                                                               
 C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
 C                                                                               
@@ -1068,8 +1127,15 @@ C
 C------ SET INITIAL (X,Y) COORDINATES & TI IN DOUBLE PRECISION.                 
 C------ DY1 ACCUMULATES NON-DIFFUSIVE CHANGES, DY2 DIFFUSION CHANGES.           
 C                                                                               
-        DY1   = 0.0D0                                                           
-        DY2   = DBLE (Y)                                                        
+c     jdemod
+c
+c        DY1   = 0.0D0                                                           
+c        DY2   = DBLE (Y)                                                        
+c
+        delta_y1 = 0.0d0
+        delta_y2 = 0.0d0
+        Y_position = dble(Y)
+c
         QUANT = 0.0                                                             
         DTEMI = DBLE (CTEMI)                                                    
 C                                                                               
@@ -1245,12 +1311,24 @@ c slmod end
 C                                                                               
 C------------ UPDATE Y POSITION OF ION                                          
 C                                                                               
+c             jdemod - set Y_position to Y in case code has adjusted the Y value outside of the 
+c                      particle movement loop. The single precision Y variable holds the definitive
+c                      version of the particle Y position. The update only is performed in double
+c                      precision. 
+c
+              Y_position = dble(Y)
+              old_y_position = y_position
+c
+              absy=abs(y)
+c
               OLDY  = Y                                                         
+c
               IF (ABSY.LE.CYNEAR .OR. ABSY.GE.CYFAR) THEN                       
                 YFACT = CSINTB                                                  
               ELSE                                                              
                 YFACT = CSINTB * CLFACT                                         
               ENDIF                                                             
+c
               IF (SVYMIN.EQ.0.0) THEN
                  SVYMOD = SVY
               ELSE
@@ -1264,12 +1342,19 @@ C
               svybar(iqx) = svybar(iqx) + abs(svymod * QS(IQX)) * sputy
               svyacc(iqx) = svyacc(iqx) + sputy
 C
-              DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
+c             jdemod
+c
+              Delta_Y1 = DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
+c              DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
 
               IF (SPARA.GT.0.0) THEN                                            
                 KK  = KK + 1                                                    
                 SPARA = SPARA * YFACT                                           
-                DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
+c
+c               jdemod
+c
+                Delta_Y2 = DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
+c                DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
               ENDIF                                                             
 
 c
@@ -1278,21 +1363,60 @@ c             NOTE: DY2 contains the initial Y coordinate PLUS all spatial diffu
 c                   DY1 contains all forces and velocity diffusive steps   
 c
 c
-              Y     = SNGL (DY1+DY2)                                            
+              Y_position = Y_position + delta_y1 + delta_y2
+              Y     = SNGL (Y_position)                                            
+c
+c
+c             jdemod
+c
+c             Y-boundary is checked in the inboard/outboard code 
+c             because the constraints are different for the 
+c             different regions. Y boundary checking is not 
+c             desired outboard where a limiter surface is present. 
+c
+c             However - we can check for reflections here. 
+c
+              if (yreflection_opt.ne.0) then 
+                 if (abs(y).gt.ctwol) then 
+                    write(6,*) 'Y > CTWOL'
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                 endif
+
+
+                call check_reflection(cx,y,oldy,svy,sputy,
+     >                                2,debugl,ierr)
+
+
+                if (ierr.eq.1) then 
+                  ! write some debugging info
+                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
+              endif
+
+
+              ABSY  = ABS (Y)                                                   
+              YY    = MOD (ABSY, CL)                                            
+              IF (YY.GT.CHALFL) YY = CL - YY                                    
+
+
 c
 c slmod begin
               IF (DEBUGL) WRITE(78,'(I4,F7.1,13G12.5)') 
      +          IMP,CIST,
      +          Y,SVY,
-     +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,DY1,DY2,
+     +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,Delta_Y1,Delta_Y2,
      +          QS(IQX),DTEMI,QUANT,CFSS(IX,IY,CIZ),YFACT
 
 c              IF (IONCNT.EQ.10.OR.IONCNT.EQ.20) 
 c     +          WRITE(50,*) IONCNT,Y,ABS(Y-OLDY)
 c slmod end
-              ABSY  = ABS (Y)                                                   
-              YY    = MOD (ABSY, CL)                                            
-              IF (YY.GT.CHALFL) YY = CL - YY                                    
+
+
 
 C                                                                               
 C------------ UPDATE X POSITION OF ION, ALLOWING FOR ELONGATION                 
@@ -1460,27 +1584,127 @@ C-------------- IF QTIM IS LARGE ITS POSSIBLE THAT ADDING 2L STILL
 C-------------- LEAVES THE PARTICLE OUTSIDE THE REGION OF INTEREST:             
 C-------------- CHECK FOR THIS AND ADD ANOTHER 2L IF NECESSARY ...              
 C                                                                               
-                IF (Y.LE.-CTWOL) THEN                                           
-  401             DY2 = DY2 + 2.0D0 * DWOL                                      
-                  Y   = SNGL (DY1+DY2)                                          
-                  IF (Y.LE.-CTWOL) GOTO 401                                     
-                  ABSY = ABS (Y)                                                
+
+               tmp_y = y
+
+               call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
+     >                               sputy,debugl,ierr)
+               if (ierr.eq.1) then 
+                  ! write some debugging info
+                  WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                  WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               endif
+
+               !
+               ! If crossed 2L 
+               !
+               if (y.ne.tmp_y) then 
                   IF (CFLY2L) THEN                                              
                     CICY2L = CICY2L + SPUTY                                     
                     IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
                     CFLY2L = .FALSE.                                            
                   ENDIF                                                         
-                ELSEIF (Y.GE.CTWOL) THEN                                        
-  402             DY2 = DY2 - 2.0D0 * DWOL                                      
-                  Y   = SNGL (DY1+DY2)                                          
-                  IF (Y.GE.CTWOL) GOTO 402                                      
-                  ABSY = ABS (Y)                                                
-                  IF (CFLY2L) THEN                                              
-                    CICY2L = CICY2L + SPUTY                                     
-                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
-                    CFLY2L = .FALSE.                                            
-                  ENDIF                                                         
-                ENDIF                                                           
+               endif
+
+c
+c              tmp_oldy = oldy  
+c
+c                IF (Y.LE.-CTWOL) THEN                                           
+c  401             DY2 = DY2 + 2.0D0 * DWOL                                      
+c                  Y   = SNGL (DY1+DY2)                                          
+c                  tmp_oldy = tmp_oldy + 2.0d0 * dwol
+c                  IF (Y.LE.-CTWOL) GOTO 401                                     
+c
+c                  ABSY = ABS (Y)                                                
+c
+c                 jdemod 
+c
+c                 Need to make sure that a particle 
+c                 does not enter a reflected region
+c                 inside the confined plasma.
+c
+c                 The problem here is that the particle
+c                 can take very large parallel steps 
+c                 in the confined plasma due to the
+c                 time step multipliers. In addition, 
+c                 the new Y value has been calculated
+c                 by possible cycling several times through 
+c                 the region. So, in theory, the particle
+c                 could have experienced multiple reflections.
+c
+c                 This effect can only occur when the ion
+c                 makes parallel steps greater than the distance
+c                 to the mirror above or below ctwol. 
+c     
+c                 This will not fix an issue with multiple internal
+c                 reflections - on the other hand - this problem 
+c                 should only arise deep inboard where the distribution
+c                 along the field lines should be uniform anyway. 
+c        
+c                 AND - this problem should be avoidable using 
+c                 a smaller ion time step.
+c
+c                  if (reflection_opt.ne.0) then 
+c                   if (check_reflected_region(y)) then 
+c                     write(6,'(a,5(1x,g18.10))') 
+c     >               'REFLECTION ERROR INBOARD:',alpha,y,oldy
+c                     call check_reflection(y,tmp_oldy,svy,debugl)
+c
+c                     if (y.lt.-ctwol) then 
+c                        y = y+2.0*ctwol
+c                     elseif (y.gt.ctwol) then 
+c                        y = y-2.0*ctwol
+c                     endif
+c
+c                     if (check_reflected_region(y)) then 
+c                        CALL errmsg('LIM3: ION INBOARD:',
+c     >                     'ION HAS ENTERED MIRROR BOUNDED REGION')
+c                     endif
+c
+c                   endif  
+c                  endif
+c
+c                  IF (CFLY2L) THEN                                              
+c                    CICY2L = CICY2L + SPUTY                                     
+c                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
+c                    CFLY2L = .FALSE.                                            
+c                  ENDIF                                                         
+c                ELSEIF (Y.GE.CTWOL) THEN                                        
+c  402             DY2 = DY2 - 2.0D0 * DWOL                                      
+c                  Y   = SNGL (DY1+DY2)                                          
+c                  tmp_oldy = tmp_oldy - 2.0d0 * dwol
+c                  IF (Y.GE.CTWOL) GOTO 402                                      
+c
+c                  ABSY = ABS (Y)                                                
+c
+c                  if (reflection_opt.ne.0) then 
+c                   if (check_reflected_region(y)) then 
+c                     write(6,'(a,5(1x,g18.10))') 
+c     >               'REFLECTION ERROR INBOARD:',alpha,y,oldy
+c                     call check_reflection(y,tmp_oldy,svy,debugl)
+c
+c                     if (y.lt.-ctwol) then 
+c                        y = y+2.0*ctwol
+c                     elseif (y.gt.ctwol) then 
+c                        y = y-2.0*ctwol
+c                     endif
+c
+c                     if (check_reflected_region(y)) then 
+c                        CALL errmsg('LIM3: ION INBOARD:',
+c     >                     'ION HAS ENTERED MIRROR BOUNDED REGION')
+c                     endif
+c                     
+c                   endif
+c                  endif
+c
+c
+c                  IF (CFLY2L) THEN                                              
+c                    CICY2L = CICY2L + SPUTY                                     
+c                    IF (CIST.LT.CIFY2L) CIFY2L = CIST                           
+c                    CFLY2L = .FALSE.                                            
+c                  ENDIF                                                         
+c                ENDIF                                                           
 C                                                                               
 C-------------- UPDATE ION VELOCITY                                             
 C-------------- MAY BE SUBJECT TO BACKGROUND FLOW VELOCITY AND ELECTRIC         
@@ -1537,18 +1761,50 @@ C-----------------------------------------------------------------------
 C                                                                               
             ELSE                                                                
 
+c
+c               jdemod - if poloidal extent limiters are in use 
+c                        in the SOL then need to check the +/-2L
+c                        boundaries which is not normally needed
+c                        in the SOL
+c
+               if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+               
+                  call check_y_boundary(cx,y,oldy,absy,svy,alpha,
+     >                                  ctwol,sputy,
+     >                                  debugl,ierr)
+                  if (ierr.eq.1) then 
+                     ! write some debugging info
+                     WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
+                     WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
+     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                  endif
+               endif
+
+
               YYCON = YY*CONO + 1.0                                             
               ALPHA = CX / YYCON                                                
 C                                                                               
 C------------ UPDATE IQX VALUE.                                                 
 C                                                                               
               IQX  = MAX (INT(ALPHA*XSCALO), 1-NQXSO)                           
+c
+c             Calculate an IQY_TMP value to access CAW_QYS which gives the wall distance
+c             at a specific value of QYS - this IQY_TMP has a different meaning than the 
+c             IQY calculated below (which is relative to the limiter faces). 
+c
+              if (y.lt.0.0) then 
+                 IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+              else
+                 IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+              endif
+
 C                                                                               
 C------------ NOTE 151,270:  STOPPING CROSS FIELD TRANSPORT.                    
 C------------ ORIGINALLY, WHEN X REACHED -4 LAMBDA IT WAS BROUGHT BACK          
 C------------ TO 0.  FOR FLEXIBILITY, A CUTOFF IS NOW SPECIFIED IN              
 C------------ THE INPUT DATA - CAN BE SWITCHED OFF BY SETTING TO -99.0          
 C                                                                               
+
               IF (ALPHA.LT.CFTCUT) THEN                                         
                 CX    = 0.0                                                     
                 ALPHA = 0.0                                                     
@@ -1558,7 +1814,9 @@ C------------ ION HAS REACHED WALL AND IS ABSORBED
 C------------ SET TEMPERATURE TO SMALLEST POSSIBLE VALUE                        
 C------------ SCORE PARTICLE IN "WALLS" ARRAY (REDIM'D TO -NYS:NYS)             
 C                                                                               
-              ELSEIF (ALPHA.LE.CAW) THEN                                        
+c              ELSEIF (ALPHA.LE.CAW) THEN                                        
+c
+              ELSEIF (ALPHA.LE.CAW_QYS(IQY_TMP)) THEN                                        
                 CIAB   = 0                                                      
                 CVABS  = SVY / QFACT                                            
                 CTBIQX = CTEMBS(1,IY)                                           
@@ -1662,8 +1920,43 @@ C-------------- UPDATE ION VELOCITY, AFFECTED BY
 C-------------- ELECTRIC FIELD AND DRIFT VELOCITY                               
 C-------------- ION HAS COMPLETED OUTBOARD STEP   (MONUP1)                      
 C                                                                               
+c
+c           jdemod - WARNING - there is an inconsistency in the 
+c                    definition of IQY in the code. IQY is the
+c                    index into the underlying QYS and related
+c                    arrays. However, it appears that in the code
+c                    below IQY was at some point redefined to 
+c                    be a number of points between the limiter
+c                    surfaces along the field lines - thus the
+c                    use of EDGE1, EDGE2 and CYSCLS in the
+c                    calculation of IQY here. However, the related
+c                    variables that are indexed by IQY were NOT
+c                    changed to reflect this usage. 
+c                    e.g. CEYS(IQY), CVHYS(IQY) and QYS(IQY) are
+c                         all calculated without taking the 
+c                         location of the limiter edges into effect.
+c                    This means that the IQY value calculated here
+c                    does not match properly with these arrays - in
+c                    particular QYS. 
+c
+c                    On the other hand, the 
+c                    procedure here will map the IQY range between
+c                    limiter surfaces 1:1 onto the CEYS and CVHQYS
+c                    arrays thus allowing for a variable limiter
+c                    shape still mapping the first data point at IQY=1
+c                    to the limiter surface.
+c                    The dependencies in CEYS and CVHYS are typically
+c                    linear in QYS to CL and so would not change 
+c                    much if they were calculated properly for the 
+c                    actual limiter surface location. 
+c
+c                    The biggest concern is QYS - it can not be
+c                    properly indexed by this IQY.                     
+c
+c
             SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
      >            CBETAI(CIZ) * CTIGS(IX,IY) 
+c
             IF (Y.GT.0.0) THEN                                              
               IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
@@ -1702,29 +1995,39 @@ C    DO NOT NEED LINES  "430 CONTINUE" THROUGH TO "GOTO 440" FOR
 C    THE QUICKER STANDARD LIM VERSION WITH NO POLOIDAL DIFFUSION.               
 C-----------------------------------------------------------------------        
 C                                                                               
+c
+c             jdemod - change structure of these statements to address
+c                      intel fortran compiler issue
+c
               IF (.NOT.BIG) GOTO 450                                            
   430         CONTINUE                                                          
-                IF ((IP.LE.-MAXNPS).OR.(PS(IP-1).LT.P))GOTO 440                 
+                IF ((IP.LE.-MAXNPS))GOTO 440                 
+                IF ((PS(IP-1).LT.P))GOTO 440                 
                 IP = IP - 1                                                     
                 GOTO 430                                                        
   440         CONTINUE                                                          
-                IF ((IP.GE.MAXNPS) .OR. (PS(IP).GE.P)) GOTO 450                 
+                IF ((IP.GE.MAXNPS)) GOTO 450                 
+                IF ((PS(IP).GE.P)) GOTO 450                 
                 IP = IP + 1                                                     
                 GOTO 440                                                        
   450         CONTINUE                                                          
-                IF ((JY.LE.1) .OR. (YS(JY-1).LT.ABSY)) GOTO 460                 
+                IF ((JY.LE.1)) GOTO 460                 
+                IF ((YS(JY-1).LT.ABSY)) GOTO 460                 
                 JY = JY - 1                                                     
                 GOTO 450                                                        
   460         CONTINUE                                                          
-                IF ((JY.GE.NYS) .OR. (YS(JY).GE.ABSY)) GOTO 470                 
+                IF ((JY.GE.NYS)) GOTO 470                 
+                IF ((YS(JY).GE.ABSY)) GOTO 470                 
                 JY = JY + 1                                                     
                 GOTO 460                                                        
   470         CONTINUE                                                          
-                IF ((IX.LE.1).OR. (XS(IX-1).LT.ALPHA)) GOTO 480                 
+                IF ((IX.LE.1)) GOTO 480                 
+                IF ((XS(IX-1).LT.ALPHA)) GOTO 480                 
                 IX = IX - 1                                                     
                 GOTO 470                                                        
   480         CONTINUE                                                          
-                IF ((IX.GE.NXS).OR. (XS(IX).GE.ALPHA)) GOTO 490                 
+                IF ((IX.GE.NXS)) GOTO 490                 
+                IF ((XS(IX).GE.ALPHA)) GOTO 490                 
                 IX = IX + 1                                                     
                 GOTO 480                                                        
   490         CONTINUE                                                          
@@ -1743,9 +2046,13 @@ C-----------------------------------------------------------------------
 C                                                                               
               DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
 c slmod begin
-              IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) 
-     +          DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
+              IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) then
+                 DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
      +                                 DSPUTY * DQFACT
+c              else
+c                 write(0,*) 'Warning: IP > MAXNPS or JY > NY3D :',
+c     >                      ip,maxnps,jy,ny3d
+              endif
 c
 c              IF (JY.LE.NY3D) DDLIM3(IX,IY,CIZ,IP) =   
 c     >           DDLIM3(IX,IY,CIZ,IP) + DSPUTY * DQFACT
@@ -2083,6 +2390,15 @@ C
             RIONS(IZ) = RIONS(IZ) + SPUTY                                       
   792     CONTINUE                                                              
         ENDIF                                                                   
+
+
+        !
+        ! Update particle reflection statistics when this ion is finished. 
+        !
+
+        call update_part_refl_stats(sputy)
+
+
 C                                                                               
         IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
      >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,FATE(IFATE)            
@@ -2185,8 +2501,10 @@ C
             DIFFUS = L(1,IPUT)                                                  
             CFLRXA = L(2,IPUT)                                                  
             CFLY2L = L(3,IPUT)                                                  
-            DY1    = 0.0D0                                                      
-            DY2    = DBLE (Y)                                                   
+            Delta_Y1    = 0.0D0                                                      
+            Delta_Y2    = 0.0d0                                                   
+            Y_position = dble(y)
+
             ABSY   = ABS (Y)                                                    
             YY     = MOD (ABSY, CL)                                             
             IF (YY.GT.CHALFL) YY = CL - YY                                      
@@ -2249,7 +2567,11 @@ C
            GOTO 805                                                             
          ENDIF                                                                  
         ENDIF                                                                   
+
+        
 C                                                                               
+c     800 is the end of the main particle following loop
+c
   800 CONTINUE                                                                  
 C                                                                               
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
@@ -2724,7 +3046,9 @@ C
       DO 883 J = 1, 2                                                           
        DO 883 IX = 1, NXS                                                       
         NEROXS(IX,1,J) =-NEROXS(IX,1,J) / XWIDS(IX) * FACTA(0)                  
-        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)                 
+        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(0)                 
         NEROXS(IX,3,J) = NEROXS(IX,3,J) / XWIDS(IX) * FACTA(0)                  
         NEROXS(IX,4,J) = NEROXS(IX,1,J) + NEROXS(IX,3,J)                        
         NEROXS(IX,5,J) = FACT * NEROXS(IX,1,J) + NEROXS(IX,3,J)                 
@@ -2741,14 +3065,18 @@ C
       DO 885 IO = 1, MAXOS                                                      
        IF (OYWIDS(IO).GT.0.0) THEN
         NEROYS(IO,1) =-NEROYS(IO,1) / OYWIDS(IO) * FACTA(0)                     
-        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
+        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(0)                    
         NEROYS(IO,3) = NEROYS(IO,3) / OYWIDS(IO) * FACTA(0)                     
        ENDIF
         NEROYS(IO,4) = NEROYS(IO,1) + NEROYS(IO,3)                              
         NEROYS(IO,5) = FACT * NEROYS(IO,1) + NEROYS(IO,3)                       
        IF (ODWIDS(IO).GT.0.0) THEN
         NERODS(IO,1) =-NERODS(IO,1) / ODWIDS(IO) * FACTA(0)                     
-        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
+        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(0)                    
         NERODS(IO,3) = NERODS(IO,3) / ODWIDS(IO) * FACTA(0)                     
 c
 c       Need to scale by the 3D bin width as well taking into account any 
@@ -2773,8 +3101,12 @@ c
 
            NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
+c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
+c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
+c     >                          / local_pwid * FACTA(-1)                    
            NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(-1)                    
+     >                          / local_pwid * FACTA(0)                    
+c
            NERODS3(IO,IP,3) = NERODS3(IO,IP,3) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
         end do
@@ -3030,8 +3362,9 @@ c
       WRITE(6,*) '12:'
 C                                                                               
 C-----------------------------------------------------------------------        
-C     CALCULATE Z EFFECTIVE ETC OVER "NEAR" REGION... NOTE 107                        WRITE (datunit,'(1X,A,I7,4X,I7)') NAME,I1,I2
-
+C     CALCULATE Z EFFECTIVE ETC OVER "NEAR" REGION... NOTE 107                  
+c      WRITE (datunit,'(1X,A,I7,4X,I7)') NAME,I1,I2
+c
 C-----------------------------------------------------------------------        
 C                                                                               
 C---- THREE QUANTITIES PER BIN:  NIE,   ZB.NBT(X),   ZEFF                       
@@ -3155,9 +3488,20 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGE                                     
 C-----------------------------------------------------------------------        
 C                                                                               
+
+
       IF (NIZS.GT.0)                                                            
      >     CALL MONPRI (QTIM,FACTA(1),VFLUID,NIZS,SDTZS,SDYZS,                  
      >           STOTS,DOUTS,RIONS,CTBIN,CRMI)                                  
+
+c
+c     Print yreflection statistics if the option is active
+c
+
+      call pr_yref_stats
+c
+
+
       CALL PRB                                                                  
       CALL PRI ('NUMBER OF NEUTRALS FOLLOWED   ',NINT(TNEUT))                   
       CALL PRI ('NUMBER OF IONS FOLLOWED       ',NINT(TATIZ))                   
@@ -3168,8 +3512,8 @@ C---- FORMATS ...
 C                                                                               
  9002 FORMAT(1X,I5,F9.1,12X,I4,4X,F10.6,10X,F10.5)                              
 c slmod
- 9003 FORMAT(1X,I5,F9.1,I4,I4,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
-     >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
+ 9003 FORMAT(1X,I5,1x,F9.1,4(1x,I4),2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
+     >  1P,G10.3,0P,F7.4,3(1x,I4),1X,A,:,I3,I4,F8.2)                                 
 c
 c 9003 FORMAT(1X,I5,F9.1,I6,I6,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F8.2,            
 c     >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
@@ -3208,10 +3552,111 @@ c slmod begin
 c slmod end
       RETURN                                                                    
       END                                                                       
+c     
+c     
+c     
+      subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
+     >                            sputy,debugl,ierr)
+      use error_handling
+      use yreflection
+      !
+      ! This routine checks to see if the particle has reached the Y-bounds of the modeling
+      ! space and then adjusts the Y coordinate of the particle appropriately. 
+      ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
+      ! the mirrors at the specified Y values. 
+      !
+      !
+
+      implicit none
+      real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
+      logical :: debugl
+      integer :: ierr
+      
+      real :: tmp_oldy
+
+      tmp_oldy = oldy
+
+      ierr = 0
+c     
+
+      IF (Y.LE.-CTWOL) THEN                                           
+
+ 401     continue
+         Y   = y + 2.0 * ctwol
+         tmp_oldy = tmp_oldy + 2.0 * ctwol
+         IF (Y.LE.-CTWOL) GOTO 401                                     
+
+c     
+c        jdemod 
+c     
+c        Need to make sure that a particle 
+c        does not enter a reflected region
+c        inside the confined plasma.
+c     
+         if (yreflection_opt.ne.0) then 
+            if (check_reflected_region(y)) then 
+               write(6,'(a,5(1x,g18.10))') 
+     >              'REFLECTION ERROR INBOARD < CTWOL:',alpha,y,oldy
+
+               call check_reflection(cx,y,tmp_oldy,svy,sputy,
+     >                               2,debugl,ierr)
+
+               if (y.lt.-ctwol) then 
+                  y = y+2.0*ctwol
+               elseif (y.gt.ctwol) then 
+                  y = y-2.0*ctwol
+               endif
+c     
+               if (check_reflected_region(y)) then 
+                  CALL errmsg('LIM3: ION INBOARD:',
+     >                 'ION HAS ENTERED MIRROR BOUNDED REGION')
+               endif
+
+            endif  
+         endif
+
+      ELSEIF (Y.GE.CTWOL) THEN                                        
+
+ 402     continue
+         Y   = Y - 2.0 * ctwol
+         tmp_oldy = tmp_oldy - 2.0 * ctwol
+         IF (Y.GE.CTWOL) GOTO 402                                      
+
+         if (yreflection_opt.ne.0) then 
+            if (check_reflected_region(y)) then 
+               write(6,'(a,5(1x,g18.10))') 
+     >              'REFLECTION ERROR INBOARD > CTWOL:',alpha,y,oldy
+
+               call check_reflection(cx,y,tmp_oldy,svy,sputy,
+     >                               2,debugl,ierr)
+
+c     
+               if (y.lt.-ctwol) then 
+                  y = y+2.0*ctwol
+               elseif (y.gt.ctwol) then 
+                  y = y-2.0*ctwol
+               endif
+c     
+               if (check_reflected_region(y)) then 
+                  CALL errmsg('LIM3: ION INBOARD:',
+     >                 'ION HAS ENTERED MIRROR BOUNDED REGION')
+               endif
+               
+            endif
+         endif
+
+      ENDIF                                                           
+
+
+      ABSY = ABS (Y)                                                
+
+      return
+      end
 C                                                                               
 C                                                                               
 C                                                                               
       SUBROUTINE HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)            
+      use error_handling
       IMPLICIT none                                                    
       REAL    OLDALP,ALPHA,OLDY,Y,XM,YM                                         
       INTEGER CIAB,IQX,IX,IOY,IOD                                               
@@ -3244,23 +3689,66 @@ C     INCLUDE (COMNET)
       REAL    XT,XB,YT,YB,EDGE1,EDGE2,DIST1,DIST2                               
       INTEGER K,IPOS                                                            
       LOGICAL THERE                                                             
+c
+      real :: xt_org,xb_org
 C                                                                               
-      XT = OLDALP                                                               
+c     jdemod - 
+c     Collision must be on limiter - therefore set XT to 0.0 if OLDALP > 0
+c      
+      if (oldalp.gt.0.0) then 
+         XT = 0.0
+      else
+         XT = oldalp
+      endif
+c
       XB = ALPHA                                                                
+c
+      xt_org = xt
+      xb_org = xb
+c
       YT = OLDY                                                                 
       YB = Y                                                                    
       K  = 1                                                                    
+c
       IF (DEBUGL) THEN                                                          
 C       WRITE (6,9001) OLDALP,OLDY                                              
 C       WRITE (6,9001) ALPHA,Y,IQX,QEDGES(IQX,1),QEDGES(IQX,2),K,.TRUE.         
       ENDIF                                                                     
 C                                                                               
   100 CONTINUE                                                                  
-      XM = 0.5 * (XT + XB)                                                      
-      YM = 0.5 * (YT + YB)                                                      
+
+      IF (XT.GT.0.0.AND.XB.GT.0.0) THEN 
+         write(error_message_data,
+     >               '(a,10(a,g18.10))')
+     >  'HIT CALLED WHEN OLDALP and ALPHA both greater than 0.0:',
+     >               ' OLDALP =',oldalp,
+     >               ' ALPHA =',alpha,
+     >               ' XT    =',xt,
+     >               ' XB    =',xb,
+     >               ' OLDY =',oldy,
+     >               ' Y =',y
+         CALL errmsg('HIT:',error_message_data)
+
+
+         xm = 0.0 - 1.0e-10
+         xt = xm
+         xb = xm
+         YM = 0.5 * (YT + YB)                                                      
+      else
+         XM = 0.5 * (XT + XB)                                                      
+         YM = 0.5 * (YT + YB)                                                      
+      endif
+
       IQX = MAX (INT (XM*XSCALO), 1-NQXSO)                                      
 C                                                                               
-      IF (IQX.GT.0) THEN                                                        
+c
+c     jdemod - changed (iqx.gt.0) to (iqx.ge.0) so that 0 values will not give a 
+c              match - this seems to cause the search algorithm to walk off the 
+c              end of the limiter and give an intersection with X>0
+c     Change back to gt 0 when max xt = 0.0 imposed
+c     
+c
+      IF (IQX.Gt.0) THEN                                                        
         XT    = XM                                                              
         YT    = YM                                                              
         THERE =.FALSE.                                                          
@@ -3288,6 +3776,24 @@ C       IF (DEBUGL) WRITE (6,9001) XM,YM,IQX,EDGE1,EDGE2,K,THERE
         IF ((.NOT.THERE) .OR. (K.LE.5)) GOTO 100                                
       ENDIF                                                                     
 C                                                                               
+      if (xm.gt.0.0) then 
+c
+c        correct error by causing impact at limiter tip
+c
+         write(error_message_data,'(a,5(a,g18.10),a)')
+     >        'Calculated XM greater than 0.0:',
+     >        ' XM = ',xm,' XB =',xb,' XT = ',xt,
+     >        ' XB_ORG =',xb_org,' XT_ORG = ',xt_org,
+     >        ' XM=MIN(XT_ORG,XB_ORG) Assigned'
+
+         CALL errmsg('HIT:',error_message_data)
+         !xm = 0.0-1.0e-10
+         xm = min(xb_org,xt_org)
+         IQX = MAX (INT (XM*XSCALO), 1-NQXSO)                                      
+         CALL EDGINT (XM,IQX,1,EDGE1,DIST1)                                      
+         CALL EDGINT (XM,IQX,2,EDGE2,DIST2)                                      
+      endif
+c
       IX = IPOS (XM, XS, NXS-1)                                                 
       IF (CIAB.EQ.-1 .OR. CIAB.EQ.2) THEN                                       
         YM  =-EDGE1 - 1.E-10                                                    
@@ -3298,6 +3804,11 @@ C
         IOY = IPOS ( EDGE2, OYS, MAXOS-1)                                       
         IOD = IPOS ( DIST2, ODS, MAXOS-1)                                       
       ENDIF                                                                     
+
+
+
+
+
       RETURN                                                                    
  9001 FORMAT(1X,'HIT: XM',F10.6,' YM',F10.5,:,                                  
      >  ' IQX',I6,' EDGES',2F10.6,I5,L2)                                        

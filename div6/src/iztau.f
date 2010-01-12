@@ -721,7 +721,7 @@ c
          PTESA(29) = 100.0
          PTESA(30) = 150.0
 
-         do in = 1,4 
+         do in = 1,5 
 
             tmpne = 1.0e17 * 10**(in) 
 

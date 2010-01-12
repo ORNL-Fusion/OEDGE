@@ -1549,7 +1549,7 @@ c
             distin(ik,ir) = finds(ik,ir) * kinds(ik,ir) * cosali(ik,ir)
             distout(ik,ir)= foutds(ik,ir)* koutds(ik,ir)* cosalo(ik,ir)
 c
-            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then 
+            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9)then 
                write(6,'(a,2i6,10(1x,g12.5))') 'DISTS:', ik,ir,
      >                 distin(ik,ir),distout(ik,ir)
 c
@@ -5578,16 +5578,16 @@ C
  9043 FORMAT(1X,2I3,2F7.3,I5,I3,I8,I3,I7,2X,3F8.2,F8.5)
  9044 FORMAT(I7,E14.0,A40)
       END
-c
-c
-c
+c     
+c     
+c     
       subroutine raug
       implicit none
       include 'params'
       include 'cgeom'
       include 'comtor'
       include 'cedge2d'
-c slmod begin
+c     slmod begin
       include 'slcom'
 c...  temp
       include 'pindata'
@@ -5597,53 +5597,53 @@ c...  temp
       REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER i1
-c slmod end
-c
+c     slmod end
+c     
 c     The purpose of this code is to read in ASDEX UPGRADE
 c     geometry files and process them for use in DIVIMP. The
 c     geometry file has a fixed format, it may change at some
 c     time, in which case the following code will need to be adapted.
-c
+c     
 c     The information included in the geometry file is:
 c     1) Corner points of the cell
 c     2) Centre point of the cell
 c     3) Magnetic field ratio ... it is uncertain (right now
-c        2pm Aug 5/93) as to whether this is Bpol/Btor OR Bpol/Btot
-c        For the time being I am assuming that it is the quantity
-c        needed for target flux calculations.
-c
+c     2pm Aug 5/93) as to whether this is Bpol/Btor OR Bpol/Btot
+c     For the time being I am assuming that it is the quantity
+c     needed for target flux calculations.
+c     
 c     DIVIMP will use its own routines to estimate the cell areas and
 c     volumes. (Until this data can be made available from the ASDEX
 c     grid files.)
-c
+c     
 c     This routine is implemented using fixed format statements which
 c     should correspond to the current structure of the geometry file.
 c     The examples of geometry files currently available share the
 c     same format.
-c
+c     
 c     Furthermore, the grid structure is identical in each case, even
 c     though the coordinates vary. Thus the following "rules" are used
 c     to decode the grid information.
-c
+c     
 c     1) The zero and 25 rings are boundary rings for the fluid code
 c     2) The zero and 97 elements of each ring are boundary points for
-c        the targets.
+c     the targets.
 c     3) Rings 0 to 7 contain the specifications for the trap and
-c        core plasma rings. Elements 0 to 24 and 73 to 97 are in the
-c        trapped plasma. Elements 25 to 72 are in the core ... starting
-c        at the point just above the X-point. If 25 and 72 do not
-c        lie on top of one another then an additional point matching
-c        25 is generated and added to the end so that it will form
-c        a closed ring.
+c     core plasma rings. Elements 0 to 24 and 73 to 97 are in the
+c     trapped plasma. Elements 25 to 72 are in the core ... starting
+c     at the point just above the X-point. If 25 and 72 do not
+c     lie on top of one another then an additional point matching
+c     25 is generated and added to the end so that it will form
+c     a closed ring.
 c     4) The other rings represent the SOL region.
-c
-c
+c     
+c     
 c     David Elder, Aug 5, 1993
-c
+c     
 c----------------------------------------------------------------------
-c
+c     
 c     Asdex grid - characteristic numbers
-c
+c     
 c     Need to add one to the cut points and maximums because
 c     the AUG grids are indexed from zero.
 c     6+1  = 7
@@ -5651,121 +5651,135 @@ c     24+1 = 25
 c     73+1 = 74
 c     25+1 = 26
 c     97+1 = 98
-c
-c
+c     
+c     
 c     Moved into common block COMTOR so that they may be read from the
 c     input file - this will generalize the reading of Asdex Upgrade
 c     grids and those with a similar structure (Sonnet grid format)
-c
-c      integer cutring,cutpt1,cutpt2,maxrings,maxkpts
-c      data cutring /7/
-c      data cutpt1 /25/
-c      data cutpt2 /74/
-c      data maxrings /26/
-c      data maxkpts /98/
-c
-       integer gridunit
-       parameter (gridunit=4)
-c
+c     
+c     integer cutring,cutpt1,cutpt2,maxrings,maxkpts
+c     data cutring /7/
+c     data cutpt1 /25/
+c     data cutpt2 /74/
+c     data maxrings /26/
+c     data maxkpts /98/
+c     
+      integer gridunit
+      parameter (gridunit=4)
+c     
       integer indexcnt,indexnadj,indexiradj,indexikadj
-c
+c     
       integer ik,ir,in,id,ikold,irold,loop_cnt
       integer max_ikold,irtmp
-c
+      integer ikn,irn
+c     
       integer in1,in2,in3
-c
+c     
       character*100 buffer
       real rvert(4),zvert(4)
       real rcent,zcent
       real rshift,zshift
       real brat
 c
-c      double precision rvert(4),zvert(4)
-c      double precision rcent,zcent
-c      double precision rshift,zshift
-c      double precision brat
+c     jdemod - Add factors to scale grid if desired
 c
+      real rscale_grid,zscale_grid
+c     
+c     double precision rvert(4),zvert(4)
+c     double precision rcent,zcent
+c     double precision rshift,zshift
+c     double precision brat
+c     
 c     Count of number of PSI data points
-c
-c
+c     
+c     
       integer npsi,ios
       real psi
-c
+c     
 c     Add indicator for extra boundary cells offset into the grid.
-c
+c     
       integer ix_cell_offset  
-c
+c     
 c     jdemod - nopriv moved to common cgeom
-c
-c      logical nopriv
-c
+c     
+c     logical nopriv
+c     
 c     Initialization
-c
+c     
       ios = 0
       indexcnt = 0
       indexnadj = 0
       indexiradj = 0
       indexikadj = 0
-      rshift   = 0.0
-      zshift   = 0.0
+c
       nves = 0 
       npsi = 0
 c
+c     Init grid shift factors
+c
+      rshift   = 0.0
+      zshift   = 0.0
+c
+c     jdemod - Init grid scaling factors
+c
+      rscale_grid = 1.0
+      zscale_grid = 1.0
+c     
       max_ikold = 1
       ikold = 1
       irold = 1
       call izero(nks,maxnrs)
-c
+c     
       ix_cell_offset = 0
-c
+c     
       crun = ' SONNET GRID (AUG,CMOD,DIIID,TDV...)'
       tslice = 0.0
-c slmod begin - tr
+c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-      IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN  ! A couple of DIII-D grid still using this...
+      IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
-     .                            indexiradj)
+     .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
          CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
-     .                            indexiradj)
+     .        indexiradj)
          GOTO 300
       ELSE
-        BACKSPACE(gridunit)
+         BACKSPACE(gridunit)
       ENDIF
-c slmod end
-c
+c     slmod end
+c     
 c     Read in lines until '======'
-c
-c      write (6,*) 'Working ... '
-c
+c     
+c     write (6,*) 'Working ... '
+c     
  100  read(gridunit,'(a100)',end=1000) buffer
-c
+c     
 c     Scan through any header information - the grid comes after the
 c     row of '======= ... '
-c
+c     
 c     If the characteristic grid numbers are in the grid header - extract
 c     them for later use.
-c
+c     
       if (buffer(1:5).eq.'GEOM:'.or.
-     >    buffer(1:5).eq.'Geom:'.or.
-     >    buffer(1:5).eq.'geom:') then
-c
-c        The agreed upon order for the GEOM: line if it is present
-c        is the following ...
-c
-c        GEOM:  #rings  #cutring    #knots   #cutpoint1  #cutpoint2
-c
+     >     buffer(1:5).eq.'Geom:'.or.
+     >     buffer(1:5).eq.'geom:') then
+c     
+c     The agreed upon order for the GEOM: line if it is present
+c     is the following ...
+c     
+c     GEOM:  #rings  #cutring    #knots   #cutpoint1  #cutpoint2
+c     
          read (buffer(6:),*) maxrings,cutring,maxkpts,cutpt1,cutpt2
-c
-c        Check for existence of private plasma for grid - this process will
-c        INCLUDE the boundary cells in the core.
-c
-c        Setting these values to 1 and maxkpts will also result in a grid
-c        without a PFZ but in this case the boundary cells will be stripped 
-c        from the core rings.
-c
+c     
+c     Check for existence of private plasma for grid - this process will
+c     INCLUDE the boundary cells in the core.
+c     
+c     Setting these values to 1 and maxkpts will also result in a grid
+c     without a PFZ but in this case the boundary cells will be stripped 
+c     from the core rings.
+c     
          if ((cutpt1.eq.0.or.cutpt1.eq.1)) then 
             nopriv = .true.
          else
@@ -5773,178 +5787,193 @@ c
          endif
 
       endif
-c
-c
-c
+c     
+c     
+c     
       if (buffer(1:12).eq.'CELL_OFFSET:'.or.
-     >    buffer(1:12).eq.'Cell_Offset:'.or.
-     >    buffer(1:12).eq.'cell_offset:') then
-c
-c        If this line is present it specifies the IX offset into the 
-c        grid where the target virtual cells can be found. The boundary
-c        cells at the edge of the grid are stripped and the entire 
-c        grid shifted so that the embedded boundary cells are moved to 
-c        the ends. This process is repeated with the background plasma
-c        data before the call to maptodiv.  
-c
+     >     buffer(1:12).eq.'Cell_Offset:'.or.
+     >     buffer(1:12).eq.'cell_offset:') then
+c     
+c     If this line is present it specifies the IX offset into the 
+c     grid where the target virtual cells can be found. The boundary
+c     cells at the edge of the grid are stripped and the entire 
+c     grid shifted so that the embedded boundary cells are moved to 
+c     the ends. This process is repeated with the background plasma
+c     data before the call to maptodiv.  
+c     
          read (buffer(13:),*) ix_cell_offset
-c
-c         write(0,*) 'IX_CELL_OFFSET:',ix_cell_offset
-c
+c     
+c     write(0,*) 'IX_CELL_OFFSET:',ix_cell_offset
+c     
       endif
-c
+c     
 c     Check also for grid shift/displacement information
-c
+c     
       if (buffer(1:6).eq.'SHIFT:'.or.
-     >    buffer(1:6).eq.'Shift:'.or.
-     >    buffer(1:6).eq.'shift:') then
-c
-c        The data is RSHIFT ZSHIFT
-c
+     >     buffer(1:6).eq.'Shift:'.or.
+     >     buffer(1:6).eq.'shift:') then
+c     
+c     The data is RSHIFT ZSHIFT
+c     
          read (buffer(7:),*) rshift,zshift
-c
+c     
       endif
-c
+c     
+c     
+c     jdemod - Check for grid scaling information
+c            - these values are used to scale up the cell and wall dimensions
+c            - the default values are 1.0
+c     
+      if (buffer(1:6).eq.'SCALE:'.or.
+     >     buffer(1:6).eq.'Scale:'.or.
+     >     buffer(1:6).eq.'scale:') then
+c     
+c     The data is RSCALE_GRID, ZSCALE_GRID
+c     
+         read (buffer(7:),*) rscale_grid,zscale_grid
+c     
+      endif
+c     
       if (buffer(4:8).ne.'=====') goto 100
-c
+c     
       write(6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c
-c      write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c
+c     
+c     write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
+c     
 c     Start reading in elements - three lines - different formats
 c     And a fourth separator line
-c
+c     
 c     The orientation of the polygons in the SONNET grids must match
 c     that for JET grids - the original read statements assigned the
 c     corners off by 90 degrees.
-c
-c
-c 200  read(12,9000,end=300)in,ik,ir,rvert(1),zvert(1),rvert(2),zvert(2)
-c      read(12,9001,end=2000) brat,rcent,zcent
-c      read(12,9002,end=2000) rvert(4),zvert(4),rvert(3),zvert(3)
-c      read(12,'(a)',end=2000) buffer
-c
-c      Results 180 degrees out of phase
-c
-c 200  read(12,9000,end=300)in,ik,ir,rvert(4),zvert(4),rvert(1),zvert(1)
-c      read(12,9001,end=2000) brat,rcent,zcent
-c      read(12,9002,end=2000) rvert(3),zvert(3),rvert(2),zvert(2)
-c      read(12,'(a)',end=2000) buffer
-c
-c 200  read(12,9000,end=300)in,ik,ir,rvert(1),zvert(1),rvert(4),zvert(4)
-c      read(12,9001,end=2000) brat,rcent,zcent
-c      read(12,9002,end=2000) rvert(2),zvert(2),rvert(3),zvert(3)
-c      read(12,'(a)',end=2000) buffer
-c
-c 200  read(12,9000,end=300)in,ik,ir,rvert(4),zvert(4),rvert(3),zvert(3)
-c      read(12,9001,end=2000) brat,rcent,zcent
-c      read(12,9002,end=2000) rvert(1),zvert(1),rvert(2),zvert(2)
-c      read(12,'(a)',end=2000) buffer
-c
+c     
+c     
+c     200  read(12,9000,end=300)in,ik,ir,rvert(1),zvert(1),rvert(2),zvert(2)
+c     read(12,9001,end=2000) brat,rcent,zcent
+c     read(12,9002,end=2000) rvert(4),zvert(4),rvert(3),zvert(3)
+c     read(12,'(a)',end=2000) buffer
+c     
+c     Results 180 degrees out of phase
+c     
+c     200  read(12,9000,end=300)in,ik,ir,rvert(4),zvert(4),rvert(1),zvert(1)
+c     read(12,9001,end=2000) brat,rcent,zcent
+c     read(12,9002,end=2000) rvert(3),zvert(3),rvert(2),zvert(2)
+c     read(12,'(a)',end=2000) buffer
+c     
+c     200  read(12,9000,end=300)in,ik,ir,rvert(1),zvert(1),rvert(4),zvert(4)
+c     read(12,9001,end=2000) brat,rcent,zcent
+c     read(12,9002,end=2000) rvert(2),zvert(2),rvert(3),zvert(3)
+c     read(12,'(a)',end=2000) buffer
+c     
+c     200  read(12,9000,end=300)in,ik,ir,rvert(4),zvert(4),rvert(3),zvert(3)
+c     read(12,9001,end=2000) brat,rcent,zcent
+c     read(12,9002,end=2000) rvert(1),zvert(1),rvert(2),zvert(2)
+c     read(12,'(a)',end=2000) buffer
+c     
  200  read(gridunit,9000,end=300) in,ik,ir,
-     >                             rvert(2),zvert(2),rvert(3),zvert(3)
-c
-c      write(6,'(a,3i5)') 'READ  :',ik,ir,in
-c
+     >     rvert(2),zvert(2),rvert(3),zvert(3)
+c     
+c     write(6,'(a,3i5)') 'READ  :',ik,ir,in
+c     
       read(gridunit,9001,end=2000) brat,rcent,zcent
       read(gridunit,9002,end=2000) rvert(1),zvert(1),rvert(4),zvert(4)
       read(gridunit,'(a)',end=2000) buffer
-c
-c     Adjust all values for any grid shifts 
-c
-      rcent = rcent + rshift
-      zcent = zcent + zshift
-c
+c     
+c     Adjust all values for any grid shifts or scalings 
+c     
+      rcent = rscale_grid * (rcent + rshift)
+      zcent = zscale_grid * (zcent + zshift)
+c     
       do loop_cnt = 1,4
-c
-         rvert(loop_cnt) = rvert(loop_cnt) + rshift
-         zvert(loop_cnt) = zvert(loop_cnt) + zshift
-c
+c     
+         rvert(loop_cnt) = rscale_grid * (rvert(loop_cnt) + rshift)
+         zvert(loop_cnt) = zscale_grid * (zvert(loop_cnt) + zshift)
+c     
       end do    
-c
-c
-c      write(15,9000) in,ik,ir,rvert(1),zvert(1),rvert(2),zvert(2)
-c      write(15,9001) brat,rcent,zcent
-c      write(15,9002) rvert(4),zvert(4),rvert(3),zvert(3)
-c      write(15,'(a)') buffer
-c
+c     
+c     
+c     write(15,9000) in,ik,ir,rvert(1),zvert(1),rvert(2),zvert(2)
+c     write(15,9001) brat,rcent,zcent
+c     write(15,9002) rvert(4),zvert(4),rvert(3),zvert(3)
+c     write(15,'(a)') buffer
+c     
 c     Assign all the values to the appropriate arrays
 c     Korpg is a cross-reference to the cell vertices. nvertp
 c     contains the number of vertices for a cell ... which is
 c     fixed at 4 for the present.
-c
+c     
 c     Increment all of the indices by an adjustment because DIVIMP does not
 c     use zeroth element array addressing for these arrays.
-c
+c     
       indexcnt = indexcnt + 1
-c
+c     
       if (indexcnt.eq.1) then
          indexnadj  = 1 - in 
          indexiradj = 1 - ir 
          indexikadj = 1 - ik 
-c
-c         if (in.eq.-1) then
-c            indexadj = 2
-c         elseif (in.eq.0) then
-c            indexadj = 1
-c         elseif (in.eq.1) then
-c            indexadj = 0
-c         endif
+c     
+c     if (in.eq.-1) then
+c     indexadj = 2
+c     elseif (in.eq.0) then
+c     indexadj = 1
+c     elseif (in.eq.1) then
+c     indexadj = 0
+c     endif
       endif
-c
+c     
       ik = ik + indexikadj
       ir = ir + indexiradj
       in = in + indexnadj
-c
+c     
 c     If IX_CELL_OFFSET is non-zero then the normal 
 c     boundary cells have to be ignored/removed before the 
 c     grid is shifted to move the second set of boundary cells 
 c     to the targets.    
-c
-c      write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
-c
+c     
+c     write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
+c     
       if (ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)) goto 150
-c
+c     
 c     Find corrected value of IK for the cell - keeping in mind that the 2
 c     end boundary cells have been removed. 
-c      
+c     
       if (ix_cell_offset.ne.0) then 
-c
+c     
          if (ik.le.(ix_cell_offset+1) ) then 
             ik = ik + (maxkpts-(ix_cell_offset+1)-1) -1 
          else
             ik = ik - (ix_cell_offset+1)
          endif     
-c
+c     
       endif
-c
-c      write(6,'(a,3i5)') 'MID   :',ik,ir,in 
-c
-c
+c     
+c     write(6,'(a,3i5)') 'MID   :',ik,ir,in 
+c     
+c     
 c     Less than or equal to the cutring is the PFZ/core 
 c     IK,IR values for these need further adjustments.
-c
+c     
       if (ir.le.cutring) then
          if (ik.le.cutpt1) then
             ir = maxrings + ir
          elseif (ik.ge.cutpt2) then
-c
-c           Moved code to add repeat cells in core to after 
-c           entire grid is loaded - this allows a split 
-c           grid to be properly handled. 
-c
-c
+c     
+c     Moved code to add repeat cells in core to after 
+c     entire grid is loaded - this allows a split 
+c     grid to be properly handled. 
+c     
+c     
             ir = maxrings + ir
             ik = ik - cutpt2 + cutpt1 +1
-c
+c     
          else
             ik = ik - cutpt1
          endif
       endif
-c
-c      write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
-c      write(6,*)  
-c
+c     
+c     write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
+c     write(6,*)  
+c     
       korpg(ik,ir) = in
       nvertp(in) = 4
       do 210 id = 1,nvertp(in)
@@ -5954,236 +5983,367 @@ c
       rs(ik,ir) = rcent
       zs(ik,ir) = zcent
       bratio(ik,ir) = brat
-c
+c     
 c     Check to see if a ring end has been passed.
-c
+c     
 c     For the trap rings ... this will be filled out twice
 c     first when it hits the cut and again at the end of the
 c     ring ... i.e. the two times when ir changes.
-c
-c
+c     
+c     
       if (ir.ne.irold) then 
          nks(irold) = max(nks(irold),max_ikold)
          max_ikold = 1  
       endif 
-c
+c     
       ikold = ik
       irold = ir
       max_ikold = max(max_ikold,ikold)
-c
+c     
 c     Exit condition ... can be supplemented with the END of file
 c     exit in the first read statement at line 200.
-c
+c     
 
  150  continue
 
       if (ir.eq.maxrings.and.ik.eq.maxkpts) then
          nks(ir) = max(nks(ir),max_ikold)
          npolyp = in
+         
+
+c     
+c     Add boundary cells for sonnet grids without virtual cells - 
+c     Add rings and add cells at the end of rings 
+c     Add cells by duplicating the cells from the adjacent ring with zero volume
+c     
+         if (sonnet_grid_sub_type.eq.2) then 
+c     
+c     
+c     If needed add boundary cells/rings to the grid - this is for grids without virtual cells around the edges
+c     
+c     Variables affected - 
+c     nvertp(ip)
+c     rvertp(1:4,ip)
+c     zvertp(1:4,ip)
+c     
+c     korpg(ik,ir)
+c     bratio(ik,ir)
+c     rs(ik,ir)
+c     zs(ik,ir)
+c     nrs
+c     nks(ir)
+c     
+c     maxrings (total rings read in - sonnet format)
+c     cutring  (last ring in core)
+c     cutpt1,cutpt2
+c     
+c     Add virtual rings first 
+c     Then add virtual target points at the ends of each SOL/PFZ ring
+c     
+c     Procedure only works with SN at the moment
+c     irsep = cutring + 1
+c     irwall = maxrings
+c     nrs = maxrings + cutring
+c     
+c     
+            if (maxrings+cutring+3 .gt.maxnrs) then 
+               write(0,*) 'ERROR ADDING BOUNDARY RINGS:'//
+     >              ' MAXNRS TOO SMALL = ',maxnrs
+               write(6,*) 'ERROR ADDING BOUNDARY RINGS:'//
+     >              ' MAXNRS TOO SMALL = ',maxnrs
+               stop
+            endif
+c
+c     Create space at ir = maxrings+1 for SOL and PFZ boundary
+c     Add space for 2 rings in the array
+c
+            do irn = maxrings+cutring,maxrings+1,-1
+               do ikn = 1,nks(irn)
+                  korpg(ikn,irn+2) = korpg(ikn,irn)
+                  rs(ikn,irn+2) = rs(ikn,irn)
+                  zs(ikn,irn+2) = zs(ikn,irn)
+                  bratio(ikn,irn+2) = bratio(ikn,irn)
+               end do 
+               nks(irn+2) = nks(irn)
+            end do
+c     
+c     Create space at ir = 1 for PFZ boundary
+c     
+            do irn = maxrings+cutring+2,1,-1
+               do ikn = 1,nks(irn)
+                  korpg(ikn,irn+1) = korpg(ikn,irn)
+                  rs(ikn,irn+1) = rs(ikn,irn)
+                  zs(ikn,irn+1) = zs(ikn,irn)
+                  bratio(ikn,irn+1) = bratio(ikn,irn)
+               end do 
+               nks(irn+1) = nks(irn)
+            end do
+c     
+c     Fill in the core boundary
+c     
+            call add_boundary_ring(in,1,2,INWARD41)
+c     
+c     Fill in the PFZ boundary
+c     
+            call add_boundary_ring(in,maxrings+3,maxrings+4,INWARD41)
+c     
+c     Fill in SOL boundary 
+c     
+            call add_boundary_ring(in,maxrings+2,maxrings+1,OUTWARD23)
+c     
+c     Adjust grid ring parameters
+c     
+            maxrings = maxrings+2
+            ir = ir + 2
+            cutring = cutring+1
+c     
+c     Add poloidal boundary cells at the ends of all rings in SOL/PFZ
+c     
+            do irn = cutring+1,maxrings+cutring
+               call add_boundary_targets(in,irn)
+            end do
+c
+c     Adjust cell counts appropriately
+c
+            ik = ik + 2
+            maxkpts  = maxkpts + 2
+            cutpt1 = cutpt1 + 1
+            cutpt2 = cutpt2 + 1
+c
+         endif
+c
          goto 300
       endif
-c
+c     
 c     Loop back
-c
+c     
       goto 200
-c
-c
+c     
+c     
 c     Continuation point after grid has been read in
-c
-c
+c     
+c     
  300  continue
-c slmod begin
+c     slmod begin
       CALL DB('RAUG: Done reading grid')
 
       vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
       vpolyp  = vpolmin
-c slmod end
-c
+c     slmod end
+c     
 c     Check for complete grid and issue error message
-c
+c     
       if (ir.ne.maxrings.or.ik.ne.maxkpts) then
-c
-          write (6,*) 'Error reading SONNET geometry file!'
-          write (6,*) 'Short read in data - grid may be incomplete'
-          write (6,*) 'Last read: ring:',ir,' knot:',ik
-          write (6,*) 'Number of polygons:',in
-          write (6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c
-          write (0,*) 'Error reading SONNET geometry file!'
-          write (0,*) 'Short read in data - grid may be incomplete'
-          write (0,*) 'Last read: ring:',ir,' knot:',ik
-          write (0,*) 'Number of polygons:',in
-          write (0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c
-          npolyp = in
-c
-          stop
-c
+c     
+         write (6,*) 'Error reading SONNET geometry file!'
+         write (6,*) 'Short read in data - grid may be incomplete'
+         write (6,*) 'Last read: ring:',ir,' knot:',ik
+         write (6,*) 'Number of polygons:',in
+         write (6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
+c     
+         write (0,*) 'Error reading SONNET geometry file!'
+         write (0,*) 'Short read in data - grid may be incomplete'
+         write (0,*) 'Last read: ring:',ir,' knot:',ik
+         write (0,*) 'Number of polygons:',in
+         write (0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
+c     
+         npolyp = in
+c     
+         stop
+c     
       endif
-c
+c     
 c     Add repeat cells to core rings - those less than or equal to cutring
-c
+c     
 c     For grids with NO PFZ - this needs to be modified since the "boundary" cells
 c     still have a finite but vey small volume - if these are deleted from the core
 c     rings (as they have been) then the core will not match up with the main SOL since
 c     the boundary cells are removed in the main SOL by code found later. As a result, 
 c     we need to manufacture a new cell by combining the two guard cells with one 
 c     of the adjacent cells and then duplicating that result.
-c
+c     
 c     This procedure applies for LIMITER machine grids generated by UEDGE. A different
 c     procedure would be necessary for cells with zero volumes.  
-c
-      if (sonnet_grid_sub_type.eq.0) then
+c     
+      if (sonnet_grid_sub_type.eq.0.or.sonnet_grid_sub_type.eq.2) then
 
          do ir = 1,cutring 
-c
+c     
             if (nopriv) then 
-c
-c              Modify the along field line coordinates of the last cell of the core
-c              ring so that they will match up with the first cell.  
-c
+c     
+c     Modify the along field line coordinates of the last cell of the core
+c     ring so that they will match up with the first cell.  
+c     
                in1 = korpg(1,ir) 
                in2 = korpg(nks(ir),ir) 
-c            
+c     
                rvertp(4,in2) = rvertp(1,in1)
                zvertp(4,in2) = zvertp(1,in1)
                rvertp(3,in2) = rvertp(2,in1)
                zvertp(3,in2) = zvertp(2,in1)
-c
-c              Also need to modify one corner of the first non-boundary main SOL cell. 
-c              so that the target closes and the corners match up correctly. 
-c
-c              NOTE: if the cells inserted actually had zero volume none of this 
-c                    additional processing would be needed. 
-c
-c              This modification should not be done for the FRC grid.  
-c
+c     
+c     Also need to modify one corner of the first non-boundary main SOL cell. 
+c     so that the target closes and the corners match up correctly. 
+c     
+c     NOTE: if the cells inserted actually had zero volume none of this 
+c     additional processing would be needed. 
+c     
+c     This modification should not be done for the FRC grid.  
+c     
                if (ir.eq.cutring) then 
-c
+c     
                   in3 = korpg(nks(ir+1)-1,ir+1)
                   rvertp(4,in3) = rvertp(3,in2)
                   zvertp(4,in3) = zvertp(3,in2)
-c
+c     
                endif 
-c
+c     
             endif
-c
+c     
             nks(ir) = nks(ir) + 1
-c
+c     
             ik = nks(ir)           
-c
-c           Add a repeat point to the core
-c           plasma rings - to close them.
-c
+c     
+c     Add a repeat point to the core
+c     plasma rings - to close them.
+c     
             rs(ik,ir) = rs(1,ir)
             zs(ik,ir) = zs(1,ir)
             korpg(ik,ir) = korpg(1,ir)
             bratio(ik,ir) = bratio(1,ir)
-c
+c     
          end do
-c
+c     
       endif 
 
-c
-c
+
+c     
+c     
 c     READ in any additional information at the end of the grid file
-c
+c     
 c     1) Target PSI values
 c     2) NEUTRAL WALL coordinates (if any)
-c
-       
+c     
+      
  400  read(gridunit,'(a)',end=500) buffer
 
-c
+c     
 c     Check for neutral wall 
-c
+c     
       if (buffer(1:13).eq.'NEUTRAL WALL:') then 
 
          read(buffer(14:),*,IOSTAT=ios) nves
-c
-c        Support old format where number of elements was on next line
-c        Trapped by error in reading the new format
-c
+c     
+c     Support old format where number of elements was on next line
+c     Trapped by error in reading the new format
+c     
          if (ios.ne.0) then 
             read(gridunit,*) nves
          endif
-c
+c     
          do in = 1,nves
             read(gridunit,*,end=4000) rves(in),zves(in)
-c
-c           Need to apply same shift to neutral wall as to grid
-c               
-            rves(in) = rves(in) + rshift
-            zves(in) = zves(in) + zshift
-c
+c     
+c     Need to apply same shift and scale to neutral wall as to grid
+c     
+            rves(in) = rscale_grid * (rves(in) + rshift)
+            zves(in) = zscale_grid * (zves(in) + zshift)
+c     
          end do
 
 
       endif  
       IF (.TRUE.) THEN
-        nvesm = nves
-        DO i1 = 1, nves-1
-          rvesm(i1,1) = rves(i1)
-          zvesm(i1,1) = zves(i1)
-          rvesm(i1,2) = rves(i1+1)
-          zvesm(i1,2) = zves(i1+1)
-        ENDDO
-        rvesm(i1,1) = rves(i1)
-        zvesm(i1,1) = zves(i1)
-        rvesm(i1,2) = rves(1)
-        zvesm(i1,2) = zves(1)
+         nvesm = nves
+         DO i1 = 1, nves-1
+            rvesm(i1,1) = rves(i1)
+            zvesm(i1,1) = zves(i1)
+            rvesm(i1,2) = rves(i1+1)
+            zvesm(i1,2) = zves(i1+1)
+         ENDDO
+         rvesm(i1,1) = rves(i1)
+         zvesm(i1,1) = zves(i1)
+         rvesm(i1,2) = rves(1)
+         zvesm(i1,2) = zves(1)
       ENDIF
-c
+c     
 c     Check for PSI values
-c
+c     
       if (buffer(1:4).eq.'PSI:') then
+c     
+c        Initialize psitarg array to zero
 c
-          read(buffer(5:),*) npsi
+         psitarg = 0.0
 c
-c         The PSI values are listed with one on each line
-c         indexed by knot and ring index based on the SONNET 
-c         grid coordinates. 
+         read(buffer(5:),*) npsi
+c     
+c     The PSI values are listed with one on each line
+c     indexed by knot and ring index based on the SONNET 
+c     grid coordinates. 
+c     
+         do in = 1,npsi
+c     
+            read(gridunit,*,end=4000) ik,ir,psi
 c
-          do in = 1,npsi
+c     In the case of sonnet_grid_sub_type=2 - boundary rings have been added
+c     and these will not have corresponding psi values - set psi values to 0.0?
 c
-             read(gridunit,*,end=4000) ik,ir,psi
+c     
+c     IK values equal to 1 correspond to the INSIDE target
+c     for an X-point down DIIID grid - this would correspond
+c     to target number "2" in the DIVIMP nomenclature
+c     
 c
-c            IK values equal to 1 correspond to the INSIDE target
-c            for an X-point down DIIID grid - this would correspond
-c            to target number "2" in the DIVIMP nomenclature
+c     jdemod - the table of PSI values at the end of the grid file has
+c              never been indexed from 0 - it has always started at 1 for the 
+c              first ring - however, this is due to the fact that UEDGE 
+c              appears to have just skipped printing values for boundary 
+c              rings - the correction is still needed to map properly to 
+c              the grid. 
 c
-             ir = ir + indexiradj
+            ir = ir + indexiradj
 c
-             if (ir.le.cutring) ir = ir + maxrings 
 c
-c            Check for first or second half of ring
+c     In the case of sonnet_grid_sub_type=2 - boundary rings have been added
+c     and these will not have corresponding psi values - set psi values to 0.0 as default
+c     Adding one to ir should account for the indexing. 
 c
-             if (ik.lt.maxkpts/2) then 
-c
-                psitarg(ir,2) = psi
-c
-             else
-c
-                psitarg(ir,1) = psi
-c
-             endif
-c
-          end do
-c
+            if (sonnet_grid_sub_type.eq.2) then
+               ir = ir +1 
+               write(6,'(a,3i8,g12.5)') 'PSITARG:',ir,indexiradj,
+     >                        cutring,ik,psi
+            endif
+c     
+            if (ir.le.cutring) ir = ir + maxrings 
+c     
+c     Check for first or second half of ring
+c     
+            if (ik.lt.maxkpts/2) then 
+c     
+               psitarg(ir,2) = psi
+c     
+            else
+c     
+               psitarg(ir,1) = psi
+c     
+            endif
+c     
+         end do
+c     
       endif
-c
+c     
 
       goto 400
 
 
  500  continue
-c
-c
+c     
+c     
 c     Check to see if vessel wall was READ IN - If required
-c
+c     
       if ((cneur.eq.4.or.ctrap.eq.4.or.cneur.eq.5.or.ctrap.eq.5)
-     >    .and.nves.eq.0) then
-c
+     >     .and.nves.eq.0) then
+c     
          write (6,*) 'Error reading SONNET geometry file!'
          write (6,*) 'The Neutral Wall data was not appended'
          write (6,*) '(but is requored for specified options.)'
@@ -6191,235 +6351,235 @@ c
          call prc('The Neutral Wall data was not appended')
          call prc('(but is requored for specified wall options)')
          stop
-c
+c     
       end if
-c
+c     
       write (6,'(a,9(1x,i6))') 'Index:',
-     >                     indexcnt,indexnadj,indexiradj,indexikadj,
-     >                     ik,ir,in,maxrings,
-     >                     maxkpts
-c
+     >     indexcnt,indexnadj,indexiradj,indexikadj,
+     >     ik,ir,in,maxrings,
+     >     maxkpts
+c     
       do ir = 1,maxrings+cutring
          write (6,'(a,5i5)') 'RINGS:',ir,nks(ir),maxrings,cutring
       end do
-c
+c     
       do ir = 1,maxrings+cutring
          do ik = 1,nks(ir)
             write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
          end do
       end do
-c
-c
+c     
+c     
 c     Set total number of rings and total number of polygons
-c
+c     
       refct = 0
-c
+c     
       if (nopriv) then
          nrs = maxrings
       else
          nrs = maxrings + cutring
       endif
-c
+c     
       irsep = cutring +1
       irwall = maxrings
-c
+c     
 c     These may need adjusting for meshes without a private plasma
-c
+c     
       irtrap  = irwall +1
       irtrap2 = irtrap
       irwall2 = irwall
       nrs2 = nrs
-c
-c
+c     
+c     
 c     For the FRC grid replace any boundary cells whose coordinates are all 
 c     zeroes with cell vertex values taken from the adjacent real cell.
-c
+c     
 c     Rings affected are IR=1 and IR=NRS/IRWALL and the first cells on each ring
-c
+c     
 c     NOTE!: The polygons created here are in fact later deleted - however, the RS,ZS
-c            values retain significance.
-c
+c     values retain significance.
+c     
       if (sonnet_grid_sub_type.eq.1) then 
-c
-c        Ring 1 and Ring NRS first from knot 2 to knot nks(ir)-1
-c
+c     
+c     Ring 1 and Ring NRS first from knot 2 to knot nks(ir)-1
+c     
          ir = 1
-c
-c        Map outward for first ring - do all cells on ring since extra cells on core
-c        rings are not later stripped while they are for the other rings. 
-c        The "virtual" cells at the ends of this ring have already been removed to 
-c        the PFZ where they are deleted. 
-c
-c        In addition the core ring needs to be lined up with the ik+1 cell in the 
-c        adjacent main SOL ring since they is a discontinuity in cell alignment. 
-c
+c     
+c     Map outward for first ring - do all cells on ring since extra cells on core
+c     rings are not later stripped while they are for the other rings. 
+c     The "virtual" cells at the ends of this ring have already been removed to 
+c     the PFZ where they are deleted. 
+c     
+c     In addition the core ring needs to be lined up with the ik+1 cell in the 
+c     adjacent main SOL ring since they is a discontinuity in cell alignment. 
+c     
          do ik = 1,nks(ir)
-c
+c     
 
             if ((rs(ik,ir).eq.rshift) .and.
-     >          (zs(ik,ir).eq.zshift)) then 
-c
+     >           (zs(ik,ir).eq.zshift)) then 
+c     
                in1 = korpg(ik,ir)
-c
-c              Line up cell with appropriate one in next ring
-c
+c     
+c     Line up cell with appropriate one in next ring
+c     
                if ((ir+1).eq.irsep) then 
                   in2 = korpg(ik+1,ir+1)
                else
                   in2 = korpg(ik,ir+1)
                endif
-c
-c              Copy cell vertices from next ring
-c
+c     
+c     Copy cell vertices from next ring
+c     
                rvertp(3,in1) = rvertp(4,in2)
                zvertp(3,in1) = zvertp(4,in2)
                rvertp(2,in1) = rvertp(1,in2)
                zvertp(2,in1) = zvertp(1,in2)
-c
-c              Duplicate these for other vertices to get a 
-c              zero volume cell
-c
+c     
+c     Duplicate these for other vertices to get a 
+c     zero volume cell
+c     
                rvertp(4,in1) = rvertp(3,in1)
                zvertp(4,in1) = zvertp(3,in1)
                rvertp(1,in1) = rvertp(2,in1)
                zvertp(1,in1) = zvertp(2,in1)
-c
+c     
                rs(ik,ir) = (rvertp(3,in1) + rvertp(2,in1))/2.0
                zs(ik,ir) = (zvertp(3,in1) + zvertp(2,in1))/2.0
                bratio(ik,ir) = bratio(ik,ir+1)
-c
+c     
             endif
-c
+c     
          end do 
-c
+c     
          ir = nrs
-c
-c        Map inward for last ring
-c
+c     
+c     Map inward for last ring
+c     
          do ik = 2,nks(ir)-1
 
-c
+c     
             if ((rs(ik,ir).eq.rshift) .and.
-     >          (zs(ik,ir).eq.zshift)) then 
-c
+     >           (zs(ik,ir).eq.zshift)) then 
+c     
                in1 = korpg(ik,ir)
                in2 = korpg(ik,ir-1)
-c
-c              Copy cell vertices from next ring
-c
+c     
+c     Copy cell vertices from next ring
+c     
                rvertp(4,in1) = rvertp(3,in2)
                zvertp(4,in1) = zvertp(3,in2)
                rvertp(1,in1) = rvertp(2,in2)
                zvertp(1,in1) = zvertp(2,in2)
-c
-c              Duplicate these for other vertices to get a 
-c              zero volume cell
-c
+c     
+c     Duplicate these for other vertices to get a 
+c     zero volume cell
+c     
                rvertp(3,in1) = rvertp(4,in1)
                zvertp(3,in1) = zvertp(4,in1)
                rvertp(2,in1) = rvertp(1,in1)
                zvertp(2,in1) = zvertp(1,in1)
-c
+c     
                rs(ik,ir) = (rvertp(4,in1) + rvertp(1,in1))/2.0
                zs(ik,ir) = (zvertp(4,in1) + zvertp(1,in1))/2.0
                bratio(ik,ir) = bratio(ik,ir-1)
-c
+c     
             endif
-c
+c     
          end do 
-c
-c        Assign vertices for the cells at the
-c        ends of the rings for cells in the main SOL. 
-c
+c     
+c     Assign vertices for the cells at the
+c     ends of the rings for cells in the main SOL. 
+c     
          do ir = irsep,nrs
-c
-c           First end - ik = 1 
-c
+c     
+c     First end - ik = 1 
+c     
             ik = 1
-c
+c     
             if ((rs(ik,ir).eq.rshift) .and.
-     >          (zs(ik,ir).eq.zshift)) then 
-c
+     >           (zs(ik,ir).eq.zshift)) then 
+c     
                in1 = korpg(ik,ir)
                in2 = korpg(ik+1,ir)
-c
-c              Copy cell vertices from next cell
-c
+c     
+c     Copy cell vertices from next cell
+c     
                rvertp(4,in1) = rvertp(1,in2)
                zvertp(4,in1) = zvertp(1,in2)
                rvertp(3,in1) = rvertp(2,in2)
                zvertp(3,in1) = zvertp(2,in2)
-c
-c              Duplicate these for other vertices to get a 
-c              zero volume cell
-c 
+c     
+c     Duplicate these for other vertices to get a 
+c     zero volume cell
+c     
                rvertp(1,in1) = rvertp(4,in1)
                zvertp(1,in1) = zvertp(4,in1)
                rvertp(2,in1) = rvertp(3,in1)
                zvertp(2,in1) = zvertp(3,in1)
-c
+c     
                rs(ik,ir) = (rvertp(4,in1) + rvertp(3,in1))/2.0
                zs(ik,ir) = (zvertp(4,in1) + zvertp(3,in1))/2.0
                bratio(ik,ir) = bratio(ik+1,ir)
-c         
+c     
             endif
-c
-c           Second end - ik = nks(ir)
-c
+c     
+c     Second end - ik = nks(ir)
+c     
             ik = nks(ir)
-c
+c     
             if ((rs(ik,ir).eq.rshift) .and.
-     >          (zs(ik,ir).eq.zshift)) then 
-c
+     >           (zs(ik,ir).eq.zshift)) then 
+c     
                in1 = korpg(ik,ir)
                in2 = korpg(ik-1,ir)
-c
-c              Copy cell vertices from next cell
-c
+c     
+c     Copy cell vertices from next cell
+c     
                rvertp(1,in1) = rvertp(4,in2)
                zvertp(1,in1) = zvertp(4,in2)
                rvertp(2,in1) = rvertp(3,in2)
                zvertp(2,in1) = zvertp(3,in2)
-c
-c              Duplicate these for other vertices to get a 
-c              zero volume cell
-c
+c     
+c     Duplicate these for other vertices to get a 
+c     zero volume cell
+c     
                rvertp(4,in1) = rvertp(1,in1)
                zvertp(4,in1) = zvertp(1,in1)
                rvertp(3,in1) = rvertp(2,in1)
                zvertp(3,in1) = zvertp(2,in1)
-c
+c     
                rs(ik,ir) = (rvertp(1,in1) + rvertp(2,in1))/2.0
                zs(ik,ir) = (zvertp(1,in1) + zvertp(2,in1))/2.0
                bratio(ik,ir) = bratio(ik-1,ir)
-c
+c     
             endif  
-c         
+c     
          end do 
-c
+c     
       endif
-c
+c     
 c     Approximate X-point values and centre point
-c
+c     
 c     Use approximate limiter tip for Textor style limiter
 c     grids - or those for which there is no private plasma
 c     specified at all.
-c
+c     
       if (nopriv.or.(cutpt1.eq.1.and.cutpt2.eq.maxkpts)) then
          rxp = (rs(1,irsep)+ rs(nks(irsep),irsep)) / 2.0
          zxp = (zs(1,irsep)+ zs(nks(irsep),irsep)) / 2.0
 
       else
          rxp = 0.25 * (rs(cutpt1,nrs)+rs(cutpt1+1,nrs)
-     >      +rs(1,cutring)+rs(nks(cutring)-1,cutring))
+     >        +rs(1,cutring)+rs(nks(cutring)-1,cutring))
          zxp = 0.25 * (zs(cutpt1,nrs)+zs(cutpt1+1,nrs)
-     >      +zs(1,cutring)+zs(nks(cutring)-1,cutring))
+     >        +zs(1,cutring)+zs(nks(cutring)-1,cutring))
       endif
-c
+c     
 c     Need to verify that the innermost core ring on the grid actually contains valid r,s data
 c     especially when r0 and z0 are used elsewhere - use the r,z coordinates for the second 
 c     ring of the core since it should be guaranted to contain real data.
-c
+c     
       r0 = 0.0
       z0 = 0.0
       irtmp = 2
@@ -6429,265 +6589,268 @@ c
  70   continue
       r0 = r0/(nks(irtmp)-1)
       z0 = z0/(nks(irtmp)-1)
-c
+c     
       write (6,*) 'Calculated: rxp,zxp,r0,z0 = ',rxp,zxp,r0,z0
-c
-c
+c     
+c     
 c     Set up value of KBFS and BTS
-c
+c     
 c     Also set up values of RMIN,RMAX,ZMIN,ZMAX
-c
+c     
       rmin = hi
       rmax = lo
       zmin = hi
       zmax = lo
-c
+c     
       do 50 ir = 1,nrs
          do 60 ik = 1,nks(ir)
             if (bratio(ik,ir).ne.0.0) then
                kbfs(ik,ir) = 1.0 / bratio(ik,ir)
             else
                write(6,'(a,2i6,4(1x,g12.5))') 
-     >            'WARNING: RAUG: BRATIO=0:',ik,ir,bratio(ik,ir)
+     >              'WARNING: RAUG: BRATIO=0:',ik,ir,bratio(ik,ir)
                kbfs(ik,ir) = 1.0
             endif
-c
-c           Assign values for toroidal magnetic field
-c
+c     
+c     Assign values for toroidal magnetic field
+c     
             if (rs(ik,ir).ne.0.0) then
                BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
             else 
                write(6,'(a,2i6,2g14.6)') 
-     >             'WARNING: RAUG: R=0 FOR CELL:',
-     >             ik,ir,rs(ik,ir),zs(ik,ir)
-                   bts(ik,ir) = cbphi
+     >              'WARNING: RAUG: R=0 FOR CELL:',
+     >              ik,ir,rs(ik,ir),zs(ik,ir)
+               bts(ik,ir) = cbphi
             endif
-c
+c     
             RMIN = MIN(rmin,rs(ik,ir))
             rmax = max(rmax,rs(ik,ir))
             zMIN = MIN(zmin,zs(ik,ir))
             zmax = max(zmax,zs(ik,ir))
  60      continue
  50   continue
-c
+c     
       if (cprint.eq.3.or.cprint.eq.9) then 
          write (6,*) 'KBFS:'
-c
+c     
          do ir = 1,nrs
-c
+c     
             write (6,'(''Ring:'',2i4)') ir,nks(ir)
             do ik = 1,nks(ir)
                write (6,'(2g18.10,i5,2g18.10)') bratio(ik,ir),
-     >                  kbfs(ik,ir),
-     >                  korpg(ik,ir),rs(ik,ir),zs(ik,ir)
+     >              kbfs(ik,ir),
+     >              korpg(ik,ir),rs(ik,ir),zs(ik,ir)
             end do
          end do
       endif   
-c
-c
+c     
+c     
 c     Other values
-c
+c     
 c     These settings for IKT will only work for a symmetric grid
 c     where the number of points on the private plasma sections at
 c     each end are the same.
-c
+c     
 
       IKT = cutpt1
       IKTO= IKT
-c
-c      IKTI = nks(irsep) - ikt + 1
-c
+c     
+c     IKTI = nks(irsep) - ikt + 1
+c     
 c     This formula should work for assymmetric legs
-c
+c     
       if (ix_cell_offset.ne.0) then   
          ikti = nks(irsep) - ( (maxkpts-2) - cutpt2 ) 
       else
          ikti = nks(irsep) - ( maxkpts - cutpt2 )
       endif
-c
+c     
       write (6,*) 'Cut values: ikt...:',ikt,ikto,ikti,
-     >             cutpt1,cutpt2,maxkpts,
-     >             cutring, maxrings, irsep,nrs
-c
-c      NINOWA = 0
-c      HMASS = 0.0
-c      ZMASS = 0.0
-c
-c
-c      Calculate KORY for non-JET grids so that the TRAN file
-c      can be written correctly. Note: at this point the 
-c      boundary cells are still on the grid so no additional 
-c      work has to be done. 
-c
-c      KORY is used to index and store data in the appropriate order
-c      for use at JET. 
-c
-       in = 0
-       do ir = 1,nrs
-          do ik = 1,nks(ir)
-             in = in+1
-             kory(ir,ik) = in 
-          end do
-       end do
-c
-c      If it has been specified to read the background plasma
-c      solution from an external file. It is assumed that the
-c      values are the result of a B2-Eirene run and the files
-c      will be in the format of the B2 to Eirene coupling. The
-c      code to read this was taken from this interface and should
-c      be identical. Furthermore, care must be taken to ensure that
-c      the grids and numbers of values match up. The code makes
-c      the same assumptions as iterated at the beginning of the
-c      RAUG subroutine ... in regards to mapping the plasma values
-c      onto the DIVIMP grid.
-c
-C
+     >     cutpt1,cutpt2,maxkpts,
+     >     cutring, maxrings, irsep,nrs
+c     
+c     NINOWA = 0
+c     HMASS = 0.0
+c     ZMASS = 0.0
+c     
+c     
+c     Calculate KORY for non-JET grids so that the TRAN file
+c     can be written correctly. Note: at this point the 
+c     boundary cells are still on the grid so no additional 
+c     work has to be done. 
+c     
+c     KORY is used to index and store data in the appropriate order
+c     for use at JET. 
+c     
+      in = 0
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            in = in+1
+            kory(ir,ik) = in 
+         end do
+      end do
+c     
+c     If it has been specified to read the background plasma
+c     solution from an external file. It is assumed that the
+c     values are the result of a B2-Eirene run and the files
+c     will be in the format of the B2 to Eirene coupling. The
+c     code to read this was taken from this interface and should
+c     be identical. Furthermore, care must be taken to ensure that
+c     the grids and numbers of values match up. The code makes
+c     the same assumptions as iterated at the beginning of the
+c     RAUG subroutine ... in regards to mapping the plasma values
+c     onto the DIVIMP grid.
+c     
+C     
 C-----------------------------------------------------------------------
 C     Extract Densities, Temperatures etc from second file
 C-----------------------------------------------------------------------
-C
+C     
       if (cre2d.eq.2.or.cioptf.eq.99.or.
-     >    cioptg.eq.99.or.cioptg.eq.90) then
+     >     cioptg.eq.99.or.cioptg.eq.90) then
 
-        call b2repl(maxrings,maxkpts,cutring,cutpt1,cutpt2,readaux,
-     >              rizb,crmb,cion,ix_cell_offset)
+         call b2repl(maxrings,maxkpts,cutring,cutpt1,cutpt2,readaux,
+     >        rizb,crmb,cion,ix_cell_offset)
 
       endif
-c
+c     
 c     Write diagnostics
-c
+c     
       write (6,'(a,4(1x,i8))') 
-     >           'nrs, irsep, irwall, irtrap as initially read:',
-     >            nrs,irsep,irwall,irtrap
+     >     'nrs, irsep, irwall, irtrap as initially read:',
+     >     nrs,irsep,irwall,irtrap
       write (6,*) 'nks as initially read:',(nks(ir),ir=1,nrs)
       write (6,'(a,4(1x,i8))') 
-     >            'maxrings, maxkpts, cutring, cutpt1, cutpt2:',
-     >             maxrings, maxkpts, cutring, cutpt1, cutpt2
-c
+     >     'maxrings, maxkpts, cutring, cutpt1, cutpt2:',
+     >     maxrings, maxkpts, cutring, cutpt1, cutpt2
+c     
       do 10 ir = 1,cutring
          do 20 ik = 1,nks(ir)
             write (diagunit,'(2i5,3(1x,g18.12))') 
-     >                   ik,ir,rs(ik,ir),zs(ik,ir),kbfs(ik,ir)
+     >           ik,ir,rs(ik,ir),zs(ik,ir),kbfs(ik,ir)
  20      continue
          write(diagunit,'(a)')
  10   continue
       do 30 ir = cutring+1,nrs
          do 40 ik = 1,nks(ir)
             write (diagunit,'(2i5,3(1x,g18.12))') 
-     >                   ik,ir,rs(ik,ir),zs(ik,ir),kbfs(ik,ir)
+     >           ik,ir,rs(ik,ir),zs(ik,ir),kbfs(ik,ir)
  40      continue
          write(diagunit,'(a)')
  30   continue
 
-c
+c     
 c     jdemod - Output the grid before modifications are made
 c     
       call OutputGrid2(67,'RAUG: before modifications')
 
-c slmod begin 
+c     slmod begin 
       IF (quasidn) CALL PrepQuasiDoubleNull
 
       IF (grdnmod.GT.0) THEN
-c...    New, more sophisticated (yeah, baby) grid cutting method:
+c...  New, more sophisticated (yeah, baby) grid cutting method:
 
-c...    Get rid of poloidal boundary cells (to be added again below
-c       after grid manipulations are complete):
-        DO ir = irsep, nrs
-          CALL DeleteCell(nks(ir),ir)
-          CALL DeleteCell(1      ,ir)
-        ENDDO
+c...  Get rid of poloidal boundary cells (to be added again below
+c     after grid manipulations are complete):
+         DO ir = irsep, nrs
+            CALL DeleteCell(nks(ir),ir)
+            CALL DeleteCell(1      ,ir)
+         ENDDO
 
-c...    Modify the grid based on entries in the GRDMOD array assigned 
-c       from the input file:
-        CALL TailorGrid
+c...  Modify the grid based on entries in the GRDMOD array assigned 
+c     from the input file:
+         CALL TailorGrid
 
-c...    Add virtual boundary cells, which will be stripped off later:
-        IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
-     .      CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
-     .     CALL AddPoloidalBoundaryCells
+c...  Add virtual boundary cells, which will be stripped off later:
+         IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .        CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .        CALL AddPoloidalBoundaryCells
+
+
+         write(0,*) 'Finished tailorgrid:'
       ENDIF      
-c
+c     
 c     jdemod - write out grid after modifications
-c
+c     
       call OutputGrid2(68,'RAUG after grid modifications')
 
-c      WRITE(0,*) 'GRDNMOD set = -1'
-c      grdnmod = -1 
-c slmod end
-c
-c
+c     WRITE(0,*) 'GRDNMOD set = -1'
+c     grdnmod = -1 
+c     slmod end
+c     
+c     
 c     Set IKREF value
-c
+c     
       IKREF  = NKS(IRSEP)/2 + 1
-c
+c     
 c     REMOVE THIS FOR NOW - Having no polygon or cell information for
 c     the boundary rings can cause some issues with central mirror reflection
 c     and far periphery entry - needs to be fixed up. 
-c
+c     
 c     Eliminate any record of polygons for the core, wall and
 c     trap wall rings since these are not proper rings in the
 c     first place.
-c
-c      if (sonnet_grid_sub_type.eq.0) then  
-c
-c         write (6,*) 'Eliminating KORPG for :', 1,irwall,irtrap
-c
-c         CALL ISet(korpg(1,1     ),MAXNKS,0)
-c         CALL ISet(korpg(1,irwall),MAXNKS,0)
-c         CALL ISet(korpg(1,irtrap),MAXNKS,0)
-c
-c      endif 
-c
+c     
+c     if (sonnet_grid_sub_type.eq.0) then  
+c     
+c     write (6,*) 'Eliminating KORPG for :', 1,irwall,irtrap
+c     
+c     CALL ISet(korpg(1,1     ),MAXNKS,0)
+c     CALL ISet(korpg(1,irwall),MAXNKS,0)
+c     CALL ISet(korpg(1,irtrap),MAXNKS,0)
+c     
+c     endif 
+c     
 c     Core
-c
-c      ir = 1
-c      do ik = 1,nks(ir)
-c         korpg(ik,ir) = 0
-c      end do
-c
+c     
+c     ir = 1
+c     do ik = 1,nks(ir)
+c     korpg(ik,ir) = 0
+c     end do
+c     
 c     Wall
-c
-c      ir = irwall
-c      do ik = 1,nks(ir)
-c         korpg(ik,ir) = 0
-c      end do
-c
+c     
+c     ir = irwall
+c     do ik = 1,nks(ir)
+c     korpg(ik,ir) = 0
+c     end do
+c     
 c     Trap Wall
-c
-c      ir = irtrap
-c      do ik = 1,nks(ir)
-c         korpg(ik,ir) = 0
-c      end do
-c
-c slmod begin
+c     
+c     ir = irtrap
+c     do ik = 1,nks(ir)
+c     korpg(ik,ir) = 0
+c     end do
+c     
+c     slmod begin
       IF (.FALSE.) THEN
-        nvesm = nves
-        DO i1 = 1, nves-1
-          rvesm(i1,1) = rves(i1)
-          zvesm(i1,1) = zves(i1)
-          rvesm(i1,2) = rves(i1+1)
-          zvesm(i1,2) = zves(i1+1)
-        ENDDO
-        rvesm(i1,1) = rves(i1)
-        zvesm(i1,1) = zves(i1)
-        rvesm(i1,2) = rves(1)
-        zvesm(i1,2) = zves(1)
-        CALL OutputData(86,'Working on it - still')
-        CALL SaveSolution
-        STOP 'WORKING ON IT - STILL'
+         nvesm = nves
+         DO i1 = 1, nves-1
+            rvesm(i1,1) = rves(i1)
+            zvesm(i1,1) = zves(i1)
+            rvesm(i1,2) = rves(i1+1)
+            zvesm(i1,2) = zves(i1+1)
+         ENDDO
+         rvesm(i1,1) = rves(i1)
+         zvesm(i1,1) = zves(i1)
+         rvesm(i1,2) = rves(1)
+         zvesm(i1,2) = zves(1)
+         CALL OutputData(86,'Working on it - still')
+         CALL SaveSolution
+         STOP 'WORKING ON IT - STILL'
       ENDIF
 
-c      DO ir = 1, nrs
-c        DO ik = 1, nks(ir)
-c          bratio(ik,ir) = 0.5
-c          kbfs  (ik,ir) = 2.0
-c        ENDDO
-c      ENDDO
-c slmod end
+c     DO ir = 1, nrs
+c     DO ik = 1, nks(ir)
+c     bratio(ik,ir) = 0.5
+c     kbfs  (ik,ir) = 2.0
+c     ENDDO
+c     ENDDO
+c     slmod end
       return
-c
+c     
 c     Error exit conditions
-c
+c     
  1000 write (6,*) 'Error reading SONNET geometry file!'
       write (6,*) 'No starting line ===== found.'
       stop
@@ -6701,33 +6864,210 @@ c
       call prc('Error reading SONNET geometry file!')
       call prc('INCOMPLETE READ ON ADDITIONAL DATA')
       stop
-c
+c     
 c     Format statements
-c
+c     
 c     The brain dead SUN compiler will not accept constant character
 c     string in an input format statement even if the match the input 
 c     text - changing to use x edit descriptor to space data for input -
 c     use original format statements for output. 
-c
+c     
 
  9000 format(10x,i5,4x,i3,1x,i3,4x,
-     >       e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,e17.10e2)
+     >     e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,e17.10e2)
  9001 format(18x,e17.10e2,14x,
-     >       e17.10e2,1x,e17.10e2)
+     >     e17.10e2,1x,e17.10e2)
  9002 format(30x,e17.10e2,1x,e17.10e2,8x,
-     >       e17.10e2,1x,e17.10e2)
-c
+     >     e17.10e2,1x,e17.10e2)
+c     
 c     Original formats for writing 
-c
+c     
  9003 format(3x,'Element',i5,' = (',i3,',',i3,'): (',
-     >       e17.10e2,',',e17.10e2,')',6x,'(',e17.10e2,',',e17.10e2,')')
+     >     e17.10e2,',',e17.10e2,')',6x,'(',e17.10e2,',',e17.10e2,')')
  9004 format(3x,'Field ratio  = ',e17.10e2,13x,
-     >       '(',e17.10e2,',',e17.10e2,')')
+     >     '(',e17.10e2,',',e17.10e2,')')
  9005 format(3x,26x,'(',e17.10e2,',',e17.10e2,')',6x,
-     >       '(',e17.10e2,',',e17.10e2,')')
-c
-c
+     >     '(',e17.10e2,',',e17.10e2,')')
+c     
+c     
       end
+c     
+c     
+c     
+
+      subroutine add_boundary_ring(in,irn,irref,ref_side)
+      implicit none
+      include 'params'
+      include 'cgeom'
+      
+      integer, intent(in) ::  irn,irref,ref_side
+      integer in 
+
+c     
+c     Local variables
+c     
+      integer ikn,inref
+
+      nks(irn) = nks(irref)
+
+      do ikn = 1,nks(irn)
+         inref = korpg(ikn,irref)
+
+         call add_boundary_cell(in,ikn,irn,inref,ref_side)
+
+         bratio(ikn,irn) = bratio(ikn,irref)
+
+      end do
+
+c     
+      return
+      end
+c     
+c     
+c     
+      subroutine add_boundary_targets(in,irn)
+      implicit none
+      include 'params'
+      include 'cgeom'
+c
+      integer in,irn
+c
+      integer ikn,inref
+
+      if (nks(irn)+2 .gt.maxnks) then 
+         write(0,*) 'ERROR ADDING BOUNDARY AT TARGETS:'//
+     >              ' MAXNKS TOO SMALL = ',maxnks
+         write(6,*) 'ERROR ADDING BOUNDARY AT TARGETS:'//
+     >              ' MAXNKS TOO SMALL = ',maxnks
+         stop
+      endif
+
+c     
+c     Make space for new cells
+c     
+      do ikn = nks(irn),1,-1
+         korpg(ikn+1,irn) = korpg(ikn,irn)
+         rs(ikn+1,irn) = rs(ikn,irn)
+         zs(ikn+1,irn) = zs(ikn,irn)
+         bratio(ikn+1,irn) = bratio(ikn,irn)
+      end do
+c     
+c     Add first cell
+c     
+      ikn=1
+      inref=korpg(ikn+1,irn)
+      bratio(ikn,irn) = bratio(ikn+1,irn)
+c     
+      call add_boundary_cell(in,ikn,irn,inref,DOWN12)
+c     
+c     Add last cell
+c     
+      ikn = nks(irn)+2
+      inref=korpg(ikn-1,irn)
+      bratio(ikn,irn) = bratio(ikn-1,irn)
+c     
+      call add_boundary_cell(in,ikn,irn,inref,UP34)
+c     
+      nks(irn) = nks(irn) + 2
+
+      return
+      end
+c     
+c     
+c     
+      subroutine add_boundary_cell(in,ikn,irn,inref,ref_side)
+      implicit none
+      include 'params'
+      include 'cgeom'
+      
+      integer in,inref,ref_side,ikn,irn
+
+      in = in + 1
+c     
+c     Add new cell data
+c     
+      korpg(ikn,irn) = in
+      nvertp(in) = 4
+c     
+c     For outer boundary need to set vertices 2,3 to adjacent real cell values - then set
+c     vertex 2 = 1 and 3 = 4
+c     
+c     
+c     Inner edge of grid
+c     
+      if (ref_side.eq.INWARD41) then 
+
+         rvertp(3,in)=rvertp(4,inref) 
+         rvertp(2,in)=rvertp(1,inref) 
+         rvertp(4,in)=rvertp(3,in) 
+         rvertp(1,in)=rvertp(2,in) 
+
+         zvertp(3,in)=zvertp(4,inref) 
+         zvertp(2,in)=zvertp(1,inref) 
+         zvertp(4,in)=zvertp(3,in) 
+         zvertp(1,in)=zvertp(2,in) 
+
+         rs(ikn,irn) = (rvertp(3,in)+rvertp(2,in))/2.0
+         zs(ikn,irn) = (zvertp(3,in)+zvertp(2,in))/2.0
+
+c     
+c     Outer edge of grid
+c     
+      elseif (ref_side.eq.OUTWARD23) then 
+
+         rvertp(4,in)=rvertp(3,inref) 
+         rvertp(1,in)=rvertp(2,inref) 
+         rvertp(2,in)=rvertp(1,in) 
+         rvertp(3,in)=rvertp(4,in) 
+
+         zvertp(4,in)=zvertp(3,inref) 
+         zvertp(1,in)=zvertp(2,inref) 
+         zvertp(2,in)=zvertp(1,in) 
+         zvertp(3,in)=zvertp(4,in) 
+
+         rs(ikn,irn) = (rvertp(4,in)+rvertp(1,in))/2.0
+         zs(ikn,irn) = (zvertp(4,in)+zvertp(1,in))/2.0
+
+c     
+c     End of ring
+c     
+      elseif (ref_side.eq.UP34) then 
+
+         rvertp(2,in)=rvertp(3,inref) 
+         rvertp(1,in)=rvertp(4,inref) 
+         rvertp(4,in)=rvertp(1,in) 
+         rvertp(3,in)=rvertp(2,in) 
+
+         zvertp(2,in)=zvertp(3,inref) 
+         zvertp(1,in)=zvertp(4,inref) 
+         zvertp(4,in)=zvertp(1,in) 
+         zvertp(3,in)=zvertp(2,in) 
+
+         rs(ikn,irn) = (rvertp(2,in)+rvertp(1,in))/2.0
+         zs(ikn,irn) = (zvertp(2,in)+zvertp(1,in))/2.0
+c     
+c     Start of ring
+c     
+      elseif (ref_side.eq.DOWN12) then 
+
+         rvertp(4,in)=rvertp(1,inref) 
+         rvertp(3,in)=rvertp(2,inref) 
+         rvertp(1,in)=rvertp(4,in) 
+         rvertp(2,in)=rvertp(3,in) 
+
+         zvertp(4,in)=zvertp(1,inref) 
+         zvertp(3,in)=zvertp(2,inref) 
+         zvertp(1,in)=zvertp(4,in) 
+         zvertp(2,in)=zvertp(3,in) 
+
+         rs(ikn,irn) = (rvertp(4,in)+rvertp(3,in))/2.0
+         zs(ikn,irn) = (zvertp(4,in)+zvertp(3,in))/2.0
+
+      endif
+
+      return
+      end
+
 c
 c
 c
@@ -7901,7 +8241,15 @@ c
         DT1 = (KTEBS(2,IR)-KTEBS(1,IR))
         NB1 = 0.5*(KNBS(2,IR)+KNBS(1,IR))
 C
-        KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
+           KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+        else
+           kes(1,ir) = 0.0
+           write(6,'(a,2i8,4(1x,g12.5))') 
+     >             'KES CALCULATION: IK,IR,DS1,NB1:',
+     >              1,ir,ds1,nb1
+        endif
+
 C
         DS1 = KSS(NKS(IR),IR) - KSS(NKS(IR)-1,IR)
         DP1 = (KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR)
@@ -7909,7 +8257,15 @@ C
         DT1 = (KTEBS(NKS(IR),IR)-KTEBS(NKS(IR)-1,IR))
         NB1 = 0.5*(KNBS(NKS(IR),IR)+KNBS(NKS(IR)-1,IR))
 C
-        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
+           KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+        else
+           kes(1,ir) = 0.0
+           write(6,'(a,2i8,4(1x,g12.5))') 
+     >             'KES CALCULATION: IK,IR,DS1,NB1:',
+     >              nks(ir),ir,ds1,nb1
+        endif
 C
 C        WRITE(6,*) 'KES:IR:',KES(1,IR),KES(NKS(IR),IR)
 C
@@ -7923,8 +8279,18 @@ C
             DP2 = KNBS(IK+1,IR)*KTEBS(IK+1,IR)-KNBS(IK,IR)*KTEBS(IK,IR)
             DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
             NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
-            KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+           if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
+     >         (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
+               KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+           else
+              kes(1,ir) = 0.0
+              write(6,'(a,2i8,4(1x,g12.5))') 
+     >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
+     >              ik,ir,ds1,nb1,ds2,nb2
+           endif
+c            KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+c     >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
 C
 C            WRITE(6,*) 'KES:',IK,IR,KES(IK,IR)
 C
@@ -10427,50 +10793,50 @@ c
 c
       return
       END
-c
-c
-c
+c     
+c     
+c     
       subroutine OSKIN
       IMPLICIT NONE
-C
+C     
 C*********************************************************************
-C
+C     
 C     OSKIN :  Extracts Transport Coefficients from the Onion
-C              Skin background plasma model generated in DIVIMP
-C
-C              Ray Monk (RHBNC) September 1993
-C
-C              Using the skeleton of Program 'OUT' by
-C              Chris Farrell  (Hunterskil)  February 1989
-C
-C  *******************************************************************
-C
+C     Skin background plasma model generated in DIVIMP
+C     
+C     Ray Monk (RHBNC) September 1993
+C     
+C     Using the skeleton of Program 'OUT' by
+C     Chris Farrell  (Hunterskil)  February 1989
+C     
+C     *******************************************************************
+C     
 c     include "params"
       include 'params'
 c     include "cgeom"
       include 'cgeom'
-c
+c     
 c     Edge2D data
-c
+c     
       include 'cedge2d'
-c
+c     
 c     Transport Data
-c
+c     
       include 'transcoef'
-c
+c     
       include 'comtor'
       include 'pindata'
       include 'printopt'
-c slmod begin
-c...TMP
+c     slmod begin
+c...  TMP
       include 'slcom'
-c slmod end
-c
-C
+c     slmod end
+c     
+C     
 C***********************************************************************
-C
+C     
 C     Useful predefined variables :-
-C
+C     
 C     NRS                  Number of Onion Skins perp to s
 C     NKS(NRS)             Number of Elements along s on given ring
 C     RS,ZS(NKS,NRS)       Machine coordinates of element
@@ -10490,12 +10856,12 @@ C     CRMB                 Plasma Ion Mass
 C     QTIM                 Timestep for Ions (s)
 C     BPHI                 Toroidal Field Bt (T)
 C     KBFS(NKS,NRS)        Incidence Angle (Btot/Bpol)
-C
+C     
 C***********************************************************************
-C
+C     
       INTEGER IK,IR,IKMID,OUEND,INEND,
-     >        ID,LOOP
-C
+     >     ID,LOOP
+C     
       REAL FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
      >     TOTFLX,OTOTFLX,ITOTFLX,
      >     totflx_save,ototflx_save,itotflx_save,
@@ -10510,7 +10876,7 @@ C
      >     IAREAO,OAREAO,AREAO,
      >     TOTQI,OTOTQI,ITOTQI,
      >     TOTQE,OTOTQE,ITOTQE,
-c
+c     
      >     OUHEATE(MAXNRS),INHEATE(MAXNRS),HEATE(MAXNRS),
      >     OUHEATI(MAXNRS),INHEATI(MAXNRS),HEATI(MAXNRS),
      >     cs,coreiz,alliz,soliz,ppiz,
@@ -10520,16 +10886,17 @@ c
      >     tionis,itionis,otionis,
      >     surf(maxnks),delqe(maxnks),delqi(maxnks),deldp(maxnks),
      >     qetoto,qetoti,qitoto,qitoti,dptoto,dptoti
-c
+      real qetot,qitot
+c     
 c     Power Loss terms
-c
-c      integer dpploss
-c      parameter (dpploss=1)
-c
+c     
+c     integer dpploss
+c     parameter (dpploss=1)
+c     
       real ionploss(maxnrs),iionploss(maxnrs),oionploss(maxnrs)
       real elecploss(maxnrs),ielecploss(maxnrs),oelecploss(maxnrs)
       real tiploss, teploss,peifact
-c
+c     
       real qecond(maxnks,maxnrs),
      >     qicond(maxnks,maxnrs),dpflux(maxnks,maxnrs),
      >     qeconv(maxnks,maxnrs),qiconv(maxnks,maxnrs),
@@ -10541,11 +10908,11 @@ c
       real delouti,delouto,qeconvi,qeconvo,qiconvi,qiconvo
       real qeouto,qeouti,qiouto,qiouti,qeoutconvi,qeoutconvo,
      >     qioutconvi,qioutconvo
-c
+c     
       real dgradt,dperpt,aperp,apdg
-c
+c     
       integer avmod
-c
+c     
       integer ikin,irin,ikout,irout,ikstart,ikend,ird
       integer irskip,irtmp,in1,in2,in
       real    totgradn,totgradte,totgradti
@@ -10555,15 +10922,15 @@ c
       real    flxval(maxnrs,13,3)
       logical usedpav,usexpav
       real    dpav,xpavi,xpavio,xpavii,xpave,xpaveo,xpavei,dptmp,
-     >        dpavi,dpavo,fact,xpavt,xpavti,xpavto,
-     >        tmpnflx,tmpion,tmpflx
-c
+     >     dpavi,dpavo,fact,xpavt,xpavti,xpavto,
+     >     tmpnflx,tmpion,tmpflx
+c     
 c     For calculation of volumetric quantities.
-c
+c     
       real srcs(maxnks,maxnrs,8)
       real srcsint(maxnrs,12)
       real srcstot(12)
-c
+c     
       real Quant2Grad
       external quant2grad
       real grad2n(maxnks,maxnrs)
@@ -10572,34 +10939,34 @@ c
       real totgrad2n(maxnrs)
       real totgrad2ti(maxnrs)
       real totgrad2te(maxnrs)
-c
-c      real pei(maxnks,maxnrs)
-c
+c     
+c     real pei(maxnks,maxnrs)
+c     
 c     Spline variables
-c
+c     
       external tg01b
       integer n1
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
-c slmod begin
+c     slmod begin
       IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-        WRITE(0,*)
-        WRITE(0,*) '---------------------------------------------------'
-        WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-        WRITE(0,*) '---------------------------------------------------'
-        WRITE(0,*)
-        RETURN
+         WRITE(0,*)
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*)
+         RETURN
       ENDIF
-c slmod end
-c
-C    >     QLOSS(MAXNRS)
-c
-c      CHARACTER coment*72
-C
+c     slmod end
+c     
+C     >     QLOSS(MAXNRS)
+c     
+c     CHARACTER coment*72
+C     
 C***********************************************************************
-C
+C     
 C     Local variables :-
-C
+C     
 C     TITLE                Title of DIVIMP Run
 C     JOB                  Code for the DIVIMP Job
 C     IR                   Current Onion Skin Ring (across s)
@@ -10607,489 +10974,490 @@ C     IK                   Current Onion Skin Ring (along s)
 C     IKMID                Mid Point between Targets
 C     INEND                Inner Target Divertor Entrance
 C     OUEND                Outer Target Divertor Entrance
-C
+C     
 C***********************************************************************
-C
-C
+C     
+C     
 C-----------------------------------------------------------------------
 C---- START OF MAIN ROUTINE
 C-----------------------------------------------------------------------
-C
-c
+C     
+c     
 c     Set Gamma values - these should be set to match the SOL option
-c                        and eventually may be set automatically
-c
+c     and eventually may be set automatically
+c     
       gai = 3.5
       gae = 5.0
-c
-c
+c     
+c     
       dpav  = 0.0
       dpavi = 0.0
       dpavo = 0.0
-c
+c     
       xpave  = 0.0
       xpavei = 0.0
       xpaveo = 0.0
-c
+c     
       xpavi  = 0.0
       xpavii = 0.0
       xpavio = 0.0
-c
+c     
       xpavt  = 0.0
       xpavti = 0.0
       xpavto = 0.0
-c
+c     
       usedpav = .false.
       usexpav = .false.
-c
-c      irskip = (irwall - irsep) / 2
-c
+c     
+c     irskip = (irwall - irsep) / 2
+c     
       irskip = dpavopt
-c
-c       irskip = 7
-c
+c     
+c     irskip = 7
+c     
       write (6,*) 'irskip:',irskip,irwall,irsep,' R0 = ',r0
-c
-C
+c     
+C     
 C---- Determine the Midpoint between the Targets
-C
-c      IR=IRSEP
-c      DO 80 IK=1,NKS(IR),1
-c        IF (KSS(IK,IR).GE.(0.5*KSMAXS(IR))) THEN
-c          IKMID=IK
-c          GOTO 90
-c        ENDIF
-c 80   CONTINUE
-c 90   continue
-C
+C     
+c     IR=IRSEP
+c     DO 80 IK=1,NKS(IR),1
+c     IF (KSS(IK,IR).GE.(0.5*KSMAXS(IR))) THEN
+c     IKMID=IK
+c     GOTO 90
+c     ENDIF
+c     80   CONTINUE
+c     90   continue
+C     
 C---- Locate Elements at Divertor Entrance (i.e. at X-point height)
-C
-C
+C     
+C     
 C---- and Locate Elements at Plasma Midplane
-c
+c     
 c     Do these for all cases since we want the R-coordinates for
 c     the inner and outer mid-planes.
-c
-c slmod begin - new
-c ARRAY BOUNDS: IR used to be set to IRSEP above, but it is now commented
-c               out.  IR needs to be set for the following code.
+c     
+c     slmod begin - new
+c     ARRAY BOUNDS: IR used to be set to IRSEP above, but it is now commented
+c     out.  IR needs to be set for the following code.
       ir = irsep
-c slmod end
+c     slmod end
       ikmid = ikmids(irsep)+1
-C
+C     
 C     Outer Plates...
-C
-         distxmin = hi
-         dist0min = hi
-         DO 100 IK=1,IKMID-1,1
-           distx = ((ZS(IK,IR)-zxp)**2)
-           IF (distx.lt.distxmin) THEN
-             distxmin = distx
-             OUEND=IK
-           ENDIF
-           dist0 = (ZS(IK,IR)-Z0)**2
-           IF (dist0.lt.dist0min) THEN
-             dist0min = dist0
-             OUMID=IK
-           ENDIF
- 100     CONTINUE
+C     
+      distxmin = hi
+      dist0min = hi
+      DO 100 IK=1,IKMID-1,1
+         distx = ((ZS(IK,IR)-zxp)**2)
+         IF (distx.lt.distxmin) THEN
+            distxmin = distx
+            OUEND=IK
+         ENDIF
+         dist0 = (ZS(IK,IR)-Z0)**2
+         IF (dist0.lt.dist0min) THEN
+            dist0min = dist0
+            OUMID=IK
+         ENDIF
+ 100  CONTINUE
 
-C
+C     
 C     Inner Plates...
-C
-         distxmin = hi
-         dist0min = hi
-         DO 120 IK=NKS(IR),IKMID,-1
-           distx = (ZS(IK,IR)-zxp)**2
-           IF (distx.lt.distxmin) THEN
-             distxmin = distx
-             INEND=IK
-           ENDIF
-           dist0 = (ZS(IK,IR)-Z0)**2
-           IF (dist0.lt.dist0min) THEN
-             dist0min = dist0
-             INMID=IK
-           ENDIF
- 120     CONTINUE
+C     
+      distxmin = hi
+      dist0min = hi
+      DO 120 IK=NKS(IR),IKMID,-1
+         distx = (ZS(IK,IR)-zxp)**2
+         IF (distx.lt.distxmin) THEN
+            distxmin = distx
+            INEND=IK
+         ENDIF
+         dist0 = (ZS(IK,IR)-Z0)**2
+         IF (dist0.lt.dist0min) THEN
+            dist0min = dist0
+            INMID=IK
+         ENDIF
+ 120  CONTINUE
 
-c
+c     
 c     Note that rcinner will be descending order and rcouter will be
 c     ascending - that is why rcouter will typically be used for
 c     plotting.
-c
-c      do ir = irsep,irwall
-c         rcinner(ir) = rs(inmid,ir)
-c         rcouter(ir) = rs(oumid,ir)
-c      end do
-c
-c
-C
+c     
+c     do ir = irsep,irwall
+c     rcinner(ir) = rs(inmid,ir)
+c     rcouter(ir) = rs(oumid,ir)
+c     end do
+c     
+c     
+C     
 C---- Calculate the Particle Fluxes into the Divertor
-C
+C     
       DO 200 ID=1,NDS,1
-        IK = IKDS(ID)
-        IR = IRDS(ID)
-c
+         IK = IKDS(ID)
+         IR = IRDS(ID)
+c     
          if (dprcopt.eq.0) then
             fact = 1.0
          else
             fact = rp(id)/r0
          endif
-c
-c        if (cioptf.eq.22) then
-c           if (ik.lt.ikmid) then
-c              CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
+c     
+c     if (cioptf.eq.22) then
+c     if (ik.lt.ikmid) then
+c     CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
 c     >                (1.0+RIZB)/CRMB) * cmachno(ir,2)
-c           elseif (ik.ge.ikmid) then
-c              CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
+c     elseif (ik.ge.ikmid) then
+c     CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
 c     >                (1.0+RIZB)/CRMB) * cmachno(ir,1)
-c           endif
-c        else
-c           CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
+c     endif
+c     else
+c     CS = 9.79E3 * SQRT (0.5*(KTEDS(ID)+KTIDS(ID))*
 c     >                (1.0+RIZB)/CRMB)
-c        endif
-c
-        cs = abs(kvds(id))
-c
-        IF (IK.EQ .NKS(IR)) THEN
-          INFLUX(IR) = KNDS (ID) * CS / KBFST (IR,1) *
-     >                 COSTET (ID) * DDS2 (ID) * fact
-          INHEATI(IR) =  GAI * ECH * ( KTIDS (ID) ) * INFLUX (IR)
-          INHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * INFLUX (IR)
-        ELSEIF (IK.EQ.1) THEN
-          OUFLUX(IR) = KNDS (ID) * CS / KBFST (IR,2) *
-     >                 COSTET (ID) * DDS2 (ID) * fact
-          OUHEATI(IR) =  GAI * ECH * ( KTIDS (ID) ) * OUFLUX (IR)
-          OUHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * OUFLUX (IR)
-       ENDIF
-c
-C
-c
+c     endif
+c     
+         cs = abs(kvds(id))
+c     
+         IF (IK.EQ .NKS(IR)) THEN
+            INFLUX(IR) = KNDS (ID) * CS / KBFST (IR,1) *
+     >           COSTET (ID) * DDS2 (ID) * fact
+            INHEATI(IR) =  GAI * ECH * ( KTIDS (ID) ) * INFLUX (IR)
+            INHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * INFLUX (IR)
+         ELSEIF (IK.EQ.1) THEN
+            OUFLUX(IR) = KNDS (ID) * CS / KBFST (IR,2) *
+     >           COSTET (ID) * DDS2 (ID) * fact
+            OUHEATI(IR) =  GAI * ECH * ( KTIDS (ID) ) * OUFLUX (IR)
+            OUHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * OUFLUX (IR)
+         ENDIF
+c     
+C     
+c     
  200  CONTINUE
-c
+c     
 c     Copy target fluxes and save them for later
-c
+c     
       totflx_save = 0.0
       ototflx_save = 0.0
       itotflx_save = 0.0
-c
+c     
       do ir = irsep,irwall-1 
          totflx_save = totflx_save + ouflux(ir)+influx(ir)
          ototflx_save = ototflx_save + ouflux(ir)
          itotflx_save = itotflx_save + influx(ir)
       end do 
-c
+c     
 c     Calculate a variety of source terms based on the
 c     background plasma. This routine will likely be moved from
 c     here at some point in time.
-c
+c     
 
       call rzero(srcs,maxnks*maxnrs*8)
       call rzero(srcsint,maxnrs*12)
       call rzero(srcstot,12)
-c
+c     
       do ir = irsep,nrs
-c
+c     
          if (ir.ne.irwall.and.ir.ne.irtrap) then
-c
-c         if (ir.eq.irwall.or.ir.eq.irtrap) cycle
-c
-         do ik = 1,nks(ir)
-c
-c           Major Radius correction if requested
-c
-            if (dprcopt.eq.0.or.dprcopt.eq.2) then
-               fact = 1.0
-            elseif (dprcopt.eq.1) then
-               fact = rs(ik,ir)/r0
-            endif
-c
-c           Pei
-c
-c            peifact = 0.5 * log(1.5e13 * ktebs(ik,ir)**1.5
+c     
+c     if (ir.eq.irwall.or.ir.eq.irtrap) cycle
+c     
+            do ik = 1,nks(ir)
+c     
+c     Major Radius correction if requested
+c     
+               if (dprcopt.eq.0.or.dprcopt.eq.2) then
+                  fact = 1.0
+               elseif (dprcopt.eq.1) then
+                  fact = rs(ik,ir)/r0
+               endif
+c     
+c     Pei
+c     
+c     peifact = 0.5 * log(1.5e13 * ktebs(ik,ir)**1.5
 c     >                   / sqrt(knbs(ik,ir)))  / 15.0
-c
-            peifact = dppei * log(1.5e13 * ktebs(ik,ir)**1.5
-     >                   / sqrt(knbs(ik,ir)))  / 15.0
+c     
+               peifact = dppei * log(1.5e13 * ktebs(ik,ir)**1.5
+     >              / sqrt(knbs(ik,ir)))  / 15.0
 
 
-            srcs(ik,ir,1) = - 1.14e-32 * knbs(ik,ir)**2 *
-     >                     (ktebs(ik,ir)-ktibs(ik,ir)) /
-     >                     (crmb * ktebs(ik,ir)**1.5)
-     >                     * peifact
-     >                             * fact
+               srcs(ik,ir,1) = - 1.14e-32 * knbs(ik,ir)**2 *
+     >              (ktebs(ik,ir)-ktibs(ik,ir)) /
+     >              (crmb * ktebs(ik,ir)**1.5)
+     >              * peifact
+     >              * fact
 
 
-c
-c           Phelpi
-c
-            srcs(ik,ir,2) = (17.5 + (5.0+37.5/ktebs(ik,ir)) *
-     >                             (1.0+0.25/ktebs(ik,ir)) *
-     >                             log10(1.0e21/knbs(ik,ir))) *
-     >                             (pinion(ik,ir)*dprec)* ech
-     >                             * fact
-c
-c           Pcx
-c
-            srcs(ik,ir,3) = 1.5 * ktibs(ik,ir) * ech * 1.0 *
-     >                      (pinion(ik,ir) *dprec)
-     >                             * fact
-c
-c           Smom
-c
-            srcs(ik,ir,4) = - crmb * amu *kvhs(ik,ir)/qtim* 1.0*
-     >                     ( pinion(ik,ir) *dprec)
-     >                             * fact
-c
-c           PINQI
-c
-            srcs(ik,ir,5) =  pinqi(ik,ir)
-     >                             * fact * dprec
-c
-c           PINQE
-c
-            srcs(ik,ir,6) =  pinqe(ik,ir) * dp_pinqe_mult
-     >                             * fact * dprec
-c
-c           Recombination
-c
-            srcs(ik,ir,7) =  pinrec(ik,ir)
-     >                             * fact * dprec
-c
-c           Ionization
-c
-            srcs(ik,ir,8) =  pinion(ik,ir)
-     >                             * fact * dprec
-c
-c
-c           Integrate over ring
-c
-            srcsint(ir,1) = srcsint(ir,1)+srcs(ik,ir,1)*karea2(ik,ir)
-            srcsint(ir,2) = srcsint(ir,2)+srcs(ik,ir,2)*karea2(ik,ir)
-            srcsint(ir,3) = srcsint(ir,3)+srcs(ik,ir,3)*karea2(ik,ir)
-            srcsint(ir,4) = srcsint(ir,4)+srcs(ik,ir,4)*karea2(ik,ir)
-            srcsint(ir,5) = srcsint(ir,5)
-     >                      +dprec*pinion(ik,ir)*karea2(ik,ir)
-            srcsint(ir,6) = srcsint(ir,6)
-     >                      +dprec*pinqi(ik,ir)*karea2(ik,ir)
-            srcsint(ir,7) = srcsint(ir,7)
-     >                +dprec*pinqe(ik,ir)*karea2(ik,ir)*dp_pinqe_mult
-            srcsint(ir,8) = srcsint(ir,8)+abs(srcs(ik,ir,4))
-     >                      *karea2(ik,ir)
-c
-            srcsint(ir,9) = srcsint(ir,5)+srcs(ik,ir,5)*karea2(ik,ir)
-            srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
-            srcsint(ir,11) = srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
-            srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
-c
-         end do
-c
-c        Add up sources over grid
-c
-         do in = 1,12
-            srcstot(in) = srcstot(in) + srcsint(ir,in)
-         end do
-c
-c        Ring Test EndIF
-c
+c     
+c     Phelpi
+c     
+               srcs(ik,ir,2) = (17.5 + (5.0+37.5/ktebs(ik,ir)) *
+     >              (1.0+0.25/ktebs(ik,ir)) *
+     >              log10(1.0e21/knbs(ik,ir))) *
+     >              (pinion(ik,ir)*dprec)* ech
+     >              * fact
+c     
+c     Pcx
+c     
+               srcs(ik,ir,3) = 1.5 * ktibs(ik,ir) * ech * 1.0 *
+     >              (pinion(ik,ir) *dprec)
+     >              * fact
+c     
+c     Smom
+c     
+               srcs(ik,ir,4) = - crmb * amu *kvhs(ik,ir)/qtim* 1.0*
+     >              ( pinion(ik,ir) *dprec)
+     >              * fact
+c     
+c     PINQI
+c     
+               srcs(ik,ir,5) =  pinqi(ik,ir)
+     >              * fact * dprec
+c     
+c     PINQE
+c     
+               srcs(ik,ir,6) =  pinqe(ik,ir) * dp_pinqe_mult
+     >              * fact * dprec
+c     
+c     Recombination
+c     
+               srcs(ik,ir,7) =  pinrec(ik,ir)
+     >              * fact * dprec
+c     
+c     Ionization
+c     
+               srcs(ik,ir,8) =  pinion(ik,ir)
+     >              * fact * dprec
+c     
+c     
+c     Integrate over ring
+c     
+               srcsint(ir,1) = srcsint(ir,1)+srcs(ik,ir,1)*karea2(ik,ir)
+               srcsint(ir,2) = srcsint(ir,2)+srcs(ik,ir,2)*karea2(ik,ir)
+               srcsint(ir,3) = srcsint(ir,3)+srcs(ik,ir,3)*karea2(ik,ir)
+               srcsint(ir,4) = srcsint(ir,4)+srcs(ik,ir,4)*karea2(ik,ir)
+               srcsint(ir,5) = srcsint(ir,5)
+     >              +dprec*pinion(ik,ir)*karea2(ik,ir)
+               srcsint(ir,6) = srcsint(ir,6)
+     >              +dprec*pinqi(ik,ir)*karea2(ik,ir)
+               srcsint(ir,7) = srcsint(ir,7)
+     >              +dprec*pinqe(ik,ir)*karea2(ik,ir)*dp_pinqe_mult
+               srcsint(ir,8) = srcsint(ir,8)+abs(srcs(ik,ir,4))
+     >              *karea2(ik,ir)
+c     
+               srcsint(ir,9) = srcsint(ir,5)+srcs(ik,ir,5)*karea2(ik,ir)
+               srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
+               srcsint(ir,11)= srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
+               srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
+c     
+            end do
+c     
+c     Add up sources over grid
+c     
+            do in = 1,12
+               srcstot(in) = srcstot(in) + srcsint(ir,in)
+            end do
+c     
+c     Ring Test EndIF
+c     
          end if
-c
+c     
       end do
-c
+c     
 c     Print out the tallies of information - cell by cell and ring by ring
-c
+c     
  2000 format(8x,'IR',2x,'IK',9x,'Karea',11x, 'Pei',
-     >       8x,'Phelpi',11x,'Pcx',10x,'Smom',11x,'Siz',
-     >       8x,'PIN QI',8x,'PIN QE')
+     >     8x,'Phelpi',11x,'Pcx',10x,'Smom',11x,'Siz',
+     >     8x,'PIN QI',8x,'PIN QE')
  2010 format(6x,2(i4),8(1x,g13.6))
  2020 format(a6,2(i4),14x,7(1x,g13.6))
  2025 format(a6,8x,14x,3(14x),1x,g13.6)
  2030 format(a14,14x,7(1x,g13.6))
  2035 format(a14,14x,3(14x),1x,g13.6)
-c
+c     
 c     Only print if the Dperp extractor print out is ON.
-c
+c     
       if (cprint.eq.1.or.cprint.eq.9) then
 
-c
-        write(6,*)
-        write(6,*) 'Volumetric Source Term Summary:'
-        write(6,*)
-        write(6,*) 'Dperp Extractor Recycle Fraction = ',dprec
-c
-        do ir = irsep,nrs
-c
-c         if (ir.eq.irwall.or.ir.eq.irtrap) cycle
-c
-           if (ir.ne.irwall.and.ir.ne.irtrap) then
-c
-           write (6,2000)
-c
-           do ik = 1,nks(ir)
-c
-              write(6,2010) ir,ik,karea2(ik,ir),
-     >            (srcs(ik,ir,in),in=1,4),dprec*pinion(ik,ir),
-     >            dprec*pinqi(ik,ir),dprec*pinqe(ik,ir) * dp_pinqe_mult
-           end do
-c
-           write(6,2020) 'Total:',ir,nks(ir),
-     >            (srcsint(ir,in),in=1,7)
-           write(6,2025) 'Smom: ',srcsint(ir,8)
-           write(6,*)
+c     
+         write(6,*)
+         write(6,*) 'Volumetric Source Term Summary:'
+         write(6,*)
+         write(6,*) 'Dperp Extractor Recycle Fraction = ',dprec
+c     
+         do ir = irsep,nrs
+c     
+c     if (ir.eq.irwall.or.ir.eq.irtrap) cycle
+c     
+            if (ir.ne.irwall.and.ir.ne.irtrap) then
+c     
+               write (6,2000)
+c     
+               do ik = 1,nks(ir)
+c     
+                  write(6,2010) ir,ik,karea2(ik,ir),
+     >                 (srcs(ik,ir,in),in=1,4),dprec*pinion(ik,ir),
+     >                 dprec*pinqi(ik,ir),dprec*pinqe(ik,ir)
+     >                 * dp_pinqe_mult
+               end do
+c     
+               write(6,2020) 'Total:',ir,nks(ir),
+     >              (srcsint(ir,in),in=1,7)
+               write(6,2025) 'Smom: ',srcsint(ir,8)
+               write(6,*)
 
-c
-c          Endif for IR test
-c
-           endif
+c     
+c     Endif for IR test
+c     
+            endif
 
-        end do
-c
-        write (6,2030) 'Grand Totals:',(srcstot(in),in=1,7)
-        write (6,2035) '        Smom:',srcstot(8)
-        write(6,*)
-c
+         end do
+c     
+         write (6,2030) 'Grand Totals:',(srcstot(in),in=1,7)
+         write (6,2035) '        Smom:',srcstot(8)
+         write(6,*)
+c     
       endif
-c
-c
-c
+c     
+c     
+c     
 c     Calculate ring totals
-c
+c     
       do ir = irsep,nrs
-c
-        FLUX(IR)=OUFLUX(IR)+INFLUX(IR)
-        HEATE(IR)=OUHEATE(IR)+INHEATE(IR)
-        HEATI(IR)=OUHEATI(IR)+INHEATI(IR)
-c
+c     
+         FLUX(IR)=OUFLUX(IR)+INFLUX(IR)
+         HEATE(IR)=OUHEATE(IR)+INHEATE(IR)
+         HEATI(IR)=OUHEATI(IR)+INHEATI(IR)
+c     
       end do
-c
-C
+c     
+C     
 C---- Determine the Elemental Volumes and Associated Pin
 C---- Ionisation Levels (using Lorne's 'real' volume)
-C
-c      CALL PRRMATDIV(E2DION,MAXNKS,nks(irsep),NRS,6,
+C     
+c     CALL PRRMATDIV(E2DION,MAXNKS,nks(irsep),NRS,6,
 c     >              'EDGE2D IONIZATION')
-c
+c     
 
       DO 220 IR=1,nrs,1
-c
-        IONIS(IR)=0.0
-        IIONIS(IR)=0.0
-        OIONIS(IR)=0.0
-c
-c       Power Loss
-c
-        ionploss(ir) = 0.0
-        iionploss(ir) = 0.0
-        oionploss(ir) = 0.0
-        elecploss(ir) = 0.0
-        ielecploss(ir) = 0.0
-        oelecploss(ir) = 0.0
-c
-c        write (6,*) 'ir:',ir,nks(ir)
-c
-        DO 230 IK=1,NKS(IR),1
-c
-c         Using karea2
-c
-          if (dprcopt.eq.0.or.dprcopt.eq.2) then
-             fact = 1.0
-          elseif (dprcopt.eq.1) then
-             fact = rs(ik,ir)/r0
-          endif
-c
+c     
+         IONIS(IR)=0.0
+         IIONIS(IR)=0.0
+         OIONIS(IR)=0.0
+c     
+c     Power Loss
+c     
+         ionploss(ir) = 0.0
+         iionploss(ir) = 0.0
+         oionploss(ir) = 0.0
+         elecploss(ir) = 0.0
+         ielecploss(ir) = 0.0
+         oelecploss(ir) = 0.0
+c     
+c     write (6,*) 'ir:',ir,nks(ir)
+c     
+         DO 230 IK=1,NKS(IR),1
+c     
+c     Using karea2
+c     
+            if (dprcopt.eq.0.or.dprcopt.eq.2) then
+               fact = 1.0
+            elseif (dprcopt.eq.1) then
+               fact = rs(ik,ir)/r0
+            endif
+c     
 
-          if (cioptg.eq.99.and.cre2d.eq.0) then
-c
-             IONIS(IR)=IONIS(IR)+(E2DION(IK,IR)
+            if (cioptg.eq.99.and.cre2d.eq.0) then
+c     
+               IONIS(IR)=IONIS(IR)+(E2DION(IK,IR)
      >              *Karea2(IK,IR))*fact
-c
-             if (kss(ik,ir).lt.(ksmaxs(ir)/2.0)) then
-                OIONIS(IR)=OIONIS(IR)+(E2DION(IK,IR)
-     >                  *Karea2(IK,IR))*fact
-             else
-                IIONIS(IR)=IIONIS(IR)+(E2DION(IK,IR)
+c     
+               if (kss(ik,ir).lt.(ksmaxs(ir)/2.0)) then
+                  OIONIS(IR)=OIONIS(IR)+(E2DION(IK,IR)
      >                 *Karea2(IK,IR))*fact
-             endif
-c
-          else
-c
-             IONIS(IR)=IONIS(IR)+( (PINION(IK,IR)*dprec)
+               else
+                  IIONIS(IR)=IIONIS(IR)+(E2DION(IK,IR)
+     >                 *Karea2(IK,IR))*fact
+               endif
+c     
+            else
+c     
+               IONIS(IR)=IONIS(IR)+( (PINION(IK,IR)*dprec)
      >              *Karea2(IK,IR))*fact
-c
-             if (dpploss.eq.1) then
-               ionploss(ir) = ionploss(ir) +
-     >             (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-               elecploss(ir) = elecploss(ir) +
-     >             (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >              * dp_pinqe_mult
-             elseif (dpploss.eq.2) then
-               ionploss(ir) = ionploss(ir)
-     >            + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >            - srcs(ik,ir,1) * karea2(ik,ir) * fact
-               elecploss(ir) = elecploss(ir)
-     >            + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >               * dp_pinqe_mult
-     >            + srcs(ik,ir,1) * karea2(ik,ir) * fact
-             endif
-c
-             if (kss(ik,ir).lt.(ksmaxs(ir)/2.0)) then
-                OIONIS(IR)=OIONIS(IR)+((PINION(IK,IR)*dprec)
-     >                  *Karea2(IK,IR))*fact
-c
-                if (dpploss.eq.1) then
-                  oionploss(ir) = oionploss(ir) +
-     >                  (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-                  oelecploss(ir) = oelecploss(ir) +
-     >                  (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >                   * dp_pinqe_mult
-                elseif (dpploss.eq.2) then
-                  oionploss(ir) = oionploss(ir)
-     >               + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >               - srcs(ik,ir,1) * karea2(ik,ir) * fact
-                  oelecploss(ir) = oelecploss(ir)
-     >               + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >                  * dp_pinqe_mult
-     >               + srcs(ik,ir,1) * karea2(ik,ir) * fact
-                endif
-c
-             else
-                IIONIS(IR)=IIONIS(IR)+((PINION(IK,IR)*dprec)
-     >                 *Karea2(IK,IR))*fact
-c
-                if (dpploss.eq.1) then
-                  iionploss(ir) = iionploss(ir) +
+c     
+               if (dpploss.eq.1) then
+                  ionploss(ir) = ionploss(ir) +
      >                 (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-                  ielecploss(ir) = ielecploss(ir) +
+                  elecploss(ir) = elecploss(ir) +
      >                 (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >                   * dp_pinqe_mult
-                elseif (dpploss.eq.2) then
-                  iionploss(ir) = iionploss(ir)
-     >               + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >               - srcs(ik,ir,1) * karea2(ik,ir) * fact
-                  ielecploss(ir) = ielecploss(ir)
-     >               + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
-     >                   * dp_pinqe_mult
-     >               + srcs(ik,ir,1) * karea2(ik,ir) * fact
-                endif
-c
-             endif
-c
-c
-          endif
+     >                 * dp_pinqe_mult
+               elseif (dpploss.eq.2) then
+                  ionploss(ir) = ionploss(ir)
+     >                 + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                 - srcs(ik,ir,1) * karea2(ik,ir) * fact
+                  elecploss(ir) = elecploss(ir)
+     >                 + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                 * dp_pinqe_mult
+     >                 + srcs(ik,ir,1) * karea2(ik,ir) * fact
+               endif
+c     
+               if (kss(ik,ir).lt.(ksmaxs(ir)/2.0)) then
+                  OIONIS(IR)=OIONIS(IR)+((PINION(IK,IR)*dprec)
+     >                 *Karea2(IK,IR))*fact
+c     
+                  if (dpploss.eq.1) then
+                     oionploss(ir) = oionploss(ir) +
+     >                    (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
+                     oelecploss(ir) = oelecploss(ir) +
+     >                    (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    * dp_pinqe_mult
+                  elseif (dpploss.eq.2) then
+                     oionploss(ir) = oionploss(ir)
+     >                    + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    - srcs(ik,ir,1) * karea2(ik,ir) * fact
+                     oelecploss(ir) = oelecploss(ir)
+     >                    + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    * dp_pinqe_mult
+     >                    + srcs(ik,ir,1) * karea2(ik,ir) * fact
+                  endif
+c     
+               else
+                  IIONIS(IR)=IIONIS(IR)+((PINION(IK,IR)*dprec)
+     >                 *Karea2(IK,IR))*fact
+c     
+                  if (dpploss.eq.1) then
+                     iionploss(ir) = iionploss(ir) +
+     >                    (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
+                     ielecploss(ir) = ielecploss(ir) +
+     >                    (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    * dp_pinqe_mult
+                  elseif (dpploss.eq.2) then
+                     iionploss(ir) = iionploss(ir)
+     >                    + (pinqi(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    - srcs(ik,ir,1) * karea2(ik,ir) * fact
+                     ielecploss(ir) = ielecploss(ir)
+     >                    + (pinqe(ik,ir)*dprec)*Karea2(IK,IR)*fact
+     >                    * dp_pinqe_mult
+     >                    + srcs(ik,ir,1) * karea2(ik,ir) * fact
+                  endif
+c     
+               endif
+c     
+c     
+            endif
 
 
- 230    CONTINUE
+ 230     CONTINUE
  220  CONTINUE
 
-c
+c     
 c     Calculate ionization in core
-c
+c     
       coreiz = 0.0
       soliz = 0.0
       ppiz = 0.0
       alliz = 0.0
       do ir = 1,nrs
-c
+c     
          if (ir.lt.irsep) then
             coreiz = coreiz + ionis(ir)
          elseif (ir.ge.irsep.and.ir.le.irwall) then
@@ -11097,1832 +11465,2044 @@ c
          elseif (ir.gt.irwall) then
             ppiz = ppiz + ionis(ir)
          endif
-c
+c     
          alliz = alliz + ionis(ir)
       end do
-c
+c     
       write(6,*) 'Core ionization from NIMBUS: ',coreiz
       write(6,*) 'All  ionization from NIMBUS: ',alliz
       write(6,*) 'Pin Correction factor: ',pincor
       write(6,*) 'Dperp Extractor Imposed Recycle Fraction = ',dprec
-c
-c
+c     
+c     
       write (6,1210)
-c
+c     
       DO 240 IR=IRSEP,nrs,1
-c
-c       Net particle fluxes
-c
-        NETFLX(IR) =FLUX(IR)  -IONIS(IR)
-        INETFLX(IR)=INFLUX(IR)-IIONIS(IR)
-        ONETFLX(IR)=OUFLUX(IR)-OIONIS(IR)
-        write(6,1200) ir,INETFLX(IR),INFLUX(IR),IIONIS(IR),
-     >                   ONETFLX(IR),OUFLUX(IR),OIONIS(IR),
-     >                   NETFLX(IR),FLUX(IR),IONIS(IR)
-c
+c     
+c     Net particle fluxes
+c     
+         NETFLX(IR) =FLUX(IR)  -IONIS(IR)
+         INETFLX(IR)=INFLUX(IR)-IIONIS(IR)
+         ONETFLX(IR)=OUFLUX(IR)-OIONIS(IR)
+         write(6,1200) ir,INETFLX(IR),INFLUX(IR),IIONIS(IR),
+     >        ONETFLX(IR),OUFLUX(IR),OIONIS(IR),
+     >        NETFLX(IR),FLUX(IR),IONIS(IR)
+c     
  240  CONTINUE
 
-c
+c     
       write(6,'(a)') 'Ion and Electron Energy Source Terms'
       write(6,1240) inner,outer
-c
+c     
       tiploss = 0.0
       teploss = 0.0
-c
+c     
       do ir = irsep,nrs
          tiploss = tiploss + ionploss(ir)
          teploss = teploss + elecploss(ir)
 
          if (cprint.eq.1.or.cprint.eq.9) then
             write(6,1230) 'Ion :',ir,ionploss(ir),iionploss(ir),
-     >                        oionploss(ir)
+     >           oionploss(ir)
             write(6,1230) 'Elec:',ir,elecploss(ir),ielecploss(ir),
-     >                        oelecploss(ir)
+     >           oelecploss(ir)
          endif
 
       end do
       write (6,*) 'Total Ion      Ploss = ',tiploss
       write (6,*) 'Total Electron Ploss = ',teploss
-c
+c     
  1240 format(1x,' IR ',10x,'Total',10x,a,10x,a)
  1230 format(a,i4,3(1x,g14.6))
 
-C
+C     
 C---- Calculate the NET Particle Flux Entering the Divertor Region
-C                   ~~~
+C     ~~~
       OTOTFLX=0.0
       ITOTFLX=0.0
       TOTFLX=0.0
-c
+c     
       OTOTQI=0.0
       ITOTQI=0.0
       TOTQI=0.0
-c
+c     
       OTOTQE=0.0
       ITOTQE=0.0
       TOTQE=0.0
-c
+c     
       Tionis  = 0.0
       iTionis = 0.0
       oTionis = 0.0
-c
+c     
       do ir = irsep,irwall-1
-c
-c       Total Ionization
+c     
+c     Total Ionization
 
-        Tionis = tionis + ionis (ir)
-        iTionis = itionis + iionis (ir)
-        oTionis = otionis + oionis (ir)
-c
-c       Total particle fluxes
-c
-        ITOTFLX=ITOTFLX + INETFLX(IR)
-        OTOTFLX=OTOTFLX + ONETFLX(IR)
-        TOTFLX =TOTFLX  + NETFLX(IR)
-c
-c       Total heat fluxes
-c
-        OTOTQI=OTOTQI+OUHEATI(IR)-oionploss(ir)
-        OTOTQE=OTOTQE+OUHEATE(IR)-oelecploss(ir)
-c
-        ITOTQI=ITOTQI+INHEATI(IR)-iionploss(ir)
-        ITOTQE=ITOTQE+INHEATE(IR)-ielecploss(ir)
-c
-        TOTQI=TOTQI+HEATI(IR)-ionploss(ir)
-        TOTQE=TOTQE+HEATE(IR)-elecploss(ir)
-c
+         Tionis = tionis + ionis (ir)
+         iTionis = itionis + iionis (ir)
+         oTionis = otionis + oionis (ir)
+c     
+c     Total particle fluxes
+c     
+         ITOTFLX=ITOTFLX + INETFLX(IR)
+         OTOTFLX=OTOTFLX + ONETFLX(IR)
+         TOTFLX =TOTFLX  + NETFLX(IR)
+c     
+c     Total heat fluxes
+c     
+         OTOTQI=OTOTQI+OUHEATI(IR)-oionploss(ir)
+         OTOTQE=OTOTQE+OUHEATE(IR)-oelecploss(ir)
+c     
+         ITOTQI=ITOTQI+INHEATI(IR)-iionploss(ir)
+         ITOTQE=ITOTQE+INHEATE(IR)-ielecploss(ir)
+c     
+         TOTQI=TOTQI+HEATI(IR)-ionploss(ir)
+         TOTQE=TOTQE+HEATE(IR)-elecploss(ir)
+c     
       end do
-c
+c     
 c     Save netfluxes 
-c
+c     
       netflx_save = totflx
       onetflx_save = ototflx
       inetflx_save = itotflx
-c
+c     
 c     Calculate the Net cross-field fluxes for
 c     each ring.
-c
-c
+c     
+c     
       if (dpfluxopt.eq.0) then
 
-      ir = irsep
+         ir = irsep
 
-      cfgam(ir) = totflx - netflx(ir)
-      icfgam(ir) = itotflx - inetflx(ir)
-      ocfgam(ir) = ototflx - onetflx(ir)
-c
-      cfqe(ir) = totqe - heate(ir) + elecploss(ir)
-      icfqe(ir) = itotqe - inheate(ir) + ielecploss(ir)
-      ocfqe(ir) = ototqe - ouheate(ir) + oelecploss(ir)
-c
-      cfqi(ir) = totqi - heati(ir) + ionploss(ir)
-      icfqi(ir) = itotqi - inheati(ir) + iionploss(ir)
-      ocfqi(ir) = ototqi - ouheati(ir) + oionploss(ir)
-c
-      if (cprint.eq.1.or.cprint.eq.9) then
-c
-         write(6,2001) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
-         write(6,2001) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
-         write(6,2001) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
-c
-      endif
-c
-      do ir = irsep+1,irwall -1
-         cfgam(ir)  = cfgam(ir-1)  - netflx(ir)
-         icfgam(ir) = icfgam(ir-1) - inetflx(ir)
-         ocfgam(ir) = ocfgam(ir-1) - onetflx(ir)
-c
-         cfqe(ir)  = cfqe(ir-1)  - heate(ir) + elecploss(ir)
-         icfqe(ir) = icfqe(ir-1) - inheate(ir)+ ielecploss(ir)
-         ocfqe(ir) = ocfqe(ir-1) - ouheate(ir)+ oelecploss(ir)
-c
-         cfqi(ir)  = cfqi(ir-1)  - heati(ir)+ ionploss(ir)
-         icfqi(ir) = icfqi(ir-1) - inheati(ir)+ iionploss(ir)
-         ocfqi(ir) = ocfqi(ir-1) - ouheati(ir)+ oionploss(ir)
-c
+         cfgam(ir) = totflx - netflx(ir)
+         icfgam(ir) = itotflx - inetflx(ir)
+         ocfgam(ir) = ototflx - onetflx(ir)
+c     
+         cfqe(ir) = totqe - heate(ir) + elecploss(ir)
+         icfqe(ir) = itotqe - inheate(ir) + ielecploss(ir)
+         ocfqe(ir) = ototqe - ouheate(ir) + oelecploss(ir)
+c     
+         cfqi(ir) = totqi - heati(ir) + ionploss(ir)
+         icfqi(ir) = itotqi - inheati(ir) + iionploss(ir)
+         ocfqi(ir) = ototqi - ouheati(ir) + oionploss(ir)
+c     
          if (cprint.eq.1.or.cprint.eq.9) then
-
+c     
             write(6,2001) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
             write(6,2001) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
             write(6,2001) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
-c
+c     
          endif
-c
-      end do
-c
- 2001 format(a,1x,i4,3(1x,g14.6))
+c     
+         do ir = irsep+1,irwall -1
+            cfgam(ir)  = cfgam(ir-1)  - netflx(ir)
+            icfgam(ir) = icfgam(ir-1) - inetflx(ir)
+            ocfgam(ir) = ocfgam(ir-1) - onetflx(ir)
+c     
+            cfqe(ir)  = cfqe(ir-1)  - heate(ir) + elecploss(ir)
+            icfqe(ir) = icfqe(ir-1) - inheate(ir)+ ielecploss(ir)
+            ocfqe(ir) = ocfqe(ir-1) - ouheate(ir)+ oelecploss(ir)
+c     
+            cfqi(ir)  = cfqi(ir-1)  - heati(ir)+ ionploss(ir)
+            icfqi(ir) = icfqi(ir-1) - inheati(ir)+ iionploss(ir)
+            ocfqi(ir) = ocfqi(ir-1) - ouheati(ir)+ oionploss(ir)
+c     
+            if (cprint.eq.1.or.cprint.eq.9) then
 
-c
+               write(6,2001) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
+               write(6,2001) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
+               write(6,2001) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
+c     
+            endif
+c     
+         end do
+c     
+ 2001    format(a,1x,i4,3(1x,g14.6))
+
+c     
 c     DPFLUXOPT
-c
+c     
       elseif (dpfluxopt.eq.1) then
 
-      ir = irsep
+         ir = irsep
 
-      cfgam(ir) = totflx - 0.5 * netflx(ir)
-      icfgam(ir) = itotflx - 0.5 * inetflx(ir)
-      ocfgam(ir) = ototflx - 0.5 * onetflx(ir)
-c
-      cfqe(ir) = totqe - 0.5 * heate(ir)
-      icfqe(ir) = itotqe - 0.5 * inheate(ir)
-      ocfqe(ir) = ototqe - 0.5 * ouheate(ir)
-c
-      cfqi(ir) = totqi - 0.5 * heati(ir)
-      icfqi(ir) = itotqi - 0.5 * inheati(ir)
-      ocfqi(ir) = ototqi - 0.5 * ouheati(ir)
-c
-c      write(6,*) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
-c      write(6,*) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
-c      write(6,*) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
-c
-c      do ir = irsep+1,irwall -1
-c         cfgam(ir)  = cfgam(ir-1)
+         cfgam(ir) = totflx - 0.5 * netflx(ir)
+         icfgam(ir) = itotflx - 0.5 * inetflx(ir)
+         ocfgam(ir) = ototflx - 0.5 * onetflx(ir)
+c     
+         cfqe(ir) = totqe - 0.5 * heate(ir)
+         icfqe(ir) = itotqe - 0.5 * inheate(ir)
+         ocfqe(ir) = ototqe - 0.5 * ouheate(ir)
+c     
+         cfqi(ir) = totqi - 0.5 * heati(ir)
+         icfqi(ir) = itotqi - 0.5 * inheati(ir)
+         ocfqi(ir) = ototqi - 0.5 * ouheati(ir)
+c     
+c     write(6,*) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
+c     write(6,*) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
+c     write(6,*) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
+c     
+c     do ir = irsep+1,irwall -1
+c     cfgam(ir)  = cfgam(ir-1)
 c     >                -0.5*(netflx(ir)+netflx(ir-1))
-c         icfgam(ir) = icfgam(ir-1)
+c     icfgam(ir) = icfgam(ir-1)
 c     >                -0.5*(inetflx(ir)+inetflx(ir-1))
-c         ocfgam(ir) = ocfgam(ir-1)
+c     ocfgam(ir) = ocfgam(ir-1)
 c     >                -0.5*(onetflx(ir)+onetflx(ir-1))
-c
-c         cfqe(ir)  = cfqe(ir-1)
+c     
+c     cfqe(ir)  = cfqe(ir-1)
 c     >               - 0.5*(heate(ir)+heate(ir-1))
-c         icfqe(ir) = icfqe(ir-1)
+c     icfqe(ir) = icfqe(ir-1)
 c     >               - 0.5*(inheate(ir)+inheate(ir-1))
-c         ocfqe(ir) = ocfqe(ir-1)
+c     ocfqe(ir) = ocfqe(ir-1)
 c     >               - 0.5*(ouheate(ir)+ouheate(ir-1))
-c
-c         cfqi(ir)  = cfqi(ir-1)
+c     
+c     cfqi(ir)  = cfqi(ir-1)
 c     >               - 0.5*(heati(ir)+heati(ir-1))
-c         icfqi(ir) = icfqi(ir-1)
+c     icfqi(ir) = icfqi(ir-1)
 c     >               - 0.5*(inheati(ir)+inheati(ir-1))
-c         ocfqi(ir) = ocfqi(ir-1)
+c     ocfqi(ir) = ocfqi(ir-1)
 c     >               - 0.5*(ouheati(ir)+ouheati(ir-1))
-c
-c         write(6,*) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
-c         write(6,*) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
-c         write(6,*) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
-c
-c      end do
-c
+c     
+c     write(6,*) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
+c     write(6,*) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
+c     write(6,*) 'cfo:',ir,ocfgam(ir),ocfqe(ir),ocfqi(ir)
+c     
+c     end do
+c     
 
 
       endif
-c
-c
+c     
+c     
       write(6,*) 'Initial Values: (flux and ionization Main SOL)'
       write(6,*) 'ITOTFLX= ',itotflx,' OTOTFLX= ',ototflx,
-     >           ' TOTFLX= ',totflx
+     >     ' TOTFLX= ',totflx
       write(6,*) 'ITionis= ',itionis,' OTionis= ',otionis,
-     >           ' Tionis= ',tionis
+     >     ' Tionis= ',tionis
       write(6,*) ' ITFlux= ',itotflx+itionis,
-     >           ' OTFlux= ',ototflx+otionis,
-     >           '  Tflux= ',totflx+tionis
-c
+     >     ' OTFlux= ',ototflx+otionis,
+     >     '  Tflux= ',totflx+tionis
+c     
 
-c
+c     
 C---- Find the Total Surface Area of the Plasma and Mean Onion
 C---- Skin Seperation...(Density Gradient!)
-C
-c
+C     
+c     
 c     This is total plasma area adjacent to the main plasma.
-c
-c
+c     
+c     
 
 
       if (dpmethod.eq.0.or.dpmethod.eq.1) then
-c
-c
-c
-      DO 280 IR=IRSEP,IRWALL-1,1
-c
-         ikmid = ikmids(ir)+1
-c
-         if (dpsuml.eq.1) then
-            ouend =1
-            inend =nks(ir)
-         endif
+c     
+c     
+c     
+         DO 280 IR=IRSEP,IRWALL-1,1
+c     
+            ikmid = ikmids(ir)+1
+c     
+            if (dpsuml.eq.1) then
+               ouend =1
+               inend =nks(ir)
+            endif
 
 
-c
+c     
 c     Implement alternate solution methods but leave in the code
 c     Select by hard-wired switch
-c
+c     
 
 
-      if (dpmethod.eq.0) then
-c
-        AREA=0.0
-        iarea= 0.0
-        oarea= 0.0
-c
-        DO 290 IK=OUEND,INEND,1
-c
-          if (dprcopt.eq.0) then
-             fact = 1.0
-          else
-             fact = rs(ik,ir)/r0
-          endif
-c
-          PYTHG=SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
-     >                (ZS(IK,IR)-ZS(IK+1,IR))**2 ) * fact
-c
-c
-           AREA=AREA+ PYTHG
-c
-c
-           if (ik.lt.ikmid) then
-              oAREA=oAREA+ PYTHG
-           else
-              iAREA=iAREA+ PYTHG
-           endif
-c
- 290    CONTINUE
-c
-c       Calculate Gradients for both inner and outer legs.
-c
-c
-        if (ir.eq.irsep) then
+            if (dpmethod.eq.0) then
+c     
+               AREA=0.0
+               iarea= 0.0
+               oarea= 0.0
+c     
+               DO 290 IK=OUEND,INEND,1
+c     
+                  if (dprcopt.eq.0) then
+                     fact = 1.0
+                  else
+                     fact = rs(ik,ir)/r0
+                  endif
+c     
+                  PYTHG=SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
+     >                 (ZS(IK,IR)-ZS(IK+1,IR))**2 ) * fact
+c     
+c     
+                  AREA=AREA+ PYTHG
+c     
+c     
+                  if (ik.lt.ikmid) then
+                     oAREA=oAREA+ PYTHG
+                  else
+                     iAREA=iAREA+ PYTHG
+                  endif
+c     
+ 290           CONTINUE
+c     
+c     Calculate Gradients for both inner and outer legs.
+c     
+c     
+               if (ir.eq.irsep) then
 
-        OSEP = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
-     >              (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
-        ISEP = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
-     >              (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+                  OSEP = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >                 (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+                  ISEP = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >                 (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
 
-        ODELN  = (KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEP
-        ODELTI = (KTIBS(OUMID,IR)-KTIBS(OUMID,IR+1))/OSEP
-        ODELTE = (KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEP
-c
-        IDELN  = (KNBS(inMID,IR)-KNBS(inMID,IR+1))/ISEP
-        IDELTI = (KTIBS(inMID,IR)-KTIBS(inMID,IR+1))/ISEP
-        IDELTE = (KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEP
+                  ODELN  = (KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEP
+                  ODELTI = (KTIBS(OUMID,IR)-KTIBS(OUMID,IR+1))/OSEP
+                  ODELTE = (KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEP
+c     
+                  IDELN  = (KNBS(inMID,IR)-KNBS(inMID,IR+1))/ISEP
+                  IDELTI = (KTIBS(inMID,IR)-KTIBS(inMID,IR+1))/ISEP
+                  IDELTE = (KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEP
 
-        elseif (ir.eq.irwall-1) then
+               elseif (ir.eq.irwall-1) then
 
-        OSEP = SQRT((ABS(RS(OUMID,IR-1)-RS(OUMID,IR)))**2 +
-     >      (ABS(ZS(OUMID,IR-1)-ZS(OUMID,IR)))**2)
-        ISEP = SQRT((ABS(RS(INMID,IR-1)-RS(INMID,IR)))**2 +
-     >      (ABS(ZS(INMID,IR-1)-ZS(INMID,IR)))**2)
+                  OSEP = SQRT((ABS(RS(OUMID,IR-1)-RS(OUMID,IR)))**2 +
+     >                 (ABS(ZS(OUMID,IR-1)-ZS(OUMID,IR)))**2)
+                  ISEP = SQRT((ABS(RS(INMID,IR-1)-RS(INMID,IR)))**2 +
+     >                 (ABS(ZS(INMID,IR-1)-ZS(INMID,IR)))**2)
 
-        ODELN  = (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEP
-        ODELTI = (KTIBS(OUMID,IR-1)-KTIBS(OUMID,IR))/OSEP
-        ODELTE = (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEP
-c
-        IDELN  = (KNBS(inMID,IR-1)-KNBS(inMID,IR))/ISEP
-        IDELTI = (KTIBS(inMID,IR-1)-KTIBS(inMID,IR))/ISEP
-        IDELTE = (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEP
+                  ODELN  = (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEP
+                  ODELTI = (KTIBS(OUMID,IR-1)-KTIBS(OUMID,IR))/OSEP
+                  ODELTE = (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEP
+c     
+                  IDELN  = (KNBS(inMID,IR-1)-KNBS(inMID,IR))/ISEP
+                  IDELTI = (KTIBS(inMID,IR-1)-KTIBS(inMID,IR))/ISEP
+                  IDELTE = (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEP
 
-        else
+               else
 
-        OSEPF = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
-     >               (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
-        ISEPF = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
-     >               (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+                  OSEPF = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >                 (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+                  ISEPF = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >                 (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
 
-        OSEPB = SQRT((RS(OUMID,IR-1)-RS(OUMID,IR))**2 +
-     >               (ZS(OUMID,IR-1)-ZS(OUMID,IR))**2 )
-        ISEPB = SQRT((RS(INMID,IR-1)-RS(INMID,IR))**2 +
-     >               (ZS(INMID,IR-1)-ZS(INMID,IR))**2 )
+                  OSEPB = SQRT((RS(OUMID,IR-1)-RS(OUMID,IR))**2 +
+     >                 (ZS(OUMID,IR-1)-ZS(OUMID,IR))**2 )
+                  ISEPB = SQRT((RS(INMID,IR-1)-RS(INMID,IR))**2 +
+     >                 (ZS(INMID,IR-1)-ZS(INMID,IR))**2 )
 
-        ODELN  = ((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEPF+
-     >           (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEPB)/2.0
+                  ODELN  = ((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEPF+
+     >                 (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEPB)/2.0
 
-        ODELTI = ((KTIBS(OUMID,IR)-KTIBS(OUMID,IR+1))/OSEPF+
-     >           (KTIBS(OUMID,IR-1)-KTIBS(OUMID,IR))/OSEPB)/2.0
+                  ODELTI = ((KTIBS(OUMID,IR)-KTIBS(OUMID,IR+1))/OSEPF+
+     >                 (KTIBS(OUMID,IR-1)-KTIBS(OUMID,IR))/OSEPB)/2.0
 
-        ODELTE = ((KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEPF+
-     >           (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEPB)/2.0
-c
-        IDELN  = ( (KNBS(inMID,IR)-KNBS(inMID,IR+1)) /ISEPF+
-     >             (KNBS(inMID,IR-1)-KNBS(inMID,IR)) /ISEPB )/2.0
+                  ODELTE = ((KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEPF+
+     >                 (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEPB)/2.0
+c     
+                  IDELN  = ( (KNBS(inMID,IR)-KNBS(inMID,IR+1)) /ISEPF+
+     >                 (KNBS(inMID,IR-1)-KNBS(inMID,IR)) /ISEPB )/2.0
 
-        IDELTI = ((KTIBS(inMID,IR)-KTIBS(inMID,IR+1))/ISEPF+
-     >           (KTIBS(inMID,IR-1)-KTIBS(inMID,IR))/ISEPB)/2.0
+                  IDELTI = ((KTIBS(inMID,IR)-KTIBS(inMID,IR+1))/ISEPF+
+     >                 (KTIBS(inMID,IR-1)-KTIBS(inMID,IR))/ISEPB)/2.0
 
-        IDELTE = ((KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEPF+
-     >           (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEPB)/2.0
+                  IDELTE = ((KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEPF+
+     >                 (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEPB)/2.0
 
-        OSEP = (OSEPF+OSEPB )/2.0
-        ISEP = (ISEPF+ISEPB )/2.0
+                  OSEP = (OSEPF+OSEPB )/2.0
+                  ISEP = (ISEPF+ISEPB )/2.0
 
-c        write (6,*) 'TESTI:',ir,inmid,ideln,isepf,isepb,iarea
-c        write (6,*) 'TESTI:',ir,knbs(inmid,ir-1),knbs(inmid,ir),
+c     write (6,*) 'TESTI:',ir,inmid,ideln,isepf,isepb,iarea
+c     write (6,*) 'TESTI:',ir,knbs(inmid,ir-1),knbs(inmid,ir),
 c     >              knbs(inmid,ir+1)
-c        write (6,*) 'TESTI:',rs(inmid,ir-1),zs(inmid,ir-1),
+c     write (6,*) 'TESTI:',rs(inmid,ir-1),zs(inmid,ir-1),
 c     >               rs(inmid,ir),
 c     >               zs(inmid,ir),rs(inmid,ir+1),zs(inmid,ir+1)
-c        write (6,*) 'TESTI:',( (KNBS(inMID,IR)-KNBS(inMID,IR+1))
+c     write (6,*) 'TESTI:',( (KNBS(inMID,IR)-KNBS(inMID,IR+1))
 c     >             /ISEPF+
 c     >             (KNBS(inMID,IR-1)-KNBS(inMID,IR)) /ISEPB )/2.0
-c        write (6,*) 'TESTO:',ir,oumid,odeln,osepf,osepb,oarea
-c        write (6,*) 'TESTO:',ir,knbs(oumid,ir-1),knbs(oumid,ir),
+c     write (6,*) 'TESTO:',ir,oumid,odeln,osepf,osepb,oarea
+c     write (6,*) 'TESTO:',ir,knbs(oumid,ir-1),knbs(oumid,ir),
 c     >              knbs(oumid,ir+1)
-c        write (6,*) 'TESTO:',rs(oumid,ir-1),zs(oumid,ir-1),
+c     write (6,*) 'TESTO:',rs(oumid,ir-1),zs(oumid,ir-1),
 c     >               rs(oumid,ir),
 c     >               zs(oumid,ir),rs(oumid,ir+1),zs(oumid,ir+1)
-c        write (6,*) 'TESTO:',((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))
+c     write (6,*) 'TESTO:',((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))
 c     >              /OSEPF+
 c     >           (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEPB)/2.0
-c
+c     
 c---------------------------------------------------------------------
-c
-        endif
-c
-c       Density values
-c
-        NI = knbs(inmid,ir)
-        NO = knbs(oumid,ir)
-        NAV = (NI+NO)/2.0
-c
-c       Overall gradient - take average of inner/outer
-c
-        SEP = (OSEP+ISEP)/2.0
-c
-        DELN   = (ODELN  + IDELN)/2.0
-        DELTE  = (ODELTE + IDELTE)/2.0
-        DELTI  = (ODELTI + IDELTI)/2.0
-c
-        TOTFLX=TOTFLX-NETFLX(IR)
-        TOTQI=TOTQI-HEATI(IR)
-        TOTQE=TOTQE-HEATE(IR)
-c
-        ITOTFLX= ITOTFLX -INETFLX(IR)
-        ITOTQI = ITOTQI  -INHEATI(IR)
-        ITOTQE = ITOTQE  -INHEATE(IR)
-c
-        OTOTFLX= OTOTFLX -ONETFLX(IR)
-        OTOTQI = OTOTQI  -OUHEATI(IR)
-        OTOTQE = OTOTQE  -OUHEATE(IR)
-c
-c       TOTflx
-c
+c     
+               endif
+c     
+c     Density values
+c     
+               NI = knbs(inmid,ir)
+               NO = knbs(oumid,ir)
+               NAV = (NI+NO)/2.0
+c     
+c     Overall gradient - take average of inner/outer
+c     
+               SEP = (OSEP+ISEP)/2.0
+c     
+               DELN   = (ODELN  + IDELN)/2.0
+               DELTE  = (ODELTE + IDELTE)/2.0
+               DELTI  = (ODELTI + IDELTI)/2.0
+c     
+               TOTFLX=TOTFLX-NETFLX(IR)
+               TOTQI=TOTQI-HEATI(IR)
+               TOTQE=TOTQE-HEATE(IR)
+c     
+               ITOTFLX= ITOTFLX -INETFLX(IR)
+               ITOTQI = ITOTQI  -INHEATI(IR)
+               ITOTQE = ITOTQE  -INHEATE(IR)
+c     
+               OTOTFLX= OTOTFLX -ONETFLX(IR)
+               OTOTQI = OTOTQI  -OUHEATI(IR)
+               OTOTQE = OTOTQE  -OUHEATE(IR)
+c     
+c     TOTflx
+c     
 
-C
+C     
 C---- Calculate the Inboard/Outboard Dperp Values
-C
-c
-c       Total - using averaged mid-plane gradients
-c
-        DPERP(IR)    = (TOTFLX/AREA)/DELN
-        CHIPERPI(IR) = (TOTQI/AREA)/(DELTI*ech)/NAV
-        CHIPERPE(IR) = (TOTQE/AREA)/(DELTE*ech)/nav
-c
-c       Outer
-c
-        ODPERP(IR)    = (OTOTFLX/OAREA)/ODELN
-        OCHIPERPI(IR) = (OTOTQI/OAREA)/(ODELTI*ech)/no
-        OCHIPERPE(IR) = (OTOTQE/OAREA)/(ODELTE*ech)/no
-c
-c       Inner
-c
-        IDPERP(IR)    = (ITOTFLX/IAREA)/IDELN
-        ICHIPERPI(IR) = (ITOTQI/IAREA)/(IDELTI*ech)/ni
-        ICHIPERPE(IR) = (ITOTQE/IAREA)/(IDELTE*ech)/ni
-c
+C     
+c     
+c     Total - using averaged mid-plane gradients
+c     
+               DPERP(IR)    = (TOTFLX/AREA)/DELN
+               CHIPERPI(IR) = (TOTQI/AREA)/(DELTI*ech)/NAV
+               CHIPERPE(IR) = (TOTQE/AREA)/(DELTE*ech)/nav
+c     
+c     Outer
+c     
+               ODPERP(IR)    = (OTOTFLX/OAREA)/ODELN
+               OCHIPERPI(IR) = (OTOTQI/OAREA)/(ODELTI*ech)/no
+               OCHIPERPE(IR) = (OTOTQE/OAREA)/(ODELTE*ech)/no
+c     
+c     Inner
+c     
+               IDPERP(IR)    = (ITOTFLX/IAREA)/IDELN
+               ICHIPERPI(IR) = (ITOTQI/IAREA)/(IDELTI*ech)/ni
+               ICHIPERPE(IR) = (ITOTQE/IAREA)/(IDELTE*ech)/ni
+c     
 c     DPMETHOD
-c
+c     
 
-      elseif (dpmethod.eq.1) then
-c
-c       Method #2
-c
+            elseif (dpmethod.eq.1) then
+c     
+c     Method #2
+c     
 
-        do ik = ouend,inend
-c
-          if (dprcopt.eq.0) then
-             fact = 1.0
-          else
-             fact = rs(ik,ir)/r0
-          endif
-c
-          if (ik.eq.1) then
+               do ik = ouend,inend
+c     
+                  if (dprcopt.eq.0) then
+                     fact = 1.0
+                  else
+                     fact = rs(ik,ir)/r0
+                  endif
+c     
+                  if (ik.eq.1) then
 
-           surf(ik) = (SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
-     >                      (ZS(IK,IR)-ZS(IK+1,IR))**2 )/ 2.0
-     >              + SQRT( (RS(IK,IR)-RP(idds(ir,2)))**2 +
-     >                      (ZS(IK,IR)-ZP(idds(ir,2)))**2 )
-     >                ) * fact
+                     surf(ik) = (SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
+     >                    (ZS(IK,IR)-ZS(IK+1,IR))**2 )/ 2.0
+     >                    + SQRT( (RS(IK,IR)-RP(idds(ir,2)))**2 +
+     >                    (ZS(IK,IR)-ZP(idds(ir,2)))**2 )
+     >                    ) * fact
 
-          elseif (ik.eq.nks(ir)) then
+                  elseif (ik.eq.nks(ir)) then
 
-           surf(ik) = (SQRT( (RS(IK,IR)-RP(idds(ir,1)))**2 +
-     >                      (ZS(IK,IR)-ZP(idds(ir,1)))**2 )
-     >              + SQRT( (RS(IK,IR)-RS(IK-1,IR))**2 +
-     >                      (ZS(IK,IR)-ZS(IK-1,IR))**2 )/ 2.0
-     >                ) * fact
+                     surf(ik) = (SQRT( (RS(IK,IR)-RP(idds(ir,1)))**2 +
+     >                    (ZS(IK,IR)-ZP(idds(ir,1)))**2 )
+     >                    + SQRT( (RS(IK,IR)-RS(IK-1,IR))**2 +
+     >                    (ZS(IK,IR)-ZS(IK-1,IR))**2 )/ 2.0
+     >                    ) * fact
 
-          else
+                  else
 
-           surf(ik) = (SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
-     >                      (ZS(IK,IR)-ZS(IK+1,IR))**2 )/ 2.0
-     >              + SQRT( (RS(IK,IR)-RS(IK-1,IR))**2 +
-     >                      (ZS(IK,IR)-ZS(IK-1,IR))**2 )/ 2.0
-     >                ) * fact
+                     surf(ik) = (SQRT( (RS(IK,IR)-RS(IK+1,IR))**2 +
+     >                    (ZS(IK,IR)-ZS(IK+1,IR))**2 )/ 2.0
+     >                    + SQRT( (RS(IK,IR)-RS(IK-1,IR))**2 +
+     >                    (ZS(IK,IR)-ZS(IK-1,IR))**2 )/ 2.0
+     >                    ) * fact
 
-          endif
+                  endif
 
 
-c
-        if (ir.eq.irsep) then
-c
-           SEP = SQRT((RS(ik,IR)-RS(ik,IR+1))**2 +
-     >                (ZS(ik,IR)-ZS(ik,IR+1))**2 )
+c     
+                  if (ir.eq.irsep) then
+c     
+                     SEP = SQRT((RS(ik,IR)-RS(ik,IR+1))**2 +
+     >                    (ZS(ik,IR)-ZS(ik,IR+1))**2 )
 
-           DELN  = (KNBS(ik,IR)-KNBS(ik,IR+1))/SEP
+                     DELN  = (KNBS(ik,IR)-KNBS(ik,IR+1))/SEP
 
-           DELTI = (KTIBS(ik,IR)-KTIBS(ik,IR+1))/SEP
-           DELTE = (KTEBS(ik,IR)-KTEBS(ik,IR+1))/SEP
-c
-        elseif (ir.eq.irwall-1) then
-c
-           SEP = SQRT((RS(ik,IR)-RS(ik,IR-1))**2 +
-     >                (ZS(ik,IR)-ZS(ik,IR-1))**2 )
+                     DELTI = (KTIBS(ik,IR)-KTIBS(ik,IR+1))/SEP
+                     DELTE = (KTEBS(ik,IR)-KTEBS(ik,IR+1))/SEP
+c     
+                  elseif (ir.eq.irwall-1) then
+c     
+                     SEP = SQRT((RS(ik,IR)-RS(ik,IR-1))**2 +
+     >                    (ZS(ik,IR)-ZS(ik,IR-1))**2 )
 
-           DELN  = (KNBS(ik,IR-1)-KNBS(ik,IR))/SEP
+                     DELN  = (KNBS(ik,IR-1)-KNBS(ik,IR))/SEP
 
-           DELTI = (KTIBS(ik,IR-1)-KTIBS(ik,IR))/SEP
-           DELTE = (KTEBS(ik,IR-1)-KTEBS(ik,IR))/SEP
-c
-        else
+                     DELTI = (KTIBS(ik,IR-1)-KTIBS(ik,IR))/SEP
+                     DELTE = (KTEBS(ik,IR-1)-KTEBS(ik,IR))/SEP
+c     
+                  else
 
-           SEPF = SQRT((RS(ik,IR)-RS(ik,IR+1))**2 +
-     >                (ZS(ik,IR)-ZS(ik,IR+1))**2 )
+                     SEPF = SQRT((RS(ik,IR)-RS(ik,IR+1))**2 +
+     >                    (ZS(ik,IR)-ZS(ik,IR+1))**2 )
 
-           SEPB = SQRT((RS(ik,IR)-RS(ik,IR-1))**2 +
-     >                (ZS(ik,IR)-ZS(ik,IR-1))**2 )
+                     SEPB = SQRT((RS(ik,IR)-RS(ik,IR-1))**2 +
+     >                    (ZS(ik,IR)-ZS(ik,IR-1))**2 )
 
-           DELN  = ((KNBS(ik,IR)-KNBS(ik,IR+1))/SEPF+
-     >           (KNBS(ik,IR-1)-KNBS(ik,IR))/SEPB)/2.0
+                     DELN  = ((KNBS(ik,IR)-KNBS(ik,IR+1))/SEPF+
+     >                    (KNBS(ik,IR-1)-KNBS(ik,IR))/SEPB)/2.0
 
-           DELTI = ((KTIBS(ik,IR)-KTIBS(ik,IR+1))/SEPF+
-     >           (KTIBS(ik,IR-1)-KTIBS(ik,IR))/SEPB)/2.0
+                     DELTI = ((KTIBS(ik,IR)-KTIBS(ik,IR+1))/SEPF+
+     >                    (KTIBS(ik,IR-1)-KTIBS(ik,IR))/SEPB)/2.0
 
-           DELTE = ((KTEBS(ik,IR)-KTEBS(ik,IR+1))/SEPF+
-     >           (KTEBS(ik,IR-1)-KTEBS(ik,IR))/SEPB)/2.0
-c
-        endif
-c
-        deldp(ik) = surf(ik) * deln
-        delqe(ik) = surf(ik) * knbs(ik,ir) * ech * delte
-        delqi(ik) = surf(ik) * knbs(ik,ir) * ech * delti
-c
-c       End of do ik
-c
-        end do
-c
-c       Now we have all the single cell fluxes
-c       in the del variables - need to sum over them
-c       and equate them to the remaining outflux to
-c       estimate the transport coefficients for the
-c       ring.
-c
-        dptoto = 0.0
-        qetoto = 0.0
-        qitoto = 0.0
-c
-        do ik = ouend,ikmid -1
-           dptoto = dptoto + deldp(ik)
-           qetoto = qetoto + delqe(ik)
-           qitoto = qitoto + delqi(ik)
-        end do
-c
-        dptoti = 0.0
-        qetoti = 0.0
-        qitoti = 0.0
-c
-        do ik = ikmid,inend
-           dptoti = dptoti + deldp(ik)
-           qetoti = qetoti + delqe(ik)
-           qitoti = qitoti + delqi(ik)
-        end do
-c
-c       Take ratio with totals to extract dperp, xperp ...
-c
-        TOTFLX=TOTFLX-NETFLX(IR)
-        TOTQI=TOTQI-HEATI(IR)
-        TOTQE=TOTQE-HEATE(IR)
-c
-        ITOTFLX= ITOTFLX -INETFLX(IR)
-        ITOTQI = ITOTQI  -INHEATI(IR)
-        ITOTQE = ITOTQE  -INHEATE(IR)
-c
-        OTOTFLX= OTOTFLX -ONETFLX(IR)
-        OTOTQI = OTOTQI  -OUHEATI(IR)
-        OTOTQE = OTOTQE  -OUHEATE(IR)
-c
-C
+                     DELTE = ((KTEBS(ik,IR)-KTEBS(ik,IR+1))/SEPF+
+     >                    (KTEBS(ik,IR-1)-KTEBS(ik,IR))/SEPB)/2.0
+c     
+                  endif
+c     
+                  deldp(ik) = surf(ik) * deln
+                  delqe(ik) = surf(ik) * knbs(ik,ir) * ech * delte
+                  delqi(ik) = surf(ik) * knbs(ik,ir) * ech * delti
+c     
+c     End of do ik
+c     
+               end do
+c     
+c     Now we have all the single cell fluxes
+c     in the del variables - need to sum over them
+c     and equate them to the remaining outflux to
+c     estimate the transport coefficients for the
+c     ring.
+c     
+               dptoto = 0.0
+               qetoto = 0.0
+               qitoto = 0.0
+c     
+               do ik = ouend,ikmid -1
+                  dptoto = dptoto + deldp(ik)
+                  qetoto = qetoto + delqe(ik)
+                  qitoto = qitoto + delqi(ik)
+               end do
+c     
+               dptoti = 0.0
+               qetoti = 0.0
+               qitoti = 0.0
+c     
+               do ik = ikmid,inend
+                  dptoti = dptoti + deldp(ik)
+                  qetoti = qetoti + delqe(ik)
+                  qitoti = qitoti + delqi(ik)
+               end do
+c     
+c     Take ratio with totals to extract dperp, xperp ...
+c     
+               TOTFLX=TOTFLX-NETFLX(IR)
+               TOTQI=TOTQI-HEATI(IR)
+               TOTQE=TOTQE-HEATE(IR)
+c     
+               ITOTFLX= ITOTFLX -INETFLX(IR)
+               ITOTQI = ITOTQI  -INHEATI(IR)
+               ITOTQE = ITOTQE  -INHEATE(IR)
+c     
+               OTOTFLX= OTOTFLX -ONETFLX(IR)
+               OTOTQI = OTOTQI  -OUHEATI(IR)
+               OTOTQE = OTOTQE  -OUHEATE(IR)
+c     
+C     
 C---- Calculate the Inboard/Outboard Dperp Values
-C
-c
-c       Total - using averaged mid-plane gradients
-c
-        DPERP(IR)    = TOTFLX/(dptoto+dptoti)
-        CHIPERPI(IR) = TOTQI/(qitoto+qitoti)
-        CHIPERPE(IR) = TOTQE/(qetoto+qetoti)
-c
-c       Outer
-c
-        ODPERP(IR)    = OTOTFLX/dptoto
-        OCHIPERPI(IR) = OTOTQI/qitoto
-        OCHIPERPE(IR) = OTOTQE/qetoto
-c
-c       Inner
-c
-        IDPERP(IR)    = ITOTFLX/dptoti
-        ICHIPERPI(IR) = ITOTQI/qitoti
-        ICHIPERPE(IR) = ITOTQE/qetoti
-c
+C     
+c     
+c     Total - using averaged mid-plane gradients
+c     
+               DPERP(IR)    = TOTFLX/(dptoto+dptoti)
+               CHIPERPI(IR) = TOTQI/(qitoto+qitoti)
+               CHIPERPE(IR) = TOTQE/(qetoto+qetoti)
+c     
+c     Outer
+c     
+               ODPERP(IR)    = OTOTFLX/dptoto
+               OCHIPERPI(IR) = OTOTQI/qitoto
+               OCHIPERPE(IR) = OTOTQE/qetoto
+c     
+c     Inner
+c     
+               IDPERP(IR)    = ITOTFLX/dptoti
+               ICHIPERPI(IR) = ITOTQI/qitoti
+               ICHIPERPE(IR) = ITOTQE/qetoti
+c     
 
-        endif
+            endif
 
-c
-c       Dperp
-c
-        write(6,*) 'Indices: IKMID=',ikmid,
-     >             ' IKINMID=',inmid,' IKOUMID=',oumid
-        write(6,*) 'Z0 = ',z0
-        write(6,500)
-        write(6,400) 'Dperp '//inner//':',ir,idperp(ir),itotflx,
-     >                ideln,iarea,isep,
-     >                influx(ir),iionis(ir),
-     >                inetflx(ir),knbs(inmid,ir),isepb,isepf
-        write(6,400) 'Dperp '//outer//':',ir,odperp(ir),ototflx,
-     >               odeln,oarea,osep,
-     >               ouflux(ir),oionis(ir),
-     >               onetflx(ir),knbs(oumid,ir),osepb,osepf
-        write(6,400) 'Dperp Total:',ir,dperp(ir),totflx,deln,area,
-     >               sep,flux(ir),ionis(ir),netflx(ir),nav
+c     
+c     Dperp
+c     
+            write(6,*) 'Indices: IKMID=',ikmid,
+     >           ' IKINMID=',inmid,' IKOUMID=',oumid
+            write(6,*) 'Z0 = ',z0
+            write(6,500)
+            write(6,400) 'Dperp '//inner//':',ir,idperp(ir),itotflx,
+     >           ideln,iarea,isep,
+     >           influx(ir),iionis(ir),
+     >           inetflx(ir),knbs(inmid,ir),isepb,isepf
+            write(6,400) 'Dperp '//outer//':',ir,odperp(ir),ototflx,
+     >           odeln,oarea,osep,
+     >           ouflux(ir),oionis(ir),
+     >           onetflx(ir),knbs(oumid,ir),osepb,osepf
+            write(6,400) 'Dperp Total:',ir,dperp(ir),totflx,deln,area,
+     >           sep,flux(ir),ionis(ir),netflx(ir),nav
 
-c
-c       Xperpi
-c
-        write(6,700)
-        write(6,400) 'Xperpi '//Inner,ir,ichiperpi(ir),itotqi,
-     >                idelti,iarea,isep,
-     >                inheati(ir),ktibs(inmid,ir),isepb,isepf
-        write(6,400) 'Xperpi '//Outer,ir,ochiperpi(ir),ototqi,
-     >               odelti,oarea,osep,
-     >               ouheati(ir),ktibs(oumid,ir),osepb,osepf
-        write(6,400) 'Xperpi Total',ir,chiperpi(ir),totqi,delti,area,
-     >               sep,heati(ir)
-c
+c     
+c     Xperpi
+c     
+            write(6,700)
+            write(6,400) 'Xperpi '//Inner,ir,ichiperpi(ir),itotqi,
+     >           idelti,iarea,isep,
+     >           inheati(ir),ktibs(inmid,ir),isepb,isepf
+            write(6,400) 'Xperpi '//Outer,ir,ochiperpi(ir),ototqi,
+     >           odelti,oarea,osep,
+     >           ouheati(ir),ktibs(oumid,ir),osepb,osepf
+            write(6,400) 'Xperpi Total',ir,chiperpi(ir),totqi,delti,
+     >           area,sep,heati(ir)
+c     
 c--------------------------------------------------------------------
-c
-c       Xperpe
-c
+c     
+c     Xperpe
+c     
 
-        write(6,900)
-        write(6,400) 'Xperpe '//Inner,ir,ichiperpe(ir),itotqe,
-     >                idelte,iarea,isep,
-     >                inheate(ir),ktebs(inmid,ir),isepb,isepf
-        write(6,400) 'Xperpe '//Outer,ir,ochiperpe(ir),ototqe,
-     >               odelte,oarea,osep,
-     >               ouheate(ir),ktebs(oumid,ir),osepb,osepf
-        write(6,400) 'Xperpe Total',ir,chiperpe(ir),totqe,delte,area,
-     >               sep,heate(ir)
-
-
+            write(6,900)
+            write(6,400) 'Xperpe '//Inner,ir,ichiperpe(ir),itotqe,
+     >           idelte,iarea,isep,
+     >           inheate(ir),ktebs(inmid,ir),isepb,isepf
+            write(6,400) 'Xperpe '//Outer,ir,ochiperpe(ir),ototqe,
+     >           odelte,oarea,osep,
+     >           ouheate(ir),ktebs(oumid,ir),osepb,osepf
+            write(6,400) 'Xperpe Total',ir,chiperpe(ir),totqe,delte,
+     >           area,sep,heate(ir)
 
 
-c
- 280  CONTINUE
-c
-c
-c
+
+
+c     
+ 280     CONTINUE
+c     
+c     
+c     
       elseif (dpmethod.eq.2) then
-c
+c     
 c     Calculate the gradients everywhere in the SOL
 c     Te, Ti, N
-c
-c
+c     
+c     
 c     First Calculate Area elements - for whole grid
-c
-      do ir = irsep,irwall-1
-c
-        do ik = 1,nks(ir)
-c
-c       Calculate Area elements
-c
-          if (dprcopt.eq.0) then
-             fact = 1.0
-          else
-             fact = rs(ik,ir)/r0
-          endif
-c
-c        Calculate the surface area based on cell-centres
-c
-         if (dparea.eq.0) then
-c
-           if (ik.eq.1) then
+c     
+         do ir = irsep,irwall-1
+c     
+            do ik = 1,nks(ir)
+c     
+c     Calculate Area elements
+c     
+               if (dprcopt.eq.0) then
+                  fact = 1.0
+               else
+                  fact = rs(ik,ir)/r0
+               endif
+c     
+c     Calculate the surface area based on cell-centres
+c     
+               if (dparea.eq.0) then
+c     
+                  if (ik.eq.1) then
 
-             surfa(ik,ir) = (kps(ik,ir) + kps(ik+1,ir)) / 2.0
-     >                     * fact
+                     surfa(ik,ir) = (kps(ik,ir) + kps(ik+1,ir)) / 2.0
+     >                    * fact
 
-           elseif (ik.eq.nks(ir)) then
+                  elseif (ik.eq.nks(ir)) then
 
-              surfa(ik,ir) = (kpmaxs(ir)
-     >                   -  0.5 *(kps(ik,ir)+kps(ik-1,ir)))
-     >                     * fact
-           else
+                     surfa(ik,ir) = (kpmaxs(ir)
+     >                    -  0.5 *(kps(ik,ir)+kps(ik-1,ir)))
+     >                    * fact
+                  else
 
-              surfa(ik,ir) = 0.5 *(kps(ik+1,ir)- kps(ik-1,ir))
-     >                     * fact
-           endif
-c
-c        Calculate the surface area based on the outward cell boundary.
-c
-         elseif (dparea.eq.1) then
-c
-            in = korpg(ik,ir)
-c
-            if (in.eq.0) then
-               surfa(ik,ir) = 0.0
-            else
-               surfa(ik,ir) = sqrt((rvertp(2,in)-rvertp(3,in))**2+
-     >                             (zvertp(2,in)-zvertp(3,in))**2)
-     >                        * fact
-            endif
-c
-c
-c        Calculate the surface area based on polygon edges
-c
-         elseif (dparea.eq.2) then
-c
-             surfa(ik,ir) = (kpb(ik,ir) - kpb(ik-1,ir))
-     >                     * fact
-c
-         endif
-c
-        end do
-      end do
-c
-c
+                     surfa(ik,ir) = 0.5 *(kps(ik+1,ir)- kps(ik-1,ir))
+     >                    * fact
+                  endif
+c     
+c     Calculate the surface area based on the outward cell boundary.
+c     
+               elseif (dparea.eq.1) then
+c     
+                  in = korpg(ik,ir)
+c     
+                  if (in.eq.0) then
+                     surfa(ik,ir) = 0.0
+                  else
+                     surfa(ik,ir) = sqrt((rvertp(2,in)-rvertp(3,in))**2+
+     >                    (zvertp(2,in)-zvertp(3,in))**2)
+     >                    * fact
+                  endif
+c     
+c     
+c     Calculate the surface area based on polygon edges
+c     
+               elseif (dparea.eq.2) then
+c     
+                  surfa(ik,ir) = (kpb(ik,ir) - kpb(ik-1,ir))
+     >                 * fact
+c     
+               endif
+c     
+            end do
+         end do
+c     
+c     
 c     Calculate actual gradients - for whole grid - no matter what
 c     options are specified.
-c
-c
+c     
+c     
 c     DPNAV Greater than zero - use normal derivative finding estimates
-c
-      if (dpnav.ge.0) then
+c     
+         if (dpnav.ge.0) then
 
-      do ir = irsep,irwall-1
-c
-        do ik = 1,nks(ir)
-c
-c         Calculate gradients - for E2d if data is also given.
-c
-c         Calculate using Method 0 - equally weighted averaging
-c
-          if (dpnav.eq.0) then
-c
+            do ir = irsep,irwall-1
+c     
+               do ik = 1,nks(ir)
+c     
+c     Calculate gradients - for E2d if data is also given.
+c     
+c     Calculate using Method 0 - equally weighted averaging
+c     
+                  if (dpnav.eq.0) then
+c     
 
-          if (ir.eq.irsep) then
-c
-            SEP = koutds(ik,ir)
-            ikout = ikouts(ik,ir)
-            irout = irouts(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ik,IR)-KNBS(ikout,irout))/SEP
-              dgradn(ik,ir) = gradn(ik,ir)
-              gradTI(ik,ir) = (KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEP
-              gradtE(ik,ir) = (KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
-     >                              -e2dNBS(ikout,irout))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
-     >                              -e2dTIBS(ikout,IRout))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
-     >                              -e2dTEBS(ikout,IRout))/SEP
-              endif
-c
-            else
-              gradn(ik,ir)  = 0.0
-              dgradn(ik,ir) = gradn(ik,ir)
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-c
-          elseif (ir.eq.irwall-1) then
-c
-            SEP = kinds(ik,ir)
-            ikin = ikins(ik,ir)
-            irin = irins(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ikin,IRin)-KNBS(ik,IR))/SEP
-              dgradn(ik,ir) = gradn(ik,ir)
-              gradTI(ik,ir) = (KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEP
-              gradtE(ik,ir) = (KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                              -e2dNBS(ik,ir))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                              -e2dTIBS(ik,IR))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                              -e2dTEBS(ik,IR))/SEP
-              endif
-            else
-              gradn(ik,ir)  = 0.0
-              dgradn(ik,ir) = gradn(ik,ir)
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-c
-          else
-c
-            SEPF = koutds(ik,ir)
-            ikout = ikouts(ik,ir)
-            irout = irouts(ik,ir)
-c
-            SEPB = kinds(ik,ir)
-            ikin = ikins(ik,ir)
-            irin = irins(ik,ir)
-c
-            if (sepf.ne.0.0.and.sepb.ne.0.0) then
-              gradn(ik,ir)  = ((KNBS(ikin,IRin)-KNBS(ik,IR))/SEPB+
-     >                    (KNBS(ik,IR)-KNBS(ikout,irout))/SEPF)/2.0
-              dgradn(ik,ir)  = ((KNBS(ikin,IRin)-KNBS(ik,IR))/SEPB-
-     >                    (KNBS(ik,IR)-KNBS(ikout,irout))/SEPF)
-              gradTI(ik,ir) = ((KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEPB+
-     >                    (KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEPF)/2.0
-              gradtE(ik,ir) = ((KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEPB+
-     >                    (KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEPF)/2.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = ((e2dNBS(ikin,IRin)
-     >                              -e2dNBS(ik,IR))/SEPB+
-     >                              (e2dNBS(ik,IR)
-     >                              -e2dNBS(ikout,irout))/SEPF)/2.0
-                 e2dgradTI(ik,ir) = ((e2dTIBS(ikin,IRin)
-     >                              -e2dTIBS(ik,IR))/SEPB+
-     >                              (e2dTIBS(ik,IR)
-     >                              -e2dTIBS(ikout,IRout))/SEPF)/2.0
-                 e2dgradtE(ik,ir) = ((e2dTEBS(ikin,IRin)
-     >                              -e2dTEBS(ik,IR))/SEPB+
-     >                              (e2dTEBS(ik,IR)
-     >                              -e2dTEBS(ikout,IRout))/SEPF)/2.0
-              endif
-            elseif (sepf.eq.0.0) then
-              if (sepb.eq.0.0) then
-                 gradn(ik,ir)  = 0.0
-                 dgradn(ik,ir) = gradn(ik,ir)
-                 gradTI(ik,ir) = 0.0
-                 gradtE(ik,ir) = 0.0
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = 0.0
-                    e2dgradTI(ik,ir) = 0.0
-                    e2dgradtE(ik,ir) = 0.0
-                 endif
-              else
-                 gradn(ik,ir)  = (KNBS(ikin,IRin)-KNBS(ik,IR))/SEPB
-                 dgradn(ik,ir) = gradn(ik,ir)
-                 gradTI(ik,ir) = (KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEPB
-                 gradtE(ik,ir) = (KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEPB
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                                 -e2dNBS(ik,ir))/SEPb
-                    e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                                 -e2dTIBS(ik,IR))/SEPb
-                    e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                                 -e2dTEBS(ik,IR))/SEPb
-              endif
-              endif
-            elseif (sepb.eq.0.0) then
-              if (sepf.eq.0.0) then
-                 gradn(ik,ir)  = 0.0
-                 dgradn(ik,ir) = gradn(ik,ir)
-                 gradTI(ik,ir) = 0.0
-                 gradtE(ik,ir) = 0.0
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = 0.0
-                    e2dgradTI(ik,ir) = 0.0
-                    e2dgradtE(ik,ir) = 0.0
-                 endif
-              else
-                 gradn(ik,ir) =(KNBS(ik,IR)-KNBS(ikout,irout))/SEPF
-                 dgradn(ik,ir) = gradn(ik,ir)
-                 gradTI(ik,ir)=(KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEPF
-                 gradtE(ik,ir)=(KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEPF
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
-     >                                 -e2dNBS(ikout,irout))/SEPf
-                    e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
-     >                                 -e2dTIBS(ikout,IRout))/SEPf
-                    e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
-     >                                 -e2dTEBS(ikout,IRout))/SEPf
-              endif
-              endif
-            endif
-          endif
-c
-c         Calculate using Method 1 - weighted by ring separation
-c
-          elseif (dpnav.eq.1) then
+                     if (ir.eq.irsep) then
+c     
+                        SEP = koutds(ik,ir)
+                        ikout = ikouts(ik,ir)
+                        irout = irouts(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ik,IR)
+     >                                     -KNBS(ikout,irout))/SEP
+                           dgradn(ik,ir) = gradn(ik,ir)
+                           gradTI(ik,ir) = (KTIBS(ik,IR)
+     >                                     -KTIBS(ikout,IRout))/SEP
+                           gradtE(ik,ir) = (KTEBS(ik,IR)
+     >                                     -KTEBS(ikout,IRout))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
+     >                             -e2dNBS(ikout,irout))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
+     >                             -e2dTIBS(ikout,IRout))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
+     >                             -e2dTEBS(ikout,IRout))/SEP
+                           endif
+c     
+                        else
+                           gradn(ik,ir)  = 0.0
+                           dgradn(ik,ir) = gradn(ik,ir)
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+c     
+                     elseif (ir.eq.irwall-1) then
+c     
+                        SEP = kinds(ik,ir)
+                        ikin = ikins(ik,ir)
+                        irin = irins(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                                     -KNBS(ik,IR))/SEP
+                           dgradn(ik,ir) = gradn(ik,ir)
+                           gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                                      -KTIBS(ik,IR))/SEP
+                           gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                                     -KTEBS(ik,IR))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                             -e2dNBS(ik,ir))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                             -e2dTIBS(ik,IR))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                             -e2dTEBS(ik,IR))/SEP
+                           endif
+                        else
+                           gradn(ik,ir)  = 0.0
+                           dgradn(ik,ir) = gradn(ik,ir)
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+c     
+                     else
+c     
+                        SEPF = koutds(ik,ir)
+                        ikout = ikouts(ik,ir)
+                        irout = irouts(ik,ir)
+c     
+                        SEPB = kinds(ik,ir)
+                        ikin = ikins(ik,ir)
+                        irin = irins(ik,ir)
+c     
+                        if (sepf.ne.0.0.and.sepb.ne.0.0) then
+                           gradn(ik,ir)  = ((KNBS(ikin,IRin)
+     >                                      -KNBS(ik,IR))/SEPB+
+     >                            (KNBS(ik,IR)-KNBS(ikout,irout))
+     >                              /SEPF)/2.0
+                           dgradn(ik,ir)  = ((KNBS(ikin,IRin)
+     >                                       -KNBS(ik,IR))/SEPB-
+     >                          (KNBS(ik,IR)-KNBS(ikout,irout))/SEPF)
+                           gradTI(ik,ir) = ((KTIBS(ikin,IRin)
+     >                                      -KTIBS(ik,IR))/SEPB+
+     >                          (KTIBS(ik,IR)-KTIBS(ikout,IRout))
+     >                             /SEPF)/2.0
+                           gradtE(ik,ir) = ((KTEBS(ikin,IRin)
+     >                                      -KTEBS(ik,IR))/SEPB+
+     >                          (KTEBS(ik,IR)-KTEBS(ikout,IRout))
+     >                             /SEPF)/2.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = ((e2dNBS(ikin,IRin)
+     >                             -e2dNBS(ik,IR))/SEPB+
+     >                             (e2dNBS(ik,IR)
+     >                             -e2dNBS(ikout,irout))/SEPF)/2.0
+                              e2dgradTI(ik,ir) = ((e2dTIBS(ikin,IRin)
+     >                             -e2dTIBS(ik,IR))/SEPB+
+     >                             (e2dTIBS(ik,IR)
+     >                             -e2dTIBS(ikout,IRout))/SEPF)/2.0
+                              e2dgradtE(ik,ir) = ((e2dTEBS(ikin,IRin)
+     >                             -e2dTEBS(ik,IR))/SEPB+
+     >                             (e2dTEBS(ik,IR)
+     >                             -e2dTEBS(ikout,IRout))/SEPF)/2.0
+                           endif
+                        elseif (sepf.eq.0.0) then
+                           if (sepb.eq.0.0) then
+                              gradn(ik,ir)  = 0.0
+                              dgradn(ik,ir) = gradn(ik,ir)
+                              gradTI(ik,ir) = 0.0
+                              gradtE(ik,ir) = 0.0
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = 0.0
+                                 e2dgradTI(ik,ir) = 0.0
+                                 e2dgradtE(ik,ir) = 0.0
+                              endif
+                           else
+                              gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                                        -KNBS(ik,IR))/SEPB
+                              dgradn(ik,ir) = gradn(ik,ir)
+                              gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                                        -KTIBS(ik,IR))/SEPB
+                              gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                                        -KTEBS(ik,IR))/SEPB
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                                -e2dNBS(ik,ir))/SEPb
+                                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                                -e2dTIBS(ik,IR))/SEPb
+                                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                                -e2dTEBS(ik,IR))/SEPb
+                              endif
+                           endif
+                        elseif (sepb.eq.0.0) then
+                           if (sepf.eq.0.0) then
+                              gradn(ik,ir)  = 0.0
+                              dgradn(ik,ir) = gradn(ik,ir)
+                              gradTI(ik,ir) = 0.0
+                              gradtE(ik,ir) = 0.0
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = 0.0
+                                 e2dgradTI(ik,ir) = 0.0
+                                 e2dgradtE(ik,ir) = 0.0
+                              endif
+                           else
+                              gradn(ik,ir) =(KNBS(ik,IR)
+     >                                      -KNBS(ikout,irout))/SEPF
+                              dgradn(ik,ir) = gradn(ik,ir)
+                              gradTI(ik,ir)=(KTIBS(ik,IR)
+     >                                      -KTIBS(ikout,IRout))/SEPF
+                              gradtE(ik,ir)=(KTEBS(ik,IR)
+     >                                      -KTEBS(ikout,IRout))/SEPF
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
+     >                                -e2dNBS(ikout,irout))/SEPf
+                                 e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
+     >                                -e2dTIBS(ikout,IRout))/SEPf
+                                 e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
+     >                                -e2dTEBS(ikout,IRout))/SEPf
+                              endif
+                           endif
+                        endif
+                     endif
+c     
+c     Calculate using Method 1 - weighted by ring separation
+c     
+                  elseif (dpnav.eq.1) then
 
-          if (ir.eq.irsep) then
-c
-            SEP = koutds(ik,ir)
-            ikout = ikouts(ik,ir)
-            irout = irouts(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ik,IR)-KNBS(ikout,irout))/SEP
-              gradTI(ik,ir) = (KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEP
-              gradtE(ik,ir) = (KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
-     >                              -e2dNBS(ikout,irout))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
-     >                              -e2dTIBS(ikout,IRout))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
-     >                              -e2dTEBS(ikout,IRout))/SEP
-              endif
-c
-            else
-              gradn(ik,ir)  = 0.0
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-c
-          elseif (ir.eq.irwall-1) then
-c
-            SEP = kinds(ik,ir)
-            ikin = ikins(ik,ir)
-            irin = irins(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ikin,IRin)-KNBS(ik,IR))/SEP
-              gradTI(ik,ir) = (KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEP
-              gradtE(ik,ir) = (KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                              -e2dNBS(ik,ir))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                              -e2dTIBS(ik,IR))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                              -e2dTEBS(ik,IR))/SEP
-              endif
-            else
-              gradn(ik,ir)  = 0.0
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-c
-          else
-c
-            SEPF = koutds(ik,ir)
-            ikout = ikouts(ik,ir)
-            irout = irouts(ik,ir)
-c
-            SEPB = kinds(ik,ir)
-            ikin = ikins(ik,ir)
-            irin = irins(ik,ir)
-c
-            if (sepf.ne.0.0.and.sepb.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ikin,IRin)
-     >                         -KNBS(ikout,irout))/(sepb+sepf)
-              gradTI(ik,ir) = (KTIBS(ikin,IRin)
-     >                         -KTIBS(ikout,IRout))/(sepb+sepf)
-              gradtE(ik,ir) = (KTEBS(ikin,IRin)
-     >                         -KTEBS(ikout,IRout))/(sepb+sepf)
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                         -e2dNBS(ikout,irout))/(sepb+sepf)
-                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                         -e2dTIBS(ikout,IRout))/(sepb+sepf)
-                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                         -e2dTEBS(ikout,IRout))/(sepb+sepf)
-              endif
-            elseif (sepf.eq.0.0) then
-              if (sepb.eq.0.0) then
-                 gradn(ik,ir)  = 0.0
-                 gradTI(ik,ir) = 0.0
-                 gradtE(ik,ir) = 0.0
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = 0.0
-                    e2dgradTI(ik,ir) = 0.0
-                    e2dgradtE(ik,ir) = 0.0
-                 endif
-              else
-                 gradn(ik,ir)  = (KNBS(ikin,IRin)-KNBS(ik,IR))/SEPB
-                 gradTI(ik,ir) = (KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEPB
-                 gradtE(ik,ir) = (KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEPB
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                                 -e2dNBS(ik,ir))/SEPb
-                    e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                                 -e2dTIBS(ik,IR))/SEPb
-                    e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                                 -e2dTEBS(ik,IR))/SEPb
-              endif
-              endif
-            elseif (sepb.eq.0.0) then
-              if (sepf.eq.0.0) then
-                 gradn(ik,ir)  = 0.0
-                 gradTI(ik,ir) = 0.0
-                 gradtE(ik,ir) = 0.0
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = 0.0
-                    e2dgradTI(ik,ir) = 0.0
-                    e2dgradtE(ik,ir) = 0.0
-                 endif
-              else
-                 gradn(ik,ir) =(KNBS(ik,IR)-KNBS(ikout,irout))/SEPF
-                 gradTI(ik,ir)=(KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEPF
-                 gradtE(ik,ir)=(KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEPF
-                 if (cre2d.eq.1.or.cre2d.eq.2) then
-                    e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
-     >                                 -e2dNBS(ikout,irout))/SEPf
-                    e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
-     >                                 -e2dTIBS(ikout,IRout))/SEPf
-                    e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
-     >                                 -e2dTEBS(ikout,IRout))/SEPf
-              endif
-              endif
-            endif
-          endif
-c
-c         Elseif (dpnav = 2)
-c
-          elseif (dpnav.eq.2) then
-c
-c         Calculate gradient going forward to next ring ONLY
-c
-c
-          if (ir.eq.irwall-1) then
-c
-            SEP = kinds(ik,ir)
-            ikin = ikins(ik,ir)
-            irin = irins(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ikin,IRin)-KNBS(ik,IR))/SEP
-              gradTI(ik,ir) = (KTIBS(ikin,IRin)-KTIBS(ik,IR))/SEP
-              gradtE(ik,ir) = (KTEBS(ikin,IRin)-KTEBS(ik,IR))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
-     >                              -e2dNBS(ik,ir))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
-     >                              -e2dTIBS(ik,IR))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
-     >                              -e2dTEBS(ik,IR))/SEP
-              endif
-            else
-              gradn(ik,ir)  = 0.0
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-c
-          else
-c
-            SEP = koutds(ik,ir)
-            ikout = ikouts(ik,ir)
-            irout = irouts(ik,ir)
-c
-            if (sep.ne.0.0) then
-              gradn(ik,ir)  = (KNBS(ik,IR)-KNBS(ikout,irout))/SEP
-              gradTI(ik,ir) = (KTIBS(ik,IR)-KTIBS(ikout,IRout))/SEP
-              gradtE(ik,ir) = (KTEBS(ik,IR)-KTEBS(ikout,IRout))/SEP
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
-     >                              -e2dNBS(ikout,irout))/SEP
-                 e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
-     >                              -e2dTIBS(ikout,IRout))/SEP
-                 e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
-     >                              -e2dTEBS(ikout,IRout))/SEP
-              endif
-c
-            else
-              gradn(ik,ir)  = 0.0
-              gradTI(ik,ir) = 0.0
-              gradtE(ik,ir) = 0.0
-              if (cre2d.eq.1.or.cre2d.eq.2) then
-                 e2dgradn(ik,ir)  = 0.0
-                 e2dgradTI(ik,ir) = 0.0
-                 e2dgradtE(ik,ir) = 0.0
-              endif
-            endif
-          endif
-c
-c         Endif for dpnav
-c
-          endif
-c
-c       End of first ik,ir loops
-c
-c        write (6,*) 'grad:',ir,ik,surfa(ik,ir),gradte(ik,ir),
+                     if (ir.eq.irsep) then
+c     
+                        SEP = koutds(ik,ir)
+                        ikout = ikouts(ik,ir)
+                        irout = irouts(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ik,IR)
+     >                                     -KNBS(ikout,irout))/SEP
+                           gradTI(ik,ir) = (KTIBS(ik,IR)
+     >                                     -KTIBS(ikout,IRout))/SEP
+                           gradtE(ik,ir) = (KTEBS(ik,IR)
+     >                                     -KTEBS(ikout,IRout))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
+     >                             -e2dNBS(ikout,irout))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
+     >                             -e2dTIBS(ikout,IRout))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
+     >                             -e2dTEBS(ikout,IRout))/SEP
+                           endif
+c     
+                        else
+                           gradn(ik,ir)  = 0.0
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+c     
+                     elseif (ir.eq.irwall-1) then
+c     
+                        SEP = kinds(ik,ir)
+                        ikin = ikins(ik,ir)
+                        irin = irins(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                                     -KNBS(ik,IR))/SEP
+                           gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                                     -KTIBS(ik,IR))/SEP
+                           gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                                     -KTEBS(ik,IR))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                             -e2dNBS(ik,ir))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                             -e2dTIBS(ik,IR))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                             -e2dTEBS(ik,IR))/SEP
+                           endif
+                        else
+                           gradn(ik,ir)  = 0.0
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+c     
+                     else
+c     
+                        SEPF = koutds(ik,ir)
+                        ikout = ikouts(ik,ir)
+                        irout = irouts(ik,ir)
+c     
+                        SEPB = kinds(ik,ir)
+                        ikin = ikins(ik,ir)
+                        irin = irins(ik,ir)
+c     
+                        if (sepf.ne.0.0.and.sepb.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                          -KNBS(ikout,irout))/(sepb+sepf)
+                           gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                          -KTIBS(ikout,IRout))/(sepb+sepf)
+                           gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                          -KTEBS(ikout,IRout))/(sepb+sepf)
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                             -e2dNBS(ikout,irout))/(sepb+sepf)
+                              e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                             -e2dTIBS(ikout,IRout))/(sepb+sepf)
+                              e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                             -e2dTEBS(ikout,IRout))/(sepb+sepf)
+                           endif
+                        elseif (sepf.eq.0.0) then
+                           if (sepb.eq.0.0) then
+                              gradn(ik,ir)  = 0.0
+                              gradTI(ik,ir) = 0.0
+                              gradtE(ik,ir) = 0.0
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = 0.0
+                                 e2dgradTI(ik,ir) = 0.0
+                                 e2dgradtE(ik,ir) = 0.0
+                              endif
+                           else
+                              gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                                        -KNBS(ik,IR))/SEPB
+                              gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                                        -KTIBS(ik,IR))/SEPB
+                              gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                                        -KTEBS(ik,IR))/SEPB
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                                -e2dNBS(ik,ir))/SEPb
+                                 e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                                -e2dTIBS(ik,IR))/SEPb
+                                 e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                                -e2dTEBS(ik,IR))/SEPb
+                              endif
+                           endif
+                        elseif (sepb.eq.0.0) then
+                           if (sepf.eq.0.0) then
+                              gradn(ik,ir)  = 0.0
+                              gradTI(ik,ir) = 0.0
+                              gradtE(ik,ir) = 0.0
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = 0.0
+                                 e2dgradTI(ik,ir) = 0.0
+                                 e2dgradtE(ik,ir) = 0.0
+                              endif
+                           else
+                              gradn(ik,ir) =(KNBS(ik,IR)
+     >                                      -KNBS(ikout,irout))/SEPF
+                              gradTI(ik,ir)=(KTIBS(ik,IR)
+     >                                      -KTIBS(ikout,IRout))/SEPF
+                              gradtE(ik,ir)=(KTEBS(ik,IR)
+     >                                      -KTEBS(ikout,IRout))/SEPF
+                              if (cre2d.eq.1.or.cre2d.eq.2) then
+                                 e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
+     >                                -e2dNBS(ikout,irout))/SEPf
+                                 e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
+     >                                -e2dTIBS(ikout,IRout))/SEPf
+                                 e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
+     >                                -e2dTEBS(ikout,IRout))/SEPf
+                              endif
+                           endif
+                        endif
+                     endif
+c     
+c     Elseif (dpnav = 2)
+c     
+                  elseif (dpnav.eq.2) then
+c     
+c     Calculate gradient going forward to next ring ONLY
+c     
+c     
+                     if (ir.eq.irwall-1) then
+c     
+                        SEP = kinds(ik,ir)
+                        ikin = ikins(ik,ir)
+                        irin = irins(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ikin,IRin)
+     >                                      -KNBS(ik,IR))/SEP
+                           gradTI(ik,ir) = (KTIBS(ikin,IRin)
+     >                                      -KTIBS(ik,IR))/SEP
+                           gradtE(ik,ir) = (KTEBS(ikin,IRin)
+     >                                      -KTEBS(ik,IR))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ikin,IRin)
+     >                             -e2dNBS(ik,ir))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ikin,IRin)
+     >                             -e2dTIBS(ik,IR))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ikin,IRin)
+     >                             -e2dTEBS(ik,IR))/SEP
+                           endif
+                        else
+                           gradn(ik,ir)  = 0.0
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+c     
+                     else
+c     
+                        SEP = koutds(ik,ir)
+                        ikout = ikouts(ik,ir)
+                        irout = irouts(ik,ir)
+c     
+                        if (sep.ne.0.0) then
+                           gradn(ik,ir)  = (KNBS(ik,IR)
+     >                                      -KNBS(ikout,irout))/SEP
+                           gradTI(ik,ir) = (KTIBS(ik,IR)
+     >                                      -KTIBS(ikout,IRout))/SEP
+                           gradtE(ik,ir) = (KTEBS(ik,IR)
+     >                                      -KTEBS(ikout,IRout))/SEP
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = (e2dNBS(ik,IR)
+     >                             -e2dNBS(ikout,irout))/SEP
+                              e2dgradTI(ik,ir) = (e2dTIBS(ik,IR)
+     >                             -e2dTIBS(ikout,IRout))/SEP
+                              e2dgradtE(ik,ir) = (e2dTEBS(ik,IR)
+     >                             -e2dTEBS(ikout,IRout))/SEP
+                           endif
+c     
+                        else
+                           gradn(ik,ir)  = 0.0
+                           gradTI(ik,ir) = 0.0
+                           gradtE(ik,ir) = 0.0
+                           if (cre2d.eq.1.or.cre2d.eq.2) then
+                              e2dgradn(ik,ir)  = 0.0
+                              e2dgradTI(ik,ir) = 0.0
+                              e2dgradtE(ik,ir) = 0.0
+                           endif
+                        endif
+                     endif
+c     
+c     Endif for dpnav
+c     
+                  endif
+c     
+c     End of first ik,ir loops
+c     
+c     write (6,*) 'grad:',ir,ik,surfa(ik,ir),gradte(ik,ir),
 c     >              gradti(ik,ir),gradn(ik,ir)
 
 
-        end do
-      end do
-c
+               end do
+            end do
+c     
 c     End of DPNAV >= 0
-c
-      elseif (dpnav.lt.0) then
-c
+c     
+         elseif (dpnav.lt.0) then
+c     
 c     Need to take each "ik sheaf" of elements as one group
 c     This requires an odd looping construct.
-c
+c     
 c     The following assumes that all of the rings in the
 c     main SOL have the same number of IK elements and as
 c     such uses nks(irsep) as the base value.
-c
-      do ik = 1,nks(irsep)
-c
-c        Load arrays for passing to the spline routine
-c
-         N1 = (irwall-1) -irsep + 1
-         dist = 0.0
-c
-c        Density
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            x1(in) = dist
-            f1(in) = knbs(ik,ir)
-            dist = dist + koutds(ik,ir)
-         end do
-c
-         CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            gradn(ik,ir) = -fdash1(in)
-         end do
-c
-c        Te
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            f1(in) = ktebs(ik,ir)
-         end do
-c
-         CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            gradte(ik,ir) = -fdash1(in)
-         end do
-c
-c        Ti
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            f1(in) = ktibs(ik,ir)
-         end do
-c
-         CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-         do ir = irsep,irwall-1
-            in = ir - irsep +1
-            gradti(ik,ir) = -fdash1(in)
-         end do
-c
-c        Calculate gradients for E2D data if available
-c
-         if (cre2d.eq.1.or.cre2d.eq.2) then
-c
-c           E2D Density
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               f1(in) = e2dnbs(ik,ir)
-            end do
-c
-            CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               e2dgradn(ik,ir) = -fdash1(in)
-            end do
-c
-c           E2D Te
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               f1(in) = e2dtebs(ik,ir)
-            end do
-c
-            CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               e2dgradte(ik,ir) = -fdash1(in)
-            end do
-c
-c           E2D Ti
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               f1(in) = e2dtibs(ik,ir)
-            end do
-c
-            CALL TB04A (N1,X1,F1,FDASH1,WORK)
-c
-            do ir = irsep,irwall-1
-               in = ir - irsep +1
-               e2dgradti(ik,ir) = -fdash1(in)
-            end do
-c
-         endif
+c     
+            do ik = 1,nks(irsep)
+c     
+c     Load arrays for passing to the spline routine
+c     
+               N1 = (irwall-1) -irsep + 1
+               dist = 0.0
+c     
+c     Density
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  x1(in) = dist
+                  f1(in) = knbs(ik,ir)
+                  dist = dist + koutds(ik,ir)
+               end do
+c     
+               CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  gradn(ik,ir) = -fdash1(in)
+               end do
+c     
+c     Te
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  f1(in) = ktebs(ik,ir)
+               end do
+c     
+               CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  gradte(ik,ir) = -fdash1(in)
+               end do
+c     
+c     Ti
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  f1(in) = ktibs(ik,ir)
+               end do
+c     
+               CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+               do ir = irsep,irwall-1
+                  in = ir - irsep +1
+                  gradti(ik,ir) = -fdash1(in)
+               end do
+c     
+c     Calculate gradients for E2D data if available
+c     
+               if (cre2d.eq.1.or.cre2d.eq.2) then
+c     
+c     E2D Density
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     f1(in) = e2dnbs(ik,ir)
+                  end do
+c     
+                  CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     e2dgradn(ik,ir) = -fdash1(in)
+                  end do
+c     
+c     E2D Te
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     f1(in) = e2dtebs(ik,ir)
+                  end do
+c     
+                  CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     e2dgradte(ik,ir) = -fdash1(in)
+                  end do
+c     
+c     E2D Ti
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     f1(in) = e2dtibs(ik,ir)
+                  end do
+c     
+                  CALL TB04A (N1,X1,F1,FDASH1,WORK)
+c     
+                  do ir = irsep,irwall-1
+                     in = ir - irsep +1
+                     e2dgradti(ik,ir) = -fdash1(in)
+                  end do
+c     
+               endif
 
-      end do
-c
+            end do
+c     
 c     Endif for DPNAV
-c
-      endif
-c
+c     
+         endif
+c     
 c     Modify the Gradients if the non-orthogonal correction has
 c     been turned on. (This is a first order correction based on
 c     the individual cell non-orthogonality as an estimate of
 c     the amount of change required in the calculated gradient.)
-c
-      if (dporth.eq.1) then
-         do ir = irsep,irwall-1
-            do ik = 1,nks(ir)
-               gradn(ik,ir) = gradn(ik,ir) / sinalph(ik,ir)
-               gradte(ik,ir) = gradte(ik,ir) / sinalph(ik,ir)
-               gradti(ik,ir) = gradti(ik,ir) / sinalph(ik,ir)
-c
-               if (cre2d.eq.1.or.cre2d.eq.2) then
-                  e2dgradn(ik,ir) = e2dgradn(ik,ir)/sinalph(ik,ir)
-                  e2dgradte(ik,ir)= e2dgradte(ik,ir)/sinalph(ik,ir)
-                  e2dgradti(ik,ir)= e2dgradti(ik,ir)/sinalph(ik,ir)
-               endif
-c
+c     
+         if (dporth.eq.1) then
+            do ir = irsep,irwall-1
+               do ik = 1,nks(ir)
+                  gradn(ik,ir) = gradn(ik,ir) / sinalph(ik,ir)
+                  gradte(ik,ir) = gradte(ik,ir) / sinalph(ik,ir)
+                  gradti(ik,ir) = gradti(ik,ir) / sinalph(ik,ir)
+c     
+                  if (cre2d.eq.1.or.cre2d.eq.2) then
+                     e2dgradn(ik,ir) = e2dgradn(ik,ir)/sinalph(ik,ir)
+                     e2dgradte(ik,ir)= e2dgradte(ik,ir)/sinalph(ik,ir)
+                     e2dgradti(ik,ir)= e2dgradti(ik,ir)/sinalph(ik,ir)
+                  endif
+c     
+               end do
             end do
-         end do
-c
-c        End of DPORTH
-c
-      endif
-c
+c     
+c     End of DPORTH
+c     
+         endif
+c     
 c     Smooth the gradients radially by averaging.
-c
-      if (dpsmooth.gt.0) then
-c
-         do ir = irsep,irwall -1
-c
-c
-c          Loop over all radial elements
-c
-           do ik = 1,nks(ir)
-c
-             totgradn = 0.0
-             totgradte = 0.0
-             totgradti = 0.0
-c
-c            Loop over range of averaging
-c
-             avmod = 0
-c
-             do in = ir-dpsmooth,ir+dpsmooth
+c     
+         if (dpsmooth.gt.0) then
+c     
+            do ir = irsep,irwall -1
+c     
+c     
+c     Loop over all radial elements
+c     
+               do ik = 1,nks(ir)
+c     
+                  totgradn = 0.0
+                  totgradte = 0.0
+                  totgradti = 0.0
+c     
+c     Loop over range of averaging
+c     
+                  avmod = 0
+c     
+                  do in = ir-dpsmooth,ir+dpsmooth
 
-                if (in.lt.irsep) then
+                     if (in.lt.irsep) then
 
-c
-c                  totgradn  = totgradn + gradn(ik,irsep)
-c                  totgradte = totgradte+ gradte(ik,irsep)
-c                  totgradti = totgradti+ gradti(ik,irsep)
-c
-                  avmod = avmod + 1
+c     
+c     totgradn  = totgradn + gradn(ik,irsep)
+c     totgradte = totgradte+ gradte(ik,irsep)
+c     totgradti = totgradti+ gradti(ik,irsep)
+c     
+                        avmod = avmod + 1
 
-               elseif (in.gt.irwall-1) then
+                     elseif (in.gt.irwall-1) then
 
-c
-c                  totgradn  = totgradn + gradn(ik,irwall-1)
-c                  totgradte = totgradte+ gradte(ik,irwall-1)
-c                  totgradti = totgradti+ gradti(ik,irwall-1)
-c
-                  avmod = avmod + 1
+c     
+c     totgradn  = totgradn + gradn(ik,irwall-1)
+c     totgradte = totgradte+ gradte(ik,irwall-1)
+c     totgradti = totgradti+ gradti(ik,irwall-1)
+c     
+                        avmod = avmod + 1
 
+                     else
+
+                        totgradn  = totgradn + gradn(ik,ir)
+                        totgradte = totgradte+ gradte(ik,ir)
+                        totgradti = totgradti+ gradti(ik,ir)
+
+                     endif
+                  end do
+
+                  gradn(ik,ir) = totgradn / (2.0*dpsmooth +1.0-avmod)
+                  gradte(ik,ir) = totgradte / (2.0*dpsmooth +1.0-avmod)
+                  gradti(ik,ir) = totgradti / (2.0*dpsmooth +1.0-avmod)
+
+               end do
+
+            end do
+c     
+c     End for DPSMOOTH
+c     
+         endif
+c     
+c     
+c     Calculate the Dperp for each ring
+c     
+c     
+c     
+c     If OUTER ring losses are to be included - calculate this first
+c     
+c     
+         delouti = 0.0
+         delouto = 0.0
+c     
+         if (dpouter.eq.1) then
+c     
+            if (dpsuml.eq.0) then
+               ikstart = ouend
+               ikend = inend
+            elseif (dpsuml.eq.1) then
+               ikstart = 1
+               ikend = nks(ir)
+            endif
+c     
+            do ik = ikstart,ikend
+               if (kss(ik,irwall-1).lt.(0.5*ksmaxs(irwall-1))) then
+                  delouto = delouto + surfa(ik,irwall-1)*
+     >                                      gradn(ik,irwall-1)
                else
+                  delouti = delouti + surfa(ik,irwall-1)
+     >                                      *gradn(ik,irwall-1)
+               endif
+            end do
+         endif
+c     
+         write (6,*) 'delout:',delouto,delouti,delouto+delouti
+c     
+         do ir = irsep,irwall-1
+c     
+            dptoto = 0.0
+            dptoti = 0.0
+c     
+            if (dpsuml.eq.0) then
+               ikstart = ouend
+               ikend = inend
+            elseif (dpsuml.eq.1) then
+               ikstart = 1
+               ikend = nks(ir)
+            endif
+c     
+            do ik = ikstart,ikend
+c     
+               deldp(ik) = surfa(ik,ir) * gradn(ik,ir)
+c     
+               if (ik.lt.ikmid) then
+                  dptoto = dptoto + deldp(ik)
+               else
+                  dptoti = dptoti + deldp(ik)
+               endif
+c     
+            end do
+c     
+            write (6,*) 'dptot:',ir,dptoto,dptoti,dptoto+dptoti
+c     
+c     This implicitly assumes that the Dperp on the outer ring is
+c     equal to the Dperp on the current ring.
+c     
+            if (usedpav) then
+               if (dpouter.eq.0) then
+                  DPERP(IR)  = cfgam(ir)/(dptoto+dptoti)
+                  ODPERP(IR) = ocfgam(ir)/dptoto
+                  IDPERP(IR) = icfgam(ir)/dptoti
+               elseif (dpouter.eq.1) then
+                  DPERP(IR)  = (cfgam(ir)+dpav*(delouti+delouto))
+     >                 /(dptoto+dptoti)
+                  ODPERP(IR) = (ocfgam(ir)+dpavo*delouto)/(dptoto)
+                  IDPERP(IR) = (icfgam(ir)+dpavi*delouti)/(dptoti)
+               endif
+            else
+               if (dpouter.eq.0) then
+                  DPERP(IR)  = cfgam(ir)/(dptoto+dptoti)
+                  ODPERP(IR) = ocfgam(ir)/dptoto
+                  IDPERP(IR) = icfgam(ir)/dptoti
+               elseif (dpouter.eq.1) then
+                  DPERP(IR)  = cfgam(ir)
+     >                         /(dptoto+dptoti-(delouti+delouto))
+                  ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
+                  IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
+               endif
+            endif
 
-                  totgradn  = totgradn + gradn(ik,ir)
-                  totgradte = totgradte+ gradte(ik,ir)
-                  totgradti = totgradti+ gradti(ik,ir)
+c     
+c     Calculate dpav if the option is set and there are enough rings
+c     
+            if (dpavopt.gt.0.and.ir.eq.(irsep+irskip+3)) then
+               irtmp = irsep + irskip
+               dpav = 0.25*(dperp(irtmp) + dperp(irtmp+1)
+     >              +dperp(irtmp+2) + dperp(irtmp+3))
+               dpavo = 0.25*(odperp(irtmp) + odperp(irtmp+1)
+     >              +odperp(irtmp+2) + odperp(irtmp+3))
+               dpavi = 0.25*(idperp(irtmp) + idperp(irtmp+1)
+     >              +idperp(irtmp+2) + idperp(irtmp+3))
+               usedpav = .true.
+
+               if (cprint.eq.1.or.cprint.eq.9) then
+                  write (6,*) 'DPERP AV: rings ',irtmp,' to ',
+     >                 irtmp+3,' = ',dpav
 
                endif
-             end do
 
-             gradn(ik,ir) = totgradn / (2.0*dpsmooth +1.0-avmod)
-             gradte(ik,ir) = totgradte / (2.0*dpsmooth +1.0-avmod)
-             gradti(ik,ir) = totgradti / (2.0*dpsmooth +1.0-avmod)
+            endif
 
-           end do
-
-         end do
-c
-c        End for DPSMOOTH
-c
-      endif
-c
-c
-c     Calculate the Dperp for each ring
-c
-c
-c
-c     If OUTER ring losses are to be included - calculate this first
-c
-c
-      delouti = 0.0
-      delouto = 0.0
-c
-      if (dpouter.eq.1) then
-c
-         if (dpsuml.eq.0) then
-            ikstart = ouend
-            ikend = inend
-         elseif (dpsuml.eq.1) then
-            ikstart = 1
-            ikend = nks(ir)
-         endif
-c
-         do ik = ikstart,ikend
-           if (kss(ik,irwall-1).lt.(0.5*ksmaxs(irwall-1))) then
-             delouto = delouto + surfa(ik,irwall-1)*gradn(ik,irwall-1)
-           else
-             delouti = delouti + surfa(ik,irwall-1)*gradn(ik,irwall-1)
-           endif
-         end do
-      endif
-c
-      write (6,*) 'delout:',delouto,delouti,delouto+delouti
-c
-      do ir = irsep,irwall-1
-c
-        dptoto = 0.0
-        dptoti = 0.0
-c
-        if (dpsuml.eq.0) then
-           ikstart = ouend
-           ikend = inend
-        elseif (dpsuml.eq.1) then
-           ikstart = 1
-           ikend = nks(ir)
-        endif
-c
-        do ik = ikstart,ikend
-c
-          deldp(ik) = surfa(ik,ir) * gradn(ik,ir)
-c
-          if (ik.lt.ikmid) then
-            dptoto = dptoto + deldp(ik)
-          else
-            dptoti = dptoti + deldp(ik)
-          endif
-c
-        end do
-c
-        write (6,*) 'dptot:',ir,dptoto,dptoti,dptoto+dptoti
-c
-c       This implicitly assumes that the Dperp on the outer ring is
-c       equal to the Dperp on the current ring.
-c
-        if (usedpav) then
-          if (dpouter.eq.0) then
-            DPERP(IR)  = cfgam(ir)/(dptoto+dptoti)
-            ODPERP(IR) = ocfgam(ir)/dptoto
-            IDPERP(IR) = icfgam(ir)/dptoti
-          elseif (dpouter.eq.1) then
-            DPERP(IR)  = (cfgam(ir)+dpav*(delouti+delouto))
-     >                   /(dptoto+dptoti)
-            ODPERP(IR) = (ocfgam(ir)+dpavo*delouto)/(dptoto)
-            IDPERP(IR) = (icfgam(ir)+dpavi*delouti)/(dptoti)
-          endif
-        else
-          if (dpouter.eq.0) then
-            DPERP(IR)  = cfgam(ir)/(dptoto+dptoti)
-            ODPERP(IR) = ocfgam(ir)/dptoto
-            IDPERP(IR) = icfgam(ir)/dptoti
-          elseif (dpouter.eq.1) then
-            DPERP(IR)  = cfgam(ir)/(dptoto+dptoti-(delouti+delouto))
-            ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
-            IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
-          endif
-        endif
-
-c
-c     Calculate dpav if the option is set and there are enough rings
-c
-        if (dpavopt.gt.0.and.ir.eq.(irsep+irskip+3)) then
-          irtmp = irsep + irskip
-          dpav = 0.25*(dperp(irtmp) + dperp(irtmp+1)
-     >               +dperp(irtmp+2) + dperp(irtmp+3))
-          dpavo = 0.25*(odperp(irtmp) + odperp(irtmp+1)
-     >               +odperp(irtmp+2) + odperp(irtmp+3))
-          dpavi = 0.25*(idperp(irtmp) + idperp(irtmp+1)
-     >               +idperp(irtmp+2) + idperp(irtmp+3))
-          usedpav = .true.
-
-          if (cprint.eq.1.or.cprint.eq.9) then
-             write (6,*) 'DPERP AV: rings ',irtmp,' to ',
-     >                    irtmp+3,' = ',dpav
-
-          endif
-
-        endif
-
-c
+c     
 c     Record values for each ring
-c
-        flxval(ir,1,1) = dptoto
-        flxval(ir,1,2) = dptoti
-        flxval(ir,1,3) = dptoto + dptoti
-        flxval(ir,2,1) = delouto
-        flxval(ir,2,2) = delouti
-        flxval(ir,2,3) = delouti + delouto
-        flxval(ir,3,1) = ocfgam(ir)
-        flxval(ir,3,2) = icfgam(ir)
-        flxval(ir,3,3) = cfgam(ir)
+c     
+            flxval(ir,1,1) = dptoto
+            flxval(ir,1,2) = dptoti
+            flxval(ir,1,3) = dptoto + dptoti
+            flxval(ir,2,1) = delouto
+            flxval(ir,2,2) = delouti
+            flxval(ir,2,3) = delouti + delouto
+            flxval(ir,3,1) = ocfgam(ir)
+            flxval(ir,3,2) = icfgam(ir)
+            flxval(ir,3,3) = cfgam(ir)
 
-c
-      end do
-c
+c     
+         end do
+c     
 c     Now calculate the Xperps - add in cross-field convection if
 c     turned on = 5/2 kT Gam(Perp) = 5/2 kT Dperp dn/dr
-c
-c
+c     
+c     
 c     If the outer ring loss option is turned on - calculate the
 c     OUTER ring conductive loss term assuming the Xperp for the
 c     outer ring equals the Xperp for the ring being calculated.
 c     Also - if the cross-field convective losses are turned
 c     on calculate these for the last ring.
-c
-c
+c     
+c     
 c     Zero out the values in case the option is not in use and
 c     for initialization purposes in case they are.
-c
-      qeouti= 0.0
-      qeouto= 0.0
-      qiouti= 0.0
-      qiouto= 0.0
-c
-      qeoutconvi= 0.0
-      qeoutconvo= 0.0
-      qioutconvi= 0.0
-      qioutconvo= 0.0
-c
-      if (dpouter.eq.1) then
-c
-        if (dpsuml.eq.0) then
-           ikstart = ouend
-           ikend = inend
-        elseif (dpsuml.eq.1) then
-           ikstart = 1
-           ikend = nks(ir)
-        endif
-c
-        ir = irwall - 1
-        ird = irwall - 2
-c
-        if (dpxpratio.gt.0.0) then
-           dptmp = dpxpratio
-        elseif (dpxpratio.eq.-1.0) then
-           dptmp = cdperp
-        elseif (usedpav) then
-           dptmp = dpav
-        else
-           dptmp = dperp(ird)
-        endif
-c
-        do ik = ikstart,ikend
-c
-          if (ik.lt.ikmid) then
-            qeouto = qeouto
-     >             + surfa(ik,ir)*knbs(ik,ir)*ech*gradte(ik,ir)
-            qiouto = qiouto
-     >             + surfa(ik,ir)*knbs(ik,ir)*ech*gradti(ik,ir)
-
-          else
-            qeouti = qeouti
-     >             + surfa(ik,ir)*knbs(ik,ir)*ech*gradte(ik,ir)
-            qiouti = qiouti
-     >             + surfa(ik,ir)*knbs(ik,ir)*ech*gradti(ik,ir)
-          endif
-c
-          if (dpconv.eq.1) then
-            if (ik.lt.ikmid) then
-              qeoutconvo = qeoutconvo
-     >            +surfa(ik,ir)*2.5*dptmp
-     >            *ktebs(ik,ir)*ech*gradn(ik,ir)
-              qioutconvo = qioutconvo
-     >            +surfa(ik,ir)*2.5*dptmp
-     >            *ktibs(ik,ir)*ech*gradn(ik,ir)
-
-            else
-              qeoutconvi = qeoutconvi
-     >            +surfa(ik,ir)*2.5*dptmp*ktebs(ik,ir)
-     >            *ech*gradn(ik,ir)
-              qioutconvi = qioutconvi
-     >            +surfa(ik,ir)*2.5*dptmp*ktibs(ik,ir)
-     >            *ech*gradn(ik,ir)
+c     
+         qeouti= 0.0
+         qeouto= 0.0
+         qiouti= 0.0
+         qiouto= 0.0
+c     
+         qeoutconvi= 0.0
+         qeoutconvo= 0.0
+         qioutconvi= 0.0
+         qioutconvo= 0.0
+c     
+         if (dpouter.eq.1) then
+c     
+            if (dpsuml.eq.0) then
+               ikstart = ouend
+               ikend = inend
+            elseif (dpsuml.eq.1) then
+               ikstart = 1
+               ikend = nks(ir)
             endif
-          endif
-c
+c     
+            ir = irwall - 1
+            ird = irwall - 2
+c     
+            if (dpxpratio.gt.0.0) then
+               dptmp = dpxpratio
+            elseif (dpxpratio.eq.-1.0) then
+               dptmp = cdperp
+            elseif (usedpav) then
+               dptmp = dpav
+            else
+               dptmp = dperp(ird)
+            endif
+c     
+            do ik = ikstart,ikend
+c     
+               if (ik.lt.ikmid) then
+                  qeouto = qeouto
+     >                 + surfa(ik,ir)*knbs(ik,ir)*ech*gradte(ik,ir)
+                  qiouto = qiouto
+     >                 + surfa(ik,ir)*knbs(ik,ir)*ech*gradti(ik,ir)
 
-        end do
+               else
+                  qeouti = qeouti
+     >                 + surfa(ik,ir)*knbs(ik,ir)*ech*gradte(ik,ir)
+                  qiouti = qiouti
+     >                 + surfa(ik,ir)*knbs(ik,ir)*ech*gradti(ik,ir)
+               endif
+c     
+               if (dpconv.eq.1) then
+                  if (ik.lt.ikmid) then
+                     qeoutconvo = qeoutconvo
+     >                    +surfa(ik,ir)*2.5*dptmp
+     >                    *ktebs(ik,ir)*ech*gradn(ik,ir)
+                     qioutconvo = qioutconvo
+     >                    +surfa(ik,ir)*2.5*dptmp
+     >                    *ktibs(ik,ir)*ech*gradn(ik,ir)
 
-      endif
-c
-      if (cprint.eq.1.or.cprint.eq.9) then
-         write (6,*) 'qeout:', qeouto,qeouti,qiouto,qiouti
-         write (6,*) 'qeoutconv:', qeoutconvo,qeoutconvi,
-     >             qioutconvo,qioutconvi
-      endif
-c
-c
+                  else
+                     qeoutconvi = qeoutconvi
+     >                    +surfa(ik,ir)*2.5*dptmp*ktebs(ik,ir)
+     >                    *ech*gradn(ik,ir)
+                     qioutconvi = qioutconvi
+     >                    +surfa(ik,ir)*2.5*dptmp*ktibs(ik,ir)
+     >                    *ech*gradn(ik,ir)
+                  endif
+               endif
+c     
+
+            end do
+
+         endif
+c     
+         if (cprint.eq.1.or.cprint.eq.9) then
+            write (6,*) 'qeout:', qeouto,qeouti,qiouto,qiouti
+            write (6,*) 'qeoutconv:', qeoutconvo,qeoutconvi,
+     >           qioutconvo,qioutconvi
+         endif
+c     
+c     
 c     Calculate Xperp values
-c
-      do ir = irsep, irwall -1
-c
-c       Zero conductive loss terms
-c
-        qetoti = 0.0
-        qitoti = 0.0
-        qetoto = 0.0
-        qitoto = 0.0
-c
-c
-c       Zero convective loss terms
-c
-        qeconvi = 0.0
-        qeconvo = 0.0
-        qiconvi = 0.0
-        qiconvo = 0.0
-c
-        if (dpsuml.eq.0) then
-           ikstart = ouend
-           ikend = inend
-        elseif (dpsuml.eq.1) then
-           ikstart = 1
-           ikend = nks(ir)
-        endif
-c
-        if (dpxpratio.gt.0.0) then
-           dptmp = dpxpratio
-        elseif (dpxpratio.eq.-1.0) then
-           dptmp = cdperp
-        elseif (usedpav) then
-           dptmp = dpav
-        else
-           dptmp = dperp(ir)
-        endif
-c
-        do ik = ikstart,ikend
-c
-          delqe(ik) = surfa(ik,ir) * knbs(ik,ir) * ech * gradte(ik,ir)
-          delqi(ik) = surfa(ik,ir) * knbs(ik,ir) * ech * gradti(ik,ir)
-          qecond(ik,ir) = delqe(ik)
-          qicond(ik,ir) = delqi(ik)
-c
-          if (ik.lt.ikmid) then
-            qetoto = qetoto + delqe(ik)
-            qitoto = qitoto + delqi(ik)
-          else
-            qetoti = qetoti + delqe(ik)
-            qitoti = qitoti + delqi(ik)
-          endif
-c
-          if (dpconv.eq.1) then
-c
-c            if (dpxpratio.gt.0.0) then
-c
-
-               qeconv(ik,ir) = surfa(ik,ir)*2.5*dptmp
-     >                      *ktebs(ik,ir)*ech*gradn(ik,ir)
-               qiconv(ik,ir) = surfa(ik,ir)*2.5*dptmp
-     >                      *ktibs(ik,ir)*ech*gradn(ik,ir)
-
-c
-c            else
-c
-c               qeconv(ik,ir) = surfa(ik,ir)*2.5*dperp(ir)
-c     >                      *ktebs(ik,ir)*ech*gradn(ik,ir)
-c               qiconv(ik,ir) = surfa(ik,ir)*2.5*dperp(ir)
-c     >                      *ktibs(ik,ir)*ech*gradn(ik,ir)
-c            endif
-c
-c
-            if (ik.lt.ikmid) then
-              qeconvo = qeconvo + qeconv(ik,ir)
-              qiconvo = qiconvo + qiconv(ik,ir)
-            else
-              qeconvi = qeconvi + qeconv(ik,ir)
-              qiconvi = qiconvi + qiconv(ik,ir)
+c     
+         do ir = irsep, irwall -1
+c     
+c     Zero conductive loss terms
+c     
+            qetoti = 0.0
+            qitoti = 0.0
+            qetoto = 0.0
+            qitoto = 0.0
+c     
+c     
+c     Zero convective loss terms
+c     
+            qeconvi = 0.0
+            qeconvo = 0.0
+            qiconvi = 0.0
+            qiconvo = 0.0
+c     
+            if (dpsuml.eq.0) then
+               ikstart = ouend
+               ikend = inend
+            elseif (dpsuml.eq.1) then
+               ikstart = 1
+               ikend = nks(ir)
             endif
-          endif
+c     
+            if (dpxpratio.gt.0.0) then
+               dptmp = dpxpratio
+            elseif (dpxpratio.eq.-1.0) then
+               dptmp = cdperp
+            elseif (usedpav) then
+               dptmp = dpav
+            else
+               dptmp = dperp(ir)
+            endif
+c     
+            do ik = ikstart,ikend
+c     
+               delqe(ik) = surfa(ik,ir) * knbs(ik,ir) 
+     >                                      * ech * gradte(ik,ir)
+               delqi(ik) = surfa(ik,ir) * knbs(ik,ir) 
+     >                                      * ech * gradti(ik,ir)
+               qecond(ik,ir) = delqe(ik)
+               qicond(ik,ir) = delqi(ik)
+c     
+               if (ik.lt.ikmid) then
+                  qetoto = qetoto + delqe(ik)
+                  qitoto = qitoto + delqi(ik)
+               else
+                  qetoti = qetoti + delqe(ik)
+                  qitoti = qitoti + delqi(ik)
+               endif
+c     
+               if (dpconv.eq.1) then
+c     
+c     if (dpxpratio.gt.0.0) then
+c     
 
-        end do
-c
-        if (cprint.eq.1.or.cprint.eq.9) then
-           write (6,*) 'q:',ir,qetoti,qitoti,qetoto,qitoto
-           write (6,*) 'conv:',ir,qeconvi,qeconvo,
-     >               qiconvi,qiconvo
-        endif
-c
-c       Calculate the Xperps
-c
-        if (dpxpratio.gt.0.0) then
+                  qeconv(ik,ir) = surfa(ik,ir)*2.5*dptmp
+     >                 *ktebs(ik,ir)*ech*gradn(ik,ir)
+                  qiconv(ik,ir) = surfa(ik,ir)*2.5*dptmp
+     >                 *ktibs(ik,ir)*ech*gradn(ik,ir)
+
+c     
+c     else
+c     
+c     qeconv(ik,ir) = surfa(ik,ir)*2.5*dperp(ir)
+c     >                      *ktebs(ik,ir)*ech*gradn(ik,ir)
+c     qiconv(ik,ir) = surfa(ik,ir)*2.5*dperp(ir)
+c     >                      *ktibs(ik,ir)*ech*gradn(ik,ir)
+c     endif
+c     
+c     
+                  if (ik.lt.ikmid) then
+                     qeconvo = qeconvo + qeconv(ik,ir)
+                     qiconvo = qiconvo + qiconv(ik,ir)
+                  else
+                     qeconvi = qeconvi + qeconv(ik,ir)
+                     qiconvi = qiconvi + qiconv(ik,ir)
+                  endif
+               endif
+
+            end do
+c     
+            if (cprint.eq.1.or.cprint.eq.9) then
+               write (6,*) 'q:',ir,qetoti,qitoti,qetoto,qitoto
+               write (6,*) 'conv:',ir,qeconvi,qeconvo,
+     >              qiconvi,qiconvo
+            endif
+c     
+c     Calculate the Xperps
+c     
+            if (dpxpratio.gt.0.0) then
 
 
-          CHIPERPI(IR) = cfqi(ir)
-     >                 / (qitoto+qitoti-(qiouti+qiouto)
-     >                        +(qiconvi+qiconvo)
-     >                        -(qioutconvi+qioutconvo))
-c
-          CHIPERPE(IR) = cfqe(ir)
-     >                 / (qetoto+qetoti-(qeouti+qeouto)
-     >                  +(qeconvi+qeconvo)
-     >                  -(qeoutconvi+qeoutconvo))
+               qitot = (qitoto+qitoti-(qiouti+qiouto)
+     >              +(qiconvi+qiconvo)
+     >              -(qioutconvi+qioutconvo))
+
+               if (qitot.ne.0.0) then
+                  CHIPERPI(IR) = cfqi(ir)/qitot
+c     >              / (qitoto+qitoti-(qiouti+qiouto)
+c     >              +(qiconvi+qiconvo)
+c     >              -(qioutconvi+qioutconvo))
+               else
+                  chiperpi(ir) = 0.0
+               endif
+c     
+               qetot = (qetoto+qetoti-(qeouti+qeouto)
+     >              +(qeconvi+qeconvo)
+     >              -(qeoutconvi+qeoutconvo))
+
+               
+               if (qetot.ne.0.0) then 
+                  CHIPERPE(IR) = cfqe(ir)/qetot
+c     >              / (qetoto+qetoti-(qeouti+qeouto)
+c     >              +(qeconvi+qeconvo)
+c     >              -(qeoutconvi+qeoutconvo))
+               else
+                  chiperpe(ir)=0.0
+               endif
+c     
 
 
-          xperpt(ir) =  (cfqi(ir)+cfqe(ir))
-     >       / (qitoto+qitoti+qetoto+qetoti
-     >         -(qiouti+qiouto)-(qeouti+qeouto)
-     >       +(qiconvi+qiconvo)-(qioutconvi+qioutconvo)
-     >       +(qeconvi+qeconvo)-(qeoutconvi+qeoutconvo))
-c
-c       Outer
-c
-          OCHIPERPI(IR) = ocfqi(ir)
+               if ((qetot+qitot).ne.0.0) then 
+                  xperpt(ir) =  (cfqi(ir)+cfqe(ir))/(qetot+qitot)
+c     >              / (qitoto+qitoti+qetoto+qetoti
+c     >              -(qiouti+qiouto)-(qeouti+qeouto)
+c     >              +(qiconvi+qiconvo)-(qioutconvi+qioutconvo)
+c     >              +(qeconvi+qeconvo)-(qeoutconvi+qeoutconvo))
+               else
+                  xperpt(ir) = 0.0
+               endif
+c     
+c     Outer
+c     
+               if ((qitoto-qiouto+qiconvo-qioutconvo).ne.0.0) then 
+                  OCHIPERPI(IR) = ocfqi(ir)
      >                 / (qitoto-qiouto+qiconvo-qioutconvo)
-c
-          OCHIPERPE(IR) = ocfqe(ir)
+               else
+                  OCHIPERPI(IR) = 0.0
+               endif
+
+c     
+               if ((qetoto-qeouto+qeconvo-qeoutconvo).ne.0.0) then 
+                  OCHIPERPE(IR) = ocfqe(ir)
      >                 / (qetoto-qeouto+qeconvo-qeoutconvo)
-c
-          oxperpt(ir) =  (ocfqi(ir)+ocfqe(ir))
-     >       / (qitoto+qetoto
-     >         -(qiouto)-(qeouto)
-     >       +(qiconvo)-(qioutconvo)
-     >       +(qeconvo)-(qeoutconvo))
-c
-c       Inner
-c
-          ICHIPERPI(IR) = icfqi(ir)
+               else
+                  OCHIPERPE(IR) = 0.0
+               endif
+
+c     
+               if ((qitoto+qetoto
+     >              -(qiouto)-(qeouto)
+     >              +(qiconvo)-(qioutconvo)
+     >              +(qeconvo)-(qeoutconvo)).ne.0.0) then 
+                  oxperpt(ir) =  (ocfqi(ir)+ocfqe(ir))
+     >                 / (qitoto+qetoto
+     >                 -(qiouto)-(qeouto)
+     >                 +(qiconvo)-(qioutconvo)
+     >                 +(qeconvo)-(qeoutconvo))
+               else
+                  oxperpt(ir) =  0.0
+               endif
+
+c     
+c     Inner
+c     
+               if ((qitoti-qiouti+qiconvi-qioutconvi).ne.0.0) then 
+                  ICHIPERPI(IR) = icfqi(ir)
      >                 / (qitoti-qiouti+qiconvi-qioutconvi)
-c
-          ICHIPERPE(IR) = icfqe(ir)
+               else 
+                  ICHIPERPI(IR) = 0.0
+               endif
+c     
+               if ((qetoti-qeouti+qeconvi-qeoutconvi).ne.0.0) then 
+                  ICHIPERPE(IR) = icfqe(ir)
      >                 / (qetoti-qeouti+qeconvi-qeoutconvi)
-c
-          ixperpt(ir) =  (icfqi(ir)+icfqe(ir))
-     >       / (qitoti+qetoti
-     >         -(qiouti)-(qeouti)
-     >       +(qiconvi)-(qioutconvi)
-     >       +(qeconvi)-(qeoutconvi))
+               else
+                  ICHIPERPE(IR) = 0.0
+               endif
 
+c     
+               if ((qitoti+qetoti
+     >              -(qiouti)-(qeouti)
+     >              +(qiconvi)-(qioutconvi)
+     >              +(qeconvi)-(qeoutconvi)).ne.0.0) then 
+                  ixperpt(ir) =  (icfqi(ir)+icfqe(ir))
+     >                 / (qitoti+qetoti
+     >                 -(qiouti)-(qeouti)
+     >                 +(qiconvi)-(qioutconvi)
+     >                 +(qeconvi)-(qeoutconvi))
+               else
+                  ixperpt(ir) =  0.0
+               endif
 
+            elseif (usexpav) then
 
-        elseif (usexpav) then
-
-          CHIPERPI(IR) = (cfqi(ir)-(qiconvi+qiconvo)
+               if ((qitoto+qitoti).ne.0.0) then 
+                  CHIPERPI(IR) = (cfqi(ir)-(qiconvi+qiconvo)
      >                 +(qioutconvi+qioutconvo)
      >                 +xpavi*(qiouti+qiouto))
      >                 / (qitoto+qitoti)
-          CHIPERPE(IR) = (cfqe(ir)-(qeconvi+qeconvo)
+               else
+                  CHIPERPI(IR) = 0.0
+               endif
+               
+
+               if ((qetoto+qetoti).ne.0.0) then
+                  CHIPERPE(IR) = (cfqe(ir)-(qeconvi+qeconvo)
      >                 +(qeoutconvi+qeoutconvo)
      >                 +xpave*(qeouti+qeouto))
      >                 / (qetoto+qetoti)
-          xperpt(ir) = ( (cfqi(ir)+cfqe(ir))
-     >       -(qiconvi+qiconvo)+(qioutconvi+qioutconvo)
-     >       +xpavt*(qiouti+qiouto)
-     >       -(qeconvi+qeconvo)+(qeoutconvi+qeoutconvo)
-     >       +xpavt*(qeouti+qeouto))
-     >       / (qitoto+qitoti+qetoto+qetoti)
-c
-c       Outer
-c
-          OCHIPERPI(IR) = (ocfqi(ir)-qiconvo+qioutconvo+xpavio*qiouto)
+               else
+                  CHIPERPE(IR) = 0.0
+               endif
+
+               if ((qitoto+qitoti+qetoto+qetoti).ne.0.0) then 
+                  xperpt(ir) = ( (cfqi(ir)+cfqe(ir))
+     >                 -(qiconvi+qiconvo)+(qioutconvi+qioutconvo)
+     >                 +xpavt*(qiouti+qiouto)
+     >                 -(qeconvi+qeconvo)+(qeoutconvi+qeoutconvo)
+     >                 +xpavt*(qeouti+qeouto))
+     >                 / (qitoto+qitoti+qetoto+qetoti)
+               else
+                  xperpt(ir) = 0.0
+               endif
+
+c     
+c     Outer
+c     
+               if ((qitoto).ne.0.0) then
+                  OCHIPERPI(IR) = (ocfqi(ir)
+     >                 -qiconvo+qioutconvo+xpavio*qiouto)
      >                 / (qitoto)
-          OCHIPERPE(IR) = (ocfqe(ir)-qeconvo+qeoutconvo+xpaveo*qeouto)
+               else
+                  OCHIPERPI(IR) = 0.0
+               endif
+               
+               if ((qetoto).ne.0.0) then 
+                  OCHIPERPE(IR) = (ocfqe(ir)
+     >                 -qeconvo+qeoutconvo+xpaveo*qeouto)
      >                 / (qetoto)
-          oxperpt(ir) = ( (ocfqi(ir)+ocfqe(ir))
-     >       -(qiconvo)+(qioutconvo)
-     >       +xpavto*(qiouto)
-     >       -(qeconvo)+(qeoutconvo)
-     >       +xpavto*(qeouto))
-     >       / (qitoto+qetoto)
-c
-c       Inner
-c
-          ICHIPERPI(IR) = (icfqi(ir)-qiconvi+qioutconvi+xpavii*qiouti)
+               else
+                  OCHIPERPE(IR) = 0.0
+               endif
+
+               
+               if ((qitoto+qetoto).ne.0.0) then 
+                  oxperpt(ir) = ( (ocfqi(ir)+ocfqe(ir))
+     >                 -(qiconvo)+(qioutconvo)
+     >                 +xpavto*(qiouto)
+     >                 -(qeconvo)+(qeoutconvo)
+     >                 +xpavto*(qeouto))
+     >                 / (qitoto+qetoto)
+               else 
+                  oxperpt(ir) = 0.0
+               endif
+
+
+c     
+c     Inner
+c     
+               if ((qitoti)
+     >              .ne.0.0) then                
+                  ICHIPERPI(IR) = (icfqi(ir)
+     >                 -qiconvi+qioutconvi+xpavii*qiouti)
      >                 / (qitoti)
-          ICHIPERPE(IR) = (icfqe(ir)-qeconvi+qeoutconvi+xpavei*qeouti)
+               else
+                  ICHIPERPI(IR) = 0.0
+               endif
+
+               if ((qetoti)
+     >              .ne.0.0) then                
+                  ICHIPERPE(IR) = (icfqe(ir)
+     >                 -qeconvi+qeoutconvi+xpavei*qeouti)
      >                 / (qetoti)
-          ixperpt(ir) = ( (icfqi(ir)+icfqe(ir))
-     >       -(qiconvi)+(qioutconvi)
-     >       +xpavti*(qiouti)
-     >       -(qeconvi)+(qeoutconvi)
-     >       +xpavti*(qeouti))
-     >       / (qitoti+qetoti)
+               else
+                  ICHIPERPE(IR) = 0.0
+               endif
 
 
-        else
+               if ((qitoti+qetoti)
+     >              .ne.0.0) then                
+                  ixperpt(ir) = ( (icfqi(ir)+icfqe(ir))
+     >                 -(qiconvi)+(qioutconvi)
+     >                 +xpavti*(qiouti)
+     >                 -(qeconvi)+(qeoutconvi)
+     >                 +xpavti*(qeouti))
+     >                 / (qitoti+qetoti)
+               else
+                  ixperpt(ir) = 0.0
+               endif
 
-          CHIPERPI(IR) = (cfqi(ir)-(qiconvi+qiconvo)
+
+            else
+
+               if ((qitoto+qitoti-(qiouti+qiouto))
+     >              .ne.0.0) then                
+                  CHIPERPI(IR) = (cfqi(ir)-(qiconvi+qiconvo)
      >                 +(qioutconvi+qioutconvo))
      >                 / (qitoto+qitoti-(qiouti+qiouto))
-          CHIPERPE(IR) = (cfqe(ir)-(qeconvi+qeconvo)
+               else
+                  CHIPERPI(IR) = 0.0
+               endif
+
+
+               if ((qetoto+qetoti-(qeouti+qeouto))
+     >              .ne.0.0) then                
+                  CHIPERPE(IR) = (cfqe(ir)-(qeconvi+qeconvo)
      >                 +(qeoutconvi+qeoutconvo))
      >                 / (qetoto+qetoti-(qeouti+qeouto))
-          xperpt(ir) = ( (cfqi(ir)+cfqe(ir))
-     >       -(qiconvi+qiconvo)+(qioutconvi+qioutconvo)
-     >       -(qeconvi+qeconvo)+(qeoutconvi+qeoutconvo))
-     >       / (qitoto+qitoti+qetoto+qetoti
-     >         -(qiouti+qiouto)-(qeouti+qeouto))
-c
-c       Outer
-c
-          OCHIPERPI(IR) = (ocfqi(ir)-qiconvo+qioutconvo)
+               else
+                  CHIPERPE(IR) = 0.0
+               endif
+
+
+               if ((qitoto+qitoti+qetoto+qetoti
+     >              -(qiouti+qiouto)-(qeouti+qeouto))
+     >              .ne.0.0) then                
+                  xperpt(ir) = ( (cfqi(ir)+cfqe(ir))
+     >                 -(qiconvi+qiconvo)+(qioutconvi+qioutconvo)
+     >                 -(qeconvi+qeconvo)+(qeoutconvi+qeoutconvo))
+     >                 / (qitoto+qitoti+qetoto+qetoti
+     >                 -(qiouti+qiouto)-(qeouti+qeouto))
+               else
+                  xperpt(ir) = 0.0
+               endif
+c     
+c     Outer
+c     
+               if ((qitoto-qiouto)
+     >              .ne.0.0) then                
+                  OCHIPERPI(IR) = (ocfqi(ir)-qiconvo+qioutconvo)
      >                 / (qitoto-qiouto)
-          OCHIPERPE(IR) = (ocfqe(ir)-qeconvo+qeoutconvo)
+               else
+                  OCHIPERPI(IR) = 0.0
+               endif
+
+
+               if ((qetoto-qeouto)
+     >              .ne.0.0) then                
+                  OCHIPERPE(IR) = (ocfqe(ir)-qeconvo+qeoutconvo)
      >                 / (qetoto-qeouto)
-          oxperpt(ir) = ( (ocfqi(ir)+ocfqe(ir))
-     >       -(qiconvo)+(qioutconvo)
-     >       -(qeconvo)+(qeoutconvo))
-     >       / (qitoto+qetoto
-     >         -(qiouto)-(qeouto))
-c
-c       Inner
-c
-          ICHIPERPI(IR) = (icfqi(ir)-qiconvi+qioutconvi)
+               else
+                  OCHIPERPE(IR) = 0.0
+               endif
+
+
+               if ((qitoto+qetoto
+     >              -(qiouto)-(qeouto))
+     >              .ne.0.0) then                
+                  oxperpt(ir) = ( (ocfqi(ir)+ocfqe(ir))
+     >                 -(qiconvo)+(qioutconvo)
+     >                 -(qeconvo)+(qeoutconvo))
+     >                 / (qitoto+qetoto
+     >                 -(qiouto)-(qeouto))
+               else
+                  oxperpt(ir) = 0.0
+               endif
+c     
+c     Inner
+c     
+               if ((qitoti-qiouti)
+     >              .ne.0.0) then                
+                  ICHIPERPI(IR) = (icfqi(ir)-qiconvi+qioutconvi)
      >                 / (qitoti-qiouti)
-          ICHIPERPE(IR) = (icfqe(ir)-qeconvi+qeoutconvi)
+               else
+                  ICHIPERPI(IR) = 0.0
+               endif
+
+
+               if ((qetoti-qeouti)
+     >              .ne.0.0) then                
+                  ICHIPERPE(IR) = (icfqe(ir)-qeconvi+qeoutconvi)
      >                 / (qetoti-qeouti)
-          ixperpt(ir) = ( (icfqi(ir)+icfqe(ir))
-     >       -(qiconvi)+(qioutconvi)
-     >       -(qeconvi)+(qeoutconvi))
-     >       / (qitoti+qetoti
-     >         -(qiouti)-(qeouti))
+               else
+                  ICHIPERPE(IR) = 0.0
+               endif
 
-      endif
 
-c
+               if ((qitoti+qetoti
+     >              -(qiouti)-(qeouti))
+     >              .ne.0.0) then                
+                  ixperpt(ir) = ( (icfqi(ir)+icfqe(ir))
+     >                 -(qiconvi)+(qioutconvi)
+     >                 -(qeconvi)+(qeoutconvi))
+     >                 / (qitoti+qetoti
+     >                 -(qiouti)-(qeouti))
+               else
+                  ixperpt(ir) = 0.0
+               endif
+
+            endif
+
+c     
 c     Calculate Averages if option is turned on
-c
-      if (dpavopt.gt.0.and.ir.eq.(irsep+irskip+3)) then
-         irtmp = irsep + irskip
-c
-         xpave = 0.25*(chiperpe(irtmp) + chiperpe(irtmp+1)
-     >               +chiperpe(irtmp+2) + chiperpe(irtmp+3))
-         xpaveo= 0.25*(ochiperpe(irtmp) + ochiperpe(irtmp+1)
-     >               +ochiperpe(irtmp+2) + ochiperpe(irtmp+3))
-         xpavei= 0.25*(ichiperpe(irtmp) + ichiperpe(irtmp+1)
-     >               +ichiperpe(irtmp+2) + ichiperpe(irtmp+3))
-c
-         xpavi = 0.25*(chiperpi(irtmp) + chiperpi(irtmp+1)
-     >               +chiperpi(irtmp+2) + chiperpi(irtmp+3))
-         xpavio= 0.25*(ochiperpi(irtmp) + ochiperpi(irtmp+1)
-     >               +ochiperpi(irtmp+2) + ochiperpi(irtmp+3))
-         xpavii= 0.25*(ichiperpi(irtmp) + ichiperpi(irtmp+1)
-     >               +ichiperpi(irtmp+2) + ichiperpi(irtmp+3))
-c
-         xpavt = 0.25*(xperpt(irtmp) + xperpt(irtmp+1)
-     >               +xperpt(irtmp+2) + xperpt(irtmp+3))
-         xpavto = 0.25*(oxperpt(irtmp) + oxperpt(irtmp+1)
-     >               +oxperpt(irtmp+2) + oxperpt(irtmp+3))
-         xpavti = 0.25*(ixperpt(irtmp) + ixperpt(irtmp+1)
-     >               +ixperpt(irtmp+2) + ixperpt(irtmp+3))
-c
-         usexpav = .true.
+c     
+            if (dpavopt.gt.0.and.ir.eq.(irsep+irskip+3)) then
+               irtmp = irsep + irskip
+c     
+               xpave = 0.25*(chiperpe(irtmp) + chiperpe(irtmp+1)
+     >              +chiperpe(irtmp+2) + chiperpe(irtmp+3))
+               xpaveo= 0.25*(ochiperpe(irtmp) + ochiperpe(irtmp+1)
+     >              +ochiperpe(irtmp+2) + ochiperpe(irtmp+3))
+               xpavei= 0.25*(ichiperpe(irtmp) + ichiperpe(irtmp+1)
+     >              +ichiperpe(irtmp+2) + ichiperpe(irtmp+3))
+c     
+               xpavi = 0.25*(chiperpi(irtmp) + chiperpi(irtmp+1)
+     >              +chiperpi(irtmp+2) + chiperpi(irtmp+3))
+               xpavio= 0.25*(ochiperpi(irtmp) + ochiperpi(irtmp+1)
+     >              +ochiperpi(irtmp+2) + ochiperpi(irtmp+3))
+               xpavii= 0.25*(ichiperpi(irtmp) + ichiperpi(irtmp+1)
+     >              +ichiperpi(irtmp+2) + ichiperpi(irtmp+3))
+c     
+               xpavt = 0.25*(xperpt(irtmp) + xperpt(irtmp+1)
+     >              +xperpt(irtmp+2) + xperpt(irtmp+3))
+               xpavto = 0.25*(oxperpt(irtmp) + oxperpt(irtmp+1)
+     >              +oxperpt(irtmp+2) + oxperpt(irtmp+3))
+               xpavti = 0.25*(ixperpt(irtmp) + ixperpt(irtmp+1)
+     >              +ixperpt(irtmp+2) + ixperpt(irtmp+3))
+c     
+               usexpav = .true.
 
-         if (cprint.eq.1.or.cprint.eq.9) then
-            write (6,*) 'XPERP AV: rings ',irtmp,' to ',irtmp+3,' = ',
-     >                xpave,xpavi
-         endif
+               if (cprint.eq.1.or.cprint.eq.9) then
+                  write (6,*) 'XPERP AV: rings ',irtmp,
+     >                       ' to ',irtmp+3,' = ',
+     >                        xpave,xpavi
+               endif
+
+            endif
+c     
+c     Record values for checking and printing
+c     
+c     
+c     XperpE
+c     
+            flxval(ir,4,1) = qetoto
+            flxval(ir,4,2) = qetoti
+            flxval(ir,4,3) = qetoti + qetoto
+c     
+            flxval(ir,5,1) = qeconvo
+            flxval(ir,5,2) = qeconvi
+            flxval(ir,5,3) = qeconvo + qeconvi
+c     
+            flxval(ir,6,1) = qeouto
+            flxval(ir,6,2) = qeouti
+            flxval(ir,6,3) = qeouto + qeouti
+c     
+            flxval(ir,7,1) = qeoutconvo
+            flxval(ir,7,2) = qeoutconvi
+            flxval(ir,7,3) = qeoutconvo + qeoutconvi
+c     
+            flxval(ir,8,1) = ocfqe(ir)
+            flxval(ir,8,2) = icfqe(ir)
+            flxval(ir,8,3) = ocfqe(ir) + icfqe(ir)
+c     
+c     XperpI
+c     
+            flxval(ir,9,1) = qitoto
+            flxval(ir,9,2) = qitoti
+            flxval(ir,9,3) = qitoti + qitoto
+c     
+            flxval(ir,10,1) = qiconvo
+            flxval(ir,10,2) = qiconvi
+            flxval(ir,10,3) = qiconvo + qiconvi
+c     
+            flxval(ir,11,1) = qiouto
+            flxval(ir,11,2) = qiouti
+            flxval(ir,11,3) = qiouto + qiouti
+c     
+            flxval(ir,12,1) = qioutconvo
+            flxval(ir,12,2) = qioutconvi
+            flxval(ir,12,3) = qioutconvo + qioutconvi
+c     
+            flxval(ir,13,1) = ocfqi(ir)
+            flxval(ir,13,2) = icfqi(ir)
+            flxval(ir,13,3) = ocfqi(ir) + icfqi(ir)
+c     
+         end do
+
 
       endif
-c
-c       Record values for checking and printing
-c
-c
-c       XperpE
-c
-        flxval(ir,4,1) = qetoto
-        flxval(ir,4,2) = qetoti
-        flxval(ir,4,3) = qetoti + qetoto
-c
-        flxval(ir,5,1) = qeconvo
-        flxval(ir,5,2) = qeconvi
-        flxval(ir,5,3) = qeconvo + qeconvi
-c
-        flxval(ir,6,1) = qeouto
-        flxval(ir,6,2) = qeouti
-        flxval(ir,6,3) = qeouto + qeouti
-c
-        flxval(ir,7,1) = qeoutconvo
-        flxval(ir,7,2) = qeoutconvi
-        flxval(ir,7,3) = qeoutconvo + qeoutconvi
-c
-        flxval(ir,8,1) = ocfqe(ir)
-        flxval(ir,8,2) = icfqe(ir)
-        flxval(ir,8,3) = ocfqe(ir) + icfqe(ir)
-c
-c       XperpI
-c
-        flxval(ir,9,1) = qitoto
-        flxval(ir,9,2) = qitoti
-        flxval(ir,9,3) = qitoti + qitoto
-c
-        flxval(ir,10,1) = qiconvo
-        flxval(ir,10,2) = qiconvi
-        flxval(ir,10,3) = qiconvo + qiconvi
-c
-        flxval(ir,11,1) = qiouto
-        flxval(ir,11,2) = qiouti
-        flxval(ir,11,3) = qiouto + qiouti
-c
-        flxval(ir,12,1) = qioutconvo
-        flxval(ir,12,2) = qioutconvi
-        flxval(ir,12,3) = qioutconvo + qioutconvi
-c
-        flxval(ir,13,1) = ocfqi(ir)
-        flxval(ir,13,2) = icfqi(ir)
-        flxval(ir,13,3) = ocfqi(ir) + icfqi(ir)
-c
-      end do
 
-
-      endif
-
-c
+c     
 c     Try calculating second derivative of N, Ti, Te and see what
 c     these yield when applied to extracting teh value of Dperp.
-c
-c
+c     
+c     
 
-c
+c     
 c     First calculate the second derivatives and their integrals over S
-c
+c     
       do ir = irsep,nrs
-c
-c        Perform summation either over the entire ring or only
-c        around the confined plasma
-c
+c     
+c     Perform summation either over the entire ring or only
+c     around the confined plasma
+c     
          if (dpsuml.eq.0) then
             ikstart = ouend
             ikend = inend
@@ -12930,523 +13510,532 @@ c
             ikstart = 1
             ikend = nks(ir)
          endif
-c
+c     
          do ik = ikstart,ikend
             grad2n(ik,ir) = quant2grad(ir,kss(ik,ir),knbs,knds)
             grad2ti(ik,ir)= quant2grad(ir,kss(ik,ir),ktibs,ktids)
             grad2te(ik,ir)= quant2grad(ir,kss(ik,ir),ktebs,kteds)
-c
-c           Include major radius correction if requested
-c
+c     
+c     Include major radius correction if requested
+c     
             if (dprcopt.eq.0) then
-                fact = 1.0
+               fact = 1.0
             else
-                fact = rs(ik,ir)/r0
+               fact = rs(ik,ir)/r0
             endif
-c
+c     
 
             totgrad2n(ir) =totgrad2n(ir)
-     >                    +grad2n(ik,ir)*surfa(ik,ir)*fact
+     >           +grad2n(ik,ir)*surfa(ik,ir)*fact
             totgrad2ti(ir)=totgrad2ti(ir)
-     >                    +grad2ti(ik,ir)*surfa(ik,ir)*fact
+     >           +grad2ti(ik,ir)*surfa(ik,ir)*fact
             totgrad2te(ir)=totgrad2te(ir)
-     >                    +grad2te(ik,ir)*surfa(ik,ir)*fact
-c
+     >           +grad2te(ik,ir)*surfa(ik,ir)*fact
+c     
          end do
 
       end do
-c
+c     
 c     Calculate alternate values of Dperp/Xperp based on the second
 c     derivative in density.
-c
+c     
 
-c
+c     
       if (cprint.eq.1.or.cprint.eq.9) then
-c
-c
+c     
+c     
 c     Print out values for Dperp, Chiperpe,i
 c     Both total for each ring as well as inner/outer values.
-c
-      call prb
-      call prchtml('  TRANSPORT COEFFICIENTS EXTRACTOR',
-     >             'pr_transport_coeff','0','B')
-      call prc('  Input Options:')
-      call prb
-c
-      call prc ('    METHOD OPTION:')
-      if (dpmethod.eq.0) then
-         call prc('      0 - Using Inner and Outer mid-plane gradients')
-      elseif (dpmethod.eq.1) then
-         call prc('      1 - Using Gradients for each cell'
-     >                 //' independently')
-      elseif (dpmethod.eq.2) then
-         call prc('      2 - Using Gradients for each cell'
-     >                 //' independently')
-      endif
-c
-      call prc('    SUMMATION OPTION:')
-      if (dpsuml.eq.0) then
-         call prc('      0 - For Transport above the X-point')
-      elseif (dpsuml.eq.1) then
-         call prc('      1 - For the entire field line')
-      endif
-c
-      call prc('    OUTER RING LOSS OPTION:')
-      if (dpouter.eq.0) then
-         call prc('      0 - Ignoring Perpendicular Fluxes across'//
-     >            ' the last ring')
-      elseif (dpsuml.eq.1) then
-         call prc('      1 - Including Perpendicular Fluxes across'//
-     >            ' the last ring')
-      endif
-c
-      call prc('    PERPENDICULAR CONVECTION OPTION:')
-      if (dpconv.eq.0) then
-         call prc('      0 - Ignoring Perpendicular Convection')
-      elseif (dpconv.eq.1) then
-         call prc('      1 - Including Perpendicular Convection')
-      endif
-c
-      call prc('    CELL CROSS-FIELD AREA OPTION:')
-      if (dparea.eq.0) then
-         call prc('      0 - Cross-field areas calculated at'//
-     >            ' cell centres')
-      elseif (dparea.eq.1) then
-         call prc('      1 - Cross-field areas calculated at'//
-     >            ' cell boundaries')
-      endif
-c
-      call prc('    CELL CENTRE CORRECTION OPTION: (Use Option 0)')
-      if (dpfluxopt.eq.0) then
-         call prc('      0 - Net Fluxes are calculated for whole ring')
-      elseif (dpfluxopt.eq.1) then
-         call prc('      1 - Net Fluxes are calculated for ring centre')
-      endif
-c
-      call prc('    USE OF AVERAGE DPERP OPTION:')
-      if (dpavopt.eq.0) then
-         call prc('      0 - Dperp/Xperp for Outer ring losses floats')
-      elseif (dpavopt.gt.0) then
-         call pri('      N - Dperp/Xperp Average Option set to',irskip)
-
-         call pri2('          Averages over rings',
-     >                    irsep+irskip,irsep+irskip+3)
-
-         call prr ('          Dperp  Average = ',dpav)
-         call prr ('          XperpE Average = ',xpave)
-         call prr ('          XperpI Average = ',xpavi)
-      endif
-c
-      call prc('    MAJOR RADIUS CORRECTION OPTION:')
-      if (dprcopt.eq.0) then
-         call prc('      0 - Not corrected for Major-Radius effects')
-      elseif (dprcopt.eq.1) then
-         call prc('      1 - Major Radius Correction Rcell/R0 applied')
-         call prc('       to Areas and to Ionization Source.')
-      elseif (dprcopt.eq.2) then
-         call prc('      2 - Major Radius Correction Rcell/R0 applied')
-         call prc('       to Areas ONLY - not to ionization source.')
-      endif
-c
-      call prc('    GRADIENT CALCULATION METHOD:')
-      if (dpnav.eq.-1) then
-         call prc('     -1 - Gradient calculated using derivatives '//
-     >            'taken from ')
-         call prc('          cubic spline iterpolation procedure')
-      elseif (dpnav.eq.0) then
-         call prc('      0 - Gradient calculated taking average of '//
-     >            'slopes to ')
-         call prc('          neighbouring cross-field cells')
-      elseif (dpnav.eq.1) then
-         call prc('      1 - Gradient calculated taking '//
-     >            'slope between ')
-         call prc('          neighbour cross-field cells.')
-         call prc('          Value at current cell is not used.')
-      elseif (dpnav.eq.2) then
-         call prc('      2 - Gradient calculated taking '//
-     >            'slope between current and next outward')
-         call prc('          cross-field cell only.')
-      endif
-c
-      call prc('    GRADIENT SMOOTHING OPTION:')
-      if (dpsmooth.eq.0) then
-         call prc('      0 - Smoothing is turned OFF')
-      elseif (dpsmooth.gt.0) then
-         call pri('      >0- Smoothing is turned ON.  Opt =',dpsmooth)
-         call pri('          Smoothing performed over N knots. N=',
-     >                    2*dpsmooth+1)
-         call prc('          Spaced evenly radially around the cell of'
-     >            //' interest')
-
-      endif
-c
-      call prc('    POWER LOSS OPTION:')
-      if (dpploss.eq.0) then
-         call prc('      0 - Volume Power Loss terms are OFF')
-      elseif (dpploss.eq.1) then
-         call prc('      1 - Volume Power Losses from PIN for ions and'
-     >                    //' electrons.')
-      elseif (dpploss.eq.2) then
-         call prc('      2 - Volume Power Losses from PIN for ions and'
-     >                    //' electrons.')
-         call prc('          Electron-Ion heat transfer (Pei) also'
-     >                    //' included.')
-         call prr('          Pei correction factor for OSKIN = ',dppei)
-      endif
-c
-      call prc('    NON-ORTHOGONAL CORRECTION OPTION:')
-      if (dporth.eq.0) then
-         call prc('      0 - Non-othogonal grid correction to gradients'
-     >                //' is  OFF')
-      elseif (dporth.eq.1) then
-         call prc('      1 - Non-othogonal grid correction to gradients'
-     >                //' is  ON')
-      endif
-c
-      call prr('    RECYLCE FRACTION APPLIED TO EXTRACTOR: ',dprec)
-c
-      if (dpxpratio.eq.-1.0) then
-         call prc('    DPERP/XPERP FIXED RATIO OPTION IS OFF')
-         call prr('    DPERP VALUE FOR XPERP EXTRACTION FIXED AT :',
-     >                                     cdperp)
-      elseif (dpxpratio.le.0.0) then
-         call prc('    DPERP/XPERP FIXED RATIO OPTION IS OFF')
-         if (dpavopt.eq.0) then
-            call prc('    DPERP VALUE FOR XPERP EXTRACTION'//
-     >                ' IS VALUE CALCULATED FOR EACH RING')
-         elseif (dpavopt.gt.0) then
-            call prr('    DPERP VALUE FOR XPERP EXTRACTION'//
-     >                ' IS CALCULATED AVERAGE VALUE: ',dpav)
+c     
+         call prb
+         call prchtml('  TRANSPORT COEFFICIENTS EXTRACTOR',
+     >        'pr_transport_coeff','0','B')
+         call prc('  Input Options:')
+         call prb
+c     
+         call prc ('    METHOD OPTION:')
+         if (dpmethod.eq.0) then
+            call prc('      0 - Using Inner and Outer'//
+     >               ' mid-plane gradients')
+         elseif (dpmethod.eq.1) then
+            call prc('      1 - Using Gradients for each cell'
+     >           //' independently')
+         elseif (dpmethod.eq.2) then
+            call prc('      2 - Using Gradients for each cell'
+     >           //' independently')
          endif
-      elseif (dpxpratio.gt.0.0) then
-         call prr('    DPERP/XPERP FIXED RATIO HAS BEEN SET TO: ',
-     >            dpxpratio )
-      endif
-c
-c
-      call prb
-      call prr('    Value of GammaI used for Xperp calculation:'
-     >          , gai)
-      call prr('    Value of GammaE used for Xperp calculation:'
-     >           ,gae)
-      call prb
-      call prc('  Table of Dperp values extracted from OSM')
-      call prc('  Ring         '//Inner//'          '//Outer//
-     >         '          Total')
-      do ir = irsep , irwall-2
-         write(coment,300) ir,idperp(ir),odperp(ir),dperp(ir)
-         call prc(coment)
-      end do
-c
-      call prc(' Table of Xperp ION values extracted from OSM')
-      call prc('  Ring         '//Inner//'           '//Outer//
-     >         '          Total')
-      do ir = irsep , irwall-2
-         write(coment,300) ir,ichiperpi(ir),ochiperpi(ir),
-     >                     chiperpi(ir)
-         call prc(coment)
-      end do
-c
-      call prc(' Table of Xperp ELECTRON extracted from OSM')
-      call prc('  Ring         '//Inner//'           '//Outer//
-     >         '          Total')
-      do ir = irsep , irwall-2
-         write(coment,300) ir,ichiperpe(ir),ochiperpe(ir),
-     >                     chiperpe(ir)
-         call prc(coment)
-      end do
-c
-      call prc(' Table of Xperp TOTAL extracted from OSM')
-      call prc('  Ring         '//Inner//'           '//Outer//
-     >         '          Total')
-      do ir = irsep , irwall-2
-         write(coment,300) ir,ixperpt(ir),oxperpt(ir),
-     >                     xperpt(ir)
-         call prc(coment)
-      end do
-c
-c     Detailed Ring summaries
-c
-      write (6,*) 'Dperp Components'
-      do ir = irsep,irwall-1
-         write(6,'(i4,9(e12.4,1x))') ir,
-     >              ((flxval(ir,in1,in2),in1=1,3),in2=1,3)
-      end do
-c
-      write (6,*) 'Dperp Components - TOTAL'
-      write (6,*) 'DPTOT(IR) = SIGMA(IK)'//
-     >         ' (AREA(IK,IR) * GRADN(IK,IR))'
-      write (6,*) 'DELTOT(IR)= SIGMA(IK)'//
-     >         '(AREA(IK,IRWALL-1) * GRADN(IK,IRWALL-1))'
-      write (6,*) 'CFGAM(IRSEP) = TOTFLX-NETFLX(IRSEP)'
-      write (6,*) 'CFGAM(IR)    = CFGAM(IR-1) - NETFLX(IR)'
-      write (6,*)
-      write (6,*) ' IR     DPTOT        DELTOT'//
-     >         '        CFGAM        DPERP        NETFLX'//
-     >         '       IONIS         FLUX       TOTFLUX'
-c
-      write (6,*) 'MAIN SOL:'
-c
-      tmpnflx = 0.0
-      tmpion  = 0.0
-      tmpflx  = 0.0
-c
-      do ir = irsep,irwall
-         write(6,'(i4,8(e12.4,1x))') ir,
-     >      flxval(ir,1,3),flxval(ir,2,3),flxval(ir,3,3),
-     >      dperp(ir),netflx(ir),ionis(ir),flux(ir),totflx
-         tmpflx = tmpflx + flux(ir)
-         tmpion = tmpion + ionis(ir)
-         tmpnflx = tmpnflx + netflx(ir)
-      end do
-      write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
-     >      tmpnflx,tmpion,tmpflx
-c
-      write (6,*) 'PP:'
+c     
+         call prc('    SUMMATION OPTION:')
+         if (dpsuml.eq.0) then
+            call prc('      0 - For Transport above the X-point')
+         elseif (dpsuml.eq.1) then
+            call prc('      1 - For the entire field line')
+         endif
+c     
+         call prc('    OUTER RING LOSS OPTION:')
+         if (dpouter.eq.0) then
+            call prc('      0 - Ignoring Perpendicular Fluxes across'//
+     >           ' the last ring')
+         elseif (dpsuml.eq.1) then
+            call prc('      1 - Including Perpendicular Fluxes across'//
+     >           ' the last ring')
+         endif
+c     
+         call prc('    PERPENDICULAR CONVECTION OPTION:')
+         if (dpconv.eq.0) then
+            call prc('      0 - Ignoring Perpendicular Convection')
+         elseif (dpconv.eq.1) then
+            call prc('      1 - Including Perpendicular Convection')
+         endif
+c     
+         call prc('    CELL CROSS-FIELD AREA OPTION:')
+         if (dparea.eq.0) then
+            call prc('      0 - Cross-field areas calculated at'//
+     >           ' cell centres')
+         elseif (dparea.eq.1) then
+            call prc('      1 - Cross-field areas calculated at'//
+     >           ' cell boundaries')
+         endif
+c     
+         call prc('    CELL CENTRE CORRECTION OPTION: (Use Option 0)')
+         if (dpfluxopt.eq.0) then
+            call prc('      0 - Net Fluxes are calculated'//
+     >               ' for whole ring')
+         elseif (dpfluxopt.eq.1) then
+            call prc('      1 - Net Fluxes are calculated'//
+     >               ' for ring centre')
+         endif
+c     
+         call prc('    USE OF AVERAGE DPERP OPTION:')
+         if (dpavopt.eq.0) then
+            call prc('      0 - Dperp/Xperp for Outer'//
+     >               ' ring losses floats')
+         elseif (dpavopt.gt.0) then
+            call pri('      N - Dperp/Xperp Average'//
+     >               ' Option set to',irskip)
 
-      tmpnflx = 0.0
-      tmpion  = 0.0
-      tmpflx  = 0.0
-c
-      do ir = irtrap,nrs
-         write(6,'(i4,4(13x),4(e12.4,1x))') ir,
-     >      netflx(ir),ionis(ir),flux(ir)
-         tmpflx = tmpflx + flux(ir)
-         tmpion = tmpion + ionis(ir)
-         tmpnflx = tmpnflx + netflx(ir)
-      end do
-c
-      write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
-     >      tmpnflx,tmpion,tmpflx
-c
-      write (6,*) 'CORE:'
+            call pri2('          Averages over rings',
+     >           irsep+irskip,irsep+irskip+3)
 
-      tmpion  = 0.0
-c
-      do ir = 1,irsep-1
-         write(6,'(i4,5(13x),4(e12.4,1x))') ir,
-     >            ionis(ir)
-         tmpion = tmpion + ionis(ir)
-      end do
-c
-      write(6,'(''TOT:'',5(13x),3(e12.4,1x))')
-     >           tmpion
-      write(6,'(a,g12.6)') 'TOTAL: ALL IZ = ',alliz
-c
-c     Dperp - Alternate calculation
-c
-      write (6,*)
-      write (6,*) 'Dperp Components - ALTERNATE'
-      write (6,*)
-      write (6,*) 'Dperp = [ Phi(ir) - INT(Siz(ir)) ] / '
-      write (6,*) '        INT [Aperp * { (dn/dr)|in -'//
-     >                    ' (dn/dr)|out }]'
-      write (6,*)
-      write (6,*) ' IR     APERP   INT(DN/DR|IN-DN/DR|OUT)'//
-     >         '        INT(AP DN/DR)        DPERP        NETFLX'//
-     >         '       IONIS         FLUX   '
-c
-      do ir = irsep+1,irwall-2
-         aperp = 0.0
-         dgradt = 0.0
-         apdg = 0.0
+            call prr ('          Dperp  Average = ',dpav)
+            call prr ('          XperpE Average = ',xpave)
+            call prr ('          XperpI Average = ',xpavi)
+         endif
+c     
+         call prc('    MAJOR RADIUS CORRECTION OPTION:')
+         if (dprcopt.eq.0) then
+            call prc('      0 - Not corrected for Major-Radius effects')
+         elseif (dprcopt.eq.1) then
+            call prc('      1 - Major Radius Correction'//
+     >               ' Rcell/R0 applied')
+            call prc('       to Areas and to Ionization Source.')
+         elseif (dprcopt.eq.2) then
+            call prc('      2 - Major Radius Correction'//
+     >               ' Rcell/R0 applied')
+            call prc('       to Areas ONLY - not to ionization source.')
+         endif
+c     
+         call prc('    GRADIENT CALCULATION METHOD:')
+         if (dpnav.eq.-1) then
+            call prc('     -1 - Gradient calculated using derivatives'//
+     >           ' taken from ')
+            call prc('          cubic spline iterpolation procedure')
+         elseif (dpnav.eq.0) then
+            call prc('      0 - Gradient calculated taking average of'//
+     >           ' slopes to ')
+            call prc('          neighbouring cross-field cells')
+         elseif (dpnav.eq.1) then
+            call prc('      1 - Gradient calculated taking '//
+     >           'slope between ')
+            call prc('          neighbour cross-field cells.')
+            call prc('          Value at current cell is not used.')
+         elseif (dpnav.eq.2) then
+            call prc('      2 - Gradient calculated taking '//
+     >           'slope between current and next outward')
+            call prc('          cross-field cell only.')
+         endif
+c     
+         call prc('    GRADIENT SMOOTHING OPTION:')
+         if (dpsmooth.eq.0) then
+            call prc('      0 - Smoothing is turned OFF')
+         elseif (dpsmooth.gt.0) then
+            call pri('      >0- Smoothing is turned ON.  Opt =',
+     >           dpsmooth)
+            call pri('          Smoothing performed over N knots. N=',
+     >           2*dpsmooth+1)
+            call prc('          Spaced evenly radially around'
+     >           //' the cell of interest')
 
-         do ik = 1,nks(ir)
-
-            aperp = aperp + surfa(ik,ir)
-            dgradt = dgradt + dgradn(ik,ir)
-            apdg = apdg + surfa(ik,ir) * dgradn(ik,ir)
-
+         endif
+c     
+         call prc('    POWER LOSS OPTION:')
+         if (dpploss.eq.0) then
+            call prc('      0 - Volume Power Loss terms are OFF')
+         elseif (dpploss.eq.1) then
+            call prc('      1 - Volume Power Losses from PIN for'
+     >           //' ions and electrons.')
+         elseif (dpploss.eq.2) then
+            call prc('      2 - Volume Power Losses from PIN for'
+     >           //' ions and electrons.')
+            call prc('          Electron-Ion heat transfer (Pei) also'
+     >           //' included.')
+            call prr('          Pei correction factor for OSKIN = ',
+     >               dppei)
+         endif
+c     
+         call prc('    NON-ORTHOGONAL CORRECTION OPTION:')
+         if (dporth.eq.0) then
+            call prc('      0 - Non-othogonal grid correction'
+     >           // ' to gradients is  OFF')
+         elseif (dporth.eq.1) then
+            call prc('      1 - Non-othogonal grid correction'
+     >           //' to gradients is  ON')
+         endif
+c     
+         call prr('    RECYLCE FRACTION APPLIED TO EXTRACTOR: ',dprec)
+c     
+         if (dpxpratio.eq.-1.0) then
+            call prc('    DPERP/XPERP FIXED RATIO OPTION IS OFF')
+            call prr('    DPERP VALUE FOR XPERP EXTRACTION FIXED AT :',
+     >           cdperp)
+         elseif (dpxpratio.le.0.0) then
+            call prc('    DPERP/XPERP FIXED RATIO OPTION IS OFF')
+            if (dpavopt.eq.0) then
+               call prc('    DPERP VALUE FOR XPERP EXTRACTION'//
+     >              ' IS VALUE CALCULATED FOR EACH RING')
+            elseif (dpavopt.gt.0) then
+               call prr('    DPERP VALUE FOR XPERP EXTRACTION'//
+     >              ' IS CALCULATED AVERAGE VALUE: ',dpav)
+            endif
+         elseif (dpxpratio.gt.0.0) then
+            call prr('    DPERP/XPERP FIXED RATIO HAS BEEN SET TO: ',
+     >           dpxpratio )
+         endif
+c     
+c     
+         call prb
+         call prr('    Value of GammaI used for Xperp calculation:'
+     >        , gai)
+         call prr('    Value of GammaE used for Xperp calculation:'
+     >        ,gae)
+         call prb
+         call prc('  Table of Dperp values extracted from OSM')
+         call prc('  Ring         '//Inner//'          '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+            write(coment,300) ir,idperp(ir),odperp(ir),dperp(ir)
+            call prc(coment)
          end do
-c
-         dperpt = netflx(ir) / apdg
-c
-         write(6,'(i4,8(e12.4,1x))') ir,
-     >      aperp,dgradt,apdg,dperpt,
-     >      netflx(ir),ionis(ir),flux(ir)
-c
-      end do
-c
+c     
+         call prc(' Table of Xperp ION values extracted from OSM')
+         call prc('  Ring         '//Inner//'           '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+            write(coment,300) ir,ichiperpi(ir),ochiperpi(ir),
+     >           chiperpi(ir)
+            call prc(coment)
+         end do
+c     
+         call prc(' Table of Xperp ELECTRON extracted from OSM')
+         call prc('  Ring         '//Inner//'           '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+            write(coment,300) ir,ichiperpe(ir),ochiperpe(ir),
+     >           chiperpe(ir)
+            call prc(coment)
+         end do
+c     
+         call prc(' Table of Xperp TOTAL extracted from OSM')
+         call prc('  Ring         '//Inner//'           '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+            write(coment,300) ir,ixperpt(ir),oxperpt(ir),
+     >           xperpt(ir)
+            call prc(coment)
+         end do
+c     
+c     Detailed Ring summaries
+c     
+         write (6,*) 'Dperp Components'
+         do ir = irsep,irwall-1
+            write(6,'(i4,9(e12.4,1x))') ir,
+     >           ((flxval(ir,in1,in2),in1=1,3),in2=1,3)
+         end do
+c     
+         write (6,*) 'Dperp Components - TOTAL'
+         write (6,*) 'DPTOT(IR) = SIGMA(IK)'//
+     >        ' (AREA(IK,IR) * GRADN(IK,IR))'
+         write (6,*) 'DELTOT(IR)= SIGMA(IK)'//
+     >        '(AREA(IK,IRWALL-1) * GRADN(IK,IRWALL-1))'
+         write (6,*) 'CFGAM(IRSEP) = TOTFLX-NETFLX(IRSEP)'
+         write (6,*) 'CFGAM(IR)    = CFGAM(IR-1) - NETFLX(IR)'
+         write (6,*)
+         write (6,*) ' IR     DPTOT        DELTOT'//
+     >        '        CFGAM        DPERP        NETFLX'//
+     >        '       IONIS         FLUX       TOTFLUX'
+c     
+         write (6,*) 'MAIN SOL:'
+c     
+         tmpnflx = 0.0
+         tmpion  = 0.0
+         tmpflx  = 0.0
+c     
+         do ir = irsep,irwall
+            write(6,'(i4,8(e12.4,1x))') ir,
+     >           flxval(ir,1,3),flxval(ir,2,3),flxval(ir,3,3),
+     >           dperp(ir),netflx(ir),ionis(ir),flux(ir),totflx
+            tmpflx = tmpflx + flux(ir)
+            tmpion = tmpion + ionis(ir)
+            tmpnflx = tmpnflx + netflx(ir)
+         end do
+         write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
+     >        tmpnflx,tmpion,tmpflx
+c     
+         write (6,*) 'PP:'
+
+         tmpnflx = 0.0
+         tmpion  = 0.0
+         tmpflx  = 0.0
+c     
+         do ir = irtrap,nrs
+            write(6,'(i4,4(13x),4(e12.4,1x))') ir,
+     >           netflx(ir),ionis(ir),flux(ir)
+            tmpflx = tmpflx + flux(ir)
+            tmpion = tmpion + ionis(ir)
+            tmpnflx = tmpnflx + netflx(ir)
+         end do
+c     
+         write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
+     >        tmpnflx,tmpion,tmpflx
+c     
+         write (6,*) 'CORE:'
+
+         tmpion  = 0.0
+c     
+         do ir = 1,irsep-1
+            write(6,'(i4,5(13x),4(e12.4,1x))') ir,
+     >           ionis(ir)
+            tmpion = tmpion + ionis(ir)
+         end do
+c     
+         write(6,'(''TOT:'',5(13x),3(e12.4,1x))')
+     >        tmpion
+         write(6,'(a,g12.6)') 'TOTAL: ALL IZ = ',alliz
+c     
+c     Dperp - Alternate calculation
+c     
+         write (6,*)
+         write (6,*) 'Dperp Components - ALTERNATE'
+         write (6,*)
+         write (6,*) 'Dperp = [ Phi(ir) - INT(Siz(ir)) ] / '
+         write (6,*) '        INT [Aperp * { (dn/dr)|in -'//
+     >        ' (dn/dr)|out }]'
+         write (6,*)
+         write (6,*) ' IR     APERP   INT(DN/DR|IN-DN/DR|OUT)'//
+     >        '        INT(AP DN/DR)        DPERP        NETFLX'//
+     >        '       IONIS         FLUX   '
+c     
+         do ir = irsep+1,irwall-2
+            aperp = 0.0
+            dgradt = 0.0
+            apdg = 0.0
+
+            do ik = 1,nks(ir)
+
+               aperp = aperp + surfa(ik,ir)
+               dgradt = dgradt + dgradn(ik,ir)
+               apdg = apdg + surfa(ik,ir) * dgradn(ik,ir)
+
+            end do
+c     
+            dperpt = netflx(ir) / apdg
+c     
+            write(6,'(i4,8(e12.4,1x))') ir,
+     >           aperp,dgradt,apdg,dperpt,
+     >           netflx(ir),ionis(ir),flux(ir)
+c     
+         end do
+c     
 c     X perp components
-c
-      write(6,*)
-c
-      write (6,*) 'XperpE Components'
-      do ir = irsep,irwall-1
-         write(6,'(i4,15(e12.4,1x))') ir,
-     >              ((flxval(ir,in1,in2),in1=4,8),in2=1,3)
-      end do
-c
-      write (6,*) 'Xperpi Components'
-      do ir = irsep,irwall-1
-         write(6,'(i4,15(e12.4,1x))') ir,
-     >             ((flxval(ir,in1,in2),in1=9,13),in2=1,3)
-      end do
-c
+c     
+         write(6,*)
+c     
+         write (6,*) 'XperpE Components'
+         do ir = irsep,irwall-1
+            write(6,'(i4,15(e12.4,1x))') ir,
+     >           ((flxval(ir,in1,in2),in1=4,8),in2=1,3)
+         end do
+c     
+         write (6,*) 'Xperpi Components'
+         do ir = irsep,irwall-1
+            write(6,'(i4,15(e12.4,1x))') ir,
+     >           ((flxval(ir,in1,in2),in1=9,13),in2=1,3)
+         end do
+c     
 c     End of cprint IF
-c
+c     
       endif
-c
-c
+c     
+c     
 c     Calculate the core outflux based on the density gradients in the
 c     calculated background and the imposed Dperp given for the case.
-c
-c      write (6,*) 'cioptg:',cioptg,cre2d
-c
-c      if (cioptg.eq.99) then
-c
-c        write (6,*) 'irsep:',irsep,nks(irsep)
-c
-        totcfflux = 0.0
-        itotcfflux = 0.0
-        ototcfflux = 0.0
-c
-        ir = irsep
-c
-        do ik = 1,nks(irsep)
-           ikin = ikins(ik,irsep)
-           irin = irins(ik,irsep)
-           if (irin.eq.irsep-1) then
-             in = korpg(ik,irsep)
-             area = sqrt( (rvertp(1,in)-rvertp(4,in))**2
-     >                  +(zvertp(1,in)-zvertp(4,in))**2)
-             gradnsep = (knbs(ikin,irin)-knbs(ik,irsep))
-     >                  /kinds(ik,irsep)
+c     
+c     write (6,*) 'cioptg:',cioptg,cre2d
+c     
+c     if (cioptg.eq.99) then
+c     
+c     write (6,*) 'irsep:',irsep,nks(irsep)
+c     
+      totcfflux = 0.0
+      itotcfflux = 0.0
+      ototcfflux = 0.0
+c     
+      ir = irsep
+c     
+      do ik = 1,nks(irsep)
+         ikin = ikins(ik,irsep)
+         irin = irins(ik,irsep)
+         if (irin.eq.irsep-1) then
+            in = korpg(ik,irsep)
+            area = sqrt( (rvertp(1,in)-rvertp(4,in))**2
+     >           +(zvertp(1,in)-zvertp(4,in))**2)
+            gradnsep = (knbs(ikin,irin)-knbs(ik,irsep))
+     >           /kinds(ik,irsep)
 
-             if (kss(ik,irsep).lt.(ksmaxs(irsep)/2.0)) then 
-c
-                ototcfflux = ototcfflux +  cdperp * area * gradnsep
-c
-             else
-c
-                itotcfflux = itotcfflux +  cdperp * area * gradnsep
-c
-             endif
-c
-             totcfflux = totcfflux + cdperp * area * gradnsep
-c
-c            IPP/08 Krieger - fixed debug output -> writing area,
-c            gradnsep and totcfflux makes only sense if they have been
-c            computed before
+            if (kss(ik,irsep).lt.(ksmaxs(irsep)/2.0)) then 
+c     
+               ototcfflux = ototcfflux +  cdperp * area * gradnsep
+c     
+            else
+c     
+               itotcfflux = itotcfflux +  cdperp * area * gradnsep
+c     
+            endif
+c     
+            totcfflux = totcfflux + cdperp * area * gradnsep
+c     
+c     IPP/08 Krieger - fixed debug output -> writing area,
+c     gradnsep and totcfflux makes only sense if they have been
+c     computed before
 
-             if (cprint.eq.1.or.cprint.eq.9) then
+            if (cprint.eq.1.or.cprint.eq.9) then
 
-                write (6,*) 'CF:',ik,ir,ikin,irin,in,area,gradnsep,
-     >                totcfflux,cdperp
-             endif
-c
-          endif
+               write (6,*) 'CF:',ik,ir,ikin,irin,in,area,gradnsep,
+     >              totcfflux,cdperp
+            endif
+c     
+         endif
 
 
-        end do
-c
-        if (cprint.eq.1.or.cprint.eq.9) then
-          call prb
-          call prc('  Calculation of Cross-field Flux from Core '//
-     >           'for actual BG plasma')
-          call prr('  Value of Dperp assumed:',cdperp)
-          call prr('  Total CF Flux       = ',totcfflux)
-          call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
-     >                             itotcfflux,ototcfflux)
-          call prr('  Total Target Flux       = ',totflx_save)
-          call prr2('  Total '//inner//'/'//outer//' Target Flux = ',
-     >                             itotflx_save,ototflx_save)
-          call prr('  Total Ionization       = ',tionis)
-          call prr2('  Total '//inner//'/'//outer//' Ionization  = ',
-     >                             itionis,otionis)
-          call prr('  Total NET Flux       = ',netflx_save)
-          call prr2('  Total '//inner//'/'//outer//' NET Flux = ',
-     >                             inetflx_save,onetflx_save)
+      end do
+c     
+      if (cprint.eq.1.or.cprint.eq.9) then
+         call prb
+         call prc('  Calculation of Cross-field Flux from Core '//
+     >        'for actual BG plasma')
+         call prr('  Value of Dperp assumed:',cdperp)
+         call prr('  Total CF Flux       = ',totcfflux)
+         call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+     >        itotcfflux,ototcfflux)
+         call prr('  Total Target Flux       = ',totflx_save)
+         call prr2('  Total '//inner//'/'//outer//' Target Flux = ',
+     >        itotflx_save,ototflx_save)
+         call prr('  Total Ionization       = ',tionis)
+         call prr2('  Total '//inner//'/'//outer//' Ionization  = ',
+     >        itionis,otionis)
+         call prr('  Total NET Flux       = ',netflx_save)
+         call prr2('  Total '//inner//'/'//outer//' NET Flux = ',
+     >        inetflx_save,onetflx_save)
 
-          call prb
-c
-c          call targflux(totflx,totrec)
-c
-        endif
-c
-c      endif
-c
+         call prb
+c     
+c     call targflux(totflx,totrec)
+c     
+      endif
+c     
+c     endif
+c     
       if (cre2d.eq.1.or.cre2d.eq.2) then
-c
-        totcfflux = 0.0
-        itotcfflux = 0.0
-        ototcfflux = 0.0
-        ir = irsep
-c
-c        write (6,*) 'irsep:',irsep,nks(irsep)
-c
-        do ik = 1,nks(irsep)
-          ikin = ikins(ik,irsep)
-          irin = irins(ik,irsep)
-          if (irin.eq.irsep-1) then
-             in = korpg(ik,irsep)
-             area = sqrt((rvertp(1,in)-rvertp(4,in))**2
-     >                  +(zvertp(1,in)-zvertp(4,in))**2)
-             gradnsep = (e2dnbs(ikin,irin)-e2dnbs(ik,irsep))
-     >                  /kinds(ik,irsep)
-c
-             if (kss(ik,irsep).lt.(ksmaxs(irsep)/2.0)) then 
-c
-                ototcfflux = ototcfflux +  cdperp * area * gradnsep
-c
-             else
-c
-                itotcfflux = itotcfflux +  cdperp * area * gradnsep
-c
-             endif
+c     
+         totcfflux = 0.0
+         itotcfflux = 0.0
+         ototcfflux = 0.0
+         ir = irsep
+c     
+c     write (6,*) 'irsep:',irsep,nks(irsep)
+c     
+         do ik = 1,nks(irsep)
+            ikin = ikins(ik,irsep)
+            irin = irins(ik,irsep)
+            if (irin.eq.irsep-1) then
+               in = korpg(ik,irsep)
+               area = sqrt((rvertp(1,in)-rvertp(4,in))**2
+     >              +(zvertp(1,in)-zvertp(4,in))**2)
+               gradnsep = (e2dnbs(ikin,irin)-e2dnbs(ik,irsep))
+     >              /kinds(ik,irsep)
+c     
+               if (kss(ik,irsep).lt.(ksmaxs(irsep)/2.0)) then 
+c     
+                  ototcfflux = ototcfflux +  cdperp * area * gradnsep
+c     
+               else
+c     
+                  itotcfflux = itotcfflux +  cdperp * area * gradnsep
+c     
+               endif
 
-             totcfflux = totcfflux + cdperp * area * gradnsep
+               totcfflux = totcfflux + cdperp * area * gradnsep
 
-          endif
+            endif
 
-          if (cprint.eq.1.or.cprint.eq.9) then
-             write (6,*) 'CF:',ik,ir,ikin,irin,in,area,gradnsep,
-     >                totcfflux,cdperp
-          endif
+            if (cprint.eq.1.or.cprint.eq.9) then
+               write (6,*) 'CF:',ik,ir,ikin,irin,in,area,gradnsep,
+     >              totcfflux,cdperp
+            endif
 
-        end do
+         end do
 
-        if (cprint.eq.1.or.cprint.eq.9) then
-          call prb
-          call prc('  Calculation of Cross-field Flux'//
-     >                    ' from Core for FLUID CODE Solution')
-          call prr('  Value of Dperp assumed:',cdperp)
-c
-          call prr('  Total CF Flux       = ',totcfflux)
-          call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
-     >                             itotcfflux,ototcfflux)
-c
-          call prb
-c
-        endif
+         if (cprint.eq.1.or.cprint.eq.9) then
+            call prb
+            call prc('  Calculation of Cross-field Flux'//
+     >           ' from Core for FLUID CODE Solution')
+            call prr('  Value of Dperp assumed:',cdperp)
+c     
+            call prr('  Total CF Flux       = ',totcfflux)
+            call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+     >           itotcfflux,ototcfflux)
+c     
+            call prb
+c     
+         endif
       endif
 
 
-c
-c
+c     
+c     
 c     Format statements
-c
+c     
 
  300  format (2x,i4,3x,3(2x,g13.5))
  400  format (a13,1x,i3,1x,11g10.3)
  500  format ('Title:',7x,'Ring',5x, 'Dperp','TotOutFlux',
-     >        5x,'Ngrad',
-     >        6x,'Area',7x,'Sep',6x,'Flux',5x,'Ionis',
-     >        3x,'Netflux',6x,'Nmid',
-     >        3x,'Sep IN',2x,'Sep OUT')
+     >     5x,'Ngrad',
+     >     6x,'Area',7x,'Sep',6x,'Flux',5x,'Ionis',
+     >     3x,'Netflux',6x,'Nmid',
+     >     3x,'Sep IN',2x,'Sep OUT')
  700  format ('Title:',7x,'Ring',4x, 'Xperpi',5x,'TotQi',
-     >        4x,'Tigrad',
-     >        6x,'Area',7x,'Sep',6x,'Heat',5x,'Timid',
-     >        3x,'Sep IN',2x,'Sep OUT')
+     >     4x,'Tigrad',
+     >     6x,'Area',7x,'Sep',6x,'Heat',5x,'Timid',
+     >     3x,'Sep IN',2x,'Sep OUT')
  900  format ('Title:',7x,'Ring',4x, 'Xperpe',5x,'TotQe',
-     >        4x,'Tegrad',
-     >        6x,'Area',7x,'Sep',6x,'Heat',5x,'Temid',
-     >        4x,'Sep IN',3x,'Sep OUT')
-1200  format(i4,9(g11.3))
-1210  format('Ring',5x,'NfluxI',6x,'FluxI',5x,'Iionis',
-     >   5x,'NfluxO',
-     >   6x,'FluxO',5x,'Oionis',6x,'Nflux',7x,'Flux',6x,'ionis')
-C
+     >     4x,'Tegrad',
+     >     6x,'Area',7x,'Sep',6x,'Heat',5x,'Temid',
+     >     4x,'Sep IN',3x,'Sep OUT')
+ 1200 format(i4,9(g11.3))
+ 1210 format('Ring',5x,'NfluxI',6x,'FluxI',5x,'Iionis',
+     >     5x,'NfluxO',
+     >     6x,'FluxO',5x,'Oionis',6x,'Nflux',7x,'Flux',6x,'ionis')
+C     
 
       return
       END
@@ -15136,7 +15725,7 @@ c
             do ik = 1,nks(ir)
                do iz = 0,nizs-1
                   tcooliz(ik,ir) = tcooliz(ik,ir) +
-     >                Iiz(iz)*(ddlims(ik,ir,iz) / kfizs(ik,ir,iz)          
+     >                Iiz(iz)*(ddlims(ik,ir,iz) / kfizs(ik,ir,iz)
      >                      -ddlims(ik,ir,iz+1) / kfrcs(ik,ir,iz+1))
                end do 
             end do
@@ -16492,7 +17081,11 @@ c        Extract magnetic field - use target based magnetic field
 c        ratios but use first cell toroidal B-field for now since I don't
 c        know if BTS is defined for the virtual cells.
 c
-         if (kbfst(ir,it).le.0.0.or.kbfst(ir,it).ge.1.0.or.
+c        jdemod - bug here calculating MPS data
+c                 should just test kbfst <=1 
+c
+c         if (kbfst(ir,it).le.0.0.or.kbfst(ir,it).ge.1.0.or.
+         if (kbfst(ir,it).le.1.0.or.
      >      id.eq.1.or.id.eq.ndsin.or.id.eq.ndsin+1.or.id.eq.nds) then
             b_field = 0.0
             mps_thickness(ir,it) = 0.0
@@ -17471,6 +18064,8 @@ c
 c
 c         if (ir.ne.1.and.ir.ne.irwall.and.ir.ne.irtrap) then
 c
+         write(6,'(a,2i10)') 'GRID_CHECK: Checking ring:',ir,nks(ir)
+c
             do ik = 1,nks(ir)
 c
                in = korpg(ik,ir)
@@ -17501,7 +18096,7 @@ c
 c
                             write(error_comment,'(a,6i5)') 
      >                          'CELL GEOMETRY ERROR: SIDE UP     34:'
-     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',                            
+     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
      >                                ik,ir,ik+1,ir,
      >                                in,testin
                             
@@ -17543,7 +18138,7 @@ c
                             write(error_comment,'(a,6i5)') 
      >                           'CELL GEOMETRY ERROR: SIDE DOWN   12:'
      >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',                            
-     >                                ik,ir,ik+1,ir,
+     >                                ik,ir,ik-1,ir,
      >                                in,testin
                             
                             call errmsg('ERROR:TAU MODULE:'//
@@ -17588,8 +18183,8 @@ c
 c
                             write(error_comment,'(a,6i5)') 
      >                            'CELL GEOMETRY ERROR: SIDE OUTWARD23:'
-     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',                            
-     >                                ik,ir,ik+1,ir,
+     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
+     >                                ik,ir,ikn,irn,
      >                                in,testin
                             
                             call errmsg('ERROR:TAU MODULE:'//
@@ -17633,8 +18228,8 @@ c
 c
                             write(error_comment,'(a,6i5)') 
      >                            'CELL GEOMETRY ERROR: SIDE INWARD 41:'
-     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',                            
-     >                                ik,ir,ik+1,ir,
+     >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
+     >                                ik,ir,ikn,irn,
      >                                in,testin
                             
                             call errmsg('ERROR:TAU MODULE:'//
@@ -18795,7 +19390,7 @@ c
 c
 c        Main Vessel wall elements
 c
-         elseif (segtype.eq.7.or.segtype.eq.2.or.segtype.eq.3) then          
+         elseif (segtype.eq.7.or.segtype.eq.2.or.segtype.eq.3) then 
 c
             do it = 1,4
                do is = 1,4
@@ -18809,7 +19404,7 @@ c
 c
 c        Private Flux Zone wall elements   
 c
-         elseif (segtype.eq.8.or.segtype.eq.9.or.segtype.eq.10) then          
+         elseif (segtype.eq.8.or.segtype.eq.9.or.segtype.eq.10) then
 c
             do it = 1,4
                do is = 1,4
@@ -19109,8 +19704,8 @@ c               should be identical
 c
                 n_intersections(in) = 0
 c
-                rtest = wallpt(in,20)                                                
-                ztest = wallpt(in,21)                                                
+                rtest = wallpt(in,20)
+                ztest = wallpt(in,21)
 c
                 call calc_wall_intersections(ntest,max_int,r_int,z_int,
      >                       rcent,zcent,rtest,ztest,.true.)
@@ -19299,7 +19894,7 @@ c
 c
 c        Main Vessel wall elements
 c
-         elseif (segtype.eq.7.or.segtype.eq.2.or.segtype.eq.3) then          
+         elseif (segtype.eq.7.or.segtype.eq.2.or.segtype.eq.3) then
 c
             wallprad(maxpts+3,1) = wallprad(maxpts+3,1) + wallprad(in,1)
             wallprad(maxpts+3,2) = wallprad(maxpts+3,2) + wallprad(in,2)
@@ -19307,7 +19902,7 @@ c
 c
 c        Private Flux Zone wall elements   
 c
-         elseif (segtype.eq.8.or.segtype.eq.9.or.segtype.eq.10) then          
+         elseif (segtype.eq.8.or.segtype.eq.9.or.segtype.eq.10) then
 c
             wallprad(maxpts+4,1) = wallprad(maxpts+4,1) + wallprad(in,1)
             wallprad(maxpts+4,2) = wallprad(maxpts+4,2) + wallprad(in,2)

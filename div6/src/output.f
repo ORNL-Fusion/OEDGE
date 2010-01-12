@@ -1031,7 +1031,7 @@ c     .   'rvesm1','zvesm1','rvesm2','zvesm2'
      .  '  '  ,'24','25','26','27','28','29','30','31'
 
       DO in = 1, wallpts
-        WRITE(fp,'(I4,8F10.5)')
+        WRITE(fp,'(I4,7(1x,F10.5),1x,e12.3)')
      .    in,(wallpt(in,ii),ii=24,31)
       ENDDO
 

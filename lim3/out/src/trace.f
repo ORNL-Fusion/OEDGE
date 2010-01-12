@@ -5,6 +5,7 @@ C
      >  NBS,ISMOTH,ASTART,AEND,BSTART,BEND,IGS,ITEC,AVS,NAVS,                   
      >  JOB,TITLE,AAXLAB,BAXLAB,BLABS,REF,VIEW,PLANE,TABLE,IDRAW,IFLAG)         
       IMPLICIT none
+      include 'params'
       INTEGER   MAXNAS,NAS,IBS,NBS,IDRAW,ISMOTH,IFLAG,IGS(*),ITEC,NAVS          
       REAL      AS(*),WS(*),BS(MAXNAS,*),ASTART,AEND,BSTART,BEND                
       REAL      AVS(0:NAVS)                                                     
@@ -94,6 +95,22 @@ c
       write(6,*) 'AAXLAB:',trim(aaxlab),':'
       write(6,*) 'BAXLAB:',trim(baxlab),':'
       write(6,*) 'BLABS1:',trim(blabs(1)),':'
+c
+c     Print the plot data to the .plt file ... outunit = 49
+c
+      WRITE (outunit,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF                         
+c
+      write(outunit,*) 'REF   :',trim(ref),':'
+      write(outunit,*) 'TABLE :',trim(table),':'
+      write(outunit,*) 'VIEW  :',trim(view),':'
+      write(outunit,*) 'PLANE :',trim(plane),':'
+      write(outunit,*) 'ANLY  :',trim(anly),':'
+      write(outunit,*) 'JOB   :',trim(job),':'
+      write(outunit,*) 'AAXLAB:',trim(aaxlab),':'
+      write(outunit,*) 'BAXLAB:',trim(baxlab),':'
+      write(outunit,*) 'BLABS1:',trim(blabs(1)),':'
+
+c
 c      
 c jdemod - removing printout
 c
@@ -270,15 +287,15 @@ C-----------------------------------------------------------------------
 c     Print out plot data in spreadsheet friendly format 
 C-----------------------------------------------------------------------        
 c
-      write(6,*)
-      write(6,'(a)') 'PLOT DATA:',REF
-      write(6,'(31(1x,a12))') 'AXIS:',(blabs(ib)(1:12),ib=1,nbs)
+      write(outunit,*)
+      write(outunit,'(a)') 'PLOT DATA:',REF
+      write(outunit,'(31(1x,a12))') 'AXIS:',(blabs(ib)(1:12),ib=1,nbs)
 c
       do ia = ia3,ia4
-         write(6,'(30(1x,g12.5))')
+         write(outunit,'(30(1x,g12.5))')
      >       as(ia),(cs(ia,ib),ib=1,nbs)
       end do 
-      write(6,*)
+      write(outunit,*)
 
 C                                                                               
 C-----------------------------------------------------------------------        

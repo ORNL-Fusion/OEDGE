@@ -104,8 +104,17 @@ c
 c slmod begin - new
       DATA t1i,t1e /0.0,0.0/
 c
-      simag1 = HI
-      simag2 = halflen
+c
+c     jdemod - setting simag1 to the ring length should be big enough
+c
+c      simag1 = HI
+      simag1 = ringlen
+c
+c     jdemod - halflen should probably be halfringlen since halflen is 
+c              never calculated or assigned
+c
+c      simag2 = halflen
+      simag2 = halfringlen
       ierror = MAXNKS
       eflag  = 0
 
@@ -463,6 +472,17 @@ c           more serious errcode comes along.
 c
             errcode = 1
             serr = simag
+
+c     
+c           jdemod - copy the code setting simag1 and simag2 from NoName
+c
+            IF (simag1.EQ.ringlen) THEN
+               simag1 = simag - soffset
+               simag2 = simag - soffset
+            ELSE
+               simag2 = simag - soffset
+            ENDIF
+
          endif
 c
 c        Exit conditions 1 and 2 do not generate error codes
@@ -1281,12 +1301,14 @@ c
 c        Deal with NEWN return codes
 c
          if (flag.eq.0) then
+            vsub=0.0
+            vsup=0.0
             if (founds) then
-               vsub = tmpgam/n
-               vsup = tmpgam/nimag
+               if (n.ne.0.0) vsub = tmpgam/n
+               if (nimag.ne.0.0) vsup = tmpgam/nimag
             else
-               vsub = tmpgam/nimag
-               vsup = tmpgam/n
+               if (nimag.ne.0.0) vsub = tmpgam/nimag
+               if (n.ne.0.0) vsup = tmpgam/n
             endif
             vsep = abs(vsub-vsup)
 c
@@ -1434,7 +1456,10 @@ c
          endif
 c
          tmpgam1 = gamma(s)
-         vtmp = tmpgam1 / n
+
+         vtmp = 0.0
+         if (n.ne.0.0) vtmp = tmpgam1 / n
+
          lastvel = vtmp
 c
          if (actswnmom.eq.4) then
@@ -1451,8 +1476,11 @@ c        else
             tmpgam1 = gamma(s-h)
             tmpgam2 = gamma(s)
 c
-            v1 = tmpgam1/nlast
-            v2 = tmpgam2/n
+            v1=0.0
+            if (nlast.ne.0.0) v1 = tmpgam1/nlast
+
+            v2=0.0
+            if (n.ne.0.0) v2 = tmpgam2/n
 c
             vgrad = (v2-v1) / h
 c

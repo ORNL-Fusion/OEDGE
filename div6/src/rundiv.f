@@ -53,6 +53,8 @@ c
       DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH', 
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH', 
      >  '17TH','18TH','19TH','20TH'/                                    
+
+      WRITE (0,*) "*RunDiv Starting"
 c
 c     Initialize the main .dat file output unit number
 c
@@ -498,8 +500,9 @@ c
 
       call create_html(jfcb)
 
-
+      WRITE (0,*) '*RunDiv Complete'
       STOP 'END OF DIVIMP'
+
 C                                                                      
  1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - ABORTED')      
       STOP                                                              

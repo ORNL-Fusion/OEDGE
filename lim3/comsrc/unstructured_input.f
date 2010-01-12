@@ -69,6 +69,9 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeUnstructuredInput
+      use iter_bm
+      use variable_wall
+      use yreflection
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -162,7 +165,18 @@ c
 c     Set to standard as default
 c
       impact_energy_opt = 0
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG I04 : Self sputtering option (added to match feature in DIVIMP)
+c               This allows self-sputtering to be specified independently
+c               of the sputter option
+c               0 = off
+c               1 = on (default to match existing behaviour for most options)
+c               2 = on (fixed constant self-sputtering energy specified)
+c
+      cselfs = 1
+c
 c
 c -----------------------------------------------------------------------
 c
@@ -178,7 +192,99 @@ c
 c              Shear_short_circuit_opt 1: P = CPCO * ( 2*ran-1) = (-CPCO,+CPCO) 
 c
       shear_short_circuit_opt=0
+cg
+c -----------------------------------------------------------------------
 c
+c     TAG L02: LIM Wall shape option - allow CAW to vary as a function of Y
+c              0 = off ... Wall = CAW
+c              1..n = on      CAW  = function of Y (option specifies function)
+c
+c              Option 1 = linear wall from CAW at ywall_start to 
+c                         CAW_MIN at YHALF (half way point between limiters)
+c
+      lim_wall_opt = 0
+c
+c     TAG L03: LIM Wall shape option - starting Y value for revised wall value
+c
+      ywall_start = 0.0
+
+c
+c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
+c
+      caw_min = HI
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L05 to L9: Limiter shape parameters for EDGE option 11 - ITER
+c     L05: rtor_setback - radial setback from LCFS at the toroidal half width of the BM
+c     L06: rslot_setback - radial setback from LCFS at slot half width
+c     L07: bm_tor_wid - toroidal half width of the BM (blanket module)
+c     L08: slot_tor_wid - toroidal half witdth of the center slot of BM 
+c     L09: lambda_design - design SOL decay length
+c
+      rtor_setback  = 0.07
+      rslot_setback = 0.01
+      bm_tor_wid    = 0.5954 
+      slot_tor_wid  = 0.03
+      lambda_design = 0.015
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L10 to L12: Inputs related to Y-Reflection option
+c
+c     L10: yreflection_opt: 0=off  1+ on : default = 0.0 or off
+c     L11: cmir_refl_lower - less than 0.0 - indicates location of Y<0 mirror
+c     L12: cmir_refl_upper - greater than 0.0 - indicates location of Y>0 mirror
+c     
+c     Default locations are also 0.0 for off - these MUST be specified to turn the 
+c     option on. 
+c
+c     yreflection_event_count - global initialization of counter to 0.0
+c
+      yreflection_opt = 0
+      cmir_refl_lower = 0.0
+      cmir_refl_upper = 0.0
+      yreflection_event_count = 0.0
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      calc_3d_power = 1
+c
+c -----------------------------------------------------------------------
+c 
+c     TAG L14 and L15: Specified Sputtering flux and energy function
+c     
+c     L14: External flux option: extfluxopt
+c          0 = off (limiter plasma conditions used for surface fluxes)
+c          1 = external flux data specified in X
+c          2 = external flux data specified in Y
+c          3 = external flux data specified in D (distance along limiter surface)
+c
+c          Note: -X,-Y and -D data apply to the Y<0 side of the limiter
+c                 X, Y and  D data apply to the Y>0 side of the limiter
+c
+c     L14:
+c
+      extfluxopt = 0
+c
+c     L15: 
+c
+c     External flux and energy function in either X,Y or D space
+c        <coord>   <flux m-2s-1>    <Eimpact eV>
+c     extfluxdata
+c
+      nextfluxdata = 0
+      extfluxdata = 0.0
 c
 c -----------------------------------------------------------------------
 c
@@ -194,6 +300,9 @@ c
 c     Turned off by default 
 C
       nnbg = 0 
+c
+c -----------------------------------------------------------------------
+c
 C
 C
 C
@@ -219,6 +328,9 @@ c
 c ======================================================================
 c
       SUBROUTINE ReadUnstructuredInput(line2)
+      use iter_bm
+      use variable_wall
+      use yreflection
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -278,9 +390,10 @@ c     2 - Eckstein IPP9/82 (1993)
 c     3 - Eckstein IPP9/82 + Adjustments from Garcia/Rosales-Roth 1996
 c     4 - specified constant yield
 c     5 - As 3 except a custom routine is used for W.  
+c     6 - 2007 Eckstein data where available - otherwise option 3
 c
 c
-        CALL ReadI(line,csputopt,1,5,'Sputter Data option')
+        CALL ReadI(line,csputopt,1,6,'Sputter Data option')
 c
 c
 c -----------------------------------------------------------------------
@@ -386,6 +499,130 @@ c
       elseif (tag(1:3).EQ.'L01') THEN
         CALL ReadI(line,shear_short_circuit_opt,0,1,
      >                'Shear Short Circuit Option')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L02: LIM Wall shape option - allow CAW to vary as a function of Y
+c              0 = off ... Wall = CAW
+c              1..n = on      CAW  = function of Y (option specifies function)
+c
+c              Option 1 = linear wall from CAW at ywall_start to 
+c                         CAW_MIN at YHALF (half way point between limiters)
+c
+      elseif (tag(1:3).EQ.'L02') THEN
+        CALL ReadI(line,lim_wall_opt,0,1,'LIM wall option')
+c
+c     TAG L03: LIM Wall shape option - starting Y value for revised wall value
+c
+      elseif (tag(1:3).EQ.'L03') THEN
+        CALL ReadR(line,ywall_start,0.0,HI,
+     >               'Starting Y value for alternate wall')
+c
+c     TAG L04: LIM Wall shape option - value of CAW reached at midpoint (YHALF)
+c
+      elseif (tag(1:3).EQ.'L04') THEN
+        CALL ReadR(line,caw_min,-HI,0.0,'Distance to wall at Yhalf')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L05 to L09: Limiter shape parameters for EDGE option 11 - ITER
+c     L03: rtor_setback - radial setback from LCFS at the toroidal half width of the BM
+c     L04: rslot_setback - radial setback from LCFS at slot half width
+c     L05: bm_tor_wid - toroidal half width of the BM (blanket module)
+c     L06: slot_tor_wid - toroidal half witdth of the center slot of BM 
+c     L07: lambda_design - design SOL decay length
+c
+      elseif (tag(1:3).EQ.'L05') THEN
+        CALL ReadR(line,rtor_setback,0.0,HI,
+     >          'Radial setback at BM edge (M)')
+      elseif (tag(1:3).EQ.'L06') THEN
+        CALL ReadR(line,rslot_setback,0.0,HI,
+     >                    'Radial setback at inner slot edge (M)')
+      elseif (tag(1:3).EQ.'L07') THEN
+        CALL ReadR(line,bm_tor_wid,0.0,HI,
+     >                    'Toroidal Half width of BM (M)')
+      elseif (tag(1:3).EQ.'L08') THEN
+        CALL ReadR(line,slot_tor_wid,0.0,HI,
+     >                    'Toroidal half width of slot (M)')
+      elseif (tag(1:3).EQ.'L09') THEN
+        CALL ReadR(line,lambda_design,0.0,HI,
+     >                    'Design decay length (M)')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L10 to L12: Inputs related to Y-Reflection option
+c
+c     L10: yreflection_opt: 0=off  1+ on : default = 0.0 or off
+c     L11: cmir_refl_lower - less than 0.0 - indicates location of Y<0 mirror
+c     L12: cmir_refl_upper - greater than 0.0 - indicates location of Y>0 mirror
+c     
+c     Default locations are also 0.0 for off - these MUST be specified to turn the 
+c     option on. 
+c
+c     L10: Y reflection option flag 
+c
+      elseif (tag(1:3).EQ.'L10') THEN
+        CALL ReadI(line,yreflection_opt,0,1,'Y-Reflection Option')
+c
+c     TAG L11: Y < 0 Reflection location specification
+c
+      elseif (tag(1:3).EQ.'L11') THEN
+        CALL ReadR(line,cmir_refl_lower,-HI,0.0,
+     >               'Y-reflection: Y<0 reflection boundary')
+c
+c     TAG L12: Y > 0 Reflection location specification
+c
+      elseif (tag(1:3).EQ.'L12') THEN
+        CALL ReadR(line,cmir_refl_upper,0.0,HI,
+     >               'Y-reflection: Y>0 reflection boundary')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L13: Calculate 3D Power emissions 
+c
+c     calc_3d_power = 0 (off)
+c                   = 1 (on)
+c
+c     Calculating the 3D versions of powls and lines which are stored
+c     in lim5 and tiz3 in the dmpout routine is time consuming. The 
+c     default of this option is to allow for calculation but when these
+c     data aren't needed the calculation can be turned off.
+c
+      elseif (tag(1:3).EQ.'L13') THEN
+        CALL ReadI(line,calc_3d_power,0,1,'3D power calculation option')
+c
+c
+c -----------------------------------------------------------------------
+c 
+c     TAG L14 and L15: Specified Sputtering flux and energy function
+c     
+c     L14: External flux option: extfluxopt
+c          0 = off (limiter plasma conditions used for surface fluxes)
+c          1 = external flux data specified in X
+c          2 = external flux data specified in Y
+c          3 = external flux data specified in D (distance along limiter surface)
+c
+c          Note: -X,-Y and -D data apply to the Y<0 side of the limiter
+c                 X, Y and  D data apply to the Y>0 side of the limiter
+c
+c     L14:
+c
+      elseif (tag(1:3).EQ.'L14') THEN
+        CALL ReadI(line,extfluxopt,0,3,'External sputtering flux'//
+     >         ' option')
+c
+c     L15: 
+c
+c     External flux and energy function in either X,Y or D space
+c        <coord>   <flux m-2s-1>    <Eimpact eV>
+c     extfluxdata
+c
+      elseif (tag(1:3).EQ.'L15') THEN
+c
+         CALL RDRARN(extfluxdata,nextfluxdata,
+     >               MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
+     >               2,'External sputtering flux data',IERR)
+
 c
 c -----------------------------------------------------------------------
 c
@@ -629,7 +866,7 @@ c
 c
 c
       SUBROUTINE ReadR(line,rval,rmin,rmax,tag)
-
+      use error_handling
       IMPLICIT none
 
       CHARACTER line*72,tag*(*)
@@ -652,7 +889,9 @@ c
       WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',rval
 
       RETURN
-98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
+
+ 98   call errmsg('READR','Problem reading unstructured input')
+      WRITE(DATUNIT,*) 'Problem reading unstructured input'
 99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
       WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
       WRITE(DATUNIT,'(5X,A,3G10.3)')
