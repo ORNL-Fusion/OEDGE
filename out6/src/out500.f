@@ -394,11 +394,29 @@ c
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
 c
+C		IPP/09 Krieger - 40 Color plot option added 
+C     
+        if (icntr.eq.0) then
         CALL CONTOUR (ICNTR,NGS,Ffi,IZ,IZ,MAXIZS,FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
      >                nconts,conts,cntropt,minscale,maxscale)
+        else
 c
+c         Setup 40 colour plots
+         WRITE(6,*) 'Out551 using 40 color plots'
+          call setup_col(41,4)
+c		  		    
+          CALL CONTOUR (ICNTR,NGS,Ffi,IZ,IZ,MAXIZS,FT,FP,1.0,
+     >                XOUTS,1,NXS,YOUTS,1,NYS,
+     >                XXMIN,XXMAX,YYMIN,YYMAX,
+     >                nconts,conts,5,minscale,maxscale) 
+c
+c         restore colours to original
+c
+          call setup_col(n_cols,col_opt)
+     
+        endif   
       ENDIF
 C
 C-----------------------------------------------------------------------
@@ -422,11 +440,28 @@ c
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
 c
-        CALL CONTOUR (ICNTR,NGS,Fthi,IZ,IZ,MAXIZS,FT,FP,1.0,
+C		IPP/09 - Krieger 40 Color plot option added 
+C
+        if (icntr.eq.0) then
+          CALL CONTOUR (ICNTR,NGS,Fthi,IZ,IZ,MAXIZS,FT,FP,1.0,
+     >                  XOUTS,1,NXS,YOUTS,1,NYS,
+     >                  XXMIN,XXMAX,YYMIN,YYMAX,
+     >                  nconts,conts,cntropt,minscale,maxscale)
+        else
+c
+c         Setup 40 colour plots
+          WRITE(6,*) 'Out551 using 40 color plots'
+          call setup_col(41,4)
+c		  		             
+          CALL CONTOUR (ICNTR,NGS,Fthi,IZ,IZ,MAXIZS,FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
-     >                nconts,conts,cntropt,minscale,maxscale)
-
+     >                nconts,conts,5,minscale,maxscale)
+c
+c         restore colours to original
+c
+          call setup_col(n_cols,col_opt)
+        endif 
       ENDIF
 C
 C-----------------------------------------------------------------------
@@ -450,10 +485,28 @@ c
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
 c
-        CALL CONTOUR (ICNTR,NGS,Fvbg,IZ,IZ,MAXIZS,FT,FP,1.0,
+C		IPP/09 - Krieger 40 Color plot option added 
+C
+        if (icntr.eq.0) then
+          CALL CONTOUR (ICNTR,NGS,Fvbg,IZ,IZ,MAXIZS,FT,FP,1.0,
+     >                  XOUTS,1,NXS,YOUTS,1,NYS,
+     >                  XXMIN,XXMAX,YYMIN,YYMAX,
+     >                  nconts,conts,cntropt,minscale,maxscale)
+        else
+c
+c         Setup 40 colour plots
+         WRITE(6,*) 'Out551 using 40 color plots'
+          call setup_col(41,4)
+C
+          CALL CONTOUR (ICNTR,NGS,Fvbg,IZ,IZ,MAXIZS,FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
-     >                nconts,conts,cntropt,minscale,maxscale)
+     >                nconts,conts,5,minscale,maxscale)
+c
+c         restore colours to original
+c
+          call setup_col(n_cols,col_opt)
+        endif      
 c
       ENDIF
 C
@@ -489,10 +542,28 @@ c
 c        WRITE(0,*)'Fsum',Fsum(25,8,iz),' ',ffi(25,8,iz),' ',
 c     >                                      fthi(25,8,iz)
 c
-        CALL CONTOUR (ICNTR,NGS,Fsum,IZ,IZ,MAXIZS,FT,FP,1.0,
+C		IPP/09 - Krieger 40 Color plot option added 
+C
+        if (icntr.eq.0) then
+          CALL CONTOUR (ICNTR,NGS,Fsum,IZ,IZ,MAXIZS,FT,FP,1.0,
+     >                  XOUTS,1,NXS,YOUTS,1,NYS,
+     >                  XXMIN,XXMAX,YYMIN,YYMAX,
+     >                  nconts,conts,cntropt,minscale,maxscale)
+        else
+c
+c         Setup 40 colour plots
+         WRITE(6,*) 'Out557 using 40 color plots'
+          call setup_col(41,4)
+C
+          CALL CONTOUR (ICNTR,NGS,Fsum,IZ,IZ,MAXIZS,FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
-     >                nconts,conts,cntropt,minscale,maxscale)
+     >                nconts,conts,5,minscale,maxscale)
+c
+c         restore colours to original
+c
+          call setup_col(n_cols,col_opt)
+        endif      
 
       ENDIF
 C
@@ -520,11 +591,29 @@ c
 c        WRITE(0,*)'Fcell',Fcell(25,8,iz),' ',ffi(25,8,iz),' ',
 c     >                                      fthi(25,8,iz)
 c
-        CALL CONTOUR (ICNTR,NGS,Fcell,IZ,IZ,MAXIZS,FT,FP,1.0,
+C		IPP/09 - Krieger 40 Color plot option added 
+C
+        if (icntr.eq.0) then
+          CALL CONTOUR (ICNTR,NGS,Fcell,IZ,IZ,MAXIZS,FT,FP,1.0,
+     >                  XOUTS,1,NXS,YOUTS,1,NYS,
+     >                  XXMIN,XXMAX,YYMIN,YYMAX,
+     >                  nconts,conts,cntropt,minscale,maxscale)
+        else
+c
+c         Setup 40 colour plots
+         WRITE(6,*) 'Out557 using 40 color plots'
+          call setup_col(41,4)
+C
+          CALL CONTOUR (ICNTR,NGS,Fcell,IZ,IZ,MAXIZS,FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
-     >                nconts,conts,cntropt,minscale,maxscale)
+     >                nconts,conts,5,minscale,maxscale)
+c
+c         restore colours to original
+c
+          call setup_col(n_cols,col_opt)
 
+        endif      
       ENDIF
 C
 C-----------------------------------------------------------------------

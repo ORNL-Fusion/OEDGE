@@ -2262,31 +2262,37 @@ C    NO INTERSECTION
        END
 C
 C
+c     IPP/08 Krieger - Optimizer may lead to wrong results
+c     for this ugly kludge. More elegant: use f90 intrinsic HUGE
       FUNCTION ILARG(IMACH)
-      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      integer imach, ilarg, i
+      i=0
+      ilarg=huge(i)
+*      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 C  THIS FUNCTION RETURNS THE LARGEST INTEGER ON THE MACHINE. IT IS
 C  ASSUMED THAT THIS INTERGER CAN BE WRITTEN AS (2**NMAX)-1
-      IF (IMACH.EQ.1) THEN
-        ILARG=2**22
-        ILARG=2*ILARG**2+1
-        GOTO 3
-      ENDIF
-      IA=1
-      DO 1 J=1,200
-        IN=IA*2
-        IF (IN.LE.IA) GOTO 2
-        IA=IN
-1     CONTINUE
-      WRITE (6,*) 'ERROR IN ILARG, EXIT CALLED'
-      CALL EXIT
-2     CONTINUE
-      ILARG=IA+(IA-1)
-      INEG=ILARG+1
-      IF (INEG.GE.ILARG) THEN
-        WRITE (6,*) 'ERROR IN ILARG, EXIT CALLED'
-        CALL EXIT
-      ENDIF
-3     CONTINUE
+*      IF (IMACH.EQ.1) THEN
+*        ILARG=2**22
+*        ILARG=2*ILARG**2+1
+*        GOTO 3
+*      ENDIF
+*      IA=1
+*      DO 1 J=1,200
+*        IN=IA*2
+*        IF (IN.LE.IA) GOTO 2
+*        IA=IN
+*1     CONTINUE
+*      WRITE (6,*) 'ERROR IN ILARG, EXIT CALLED'
+*      CALL EXIT
+*2     CONTINUE
+*      ILARG=IA+(IA-1)
+*      INEG=ILARG+1
+*      IF (INEG.GE.ILARG) THEN
+*        WRITE (6,*) 'ERROR IN ILARG, EXIT CALLED'
+*        WRITE (0,*) 'ERROR IN ILARG, INEG GE ILARG'
+*        CALL EXIT
+*      ENDIF
+*3     CONTINUE
       WRITE (6,*) 'LARGEST INTEGER ON THIS MACHINE: '
       WRITE (6,*) 'ILARG= ',ILARG
       CALL LEER(2)

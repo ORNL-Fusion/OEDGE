@@ -15647,7 +15647,10 @@ c     Formatting
 c
   10  format(a)
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+c200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+c     IPP/09 - Krieger: had to change this because sun compiler
+c     generates code choking on original format statement
+ 200  format(4x,i5,6x,i5,4x,i5)
  400  format(12i6)
  500  format(6e18.10)
 c

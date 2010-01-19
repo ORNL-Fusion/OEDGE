@@ -1569,6 +1569,9 @@ c
 
       INTEGER iobj,iside,isrf
 
+c     IPP/09 - Krieger - have to declare type
+      REAL*8 gmCalcTetrahedronVolume
+
       CALL ClearDerivedQuantity(mode)
 
       SELECTCASE(mode)     
@@ -1584,7 +1587,9 @@ c
           obj_volume = 0.0D0
           DO iobj = 1, nobj
             IF (grp(obj(iobj)%group)%type.NE.GRP_TETRAHEDRON) CYCLE
-            CALL gmCalcTetrahedronVolume(iobj)
+c           IPP/09 Krieger - this should be a function call (obj_volume?)
+c           CALL gmCalcTetrahedronVolume(iobj)
+            obj_volume(iobj)=gmCalcTetrahedronVolume(iobj)
           ENDDO
 
         CASE (MODE_SRF_OBJ)
@@ -1599,7 +1604,7 @@ c
                   WRITE(0,*) '  ISIDE,ISRF    = ',iside,isrf
                   WRITE(0,*) '  CURRENT VALUE = ',srf_obj(isrf)
                   WRITE(0,*) '  NEW     VALUE = ',iobj
-                  CALL ER('CalcDerivedQuantity','Duplicate SRF_OBJ',*99)     
+                  CALL ER('CalcDerivedQuantity','Duplicate SRF_OBJ',*99)
                 ELSE
                   srf_obj(isrf) = iobj
                 ENDIF

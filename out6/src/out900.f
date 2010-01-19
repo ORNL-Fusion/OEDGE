@@ -897,6 +897,8 @@ c     >    nenum,99,0.0,temax,0.0,150.0,IGNORS,ITEC,AVS,NAVS,
      >    nenum,99,temin,temax,-HI,HI,IGNORS,ITEC,AVS,NAVS,
      >    JOB,TITLE2,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,IOPT,2,1.0,0)
 
+c         IPP/09 Krieger - I think colors should be reset here
+          call setup_col(ncols,col_opt)
       endif 
 
 c

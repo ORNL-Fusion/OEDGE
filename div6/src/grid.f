@@ -7304,8 +7304,8 @@ c          IF (r1.LT.1.OR.r1.GT.NUMZONE) CYCLE
         DO i2 = 1, nknot
 c          DO i2 = izone(r1,z1), izone(r1+1,z1)-1
              
-            write(6,'(a,15i8)') 'IZONE:',i1,z1,r1,i2,izone(r1,z1),
-     >                izone(r1+1,z1)-1
+c            write(6,'(a,15i8)') 'IZONE:',i1,z1,r1,i2,izone(r1,z1),
+c     >                izone(r1+1,z1)-1
 
             IF (i1.EQ.i2) CYCLE
 c...

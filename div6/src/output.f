@@ -558,7 +558,9 @@ c
       INTEGER   fp
       CHARACTER comment*(*)
 
-      write(fp,*) 'OutputGrid:',trim(comment)
+C     IPP/08 Krieger - changed output channel to 6 (lim file)
+C     because of conflict with open statement in OutputData
+      write(6,*) 'OutputGrid:',trim(comment)
 
       CALL OutputData(fp,comment)
 
@@ -762,7 +764,9 @@ c
       CHARACTER*128 note
 
       write(6,*) 'OutputData:',fp,":",trim(comment)
-      close(fp)
+c     IPP/09 Krieger - don't need this because we use unit 6
+c     for write statement above
+c     close(fp)
 
 c f90 strange
       IF (stopopt.EQ.80) RETURN

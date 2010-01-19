@@ -1147,6 +1147,9 @@ c              CALL JOIN  (listr(i1+1),listz(i1+1))
 
 
 c...  Reset drawing settings:
+c     IPP/09 - Krieger - also reset color settings
+c     which is not possible right now because n_cols, col_opt not avail.
+c     call setup_col(n_cols,col_opt)
       CALL FULL
       CALL LINCOL(1)
       CALL THICK(1)

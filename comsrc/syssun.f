@@ -346,6 +346,7 @@ C     MAINTENANCE.
 C
 C     DAVID ELDER, FEB 4 1993
 C
+c     IPP/08 Krieger - changed timing code to use function SECNDS
 C
 c     NOTE!: Actpin MUST be converted to a null terminated string
 c
@@ -353,17 +354,16 @@ c
 c
       integer lenstr,len
       external lenstr
-      integer time
-      external time
 c
-      REAL ZA02AS
-      EXTERNAL ZA02AS
+      real secnds
+      external secnds
 c
 c     Assign the return code to zero for now 
 c
       retcode = 0
 c
-      NIMTIM = time()
+      NIMTIM = secnds(0.0)
+
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
 C
@@ -390,7 +390,7 @@ C
 C      CALL PINPGX
 C
 C
-      NIMTIM = time() - NIMTIM
+      NIMTIM = secnds(NIMTIM)
       WRITE(6,*) 'TIME USED IN HYDROGEN NEUTRAL CODE:',NIMTIM,' (S)'
       write(6,*) '- PIN RETURN CODE = ',retcode
 C
