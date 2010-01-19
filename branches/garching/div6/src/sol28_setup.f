@@ -1334,7 +1334,7 @@ c...
         tube(it)%ti  (LO,ion) = node(2)%ti(ion)
         tube(it)%jsat(LO,ion) = 
      .    GetJsat2(node(2)%te,node(2)%ti(ion),0.5*node(2)%ne,1.0) 
-        STOP 'OK 1'
+c        STOP 'OK 1'
       ENDIF
 c...  Set low index target node Te,i:
       SELECTCASE(node(2)%par_set)
@@ -1362,7 +1362,7 @@ c...  Set low index target node Te,i:
         tube(it)%jsat(HI,ion) = 
      .    GetJsat2(node(nnode-1)%te,node(nnode-1)%ti(ion),
      .             node(nnode-1)%ne*0.5,1.0) 
-        STOP 'OK 2'
+c        STOP 'OK 2'
       ENDIF
       SELECTCASE(node(nnode-1)%par_set)
         CASE (0) 

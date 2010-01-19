@@ -1513,7 +1513,9 @@ Contains
        !             &H_Isotope_Composition)))
        !Reflected_Energy = Find_HC_Mass (HC_Species,H_Isotope_Composition) * (HC_Velocity / 1.38E4) * (HC_Velocity / 1.38E4)
 
-       HC_Velocity = SQRT (8.0 * 1.38066E-23 *  Find_Wall_Temperature (Vessel_Segment) / ( Pi_Value  * AMU * Find_HC_Mass (HC_Species,&
+       ! IPP/09 Krieger - shortened line (SUNWorkshop chokes over len>132)
+
+       HC_Velocity = SQRT(8.0 * 1.38066E-23 *  Find_Wall_Temperature(Vessel_Segment) / (Pi_Value * AMU * Find_HC_Mass(HC_Species,&
                           &H_Isotope_Composition)))
        Reflected_Energy = 0.5* AMU / ech * Find_HC_Mass (HC_Species,H_Isotope_Composition) * HC_Velocity**2
 
@@ -1522,7 +1524,7 @@ Contains
     ElseIf (hc_reflection_energy_model .eq. 3) Then
        ! Particle energy found with Alman & Ruzic data.
        !Call Reflect_EnergyVel_Alman_Ruzic (HC_Species,Target_Segment,R_Position,Z_Position,HC_Temperature,HC_Velocity,HC_Angle_To_Normal,Surface_Temperature)
-    Else		
+    Else
        ! Unsupported reflection model selected.
        Write (Output_Unit_HC_Alert,*) "Unsupported reflection energy/vel model selected: ", hc_reflection_energy_model
        Write (Output_Unit_HC_Alert,*) "Program Stopping."
@@ -1572,7 +1574,9 @@ Contains
        !                   &H_Isotope_Composition)))
        !Reflected_Energy = Find_HC_Mass (HC_Species,H_Isotope_Composition) * (HC_Velocity / 1.38E4) * (HC_Velocity / 1.38E4)
 
-       HC_Velocity = SQRT (8.0 * 1.38066E-23 * Find_Target_Temperature (Target_Index) / ( Pi_Value  * AMU * Find_HC_Mass (HC_Species,&
+       ! IPP/09 Krieger - shortened line (SUNWorkshop chokes over len>132)
+
+       HC_Velocity = SQRT(8.0 * 1.38066E-23 * Find_Target_Temperature(Target_Index) / (Pi_Value * AMU * Find_HC_Mass(HC_Species,&
                           &H_Isotope_Composition)))
        Reflected_Energy = 0.5* AMU / ech * Find_HC_Mass (HC_Species,H_Isotope_Composition) * HC_Velocity**2
 
@@ -1580,10 +1584,10 @@ Contains
     ElseIf (hc_reflection_energy_model .eq. 3) Then
        ! Particle energy found with Alman & Ruzic data.
        !Call Reflect_EnergyVel_Alman_Ruzic (HC_Species,Target_Index,R_Position,Z_Position,HC_Temperature,HC_Velocity,HC_Angle_To_Normal,Surface_Temperature)
-    Else		
+    Else
        ! Unsupported reflection model selected.
        Write (Output_Unit_HC_Alert,*) "Unsupported reflection energy/vel model selected: ", hc_reflection_energy_model
-       Write (Output_Unit_HC_Alert,*) "Program Stopping."		
+       Write (Output_Unit_HC_Alert,*) "Program Stopping."
        Stop
     End If
  

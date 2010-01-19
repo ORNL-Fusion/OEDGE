@@ -2028,6 +2028,9 @@ c
         endif
       ENDIF
 C
+c     IPP/09 - Krieger - should reset colors here
+c     but not possible because n_cols,col_opt are unavailable
+c     call setup_col(n_cols,col_opt)
       RETURN
 c slmod begin
  99   WRITE(0,*) 'SUPIMP2 ERROR: UNABLE TO OPEN TRIANGLES FILE'

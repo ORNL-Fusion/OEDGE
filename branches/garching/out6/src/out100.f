@@ -103,7 +103,9 @@ c
       endif
 
       call init_plot(iref,graph,iopt) 
-
+c     IPP/08 Krieger - added this because original color opt might 
+c     get lost by other plots
+      call setup_col(n_cols,col_opt)
 
 
 C
@@ -1465,47 +1467,47 @@ c
 
          else
 
-c            TADAS(1) =   5.0
-c            TADAS(2) =   6.0
-c            TADAS(3) =   7.0
-c            TADAS(4) =   8.0
-c            TADAS(5) =   9.0
-c            TADAS(6) =  10.0
-c            TADAS(7) =  11.0
-c            TADAS(8) =  12.0
-c            TADAS(9) =  13.0
-c            TADAS(10) = 14.0
-c            TADAS(11) = 15.0
-c            TADAS(12) = 16.0
-c            TADAS(13) = 17.0
-c            TADAS(14) = 18.0
-c            TADAS(15) = 20.0
-c            TADAS(16) = 22.0
-c            TADAS(17) = 24.0
-c            TADAS(18) = 26.0
-c            TADAS(19) = 28.0
-c            TADAS(20) = 30.0
+            TADAS(1) =   5.0
+            TADAS(2) =   6.0
+            TADAS(3) =   7.0
+            TADAS(4) =   8.0
+            TADAS(5) =   9.0
+            TADAS(6) =  10.0
+            TADAS(7) =  11.0
+            TADAS(8) =  12.0
+            TADAS(9) =  13.0
+            TADAS(10) = 14.0
+            TADAS(11) = 15.0
+            TADAS(12) = 16.0
+            TADAS(13) = 17.0
+            TADAS(14) = 18.0
+            TADAS(15) = 20.0
+            TADAS(16) = 22.0
+            TADAS(17) = 24.0
+            TADAS(18) = 26.0
+            TADAS(19) = 28.0
+            TADAS(20) = 30.0
 
-            TADAS(1) = 0.5
-            TADAS(2) = 0.75
-            TADAS(3) = 1.0
-            TADAS(4) = 1.25
-            TADAS(5) = 1.50
-            TADAS(6) = 1.75
-            TADAS(7) = 2.0
-            TADAS(8) = 2.25
-            TADAS(9) = 2.5
-            TADAS(10) = 2.75
-            TADAS(11) = 3.0
-            TADAS(12) = 4.0
-            TADAS(13) = 5.0
-            TADAS(14) = 5.5
-            TADAS(15) = 6.0
-            TADAS(16) = 6.5
-            TADAS(17) = 7.0
-            TADAS(18) = 8.0
-            TADAS(19) = 9.0
-            TADAS(20) = 10.0
+c            TADAS(1) = 0.5
+c            TADAS(2) = 0.75
+c            TADAS(3) = 1.0
+c            TADAS(4) = 1.25
+c            TADAS(5) = 1.50
+c            TADAS(6) = 1.75
+c            TADAS(7) = 2.0
+c            TADAS(8) = 2.25
+c            TADAS(9) = 2.5
+c            TADAS(10) = 2.75
+c            TADAS(11) = 3.0
+c            TADAS(12) = 4.0
+c            TADAS(13) = 5.0
+c            TADAS(14) = 5.5
+c            TADAS(15) = 6.0
+c            TADAS(16) = 6.5
+c            TADAS(17) = 7.0
+c            TADAS(18) = 8.0
+c            TADAS(19) = 9.0
+c            TADAS(20) = 10.0
 
          endif
 c

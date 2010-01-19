@@ -1331,7 +1331,8 @@ c
              call setup_col(ncntr+1,2)
          elseif (icntr.eq.3.or.icntr.eq.4) then
              ncntr = ncntr
-             call setup_col(ncntr+1,2)
+c            IPP/09 Krieger - should be 3 instead of 2
+             call setup_col(ncntr+1,3)
          endif
 
          PLANE = '                                    '
@@ -1971,6 +1972,9 @@ c      ENDDO
       IF (zval.NE.-99.0) zval = -99.0
 
       IF (MARsum.NE.0.0) WRITE(0,*) 'MARSUM:',MARsum
+
+c     IPP/09 - Krieger - should reset colors here
+      call setup_col(ncntr,icntr)
 
       RETURN
  9012 FORMAT(1X,'PLOT',I3,4X,A)

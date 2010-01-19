@@ -812,14 +812,20 @@ c        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
 c
         RETURN
 c slmod begin
-      ELSEIF (grdnmod.NE.0.AND.
-     .        ir.LT.irwall.AND.irouts(ik1,ir).EQ.irwall) THEN
-        s1 = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
-     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-c        s = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
-c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-        Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
-      RETURN
+c     IPP/08 Krieger - Usual problem: ik1 exists only if grdnmod.ne.0
+c     INTEL compiler runtime system always evaluates complete set of
+c     conditions -> requires nested if clause
+*     ELSEIF (grdnmod.NE.0.AND.
+*    .        ir.LT.irwall.AND.irouts(ik1,ir).EQ.irwall) THEN
+      ELSEIF (grdnmod.NE.0) THEN
+        IF (ir.LT.irwall.AND.irouts(ik1,ir).EQ.irwall) THEN
+          s1 = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
+     .                           (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
+c         s  = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
+c     .                          (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
+          Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
+          RETURN
+        ENDIF
 c slmod end
       ENDIF
 c

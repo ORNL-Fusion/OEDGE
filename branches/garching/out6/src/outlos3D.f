@@ -276,7 +276,7 @@ c
              call setup_col(ncntr+1,2)
          elseif (icntr.eq.3.or.icntr.eq.4) then
              ncntr = ncntr
-             call setup_col(ncntr+1,2)
+             call setup_col(ncntr+1,3)
          endif
 c
 c         write(0,'(a,2i4,8(1x,g12.5))') 'PLOT_CONT:',icntr,ncntr,
@@ -414,6 +414,8 @@ c----------------------------------------------------------------------
 c
 c     Return from 3D image routine
 c
+c     IPP/09 - Krieger - should reset colors here
+      call setup_col(ncntr,icntr)
       return
 c
 c     Format statements 
@@ -1715,7 +1717,8 @@ c
             call setup_col(ncntr+1,2)
          elseif (icntr.eq.3.or.icntr.eq.4) then
             ncntr = ncntr
-            call setup_col(ncntr+1,2)
+c           IPP/09 - Krieger - should be 3 instead of 2?
+            call setup_col(ncntr+1,3)
          endif
 c
       endif
@@ -2083,6 +2086,8 @@ c
 c
 c     Return from generalized 3D LOS routine
 c
+c     IPP/09 - Krieger - should reset colors here
+      call setup_col(ncntr,icntr)
       return
 c
 c     Format statements 
