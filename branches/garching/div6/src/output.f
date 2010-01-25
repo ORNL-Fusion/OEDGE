@@ -558,9 +558,9 @@ c
       INTEGER   fp
       CHARACTER comment*(*)
 
-C     IPP/08 Krieger - changed output channel to 6 (lim file)
-C     because of conflict with open statement in OutputData
-      write(6,*) 'OutputGrid:',trim(comment)
+c     IPP/08 Krieger - changed output channel to 6 (lim file)
+c     because of conflict with open statement in OutputData
+c      write(fp,*) 'OutputGrid:',trim(comment)
 
       CALL OutputData(fp,comment)
 
@@ -721,18 +721,6 @@ c
 600   CONTINUE
 
       CLOSE(fp)
-
-
-
-
-
-
-
-
-
-
-
-
 c-----------------------------------
 
       RETURN
@@ -753,15 +741,22 @@ c
       INCLUDE 'params'
       INCLUDE 'comtor'
       INCLUDE 'cgeom'
+      INCLUDE 'dynam1'
       INCLUDE 'pindata'
       INCLUDE 'grbound'
       INCLUDE 'slcom'
 
-      INTEGER ik,ir,in,ii,i1,i2,id
+      INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
       CHARACTER*7   irtag(0:MAXNRS)
       CHARACTER*128 note
+      CHARACTER     ring_tag(4)*4
+
+      ring_tag(1) = 'SOL '
+      ring_tag(2) = 'PFZ '
+      ring_tag(3) = 'CORE'
+      ring_tag(4) = 'N/A '
 
       write(6,*) 'OutputData:',fp,":",trim(comment)
 c     IPP/09 Krieger - don't need this because we use unit 6
@@ -816,7 +811,8 @@ c f90 strange
       WRITE(fp,12) 'maxrings ',maxrings
       WRITE(fp,10) 'npolyp   ',npolyp  ,'vpolyp   ',vpolyp
       WRITE(fp,12) 'vpolmin  ',vpolmin
-      WRITE(fp,*)
+      WRITE(fp,* ) 'vpolmin  ',vpolmin
+      WRITE(fp,* ) 'nopriv   ',nopriv
       WRITE(fp,16) 'r0       ',r0      ,'z0       ',z0
       WRITE(fp,16) 'rxp      ',rxp     ,'zxp      ',zxp
       WRITE(fp,17) 'dthetg   ',dthetg
@@ -836,16 +832,18 @@ c f90
       WRITE(fp,*) 'RING DATA:'
       WRITE(fp,*)
 
-      WRITE(fp,'(4A4,4A6,1X,A4,1X,2(A3,6X),3A10,A8,A5,1X,2A8,2A4)')
-     .  'ir' ,'nks','id','org','idds2','idds1','ikto2','ikti2','ikm',
-     .  'vl1','vl2','rhoIN (mm)','rho','rhoOUT','ksmaxs','ikb',
+      WRITE(fp,'(4A4,5A6,1X,A4,1X,2(A3,6X),3A10,A8,A5,1X,2A8,2A4)')
+     .  'ir' ,'nks','id','org','type','idds2','idds1','ikto2','ikti2',
+     .  'ikm','vl1','vl2','rhoIN (mm)','rho','rhoOUT','ksmaxs','ikb',
      .  'psin2','psin1','mp1','mp2'
 
       DO ir = 1, nrs
-        WRITE(fp,'(4I4,4I6,1X,I4,1X,'//
+        i1 = ringtype(ir)
+        IF (i1.LT.1.OR.i1.GT.3) i1 = 4
+        WRITE(fp,'(4I4,2X,A4,4I6,1X,I4,1X,'//
      .           ' 2(I3,A,I2,A),3F10.5,1X,F7.3,I5,1X,2F8.4,
      .               2I4,1X,A)')
-     .    ir,nks(ir),idring(ir),irorg2(ir),
+     .    ir,nks(ir),idring(ir),irorg2(ir),ring_tag(i1),
      .    MAX(MIN(idds(ir,2),999),-999),
      .    MAX(MIN(idds(ir,1),999),-999),
      .    ikto2(ir),ikti2(ir),ikmids(ir),
@@ -990,14 +988,15 @@ c     .   'rvesm1','zvesm1','rvesm2','zvesm2'
       ENDDO
 
       WRITE(fp,*)
-      WRITE(fp,'(A4,A6,10A10)') 'in','jvesm','rvesm1','zvesm1',
+      WRITE(fp,'(A4,A6,12A10)') 'in','jvesm','rvesm1','zvesm1',
      .                          'rvesm2','zvesm2','fluxhw','flxhw2',
-     .                          'flxhw3','flxhw4','flxhw5','flxhw6'
+     .                          'flxhw3','flxhw4','flxhw5','flxhw6',
+     .                          'flxhw7','flxhw8'
       DO in = 1, nvesm+nvesp
-        WRITE(fp,'(I4,I6,4F10.6,1P,6E10.2,0P)')
+        WRITE(fp,'(I4,I6,4F10.6,1P,8E10.2,0P)')
      .    in,jvesm(in),rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2),
      .    fluxhw(in),flxhw2(in),flxhw3(in),flxhw4(in),flxhw5(in),
-     .    flxhw6(in)
+     .    flxhw6(in),flxhw7(in),flxhw8(in)
       ENDDO
 
 
@@ -1035,7 +1034,7 @@ c     .   'rvesm1','zvesm1','rvesm2','zvesm2'
      .  '  '  ,'24','25','26','27','28','29','30','31'
 
       DO in = 1, wallpts
-        WRITE(fp,'(I4,7(1x,F10.5),1x,e12.3)')
+        WRITE(fp,'(I4,8F10.5)')
      .    in,(wallpt(in,ii),ii=24,31)
       ENDDO
 
@@ -1077,8 +1076,10 @@ c          IF (kvhs(ik,ir).LT.1.0) cs = cs / qtim
 
           WRITE(fp,'(2I3,1P,3E11.4,5E11.3,0P,3F10.4,A)') ik,ir,
      .      kbfs (ik,ir),bratio(ik,ir),kes(ik,ir),
+c     .      kvhs(ik,ir),knbs(ik,ir),knes(ik,ir),
      .      kvhs(ik,ir)/qtim,knbs(ik,ir),knes(ik,ir),
      .      pinatom(ik,ir),pinmol(ik,ir)*2,
+c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
      .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
      .      note(1:LEN_TRIM(note))
 
@@ -1102,14 +1103,14 @@ c          IF (kvhs(ik,ir).LT.1.0) cs = cs / qtim
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A3,5A4,4A10,3A11,1X,A7)')
+        WRITE(fp,'(2A4,5A4,4A10,3A11,1X,A7)')
      .    'ik','ir','vt','iki','iri','iko','iro',
      .    'kinds','koutds',
      .    'finds','foutds','kvols','kareas','thetag',irtag(ir)
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(89X,F10.6,I4)') thetat(id),idds(ir,2)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,2)
         ENDIF
 
         DO ik = 1, nks(ir)
@@ -1122,7 +1123,7 @@ c          IF (kvhs(ik,ir).LT.1.0) cs = cs / qtim
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
+          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
      .      ik,ir,virtag(ik,ir),
      .      ikins(ik,ir),irins (ik,ir),ikouts(ik,ir),irouts(ik,ir),
      .      kinds(ik,ir),koutds(ik,ir),finds (ik,ir),foutds(ik,ir),
@@ -1133,7 +1134,7 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(89X,F10.6,I4)') thetat(id),idds(ir,1)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,1)
         ENDIF
       ENDDO
 
@@ -1144,18 +1145,18 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A3,2A10,2A20,A20,A12,1X,A7)')
+        WRITE(fp,'(2A4,2A10,2A20,A20,A12,A8,1X,A7)')
      .    'ik','ir',
      .    'rs','zs','kss (/ max)','ksb (% max)',
-     .    'kps (/ max)','kpb',
+     .    'kps (/ max)','kpb','d_kpb',
      .    irtag(ir)
 
         IF (ir.LT.irsep) THEN
-          WRITE(fp,'(2I3,40X,F12.6,28X,F12.6)')
+          WRITE(fp,'(2I4,40X,F12.6,28X,F12.6)')
      .      0,ir,ksb(0,ir),kpb(0,ir)
         ELSE
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(2I3,2F10.6,20X,F12.6,28X,F12.6,A,I2,A)')
+          WRITE(fp,'(2I4,2F10.6,20X,F12.6,28X,F12.6,A,I2,A)')
      .      idds(ir,2),ir,rp(id),zp(id),ksb(0,ir),
      .      kpb(0,ir),' (',idds(ir,2),')'
         ENDIF
@@ -1170,21 +1171,23 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
-c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A)')
+c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
+          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
      .      ik,ir,
      .      rs (ik,ir),zs (ik,ir),
      .      kss(ik,ir),kss(ik,ir)/(ksmaxs(ir)+1.0E-10),
      .      ksb(ik,ir),(ksb(ik,ir)-ksb(ik-1,ir))/(ksmaxs(ir)+1.0E-10)*
      .                  100.0,
-     .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),kpb(ik,ir),
-     .      note(1:LEN_TRIM(note)),kss2(ik,ir)
+     .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),
+     .      kpb(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
+     .      note(1:LEN_TRIM(note))
+c     .      kss2(ik,ir)
 
         ENDDO
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(2I3,2F10.6,2X,F10.6,60X,A,I2,A)')
+          WRITE(fp,'(2I4,2F10.6,2X,F10.6,60X,A,I2,A)')
      .      idds(ir,1),ir,rp(id),zp(id),ksmaxs(ir),
      .      ' (',idds(ir,1),')'
         ENDIF
@@ -1217,7 +1220,7 @@ c...temp: korpg=0
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I3,I6,2I3,8F12.8,A)')
+          WRITE(fp,'(2I3,I6,2I3,8F12.7,A)')
      .      ik,ir,in,virtag(ik,ir),nvertp(in),
      .      rvertp(1,in),zvertp(1,in),rvertp(2,in),zvertp(2,in),
      .      rvertp(3,in),zvertp(3,in),rvertp(4,in),zvertp(4,in),
@@ -1225,7 +1228,37 @@ c...temp: korpg=0
         ENDDO
       ENDDO
 
-600   CONTINUE
+      IF (ctestsol.GE.0.0) THEN
+        IF (outmode.EQ.3) WRITE(0,*) 'OUTPUTDATA: IMPURITIES'
+        WRITE(fp,*)
+        WRITE(fp,*) 'DIVIMP IMPURITY DATA:'
+        DO ir = 1, nrs
+          WRITE(fp,*)
+          WRITE(fp,'(2A4,2A10,9A10,1X,A7)')
+     .      'ik','ir','r','z',
+     .      '1','2','3','4','5','10','15','20','25',
+     .      irtag(ir)
+          ike = nks(ir) 
+          IF (ir.LT.irsep) ike = nks(ir) - 1
+          DO ik = 1, ike
+            note = ' '
+            IF (ik.EQ.ikto2 (ir)) note = TRIM(note)//' IKTO2'
+            IF (ik.EQ.ikti2 (ir)) note = TRIM(note)//' IKTI2'
+            IF (ik.EQ.ikmids(ir)) note = TRIM(note)//' IKMIDS'
+            IF (ik.EQ.ikbound(ir,IKLO))
+     .        note = note(1:LEN_TRIM(note))//' IK1'
+            IF (ik.EQ.ikbound(ir,IKHI))
+     .        note = note(1:LEN_TRIM(note))//' IK2'
+            WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
+     .        ik,ir,
+     .        rs (ik,ir),zs (ik,ir),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+          ENDDO
+        ENDDO
+      ENDIF
+
+600   CONTINUE  ! ???
 
       CLOSE(fp)
 
@@ -1279,7 +1312,7 @@ c
 
 
       IF (sloutput.AND.citersol.NE.0) THEN
-        WRITE(0,*) '***NOT WRITING PIN DATA FILE***'
+        WRITE(pinout,*) '***NOT WRITING PIN DATA FILE***'
         RETURN
       ENDIF
 
@@ -1290,8 +1323,8 @@ c     .    rel_count.NE.0.AND.rel_step.NE.rel_nstep) RETURN
 
 
       IF (sloutput) THEN
-        WRITE(0,*) 'WRITING PIN DATA OUTPUT FILE'
-        WRITE(0,*) '  '//note(1:LEN_TRIM(note))
+        WRITE(pinout,*) 'WRITING PIN DATA OUTPUT FILE'
+        WRITE(pinout,*) '  '//note(1:LEN_TRIM(note))
       ENDIF
 
 c      WRITE(0,*) 'SKIPPING TO AVOID BUS ERROR!?'
@@ -1385,9 +1418,9 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
 
       IF (fp.NE.67.AND.fp.NE.SLOUT.AND.fp.NE.PINOUT) CLOSE(fp)
 
-      CALL DB('done')
+c      CALL DB('done')
 
-      IF (sloutput) WRITE(0,*) 'DONE'
+      IF (sloutput) WRITE(pinout,*) 'DONE'
 
       RETURN
       END
@@ -2038,8 +2071,12 @@ c...  Fluxes to surfaces:
       WRITE(fp,*)
 
       WRITE(fp,40) 'Ind',' r ',' z ',' D_parflx',' D_avgeng',
-     .                               'D2_parflx','D2_avgeng'
+     .                               'D2_parflx','D2_avgeng',
+     .                               'Im_parflx','Im_avgeng',
+     .                               'D+_parflx','D+_avgeng'
       WRITE(fp,40) '   ','(m)','(m)','(m-2 s-1)','   (eV)  ',   
+     .                               '(m-2 s-1)','   (eV)  ',
+     .                               '(m-2 s-1)','   (eV)  ',
      .                               '(m-2 s-1)','   (eV)  '
 c...  Loop over NWALL for now, to avoid BGK grid:
       DO i1 = 1, nvesm+nvesp
@@ -2049,14 +2086,15 @@ c
 c        IF (0.5*(zvesm(i1,1)+zvesm(i1,2)).LT.zxp) THEN
           WRITE(fp,41) i1,       
      .      0.5*(rvesm(i1,1)+rvesm(i1,2)),0.5*(zvesm(i1,1)+zvesm(i1,2)),
-     .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1)
+     .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1),
+     .      flxhw3(i1),flxhw4(i1),flxhw8(i1)           ,-1.0
 c
 c        ENDIF
 c
 
       ENDDO
-40    FORMAT(5X,A3,2A7     ,4A11)
-41    FORMAT(5X,I3,2F7.3,2(1P,E11.2,0P,F11.3))      
+40    FORMAT(5X,A3,2A7     ,8A11)
+41    FORMAT(5X,I3,2F7.3,4(1P,E11.2,0P,F11.3))      
 
 
 

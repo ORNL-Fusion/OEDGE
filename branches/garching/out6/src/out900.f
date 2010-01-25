@@ -1036,12 +1036,9 @@ c...    Dump EIRENE reaction data to file:
         CALL DumpRates(iopt)
 
       ELSEIF (iref.EQ.999) THEN
-
         call setup_col(n_cols,5)
-        CALL Development(iopt)
+        CALL Development(iopt,nizs,cizsc,crmi,cion,absfac)
         call setup_col(n_cols,col_opt)
-
-
 c slmod end
 
       ENDIF

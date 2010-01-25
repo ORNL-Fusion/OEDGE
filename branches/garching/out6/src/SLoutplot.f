@@ -3,6 +3,75 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE GenerateOSMDataFiles
+      USE mod_geometry
+      IMPLICIT none
+
+      INTEGER status
+
+      CALL LoadGrid('osm.raw')
+
+      CALL User_GenerateOutputFiles
+
+      CALL LoadObjects('osm_geometry.raw',status)
+
+      CALL SaveFluidGridGeometry       
+
+      CALL osmClean
+      CALL geoClean
+ 
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
+      SUBROUTINE FluxSurfacesInTheSOL
+      USE mod_interface
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'slcom'
+
+      INTEGER ik,ir,id
+
+      WRITE(6,'(A)') '* FLUX SURFACES FOR SPENCER'
+      WRITE(6,'(A)') '* <rho (m)>'
+      WRITE(6,'(A)') '* <number of points>'
+      WRITE(6,'(A)') '* <index> <R (m)> <Z (m)>'
+      WRITE(6,'(A)') '*'
+
+      ir = irsep
+      WRITE(6,*) rho(ir,IN14)
+      WRITE(6,*) nks(ir)+1
+      DO ik = 1, nks(ir)
+        id = korpg(ik,ir)
+        WRITE(6,'(I6,2F12.6)') ik,rvertp(1,id),zvertp(1,id)
+      ENDDO
+      WRITE(6,'(I6,2F12.6)') ik,rvertp(4,id),zvertp(4,id)
+
+      DO ir = irsep+10, 82, 10
+        IF (rho(ir,IN14).EQ.0.0) CYCLE
+        WRITE(6,*) rho(ir,IN14)
+        WRITE(6,*) nks(ir)+1
+        DO ik = 1, nks(ir)
+          id = korpg(ik,ir)
+          WRITE(6,'(I6,2F12.6)') ik,rvertp(1,id),zvertp(1,id)
+        ENDDO
+        WRITE(6,'(I6,2F12.6)') ik,rvertp(4,id),zvertp(4,id)
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpDataToIDL
       USE mod_interface
       IMPLICIT none
@@ -15,14 +84,16 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER n,ik,ike,ir,i1,i2,id
-      REAL x1,x2,y1,y2,t
+      REAL GetJsat,GetCs,CalcPressure
+
+      INTEGER n,ik,ike,ir,i1,i2,id,itube
+      REAL x1,x2,y1,y2,t,mach,p,jsat
       REAL   , ALLOCATABLE :: x(:),y(:),v(:),s(:)
       CHARACTER tag_x*11,tag_y*11,file*512
 
 c...  Dump data for processing in IDL:
       file = 'osm.idl'
-      WRITE(6,*) '989: Duming OSM data to interface file'
+      WRITE(6,*) '999: Duming OSM data to interface file'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
       CALL inOpenInterface(file)
       n = 10  ! Resolution parameter for all cells... need something more refined...
@@ -121,6 +192,50 @@ c...    Interpolate along the field line to improve spatial resolution:
         DEALLOCATE(y)
         DEALLOCATE(s)
         DEALLOCATE(v)
+      ENDDO
+      CALL inCloseInterface
+c
+c     ----------------------------------------------------------------------
+c     Write out target data:
+c
+      file = 'osm.idl.targets'
+      WRITE(6,*) '999: Duming OSM data to interface file - targets'
+      WRITE(6,*) '     FILE = >',TRIM(file),'<'
+      CALL inOpenInterface(file)
+      ir = irtrap
+      IF (nopriv) ir = irsep
+      DO WHILE(ir.NE.irwall-1)
+        ir = ir + 1
+        IF (ir.EQ.nrs+1) ir = irsep
+        itube = ir
+        IF (ir.LT.irwall) itube = itube - 1
+        IF (ir.GT.irwall) itube = itube - 3
+        CALL inPutData(itube        ,'TAR_TUBE','none')                    
+        CALL inPutData(ir           ,'TAR_RING','none')                    
+        CALL inPutData(psitarg(ir,2),'TAR_PSIN','none')                    
+        CALL inPutData(rho(ir,CELL1),'TAR_RHO' ,'m') 
+        id   = idds(ir,2)
+        p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
+        jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
+        mach = kvds(id) / GetCs(kteds(id),ktids(id))
+        CALL inPutData(jsat     ,'TAR_LO_JSAT','Amps')                    
+        CALL inPutData(knds(id) ,'TAR_LO_NE'  ,'m-3')                    
+        CALL inPutData(kvds(id) ,'TAR_LO_V'   ,'m s-1')                    
+        CALL inPutData(mach     ,'TAR_LO_M'   ,'none')                    
+        CALL inPutData(p        ,'TAR_LO_P'   ,'m-3 eV')                    
+        CALL inPutData(kteds(id),'TAR_LO_TE'  ,'eV')                    
+        CALL inPutData(ktids(id),'TAR_LO_TI'  ,'eV')                    
+        id   = idds(ir,1)
+        p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
+        jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
+        mach = kvds(id) / GetCs(kteds(id),ktids(id))
+        CALL inPutData(jsat     ,'TAR_HI_JSAT','Amps')                    
+        CALL inPutData(knds(id) ,'TAR_HI_NE'  ,'m-3')                     
+        CALL inPutData(kvds(id) ,'TAR_HI_V'   ,'m s-1')                    
+        CALL inPutData(mach     ,'TAR_HI_M'   ,'none')                     
+        CALL inPutData(p        ,'TAR_HI_P'   ,'m-3 eV')                    
+        CALL inPutData(kteds(id),'TAR_HI_TE'  ,'eV')                    
+        CALL inPutData(ktids(id),'TAR_HI_TI'  ,'eV')                    
       ENDDO
       CALL inCloseInterface
 
@@ -367,27 +482,37 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE CoreProfileAnalysis
+      SUBROUTINE CoreProfileAnalysis(nizs,cizsc,crmi,cion,absfac)
       USE mod_eirene04
+      USE mod_interface
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'slout'
       INCLUDE 'comgra'
-      INCLUDE 'comtor'
       INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
+
+      INTEGER, INTENT(IN) :: nizs,cizsc,cion
+      REAL   , INTENT(IN) :: crmi,absfac
+
+      REAL CalcPressure, GetCs
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
 
-
-      INTEGER ik,ir,npro,ikmid,i1,fp,nre,itri,id
-      REAL    midpro(200,10),avolpro(200,0:10),psin(200),r(200),pmax,
-     .        tvolpro(200,0:10),deltar(200),dpsin(200),frac,p(200),
+      INTEGER ik,ir,npro,ikmid,i1,i2,fp,nre,itri,id,ncol,iz,iz1(200),
+     .        ikmid1(200),ring(200),in
+      CHARACTER dummy*256
+      REAL    midpro(200,10),avolpro(200,0:100),psin(200),r(200),pmax,
+     .        tvolp(200,0:100),deltar(200),dpsin(200),frac,p(200),
      .        dp(200),t_D(MAXNKS,MAXNRS),t_D2(MAXNKS,MAXNRS),
-     .        r1,r2,z1,z2,rho1(200)
+     .        r1,r2,z1,z2,rho1(200),scale,impurity_influx,rsmax,rsmin,
+     .        pressure,machno,
+     .        totfpin,totfypin,tmpy,totzfpin,tothpin,totfapin,totmhpin
 
       REAL, ALLOCATABLE :: tdata(:)
 
@@ -402,24 +527,344 @@ c      ALLOCATE(tdata (ntri))
 c      ALLOCATE(tdata1(ntri))
 
 
+      fp = 98
+      OPEN (UNIT=fp,FILE='core_analysis.dat',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+
+
+c     ------------------------------------------------------------------
+c     IMPURITIES
+c     ------------------------------------------------------------------
+
+c...  Calculate the impurity source that came back from EIRENE:
+c       (from code in divoutput.f)
+      totfpin = 0.0
+      totfypin= 0.0
+      totzfpin= 0.0
+      tothpin = 0.0
+      totmhpin= 0.0
+      totfapin= 0.0
+      DO id = 1, wallpts
+         in = wallpt(id,17)
+         totfpin  = totfpin  + flxhw2(in) * wallpt(id,7)
+         totfypin = totfypin + flxhw3(in) * wallpt(id,7)
+         totzfpin = totzfpin + flxhw4(in) * wallpt(id,7)
+         totfapin = totfapin + flxhw6(in) * wallpt(id,7)
+         tothpin  = tothpin  + flxhw6(in) * flxhw5(in) * wallpt(id,7)
+         totmhpin = totmhpin + (fluxhw(in)-flxhw6(in))* kboltz
+     .                        * wallpt(id,19) * wallpt(id,7)
+      ENDDO 
+      impurity_influx = totfypin  ! per meter toroidally s-1
+
+c...  Outer midplane profiles:
+      npro = 0
+      midpro = 0.0  
+      scale = 1.0
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        IF (ir.EQ.irwall.OR.ir.EQ.irtrap) CYCLE   ! Not sure why, but seems necessary...
+        ikmid = 0
+        DO ik = 1, nks(ir)-2
+          IF (rs(ik,ir).GT.r0.AND.
+     .        ((zs(ik,ir).GE.z0.AND.zs(ik+1,ir).LT.z0).OR.
+     .         (zs(ik,ir).LT.z0.AND.zs(ik+1,ir).GE.z0))) THEN
+c     .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.     ! changed 05/01/2010
+c     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
+            ikmid = ik
+          ENDIF
+        ENDDO
+        IF (ikmid.EQ.0) CYCLE  ! Flux tube does not cross the y-axis on the LFS
+        rsmax = 0.0
+        DO ik = 1, nks(ir)-2
+          IF (rs(ik,ir).GT.rsmax.AND.ABS(zs(ik,ir)).LT.0.3*r0) THEN
+            ikmid = ik
+            rsmax = rs(ik,ir)
+          ENDIF
+        ENDDO
+        npro = npro + 1
+        ring(npro) = ir
+        rho1(npro) = rho(ir,CELL1) 
+        r(npro) = rs(ikmid,ir)
+        psin(npro) = psitarg(ir,2)
+        ncol = 0
+        DO iz = 5, 25, 5
+          ncol = ncol + 1
+          IF (ir.EQ.2) iz1(ncol) = iz
+          IF (iz.EQ.5) ikmid1(npro) = ikmid
+          midpro(npro,ncol) = sdlims(ikmid,ir,iz) * scale
+c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
+        ENDDO
+      ENDDO
+      WRITE(fp,*) '* Outer midplane profiles (max of bulge):'
+      WRITE(fp,'(A4,8X,4A9,2X,A9,A10,A6,A9,2A9,10I10)') 
+     .  '*','r','rho','psin','L','ne','vb','M','P',
+     .  'Te','Ti',(iz1(i1),i1=1,ncol)
+      WRITE(fp,*) npro
+      DO i1 = 1, npro
+        machno = kvhs(ikmid1(i1),ring(i1)) / qt /
+     .           GetCs(ktebs(ikmid1(i1),ring(i1)),
+     .                 ktibs(ikmid1(i1),ring(i1)))
+        pressure = CalcPressure(knbs (ikmid1(i1),ring(i1)),
+     .                          ktebs(ikmid1(i1),ring(i1)),
+     .                          ktibs(ikmid1(i1),ring(i1)),
+     .                          kvhs (ikmid1(i1),ring(i1))/qt)* ECH
+        WRITE(fp,'(3I4,3F9.5,F9.2,2X,'//
+     .           '1P,E9.2,E10.2,0P,F6.2,1P,E9.2,0P'//
+     .           '2F9.2,1P,9E10.2,2X,I4)') 
+     .    i1,ikmid1(i1),ring(i1),
+     .    r(i1),rho1(i1),psin(i1),ksmaxs(ring(i1)),
+     .    knbs(ikmid1(i1),ring(i1)),
+     .    kvhs(ikmid1(i1),ring(i1)) / qt,
+     .    machno,pressure,
+     .    ktebs(ikmid1(i1),ring(i1)),ktibs(ikmid1(i1),ring(i1)),
+     .    (midpro(i1,i2),i2=1,ncol)
+      ENDDO
+
+      CALL inOpenInterface('osm.idl.midplane')
+c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
+      CALL inPutData(ring  (     1:npro ),'MID_RING','none')
+      CALL inPutData(r     (     1:npro ),'MID_R'   ,'m')
+      CALL inPutData(rho1  (     1:npro ),'MID_RHO' ,'m')
+      CALL inPutData(psin  (     1:npro ),'MID_PSIN','none')
+      CALL inPutData(ksmaxs(ring(1:npro)),'MID_L'   ,'m')
+      DO i1 = 1, npro
+        machno = kvhs(ikmid1(i1),ring(i1)) / qt / 
+     .           GetCs(ktebs(ikmid1(i1),ring(i1)),
+     .                 ktibs(ikmid1(i1),ring(i1)))
+        pressure = CalcPressure(knbs (ikmid1(i1),ring(i1)),
+     .                          ktebs(ikmid1(i1),ring(i1)),
+     .                          ktibs(ikmid1(i1),ring(i1)),
+     .                          kvhs (ikmid1(i1),ring(i1))/qt)* ECH
+        CALL inPutData(knbs (ikmid1(i1),ring(i1))   ,'MID_NE','m-3')
+        CALL inPutData(kvhs (ikmid1(i1),ring(i1))/qt,'MID_VB','m s-1')
+        CALL inPutData(machno                       ,'MID_M' ,'none')
+        CALL inPutData(pressure                     ,'MID_P' ,'Pa')
+        CALL inPutData(ktebs(ikmid1(i1),ring(i1))   ,'MID_TE','eV')
+        CALL inPutData(ktibs(ikmid1(i1),ring(i1))   ,'MID_TI','eV')
+      ENDDO
+      CALL inCloseInterface
+
+c...  Volume averaged radial profiles in the core:
+      WRITE(0 ,*) 'NIZS             =',nizs
+      WRITE(0 ,*) 'IMPURITY_INFLUX  =',impurity_influx
+      WRITE(0 ,*) 'TOROIDAL_FRACTION=',1.0
+      WRITE(fp,*) 'NIZS=             ',nizs
+      WRITE(fp,*) 'IMPURITY_INFLUX=  ',impurity_influx
+      WRITE(fp,*) 'TOROIDAL_FRACTION=',1.0
+      impurity_influx = impurity_influx * 1.0
+      avolpro = 0.0  ! Full volume averaged radial profiles
+      tvolp = 0.0  ! Totals
+      npro = 0
+      DO ir = 2, irsep-1
+        npro = npro + 1
+        ikmid = -1
+        DO ik = 1, nks(ir)-2
+          IF (rs(ik,ir).GT.r0.AND.
+     .        ((zs(ik,ir).GE.z0.AND.zs(ik+1,ir).LT.z0).OR.
+     .         (zs(ik,ir).LT.z0.AND.zs(ik+1,ir).GE.z0))) ikmid = ik
+        ENDDO
+        ikmid1(npro) = ikmid
+        ring  (npro) = ir
+        r     (npro) = rs     (ikmid,ir)
+        rho1  (npro) = rho    (ir,CELL1) 
+        psin  (npro) = psitarg(ir,2)
+        DO ik = 1, nks(ir)-1
+         tvolp(npro,0) = tvolp(npro,0)+kvols(ik,ir)                  ! Volume
+         ncol = 0
+         DO iz = 1, nizs
+           tvolp(npro,iz)=tvolp(npro,iz)+kvols(ik,ir)*sdlims(ik,ir,iz)
+         ENDDO
+         tvolp(npro,nizs+1)=tvolp(npro,nizs+1)+kvols(ik,ir)*knbs (ik,ir)  ! ne
+         tvolp(npro,nizs+2)=tvolp(npro,nizs+2)+kvols(ik,ir)*ktebs(ik,ir)  ! Te
+         tvolp(npro,nizs+3)=tvolp(npro,nizs+3)+kvols(ik,ir)*ktibs(ik,ir)  ! D+ temperature
+        ENDDO
+        DO iz = 1, nizs
+          tvolp(npro,nizs+4)=tvolp(npro,nizs+4)+tvolp(npro,iz)            ! Total amount of impurity on ring
+          tvolp(npro,nizs+5)=tvolp(npro,nizs+5)+tvolp(npro,iz)*REAL(iz)   ! Total amount * charge on ring
+        ENDDO
+        avolpro(npro,1:nizs+5) = tvolp(npro,1:nizs+5) / tvolp(npro,0)     ! Divide by the total volume on the ring to get average values
+      ENDDO
+      avolpro(:,1     :nizs  )=avolpro(:,1     :nizs  )*impurity_influx
+      avolpro(:,nizs+4:nizs+5)=avolpro(:,nizs+4:nizs+5)*impurity_influx
+      avolpro(1:npro,nizs+6) = avolpro(1:npro,nizs+4) /  ! Fraction of number
+     .                         avolpro(1:npro,nizs+1)  
+      avolpro(1:npro,nizs+7) = avolpro(1:npro,nizs+5) /  ! Fraction of postive charge 
+     .                         avolpro(1:npro,nizs+1)  
+c...  Zeff:
+      npro = 0
+      DO ir = 2, irsep-1
+        npro = npro + 1
+        avolpro(npro,nizs+8) = avolpro(npro,nizs+1)  ! Values for Z=1
+        avolpro(npro,nizs+9) = avolpro(npro,nizs+1)
+        DO iz = 1, nizs                                              ! This isn quite right since Z=1 for impurities should be folded
+          avolpro(npro,nizs+8) = avolpro(npro,nizs+8) +              ! into the above initial value, but since Z=1 for impurities
+     .                           avolpro(npro,iz    ) * REAL(iz)**2  ! is zero in the core (!) it doesn't matter...
+          avolpro(npro,nizs+9) = avolpro(npro,nizs+9) +
+     .                           avolpro(npro,iz    ) * REAL(iz)  
+        ENDDO
+        avolpro(npro,nizs+8) = avolpro(npro,nizs+8)/avolpro(npro,nizs+9) 
+      ENDDO
+
+      WRITE(fp,*) '* Volume averaged core impurity radial profiles:'
+      WRITE(fp,'(A4,3A10,2X,5A10,2X,80I10)') 
+     .  '*','rho','psin','vol','frac_%','frac_e_%','Zeff','ne^20','Te',
+     .  (i1,i1=1,nizs)
+      WRITE(fp,*) npro
+      DO i1 = 1, npro
+        WRITE(fp,'(I4,3F10.5,2X,3F10.6,2F10.2,1P,2X,80E10.2)') 
+     .    i1,rho1(i1),psin(i1),tvolp(i1,0),
+     .    avolpro(i1,nizs+6)*100.0,avolpro(i1,nizs+7)*100.0,
+     .    avolpro(i1,nizs+8),
+     .    avolpro(i1,nizs+1)*1.0E-20,avolpro(i1,nizs+2),
+     .    (avolpro(i1,iz),iz=1,nizs),
+     .    avolpro(i1,nizs+4)
+      ENDDO
+
+      CALL inOpenInterface('osm.idl.core_impurities')
+ 
+      CALL inPutData(absfac         ,'DIV_IMPURITY_INFLUX','s-1')
+      CALL inPutData(impurity_influx,'EIR_IMPURITY_INFLUX','s-1')
+      CALL inPutData(cizsc,'IMP_INITIAL_IZ','NA')
+      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'NA')
+      CALL inPutData(cion ,'IMP_Z'         ,'NA')
+      CALL inPutData(crmi ,'IMP_A'         ,'NA')
+      CALL inPutData(ring  (1:npro)                 ,'RING'   ,'NA')
+      CALL inPutData(r     (1:npro)                 ,'MID_R'  ,'m' )
+      CALL inPutData((r    (1:npro)-r0)/(r(npro)-r0),'MID_R/A','m' )  ! Not quite right but almost...
+      CALL inPutData(rho1  (1:npro)                 ,'RHO'    ,'m' )
+      CALL inPutData(psin  (1:npro)                 ,'PSIN'   ,'NA')
+      CALL inPutData(ksmaxs(ring(1:npro))           ,'L'      ,'m' )
+
+      CALL inPutData(avolpro(1:npro,nizs+1),'AVG_NE','m-3')
+      CALL inPutData(avolpro(1:npro,nizs+2),'AVG_TE','eV')
+      CALL inPutData(avolpro(1:npro,nizs+3),'AVG_TI','eV')
+
+      CALL inPutData(tvolp  (1:npro,0     )      ,'IMP_VOL'     ,'m-3')
+      CALL inPutData(avolpro(1:npro,nizs+6)*100.0,'IMP_FRAC_%'  ,'NA')
+      CALL inPutData(avolpro(1:npro,nizs+7)*100.0,'IMP_FRAC_E_%','NA')
+      CALL inPutData(avolpro(1:npro,nizs+8)      ,'IMP_ZEFF'    ,'NA')
+      DO iz = 1, nizs
+       WRITE(dummy,'(A,I0.2)') 'IMP_AVG_DENS_',iz
+       CALL inPutData(avolpro(1:npro,iz),dummy(1:LEN_TRIM(dummy)),'m-3')
+      ENDDO
+
+      DO i1 = 1, npro
+        machno = kvhs(ikmid1(i1),ring(i1)) / qt / 
+     .           GetCs(ktebs(ikmid1(i1),ring(i1)),
+     .                 ktibs(ikmid1(i1),ring(i1)))
+        pressure = CalcPressure(knbs (ikmid1(i1),ring(i1)),
+     .                          ktebs(ikmid1(i1),ring(i1)),
+     .                          ktibs(ikmid1(i1),ring(i1)),
+     .                          kvhs (ikmid1(i1),ring(i1))/qt)* ECH
+        CALL inPutData(knbs (ikmid1(i1),ring(i1))   ,'MID_NE','m-3')
+        CALL inPutData(kvhs (ikmid1(i1),ring(i1))/qt,'MID_VB','m s-1')
+        CALL inPutData(machno                       ,'MID_M' ,'none')
+        CALL inPutData(pressure                     ,'MID_P' ,'Pa')
+        CALL inPutData(ktebs(ikmid1(i1),ring(i1))   ,'MID_TE','eV')
+        CALL inPutData(ktibs(ikmid1(i1),ring(i1))   ,'MID_TI','eV')
+      ENDDO
+
+      CALL inCloseInterface
+c
+c     ------------------------------------------------------------------
+c...  Inner midplane profiles:
+      npro = 0
+      midpro = 0.0  
+      scale = 1.0
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        IF (ir.EQ.irwall.OR.ir.EQ.irtrap) CYCLE   ! Not sure why, but seems necessary...
+        ikmid = 0
+        DO ik = 1, nks(ir)-2
+          IF (rs(ik,ir).LT.r0.AND.
+     .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.
+     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
+            ikmid = ik
+          ENDIF
+        ENDDO
+        IF (ikmid.EQ.0) CYCLE  ! Flux tube does not cross the y-axis on the HFS
+c        rsmin = 0.0
+c        DO ik = 1, nks(ir)-2
+c          IF (rs(ik,ir).GT.rsmin.AND.ABS(zs(ik,ir)).LT.0.3*r0) THEN  ! Poorly defined
+c            ikmid = ik
+c            rsmin = rs(ik,ir)
+c          ENDIF
+c        ENDDO
+        npro = npro + 1
+        ring(npro) = ir
+        rho1(npro) = rho(ir,CELL1) 
+        r(npro) = rs(ikmid,ir)
+        psin(npro) = psitarg(ir,2)
+        ncol = 0
+        DO iz = 5, 25, 5
+          ncol = ncol + 1
+          IF (ir.EQ.2) iz1(ncol) = iz
+          IF (iz.EQ.5) ikmid1(npro) = ikmid
+          midpro(npro,ncol) = sdlims(ikmid,ir,iz) * scale
+c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
+        ENDDO
+      ENDDO
+      WRITE(fp,*) '* Inner midplane profiles (Z approx. 0.0):'
+      WRITE(fp,'(A4,8X,4A9,2X,A9,A10,A6,A9,2A9,10I10)') 
+     .  '*','r','rho','psin','L','ne','vb','M','P',
+     .  'Te','Ti',(iz1(i1),i1=1,ncol)
+      WRITE(fp,*) npro
+      DO i1 = 1, npro
+        machno = kvhs(ikmid1(i1),ring(i1)) / qt /
+     .           GetCs(ktebs(ikmid1(i1),ring(i1)),
+     .                 ktibs(ikmid1(i1),ring(i1)))
+        pressure = CalcPressure(knbs (ikmid1(i1),ring(i1)),
+     .                          ktebs(ikmid1(i1),ring(i1)),
+     .                          ktibs(ikmid1(i1),ring(i1)),
+     .                          kvhs (ikmid1(i1),ring(i1))/qt)* ECH
+        WRITE(fp,'(3I4,3F9.5,F9.2,2X,'//
+     .           '1P,E9.2,E10.2,0P,F6.2,1P,E9.2,0P'//
+     .           '2F9.2,1P,9E10.2,2X,I4)') 
+     .    i1,ikmid1(i1),ring(i1),
+     .    r(i1),rho1(i1),psin(i1),ksmaxs(ring(i1)),
+     .    knbs(ikmid1(i1),ring(i1)),
+     .    kvhs(ikmid1(i1),ring(i1)) / qt,
+     .    machno,pressure,
+     .    ktebs(ikmid1(i1),ring(i1)),ktibs(ikmid1(i1),ring(i1)),
+     .    (midpro(i1,i2),i2=1,ncol)
+      ENDDO
+
+
+
+      WRITE(fp,*)
+      IF (fp.NE.0) CLOSE(fp)
+
+
+   
+c
+c     *** STOPPING HERE FOR NOW! ***
+c
+      RETURN
+
+
+
 c...  Get T_D and T_D2 (crap):
       CALL LoadTriangles
       ALLOCATE(tdata(ntri))
 
-      tdata = 0.0
-      CALL LoadTriangleData(2,1,7,0,tdata)  
       t_d = 0.0
+      t_d2 = 0.0
+
+      GOTO 10  ! *** Having to skip this block for now, crashing...
+
+      tdata = 0.0
+      CALL LoadTriangleData(2,1,7,0,tdata,'default')  
       DO itri = 1, ntri
         IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE        
         ik = tri(itri)%index(1)
         ir = tri(itri)%index(2)
+        WRITE(0,*) 'TRI:',itri,ik,ir
         t_d(ik,ir) = t_d(ik,ir) + tdata(itri)
       ENDDO
       t_d = t_d / 2.0
 
       tdata = 0.0
-      CALL LoadTriangleData(3,1,7,0,tdata)  
-      t_d2 = 0.0
+      CALL LoadTriangleData(3,1,7,0,tdata,'default')  
       DO itri = 1, ntri
         IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE        
         ik = tri(itri)%index(1)
@@ -427,6 +872,8 @@ c...  Get T_D and T_D2 (crap):
         t_d2(ik,ir) = t_d2(ik,ir) + tdata(itri)
       ENDDO
       t_d2 = t_d2 / 2.0
+
+ 10   CONTINUE
 
 c...  Inner midplane profiles:
       npro = 0
@@ -437,8 +884,10 @@ c...  Inner midplane profiles:
         DO ik = 1, nks(ir)-2
           IF (rs(ik,ir).LT.r0.AND.
      .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.
-     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) 
-     .      ikmid = ik
+     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
+            ikmid = ik
+            IF (ABS(zs(ik,ir)).GT.ABS(zs(ik+1,ir))) ikmid = ik + 1
+          ENDIF
         ENDDO
         IF (ikmid.NE.0) THEN
           npro = npro + 1
@@ -455,10 +904,6 @@ c...  Inner midplane profiles:
           midpro(npro,9) = ktibs   (ikmid,ir)  ! D+ temperature
         ENDIF
       ENDDO
-
-      fp = 99
-      OPEN (UNIT=fp,FILE='core_analysis.dat',ACCESS='SEQUENTIAL',
-     .      STATUS='REPLACE')
 
       WRITE(fp,*) '* Inner midplane profiles:'
       WRITE(fp,'(A4,2A8,9A10)') 
@@ -480,8 +925,10 @@ c...  Outer midplane profiles:
         DO ik = 1, nks(ir)-2
           IF (rs(ik,ir).GT.r0.AND.
      .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.
-     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) 
-     .      ikmid = ik
+     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
+            ikmid = ik
+            IF (ABS(zs(ik,ir)).GT.ABS(zs(ik+1,ir))) ikmid = ik + 1
+          ENDIF
         ENDDO
         IF (ikmid.NE.0) THEN
           npro = npro + 1
@@ -511,11 +958,10 @@ c...  Outer midplane profiles:
 c...  Volume averaged radial profiles:
 c      IF (nrs.EQ.65) nre = 27  ! sonnet_15169_259
 c      IF (nrs.EQ.72) nre = 36  ! 
-
       nre = irsep - 1
       npro = nre - 1 
       avolpro = 0.0  ! Full volume averaged radial profiles
-      tvolpro = 0.0  ! Totals
+      tvolp = 0.0  ! Totals
       DO ir = 2, nre
         psin(ir-1) = psitarg(ir,2)
         deltar(ir-1) = rho(ir,OUT23) - rho(ir,IN14)
@@ -526,18 +972,18 @@ c     .                 (rho(ir+1,CELL1) - rho(ir,CELL1))
         dpsin(ir-1) = (psitarg(ir+1,2) - psitarg(ir,2)) * frac * 2.0
         DO ik = 1, nks(ir)-1
           IF (rs(ik,ir).GT.rxp) CYCLE
-          tvolpro(ir-1,0) = tvolpro(ir-1,0)+kvols(ik,ir)                  ! Volume
-          tvolpro(ir-1,1) = tvolpro(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
-          tvolpro(ir-1,2) = tvolpro(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
-          tvolpro(ir-1,3) = tvolpro(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
-          tvolpro(ir-1,4) = tvolpro(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
-          tvolpro(ir-1,5) = tvolpro(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
-          tvolpro(ir-1,6) = tvolpro(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
-          tvolpro(ir-1,7) = tvolpro(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
-          tvolpro(ir-1,8) = tvolpro(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
-          tvolpro(ir-1,9) = tvolpro(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
+          tvolp(ir-1,0) = tvolp(ir-1,0)+kvols(ik,ir)                  ! Volume
+          tvolp(ir-1,1) = tvolp(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
+          tvolp(ir-1,2) = tvolp(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
+          tvolp(ir-1,3) = tvolp(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
+          tvolp(ir-1,4) = tvolp(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
+          tvolp(ir-1,5) = tvolp(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
+          tvolp(ir-1,6) = tvolp(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
+          tvolp(ir-1,7) = tvolp(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
+          tvolp(ir-1,8) = tvolp(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
+          tvolp(ir-1,9) = tvolp(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
         ENDDO
-        avolpro(ir-1,1:9) = tvolpro(ir-1,1:9) / tvolpro(ir-1,0)
+        avolpro(ir-1,1:9) = tvolp(ir-1,1:9) / tvolp(ir-1,0)
       ENDDO
       WRITE(fp,*) '* Total inner radial core profiles:'
       WRITE(fp,'(A4,4A8,10A10)') 
@@ -546,28 +992,28 @@ c     .                 (rho(ir+1,CELL1) - rho(ir,CELL1))
       WRITE(fp,*) npro
       DO i1 = 1, npro
         WRITE(fp,'(I4,4F8.5,1P,10E10.2)') 
-     .    i1,r(i1),psin(i1),deltar(i1),dpsin(i1),tvolpro(i1,0:9)
+     .    i1,r(i1),psin(i1),deltar(i1),dpsin(i1),tvolp(i1,0:9)
       ENDDO
       WRITE(fp,'(4X,32X,1P,10E10.2)') 
-     .  (SUM(tvolpro(1:npro,i1)),i1=0,9)
+     .  (SUM(tvolp(1:npro,i1)),i1=0,9)
 
       avolpro = 0.0  ! Full volume averaged radial profiles
-      tvolpro = 0.0  ! Totals
+      tvolp = 0.0  ! Totals
       DO ir = 2, nre
         DO ik = 1, nks(ir)-1
           IF (rs(ik,ir).LT.rxp) CYCLE
-          tvolpro(ir-1,0) = tvolpro(ir-1,0)+kvols(ik,ir)                  ! Volume
-          tvolpro(ir-1,1) = tvolpro(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
-          tvolpro(ir-1,2) = tvolpro(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
-          tvolpro(ir-1,3) = tvolpro(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
-          tvolpro(ir-1,4) = tvolpro(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
-          tvolpro(ir-1,5) = tvolpro(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
-          tvolpro(ir-1,6) = tvolpro(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
-          tvolpro(ir-1,7) = tvolpro(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
-          tvolpro(ir-1,8) = tvolpro(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
-          tvolpro(ir-1,9) = tvolpro(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
+          tvolp(ir-1,0) = tvolp(ir-1,0)+kvols(ik,ir)                  ! Volume
+          tvolp(ir-1,1) = tvolp(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
+          tvolp(ir-1,2) = tvolp(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
+          tvolp(ir-1,3) = tvolp(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
+          tvolp(ir-1,4) = tvolp(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
+          tvolp(ir-1,5) = tvolp(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
+          tvolp(ir-1,6) = tvolp(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
+          tvolp(ir-1,7) = tvolp(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
+          tvolp(ir-1,8) = tvolp(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
+          tvolp(ir-1,9) = tvolp(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
         ENDDO
-        avolpro(ir-1,1:9) = tvolpro(ir-1,1:9) / tvolpro(ir-1,0)
+        avolpro(ir-1,1:9) = tvolp(ir-1,1:9) / tvolp(ir-1,0)
       ENDDO
       WRITE(fp,*) '* Total outer radial core profiles:'
       WRITE(fp,'(A4,4A8,10A10)') 
@@ -576,16 +1022,16 @@ c     .                 (rho(ir+1,CELL1) - rho(ir,CELL1))
       WRITE(fp,*) npro
       DO i1 = 1, npro
         WRITE(fp,'(I4,4F8.5,1P,10E10.2)') 
-     .    i1,r(i1),psin(i1),deltar(i1),dpsin(i1),tvolpro(i1,0:9)
+     .    i1,r(i1),psin(i1),deltar(i1),dpsin(i1),tvolp(i1,0:9)
       ENDDO
       WRITE(fp,'(4X,32X,1P,10E10.2)') 
-     .  (SUM(tvolpro(1:npro,i1)),i1=0,9)
+     .  (SUM(tvolp(1:npro,i1)),i1=0,9)
 
 c...  Volume averaged poloidal profiles:
       nre = irsep - 1
       npro = nks(nre) - 1
       avolpro = 0.0  ! Full volume averaged radial profiles
-      tvolpro = 0.0  ! Totals
+      tvolp = 0.0  ! Totals
       DO ik = 1, nks(nre) - 1
         id = korpg(ik,nre)
         r1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
@@ -599,18 +1045,18 @@ c...  Volume averaged poloidal profiles:
           p(ik) = p(ik-1) + 0.5 * dp(ik)
         ENDIF
         DO ir = 2, irsep - 1
-          tvolpro(ik,0) = tvolpro(ik,0)+kvols(ik,ir)                  ! Volume
-          tvolpro(ik,1) = tvolpro(ik,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
-          tvolpro(ik,2) = tvolpro(ik,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
-          tvolpro(ik,3) = tvolpro(ik,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
-          tvolpro(ik,4) = tvolpro(ik,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
-          tvolpro(ik,5) = tvolpro(ik,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
-          tvolpro(ik,6) = tvolpro(ik,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
-          tvolpro(ik,7) = tvolpro(ik,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
-          tvolpro(ik,8) = tvolpro(ik,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
-          tvolpro(ik,9) = tvolpro(ik,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
+          tvolp(ik,0) = tvolp(ik,0)+kvols(ik,ir)                  ! Volume
+          tvolp(ik,1) = tvolp(ik,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
+          tvolp(ik,2) = tvolp(ik,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
+          tvolp(ik,3) = tvolp(ik,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
+          tvolp(ik,4) = tvolp(ik,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
+          tvolp(ik,5) = tvolp(ik,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
+          tvolp(ik,6) = tvolp(ik,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
+          tvolp(ik,7) = tvolp(ik,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
+          tvolp(ik,8) = tvolp(ik,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
+          tvolp(ik,9) = tvolp(ik,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
         ENDDO
-        avolpro(ir-1,1:9) = tvolpro(ir-1,1:9) / tvolpro(ir-1,0)
+        avolpro(ir-1,1:9) = tvolp(ir-1,1:9) / tvolp(ir-1,0)
       ENDDO
       pmax = p(ik-1) + 0.5 * dp(ik-1)
       WRITE(fp,*) '* Total poloidal core profiles:'
@@ -620,18 +1066,16 @@ c...  Volume averaged poloidal profiles:
       WRITE(fp,*) npro
       DO i1 = 1, npro
         WRITE(fp,'(I4,3F8.5,1P,10E10.2)') 
-     .    i1,p(i1),dp(i1),dp(i1)/pmax,tvolpro(i1,0:9)
+     .    i1,p(i1),dp(i1),dp(i1)/pmax,tvolp(i1,0:9)
       ENDDO
       WRITE(fp,'(4X,24X,1P,10E10.2)') 
-     .  (SUM(tvolpro(1:npro,i1)),i1=0,9)
+     .  (SUM(tvolp(1:npro,i1)),i1=0,9)
 
-
-
-c...  Volume averaged radial profiles:
+c...  Volume averaged radial profiles:  *** THIS APPEARS VERY SIMILAR TO THE SIMILARLY LABELLED CODE THAT APPEARS ABOVE ***
       nre = irsep - 1
       npro = nre - 1 
       avolpro = 0.0  ! Full volume averaged radial profiles
-      tvolpro = 0.0  ! Totals
+      tvolp = 0.0  ! Totals
       DO ir = 2, nre
         rho1(ir-1) = rho(ir,CELL1) 
         psin(ir-1) = psitarg(ir,2)
@@ -640,18 +1084,18 @@ c...  Volume averaged radial profiles:
      .         (rho(ir+1,CELL1) - rho(ir,CELL1))
         dpsin(ir-1) = (psitarg(ir+1,2) - psitarg(ir,2)) * frac * 2.0
         DO ik = 1, nks(ir)-1
-          tvolpro(ir-1,0) = tvolpro(ir-1,0)+kvols(ik,ir)                  ! Volume
-          tvolpro(ir-1,1) = tvolpro(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
-          tvolpro(ir-1,2) = tvolpro(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
-          tvolpro(ir-1,3) = tvolpro(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
-          tvolpro(ir-1,4) = tvolpro(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
-          tvolpro(ir-1,5) = tvolpro(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
-          tvolpro(ir-1,6) = tvolpro(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
-          tvolpro(ir-1,7) = tvolpro(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
-          tvolpro(ir-1,8) = tvolpro(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
-          tvolpro(ir-1,9) = tvolpro(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
+          tvolp(ir-1,0) = tvolp(ir-1,0)+kvols(ik,ir)                  ! Volume
+          tvolp(ir-1,1) = tvolp(ir-1,1)+kvols(ik,ir)*pinion  (ik,ir)  ! Ionisation
+          tvolp(ir-1,2) = tvolp(ir-1,2)+kvols(ik,ir)*pinalpha(ik,ir)  ! Dalpha
+          tvolp(ir-1,3) = tvolp(ir-1,3)+kvols(ik,ir)*pinatom (ik,ir)  ! D density
+          tvolp(ir-1,4) = tvolp(ir-1,4)+kvols(ik,ir)*t_D     (ik,ir)  ! D temperature
+          tvolp(ir-1,5) = tvolp(ir-1,5)+kvols(ik,ir)*pinmol  (ik,ir)  ! D2 density
+          tvolp(ir-1,6) = tvolp(ir-1,6)+kvols(ik,ir)*t_D2    (ik,ir)  ! D2 temperature
+          tvolp(ir-1,7) = tvolp(ir-1,7)+kvols(ik,ir)*knbs    (ik,ir)  ! ne
+          tvolp(ir-1,8) = tvolp(ir-1,8)+kvols(ik,ir)*ktebs   (ik,ir)  ! Te
+          tvolp(ir-1,9) = tvolp(ir-1,9)+kvols(ik,ir)*ktibs   (ik,ir)  ! D+ temperature
         ENDDO
-        avolpro(ir-1,1:9) = tvolpro(ir-1,1:9) / tvolpro(ir-1,0)
+        avolpro(ir-1,1:9) = tvolp(ir-1,1:9) / tvolp(ir-1,0)
       ENDDO
       WRITE(fp,*) '* Total inner radial core profiles:'
       WRITE(fp,'(A4,5A8,10A10)') 
@@ -661,21 +1105,17 @@ c...  Volume averaged radial profiles:
       DO i1 = 1, npro
         WRITE(fp,'(I4,5F8.5,1P,10E10.2)') 
      .    i1,r(i1),deltar(i1),psin(i1),dpsin(i1),rho1(i1),
-     .    tvolpro(i1,0:9)
+     .    tvolp(i1,0:9)
       ENDDO
       WRITE(fp,'(4X,40X,1P,10E10.2)') 
-     .  (SUM(tvolpro(1:npro,i1)),i1=0,9)
-
-
-
-      WRITE(fp,*)
-      IF (fp.NE.0) CLOSE(fp)
+     .  (SUM(tvolp(1:npro,i1)),i1=0,9)
 
 c...  Clear arrays:
       CALL DEALLOC_VERTEX  
       CALL DEALLOC_SURFACE   
       CALL DEALLOC_TRIANGLE
       IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
+
 
       RETURN
  99   STOP
@@ -2716,15 +3156,16 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE Development(iopt)
+      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
       IMPLICIT none
 
       INCLUDE 'params'
+      INCLUDE 'ppplas'
       INCLUDE 'slout'
 
- 
-      INTEGER iopt,ik,ir,i1
-      REAL    array(MAXNKS,MAXNRS)
+
+      INTEGER iopt,nizs2,ik,ir,i1,cizsc2,cion2
+      REAL    array(MAXNKS,MAXNRS),crmi2,absfac2
 
 
       IF     (iopt.EQ.2) THEN
@@ -2744,7 +3185,7 @@ c
 c        CALL DTSanalysis(MAXGXS,MAXNGS)
         RETURN
       ELSEIF (iopt.EQ.7) THEN
-        CALL CoreProfileAnalysis
+        CALL CoreProfileAnalysis(nizs2,cizsc2,crmi2,cion2,absfac2)
         RETURN
       ELSEIF (iopt.EQ.8) THEN
         CALL OutputDivertorProfiles
@@ -2755,6 +3196,13 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.10) THEN
         WRITE(0,*) 'DUMING DATA TO IDL'
         CALL DumpDataToIDL
+        RETURN
+      ELSEIF (iopt.EQ.11) THEN
+        WRITE(0,*) 'FLUX SURFACES FOR SPENCER'
+        CALL FluxSurfacesInTheSOL
+        RETURN
+      ELSEIF (iopt.EQ.12) THEN
+        CALL GenerateOSMDataFiles
         RETURN
       ENDIF
      

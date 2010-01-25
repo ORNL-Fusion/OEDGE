@@ -12,22 +12,37 @@ c
 c      RETURN
 
       CALL MapRingstoTubes
+      CALL AssignOSMWall
 
       CALL SaveGeometryData('osm_geometry.raw')
 
       CALL LoadLegacyData('osm_legacy.raw')
 
-      CALL SetTargetConditions
+c      CALL SetTargetConditions(itube)
 
       IF (opt%osm_load.NE.0) CALL LoadReferenceSolution(1)
 
 c...  Clear geometry arrays:
-      nobj = 0
-      nsrf = 0
-      nvtx = 0
-      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+      CALL geoClean
+c      nobj = 0
+c      nsrf = 0
+c      nvtx = 0
+c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
+c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
+c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE DumpData(cdum1,cdum2)
+      IMPLICIT none
+
+      CHARACTER, INTENT(IN) :: cdum1*(*),cdum2*(*)
+
+      CALL OutputData(85,cdum2)
 
       RETURN
  99   STOP
@@ -72,16 +87,20 @@ c      CALL SetTargetConditions
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
 
+c...  Generate output files:
+      CALL GenerateOutputFiles
+
 c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
 
 c...  Clear geometry arrays:
-      nobj = 0
-      nsrf = 0
-      nvtx = 0
-      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+      CALL geoClean
+c      nobj = 0
+c      nsrf = 0
+c      nvtx = 0
+c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
+c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
+c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
 c      CALL CleanUp
 
@@ -100,7 +119,7 @@ c...  Save solution:
       CALL SaveGrid('osm.raw')
 
 c...  Clear memory:
-      CALL CleanUp
+      CALL osmClean
 
       RETURN
  99   STOP
@@ -237,6 +256,40 @@ c...  Copy PIN data:
 c
 c ======================================================================
 c
+      SUBROUTINE AssignOSMWall
+      USE mod_sol28_wall
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'walls_com'
+
+      INTEGER iwall
+
+      nwall = wallpts
+
+      ALLOCATE(wall(nwall))
+
+      DO iwall = 1, nwall
+        wall(iwall)%class             =  1       
+        wall(iwall)%index(WAL_GROUP ) = -1
+        wall(iwall)%index(WAL_INDEX ) = -1    
+        wall(iwall)%index(WAL_TUBE  ) = -1    
+        wall(iwall)%index(WAL_TARGET) = NINT(wallpt(iwall,16))    
+        wall(iwall)%material_tag      = 'unknown'
+        wall(iwall)%material          = -1
+        wall(iwall)%temperature       =      wallpt(iwall,19)
+        wall(iwall)%v1(1)             = DBLE(wallpt(iwall,20))
+        wall(iwall)%v1(2)             = DBLE(wallpt(iwall,21))
+        wall(iwall)%v2(1)             = DBLE(wallpt(iwall,22))
+        wall(iwall)%v2(2)             = DBLE(wallpt(iwall,23))
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE MapRingstoTubes
       USE mod_sol28_global
       USE mod_geometry
@@ -257,6 +310,7 @@ c
       TYPE(type_srf   ) newsrf
       TYPE(type_object) newobj
 
+      REAL tube_3D_data(5,MAXNKS,MAXNRS),dangle
 
       load_bfield_data = .FALSE.
 
@@ -278,7 +332,6 @@ c
         ENDDO
         CLOSE(fp)
       ENDIF
-
 
 c *CRUDE* Should be elsewhere... can IDRING take the place of RINGTYPE for EIRENE04? 
       ringtype = 0
@@ -361,6 +414,10 @@ c...  Copy DIVIMP grid:
       ion = 1
       ntube = 0
       ncell = 0
+
+      tube_3D_data = 0.0
+      CALL CalcTubeDimensions(tube_3D_data,dangle)
+
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
@@ -370,13 +427,14 @@ c...  Copy DIVIMP grid:
         cind2 = ncell + ike
 
         ntube = ntube + 1
-        tube(ntube)%ir   = ir
-        tube(ntube)%type = ringtype(ir)
-        tube(ntube)%ikti = ikti2(ir)
-        tube(ntube)%ikto = ikto2(ir)
-        tube(ntube)%n    = ike
-        tube(ntube)%smax = ksmaxs(ir)
-        tube(ntube)%pmax = kpmaxs(ir)
+        tube(ntube)%ir     = ir
+        tube(ntube)%type   = ringtype(ir)
+        tube(ntube)%ikti   = ikti2(ir)
+        tube(ntube)%ikto   = ikto2(ir)
+        tube(ntube)%n      = ike
+        tube(ntube)%smax   = ksmaxs(ir)
+        tube(ntube)%pmax   = kpmaxs(ir)
+        tube(ntube)%dangle = dangle
         tube(ntube)%rho  = rho(ir,CELL1)
         tube(ntube)%psin = psitarg(ir,1)
         tube(ntube)%cell_index(1) = cind1  ! The "1" must be consistent with "LO" in mod_osm
@@ -410,7 +468,17 @@ c...  Copy DIVIMP grid:
         cell(cind1:cind2)%cencar(1) = rs(1:ike,ir)
         cell(cind1:cind2)%cencar(2) = zs(1:ike,ir)
         cell(cind1:cind2)%cencar(3) = 0.0
-        cell(cind1:cind2)%vol       = kvols  (1:ike,ir)
+        cell(cind1:cind2)%vol       = kvols (1:ike,ir)
+
+
+c        IF (cind1.LE.1025.AND.cind2.GE.1025) THEN
+c          DO id = 1,ike
+c            WRITE(0,*) 'VOLS:',id,ir,kvols(id,ir)
+c          ENDDO
+c          CALL OutputData(85,'Zero volume')
+c          STOP 'sdkjlsdkfsd'
+c        ENDIF
+
         cell(cind1:cind2)%s         = kss   (1:ike,ir)
         cell(cind1:cind2)%p         = kps   (1:ike,ir)
         cell(cind1:cind2)%sbnd(1)   = ksb   (0:ike-1,ir)
@@ -418,6 +486,21 @@ c...  Copy DIVIMP grid:
         cell(cind1:cind2)%pbnd(1)   = kpb   (0:ike-1,ir)
         cell(cind1:cind2)%pbnd(2)   = kpb   (1:ike  ,ir)
         cell(cind1:cind2)%metric    = thetag(1:ike,ir)
+
+        cell(cind1:cind2)%sbnd_3D(1) = tube_3D_data(1,1:ike,ir)
+        cell(cind1:cind2)%sbnd_3D(2) = tube_3D_data(2,1:ike,ir)
+        cell(cind1:cind2)%s_3D       = tube_3D_data(3,1:ike,ir)
+        cell(cind1:cind2)%area_3D    = tube_3D_data(4,1:ike,ir)
+        cell(cind1:cind2)%volume_3D  = tube_3D_data(5,1:ike,ir)
+
+        DO ik = 1, nks(ir)
+          WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
+     .                               (360.0/dangle) 
+        ENDDO
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN
@@ -434,6 +517,7 @@ c...  Copy DIVIMP grid:
 
         DO ik = 1, ike
           cell(cind1+ik-1)%ik = ik
+          cell(cind1+ik-1)%ir = ir
           cell(cind1+ik-1)%ds = ksb(ik,ir) - ksb(ik-1,ir)
         ENDDO
 c        pin(cind1:cind2,ion)%ion = pinion(1:ike,ir)
@@ -441,12 +525,13 @@ c        pin(cind1:cind2,ion)%rec = pinrec(1:ike,ir)
 c        pin(cind1:cind2,ion)%mom = pinmp (1:ike,ir)
       ENDDO
 c...  Set grid quantities:
+      grid%r0   = DBLE(r0)
+      grid%z0   = DBLE(z0)
       grid%n    = ntube
       grid%isep = irsep  - 1
       grid%ipfz = irtrap - 2
       grid%ikto = ikto
       grid%ikti = ikti
-
 c...  Geometry:
       ngrp = 1
       grp(1)%origin = GRP_MAGNETIC_GRID  ! *** NEED AddGroup and CopyGroup functions ***
@@ -498,12 +583,27 @@ c...
 
 c...  Build connection map:
       CALL BuildConnectionMap(1,nobj)
+c...  Force idenfication of the radial boundaries in the OBJ connection
+c     map, since generalised grids with poorly defined cross-field nearest
+c     neighbours will come up with a 0 mapping, the same as for the grid
+c     boundaries:
+      DO iobj = 1, nobj
+        ik =obj(iobj)%index(IND_IK)
+        ir =obj(iobj)%index(IND_IR)
+        IF (idring(irins (ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(4) = -1
+        IF (idring(irouts(ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(2) = -1
+        IF (ir.GE.irsep) THEN
+          IF (ik.EQ.1      ) obj(iobj)%omap(1) = -2
+          IF (ik.EQ.nks(ir)) obj(iobj)%omap(3) = -2
+        ENDIF
+      ENDDO
+
 
 c...  Setup the old format SOL28 input data:
       osmns28 = osmnnode
       osms28 = 0.0
       DO i1 = 1, osmnnode
-        osms28(i1,1) = osmnode(i1)%type
+        osms28(i1,1) = osmnode(i1)%type 
         osms28(i1,5) = osmnode(i1)%rad_x
         osms28(i1,6) = osmnode(i1)%rad_y
       ENDDO
@@ -549,13 +649,13 @@ c...      Need to do volume weighted averaging...
 
           IF (ir.GE.irsep) THEN
             in = idds(ir,2)
-            knds (in) = tube(itube)%ni(1,ion)
+            knds (in) = tube(itube)%ne(1)      ! ne(1,ion) - 12/10/09 SL
             kvds (in) = tube(itube)%vi(1,ion) 
             kteds(in) = tube(itube)%te(1)
             ktids(in) = tube(itube)%ti(1,ion)
 
             in = idds(ir,1)
-            knds (in) = tube(itube)%ni(2,ion)
+            knds (in) = tube(itube)%ne(2)      ! ni(1,ion) - 12/10/09 SL
             kvds (in) = tube(itube)%vi(2,ion)       
             kteds(in) = tube(itube)%te(2)
             ktids(in) = tube(itube)%ti(2,ion)
@@ -566,7 +666,7 @@ c...      Need to do volume weighted averaging...
           ENDIF
 
           knes (1:ike,ir) = fluid(cind1:cind2,ion)%ne
-          knbs (1:ike,ir) = fluid(cind1:cind2,ion)%ni
+          knbs (1:ike,ir) = fluid(cind1:cind2,ion)%ne  ! *** USING ne NOT ni ***
           kvhs (1:ike,ir) = fluid(cind1:cind2,ion)%vi
           ktebs(1:ike,ir) = fluid(cind1:cind2,ion)%te
           ktibs(1:ike,ir) = fluid(cind1:cind2,ion)%ti
@@ -574,9 +674,7 @@ c...      Need to do volume weighted averaging...
           osmion(1:ike,ir) = fluid(cind1:cind2,ion)%parion
           osmrec(1:ike,ir) = fluid(cind1:cind2,ion)%parrec
           osmcfp(1:ike,ir) = fluid(cind1:cind2,ion)%parano
-
           osmmp (1:ike,ir) = fluid(cind1:cind2,ion)%momsrc
-
           osmcfe(1:ike,ir) = fluid(cind1:cind2,ion)%eneano
           osmqe (1:ike,ir) = fluid(cind1:cind2,ion)%eneion
 
@@ -1236,7 +1334,6 @@ c
       WRITE(fp,ERR=98) MAXNRS
       WRITE(fp,ERR=98) (grdntreg(i1),grdntseg(1:MAXNRS,i1),
      .                  (grdtseg(1:MAXNRS,i2,i1),i2=1,MAXNRS),i1=1,2)
-
       CLOSE (fp)
       
       RETURN
@@ -1264,77 +1361,111 @@ c
       INCLUDE 'slcom'
 
 
-      INTEGER id,ik,ir,i1,grid_option
-      REAL*4  r,delr,L,r1,r2,z1,z2,delta,frac,frac1,frac2,vessel_radius
+      INTEGER id,ik,ir,i1,grid_option,nrings_inner,nrings_outer
+      REAL*8  r,delr,L,r1,r2,z1,z2,frac1,frac2,
+     .        vessel_radius,brat,frac,r_inner,r_outer,delta
 
 
-      grid_option = 6
+      grid_option = 3  ! 7  ! 6
 
-      vessel_radius = 0.02  
-c      vessel_radius = 0.12  ! ULS
+      brat = 1.0
 
+      r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
+c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
       SELECTCASE (grid_option)
         CASE (1)  ! Full vessel, mirrored
-          L = 3.6                     ! Total length of mirrored plasma column (m)
-          r = 0.015                   ! Plasma radius (m)
+          vessel_radius = 0.02D0
+          L = 3.6D0                   ! Total length of mirrored plasma column (m)
+          r = 0.015D0                 ! Plasma radius (m)
+          z0 = L / 2.0D0              ! Height of the centre of the plasma (m)
           delr = (vessel_radius - r)  ! Distance from plasma to outer wall (m)
           maxrings = 10               ! Number of flux tubes (if changed, also need to change triangle grid in input file)
           nks(1:maxrings) = 100       ! Number of cells on each tube
         CASE (2)  ! Full vessel
-          L = 1.8
-          r = 0.015          
+          vessel_radius = 0.02D0
+          L = 1.8D0
+          r = 0.015D0          
+          z0 = L / 2.0D0              
           delr = (vessel_radius - r)  
           maxrings = 10      
           nks(1:maxrings) = 100         
         CASE (3) ! Target chamber
-          L = 0.56
-          r = 0.015          
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.02D0 ! 0.05D0 ! 0.02D0
+          L = 0.55D0  ! 0.56D0
+          r = 0.015D0 ! 0.03D0  ! 0.015D0
+          z0 = L / 2.0D0 ! 0.0 ! L / 2.0D0              
           delr = (vessel_radius - r)  
           maxrings = 10      
-          nks(1:maxrings) = 50  ! 175
+          nks(1:maxrings) = 20  ! 50  ! 175
         CASE (4) ! Target chamber: fancy
-          vessel_radius = 0.16 
-          L = 0.55
-          r = 0.08          
+          vessel_radius = 0.16D0 
+          L = 0.55D0
+          r = 0.08D0          
+          z0 = L / 2.0D0              
           delr = (vessel_radius - r)  
           maxrings = 50      
           nks(1:maxrings) = 150
         CASE (5) ! Target chamber: fancy #2, full vessel and small volume 
-          vessel_radius = 0.16 
-          L = 0.55
-          r = 0.03          
+          vessel_radius = 0.16D0 
+          L = 0.55D0
+          r = 0.03D0          
+          z0 = L / 2.0D0              
           delr = (vessel_radius - r)  
           maxrings = 50      
           nks(1:maxrings) = 150
         CASE (6) ! Target chamber: fancy #3, small volume 
-          vessel_radius = 0.05 
-          L = 0.55
-          r = 0.03          
+          vessel_radius = 0.05D0 
+          L = 0.55D0
+          r = 0.03D0          
+          z0 = L / 2.0D0              
           delr = (vessel_radius - r)  
           maxrings = 50      
+          nks(1:maxrings) = 150
+        CASE (7) ! Grid with 2 radial regions
+          vessel_radius = 0.05D0 
+          L = 0.55D0
+          z0 = L / 2.0D0              
+          nrings_inner = 30
+          nrings_outer = 20
+          maxrings = nrings_inner + nrings_outer
+          r_inner = 0.01D0
+          r_outer = 0.03D0     
+          delr = (vessel_radius - r_outer)  
           nks(1:maxrings) = 150
       ENDSELECT
 
       id = 0
 
-      r0 = 0.0000001  ! Need this tiny displacement to keep EIRENE04 from falling over 
-      z0 = 0.0
-
       DO ir = 1, maxrings
 
         IF (.TRUE.) THEN
-          IF (grid_option.EQ.4) THEN
-            frac1 = (REAL(ir-1) / REAL(maxrings))**0.7
-            frac2 = (REAL(ir  ) / REAL(maxrings))**0.7
-            r1 = r0 + frac1 * r
-            r2 = r0 + frac2 * r
+          IF     (grid_option.EQ.4) THEN
+            frac1 = (DBLE(ir-1) / DBLE(maxrings))**0.7
+            frac2 = (DBLE(ir  ) / DBLE(maxrings))**0.7
+            r1 = frac1 * r
+            r2 = frac2 * r
+          ELSEIF (grid_option.EQ.7) THEN
+            IF (ir.LE.nrings_inner) THEN
+              frac  = DBLE(ir-1) / DBLE(nrings_inner)
+              delta = r_inner / DBLE(nrings_inner)
+              r1 = frac * r_inner
+              r2 = r1 + delta
+            ELSE
+              frac  = DBLE(ir-nrings_inner-1) / DBLE(nrings_outer)
+              delta = (r_outer - r_inner) / DBLE(nrings_outer)
+              r1 = r_inner + frac * (r_outer - r_inner)
+              r2 = r1 + delta
+            ENDIF
           ELSE
-            frac  = REAL(ir-1) / REAL(maxrings)
-            delta = r / REAL(maxrings)
-            r1 = r0 + frac * r 
+            frac  = DBLE(ir-1) / DBLE(maxrings)
+            delta = r / DBLE(maxrings)
+            r1 = frac * r 
             r2 = r1 + delta
           ENDIF
+          IF (ir.EQ.1) r1 = r1 + r0
         ENDIF
 
 C       Krieger IPP/07 - SUN compiler does not know SNGL, replaced by REAL  -strange since SNGL is used elsewhere... -SL
@@ -1353,38 +1484,41 @@ c       nks(ir) = 100
           SELECTCASE (grid_option)
             CASE (1)  ! Full vessel, mirrored
               IF (.TRUE.) THEN
-                frac = REAL(ik-1) / REAL(nks(ir)) 
-                delta = L / REAL(nks(ir)) 
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
                 z1 = (0.5 - frac) * L
                 z2 = z1 - delta
               ENDIF
             CASE (2)  ! Full vessel
               IF (.TRUE.) THEN
-                frac = REAL(ik-1) / REAL(nks(ir)) 
-                delta = L / REAL(nks(ir)) 
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
                 z1 = (1.0 - frac) * L
                 z2 = z1 - delta       
               ENDIF
             CASE (3)  ! Target chamber
               IF (.TRUE.) THEN
-                frac = REAL(ik-1) / REAL(nks(ir)) 
-                delta = L / REAL(nks(ir)) 
-c                z1 = frac * L
-c                z2 = z1 + delta       
-                z1 = (1.0 - frac) * L
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
+                z1 = (0.5 - frac) * L + z0
+c                z1 = (1.0 - frac) * L 
                 z2 = z1 - delta       
               ENDIF
-            CASE (4:6) ! Target chamber: fancy
-              frac1 = REAL(ik-1) / REAL(nks(ir)) 
-              frac2 = REAL(ik  ) / REAL(nks(ir)) 
+            CASE (4:7) ! Target chamber: fancy
+              frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
+              frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
               frac1 = SIGN(0.5,frac1-0.5)*(ABS(frac1-0.5)/0.5)**1.00+0.5
               frac2 = SIGN(0.5,frac2-0.5)*(ABS(frac2-0.5)/0.5)**1.00+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
           ENDSELECT
 
-          bratio(ik,ir) = 1.0
-          kbfs  (ik,ir) = 1.0
+c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05
+c          IF (ir.EQ.2) WRITE(0,*) frac
+c          bratio(ik,ir) = SNGL(brat * frac)
+          bratio(ik,ir) = SNGL(brat)
+
+          kbfs  (ik,ir) = 1.0 / brat
           bts   (ik,ir) = cbphi 
 
           id = id + 1
@@ -1393,11 +1527,14 @@ c                z2 = z1 + delta
 
           nvertp(id) = 4
 
+!          frac = 1.0D0 + 1.0D0 * DBLE(ik-1) / DBLE(nks(ir) - 1)
+          frac = 1.0D0
+
           IF (ik.EQ.1) THEN
-            rvertp(1,id) = r1
-            rvertp(2,id) = r2
-            zvertp(1,id) = z1
-            zvertp(2,id) = z1
+            rvertp(1,id) = SNGL(r1)
+            rvertp(2,id) = SNGL(r2)
+            zvertp(1,id) = SNGL(z1)
+            zvertp(2,id) = SNGL(z1)
           ELSE
             rvertp(1,id) = rvertp(4,id-1)
             rvertp(2,id) = rvertp(3,id-1)
@@ -1405,10 +1542,10 @@ c                z2 = z1 + delta
             zvertp(2,id) = zvertp(3,id-1)
           ENDIF
 
-          rvertp(3,id) = r2
-          rvertp(4,id) = r1
-          zvertp(3,id) = z2
-          zvertp(4,id) = z2
+          rvertp(3,id) = SNGL(r2 * frac)
+          rvertp(4,id) = SNGL(r1 * frac)
+          zvertp(3,id) = SNGL(z2)
+          zvertp(4,id) = SNGL(z2)
 
           rs(ik,ir) = 0.0
           zs(ik,ir) = 0.0
@@ -1454,14 +1591,9 @@ c...  Necessary..?
       idring(1) = -1
       idring(nrs) = -1
 
-
 c...  Modify the grid based on entries in the GRDMOD array assigned 
 c     from the input file:
 c      IF (grdnmod.NE.0) CALL TailorGrid
-
-
-      rxp =  0.0 
-      zxp = -0.25 * L
 
       rmin = HI
       rmax = LO
@@ -1476,6 +1608,10 @@ c      IF (grdnmod.NE.0) CALL TailorGrid
         ENDDO
       ENDDO
 
+      rxp =  0.0 
+      zxp =  0.25 * zmin + 0.75 * zmax
+c      zxp = -0.25 * L
+
 c...  Neutral wall
       IF (cneur.EQ.4) THEN
 
@@ -1483,32 +1619,32 @@ c...  Neutral wall
            CASE (1)  ! Full vessel, mirrored
              nves = 20
              ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
+             r1 = DBLE(rvertp(2,korpg(1      ,ir)))
              r2 = r1 + delr
-             z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
+             z1 = DBLE(zvertp(2,korpg(1      ,ir)))
+             z2 = DBLE(zvertp(3,korpg(nks(ir),ir)))
   
-             rves(1)  =  r1
-             zves(1)  =  z1
-             rves(2)  =  r2
-             zves(2)  =  z1
+             rves(1)  =  SNGL(r1)
+             zves(1)  =  SNGL(z1)
+             rves(2)  =  SNGL(r2)
+             zves(2)  =  SNGL(z1)
   
-             rves(3)  =  r2
-             zves(3)  =  L / 2.0 - 0.56
-             rves(4)  =  r1 + 0.0101 
-             zves(4)  =  L / 2.0 - 0.56
-             rves(5)  =  r1 + 0.0001 
-             zves(5)  =  L / 2.0 - 0.57
-             rves(6)  =  r2
-             zves(6)  =  L / 2.0 - 0.57
+             rves(3)  =  SNGL(r2)
+             zves(3)  =  SNGL(L) / 2.0 - 0.56
+             rves(4)  =  SNGL(r1) + 0.0101 
+             zves(4)  =  SNGL(L) / 2.0 - 0.56
+             rves(5)  =  SNGL(r1) + 0.0001
+             zves(5)  =  SNGL(L) / 2.0 - 0.57
+             rves(6)  =  SNGL(r2)
+             zves(6)  =  SNGL(L) / 2.0 - 0.57
   
-             rves(7)  =  r2
+             rves(7)  =  SNGL(r2)
              zves(7)  =  0.03
-             rves(8)  =  r1 + 0.0001
+             rves(8)  =  SNGL(r1) + 0.0001
              zves(8)  =  0.03
-             rves(9)  =  r1 + 0.0001
+             rves(9)  =  SNGL(r1) + 0.0001
              zves(9)  =  0.02
-             rves(10) =  r2
+             rves(10) =  SNGL(r2)
              zves(10) =  0.02
   
              rves(11) =  r2
@@ -1569,22 +1705,29 @@ c...  Neutral wall
              rves(12) =  r1
              zves(12) =  z2
            CASE (3)  ! Target chamber
-             nves = 4
+             nves = 7
              ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
+             r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
              r2 = r1 + delr
              z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
+             z2 = zvertp(3,korpg(nks(ir),ir)) 
   
              rves(1) =  r1
              zves(1) =  z1
              rves(2) =  r2
              zves(2) =  z1
-  
+
              rves(3) =  r2
-             zves(3) =  z2 
-             rves(4) =  r1
-             zves(4) =  z2
+             zves(3) =  0.55 * z1 + 0.45 * z2
+             rves(4) =  r2
+             zves(4) =  0.50 * z1 + 0.50 * z2
+             rves(5) =  r2
+             zves(5) =  0.45 * z1 + 0.55 * z2
+  
+             rves(6) =  r2
+             zves(6) =  z2 
+             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.0001 ! r1
+             zves(7) =  z2
            CASE (4:5)  ! Target chamber: fancy
              nves = 10
              ir = irwall-1
@@ -1621,7 +1764,7 @@ c...  Neutral wall
   
              rves(10) =  r1
              zves(10) =  z2
-           CASE (6)  ! Target chamber: fancy #3, small volume
+           CASE (6:7)  ! Target chamber: fancy #3, small volume
              nves = 10
              ir = irwall-1
              r1 = rvertp(2,korpg(1      ,ir))
@@ -1673,6 +1816,8 @@ c...  Neutral wall
  
 c      CALL DumpGrid('BUILDING LINEAR GRID')
 
+      IF (grdnmod.GT.0) CALL TailorGrid
+
 
       CALL OutputData(85,'Linear')
 
@@ -1687,3 +1832,1655 @@ c      STOP 'WHA-WHO!'
       RETURN
  99   STOP
       END
+c
+c
+c
+c
+c
+c
+c
+c
+c ========================================================================
+c
+      SUBROUTINE FindKnot_SL(NUMZONE,izone,condition,
+     .                       index1,index2)
+      USE mod_grid
+      IMPLICIT none
+      INCLUDE 'params'  ! for SLOUTPUT
+c
+c     jdemod
+c
+c     Condition=1 finds two different knots which have the same 
+c                 R,Z values for knot number 1. This condition
+c                 should only occur at an Xpoint
+c
+c     Condition=2 finds knot 1=2 and knot 4=3 for test cell vs. other cells
+c
+c     Condition=3 finds knot 3=2 and knot 4=1 for test cell vs. other cells
+c
+c     Condition=4 finds knot 2=1 and knot 3=4 for test cell vs. other cells
+c
+c     Condition=5 finds knot 1=4 and knot 2=3 for test cell vs. other cells
+c
+c      TYPE type_grid_cell
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL*8  :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_grid_cell
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
+
+      INTEGER index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
+     .        condition
+c      INTEGER nknot,index1,index2,NUMZONE,izone(NUMZONE+1,NUMZONE),
+c      TYPE(type_grid_cell) :: knot(0:nknot)      
+
+      REAL*8, PARAMETER :: DTOL=1.0D-06
+
+      INTEGER i1,i2,r1,z1
+
+      i1 = index1
+
+      index2 = -1
+
+      DO z1 = knot(i1)%zzone-1, knot(i1)%zzone+1
+        IF (z1.LT.1.OR.z1.GT.NUMZONE) CYCLE
+        DO r1 = knot(i1)%rzone-1, knot(i1)%rzone+1
+          IF (r1.LT.1.OR.r1.GT.NUMZONE) CYCLE  
+c          DO i2 = 1, nknot
+          DO i2 = izone(r1,z1), izone(r1+1,z1)-1
+            IF (i1.EQ.i2) CYCLE
+c...
+            IF     (condition.EQ.1.AND.
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(1)).LT.DTOL) THEN
+c              IF (sloutput) WRITE(0,*) 'XPOINT:',i1,i2
+              index2 = i2
+              RETURN
+            ELSEIF (condition.EQ.2.AND.
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(4)-knot(i2)%rv(3)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(4)-knot(i2)%zv(3)).LT.DTOL) THEN
+c              WRITE(0,*) 'SIDE14:',i1,i2
+              index2 = i2
+              RETURN
+            ELSEIF (condition.EQ.3.AND.
+     .              DABS(knot(i1)%rv(3)-knot(i2)%rv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(3)-knot(i2)%zv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(4)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(4)-knot(i2)%zv(1)).LT.DTOL) THEN
+c              WRITE(0,*) 'SIDE14:',i1,i2
+              index2 = i2
+              RETURN
+            ELSEIF (condition.EQ.4.AND.
+     .              DABS(knot(i1)%rv(2)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(2)-knot(i2)%zv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(3)-knot(i2)%rv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(3)-knot(i2)%zv(4)).LT.DTOL) THEN
+c              WRITE(0,*) 'SIDE14:',i1,i2
+              index2 = i2
+              RETURN
+            ELSEIF (condition.EQ.5.AND.
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(2)-knot(i2)%rv(3)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(2)-knot(i2)%zv(3)).LT.DTOL) THEN
+c...          Matching sides 12 and 34:
+c              WRITE(0,*) 'SIDE14:',i1,i2
+              index2 = i2
+              RETURN
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+
+c
+c ========================================================================
+c
+      SUBROUTINE MoveKnot_SL(knot1,knot2)
+      USE mod_grid
+      IMPLICIT none
+
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
+      TYPE(type_grid_cell) :: knot1,knot2      
+
+      INTEGER i1
+
+      knot2%index  = knot1%index
+      knot2%ik     = knot1%ik
+      knot2%ir     = knot1%ir
+      knot2%rzone  = knot1%rzone
+      knot2%zzone  = knot1%zzone
+      knot2%xpt    = knot1%xpt
+      knot2%rcen   = knot1%rcen
+      knot2%zcen   = knot1%zcen
+      knot2%bratio = knot1%bratio
+      DO i1 = 1, 4
+        knot2%rv(i1) = knot1%rv(i1)
+        knot2%zv(i1) = knot1%zv(i1)
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ========================================================================
+c
+      SUBROUTINE ReadGeneralisedGrid_SL(gridunit,ik,ir,
+     .                                  rshift,zshift,indexiradj)
+      USE mod_sol28_global
+      USE mod_grid
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INTEGER gridunit,ik,ir,indexiradj
+      REAL    rshift,zshift
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+      INCLUDE 'pindata'
+
+c..TMP
+      CHARACTER title*174,desc*1024,job*72,equil*60
+      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
+
+      INTEGER, PARAMETER :: NUMZONE = 5
+      REAL*8,  PARAMETER :: TOL = 1.0D-06
+
+      INTEGER   i1,i2,z1,r1,kind,nxpt,ixpt(0:2),cxpt(0:2),i3,
+c      INTEGER   nknot,i1,i2,z1,r1,kind,nxpt,ixpt(0:2),cxpt(0:2),i3,
+     .          izone(NUMZONE+1,NUMZONE),newi1,icore(0:2),id,tmpnks,
+     .          ikmax,irmax,ir1,istart,
+     .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
+      LOGICAL   cont,deleteknot,output,swap
+      REAL      vrmin,vzmin,vrmax,vzmax,rspan,zspan,area,valpsi(MAXNRS)
+      REAL*8    rvdp(4),zvdp(4),areadp
+      CHARACTER buffer*1000
+
+c      INTEGER, ALLOCATABLE :: imap(:,:)
+
+c      TYPE type_cell_old
+c        INTEGER :: index,ik,ir,nv,rzone,zzone,xpt,map
+c        REAL    :: rcen,zcen,bratio,rv(4),zv(4)
+c      ENDTYPE type_cell_old
+c      TYPE(type_cell_old),ALLOCATABLE :: knot(:)
+
+      output = .FALSE.
+
+      ALLOCATE(knot(0:MAXNKS*MAXNRS))
+      ALLOCATE(imap(MAXNKS,0:MAXNRS))
+
+c...  Find the start of the cell/knot information in the grid file:
+      WRITE(buffer,'(1000X)')
+      DO WHILE (buffer(4:8).NE.'=====')
+        READ(gridunit,'(A10)',END=98) buffer
+      ENDDO
+
+c...  Read the knot data:
+      nknot = 0
+      DO WHILE(nknot.EQ.0.OR.buffer(4:10).EQ.'Element')
+        nknot = nknot + 1
+        READ(gridunit,80,END=97) knot(nknot)%index,
+     .                           knot(nknot)%ik   ,knot(nknot)%ir,
+     .                           knot(nknot)%rv(2),knot(nknot)%zv(2),
+     .                           knot(nknot)%rv(3),knot(nknot)%zv(3)
+        READ(gridunit,81,END=97) knot(nknot)%bratio,
+     .                           knot(nknot)%rcen ,knot(nknot)%zcen
+        READ(gridunit,82,END=97) knot(nknot)%rv(1),knot(nknot)%zv(1),
+     .                           knot(nknot)%rv(4),knot(nknot)%zv(4)
+        knot(nknot)%nv = 4
+c...    Dividing line:       
+        READ(gridunit,*)
+        READ(gridunit,'(A10)',END=20) buffer
+        BACKSPACE(gridunit)
+      ENDDO
+ 80   FORMAT(10X,I5,4X,I3,1x,i3,4x,e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,
+     .       E17.10E2)
+ 81   FORMAT(18x,e17.10e2,14x,e17.10e2,1x,e17.10e2)
+ 82   FORMAT(30x,e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,e17.10e2)
+c...  End of file continuation:
+ 20   CONTINUE
+
+c...  Delete zero volume cells:
+
+c...  Strip those boundary cells:
+c     jdemod
+      IF (output) then
+         WRITE(0,*) 'CELL 1'
+         WRITE(0,*) '2     :',knot(1)%rv(2),knot(1)%zv(2)
+         WRITE(0,*) '3     :',knot(1)%rv(3),knot(1)%zv(3)
+         WRITE(0,*) '1     :',knot(1)%rv(1),knot(1)%zv(1)
+         WRITE(0,*) '4     :',knot(1)%rv(4),knot(1)%zv(4)
+         WRITE(0,*) 'cen   :',knot(1)%rcen,knot(1)%zcen
+         WRITE(0,*) 'bratio:',knot(1)%bratio
+
+         WRITE(0,*) 'STRIPPING...'
+         WRITE(6,*) 'STRIPPING...'
+ 
+
+      endif
+c
+      ikmax = 0
+      irmax = 0
+      DO i1 = 1, nknot
+        IF (knot(i1)%ik.GT.ikmax) ikmax = knot(i1)%ik
+        IF (knot(i1)%ir.GT.irmax) irmax = knot(i1)%ir
+      ENDDO
+c...  (This is not the most efficient way of doing things -- certaintly it would
+c      be better just to avoid storing the cells as the grid file is read in --    <---WHAT?
+c      but it is general, which is the goal here, and makes minimal assumptions 
+c      about the structure of the grid file):
+c
+c     jdemod - the following code loops through the grid and removes all cells for which the 
+c              coordinates of vertex 3=2 and 4=1 - these are the parallel to the field line 
+c              vertices - this will remove cells at the targets but not any boundary rings
+c
+      i1 = 1
+      DO WHILE(i1.LE.nknot)
+c        IF     (.TRUE..AND.  ! FOR SXD GRID
+        IF     (opt%f_grid_strip.EQ.1.AND.
+     .          (knot(i1)%ik.EQ.0.OR.knot(i1)%ik.EQ.ikmax.OR.     ! virtual cells on end of rings
+     .           knot(i1)%ir.EQ.0.OR.knot(i1)%ir.EQ.irmax)) THEN  ! virtual rings
+c...      Remove boundary knots:
+          deleteknot = .TRUE.
+        ELSEIF (ABS(knot(i1)%rv(3)-knot(i1)%rv(2)).LT.TOL.AND.
+     .          ABS(knot(i1)%zv(3)-knot(i1)%zv(2)).LT.TOL.AND.
+     .          ABS(knot(i1)%rv(4)-knot(i1)%rv(1)).LT.TOL.AND.
+     .          ABS(knot(i1)%zv(4)-knot(i1)%zv(1)).LT.TOL) THEN
+c...      Also get rid of zero volume cells, which can be present in UEDGE
+c         double null grids.  The above condition is the best identifier
+c         for these (for grids generated with UEDGE anyway):
+          deleteknot = .TRUE.
+        ELSE
+c...      Cell to be kept, advance index:
+          deleteknot = .FALSE.
+          i1 = i1 + 1
+        ENDIF
+c...    Delete the knot:
+        IF (deleteknot) THEN
+          IF (i1.LT.nknot) THEN
+            DO i2 = i1, nknot
+              CALL MoveKnot_SL(knot(i2+1),knot(i2))
+            ENDDO
+          ENDIF
+          nknot = nknot - 1
+c          jdemod
+c          IF (output) then
+c             WRITE(0,*) 'GONE',i1
+c             WRITE(6,*) 'GONE',i1
+c          endif
+
+        ENDIF
+      ENDDO
+c
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'DONE'
+         WRITE(6,*) 'DONE'
+      endif
+
+
+c...  Search the grid for remaining virtual cells (typically zero-volume):
+c      DO i1 = 1, nknot
+c        DO i2 = 1, knot(i1)%nv
+c          rvdp(i2) = DBLE(knot(i1)%rv(i2))
+c          zvdp(i2) = DBLE(knot(i1)%zv(i2))
+c        ENDDO
+c        areadp = 0.0
+c        DO i2 = 1, knot(i1)%nv
+c          i3 = i2 + 1
+c          IF (i2.EQ.knot(i1)%nv) i3 = 1
+c          areadp = areadp + (rvdp(i3) * zvdp(i2) -
+c     .                       rvdp(i2) * zvdp(i3))
+c        ENDDO
+c        area = 0.5 * SNGL(DABS(areadp))
+c
+c         cont = .FALSE.
+c          IF (DABS(rvdp(3)-rvdp(2)).LT.TOL.AND.
+c     .        DABS(zvdp(3)-zvdp(2)).LT.TOL.AND.
+c     .        DABS(rvdp(4)-rvdp(1)).LT.TOL.AND.
+c     .        DABS(zvdp(4)-zvdp(1)).LT.TOL) cont = .TRUE.
+c
+c
+c        IF (area.LT.1.0E-08) 
+c     .    WRITE(0,*) 'I!,AREA:',knot(i1)%index,area,cont
+c      ENDDO
+c
+c      STOP 'sdfsd'
+
+c...  R,Z shifts:
+
+c...  Assign knot sector (for improved efficiency in the search routines):
+      vrmin =  HI
+      vrmax = -HI
+      vzmin =  HI
+      vzmax = -HI
+      DO i1 = 1, nknot      
+        DO i2 = 1, knot(i1)%nv
+          IF (knot(i1)%rv(i2).LT.vrmin) vrmin = knot(i1)%rv(i2)
+          IF (knot(i1)%rv(i2).GT.vrmax) vrmax = knot(i1)%rv(i2)
+          IF (knot(i1)%zv(i2).LT.vzmin) vzmin = knot(i1)%zv(i2)
+          IF (knot(i1)%zv(i2).GT.vzmax) vzmax = knot(i1)%zv(i2)
+        ENDDO
+      ENDDO
+      vrmin = vrmin - 0.001
+      vrmax = vrmax + 0.001
+      vzmin = vzmin - 0.001
+      vzmax = vzmax + 0.001
+c
+c     jdemod
+      IF (output) then
+         WRITE(0,*) 'MIN,MAX:',vrmin,vrmax,vzmin,vzmax
+         WRITE(6,*) 'MIN,MAX:',vrmin,vrmax,vzmin,vzmax
+      endif
+c      IF (output) WRITE(0,*) 'MIN,MAX:',vrmin,vrmax,vzmin,vzmax
+c...  Assign knot to search zone:
+      rspan = (vrmax - vrmin) / REAL(NUMZONE)
+      zspan = (vzmax - vzmin) / REAL(NUMZONE)
+      DO i1 = 1, nknot
+        knot(i1)%rzone = INT( (knot(i1)%rcen - vrmin) / rspan ) + 1
+        knot(i1)%zzone = INT( (knot(i1)%zcen - vzmin) / zspan ) + 1
+c        WRITE(0,*) 'SPAN:',i1,knot(i1)%rzone,knot(i1)%zzone
+      ENDDO
+
+c...  Index cells by zone, work now for saved time later:
+      kind = 1
+      DO z1 = 1, NUMZONE
+        DO r1 = 1, NUMZONE
+          izone(r1,z1) = kind
+          DO i1 = kind, nknot
+            IF     (knot(i1)%rzone.EQ.r1.AND.knot(i1)%zzone.EQ.z1) THEN
+              IF (i1.EQ.kind) THEN
+c...            Do nothing:
+              ELSE
+c...            Swap knots:
+                CALL MoveKnot_SL(knot(kind),knot(0)   )
+                CALL MoveKnot_SL(knot(i1)  ,knot(kind))
+                CALL MoveKnot_SL(knot(0)   ,knot(i1)  )
+c                WRITE(0,*) 'ZONING SWAP:',kind,i1
+              ENDIF
+              kind = kind + 1
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+c...  
+      DO i1 = 1, NUMZONE-1
+        izone(NUMZONE+1,i1) = izone(1,i1+1)
+      ENDDO
+      izone(NUMZONE+1,NUMZONE) = nknot + 1
+
+c      DO i1 = 1, nknot
+c        WRITE(0,*) 'ZONED:',i1,knot(i1)%rzone,knot(i1)%zzone
+c      ENDDO
+c      DO z1 = 1, NUMZONE
+c        DO r1 = 1, NUMZONE
+c          WRITE(0,*) 'IZONE:',izone(r1,z1) 
+c        ENDDO
+c      ENDDO
+
+c...  Search for x-point(s):
+c
+c     jdemod - it appears that the X-point finding algorithm used is the following:
+c            - the only cells on the grid which can have an identical vertex - both index and value 
+c              and not be the same cell must occur at the Xpoint - the shared vertex in this 
+c              case IS the Xpoint. This is the condition tested for when FindKnot_SL is called with 
+c              a 1. Search efficiency has been enhanced by using the zones set up above. 
+c            - Zero volume cells would be an issue with this algorithm - code above this has 
+c              apparently removed zero volume cells where vertices 3=2 and 1=4 - however, it would 
+c              appear that boundary rings around the plasma and in the core/PFZ have not been 
+c              removed.
+c
+      nxpt = 0
+      DO i1 = 1, nknot
+        IF (knot(i1)%xpt.NE.0) CYCLE
+
+        IF (nxpt.EQ.2) THEN
+          WRITE(0,*)
+          WRITE(0,*) '--------------------------------------------'
+          WRITE(0,*) '-   MORE THAN 2 XPTS FOUND, IGNORING...    -'
+          WRITE(0,*) '--------------------------------------------'
+          WRITE(0,*)
+          EXIT
+        ENDIF
+
+        CALL FindKnot_SL(NUMZONE,izone,1,i1,i2)
+
+        IF (i2.NE.-1) THEN
+c
+c     jdemod - the code appears to assume that the midplane is at 0.0 - this 
+c              should probably be replaced with the zc value defining the 
+c              center of the confined plasma. 
+c
+c...      Select the appropriate cell, whichever is closest to the midplane will
+c         be the cell associated with the core (which we want to build first):
+          IF    (knot(i1)%zcen.LT.0.0.AND.knot(i2)%zcen.LT.0.0) THEN
+            nxpt = nxpt + 1
+            IF (knot(i1)%zcen.GT.knot(i2)%zcen) THEN
+              ixpt(nxpt) = i1
+              knot(i1)%xpt = i2
+              knot(i2)%xpt = i1
+            ELSE
+              ixpt(nxpt) = i2
+              knot(i1)%xpt = i2
+              knot(i2)%xpt = i1
+            ENDIF
+          ELSEIF(knot(i1)%zcen.GT.0.0.AND.knot(i2)%zcen.GT.0.0) THEN
+            nxpt = nxpt + 1
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) '  >> ',i1,i2
+               WRITE(0,*) '     ',knot(i1)%zcen,knot(i2)%zcen
+               WRITE(6,*) '  >> ',i1,i2
+               WRITE(6,*) '     ',knot(i1)%zcen,knot(i2)%zcen
+            endif
+c            IF (output) WRITE(0,*) '  >> ',i1,i2
+c            IF (output) WRITE(0,*) '     ',knot(i1)%zcen,knot(i2)%zcen
+            IF (knot(i1)%zcen.LT.knot(i2)%zcen) THEN
+              ixpt(nxpt) = i1
+              knot(i1)%xpt = i2
+              knot(i2)%xpt = i1
+            ELSE
+              ixpt(nxpt) = i2
+              knot(i1)%xpt = i2
+              knot(i2)%xpt = i1
+            ENDIF
+          ELSE
+            CALL ER('Readgeneralisedgrid','Unrecognized '//
+     .              'x-point configuration',*99)
+          ENDIF
+        ENDIF
+      ENDDO
+
+c...  No x-points found, for some reason:
+      IF (nxpt.EQ.0) 
+     .  CALL ER('Readgeneralisedgrid','No x-points found',*99)
+
+      IF (output) THEN
+        DO i1 = 1, nxpt
+          WRITE(0,*) 'XPTS:',i1,
+     .               ixpt(i1),knot(ixpt(i1))%index,
+     .               knot(ixpt(i1))%xpt,
+     .               knot(knot(ixpt(i1))%xpt)%index
+          WRITE(6,*) 'XPTS:',i1,
+     .               ixpt(i1),knot(ixpt(i1))%index,
+     .               knot(ixpt(i1))%xpt,
+     .               knot(knot(ixpt(i1))%xpt)%index
+        ENDDO
+      ENDIF
+c
+c     jdemod - the Xpoint finding algorithm returns the two cells that share the 
+c              Xpoint vertex as index 1. One of these cells should be the cell
+c              in the SOL adjacent to the first cell on the core ring at the
+c              Xpoint. The second of these cells is below the Xpoint adjacent to 
+c              PFZ. By using the cell "closer to the midplane" it should choose
+c              the cell adjacent to the confined plasma - the cell sharing the side
+c              with vertices where 1 = 2 and 4 = 3 should be the first cell on the 
+c              core ring. 
+c
+c              The code then walks inward from the Xpoint finding the cell on the
+c              innermost core ring corresponding to the first cell on the ring at the 
+c              Xpoint. The variable cxpt records the number of rings from the Xpoint
+c              to the innermost ring. If this value is the same for two different
+c              Xpoints then the grid is a connected double null. If not - the difference
+c              in the two values should define the number of rings in the secondary 
+c              plasma between the two Xpoints for the DDN plasma configuration. 
+c
+c...  Searching for the start of the core center ring:
+      cxpt = 0
+      icore = 0
+      DO i3 = 1, nxpt
+        newi1 = ixpt(i3)
+        cont = .TRUE.
+        DO WHILE (cont)
+          i1 = newi1
+          cxpt(i3) = cxpt(i3) + 1
+          cont = .FALSE.
+c
+c     jdemod - when the search has moved all the way inward and 
+c              can no longer find a cell with a matching side then
+c              i2=-1 is returned and the code moves onto any other
+c              Xpoints. 
+c
+          CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
+
+          IF (i2.NE.-1) THEN
+            cont = .TRUE.
+            newi1 = i2 
+            icore(i3) = i2
+          ENDIF
+        ENDDO
+c
+c       jdemod
+        IF (output) then 
+           WRITE(0,*) 'Cxpt:',ixpt(i3),cxpt(i3),icore(i3)
+           WRITE(6,*) 'Cxpt:',ixpt(i3),cxpt(i3),icore(i3)
+        endif
+c        IF (output) WRITE(0,*) 'Cxpt:',ixpt(i3),cxpt(i3),icore(i3)
+      ENDDO
+
+      IF (nxpt.GT.1) THEN
+c...    Check that the x-points are ordered properly, with the primary x-point
+c       at index 1, and whether or not the double-null grid is connected:
+        swap = .FALSE.
+        IF     (nxpt.GT.1.AND.cxpt(1).EQ.cxpt(2)) THEN
+c...      Connected:
+          IF (knot(ixpt(1))%zcen.GT.0.0) swap = .TRUE.
+          connected = .TRUE.
+c
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'CONNECTED DN DETECTED'
+             WRITE(6,*) 'CONNECTED DN DETECTED'
+          endif
+c          IF (output) WRITE(0,*) 'CONNECTED DN DETECTED'
+        ELSEIF (nxpt.GT.1.AND.cxpt(1).GT.cxpt(2)) THEN
+          swap = .TRUE.
+          connected = .FALSE.
+        ENDIF
+        IF (swap) THEN
+c
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'SWAPPING X-POINTS'
+             WRITE(6,*) 'SWAPPING X-POINTS'
+          endif
+c          IF (output) WRITE(0,*) 'SWAPPING X-POINTS'
+          ixpt (0) = ixpt (1)
+          ixpt (1) = ixpt (2)
+          ixpt (2) = ixpt (0)
+          cxpt (0) = cxpt (1)
+          cxpt (1) = cxpt (2)
+          cxpt (2) = cxpt (0)
+          icore(0) = icore(1)
+          icore(1) = icore(2)
+          icore(2) = icore(0)
+        ENDIF
+      ENDIF
+
+c...  Make sure that x-point knot indeces are ordered properly, with the inner (lower radius)
+c     of each pair listed in IXPT:
+c      DO i1 = 1, nxpt
+c        IF (knot(ixpt(i1))%rcen.GT.knot(knot(ixpt(i1))%xpt)%rcen) THEN
+c          jdemod
+c          IF (output) then 
+c              WRITE(0,*) 'SWAPPING X-POINT PAIR',i1
+c              WRITE(6,*) 'SWAPPING X-POINT PAIR',i1
+c          endif       
+c          IF (output) WRITE(0,*) 'SWAPPING X-POINT PAIR',i1
+c          ixpt(i1) = knot(ixpt(i1))%xpt
+c        ENDIF
+c      ENDDO
+
+c...  Location of the primary separatrix is known:
+      irsep  = cxpt(1)
+      irsep2 = irsep
+
+c...  Build the grid:
+c
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'PROCESSING CORE RINGS'
+         WRITE(6,*) 'PROCESSING CORE RINGS'
+      endif
+c      IF (output) WRITE(0,*) 'PROCESSING CORE RINGS'
+
+c...  Start with the core rings:
+      ik = 1
+      ir = 1
+      i1 = icore(1) 
+      DO WHILE(ir.LT.irsep)
+        imap(1,ir) = i1
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+c...      Move along the ring:
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
+c          WRITE(0,*) '>>>',i1,i2,ir,imap(1,ir)  
+          IF (i2.NE.-1) THEN
+            IF (i2.NE.imap(1,ir)) THEN
+              i1 = i2 
+              ik = ik + 1
+              imap(ik,ir) = i1 
+              cont = .TRUE.
+c
+c             jdemod
+              IF (output) then 
+                 WRITE(0,*) 'CORE MAP:',ik,ir,i1
+                 WRITE(6,*) 'CORE MAP:',ik,ir,i1
+              endif
+c              IF (output) WRITE(0,*) 'CORE MAP:',ik,ir,i1
+            ENDIF
+          ELSE
+            CALL ER('ReadGeneralisedGrid','Bad IK step',*99)
+          ENDIF
+        ENDDO
+        nks(ir) = ik
+c...    Step outward, still in the core:        
+        CALL FindKnot_SL(NUMZONE,izone,4,imap(1,ir),i2)
+        IF (i2.NE.-1) THEN        
+          i1 = i2
+          ik = 1
+          ir = ir + 1
+        ELSE
+          CALL ER('Readgeneralisedgrid','Bad IR step',*99)
+        ENDIF
+      ENDDO
+
+c...  SOL rings: 
+c
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'PROCESSING SOL RINGS'
+         WRITE(6,*) 'PROCESSING SOL RINGS'
+      endif
+c      IF (output) WRITE(0,*) 'PROCESSING SOL RINGS'
+c
+c     jdemod - Doesn't this assume an Xpoint down configuration? At least as far as the 
+c              "high field side" reference goes? I think the code itself still works. 
+c
+
+c...  Step out of the core on the high field side:
+      i1 = imap(1,irsep-1)
+      CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
+      IF (i2.NE.-1) THEN  
+c...    Move down to the target:
+        i1 = i2
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
+          IF (i2.NE.-1) THEN 
+            i1 = i2
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+      ELSE
+        CALL ER('Readgeneralisedgrid','Bad IR step to SOL',*99)
+      ENDIF
+c...  Target located, start mapping the SOL:
+      ik = 1
+      ir = irsep
+      imap(ik,ir) = i1
+      cont = .TRUE.
+      DO WHILE(cont)
+        cont = .FALSE.
+c...    Move along the ring:
+        CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
+        IF (i2.NE.-1) THEN
+          i1 = i2 
+          ik = ik + 1
+          imap(ik,ir) = i1
+          cont = .TRUE.
+c
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'INNER SOL MAP:',ik,ir,i1
+             WRITE(6,*) 'INNER SOL MAP:',ik,ir,i1
+          endif
+c          IF (output) WRITE(0,*) 'INNER SOL MAP:',ik,ir,i1
+        ENDIF
+c...    Step radially outward if ring is finished:
+        IF (.NOT.cont) THEN
+          nks(ir) = ik
+          i1 = imap(1,ir)
+          CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)          
+          IF (i2.NE.-1) THEN
+            i1 = i2
+            ik = 1
+            ir = ir + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) 'INNER SOL MAP NEW RING:',ik,ir,i1
+               WRITE(6,*) 'INNER SOL MAP NEW RING:',ik,ir,i1
+            endif
+c            IF (output) WRITE(0,*) 'INNER SOL MAP NEW RING:',ik,ir,i1
+          ENDIF
+        ENDIF
+      ENDDO
+      irwall = ir
+      irtrap = ir + 1
+      nrs = ir
+
+      IF (nxpt.GT.1) THEN
+c
+c       jdemod
+        IF (output) then
+           WRITE(0,*) 'PROCESSING LOW FIELD SOL'
+           WRITE(6,*) 'PROCESSING LOW FIELD SOL'
+        endif
+c        IF (output) WRITE(0,*) 'PROCESSING LOW FIELD SOL'
+
+c...    Process the low field side looking for any rings that
+c       were not processed when looking around the high field side (which
+c       is usually the case for double-nulls):
+
+c...    Register all knots that have been mapped to the grid:
+        DO ir = 1, nrs
+          DO ik = 1, nks(ir)
+            knot(imap(ik,ir))%map = 1
+          ENDDO
+        ENDDO
+c
+c     jdemod - why not use - i1=imap(nks(irsep-1),irsep-1) ?
+c
+c...    Start with the first cell on the outer-most core ring and move to 
+c       the last cell on the same ring:
+        i1 = imap(1,irsep-1)
+        CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
+        IF (i2.EQ.-1) 
+     .    CALL ER('Readgeneralisedgrid','Core map problems',*99)
+        i1 = i2
+c...    Move into the SOL:
+        CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
+        IF (i2.NE.-1) THEN
+          i1 = i2
+          IF (knot(i2)%map.EQ.1) THEN  
+c...        Keep moving outward until a cell with no assigned mapping is
+c           found:
+            cont = .TRUE.
+            DO WHILE(cont)
+              cont = .FALSE.
+              CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)
+              IF (i2.NE.-1) THEN 
+                i1 = i2
+                IF (knot(i1)%map.NE.0) cont = .TRUE.
+              ELSE
+c...            Either an error or a single-null grid is being tested:
+                STOP 'SINGLE NULL GRID BEING TESTED OR ERROR?'
+              ENDIF
+            ENDDO
+          ENDIF
+        ELSE
+          CALL ER('Readgeneralisedgrid','Bad IR step to SOL',*99)
+        ENDIF
+
+c...    An unmapped cell has been found, proceed to target:
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
+          IF (i2.NE.-1) THEN 
+            i1 = i2
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+
+c...    Target located, start mapping the low field SOL:
+        ik = 1
+        ir = nrs + 1
+        IF (connected) irsep2 = ir
+        imap(ik,ir) = i1
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+c...      Move along the ring:
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
+          IF (i2.NE.-1) THEN
+            i1 = i2 
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) 'OUTER SOL MAP:',ik,ir,i1
+               WRITE(6,*) 'OUTER SOL MAP:',ik,ir,i1
+            endif
+c            IF (output) WRITE(0,*) 'OUTER SOL MAP:',ik,ir,i1
+          ENDIF
+c...      Step radially outward if ring is finished:
+          IF (.NOT.cont) THEN
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) 'STEPPING OUT:',ik,ir,i1
+               WRITE(6,*) 'STEPPING OUT:',ik,ir,i1
+            endif
+c            IF (output) WRITE(0,*) 'STEPPING OUT:',ik,ir,i1
+            nks(ir) = ik
+            i1 = imap(1,ir)
+            CALL FindKnot_SL(NUMZONE,izone,4,i1,i2)          
+            IF (i2.NE.-1) THEN
+              i1 = i2
+              ik = 1
+              ir = ir + 1
+              imap(ik,ir) = i1
+              cont = .TRUE.
+c
+c             jdemod
+              IF (output) then 
+                 WRITE(0,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
+                 WRITE(6,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
+              endif
+c              IF (output) WRITE(0,*) 'OUTER SOL MAP NEW RING:',ik,ir,i1
+            ELSE
+c...          Assume the outer boundary of the grid:
+c
+c             jdemod
+              IF (output) then 
+                 WRITE(0,*) 'ASSUMING OUTER GRID BOUNDARY'
+                 WRITE(6,*) 'ASSUMING OUTER GRID BOUNDARY'
+              endif
+c              IF (output) WRITE(0,*) 'ASSUMING OUTER GRID BOUNDARY'
+            ENDIF
+          ENDIF
+        ENDDO
+        irwall = ir
+        irtrap = ir + 1
+        nrs = ir
+
+c...    Register all knots that have been mapped to the grid:
+        DO ir = 1, nrs
+          DO ik = 1, nks(ir)
+            knot(imap(ik,ir))%map = 1
+          ENDDO
+        ENDDO
+
+
+
+c       jdemod
+        IF (output) then 
+           WRITE(0,*) 'PROCESSING SECONDARY PFZ'
+           WRITE(6,*) 'PROCESSING SECONDARY PFZ'
+        endif
+c        IF (output) WRITE(0,*) 'PROCESSING SECONDARY PFZ'
+c...    Process the secondary x-point PFR, which is just considered part of the
+c       SOL for generalized grids:
+        IF (.FALSE..AND.connected) THEN  ! NEEDED FOR SXD GRID
+          i1 = ixpt(2)  ! OK, not sure if this always needed to be hardcoded for connected grids,
+                        ! but adding the option here - quasi-BUG!  16.06.09 - SL
+        ELSE
+          i1 = knot(ixpt(2))%xpt
+        ENDIF
+        IF (output) WRITE(6,*) 'I1 XPT:',i1
+
+c...    Move into the PFR:
+        CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
+        IF (i2.EQ.-1) 
+     .    CALL ER('Readgeneralisedgrid','PFR2 problems',*99)
+        i1 = i2
+        ik = 1
+        ir = nrs + 1
+        imap(ik,ir) = i1
+
+
+c...    Proceed to target:
+c
+c       jdemod
+        IF (output) then 
+           WRITE(0,*) 'LOOKING FOR TARGET'
+           WRITE(6,*) 'LOOKING FOR TARGET'
+        endif
+c        IF (output) WRITE(0,*) 'LOOKING FOR TARGET'
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+          CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
+c
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'MOVING',i1,i2,istart
+             WRITE(6,*) 'MOVING',i1,i2,istart
+             IF (i2.GT.0) THEN
+               WRITE(6,*) '  KNOT R:',SNGL(knot(i1)%rv(1:4))
+               WRITE(6,*) '        :',SNGL(knot(i2)%rv(1:4))
+               WRITE(6,*) '  KNOT Z:',SNGL(knot(i1)%zv(1:4))
+               WRITE(6,*) '        :',SNGL(knot(i2)%zv(1:4))
+            ELSE
+               WRITE(6,*) '        : i2 = -1'
+            ENDIF
+          endif
+c          IF (output) WRITE(0,*) 'MOVING',i1,i2,istart
+          IF (i2.NE.-1) THEN 
+            i1 = i2
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+ 
+c        STOP 'sdfsd'
+
+c...    Target located, start mapping the secondary PFR:
+c
+c       jdemod
+        IF (output) then 
+           WRITE(0,*) 'TARGET LOCATED'
+           WRITE(6,*) 'TARGET LOCATED'
+        endif
+c        IF (output) WRITE(0,*) 'TARGET LOCATED'
+        ik = 1
+        ir = nrs + 1
+        imap(ik,ir) = i1
+        cont = .TRUE.
+        DO WHILE(cont)
+          cont = .FALSE.
+c...      Move along the ring:
+          CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
+c
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'MOVING',i1,i2
+             WRITE(6,*) 'MOVING',i1,i2
+          endif
+c          IF (output) WRITE(0,*) 'MOVING',i1,i2
+          IF (i2.NE.-1) THEN
+            i1 = i2 
+            ik = ik + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
+               WRITE(6,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
+            endif
+c            IF (output) WRITE(0,*) '2ND PFR MAP:',ik,ir,i1,knot(i1)%zcen
+          ENDIF
+c...      Step radially outward if ring is finished:
+          IF (.NOT.cont) THEN
+            nks(ir) = ik
+            i1 = imap(1,ir)
+            CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)          
+            IF (i2.NE.-1) THEN
+              i1 = i2
+              ik = 1
+              ir = ir + 1
+              imap(ik,ir) = i1
+              cont = .TRUE.
+c
+c             jdemod
+              IF (output) then  
+                WRITE(0,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
+     >             knot(i1)%zcen
+                WRITE(6,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
+     >             knot(i1)%zcen
+              endif
+c              IF (output) 
+c     .          WRITE(0,*) '2ND PFR MAP NEW RING:',ik,ir,i1,
+c     .          knot(i1)%zcen
+            ELSE
+c...          Assume the outer boundary of the grid:
+            ENDIF
+          ENDIF
+        ENDDO
+        irwall = ir
+        irtrap = ir + 1
+        nrs = ir
+
+      ENDIF ! Done processing double-null rings
+
+
+      IF (.FALSE.) THEN   ! DEBUG
+        nks(ir) = ik
+        irwall = ir
+        irtrap = ir + 1
+        nrs = ir
+        id = 0
+        DO ir = 1, nrs
+          DO ik = 1, nks(ir)        
+            i1 = imap(ik,ir)
+            rs(ik,ir) = knot(i1)%rcen
+            zs(ik,ir) = knot(i1)%zcen
+            bratio(ik,ir) = knot(i1)%bratio
+            id = id + 1
+            korpg(ik,ir) = id
+            nvertp(id) = knot(i1)%nv
+            DO i2 = 1, nvertp(id)
+              rvertp(i2,id) = knot(i1)%rv(i2)
+              zvertp(i2,id) = knot(i1)%zv(i2)
+            ENDDO
+          ENDDO
+        ENDDO
+        ikto = -1
+        ikti = -1
+        DO ik = 1, nks(irsep)
+          IF (connected) THEN
+            IF (imap(ik,irsep).EQ.ixpt(1)          ) ikto = ik    ! Not sure this will always work... 
+            IF (imap(ik,irsep).EQ.knot(ixpt(2))%xpt) ikti = ik -1
+c            IF (imap(ik,irsep).EQ.ixpt(1)) ikto = ik - 1  ! Not sure this will always work...
+c            IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik     
+          ENDIF
+        ENDDO
+        CALL SaveSolution
+        CALL OutputData(86,'MAST!')
+        title = '...'
+        desc  = 'Call to STORE from DumpGrid'
+        job   = 'Call to STORE from DumpGrid'
+        equil = 'Call to STORE from DumpGrid'
+        WRITE(0,*) 'CALLING STORE'
+        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        WRITE(0,*) 'FUN WITH MAST GRIDS!'
+        STOP
+      ENDIF
+
+
+
+c
+
+
+
+c
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'PROCESSING PRIMARY PFZ'
+         WRITE(6,*) 'PROCESSING PRIMARY PFZ'
+      endif   
+c      IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ'
+
+c...  Process the primary x-point PFR:
+c      IF (connected) THEN
+c        i1 = ixpt(1)
+c      ELSE
+        i1 = knot(ixpt(1))%xpt
+c      ENDIF
+c...  Move into the PFR:
+      CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)
+      IF (i2.EQ.-1) 
+     .  CALL ER('Readgeneralisedgrid','PFR1 problems',*99)
+c
+c     jdemod
+      IF (output) then
+         WRITE(0,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
+         WRITE(6,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
+      endif
+
+
+c      IF (output) 
+c     .  WRITE(0,*) '  INTO PFZ',knot(i1)%index,knot(i2)%index
+      i1 = i2
+c...  Proceed to target:
+      cont = .TRUE.
+      DO WHILE(cont)
+        cont = .FALSE.
+        CALL FindKnot_SL(NUMZONE,izone,5,i1,i2)
+c        jdemod
+c        IF (output) then 
+c           WRITE(0,*) '  TO TARGET',i1,i2
+c           WRITE(0,*) '  TO TARGET',knot(i1)%index
+c           WRITE(0,*) '  TO TARGET',knot(i2)%index
+c           WRITE(6,*) '  TO TARGET',i1,i2
+c           WRITE(6,*) '  TO TARGET',knot(i1)%index
+c           WRITE(6,*) '  TO TARGET',knot(i2)%index
+c        endif
+c        IF (output) WRITE(0,*) '  TO TARGET',i1,i2
+c        IF (output) WRITE(0,*) '  TO TARGET',knot(i1)%index
+c        IF (output) WRITE(0,*) '  TO TARGET',knot(i2)%index
+c        STOP 'tet'
+        IF (i2.NE.-1) THEN 
+          i1 = i2
+          cont = .TRUE.
+        ENDIF
+      ENDDO
+c...  Target located, start mapping the primary PFR:
+c     
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
+         WRITE(6,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
+      endif
+
+
+c      IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ, TARGET LOCATED'
+      ik = 1
+      ir = nrs + 1
+      imap(ik,ir) = i1
+
+      cont = .TRUE.
+      DO WHILE(cont)
+        cont = .FALSE.
+c...    Move along the ring:
+        CALL FindKnot_SL(NUMZONE,izone,3,i1,i2)
+        IF (i2.NE.-1) THEN
+          i1 = i2 
+          ik = ik + 1
+          imap(ik,ir) = i1
+          cont = .TRUE.
+c          jdemod
+c          IF (output) then 
+c             WRITE(0,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
+c             WRITE(6,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
+c          endif
+c          IF (output) WRITE(0,*) '1ST PFR MAP:',ik,ir,i1,knot(i1)%zcen
+        ENDIF
+c...    Step radially outward if ring is finished:
+        IF (.NOT.cont) THEN
+          nks(ir) = ik
+          i1 = imap(1,ir)
+          CALL FindKnot_SL(NUMZONE,izone,2,i1,i2)          
+          IF (i2.NE.-1) THEN
+            i1 = i2
+            ik = 1
+            ir = ir + 1
+            imap(ik,ir) = i1
+            cont = .TRUE.
+c
+c           jdemod
+            IF (output) then 
+               WRITE(0,*) '1ST PFR MAP NEW RING:',ik,ir,i1,knot(i1)%zcen
+               WRITE(6,*) '1ST PFR MAP NEW RING:',ik,ir,i1,knot(i1)%zcen
+            endif
+c            IF (output) 
+c     .        WRITE(0,*) '1ST PFR MAP NEW RING:',ik,ir,i1,knot(i1)%zcen
+          ELSE
+c...        Assume the outer boundary of the grid:
+          ENDIF
+c         jdemod
+          IF (output) then 
+             WRITE(0,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
+             WRITE(6,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
+          endif
+c          IF (output) WRITE(0,*) 'PROCESSING PRIMARY PFZ, BUZZING...'
+        ENDIF
+      ENDDO
+      nrs = ir
+
+c...  Need to reorder the rings in the primary PFZ:
+      DO i1 = 0, (nrs-irtrap+1)/2-1
+c
+c       jdemod
+        IF (output) then 
+           WRITE(0,*) 'I1???=',i1
+           WRITE(6,*) 'I1???=',i1
+        endif
+c        IF (output) WRITE(0,*) 'I1???=',i1
+        tmpnks = nks(irtrap+i1)
+        DO ik = 1, nks(irtrap+i1)
+          imap(ik,0) = imap(ik,irtrap+i1)
+        ENDDO
+        nks(irtrap+i1) = nks(nrs-i1)
+        DO ik = 1, nks(nrs-i1)
+          imap(ik,irtrap+i1) = imap(ik,nrs-i1)
+        ENDDO
+        nks(nrs-i1) = tmpnks
+        DO ik = 1, tmpnks
+          imap(ik,nrs-i1) = imap(ik,0)
+        ENDDO
+      ENDDO
+
+c...  Put grid together:
+c     jdemod
+      IF (output) then 
+         WRITE(0,*) 'PUTTING GRID TOGETHER'
+         WRITE(6,*) 'PUTTING GRID TOGETHER'
+      endif
+c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
+
+
+
+
+
+
+c...TMP
+      IF (.FALSE.) THEN
+        WRITE(0,*) 'CELL IN QUESTION:',i1
+        WRITE(6,*) 'CELL IN QUESTION:',i1
+c        i1 = i2
+c        ik = 1
+c        ir = nrs + 1
+c        imap(ik,ir) = i1
+c        nks(ir) = 1
+c        nks(ir) = ik
+c        nrs = nrs + 2
+
+c        ik = 1
+c        imap(ik,ir) = i2
+c        irwall = nrs
+c        irtrap = nrs + 1
+c        nks(irwall) = 1 
+c        nks(irtrap) = 1 
+c        nrs = ir 
+c        WRITE(0,*) 'i2:',i2,knot(i2)%map
+        id = 0
+        DO ir = 1, nrs
+          WRITE(0,*) 'NKS:',ir,nks(ir)
+          DO ik = 1, nks(ir)        
+            i1 = imap(ik,ir)
+            rs(ik,ir) = knot(i1)%rcen
+            zs(ik,ir) = knot(i1)%zcen
+            bratio(ik,ir) = knot(i1)%bratio
+            id = id + 1
+            korpg(ik,ir) = id
+            nvertp(id) = knot(i1)%nv
+            DO i2 = 1, nvertp(id)
+              rvertp(i2,id) = knot(i1)%rv(i2)
+              zvertp(i2,id) = knot(i1)%zv(i2)
+              IF (i1.EQ.588) THEN
+                IF (i2.EQ.1) zvertp(i2,id) = 0.0
+c                IF (i2.EQ.1.OR.i2.EQ.2) zvertp(i2,id) = 0.0
+              ENDIF
+c              IF (i1.EQ.2843) THEN
+c                IF (i2.EQ.1) zvertp(i2,id) = 0.0
+c                IF (i2.EQ.1.OR.i2.EQ.2) zvertp(i2,id) = 0.0
+c              ENDIF
+            ENDDO
+          ENDDO
+        ENDDO
+        CALL SaveSolution
+        CALL OutputData(86,'MAST!')
+        title = '...'
+        desc  = 'Call to STORE from DumpGrid'
+        job   = 'Call to STORE from DumpGrid'
+        equil = 'Call to STORE from DumpGrid'
+        WRITE(0,*) 'CALLING STORE'
+        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        WRITE(0,*) 'FUN WITH MAST GRIDS!'
+        STOP
+      ENDIF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      CALL ALLOC_GRID(MAXNKS,MAXNRS)
+      id = 0
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)        
+          i1 = imap(ik,ir)
+          rs(ik,ir) = knot(i1)%rcen
+          zs(ik,ir) = knot(i1)%zcen
+          bratio(ik,ir) = knot(i1)%bratio
+          id = id + 1
+          korpg(ik,ir) = id
+          nvertp(id) = knot(i1)%nv
+          DO i2 = 1, nvertp(id)
+            rvertp(i2,id) = knot(i1)%rv(i2)
+            zvertp(i2,id) = knot(i1)%zv(i2)
+          ENDDO
+c...      Store these in case B2 data from Rhozansky is being loaded:
+          divimp_ik(ik,ir) = knot(i1)%ik 
+          divimp_ir(ik,ir) = knot(i1)%ir
+        ENDDO
+      ENDDO
+
+
+c...  Set NPOLYP:
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+c...  Find IKTO,IKTI:
+      ikto = -1
+      ikti = -1
+      DO ik = 1, nks(irsep)
+        IF (connected) THEN
+c          IF (imap(ik,irsep).EQ.ixpt(1)) ikto = ik       ! SXD GRID!
+c          IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik - 1 
+          IF (imap(ik,irsep).EQ.ixpt(1)          ) ikto = ik    ! Not sure this will always work...
+          IF (imap(ik,irsep).EQ.knot(ixpt(2))%xpt) ikti = ik - 1
+c          IF (imap(ik,irsep).EQ.ixpt(1)) ikto = ik - 1     ! Not sure this will always work...
+c          IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik - 1
+c          IF (imap(ik,irsep).EQ.knot(ixpt(2))%xpt) ikti = ik - 1  ! Not sure this will always work...
+        ELSE
+          IF (imap(ik,irsep).EQ.ixpt(1)          ) ikto = ik - 1
+          IF (imap(ik,irsep).EQ.knot(ixpt(1))%xpt) ikti = ik 
+        ENDIF
+      ENDDO
+
+
+      IF (ikto.EQ.-1.OR.ikti.EQ.-1)
+     .  CALL ER('Readgeneralisedgrid','IKTI or IKTO not found',*99)
+
+c     CUTPT1
+c     CUTPT2
+c     MAXKPTS
+c     MAXRINGS
+c     CUTRING
+c
+      IF (ikto.EQ.0) THEN
+        nopriv = .TRUE.
+        CALL InsertRing(1  ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      ELSE
+        nopriv = .FALSE.
+c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+        CALL InsertRing(1,BEFORE,PERMANENT)
+        CALL InsertRing(nrs-irsep+2,AFTER,PERMANENT)
+        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+      ENDIF
+
+      cutpt1 = ikto
+      cutpt2 = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring = irsep - 1
+      maxkpts = nks(irsep)
+      maxrings = irwall
+      indexiradj = 1
+
+c...TMP
+c      ik = 1
+c      ir = nrs + 1
+c      nks(ir) = 1 
+c      imap(ik,ir) = i2
+c      irwall = ir
+c      irtrap = ir + 1
+c      nrs = ir 
+c      WRITE(0,*) 'i2:',i2,knot(i2)%map
+
+      IF (.NOT..TRUE.) THEN
+c        id = 0
+c        DO ir = 1, nrs
+c          DO ik = 1, nks(ir)        
+c            i1 = imap(ik,ir)
+c            rs(ik,ir) = knot(i1)%rcen
+c            zs(ik,ir) = knot(i1)%zcen
+c            bratio(ik,ir) = knot(i1)%bratio
+c            id = id + 1
+c            korpg(ik,ir) = id
+c            nvertp(id) = knot(i1)%nv
+c            DO i2 = 1, nvertp(id)
+c              rvertp(i2,id) = knot(i1)%rv(i2)
+c              zvertp(i2,id) = knot(i1)%zv(i2)
+c            ENDDO
+c          ENDDO
+c        ENDDO
+        CALL SaveSolution
+        CALL OutputData(86,'MAST!')
+        title = '...'
+        desc  = 'Call to STORE from DumpGrid'
+        job   = 'Call to STORE from DumpGrid'
+        equil = 'Call to STORE from DumpGrid'
+        WRITE(0,*) 'CALLING STORE'
+        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        WRITE(0,*) 'FUN WITH MAST GRIDS!'
+        STOP
+      ENDIF
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (ctargopt.EQ.0.OR.ctargopt.EQ.1.OR.ctargopt.EQ.2.OR.
+     .    ctargopt.EQ.3.OR.ctargopt.EQ.6) 
+     .  CALL AddPoloidalBoundaryCells      
+
+c...  Look for PSIn data for full double null grids (code mostly 
+c     from tau.d6a):
+      READ(gridunit,'(A)',END=25) buffer
+      IF (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
+        READ(buffer(17:),*) numpsi
+c...    The PSI values are to be loaded in TailorGrid...glorious hack!
+        DO i1 = 1, numpsi
+          READ(gridunit,*,END=97)
+        ENDDO
+      ELSEIF (buffer(1:15).EQ.'PSI-DOUBLE-NULL') THEN
+        READ(buffer(16:),*) numpsi
+c...    The PSI values are listed with one on each line
+c       indexed by knot and ring index based on the SONNET 
+c       grid coordinates:
+        DO i1 = 1, numpsi
+          READ(gridunit,*,END=97) ikpsi(i1),irpsi(i1),valpsi(i1)
+        ENDDO
+c...    Assign to grid rings:
+        DO ir = 2, irwall-1
+c...      (Need the "-1" because a virtual core ring has been added to the grid)
+          ir1 = knot(imap(1,ir-1))%ir 
+          DO i1 = 1, numpsi
+            IF (irpsi(i1).EQ.ir1) EXIT
+          ENDDO
+          IF (i1.EQ.numpsi+1) 
+     .      CALL ER('Readgeneralisedgrid','Problem with PSIn',*99)
+c          WRITE(0,*) '--',ir,valpsi(i1)
+          psitarg(ir,1) = valpsi(i1)
+          psitarg(ir,2) = valpsi(i1)
+          IF (ir.LT.irsep) THEN
+            psitarg(ir-1+irtrap,1) = valpsi(i1)
+            psitarg(ir-1+irtrap,2) = valpsi(i1)
+          ENDIF
+        ENDDO
+        WRITE(0,*)
+        WRITE(0,*) '--------------------------------------------------'
+        WRITE(0,*) 'BOGUS PSITARG -- ALSO USING INNER TARGET DATA ONLY'
+        WRITE(0,*) '--------------------------------------------------'
+        WRITE(0,*)
+      ELSE
+        BACKSPACE gridunit
+      ENDIF
+ 25   CONTINUE
+
+      DEALLOCATE(knot)
+      DEALLOCATE(imap)
+
+c      IF (nrs.EQ.60) THEN
+c        WRITE(0,*)
+c        WRITE(0,*) '--------------------------------------------------'
+c        WRITE(0,*) 'HARDCODING IRSEP2 = 30 (FOR IR = 60) '
+c        WRITE(0,*) '--------------------------------------------------'
+c        WRITE(0,*)
+c        irsep2 = 35
+c      ENDIF
+
+c...  For consistency with original SONNET code in tau.d6a:
+      ir = maxrings
+      ik = maxkpts
+
+      RETURN
+ 97   CALL ER('Readgeneralisedgrid','Unexpected end-of-file',*99)
+ 98   CALL ER('Readgeneralisedgrid','Problem accessing grid file',*99)
+ 99   WRITE(0,*) 'IXPT:',ixpt(1),ixpt(2)
+      STOP  
+      END
+c
+c ========================================================================
+c
+      SUBROUTINE ReadGeneralisedGrid_OSM(gridunit,ik,ir,
+     .                                   rshift,zshift,indexiradj)
+      USE mod_grid
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INTEGER, INTENT(IN)  :: gridunit
+      INTEGER, INTENT(OUT) :: ik,ir,indexiradj
+      REAL   , INTENT(OUT) :: rshift,zshift
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+      INCLUDE 'pindata'
+
+      INTEGER   id,i1,i2,ir1,
+     .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
+      CHARACTER buffer*1024
+      REAL      valpsi(MAXNRS)
+
+      rshift = 0.0
+      zshift = 0.0
+
+      CALL LoadGeneralisedGrid
+
+      irsep  = grid_load%irsep
+      irsep2 = grid_load%irsep2
+      irwall = grid_load%irwall
+      irtrap = grid_load%irtrap
+      nrs    = grid_load%nrs
+      nks(1:nrs) = grid_load%nks(1:nrs)
+
+      id = 0
+      CALL ALLOC_GRID(MAXNKS,MAXNRS)
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)        
+          i1 = imap(ik,ir)
+          rs(ik,ir) = knot(i1)%rcen
+          zs(ik,ir) = knot(i1)%zcen
+          bratio(ik,ir) = knot(i1)%bratio
+          id = id + 1
+          korpg(ik,ir) = id
+          nvertp(id) = knot(i1)%nv
+          DO i2 = 1, nvertp(id)
+            rvertp(i2,id) = knot(i1)%rv(i2)
+            zvertp(i2,id) = knot(i1)%zv(i2)
+          ENDDO
+c...      Store these in case B2 data from Rhozansky is being loaded:
+          divimp_ik(ik,ir) = knot(i1)%ik 
+          divimp_ir(ik,ir) = knot(i1)%ir
+        ENDDO
+      ENDDO
+
+c...  Set NPOLYP:
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+c...  Find IKTO,IKTI:
+      ikto = grid_load%ikto
+      ikti = grid_load%ikti
+      IF (ikto.EQ.-1.OR.ikti.EQ.-1)
+     .  CALL ER('Readgeneralisedgrid','IKTI and/or IKTO not found',*99)
+
+c...  Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+c      CALL InsertRing(1          ,BEFORE,PERMANENT)
+c      CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+c      CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+
+c     CUTPT1
+c     CUTPT2
+c     MAXKPTS
+c     MAXRINGS
+c     CUTRING
+c
+      IF (ikto.EQ.0) THEN
+        nopriv = .TRUE.
+        CALL InsertRing(1  ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      ELSE
+        nopriv = .FALSE.
+c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+        CALL InsertRing(1          ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+      ENDIF
+
+      cutpt1     = ikto
+      cutpt2     = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring    = irsep - 1
+      maxkpts    = nks(irsep)
+      maxrings   = irwall
+      indexiradj = 1
+
+      IF (.NOT..TRUE.) THEN
+c        id = 0
+c        DO ir = 1, nrs
+c          DO ik = 1, nks(ir)        
+c            i1 = imap(ik,ir)
+c            rs(ik,ir) = knot(i1)%rcen
+c            zs(ik,ir) = knot(i1)%zcen
+c            bratio(ik,ir) = knot(i1)%bratio
+c            id = id + 1
+c            korpg(ik,ir) = id
+c            nvertp(id) = knot(i1)%nv
+c            DO i2 = 1, nvertp(id)
+c              rvertp(i2,id) = knot(i1)%rv(i2)
+c              zvertp(i2,id) = knot(i1)%zv(i2)
+c            ENDDO
+c          ENDDO
+c        ENDDO
+        CALL SaveSolution
+        CALL OutputData(86,'MAST!')
+c        title = '...'
+c        desc  = 'Call to STORE from DumpGrid'
+c        job   = 'Call to STORE from DumpGrid'
+c        equil = 'Call to STORE from DumpGrid'
+c        WRITE(0,*) 'CALLING STORE'
+c        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+c        WRITE(0,*) 'FUN WITH MAST GRIDS!'
+        STOP
+      ENDIF
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (ctargopt.EQ.0.OR.ctargopt.EQ.1.OR.ctargopt.EQ.2.OR.
+     .    ctargopt.EQ.3.OR.ctargopt.EQ.6) 
+     .  CALL AddPoloidalBoundaryCells      
+
+c...  Look for PSIn data for full double null grids (code mostly 
+c     from tau.d6a):
+      DO WHILE (.TRUE.)  
+        READ(gridunit,'(A)',END=25) buffer
+        IF     (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
+          READ(buffer(17:),*) numpsi
+c...      The PSI values are to be loaded in TailorGrid...glorious hack!
+          DO i1 = 1, numpsi
+            READ(gridunit,*,END=97)
+          ENDDO
+        ELSEIF (buffer(1:15).EQ.'PSI-DOUBLE-NULL') THEN
+          READ(buffer(16:),*) numpsi
+c...      The PSI values are listed with one on each line
+c         indexed by knot and ring index based on the SONNET 
+c         grid coordinates:
+          DO i1 = 1, numpsi
+            READ(gridunit,*,END=97) ikpsi(i1),irpsi(i1),valpsi(i1)
+          ENDDO
+c...      Assign to grid rings:
+          DO ir = 2, irwall-1
+c...        (Need the "-1" because a virtual core ring has been added to the grid)
+            ir1 = knot(imap(1,ir-1))%ir 
+            DO i1 = 1, numpsi
+              IF (irpsi(i1).EQ.ir1) EXIT
+            ENDDO
+            IF (i1.EQ.numpsi+1) 
+     .        CALL ER('Readgeneralisedgrid','Problem with PSIn',*99)
+            psitarg(ir,1) = valpsi(i1)
+            psitarg(ir,2) = valpsi(i1)
+            IF (ir.LT.irsep) THEN
+              psitarg(ir-1+irtrap,1) = valpsi(i1)
+              psitarg(ir-1+irtrap,2) = valpsi(i1)
+            ENDIF
+          ENDDO
+          WRITE(0,*)
+          WRITE(0,*) '------------------------------------------------'
+          WRITE(0,*) 'BAD PSITARG -- AND, USING INNER TARGET DATA ONLY'
+          WRITE(0,*) '------------------------------------------------'
+          WRITE(0,*)
+        ENDIF
+      ENDDO
+ 25   REWIND(gridunit)  ! Reset the grid file to the beginning for the PSI:
+                        ! and NEUTRAL WALL: data that's loaded in the the
+                        ! RAUG subroutine after this routine has been called.   
+
+
+c...  For consistency with original SONNET code in tau.d6a:
+      ir = maxrings
+      ik = maxkpts
+
+      DEALLOCATE(knot)
+      DEALLOCATE(imap)
+
+
+
+      RETURN
+ 97   CALL ER('ReadGeneralisedGrid_OSM','Unexpected end of file',*99)
+ 99   STOP
+      END
+c
+c ======================================================================
+c

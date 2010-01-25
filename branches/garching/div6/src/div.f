@@ -536,7 +536,7 @@ c
 c
 c     Calculate transport coefficients from OSM
 c
-      if (cpinopt.eq.1) then
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then
          call oskin
       endif
 c
@@ -1017,10 +1017,10 @@ c sltmp
       IF (grdnmod.NE.0) iw = MAX(1,stopopt)
 
       DO 800  IMP = 1, NATIZ
-
-c       IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0)
-c    .    WRITE(0,*) 'debug imp:',imp
-
+c slmod begin
+        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+     .    WRITE(0,*) 'debug imp:',imp,natiz
+c slmod end
 c
 c       Particle initialization
 c
@@ -3833,7 +3833,7 @@ C
           PNESA(IK) = KNBS(IK,IR) * RIZB
           PNBS(IK) = KNBS(IK,IR)
 c
-          if (cpinopt.eq.1) then
+          if (cpinopt.eq.1.or.cpinopt.eq.4) then
              PNHS(IK) = PINATOM(IK,IR)
           else
              PNHS(IK) = E2DATOM(IK,IR)
@@ -4823,7 +4823,9 @@ c
          write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
      >       in * d_pinch_vel, d_pinch_v(in)
       end do
-
+c slmod begin
+      CALL OutputData(87,'END OF DIV')
+c slmod end
 c
 c      if (cisterrcnt.ne.0) then
 c         call prb

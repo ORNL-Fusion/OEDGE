@@ -506,7 +506,7 @@ c...  Input:
       REAL Clock2
 
       INTEGER   i1,i2,i3,i4,status,fp,fp2,m,n,codec,iobj,ierr,volcnt,
-     .          pixcnt,ndum1,npts,vcount
+     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet
       LOGICAL   ascii,message
       REAL      rtime,ttime
       CHARACTER file*1024
@@ -518,9 +518,6 @@ c...  Input:
       REAL*4, ALLOCATABLE, TARGET :: rdum1(:)
 
       message = .TRUE.
-
-      nchord = 0
-
 
       IF (.TRUE.) THEN
 c...    Open a stream for storing the inversion matrix 'A':
@@ -656,9 +653,11 @@ c...  MPI!  (for MPI to work the various lists -- vw,gb,ob -- need to be passed 
 
 c...  Loop over pixels:
 c      DO i1 = 200000, npixel
+c      DO i1 = 4325, 4325
       DO i1 = 1, npixel
 
 c        IF (MOD(i1,npixel/10).EQ.0) 
+c        IF (MOD(i1,1).EQ.0) 
         IF (MOD(i1,1000).EQ.0) 
      .    WRITE(0,'(A,I7,A,I7)') 'PROCESSING PIXEL ',i1,' OF ',npixel
 
@@ -828,6 +827,28 @@ c...    Close stream:
         IF (.NOT.ascii) WRITE(fp) 666666666
         CLOSE(fp)
       ENDIF
+
+      IF (.TRUE.) THEN
+c...    Dump pixel view trajectories:
+        DO idet = 1, opt%ndet
+          fp = 99
+          file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.pxv'
+          OPEN(fp,FILE=file(1:LEN_TRIM(file)),
+     .         FORM='FORMATTED',STATUS='REPLACE',ERR=97)
+          nxbin = opt%det_nxbin(idet)
+          nybin = opt%det_nybin(idet)
+          WRITE(fp,'(A)') '* Detector pixel views'
+          WRITE(fp,'(2I8)') nxbin,nybin
+          DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+            WRITE(fp,'(2I8,2X,2(3F10.6,2X))')
+     .       pixel(ipixel)%xindex,pixel(ipixel)%yindex,
+     .       pixel(ipixel)%global_v1(1:3),
+     .       pixel(ipixel)%global_v2(1:3)
+          ENDDO
+          CLOSE(fp)
+        ENDDO
+      ENDIF
+
 c...  Clear arrays:
       DEALLOCATE(idum1)
       DEALLOCATE(ddum1)
@@ -840,6 +861,7 @@ c...  Clear arrays:
       DEALLOCATE(mapchk)
 
       RETURN
+ 97   CALL ER('ProcessPixels','Unable to save pixel views',*99)
  98   CALL ER('ProcessPixels','Unable to open inversion matrix '//
      .        'data file',*99)
  99   STOP
@@ -1142,32 +1164,6 @@ c           *** use opt%det_ array...
 
 
 
-            IF (.NOT..TRUE.) THEN
-c...          Rotate about z-axis (roll):
-              CALL Calc_Transform2(mat,0.0D0,1,0)
-              angle = pixel(npixel)%rot(3)
-              CALL Calc_Transform2(mat,angle,3,1)
-              CALL Transform_Vect(mat,pixel(npixel)%v1)
-              CALL Transform_Vect(mat,pixel(npixel)%v2)
-c...          Rotate about x-axis (tilt):                       !... better to do swing before tilt? 
-              CALL Calc_Transform2(mat,0.0D0,1,0)
-              angle = pixel(npixel)%rot(1)
-              CALL Calc_Transform2(mat,angle,1,1)
-              CALL Transform_Vect(mat,pixel(npixel)%v1)
-              CALL Transform_Vect(mat,pixel(npixel)%v2)
-c...          Rotate about y-axis (swing):
-              CALL Calc_Transform2(mat,0.0D0,1,0)
-              angle = pixel(npixel)%rot(2)
-              CALL Calc_Transform2(mat,angle,2,1)
-              CALL Transform_Vect(mat,pixel(npixel)%v1)
-              CALL Transform_Vect(mat,pixel(npixel)%v2)
-c...          Translate:
-              pixel(npixel)%v1(1:3) = pixel(npixel)%v1(1:3) + 
-     .                                pixel(npixel)%trans(1:3)
-              pixel(npixel)%v2(1:3) = pixel(npixel)%v2(1:3) + 
-     .                                pixel(npixel)%trans(1:3)
-            ENDIF
- 
 
 c            WRITE(0,*) 'X!;',npixel,pixel(npixel)%x2
           ENDDO
@@ -1293,7 +1289,6 @@ c     focus is off, then clear the memory for the views associated with that pix
 c...  Allocate space for line shape storage for unmasked pixels:
 
 
-
       RETURN
  99   STOP
       END
@@ -1304,18 +1299,6 @@ c
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
-
-
-c      INCLUDE 'params'
-c      INCLUDE 'cgeom'
-c      INCLUDE 'comtor'
-c      INCLUDE 'pindata'
-c      INCLUDE 'slcom'
-
-
-      
-
-
 
       INTEGER i1,i2,i3,ix,iy,in1,in2,ir,id,nsector,isector,
      .        ielement
@@ -1396,13 +1379,8 @@ c     VOLUME INTEGRATION OBJECTS MUST COME FIRST!
 c     *******************************************
 c
 
-c...    Integration mesh:
-c        IF (opt%ob_invgrd.GT.0) 
-c     .    CALL BuildInversionMesh(0)
-
-
       IF (opt%obj_num.NE.0) THEN
-c        STOP 'NOT READY YET'
+
         DO ielement = 1, opt%obj_num
           SELECTCASE (opt%obj_type(ielement))
             CASE (1)
@@ -1424,392 +1402,9 @@ c        STOP 'NOT READY YET'
           ENDSELECT
         ENDDO
 
-
-
-c        DO i1 = 1, nobj
-c          IF (obj(i1)%ik.EQ.ikto.AND.obj(i1)%ir.EQ.irsep) THEN
-cc             WRITE(0,*) 'r:',obj(i1)%v(1,1:obj(nobj)%nver)
-c          ENDIF
-c        ENDDO
-
-
       ENDIF
 
-      IF (.TRUE.) THEN
-c...    OLD METHOD OF SPECIFYING THE 3D OBJECTS
 
-
-
-c        WRITE(0,*) 'MAG GRID OPT',opt%ob_stdgrd
-cc...    Standard magnetic grid:
-c        IF (opt%ob_stdgrd.GT.0) 
-c     .    CALL ProcessMagneticGrid(0)
-
-c...    Triangle grid:
-c        IF (opt%ob_trigrd.GT.0) 
-c     .    CALL ProcessTriangleGrid(0)
-
-c...    Vessel structures from .raw CAD generated files:
-c        IF (opt%ob_raw_num.GT.0) 
-c     .    CALL LoadVesselStructures(0)
-
-c...    Trace magnetic field lines:
-c        IF (opt%ob_line.GT.0) 
-c     .    CALL TraceMagneticFieldLines
-
-      ENDIF
-      
-
-c      IF (opt%ob_wall.GT.0) THEN
-cc...    Standard PIN wall (xVESM):
-c
-c        IF (opt%ob_wall.EQ.2) THEN
-c
-c          DO i1 = 1, nvesm+nvesp
-c        
-cc...        Don't draw anything above the x-point:
-cc            IF (zvesm(i1,1).GT.zxp.OR.zvesm(i1,2).GT.zxp) CYCLE
-cc            IF (zvesm(i1,1).GT.zxp.AND.rvesm(i1,1).GT.rxp) CYCLE
-c       
-cc...        Don't draw other things:
-c            IF (jvesm(i1).NE.7.AND.jvesm(i1).NE.8.AND.
-c     .          jvesm(i1).NE.0) CYCLE
-c        
-c            IF (nobj+1.GT.MAX3D) 
-c     .        CALL ER('BuildObjects','Insufficient array bounds '//
-c     .                'for all objects',*98)     
-c
-c            nobj = nobj + 1
-c
-c            obj(nobj)%index       = 1 ! nobj
-c            obj(nobj)%type        = OP_EMPTY
-c            obj(nobj)%mode        = 0      
-c            obj(nobj)%surface     = 1      ! SOLID
-c            obj(nobj)%wedge1      = 0
-c            obj(nobj)%wedge2      = 0
-c            obj(nobj)%colour      = 1
-c            obj(nobj)%orientation = 1      ! CW
-c            obj(nobj)%ik          = i1
-c            obj(nobj)%ir          = 0
-c            obj(nobj)%in          = i1
-c            obj(nobj)%ivolume     = 0
-c            obj(nobj)%nsur        = 1
-c            obj(nobj)%gsur(1:1)   = GT_TC
-c            obj(nobj)%nver        = 2
-c            obj(nobj)%tsur(1)     = SP_VESSEL_WALL
-c            obj(nobj)%reflec(1)   = opt%ob_wall_reflec
-c            obj(nobj)%npts(1)     = 2
-c            obj(nobj)%ipts(1,1)   = 1
-c            obj(nobj)%ipts(2,1)   = 2
-c            obj(nobj)%nmap(1) = 0
-c
-cc...        Vertices:
-c            obj(nobj)%v(1,2) = DBLE(rvesm(i1,1))
-c            obj(nobj)%v(2,2) = DBLE(zvesm(i1,1))
-c            obj(nobj)%v(3,2) = 0.0D0
-c            obj(nobj)%v(1,1) = DBLE(rvesm(i1,2))
-c            obj(nobj)%v(2,1) = DBLE(zvesm(i1,2))
-c            obj(nobj)%v(3,1) = 0.0D0
-c
-c          ENDDO
-c
-c        ELSEIF (opt%ob_wall.EQ.1.OR.opt%ob_wall.EQ.3) THEN
-c
-c          nsector = opt%ob_nsector
-c          IF (nsector.EQ.-1) nsector = eirntorseg
-c          dangle = 360.0 / REAL(nsector) / RADDEG
-c          nsector = NINT(REAL(nsector) * 
-c     .                   (opt%ob_angle_end - opt%ob_angle_start)/360.0)
-c
-c          dangle2 = dangle
-c
-c          DO i1 = 1, nvesm+nvesp
-c        
-cc...        Don't draw anything above the x-point:
-cc            IF (zvesm(i1,1).GT.zxp.OR.zvesm(i1,2).GT.zxp) CYCLE
-cc            IF (zvesm(i1,1).GT.zxp.AND.rvesm(i1,1).GT.rxp) CYCLE
-c       
-cc...        Don't draw other things:
-c            IF (jvesm(i1).NE.7.AND.jvesm(i1).NE.8.AND.
-c     .          jvesm(i1).NE.0) CYCLE
-c        
-cc            DO ang = 0.0, 2.0*PI-dangle, dangle   !DO ang = 0.0, 0.45*2.0*PI-dangle, dangle
-c
-c            DO isector = 1, nsector
-c           
-c              dangle = dangle2    ! For opt%ob_wall.EQ.3, temp...
-c
-c              ang = REAL(isector - 1) * dangle + 
-c     .              opt%ob_angle_start / RADDEG
-c
-c              IF (opt%ob_wall.EQ.3) THEN
-c                IF (MOD(isector,2).EQ.1) THEN
-c                  dangle = dangle2 * 1.60
-c                ELSE
-c                  dangle = dangle2 * 0.40
-c                ENDIF
-c              ENDIF        
-c
-c              IF (nobj+1.GT.MAX3D) 
-c     .          CALL ER('BuildObjects','Insufficient array bounds '//
-c     .                  'for all objects',*98)     
-c
-c              nobj = nobj + 1
-c        
-c              obj(nobj)%index       = nobj
-c              obj(nobj)%type        = OP_EMPTY
-c              obj(nobj)%mode        = 0      
-c              obj(nobj)%surface     = 1      ! SOLID
-c              obj(nobj)%wedge1      = 0
-c              obj(nobj)%wedge2      = 0
-c              obj(nobj)%colour      = 1
-c              obj(nobj)%orientation = 1      ! CW
-c              obj(nobj)%ik          = 0
-c              obj(nobj)%ir          = 0
-c              obj(nobj)%in          = i1
-c              obj(nobj)%ivolume     = 0
-c              obj(nobj)%nsur        = 1
-c              obj(nobj)%gsur(1:1)   = GT_TD
-c              obj(nobj)%nver        = 4
-c        
-c              obj(nobj)%tsur(1) = SP_VESSEL_WALL
-c              obj(nobj)%reflec(1) = opt%ob_wall_reflec
-c              obj(nobj)%npts(1) = 4
-c              obj(nobj)%nmap(1) = 0
-c        
-cc...          A little over done here, with all the p's (from old code), clean:
-c              p1(1,1) = DBLE(rvesm(i1,1)) * DCOS(DBLE(-0.5 * dangle))
-c              p1(2,1) = DBLE(zvesm(i1,1))
-c              p1(3,1) = DBLE(rvesm(i1,1)) * DSIN(DBLE(-0.5 * dangle))
-c              p2(1,1) = DBLE(rvesm(i1,2)) * DCOS(DBLE(-0.5 * dangle))
-c              p2(2,1) = DBLE(zvesm(i1,2))
-c              p2(3,1) = DBLE(rvesm(i1,2)) * DSIN(DBLE(-0.5 * dangle))
-cc              p1(1,1) = DBLE(rvesm(i1,1))
-cc              p1(2,1) = DBLE(zvesm(i1,1))
-cc              p1(3,1) = DBLE(rvesm(i1,1)) * DTAN(DBLE(-0.5 * dangle))
-cc              p2(1,1) = DBLE(rvesm(i1,2))
-cc              p2(2,1) = DBLE(zvesm(i1,2))
-cc              p2(3,1) = DBLE(rvesm(i1,2)) * DTAN(DBLE(-0.5 * dangle))
-c	
-c              p1(1,2) = p2(1,1)
-c              p1(2,2) = p2(2,1)
-c              p1(3,2) = p2(3,1)
-c              p2(1,2) = DBLE(rvesm(i1,2)) * DCOS(DBLE(+0.5 * dangle))
-c              p2(2,2) = DBLE(zvesm(i1,2))
-c              p2(3,2) = DBLE(rvesm(i1,2)) * DSIN(DBLE(+0.5 * dangle))
-cc              p2(1,2) = DBLE(rvesm(i1,2))
-cc              p2(2,2) = DBLE(zvesm(i1,2))
-cc              p2(3,2) = DBLE(rvesm(i1,2)) * DTAN(DBLE(+0.5 * dangle))
-c
-c        
-c              p1(1,3) = p2(1,2)
-c              p1(2,3) = p2(2,2)
-c              p1(3,3) = p2(3,2)
-c              p2(1,3) = DBLE(rvesm(i1,1)) * DCOS(DBLE(+0.5 * dangle))
-c              p2(2,3) = DBLE(zvesm(i1,1))
-c              p2(3,3) = DBLE(rvesm(i1,1)) * DSIN(DBLE(+0.5 * dangle))
-cc              p2(1,3) = DBLE(rvesm(i1,1))
-cc              p2(2,3) = DBLE(zvesm(i1,1))
-cc              p2(3,3) = DBLE(rvesm(i1,1)) * DTAN(DBLE(+0.5 * dangle))
-c	
-c              p1(1,4) = p2(1,3)
-c              p1(2,4) = p2(2,3)
-c              p1(3,4) = p2(3,3)
-c              p2(1,4) = p1(1,1)
-c              p2(2,4) = p1(2,1)
-c              p2(3,4) = p1(3,1)
-c          
-c              DO i2 = 1, 4
-c                x1 = p1(1,i2)
-c                z1 = p1(3,i2)
-c                x2 = p2(1,i2)
-c                z2 = p2(3,i2)
-c                p1(1,i2) =  DCOS(DBLE(ang)) * x1 - DSIN(DBLE(ang)) *z1
-c                p1(3,i2) = +DSIN(DBLE(ang)) * x1 + DCOS(DBLE(ang)) *z1
-c                p2(1,i2) =  DCOS(DBLE(ang)) * x2 - DSIN(DBLE(ang)) *z2
-c                p2(3,i2) = +DSIN(DBLE(ang)) * x2 + DCOS(DBLE(ang)) *z2
-c         
-c                obj(nobj)%ipts(i2,1) = i2
-c                obj(nobj)%v(1:3,i2) = p1(1:3,i2)
-c              ENDDO
-c          
-cc... Reverse:
-c              p1(1:3,1) = obj(nobj)%v(1:3,2)
-c              obj(nobj)%v(1:3,2) = obj(nobj)%v(1:3,4)  
-c              obj(nobj)%v(1:3,4) = p1(1:3,1)
-c  
-c            ENDDO
-c          ENDDO
-c        ELSE
-c          CALL ER('BuildObjects','Bad wall option',*99)
-c        ENDIF
-c      ENDIF
-c
-c      IF (opt%ob_targ.GT.0) THEN
-cc...    Targets:
-c        
-c        IF (opt%ob_targ.EQ.2) THEN
-c
-c          DO ir = irsep, nrs
-c            IF (idring(ir).EQ.BOUNDARY) CYCLE
-c
-c            DO i1 = 1, 2
-c
-c              IF (nobj+1.GT.MAX3D) 
-c     .          CALL ER('BuildObjects','Insufficient array bounds '//
-c     .                  'for all objects',*98)     
-c
-c              nobj = nobj + 1
-c
-c              obj(nobj)%index       = nobj
-c              obj(nobj)%type        = OP_EMPTY
-c              obj(nobj)%mode        = 0      
-c              obj(nobj)%surface     = 1      ! SOLID
-c              obj(nobj)%wedge1      = 0
-c              obj(nobj)%wedge2      = 0
-c              obj(nobj)%colour      = 4
-c              obj(nobj)%orientation = 1      ! CW
-c              obj(nobj)%ik          = 0
-c              obj(nobj)%ir          = ir
-c              obj(nobj)%in          = 0
-c              obj(nobj)%ivolume     = 0
-c              obj(nobj)%nsur        = 1
-c              obj(nobj)%gsur(1)     = GT_TC
-c              obj(nobj)%nver        = 2
-c              obj(nobj)%tsur(1)     = SP_VESSEL_WALL
-c              obj(nobj)%reflec(1)   = opt%ob_targ_reflec
-c              obj(nobj)%npts(1)     = 2
-c              obj(nobj)%ipts(1,1)   = 1
-c              obj(nobj)%ipts(2,1)   = 2
-c              obj(nobj)%nmap(1)     = 0 
-c...          Vertices:
-c              IF (i1.EQ.1) THEN
-c...            Inner target:
-c                id = korpg(1,ir)
-c                in1 = 1
-c                in2 = 2
-c              ELSE
-cc...            Outer: 
-c                id = korpg(nks(ir),ir)
-c                in1 = 3
-c                in2 = 4
-c              ENDIF
-c              obj(nobj)%v(1,2) = DBLE(rvertp(in1,id))
-c              obj(nobj)%v(2,2) = DBLE(zvertp(in1,id))
-c              obj(nobj)%v(3,2) = 0.0D0
-c              obj(nobj)%v(1,1) = DBLE(rvertp(in2,id))
-c              obj(nobj)%v(2,1) = DBLE(zvertp(in2,id))
-c              obj(nobj)%v(3,1) = 0.0D0
-c
-c            ENDDO
-c
-c          ENDDO
-c       
-c        ELSEIF (opt%ob_targ.EQ.1) THEN
-c          nsector = opt%ob_nsector
-c          IF (nsector.EQ.-1) nsector = eirntorseg
-c
-c          dangle = 360.0 / REAL(nsector) / RADDEG
-c        
-c          DO ir = irsep, nrs
-c            IF (idring(ir).EQ.BOUNDARY) CYCLE
-c        
-c            DO ang = 0.0, 2.0*PI-dangle, dangle   !DO ang = 0.0, 0.45*2.0*PI-dangle, dangle
-c        
-c              IF (nobj+1.GT.MAX3D) 
-c     .          CALL ER('BuildObjects','Insufficient array bounds '//
-c     .                  'for all objects',*98)     
-c
-c              DO i1 = 1, 2
-c
-c                nobj = nobj + 1
-c         
-c                obj(nobj)%index       = nobj
-c                obj(nobj)%type        = OP_EMPTY
-c                obj(nobj)%mode        = 0      
-c                obj(nobj)%surface     = 1      ! SOLID
-c                obj(nobj)%wedge1      = 0
-c                obj(nobj)%wedge2      = 0
-c                obj(nobj)%colour      = 4
-c                obj(nobj)%orientation = 1      ! CW
-c                obj(nobj)%ik          = 0
-c                obj(nobj)%ir          = ir
-c                obj(nobj)%in          = 0
-c                obj(nobj)%ivolume     = 0
-c                obj(nobj)%nsur        = 1
-c                obj(nobj)%gsur(1:1)   = GT_TD
-c                obj(nobj)%nver        = 4
-c                obj(nobj)%tsur(1) = SP_VESSEL_WALL
-c                obj(nobj)%reflec(1) = opt%ob_targ_reflec
-c                obj(nobj)%npts(1) = 4
-c                obj(nobj)%nmap(1) = 0
-c        
-c                IF (i1.EQ.1) THEN
-cc...              Inner target:
-c                  id = korpg(1,ir)
-c                  in1 = 1
-c                  in2 = 2
-c                ELSE
-cc...              Outer: 
-c                  id = korpg(nks(ir),ir)
-c                  in1 = 3
-c                  in2 = 4
-c                ENDIF
-c
-cc...            A little over done here, with all the p's (from old code), clean:
-c                p1(1,1) = DBLE(rvertp(in1,id))
-c                p1(2,1) = DBLE(zvertp(in1,id))
-c                p1(3,1) = DBLE(rvertp(in1,id)) * DTAN(DBLE(-0.5*dangle))
-c                p2(1,1) = DBLE(rvertp(in2,id))
-c                p2(2,1) = DBLE(zvertp(in2,id))
-c                p2(3,1) = DBLE(rvertp(in2,id)) * DTAN(DBLE(-0.5*dangle))
-c	
-c                p1(1,2) = p2(1,1)
-c                p1(2,2) = p2(2,1)
-c                p1(3,2) = p2(3,1)
-c                p2(1,2) = DBLE(rvertp(in2,id))
-c                p2(2,2) = DBLE(zvertp(in2,id))
-c                p2(3,2) = DBLE(rvertp(in2,id)) * DTAN(DBLE(+0.5*dangle))
-c        
-c                p1(1,3) = p2(1,2)
-c                p1(2,3) = p2(2,2)
-c                p1(3,3) = p2(3,2)
-c                p2(1,3) = DBLE(rvertp(in1,id))
-c                p2(2,3) = DBLE(zvertp(in1,id))
-c                p2(3,3) = DBLE(rvertp(in1,id)) * DTAN(DBLE(+0.5*dangle))
-c	
-c                p1(1,4) = p2(1,3)
-c                p1(2,4) = p2(2,3)
-c                p1(3,4) = p2(3,3)
-c                p2(1,4) = p1(1,1)
-c                p2(2,4) = p1(2,1)
-c                p2(3,4) = p1(3,1)
-c
-c                DO i2 = 1, 4
-c                  x1 = p1(1,i2)
-c                  z1 = p1(3,i2)
-c                  x2 = p2(1,i2)
-c                  z2 = p2(3,i2)
-c                  p1(1,i2) =  DCOS(DBLE(ang)) * x1 - DSIN(DBLE(ang))*z1
-c                  p1(3,i2) = +DSIN(DBLE(ang)) * x1 + DCOS(DBLE(ang))*z1
-c                  p2(1,i2) =  DCOS(DBLE(ang)) * x2 - DSIN(DBLE(ang))*z2
-c                  p2(3,i2) = +DSIN(DBLE(ang)) * x2 + DCOS(DBLE(ang))*z2
-c         
-c                  obj(nobj)%ipts(i2,1) = i2
-c                  obj(nobj)%v(1:3,i2) = p1(1:3,i2)
-c                ENDDO
-cc...            Reverse:
-c                p1(1:3,1) = obj(nobj)%v(1:3,2)
-c                obj(nobj)%v(1:3,2) = obj(nobj)%v(1:3,4)  
-c                obj(nobj)%v(1:3,4) = p1(1:3,1)
-c              ENDDO  
-c
-c            ENDDO
-c          ENDDO
-c        ELSE
-c          CALL ER('BuildObjects','Bad target option',*99)
-c        ENDIF
-c      ENDIF
 
  98   RETURN
  99   STOP
@@ -1823,6 +1418,7 @@ c
 c      SUBROUTINE DumpImage(opt,npixel,pixel)
       USE mod_out985
       USE mod_out985_variables
+      USE mod_interface
       IMPLICIT none
 
 c      TYPE(type_options985) :: opt     
@@ -1848,9 +1444,22 @@ c      TYPE(type_options985) :: opt
         ENDDO
 
         IF (.TRUE.) THEN
+c...      Also generate mod_interface file:
+          WRITE(file,'(1024X)')          
+          file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
+          CALL inOpenInterface(TRIM(file))
+          DO iy = 1, nybin
+            CALL inPutData(image(1:nxbin,iy),'data','unknown')
+          ENDDO
+          CALL inPutData(nxbin,'dx','none')
+          CALL inPutData(nybin,'dy','none')
+          CALL inCloseInterface
+        ENDIF
+
+        IF (.TRUE.) THEN
           fp = 99
           WRITE(file,'(A,I1,A)')
-          file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
+          file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img_old'
           WRITE(0,*) 'DUMP IMAGE:',file(1:LEN_TRIM(file))
           OPEN(fp,FILE=file(1:LEN_TRIM(file)),
      .         FORM='FORMATTED',STATUS='REPLACE',ERR=97)
@@ -1971,7 +1580,8 @@ c      MAX3D = MAX3D985
       WRITE(0,*) 'HERE IN 985'
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 400000 ! 200000
+      MAX3D = 1000000 
+c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
@@ -1991,10 +1601,12 @@ c      MAX3D = MAX3D985
       fp = 5
 
       npixel = 0
+      nchord = 0
 
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
+      opt%nplots = -1
 
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
@@ -2004,15 +1616,13 @@ c      MAX3D = MAX3D985
         CALL LoadOptions985_New(opt,ALL_OPTIONS,status)
       ENDIF
 
-      IF (opt%load.EQ.1) THEN
-        status = 0
-        save_opt_ccd = 0
-        DO WHILE(status.EQ.0)
-          opt%ccd = 0  ! Hack
+      IF (opt%load.EQ.1) THEN    ! *** HACK *** This is crap, i.e. the {DETECTOR} tags
+        status = 0               ! have to come last in the input file.  Also, the 
+        save_opt_ccd = 0         ! focal length, distortion, etc. are only recorded for 
+        DO WHILE(status.EQ.0)    ! the last active detector.  Need to define TYPE_DETECTOR
+          opt%ccd = 0  ! Hack    ! and use in in TYPE_OPTION985...
           opt%mask_num = 0
-
           CALL LoadOptions985_New(opt,DETECTOR_ONLY,status)
-c          CALL LoadDetectorOptions985(opt)
           IF (opt%ccd.GT.0) THEN
 
             IF (save_opt_ccd.EQ.0) save_opt_ccd = opt%ccd
@@ -2142,7 +1752,8 @@ c        WRITE(0,*) 'f:',f
         WRITE(0,*) 'F1:',f1
       ENDIF
 
-      CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
+      IF (opt%nplots.GT.0)
+     .  CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
 
 c      nobj985 = nobj
 

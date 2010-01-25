@@ -1708,9 +1708,8 @@ c...        No degenerate point found so advance the index:
      .       '   V2:',cellnum,i1,rv(i1),zv(i1)
         ENDDO
 
-
         IF (nv.GE.40) 
-     .    CALL ER('CalcPolygonArea','VERTEX array out of bounds',*99)
+     .    CALL ER('CalcPolygonVolume','VERTEX array out of bounds',*99)
 
 c...    Assign verticies to additional cell array:
         IF     (asc_3Dmode.EQ.2.AND.cellnum.LE.asc_ncell) THEN
