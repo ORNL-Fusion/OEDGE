@@ -3,7 +3,8 @@ c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
 c slmod begin
-      USE mod_grid
+      USE mod_grid_divimp
+      USE mod_solps
       use mtc
       use bfield
 c slmod end
@@ -11,8 +12,7 @@ c slmod end
       character*(*) title,equil
       INTEGER NIZS
 c slmod begin
-c     function defined in plasma.d5a; Krieger IPP/97
-c      integer ringno
+      INTEGER GetModel
 c slmod end
       REAL    VFLUID , XJI , XJ , XJF
 C
@@ -561,9 +561,9 @@ c               THETA(IK,IR) = theta(ik+1,ir)
                KBFS(IK,IR)  = kbfs(ik+1,ir)
 c slmod begin - new
                BRATIO(IK,IR) = BRATIO(IK+1,IR)
-               IF (ALLOCATED(sonnetik)) THEN
-                 sonnetik(ik,ir) = sonnetik(ik+1,ir)
-                 sonnetir(ik,ir) = sonnetir(ik+1,ir)
+               IF (ALLOCATED(divimp_ik)) THEN
+                 divimp_ik(ik,ir) = divimp_ik(ik+1,ir)
+                 divimp_ir(ik,ir) = divimp_ir(ik+1,ir)
                ENDIF
 c slmod end
                PSIFL(IK,IR) = psifl(ik+1,ir)
@@ -1549,7 +1549,7 @@ c
             distin(ik,ir) = finds(ik,ir) * kinds(ik,ir) * cosali(ik,ir)
             distout(ik,ir)= foutds(ik,ir)* koutds(ik,ir)* cosalo(ik,ir)
 c
-            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9)then 
+            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then 
                write(6,'(a,2i6,10(1x,g12.5))') 'DISTS:', ik,ir,
      >                 distin(ik,ir),distout(ik,ir)
 c
@@ -2554,6 +2554,9 @@ c slmod begin
       if (northopt.eq.3) then
          IF (stopopt2.EQ.900) THEN
            CALL CalcMetricQuickandDirty
+         ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
+           WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
+           thetag = 1.0
          ELSEIF (grdnmod.NE.0) THEN
            CALL CalcMetric
          ELSEIF (connected) THEN
@@ -2581,7 +2584,7 @@ c...  Load supplimental .RAW file(s) if requested:
 
 c...  Read in the results from a SOLPS/B2 simulation (from Rozhansky at
 c     the moment): 
-      IF (cre2d.EQ.3) CALL LoadSOLPSData
+      IF (solps_opt.GT.0) CALL LoadSOLPSData
 
 c slmod end
 c
@@ -2826,6 +2829,20 @@ c
            kfids(idds(ir,1))=fact*(ktibs(nks(ir),ir)-ktids(idds(ir,1)))
      >                             /(smax-kss(nks(ir),ir))
         endif
+c slmod begin - 04/01/2020
+c
+c       Setting the KFEGS and KFIGS to 0.0 creats a startling artifact
+c       for higher charge states when the other parallel force terms
+c       are small.  This nulling out of the thermal force at the midpoint
+c       of each ring is a good idea when there's a temperature 
+c       discontinuty, but it's not necessary for SOL28:
+c
+
+        if (getmodel(3,ir).eq.28) cycle
+
+        write(0,*) '****** blanking mid-point grad terms! ******'
+
+c slmod end
 c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
@@ -3566,7 +3583,7 @@ C
 C       GENERATE AN ANALYSIS OF THE IONIZATION DATA FOR CONSISTENCY
 C       CHECK PURPOSES.
 C
-        IF ((CPINOPT.EQ.1).AND.PINCHECK) THEN
+        IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).AND.PINCHECK) THEN
            CALL PINPRN
            CALL PINCHK
         ENDIF
@@ -3885,7 +3902,10 @@ C
       REAL    S1,S2,S3,S4,RRS(5,5),ZZS(5,5),S,XX
       REAL    ACHK,RNGCHK,TOTCHK
       REAL    TOTA,TOTV,TOTA2,TOTV2,tmpval
-c
+c slmod begin
+      REAL*8  :: AREA_SUM
+      LOGICAL :: WARNING_MESSAGE = .TRUE.
+c slmod end
       real    apara,apol,afact
 C
       TOTA   = 0.0
@@ -4064,6 +4084,7 @@ C---- AROUND THE PERIMETER.
 C
 c slmod begin
  205  CONTINUE
+      AREA_SUM = 0.0D0
 c slmod end
       KP = KORPG(IK,IR)
       KAREA2(IK,IR) = 0.0
@@ -4078,6 +4099,42 @@ c
 c       Ensure that the area is greater than zero.
 c
         KAREA2(IK,IR) = 0.5 * abs(KAREA2(IK,IR))
+c slmod begin
+        IF     (KAREA2(IK,IR).LT.-1.0E-10) THEN 
+          CALL ER('TAUVOL','Malformed cell detected, stopping',*99)       
+        ELSEIF (KAREA2(IK,IR).LT.1.0E-06) THEN 
+          IF (WARNING_MESSAGE) THEN
+            WRITE(0,*) 'WARNING: Small area cell detected, using '//
+     +                 'double precision calculation in TAUVOL'
+            WARNING_MESSAGE = .FALSE.
+          ENDIF
+          KAREA2(IK,IR) = 0.0
+          DO L = 1, NVERTP(KP)
+            LP1 = L + 1
+            IF (L.EQ.NVERTP(KP)) LP1 = 1
+            AREA_SUM = AREA_SUM + 
+     +                 DBLE(RVERTP(LP1,KP)) * DBLE(ZVERTP(L  ,KP)) -
+     +                 DBLE(RVERTP(L  ,KP)) * DBLE(ZVERTP(LP1,KP))
+c            AREA_SUM = AREA_SUM + DBLE(RVERTP(LP1,KP) * ZVERTP(L  ,KP))-
+c     +                            DBLE(RVERTP(L  ,KP) * ZVERTP(LP1,KP))
+            IF (.TRUE.) THEN
+              KAREA2(IK,IR)=KAREA2(IK,IR)+(RVERTP(LP1,KP)*ZVERTP(L,KP)
+     +                                   - RVERTP(L,KP)*ZVERTP(LP1,KP))
+              WRITE(6,*) 'WARNING: SMALL AREA CELL DETECTED'
+              WRITE(6,*) '  KAREA2:',ik,ir,l
+              WRITE(6,*) '        :',karea2(ik,ir)
+              WRITE(6,*) '        :',area_sum
+              WRITE(6,*) '        :',lp1,kp,rvertp(lp1,kp)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',RVERTP(LP1,KP)*ZVERTP(L,KP)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',lp1,kp,zvertp(lp1,kp)
+              WRITE(6,*) '        :',RVERTP(L,KP)*ZVERTP(LP1,KP)
+            ENDIF
+          ENDDO
+          KAREA2(IK,IR) = SNGL(0.5D0*AREA_SUM)
+        ENDIF
+c slmod end
       ENDIF
 c slmod begin
       IF (cgridopt.EQ.LINEAR_GRID) THEN
@@ -4230,6 +4287,10 @@ C
  9008 FORMAT(//1X,'TOTAL: ',13X,1P,5E10.3)
 C
       RETURN
+c slmod begin
+ 99   WRITE(0,*) '  IK,IR=',ik,ir
+      STOP
+c slmod end
       END
 c
 c
@@ -5737,14 +5798,23 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
+      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
+      ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+        CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
+     .                              indexiradj)
+        GOTO 300
+      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
+     .                               indexiradj)
+        GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
-     .        indexiradj)
-         GOTO 300
+        CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
+     .       indexiradj)
+        GOTO 300
       ELSE
          BACKSPACE(gridunit)
       ENDIF
@@ -6125,6 +6195,10 @@ c
 c     
  300  continue
 c     slmod begin
+
+      CALL OutputData(86,'300 of RAUG')    
+c         STOP 'RAUG MID'
+
       CALL DB('RAUG: Done reading grid')
 
       vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
@@ -6748,26 +6822,21 @@ c     slmod begin
       IF (quasidn) CALL PrepQuasiDoubleNull
 
       IF (grdnmod.GT.0) THEN
-c...  New, more sophisticated (yeah, baby) grid cutting method:
+c...    New, more sophisticated (yeah, baby) grid cutting method:
 
-c...  Get rid of poloidal boundary cells (to be added again below
-c     after grid manipulations are complete):
-         DO ir = irsep, nrs
-            CALL DeleteCell(nks(ir),ir)
-            CALL DeleteCell(1      ,ir)
-         ENDDO
-
-c...  Modify the grid based on entries in the GRDMOD array assigned 
-c     from the input file:
-         CALL TailorGrid
-
-c...  Add virtual boundary cells, which will be stripped off later:
-         IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
-     .        CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
-     .        CALL AddPoloidalBoundaryCells
-
-
-         write(0,*) 'Finished tailorgrid:'
+c...    Get rid of poloidal boundary cells (to be added again below
+c       after grid manipulations are complete):
+        DO ir = irsep, nrs
+          CALL DeleteCell(nks(ir),ir)
+          CALL DeleteCell(1      ,ir)
+        ENDDO
+c...    Modify the grid based on entries in the GRDMOD array assigned 
+c       from the input file:
+        CALL TailorGrid
+c...    Add virtual boundary cells, which will be stripped off later:
+        IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .      CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .      CALL AddPoloidalBoundaryCells
       ENDIF      
 c     
 c     jdemod - write out grid after modifications
@@ -6839,6 +6908,8 @@ c     slmod begin
          CALL SaveSolution
          STOP 'WORKING ON IT - STILL'
       ENDIF
+
+      CALL OutputData(85,'End of RAUG')
 
 c     DO ir = 1, nrs
 c     DO ik = 1, nks(ir)
@@ -15379,7 +15450,10 @@ c     Formatting
 c
   10  format(a,1x,3(1x,i5))
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+c200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+c     IPP/09 - Krieger: had to change this because sun compiler
+c     generates code choking on original format statement
+ 200  format(4x,i5,6x,i5,4x,i5)
  300  format('KNOTS:')
  400  format(12i6)
  500  format(6e18.10)
@@ -15647,10 +15721,7 @@ c     Formatting
 c
   10  format(a)
  100  format(a40)
-c200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
-c     IPP/09 - Krieger: had to change this because sun compiler
-c     generates code choking on original format statement
- 200  format(4x,i5,6x,i5,4x,i5)
+ 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
  400  format(12i6)
  500  format(6e18.10)
 c

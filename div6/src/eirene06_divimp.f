@@ -10,6 +10,7 @@ c
       SUBROUTINE WriteEireneFiles_06(iitersol)
       USE mod_eirene06
       USE mod_sol28_global
+      USE mod_options
       USE mod_geometry
       USE mod_filament
       IMPLICIT none
@@ -21,42 +22,69 @@ c
 
       INTEGER, INTENT(IN) :: iitersol
 
-      INTEGER ik,ir,in1,in2,i1,id,ik1,status
-      LOGICAL saved_triangles,output
+      INTEGER   ik,ir,in1,in2,i1,id,ik1,status,i,ivoid
+      LOGICAL   saved_triangles,output
+      CHARACTER fname*1024
 
-      REAL*8 t  ! *** TEMP ***
+      REAL t  ! *** TEMP ***
 
-      DATA t /0.0D0/
+      DATA t /0.0/
       DATA saved_triangles /.FALSE./
       SAVE
 
-      IF (citersol.GT.0) THEN
-        WRITE(0,*) 
-        WRITE(0,*) '---------------------------------'
-        WRITE(0,*) iitersol,SNGL(t),nfilament
-        WRITE(0,*) '---------------------------------'
-        WRITE(0,*) 
-        IF (t.EQ.0.0D0) CALL DefineFilaments 
-        CALL SetupFilaments(t)
-        t = t + 10.0D-06
-      ELSE
-        IF (t.EQ.0.0D0) CALL DefineFilaments 
-        CALL SetupFilaments(t)
-      ENDIF
+ 
+      WRITE(0,*) '-----> EIRENE:',iitersol
+      IF (opt_fil%opt.NE.0) THEN
 
-c      CALL DefineFilaments
-c      t = 1.0D0
-c      DO i1 = 1, 10
-c        CALL SetupFilaments(t)      
-c        t = t + 10.0D-6
-c      ENDDO
-c      STOP 'asshole'
+c        DO i = 1, 20
+
+        IF (citersol.GT.0) THEN
+          IF (t.EQ.0.0) THEN
+            t = 1.0E-07
+c            t = t - opt_fil%time_step + 1.0E-09  ! The last one is so that t=0.0 is registered again  
+            CALL DefineFilaments 
+            DO i1 = 1, 1000
+              CALL SetupFilaments(DBLE(t))
+              IF ((t-opt_fil%start_time).GT.-1.0E-06) EXIT
+              t = t + opt_fil%time_step
+            ENDDO
+          ELSE
+            t = t + opt_fil%time_step
+            CALL SetupFilaments(DBLE(t))
+          ENDIF
+          WRITE(0,*) 
+          WRITE(0,*) '------------------------------------------'
+          WRITE(0,*) ' FILAMENT SETUP:',iitersol,NINT(t/1.0E-06),
+     .                                  nfilament
+          WRITE(0,*) '------------------------------------------'
+          WRITE(0,*) 
+
+
+        ELSE
+          IF (t.EQ.0.0) THEN
+            CALL DefineFilaments 
+            DO i1 = 1, 1000
+              CALL SetupFilaments(DBLE(t))
+              IF ((t-opt_fil%start_time).GT.-1.0E-06) EXIT
+              t = t + opt_fil%time_step
+            ENDDO
+            WRITE(0,*) 'NON-ITERATIVE TIME STAMP=',t/1.0E-06
+          ENDIF
+        ENDIF
+
+c        enddo
+c        stop 'sdgsg'
+
+      ENDIF
 
       helium = .TRUE.
 
       output = .FALSE.
       opt%pin_data = .TRUE.
+      opt_iteration(1:nopt)%pin_data = .TRUE.
+
       tetrahedrons = .FALSE.
+      time_dependent = .FALSE.
 
       SELECTCASE (eirgeom)
         CASE (-1)
@@ -64,6 +92,15 @@ c      STOP 'asshole'
         CASE ( 3)
           tetrahedrons = .TRUE.
       ENDSELECT        
+
+      IF (opt_eir%ntime.NE.0) THEN
+        time_dependent = .TRUE.
+        IF (iitersol.EQ.1) THEN
+          time0 = opt_eir%time0
+        ELSE
+          time0 = time0 + opt_eir%dtimv
+        ENDIF
+      ENDIF
 
 c      IF (tetrahedrons) THEN
 c...    All a bit cavalier at the moment because the object parameters
@@ -82,7 +119,7 @@ c     access to the standard DIVIMP common blocks:
 
       time  = eirtime                           ! EIRENE run time (s)
       niter = eirniter                          ! Number of EIRENE self-iterations
-      dtimv = eirdtimv                          ! Time-dependent runs
+      dtimv = opt_eir%dtimv                     ! Time-dependent runs
 
       ttemp = ctargt                            ! Temperature (K) of target surfaces
       wtemp = cwallt                            ! Temperature (K) of wall surfaces
@@ -93,10 +130,12 @@ c     specified in block 3 in the EIRENE input file:
       IF (eirmat1.EQ.2) tmater = 1206.0
       IF (eirmat1.EQ.3) tmater = 18474.0
       IF (eirmat1.EQ.4) tmater = 904.0  
+      IF (eirmat1.EQ.5) tmater = 5626.0
       IF (eirmat2.EQ.1) wmater = 9642.0         ! Wall
       IF (eirmat2.EQ.2) wmater = 1206.0
       IF (eirmat2.EQ.3) wmater = 18474.0
       IF (eirmat2.EQ.4) wmater = 904.0
+      IF (eirmat2.EQ.5) wmater = 5626.0
 
       opacity   = eiropacity
       photons   = eirphoton
@@ -106,6 +145,10 @@ c     specified in block 3 in the EIRENE input file:
       torfrac   = eirtorfrac
       alloc     = eiralloc
       beam      = 0
+
+      eirfp = 88
+
+      eir_pass = 0
 
       IF (eirtrim.NE.1) CALL ER('WriteEireneFiles','TRIM option '//
      .                          'not set',*99)
@@ -137,7 +180,7 @@ c     and tetrahedrons at the moment):
           CALL SetupEireneStrata
         ELSE
           IF (output) WRITE(0,*) 'building triangles'
-          CALL ALLOC_VERTEX  (10000)   ! NEED TO ADD ACTIVE BOUNDS CHECKING FOR ALL THESE!
+          CALL ALLOC_VERTEX  (20000)   ! NEED TO ADD ACTIVE BOUNDS CHECKING FOR ALL THESE!
           CALL ALLOC_SURFACE (300)
           CALL ALLOC_TRIANGLE(25000)
 
@@ -151,39 +194,70 @@ c...      Loads cell geometry and plasma quantities from fluid grid:
 c...      Generates Eirene triangle mesh from fluid grid information:
           CALL BuildFluidGridTriangles_06
 
+          WRITE(0,*) 'DEBUG 0.0>>>>>',tri(1)%sideindex(5,1:3)
+
 c...      Builds connection map, amongst other things:
           CALL ProcessTriangles_06(0)
+
+          WRITE(0,*) 'DEBUG 0.1>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Sets triangle volume quantities from data stored in ProcessFluidGrid:
           CALL AssignPlasmaQuantities_06
 
+          WRITE(0,*) 'DEBUG 0.2>>>>>',tri(1)%sideindex(5,1:3)
+
 c...      Define Eirene particle sources:
           CALL SetupEireneStrata
 
+          WRITE(0,*) 'DEBUG 0.3>>>>>',tri(1)%sideindex(5,1:3)
+
 c...      Fills the voids outside the fluid grid with triangles (by calling
 c         the external program TRIANGLE):
-          CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
+          IF (opt_eir%nvoid.GT.0) THEN
+            CALL SetupVoidProcessing
+            DO ivoid = 1, opt_eir%nvoid
+              CALL ProcessVoid(opt_eir%void_zone(ivoid))
+            ENDDO
+          ELSE
+            CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
+          ENDIF
+
+          WRITE(0,*) 'DEBUG 0.4>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Re-builds connection map, taking into account the new triangles:
           CALL ProcessTriangles_06(0)
+
+          WRITE(0,*) 'DEBUG 0.5>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Dumps trianlges to a binary file, for use with LoadTriangles:
           CALL SaveTriangles_06
           saved_triangles = .TRUE.
 
+          WRITE(0,*) 'DEBUG 0.6>>>>>',tri(1)%sideindex(5,1:3)
+
 c...      Tetrahedrons:
           IF (tetrahedrons) THEN
             CALL ProcessTetrahedrons_06
-            CALL SaveGeometryData('tetrahedrons.raw')
+            IF (citersol.GT.0) THEN 
+              WRITE(fname,'(A,I3.3,A)') '.',iitersol,'.raw'
+              WRITE(0,*) 'FILENAME=','tetrahedrons'//TRIM(fname)
+              CALL SaveGeometryData('tetrahedrons'//TRIM(fname))
+              CALL SaveFilamentData('filaments'//TRIM(fname))
+            ELSE
+              CALL SaveGeometryData('tetrahedrons.raw')
+              CALL SaveFilamentData('filaments.raw')
+            ENDIF
 c            CALL DumpGrid('BUILDING TETRAHEDRONS')          
           ENDIF
 
           WRITE(0,*) 'DONE'
         ENDIF
 
+        WRITE(0,*) 'DEBUG 0.9>>>>>',tri(1)%sideindex(5,1:3)
 
         IF (.TRUE.) CALL LocalGridRefinement
 
+        WRITE(0,*) 'DEBUG 1.0>>>>>',tri(1)%sideindex(5,1:3)
 
 c...    Writes the .points, .sides, .map and .plasma files to be loaded
 c       by EIRENE:
@@ -198,6 +272,9 @@ c       by EIRENE:
 
 c...  Fluid grid data no longer required:
       CALL DEALLOC_CELL
+
+c      CALL DumpGrid('Quitting early')  
+c      STOP 'QUITTING EARLY...'
 
 c...  Need this to generate celldata.dat for triangle grid, which
 c     is required for finding the B-field everywhere in the vessel:
@@ -233,6 +310,7 @@ c
       SUBROUTINE DefineEireneSurfaces_06
       USE mod_eirene06_parameters
       USE mod_eirene06
+      USE mod_sol28_global
       IMPLICIT none
       INCLUDE 'params' 
       INCLUDE 'comtor'
@@ -242,149 +320,121 @@ c
       INTEGER NewEireneSurface_06
 
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
-     .        type,index1,index2,ilside,ilswch,region,code
+     .        type,index1,index2,ilside,ilswch,region,code,is,nboundary
+      LOGICAL assigned(2)
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
-     .        material,recycf,recyct
+     .        mater,recycf,recyct,ilspt,isrs,recycs,recycc
 
       nsurface = 0
 
-c...  Load vessel wall segments from the default DIVIMP vessel 
-c     wall array (WALLPTS), clockwise wall is assumed:
-      DO i1 = wallpts, 1, -1
-        IF (i1.EQ.wallpts) THEN
-          i2 = 1
-        ELSE
-          i2 = i1 + 1
-        ENDIF
-        IF (wallpt(i1,18).EQ.0.0) THEN
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
-          surface(nsurface)%index(1) = i1               ! Index of VESSEL_WALL surface in the fluid code wall array
-          surface(nsurface)%v(1,1) =  wallpt(i2,20)     ! x coordinate of side vertex 1 (m)
-          surface(nsurface)%v(2,1) =  wallpt(i2,21)     ! y coordinate
-          surface(nsurface)%v(3,1) = -1.0E+18           ! z (code currently assumes toroidal symmetry)
-          surface(nsurface)%v(1,2) =  wallpt(i1,20)     ! x coordinate of side vertex 2 (m)
-          surface(nsurface)%v(2,2) =  wallpt(i1,21)     ! y
-          surface(nsurface)%v(3,2) =  1.0E+18           ! z
-        ENDIF
-      ENDDO
+c     ----------------------------------------------------------------------
+c...  Setup non-default standard surfaces related to the magnetic grid:
+c     ----------------------------------------------------------------------
 
-c...  Additional user specified wall surfaces (EIRASDAT array):
-      DO i1 = 1, eirnasdat
-        IF (eirasdat(i1,1) .EQ.-1.0.OR.
-     .      eirasdat(i1,10).EQ. 0.0) CYCLE
+c...  Poloidal surfaces for Eirene strata (needs to be generalized to 
+c     allow more than 2 surface strata):
+      IF (.TRUE.) THEN
+c...    Determine the number of target strata that are defined:
+        assigned = .FALSE.
+        DO is = 1, opt_eir%nstrata
+          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+     .             opt_eir%target(is).EQ.IKLO) assigned(IKLO) =.TRUE.
+          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+     .             opt_eir%target(is).EQ.IKHI) assigned(IKHI) =.TRUE.
+        ENDDO
+c...    Define the default surfaces for the target strata, since target
+c       strata are not specifically assigned:
+        DO i1 = IKLO, IKHI 
+          IF (assigned(i1)) CYCLE
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* default target (OSM)'
+          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+          IF (cgridopt.EQ.LINEAR_GRID) THEN
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs-1               ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ELSE
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs                 ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ENDIF
+          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+        ENDDO
+c...    Loop over the user specified strata and assemble the 
+c       corresponding target surfaces:
+        DO is = 1, opt_eir%nstrata 
+          IF (NINT(opt_eir%type(is)).NE.1) CYCLE
 
-        IF     (eirasdat(i1,1).EQ.7.0) THEN
-c...      *** The 7.0 designation needs to change since not all the 7.0 info is being used ***
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* user specified target (OSM)'
+          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+          surface(nsurface)%index(1:2) = opt_eir%range_tube(1:2,is) ! irsep                  ! Ring index start location of surface
+c          surface(nsurface)%index(2) = nrs                    ! Ring index end
+          surface(nsurface)%index(3) = opt_eir%target(is)  ! Target (IKLO=inner, IKHI=outer)
+          surface(nsurface)%index(5) = 0
+          surface(nsurface)%reflect = LOCAL                   ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
 
-          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+        ENDDO
+      ELSE
+        DO i1 = IKLO, IKHI 
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = STRATUM
+          surface(nsurface)%surtxt   = '* default target (OSM)'
+          IF (cgridopt.EQ.LINEAR_GRID) THEN
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs-1               ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ELSE
+            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+            surface(nsurface)%index(2) = nrs                 ! Ring index end
+            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+            surface(nsurface)%index(5) = 0
+          ENDIF
+          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
+          surface(nsurface)%iliin  = 1
+          surface(nsurface)%ilside = 0
+          surface(nsurface)%ilswch = 0
+          surface(nsurface)%iltor  = 0  
+          surface(nsurface)%ilcell = 0
+          surface(nsurface)%ilcol  = 4
+          surface(nsurface)%material = tmater                ! Set surface material
+          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+          IF (surface(nsurface)%ilspt.NE.0) THEN
+            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
+            surface(nsurface)%recycs = 1.0
+            surface(nsurface)%recycc = 1.0
+          ENDIF
+        ENDDO
+      ENDIF
 
-          surface(nsurface)%v(1,1) =  eirasdat(i1,3)
-          surface(nsurface)%v(2,1) =  eirasdat(i1,4)
-          surface(nsurface)%v(3,1) = -1.0E+18
-          surface(nsurface)%v(1,2) =  eirasdat(i1+1,3)
-          surface(nsurface)%v(2,2) =  eirasdat(i1+1,4)
-          surface(nsurface)%v(3,2) =  1.0E+18
-
-        ELSEIF (eirasdat(i1,1).EQ.11.0) THEN
-c...      Tube (fun!):
-          dangle = (eirasdat(i1,8) - eirasdat(i1,7)) / eirasdat(i1,9) 
-          xcen = eirasdat(i1,2)
-          ycen = eirasdat(i1,3)
-          rad = eirasdat(i1,6)
-          DO angle = eirasdat(i1,7), 0.9999*eirasdat(i1,8), dangle
-            x1 = xcen + rad * COS(angle*PI/180.0)
-            y1 = ycen + rad * SIN(angle*PI/180.0)
-            x2 = xcen + rad * COS((angle+dangle)*PI/180.0)
-            y2 = ycen + rad * SIN((angle+dangle)*PI/180.0)
-
-            nsurface = NewEireneSurface_06(VESSEL_WALL)
-            surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
-            surface(nsurface)%v(1,1) = x1
-            surface(nsurface)%v(2,1) = y1
-            surface(nsurface)%v(3,1) = eirasdat(i1,4)
-            surface(nsurface)%v(1,2) = x2
-            surface(nsurface)%v(2,2) = y2
-            surface(nsurface)%v(3,2) = eirasdat(i1,5)
-          ENDDO
-
-        ELSEIF (eirasdat(i1,1).EQ.12.0) THEN
-c...      Rectangular tube: 
-          x1 = eirasdat(i1,2)
-          y1 = eirasdat(i1,3)
-          x2 = eirasdat(i1,4)
-          y2 = eirasdat(i1,5)
-
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
-          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
-          surface(nsurface)%v(1,1) = x1
-          surface(nsurface)%v(2,1) = y1
-          surface(nsurface)%v(3,1) = eirasdat(i1,6)
-          surface(nsurface)%v(1,2) = x2
-          surface(nsurface)%v(2,2) = y1
-          surface(nsurface)%v(3,2) = eirasdat(i1,7)
-
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
-          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
-          surface(nsurface)%v(1,1) = x2
-          surface(nsurface)%v(2,1) = y1
-          surface(nsurface)%v(3,1) = eirasdat(i1,6)
-          surface(nsurface)%v(1,2) = x2
-          surface(nsurface)%v(2,2) = y2
-          surface(nsurface)%v(3,2) = eirasdat(i1,7)
-
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
-          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
-          surface(nsurface)%v(1,1) = x2
-          surface(nsurface)%v(2,1) = y2
-          surface(nsurface)%v(3,1) = eirasdat(i1,6)
-          surface(nsurface)%v(1,2) = x1
-          surface(nsurface)%v(2,2) = y2
-          surface(nsurface)%v(3,2) = eirasdat(i1,7)
-
-          nsurface = NewEireneSurface_06(VESSEL_WALL)
-          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
-          surface(nsurface)%v(1,1) = x1
-          surface(nsurface)%v(2,1) = y2
-          surface(nsurface)%v(3,1) = eirasdat(i1,6)
-          surface(nsurface)%v(1,2) = x1
-          surface(nsurface)%v(2,2) = y1
-          surface(nsurface)%v(3,2) = eirasdat(i1,7)
-
-        ELSEIF (eirasdat(i1,1).EQ.14.0) THEN
-c...       
-          DO i2 = i1, eirnasdat
-            IF (i2.GT.i1.AND.eirasdat(i2,1).NE.0.0) EXIT
-            IF (i2.EQ.i1) THEN
-              x1 = eirasdat(i2,2)
-              y1 = eirasdat(i2,3)
-              z1 = eirasdat(i2,6)
-              z2 = eirasdat(i2,7)
-            ELSE
-              x1 = x2
-              y1 = y2
-            ENDIF
-            x2 = eirasdat(i2,4)
-            y2 = eirasdat(i2,5)
-            nsurface = NewEireneSurface_06(VESSEL_WALL)
-            surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
-            surface(nsurface)%v(1,1) =  x1
-            surface(nsurface)%v(2,1) =  y1
-            surface(nsurface)%v(3,1) =  z1
-            surface(nsurface)%v(1,2) =  x2
-            surface(nsurface)%v(2,2) =  y2
-            surface(nsurface)%v(3,2) =  z2
-          ENDDO
-        
-        ELSE
-        ENDIF
-      ENDDO
-
-c...  Non-default standard surfaces on the magnetic grid:
-c     *TEMP* move lower eventually -- here now to be compatible with block 3a surface index of core
-c     boundary in Detlev's reference input file...
+c...  (Core boundary surface should ideally be set here (and not above).)
       nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
       surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
+      nboundary = 1
       IF (cgridopt.EQ.LINEAR_GRID) THEN
         surface(nsurface)%surtxt   = '* core, reflecting (OSM)'
         surface(nsurface)%index(1) = 1         
@@ -392,6 +442,7 @@ c     boundary in Detlev's reference input file...
         surface(nsurface)%index(3) = 2         
         surface(nsurface)%index(4) = 14      
         surface(nsurface)%index(5) = 0
+        surface(nsurface)%index(6) = nboundary
         surface(nsurface)%iliin  = 1         
         surface(nsurface)%ilcol  = 3         
       ELSE
@@ -401,39 +452,10 @@ c     boundary in Detlev's reference input file...
         surface(nsurface)%index(3) = 2       ! Ring in the magnetic grid 
         surface(nsurface)%index(4) = 14      ! Radial surface of cell (1-4 cell side here)
         surface(nsurface)%index(5) = 0
+        surface(nsurface)%index(6) = nboundary
         surface(nsurface)%iliin  = 2         ! Reflection type (ILIIN=2 is 100% absorbing)
         surface(nsurface)%ilcol  = 3         ! Colour of surface in EIRENE plots
       ENDIF
-
-c...  Poloidal surfaces for Eirene strata (needs to be generalized to 
-c     allow more than 2 surface strata):
-      DO i1 = IKLO, IKHI 
-        nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-        surface(nsurface)%subtype  = STRATUM
-        surface(nsurface)%surtxt   = '* target (OSM)'
-        IF (cgridopt.EQ.LINEAR_GRID) THEN
-          surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-          surface(nsurface)%index(2) = nrs-1               ! Ring index end
-          surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-          surface(nsurface)%index(5) = 0
-        ELSE
-          surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-          surface(nsurface)%index(2) = nrs                 ! Ring index end
-          surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-          surface(nsurface)%index(5) = 0
-        ENDIF
-        surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
-        surface(nsurface)%iliin  = 1
-        surface(nsurface)%ilside = 0
-        surface(nsurface)%ilswch = 0
-        surface(nsurface)%iltor  = 0  
-        surface(nsurface)%ilcell = 0
-        surface(nsurface)%ilcol  = 4
-        surface(nsurface)%material = tmater                ! Set surface material
-        surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-      ENDDO
-
-c...  (Core boundary surface should ideally be set here (and not above).)
 
 c...  Setup SOL radial boundary surfaces:
       ik1 = 0
@@ -453,6 +475,7 @@ c...
             side = 14
           ENDIF
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          nboundary = nboundary + 1
           surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
           surface(nsurface)%surtxt   = '* radial SOL (OSM)'
           surface(nsurface)%index(1) = ikins(ik1,irwall)  ! Cell index start location of surface       
@@ -460,6 +483,7 @@ c...
           surface(nsurface)%index(3) = irins(ik1,irwall)  ! Ring in the magnetic grid                  
           surface(nsurface)%index(4) = side               ! Radial surface of cell
           surface(nsurface)%index(5) = 0                                                                
+          surface(nsurface)%index(6) = nboundary                                                        
           surface(nsurface)%iliin  = -1                   ! Reflection type (ILIIN=-1 is 100% transparent)
           surface(nsurface)%ilcol  = 4                    ! Colour of surface in EIRENE plots
           ik1 = 0
@@ -468,6 +492,7 @@ c...
       ENDDO
 
 c...  PFZ radial boundary:  
+      nboundary = nboundary + 1
       IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
       ELSE
         nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
@@ -478,11 +503,158 @@ c...  PFZ radial boundary:
         surface(nsurface)%index(3) = irtrap + 1                ! Ring in the magnetic grid                  
         surface(nsurface)%index(4) = 14                        ! Radial surface of cell (1-4 cell side here)
         surface(nsurface)%index(5) = 0                                                                      
+        surface(nsurface)%index(6) = nboundary                                                        
         surface(nsurface)%iliin  = -1                          ! Reflection type (ILIIN=-1 is 100% transparent)
         surface(nsurface)%ilcol  = 4                           ! Colour of surface in EIRENE plots
       ENDIF
 
+c     ------------------------------------------------------------------
+c     Add wall surfaces:
+c     ------------------------------------------------------------------
+
+c...  Load vessel wall segments from the default DIVIMP vessel 
+c     wall array (WALLPTS), clockwise wall is assumed:
+      DO i1 = wallpts, 1, -1
+        IF (i1.EQ.wallpts) THEN
+          i2 = 1
+        ELSE
+          i2 = i1 + 1
+        ENDIF
+        IF (wallpt(i1,18).EQ.0.0) THEN
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          surface(nsurface)%index(1) = i1                  ! Index of VESSEL_WALL surface in the fluid code wall array
+          surface(nsurface)%v(1,1) =  DBLE(wallpt(i2,20))  ! x coordinate of side vertex 1 (m)
+          surface(nsurface)%v(2,1) =  DBLE(wallpt(i2,21))  ! y coordinate
+          surface(nsurface)%v(3,1) = -1.0D+18              ! z (code currently assumes toroidal symmetry)
+          surface(nsurface)%v(1,2) =  DBLE(wallpt(i1,20))  ! x coordinate of side vertex 2 (m)
+          surface(nsurface)%v(2,2) =  DBLE(wallpt(i1,21))  ! y
+          surface(nsurface)%v(3,2) =  1.0D+18              ! z
+        ENDIF
+      ENDDO
+
+c...  Additional user specified wall surfaces (EIRASDAT array):
+      DO i1 = 1, eirnasdat
+        IF (eirasdat(i1,1) .EQ.-1.0.OR.
+     .      eirasdat(i1,10).EQ. 0.0) CYCLE
+
+        IF     (eirasdat(i1,1).EQ.7.0) THEN
+c...      *** The 7.0 designation needs to change since not all the 7.0 info is being used ***
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+
+          surface(nsurface)%v(1,1) =  DBLE(eirasdat(i1,3))
+          surface(nsurface)%v(2,1) =  DBLE(eirasdat(i1,4))
+          surface(nsurface)%v(3,1) = -1.0D+18
+          surface(nsurface)%v(1,2) =  DBLE(eirasdat(i1+1,3))
+          surface(nsurface)%v(2,2) =  DBLE(eirasdat(i1+1,4))
+          surface(nsurface)%v(3,2) =  1.0D+18
+
+        ELSEIF (eirasdat(i1,1).EQ.11.0) THEN
+c...      Tube (fun!):
+          dangle = (eirasdat(i1,8) - eirasdat(i1,7)) / eirasdat(i1,9) 
+          xcen = eirasdat(i1,2)
+          ycen = eirasdat(i1,3)
+          rad = eirasdat(i1,6)
+          DO angle = eirasdat(i1,7), 0.9999*eirasdat(i1,8), dangle
+            x1 = xcen + rad * COS(angle*PI/180.0)
+            y1 = ycen + rad * SIN(angle*PI/180.0)
+            x2 = xcen + rad * COS((angle+dangle)*PI/180.0)
+            y2 = ycen + rad * SIN((angle+dangle)*PI/180.0)
+
+            nsurface = NewEireneSurface_06(VESSEL_WALL)
+            surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+            surface(nsurface)%v(1,1) = DBLE(x1)  ! *** change X1, etc. to REAL*8 ***
+            surface(nsurface)%v(2,1) = DBLE(y1)
+            surface(nsurface)%v(3,1) = DBLE(eirasdat(i1,4))
+            surface(nsurface)%v(1,2) = DBLE(x2)
+            surface(nsurface)%v(2,2) = DBLE(y2)
+            surface(nsurface)%v(3,2) = DBLE(eirasdat(i1,5))
+          ENDDO
+
+        ELSEIF (eirasdat(i1,1).EQ.12.0) THEN
+c...      Rectangular tube: 
+          x1 = eirasdat(i1,2)
+          y1 = eirasdat(i1,3)
+          x2 = eirasdat(i1,4)
+          y2 = eirasdat(i1,5)
+
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+          surface(nsurface)%v(1,1) = DBLE(x1)
+          surface(nsurface)%v(2,1) = DBLE(y1)
+          surface(nsurface)%v(3,1) = DBLE(eirasdat(i1,6))
+          surface(nsurface)%v(1,2) = DBLE(x2)
+          surface(nsurface)%v(2,2) = DBLE(y1)
+          surface(nsurface)%v(3,2) = DBLE(eirasdat(i1,7))
+
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
+          surface(nsurface)%v(1,1) = DBLE(x2)
+          surface(nsurface)%v(2,1) = DBLE(y1)
+          surface(nsurface)%v(3,1) = DBLE(eirasdat(i1,6))
+          surface(nsurface)%v(1,2) = DBLE(x2)
+          surface(nsurface)%v(2,2) = DBLE(y2)
+          surface(nsurface)%v(3,2) = DBLE(eirasdat(i1,7))
+
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
+          surface(nsurface)%v(1,1) = DBLE(x2)
+          surface(nsurface)%v(2,1) = DBLE(y2)
+          surface(nsurface)%v(3,1) = DBLE(eirasdat(i1,6))
+          surface(nsurface)%v(1,2) = DBLE(x1)
+          surface(nsurface)%v(2,2) = DBLE(y2)
+          surface(nsurface)%v(3,2) = DBLE(eirasdat(i1,7))
+
+          nsurface = NewEireneSurface_06(VESSEL_WALL)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  
+          surface(nsurface)%v(1,1) = DBLE(x1)
+          surface(nsurface)%v(2,1) = DBLE(y2)
+          surface(nsurface)%v(3,1) = DBLE(eirasdat(i1,6))
+          surface(nsurface)%v(1,2) = DBLE(x1)
+          surface(nsurface)%v(2,2) = DBLE(y1)
+          surface(nsurface)%v(3,2) = DBLE(eirasdat(i1,7))
+
+        ELSEIF (eirasdat(i1,1).EQ.14.0) THEN
+c...       
+          DO i2 = i1, eirnasdat
+            IF (i2.GT.i1.AND.eirasdat(i2,1).NE.0.0) EXIT
+            IF (i2.EQ.i1) THEN
+              x1 = eirasdat(i2,2)
+              y1 = eirasdat(i2,3)
+              z1 = eirasdat(i2,6)
+              z2 = eirasdat(i2,7)
+            ELSE
+              x1 = x2
+              y1 = y2
+            ENDIF
+            x2 = eirasdat(i2,4)
+            y2 = eirasdat(i2,5)
+            nsurface = NewEireneSurface_06(VESSEL_WALL)
+            surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+            surface(nsurface)%v(1,1) =  DBLE(x1)
+            surface(nsurface)%v(2,1) =  DBLE(y1)
+            surface(nsurface)%v(3,1) =  DBLE(z1)
+            surface(nsurface)%v(1,2) =  DBLE(x2)
+            surface(nsurface)%v(2,2) =  DBLE(y2)
+            surface(nsurface)%v(3,2) =  DBLE(z2)
+          ENDDO
+
+        ELSEIF (eirasdat(i1,1).EQ.15.0) THEN
+c...      Holes in the triangle grid, so not really a surface, but no 
+c         where else to put it:
+          nsurface = NewEireneSurface_06(HOLE_IN_GRID)
+          surface(nsurface)%index(2) = NINT(eirasdat(i1,10))  ! Additional surface index
+          surface(nsurface)%v(1,1)   = DBLE(eirasdat(i1,2))
+          surface(nsurface)%v(2,1)   = DBLE(eirasdat(i1,3))
+        ELSE
+        ENDIF
+      ENDDO
+
+c     ------------------------------------------------------------------
 c...  Over-ride default surface properties:
+c     ------------------------------------------------------------------
+
       DO i1 = 1, nsurface
         DO i2 = 1, eirnspdat
           type   = NINT(eirspdat(i2,1))
@@ -494,14 +666,24 @@ c...  Over-ride default surface properties:
           ENDIF
           IF (type.EQ.0) CYCLE
 
-c          WRITE(0,*) '-->',surface(i1)%index(1),surface(i1)%index(2),
-c     .      surface(i1)%type,index1,index2
+c          WRITE(0,*) '-->',i1,i2,
+c     .      eirspdat(i2,1),type,
+c     .      index1,index2
+c          WRITE(0,*) '  >',
+c     .      surface(i1)%type,surface(i1)%subtype,
+c     .      surface(i1)%index(1),surface(i1)%index(2) 
+c          WRITE(0,*) 
 
           IF ((surface(i1)%type   .EQ.NON_DEFAULT_STANDARD  .AND.   ! Code not tested as I forgot that
      .         surface(i1)%subtype.EQ.MAGNETIC_GRID_BOUNDARY.AND.   ! I was using the template directly
-     .           type.EQ.1.AND.                                 ! for the case in question... *sigh*
+     .           eirspdat(i2,1).EQ.1.0.AND.
      .           surface(i1)%index(3).GE.index1.AND.
      .           surface(i1)%index(3).LE.index2).OR.  ! *whew!*
+     .        (surface(i1)%type   .EQ.NON_DEFAULT_STANDARD.AND.   
+     .         surface(i1)%subtype.EQ.STRATUM             .AND.   
+     .           eirspdat(i2,1).EQ.1.1.AND.
+     .           i1.GE.index1.AND.
+     .           i1.LE.index2).OR.  ! *whew!*
      .        (surface(i1)%type.EQ.VESSEL_WALL.AND.
      .         ((type.EQ.2.AND.
      .           surface(i1)%index(1).GE.index1.AND.
@@ -515,12 +697,45 @@ c     .      surface(i1)%type,index1,index2
             surface(i1)%ilswch = NINT(eirspdat(i2,5))
             surface(i1)%recyct = eirspdat(i2,8)
 
+c *** HACK ***
+c            WRITE(0,*) 'EIRSPDAT(x,10)',i2,eirspdat(i2,10)
+            IF (eirspdat(i2,10).LT.0.0) THEN   ! (,10) is remapped from (,9) in unstructured_input_com.f
+              IF (surface(i1)%type   .EQ.NON_DEFAULT_STANDARD  .AND.   
+     .            surface(i1)%subtype.EQ.MAGNETIC_GRID_BOUNDARY) THEN
+c        *** MASSIVE HACK : SURFACE REMAPPING, SEE PROCESSTRIANGLES_06
+                surface(i1)%index(10) = -NINT(eirspdat(i2,10))
+                WRITE(0,*) '*** SUPER HACK ACTIVATED! ***',i1
+c                surface(i1)%recyct = 1.0
+              ELSE
+                opt_eir%ilspt = -NINT(eirspdat(i2,10)) 
+                surface(i1)%ilspt  = 2  
+                surface(i1)%isrs   = 2   ! Species index of sputtered atom
+                surface(i1)%recycs = 1.0
+                surface(i1)%recycc = 1.0
+
+                WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+     .                     surface(i1)%ilspt
+c                surface(i1)%recyct = 0.0
+cc                surface(i1)%recycf = 0.0
+c                WRITE(0,*) '*** SPUTTERING ON IN EIRENE, PUMPING! ***',
+c     .            i1,surface(i1)%ilspt,opt_eir%ilspt
+cc                surface(i1)%recyct = 0.0
+cc                WRITE(0,*) '*** SPUTTERING ON IN EIRENE (ABSORBING '//
+cc     .                     'SURFACE!) ***',opt_eir%ilspt
+              ENDIF
+            ENDIF   
+
+
+
 c            WRITE(0,*) 'IL:',i1,surface(i1)%type
 c            WRITE(0,*) '   ',surface(i1)%iliin,surface(i1)%ilside,
 c     .                       surface(i1)%ilswch
           ENDIF
         ENDDO
       ENDDO
+
+
+
 c
 c     If the above surfaces are defined correctly, then the following
 c     should be the same for all plasma codes.
@@ -544,25 +759,33 @@ c     zero surfaces):
       DO i1 = 1, ntmp
         IF (surface(i1)%type.NE.VESSEL_WALL) CYCLE
 c...    Surface matching criteria:
-        iliin    = surface(i1)%iliin
-        ilside   = surface(i1)%ilside
-        ilswch   = surface(i1)%ilswch
-        material = surface(i1)%material
-        ewall    = surface(i1)%ewall
-        recycf   = surface(i1)%recycf
-        recyct   = surface(i1)%recyct
+        iliin  = surface(i1)%iliin
+        ilside = surface(i1)%ilside
+        ilswch = surface(i1)%ilswch
+        mater  = surface(i1)%material
+        ewall  = surface(i1)%ewall
+        recycf = surface(i1)%recycf
+        recyct = surface(i1)%recyct
+        ilspt  = surface(i1)%ilspt
+        isrs   = surface(i1)%isrs 
+        recycs = surface(i1)%recycs
+        recycc = surface(i1)%recycc
 c...    Check if a non-default standard surface has already been defined
 c       that matches the above citeria:
         sur3 = 0
         DO i2 = ntmp+1, nsurface
-          IF (surface(i2)%iliin   .EQ.iliin   .AND.
-     .        surface(i2)%ilside  .EQ.ilside  .AND.
-     .        surface(i2)%ilswch  .EQ.ilswch  .AND.
-     .        surface(i2)%material.EQ.material.AND.
-     .        surface(i2)%ewall   .EQ.ewall   .AND.
-     .        surface(i2)%recycf  .EQ.recycf  .AND.
-     .        surface(i2)%recyct  .EQ.recyct) sur3 = i2
-        ENDDO
+          IF (surface(i2)%iliin   .EQ.iliin .AND.
+     .        surface(i2)%ilside  .EQ.ilside.AND.
+     .        surface(i2)%ilswch  .EQ.ilswch.AND.
+     .        surface(i2)%material.EQ.mater .AND.
+     .        surface(i2)%ewall   .EQ.ewall .AND.
+     .        surface(i2)%recycf  .EQ.recycf.AND.
+     .        surface(i2)%recyct  .EQ.recyct.AND.
+     .        surface(i2)%ilspt   .EQ.ilspt .AND.
+     .        surface(i2)%isrs    .EQ.isrs  .AND.
+     .        surface(i2)%recycs  .EQ.recycs.AND.
+     .        surface(i2)%recycc  .EQ.recycc) sur3 = i2
+        ENDDO                    
         IF (sur3.EQ.0) THEN
 c...      Existing surface matching the criteria for the current surface 
 c         not found, so add a surface:
@@ -578,6 +801,10 @@ c         not found, so add a surface:
           surface(nsurface)%ewall    = surface(i1)%ewall
           surface(nsurface)%recyct   = surface(i1)%recyct
           surface(nsurface)%recycf   = surface(i1)%recycf
+          surface(nsurface)%ilspt    = surface(i1)%ilspt 
+          surface(nsurface)%isrs     = surface(i1)%isrs  
+          surface(nsurface)%recycs   = surface(i1)%recycs
+          surface(nsurface)%recycc   = surface(i1)%recycc
           SELECTCASE (iliin)
             CASE (0)
               surface(nsurface)%surtxt = 
@@ -605,6 +832,17 @@ c...  Assign block 3a surface index to non-default standard surfaces:
           i2 = i2 + 1
           surface(i1)%num = i2
         ENDIF
+      ENDDO
+
+
+c...  Output:
+      WRITE(eirfp,*) 'EIRENE SURFACE DEFINITION DATA:'
+      DO i1 = 1, nsurface
+        WRITE(eirfp,'(3I6,2X,A)')
+     .    i1,
+     .    surface(i1)%subtype,
+     .    surface(i1)%iliin,                  
+     .    TRIM(surface(i1)%surtxt)
       ENDDO
 
       RETURN
@@ -648,13 +886,13 @@ c
       SUBROUTINE ProcessFluidGrid_06
       USE mod_eirene06_parameters
       USE mod_eirene06
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
-
 
       REAL       TOL
       PARAMETER (TOL=1.0E-07)
@@ -719,6 +957,8 @@ c      fact = qtim * qtim * emi / crmi
         ENDIF
         DO ik = 1, ike
           ncell = ncell + 1
+          cell(ncell)%index     = 0
+          cell(ncell)%sideindex = 0
           cell(ncell)%type = 1
 c...      Cell indices on the magnetic grid:
           cell(ncell)%index(1) = ik                               ! Cell index
@@ -727,16 +967,25 @@ c...      Radial cell surfaces:
           cell(ncell)%sideindex(1,2) = 23                         ! Side index for cell surface 2
           cell(ncell)%sideindex(1,4) = 14                         ! Side index for cell surface 4
 c...      Poloidal surfaces of note (targets):
-          cell(ncell)%sideindex(2,1:4) = 0
           IF (ir.GE.irsep) THEN
-            IF (ik.EQ.1      ) cell(ncell)%sideindex(2,1) = IKLO  ! Target index for cell surface 1
-            IF (ik.EQ.nks(ir)) cell(ncell)%sideindex(2,3) = IKHI  ! Target index for cell surface 3
+            IF     (ik.EQ.1      ) THEN
+              cell(ncell)%sideindex(2,1) = IKLO        ! Target index for cell surface 1
+              cell(ncell)%sideindex(5,1) = nimindex(idds(ir,2))  ! Map to DIVIMP wall array
+            ELSEIF (ik.EQ.nks(ir)) THEN
+              cell(ncell)%sideindex(2,3) = IKHI  
+              cell(ncell)%sideindex(5,3) = nimindex(idds(ir,1))
+            ENDIF
           ENDIF
 c...      Cell vertices (4 vertices assumed at present):            
           id = korpg(ik,ir)
           DO i1 = 1, nvertp(id)
-            cell(ncell)%r(i1) = DBLE(rvertp(i1,id))               ! x (m)
-            cell(ncell)%z(i1) = DBLE(zvertp(i1,id))               ! y
+            IF (ALLOCATED(d_rvertp)) THEN
+              cell(ncell)%r(i1) = d_rvertp(i1,id)       ! x (m)
+              cell(ncell)%z(i1) = d_zvertp(i1,id)       ! y
+            ELSE
+              cell(ncell)%r(i1) = DBLE(rvertp(i1,id))   ! x (m)
+              cell(ncell)%z(i1) = DBLE(zvertp(i1,id))   ! y
+            ENDIF
           ENDDO
 c...      B-field components (approximate):         
           x(1) = DBLE(0.5 * (rvertp(1,id) + rvertp(2,id)))        ! x midpoint of the poloidal cell surface 1
@@ -767,6 +1016,7 @@ c...      E&M quantities:
           cell(ncell)%bfield(1) = SNGL(Bx) * Bfrac               ! Bx (Tesla) (normalized on Eirene side)
           cell(ncell)%bfield(2) = SNGL(By) * Bfrac               ! By 
           cell(ncell)%bfield(3) = SNGL(Bz) * Bfrac               ! Bz 
+          cell(ncell)%bfield(4) = brat                           ! Bratio 
           cell(ncell)%efield(1) = SNGL(Bx) * kes(ik,ir) / fact   ! Ex (not required by EIRENE)
           cell(ncell)%efield(2) = SNGL(By) * kes(ik,ir) / fact   ! Ey
           cell(ncell)%efield(3) = SNGL(Bz) * kes(ik,ir) / fact   ! Ez
@@ -778,9 +1028,9 @@ c...      E&M quantities:
 
       IF (tetrahedrons) THEN
 c   *** HACK ***
-        cell(1)%plasma(1) = 10.0                  ! Te (eV)
-        cell(1)%plasma(2) = 10.0                  ! Ti (eV)
-        cell(1)%plasma(3) = 5.0E+21               ! ni (eV) (ne=ni assumed at present)
+c        cell(1)%plasma(1) = 10.0                  ! Te (eV)
+c        cell(1)%plasma(2) = 10.0                  ! Ti (eV)
+c        cell(1)%plasma(3) = 5.0E+21               ! ni (eV) (ne=ni assumed at present)
         fact = ECH
       ELSE
         fact = ECH 
@@ -812,6 +1062,7 @@ c...  Specify target plasma quantities:
           tardat(it,10) = kvds(in)                                        ! v_para (m s-1)
           tardat(it,11) = GetMach(kvds(in),kteds(in),ktids(in))           ! Mach no.
           tardat(it,12) = GetJsat(kteds(in),ktids(in),knds(in),kvds(in))  ! jsat 
+          tardat(it,13) = costet(in)                                      ! *** HACK *** COSTET, for calculating tetrahedron cell particle flux...
         ENDDO
       ENDDO      
       ntardat = it
@@ -830,12 +1081,13 @@ c
       SUBROUTINE SetupEireneStrata
       USE mod_eirene06
       USE mod_osm_input
+      USE mod_sol28_global
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      INTEGER i1,type,nspez,nasor,i2,insor,istrata
+      INTEGER i1,type,nspez,nasor,i2,insor,is,target,srcsrf
       LOGICAL assign_LO,assign_HI,assign_volrec
 
       TYPE(type_strata) :: tmpstrata      
@@ -844,22 +1096,25 @@ c
 c      STOP
 c      nstrata = 0
 
+      srcsrf = 0 
+
 c...  Decide if default strata should be assigned:
       assign_LO     = .TRUE.
       assign_HI     = .TRUE.
       assign_volrec = .TRUE.
-      DO istrata = 1, nstrata 
-        IF (strata(istrata)%type         .EQ.1.0.AND.
-     .      strata(istrata)%range_cell(1).EQ.-1 ) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
-        IF (strata(istrata)%type         .EQ.1.0.AND.
-     .      strata(istrata)%range_cell(1).EQ.-2 ) assign_HI     =.FALSE.
-        IF (strata(istrata)%type         .EQ.2.0) assign_volrec =.FALSE.
+      DO is = 1, opt_eir%nstrata
+        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+     .           opt_eir%target(is).EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
+        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+     .           opt_eir%target(is).EQ.IKHI) assign_HI     =.FALSE.
+        IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
       ENDDO
 
       WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 
 c...  Low IK target:
       IF (assign_LO) THEN
+        srcsrf  = srcsrf + 1 
         nstrata = nstrata + 1
 
         strata(nstrata)%range_cell(1) = -1  ! No idea what this is for, also there for ASSIGN_HI...
@@ -877,7 +1132,7 @@ c        strata(nstrata)%npts    = 100
         strata(nstrata)%distrib = 'FFTFF'
         strata(nstrata)%inum    =  1
         strata(nstrata)%indim   =  4
-        strata(nstrata)%insor   = -2
+        strata(nstrata)%insor   = -srcsrf  ! -2
         strata(nstrata)%sorwgt  = 1.0
         strata(nstrata)%sorlim  = 124.0
         strata(nstrata)%sorind  = 1.0
@@ -892,6 +1147,7 @@ c        strata(nstrata)%npts    = 100
 
 c...  High IK target:
       IF (assign_HI) THEN
+        srcsrf  = srcsrf + 1 
         nstrata = nstrata + 1
 
         strata(nstrata)%range_cell(1) = -2  ! Again, can't recall what I was starting to setup here, 
@@ -913,7 +1169,7 @@ c        strata(nstrata)%npts    = 100
         strata(nstrata)%distrib = 'FFTFF'
         strata(nstrata)%inum    =  1
         strata(nstrata)%indim   =  4
-        strata(nstrata)%insor   = -3
+        strata(nstrata)%insor   = -srcsrf  ! -3
         strata(nstrata)%sorwgt  = 1.0
         strata(nstrata)%sorlim  = 124.0
         strata(nstrata)%sorind  = 2.0
@@ -932,8 +1188,8 @@ c...  Volume recombination:
         strata(nstrata)%type    = 2.0
         strata(nstrata)%indsrc  = 1
         strata(nstrata)%txtsou  = '* Volume recombination'
-        strata(nstrata)%npts    = 100
-c        strata(nstrata)%npts    = -90000
+c        strata(nstrata)%npts    = 100
+        strata(nstrata)%npts    = -90000
         strata(nstrata)%ninitl  = -1
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
@@ -956,50 +1212,109 @@ c        strata(nstrata)%npts    = -90000
       ENDIF
 
 c...  User specified neutral injection/puffing:
-      DO istrata = 1, nstrata
-        WRITE(0,*) 'STRATA:TYPE=',NINT(strata(istrata)%type)
+      DO is = 1, opt_eir%nstrata
+        WRITE(0,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
 
-        SELECTCASE (NINT(strata(istrata)%type))
+        SELECTCASE (NINT(opt_eir%type(is)))
           CASE (999)  ! For compatibility with old strata definition format, see below
           CASE (1)
+            srcsrf = srcsrf + 1 
+            target = opt_eir%target(is)
+            nstrata = nstrata + 1
+            strata(nstrata)%range_cell(1) = -1  ! No idea what this is for...
+            strata(nstrata)%type    = 1.0
+            strata(nstrata)%indsrc  = 1
+            strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
+            strata(nstrata)%npts    = opt_eir%npts(is)
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  3
+            strata(nstrata)%flux    = opt_eir%flux(is)
+            strata(nstrata)%species_tag = 'FFFT'
+            strata(nstrata)%nspez   =  1
+            strata(nstrata)%distrib = 'FFTFF'
+            strata(nstrata)%inum    =  1
+            strata(nstrata)%indim   =  4
+            strata(nstrata)%insor = -srcsrf
+c            IF (target.EQ.IKLO) strata(nstrata)%insor = -2
+c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 124.0
+            strata(nstrata)%sorind  = SNGL(srcsrf)
+c            IF (target.EQ.IKLO) strata(nstrata)%sorind = 1.0
+c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
+            strata(nstrata)%nrsor   = -1
+            strata(nstrata)%nasor   =  0
+            strata(nstrata)%sorad   = 0.0
+            strata(nstrata)%sorene  = 3.0
+            strata(nstrata)%soreni  = 0.5
+            strata(nstrata)%sorcos  = 1.0
+            strata(nstrata)%sormax  = 90.0
           CASE (2)
+            nstrata = nstrata + 1
+            strata(nstrata)%type    = 2.0
+            strata(nstrata)%indsrc  = 1
+            strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
+            strata(nstrata)%npts    = opt_eir%npts(is)
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  3
+            strata(nstrata)%flux    = opt_eir%flux(is)
+            strata(nstrata)%species_tag = 'FFFT'
+            strata(nstrata)%nspez   =  1
+            strata(nstrata)%distrib = 'FFFTF'
+            strata(nstrata)%inum    =  1
+            strata(nstrata)%indim   =  4
+            strata(nstrata)%insor   =  5
+            strata(nstrata)%nasor   =  0
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 124.0
+            strata(nstrata)%sorind  = 0.0
+            strata(nstrata)%nrsor   = -1
+            strata(nstrata)%sorad   = 0.0
+            strata(nstrata)%sorene  = 3.0
+            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%sorcos  = 1.0
+            strata(nstrata)%sormax  = 90.0
           CASE (3)
-            IF (strata(istrata)%type.EQ.3.1) THEN  !***(small) hack***
+            IF (opt_eir%type(is).EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
               insor = 2 ! 1
               nasor = 1
-              beam  = 1 ! Turn on beams in input file...
+              beam  = 1 ! Turn on beams in EIRENE input file...
             ELSE
               nspez = 1
               insor = 1
               nasor = 0
             ENDIF
-            strata(istrata)%indsrc  = -1
-            strata(istrata)%txtsou  = '* point injection, '//
-     .                                strata(istrata)%txtsou
-            strata(istrata)%ninitl  = -1
-            strata(istrata)%nemods  =  1
-            strata(istrata)%flux    = strata(istrata)%flux *
-     .                                strata(istrata)%flux_fraction
-            strata(istrata)%species_tag = 'FFFF'
-            i2 = strata(istrata)%species
-            strata(istrata)%species_tag(i2:i2) = 'T'
-            strata(istrata)%nspez   = nspez
-            strata(istrata)%distrib = 'TFFFF'
-            strata(istrata)%inum    = 0
-            strata(istrata)%indim   = 0
-            strata(istrata)%insor   = insor
-            strata(istrata)%sorwgt  = 1.0
-            strata(istrata)%sorlim  = 220.0
-            strata(istrata)%sorind  = 0.0
-            strata(istrata)%nrsor   = 0
-            strata(istrata)%nasor   = nasor
-            strata(istrata)%sorad(1:3) = strata(istrata)%sorad(1:3) *  ! Convert to cm
-     .                                   100.0  
-
-c            WRITE(0,*) strata(istrata)%sorad(1:3)
+            nstrata = nstrata + 1
+            strata(nstrata)%indsrc  = -1
+            strata(nstrata)%txtsou  = '* point injection, '//
+     .                                opt_eir%txtsou(is)
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  1
+            strata(nstrata)%npts    = opt_eir%npts(is)
+            strata(nstrata)%flux    = opt_eir%flux(is) *
+     .                                opt_eir%flux_fraction(is)
+            strata(nstrata)%species_tag = 'FFFF'
+            i2 = opt_eir%species(is)
+            strata(nstrata)%species_tag(i2:i2) = 'T'
+            strata(nstrata)%nspez   = nspez
+            strata(nstrata)%distrib = 'TFFFF'
+            strata(nstrata)%inum    = 0
+            strata(nstrata)%indim   = 0
+            strata(nstrata)%insor   = insor
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 220.0
+            strata(nstrata)%sorind  = 0.0
+            strata(nstrata)%nrsor   = 0
+            strata(nstrata)%nasor   = nasor
+            strata(nstrata)%sorad(1:6) =opt_eir%sorad(1:6,is) *  ! Convert to cm
+     .                                  100.0  
+c            WRITE(0,*) strata(nstrata)%sorad(1:3)
 c            STOP 'sdgsdgd'
-            strata(istrata)%soreni  = 0.0
+            strata(nstrata)%sorene  = opt_eir%sorene(is)
+            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%sorcos  = opt_eir%sorcos(is)
+            strata(nstrata)%sormax  = opt_eir%sormax(is)
           CASE (4)  ! Puff wall surface (not working...)
             WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
             STOP 
@@ -1103,43 +1418,49 @@ c            strata(nstrata)%sorad =  0.0
 
 
 c...  TEMP: make sure regular strata come first until surface to strata mapping is done properly...
-      DO istrata = 1, nstrata
-        IF (strata(istrata)%type.GE.3.0) THEN
-          tmpstrata = strata(istrata)
-          DO i1 = istrata, nstrata-1
+      DO is = 1, nstrata
+        IF (strata(is)%type.GE.3.0) THEN
+          tmpstrata = strata(is)
+          DO i1 = is, nstrata-1
             strata(i1) = strata(i1+1)
           ENDDO
           strata(nstrata) = tmpstrata  
         ENDIF
       ENDDO
 
-
-      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
-      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
-
+c      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
+c      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
+c      WRITE(0,*) 'STRATA:',alloc
 
 c      STOP 'sdgsgsdsdgsgd'
 
 c...  Debugging:
+c      IF (time_dependent) THEN
+c        strata(1:3)%npts = 10
+c      ENDIF
+c      strata(1:3)%npts = 100000
 c      strata(1:3)%npts = 2
 c      strata(1:10)%ninitl = 11111 ! 22222 ! 99887
 
       RETURN
- 99   WRITE(0,*) '  INDEX =',istrata
-      WRITE(0,*) '  TYPE  =',strata(istrata)%type
+ 99   WRITE(0,*) '  INDEX =',is
+      WRITE(0,*) '  TYPE  =',strata(is)%type
       STOP
       END
 c
 c ======================================================================
 c ======================================================================
 c
-      SUBROUTINE ReadEireneResults_06
+      SUBROUTINE ReadEireneResults_06(iitersol)
       USE mod_eirene06
+      USE mod_sol28_global
       IMPLICIT none
+
+      INTEGER iitersol
 
       CALL ReadParticleTracks_04
 
-      CALL LoadEireneData_06
+      CALL LoadEireneData_06(iitersol,opt_eir%ilspt)
      
       call targflux
 c
@@ -1164,12 +1485,14 @@ c ======================================================================
 c
 c
 c
-      SUBROUTINE LoadEireneData_06
+      SUBROUTINE LoadEireneData_06(iitersol,ilspt)
       USE mod_geometry
       USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       IMPLICIT none
+ 
+      INTEGER, INTENT(IN) :: iitersol,ilspt
 
       INCLUDE 'params'
       INCLUDE 'comtor'
@@ -1177,25 +1500,32 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,
-     .        iblk,iatm,imol,iion,ipho,ilin,isur
-      LOGICAL goodeof,output
-      REAL    rdum(30),frac,norm,
+      INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,iside,in,iw, 
+     .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG)
+      LOGICAL goodeof,debug,wall_ignored,warning_message
+      REAL    rdum(30),frac,norm,len,cir,area,
      .        sumion,amps,pflux
-      CHARACTER buffer*256,species*32
+      CHARACTER buffer*256,species*32,fname*1024
 
       INTEGER iobj,igrp
-      INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:)
-      REAL     , ALLOCATABLE :: tdata(:,:,:)
+      INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:),wall_in(:,:)
+      REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:)
 
-      output = .FALSE.
 
-      ALLOCATE(tdata(MAXNKS,MAXNRS,5))
+      WRITE(0,*) 'DEBUG 2.0>>>>>',tri(1)%sideindex(5,1:3)
+      
+      wall_ignored = .FALSE.
+      debug        = .FALSE.
+
+      ALLOCATE(tdata(MAXNKS,MAXNRS,5 ))
+      ALLOCATE(tflux(MAXSEG       ,10))
       tdata = 0.0
+      tflux = 0.0
 
       IF (tetrahedrons) THEN
         ALLOCATE(fluid_ik(nobj))
         ALLOCATE(fluid_ir(nobj))
+        ALLOCATE(wall_in(3,ntri))
         fluid_ik = 0
         fluid_ir = 0
         DO iobj = 1, nobj
@@ -1204,17 +1534,32 @@ c
             fluid_ik(iobj) = obj(iobj)%index(IND_IK)
             fluid_ir(iobj) = obj(iobj)%index(IND_IR)
           ENDIF
+c          wall_in(1:3,iobj) = obj(iobj)%sideindex(5,1:3)
         ENDDO
       ELSE
         ALLOCATE(fluid_ik(ntri))
         ALLOCATE(fluid_ir(ntri))
+        ALLOCATE(wall_in(3,ntri))
         fluid_ik = 0
         fluid_ir = 0
+        wall_in  = 0
         DO iobj = 1, ntri
-          IF (tri(iobj)%type.EQ.MAGNETIC_GRID) THEN  
+          IF     (tri(iobj)%type.EQ.MAGNETIC_GRID) THEN  
             fluid_ik(iobj) = tri(iobj)%index(1)                   ! Should pull these from .transfer
             fluid_ir(iobj) = tri(iobj)%index(2)   
+            ik = fluid_ik(iobj)
+            ir = fluid_ir(iobj)
+c            IF (ir.LT.irsep) CYCLE
+c            IF (ik.EQ.1      ) wall_in(1:3,iobj) = nimindex(idds(ir,2))  ! A problem in corners..?
+c            IF (ik.EQ.nks(ir)) wall_in(1:3,iobj) = nimindex(idds(ir,1))
+          ELSEIF (tri(iobj)%type.EQ.VACUUM_GRID) THEN
+c            wall_in(1:3,iobj) = tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
+c            IF (iobj.EQ.15033) THEN
+c              WRITE(0,*) 'wall_in',wall_in(:,iobj)
+c              WRITE(0,*) 'wall_in',tri(iobj)%sideindex(3,:)
+c            ENDIF
           ENDIF
+          wall_in(1:3,iobj) = tri(iobj)%sideindex(5,1:3)
         ENDDO
       ENDIF
 
@@ -1236,42 +1581,37 @@ c      pinrec = 0.0
       ELSE
         frac = 1.0
       ENDIF
-      IF (sloutput)
+      IF (sldebug)
      .  WRITE(0     ,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
       WRITE(PINOUT,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
 
+c...  Open the EIRENE data transfer file:
       fp = 99
-      OPEN(UNIT=fp,FILE='eirene.transfer',ACCESS='SEQUENTIAL',
+      IF (citersol.GT.0.AND.
+     .    (tetrahedrons.OR.time_dependent)) THEN
+        WRITE(fname,'(A,I3.3,A)') 'eirene.',iitersol,'.transfer'
+      ELSE
+        fname='eirene.transfer'
+      ENDIF
+      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
 
-
+c...  Read through the file:
       iblk = 0
       iatm = 0
       imol = 0
+      iion = 0
       ipho = 0
       ilin = 0
+      cvesm = 0
       DO WHILE (.TRUE.)
         READ(fp,'(A256)',END=10) buffer
-        IF     (buffer(1:16).EQ.'* BULK PARTICLES') THEN
-          IF (output) WRITE(0,*) '===BULK PARTICLES==='
+        IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
+          IF (debug) WRITE(0,*) '===BULK PARTICLES: VOLUME TALLIES==='
           iblk = iblk + 1
-
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         ! Check...
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
-
-          WRITE(0,*) 'NDATA:',ndata,nobj
-
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK1:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) ntally
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK2:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) ndata                         
-c          READ(fp,'(A256)',END=10) buffer
-c          WRITE(0,*) 'BULK3:',TRIM(buffer)
-c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)          
-
           icount = 0
           DO WHILE (icount.LT.ndata)
             CALL NextLine(fp,ntally,icount,rdum)
@@ -1287,10 +1627,40 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
               ENDIF
             ENDIF
           ENDDO
-          IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:12).EQ.'* TEST ATOMS') THEN
-          IF (output) WRITE(0,*) '===TEST ATOMS==='
+          IF (debug) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:22).EQ.'* BULK PARTICLES - SUR') THEN
+          IF (debug) WRITE(0,*) '===BULK PARTICLES: SURFACE===',iblk
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF     (iblk.EQ.1) THEN                ! Only for D, presumably the 1st atom species, need check...
+              tflux(in,3) = tflux(in,3) + rdum(2)  ! Bulk particle flux (s-1)
+              tflux(in,4) = tflux(in,4) + rdum(3)  ! Bulk energy flux   (eV s-1)
+              cvesm(in) = 1
+            ELSEIF (iblk.EQ.2.AND.ilspt.GT.0) THEN
+c...          Sputtering turned on in EIRENE, ignore the data:
+            ELSE
+              CALL ER('LoadEireneData_06','IBLK out of bounds, '//
+     .                'unexpected this is...',*99)
+            ENDIF
+c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+          ENDDO
+          IF (debug) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - VOL') THEN
           iatm = iatm + 1
+          IF (debug) WRITE(0,*) '===TEST ATOMS: VOLUME TALLIES===',iatm
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
@@ -1305,9 +1675,45 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
               ENDIF
             ENDIF
           ENDDO
-          IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:16).EQ.'* TEST MOLECULES') THEN
-          IF (output) WRITE(0,*) '===TEST MOLECULES==='
+          IF (debug) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - SUR') THEN
+          IF (debug) WRITE(0,*) '===TEST ATOMS: SURFACE FLUXES===',iatm
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+c            WRITE(0,*) 'WTF',iobj,iside,in
+c            WRITE(0,*) '   ',iobj,tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
+c            WRITE(0,*) '   ',iobj,
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF     (iatm.EQ.1) THEN                ! Only for D, presumably the 1st atom species, need check...
+              tflux(in,1) = tflux(in,1) + rdum(2)  ! Incident atom particle flux (s-1)
+              tflux(in,2) = tflux(in,2) + rdum(3)  ! Incident atom energy flux   (eV s-1)
+              cvesm(in) = 1
+            ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN
+c...          Sputtering turned on in EIRENE, assume (for now) this data 
+c             is for the impurity species (loose...):
+              tflux(in,5) = tflux(in,5) + rdum(4) - rdum(2)  ! Emitted atom particle flux *** from atoms *** (s-1)
+              tflux(in,6) = tflux(in,6) + rdum(8)            ! Emitted atom energy flux (eV s-1)
+            ELSE
+              CALL ER('LoadEireneData_06','IATM out of bounds, '//
+     .                'unexpected this is...',*99)
+            ENDIF
+c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+          ENDDO
+          IF (debug) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:22).EQ.'* TEST MOLECULES - VOL') THEN
+          IF (debug) WRITE(0,*) '===TEST MOLECULES: VOLUME TALLIES==='
           imol = imol + 1
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata                         
@@ -1323,11 +1729,45 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
               ENDIF
             ENDIF
           ENDDO
-          IF (output) WRITE(0,*) '===DONE==='
-        ELSEIF (buffer(1:11).EQ.'* TEST IONS') THEN
-        ELSEIF (buffer(1:14).EQ.'* TEST PHOTONS') THEN
+          IF (debug) WRITE(0,*) '===DONE==='
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - VOL') THEN
+          iion = iion + 1
+          IF (debug) WRITE(0,*) '===TEST IONS: VOLUME TALLIES===',iion
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 0
+          DO WHILE (icount.LT.ndata)
+            CALL NextLine(fp,ntally,icount,rdum)
+          ENDDO
+          IF (debug) WRITE(0,*) '===DONE (NO DATA STORED)==='
+        ELSEIF (buffer(1:17).EQ.'* TEST IONS - SUR') THEN
+          IF (debug) WRITE(0,*) '===TEST IONS: SURFACE FLUXES===',iion
+          READ(fp,*,ERR=97) ntally
+          READ(fp,*,ERR=97) ndata                         
+          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          icount = 1
+          DO WHILE (icount.LE.ndata)
+            icount = icount + 1
+            CALL NextLine(fp,ntally,iobj,rdum)
+            iside = NINT(rdum(1))
+            in = wall_in(iside,iobj)
+            IF (in.EQ.0) THEN
+c             Lots of data comes through that's not associated with 
+c             the standard DIVIMP neutral wall, ignore for now...              
+              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
+              CYCLE
+            ENDIF
+            IF (iion.EQ.1) THEN                 
+            ELSE
+              CALL ER('LoadEireneData_06','IION.GT.1, unexpected '//
+     .                'this is...',*99)
+            ENDIF
+          ENDDO
+          IF (debug) WRITE(0,*) '===DONE (NO DATA STORED)==='
+        ELSEIF (buffer(1:20).EQ.'* TEST PHOTONS - VOL') THEN
         ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
-          IF (output) WRITE(0,*) '===LINE EMISSION==='
+          IF (debug) WRITE(0,*) '===LINE EMISSION==='
           ilin = ilin + 1   
           READ(fp,*,ERR=97) ntally
           READ(fp,*,ERR=97) ndata   
@@ -1351,11 +1791,11 @@ c          READ(buffer,*,ERR=97) (index(i1),i1=1,ntally)
               ENDIF  
             ENDIF
           ENDDO
-          IF (output) WRITE(0,*) '===DONE==='
+          IF (debug) WRITE(0,*) '===DONE==='
         ELSEIF (buffer(1:6 ).EQ.'* MISC') THEN
 c...      Check volumes:
         ELSEIF (buffer(1:13).EQ.'* PUMPED FLUX') THEN
-          IF (output) WRITE(0,*) '===PUMPED FLUX==='
+          IF (debug) WRITE(0,*) '===PUMPED FLUX==='
           DO WHILE (.TRUE.) 
             READ(fp,'(A256)',END=97,ERR=97) buffer
             IF (buffer(1:6).EQ.'* DONE') THEN
@@ -1376,7 +1816,7 @@ c...      Check volumes:
               CALL WN('LoadEireneData','Unknown particle type')
             ENDIF          
           ENDDO
-          IF (output) WRITE(0,*) '===DONE==='
+          IF (debug) WRITE(0,*) '===DONE==='
         ELSEIF (buffer(1:1 ).EQ.'*') THEN
         ELSE
         ENDIF
@@ -1388,30 +1828,26 @@ c...      Check volumes:
 
 c...  Relaxation into OSM arrays only?
 
-c...  Normalize quantities (need to be careful vis-a-vis relaxation):
+c...  Normalize volume quantities (need to be careful vis-a-vis relaxation):
       sumion = 0.0
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
-
         DO ik = 1, nks(ir)
           norm = 1.0 / kvols(ik,ir)
 c          norm = 1.0 / (kvols(ik,ir) * eirtorfrac)
 
 c...      Volume normalization:
           tdata(ik,ir,1:5) = tdata(ik,ir,1:5) / kvols(ik,ir)
-
 c...      Linear relaxation:
           pinion(ik,ir) = (1.0-frac)*pinion(ik,ir) + frac*tdata(ik,ir,1)
           pinrec(ik,ir) = (1.0-frac)*pinrec(ik,ir) + frac*tdata(ik,ir,2)
           pinmp (ik,ir) = (1.0-frac)*pinmp (ik,ir) + frac*tdata(ik,ir,3)
           pinqi (ik,ir) = (1.0-frac)*pinqi (ik,ir) + frac*tdata(ik,ir,4)
           pinqe (ik,ir) = (1.0-frac)*pinqe (ik,ir) + frac*tdata(ik,ir,5)
-
 c          pinion (ik,ir) = (1.0 - frac) * pinion(ik,ir) + 
 c     .                            frac  * tdata (ik,ir,1) / kvols(ik,ir)
 c          pinrec (ik,ir) = (1.0 - frac) * pinrec(ik,ir) + 
 c     .                                    tdata (ik,ir,2) / kvols(ik,ir)
-
 c...      Not relaxed, volume normalize:
           pinatom(ik,ir) = pinatom(ik,ir) * norm  !/ kvols(ik,ir)
           pinmol (ik,ir) = pinmol (ik,ir) * norm  !/ kvols(ik,ir)
@@ -1419,7 +1855,6 @@ c...      Not relaxed, volume normalize:
      .                                  norm  !kvols(ik,ir)
           pinline(ik,ir,1:6,H_BGAMMA) = pinline(ik,ir,1:6,H_BGAMMA) * !/
      .                                  norm  !kvols(ik,ir)
-
 c          DO i1 = 1, 6
 c            pinline(ik,ir,i1,H_BALPHA) = pinline(ik,ir,i1,H_BALPHA) /
 c    .                                    kvols(ik,ir)
@@ -1435,30 +1870,130 @@ c...
 
       WRITE(0,*) 'SUMION:',sumion
 
+c...  Assign wall fluxes (based on code in ReadWallFlux in 
+c     setup.f, for EIRENE99):
+
+c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c     FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c     FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)  --- *HACK* AVERAGE IMPURITY LAUNCH ENERGY
+c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+c
+      fluxhw = 0.0
+      flxhw2 = 0.0
+      flxhw3 = 0.0
+      flxhw4 = 0.0
+      flxhw5 = 0.0
+      flxhw6 = 0.0
+      flxhw7 = 0.0
+      flxhw8 = 0.0
+
+      DO iw = 1, nvesm+nvesp
+        cir = 2 * PI * 0.5 * (rvesm(iw,1) + rvesm(iw,2))
+        len = SQRT((rvesm(iw,1) - rvesm(iw,2))**2.0 +
+     .             (zvesm(iw,1) - zvesm(iw,2))**2.0)
+        area = cir * len
+        fluxhw(iw) = 0.0  ! (adatp(i2,1,1) + mdatp(i2,1,1)) / len / cir
+        flxhw2(iw) = (tflux(iw,1) + tflux(iw,3)) / area  ! ***
+        flxhw3(iw) = tflux(iw,5) / area
+        IF (tflux(iw,5).NE.0.0) flxhw4(iw) = tflux(iw,6) / tflux(iw,5) ! 0.0  ! adatp(i2,1,1)     ! ***
+        flxhw5(iw) = tflux(iw,2) / (tflux(iw,1) + 1.0E-10) ! *** 
+        flxhw6(iw) = tflux(iw,1) / area  ! ***
+        flxhw7(iw) = 0.0 ! tflux(iw,4) / (tflux(iw,3) + 1.0E-10) ! *** 0.0  ! ***
+c...    If this is fixed on the EIRENE side so that it is no longer
+c       statistical, then the use of FLXHW8 in the CALC_TARGFLUXDATA 
+c       routine can be removed:
+        flxhw8(iw) = tflux(iw,3) / area  !  * 1.602E-19  For hand checks...
+      ENDDO
+c...  Check that flux data was assigned to every wall/target segment:
+      warning_message = .FALSE.
+      DO iw = 1, nvesm+nvesp
+        IF (cvesm(iw).EQ.0) THEN
+          warning_message = .TRUE.
+          WRITE(eirfp,'(A,3I4)') 'WARNING: NO WALL FLUX DATA ASS'//
+     .                           'IGNED FOR SEGMENT ',iw,nvesm,nvesp
+        ENDIF
+      ENDDO
+      IF (warning_message) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '*********************************************'
+        WRITE(0,*) '* NO FLUX DATA FOUND FOR SOME WALL SEGMENTS *'
+        WRITE(0,*) '*********************************************'
+        WRITE(0,*) 
+      ENDIF
+c...  Not sure what PINCOR is about at the moment, so issue a warning
+c     if it is not unity:
+      IF (pincor.NE.1.0) THEN
+        CALL WN('LoadEireneData_06','PINCOR not unity, setting to 1.0')      
+        pincor = 1.0
+      ENDIF
+c...  Not sure the reason at the moment, but this is done in READPIN 
+c     and the _PIN arrays are referenced in TAU:
+      DO iw = 1, nvesm+nvesp
+        fluxhw(iw) = fluxhw(iw) * pincor
+        flxhw2(iw) = flxhw2(iw) * pincor
+        flxhw3(iw) = flxhw3(iw) * pincor
+        flxhw4(iw) = flxhw4(iw) * pincor
+        flxhw6(iw) = flxhw6(iw) * pincor
+c...    Copy wall flux data:
+        fluxhw_pin(iw) = fluxhw(iw)
+        flxhw2_pin(iw) = flxhw2(iw)
+        flxhw3_pin(iw) = flxhw3(iw)
+        flxhw4_pin(iw) = flxhw4(iw)
+        flxhw5_pin(iw) = flxhw5(iw)
+        flxhw6_pin(iw) = flxhw6(iw)
+c...    Copy vessel definitions:
+        jvesm_pin(iw)  = jvesm(iw)
+        DO in = 1,2
+          rvesm_pin(iw,in)  = rvesm(iw,in)
+          zvesm_pin(iw,in)  = zvesm(iw,in)
+        ENDDO
+      ENDDO
+c...  From READPIN:
+      IF ((wlpabs.EQ.2.OR.wlpabs.EQ.3).AND.cgeoopt.NE.-1) 
+     .  CALL ER('LoadEireneData_06','Probability data not passed '//
+     .                              'from EIRENE',*99)
+c...  Also from READPIN?
+      hcorr = 1.0  ! volume correction factor
+      hval  = 1.0  ! volume correction factor
+
       CALL OutputEIRENE(67,'WORKING WITH EIRENE06')
 
-c...  Make sure that the whole EIRENE data file was there:
-      IF (.NOT.goodeof)  CALL ER('LoadEireneData','Problem with '//
-     .                           'eirene.transfer file',*99)
-
 c...  Need to save data again since Dalpha has been loaded into OBJ:
-      CALL SaveGeometryData('tetrahedrons.raw')
+c      CALL SaveGeometryData('tetrahedrons.raw')
 
 c...  Clear arrays: 
       DEALLOCATE(fluid_ik)
       DEALLOCATE(fluid_ir)
+      DEALLOCATE(wall_in)
       DEALLOCATE(tdata)
+      DEALLOCATE(tflux)
       IF (ALLOCATED(tri)) DEALLOCATE(tri) ! Move earlier and pass index mapping to/from Eirene
       IF (ALLOCATED(obj)) DEALLOCATE(obj) ! *same* but need to make more selective
       IF (ALLOCATED(srf)) DEALLOCATE(srf) ! at some point since even fluid objects will be stored here... 
       IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
+c...  Output results of confidence checks:
+      IF (.NOT.goodeof)  CALL ER('LoadEireneData','Problem with '//
+     .                           'eirene.transfer file',*99)
+      IF (wall_ignored) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '**********************************************'
+        WRITE(0,*) '* FLUXES TO NON-STANDARD DIVIMP WALL IGNORED *'
+        WRITE(0,*) '**********************************************'
+        WRITE(0,*) 
+      ENDIF
+
       RETURN
- 97   WRITE(0,*) 'ERROR: PROBLEM READING DATA TRANSFER FILE'
+ 97   CALL ER('LoadEireneData_06','Problem reading data file',*99)
+ 98   CALL ER('LoadEireneData_06','Data file not found',*99)
+ 99   WRITE(0,*) 'IOBJ =',icount
+      WRITE(0,*) 'ISIDE=',iside
+      WRITE(0,*) '  FILENAME= "'//TRIM(fname)//'"'
       STOP
- 98   WRITE(0,*) 'WARNING: eirene.transfer DATA FILE NOT FOUND'
-      RETURN
- 99   STOP
       END
 c
 c ======================================================================

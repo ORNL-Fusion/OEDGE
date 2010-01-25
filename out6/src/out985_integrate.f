@@ -328,7 +328,7 @@ c      TYPE(type_3D_object)  :: obj(nobj)
 
       output = .FALSE.
 
-      IF (nchord.EQ.dchord-1) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
+      IF (nchord.EQ.dchord) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
 
 c      RETURN
 
@@ -436,7 +436,7 @@ c...    Make sure the correct normal is in use, relative to the
 c       viewing chord:
         theta = DACOS(vv(1)*nv(1) + vv(2)*nv(2) + vv(3)*nv(3)) /
      .          D_DEGRAD
-        IF (nchord.EQ.dchord-1) THEN
+        IF (nchord.EQ.dchord) THEN
           WRITE(0,*) 'THETA:',theta
           WRITE(0,*) 'vv:',REAL(vv) 
           WRITE(0,*) 'nv:',REAL(nv) 
@@ -583,7 +583,8 @@ c     .         (chord%v1,chord%v2,IT_VWINTER,nobj,obj,status)
           RETURN
         ENDIF
 
-        IF (nchord.EQ.dchord-1) THEN
+c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
+        IF (nchord.EQ.dchord) THEN
           WRITE(fp,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
           WRITE(fp,*) vwinter(1:nvwinter)%dist 
           WRITE(fp,*) vwinter(1:nvwinter)%obj 
@@ -653,7 +654,7 @@ c     .           (chord%v1,chord%v2,IT_GBINTER,nobj,obj,status)
 c...      Cheat, try last set of grid intersections first (if there is an appropriate one): 
         ENDIF
 
-        IF (nchord.EQ.dchord-1) THEN
+        IF (nchord.EQ.dchord) THEN
           WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
           WRITE(fp,*) gbinter(1:ngbinter)%dist 
           WRITE(fp,*) gbinter(1:ngbinter)%obj 
@@ -756,6 +757,8 @@ c                  FROM, LIKE FOR THE X-POINT WITH THE MAGNETIC GRID (NEEDS TO B
                   IF (i1.NE.ngbinter) problem_ignored =problem_ignored+1
 c                  IF (i1.NE.ngbinter) 
 c     .              WRITE(0,*) 'PROBLEM IGNORED...',nchord
+
+
 
 c                IF (i1.EQ.ngbinter) THEN
 c                IF (nobinter.EQ.2) THEN
@@ -1223,6 +1226,23 @@ c            ENDDO
         
           ENDIF 
 
+
+          IF (.TRUE.) THEN
+c...        Toroidal rotation of camera, while preserving the view orientation with 
+c           respect to the centre of the torus:
+c            angle = 14.76D0 * 3.141596D0 / 180.0D0 ! LWIR
+            angle = 18.7D0 * 3.141596D0 / 180.0D0 ! LWIR
+c            angle = 4.04D0 * 3.141596D0 / 180.0D0
+c            angle = 9.0D0 * 3.141596D0 / 180.0D0  ! For viewing one have of the plasma from HU12...
+c...        Rotate about y-axis (swing):
+            CALL Calc_Transform2(mat,0.0D0,1,0)
+            CALL Calc_Transform2(mat,angle,2,1)
+            CALL Transform_Vect(mat,chord%v1)
+            CALL Transform_Vect(mat,chord%v2)
+          ENDIF
+
+
+
 c      IF (nchord.LE.500) THEN
 c        nchord = nchord + 1
 c        s_chord(nchord)%v1(1:3) = chord%v1(1:3)
@@ -1245,10 +1265,17 @@ c...
 
 c            pixel%spectrum(1:100) = pixel%spectrum(1:100) + 
 c     .                              chord%spectrum(1:100)
+
           ELSE
             WRITE(0,*) '  STATUS.LT.0 FOR CHORD'
             WRITE(0,*) '    PIXEL:',-1
             WRITE(0,*) '    CHORD:',ix,iy
+          ENDIF
+
+c...      Store representative vector for this pixel:
+          IF (ix.EQ.nxbin/2+1.AND.iy.EQ.nybin/2+1) THEN
+            pixel%global_v1 = SNGL(chord%v1)
+            pixel%global_v2 = SNGL(chord%v2)
           ENDIF
 
         ENDDO

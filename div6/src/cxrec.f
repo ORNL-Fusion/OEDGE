@@ -127,7 +127,11 @@ c
 c     >         ciopti.eq.7.or.ciopti.eq.8) THEN
 c slmod end
 c 
-        if (cpinopt.eq.1) then 
+c slmod begin
+        if (cpinopt.eq.1.or.cpinopt.eq.4) then 
+c
+c        if (cpinopt.eq.1) then 
+c slmod end
            DO IR =1,NRS
               DO IK =1,NKS(IR)
                  KNHS(IK,IR)= PINATOM(IK,IR)

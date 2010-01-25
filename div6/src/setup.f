@@ -6,7 +6,7 @@ c subroutine: SetupToroidalSurfaces
 c
 c
       SUBROUTINE ReadSOLPSDataFile(filename,array)
-      USE mod_grid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -74,8 +74,8 @@ c...  Assign B2 data:
 
           IR_LOOP: DO ir1 = 1, numir
             DO ik1 = 1, numik
-              IF (sonnetik(ik,ir).EQ.ikindex(ik1).AND.
-     .            sonnetir(ik,ir).EQ.irindex(ir1)) THEN    
+              IF (divimp_ik(ik,ir).EQ.ikindex(ik1).AND.
+     .            divimp_ir(ik,ir).EQ.irindex(ir1)) THEN    
                 array(ik,ir) = b2dat(ik1,ir1)
                 EXIT IR_LOOP
               ENDIF
@@ -96,7 +96,7 @@ c...  Assign B2 data:
       DO ir = 1, nrs
         DO ik = 1, nks(ir)
           WRITE(SLOUT,*) 'GRIDMAP:',ik,ir,' * ',
-     .                   sonnetik(ik,ir),sonnetir(ik,ir)
+     .                   divimp_ik(ik,ir),divimp_ir(ik,ir)
         ENDDO
       ENDDO
 
@@ -123,7 +123,8 @@ c
 
       ALLOCATE(fluvol(MAXNKS,MAXNRS))
 
-      WRITE(0,*) 'LOADING SOLPS DATA'
+      CALL LoadSOLPSData_OSM
+      RETURN
 
 c...  Files from Sergey (SOLPS5.0, 007666 at 220 ms, drifts and no drifts):
 c	Sna_ion0  ionization source for neutrals
@@ -1350,12 +1351,13 @@ c
 
       INTEGER iitersol
 
-      INTEGER ir,ii,ind1,ind2,i1,i2,i3,region,method,ring,target
+      INTEGER ir,ii,ind1,ind2,i1,i2,i3,region,method,ring,target,
+     .        no_data_warning
       LOGICAL specific,apply,repeat
       REAL    dum1,dum2,dum3,dum4,exp2,exp3,exp4,dpsin,psin0,frac,
      .        tedat(MAXNRS),tidat(MAXNRS),nedat(MAXNRS)
-
-
+      DATA no_data_warning / 0 / 
+      SAVE
 
       IF (connected) THEN
         WRITE(0,*) 'CHEATING ON PSITARG'
@@ -1371,7 +1373,7 @@ c
       WRITE(SLOUT,*) 'INTERPOLATING TARGET DATA'
 
 c...  Need to check that PSITARG is assigned:
-      IF (psitarg(irsep,2).EQ.0.0)
+      IF (psitarg(irsep,2).EQ.0.0) 
      .  CALL ER('InterpolateTargetData','PSITARG does not appear to '//
      .                                  'be assigned',*99)
 
@@ -1483,7 +1485,9 @@ c           the entire TARINTER array as target data to be interpolated:
             ind2 = tarninter(region)
           ELSEIF (ind1.EQ.0.OR.ind2.EQ.0) THEN
 c...        Data was not found for this ring:
-            WRITE(0,*) 'WARNING: TARGET DATA NOT FOUND FOR',ir,region
+            IF (no_data_warning.EQ.0) no_data_warning = 1
+            WRITE(PINOUT,*) 'WARNING: TARGET DATA NOT FOUND FOR',
+     .                      ir,region
             CYCLE
           ENDIF
 
@@ -1651,6 +1655,14 @@ c...    Need to do this twice:
 c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
 	
+      IF (no_data_warning.EQ.1) THEN
+        WRITE(0,*)
+        WRITE(0,*) '****************************************'
+        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME RINGS *'
+        WRITE(0,*) '****************************************'
+        WRITE(0,*)
+        no_data_warning = 2
+      ENDIF
 
       RETURN
 99    CONTINUE
@@ -1829,8 +1841,8 @@ c
       LOGICAL OutsideBreak
 
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
-     .        ikto3,ikti3,ik1,ik2
-      LOGICAL recalculate,cheat1
+     .        ikto3,ikti3,ik1,ik2,ik3,ir3
+      LOGICAL recalculate,cheat1,status
       REAL rhozero,ikintersec(MAXNRS,2)
 
       REAL*8 a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
@@ -1883,19 +1895,31 @@ c...  RINGTYPE:
       DO ir = irtrap+1, nrs
         ringtype(ir) = PFZ
       ENDDO
-c...  Check for secondary PFZ:
-c...  SPECIAL:
-      IF (nrs.EQ.45) THEN
-        IF (cheat1) THEN
-          cheat1 = .FALSE.
-          WRITE(0,*)
-          WRITE(0,*) '------------------------------------------'
-          WRITE(0,*) 'SUPER CHEAT ON RINGTYPE FOR MAST UPPER PFZ'
-          WRITE(0,*) '------------------------------------------'
-          WRITE(0,*)
-        ENDIF
-        DO ir = 20, 31        
-          ringtype(ir) = PFZ
+c...  Check for secondary PFZ by scanning inward along the connection
+c     map to see if the core is encoutered -- if not, then set as a 
+c     PFZ ring:
+      IF (ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
+        DO ir = irsep, irwall-1
+          status = .TRUE.
+          DO ik = 1, nks(ir)
+            ik1 = ik
+            ir1 = ir
+            DO WHILE (idring(ir1).NE.BOUNDARY)
+              ik2 = ikins(ik1,ir1)
+              ir2 = irins(ik1,ir1)
+              WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik,ir,ik2,ir2,
+     .                               nks(ir),irsep,status
+              IF (ir1.LT.irsep) THEN
+                WRITE(88,*) 'BOUNCE!'
+                status = .FALSE.
+                EXIT
+              ENDIF
+              ik1 = ik2
+              ir1 = ir2
+            ENDDO
+            IF (.NOT.status) EXIT
+          ENDDO
+          IF (status) ringtype(ir) = PFZ
         ENDDO
       ENDIF
 
@@ -1961,33 +1985,37 @@ c     IKTO2 and IKTI2:
 c
 c...  Check first that IKTO and IKTI are correct:
       
-      id1 = korpg(ikto,irsep)      
-      id2 = korpg(ikti,irsep)
-      IF (ABS(rvertp(4,id1)-rvertp(1,id2)).GT.TOL.OR.
-     .    ABS(zvertp(4,id1)-zvertp(1,id2)).GT.TOL) THEN
- 
-        IF (sloutput) WRITE(0,*) 'WARNING: HEALING IKTO AND IKTI'
-
-c...    Find IKTO and IKTI from the separatrix ring:
-        ir = irsep
-        DO ik1 = 1, nks(ir)-2
-          id1 = korpg(ik1,ir)
-          DO ik2 = ik1+2, nks(ir)
-            id2 = korpg(ik2,ir)
-            IF (ABS(rvertp(4,id1)-rvertp(1,id2)).LT.TOL.AND.
-     .          ABS(zvertp(4,id1)-zvertp(1,id2)).LT.TOL) THEN
-              ikto = ik1
-              ikti = ik2
-            ENDIF
-          ENDDO
-        ENDDO        
-
-c       CALL ER('GridSpace','IKTO and IKTI not consistent',*99)
+      IF     (connected) THEN
+        rxp = rvertp(4,korpg(ikto,irsep)) 
+        zxp = zvertp(4,korpg(ikto,irsep)) 
+      ELSEIF (nopriv) THEN
+        rxp = rvertp(1,korpg(1,irsep)) 
+        zxp = zvertp(1,korpg(1,irsep)) 
+      ELSE
+        id1 = korpg(ikto,irsep)      
+        id2 = korpg(ikti,irsep)
+        IF (ABS(rvertp(4,id1)-rvertp(1,id2)).GT.TOL.OR.
+     .      ABS(zvertp(4,id1)-zvertp(1,id2)).GT.TOL) THEN
+           IF (sloutput) 
+     .       WRITE(pinout,*) 'WARNING: HEALING IKTO AND IKTI'
+c...      Find IKTO and IKTI from the separatrix ring:
+          ir = irsep
+          DO ik1 = 1, nks(ir)-2
+            id1 = korpg(ik1,ir)
+            DO ik2 = ik1+2, nks(ir)
+              id2 = korpg(ik2,ir)
+              IF (ABS(rvertp(4,id1)-rvertp(1,id2)).LT.TOL.AND.
+     .            ABS(zvertp(4,id1)-zvertp(1,id2)).LT.TOL) THEN
+                ikto = ik1
+                ikti = ik2
+              ENDIF
+            ENDDO
+          ENDDO        
+c         CALL ER('GridSpace','IKTO and IKTI not consistent',*99)
+        ENDIF
+        rxp = rvertp(4,korpg(ikto,irsep)) 
+        zxp = zvertp(4,korpg(ikto,irsep)) 
       ENDIF
-
-      rxp = rvertp(4,korpg(ikto,irsep)) 
-      zxp = zvertp(4,korpg(ikto,irsep)) 
-
 
       ikto2(irsep) = ikto
       ikti2(irsep) = ikti
@@ -2118,8 +2146,94 @@ c            STOP 'sdfsdf'
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
      .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
       ENDDO
+c
+c     Set IKTO,I2 for double-null grids:
+c     ------------------------------------------------------------------    
+      DO ir = irsep+1, irwall-1
+        IF (ringtype(ir).EQ.PFZ) EXIT
+      ENDDO
+      IF (ir.NE.irwall) THEN
+        ir1 = irouts(1,irsep2)
+        DO ik1 = 1, nks(ir1)
+          IF (irins(ik1,ir1).NE.irsep2) EXIT
+        ENDDO
+        IF (ik1.EQ.nks(ir1)+1) THEN
+          STOP 'DAMNA'
+        ELSE
+c...      Outer SOL - IKTO:
+          ik = ikouts(ikto2(irsep2),irsep2)
+          ir = ir1
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikto2(ir) = ik
+            ik3 = ik
+            ir3 = ir
+            ik = ikouts(ik3,ir3)
+            ir = irouts(ik3,ir3)
+          ENDDO
+c...      Outer SOL - IKTI:
+          ik = ik1
+          ir = ir1
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikti2(ir) = ik
+            ik3 = ik
+            ir3 = ir
+            ik = ikouts(ik3,ir3)
+            ir = irouts(ik3,ir3)
+          ENDDO
+c...      Secondary PFZ:
+          ik = ikins(ik1,ir1)
+          ir = irins(ik1,ir1)
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikti2(ir) = ik
+            ik3 = ik
+            ir3 = ir
+            ik = ikins(ik3,ir3)
+            ir = irins(ik3,ir3)
+          ENDDO
+        ENDIF
+c
+        ir1 = irouts(nks(irsep2),irsep2)
+        DO ik1 = nks(ir1), 1, -1
+          IF (irins(ik1,ir1).NE.irsep2) EXIT
+        ENDDO
+        IF (ik1.EQ.0) THEN
+          STOP 'DAMNB'
+        ELSE
+c...      Outer SOL - IKTI:
+          ik = ikouts(ikti2(irsep2),irsep2)
+          ir = ir1
+c            write(0,*) 'go man go - start',ik,ir  
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikti2(ir) = ik
+c            write(0,*) 'go man go',ir,ikti2(ir)
+            ik3 = ik
+            ir3 = ir
+            ik = ikouts(ik3,ir3)
+            ir = irouts(ik3,ir3)
+          ENDDO
+c...      Outer SOL - IKTI:
+          ik = ik1
+          ir = ir1
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikto2(ir) = ik
+            ik3 = ik
+            ir3 = ir
+            ik = ikouts(ik3,ir3)
+            ir = irouts(ik3,ir3)
+          ENDDO
+c...      Secondary PFZ:
+          ik = ikins(ik1,ir1)
+          ir = irins(ik1,ir1)
+          DO WHILE (idring(ir).NE.BOUNDARY)
+            ikto2(ir) = ik
+            ik3 = ik
+            ir3 = ir
+            ik = ikins(ik3,ir3)
+            ir = irins(ik3,ir3)
+          ENDDO
+        ENDIF
 
-
+      ENDIF
 
 c
 c
@@ -2137,8 +2251,10 @@ c
 
           a1 = DBLE(r0)
           b1 = DBLE(r0) - 100.0D0
-          a2 = 0.0D0
-          b2 = 0.0D0
+          a2 = DBLE(z0)
+          b2 = DBLE(z0)
+c          a2 = 0.0D0
+c          b2 = 0.0D0
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
           IF (tab.GE.0.0.AND.tab.LE.1.0.AND.
      .        tcd.GE.0.0.AND.tcd.LE.1.0) THEN
@@ -2148,8 +2264,10 @@ c
 
           a1 = DBLE(r0)
           b1 = DBLE(r0) + 100.0D0
-          a2 = 0.0D0
-          b2 = 0.0D0
+          a2 = DBLE(z0)
+          b2 = DBLE(z0)
+c          a2 = 0.0D0
+c          b2 = 0.0D0
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
           IF (tab.GE.0.0.AND.tab.LE.1.0.AND.
      .        tcd.GE.0.0.AND.tcd.LE.1.0) THEN
@@ -2166,28 +2284,16 @@ c
 c     RHO:
 c
 
-
-
-
-
 c      NEEDS REWORKING!  BIG TIME!
-
-
-
-
-
-
       rho = 0.0
-c      CALL RZero(rho,MAXNRS*3)
-c      CALL RZero(rhoin,MAXNRS)
-c      CALL RZero(rhoou,MAXNRS)
-
-      WRITE(SLOUT,*) 'CALCULATING RHO', r0
+      WRITE(SLOUT,*) 'CALCULATING RHO', r0,z0
 
       a1 = r0
-      a2 = 0.0
-      b1 = r0 + 100.0
-      b2 = 0.0
+      a2 = z0   ! This was not a good idea... removed - SL, 19/10/2009  yes it was... 10/12/2009
+c      a2 = 0.0D0           
+      b1 = r0 + 100.0D0
+      b2 = z0
+c      b2 = 0.0D0
 
       DO ir = 2, irwall-1
         DO ik = 1, nks(ir)
@@ -2197,81 +2303,58 @@ c      CALL RZero(rhoou,MAXNRS)
           c2 = zvertp(1,id)
           d1 = rvertp(4,id)
           d2 = zvertp(4,id)
-
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-
-          IF (tab.GE.0.0.AND.tab.LE.1.0.AND.tcd.GE.0.0.AND.tcd.LE.1.0)
-     .      rho(ir,IN14) = r0 + tab * 100.0
+          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .      rho(ir,IN14) = r0 + SNGL(tab) * 100.0D0
 
           c1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
           c2 = 0.5 * (zvertp(1,id) + zvertp(2,id))
           d1 = 0.5 * (rvertp(3,id) + rvertp(4,id))
           d2 = 0.5 * (zvertp(3,id) + zvertp(4,id))
-
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-
-          IF (tab.GE.0.0.AND.tab.LE.1.0.AND.tcd.GE.0.0.AND.tcd.LE.1.0)
-     .      rho(ir,CELL1) = r0 + tab * 100.0
+          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .      rho(ir,CELL1) = r0 + SNGL(tab) * 100.0
 
           c1 = rvertp(2,id)
           c2 = zvertp(2,id)
           d1 = rvertp(3,id)
           d2 = zvertp(3,id)
-
           CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-
-          IF (tab.GE.0.0.AND.tab.LE.1.0.AND.tcd.GE.0.0.AND.tcd.LE.1.0)
-     .      rho(ir,OUT23) = r0 + tab * 100.0
+          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .      rho(ir,OUT23) = r0 + SNGL(tab)* 100.0
         ENDDO
       ENDDO
 
-
-
-
-      rhozero = rho(irsep,IN14)
+      IF (connected) THEN
+        rhozero = rho(irsep2,IN14) 
+      ELSE
+        rhozero = rho(irsep ,IN14)
+      ENDIF
 
       DO ir = 2, irwall-1
         IF (rho(ir,CELL1).NE.0.0) THEN
-          rho(ir,IN14)  = rho(ir,IN14)  - rhozero
-          rho(ir,CELL1)  = rho(ir,CELL1)  - rhozero
+          rho(ir,IN14 ) = rho(ir,IN14)  - rhozero
+          rho(ir,CELL1) = rho(ir,CELL1)  - rhozero
           rho(ir,OUT23) = rho(ir,OUT23) - rhozero
         ENDIF
       ENDDO
 
 c This sucks... it is good to get rho from grid.. what if not a CMOD
 c grid being used...?
-      rho(nrs,IN14)  = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
+      rho(nrs,IN14 ) = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
       rho(nrs,OUT23) = rho(irsep,IN14)
-      rho(nrs,CELL1)  = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
+      rho(nrs,CELL1) = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
 
       DO ir = nrs-1, irtrap+1, -1
         rho(ir,OUT23) = rho(ir+1,IN14)
-        rho(ir,IN14)  = rho(ir+1,IN14) - 
+        rho(ir,IN14 ) = rho(ir+1,IN14) - 
      .                  (rho(ir+1,OUT23) - rho(ir+1,IN14))
 c        rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
         rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
       ENDDO
-
-c KILL
-cc...  Map PSIN using the calculated RHO and the PSIDAT data stored in 
-cc     subroutine RAUG:
-cc...  LIMITED TO SOL RINGS!
-c      IF (psindat(1).GT.0) THEN
-c        DO ir = irsep, irwall-1      
-c          psitarg(ir,1) = 0.0
-c          IF (ikmidplane(ir,IKHI).NE.0) THEN
-c            IF (rho(ir,CELL1).LT.psidat(1,1).OR.
-c     .          rho(ir,CELL1).GT.psidat(psindat(1),1)) THEN
-cc...          Out of bounds:             
-c              WRITE(0,*) 'PSITARG OUT OF BOUNDS FOR IR=',ir
-c              psitarg(ir,1) = 1.0
-c            ELSE
-c              CALL Fitter(psindat(1),psidat(1,1),psidat(1,2),
-c     .                    1,rho(ir,CELL1),psitarg(ir,1),'LINEAR')
-c            ENDIF
-c          ENDIF
-c        ENDDO
-c      ENDIF
 
 
 c...  Find inner midplane "rho", for rings that do not intesect
@@ -2283,7 +2366,11 @@ c     the outer midplane:
       b2 = 0.0D0
 
 c...  Find RHOZERO:
-      ir = irsep
+      IF (connected) THEN 
+        ir = irsep2
+      ELSE
+        ir = irsep
+      ENDIF
       rhozero = 0.0
       DO ik = 1, nks(ir)
         id = korpg(ik,ir)
@@ -2433,20 +2520,15 @@ c
       WRITE(EROUT,'(A,2I4)') 'IKO  IKI   = ',iko,iki
       WRITE(EROUT,'(A,2I4)') 'IKTO IKTI  = ',ikto,ikti
 
+      zvertp(4,id1) = 0.0
+      zvertp(4,id2) = 0.0
+
       WRITE(0,*) 'IRs:',irsep,irsep2,ir
       WRITE(0,*) 'IKs:',ikto,ikti
       WRITE(0,*) 'IKs:',ikto2(irsep2),ikti2(irsep2)
       CALL DumpGrid('Connected bastard')
       STOP 
       END
-
-
-
-
-
-
-
-
 c
 c ======================================================================
 c
@@ -2617,15 +2699,7 @@ c...  Set additional cell "plasma" values to EIRENE vacuum defaults:
       WRITE(50,*) 'Initialising unstructured input options: '
       WRITE(50,*) ' '
 
-      DPERP6 = 1.0
-      DRFRAC = 0.5
-      DRSPAN = 0.0
-      DRSOUR = 0.1
 
-      EFPOPT = 0
-      WGDOPT = 0
-      IRDRFT = IRWALL
-      DRDECY = 0
       cgridst  = 0
 
       CALL IZero(eiraout,MAXASD*10) 

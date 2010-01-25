@@ -1,6 +1,612 @@
 c
 c ======================================================================
 c
+      SUBROUTINE AssignNodeValues_Legacy(itube,nnode,mnode,node)
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_geometry
+      USE mod_legacy
+      IMPLICIT none
+
+      INTEGER itube,nnode,mnode       
+      TYPE(type_node) :: node(*)
+
+      REAL GetRelaxationFraction
+
+      INTEGER ic,ic1,it,it1,i0,i1,i2,i3,i4,ifit,index,mode,
+     .        iobj,isrf,ivtx(2)
+      LOGICAL tc,nc,density,tetarget
+      REAL    te(0:6),ne(0:6),s(0:6),
+     .        frac,t0,t1,n0,n1,A,B,C,coord,expon,
+     .        psin0,psin1,psin2,
+     .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2
+      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
+
+
+      INTEGER node_n,node_index(0:50)
+      TYPE(type_node) :: node_store(0:50)
+
+      STOP 'THIS CODE IS HEADED FOR THE TRASH BIN'
+
+      s  = 0.0
+      ne = 0.0
+      te = 0.0
+
+      node_n = 1
+
+      frac = GetRelaxationFraction()
+
+c...  Better/cleaner to pass the tube to this routine, and not need to
+c     use mod_sol28_locals...?
+      it = itube
+
+
+      IF (osmns28.EQ.0) 
+     .  CALL ER('AssignNodeValues_2','Profiles not found',*99)
+
+
+      DO i1 = 2, osmns28
+        i0 = i1 - 1
+        IF ((osms28(i0,1).NE.osms28(i1,1)).OR.osms28(i1,1).EQ.0.0.OR.
+     .      osms28(i1,2).EQ.0.0) CYCLE
+
+c...    Do not apply data if IT is outside specified range:
+        IF ((osms28(i1,11).NE.0.0.AND.REAL(it).LT.osms28(i1,11) ).OR.
+     .      (osms28(i1,12).NE.0.0.AND.REAL(it).GT.osms28(i1,12)))
+     .    CYCLE
+
+
+c...    Need to keep track of iteration currently being assigned, so
+c       that scans in upstream with step can be done serially, rather than
+c       having everything on the same line...
+c (Do you have any idea what I am talking about?)
+
+
+c...    Check that rings from different grid regions are not in the same group
+c       of rings:
+        DO i2 = NINT(osms28(i1,11)), NINT(osms28(i1,12))-1
+          IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
+            IF (log.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
+              WRITE(logfp,*)
+              WRITE(logfp,*) '-------------------------------------'
+              WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
+              WRITE(logfp,*) '--------------------------- ---------'
+              WRITE(logfp,*)
+            ENDIF
+          ENDIF      
+        ENDDO
+
+
+c MODE                          P1           P2
+c   1 - power law               coordinate   index
+c   2 - exponential v0-v2       coordinate   index
+c   3 - exponential to infinity
+c   4 - from probe data         coordinate   probe number
+c   5 - something strange...
+c
+c   coord = 1 - linear on line segment
+c         = 2 - linear on line segment, but from first to last ring intersection
+c         = 3 - PSIn 
+c         = 4 - RHO
+c
+
+        index = NINT(osms28(i1,1)) 
+        mode  = NINT(osms28(i1,2))
+        coord = osms28(i1,3)
+        expon = osms28(i1,4)
+
+c...  Decide if specified upstream data is density or pressure:
+        density = .TRUE.   ! *** I DON'T LIKE THIS SOLUTION ***
+        IF (index.EQ.3.AND.
+     .      (tube(it)%type.EQ.GRD_SOL.AND..FALSE..OR.
+     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
+     .    density = .FALSE.
+
+
+        a1 = DBLE(osms28(i1-1,5))
+        a2 = DBLE(osms28(i1-1,6))
+        b1 = DBLE(osms28(i1  ,5))
+        b2 = DBLE(osms28(i1  ,6))
+
+        DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+
+c...      Assumed 1:1 mapping between grid and data:
+          iobj = ic
+          isrf = ABS(obj(iobj)%iside(1))
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+          isrf = ABS(obj(iobj)%iside(3))
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c          id = korpg(ik,ir)
+c          c1 = 0.5D0 * DBLE(rvertp(1,id) + rvertp(2,id))
+c          c2 = 0.5D0 * DBLE(zvertp(1,id) + zvertp(2,id))
+c          d1 = 0.5D0 * DBLE(rvertp(3,id) + rvertp(4,id))
+c          d2 = 0.5D0 * DBLE(zvertp(3,id) + zvertp(4,id))
+       
+          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+ 
+          IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+c...        Intersecting between the line segment and the ring is found:
+
+c...        These are here in case psin0 gets picked up when linking exponential
+c           decay data to neighbouring ring:
+            IF (tube(it)%type.EQ.GRD_PFZ) THEN
+              psin0 = -RHI
+              psin1 =  RHI
+            ELSE
+              psin0 =  RHI
+              psin1 =  RHI
+            ENDIF
+
+            IF (.FALSE.) THEN
+c...          Need a check to know if the ring is over-constrained:
+            ELSEIF (index.GE.0.AND.index.LE.6) THEN
+
+              IF (index.GE.1.AND.index.LE.5) THEN
+                s(index) = cell(ic)%sbnd(1) + SNGL(tcd) * cell(ic)%ds
+c                s(index)=ksb(ik-1,ir)+
+c     .                   SNGL(tcd)*(ksb(ik,ir)-ksb(ik-1,ir))
+              ENDIF
+
+c...          Find data boundary values -- NEEDS WORK!:
+              i2 = i0
+
+              i3 = i1
+
+c...          Flag...
+              tetarget = .FALSE.
+              IF ((index.EQ.1.OR.index.EQ.5).AND.osms28(i3,7).LT.0.0) 
+     .          tetarget = .TRUE.
+
+              IF     (mode.EQ.1.OR.mode.EQ.2.OR.mode.EQ.3.OR.
+     .                mode.EQ.5) THEN
+c...            Interpolation boundary values provided in the input file:
+
+c               *CRAP!*
+                t0 = osms28(i2,7) + frac*(osms28(i2,9) -osms28(i2,7))
+                n0 = osms28(i2,8) + frac*(osms28(i2,10)-osms28(i2,8))
+                t1 = osms28(i3,7) + frac*(osms28(i3,9) -osms28(i3,7))
+                n1 = osms28(i3,8) + frac*(osms28(i3,10)-osms28(i3,8))
+
+                IF ((index.EQ.3.OR.index.EQ.4.OR.index.EQ.5).AND.
+     .              (osms28(i2,7).EQ.-99.0.OR.
+     .               osms28(i2,8).EQ.-99.0)) THEN
+c...              Linking to another plasma region where the solution has
+c                 already (!) been calculated: 
+
+                  STOP 'NEED NEW FINDCELL ROUTINE (PROPER IR REFERENCE)'
+c                  CALL FindCell(i2,i3,ir,ikcell,ircell)
+c                 ic1 = 
+c                 it1 = 
+                  IF (tube(it)%type.EQ.GRD_PFZ) THEN
+c                    ik1 = ikouts(ikcell(2),ircell(2))  ! FIX
+c                    ir1 = irouts(ikcell(2),ircell(2)) 
+                  ELSE
+c                    ik1 = ikins(ikcell(2),ircell(2))   ! FIX
+c                    ir1 = irins(ikcell(2),ircell(2))
+                  ENDIF
+                  IF (osms28(i2,7).EQ.-99.0) t0 = fluid(ic1,1)%te
+                  IF (osms28(i2,8).EQ.-99.0) THEN
+                    IF (density) THEN
+                      n0 = fluid(ic1,1)%ne
+                    ELSE
+                      n0 = 2.0 * fluid(ic1,1)%te * fluid(ic1,1)%ne  ! Add Ti and M? 
+                    ENDIF
+                  ENDIF
+c...              Shouldn't really be outer target (all this would go away if PSITARG was
+c                 assigned properly):
+                  IF (coord.EQ.3) psin0 = tube(it1)%psin
+c                  IF (coord.EQ.4) rho0  = tube(it1)%rho
+                ENDIF
+
+c...            Make sure that t0,1 are positive:
+                IF (tetarget) THEN
+                  t0 = ABS(t0)
+                  t1 = ABS(t1)
+                ENDIF
+
+                IF     (coord.EQ.1) THEN
+c...              Linear along the line segment, nice and simple:
+                  val0 = 0.0
+                  val1 = 1.0
+                  val = SNGL(tab)
+                ELSEIF (coord.EQ.5) THEN
+c...              Just give me PSIn:
+                  psin0 = tube(it)%psin
+                ELSE
+c...            
+                  IF (NINT(osms28(i2,11)).NE.NINT(osms28(i3,11)).OR.
+     .                NINT(osms28(i2,12)).NE.NINT(osms28(i3,12)).OR.
+     .                NINT(osms28(i2,11)).GT.NINT(osms28(i2,12)))
+     .              CALL ER('AssignNodeValues_2','Invalid '//
+     .                      'IT range, check input file',*99)
+
+c...              Need range of PSIn over the segment:
+                  DO it1 = NINT(osms28(i2,11)), NINT(osms28(i2,12)) 
+                    DO ic1 = tube(it1)%cell_index(LO), 
+     .                       tube(it1)%cell_index(HI)
+                      iobj = ic1
+                      isrf = ABS(obj(iobj)%iside(1))
+                      ivtx(1:2) = srf(isrf)%ivtx(1:2)
+                      c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+                      c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+                      isrf = ABS(obj(iobj)%iside(3))
+                      ivtx(1:2) = srf(isrf)%ivtx(1:2)
+                      d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+                      d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c                      id1 = korpg(ik1,ir1)
+c                      c1 = 0.5D0 * DBLE(rvertp(1,id1) + rvertp(2,id1))
+c                      c2 = 0.5D0 * DBLE(zvertp(1,id1) + zvertp(2,id1))
+c                      d1 = 0.5D0 * DBLE(rvertp(3,id1) + rvertp(4,id1))
+c                      d2 = 0.5D0 * DBLE(zvertp(3,id1) + zvertp(4,id1))
+                      CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+                      IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .                    tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+                        IF     (tube(it)%type.EQ.GRD_SOL) THEN
+                          IF (psin0.EQ.HI) psin0 = tube(it1)%psin
+                          IF (psin0.NE.HI) psin1 = tube(it1)%psin
+                        ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
+                          psin0 = MAX(psin0,tube(it1)%psin)
+                          psin1 = MIN(psin1,tube(it1)%psin)
+                        ELSE
+                          CALL ER('AssignNodeValues_2','Invalid '//
+     .                            'RINGTYPE',*99)
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                  ENDDO
+
+                  IF     (coord.EQ.2) THEN
+c...                Spatial along the IR-range of applicability:
+                    STOP 'NOT READY 2'
+                  ELSEIF (coord.EQ.3) THEN
+c...                PSIn:
+                    val0 = 0.0
+                    val1 = ABS(psin1         - psin0)
+                    val  = ABS(tube(it)%psin - psin0)
+                  ELSEIF (coord.EQ.4) THEN
+c...                RHO:
+                    STOP 'NOT READY 4'
+                  ELSE
+                    CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
+                  ENDIF
+                ENDIF
+
+              ELSEIF (mode.EQ.4) THEN
+c...            Load probe data, dummy values here:
+                t0 = osms28(i2,7)
+                t1 = t0
+                n0 = osms28(i2,8)
+                n1 = n0
+              ELSE
+                CALL ER('S28params_v3','Invalid MODE',*99)   
+              ENDIF
+
+c...          Check if quantities should be assigned:
+              tc = .TRUE.
+              nc = .TRUE.
+              IF (t0.EQ.0.0.OR.t1.EQ.0.0) tc = .FALSE.
+              IF (n0.EQ.0.0.OR.n1.EQ.0.0) nc = .FALSE.
+
+              SELECTCASE (mode)
+                CASE (1)
+c...              Power law between v1 and v2:
+                  val2 = (val - val0) / (val1 - val0)
+                  IF (tc) te(index) = t0 + val2**expon * (t1 - t0)
+                  IF (nc) ne(index) = n0 + val2**expon * (n1 - n0)
+                CASE (2)
+c...              Exponential decay between v1 and v2:
+                  C = expon  
+                  IF (tc) THEN
+                    A = (t1 - t0) / (EXP(-val1 / C) - 1.0)
+                    B = t0 - A
+                    te(index) = A * EXP(-val / C) + B
+                  ENDIF
+                  IF (nc) THEN
+                    A = (n1 - n0) / (EXP(-val1 / C) - 1.0)
+                    B = n0 - A
+                    ne(index) = A * EXP(-val / C) + B
+                  ENDIF
+                CASE (3)
+c...              Exponential decay to zero at infinity:
+                  C = expon
+                  A = t0 - t1
+                  B = t1 
+                  IF (tc) te(index) = A * EXP(-val / C) + B
+                  A = n0 - n1
+                  B = n1
+                  IF (nc) ne(index) = A * EXP(-val / C) + B
+                CASE (4)
+c...              Load probe data from the .experiments file:
+                  IF     (coord.EQ.3) THEN
+                    prb1 = -1.0
+                  ELSEIF (coord.EQ.4) THEN
+                    prb1 = -3.0
+                  ELSE
+                    CALL ER('AssignNodeValues_2','Invalid COORD B',*99)   
+                  ENDIF
+                  IF (tc) THEN
+                    STOP 'OPTION NOT READY A'
+                    tmp1 = prb1
+c                    CALL LoadProbeDataS28(ir,NINT(osms28(i2,7)),2,tmp1) 
+                    te(index) = tmp1
+                    IF     (expon.EQ.1.0) THEN
+                      STOP 'OPTION NOT READY B'
+                    ELSEIF (expon.EQ.2.0) THEN
+                      te(0) = -te(index)
+                      te(6) = -te(index)
+                    ELSEIF (expon.EQ.3.0) THEN
+                      te(0) = 97.0
+                      te(6) = 97.0
+                    ENDIF
+                  ENDIF
+                  IF (nc) THEN
+                    STOP 'OPTION NOT READY C'
+                    tmp1 = prb1
+c                    CALL LoadProbeDataS28(ir,NINT(osms28(i2,8)),1,tmp1) 
+                    ne(index) = tmp1
+                    IF     (expon.EQ.1.0) THEN
+                      STOP 'OPTION NOT READY D'
+                    ELSEIF (expon.EQ.2.0) THEN
+                      ne(0) = -ne(index)
+                      ne(6) = -ne(index)
+                    ELSEIF (expon.EQ.3.0) THEN
+                    ENDIF
+                  ENDIF
+
+                CASE (5)
+c...              Interpolations from polynomial and exponential fitting parameters 
+c                 that are listed in the input file:
+                  DO i4 = 1, NINT(osms28(i1,4))
+                    ifit = i1 + i4
+                    IF     (osms28(ifit,2).EQ.-1.0) THEN 
+                      psin1 = psin0 - osms28(ifit,3)
+                    ELSEIF (psin1.GE.osms28(ifit,3).AND.
+     .                      psin1.LE.osms28(ifit,4)) THEN
+c...                  Only need this for the exponential fit coefficients
+c                     returned in IDL (ts.pro at the moment):
+                      IF (osms28(ifit,2).EQ.2.0) THEN
+                        psin2 = psin1 - osms28(ifit,3)
+                      ELSE
+                        psin2 = psin1
+                      ENDIF
+                       SELECTCASE (NINT(osms28(ifit,2)))
+                        CASE ( 1)  ! Polynomial
+                          val = osms28(ifit,7 )            +
+     .                          osms28(ifit,8 ) * psin2    +
+     .                          osms28(ifit,9 ) * psin2**2 +
+     .                          osms28(ifit,10) * psin2**3 +
+     .                          osms28(ifit,11) * psin2**4 +
+     .                          osms28(ifit,12) * psin2**5
+                        CASE ( 2)  ! Exponential
+                          val = osms28(ifit,7) * 
+     .                          EXP(osms28(ifit,8)*psin2) + 
+     .                          osms28(ifit,9)
+                        CASE ( 3)  ! TANH 
+                          p(0:4) = osms28(ifit,7:11)
+                          v0 = (p(0) - psin2) / (2.0 * p(1))               ! from /home/mastts/lib/edgefunctionats.pro
+                          v1 = ((1. + p(3) * v0) * EXP(v0) - EXP(-v0)) /   ! from /home/mastts/bck/mtanh.pro (right one?) 
+     .                                            (EXP(v0) + EXP(-v0))
+                          val = (p(2) - p(4)) / 2.0 * (v1 + 1.0) + p(4)
+                        CASEDEFAULT
+                          CALL ER('AssignNodeValues_2',
+     .                            'Unknown data type',*99)
+                      ENDSELECT
+                      SELECTCASE (NINT(osms28(ifit,6)))
+                        CASE (1)  
+                          IF (osms28(ifit,2).EQ.3.0) val = val * 1.0E+19  ! Special for TANH fit from ts.pro
+                          ne(index) = val
+                        CASE (4)  
+                          te(index) = val 
+                        CASEDEFAULT
+                          CALL ER('AssignNodeValues_2',
+     .                            'Unknown data type',*99)
+                      ENDSELECT
+                    ENDIF
+                  ENDDO
+                CASE DEFAULT
+                  CALL ER('AssignNodeValues_2','Invalid MODE',*99)   
+              ENDSELECT
+
+            ELSE
+              CALL ER('AssignNodeValues_2','Invalid parameter '//
+     .                'index',*99)
+            ENDIF
+
+
+            IF (tetarget) THEN
+              te(index) = -te(index)
+            ENDIF
+
+            IF (.NOT.density.AND.index.EQ.3.AND.nc.AND.mode.NE.4) THEN
+c...          Convert the pressure value to density:
+              IF (te(3).EQ.0.0) THEN
+                CALL ER('AssignNodeValues_2','Te3 not assigned',*99)
+              ELSE
+c...            Assumes that the Mach no. is low (note: Ti.NE.Te is not a problem
+c               since that situation is currently resolved in the SOL28 routine):
+c                WRITE(0,*) 'CONVERTING PRESSURE TO DENSITY',ne(3)
+c                WRITE(0,*) 'OLD D:',ne(3)
+                ne(3) = ne(3) / (2.0 * te(3))
+              ENDIF
+            ENDIF
+
+c...        Store node values:
+            node_n = node_n + 1
+            WRITE(0,*) 'INDEX:',index,s(index)
+            node_index(node_n) = index
+            node_store(node_n)%s  = s (index)
+            node_store(node_n)%ne = ne(index)
+            node_store(node_n)%te = te(index)
+
+          ENDIF
+
+        ENDDO
+
+      ENDDO
+
+
+
+
+      IF (.TRUE.) THEN
+        node_n = node_n + 1
+c...    Target nodes:
+        node_store(1     )%s = 0.0
+        node_store(node_n)%s = tube(it)%smax
+c...    Assign cell indeces:
+        DO i1 = 1, node_n
+          DO ic = tube(it)%cell_index(LO),tube(it)%cell_index(HI)
+            IF (node_store(i1)%s.GE.cell(ic)%sbnd(1).AND.
+     .          node_store(i1)%s.LE.cell(ic)%sbnd(2))THEN
+              node_store(i1)%icell = ic - tube(it)%cell_index(LO) + 1
+c >>>> EH? >>>>              IF (i1.EQ.3) s(3) = cell(ic)%s
+            ENDIF
+          ENDDO
+        ENDDO
+
+        IF (log.GT.0) THEN
+          WRITE(logfp,*) 
+          DO i1 = 1, node_n
+            WRITE(logfp,'(A,3I6,F10.2,E10.2,F10.2)') 
+     .        'NODE:',i1,node_index(i1),
+     .        node_store(i1)%icell,node_store(i1)%s,
+     .        node_store(i1)%ne,node_store(i1)%te
+          ENDDO
+        ENDIF
+
+c...    Check that only one symmetry node is specified:
+        i2 = 0
+        DO i1 = 1, node_n
+          IF (node_index(i1).EQ.2) i2 = i2 + 1
+        ENDDO
+        IF (i2.NE.1) CALL ER('AssignNodeValues_Legacy','More than '//
+     .                       'one symmetry point node found',*99)
+
+c...    Sort nodes based on s-distance along the field line:
+        DO i1 = 1, node_n-1
+          DO i2 = i1+1, node_n
+            IF (node_store(i2)%s.LT.node_store(i1)%s) THEN
+              node_store(0)  = node_store(i1)
+              node_index(0)  = node_index(i1)
+              node_store(i1) = node_store(i2)
+              node_index(i1) = node_index(i2)
+              node_store(i2) = node_store(0)
+              node_index(i2) = node_index(0)
+            ENDIF
+c...        Also check that there isn't more than one node in each cell:
+            IF (node_store(i1)%icell.EQ.node_store(i2)%icell) 
+     .        CALL ER('AssignNodeValues_Legacy','More than one node '//
+     .                'detected in cell',*99)
+          ENDDO
+        ENDDO
+
+        IF (log.GT.0) THEN
+          WRITE(logfp,*) 
+          DO i1 = 1, node_n
+            WRITE(logfp,'(A,3I6,F10.2,E10.2,F10.2)') 
+     .        'NODE:',i1,node_index(i1),
+     .        node_store(i1)%icell,node_store(i1)%s,
+     .        node_store(i1)%ne,node_store(i1)%te
+          ENDDO
+        ENDIF
+
+c...    Set node indeces:
+        DO i1 = 1, node_n 
+          IF (node_index(i1).EQ.2) mnode = i1
+        ENDDO
+        nnode = node_n
+
+c...    Assign values to nodes:
+        node(1:nnode) = node_store(1:nnode)
+c...    Assign other quantites:
+        node(1:nnode)%jsat(1)   = 0.0
+        node(1:nnode)%pe        = 0.0
+        node(1:nnode)%ni(1)     = 0.0
+        node(1:nnode)%pi(1)     = 0.0
+        node(1:nnode)%ti(1)     = 0.0
+        node(1:nnode)%machno    = 0.0
+        node(1:nnode)%potential = 0.0
+        node(1:nnode)%efield    = 0.0
+
+        IF (node(1    )%ne   .EQ.0.) node(1    )%ne   =tube(it)%ne(LO)
+        IF (node(nnode)%ne   .EQ.0.) node(nnode)%ne   =tube(it)%ne(HI)
+        IF (node(1    )%te   .EQ.0.) node(1    )%te   =tube(it)%te(LO)
+        IF (node(nnode)%te   .EQ.0.) node(nnode)%te   =tube(it)%te(HI)
+        IF (node(1    )%ti(1).EQ.0.) node(1    )%ti(1)=tube(it)%ti(LO,1)
+        IF (node(nnode)%ti(1).EQ.0.) node(nnode)%ti(1)=tube(it)%ti(HI,1)
+c REAL FUNCTION GetJsat(te,ti,ne,v)
+        node(1    )%jsat(1) = tube(it)%jsat(LO,1)
+        node(nnode)%jsat(1) = tube(it)%jsat(HI,1)
+        node(1    )%ne      = 0.0
+        node(nnode)%ne      = 0.0
+
+        WRITE(0,*) 'NODE:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(0,'(A,3I6,F10.2,2E10.2,F10.2)') 
+     .      'NODE:',i1,node_index(i1),
+     .      node(i1)%icell,node_store(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,node_store(i1)%te
+        ENDDO
+
+      ELSE
+
+        s(0) = 0.0
+        s(6) = tube(it)%smax
+        DO i1 = 0, 6
+          DO ic = tube(it)%cell_index(LO),tube(it)%cell_index(HI)
+            IF (s(i1).GE.cell(ic)%sbnd(1).AND.
+     .          s(i1).LE.cell(ic)%sbnd(2))THEN
+              node(i1+1)%icell = ic - tube(it)%cell_index(LO) + 1
+              IF (i1.EQ.3) s(3) = cell(ic)%s
+            ENDIF
+          ENDDO
+        ENDDO
+
+        nnode = 7
+        mnode = 4
+
+c...    Assign values to nodes:
+        node(1:7)%s  = s (0:6)
+        node(1:7)%ne = ne(0:6)
+        node(1:7)%te = te(0:6)
+c...    Assign other quantites:
+        node(1:7)%jsat(1)   = 0.0
+        node(1:7)%pe        = 0.0
+        node(1:7)%ni(1)     = 0.0
+        node(1:7)%pi(1)     = 0.0
+        node(1:7)%ti(1)     = 0.0
+        node(1:7)%machno    = 0.0
+        node(1:7)%potential = 0.0
+        node(1:7)%efield    = 0.0
+
+        IF (node(1)%ne   .EQ.0.0) node(1)%ne    = tube(it)%ne(LO)
+        IF (node(7)%ne   .EQ.0.0) node(7)%ne    = tube(it)%ne(HI)
+        IF (node(1)%te   .EQ.0.0) node(1)%te    = tube(it)%te(LO)
+        IF (node(7)%te   .EQ.0.0) node(7)%te    = tube(it)%te(HI)
+        IF (node(1)%ti(1).EQ.0.0) node(1)%ti(1) = tube(it)%ti(LO,1)
+        IF (node(7)%ti(1).EQ.0.0) node(7)%ti(1) = tube(it)%ti(HI,1)
+
+c REAL FUNCTION GetJsat(te,ti,ne,v)
+        node(1)%jsat(1) = tube(it)%jsat(LO,1)
+        node(7)%jsat(1) = tube(it)%jsat(HI,1)
+      ENDIF
+
+      RETURN
+99    CONTINUE
+      STOP
+      END
+
+
+
+
+
+c
+c ======================================================================
+c
 c subroutine: WriteInputFile
 c
 c

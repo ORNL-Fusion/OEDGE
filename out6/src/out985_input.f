@@ -98,7 +98,7 @@ c        READ(fp,'(A256)',END=10) buffer
 
         n = LEN_TRIM(buffer)
 
-        WRITE(0,*) 'BUFFER:',TRIM(buffer)
+c        WRITE(0,*) 'BUFFER:',TRIM(buffer)
 
 c        IF (buffer(2:2).NE.'{') CYCLE
 
@@ -195,7 +195,10 @@ c                WRITE(0,*) 'BUFFER:-',TRIM(buffer)
      .                opt%obj_colour(opt%obj_num),
      .                opt%obj_reflec(opt%obj_num),
      .                opt%obj_fudge (opt%obj_num),
-     .                opt%obj_factor(opt%obj_num)
+     .                opt%obj_factor(opt%obj_num),
+     .                opt%obj_n     (opt%obj_num,1),
+     .                opt%obj_n     (opt%obj_num,2),
+     .                opt%obj_fname (opt%obj_num)
                   CASE (7)  ! Reconstructed image
                     READ(buffer,*) cdum1,
      .                opt%obj_type  (opt%obj_num),
@@ -367,6 +370,18 @@ c...                Load image and look for pure/artificial black (pixel value=0
                     CALL ER('LoadOptions985_New','Unrecognized '//
      .                      'detector mask type',*99)
                 ENDSELECT
+              ENDDO
+            ENDIF
+
+          CASE('PLOTS')
+            IF (mode.NE.ALL_OPTIONS) CYCLE
+            IF (opt%nplots.EQ.-1) opt%nplots = 0
+            READ(buffer(i+1:n),*) idum1
+            IF (idum1.NE.0) THEN
+              DO WHILE(GetLine(fp,buffer,NO_TAG))
+                opt%nplots = opt%nplots + 1
+                opt%plots(opt%nplots) = buffer(1:LEN_TRIM(buffer))  ! Still don't know why TRIM() doesn't work...
+                WRITE(0,*) opt%nplots,buffer(1:LEN_TRIM(buffer))
               ENDDO
             ENDIF
 

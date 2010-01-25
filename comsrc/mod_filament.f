@@ -29,18 +29,29 @@ c
 
       TYPE, PUBLIC :: type_filament
         REAL*4    :: version = 1.0
+        INTEGER*4 :: status                               ! Is the filament active?
 !       Timing:
-        REAL*8    :: t_start                              ! Time when the filament was born
-        REAL*8    :: t_last                               ! Time stamp when filament was last updated
+        REAL*8    :: t_start                              ! Time when the filament was born (s)
+        REAL*8    :: t_end                                ! Time it's finished (s)
+        REAL*8    :: t_duration                           ! How long the filament lasts (s)
+        REAL*8    :: t_last                               ! Global time stamp when filament was last updated (s)
 !       Plasma parameters:
-        REAL*4    :: ne(MAX_FIL_NCELL)                    ! Density scaling (m-3)
-        REAL*4    :: vb(MAX_FIL_NCELL)                    ! Parallel flow (m s-1)
-        REAL*4    :: te(MAX_FIL_NCELL)                    ! Te (eV)
-        REAL*4    :: ti(MAX_FIL_NCELL)                    ! Ti (eV)
-        REAL*4    :: ne0                                  ! Principle density parameter (m-3)
-        REAL*4    :: vb0                                  !     "     parallel flow (m s-1)
-        REAL*4    :: te0                                  !     "     Te (eV)
-        REAL*4    :: ti0                                  !     "     Ti (eV)
+!        REAL*4    :: ne(MAX_FIL_NCELL)                    ! Density scaling (m-3)
+!        REAL*4    :: vb(MAX_FIL_NCELL)                    ! Parallel flow (m s-1)
+!        REAL*4    :: te(MAX_FIL_NCELL)                    ! Te (eV)
+!        REAL*4    :: ti(MAX_FIL_NCELL)                    ! Ti (eV)
+!        REAL*4    :: ne0                                  ! Principle density parameter (m-3)
+!        REAL*4    :: vb0                                  !     "     parallel flow (m s-1)
+!        REAL*4    :: te0                                  !     "     Te (eV)
+!        REAL*4    :: ti0                                  !     "     Ti (eV)
+
+!       Plasma density:
+        INTEGER*4 :: ne_opt                              ! Option (1=...)
+        REAL      :: ne_param(MAX_FIL_PARAMS)            ! 
+!       Plasma temperature:
+        INTEGER*4 :: te_opt                              ! Option (1=...)
+        REAL      :: te_param(MAX_FIL_PARAMS)            ! 
+
 !       Cross section parameters:
         INTEGER*4 :: crs_opt                              ! Option (1=circle)
         REAL*8    :: crs_param(MAX_FIL_PARAMS)           ! 
@@ -50,13 +61,10 @@ c
         INTEGER*4 :: par_length                           ! Extent of the filament at creation (t = 0) (1-"full", 2-outer)
         INTEGER*4 :: par_growth                           ! Rate of expansion along the field line
         REAL*8    :: par_growth_param(MAX_FIL_PARAMS)    ! ...parameters
-        INTEGER*4 :: par_growth_trigger                   ! When to start the parallel evolution of the filament
         REAL*4    :: par_growth_delay                     ! Time delay to impose after the trigger is registered (s)
 !       Toroidal transport:
         INTEGER*4 :: tor_opt                              ! Option
         REAL*8    :: tor_param(MAX_FIL_PARAMS)           ! Parameters for transport function
-        INTEGER*4 :: tor_trigger                          ! Option for under what conditions to initiate transport
-        REAL*8    :: tor_trigger_param(MAX_FIL_PARAMS)   ! ...parameters
         REAL*8    :: tor_delay                            ! Time delay before the transport is initiated
         REAL*8    :: tor_position                         ! Current position for filament "center of mass"
         INTEGER*4 :: tor_coordinate                       ! Coordinate used for tracking filament "center of mass"
@@ -64,8 +72,6 @@ c
 !       Radial transport:
         INTEGER*4 :: rad_opt                              ! Option
         REAL*8    :: rad_param(MAX_FIL_PARAMS)           ! Parameters for transport function
-        INTEGER*4 :: rad_trigger                          ! Option for under what conditions to initiate transport
-        REAL*8    :: rad_trigger_param(MAX_FIL_PARAMS)   ! ...parameters
         REAL*8    :: rad_delay                            ! Time delay before the transport is initiated
         REAL*8    :: rad_position                         ! Current position for filament "center of mass"
         INTEGER*4 :: rad_coordinate                       ! Coordinate used for tracking filament "center of mass"

@@ -1,8 +1,4 @@
 c     -*-Fortran-*-
-
-
-      
-
 c
 c ====================================================================== 
 c
@@ -16,8 +12,10 @@ c
 
       INTEGER GetNumberOfObjects
 
-      INTEGER iint,ipla,i2,iobj,ipixel,max_ik,max_ir,max_in,count,ndat
+      INTEGER iint,ipla,i2,iobj,ipixel,max_ik,max_ir,max_in,count,ndat,
+     .        iobject,i1,i3,p(4)
       REAL    wlngth,delta
+      CHARACTER fname*512
       REAL, ALLOCATABLE :: osm(:,:),tdata(:)
 
 
@@ -73,11 +71,43 @@ c...      Fluid grid quantity:
 
         IF (max_in.GT.0) THEN
 c...      EIRENE grid:
-          ndat = GetNumberOfObjects()
-          ALLOCATE(tdata(ndat))
-          CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
-        ENDIF
 
+c...      Check which name 
+          fname = 'default'
+          i2 = 0
+          i3 = 0
+          DO iobject = 1, opt%obj_num
+            IF (opt%obj_type(iobject).EQ.6) THEN
+              DO i1 = 1, LEN_TRIM(opt%obj_fname(iobject))
+                IF (opt%obj_fname(iobject)(i1:i1).EQ.'.') THEN
+                  IF (i2.EQ.0) i2 = i1
+                  i3 = i1
+                ENDIF
+c                WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
+              ENDDO
+              fname ='eirene'//opt%obj_fname(iobject)(i2:i3)//'transfer'
+              WRITE(0,*) 'fname:',fname(1:LEN_TRIM(fname))
+              EXIT
+            ENDIF
+          ENDDO
+
+          ndat = GetNumberOfObjects(fname(1:LEN_TRIM(fname)))
+          ALLOCATE(tdata(ndat))
+
+          p = [0,0,0,0]
+          IF (opt%int_line(iint).EQ.'B_ALPHA')    p = [6,1,7 ,1]  ! Dalpha
+          IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
+          IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
+          IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0] ! D+ density
+          WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
+          IF (p(1).EQ.0) CALL ER('AssignEmissionData','Unrecognised '//
+     .                           'EIRENE data tag',*99)
+          CALL LoadTriangleData(p(1),p(2),p(3),p(4),tdata,fname)  
+          
+c          CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
+
+          WRITE(0,*) 'DONE'
+        ENDIF
 
         opt%int_wlngth(iint) = wlngth
 
@@ -89,11 +119,12 @@ c...    Assign data to objects:
           SELECTCASE (obj(iobj)%subtype)
             CASE (OP_FLUID_GRID)
 c...          Fluid grid:
-              obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir)
+              obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir) 
 
             CASE (OP_EIRENE_GRID)
 c...          Eirene grid:
               obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
+c     .            * obj(iobj)%quantity(iint)
 
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:

@@ -664,7 +664,7 @@ c
 c ======================================================================
 c
 c
-      INTEGER FUNCTION GetTetSrfInd(iobj,iside,ivtx)
+      INTEGER FUNCTION GetTetVtxInd(iobj,iside,ivtx)
       USE mod_geometry
       IMPLICIT none
 
@@ -674,7 +674,7 @@ c
 
       isrf = ABS(obj(iobj)%iside(iside))
 
-      GetTetSrfInd = srf(isrf)%ivtx(ivtx)
+      GetTetVtxInd = srf(isrf)%ivtx(ivtx)
 
       RETURN
  99   STOP
@@ -729,7 +729,8 @@ c
       IMPLICIT none
 
       TYPE(type_3D_object) :: newobj
-      INTEGER nsurface,ielement,status
+      INTEGER, INTENT(IN)  ::  nsurface,ielement
+      INTEGER, INTENT(OUT) :: status
       REAL, ALLOCATABLE :: tdata(:)
 
       REAL GetTetCentre
@@ -737,12 +738,11 @@ c
       INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj
       REAL, ALLOCATABLE :: ycen(:)
 
-      DATA iobj / 0 /
       SAVE
 
       status = 0
 
-      IF (iobj.EQ.0) THEN
+      IF (nsurface.EQ.-1) THEN
 c...    Needed so that Dalpha could be loaded using LoadTriangleData
 c       from AssignEmissionData... scary and will not doubt cause 
 c       problems:
@@ -759,6 +759,7 @@ c        CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
         DO i1 = 1, nobj
           ycen(i1) = GetTetCentre(i1)
         ENDDO
+        iobj = 0
       ENDIF
 
       iobj = iobj + 1
@@ -774,6 +775,7 @@ c     .          (ycen(iobj).LT.-0.90))
 c     .          (ycen(iobj).LT.-0.50).OR.(ycen(iobj).GT.0.50))
 c     .          (ycen(iobj).LT.-0.20).OR.(ycen(iobj).GT.0.20))
 c     .          (tdata(iobj).LT.0.5E+23))
+c     DO WHILE (obj(iobj)%segment(1).EQ.0)  ! *** HACK ***
       DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID)
         iobj = iobj + 1
         IF (iobj.GT.nobj) THEN
@@ -808,9 +810,11 @@ c     .          (tdata(iobj).LT.0.5E+23))
       newobj%gsur(1:4)    = GT_TD
       newobj%tsur(1:4)    = SP_GRID_SURFACE  ! Some to be replace with SP_GRID_BOUNDARY...
       newobj%reflec(1:4)  = 0
-      newobj%nmap         = 0
-      newobj%imap         = 0
+      newobj%nmap         = 1
+      newobj%imap(1,1:4)  = obj(iobj)%omap(1:4)
+      newobj%isur         = -1
       newobj%quantity(1)  = 1.0
+c      IF (obj(iobj)%segment(1).EQ.0) newobj%quantity(1) = 0.0  ! *** HACK ***
 c..   Defunct:  ! ...really?
       newobj%nsur         = 0
       newobj%ipts(2,1)    = 0
@@ -839,6 +843,21 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE Wrapper_ClearObjects
+      USE mod_geometry
+      IMPLICIT none
+
+      IF (ALLOCATED(obj)) DEALLOCATE(obj)
+      IF (ALLOCATED(srf)) DEALLOCATE(srf)
+      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE ProcessTetrahedronGrid(ielement)
       USE mod_out985
       USE mod_out985_variables
@@ -847,7 +866,7 @@ c
 c...  Input:
       INTEGER ielement
 
-      INTEGER AddVertex,AddSurface,GetTetSrfInd
+      INTEGER AddVertex,AddSurface,GetTetVtxInd
 
       TYPE(type_3D_object) newobj
       TYPE(type_surface) newsrf
@@ -855,13 +874,15 @@ c...  Input:
       INTEGER status,i1,idum1
 
 c...  For connection map:
-      INTEGER nlist,i2,i3,i4,i5,i6,c,iobj,isid,isrf,isrf1,isrf2
-      INTEGER, ALLOCATABLE :: vsum(:,:),ilist(:)
+      INTEGER nlist,i2,i3,i4,i5,i6,c,iobj,isid,isrf,isrf1,isrf2,
+     .        iside,iside1,iobj1,ntet,nmatch
+      INTEGER, ALLOCATABLE :: vsum(:,:),ilist(:), itet(:)
       REAL, ALLOCATABLE :: yobj(:)
       REAL    minphi,maxphi,phi,dphi,y,dy,miny,maxy,GetTetCentre
 
 
-      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
+      CALL Wrapper_LoadObjects(TRIM(opt%obj_fname(ielement)),status)
+c      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
       IF (status.NE.0) CALL ER('Wrapper_LoadObjects','Unable '//
      .                         'to find grid file',*99)
 
@@ -876,15 +897,16 @@ c.... Load all the vertices:
 
 c...  Load all fluid grid tetrahedrons:
       status = 0
+      CALL GetNextTet(newobj,-1,-1,status)
       DO WHILE (status.EQ.0) 
         CALL GetNextTet(newobj,nsrf,ielement,status)
         IF (status.EQ.0) THEN
           DO i1 = 1, newobj%nside
             newsrf%type = SP_PLANAR_POLYGON
             newsrf%nvtx = 3       
-            newsrf%ivtx(1) = GetTetSrfInd(newobj%in,i1,1)
-            newsrf%ivtx(2) = GetTetSrfInd(newobj%in,i1,2)
-            newsrf%ivtx(3) = GetTetSrfInd(newobj%in,i1,3)
+            newsrf%ivtx(1) = GetTetVtxInd(newobj%in,i1,1)
+            newsrf%ivtx(2) = GetTetVtxInd(newobj%in,i1,2)
+            newsrf%ivtx(3) = GetTetVtxInd(newobj%in,i1,3)
             idum1 = AddSurface(newsrf)
           ENDDO
           IF (nobj+1.GT.MAX3D) 
@@ -895,115 +917,189 @@ c...  Load all fluid grid tetrahedrons:
         ENDIF
       ENDDO 
 
+      CALL Wrapper_ClearObjects
+
       WRITE(0,*) 'NSRF:',nsrf
       WRITE(0,*) 'NOBJ:',nobj
       WRITE(0,*) 'NVTX:',nvtx
 c
 c...  Need to build connection map, again:
-      ALLOCATE(vsum (4,nobj))
-      ALLOCATE(ilist(nobj))
-      ALLOCATE(yobj(nobj))
-
-      WRITE(0,*) '  CALCULATING VSUM'
-      DO iobj = 1, nobj
-        isrf = obj(iobj)%iside(1,1)  
-c        yobj(iobj) = GetTetCentre(iobj)  
-
-
-c      WRITE(0,*) 'CENTRE:',yobj(iobj)
-c      WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
-c      STOP 'sdfsd'
-
-        yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
-        DO isid = 1, obj(iobj)%nside
-          isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
-          vsum(isid,iobj) = srf(isrf)%ivtx(1) +
-     .                      srf(isrf)%ivtx(2) +
-     .                      srf(isrf)%ivtx(3)
+      IF (.TRUE.) THEN
+        WRITE(0,*) '  CALCULATING TETRAHEDRON CONNECTION MAP'
+c...    Create map of original tetrahedron grid object index to the
+c       new RAY object index:
+        ntet = 0
+        DO iobj = 1, nobj
+          ntet = MAX(ntet,obj(iobj)%in)
         ENDDO
-      ENDDO
+        ALLOCATE(itet(ntet))
+        itet = -1
+        DO iobj = 1, nobj
+          itet(obj(iobj)%in) = iobj
+        ENDDO
+c...    Create (poor) surface discriminator:
+        ALLOCATE(vsum(4,nobj))
+        WRITE(0,*) '  CALCULATING VSUM'
+        DO iobj = 1, nobj
+          DO iside = 1, obj(iobj)%nside
+            isrf = obj(iobj)%iside(iside,1)  ! Assuming only one surface per side...
+            vsum(iside,iobj) = SUM(srf(isrf)%ivtx(1:3))
+          ENDDO
+        ENDDO
+        WRITE(0,*) '  DONE'
+c...    Build map:
+        DO iobj = 1, nobj
+          DO iside = 1, obj(iobj)%nside
 
-      WRITE(0,*) '  DIVIDING AND CONQUERING'
-      minphi =  1.0E+20
-      maxphi = -1.0E+20
-      miny   =  1.0E+20
-      maxy   = -1.0E+20
-      DO iobj = 1, nobj
-        minphi = MIN(minphi,obj(iobj)%phi)
-        maxphi = MAX(maxphi,obj(iobj)%phi)
-        miny   = MIN(miny  ,yobj(iobj)   )
-        maxy   = MAX(maxy  ,yobj(iobj)   )
-      ENDDO
-      WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
-      WRITE(0,*) '  MIN,MAXY  =',miny,maxy
-      dphi = 15.0
-      dy   = 0.20
-      DO phi = minphi, maxphi, dphi  ! maxphi, dphi
-        DO y = miny, maxy, dy
-          nlist = 0
-          WRITE(0,*) '  BUILDING LIST:',phi,y
-          DO iobj = 1, nobj
-            IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
-     .          ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
-              nlist = nlist + 1
-              ilist(nlist) = iobj
+            IF (obj(iobj)%imap(1,iside).NE.0   .AND.
+     .          obj(iobj)%imap(1,iside).LE.ntet) THEN
+              obj(iobj)%imap(1,iside) = itet(obj(iobj)%imap(1,iside))
+            ELSE
+              obj(iobj)%imap(1,iside) = -1
             ENDIF
-          ENDDO  
-          WRITE(0,*) '           DONE:',nlist
-          WRITE(0,*) '           MAPPING...'
-          DO i1 = 1, nlist-1
-            DO i2 = i1+1, nlist
-              DO i3 = 1, obj(ilist(i1))%nside
-                IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
-                DO i4 = 1, obj(ilist(i2))%nside
-c                  WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
-c                  WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
-     
-                  IF (vsum(i3,ilist(i1)).EQ.
-     .                vsum(i4,ilist(i2))) THEN 
-c...                Potential match, need proper check:
-                    isrf1 = obj(ilist(i1))%iside(i3,1)
-                    isrf2 = obj(ilist(i2))%iside(i4,1)
-                    c = 0
-                    DO i5 = 1, srf(isrf1)%nvtx
-                      DO i6 = 1, srf(isrf2)%nvtx
-                        IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
-     .                    c = c + 1
-                      ENDDO
-                    ENDDO
-c                    WRITE(0,*) 'c:',c
-                    IF (c.EQ.srf(isrf1)%nvtx) THEN
-c                      WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
-                      obj(ilist(i1))%nmap(  i3) = 1
-                      obj(ilist(i1))%imap(1,i3) = ilist(i2)
-                      obj(ilist(i1))%isur(1,i3) = i4
-                      obj(ilist(i2))%nmap(  i4) = 1
-                      obj(ilist(i2))%imap(1,i4) = ilist(i1)
-                      obj(ilist(i2))%isur(1,i4) = i3
-                      vsum(i3,ilist(i1)) = 0
-                      vsum(i4,ilist(i2)) = 0
-                    ENDIF
-                  ENDIF
 
+            IF (obj(iobj)%imap(1,iside).EQ.-1) THEN
+c...          No neighbouring tetrahedron:
+              obj(iobj)%tsur(  iside) = SP_GRID_BOUNDARY
+              obj(iobj)%imap(1,iside) = iobj
+              obj(iobj)%isur(1,iside) = iside
+            ELSE
+c...          Find out which side the neigbouring tetrahedron that
+c             the current side corresponds to:
+              iobj1 = obj(iobj)%imap(1,iside)
+              nmatch = 0
+              DO iside1 = 1, obj(iobj1)%nside
+                IF (vsum(iside,iobj).EQ.vsum(iside1,iobj1)) THEN
+                  nmatch = nmatch + 1
+                  obj(iobj)%isur(1,iside) = iside1                  
+                ENDIF
+              ENDDO
+              IF (nmatch.EQ.0) 
+     .          CALL ER('ProcessTetrahedronGrid','No side found '//
+     .                  'when building connection map',*98)
+              IF (nmatch.GT.1) 
+     .          CALL ER('ProcessTetrahedronGrid','More than one '//
+     .                  'side found, need to be more careful',*98)
+            ENDIF
+          ENDDO
+        ENDDO
+        DEALLOCATE(itet)
+        DEALLOCATE(vsum)
+        WRITE(0,*) '  DONE'
+      ELSE
+        ALLOCATE(vsum (4,nobj))
+        ALLOCATE(ilist(nobj))
+        ALLOCATE(yobj(nobj))
+
+        WRITE(0,*) '  CALCULATING VSUM'
+        DO iobj = 1, nobj
+          isrf = obj(iobj)%iside(1,1)  
+c          yobj(iobj) = GetTetCentre(iobj)  
+
+
+c        WRITE(0,*) 'CENTRE:',yobj(iobj)
+c        WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
+c        STOP 'sdfsd'
+
+          yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
+          DO isid = 1, obj(iobj)%nside
+            isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
+            vsum(isid,iobj) = srf(isrf)%ivtx(1) +
+     .                        srf(isrf)%ivtx(2) +
+     .                        srf(isrf)%ivtx(3)
+          ENDDO
+        ENDDO
+
+        WRITE(0,*) '  DIVIDING AND CONQUERING'
+        minphi =  1.0E+20
+        maxphi = -1.0E+20
+        miny   =  1.0E+20
+        maxy   = -1.0E+20
+        DO iobj = 1, nobj
+          minphi = MIN(minphi,obj(iobj)%phi)
+          maxphi = MAX(maxphi,obj(iobj)%phi)
+          miny   = MIN(miny  ,yobj(iobj)   )
+          maxy   = MAX(maxy  ,yobj(iobj)   )
+        ENDDO
+        WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
+        WRITE(0,*) '  MIN,MAXY  =',miny,maxy
+        dphi = 15.0
+        dy   = 0.20
+        DO phi = minphi, maxphi, dphi  ! maxphi, dphi
+          DO y = miny, maxy, dy
+            nlist = 0
+            WRITE(0,*) '  BUILDING LIST:',phi,y
+            DO iobj = 1, nobj
+              IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
+     .            ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
+                nlist = nlist + 1
+                ilist(nlist) = iobj
+              ENDIF
+            ENDDO  
+            WRITE(0,*) '           DONE:',nlist
+            WRITE(0,*) '           MAPPING...'
+            DO i1 = 1, nlist-1
+              DO i2 = i1+1, nlist
+                DO i3 = 1, obj(ilist(i1))%nside
+                  IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
+                  DO i4 = 1, obj(ilist(i2))%nside
+c                    WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
+c                    WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
+        
+                    IF (vsum(i3,ilist(i1)).EQ.
+     .                  vsum(i4,ilist(i2))) THEN 
+c...                  Potential match, need proper check:
+                      isrf1 = obj(ilist(i1))%iside(i3,1)
+                      isrf2 = obj(ilist(i2))%iside(i4,1)
+                      c = 0
+                      DO i5 = 1, srf(isrf1)%nvtx
+                        DO i6 = 1, srf(isrf2)%nvtx
+                         IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
+     .                     c = c + 1
+                        ENDDO
+                      ENDDO
+c                      WRITE(0,*) 'c:',c
+                      IF (c.EQ.srf(isrf1)%nvtx) THEN
+c                        WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
+                        obj(ilist(i1))%nmap(  i3) = 1
+                        obj(ilist(i1))%imap(1,i3) = ilist(i2)
+                        obj(ilist(i1))%isur(1,i3) = i4
+                        obj(ilist(i2))%nmap(  i4) = 1
+                        obj(ilist(i2))%imap(1,i4) = ilist(i1)
+                        obj(ilist(i2))%isur(1,i4) = i3
+                        vsum(i3,ilist(i1)) = 0
+                        vsum(i4,ilist(i2)) = 0
+                      ENDIF
+                    ENDIF
+        
+                  ENDDO
                 ENDDO
               ENDDO
             ENDDO
+
           ENDDO
-
         ENDDO
-      ENDDO
-
-c...  Marking the grid boundary:
-      DO iobj = 1, nobj
-        DO isid = 1, obj(iobj)%nside
-          IF (obj(iobj)%imap(1,isid).EQ.0) THEN
-            obj(iobj)%nmap(  isid) = 1
-            obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
-            obj(iobj)%imap(1,isid) = iobj
-            obj(iobj)%isur(1,isid) = isid
-          ENDIF
+c...    Mark the grid boundary:
+        DO iobj = 1, nobj
+          DO isid = 1, obj(iobj)%nside
+            IF (obj(iobj)%imap(1,isid).EQ.0) THEN
+              obj(iobj)%nmap(  isid) = 1
+              obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
+              obj(iobj)%imap(1,isid) = iobj
+              obj(iobj)%isur(1,isid) = isid
+            ENDIF
+          ENDDO
         ENDDO
-      ENDDO
+
+c...    Clear geometry arrays:
+        CALL ClearTetArrays
+        DEALLOCATE(vsum )
+        DEALLOCATE(ilist)
+
+      ENDIF
+
+
+
 
 c      DO iobj = 1, nobj
 c        IF (obj(iobj)%ivolume.NE.2) CYCLE  
@@ -1013,12 +1109,14 @@ c     .    obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY
 c      ENDDO
 c      STOP 'sdfsdf'
 
-c...  Clear geometry arrays:
-      CALL ClearTetArrays
-      DEALLOCATE(vsum )
-      DEALLOCATE(ilist)
+
 
       RETURN
+ 98   WRITE(0,*) ' FNAME= "'//TRIM(opt%obj_fname(ielement))//'"'
+      WRITE(0,*) ' IOBJ,ISIDE = ',iobj,iside
+      WRITE(0,*) ' NOBJ       = ',nobj
+      WRITE(0,*) ' VSUM       = ',vsum(iside,iobj)
+      WRITE(0,*) ' VSUM1      = ',vsum(1:4,obj(iobj)%imap(1,iside))
  99   STOP
       END
 c
@@ -1824,8 +1922,8 @@ c...    Toroidally continuous surfaces:
 C     .        (opt%ob_stdgrd.EQ.1.OR.opt%ob_stdgrd.EQ.3)) THEN
         nsector = opt%obj_nsector
 
-        STOP 'CUSTOM TOROIDAL SECTION SPECIFIED'
-        nsector = 48
+c        STOP 'CUSTOM TOROIDAL SECTION SPECIFIED'
+        nsector = 12
         opt%obj_angle_start = 0.0
         opt%obj_angle_end = 3.0 * 360.0 / 48.0
 !        opt%obj_angle_end = 360.0

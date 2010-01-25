@@ -32,22 +32,29 @@
      .  s28_MAXXPT   =   2,   
      .  s28_MAXVER   =   4, 
      .  S28_MAXNSRC  =  10,   
+     .  S28_MAXNTDEL =  100,   
      .  ITY_FLUID    =   1,    
      .  ITY_KINETIC  =   2,   
      .  ST_STANDARD  =   1,   
      .  ST_NORMALIZE =   2,
-     .  GRD_SOL      =   1,
-     .  GRD_PFZ      =   2,
-     .  GRD_CORE     =   3,
+     .  GRD_SOL      =   1,  ! Should be consistent with the SOL1 definition in SLCOM in DIVIMP
+     .  GRD_PFZ      =   2,  !  same
+     .  GRD_CORE     =   3,  !  same
      .  GRD_TEST     =   4,
      .  GRD_BOUNDARY =  -1,
-     .  EIR_MAXNPUFF =  10
+     .  EIR_MAXNSTRATA = 100,
+     .  EIR_MAXNVOID   = 100,
+     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5
+
 
       REAL, PUBLIC, PARAMETER ::   
      .  RHI   = 1.0E+37, 
      .  RLO   = 1.0E-37,
      .  V_PI  = 3.141593,
      .  EPS10 = 1.0E-10
+
+      REAL*8, PUBLIC, PARAMETER ::   
+     .  DPS10 = 1.0D-15
 
 
       INTEGER, PUBLIC, PARAMETER ::  LO = 1, HI = 2, FULL = 3, TOTAL = 0
@@ -67,20 +74,32 @@ c
       IMPLICIT none
       PRIVATE
 
+      LOGICAL, PUBLIC :: cell_modified, tube_modified  ! *** make PRIVATE when code update to use Alloc_cell, AddCell, etc and they are resident in this module
 
+!     OSM options:
+!     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_osm
          REAL*4    :: version = 1.0
+
+!...     Applicability:
+         INTEGER   :: iteration(2)
+         INTEGER   :: tube(2)
 
 !...     I/O:
          INTEGER   :: log          ! Log file option
          INTEGER   :: logfp        ! File pointer for log file
          INTEGER   :: debug
 
-         INTEGER   :: osm_load        ! Load status
-         CHARACTER :: f_osm_load*512  ! Name of file to be loaded
-         CHARACTER :: f_osm_dir*512   ! 
-
-!...     Control:
+         INTEGER   :: osm_load         ! Load status
+         CHARACTER :: f_osm_dir*512    ! 
+         CHARACTER :: f_osm_load*512   ! Name of file to be loaded
+!...     Grid:
+         INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
+         CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
+         INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
+         INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
+         INTEGER   :: grd_tdel(S28_MAXNTDEL)  ! List of tubes to delete
+!...     Flow control:
          INTEGER   :: nflukin      ! Number of fluid-kinetic code iterations
          INTEGER   :: eirene       !   execute Eirene
          INTEGER   :: divimp       !   execute DIVIMP
@@ -88,23 +107,21 @@ c
          LOGICAL   :: pin_data     ! Flags whether or not PIN data is available
          INTEGER   :: cosm         ! OSM flux-tube loop internal iteration number for this run
          INTEGER   :: cflukin      ! OSM-kinetic code (Eirene,DIVIMP) iteration number
-
-
 !...     Fluid solver:  
+         INTEGER   :: sol_n
+         INTEGER   :: sol_tube  (2,100)
+         INTEGER   :: sol_option(  100)
          INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
-
-
          INTEGER   :: p_ion(2)         ! Ionisation 
+         REAL      :: p_ion_exp(2)     ! Exponent for exponential decay of the ionisation source for P_ION = 3
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
          INTEGER   :: p_rec(2)         ! Volume recombination 
          INTEGER   :: p_ano(2)         ! Anomalous
-
          INTEGER   :: m_mom(2)         ! ... needs new name...
          INTEGER   :: m_fit(2)         !
          INTEGER   :: m_ano(2)         !
          INTEGER   :: m_ano_dist(2)    ! Distribution along field line of anomalous momentum
          REAL      :: m_ano_exp(2)     ! Distribution exponent
-
          INTEGER   :: ti(2)            ! Ti calculation
          INTEGER   :: te_ano(2)        ! Distribution of anomalous (cross-field) electron power into the tube
          INTEGER   :: te_ano_psol(2)   ! Magnitude of  anomalous (cross-field) electron power flux
@@ -121,43 +138,107 @@ c
          INTEGER   :: ti_equil(2)      ! Te,Ti equilibration (fluid quantities only?)
          INTEGER   :: ti_ion(2)        ! Energy source from neutral code associated with ionisation (not strictly correct)
          INTEGER   :: ti_rec(2)        ! Energy source from neutral code associated with volume recombination
-
          INTEGER   :: super(2)         ! Allow for supersonic flows near targets
- 
          REAL      :: s28mode          ! Node assignment routine
+!...     Materials data to load:
+         INTEGER   :: mat_opt
+         CHARACTER :: mat_file*512
       ENDTYPE type_options_osm
 
+
+      TYPE, PUBLIC :: type_options_filament
+         REAL*4    :: version = 1.0
+
+         INTEGER   :: opt
+         INTEGER   :: clip
+         INTEGER   :: target_flux
+         REAL      :: start_time
+         REAL      :: time_step
+         REAL      :: scale(3)
+         REAL      :: length1
+         REAL      :: length2
+! Time of interest for non-iterating solution, i.e. advancement to a particular time where everything starts at t=0.0
+! Cross field dimention of filament grid refinement: 1 - initial pass, 2 - second pass, 3 - plasma assignment
+      ENDTYPE type_options_filament
+
+!     EIRENE options:
+!     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_eirene
          REAL*4    :: version = 1.0
 
 !...     i/o:
+         INTEGER   :: f_eirene_load     ! Load status of reference files
+         CHARACTER :: f_eirene_dir*512  ! Directory where EIRENE data files are located 
+         CHARACTER :: f_eirene_13*512   ! eirene.13
+         CHARACTER :: f_eirene_15*512   ! eirene.15 for time dependent runs
 
 !...     Options:    
          INTEGER   :: geom            ! geometry  2-triangles 3-tetrahedrons (toroidal)
          INTEGER   :: time            ! Execution time (CPU time in seconds)
          REAL      :: dtimv           ! ?
+         REAL      :: time0           ! ?
          INTEGER   :: opacity         ! Lyman alpha photon opacity option
          INTEGER   :: photons         ! Photon transport option
          INTEGER   :: trim            ! Fast ion surface collision database
          INTEGER   :: bgk             ! Neutral viscosity
          INTEGER   :: niter           ! Number of Eirene self-iterations
+         INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
+         INTEGER   :: ilspt           ! Sputering option
 
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
-         REAL      :: puff_type(EIR_MAXNPUFF)
-         INTEGER   :: puff_npts(EIR_MAXNPUFF)
-         REAL      :: puff_flux(EIR_MAXNPUFF)
-         REAL      :: puff_frac(EIR_MAXNPUFF)
-         INTEGER   :: puff_species(EIR_MAXNPUFF)
-         INTEGER   :: puff_index(EIR_MAXNPUFF)
-         INTEGER   :: puff_energy(EIR_MAXNPUFF)
-         INTEGER   :: puff_cosine_ind(EIR_MAXNPUFF)
-         INTEGER   :: puff_cosine_max(EIR_MAXNPUFF)
-         INTEGER   :: puff_pos(3,EIR_MAXNPUFF)
-         INTEGER   :: puff_vec(3,EIR_MAXNPUFF)
-         CHARACTER :: puff_note(EIR_MAXNPUFF)*1024
+!         REAL      :: puff_type   (EIR_MAXNPUFF)
+!         INTEGER   :: puff_npts   (EIR_MAXNPUFF)        ! *** IN USE? ***
+!         REAL      :: puff_flux   (EIR_MAXNPUFF)
+!         REAL      :: puff_frac   (EIR_MAXNPUFF)
+!         INTEGER   :: puff_species(EIR_MAXNPUFF)
+!         INTEGER   :: puff_index  (EIR_MAXNPUFF)
+!         INTEGER   :: puff_energy (EIR_MAXNPUFF)
+!         INTEGER   :: puff_cosine_ind(EIR_MAXNPUFF)
+!         INTEGER   :: puff_cosine_max(EIR_MAXNPUFF)
+!         INTEGER   :: puff_pos (3,EIR_MAXNPUFF)
+!         INTEGER   :: puff_vec (3,EIR_MAXNPUFF)
+!         CHARACTER :: puff_note(  EIR_MAXNPUFF)*1024
 
+c...    Strata:
+        INTEGER   :: nstrata 
+        REAL      :: type           (EIR_MAXNSTRATA)
+        INTEGER   :: Z              (EIR_MAXNSTRATA)           ! atomic number
+        INTEGER   :: A              (EIR_MAXNSTRATA)           ! atomic mass
+        INTEGER   :: npts           (EIR_MAXNSTRATA)
+        REAL      :: flux           (EIR_MAXNSTRATA)
+        REAL      :: flux_fraction  (EIR_MAXNSTRATA)
+        CHARACTER :: species_tag*128(EIR_MAXNSTRATA)
+        INTEGER   :: species        (EIR_MAXNSTRATA)
+        INTEGER   :: species_index  (EIR_MAXNSTRATA)
+        REAL      :: energy         (EIR_MAXNSTRATA)
+        INTEGER   :: target         (EIR_MAXNSTRATA)
+        INTEGER   :: range_cell   (2,EIR_MAXNSTRATA)
+        INTEGER   :: range_tube   (2,EIR_MAXNSTRATA)
+!        REAL      :: cos         
+!        REAL      :: cos_max     
+!        CHARACTER :: note*512    
+!        INTEGER   :: indsrc  ! ...
+        CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)
+!        INTEGER   :: ninitl       
+!        INTEGER   :: nemods       
+!        CHARACTER :: species_tag*4
+!        INTEGER   :: nspez
+!        CHARACTER :: distrib*5
+!        INTEGER   :: inum
+!        INTEGER   :: indim
+!        INTEGER   :: insor
+!        REAL      :: sorwgt
+        REAL      :: sorlim       (EIR_MAXNSTRATA)
+        REAL      :: sorind       (EIR_MAXNSTRATA)
+!        INTEGER   :: nrsor    
+!        INTEGER   :: nasor
+        REAL      :: sorad      (6,EIR_MAXNSTRATA)
+        REAL      :: sorene       (EIR_MAXNSTRATA)
+!        REAL      :: soreni   
+        REAL      :: sorcos       (EIR_MAXNSTRATA)
+        REAL      :: sormax       (EIR_MAXNSTRATA)
 
 !...     Geometry / structure:
          INTEGER   :: ntorseg         ! Number of toroidal segments for regular toroidal descretization
@@ -168,8 +249,22 @@ c
          INTEGER   :: mat2            ! Wall material?            
          REAL      :: ctargt          ! Target surface temperature
          REAL      :: cwallt          ! Wall surface temperature
-      ENDTYPE type_options_eirene
 
+
+!...     Voids between the fluid grid and the wall:
+         INTEGER   :: nvoid 
+         INTEGER   :: void_zone(  EIR_MAXNVOID)
+         INTEGER   :: void_grid(2,EIR_MAXNVOID)
+         INTEGER   :: void_wall(2,EIR_MAXNVOID)
+         INTEGER   :: void_add (2,EIR_MAXNVOID)
+         REAL      :: void_res (  EIR_MAXNVOID)
+         REAL      :: void_hole(2,EIR_MAXNVOID)
+         INTEGER   :: void_code(  EIR_MAXNVOID)
+         REAL      :: void_ne  (  EIR_MAXNVOID)
+         REAL      :: void_te  (  EIR_MAXNVOID)
+         REAL      :: void_ti  (  EIR_MAXNVOID)
+
+      ENDTYPE type_options_eirene
 !
 !
 !     Interpolation nodes:
@@ -205,6 +300,7 @@ c
          INTEGER   :: par_set
          ! External data file:
          CHARACTER :: file_name*512
+         INTEGER   :: file_format
          REAL      :: file_shift
          REAL      :: file_scale_ne
          REAL      :: file_scale_M
@@ -233,11 +329,23 @@ c
         REAL    :: version_drift
         REAL    :: version_fluid
         REAL    :: version_impurity
+        REAL    :: version_wall
+        REAL    :: version_species
         INTEGER :: n                 ! = NTUBE
         INTEGER :: isep
+        INTEGER :: isep2
         INTEGER :: ipfz
         INTEGER :: ikto
         INTEGER :: ikti
+        REAL*8  :: r0
+        REAL*8  :: z0
+        REAL*8  :: core_volume_total
+        REAL*8  :: core_volume_grid
+        REAL*8  :: core_surface_area
+        INTEGER :: nxpt
+        REAL*8  :: rxpt(2)
+        REAL*8  :: zxpt(2)
+        INTEGER :: ixpt(2,2)
       ENDTYPE type_grid
 !
 !
@@ -248,7 +356,7 @@ c
         INTEGER :: region                ! core/SOL/PFZ/...
         INTEGER :: ir                    ! Radial index of tube ('ring number' in DIVIMP fluid grid)
         INTEGER :: it                    ! Toroidal index ('segment')
-        INTEGER :: type                  ! 'idring' in DIVIMP
+        INTEGER :: type                  ! 'idring' in DIVIMP -- *** useful? ***
 !...    Geometry data:
         INTEGER :: n                     ! Number of knots/cells in the flux-tube
         INTEGER :: ikti                       
@@ -258,6 +366,11 @@ c
         REAL    :: rho
         REAL    :: psin
         REAL    :: metric(2)             ! Cross-field othogonality metric at ends of tube
+        REAL*8  :: VOlume
+        REAL*8  :: surface_area(2)
+        REAL*8  :: target_area(2)
+!...    3D:
+        REAL    :: dangle                ! Toroidal angle step when calculating 3D flux-tube
 !...    DIVIMP geometry data (temporary):
         REAL    :: bratio(2)             ! Field ratio (not totally correct)
         REAL    :: dds   (2)             ! Length of target segment (m)
@@ -279,6 +392,10 @@ c
         REAL    :: machno(2)
         REAL    :: pi(2,s28_MAXNION)       
         REAL    :: ti(2,s28_MAXNION)       
+        REAL    :: gamma(2,s28_MAXNION)       
+        REAL    :: qe(2,s28_MAXNION)
+        REAL    :: te_upstream(2,s28_MAXNION)
+        REAL    :: Psol(2,s28_MAXNION)
 !...    Cells:
         INTEGER :: cell_index(2)           ! Index of flux-tube in the CELL array
 !...    Store solution parameters for upstream bc work:
@@ -303,19 +420,25 @@ c
 !     Cells:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_cell
-        INTEGER :: ik                               ! Index of cell in standard 2D grid
+        INTEGER*2 :: ik                             ! Knot index of cell in standard 2D grid
+        INTEGER*2 :: ir                             ! Ring index
 !...    Geometry data:
         REAL    :: cencar(3)                        ! Cell caresian center in machine coordinates
         REAL    :: centor(3)                        ! Cell toroidal center in 'toroidal' coordinates
         REAL    :: vol                              ! Cell volume 
-        INTEGER :: nside                            ! Number of sides for each cell: nside=6 usually
+        INTEGER :: nside                            ! *** DELETE? *** Number of sides for each cell: nside=6 usually
+!...    3D:
+        REAL    :: s_3D
+        REAL    :: sbnd_3D(2)
+        REAL    :: area_3D
+        REAL    :: volume_3D
 !         ...need some reference to location relative to x-point...
         REAL    :: s                                ! Distance of cell center along the magnetic field line (m), s=0 at inner target (LO index target)
         REAL    :: p                                ! Poloidal distance of cell center from inner target (LO index target)
         REAL    :: sbnd(2)                          ! 's' at ends of each cell
         REAL    :: pbnd(2)                          ! 'p' at ends of each cell
-        REAL    :: ds
-        REAL    :: dp
+        REAL    :: ds                               ! *** delete? ***
+        REAL    :: dp                               ! *** delete? ***
         REAL    :: metric                           ! Cross-field othogonality metric
         REAL    :: cfdist(s28_MAXSIDE)              ! Cross-field distance from cell center to side in machine coordinates
 !...    Cell side data:   (FOR DELETION!  DO NOT USE!)
@@ -439,21 +562,133 @@ c
         REAL    :: enesrc               ! Energy
         REAL    :: enisrc
       ENDTYPE type_fluid
-
+!
 !...  Kinetic ion code results (Eirene/DIVIMP):
 !     --------------------------------------------------
       TYPE, PUBLIC :: type_kinetic
         REAL :: te
       ENDTYPE type_kinetic
-
+!
+!...  Wall segments:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_wall
+        REAL      :: type                 ! Don't know why I used INDEX here, should replace
+        INTEGER   :: class                ! everything with a call to the actual name of 
+        INTEGER   :: index(10)            ! the variable, i.e. %index(WAL_TUBE) should be
+        CHARACTER :: material_tag*128     ! %tube
+        INTEGER   :: material
+        REAL      :: temperature
+        REAL*8    :: v1(2)
+        REAL*8    :: v2(2)
+        CHARACTER :: file_name*512
+        INTEGER   :: file_format
+      ENDTYPE type_wall
+!
+!...  Plasma species:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_species
+        REAL      :: version
+        CHARACTER :: tag*128
+        INTEGER   :: index
+        INTEGER   :: type
+        CHARACTER :: code_source_tag*128
+        INTEGER   :: code_source
+        CHARACTER :: code_transport_tag*128
+        INTEGER   :: code_transport
+        INTEGER   :: maxcharge
+        INTEGER   :: nhistory
+        INTEGER   :: ntime
+      ENDTYPE type_species
+!
+!...  Simulation code designation:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_code
+        REAL      :: version
+        CHARACTER :: name*128
+        CHARACTER :: home*128
+        CHARACTER :: run_script*128
+      ENDTYPE type_code
+!
+!...  Material data:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_material
+        REAL      :: version
+        INTEGER   :: type
+        CHARACTER :: tag*128
+        INTEGER   :: A
+        INTEGER   :: Z
+        REAL      :: mass
+        REAL      :: density
+        CHARACTER :: crystal_structure*128
+        REAL      :: monolayer_thickness
+        REAL      :: melting_point
+        REAL      :: thermal_conductivity
+        INTEGER   :: adas_divimp
+        INTEGER   :: adas_eirene
+      ENDTYPE type_material
+!
+!     Target plates:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_target
+        REAL      :: version
+        INTEGER   :: type         ! ...
+        INTEGER   :: location     ! Location relative to the divertor/limiter layout
+        INTEGER   :: position     ! Which end of the flux-tube: low index (1, 2, 3...) or high (...n-2, n-1, n) 
+        CHARACTER :: tag*1024     
+        INTEGER   :: nlist        ! Number of tubes associated with this target
+        INTEGER   :: npart        ! Number of parts that the target is made up of if discontinuous
+        INTEGER   :: ipeak        ! Index of nominal distribution peak, i.e. usually ISEP or ISEP2
+        REAL      :: sep_psin     ! PSIn at the local target/separatrix intersection             
+        REAL      :: sep_rho      ! RHO (midplane mapping) at the local target/sep. intersection
+        INTEGER   :: ilist(1024)  ! List of the tubes
+        INTEGER   :: ipart(1024)  ! Part index
+      ENDTYPE type_target
+!
 !...  
       REAL, PUBLIC, ALLOCATABLE, SAVE :: tmpflx(:,:)
 
       END MODULE mod_sol28
 !
+! ----------------------------------------------------------------------
 !
+      MODULE mod_sol28_targets
+      USE mod_sol28      
+      IMPLICIT none
+
+      INTEGER :: ntarget
+      TYPE(type_target), ALLOCATABLE :: target(:)
+
+      END MODULE mod_sol28_targets
 !
+! ----------------------------------------------------------------------
 !
+      MODULE mod_options
+      USE mod_sol28      
+      IMPLICIT none
+
+      TYPE(type_options_filament) :: opt_fil
+      END MODULE mod_options
+!
+! ----------------------------------------------------------------------
+!
+      MODULE mod_sol28_wall
+      USE mod_sol28      
+      IMPLICIT none
+
+      INTEGER, PARAMETER :: WAL_GROUP  = 1,  ! Group index
+     .                      WAL_INDEX  = 2,  ! Index within group
+     .                      WAL_TUBE   = 3,  ! Corresponding tube for target segments
+     .                      WAL_TARGET = 4,  ! Target index (LO,HI)
+     .                      WAL_RANGE1 = 8,  ! Target index (LO,HI)
+     .                      WAL_RANGE2 = 9   ! Target index (LO,HI)
+
+      INTEGER, SAVE :: nopt_wall
+      TYPE(type_wall), SAVE :: opt_wall(100)
+
+      INTEGER, SAVE :: nwall
+      TYPE(type_wall), ALLOCATABLE :: wall(:)
+
+      END MODULE mod_sol28_wall
 !
 ! ----------------------------------------------------------------------
 !
@@ -468,21 +703,31 @@ c
      .                      IND_IR      = 2,  
      .                      IND_IS      = 3,  
      .                      IND_ZONE    = 4,  
-     .                      IND_FLUID   = 5,  
-     .                      IND_KINETIC = 6,  
-     .                      IND_NEUTRAL = 7,  
+     .                      IND_FLUID   = 5,  ! *** NEED TO ADD A FLAG IN THE OBJECT BEING CREATED
+     .                      IND_KINETIC = 6,  !     THAT IDENTIFIES WHERE IT WAS GENERATED, SINCE
+     .                      IND_NEUTRAL = 7,  !     THESE MAPPINGS ARE SOURCE DEPENDENT, I.E. THEY ARE DIFFERENCE IN mod_sol28 and mod_eirene06...
      .                      IND_FIELD   = 8,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
-     .                      IND_CELL    = 9
+     .                      IND_CELL    = 9,
+     .                      IND_OBJECT  = OBJ_MAXNINDEX+1  ! Just for cell and tube finding in GetCell and and GetTube
 
       INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
-     .                      IND_SURFACE = 3   ! Surface (block 2A non-default surface in Eirene input file)
+     .                      IND_SURFACE = 3,  ! Surface (block 2A non-default surface in Eirene input file)
+     .                      IND_WALL    = 4   ! Surface (block 2A non-default surface in Eirene input file)
 
 
 !...
-      TYPE(type_options_osm   ) :: opt
-      TYPE(type_options_eirene) :: opt_eir
+      TYPE(type_options_osm     ) :: opt
+      INTEGER, PARAMETER :: MAX_NOPT = 10
+      INTEGER nopt
+      TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
+      TYPE(type_options_eirene  ) :: opt_eir   ! *** ADD SIMILAR FUNCTIONALITY? ***
       INTEGER log, logfp
+
+!...  Nasty...
+      INTEGER, PARAMETER :: MAX_NITERATION = 1000
+      INTEGER               iiteration,niteration
+      CHARACTER*1024        iteration_buffer(MAX_NITERATION)
 
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
@@ -495,7 +740,7 @@ c
       INTEGER, PARAMETER :: MAXNCELL = MAXNTUBE * 100
       INTEGER, SAVE :: nion,ncell,nfield,npin,nphoton,nfluid,nkinetic,
      .                 nimpurity,ndrift
-      TYPE(type_cell         ), ALLOCATABLE, SAVE :: cell    (:) 
+      TYPE(type_cell    ), ALLOCATABLE, SAVE :: cell    (:) 
       TYPE(type_field   ), ALLOCATABLE, SAVE :: field   (:) 
       TYPE(type_neutral ), ALLOCATABLE, SAVE :: pin     (:,:) 
       TYPE(type_photon  ), ALLOCATABLE, SAVE :: photon  (:,:) 
@@ -505,9 +750,24 @@ c
       TYPE(type_drift   ), ALLOCATABLE, SAVE :: drift   (:,:) 
 
 !...  Reference plasma:
-      INTEGER, SAVE :: ref_ntube,ref_nion,ref_nfluid
+      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
       TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
+      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
+
+
+!...  Plasma species that are being tracked in the simulation:
+      INTEGER, SAVE :: nspecies
+      TYPE(type_species), SAVE :: species(100)
+
+!...  Material data:
+      INTEGER, SAVE :: nmaterial
+      TYPE(type_material), SAVE :: material(100)
+
+
+!...  Index mapping in GetObject and GetTube:
+      INTEGER, ALLOCATABLE, SAVE :: obj_index_map (:,:),
+     .                              tube_index_map(:,:)
 
       END MODULE mod_sol28_global
 !
@@ -527,17 +787,22 @@ c
       LOGICAL, SAVE :: output
 
 
-      REAL*8, PARAMETER :: ECH = 1.602D-19, AMU = 1.67D-27
+      REAL*8, PARAMETER :: ECH = 1.6022D-19, AMU = 1.67D-27
 
 
       TYPE(type_options_osm), SAVE :: opt
       INTEGER :: log,logfp
 
+      REAL*8, SAVE :: chisq(0:7),t_chisq(0:7),m_chisq(0:7)
+
+
 !...  Local solver options:
       INTEGER, SAVE ::    
 c     .  opt_bc(2),             ! Method of assigning boundary conditions (1=target, 2=upstream)
 c     .  opt_p_ion(2),             
-     .  opt_p_ion_scale(2)
+     .  sol_option,
+     .  opt_p_ion_scale(2),
+     .  node_par_mode  (100)
 c     .  opt_p_rec(2),             
 c     .  opt_p_ano(2),              
 c     .  opt_p_radExB(2),   
