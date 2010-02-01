@@ -2928,7 +2928,8 @@ Contains
        Do j = 1,number_leaked_core(i) ! Done for particles from both targets.
           index_cnt= index_cnt+1
           do k = 1,2
-             Call pacleakpos (index_cnt,k, HC_Leak_Position (i,j,k))
+             ! jdemod - i,j index was reversed - corrected to j,i
+             Call pacleakpos (index_cnt,k, HC_Leak_Position (j,i,k))
           end do  
        End Do
     End Do

@@ -47,6 +47,10 @@ c
       INTEGER NQS,ISTEP,in
       REAL    ZO
 c
+c     jdemod - option for converting LP data input from particles/s to A/s
+c     
+      real lpdat_conv
+c
 c     Option indicating if the SOL23 parameter list is included in the data
 c     file.
 c
@@ -266,7 +270,7 @@ c     AS EITHER THE DENSITY OR THE Isat (PROBE SATURATION CURRENT)
 c
 C     THE DATA IS ORDERED AS  RING #,TEBP,TIBP,NBP (or ISAT)
 C
-      CALL RDI(lpdatsw,.TRUE. , 0 ,.TRUE., 1 ,'LP DATA SWITCH', IERR)
+      CALL RDI(lpdatsw,.TRUE. , 0 ,.TRUE., 2 ,'LP DATA SWITCH', IERR)
 c
 c     Inner
 c
@@ -286,16 +290,35 @@ c
 c
 c     Adjust the Target conditions - by multiplication factors
 c
+c     jdemod 
+c
+c     If the lpdat switch is set to 2 convert particles/s to Amperes for
+c     compatibility elsewhere in the code. 
+c      
+      if (lpdatsw.eq.2) then 
+c
+c        Note: after conversion the data is then in A and the lpdatsw needs to be
+c        set accordingly. 
+c
+         write(6,'(a)') 'INPUT: LPDATSW : Initial value 2 : '//
+     >     'Isats converted from particles/s to Amp : LPDATSW set to 1'
+c
+         lpdat_conv = ech
+         lpdatsw = 1
+      else
+         lpdat_conv = 1.0
+      endif
+c
       do in = 1,nlpdati
          lpdati(in,2) =  lpdati(in,2) * te_mult_i
          lpdati(in,3) =  lpdati(in,3) * ti_mult_i
-         lpdati(in,4) =  lpdati(in,4) *  n_mult_i
+         lpdati(in,4) =  lpdati(in,4) *  n_mult_i * lpdat_conv
       end do
 c
       do in = 1,nlpdato
          lpdato(in,2) =  lpdato(in,2) * te_mult_o
          lpdato(in,3) =  lpdato(in,3) * ti_mult_o
-         lpdato(in,4) =  lpdato(in,4) *  n_mult_o
+         lpdato(in,4) =  lpdato(in,4) *  n_mult_o * lpdat_conv
       end do
 C
 c     Read in data for core rings - data varies depending on

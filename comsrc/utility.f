@@ -3729,19 +3729,41 @@ C
 c
        real   ran1,ran2
        real*8 seed
+       real :: n(2),ri(2),rr(2)
+       real, external :: atan2c
+
 c
 c       real*8 tnorm_tmp,timp_tmp,dthe,tref_tmp
 c
+c
+c       jdemod - Set the maximum reflection angle to 89 degrees
+c                from normal for the random angle cases  
+c
        if (nrfopt.eq.0.or.nrfopt.eq.1) then
 
-          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+c          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+c          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
+c
+c          jdemod - formula only works under specific circumstances
+c                 - replace with general vector formulation
+c
+           n(1) = cos(tnorm)
+           n(2) = sin(tnorm)
+           ri(1) = -cos(timp)
+           ri(2) = -sin(timp)
+          
+           rr = ri - 2.0 * n * dot_product(ri,n)
+c
+c          Calculate reflection angle from reflection vector
+c
+           tref = atan2c(rr(2),rr(1))
 
        elseif (nrfopt.eq.2) then
 c
           CALL SURAND2 (SEED, 1, RAN1)
           CALL SURAND2 (SEED, 1, RAN2)
 c
-          TREF = tnorm + SIGN (ACOS (ran1), ran2-0.5)
+          TREF = tnorm + SIGN (min(ACOS (ran1),DEGRAD*89.0), ran2-0.5)
 c
 c ammod - added options 3 and 4 to NRFOPT
 c
@@ -3750,14 +3772,15 @@ c
 	  CALL SURAND2 (SEED, 1, RAN1)
           CALL SURAND2 (SEED, 1, RAN2)
 c
-          TREF = tnorm + SIGN (ASIN (ran1), ran2-0.5)
+          TREF = tnorm + SIGN (min(ASIN (ran1),DEGRAD*89.0), ran2-0.5)
 c
        elseif (nrfopt.eq.4) then
 c
 	  CALL SURAND2 (SEED, 1, RAN1)
           CALL SURAND2 (SEED, 1, RAN2)
 c
-          TREF = tnorm + SIGN (ASIN (SQRT(ran1)), ran2-0.5)
+          TREF = tnorm + SIGN (min(ASIN (SQRT(ran1)),degrad*89.0),
+     >                         ran2-0.5)
 c
 c ammod
 c

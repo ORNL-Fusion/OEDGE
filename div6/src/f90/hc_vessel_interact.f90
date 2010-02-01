@@ -1411,8 +1411,9 @@ Contains
        Stop
     ElseIf (hc_reflection_angle_model .eq. 1) Then
        ! =1, Specular reflection from wall, bounds of +/-90 degrees from normal to vessel wall.
+       ! jdemod - Ion specular reflection doesn't make any sense - what is the incoming angle in this case?
        reflection_angle = 2.0*gthetas(target_segment) + sign ((PI-abs(incoming_angle)),-incoming_angle)
-       !Write (Output_Unit_HC_Alert,*) "Specular reflection not yet supported.  Program stopping."
+       Write (Output_Unit_HC_Alert,*) "Specular reflection not yet supported.  Program stopping."
        Stop
     ElseIf (hc_reflection_angle_model .eq. 2) Then
        ! =2, Isotropic reflection from vessel wall, bounds of +/-90 degrees from normal to vessel wall.

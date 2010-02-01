@@ -2007,9 +2007,10 @@ Contains
             &     INJ_Ring_Number),"BRatio", &
             &     gbratio(Temp_Counter, INJ_Ring_Number),"Center S",gkss(Temp_Counter, INJ_Ring_Number), &
             &     "area",gkareas(Temp_Counter, INJ_Ring_Number), &
-            &     "ratio L/A",(gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number))/gkareas(Temp_Counter, &
-            &     INJ_Ring_Number), &
-            &     "ratio C/A", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)/gkareas(Temp_Counter, INJ_Ring_Number), &
+            &     "ratio L/A",(gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number))&
+            &                  /max(1e-8,gkareas(Temp_Counter,INJ_Ring_Number)), &
+            &     "ratio C/A", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)&
+            &                  /max(1e-8,gkareas(Temp_Counter, INJ_Ring_Number)), &
             &     "ratio C/L", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)/(gksb(Temp_Counter, INJ_Ring_Number)-gksb(&
             &     Temp_Counter-1, INJ_Ring_Number))
     End Do

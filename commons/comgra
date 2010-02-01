@@ -2,9 +2,14 @@ c     -*-Fortran-*-
 c
 c     Common block for graphics in OUT 
 c
-      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,NPLOTS,ISPOT
+c
+c     
+c
+      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,GRA_NPLOTS,ISPOT,
+     >                thickness
       save /comgra/
 c
       REAL            CXMIN,CXMAX,CYMIN,CYMAX
-      INTEGER         IPLOTS,NPLOTS,ISPOT
+      INTEGER         IPLOTS,GRA_NPLOTS,ISPOT
+      integer :: thickness
 c
