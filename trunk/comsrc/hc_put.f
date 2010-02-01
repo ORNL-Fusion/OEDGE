@@ -1049,10 +1049,20 @@
 		Integer, Intent (In) :: Index1
 		Integer, Intent (In) :: Index2
 		Real, Intent (In) :: Value
-		
+
+!
+!               jdemod - cleakpos isn't really used at the moment - however, it is 
+!                        supposed to contain the starting R and Z ionization locations 
+!                        for each particle entering the confined plasma. As
+!                        such the values are only assigned not summed. 
+!     
+                cleakpos(index1,index2) = Value
+                
 		! Store value.
-		cleakpos (Index1,Index2) = cleakpos (Index1,Index2) + 
-     >            Value
+!		cleakpos (Index1,Index2) = cleakpos (Index1,Index2) + 
+!     >            Value
+                
+
 
 	End Subroutine pacleakpos
 	

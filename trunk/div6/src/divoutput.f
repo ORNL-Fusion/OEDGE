@@ -1859,9 +1859,18 @@ C-----------------------------------------------------------------------
      >ID) GRID FILES')
 
         if (sonnet_grid_sub_type.eq.1) then 
-          call prc(sp//'USE FRC VERSION 1 SONNET GRID '
-     >               //'CUSTOMIZATIONS')
+          call prc(sp//'SONNET GRID SUB-TYPE: 1')
+          call prc(sp//'- USE FRC VERSION 1 SONNET GRID '
+     >               //' CUSTOMIZATIONS')
         endif 
+c
+        if (sonnet_grid_sub_type.eq.2) then 
+          call prc(sp//'SONNET GRID SUB-TYPE: 2')
+          call prc(sp//'- SONNET GRID WITHOUT BOUNDARY CELLS - '
+     >               //'CELLS ARE ADDED FOR INTERNAL PROCESSING')
+        endif 
+
+
       ELSEIF (CGRIDOPT.EQ.LINEAR_GRID) then
         CALL PRC ('  GRID OPTION 6:  LINEAR DEVICE GRID BUILT')
       ELSEIF (CGRIDOPT.EQ.GEN_GRID) then
