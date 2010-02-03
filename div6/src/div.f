@@ -1578,6 +1578,10 @@ c
 c
            irstart = idatizs (imp,3)
            ikstart = idatizs (imp,4)
+c
+c          Transferred source terms and localization data  
+c          based on entire molecule 
+c
            incore = Travel_Locations (imp,1)
            inedge = Travel_Locations (imp,2)
            inmsol = Travel_Locations (imp,3)
@@ -1603,8 +1607,9 @@ c
 	   ! Updating num_entered_core is done by DIVIMP for each HC.      
            num_entered_core = num_entered_core + sputy
 c
-           ! Updating all other position variables is done by 
-	   ! passed information from DIVIMP-HC.
+           ! jdemod - wtsource data for each HC particle is accumulated
+           !          in the HC code ... continued for ions here  
+           !
            if (.not.incore) then  
               incore = .true.
 c

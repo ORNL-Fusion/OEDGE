@@ -251,6 +251,16 @@ Contains
  
     ! Set initial fate.
     IFate = 0
+
+    ! jdemod - set particle location tracking toggles
+    !        - this was changed from tracking/state to tracking/particle
+    !        - in addition the associated wtsource data is not passed to DIVIMP
+    !        - code in DIVIMP is looking only at leakage of ionized atomic particles not the molecular fragments
+    HC_InCore = .False.
+    HC_InEdge = .False.
+    HC_InMSOL = .False.
+    HC_InDIV = .False.
+    HC_InTrap = .False.
  
     ! Set initial time.
     Time_Value = 0.0
