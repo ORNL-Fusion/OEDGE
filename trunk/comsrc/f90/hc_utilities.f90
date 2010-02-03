@@ -2813,6 +2813,10 @@ Contains
        End Do
     End Do
  
+    ! jdemod - base wtsource data in DIVIMP on only the C+ ion transport as is done with neut data
+    !        - the HC code was collecting wtsource data for each state instead of particle so there
+    !          were issues with data adding up - changed to once/particle
+    !
     ! HC_WtSource.
     Do i = 1, Max_Points
        Do j = 1, Max_Rings
