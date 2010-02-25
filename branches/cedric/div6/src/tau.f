@@ -2570,6 +2570,18 @@ c    result:
          ENDIF
       endif
 
+c$$$      CALL CalcMetric
+c$$$      WRITE(0,*) ' Writing CSV Theta'
+c$$$      CALL csvThetaOld
+c$$$      WRITE(0,*) 'Writing Theta to CSV complete'
+c$$$      WRITE(0,*) 'ThetaG(19,50),in',THETAG(19,50),KORPG(19,50)
+c$$$      WRITE(0,*) 'ThetaG(20,50),in',THETAG(20,50),KORPG(20,50)
+c$$$      WRITE(0,*) 'THETAG(21,50),in',THETAG(21,50),KORPG(21,50)
+c$$$      WRITE(0,*) 'THETAG(22,50),in',THETAG(22,50),KORPG(22,50)
+c$$$
+c$$$      WRITE(0,*) 'DTHETG',DTHETG
+c$$$      STOP
+
 c...  Make a token call to SetupRelaxation, in case SOL22/24 is not
 c     being used.  This should be moved somewhere more appropriate,
 c     but not sure where just yet:
@@ -21406,3 +21418,27 @@ c slmod end
 
       return
       end
+
+
+      SUBROUTINE csvThetaOld
+      IMPLICIT NONE
+      include 'params'
+      include 'cgeom'
+
+      INTEGER OutputUnit, in, ik,ir
+
+      OutputUnit = 63
+      OPEN(OutputUnit,FILE = 'ThetaTransfer.CSV', STATUS ='REPLACE')
+      WRITE(OutputUnit,'(f13.5," DTHETG")',ADVANCE = 'yes')DTHETG
+      WRITE(OutputUnit,'("  in,    ThetaG")',ADVANCE = 'yes')       
+
+      DO ir = 1,NRS
+         DO ik = 1,NKS(ir)
+            in = KORPG(ik,ir)
+            WRITE(OutputUnit,'(I4,",",f13.5)',ADVANCE = 'yes')
+     $           in,ThetaG(ik,ir)          
+         END DO
+      END DO
+      
+      CLOSE(OutputUnit)
+      END
