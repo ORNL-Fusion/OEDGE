@@ -2789,7 +2789,7 @@ c
      >                                 tneut)
         call prr ('NUMBER OF MTC EVENTS FOR ORIG NEUTRALS    ',
      >                                 mtcinf(1,1))
-        if (mtcinf(1,1).gt.0.0) then  
+        if (mtcinf(1,1).gt.0.0.and.tneut.gt.0) then  
 
          call prr ('AVERAGE NUMBER OF MTC EVENTS/NEUTRAL     ',
      >                   mtcinf(1,1)/tneut)
@@ -2946,8 +2946,11 @@ c
          call prr0('  - NUMBER ENTERING MAIN           ',recmain)
          call prr0('  - NUMBER EXITING MAIN            ',recexit)
          call prr0('  - NUMBER STRIKING CENTRAL MIRROR ',reccent)   
-         call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
+         if (tatiz.gt.0) then 
+             call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
+         endif
+
 c
          call prb
 c         
@@ -3038,8 +3041,11 @@ c
          call prr0('   - NUMBER ENTERING MAIN           ',refmain)
          call prr0('   - NUMBER EXITING MAIN            ',refexit)
          call prr0('   - NUMBER STRIKING CENTRAL MIRROR ',refcent)   
-         call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
+         if (tatiz.gt.0) then 
+            call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
+         endif
+
          call prb
       endif
 c
@@ -3060,7 +3066,9 @@ c
          end do
       end do   
 c
-      call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
+      if (tmpiz.gt.0) then 
+         call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
+      endif
 c
       call prb
       call prchtml('SUMMARY OF INITIAL IMPURITY NEUTRAL IONIZATION',

@@ -676,6 +676,14 @@ c
 c     Update random number count
 c     
       ran_used = ran_used + 1.0
+      
+      ! jdemod - use to check random number generator
+      !          this statement should be rarely triggered ... 
+      !          remove it ...  if it slows the code too much
+
+c      if (rands.gt.0.999999) then
+c         write(0,'(a,2g18.8)') 'RAND:',ran_used,rands
+c      endif
 c
       RETURN
       END
