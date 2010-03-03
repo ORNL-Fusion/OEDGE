@@ -1089,7 +1089,7 @@ c
              ENDIF
           endif
 C
-          IF (DEBUG) WRITE (6,1001) 'D1:',IK,IR,S,K,
+          IF (DEBUG) WRITE (6,1001) 'D1A:',IK,IR,S,K,
      >      THETA,SMAX,CROSS,adjust,
      >      'UPDATED S'
 
@@ -1779,7 +1779,7 @@ c
 c
 c
 C
-          IF (DEBUG) WRITE (6,1000) 'D2:',IK,IR,S,K,
+          IF (DEBUG) WRITE (6,1000) 'D2A:',IK,IR,S,K,
      >      THETA,SMAX,CROSS,adjust,kprob,
      >      kprob-tmpran,
      >      distin(ik,ir),
@@ -1805,7 +1805,7 @@ c
              ENDIF
           endif
 C
-          IF (DEBUG) WRITE (6,1000) 'D3:',IK,IR,S,K,
+          IF (DEBUG) WRITE (6,1000) 'D3A:',IK,IR,S,K,
      >      THETA,SMAX,CROSS,adjust,kprob,
      >      kprob-tmpran,
      >      distin(ik,ir),

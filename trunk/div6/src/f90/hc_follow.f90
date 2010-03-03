@@ -193,6 +193,8 @@ Contains
     !Integer, Dimension (Number_H_Products) :: H_Isotope_Composition ! Number of H/D/T isotopes in the HC.
     !Integer, Dimension (Number_H_Products) :: Last_H_Isotope_Composition ! Previous number of H/D/T isotopes in the HC.
     Integer :: Particle_Ionized
+
+    ! jdemod - removing some code that doesn't seem to do anything useful
     Integer :: M
  
     ! GA15 temporary variables.
@@ -211,6 +213,10 @@ Contains
     ! External function declarations.
     Integer, External :: IPOS ! IPOS(R,RS,NRS) Finds nearest higher value in RS array (length NRS) to given R.
     Real, External :: CELLWIDTH
+
+    ! jdemod - debugging variables 
+    !real :: temp_s1,temp_s2
+
 
 
     ! jdemod - initialization - set values of NPROD
@@ -538,7 +544,7 @@ Contains
     ! Artificial launch angle.
     !Current_Angle = 1.57
 
-
+    !write(0,'(a,10g18.6)') 'Launch angle:',launch_angle*raddeg, current_tangent*raddeg, current_angle*raddeg
 
 
     ! jdemod - comment - the following code does nothing since max_velocity_randoms=1.0 is assigned below
@@ -1998,69 +2004,100 @@ Contains
     Neutime = Neutral_Time_Step_Count *  Neutral_Time_Step
     Iontime = Ion_Time_Step_Count *  Ion_Time_Step
  
-    Open (unit=92,file="temphc.txt")
+
+
+    ! jdemod - the following code just seems to be printing some diagnostic information to the temphc file and otherwise doesn't do much 
+    !          so I am commenting it out
+
+    !Open (unit=92,file="temphc.txt")
     ! Write rate HC_Density data for injir
-    Write (92,*) "Neutral_Time_Step_Count",Neutral_Time_Step_Count
-    Write (92,*) "Ion_Time_Step_Count",Ion_Time_Step_Count
-    Write (92,*) "Time_Steps_In_State",Time_Steps_In_State
-    Write (92,*) "Eq_Total_Ion_Time_Steps",Eq_Total_Ion_Time_Steps
-    Write (92,*) "Diag_Table % HC_Neutral_Timesteps_Count", HC_Neutral_Timesteps_Count
-    Write (92,*) "Diag_Table % HC_Ion_Timesteps_Count", HC_Ion_Timesteps_Count
-    Write (92,*) "Diag_Table % Time_All_HCs", Time_All_HCs
-    Write (92,*) "Diag_Table % Max_Time_Any_HC", Max_Time_Any_HC
-    Write(92,*)"Diag_Table%HC_State_TimeSteps(Cur_HC_Spec,1:2)",HC_State_TimeSteps(Cur_HC_Spec,1),HC_State_TimeSteps(Cur_HC_Spec,2)
-    Write(92,*)"Diag_Table%HC_Max_TimeSteps(Cur_HC_Spec,1:2)",HC_Max_TimeSteps(Cur_HC_Spec,1),HC_Max_TimeSteps(Cur_HC_Spec,2)
-    write (92,*) "INJIR",  INJ_Ring_Number
-    Do Temp_Counter = 1,gnks( INJ_Ring_Number)
-       write (92,19) "cell",Temp_Counter,"counts", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec),"length", &
-            &     gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number),"KBFS",gkbfs(Temp_Counter, &
-            &     INJ_Ring_Number),"BRatio", &
-            &     gbratio(Temp_Counter, INJ_Ring_Number),"Center S",gkss(Temp_Counter, INJ_Ring_Number), &
-            &     "area",gkareas(Temp_Counter, INJ_Ring_Number), &
-            &     "ratio L/A",(gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number))&
-            &                  /max(1e-8,gkareas(Temp_Counter,INJ_Ring_Number)), &
-            &     "ratio C/A", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)&
-            &                  /max(1e-8,gkareas(Temp_Counter, INJ_Ring_Number)), &
-            &     "ratio C/L", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)/(gksb(Temp_Counter, INJ_Ring_Number)-gksb(&
-            &     Temp_Counter-1, INJ_Ring_Number))
-    End Do
+    !Write (92,*) "Neutral_Time_Step_Count",Neutral_Time_Step_Count
+    !Write (92,*) "Ion_Time_Step_Count",Ion_Time_Step_Count
+    !Write (92,*) "Time_Steps_In_State",Time_Steps_In_State
+    !Write (92,*) "Eq_Total_Ion_Time_Steps",Eq_Total_Ion_Time_Steps
+    !Write (92,*) "Diag_Table % HC_Neutral_Timesteps_Count", HC_Neutral_Timesteps_Count
+    !Write (92,*) "Diag_Table % HC_Ion_Timesteps_Count", HC_Ion_Timesteps_Count
+    !Write (92,*) "Diag_Table % Time_All_HCs", Time_All_HCs
+    !Write (92,*) "Diag_Table % Max_Time_Any_HC", Max_Time_Any_HC
+    !Write(92,*)"Diag_Table%HC_State_TimeSteps(Cur_HC_Spec,1:2)",HC_State_TimeSteps(Cur_HC_Spec,1),HC_State_TimeSteps(Cur_HC_Spec,2)
+    !Write(92,*)"Diag_Table%HC_Max_TimeSteps(Cur_HC_Spec,1:2)",HC_Max_TimeSteps(Cur_HC_Spec,1),HC_Max_TimeSteps(Cur_HC_Spec,2)
+    !write (92,*) "INJIR",  INJ_Ring_Number
+    
+    !write(0,*) '1:'
+
+!    Do Temp_Counter = 1,gnks( INJ_Ring_Number)
+!       write (92,19) "cell",Temp_Counter,"counts", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec),"length", &
+!            &     gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number),"KBFS",gkbfs(Temp_Counter, &
+!            &     INJ_Ring_Number),"BRatio", &
+!            &     gbratio(Temp_Counter, INJ_Ring_Number),"Center S",gkss(Temp_Counter, INJ_Ring_Number), &
+!            &     "area",gkareas(Temp_Counter, INJ_Ring_Number), &
+!            &     "ratio L/A",(gksb(Temp_Counter, INJ_Ring_Number)-gksb(Temp_Counter-1, INJ_Ring_Number))&
+!            &                  /max(1e-8,gkareas(Temp_Counter,INJ_Ring_Number)), &
+!            &     "ratio C/A", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)&
+!            &                  /max(1e-8,gkareas(Temp_Counter, INJ_Ring_Number)), &
+!            &     "ratio C/L", HC_Density (Temp_Counter, INJ_Ring_Number,Cur_HC_Spec)/(gksb(Temp_Counter, INJ_Ring_Number)-gksb(&
+!            &     Temp_Counter-1, INJ_Ring_Number))
+!    End Do
+    !write(0,*) '2:'
  
-    write (92,*) "By Ring:", Inner_Wall_Ring
-    Do Temp_Counter=1, Inner_Wall_Ring-1
+    !write (92,*) "By Ring:", Inner_Wall_Ring
+
+    !Do Temp_Counter=1, Inner_Wall_Ring-1
        ! Find cell at injir S.
  
        !       FOR NOW SIMPLY FIND GRID POINT CLOSEST TO DESIRED
        !       INJECTION POSITION. THIS IS ALL THAT IS CURRENTLY DONE.
        !       THE PARTIAL DISPLACEMENTS FROM THE GRID POINTS ARE IGNORED.
        !
-       NRAND = NRAND + 1
-       CALL SURAND2 (SEED,1,Random_Temp)
-       STMP=Random_Temp*(INJ_Area_Upper_Bound-INJ_Area_Lower_Bound)*gKSMAXS(Temp_Counter)+INJ_Area_Lower_Bound*gKSMAXS(Temp_Counter)
-       NRAND = NRAND + 1
-       CALL SURAND2 (SEED, 1, Random_Temp)
-       IF (Random_Temp.GT.0.5.and.( Injection_Opt.eq.2.or. Injection_Opt.eq.5)) THEN
+    !   NRAND = NRAND + 1
+    !   CALL SURAND2 (SEED,1,Random_Temp)
+
+    !   STMP=Random_Temp*(INJ_Area_Upper_Bound-INJ_Area_Lower_Bound)*gKSMAXS(Temp_Counter)+INJ_Area_Lower_Bound*gKSMAXS(Temp_Counter)
+
+    !   NRAND = NRAND + 1
+    !   CALL SURAND2 (SEED, 1, Random_Temp)
+
+    !   IF (Random_Temp.GT.0.5.and.( Injection_Opt.eq.2.or. Injection_Opt.eq.5)) THEN
           !
           !         OUTER PLATE - OTHERWISE INNER - for option 2
           !
-          STMP = gKSMAXS(Temp_Counter) - STMP
-       ENDIF
+    !      STMP = gKSMAXS(Temp_Counter) - STMP
+    !   ENDIF
  
        ! FIND NEAREST IK CORRESPONDING TO DISTANCE S ALONG CONTOUR INJI
-       M = 1
-758    IF (M.LT.gNKS(Temp_Counter).AND.STMP.GT.gKSS(M,Temp_Counter)) THEN
-          M = M + 1
-          GOTO 758
-       ENDIF
-759    IF (M.GT.1.AND.STMP.LE.gKSS(M-1,Temp_Counter)) THEN
-          M = M - 1
-          GOTO 759
-       ENDIF
-       IF (M.GT.1.AND.(STMP-gKSS(M-1,Temp_Counter).LT.gKSS(M,Temp_Counter)-STMP)) M = M - 1
-       If (Temp_Counter .lt.  Inner_SOL_Ring) Then
-          M = 14
-       ELSE
-          M = 34
-       EndIf
+    !   M = 1
+
+       !write(0,*) '3:',m
+
+!758    IF (M.LT.gNKS(Temp_Counter).AND.STMP.GT.gKSS(M,Temp_Counter)) THEN
+!          M = M + 1
+!          !write(0,*) '3+:',m
+!          GOTO 758
+!       ENDIF
+!759    IF (M.GT.1.AND.STMP.LE.gKSS(M-1,Temp_Counter)) THEN
+!          M = M - 1
+!          !write(0,*) '3-:',m
+!          GOTO 759
+!       ENDIF
+
+
+       !write(0,*) '3a:',m
+!       temp_s1 = stmp-gkss(m-1,temp_counter)
+!       temp_s2 = gkss(m,temp_counter)-stmp
+       
+
+!       IF (M.GT.1.AND.( temp_s1.LT.temp_s2)) M = M - 1
+!       IF (M.GT.1.AND.( (STMP-gKSS(M-1,Temp_Counter)).LT.(gKSS(M,Temp_Counter)-STMP) )) M = M - 1
+       !write(0,*) '3b:',m,inner_sol_ring
+       
+!       If (Temp_Counter .lt.  Inner_SOL_Ring) Then
+!          M = 14
+!       ELSE
+!          M = 34
+!       EndIf
+
+       !write(0,*) '4:'
+
  
        !         write (92,18) "Ring",Temp_Counter,"cell",M,"counts", HC_Density(M,Temp_Counter,Cur_HC_Spec), &
        !	&	"length",gksb(M,Temp_Counter)-gksb(M-1,Temp_Counter),"Center S",gkss(M,Temp_Counter), &
@@ -2069,7 +2106,9 @@ Contains
        !	&	"ratio L/A",(gksb(M,Temp_Counter)-gksb(M-1, INJ_Ring_Number))/gkareas(M, INJ_Ring_Number), &
        !	&	"ratio C/A", HC_Density(M,Temp_Counter,Cur_HC_Spec)/gkareas(M,Temp_Counter), &
        !	&	"ratio C/L", HC_Density(M,Temp_Counter,Cur_HC_Spec)/(gksb(M,Temp_Counter)-gksb(M-1,Temp_Counter))
-    End Do
+!    End Do
+
+
 17  Format (a,1x,e9.3,1x,a,1x,e9.3,1x,a,1x,e9.3,1x,a,1x,I3)
 18  Format (2(A,1X,I3,1X),20(A,1X,E11.5,1X))
 19  Format (1(A,1X,I3,1X),20(A,1X,E11.5,1X))
