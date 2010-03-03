@@ -10678,8 +10678,18 @@ c...    Calculate the total puffed source:
 
 c...    Only output to .dat file for the last PIN call (also,
 c       find the appropriate replacement for rel_count):
+
+c        write(0,*) 'REL_COUNT:', rel_count, citersol,nitersol
+c
+c       jdemod
+c     
+c       Note rel_count appears to start at zero ... so this output is never
+c       printed if iteration is on since rel_count is always less than nitersol
+c       on the last iteration
+c
+
         IF (citersol.EQ.0.OR.nitersol.EQ.0.OR.
-     .      rel_count.EQ.nitersol) THEN
+     .      (rel_count+1).EQ.nitersol) THEN
           fp = datunit
         ELSE
           fp = PINOUT
@@ -21418,6 +21428,7 @@ c
       end
 
       real function acos_test(xcos,flag)
+      use error_handling
       implicit none
       real xcos
       integer flag
@@ -21429,10 +21440,16 @@ c      if (xcos.lt.-1.000005) then
 c
 c      if (xcos.lt.-1.0) then 
 c slmod end
-         write(0,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c         write(0,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c     >                    flag,xcos,acos(-1.0)
+c         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c     >                    flag,xcos,acos(-1.0)
+c
+         write(error_message_data,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
      >                    flag,xcos,acos(-1.0)
-         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
-     >                    flag,xcos,acos(-1.0)
+         
+         call dbgmsg('ACOS_TEST:',error_message_data)
+
 
          acos_test = acos(-1.0) 
 
@@ -21443,11 +21460,16 @@ c      elseif (xcos.gt.1.000005) then
 c
 c      elseif (xcos.gt.1.0) then 
 c slmod end
-
-          write(0,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
-     >                      flag,xcos,acos(1.0)
-          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
-     >                      flag,xcos,acos(1.0)
+c
+c          write(0,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
+c     >                      flag,xcos,acos(1.0)
+c          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
+c     >                      flag,xcos,acos(1.0)
+c
+         write(error_message_data,*) 'ACOS ERROR: XCOS >  1.0: FLAG = ',
+     >                    flag,xcos,acos(1.0)
+         call dbgmsg('ACOS_TEST:',error_message_data)
+c
          acos_test = acos(1.0)
 
       else
