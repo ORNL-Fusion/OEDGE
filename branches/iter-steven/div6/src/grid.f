@@ -6592,7 +6592,7 @@ c...    Low index target:
         ir1 = ir
         ik2 = ikins(ik1,ir1)
         ir2 = irins(ik1,ir1)
-        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+        IF (idring(ir2).AND.BOUNDARY.AND.ir1.NE.ir2) THEN
           id1 = korpg(ik1,ir1)
           id2 = korpg(ik2,ir2)
           id3 = korpg(1  ,ir2)
@@ -6651,7 +6651,7 @@ c             vertex:
         ik2 = ikouts(ik1,ir1)
         ir2 = irouts(ik1,ir1)
         id2 = korpg (ik2,ir2)
-        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+        IF (idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
           IF (DABS(d_rvertp(2,id1)-d_rvertp(1,id2)).GT.DTOL.OR.
      .        DABS(d_zvertp(2,id1)-d_zvertp(1,id2)).GT.DTOL) THEN
             STOP 'CODE NOT READY A'
