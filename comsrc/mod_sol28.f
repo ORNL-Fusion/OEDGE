@@ -32,6 +32,7 @@
      .  s28_MAXXPT   =   2,   
      .  s28_MAXVER   =   4, 
      .  S28_MAXNSRC  =  10,   
+     .  S28_MAXNTDEL =  100,   
      .  ITY_FLUID    =   1,    
      .  ITY_KINETIC  =   2,   
      .  ST_STANDARD  =   1,   
@@ -42,7 +43,9 @@
      .  GRD_TEST     =   4,
      .  GRD_BOUNDARY =  -1,
      .  EIR_MAXNSTRATA = 100,
-     .  EIR_MAXNVOID   = 100
+     .  EIR_MAXNVOID   = 100,
+     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5
+
 
       REAL, PUBLIC, PARAMETER ::   
      .  RHI   = 1.0E+37, 
@@ -90,12 +93,13 @@ c
          INTEGER   :: osm_load         ! Load status
          CHARACTER :: f_osm_dir*512    ! 
          CHARACTER :: f_osm_load*512   ! Name of file to be loaded
-
-         INTEGER   :: f_grid_format    ! Format of equilibrium grid to be loaded
-         CHARACTER :: f_grid_file*512  ! Name of equilibrium grid to be loaded
-         INTEGER   :: f_grid_strip     ! Remove boundary cells (1=first and last cells, first and last rings)
-
-!...     Control:
+!...     Grid:
+         INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
+         CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
+         INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
+         INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
+         INTEGER   :: grd_tdel(S28_MAXNTDEL)  ! List of tubes to delete
+!...     Flow control:
          INTEGER   :: nflukin      ! Number of fluid-kinetic code iterations
          INTEGER   :: eirene       !   execute Eirene
          INTEGER   :: divimp       !   execute DIVIMP
@@ -103,26 +107,21 @@ c
          LOGICAL   :: pin_data     ! Flags whether or not PIN data is available
          INTEGER   :: cosm         ! OSM flux-tube loop internal iteration number for this run
          INTEGER   :: cflukin      ! OSM-kinetic code (Eirene,DIVIMP) iteration number
-
 !...     Fluid solver:  
          INTEGER   :: sol_n
          INTEGER   :: sol_tube  (2,100)
          INTEGER   :: sol_option(  100)
-
          INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
-
          INTEGER   :: p_ion(2)         ! Ionisation 
          REAL      :: p_ion_exp(2)     ! Exponent for exponential decay of the ionisation source for P_ION = 3
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
          INTEGER   :: p_rec(2)         ! Volume recombination 
          INTEGER   :: p_ano(2)         ! Anomalous
-
          INTEGER   :: m_mom(2)         ! ... needs new name...
          INTEGER   :: m_fit(2)         !
          INTEGER   :: m_ano(2)         !
          INTEGER   :: m_ano_dist(2)    ! Distribution along field line of anomalous momentum
          REAL      :: m_ano_exp(2)     ! Distribution exponent
-
          INTEGER   :: ti(2)            ! Ti calculation
          INTEGER   :: te_ano(2)        ! Distribution of anomalous (cross-field) electron power into the tube
          INTEGER   :: te_ano_psol(2)   ! Magnitude of  anomalous (cross-field) electron power flux
@@ -139,10 +138,11 @@ c
          INTEGER   :: ti_equil(2)      ! Te,Ti equilibration (fluid quantities only?)
          INTEGER   :: ti_ion(2)        ! Energy source from neutral code associated with ionisation (not strictly correct)
          INTEGER   :: ti_rec(2)        ! Energy source from neutral code associated with volume recombination
-
          INTEGER   :: super(2)         ! Allow for supersonic flows near targets
- 
          REAL      :: s28mode          ! Node assignment routine
+!...     Materials data to load:
+         INTEGER   :: mat_opt
+         CHARACTER :: mat_file*512
       ENDTYPE type_options_osm
 
 
@@ -203,18 +203,19 @@ c
 
 c...    Strata:
         INTEGER   :: nstrata 
-        REAL      :: type         (EIR_MAXNSTRATA)
-        INTEGER   :: Z            (EIR_MAXNSTRATA)           ! atomic number
-        INTEGER   :: A            (EIR_MAXNSTRATA)           ! atomic mass
-        INTEGER   :: npts         (EIR_MAXNSTRATA)
-        REAL      :: flux         (EIR_MAXNSTRATA)
-        REAL      :: flux_fraction(EIR_MAXNSTRATA)
-        INTEGER   :: species      (EIR_MAXNSTRATA)
-        INTEGER   :: species_index(EIR_MAXNSTRATA)
-        REAL      :: energy       (EIR_MAXNSTRATA)
-        INTEGER   :: target       (EIR_MAXNSTRATA)
-        INTEGER   :: range_cell (2,EIR_MAXNSTRATA)
-        INTEGER   :: range_tube (2,EIR_MAXNSTRATA)
+        REAL      :: type           (EIR_MAXNSTRATA)
+        INTEGER   :: Z              (EIR_MAXNSTRATA)           ! atomic number
+        INTEGER   :: A              (EIR_MAXNSTRATA)           ! atomic mass
+        INTEGER   :: npts           (EIR_MAXNSTRATA)
+        REAL      :: flux           (EIR_MAXNSTRATA)
+        REAL      :: flux_fraction  (EIR_MAXNSTRATA)
+        CHARACTER :: species_tag*128(EIR_MAXNSTRATA)
+        INTEGER   :: species        (EIR_MAXNSTRATA)
+        INTEGER   :: species_index  (EIR_MAXNSTRATA)
+        REAL      :: energy         (EIR_MAXNSTRATA)
+        INTEGER   :: target         (EIR_MAXNSTRATA)
+        INTEGER   :: range_cell   (2,EIR_MAXNSTRATA)
+        INTEGER   :: range_tube   (2,EIR_MAXNSTRATA)
 !        REAL      :: cos         
 !        REAL      :: cos_max     
 !        CHARACTER :: note*512    
@@ -299,6 +300,7 @@ c...    Strata:
          INTEGER   :: par_set
          ! External data file:
          CHARACTER :: file_name*512
+         INTEGER   :: file_format
          REAL      :: file_shift
          REAL      :: file_scale_ne
          REAL      :: file_scale_M
@@ -327,11 +329,23 @@ c...    Strata:
         REAL    :: version_drift
         REAL    :: version_fluid
         REAL    :: version_impurity
+        REAL    :: version_wall
+        REAL    :: version_species
         INTEGER :: n                 ! = NTUBE
         INTEGER :: isep
+        INTEGER :: isep2
         INTEGER :: ipfz
         INTEGER :: ikto
         INTEGER :: ikti
+        REAL*8  :: r0
+        REAL*8  :: z0
+        REAL*8  :: core_volume_total
+        REAL*8  :: core_volume_grid
+        REAL*8  :: core_surface_area
+        INTEGER :: nxpt
+        REAL*8  :: rxpt(2)
+        REAL*8  :: zxpt(2)
+        INTEGER :: ixpt(2,2)
       ENDTYPE type_grid
 !
 !
@@ -352,6 +366,9 @@ c...    Strata:
         REAL    :: rho
         REAL    :: psin
         REAL    :: metric(2)             ! Cross-field othogonality metric at ends of tube
+        REAL*8  :: VOlume
+        REAL*8  :: surface_area(2)
+        REAL*8  :: target_area(2)
 !...    3D:
         REAL    :: dangle                ! Toroidal angle step when calculating 3D flux-tube
 !...    DIVIMP geometry data (temporary):
@@ -545,21 +562,103 @@ c...    Strata:
         REAL    :: enesrc               ! Energy
         REAL    :: enisrc
       ENDTYPE type_fluid
-
+!
 !...  Kinetic ion code results (Eirene/DIVIMP):
 !     --------------------------------------------------
       TYPE, PUBLIC :: type_kinetic
         REAL :: te
       ENDTYPE type_kinetic
-
+!
+!...  Wall segments:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_wall
+        REAL      :: type                 ! Don't know why I used INDEX here, should replace
+        INTEGER   :: class                ! everything with a call to the actual name of 
+        INTEGER   :: index(10)            ! the variable, i.e. %index(WAL_TUBE) should be
+        CHARACTER :: material_tag*128     ! %tube
+        INTEGER   :: material
+        REAL      :: temperature
+        REAL*8    :: v1(2)
+        REAL*8    :: v2(2)
+        CHARACTER :: file_name*512
+        INTEGER   :: file_format
+      ENDTYPE type_wall
+!
+!...  Plasma species:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_species
+        REAL      :: version
+        CHARACTER :: tag*128
+        INTEGER   :: index
+        INTEGER   :: type
+        CHARACTER :: code_source_tag*128
+        INTEGER   :: code_source
+        CHARACTER :: code_transport_tag*128
+        INTEGER   :: code_transport
+        INTEGER   :: maxcharge
+        INTEGER   :: nhistory
+        INTEGER   :: ntime
+      ENDTYPE type_species
+!
+!...  Simulation code designation:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_code
+        REAL      :: version
+        CHARACTER :: name*128
+        CHARACTER :: home*128
+        CHARACTER :: run_script*128
+      ENDTYPE type_code
+!
+!...  Material data:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_material
+        REAL      :: version
+        INTEGER   :: type
+        CHARACTER :: tag*128
+        INTEGER   :: A
+        INTEGER   :: Z
+        REAL      :: mass
+        REAL      :: density
+        CHARACTER :: crystal_structure*128
+        REAL      :: monolayer_thickness
+        REAL      :: melting_point
+        REAL      :: thermal_conductivity
+        INTEGER   :: adas_divimp
+        INTEGER   :: adas_eirene
+      ENDTYPE type_material
+!
+!     Target plates:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_target
+        REAL      :: version
+        INTEGER   :: type         ! ...
+        INTEGER   :: location     ! Location relative to the divertor/limiter layout
+        INTEGER   :: position     ! Which end of the flux-tube: low index (1, 2, 3...) or high (...n-2, n-1, n) 
+        CHARACTER :: tag*1024     
+        INTEGER   :: nlist        ! Number of tubes associated with this target
+        INTEGER   :: npart        ! Number of parts that the target is made up of if discontinuous
+        INTEGER   :: ipeak        ! Index of nominal distribution peak, i.e. usually ISEP or ISEP2
+        REAL      :: sep_psin     ! PSIn at the local target/separatrix intersection             
+        REAL      :: sep_rho      ! RHO (midplane mapping) at the local target/sep. intersection
+        INTEGER   :: ilist(1024)  ! List of the tubes
+        INTEGER   :: ipart(1024)  ! Part index
+      ENDTYPE type_target
+!
 !...  
       REAL, PUBLIC, ALLOCATABLE, SAVE :: tmpflx(:,:)
 
       END MODULE mod_sol28
 !
+! ----------------------------------------------------------------------
 !
-!
-!
+      MODULE mod_sol28_targets
+      USE mod_sol28      
+      IMPLICIT none
+
+      INTEGER :: ntarget
+      TYPE(type_target), ALLOCATABLE :: target(:)
+
+      END MODULE mod_sol28_targets
 !
 ! ----------------------------------------------------------------------
 !
@@ -569,6 +668,27 @@ c...    Strata:
 
       TYPE(type_options_filament) :: opt_fil
       END MODULE mod_options
+!
+! ----------------------------------------------------------------------
+!
+      MODULE mod_sol28_wall
+      USE mod_sol28      
+      IMPLICIT none
+
+      INTEGER, PARAMETER :: WAL_GROUP  = 1,  ! Group index
+     .                      WAL_INDEX  = 2,  ! Index within group
+     .                      WAL_TUBE   = 3,  ! Corresponding tube for target segments
+     .                      WAL_TARGET = 4,  ! Target index (LO,HI)
+     .                      WAL_RANGE1 = 8,  ! Target index (LO,HI)
+     .                      WAL_RANGE2 = 9   ! Target index (LO,HI)
+
+      INTEGER, SAVE :: nopt_wall
+      TYPE(type_wall), SAVE :: opt_wall(100)
+
+      INTEGER, SAVE :: nwall
+      TYPE(type_wall), ALLOCATABLE :: wall(:)
+
+      END MODULE mod_sol28_wall
 !
 ! ----------------------------------------------------------------------
 !
@@ -592,7 +712,8 @@ c...    Strata:
 
       INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
-     .                      IND_SURFACE = 3   ! Surface (block 2A non-default surface in Eirene input file)
+     .                      IND_SURFACE = 3,  ! Surface (block 2A non-default surface in Eirene input file)
+     .                      IND_WALL    = 4   ! Surface (block 2A non-default surface in Eirene input file)
 
 
 !...
@@ -610,6 +731,9 @@ c...    Strata:
 
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
+
+      INTEGER store_sopt(500),store_mnode(500),store_nnode(500)
+      TYPE(type_node) store_node(20,500)
 !...  
       INTEGER, PARAMETER :: MAXNTUBE = 100
       TYPE(type_grid), SAVE :: grid
@@ -633,6 +757,16 @@ c...    Strata:
       TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
       TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
+
+
+!...  Plasma species that are being tracked in the simulation:
+      INTEGER, SAVE :: nspecies
+      TYPE(type_species), SAVE :: species(100)
+
+!...  Material data:
+      INTEGER, SAVE :: nmaterial
+      TYPE(type_material), SAVE :: material(100)
+
 
 !...  Index mapping in GetObject and GetTube:
       INTEGER, ALLOCATABLE, SAVE :: obj_index_map (:,:),
@@ -661,6 +795,9 @@ c...    Strata:
 
       TYPE(type_options_osm), SAVE :: opt
       INTEGER :: log,logfp
+
+      REAL*8, SAVE :: chisq(0:7),t_chisq(0:7),m_chisq(0:7)
+
 
 !...  Local solver options:
       INTEGER, SAVE ::    

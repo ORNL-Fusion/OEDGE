@@ -967,8 +967,8 @@ c...    Surfaces fluxes:
 c...        Output:
             MSURFG=NLIM+NSTS+INSPAT(IS,IR)
             DDUM(1)=DBLE(IS)                  ! Side index of the triangle
-            DDUM(2)=POTPL(IPLS,MSURFG)/CONV   ! Atom particle flux (s-1)
-            DDUM(3)=EOTPL(IPLS,MSURFG)/CONV   ! Atom energy flux (eV s-1)
+            DDUM(2)=POTPL(IPLS,MSURFG)/CONV   ! D+ particle flux (s-1)
+            DDUM(3)=EOTPL(IPLS,MSURFG)/CONV   ! D+ energy flux (eV s-1)
             ICOUNT=ICOUNT+14
             IF (ICOUNT.EQ.40) THEN
               WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
@@ -1037,7 +1037,7 @@ c...        Output:
             DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
 c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
             DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
-            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
+            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! ???
             ICOUNT=ICOUNT+14
             IF (ICOUNT.EQ.40) THEN
               WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
@@ -1347,7 +1347,8 @@ c...  Particle source:
       WRITE(FP,80) '* PARTICLE SOURCES'
       WRITE (FP,'(I6)') NSTRAI
       DO IS=1,NSTRAI
-        WRITE (FP,'(I6,1P,E14.6,0P,I8)') IS,FLUXT(IS),SAVE_IPANU(IS)
+        WRITE (FP,'(I6,I8,1P,3E14.6,0P)') 
+     .    IS,SAVE_IPANU(IS),FLUXT(IS),PTRASH(IS),ETRASH(IS)
       ENDDO
 c
 c     ----------------------------------------------------------------------

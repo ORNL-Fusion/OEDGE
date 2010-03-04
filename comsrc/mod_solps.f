@@ -40,7 +40,7 @@ c
       INTEGER :: nsolps_data,solps_opt
       TYPE(type_solps_data), PUBLIC, ALLOCATABLE :: solps_data(:)
 
-      INTEGER :: solps_maxik,solps_maxir
+      INTEGER :: solps_maxik,solps_maxir,solps_n
 
       INTEGER, ALLOCATABLE :: map_divimp(:,:),map_osm(:)
       INTEGER, ALLOCATABLE :: solps_ik(:),solps_ir(:)

@@ -161,6 +161,8 @@ c
      >     + IMP_DRFTVEL + ds_dperpz + ds_pinch
 c     
       VEL   = VEL + QUANT + dvpara
+c sltmp - turning off parallel transport
+c      s = slast
 c     
 
       if (debug_all) then 

@@ -967,14 +967,15 @@ c_
 
       SELECTCASE (mode)
         CASE (1)  ! Surface:
-          IF (srf(index)%nvtx.EQ.0) 
+          isrf = index
+          IF (srf(isrf)%nvtx.EQ.0) 
      .      CALL ER('CalcCentroid','NVTX.EQ.0',*99)
           p = 0.0D0
-          DO i1 = 1, srf(index)%nvtx
-            ivtx = srf(index)%ivtx(i1)
+          DO i1 = 1, srf(isrf)%nvtx
+            ivtx = srf(isrf)%ivtx(i1)
             p(1:3) = p(1:3) + vtx(1:3,ivtx)
           ENDDO 
-          p(1:3) = p(1:3) / DBLE(srf(index)%nvtx)
+          p(1:3) = p(1:3) / DBLE(srf(isrf)%nvtx)
         CASE (2)  ! Object:
           iobj = index
           p = 0.0D0
@@ -1671,7 +1672,7 @@ c
       count_srf_obj = 0
       count_srf_side = 0
 
-      fp = 0
+      fp = 88
 
       WRITE(fp,*) '=== BUILDING CONNECTION MAP ==='
 
@@ -1710,7 +1711,7 @@ c      WRITE(0,*) 'LIST:',list(1:nlist)
 c            iobj1  = srf(-isrf)%obj     
 c            iside1 = srf(-isrf)%side    
                                          
-c            WRITE(0,*) '   -->',iobj,iside,isrf,iobj1,iside1
+            WRITE(fp,*) '   -D->',iobj,iside,isrf,iobj1,iside1
 
             IF (iobj1 .NE.srf(-isrf)%obj) THEN
               count_srf_obj = count_srf_obj + 1
@@ -1867,7 +1868,7 @@ c
 
       INTEGER fp
      
-      fp = 0
+      fp = geofp
 
       SELECTCASE(mode)     
         CASE (MODE_SRF_OBJ)

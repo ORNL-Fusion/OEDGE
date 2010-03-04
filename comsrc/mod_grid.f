@@ -8,6 +8,8 @@
       INTEGER, SAVE :: divimp_maxnks,divimp_maxnrs
       INTEGER, ALLOCATABLE, SAVE :: divimp_ik(:,:),divimp_ir(:,:)
 
+      REAL*8 , ALLOCATABLE, SAVE :: d_rvertp(:,:),d_zvertp(:,:)
+
       CONTAINS
 
       SUBROUTINE ALLOC_GRID(MAXNKS,MAXNRS)
@@ -67,8 +69,8 @@
      .                      R_INWARD   = 2,         
      .                      P_FORWARD  = 3,         
      .                      R_OUTWARD  = 4,         
-     .                      P_BACKWARD = 5        
-
+     .                      P_BACKWARD = 5,
+     .                      LIMITER_SEARCH = 6         
 
       INTEGER, ALLOCATABLE :: imap(:,:)
 

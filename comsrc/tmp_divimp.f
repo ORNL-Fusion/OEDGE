@@ -40,7 +40,7 @@ c      REAL*8 , INTENT(OUT) :: vsur(3,MAXPOINTS,0:MAXSURFACE)
       TYPE(type_tube_3D) :: tube_3D(0:5)
 
       WRITE(0,*) '---------------------------------'
-      WRITE(0,*) 'NOT CALCULATING TUBE DIMENTSIONS!'
+      WRITE(0,*) 'NOT CALCULATING TUBE DIMENSIONS!'
       WRITE(0,*) '---------------------------------'
       RETURN
 
@@ -722,7 +722,7 @@ c      REAL   , INTENT(IN) :: rad_coord,in_phi
 
 
       INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike
-      LOGICAL finished
+      LOGICAL finished,debug
       REAL    rsep
       REAL*8  r(2),z(2),deltar,deltaz,deltac,deltap,phi,dphi,rval,pval,
      .        frac1,frac2,angle1,angle2,brat,rfrac,r12frac,z12frac,
@@ -733,12 +733,12 @@ c      REAL   , INTENT(IN) :: rad_coord,in_phi
       REAL       TOL
       PARAMETER (TOL=1.0D-06)
 
+      debug = .FALSE.
 
       fp = 0
 
       dphi = 0.5 !  1.0 ! 5.0 ! 10.0  ! Make this an adjustable parameter...
 
-      
       IF (yin.NE.0.0) 
      .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
 
@@ -762,6 +762,14 @@ c      phiin = zin  ! *** TEMP ***
 c      WRITE(0,*) '==INPUT:',rhoin,phiin
 c      WRITE(0,*) '       :',xin,zin,rsep
 c      STOP 'sdfsdf'
+
+      IF (debug) THEN
+        WRITE(0,*) 'TRACE  MODE,CHOP : ',mode,chop
+        WRITE(0,*) 'TRACE  X,Y,ZIN   : ',xin,yin,zin
+        WRITE(0,*) 'TRACE  RHO,PHIIN : ',rhoin,phiin
+        WRITE(0,*) 'TRACE  RSEP      : ',rsep
+        WRITE(0,*) 'TRACE  LENGTH1,2 : ',length1,length2
+      ENDIF
 
       n = 0
 
@@ -821,13 +829,18 @@ c       has to be called before this check is made, nasty):
 
         IF (rho(ir,CELL1).EQ.0.0) CYCLE
 
+        IF (debug) WRITE(0,*) 'TRACE IR SCAN : ',
+     .    ir,SNGL(rhoin),rho(ir,SIDE14),rho(ir,SIDE23)
+
         IF (rhoin.GE.DBLE(rho(ir,SIDE14)).AND.
      .      rhoin.LT.DBLE(rho(ir,SIDE23))) THEN
 c...      Find midplane cell:   ! *** NEED TO DO THIS SO THAT PHI IS REFERENCED PROPERLY TO PHI=0 AT THE OUTER MIDPLANE ***
-          ikm = -1              !     NEED A BETTER WAY...
+          ikm = -1              !     NEED A BETTER WAY...          
           ikm = FindMidplaneCell(ir)
           IF (ikm.EQ.-1) CALL ER('TraceFieldLine_DIVIMP','No '//
      .                           'midplane cell found',*99)
+
+          IF (debug) WRITE(0,*) 'TRACE RING,IKM : ',ir,ikm
           
 c...      Decide how to assign the magnetic field line pitch angle information:
           SELECTCASE (mode)
@@ -867,6 +880,8 @@ c                WRITE(fp,*) rhoin,rho(ir,CELL1),rho(ir1,CELL1)
           EXIT
         ENDIF
       ENDDO
+      IF (ir.EQ.irwall+1) 
+     .  CALL ER('TraceFieldLine_DIVIMP','Ring not identified',*99)
 
       ring = ir
 
@@ -1073,7 +1088,7 @@ c      ENDDO
 
 c      WRITE(0,*) 'n:',n
 
-c      WRITE(0,*) 'LENGTH:',len1,len2
+      WRITE(0,*) 'LENGTH:',len1,len2,len1+len2
 
       SELECTCASE (chop)
         CASE(1)

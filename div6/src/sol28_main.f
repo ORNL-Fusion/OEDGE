@@ -15,7 +15,7 @@ c
      .        alpha(2),beta(2),delta,A,B,C,D,a1,b1,c1,radical,cs
 
  
-      IF (log.GT.1) WRITE(logfp,*) 'CONSERVING MOMENTUM'
+      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -194,6 +194,8 @@ c    .                        integral(3)) * ECH
         ENDDO
 
       ENDDO
+
+      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: DONE'
       
       RETURN
  99   STOP
@@ -207,15 +209,14 @@ c  Treats the core, SOL and PFR separately, i.e. the interpolation
 c  will make a step at the separatrix if the focus grid is narrower 
 c  there than the reference grid/plasma.
 c 
-      SUBROUTINE InterpolateReferencePlasma(itube,nnode,mnode,node)
+      SUBROUTINE InterpolateReferencePlasma(itube)
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_solps_params
       USE mod_solps
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: itube,nnode,mnode
-      TYPE(type_node)     :: node(nnode)
+      INTEGER, INTENT(IN) :: itube
 
       REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
      .                   AMU = 1.67E-27
@@ -451,21 +452,24 @@ c
 c
 c
 c
-      SUBROUTINE AssignSOLPSPlasma(itube,nnode,mnode,node)
+      SUBROUTINE AssignSOLPSPlasma(itube)
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_solps_params
       USE mod_solps
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: itube,nnode,mnode
-      TYPE(type_node)     :: node(nnode)
+      INTEGER, INTENT(IN) :: itube
 
       REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
      .                   AMU = 1.67E-27
 
       INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic
       REAL    mi,ne,ni,vi,te,ti,cs,pe,pi
+     
+      INTEGER, ALLOCATABLE :: map_solps(:)
+
+      SAVE
 
       ion = 1
 
@@ -475,14 +479,38 @@ c     has not been setup:
         ALLOCATE(map_osm(ncell))      
         map_osm = 0
         IF (ALLOCATED(map_divimp)) THEN
-c...      OSM appears to be call from within DIVIMP, so use the index
+c...      OSM is called from within DIVIMP, so use the index
 c         mapping information that's been setup:
           DO icell = 1, ncell
             map_osm(icell) = map_divimp(cell(icell)%ik,cell(icell)%ir)
           ENDDO
         ELSE
-          CALL ER('AssignSOLPSPlasma','OSM_MAP needs assigning',*99) 
+c...      Build the map based on cell centres, on the fly (slow...):
+          ALLOCATE(map_solps(solps_n))      
+          map_solps = 0
+          DO icell = 1, ncell 
+            DO is = 1, solps_n
+             IF (map_solps(is).NE.0) CYCLE
+              IF (icell.EQ.1) THEN
+                WRITE(logfp,'(A,2(2F14.7,2X))') 'CEN CHECK->',
+     .              cell(icell)%cencar(1:2),
+     .              solps_cen(is,1:2)
+              ENDIF 
+
+             IF (ABS(cell(icell)%cencar(1)-solps_cen(is,1)).LT.TOL.AND.
+     .           ABS(cell(icell)%cencar(2)-solps_cen(is,2)).LT.TOL) THEN
+               map_osm  (icell) = is
+               map_solps(is   ) = 1
+             ENDIF
+            ENDDO
+          ENDDO
+          DEALLOCATE(map_solps)
         ENDIF
+c...    Check that the map is defined for each cell:
+        DO icell = 1, ncell
+          IF (map_osm(icell).EQ.0) 
+     .      CALL ER('AssignSOLPSPlasma','OSM_MAP assignment',*99) 
+        ENDDO
       ENDIF
 
 c...  Identify which SOLPS data sets go with what:
@@ -535,6 +563,13 @@ c...  Copy SOLPS data to the OSM fluid solution arrays:
         fluid(icell,ion)%ti = solps_data(solps_index(5))%data(imap)
       ENDDO
 
+      fluid(ic1:ic2,ion)%parion = 0.0
+      fluid(ic1:ic2,ion)%parrec = 0.0
+      fluid(ic1:ic2,ion)%parano = 0.0
+      fluid(ic1:ic2,ion)%momsrc = 0.0
+      fluid(ic1:ic2,ion)%eneano = 0.0
+      fluid(ic1:ic2,ion)%eneion = 0.0
+
 c...  Calculate the boundary conditions at the target for open 
 c     field lines (SOL and PFR's):
       IF (tube(itube)%type.NE.GRD_CORE) THEN
@@ -554,7 +589,7 @@ c     field lines (SOL and PFR's):
 
 c...      This list must be the same as the main list at the end
 c         of SOL28_V4:
-          tube(itube)%jsat       (itarget,ion) = cs * ne * ECH
+          tube(itube)%jsat       (itarget,ion) = vi * ne * ECH ! cs * ne * ECH
           tube(itube)%ne         (itarget)     = ne
           tube(itube)%pe         (itarget)     = pe
           tube(itube)%te         (itarget)     = te
@@ -569,13 +604,15 @@ c         of SOL28_V4:
         ENDDO
       ENDIF
 
+     
       RETURN
- 99   WRITE(0,*) ' NNODE,MNODE=',nnode,mnode
-      WRITE(0,*) ' SOLPS_INDEX=',solps_index
+ 99   WRITE(0,*) ' SOLPS_INDEX=',solps_index
       WRITE(0,*) ' ICELL      =',icell
       WRITE(0,*) ' IMAP       =',imap
-      WRITE(0,*) ' CELL%CENCAR=',cell(icell)%cencar(1:2)
-      WRITE(0,*) ' SOLPS_CEN  =',solps_cen(imap,1:2)
+      IF (icell.GT.0.AND.imap.GT.0) THEN
+        WRITE(0,*) ' CELL%CENCAR=',cell(icell)%cencar(1:2)
+        WRITE(0,*) ' SOLPS_CEN  =',solps_cen(imap,1:2)
+      ENDIF
       STOP
       END
 c
@@ -647,22 +684,26 @@ c
 
 c...    Te:
 c        WRITE(logfp,*) 'DEBUG: Calling InterpolateTeProfile'
-        CALL InterpolateTeProfile(1)
+        CALL InterpolateProfile(1)
 
 c...    Ti:
-        ion = 1
-        DO target = LO, HI
-          ic1 = icbnd1(target)
-          ic2 = icbnd2(target)
-          IF (target.EQ.LO.AND.ic1.EQ.1    ) ic1 = 0
-          IF (target.EQ.HI.AND.ic2.EQ.icmax) ic2 = icmax + 1
-          SELECTCASE (opt%ti(target))
-            CASE (0)
-              ti(ic1:ic2,ion) = te(ic1:ic2) * DBLE(opt%ti_ratio(target))
-            CASE DEFAULT
-              STOP 'NO USER TI OPTION YET'
-          ENDSELECT
-        ENDDO
+        IF (.TRUE.) THEN
+          CALL InterpolateProfile(2)
+        ELSE
+          ion = 1
+          DO target = LO, HI
+            ic1 = icbnd1(target)
+            ic2 = icbnd2(target)
+            IF (target.EQ.LO.AND.ic1.EQ.1    ) ic1 = 0
+            IF (target.EQ.HI.AND.ic2.EQ.icmax) ic2 = icmax + 1
+            SELECTCASE (opt%ti(target))
+              CASE (0)
+                ti(ic1:ic2,ion) = te(ic1:ic2)*DBLE(opt%ti_ratio(target))
+              CASE DEFAULT
+                STOP 'NO USER TI OPTION YET'
+            ENDSELECT
+          ENDDO
+        ENDIF
 
 c...    Loop exit conditions:
 
@@ -883,6 +924,11 @@ c...      Turn things off:
           cnt_momentum = .TRUE.
         ENDIF
 
+        IF (opt%p_ano(LO).EQ.4.OR.opt%p_ano(HI).EQ.4) THEN
+          cnt_particles = .TRUE.
+          cnt_momentum  = .TRUE.
+        ENDIF
+
         IF (development.AND.count.EQ.4) THEN   ! For debugging energy profile with flow calculated
           cnt_energy       = .TRUE.
           cnt_prescription = .TRUE.
@@ -934,9 +980,9 @@ c...  Output:
         WRITE(logfp,'(A,2F10.2)') 'TI_RATIO    = ',opt%ti_ratio
         WRITE(logfp,'(A,2I10)')   'TI_EQUIL    = ',opt%ti_equil
         WRITE(logfp,*) 
-        WRITE(logfp,'(A,  I10)') 'NNODE        =',nnode
+        WRITE(logfp,'(A,  I10)')  'NNODE       =',nnode
 c        WRITE(logfp,'(A,10I10)') 'PAR_MODE=',node_par_mode(1:nnode)
-        WRITE(logfp,'(A,10I10)') 'PAR_MODE=',node(1:nnode)%par_mode
+        WRITE(logfp,'(A,10I10)')  'PAR_MODE    =',node(1:nnode)%par_mode
         WRITE(logfp,*) 
       ENDIF
 
@@ -975,7 +1021,8 @@ c         --------------------------------------------------------------
 c...          Target conditions specified:
 
               te(ic)     = DBLE(node(in)%te)  ! Add some checks...
-              ti(ic,ion) = te(ic) * DBLE(opt%ti_ratio(target))  ! Need to check options: Ti from input file or ratio, etc...
+              ti(ic,ion) = DBLE(node(in)%ti(ion))
+c              ti(ic,ion) = te(ic) * DBLE(opt%ti_ratio(target))  ! Need to check options: Ti from input file or ratio, etc...
 
 c...          Specify target temperature everywhere on the half ring for first pass
 c             through the solver, which will result in incorrect momentum sources
@@ -1023,8 +1070,9 @@ c     .                     -1.0D0 * DSIGN(1.0D0,isat(ic,ion))
 c...          Target particle and momentum from upstream cross-field 
 c             and volume sources:
               STOP 'OPTION NO LONGER SUPPORTED'
-              te(ic)     = DBLE(node(in)%te)  ! Add some checks...
-              ti(ic,ion) = te(ic) * DBLE(opt%ti_ratio(target))  ! Not good, need to check options
+              te(ic) = DBLE(node(in)%te)  ! Add some checks...
+              te(ic) = DBLE(node(in)%ti(ion))
+c              ti(ic,ion) = te(ic) * DBLE(opt%ti_ratio(target))  ! Not good, need to check options
 
               cs = DSQRT( (te(ic) + ti(ic,ion)) * ECH / mi(ion) )  ! Needs improvement... CalcCs
               vi(ic,ion) = cs * machno(ic,ion) * tsign(target)
@@ -1066,8 +1114,8 @@ c             *** NO CHECK AS YET ON WHETHER THE REFERENCE SOLUTION IS DEFINED! 
         ENDDO  ! End of target loop
       ENDDO  ! End of ION loop
 
-      WRITE(logfp,*) 'ISAT1:',ion,isat(ictarg(LO),1),
-     .                            isat(ictarg(HI),1)
+c      WRITE(logfp,*) 'ISAT1:',ion,isat(ictarg(LO),1),
+c     .                            isat(ictarg(HI),1)
 
       RETURN
  99   WRITE(0,*) '  TARGET=',target
@@ -1086,8 +1134,15 @@ c
 
       INTEGER, INTENT(IN) :: count, MAX_ITERATIONS
  
-      INTEGER target,ictarget(2),ion
-      REAL*8  delta(2),adjust(2)
+      INTEGER target,ictarget(2),ion,ic
+      REAL*8  delta(2),adjust(2),
+     .        h_ne(0:S28_MAXNKS+1),
+     .        h_ni(0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .        h_vi(0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .        h_pe(0:S28_MAXNKS+1),                 
+     .        h_pi(0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .        h_te(0:S28_MAXNKS+1),                 
+     .        h_ti(0:S28_MAXNKS+1,0:S28_MAXNION)
       REAL*8, POINTER :: s(:)
 
       LOGICAL initial_run(2)
@@ -1181,6 +1236,52 @@ c              ENDIF
 
       ENDDO
 
+c...  Calculated CHISQ for the plasma solution, to keep track of how things are evolving:
+      IF (count.GT.1) THEN
+        chisq = 0.0D0
+        t_chisq = 0.0D0
+        m_chisq = 0.0D0
+        DO ic = 1, icmax
+          chisq(1) = ((ne(ic    ) - h_ne(ic    )) / h_ne(ic    ))**2
+          chisq(2) = ((ni(ic,ion) - h_ni(ic,ion)) / h_ni(ic,ion))**2
+          chisq(3) = ((vi(ic,ion) - h_vi(ic,ion)) / h_vi(ic,ion))**2
+          chisq(4) = ((pe(ic    ) - h_pe(ic    )) / h_pe(ic    ))**2
+          chisq(5) = ((pi(ic,ion) - h_pi(ic,ion)) / h_pi(ic,ion))**2
+          chisq(6) = ((te(ic    ) - h_te(ic    )) / h_te(ic    ))**2
+          chisq(7) = ((ti(ic,ion) - h_ti(ic,ion)) / h_ti(ic,ion))**2
+
+          t_chisq = t_chisq + chisq
+          m_chisq = MAX(m_chisq,chisq)
+ 
+c          t_chisq(1) =MAX(chisq(1),((ne(i    )-h_ne(i    ))/ne(i    ))**2)
+c          t_chisq(2) =MAX(chisq(2),((ni(i,ion)-h_ni(i,ion))/ni(i,ion))**2)
+c          t_chisq(3) =MAX(chisq(3),((vi(i,ion)-h_vi(i,ion))/vi(i,ion))**2)
+c          t_chisq(4) =MAX(chisq(4),((pe(i    )-h_pe(i    ))/pe(i    ))**2)
+c          t_chisq(5) =MAX(chisq(5),((pi(i,ion)-h_pi(i,ion))/pi(i,ion))**2)
+c          t_chisq(6) =MAX(chisq(6),((te(i    )-h_te(i    ))/te(i    ))**2)
+c          t_chisq(7) =MAX(chisq(7),((ti(i,ion)-h_ti(i,ion))/ti(i,ion))**2)
+        ENDDO
+        t_chisq = t_chisq / DBLE(icmax-1)
+        m_chisq = m_chisq / DBLE(icmax-1)
+        t_chisq(0) = SUM(t_chisq(1:7))
+        m_chisq(0) = SUM(m_chisq(1:7))
+c...    Do the target conditions as well...
+      ENDIF
+      IF (log.GE.1) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'T_CHISQ:',count,t_chisq(0:7)
+        WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'M_CHISQ:',count,m_chisq(0:7)
+        WRITE(logfp,*) 
+      ENDIF
+c...  Store plasma solution:
+      h_ne = ne
+      h_ni = ni
+      h_vi = vi
+      h_pe = pe
+      h_pi = pi
+      h_te = te
+      h_ti = ti
+
       RETURN
  99   STOP
       END
@@ -1226,10 +1327,8 @@ c...  Data transfer:  ...don't really like this... other way of doing it?
         pin  (1:icmax,ion) = pin1  (1:icmax,ion)
         fluid(1:icmax,ion) = fluid1(1:icmax,ion)
       ENDDO
-      IF (ref_icmax1.GT.1) THEN
+      IF (ref_icmax1.GT.1.AND.icmax1.EQ.ref_icmax1) THEN
         ref_tube = ref_tube1
-        IF (icmax1.NE.ref_icmax1) 
-     .    CALL ER('SOL28_V4','Reference data does not match tube',*99)
         ref_nion = ref_nion1
 c        WRITE(0,*) 'ref_nion,ref_icmax:',
 c     .    ref_nion,ref_icmax1
@@ -1239,7 +1338,13 @@ c     .    ref_nion,ref_icmax1
       ELSE
         ref_nion = 0
       ENDIF
-
+      IF (log.GT.0.AND.ref_nion.EQ.0.AND.ref_nion1.NE.0) THEN
+        WRITE(logfp,*)
+        WRITE(logfp,*) 'Reference solution data not available '//
+     .                 'for this tube because the geometry''s '
+        WRITE(logfp,*) 'of the reference and current cases '//
+     .                 'do not match.'
+      ENDIF
       
       nnode = nnode1
       mnode = mnode1
@@ -1323,12 +1428,19 @@ c...  Control:
       qcond = 0.0D0
       qconv = 0.0D0
 
+      t_chisq = 1.0D0
+      m_chisq = 1.0D0
+
 c...  Main loop:
       DO WHILE (cont)
 c...    Loop counter:
         count = count + 1
 
-        IF (log.GT.0) WRITE(logfp,*) '    COUNT:',tube%ir,count
+        IF (log.GT.0) THEN
+          WRITE(logfp,*) '==============================='
+          WRITE(logfp,*) 'COUNT:',tube%ir,count
+          WRITE(logfp,*) '==============================='
+        ENDIF
 
 c...    Set options for solver iteration:
 c       ----------------------------------------------------------------
@@ -1377,7 +1489,8 @@ c       ----------------------------------------------------------------
 
 c...    Main iteration loop exit conditions:
 c       ----------------------------------------------------------------
-        IF     (count.LE.6) THEN
+        IF     (count.LE.30.AND.(t_chisq(0).GT.1.0D-07.OR.
+     .                           m_chisq(0).GT.1.0D-07)) THEN
           cont = .TRUE.
         ELSEIF (count.LE.MAX_ITERATIONS.AND.
      .          (opt%super(LO).NE.0.AND.cnt_super(LO).OR.
@@ -1495,7 +1608,7 @@ c
      .        sol_option,isol
       LOGICAL cont
 
-      INTEGER ion,i1,itarget
+      INTEGER ion,i1,itarget,opt_iopt
 c      REAL    totsrc
  
       INTEGER nnode,mnode
@@ -1537,6 +1650,7 @@ c        CALL CalculateDrifts
 c...      Setup solver options:
 c         CALL SetupLocalOptions(itube,opt)
 
+          opt_iopt = 1
           IF (.TRUE.) THEN 
             DO iopt = 1, nopt
 c              WRITE(0,*) 'CHECK:',opt%cflukin,
@@ -1548,14 +1662,16 @@ c     .                   opt_iteration(iopt)%tube    (1:2)
      .            itube      .GE.opt_iteration(iopt)%tube(1)     .AND.
      .            itube      .LE.opt_iteration(iopt)%tube(2)) THEN
                 opt_tube = opt_iteration(iopt)
-                WRITE(0,*) 'SELECTING OPTION SET   :',itube,opt%cflukin,
-     .                     iopt
+                opt_iopt = iopt
+c                WRITE(0,*) 'SELECTING OPTION SET   :',itube,opt%cflukin,
+c     .                     iopt
               ENDIF
             ENDDO
           ELSE
             opt_tube = opt
           ENDIF
 
+c          WRITE(0,*) 'CHECKING SOLVER OPTION:',opt_tube%sol_n
           sol_option = 0
           DO isol = 1, opt_tube%sol_n
 c            WRITE(0,*) 'CHECKING SOLVER OPTION:',isol,itube,
@@ -1563,7 +1679,7 @@ c     .                 opt_tube%sol_tube(1:2,isol)
             IF (itube.GE.opt_tube%sol_tube(1,isol).AND.
      .          itube.LE.opt_tube%sol_tube(2,isol)) THEN
               sol_option = opt_tube%sol_option(isol)
-              WRITE(0,*) 'SELECTING SOLVER OPTION:',isol,sol_option
+c              WRITE(0,*) 'SELECTING SOLVER OPTION:',isol,sol_option
             ENDIF
           ENDDO
 
@@ -1572,6 +1688,7 @@ c     .                 opt_tube%sol_tube(1:2,isol)
             WRITE(logfp,'(A,I6)') ' SOLVING TUBE: ',itube
             WRITE(logfp,'(A,I6)') ' SOL OPTON   : ',sol_option
             WRITE(logfp,'(A,I6)') ' CFLUKIN     : ',opt%cflukin
+            WRITE(logfp,'(A,I6)') ' IOPT        : ',opt_iopt       
             WRITE(logfp,'(A,I6)') ' COSM        : ',opt%cosm
             WRITE(logfp,'(A,I6)') ' DEBUG_COUNT : ',debug_count
             WRITE(logfp,'(A   )') '------------------------------------'
@@ -1589,10 +1706,12 @@ c...      Calculate plasma solution:
           IF (.FALSE.) THEN
 c...        MPI:
           ELSE
+            store_sopt (itube) = sol_option  ! *** TEMP ***
+
             SELECTCASE (sol_option) 
+c             ----------------------------------------------------------
               CASE(1)
 c...            Assign reference solution:
-c               --------------------------------------------------------
                 IF (cind1.NE.ref_cind1.OR.cind2.NE.ref_cind2.OR.
      .              itube.NE.ref_itube) 
      .            CALL ER('MainLoop','Reference solution index '//
@@ -1601,32 +1720,30 @@ c               --------------------------------------------------------
                 DO i1 = 1, nion
                   fluid(cind1:cind2,i1) = ref_fluid(cind1:cind2,i1)
                 ENDDO
-
+c             ----------------------------------------------------------
               CASE(2)
 c...            Assign SOLPS solution:
-c               --------------------------------------------------------
-                CALL AssignSOLPSPlasma(itube,nnode,mnode,node)
-
-c      DO i1 = tube(itube)%cell_index(LO), tube(itube)%cell_index(HI)
-c        WRITE(0,*) '-->',fluid(i1,1)%ni
-c      ENDDO
-
+                CALL AssignSOLPSPlasma(itube)
+c             ----------------------------------------------------------
               CASE(3)
 c...            Interpolate reference solution:
-c               --------------------------------------------------------
-                CALL InterpolateReferencePlasma(itube,nnode,mnode,node)
-
+                CALL InterpolateReferencePlasma(itube)
+c             ----------------------------------------------------------
               CASE(28)
 c...            SOL28:
-c               --------------------------------------------------------
-                WRITE(logfp,*) 'mad parion:', pin(cind1:cind2,1)%ion
+                CALL SetTargetConditions(itube)
 
 c...            Assign solution parameter nodes:
                 IF (opt%s28mode.EQ.4.1) THEN 
                   CALL AssignNodeValues_New(itube,nnode,mnode,node,
      .                                      opt_tube)
+                  
+                  store_nnode(itube) = nnode  ! *** TEMP ***
+                  store_mnode(itube) = mnode
+                  store_node (1:nnode,itube) = node(1:nnode)
                 ELSE
-                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
+                  STOP 'NO LONGER SUPPORTED'
+c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
                 ENDIF
 
                 IF (tube(itube)%type.EQ.GRD_CORE) THEN
@@ -1642,9 +1759,8 @@ c...            Assign solution parameter nodes:
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
                 ENDIF
 c              WRITE(0,*) 'TUBE:PSOL',tube(itube)%eneano(1:2)
-
+c             ----------------------------------------------------------
               CASE DEFAULT
-c               --------------------------------------------------------
                 CALL ER('MainLoop','Solver option not identified',*99)
             ENDSELECT
 

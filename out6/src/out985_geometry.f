@@ -240,7 +240,7 @@ c
 c
 c ======================================================================
 c
-      SUBROUTINE PointInPolygon(p3,iobj,iside,isur,plane,result,status)
+      SUBROUTINE PointInPoly(p3,iobj,iside,isur,plane,result,status)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -269,13 +269,11 @@ c
       ENDIF
 
       DO v = 1, nv
-
          if (v.eq.nv) then
             nextv = 1
          else
             nextv = v+1
          endif
-
          IF     (plane.EQ.1) THEN
            x0 = p3(2) 
            y0 = p3(3) 
@@ -683,7 +681,7 @@ c...      Project onto the appropriate plane:
           ENDIF
 
 c...      Check if the point is inside the surface polygon:
-          CALL PointInPolygon(p3,iobj,iside,isur,plane,result,status)
+          CALL PointInPoly(p3,iobj,iside,isur,plane,result,status)
 
           IF (result) THEN
             n = n + 1
@@ -742,20 +740,28 @@ c...  Input:
 
 
       IF     (mode.EQ.IT_VWINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: vessel wall'
         nsurlist = nvwlist
         surlist => vwlist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: vessel wall'
       ELSEIF (mode.EQ.IT_GBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: grid boundary'
         nsurlist = ngblist
         surlist => gblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: grid boundary'
       ELSEIF (mode.EQ.IT_OBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: object map'
         nsurlist = noblist
         surlist => oblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: object map'
       ELSE
         CALL ER('FindSurfaceIntersections','MODE problem',*99)
       ENDIF
+      IF (nchord.EQ.dchord) THEN
+        WRITE(fp,*) '  NSURLIST:',nsurlist
+        IF (nsurlist.GT.0) THEN
+          WRITE(fp,*) '  SURLIST1:',surlist(1:nsurlist,1)
+          WRITE(fp,*) '  SURLIST2:',surlist(1:nsurlist,2)
+        ENDIF
+      ENDIF
+
 
       DO i3 = 1, nsurlist
         iobj  = surlist(i3,1)

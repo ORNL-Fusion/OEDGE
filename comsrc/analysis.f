@@ -101,8 +101,8 @@ c      WRITE(fp,*)
 c      WRITE(fp,*) 'Target conditions:'
       DO i1 = 2, 1, -1
         WRITE(fp,*)
-        WRITE(fp,'(1X,A4,A5,A9,1X,2A10,2A12,1X,A10,A6,A12)')
-     .    'ir','sol','rho','Te','Ti','Ne','Jsat','v','M','p'
+        WRITE(fp,'(1X,A4,A5,2A9,1X,2A10,2A12,1X,A10,A6,A12)')
+     .    'ir','sol','psin','rho','Te','Ti','Ne','Jsat','v','M','p'
         DO ir = irsep, nrs
           IF (idring(ir).EQ.-1) CYCLE
 
@@ -117,9 +117,9 @@ c      WRITE(fp,*) 'Target conditions:'
           jsat = GetJsat     (kteds(id),ktids(id),knds(id),kvds(id))
           mach = kvds(id) / GetCs(kteds(id),ktids(id))
 
-          WRITE(fp,'(1X,I4,I5,F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
+          WRITE(fp,'(1X,I4,I5,2F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
      .             ' ,F6.2,1P,E12.4,0P,1X,A)')
-     .      ir,model,rho(ir,CELL1),
+     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
      .      kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
      .      irtag(ir)
         ENDDO

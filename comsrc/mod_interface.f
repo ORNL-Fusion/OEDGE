@@ -72,6 +72,13 @@
 
       END INTERFACE
 
+      INTERFACE inGetData
+
+        MODULE PROCEDURE GetDataI ,GetDataR ,GetDataD,
+     .                   GetDatumI,GetDatumR,GetDatumD
+
+      END INTERFACE
+
 
 !...  Definitions:
 !     ==================================================================
@@ -125,7 +132,7 @@
 !..  .Declarations:
 !     ==================================================================
 
-      PUBLIC :: inOpenInterface, inCloseInterface, inPutData !, GetHandle
+      PUBLIC :: inOpenInterface, inCloseInterface, inPutData , inGetData, inGetDataSize !, GetHandle
 
       TYPE(type_interface) :: interface
 
@@ -179,7 +186,10 @@
       IF (ALLOCATED(dat)) DEALLOCATE(dat)
 
 !     Close file stream:
-      IF (interface%file_open) CLOSE(interface%file_pointer)
+      IF (interface%file_open) THEN
+        CLOSE(interface%file_pointer)
+        interface%file_open = .FALSE.
+      ENDIF
 
       RETURN
  99   STOP
@@ -303,7 +313,6 @@
 
       n    = dat(idat)%n
       nmax = dat(idat)%nmax
-
 !...  Check if more memory needs to be allocated:
       IF (nsrc.GT.nmax-n) THEN
         IF (.NOT.ALLOCATED(dat(idat)%rdata)) THEN
@@ -321,12 +330,10 @@
           DEALLOCATE(store)
         ENDIF
       ENDIF
-
 !...  Store data:
       dat(idat)%nmax = nmax
       dat(idat)%rdata(n+1:n+nsrc) = src(1:nsrc)
       dat(idat)%n = dat(idat)%n + nsrc
-
       RETURN
  99   STOP
       END SUBROUTINE PutDataR
@@ -444,10 +451,14 @@ c        WRITE(0,*) 'TAG:',TRIM(dtag)//'<'
      .  OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .       STATUS='REPLACE')
 
+      interface%file_open = .TRUE.
+
       SELECTCASE (1)
         CASE (1)
 !         ASCII, columns:
           pw = 22
+
+          WRITE(fp,'(F4.2)') 1.00  ! Version
 
           WRITE(fp,'(A,I6)') '{FILE BLOCK FORMAT}',1 
           WRITE(fp,'(A,I6)') '{FILE INDENT}      ',pw
@@ -565,6 +576,91 @@ c                    CASE (DTY_B)
  99   STOP
       END SUBROUTINE WriteInterfaceData
 !
+!     ------------------------------------------------------------------
+!     ------------------------------------------------------------------
+!
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE inGetDataSize
+      IMPLICIT none
+      RETURN
+ 99   STOP
+      END SUBROUTINE inGetDataSize
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDataI(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      INTEGER  , INTENT(OUT) :: src(:)
+      INTEGER :: nsrc
+      nsrc = SIZE(src)
+      src(1:nsrc) = -1
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDataI
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDatumI(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      INTEGER  , INTENT(OUT) :: src
+      src = -1
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDatumI
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDataR(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      REAL     , INTENT(OUT) :: src(:)
+      INTEGER :: nsrc
+      nsrc = SIZE(src)
+      src(1:nsrc) = -1.0
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDataR
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDatumR(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      REAL     , INTENT(OUT) :: src
+      src = -1.0
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDatumR
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDataD(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      REAL*8   , INTENT(OUT) :: src(:)
+      INTEGER :: nsrc
+      nsrc = SIZE(src)
+      src(1:nsrc) = -1.0D0
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDataD
+!
+!   -----------------------------------------------------------------------
+!
+      SUBROUTINE GetDatumD(src,dtag)
+      IMPLICIT none
+      CHARACTER, INTENT(IN)  :: dtag*(*)
+      REAL*8   , INTENT(OUT) :: src
+      src = -1.0D0
+      RETURN
+ 99   STOP
+      END SUBROUTINE GetDatumD
+!
+!     ------------------------------------------------------------------
 !     ------------------------------------------------------------------
 !
       SUBROUTINE InterfaceError(char1,char2,*)

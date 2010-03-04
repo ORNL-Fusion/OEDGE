@@ -255,7 +255,7 @@ c...  Input:
             ENDDO
           ENDDO
 
-        CASE (1)            ! Separatrix
+        CASE (1)            ! Separatrix and vessel wall
           ir = irsep
           DO ik = 1, nks(ir)
             id = korpg(ik,ir)
@@ -270,7 +270,7 @@ c...  Input:
             vsur(3,2,nsur) = 0.0D0
           ENDDO
 
-          IF (.TRUE.) THEN
+          IF (.FALSE.) THEN
             ir = irsep2
             DO ik = 1, nks(ir)
               id = korpg(ik,ir)
@@ -575,6 +575,23 @@ c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,1,len1,len2,
             vsur(1:3,1,nsur) = v(1:3,i1  )
             vsur(1:3,2,nsur) = v(1:3,i1+1)
           ENDDO
+
+        CASE (7)            ! Separatrix only
+          ir = irsep
+          DO ik = 1, nks(ir)
+            id = korpg(ik,ir)
+            nsur = nsur + 1 
+            hsur(nsur) = -3
+            npts(nsur) = 2
+            vsur(1,1,nsur) = DBLE(rvertp(1,id))
+            vsur(2,1,nsur) = DBLE(zvertp(1,id))
+            vsur(3,1,nsur) = 0.0D0
+            vsur(1,2,nsur) = DBLE(rvertp(4,id))
+            vsur(2,2,nsur) = DBLE(zvertp(4,id))
+            vsur(3,2,nsur) = 0.0D0
+          ENDDO
+
+
 
         CASE DEFAULT
           IF (mode.LT.0) THEN
@@ -1032,7 +1049,7 @@ c           ------------------------------------------------------------
 
               DO iobj = 1, nobj
                 DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
-c                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
+                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
                   IF     (obj(iobj)%gsur(isur).EQ.GT_TC) THEN
 c...                Create polygons for toroidally continuous surfaces:
@@ -1096,9 +1113,9 @@ c...                    Rotate vertices toroidally:
                         nsur = nsur + 1
                         npts(nsur) = 4
                         hsur(nsur) = opt%obj_colour(obj(iobj)%index)
-                        IF (MOD(nsur,1000).EQ.0)
-     .                    WRITE(0,*) '  - ',iobj,obj(iobj)%index,
-     .                                      hsur(nsur),r
+c                        IF (MOD(nsur,1000).EQ.0)
+c     .                    WRITE(0,*) '  - ',iobj,obj(iobj)%index,
+c     .                                      hsur(nsur),r
                         csur(1:3,nsur) = 0.0D0
                         vsur(1:3,4,nsur) = p1(1:3,1)
                         vsur(1:3,3,nsur) = p2(1:3,1)
@@ -1158,6 +1175,8 @@ c           ------------------------------------------------------------
                 xin = FindSeparatrixRadius(1) + delr
                 yin = 0.0
                 zin = 0.0
+                len1 = 1.0E+20
+                len2 = 1.0E+20
               ELSEIF (sub_option.EQ.6) THEN
                 READ(opt%plots(iplot1),*) cdum1,(idum1,i1=1,3),
      .                                    delr,dely,delphi
@@ -1172,7 +1191,6 @@ c           ------------------------------------------------------------
      .                           nsur,npts,hsur,vsur,len1,len2)
               npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
               IF (sub_option.EQ.4) THEN
-
               ENDIF
 c           ------------------------------------------------------------
             CASE (003) ! 3D flux-tube
@@ -2617,15 +2635,18 @@ c
       TYPE(type_view) :: pixel(MAXPIXEL)
       REAL*8 image(1100,1100)
 
-      INTEGER iplot,option
+      INTEGER   iplot,option
+      LOGICAL   debug
       CHARACTER buffer*1024
 
+      debug = .FALSE.
 
-      WRITE(0,*) 'PLOTS:',opt%nplots
-      DO iplot = 1, opt%nplots
-        WRITE(0,*) TRIM(opt%plots(iplot))
-      ENDDO
-c      STOP 'sgsdgsd'
+      IF (debug) THEN
+        WRITE(0,*) 'PLOT LIST:',opt%nplots
+        DO iplot = 1, opt%nplots
+          WRITE(0,*) TRIM(opt%plots(iplot))
+        ENDDO
+      ENDIF
 
       DO iplot = 1, opt%nplots
         WRITE(buffer,'(1024X)')

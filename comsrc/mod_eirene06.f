@@ -136,6 +136,11 @@ c...    Quantities set in EIRENE interface routines:
         REAL      :: soreni
         REAL      :: sorcos
         REAL      :: sormax
+c...    Quantities returned by EIRENE:
+        INTEGER   :: ipanu
+        REAL      :: fluxt
+        REAL      :: ptrash
+        REAL      :: etrash
       ENDTYPE type_strata
 
 !...  Code identifier:

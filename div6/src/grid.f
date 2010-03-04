@@ -1152,7 +1152,7 @@ c
       INCLUDE 'slcom'
 
       REAL       TOL
-      PARAMETER (TOL=1.0E-07)
+      PARAMETER (TOL=5.0E-07)
 
       REAL ATAN2C
 
@@ -1163,6 +1163,7 @@ c
       REAL    holdr1,holdz1,holdr2,holdz2,rstart,zstart,
      .        wallr1(MAXPTS+1,2),wallz1(MAXPTS+1,2),
      .        r1,z1,r2,z2,r3,z3,dist,ri,zi
+      REAL*8  d_wallr1(MAXPTS+1,2),d_wallz1(MAXPTS+1,2)
 
       terminate = .FALSE.
 
@@ -1184,7 +1185,7 @@ c     specification (CLOCKWISE) is opposite EIRENE's.
 c
 c     FIX! A check should be made for the neutral wall option, not for 
 c     whether or not there is neutral wall data in the input file:
-      IF (sloutput) WRITE(0,*) 'ISSUE WARNING ON WALL OPTION'
+c      IF (sloutput) WRITE(0,*) 'ISSUE WARNING ON WALL OPTION'
 c      CALL WN('BuildNeutralWall','Not checking wall option')
 
 c...  Load main wall data:
@@ -1344,7 +1345,16 @@ c...      Leave the loop:
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
 c...      Automated clipping:
-          CALL ClipWallToGrid(walln,wallr1,wallz1,MAXPTS+1)
+          d_wallr1 = DBLE(wallr1)
+          d_wallz1 = DBLE(wallz1)
+          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,
+     .                        MAXPTS+1,.TRUE.)
+          wallr1 = SNGL(d_wallr1)
+          wallz1 = SNGL(d_wallz1)           
+c          DO i2 = 1, walln
+c            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
+c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+c          ENDDO
 c...      Wipe the geometry arrays:
           CALL geoClean
           CALL osmClean
@@ -1443,14 +1453,23 @@ c       R=0.0:
       i2 = 0
       DO i1 = 1, walln-1
 
-       WRITE(pinout,*) '   SEARCH:',i1-1,wallr1(MAX(1,i1-1),2),
-     .                              wallz1(MAX(1,i1-1),2)
+        IF (i1.EQ.1) THEN
+          WRITE(pinout,*) '   SEARCH:',i1,walln,rstart,zstart,irstart
+        ELSE
+          WRITE(pinout,*) '   SEARCH:',i1-1,walln,wallr1(MAX(1,i1-1),2),
+     .                                 wallz1(MAX(1,i1-1),2)
+        ENDIF
 
         DO i2 = i1, walln
-
+c          IF (i1.EQ.1) THEN
+c            WRITE(pinout,*) '    MATCH:',i2,rstart,zstart
+c            WRITE(pinout,*) '         :',i2,wallr1(i2,1),wallz1(i2,1)
+c          ENDIF
           IF ((i1.EQ.1.AND.
-     .         wallr1(i2,1).EQ.rstart.AND.
-     .         wallz1(i2,1).EQ.zstart).OR.
+     .         ABS(rstart-wallr1(i2,1)).LT.TOL.AND. 
+     .         ABS(zstart-wallz1(i2,1)).LT.TOL).OR.
+c     .         wallr1(i2,1).EQ.rstart.AND.
+c     .         wallz1(i2,1).EQ.zstart).OR.
      .        (i1.GT.1.AND.
      .         ABS(wallr1(i2,1)-wallr1(MAX(1,i1-1),2)).LT.TOL.AND.
      .         ABS(wallz1(i2,1)-wallz1(MAX(1,i1-1),2)).LT.TOL)) THEN
@@ -1485,11 +1504,9 @@ c     .         wallz1(i2,1).EQ.wallz1(MAX(1,i1-1),2))) THEN
           ENDIF
 
         ENDDO
-
 c...    The next wall segment could not be found:
         IF (i2.EQ.walln+1) 
      .    CALL ER('BuildNeutralWall','Unable to sequence wall',*99)
-      
       ENDDO
 c
 c
@@ -1718,9 +1735,9 @@ c...    No PFZ here:
         ENDIF
       ENDIF
  
-      IF (sloutput) 
-     .  WRITE(0,*) 'DONE BUILDING NEUTRAL WALL -- NEED TO ASSIGN '//
-     .             'MORE WALLPT ENTRIES'
+c      IF (sloutput) 
+c     .  WRITE(0,*) 'DONE BUILDING NEUTRAL WALL -- NEED TO ASSIGN '//
+c     .             'MORE WALLPT ENTRIES'
 
 c...  Assign WALLINDEX:
       DO i1 = 1, wallpts
@@ -1743,6 +1760,7 @@ c      ENDIF
 99    CONTINUE
       WRITE(0,*) '   I1   :',i1
       WRITE(0,*) '   R1,Z1:',wallr1(i1,2),wallz1(i1,2)
+      WRITE(pinout,*)
       WRITE(pinout,*) '   R1,Z1:',wallr1(i1,2),wallz1(i1,2)
       DO i1 = 1, walln
         WRITE(pinout,*)  i1,(wallr1(i1,i2),wallz1(i1,i2),i2=1,2)
@@ -1767,7 +1785,9 @@ c
       INCLUDE 'grbound'
       INCLUDE 'slcom'
 
-      INTEGER id,walln,i1,i2,ik,ir,kind
+      REAL*8, PARAMETER :: TOL = 3.0E-7
+
+      INTEGER id,walln,i1,i2,ik,ir,kind,fp
       REAL    holdr(2),holdz(2),wallr1(MAXPTS+1,2),wallz1(MAXPTS+1,2)
 
 
@@ -1775,9 +1795,27 @@ c
      .  CALL ER('BuildGridPolygons','CIONR=2 is this only support '//
      .          'ion wall option for generalized grids',*99)
 
+      fp = PINOUT
 
       walln = 0
 
+
+c...  Add target segments:
+      DO ir = irsep, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        walln = walln + 1
+        id = korpg(1,ir)
+        wallr1(walln,1) = rvertp(1,id)
+        wallz1(walln,1) = zvertp(1,id)
+        wallr1(walln,2) = rvertp(2,id)
+        wallz1(walln,2) = zvertp(2,id)
+        walln = walln + 1
+        id = korpg(nks(ir),ir)
+        wallr1(walln,1) = rvertp(3,id)
+        wallz1(walln,1) = zvertp(3,id)
+        wallr1(walln,2) = rvertp(4,id)
+        wallz1(walln,2) = zvertp(4,id)
+      ENDDO
 c...  Add IRWALL boundary ring segments:
       ir = irwall
       DO ik = 1, nks(ir)
@@ -1797,52 +1835,38 @@ c          WRITE(0,*) '----> ',ikins(ik,ir),irins(ik,ir)
         ENDIF
       ENDDO
 c...  Add IRTRAP boundary ring segments:
-      ir = irtrap
-      DO ik = 1, nks(ir)
-        id = korpg(ikouts(ik,ir),irouts(ik,ir))
-        walln = walln + 1
-        wallr1(walln,1) = rvertp(4,id)
-        wallz1(walln,1) = zvertp(4,id)
-        wallr1(walln,2) = rvertp(1,id)
-        wallz1(walln,2) = zvertp(1,id)
-      ENDDO
-c...  Add target segments:
-      DO ir = irsep, nrs
-        IF (idring(ir).EQ.BOUNDARY) CYCLE
-        walln = walln + 1
-        id = korpg(1,ir)
-        wallr1(walln,1) = rvertp(1,id)
-        wallz1(walln,1) = zvertp(1,id)
-        wallr1(walln,2) = rvertp(2,id)
-        wallz1(walln,2) = zvertp(2,id)
-        walln = walln + 1
-        id = korpg(nks(ir),ir)
-        wallr1(walln,1) = rvertp(3,id)
-        wallz1(walln,1) = zvertp(3,id)
-        wallr1(walln,2) = rvertp(4,id)
-        wallz1(walln,2) = zvertp(4,id)
-      ENDDO
+      IF (cgridopt.NE.LINEAR_GRID) THEN
+        ir = irtrap
+        DO ik = 1, nks(ir)
+          id = korpg(ikouts(ik,ir),irouts(ik,ir))
+          walln = walln + 1
+          wallr1(walln,1) = rvertp(4,id)
+          wallz1(walln,1) = zvertp(4,id)
+          wallr1(walln,2) = rvertp(1,id)
+          wallz1(walln,2) = zvertp(1,id)
+        ENDDO
+      ENDIF
+
 c      WRITE(0,*) 'WALLN=',walln
 
       DO i1 = 2, walln-1
         DO i2 = i1, walln
-          IF (ABS(wallr1(i2,1)-wallr1(i1-1,2)).LT.3.0D-07.AND.
-     .        ABS(wallz1(i2,1)-wallz1(i1-1,2)).LT.3.0D-07) THEN
+          IF (ABS(wallr1(i2,1)-wallr1(i1-1,2)).LT.TOL.AND.
+     .        ABS(wallz1(i2,1)-wallz1(i1-1,2)).LT.TOL) THEN
 c...        Need to check that they are exactly the same, and if not
-c           then make them almost exactly the same:  ... or should this be done in TailorGrid?
-
-            holdr(1:2) = wallr1(i1,1:2) 
-            holdz(1:2) = wallz1(i1,1:2) 
+c           then make them exactly the same:  
+            holdr(    1:2) = wallr1(i1,1:2) 
+            holdz(    1:2) = wallz1(i1,1:2) 
             wallr1(i1,1:2) = wallr1(i2,1:2)
             wallz1(i1,1:2) = wallz1(i2,1:2)
-            wallr1(i2,1:2) = holdr(1:2)
-            wallz1(i2,1:2) = holdz(1:2)
+            wallr1(i2,1:2) = holdr(    1:2)
+            wallz1(i2,1:2) = holdz(    1:2)
             EXIT
           ENDIF
         ENDDO
 c...    The next wall segment could not be found:
         IF (i2.EQ.walln+1) 
-     .    CALL ER('BuildNeutralWall','Unable to polygon grid',*99)
+     .    CALL ER('BuildGridPolygons','Unable to polygon grid',*99)
       ENDDO
 
 c...  Assign:
@@ -1856,9 +1880,8 @@ c...  Not really sure what this does, but found in IONWALL in WALLS.F,
 c     seems to setup some work arrays:
       kind = 1
       CALL GA15A(IONWPTS,KIND,iwWORK,4*MAXPTS,iwINDW,MAXPTS,
-     >             RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
+     >           RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
       WRITE(SLOUT,'(A,I10)') 'RETURN FROM GA15A, TAU =',iwINDW(2,1)
-
 
 c...  Core boundary polygon:
       ioncpts = nks(2) 
@@ -1872,8 +1895,6 @@ c...  Core boundary polygon:
 
       CALL GA15A(IONCPTS,KIND,icWORK,4*MAXPTS,icINDW,MAXPTS,
      >             RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
-
-
 
 c...  Some stuff from the bottom of the IONWALL routine in WALLS.F:
 
@@ -1889,19 +1910,19 @@ c...  Some stuff from the bottom of the IONWALL routine in WALLS.F:
          ZMAX = ZMAX + 2.0 * DZ
       endif
 
-
-
       RETURN
-99    WRITE(0,*) '  I1,2=',i1,i2
-      WRITE(0,*) '  WALL1:',wallr1(i1-1,2),wallz1(i1-1,2)
-      WRITE(0,*) '  WALL2:'
-      DO i2 = i1, walln
-        WRITE(0,'(1X,A,I4,4F16.8)')
+99    WRITE(fp,*) '  I1,2=',i1,i2
+      WRITE(fp,*) '  WALL1:',wallr1(i1-1,2),wallz1(i1-1,2)
+      WRITE(fp,*) '  WALL2:'
+      DO i2 = 2, walln
+        WRITE(fp,'(1X,A,I4,4F16.8,4X,2F16.8)')
      .     '       :',i2,wallr1(i2,1),wallz1(i2,1),
-     .     wallr1(i2,1)-wallr1(i1-1,2),
-     .     wallz1(i2,1)-wallz1(i1-1,2)
+     .                   wallr1(i2,2),wallz1(i2,2),
+     .     wallr1(i2,1)-wallr1(i2-1,2),
+     .     wallz1(i2,1)-wallz1(i2-1,2)
       ENDDO
-      CALL OutputData(86,'Trying to build polygons')
+      CALL OutputData(85,'TRYING TO POLYGON THE GRID')
+      CALL DumpGrid('TRYING TO POLYGON THE GRID')
       STOP
       END
 c
@@ -1923,6 +1944,7 @@ c
 c
 c
       SUBROUTINE MergeRings(ir)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -1951,7 +1973,12 @@ c       in the ends of the rings are to be cut shortly:
         zvertp(2,id1)=zvertp(2,id2)
         rvertp(3,id1)=rvertp(3,id2)
         zvertp(3,id1)=zvertp(3,id2)
- 
+        IF (ALLOCATED(d_rvertp)) THEN
+          d_rvertp(2,id1) = d_rvertp(2,id2)
+          d_zvertp(2,id1) = d_zvertp(2,id2)
+          d_rvertp(3,id1) = d_rvertp(3,id2)
+          d_zvertp(3,id1) = d_zvertp(3,id2)
+        ENDIF 
         rs(ik,ir) = 0.0
         zs(ik,ir) = 0.0
         DO i1 = 1, 4
@@ -1974,6 +2001,7 @@ c
 c
 c
       SUBROUTINE AddOuterRing(ir,frac1)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -2029,6 +2057,20 @@ c         and before it is processed by OEDGE:
           zvertp(3,id2)=zvertp(4,id1)+frac*(zvertp(3,id1)-zvertp(4,id1))
           rvertp(4,id2)=rvertp(3,id1)
           zvertp(4,id2)=zvertp(3,id1)
+          IF (ALLOCATED(d_rvertp)) THEN
+            d_rvertp(1,id2)=d_rvertp(2,id1)
+            d_zvertp(1,id2)=d_zvertp(2,id1)
+            d_rvertp(2,id2)=d_rvertp(1,id1)+DBLE(frac)*(d_rvertp(2,id1)-
+     .                                                  d_rvertp(1,id1))
+            d_zvertp(2,id2)=d_zvertp(1,id1)+DBLE(frac)*(d_zvertp(2,id1)-
+     .                                                  d_zvertp(1,id1))
+            d_rvertp(3,id2)=d_rvertp(4,id1)+DBLE(frac)*(d_rvertp(3,id1)-
+     .                                                  d_rvertp(4,id1))
+            d_zvertp(3,id2)=d_zvertp(4,id1)+DBLE(frac)*(d_zvertp(3,id1)-
+     .                                                  d_zvertp(4,id1))
+            d_rvertp(4,id2)=d_rvertp(3,id1)
+            d_zvertp(4,id2)=d_zvertp(3,id1)
+          ENDIF
 
           rs(ik,ir+1) = 0.0
           zs(ik,ir+1) = 0.0
@@ -2053,6 +2095,7 @@ c
 c
 c
       SUBROUTINE DupeRing(ir)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -2064,6 +2107,9 @@ c
       INTEGER ir
 
       INTEGER ik,id1,id2,i1,irset
+
+      IF (idring(ir).EQ.BOUNDARY) 
+     .  CALL ER('TailorGrid','Trying to duplicate a boundary ring',*99)
 
       IF (ir.GE.irsep.AND.ir.LE.nrs) THEN
 c      IF (ir.GE.irsep.AND.ir.LT.irwall) THEN
@@ -2098,6 +2144,10 @@ c         and before it is processed by OEDGE:
           DO i1 = 1, nvertp(id2)
             rvertp(i1,id2) = rvertp(i1,id1)
             zvertp(i1,id2) = zvertp(i1,id1)
+            IF (ALLOCATED(d_rvertp)) THEN
+              d_rvertp(i1,id2) = d_rvertp(i1,id1)
+              d_zvertp(i1,id2) = d_zvertp(i1,id1)
+            ENDIF
           ENDDO
         ENDDO
       ELSE 
@@ -2326,6 +2376,7 @@ c
 c
 c
       SUBROUTINE SplitRing(ir,sposition)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INTEGER ir
@@ -2346,7 +2397,6 @@ c
       IF (ir.EQ.1.OR.ir.EQ.irwall.OR.ir.EQ.irtrap)
      .  CALL ER('SplitRing','Trying to split a boundary ring',*99)
 
-
       CALL InsertRing(ir,AFTER,PERMANENT)
 
       spos = DBLE(sposition)
@@ -2359,10 +2409,17 @@ c     .    CALL ER('SplitRing','Cell does not have 4 verticies',*99)
 
 c...    Assume cells have 4 verticies:
         id = korpg(ik,ir)
-        DO ii = 1, 4
-          r(ii) = rvertp(ii,id)
-          z(ii) = zvertp(ii,id)
-        ENDDO
+        IF (ALLOCATED(d_rvertp)) THEN
+          r(1:4) = d_rvertp(1:4,id)
+          z(1:4) = d_zvertp(1:4,id)
+        ELSE
+          r(1:4) = rvertp(1:4,id)
+          z(1:4) = zvertp(1:4,id)
+        ENDIF
+c        DO ii = 1, 4
+c          r(ii) = rvertp(ii,id)
+c          z(ii) = zvertp(ii,id)
+c        ENDDO
 
         r(5) = r(1) + spos * (r(2) - r(1))
         z(5) = z(1) + spos * (z(2) - z(1))
@@ -2384,6 +2441,16 @@ c        korpg(ik,ir+1) = id
 c...    Build the cell geometry:
         id = korpg(ik,ir+1)
         nvertp(id)   = 4
+        IF (ALLOCATED(d_rvertp)) THEN
+          d_rvertp(1,id) = r(5)
+          d_zvertp(1,id) = z(5)
+          d_rvertp(2,id) = r(2)
+          d_zvertp(2,id) = z(2)
+          d_rvertp(3,id) = r(3)
+          d_zvertp(3,id) = z(3)
+          d_rvertp(4,id) = r(6)
+          d_zvertp(4,id) = z(6)      
+        ENDIF
         rvertp(1,id) = SNGL(r(5))
         zvertp(1,id) = SNGL(z(5))
         rvertp(2,id) = SNGL(r(2))
@@ -2407,6 +2474,12 @@ c...  Resize the cells on the pre-existing ring:
       DO ik = 1, nks(ir)
 c...    Build the cell geometry:
         id = korpg(ik,ir)
+        IF (ALLOCATED(d_rvertp)) THEN
+          d_rvertp(2,id) = d_rvertp(1,korpg(ik,ir+1))
+          d_zvertp(2,id) = d_zvertp(1,korpg(ik,ir+1))
+          d_rvertp(3,id) = d_rvertp(4,korpg(ik,ir+1))
+          d_zvertp(3,id) = d_zvertp(4,korpg(ik,ir+1))
+        ENDIF
         rvertp(2,id) = rvertp(1,korpg(ik,ir+1))
         zvertp(2,id) = zvertp(1,korpg(ik,ir+1))
         rvertp(3,id) = rvertp(4,korpg(ik,ir+1))
@@ -2699,7 +2772,6 @@ c
           zvertp(3,in) = zvertp(2,id)
           rvertp(4,in) = rvertp(1,id)
           zvertp(4,in) = zvertp(1,id)
-
           rvertp(1,in) = rvertp(4,in)
           zvertp(1,in) = zvertp(4,in)
           rvertp(2,in) = rvertp(3,in)
@@ -2709,17 +2781,18 @@ c
           zvertp(1,in) = zvertp(4,id)
           rvertp(2,in) = rvertp(3,id)
           zvertp(2,in) = zvertp(3,id)
-
           rvertp(3,in) = rvertp(2,in)
           zvertp(3,in) = zvertp(2,in)
           rvertp(4,in) = rvertp(1,in)
           zvertp(4,in) = zvertp(1,in)
         ENDIF
       ELSE
-        DO ii = 1, 4
-          rvertp(ii,in) = 0.0
-          zvertp(ii,in) = 0.0
-        ENDDO
+        rvertp(:,in) = 0.0
+        zvertp(:,in) = 0.0
+        IF (ALLOCATED(d_rvertp)) THEN
+          d_rvertp(:,in) = 0.0D0
+          d_zvertp(:,in) = 0.0D0
+        ENDIF
       ENDIF
 
       nvertp(in) = 4
@@ -2810,22 +2883,27 @@ c
 c
 c Check to see if IKTO and IKTI should be modified:
 c
-      IF (ir.EQ.irsep.OR.ir.GT.irtrap.OR.
-     .    (ir.GT.irsep.AND.ir.LT.irwall.AND.type.EQ.VIRTUAL)) THEN
+      IF (nopriv) THEN
+        ikto2 = 0
+        ikti2 = nks(irsep) + 1
+      ELSE
+        IF (ir.EQ.irsep.OR.ir.GT.irtrap.OR.
+     .      (ir.GT.irsep.AND.ir.LT.irwall.AND.type.EQ.VIRTUAL)) THEN
 
-        IF ((ikcell.LE.ikto2(ir).AND.mode.EQ.BEFORE).OR.
-     .      (ikcell.LT.ikto2(ir).AND.mode.EQ.AFTER))
-     .    ikto2(ir) = ikto2(ir) + 1
+          IF ((ikcell.LE.ikto2(ir).AND.mode.EQ.BEFORE).OR.
+     .        (ikcell.LT.ikto2(ir).AND.mode.EQ.AFTER))
+     .      ikto2(ir) = ikto2(ir) + 1
 
-        IF ((ikcell.LE.ikti2(ir).AND.mode.EQ.BEFORE).OR.
-     .      (ikcell.LT.ikti2(ir).AND.mode.EQ.AFTER))
-     .    ikti2(ir) = ikti2(ir) + 1
+          IF ((ikcell.LE.ikti2(ir).AND.mode.EQ.BEFORE).OR.
+     .        (ikcell.LT.ikti2(ir).AND.mode.EQ.AFTER))
+     .      ikti2(ir) = ikti2(ir) + 1
 
-      ELSEIF (ir.LT.irwall) THEN
-        midnks = ikti - ikto - 1
+        ELSEIF (ir.LT.irwall) THEN
+          midnks = ikti - ikto - 1
 
-        ikto2(ir) = MAX(1      ,(nks(ir) - midnks) / 2)
-        ikti2(ir) = MIN(nks(ir),ikto2(ir) + midnks + 1)
+          ikto2(ir) = MAX(1      ,(nks(ir) - midnks) / 2)
+          ikti2(ir) = MIN(nks(ir),ikto2(ir) + midnks + 1)
+        ENDIF
       ENDIF
 
       ikto = ikto2(irsep)
@@ -2981,12 +3059,13 @@ c ======================================================================
 c Make sure that a virtual cell isn't being split...
 c
       SUBROUTINE SplitCell(ikcell,ircell,splitpos,code)
+      USE mod_grid_divimp
       IMPLICIT none
 c
 c Input:
 c
       INTEGER ikcell,ircell
-      REAL splitpos
+      REAL*8  splitpos
 
 c     Output:
       INTEGER code
@@ -3006,6 +3085,7 @@ c     Output:
       ik = ikcell
       ir = ircell
       spos = splitpos
+c      spos = DBLE(splitpos)
       id = korpg(ik,ir)
 c
 c
@@ -3016,9 +3096,7 @@ c      IF (nks(ir)+1.EQ.MAXNKS) THEN
         RETURN
       ENDIF
 
-
       IF (ir.EQ.irsep.OR.(ir.GE.irtrap.AND.ir.LE.nrs)) THEN
-
         ladd = ikto
         hadd = nks(irsep) - ikti + 1
 
@@ -3136,17 +3214,19 @@ c         off for now.
 c
 c     Determine vertices for new cells:
 c
-      DO ii = 1,4
-        r(ii) = DBLE(rvertp(ii,id))
-        z(ii) = DBLE(zvertp(ii,id))
-      ENDDO
+      IF (ALLOCATED(d_rvertp)) THEN
+        r(1:4) = d_rvertp(1:4,id)
+        z(1:4) = d_zvertp(1:4,id)
+      ELSE
+        r(1:4) = DBLE(rvertp(1:4,id))
+        z(1:4) = DBLE(zvertp(1:4,id))
+      ENDIF
 
       r(5) = r(1) + spos * (r(4) - r(1))
       z(5) = z(1) + spos * (z(4) - z(1))
-
       r(6) = r(2) + spos * (r(3) - r(2))
       z(6) = z(2) + spos * (z(3) - z(2))
-c
+
 c     Check that the length of the poloidal sides of the new cells
 c     is sufficient:
 c
@@ -3154,7 +3234,6 @@ c
       deltar(2) = r(2) - r(6)
       deltar(3) = r(5) - r(4)
       deltar(4) = r(6) - r(3)
-
       deltaz(1) = z(1) - z(5)
       deltaz(2) = z(2) - z(6)
       deltaz(3) = z(5) - z(4)
@@ -3162,7 +3241,7 @@ c
 
       DO ii = 1, 4
 c...bug
-        len = SQRT(deltar(ii)**2.0D0 + deltaz(ii)**2)
+        len = DSQRT(deltar(ii)**2.0D0 + deltaz(ii)**2)
 c        len = SQRT(deltar(ii)**2.0 + deltaz(ii)**2.0)
 
 c        WRITE(SLOUT,*) 'MARK: SPLIT ',ikcell,ircell,len,deltar(ii),
@@ -3191,12 +3270,10 @@ c       WRITE(0,*) 'NKS=',nks(ir),ir
 c       WRITE(0,*) 'NKS=',nks(ir),ir
 
 c This has to be added because of the way that InsertCell adjusts ikto...
-      IF (ir.EQ.irsep.AND.ik.EQ.ikto.OR.
-     .    ik.EQ.ikto2(ir)) THEN
+      IF (ir.EQ.irsep.AND.ik.EQ.ikto.OR.ik.EQ.ikto2(ir)) THEN
         ikto2(ir) = ikto2(ir) + 1
         ikto      = ikto2(ir)
       ENDIF
-
 
       IF (ik.EQ.ikmids(ir)) ikmids(ir) = ikmids(ir) + 1
 
@@ -3208,23 +3285,46 @@ c This has to be added because of the way that InsertCell adjusts ikto...
 c
 c Assign cell quantities:
 c
-      rvertp(1,id1) = SNGL(r(1))
-      zvertp(1,id1) = SNGL(z(1))
-      rvertp(2,id1) = SNGL(r(2))
-      zvertp(2,id1) = SNGL(z(2))
+      rvertp(3,id2) = rvertp(3,id1)
+      zvertp(3,id2) = zvertp(3,id1)
+      rvertp(4,id2) = rvertp(4,id1)
+      zvertp(4,id2) = zvertp(4,id1)
+      IF (ALLOCATED(d_rvertp)) THEN
+        d_rvertp(3,id2) = d_rvertp(3,id1)
+        d_zvertp(3,id2) = d_zvertp(3,id1)
+        d_rvertp(4,id2) = d_rvertp(4,id1)
+        d_zvertp(4,id2) = d_zvertp(4,id1)
+      ENDIF
+
+c      rvertp(1,id1) = SNGL(r(1))
+c      zvertp(1,id1) = SNGL(z(1))
+c      rvertp(2,id1) = SNGL(r(2))
+c      zvertp(2,id1) = SNGL(z(2))
       rvertp(3,id1) = SNGL(r(6))
       zvertp(3,id1) = SNGL(z(6))
       rvertp(4,id1) = SNGL(r(5))
       zvertp(4,id1) = SNGL(z(5))
+      IF (ALLOCATED(d_rvertp)) THEN
+        d_rvertp(3,id1) = r(6)
+        d_zvertp(3,id1) = z(6)
+        d_rvertp(4,id1) = r(5)
+        d_zvertp(4,id1) = z(5)
+      ENDIF
 
       rvertp(1,id2) = SNGL(r(5))
       zvertp(1,id2) = SNGL(z(5))
       rvertp(2,id2) = SNGL(r(6))
       zvertp(2,id2) = SNGL(z(6))
-      rvertp(3,id2) = SNGL(r(3))
-      zvertp(3,id2) = SNGL(z(3))
-      rvertp(4,id2) = SNGL(r(4))
-      zvertp(4,id2) = SNGL(z(4))
+      IF (ALLOCATED(d_rvertp)) THEN
+        d_rvertp(1,id2) = r(5)
+        d_zvertp(1,id2) = z(5)
+        d_rvertp(2,id2) = r(6)
+        d_zvertp(2,id2) = z(6)
+      ENDIF
+c      rvertp(3,id2) = SNGL(r(3))
+c      zvertp(3,id2) = SNGL(z(3))
+c      rvertp(4,id2) = SNGL(r(4))
+c      zvertp(4,id2) = SNGL(z(4))
 
       rs(ik1,ir) = 0.25 * (rvertp(1,id1) + rvertp(2,id1) +
      .                     rvertp(3,id1) + rvertp(4,id1))
@@ -3829,7 +3929,7 @@ c
 c Currently assumes that core rings are structured...
 c
       SUBROUTINE FindLink(ikcell,ircell,side,iklink,irlink)
-
+      USE mod_grid_divimp
       IMPLICIT none
 
 c     Input:
@@ -3876,30 +3976,28 @@ c     information for standard cases:
         IF (ircell.EQ.1.OR.ircell.EQ.irtrap) THEN
           irlink = ircell
           iklink = ikcell
-
           in = korpg(ikcell,ircell+1)
-
           rs(ikcell,ircell) = 0.5 * (rvertp(2,in) + rvertp(3,in))
           zs(ikcell,ircell) = 0.5 * (zvertp(2,in) + zvertp(3,in))
-
           RETURN
-c Assume that the core rings are sturctured...
-c        ELSEIF ((ircell.GT.1.AND.ircell.LT.irsep)
-c     .          .OR.ircell.EQ.irtrap+1.OR.
-
         ELSEIF (ircell.EQ.irtrap+1.OR.
      .          ircell.EQ.2.OR.
      .          ircell.EQ.irwall) THEN
           irlink = ircell - 1
           iklink = ikcell
           RETURN
-
         ELSE
-          c1 = DBLE(rvertp(1,incell))
-          c2 = DBLE(zvertp(1,incell))
-          d1 = DBLE(rvertp(4,incell))
-          d2 = DBLE(zvertp(4,incell))
-
+          IF (ALLOCATED(d_rvertp)) THEN
+            c1 = d_rvertp(1,incell)
+            c2 = d_zvertp(1,incell)
+            d1 = d_rvertp(4,incell)
+            d2 = d_zvertp(4,incell)
+          ELSE 
+            c1 = DBLE(rvertp(1,incell))
+            c2 = DBLE(zvertp(1,incell))
+            d1 = DBLE(rvertp(4,incell))
+            d2 = DBLE(zvertp(4,incell))
+          ENDIF
           IF (ircell.EQ.irsep.AND.
      .        (ikcell.LE.ikto.OR.ikcell.GE.ikti)) THEN
             ir = nrs
@@ -3907,31 +4005,32 @@ c     .          .OR.ircell.EQ.irtrap+1.OR.
             ir = ircell - 1
           ENDIF
         ENDIF
-
       ELSEIF (side.EQ.SIDE23) THEN
-
         IF (ircell.EQ.irwall) THEN
           irlink = ircell
           iklink = ikcell
-
           in = korpg(ikcell,ircell-1)
-
           rs(ikcell,ircell) = 0.5 * (rvertp(1,in) + rvertp(4,in))
           zs(ikcell,ircell) = 0.5 * (zvertp(1,in) + zvertp(4,in))
           RETURN
 c Assume that the core rings are sturctured...
         ELSEIF (ircell.EQ.1.OR.ircell.EQ.irtrap.OR.
      .          (ircell.EQ.irwall-1.AND.irbreak.EQ.0)) THEN
-c        ELSEIF (ircell.LT.irsep-1.OR.ircell.EQ.irtrap.OR.
-c     .          (ircell.EQ.irwall-1.AND.irbreak.EQ.0)) THEN
           irlink = ircell + 1
           iklink = ikcell
           RETURN
         ELSE
-          c1 = DBLE(rvertp(2,incell))
-          c2 = DBLE(zvertp(2,incell))
-          d1 = DBLE(rvertp(3,incell))
-          d2 = DBLE(zvertp(3,incell))
+          IF (ALLOCATED(d_rvertp)) THEN
+            c1 = d_rvertp(2,incell)
+            c2 = d_zvertp(2,incell)
+            d1 = d_rvertp(3,incell)
+            d2 = d_zvertp(3,incell)
+          ELSE 
+            c1 = DBLE(rvertp(2,incell))
+            c2 = DBLE(zvertp(2,incell))
+            d1 = DBLE(rvertp(3,incell))
+            d2 = DBLE(zvertp(3,incell))
+          ENDIF
           IF (ircell.EQ.nrs) THEN
             ir = irsep
           ELSE
@@ -3941,23 +4040,12 @@ c     .          (ircell.EQ.irwall-1.AND.irbreak.EQ.0)) THEN
       ELSE
         CALL ER('FindLink','Illegal side option',*99)
       ENDIF
-
 c...  Loop over rings to find neighbouring cells:
-c      clean = .FALSE.
       nmatch = 0
-
       cont = .TRUE.
       DO WHILE (cont)
-        cont = .FALSE.
+        cont  = .FALSE.
         clean = .FALSE.
-
-
-c      DO WHILE (nmatch.EQ.0.OR.(nmatch.GE.1.AND..NOT.clean))
-c      DO WHILE (nmatch.EQ.0.OR.(nmatch.EQ.1.AND..NOT.clean))
-
-c          IF (side.EQ.SIDE14.AND.ir.EQ.irsep.AND.ik.EQ.23) 
-c     .      WRITE(0,*) 'LINK IR=',ir,nmatch,clean
-
         IF     (ir.EQ.ircell.OR.idring(ir).EQ.BOUNDARY) THEN
           ikend = 0
         ELSEIF (ir.LT.irsep) THEN
@@ -3965,38 +4053,46 @@ c     .      WRITE(0,*) 'LINK IR=',ir,nmatch,clean
         ELSE
           ikend = nks(ir)
         ENDIF
-
         DO ik = 1, ikend
 c         Exclude virtual cells, unless specified cell is also virtual:
           IF (virtag(ik,ir).NE.0) CYCLE
-
           in = korpg(ik,ir)
-
           IF (side.EQ.SIDE23) THEN
-            a1 = DBLE(rvertp(1,in))
-            a2 = DBLE(zvertp(1,in))
-            b1 = DBLE(rvertp(4,in))
-            b2 = DBLE(zvertp(4,in))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a1 = d_rvertp(1,in)
+              a2 = d_zvertp(1,in)
+              b1 = d_rvertp(4,in)
+              b2 = d_zvertp(4,in)
+            ELSE 
+              a1 = DBLE(rvertp(1,in))
+              a2 = DBLE(zvertp(1,in))
+              b1 = DBLE(rvertp(4,in))
+              b2 = DBLE(zvertp(4,in))
+            ENDIF
           ELSE
-            a1 = DBLE(rvertp(2,in))
-            a2 = DBLE(zvertp(2,in))
-            b1 = DBLE(rvertp(3,in))
-            b2 = DBLE(zvertp(3,in))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a1 = d_rvertp(2,in)
+              a2 = d_zvertp(2,in)
+              b1 = d_rvertp(3,in)
+              b2 = d_zvertp(3,in)
+            ELSE 
+              a1 = DBLE(rvertp(2,in))
+              a2 = DBLE(zvertp(2,in))
+              b1 = DBLE(rvertp(3,in))
+              b2 = DBLE(zvertp(3,in))
+            ENDIF
           ENDIF
-
           cpc = CalcPoint(a1,a2,b1,b2,c1,c2,t1)
           cpd = CalcPoint(a1,a2,b1,b2,d1,d2,t2)
-
-          IF (ir.EQ.65.AND.side.EQ.SIDE14.AND.
-     .        ikcell.EQ.49.AND.ircell.EQ.66) THEN
-              WRITE(50,*) 'LINK PROBLEM 49,66:',ik,ir,cpc,cpd
-              WRITE(50,*) '                  :',t1,t2
-              WRITE(50,*) '                  :',a1,a2
-              WRITE(50,*) '                  :',b1,b2
-              WRITE(50,*) '                  :',c1,c2
-              WRITE(50,*) '                  :',d1,d2
+          IF (side.EQ.SIDE23.AND.
+     .        ikcell.EQ.26.AND.ircell.EQ.120.AND.ir.EQ.128) THEN
+            WRITE(88,'(A,4I6,2X,2I6,2F15.8)') 
+     .        'LINK:',ikcell,ircell,ik,ir,cpc,cpd,t1,t2
+            WRITE(88,'(A,4F15.8)')
+     .        '    :',a1,a2,b1,b2
+            WRITE(88,'(A,4F15.8)')
+     .        '    :',c1,c2,d1,d2
           ENDIF
-
           IF ((cpc.EQ.1.AND.t1.LT.1.0D0).AND.
      .        (cpd.EQ.1.AND.t2.GT.0.0D0)) THEN
 c...        Both end points are connected to a neighbouring cell.  This is 
@@ -4006,7 +4102,7 @@ c           exit the search (this could be improved in the future):
             iklink = ik
             irlink = ir
             clean = .TRUE.
-            cont = .FALSE.
+            cont  = .FALSE.
             EXIT  ! Leave IK loop
           ELSEIF ((cpc.EQ.1.AND.t1.LT.1.0D0).OR.
      .            (cpd.EQ.1.AND.t2.GT.0.0D0)) THEN
@@ -4020,62 +4116,38 @@ c           store the cell index in a list of candidates:
         ENDDO
 
         IF (nmatch.EQ.0.OR..NOT.clean) THEN
-c        IF (nmatch.EQ.0.OR.(nmatch.EQ.1.AND..NOT.clean)) THEN
 c...      No connection was identified, so check the entire grid:
           cont = .TRUE.
           IF (side.EQ.SIDE14) THEN
-
             IF (sidereset) THEN
               ir = ir - 1
-c              WRITE(0,*) 'SEARCHING WHOLE GRID:',ir,irsep,irwall,nrs
             ELSE
               sidereset = .TRUE.
               ir = nrs
-c              WRITE(0,*) 'SEARCHING WHOLE GRID:',ircell
-c              IF (ir.LT.irwall) THEN
-c                ir = irwall - 1
-c              ELSE
-c...            Nothing fancy for the primary PFZ:
-c                ir = ir - 1
-c              ENDIF
             ENDIF
-c              ir = ir - 1
           ELSE
             IF (sidereset) THEN
               ir = ir + 1
            ELSE
               sidereset = .TRUE.
               ir = 3
-c              IF (ir.LT.irwall) THEN
-c                ir = irsep - 1
-c              ELSE
-c...            Nothing fancy for the primary PFZ:
-c                ir = ir + 1
-c              ENDIF
             ENDIF
-c            ir = ir + 1
           ENDIF
 
-
-          IF (side.EQ.SIDE14.AND.
-     .        ikcell.EQ.23.AND.ircell.EQ.irsep) THEN
-c          IF (side.EQ.SIDE14.AND.ikcell.EQ.14.AND.ircell.EQ.32) THEN
+          IF (side.EQ.SIDE23.AND.
+     .        ikcell.EQ.26.AND.ircell.EQ.120) THEN
              IF (sloutput) THEN
-               WRITE(0,*) 'LINK PROBLEM: SEARCHING',ir
+               WRITE(88,*) 'LINK PROBLEM: SEARCHING',ir
              ENDIF 
           ENDIF
 
 c...      Exit when a virtual ring is encountered:
           IF ((side.EQ.SIDE14.AND.ir.EQ.1    ).OR.
      .        (side.EQ.SIDE23.AND.ir.EQ.nrs+1)) cont = .FALSE.
-c          IF (idring(ir).EQ.BOUNDARY.OR.ir.LE.0.OR.ir.GT.nrs) cont = .FALSE.
-c          IF (idring(ir).EQ.-1.OR.ir.LE.0.OR.ir.GT.nrs) nmatch = -1
         ENDIF
-
       ENDDO
 
       IF (.NOT.clean.AND.nmatch.LE.1) THEN
-c      IF     (nmatch.LE.0) THEN
 c...    If no match was found, so point the cell to itself (for
 c       later processing):
         iklink = ikcell
@@ -4100,21 +4172,11 @@ c       distance between cell centres:
         irlink = irmin
       ENDIF
 
-      IF (side.EQ.SIDE14.AND.
-     .    ikcell.EQ.23.AND.ircell.EQ.irsep) THEN
+      IF (side.EQ.SIDE23.AND.
+     .    ikcell.EQ.26.AND.ircell.EQ.120) THEN
         IF (sloutput) THEN
-          WRITE(0,*) 'LINK PROBLEM:',iklink,irlink,nmatch,clean
+          WRITE(88,*) 'LINK PROBLEM:',iklink,irlink,nmatch,clean
         ENDIF
-      ENDIF
-
-      IF (.FALSE..AND.
-     .    side.EQ.SIDE14.AND.ikcell.EQ.14.AND.ircell.EQ.32) THEN
-        WRITE(0,*) 'LINK PROBLEM:',iklink,irlink,nmatch,clean
-        id = korpg(ikcell,ircell)
-        WRITE(0,*) rvertp(1,id),zvertp(1,id),rvertp(4,id),zvertp(4,id)
-        id = korpg(iklink,irlink)
-        WRITE(0,*) rvertp(2,id),zvertp(2,id),rvertp(3,id),zvertp(3,id)
-c        STOP 'sdfgsdgsd'
       ENDIF
 
       RETURN
@@ -4133,6 +4195,7 @@ c
 c jul 9, 97 - need to account for virtual cells with NO POLYGONS
 c
       SUBROUTINE BuildMap
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4156,6 +4219,11 @@ c Make sure the cell centers for bounary rings are recalculated at the
 c correct time...
 c      WRITE(0,*) 'Resetting boundary rings'
 
+      IF (ALLOCATED(d_rvertp)) THEN
+        rvertp = SNGL(d_rvertp)
+        zvertp = SNGL(d_zvertp)
+      ENDIF
+
       CALL ResetRing(1     ,2)
       CALL ResetRing(irwall,irwall-1)
       CALL ResetRing(irtrap,irtrap+1)
@@ -4177,9 +4245,7 @@ c
 c Build the connection map:
 c
       DO ir = 1, nrs
-c          WRITE(0,*) 'FINDLINK IR=',ir         
         DO ik = 1, nks(ir)
-c          WRITE(0,*) 'FINDLINK IK,IR=',ik,ir
           CALL FindLink(ik,ir,SIDE14,ikins (ik,ir),irins (ik,ir))
           CALL FindLink(ik,ir,SIDE23,ikouts(ik,ir),irouts(ik,ir))
         ENDDO
@@ -4277,7 +4343,6 @@ c...  Clear connection map values for virtual cells:
       CALL DB('Done in BuildMap - short return')
 
 c.... Assign polygons for virtual rings:
-c      RETURN
 
 c...  Do me a little scan to be sure that there is no KORPG overlap:
       DO ir = 1, nrs
@@ -4294,9 +4359,6 @@ c...  Do me a little scan to be sure that there is no KORPG overlap:
           ENDDO
         ENDDO
       ENDDO
-
-      CALL OutputData(87,'BEFORE BOUNDARY POLYGONS')
-c      STOP 'sdfsd'
 
       ir = 1
       DO ik = 1, nks(ir)
@@ -4415,17 +4477,16 @@ c...  Input:
 c...  Output:
       REAL*8  r,z
 
-      REAL*8     TOL
-      PARAMETER (TOL = 1.0E-07)
+      REAL*8     DTOL
+      PARAMETER (DTOL = 1.0D-07)
 
       INTEGER in,id
-      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,f,t1,t2
+      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,f,t1,t2,mint1
 
       SegChk = .FALSE.
 
 c...  Validate input:
       id = korpg(ik,ir)
-
       IF     (side.EQ.SIDE14) THEN
         a1 = rvp(1,id)
         a2 = zvp(1,id)
@@ -4450,36 +4511,31 @@ c...  Validate input:
 
 c...  Search for intesections between the grid cells and the line segment
 c     specified in the OEDGE input file, returning the first intersection:
+      mint1 = 1.0D+30
       DO in = 1, 2*nseg, 2
         c1 = rseg(in)
         c2 = zseg(in)
         d1 = rseg(in+1)
         d2 = zseg(in+1)
-      
 c...    Find the intersection points:
         CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,t1,t2)
-      
 c...    This is necessary because the DIII-D SONNET grids are already refined
 c       at the target, while the C-Mod grids are not:
 c        f = 10000.0D0
 c...    C-Mod:
         f = 1.0D0
-      
-        IF ((t1+TOL*f.GE.0.0.AND.t1-TOL*f.LE.1.0).AND.
-     .      (t2+TOL*f.GE.0.0.AND.t2-TOL*f.LE.1.0)) THEN
-      
+        IF ((t1+DTOL*f.GE.0.0D0.AND.t1-DTOL*f.LE.1.0D0).AND.
+     .      (t2+DTOL*f.GE.0.0D0.AND.t2-DTOL*f.LE.1.0D0).AND.
+     .      t1.LT.mint1) THEN
           SegChk = .TRUE.
-      	
+          mint1 = t1
           r = a1 + t1 * (b1 - a1)
           z = a2 + t1 * (b2 - a2)
-      
           WRITE(50,'(3X,A,2I4,1X,I3,2X,I3,2X,2F11.7,L4)')
      .      'SegChk IK,IR,T,S WS T1,T2 WC = ',
      .      ik,ir,side,in,t1,t2,SegChk
-      
           RETURN
         ENDIF
-
       ENDDO
 
       RETURN
@@ -4488,6 +4544,7 @@ c
 c ======================================================================
 c
       SUBROUTINE MorphGrid(mode,index)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4495,8 +4552,7 @@ c
       INCLUDE 'slcom' 
 
       INTEGER mode,index,i1,ik,ir,id,ike,ind1
-      REAL    deltax,deltay,rv,zv,fx,fy,x1,x2,y1,y2
-
+      REAL*8  deltax,deltay,rv,zv,fx,fy,x1,x2,y1,y2
 
 
       IF     (mode.GE.2.AND.mode.LE.7) THEN
@@ -4510,12 +4566,12 @@ c...    Lower divertor stretch:
           IF (grdmod(ind1+1,1).NE.0.0) 
      .      CALL ER('MorphGrid','Invalid GRDMOD data',*99)
       
-          x1 = grdmod(ind1,2)    
-          x2 = grdmod(ind1,3)    
-          y1 = grdmod(ind1,4)    
-          y2 = grdmod(ind1,5)    
-          deltax = grdmod(ind1+1,2)    
-          deltay = grdmod(ind1+1,3)    
+          x1 = DBLE(grdmod(ind1,2))   
+          x2 = DBLE(grdmod(ind1,3))   
+          y1 = DBLE(grdmod(ind1,4))   
+          y2 = DBLE(grdmod(ind1,5))
+          deltax = DBLE(grdmod(ind1+1,2))   
+          deltay = DBLE(grdmod(ind1+1,3))
 
           WRITE(0,*) 'MODE:',ind1,mode
           WRITE(0,*) 'MODE:',x1,x2
@@ -4528,59 +4584,105 @@ c...    Lower divertor stretch:
             DO ik = 1, ike
               id = korpg(ik,ir)
               DO i1 = 1, nvertp(id)
-                rv = rvertp(i1,id)
-                zv = zvertp(i1,id)
+                IF (ALLOCATED(d_rvertp)) THEN
+                  rv = d_rvertp(i1,id)
+                  zv = d_zvertp(i1,id)
+                ELSE
+                  rv = rvertp(i1,id)
+                  zv = zvertp(i1,id)
+                ENDIF
                 IF (rv.LT.MIN(x1,x2).OR.rv.GT.MAX(x1,x2).OR.
      .              zv.LT.MIN(y1,y2).OR.zv.GT.MAX(y1,y2)) CYCLE
 
                 SELECTCASE (mode)
                   CASE (2)
                     fx = 1.0
-                    fy = 1.0 - ABS( (zv - 0.5*(y1+y2)) / (0.5*(y2-y1)) )
+                    fy = 1.0 - DABS((zv - 0.5*(y1+y2)) / (0.5*(y2-y1)))
                     rvertp(i1,id) = rv 
                     zvertp(i1,id) = zv + deltay * fx * fy
+                    IF (ALLOCATED(d_rvertp)) THEN
+                      d_rvertp(i1,id) = rv 
+                      d_zvertp(i1,id) = zv + deltay * fx * fy
+                    ELSE
+                      rvertp(i1,id) = rv 
+                      zvertp(i1,id) = zv + deltay * fx * fy
+                    ENDIF
                   CASE (3)
-                    fx = ABS((zv - y1) / (y2 - y1))**1.0
-                    fy = ABS((rv - x1) / (x2 - x1))**0.5
-                    rvertp(i1,id) = rv + deltax * fx * fy
-                    zvertp(i1,id) = zv
+                    fx = DABS((zv - y1) / (y2 - y1))**1.0
+                    fy = DABS((rv - x1) / (x2 - x1))**0.5
+                    IF (ALLOCATED(d_rvertp)) THEN
+                      d_rvertp(i1,id) = rv + deltax * fx * fy
+                      d_zvertp(i1,id) = zv
+                    ELSE
+                      rvertp(i1,id) = rv + deltax * fx * fy
+                      zvertp(i1,id) = zv
+                    ENDIF
                   CASE (4)
 c...                General adjustment which goes to zero at the domain boundary:
-                    fx = 1.0 - ABS( (rv - 0.5*(x1+x2)) / (0.5*(x2-x1)) )
-                    fy = 1.0 - ABS( (zv - 0.5*(y1+y2)) / (0.5*(y2-y1)) )
-                    rvertp(i1,id) = rv + deltax * fx * fy
-                    zvertp(i1,id) = zv + deltay * fx * fy
+                    fx = 1.0 - DABS((rv - 0.5*(x1+x2)) / (0.5*(x2-x1)))
+                    fy = 1.0 - DABS((zv - 0.5*(y1+y2)) / (0.5*(y2-y1)))
+                    IF (ALLOCATED(d_rvertp)) THEN
+                      d_rvertp(i1,id) = rv + deltax * fx * fy
+                      d_zvertp(i1,id) = zv + deltay * fx * fy
+                    ELSE
+                      rvertp(i1,id) = rv + deltax * fx * fy
+                      zvertp(i1,id) = zv + deltay * fx * fy
+                    ENDIF
                   CASE (5)
 c...                Horizontal/vertical adjustment that goes to zero at Y1,Y2/X1,X2:
                     IF (deltax.NE.0.0) THEN
-                      fx = 1.0 - ABS((rv - 0.5*(x1+x2)) / (0.5*(x2-x1)))
-                      rvertp(i1,id) = rv + deltax * fx
+                      fx = 1.0 - DABS((rv-0.5*(x1+x2)) / (0.5*(x2-x1)))
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_rvertp(i1,id) = rv + deltax * fx
+                      ELSE
+                        rvertp(i1,id) = rv + deltax * fx
+                      ENDIF
                     ENDIF
                     IF (deltay.NE.0.0) THEN
-                      fy = 1.0 - ABS((zv - 0.5*(y1+y2)) / (0.5*(y2-y1)))
-                      zvertp(i1,id) = zv + deltay * fy
+                      fy = 1.0 - DABS((zv-0.5*(y1+y2)) / (0.5*(y2-y1)))
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_zvertp(i1,id) = zv + deltay * fy
+                      ELSE
+                        zvertp(i1,id) = zv + deltay * fy
+                      ENDIF
                     ENDIF
                   CASE (6)
 c...                Horizonta/vertical adjustment that goes to zero at Y1,1:
                     IF (deltax.NE.0.0) THEN
-                      fx = ABS((zv - y1) / (y2 - y1))**0.5
-                      fy = ABS((rv - x1) / (x2 - x1))**1.0
-                      rvertp(i1,id) = rv + deltax * fx * fy
+                      fx = DABS((zv - y1) / (y2 - y1))**0.5
+                      fy = DABS((rv - x1) / (x2 - x1))**1.0
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_rvertp(i1,id) = rv + deltax * fx * fy
+                      ELSE
+                        rvertp(i1,id) = rv + deltax * fx * fy
+                      ENDIF
                     ENDIF
                     IF (deltay.NE.0.0) THEN
-                      fx = ABS((zv - y1) / (y2 - y1))**1.0
-                      fy = ABS((rv - x1) / (x2 - x1))**0.5
-                      zvertp(i1,id) = zv + deltay * fx * fy
+                      fx = DABS((zv - y1) / (y2 - y1))**1.0
+                      fy = DABS((rv - x1) / (x2 - x1))**0.5
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_zvertp(i1,id) = zv + deltay * fx * fy
+                      ELSE
+                        zvertp(i1,id) = zv + deltay * fx * fy
+                      ENDIF  
                     ENDIF
                   CASE (7)
 c...                Yank:
                     IF (deltax.NE.0.0) THEN
-                      fx = 1.0 - ABS((zv - 0.5*(y1+y2)) / (0.5*(y2-y1)))
-                      rvertp(i1,id) = rv + deltax * fx 
+                      fx = 1.0 - DABS((zv-0.5*(y1+y2)) / (0.5*(y2-y1)))
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_rvertp(i1,id) = rv + deltax * fx 
+                      ELSE
+                        rvertp(i1,id) = rv + deltax * fx 
+                      ENDIF
                     ENDIF
                     IF (deltay.NE.0.0) THEN
-                      fy = 1.0 - ABS((rv - 0.5*(x1+x2)) / (0.5*(x2-x1)))
-                      zvertp(i1,id) = zv + deltay * fy
+                      fy = 1.0 - DABS((rv-0.5*(x1+x2)) / (0.5*(x2-x1)))
+                      IF (ALLOCATED(d_rvertp)) THEN
+                        d_zvertp(i1,id) = zv + deltay * fy
+                      ELSE
+                        zvertp(i1,id) = zv + deltay * fy
+                      ENDIF
                     ENDIF
 
                   CASE DEFAULT
@@ -4620,9 +4722,14 @@ c        y2 = -0.1
               IF (rv.GE.x1.AND.rv.LE.x2.AND.
      .            zv.GE.MIN(y1,y2).AND.zv.LE.MAX(y1,y2)) THEN
                 fx = 1.0
-                fy = 1.0 - ABS( (zv - 0.5*(y1+y2)) / (0.5*(y2-y1)) )
-                rvertp(i1,id) = rv 
-                zvertp(i1,id) = zv + deltay * fx * fy
+                fy = 1.0 - DABS((zv-0.5*(y1+y2)) / (0.5*(y2-y1)))
+                IF (ALLOCATED(d_rvertp)) THEN
+                  d_rvertp(i1,id) = rv 
+                  d_zvertp(i1,id) = zv + deltay * fx * fy
+                ELSE
+                  rvertp(i1,id) = rv 
+                  zvertp(i1,id) = zv + deltay * fx * fy
+                ENDIF
               ENDIF
             ENDDO
           ENDDO
@@ -4649,9 +4756,14 @@ c...    Upper core/SOL stretch:
 c              IF (rv.GE.x1.AND.rv.LE.x2.AND.
 c     .            zv.GE.y1.AND.zv.LE.y2) THEN
                 fx = 1.0
-                fy = 1.0 - ABS( (zv - 0.5*(y1+y2)) / (0.5*(y2-y1)) )
-                rvertp(i1,id) = rv 
-                zvertp(i1,id) = zv + deltay * fx * fy
+                fy = 1.0 - DABS((zv - 0.5*(y1+y2)) / (0.5*(y2-y1)))
+                IF (ALLOCATED(d_rvertp)) THEN
+                  d_rvertp(i1,id) = rv 
+                  d_zvertp(i1,id) = zv + deltay * fx * fy
+                ELSE
+                  rvertp(i1,id) = rv 
+                  zvertp(i1,id) = zv + deltay * fx * fy
+                ENDIF
               ENDIF
             ENDDO
           ENDDO
@@ -4676,11 +4788,16 @@ c        y2 = -1.1
               zv = zvertp(i1,id)
               IF (rv.GE.x1.AND.rv.LE.x2.AND.
      .            zv.GE.MIN(y1,y2).AND.zv.LE.MAX(y1,y2)) THEN
-                fx = ABS((zv - y1) / (y2 - y1))**1.0
+                fx = DABS((zv - y1) / (y2 - y1))**1.0
 c                fx = ABS((zv - y2) / (y2 - y1))**1.0
-                fy = ABS((rv - x1) / (x2 - x1))**0.5
-                rvertp(i1,id) = rv + deltax * fx * fy
-                zvertp(i1,id) = zv
+                fy = DABS((rv - x1) / (x2 - x1))**0.5
+                IF (ALLOCATED(d_rvertp)) THEN
+                  d_rvertp(i1,id) = rv + deltax * fx * fy
+                  d_zvertp(i1,id) = zv
+                ELSE
+                  rvertp(i1,id) = rv + deltax * fx * fy
+                  zvertp(i1,id) = zv
+                ENDIF
               ENDIF
             ENDDO
           ENDDO
@@ -4704,10 +4821,15 @@ c...    Upper divertor stretch:
               IF (rv.GE.x1.AND.rv.LE.x2.AND.
      .            zv.GE.MIN(y1,y2).AND.zv.LE.MAX(y1,y2)) THEN
 c     .            zv.GE.y1.AND.zv.LE.y2) THEN
-                fx = ABS((zv - y1) / (y2 - y1))**1.0
-                fy = ABS((rv - x1) / (x2 - x1))**0.5
-                rvertp(i1,id) = rv + deltax * fx * fy
-                zvertp(i1,id) = zv
+                fx = DABS((zv - y1) / (y2 - y1))**1.0
+                fy = DABS((rv - x1) / (x2 - x1))**0.5
+                IF (ALLOCATED(d_rvertp)) THEN
+                  d_rvertp(i1,id) = rv + deltax * fx * fy
+                  d_zvertp(i1,id) = zv
+                ELSE
+                  rvertp(i1,id) = rv + deltax * fx * fy
+                  zvertp(i1,id) = zv
+                ENDIF
               ENDIF
             ENDDO
           ENDDO
@@ -4729,6 +4851,7 @@ c
 c
 c
       SUBROUTINE ShapeTarget(dataindex,rvp,zvp)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4751,15 +4874,14 @@ c     Input:
      .        i3,nseg,type,mode
       REAL*8  len(MAXNKS),totlen,t,rseg(2*MAXNRS),zseg(2*MAXNRS)
       REAL*8  r1,z1,r2,z2,dist1,dist2
-
       REAL*8  minlength
 
 c...  Maintain compatability with thesis version:
       IF (grdnmod.EQ.0) THEN
+        STOP 'ShapeTarget_Old NO LONGER SUPPORTED'
         CALL ShapeTarget_Old(rvp,zvp)
         RETURN
       ENDIF
-
 
 c...    This is necessary because the DIII-D grids are already refined near the
 c       targets.  However, this scale limit is still arbitrary and may not
@@ -4773,7 +4895,6 @@ c     the parameters for modifying the grid, for rings that need to be
 c     modified:
       i1 = dataindex
 
- 
 c...  Assing cut parameters:
       type = NINT(grdmod(i1,1))
       mode = NINT(grdmod(i1,2))
@@ -4815,33 +4936,34 @@ c     targets is not discarded:
       IF (type.EQ.1.AND.mode.EQ.3) THEN
 c...    For at least one case (likely when keeping the outer target), a 
 c       ring is going to be added:
-
 c
 c...    Cases: 1 - Cut inner target 
 c              2 - Cut outer target
 c              3 - Cut mid-ring, keeping original inner and outer targets
 c                  (which requires inserting a new ring for the outer half)
-
-
+c
 c...    Duplicate the ring and insert before IRWALL:
-
+c
 c...    Move grid vertex data into RVERTP and ZVERTP:
-        DO i2 = 1, MAXNKS*MAXNRS
-          DO i3 = 1, 4
-            rvertp(i3,i2) = rvp(i3,i2)
-            zvertp(i3,i2) = zvp(i3,i2)
-          ENDDO
-        ENDDO
+c        DO i2 = 1, MAXNKS*MAXNRS
+c          DO i3 = 1, 4
+c            rvertp(i3,i2) = rvp(i3,i2)
+c            zvertp(i3,i2) = zvp(i3,i2)
+c          ENDDO
+c        ENDDO
+        d_rvertp = rvp
+        d_zvertp = zvp
         DO ir = irs, ire
           CALL DupeRing(ir)
         ENDDO
-        DO i2 = 1, MAXNKS*MAXNRS
-          DO i3 = 1, 4
-            rvp(i3,i2) = rvertp(i3,i2)
-            zvp(i3,i2) = zvertp(i3,i2)
-          ENDDO
-        ENDDO
-
+        rvp = d_rvertp
+        zvp = d_zvertp
+c        DO i2 = 1, MAXNKS*MAXNRS
+c          DO i3 = 1, 4
+c            rvp(i3,i2) = rvertp(i3,i2)
+c            zvp(i3,i2) = zvertp(i3,i2)
+c          ENDDO
+c        ENDDO
       ENDIF
 
       irbreak = MIN(irbreak,irs)
@@ -4881,312 +5003,258 @@ c...      IDRING unchanged:
      .      CALL ER('ShapeTarget','Unable to set IDRING',*99)                
         ENDDO
       ENDIF  
-
-
-
 c
-c...    Loop over rings:
+c...  Loop over rings:
 c
-        DO ir = irs, ire
-          IF (ir.EQ.irwall.OR.ir.EQ.irtrap) CYCLE
+      DO ir = irs, ire
+        IF (ir.EQ.irwall.OR.ir.EQ.irtrap) CYCLE
 
-          IF (mode.EQ.1) THEN
+        IF (mode.EQ.1) THEN
 c
-c...        Low index target:
+c...      Low index target:
 c
-            DO ik1 = nks(ir), 1, -1
-              IF (SegChk(ik1,ir,rvp,zvp,SIDE14,nseg,rseg,zseg,r1,z1))
-     .          GOTO 120
-            ENDDO
-            CALL ER('ShapeTarget','No intersection-low side 1-4',*99)
-120         CONTINUE
-            DO ik2 = nks(ir), 1, -1
-              IF (SegChk(ik2,ir,rvp,zvp,SIDE23,nseg,rseg,zseg,r2,z2))
-     .          GOTO 130
-            ENDDO
-            CALL ER('ShapeTarget','No intersection-low side 2-3',*99)
-130         CONTINUE
+          DO ik1 = nks(ir), 1, -1
+            IF (SegChk(ik1,ir,rvp,zvp,SIDE14,nseg,rseg,zseg,r1,z1))
+     .        GOTO 120
+          ENDDO
+          CALL ER('ShapeTarget','No intersection-low side 1-4',*99)
+120       CONTINUE
+          DO ik2 = nks(ir), 1, -1
+            IF (SegChk(ik2,ir,rvp,zvp,SIDE23,nseg,rseg,zseg,r2,z2))
+     .        GOTO 130
+          ENDDO
+          CALL ER('ShapeTarget','No intersection-low side 2-3',*99)
+130       CONTINUE
 
-            totlen = 0.0
-            t      = 0.0
+          totlen = 0.0D0
+          t      = 0.0D0
 
-            id1 = korpg(ik1,ir)
-            id2 = korpg(ik2,ir)
+          id1 = korpg(ik1,ir)
+          id2 = korpg(ik2,ir)
 c
-c...        Check to see if the length of the cropped cell side will be too
-c           short.  If so, then move the vertex of the cell side being
-c           cut over to the intersection (between the cell side and the
-c           wall) point:
+c...      Check to see if the length of the cropped cell side will be too
+c         short.  If so, then move the vertex of the cell side being
+c         cut over to the intersection (between the cell side and the
+c         wall) point:
+          dist1 = DSQRT((rvp(4,id1) - r1)**2 + (zvp(4,id1) - z1)**2)
+          dist2 = DSQRT((rvp(3,id2) - r2)**2 + (zvp(3,id2) - z2)**2)
 
-c...  DOUBLE PRECISION ON SQRT?
+          WRITE(SLOUT,'(A,3I4,2F10.6)')
+     .      'Checking side lengths LOW INDEX:',ir,ik1,ik2,dist1,dist2
 
-            dist1 = SQRT((rvp(4,id1) - r1)**2 + (zvp(4,id1) - z1)**2)
-            dist2 = SQRT((rvp(3,id2) - r2)**2 + (zvp(3,id2) - z2)**2)
-
-            WRITE(SLOUT,'(A,3I4,2F10.6)')
-     .        'Checking side lengths LOW INDEX:',ir,ik1,ik2,dist1,dist2
-
-            IF (dist1.LT.minlength) THEN
+          IF (dist1.LT.minlength) THEN
 c
 c Do the global search and update for all verticies so that
 c MAX(1.0,REAL(ik2-ik1+1)) can be used to scale min side length...
 c
-              rvp(4,id1) = r1
-              zvp(4,id1) = z1
+            rvp(4,id1) = r1
+            zvp(4,id1) = z1
 
-              ik1 = ik1 + 1
-              id1 = korpg(ik1,ir)
-              rvp(1,id1) = r1
-              zvp(1,id1) = z1
- 
-              WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 4 :',ik1-1,ir,
-     .                                     dist1
-            ENDIF
-
-            IF (dist2.LT.minlength) THEN
-              rvp(3,id2) = r2
-              zvp(3,id2) = z2
- 
-              ik2 = ik2 + 1
-              id2 = korpg(ik2,ir)
-              rvp(2,id2) = r2
-              zvp(2,id2) = z2
-              WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 3 :',ik2-1,ir,
-     .                                     dist2
-            ENDIF
-c
-c
-c
-            IF (ik1.EQ.ik2) THEN
-              rvp(1,id1) = r1
-              zvp(1,id1) = z1
-              rvp(2,id2) = r2
-              zvp(2,id2) = z2
-            ELSEIF (ik1.GT.ik2) THEN
-              rvp(1,id2) = r1
-              zvp(1,id2) = z1
-              rvp(2,id2) = r2
-              zvp(2,id2) = z2
-
-              DO ik = ik2, ik1
-                id      = korpg(ik,ir)
-                len(ik) = SQRT((rvp(2,id) - rvp(3,id))**2 +
-     .                         (zvp(2,id) - zvp(3,id))**2)
-                totlen  = totlen + len(ik)
-              ENDDO
-
-              DO ik = ik1, ik2+1, -1
-                id = korpg(ik,ir)
-                t  = t + len(ik) / totlen
-  
-                rvp(1,id) = rvp(4,id1) + t * (r1 - rvp(4,id1))
-                zvp(1,id) = zvp(4,id1) + t * (z1 - zvp(4,id1))
-
-                rvp(4,korpg(ik-1,ir)) = rvp(1,id)
-                zvp(4,korpg(ik-1,ir)) = zvp(1,id)
-
-                WRITE(50,*) 'splitting side: ',ik,ir,'low ik target'
-              ENDDO
-            ELSEIF (ik2.GT.ik1) THEN
-              rvp(1,id1) = r1
-              zvp(1,id1) = z1
-              rvp(2,id1) = r2
-              zvp(2,id1) = z2
-
-              DO ik = ik1, ik2
-                id      = korpg(ik,ir)
-                len(ik) = SQRT((rvp(1,id) - rvp(4,id))**2 +
-     .                         (zvp(1,id) - zvp(4,id))**2)
-                totlen  = totlen + len(ik)
-              ENDDO
-
-              DO ik = ik2, ik1+1, -1
-                id = korpg(ik,ir)
-                t  = t + len(ik) / totlen
-
-                rvp(2,id) = rvp(3,id2) + t * (r2 - rvp(3,id2))
-                zvp(2,id) = zvp(3,id2) + t * (z2 - zvp(3,id2))
-
-                rvp(3,korpg(ik-1,ir)) = rvp(2,id)
-                zvp(3,korpg(ik-1,ir)) = zvp(2,id)
-
-                WRITE(50,*) 'splitting side: ',ik,ir,t,
-     .                      'low index target'
-
-              ENDDO
-            ENDIF
-
-c           Delete excess cells:
-            IF (ik1.GT.1.AND.ik2.GT.1) THEN
-              DO ii = 1, MIN(ik1,ik2)-1
-                iktop(ir) = iktop(ir) - 1
-
-                CALL DeleteCell(1,ir)
-
-                WRITE(50,'(3X,2A,I3,A,I3,A,I4,A,I4)') 'ShapeTarget:',
-     .          ' DELETING CELL  ring ',ir,' :  target ',1,
-     .          ' : korpg ',id,' :  nks ',nks(ir)
-              ENDDO
-            ENDIF
-          
-          ELSEIF (mode.EQ.2.OR.mode.EQ.3) THEN
-c
-c...        High index target:
-c
-            WRITE(SLOUT,*) 'SHAPE TARGET: IR= ',ir
-            WRITE(SLOUT,*) '1-4'
-            DO ik1 = 1, nks(ir)
-              IF (SegChk(ik1,ir,rvp,zvp,SIDE14,nseg,rseg,zseg,r1,z1))
-     .          GOTO 140
-            ENDDO
-            CALL ER('ShapeTarget','No intersection- high side 1-4',*99)
-140         CONTINUE
-
-            WRITE(SLOUT,*) '2-3'
-            DO ik2 = 1, nks(ir)
-              IF (SegChk(ik2,ir,rvp,zvp,SIDE23,nseg,rseg,zseg,r2,z2))
-     .          GOTO 150
-            ENDDO
-            WRITE(SLOUT,*) 'NKS =', nks(ir)
-            CALL ER('ShapeTarget','No intersection- high side 2-3',*99)
-150         CONTINUE
-
-            totlen = 0.0
-            t      = 0.0
-
+            ik1 = ik1 + 1
             id1 = korpg(ik1,ir)
-            id2 = korpg(ik2,ir)
-c
-c
-c
-            dist1 = SQRT((rvp(1,id1)-r1)**2.0 + (zvp(1,id1)-z1)**2.0)
-            dist2 = SQRT((rvp(2,id2)-r2)**2.0 + (zvp(2,id2)-z2)**2.0)
-
-              WRITE(SLOUT,'(A,3I4,2F10.6)')
-     .          'Checking side lengths HIGH INDEX:',ir,ik1,ik2,dist1,
-     .          dist2
-
-            IF (dist1.LT.minlength) THEN
-              rvp(1,id1) = r1
-              zvp(1,id1) = z1
-
-              ik1 = ik1 - 1
-              id1 = korpg(ik1,ir)
-              rvp(4,id1) = r1
-              zvp(4,id1) = z1
-
-              WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 1 :',ik1+1,ir,
-     .                                     dist1
-            ENDIF
+            rvp(1,id1) = r1
+            zvp(1,id1) = z1
  
-            IF (dist2.LT.minlength) THEN
-              rvp(2,id2) = r2
-              zvp(2,id2) = z2
-  
-              ik2 = ik2 - 1
-              id2 = korpg(ik2,ir)
-              rvp(3,id2) = r2
-              zvp(3,id2) = z2
-
-              WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 2 :',ik2+1,ir,
-     .                                     dist2
-            ENDIF
-c
-c
-c
-            IF (ik1.EQ.ik2) THEN
-              rvp(4,id1) = r1
-              zvp(4,id1) = z1
-              rvp(3,id2) = r2
-              zvp(3,id2) = z2
-
-              WRITE(SLOUT,*) 'IK1=IK2:',ik1,ik2
-            ELSEIF (ik1.GT.ik2) THEN
-              WRITE(SLOUT,*) 'IK1>IK2:',ik1,ik2
-              rvp(4,id1) = r1
-              zvp(4,id1) = z1
-              rvp(3,id1) = r2
-              zvp(3,id1) = z2
-
-              DO ik = ik2, ik1
-                id      = korpg(ik,ir)
-                len(ik) = sqrt((rvp(1,id) - rvp(4,id))**2 +
-     .                         (zvp(1,id) - zvp(4,id))**2)
-                totlen  = totlen + len(ik)
-              ENDDO
-
-              DO ik = ik2, ik1-1
-                id = korpg(ik,ir)
-                t  = t + len(ik) / totlen
-
-                rvp(3,id) = rvp(2,id2) + t * (r2 - rvp(2,id2))
-                zvp(3,id) = zvp(2,id2) + t * (z2 - zvp(2,id2))
-
-                rvp(2,korpg(ik+1,ir)) = rvp(3,id)
-                zvp(2,korpg(ik+1,ir)) = zvp(3,id)
-
-                WRITE(50,'(5X,2A,2I4,F10.4,A)') '   :',
-     .            ' Splitting side: ',ik,ir,t,' outer target'
-              ENDDO
-            ELSEIF (ik2.GT.ik1) THEN
-              WRITE(SLOUT,*) 'IK1<IK2:',ik1,ik2
-
-              rvp(4,id2) = r1
-              zvp(4,id2) = z1
-              rvp(3,id2) = r2
-              zvp(3,id2) = z2
-	   
-              DO ik = ik1, ik2
-                id      = korpg(ik,ir)
-                len(ik) = sqrt((rvp(2,id) - rvp(3,id))**2 +
-     .                         (zvp(2,id) - zvp(3,id))**2)
-                totlen  = totlen + len(ik)
-              ENDDO
-	   
-              DO ik = ik1, ik2-1
-                id = korpg(ik,ir)
-                t  = t + len(ik) / totlen
-	   
-                rvp(4,id) = rvp(1,id1) + t * (r1 - rvp(1,id1))
-                zvp(4,id) = zvp(1,id1) + t * (z1 - zvp(1,id1))
-	   
-                rvp(1,korpg(ik+1,ir)) = rvp(4,id)
-                zvp(1,korpg(ik+1,ir)) = zvp(4,id)
-	   
-                WRITE(50,'(5X,2A,2I4,F10.4,A)') '   :',
-     .            ' Splitting side: ',ik,ir,t,' outer target'
-              ENDDO
-            ENDIF
-
-c           Delete excess cells:
-            IF (ik1.LT.nks(ir).AND.ik2.LT.nks(ir)) THEN
-              DO ii = nks(ir), MAX(ik1,ik2)+1, -1
-
-                CALL DeleteCell(nks(ir),ir)
-
-                WRITE(50,'(3X,2A,I3,A,I3,A,I4,A,I4)') 'ShapeTarget:',
-     .          ' DELETING CELL  ',ir,' :  target ',2,
-     .          ' :  korpg ',id,' :  nks ',nks(ir)
-              ENDDO
-            ENDIF
-
-          ELSE
-            CALL ER('ShapeTarget','Unrecognized mode',*99)
+            WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 4 :',ik1-1,ir,
+     .                                   dist1
           ENDIF
+
+          IF (dist2.LT.minlength) THEN
+            rvp(3,id2) = r2
+            zvp(3,id2) = z2
+            ik2 = ik2 + 1
+            id2 = korpg(ik2,ir)
+            rvp(2,id2) = r2
+            zvp(2,id2) = z2
+            WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 3 :',ik2-1,ir,
+     .                                   dist2
+          ENDIF
+c
+          IF (ik1.EQ.ik2) THEN
+            rvp(1,id1) = r1
+            zvp(1,id1) = z1
+            rvp(2,id2) = r2
+            zvp(2,id2) = z2
+          ELSEIF (ik1.GT.ik2) THEN
+            rvp(1,id2) = r1
+            zvp(1,id2) = z1
+            rvp(2,id2) = r2
+            zvp(2,id2) = z2
+            DO ik = ik2, ik1
+              id      = korpg(ik,ir)
+              len(ik) = DSQRT((rvp(2,id) - rvp(3,id))**2 +
+     .                        (zvp(2,id) - zvp(3,id))**2)
+              totlen  = totlen + len(ik)
+            ENDDO
+            DO ik = ik1, ik2+1, -1
+              id = korpg(ik,ir)
+              t  = t + len(ik) / totlen
+              rvp(1,id) = rvp(4,id1) + t * (r1 - rvp(4,id1))
+              zvp(1,id) = zvp(4,id1) + t * (z1 - zvp(4,id1))
+              rvp(4,korpg(ik-1,ir)) = rvp(1,id)
+              zvp(4,korpg(ik-1,ir)) = zvp(1,id)
+              WRITE(50,*) 'splitting side: ',ik,ir,'low ik target'
+            ENDDO
+          ELSEIF (ik2.GT.ik1) THEN
+            rvp(1,id1) = r1
+            zvp(1,id1) = z1
+            rvp(2,id1) = r2
+            zvp(2,id1) = z2
+            DO ik = ik1, ik2
+              id      = korpg(ik,ir)
+              len(ik) = DSQRT((rvp(1,id) - rvp(4,id))**2 +
+     .                        (zvp(1,id) - zvp(4,id))**2)
+              totlen  = totlen + len(ik)
+            ENDDO
+            DO ik = ik2, ik1+1, -1
+              id = korpg(ik,ir)
+              t  = t + len(ik) / totlen
+              rvp(2,id) = rvp(3,id2) + t * (r2 - rvp(3,id2))
+              zvp(2,id) = zvp(3,id2) + t * (z2 - zvp(3,id2))
+              rvp(3,korpg(ik-1,ir)) = rvp(2,id)
+              zvp(3,korpg(ik-1,ir)) = zvp(2,id)
+              WRITE(50,*) 'splitting side: ',ik,ir,t,
+     .                    'low index target'
+            ENDDO
+          ENDIF
+c         Delete excess cells:
+          IF (ik1.GT.1.AND.ik2.GT.1) THEN
+            DO ii = 1, MIN(ik1,ik2)-1
+              iktop(ir) = iktop(ir) - 1
+              CALL DeleteCell(1,ir)
+              WRITE(50,'(3X,2A,I3,A,I3,A,I4,A,I4)') 'ShapeTarget:',
+     .        ' DELETING CELL  ring ',ir,' :  target ',1,
+     .        ' : korpg ',id,' :  nks ',nks(ir)
+            ENDDO
+          ENDIF
+        ELSEIF (mode.EQ.2.OR.mode.EQ.3) THEN
+c
+c...      High index target:
+c
+          WRITE(SLOUT,*) 'SHAPE TARGET: IR= ',ir
+          WRITE(SLOUT,*) '1-4'
+          DO ik1 = 1, nks(ir)
+            IF (SegChk(ik1,ir,rvp,zvp,SIDE14,nseg,rseg,zseg,r1,z1))
+     .        GOTO 140
+          ENDDO
+          CALL ER('ShapeTarget','No intersection- high side 1-4',*99)
+140       CONTINUE
+          WRITE(SLOUT,*) '2-3'
+          DO ik2 = 1, nks(ir)
+            IF (SegChk(ik2,ir,rvp,zvp,SIDE23,nseg,rseg,zseg,r2,z2))
+     .        GOTO 150
+          ENDDO
+          WRITE(SLOUT,*) 'NKS =', nks(ir)
+          CALL ER('ShapeTarget','No intersection- high side 2-3',*99)
+150       CONTINUE
+          totlen = 0.0D0
+          t      = 0.0D0
+          id1 = korpg(ik1,ir)
+          id2 = korpg(ik2,ir)
+c
+          dist1 = DSQRT((rvp(1,id1)-r1)**2 + (zvp(1,id1)-z1)**2)
+          dist2 = DSQRT((rvp(2,id2)-r2)**2 + (zvp(2,id2)-z2)**2)
+            WRITE(SLOUT,'(A,3I4,2F10.6)')
+     .        'Checking side lengths HIGH INDEX:',ir,ik1,ik2,dist1,
+     .        dist2
+          IF (dist1.LT.minlength) THEN
+            rvp(1,id1) = r1
+            zvp(1,id1) = z1
+            ik1 = ik1 - 1
+            id1 = korpg(ik1,ir)
+            rvp(4,id1) = r1
+            zvp(4,id1) = z1
+            WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 1 :',ik1+1,ir,
+     .                                   dist1
+          ENDIF
+ 
+          IF (dist2.LT.minlength) THEN
+            rvp(2,id2) = r2
+            zvp(2,id2) = z2
+            ik2 = ik2 - 1
+            id2 = korpg(ik2,ir)
+            rvp(3,id2) = r2
+            zvp(3,id2) = z2
+            WRITE(SLOUT,'(A,2I4,F10.6)') 'Move vertex 2 :',ik2+1,ir,
+     .                                   dist2
+          ENDIF
+c
+          IF (ik1.EQ.ik2) THEN
+            rvp(4,id1) = r1
+            zvp(4,id1) = z1
+            rvp(3,id2) = r2
+            zvp(3,id2) = z2
+            WRITE(SLOUT,*) 'IK1=IK2:',ik1,ik2
+          ELSEIF (ik1.GT.ik2) THEN
+            WRITE(SLOUT,*) 'IK1>IK2:',ik1,ik2
+            rvp(4,id1) = r1
+            zvp(4,id1) = z1
+            rvp(3,id1) = r2
+            zvp(3,id1) = z2
+            DO ik = ik2, ik1
+              id      = korpg(ik,ir)
+              len(ik) = DSQRT((rvp(1,id) - rvp(4,id))**2 +
+     .                        (zvp(1,id) - zvp(4,id))**2)
+              totlen  = totlen + len(ik)
+            ENDDO
+            DO ik = ik2, ik1-1
+              id = korpg(ik,ir)
+              t  = t + len(ik) / totlen
+              rvp(3,id) = rvp(2,id2) + t * (r2 - rvp(2,id2))
+              zvp(3,id) = zvp(2,id2) + t * (z2 - zvp(2,id2))
+              rvp(2,korpg(ik+1,ir)) = rvp(3,id)
+              zvp(2,korpg(ik+1,ir)) = zvp(3,id)
+              WRITE(50,'(5X,2A,2I4,F10.4,A)') '   :',
+     .          ' Splitting side: ',ik,ir,t,' outer target'
+            ENDDO
+          ELSEIF (ik2.GT.ik1) THEN
+            WRITE(SLOUT,*) 'IK1<IK2:',ik1,ik2
+            rvp(4,id2) = r1
+            zvp(4,id2) = z1
+            rvp(3,id2) = r2
+            zvp(3,id2) = z2
+            DO ik = ik1, ik2
+              id      = korpg(ik,ir)
+              len(ik) = DSQRT((rvp(2,id) - rvp(3,id))**2 +
+     .                        (zvp(2,id) - zvp(3,id))**2)
+              totlen  = totlen + len(ik)
+            ENDDO
+            DO ik = ik1, ik2-1
+              id = korpg(ik,ir)
+              t  = t + len(ik) / totlen
+              rvp(4,id) = rvp(1,id1) + t * (r1 - rvp(1,id1))
+              zvp(4,id) = zvp(1,id1) + t * (z1 - zvp(1,id1))
+              rvp(1,korpg(ik+1,ir)) = rvp(4,id)
+              zvp(1,korpg(ik+1,ir)) = zvp(4,id)
+              WRITE(50,'(5X,2A,2I4,F10.4,A)') '   :',
+     .          ' Splitting side: ',ik,ir,t,' outer target'
+            ENDDO
+          ENDIF
+c         Delete excess cells:
+          IF (ik1.LT.nks(ir).AND.ik2.LT.nks(ir)) THEN
+            DO ii = nks(ir), MAX(ik1,ik2)+1, -1
+              CALL DeleteCell(nks(ir),ir)
+              WRITE(50,'(3X,2A,I3,A,I3,A,I4,A,I4)') 'ShapeTarget:',
+     .        ' DELETING CELL  ',ir,' :  target ',2,
+     .        ' :  korpg ',id,' :  nks ',nks(ir)
+            ENDDO
+          ENDIF
+        ELSE
+          CALL ER('ShapeTarget','Unrecognized mode',*99)
+        ENDIF
 c Sep 22, 97 - Should recaluate BRATIO here as well, based
 c on linear extrapolation...
+      ENDDO
 
-        ENDDO
-
-c...   End of GRDMOD loop:
-c      ENDDO
-
-      IF (.NOT.sloutput) write(0,*) 'FINISHED SHAPETARGET:'
 
       RETURN
 99    CONTINUE
       WRITE(0,*) 'IR,IDRING=',ir,id,mode
       WRITE(0,*) 'IRS,IRE,IRSEP,NRS=',irs,ire,irsep,nrs
+      DO i1 = 1, 4
+        rvertp(i1,:) = SNGL(rvp(i1,:))
+        zvertp(i1,:) = SNGL(zvp(i1,:))
+      ENDDO
       CALL DumpGrid('ERROR IN ShapeTarget')
       STOP
       END
@@ -5235,49 +5303,54 @@ c       of the low IK target segment:
      .        ir1.LT.irwall.AND.ir.GT.irtrap.OR.
      .        ir1.GT.irtrap.AND.ir.LT.irwall) CYCLE
           id1 = korpg(1,ir1)
-          id2 = korpg(1,ir)
+          id2 = korpg(1,ir )
+c          WRITE(0,*) 'VERT:',ir1,rvertp(2,id1),ir,rvertp(1,id2)
+c          WRITE(0,*) '    :',ir1,zvertp(2,id1),ir,zvertp(1,id2)
           IF (ABS(rvertp(2,id1)-rvertp(1,id2)).LT.TOL.AND.
      .        ABS(zvertp(2,id1)-zvertp(1,id2)).LT.TOL) THEN
             nlist1(nregion1) = nlist1(nregion1) + 1
             ilist1(nlist1(nregion1),nregion1) = ir
             ir1 = ir
             found = .TRUE.
+c            WRITE(0,*) 'IR1:',ir1,nregion1
           ENDIF
         ENDDO
 c...    Look for a neighbouring target segment on the vertex 1 side 
 c       of the low IK target segment:
-        DO ir = nrs, irsep, -1
-          IF (ir2.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
-     .        (ir2.LT.irwall.AND.ir.GT.irtrap.OR.
-     .         ir2.GT.irtrap.AND.ir.LT.irwall)) CYCLE
-          id1 = korpg(1,ir2)
-          id2 = korpg(1,ir)
-          IF (ir2.EQ.irsep.and.(ir.EQ.nrs.or.ir.eq.irsep+1)) THEN
-c            WRITE(0,'(A,2F10.6,3I6)') 
-c     . 'X-->',ABS(rvertp(1,id1)-rvertp(2,id2)),
-c     .       ABS(zvertp(1,id1)-zvertp(2,id2)), 
-c     .       nlist1(nregion1),ir2,ir
-          ENDIF
-          IF (ir2.EQ.irsep+1.and.(ir.EQ.irsep+2.or.ir.eq.irsep)) THEN
-c            WRITE(0,'(A,2F10.6,3I6)') 
-c     . 'Y-->',ABS(rvertp(1,id1)-rvertp(2,id2)),
-c     .       ABS(zvertp(1,id1)-zvertp(2,id2)), 
-c     .       nlist1(nregion1),ir2,ir
-          ENDIF
-          IF (ABS(rvertp(1,id1)-rvertp(2,id2)).LT.TOL.AND.
-     .        ABS(zvertp(1,id1)-zvertp(2,id2)).LT.TOL) THEN
-c...        Make room:
-            DO i1 = nlist1(nregion1), 1, -1
-              ilist1(i1+1,nregion1) = ilist1(i1,nregion1)
-            ENDDO
-            nlist1(nregion1) = nlist1(nregion1) + 1
-            ilist1(1,nregion1) = ir
-c            WRITE(0,*) 'FOUND',ir,ir2
-            ir2 = ir
-            found = .TRUE.
-c            WRITE(0,*) 'FOUND',ir,ir2
-          ENDIF
-        ENDDO
+        IF (cgridopt.NE.LINEAR_GRID) THEN
+          DO ir = nrs, irsep, -1
+            IF (ir2.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
+     .          (ir2.LT.irwall.AND.ir.GT.irtrap.OR.
+     .           ir2.GT.irtrap.AND.ir.LT.irwall)) CYCLE
+            id1 = korpg(1,ir2)
+            id2 = korpg(1,ir)
+            IF (ir2.EQ.irsep.and.(ir.EQ.nrs.or.ir.eq.irsep+1)) THEN
+c              WRITE(0,'(A,2F10.6,3I6)') 
+c     .   'X-->',ABS(rvertp(1,id1)-rvertp(2,id2)),
+c     .         ABS(zvertp(1,id1)-zvertp(2,id2)), 
+c     .         nlist1(nregion1),ir2,ir
+            ENDIF
+            IF (ir2.EQ.irsep+1.and.(ir.EQ.irsep+2.or.ir.eq.irsep)) THEN
+c              WRITE(0,'(A,2F10.6,3I6)') 
+c     .   'Y-->',ABS(rvertp(1,id1)-rvertp(2,id2)),
+c     .         ABS(zvertp(1,id1)-zvertp(2,id2)), 
+c     .         nlist1(nregion1),ir2,ir
+            ENDIF
+            IF (ABS(rvertp(1,id1)-rvertp(2,id2)).LT.TOL.AND.
+     .          ABS(zvertp(1,id1)-zvertp(2,id2)).LT.TOL) THEN
+c...          Make room:
+              DO i1 = nlist1(nregion1), 1, -1
+                ilist1(i1+1,nregion1) = ilist1(i1,nregion1)
+              ENDDO
+              nlist1(nregion1) = nlist1(nregion1) + 1
+              ilist1(1,nregion1) = ir
+c              WRITE(0,*) 'FOUND',ir,ir2
+              ir2 = ir
+              found = .TRUE.
+c              WRITE(0,*) 'FOUND',ir,ir2
+            ENDIF
+          ENDDO
+        ENDIF
 c            WRITE(0,*) 'DONE LOOP'
         IF (found) THEN
 c...      Check if a connecting target segment was found (but was
@@ -5301,6 +5374,7 @@ c         in the identified target regions:
               nlist1(nregion1) = 1
               ilist1(1,nregion1) = ir1
               cont = .TRUE.
+c              WRITE(0,*) 'NEXT',ir1,nregion1
               EXIT
             ENDIF 
           ENDDO
@@ -5330,9 +5404,8 @@ c          WRITE(0,*) 'ID1:',nrs,nks(irtrap+1),irtrap+1
         cont  = .FALSE.
         found = .FALSE.
 
-c...    Not including PFZ for now:
         DO ir = irsep, nrs
-c        DO ir = irsep, irwall-1
+c        DO ir = irsep, irwall-1 !     Not including PFZ for now:
           IF (ir1.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
      .        ir1.LT.irwall.AND.ir.GT.irtrap.OR.
      .        ir1.GT.irtrap.AND.ir.LT.irwall) CYCLE
@@ -5349,25 +5422,27 @@ c          WRITE(0,*) 'ID1:',nks(ir1),ir1,irwall
             found = .TRUE.
           ENDIF
         ENDDO
-        DO ir = nrs, irsep, -1
-c        DO ir = irwall-1, irsep, -1
-          IF (ir2.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
-     .        ir2.LT.irwall.AND.ir.GT.irtrap.OR.
-     .        ir2.GT.irtrap.AND.ir.LT.irwall) CYCLE
-          id1 = korpg(nks(ir2),ir2)
-          id2 = korpg(nks(ir),ir)
-          IF (ABS(rvertp(4,id1)-rvertp(3,id2)).LT.TOL.AND.
-     .        ABS(zvertp(4,id1)-zvertp(3,id2)).LT.TOL) THEN
-c...        Make room in the list:
-            DO i1 = nlist2(nregion2), 1, -1
-              ilist2(i1+1,nregion2) = ilist2(i1,nregion2)
-            ENDDO
-            nlist2(nregion2) = nlist2(nregion2) + 1
-            ilist2(1,nregion2) = ir
-            ir2 = ir
-            found = .TRUE.
-          ENDIF
-        ENDDO
+        IF (cgridopt.NE.LINEAR_GRID) THEN
+          DO ir = nrs, irsep, -1
+c          DO ir = irwall-1, irsep, -1
+            IF (ir2.EQ.ir.OR.idring(ir).EQ.BOUNDARY.OR.
+     .          ir2.LT.irwall.AND.ir.GT.irtrap.OR.
+     .          ir2.GT.irtrap.AND.ir.LT.irwall) CYCLE
+            id1 = korpg(nks(ir2),ir2)
+            id2 = korpg(nks(ir),ir)
+            IF (ABS(rvertp(4,id1)-rvertp(3,id2)).LT.TOL.AND.
+     .          ABS(zvertp(4,id1)-zvertp(3,id2)).LT.TOL) THEN
+c...          Make room in the list:
+              DO i1 = nlist2(nregion2), 1, -1
+                ilist2(i1+1,nregion2) = ilist2(i1,nregion2)
+              ENDDO
+              nlist2(nregion2) = nlist2(nregion2) + 1
+              ilist2(1,nregion2) = ir
+              ir2 = ir
+              found = .TRUE.
+            ENDIF
+          ENDDO
+        ENDIF
         IF (found) THEN
 c...      Check if a connecting target segment was found (but was
 c         not sequential in terms of the target index):
@@ -5398,7 +5473,6 @@ c          DO ir = irsep, irwall-1
 
       ENDDO
 
-
 c      WRITE(0,*) 'SEQUENCE HIGH:'
 c      DO i1 = 1, nregion2
 c          WRITE(0,'(I6,I6,50(I6:))') 
@@ -5425,15 +5499,17 @@ c
 
       INTEGER ir,i1,i2,i3,i4,ir1,ir2,nlist,ilist(0:MAXNRS),id1,id2,id,
      .        nregion1,nregion2,nlist1(0:MAXNRS),nlist2(0:MAXNRS),
-     .        ilist1(MAXNRS,0:MAXNRS),ilist2(MAXNRS,0:MAXNRS)
-      LOGICAL cont,status,found
+     .        ilist1(MAXNRS,0:MAXNRS),ilist2(MAXNRS,0:MAXNRS),fp
+      LOGICAL cont,status,found,debug
       REAL    deltar,deltaz,angle1(0:MAXNRS),angle2(0:MAXNRS)
 
       REAL       TOL
       PARAMETER (TOL=1.0E-04)
 c      PARAMETER (TOL=1.0E-03)
 
-
+      debug = .TRUE.
+      fp    = PINOUT
+ 
 c...  Remove small gaps from between adjacent targets, assuming that 
 c     such small gaps are the result of grid irregularities, rather than 
 c     representing discontinuities in the targets:
@@ -5474,17 +5550,17 @@ c     doing this, but I am looking for generality at present):
 
 c      WRITE(0,*) 'PST:',nrs,irtrap+1,nks(irtrap+1)
 
-      IF (.FALSE..AND.sloutput) THEN
-        WRITE(0,*)
-        WRITE(0,*) 'Target grouping A:'
+      IF (debug) THEN
+        WRITE(fp,*)
+        WRITE(fp,*) 'Target grouping A:'
         DO i1 = 1, nregion1
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
         ENDDO
-        WRITE(0,*)
+        WRITE(fp,*)
         DO i1 = 1, nregion2
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
         ENDDO
       ENDIF
 
@@ -5531,17 +5607,17 @@ c     the separatrix:
         ENDDO
       ENDDO
 
-      IF (.FALSE..AND.sloutput) THEN
-        WRITE(0,*)
-        WRITE(0,*) 'Target grouping B:'
+      IF (debug) THEN
+        WRITE(fp,*)
+        WRITE(fp,*) 'Target grouping B:'
         DO i1 = 1, nregion1
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
         ENDDO
-        WRITE(0,*)
+        WRITE(fp,*)
         DO i1 = 1, nregion2
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
         ENDDO
       ENDIF
 
@@ -5636,18 +5712,17 @@ c...  Sort the region indeces:
         ENDDO
       ENDDO
 
-
-      IF (.FALSE..AND.sloutput) THEN
-        WRITE(0,*)
-        WRITE(0,*) 'Target grouping C:'
+      IF (debug) THEN
+        WRITE(fp,*)
+        WRITE(fp,*) 'Target grouping C:'
         DO i1 = 1, nregion1
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
         ENDDO
-        WRITE(0,*)
+        WRITE(fp,*)
         DO i1 = 1, nregion2
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
+          WRITE(fp,'(I6,I6,50(I6:))') 
+     .      i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
         ENDDO
       ENDIF
 
@@ -5665,7 +5740,7 @@ c          WRITE(0,*) 'FOUND1:',i1
         ENDIF
       ENDDO
       IF (.NOT.found) 
-     .  CALL ER('SequenceGrid','Unable to add IRWALL 1',*99)
+     .  CALL ER('SequenceGrid','Unable to add IRWALL 1',*98)
 
       found = .FALSE.
       DO i1 = 1, nregion2
@@ -5678,7 +5753,7 @@ c          WRITE(0,*) 'FOUND2:',i1
         ENDIF
       ENDDO
       IF (.NOT.found) 
-     .  CALL ER('SequenceGrid','Unable to add IRWALL 2',*99)
+     .  CALL ER('SequenceGrid','Unable to add IRWALL 2',*98)
 
 c...  Add TRAP:
       found = .FALSE.
@@ -5711,18 +5786,19 @@ c...  Add TRAP:
 
 
       IF (sloutput) THEN
-        WRITE(0,*)
-        WRITE(0,*) 'Final target grouping:'
+        WRITE(pinout,*)
+        WRITE(pinout,*) 'Final target grouping:'
         DO i1 = 1, nregion1
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
+          WRITE(pinout,'(I6,I6,50(I6:))') 
+     .      i1,nlist1(i1),(ilist1(i2,i1),i2=1,nlist1(i1))
         ENDDO
-        WRITE(0,*)
+        WRITE(pinout,*)
         DO i1 = 1, nregion2
-            WRITE(0,'(I6,I6,50(I6:))') 
-     .    i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
+          WRITE(pinout,'(I6,I6,50(I6:))') 
+     .      i1,nlist2(i1),(ilist2(i2,i1),i2=1,nlist2(i1))
         ENDDO
-        WRITE(0,*) 'SHOULD TARGET-TO-TARGET GRID REGIONS BE ASSIGNED?'
+        WRITE(pinout,*) 'SHOULD TARGET-TO-TARGET GRID REGIONS BE '//
+     .                  'ASSIGNED?'
       ENDIF
 
 
@@ -5812,101 +5888,152 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER fp,ik,ir,ik1,ir1
-      REAL rdum1,rdum2,rdum3,rdum4,diff1,diff2,diff3
+      INTEGER   fp,ik,ir,ik1,ir1
+      CHARACTER buffer*1024
+      REAL      rdum1,rdum2,rdum3,rdum4,diff1,diff2,diff3
 
       REAL, ALLOCATABLE :: bratio2(:,:), psin2(:,:)
 
       ALLOCATE(bratio2(MAXNKS,MAXNRS))
-      ALLOCATE(psin2(MAXNKS,MAXNRS))
+      ALLOCATE(psin2  (MAXNKS,MAXNRS))
 
       fp = 98
-      IF     (mode.EQ.0.OR.mode.EQ.10) THEN
-        OPEN(UNIT=fp,FILE='grid.dat'  ,ACCESS='SEQUENTIAL',
-     .       STATUS='OLD',ERR=96)      
-      ELSEIF (mode.EQ.1) THEN
-        OPEN(UNIT=fp,FILE='grid.dat.1',ACCESS='SEQUENTIAL',
-     .       STATUS='OLD',ERR=96)      
-      ELSE
-        CALL ER('LoadGridData','Unknown MODE',*99)
-      ENDIF
+      SELECTCASE(mode)
+        CASE (0,2,3,10)
+          OPEN(UNIT=fp,FILE='grid.dat'  ,ACCESS='SEQUENTIAL',
+     .         STATUS='OLD',ERR=96)      
+        CASE (1)
+          OPEN(UNIT=fp,FILE='grid.dat.1',ACCESS='SEQUENTIAL',
+     .         STATUS='OLD',ERR=96)      
+        CASE DEFAULT
+          CALL ER('LoadGridData','Unknown MODE',*99)
+      ENDSELECT
+
 c...  Clear header:
-      READ(fp,*) 
-      READ(fp,*) 
-c...  Read grid data:
-      IF (mode.EQ.10) THEN
-        DO ir = 1, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-          DO ik = 1, nks(ir)
-            READ(fp,*,END=98) rdum1,rdum2,rdum3,rdum4,ik1,ir1
-            IF (ik1.EQ.ik.AND.ir1.EQ.ir) THEN
-              bratio2(ik,ir) = rdum3        
-            ELSE
-              CALL ER('LoadGridData','IK/IR index does not match',*99)
-            ENDIF
+      SELECTCASE (mode)
+        CASE (10)
+          READ(fp,*) 
+          READ(fp,*) 
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            DO ik = 1, nks(ir)
+              READ(fp,*,END=98) rdum1,rdum2,rdum3,rdum4,ik1,ir1
+              IF (ik1.EQ.ik.AND.ir1.EQ.ir) THEN
+                bratio2(ik,ir) = rdum3        
+              ELSE
+                CALL ER('LoadGridData','IK/IR index does not match',*99)
+              ENDIF
+            ENDDO
           ENDDO
-        ENDDO
-      ELSE
-        DO WHILE(.TRUE.)
-          READ(fp,*,END=10) rdum1,rdum2,rdum3,rdum4,ik,ir
-          bratio2(ik,ir) = rdum3        
-          psin2(ik,ir) = rdum4
-        ENDDO
- 10     CONTINUE
-      ENDIF
+        CASE (0:1)
+          READ(fp,*) 
+          READ(fp,*) 
+          DO WHILE(.TRUE.)
+            READ(fp,*,END=10) rdum1,rdum2,rdum3,rdum4,ik,ir
+            bratio2(ik,ir) = rdum3        
+            psin2(ik,ir) = rdum4
+          ENDDO
+ 10       CONTINUE
+        CASE (2)
+          WRITE(buffer,'(1024X)')
+          buffer(1:1) = '*'
+          DO WHILE(buffer(1:1).EQ.'*')
+            READ(fp,'(A1024)') buffer
+c            WRITE(0,*) 'WHAT'//buffer(1:1)//'<'
+          ENDDO
+          BACKSPACE(fp)
+        CASE (3)
+          READ(fp,*) 
+          WRITE(buffer,'(1024X)')
+          buffer(1:1) = '*'
+          DO WHILE(buffer(1:1).EQ.'*')
+            READ(fp,'(A1024)') buffer
+          ENDDO
+          BACKSPACE(fp)
+      ENDSELECT
 
 c...  Compare:
-      WRITE(SLOUT,*)
-      WRITE(SLOUT,*) 'BRATIO RECACULATION:'
-      DO ir = 1, nrs
-        IF (idring(ir).EQ.BOUNDARY) CYCLE
-        DO ik = 1, nks(ir)
-          diff1 = (bratio2(ik,ir) - bratio(ik,ir)) / bratio(ik,ir)*100.0
-          diff2 = ((psin2(ik,ir)-1.0) - (psitarg(ir,2)-1.0)) / 
-     .            (psitarg(ir,2)-1.0)*100.0
-          diff3 = ((psin2(ik,ir)-1.0) - (psitarg(ir,1)-1.0)) / 
-     .            (psitarg(ir,1)-1.0)*100.0
-          WRITE(SLOUT,'(2I6,2F14.6,F8.3,A,2X,3F10.4,2(F8.3,A))') 
-     .      ik,ir,bratio(ik,ir),bratio2(ik,ir),diff1,'%',
-     .      psin2(ik,ir),psitarg(ir,2),psitarg(ir,1),
-     .      diff2,'%  ',diff3,'%'
-        ENDDO
-      ENDDO
+c      WRITE(SLOUT,*)
+c      WRITE(SLOUT,*) 'BRATIO RECACULATION:'
+c      DO ir = 1, nrs
+c        IF (idring(ir).EQ.BOUNDARY) CYCLE
+c        DO ik = 1, nks(ir)
+c          diff1 = (bratio2(ik,ir) - bratio(ik,ir)) / bratio(ik,ir)*100.0
+c          diff2 = ((psin2(ik,ir)-1.0) - (psitarg(ir,2)-1.0)) / 
+c     .            (psitarg(ir,2)-1.0)*100.0
+c          diff3 = ((psin2(ik,ir)-1.0) - (psitarg(ir,1)-1.0)) / 
+c     .            (psitarg(ir,1)-1.0)*100.0
+c          WRITE(SLOUT,'(2I6,2F14.6,F8.3,A,2X,3F10.4,2(F8.3,A))') 
+c     .      ik,ir,bratio(ik,ir),bratio2(ik,ir),diff1,'%',
+c     .      psin2(ik,ir),psitarg(ir,2),psitarg(ir,1),
+c     .      diff2,'%  ',diff3,'%'
+c        ENDDO
+c      ENDDO
 
 c...  Assign grid values:
       psitarg = 0.0
 c      bratio = 0.0
 
-      IF (mode.EQ.10) THEN
-        DO WHILE (.TRUE.)
-          READ(fp,*,END=20) rdum1,rdum2,rdum3,rdum4,ik,ir
-          IF (ir.LT.irsep) THEN
-            psitarg(ir,1) = rdum4
-            psitarg(ir,2) = psitarg(ir,1)
-          ELSE
-            IF (ik.EQ.1      ) psitarg(ir,2) = rdum4
-            IF (ik.EQ.nks(ir)) psitarg(ir,1) = rdum4
-          ENDIF
-        ENDDO
- 20     CONTINUE
-        DO ir = 1, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-          DO ik = 1, nks(ir)
-            IF (bratio2(ik,ir).LE.0.0) 
-     .        CALL ER('LoadGridData','BRATIO.LE.0.0',*99)
+      SELECTCASE (mode)
+        CASE (10) 
+          DO WHILE (.TRUE.)
+            READ(fp,*,END=20) rdum1,rdum2,rdum3,rdum4,ik,ir
+            IF (ir.LT.irsep) THEN
+              psitarg(ir,1) = rdum4
+              psitarg(ir,2) = psitarg(ir,1)
+            ELSE
+              IF (ik.EQ.1      ) psitarg(ir,2) = rdum4
+              IF (ik.EQ.nks(ir)) psitarg(ir,1) = rdum4
+            ENDIF
           ENDDO
-          bratio(1:nks(ir),ir) = bratio2(1:nks(ir),ir)
-        ENDDO
-      ELSE
-        DO ir = 1, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-          psitarg(ir,2) = psin2(1,ir)
-          psitarg(ir,1) = psin2(nks(ir),ir)
-          DO ik = 1, nks(ir)
-            IF (bratio2(ik,ir).NE.0.0) bratio(ik,ir) = bratio2(ik,ir)
+ 20       CONTINUE
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            DO ik = 1, nks(ir)
+              IF (bratio2(ik,ir).LE.0.0) 
+     .          CALL ER('LoadGridData','BRATIO.LE.0.0',*99)
+            ENDDO
+            bratio(1:nks(ir),ir) = bratio2(1:nks(ir),ir)
           ENDDO
-        ENDDO
-      ENDIF
+        CASE (0:1)
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            psitarg(ir,2) = psin2(1,ir)
+            psitarg(ir,1) = psin2(nks(ir),ir)
+            DO ik = 1, nks(ir)
+              IF (bratio2(ik,ir).NE.0.0) bratio(ik,ir) = bratio2(ik,ir)
+            ENDDO
+          ENDDO
+        CASE (2) 
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            DO ik = 1, nks(ir)
+              READ(fp,'(A1024)',END=25) buffer
+c              WRITE(0,*) 'BUFFER',buffer(1:100)
+              READ(buffer,*) ik1,ir1,rdum1
+              IF (ik.NE.ik1.OR.ir.NE.ir1) 
+     .          CALL ER('LoadGridData','Cell index mismatch',*99)
+              IF (ik.EQ.1      ) psitarg(ir,2) = rdum1
+              IF (ik.EQ.nks(ir)) psitarg(ir,1) = rdum1
+            ENDDO
+          ENDDO
+ 25       CONTINUE
+        CASE (3) 
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            DO ik = 1, nks(ir)
+              READ(fp,'(A1024)',END=30) buffer
+              READ(buffer,*) ik1,ir1,rdum1,rdum2
+              IF (ik.NE.ik1.OR.ir.NE.ir1) 
+     .          CALL ER('LoadGridData','Cell index mismatch',*99)
+              IF (ik.EQ.1      ) psitarg(ir,2) = rdum1
+              IF (ik.EQ.nks(ir)) psitarg(ir,1) = rdum1
+              bratio(ik,ir) = rdum2
+              kbfs  (ik,ir) = 1.0 / (rdum2 + 1.0E-10)
+            ENDDO
+          ENDDO
+ 30       CONTINUE
+      ENDSELECT
 
 c...  Close stream:
       CLOSE (fp)
@@ -5919,7 +6046,10 @@ c...  Clear arrays:
       GOTO 99
  98   CALL ER('LoadGridData','Error reading supplimental grid data '//
      .        'file',*99)
- 99   STOP
+ 99   WRITE(0,*) 'MODE   =',mode
+      WRITE(0,*) 'IK,IR  =',ik ,ir
+      WRITE(0,*) 'IK1,IR1=',ik1,ir1
+      STOP
       END
 c
 c ======================================================================
@@ -5994,6 +6124,7 @@ c
 c
 c
       SUBROUTINE CalcPolDist(ir,pdist,ploc)
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -6001,16 +6132,25 @@ c
       INCLUDE 'comtor'
       INCLUDE 'slcom'
 
-      INTEGER ik,ir,id,ilocmax
+      INTEGER ik,ir,id,ilocmax,ikend
       REAL    pdist(MAXNKS),ploc(0:MAXNKS),r1,r2,z1,z2,plocshift
 
+      ikend = nks(ir)
+      IF (ir.LT.irsep) ikend = ikend - 1
 
-      DO ik = 1, nks(ir)
+      DO ik = 1, ikend
         id = korpg(ik,ir)
-        r1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
-        z1 = 0.5 * (zvertp(1,id) + zvertp(2,id))
-        r2 = 0.5 * (rvertp(3,id) + rvertp(4,id))
-        z2 = 0.5 * (zvertp(3,id) + zvertp(4,id))
+        IF (ALLOCATED(d_rvertp)) THEN
+          r1 = 0.5 * SNGL(d_rvertp(1,id) + d_rvertp(2,id))
+          z1 = 0.5 * SNGL(d_zvertp(1,id) + d_zvertp(2,id))
+          r2 = 0.5 * SNGL(d_rvertp(3,id) + d_rvertp(4,id))
+          z2 = 0.5 * SNGL(d_zvertp(3,id) + d_zvertp(4,id))
+        ELSE
+          r1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
+          z1 = 0.5 * (zvertp(1,id) + zvertp(2,id))
+          r2 = 0.5 * (rvertp(3,id) + rvertp(4,id))
+          z2 = 0.5 * (zvertp(3,id) + zvertp(4,id))
+        ENDIF
         pdist(ik) = SQRT((r1 - r2)**2 + (z1 - z2)**2)
         IF (ik.EQ.1) THEN
           ploc(ik) = 0.5 * pdist(ik)
@@ -6018,25 +6158,24 @@ c
           ploc(ik) = ploc(ik-1) + 0.5 * (pdist(ik-1) + pdist(ik))
         ENDIF
       ENDDO
-      ploc(0) = ploc(nks(ir)) + 0.5 * pdist(nks(ir))
-
+      ploc(0) = ploc(ikend) + 0.5 * pdist(nks(ir))
 c...  Set coordinate so that it is increasing towards the center from
 c     both targets:
-      DO ik = 1, nks(ir)
+      DO ik = 1, ikend
         ploc(ik) = ABS(ABS(ploc(ik) - 0.5 * ploc(0)) - 0.5 * ploc(0))
       ENDDO
-
 c...  Adjust poloidal coordinate so that the 1st and last cells are at 
 c     position 0.0:
       plocshift = ploc(1)
-      DO ik = 1, nks(ir)-1
+      DO ik = 1, ikend-1
         IF (ploc(ik).LT.ploc(ik+1)) ploc(ik) = ploc(ik) - plocshift
       ENDDO
-      plocshift = ploc(nks(ir))
-      DO ik = nks(ir), 2, -1
+      plocshift = ploc(ikend)
+      DO ik = ikend, 2, -1
         IF (ploc(ik).LT.ploc(ik-1)) ploc(ik) = ploc(ik) - plocshift
       ENDDO
-
+      ploc(0      ) = 0.0
+      ploc(ikend+1) = 0.0
 
       RETURN
  99   STOP
@@ -6058,8 +6197,8 @@ c
       INCLUDE 'comtor'
       INCLUDE 'slcom'
 
-      INTEGER ir1,mode
-      REAL    param
+      INTEGER, INTENT(IN) :: ir1,mode
+      REAL   , INTENT(IN) ::  param
 
       INTEGER i1,ik,ir,status,nks2,iks,ike,ikto3,ikti3,lastmode,lastir,
      .        ikmark1(MAXNRS),ikmark2(MAXNRS),tmpnmod
@@ -6079,20 +6218,30 @@ c...    Simple refinement of low IK index near target region:
         DO WHILE (cont)
           cont = .FALSE.
           nks2 = nks(ir)
+          IF (ir.LT.irsep) nks2 = nks2 - 1
           DO ik = nks2, 1, -1
 c...        Calculate poloidal distribution of cells:
             CALL CalcPolDist(ir,pdist,ploc)
 
-            tdist = 1.5 * grd_minpl * EXP(ploc(ik)/param)
+            IF (ploc(ik)/param.GT.5.0) THEN
+              tdist = 200.0
+            ELSE
+              tdist = 1.5 * grd_minpl * EXP(ploc(ik)/param)
+            ENDIF
 
-c            WRITE(0,*) 'TDIST:',tdist,pdist(ik),grd_minpl
+            WRITE(88,'(A,2I6,3F12.5,L2)') 
+     .        'TDIST:',ik,ir1,tdist,pdist(ik),grd_minpl,
+     .         (tdist.LT.pdist(ik).AND.
+     .          (mode.EQ.3.OR.
+     .           mode.EQ.1.AND.ploc(ik).LT.ploc(ik+1).OR.
+     .           mode.EQ.2.AND.ploc(ik).LT.ploc(ik-1)))
                      
             IF (tdist.LT.pdist(ik).AND.
      .          (mode.EQ.3.OR.
      .           mode.EQ.1.AND.ploc(ik).LT.ploc(ik+1).OR.
      .           mode.EQ.2.AND.ploc(ik).LT.ploc(ik-1))) THEN
 
-              CALL SplitCell(ik,ir,0.5,status)
+              CALL SplitCell(ik,ir,0.5D0,status)
 c              WRITE(0,*) '  POLOIDAL:',ik,ir,status
               IF (status.EQ.-1) THEN
                 CALL ER('PoloidalRefinement','Unable to refine grid',
@@ -6168,7 +6317,7 @@ c        WRITE(0,*) 'IKS,IKE=',ir,mode,iks,ike
 c          IF (ir.EQ.irsep.AND.ik.LE.ikto3) ikto3 = ikto3 + 1
 c          IF (ir.EQ.irsep.AND.ik.LT.ikti3) ikti3 = ikti3 + 1
           IF (grd_minpl.LT.pdist(ik)) THEN
-            CALL SplitCell(ik,ir,0.5,status)
+            CALL SplitCell(ik,ir,0.5D0,status)
 c            WRITE(0,*) '  POLOIDAL:',ik,ir,status
             IF (status.NE.0) 
      .        CALL ER('PoloidalRefinement','Unable to refine grid',
@@ -6202,7 +6351,7 @@ c...      Outer SOL (inside on JET):
           iks = ikmark1(ir) - NINT(param)
           ike = ikmark1(ir) + NINT(param) - 1
           DO ik = ike, iks, -1
-            CALL SplitCell(ik,ir,0.5,status)
+            CALL SplitCell(ik,ir,0.5D0,status)
             IF (status.NE.0) 
      .        CALL ER('PoloidalRefinement','Unable to refine gridA',*99)
           ENDDO
@@ -6210,7 +6359,7 @@ c...      Inner SOL (outside on JET):
           iks = ikmark2(ir) - NINT(param) + 1
           ike = ikmark2(ir) + NINT(param)
           DO ik = ike, iks, -1
-            CALL SplitCell(ik,ir,0.5,status)
+            CALL SplitCell(ik,ir,0.5D0,status)
             IF (status.NE.0) 
      .        CALL ER('PoloidalRefinement','Unable to refine gridB',*99)
           ENDDO
@@ -6221,7 +6370,7 @@ c...      PFZ:
           iks = ikto2(ir) - NINT(param) + 1
           ike = ikti2(ir) + NINT(param) - 1
           DO ik = ike, iks, -1
-            CALL SplitCell(ik,ir,0.5,status)
+            CALL SplitCell(ik,ir,0.5D0,status)
             IF (status.NE.0) 
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO
@@ -6232,7 +6381,7 @@ c...    Double the number of cells on the ring (split each cell in half):
         DO i1 = 1, NINT(param)
           nks2 = nks(ir)
           DO ik = nks2, 1, -1
-            CALL SplitCell(ik,ir,0.5,status)
+            CALL SplitCell(ik,ir,0.5D0,status)
             IF (status.EQ.-1)
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO    
@@ -6251,121 +6400,539 @@ c...    Double the number of cells on the ring (split each cell in half):
  99   WRITE(0,'(A,2I6,F10.2)') 'DATA=',ir,mode,param
       STOP
       END
-c     
-c ========================================================================
 c
-c subroutine: SealGrid
+c ======================================================================
 c
-c 
-c
-c
-c
-      SUBROUTINE SealGrid
+      REAL*8 FUNCTION VertexDisplacement(id1,iv1,id2,iv2)
+      USE mod_grid_divimp
       IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+
+      INTEGER, INTENT(IN) :: id1,id2,iv1,iv2
+
+      REAL*8  a1,a2,b1,b2
+
+      IF (ALLOCATED(d_rvertp)) THEN
+        a1 = d_rvertp(iv1,id1)
+        a2 = d_zvertp(iv1,id1)
+        b1 = d_rvertp(iv2,id2)
+        b2 = d_zvertp(iv2,id2)
+      ELSE
+        a1 = DBLE(rvertp(iv1,id1))
+        a2 = DBLE(zvertp(iv1,id1))
+        b1 = DBLE(rvertp(iv2,id2))
+        b2 = DBLE(zvertp(iv2,id2))
+      ENDIF
+
+      VertexDisplacement = DSQRT((a1 - b1)**2 + (a2 - b2)**2)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      REAL*8 FUNCTION SideLength(id,iside)
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+
+      INTEGER, INTENT(IN) :: id,iside 
+
+      INTEGER i1,i2
+      REAL*8  a1,a2,b1,b2
+
+      i1 = iside
+      i2 = iside + 1
+      IF (i2.EQ.nvertp(id)+1) i2 = 1 
+
+      IF (ALLOCATED(d_rvertp)) THEN
+        a1 = d_rvertp(i1,id)
+        a2 = d_zvertp(i1,id)
+        b1 = d_rvertp(i2,id)
+        b2 = d_zvertp(i2,id)
+      ELSE
+        a1 = DBLE(rvertp(i1,id))
+        a2 = DBLE(zvertp(i1,id))
+        b1 = DBLE(rvertp(i2,id))
+        b2 = DBLE(zvertp(i2,id))
+      ENDIF
+
+      SideLength = DSQRT((a1 - b1)**2 + (a2 - b2)**2)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE TightenGrid
+      USE mod_grid_divimp
+      IMPLICIT none
+
       INCLUDE 'params'
       INCLUDE 'cgeom'
       INCLUDE 'comtor'
       INCLUDE 'slcom'
 
-      INTEGER ik,ir,id1,id2
+      INTEGER CalcPoint
+      LOGICAL PointOnLine
+      REAL*8  SideLength,VertexDisplacement
 
+      INTEGER ik,ir,id,ik1,ir1,id1,ike,ike1,iside,v1,v2,v3,v4,fp,
+     .        ik2,ir2,status,id2,id3,id4,i1,iv
+
+      REAL*8  dist,tol,length1,length2,x(3),y(3),s,t,
+     .        a1,a2,b1,b2,c1,c2,d1,d2,t1
+
+      REAL*8, PARAMETER :: DTOL = 1.0D-06
+
+
+      fp = 88
 
       CALL BuildMap
+      CALL SetupGrid
 
-      ir = 2
-      DO ik = 1, nks(ir)-1
-        id1 = korpg(ik  ,ir)
-        id2 = korpg(ik+1,ir)
-        IF (rvertp(3,id1).NE.rvertp(2,id2).OR.
-     .      zvertp(3,id1).NE.zvertp(2,id2).OR.
-     .      rvertp(4,id1).NE.rvertp(1,id2).OR.
-     .      zvertp(4,id1).NE.zvertp(1,id2)) THEN
-          WRITE(0,*) 'LOOSE GRID UP:',ik,ir
-          rvertp(1,id2) = rvertp(4,id1)
-          zvertp(1,id2) = zvertp(4,id1)
-          rvertp(2,id2) = rvertp(3,id1)
-          zvertp(2,id2) = zvertp(3,id1)
+      CALL OutputData(85,'Tightening the grid')
+              
+      IF (cgridopt.NE.LINEAR_GRID.AND.irsep2.NE.irsep) 
+     .  CALL WN('TightenGrid','Not ready for double null grids '//
+     .          'due to the secondary PFR')  !,*99)
+
+      id = -1 ! TEMP
+
+      DO ir = 2, irwall-1
+        IF (ringtype(ir).EQ.PFZ) CYCLE  ! Avoiding the SOL PFZ problem for double-null grids, rather than fixing it...
+        DO ik = 1, nks(ir)+1
+          id1 = korpg(MIN(ik,nks(ir)),ir)
+          IF (ik.LT.nks(ir)) THEN
+            ik1 = ik + 1
+            ir1 = ir
+            id2 = korpg(ik1,ir1)
+            d_rvertp(1,id2) = d_rvertp(4,id1)
+            d_zvertp(1,id2) = d_zvertp(4,id1)
+            d_rvertp(2,id2) = d_rvertp(3,id1)
+            d_zvertp(2,id2) = d_zvertp(3,id1)
+          ENDIF
+          ir1 = irouts(MIN(ik,nks(ir)),ir)
+          IF (idring(ir1).EQ.BOUNDARY) CYCLE
+          IF (ik.EQ.nks(ir)+1) THEN
+            id2 = id1
+            a1 = d_rvertp(3,id1)
+            a2 = d_zvertp(3,id1)
+            b1 = d_rvertp(2,id1)
+            b2 = d_zvertp(2,id1)
+          ELSE
+            id2 = korpg(MAX(1,ik-1),ir)
+            a1 = d_rvertp(2,id1)
+            a2 = d_zvertp(2,id1)
+            b1 = d_rvertp(3,id1)
+            b2 = d_zvertp(3,id1)
+          ENDIF
+          DO ik1 = 1, nks(ir1)+1
+            id3 = korpg(MIN(ik1,nks(ir1)),ir1)
+            IF (ik1.EQ.nks(ir1)+1) THEN
+              id4 = id3
+              c1 = d_rvertp(4,id3)
+              c2 = d_zvertp(4,id3)
+              d1 = d_rvertp(1,id3)
+              d2 = d_zvertp(1,id3)
+            ELSE
+              id4 = korpg(MAX(1,ik1-1),ir1)
+              c1 = d_rvertp(1,id3)
+              c2 = d_zvertp(1,id3)
+              d1 = d_rvertp(4,id3)
+              d2 = d_zvertp(4,id3)
+            ENDIF
+            dist    = DSQRT((a1 - c1)**2 + (a2 - c2)**2)
+            length1 = MIN(SideLength(id1,2),SideLength(id2,2)) 
+            length2 = MIN(SideLength(id3,4),SideLength(id4,4)) 
+            tol = MIN(1.0D-3, 0.05D0*MIN(length1,length2))
+c            IF (.FALSE..AND.ik.EQ.2.and.ir.eq.24) THEN
+            IF (.FALSE..AND.ik.EQ.30.and.ir.eq.119) THEN
+              WRITE(0,*) '---',ik,ir,ik1,ir1
+              WRITE(0,*) '---',dist,tol
+              WRITE(0,*) '---',d_rvertp(2,id1),d_rvertp(1,id3)
+              WRITE(0,*) '---',d_rvertp(3,id1),d_rvertp(4,id3)
+              WRITE(0,*) '---',d_zvertp(2,id1),d_zvertp(1,id3)
+              WRITE(0,*) '---',d_zvertp(3,id1),d_zvertp(4,id3)
+            ENDIF
+            IF (dist.GT.0.0D0.AND.dist.LT.tol.AND.
+     .          (a1.NE.c1.OR.a2.NE.c2)) THEN
+              WRITE(fp,*) 'TIGHTENING SOL:',ik,ir,ik1,ir1
+              WRITE(fp,*) '              :',dist,tol      
+              IF (ik1.EQ.nks(ir1)+1) THEN
+                d_rvertp(4,id3) = a1
+                d_zvertp(4,id3) = a2
+              ELSE
+                d_rvertp(1,id3) = a1
+                d_zvertp(1,id3) = a2
+                IF (ik1.GT.1) THEN
+                  id3 = korpg(ik1-1,ir1)
+                  d_rvertp(4,id3) = a1
+                  d_zvertp(4,id3) = a2
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO ir = irsep, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        IF (ir.LT.irwall.AND.ringtype(ir).EQ.PFZ) CYCLE
+c...    Low index target:
+        ik1 = 1
+        ir1 = ir
+        ik2 = ikins(ik1,ir1)
+        ir2 = irins(ik1,ir1)
+        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+          id1 = korpg(ik1,ir1)
+          id2 = korpg(ik2,ir2)
+          id3 = korpg(1  ,ir2)
+          dist    = VertexDisplacement(id1,1,id3,2)
+          length1 = MIN(SideLength(id1,1),SideLength(id1,4))
+          length2 = MIN(SideLength(id3,1),SideLength(id3,2))
+          tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+          IF (dist.LT.tol) THEN
+c          IF     (DABS(d_rvertp(1,id1)-d_rvertp(2,id3)).LT.DTOL.AND.
+c                  DABS(d_zvertp(1,id1)-d_zvertp(2,id3)).LT.DTOL) THEN
+c...        Make sure the points are exactly the same, since small errors
+c           can creep in when cutting the grid:
+            d_rvertp(1,id1) = d_rvertp(2,id3)
+            d_zvertp(1,id1) = d_zvertp(2,id3)
+          ELSEIF (irbreak.GT.0.AND.ir.GE.irbreak-1) THEN
+            dist    = VertexDisplacement(id1,1,id2,2)
+            length1 = MIN(SideLength(id1,1),SideLength(id1,4))
+            length2 = MIN(SideLength(id2,1),SideLength(id2,2))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+            IF (dist.LT.tol) THEN
+              d_rvertp(1,id1) = d_rvertp(2,id2)
+              d_zvertp(1,id1) = d_zvertp(2,id2)
+            ELSE
+c            IF (DABS(d_rvertp(1,id1)-d_rvertp(2,id2)).GT.DTOL.OR.
+c                DABS(d_zvertp(1,id1)-d_zvertp(2,id2)).GT.DTOL) THEN
+c...          A step is evident between neighbouring target segments,
+c             which indicates a discontinuity.  To make everything tidy,
+c             split the cell so the end of the target segment that is
+c             part way up the neighbouring ring sits on top of a cell 
+c             vertex:
+              a1 = d_rvertp(2,id2)
+              a2 = d_zvertp(2,id2)
+              b1 = d_rvertp(3,id2)
+              b2 = d_zvertp(3,id2)
+              c1 = d_rvertp(1,id1)
+              c2 = d_zvertp(1,id1)
+              IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
+      WRITE(0,*) 'A1,2=',a1,a2
+      WRITE(0,*) 'B1,2=',b1,b2
+      WRITE(0,*) 'C1,2=',c1,c2
+      WRITE(0,*) '     ',dist,tol
+                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR A',t1
+                CALL SplitCell(ik2,ir2,t1,status)
+                CALL BuildMap
+              ELSE
+                CALL ER('TightenGrid','Target vertex does not match '//
+     .                  'boundary - A',*99)
+              ENDIF
+            ENDIF
+          ELSE
+            CALL ER('TightenGrid','Target vertex mismatch on the '//
+     .              'standard grid region - A',*99)
+          ENDIF
+        ENDIF  
+    
+        ik2 = ikouts(ik1,ir1)
+        ir2 = irouts(ik1,ir1)
+        id2 = korpg (ik2,ir2)
+        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+          IF (DABS(d_rvertp(2,id1)-d_rvertp(1,id2)).GT.DTOL.OR.
+     .        DABS(d_zvertp(2,id1)-d_zvertp(1,id2)).GT.DTOL) THEN
+            STOP 'CODE NOT READY A'
+          ENDIF
         ENDIF
       ENDDO
-      DO ir = 3, irwall-1
-        DO ik = 1, nks(ir)
-          IF (irouts(ik,ir).EQ.ir) THEN
-            WRITE(0,*) 'LOOSE GRID INNER - BAD MAP:',ik,ir
-            CYCLE
-          ENDIF
-          id1 = korpg(ik,ir)
-          IF (irouts(ik,ir).EQ.irwall) THEN
-            IF (ik.NE.nks(ir)) THEN
-              id2 = korpg(ik+1,ir)
-              IF (rvertp(3,id1).NE.rvertp(2,id2).OR.
-     .            zvertp(3,id1).NE.zvertp(2,id2)) THEN
-                WRITE(0,*) 'LOOSE GRID UP - ZIP:',ik,ir
-                rvertp(2,id2) = rvertp(3,id1)
-                zvertp(2,id2) = zvertp(3,id1)
-              ENDIF          
-             ENDIF
+
+      DO ir = irsep, nrs
+        IF (ir.LT.irwall.AND.ringtype(ir).EQ.PFZ) CYCLE
+c        DO ir = irbreak-1, nrs
+c        DO ir = irbreak, nrs
+        IF (idring(ir).EQ.BOUNDARY.OR.ir.EQ.irsep.AND.nopriv) CYCLE  ! NOPRIV check necessary because of the 
+c...    High index target:                                           ! extra cell added to the core rings
+        ik1 = nks(ir)
+        ir1 = ir
+        ik2 = ikins(ik1,ir1)
+        ir2 = irins(ik1,ir1)
+        IF (idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
+          id1 = korpg(ik1     ,ir1)
+          id2 = korpg(ik2     ,ir2)
+          id3 = korpg(nks(ir2),ir2)
+          dist    = VertexDisplacement(id1,4,id3,3)
+          length1 = MIN(SideLength(id1,3),SideLength(id1,4))
+          length2 = MIN(SideLength(id3,3),SideLength(id3,2))
+          tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+          IF (dist.LT.tol) THEN
+c          IF     (DABS(d_rvertp(4,id1)-d_rvertp(3,id3)).LT.DTOL.AND.     ! NEED TO FIX THIS PROPERLY-MAR 15
+c     .            DABS(d_zvertp(4,id1)-d_zvertp(3,id3)).LT.DTOL) THEN
+c...        Make sure the points are exactly the same, since small errors
+c           can creep in when cutting the grid: 
+            d_rvertp(4,id1) = d_rvertp(3,id3)
+            d_zvertp(4,id1) = d_zvertp(3,id3)
+          ELSEIF (irbreak.GT.0.AND.ir.GE.irbreak-1) THEN
+            dist    = VertexDisplacement(id1,4,id2,3)
+            length1 = MIN(SideLength(id1,3),SideLength(id1,4))
+            length2 = MIN(SideLength(id2,3),SideLength(id2,2))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+            IF (dist.LT.tol) THEN
+              d_rvertp(4,id1) = d_rvertp(3,id2)
+              d_zvertp(4,id1) = d_zvertp(3,id2)
+            ELSE
+c          ELSEIF (DABS(d_rvertp(4,id1)-d_rvertp(3,id2)).GT.DTOL.OR.
+c     .            DABS(d_zvertp(4,id1)-d_zvertp(3,id2)).GT.DTOL) THEN
+              a1 = d_rvertp(2,id2)
+              a2 = d_zvertp(2,id2)
+              b1 = d_rvertp(3,id2)
+              b2 = d_zvertp(3,id2)
+              c1 = d_rvertp(4,id1)
+              c2 = d_zvertp(4,id1)
+              WRITE(0,*) 'A1,2=',a1,a2
+              WRITE(0,*) 'B1,2=',b1,b2
+              WRITE(0,*) 'C1,2=',c1,c2
+              WRITE(0,*) '     ',ik1,ik2,nks(ir2)
+              IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
+                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR B',t1
+                CALL SplitCell(ik2,ir2,t1,status)
+                CALL BuildMap
+              ELSE
+                CALL ER('TightenGrid','Target vertex does not match '//
+     .                  'boundary - B',*99)
+              ENDIF
+            ENDIF
           ELSE
-            id2 = korpg(ikouts(ik,ir),irouts(ik,ir))
-            IF (rvertp(2,id1).NE.rvertp(1,id2).OR.
-     .          zvertp(2,id1).NE.zvertp(1,id2).OR.
-     .          rvertp(3,id1).NE.rvertp(4,id2).OR.
-     .          zvertp(3,id1).NE.zvertp(4,id2)) THEN
-              WRITE(0,*) 'LOOSE GRID OUTER:',ik,ir
-              rvertp(1,id2) = rvertp(2,id1)
-              zvertp(1,id2) = zvertp(2,id1)
-              rvertp(4,id2) = rvertp(3,id1)
-              zvertp(4,id2) = zvertp(3,id1)
-            ENDIF
+            CALL ER('TightenGrid','Target vertex mismatch on the '//
+     .              'standard grid region - B',*99)
           ENDIF
-        ENDDO
+        ENDIF
+
+        ir2 = ikouts(ik1,ir1)
+        ir2 = irouts(ik1,ir1)
+        id2 = korpg (ik2,ir2)
+        IF (idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
+          IF (DABS(d_rvertp(3,id1)-d_rvertp(4,id2)).GT.DTOL.OR.
+     .        DABS(d_zvertp(3,id1)-d_zvertp(4,id2)).GT.DTOL) THEN
+c...        Find and split the appropriate cell:
+            DO ik2 = nks(ir2)/2, nks(ir2)
+              id2 = korpg(ik2,ir2)
+              a1 = d_rvertp(1,id2)
+              a2 = d_zvertp(1,id2)
+              b1 = d_rvertp(4,id2)
+              b2 = d_zvertp(4,id2)
+              c1 = d_rvertp(3,id1)
+              c2 = d_zvertp(3,id1)
+              IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
+                IF (t1.GT.0.0D0+DTOL.AND.t1.LT.1.0D0-DTOL) THEN
+                  WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR C',t1
+                  CALL SplitCell(ik2,ir2,t1,status)
+                  CALL BuildMap
+                  EXIT
+                ENDIF
+              ELSE
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
       ENDDO
-      WRITE(0,*) 'TRYING AFTER FIXES'
-      DO ir = 2, irwall-1
-        DO ik = 1, nks(ir)
-          id1 = korpg(ik,ir)
-c          IF (ir.NE.irtrap+1) THEN
-c            id2 = korpg(ikins(ik,ir),irins(ik,ir))
-c            IF (rvertp(1,id1).NE.rvertp(2,id2).OR.
-c     .          zvertp(1,id1).NE.zvertp(2,id2).OR.
-c     .          rvertp(4,id1).NE.rvertp(3,id2).OR.
-c     .          zvertp(4,id1).NE.zvertp(3,id2)) THEN
-c              WRITE(0,*) 'LOOSE GRID INNER:',ik,ir
-c            ENDIF
+
+c...  This is for really messed up grids, where targets from opposite ends
+c     of different rings may be touching.  This happens with grids that go
+c     all the way out to the wall, creating many private flux regions:
+c      DO ir1 = irsep, nrs
+c        IF (idring(ir1).EQ.BOUNDARY) CYCLE
+c        DO ir2 = irsep, nrs
+c          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2) CYCLE
+c          id1 = korpg(nks(ir1),ir1)
+c          id2 = korpg(1       ,ir2)
+c          dist    = VertexDisplacement(id1,4,id2,1)
+c          length1 = MIN(SideLength(id1,3),SideLength(id1,4))
+c          length2 = MIN(SideLength(id2,1),SideLength(id2,2))
+c          tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+c          IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
+cc...        Make sure the points are exactly the same, since small errors
+cc           can creep in when cutting the grid: 
+c            WRITE(0,*) 'ZIPPING GRID',ir1,ir2
+c            d_rvertp(1,id2) = d_rvertp(4,id1)
+c            d_zvertp(1,id2) = d_zvertp(4,id1)
 c          ENDIF
-          IF (ir.NE.irwall-1) THEN
-            id2 = korpg(ikouts(ik,ir),irouts(ik,ir))
-            IF (rvertp(2,id1).NE.rvertp(1,id2).OR.
-     .          zvertp(2,id1).NE.zvertp(1,id2).OR.
-     .          rvertp(3,id1).NE.rvertp(4,id2).OR.
-     .          zvertp(3,id1).NE.zvertp(4,id2)) THEN
-              WRITE(0,*) 'LOOSE GRID OUTER:',ik,ir
+c        ENDDO
+c      ENDDO
+
+      DO ir1 = irsep, nrs
+        IF (idring(ir1).EQ.BOUNDARY) CYCLE
+        IF (ir1.LT.irwall.AND.ringtype(ir1).EQ.PFZ) CYCLE
+        id1 = korpg(1       ,ir1)
+        id2 = korpg(nks(ir1),ir1)
+        DO ir2 = irsep, nrs
+          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2) CYCLE
+          DO ik = 1, nks(ir2)+1
+            id = korpg(ik,ir2)
+            IF (ik.EQ.nks(ir2)+1) THEN
+              iv = 3
+            ELSE
+              iv = 2
             ENDIF
-          ENDIF
+            dist    = VertexDisplacement(id1,1,id,iv)
+            length1 = MIN(SideLength(id1,1),SideLength(id1,4))
+            length2 = MIN(SideLength(id ,1),SideLength(id ,2))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+
+c            IF (ir1.EQ.128.AND.ir2.EQ.120) THEN
+c              WRITE(0,*) '>>>',ir1,ir2
+c              WRITE(0,*) '---',dist,tol
+c              WRITE(0,*) '---',d_rvertp(1 ,id1),d_rvertp(1 ,id1)
+c              WRITE(0,*) '---',d_rvertp(iv,id ),d_rvertp(iv,id )
+c            ENDIF        
+
+            IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
+c...          Make sure the points are exactly the same, since small errors
+c             can creep in when cutting the grid: 
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              d_rvertp(1,id1) = d_rvertp(iv,id)
+              d_zvertp(1,id1) = d_zvertp(iv,id)
+            ENDIF
+            dist    = VertexDisplacement(id2,4,id,iv)
+            length1 = MIN(SideLength(id2,3),SideLength(id2,4))
+            length2 = MIN(SideLength(id ,1),SideLength(id ,2))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+            IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              d_rvertp(4,id2) = d_rvertp(iv,id)
+              d_zvertp(4,id2) = d_zvertp(iv,id)
+            ENDIF
+            IF (ik.EQ.nks(ir)+1) THEN
+              iv = 4
+            ELSE
+              iv = 1
+            ENDIF
+            dist    = VertexDisplacement(id1,2,id,iv)
+            length1 = MIN(SideLength(id1,1),SideLength(id1,2))
+            length2 = MIN(SideLength(id ,3),SideLength(id ,4))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+            IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              d_rvertp(2,id1) = d_rvertp(iv,id)
+              d_zvertp(2,id1) = d_zvertp(iv,id)
+            ENDIF
+            dist    = VertexDisplacement(id2,3,id,iv)
+            length1 = MIN(SideLength(id2,3),SideLength(id2,2))
+            length2 = MIN(SideLength(id ,3),SideLength(id ,4))
+            tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
+            IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              d_rvertp(3,id2) = d_rvertp(iv,id)
+              d_zvertp(3,id2) = d_zvertp(iv,id)
+            ENDIF
+
+
+          ENDDO
         ENDDO
       ENDDO
-      DO ir = 2, irwall-1
-        DO ik = 1, nks(ir)-1
-          id1 = korpg(ik  ,ir)
-          id2 = korpg(ik+1,ir)
-          IF (rvertp(3,id1).NE.rvertp(2,id2).OR.
-     .        zvertp(3,id1).NE.zvertp(2,id2).OR.
-     .        rvertp(4,id1).NE.rvertp(1,id2).OR.
-     .        zvertp(4,id1).NE.zvertp(1,id2)) THEN
-            WRITE(0,*) 'LOOSE GRID UP:',ik,ir
-          ENDIF
+
+c...  Clean up grid as necessary:
+      CALL BuildMap
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        IF (ir.LT.irwall.AND.ringtype(ir).EQ.PFZ) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = nks(ir) - 1
+        DO ik = 1, ike
+          id = korpg(ik,ir)
+          DO iside = 1, 2
+            IF (iside.EQ.1) THEN
+c...          Side 14:
+              v1 = 1
+              v2 = 4
+              v3 = 2
+              v4 = 3
+              ir1 = irins(ik,ir)  
+            ELSE
+c...          Side 23:
+              v1 = 2
+              v2 = 3
+              v3 = 1
+              v4 = 4
+              ir1 = irouts(ik,ir)  
+            ENDIF
+            x(1) = d_rvertp(v1,id)
+            y(1) = d_zvertp(v1,id)
+            x(2) = d_rvertp(v2,id)
+            y(2) = d_zvertp(v2,id)
+            ike1 = nks(ir1) + 1
+            IF (ir1.LT.irsep) ike1 = nks(ir1)
+            DO ik1 = 1, ike1
+              id1 = korpg(ik1,ir1)
+              IF (ik1.EQ.nks(ir1)+1) THEN
+                x(3) = d_rvertp(v4,id1)
+                y(3) = d_zvertp(v4,id1)
+              ELSE
+                x(3) = d_rvertp(v3,id1)
+                y(3) = d_zvertp(v3,id1)
+              ENDIF
+
+              IF (ik.EQ.30.AND.ir.EQ.119.AND.iside.EQ.1) THEN
+                STOP 'REMOVE THIS EXCEPTION HANDLE'
+                IF (.NOT.PointOnLine(x,y,s,t,3,.TRUE.)) CYCLE
+              ELSE
+                IF (.NOT.PointOnLine(x,y,s,t,3,.FALSE.)) CYCLE
+              ENDIF
+
+              IF (DABS(s-t).GT.1.0D-8.AND.DABS(s-t).LT.1.0D0) THEN
+                IF (sloutput) THEN
+                  WRITE(0,*) '************************************'
+                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
+                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
+                  WRITE(0,*) '  DOING NOTHING...'
+                  WRITE(0,*) '************************************'
+                  CYCLE
+                ENDIF
+
+                IF (ik1.EQ.nks(ir1)+1) THEN
+                  d_rvertp(v4,id1) = x(1) + s * (x(2) - x(1))
+                  d_zvertp(v4,id1) = y(1) + s * (y(2) - y(1))
+                ELSE
+                  d_rvertp(v3,id1) = x(1) + s * (x(2) - x(1))
+                  d_zvertp(v3,id1) = y(1) + s * (y(2) - y(1))
+                ENDIF
+                IF (ik1.GT.1.AND.ik1.LT.nks(ir1)+1) THEN
+                  id1 = korpg(ik1-1,ir1)
+                  d_rvertp(v4,id1) = x(1) + s * (x(2) - x(1))
+                  d_zvertp(v4,id1) = y(1) + s * (y(2) - y(1))
+                ENDIF
+              ELSE
+                WRITE(fp,'(A,2I6,2F15.8)') 'PASSED THE TEST',ik,ir,s,t
+              ENDIF
+
+            ENDDO
+          ENDDO
+
         ENDDO
       ENDDO
 
-
-      CALL OutputData(85,'Tricky')
-
-c      CALL DUMPGRID('FATERSEAL')
-
-c      STOP 'sdfsdfsdfsd'
-
+      rvertp = SNGL(d_rvertp)
+      zvertp = SNGL(d_zvertp)
 
       RETURN
- 99   STOP
+ 99   WRITE(0,*) 'IR1,2=',ir1,ir2
+      WRITE(0,*) 'A1,2 =',a1,a2
+      WRITE(0,*) 'B1,2 =',b1,b2
+      WRITE(0,*) 'C1,2 =',c1,c2
+      WRITE(0,*) 'D1,2 =',d1,d2
+      STOP
       END
 c
 c ========================================================================
@@ -6376,6 +6943,7 @@ c Note - there are no virtual rings at this point -- should add them first?
 c
 cc
       SUBROUTINE TailorGrid
+      USE mod_grid_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -6385,71 +6953,45 @@ cc
 
       COMMON /GRID/ iktop,irout,irin
 
-      INTEGER CalcPoint
-      LOGICAL PointOnLine
 
       INTEGER iktop(MAXNRS),irout(MAXNRS),irin(MAXNRS)
 
       INTEGER id1,id2,id3,ir1,ir2,irs,ire,nlist,ilist(0:MAXNRS),ike,ike1
 
-      REAL       TOL
-      REAL*8                 DTOL
-      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
 
-      INTEGER ii,i1,i2,i3,ir,ik,id,ik1,ik2,status,in,in1,tmpnmod,iside,
-     .        v1,v2,v3,v4
-
+      INTEGER ii,i1,i2,i3,ir,ik,id,ik1,ik2,status,in,in1,tmpnmod,fp
       REAL*8  r1,z1,r2,z2,rvp(4,MAXNKS*MAXNRS),
-     .                    zvp(4,MAXNKS*MAXNRS),
-     .        a1,a2,b1,b2,c1,c2,t1,x(3),y(3),s,t
-
+     .                    zvp(4,MAXNKS*MAXNRS)
+c     .        a1,a2,b1,b2,c1,c2,t1
       REAL    maxz,spos
 
       INTEGER count
       CHARACTER buffer*512
 
-      IF (sloutput) WRITE(0,*) 'HERE IN TAILORGRID'
 
-      CALL SetupGrid
+      fp = pinout
 
-c      WRITE(0,*) 'IRBREAK:',irbreak
+      IF (sloutput) WRITE(fp,*) 'HERE IN TAILORGRID'
+
+
+      ALLOCATE(d_rvertp(5,MAXNKS*MAXNRS))
+      ALLOCATE(d_zvertp(5,MAXNKS*MAXNRS))
+      d_rvertp = DBLE(rvertp)
+      d_zvertp = DBLE(zvertp)
+
+c      WRITE(0,*) 'here we go...'
+c      CALL SetupGrid
+c      CALL BuildMap   
+c      CALL TightenGrid 
+
+c      WRITE(fp,*) 'IRBREAK:',irbreak
 
       irbreak = 0
-
-
-
-
-
-
-
-
-c      STOP 'sdfsdfsd'
-
-c
-c...  Remnants of my thesis version:
-c
-      IF (grdnmod.EQ.0.OR.grdmod(1,1).EQ.887.0) THEN
-        tmpnmod = grdnmod
-        grdnmod = 0
-        WRITE(0,*) 'CALLING TAILORGRID_OLD'
-        CALL TailorGrid_Old
-        IF (grdmod(1,1).EQ.887.0) THEN
-          IF (grdmod(2,1).EQ.886.0) THEN
-            WRITE(0,*) 'MOVING TO RADIAL REFINEMENT CODE'
-            grdnmod = tmpnmod
-          ELSE
-            WRITE(0,*) 'MOVING TO POLOIDAL REFINEMENT CODE'
-            GOTO 10
-          ENDIF
-        ELSE
-          RETURN
-        ENDIF
-      ENDIF
 
 c.... Delete and split rings:
       DO i1 = 1, grdnmod
  
-c        WRITE(0,*) 'GRDMOD:',i1,grdmod(i1,1)
+c        WRITE(fp,*) 'GRDMOD:',i1,grdmod(i1,1)
 
         IF     (grdmod(i1,1).EQ.3.0) THEN
 c...      Type = 1 - cut a ring
@@ -6498,39 +7040,33 @@ c          CALL MergeRings(NINT(grdmod(i1,4)))
 c...      Morph grid:
           CALL MorphGrid(NINT(grdmod(i1,2)),i1)
 
-        ELSEIF (grdmod(i1,1).EQ.710.0) THEN
-c...      Seal grid:
-          CALL SealGrid
-
         ELSEIF (grdmod(i1,1).EQ.1.0.OR.grdmod(i1,1).EQ.2.0) THEN
 c...      Shape the grid targets:
-          DO i2 = 1, MAXNKS*MAXNRS
-            DO i3 = 1, 4
-              rvp(i3,i2) = DBLE(rvertp(i3,i2))
-              zvp(i3,i2) = DBLE(zvertp(i3,i2))
-            ENDDO
-          ENDDO
+          rvp = d_rvertp
+          zvp = d_zvertp
           IF (irbreak.EQ.0) irbreak = MAXNRS
           idring(1)      = BOUNDARY
           idring(irwall) = BOUNDARY
           idring(irtrap) = BOUNDARY
           CALL ShapeTarget(i1,rvp,zvp)
 c...      Move grid vertex data into RVERTP and ZVERTP:
-          DO i2 = 1, MAXNKS*MAXNRS
-            DO i3 = 1, 4
-              rvertp(i3,i2) = SNGL(rvp(i3,i2))
-              zvertp(i3,i2) = SNGL(zvp(i3,i2))
-            ENDDO
-          ENDDO
+          d_rvertp = rvp
+          d_zvertp = zvp
+          rvertp = SNGL(d_rvertp)
+          zvertp = SNGL(d_zvertp)
 
         ELSEIF (grdmod(i1,1).EQ.999.0) THEN
 c...      Stop grid modifications and dump current grid state
 c         for plotting in OUT:
           IF (irsep-2.NE.nrs-irtrap) THEN
-            WRITE(0,*)
-            WRITE(0,*) 'WARNING: GRID UNBALANCED',irsep-2,nrs-irtrap
-            WRITE(0,*) 
+            WRITE(fp,*)
+            WRITE(fp,*) 'WARNING: GRID UNBALANCED',irsep-2,nrs-irtrap
+            WRITE(fp,*) 
           ENDIF
+          rvertp = SNGL(d_rvertp)
+          zvertp = SNGL(d_zvertp)
+          CALL SetupGrid
+          CALL BuildMap
           CALL DumpGrid('MODIFYING RINGS AND TARGETS')
 
         ELSEIF (grdmod(2,1).NE.886.0.AND.
@@ -6540,10 +7076,10 @@ c...      Moving on to polodial refinement:
 
         ELSEIF (grdmod(i1,1).EQ.885.0) THEN
 c...      Hack for thesis version:
-          WRITE(0,*) 'MOVING TO POLOIDAL REFINEMENT CODE',irbreak
+          WRITE(fp,*) 'MOVING TO POLOIDAL REFINEMENT CODE',irbreak
           tmpnmod = grdnmod
           grdnmod = 0
-          GOTO 10
+          EXIT
 
         ENDIF
 
@@ -6551,29 +7087,15 @@ c...      Hack for thesis version:
 
       CALL SetupGrid
 
-c...  Recalculate cell centers:
-c      DO ir = 1, nrs
-c        DO ik = 1, nks(ir)
-c          id = korpg(ik,ir)
-c          rs(ik,ir) = 0.0
-c          zs(ik,ir) = 0.0
-c          DO in = 1, nvertp(id)
-c            rs(ik,ir) = rs(ik,ir) + 1.0/REAL(nvertp(id))*rvertp(in,id)
-c            zs(ik,ir) = zs(ik,ir) + 1.0/REAL(nvertp(id))*zvertp(in,id)
-c          ENDDO
-c        ENDDO
-c      ENDDO
-
-
 c...  The grid is most likely a mess, fix it:
       CALL SequenceGrid
 
 c...  Check if the core and PFZ are balanced (NOTE: this will not be an issue when
 c     the EIRENE interface is converted to triangles):
       IF (sloutput.AND.pincode.LE.3.AND.irsep-2.NE.nrs-irtrap) THEN
-        WRITE(0,*)
-        WRITE(0,*) 'WARNING: GRID UNBALANCED',irsep-2,nrs-irtrap
-        WRITE(0,*) 
+        WRITE(fp,*)
+        WRITE(fp,*) 'WARNING: GRID UNBALANCED',irsep-2,nrs-irtrap
+        WRITE(fp,*) 
       ENDIF
 
 c...  Assign IRBREAK:
@@ -6611,7 +7133,7 @@ c...  ...
       IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
      .    grdntreg(IKHI).GT.2) THEN
         DO i1 = 2, grdntreg(IKHI) 
-c          WRITE(0,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
+c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
           IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
             irbreak = grdtseg(1,i1,IKHI)
             EXIT
@@ -6630,7 +7152,7 @@ c...  Assign NBR:
       ENDIF
 
 
-      IF (sloutput) WRITE(0,*) 'IRBREAK,NBR=',irbreak,nbr
+      IF (sloutput) WRITE(fp,*) 'IRBREAK,NBR=',irbreak,nbr
 
 c      CALL BuildMap
 
@@ -6638,9 +7160,9 @@ c...  Split cells along broken target so that the nearest neighbour of the
 c     target cell is well defined:
 
 
-      CALL BuildMap
+      CALL TightenGrid
 
-c      WRITE(0,*) 'IRBREAK:',irbreak
+c      WRITE(fp,*) 'IRBREAK:',irbreak
 c      CALL DumpGrid('BUILDING WALL RING')
 c      STOP
 
@@ -6650,194 +7172,13 @@ c     in the call to SequenceGrid:
       IF (connected) irsep2 = irouts(ikins(ikti-1,irsep)+1,irsep-1)
 
 
-      IF (sloutput) WRITE(0,*) 'DONE IN BUILDMAP'
+      IF (sloutput) WRITE(fp,*) 'DONE IN BUILDMAP'
 
 
-      IF (irbreak.GT.0) THEN
-        DO ir = irbreak, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-
-c...      Low index target:
-          ik1 = 1
-          ir1 = ir
-          ik2 = ikins(ik1,ir1)
-          ir2 = irins(ik1,ir1)
-
-          id1 = korpg(ik1,ir1)
-          id2 = korpg(ik2,ir2)
-          id3 = korpg(1,ir2)
-
-c...      This code is unreliable:
-c          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2.OR.
-c     .        (ABS(rvertp(1,id1)-rvertp(2,id3)).LT.TOL.AND.
-c     .         ABS(zvertp(1,id1)-zvertp(2,id3)).LT.TOL)) CYCLE
-
-          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2) CYCLE
-
-          IF (ABS(rvertp(1,id1)-rvertp(2,id3)).LT.TOL.AND.
-     .        ABS(zvertp(1,id1)-zvertp(2,id3)).LT.TOL) THEN
-c...        Make sure the points are exactly the same, since small errors
-c           can creep in when cutting the grid:
-            rvertp(1,id1) = rvertp(2,id3)
-            zvertp(1,id1) = zvertp(2,id3)
-            CYCLE
-          ENDIF
-
-          IF (ABS(rvertp(1,id1)-rvertp(2,id2)).GT.TOL.OR.   ! This seems strange...
-     .        ABS(zvertp(1,id1)-zvertp(2,id2)).GT.TOL) THEN
-
-            a1 = DBLE(rvertp(2,id2))
-            a2 = DBLE(zvertp(2,id2))
-            b1 = DBLE(rvertp(3,id2))
-            b2 = DBLE(zvertp(3,id2))
-
-            c1 = DBLE(rvertp(1,id1))
-            c2 = DBLE(zvertp(1,id1))
-      
-            IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-              CALL SplitCell(ik2,ir2,SNGL(t1),status)
-              CALL BuildMap
-            ELSE
-  
-              WRITE(0,*) '-->',ik1,ir1,rvertp(1,id1),rvertp(2,id2)
-              WRITE(0,*) '-->',ik2,ir2,zvertp(1,id1),zvertp(2,id2)
-
-              DO i1 = 1, 10
-                id = korpg(i1,ir2)
-                WRITE(0,*) 'VERT',i1,ir2,rvertp(2,id),zvertp(2,id)
-              ENDDO
-
-              CALL ER('...','Target vertex does not match '//
-     .                'boundary A',*99)
-            ENDIF
-          ENDIF
-      
-          ik2 = ikouts(ik1,ir1)
-          ir2 = irouts(ik1,ir1)
-          id2 = korpg(ik2,ir2)
-          IF (idring(ir2).NE.BOUNDARY.AND.
-     .        (ABS(rvertp(2,id1)-rvertp(1,id2)).GT.TOL.OR.
-     .         ABS(zvertp(2,id1)-zvertp(1,id2)).GT.TOL)) THEN
-            STOP 'CODE NOT READY A'
-          ENDIF
-        ENDDO
-
-        DO ir = irbreak-1, nrs
-c        DO ir = irbreak, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-
-c...      High index target:
-
-          ik1 = nks(ir)
-          ir1 = ir
-          ik2 = ikins(ik1,ir1)
-          ir2 = irins(ik1,ir1)
-
-          id1 = korpg(ik1,ir1)
-          id2 = korpg(ik2,ir2)
-          id3 = korpg(nks(ir2),ir2)
-
-c...      This code is unreliable:
-
-          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2) GOTO 15
-
-          IF (ABS(rvertp(4,id1)-rvertp(3,id3)).LT.TOL.AND.     ! NEED TO FIX THIS PROPERLY-MAR 15
-     .        ABS(zvertp(4,id1)-zvertp(3,id3)).LT.TOL) THEN
-c...        Make sure the points are exactly the same, since small errors
-c           can creep in when cutting the grid: 
-            rvertp(4,id1) = rvertp(3,id3)
-            zvertp(4,id1) = zvertp(3,id3)
-            GOTO 15   
-          ENDIF
-
-c          IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2.OR.
-c     .        (ABS(rvertp(4,id1)-rvertp(3,id3)).LT.TOL.AND.
-c     .         ABS(zvertp(4,id1)-zvertp(3,id3)).LT.TOL)) GOTO 15   ! NEED TO FIX THIS PROPERLY-MAR 15
-cc     .         ABS(zvertp(4,id1)-zvertp(3,id3)).LT.TOL)) CYCLE
-
-c        IF (idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2.AND.
-c     .      (ABS(rvertp(4,korpg(nks(ir1),ir1))-
-c     .           rvertp(3,korpg(nks(ir2),ir2))).GT.TOL.OR.
-c     .       ABS(zvertp(4,korpg(nks(ir1),ir1))-
-c     .           zvertp(3,korpg(nks(ir2),ir2))).GT.TOL)) THEN
-          IF (ABS(rvertp(4,id1)-rvertp(3,id2)).GT.TOL.OR.
-     .        ABS(zvertp(4,id1)-zvertp(3,id2)).GT.TOL) THEN
-
-            a1 = DBLE(rvertp(2,id2))
-            a2 = DBLE(zvertp(2,id2))
-            b1 = DBLE(rvertp(3,id2))
-            b2 = DBLE(zvertp(3,id2))
-
-            c1 = DBLE(rvertp(4,id1))
-            c2 = DBLE(zvertp(4,id1))
-      
-           IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-              CALL SplitCell(ik2,ir2,SNGL(t1),status)
-              CALL BuildMap
-            ELSE
-              CALL ER('...','Target vertex does not match '//
-     .                'boundary B',*99)
-            ENDIF
-          ENDIF
-      
-
- 15       CONTINUE
-
-          ir2 = ikouts(ik1,ir1)
-          ir2 = irouts(ik1,ir1)
-          id2 = korpg(ik2,ir2)
-          IF (idring(ir2).NE.BOUNDARY.AND.
-     .        (ABS(rvertp(3,id1)-rvertp(4,id2)).GT.TOL.OR.
-     .         ABS(zvertp(3,id1)-zvertp(4,id2)).GT.TOL)) THEN
-c...        Find and split the appropriate cell:
-            DO ik2 = nks(ir2)/2, nks(ir2)
-              id2 = korpg(ik2,ir2)
-              a1 = DBLE(rvertp(1,id2))
-              a2 = DBLE(zvertp(1,id2))
-              b1 = DBLE(rvertp(4,id2))
-              b2 = DBLE(zvertp(4,id2))
-              c1 = DBLE(rvertp(3,id1))
-              c2 = DBLE(zvertp(3,id1))
-              IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-                IF (t1.GT.0.0D0+DTOL.AND.t1.LT.1.0D0-DTOL) THEN
-c                  WRITE(0,*) 'IR,T1=',ir1,t1
-                  CALL SplitCell(ik2,ir2,SNGL(t1),status)
-                  CALL BuildMap
-                  EXIT
-                ENDIF
-              ELSE
-              ENDIF
-            ENDDO
-c            IF (ik2.EQ.nks(ir2)+1) 
-c     .        CALL ER('TailorGrid','Cannot find cell to split',*99)
-          ENDIF
-      
-        ENDDO
-
-c...    This is for really messed up grids:
-        DO ir1 = irsep, nrs
-          IF (idring(ir1).EQ.BOUNDARY) CYCLE
-          DO ir2 = irsep, nrs
-            IF (idring(ir2).EQ.BOUNDARY.OR.ir1.EQ.ir2) CYCLE
-            id1 = korpg(nks(ir1),ir1)
-            id2 = korpg(1       ,ir2)
-            IF (ABS(rvertp(4,id1)-rvertp(1,id2)).LT.TOL.AND.  
-     .          ABS(zvertp(4,id1)-zvertp(1,id2)).LT.TOL) THEN
-c...          Make sure the points are exactly the same, since small errors
-c             can creep in when cutting the grid: 
-              rvertp(4,id1) = rvertp(1,id2)
-              zvertp(4,id1) = zvertp(1,id2)
-            ENDIF
-          ENDDO
-        ENDDO
-
-      ENDIF
-
-
-c...  Hack: Skipping almost everything in this routine, except for poloidal
-c     refinement code:
- 10   CONTINUE
       IF (grdmod(1,1).EQ.887.0) grdnmod = tmpnmod
+
+      rvertp = SNGL(d_rvertp)
+      zvertp = SNGL(d_zvertp)
 
       DO i1 = 1, grdnmod
 
@@ -6851,7 +7192,9 @@ c...        Poloidal refinement:
               CALL OUTPUTDATA(85,'sdfsd')
               STOP 'sdfsd'
             ENDIF
+
             CALL SetupGrid
+
             irs  = NINT(grdmod(i1,4))
             ire  = NINT(grdmod(i1,5))
             IF (irs.EQ.-99) irs = irsep
@@ -6859,23 +7202,52 @@ c...        Poloidal refinement:
             DO ir = irs, ire
              IF (ir.NE.0.AND.idring(MAX(1,ir)).EQ.BOUNDARY) CYCLE
              CALL PoloidalRefinement(ir,NINT(grdmod(i1,2)),grdmod(i1,3))
+c             WRITE(0,*) 'POLOIDAL REF:',ir,nks(ir)
             ENDDO
+
+c            WRITE(0,*) 'here we go...'
+c            CALL BuildMap
+c            CALL TightenGrid
           ENDIF
+
+c          rvertp = SNGL(d_rvertp)
+c          zvertp = SNGL(d_zvertp)
 
         ELSEIF (grdmod(i1,1).EQ.7.0) THEN
 c...      Dump grid data to an external file:
-          OPEN (UNIT=98,FILE='celldata.dat',ACCESS='SEQUENTIAL',
+          OPEN (UNIT=98,FILE='cell.dat',ACCESS='SEQUENTIAL',
      .          STATUS='NEW')      
-          WRITE(98,*) 'SHOT: 119919   TIME: 3000'
-          WRITE(98,'(2A6,2A10)') 'IK','IR','R (m)','Z (m)'
           IF (.FALSE.) THEN
+            WRITE(98,*) 'SHOT: 119919   TIME: 3000'
+            WRITE(98,'(2A6,2A10)') 'IK','IR','R (m)','Z (m)'
             DO ir = 1, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               DO ik = 1, nks(ir)
                 WRITE(98,'(2I6,2F10.6)') ik,ir,rs(ik,ir),zs(ik,ir)
               ENDDO
             ENDDO
-          ELSE
+          ELSEIF (.TRUE.) THEN
+            WRITE(98,'(A)') '* Grid geometry file from DIVIMP'
+            WRITE(98,'(A,1X,2A6,6A12)') 
+     .        '*','IK','IR','Rcen (m)','Zcen (m)','Rmid1 (m)',
+     .        'Zmid1 (m)','R1 (m)','Z1 (m)'
+            WRITE(98,*) 3  ! Format code
+            DO ir = 2, nrs
+              IF (idring(ir).EQ.BOUNDARY) CYCLE
+c...          Points in core near the x-point (more accurate due to flux expansion):
+              DO ik = 1, nks(ir)
+                id = korpg(ik,ir)
+                WRITE(98,'(2X,2I6,6F12.7)') ik,ir,
+     .            rs(ik,ir),zs(ik,ir),
+     .            0.5*(rvertp(1,id)+rvertp(2,id)),
+     .            0.5*(zvertp(1,id)+zvertp(2,id)),
+     .            rvertp(1,id),
+     .            zvertp(1,id)
+              ENDDO
+            ENDDO
+          ELSEIF (.FALSE.) THEN
+            WRITE(98,*) 'SHOT: 119919   TIME: 3000'
+            WRITE(98,'(2A6,2A10)') 'IK','IR','R (m)','Z (m)'
             DO ir = 1, irsep-1
               IF (idring(ir).EQ.BOUNDARY) CYCLE
 c...          Points in core near the x-point (more accurate due to flux expansion):
@@ -6924,11 +7296,13 @@ c...          Points at the centers of outer targets:
             ENDDO
           ENDIF
           CLOSE (98)
-c          CALL DumpGridData
 
         ELSEIF (grdmod(i1,1).EQ.8.0) THEN
+
           IF     (grdmod(i1,2).EQ. 0.0.OR.
      .            grdmod(i1,2).EQ. 1.0.OR.
+     .            grdmod(i1,2).EQ. 2.0.OR.
+     .            grdmod(i1,2).EQ. 3.0.OR.
      .            grdmod(i1,2).EQ.10.0) THEN
 c...        Load Bratio and PSIn data from external file:
             CALL LoadGridData(NINT(grdmod(i1,2)))
@@ -6951,11 +7325,11 @@ c...        Quick check:
      .          CALL ER('TailorGrid','Bad PSITARG hack',*99)
             ENDDO
             IF (sloutput) THEN
-              WRITE(0,*)
-              WRITE(0,*) '----------------------'
-              WRITE(0,*) 'PSITARG -- SUPER-HACK!'
-              WRITE(0,*) '----------------------'
-              WRITE(0,*)
+              WRITE(fp,*)
+              WRITE(fp,*) '----------------------'
+              WRITE(fp,*) 'PSITARG -- SUPER-HACK!'
+              WRITE(fp,*) '----------------------'
+              WRITE(fp,*)
             ENDIF 
           ELSE
             CALL ER('TailorGrid','Invalid .dat grid option',*99)
@@ -7002,114 +7376,37 @@ c...  Hack: Turn off new generalized grid code:
 
 c...  Calculate some derived grid quantities:
       CALL SetupGrid
+      CALL TightenGrid
 
-c...  Clean up grid as necessary:
-      IF (.TRUE.) THEN
-        CALL BuildMap
-        IF (sloutput) WRITE(0,*) 'CLEANING UP THE GRID'
-        DO ir = 2, nrs
-          IF (idring(ir).EQ.BOUNDARY) CYCLE
-          ike = nks(ir)
-          IF (ir.LT.irsep) ike = nks(ir) - 1
-          DO ik = 1, ike
-            id = korpg(ik,ir)
-
-            DO iside = 1, 2
-
-              IF (iside.EQ.1) THEN
-c...            Side 14:
-                v1 = 1
-                v2 = 4
-                v3 = 2
-                v4 = 3
-                ir1 = irins(ik,ir)  
-              ELSE
-c...            Side 23:
-                v1 = 2
-                v2 = 3
-                v3 = 1
-                v4 = 4
-                ir1 = irouts(ik,ir)  
-              ENDIF
-
-              x(1) = DBLE(rvertp(v1,id))
-              y(1) = DBLE(zvertp(v1,id))
-              x(2) = DBLE(rvertp(v2,id))
-              y(2) = DBLE(zvertp(v2,id))
-
-              ike1 = nks(ir1)+1
-              IF (ir1.LT.irsep) ike1 = nks(ir1)
-              DO ik1 = 1, ike1
-                id1 = korpg(ik1,ir1)
-                IF (ik1.EQ.nks(ir1)+1) THEN
-                  x(3) = DBLE(rvertp(v4,id1))
-                  y(3) = DBLE(zvertp(v4,id1))
-                ELSE
-                  x(3) = DBLE(rvertp(v3,id1))
-                  y(3) = DBLE(zvertp(v3,id1))
-                ENDIF
-
-                IF (PointOnLine(x,y,s,t,3,.FALSE.)) THEN
-
-c... LINKED TO VALUE IN POINTONLINE -- REDUCE VALUE THERE! 
-                  
-
-                  IF (DABS(s-t).GT.1.0D-3.AND.DABS(s-t).LT.1.0D0) THEN
-                    IF (sloutput) THEN
-                      WRITE(0,*) '*************************************'
-                      WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
-                      WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
-                      WRITE(0,*) '  DOING NOTHING...'
-                      WRITE(0,*) '*************************************'
-                      CYCLE
-                    ENDIF
-c
-c                   jdemod - whatever this code is doing it should be issuing a message
-c
-                    write(6,'(a,3i6,2(1xg12.5))') 
-     >                       'TAILORGRID: PROBLEM Ik,IR,ISIDE,S,T:',
-     >                        ik,ir,iside,s,t
-c
-                    IF (ik1.EQ.nks(ir1)+1) THEN
-                      rvertp(v4,id1) = SNGL(x(1)+s*(x(2)-x(1)))
-                      zvertp(v4,id1) = SNGL(y(1)+s*(y(2)-y(1)))
-                    ELSE
-                      rvertp(v3,id1) = SNGL(x(1)+s*(x(2)-x(1)))
-                      zvertp(v3,id1) = SNGL(y(1)+s*(y(2)-y(1)))
-                    ENDIF
-                    IF (ik1.GT.1.AND.ik1.LT.nks(ir1)+1) THEN
-                      id1 = korpg(ik1-1,ir1)
-                      rvertp(v4,id1) = SNGL(x(1)+s*(x(2)-x(1)))
-                      zvertp(v4,id1) = SNGL(y(1)+s*(y(2)-y(1)))
-                    ENDIF
-                  ENDIF
-
-                ENDIF
-
-              ENDDO
-
-            ENDDO
-
-          ENDDO
-        ENDDO
+      IF (nopriv) THEN
+        rxp = rvertp(1,korpg(1,irsep))
+        zxp = zvertp(1,korpg(1,irsep))
+      ELSE
+        IF (sloutput) WRITE(fp,*) 'ADJUSTING X-POINT'
+        rxp = rvertp(4,korpg(ikto,irsep))
+        zxp = zvertp(4,korpg(ikto,irsep))
       ENDIF
 
-c      STOP 'sdgsdgsd'
+c      DO ik = 1, 10
+c        id = korpg(ik,irsep)
+c        WRITE(0,*) 'CHECK: ',rvertp(1,id),d_rvertp(1,id)
+c        WRITE(0,*) '     : ',zvertp(1,id),d_zvertp(1,id)
+c        WRITE(0,*) '     : ',rvertp(4,id),d_rvertp(4,id)
+c        WRITE(0,*) '     : ',zvertp(4,id),d_zvertp(4,id)
+c      ENDDO
 
-c      CALL DUMPGRID('TAILORGRI')
-
-      IF (sloutput) WRITE(0,*) 'ADJUSTING X-POINT'
-      rxp = rvertp(4,korpg(ikto,irsep))
-      zxp = zvertp(4,korpg(ikto,irsep))
+c      DEALLOCATE(d_rvertp)
+c      DEALLOCATE(d_zvertp)
 
       RETURN
-99    WRITE(0,*) 'IR=',ir,t1,id1
-      WRITE(0,*) 'IK1,IR1,D1=',ik1,ir1,id1
-      WRITE(0,*) 'IR=',c1,c2
-      WRITE(0,*) 'IK2,IR1,D2=',ik2,ir2,id2
-      WRITE(0,*) 'A1,2=',a1,a2
-      WRITE(0,*) 'B1,2=',b1,b2
-      WRITE(0,*) 'C1,2=',c1,c2
+99    CONTINUE
+c      WRITE(0,*) 'IR=',ir,t1,id1
+c      WRITE(0,*) 'IK1,IR1,D1=',ik1,ir1,id1
+c      WRITE(0,*) 'IR=',c1,c2
+c      WRITE(0,*) 'IK2,IR1,D2=',ik2,ir2,id2
+c      WRITE(0,*) 'A1,2=',a1,a2
+c      WRITE(0,*) 'B1,2=',b1,b2
+c      WRITE(0,*) 'C1,2=',c1,c2
       CALL OutputGrid(85,'PROBLEM IN TAILORGRID')
       CALL DumpGrid('PROBLEM IN TAILORGRID')
       STOP
