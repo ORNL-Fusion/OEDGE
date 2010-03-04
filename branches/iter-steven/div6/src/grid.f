@@ -6592,7 +6592,7 @@ c...    Low index target:
         ir1 = ir
         ik2 = ikins(ik1,ir1)
         ir2 = irins(ik1,ir1)
-        IF (idring(ir2).AND.BOUNDARY.AND.ir1.NE.ir2) THEN
+        IF (idring(ir2).EQ.BOUNDARY.AND.ir1.NE.ir2) THEN
           id1 = korpg(ik1,ir1)
           id2 = korpg(ik2,ir2)
           id3 = korpg(1  ,ir2)
