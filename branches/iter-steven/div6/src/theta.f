@@ -42,7 +42,6 @@ c...  Some out of place initialization:
 
       dthetg = thetag(ikti-1,irsep) - thetag(ikto+1,irsep) 
 
-
 c...  SOL:
       DO ir = irsep + 1, irwall-1
         IF (ringtype(ir).EQ.SOL1) THEN
@@ -256,20 +255,10 @@ c
 
       count = 0
 
-c      WRITE(0,*)
-c      WRITE(0,*) '*** NOT CHECKING FOR ERRORS IN THE THETA '//
-c     .           'CALCULATIONS ***'
-c      WRITE(0,*)
-c      RETURN
-
-
+      CALL OutputGrid(86,'Before metric repair')
 
       DO ir = irsep, nrs
         IF (idring(ir).EQ.-1) CYCLE
-
-c        DO ik = 1, nks(ir)
-c          WRITE(SLOUT,*) 'THETAG:',ik,ir,thetag(ik,ir)
-c        ENDDO
 
         ik = 1
         DO WHILE (ik.LT.nks(ir)-1)
@@ -277,8 +266,6 @@ c        ENDDO
 
           theta1 = thetag(ik-1,ir)
           theta2 = thetag(ik  ,ir)
-c          theta3 = thetag(ik+1,ir)
-
 
           IF (ik.LT.nks(ir)-3) THEN         
             theta3 = 0.0
@@ -440,7 +427,7 @@ c
       REAL    CALCTHETA
       REAL    FACTOR,F1,F2
 
-      INTEGER IKR,IRR,IKTMP,errcnt,ir,ik,id,i,ik1
+      INTEGER IKR,IRR,IKTMP,errcnt,ir,ik,id,i,ik1,ir1,ir2
       REAL thesft,themin,extthe,shift,delta,len1,len2
 
 
@@ -485,18 +472,62 @@ c      ENDDO
      +         thetag(ikto + 1,irsep) + 1.0
 
       CALL OutputGrid(85,'Before calculating metric')
-
 c
 c     Scrape off layer:
-c
+c     ------------------------------------------------------------------
       DO ir = irsep+1, irwall-1
         DO ik = 1, nks(ir)
           thetag(ik,ir) = CalcTheta(ik,ir)
         ENDDO
       ENDDO
 c
-c     Private plasma:
+c     Secondary PFZ for double-null grids:
+c     ------------------------------------------------------------------
+      DO ir = irsep+1, irwall-1
+        IF (ringtype(ir).EQ.PFZ) EXIT
+      ENDDO
+      IF (ir.NE.irwall) THEN
+c...    Identify the rings just outside the ring that's just inside the 
+c       secondary separatrix
+        ir1 = irouts(1          ,irsep2)
+        ir2 = irouts(nks(irsep2),irsep2)  
+c...    Extend THETAG on these rings as per the definition on the
+c       primary separatrix ring:
+        ir = ir1
+        DO ik = 1, nks(ir)
+          IF (irins(ik,ir).NE.irsep2) THEN
+            thetag(ik,ir) =
+     .        thetag(ik-1,ir) + (kps(ik  ,ir) - kps(ik-1,ir)) * 100.0
+          ENDIF
+        ENDDO
+        ir = ir2
+        DO ik = nks(ir), 1, -1
+          IF (irins(ik,ir).NE.irsep2) THEN
+            thetag(ik,ir) = 
+     .        thetag(ik+1,ir) - (kps(ik+1,ir) - kps(ik  ,ir)) * 100.0
+          ENDIF
+        ENDDO
+        write(0,*) 'IR1,2=',ir1,ir2
+
+        DO ir = ir1+1, irwall-1
+          IF (ir.EQ.ir2.OR.ringtype(ir).EQ.PFZ) CYCLE
+          DO ik = 1, nks(ir)
+            thetag(ik,ir) = CalcTheta(ik,ir)
+          ENDDO        
+        ENDDO
+
+        DO ir = irwall-1, ir1+1, -1
+          IF (ir.EQ.ir2.OR.ringtype(ir).NE.PFZ) CYCLE
+          DO ik = 1, nks(ir)
+            thetag(ik,ir) = CalcTheta(ik,ir)
+          ENDDO        
+        ENDDO
+
+      ENDIF
+
 c
+c     Private plasma:
+c     ------------------------------------------------------------------
       DO ir = nrs, irtrap+1, -1
         DO ik = 1, nks(ir)
           thetag(ik,ir) = CalcTheta(ik,ir)
@@ -525,17 +556,17 @@ c...        Assume that the theta value can be extrapolated:
         ENDDO
       ENDDO
 
-c ...There is sometimes a problem with the near-x-point cells of the
-c PFZ do to the approximate nature of DTHETG... just smooth the metric...
-
-      IF (thetag(ikto2(nrs),nrs).GT.thetag(ikti2(nrs),nrs)) THEN
-        ir = nrs
-
-        len1 = kps(ikti2(ir)  ,ir) - kps(ikto2(ir),ir)
-        len2 = kps(ikti2(ir)+1,ir) - kps(ikto2(ir),ir)
-
-        thetag(ikti2(ir),ir) = thetag(ikto2(ir),ir) +
-     .    len1 / len2 * (thetag(ikti2(ir)+1,ir) - thetag(ikto2(ir),ir))
+c...  There is sometimes a problem with the near-x-point cells of the
+c     PFZ do to the approximate nature of DTHETG -- just smooth the metric:
+      IF (.NOT.nopriv) THEN
+        IF (thetag(ikto2(nrs),nrs).GT.thetag(ikti2(nrs),nrs)) THEN
+          ir = nrs
+          len1 = kps(ikti2(ir)  ,ir) - kps(ikto2(ir),ir)
+          len2 = kps(ikti2(ir)+1,ir) - kps(ikto2(ir),ir)
+          thetag(ikti2(ir),ir) = thetag(ikto2(ir),ir) +
+     .      len1 / len2 * (thetag(ikti2(ir)+1,ir) - 
+     .                     thetag(ikto2(ir)  ,ir))
+        ENDIF
       ENDIF
 c
 c     Core:
@@ -549,14 +580,7 @@ c
       ENDDO
 
 
-      CALL OutputGrid(86,'Before metric repair')
-c      STOP 'sdjfk'
-
-
       CALL RepairMetric
-
-
-
 
 c
 c     Boundary rings:
@@ -572,16 +596,6 @@ c
       DO ik = 1, nks(irtrap)
         thetag(ik,irtrap) = thetag(ikouts(ik,irtrap),irouts(ik,irtrap))
       ENDDO
-
-
-
-
-
-
-
-
-
-c      goto 900
 c
 c ----------------------------------------------------------------------
 c Initialize THETAT for CTARGOPT 1&6 - other options are in WALLS.D4A:
@@ -644,18 +658,7 @@ c     .               shift/delta
      .      (shift / delta)
         ENDDO
 
-c        thetat(idds(1          ,1))      = thetag(1     ,1)
-c        thetat(idds(nks(1)     ,1))      = thetag(nks(1)     ,1)
-c        thetat(idds(1          ,irwall)) = thetag(1          ,irwall)
-c        thetat(idds(nks(irwall),irwall)) = thetag(nks(irwall),irwall)
-c        thetat(idds(1          ,irtrap)) = thetag(1          ,irtrap)
-c        thetat(idds(nks(irtrap),irtrap)) = thetag(nks(irtrap),irtrap)
-
       ENDIF
-
-
-c  900   CONTINUE
-
 c
 c     Intialize the metric on boundary rings:
 c
@@ -702,14 +705,10 @@ c
         thetat(i) = thetat(i) + thesft
       ENDDO
 
-c      WRITE(0,*) 'THESHIFT=',thesft
-
       CALL OutputGrid(87,'After calculating metric')
-      IF (stopopt.EQ.10) STOP 'After calculating metric'
 
-c      STOP 'DONE CALCULATING METRIC'
-
-
+c      CALL OutputData(85,'THETA PATCHING')
+c      CALL DumpGrid('THETA PATCHING')
       RETURN
 c
 c     Error output:
@@ -763,14 +762,14 @@ c      PARAMETER (RANGE = 20)
 c
 c
 c
-      IF (ir.LT.irsep) THEN
+      IF     (ir.LT.irsep) THEN
         ikack = ikouts(ikcell,ir)
         irref = irouts(ikcell,ir)
         nv1   = 2
         nv2   = 3
         ikmin = 1
         ikmax = nks(ir) - 1
-      ELSEIF (ir.GT.irtrap) THEN
+      ELSEIF (ir.GT.irtrap.OR.ringtype(ir).EQ.PFZ) THEN
         ikack = ikouts(ikcell,ir)
         irref = irouts(ikcell,ir)
         nv1   = 2
@@ -782,7 +781,6 @@ c
           ikmin = ikti2(ir)
           ikmax = nks(ir)
         ENDIF
-
 c...BROKEN PFZ:
         IF (irref.EQ.irwall) THEN
           CalcTheta = 1.0
@@ -806,7 +804,6 @@ c     cell IKCELL,IR to the polygon side of a cell in the
 c     relevant cross-field direction.  As default, take the
 c     perpendicular distance to the polygon side of IKCELL,IR:
 c
-
       distmin = SQRT((rs(ikcell,ir) - rs(ikack,irref))**2.0 +
      .               (zs(ikcell,ir) - zs(ikack,irref))**2.0)
 c Find a better scale distance...

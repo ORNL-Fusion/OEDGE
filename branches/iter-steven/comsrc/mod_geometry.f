@@ -46,7 +46,7 @@
 
 !..   Surface data:
       TYPE, PUBLIC :: type_srf  ! 44 bytes
-        INTEGER :: index(3) ! ???       ! Generaly index array
+        INTEGER :: index(5) ! ???       ! Generaly index array
         INTEGER :: type  ! INT*1        ! Category: SP_PLANAR_POLYGON=4, SP_LINE_SEGMENT=5
         INTEGER :: mode  ! DROP?        ! vertex indexing scheme (sequential, or not, or use IVTX(1)=-1 instead?)
         INTEGER :: link  ! DROP?        ! Connection to another surface

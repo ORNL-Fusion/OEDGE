@@ -2922,11 +2922,10 @@ c...  Decide which machine is being modeled:
         machine = NULL
       ENDIF
 
+      nopriv = .FALSE.
+      IF (ikto.LE.1) nopriv = .TRUE.
 c slmod end
 c
-
-
-
 c
 c------------------------------------------------------------------------------------
 c

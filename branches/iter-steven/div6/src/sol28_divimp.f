@@ -12,12 +12,13 @@ c
 c      RETURN
 
       CALL MapRingstoTubes
+      CALL AssignOSMWall
 
       CALL SaveGeometryData('osm_geometry.raw')
 
       CALL LoadLegacyData('osm_legacy.raw')
 
-      CALL SetTargetConditions
+c      CALL SetTargetConditions(itube)
 
       IF (opt%osm_load.NE.0) CALL LoadReferenceSolution(1)
 
@@ -85,6 +86,9 @@ c      CALL SetTargetConditions
 
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
+
+c...  Generate output files:
+      CALL GenerateOutputFiles
 
 c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
@@ -245,6 +249,40 @@ c...  Copy PIN data:
 
       IF (ncell.NE.ncell1) 
      .  CALL ER('MapNeutraltoTubes','NCELL1.NE.NCELL',*99)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE AssignOSMWall
+      USE mod_sol28_wall
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'walls_com'
+
+      INTEGER iwall
+
+      nwall = wallpts
+
+      ALLOCATE(wall(nwall))
+
+      DO iwall = 1, nwall
+        wall(iwall)%class             =  1       
+        wall(iwall)%index(WAL_GROUP ) = -1
+        wall(iwall)%index(WAL_INDEX ) = -1    
+        wall(iwall)%index(WAL_TUBE  ) = -1    
+        wall(iwall)%index(WAL_TARGET) = NINT(wallpt(iwall,16))    
+        wall(iwall)%material_tag      = 'unknown'
+        wall(iwall)%material          = -1
+        wall(iwall)%temperature       =      wallpt(iwall,19)
+        wall(iwall)%v1(1)             = DBLE(wallpt(iwall,20))
+        wall(iwall)%v1(2)             = DBLE(wallpt(iwall,21))
+        wall(iwall)%v2(1)             = DBLE(wallpt(iwall,22))
+        wall(iwall)%v2(2)             = DBLE(wallpt(iwall,23))
+      ENDDO
 
       RETURN
  99   STOP
@@ -487,12 +525,13 @@ c        pin(cind1:cind2,ion)%rec = pinrec(1:ike,ir)
 c        pin(cind1:cind2,ion)%mom = pinmp (1:ike,ir)
       ENDDO
 c...  Set grid quantities:
+      grid%r0   = DBLE(r0)
+      grid%z0   = DBLE(z0)
       grid%n    = ntube
       grid%isep = irsep  - 1
       grid%ipfz = irtrap - 2
       grid%ikto = ikto
       grid%ikti = ikti
-
 c...  Geometry:
       ngrp = 1
       grp(1)%origin = GRP_MAGNETIC_GRID  ! *** NEED AddGroup and CopyGroup functions ***
@@ -553,13 +592,18 @@ c     boundaries:
         ir =obj(iobj)%index(IND_IR)
         IF (idring(irins (ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(4) = -1
         IF (idring(irouts(ik,ir)).EQ.BOUNDARY) obj(iobj)%omap(2) = -1
+        IF (ir.GE.irsep) THEN
+          IF (ik.EQ.1      ) obj(iobj)%omap(1) = -2
+          IF (ik.EQ.nks(ir)) obj(iobj)%omap(3) = -2
+        ENDIF
       ENDDO
+
 
 c...  Setup the old format SOL28 input data:
       osmns28 = osmnnode
       osms28 = 0.0
       DO i1 = 1, osmnnode
-        osms28(i1,1) = osmnode(i1)%type
+        osms28(i1,1) = osmnode(i1)%type 
         osms28(i1,5) = osmnode(i1)%rad_x
         osms28(i1,6) = osmnode(i1)%rad_y
       ENDDO
@@ -605,13 +649,13 @@ c...      Need to do volume weighted averaging...
 
           IF (ir.GE.irsep) THEN
             in = idds(ir,2)
-            knds (in) = tube(itube)%ni(1,ion)
+            knds (in) = tube(itube)%ne(1)      ! ne(1,ion) - 12/10/09 SL
             kvds (in) = tube(itube)%vi(1,ion) 
             kteds(in) = tube(itube)%te(1)
             ktids(in) = tube(itube)%ti(1,ion)
 
             in = idds(ir,1)
-            knds (in) = tube(itube)%ni(2,ion)
+            knds (in) = tube(itube)%ne(2)      ! ni(1,ion) - 12/10/09 SL
             kvds (in) = tube(itube)%vi(2,ion)       
             kteds(in) = tube(itube)%te(2)
             ktids(in) = tube(itube)%ti(2,ion)
@@ -1290,7 +1334,6 @@ c
       WRITE(fp,ERR=98) MAXNRS
       WRITE(fp,ERR=98) (grdntreg(i1),grdntseg(1:MAXNRS,i1),
      .                  (grdtseg(1:MAXNRS,i2,i1),i2=1,MAXNRS),i1=1,2)
-
       CLOSE (fp)
       
       RETURN
@@ -1326,6 +1369,9 @@ c
       grid_option = 3  ! 7  ! 6
 
       brat = 1.0
+
+      r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
+c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
       SELECTCASE (grid_option)
         CASE (1)  ! Full vessel, mirrored
@@ -1392,9 +1438,6 @@ c
       ENDSELECT
 
       id = 0
-
-c      r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
-      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
       DO ir = 1, maxrings
 
@@ -1662,22 +1705,29 @@ c...  Neutral wall
              rves(12) =  r1
              zves(12) =  z2
            CASE (3)  ! Target chamber
-             nves = 4
+             nves = 7
              ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
+             r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
              r2 = r1 + delr
              z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
+             z2 = zvertp(3,korpg(nks(ir),ir)) 
   
              rves(1) =  r1
              zves(1) =  z1
              rves(2) =  r2
              zves(2) =  z1
-  
+
              rves(3) =  r2
-             zves(3) =  z2 
-             rves(4) =  rvertp(3,korpg(nks(ir),ir)) ! r1
-             zves(4) =  z2
+             zves(3) =  0.55 * z1 + 0.45 * z2
+             rves(4) =  r2
+             zves(4) =  0.50 * z1 + 0.50 * z2
+             rves(5) =  r2
+             zves(5) =  0.45 * z1 + 0.55 * z2
+  
+             rves(6) =  r2
+             zves(6) =  z2 
+             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.0001 ! r1
+             zves(7) =  z2
            CASE (4:5)  ! Target chamber: fancy
              nves = 10
              ir = irwall-1
@@ -1766,6 +1816,8 @@ c...  Neutral wall
  
 c      CALL DumpGrid('BUILDING LINEAR GRID')
 
+      IF (grdnmod.GT.0) CALL TailorGrid
+
 
       CALL OutputData(85,'Linear')
 
@@ -1836,71 +1888,51 @@ c      TYPE(type_grid_cell) :: knot(0:nknot)
         IF (z1.LT.1.OR.z1.GT.NUMZONE) CYCLE
         DO r1 = knot(i1)%rzone-1, knot(i1)%rzone+1
           IF (r1.LT.1.OR.r1.GT.NUMZONE) CYCLE  
-
 c          DO i2 = 1, nknot
           DO i2 = izone(r1,z1), izone(r1+1,z1)-1
             IF (i1.EQ.i2) CYCLE
 c...
             IF     (condition.EQ.1.AND.
-     .              ABS(knot(i1)%rv(1)-knot(i2)%rv(1)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(1)-knot(i2)%zv(1)).LT.DTOL) THEN
-
-              IF (sloutput) WRITE(0,*) 'XPOINT:',i1,i2
-
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(1)).LT.DTOL) THEN
+c              IF (sloutput) WRITE(0,*) 'XPOINT:',i1,i2
               index2 = i2
               RETURN
-
             ELSEIF (condition.EQ.2.AND.
-     .              ABS(knot(i1)%rv(1)-knot(i2)%rv(2)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(1)-knot(i2)%zv(2)).LT.DTOL.AND.
-     .              ABS(knot(i1)%rv(4)-knot(i2)%rv(3)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(4)-knot(i2)%zv(3)).LT.DTOL) THEN
-
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(4)-knot(i2)%rv(3)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(4)-knot(i2)%zv(3)).LT.DTOL) THEN
 c              WRITE(0,*) 'SIDE14:',i1,i2
-
               index2 = i2
               RETURN
-
             ELSEIF (condition.EQ.3.AND.
-     .              ABS(knot(i1)%rv(3)-knot(i2)%rv(2)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(3)-knot(i2)%zv(2)).LT.DTOL.AND.
-     .              ABS(knot(i1)%rv(4)-knot(i2)%rv(1)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(4)-knot(i2)%zv(1)).LT.DTOL) THEN
-
+     .              DABS(knot(i1)%rv(3)-knot(i2)%rv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(3)-knot(i2)%zv(2)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(4)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(4)-knot(i2)%zv(1)).LT.DTOL) THEN
 c              WRITE(0,*) 'SIDE14:',i1,i2
-
               index2 = i2
               RETURN
-
             ELSEIF (condition.EQ.4.AND.
-     .              ABS(knot(i1)%rv(2)-knot(i2)%rv(1)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(2)-knot(i2)%zv(1)).LT.DTOL.AND.
-     .              ABS(knot(i1)%rv(3)-knot(i2)%rv(4)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(3)-knot(i2)%zv(4)).LT.DTOL) THEN
-
+     .              DABS(knot(i1)%rv(2)-knot(i2)%rv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(2)-knot(i2)%zv(1)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(3)-knot(i2)%rv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(3)-knot(i2)%zv(4)).LT.DTOL) THEN
 c              WRITE(0,*) 'SIDE14:',i1,i2
-
               index2 = i2
               RETURN
-
             ELSEIF (condition.EQ.5.AND.
-     .              ABS(knot(i1)%rv(1)-knot(i2)%rv(4)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(1)-knot(i2)%zv(4)).LT.DTOL.AND.
-     .              ABS(knot(i1)%rv(2)-knot(i2)%rv(3)).LT.DTOL.AND.
-     .              ABS(knot(i1)%zv(2)-knot(i2)%zv(3)).LT.DTOL) THEN
+     .              DABS(knot(i1)%rv(1)-knot(i2)%rv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(1)-knot(i2)%zv(4)).LT.DTOL.AND.
+     .              DABS(knot(i1)%rv(2)-knot(i2)%rv(3)).LT.DTOL.AND.
+     .              DABS(knot(i1)%zv(2)-knot(i2)%zv(3)).LT.DTOL) THEN
 c...          Matching sides 12 and 34:
-
 c              WRITE(0,*) 'SIDE14:',i1,i2
-
               index2 = i2
               RETURN
-
-
-
             ENDIF
-
           ENDDO
-
         ENDDO
       ENDDO
 
@@ -2409,7 +2441,6 @@ c...  Start with the core rings:
       ik = 1
       ir = 1
       i1 = icore(1) 
-      WRITE(0,*) 'irsep=',irsep,ir
       DO WHILE(ir.LT.irsep)
         imap(1,ir) = i1
         cont = .TRUE.
@@ -2527,6 +2558,8 @@ c            IF (output) WRITE(0,*) 'INNER SOL MAP NEW RING:',ik,ir,i1
       nrs = ir
 
       IF (nxpt.GT.1) THEN
+
+        irsep2 = irsep + cxpt(2) - cxpt(1) - 1
 c
 c       jdemod
         IF (output) then
@@ -3124,18 +3157,23 @@ c          IF (imap(ik,irsep).EQ.knot(ixpt(2))%xpt) ikti = ik - 1  ! Not sure th
       IF (ikto.EQ.-1.OR.ikti.EQ.-1)
      .  CALL ER('Readgeneralisedgrid','IKTI or IKTO not found',*99)
 
-c...  Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
-      CALL InsertRing(1,BEFORE,PERMANENT)
-      CALL InsertRing(nrs-irsep+2,AFTER,PERMANENT)
-      CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
-
 c     CUTPT1
 c     CUTPT2
 c     MAXKPTS
 c     MAXRINGS
 c     CUTRING
 c
-      nopriv = .FALSE.
+      IF (ikto.EQ.0) THEN
+        nopriv = .TRUE.
+        CALL InsertRing(1  ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      ELSE
+        nopriv = .FALSE.
+c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+        CALL InsertRing(1,BEFORE,PERMANENT)
+        CALL InsertRing(nrs-irsep+2,AFTER,PERMANENT)
+        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+      ENDIF
 
       cutpt1 = ikto
       cutpt2 = ikti             ! These are semi-bogus for a connected double-null...?
@@ -3255,4 +3293,196 @@ c...  For consistency with original SONNET code in tau.d6a:
       STOP  
       END
 c
+c ========================================================================
+c
+      SUBROUTINE ReadGeneralisedGrid_OSM(gridunit,ik,ir,
+     .                                   rshift,zshift,indexiradj)
+      USE mod_grid
+      USE mod_grid_divimp
+      IMPLICIT none
 
+      INTEGER, INTENT(IN)  :: gridunit
+      INTEGER, INTENT(OUT) :: ik,ir,indexiradj
+      REAL   , INTENT(OUT) :: rshift,zshift
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+      INCLUDE 'pindata'
+
+      INTEGER   id,i1,i2,ir1,
+     .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
+      CHARACTER buffer*1024
+      REAL      valpsi(MAXNRS)
+
+      rshift = 0.0
+      zshift = 0.0
+
+      CALL LoadGeneralisedGrid
+
+      irsep  = grid_load%irsep
+      irsep2 = grid_load%irsep2
+      irwall = grid_load%irwall
+      irtrap = grid_load%irtrap
+      nrs    = grid_load%nrs
+      nks(1:nrs) = grid_load%nks(1:nrs)
+
+      id = 0
+      CALL ALLOC_GRID(MAXNKS,MAXNRS)
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)        
+          i1 = imap(ik,ir)
+          rs(ik,ir) = knot(i1)%rcen
+          zs(ik,ir) = knot(i1)%zcen
+          bratio(ik,ir) = knot(i1)%bratio
+          id = id + 1
+          korpg(ik,ir) = id
+          nvertp(id) = knot(i1)%nv
+          DO i2 = 1, nvertp(id)
+            rvertp(i2,id) = knot(i1)%rv(i2)
+            zvertp(i2,id) = knot(i1)%zv(i2)
+          ENDDO
+c...      Store these in case B2 data from Rhozansky is being loaded:
+          divimp_ik(ik,ir) = knot(i1)%ik 
+          divimp_ir(ik,ir) = knot(i1)%ir
+        ENDDO
+      ENDDO
+
+c...  Set NPOLYP:
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+c...  Find IKTO,IKTI:
+      ikto = grid_load%ikto
+      ikti = grid_load%ikti
+      IF (ikto.EQ.-1.OR.ikti.EQ.-1)
+     .  CALL ER('Readgeneralisedgrid','IKTI and/or IKTO not found',*99)
+
+c...  Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+c      CALL InsertRing(1          ,BEFORE,PERMANENT)
+c      CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+c      CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+
+c     CUTPT1
+c     CUTPT2
+c     MAXKPTS
+c     MAXRINGS
+c     CUTRING
+c
+      IF (ikto.EQ.0) THEN
+        nopriv = .TRUE.
+        CALL InsertRing(1  ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      ELSE
+        nopriv = .FALSE.
+c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+        CALL InsertRing(1          ,BEFORE,PERMANENT)
+        CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+      ENDIF
+
+      cutpt1     = ikto
+      cutpt2     = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring    = irsep - 1
+      maxkpts    = nks(irsep)
+      maxrings   = irwall
+      indexiradj = 1
+
+      IF (.NOT..TRUE.) THEN
+c        id = 0
+c        DO ir = 1, nrs
+c          DO ik = 1, nks(ir)        
+c            i1 = imap(ik,ir)
+c            rs(ik,ir) = knot(i1)%rcen
+c            zs(ik,ir) = knot(i1)%zcen
+c            bratio(ik,ir) = knot(i1)%bratio
+c            id = id + 1
+c            korpg(ik,ir) = id
+c            nvertp(id) = knot(i1)%nv
+c            DO i2 = 1, nvertp(id)
+c              rvertp(i2,id) = knot(i1)%rv(i2)
+c              zvertp(i2,id) = knot(i1)%zv(i2)
+c            ENDDO
+c          ENDDO
+c        ENDDO
+        CALL SaveSolution
+        CALL OutputData(86,'MAST!')
+c        title = '...'
+c        desc  = 'Call to STORE from DumpGrid'
+c        job   = 'Call to STORE from DumpGrid'
+c        equil = 'Call to STORE from DumpGrid'
+c        WRITE(0,*) 'CALLING STORE'
+c        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+c        WRITE(0,*) 'FUN WITH MAST GRIDS!'
+        STOP
+      ENDIF
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (ctargopt.EQ.0.OR.ctargopt.EQ.1.OR.ctargopt.EQ.2.OR.
+     .    ctargopt.EQ.3.OR.ctargopt.EQ.6) 
+     .  CALL AddPoloidalBoundaryCells      
+
+c...  Look for PSIn data for full double null grids (code mostly 
+c     from tau.d6a):
+      DO WHILE (.TRUE.)  
+        READ(gridunit,'(A)',END=25) buffer
+        IF     (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
+          READ(buffer(17:),*) numpsi
+c...      The PSI values are to be loaded in TailorGrid...glorious hack!
+          DO i1 = 1, numpsi
+            READ(gridunit,*,END=97)
+          ENDDO
+        ELSEIF (buffer(1:15).EQ.'PSI-DOUBLE-NULL') THEN
+          READ(buffer(16:),*) numpsi
+c...      The PSI values are listed with one on each line
+c         indexed by knot and ring index based on the SONNET 
+c         grid coordinates:
+          DO i1 = 1, numpsi
+            READ(gridunit,*,END=97) ikpsi(i1),irpsi(i1),valpsi(i1)
+          ENDDO
+c...      Assign to grid rings:
+          DO ir = 2, irwall-1
+c...        (Need the "-1" because a virtual core ring has been added to the grid)
+            ir1 = knot(imap(1,ir-1))%ir 
+            DO i1 = 1, numpsi
+              IF (irpsi(i1).EQ.ir1) EXIT
+            ENDDO
+            IF (i1.EQ.numpsi+1) 
+     .        CALL ER('Readgeneralisedgrid','Problem with PSIn',*99)
+            psitarg(ir,1) = valpsi(i1)
+            psitarg(ir,2) = valpsi(i1)
+            IF (ir.LT.irsep) THEN
+              psitarg(ir-1+irtrap,1) = valpsi(i1)
+              psitarg(ir-1+irtrap,2) = valpsi(i1)
+            ENDIF
+          ENDDO
+          WRITE(0,*)
+          WRITE(0,*) '------------------------------------------------'
+          WRITE(0,*) 'BAD PSITARG -- AND, USING INNER TARGET DATA ONLY'
+          WRITE(0,*) '------------------------------------------------'
+          WRITE(0,*)
+        ENDIF
+      ENDDO
+ 25   REWIND(gridunit)  ! Reset the grid file to the beginning for the PSI:
+                        ! and NEUTRAL WALL: data that's loaded in the the
+                        ! RAUG subroutine after this routine has been called.   
+
+
+c...  For consistency with original SONNET code in tau.d6a:
+      ir = maxrings
+      ik = maxkpts
+
+      DEALLOCATE(knot)
+      DEALLOCATE(imap)
+
+
+
+      RETURN
+ 97   CALL ER('ReadGeneralisedGrid_OSM','Unexpected end of file',*99)
+ 99   STOP
+      END
+c
+c ======================================================================
+c

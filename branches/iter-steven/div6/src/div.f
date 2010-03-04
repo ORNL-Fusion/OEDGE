@@ -534,7 +534,7 @@ c
 c
 c     Calculate transport coefficients from OSM
 c
-      if (cpinopt.eq.1) then 
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then 
          call oskin
       endif 
 c
@@ -951,7 +951,6 @@ c
         REXIT  = 0.0
 c
       ENDIF
-
 c
       RNEUT1 = RNEUT
       CLLL(-1) = REXIT
@@ -1372,7 +1371,6 @@ c
 c           STOP
 c
         endif
-
 c
 c       SET Initial S and CROSS postion for particles.
 c
@@ -2078,6 +2076,7 @@ c
 
         if (debug0) write(0,*) 'Before CS',ifate,iz
 
+c sltmp
         call check_ion_change_state(seed,nrand,neutim,nizs)
 
         if (debug0) write(0,*) 'After CS',ifate,iz
@@ -3646,7 +3645,8 @@ C
   960   CONTINUE
   990 CONTINUE
 
-
+        WRITE(6,*) 'powls:',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims:',SNGL(ddlims(1,irsep,:))
 c
 c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including 
 c     impurity data have been loaded for reference.
@@ -3815,7 +3815,7 @@ C
           PNESA(IK) = KNBS(IK,IR) * RIZB
           PNBS(IK) = KNBS(IK,IR)
 c
-          if (cpinopt.eq.1) then 
+          if (cpinopt.eq.1.or.cpinopt.eq.4) then 
              PNHS(IK) = PINATOM(IK,IR)
           else
              PNHS(IK) = E2DATOM(IK,IR)
@@ -4770,6 +4770,12 @@ c     Calculate the wall distribution of any hydrogenic or impurity
 c     radiation in POWLS and HPOWLS.  
 c       
       call calc_wallprad(nizs)
+
+
+c        WRITE(0,*) 'powls:',powls(ikti,irsep,:)
+c        WRITE(0,*) 'ddlims:',SNGL(ddlims(ikti,irsep,:))
+        WRITE(6,*) 'powls end div:',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims end div:',SNGL(ddlims(1,irsep,:))
 C
 C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
@@ -7419,8 +7425,12 @@ C       IONISATION AND RECOMBINATION
 C-----------------------------------------------------------------------
 C
         KK = KK + 1
+c sltmp - turning off ionisation and recombination
+c        IF (.FALSE..AND.RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
         IF (RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
           KK = KK + 1
+c sltmp - turning off recombination
+c          IF (.FALSE..AND.RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
           IF (RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
             CICRCS(IZ) = CICRCS(IZ) + SPUTY
 c            CIFRCS(IZ) = MIN (CIFRCS(IZ), CIST)

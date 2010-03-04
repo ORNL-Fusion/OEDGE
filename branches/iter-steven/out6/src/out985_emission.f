@@ -30,6 +30,8 @@ c...  Check for the presence of standard (OSM) and triangle (EIRENE) grid elemen
              max_ik = MAX(max_ik,obj(iobj)%ik)
              max_ir = MAX(max_ir,obj(iobj)%ir)
           CASE (OP_EIRENE_GRID)
+             max_ik = MAX(max_ik,obj(iobj)%ik)
+             max_ir = MAX(max_ir,obj(iobj)%ir)
              max_in = MAX(max_in,obj(iobj)%in)
           CASE DEFAULT
         ENDSELECT
@@ -52,7 +54,7 @@ c...  Allocate memory for spectrum and plasma data storage:
      .      nplasma = nplasma + 1
         ENDDO
         ALLOCATE(spectrum(MAXSPECBIN,count*nspectrum))
-        ALLOCATE(plasma  (count*nplasma  ))
+        ALLOCATE(plasma  (           count*nplasma  ))
         spectrum = 0.0
 c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
       ENDIF
@@ -69,7 +71,7 @@ c...      Fluid grid quantity:
           CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
         ENDIF
 
-        IF (max_in.GT.0) THEN
+        IF (.FALSE..AND.max_in.GT.0) THEN
 c...      EIRENE grid:
 
 c...      Check which name 
@@ -111,20 +113,19 @@ c          CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
 
         opt%int_wlngth(iint) = wlngth
 
-
 c...    Assign data to objects:
         DO iobj = 1, nobj
           IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
 
           SELECTCASE (obj(iobj)%subtype)
-            CASE (OP_FLUID_GRID)
+            CASE (OP_FLUID_GRID,OP_EIRENE_GRID)
 c...          Fluid grid:
               obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir) 
 
-            CASE (OP_EIRENE_GRID)
-c...          Eirene grid:
-              obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
-c     .            * obj(iobj)%quantity(iint)
+c            CASE (OP_EIRENE_GRID)
+cc...          Eirene grid:
+c              obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
+cc     .            * obj(iobj)%quantity(iint)
 
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:

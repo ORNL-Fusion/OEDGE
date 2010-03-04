@@ -509,6 +509,7 @@ c...  Input:
      .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet
       LOGICAL   ascii,message
       REAL      rtime,ttime
+      REAL*8    int_sum,solid_total,solid_angle
       CHARACTER file*1024
 
       INTEGER, ALLOCATABLE :: idum1(:)
@@ -656,9 +657,9 @@ c      DO i1 = 200000, npixel
 c      DO i1 = 4325, 4325
       DO i1 = 1, npixel
 
-c        IF (MOD(i1,npixel/10).EQ.0) 
+        IF (MOD(i1,npixel/10).EQ.0) 
 c        IF (MOD(i1,1).EQ.0) 
-        IF (MOD(i1,1000).EQ.0) 
+c        IF (MOD(i1,1000).EQ.0) 
      .    WRITE(0,'(A,I7,A,I7)') 'PROCESSING PIXEL ',i1,' OF ',npixel
 
         status = 0
@@ -738,7 +739,7 @@ c...        Add some brains:
           ENDIF
         ELSE
         ENDIF
-
+c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
       ENDDO  ! Pixel loop
 
 c...  Confirm that all volumes on the inversion mesh were sampled by the
@@ -846,6 +847,32 @@ c...    Dump pixel view trajectories:
      .       pixel(ipixel)%global_v2(1:3)
           ENDDO
           CLOSE(fp)
+        ENDDO
+      ENDIF
+
+      IF (.TRUE.) THEN
+c...    Total the signal for all pixels:
+        solid_total = (opt%angle(1) * opt%angle(2)) / (180.D0 * 360.0D0)
+        IF (solid_total.GT.1.0D0) 
+     .    CALL ER('ProcessPixels','Solid angle greater than 4PI',*99)
+        solid_angle = solid_total / DBLE(npixel)
+        DO i1 = 1, MAX(1,opt%int_num)
+          int_sum = 0.0
+          DO i2 = 1, npixel
+            int_sum = int_sum + pixel(i2)%integral(i1) * solid_angle /
+     .                          6.0D0 *  ! 8.0D0 * ! 6.0D0
+     .                   DCOS(pixel(i2)%xangle * 3.1415D0 / 180.0D0) *
+     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
+
+
+c            pixel(i2)%integral(i1) =  pixel(i2)%integral(i1) *
+c     .                   DCOS(pixel(i2)%xangle * 3.1415D0 / 180.0D0) *
+c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
+ 
+          ENDDO
+          WRITE(0,*)
+          WRITE(0,*) 'INTEGRAL SUMMATION:',i1,int_sum
+          WRITE(0,*)
         ENDDO
       ENDIF
 
@@ -1141,13 +1168,13 @@ c              pixel(npixel)%dyangle=yangle/DBLE(nybin)*DBLE(opt%sa_par2)
 c...        These are only needed for plotting, not actually used during LOS integration:
             pixel(npixel)%v2(1) = DSIN(pixel(npixel)%xangle *D_DEGRAD) *    ! Correct?
      .                            DCOS(pixel(npixel)%yangle *D_DEGRAD) * 
-     .                            7.0D0 + pixel(npixel)%v1(1)                ! 7 meters/units?
+     .                            50.0D0 + pixel(npixel)%v1(1)                ! 7 meters/units?
             pixel(npixel)%v2(2) = DCOS(pixel(npixel)%xangle *D_DEGRAD) * 
      .                            DSIN(pixel(npixel)%yangle *D_DEGRAD) * 
-     .                            7.0D0 + pixel(npixel)%v1(2)
+     .                            50.0D0 + pixel(npixel)%v1(2)
             pixel(npixel)%v2(3) = DCOS(pixel(npixel)%xangle *D_DEGRAD) * 
      .                            DCOS(pixel(npixel)%yangle *D_DEGRAD) * 
-     .                            7.0D0 + pixel(npixel)%v1(3)
+     .                            50.0D0 + pixel(npixel)%v1(3)
 c            pixel(npixel)%v2(3) = -pixel(npixel)%v2(3)
 
 
@@ -1502,61 +1529,14 @@ c          ENDIF
 c
 c ======================================================================
 c
-      SUBROUTINE LoadEmissionDatabase(dummy,ni,nr)
-      USE mod_out985
-      USE mod_out985_variables
-      IMPLICIT none
-
- 
-      CHARACTER dummy*(*)
-      INTEGER   ni,nr
-
-      INTEGER   i1,idum1
-      REAL      rdum1
-      CHARACTER cdum1*256
-
-      SELECTCASE (opt%int_database(opt%int_num))
-        CASE (0)
-          READ(dummy,*) cdum1,(idum1,i1=1,ni),
-     .                        (rdum1,i1=1,nr),idum1,
-     .                  opt%int_line(opt%int_num)
-        CASE (1)
-          READ(dummy,*) cdum1,(idum1,i1=1,ni),
-     .                        (rdum1,i1=1,nr),idum1,
-     .                  opt%int_adasid(opt%int_num),
-     .                  opt%int_adasyr(opt%int_num),
-     .                  opt%int_adasex(opt%int_num),
-     .                  opt%int_isele (opt%int_num),
-     .                  opt%int_iselr (opt%int_num),
-     .                  opt%int_iselx (opt%int_num),
-     .                  opt%int_iseld (opt%int_num)
-        CASE DEFAULT
-          STOP 'SORRY, NO USER OPTIONS YET FOR DATABASE'
-      ENDSELECT
-
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
 c subroutine: Main985
 c
       SUBROUTINE Main985(iopt)
-c      SUBROUTINE Main985(iopt,opt985,
-c     .                   MAXPIXEL,npixel,pixel,
-c     .                   MAX3D985,nobj985,obj985,
-c     .                   image)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
 
-      INTEGER                          iopt
-c      TYPE(type_options985), TARGET :: opt985
-c      INTEGER                          MAXPIXEL,npixel
-c      TYPE(type_view)               :: pixel(MAXPIXEL)
-c      INTEGER                          MAX3D985,nobj985
-c      TYPE(type_3D_object), TARGET  :: obj985(MAX3D985)
+      INTEGER, INTENT(IN) :: iopt
 
       REAL*8, PARAMETER :: PI = 3.141592654
 

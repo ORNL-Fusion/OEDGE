@@ -51,7 +51,7 @@ c...  984:
       REAL GetEAD
 
       INTEGER    MAXCELL      ,MAXPOINT
-      PARAMETER (MAXCELL=10000,MAXPOINT=100)
+      PARAMETER (MAXCELL=20000,MAXPOINT=100)
 
       INTEGER   nc,nv(MAXCELL),shade,shift,set,avoid(MAXASCDAT),idum1,
      .          istart,iend,i3,cut1,size,line,component,iz

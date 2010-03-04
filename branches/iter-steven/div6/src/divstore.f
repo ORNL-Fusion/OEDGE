@@ -184,6 +184,11 @@ c
 c     >  TITLE,JOB,ITER,IMODE,refct
 c
       CALL RINOUT ('W POWLS ',POWLS ,MAXNKS*MAXNRS*(MAXIZS+2))
+c      WRITE(0,*) 'powls :',powls (ikti,irsep,:)
+c      WRITE(0,*) 'ddlims:',SNGL(ddlims(ikti,irsep,:))
+        WRITE(6,*) 'powls store:',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims store:',SNGL(ddlims(1,irsep,:))
+
       CALL RINOUT ('W LINES ',LINES ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('W HPOWLS',HPOWLS,MAXNKS*MAXNRS*2)
       CALL RINOUT ('W HLINES',HLINES,MAXNKS*MAXNRS*2)
@@ -534,7 +539,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.5
+      slver = 3.6
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -657,15 +662,15 @@ c...  6.29:
       WRITE(8) eirntorseg
 c...  6.33:
       WRITE(8) ciopte,cxsc,cysc,cxsca,cysca,cxscb,cyscb
-
 c...  slver = 3.5: *TEMP*
       CALL RINOUT('W EIRPH1',eirpho1,MAXNKS*MAXNRS)
       CALL RINOUT('W EIRPH2',eirpho2,MAXNKS*MAXNRS)
- 
 c...  6.41:
       WRITE(8) debugv,cstepv
       IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
         
+c...  slver 3.6:
+c      CALL RINOUT('W TOTFYDATA',totfydata,)
 
 c...  6.14 (end of file flag):
       WRITE(8) 123456789

@@ -309,6 +309,7 @@ c-----------------------------------------------------------------------
 c
 c     Launch first groups 
 c
+      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- FIRST LANUCH'
       if (nproda.gt.0.or.nprod.gt.0) then  
 c
          if (cneutb.eq.0.or.cneutb.eq.3) then 
@@ -324,6 +325,7 @@ c
 c              Deal with sputter option 7 - external target flux
 c
                if (cneutd.eq.7) then  
+                  WRITE(0,*) 'DEBUG: CALL TFY A.0'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
@@ -368,6 +370,7 @@ c
                   yieldsw = 0 
 c
                   if (cneutd.eq.7) then  
+                     IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY B.0'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
                   else
@@ -653,6 +656,7 @@ c-----------------------------------------------------------------------
 c
 c     Launch second batches of neutrals if there are any
 c
+      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- SECOND LANUCH'
       if (nprod2a.gt.0.or.nprod2.gt.0) then 
 c
          if (cneuth.eq.0.or.cneuth.eq.3) then 
@@ -668,6 +672,7 @@ c
 c              Load physical sputtering data on targets
 c
                if (cneutd2.eq.7) then  
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY D.0'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
@@ -708,6 +713,7 @@ c
                   yieldsw = 0
 c
                   if (cneutd2.eq.7) then  
+                     IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY E.0'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
                   else
@@ -1058,6 +1064,7 @@ c
      >    cneutd.eq.8) then 
 c
          if (cneutd.eq.7) then  
+            IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY G.0'
             call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,0,matp,matt)               
          else
@@ -2499,7 +2506,8 @@ C
      >       cneutb.ne.6.and.cneutb.ne.7).and.
      >     ((ANGLAN+TANLAN .LE. TANTRU-PI/2.0) .OR.
      >      (ANGLAN+TANLAN .GE. TANTRU+PI/2.0))) THEN
-          WRITE(6,*) 'OUT HERE',ANGLAN,TANLAN,TANTRU
+          WRITE(6,*) 'OUT HERE',ANGLAN,TANLAN,
+     .               TANTRU-PI/2.0,TANTRU+PI/2.0
           RSTRUK(M) = RSTRUK(M) + SPUTY
 c
           if (mtccnt.gt.0) then
@@ -2517,8 +2525,6 @@ c slmod end
 	  ! WBC comparison addition for neut struck target.
           Call global_hc_wbc_comp(0,CRMI,VIN,TEMN,SPUTY)
 ! ammod end.	       
-
-
           GOTO 899
         ENDIF
 C
@@ -4362,6 +4368,7 @@ c            PINSW  = 0  No PIN/NIMBUS data available
 c                   = 1  Use PIN/NIMBUS data
 c                   = 2  Use Wall plasma conditions (not implemented)
 c                   = 3  Use external flux file 
+c                   = 4  Use impurity influx data from PIN/NIMBUS - SL, 24/11/2009
 c
 c
 c            YIELDSW= 0  Use Physiclal Sputtering Yields
@@ -4407,13 +4414,13 @@ c
 c
 c     Select work to be done based on pinsw 
 c
-      if (pinsw.eq.0.or.pinsw.eq.1) then  
+      if (pinsw.eq.0.or.pinsw.eq.1.or.pinsw.eq.4) then  
 c
 c     -------------------------------------------------------
 C     
 C---- CALCULATE FLUXES AND YIELDS
 C     
-      WRITE(0,*) 'CALL TFY: looping over targets...',yieldsw
+      WRITE(0,*) 'CALL TFY: looping over targets...',yieldsw,pinsw
       DO ID = 1,NDS
         IK = IKDS(ID)
         IR = IRDS(ID)
@@ -4435,6 +4442,8 @@ c
            sheath_te = kteds(id)
            sheath_ti = ktids(id)
         else
+c sltmp
+          IF (sloutput) STOP 'STOP: SHOULD NOT USE SHEATH VALUES'  
 c
 c          The code assumes for now that Te=Ti when the
 c          sheath potential is directly specified. 
@@ -4496,7 +4505,7 @@ c
         elseif (northopt.eq.1.or.northopt.eq.2
      >          .or.northopt.eq.3) then
 c     
-          fydata(ID,1)   = KNDS(ID) * CS/KBFS(IK,IR) * COSTET(ID)
+          fydata(ID,1)   = KNDS(ID) * CS/KBFS(IK,IR) * COSTET(ID)  ! *** Assumption here that M=1 I think... ***
 c     
         endif
 c     
@@ -4537,7 +4546,7 @@ c
                  fydata(ID,4) = YLDCHEM (fydata(id,2),fydata(id,1),
      >                           MATP,MATT,tempds(id))*KMFCS(ID)
 c     
-              elseif (pinsw.eq.1) then 
+              elseif (pinsw.eq.1.or.pinsw.eq.4) then 
 c     
 c                Test for valid index to NIMBUS data
 c     
@@ -4588,6 +4597,34 @@ c        Load external flux data array
 c
          call calc_extflx_yield(fydata,matt)
 c
+c slmod begin
+c
+c ADD A NEW OPTION SOMEWHERE HERE WHERE fydata IS APPLIED DIRECTLY FROM PRE-CALCULATED
+c VALUES, as BELOW (clearer in FYW routine below...)
+c
+c Put this back in when I start processing the impurity production in EIRENE
+c that's coming from ions striking the target -- need to compare with what 
+c DIVIMP is calculating.  Need to remove the pinsw.eq.4 references that occur
+c in this subroutine, see above.
+c
+c      elseif (pinsw.eq.4.and.yieldsw.EQ.0) then 
+c        STOP 'MADNESS...'
+cc        WRITE(0,*) 'WHA-WHO! 2'
+cc       FYDATA(ID,1)  = Flux
+cc                 2   = Energy
+cc                 3   = Heat
+cc                 4   = Yield
+cc                 5   = Flux * Yield
+c        do in = 1, wallpts
+c          id =  NINT(wallpt(in,17))
+c          fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c          fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c          fydata(in,3) = 1.0 
+c          fydata(in,4) = flxhw3(id) / (flxhw2(in) + 1.0E-10)
+c          fydata(in,5) = flxhw3(id)  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
+c          fydata(in,:) = fydata(in,:) * kmfps(in)
+c        enddo
+c slmod end
       endif 
 C     
 C---- GENERATE CUMULATIVE DISTRIBUTION FUNCTIONS FOR NEUTRAL
@@ -4626,6 +4663,8 @@ c
       TOTfydata(2,1) = TOTfydata(3,1)- TOTfydata(1,1)
       totfydata(2,3) = totfydata(3,3)- totfydata(1,3)
       totfydata(2,5) = totfydata(3,5)- totfydata(1,5)
+
+      WRITE(0,*) 'CALL TFY: total yield =',totfydata(3,5)
 c     
 c     Calculate cumulative - normalized - non-zero launch 
 c     probabilities. 
@@ -4718,6 +4757,7 @@ c            PINSW  = 0  No PIN/NIMBUS data available
 c                   = 1  Use PIN/NIMBUS data
 c                   = 2  Use WALL plasma data
 c                   = 3  Use external fluxes (not implemented)
+c                   = 4  Use impurity influx data from PIN/NIMBUS - SL, 24/11/2009
 c
 c            YIELDSW= 0  Use Physical Sputtering Yields
 c                   = 1  Use Chemical Sputtering Yields
@@ -4787,7 +4827,7 @@ c
 c
 c     Do proper calculations if PIN/NIMBUS data is available
 c
-      elseif (pinsw.eq.1.or.pinsw.eq.2) then 
+      elseif (pinsw.eq.1.or.pinsw.eq.2.or.pinsw.eq.4) then
 c
          if (pinsw.eq.1) then 
 C     
@@ -4990,6 +5030,24 @@ c
 c
             end do
 c
+c slmod begin
+         elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
+           WRITE(0,*) 'WHA-WHO! 1'
+c          FYDATA(ID,1)  = Flux
+c                    2   = Energy
+c                    3   = Heat
+c                    4   = Yield
+c                    5   = Flux * Yield
+           do in = 1, wallpts
+             id =  NINT(wallpt(in,17))
+             fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+             fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+             fydata(in,3) = 1.0 
+             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))
+             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
+             fydata(id,:) = fydata(id,:) * kmfpws(id)
+           enddo
+c slmod end
          endif 
 
 C     
@@ -5218,7 +5276,7 @@ C
 c
 c              Pin data available
 c
-               if (pinsw.eq.1) then 
+               if (pinsw.eq.1.or.pinsw.eq.4) then 
 c
                   IF (CNEUTD.EQ.1) THEN
                      EMAX = CEMAXF * fydata(id,2)
@@ -5272,7 +5330,12 @@ c     then the code needs to issue an error message and exit.
 c
 c
       if (.not.nonzero_krmax.and.(cneutb.ne.1.and.
-     >         cneutb.ne.6.and.cneutb.ne.7)) then 
+c slmod begin
+     >         cneutb.ne.6.and.cneutb.ne.7).and.
+     >         .not.((cneutb.eq.2.or.cneutb.eq.4).and.pinsw.eq.4)) then 
+c
+c     >         cneutb.ne.6.and.cneutb.ne.7)) then 
+c slmod end
 c
          write(6,'(a)') 'FATAL ERROR IN NEUTBATCH ROUTINE:'
          write(6,'(a)') '- LIMITING ENERGY VALUE FOR LAUNCH IS'//
@@ -5287,6 +5350,11 @@ c
          write(0,'(a)') '- LAUNCH IS NOT POSSIBLE - CODE EXITING'
          write(0,'(a)') '- CHECK SELECTION OF VELOCITY/ANGLE FLAG'//
      >                  ' AND CORRESPONDING SPUTTER ENERGIES'
+c sltmp
+c         write(0,*) 'CNEUTB=',cneutb
+c         write(0,*) 'PINSW =',pinsw
+c         write(0,*) 'CEBD  =',cebd
+
          stop 1
 c
       endif
@@ -5382,7 +5450,11 @@ C
 c
 c           Do not limit particle energies for chemical sputtering 
 c
-            if (yieldsw.eq.0) then  
+c slmod begin
+            if (yieldsw.eq.0.and.pinsw.ne.4) then  
+c
+c            if (yieldsw.eq.0) then  
+c slmod end
                RMAXS (IPROD+nneut1) = krmaxw(id)
             else
                RMAXS (IPROD+nneut1) = 1.0
@@ -5671,7 +5743,10 @@ c
             WRITE (7,9002) id,
      >         RP(ID),ZP(ID),ymf,fydata(id,1),fydata(id,2),
      >         fydata(id,4),fydata(id,5),kbfs(ikds(id),irds(id)),
-     >         dds(id),costet(ID),tempds(id)
+     >         dds(id),costet(ID),tempds(id),
+c slmod begin
+     >         kteds(id),ktids(id),nimindex(id)
+c slmod end
          end do
 C
          call prb
@@ -5771,7 +5846,11 @@ c
      >  '          LENGTH   TYPE TEMP')
  9002 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
      >      2G9.2,0P,1x,F5.2,1P,
-     >       G9.2,0P,1x,f5.2,f5.0)
+c slmod begin
+     >       G9.2,0P,1x,f5.2,f5.0,2x,2f5.1,i4)
+c
+c     >       G9.2,0P,1x,f5.2,f5.0)
+c slmod end
  9003 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
      >      2G9.2,0P,1x,5x,1P,
      >       G9.2,0P,1x,f5.1,f5.0)
@@ -5981,6 +6060,9 @@ c
       real      totfydata(3,5)
       integer   nfy,nfymap,yieldsw,newcneutc,newcneutb
       integer   fymap(maxpts)
+c slmod begin
+      integer   in
+c slmod end
 c      
       ntot = nprod + nprod2
 c
@@ -5994,6 +6076,8 @@ c
       w2  = 0.0
       w3  = 0.0
       wtot= 0.0 
+      IF (sloutput) WRITE(0,*) 'REDIST:',nprod,nprod2 
+      IF (sloutput) WRITE(0,*) 'FIRST:',cneutb,cneutd
 c
 c     Calculate total and partial FY for first launch 
 c
@@ -6011,6 +6095,7 @@ c
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,0,matp,matt)               
                else
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY I'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                endif
@@ -6087,14 +6172,14 @@ c
 c
 c               Physical Sputtering On Walls 
 c
-                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY I'
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY I',pinsw
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,0,matp,matt)               
                 w1a = totfydata(3,5) 
 c
 c               Chemical Sputtering On Walls 
 c
-                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY J'
+                IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY J',pinsw
                 call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                   pinsw,1,matp,matt)               
                 w1 = totfydata(3,5) 
@@ -6117,6 +6202,7 @@ c
 c
 c     Calculate total and partial FY for second launch 
 c
+      IF (sloutput) WRITE(0,*) 'SECND:',cneuth,cneutd2
       if (nprod2.gt.0) then  
 c
          if (cneuth.eq.0.or.cneuth.eq.3) then 
@@ -6131,6 +6217,7 @@ c
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                else
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY J'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
                endif

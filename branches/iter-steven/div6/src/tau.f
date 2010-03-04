@@ -12,8 +12,7 @@ c slmod end
       character*(*) title,equil
       INTEGER NIZS
 c slmod begin
-c     function defined in plasma.d5a; Krieger IPP/97
-c      integer ringno
+      INTEGER GetModel
 c slmod end
       REAL    VFLUID , XJI , XJ , XJF
 C
@@ -2082,8 +2081,7 @@ c
 c     End of grid option IF for calculating KSS2 ...
 c
       endif
-      CALL OUTPUTDATA(85,'AFTER KKS')
-c      STOP 'sdfds'
+      CALL OUTPUTDATA(87,'AFTER KKS')
 c
 C-----------------------------------------------------------------------
 c
@@ -2555,6 +2553,9 @@ c slmod begin
       if (northopt.eq.3) then
          IF (stopopt2.EQ.900) THEN
            CALL CalcMetricQuickandDirty
+         ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
+           WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
+           thetag = 1.0
          ELSEIF (grdnmod.NE.0) THEN
            CALL CalcMetric
          ELSEIF (connected) THEN
@@ -2827,6 +2828,18 @@ c
            kfids(idds(ir,1))=fact*(ktibs(nks(ir),ir)-ktids(idds(ir,1)))
      >                             /(smax-kss(nks(ir),ir))
         endif
+c slmod begin - 04/01/2020
+c
+c       Setting the KFEGS and KFIGS to 0.0 creats a startling artifact
+c       for higher charge states when the other parallel force terms
+c       are small.  This nulling out of the thermal force at the midpoint
+c       of each ring is a good idea when there's a temperature 
+c       discontinuty, but it's not necessary for SOL28 (and a problem for
+c       some ITER cases I found):
+c
+        if (getmodel(3,ir).eq.28) cycle
+c        write(0,*) '****** blanking mid-point grad terms! ******'
+c slmod end
 c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
@@ -3567,7 +3580,7 @@ C
 C       GENERATE AN ANALYSIS OF THE IONIZATION DATA FOR CONSISTENCY
 C       CHECK PURPOSES.
 C
-        IF ((CPINOPT.EQ.1).AND.PINCHECK) THEN
+        IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).AND.PINCHECK) THEN
            CALL PINPRN
            CALL PINCHK
         ENDIF
@@ -5782,19 +5795,23 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
+      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
+      ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+        CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
+     .                              indexiradj)
+        GOTO 300
+      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
+     .                               indexiradj)
+        GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         IF (sloutput) THEN
-           CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
-     .                                 indexiradj)
-         ELSE
-           CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
-     .          indexiradj)
-         ENDIF
-         GOTO 300
+        CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
+     .       indexiradj)
+        GOTO 300
       ELSE
          BACKSPACE(gridunit)
       ENDIF
@@ -6175,6 +6192,10 @@ c
 c     
  300  continue
 c     slmod begin
+
+      CALL OutputData(86,'300 of RAUG')    
+c         STOP 'RAUG MID'
+
       CALL DB('RAUG: Done reading grid')
 
       vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
@@ -6798,26 +6819,21 @@ c     slmod begin
       IF (quasidn) CALL PrepQuasiDoubleNull
 
       IF (grdnmod.GT.0) THEN
-c...  New, more sophisticated (yeah, baby) grid cutting method:
+c...    New, more sophisticated (yeah, baby) grid cutting method:
 
-c...  Get rid of poloidal boundary cells (to be added again below
-c     after grid manipulations are complete):
-         DO ir = irsep, nrs
-            CALL DeleteCell(nks(ir),ir)
-            CALL DeleteCell(1      ,ir)
-         ENDDO
-
-c...  Modify the grid based on entries in the GRDMOD array assigned 
-c     from the input file:
-         CALL TailorGrid
-
-c...  Add virtual boundary cells, which will be stripped off later:
-         IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
-     .        CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
-     .        CALL AddPoloidalBoundaryCells
-
-
-         write(0,*) 'Finished tailorgrid:'
+c...    Get rid of poloidal boundary cells (to be added again below
+c       after grid manipulations are complete):
+        DO ir = irsep, nrs
+          CALL DeleteCell(nks(ir),ir)
+          CALL DeleteCell(1      ,ir)
+        ENDDO
+c...    Modify the grid based on entries in the GRDMOD array assigned 
+c       from the input file:
+        CALL TailorGrid
+c...    Add virtual boundary cells, which will be stripped off later:
+        IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .      CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .      CALL AddPoloidalBoundaryCells
       ENDIF      
 c     
 c     jdemod - write out grid after modifications
@@ -6889,6 +6905,8 @@ c     slmod begin
          CALL SaveSolution
          STOP 'WORKING ON IT - STILL'
       ENDIF
+
+      CALL OutputData(85,'End of RAUG')
 
 c     DO ir = 1, nrs
 c     DO ik = 1, nks(ir)
@@ -8499,6 +8517,7 @@ c
       real ri,zi,m1,m2,b1,b2
       real asqr,bsqr,csqr
       real cr1,cr2,cz1,cz2,ds1,ds2,ds3,ds4
+      real rdum1
       integer ik,ir,in,kp,id
 c
 c     Externals
@@ -8655,10 +8674,12 @@ c
            write (6,*) 'Ring Number:',ir
            do 20 ik = 1,nks(ir)
              kp = korpg(ik,ir)
-             if (kp.gt.0)
-     >        write(6,'(2i4,3(1x,g13.6),2i4)') ir,ik,cosalph(ik,ir),
-     >          sinalph(ik,ir),raddeg*acos_test(cosalph(ik,ir),18),
+             if (kp.gt.0) then
+              rdum1 = acos_test(cosalph(ik,ir),18)  ! Avoids recursive I/O error - SL, 04.03.2010
+              write(6,'(2i4,3(1x,g13.6),2i4)') ir,ik,cosalph(ik,ir),
+     >          sinalph(ik,ir),raddeg*rdum1,
      >          kp,nvertp(kp)
+             endif
  20      continue
 c
 c        Print target orthogonal angles
@@ -10233,6 +10254,9 @@ c
 c
 c
       subroutine TARGFLUX
+c slmod begin
+      USE mod_eirene06
+c slmod end 
       IMPLICIT NONE
 C
 C*********************************************************************
@@ -10670,9 +10694,16 @@ c         the additional cell volume:
 
 c...    Calculate the total puffed source:
         puffsrc = 0.0
-        DO i1 = 1, eirnpuff
-          puffsrc = puffsrc + eirpuff(i1,MAXPUFF)/ECH
-        ENDDO
+        IF (pincode.EQ.5) THEN
+          DO i1 = 1, nstrata
+            IF (NINT(strata(i1)%type).EQ.3) 
+     .        puffsrc = puffsrc + strata(i1)%flux / ECH
+          ENDDO
+        ELSE
+          DO i1 = 1, eirnpuff
+            puffsrc = puffsrc + eirpuff(i1,MAXPUFF) / ECH
+          ENDDO
+        ENDIF
 
         EIRCOR = (TOTFLX + TOTRECe + puffsrc) / (alliz+hescpd+addion)
 
@@ -10739,12 +10770,26 @@ c       and reported here -- fix:
         WRITE(fp,86) 'Toroidal fraction (EIRTORFRAC)=',eirtorfrac
         WRITE(fp,86) 'Global src multi   (EIRSRCMUL)=',eirsrcmul
  
-        CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
-        CALL PRB
-        WRITE(fp,90) 'STRATUM','NO. TRACKS'
-        DO i1 = 1, eirnstrata+eirnpuff
-          WRITE(fp,91) i1,eirntracks(i1)
-        ENDDO
+        IF (pincode.EQ.5) THEN
+          CALL HD(fp,'  EIRENE STRATA SUMMARY','EIRNUMPAR-HD',5,77)
+          CALL PRB
+          WRITE(fp,'(4X,A8,A6,3A12)') 
+     .      'STRATUM','TYPE','NO. TRACKS','FLUXT','PTRASH(%)'
+          DO i1 = 1, nstrata
+            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4)') i1,
+     .        strata(i1)%type,
+     .        strata(i1)%ipanu,
+     .        strata(i1)%fluxt,
+     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
+          ENDDO
+        ELSE
+          CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
+          CALL PRB
+          WRITE(fp,90) 'STRATUM','TYPE','NO. TRACKS'
+          DO i1 = 1, eirnstrata+eirnpuff
+            WRITE(fp,91) i1,eirntracks(i1)
+          ENDDO
+        ENDIF
 
 85      FORMAT(3X,A)
 86      FORMAT(3X,A,   2(1X,F12.3))

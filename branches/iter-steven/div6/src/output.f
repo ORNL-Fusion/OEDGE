@@ -761,6 +761,13 @@ c
 
       CHARACTER*7   irtag(0:MAXNRS)
       CHARACTER*128 note
+      CHARACTER     ring_tag(4)*4
+
+      ring_tag(1) = 'SOL '
+      ring_tag(2) = 'PFZ '
+      ring_tag(3) = 'CORE'
+      ring_tag(4) = 'N/A '
+
 
       write(6,*) 'OutputData:',fp,":",trim(comment)
       close(fp)
@@ -813,7 +820,8 @@ c f90 strange
       WRITE(fp,12) 'maxrings ',maxrings
       WRITE(fp,10) 'npolyp   ',npolyp  ,'vpolyp   ',vpolyp
       WRITE(fp,12) 'vpolmin  ',vpolmin
-      WRITE(fp,*)
+      WRITE(fp,* ) 'vpolmin  ',vpolmin
+      WRITE(fp,* ) 'nopriv   ',nopriv
       WRITE(fp,16) 'r0       ',r0      ,'z0       ',z0
       WRITE(fp,16) 'rxp      ',rxp     ,'zxp      ',zxp
       WRITE(fp,17) 'dthetg   ',dthetg
@@ -833,16 +841,18 @@ c f90
       WRITE(fp,*) 'RING DATA:'
       WRITE(fp,*)
 
-      WRITE(fp,'(4A4,4A6,1X,A4,1X,2(A3,6X),3A10,A8,A5,1X,2A8,2A4)')
-     .  'ir' ,'nks','id','org','idds2','idds1','ikto2','ikti2','ikm',
-     .  'vl1','vl2','rhoIN (mm)','rho','rhoOUT','ksmaxs','ikb',
+      WRITE(fp,'(4A4,5A6,1X,A4,1X,2(A3,6X),3A10,A8,A5,1X,2A8,2A4)')
+     .  'ir' ,'nks','id','org','type','idds2','idds1','ikto2','ikti2',
+     .  'ikm','vl1','vl2','rhoIN (mm)','rho','rhoOUT','ksmaxs','ikb',
      .  'psin2','psin1','mp1','mp2'
 
       DO ir = 1, nrs
-        WRITE(fp,'(4I4,4I6,1X,I4,1X,'//
+        i1 = ringtype(ir)
+        IF (i1.LT.1.OR.i1.GT.3) i1 = 4
+        WRITE(fp,'(4I4,2X,A4,4I6,1X,I4,1X,'//
      .           ' 2(I3,A,I2,A),3F10.5,1X,F7.3,I5,1X,2F8.4,
      .               2I4,1X,A)')
-     .    ir,nks(ir),idring(ir),irorg2(ir),
+     .    ir,nks(ir),idring(ir),irorg2(ir),ring_tag(i1),
      .    MAX(MIN(idds(ir,2),999),-999),
      .    MAX(MIN(idds(ir,1),999),-999),
      .    ikto2(ir),ikti2(ir),ikmids(ir),
@@ -1075,11 +1085,11 @@ c          IF (kvhs(ik,ir).LT.1.0) cs = cs / qtim
 
           WRITE(fp,'(2I3,1P,3E11.4,5E11.3,0P,3F10.4,A)') ik,ir,
      .      kbfs (ik,ir),bratio(ik,ir),kes(ik,ir),
-     .      kvhs(ik,ir),knbs(ik,ir),knes(ik,ir),
-c     .      kvhs(ik,ir)/qtim,knbs(ik,ir),knes(ik,ir),
+c     .      kvhs(ik,ir),knbs(ik,ir),knes(ik,ir),
+     .      kvhs(ik,ir)/qtim,knbs(ik,ir),knes(ik,ir),
      .      pinatom(ik,ir),pinmol(ik,ir)*2,
-     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
-c     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
+c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
+     .      kvhs(ik,ir)/qtim/cs,ktibs(ik,ir),ktebs (ik,ir),
      .      note(1:LEN_TRIM(note))
 
         ENDDO
@@ -1311,7 +1321,7 @@ c
 
 
       IF (sloutput.AND.citersol.NE.0) THEN
-        WRITE(0,*) '***NOT WRITING PIN DATA FILE***'
+        WRITE(pinout,*) '***NOT WRITING PIN DATA FILE***'
         RETURN
       ENDIF
 
@@ -1322,8 +1332,8 @@ c     .    rel_count.NE.0.AND.rel_step.NE.rel_nstep) RETURN
 
 
       IF (sloutput) THEN
-        WRITE(0,*) 'WRITING PIN DATA OUTPUT FILE'
-        WRITE(0,*) '  '//note(1:LEN_TRIM(note))
+        WRITE(pinout,*) 'WRITING PIN DATA OUTPUT FILE'
+        WRITE(pinout,*) '  '//note(1:LEN_TRIM(note))
       ENDIF
 
 c      WRITE(0,*) 'SKIPPING TO AVOID BUS ERROR!?'
@@ -1417,9 +1427,9 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
 
       IF (fp.NE.67.AND.fp.NE.SLOUT.AND.fp.NE.PINOUT) CLOSE(fp)
 
-      CALL DB('done')
+c      CALL DB('done')
 
-      IF (sloutput) WRITE(0,*) 'DONE'
+      IF (sloutput) WRITE(pinout,*) 'DONE'
 
       RETURN
       END
@@ -2070,8 +2080,12 @@ c...  Fluxes to surfaces:
       WRITE(fp,*)
 
       WRITE(fp,40) 'Ind',' r ',' z ',' D_parflx',' D_avgeng',
-     .                               'D2_parflx','D2_avgeng'
+     .                               'D2_parflx','D2_avgeng',
+     .                               'Im_parflx','Im_avgeng',
+     .                               'D+_parflx','D+_avgeng'
       WRITE(fp,40) '   ','(m)','(m)','(m-2 s-1)','   (eV)  ',   
+     .                               '(m-2 s-1)','   (eV)  ',
+     .                               '(m-2 s-1)','   (eV)  ',
      .                               '(m-2 s-1)','   (eV)  '
 c...  Loop over NWALL for now, to avoid BGK grid:
       DO i1 = 1, nvesm+nvesp
@@ -2081,14 +2095,15 @@ c
 c        IF (0.5*(zvesm(i1,1)+zvesm(i1,2)).LT.zxp) THEN
           WRITE(fp,41) i1,       
      .      0.5*(rvesm(i1,1)+rvesm(i1,2)),0.5*(zvesm(i1,1)+zvesm(i1,2)),
-     .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1)
+     .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1),
+     .      flxhw3(i1),flxhw4(i1),flxhw8(i1)           ,-1.0
 c
 c        ENDIF
 c
 
       ENDDO
-40    FORMAT(5X,A3,2A7     ,4A11)
-41    FORMAT(5X,I3,2F7.3,2(1P,E11.2,0P,F11.3))      
+40    FORMAT(5X,A3,2A7     ,8A11)
+41    FORMAT(5X,I3,2F7.3,4(1P,E11.2,0P,F11.3))      
 
 
 

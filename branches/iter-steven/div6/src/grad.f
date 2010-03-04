@@ -912,7 +912,8 @@ c
 c
 c      IF (((res_Quant2Grad-tgrad)/res_Quant2Grad*100.0).GT.0.01)THEN
 c
-        if (cprint.eq.8.or.cprint.eq.9) then   
+        if (cprint.eq.8.or.cprint.eq.9.and.
+     .      iki.ge.2.and.ik.ge.2.and.iko.ge.2) then   
 
         WRITE(SLOUT,'(3x,2I3,3X,2I3,2X,2I3,2X,2I3,3F10.6)')
      .    iki,iri,ik,ir,iko,iro,ikins(ik,ir),ikouts(ik,ir),widi,wid,wido

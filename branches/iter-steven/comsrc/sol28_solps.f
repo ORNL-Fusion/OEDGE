@@ -84,6 +84,7 @@ c...  Load the data:
             count = count + 1
             solps_data(idata)%data(count) = rdum(column+2)
             IF (first_call) THEN
+              solps_n              = count
               solps_ik (count)     = idum(1)
               solps_ir (count)     = idum(2)
               solps_cen(count,1:2) = rdum(1:2) * 1.0D-03

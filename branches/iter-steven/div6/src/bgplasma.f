@@ -122,7 +122,8 @@ C-----------------------------------------------------------------------
 C     INITIALISE COUNTER FOR USE IF SOL IS TO BE CALCULATED ITERATIVELY
 C-----------------------------------------------------------------------
 C
-      IF (CPINOPT.EQ.1.or.(cneuta.eq.1.and.ciopte.eq.4)) THEN
+      IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).or.
+     .    (cneuta.eq.1.and.ciopte.eq.4)) THEN
         LPINOPT = .TRUE.
         IITERSOL = 1
         IITERPIN = 0
@@ -133,6 +134,14 @@ c       being used:
           CALL SetupIteration(iitersol)
           CALL SaveSolution
           IITERSOL = 2
+          IITERPIN = 1
+        elseif (citersol.eq.2) then
+          WRITE(0,*) 
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) 
+          IITERSOL = 1
           IITERPIN = 1
         ENDIF
 c slmod end
@@ -593,8 +602,9 @@ c
 c slmod begin
       if (liter) then
         goto 360
-      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
-     .        rel_opt.ne.0) then
+      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
+c      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
+c     .        rel_opt.ne.0) then
 c...    Calculate plasma solution one more time, so that it is consistent
 c       with the current PIN source terms:
         lpinopt = .false.
@@ -621,7 +631,8 @@ C-----------------------------------------------------------------------
 C     INITIALISE COUNTER FOR USE IF SOL IS TO BE CALCULATED ITERATIVELY
 C-----------------------------------------------------------------------
 C
-      IF (CPINOPT.EQ.1.or.(cneuta.eq.1.and.ciopte.eq.4)) THEN
+      IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).or.
+     .    (cneuta.eq.1.and.ciopte.eq.4)) THEN
         LPINOPT = .TRUE.
         IITERSOL = 1
         IITERPIN = 0
@@ -630,8 +641,16 @@ c...    Avoid the 0th call to PIN if boundary condition relaxation is
 c       being used:
         IF (rel_opt.EQ.2.OR.rel_opt.EQ.3) THEN
           CALL SetupIteration(iitersol)
-          CALL SaveSolution
+c          CALL SaveSolution
           IITERSOL = 2
+          IITERPIN = 1
+        elseif (citersol.eq.2) then
+          WRITE(0,*) 
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*)
+          IITERSOL = 1
           IITERPIN = 1
         ENDIF 
 c slmod end
@@ -1007,8 +1026,9 @@ c
 c slmod begin
       if (liter) then
         goto 361
-      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
-     .        rel_opt.ne.0) then
+      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
+c      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
+c     .        rel_opt.ne.0) then
 c...    Calculate plasma solution one more time, so that it is consistent
 c       with the current PIN source terms:
         lpinopt = .false.
@@ -1106,7 +1126,7 @@ c     IF Ofield = 4 and PIN has been run - call the E-field
 c     calculation routine again to revise the values based on the
 c     PIN generated Leq values.
 c
-      if (cpinopt.eq.1.and.ofield.eq.4) then
+      if ((cpinopt.eq.1.or.cpinopt.eq.4).and.ofield.eq.4) then
 c
          call calcef4(lpinavail)
 c
@@ -1152,15 +1172,11 @@ c...TEMP:
       CALL OutputEIRENE(67,'DONE CALCULATING PLASMA SOLUTION')
       WRITE(67,*)
 
-      IF (sloutput) WRITE(0,*) 'LAST SAVE SOLUTION'
       IF (cpinopt.EQ.0.OR.citersol.EQ.0.OR.rel_opt.EQ.0.OR.
      .    citersol.EQ.2)
      .  CALL SaveSolution
 
-      IF (sloutput) WRITE(0,*) 'END OF BGPLASMA'
-
-      if (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
-
+      IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
 c      CALL SaveSolution
 c slmod end
       return
@@ -1757,7 +1773,8 @@ c...       Calling EIRENE04/06/07:
      .         ' (step ',rel_step,'  subiteration ',rel_iter,
      .         ')'
            ELSE
-             WRITE(0     ,*) 'Calling EIRENE0x, iteration',iitersol
+             WRITE(0     ,*) 'Calling EIRENE0x, iteration',iitersol,
+     .                                                     nitersol
              WRITE(PINOUT,*) 'Calling EIRENE0x, iteration',iitersol
            ENDIF
 c...       Pass iteration number to the EIRENE script if tetrahedrons
@@ -1895,7 +1912,7 @@ C
            IF (IITERSOL.GE.NITERSOL) litersol = .false.
 c slmod begin - tmp
            WRITE(PINOUT,*) 'IITER,NITER,LITER=',
-     .                     iitersol,nitersol,litersol
+     .       iitersol,nitersol,litersol,lpinopt
 c slmod end
 C
 C          STORE VALUES OF PLASMA PARAMETERS FOR CONVERGENCE STUDY
@@ -1939,7 +1956,7 @@ C
            IITERSOL = IITERSOL + 1
            liter = .true.
 c slmod begin
-           IF (rel_opt.NE.0.AND..NOT.litersol) liter = .FALSE.
+           IF (citersol.EQ.2.AND..NOT.litersol) liter = .FALSE.
 c slmod end
         ENDIF
 c

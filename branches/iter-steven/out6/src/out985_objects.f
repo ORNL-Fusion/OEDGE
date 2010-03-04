@@ -210,7 +210,7 @@ c...  Input:
 
       INTEGER AddVertex,AddSurface
 
-      INTEGER   fp,count,istart,n1,n2,idum1
+      INTEGER   fp,count,istart,n1,n2,idum1,option
       REAL*8    newvtx(3,2)
       CHARACTER file*1024,buffer*2048
       TYPE(type_surface) newsrf
@@ -218,6 +218,7 @@ c...  Input:
 
       fp = 99
 
+      option = opt%obj_option(ielement)
 
       WRITE(0,*) 'LOADING LINE SEGMENTS'//
      .  opt%obj_fname(ielement)
@@ -249,43 +250,40 @@ c...  Load up surface and vertex arrays:
 c...    Extract vertices:
         newvtx(1:3,1) = 0.0D0
 
-        SELECTCASE (1)
+        SELECTCASE (option)
           CASE(1)
-            READ(buffer,*,ERR=10) newvtx(1,1),newvtx(2,1)
+            READ(buffer,*,ERR=10,END=10) newvtx(1,1),newvtx(2,1)
           CASE(2)
-            READ(buffer,*,ERR=10) newvtx(2,1),newvtx(1,1)
+            READ(buffer,*,ERR=10,END=10) newvtx(2,1),newvtx(1,1)
+          CASE(3)
+            READ(buffer,*,ERR=10,END=10) newvtx(1:2,1),newvtx(1:2,2)
           CASE DEFAULT
             CALL ER('LoadLineSegmentFile','Unknown orientation '//
      .              'option',*99)
         ENDSELECT
 
-
-        IF (count.GT.0.AND.
-     .      ((count.GE.n1).OR.(-1.EQ.n1)).AND.
-     .      ((count.LE.n2).OR.(-1.EQ.n2))) THEN
-
-          newsrf%type = SP_LINE_SEGMENT   ! LEFT OFF -- NEED TO ADD THIS IN?
+        IF (option.EQ.3.OR.
+     .      ((option.EQ.1.OR.option.EQ.2).AND.count.GT.0.AND.
+     .       ((count.GE.n1).OR.(-1.EQ.n1)).AND.
+     .       ((count.LE.n2).OR.(-1.EQ.n2)))) THEN
+          newsrf%type = SP_LINE_SEGMENT  
           newsrf%nvtx = 2
           newsrf%ivtx(1) = AddVertex(newvtx(1,1))
           newsrf%ivtx(2) = AddVertex(newvtx(1,2))
-
           idum1 = AddSurface(newsrf)
         ENDIF
-
         newvtx(1:3,2) = newvtx(1:3,1)
-
         count = count + 1
-
       ENDDO
  10   CONTINUE
       CLOSE(fp)
 
-      WRITE(0,*) 'VERTICES? SURFACES?',nvtx,nsrf
-      WRITE(0,*) '                   ',istart
+c      WRITE(0,*) 'VERTICES? SURFACES?',nvtx,nsrf
+c      WRITE(0,*) '                   ',istart
 
 c...  Assign object(s):    
 
-      WRITE(0,*) 'NOBJ:',nobj,MAX3D
+c      WRITE(0,*) 'NOBJ:',nobj,MAX3D
 
       IF (nobj+1.GT.MAX3D) 
      .  CALL ER('LoadVesselStructures','Insufficient array bounds '//
@@ -323,7 +321,6 @@ c..   Defunct:
       obj(nobj)%nmap(1)     = 0
 
       WRITE(0,*) 'DONE'
-
 
       RETURN
  98   WRITE(0,*) 'ERROR LoadLineSegmentFile: File not found'

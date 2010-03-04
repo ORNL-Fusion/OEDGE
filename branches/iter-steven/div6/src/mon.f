@@ -281,6 +281,9 @@ C
      >                                    RMACH)
            CALL PRR  ('  IMPACT ENERGY AT ABSORPTION (EV)           ',
      >                                    RENEGY)
+c slmod begin
+c DUMP WALL IMPURITY FLUX DATA HERE...     
+c slmod end
          ENDIF
 C
 C-----------------------------------------------------------------------

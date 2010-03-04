@@ -569,7 +569,7 @@ C  DO ONE MORE COMPLETE TIME-CYCLE IN THIS EIRENE RUN
       ENDIF
 c slmod begin
 c...  Good place?
-      WRITE(0,*) 'CHECK IF THERE IS ANOTHER PLACE FOR OUTUSR CALL'
+c      WRITE(0,*) 'CHECK IF THERE IS ANOTHER PLACE FOR OUTUSR CALL'
       CALL OUTUSR
 c slmod end
       call REINITIALIZATION_OF_EIRENE
@@ -1687,7 +1687,15 @@ C  REMAINING CPU TIME, SUBSTRACT N2 SECONDS FOR PRINTOUT AND PLOTS
           CALL LEER(1)
         ENDIF
         XPT=XPT+FLOAT(NPTS(ISTRA))
-        XFL=XFL+FLUX(ISTRA)
+c slmod begin
+        IF (SCALV(ISTRA).LT.0.0D0) THEN
+          XFL=XFL-FLUX(ISTRA)*SCALV(ISTRA)
+        ELSE
+          XFL=XFL+FLUX(ISTRA)
+        ENDIF
+c
+c        XFL=XFL+FLUX(ISTRA)
+c slmod end
 7     CONTINUE
       XPT1=0.
       XFL1=0.
@@ -1695,12 +1703,23 @@ C  REMAINING CPU TIME, SUBSTRACT N2 SECONDS FOR PRINTOUT AND PLOTS
       DO 8 ISTRA=1,NSTRAI
         if (npts(istra) .gt. 0) then
           XPT1=XPT1+NPTS(ISTRA)
-          XFL1=XFL1+FLUX(ISTRA)
+c slmod begin
+          IF (SCALV(ISTRA).LT.0.0D0) THEN
+            XFL1=XFL1-FLUX(ISTRA)*SCALV(ISTRA)
+          ELSE
+            XFL1=XFL1+FLUX(ISTRA)
+          ENDIF
+c
+c          XFL1=XFL1+FLUX(ISTRA)
+c slmod end
           XTIM(ISTRA)=XTIM(0)+XX1*((1.-ALLOC)*XPT1/(XPT+EPS60)+
      +                             (   ALLOC)*XFL1/(XFL+EPS60))
           nsteff=nsteff+1
+          WRITE(6,*) 'DEBUG: A ',istra,xtim(istra),NPTS(ISTRA),
+     .                   FLUX(ISTRA),scalv(istra)
         else
           xtim(istra)=xtim(istra-1)
+          WRITE(6,*) 'DEBUG: B ',istra,xtim(istra)
         end if
 8     CONTINUE
 
