@@ -1457,6 +1457,7 @@ c
 c
 c
       SUBROUTINE LoadEireneData_06(iitersol,ilspt)
+      USE mod_interface
       USE mod_geometry
       USE mod_eirene06_parameters
       USE mod_eirene06
@@ -1472,7 +1473,7 @@ c
       INCLUDE 'slcom'
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,i2,iside,in,iw, 
-     .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG)
+     .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG),tube,ike
       LOGICAL goodeof,debug,wall_ignored,warning_message
       REAL    rdum(30),frac,norm,len,cir,area,
      .        sumion,amps,pflux
@@ -1480,7 +1481,7 @@ c
 
       INTEGER iobj,igrp
       INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:),wall_in(:,:)
-      REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:)
+      REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:),eirdat(:,:,:)
 
 
       wall_ignored = .FALSE.
@@ -1490,6 +1491,11 @@ c
       ALLOCATE(tflux(MAXSEG       ,10))
       tdata = 0.0
       tflux = 0.0
+
+      IF (ilspt.GT.0) THEN
+        ALLOCATE(eirdat(MAXNKS,MAXNRS,2))
+        eirdat = 0.0
+      ENDIF
 
       IF (tetrahedrons) THEN
         ALLOCATE(fluid_ik(nobj))
@@ -1587,12 +1593,14 @@ c...  Read through the file:
             IF (fluid_ik(icount).NE.0) THEN
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
-              IF (iblk.EQ.1) THEN                           ! Data for D+ only:
+              IF     (iblk.EQ.1) THEN                           ! Data for D+ only:
                 tdata(ik,ir,1) = tdata(ik,ir,1) + rdum(5)   ! PINION
                 tdata(ik,ir,2) = tdata(ik,ir,2) + rdum(6)   ! PINREC (relax?)
                 tdata(ik,ir,3) = tdata(ik,ir,3) + rdum(7)   ! PINMP
                 tdata(ik,ir,4) = tdata(ik,ir,4) + rdum(8)   ! PINQi
                 tdata(ik,ir,5) = tdata(ik,ir,5) + rdum(9)   ! PINQe
+              ELSEIF (iblk.EQ.2.AND.ilspt.GT.0) THEN                     
+                eirdat(ik,ir,1) = eirdat(ik,ir,1) + rdum(5)  ! Impurity atom (probably) ionisation
               ENDIF
             ENDIF
           ENDDO
@@ -1639,8 +1647,10 @@ c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
             IF (fluid_ik(icount).NE.0) THEN
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
-              IF (iatm.EQ.1) THEN                            ! Only for D, presumably the 1st atom species, need check...
+              IF     (iatm.EQ.1) THEN                        ! Only for D, presumably the 1st atom species, need check...
                 pinatom(ik,ir) = pinatom(ik,ir) + rdum(1) 
+              ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN                     
+                eirdat(ik,ir,2) = eirdat(ik,ir,2) + rdum(1)  ! Impurity atom (probably) density
               ENDIF
             ENDIF
           ENDDO
@@ -1656,9 +1666,6 @@ c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
             CALL NextLine(fp,ntally,iobj,rdum)
             iside = NINT(rdum(1))
             in = wall_in(iside,iobj)
-c            WRITE(0,*) 'WTF',iobj,iside,in
-c            WRITE(0,*) '   ',iobj,tri(iobj)%sideindex(3,1:3)  ! =surface(i2)%index(1) 
-c            WRITE(0,*) '   ',iobj,
             IF (in.EQ.0) THEN
 c             Lots of data comes through that's not associated with 
 c             the standard DIVIMP neutral wall, ignore for now...              
@@ -1842,6 +1849,8 @@ c          ENDDO
 c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
 
+          IF (ilspt.GT.0) eirdat(ik,ir,:) = eirdat(ik,ir,:) * norm
+
           sumion = sumion + pinion(ik,ir) * kvols(ik,ir) * eirtorfrac
         ENDDO
       ENDDO
@@ -1940,6 +1949,27 @@ c...  Also from READPIN?
 
       CALL OutputEIRENE(67,'WORKING WITH EIRENE06')
 
+c...  Dump EIRENE calculated impurity distribution data:
+      IF (ALLOCATED(eirdat)) THEN
+        CALL inOpenInterface('idl.eirene_imp')
+        CALL inPutData(irsep -1,'GRID_ISEP' ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
+        CALL inPutData(irwall-1,'GRID_IPFZ' ,'N/A')  ! the boundary rings are not present
+        DO ir = 2, nrs
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          ike = nks(ir)
+          IF (ir.LT.irsep) ike = ike - 1
+          tube = ir - 1                      
+          IF (ir.GT.irwall) tube = tube - 2  
+          DO ik = 1, ike
+            CALL inPutData(ik  ,'POS' ,'N/A')                     
+            CALL inPutData(tube,'TUBE','N/A')  
+            CALL inPutData(eirdat(ik,ir,2),'IMP_DENS_00' ,'m-3 s-1')  
+            CALL inPutData(eirdat(ik,ir,1),'IMP_IONIZ_00','m-3 s-1')  
+          ENDDO
+        ENDDO
+        CALL inCloseInterface
+        DEALLOCATE(eirdat)
+      ENDIF
 c...  Need to save data again since Dalpha has been loaded into OBJ:
 c      CALL SaveGeometryData('tetrahedrons.raw')
 

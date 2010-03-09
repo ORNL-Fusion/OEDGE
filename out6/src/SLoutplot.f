@@ -34,9 +34,10 @@ c       (from code in divoutput.f)
          in = wallpt(id,17)
          totfypin = totfypin + flxhw3(in) * wallpt(id,7)  ! per meter toroidally s-1
       ENDDO 
+      IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Dump impurity data:
-      CALL inOpenInterface('osm.idl.divimp_imp_density')
+      CALL inOpenInterface('idl.divimp_imp_density')
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
@@ -1099,6 +1100,7 @@ c       (from code in divoutput.f)
      .                        * wallpt(id,19) * wallpt(id,7)
       ENDDO 
       impurity_influx = totfypin  ! per meter toroidally s-1
+      IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Outer midplane profiles:
       npro = 0

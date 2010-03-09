@@ -1150,6 +1150,9 @@ C
      >                   NEUTIM,SFAIL,STATUS,MATP,MATT,neuttype)
       use mtc
       use velocity_dist
+c slmod begin
+      use mod_interface
+c slmod end
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -4219,6 +4222,12 @@ C
      >           YSATIZ(1)/MAX(LO,SFRAC(1)),YSATIZ(2)/MAX(LO,SFRAC(2)))
       CALL PRR2 ('AVERAGE S OR SMAX-S FOR SOL IONIZ  ',
      >           SSATIZ(1)/MAX(LO,SFRAC(1)),SSATIZ(2)/MAX(LO,SFRAC(2)))
+c slmod begin
+      CALL inOpenInterface('idl.divimp_launch')
+      CALL inPutData(SUM(ETOT (1:2))/SUM(RNEUT(1:2)),'TAVG_PROD','eV')
+      CALL inPutData(SUM(EATIZ(1:2))/SUM(RATIZ(1:2)),'TAVG_IONI','eV')
+      CALL inCloseInterface
+c slmod end
 c
 c     Double check test
 c    
