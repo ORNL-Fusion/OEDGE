@@ -1385,7 +1385,6 @@ c
 c     Write out temporary case specific data 
 c
       call write_tmp_data
-
 c
 c     Formats for the above write statements  
 c

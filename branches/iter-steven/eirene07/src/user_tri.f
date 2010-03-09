@@ -857,8 +857,6 @@ c...  Determine the number of surfaces:
 c
 c     ----------------------------------------------------------------------
 c     Bulk species:
-      ITALLY=16
-
       BULK_SOURCES = .FALSE.
 
       NIPLS=1
@@ -875,6 +873,7 @@ c      DO IPLS=1,MIN(NPLSI,1)  ! specifying NITER > 0 when not BGK or photons...
         IPLSTI=MPLSTI(IPLS)
         IPLSV =MPLSV (IPLS)
         ICOUNT=39
+        ITALLY=16
 
         WRITE(logfp,*) 'COPV:',ipls,lcopv 
         WRITE(logfp,*) 'LCOPV:',lcopv

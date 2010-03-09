@@ -6592,7 +6592,7 @@ c...    Low index target:
         ir1 = ir
         ik2 = ikins(ik1,ir1)
         ir2 = irins(ik1,ir1)
-        IF (idring(ir2).EQ.BOUNDARY.AND.ir1.NE.ir2) THEN
+        IF (.FALSE..AND.idring(ir2).EQ.BOUNDARY.AND.ir1.NE.ir2) THEN
           id1 = korpg(ik1,ir1)
           id2 = korpg(ik2,ir2)
           id3 = korpg(1  ,ir2)
@@ -6601,8 +6601,8 @@ c...    Low index target:
           length2 = MIN(SideLength(id3,1),SideLength(id3,2))
           tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
           IF (dist.LT.tol) THEN
-c          IF     (DABS(d_rvertp(1,id1)-d_rvertp(2,id3)).LT.DTOL.AND.
-c                  DABS(d_zvertp(1,id1)-d_zvertp(2,id3)).LT.DTOL) THEN
+c          IF     (DABS(d_rvertp(1,id1)-d_rvertp(2,id3)).LT.DTOL.AND.   
+c                  DABS(d_zvertp(1,id1)-d_zvertp(2,id3)).LT.DTOL) THEN  
 c...        Make sure the points are exactly the same, since small errors
 c           can creep in when cutting the grid:
             d_rvertp(1,id1) = d_rvertp(2,id3)
@@ -6651,7 +6651,7 @@ c             vertex:
         ik2 = ikouts(ik1,ir1)
         ir2 = irouts(ik1,ir1)
         id2 = korpg (ik2,ir2)
-        IF (idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
+        IF (.FALSE..AND.idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
           IF (DABS(d_rvertp(2,id1)-d_rvertp(1,id2)).GT.DTOL.OR.
      .        DABS(d_zvertp(2,id1)-d_zvertp(1,id2)).GT.DTOL) THEN
             STOP 'CODE NOT READY A'
