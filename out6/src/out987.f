@@ -981,7 +981,6 @@ c            DO ir = irsep, nrs
 c              WRITE(0,*) 'DEBUG: here 1'
               iz = iopt - 800
               READ(5,'(A512)') cdum1
-              WRITE(0,*) 'CDUM>'//cdum1(8:11)//'<'
 c             ----------------------------------------------------------
               IF (cdum1(8:11).EQ.'Adas'.OR.cdum1(8:11).EQ.'ADAS'.OR.
      .            cdum1(8:11).EQ.'adas') THEN
@@ -1004,7 +1003,7 @@ c...            Load PLRP data from ADAS:
 c             ----------------------------------------------------------
               ELSEIF (cdum1(8:10).EQ.'Ion'.OR.cdum1(8:10).EQ.'ION'.OR.
      .                cdum1(8:10).EQ.'ion') THEN
-                WRITE(0,*) 'Loading ionisation data'
+c                WRITE(0,*) 'Loading ionisation data'
                 DO ir = 2, nrs
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
                   gdata1(1:nks(ir),ir) = tizs(1:nks(ir),ir,iz)

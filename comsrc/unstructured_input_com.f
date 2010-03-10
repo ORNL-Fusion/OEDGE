@@ -373,23 +373,25 @@ c         z-coordinate data is now in elements 8 and 9:
             WRITE(SLOUT,'(I6,10F10.4)') i1,(eirasdat(i1,i2),i2=1,10)
           ENDDO
 c For deletion...
-c        ELSEIF (line(7:9).EQ.'1.1') THEN
-c          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
-c     .              -MACHHI,MACHHI,8,'EIRENE additional surfaces',ierr)
-c          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
-cc...      Shift data around so that it is compatible with the existing code.  The 
-cc         z-coordinate data is now in elements 8 and 9:
-c          DO i1 = 1, eirnasdat
-c            z1 = eirasdat(i1,5)
-c            DO i2 = 5, 7
-c              eirasdat(i1,i2) = eirasdat(i1,i2+1)
-c            ENDDO
-c            eirasdat(i1,8) = z1
-c          ENDDO
-c          WRITE(SLOUT,*) 'Additional surface data:'
-c          DO i1 = 1, eirnasdat
-c            WRITE(SLOUT,'(I6,9F10.4)') i1,(eirasdat(i1,i2),i2=1,9)
-c          ENDDO
+        ELSEIF (line(7:9).EQ.'1.1') THEN
+          CALL WN('RUI','Additional wall data format 1.1 soon to be '//
+     .                  'obsolete (unstructured input tag *077)')
+          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
+     .              -MACHHI,MACHHI,8,'EIRENE additional surfaces',ierr)
+          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
+c...      Shift data around so that it is compatible with the existing code.  The 
+c         z-coordinate data is now in elements 8 and 9:
+          DO i1 = 1, eirnasdat
+            z1 = eirasdat(i1,5)
+            DO i2 = 5, 7
+              eirasdat(i1,i2) = eirasdat(i1,i2+1)
+            ENDDO
+            eirasdat(i1,8) = z1
+          ENDDO
+          WRITE(SLOUT,*) 'Additional surface data:'
+          DO i1 = 1, eirnasdat
+            WRITE(SLOUT,'(I6,9F10.4)') i1,(eirasdat(i1,i2),i2=1,9)
+          ENDDO
 c        ELSEIF (line(7:9).EQ.'1.0') THEN
 c          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
 c     .              -MACHHI,MACHHI,6,'EIRENE additional surfaces',ierr)

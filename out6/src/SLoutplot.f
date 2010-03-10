@@ -3,6 +3,55 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE GenerateEIRENEDataFiles
+      USE mod_interface
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      INTEGER   ik,ir,ike,index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
+      CHARACTER unit*10
+
+      index = -1
+      DO ik = 1, MAXNKS
+        pos(ik) = ik
+      ENDDO
+
+      unit = 'ph m-3 s-1'
+
+      CALL inOpenInterface('idl.fluid_eirene')
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
+        IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
+        CALL inPutData(index(1:ike),'INDEX','N/A')                     
+        CALL inPutData(pos  (1:ike),'POS'  ,'N/A')                     
+        CALL inPutData(tube (1:ike),'TUBE' ,'N/A')                     
+        CALL inPutData(kss(1:ike,ir),'S','m')
+        CALL inPutData(pinion (1:ike,ir),'ION_NET','m-3 s-1')        
+        CALL inPutData(pinrec (1:ike,ir),'REC_NET','m-3 s-1')        
+        CALL inPutData(pinmp  (1:ike,ir),'MOM_NET','?')
+        CALL inPutData(pinqe  (1:ike,ir),'QE_NET' ,'?')
+        CALL inPutData(pinqi  (1:ike,ir),'QI_NET' ,'?')
+        CALL inPutData(pinatom(1:ike,ir),'ATM_DENS','m-3')
+        CALL inPutData(pinmol (1:ike,ir),'MOL_DENS','m-3')
+        CALL inPutData(pinline(1:ike,ir,6,H_BALPHA),'BALMER_ALPHA',unit)
+        CALL inPutData(pinline(1:ike,ir,6,H_BGAMMA),'BALMER_GAMMA',unit)
+      ENDDO
+      CALL inCloseInterface
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac)
       USE mod_interface
       IMPLICIT none
@@ -13,16 +62,19 @@ c
       INCLUDE 'cgeom'
       INCLUDE 'walls_com'
       INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
       REAL   , INTENT(IN) :: crmi,absfac
 
-      INTEGER   ik,ir,iz,id,in,status,ike,pos(MAXNKS),tube(MAXNKS)
+      INTEGER   ik,ir,iz,id,in,status,ike,
+     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
       REAL      totfypin
       CHARACTER tag*64
 
+      index = -1
       DO ik = 1, MAXNKS
         pos(ik) = ik
       ENDDO
@@ -52,8 +104,10 @@ c...  Dump impurity data:
         IF (ir.LT.irsep) ike = ike - 1
         tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
-        CALL inPutData(pos (1:ike),'POS' ,'N/A')                     
-        CALL inPutData(tube(1:ike),'TUBE','N/A')                     
+        CALL inPutData(index(1:ike)   ,'INDEX','N/A')                     
+        CALL inPutData(pos  (1:ike)   ,'POS'  ,'N/A')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE' ,'N/A')                     
+        CALL inPutData(kss  (1:ike,ir),'S'    ,'N/A')                     
       ENDDO
       DO iz = 0, MIN(nizs,cion)
         WRITE(tag,'(A,I0.2)') 'IMP_DENS_',iz
@@ -62,6 +116,37 @@ c...  Dump impurity data:
           ike = nks(ir)
           IF (ir.LT.irsep) ike = ike - 1
           CALL inPutData(sdlims(1:ike,ir,iz),TRIM(tag),'m-3 s-1')                     
+        ENDDO
+      ENDDO
+      CALL inCloseInterface 
+
+      CALL inOpenInterface('idl.divimp_imp_ionisation')
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
+      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
+      CALL inPutData(cion ,'IMP_Z'         ,'N/A')
+      CALL inPutData(crmi ,'IMP_A'         ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
+        IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
+        CALL inPutData(index(1:ike)   ,'INDEX','N/A')                     
+        CALL inPutData(pos  (1:ike)   ,'POS'  ,'N/A')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE' ,'N/A')                     
+        CALL inPutData(kss  (1:ike,ir),'S'    ,'N/A')                     
+      ENDDO
+      DO iz = 0, MIN(nizs,cion)
+        WRITE(tag,'(A,I0.2)') 'IMP_IONIZ_',iz
+        DO ir = 2, nrs
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          ike = nks(ir)
+          IF (ir.LT.irsep) ike = ike - 1
+          CALL inPutData(tizs(1:ike,ir,iz),TRIM(tag),'m-3 s-1')                     
         ENDDO
       ENDDO
       CALL inCloseInterface 
@@ -3761,7 +3846,12 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.14) THEN
         CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,absfac2)
         RETURN
+      ELSEIF (iopt.EQ.15) THEN
+        CALL GenerateEIRENEDataFiles
+        RETURN
       ENDIF
+
+      RETURN
      
 
       IF (nrmindex.GT.0) THEN
