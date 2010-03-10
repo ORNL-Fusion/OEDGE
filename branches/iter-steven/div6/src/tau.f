@@ -4937,7 +4937,10 @@ c
          if (ir.eq.irwall-1)
      >           write (6,9065) rvertp(3,in),zvertp(3,in)
       end do
-
+c slmod begin
+      CALL OutputData(86,'After calling DOTARG')
+      CALL DumpGrid('After calling DOTARG')
+c slmod end
 c
 c
 c     END RJET

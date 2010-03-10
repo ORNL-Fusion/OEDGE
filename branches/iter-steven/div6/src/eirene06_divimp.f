@@ -1961,8 +1961,10 @@ c...  Dump EIRENE calculated impurity distribution data:
           tube = ir - 1                      
           IF (ir.GT.irwall) tube = tube - 2  
           DO ik = 1, ike
-            CALL inPutData(ik  ,'POS' ,'N/A')                     
-            CALL inPutData(tube,'TUBE','N/A')  
+            CALL inPutData(-1  ,'INDEX','N/A')                     
+            CALL inPutData(ik  ,'POS'  ,'N/A')                     
+            CALL inPutData(tube,'TUBE' ,'N/A')  
+            CALL inPutData(kss(ik,ir),'S','m')
             CALL inPutData(eirdat(ik,ir,2),'IMP_DENS_00' ,'m-3 s-1')  
             CALL inPutData(eirdat(ik,ir,1),'IMP_IONIZ_00','m-3 s-1')  
           ENDDO
