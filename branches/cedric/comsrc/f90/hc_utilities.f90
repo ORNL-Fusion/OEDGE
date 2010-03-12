@@ -646,13 +646,16 @@ Contains
        ! NOTE: The following repeat of the same two identical lines is a workaround for a PGI compiler bug of some
        !       sort - still in the process of tracking it down - jde - May 15 2007
        !
-       Beta = ASIN (sqrt(random_value_1))
+       !Beta = ASIN (sqrt(random_value_1))
        !write(0,*) 'beta1:',beta,random_value_1
+
        Beta = ASIN (sqrt(random_value_1))
        !write(0,*) 'beta2:',beta,random_value_1
        Psi = 2.0 *  Pi_Value * Random_Value_2
+
        Launch_Angle = ATAN (TAN (Beta) * COS (Psi))
-       !write (0,'(a,i6,2g12.5,i6,5g12.5)') "Launch angle is:",Velocity_Angle_Option,Beta,Psi,IProd,Launch_Angle,&
+
+       !write (6,'(a,i6,2g12.5,i6,5g12.5)') "Launch angle is:",Velocity_Angle_Option,Beta,Psi,IProd,Launch_Angle,&
        !  & random_value_1,random_value_2,sqrt(random_value_1),asin(sqrt(random_value_1))
 
     ElseIf (Velocity_Angle_Option .eq. 1 .or. Velocity_Angle_Option .eq. 2 .or. Velocity_Angle_Option .eq.4) Then
@@ -2813,6 +2816,10 @@ Contains
        End Do
     End Do
  
+    ! jdemod - base wtsource data in DIVIMP on only the C+ ion transport as is done with neut data
+    !        - the HC code was collecting wtsource data for each state instead of particle so there
+    !          were issues with data adding up - changed to once/particle
+    !
     ! HC_WtSource.
     Do i = 1, Max_Points
        Do j = 1, Max_Rings
@@ -2928,7 +2935,8 @@ Contains
        Do j = 1,number_leaked_core(i) ! Done for particles from both targets.
           index_cnt= index_cnt+1
           do k = 1,2
-             Call pacleakpos (index_cnt,k, HC_Leak_Position (i,j,k))
+             ! jdemod - i,j index was reversed - corrected to j,i
+             Call pacleakpos (index_cnt,k, HC_Leak_Position (j,i,k))
           end do  
        End Do
     End Do
