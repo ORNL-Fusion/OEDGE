@@ -804,6 +804,17 @@ c         standard surface that already exists:
         ENDIF
       ENDDO
 
+      IF (tetrahedrons) THEN
+        nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+        surface(nsurface)%subtype  = ADDITIONAL
+        surface(nsurface)%index(1) = -1
+        surface(nsurface)%reflect  = LOCAL
+        surface(nsurface)%ewall    = -wtemp * 1.38E-23 / ECH
+        surface(nsurface)%material = wmater
+        surface(nsurface)%ilcol    = 4         
+        surface(nsurface)%surtxt   = '* tetrahedron dump surface'
+      ENDIF
+
 c...  Assign block 3a surface index to non-default standard surfaces:
       i2 = 0
       DO i1 = 1, nsurface
@@ -1485,7 +1496,7 @@ c
 
 
       wall_ignored = .FALSE.
-      debug        = .FALSE.
+      debug        = .TRUE.
 
       ALLOCATE(tdata(MAXNKS,MAXNRS,5 ))
       ALLOCATE(tflux(MAXSEG       ,10))

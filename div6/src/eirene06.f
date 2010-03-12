@@ -45,6 +45,7 @@ c
 c subroutine: WriteEireneObjects
 c
       SUBROUTINE WriteEireneObjects
+      USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       USE mod_geometry
@@ -176,9 +177,16 @@ c...    Collect connection map information:
           isrf1 (iside) = srf(isrf)%index(IND_SURFACE)             ! Surface (block 2A)
         ENDDO
         IF (tetrahedrons.AND.  
-     .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for ITER
-          isrf1(1) = 5  
-          STOP 'SORT OUT THIS ANNOYING BUSINESS'
+     .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! For toroidal boundary tetrahedral surfaces, which are "lost" at the moment...
+          IF (surface(nsurface)%type   .EQ.NON_DEFAULT_STANDARD.AND.   ! Looking for the special tetrahedron catch all surface of desperation...
+     .        surface(nsurface)%subtype.EQ.ADDITIONAL.AND.
+     .        surface(nsurface)%index(1).EQ.-1) THEN
+            isrf1(1) = surface(nsurface)%num
+          ELSE
+            STOP 'SORT OUT THIS ANNOYING BUSINESS, AGAIN...'
+          ENDIF
+c          isrf1(1) = 5  
+c          STOP 'SORT OUT THIS ANNOYING BUSINESS'
         ENDIF
 c        IF (tetrahedrons.AND.   ! *** THIS ONE WAS ACTIVE MOST RECENTLY *** -SL, 12.08.09
 c    .       iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for MAST

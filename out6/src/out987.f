@@ -725,7 +725,7 @@ c
 
       INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,
      .        nline,lastcolour,scaleopt,colouropt,posopt
-      LOGICAL setqmin,setqmax,inside,scale_set
+      LOGICAL setqmin,setqmax,inside,scale_set,double_null
       REAL    qmin,qmax,frac,frac5,fmod5,scalefact,fact,
      .        posx,posy,poswidth,posheight,rdum(4),taus
       CHARACTER label*512,cdum1*512,cdum2*512
@@ -754,6 +754,11 @@ c      WRITE(0,*) 'DATA:',job
 c      WRITE(0,*) 'DATA:',graph
 c      WRITE(0,*) 'DATA:',title
 c      WRITE(0,*) 'DATA:',ref
+
+      double_null = .FALSE.   ! *** THIS DOESN'T WORK BECAUSE RINGTYPE IS NOT PASSED TO OUT! ***
+      DO ir = 2, irwall-1
+        IF (ringtype(ir).EQ.PFZ) double_null = .TRUE.
+      ENDDO
 
       WRITE(glabel,'(512(A:))') (' ',i1=1,LEN(glabel)) 
 
@@ -1323,7 +1328,7 @@ c...    Magnetic grid:
               lines2(nline,2) = nver 
               lcolour(nline) = ncols + 1
             ELSEIF (idring(irins(ik,ir)).EQ.BOUNDARY.OR.ir.EQ.irsep.OR.
-     .            (irsep.NE.irsep2.AND.irsep2.GT.0.AND.
+     .            (double_null.AND.
      .             ir.EQ.irouts(1                 ,MAX(1,irsep2)).OR.
      .             ir.EQ.irouts(nks(MAX(1,irsep2)),MAX(1,irsep2)))) THEN
               nver = nver + 1

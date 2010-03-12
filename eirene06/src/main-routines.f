@@ -2299,7 +2299,11 @@ c slmode end
         IESTR=ISTRA
         ISTRAA=ISTRA
         ISTRAE=ISTRA
-        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod begin
+        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER,IPANU)
+c
+c        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod end
         NEW_ITER=1
       ENDIF
 C

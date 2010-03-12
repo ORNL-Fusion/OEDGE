@@ -771,13 +771,14 @@ C ===== SOURCE: outusr.f
       USE clogau
       USE comsou
       USE coutau
+      USE ctetra  ! TET diff
       IMPLICIT none
 
       REAL*8    :: FTABRC1,FEELRC1
 
       INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,IPLS,I1,IADD,IPLSTI,IPLSV,
      .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
-     .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,
+     .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
      .             ISTRAA,ISTRAE,NEW_ITER,JFEXMN,JFEXMX,MSURFG
       INTEGER   :: PROB1,PROB2
       LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI),SAVE_IPANU(100),IPANU
@@ -806,6 +807,8 @@ c...  Iteration data:
 
       SAVE
        
+
+      IF (NLTET) STOP 'TETRAHEDRONS DETECTED!'
 
       OUTPUT1=.TRUE.
       PROB1=10000000
@@ -848,9 +851,11 @@ c            IRINGST(ITRI) = IRINGRD(IR)
 c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
 
 c...  Determine the number of surfaces:
+      NSIDE = 3
+
       NSUR=0
       DO IR=1,NTRII 
-        DO IS=1,3
+        DO IS=1,NSIDE
           IF (INSPAT(IS,IR).NE.0) NSUR=NSUR+1
         ENDDO
       ENDDO
@@ -960,7 +965,7 @@ c...    Surfaces fluxes:
         WRITE(FP,85) (I1,I1=1,ITALLY)
         CONV = 1.602176D-19
         DO IR=1,NTRII 
-          DO IS=1,3
+          DO IS=1,NSIDE
             IF (INSPAT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
@@ -1023,7 +1028,7 @@ c...    Surfaces fluxes:
         WRITE(FP,85) (I1,I1=1,ITALLY)
         CONV = 1.602176D-19
         DO IR=1,NTRII 
-          DO IS=1,3
+          DO IS=1,NSIDE
             IF (INSPAT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
@@ -1182,7 +1187,7 @@ c...    Surfaces fluxes:
         WRITE(FP,85) (I1,I1=1,ITALLY)
         CONV = 1.602176D-19
         DO IR=1,NTRII 
-          DO IS=1,3
+          DO IS=1,NSIDE
             IF (INSPAT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
@@ -1528,6 +1533,7 @@ C ===== SOURCE: plausr.f
       USE CINIT
       USE COMSOU
       USE CTRIG
+      USE CTETRA  ! TET diff
       IMPLICIT NONE
       REAL(DP) :: FACTOR, STEP
       INTEGER :: NLINES, ITRI, ISIDE, I, NBIN, ISTRA, ISRFS, ISOR, 

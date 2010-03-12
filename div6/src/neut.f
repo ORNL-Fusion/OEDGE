@@ -325,11 +325,11 @@ c
 c              Deal with sputter option 7 - external target flux
 c
                if (cneutd.eq.7) then  
-                  WRITE(0,*) 'DEBUG: CALL TFY A.0'
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY A.0'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
-                  WRITE(0,*) 'DEBUG: CALL TFY A'
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY A'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
                endif
@@ -4429,7 +4429,8 @@ c     -------------------------------------------------------
 C     
 C---- CALCULATE FLUXES AND YIELDS
 C     
-      WRITE(0,*) 'CALL TFY: looping over targets...',yieldsw,pinsw
+      IF (sloutput) WRITE(0,*) 'CALL TFY: looping over targets...',
+     .                         yieldsw,pinsw
       DO ID = 1,NDS
         IK = IKDS(ID)
         IR = IRDS(ID)
@@ -4673,7 +4674,7 @@ c
       totfydata(2,3) = totfydata(3,3)- totfydata(1,3)
       totfydata(2,5) = totfydata(3,5)- totfydata(1,5)
 
-      WRITE(0,*) 'CALL TFY: total yield =',totfydata(3,5)
+      IF (sloutput) WRITE(0,*) 'CALL TFY: total yield =',totfydata(3,5)
 c     
 c     Calculate cumulative - normalized - non-zero launch 
 c     probabilities. 
@@ -5041,7 +5042,7 @@ c
 c
 c slmod begin
          elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
-           WRITE(0,*) 'WHA-WHO! 1'
+           IF (sloutput) WRITE(0,*) 'WHA-WHO! 1'
 c          FYDATA(ID,1)  = Flux
 c                    2   = Energy
 c                    3   = Heat
