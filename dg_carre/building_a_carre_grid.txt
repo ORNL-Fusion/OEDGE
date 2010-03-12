@@ -61,6 +61,8 @@ Instructions on how to build a grid using dg and carre:
     - mark ONLY the plasma facing elements for the targets on the inside and outside
     - mark and set each target separately
     - the structure must include all elements that are specified as part of the targets 
+   Normals 
+    - Make sure normals are consistent - I dont think it matters whether they are all inward or outward
 6) Import the equilibrium (import command on file menu)
 7) Import a topology file (SN, SN up, DN ...)
    - this should allow DG to calculate the X-point and separatrix

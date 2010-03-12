@@ -6322,7 +6322,7 @@ c     Adding one to ir should account for the indexing.
 c
             if (sonnet_grid_sub_type.eq.2) then
                ir = ir +1 
-               write(6,'(a,3i8,g12.5)') 'PSITARG:',ir,indexiradj,
+               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
      >                        cutring,ik,psi
             endif
 c     
@@ -12879,10 +12879,25 @@ c
                   ODPERP(IR) = ocfgam(ir)/dptoto
                   IDPERP(IR) = icfgam(ir)/dptoti
                elseif (dpouter.eq.1) then
-                  DPERP(IR)  = cfgam(ir)
-     >                         /(dptoto+dptoti-(delouti+delouto))
-                  ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
-                  IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
+c
+c                 jdemod - for ir=irwall-1 - the denominator in these
+c                          calculations is exactly zero.
+c                        - to avoid this - for ir=irwall-1 - assign
+c                          dperp(irwall-1) = dperp(irwall-2)
+c                        - this fix needs checking to make sure it is
+c                          logically correct                         
+c
+                  if (ir.ne.irwall-1) then 
+                     DPERP(IR)  = cfgam(ir)
+     >                           /(dptoto+dptoti-(delouti+delouto))
+                     ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
+                     IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
+                  else
+                     DPERP(IR)  = dperp(ir-1)
+                     ODPERP(IR) = odperp(ir-1)
+                     IDPERP(IR) = idperp(ir-1)
+                  endif
+
                endif
             endif
 
