@@ -6,7 +6,7 @@
 # PROCESS INPUT FLAGS
 # ======================================================================
 #
-source /home/ITER/lisgos/divimp/scripts/run_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15
+source $DIVHOME/scripts/run_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15
 #
 # ----------------------------------------------------------------------
 # Case parameter summary to the screen:
@@ -75,7 +75,7 @@ source /home/ITER/lisgos/divimp/scripts/run_process_flags $1 $2 $3 $4 $5 $6 $7 $
 # COPY SETUP FILES
 # ======================================================================
 #
-  source $DIVHOME/scripts/run_setup_files
+  source $DIVHOME/scripts/run_process_files
 #
 # ======================================================================
 # EXECUTE
