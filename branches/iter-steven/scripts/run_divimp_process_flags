@@ -34,44 +34,16 @@
 # Decide which version of EIRENE to run, and if photon transport is 
 # included:
 # 
-  setenv EIRTEMP eirene99
-  setenv EIRFILE eirene99.dat
+  setenv EIRTEMP eirene07
+  setenv EIRFILE eirene07.dat
   setenv EIR13  
   setenv EIR15  
   setenv EIRPHOTONS 
+
   if      ( "$1" == "-eirene04" || "$1" == "-04" ) then
     shift 
     setenv EIRTEMP eirene04
     setenv EIRFILE eirene04.dat
-    if      ( "$1" == "-template" || "$1" == "-t" ) then
-      shift 
-      setenv EIRFILE eirene04.dat.$1
-      shift
-    endif
-    if      ( "$1" == "-photons" ) then
-      shift 
-      setenv EIRPHOTONS yes
-      setenv EIRFILE    eirene04.dat.photons
-    endif
-    if      ( "$1" == "-photons.cont" ) then
-      shift 
-      setenv EIRPHOTONS  yes
-      setenv EIRFILE     eirene04.dat.photons.cont
-    endif
-    if      ( "$1" == "-photons.bgk" ) then
-      shift 
-      setenv EIRPHOTONS  yes
-      setenv EIRFILE  eirene04.dat.photons.bgk
-    endif
-    if      ( "$1" == "-puff" ) then
-      shift 
-      setenv EIRFILE     eirene04.dat.puff
-    endif
-    if      ( "$1" == "-13" ) then
-      shift 
-      setenv EIR13  $1
-      shift 
-    endif
   endif
 
   setenv EIRRAW  "no"
@@ -79,51 +51,39 @@
     shift 
     setenv EIRTEMP  eirene06
     setenv EIRFILE  eirene06.dat
-    if      ( "$1" == "-cr" ) then
-      shift 
-      setenv EIRRAW  "yes"
-    endif
-    if      ( "$1" == "-template" || "$1" == "-t" ) then
-      shift 
-      setenv EIRFILE  eirene06.dat.$1
-      shift
-    endif
-    if      ( "$1" == "-photons" ) then
-      shift 
-      setenv EIRPHOTONS  yes
-      setenv EIRFILE     eirene06.dat.photons
-    endif
   endif
 
-  if      ( "$1" == "-eirene07" || "$1" == "-07" ) then
+  if      ( "$1" == "-eirene99" || "$1" == "-99" ) then
     shift 
-    setenv EIRTEMP  eirene07
-    setenv EIRFILE  eirene07.dat
-    if      ( "$1" == "-cr" ) then
-      shift 
-      setenv EIRRAW  "yes"
-    endif
-    if      ( "$1" == "-template" || "$1" == "-t" ) then
-      shift 
-      setenv EIRFILE  eirene07.dat.$1
-      shift
-    endif
-    if      ( "$1" == "-photons" ) then
-      shift 
-      setenv EIRPHOTONS  yes
-      setenv EIRFILE     eirene07.dat.photons
-    endif
-    if      ( "$1" == "-13" ) then
-      shift 
-      setenv EIR13  $1
-      shift 
-    endif
-    if      ( "$1" == "-15" ) then
-      shift 
-      setenv EIR15  $1
-      shift 
-    endif
+    setenv EIRTEMP  eirene99
+    setenv EIRFILE  eirene99.dat
   endif
+
+  if      ( "$1" == "-cr" ) then
+    shift 
+    setenv EIRRAW  "yes"
+  endif
+  if      ( "$1" == "-template" || "$1" == "-t" ) then
+    shift 
+    setenv EIRFILE  $EIRFILE.$1
+    shift
+  endif
+  if      ( "$1" == "-photons" ) then
+    shift 
+    setenv EIRPHOTONS  yes
+    setenv EIRFILE     $EIRFILE.photons
+  endif
+  if      ( "$1" == "-13" ) then
+    shift 
+    setenv EIR13  $1
+    shift 
+  endif
+  if      ( "$1" == "-15" ) then
+    shift 
+    setenv EIR15  $1
+    shift 
+  endif
+
 #
 # ----------------------------------------------------------------------
 # Just run OUT, the post-processing and graphics package:
