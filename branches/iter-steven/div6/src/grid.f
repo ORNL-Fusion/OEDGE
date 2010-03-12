@@ -4472,7 +4472,7 @@ c
 
 c...  Input:
       INTEGER ik,ir,side,nseg
-      REAL*8  rvp(4,MAXNKS*MAXNRS),zvp(4,MAXNKS*MAXNRS),
+      REAL*8  rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS),
      .        rseg(2*nseg),zseg(2*nseg)
 
 c...  Output:
@@ -4862,7 +4862,7 @@ c
 
 c     Input:
       INTEGER dataindex
-      REAL*8  rvp(4,MAXNKS*MAXNRS),zvp(4,MAXNKS*MAXNRS)
+      REAL*8  rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS)
 
 
       COMMON /GRID/ iktop,irout,irin
@@ -6961,8 +6961,7 @@ cc
 
 
       INTEGER ii,i1,i2,i3,ir,ik,id,ik1,ik2,status,in,in1,tmpnmod,fp
-      REAL*8  r1,z1,r2,z2,rvp(4,MAXNKS*MAXNRS),
-     .                    zvp(4,MAXNKS*MAXNRS)
+      REAL*8  r1,z1,r2,z2,rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS)
 c     .        a1,a2,b1,b2,c1,c2,t1
       REAL    maxz,spos
 
@@ -9067,8 +9066,8 @@ c      LOGICAL nopriv
       quasidn = .TRUE.
 
 c...  Allocate the temporary storage arrays for the grid:
-      ALLOCATE(rvp(0:MAXNKS,0:MAXNRS,4))
-      ALLOCATE(zvp(0:MAXNKS,0:MAXNRS,4))
+      ALLOCATE(rvp(0:MAXNKS,0:MAXNRS,5))
+      ALLOCATE(zvp(0:MAXNKS,0:MAXNRS,5))
       ALLOCATE(rcen(0:MAXNKS,0:MAXNRS))
       ALLOCATE(zcen(0:MAXNKS,0:MAXNRS))
       ALLOCATE(bval(0:MAXNKS,0:MAXNRS))
