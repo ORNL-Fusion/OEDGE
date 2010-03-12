@@ -2556,7 +2556,13 @@ c slmod begin
          ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
            WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
            thetag = 1.0
-         ELSEIF (grdnmod.NE.0) THEN
+         ELSEIF (.TRUE..OR.grdnmod.NE.0) THEN
+           IF (grdnmod.EQ.0) THEN
+             WRITE(0,*)
+             WRITE(0,*) 'WARNING tauin1: Calling the new THETAG '
+             WRITE(0,*) '  calculation code for all cases as of '
+             WRITE(0,*) '  10/03/2010'
+           ENDIF
            CALL CalcMetric
          ELSEIF (connected) THEN
            WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
@@ -4446,6 +4452,9 @@ c
 c     Edge2d values
 c
       include 'cedge2d'
+c slmod begin
+      include 'slcom'
+c slmod end
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -4938,8 +4947,24 @@ c
      >           write (6,9065) rvertp(3,in),zvertp(3,in)
       end do
 c slmod begin
-      CALL OutputData(86,'After calling DOTARG')
-      CALL DumpGrid('After calling DOTARG')
+      in = 0
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)
+          IF (korpg(ik,ir).LT.MAXNKS*MAXNRS) in = MAX(korpg(ik,ir),in)
+        ENDDO
+      ENDDO
+      vpolmin = (MAXNKS*MAXNRS - in) / 2 + in
+      vpolyp  = vpolmin
+
+      CALL OutputData(85,'End of RJET')
+
+c      z0  = -z0
+c      zxp = -zxp
+c      DO id = 1, in
+c        zvertp(1:4,id) = -zvertp(1:4,id)
+c      ENDDO 
+c      CALL OutputData(86,'End of RJET, really this time')
+c      CALL DumpGrid('End of RJET')
 c slmod end
 c
 c

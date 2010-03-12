@@ -1202,7 +1202,6 @@ c...                 980116023:           990429019 new:
             wallz1(walln,1) = wallco(i1,2)
             wallr1(walln,2) = wallco(i1+1,1)
             wallz1(walln,2) = wallco(i1+1,2)
-      
           ENDIF
         ENDDO
 
@@ -3563,7 +3562,9 @@ c        ir = 0
 
       CALL ER('FetchKORPG','Unable to find index',*99)
       RETURN
- 99   STOP
+ 99   CALL OutputData(86,'Unable to find KORPG index')
+      CALL DumpGrid('Unable to find KORPG index')
+      STOP
       END
 c
 c

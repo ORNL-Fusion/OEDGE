@@ -1373,9 +1373,9 @@ c
       WRITE(PINOUT,*) 'INTERPOLATING TARGET DATA'
 
 c...  Need to check that PSITARG is assigned:
-      IF (psitarg(irsep,2).EQ.0.0) 
-     .  CALL ER('InterpolateTargetData','PSITARG does not appear to '//
-     .                                  'be assigned',*99)
+c      IF (psitarg(irsep,2).EQ.0.0) 
+c     .  CALL ER('InterpolateTargetData','PSITARG does not appear to '//
+c     .                                  'be assigned',*99)
 
       repeat = .TRUE.
 
