@@ -98,16 +98,19 @@ c...  Dump impurity data:
       CALL inPutData(crmi ,'IMP_A'         ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
-        CALL inPutData(index(1:ike)   ,'INDEX','N/A')                     
-        CALL inPutData(pos  (1:ike)   ,'POS'  ,'N/A')                     
-        CALL inPutData(tube (1:ike)   ,'TUBE' ,'N/A')                     
-        CALL inPutData(kss  (1:ike,ir),'S'    ,'N/A')                     
+        CALL inPutData(index(1:ike)   ,'INDEX' ,'N/A')                     
+        CALL inPutData(pos  (1:ike)   ,'POS'   ,'N/A')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE'  ,'N/A')                     
+        CALL inPutData(kss  (1:ike,ir),'S'     ,'m')                     
+        CALL inPutData(kps  (1:ike,ir),'P'     ,'m')
+        CALL inPutData(kvols(1:ike,ir),'VOLUME','m-3')
       ENDDO
       DO iz = 0, MIN(nizs,cion)
         WRITE(tag,'(A,I0.2)') 'IMP_DENS_',iz

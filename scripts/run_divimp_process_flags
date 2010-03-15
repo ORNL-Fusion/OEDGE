@@ -40,45 +40,48 @@
   setenv EIR15  
   setenv EIRPHOTONS 
 
-  if      ( "$1" == "-eirene04" || "$1" == "-04" ) then
+  if ( "$1" == "-eirene04" || "$1" == "-04" ) then
     shift 
     setenv EIRTEMP eirene04
     setenv EIRFILE eirene04.dat
   endif
 
-  setenv EIRRAW  "no"
-  if      ( "$1" == "-eirene06" || "$1" == "-06" ) then
+  if ( "$1" == "-eirene06" || "$1" == "-06" ) then
     shift 
     setenv EIRTEMP  eirene06
     setenv EIRFILE  eirene06.dat
   endif
 
-  if      ( "$1" == "-eirene99" || "$1" == "-99" ) then
+  if ( "$1" == "-eirene99" || "$1" == "-99" ) then
     shift 
     setenv EIRTEMP  eirene99
     setenv EIRFILE  eirene99.dat
   endif
 
-  if      ( "$1" == "-cr" ) then
+  setenv EIRRAW  "no"
+  if ( "$1" == "-cr" ) then
     shift 
     setenv EIRRAW  "yes"
   endif
+
   if      ( "$1" == "-template" || "$1" == "-t" ) then
     shift 
     setenv EIRFILE  $EIRFILE.$1
     shift
   endif
-  if      ( "$1" == "-photons" ) then
+
+  if ( "$1" == "-photons" ) then
     shift 
     setenv EIRPHOTONS  yes
     setenv EIRFILE     $EIRFILE.photons
   endif
-  if      ( "$1" == "-13" ) then
+
+  if ( "$1" == "-13" ) then
     shift 
     setenv EIR13  $1
     shift 
   endif
-  if      ( "$1" == "-15" ) then
+  if ( "$1" == "-15" ) then
     shift 
     setenv EIR15  $1
     shift 

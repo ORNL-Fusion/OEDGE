@@ -2553,12 +2553,11 @@ c slmod begin
       if (northopt.eq.3) then
          IF (stopopt2.EQ.900) THEN
            CALL CalcMetricQuickandDirty
-         ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
-           WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
-           thetag = 1.0
+c         ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
+c           WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
+c           thetag = 1.0
          ELSEIF (.TRUE..OR.grdnmod.NE.0) THEN
            IF (grdnmod.EQ.0) THEN
-             WRITE(0,*)
              WRITE(0,*) 'WARNING tauin1: Calling the new THETAG '
              WRITE(0,*) '  calculation code for all cases as of '
              WRITE(0,*) '  10/03/2010'

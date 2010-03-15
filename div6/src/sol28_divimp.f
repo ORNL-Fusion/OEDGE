@@ -1349,9 +1349,7 @@ c      END
 c
 c ======================================================================
 c
-
-
-      SUBROUTINE BuildLinearGrid
+      SUBROUTINE BuildLinearGrid_OLD
       IMPLICIT none
 
       INCLUDE 'params'
