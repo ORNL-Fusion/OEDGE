@@ -943,9 +943,9 @@ c...  Load all fluid grid tetrahedrons:
 
       CALL Wrapper_ClearObjects
 
-      WRITE(0,*) 'NSRF:',nsrf
-      WRITE(0,*) 'NOBJ:',nobj
-      WRITE(0,*) 'NVTX:',nvtx
+      WRITE(0,*) 'TETRAHEDRONS NSRF:',nsrf
+      WRITE(0,*) 'TETRAHEDRONS NOBJ:',nobj
+      WRITE(0,*) 'TETRAHEDRONS NVTX:',nvtx
 c
 c...  Need to build connection map, again:
       IF (.TRUE.) THEN

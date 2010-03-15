@@ -1899,7 +1899,7 @@ c...  RINGTYPE:
 c...  Check for secondary PFZ by scanning inward along the connection
 c     map to see if the core is encoutered -- if not, then set as a 
 c     PFZ ring:
-      IF (ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
+      IF (cgridopt.NE.LINEAR_GRID.AND.ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
         DO ir = irsep, irwall-1
           status = .TRUE.
           DO ik = 1, nks(ir)
@@ -1956,10 +1956,6 @@ c...grd
       idring(1)      = BOUNDARY
       idring(irwall) = BOUNDARY
       idring(irtrap) = BOUNDARY  
-
-
-
-
 c
 c     VIRLOC:
 c
@@ -1978,8 +1974,6 @@ c
 
 c...  Tighten up the grid :
 c..THIS MAY MAKE THE CODE BELOW REDUNDANT
-
-
 
 c
 c     IKTO2 and IKTI2:
@@ -2116,7 +2110,7 @@ c          STOP 'sdfsdf'
 c
 c     Set IKTO,I2 for double-null grids:
 c     ------------------------------------------------------------------    
-      DO ir = irsep+1, irwall-1
+      DO ir = irsep+1, irwall-1          ! *** REPLACE CHECK WITH FUNCTION OR DOUBLE_NULL FLAG ***
         IF (ringtype(ir).EQ.PFZ) EXIT
       ENDDO
       IF (ir.NE.irwall) THEN
@@ -2202,11 +2196,7 @@ c...      Secondary PFZ:
 
       ENDIF
 
-
  50   CONTINUE ! For NOPRIV...
-
-
-
 c
 c
 c     IKMIDPLANE:
@@ -2248,14 +2238,9 @@ c          b2 = 0.0D0
           ENDIF
         ENDDO
       ENDDO
-
-
-
-
 c
 c     RHO:
 c
-
 c      NEEDS REWORKING!  BIG TIME!
       rho = 0.0
       WRITE(SLOUT,*) 'CALCULATING RHO', r0,z0
@@ -2327,16 +2312,12 @@ c grid being used...?
 c        rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
         rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
       ENDDO
-
-
 c...  Find inner midplane "rho", for rings that do not intesect
 c     the outer midplane:
-
       a1 = DBLE(r0)
       b1 = DBLE(r0) - 100.0D0
       a2 = 0.0D0
       b2 = 0.0D0
-
 c...  Find RHOZERO:
       IF (connected) THEN 
         ir = irsep2
@@ -2362,36 +2343,6 @@ c...  Find RHOZERO:
      .    rho(ir,CELL1) = -(ikintersec(ir,IKLO) - rhozero)
       ENDDO
 
-c KILL
-cc..   Find PSI values for rings that do not intersect the outer
-cc     midplane:
-c      IF (psindat(2).GT.0) THEN
-cc...    Inside:
-c        DO ir = irsep, irwall-1      
-c          psitarg(ir,2) = 0.0
-c          IF (ikmidplane(ir,IKLO).NE.0.AND.
-c     .        ikmidplane(ir,IKHI).EQ.0) THEN
-c            IF (rho(ir,CELL1).LT.psidat(1,3).OR.
-c     .          rho(ir,CELL1).GT.psidat(psindat(1),3)) THEN
-cc...          Out of bounds:             
-c            ELSE
-c              CALL Fitter(psindat(2),psidat(1,3),psidat(1,4),
-c     .                    1,rho(ir,CELL1),psitarg(ir,2),'LINEAR')
-c            ENDIF
-c          ENDIF
-c        ENDDO
-c      ENDIF
-
-c...  Fill in PSITARG:
-c      DO ir = irsep, nrs
-c        IF (idring(ir).EQ.-1) CYCLE
-c        IF (psitarg(ir,1).EQ.0.0.AND.
-c     .      psitarg(ir,2).NE.0.0) psitarg(ir,1) = psitarg(ir,2)
-c        IF (psitarg(ir,1).NE.0.0.AND.
-c     .      psitarg(ir,2).EQ.0.0) psitarg(ir,2) = psitarg(ir,1)
-c      ENDDO
-
-
       DO ir = 1, nrs
         WRITE(SLOUT,'(A,I4,1P,3E15.7)')
      .    'IR RHO = ',ir,(rho(ir,in),in=1,3)
@@ -2413,8 +2364,6 @@ c
       DO ir = 1, nrs
         IF (idring(ir).EQ.-1) ksmaxs(ir) = MAX(ksmaxs(ir),1.0)
       ENDDO
-
-
 c
 c jdemod
 c

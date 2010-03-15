@@ -1170,6 +1170,7 @@ c
       IF (stopopt.EQ.14) RETURN
 
       CALL DB('Entering BUILDNEUTRALWALL')
+      WRITE(88,*) 'ENTERING BUILDNEUTRALWALL'
 
       CALL OutputGrid(85,'Before building neutral wall')
 

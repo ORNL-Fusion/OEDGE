@@ -1494,9 +1494,8 @@ c
       INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:),wall_in(:,:)
       REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:),eirdat(:,:,:)
 
-
       wall_ignored = .FALSE.
-      debug        = .TRUE.
+      debug        = .FALSE.
 
       ALLOCATE(tdata(MAXNKS,MAXNRS,5 ))
       ALLOCATE(tflux(MAXSEG       ,10))
@@ -1829,34 +1828,23 @@ c...  Normalize volume quantities (need to be careful vis-a-vis relaxation):
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         DO ik = 1, nks(ir)
-          norm = 1.0 / kvols(ik,ir)
-c          norm = 1.0 / (kvols(ik,ir) * eirtorfrac)
+          norm = 1.0 / kvols(ik,ir)  ! KVOLS scaled by EIRTORFRAC in tau.f
 
 c...      Volume normalization:
-          tdata(ik,ir,1:5) = tdata(ik,ir,1:5) / kvols(ik,ir)
+          tdata(ik,ir,1:5) = tdata(ik,ir,1:5) * norm
 c...      Linear relaxation:
           pinion(ik,ir) = (1.0-frac)*pinion(ik,ir) + frac*tdata(ik,ir,1)
           pinrec(ik,ir) = (1.0-frac)*pinrec(ik,ir) + frac*tdata(ik,ir,2)
           pinmp (ik,ir) = (1.0-frac)*pinmp (ik,ir) + frac*tdata(ik,ir,3)
           pinqi (ik,ir) = (1.0-frac)*pinqi (ik,ir) + frac*tdata(ik,ir,4)
           pinqe (ik,ir) = (1.0-frac)*pinqe (ik,ir) + frac*tdata(ik,ir,5)
-c          pinion (ik,ir) = (1.0 - frac) * pinion(ik,ir) + 
-c     .                            frac  * tdata (ik,ir,1) / kvols(ik,ir)
-c          pinrec (ik,ir) = (1.0 - frac) * pinrec(ik,ir) + 
-c     .                                    tdata (ik,ir,2) / kvols(ik,ir)
 c...      Not relaxed, volume normalize:
-          pinatom(ik,ir) = pinatom(ik,ir) * norm  !/ kvols(ik,ir)
-          pinmol (ik,ir) = pinmol (ik,ir) * norm  !/ kvols(ik,ir)
+          pinatom(ik,ir) = pinatom(ik,ir) * norm  
+          pinmol (ik,ir) = pinmol (ik,ir) * norm  
           pinline(ik,ir,1:6,H_BALPHA) = pinline(ik,ir,1:6,H_BALPHA) * !/
-     .                                  norm  !kvols(ik,ir)
+     .                                  norm  
           pinline(ik,ir,1:6,H_BGAMMA) = pinline(ik,ir,1:6,H_BGAMMA) * !/
-     .                                  norm  !kvols(ik,ir)
-c          DO i1 = 1, 6
-c            pinline(ik,ir,i1,H_BALPHA) = pinline(ik,ir,i1,H_BALPHA) /
-c    .                                    kvols(ik,ir)
-c            pinline(ik,ir,i1,H_BGAMMA) = pinline(ik,ir,i1,H_BGAMMA) /
-c    .                                    kvols(ik,ir)
-c          ENDDO
+     .                                  norm  
 c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
 
@@ -1890,17 +1878,17 @@ c
       flxhw8 = 0.0
 
       DO iw = 1, nvesm+nvesp
-        cir = 2 * PI * 0.5 * (rvesm(iw,1) + rvesm(iw,2))
+        cir = 2.0 * PI * 0.5 * (rvesm(iw,1) + rvesm(iw,2))
         len = SQRT((rvesm(iw,1) - rvesm(iw,2))**2.0 +
      .             (zvesm(iw,1) - zvesm(iw,2))**2.0)
         area = cir * len
-        fluxhw(iw) = 0.0  ! (adatp(i2,1,1) + mdatp(i2,1,1)) / len / cir
+        fluxhw(iw) = 0.0  
         flxhw2(iw) = (tflux(iw,1) + tflux(iw,3)) / area  ! ***
         flxhw3(iw) = tflux(iw,5) / area
-        IF (tflux(iw,5).NE.0.0) flxhw4(iw) = tflux(iw,6) / tflux(iw,5) ! 0.0  ! adatp(i2,1,1)     ! ***
-        flxhw5(iw) = tflux(iw,2) / (tflux(iw,1) + 1.0E-10) ! *** 
-        flxhw6(iw) = tflux(iw,1) / area  ! ***
-        flxhw7(iw) = 0.0 ! tflux(iw,4) / (tflux(iw,3) + 1.0E-10) ! *** 0.0  ! ***
+        IF (tflux(iw,5).NE.0.0) flxhw4(iw) = tflux(iw,6) / tflux(iw,5)  ! *** HACK AVERAGE IMPURITY INJECTION ENERGY ***
+        IF (tflux(iw,1).NE.0.0) flxhw5(iw) = tflux(iw,2) / tflux(iw,1)  ! flxhw5(iw) = tflux(iw,2) / (tflux(iw,1) + 1.0E-10)
+        flxhw6(iw) = tflux(iw,1) / area 
+        flxhw7(iw) = 0.0                                                ! tflux(iw,4) / (tflux(iw,3) + 1.0E-10) 
 c...    If this is fixed on the EIRENE side so that it is no longer
 c       statistical, then the use of FLXHW8 in the CALC_TARGFLUXDATA 
 c       routine can be removed:
@@ -1965,6 +1953,7 @@ c...  Dump EIRENE calculated impurity distribution data:
         CALL inOpenInterface('idl.eirene_imp')
         CALL inPutData(irsep -1,'GRID_ISEP' ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
         CALL inPutData(irwall-1,'GRID_IPFZ' ,'N/A')  ! the boundary rings are not present
+        CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  
         DO ir = 2, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
           ike = nks(ir)
@@ -1976,6 +1965,8 @@ c...  Dump EIRENE calculated impurity distribution data:
             CALL inPutData(ik  ,'POS'  ,'N/A')                     
             CALL inPutData(tube,'TUBE' ,'N/A')  
             CALL inPutData(kss(ik,ir),'S','m')
+            CALL inPutData(kps(ik,ir),'P','m')
+            CALL inPutData(kvols(ik,ir),'VOLUME','m-3')
             CALL inPutData(eirdat(ik,ir,2),'IMP_DENS_00' ,'m-3 s-1')  
             CALL inPutData(eirdat(ik,ir,1),'IMP_IONIZ_00','m-3 s-1')  
           ENDDO
