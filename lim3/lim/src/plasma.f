@@ -349,9 +349,9 @@ C-----------------------------------------------------------------------
 C     INBOARD CURVE FITTING OPTION FOR TEMPERATURE AND DENSITY                  
 C-----------------------------------------------------------------------        
 C                                                                               
-C---- OPTION 3 OR 7: CURVE FITTING INBOARD                                          
+C---- OPTION 3 : CURVE FITTING INBOARD                                          
 C                                                                               
-      IF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                     
+      IF (CIOPTG.EQ.3) THEN                                                     
 C                                                                               
 C------ INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
@@ -366,9 +366,9 @@ C
      >           NXS-IXOUT,XOUTS(IXOUT+1),CRNBS (IXOUT+1,IY),'LINEAR')          
       ENDIF                                                                     
 C                                                                               
-C---- OPTION 3 or 7: CURVE FITTING INBOARD                                          
+C---- OPTION 3 : CURVE FITTING INBOARD                                          
 C                                                                               
-      IF (CIOPTK.EQ.3.or.cioptk.eq.7) THEN                                                     
+      IF (CIOPTK.EQ.3) THEN                                                     
 C                                                                               
 C------ INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
@@ -412,19 +412,11 @@ C
 C                                                                               
 C---- OPTIONS 0           : CONSTANT                                            
 C---- OPTIONS 1,2,3,4,5,6 : EXPONENTIAL DECAY                                   
-c---- Options 7           : FITTED
 C                                                                               
 C     
 C     SET UP GRADIENT MULTIPLIER FOR LIMITER EDGE POSITIONS
 C     MULTIPLY INITIAL TEMPERATURES BY GRADIENT VALUE
 C
-c     jdemod - July 2009 
-c            - allow the base outboard density profile to be specified
-c              in the input and fitted instead of just using an 
-c              exponential 
-c
-c
-c
 C
       IF (NTEG.NE.0) THEN 
          TEGOUL = CTBOUL *  TMEG(1,2)
@@ -440,166 +432,68 @@ C
          TIGOUL = CTIBOUL
          TIGOUG = CTIBOUG
       ENDIF
-
-c
-c     Base Density and temperature profiles along the limiter surface
-c
-c
-      if (cioptg.eq.7) then 
-
-C                                                                               
-C-----------------------------------------------------------------------        
-C     OUTBOARD CURVE FITTING OPTION FOR TEMPERATURE AND DENSITY                  
-C-----------------------------------------------------------------------        
-C                                                                               
-C---- OPTION 7 : CURVE FITTING OUTBOARD
-C                                                                               
-C                                                                               
-C------ INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
-C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
-C                                                                               
-          CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >           NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
-C                                                                               
-C------ INTERPOLATE DENSITIES INBOARD FROM CUBIC SPLINE FIT.                    
-C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
-C                                                                               
-          CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >           nqxso-1,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
-
-        qtembs(:,2) = qtembs(:,1)
-        qrnbs(:,2) = qrnbs(:,1)
-
-      else
-
-         DO IQX = 1-NQXSO, 0                                                  
-           IF (CIOPTG.EQ.0) THEN                                                   
-             QTEMBS(IQX,1) = TEGOUL                             
-             QTEMBS(IQX,2) = TEGOUG  
-             QRNBS(IQX,1)  = CNBOUL                                                
-             QRNBS(IQX,2)  = CNBOUG                                                
-           ELSE                                                                    
-             QTEMBS(IQX,1) = TEGOUL * EXP (QXS(IQX) / CLTOUL)        
-             QTEMBS(IQX,2) = TEGOUG * EXP (QXS(IQX) / CLTOUG)            
-             QRNBS(IQX,1)  = CNBOUL * EXP (QXS(IQX) / CLNOUL)                      
-             QRNBS(IQX,2)  = CNBOUG * EXP (QXS(IQX) / CLNOUG)                      
-           ENDIF                                                                   
-
-        end do
-C                                                                               
-      endif
-
-C                                                                               
-C---- OPTION 7 : CURVE FITTING OUTBOARD
-C                                                                               
-      IF (CIOPTK.EQ.7) THEN                                                     
-C                                                                               
-C------ INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
-C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
-C                                                                               
-          CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >           nqxso-1,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
-C                                                                               
-          qtembsi(:,2) = qtembsi(:,1)
-c
-      else
-
-         DO IQX = 1-NQXSO, 0                                                  
+      DO 1100 IQX = 1-NQXSO, 0                                                  
+        IF (CIOPTG.EQ.0) THEN                                                   
+          QTEMBS(IQX,1) = TEGOUL                             
+          QTEMBS(IQX,2) = TEGOUG  
+          QRNBS(IQX,1)  = CNBOUL                                                
+          QRNBS(IQX,2)  = CNBOUG                                                
+        ELSE                                                                    
+          QTEMBS(IQX,1) = TEGOUL * EXP (QXS(IQX) / CLTOUL)        
+          QTEMBS(IQX,2) = TEGOUG * EXP (QXS(IQX) / CLTOUG)            
+          QRNBS(IQX,1)  = CNBOUL * EXP (QXS(IQX) / CLNOUL)                      
+          QRNBS(IQX,2)  = CNBOUG * EXP (QXS(IQX) / CLNOUG)                      
+        ENDIF                                                                   
 C
-C          BACKGROUND ION TEMPERATURES ALONG THE LIMITER FOR 
-C          USE IN THE CALCULATION OF NEUTRAL PARTICLE INJECTION 
-C          ENERGIES  .08/02/90. DAVID ELDER
+C       BACKGROUND ION TEMPERATURES ALONG THE LIMITER FOR 
+C       USE IN THE CALCULATION OF NEUTRAL PARTICLE INJECTION 
+C       ENERGIES  .08/02/90. DAVID ELDER
 C
-           IF (CIOPTK.EQ.0) THEN                                                   
-             QTEMBSI(IQX,1) = TIGOUL                                     
-             QTEMBSI(IQX,2) = TIGOUG                                    
-           ELSE                                                                    
-             QTEMBSI(IQX,1) = TIGOUL * EXP (QXS(IQX) / CLTIOUL)      
-             QTEMBSI(IQX,2) = TIGOUG * EXP (QXS(IQX) / CLTIOUG)       
-           ENDIF                                                                   
-        end do
-
-      endif
-c
-c     Calculate base plasma conditions on the general grid
-c
-
-
-      IF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                     
+        IF (CIOPTK.EQ.0) THEN                                                   
+          QTEMBSI(IQX,1) = TIGOUL                                     
+          QTEMBSI(IQX,2) = TIGOUG                                    
+        ELSE                                                                    
+          QTEMBSI(IQX,1) = TIGOUL * EXP (QXS(IQX) / CLTIOUL)      
+          QTEMBSI(IQX,2) = TIGOUG * EXP (QXS(IQX) / CLTIOUG)       
+        ENDIF                                                                   
+ 1100 CONTINUE                                                                  
+C                                                                               
+      IF (CIOPTG.EQ.3) THEN                                                     
         CTBIN = CTBINS(1,2)                                      
         CNBIN = CNBINS(1,2)                                                     
         WRITE (6,'('' PLASMA: CTBIN,CNBIN='',1P,2G12.4)') CTBIN,CNBIN           
       ENDIF                                                                     
 C
-      IF (CIOPTK.EQ.3.or.cioptk.eq.7) THEN                                                     
+      IF (CIOPTK.EQ.3) THEN                                                     
         CTIBIN = CTIBINS(1,2)                                                   
         WRITE (6,'('' PLASMA: CTIBIN='',1P,G12.4)') CTIBIN           
       ENDIF                                                                     
 C                                                                               
-      DO J = 1, 2                                                          
+      DO 1110 J = 1, 2                                                          
         QTEMBSI(1,J) = CTIBIN 
         QTEMBS(1,J) = CTBIN                                           
         QRNBS (1,J) = CNBIN                                                     
-      end do
+ 1110 CONTINUE                                                                  
 C                                                                               
-
-
-
-
-      DO IY = -NYS, NYS                                                    
-c
-c       Density and electron temperature
-c
-         if (cioptg.eq.7) then 
-c
-C           INTERPOLATE TEMPERATURES OUTBOARD FROM FITTER ROUTINE.                   
-C                                                                               
-           CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >             IXOUT,XOUTS(1),CTEMBS(1,IY),'LINEAR')          
-C                                                                               
-C           INTERPOLATE DENSITIES OUTBOARD FROM FITTER ROUTINE.                   
-c
-           CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >           IXOUT,XOUTS(1),CRNBS(1,IY),'LINEAR')          
-        else
-
-           DO IX = 1, IXOUT                                                   
-             IF (CIOPTG.EQ.0) THEN                                                 
-               IF (IY.GT.0) THEN                                                   
-                 CTEMBS(IX,IY) = CTBOUG                                            
-                 CRNBS(IX,IY)  = CNBOUG                                            
-               ELSE                                                                
-                 CTEMBS(IX,IY) = CTBOUL                                            
-                 CRNBS(IX,IY)  = CNBOUL                                            
-               ENDIF                                                               
-             ELSE                                                                  
-               IF (IY.GT.0) THEN                                                   
-                 CTEMBS(IX,IY) = CTBOUG * EXP (XOUTS(IX) / CLTOUG)                 
-                 CRNBS(IX,IY)  = CNBOUG * EXP (XOUTS(IX) / CLNOUG)                 
-               ELSE                                                                
-                 CTEMBS(IX,IY) = CTBOUL * EXP (XOUTS(IX) / CLTOUL)                 
-                 CRNBS(IX,IY)  = CNBOUL * EXP (XOUTS(IX) / CLNOUL)                 
-               ENDIF                                                               
-             ENDIF                                                                 
-          end do
-       endif
-c
-c     Ion temperature
-c
-       if (cioptk.eq.7) then
-
-C------ INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
-C------ EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
-C                                                                               
-        CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >            IXOUT,XOUTS(1),CTEMBSI(1,IY),'LINEAR')        
-C                                                                               
-
-      else
-       
-
-         DO IX = 1, IXOUT                                                   
-
+      DO 1120 IY = -NYS, NYS                                                    
+        DO 1120 IX = 1, IXOUT                                                   
+          IF (CIOPTG.EQ.0) THEN                                                 
+            IF (IY.GT.0) THEN                                                   
+              CTEMBS(IX,IY) = CTBOUG                                            
+              CRNBS(IX,IY)  = CNBOUG                                            
+            ELSE                                                                
+              CTEMBS(IX,IY) = CTBOUL                                            
+              CRNBS(IX,IY)  = CNBOUL                                            
+            ENDIF                                                               
+          ELSE                                                                  
+            IF (IY.GT.0) THEN                                                   
+              CTEMBS(IX,IY) = CTBOUG * EXP (XOUTS(IX) / CLTOUG)                 
+              CRNBS(IX,IY)  = CNBOUG * EXP (XOUTS(IX) / CLNOUG)                 
+            ELSE                                                                
+              CTEMBS(IX,IY) = CTBOUL * EXP (XOUTS(IX) / CLTOUL)                 
+              CRNBS(IX,IY)  = CNBOUL * EXP (XOUTS(IX) / CLNOUL)                 
+            ENDIF                                                               
+          ENDIF                                                                 
           IF (CIOPTK.EQ.0) THEN                                                 
             IF (IY.GT.0) THEN                                                   
               CTEMBSI(IX,IY) = CTIBOUG                                      
@@ -613,21 +507,7 @@ C
               CTEMBSI(IX,IY) = CTIBOUL * EXP (XOUTS(IX) / CLTIOUL)              
             ENDIF                                                               
           ENDIF                                                                 
-        end do
-
-       endif
-
-
-
-      end do
-
-
-
-c
-c------------------------------------------------------------
-c     Apply density and temperature gradients outboard
-c------------------------------------------------------------
-c
+ 1120 CONTINUE                                                                  
 C
 C     UNFORTUNATELY, THE METHOD THAT ALLOWED SIMPLE CALCULATION 
 C     OF THE TEMPERATURES AT THE LIMITER EDGE WILL NOT WORK 

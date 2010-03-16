@@ -501,8 +501,8 @@ c
 
       STOP 'END OF DIVIMP'
 C                                                                      
- 1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - RUN ABORTED')      
-      STOP 'ERROR OCCURED DURING DATA INPUT - RUN ABORTED'                                                            
+ 1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - ABORTED')      
+      STOP                                                              
       END                                                               
 c
 c

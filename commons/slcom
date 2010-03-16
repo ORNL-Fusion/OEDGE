@@ -83,20 +83,14 @@ c       channel currently:
      .           H_MP5  = 17,H_MP6  = 18,H_MP7  = 19,H_MP8  = 20,
      .           H_MP9  = 21)
 
+c...  Block cleared out -SL, 28.07.09
       COMMON /SLCOM1/
-     .  pfluxe,pfluxi,intpowe,intpowi,powpei,intpei,powpmk,intpmk,
-     .  powesum,powisum,
-     .  dumpae1,dumpai1,dumsrc1,dumpei1,dumpei2,
-     .  actswpow2,actswion2,osm_store,osm_preopt,osm_recopt,osm_model,
+     .  intpmk,dumpae1,dumpai1,dumpei1,
+     .  osm_store,osm_preopt,osm_recopt,osm_model,
      .  osmbulkn,osmbulkte,osmbulkti,osmbulkv,optuser,
-     .  osmikshift,
-     .  NIJC,PIJC,
-     +  EFPOPT,FPXMAXL,FPTIML,FPXMAXH,FPTIMH,
-     +  DPERP6,WGDOPT,
-     +  DRFRAC,DRSPAN,IRDRFT,DRDECY,DRSOUR,DRFRFC,
-     +  SSPEED,DRTOFX,thesis,
-     .  tuprati,tuprat,plrati,plrat
-      save /SLCOM1/
+     .  osmikshift,thesis,
+     .  tuprati,tuprat
+      SAVE /SLCOM1/
 
       COMMON /slcom2/
      +  IDRING,supflx,ringtype,
@@ -145,7 +139,8 @@ c       channel currently:
      .  grd_minpl,grd_refine,grd_range,grd_shift,grd_thresh,
      .  rel_opt  ,rel_frac,rel_count,rel_niter,rel_nstep ,rel_iter  ,
      .  rel_step ,rel_pace,rel_data ,rel_ndata,rel_bound1,rel_bound2,
-     .  relmode,relreset,relseed,relexpdat,
+     .  relmode,relreset,relexpdat,
+c     .  relmode,relreset,relseed,relexpdat,
      .  rel_viter,osm_sympt,osm_symopt,osm_powopt,
      .  osm_dp1,osm_dp2,osm_dp3,osm_dp4,osm_dp5,osm_dp6,osm_code,
      .  rel_tol  ,rel_symfr,rel_prbfr , rel_mfsp,
@@ -153,6 +148,9 @@ c       channel currently:
      .  rel_deltati,rel_dirtg,rel_hte,rel_hti,rel_hne,
      .  rel_hproe  ,rel_hproi,osmmock
       save /slcom3/
+
+      COMMON /slcom3_5/ relseed,ringuppr
+      SAVE /slcom3_5/
 
       COMMON /slcom4/
      .  slffric,osm_watch1,osm_watch2,osm_probe,osm_nflag,ikbound,
@@ -170,7 +168,8 @@ c       channel currently:
      .  adp_opt,adp_region,adp_upper,adp_lower,osm_mode,
      .  osm_range,s21_ndatai,s21_ndatao,s21_datai,s21_datao,
      .  s22_ir,s22_l1,s22_nr,s22_maxs,s22_tr,s22_midnks,s21_mode,
-     .  ringuppr,ringmodel,osms28,osmns28,s22pfzion,
+     .  ringmodel,osms28,osmns28,s22pfzion,
+c     .  ringuppr,ringmodel,osms28,osmns28,s22pfzion,
      .  osms28over,osmns28over,s28sym
       save /slcom4/
 
@@ -202,27 +201,9 @@ c
 
       INTEGER outmode
 c
-c What are these?
-c
-        INTEGER NIJC
-        REAL    PIJC(10)
-c
-c Extended far-periphery:
-c
-        INTEGER EFPOPT
-        REAL    FPXMAXL,FPTIML,FPXMAXH,FPTIMH
-c
 c New Dperp options:
 c
-        REAL    DPERP6
-        REAL    DRSPAN,DRFRAC,DRSOUR
-        INTEGER IRDRFT,DRDECY
-        REAL    DRFRFC(MAXNRS),SSPEED(MAXNKS,MAXNRS),DRTOFX
-        INTEGER NFR
-c
-c WGDOPT: 1-write background plasma to file
-c
-        INTEGER WGDOPT,optuser
+        INTEGER optuser
 c
 c Cell width calculation option:
 c
@@ -488,12 +469,7 @@ c     in both.
       PARAMETER (SWPOW2 = 38,SWPOW3 = 39,SWION2 = 40)
 
 c...these 100's are MXSPTS in solparams... move later...
-      REAL*8
-     .  powesum,powisum,
-     .  dumpei1,dumpei2,dumpae1,dumpai1,dumsrc1,
-     .  actswpow2,actswion2,
-     .  pfluxi (100),pfluxe (100),powpei(100),powpmk(0:100),
-     .  intpowi(100),intpowe(100),intpei(100),intpmk(100)
+      REAL*8 dumpei1,dumpae1,dumpai1,intpmk(100)
 
 c
 c     Statistics:
@@ -569,7 +545,7 @@ c...   SOL27:
       REAL*8 osmpmk2(0:MAXNKS,MAXNRS)
 
       LOGICAL thesis
-      REAL    tuprati,tuprat,plrati,plrat
+      REAL    tuprati,tuprat
 
       INTEGER vacnseg,vacregion(MAXVACREGION),vacnpla
       REAL    vacseg(MAXNKS,6),vacpla(MAXNKS,10)

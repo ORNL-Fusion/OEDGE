@@ -11,9 +11,11 @@ c
 !      Use HC_WBC_Comp ! Records ion death statistics for WBC comparison.
 !      Use HC_Utilities ! Sheath E-field calc by Brooks.
 c
-      use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
+c slmod begin
+      use mod_interface
+c slmod end
 c
       implicit none
 c
@@ -77,6 +79,8 @@ c
       include    'hc_global_opts'
 c slmod begin - temp
       include 'slcom'
+
+      integer i
 c slmod end
 
 
@@ -535,7 +539,7 @@ c
 c
 c     Calculate transport coefficients from OSM
 c
-      if (cpinopt.eq.1) then 
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then 
          call oskin
       endif 
 c
@@ -779,11 +783,9 @@ C
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
-     >         csputopt.eq.6)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
         CALL SYLD96 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-        call init_eckstein_2007(mattar,matp)
       ENDIF
 c
 C
@@ -954,7 +956,6 @@ c
         REXIT  = 0.0
 c
       ENDIF
-
 c
       RNEUT1 = RNEUT
       CLLL(-1) = REXIT
@@ -1019,8 +1020,10 @@ c sltmp
 
       DO 800  IMP = 1, NATIZ
 
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0) 
-     .    WRITE(0,*) 'debug imp:',imp
+        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+     .    WRITE(0,*) 'debug imp:',imp,natiz
+c        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0) 
+c     .    WRITE(0,*) 'debug imp:',imp
 
 c
 c       Particle initialization
@@ -1373,7 +1376,6 @@ c
 c           STOP
 c
         endif
-
 c
 c       SET Initial S and CROSS postion for particles.
 c
@@ -1578,10 +1580,6 @@ c
 c
            irstart = idatizs (imp,3)
            ikstart = idatizs (imp,4)
-c
-c          Transferred source terms and localization data  
-c          based on entire molecule 
-c
            incore = Travel_Locations (imp,1)
            inedge = Travel_Locations (imp,2)
            inmsol = Travel_Locations (imp,3)
@@ -1607,9 +1605,8 @@ c
 	   ! Updating num_entered_core is done by DIVIMP for each HC.      
            num_entered_core = num_entered_core + sputy
 c
-           ! jdemod - wtsource data for each HC particle is accumulated
-           !          in the HC code ... continued for ions here  
-           !
+           ! Updating all other position variables is done by 
+	   ! passed information from DIVIMP-HC.
            if (.not.incore) then  
               incore = .true.
 c
@@ -2084,6 +2081,7 @@ c
 
         if (debug0) write(0,*) 'Before CS',ifate,iz
 
+c sltmp
         call check_ion_change_state(seed,nrand,neutim,nizs)
 
         if (debug0) write(0,*) 'After CS',ifate,iz
@@ -2789,7 +2787,7 @@ c
      >                                 tneut)
         call prr ('NUMBER OF MTC EVENTS FOR ORIG NEUTRALS    ',
      >                                 mtcinf(1,1))
-        if (mtcinf(1,1).gt.0.0.and.tneut.gt.0) then  
+        if (mtcinf(1,1).gt.0.0) then  
 
          call prr ('AVERAGE NUMBER OF MTC EVENTS/NEUTRAL     ',
      >                   mtcinf(1,1)/tneut)
@@ -2946,11 +2944,8 @@ c
          call prr0('  - NUMBER ENTERING MAIN           ',recmain)
          call prr0('  - NUMBER EXITING MAIN            ',recexit)
          call prr0('  - NUMBER STRIKING CENTRAL MIRROR ',reccent)   
-         if (tatiz.gt.0) then 
-             call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
+         call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
-         endif
-
 c
          call prb
 c         
@@ -3041,11 +3036,8 @@ c
          call prr0('   - NUMBER ENTERING MAIN           ',refmain)
          call prr0('   - NUMBER EXITING MAIN            ',refexit)
          call prr0('   - NUMBER STRIKING CENTRAL MIRROR ',refcent)   
-         if (tatiz.gt.0) then 
-            call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
+         call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
-         endif
-
          call prb
       endif
 c
@@ -3066,9 +3058,7 @@ c
          end do
       end do   
 c
-      if (tmpiz.gt.0) then 
-         call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
-      endif
+      call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
 c
       call prb
       call prchtml('SUMMARY OF INITIAL IMPURITY NEUTRAL IONIZATION',
@@ -3660,7 +3650,8 @@ C
   960   CONTINUE
   990 CONTINUE
 
-
+        WRITE(6,*) 'powls:',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims:',SNGL(ddlims(1,irsep,:))
 c
 c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including 
 c     impurity data have been loaded for reference.
@@ -3829,7 +3820,7 @@ C
           PNESA(IK) = KNBS(IK,IR) * RIZB
           PNBS(IK) = KNBS(IK,IR)
 c
-          if (cpinopt.eq.1) then 
+          if (cpinopt.eq.1.or.cpinopt.eq.4) then 
              PNHS(IK) = PINATOM(IK,IR)
           else
              PNHS(IK) = E2DATOM(IK,IR)
@@ -4784,6 +4775,12 @@ c     Calculate the wall distribution of any hydrogenic or impurity
 c     radiation in POWLS and HPOWLS.  
 c       
       call calc_wallprad(nizs)
+
+
+c        WRITE(0,*) 'powls:',powls(ikti,irsep,:)
+c        WRITE(0,*) 'ddlims:',SNGL(ddlims(ikti,irsep,:))
+        WRITE(6,*) 'powls end div:',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims end div:',SNGL(ddlims(1,irsep,:))
 C
 C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
@@ -4819,7 +4816,25 @@ c
          write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
      >       in * d_pinch_vel, d_pinch_v(in)
       end do 
+c slmod begin
+      CALL inOpenInterface('idl.divimp_summary')
+      i = nimps
+      IF (cneuth.NE.-1) i = i + nimps2  ! Check for a supplementary launch
+      CALL inPutData(i               ,'IONS_REQUESTED'       ,'N/A')
+      CALL inPutData(tneut           ,'NEUTRALS_LAUNCHED'    ,'N/A')
+      CALL inPutData(tfail           ,'NEUTRALS_FAILED'      ,'N/A')
+      CALL inPutData(tatiz           ,'IONS_CREATED'         ,'N/A')
+      CALL inPutData(num_entered_core,'IONS_REACHING_CORE'   ,'N/A')
+      CALL inPutData(twall           ,'IONS_LOST_WALL'       ,'N/A')
+      CALL inPutData(tdep            ,'IONS_LOST_TARGET'     ,'N/A')
+      CALL inPutData(tbyond          ,'IONS_LOST_STATE_LIMIT','N/A')
+      CALL inPutData(tbelow          ,'IONS_LOST_RECOMBINED' ,'N/A')
+      CALL inPutData(cion            ,'ION_ATOMIC_NUMBER'    ,'N/A')
+      CALL inPutData(nizs            ,'MAX_CHARGE_STATE'     ,'N/A')
+      CALL inCloseInterface
 
+      CALL OutputData(87,'END OF DIV')
+c slmod end
 c
 c      if (cisterrcnt.ne.0) then 
 c         call prb
@@ -7431,8 +7446,12 @@ C       IONISATION AND RECOMBINATION
 C-----------------------------------------------------------------------
 C
         KK = KK + 1
+c sltmp - turning off ionisation and recombination
+c        IF (.FALSE..AND.RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
         IF (RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
           KK = KK + 1
+c sltmp - turning off recombination
+c          IF (.FALSE..AND.RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
           IF (RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
             CICRCS(IZ) = CICRCS(IZ) + SPUTY
 c            CIFRCS(IZ) = MIN (CIFRCS(IZ), CIST)

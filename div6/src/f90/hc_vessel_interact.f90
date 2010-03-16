@@ -940,13 +940,6 @@ Contains
     NRand = NRand + 1
     Call Surand2 (Seed, 1, Random_Value)
     Random_Angle =  Pi_Value * Random_Value -  Pi_Value / 2.0
-
-    ! jdemod - limit random_angle to [PI/2-PI/180, -PI/2 + PI/180] to avoid V=0  
-    if (abs(random_angle).gt.(pi_value/2.0 - Pi_value/180.0)) then 
-       random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
-    endif
-
-
  
     ! jdemod
     !
@@ -1023,10 +1016,6 @@ Contains
     Call Surand2 (Seed, 1, Random_Value)
     Random_Angle =  Pi_Value * Random_Value -  Pi_Value / 2.0
 
-    ! jdemod - limit random_angle to [PI/2-PI/180, -PI/2 + PI/180] to avoid V=0  
-    if (abs(random_angle).gt.(pi_value/2.0 - Pi_value/180.0)) then 
-       random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
-    endif
 
     ! jdemod
     !
@@ -1422,9 +1411,8 @@ Contains
        Stop
     ElseIf (hc_reflection_angle_model .eq. 1) Then
        ! =1, Specular reflection from wall, bounds of +/-90 degrees from normal to vessel wall.
-       ! jdemod - Ion specular reflection doesn't make any sense - what is the incoming angle in this case?
        reflection_angle = 2.0*gthetas(target_segment) + sign ((PI-abs(incoming_angle)),-incoming_angle)
-       Write (Output_Unit_HC_Alert,*) "Specular reflection not yet supported.  Program stopping."
+       !Write (Output_Unit_HC_Alert,*) "Specular reflection not yet supported.  Program stopping."
        Stop
     ElseIf (hc_reflection_angle_model .eq. 2) Then
        ! =2, Isotropic reflection from vessel wall, bounds of +/-90 degrees from normal to vessel wall.
@@ -1640,7 +1628,6 @@ Contains
     !          from a surface interaction routine - thus the option and the vel_mult_recomb_neut multiplier are not applicable here
     HC_Velocity = 1.38E4 * SQRT (HC_Temperature / Find_HC_Mass (HC_Species,H_Isotope_Composition)) 
 
-
     ! Check for neutral heating.
     !If ( Impurity_Neutral_Vel_Opt .eq. 0) Then
     !   HC_Velocity = 1.38E4 * SQRT (HC_Temperature / Find_HC_Mass (HC_Species,H_Isotope_Composition)) *  Vel_Mult_Recomb_Neut
@@ -1649,7 +1636,6 @@ Contains
     !                &Vel_Mult_Recomb_Neut
     !End If
  
-    !write(0,'(a,3g18.6)') 'HC_REF_VEL:',hc_velocity, current_velocity_in_r,current_velocity_in_z
 
     if (hc_reflection_angle_model.eq.10) then 
        random_angle = 0.0
@@ -1658,22 +1644,7 @@ Contains
        ! Adjust velocity for projection to 2-D poloidal plane.
        NRand = NRand + 1
        Call Surand2 (Seed, 1, Random_Value)
-
-       ! jdemod - random angle represents a projection angle into the toroidal direction
-       !          it is assumed to be evenly distributed in the range -PI/2 to PI/2 
-       !          the remaining projected HC_velocity in the R,Z plane is thus HC_Velocity * cos(random_angle)
-       !          However, if random_angle is actually equal to +/- PI/2 the projected velocity -> 0 which
-       !          results in a zero or near zero particle velocity at a material surface which is an issue. 
-       !
-       !          Fix this by:                  1) this maximum value for this is limited to 1 degree less than 
-       !                                           PI/2 ... = [PI/2 - PI/180.0, -PI/2 + PI/180]
-       !                                           
        Random_Angle =  Pi_Value * Random_Value -  Pi_Value / 2.0
-
-       ! jdemod - limit random_angle to [PI/2-PI/180, -PI/2 + PI/180] to avoid V=0  
-       if (abs(random_angle).gt.(pi_value/2.0 - Pi_value/180.0)) then 
-          random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
-       endif
 
     endif
 
@@ -1703,10 +1674,6 @@ Contains
     !   write(0,'(a,2i8,10(1x,g20.12))') 'ERROR in neutral vessel reflect velocity:',Current_Cell,Current_Ring,Current_Angle*raddeg,&
     ! & current_velocity_in_r,current_velocity_in_z,HC_Velocity,Random_Angle,COS(Random_Angle)
     !endif
-    
-    !write(0,'(a,10g18.6)') 'HC_REF_VEL:',hc_velocity, current_velocity_in_r,current_velocity_in_z,random_angle
-
-    !if (hc_velocity.lt.100) stop 'hc_vel'
 
   End Subroutine HC_Neut_Vessel_Reflect_Velocity
 
@@ -1770,13 +1737,6 @@ Contains
     NRand = NRand + 1
     Call Surand2 (Seed, 1, Random_Value)
     Random_Angle =  Pi_Value * Random_Value -  Pi_Value / 2.0
-
-    ! jdemod - limit random_angle to [PI/2-PI/180, -PI/2 + PI/180] to avoid V=0  
-    if (abs(random_angle).gt.(pi_value/2.0 - Pi_value/180.0)) then 
-       random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
-    endif
-
-
     !Write (Output_Unit_Scratch,*) "neut_vessel_reflect_Velocity",Current_Cell,Current_Ring,Current_Angle,HC_Velocity,Random_Angle,COS(Random_Angle)
 
     ! jdemod
@@ -1864,13 +1824,6 @@ Contains
        NRand = NRand + 1
        Call Surand2 (Seed, 1, Random_Value)
        Random_Angle =  Pi_Value * Random_Value -  Pi_Value / 2.0
-
-      ! jdemod - limit random_angle to [PI/2-PI/180, -PI/2 + PI/180] to avoid V=0  
-      if (abs(random_angle).gt.(pi_value/2.0 - Pi_value/180.0)) then 
-         random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
-      endif
-
-
     endif
 
     !Write (Output_Unit_Scratch,'(a,2i8,4(1x,g20.12))') "ion_target_reflect_Velocity",&

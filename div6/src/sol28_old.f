@@ -5025,12 +5025,10 @@ c     .        x1,x2,x3,x5,
 
       SAVE
 
-
-      WRITE(0,*) 'SOL28 RINGS:',irs,ire
-
+c      WRITE(0,*) 'SOL28 RINGS:',irs,ire
 
       IF (s28mode.GE.4.0) THEN 
-        IF (sloutput) WRITE(0,*) 'WHAT-WHO! CALLING SOL28_V4'
+c        IF (sloutput) WRITE(0,*) 'WHAT-WHO! CALLING SOL28_V4'
         CALL ExecuteSOL28(irs,ire,ikopt,sloutput)
         RETURN
       ENDIF

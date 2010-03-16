@@ -692,7 +692,8 @@ C
       if (debug_all) write(6,'(a,i4,3(1x,g12.5))') 
      >             'DO  CROSS :',ifate,s,theta,cross
 
-
+c sltmp
+c      WRITE(88,*) 'cross:',ik,ir,cross,cross-oldcross
 c
 c     Update S and other values based on new cross-field location
 c

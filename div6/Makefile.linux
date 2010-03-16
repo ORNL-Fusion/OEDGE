@@ -76,10 +76,10 @@ ARCH=
 # the version of the fortran compiler used
 OPTC= -O $(EMU)
 #
-OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds
 #OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 
-OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds -traceback
-OPTGS1= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds -traceback
+OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+OPTGS1= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 OPTGS1A= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo
 OPTGS2= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mbounds
 OPTGS3= -g -O1 -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mbounds
@@ -91,7 +91,7 @@ OPTF90= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk
 #
 OPTFAST= -fast
 OPTKO= -O -Kieee
-OPTO0= -O0  -Mlist -Mbyteswapio 
+OPTO0= -O0  -Mlist -Mbyteswapio
 OPTO1= -O1  -Mlist -Mbyteswapio -g
 OPTO2= -O2  -Mlist -Mbyteswapio
 OPTO3= -O3  -Mlist -Mbyteswapio
@@ -100,7 +100,7 @@ OPTOG= -O -g -Mlist -Mbyteswapio
 #
 # Need base OPTO
 #
-OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
+OPTO= -O -Mbyteswapio -Mlist
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=

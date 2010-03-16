@@ -1859,18 +1859,9 @@ C-----------------------------------------------------------------------
      >ID) GRID FILES')
 
         if (sonnet_grid_sub_type.eq.1) then 
-          call prc(sp//'SONNET GRID SUB-TYPE: 1')
-          call prc(sp//'- USE FRC VERSION 1 SONNET GRID '
-     >               //' CUSTOMIZATIONS')
+          call prc(sp//'USE FRC VERSION 1 SONNET GRID '
+     >               //'CUSTOMIZATIONS')
         endif 
-c
-        if (sonnet_grid_sub_type.eq.2) then 
-          call prc(sp//'SONNET GRID SUB-TYPE: 2')
-          call prc(sp//'- SONNET GRID WITHOUT BOUNDARY CELLS - '
-     >               //'CELLS ARE ADDED FOR INTERNAL PROCESSING')
-        endif 
-
-
       ELSEIF (CGRIDOPT.EQ.LINEAR_GRID) then
         CALL PRC ('  GRID OPTION 6:  LINEAR DEVICE GRID BUILT')
       ELSEIF (CGRIDOPT.EQ.GEN_GRID) then
@@ -2988,7 +2979,6 @@ c
 c
       SUBROUTINE PR_sim_options(NIZS,NIMPS,NIMPS2,nymfs)
       use eckstein_2002_yield_data
-      use eckstein_2007_yield_data
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -4197,20 +4187,11 @@ C-----------------------------------------------------------------------
              call prr('     - DATA SELECTED FOR INCIDENT ANGLE =',
      >                  extra_sputter_angle)
           endif
-          call print_eck2002_yields(datunit)
+          call print_eck2002_yields(7)
        elseif (cion.eq.74) then 
           ! W selected 
              CALL PRC ('    TUNGSTEN SPUTTERING DATA SELECTED:')
        endif
-      ELSEIF (CSPUTOPT.EQ.6) THEN
-       CALL PRC ('  SPUTTER SOURCE   6 : Based on Eckstein'//
-     >                               ' "Sputtering Yields" 2007')
-       call prc ('                       Defaults to '//
-     >      'Sputter data option 3 (modified  Eckstein IPP9/82 (1993))') 
-       call prc ('                       if 2007 data is unavailable')
-
-       call print_eck2007_yields(datunit)
-
       ENDIF
 C-----------------------------------------------------------------------
       IF     (CCHEMOPT.EQ.1) THEN
@@ -6702,9 +6683,12 @@ C-----------------------------------------------------------------------
 c
 c     Iterative SOL Option
 c
-      if (cpinopt.eq.1) then  
+c slmod begin
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then  
 c
-
+c      if (cpinopt.eq.1) then  
+c slmod end
+c
        IF (CITERSOL.EQ.0) THEN
        CALL PRC ('  PIN ITERATION OPT 0: THE SOL IS NOT CALCULATED ITERA
      >TIVELY.')
@@ -7422,7 +7406,11 @@ C-----------------------------------------------------------------------
 c
        if (cpinopt.eq.0) then
           call prr ('                       Lsource = SMAX * ', ceflen)
-       elseif (cpinopt.eq.1) then
+c slmod begin
+       elseif (cpinopt.eq.1.or.cpinopt.eq.4) then
+c
+c       elseif (cpinopt.eq.1) then
+c slmod end
           call prc ('                       Lsource = Lequiv from PIN')
        endif
 c
@@ -7828,12 +7816,16 @@ c
        CALL PRC ('  PIN RUN OPT      0 : PIN NOT EXECUTED FOR BG')
        call prc ('                       PLASMA SOLUTION')
 
-      ELSEIF (CPINOPT.EQ.1) THEN
-
-       CALL PRC ('  PIN RUN OPT      1 : PIN IS EXECUTED. SOME RESULTS R
-     >ETAINED.')
-       CALL PRC ('                       THE PIN INVOCATION COMMAND IS:'
-     >)
+      ELSEIF (CPINOPT.EQ.1.OR.CPINOPT.EQ.4) THEN
+       IF (CPINOPT.EQ.1) THEN
+         CALL PRC ('  PIN RUN OPT      1 : PIN IS EXECUTED. SOME '// 
+     >             'RESULTS RETAINED.')
+       ELSE
+         CALL PRC ('  PIN RUN OPT      4 : PIN IS EXECUTED. SOME '// 
+     >             'RESULTS RETAINED.  PIN IMPURITY SOURCE USED.')
+       ENDIF
+       CALL PRC ('                       THE PIN INVOCATION '//
+     >           'COMMAND IS:')
        LEN = LENSTR(actpin)
        CALL PRC ('                      '//ACTPIN(1:LEN))
 c

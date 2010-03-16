@@ -328,7 +328,7 @@ c      TYPE(type_3D_object)  :: obj(nobj)
 
       output = .FALSE.
 
-      IF (nchord.EQ.dchord-1) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
+      IF (nchord.EQ.dchord) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
 
 c      RETURN
 
@@ -436,7 +436,7 @@ c...    Make sure the correct normal is in use, relative to the
 c       viewing chord:
         theta = DACOS(vv(1)*nv(1) + vv(2)*nv(2) + vv(3)*nv(3)) /
      .          D_DEGRAD
-        IF (nchord.EQ.dchord-1) THEN
+        IF (nchord.EQ.dchord) THEN
           WRITE(0,*) 'THETA:',theta
           WRITE(0,*) 'vv:',REAL(vv) 
           WRITE(0,*) 'nv:',REAL(nv) 
@@ -529,12 +529,18 @@ c      INTEGER nobj,status                    ! Flag nobj so it can't change?
       REAL   quant
       REAL*8 val,v1(3),v3(3),v4(3),v1_hold(3),v2_hold(3)
 
-      DATA problem_ignored /0/
+c      DATA problem_ignored /0/
+      LOGICAL problem_message
+      DATA    problem_message / .FALSE. /
+      SAVE
 
-      dchord = -1 ! 6625  ! -1 
+      problem_ignored = 0
+
+      dchord = -1 ! -1 ! 6625  ! -1 
       fp = 6
 
       IF (nchord.EQ.dchord+1) THEN
+        WRITE(0,*) 'TERMINATING TRACE AFTER DIAGNOSTIC CHORD'
         status = -2
         RETURN
       ENDIF
@@ -583,7 +589,8 @@ c     .         (chord%v1,chord%v2,IT_VWINTER,nobj,obj,status)
           RETURN
         ENDIF
 
-        IF (nchord.EQ.dchord-1) THEN
+c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
+        IF (nchord.EQ.dchord) THEN
           WRITE(fp,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
           WRITE(fp,*) vwinter(1:nvwinter)%dist 
           WRITE(fp,*) vwinter(1:nvwinter)%obj 
@@ -653,7 +660,7 @@ c     .           (chord%v1,chord%v2,IT_GBINTER,nobj,obj,status)
 c...      Cheat, try last set of grid intersections first (if there is an appropriate one): 
         ENDIF
 
-        IF (nchord.EQ.dchord-1) THEN
+        IF (nchord.EQ.dchord) THEN
           WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
           WRITE(fp,*) gbinter(1:ngbinter)%dist 
           WRITE(fp,*) gbinter(1:ngbinter)%obj 
@@ -688,24 +695,19 @@ c             the integration mesh, i.e. from a target surface:
 c...          Assemble list of surfaces bounding this object: 
               noblist = 0
               DO i2 = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)     
-
 c...            If the object geometry is toroidally discretized, then 
 c               do not allow the surface that the chord is currently
 c               "on" to be included in the search list 'cause ..., but otherwise okay...:
                 IF (obj(iobj)%gsur(i2).EQ.GT_TD.AND.i2.EQ.isid) CYCLE     
-
 c...            Add map surfaces, which were identified when objects were defined, to list: 
                 IF (nchord.EQ.dchord) THEN
                   WRITE(fp,*) ' -->',iobj,i2,obj(iobj)%nmap(i2)
                 ENDIF
-
                 DO i3 = 1, obj(iobj)%nmap(i2) 
                   noblist = noblist + 1
                   oblist(noblist,1) = obj(iobj)%imap(i3,i2)   ! Need to store this list for the next ray... 
                   oblist(noblist,2) = obj(iobj)%isur(i3,i2)
                 ENDDO
-
-
               ENDDO
               nobinter = 0
 
@@ -713,10 +715,12 @@ c...            Add map surfaces, which were identified when objects were define
                 WRITE(fp,*) ' ???:',iobj,isid
                 WRITE(fp,*) '    :',obj(iobj)%ik,obj(iobj)%ir
                 WRITE(fp,*) '    :',noblist
-                WRITE(fp,*) '    :',oblist(1:noblist,1)
-                WRITE(fp,*) '    :',obj(oblist(1:noblist,1))%ik
-                WRITE(fp,*) '    :',obj(oblist(1:noblist,1))%ir
-                WRITE(fp,*) '    :',oblist(1:noblist,2)
+                IF (noblist.GT.0) THEN
+                  WRITE(fp,*) '    :',oblist(1:noblist,1)
+                  WRITE(fp,*) '    :',obj(oblist(1:noblist,1))%ik
+                  WRITE(fp,*) '    :',obj(oblist(1:noblist,1))%ir
+                  WRITE(fp,*) '    :',oblist(1:noblist,2)
+                ENDIF
               ENDIF
 
 
@@ -778,7 +782,6 @@ c     .                                      (v1(3) - chord%v2(3))**2)
 
                 ELSE
 c...              Problems:
-
                   STOP 'PROBLEMS...'
                 ENDIF
 
@@ -806,7 +809,6 @@ c...            Clean-up the list:
                 ENDIF
               ENDIF
  
-
               IF (nchord.EQ.-1) THEN
                 WRITE(fp,'(A,5I6)') 
      .            ' DEBUG:',nchord,iobj,isid,obj(iobj)%ik,obj(iobj)%ir
@@ -1047,12 +1049,17 @@ c     GET RID OF _PRIMARY BUSINESS!
         chord_primary%average (i1) = chord%average (i1)
       ENDDO
 
-      IF (problem_ignored.EQ.1) THEN
-        WRITE(0,*) 
-        WRITE(0,*) '=============================================='
-        WRITE(0,*) '"PROBLEM IGNORED"...',nchord
-        WRITE(0,*) '=============================================='
-        WRITE(0,*) 
+      IF (problem_ignored.GE.1) THEN
+        IF (.NOT.problem_message) THEN
+          WRITE(0,*) 
+          WRITE(0,*) '=============================================='
+          WRITE(0,*) '"PROBLEM IGNORED"...',nchord
+          WRITE(0,*) '=============================================='
+          WRITE(0,*) 
+          problem_message = .TRUE.
+        ENDIF
+        chord_primary%integral = 0.0
+        chord_primary%average  = 0.0
       ENDIF
 
 c      WRITE(0,*) 'INTEGRAL STORED'
@@ -1185,13 +1192,13 @@ c          WRITE(0,*) 'CHORD:',nchord,chord%xangle,chord%yangle
 
           chord%v2(1) = DSIN(chord%xangle * D_DEGRAD) * 
      .                  DCOS(chord%yangle * D_DEGRAD) * 
-     .                  7.0D0 + chord%v1(1)
+     .                  50.0D0 + chord%v1(1)
           chord%v2(2) = DCOS(chord%xangle * D_DEGRAD) * 
      .                  DSIN(chord%yangle * D_DEGRAD) * 
-     .                  7.0D0 + chord%v1(2)
+     .                  50.0D0 + chord%v1(2)
           chord%v2(3) = DCOS(chord%xangle * D_DEGRAD) * 
      .                  DCOS(chord%yangle * D_DEGRAD) * 
-     .                  7.0D0 + chord%v1(3)
+     .                  50.0D0 + chord%v1(3)
 c          chord%v2(3) = -chord%v2(3)
 
 c...      Rotate and translate chords according to the detector specifications:
@@ -1223,6 +1230,23 @@ c            ENDDO
         
           ENDIF 
 
+
+          IF (.FALSE.) THEN
+c...        Toroidal rotation of camera, while preserving the view orientation with 
+c           respect to the centre of the torus:
+c            angle = 14.76D0 * 3.141596D0 / 180.0D0 ! LWIR
+            angle = 18.7D0 * 3.141596D0 / 180.0D0 ! LWIR
+c            angle = 4.04D0 * 3.141596D0 / 180.0D0
+c            angle = 9.0D0 * 3.141596D0 / 180.0D0  ! For viewing one have of the plasma from HU12...
+c...        Rotate about y-axis (swing):
+            CALL Calc_Transform2(mat,0.0D0,1,0)
+            CALL Calc_Transform2(mat,angle,2,1)
+            CALL Transform_Vect(mat,chord%v1)
+            CALL Transform_Vect(mat,chord%v2)
+          ENDIF
+
+
+
 c      IF (nchord.LE.500) THEN
 c        nchord = nchord + 1
 c        s_chord(nchord)%v1(1:3) = chord%v1(1:3)
@@ -1245,10 +1269,17 @@ c...
 
 c            pixel%spectrum(1:100) = pixel%spectrum(1:100) + 
 c     .                              chord%spectrum(1:100)
+
           ELSE
             WRITE(0,*) '  STATUS.LT.0 FOR CHORD'
             WRITE(0,*) '    PIXEL:',-1
             WRITE(0,*) '    CHORD:',ix,iy
+          ENDIF
+
+c...      Store representative vector for this pixel:
+          IF (ix.EQ.nxbin/2+1.AND.iy.EQ.nybin/2+1) THEN
+            pixel%global_v1 = SNGL(chord%v1)
+            pixel%global_v2 = SNGL(chord%v2)
           ENDIF
 
         ENDDO

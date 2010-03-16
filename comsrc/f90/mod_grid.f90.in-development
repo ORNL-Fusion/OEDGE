@@ -165,7 +165,7 @@ CONTAINS
         DO WHILE(nknot.EQ.0.OR.buffer(4:10).EQ.'Element')
            nknot = nknot + 1
            READ(gridunit,80,END=97) knot(nknot)%index,&
-                knot(nknot)%sonnetik   ,knot(nknot)%sonnetir,&
+                knot(nknot)%ik   ,knot(nknot)%ir,&
                 knot(nknot)%rv(2),knot(nknot)%zv(2),&
                 knot(nknot)%rv(3),knot(nknot)%zv(3)
            READ(gridunit,81,END=97) knot(nknot)%bratio,&
@@ -353,74 +353,16 @@ CONTAINS
 
       end subroutine read_walls
 
-      subroutine apply_grid_modifications(gridmods,ngridmods)
-        implicit none
-
-        integer :: ngridmods
-
-        !
-        ! gridmods -  cell_index#    vertex#    new_r   new_z  
-        !
-        real :: gridmods(ngridmods,4)
-
-
-        integer :: in,im,vertex
-
-        !
-        ! Brute force application of changes for now - can be made more efficient
-        ! if this is too slow. 
-        !
-        do im = 1,ngridmods
-
-           do in = 1,nknot
-              !
-              ! Change the cell vertex coordinates based on input values
-              !
-
-              if (knot(in)%index .eq. int(gridmods(im,1))) then 
-
-                 if (knot(in)%ignore) then 
-
-                    write(0,'(a,2i8,2(1x,g112.5))') 'WARNING: Modification specified for ignored cell:',gridmods(im,1)
-                 else
-
-                    vertex = int(gridmods(im,2))
-
-                    knot(in)%rv(vertex) = gridmods(im,3)
-                    knot(in)%zv(vertex) = gridmods(im,4)
-
-                    !
-                    ! Recalculate the cell area and volume based on the new coordinates
-                    !
-
-                    call calc_cell_area(knot(in))
-
-                 endif
-
-              endif
-
-           end do
-
-
-        end do
 
 
 
-      end subroutine apply_grid_modifications
-
-
-
-      SUBROUTINE ReadGeneralisedGrid(gridunit,rshift,zshift,indexiradj,gridmods.ngridmods)
+      SUBROUTINE ReadGeneralisedGrid(gridunit,rshift,zshift,indexiradj)
         use global_parameters
         IMPLICIT none
 
         INTEGER,intent(in) ::  gridunit
         integer :: indexiradj
         REAL,intent(in) ::     rshift,zshift
-
-        integer,intent(in) :: ngridmods
-        real,intent(in)    :: gridmods(ngridmods,4)
-
 
         !      INCLUDE 'params'
         !      INCLUDE 'cgeom'
@@ -471,9 +413,9 @@ CONTAINS
         integer :: irsep,irwall,irtrap,irsep2
         integer :: first_pfr_ring
 
-        !INTEGER, ALLOCATABLE :: imap(:,:)
+        INTEGER, ALLOCATABLE :: imap(:,:)
 
-        !TYPE(type_cell),ALLOCATABLE :: knot(:)
+        TYPE(type_cell),ALLOCATABLE :: knot(:)
 
         type(type_cell) :: temp_knot
 
@@ -498,18 +440,19 @@ CONTAINS
 
         IF (output) then
            write(0,*) 'CELLS READ IN:', nknot,&
-                knot(nknot)%sonnetir,knot(nknot)%sonnetik
+                       knot(nknot)%ir,knot(nknot)%ik
            write(6,*) 'CELLS READ IN:', nknot,&
-                knot(nknot)%sonnetir,knot(nknot)%sonnetik
+                       knot(nknot)%ir,knot(nknot)%ik
         endif
 
-        call apply_grid_modifications(gridmods,ngridmods)
 
         call read_psi(gridunit)
 
         call read_walls(gridunit)
 
-        !...  Apply R,Z shifts:
+
+
+        !...  R,Z shifts:
 
         do in = 1,nknot
            call rzshift(knot(in),rshift,zshift)
@@ -524,13 +467,13 @@ CONTAINS
         irmax = 0
 
         DO knot_cnt = 1, nknot
-           IF (knot(knot_cnt)%ik.GT.ikmax) ikmax = knot(knot_cnt)%sonnetik
-           IF (knot(knot_cnt)%ir.GT.irmax) irmax = knot(knot_cnt)%sonnetir
+           IF (knot(knot_cnt)%ik.GT.ikmax) ikmax = knot(knot_cnt)%ik
+           IF (knot(knot_cnt)%ir.GT.irmax) irmax = knot(knot_cnt)%ir
         ENDDO
 
         IF (output) then
-           write(0,*) 'SONNET IKMAX,IRMAX:', ikmax,irmax
-           write(6,*) 'SONNET IKMAX,IRMAX:', ikmax,irmax
+           write(0,*) 'IKMAX,IRMAX:', ikmax,irmax
+           write(6,*) 'IKMAX,IRMAX:', ikmax,irmax
         endif
 
         !...  Mark zero volume cells to be ignored
@@ -653,7 +596,7 @@ CONTAINS
         !            - the only cells on the grid which can have an identical vertex - both index and value 
         !              and not be the same cell must occur at the Xpoint - the shared vertex in this 
         !              case IS the Xpoint. This is the condition tested for when FindKnot is called with 
-        !              a 1. Search efficiency has been enhanced by using the zones set up above (sl). 
+        !              a 1. Search efficiency has been enhanced by using the zones set up above. 
         !            - Zero volume cells would be an issue with this algorithm - code above this has 
         !              apparently removed zero volume cells where vertices 3=2 and 1=4 - however, it would 
         !              appear that boundary rings around the plasma and in the core/PFZ have not been 
@@ -676,7 +619,7 @@ CONTAINS
               EXIT
            ENDIF
 
-           ! condition =6 - find matching knot 2 - 
+           ! condition =6 - find matching knot 2
            CALL FindKnot(nknot,knot,NUMZONE,izone,6,index1,index2)
            !CALL FindKnot(nknot,knot,NUMZONE,izone,1,i1,i2)
 
@@ -685,8 +628,7 @@ CONTAINS
               !
               !     jdemod - the code appears to assume that the midplane is at 0.0 - this 
               !              should probably be replaced with the zc value defining the 
-              !              center of the confined plasma - except that this isn't determined until 
-              !              after the innermost grid ring is identified. 
+              !              center of the confined plasma. 
               !
               !...      Select the appropriate cell, whichever is closest to the midplane will
               !         be the cell associated with the core (which we want to build first):
@@ -761,11 +703,12 @@ CONTAINS
            ! vertex 1 = vertex 4 WILL find the limiter tip but only for conditions
            ! where there are no divertor legs - 1=4 is not unique when Xpoints are
            ! present.
-           ! Code will need to be added later to properly interpret a limiter grid
 
            CALL ER('Readgeneralisedgrid','No x-points found',*99)
 
            ! There should be only one limiter tip in the grid 
+
+
 
            nlim = 0
            DO index1 = 1, nknot
@@ -789,16 +732,23 @@ CONTAINS
               ! cell found if index2.ne.-1
               IF (index2.NE.-1) THEN
                  !
+                 !     jdemod - the code appears to assume that the midplane is at 0.0 - this 
+                 !              should probably be replaced with the zc value defining the 
+                 !              center of the confined plasma. 
+                 !
+                 !...      Select the appropriate cell, whichever is closest to the midplane will
+                 !         be the cell associated with the core (which we want to build first):
+
                  !
                  ! Xpoint up and down is not relevant for a limiter
                  !
 
 
                  IF (output) then 
-                    WRITE(0,'(a,2i6,4(1x,g12.5))') 'LIMITER TIP:',index1,index2,&
+                    WRITE(0,'(a,2i6,4(1x,g12.5))') 'XPT DN:',index1,index2,&
                          knot(index1)%rv(1),knot(index1)%zv(1),&
                          knot(index1)%zcen,knot(index2)%zcen
-                    WRITE(6,'(a,2i6,4(1x,g12.5))') 'LIMITER TIP:',index1,index2,&
+                    WRITE(6,'(a,2i6,4(1x,g12.5))') 'XPT DN:',index1,index2,&
                          knot(index1)%rv(1),knot(index1)%zv(1),&
                          knot(index1)%zcen,knot(index2)%zcen
                  endif
@@ -807,7 +757,7 @@ CONTAINS
 
                  ! If cell index1 is closer to center
 
-                 index_xpt(nlim) = index1
+                 index_xpt(nxpt) = index1
                  knot(index1)%xpt = index2
                  knot(index2)%xpt = index1
               ENDIF
@@ -868,10 +818,9 @@ CONTAINS
         !              the core and pfz by using a different vertex for Xpoint detection allows this 
         !              problem to be avoided. The definition of cxpt needs to be revised to accomodate this.
         !
-        !              This was implemented above by using condition=6 to findknot 
-        !
-        !
 
+
+        !
         ring_xpt = 0
         index_core = 0
 
@@ -914,6 +863,7 @@ CONTAINS
            endif
            !        IF (output) WRITE(0,*) 'Ring_xpt:',ixpt(i3),ring_xpt(i3),icore(i3)
         ENDDO
+
 
 
         IF (nxpt.GT.1) THEN
@@ -966,7 +916,6 @@ CONTAINS
            ENDIF
         ENDIF
 
-
         !...  Make sure that x-point knot indices are ordered properly, with the inner (lower radius)
         !     of each pair listed in IXPT:
         !      DO i1 = 1, nxpt
@@ -985,7 +934,6 @@ CONTAINS
         ! Add one to index since ring_xpt is the count for the last ring in the confined plasma
 
         irsep  = ring_xpt(1) +1 
-
         !irsep2 = irsep
 
         !...  Build the grid:
@@ -1000,18 +948,11 @@ CONTAINS
         ik = 1
         ir = 1
         index1 = index_core(1) 
-
         DO WHILE(ir.LT.irsep)
            !
            ! First cell of core is mapped from Xpoint inward
            !
            imap(1,ir) = index1
-           !
-           ! Set knot quantities
-           !
-           knot(index1)%ik = ik
-           knot(index1)%ir = ir
-           knot(index1)%map = 1
 
            cont = .TRUE.
            DO WHILE(cont)
@@ -1024,24 +965,16 @@ CONTAINS
                     index1 = index2 
                     ik = ik + 1
                     imap(ik,ir) = index1
-                    !
-                    ! Set knot quantities
-                    !
-                    knot(index1)%ik = ik
-                    knot(index1)%ir = ir
-                    knot(index1)%map = 1
-
-
                     cont = .TRUE.
                     !
                     !             jdemod
                     IF (output) then 
                        WRITE(0,'(a,4i6,5(1x,g12.5))') 'CORE MAP:',&
-                            ik,ir,index1,imap(1,ir),&
-                            knot(index1)%rcen,knot(index1)%zcen
+                            ik,ir,i1,imap(1,ir),&
+                            knot(i1)%rcen,knot(i1)%zcen
                        WRITE(6,'(a,4i6,5(1x,g12.5))') 'CORE MAP:',&
-                            ik,ir,index1,imap(1,ir),&
-                            knot(index1)%rcen,knot(index1)%zcen
+                            ik,ir,i1,imap(1,ir),&
+                            knot(i1)%rcen,knot(i1)%zcen
                     endif
                     !              IF (output) WRITE(0,*) 'CORE MAP:',ik,ir,i1
                  ENDIF
@@ -1099,18 +1032,10 @@ CONTAINS
         ELSE
            CALL ER('Readgeneralisedgrid','SOL RING: Problem stepping out into SOL: Bad IR step to SOL',*99)
         ENDIF
-
         !...  Target located, start mapping the SOL:
         ik = 1
         ir = irsep
         imap(ik,ir) = index1
-        !
-        ! Set knot quantities
-        !
-        knot(index1)%ik = ik
-        knot(index1)%ir = ir
-        knot(index1)%map = 1
-
         cont = .TRUE.
         DO WHILE(cont)
            cont = .FALSE.
@@ -1120,23 +1045,16 @@ CONTAINS
               index1 = index2 
               ik = ik + 1
               imap(ik,ir) = index1
-              !
-              ! Set knot quantities
-              !
-              knot(index1)%ik = ik
-              knot(index1)%ir = ir
-              knot(index1)%map = 1
-
               cont = .TRUE.
               !
               !         jdemod
               IF (output) then 
                  WRITE(0,'(a,4i6,5(1x,g12.5))') 'INNER SOL MAP:',&
-                      ik,ir,index1,imap(1,ir),&
-                      knot(index1)%rcen,knot(index1)%zcen
+                             ik,ir,index1,imap(1,ir),&
+                             knot(index1)%rcen,knot(index1)%zcen
                  WRITE(6,'(a,4i6,5(1x,g12.5))') 'INNER SOL MAP:',&
-                      ik,ir,index1,imap(1,ir),&
-                      knot(index1)%rcen,knot(index1)%zcen
+                             ik,ir,index1,imap(1,ir),&
+                             knot(index1)%rcen,knot(index1)%zcen
               endif
 
            ENDIF
@@ -1144,29 +1062,22 @@ CONTAINS
            IF (.NOT.cont) THEN
               nks(ir) = ik
               index1 = imap(1,ir)
-              CALL FindKnot(nknot,knot,NUMZONE,izone,4,index1,index2)          
+              CALL FindKnot(nknot,knot,NUMZONE,izone,4,i1,i2)          
               IF (index2.NE.-1) THEN
                  index1 = index2
                  ik = 1
                  ir = ir + 1
-                 imap(ik,ir) = index1
-        !
-        ! Set knot quantities
-        !
-        knot(index1)%ik = ik
-        knot(index1)%ir = ir
-        knot(index1)%map = 1
-
+                 imap(ik,ir) = i1
                  cont = .TRUE.
                  !
                  !           jdemod
                  IF (output) then 
                     WRITE(0,'(a,4i6,5(1x,g12.5))') 'INNER SOL MAP:NEW RING:',&
-                         ik,ir,index1,imap(1,ir),&
-                         knot(index1)%rcen,knot(index1)%zcen
+                                ik,ir,index1,imap(1,ir),&
+                                knot(index1)%rcen,knot(index1)%zcen
                     WRITE(6,'(a,4i6,5(1x,g12.5))') 'INNER SOL MAP:NEW RING:',&
-                         ik,ir,index1,imap(1,ir),&
-                         knot(index1)%rcen,knot(index1)%zcen
+                                ik,ir,index1,imap(1,ir),&
+                                knot(index1)%rcen,knot(index1)%zcen
                  endif
 
               ENDIF
@@ -1175,7 +1086,6 @@ CONTAINS
 
         !
         ! For a single null will have just mapped the SOL out to the "wall" ring. 
-        ! For a single null broken grid we will have just mapped some of the SOL
         ! For a double null with lower primary Xpoint will have just mapped the high field side SOL rings
         ! For a double null with upper primary xpoint will have just mapped the low field side SOL rings
         !
@@ -1195,15 +1105,24 @@ CONTAINS
               WRITE(6,*) 'PROCESSING LOW FIELD SOL'
            endif
 
+           !...    Process the low field side looking for any rings that
+           !       were not processed when looking around the high field side (which
+           !       is usually the case for double-nulls):
+           !...    Register all knots that have been mapped to the grid:
+           !
+           DO ir = 1, nrs
+              DO ik = 1, nks(ir)
+                 knot(imap(ik,ir))%map = 1
+              ENDDO
+           ENDDO
            !
            !     jdemod - why not use - i1=imap(nks(irsep-1),irsep-1) ?
            !
            !...    Start with the first cell on the outer-most core ring and move to 
            !       the last cell on the same ring:
            !
-
            index1 = imap(1,irsep-1)
-           CALL FindKnot(nknot,knot,NUMZONE,izone,5,index1,index2)
+           CALL FindKnot(nknot,knot,NUMZONE,izone,5,i1,i2)
 
            write (0,*) 'Checking map:',index2,imap(nks(irsep-1),irsep-1)
 
@@ -1263,14 +1182,6 @@ CONTAINS
                  index1 = index2 
                  ik = ik + 1
                  imap(ik,ir) = i1
-                 !
-                 ! Set knot quantities
-                 !
-                 knot(i1)%ik = ik
-                 knot(i1)%ir = ir
-                 knot(i1)%map = 1
-
-
                  cont = .TRUE.
                  !
                  !           jdemod
@@ -1531,9 +1442,7 @@ CONTAINS
         endif
 
         !...  Process the primary x-point PFR:
-
         index1 = knot(ixpt(1))%xpt
-
         !     This index should already be inside the PFR
         !...  Move into the PFR:
         !CALL FindKnot(nknot,knot,NUMZONE,izone,2,i1,i2)
@@ -1542,7 +1451,6 @@ CONTAINS
         !  CALL ER('Readgeneralisedgrid','PFR1 problems',*99)
         !
         !     jdemod
-
         IF (output) then
            WRITE(0,*) '  IN PRIMARY PFZ',knot(index1)%index
            WRITE(6,*) '  IN PRIMARY PFZ',knot(index1)%index
@@ -1550,7 +1458,6 @@ CONTAINS
 
         !i1 = i2
         !...  Proceed to target:
-
         cont = .TRUE.
         DO WHILE(cont)
            cont = .FALSE.
@@ -1597,10 +1504,10 @@ CONTAINS
               imap(ik,ir) = index1
               cont = .TRUE.
               !          jdemod
-              IF (output) then 
-                 WRITE(0,*) '1ST PFR MAP:',ik,ir,index1,knot(index1)%zcen
-                 WRITE(6,*) '1ST PFR MAP:',ik,ir,index1,knot(index1)%zcen
-              endif
+                        IF (output) then 
+                           WRITE(0,*) '1ST PFR MAP:',ik,ir,index1,knot(index1)%zcen
+                           WRITE(6,*) '1ST PFR MAP:',ik,ir,index1,knot(index1)%zcen
+                        endif
 
            ENDIF
            !...    Step "inward" (in PFR->wall) if ring is finished:
@@ -1618,15 +1525,15 @@ CONTAINS
                  !           jdemod
                  IF (output) then 
                     WRITE(0,'(a,4i6,5(1x,g12.5))') 'PRIM PFZ MAP:',&
-                         ik,ir,index1,imap(1,ir),&
-                         knot(index1)%rcen,knot(index1)%zcen
+                                ik,ir,index1,imap(1,ir),&
+                                knot(index1)%rcen,knot(index1)%zcen
                     WRITE(6,'(a,4i6,5(1x,g12.5))') 'PRIM PFZ MAP:',&
-                         ik,ir,index1,imap(1,ir),&
-                         knot(index1)%rcen,knot(index1)%zcen
+                                ik,ir,index1,imap(1,ir),&
+                                knot(index1)%rcen,knot(index1)%zcen
                  endif
 
-                 !ELSE
-                 !   ...        Assume the outer boundary of the grid:
+              !ELSE
+              !   ...        Assume the outer boundary of the grid:
               ENDIF
               !         jdemod
               !IF (output) then 
@@ -1680,7 +1587,6 @@ CONTAINS
         endif
 
         call assign_global_geometry_data(gridunit)
-
 
         return
 

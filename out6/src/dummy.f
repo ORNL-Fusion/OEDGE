@@ -20,12 +20,12 @@ c...For lab:
       RETURN
       END
 
-      SUBROUTINE InitializeOptions
-      END
+c      SUBROUTINE InitializeOptions
+c      END
  
-      SUBROUTINE ProcessInputTag(i1,i2,char,logic)
-      INTEGER   i1,i2
-      LOGICAL   logic
-      CHARACTER char*(*)
-      END
+c      SUBROUTINE ProcessInputTag(i1,i2,char,logic)
+c      INTEGER   i1,i2
+c      LOGICAL   logic
+c      CHARACTER char*(*)
+c      END
 

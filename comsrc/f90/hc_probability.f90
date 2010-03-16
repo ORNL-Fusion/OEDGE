@@ -35,7 +35,7 @@ contains
 
        ! Find the cross section at specific temperature and target energy using specified data
        Call HC_Interpolate (Reactions_Possible (i),Data_Type,Plasma_Temperature,Target_Energy,Interpolant)
-       !write (0,'(a,i5,a,5(1x,g12.5)') "REACTING",Reactions_Possible (i),Data_Type,Plasma_Temperature,Plasma_density,Target_Energy,Interpolant,Hydrogen_Mass
+       !write (0,*) "REACTING",Reactions_Possible (i),Data_Type,Plasma_Temperature,Target_Energy,Interpolant,Hydrogen_Mass
 
        ! jdemod - proton interaction rates may need to be adjusted for different masses of plasma particles. 
        ! Correct for hydrogen mass for proton/D/T reactions.
@@ -66,7 +66,7 @@ contains
           Write (Output_Unit_HC_Alert,*) 'Unknown data type specified in HC_Reaction_Probability: ', Data_Type
           Stop
        End If
-       !write (0,'(a,1x,i6,1x,a,10(1x,g12.5))') "REACTING",Reactions_Possible(i),Data_Type,Plasma_Density, &
+       !write (0,*) "REACTING",Reactions_Possible(i),Data_Type,Plasma_Density, &
        !& Plasma_Temperature,Target_Energy,Interpolant,Reaction_Probabilities(i),Hydrogen_Mass,Timestep
        ! Increase counter for number of reactions.
        i = i + 1
@@ -166,27 +166,13 @@ contains
        endif
     End Do
 
-
-    !if (ns_probabilities(number_reactions).le.0.0) then 
-    !   write(0,'(a,i7,1x,g12.5)') 'ERROR in HC_NS_Probability',number_reactions,ns_probabilities(number_reactions)
-    !endif
-
     ! Find reaction probability given a reaction.
     ! Do j = 1, i - 1, 1
-
-    ! jdemod
-    !
-    ! Only normalize if the total probability of a change of state is non-zero
-    ! It is possible for a particle in a particular state to find itself in a part of the plasma with plasma conditions 
-    ! such that the change of state probability in any given time step is numerically zero
-    !
-    if (ns_probabilities(number_reactions).gt.0) then 
-       Do i = 1, number_reactions
-          ! jdemod - renormalize the cumulative array
-          NS_Probabilities (i) = NS_Probabilities(i) / NS_Probabilities(number_reactions)
-         !NS_Probabilities (j) = Reaction_Probabilites (j) / Sum_Probability
-       End Do
-    endif
+    Do i = 1, number_reactions
+       ! jdemod - renormalize the cumulative array
+       NS_Probabilities (i) = NS_Probabilities(i) / NS_Probabilities(number_reactions)
+       !NS_Probabilities (j) = Reaction_Probabilites (j) / Sum_Probability
+    End Do
 
   End Subroutine HC_NS_Probability
 

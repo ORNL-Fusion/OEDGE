@@ -758,50 +758,29 @@ C-----------------------------------------------------------------------
       CALL PRC ('IONISATION AND RECOMBINATION TIMES')                           
       WRITE (7,9101)                                                            
       CALL PRB                                                                  
-      CALL PRC ('  VALUES NEAR X = A/2  (Y>0)')                                        
+      CALL PRC ('  VALUES NEAR X = A/2')                                        
       WRITE (7,9102) 0,CFIZS(IXA2,IY0,0)                                        
-      DO IZ = 1, PMIZS                                                       
+      DO 12 IZ = 1, PMIZS                                                       
        WRITE (7,9102) IZ,CFIZS(IXA2 ,IY0,IZ),CFRCS(IXA2 ,IY0,IZ),               
      >   CFCXS(IXA2 ,IY0,IZ),CFCXS(IXA2 ,IYL8,IZ),CFCXS(IXA2 ,IYL4,IZ)          
-      end do
-c      call prb
-c      CALL PRC ('  VALUES NEAR X = A/2  (Y<0)')                                        
-c      WRITE (7,9102) 0,CFIZS(IXA2,IY0LT,0)                                        
-c      DO IZ = 1, PMIZS                                                       
-c       WRITE (7,9102) IZ,CFIZS(IXA2 ,IY0LT,IZ),CFRCS(IXA2 ,IY0LT,IZ),               
-c     >   CFCXS(IXA2,IY0LT,IZ),CFCXS(IXA2,-IYL8,IZ),CFCXS(IXA2 ,-IYL4,IZ)          
-c      end do
+   12 CONTINUE                                                                  
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
-      CALL PRC ('  VALUES JUST OUTBOARD (Y>0)')                                       
+      CALL PRC ('  VALUES JUST OUTBOARD')                                       
       WRITE (7,9102) 0,CFIZS(IXOUT,IY0,0)                                       
-      DO IZ = 1, PMIZS                                                       
+      DO 22 IZ = 1, PMIZS                                                       
        WRITE (7,9102) IZ,CFIZS(IXOUT,IY0,IZ),CFRCS(IXOUT,IY0,IZ),               
      >   CFCXS(IXOUT,IY0,IZ),CFCXS(IXOUT,IYL8,IZ),CFCXS(IXOUT,IYL4,IZ)          
-      end do
-      CALL PRB                                                                  
-      CALL PRC ('  VALUES JUST OUTBOARD (Y<0)')                                       
-      WRITE (7,9102) 0,CFIZS(IXOUT,IY0LT,0)                                       
-      DO IZ = 1, PMIZS                                                       
-       WRITE (7,9102) IZ,CFIZS(IXOUT,IY0LT,IZ),CFRCS(IXOUT,IY0LT,IZ),               
-     > CFCXS(IXOUT,IY0LT,IZ),CFCXS(IXOUT,-IYL8,IZ),CFCXS(IXOUT,-IYL4,IZ)          
-      end do
+   22 CONTINUE                                                                  
 C-----------------------------------------------------------------------        
       IF (IQXFAC.LT.0) THEN                                                     
         CALL PRB                                                                
-        CALL PRR ('  VALUES NEAR X = -LAMBDA (Y>0) = ',QXS(IQXFAC))                   
+        CALL PRR ('  VALUES NEAR X = -LAMBDA = ',QXS(IQXFAC))                   
         WRITE (7,9102) 0,CFIZS(IXFAC,IY0,0)                                     
-        DO IZ = 1, PMIZS                                                     
+        DO 32 IZ = 1, PMIZS                                                     
           WRITE (7,9102) IZ,CFIZS(IXFAC,IY0,IZ),CFRCS(IXFAC,IY0,IZ),            
      >     CFCXS(IXFAC,IY0,IZ),CFCXS(IXFAC,IYL8,IZ),CFCXS(IXFAC,IYL4,IZ)        
-        end do
-        CALL PRB                                                                
-        CALL PRR ('  VALUES NEAR X = -LAMBDA (Y<0) = ',QXS(IQXFAC))                   
-        WRITE (7,9102) 0,CFIZS(IXFAC,IY0LT,0)                                     
-        DO IZ = 1, PMIZS                                                     
-          WRITE (7,9102) IZ,CFIZS(IXFAC,IY0LT,IZ),CFRCS(IXFAC,IY0LT,IZ),            
-     > CFCXS(IXFAC,IY0LT,IZ),CFCXS(IXFAC,-IYL8,IZ),CFCXS(IXFAC,-IYL4,IZ)        
-        end do
+   32   CONTINUE                                                                
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
 C                                                                               
@@ -817,59 +796,33 @@ C
      >R IONS)')                                                                 
       WRITE (7,9103)                                                            
       CALL PRB                                                                  
-      CALL PRC ('  VALUES NEAR X = A/2 (Y>0)')                                        
-      DO IZ = 0, PMIZS                                                       
+      CALL PRC ('  VALUES NEAR X = A/2')                                        
+      DO 42 IZ = 0, PMIZS                                                       
         WRITE (7,9104) IZ,                                                      
      >    CPCHS(IXA2 ,IY0 ,IZ)          ,100.0*CPRCS(IXA2 ,IY0 ,IZ),            
      >    CPCHS(IXA2 ,IYL8,IZ)          ,100.0*CPRCS(IXA2 ,IYL8,IZ),            
      >    CPCHS(IXA2 ,IYL4,IZ)          ,100.0*CPRCS(IXA2 ,IYL4,IZ)             
-      end do
-c      CALL PRB                                                                  
-c      CALL PRC ('  VALUES NEAR X = A/2 (Y<0)')                                        
-c      DO IZ = 0, PMIZS                                                       
-c        WRITE (7,9104) IZ,                                                      
-c     >    CPCHS(IXA2 ,IY0LT ,IZ)         ,100.0*CPRCS(IXA2 ,IY0LT,IZ),            
-c     >    CPCHS(IXA2 ,-IYL8,IZ)          ,100.0*CPRCS(IXA2 ,-IYL8,IZ),            
-c     >    CPCHS(IXA2 ,-IYL4,IZ)          ,100.0*CPRCS(IXA2 ,-IYL4,IZ)             
-c      end do
+   42 CONTINUE                                                                  
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
-      CALL PRC ('  VALUES JUST OUTBOARD (Y>0)')                                       
-      DO IZ = 0, PMIZS                                                       
+      CALL PRC ('  VALUES JUST OUTBOARD')                                       
+      DO 52 IZ = 0, PMIZS                                                       
         WRITE (7,9104) IZ,                                                      
      >    CPCHS(IXOUT,IY0 ,IZ)           ,100.0*CPRCS(IXOUT,IY0 ,IZ),           
      >    CPCHS(IXOUT,IYL8,IZ)           ,100.0*CPRCS(IXOUT,IYL8,IZ),           
      >    CPCHS(IXOUT,IYL4,IZ)           ,100.0*CPRCS(IXOUT,IYL4,IZ)            
-      end do
-      CALL PRB                                                                  
-      CALL PRC ('  VALUES JUST OUTBOARD (Y<0)')                                       
-      DO IZ = 0, PMIZS                                                       
-        WRITE (7,9104) IZ,                                                      
-     >    CPCHS(IXOUT,IY0LT ,IZ)         ,100.0*CPRCS(IXOUT,IY0LT,IZ),           
-     >    CPCHS(IXOUT,-IYL8,IZ)          ,100.0*CPRCS(IXOUT,-IYL8,IZ),           
-     >    CPCHS(IXOUT,-IYL4,IZ)          ,100.0*CPRCS(IXOUT,-IYL4,IZ)            
-      end do
+   52 CONTINUE                                                                  
 C-----------------------------------------------------------------------        
       IF (IQXFAC.LT.0) THEN                                                     
         CALL PRB                                                                
-        CALL PRR ('  VALUES NEAR X = -LAMBDA (Y>0) = ',QXS(IQXFAC))                   
-        DO IZ = 0, PMIZS                                                     
+        CALL PRR ('  VALUES NEAR X = -LAMBDA = ',QXS(IQXFAC))                   
+        DO 62 IZ = 0, PMIZS                                                     
           WRITE (7,9104) IZ,                                                    
      >      CPCHS(IXFAC,IY0 ,IZ)           ,100.0*CPRCS(IXFAC,IY0 ,IZ),         
      >      CPCHS(IXFAC,IYL8,IZ)           ,100.0*CPRCS(IXFAC,IYL8,IZ),         
      >      CPCHS(IXFAC,IYL4,IZ)           ,100.0*CPRCS(IXFAC,IYL4,IZ)          
-        end do
-        CALL PRB                                                                
-        CALL PRR ('  VALUES NEAR X = -LAMBDA (Y<0) = ',QXS(IQXFAC))                   
-        DO IZ = 0, PMIZS                                                     
-          WRITE (7,9104) IZ,                                                    
-     >      CPCHS(IXFAC,IY0LT,IZ)         ,100.0*CPRCS(IXFAC,IY0LT,IZ),         
-     >      CPCHS(IXFAC,-IYL8,IZ)         ,100.0*CPRCS(IXFAC,-IYL8,IZ),         
-     >      CPCHS(IXFAC,-IYL4,IZ)         ,100.0*CPRCS(IXFAC,-IYL4,IZ)          
-        end do
+   62   CONTINUE                                                                
       ENDIF                                                                     
-
-
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  

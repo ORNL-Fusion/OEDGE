@@ -65,8 +65,8 @@ c     unstructured input values.
 c
       common /sputdat/ csputopt,extra_sputter_angle,
      >                 cchemopt, const_yield, impact_energy_opt,
-     >                 init_y_coord,cselfs
-      integer csputopt,cchemopt,impact_energy_opt,cselfs
+     >                 init_y_coord
+      integer csputopt,cchemopt,impact_energy_opt
       real    extra_sputter_angle,init_y_coord
       real    const_yield        
 c
@@ -89,12 +89,9 @@ c      real*8 absfac
 c
 c     Common block for generic LIM related unstructured input
 c      
-      common /lim_unstruc/ shear_short_circuit_opt,calc_3d_power,
-     >                     extfluxopt,nextfluxdata,extfluxdata
+      common /lim_unstruc/ shear_short_circuit_opt,calc_3d_power
 c
-      integer shear_short_circuit_opt,calc_3d_power,extfluxopt,
-     >        nextfluxdata
-      real extfluxdata(maxins,3)
+      integer shear_short_circuit_opt,calc_3d_power
 c
 c     Common block for OUT related unstructured input
 c

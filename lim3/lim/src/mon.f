@@ -637,6 +637,11 @@ C
 C                                                                               
       CALL PRC ('AVERAGE DELTA Y STEPS OUTBOARD (AS USED) (M)')                 
       WRITE (7,'((2X,6(I2,1P,E8.1)))') (IZ,SDYZS(IZ),IZ=1,NIZS)                 
+c
+c     Print yreflection statistics if the option is active
+c
+      call pr_yref_stats
+c
 
       RETURN                                                                    
       END                                                                       

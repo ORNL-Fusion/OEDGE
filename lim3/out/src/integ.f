@@ -671,8 +671,7 @@ C
 C     THE FOLLOWING IS DONE IN TWO SEGMENTS - 1 FOR TFTR GRID MAPPED
 C     PLOTS AND ONE FOR THE STANDARD CASE. 
 C
-c      write (6,'(a,i5,4g12.5,i8)') 'tftrg:',tftrg,
-c     >                        xmin,xmax,ymin,ymax,ifold
+      write (6,*) 'tftrg:', tftrg,xmin,xmax,ymin,ymax,ifold
 
       if (tftrg.eq.0) then 
  
@@ -789,8 +788,8 @@ C
             IRYSPQ =-IPOS(-YTMP, YS, NYS-1)                                
           ENDIF                                                                   
 
-c          write (6,*) irx,iry,p,q,xtmp,ytmp,
-c     >                irxspq,iryspq
+          write (6,*) irx,iry,p,q,xtmp,ytmp,
+     >                irxspq,iryspq
 
           DO 500 IZ = IZ1, IZ2                                                      
             IF (IPLANE.EQ.99) THEN                                              

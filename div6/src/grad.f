@@ -782,6 +782,7 @@ c
 c slmod begin
 c
 c...  Find IK value for the cell for which the gradient is calculated:
+      ik1 = 1
       IF (grdnmod.NE.0) THEN
         DO ik1 = 1, nks(ir)
           IF (ksb(ik1-1,ir).LE.s.AND.ksb(ik1,ir).GT.s) EXIT
@@ -794,30 +795,18 @@ c slmod end
 c... BUG - OCT 2, 2000
         s1 = (s - ksb(0,ir)) * (ksb(nks(ir+1),ir+1) - ksb(0,ir+1)) /
      .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-c        s = (s - ksb(0,ir)) * (ksb(nks(ir+1),ir+1) - ksb(0,ir+1)) /
-c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
         Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
-c
-c        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
-c
         RETURN
       ELSEIF (ir.EQ.irwall-1) THEN
         s1 = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
      .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-c        s = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
-c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
         Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
-c
-c        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
-c
         RETURN
 c slmod begin
       ELSEIF (grdnmod.NE.0.AND.
-     .        ir.LT.irwall.AND.irouts(ik1,ir).EQ.irwall) THEN
+     .       ir.LT.irwall.AND.irouts(ik1,ir).EQ.irwall) THEN
         s1 = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
      .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-c        s = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
-c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
         Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
       RETURN
 c slmod end
@@ -923,7 +912,8 @@ c
 c
 c      IF (((res_Quant2Grad-tgrad)/res_Quant2Grad*100.0).GT.0.01)THEN
 c
-        if (cprint.eq.8.or.cprint.eq.9) then   
+        if (cprint.eq.8.or.cprint.eq.9.and.
+     .      iki.ge.2.and.ik.ge.2.and.iko.ge.2) then   
 
         WRITE(SLOUT,'(3x,2I3,3X,2I3,2X,2I3,2X,2I3,3F10.6)')
      .    iki,iri,ik,ir,iko,iro,ikins(ik,ir),ikouts(ik,ir),widi,wid,wido

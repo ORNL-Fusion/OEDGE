@@ -281,6 +281,9 @@ C
      >                                    RMACH)
            CALL PRR  ('  IMPACT ENERGY AT ABSORPTION (EV)           ',
      >                                    RENEGY)
+c slmod begin
+c DUMP WALL IMPURITY FLUX DATA HERE...     
+c slmod end
          ENDIF
 C
 C-----------------------------------------------------------------------
@@ -1382,7 +1385,6 @@ c
 c     Write out temporary case specific data 
 c
       call write_tmp_data
-
 c
 c     Formats for the above write statements  
 c
