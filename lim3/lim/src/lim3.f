@@ -164,7 +164,7 @@ c
       INTEGER   KKLIM,KK,ICUT(2),NATIZ,NPROD,IP,IFATE,STATUS                    
       INTEGER   IPOS,IQX,IQY,IX,IY,IZ,MAXCIZ,IC,II,IOY,IOD,IO                   
       INTEGER   IMP,IMPLIM,MATLIM,J,JY,JX,IT,MPUT,IN
-      CHARACTER WHAT(51)*10,FATE(9)*16,STRING*21                                
+      CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
       REAL      POLODS(-MAXQXS:MAXQXS),TIMUSD,XM,YM                             
       REAL      SVPOLS(-MAXQXS:MAXQXS)
       REAL      RIONS(MAXIZS),STOTS(20)                                         
@@ -222,7 +222,8 @@ C
      >             'REACHED Y=2L',        'HIT Y=0 FROM Y<0',                   
      >             'REACHED Y=-2L',       'REACHED TIME CUT',                   
      >             'SPLITTING ION',       'ROULETTE DISCARD',                   
-     >             'CHARGE CHECK'/                                              
+     >             'CHARGE CHECK',        'X-ABSORPTION',
+     >             'Y-ABSORPTION'/                                              
 C                                                                               
       DATA  WHAT  /'  PRIMARY ',   ' SECONDARY',   ' TERTIARY ',                
      >             'QUATERNARY',   '  QUINARY ',   '  SIXTH   ',                
@@ -574,7 +575,7 @@ c
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs)
+        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)
 C                                                                               
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
@@ -650,12 +651,22 @@ C---- CALCULATE INTERPOLATED/EXTRAPOLATED YMF AT EACH OUTBOARD X POSN.
 C---- DIFFERENT YIELD MODIFIERS FOR EACH SIDE OF Y = 0                          
 C---- FLAG DETERMINES WHETHER TO APPLY TO PRIMARIES, SECONDARIES, BOTH          
 C                                                                               
+c
+c     Set primary and secondary YMFs to 1.0 to start
+c
       DO 55 J = 1, 2                                                            
         DO 55 IQX = 1-NQXSO, 0                                                  
           CYMFPS(IQX,J) = 1.0                                                   
           CYMFSS(IQX,J) = 1.0                                                   
    55 CONTINUE                                                                  
 C                                                                               
+c     Calculating YMFs
+c
+c     cymfs(in,1) - X coordinate 
+c     cymfs(in,2) - Y<0 side data
+c     cymfs(in,3) - Y>0 side data
+c
+c
       IF (CYMFLG.NE.-2) THEN                                                    
         CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
      >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,1),'LINEAR')             
@@ -669,11 +680,38 @@ C
         CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
      >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
       ENDIF                                                                     
+c
+c     jdemod
+c
+c     if specific self-sputtering yields are specified they override the 
+c     cymflg flag specification. 
+c
+      if (ss_nymfs.gt.0) then
+         write(6,'(a)') 'Specified self-sputtering'//
+     >                  ' yield modifiers will be used:'
+         do in = 1,nymfs
+            write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+     >                      cymfs(in,2),cymfs(in,3)
+         end do
+c
+c        Apply yield modifiers to cymfss
+c
+        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,2),                               
+     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,1),'LINEAR')             
+        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,3),                               
+     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
+      endif
+
+
 C
-C      do in = 1,nymfs
-C         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
-C     >                      cymfs(in,2),cymfs(in,3)
-C      end do
+      do in = 1,nymfs
+         write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
+     >                      cymfs(in,2),cymfs(in,3)
+      end do
+      do in = 1,ss_nymfs
+         write(6,'(a,i6,10(1x,g12.5))') 'SS_CYMFS:',in,ss_cymfs(in,1),
+     >                      ss_cymfs(in,2),ss_cymfs(in,3)
+      end do
 
 c      do iqx=1-nqxso,0
 c         write(6,'(a,i8,10(1x,g12.5))') 
@@ -1206,13 +1244,22 @@ c slmod begin - not sure what this does
                AVGTRAC = AVGTRAC + TPTRAC(TRACLEN-1,2) - 
      +                             TPTRAC(TRACLEN-2,2)
              ENDIF
+c
+c jdemod - the print out of the particle tracks can use a lot of space
+c          300Mb+ for a 6 particle debug for example - 6 particles from each 
+c          generation are printed. 
+c        - to allow collection of track information in the code without
+c          the overhead in the LIM file ... I have commented this out for
+c          now ... it could be added back with a specific print option 
+c          if that would help.  
+c
 c slmod end
-             write(6,'(a,i8,10(1x,g12.5))') 
-     >              'trac:',traclen-1,tptrac(traclen-1,1),
-     >              tptrac(traclen-1,2),
+c             write(6,'(a,i6,i8,10(1x,g12.5))') 
+c     >              'trac:',imp,traclen-1,tptrac(traclen-1,1),
+c     >              tptrac(traclen-1,2),
 c slmod
-     +             (tptrac(traclen-1,2)-tptrac(traclen-2,2)),
-     +             AVGTRAC/(TRACLEN-2)
+c     +             (tptrac(traclen-1,2)-tptrac(traclen-2,2)),
+c     +             AVGTRAC/(TRACLEN-2)
 c     >                  tptrac(traclen-1,2),bigtrac
 c slmod end
           endif
@@ -1366,6 +1413,20 @@ c
               Y_position = Y_position + delta_y1 + delta_y2
               Y     = SNGL (Y_position)                                            
 c
+c             jdemod - Check for Y absorption
+c
+              if (yabsorb_opt.ne.0) then 
+
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+
+                 if (ierr.eq.1) then 
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ifate = 11
+                   goto 790
+                endif 
+
+             endif
+
 c
 c             jdemod
 c
@@ -1376,6 +1437,8 @@ c             desired outboard where a limiter surface is present.
 c
 c             However - we can check for reflections here. 
 c
+
+
               if (yreflection_opt.ne.0) then 
                  if (abs(y).gt.ctwol) then 
                     write(6,*) 'Y > CTWOL'
@@ -1465,6 +1528,23 @@ C
                    CX = CX + SIGN(CDPSTP,CXCFS(IQX,J)-RANV(KK))
                 ENDIF
               ENDIF                
+c
+c             Add check for X absorption here
+c
+              if (xabsorb_opt.ne.0) then 
+                call check_x_absorption(cx,y,sputy,ciz,ierr)
+        
+               if (ierr.eq.1) then 
+c                 Particle absorbed - exit tracking loop - x absorption
+                  ifate = 10
+                  goto 790
+               
+               endif 
+
+              endif
+
+
+
 C                                                                               
 C------------ DO NOT NEED THE FOLLOWING TWO LINES FOR THE QUICK STANDARD        
 C------------ LIM VERSION WITH NO POLOIDAL DIFFUSION.  THEN KK WILL ONLY        
@@ -1588,12 +1668,17 @@ C
                tmp_y = y
 
                call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               sputy,debugl,ierr)
+     >                               sputy,ciz,debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
                   WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               elseif (ierr.eq.2) then
+                  ! particle Y-absorbed
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ifate = 11
+                   goto 790
                endif
 
                !
@@ -1770,16 +1855,21 @@ c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
                   call check_y_boundary(cx,y,oldy,absy,svy,alpha,
-     >                                  ctwol,sputy,
+     >                                  ctwol,sputy,ciz,
      >                                  debugl,ierr)
                   if (ierr.eq.1) then 
                      ! write some debugging info
                      WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
                      WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                  elseif (ierr.eq.2) then
+                     ! particle Y-absorbed
+c                  Particle absorbed - exit tracking loop - y absorption
+                     ifate = 11
+                     goto 790
                   endif
-               endif
 
+               endif
 
               YYCON = YY*CONO + 1.0                                             
               ALPHA = CX / YYCON                                                
@@ -2779,7 +2869,21 @@ C
  4110   CONTINUE                                                                
  4120  CONTINUE                                                                 
  4130 CONTINUE                                                                  
-      WRITE(6,*) '2:'
+
+c
+c     jdemod - symmetric contributions in the walls array
+c            - nys goes to -2L and nys to +2L 
+c            - the ranges -2L,0 maps directly onto 0,2L - they are the same
+c            - so data is combined and overlaid
+c            - I have no idea why this design decision was originally made
+c
+      do iz = -1,nizs
+         do iy = 1,nys
+            walls(iy,iz) = walls(iy,iz) + walls(-nys-1+iy,iz)
+            walls(-nys-1+iy,iz) = walls(iy,iz)
+         end do 
+      end do
+
 C                                                                               
 C====================== DDTS AND DDYS ARRAYS ===========================        
 C                                                                               
@@ -3372,8 +3476,20 @@ C---- THE AVERAGE VALUES OVER THE "NEAR" REGION ARE SUMMED IN THE DTOTS
 C---- ARRAY BELOW, JUST OVER THE REGION 0:CXNEAR, -CYNEAR:CYNEAR.               
 C---- SEE ALSO NOTES 139, 221, 225, 288, 293                                    
 C                                                                               
-      DEFACT = 0.0D0                                                            
-      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT)         
+c
+c     jdemod
+c
+c     Change Default scaling factor to 1.0 so that data is scaled to 
+c     1 particle/s if a better scaling factor is not available     
+c
+c      DEFACT = 0.0D0                                                            
+
+      DEFACT = 1.0D0                                                            
+c
+c      jdemod - removed TATIZ/TNEUT scaling of the absolute factor
+c
+c      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT)         
+      IF (TNEUT.GT.0.0) DEFACT = DBLE (2.0*GTOT1*YEFF*CSEF)         
 c
 c     Assign DEFACT to ABSFAC which is in the common include file comtor 
 c     This is for compatibility with some DIVIMP code.
@@ -3385,11 +3501,14 @@ c
       call prb
       call prc(' CALCULATION OF "ABSOLUTE" FACTOR:')
       call prc(' FORMULA USED: ABSFAC ='//
-     >         ' 2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT')
+     >         ' 2.0*GTOT1*YEFF*CSEF')
+c      call prc(' FORMULA USED: ABSFAC ='//
+c     >         ' 2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT')
       call prr(' ABSFAC = ',real(absfac))
       call prr(' GTOT1  = ',gtot1)
       call prr(' YEFF   = ',yeff)
       call prr(' CSEF   = ',csef)
+      call prc(' For Refererence: ') 
       call pri(' TATIZ  = ',nint(tatiz))
       call pri(' TNEUT  = ',nint(tneut))
 c
@@ -3556,7 +3675,7 @@ c
 c     
 c     
       subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                            sputy,debugl,ierr)
+     >                            sputy,ciz,debugl,ierr)
       use error_handling
       use yreflection
       !
@@ -3570,7 +3689,7 @@ c
       implicit none
       real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
-      integer :: ierr
+      integer :: ierr,ciz
       
       real :: tmp_oldy
 
@@ -3578,13 +3697,31 @@ c
 
       ierr = 0
 c     
+c
+c     Check for crossing Y- absorbing surface before the y-coordinate are updated
+c
+c             jdemod - Check for Y absorption
+c
+              if (yabsorb_opt.ne.0) then 
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
 
+                 if (ierr.eq.1) then 
+c                  Particle absorbed - exit tracking loop - y absorption
+                   ierr =2 
+                   return
+                endif 
+
+             endif
+
+c
       IF (Y.LE.-CTWOL) THEN                                           
 
  401     continue
          Y   = y + 2.0 * ctwol
          tmp_oldy = tmp_oldy + 2.0 * ctwol
          IF (Y.LE.-CTWOL) GOTO 401                                     
+
+
 
 c     
 c        jdemod 
