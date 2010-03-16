@@ -1369,8 +1369,8 @@ c
 
       CALL OutputData(85,'What the fll')
 
-      WRITE(SLOUT,*)
-      WRITE(SLOUT,*) 'INTERPOLATING TARGET DATA'
+      WRITE(PINOUT,*)
+      WRITE(PINOUT,*) 'INTERPOLATING TARGET DATA'
 
 c...  Need to check that PSITARG is assigned:
       IF (psitarg(irsep,2).EQ.0.0) 
@@ -1389,7 +1389,8 @@ c     required, but leaving this in until it is a problem:
 
 c...  Assign target data (LPDATO, LPDATI) from the TARINTER
 c     data listed in the DIVIMP/OEDGE input file:
- 10   DO region = IKLO, IKHI
+ 10     WRITE(PINOUT,*) 'REPEAT',repeat
+        DO region = IKLO, IKHI
         ii = 0
         DO ir = irsep, nrs
           ii = ii + 1
@@ -1991,6 +1992,12 @@ c...  Check first that IKTO and IKTI are correct:
       ELSEIF (nopriv) THEN
         rxp = rvertp(1,korpg(1,irsep)) 
         zxp = zvertp(1,korpg(1,irsep)) 
+
+        ikto = 0
+        ikti = nks(irsep) + 1
+        ikto2 = ikto
+        ikti2 = ikti
+        GOTO 50  ! *** SPAGETTI FOR NOW ***
       ELSE
         id1 = korpg(ikto,irsep)      
         id2 = korpg(ikti,irsep)
@@ -2034,71 +2041,31 @@ c     .    midnks = MAX(ikti2(ir) - ikto2(ir) + 1,midnks)
       ENDDO
 
 
-      IF (.FALSE..AND.grdnmod.NE.0) THEN
-
-        WRITE(0,*)
-        WRITE(0,*)
-        WRITE(0,*) 'WARNING: CHANGING IKTO,I2 DEFINITION '//
-     .             'IN SOL (C13 CASES)'
-        WRITE(0,*)
-        WRITE(0,*)
-
-        DO ir = irsep+1, irwall-1
-          ikto2(ir) = -1
-          ikti2(ir) = -1
-
-          ir1 = ir - 1
-
-          iko = ikto2(ir1)
-          iki = ikti2(ir1)
-          id1 = korpg(MAX(1,iko),ir1)
-          id2 = korpg(MAX(1,iki),ir1)
-
+      midnks = ikti - ikto - 1
+      DO ir = irsep+1, irwall-1
+c        ikto3 = (virloc(ir,IKHI) - midnks) / 2 + virloc(ir,IKLO)
+        IF (connected.AND.ir.EQ.irsep2) THEN
+c          WRITE(0,*) irsep,irsep2,irwall,connected
+c          STOP 'sdfsdf'      
+          id1 = korpg(ikto,irsep)
+          id2 = korpg(ikti,irsep)
           DO ik = 1, nks(ir)
-            id3 = korpg(ik,ir)
-            IF (ABS(rvertp(3,id1)-rvertp(4,id3)).LT.TOL.AND.iko.NE.-1
-     .          .AND.
-     .          ABS(zvertp(3,id1)-zvertp(4,id3)).LT.TOL) ikto2(ir) = ik
-c            IF (ABS(rvertp(2,id2)-rvertp(1,id3)).LT.TOL.AND.iki.NE.-1
-c     .          .AND.
-c     .          ABS(zvertp(2,id2)-zvertp(1,id3)).LT.TOL) ikti2(ir) = ik
-            IF (ABS(zvertp(2,id2)-zvertp(1,id3)).LT.TOL) ikti2(ir) = ik
+            id = korpg(ik,ir)
+            IF (ABS(rvertp(1,id)-rvertp(4,id1)).LT.TOL.AND.
+     .          ABS(zvertp(1,id)-zvertp(4,id1)).LT.TOL) ikti2(ir) = ik
+            IF (ABS(rvertp(4,id)-rvertp(1,id2)).LT.TOL.AND.
+     .          ABS(zvertp(4,id)-zvertp(1,id2)).LT.TOL) ikto2(ir) = ik
           ENDDO
-
-          WRITE(0,*) 'IKTO SHIT=',ikto2(ir1),ir1,ikto2(ir),ir
-
-          IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
-     .      CALL ER('SetupGrid','Cannot find cut points in SOL '//
-     .              '(expected)',*99)
-        ENDDO
-
-      ELSE
-        midnks = ikti - ikto - 1
-        DO ir = irsep+1, irwall-1
-c          ikto3 = (virloc(ir,IKHI) - midnks) / 2 + virloc(ir,IKLO)
-          IF (connected.AND.ir.EQ.irsep2) THEN
-c            WRITE(0,*) irsep,irsep2,irwall,connected
-c            STOP 'sdfsdf'      
-            id1 = korpg(ikto,irsep)
-            id2 = korpg(ikti,irsep)
-            DO ik = 1, nks(ir)
-              id = korpg(ik,ir)
-              IF (ABS(rvertp(1,id)-rvertp(4,id1)).LT.TOL.AND.
-     .            ABS(zvertp(1,id)-zvertp(4,id1)).LT.TOL) ikti2(ir) = ik
-              IF (ABS(rvertp(4,id)-rvertp(1,id2)).LT.TOL.AND.
-     .            ABS(zvertp(4,id)-zvertp(1,id2)).LT.TOL) ikto2(ir) = ik
-            ENDDO
-            IF (ikto2(ir).EQ.-1.OR.ikti2(ir).EQ.-1) 
-     .        CALL ER('SetupGrid','IKTI,O2 problem for IRSEP2',*99)
-          ELSE
-            ikto3 = virloc(ir,IKLO) - 1 +
-     .              (virloc(ir,IKHI) - virloc(ir,IKLO) + 1 - midnks) / 2
-            ikti3 = ikto3 + midnks + 1
-            ikto2(ir) = MAX(virloc(ir,IKLO),ikto3)
-            ikti2(ir) = MIN(virloc(ir,IKHI),ikti3)
-          ENDIF  
-        ENDDO
-      ENDIF
+          IF (ikto2(ir).EQ.-1.OR.ikti2(ir).EQ.-1) 
+     .      CALL ER('SetupGrid','IKTI,O2 problem for IRSEP2',*99)
+        ELSE
+          ikto3 = virloc(ir,IKLO) - 1 +
+     .            (virloc(ir,IKHI) - virloc(ir,IKLO) + 1 - midnks) / 2
+          ikti3 = ikto3 + midnks + 1
+          ikto2(ir) = MAX(virloc(ir,IKLO),ikto3)
+          ikti2(ir) = MIN(virloc(ir,IKHI),ikti3)
+        ENDIF  
+      ENDDO
 
       DO ir = nrs, irtrap+1, -1
         WRITE(SLOUT,*) 'CUTPOINTS IN PFZ: IR= ',ir
@@ -2234,6 +2201,11 @@ c...      Secondary PFZ:
         ENDIF
 
       ENDIF
+
+
+ 50   CONTINUE ! For NOPRIV...
+
+
 
 c
 c

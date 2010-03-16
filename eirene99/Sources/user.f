@@ -2035,9 +2035,9 @@ c        READ (IUNIN,*) comment,addopt
         ENDIF
 
        IF (optconmap.EQ.1) THEN
-         WRITE(0,*) '*****************************'
-         WRITE(0,*) '* CONNECTION MAP TURNED ON! *'
-         WRITE(0,*) '*****************************'
+         WRITE(6,*) '*****************************'
+         WRITE(6,*) '* CONNECTION MAP TURNED ON! *'
+         WRITE(6,*) '*****************************'
        ENDIF
 
        IF (debugopt.GE.1.AND.debugopt.LE.20) THEN

@@ -731,6 +731,9 @@ c...    Strata:
 
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
+
+      INTEGER store_sopt(500),store_mnode(500),store_nnode(500)
+      TYPE(type_node) store_node(20,500)
 !...  
       INTEGER, PARAMETER :: MAXNTUBE = 100
       TYPE(type_grid), SAVE :: grid

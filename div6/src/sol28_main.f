@@ -1706,6 +1706,8 @@ c...      Calculate plasma solution:
           IF (.FALSE.) THEN
 c...        MPI:
           ELSE
+            store_sopt (itube) = sol_option  ! *** TEMP ***
+
             SELECTCASE (sol_option) 
 c             ----------------------------------------------------------
               CASE(1)
@@ -1735,6 +1737,10 @@ c...            Assign solution parameter nodes:
                 IF (opt%s28mode.EQ.4.1) THEN 
                   CALL AssignNodeValues_New(itube,nnode,mnode,node,
      .                                      opt_tube)
+                  
+                  store_nnode(itube) = nnode  ! *** TEMP ***
+                  store_mnode(itube) = mnode
+                  store_node (1:nnode,itube) = node(1:nnode)
                 ELSE
                   STOP 'NO LONGER SUPPORTED'
 c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)

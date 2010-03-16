@@ -740,20 +740,28 @@ c...  Input:
 
 
       IF     (mode.EQ.IT_VWINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: vessel wall'
         nsurlist = nvwlist
         surlist => vwlist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: vessel wall'
       ELSEIF (mode.EQ.IT_GBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: grid boundary'
         nsurlist = ngblist
         surlist => gblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: grid boundary'
       ELSEIF (mode.EQ.IT_OBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: object map'
         nsurlist = noblist
         surlist => oblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: object map'
       ELSE
         CALL ER('FindSurfaceIntersections','MODE problem',*99)
       ENDIF
+      IF (nchord.EQ.dchord) THEN
+        WRITE(fp,*) '  NSURLIST:',nsurlist
+        IF (nsurlist.GT.0) THEN
+          WRITE(fp,*) '  SURLIST1:',surlist(1:nsurlist,1)
+          WRITE(fp,*) '  SURLIST2:',surlist(1:nsurlist,2)
+        ENDIF
+      ENDIF
+
 
       DO i3 = 1, nsurlist
         iobj  = surlist(i3,1)

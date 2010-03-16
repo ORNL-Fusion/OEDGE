@@ -777,7 +777,7 @@ c       ----------------------------------------------------------------
             IF (iontype(ion).NE.ITY_FLUID) CYCLE
 c...        Calculate total electron energy source along the flux tube and
 c           integrate along the field line:
-            enesrc(0      ,1) = enesrc(0      ,1) + 1.0
+            enesrc(0      ,1) = enesrc(0      ,1) + 1.0  ! *** WHY IS THIS 1.0 HERE? ***
             enesrc(icmax+1,1) = enesrc(icmax+1,1) + 1.0
             enesrc(1:icmax,1) = enesrc(1:icmax,1) + 
      .                          enerec(1:icmax,ion) +

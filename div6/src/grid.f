@@ -433,7 +433,7 @@ c     Input:
 
       INTEGER i1,ik1,ik2,ir,ir1,maxcells,numadd,id1,id2,ik
 
-      WRITE(0,*) 'STRUCTURING GRID - NEW ROUTINE'
+c      WRITE(0,*) 'STRUCTURING GRID - NEW ROUTINE'
       write(50,*)
       write(50,'(A)') 'Structuring the grid'
       write(50,*)
@@ -2883,22 +2883,27 @@ c
 c
 c Check to see if IKTO and IKTI should be modified:
 c
-      IF (ir.EQ.irsep.OR.ir.GT.irtrap.OR.
-     .    (ir.GT.irsep.AND.ir.LT.irwall.AND.type.EQ.VIRTUAL)) THEN
+      IF (nopriv) THEN
+        ikto2 = 0
+        ikti2 = nks(irsep) + 1
+      ELSE
+        IF (ir.EQ.irsep.OR.ir.GT.irtrap.OR.
+     .      (ir.GT.irsep.AND.ir.LT.irwall.AND.type.EQ.VIRTUAL)) THEN
 
-        IF ((ikcell.LE.ikto2(ir).AND.mode.EQ.BEFORE).OR.
-     .      (ikcell.LT.ikto2(ir).AND.mode.EQ.AFTER))
-     .    ikto2(ir) = ikto2(ir) + 1
+          IF ((ikcell.LE.ikto2(ir).AND.mode.EQ.BEFORE).OR.
+     .        (ikcell.LT.ikto2(ir).AND.mode.EQ.AFTER))
+     .      ikto2(ir) = ikto2(ir) + 1
 
-        IF ((ikcell.LE.ikti2(ir).AND.mode.EQ.BEFORE).OR.
-     .      (ikcell.LT.ikti2(ir).AND.mode.EQ.AFTER))
-     .    ikti2(ir) = ikti2(ir) + 1
+          IF ((ikcell.LE.ikti2(ir).AND.mode.EQ.BEFORE).OR.
+     .        (ikcell.LT.ikti2(ir).AND.mode.EQ.AFTER))
+     .      ikti2(ir) = ikti2(ir) + 1
 
-      ELSEIF (ir.LT.irwall) THEN
-        midnks = ikti - ikto - 1
+        ELSEIF (ir.LT.irwall) THEN
+          midnks = ikti - ikto - 1
 
-        ikto2(ir) = MAX(1      ,(nks(ir) - midnks) / 2)
-        ikti2(ir) = MIN(nks(ir),ikto2(ir) + midnks + 1)
+          ikto2(ir) = MAX(1      ,(nks(ir) - midnks) / 2)
+          ikti2(ir) = MIN(nks(ir),ikto2(ir) + midnks + 1)
+        ENDIF
       ENDIF
 
       ikto = ikto2(irsep)
@@ -3221,7 +3226,7 @@ c
       z(5) = z(1) + spos * (z(4) - z(1))
       r(6) = r(2) + spos * (r(3) - r(2))
       z(6) = z(2) + spos * (z(3) - z(2))
-c
+
 c     Check that the length of the poloidal sides of the new cells
 c     is sufficient:
 c
@@ -3265,8 +3270,7 @@ c       WRITE(0,*) 'NKS=',nks(ir),ir
 c       WRITE(0,*) 'NKS=',nks(ir),ir
 
 c This has to be added because of the way that InsertCell adjusts ikto...
-      IF (ir.EQ.irsep.AND.ik.EQ.ikto.OR.
-     .    ik.EQ.ikto2(ir)) THEN
+      IF (ir.EQ.irsep.AND.ik.EQ.ikto.OR.ik.EQ.ikto2(ir)) THEN
         ikto2(ir) = ikto2(ir) + 1
         ikto      = ikto2(ir)
       ENDIF
@@ -5895,7 +5899,7 @@ c
 
       fp = 98
       SELECTCASE(mode)
-        CASE (0,2,10)
+        CASE (0,2,3,10)
           OPEN(UNIT=fp,FILE='grid.dat'  ,ACCESS='SEQUENTIAL',
      .         STATUS='OLD',ERR=96)      
         CASE (1)
@@ -5931,11 +5935,20 @@ c...  Clear header:
           ENDDO
  10       CONTINUE
         CASE (2)
+          READ(fp,*) 
           WRITE(buffer,'(1024X)')
           buffer(1:1) = '*'
           DO WHILE(buffer(1:1).EQ.'*')
             READ(fp,'(A1024)') buffer
 c            WRITE(0,*) 'WHAT'//buffer(1:1)//'<'
+          ENDDO
+          BACKSPACE(fp)
+        CASE (3)
+          READ(fp,*) 
+          WRITE(buffer,'(1024X)')
+          buffer(1:1) = '*'
+          DO WHILE(buffer(1:1).EQ.'*')
+            READ(fp,'(A1024)') buffer
           ENDDO
           BACKSPACE(fp)
       ENDSELECT
@@ -6006,6 +6019,21 @@ c              WRITE(0,*) 'BUFFER',buffer(1:100)
             ENDDO
           ENDDO
  25       CONTINUE
+        CASE (3) 
+          DO ir = 1, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            DO ik = 1, nks(ir)
+              READ(fp,'(A1024)',END=30) buffer
+              READ(buffer,*) ik1,ir1,rdum1,rdum2
+              IF (ik.NE.ik1.OR.ir.NE.ir1) 
+     .          CALL ER('LoadGridData','Cell index mismatch',*99)
+              IF (ik.EQ.1      ) psitarg(ir,2) = rdum1
+              IF (ik.EQ.nks(ir)) psitarg(ir,1) = rdum1
+              bratio(ik,ir) = rdum2
+              kbfs  (ik,ir) = 1.0 / (rdum2 + 1.0E-10)
+            ENDDO
+          ENDDO
+ 30       CONTINUE
       ENDSELECT
 
 c...  Close stream:
@@ -6105,10 +6133,13 @@ c
       INCLUDE 'comtor'
       INCLUDE 'slcom'
 
-      INTEGER ik,ir,id,ilocmax
+      INTEGER ik,ir,id,ilocmax,ikend
       REAL    pdist(MAXNKS),ploc(0:MAXNKS),r1,r2,z1,z2,plocshift
 
-      DO ik = 1, nks(ir)
+      ikend = nks(ir)
+      IF (ir.LT.irsep) ikend = ikend - 1
+
+      DO ik = 1, ikend
         id = korpg(ik,ir)
         IF (ALLOCATED(d_rvertp)) THEN
           r1 = 0.5 * SNGL(d_rvertp(1,id) + d_rvertp(2,id))
@@ -6128,24 +6159,24 @@ c
           ploc(ik) = ploc(ik-1) + 0.5 * (pdist(ik-1) + pdist(ik))
         ENDIF
       ENDDO
-      ploc(0) = ploc(nks(ir)) + 0.5 * pdist(nks(ir))
+      ploc(0) = ploc(ikend) + 0.5 * pdist(nks(ir))
 c...  Set coordinate so that it is increasing towards the center from
 c     both targets:
-      DO ik = 1, nks(ir)
+      DO ik = 1, ikend
         ploc(ik) = ABS(ABS(ploc(ik) - 0.5 * ploc(0)) - 0.5 * ploc(0))
       ENDDO
 c...  Adjust poloidal coordinate so that the 1st and last cells are at 
 c     position 0.0:
       plocshift = ploc(1)
-      DO ik = 1, nks(ir)-1
+      DO ik = 1, ikend-1
         IF (ploc(ik).LT.ploc(ik+1)) ploc(ik) = ploc(ik) - plocshift
       ENDDO
-      plocshift = ploc(nks(ir))
-      DO ik = nks(ir), 2, -1
+      plocshift = ploc(ikend)
+      DO ik = ikend, 2, -1
         IF (ploc(ik).LT.ploc(ik-1)) ploc(ik) = ploc(ik) - plocshift
       ENDDO
-      ploc(0        ) = 0.0
-      ploc(nks(ir)+1) = 0.0
+      ploc(0      ) = 0.0
+      ploc(ikend+1) = 0.0
 
       RETURN
  99   STOP
@@ -6188,6 +6219,7 @@ c...    Simple refinement of low IK index near target region:
         DO WHILE (cont)
           cont = .FALSE.
           nks2 = nks(ir)
+          IF (ir.LT.irsep) nks2 = nks2 - 1
           DO ik = nks2, 1, -1
 c...        Calculate poloidal distribution of cells:
             CALL CalcPolDist(ir,pdist,ploc)
@@ -7271,6 +7303,7 @@ c...          Points at the centers of outer targets:
           IF     (grdmod(i1,2).EQ. 0.0.OR.
      .            grdmod(i1,2).EQ. 1.0.OR.
      .            grdmod(i1,2).EQ. 2.0.OR.
+     .            grdmod(i1,2).EQ. 3.0.OR.
      .            grdmod(i1,2).EQ.10.0) THEN
 c...        Load Bratio and PSIn data from external file:
             CALL LoadGridData(NINT(grdmod(i1,2)))

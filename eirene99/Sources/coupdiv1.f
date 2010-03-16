@@ -3843,10 +3843,10 @@ c...  Count radial surface segments:
 c
 c     jdemod - removing NUMSURF hack for now
 c
-      WRITE(0,*) '------------------------------'
+      WRITE(6,*) '------------------------------'
 c      WRITE(0,*) 'NUMSURF HACK!'
-      WRITE(0,*) 'NUMSURF HACK REMOVED!'
-      WRITE(0,*) '------------------------------'
+      WRITE(6,*) 'NUMSURF HACK REMOVED!'
+      WRITE(6,*) '------------------------------'
 c      NUMSURF = NUMSURF + 4
 c
 c     jdemod 

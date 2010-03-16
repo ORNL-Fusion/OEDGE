@@ -39,13 +39,13 @@ c
 c
 c ====================================================================
 c
-      SUBROUTINE SamplePlasmaProfile(index,val,coord,result)
+      SUBROUTINE SimplePlasmaProfile(type,index,val,coord,result)
       USE mod_geometry
       USE mod_sol28_global
       USE mod_interface
       IMPLICIT none
       
-      INTEGER, INTENT(IN)  :: index,coord
+      INTEGER, INTENT(IN)  :: type,index,coord
       REAL   , INTENT(IN)  :: val
       REAL   , INTENT(OUT) :: result(3)
  
@@ -85,7 +85,8 @@ c           = 3 - PSIn over range of applicability (like coord=2)
 c           = 4 - RHO
 c           = 5 - PSIn (raw)
 c           = 6 - linear on line segment, but from tube link to infinity
-      
+
+c...  Initialisation:      
       IF (firstcall) THEN
         xdata = 0.0D0
         ydata = 0.0D0
@@ -102,7 +103,7 @@ c       interpolation region:
         itube = grid%isep-1
         WRITE(0,*) 'ITUBE 1=',itube
         CALL LineCutTube(p1,p2,itube,p)
-        a_sep = p(1) - p1(1)
+        a_sep = p(1) - p1(1)  
 
         itube = osmnode(index)%tube_range(2) 
         WRITE(0,*) 'ITUBE 2=',itube,index
@@ -122,7 +123,7 @@ c...    Calculate core volume:
           iobj = GetObject(icell,IND_CELL)                   
           CALL GetVertex(iobj,2,x(n),y(n))          
         ENDDO
-
+c Debug:
 c        DEALLOCATE(x)
 c        DEALLOCATE(y)
 c        n = 4
@@ -149,7 +150,7 @@ c        y(4) = 0.0D0
 
         step = (2.0D0 * a_sep) / DBLE(NSTEP-1)
 
-        a_etb = DBLE(osmnode(index)%fit_p(3)) * a_sep
+c        a_etb = DBLE(osmnode(index)%fit_p(3)) * a_sep
 
         WRITE(fp,*) 'STEP: ',a_sep,a_end,step
 
@@ -177,9 +178,9 @@ c       Recale so the total length covered is 2a:
 
       SELECTCASE (NINT(osmnode(index)%fit_quantity))
         CASE (1)
-          j = 1
+          j = IND_NE
         CASE (4)
-          j = 2
+          j = IND_TE
         CASE DEFAULT
           CALL ER('SamplePlasmaProfile','Unknown quantity',*99)
       ENDSELECT
@@ -187,20 +188,32 @@ c       Recale so the total length covered is 2a:
       IF (ydata(0,j).EQ.0.0D0) THEN
         ydata(0,j) = -1.0     
 
-        target  = DBLE(osmnode(index)%fit_p(1))
-        a_knee  = DBLE(osmnode(index)%fit_p(2))
-        a_etb   = DBLE(osmnode(index)%fit_p(3)) + a_sep
-        a_delta = DBLE(osmnode(index)%fit_p(4))      
-        a_SOL   = DBLE(osmnode(index)%fit_p(5))
-        t_SOL   = DBLE(osmnode(index)%fit_p(6))
-        b_SOL   = DBLE(osmnode(index)%fit_p(7))
-        param1  = DBLE(osmnode(index)%fit_p(8))
-        param2  = DBLE(osmnode(index)%fit_p(9))
+        SELECTCASE (type)
+          CASE (1)
+            target  = DBLE(osmnode(index)%fit_p(1))
+            a_knee  = DBLE(osmnode(index)%fit_p(2))
+            a_etb   = DBLE(osmnode(index)%fit_p(3)) + a_sep
+            a_delta = DBLE(osmnode(index)%fit_p(4))      
+            a_SOL   = DBLE(osmnode(index)%fit_p(5))
+            t_SOL   = DBLE(osmnode(index)%fit_p(6))
+            b_SOL   = DBLE(osmnode(index)%fit_p(7))
+            param1  = DBLE(osmnode(index)%fit_p(8))
+            param2  = DBLE(osmnode(index)%fit_p(9))
+            a_ped1 = a_etb - 2.0D0 * a_delta
+            a_ped2 = a_etb + 2.0D0 * a_delta
+          CASE (2)
+            target  = DBLE(osmnode(index)%fit_p(1))
+            a_etb   = DBLE(osmnode(index)%fit_p(2)) + a_sep
+            a_SOL   = DBLE(osmnode(index)%fit_p(3))
+            t_SOL   = DBLE(osmnode(index)%fit_p(4))
+            b_SOL   = DBLE(osmnode(index)%fit_p(5))
+            param1  = DBLE(osmnode(index)%fit_p(6))
+            param2  = DBLE(osmnode(index)%fit_p(7))
+          CASE DEFAULT
+            CALL ER('SimplePlasmaProfile','Unknown TYPE',*99) 
+        ENDSELECT          
 
-        a_ped1 = a_etb - 2.0D0 * a_delta
-        a_ped2 = a_etb + 2.0D0 * a_delta
-
-        IF (j.EQ.2.AND.ydata(0,1).EQ.0.0D0) 
+        IF (j.EQ.IND_TE.AND.ydata(0,1).EQ.0.0D0) 
      .    CALL ER('SamplePlasmaProfile','NE data must be assigned '//
      .            'before T profile can be calculated',*99)
 
@@ -215,36 +228,45 @@ c          (4) ! RHO : or (m), so need to update
         cont = .TRUE.
         DO WHILE(cont)
           cont = .FALSE.
-          DO i = 1, NSTEP
-            r          = (a_etb - xdata(i,IND_R)) / (2.0D0 * a_delta)
-            mtanh      = ((1.0D0 + a_slope * r) * EXP(r) - EXP(-r)) / 
-     .                   (EXP(r) + EXP(-r))
-            ydata(i,j) = (a_knee - a_SOL) / 2.0D0 * (mtanh + 1) + a_SOL
-          ENDDO
-
+c...      Calculate the core plasma profile:
+          SELECTCASE (type)
+            CASE (1)
+              DO i = 1, NSTEP
+                r         =(a_etb - xdata(i,IND_R)) / (2.0D0 * a_delta)
+                mtanh     =((1.0D0 + a_slope * r) * EXP(r) - EXP(-r)) / 
+     .                     (EXP(r) + EXP(-r))
+                ydata(i,j)=(a_knee - a_SOL)/2.0D0 * (mtanh+1.D0) + a_SOL
+              ENDDO
+            CASE (2)
+              DO i = 1, NSTEP 
+                r = (a_etb - xdata(i,IND_R)) / a_etb
+                ydata(i,j) = a_slope * a_SOL * r + a_SOL
+c                WRITE(88,*) 'PRO:',i,ydata(i,j),diff
+              ENDDO
+            CASE DEFAULT
+              CALL ER('SimplePlasmaProfile','Unknown TYPE',*99) 
+          ENDSELECT          
+c...      Calculate the metric for adjusting the slope of the core profile
+c         to match the specified line averaged density or stored energy:
           SELECTCASE (j)
-            CASE (1)  ! Calculate the line averaged density:   **** IS THIS RIGHT? ***
+            CASE (IND_NE)  ! Line averaged density:   **** IS THIS RIGHT? ***
               metric = 0.0D0
               DO i = 1, NSTEP
                 metric = metric + ydata(i,IND_NE) * xdata(i,IND_VOL)
               ENDDO
-            CASE (2)  ! Stored energy 
+            CASE (IND_TE)  ! Stored energy 
               DO i = 1, NSTEP
                 IF     (xdata(i,IND_R).LT.a_ped1) THEN
                   param = param1
                 ELSEIF (xdata(i,IND_R).LT.a_ped2) THEN
-                  frac = (xdata(i,IND_R) - a_ped1) / (4.0D0 * a_delta)
-                  frac = frac**1.5
+                  frac = (xdata(i,IND_R) - a_ped1) / (a_ped2 - a_ped1)
+                  frac = frac**3.0
                   param = (1.0D0 - frac) * param1 + frac * param2
                 ELSE
                   param = param2
                 ENDIF
                 ydata(i,IND_TI) = ydata(i,IND_TE) * param
-c                WRITE(0,*) 'PARAM A:',i,param
               ENDDO
-
-c              ydata(:,IND_TI) = ydata(:,IND_TE) * param
-
               metric = 0.0D0
               DO i = 1, NSTEP
                 metric = metric + 1.0D-06 * 1.5D0 *
@@ -252,7 +274,8 @@ c              ydata(:,IND_TI) = ydata(:,IND_TE) * param
      .                   (ydata(i,IND_TE) + ydata(i,IND_TI)) * ECH
               ENDDO
           ENDSELECT
-
+c...      Evaluate the proximity of the metric to the requested value (TARGET) and
+c         adjust the slope of the core profile accordingly:
           diff = (metric - target) / target
           IF (DABS(diff).GT.0.001) THEN
             cont = .TRUE.
@@ -279,81 +302,86 @@ c              ydata(:,IND_TI) = ydata(:,IND_TE) * param
         ENDDO
 
 c...    Add the exponential tail that extends into the SOL:
-        DO i_end = 1, NSTEP
-          IF (xdata(i_end,IND_R).GT.a_end) EXIT
-        ENDDO
-        IF (i_end.EQ.NSTEP+1)
-     .    CALL ER('SamplePlasmaProfile','A_END outside range',*99)    
-        i_end = i_end - 1
-        x_end = xdata(i_end,IND_R)
+        SELECTCASE (type)
+          CASE (1)
+            DO i_end = 1, NSTEP
+              IF (xdata(i_end,IND_R).GT.a_end) EXIT
+            ENDDO
+            IF (i_end.EQ.NSTEP+1)
+     .        CALL ER('SamplePlasmaProfile','A_END outside range',*99)    
+            i_end = i_end - 1
+            x_end = xdata(i_end,IND_R)
+            
+            diff_min = 1.0D+20
+            cross(j) = -1
+            DO i = 1, NSTEP-1 
+              IF (xdata(i,IND_R).LT.a_etb+2.0D0*a_delta.OR.
+     .            xdata(i,IND_R).GT.a_etb+8.0D0*a_delta) CYCLE
+            
+              slope_mtanh = (ydata(i+1,j) - ydata(i,j)) / 
+     .                      (xdata(i+1,1) - xdata(i,1) + 1.0D-10)
+            
+c             For y(x) = A e**(-1/t) + B ; C = y(0), D = y(1)
+              xval = x_end - xdata(i,IND_R) 
+            
+              C = ydata(i,j)
+              D = b_SOL
+              A = (D - C) / (DEXP(-xval / t_SOL) - 1.0D0)
+              B = C - A
+              slope_exp  = -1.0D0 * A / t_SOL
+            
+              diff = DABS((slope_mtanh - slope_exp) / slope_exp)
+              IF (diff.LT.diff_min) THEN
+                diff_min = diff
+                cross(j) = i + 1
+              ENDIF
+            ENDDO
+          CASE (2)
+            DO i_end = 1, NSTEP
+              IF (xdata(i_end,IND_R).GT.a_end) EXIT
+            ENDDO
+            IF (i_end.EQ.NSTEP+1)
+     .        CALL ER('SamplePlasmaProfile','A_END outside range',*99)    
+            i_end = i_end - 1
+            x_end = xdata(i_end,IND_R)
+            DO i = 1, NSTEP
+              IF (xdata(i,IND_R).GT.a_etb) EXIT
+            ENDDO
+            IF (i.EQ.NSTEP+1)
+     .        CALL ER('SamplePlasmaProfile','A_ETB outside range',*99)    
+            cross(j) = i
+          CASE DEFAULT
+            CALL ER('SimplePlasmaProfile','Unknown TYPE',*99) 
+        ENDSELECT
 
-        diff_min = 1.0D+20
-        cross(j) = -1
-        DO i = 1, NSTEP-1 
-          IF (xdata(i,IND_R).LT.a_etb+2.0D0*a_delta.OR.
-     .        xdata(i,IND_R).GT.a_etb+8.0D0*a_delta) CYCLE
-
-          slope_mtanh = (ydata(i+1,j) - ydata(i,j)) / 
-     .                  (xdata(i+1,1) - xdata(i,1) + 1.0D-10)
-
-
-c         For y(x) = A e**(-1/t) + B ; C = y(0), D = y(1)
-          xval = x_end - xdata(i,IND_R) 
-
-          C = ydata(i,j)
-          D = b_SOL
-          A = (D - C) / (DEXP(-xval / t_SOL) - 1.0D0)
-          B = C - A
-
-          slope_exp  = -1.0D0 * A / t_SOL
-c          slope_exp  = -(ydata(i,j) - b_SOL) / t_SOL
-
-          diff = DABS((slope_mtanh - slope_exp) / slope_exp)
-          IF (diff.LT.diff_min) THEN
-            diff_min = diff
-            cross(j) = i + 1
-          ENDIF
-        ENDDO
         IF (cross(j).EQ.-1)
      .    CALL ER('SamplePlasmaProfile','No core/SOL cross-over',*99)
 c...    Calculate exponential fall off into the SOL:
         ydata(cross(j):NSTEP,j) = 0.0D0
 
-        C = ydata(cross(j)-1,j)
-        D = b_SOL
+        C    = ydata(cross(j)-1,j)
+        D    = b_SOL
         xval = x_end - xdata(cross(j)-1,IND_R)
-        A = (D - C) / (DEXP(-xval / t_SOL)- 1.0D0)
-        B = C - A
-
-
+        A    = (D - C) / (DEXP(-xval / t_SOL)- 1.0D0)
+        B    = C - A
 
         DO i = cross(j), i_end
-c          xval = (xdata(i,IND_R) - xdata(cross(j)-1,IND_R)) / 
-c     .           (xdata(k,IND_R) - xdata(cross(j)-1,IND_R))
           xval = xdata(i,IND_R) - xdata(cross(j)-1,IND_R)
-
           ydata(i,j) = A * DEXP(-xval / t_SOL) + B
-
-c          ydata(i,j) =(ydata(cross(j)-1,j) - b_SOL)*EXP(-xval / t_SOL) +
-c     .                b_SOL 
-c          ydata(i,j) =(ydata(cross(j)-1,j) - b_SOL)*EXP(-xval / t_SOL) +
-c     .                b_SOL 
-
           WRITE(88,*) 'XVAL:',i,xval,ydata(i,j)
-      
-c          ydata(i,j) = b_SOL + (ydata(cross(j)-1,j) - b_SOL) * 
-c     .      EXP(-(xdata(i,IND_R) - xdata(cross(j)-1,IND_R)) / t_SOL) 
         ENDDO
+
 c...    Set YDATA beyone A_END to a constant:
         ydata(i_end+1:NSTEP,j) = ydata(i_end,j)
+
 c...    Set Ti from Te:
-        IF (j.EQ.2) THEN 
+        IF (j.EQ.IND_TE) THEN 
           DO i = 1, NSTEP
             IF     (xdata(i,IND_R).LT.a_ped1) THEN
               param = param1
             ELSEIF (xdata(i,IND_R).LT.a_ped2) THEN
-              frac = (xdata(i,IND_R) - a_ped1) / (4.0D0 * a_delta)
-              frac = frac**1.5
+              frac = (xdata(i,IND_R) - a_ped1) / (a_ped2 - a_ped1)
+              frac = frac**3.0
               param = (1.0D0 - frac) * param1 + frac * param2
             ELSE
               param = param2
@@ -361,9 +389,7 @@ c...    Set Ti from Te:
             ydata(i,IND_TI) = ydata(i,IND_TE) * param
 c            WRITE(0,*) 'PARAM B:',i,param
           ENDDO
- 
         ENDIF
-c        IF (j.EQ.2)  ydata(:,IND_TI) = ydata(:,IND_TE) * param
 
 
 

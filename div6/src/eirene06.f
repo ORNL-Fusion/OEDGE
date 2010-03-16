@@ -178,8 +178,8 @@ c...    Collect connection map information:
         IF (tetrahedrons.AND.  
      .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for ITER
           isrf1(1) = 5  
+          STOP 'SORT OUT THIS ANNOYING BUSINESS'
         ENDIF
-c        STOP 'SORT OUT THIS ANNOYING BUSINESS'
 c        IF (tetrahedrons.AND.   ! *** THIS ONE WAS ACTIVE MOST RECENTLY *** -SL, 12.08.09
 c    .       iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for MAST
 c         isrf1(1) = 8  
@@ -2138,13 +2138,14 @@ c...      Check if 2 close lying points got merged by accident:
 c
 c ====================================================================
 c
-      SUBROUTINE OutputVoidSpecification(fp)
-      USE mod_sol28_global
+      SUBROUTINE OutputVoidSpecification(fp,opt)
+      USE mod_sol28
       USE mod_eirene06_parameters
       USE mod_eirene06
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: fp
+      TYPE(type_options_eirene), INTENT(IN) :: opt
 
       INTEGER ivoid
 
@@ -2153,18 +2154,18 @@ c
       WRITE(fp,'(A4,3(2X,A8),A10,2X,A18,2X,A4,2X,3A10)') 
      .  'zone','grid1,2','wall1,2','add1,2','res','hole','code',
      .  'ne','Te','Ti'
-      DO ivoid = 1, opt_eir%nvoid
+      DO ivoid = 1, opt%nvoid
         WRITE(fp,'(I4,3(2X,2I4),F10.4,2X,2F9.4,2X,I4,2X,1P,3E10.2,0P)') 
-     .    opt_eir%void_zone(    ivoid),
-     .    opt_eir%void_grid(1:2,ivoid),
-     .    opt_eir%void_wall(1:2,ivoid),
-     .    opt_eir%void_add (1:2,ivoid),
-     .    opt_eir%void_res (    ivoid),
-     .    opt_eir%void_hole(1:2,ivoid),
-     .    opt_eir%void_code(    ivoid),
-     .    opt_eir%void_ne  (    ivoid),
-     .    opt_eir%void_te  (    ivoid),
-     .    opt_eir%void_ti  (    ivoid)
+     .    opt%void_zone(    ivoid),
+     .    opt%void_grid(1:2,ivoid),
+     .    opt%void_wall(1:2,ivoid),
+     .    opt%void_add (1:2,ivoid),
+     .    opt%void_res (    ivoid),
+     .    opt%void_hole(1:2,ivoid),
+     .    opt%void_code(    ivoid),
+     .    opt%void_ne  (    ivoid),
+     .    opt%void_te  (    ivoid),
+     .    opt%void_ti  (    ivoid)
       ENDDO
 
       RETURN
@@ -2212,11 +2213,13 @@ c
 c
 c ====================================================================
 c
-      SUBROUTINE SetupVoidProcessing
-      USE mod_sol28_global
+      SUBROUTINE SetupVoidProcessing(opt)
+      USE mod_sol28
       USE mod_eirene06_parameters
       USE mod_eirene06
       IMPLICIT none
+
+      TYPE(type_options_eirene), INTENT(INOUT) :: opt
 
       INTEGER fp,ivoid,isrf,i1,i2,idefault
       LOGICAL void_specified
@@ -2224,84 +2227,84 @@ c
       TYPE(type_options_eirene) :: opt_tmp
 
 c...  Output:
-      CALL OutputVoidSpecification(eirfp)
+      CALL OutputVoidSpecification(eirfp,opt)
 
-      CALL ProcessVoid(-999)  ! Initialisation
+      CALL ProcessVoid(-999,opt)  ! Initialisation
 
 c      default_index = 0     
-c      DO ivoid = 1, opt_eir%nvoid
-c        IF (opt_eir%void_zone.EQ.-1) default_index = ivoid
+c      DO ivoid = 1, opt%nvoid
+c        IF (opt%void_zone.EQ.-1) default_index = ivoid
 c      ENDDO
 
 c...  Assign defaults, if necessary:
       idefault  = 0
       void_specified = .FALSE.
-      DO i1 = 1, opt_eir%nvoid
-        IF (opt_eir%void_zone(i1).EQ.-1) idefault = i1
-        IF (opt_eir%void_zone(i1).GE. 1) void_specified = .TRUE.
+      DO i1 = 1, opt%nvoid
+        IF (opt%void_zone(i1).EQ.-1) idefault = i1
+        IF (opt%void_zone(i1).GE. 1) void_specified = .TRUE.
       ENDDO
       IF (void_specified.AND.idefault.NE.0) 
      .  CALL ER('SetupVoidProcessing','Cannot specify default void '//
      .          'setup and also set specific void parameters',*99)
       IF (idefault.NE.0) THEN
         i1 = idefault
-        opt_tmp = opt_eir
+        opt_tmp = opt
         DO isrf = 1, nsurface
           IF (surface(isrf)%type    .NE.NON_DEFAULT_STANDARD  .OR.
      .        surface(isrf)%subtype .NE.MAGNETIC_GRID_BOUNDARY.OR.
      .        surface(isrf)%index(6).LT.opt_tmp%void_grid(1,i1)) CYCLE
-          opt_eir%nvoid = opt_eir%nvoid + 1
-          opt_eir%void_zone(  opt_eir%nvoid) = opt_eir%nvoid - 
+          opt%nvoid = opt%nvoid + 1
+          opt%void_zone(  opt%nvoid) = opt%nvoid - 
      .                                         opt_tmp%nvoid 
-          opt_eir%void_grid(:,opt_eir%nvoid) = surface(isrf)%index(6)
-          opt_eir%void_wall(:,opt_eir%nvoid) = opt_tmp%void_wall(:,i1)
-          opt_eir%void_add (:,opt_eir%nvoid) = opt_tmp%void_add (:,i1)
-          opt_eir%void_res (  opt_eir%nvoid) = opt_tmp%void_res (  i1)
-          opt_eir%void_hole(:,opt_eir%nvoid) = opt_tmp%void_hole(:,i1)
-          opt_eir%void_code(  opt_eir%nvoid) = opt_tmp%void_code(  i1)
-          opt_eir%void_ne  (  opt_eir%nvoid) = opt_tmp%void_ne  (  i1)
-          opt_eir%void_te  (  opt_eir%nvoid) = opt_tmp%void_te  (  i1)
-          opt_eir%void_ti  (  opt_eir%nvoid) = opt_tmp%void_ti  (  i1)
+          opt%void_grid(:,opt%nvoid) = surface(isrf)%index(6)
+          opt%void_wall(:,opt%nvoid) = opt_tmp%void_wall(:,i1)
+          opt%void_add (:,opt%nvoid) = opt_tmp%void_add (:,i1)
+          opt%void_res (  opt%nvoid) = opt_tmp%void_res (  i1)
+          opt%void_hole(:,opt%nvoid) = opt_tmp%void_hole(:,i1)
+          opt%void_code(  opt%nvoid) = opt_tmp%void_code(  i1)
+          opt%void_ne  (  opt%nvoid) = opt_tmp%void_ne  (  i1)
+          opt%void_te  (  opt%nvoid) = opt_tmp%void_te  (  i1)
+          opt%void_ti  (  opt%nvoid) = opt_tmp%void_ti  (  i1)
         ENDDO
       ENDIF
 
 c...  Output:
-      CALL OutputVoidSpecification(eirfp)
+      CALL OutputVoidSpecification(eirfp,opt)
 
 c...  Check void blacklist:
-      DO i1 = 1, opt_eir%nvoid
-        IF (opt_eir%void_zone(i1).NE.-2) CYCLE
-        DO i2 = 1, opt_eir%nvoid
+      DO i1 = 1, opt%nvoid
+        IF (opt%void_zone(i1).NE.-2) CYCLE
+        DO i2 = 1, opt%nvoid
           IF (i1.EQ.i2) CYCLE
-          IF (opt_eir%void_grid(1,i1).LE.opt_eir%void_zone(i2).AND.
-     .        opt_eir%void_grid(2,i1).GE.opt_eir%void_zone(i2)) 
-     .      opt_eir%void_zone(i2) = -999  ! Delete
+          IF (opt%void_grid(1,i1).LE.opt%void_zone(i2).AND.
+     .        opt%void_grid(2,i1).GE.opt%void_zone(i2)) 
+     .      opt%void_zone(i2) = -999  ! Delete
         ENDDO
       ENDDO
 
 c...  Output:
-      CALL OutputVoidSpecification(eirfp)
+      CALL OutputVoidSpecification(eirfp,opt)
 
 c...  Delete tagged void regions:
-      DO i1 = opt_eir%nvoid, 1, -1
-        IF (opt_eir%void_zone(i1).NE.-999) CYCLE
-        DO i2 = i1, opt_eir%nvoid-1
-          opt_eir%void_zone(  i2) = opt_eir%void_zone(  i2+1)-1
-          opt_eir%void_grid(:,i2) = opt_eir%void_grid(:,i2+1)
-          opt_eir%void_wall(:,i2) = opt_eir%void_wall(:,i2+1)
-          opt_eir%void_add (:,i2) = opt_eir%void_add (:,i2+1)
-          opt_eir%void_res (  i2) = opt_eir%void_res (  i2+1)
-          opt_eir%void_hole(:,i2) = opt_eir%void_hole(:,i2+1)
-          opt_eir%void_code(  i2) = opt_eir%void_code(  i2+1)
-          opt_eir%void_ne  (  i2) = opt_eir%void_ne  (  i2+1)
-          opt_eir%void_te  (  i2) = opt_eir%void_te  (  i2+1)
-          opt_eir%void_ti  (  i2) = opt_eir%void_ti  (  i2+1)
+      DO i1 = opt%nvoid, 1, -1
+        IF (opt%void_zone(i1).NE.-999) CYCLE
+        DO i2 = i1, opt%nvoid-1
+          opt%void_zone(  i2) = opt%void_zone(  i2+1)-1
+          opt%void_grid(:,i2) = opt%void_grid(:,i2+1)
+          opt%void_wall(:,i2) = opt%void_wall(:,i2+1)
+          opt%void_add (:,i2) = opt%void_add (:,i2+1)
+          opt%void_res (  i2) = opt%void_res (  i2+1)
+          opt%void_hole(:,i2) = opt%void_hole(:,i2+1)
+          opt%void_code(  i2) = opt%void_code(  i2+1)
+          opt%void_ne  (  i2) = opt%void_ne  (  i2+1)
+          opt%void_te  (  i2) = opt%void_te  (  i2+1)
+          opt%void_ti  (  i2) = opt%void_ti  (  i2+1)
         ENDDO
-        opt_eir%nvoid = opt_eir%nvoid - 1
+        opt%nvoid = opt%nvoid - 1
       ENDDO
 
 c...  Output:
-      CALL OutputVoidSpecification(eirfp)
+      CALL OutputVoidSpecification(eirfp,opt)
 
 
       RETURN
@@ -2310,13 +2313,14 @@ c...  Output:
 c
 c ====================================================================
 c
-      SUBROUTINE ProcessVoid(izone)
-      USE mod_sol28_global
+      SUBROUTINE ProcessVoid(izone,opt)
+      USE mod_sol28
       USE mod_eirene06_parameters
       USE mod_eirene06
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: izone
+      TYPE(type_options_eirene), INTENT(INOUT) :: opt
 
       LOGICAL PointInVoid
 
@@ -2336,8 +2340,14 @@ c
       SAVE
 
 
+      debug = .FALSE.
+      fp = 88
+
+      IF (debug) WRITE(fp,*) 'HERE IN PROCESS VOID',izone
+
       IF (izone.LT.0) THEN
-        IF (izone.EQ.-999) res = 0.0  ! Initialisation
+        res = 0.0  ! Initialisation
+c        IF (izone.EQ.-999) res = 0.0  ! Initialisation
 
 c...    Loop over the wall surfaces to make sure they match up exactly 
 c       with the target segments:
@@ -2389,9 +2399,6 @@ c                  WRITE(0,*) 'WALL FIX 4'
         RETURN
       ENDIF
 
-      debug = .TRUE.
-      fp = 88
-
       nseg = 0
       seg  = 0
       npts = 0       
@@ -2401,10 +2408,10 @@ c                  WRITE(0,*) 'WALL FIX 4'
       te = 0.0
       ti = 0.0
 
-      IF (debug) WRITE(fp,*) 'HERE IN ASSEMBLE VOID',izone
+      IF (debug) WRITE(fp,*) 'BEYOND INITIALISATION',izone
 
-      DO ivoid = 1, opt_eir%nvoid
-        IF (opt_eir%void_zone(ivoid).NE.izone) CYCLE
+      DO ivoid = 1, opt%nvoid
+        IF (opt%void_zone(ivoid).NE.izone) CYCLE
 
         IF (debug) WRITE(fp,*) '  PROCESSING VOID SETUP',ivoid
 c       ----------------------------------------------------------------
@@ -2415,8 +2422,8 @@ c       Map the surface indices provided in the input file to the surface
 c       indices defined in the EIRENE setup code:
         isrf1 = -1
         isrf2 = -1
-        i1 = opt_eir%void_grid(1,ivoid)
-        i2 = opt_eir%void_grid(2,ivoid)
+        i1 = opt%void_grid(1,ivoid)
+        i2 = opt%void_grid(2,ivoid)
         DO isrf = 1, nsurface
 c          IF (debug) WRITE(fp,*) 'GRID SURFACE:',isrf
           IF (surface(isrf)%type   .NE.NON_DEFAULT_STANDARD  .OR.
@@ -2467,8 +2474,8 @@ c       list of triangles for sides that match up with these surfaces:
 c       ------------------------------------------------------------------
 c...    Search through the list of standard wall line segments and build
 c       a list for each zone that completes the individual voids:
-        i1 = opt_eir%void_wall(1,ivoid)
-        i2 = opt_eir%void_wall(2,ivoid)
+        i1 = opt%void_wall(1,ivoid)
+        i2 = opt%void_wall(2,ivoid)
 
         IF     (i1.EQ.-1.AND.i2.EQ.-1) THEN
 c         Find the wall segments for this zone automatically -- just keep
@@ -2524,11 +2531,12 @@ c             looking at the next segment:
      .               DABS(pts(i3,2)-y2).LT.DTOL)) THEN
 
                   IF (res(isrf).EQ.0.0) THEN
-                    res(isrf) = opt_eir%void_res(ivoid)
+                    res(isrf) = opt%void_res(ivoid)
                   ELSE
                     WRITE(fp,*) 'ISRF,RES:',isrf,nsurface,res(isrf)
                     WRITE(fp,*) 'X1,Y1:',x1,y1
                     WRITE(fp,*) 'X2,Y2:',x2,y2
+                    WRITE(fp,*) 'RES  :',res                  
                     STOP 'NOT READY FOR THE RES...'
                   ENDIF
 
@@ -2639,16 +2647,16 @@ c     ------------------------------------------------------------------
 c...  The perimeter of the void / zone is now defined, so look to see if 
 c     any additional line segments or holes should be included:     
       tmp_nseg = nseg
-      DO ivoid = 1, opt_eir%nvoid
-        IF (opt_eir%void_zone(ivoid).NE.izone) CYCLE
+      DO ivoid = 1, opt%nvoid
+        IF (opt%void_zone(ivoid).NE.izone) CYCLE
 
 c...    Set requested triangle area:
-        IF (area.EQ.0.0.AND.opt_eir%void_res(ivoid).NE.0.0) 
-     .    area = 0.5 * opt_eir%void_res(ivoid)**2
+        IF (area.EQ.0.0.AND.opt%void_res(ivoid).NE.0.0) 
+     .    area = 0.5 * opt%void_res(ivoid)**2
 
 c...    Holes:
-        IF     (opt_eir%void_hole(1,ivoid).EQ.-1.0.AND.
-     .          opt_eir%void_hole(2,ivoid).EQ.-1.0) THEN
+        IF     (opt%void_hole(1,ivoid).EQ.-1.0.AND.
+     .          opt%void_hole(2,ivoid).EQ.-1.0) THEN
           DO isrf = 1, nsurface
             IF (surface(isrf)%type.NE.HOLE_IN_GRID) CYCLE
             x1 = surface(isrf)%v(1,1)  
@@ -2664,24 +2672,24 @@ c...    Holes:
             ENDIF
           ENDDO
 
-        ELSEIF (opt_eir%void_hole(1,ivoid).NE.0.0.AND.
-     .          opt_eir%void_hole(2,ivoid).NE.0.0) THEN
+        ELSEIF (opt%void_hole(1,ivoid).NE.0.0.AND.
+     .          opt%void_hole(2,ivoid).NE.0.0) THEN
           nhole = nhole + 1
-          xhole(nhole) = opt_eir%void_hole(1,ivoid)
-          yhole(nhole) = opt_eir%void_hole(2,ivoid)
+          xhole(nhole) = opt%void_hole(1,ivoid)
+          yhole(nhole) = opt%void_hole(2,ivoid)
         ENDIF
 
 c...    Plasma conditions for all triangles in zone -- but note that
 c       this does not imply any associated recycling in EIRENE:
-        IF (opt_eir%void_ne(ivoid).GT.0.0) THEN
-          ne = opt_eir%void_ne(ivoid)
-          te = opt_eir%void_te(ivoid)
-          ti = opt_eir%void_ti(ivoid)
+        IF (opt%void_ne(ivoid).GT.0.0) THEN
+          ne = opt%void_ne(ivoid)
+          te = opt%void_te(ivoid)
+          ti = opt%void_ti(ivoid)
         ENDIF
 
 c...    Look for wall surfaces that are inside each zone:
-        IF (opt_eir%void_add(1,ivoid).EQ.-1.AND.
-     .      opt_eir%void_add(2,ivoid).EQ.-1) THEN
+        IF (opt%void_add(1,ivoid).EQ.-1.AND.
+     .      opt%void_add(2,ivoid).EQ.-1) THEN
           DO isrf = 1, nsurface
             IF (surface(isrf)%type    .NE.VESSEL_WALL.OR.
      .          surface(isrf)%index(2).EQ.0          .OR.
@@ -2694,7 +2702,7 @@ c...    Look for wall surfaces that are inside each zone:
             IF (PointInVoid(x1,y1,tmp_nseg,seg,MAXNSEG,
      .                      npts,pts,MAXNPTS,debug,fp)) THEN
 c...          The point is inside the void perimeter, so add the segment to the list:
-              res(isrf) = opt_eir%void_res(ivoid)
+              res(isrf) = opt%void_res(ivoid)
 c...          Determine if the segment needs to be sub-divided:
               x1 = surface(isrf)%v(1,1)
               y1 = surface(isrf)%v(2,1)
@@ -5177,10 +5185,11 @@ c
 
       INTEGER i1,nstsi,instsi,def_ilcell,ilcell,n
       LOGICAL warning_reported
+      DATA warning_reported /.FALSE./
+      SAVE
+
 
 c      WRITE(eirfp,*) 'WRITING BLOCK3a'
-
-      warning_reported = .FALSE.
 
       def_ilcell = 0
 
@@ -5221,7 +5230,7 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
           WRITE(0,*)
           WRITE(0,*) '--------------------------------------------'
           WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
-          WRITE(0,*) '        REPORTED TO OSM BY EIRENE           ' 
+          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) '
           WRITE(0,*) '--------------------------------------------'
           WRITE(0,*)
         ENDIF
@@ -5654,4 +5663,3 @@ c
 c ======================================================================
 c
 c
-
