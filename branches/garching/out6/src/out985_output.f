@@ -1049,7 +1049,7 @@ c           ------------------------------------------------------------
 
               DO iobj = 1, nobj
                 DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
-                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
+c                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
                   IF     (obj(iobj)%gsur(isur).EQ.GT_TC) THEN
 c...                Create polygons for toroidally continuous surfaces:
@@ -1132,12 +1132,14 @@ c     . ..  .            obj(iobj)%ir.NE.2) CYCLE
 c                    IF (obj(iobj)%ivolume.NE.1) CYCLE   ! *** HACK *** 
 c                    IF (obj(iobj)%ir     .NE.9) CYCLE 
 c                    IF (isur.EQ.1) 
-c     . ..  .          WRITE(0,*) 'OBJ:',iobj,obj(iobj)%ik, 
-c     . ..  .            obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY,
-c     . ..  .            obj(iobj)%nside,
-c     . ..  .            obj(iobj)%iside(isur,1:2)
+
+c                      WRITE(0,*) 'OBJ:',iobj,obj(iobj)%ik, 
+c     .                  obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY,
+c     .                  obj(iobj)%nside,
+c     .                  obj(iobj)%iside(isur,1:2)
+
                     IF (obj(iobj)%nside.NE.0) THEN
-                      DO isrf = obj(iobj)%iside(isur,1),
+                       DO isrf = obj(iobj)%iside(isur,1),
      .                          obj(iobj)%iside(isur,2)
                         IF (nsur+1.GT.MAXSURFACE) 
      .                    CALL ER('DrawSoildPlot','Array bounds',*99)
@@ -2170,6 +2172,12 @@ c...              Rotate vertices:
               ENDDO
             ELSEIF (obj(iobj)%gsur(isid).EQ.GT_TD) THEN
               IF (obj(iobj)%nside.NE.0) THEN
+
+c...            Filter:
+                count = 0.0
+                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+                WRITE(0,*) 'GO MAN',iobj,isid
+
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
                     i4 = i3 + 1

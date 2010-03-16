@@ -1007,7 +1007,7 @@ c...    New 2D plots (including EIRENE triangle plots):
         call setup_col(n_cols,5)
         CALL Plot987(job,graph,ref,title,iopt,
      .               xxmin,xxmax,yymin,yymax,ft,fp,zadj,
-     .               ismoth,ignors,itec,avs,navs)
+     .               ismoth,ignors,itec,avs,navs,nizs)
         call setup_col(n_cols,col_opt)
       ELSEIF (iref.EQ.988) THEN
 c...    Line shapes:

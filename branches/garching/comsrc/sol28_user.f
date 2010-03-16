@@ -174,8 +174,9 @@ c...  ------------------------------------------------------------------
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
 c....     Cells centres:
-          CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
           CALL inPutData(ic(ic1:ic2),'INDEX','none')
+          CALL inPutData(ic(ic1:ic2),'POS','none')
+          CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
           CALL inPutData(cell(ic1:ic2)%s,'S','m')
           CALL inPutData(pin(ic1:ic2,ion)%ion  ,'ION_NET','?')        
           CALL inPutData(pin(ic1:ic2,ion)%rec  ,'REC_NET','?')        

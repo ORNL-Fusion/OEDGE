@@ -433,7 +433,7 @@ c     Input:
 
       INTEGER i1,ik1,ik2,ir,ir1,maxcells,numadd,id1,id2,ik
 
-c      WRITE(0,*) 'STRUCTURING GRID - NEW ROUTINE'
+      WRITE(0,*) 'STRUCTURING GRID - NEW ROUTINE'
       write(50,*)
       write(50,'(A)') 'Structuring the grid'
       write(50,*)
@@ -1170,6 +1170,7 @@ c
       IF (stopopt.EQ.14) RETURN
 
       CALL DB('Entering BUILDNEUTRALWALL')
+      WRITE(88,*) 'ENTERING BUILDNEUTRALWALL'
 
       CALL OutputGrid(85,'Before building neutral wall')
 
@@ -1202,7 +1203,6 @@ c...                 980116023:           990429019 new:
             wallz1(walln,1) = wallco(i1,2)
             wallr1(walln,2) = wallco(i1+1,1)
             wallz1(walln,2) = wallco(i1+1,2)
-      
           ENDIF
         ENDDO
 
@@ -3563,7 +3563,9 @@ c        ir = 0
 
       CALL ER('FetchKORPG','Unable to find index',*99)
       RETURN
- 99   STOP
+ 99   CALL OutputData(86,'Unable to find KORPG index')
+      CALL DumpGrid('Unable to find KORPG index')
+      STOP
       END
 c
 c
@@ -4471,7 +4473,7 @@ c
 
 c...  Input:
       INTEGER ik,ir,side,nseg
-      REAL*8  rvp(4,MAXNKS*MAXNRS),zvp(4,MAXNKS*MAXNRS),
+      REAL*8  rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS),
      .        rseg(2*nseg),zseg(2*nseg)
 
 c...  Output:
@@ -4861,7 +4863,7 @@ c
 
 c     Input:
       INTEGER dataindex
-      REAL*8  rvp(4,MAXNKS*MAXNRS),zvp(4,MAXNKS*MAXNRS)
+      REAL*8  rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS)
 
 
       COMMON /GRID/ iktop,irout,irin
@@ -5935,7 +5937,6 @@ c...  Clear header:
           ENDDO
  10       CONTINUE
         CASE (2)
-          READ(fp,*) 
           WRITE(buffer,'(1024X)')
           buffer(1:1) = '*'
           DO WHILE(buffer(1:1).EQ.'*')
@@ -6593,7 +6594,7 @@ c...    Low index target:
         ir1 = ir
         ik2 = ikins(ik1,ir1)
         ir2 = irins(ik1,ir1)
-        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+        IF (.FALSE..AND.idring(ir2).EQ.BOUNDARY.AND.ir1.NE.ir2) THEN
           id1 = korpg(ik1,ir1)
           id2 = korpg(ik2,ir2)
           id3 = korpg(1  ,ir2)
@@ -6602,8 +6603,8 @@ c...    Low index target:
           length2 = MIN(SideLength(id3,1),SideLength(id3,2))
           tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
           IF (dist.LT.tol) THEN
-c          IF     (DABS(d_rvertp(1,id1)-d_rvertp(2,id3)).LT.DTOL.AND.
-c                  DABS(d_zvertp(1,id1)-d_zvertp(2,id3)).LT.DTOL) THEN
+c          IF     (DABS(d_rvertp(1,id1)-d_rvertp(2,id3)).LT.DTOL.AND.   
+c                  DABS(d_zvertp(1,id1)-d_zvertp(2,id3)).LT.DTOL) THEN  
 c...        Make sure the points are exactly the same, since small errors
 c           can creep in when cutting the grid:
             d_rvertp(1,id1) = d_rvertp(2,id3)
@@ -6652,7 +6653,7 @@ c             vertex:
         ik2 = ikouts(ik1,ir1)
         ir2 = irouts(ik1,ir1)
         id2 = korpg (ik2,ir2)
-        IF (idring(ir2).AND.BOUNDARY.NE.ir1.EQ.ir2) THEN
+        IF (.FALSE..AND.idring(ir2).NE.BOUNDARY.AND.ir1.NE.ir2) THEN
           IF (DABS(d_rvertp(2,id1)-d_rvertp(1,id2)).GT.DTOL.OR.
      .        DABS(d_zvertp(2,id1)-d_zvertp(1,id2)).GT.DTOL) THEN
             STOP 'CODE NOT READY A'
@@ -6961,8 +6962,7 @@ cc
 
 
       INTEGER ii,i1,i2,i3,ir,ik,id,ik1,ik2,status,in,in1,tmpnmod,fp
-      REAL*8  r1,z1,r2,z2,rvp(4,MAXNKS*MAXNRS),
-     .                    zvp(4,MAXNKS*MAXNRS)
+      REAL*8  r1,z1,r2,z2,rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS)
 c     .        a1,a2,b1,b2,c1,c2,t1
       REAL    maxz,spos
 
@@ -9067,8 +9067,8 @@ c      LOGICAL nopriv
       quasidn = .TRUE.
 
 c...  Allocate the temporary storage arrays for the grid:
-      ALLOCATE(rvp(0:MAXNKS,0:MAXNRS,4))
-      ALLOCATE(zvp(0:MAXNKS,0:MAXNRS,4))
+      ALLOCATE(rvp(0:MAXNKS,0:MAXNRS,5))
+      ALLOCATE(zvp(0:MAXNKS,0:MAXNRS,5))
       ALLOCATE(rcen(0:MAXNKS,0:MAXNRS))
       ALLOCATE(zcen(0:MAXNKS,0:MAXNRS))
       ALLOCATE(bval(0:MAXNKS,0:MAXNRS))

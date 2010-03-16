@@ -725,7 +725,7 @@ c
 
       INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,
      .        nline,lastcolour,scaleopt,colouropt,posopt
-      LOGICAL setqmin,setqmax,inside,scale_set
+      LOGICAL setqmin,setqmax,inside,scale_set,double_null
       REAL    qmin,qmax,frac,frac5,fmod5,scalefact,fact,
      .        posx,posy,poswidth,posheight,rdum(4),taus
       CHARACTER label*512,cdum1*512,cdum2*512
@@ -754,6 +754,11 @@ c      WRITE(0,*) 'DATA:',job
 c      WRITE(0,*) 'DATA:',graph
 c      WRITE(0,*) 'DATA:',title
 c      WRITE(0,*) 'DATA:',ref
+
+      double_null = .FALSE.   ! *** THIS DOESN'T WORK BECAUSE RINGTYPE IS NOT PASSED TO OUT! ***
+      DO ir = 2, irwall-1
+        IF (ringtype(ir).EQ.PFZ) double_null = .TRUE.
+      ENDDO
 
       WRITE(glabel,'(512(A:))') (' ',i1=1,LEN(glabel)) 
 
@@ -865,7 +870,7 @@ c      CALL THICK2(6)
 
       IF (numplots.NE.0) ylabel = 'none'
 
-      CALL GRTSET_TRIM ('Title',' ',' ',' ',glabel,
+      CALL GRTSET_TRIM (TITLE,' ',' ',' ',glabel,
      >                  xXMIN,xXMAX,yYMIN,yYMAX,
      .                  ' ',xlabel,ylabel,
      .                  0,' ',0,' ',1)
@@ -881,14 +886,14 @@ c     .                  0,smooth,0,ANLY,1)
 c...problem is some small triangles driving up the neutral density? ... check against magnetic 
 c grid neutral density plot? or check agains ionisation plot to see if scales are the same... 
 c...check .eirdat file...
-      WRITE(0,*) 'DEBUG: IOPT',iopt
+c      WRITE(0,*) 'DEBUG: IOPT',iopt
 
       IF (iopt.GE.500) THEN
 
         ALLOCATE(gdata1(MAXNKS,MAXNRS))
         gdata1 = 0.0
 
-        WRITE(0,*) 'DEBUG: IOPT',iopt
+c        WRITE(0,*) 'DEBUG: IOPT',iopt
 
         SELECTCASE (iopt)
           CASE (501)
@@ -978,10 +983,9 @@ c            DO ir = irsep, nrs
             ENDDO
             gdata => gdata1
           CASE (799:875) 
-              WRITE(0,*) 'DEBUG: here 1'
+c              WRITE(0,*) 'DEBUG: here 1'
               iz = iopt - 800
               READ(5,'(A512)') cdum1
-              WRITE(0,*) 'CDUM>'//cdum1(8:11)//'<'
 c             ----------------------------------------------------------
               IF (cdum1(8:11).EQ.'Adas'.OR.cdum1(8:11).EQ.'ADAS'.OR.
      .            cdum1(8:11).EQ.'adas') THEN
@@ -1004,7 +1008,7 @@ c...            Load PLRP data from ADAS:
 c             ----------------------------------------------------------
               ELSEIF (cdum1(8:10).EQ.'Ion'.OR.cdum1(8:10).EQ.'ION'.OR.
      .                cdum1(8:10).EQ.'ion') THEN
-                WRITE(0,*) 'Loading ionisation data'
+c                WRITE(0,*) 'Loading ionisation data'
                 DO ir = 2, nrs
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
                   gdata1(1:nks(ir),ir) = tizs(1:nks(ir),ir,iz)
@@ -1253,7 +1257,7 @@ c...        Decide if the cell is within the viewing range:
           ENDDO
           IF (setqmin.AND.qmin.GT.-1.0E-10) qmin = MAX(qmin,0.01*qmax)
         ENDIF
-        WRITE(0,*) 'QMIN,QMAX:',qmin,qmax
+c        WRITE(0,*) 'QMIN,QMAX:',qmin,qmax
 
 c...    Draw polygons:
         CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
@@ -1324,9 +1328,9 @@ c...    Magnetic grid:
               lines2(nline,2) = nver 
               lcolour(nline) = ncols + 1
             ELSEIF (idring(irins(ik,ir)).EQ.BOUNDARY.OR.ir.EQ.irsep.OR.
-     .              (irsep.NE.irsep2.AND.
-     .               ir.EQ.irouts(1          ,irsep2).OR.
-     .               ir.EQ.irouts(nks(irsep2),irsep2))) THEN
+     .            (double_null.AND.
+     .             ir.EQ.irouts(1                 ,MAX(1,irsep2)).OR.
+     .             ir.EQ.irouts(nks(MAX(1,irsep2)),MAX(1,irsep2)))) THEN
               nver = nver + 1
               ver(nver,1) = DBLE(rvertp(1,id))
               ver(nver,2) = DBLE(zvertp(1,id))

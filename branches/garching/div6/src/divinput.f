@@ -97,13 +97,7 @@ c
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 3,'HEATING OPT          ',IERR)
       CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
       CALL RDI (CIOPTF,.TRUE.,-1,.TRUE.,99,'SOL OPT              ',IERR)
-c slmod begin
-      call rdi (ccoreopt,.true.,-1,.true.,28,'Core Option        ',ierr)
-      if (ccoreopt.ge.7.and.ccoreopt.le.27) 
-     .  call er('READIN','Invalid CCOREOPT',ccoreopt)
-c
-c      call rdi (ccoreopt,.true.,-1,.true.,6,'Core Option         ',ierr)
-c slmod end
+      call rdi (ccoreopt,.true.,-1,.true.,6,'Core Option         ',ierr)
       CALL RDI (CIOPTG,.TRUE., 0,.TRUE.,99,'PLASMA DECAY OPT     ',IERR)
 c slmod begin
 c...  Need to store these because they are overwritten in BGPLASMA but 

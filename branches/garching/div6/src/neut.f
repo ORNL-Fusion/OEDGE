@@ -325,11 +325,11 @@ c
 c              Deal with sputter option 7 - external target flux
 c
                if (cneutd.eq.7) then  
-                  WRITE(0,*) 'DEBUG: CALL TFY A.0'
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY A.0'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               3,yieldsw,matp,matt)              
                else
-                  WRITE(0,*) 'DEBUG: CALL TFY A'
+                  IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY A'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
                endif
@@ -1150,6 +1150,9 @@ C
      >                   NEUTIM,SFAIL,STATUS,MATP,MATT,neuttype)
       use mtc
       use velocity_dist
+c slmod begin
+      use mod_interface
+c slmod end
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -4219,6 +4222,12 @@ C
      >           YSATIZ(1)/MAX(LO,SFRAC(1)),YSATIZ(2)/MAX(LO,SFRAC(2)))
       CALL PRR2 ('AVERAGE S OR SMAX-S FOR SOL IONIZ  ',
      >           SSATIZ(1)/MAX(LO,SFRAC(1)),SSATIZ(2)/MAX(LO,SFRAC(2)))
+c slmod begin
+      CALL inOpenInterface('idl.divimp_launch')
+      CALL inPutData(SUM(ETOT (1:2))/SUM(RNEUT(1:2)),'TAVG_PROD','eV')
+      CALL inPutData(SUM(EATIZ(1:2))/SUM(RATIZ(1:2)),'TAVG_IONI','eV')
+      CALL inCloseInterface
+c slmod end
 c
 c     Double check test
 c    
@@ -4420,7 +4429,8 @@ c     -------------------------------------------------------
 C     
 C---- CALCULATE FLUXES AND YIELDS
 C     
-      WRITE(0,*) 'CALL TFY: looping over targets...',yieldsw,pinsw
+      IF (sloutput) WRITE(0,*) 'CALL TFY: looping over targets...',
+     .                         yieldsw,pinsw
       DO ID = 1,NDS
         IK = IKDS(ID)
         IR = IRDS(ID)
@@ -4598,6 +4608,10 @@ c
          call calc_extflx_yield(fydata,matt)
 c
 c slmod begin
+c
+c ADD A NEW OPTION SOMEWHERE HERE WHERE fydata IS APPLIED DIRECTLY FROM PRE-CALCULATED
+c VALUES, as BELOW (clearer in FYW routine below...)
+c
 c Put this back in when I start processing the impurity production in EIRENE
 c that's coming from ions striking the target -- need to compare with what 
 c DIVIMP is calculating.  Need to remove the pinsw.eq.4 references that occur
@@ -4660,7 +4674,7 @@ c
       totfydata(2,3) = totfydata(3,3)- totfydata(1,3)
       totfydata(2,5) = totfydata(3,5)- totfydata(1,5)
 
-      WRITE(0,*) 'CALL TFY: total yield =',totfydata(3,5)
+      IF (sloutput) WRITE(0,*) 'CALL TFY: total yield =',totfydata(3,5)
 c     
 c     Calculate cumulative - normalized - non-zero launch 
 c     probabilities. 
@@ -5028,7 +5042,7 @@ c
 c
 c slmod begin
          elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
-           WRITE(0,*) 'WHA-WHO! 1'
+           IF (sloutput) WRITE(0,*) 'WHA-WHO! 1'
 c          FYDATA(ID,1)  = Flux
 c                    2   = Energy
 c                    3   = Heat

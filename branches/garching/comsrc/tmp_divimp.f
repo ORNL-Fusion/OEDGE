@@ -39,11 +39,9 @@ c      REAL*8 , INTENT(OUT) :: vsur(3,MAXPOINTS,0:MAXSURFACE)
 
       TYPE(type_tube_3D) :: tube_3D(0:5)
 
-      IF (sloutput) THEN 
-        WRITE(0,*) '---------------------------------'
-        WRITE(0,*) 'NOT CALCULATING TUBE DIMENSIONS!'
-        WRITE(0,*) '---------------------------------'
-      ENDIF
+      WRITE(0,*) '---------------------------------'
+      WRITE(0,*) 'NOT CALCULATING TUBE DIMENSIONS!'
+      WRITE(0,*) '---------------------------------'
       RETURN
 
 

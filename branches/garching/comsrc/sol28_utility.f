@@ -588,7 +588,7 @@ c...    Scale by triangle volume:
           volmin = MIN(volmin,tvol(i1))
           tdata(i1) = tdata(i1) / tvol(i1) * 1.0E+06  ! Conversion to m-3
         ENDDO
-        WRITE(0,*) 'VOLMIN:',volmin
+c        WRITE(0,*) 'VOLMIN:',volmin
         IF (ALLOCATED(tvol)) DEALLOCATE(tvol)
       ENDIF
 

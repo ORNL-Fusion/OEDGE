@@ -11064,15 +11064,26 @@ c
 c
                if (ik.eq.startik) then
                   brat1 = kbfst(ir,2)
-                  brat2 = (kbfst(ik,ir)+kbfs(ik+1,ir))/2.0
+c slmod begin - bug fix, 04.03.2010
+c... Correct correction, swapping KBFST for KBFS when IR is used to index the array?
+                  brat2 = (kbfs(ik  ,ir)+kbfs(ik+1,ir))/2.0
                elseif (ik.eq.endik) then
-                  brat1 = (kbfst(ik-1,ir)+kbfs(ik,ir))/2.0
+                  brat1 = (kbfs(ik-1,ir)+kbfs(ik  ,ir))/2.0
                   brat2 = kbfst(ir,1)
                else
-                  brat1 = (kbfst(ik-1,ir)+kbfs(ik,ir))/2.0
-                  brat2 = (kbfst(ik,ir)+kbfs(ik+1,ir))/2.0
+                  brat1 = (kbfs(ik-1,ir)+kbfs(ik  ,ir))/2.0
+                  brat2 = (kbfs(ik  ,ir)+kbfs(ik+1,ir))/2.0
                endif
-
+c
+c                  brat2 = (kbfst(ik,ir)+kbfs(ik+1,ir))/2.0
+c               elseif (ik.eq.endik) then
+c                  brat1 = (kbfst(ik-1,ir)+kbfs(ik,ir))/2.0
+c                  brat2 = kbfst(ir,1)
+c               else
+c                  brat1 = (kbfst(ik-1,ir)+kbfs(ik,ir))/2.0
+c                  brat2 = (kbfst(ik,ir)+kbfs(ik+1,ir))/2.0
+c               endif
+c slmod end
                fluxst  = e2dflux(ik,ir) /brat1
                fluxend = e2dflux(ik+1,ir) /brat2
 c

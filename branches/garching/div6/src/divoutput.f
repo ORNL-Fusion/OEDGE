@@ -7661,11 +7661,6 @@ c
        end do
 c
 c
-c slmod begin
-      elseif (ccoreopt.eq.28) then
-       CALL PRC ('  CORE DECAY OPT 28  : FLUX SURFACE AVERAGE VALUES')
-       CALL PRC ('                       PRESCRIBED IN THE CORE, V=0')
-c slmod end
       ENDIF
 c
 C-----------------------------------------------------------------------
