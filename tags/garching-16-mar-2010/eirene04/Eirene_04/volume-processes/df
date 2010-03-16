@@ -1,0 +1,43 @@
+24,25c24,25
+< c   reduced pop coeff r0,r1  are per electron. hence: times "densel"
+< c   for pop0,pop1 - arrays of reduced population coefficients
+---
+> c   reduced pop coeff r0,r1,r2  are per electron. hence: times "densel"
+> c   for pop0,pop1,pop2 - arrays of reduced population coefficients
+30,31c30
+<      .                     E_ALPCR, E_SCR, E_SCRRAD, 
+<      .                     E_ALPCR_T, E_SCR_T,E_SCRRAD_T)
+---
+>      .                     E_ALPCR, E_SCR, E_SCRRAD, E_SCR_T,E_SCRRAD_T)
+38,40c37,39
+<       REAL(DP), INTENT(OUT) ::   ALPCR,    SCR,     SCRRAD
+<       REAL(DP), INTENT(OUT) :: E_ALPCR,  E_SCR,   E_SCRRAD
+<       REAL(DP), INTENT(OUT) :: E_ALPCR_T,E_SCR_T, E_SCRRAD_T
+---
+>       REAL(DP), INTENT(OUT) ::   ALPCR,   SCR,     SCRRAD
+>       REAL(DP), INTENT(OUT) :: E_ALPCR, E_SCR,   E_SCRRAD
+>       REAL(DP), INTENT(OUT) ::          E_SCR_T, E_SCRRAD_T
+61,63c60,62
+< c  pop_esc: lyman alpha population escape factor
+< c  pop_esc= 1: opt. thin
+< c  pop_esc= 0: opt. thick
+---
+> c  pop_esc   : lyman alpha population escape factor
+> c  pop_esc= 1: lyman alpha opt. thin
+> c  pop_esc= 0: lyman alpha opt. thick
+89c88
+< CDR COUPLING TO H+
+---
+> CDR COUPLING TO H+ IONS
+91c90
+< CDR COUPLING TO H
+---
+> CDR COUPLING TO H  ATOMS
+93c92
+< CDR COUPLING TO Q
+---
+> CDR COUPLING TO EXTERNAL SOURCE Q
+97a97
+> C  EFFECTIVE IONISATION RATES
+100a101
+> C  EFFECTIVE ELECTRON COOLING RATES

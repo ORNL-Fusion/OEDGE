@@ -1,0 +1,13 @@
+#!/bin/tcsh
+
+if ( $# != 1 ) then
+  exit
+endif
+
+if ( -e $1 ) then
+  unzip -qq $1
+  rm    $1
+endif
+
+
+

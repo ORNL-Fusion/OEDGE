@@ -1,0 +1,322 @@
+#
+# Definintions
+#
+#
+# Remove implicit .f and .f90 and .mod creation rules
+#
+%.o : %.f
+#%.o : %.f90
+#%.o : %.mod
+#
+#
+# Source filename extensions
+#
+DIVEXT=.f
+DIVF90EXT=.f90
+#COMEXT=.u6a
+#COMF90EXT=.u6b
+CEXT=.c
+#
+# VERSION to build
+#
+# VER=aix
+#
+VER=pgi
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
+#
+# Source file locations
+#
+DIVMAIN=$(HOME)/divimp
+COMMONS=$(DIVMAIN)/commons
+#
+DIVSRC =$(DIVMAIN)/div6/src
+DIVF90SRC=$(DIVSRC)/f90
+COMSRC =$(DIVMAIN)/comsrc
+COMF90SRC=$(COMSRC)/f90
+#
+# 64 bit support
+#
+BIT64=
+EMU=
+#
+VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
+
+#
+# Suffixes
+#
+.SUFFIXES: .o $(DIVEXT) $(DIVF90EXT)
+
+#
+# Compiler
+#
+FCOMP=pgf95
+RM=rm -f
+#
+FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_pgi=pgf95
+#
+# Optimization and debugging flags
+#
+# AIX - XLF
+#
+# ARCH=-qarch=com
+# OPTC= -O
+# OPTG= -g -bloadmap:load1 -qextchk -qsource
+# OPTO= -O -bloadmap:load1 -qmaxmem=16384 -qsource
+#
+# OPTS= -NQ60000 -NT70000 -ND10000 -NA16384
+#
+# LINUX - PGI
+#
+ARCH=
+# add -m32 C flag to produce 32 bit C-code - needs to be adjusted depending on 
+# the version of the fortran compiler used
+OPTC= -O $(EMU)
+#
+OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds
+#OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 
+OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+OPTGS1= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+OPTGS1A= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo
+OPTGS2= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mbounds
+OPTGS3= -g -O1 -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mbounds
+#OPTGS= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+OPTF90= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+#OPTF90= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+#
+# Various levels of optimization
+#
+OPTFAST= -fast
+OPTKO= -O -Kieee
+OPTO0= -O0  -Mlist -Mbyteswapio
+OPTO1= -O1  -Mlist -Mbyteswapio -g
+OPTO2= -O2  -Mlist -Mbyteswapio
+OPTO3= -O3  -Mlist -Mbyteswapio
+OPTOS= -O  -Mlist -Mbyteswapio -Msave
+OPTOG= -O -g -Mlist -Mbyteswapio
+#
+# Need base OPTO
+#
+OPTO= -O -Mbyteswapio -Mlist
+#OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
+#OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
+OPTS=
+#
+# LINUX - ABSOFT
+#
+OPT_ABSOFT = -g 
+OPT_ABSOFT_OPT = -O
+#
+# LINUX - INTEL
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1 -g -traceback -debug all
+#
+OPT = $(OPTG)
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT)
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+#
+# C-compiler
+#
+CC= cc
+#
+# C-flags
+#
+CFLAGS= $(OPTC)
+
+#
+# Libraries
+#
+#
+# AIX
+#
+# LIBS= -L/u/local/lib -lxlf -lc -lghost -lpostsc
+#
+# LIBS= -L/usr/local/lib -lc -lghost -lpostsc -L/usr/pgi/linux86/lib -lpgftnrtl
+#
+#
+# LINUX
+#
+LIB_VER=
+LOCAL_LIB=/usr/local/lib
+LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+#
+#
+# Name of target to build
+#
+TARG=div6O$(VER)
+TARGALT=div6aO$(VER)
+
+#
+# Objects to compile
+#
+
+include OBJECT_LIST
+
+#OBJECTS= mod_params.o  comhc.o hc_put.o hc_get.o mod_fperiph.o mod_grid.o mod_taus.o mod_fp_transport.o mod_triangles.o adas.o adpak.o amjuel.o datetime$(VER).o harw.o nc.o sys$(VER).o hc_storage_setup.o hc_lib_setup.o hc_init_div_data.o hc_init_lib_data.o hc_init_div_diag.o utility.o utility_com.o utility2.o hc_utilities.o hc_lddta.o hc_interp.o hc_nsprb.o hc_stack.o hc_rnlup.o hc_rnprb.o hc_stlup.o hc_release.o hc_tlprb.o hc_newst.o hc_vessel_interact.o hc_stick.o hc_prompt.o hc_freespace_transition.o hc_inside_neutral.o hc_inside_ion.o hc_outside_neutral.o hc_outside_ion.o hc_ion_transport.o hc_neutral_transport.o hc_follow.o hc_wbc_comp.o hc_output.o hc_start.o hc_batch.o hc_global_routines.o bgplasma.o cfd_osm.o cxrec.o div.o divinput.o divstore.o divoutput.o divtrn.o dummy.o eirediv.o eirene.o eirene04.o geier.o grad.o grid.o fp_transport.o ion_transport.o ion_crossfield_transport.o ion_parallel_transport.o iztau.o mon.o neut.o neutone.o output.o  pindiv.o plasma.o pputil.o redefves.o reiser.o relax.o rundiv.o setup.o purgatory.o sol.o sol23.o mod_sol28.o sol28.o solascv0.o solascv1.o solascv2.o solascv3.o soledge.o sputter.o tau.o theta.o walls.o vacuum.o
+
+#
+# Rules
+#
+
+#$(DIVEXT).o:
+#	cp $(DIVSRC)$*$(DIVEXT) $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	rm $*.f
+
+
+$(DIVEXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+
+$(DIVF90EXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+
+#
+# Basic creation rules - apparently the file extensions can't be aliased as a variable
+#
+
+%.o: %.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+%.o: %.f90
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+
+#.f.o:
+#	rm -f $*.f
+#	rm -f $*.mod
+#	cp $? $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(RM) $*.f
+
+#.f90.o:
+#	rm -f $*.f90
+#	rm -f $*.mod
+#	cp $? $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(RM) $*.f90
+
+#$(COMEXT).o:
+#	rm -f $*.f
+#	rm -f $*.mod
+#	cp $? $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(RM) $*.f
+
+#$(COMF90EXT).o:
+#	rm -f $*.f90
+#	rm -f $*.mod
+#	cp $? $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(RM) $*.f90
+
+#
+# Target
+#
+
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+opt:
+	$(MAKE)  "OPT=$(OPTO)"
+
+optieee:
+	$(MAKE)  "OPT=$(OPTKO)"
+
+opt1:
+	$(MAKE)  "OPT=$(OPTO1)"
+
+fast:
+	$(MAKE)  "OPT=$(OPTFAST)"
+
+32bit:
+	$(MAKE)  "OPT=$(OPTO)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+32bito1:
+	$(MAKE)  "OPT=$(OPTO1)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+32bito2:
+	$(MAKE)  "OPT=$(OPTO2)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+32bito3:
+	$(MAKE)  "OPT=$(OPTO3)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+32bitog:
+	$(MAKE)  "OPT=$(OPTOG)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+32bitg:
+	$(MAKE)  "OPT=$(OPTGS2)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+64bit:
+	$(MAKE)  "OPT=$(OPTOS)"
+
+debug:
+	$(MAKE)  "OPT=$(OPTGS)" "TARG=div6dbg$(VER)"
+
+debug32:
+	$(MAKE)  "OPT=$(OPTGS2)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32" "TARG=div6dbg$(VER)"
+
+debugO:
+	$(MAKE)  "OPT=$(OPTGS1)" "TARG=div6dbg$(VER)"
+
+abs:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT)" "VER=$(VER_ABSOFT)" 
+
+absopt:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT_OPT)" "VER=$(VER_ABSOFT)" 
+
+intel:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" 
+
+intelopt:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
+intellib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+inteloptlib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+intel-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
+
+intelopt-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
+
+alt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
+
+altopt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTO)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.f
+	$(RM) *.f90
+	$(RM) *.mod
+
+
+
+
+
+
+
