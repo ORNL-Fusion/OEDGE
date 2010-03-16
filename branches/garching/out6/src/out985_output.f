@@ -1049,7 +1049,7 @@ c           ------------------------------------------------------------
 
               DO iobj = 1, nobj
                 DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
-c                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
+                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
                   IF     (obj(iobj)%gsur(isur).EQ.GT_TC) THEN
 c...                Create polygons for toroidally continuous surfaces:
@@ -1113,9 +1113,9 @@ c...                    Rotate vertices toroidally:
                         nsur = nsur + 1
                         npts(nsur) = 4
                         hsur(nsur) = opt%obj_colour(obj(iobj)%index)
-                        IF (MOD(nsur,1000).EQ.0)
-     .                    WRITE(0,*) '  - ',iobj,obj(iobj)%index,
-     .                                      hsur(nsur),r
+c                        IF (MOD(nsur,1000).EQ.0)
+c     .                    WRITE(0,*) '  - ',iobj,obj(iobj)%index,
+c     .                                      hsur(nsur),r
                         csur(1:3,nsur) = 0.0D0
                         vsur(1:3,4,nsur) = p1(1:3,1)
                         vsur(1:3,3,nsur) = p2(1:3,1)
@@ -2635,15 +2635,18 @@ c
       TYPE(type_view) :: pixel(MAXPIXEL)
       REAL*8 image(1100,1100)
 
-      INTEGER iplot,option
+      INTEGER   iplot,option
+      LOGICAL   debug
       CHARACTER buffer*1024
 
+      debug = .FALSE.
 
-      WRITE(0,*) 'PLOTS:',opt%nplots
-      DO iplot = 1, opt%nplots
-        WRITE(0,*) TRIM(opt%plots(iplot))
-      ENDDO
-c      STOP 'sgsdgsd'
+      IF (debug) THEN
+        WRITE(0,*) 'PLOT LIST:',opt%nplots
+        DO iplot = 1, opt%nplots
+          WRITE(0,*) TRIM(opt%plots(iplot))
+        ENDDO
+      ENDIF
 
       DO iplot = 1, opt%nplots
         WRITE(buffer,'(1024X)')

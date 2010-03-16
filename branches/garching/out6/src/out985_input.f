@@ -2,6 +2,44 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+      SUBROUTINE LoadEmissionDatabase(dummy,ni,nr)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+ 
+      CHARACTER dummy*(*)
+      INTEGER   ni,nr
+
+      INTEGER   i1,idum1
+      REAL      rdum1
+      CHARACTER cdum1*256
+
+      SELECTCASE (opt%int_database(opt%int_num))
+        CASE (1,3)
+          READ(dummy,*) cdum1,(idum1,i1=1,ni),
+     .                        (rdum1,i1=1,nr),idum1,
+     .                  opt%int_line(opt%int_num)
+        CASE (2)
+          READ(dummy,*) cdum1,(idum1,i1=1,ni),
+     .                        (rdum1,i1=1,nr),idum1,
+     .                  opt%int_adasid(opt%int_num),
+     .                  opt%int_adasyr(opt%int_num),
+     .                  opt%int_adasex(opt%int_num),
+     .                  opt%int_isele (opt%int_num),
+     .                  opt%int_iselr (opt%int_num),
+     .                  opt%int_iselx (opt%int_num),
+     .                  opt%int_iseld (opt%int_num)
+        CASE DEFAULT
+          STOP 'SORRY, NO USER OPTIONS YET FOR DATABASE'
+      ENDSELECT
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       LOGICAL FUNCTION GetLine(fp,buffer,mode)
       IMPLICIT none
 
@@ -128,7 +166,7 @@ c            WRITE(0,*) 'BUFFER:-',buffer(i+1:n),idum1
                 READ(buffer,*) cdum1,idum1
 c                WRITE(0,*) 'BUFFER:-',TRIM(buffer)
                 IF (idum1.EQ.0) CYCLE
-                WRITE(0,*) 'LOADING GEOMETRY:',idum1
+c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 opt%obj_num = opt%obj_num + 1
                 SELECTCASE (idum1)
                   CASE (1)  ! Data from magnetic/standard OSM fluid grid
@@ -381,7 +419,7 @@ c...                Load image and look for pure/artificial black (pixel value=0
               DO WHILE(GetLine(fp,buffer,NO_TAG))
                 opt%nplots = opt%nplots + 1
                 opt%plots(opt%nplots) = buffer(1:LEN_TRIM(buffer))  ! Still don't know why TRIM() doesn't work...
-                WRITE(0,*) opt%nplots,buffer(1:LEN_TRIM(buffer))
+c                WRITE(0,*) opt%nplots,buffer(1:LEN_TRIM(buffer))
               ENDDO
             ENDIF
 

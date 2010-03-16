@@ -5029,7 +5029,7 @@ c      WRITE(0,*) 'SOL28 RINGS:',irs,ire
 
       IF (s28mode.GE.4.0) THEN 
 c        IF (sloutput) WRITE(0,*) 'WHAT-WHO! CALLING SOL28_V4'
-        CALL ExecuteSOL28(irs,ire,ikopt,sloutput)
+        CALL ExecuteSOL28(MAX(2,irs),ire,ikopt,sloutput)
         RETURN
       ENDIF
 

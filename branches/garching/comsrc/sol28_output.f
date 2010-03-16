@@ -23,14 +23,14 @@ c
       WRITE(fp,'(A)') '  '//TRIM(title)
       DO itarget = LO, HI
         WRITE(fp,*)
-        WRITE(fp,'(A6,A16,3A10,A6,4A10,A8,2X,A)') 
-     .    'TUBE','jsat','ne','ni','vi','M','pe','pi','Te','Ti','Gamma',
-     .     target_tag(itarget)
+        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,A8,2X,A)') 
+     .    'TUBE','psin','jsat','ne','ni','vi','M','pe','pi','Te','Ti',
+     .    'Gamma',target_tag(itarget)
         DO itube = 1, ntube
           IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
-          WRITE(fp,'(I6,1P,E16.6,3E10.2,0P,F6.2,
+          WRITE(fp,'(I6,F8.4,1P,E16.6,3E10.2,0P,F6.2,
      .               1P,2E10.2,0P,2F10.6,F8.2)')
-     .      itube,
+     .      itube,tube(itube)%psin,
      .      tube(itube)%jsat  (itarget,ion),
      .      tube(itube)%ne    (itarget),
      .      tube(itube)%ni    (itarget,ion),
@@ -215,9 +215,11 @@ c
       CHARACTER*(*) fname,title 
 
       INTEGER GetObject,GetTube
+      REAL    GetCs2
 
       INTEGER   fp,it,ic,ion,i,iobj,iwall,imat,itarget
-      CHARACTER tube_tag(4)*4
+      CHARACTER tube_tag(4)*4,tag*64
+      REAL      cs
       REAL*8    x(10),y(10)
 
       tube_tag(1) = 'SOL '
@@ -256,6 +258,7 @@ c
      .                   GetTube(grid%ixpt(i,2),IND_OBJECT),')',
      .               'R,ZXPT    = ',grid%rxpt(i),grid%zxpt(i)
       ENDDO
+  9   FORMAT(A,I8,A)
  10   FORMAT(10(A,I8,4X))
  11   FORMAT(A,2I6,2X,A,2I6,A,8X,A,2F10.6)
  12   FORMAT(10(A,F10.6,4X))
@@ -293,10 +296,8 @@ c
       WRITE(fp,*)
       WRITE(fp,'(A)') 'TARGET DATA:'
       WRITE(fp,*)
-      WRITE(logfp,*)
-      WRITE(logfp,'(A)') 'Identified target groups:'
       DO itarget = 1, ntarget
-        WRITE(logfp,'(I4,I4,2X,A12,I4,2X,I4,2X,1024I4)') itarget,
+        WRITE(fp,'(I4,I4,2X,A12,I4,2X,I4,2X,1024I4)') itarget,
      .    target(itarget)%location,
      .    target(itarget)%tag,
      .    target(itarget)%position,
@@ -351,8 +352,8 @@ c
             WRITE(fp,10) '   ION  =',ion
             WRITE(fp,'(3X,A8,9A11)') 
      .        'Cell','bratio','s','sbnd1','sbnd2','p','q','R','Z','vol'
-            WRITE(fp,'(11X,8A11)') 
-     .        '(m)',' ',' ','(m)',' ','(m)','(m)','(m3)'
+            WRITE(fp,'(11X,9A11)') 
+     .        ' ','(m)','(m)','(m)','(m)',' ','(m)','(m)','(m3)'
             WRITE(fp,'(11X,6F11.5,2F11.5)')
      .         tube(it)%bratio(LO),
      .         0.0,
@@ -392,33 +393,42 @@ c
       IF (nfluid.GT.0) THEN
         DO it = 1, ntube
           DO ion = 1, nion
+            WRITE(tag,'(64X)')
+            tag = tube_tag(tube(it)%type)
+            IF (it.EQ.grid%isep ) tag = TRIM(tag)//', 1ST SEPARATRIX'
+            IF (it.EQ.grid%isep2) tag = TRIM(tag)//', 2ND SEPARATRIX'
+
             WRITE(fp,*)
-            WRITE(fp,10) '   TUBE =',it
+            WRITE(fp, 9) '   TUBE =',it,'    '//TRIM(tag)
             WRITE(fp,10) '   ION  =',ion
-            WRITE(fp,'(3X,A8,3A11,2A10)') 
-     .        'Cell','ne','ni','vi','Te','Ti'
-            WRITE(fp,'(A8,3A11,2A10)') 
-     .        '     ','(m-3)','(m-3)','(m s-1)','(eV)','(eV)'
-            WRITE(fp,'(11X,1P,3E11.2,0P,2F10.2)') 
+            WRITE(fp,'(3X,A8,3A11,3A10)') 
+     .        'Cell','ne','ni','vi','M','Te','Ti'
+            WRITE(fp,'(A8,3A11,3A10)') 
+     .        '     ','(m-3)','(m-3)','(m s-1)',' ','(eV)','(eV)'
+            WRITE(fp,'(11X,1P,3E11.2,0P,3F10.2)') 
      .        tube(it)%ne(LO),
      .        tube(it)%ni(LO,ion),
      .        tube(it)%vi(LO,ion),
+     .       -tube(it)%machno(LO),
      .        tube(it)%te(LO),
      .        tube(it)%ti(LO,ion)
             i = 0
             DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)        
               i = i + 1
-              WRITE(fp,'(I3,I8,1P,3E11.2,0P,2F10.2)') i,ic,
+              cs = GetCs2(fluid(ic,ion)%te,fluid(ic,ion)%ti)
+              WRITE(fp,'(I3,I8,1P,3E11.2,0P,3F10.2)') i,ic,
      .          fluid(ic,ion)%ne,
      .          fluid(ic,ion)%ni,
      .          fluid(ic,ion)%vi,
+     .          fluid(ic,ion)%vi/cs,
      .          fluid(ic,ion)%te,
      .          fluid(ic,ion)%ti
             ENDDO
-            WRITE(fp,'(11X,1P,3E11.2,0P,2F10.2)') 
+            WRITE(fp,'(11X,1P,3E11.2,0P,3F10.2)') 
      .        tube(it)%ne(HI),
      .        tube(it)%ni(HI,ion),
      .        tube(it)%vi(HI,ion),
+     .        tube(it)%machno(HI),
      .        tube(it)%te(HI),
      .        tube(it)%ti(HI,ion)
           ENDDO
@@ -507,9 +517,9 @@ c
       WRITE(fp,'(A)') 'VERTEX DATA:'
       IF (nobj.GT.0.AND.nvtx.GT.0) THEN
         WRITE(fp,*)
-        WRITE(fp,'(6X,A8,2A6,4A11)') 
+        WRITE(fp,'(6X,A8,2A6,4I22)') 
      .    'Index','Tube','Cell',(i,i=1,4)
-        WRITE(fp,'(6X,8X,12X,4A11)') 
+        WRITE(fp,'(6X,8X,12X,4A22)') 
      .    '(m)','(m)','(m)','(m)'
         DO iobj = 1, nobj
           IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID.OR.  ! Only for fluid grid objects
@@ -517,7 +527,7 @@ c
           DO i = 1, obj(iobj)%nside
             CALL GetVertex(iobj,i,x(i),y(i))         
           ENDDO
-          WRITE(fp,'(I6,I8,2I6,4(2F10.6,2X))') 
+          WRITE(fp,'(I6,I8,2I6,4(2X,2F10.6))') 
      .      iobj,
      .      -1,
      .      GetTube(iobj,IND_OBJECT),
@@ -645,7 +655,7 @@ c
 
       WRITE(dummy,'(1024X)')
 
-      CALL inOpenInterface('osm.idl.wall')
+      CALL inOpenInterface('osm.idl.fluid_wall')
       DO iw = 1, nwall
         CALL inPutData(wall(iw)%class            ,'WALL_CLASS' ,'none')
         CALL inPutData(wall(iw)%index(WAL_GROUP ),'WALL_GROUP' ,'none')

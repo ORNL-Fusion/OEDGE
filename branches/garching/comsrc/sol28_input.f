@@ -751,7 +751,7 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
 
       INTEGER   i1
       LOGICAL   node_fit,node_data,ldum1
-      REAL      node_type,rdum1
+      REAL      node_type,rdum1,rdum2
       CHARACTER cdum1
       TYPE(type_node) :: node_tmp
 
@@ -837,10 +837,22 @@ c                ENDIF
                 osmnode(osmnnode)%type = 0.0
                 IF (node_tmp%rad_mode.EQ.6) THEN
 c...              Load data for radial fits to pedestal prescription:
-                  READ(buffer,*) rdum1,
-     .              osmnode(osmnnode)%fit_type,
-     .              osmnode(osmnnode)%fit_quantity,
-     .              osmnode(osmnnode)%fit_p(1:9)
+                  READ(buffer,*) rdum1,rdum2
+                  SELECTCASE (NINT(rdum2))                 
+                    CASE (-1) 
+                    CASE ( 1)  ! Linear in core, TANH in pedestal, exponential in SOL
+                      READ(buffer,*) rdum1,
+     .                  osmnode(osmnnode)%fit_type,
+     .                  osmnode(osmnnode)%fit_quantity,
+     .                  osmnode(osmnnode)%fit_p(1:9)
+                    CASE ( 2)  ! Linear in the core, exponential in SOL
+                      READ(buffer,*) rdum1,
+     .                  osmnode(osmnnode)%fit_type,
+     .                  osmnode(osmnnode)%fit_quantity,
+     .                  osmnode(osmnnode)%fit_p(1:7)
+                    CASE DEFAULT
+                      CALL ER('LoadMiscOption','Bad TYPE',*99)
+                  ENDSELECT
                 ELSE
 c...              Load data for radial fits to functions:
                   READ(buffer,*) rdum1,

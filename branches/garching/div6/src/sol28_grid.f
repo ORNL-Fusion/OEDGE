@@ -143,10 +143,10 @@ c
       TYPE(type_target), ALLOCATABLE :: new_target(:)
       INTEGER          , ALLOCATABLE :: ilist(:),tcheck(:)
 
-      target_tag(1) = 'upper, inner'  ! Target location specification
-      target_tag(2) = 'lower, inner'
-      target_tag(3) = 'upper, outer'
-      target_tag(4) = 'lower, outer'
+      target_tag(1) = 'inner, upper'  ! Target location specification
+      target_tag(2) = 'inner, lower'
+      target_tag(3) = 'outer, upper'
+      target_tag(4) = 'outer, lower'
 
       ALLOCATE(ilist (ntube))
       ALLOCATE(tcheck(ntube))
@@ -158,10 +158,15 @@ c...  Targets directly associated with the primary separatrix:
       ntarget = 0
 
 c...  Set the geometry:
-      IF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
+      IF     (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
+        geometry = LSND
+      ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
         geometry = UDND
       ELSE
-        STOP 'NOT TESTED YET'
+        WRITE(0,*) 'NXPT   =',grid%nxpt
+        WRITE(0,*) 'ZXPT1,2=',grid%zxpt
+        WRITE(0,*) 'Z0     =',grid%z0
+        STOP 'NOT TESTED YET - A'
       ENDIF
 
 c...  A bit of a mess... but...
@@ -179,7 +184,7 @@ c...  A bit of a mess... but...
                   ilist(1) = GetTube(grid%ixpt(2,1),IND_OBJECT)
                 ENDIF
               CASE DEFAULT
-                STOP 'NOT TESTED YET'
+                STOP 'NOT TESTED YET - B'
             ENDSELECT
           ENDIF
           tcheck = 0
@@ -255,7 +260,7 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
               ENDIF
             CASE (LDND)
-              STOP 'NOT CHECKED'
+              STOP 'NOT CHECKED - A'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -264,7 +269,7 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 1
               ENDIF
             CASE (CDND)
-              STOP 'NOT CHECKED'
+              STOP 'NOT CHECKED - B'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 1
@@ -1024,10 +1029,10 @@ c
       INTEGER GetObject
 
       INTEGER   fp,ipos,itube,version,ierr,icell,iobj,maxitube,
-     .          maxipos(ntube)
+     .          maxipos(ntube),hold_itube
       LOGICAL   first_try,debug
       CHARACTER buffer*1024
-      REAL      rdum1
+      REAL      rdum1,rdum2
       REAL*8    a1,a2,b1,b2
 
       debug = .FALSE.
@@ -1085,6 +1090,7 @@ c       Now try to open the supplimental data file:
 
 c...  Load the supplimental data from the IDL file:
       tube(1:ntube)%psin = 0.0
+      hold_itube = -1
       maxitube = 0
       maxipos  = 0
       READ(fp,*) version  ! First line 
@@ -1093,11 +1099,17 @@ c...  Load the supplimental data from the IDL file:
         IF (buffer(1:1).EQ.'*'.OR.buffer(1:1).EQ.'$') CYCLE  ! Comment line indicators
         SELECTCASE (version)
           CASE (1)
-            READ(buffer,*,ERR=98) ipos,itube,rdum1   
+            READ(buffer,*,ERR=98) ipos,itube,rdum1,rdum2
             maxitube = MAX(maxitube,itube)
             IF (maxitube.GT.ntube) EXIT
             maxipos(itube) = ipos
             tube(itube)%psin = tube(itube)%psin + rdum1  ! Take an average PSIn value for the tube
+            IF (itube.NE.hold_itube) THEN
+              hold_itube = itube
+              icell = tube(itube)%cell_index(LO) - 1
+            ENDIF
+            icell = icell + 1
+            field(icell)%bratio = rdum2
           CASE DEFAULT
             CALL ER('ProcessGrid','Unrecognised version number for '//
      .              'the supplimental grid data file',*99)
@@ -1126,12 +1138,85 @@ c         endless sub-versions of the file, one for each case:
         ENDIF
       ENDDO
 
+      IF (.TRUE.) THEN
+        DO itube = 1, ntube
+         tube(itube)%bratio(LO)=field(tube(itube)%cell_index(LO))%bratio
+         tube(itube)%bratio(HI)=field(tube(itube)%cell_index(HI))%bratio
+        ENDDO
+        CALL osm_DeriveGridQuantities
+      ENDIF
+
       IF (log.GT.0) WRITE(logfp,*) 'DONE'
 
       RETURN
  98   CALL ER('ProcessGrid','Format error in supplimental file',*99)
  99   WRITE(0,*) 'IPOS,ITUBE  =',ipos,itube
       STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE osm_DeriveGridQuantities
+      USE mod_geometry 
+      USE mod_grid
+      USE mod_legacy
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_solps
+      IMPLICIT none
+
+      INTEGER GetObject
+      REAL*8  CalcPolygonArea
+
+      INTEGER itube,ic1,ic2,icell,iobj,i
+      REAL    deltap,deltas,area,volume
+      REAL*8  a(3),b(3),c(3),d(3),e(3),f(3),x(10),y(10)
+
+      DO itube = 1, ntube
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)
+        cell(ic1)%sbnd = 0.0
+        cell(ic1)%pbnd = 0.0
+
+        DO icell = ic1, ic2
+          iobj = GetObject(icell,IND_CELL)
+
+          CALL GetVertex(iobj,1,a(1),a(2))
+          CALL GetVertex(iobj,2,b(1),b(2))
+          CALL GetVertex(iobj,3,c(1),c(2))
+          CALL GetVertex(iobj,4,d(1),d(2))
+
+          e(:) = 0.5D0 * (a(:) + b(:))
+          f(:) = 0.5D0 * (c(:) + d(:))
+
+          deltap = SNGL(DSQRT((e(1)-f(1))**2 + (e(2)-f(2))**2))
+          deltas = deltap / (field(icell)%bratio + EPS10)
+
+          IF (icell.GT.ic1) THEN
+            cell(icell)%pbnd(1) = cell(icell-1)%pbnd(2)
+            cell(icell)%sbnd(1) = cell(icell-1)%sbnd(2)
+          ENDIF
+          cell(icell)%p  = cell(icell)%pbnd(1) + 0.5 * deltap
+          cell(icell)%s  = cell(icell)%sbnd(1) + 0.5 * deltas
+          cell(icell)%ds = deltas
+          cell(icell)%pbnd(2) = cell(icell)%pbnd(1) + deltap
+          cell(icell)%sbnd(2) = cell(icell)%sbnd(1) + deltas
+
+c...      Calculate cell area and volume:
+          DO i = 1, obj(iobj)%nside
+            CALL GetVertex(iobj,i,x(i),y(i))
+          ENDDO
+          area   = SNGL(CalcPolygonArea(x,y,obj(iobj)%nside))
+          volume = 2.0 * V_PI * cell(icell)%cencar(1) * area
+          cell(icell)%vol = volume
+        ENDDO
+
+        tube(itube)%pmax = cell(ic2)%pbnd(2)
+        tube(itube)%smax = cell(ic2)%sbnd(2)
+      ENDDO
+ 
+      RETURN
+ 99   STOP
       END
 c
 c ======================================================================
@@ -1313,33 +1398,25 @@ c              ENDIF
               e(:) = 0.5D0 * (c(1,:) + c(2,:))
               f(:) = 0.5D0 * (d(1,:) + d(2,:))
 
-              deltap = SNGL(DSQRT((e(1)-f(1))**2 + (e(2)-f(2))**2))
-              deltas = deltap / (field(ncell)%bratio + EPS10)
-
-              IF (ik.GT.1) THEN
-                cell(ncell)%pbnd(1) = cell(ncell-1)%pbnd(2)
-                cell(ncell)%sbnd(1) = cell(ncell-1)%sbnd(2)
-              ENDIF
-              cell(ncell)%p  = cell(ncell)%pbnd(1) + 0.5 * deltap
-              cell(ncell)%s  = cell(ncell)%sbnd(1) + 0.5 * deltas
-              cell(ncell)%ds = deltas
-              cell(ncell)%pbnd(2) = cell(ncell)%pbnd(1) + deltap
-              cell(ncell)%sbnd(2) = cell(ncell)%sbnd(1) + deltas
-
-c...          Calculate cell area and volume:
-              DO i = 1, obj(nobj)%nside
-                CALL GetVertex(nobj,i,x(i),y(i))
-              ENDDO
-              area   = SNGL(CalcPolygonArea(x,y,obj(nobj)%nside))
-              volume = 2.0 * V_PI * cell(ncell)%cencar(1) * area
-              cell(ncell)%vol = SNGL(volume)
-c              IF (ncell.EQ.1) THEN
-c                WRITE(0,*) 'AREA:',area
-c                WRITE(0,*) '   X:',x(1:4)
-c                WRITE(0,*) '   Y:',y(1:4)
-c                WRITE(0,*) 'VOL :',volume
-c                WRITE(0,*) '   R:',(cell(ncell)%cencar(1)
+c Moved to osm_DeriveGridQuantities...
+c              deltap = SNGL(DSQRT((e(1)-f(1))**2 + (e(2)-f(2))**2))
+c              deltas = deltap / (field(ncell)%bratio + EPS10)
+c              IF (ik.GT.1) THEN
+c                cell(ncell)%pbnd(1) = cell(ncell-1)%pbnd(2)
+c                cell(ncell)%sbnd(1) = cell(ncell-1)%sbnd(2)
 c              ENDIF
+c              cell(ncell)%p  = cell(ncell)%pbnd(1) + 0.5 * deltap
+c              cell(ncell)%s  = cell(ncell)%sbnd(1) + 0.5 * deltas
+c              cell(ncell)%ds = deltas
+c              cell(ncell)%pbnd(2) = cell(ncell)%pbnd(1) + deltap
+c              cell(ncell)%sbnd(2) = cell(ncell)%sbnd(1) + deltas
+cc...          Calculate cell area and volume:
+c              DO i = 1, obj(nobj)%nside
+c                CALL GetVertex(nobj,i,x(i),y(i))
+c              ENDDO
+c              area   = SNGL(CalcPolygonArea(x,y,obj(nobj)%nside))
+c              volume = 2.0 * V_PI * cell(ncell)%cencar(1) * area
+c              cell(ncell)%vol = SNGL(volume)
 
 c...          Calculate target quantities:
               target = 0
@@ -1420,6 +1497,8 @@ c         been tailored:
           DEALLOCATE(knot)
           DEALLOCATE(imap)
 c          STOP 'whoa'
+
+          CALL osm_DeriveGridQuantities
 
         CASE (GRD_LOAD_OLD)
           CALL LoadObjects('osm_geometry.raw',status)  ! Change to LoadGeometryObjects...
@@ -1752,7 +1831,7 @@ c...  Read the knot data:
 
       SELECTCASE (grd_format)
 c       --------------------------------------------------------------
-        CASE (-1)
+        CASE (-2:-1)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
           DO WHILE (buffer(4:8).NE.'=====')

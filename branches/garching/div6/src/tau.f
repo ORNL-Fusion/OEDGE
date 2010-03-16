@@ -2840,8 +2840,8 @@ c
 
         if (getmodel(3,ir).eq.28) cycle
 
-        write(0,*) '****** blanking mid-point grad terms! ******'
-
+c sltmp
+        if (sloutput) write(0,*) '* blanking mid-point T-grad terms! *'
 c slmod end
 c
 c       Fix the mid-point of the ring where the solutions join and force
@@ -5798,7 +5798,6 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
@@ -11021,11 +11020,13 @@ c
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
       IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-         WRITE(0,*)
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*)
+         IF (sloutput) THEN
+           WRITE(0,*)
+           WRITE(0,*)'-------------------------------------------------'
+           WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+           WRITE(0,*)'-------------------------------------------------'
+           WRITE(0,*)
+         ENDIF
          RETURN
       ENDIF
 c     slmod end
@@ -14434,7 +14435,7 @@ c
 c slmod begin
       IF (grdnmod.NE.0) THEN
 c...    Skip this, as it is done in AssignNimbusWall (I think):
-        WRITE(0,*) 'SKIPPING CALL TO NIMIND - TROUBLE?'
+        IF (sloutput) WRITE(0,*) 'SKIPPING CALL TO NIMIND - TROUBLE?'
         RETURN
       ENDIF
 c slmod end
@@ -21455,8 +21456,8 @@ c      if (xcos.lt.-1.0) then
 c slmod end
          write(0,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
      >                    flag,xcos,acos(-1.0)
-         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
-     >                    flag,xcos,acos(-1.0)
+c         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c     >                    flag,xcos,acos(-1.0)
 
          acos_test = acos(-1.0) 
 
@@ -21470,8 +21471,8 @@ c slmod end
 
           write(0,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
      >                      flag,xcos,acos(1.0)
-          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
-     >                      flag,xcos,acos(1.0)
+c          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
+c     >                      flag,xcos,acos(1.0)
          acos_test = acos(1.0)
 
       else

@@ -33,7 +33,7 @@ c
       SAVE
 
  
-      WRITE(0,*) '-----> EIRENE:',iitersol
+c      WRITE(0,*) '-----> EIRENE:',iitersol
       IF (opt_fil%opt.NE.0) THEN
 
 c        DO i = 1, 20
@@ -58,8 +58,6 @@ c            t = t - opt_fil%time_step + 1.0E-09  ! The last one is so that t=0.
      .                                  nfilament
           WRITE(0,*) '------------------------------------------'
           WRITE(0,*) 
-
-
         ELSE
           IF (t.EQ.0.0) THEN
             CALL DefineFilaments 
@@ -194,46 +192,32 @@ c...      Loads cell geometry and plasma quantities from fluid grid:
 c...      Generates Eirene triangle mesh from fluid grid information:
           CALL BuildFluidGridTriangles_06
 
-          WRITE(0,*) 'DEBUG 0.0>>>>>',tri(1)%sideindex(5,1:3)
-
 c...      Builds connection map, amongst other things:
           CALL ProcessTriangles_06(0)
-
-          WRITE(0,*) 'DEBUG 0.1>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Sets triangle volume quantities from data stored in ProcessFluidGrid:
           CALL AssignPlasmaQuantities_06
 
-          WRITE(0,*) 'DEBUG 0.2>>>>>',tri(1)%sideindex(5,1:3)
-
 c...      Define Eirene particle sources:
           CALL SetupEireneStrata
-
-          WRITE(0,*) 'DEBUG 0.3>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Fills the voids outside the fluid grid with triangles (by calling
 c         the external program TRIANGLE):
           IF (opt_eir%nvoid.GT.0) THEN
-            CALL SetupVoidProcessing
+            CALL SetupVoidProcessing(opt_eir)
             DO ivoid = 1, opt_eir%nvoid
-              CALL ProcessVoid(opt_eir%void_zone(ivoid))
+              CALL ProcessVoid(opt_eir%void_zone(ivoid),opt_eir)
             ENDDO
           ELSE
             CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
           ENDIF
 
-          WRITE(0,*) 'DEBUG 0.4>>>>>',tri(1)%sideindex(5,1:3)
-
 c...      Re-builds connection map, taking into account the new triangles:
           CALL ProcessTriangles_06(0)
-
-          WRITE(0,*) 'DEBUG 0.5>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Dumps trianlges to a binary file, for use with LoadTriangles:
           CALL SaveTriangles_06
           saved_triangles = .TRUE.
-
-          WRITE(0,*) 'DEBUG 0.6>>>>>',tri(1)%sideindex(5,1:3)
 
 c...      Tetrahedrons:
           IF (tetrahedrons) THEN
@@ -250,14 +234,10 @@ c...      Tetrahedrons:
 c            CALL DumpGrid('BUILDING TETRAHEDRONS')          
           ENDIF
 
-          WRITE(0,*) 'DONE'
+c          WRITE(0,*) 'DONE'
         ENDIF
 
-        WRITE(0,*) 'DEBUG 0.9>>>>>',tri(1)%sideindex(5,1:3)
-
         IF (.TRUE.) CALL LocalGridRefinement
-
-        WRITE(0,*) 'DEBUG 1.0>>>>>',tri(1)%sideindex(5,1:3)
 
 c...    Writes the .points, .sides, .map and .plasma files to be loaded
 c       by EIRENE:
@@ -349,7 +329,7 @@ c       strata are not specifically assigned:
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* default target (OSM)'
-          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+c          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
           IF (cgridopt.EQ.LINEAR_GRID) THEN
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs-1               ! Ring index end
@@ -380,7 +360,7 @@ c       corresponding target surfaces:
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* user specified target (OSM)'
-          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
+c          WRITE(0,*) '>>>',nsurface,TRIM(surface(nsurface)%surtxt)
           surface(nsurface)%index(1:2) = opt_eir%range_tube(1:2,is) ! irsep                  ! Ring index start location of surface
 c          surface(nsurface)%index(2) = nrs                    ! Ring index end
           surface(nsurface)%index(3) = opt_eir%target(is)  ! Target (IKLO=inner, IKHI=outer)
@@ -904,7 +884,7 @@ c
       REAL*8  Bx,By,Bz,beta,brat,deltax,deltay,x(3),y(3)
 
 
-      WRITE(0,*) 'PROCESSING MAGNETIC GRID'
+c      WRITE(0,*) 'PROCESSING MAGNETIC GRID'
 
 
 c...  Rough crack at e-potential:
@@ -1067,7 +1047,7 @@ c...  Specify target plasma quantities:
       ENDDO      
       ntardat = it
 
-      WRITE(0,*) 'DONE'
+c      WRITE(0,*) 'DONE'
 
       RETURN
  99   STOP
@@ -1092,7 +1072,7 @@ c
 
       TYPE(type_strata) :: tmpstrata      
 
-      WRITE(0,*) 'NSTRATA:',nstrata,strata(1)%type
+c      WRITE(0,*) 'NSTRATA:',nstrata,strata(1)%type
 c      STOP
 c      nstrata = 0
 
@@ -1110,7 +1090,7 @@ c...  Decide if default strata should be assigned:
         IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
       ENDDO
 
-      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
+c      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 
 c...  Low IK target:
       IF (assign_LO) THEN
@@ -1512,7 +1492,7 @@ c
       REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:)
 
 
-      WRITE(0,*) 'DEBUG 2.0>>>>>',tri(1)%sideindex(5,1:3)
+c      WRITE(0,*) 'DEBUG 2.0>>>>>',tri(1)%sideindex(5,1:3)
       
       wall_ignored = .FALSE.
       debug        = .FALSE.
@@ -1868,7 +1848,7 @@ c...
         ENDDO
       ENDDO
 
-      WRITE(0,*) 'SUMION:',sumion
+c      WRITE(0,*) 'SUMION:',sumion
 
 c...  Assign wall fluxes (based on code in ReadWallFlux in 
 c     setup.f, for EIRENE99):

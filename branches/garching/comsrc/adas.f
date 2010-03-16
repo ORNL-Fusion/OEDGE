@@ -160,7 +160,7 @@ C
        PARAMETER ( L1    =  1 )                                         
 c slmod begin - new
        integer iread,lck
-       PARAMETER ( IREAD = 12 , LCK = 250 )
+       PARAMETER ( IREAD = 12 , LCK = 500 )  ! incerased from 250 - SL, 27/01/2010
 c
 c       PARAMETER ( IREAD = 12 , LCK = 100 )
 c slmod end

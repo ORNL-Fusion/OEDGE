@@ -9,7 +9,24 @@ c
 
       INTEGER,INTENT(IN) :: itube
 
+      INTEGER i
+      LOGICAL first_call
+      DATA    first_call /.TRUE./
+
       tube(itube)%jsat(2,1:S28_MAXNION) = 0.0
+
+      IF (first_call) THEN
+        first_call = .FALSE.
+c...    This is nasty, but it's necessary to initialize all of the targets,
+c       otherwise any regions linked to other regions, where it's assumed the 
+c       linked-to region has already been defined, will fail.  This is a backwards
+c       compatibilty issue at the moment and only affects the legacy LPDATI,O 
+c       assignment for SOL28, i.e. if doesn't bother DIVIMP or the newer SOL28
+c       target data assignments:
+        DO i = grid%isep, ntube
+          CALL SetTargetConditions_Legacy(i)        
+        ENDDO
+      ENDIF
 
       CALL SetTargetConditions_Legacy(itube)
 
@@ -166,7 +183,7 @@ c...  Local:
 
       INTEGER ii,ind1,ind2,i1,i2,i3,region,method,ring,target,idat,
      .        no_data_warning,ir
-      LOGICAL specific,apply,repeat,cycle_loop,initialise
+      LOGICAL specific,apply,cycle_loop,initialise
       REAL    dum1,dum2,dum3,dum4,exp2,exp3,exp4,dpsin,psin0,frac,
      .        tedat(MAXNRS),tidat(MAXNRS),nedat(MAXNRS)
 
@@ -207,11 +224,9 @@ c...  Need to check that PSITARG is assigned:
      .  CALL WN('InterpolateTargetData','PSITARG does not appear to '//
      .                                  'be assigned')
 
-      repeat = .TRUE.
-
+c      repeat = .TRUE.
 
       frac = GetRelaxationFraction()
-
 
       IF (initialise) THEN
         WRITE(logfp,*) 'INITIALISING SetTargetConditions_Legacy'
@@ -481,11 +496,11 @@ c       KxDS arrays):
 c...    End of REGION loop:
       ENDDO
 
-      IF (repeat) THEN
+c      IF (repeat) THEN
 c...    Need to do this twice:
-        repeat = .FALSE.
-        GOTO 10
-      ENDIF
+c        repeat = .FALSE.
+c        GOTO 10
+c      ENDIF
 
 c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
@@ -918,6 +933,7 @@ c         = 3 - PSIn over range of applicability (like coord=2)
 c         = 4 - RHO
 c         = 5 - PSIn (raw)
 c         = 6 - linear on line segment, but from tube link to infinity
+c         = 7 - psin, from tube link to infinity
 
         index = NINT(osmnode(i1)%type)
         mode  = osmnode(i1)%rad_mode
@@ -1156,7 +1172,7 @@ c...        Base second radial interpolation value on the first value:
             IF (osmnode(i3)%te   .LT.0.0) te1= -osmnode(i3)%te    * te0
             IF (osmnode(i3)%ti(1).LT.0.0) ti1= -osmnode(i3)%ti(1) * ti0
 
-            IF (coord.EQ.3) psin0 = tube(it1)%psin
+            IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
 c            IF (coord.EQ.4) rho0  = tube(it1)%rho
 
 c            WRITE(0,*) 'te0:',te0
@@ -1232,6 +1248,11 @@ c...          Assuming a 1:1 mapping between grid and data:
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)
             IF (debug) WRITE(logfp,*) '6: VAL=',val
+          ELSEIF (coord.EQ.7) THEN
+            val0 = 0.0  ! Necessary?
+            val1 = 0.0  
+            val  = ABS(tube(it)%psin - psin0)
+            WRITE(logfp,*) ' psin 7:',psin0,tube(it)%psin,val
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             IF ((osmnode(i2)%tube_range(1).NE.
@@ -1512,8 +1533,8 @@ c           parameters:
                 type = NINT(osmnode(ifit)%fit_type)
                 osmnode(ifit)%tube_range = osmnode(i0)%tube_range
                 SELECTCASE (type)
-                  CASE (1)  ! Core + pedestal + SOL
-                    CALL SamplePlasmaProfile(ifit,val,coord,result)
+                  CASE (1:2)  ! Core + pedestal + SOL
+                    CALL SimplePlasmaProfile(type,ifit,val,coord,result)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown fit '//
      .                      'type for MODE=6',*99)

@@ -322,7 +322,8 @@ c
       CALL FULL
       CALL HSV  ! This should be moved...
 
-      IF     (mode.EQ.1) THEN  ! Vertical scale drawn to the left of the plot
+      IF     (mode.EQ.0) THEN  ! Don't draw a scale
+      ELSEIF (mode.EQ.1) THEN  ! Vertical scale drawn to the left of the plot
         dspot = 0.016         
         minx = map2x + 0.02
         maxx = map2x + 0.04
@@ -683,7 +684,7 @@ c ======================================================================
 c
       SUBROUTINE Plot987(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
-     .                   ismoth,ignors,itec,avs,navs)
+     .                   ismoth,ignors,itec,avs,navs,nizs)
       USE mod_eirene06_parameters
       USE mod_eirene06 
       IMPLICIT none
@@ -709,7 +710,7 @@ c
       INTEGER CH1
       REAL    GetMach
 
-      INTEGER   ismoth,IGNORS(MAXNGS),ITEC,NAVS,iopt
+      INTEGER   ismoth,IGNORS(MAXNGS),ITEC,NAVS,iopt,nizs
       REAL      XXMIN,XXMAX,YYMIN,YYMAX,ft,fp,zadj,AVS(0:100)
       CHARACTER TITLE*(*),JOB*(*),GRAPH*(*),REF*(*)
 
@@ -807,8 +808,8 @@ c...  Read scale information:
      .                label
         IF (qmin.EQ.-99.0) qmin =  HI
         IF (qmax.EQ.-99.0) qmax = -HI
-        WRITE(0,*) 'SCALE:',scaleopt,colouropt,scalefact,
-     .              label(1:LEN_TRIM(label))
+c        WRITE(0,*) 'SCALE:',scaleopt,colouropt,scalefact,
+c     .              label(1:LEN_TRIM(label))
         IF (label.EQ.'default') 
      .    label = graph(CH1(graph):LEN_TRIM(graph))
       ELSE
@@ -864,7 +865,7 @@ c      CALL THICK2(6)
 
       IF (numplots.NE.0) ylabel = 'none'
 
-      CALL GRTSET_TRIM (TITLE,' ',' ',' ',glabel,
+      CALL GRTSET_TRIM ('Title',' ',' ',' ',glabel,
      >                  xXMIN,xXMAX,yYMIN,yYMAX,
      .                  ' ',xlabel,ylabel,
      .                  0,' ',0,' ',1)
@@ -900,7 +901,7 @@ c...check .eirdat file...
             gdata => e2dtebs
           CASE (522) 
             gdata => e2dtibs
-          CASE (530)  ! Cross-field metric THETAG
+          CASE (530)  ! Cross-field metric THETAG 
             gdata1 = 0.0
             DO ir = 2, nrs ! irsep-1
               gdata1(1:nks(ir),ir) = thetag(1:nks(ir),ir)
@@ -976,7 +977,7 @@ c            DO ir = irsep, nrs
               gdata1(1:nks(ir),ir) = ktibs(1:nks(ir),ir)
             ENDDO
             gdata => gdata1
-          CASE (800:875) 
+          CASE (799:875) 
               WRITE(0,*) 'DEBUG: here 1'
               iz = iopt - 800
               READ(5,'(A512)') cdum1
@@ -1008,6 +1009,29 @@ c             ----------------------------------------------------------
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
                   gdata1(1:nks(ir),ir) = tizs(1:nks(ir),ir,iz)
                 ENDDO
+c             ----------------------------------------------------------
+              ELSEIF (cdum1(8:12).EQ.'Power'.OR.cdum1(8:12).EQ.'POWER'
+     .                .OR.cdum1(8:12).EQ.'power') THEN
+                WRITE(0,*) 'Loading total radiated power data',iz,
+     .                     MIN(cion,nizs)
+                IF (iz.EQ.-1) THEN
+                  DO iz = 0, MIN(cion,nizs)
+                    DO ir = 2, nrs
+                      IF (idring(ir).EQ.BOUNDARY) CYCLE
+                      gdata1(1:nks(ir),ir) = gdata1(1:nks(ir),ir   ) + 
+     .                                       powls (1:nks(ir),ir,iz)
+                    ENDDO
+                  ENDDO
+                ELSE
+                  DO ir = 2, nrs
+                    IF (idring(ir).EQ.BOUNDARY) CYCLE
+                    gdata1(1:nks(ir),ir) = powls(1:nks(ir),ir,iz) 
+                  ENDDO
+                ENDIF
+                gdata1 = gdata1 * absfac
+        WRITE(6,*) 'powls ioout :',powls(1,irsep,:)
+        WRITE(6,*) 'ddlims ioout:',sdlims(1,irsep,:)
+        WRITE(6,*) 'gdata1      :',gdata1(1,irsep)
 c             ----------------------------------------------------------
               ELSEIF (cdum1(8:15).EQ.'Legrange'.OR.    ! Net force on impurities, from OUT 
      .                cdum1(8:15).EQ.'LEGRANGE'.OR.    ! plot 669/670
@@ -1238,7 +1262,8 @@ c...    Draw polygons:
 c         hardscale = .TRUE.
         IF (qmin.NE.qmax) THEN  ! This check is required to avoid a strange seg fault - SL, 22/01/2010
           DO i1 = 1, nc
-            IF (cq(i1).GE.qmin) THEN
+            IF (cq(i1).LT.qmin) cq(i1) = qmin
+c            IF (cq(i1).GE.qmin) THEN
 c              WRITE(0,*) colouropt,i1,cq(i1),qmin,qmax
               CALL SetCol255_04(colouropt,cq(i1),qmin,qmax)
 c              CALL SetCol255_04(colouropt,cq(i1),qmin,qmax)
@@ -1249,7 +1274,7 @@ c              WRITE(6,*) '    :',rv(2,i1),zv(2,i1)
 c              WRITE(6,*) '    :',rv(3,i1),zv(3,i1)
 c              WRITE(6,*) '    :',rv(4,i1),zv(4,i1)
               CALL PTPLOT(rv(1,i1),zv(1,i1),1,nv(i1),1)
-            ENDIF
+c            ENDIF
           ENDDO
         ENDIF
 
