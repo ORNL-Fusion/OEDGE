@@ -1704,7 +1704,7 @@ c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
 
 
  21     READ(5,'(A512)') cdum1
-        IF   (cdum1(8:11).EQ.'Show'.OR.cdum1(8:11).EQ.'shot'.OR.
+        IF   (cdum1(8:11).EQ.'Show'.OR.cdum1(8:11).EQ.'show'.OR.
      .        cdum1(8:11).EQ.'SHOW') THEN
           READ(cdum1,*) cdum2,rind
           WRITE(0,*) 'SHOWING TRIANGLE: ',rind
@@ -1824,7 +1824,7 @@ c       out, here they come):
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 
-        IF (IRSEP.NE.IRSEP2) THEN
+        IF (IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
           IR = IROUTS(1,IRSEP2)
           DO IK = 1, NKS(IR)
             K = KORPG(IK,IR)
@@ -2038,9 +2038,6 @@ c
         endif
       ENDIF
 C
-c     IPP/09 - Krieger - should reset colors here
-c     but not possible because n_cols,col_opt are unavailable
-c     call setup_col(n_cols,col_opt)
       RETURN
 c slmod begin
  99   WRITE(0,*) 'SUPIMP2 ERROR: UNABLE TO OPEN TRIANGLES FILE'

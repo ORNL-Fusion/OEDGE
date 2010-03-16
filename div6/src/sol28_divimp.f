@@ -13,8 +13,6 @@ c      RETURN
 
       CALL MapRingstoTubes
       CALL AssignOSMWall
-      CALL GenerateTubeGroups
-      CALL GenerateTargetGroups
 
       CALL SaveGeometryData('osm_geometry.raw')
 
@@ -85,8 +83,6 @@ c      CALL SetTargetConditions
         IF (tube(itube)%ir.EQ.irend  ) itube2 = itube
       ENDDO
       IF (itube2.EQ.0.AND.irend.EQ.ntube+2) itube2 = ntube
-      IF (itube1.EQ.0.OR.itube2.EQ.0)
-     .  CALL ER('(ExecuteSOL28','Invalid TUBE range',*99)
 
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
@@ -109,9 +105,7 @@ c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 c      CALL CleanUp
 
       RETURN
- 99   WRITE(0,*) '  ITUBE1 = ',itube1
-      WRITE(0,*) '  ITUBE2 = ',itube2
-      STOP
+ 99   STOP
       END
 c
 c ======================================================================
@@ -309,7 +303,7 @@ c
 
       INTEGER ik,ike,ir,id,cind1,cind2,i1,i2,iside,ik1,ir1,ir2,ion,iobj,
      .        fp,idum1
-      LOGICAL pfz_ring,load_bfield_data ! ,double_null
+      LOGICAL pfz_ring,load_bfield_data
       REAL    rdum1
       REAL, ALLOCATABLE:: bfield_data(:,:,:)
       REAL*8  a(3)
@@ -381,10 +375,6 @@ c...              Discontinuous target!
 
         ENDDO
       ENDIF
-
-c      double_null = .FALSE.
-c      IF (
-
 
 c...  Count number of cells:
       ntube = 0
@@ -535,16 +525,13 @@ c        pin(cind1:cind2,ion)%rec = pinrec(1:ike,ir)
 c        pin(cind1:cind2,ion)%mom = pinmp (1:ike,ir)
       ENDDO
 c...  Set grid quantities:
-      grid%r0    = DBLE(r0)
-      grid%z0    = DBLE(z0)
-c      grid%rxp   = DBLE(rxp)
-c      grid%zxp   = DBLE(zxp)
-      grid%n     = ntube
-      grid%isep  = irsep  - 1
-      grid%isep2 = irsep2 - 1
-      grid%ipfz  = irtrap - 2
-      grid%ikto  = ikto
-      grid%ikti  = ikti
+      grid%r0   = DBLE(r0)
+      grid%z0   = DBLE(z0)
+      grid%n    = ntube
+      grid%isep = irsep  - 1
+      grid%ipfz = irtrap - 2
+      grid%ikto = ikto
+      grid%ikti = ikti
 c...  Geometry:
       ngrp = 1
       grp(1)%origin = GRP_MAGNETIC_GRID  ! *** NEED AddGroup and CopyGroup functions ***
@@ -1362,9 +1349,7 @@ c      END
 c
 c ======================================================================
 c
-
-
-      SUBROUTINE BuildLinearGrid
+      SUBROUTINE BuildLinearGrid_OLD
       IMPLICIT none
 
       INCLUDE 'params'

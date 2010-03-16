@@ -45,6 +45,7 @@ c
 c subroutine: WriteEireneObjects
 c
       SUBROUTINE WriteEireneObjects
+      USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       USE mod_geometry
@@ -176,9 +177,16 @@ c...    Collect connection map information:
           isrf1 (iside) = srf(isrf)%index(IND_SURFACE)             ! Surface (block 2A)
         ENDDO
         IF (tetrahedrons.AND.  
-     .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for ITER
-          isrf1(1) = 5  
-          STOP 'SORT OUT THIS ANNOYING BUSINESS'
+     .      iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! For toroidal boundary tetrahedral surfaces, which are "lost" at the moment...
+          IF (surface(nsurface)%type   .EQ.NON_DEFAULT_STANDARD.AND.   ! Looking for the special tetrahedron catch all surface of desperation...
+     .        surface(nsurface)%subtype.EQ.ADDITIONAL.AND.
+     .        surface(nsurface)%index(1).EQ.-1) THEN
+            isrf1(1) = surface(nsurface)%num
+          ELSE
+            STOP 'SORT OUT THIS ANNOYING BUSINESS, AGAIN...'
+          ENDIF
+c          isrf1(1) = 5  
+c          STOP 'SORT OUT THIS ANNOYING BUSINESS'
         ENDIF
 c        IF (tetrahedrons.AND.   ! *** THIS ONE WAS ACTIVE MOST RECENTLY *** -SL, 12.08.09
 c    .       iobj1(1).EQ.0.AND.iside1(1).EQ.0.AND.isrf1(1).EQ.0) THEN   ! *HACK* temporary for MAST
@@ -1046,11 +1054,11 @@ c...  Bricks:
       INTEGER itry,nseg,i1,i2,isid,itet,ivtx,save_nobj,save_isrf,
      .        iobj,isrf,istart,iend,isector,idum1
       LOGICAL regular_grid
-      LOGICAL :: output = .FALSE.
-      LOGICAL :: hack   = .FALSE.
+      LOGICAL :: debug = .FALSE.
+      LOGICAL :: hack  = .FALSE.
 
       REAL*8 a(3,3),b(3,7),c(3,4),ang,ang1,ang2,dang(500,2),
-     .       theta,frac
+     .       theta,frac,xcen,ycen
 
       REAL*8     DTOL
       PARAMETER (DTOL=1.0D-07)
@@ -1078,7 +1086,7 @@ C     variable declaration and initialization separately
 C     INTEGER t(3,4) /1, 2, 3,  1, 4, 2,  2, 4, 3,  3, 4, 1 /
       DATA    t      /1, 2, 3,  1, 4, 2,  2, 4, 3,  3, 4, 1 /
 
-      WRITE(eirfp,*) 'BUILDING TETRAHEDRONS',output,eirfp
+      WRITE(eirfp,*) 'BUILDING TETRAHEDRONS',debug,eirfp
 
       IF (.TRUE.) THEN
 c...    Convert legacy triangle objects to generalized geometry objects:
@@ -1191,8 +1199,15 @@ c...    Assemble brick vertices:
           a(3,i1) = 0.0D0
         ENDDO
 
+c...    Filter:
+        xcen = SUM(a(1,1:3)) / 3.0
+        ycen = SUM(a(2,1:3)) / 3.0
+c        IF (xcen.LT.0.01) CYCLE
+        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
+
+
 c...    Check orientation...?
-        IF (output) THEN
+        IF (debug) THEN
           WRITE(eirfp,*) 'A:',a(1:2,1)
           WRITE(eirfp,*) 'A:',a(1:2,2)
           WRITE(eirfp,*) 'A:',a(1:2,3)
@@ -1207,7 +1222,7 @@ c        b(2,4:6) = a(2,1:3)
 c        b(3,4:6) = a(1,1:3) * DTAN(+0.5D0*ang1)
 
         isector = 1
-        IF (output) THEN
+        IF (debug) THEN
           WRITE(eirfp,*) 'DANG:',dang(isector,1:2)/D_DEGRAD
         ENDIF
         b(1,1:3) = a(1,1:3) * DCOS(dang(isector,1))
@@ -1233,7 +1248,7 @@ c          b(1:2,7) = b(1:2,7) + b(1:2,i1) / 3.0D0
         ENDDO
 
 c...    Check orientation...?
-        IF (output) THEN
+        IF (debug) THEN
           WRITE(eirfp,*) 'B:',b(1:3,1)
           WRITE(eirfp,*) 'B:',b(1:3,2)
           WRITE(eirfp,*) 'B:',b(1:3,3)
@@ -1274,7 +1289,7 @@ c     .        try(itry)%smap(iside),itry1
           c(1:3,3) = b(1:3,s(3,itet+ishift))
           c(1:3,4) = b(1:3,s(4,itet+ishift))
 
-          IF (output) THEN
+          IF (debug) THEN
             WRITE(eirfp,*)
             WRITE(eirfp,*) itet,ishift
             WRITE(eirfp,*) s(1:4,itet+ishift)
@@ -1289,10 +1304,10 @@ c...      Assign index mapping:
 c           Vertices:
             IF (isid.EQ.1.AND.itet.GE.2.AND.itet.LE.7) THEN
               i1 = INT(REAL(itet-1)/2.0+0.51)                
-              IF (output) WRITE(eirfp,*) 'IIII:',itet,i1
+              IF (debug) WRITE(eirfp,*) 'IIII:',itet,i1
               newsrf%index = trysrf(ABS(try(itry)%iside(i1)))%index
           
-              IF (output) THEN
+              IF (debug) THEN
                 WRITE(eirfp,*) ' :',
      .            trysrf(ABS(try(itry)%iside(i1)))%index(1:3)
               ENDIF
@@ -1313,7 +1328,7 @@ c              ENDIF
             
             newobj%iside(isid) = AddSurface(newsrf)
 
-            IF (output) THEN
+            IF (debug) THEN
               WRITE(eirfp,*) 'I.:',isid
               WRITE(eirfp,*) 'IN:',newsrf%index(1:3)
               WRITE(eirfp,*) 'I0:',t(1:3,isid)
@@ -5230,7 +5245,7 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
           WRITE(0,*)
           WRITE(0,*) '--------------------------------------------'
           WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
-          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) '
+          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) ' 
           WRITE(0,*) '--------------------------------------------'
           WRITE(0,*)
         ENDIF

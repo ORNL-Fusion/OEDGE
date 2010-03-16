@@ -351,9 +351,10 @@ c...    Additional surfaces for EIRENE
           CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
      .              -MACHHI,MACHHI,9,'EIRENE additional surfaces',ierr)
           IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
-c... NEED TO ADD A FLAG HERE THAT HELPS BUILDNEUTRAL WALL GET THE INDEXING RIGHT, c
-c    SINCE IT CURRENTLY ASSUMES THE FOLLOWING SHIFT IN INDECIES, WHICH IS DEFUNCT FOR
-c    EIRENE04... 
+
+          eirnasdat = MAX(1,eirnasdat)  ! To preserve the default settings in InitializeUnstructuredInput
+                                        ! in unstructured_input.f
+
 c...      Shift data around so that it is compatible with the existing code.  The 
 c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
@@ -371,9 +372,10 @@ c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
             WRITE(SLOUT,'(I6,10F10.4)') i1,(eirasdat(i1,i2),i2=1,10)
           ENDDO
-
+c For deletion...
         ELSEIF (line(7:9).EQ.'1.1') THEN
-
+          CALL WN('RUI','Additional wall data format 1.1 soon to be '//
+     .                  'obsolete (unstructured input tag *077)')
           CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
      .              -MACHHI,MACHHI,8,'EIRENE additional surfaces',ierr)
           IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
@@ -390,12 +392,10 @@ c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
             WRITE(SLOUT,'(I6,9F10.4)') i1,(eirasdat(i1,i2),i2=1,9)
           ENDDO
-
-        ELSEIF (line(7:9).EQ.'1.0') THEN
-          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
-     .              -MACHHI,MACHHI,6,'EIRENE additional surfaces',ierr)
-          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
-
+c        ELSEIF (line(7:9).EQ.'1.0') THEN
+c          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
+c     .              -MACHHI,MACHHI,6,'EIRENE additional surfaces',ierr)
+c          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
         ELSE
           CALL ER('RUI','Unsupported version for 077 EIRASDAT',*99)
         ENDIF
@@ -678,14 +678,6 @@ c -----------------------------------------------------------------------
         CALL ReadR(line,rflexopt(5),0.0,10.0,'Real flex option 5')
       ELSEIF (TAG(1:3).EQ.'072') THEN
         CALL ReadR(line,rflexopt(6),0.0,1.0E+25,'Real flex option 6')
-
-
-
-
-        IF (stopopt.EQ.99) osm_testep = 0.25
-
-
-
 c -----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------
