@@ -1,0 +1,14 @@
+c     -*-Fortran-*-
+c
+c     Common block containing variables related to the prompt 
+c     deposition option. 
+c
+      common /prompt_data/ prompt_depopt,promptdeps,mps_thickness,
+     >                     mps_energy
+      save /prompt_data/
+c
+      real promptdeps(maxnds,6),
+     >     mps_thickness(maxnrs,2),mps_energy(maxnrs,2)
+c
+      integer prompt_depopt
+c 

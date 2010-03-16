@@ -1,0 +1,1158 @@
+*DK USER
+C
+C   USER SUPPLIED SUBROUTINES
+C
+      SUBROUTINE ADDUSR
+C
+C   PREPARE DATA FOR LIMITER-SURFACES
+C
+      USE PARMMOD
+      USE CADGEO
+      USE CCONA
+      USE CGEOM
+      USE CGRID
+      USE CLGIN
+      USE CINIT
+
+      IMPLICIT NONE
+C
+C MODIFY GEOMETRY
+C
+C
+C  ABSCHALTEN NICHT ERREICHBARER ODER DOPPELT VORHANDENER FLAECHEN
+C
+C   HIERHER: LGJUM1, LGJUM2, LGJUM3
+C   SETZEN ZUR BESCHLEUNIGUNG (NICHT UNBEDINGT
+C   NOETIG)
+C
+C   LGJUM1(J,I)=.TRUE. :
+C   ABSCHALTEN DER FLAECHE I, FALLS TEILCHEN AUF J SITZT
+C
+C   LGJUM2(J,I)=.TRUE. :
+C   ABSCHALTEN DES ERSTEN SCHNITTPUNKTES MIT FLAECHE I, FALLS
+C   TEILCHEN AUF J SITZT (FALLS I EINE FLAECHE ZWEITER ORDNUNG IST)
+C
+C   LGJUM3(J,I)=.TRUE. :
+C   ABSCHALTEN DER FLAECHE I, FALLS TEILCHEN IN ZELLE NCELL=J SITZT
+C
+C   DEFAULTS: LGJUM1(J,J)=.TRUE. FUER EBENE FLAECHEN,
+C             LGJUM2(J,J)=.TRUE. FUER FLAECHEN ZWEITER ORDNUNG
+C             LGJUM3(J,I)=.FALSE. FUER ALLE I UND J
+C
+C  SETZE EINIGE VOLUMINA EXPLIZIT
+C
+C
+      RETURN
+      END
+C
+      SUBROUTINE GEOUSR
+C
+C   PREPARE DATA FOR LIMITER-SURFACES
+C
+      USE PRECISION
+      USE PARMMOD
+      USE CADGEO
+      USE CCONA
+      USE CGEOM
+      USE CGRID
+      USE CLGIN
+      USE CINIT
+
+      IMPLICIT NONE
+C
+C MODIFY GEOMETRY
+C
+C
+C  ABSCHALTEN NICHT ERREICHBARER ODER DOPPELT VORHANDENER FLAECHEN
+C
+C   HIERHER: LGJUM1, LGJUM2, LGJUM3
+C   SETZEN ZUR BESCHLEUNIGUNG (NICHT UNBEDINGT
+C   NOETIG)
+C
+C   LGJUM1(J,I)=.TRUE. :
+C   ABSCHALTEN DER FLAECHE I, FALLS TEILCHEN AUF J SITZT
+C
+C   LGJUM2(J,I)=.TRUE. :
+C   ABSCHALTEN DES ERSTEN SCHNITTPUNKTES MIT FLAECHE I, FALLS
+C   TEILCHEN AUF J SITZT (FALLS I EINE FLAECHE ZWEITER ORDNUNG IST)
+C
+C   LGJUM3(J,I)=.TRUE. :
+C   ABSCHALTEN DER FLAECHE I, FALLS TEILCHEN IN ZELLE NCELL=J SITZT
+C
+C   DEFAULTS: LGJUM1(J,J)=.TRUE. FUER EBENE FLAECHEN,
+C             LGJUM2(J,J)=.TRUE. FUER FLAECHEN ZWEITER ORDNUNG
+C             LGJUM3(J,I)=.FALSE. FUER ALLE I UND J
+C
+C  SETZE EINIGE VOLUMINA EXPLIZIT
+C
+C
+      RETURN
+      END
+C
+C
+      SUBROUTINE PLAUSR
+      IMPLICIT NONE
+C
+      RETURN
+      END
+C
+      SUBROUTINE PLTUSR(PLABLE,J)
+      USE PRECISION
+      USE PARMMOD
+      USE CADGEO
+      USE CPL3D
+      IMPLICIT NONE
+      LOGICAL, INTENT(IN) :: PLABLE
+      INTEGER, INTENT(IN) :: J
+      RETURN
+      END
+C
+      SUBROUTINE UPTUSR(XSTOR2,XSTORV2,WV)
+C
+C  USER SUPPLIED TRACKLENGTH ESTIMATOR, VOLUME AVERAGED
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CSPEZ
+      USE CUPD
+      USE CGRID
+      USE CZT1
+      USE CLOGAU
+      USE COMXS
+      USE COMPRT
+      USE CCONA
+      USE CGEOM
+      IMPLICIT NONE
+      REAL(DP), INTENT(INOUT) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
+     .                         XSTORV2(NSTORV,N2ND+N3RD), WV
+      REAL(DP) :: DIST, WTR, CVELBB
+      INTEGER :: ICOU, IRD, IRDD
+C
+      IF (ITYP.EQ.1) THEN
+        DO 51 ICOU=1,NCOU
+          DIST=CLPD(ICOU)
+          WTR=WV*DIST
+          CVELBB=SQRT(RMASSA(IATM))/CVELAA
+          IRDD=NRCELL+NUPC(ICOU)*NR1ST+NBLCKA
+          IRD=NCLTAL(IRDD)
+          ADDV(IATM,IRD)=ADDV(IATM,IRD)+WTR*VELX*VEL*CVELBB
+          ADDV(NATMI+IATM,IRD)=ADDV(NATMI+IATM,IRD)+WTR*VELY*VEL*
+     .                         CVELBB
+          ADDV(2*NATMI+IATM,IRD)=ADDV(2*NATMI+IATM,IRD)+WTR*VELZ*
+     .                           VEL*CVELBB
+51      CONTINUE
+C
+      ELSEIF (ITYP.EQ.2) THEN
+c
+      ELSEIF (ITYP.EQ.3) THEN
+c
+      ENDIF
+C
+      RETURN
+      END
+C
+      SUBROUTINE UPCUSR(WS,IND)
+C
+C  USER SUPPLIED COLLISION ESTIMATOR, VOLUME AVERAGED
+C
+      USE PRECISION
+      USE PARMMOD
+      USE CESTIM
+      USE COMUSR
+      USE COMPRT
+      USE COMXS
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: WS
+      INTEGER, INTENT(IN) :: IND
+C
+C  COLLISION ESTIMATOR  FOR DENSITY
+C
+C     IF (ITYP.NE.3) RETURN
+C
+C     COLV(IION,NCELL)=COLV(IION,NCELL)+WEIGHT/SIGTOT
+C
+      RETURN
+      END
+C
+      SUBROUTINE UPNUSR
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE COMPRT
+      USE CGRID
+      IMPLICIT NONE
+      INTEGER :: IRD, IRDD
+C
+C  SNAPSHOT ESTIMATOR FOR DENSITY
+C
+      IF (ITYP.NE.1) RETURN
+      IF (IATM.GT.NSNVI) RETURN
+C
+      IRDD=NRCELL+((NPCELL-1)+(NTCELL-1)*NP2T3)*NR1P2
+      IRD=NCLTAL(IRDD)
+      SNAPV(IATM,IRD)=SNAPV(IATM,IRD)+WEIGHT
+C
+      RETURN
+      END
+C
+      SUBROUTINE UPSUSR(WT,IND)
+C
+C  SURFACE AVERAGED TALLIES
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE COMPRT
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: WT
+      INTEGER, INTENT(IN) :: IND
+      RETURN
+      END
+C
+C
+      SUBROUTINE REFUSR
+C  USER SUPPLIED SURFACE REFLECTION MODEL
+C
+C  INCIDENT PARTICLE WITH MASS NUMBER XMP AND NUCLEAR CHARGE NUMBER XCP
+C
+C  RETURN 1 : EIRENE DEFAULT SURFACE ANGULAR DISTRIBUTION
+C  RETURN 2 : EIRENE DEFAULT THERMAL MOLECULE MODEL
+C  RETURN 3 : EIRENE DEFAULT THERMAL ATOM MODEL
+C  RETURN 4 : ABSORB PARTICLE
+C
+C
+C  THIS ROUTINE: SEKI ET AL, NUCL.FUS. VOL 20 , NO 10, (1980)
+C  FOR D,T AND HE ATOMS OR IONS INCIDENT ON COPPER AND ON IRON
+C
+C  MODREF=3 WALL (REFLECT TEST IONS, SPECULAR FOR FAST ATOMS)
+C  MODREF=4 DEFLECTOR PLATE  (ABSORB TEST IONS, COSINE FOR FAST ATOMS)
+C  EL: 1ST INDEX I1: SPECIES OF INCIDENT PARTICLE
+C      2ND INDEX: SURFACE MATERIAL
+C  I1=1: D,T ;  I1=2: HE
+C  I2=1: SS ;  I2=2: COPPER
+      USE PRECISION
+      USE PARMMOD
+      USE COMPRT
+      USE CZT1
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: XMW, XCW, XMPP, XCP, ZCOS, ZSIN, EXPI,
+     .                        RPROB, E0TERM
+      INTEGER, INTENT(IN) :: IGASF,IGAST
+      REAL(DP), SAVE :: EL(2,2)=(/2610.,5510.,2990.,6290./)
+      REAL(DP) :: RN, RE, ELI, XMP, ZCS, ZSN, RPR, ZEP1, E, EX,
+     .            E0T 
+      REAL(DP), EXTERNAL :: RANF_EIRENE
+      INTEGER :: I2, ITYPO, I1, IGT, IGF
+
+      RN(E,ELI)=-0.237*LOG10(E/ELI)+0.19
+      RE(E,ELI)=-0.22*LOG10(E/ELI)+0.06
+C
+      ENTRY RF0USR
+      RETURN
+
+      I2=MODREF-2
+C  ABSORB TEST IONS AT DEFLECTOR PLATE
+      IF (ITYP.EQ.3.AND.I2.EQ.2) RETURN 4
+      ITYPO=ITYP
+C
+      I1=1
+      IF (XMP.Ge.4.) I1=2
+      write (6,*) 'refusr',ityp,i2,i1
+      ELI=EL(I1,I2)
+C
+      ZCS=1.
+      ZSN=0.
+      RPR=RN(E0,ELI)
+      ZEP1=RANF_EIRENE( )
+C
+C COSINE FOR CHARGED, SPECULAR FOR NEUTRALS
+      EX=0.
+      IF (ITYPO.LE.3) EX=100.
+C
+      IF (I1.EQ.1) THEN
+C  INCIDENT D, T , T+ OR D+
+        IGT=1
+        IF (XMP.GT.2.) IGT=2
+        IGT=IGF
+        ITYP=1
+C  FRANCK CONDON ATOM, 3 EV?
+        IF (ZEP1.GT.RPR) THEN
+          EX=0.
+          E0T=3.
+          RETURN 3
+C  FAST ATOM
+        ELSE
+          IATM=1
+          IF (XMP.GT.2.) IATM=2
+          E0=RE(E0,ELI)/RPR*E0
+          VEL=RSQDVA(IATM)*SQRT(E0)
+          RETURN 1
+        ENDIF
+      ELSE
+C  INCIDENT HE, HE+ OR HE++
+        IGF=3
+        IGT=IGF
+        ITYP=1
+C  THERMAL ATOM, 0.1 EV
+        EX=0.
+        E0T=0.1
+        IF (I2.EQ.1) E0T=0.0612
+        IF (ZEP1.GT.RPR) RETURN 3
+C  FAST ATOM
+        IATM=3
+        E0=RE(E0,ELI)/RPR*E0
+        VEL=RSQDVA(IATM)*SQRT(E0)
+        RETURN 1
+      ENDIF
+C
+      RETURN
+C
+      ENTRY RF1USR (XMW,XCW,XMPP,XCP,IGASF,IGAST,ZCOS,ZSIN,EXPI,
+     .              RPROB,E0TERM,*,*,*,*)
+C
+      RETURN
+      ENTRY SP0USR
+      ENTRY SP1USR
+      RETURN
+      END
+C
+C
+      SUBROUTINE RETUSR(SIG)
+      USE PRECISION
+      USE PARMMOD
+      USE COMPRT
+      USE COMUSR
+      IMPLICIT NONE
+      REAL(DP), INTENT(OUT) :: SIG
+      IF (E0.LE.0.5*TEIN(NCELL)) SIG=-1.
+
+      RETURN
+      END
+C
+C
+      SUBROUTINE MODUSR(*)
+      IMPLICIT NONE
+C RETURN 1 Ohne Berechnung von neuen plasma
+C Redefination of new sources
+C FLUX(ISTRA) = Flux in AMP
+C ISTRA     === 1
+C NITER InTENT(IN)
+C IITER 
+C     CALL (FLUX(ISTRA),NLVOL,NLSRF,NLPNT,NLPLS,NLATM,NLMOL)
+C     RETURN 1
+      RETURN
+      END
+c
+c
+      SUBROUTINE SIGUSR(III,JJJ,ZDS,PEN,PSIG,TIMAX,ARGST)
+      IMPLICIT NONE
+      WRITE(6,*)'NOTHING HAS BEEN DONE IN SIGUSR!'
+      RETURN
+      END
+c
+c
+      subroutine talusr (ICOUNT,VECTOR,TALTOT,TALAV,
+     .              TXTTL,TXTSP,TXTUN,ILAST,*)
+      USE PRECISION
+      USE PARMMOD
+      USE CGRID
+      USE CGEOM
+      implicit NONE
+      integer, intent(in) :: icount
+      integer, intent(out) :: ilast
+      real(dp), intent(in) :: vector(*), TALTOT, TALAV
+      character(len=*) :: txttl,txtsp,txtun
+      integer :: N0WR
+
+C3. OUTPUT FOR EMC3
+      N0WR = 1
+      CALL OUT_FOR_EMC3(N0WR)
+
+      ILAST = 1
+      return 1
+      end
+c
+C
+*//GEOMD//
+C=======================================================================
+C          S U B R O U T I N E   G E O M D
+C=======================================================================
+      SUBROUTINE GEOMD(NDXA,NDYA,NPLP,NR1ST,
+     .                 PUX,PUY,PVX,PVY)
+C
+      USE PRECISION
+      USE PARMMOD
+      USE CCONA
+      USE CGEOM
+C
+      REAL(DP), INTENT(OUT) :: PUX(*),PUY(*),PVX(*),PVY(*)
+      INTEGER, INTENT(INOUT) :: NDXA,NDYA,NPLP,NR1ST
+C
+C  GEOMETRY DATA: CELL VERTICES (LINDA ---> EIRENE)
+      RETURN
+      END
+C
+c
+      SUBROUTINE TMSUSR(T)
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: T
+      RETURN
+      END
+
+
+      SUBROUTINE INIUSR
+      USE PRECISION
+      USE PARMUSR
+      IMPLICIT NONE
+      CHARACTER(72) :: ERRMES
+ 
+      SAVE
+C
+C1. Updata 3D Geometry
+c     IERR = 0
+c     CALL UP_GEO_N0(N1ST,IERR,ERRMES)
+c     IF(IERR.NE.0) THEN 
+c       CALL WRMESS('YOU CANNOT RUN THE STELLARATOR OPTION DUE TO:')
+c       CALL WRMESS(ERRMES)
+c       call exit
+c     ENDIF 
+c     CALL WRMESS('*** Updata successful ***')
+
+      RETURN
+      END
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C* UPTCOP: stellarator option
+C
+C THIS SUBROUTINE CALCULATES 
+C     1. CHARGE EXCHANGE RATES
+C     2. MOMENTUM LOSS OR GAIN (CHARGE EXCHANGE AND IONIZATION BY e)        
+C DUE ONLY TO NEUTRAL ATOM
+C
+C *1) CONTRIBUTION OF ION IMPACT IONIZATION IS NOT INCLUDED
+C *2) CONTRIBUTION OF MOLECULE IS IN SUBP. COLLIDE              
+C *3) NO CONTRIBUTION FROM TEST ION
+C
+C*** STELLARATOR OPTION
+C    1. VECTORS(B-LINE, V_ion) ARE PROVIDED BY THE USER
+C       1.1  V_ION = VDION (FUNCTION)
+C       1.2  BX,BY,BZ PROVIDED BY SUB. VECUSR
+C    2. VELOCITY OF THE NEUTRAL (VELX,-Y,-Z) IS REPLACED BY (VX,VY,VZ)
+C       PROVIDED BY USER. THIS IS DUE TO THE PERIOD OF THE STELLA. 
+C       GEOMETRY.                                                    
+ 
+      SUBROUTINE UPTCOP(XSTOR2,WV)
+C
+C  USER SUPPLIED TRACKLENGTH ESTIMATOR, VOLUME AVERAGED
+C
+      USE PRECISION
+      USE PARMMOD
+      USE CESTIM
+      USE COMUSR
+      USE COMPRT
+      USE CUPD
+      USE COMXS
+      USE CSPEZ
+      USE CGRID
+      USE CLOGAU
+      USE CCONA
+      USE CPOLYG
+      USE CZT1
+      USE CSDVI
+      USE CINIT
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
+     .                      XSTORV2(NSTORV,N2ND+N3RD), WV
+      REAL(DP) :: P, WTRSIG, EION, V0_PARB, DIST, WTR
+      INTEGER :: IAEL, IREL, IPL2, IAEI, IRDS, IBGK, IICX, IIEI, IIEL,
+     .           IMEL, IPL1, I, IPL, IIO, IRD, IP, IR, IML, IAT, IFIRST,
+     .           IRCX, IADD, ICOU, IACX, IRDD, IMCX, IMEI, IPL2, IPLSTI
+      INTEGER, SAVE :: NMTSP
+      REAL(DP), ALLOCATABLE, SAVE ::
+     . CNDYNA(:), CNDYNM(:), CNDYNI(:), CNDYNP(:) 
+      DATA IFIRST/0/
+      SAVE
+      IF (IFIRST.EQ.0) THEN
+        IFIRST=1
+        ALLOCATE (CNDYNA(NATM))
+        ALLOCATE (CNDYNM(NMOL))
+        ALLOCATE (CNDYNI(NION))
+        ALLOCATE (CNDYNP(NPLS))
+        DO 11 IAT=1,NATMI
+11        CNDYNA(IAT)=AMUA*RMASSA(IAT)
+        DO 12 IML=1,NMOLI
+12        CNDYNM(IML)=AMUA*RMASSM(IML)
+        DO 13 IIO=1,NIONI
+13        CNDYNI(IIO)=AMUA*RMASSI(IIO)
+        DO 14 IPL=1,NPLSI
+14        CNDYNP(IPL)=AMUA*RMASSP(IPL)
+C
+        DO 2 IR=1,NR1STM
+C         DO 2 IP=1,NP2NDM
+CYHF
+          IP_MAX = MAX(1,NP2NDM)
+          DO 2 IP=1,IP_MAX
+C END YHF 
+            IRD=IR+(IP-1)*NR1P2
+
+            IF ((INDPRO(4) == 8) .AND. (INDPRO(5) == 8)) THEN
+              vion=vdion(ird)
+              VSIG_PARB(1:NPLSI,ird)=CNDYNP(1:NPLSI)*vion
+            ELSE
+              IF (INDPRO(5) == 8) THEN
+                CALL VECUSR (1,BX,BY,BZ,1)
+              ELSE
+                BX=BXIN(IRD)
+                BY=BYIN(IRD)
+                BZ=BZIN(IRD)
+              END IF
+              DO 3 IPL=1,NPLSI
+                IF (INDPRO(4) == 8) THEN
+                  CALL VECUSR (2,VX,VY,VZ,IPL)
+                ELSE
+                  VX=VXIN(IPL,IRD)
+                  VY=VYIN(IPL,IRD)
+                  VZ=VZIN(IPL,IRD)
+                END IF
+                VSIG_PARB(IPL,IRD)=CNDYNP(IPL)*(VX*BX+VY*BY+VZ*BZ)
+3             CONTINUE
+            END IF
+2       CONTINUE
+
+      NMTSP=NPHOTI+NATMI+NMOLI+NIONI+NPLSI+NADVI+NALVI
+C
+      ENDIF
+C
+C  WV=WEIGHT/VEL
+C
+C  ATOMS
+      IF (ITYP.EQ.1) THEN
+        DO 20 ICOU=1,NCOU
+          DIST=CLPD(ICOU)
+          WTR=WV*DIST
+          IRD=NRCELL+NUPC(ICOU)*NR1P2+NBLCKA
+          IRDD=NCLTAL(IRD)
+C
+          IF (LGVAC(IRD,0)) GOTO 20
+C
+          XSTOR(:,:) = XSTOR2(:,:,ICOU)
+          XSTORV(:) = XSTORV2(:,ICOU)
+C
+C  1,NPLSI:
+C              PARTICLE CHARGE EXCHANGE RATE DUE TO IPLS: #/S
+C              WITH ATOM SPECIES IATM=1,NATMI, PER ION
+C  EACH RATE IS WEIGHTED WITH THE FACTOR (E0/EI-1), E0 BEING
+C  THE NEUTRAL PARTCILE ENERGY, EI THE MEAN PLASMA ION ENERGY
+C  THESE RATES ARE SCALED IN THE SHORT CYCLE WITH EI*NI
+C
+C
+          IF (NCPVI.LT.NPLSI) GOTO 20
+C
+          IF (LGACX(IATM,0,0).EQ.0) GOTO 51
+          DO 52 IACX=1,NACXI(IATM)
+            IRCX=LGACX(IATM,IACX,0)
+            IPLS=LGACX(IATM,IACX,1)
+            IF (LGVAC(IRD,IPLS)) GOTO 52
+            IPLSTI= MPLSTI(IPLS)
+            EION=1.5*TIIN(IPLSTI,IRD)+EDRIFT(IPLS,IRD)
+            WTRSIG=WTR*SIGVCX(IRCX)/DIIN(IPLS,IRD)
+CYHF 
+C           COPV(IPLS,IRDD)=COPV(IPLS,IRDD)+WTRSIG*(E0/EION-1.)
+CEND YHF 
+            COPV(IPLS,IRDD)=COPV(IPLS,IRDD)+WTRSIG
+            LMETSP(NMTSP+IPLS)=.TRUE.
+52        CONTINUE
+51        CONTINUE
+C
+C.........................................
+C
+C   MOMENTUM EXCHANGE RATE: DYN/CM**3
+C
+C.........................................
+C
+C
+C  CONTRIBUTIONS FROM ATOMS
+C  NPLSI+1, 2*NPLSI:
+C
+          IF (NCPVI.LT.2*NPLSI) GOTO 20
+C
+          IADD=NPLSI
+          IF (INDPRO(5) == 8) THEN
+            CALL VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRD)
+            BY=BYIN(IRD)
+            BZ=BZIN(IRD)
+          END IF
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+          V0_PARB=V0_PARB*CNDYNA(IATM)
+C
+          IF (LGACX(IATM,0,0).EQ.0) GOTO 59
+          DO 56 IACX=1,NACXI(IATM)
+            IRCX=LGACX(IATM,IACX,0)
+            IPLS=LGACX(IATM,IACX,1)
+            IF (LGVAC(IRD,IPLS)) GOTO 56
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 56
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHA
+C
+            VSIGCX_PARB=VSIG_PARB(IPLS,IRD)
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGCX_PARB)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            IPL1=IADD+IPLS
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGCX_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N1STX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*VSIGCX_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N2NDX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+56        CONTINUE
+59        CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 61 IAEI=1,NAEII(IATM)
+            IRDS=LGAEI(IATM,IAEI)
+            IF (PPLDS(IRDS,0).GT.0) THEN
+              DO 62 IPL=1,NPLSI
+                P=PPLDS(IRDS,IPL)
+                IF (P.GT.0) THEN
+                  VSIGEI_PARB=VSIG_PARB(IPL,IRD)
+                  WTRSIG=WTR*SIGVEI(IRDS)*P
+                  WTRSIG=WTRSIG*SIGN(1.D0,VSIGEI_PARB)
+C  NEW BULK ION IPL
+                  IPL2=IADD+IPL
+                  COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+                  LMETSP(NMTSP+IPL2)=.TRUE.
+                ENDIF
+62            CONTINUE
+            ENDIF
+61        CONTINUE
+C
+C  ION IMPACT IONIZATION CONTRIBUTION: NOT INCLUDED
+C
+C
+C  ELASTIC CONTRIBUTION FROM ATOMS
+C
+C
+          IF (LGAEL(IATM,0,0).EQ.0) GOTO 80
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+          DO 81  IAEL=1,NAELI(IATM)
+            IREL=LGAEL(IATM,IAEL,0)
+            IPLS=LGAEL(IATM,IAEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 81
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 81
+C
+            VSIGEL_PARB=VSIG_PARB(IPLS,IRD)
+            WTRSIG=WTR*SIGVEL(IREL)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGEL_PARB)
+C
+            IPL1=IADD+IPLS
+            IPL2=IPL1
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGEL_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+            IPL2=IPL1
+            COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+            LMETSP(NMTSP+IPL2)=.TRUE.
+81        CONTINUE
+80      CONTINUE
+C
+20      CONTINUE
+C
+C  MOLECULES
+      ELSEIF (ITYP.EQ.2) THEN
+C
+        DO 200 ICOU=1,NCOU
+          DIST=CLPD(ICOU)
+          WTR=WV*DIST
+          IRD=NRCELL+NUPC(ICOU)*NR1P2+NBLCKA
+          IRDD=NCLTAL(IRD)
+C
+          IF (LGVAC(IRD,0)) GOTO 200
+C
+          XSTOR(:,:) = XSTOR2(:,:,ICOU)
+          XSTORV(:) = XSTORV2(:,ICOU)
+C
+C             MOMENTUM EXCHANGE RATE: DYN/CM**3
+C
+C
+C
+C
+C  CONTRIBUTIONS FROM MOLECULES
+C  2*NPLSI+1, 3*NPLSI:
+C
+          IF (NCPVI.LT.3*NPLSI) GOTO 200
+C
+          IADD=2*NPLSI
+CYHF
+C         V0_PARB=VEL*(VELX*BXIN(IRD)+VELY*BYIN(IRD)+VELZ*BZIN(IRD)) 
+          IF (INDPRO(5) == 8) THEN
+            CALL VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRD)
+            BY=BYIN(IRD)
+            BZ=BZIN(IRD)
+          END IF
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+CEND YHF 
+          V0_PARB=V0_PARB*CNDYNM(IMOL)
+C
+          IF (LGMCX(IMOL,0,0).EQ.0) GOTO 590
+          DO 560 IMCX=1,NMCXI(IMOL)
+            IRCX=LGMCX(IMOL,IMCX,0)
+            IPLS=LGMCX(IMOL,IMCX,1)
+            IF (LGVAC(IRD,IPLS)) GOTO 560
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 560
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHM
+C
+            VSIGCX_PARB=VSIG_PARB(IPLS,IRD)
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGCX_PARB)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            IPL1=IADD+IPLS
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGCX_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N1STX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*VSIGCX_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N2NDX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+560       CONTINUE
+590       CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 610 IMEI=1,NMDSI(IMOL)
+            IRDS=LGMEI(IMOL,IMEI)
+            IF (PPLDS(IRDS,0).GT.0) THEN
+              DO 620 IPL=1,NPLSI
+                P=PPLDS(IRDS,IPL)
+                IF (P.GT.0) THEN
+                  VSIGEI_PARB=VSIG_PARB(IPL,IRD)
+                  WTRSIG=WTR*SIGVEI(IRDS)*P
+                  WTRSIG=WTRSIG*SIGN(1.D0,VSIGEI_PARB)
+C  NEW BULK ION IPL
+                  IPL2=IADD+IPL
+                  COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+                  LMETSP(NMTSP+IPL2)=.TRUE.
+                ENDIF
+620           CONTINUE
+            ENDIF
+610       CONTINUE
+C
+C
+C  ELASTIC CONTRIBUTION FROM MOLECULES
+C
+C
+          IF (LGMEL(IMOL,0,0).EQ.0) GOTO 800
+C  DEFAULT TRACKLENGTH ESTIMATOR
+          DO 810 IMEL=1,NMELI(IMOL)
+            IREL=LGMEL(IMOL,IMEL,0)
+            IPLS=LGMEL(IMOL,IMEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 810
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 810
+C
+            VSIGEL_PARB=VSIG_PARB(IPLS,IRD)
+            WTRSIG=WTR*SIGVEL(IREL)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGEL_PARB)
+C
+            IPL1=IADD+IPLS
+            IPL2=IPL1
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGEL_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+            IPL2=IPL1
+            COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+            LMETSP(NMTSP+IPL2)=.TRUE.
+810       CONTINUE
+800     CONTINUE
+C
+C
+200     CONTINUE
+C
+C  TEST IONS
+C
+      ELSEIF (ITYP.EQ.3) THEN
+C
+        DO 2000 ICOU=1,NCOU
+          DIST=CLPD(ICOU)
+          WTR=WV*DIST
+          IRD=NRCELL+NUPC(ICOU)*NR1P2+NBLCKA
+          IRDD=NCLTAL(IRD)
+C
+          IF (LGVAC(IRD,0)) GOTO 2000
+C
+          XSTOR(:,:) = XSTOR2(:,:,ICOU)
+          XSTORV(:) = XSTORV2(:,ICOU)
+C
+C             MOMENTUM EXCHANGE RATE: DYN/CM**3
+C
+C
+C
+C
+C  CONTRIBUTIONS FROM TEST IONS
+C  3*NPLSI+1, 4*NPLSI:
+C
+          IF (NCPVI.LT.4*NPLSI) GOTO 2000
+C
+          IADD=3*NPLSI
+          IF (INDPRO(5) == 8) THEN
+            CALL VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRD)
+            BY=BYIN(IRD)
+            BZ=BZIN(IRD)
+          END IF
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+          V0_PARB=V0_PARB*CNDYNI(IION)
+C
+          IF (LGICX(IION,0,0).EQ.0) GOTO 5900
+          DO 5600 IICX=1,NICXI(IION)
+            IRCX=LGICX(IION,IICX,0)
+            IPLS=LGICX(IION,IICX,1)
+            IF (LGVAC(IRD,IPLS)) GOTO 5600
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 5600
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHI
+C
+            VSIGCX_PARB=VSIG_PARB(IPLS,IRD)
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGCX_PARB)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            IPL1=IADD+IPLS
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGCX_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N1STX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*VSIGCX_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=IADD+N2NDX(IRCX,2)
+              COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+              LMETSP(NMTSP+IPL2)=.TRUE.
+            ENDIF
+5600      CONTINUE
+5900      CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 6100 IIEI=1,NIDSI(IION)
+            IRDS=LGIEI(IION,IIEI)
+            IF (PPLDS(IRDS,0).GT.0) THEN
+              DO 6200 IPL=1,NPLSI
+                P=PPLDS(IRDS,IPL)
+                IF (P.GT.0) THEN
+                  VSIGEI_PARB=VSIG_PARB(IPL,IRD)
+                  WTRSIG=WTR*SIGVEI(IRDS)*P
+                  WTRSIG=WTRSIG*SIGN(1.D0,VSIGEI_PARB)
+C  NEW BULK ION IPL
+                  IPL2=IADD+IPL
+                  COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+                  LMETSP(NMTSP+IPL2)=.TRUE.
+                ENDIF
+6200          CONTINUE
+            ENDIF
+6100      CONTINUE
+C
+C
+C  ELASTIC CONTRIBUTION FROM TEST IONS
+C
+          IF (LGIEL(IION,0,0).EQ.0) GOTO 8000
+C  DEFAULT TRACKLENGTH ESTIMATOR
+          DO 8100 IIEL=1,NIELI(IION)
+            IREL=LGIEL(IION,IIEL,0)
+            IPLS=LGIEL(IION,IIEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 8100
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 8100
+C
+            VSIGEL_PARB=VSIG_PARB(IPLS,IRD)
+            WTRSIG=WTR*SIGVEL(IREL)
+            WTRSIG=WTRSIG*SIGN(1.D0,VSIGEL_PARB)
+C
+            IPL1=IADD+IPLS
+            IPL2=IPL1
+            COPV(IPL1,IRDD)=COPV(IPL1,IRDD)-WTRSIG*VSIGEL_PARB
+            LMETSP(NMTSP+IPL1)=.TRUE.
+            IPL2=IPL1
+            COPV(IPL2,IRDD)=COPV(IPL2,IRDD)+WTRSIG*V0_PARB
+            LMETSP(NMTSP+IPL2)=.TRUE.
+8100      CONTINUE
+8000    CONTINUE
+C
+C
+2000    CONTINUE
+C
+C
+      ENDIF
+C
+      RETURN
+      END
+
+
+      SUBROUTINE OUT_PROF(MFLAG,IPLAS,IC1,IC2,PROF) 
+C MFLAG = 1: Ionisation source for IPLS 
+C         2: Energy source for e 
+C         3: Energy source for i 
+C        30: CX Rate
+C        31: Momentum source from atom
+C        32: Momentum source from mole
+C        33: Momentum source from TEST ION 
+C
+C        -1: Atom density    
+C        -2: Molecule density 
+      USE PRECISION
+      USE PARMMOD
+      USE CESTIM
+      USE COMUSR
+      USE COMSOU
+      USE CADGEO
+      USE CSPEZ
+      USE CSPEI
+      USE CSDVI
+      USE CGEOM
+      USE CTRCEI
+      USE CTEXT
+      USE COUTAU
+      USE CGRID
+      USE COMPRT
+      USE CLOGAU
+      USE CCONA
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(OUT) :: PROF(*)
+      INTEGER, INTENT(IN) :: MFLAG, IPLAS, IC1, IC2
+      INTEGER :: IAD
+ 
+      IF    (MFLAG.EQ.1) THEN
+        PROF(IC1:IC2)       
+     .=                     PAPL(IPLAS,IC1:IC2)
+     .+                     PMPL(IPLAS,IC1:IC2)
+     .+                     PIPL(IPLAS,IC1:IC2)
+      ELSEIF(MFLAG.EQ.2) THEN
+        PROF(IC1:IC2)                  
+     .=                     EAEL(IC1:IC2)
+     .+                     EMEL(IC1:IC2)
+     .+                     EIEL(IC1:IC2)
+      ELSEIF(MFLAG.EQ.3) THEN
+        PROF(IC1:IC2)                  
+     .=                     EAPL(IC1:IC2)
+     .+                     EMPL(IC1:IC2)
+     .+                     EIPL(IC1:IC2)
+      ELSEIF(MFLAG.EQ.30) THEN
+C CX Rate
+       IAD= 0*NPLSI + IPLAS
+       PROF(IC1:IC2)
+     .=                     COPV(IAD,IC1:IC2)
+      ELSEIF(MFLAG.EQ.31) THEN
+C CONTRIBUTION FROM ATOM
+       IAD= 1*NPLSI + IPLAS
+       PROF(IC1:IC2)
+     .=                     COPV(IAD,IC1:IC2)
+      ELSEIF(MFLAG.EQ.32) THEN
+C CONTRIBUTION FROM MOLE 
+       IAD= 2*NPLSI + IPLAS
+       PROF(IC1:IC2)
+     .=                     COPV(IAD,IC1:IC2)
+      ELSEIF(MFLAG.EQ.33) THEN
+C CONTRIBUTION FROM TEST ION 
+       IAD= 3*NPLSI + IPLAS
+       PROF(IC1:IC2)
+     .=                     COPV(IAD,IC1:IC2)
+ 
+      ELSEIF(MFLAG.EQ.-1) THEN
+       PROF(IC1:IC2)
+     .=                     PDENA(IPLAS,IC1:IC2)
+      ELSEIF(MFLAG.EQ.-2) THEN
+       PROF(IC1:IC2)
+     .=                     PDENM(IPLAS,IC1:IC2)
+      ENDIF
+ 
+      RETURN 
+      END
+C*DK SAMUSR                                                              
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
+      SUBROUTINE SAMUSR(NI,X,Y,Z,AD1,AD2,AD3,AD4,AD5,AD6,               
+     .                  IR,IP,IT,IA,IB,                            
+     .                  TEWL,TIWL,DIWL,VXWL,VYWL,VZWL,WEISPZ)
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
+C   USER SUPPLIED SURFACE SAMPLING ROUTINE FOR EIRENE INPUT DS "W7AS" C 
+C                                                                     C 
+C   INPUT:        NI:  SOURCE NUMBER                                  C
+C            AD1-AD6:  IRRELEVANT                                     C 
+C                                                                     C 
+C  OUTPUT:     X,Y,Z:  SOURCE POINT                                   C 
+C           IR,IP,IT:  CELL NUMBER OF THE POINT SOURCE                C
+C                                                                     C 
+C  IA=0,  IB=1                                                        C 
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
+C---> COMMON BLOCKS                                                     
+      USE PRECISION                     
+      USE PARMMOD                      
+      USE COMSOU                                                   
+      USE CUPD                                
+      USE CCONA                         
+      USE CGRID                             
+      USE CTRCEI                        
+      USE CLOGAU                            
+      USE CADGEO                               
+      USE COMUSR
+      IMPLICIT NONE                        
+      REAL(DP), INTENT(IN) :: AD1, AD2, AD3, AD4, AD5, AD6, 
+     .                        R1, R2, R3, R4, R5, R6
+      REAL(DP), INTENT(OUT) :: X,Y,Z,TEWL,TIWL,DIWL,VXWL,VYWL,VZWL,
+     .                       WEISPZ
+      INTEGER, INTENT(IN) :: NI,i1, i2
+      INTEGER, INTENT(OUT) :: IR, IP, IT, IA, IB
+      INTEGER :: NELEM
+      LOGICAL L_ADD_EIR 
+      SAVE
+C
+C  SAMPLE INITAL COORDIANTES X,Y,Z ON ADDITIONAL SURFACE NLLI
+C
+      ENTRY SM0USR(I1,I2,R1,R2,R3,R4,R5,R6)
+C Uebergabe des Flusses von EMC3
+C     I2 = ISTRA
+      IF( NLVOL(I2) ) THEN 
+c       CALL UEBERSCHREIBUNG_VOL (I2, FLUX(I2) )
+      ELSEIF( NLSRF(I2) ) THEN
+c       CALL UEBERSCHREIBUNG_SRF (I2, FLUX(I2) )
+      ENDIF 
+      RETURN
+
+      ENTRY SM1USR (NI,X,Y,Z,AD1,AD2,AD3,AD4,AD5,AD6,
+     .              IR,IP,IT,IA,IB,
+     .              TEWL,TIWL,DIWL,VXWL,VYWL,VZWL,WEISPZ)
+C--------------------------------------------------------------------
+      CALL SAMPLE_N0_W7(L_ADD_EIR,NELEM,X,Y,Z)                          
+C Uebergabe von WEIGHT : Relative meaning
+
+      IF(L_ADD_EIR) THEN 
+       NASOR(NI,ISTRA) = 0                                               
+       INSOR(NI,ISTRA) = NELEM                                           
+       NRSOR(NI,ISTRA) = 0      
+      ENDIF 
+      RETURN
+99    END
+Ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      SUBROUTINE INICOP
+      USE PRECISION
+      USE PARMMOD
+      USE CESTIM
+      USE COMUSR
+      USE COMSOU
+      USE CSTEP
+      USE COMPRT
+      USE CINIT
+      USE CGRID
+      USE CCONA
+      USE CGEOM
+      USE CADGEO
+      USE CSPEI
+      USE CTRCEI
+      USE CPLOT
+      USE CLOGAU
+      USE CTEXT
+      USE CLGIN
+      USE COUTAU
+      USE CPOLYG
+      USE CSDVI
+      USE CGRPTL
+      USE COMXS
+      USE CCOUPL
+      USE COMNNL
+      USE CZT1
+      IMPLICIT NONE
+      INTEGER :: IPLS
+     
+      NCPVI=4*NPLSI
+      IF (NCPVI.GT.NCPV) THEN
+        WRITE (6,*) 'FROM INTERFACING SUBROUTINE INFCOP: '
+        CALL MASPRM('NCPV',4,NCPV,'NCPVI',5,NCPVI,IERROR)
+        STOP            
+      ENDIF
+      DO 70 IPLS=1,NPLSI
+        ICPVE(IPLS)=1
+        ICPRC(IPLS)=1
+        TXTTAL(IPLS,NTALB)=
+     .  'ENERGY WEIGHTED CX RATE OF ATOMS WITH IPLS                  '
+        TXTSPC(IPLS,NTALB)=TEXTS(IPLS)
+        TXTUNT(IPLS,NTALB)='AMPS                       '
+C
+        ICPVE(NPLSI+IPLS)=3
+        ICPRC(NPLSI+IPLS)=1
+        TXTTAL(NPLSI+IPLS,NTALB)=
+     .  'PAR. MOM. SOURCE, FROM ATOMS, FOR IPLS             '
+        TXTSPC(NPLSI+IPLS,NTALB)=TEXTS(IPLS)
+        TXTUNT(NPLSI+IPLS,NTALB)='G*CM/S* AMP * CM**-3       '
+C
+        ICPVE(2*NPLSI+IPLS)=3
+        ICPRC(2*NPLSI+IPLS)=2
+        TXTTAL(2*NPLSI+IPLS,NTALB)=
+     .  'PAR. MOM. SOURCE, FROM MOLECUELS, FOR IPLS         '
+        TXTSPC(2*NPLSI+IPLS,NTALB)=TEXTS(IPLS)
+        TXTUNT(2*NPLSI+IPLS,NTALB)='G*CM/S* AMP * CM**-3       '
+C
+        ICPVE(3*NPLSI+IPLS)=3
+        ICPRC(3*NPLSI+IPLS)=1
+        TXTTAL(3*NPLSI+IPLS,NTALB)=
+     .  'PAR. MOM. SOURCE, FROM TEST IONS, FOR IPLS               '
+        TXTSPC(3*NPLSI+IPLS,NTALB)=TEXTS(IPLS)
+        TXTUNT(3*NPLSI+IPLS,NTALB)='G*CM/S* AMP * CM**-3       '
+C
+70    CONTINUE
+      RETURN
+      END
+
+      SUBROUTINE BROAD_USR
+      RETURN
+      END

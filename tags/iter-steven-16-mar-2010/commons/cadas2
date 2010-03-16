@@ -1,0 +1,13 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /CADAS2/ DTEV, DDENS, DTEVD, DDENSD, DRCOFD, ZDATA,        
+     >                DRCOFI, TITLF,                                    
+     >                IFAIL, IEVCUT, ITMAXD, IDMAXD, IZMAXD             
+C                                                                       
+      save /cadas2/
+c
+      REAL*8 DTEV(MAXNKS), DDENS(MAXNKS), DTEVD(MAXADS),                
+     >       DDENSD(MAXADS), DRCOFD(MAXADS,MAXADS,MAXADS),              
+     >       ZDATA(MAXADS), DRCOFI(MAXNKS)                              
+      CHARACTER TITLF*80                                                
+      INTEGER IFAIL, IEVCUT, ITMAXD, IDMAXD, IZMAXD                     

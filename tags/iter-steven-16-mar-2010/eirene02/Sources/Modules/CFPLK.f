@@ -1,0 +1,12 @@
+      MODULE CFPLK
+
+      USE PRECISION
+      
+      IMPLICIT NONE
+
+      PUBLIC
+
+      REAL(DP), PUBLIC, SAVE ::
+     R VELPAR, VLXPAR, VLYPAR, VLZPAR, TI, TAUE
+
+      END MODULE CFPLK

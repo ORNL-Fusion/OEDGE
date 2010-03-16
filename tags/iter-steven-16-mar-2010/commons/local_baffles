@@ -1,0 +1,11 @@
+c     -*-Fortran-*-
+c
+c     This common block contains baffle related data local to 
+c     the baffle routines
+c
+      common /local_baffles/ rbufxl,zbufxl,nbufmxl,nbufxl
+      save /local_baffles/
+c
+      integer nbufmxl,nbufxl(mbufx+2)
+      real*8  rbufxl(mbufx+2,mves),zbufxl(mbufx+2,mves)
+c

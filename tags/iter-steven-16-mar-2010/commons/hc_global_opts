@@ -1,0 +1,17 @@
+c     -*-Fortran-*-
+c
+c jdemod
+c     All of the HC related variables have been included in modules - 
+c     even the actual switch to turn the option on and off - the result 
+c     of this is that HC related modules and code need to be included in 
+c     a number of places where they are not required - to solve this I am 
+c     creating global DIVIMP versions of some of the options so the module
+c     inlusions are not required and the HC code impact is limited to the HC
+c     files. 
+c
+c
+      common /global_hc_data/ global_hc_follow_option
+      save /global_hc_data/
+c
+      integer global_hc_follow_option 
+c
