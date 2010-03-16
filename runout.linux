@@ -13,23 +13,12 @@ fi
 #
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=$HOME/adas
+export ADASCENT=/home/david/divimp/adas/adas
 #
 VER=pgi
-#
-# If this script is run from the root of the code directory then
-# the line assigning PROGDIR will pick up the correct local path - otherwise 
-# PROGDIR should be set to the local installation directory. The 
-# default is divimp since the alternate is only really useful when
-# working with multiple versions of the code 
-#
-#PROGDIR=`basename \`pwd\``
-#
-PROGDIR=divimp
-#
-RUNROOT=$HOME/$PROGDIR
-EXEROOT=$HOME/$PROGDIR
-DATAROOT=$HOME/$PROGDIR
+RUNROOT=$HOME/divimp
+EXEROOT=$HOME/divimp
+DATAROOT=$HOME/divimp
 #
 #  Loctions of the various DIVIMP files 
 #

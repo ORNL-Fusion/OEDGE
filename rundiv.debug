@@ -15,7 +15,7 @@ fi
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=$HOME/adas
+export ADASCENT=/home/david/divimp/adas/adas
 #
 VER=pgi
 RUNROOT=$HOME/divimp

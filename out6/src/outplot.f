@@ -1416,7 +1416,7 @@ C
       IF (OPTION.EQ.'FULL') THEN
         write (6,*) 'FULL:'
 
-        CALL CTRMAG(4)
+        CALL CTRMAG(8) 
         call setup_col(ncols,5)
 c slmod begin
         tindex = .FALSE.
@@ -1428,7 +1428,6 @@ c slmod begin
           BACKSPACE 5
         ENDIF          
 
-        DEFCOL = NCOLS+1
 c slmod end
         DO ir = 2,nrs
 c slmod begin
@@ -1439,6 +1438,8 @@ c           IF (ir.NE.49) CYCLE
 c slmod end
 
            DO ik = 1, nks(ir)
+
+              DEFCOL = NCOLS+1
 
               i = korpg(ik,ir)
 c
@@ -1519,6 +1520,7 @@ c             ENDIF
 
 c...       Show ring index at target:
            IF (tindex) THEN
+              call lincol(ncols+3)
               WRITE(dummy,'(I3)') ir
               CALL PCSCEN(rs(1      ,ir),zs(1      ,ir),
      .                    dummy(1:LEN_TRIM(dummy)))
@@ -1673,6 +1675,8 @@ c slmod begin
         DO j = 1, i
           READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3)
 
+c          IF (id.NE.5342) CYCLE
+
 c          CYCLE
 
 c          IF     (id.EQ.4019) THEN
@@ -1697,26 +1701,36 @@ c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
 
         CALL RGB
         CALL COLSET(1.0,0.0,0.0,NCOLS+1)
-        
-        DEFCOL = NCOLS+1
-        OPEN(UNIT=fp,FILE='triangles.dat',ACCESS='SEQUENTIAL',
-     .       STATUS='OLD',ERR=99)      
-        READ(fp,*) i
-        DO j = 1, i
-          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3)
-          IF (id.NE.3042) CYCLE
 
-c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
-          PVALS(4,1) = PVALS(1,1)
-          PVALS(4,2) = PVALS(1,2)
-          CALL GRTRAC (PVALS(1,1),PVALS(1,2),4,NAME,'LINE',-1)
-          PVALS(1,1) = xcen
-          PVALS(1,2) = ycen
-          PVALS(2,1) = xcen * 1.001
-          PVALS(2,2) = ycen 
-          CALL GRTRAC (PVALS(1,1),PVALS(1,2),2,NAME,'LINE',-1)
-        ENDDO
-        CLOSE(fp)              
+
+ 21     READ(5,'(A512)') cdum1
+        IF   (cdum1(8:11).EQ.'Show'.OR.cdum1(8:11).EQ.'show'.OR.
+     .        cdum1(8:11).EQ.'SHOW') THEN
+          READ(cdum1,*) cdum2,rind
+          WRITE(0,*) 'SHOWING TRIANGLE: ',rind
+          DEFCOL = NCOLS+1
+          OPEN(UNIT=fp,FILE='triangles.dat',ACCESS='SEQUENTIAL',
+     .         STATUS='OLD',ERR=99)      
+          READ(fp,*) i
+          DO j = 1, i
+            READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3)
+            IF (id.NE.rind) CYCLE
+            PVALS(4,1) = PVALS(1,1)
+            PVALS(4,2) = PVALS(1,2)
+            CALL GRTRAC (PVALS(1,1),PVALS(1,2),4,NAME,'LINE',-1)
+            PVALS(1,1) = xcen
+            PVALS(1,2) = ycen
+            PVALS(2,1) = xcen * 1.001
+            PVALS(2,2) = ycen 
+            CALL GRTRAC (PVALS(1,1),PVALS(1,2),2,NAME,'LINE',-1)
+          ENDDO
+          CLOSE(fp)              
+          GOTO 21
+        ELSE
+          BACKSPACE 5
+        ENDIF          
+        
+
         DEFCOL = 0
 
 
@@ -1775,20 +1789,6 @@ c slmod end
 c slmod begin
 c...    Changes made to accommodate broken grids (look
 c       out, here they come): 
-       
-
-c          DEFCOL = NCOLS + 2
-c	  IR = 32
-c          DO IK = 1, NKS(IR)
-c            K = KORPG(IKINS(IK,IR),IRINS(IK,IR))
-c            KVALS(1,1) = RVERTP(2,K)
-c            KVALS(1,2) = ZVERTP(2,K)
-c            KVALS(2,1) = RVERTP(3,K)
-c            KVALS(2,2) = ZVERTP(3,K)
-c            CALL GRTRAC(KVALS(1,1),KVALS(1,2),2,NAME,'LINE',-1)
-c          ENDDO
-
-
         IF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID) THEN
           DEFCOL = NCOLS + 1
 	  IR = IRWALL
@@ -1823,6 +1823,29 @@ c          ENDDO
           KVALS(NKS(IR)+1,2) = ZVERTP(3,K)
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
+
+        IF (IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
+          IR = IROUTS(1,IRSEP2)
+          DO IK = 1, NKS(IR)
+            K = KORPG(IK,IR)
+            KVALS(IK,1) = RVERTP(1,K)
+            KVALS(IK,2) = ZVERTP(1,K)
+          ENDDO
+          K = KORPG(NKS(IR),IR)
+          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+          IR = IROUTS(NKS(IRSEP2),IRSEP2)
+          DO IK = 1, NKS(IR)
+            K = KORPG(IK,IR)
+            KVALS(IK,1) = RVERTP(1,K)
+            KVALS(IK,2) = ZVERTP(1,K)
+          ENDDO
+          K = KORPG(NKS(IR),IR)
+          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+        ENDIF
 c
 c        DO IK = 1, NKS(IR)
 c          K = KORPG(IK,IR)
@@ -1843,7 +1866,7 @@ C
         ENDDO
         CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
 C
-        IF (CGRIDOPT.NE.LINEAR_GRID) THEN
+        IF (CGRIDOPT.NE.LINEAR_GRID.AND..NOT.NOPRIV) THEN
           IR = IRTRAP + 1
           DO IK = 1, NKS(IR)
             K = KORPG(IK,IR)
@@ -1867,19 +1890,6 @@ C
           KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
           DEFCOL = NCOLS + 1
-        ENDIF
-
-        IF (.FALSE..AND.nbr.GT.0) THEN
-          IR = 22
-          DO IK = 1, NKS(IR)
-            K = KORPG(IK,IR)
-            KVALS(IK,1) = RVERTP(2,K)
-            KVALS(IK,2) = ZVERTP(2,K)
-          ENDDO
-          K = KORPG(NKS(IR),IR)
-          KVALS(NKS(IR)+1,1) = RVERTP(3,K)
-          KVALS(NKS(IR)+1,2) = ZVERTP(3,K)
-          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 C
 c slmod begin
@@ -2031,7 +2041,8 @@ C
       RETURN
 c slmod begin
  99   WRITE(0,*) 'SUPIMP2 ERROR: UNABLE TO OPEN TRIANGLES FILE'
-      STOP
+      RETURN
+c      STOP
 c slmod end
       END
 C
@@ -7698,10 +7709,6 @@ c                   2 - CD Emissivity (photons/m3)
 c              29 = HC - HC State density
 c                   istate = specific HC species 
 c                          = sum over states for greater than maxstate   
-c                        1 = C+ (from HC module)
-c                        2 = C  (from HC module)
-c                        3 = CH+(from HC module)
-c                        4 = CH (from HC module)
 c              30 = HC - HC State Ionization
 c                   istate = specific HC species (ONLY CH So far)
 c              31 = Impurity Ionizations - specified by source charge state
@@ -7714,7 +7721,6 @@ c
 c              32 = Subgrid impurity density - STATE = IZ
 c              33 = Subgrid HC density - STATE = HC STATE INDEX
 c              34 = Subgrid impurity ADAS based emissions - additional data read 
-c              35 = Subgrid CH emission
 c
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
 c

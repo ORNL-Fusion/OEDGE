@@ -103,59 +103,6 @@ c
 c
 c jdemod
 c
-
-
-
-
-
-
-c...  TEMP!
-
-      RETURN
-
-
-
-
-c...  This awkward sp business is necessary since I can't figure how to
-c     reference a substring in a string array - e.g. something
-c     like string(1:2,10):
-      WRITE(sp,'(69X)')
-
-      CALL IZero(mchklist,MAXTAG)
-
-      nchklist = 0
-
-      DO i1 = 1, ntaglist
-        DO i2 = 1, MAXCHK
-          IF (taglist(i1)//sp.EQ.chklist(2*i2-1)) THEN
-            IF (mchklist(i2).EQ.1) THEN
-c...          Tag appears more than once in the input file:
-              CALL ER('ValidateUnstructuredInput','Tag '''//taglist(i2)
-     .                //''' appears more than once in DIVIMP input file'
-     .                ,*98)
-            ELSE
-              nchklist     = nchklist + 1
-              mchklist(i2) = 1
-            ENDIF
-          ENDIF
-        ENDDO
-      ENDDO
-
-      IF (nchklist.NE.MAXCHK) THEN
-c        CALL ER('ValidateUnstructuredInput','Required tag(s) not '//
-c     .          'found in DIVIMP input file',*97)
-
-        WRITE(0,90) ' WARNING: Required unstructured input tag(s) '//
-     .              'not found in DIVIMP input file'
-        DO i1 = 1, MAXCHK
-          IF (mchklist(i1).NE.1) THEN
-            WRITE(6,90) '  ',chklist(2*i1-1),chklist(2*i1)
-            WRITE(0,90) '  ',chklist(2*i1-1),chklist(2*i1)
-          ENDIF
-        ENDDO
-
-      ENDIF
-
       RETURN
 90    FORMAT(A,A3,A)
 97    DO i1 = 1, MAXCHK
@@ -408,8 +355,6 @@ c
 c     0 = stanard Sonnet grid = Default 
 c     1 = FRC version 1 - type of Sonnet grid 
 c         - used to set various FRC related options
-c     2 = sonnet grid without boundary cells - boundary cells are added
-c         - useful for carre grids
 c
       sonnet_grid_sub_type = 0
 c
@@ -894,6 +839,15 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c slmod begin
+c     TAG 077
+c
+c     Data for additional neutral wall surfaces
+c
+      eirnasdat = 1
+      eirasdat  = 0.0
+      eirasdat(1,1) = 998.0  ! This triggers the automated wall clipping for EIRENE
+c slmod end
 c
 c     End of intialization
 c      

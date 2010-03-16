@@ -47,10 +47,6 @@ c
       INTEGER NQS,ISTEP,in
       REAL    ZO
 c
-c     jdemod - option for converting LP data input from particles/s to A/s
-c     
-      real lpdat_conv
-c
 c     Option indicating if the SOL23 parameter list is included in the data
 c     file.
 c
@@ -111,12 +107,7 @@ c     are needed in GETMODEL:
 c slmod end
       CALL RDRARN(BGPLASOPT,NBGPLAS,2*MAXNRS,-MACHHI,MACHHI,.FALSE.,
      >            0.0,MACHHI,7,'SET OF BG PLASMA OPTIONS BY RING',IERR)
-c slmod end
-c...  Option 3 added, for loading SOLPS2.5 data from Rhozansky:
-      call rdi (cre2d ,.TRUE., 0,.true.,3 ,'READ E2D BG FOR REF  ',ierr)
-c
-c      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
-c slmod begin
+      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
       call rdi (e2dtargopt,.TRUE., 0,.true.,6 ,'EDGE2D TARG COND',ierr)
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 9,'CX RECOMB OPT        ',IERR)
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)
@@ -187,7 +178,7 @@ c
       CALL RDI (neut2d_vaopt,.TRUE.,-1,.TRUE.,19,
      >                                         'EXTRA 2D V/A FLAG',IERR)
 c
-      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 6,'SPUTTER SOURCE OPT ',IERR)
+      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 5,'SPUTTER SOURCE OPT ',IERR)
       CALL RDI (CCHEMOPT,.TRUE., 1,.TRUE.,11,'CHEMSPUT SOURCE OPT',IERR)
       CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)
       CALL RDI (CNEUTD2,.TRUE.,-1,.TRUE.,8,'2ND SPUTTER OPTION   ',IERR)
@@ -270,7 +261,7 @@ c     AS EITHER THE DENSITY OR THE Isat (PROBE SATURATION CURRENT)
 c
 C     THE DATA IS ORDERED AS  RING #,TEBP,TIBP,NBP (or ISAT)
 C
-      CALL RDI(lpdatsw,.TRUE. , 0 ,.TRUE., 2 ,'LP DATA SWITCH', IERR)
+      CALL RDI(lpdatsw,.TRUE. , 0 ,.TRUE., 1 ,'LP DATA SWITCH', IERR)
 c
 c     Inner
 c
@@ -290,35 +281,16 @@ c
 c
 c     Adjust the Target conditions - by multiplication factors
 c
-c     jdemod 
-c
-c     If the lpdat switch is set to 2 convert particles/s to Amperes for
-c     compatibility elsewhere in the code. 
-c      
-      if (lpdatsw.eq.2) then 
-c
-c        Note: after conversion the data is then in A and the lpdatsw needs to be
-c        set accordingly. 
-c
-         write(6,'(a)') 'INPUT: LPDATSW : Initial value 2 : '//
-     >     'Isats converted from particles/s to Amp : LPDATSW set to 1'
-c
-         lpdat_conv = ech
-         lpdatsw = 1
-      else
-         lpdat_conv = 1.0
-      endif
-c
       do in = 1,nlpdati
          lpdati(in,2) =  lpdati(in,2) * te_mult_i
          lpdati(in,3) =  lpdati(in,3) * ti_mult_i
-         lpdati(in,4) =  lpdati(in,4) *  n_mult_i * lpdat_conv
+         lpdati(in,4) =  lpdati(in,4) *  n_mult_i
       end do
 c
       do in = 1,nlpdato
          lpdato(in,2) =  lpdato(in,2) * te_mult_o
          lpdato(in,3) =  lpdato(in,3) * ti_mult_o
-         lpdato(in,4) =  lpdato(in,4) *  n_mult_o * lpdat_conv
+         lpdato(in,4) =  lpdato(in,4) *  n_mult_o
       end do
 C
 c     Read in data for core rings - data varies depending on
@@ -494,7 +466,11 @@ C
 C
 C     COMMANDS RELATING TO PIN EXECUTION
 C
-      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,1  ,'RUNPIN 0-NO 1-YES',IERR)
+c slmod begin
+      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,4  ,'RUNPIN 0-NO 1-YES',IERR)
+c 
+c      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,1  ,'RUNPIN 0-NO 1-YES',IERR)
+c slmod end
       CALL RDC(CPINCOM,'COMMAND TO RUN PIN',IERR)
       READ(CPINCOM(11:80),'(A69)') ACTPIN
 c

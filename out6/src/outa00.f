@@ -1839,10 +1839,6 @@ c      include 'cioniz'
 c      include 'reiser' 
 c      include 'printopt' 
 c
-c     Initialize some global graph parameters
-c
-      include 'comgra'
-c
 c     Local Variables
 c
 c
@@ -1861,12 +1857,6 @@ c
       integer startid,endid,stepid,switchid
 
 c
-c     Initialize the line base line thickness for plots
-c     This is in the common block 'comgra'
-c
-      thickness = 1
-c
-
 
       ITEC = 1
       DO 15 IG = 0, NAVS

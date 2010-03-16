@@ -7,7 +7,7 @@ c
       USE mod_out985_variables
       IMPLICIT none
 
-      INTEGER ipla,iint,iobj
+      INTEGER, INTENT(IN) :: ipla,iint,iobj
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
@@ -129,10 +129,10 @@ c                ENDIF
 
         CASE (OP_EIRENE_GRID)
 c...      Eirene grid:
-
+          STOP 'NOT READY: OP_EIRENE_GRID'
         CASE (OP_INVERSION_GRID)
 c...      Inversion mesh:
-
+          STOP 'NOT READY: OP_INVERSION_GRID'
         CASE DEFAULT
           CALL ER('AssignPlasmaQuantities','Unknown integration '//
      .            'sub-type',*99)
@@ -159,6 +159,7 @@ c
       INCLUDE 'params'
       INCLUDE 'cgeom'
       INCLUDE 'comtor'
+      INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'outcom'
 
@@ -170,7 +171,7 @@ c
 
       SELECT CASE (opt%int_database(iint))
 
-        CASE (0)
+        CASE (1)
 c...      PIN: 
           IF (opt%int_line(iint).EQ.'UNITY') THEN
             osm = 1.0
@@ -204,7 +205,7 @@ c...            ???:
             ENDSELECT
           ENDIF      
    
-        CASE (1)
+        CASE (2)
 c...      ADAS: 
 
           SELECTCASE (za)
@@ -240,6 +241,29 @@ c     >                   plrpad,wlngth2,IRCODE)
 
           osm(1:ik,1:ir) = plrpad(1:ik,1:ik)  
           WRITE(0,*) 'WLNGTH:',wlngth2
+
+        CASE (3) 
+c...      DIVIMP precalculated quantities (should mode DALHPA and DGAMMA here):
+          IF     (TRIM(opt%int_line(iint)).EQ.'PRAD') THEN
+            SELECTCASE (opt%int_charge(iint))
+              CASE (-1)  ! Sum over all charge states 
+                osm = 0.0
+                DO iz = 0, MIN(cion,nizs)
+                  WRITE(0,*) 'IZ!',iz,absfac
+                  osm(1:ik,1:ir) = osm(1:ik,1:ir) +  powls(1:ik,1:ir,iz)
+                ENDDO
+                IF (absfac.GT.0.0) osm = osm * absfac
+                DO iz = 0, 1
+                  WRITE(0,*) 'IZ!',iz
+                  osm(1:ik,1:ir) = osm(1:ik,1:ir) + hpowls(1:ik,1:ir,iz)
+                ENDDO
+
+              CASE DEFAULT
+                CALL ER('GetFluidGridEmission','Unknown PRAD opt',*99)
+            ENDSELECT
+          ELSE
+            CALL ER('GetFluidGridEmission','Unknown DIVIMP tag',*99)
+          ENDIF
 
         CASE DEFAULT
           STOP 'UNRECOGNIZED DATABASE'
@@ -664,7 +688,7 @@ c
 c ======================================================================
 c
 c
-      INTEGER FUNCTION GetTetSrfInd(iobj,iside,ivtx)
+      INTEGER FUNCTION GetTetVtxInd(iobj,iside,ivtx)
       USE mod_geometry
       IMPLICIT none
 
@@ -674,7 +698,7 @@ c
 
       isrf = ABS(obj(iobj)%iside(iside))
 
-      GetTetSrfInd = srf(isrf)%ivtx(ivtx)
+      GetTetVtxInd = srf(isrf)%ivtx(ivtx)
 
       RETURN
  99   STOP
@@ -729,7 +753,8 @@ c
       IMPLICIT none
 
       TYPE(type_3D_object) :: newobj
-      INTEGER nsurface,ielement,status
+      INTEGER, INTENT(IN)  ::  nsurface,ielement
+      INTEGER, INTENT(OUT) :: status
       REAL, ALLOCATABLE :: tdata(:)
 
       REAL GetTetCentre
@@ -737,12 +762,11 @@ c
       INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj
       REAL, ALLOCATABLE :: ycen(:)
 
-      DATA iobj / 0 /
       SAVE
 
       status = 0
 
-      IF (iobj.EQ.0) THEN
+      IF (nsurface.EQ.-1) THEN
 c...    Needed so that Dalpha could be loaded using LoadTriangleData
 c       from AssignEmissionData... scary and will not doubt cause 
 c       problems:
@@ -759,6 +783,7 @@ c        CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
         DO i1 = 1, nobj
           ycen(i1) = GetTetCentre(i1)
         ENDDO
+        iobj = 0
       ENDIF
 
       iobj = iobj + 1
@@ -774,6 +799,7 @@ c     .          (ycen(iobj).LT.-0.90))
 c     .          (ycen(iobj).LT.-0.50).OR.(ycen(iobj).GT.0.50))
 c     .          (ycen(iobj).LT.-0.20).OR.(ycen(iobj).GT.0.20))
 c     .          (tdata(iobj).LT.0.5E+23))
+c     DO WHILE (obj(iobj)%segment(1).EQ.0)  ! *** HACK ***
       DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID)
         iobj = iobj + 1
         IF (iobj.GT.nobj) THEN
@@ -808,9 +834,11 @@ c     .          (tdata(iobj).LT.0.5E+23))
       newobj%gsur(1:4)    = GT_TD
       newobj%tsur(1:4)    = SP_GRID_SURFACE  ! Some to be replace with SP_GRID_BOUNDARY...
       newobj%reflec(1:4)  = 0
-      newobj%nmap         = 0
-      newobj%imap         = 0
+      newobj%nmap         = 1
+      newobj%imap(1,1:4)  = obj(iobj)%omap(1:4)
+      newobj%isur         = -1
       newobj%quantity(1)  = 1.0
+c      IF (obj(iobj)%segment(1).EQ.0) newobj%quantity(1) = 0.0  ! *** HACK ***
 c..   Defunct:  ! ...really?
       newobj%nsur         = 0
       newobj%ipts(2,1)    = 0
@@ -839,6 +867,21 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE Wrapper_ClearObjects
+      USE mod_geometry
+      IMPLICIT none
+
+      IF (ALLOCATED(obj)) DEALLOCATE(obj)
+      IF (ALLOCATED(srf)) DEALLOCATE(srf)
+      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE ProcessTetrahedronGrid(ielement)
       USE mod_out985
       USE mod_out985_variables
@@ -847,7 +890,7 @@ c
 c...  Input:
       INTEGER ielement
 
-      INTEGER AddVertex,AddSurface,GetTetSrfInd
+      INTEGER AddVertex,AddSurface,GetTetVtxInd
 
       TYPE(type_3D_object) newobj
       TYPE(type_surface) newsrf
@@ -855,13 +898,15 @@ c...  Input:
       INTEGER status,i1,idum1
 
 c...  For connection map:
-      INTEGER nlist,i2,i3,i4,i5,i6,c,iobj,isid,isrf,isrf1,isrf2
-      INTEGER, ALLOCATABLE :: vsum(:,:),ilist(:)
+      INTEGER nlist,i2,i3,i4,i5,i6,c,iobj,isid,isrf,isrf1,isrf2,
+     .        iside,iside1,iobj1,ntet,nmatch
+      INTEGER, ALLOCATABLE :: vsum(:,:),ilist(:), itet(:)
       REAL, ALLOCATABLE :: yobj(:)
       REAL    minphi,maxphi,phi,dphi,y,dy,miny,maxy,GetTetCentre
 
 
-      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
+      CALL Wrapper_LoadObjects(TRIM(opt%obj_fname(ielement)),status)
+c      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
       IF (status.NE.0) CALL ER('Wrapper_LoadObjects','Unable '//
      .                         'to find grid file',*99)
 
@@ -876,15 +921,16 @@ c.... Load all the vertices:
 
 c...  Load all fluid grid tetrahedrons:
       status = 0
+      CALL GetNextTet(newobj,-1,-1,status)
       DO WHILE (status.EQ.0) 
         CALL GetNextTet(newobj,nsrf,ielement,status)
         IF (status.EQ.0) THEN
           DO i1 = 1, newobj%nside
             newsrf%type = SP_PLANAR_POLYGON
             newsrf%nvtx = 3       
-            newsrf%ivtx(1) = GetTetSrfInd(newobj%in,i1,1)
-            newsrf%ivtx(2) = GetTetSrfInd(newobj%in,i1,2)
-            newsrf%ivtx(3) = GetTetSrfInd(newobj%in,i1,3)
+            newsrf%ivtx(1) = GetTetVtxInd(newobj%in,i1,1)
+            newsrf%ivtx(2) = GetTetVtxInd(newobj%in,i1,2)
+            newsrf%ivtx(3) = GetTetVtxInd(newobj%in,i1,3)
             idum1 = AddSurface(newsrf)
           ENDDO
           IF (nobj+1.GT.MAX3D) 
@@ -895,115 +941,189 @@ c...  Load all fluid grid tetrahedrons:
         ENDIF
       ENDDO 
 
-      WRITE(0,*) 'NSRF:',nsrf
-      WRITE(0,*) 'NOBJ:',nobj
-      WRITE(0,*) 'NVTX:',nvtx
+      CALL Wrapper_ClearObjects
+
+      WRITE(0,*) 'TETRAHEDRONS NSRF:',nsrf
+      WRITE(0,*) 'TETRAHEDRONS NOBJ:',nobj
+      WRITE(0,*) 'TETRAHEDRONS NVTX:',nvtx
 c
 c...  Need to build connection map, again:
-      ALLOCATE(vsum (4,nobj))
-      ALLOCATE(ilist(nobj))
-      ALLOCATE(yobj(nobj))
-
-      WRITE(0,*) '  CALCULATING VSUM'
-      DO iobj = 1, nobj
-        isrf = obj(iobj)%iside(1,1)  
-c        yobj(iobj) = GetTetCentre(iobj)  
-
-
-c      WRITE(0,*) 'CENTRE:',yobj(iobj)
-c      WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
-c      STOP 'sdfsd'
-
-        yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
-        DO isid = 1, obj(iobj)%nside
-          isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
-          vsum(isid,iobj) = srf(isrf)%ivtx(1) +
-     .                      srf(isrf)%ivtx(2) +
-     .                      srf(isrf)%ivtx(3)
+      IF (.TRUE.) THEN
+        WRITE(0,*) '  CALCULATING TETRAHEDRON CONNECTION MAP'
+c...    Create map of original tetrahedron grid object index to the
+c       new RAY object index:
+        ntet = 0
+        DO iobj = 1, nobj
+          ntet = MAX(ntet,obj(iobj)%in)
         ENDDO
-      ENDDO
+        ALLOCATE(itet(ntet))
+        itet = -1
+        DO iobj = 1, nobj
+          itet(obj(iobj)%in) = iobj
+        ENDDO
+c...    Create (poor) surface discriminator:
+        ALLOCATE(vsum(4,nobj))
+        WRITE(0,*) '  CALCULATING VSUM'
+        DO iobj = 1, nobj
+          DO iside = 1, obj(iobj)%nside
+            isrf = obj(iobj)%iside(iside,1)  ! Assuming only one surface per side...
+            vsum(iside,iobj) = SUM(srf(isrf)%ivtx(1:3))
+          ENDDO
+        ENDDO
+        WRITE(0,*) '  DONE'
+c...    Build map:
+        DO iobj = 1, nobj
+          DO iside = 1, obj(iobj)%nside
 
-      WRITE(0,*) '  DIVIDING AND CONQUERING'
-      minphi =  1.0E+20
-      maxphi = -1.0E+20
-      miny   =  1.0E+20
-      maxy   = -1.0E+20
-      DO iobj = 1, nobj
-        minphi = MIN(minphi,obj(iobj)%phi)
-        maxphi = MAX(maxphi,obj(iobj)%phi)
-        miny   = MIN(miny  ,yobj(iobj)   )
-        maxy   = MAX(maxy  ,yobj(iobj)   )
-      ENDDO
-      WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
-      WRITE(0,*) '  MIN,MAXY  =',miny,maxy
-      dphi = 15.0
-      dy   = 0.20
-      DO phi = minphi, maxphi, dphi  ! maxphi, dphi
-        DO y = miny, maxy, dy
-          nlist = 0
-          WRITE(0,*) '  BUILDING LIST:',phi,y
-          DO iobj = 1, nobj
-            IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
-     .          ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
-              nlist = nlist + 1
-              ilist(nlist) = iobj
+            IF (obj(iobj)%imap(1,iside).NE.0   .AND.
+     .          obj(iobj)%imap(1,iside).LE.ntet) THEN
+              obj(iobj)%imap(1,iside) = itet(obj(iobj)%imap(1,iside))
+            ELSE
+              obj(iobj)%imap(1,iside) = -1
             ENDIF
-          ENDDO  
-          WRITE(0,*) '           DONE:',nlist
-          WRITE(0,*) '           MAPPING...'
-          DO i1 = 1, nlist-1
-            DO i2 = i1+1, nlist
-              DO i3 = 1, obj(ilist(i1))%nside
-                IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
-                DO i4 = 1, obj(ilist(i2))%nside
-c                  WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
-c                  WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
-     
-                  IF (vsum(i3,ilist(i1)).EQ.
-     .                vsum(i4,ilist(i2))) THEN 
-c...                Potential match, need proper check:
-                    isrf1 = obj(ilist(i1))%iside(i3,1)
-                    isrf2 = obj(ilist(i2))%iside(i4,1)
-                    c = 0
-                    DO i5 = 1, srf(isrf1)%nvtx
-                      DO i6 = 1, srf(isrf2)%nvtx
-                        IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
-     .                    c = c + 1
-                      ENDDO
-                    ENDDO
-c                    WRITE(0,*) 'c:',c
-                    IF (c.EQ.srf(isrf1)%nvtx) THEN
-c                      WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
-                      obj(ilist(i1))%nmap(  i3) = 1
-                      obj(ilist(i1))%imap(1,i3) = ilist(i2)
-                      obj(ilist(i1))%isur(1,i3) = i4
-                      obj(ilist(i2))%nmap(  i4) = 1
-                      obj(ilist(i2))%imap(1,i4) = ilist(i1)
-                      obj(ilist(i2))%isur(1,i4) = i3
-                      vsum(i3,ilist(i1)) = 0
-                      vsum(i4,ilist(i2)) = 0
-                    ENDIF
-                  ENDIF
 
+            IF (obj(iobj)%imap(1,iside).EQ.-1) THEN
+c...          No neighbouring tetrahedron:
+              obj(iobj)%tsur(  iside) = SP_GRID_BOUNDARY
+              obj(iobj)%imap(1,iside) = iobj
+              obj(iobj)%isur(1,iside) = iside
+            ELSE
+c...          Find out which side the neigbouring tetrahedron that
+c             the current side corresponds to:
+              iobj1 = obj(iobj)%imap(1,iside)
+              nmatch = 0
+              DO iside1 = 1, obj(iobj1)%nside
+                IF (vsum(iside,iobj).EQ.vsum(iside1,iobj1)) THEN
+                  nmatch = nmatch + 1
+                  obj(iobj)%isur(1,iside) = iside1                  
+                ENDIF
+              ENDDO
+              IF (nmatch.EQ.0) 
+     .          CALL ER('ProcessTetrahedronGrid','No side found '//
+     .                  'when building connection map',*98)
+              IF (nmatch.GT.1) 
+     .          CALL ER('ProcessTetrahedronGrid','More than one '//
+     .                  'side found, need to be more careful',*98)
+            ENDIF
+          ENDDO
+        ENDDO
+        DEALLOCATE(itet)
+        DEALLOCATE(vsum)
+        WRITE(0,*) '  DONE'
+      ELSE
+        ALLOCATE(vsum (4,nobj))
+        ALLOCATE(ilist(nobj))
+        ALLOCATE(yobj(nobj))
+
+        WRITE(0,*) '  CALCULATING VSUM'
+        DO iobj = 1, nobj
+          isrf = obj(iobj)%iside(1,1)  
+c          yobj(iobj) = GetTetCentre(iobj)  
+
+
+c        WRITE(0,*) 'CENTRE:',yobj(iobj)
+c        WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
+c        STOP 'sdfsd'
+
+          yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
+          DO isid = 1, obj(iobj)%nside
+            isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
+            vsum(isid,iobj) = srf(isrf)%ivtx(1) +
+     .                        srf(isrf)%ivtx(2) +
+     .                        srf(isrf)%ivtx(3)
+          ENDDO
+        ENDDO
+
+        WRITE(0,*) '  DIVIDING AND CONQUERING'
+        minphi =  1.0E+20
+        maxphi = -1.0E+20
+        miny   =  1.0E+20
+        maxy   = -1.0E+20
+        DO iobj = 1, nobj
+          minphi = MIN(minphi,obj(iobj)%phi)
+          maxphi = MAX(maxphi,obj(iobj)%phi)
+          miny   = MIN(miny  ,yobj(iobj)   )
+          maxy   = MAX(maxy  ,yobj(iobj)   )
+        ENDDO
+        WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
+        WRITE(0,*) '  MIN,MAXY  =',miny,maxy
+        dphi = 15.0
+        dy   = 0.20
+        DO phi = minphi, maxphi, dphi  ! maxphi, dphi
+          DO y = miny, maxy, dy
+            nlist = 0
+            WRITE(0,*) '  BUILDING LIST:',phi,y
+            DO iobj = 1, nobj
+              IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
+     .            ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
+                nlist = nlist + 1
+                ilist(nlist) = iobj
+              ENDIF
+            ENDDO  
+            WRITE(0,*) '           DONE:',nlist
+            WRITE(0,*) '           MAPPING...'
+            DO i1 = 1, nlist-1
+              DO i2 = i1+1, nlist
+                DO i3 = 1, obj(ilist(i1))%nside
+                  IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
+                  DO i4 = 1, obj(ilist(i2))%nside
+c                    WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
+c                    WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
+        
+                    IF (vsum(i3,ilist(i1)).EQ.
+     .                  vsum(i4,ilist(i2))) THEN 
+c...                  Potential match, need proper check:
+                      isrf1 = obj(ilist(i1))%iside(i3,1)
+                      isrf2 = obj(ilist(i2))%iside(i4,1)
+                      c = 0
+                      DO i5 = 1, srf(isrf1)%nvtx
+                        DO i6 = 1, srf(isrf2)%nvtx
+                         IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
+     .                     c = c + 1
+                        ENDDO
+                      ENDDO
+c                      WRITE(0,*) 'c:',c
+                      IF (c.EQ.srf(isrf1)%nvtx) THEN
+c                        WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
+                        obj(ilist(i1))%nmap(  i3) = 1
+                        obj(ilist(i1))%imap(1,i3) = ilist(i2)
+                        obj(ilist(i1))%isur(1,i3) = i4
+                        obj(ilist(i2))%nmap(  i4) = 1
+                        obj(ilist(i2))%imap(1,i4) = ilist(i1)
+                        obj(ilist(i2))%isur(1,i4) = i3
+                        vsum(i3,ilist(i1)) = 0
+                        vsum(i4,ilist(i2)) = 0
+                      ENDIF
+                    ENDIF
+        
+                  ENDDO
                 ENDDO
               ENDDO
             ENDDO
+
           ENDDO
-
         ENDDO
-      ENDDO
-
-c...  Marking the grid boundary:
-      DO iobj = 1, nobj
-        DO isid = 1, obj(iobj)%nside
-          IF (obj(iobj)%imap(1,isid).EQ.0) THEN
-            obj(iobj)%nmap(  isid) = 1
-            obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
-            obj(iobj)%imap(1,isid) = iobj
-            obj(iobj)%isur(1,isid) = isid
-          ENDIF
+c...    Mark the grid boundary:
+        DO iobj = 1, nobj
+          DO isid = 1, obj(iobj)%nside
+            IF (obj(iobj)%imap(1,isid).EQ.0) THEN
+              obj(iobj)%nmap(  isid) = 1
+              obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
+              obj(iobj)%imap(1,isid) = iobj
+              obj(iobj)%isur(1,isid) = isid
+            ENDIF
+          ENDDO
         ENDDO
-      ENDDO
+
+c...    Clear geometry arrays:
+        CALL ClearTetArrays
+        DEALLOCATE(vsum )
+        DEALLOCATE(ilist)
+
+      ENDIF
+
+
+
 
 c      DO iobj = 1, nobj
 c        IF (obj(iobj)%ivolume.NE.2) CYCLE  
@@ -1013,12 +1133,14 @@ c     .    obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY
 c      ENDDO
 c      STOP 'sdfsdf'
 
-c...  Clear geometry arrays:
-      CALL ClearTetArrays
-      DEALLOCATE(vsum )
-      DEALLOCATE(ilist)
+
 
       RETURN
+ 98   WRITE(0,*) ' FNAME= "'//TRIM(opt%obj_fname(ielement))//'"'
+      WRITE(0,*) ' IOBJ,ISIDE = ',iobj,iside
+      WRITE(0,*) ' NOBJ       = ',nobj
+      WRITE(0,*) ' VSUM       = ',vsum(iside,iobj)
+      WRITE(0,*) ' VSUM1      = ',vsum(1:4,obj(iobj)%imap(1,iside))
  99   STOP
       END
 c
@@ -1027,16 +1149,16 @@ c
       SUBROUTINE ProcessTriangleGrid(ielement)
       USE mod_out985
       USE mod_out985_variables
-      USE mod_eirene04
+      USE mod_eirene06_parameters
+      USE mod_eirene06
+c      USE mod_eirene04
       IMPLICIT none
 
       INTEGER ielement
 
       INCLUDE 'params'
+      INCLUDE 'cgeom'
       INCLUDE 'slcom'
-
-
-
 
       LOGICAL PointOnLine
 
@@ -1047,10 +1169,9 @@ c
       REAL    angle,dangle,dangle2,ang,rcen,zcen
       REAL*8  x1,z1,x2,z2,p1(3,8),p2(3,8),s1,s2,t1,t2,x(3),y(3)
 
-
-
 c...  Load triangle .raw file:
-      CALL LoadTriangles
+      CALL LoadTriangles_06
+c      CALL LoadTriangles
 
       nsector = opt%obj_nsector
       IF (nsector.EQ.-1) nsector = eirntorseg
@@ -1071,14 +1192,10 @@ c
      .      opt%obj_option(ielement).EQ.6.OR.
      .      opt%obj_option(ielement).EQ.7.OR.
      .      opt%obj_option(ielement).EQ.8))) THEN
-c     .    (opt%ob_trigrd.EQ.3.OR.opt%ob_trigrd.EQ.4.OR.
-c     .     opt%ob_trigrd.EQ.5.OR.opt%ob_trigrd.EQ.6.OR.
-c     .     opt%ob_trigrd.EQ.7.OR.opt%ob_trigrd.EQ.8)) THEN
 
         IF ((ielement.NE.0.AND.
      .       (opt%obj_option(ielement).EQ.5.OR.
      .        opt%obj_option(ielement).EQ.6))) THEN
-c     .      (opt%ob_trigrd.EQ.5.OR.opt%ob_trigrd.EQ.6)) THEN
 c...      Toroidally continuous surfaces:
           nsector = 1
         ELSEIF ((ielement.NE.0.AND.
@@ -1086,10 +1203,6 @@ c...      Toroidally continuous surfaces:
      .            opt%obj_option(ielement).EQ.4.OR.
      .            opt%obj_option(ielement).EQ.7.OR.
      .            opt%obj_option(ielement).EQ.8))) THEN
-c     .          (opt%ob_trigrd.EQ.3.OR.opt%ob_trigrd.EQ.4.OR.
-c     .           opt%ob_trigrd.EQ.7.OR.opt%ob_trigrd.EQ.8)) THEN
-c        ELSEIF (opt%ob_trigrd.EQ.3.OR.opt%ob_trigrd.EQ.4.OR.
-c     .          opt%ob_trigrd.EQ.7.OR.opt%ob_trigrd.EQ.8) THEN
 c...      Toroidally discrete:
           nsector = opt%obj_nsector
           IF (nsector.EQ.-1) nsector = eirntorseg
@@ -1112,8 +1225,6 @@ c...      Toroidally discrete:
           IF ((ielement.NE.0.AND.
      .         (opt%obj_option(ielement).EQ.7.OR.
      .          opt%obj_option(ielement).EQ.8))) THEN
-c     .        (opt%ob_trigrd.EQ.7.OR.opt%ob_trigrd.EQ.8)) THEN
-c          IF (opt%ob_trigrd.EQ.7.OR.opt%ob_trigrd.EQ.8) THEN
             IF (MOD(isector,2).EQ.1) THEN
               dangle = dangle2 * 1.60
             ELSE
@@ -1135,8 +1246,6 @@ c...
      .                 (opt%obj_option(ielement).EQ.3.OR.
      .                  opt%obj_option(ielement).EQ.5.OR.
      .                  opt%obj_option(ielement).EQ.7))).AND.
-c     .                (opt%ob_trigrd.EQ.3.OR.opt%ob_trigrd.EQ.5.OR.         ! Target check (weak...)
-c     .                 opt%ob_trigrd.EQ.7))                    .AND.
      .               tri(itri)%map(v1)        .EQ.0            .AND.
      .               tri(itri)%type           .EQ.MAGNETIC_GRID.AND.
      .               tri(itri)%sideindex(2,v1).NE.0).OR.                   
@@ -1145,7 +1254,6 @@ c...
      .               tri(itri       )%type.NE.MAGNETIC_GRID.AND.
      .               tri(MAX(1,imap))%type.NE.MAGNETIC_GRID))))
      .          CYCLE
-
 
 c...          Filter:
               IF (opt%obj_n(ielement,1).NE.-1.AND.
@@ -1157,7 +1265,6 @@ c...          Filter:
      .           (tri(itri)%sideindex(4,v1).LT.opt%obj_n(ielement,1).OR.
      .            tri(itri)%sideindex(4,v1).GT.opt%obj_n(ielement,2)))))
      .          CYCLE
-
 
               IF (nobj+1.GT.MAX3D) 
      .          CALL ER('ProcessTriangleGrid','Insufficient array '//
@@ -1182,7 +1289,6 @@ c...          Filter:
               IF ((ielement.NE.0.AND.
      .             (opt%obj_option(ielement).EQ.5.OR.
      .              opt%obj_option(ielement).EQ.6))) THEN
-c     .           (opt%ob_trigrd.EQ.5.OR.opt%ob_trigrd.EQ.6))THEN
                 obj(nobj)%gsur(1:1) = GT_TC
                 obj(nobj)%nver      = 2
                 obj(nobj)%tsur(1)   = SP_VESSEL_WALL
@@ -1218,8 +1324,6 @@ c...          Vertices:
               IF ((ielement.NE.0.AND.
      .             (opt%obj_option(ielement).EQ.5.OR.
      .              opt%obj_option(ielement).EQ.6))) THEN
-c     .            (opt%ob_trigrd.EQ.5.OR.opt%ob_trigrd.EQ.6)) THEN
-c             IF (opt%ob_trigrd.EQ.5.OR.opt%ob_trigrd.EQ.6) THEN
                 obj(nobj)%v(1,1) = DBLE(ver(tri(itri)%ver(v1),1))
                 obj(nobj)%v(2,1) = DBLE(ver(tri(itri)%ver(v1),2))
                 obj(nobj)%v(3,1) = 0.0D0
@@ -1265,7 +1369,6 @@ c...            Rotate vertices:
 c...    Horizontal test surface for checking distortion: 
         IF (.FALSE.) THEN
           nobj = nobj + 1
-
           obj(nobj)%index       = ielement
           obj(nobj)%type        = OP_EMPTY
           obj(nobj)%mode        = 0      
@@ -1289,7 +1392,6 @@ c...    Horizontal test surface for checking distortion:
           obj(nobj)%ipts(3,1)   = 3
           obj(nobj)%ipts(4,1)   = 4
           obj(nobj)%nmap(1) = 0
-
 c...      Vertices:
           obj(nobj)%v(1,1) =  0.5D0
           obj(nobj)%v(2,1) =  1.3D0
@@ -1304,49 +1406,36 @@ c...      Vertices:
           obj(nobj)%v(2,4) =  1.2D0
           obj(nobj)%v(3,4) =  1.0D0
         ENDIF
-
-      ELSEIF (.FALSE.) THEN
-
+c     ------------------------------------------------------------------
+      ELSEIF (opt%obj_option(ielement).EQ.2) THEN
         ivol = 0
- 
         DO itri = 1, ntri
+          IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
 
           IF (nobj+1.GT.MAX3D) 
      .      CALL ER('BuildObjects','Insufficient array bounds '//
      .              'for all objects C',*98)     
-
           nobj = nobj + 1
-
           obj(nobj)%index       = ielement ! nobj
-          IF (tri(itri)%type.EQ.MAGNETIC_GRID) THEN
-            ivol = ivol + 1
-            obj(nobj)%type    = OP_INTEGRATION_VOLUME
-            obj(nobj)%subtype = OP_EIRENE_GRID
-            obj(nobj)%ivolume = ivol
-          ELSE
-            obj(nobj)%type = OP_EMPTY
-            obj(nobj)%ivolume = 0
-          ENDIF
+
+          ivol = ivol + 1
+          obj(nobj)%type    = OP_INTEGRATION_VOLUME
+          obj(nobj)%subtype = OP_EIRENE_GRID
+          obj(nobj)%ivolume = ivol
+
           obj(nobj)%mode        = 0      
           obj(nobj)%surface     = 1      ! SOLID
           obj(nobj)%wedge1      = 0
           obj(nobj)%wedge2      = 0
           obj(nobj)%colour      = 3
           obj(nobj)%orientation = 1      ! CW
-          obj(nobj)%ik          = itri
-          obj(nobj)%ir          = 0
-          obj(nobj)%in          = 0
+          obj(nobj)%ik          = tri(itri)%index(1)
+          obj(nobj)%ir          = tri(itri)%index(2)
+          obj(nobj)%in          = itri
           obj(nobj)%nsur        = 3  
           obj(nobj)%gsur(1:5)   = GT_TC
           obj(nobj)%nver        = 3
-
-          obj(nobj)%quantity = 1.0
-c          IF (obj(nobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
-c            obj(nobj)%quantity(1) = 1.0    ! *TEMP*
-c          ELSE
-c            obj(nobj)%quantity(1) = 0.0
-c          ENDIF
-
+          obj(nobj)%quantity    = 1.0
 c...    
           DO v1 = 1, 3
             p1(1,v1  ) = DBLE(ver(tri(itri)%ver(v1),1))   ! *** NEED TO CHANGE VER(*,1:3) to VER(1:3,*) ***
@@ -1361,27 +1450,29 @@ c...      Assign vertices to object:
             obj(nobj)%v(1:3,v1) = p1(1:3,v1)
           ENDDO
 c...
-
           DO v1 = 1, 3
 
             IF (tri(itri)%sur(v1).NE.0) THEN        
 c...          Triangle surface is on a surface (magnetic or vessel wall):
               imap = tri(itri)%map(v1)
-              IF ((tri(itri)%map(v1).EQ.0            .AND.               ! Need surface type identifier...
-     .             tri(itri)%type   .NE.MAGNETIC_GRID).OR.
-     .            (tri(itri)%map(v1)        .EQ.0            .AND.
-     .             tri(itri)%type           .EQ.MAGNETIC_GRID.AND.
-     .             tri(itri)%sideindex(2,v1).NE.0).OR.                   ! Target check
-     .            (imap.NE.0.AND.                                       
-     .             tri(itri       )%type.NE.MAGNETIC_GRID.AND.
-     .             tri(MAX(1,imap))%type.NE.MAGNETIC_GRID)) THEN
+              IF (.FALSE..AND.
+     .            tri(itri)%map  (v1).EQ.0    .AND.
+     .            tri(itri)%index(2 ).GE.irsep) THEN
+c            .AND.               ! Need surface type identifier...
+c     .             tri(itri)%type   .NE.MAGNETIC_GRID).OR.
+c     .            (tri(itri)%map(v1)        .EQ.0            .AND.
+c     .             tri(itri)%type           .EQ.MAGNETIC_GRID.AND.
+c     .             tri(itri)%sideindex(2,v1).NE.0).OR.                   ! Target check
+c     .            (imap.NE.0.AND.                                       
+c     .             tri(itri       )%type.NE.MAGNETIC_GRID.AND.
+c     .             tri(MAX(1,imap))%type.NE.MAGNETIC_GRID)) THEN
 c...            Vessel wall surface:
                 obj(nobj)%tsur(v1) = SP_VESSEL_WALL  
-                IF (ielement.NE.0) THEN
-                  obj(nobj)%reflec(v1) = opt%obj_reflec(ielement)
-                ELSE
-C                  obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
-                ENDIF
+c                IF (ielement.NE.0) THEN
+                obj(nobj)%reflec(v1) = opt%obj_reflec(ielement)
+c                ELSE
+c                  obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
+c                ENDIF
 c                obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
                 obj(nobj)%nmap(v1) = 1
                 obj(nobj)%imap(1,v1) = nobj
@@ -1418,32 +1509,15 @@ c...          Triangle mesh boundary surface only:
               obj(nobj)%ipts(1,v1) = 3
               obj(nobj)%ipts(2,v1) = 1
             ENDIF
-
           ENDDO
-
         ENDDO
-
-c...    Reorder everything so that the integration volumes are listed first,
-c       and also so that they start in the upper left hand corner, from left
-c       to right:
-
-c...    It is assumed in ProcessPixels that the 1st n objects are the volume integration
-c       cells... hard to arrange that sensibly here... 
-
-        STOP 'WHAT A MESS'
-
+c     ------------------------------------------------------------------
       ELSE
-
         dangle = 360.0 / REAL(nsector) / RADDEG
-
         DO isector = 1, nsector
-
           ang = REAL(isector - 1) * dangle
-
           ivol = 0
- 
           DO itri = 1, ntri
-
             IF (nobj+1.GT.MAX3D) 
      .        CALL ER('BuildObjects','Insufficient array bounds '//
      .                'for all objects D',*98)     
@@ -1471,8 +1545,14 @@ c       cells... hard to arrange that sensibly here...
             obj(nobj)%ir          = 0
             obj(nobj)%in          = 0
             obj(nobj)%nsur        = 5  ! 6 bug
-            obj(nobj)%gsur(1:5)   = GT_TD
-            obj(nobj)%nver        = 8
+            IF (opt%obj_option(ielement).EQ.2) THEN
+              obj(nobj)%gsur(1:5) = GT_TC
+              obj(nobj)%nver      = 8
+            ELSE
+              obj(nobj)%gsur(1:5) = GT_TD
+              obj(nobj)%nver      = 8
+            ENDIF
+
 
             obj(nobj)%quantity = 1.0
 c            IF (obj(nobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
@@ -1675,7 +1755,7 @@ c
       PARAMETER (TOL=1.0D-05)
 
       INTEGER i1,i2,i3,i4,ir,ik,id,ncells,isector,nsector,ike,ik1,ir1,
-     .        ike1,id1,ivol,cntcell
+     .        ike1,id1,ivol,cntcell,maxmap
       LOGICAL check1,check2
       REAL    angle,dangle,ang,dangle2
       REAL*8  x1,z1,x2,z2,p1(3,8),p2(3,8),s1,s2,t1,t2,x(3),y(3)
@@ -1684,21 +1764,23 @@ c
      .                        ikoutmap(:,:,:),iroutmap(:,:,:),
      .                        ninmap(:,:),noutmap(:,:),indmap(:,:)
 
-      INTEGER    MAXMAP
-      PARAMETER (MAXMAP=50)
-
+      INTEGER, PARAMETER :: MAXNMAP = 50
 
 c...    Number of objects per toroidal segment:
 
 c      WRITE(0,*) 'BUILDING RADIAL MAP'
 
       ALLOCATE(ninmap(MAXNKS,MAXNRS))
-      ALLOCATE(ikinmap(MAXNKS,MAXNRS,MAXMAP))
-      ALLOCATE(irinmap(MAXNKS,MAXNRS,MAXMAP))
+      ALLOCATE(ikinmap(MAXNKS,MAXNRS,MAXNMAP))
+      ALLOCATE(irinmap(MAXNKS,MAXNRS,MAXNMAP))
       ALLOCATE(noutmap(MAXNKS,MAXNRS))
-      ALLOCATE(ikoutmap(MAXNKS,MAXNRS,MAXMAP))
-      ALLOCATE(iroutmap(MAXNKS,MAXNRS,MAXMAP))
+      ALLOCATE(ikoutmap(MAXNKS,MAXNRS,MAXNMAP))
+      ALLOCATE(iroutmap(MAXNKS,MAXNRS,MAXNMAP))
       ALLOCATE(indmap(MAXNKS,MAXNRS))
+
+      ninmap  = 0
+      noutmap = 0
+      
 
       ncells = 0
 
@@ -1741,9 +1823,9 @@ c          IF (zs(ik,ir).GT.-0.25) CYCLE
      .            (.NOT.check2.AND.check1.AND.s1.LT.0.0D0+TOL).OR.
      .            (check1.AND.check2)) THEN
                 ninmap(ik,ir) = ninmap(ik,ir) + 1
-                IF (ninmap(ik,ir).GT.MAXMAP) 
+                IF (ninmap(ik,ir).GT.MAXNMAP) 
      .            CALL ER('BuildObjects','Bounds error, '//  ! Note, this error can also come from not
-     .                    'increase MAXMAP A',*99)           ! loading the supplimental .raw files first
+     .                    'increase MAXNMAP A',*99)           ! loading the supplimental .raw files first
                 ikinmap(ik,ir,ninmap(ik,ir)) = ik1
                 irinmap(ik,ir,ninmap(ik,ir)) = ir1
               ENDIF
@@ -1773,9 +1855,9 @@ c          IF (zs(ik,ir).GT.-0.25) CYCLE
      .            (.NOT.check2.AND.check1.AND.s1.LT.0.0D0+TOL).OR.
      .            (check1.AND.check2)) THEN
                 noutmap(ik,ir) = noutmap(ik,ir) + 1
-                IF (noutmap(ik,ir).GT.MAXMAP) 
+                IF (noutmap(ik,ir).GT.MAXNMAP) 
      .            CALL ER('BuildObjects','Bounds error, '//
-     .                    'increase MAXMAP B',*99)
+     .                    'increase MAXNMAP B',*99)
                 ikoutmap(ik,ir,noutmap(ik,ir)) = ik1
                 iroutmap(ik,ir,noutmap(ik,ir)) = ir1
               ENDIF
@@ -1786,9 +1868,14 @@ c          IF (zs(ik,ir).GT.-0.25) CYCLE
       ENDDO
 
 c *TEMP*
+      maxmap = 0
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         DO ik = 1, nks(ir)
+
+          maxmap = MAX(maxmap,MAX(ninmap(ik,ir),noutmap(ik,ir)))
+c          IF(ninmap(ik,ir)
+
           IF (ir.LT.irsep.AND.ik.EQ.nks(ir)) CYCLE
 
 c Filter
@@ -1805,9 +1892,13 @@ c          IF (zs(ik,ir).GT.-0.25) CYCLE
             IF (ikoutmap(ik,ir,i1).EQ.0.OR.
      .          iroutmap(ik,ir,i1).EQ.0) STOP 'sdfsdf B'
           ENDDO
+ 
         ENDDO
       ENDDO
+      
+      WRITE(0,*) 'MAXMAP:',maxmap
 
+c      STOP 'dasdsad'
 c      WRITE(0,*) 'DONE'
 
       IF     ((ielement.NE.0.AND.
@@ -1824,8 +1915,8 @@ c...    Toroidally continuous surfaces:
 C     .        (opt%ob_stdgrd.EQ.1.OR.opt%ob_stdgrd.EQ.3)) THEN
         nsector = opt%obj_nsector
 
-        STOP 'CUSTOM TOROIDAL SECTION SPECIFIED'
-        nsector = 48
+c        STOP 'CUSTOM TOROIDAL SECTION SPECIFIED'
+        nsector = 12
         opt%obj_angle_start = 0.0
         opt%obj_angle_end = 3.0 * 360.0 / 48.0
 !        opt%obj_angle_end = 360.0
@@ -2033,11 +2124,12 @@ c                    obj(nobj)%reflec(1) = opt%ob_stdgrd_reflec
 
               IF (idring(irouts(ik,ir)).EQ.BOUNDARY) THEN
                 obj(nobj)%tsur(2) = SP_GRID_BOUNDARY
-                IF (ielement.NE.0) THEN
-                  obj(nobj)%reflec(2) = opt%obj_reflec(ielement)
-                ELSE
+                obj(nobj)%reflec(2) = 0
+c                IF (ielement.NE.0) THEN
+c                  obj(nobj)%reflec(2) = opt%obj_reflec(ielement)
+c                ELSE
 c                  obj(nobj)%reflec(2) = opt%ob_stdgrd_reflec
-                ENDIF
+c                ENDIF
                 obj(nobj)%nmap(2) = 1
                 obj(nobj)%imap(1,2) = nobj
                 obj(nobj)%isur(1,2) = 2
@@ -2292,7 +2384,6 @@ c              obj(nobj)%ipts(4,4) = 4
           ENDDO ! IK loop
         ENDDO ! IR loop
 
-
         indmap = 0
         DO i1 = nobj - ncells + 1, nobj
          indmap(obj(i1)%ik,obj(i1)%ir) = i1
@@ -2324,7 +2415,6 @@ c...    Assign radial cross-field mapping:
             ENDIF 
           ENDDO
         ENDDO
-
 
       ENDDO ! ISECTOR loop
 

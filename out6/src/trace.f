@@ -734,8 +734,7 @@ c
       real power,tmin,tmax
       integer iexp,l,lenstr,iten
 c slmod begin
-      INTEGER L1
-c      INTEGER L1,thickness
+      INTEGER L1,thickness
 
 c...
       IF (slopt4.EQ.1) THEN
@@ -749,7 +748,7 @@ c...
       IF (slopt.NE.0) THEN
         thickness = 1
       ELSE
-        thickness = 1
+        thickness = 2
       ENDIF
 
 c...   Need to restore this call to get thick lines by default:
@@ -766,12 +765,12 @@ C
       CYMAX  = YMAX
       IPLOTS = 0
       COL   = init_col()
-      GRA_NPLOTS = NBBS
+      NPLOTS = NBBS
       ISPOT  = 12
-      IF (GRA_NPLOTS.GT.10) ISPOT = 10
-      IF (GRA_NPLOTS.GT.15) ISPOT = 8
+      IF (NPLOTS.GT.10) ISPOT = 10
+      IF (NPLOTS.GT.15) ISPOT = 8
 c 
-      write(6,*) 'GRA_NPLOTS:',gra_nplots,ispot
+      write(6,*) 'NPLOTS:',nplots,ispot
 C
 C---- DRAW TITLES
 C
@@ -787,7 +786,9 @@ c
 c
 c     Set Line thickness for title
 c
-      CALL THICK  (thickness)
+c     IPP/08 Krieger - revert to thin lines for the moment
+c     CALL THICK  (thickness)
+      CALL THICK  (1)
 c
 c slmod begin - newa
       L = LENSTR(TITLE)
@@ -825,7 +826,9 @@ c slmod end
 c
 c     Set thickness for text in table and frames
 c
-      CALL THICK  (thickness)
+c     IPP/08 Krieger - revert to thin lines for the moment
+c     CALL THICK  (thickness)
+      CALL THICK  (1)
 c
 c
       CALL CTRMAG (12)
@@ -977,7 +980,9 @@ c slmod end
 c
 c     Set thickness for axis text
 c
-      CALL THICK  (thickness)
+c     IPP/08 Krieger - revert to thin lines for the moment
+c     CALL THICK  (thickness)
+      CALL THICK  (1)
 c
       L = LENSTR (YLABEL)
 c slmod begin
@@ -1096,8 +1101,9 @@ c...
       IF (slopt.NE.0) THEN
         CALL THICK(1)
       ELSE
-c        call thick(3)
-        call thick(thickness)
+c       IPP/08 Krieger - revert to thin lines for the moment
+c       call thick(3)
+        call thick(1)
       ENDIF
 c
 c      call thick(3)
@@ -1127,8 +1133,8 @@ c      IF (ICOL.LT.1) ICOL = NCOLS
 c
       IF (IPLOTS.LE.1) THEN
          CALL FULL
-c         write(6,*) 'FULL:',iplots,ibrok,gra_nplots
-      ELSEIF (GRA_NPLOTS.LE.5) THEN
+c         write(6,*) 'FULL:',iplots,ibrok,nplots
+      ELSEIF (NPLOTS.LE.5) THEN
          CALL BROKEN (3*IBROK,2*IBROK,3*IBROK,2*IBROK)
 c         write(6,*) 'BROKEN1:',ibrok,3*IBROK,2*IBROK,3*IBROK,2*IBROK
       ELSE
@@ -1304,7 +1310,9 @@ c slmod begin
 
       IF (slopt2.EQ.2) THEN
         ispot = 20
-        CALL THICK(2)
+c       IPP/08 Krieger - revert to thin lines for the moment
+c       CALL THICK(2)
+        CALL THICK(1)
       ENDIF
 
       IF (plottype(MAX(1,iplots)).LE.-1) THEN
@@ -1529,7 +1537,7 @@ c      IF (ICOL.LT.1) ICOL = NCOLS
 c
       IF (IPLOTS.LE.1) THEN
          CALL FULL
-      ELSEIF (GRA_NPLOTS.LE.5) THEN
+      ELSEIF (NPLOTS.LE.5) THEN
          CALL BROKEN (3*IBROK,2*IBROK,3*IBROK,2*IBROK)
       ELSE
          CALL BROKEN (2*IBROK,1*IBROK,2*IBROK,1*IBROK)
@@ -2739,7 +2747,9 @@ c
 c     Draw Axes scales as appropriate.
 c
       CALL LINCOL (defcol)
-      CALL THICK  (2)
+c     IPP/08 Krieger - revert to thin lines for the moment
+c     CALL THICK  (2)
+      CALL THICK  (1)
       call full
 c
 c     Xscale
@@ -3333,7 +3343,9 @@ c
 c slmod begin
       IF (iflag.EQ.5) THEN
       ELSE
-        CALL THICK  (2)
+c       IPP/08 Krieger - revert to thin lines for the moment
+c       CALL THICK  (2)
+        CALL THICK  (1)
         CALL CTRMAG (10)
       ENDIF
 c
@@ -3812,6 +3824,7 @@ c
 c
 C        B2/EIRENE 15-color set  Krieger IPP/97
 C        IPP/01 Krieger - changed to 12 colors and reversed order
+c        IPP/09 Krieger - reverted color order back
 c
          call rgb
 c
@@ -3822,49 +3835,18 @@ c
          end do
 c
 c        strong colours
-         call colset(1.00, 0.00, 0.00,  2)
-         call colset(1.00, 0.40, 0.00,  3)
-         call colset(1.00, 0.69, 0.00,  4)
-         call colset(1.00, 0.97, 0.00,  5)
-         call colset(0.72, 1.00, 0.28,  6)
-         call colset(0.44, 1.00, 0.56,  7)
-         call colset(0.15, 1.00, 0.84,  8)
-         call colset(0.00, 0.89, 1.00,  9)
-         call colset(0.00, 0.61, 1.00, 10)
-         call colset(0.00, 0.33, 1.00, 11)
-         call colset(0.00, 0.00, 1.00, 12)
-         call colset(0.33, 0.00, 0.84, 13)
-c
-c        BrightRed
-c         call colset(1.0, 0.0, 0.1, 16)
-c        Red
-c         call colset(0.9, 0.25, 0.0, 15)
-c        Orange
-c         call colset(1.0, 0.65, 0.0, 14)
-c        Golden
-c         call colset(1.0, 0.85, 0.0, 13)
-c        Yellow
-c         call colset(1.0, 1.0, 0.0, 12)
-c        GreenYellow
-c         call colset(0.7, 1.0, 0.2, 11)
-c        Chartreuse
-c         call colset(0.5, 1.0, 0.0, 10)
-c        Green
-c         call colset(0.2, 0.9, 0.1, 9)
-c        Aqua
-c         call colset(0.0, 0.9, 1.0, 8)
-c        DeepSkyBlue
-c         call colset(0.0, 0.75, 1.0, 7)
-c        RoyalBlue
-c         call colset(0.25, 0.45, 0.95, 6)
-c        SlateBlue
-c         call colset(0.4, 0.35, 0.8, 5)
-c        DarkViolet
-c         call colset(0.6, 0.0, 0.8, 4)
-c        Orchid
-c         call colset(0.85, 0.45, 0.8, 3)
-c        Lavender
-c         call colset(0.8, 0.8, 1.0, 2)
+         call colset(1.00, 0.00, 0.00, 13)
+         call colset(1.00, 0.40, 0.00, 12)
+         call colset(1.00, 0.69, 0.00, 11)
+         call colset(1.00, 0.97, 0.00, 10)
+         call colset(0.72, 1.00, 0.28,  9)
+         call colset(0.44, 1.00, 0.56,  8)
+         call colset(0.15, 1.00, 0.84,  7)
+         call colset(0.00, 0.89, 1.00,  6)
+         call colset(0.00, 0.61, 1.00,  5)
+         call colset(0.00, 0.33, 1.00,  4)
+         call colset(0.00, 0.00, 1.00,  3)
+         call colset(0.33, 0.00, 0.84,  2)
 c
       elseif (opt.eq.4) then
 c

@@ -3495,8 +3495,7 @@ c
             wall_dep(in,1:3) = 0.0
          endif
 c
-         write(6,'(a,3i6,16(1x,g12.5))') 'DEP 819:',cnt,in,wallpts,
-     >             wallpt(in,1),wallpt(in,2),
+         write(6,'(a,3i6,12(1x,g12.5))') 'DEP 819:',cnt,in,wallpts,
      >             wall_coord(cnt),
      >             wall_dep(cnt,1),wall_dep(cnt,2),
      >             wall_dep(cnt,3),

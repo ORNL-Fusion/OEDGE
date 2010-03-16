@@ -1579,7 +1579,7 @@
 		Integer, Intent (In) :: Index_2
 				
 		! Stored value.
-                if (cpinopt.eq.1) then
+                if (cpinopt.eq.1.or.cpinopt.eq.4) then
                    gnh = pinatom(Index_1,Index_2)
                 else
                    gnh = e2datom(index_1,index_2)

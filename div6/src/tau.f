@@ -3,7 +3,8 @@ c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
 c slmod begin
-      USE mod_grid
+      USE mod_grid_divimp
+      USE mod_solps
       use mtc
       use bfield
 c slmod end
@@ -11,8 +12,7 @@ c slmod end
       character*(*) title,equil
       INTEGER NIZS
 c slmod begin
-c     function defined in plasma.d5a; Krieger IPP/97
-c      integer ringno
+      INTEGER GetModel
 c slmod end
       REAL    VFLUID , XJI , XJ , XJF
 C
@@ -561,9 +561,9 @@ c               THETA(IK,IR) = theta(ik+1,ir)
                KBFS(IK,IR)  = kbfs(ik+1,ir)
 c slmod begin - new
                BRATIO(IK,IR) = BRATIO(IK+1,IR)
-               IF (ALLOCATED(sonnetik)) THEN
-                 sonnetik(ik,ir) = sonnetik(ik+1,ir)
-                 sonnetir(ik,ir) = sonnetir(ik+1,ir)
+               IF (ALLOCATED(divimp_ik)) THEN
+                 divimp_ik(ik,ir) = divimp_ik(ik+1,ir)
+                 divimp_ir(ik,ir) = divimp_ir(ik+1,ir)
                ENDIF
 c slmod end
                PSIFL(IK,IR) = psifl(ik+1,ir)
@@ -1549,7 +1549,7 @@ c
             distin(ik,ir) = finds(ik,ir) * kinds(ik,ir) * cosali(ik,ir)
             distout(ik,ir)= foutds(ik,ir)* koutds(ik,ir)* cosalo(ik,ir)
 c
-            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9)then 
+            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then 
                write(6,'(a,2i6,10(1x,g12.5))') 'DISTS:', ik,ir,
      >                 distin(ik,ir),distout(ik,ir)
 c
@@ -2081,8 +2081,7 @@ c
 c     End of grid option IF for calculating KSS2 ...
 c
       endif
-      CALL OUTPUTDATA(85,'AFTER KKS')
-c      STOP 'sdfds'
+      CALL OUTPUTDATA(87,'AFTER KKS')
 c
 C-----------------------------------------------------------------------
 c
@@ -2554,7 +2553,15 @@ c slmod begin
       if (northopt.eq.3) then
          IF (stopopt2.EQ.900) THEN
            CALL CalcMetricQuickandDirty
-         ELSEIF (grdnmod.NE.0) THEN
+c         ELSEIF (cgridopt.EQ.LINEAR_GRID) THEN
+c           WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
+c           thetag = 1.0
+         ELSEIF (.TRUE..OR.grdnmod.NE.0) THEN
+           IF (grdnmod.EQ.0) THEN
+             WRITE(0,*) 'WARNING tauin1: Calling the new THETAG '
+             WRITE(0,*) '  calculation code for all cases as of '
+             WRITE(0,*) '  10/03/2010'
+           ENDIF
            CALL CalcMetric
          ELSEIF (connected) THEN
            WRITE(0,*) 'NOT CALCULATING THETAG METRIC'
@@ -2581,7 +2588,7 @@ c...  Load supplimental .RAW file(s) if requested:
 
 c...  Read in the results from a SOLPS/B2 simulation (from Rozhansky at
 c     the moment): 
-      IF (cre2d.EQ.3) CALL LoadSOLPSData
+      IF (solps_opt.GT.0) CALL LoadSOLPSData
 
 c slmod end
 c
@@ -2826,6 +2833,18 @@ c
            kfids(idds(ir,1))=fact*(ktibs(nks(ir),ir)-ktids(idds(ir,1)))
      >                             /(smax-kss(nks(ir),ir))
         endif
+c slmod begin - 04/01/2020
+c
+c       Setting the KFEGS and KFIGS to 0.0 creats a startling artifact
+c       for higher charge states when the other parallel force terms
+c       are small.  This nulling out of the thermal force at the midpoint
+c       of each ring is a good idea when there's a temperature 
+c       discontinuty, but it's not necessary for SOL28 (and a problem for
+c       some ITER cases I found):
+c
+        if (getmodel(3,ir).eq.28) cycle
+c        write(0,*) '****** blanking mid-point grad terms! ******'
+c slmod end
 c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
@@ -3566,7 +3585,7 @@ C
 C       GENERATE AN ANALYSIS OF THE IONIZATION DATA FOR CONSISTENCY
 C       CHECK PURPOSES.
 C
-        IF ((CPINOPT.EQ.1).AND.PINCHECK) THEN
+        IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).AND.PINCHECK) THEN
            CALL PINPRN
            CALL PINCHK
         ENDIF
@@ -3885,7 +3904,10 @@ C
       REAL    S1,S2,S3,S4,RRS(5,5),ZZS(5,5),S,XX
       REAL    ACHK,RNGCHK,TOTCHK
       REAL    TOTA,TOTV,TOTA2,TOTV2,tmpval
-c
+c slmod begin
+      REAL*8  :: AREA_SUM
+      LOGICAL :: WARNING_MESSAGE = .TRUE.
+c slmod end
       real    apara,apol,afact
 C
       TOTA   = 0.0
@@ -4064,6 +4086,7 @@ C---- AROUND THE PERIMETER.
 C
 c slmod begin
  205  CONTINUE
+      AREA_SUM = 0.0D0
 c slmod end
       KP = KORPG(IK,IR)
       KAREA2(IK,IR) = 0.0
@@ -4078,6 +4101,42 @@ c
 c       Ensure that the area is greater than zero.
 c
         KAREA2(IK,IR) = 0.5 * abs(KAREA2(IK,IR))
+c slmod begin
+        IF     (KAREA2(IK,IR).LT.-1.0E-10) THEN 
+          CALL ER('TAUVOL','Malformed cell detected, stopping',*99)       
+        ELSEIF (KAREA2(IK,IR).LT.1.0E-06) THEN 
+          IF (WARNING_MESSAGE) THEN
+            WRITE(0,*) 'WARNING: Small area cell detected, using '//
+     +                 'double precision calculation in TAUVOL'
+            WARNING_MESSAGE = .FALSE.
+          ENDIF
+          KAREA2(IK,IR) = 0.0
+          DO L = 1, NVERTP(KP)
+            LP1 = L + 1
+            IF (L.EQ.NVERTP(KP)) LP1 = 1
+            AREA_SUM = AREA_SUM + 
+     +                 DBLE(RVERTP(LP1,KP)) * DBLE(ZVERTP(L  ,KP)) -
+     +                 DBLE(RVERTP(L  ,KP)) * DBLE(ZVERTP(LP1,KP))
+c            AREA_SUM = AREA_SUM + DBLE(RVERTP(LP1,KP) * ZVERTP(L  ,KP))-
+c     +                            DBLE(RVERTP(L  ,KP) * ZVERTP(LP1,KP))
+            IF (.TRUE.) THEN
+              KAREA2(IK,IR)=KAREA2(IK,IR)+(RVERTP(LP1,KP)*ZVERTP(L,KP)
+     +                                   - RVERTP(L,KP)*ZVERTP(LP1,KP))
+              WRITE(6,*) 'WARNING: SMALL AREA CELL DETECTED'
+              WRITE(6,*) '  KAREA2:',ik,ir,l
+              WRITE(6,*) '        :',karea2(ik,ir)
+              WRITE(6,*) '        :',area_sum
+              WRITE(6,*) '        :',lp1,kp,rvertp(lp1,kp)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',RVERTP(LP1,KP)*ZVERTP(L,KP)
+              WRITE(6,*) '        :',l  ,kp,rvertp(l  ,kp)
+              WRITE(6,*) '        :',lp1,kp,zvertp(lp1,kp)
+              WRITE(6,*) '        :',RVERTP(L,KP)*ZVERTP(LP1,KP)
+            ENDIF
+          ENDDO
+          KAREA2(IK,IR) = SNGL(0.5D0*AREA_SUM)
+        ENDIF
+c slmod end
       ENDIF
 c slmod begin
       IF (cgridopt.EQ.LINEAR_GRID) THEN
@@ -4230,6 +4289,10 @@ C
  9008 FORMAT(//1X,'TOTAL: ',13X,1P,5E10.3)
 C
       RETURN
+c slmod begin
+ 99   WRITE(0,*) '  IK,IR=',ik,ir
+      STOP
+c slmod end
       END
 c
 c
@@ -4388,6 +4451,9 @@ c
 c     Edge2d values
 c
       include 'cedge2d'
+c slmod begin
+      include 'slcom'
+c slmod end
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -4879,7 +4945,26 @@ c
          if (ir.eq.irwall-1)
      >           write (6,9065) rvertp(3,in),zvertp(3,in)
       end do
+c slmod begin
+      in = 0
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)
+          IF (korpg(ik,ir).LT.MAXNKS*MAXNRS) in = MAX(korpg(ik,ir),in)
+        ENDDO
+      ENDDO
+      vpolmin = (MAXNKS*MAXNRS - in) / 2 + in
+      vpolyp  = vpolmin
 
+      CALL OutputData(85,'End of RJET')
+
+c      z0  = -z0
+c      zxp = -zxp
+c      DO id = 1, in
+c        zvertp(1:4,id) = -zvertp(1:4,id)
+c      ENDDO 
+c      CALL OutputData(86,'End of RJET, really this time')
+c      CALL DumpGrid('End of RJET')
+c slmod end
 c
 c
 c     END RJET
@@ -5737,14 +5822,23 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
+      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
+      ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+        CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
+     .                              indexiradj)
+        GOTO 300
+      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
+     .                               indexiradj)
+        GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
-     .        indexiradj)
-         GOTO 300
+        CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
+     .       indexiradj)
+        GOTO 300
       ELSE
          BACKSPACE(gridunit)
       ENDIF
@@ -6125,6 +6219,10 @@ c
 c     
  300  continue
 c     slmod begin
+
+      CALL OutputData(86,'300 of RAUG')    
+c         STOP 'RAUG MID'
+
       CALL DB('RAUG: Done reading grid')
 
       vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
@@ -6310,7 +6408,7 @@ c     Adding one to ir should account for the indexing.
 c
             if (sonnet_grid_sub_type.eq.2) then
                ir = ir +1 
-               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
+               write(6,'(a,3i8,g12.5)') 'PSITARG:',ir,indexiradj,
      >                        cutring,ik,psi
             endif
 c     
@@ -6748,26 +6846,21 @@ c     slmod begin
       IF (quasidn) CALL PrepQuasiDoubleNull
 
       IF (grdnmod.GT.0) THEN
-c...  New, more sophisticated (yeah, baby) grid cutting method:
+c...    New, more sophisticated (yeah, baby) grid cutting method:
 
-c...  Get rid of poloidal boundary cells (to be added again below
-c     after grid manipulations are complete):
-         DO ir = irsep, nrs
-            CALL DeleteCell(nks(ir),ir)
-            CALL DeleteCell(1      ,ir)
-         ENDDO
-
-c...  Modify the grid based on entries in the GRDMOD array assigned 
-c     from the input file:
-         CALL TailorGrid
-
-c...  Add virtual boundary cells, which will be stripped off later:
-         IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
-     .        CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
-     .        CALL AddPoloidalBoundaryCells
-
-
-         write(0,*) 'Finished tailorgrid:'
+c...    Get rid of poloidal boundary cells (to be added again below
+c       after grid manipulations are complete):
+        DO ir = irsep, nrs
+          CALL DeleteCell(nks(ir),ir)
+          CALL DeleteCell(1      ,ir)
+        ENDDO
+c...    Modify the grid based on entries in the GRDMOD array assigned 
+c       from the input file:
+        CALL TailorGrid
+c...    Add virtual boundary cells, which will be stripped off later:
+        IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .      CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .      CALL AddPoloidalBoundaryCells
       ENDIF      
 c     
 c     jdemod - write out grid after modifications
@@ -6839,6 +6932,8 @@ c     slmod begin
          CALL SaveSolution
          STOP 'WORKING ON IT - STILL'
       ENDIF
+
+      CALL OutputData(85,'End of RAUG')
 
 c     DO ir = 1, nrs
 c     DO ik = 1, nks(ir)
@@ -8449,6 +8544,7 @@ c
       real ri,zi,m1,m2,b1,b2
       real asqr,bsqr,csqr
       real cr1,cr2,cz1,cz2,ds1,ds2,ds3,ds4
+      real rdum1
       integer ik,ir,in,kp,id
 c
 c     Externals
@@ -8605,10 +8701,12 @@ c
            write (6,*) 'Ring Number:',ir
            do 20 ik = 1,nks(ir)
              kp = korpg(ik,ir)
-             if (kp.gt.0)
-     >        write(6,'(2i4,3(1x,g13.6),2i4)') ir,ik,cosalph(ik,ir),
-     >          sinalph(ik,ir),raddeg*acos_test(cosalph(ik,ir),18),
+             if (kp.gt.0) then
+              rdum1 = acos_test(cosalph(ik,ir),18)  ! Avoids recursive I/O error - SL, 04.03.2010
+              write(6,'(2i4,3(1x,g13.6),2i4)') ir,ik,cosalph(ik,ir),
+     >          sinalph(ik,ir),raddeg*rdum1,
      >          kp,nvertp(kp)
+             endif
  20      continue
 c
 c        Print target orthogonal angles
@@ -10183,6 +10281,9 @@ c
 c
 c
       subroutine TARGFLUX
+c slmod begin
+      USE mod_eirene06
+c slmod end 
       IMPLICIT NONE
 C
 C*********************************************************************
@@ -10620,16 +10721,33 @@ c         the additional cell volume:
 
 c...    Calculate the total puffed source:
         puffsrc = 0.0
-        DO i1 = 1, eirnpuff
-          puffsrc = puffsrc + eirpuff(i1,MAXPUFF)/ECH
-        ENDDO
+        IF (pincode.EQ.5) THEN
+          DO i1 = 1, nstrata
+            IF (NINT(strata(i1)%type).EQ.3) 
+     .        puffsrc = puffsrc + strata(i1)%flux / ECH
+          ENDDO
+        ELSE
+          DO i1 = 1, eirnpuff
+            puffsrc = puffsrc + eirpuff(i1,MAXPUFF) / ECH
+          ENDDO
+        ENDIF
 
         EIRCOR = (TOTFLX + TOTRECe + puffsrc) / (alliz+hescpd+addion)
 
 c...    Only output to .dat file for the last PIN call (also,
 c       find the appropriate replacement for rel_count):
+
+c        write(0,*) 'REL_COUNT:', rel_count, citersol,nitersol
+c
+c       jdemod
+c     
+c       Note rel_count appears to start at zero ... so this output is never
+c       printed if iteration is on since rel_count is always less than nitersol
+c       on the last iteration
+c
+
         IF (citersol.EQ.0.OR.nitersol.EQ.0.OR.
-     .      rel_count.EQ.nitersol) THEN
+     .      (rel_count+1).EQ.nitersol) THEN
           fp = datunit
         ELSE
           fp = PINOUT
@@ -10679,12 +10797,26 @@ c       and reported here -- fix:
         WRITE(fp,86) 'Toroidal fraction (EIRTORFRAC)=',eirtorfrac
         WRITE(fp,86) 'Global src multi   (EIRSRCMUL)=',eirsrcmul
  
-        CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
-        CALL PRB
-        WRITE(fp,90) 'STRATUM','NO. TRACKS'
-        DO i1 = 1, eirnstrata+eirnpuff
-          WRITE(fp,91) i1,eirntracks(i1)
-        ENDDO
+        IF (pincode.EQ.5) THEN
+          CALL HD(fp,'  EIRENE STRATA SUMMARY','EIRNUMPAR-HD',5,77)
+          CALL PRB
+          WRITE(fp,'(4X,A8,A6,3A12)') 
+     .      'STRATUM','TYPE','NO. TRACKS','FLUXT','PTRASH(%)'
+          DO i1 = 1, nstrata
+            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4)') i1,
+     .        strata(i1)%type,
+     .        strata(i1)%ipanu,
+     .        strata(i1)%fluxt,
+     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
+          ENDDO
+        ELSE
+          CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
+          CALL PRB
+          WRITE(fp,90) 'STRATUM','TYPE','NO. TRACKS'
+          DO i1 = 1, eirnstrata+eirnpuff
+            WRITE(fp,91) i1,eirntracks(i1)
+          ENDDO
+        ENDIF
 
 85      FORMAT(3X,A)
 86      FORMAT(3X,A,   2(1X,F12.3))
@@ -12867,25 +12999,10 @@ c
                   ODPERP(IR) = ocfgam(ir)/dptoto
                   IDPERP(IR) = icfgam(ir)/dptoti
                elseif (dpouter.eq.1) then
-c
-c                 jdemod - for ir=irwall-1 - the denominator in these
-c                          calculations is exactly zero.
-c                        - to avoid this - for ir=irwall-1 - assign
-c                          dperp(irwall-1) = dperp(irwall-2)
-c                        - this fix needs checking to make sure it is
-c                          logically correct                         
-c
-                  if (ir.ne.irwall-1) then 
-                     DPERP(IR)  = cfgam(ir)
-     >                           /(dptoto+dptoti-(delouti+delouto))
-                     ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
-                     IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
-                  else
-                     DPERP(IR)  = dperp(ir-1)
-                     ODPERP(IR) = odperp(ir-1)
-                     IDPERP(IR) = idperp(ir-1)
-                  endif
-
+                  DPERP(IR)  = cfgam(ir)
+     >                         /(dptoto+dptoti-(delouti+delouto))
+                  ODPERP(IR) = ocfgam(ir)/(dptoto-delouto)
+                  IDPERP(IR) = icfgam(ir)/(dptoti-delouti)
                endif
             endif
 
@@ -21383,6 +21500,7 @@ c
       end
 
       real function acos_test(xcos,flag)
+      use error_handling
       implicit none
       real xcos
       integer flag
@@ -21394,10 +21512,16 @@ c      if (xcos.lt.-1.000005) then
 c
 c      if (xcos.lt.-1.0) then 
 c slmod end
-         write(0,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c         write(0,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c     >                    flag,xcos,acos(-1.0)
+c         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
+c     >                    flag,xcos,acos(-1.0)
+c
+         write(error_message_data,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
      >                    flag,xcos,acos(-1.0)
-         write(6,*) 'ACOS ERROR: XCOS < -1.0: FLAG = ',
-     >                    flag,xcos,acos(-1.0)
+         
+         call dbgmsg('ACOS_TEST:',error_message_data)
+
 
          acos_test = acos(-1.0) 
 
@@ -21408,11 +21532,16 @@ c      elseif (xcos.gt.1.000005) then
 c
 c      elseif (xcos.gt.1.0) then 
 c slmod end
-
-          write(0,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
-     >                      flag,xcos,acos(1.0)
-          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
-     >                      flag,xcos,acos(1.0)
+c
+c          write(0,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
+c     >                      flag,xcos,acos(1.0)
+c          write(6,*) 'ACOS ERROR: XCOS > 1.0: FLAG = ',
+c     >                      flag,xcos,acos(1.0)
+c
+         write(error_message_data,*) 'ACOS ERROR: XCOS >  1.0: FLAG = ',
+     >                    flag,xcos,acos(1.0)
+         call dbgmsg('ACOS_TEST:',error_message_data)
+c
          acos_test = acos(1.0)
 
       else

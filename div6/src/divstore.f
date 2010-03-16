@@ -68,14 +68,6 @@ c     Basic information - title, job description,
 c                         equilibrium, shot number and time slice
 c     
       WRITE  (8) TITLE,desc,JOB,EQUIL,ISHOT,TSLICE
-c
-c     Write out the global parameters used to write the file
-c     - this is the first step in parameterizing the read statements in 
-c       OUT and removing the dependency on having identical parameter 
-c       values in both the DIVIMP and OUT compiles
-c
-
-
 c     
 c     Simulation values
 c     

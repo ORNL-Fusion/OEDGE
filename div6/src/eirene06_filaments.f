@@ -1,4 +1,233 @@
 c
+c
+c ======================================================================
+c
+c
+c
+c
+      SUBROUTINE AssignFilamentPlasma
+      USE mod_geometry
+      USE mod_filament_params
+      USE mod_filament
+      USE mod_eirene06_locals
+      USE mod_eirene06  ! *** TEMP ***
+      USE mod_options
+      IMPLICIT none
+
+      REAL FindSeparatrixRadius
+
+      INTEGER nplasma,iobj,count,iplasma,icell,ivtx,ifilament,
+     .        nplasma_start,iplasma1,iplasma2
+
+      INTEGER mode,nir,nmid,i1,i2,chop
+      LOGICAL found_data
+      REAL    x,y,z,rsep,r,
+     .        t,frac,ne,te
+
+      INTEGER n,index(10000),ring
+      REAL    fraction(10000)
+      REAL*8  len1,len2,v(3,10000),scale
+
+
+      INTEGER, ALLOCATABLE :: tmp_segment(:)
+      REAL   , ALLOCATABLE :: tmp_plasma(:,:)      
+
+
+c      TYPE(type_object) newobj
+c      IF (.NOT.ALLOCATED(plasma)) THEN
+c        i1 = AddObject(newobj)
+c        ALLOCATE(plasma(20,nobj))
+c      ENDIF
+
+
+c...  Store flag that marks the locally resolved tetrahedrons:
+      ALLOCATE(tmp_segment(nobj))
+      tmp_segment(1:nobj) = 0
+c      tmp_segment(1:nobj) = obj(1:nobj)%segment(1)
+
+c...  Find current size of PLASMA array:
+      nplasma = 0
+      DO iobj = 1, nobj
+        nplasma = MAX(nplasma,obj(iobj)%index(IND_PLASMA))
+      ENDDO   
+      nplasma_start = nplasma
+
+      CALL CalcDerivedQuantity(MODE_OBJ_CENTRE)
+      CALL CalcDerivedQuantity(MODE_OBJ_TUBE)      
+      CALL CalcDerivedQuantity(MODE_OBJ_DISTANCE)
+
+      DO ifilament = 1, nfilament
+        IF (filament(ifilament)%status.EQ.0) CYCLE
+
+        obj_tube = 0
+        obj_distance = 1.0D+20
+
+        obj(1:nobj)%segment(1) = 0  
+
+c...    Identify objects associated with this filament:
+        mode = 1              ! Just compare perpendicular distance between 
+        scale = opt_fil%scale(3) ! 0.005D0 ! 0.01D0        ! line segment and tetrahedron centroid 
+                              ! For MODE=1, distance threshold for selection
+        nir = 1 ! filament(ifilament)%ir_space(0,icell)
+        DO icell = 1, filament(ifilament)%ncell
+          ivtx = icell  ! *** HACK ***
+          x = SNGL(filament(ifilament)%vtx(1,ivtx))
+          y = 0.0
+          z = SNGL(filament(ifilament)%vtx(3,ivtx))
+          len1 = filament(ifilament)%lcell(1,ivtx) 
+          len2 = filament(ifilament)%lcell(2,ivtx) 
+          chop = 4
+          IF (opt_fil%clip.EQ.1) chop = 6
+          IF (opt_fil%clip.EQ.2) THEN
+            len1 = 1.0D+20
+            len2 = 0.0D0
+            rsep = FindSeparatrixRadius(1)
+            r = SQRT(x**2 + z**2)
+            IF (r.LE.rsep) chop = 6
+c            IF (chop.EQ.6) WRITE(0,*) '====WORKING:',r,rsep,
+c     .         filament(ifilament)%ir_space(1,icell)
+          ENDIF
+          CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+     .                               n,v,index,fraction,ring,10000)  ! *** HACK *** (the 10000)
+          CALL SelectTetrahedrons(n,v(1:3,1:n),mode,scale,
+     .           ifilament,icell)
+c     .           nir,filament(ifilament)%ir_space(1:nir,icell))
+        ENDDO  ! TUBE
+
+
+c...    Calculate the plasma quantities (as a function of time:
+        t = SNGL(filament(ifilament)%t_last)
+
+c...    Density:
+        SELECTCASE (filament(ifilament)%ne_opt)
+          CASE(2)
+            n = (NINT(filament(ifilament)%ne_param(1)))
+            ne = 0.0
+            DO i1 = 2, n
+              found_data = .FALSE.
+              IF ((t+1.D-07.GE.filament(ifilament)%ne_param(i1  )).AND.
+     .            (t-1.D-07.LE.filament(ifilament)%ne_param(i1+1))) THEN
+                found_data = .TRUE.
+                frac = (t - filament(ifilament)%ne_param(i1)) / 
+     .                 (filament(ifilament)%ne_param(i1+1) - 
+     .                  filament(ifilament)%ne_param(i1  ))
+                i2 = i1 + n
+                ne = (1.0D0-frac)*filament(ifilament)%ne_param(i2  ) +
+     .                      frac *filament(ifilament)%ne_param(i2+1)
+              ENDIF
+            ENDDO
+          CASE DEFAULT
+            STOP 'PROBLEM XXX1'
+        ENDSELECT
+        WRITE(0,*) 't,ne:',ifilament,NINT(t/1.0D-06),ne,frac
+
+c...    Temperature:
+        SELECTCASE (filament(ifilament)%te_opt)
+          CASE(2)
+            n = (NINT(filament(ifilament)%te_param(1)))
+            te = 0.0
+            DO i1 = 2, n
+              found_data = .FALSE.
+              IF ((t+1.D-07.GE.filament(ifilament)%te_param(i1  )).AND.
+     .            (t-1.D-07.LE.filament(ifilament)%te_param(i1+1))) THEN
+                found_data = .TRUE.
+                frac = (t - filament(ifilament)%te_param(i1)) / 
+     .                 (filament(ifilament)%te_param(i1+1) - 
+     .                  filament(ifilament)%te_param(i1  ))
+                i2 = i1 + n
+                te = (1.0D0-frac)*filament(ifilament)%te_param(i2  ) +
+     .                      frac *filament(ifilament)%te_param(i2+1)
+              ENDIF
+            ENDDO
+          CASE DEFAULT
+            STOP 'PROBLEM XXX1'
+        ENDSELECT
+        WRITE(0,*) 't,te:',ifilament,t/1.0D-06,te,frac
+
+c...    Increase size of PLASMA array:
+        ALLOCATE(tmp_plasma(20,nplasma))  ! Needs to be consistent with PLASMA allocation in ProcessTetrahedrons
+        tmp_plasma = plasma
+        DEALLOCATE(plasma)
+
+c...    Find the number of associated cells:
+        count = 0
+        DO iobj = 1, nobj
+          IF (obj(iobj)%segment(1).EQ.1.AND.
+     .        obj(iobj)%index(IND_PLASMA).LE.nplasma_start)     
+     .      count = count + 1
+        ENDDO
+        WRITE(0,*) 'nplasma,count:',nplasma,count
+c        count = 1  ! *** HACK *** 
+
+        ALLOCATE(plasma(20,nplasma+count))  ! Needs to be consistent with PLASMA allocation in ProcessTetrahedrons
+        DO iplasma = 1, nplasma
+          plasma(1:20,iplasma) = tmp_plasma(1:20,iplasma)
+        ENDDO
+        DEALLOCATE(tmp_plasma)
+
+        count = 0
+        DO iobj = 1, nobj                         ! Fast if I kept a list of objects from the above loop...
+          IF (obj(iobj)%segment(1).EQ.0) CYCLE  
+
+          iplasma1 = obj(iobj)%index(IND_PLASMA)
+          IF (iplasma1.LE.nplasma_start) THEN
+            count = count + 1
+            iplasma2 = nplasma + count
+          ELSE
+            iplasma2 = iplasma1
+          ENDIF
+          
+          frac = ne / (ne + plasma(3,iplasma1))
+
+c          IF (iplasma2.EQ.iplasma1)
+c     .      WRITE(0,*) '-OLD>',plasma(1:3,iplasma2)
+c          IF (iplasma2.NE.iplasma1)
+c     .      WRITE(0,*) '-NEW>',plasma(1:3,iplasma2)
+
+          plasma(1:2,iplasma2) = (1.0-frac) * plasma(1:2,iplasma1) + 
+     .                                frac  * te
+          plasma(3  ,iplasma2) = plasma(3,iplasma1) + ne
+          plasma(17:19,iplasma2) = plasma(17:19,iplasma1)  ! *** HACK *** For local scaling otetrahedron target flux...
+c          plasma(1,nplasma) = te       ! Te (eV)
+c          plasma(2,nplasma) = te       ! Ti (eV)
+c          plasma(3,nplasma) = ne       ! ni (eV) (ne=ni assumed at present)
+
+c          IF (iplasma2.EQ.iplasma1)
+c     .      WRITE(0,*) '     ',plasma(1:3,iplasma1),frac
+c          IF (iplasma2.EQ.iplasma1)
+c     .      WRITE(0,*) '     ',plasma(1:3,iplasma2)
+c          IF (iplasma2.NE.iplasma1)
+c     .      WRITE(0,*) '     ',plasma(1:3,iplasma1),frac
+c          IF (iplasma2.NE.iplasma1)
+c     .      WRITE(0,*) '     ',plasma(1:3,iplasma2),
+c     .  obj(iobj)%index(IND_IK),obj(iobj)%index(IND_IR)
+
+
+          obj(iobj)%index(IND_PLASMA) = iplasma2
+
+          tmp_segment(iobj) = 1
+        ENDDO           
+
+        nplasma = nplasma + count
+c        WRITE(0,*) 'nplasma,count:',nplasma,count
+
+      ENDDO  ! FILAMENT
+
+      CALL ClearDerivedQuantity(MODE_OBJ_CENTRE)
+      CALL ClearDerivedQuantity(MODE_OBJ_TUBE)
+      CALL ClearDerivedQuantity(MODE_OBJ_CENTRE)
+
+      obj(1:nobj)%segment(1) = tmp_segment(1:nobj)
+      DEALLOCATE(tmp_segment)
+
+c        STOP 'dggsdgsd'
+
+
+
+      RETURN
+ 99   STOP
+      END
+c
 c ======================================================================
 c
 c
@@ -12,16 +241,19 @@ c
       USE mod_filament
       USE mod_eirene06_locals
       USE mod_eirene06  ! *** TEMP ***
+      USE mod_options
       IMPLICIT none
 
 c      REAL FindSeparatrixRadius
 
       INTEGER iobj,iobj1,tmp_nobj,ifilament,ivtx,icell,iside,mode,iloop
 
-      INTEGER n,nir,nmid
-      REAL    x,y,z,rho,phi
+      INTEGER nir,nmid,chop
+      REAL    x,y,z
+
+      INTEGER n,index(10000),ring
+      REAL    fraction(10000)
       REAL*8  len1,len2,v(3,10000),scale
-      
 
       obj(1:nobj)%segment(1) = 0
 
@@ -56,7 +288,7 @@ c      RETURN
 
         CASE (2)
           CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,1.0E+20,1.0E+20,
-     .                               n,v,10000)
+     .                               n,v,index,fraction,ring,10000)
           CALL SelectTetrahedrons(n,v(1:3,1:n))
           tmp_nobj = nobj
           DO iobj = 1, tmp_nobj
@@ -65,24 +297,22 @@ c      RETURN
           CALL CleanObjectArray
 
         CASE (3)
-c          CALL DefineFilaments 
-c          CALL SetupFilaments(0.0D0)
-
-c          rsep = FindSeparatrixRadius(1)
 
           DO iloop = 1, 2
             obj(1:nobj)%segment(1) = 0
 
             mode = 1              ! Just compare perpendicular distance between 
             IF (iloop.EQ.1) THEN  ! line segment and tetrahedron centroid 
-              scale = 0.05D0      ! For MODE=1, distance threshold for selection
+              scale = opt_fil%scale(1) ! 0.01D0   ! 0.05D0      ! For MODE=1, distance threshold for selection
             ELSE
-              scale = 0.02D0
+              scale = opt_fil%scale(2) ! 0.005D0  ! 0.02D0
             ENDIF
-            nir = 1
-c             nir = filament(ifilament)%ir_space(0,icell)
+            nir = 1 ! filament(ifilament)%ir_space(0,icell)
 
+            CALL CalcDerivedQuantity(MODE_OBJ_CENTRE)
             DO ifilament = 1, nfilament
+              IF (filament(ifilament)%status.EQ.0) CYCLE
+
               DO icell = 1, filament(ifilament)%ncell
 c...            Once cells are setup properly, should really have coarser cells stored in FILAMENT% and then temporarily 
 c               subdivide them when looking for tetrahedron intersections, rather than always storing so many vertices in 
@@ -93,17 +323,27 @@ c               filament cross-section...
                 z = SNGL(filament(ifilament)%vtx(3,ivtx))
                 len1 = filament(ifilament)%lcell(1,ivtx) 
                 len2 = filament(ifilament)%lcell(2,ivtx) 
-                WRITE(0,*) '==FILAMENT:',ifilament,ivtx,x,z
-                CALL TraceFieldLine_DIVIMP(x,y,z,2,4,len1,len2,
-     .                                     n,v,10000)  ! *** HACK *** (the 10000)
-c                CALL TraceFieldLine_DIVIMP(rho,0.0,phi,2,2,1.0,1.0,
-c     .                                     n,v,10000)  ! *** HACK *** (the 10000)
-c                CALL TraceFieldLine_DIVIMP(x,y,z,2,2,1.0E+20,1.0E+20,
-c     .                                     n,v,10000)  ! *** HACK *** (the 10000)
+c                WRITE(0,*) '==FILAMENT:',ifilament,ivtx,x,z,
+c     .            nir,filament(ifilament)%ir_space(1:nir,icell)
+                chop = 4
+                IF (opt_fil%clip.EQ.1) chop = 6
+                IF (opt_fil%clip.EQ.2) THEN
+                  len1 = 1.0D+20
+                  len2 = 0.0D0
+                ENDIF
+                IF (opt_fil%clip.EQ.3) THEN
+                  len1 = 1.0D+20
+                  len2 = 1.0D+20
+                ENDIF
+c         WRITE(0,*) '============>LENGTH:',len1,len2,chop
+                CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+     .                                   n,v,index,fraction,ring,10000)  ! *** HACK *** (the 10000)
                 CALL SelectTetrahedrons(n,v(1:3,1:n),mode,scale,
-     .                 nir,filament(ifilament)%ir_space(1:nir,icell))
+     .                 ifilament,icell)
+c     .                 nir,filament(ifilament)%ir_space(1:nir,icell))
               ENDDO  ! TUBE
             ENDDO  ! FILAMENT
+            CALL ClearDerivedQuantity(MODE_OBJ_CENTRE)
 
             IF (iloop.EQ.1) THEN
 c...          Resolve the nighbouring tetrahedrons as well to make sure that the
@@ -131,18 +371,6 @@ c...          Increase spatial resolution along the filament:
 
       ENDSELECT
 
-
-
-c     Doesn't work here for some reason, so hack is in ProcessFluidGrid_06...     
-c      cell(1)%plasma(1) = 1.0                   ! Te (eV)
-c      cell(1)%plasma(2) = 1.0                   ! Ti (eV)
-c      cell(1)%plasma(3) = 5.0E+21               ! ni (eV) (ne=ni assumed at present)
-      DO iobj = 1, nobj
-        IF (obj(iobj)%segment(1).EQ.1) obj(iobj)%index(IND_PLASMA) = 1
-      ENDDO
-
-
-
       RETURN
 99    STOP
       END
@@ -153,7 +381,8 @@ c
 c subroutine: SelectTetrahedrons
 c
 c
-      SUBROUTINE SelectTetrahedrons(n,v,mode,scale,n_ir,ir)
+      SUBROUTINE SelectTetrahedrons(n,v,mode,scale,ifilament,icell)
+c      SUBROUTINE SelectTetrahedrons(n,v,mode,scale,n_ir,ir)
       USE mod_geometry
       USE mod_filament
       USE mod_eirene06_locals
@@ -161,15 +390,21 @@ c
 
       REAL*8 CalcPerp
 
-      INTEGER, INTENT(IN) :: n,mode,n_ir,ir(n_ir)
+      INTEGER, INTENT(IN) :: n,mode,ifilament,icell
       REAL*8 :: v(3,n),scale
 c      REAL   , INTENT(IN) :: v(3,n)
 
-      INTEGER npts,iobj,i1,ilist,nlist,list(1000000)
+      INTEGER npts,iobj,i1,ilist,nlist,list(1000000),n_ir,ir(10)
       LOGICAL addobj
-      REAL*8  a(3),b(3),p(3),pdist,t
+      REAL*8  a(3),b(3),p(3),pdist,t,distance(n),delta,length,len1
 
       npts = n
+
+      n_ir = 1
+      ir(1:n_ir) = filament(ifilament)%ir_space(1:n_ir,icell)
+
+      IF (.NOT.ALLOCATED(obj_centroid)) 
+     .  CALL ER('SelectTetrahedrons','Need centroids',*99)
 
 
       SELECTCASE(1) 
@@ -208,7 +443,7 @@ c          p(2) =  0.9999999D0
 c          p(3) =  0.0D0
 c          pdist = CalcPerp(v(1,1),v(1,2),p,t)
 
-          CALL CalcDerivedQuantity(MODE_OBJ_CENTRE)
+
 
 c...      Make this here for now, but it needs to be pre-computed:         
           nlist = 0
@@ -229,13 +464,25 @@ c            IF (obj(iobj)%index(IND_IR).NE.5) CYCLE
             ENDIF
           ENDDO
 
+c...      Calculate the distance along the field line for each
+c         segment, using the midplane as 0.0:
+          len1 = filament(ifilament)%lcell(1,icell)
+          DO i1 = 1, npts-1
+            delta =  DSQRT((v(1,i1+1)-v(1,i1))**2 + 
+     .                     (v(2,i1+1)-v(2,i1))**2 + 
+     .                     (v(3,i1+1)-v(3,i1))**2)
+            length = length + 0.5D0 * delta
+            distance(i1) = -len1 + length
+            length = length + 0.5D0 * delta       
+          ENDDO
+c          WRITE(0,*) '=====> LENGTH:',length,
+c     .      len1 + filament(ifilament)%lcell(1,icell)
 
           DO ilist = 1, nlist
             iobj = list(ilist)
 
-            IF (MOD(ilist,10000).EQ.0) WRITE(0,*) '  PROCESSING:',ilist
-
-            IF (iobj.LT.10) WRITE(0,*) 'CEN:',obj_centroid(1:3,iobj)
+c            IF (MOD(ilist,1000000).EQ.0) 
+c     .        WRITE(0,*) '  PROCESSING:',ilist
 
             IF (obj(iobj)%segment(1).GT.0) CYCLE
 
@@ -253,6 +500,13 @@ c                WRITE(0,*) '     =',v(1:3,i1 )
 c                WRITE(0,*) '     =',v(1:3,i1+1)
 c              ENDIF
               IF (pdist.GE.0.0D0.AND.pdist.LE.scale) THEN
+
+c                IF (pdist.LT.obj_distance(1,iobj)) THEN  ! *** LEFT OFF ***
+c                  obj_tube = icell
+c                  obj_distance(1,iobj) = pdist
+c                  obj_distance(2,iobj) = distance(i1)
+c                ENDIF
+
                 obj(iobj)%segment(1) = 1  ! *** HACK ***
 c                WRITE(0,*) '   BUSTED:',iobj
 c                WRITE(0,*) '         :',obj_centroid(1:3,iobj)
@@ -263,7 +517,6 @@ c                obj(iobj)%segment(1) = 0
             ENDDO
           ENDDO
 
-          CALL ClearDerivedQuantity(MODE_OBJ_CENTRE)
 
       ENDSELECT
 

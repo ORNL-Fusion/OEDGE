@@ -8,8 +8,9 @@ MODULE MOD_OUT985
 !   PUBLIC :: ALLOC_OBJ,DEALLOC_OBJ,ALLOC_PIXEL,DEALLOC_PIXEL
   PUBLIC :: ALLOC_CHORD,DEALLOC_CHORD,ALLOC_SURFACE,ALLOC_VERTEX
 
-  INTEGER    MAX3DSUR  ,MAX3DPTS  ,MAX3DLNK  ,MAX3DVER
-  PARAMETER (MAX3DSUR=6,MAX3DPTS=4,MAX3DLNK=8,MAX3DVER=8)
+  INTEGER    MAX3DSUR  ,MAX3DPTS  ,MAX3DLNK   ,MAX3DVER  ,MAXNPLOT
+  PARAMETER (MAX3DSUR=6,MAX3DPTS=4,MAX3DLNK=20,MAX3DVER=8,MAXNPLOT=500)
+!  PARAMETER (MAX3DSUR=6,MAX3DPTS=4,MAX3DLNK=8,MAX3DVER=8,MAXNPLOT=500)
 
   INTEGER    MAX3DSIDE 
   PARAMETER (MAX3DSIDE=6)
@@ -23,7 +24,7 @@ MODULE MOD_OUT985
 
   INTEGER, PUBLIC, PARAMETER :: MP_INITIALIZE = 1, MP_INCREASE_SIZE = 2
 
-  INTEGER, PUBLIC, PARAMETER :: VTX_SIZESTEP = 10000
+  INTEGER, PUBLIC, PARAMETER :: VTX_SIZESTEP = 100000
   INTEGER, PUBLIC, SAVE :: nvtx
   INTEGER, PUBLIC, SAVE :: maxvtx
   REAL*8 , PUBLIC, ALLOCATABLE, SAVE :: vtx(:,:)
@@ -38,7 +39,7 @@ MODULE MOD_OUT985
     REAL*8  :: norm(3)                 ! Surface normal
   ENDTYPE type_surface
   REAL              , PUBLIC, PARAMETER :: SRF_VERSION = 1.0
-  INTEGER           , PUBLIC, PARAMETER :: SRF_SIZESTEP = 10000
+  INTEGER           , PUBLIC, PARAMETER :: SRF_SIZESTEP = 1000000
   INTEGER           , PUBLIC,              SAVE :: nsrf
   INTEGER           , PUBLIC,              SAVE :: maxsrf
   TYPE(type_surface), PUBLIC, ALLOCATABLE, SAVE :: srf(:)
@@ -131,6 +132,8 @@ MODULE MOD_OUT985
      REAL*8  :: dyangle 
      REAL*8  :: rot(3)
      REAL*8  :: trans(3)
+     REAL    :: global_v1(3)
+     REAL    :: global_v2(3)
      INTEGER :: otrack
      INTEGER :: ntrack
      INTEGER, POINTER :: tlist(:)    ! INTERGER*2?
@@ -316,6 +319,9 @@ MODULE MOD_OUT985
      INTEGER   :: mask_polarity(MAX_OPT_MASK)
      INTEGER   :: mask_nvtx    (MAX_OPT_MASK)
      INTEGER   :: mask_vtx     (MAX_OPT_MASK,MAX_OPT_MASK_NVTX)
+     ! Plots
+     INTEGER        :: nplots
+     CHARACTER(512) :: plots(MAXNPLOT)
   ENDTYPE type_options985
 
 
@@ -360,7 +366,7 @@ MODULE MOD_OUT985
   !...  Utility, wall lists:
   INTEGER, PUBLIC :: nvwlist,ngblist,noblist
   INTEGER, PUBLIC, TARGET, ALLOCATABLE :: vwlist(:,:),gblist(:,:)
-  INTEGER, PUBLIC, TARGET :: oblist(10,2)
+  INTEGER, PUBLIC, TARGET :: oblist(20,2)
 
   INTEGER, PUBLIC :: nvwinter,ngbinter,nobinter
   ! jdemod - these need to be declared allocatable
@@ -440,7 +446,7 @@ CONTAINS
         WRITE(0,*) 'ERROR ALLOC_SURFACE: SRF ARRAY NOT ALLOCATED'
         STOP
       ELSE
-        WRITE(0,*) 'ADDSURFACE: INCREASING SIZE',nsrf
+        WRITE(0,*) 'ALLOC_SURFACE: INCREASING SIZE',nsrf
         ALLOCATE(tmpsrf(nsrf),STAT=istat)     
         IF (istat.NE.0) THEN
           WRITE(0,*) 'ERROR ALLOC_SURFACE: BAD TMPSRF'
