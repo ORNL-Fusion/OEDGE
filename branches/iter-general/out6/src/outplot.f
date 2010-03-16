@@ -7698,6 +7698,10 @@ c                   2 - CD Emissivity (photons/m3)
 c              29 = HC - HC State density
 c                   istate = specific HC species 
 c                          = sum over states for greater than maxstate   
+c                        1 = C+ (from HC module)
+c                        2 = C  (from HC module)
+c                        3 = CH+(from HC module)
+c                        4 = CH (from HC module)
 c              30 = HC - HC State Ionization
 c                   istate = specific HC species (ONLY CH So far)
 c              31 = Impurity Ionizations - specified by source charge state
@@ -7710,6 +7714,7 @@ c
 c              32 = Subgrid impurity density - STATE = IZ
 c              33 = Subgrid HC density - STATE = HC STATE INDEX
 c              34 = Subgrid impurity ADAS based emissions - additional data read 
+c              35 = Subgrid CH emission
 c
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
 c
