@@ -1967,7 +1967,8 @@ c
 c     0 = stanard Sonnet grid = Default 
 c     1 = FRC version 1 - type of Sonnet grid 
 c         - used to set various FRC related options
-c     2 = sonnet grid without boundary cells
+c     2 = sonnet grid without boundary cells - boundary cells are added
+c         - useful for carre grids
 c
       ELSEIF (tag(1:3).EQ.'G23') THEN
         CALL ReadI(line,sonnet_grid_sub_type,0,2,'SONNET Grid '//
