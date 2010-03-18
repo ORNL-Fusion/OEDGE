@@ -181,43 +181,86 @@ c
       SUBROUTINE GetSchematics(xin,yin,zin,
      .                         mode,MAXSURFACE,MAXPOINTS,
      .                         opt,nobj,obj,
-     .                         nsur,npts,hsur,vsur)
+     .                         nsur,npts,hsur,vsur,len1,len2)
       USE MOD_OUT985
+      USE mod_eirene04
       IMPLICIT none
 
 c...  Input:
       INTEGER mode,MAXSURFACE,MAXPOINTS,nobj,
      .        nsur,npts(MAXSURFACE),hsur(MAXSURFACE)
       REAL    xin,yin,zin
-      REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE)
+      REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE),len1,len2
       TYPE(type_options985) :: opt
       TYPE(type_3D_object)  :: obj(nobj)
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
       INCLUDE 'colours'
+      INCLUDE 'pindata'
       INCLUDE 'slout'
       INCLUDE 'slcom'
 
 
-      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,nstart,count,
-     .        ik1,ir1,ike
+      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,i2,nstart,count,
+     .        ik1,ir1,ike,v1,v2,ring
       REAL    r(2),z(2),deltar,deltaz,deltac,deltap,phi,dphi,rval,pval,
      .        frac1,frac2,angle1,angle2,rmid,
      .        brat,rfilament,rfrac
 
-      INTEGER n
-      REAL*8  v(3,10000),len1,len2
+      INTEGER n,index(200000)
+      REAL    fraction(200000)
+      REAL*8  v(3,200000)
 
       fp = 0
 
       SELECTCASE (mode)
-        CASE (1)            ! Separatrix
+        CASE (6)            ! Triangle grid
+          CALL LoadTriangles
+          DO i1 = 1, ntri
+            DO v1 = 1, 3
+              v2 = v1 + 1
+              IF (v1.EQ.3) v2 = 1
+              IF (tri(i1)%type.EQ.MAGNETIC_GRID) THEN
+                nsur = nsur + 1 
+                hsur(nsur) = -3
+                npts(nsur) = 2
+                vsur(1,1,nsur) = DBLE(ver(tri(i1)%ver(v1),1))
+                vsur(2,1,nsur) = DBLE(ver(tri(i1)%ver(v1),2))
+                vsur(3,1,nsur) = 0.0D0
+                vsur(1,2,nsur) = DBLE(ver(tri(i1)%ver(v2),1))
+                vsur(2,2,nsur) = DBLE(ver(tri(i1)%ver(v2),2))
+                vsur(3,2,nsur) = 0.0D0
+              ENDIF
+            ENDDO
+          ENDDO
+
+        CASE (5)            ! Fluid grid
+          DO ir = 1, nrs
+            DO ik = 1, nks(ir)
+              id = korpg(ik,ir)
+              DO i1 = 1, nvertp(id)
+                i2 = i1 + 1
+                IF (i2.GT.nvertp(id)) i2 = 1
+                nsur = nsur + 1 
+                hsur(nsur) = -3
+                npts(nsur) = 2
+                vsur(1,1,nsur) = DBLE(rvertp(i1,id))
+                vsur(2,1,nsur) = DBLE(zvertp(i1,id))
+                vsur(3,1,nsur) = 0.0D0
+                vsur(1,2,nsur) = DBLE(rvertp(i2,id))
+                vsur(2,2,nsur) = DBLE(zvertp(i2,id))
+                vsur(3,2,nsur) = 0.0D0
+              ENDDO
+            ENDDO
+          ENDDO
+
+        CASE (1)            ! Separatrix and vessel wall
           ir = irsep
           DO ik = 1, nks(ir)
             id = korpg(ik,ir)
             nsur = nsur + 1 
-            hsur(nsur) = -1
+            hsur(nsur) = -3
             npts(nsur) = 2
             vsur(1,1,nsur) = DBLE(rvertp(1,id))
             vsur(2,1,nsur) = DBLE(zvertp(1,id))
@@ -227,21 +270,33 @@ c...  Input:
             vsur(3,2,nsur) = 0.0D0
           ENDDO
 
-          IF (.FALSE..AND.nrs.EQ.65) THEN
-            ir = 38
+          IF (.FALSE.) THEN
+            ir = irsep2
             DO ik = 1, nks(ir)
               id = korpg(ik,ir)
               nsur = nsur + 1 
-              hsur(nsur) = -1
+              hsur(nsur) = -3
               npts(nsur) = 2
-              vsur(1,1,nsur) = DBLE(rvertp(2,id))
-              vsur(2,1,nsur) = DBLE(zvertp(2,id))
+              vsur(1,1,nsur) = DBLE(rvertp(1,id))
+              vsur(2,1,nsur) = DBLE(zvertp(1,id))
               vsur(3,1,nsur) = 0.0D0
-              vsur(1,2,nsur) = DBLE(rvertp(3,id))
-              vsur(2,2,nsur) = DBLE(zvertp(3,id))
+              vsur(1,2,nsur) = DBLE(rvertp(4,id))
+              vsur(2,2,nsur) = DBLE(zvertp(4,id))
               vsur(3,2,nsur) = 0.0D0
             ENDDO
           ENDIF
+
+          DO i1 = 1, nvesm
+            nsur = nsur + 1 
+            hsur(nsur) = 4
+            npts(nsur) = 2
+            vsur(1,1,nsur) = DBLE(rvesm(i1,1))
+            vsur(2,1,nsur) = DBLE(zvesm(i1,1))
+            vsur(3,1,nsur) = 0.0D0
+            vsur(1,2,nsur) = DBLE(rvesm(i1,2))
+            vsur(2,2,nsur) = DBLE(zvesm(i1,2))
+            vsur(3,2,nsur) = 0.0D0
+          ENDDO
 
         CASE (2)            ! Field line
           nstart = nsur + 1
@@ -258,8 +313,10 @@ c...        Find midplane of lines:
               id = korpg(ik,ir)
               z(1) = 0.5 * (zvertp(1,id) + zvertp(2,id))
               z(2) = 0.5 * (zvertp(3,id) + zvertp(4,id))
-              IF (((z(1).LT.0.0D0.AND.z(2).GE.0.0).OR.
-     .             (z(2).LT.0.0D0.AND.z(1).GE.0.0)).AND.
+              IF (((z(1).LT.z0.AND.z(2).GE.z0).OR.
+     .             (z(2).LT.z0.AND.z(1).GE.z0)).AND.
+c              IF (((z(1).LT.0.0D0.AND.z(2).GE.0.0).OR.
+c     .             (z(2).LT.0.0D0.AND.z(1).GE.0.0)).AND.
      .            rs(ik,ir).GT.rmid) THEN
                 ikm  = ik
                 rmid = rs(ik,ir)
@@ -385,8 +442,10 @@ c...          Find midplane cell:
                 id = korpg(ik,ir)
                 z(1) = 0.5 * (zvertp(1,id) + zvertp(2,id))
                 z(2) = 0.5 * (zvertp(3,id) + zvertp(4,id))
-                IF (((z(1).LT.0.0D0.AND.z(2).GE.0.0).OR.
-     .               (z(2).LT.0.0D0.AND.z(1).GE.0.0)).AND.
+                IF (((z(1).LT.z0.AND.z(2).GE.z0).OR.
+     .               (z(2).LT.z0.AND.z(1).GE.z0)).AND.
+c                IF (((z(1).LT.0.0D0.AND.z(2).GE.0.0).OR.
+c     .               (z(2).LT.0.0D0.AND.z(1).GE.0.0)).AND.
      .              rs(ik,ir).GT.rmid) THEN
                   ikm  = ik
                   rmid = rs(ik,ir)
@@ -504,19 +563,35 @@ c...      Convert from r,z,phi to x,y,z (y okay already):
           ENDDO
 
         CASE (4)
-          len1 = 1.0D0
-          len2 = 1.0D0
-          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,2,len1,len2,
-     .                               n,v,10000)
+c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,3,len1,len2,
+         CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,5,len1,len2,
+c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,1,len1,len2,
+     .                               n,v,index,fraction,ring,200000)
+          WRITE(0,*) 'FIELD LINE TRACE:',len1,len2
           DO i1 = 1, n-1
             nsur = nsur + 1
-            hsur(nsur) = -2
+            hsur(nsur) = -1
             npts(nsur) =  2
             vsur(1:3,1,nsur) = v(1:3,i1  )
             vsur(1:3,2,nsur) = v(1:3,i1+1)
           ENDDO
 
-          WRITE(0,*) 'NPTS 490:',nsur,npts(nsur)
+        CASE (7)            ! Separatrix only
+          ir = irsep
+          DO ik = 1, nks(ir)
+            id = korpg(ik,ir)
+            nsur = nsur + 1 
+            hsur(nsur) = -3
+            npts(nsur) = 2
+            vsur(1,1,nsur) = DBLE(rvertp(1,id))
+            vsur(2,1,nsur) = DBLE(zvertp(1,id))
+            vsur(3,1,nsur) = 0.0D0
+            vsur(1,2,nsur) = DBLE(rvertp(4,id))
+            vsur(2,2,nsur) = DBLE(zvertp(4,id))
+            vsur(3,2,nsur) = 0.0D0
+          ENDDO
+
+
 
         CASE DEFAULT
           IF (mode.LT.0) THEN
@@ -716,7 +791,7 @@ c
 c subroutine: TestTetrahedrons
 c
 c
-      SUBROUTINE TestTetrahedrons(nsur,npts,vsur,hsur,
+      SUBROUTINE TestTetrahedrons(fname,nsur,npts,vsur,hsur,
      .                            MAXSURFACE,MAXPOINTS,status)
       USE mod_eirene06_locals
       IMPLICIT none
@@ -724,10 +799,12 @@ c
       INTEGER nsur,MAXSURFACE,MAXPOINTS,status,
      .        npts(0:MAXSURFACE),hsur(0:MAXSURFACE)
       REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE)
+      CHARACTER fname*(*)
 
-      INTEGER iobj,iside,isrf,i1
+      INTEGER iobj,iside,isrf,i1,iobj1
 
-      CALL LoadObjects('tetrahedrons.raw',status)
+      CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
+c      CALL LoadObjects('tetrahedrons.001.raw',status)
 
       WRITE(0,*) 'NOBJ:',nobj
 
@@ -763,20 +840,30 @@ c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
 c     .            (obj(iobj)%index(IND_IR).NE.17)) CYCLE
 c     .            (obj(iobj)%index(IND_IR).NE.5)) CYCLE
  
+
+
             IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE     
+c            IF (obj(iobj)%index(IND_IR).NE.5) CYCLE
             IF (obj(iobj)%segment(1).EQ.0) CYCLE
+
+
 
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
+c              IF (isrf.LT.0) CYCLE  ! *** NOTE! ***
 
-              IF (isrf.LT.0) CYCLE  ! *** NOTE! ***
+c              iobj1 = obj(iobj)%omap(iside)
+c              IF (iobj1.NE.0.AND.obj(iobj)%segment(1).EQ.0) THEN
+c                IF (grp(obj(iobj1)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
+c     .            CYCLE          
+c              ENDIF
  
               isrf = ABS(isrf)
 
-             IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
+c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
+c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
 
-              isrf = ABS(obj(iobj)%iside(iside))
+c              isrf = ABS(obj(iobj)%iside(iside))
               DO WHILE(isrf.GT.0)
                 IF (nsur.GE.MAXSURFACE) THEN
                   WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
@@ -849,17 +936,18 @@ c              ENDDO
 c
 c ======================================================================
 c
-c subroutine: DrawSolidPlot
+c subroutine: SolidPlot985
 c
 c
-      SUBROUTINE DrawSolidPlot(opt,nobj,obj)
+      SUBROUTINE SolidPlot985(opt,nobj,obj,iplot)
       USE MOD_OUT985
       USE mod_filament
+      USE mod_options
       IMPLICIT none
 
 c...  Input:
       TYPE(type_options985) :: opt
-      INTEGER nobj                    ! Flag nobj so it can't change?
+      INTEGER, INTENT(IN) :: nobj, iplot
       TYPE(type_3D_object) :: obj(nobj)
 
       INCLUDE 'params'
@@ -870,33 +958,41 @@ c...  Input:
       INCLUDE 'slcom'
 
       INTEGER   MAXSURFACE       ,MAXPOINTS
-      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
-c      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
+c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
+      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
 
       INTEGER FindMidplaneCell
-c      REAL    FindSeparatrixRadius
+      REAL    FindSeparatrixRadius
+
 
       INTEGER nsur,iobj,isur,isrf,i1,i2,i3,ipts,ipts1,ipts2,pass,nx,ny,
      .        ix,iy,iver,count,fp,ntmp,nlight,isrf1,isrf2,status,
-     .        icolour,last_icolour,ir,ifilament,ikm,id
+     .        icolour,last_icolour,ir,ifilament,ikm,id,ibin,nbin,nlist,
+     .        option,sub_option,iplot1,idum1,nsur_solid
       LOGICAL cont,solid
       REAL    XXMIN,XXMAX,YYMIN,YYMAX,theta,theta1,theta2,
      .        xsur(MAXPOINTS),ysur(MAXPOINTS),frac,
-     .        xin,yin,zin
+     .        xin,yin,zin,rsep,rhoval,
+     .        xcen,ycen,xnear,ynear,angle(3),delr,dely,delphi
       REAL*8  a(3),b(3),n(3),p1(3,6),p2(3,6),light(3,10),view(3),p3(3),
-     .        mat(3,3),angle,deltax,deltay,res,xs1,xs2,ys1,ys2,
+     .        mat(3,3),deltax,deltay,res,xs1,xs2,ys1,ys2,
      .        dangle,ang,x1,z1,r,x,y,z,
-     .        sv(3),lv(3,10),nv(3),vv(3),ndotv,ldots
-      CHARACTER file*1024,buffer*2048
+     .        sv(3),lv(3,10),nv(3),vv(3),ndotv,ldots,
+     .        mindsur,maxdsur,frac1,frac2,limit1,limit2,len1,len2
+      CHARACTER fname*512,buffer*2048,cdum1*512
 
 
-      INTEGER, ALLOCATABLE :: npts(:),hsur(:)
-      REAL*8, ALLOCATABLE :: csur(:,:),vsur(:,:,:),bsur(:,:),dsur(:)
+      INTEGER, ALLOCATABLE :: npts(:),hsur(:),dlist(:),ilist(:)
+      REAL*8,  ALLOCATABLE :: csur(:,:),vsur(:,:,:),bsur(:,:),dsur(:)
+
+
+      CALL setup_col(16,5)
    
 
-c      CALL THICK2(8)
+      CALL THICK2(5)
 
-      solid = .TRUE.
+      solid = .FALSE.
+      nsur_solid = MAXSURFACE + 1
 
       ALLOCATE(npts(0:MAXSURFACE))
       ALLOCATE(hsur(0:MAXSURFACE))
@@ -904,6 +1000,10 @@ c      CALL THICK2(8)
       ALLOCATE(csur(3,0:MAXSURFACE))
       ALLOCATE(bsur(3,0:MAXSURFACE))
       ALLOCATE(vsur(3,MAXPOINTS,0:MAXSURFACE))
+
+      nsur = 0
+      csur = 0.0D0
+      vsur = 0.0D0
 
 c...  Distance from observer to surface center:
       view(1) = 0.0D0  
@@ -923,103 +1023,270 @@ c...  Distance from observer to surface center:
       light(2,3) =  10.0D0 
       light(3,3) =  -2.0D0 
 
-      nsur = 0
+      xxmin =  HI
+      xxmax = -HI
+      yymin =  HI
+      yymax = -HI
 
-      csur = 0.0D0
-      vsur = 0.0D0
+      angle = 0.0
+
+      DO iplot1 = iplot+1, opt%nplots
+        READ(opt%plots(iplot1),*) cdum1
+        IF (cdum1(1:4).EQ.'item') THEN
+              xin = 0.0
+              yin = 0.0
+              zin = 0.0
+              len1 = 0.0D0
+              len2 = 0.0D0
+
+c...      Add geometry item to list of objects to be plotted:
+          READ(opt%plots(iplot1),*) cdum1,option
+          SELECTCASE (option)
+c           ------------------------------------------------------------
+            CASE (001) ! LOS integration geometry objects
+              nsur_solid = nsur + 1
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
+
+              DO iobj = 1, nobj
+                DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
+c                  IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
+
+                  IF     (obj(iobj)%gsur(isur).EQ.GT_TC) THEN
+c...                Create polygons for toroidally continuous surfaces:
+                    IF (obj(iobj)%nside.NE.0) THEN
+                      isrf1 = obj(iobj)%iside(isur,1)
+                      isrf2 = obj(iobj)%iside(isur,2)
+                      r = 0.0
+                    ELSE
+                      isrf1 = 1
+                      isrf2 = 1
+                      x = obj(iobj)%v(1,obj(iobj)%ipts(1,isur)) 
+                      z = 0.0D0
+                      r = DSQRT( x**2 + z**2 )
+                    ENDIF
+                    IF (r.LT.0.5D0) THEN
+c                      dangle =  2.0D0 * DBLE(PI) / 180.0D0
+                      dangle =  5.0D0 * DBLE(PI) / 180.0D0
+                    ELSE
+                      dangle = 30.0D0 * DBLE(PI) / 180.0D0
+                    ENDIF
+                    DO ang = 0.0D0, 359.0D0 * DBLE(PI) / 180.0D0, dangle
+                      DO isrf = isrf1, isrf2
+                        IF (obj(iobj)%nside.NE.0) THEN
+                          p1(1,1) = vtx(1,srf(isrf)%ivtx(1))
+                          p1(2,1) = vtx(2,srf(isrf)%ivtx(1))
+                          p1(3,1) = p1(1,1) * DTAN(-0.5D0*dangle)
+                          p2(1,1) = p1(1,1)
+                          p2(2,1) = p1(2,1)
+                          p2(3,1) = p2(1,1) * DTAN(+0.5D0*dangle)
+                          p1(1,2) = vtx(1,srf(isrf)%ivtx(2))
+                          p1(2,2) = vtx(2,srf(isrf)%ivtx(2))
+                          p1(3,2) = p1(1,2) * DTAN(-0.5D0*dangle)
+                          p2(1,2) = p1(1,2)
+                          p2(2,2) = p1(2,2)
+                          p2(3,2) = p2(1,2) * DTAN(+0.5D0*dangle)
+                        ELSE
+                          p1(1,1) =obj(iobj)%v(1,obj(iobj)%ipts(1,isur)) 
+                          p1(2,1) =obj(iobj)%v(2,obj(iobj)%ipts(1,isur)) 
+                          p1(3,1) = p1(1,1) * DTAN(-0.5D0*dangle)
+                          p2(1,1) = p1(1,1)
+                          p2(2,1) = p1(2,1)
+                          p2(3,1) = p2(1,1) * DTAN(+0.5D0*dangle)
+                          p1(1,2) =obj(iobj)%v(1,obj(iobj)%ipts(2,isur)) 
+                          p1(2,2) =obj(iobj)%v(2,obj(iobj)%ipts(2,isur)) 
+                          p1(3,2) = p1(1,2) * DTAN(-0.5D0*dangle)
+                          p2(1,2) = p1(1,2)
+                          p2(2,2) = p1(2,2)
+                          p2(3,2) = p2(1,2) * DTAN(+0.5D0*dangle)
+                        ENDIF
+c...                    Rotate vertices toroidally:
+                        DO i3 = 1, 2
+                          x1 = p1(1,i3)
+                          z1 = p1(3,i3)
+                          p1(1,i3) = DCOS(ang) * x1 - DSIN(ang) * z1
+                          p1(3,i3) = DSIN(ang) * x1 + DCOS(ang) * z1
+                          x1 = p2(1,i3)
+                          z1 = p2(3,i3)
+                          p2(1,i3) = DCOS(ang) * x1 - DSIN(ang) * z1
+                          p2(3,i3) = DSIN(ang) * x1 + DCOS(ang) * z1
+                        ENDDO
+                        nsur = nsur + 1
+                        npts(nsur) = 4
+                        hsur(nsur) = opt%obj_colour(obj(iobj)%index)
+c                        IF (MOD(nsur,1000).EQ.0)
+c     .                    WRITE(0,*) '  - ',iobj,obj(iobj)%index,
+c     .                                      hsur(nsur),r
+                        csur(1:3,nsur) = 0.0D0
+                        vsur(1:3,4,nsur) = p1(1:3,1)
+                        vsur(1:3,3,nsur) = p2(1:3,1)
+                        vsur(1:3,2,nsur) = p2(1:3,2)
+                        vsur(1:3,1,nsur) = p1(1:3,2)
+                      ENDDO
+                    ENDDO
+                  ELSEIF (obj(iobj)%gsur(isur).EQ.GT_TD) THEN
+c...                Load polygons from toroidally descrete surfaces:
+c                    IF (obj(iobj)%tsur(isur).NE.SP_GRID_BOUNDARY) CYCLE
+c     . ..  .            obj(iobj)%ik.NE.1) CYCLE
+c     . ..  .            obj(iobj)%ik.NE.nks(obj(iobj)%ir)) CYCLE
+c     . ..  .            obj(iobj)%ir.NE.2) CYCLE
+c                    IF (obj(iobj)%ivolume.NE.1) CYCLE   ! *** HACK *** 
+c                    IF (obj(iobj)%ir     .NE.9) CYCLE 
+c                    IF (isur.EQ.1) 
+
+c                      WRITE(0,*) 'OBJ:',iobj,obj(iobj)%ik, 
+c     .                  obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY,
+c     .                  obj(iobj)%nside,
+c     .                  obj(iobj)%iside(isur,1:2)
+
+                    IF (obj(iobj)%nside.NE.0) THEN
+                       DO isrf = obj(iobj)%iside(isur,1),
+     .                          obj(iobj)%iside(isur,2)
+                        IF (nsur+1.GT.MAXSURFACE) 
+     .                    CALL ER('DrawSoildPlot','Array bounds',*99)
+                        nsur = nsur + 1
+                        npts(nsur) = srf(isrf)%nvtx
+                        hsur(nsur) = opt%obj_colour(obj(iobj)%index)
+                        csur(1:3,nsur) = 0.0D0
+                        DO i1 = 1, npts(nsur)
+                          vsur(1:3,i1,nsur) =vtx(1:3,srf(isrf)%ivtx(i1))
+c                          WRITE(0,*) 'WORKING',isrf,i1,vsur(1:3,i1,nsur)         
+                        ENDDO
+                      ENDDO
+                    ELSE
+                      nsur = nsur + 1
+                      npts(nsur) = obj(iobj)%npts(isur)
+                      hsur(nsur) = opt%obj_colour(obj(iobj)%index)
+                      csur(1:3,nsur) = 0.0D0
+                      DO i1 = 1, npts(nsur)
+                        iver = obj(iobj)%ipts(i1,isur)
+                        vsur(1:3,i1,nsur) = obj(iobj)%v(1:3,iver)
+                      ENDDO
+                    ENDIF
+                  ELSE
+                    CALL ER('SolidPlot985','Unknown surface type',*99)
+                  ENDIF
+            
+                ENDDO
+              ENDDO
+c           ------------------------------------------------------------
+            CASE (002) ! 2D annotation
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
+              IF     (sub_option.EQ.4) THEN
+                READ(opt%plots(iplot1),*) cdum1,(idum1,i1=1,3),
+     .                                    delr,dely,delphi
+                xin = FindSeparatrixRadius(1) + delr
+                yin = 0.0
+                zin = 0.0
+                len1 = 1.0E+20
+                len2 = 1.0E+20
+              ELSEIF (sub_option.EQ.6) THEN
+                READ(opt%plots(iplot1),*) cdum1,(idum1,i1=1,3),
+     .                                    delr,dely,delphi
+                xin = FindSeparatrixRadius(1) + delr
+                len1 = DBLE(dely)
+                len2 = DBLE(delphi) 
+                sub_option = 4
+              ENDIF
+              CALL GetSchematics(xin,yin,zin,
+     .                           sub_option,MAXSURFACE,MAXPOINTS,
+     .                           opt,nobj,obj,
+     .                           nsur,npts,hsur,vsur,len1,len2)
+              npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
+              IF (sub_option.EQ.4) THEN
+              ENDIF
+c           ------------------------------------------------------------
+            CASE (003) ! 3D flux-tube
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
+     .                                  xin
+              yin = 0.0
+              zin = 0.0
+c              CALL CalcTubeDimensions(xin,yin,zin,
+c     .               MAXSURFACE,MAXPOINTS,nsur,npts,hsur,vsur)
+c              CALL ProcessFluxTube(xin,yin,zin,
+c     .               MAXSURFACE,MAXPOINTS,nsur,npts,hsur,vsur)
+c              npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
+c           ------------------------------------------------------------
+            CASE (020) ! Filaments
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
+              IF (sub_option.EQ.1) THEN
+                READ(opt%plots(iplot1),*) cdum1,idum1,idum1,idum1,fname
+                CALL LoadFilamentData(fname(1:LEN_TRIM(fname)),status)
+                IF (status.EQ.-1) 
+     .            CALL ER('SolidPlot985','Unable to open filament '//
+     .                    'data file',*98)
+              ELSEIF (sub_option.EQ.2) THEN
+                opt_fil%opt  = 2
+                opt_fil%start_time = 0.0
+                CALL DefineFilaments
+                CALL SetupFilaments(0.0D0)
+              ELSE
+                CALL ER('SolidPlot985','Unrecognised filament '//
+     .                  'option',*99)
+              ENDIF
+              WRITE(6,*) '==FIELD LINE DATA:'
+              DO ifilament = 1, nfilament
+                IF (filament(ifilament)%status.EQ.0) CYCLE
+                DO i1 = 1, filament(ifilament)%nvtx
+                  IF (sub_option.EQ.1) THEN
+                    len1 = filament(ifilament)%lcell(1,i1)   ! *** HACK ***
+                    len2 = filament(ifilament)%lcell(2,i1)
+                  ELSE
+                    len1 = 1000.0D0
+                    len2 = 1000.0D0
+                  ENDIF
+                  xin = SNGL(filament(ifilament)%vtx(1,i1))
+                  yin = 0.0
+                  zin = SNGL(filament(ifilament)%vtx(3,i1))
+c                  WRITE(0,*) 'FILAMENT',ifilament,i1,xin,zin
+                  rsep = FindSeparatrixRadius(1)
+                  rhoval = SQRT(xin**2 + zin**2) - rsep
+c                  WRITE(0,'(A,I6,3F10.6,2(2X,2F12.6))') ' ',
+c     .              ifilament,rsep,rhoval,
+c     .              len1,len2,xin,zin
+                  CALL GetSchematics(xin,yin,zin,
+     .                            4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
+     .                            nsur,npts,hsur,vsur,len1,len2)
+                  npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
+c...              Output:
+                  WRITE(6,'(A,2I6,3F10.6,2X,2F12.6)') ' ',
+     .              ifilament,i1,rsep,rhoval,rsep+rhoval,
+     .              len1,len2
+                ENDDO
+              ENDDO
+c           ------------------------------------------------------------
+            CASE (021) ! Test tetrahedrons
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
+     .                                  fname
+              CALL TestTetrahedrons(fname,nsur,npts,vsur,hsur,
+     .                              MAXSURFACE,MAXPOINTS,status)
+              CALL ClearTetArrays
+              WRITE(0,*) 'TETRAHEDRON FILE STATUS:',status
+              IF (status.EQ.-1) RETURN
+            CASE DEFAULT
+          ENDSELECT
+
+        ELSEIF (cdum1(1:4).EQ.'zoom') THEN
+          READ(opt%plots(iplot1),*) cdum1,xcen,ycen,xnear,ynear
+          xxmin = xcen - xnear
+          xxmax = xcen + xnear
+          yymin = ycen - ynear
+          yymax = ycen + ynear
+
+        ELSEIF (cdum1(1:4).EQ.'axis') THEN
+          READ(opt%plots(iplot1),*) cdum1,(angle(i1),i1=1,3)
+          angle = angle * PI / 180.0
+        ELSE
+          EXIT 
+        ENDIF   
+      ENDDO      
 
       IF (.TRUE.) THEN
-
-        IF (.TRUE.) THEN
-          CALL DefineFilaments
-          CALL SetupFilaments(0.0D0)
-c          rmid = FindSeparatrixRadius(1)
-
-          DO ifilament = 1, nfilament
-            DO i1 = 1, filament(ifilament)%nvtx
-              xin = SNGL(filament(ifilament)%vtx(1,i1))
-              yin = 0.0
-              zin = SNGL(filament(ifilament)%vtx(3,i1))
-              WRITE(0,*) 'FILAMENT',i1,xin,zin
-              CALL GetSchematics(xin,yin,zin,
-     .                           4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-     .                           nsur,npts,hsur,vsur)
-c              CALL GetSchematics(rin,0.0,pin,
-c     .                           4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-c     .                           nsur,npts,hsur,vsur)
-              npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
-            ENDDO
-          ENDDO
-
-        ELSE
-          ir = irsep + 1
-          xin = rho(ir,CELL1) 
-          yin = 0.0
-          zin = 0.0
-          CALL GetSchematics(xin,yin,zin,
-     .                       4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-     .                       nsur,npts,hsur,vsur)
-          npts(nsur) = 2 ! This appears necessary -- compiler bug?
-          WRITE(0,*) 'NPTS 490:',nsur,npts(nsur)
-
-          frac = 0.2
-          xin = (1.0 - frac) * rho(ir  ,CELL1) + 
-     .                 frac  * rho(ir+1,CELL1)
-          yin = 0.0
-          zin = 0.0
-          CALL GetSchematics(xin,yin,zin,
-     .                       4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-     .                       nsur,npts,hsur,vsur)
-          npts(nsur) = 2 ! This appears necessary -- compiler bug?
-          WRITE(0,*) 'NPTS 490:',nsur,npts(nsur)
-
-          frac = 0.2
-          xin = (1.0 - frac) * rho(ir  ,CELL1) + 
-     .                 frac  * rho(ir+1,CELL1)
-          yin = 0.0
-          zin = 10.0
-          CALL GetSchematics(xin,yin,zin,
-     .                       4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-     .                       nsur,npts,hsur,vsur)
-          npts(nsur) = 2 ! This appears necessary -- compiler bug?
-          WRITE(0,*) 'NPTS 490:',nsur,npts(nsur)
-
-          frac = 0.0
-          xin = (1.0 - frac) * rho(ir  ,CELL1) + 
-     .                 frac  * rho(ir+1,CELL1)
-          yin = 0.0
-          zin = 10.0
-          CALL GetSchematics(xin,yin,zin,
-     .                       4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-     .                       nsur,npts,hsur,vsur)
-          npts(nsur) = 2 ! This appears necessary -- compiler bug?
-          WRITE(0,*) 'NPTS 490:',nsur,npts(nsur)
-        ENDIF
-
-c        CALL GetSchematics(-4,MAXSURFACE,MAXPOINTS,opt,nobj,obj,
-c     .                     nsur,npts,hsur,vsur)
-      ENDIF
-
-
-      IF     (.TRUE.) THEN
-
-!        IF (ALLOCATED(obj))   DEALLOCATE(obj)  ! why is this still passed
-!        IF (ALLOCATED(pixel)) DEALLOCATE(pixel)
-!        CALL DEALLOC_CHORD
-!        IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
-!        IF (ALLOCATED(srf)) DEALLOCATE(srf)
-
-        CALL TestTetrahedrons(nsur,npts,vsur,hsur,
-     .                        MAXSURFACE,MAXPOINTS,status)
-
-        WRITE(0,*) 'TETRAHEDRON FILE STATUS:',status
-        IF (status.EQ.-1) RETURN
 
       ELSEIF (.FALSE.) THEN
 
         fp = 99
-        file = 'test-p3.raw'
-        OPEN(fp,FILE=file(1:LEN_TRIM(file)),
+        fname = 'test-p3.raw'
+        OPEN(fp,FILE=fname(1:LEN_TRIM(fname)),
      .       FORM='FORMATTED',STATUS='OLD',ERR=98)     
         
         count = 0
@@ -1060,141 +1327,6 @@ c                WRITE(0,'(1X,A,3F10.4)') '  DATA:',vsur(1:3,3,nsur)
           
         ENDDO
  10     CONTINUE
-      ENDIF
-
-      IF (.TRUE.) THEN
-c...    Solid surfaces:
-        DO iobj = 1, nobj
-          DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
-
-c            IF (obj(iobj)%tsur(isur).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
-
-            IF     (obj(iobj)%gsur(isur).EQ.GT_TC) THEN
-c...          Create polygons for toroidally continuous surfaces:
-
-              IF (obj(iobj)%nside.NE.0) THEN
-                isrf1 = obj(iobj)%iside(isur,1)
-                isrf2 = obj(iobj)%iside(isur,2)
-                r = 0.0
-              ELSE
-                isrf1 = 1
-                isrf2 = 1
-                x = obj(iobj)%v(1,obj(iobj)%ipts(1,isur)) 
-                z = 0.0D0
-                r = DSQRT( x**2 + z**2 )
-              ENDIF
-
-              IF (r.LT.0.5D0) THEN
-                dangle =  5.0D0 * DBLE(PI) / 180.0D0
-              ELSE
-                dangle =  5.0D0 * DBLE(PI) / 180.0D0
-              ENDIF
-
-              DO ang = 0.0D0, 359.0D0 * DBLE(PI) / 180.0D0, dangle
-
-                DO isrf = isrf1, isrf2
-
-                  IF (obj(iobj)%nside.NE.0) THEN
-                    p1(1,1) = vtx(1,srf(isrf)%ivtx(1))
-                    p1(2,1) = vtx(2,srf(isrf)%ivtx(1))
-                    p1(3,1) = p1(1,1) * DTAN(-0.5D0*dangle)
-                    p2(1,1) = p1(1,1)
-                    p2(2,1) = p1(2,1)
-                    p2(3,1) = p2(1,1) * DTAN(+0.5D0*dangle)
-
-                    p1(1,2) = vtx(1,srf(isrf)%ivtx(2))
-                    p1(2,2) = vtx(2,srf(isrf)%ivtx(2))
-                    p1(3,2) = p1(1,2) * DTAN(-0.5D0*dangle)
-                    p2(1,2) = p1(1,2)
-                    p2(2,2) = p1(2,2)
-                    p2(3,2) = p2(1,2) * DTAN(+0.5D0*dangle)
-                  ELSE
-                    p1(1,1) = obj(iobj)%v(1,obj(iobj)%ipts(1,isur)) 
-                    p1(2,1) = obj(iobj)%v(2,obj(iobj)%ipts(1,isur)) 
-                    p1(3,1) = p1(1,1) * DTAN(-0.5D0*dangle)
-                    p2(1,1) = p1(1,1)
-                    p2(2,1) = p1(2,1)
-                    p2(3,1) = p2(1,1) * DTAN(+0.5D0*dangle)
-
-                    p1(1,2) = obj(iobj)%v(1,obj(iobj)%ipts(2,isur)) 
-                    p1(2,2) = obj(iobj)%v(2,obj(iobj)%ipts(2,isur)) 
-                    p1(3,2) = p1(1,2) * DTAN(-0.5D0*dangle)
-                    p2(1,2) = p1(1,2)
-                    p2(2,2) = p1(2,2)
-                    p2(3,2) = p2(1,2) * DTAN(+0.5D0*dangle)
-                  ENDIF
-                
-c...              Rotate vertices toroidally:
-                  DO i3 = 1, 2
-                    x1 = p1(1,i3)
-                    z1 = p1(3,i3)
-                    p1(1,i3) = DCOS(ang) * x1 - DSIN(ang) * z1
-                    p1(3,i3) = DSIN(ang) * x1 + DCOS(ang) * z1
-                    x1 = p2(1,i3)
-                    z1 = p2(3,i3)
-                    p2(1,i3) = DCOS(ang) * x1 - DSIN(ang) * z1
-                    p2(3,i3) = DSIN(ang) * x1 + DCOS(ang) * z1
-                  ENDDO
-
-                  nsur = nsur + 1
-                  npts(nsur) = 4
-                  hsur(nsur) = opt%obj_colour(obj(iobj)%index)
-
-                  IF (MOD(nsur,1000).EQ.0)
-     .              WRITE(0,*) '  - ',iobj,obj(iobj)%index,hsur(nsur),r
-
-                  csur(1:3,nsur) = 0.0D0
-                  vsur(1:3,4,nsur) = p1(1:3,1)
-                  vsur(1:3,3,nsur) = p2(1:3,1)
-                  vsur(1:3,2,nsur) = p2(1:3,2)
-                  vsur(1:3,1,nsur) = p1(1:3,2)
-                ENDDO
-              ENDDO
-
-            ELSEIF (obj(iobj)%gsur(isur).EQ.GT_TD) THEN
-c...          Load polygons:
-              IF (obj(iobj)%tsur(isur).NE.SP_GRID_BOUNDARY) CYCLE
-c     .            obj(iobj)%ik.NE.1) CYCLE
-c     .            obj(iobj)%ik.NE.nks(obj(iobj)%ir)) CYCLE
-c     .            obj(iobj)%ir.NE.2) CYCLE
-c              IF (obj(iobj)%ivolume.NE.1) CYCLE   ! *** HACK *** 
-c              IF (obj(iobj)%ir     .NE.9) CYCLE 
-c              IF (isur.EQ.1) 
-c     .          WRITE(0,*) 'OBJ:',iobj,obj(iobj)%ik, 
-c     .            obj(iobj)%tsur(1).EQ.SP_GRID_BOUNDARY,
-c     .            obj(iobj)%nside,
-c     .            obj(iobj)%iside(isur,1:2)
-              IF (obj(iobj)%nside.NE.0) THEN
-                DO isrf = obj(iobj)%iside(isur,1),
-     .                    obj(iobj)%iside(isur,2)
-                  IF (nsur+1.GT.MAXSURFACE) 
-     .              CALL ER('DrawSoildPlot','Array bounds',*99)
-                  nsur = nsur + 1
-                  npts(nsur) = srf(isrf)%nvtx
-                  hsur(nsur) = opt%obj_colour(obj(iobj)%index)
-                  csur(1:3,nsur) = 0.0D0
-                  DO i1 = 1, npts(nsur)
-                    vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
-c                    WRITE(0,*) 'WORKING',isrf,i1,vsur(1:3,i1,nsur)         
-                  ENDDO
-                ENDDO
-              ELSE
-                nsur = nsur + 1
-                npts(nsur) = obj(iobj)%npts(isur)
-                hsur(nsur) = opt%obj_colour(obj(iobj)%index)
-                csur(1:3,nsur) = 0.0D0
-                DO i1 = 1, npts(nsur)
-                  iver = obj(iobj)%ipts(i1,isur)
-                  vsur(1:3,i1,nsur) = obj(iobj)%v(1:3,iver)
-                ENDDO
-              ENDIF
-            ELSE
-              CALL ER('DrawSolidPlot','Unknown surface type',*99)
-            ENDIF
-
-          ENDDO
-        ENDDO
-
       ENDIF
 
 
@@ -1258,9 +1390,8 @@ c.... Estimate center of surface:
       ENDDO
 
 
-
-      IF (.TRUE.) THEN
-        WRITE(0,*) '    TRANSFORMING'
+       IF (angle(1).NE.0.0.OR.angle(2).NE.0.0.OR.angle(3).NE.0.0) THEN
+         WRITE(0,*) '    TRANSFORMING'
 
 c...    Warp:
 
@@ -1272,9 +1403,9 @@ c       Displace/swing/tilt/rotate:
           DO ipts = 1, npts(isur)
 c...        Rotate about z-axis (roll):
             CALL Calc_Transform2(mat,0.0D0,1,0)  ! move outside loop...
-c            angle = DBLE(-10.0*PI/180.0)
-            angle = DBLE(  0.0*PI/180.0)
-            CALL Calc_Transform2(mat,angle,3,1)
+cc            angle = DBLE(-10.0*PI/180.0)
+c            angle = DBLE(  0.0*PI/180.0)
+            CALL Calc_Transform2(mat,DBLE(angle(1)),3,1)
             CALL Transform_Vect(mat,vsur(1,ipts,isur))
 
             IF (isur.EQ.1.AND.ipts.EQ.1) THEN    ! Lame
@@ -1285,10 +1416,10 @@ c            angle = DBLE(-10.0*PI/180.0)
 
 c...        Rotate about x-axis (tilt):               
             CALL Calc_Transform2(mat,0.0D0,1,0)
-c            angle = DBLE(+00.0*PI/180.0)
-            angle = DBLE( 20.0*PI/180.0)
-c            angle = DBLE(+90.0*PI/180.0)
-            CALL Calc_Transform2(mat,angle,1,1)
+cc            angle = DBLE(+00.0*PI/180.0)
+c            angle = DBLE( 20.0*PI/180.0)
+cc            angle = DBLE(+90.0*PI/180.0)
+            CALL Calc_Transform2(mat,DBLE(angle(2)),1,1)
             CALL Transform_Vect(mat,vsur(1,ipts,isur))
 
             IF (isur.EQ.1.AND.ipts.EQ.1) THEN
@@ -1299,9 +1430,9 @@ c            angle = DBLE(+90.0*PI/180.0)
 
 c...        Rotate about y-axis (swing):
             CALL Calc_Transform2(mat,0.0D0,1,0)
-c            angle = DBLE(-90.0*PI/180.0)
-            angle = DBLE( 00.0*PI/180.0)
-            CALL Calc_Transform2(mat,angle,2,1)
+cc            angle = DBLE(-90.0*PI/180.0)
+c            angle = DBLE( 00.0*PI/180.0)
+            CALL Calc_Transform2(mat,DBLE(angle(3)),2,1)
             CALL Transform_Vect(mat,vsur(1,ipts,isur))
 
             IF (isur.EQ.1.AND.ipts.EQ.1) THEN
@@ -1323,26 +1454,8 @@ c            frac = 1.0 / (1.0 + DABS(vsur(3,ipts,isur)))**1
 c            vsur(1:2,ipts,isur) = vsur(1:2,ipts,isur) * frac
           ENDDO
         ENDDO    
-
-
-
-c...    Contract along the viewing vector, so that all points collapse onto 
-c       the vector at infinity:
-
-      ELSE
-c...    Setup transformation matrix:
-        CALL Calc_Transform2(mat,0.0D0,1,0)
-        DO i1 = 1, 3
-         angle = DBLE(0.0*PI/180.0)
-c          angle = DBLE(-10.0*PI/180.0)
-          CALL Calc_Transform2(mat,angle,1,1)
-        ENDDO
-        DO isur = 1, nsur
-          DO ipts = 1, npts(isur)
-            call transform_vect(mat,vsur(1,ipts,isur))
-          ENDDO
-        ENDDO
       ENDIF
+
 
 
 c.... Estimate center of surface:
@@ -1355,12 +1468,13 @@ c.... Estimate center of surface:
       ENDDO
 
 
-      IF (solid) THEN
+      IF (.TRUE..OR.solid) THEN
         WRITE(0,*) '    CHECKING VISIBILITY'
 
-c...  Decide which surfaces are visible:
+c...    Decide which surfaces are visible:
         bsur = 0.0D0
         DO isur = 1, nsur
+          IF (isur.LT.nsur_solid) CYCLE
           IF (hsur(isur).LT.0.OR.npts(isur).EQ.2) CYCLE
           a(1:3) = vsur(1:3,1,isur) - vsur(1:3,2,isur) 
           b(1:3) = vsur(1:3,3,isur) - vsur(1:3,2,isur) 
@@ -1417,10 +1531,11 @@ c.... Estimate center of surface:
 
 c...  Subdivide surface to give a minimum surface size, so that the chances of
 c     incorrect distance ordering of surfaces is reduced:
-      IF (solid) THEN
+      IF (.TRUE..OR.solid) THEN
         res = 0.20D0
         ntmp = nsur
         DO i1 = 1, ntmp
+          IF (i1.LT.nsur_solid) CYCLE
           IF (npts(i1).EQ.4) THEN
 
             deltax = MAX(DSQRT((vsur(1,1,i1) - vsur(1,2,i1))**2 +
@@ -1499,125 +1614,122 @@ c.... Estimate center of surface:
         DO ipts = 1, npts(isur)
           csur(1:3,isur) = csur(1:3,isur) + vsur(1:3,ipts,isur)
         ENDDO
-        csur(1:3,isur) = csur(1:3,isur) / DBLE(REAL(npts(isur)))
+        csur(1:3,isur) = csur(1:3,isur) / DBLE(npts(isur))
       ENDDO
 
+c...  Want to find out which surfaces are closest to the observer, but in this scheme, 
+c     where the objects are rotated and translated with the observer fixed, it is
+c     enough just to take the z-coordinate, i.e. the eye is assumed to be along the
+c     z-axis (at infinity?):
       DO i1 = 1, nsur
         dsur(i1) = csur(3,i1)
 c        dsur(i1) = DSQRT((csur(1,i1) - view(1))**2 + 
 c     .                   (csur(2,i1) - view(2))**2 +
 c     .                   (csur(3,i1) - view(3))**2)
       ENDDO
+
+
 c...  Sort surfaces, listing (and therefore drawing) the farthest surface from the
 c     observer first:
-      pass = 0
-      IF (solid) cont = .TRUE.
-      DO WHILE(cont)
-        cont = .FALSE.
-
-        pass = pass + 1  ! *TEMP*    **** WAY TOO SLOW AT HIGH RES ***
-        WRITE(0,*) 'PASS:',pass      !**** BUILD A LIST INSTEAD??? *** ...I THINK SO... STILL DEMANDING...
-                                     !BE SMARTER WITH THE INNER LOOP, IF POSSIBLE?  
-        DO i1 = 1, nsur-1
-
-          IF (MOD(i1,1000).EQ.0) WRITE(0,*) '  - ',i1,nsur
-
-          DO i2 = i1+1, nsur
-
-            IF (dsur(i1).GT.dsur(i2)) THEN
-c            IF (dsur(i1).LT.dsur(i2)) THEN
-c...          Swap:
-              npts(0) = npts(i1)
-              hsur(0) = hsur(i1)
-              dsur(0) = dsur(i1)
-              csur(1:3,0) = csur(1:3,i1)
-              bsur(1:3,0) = bsur(1:3,i1)
-              DO i3 = 1, npts(i1)
-                vsur(1:3,i3,0) = vsur(1:3,i3,i1)
-              ENDDO
-              npts(i1) = npts(i2)
-              hsur(i1) = hsur(i2)
-              dsur(i1) = dsur(i2)
-              csur(1:3,i1) = csur(1:3,i2)
-              bsur(1:3,i1) = bsur(1:3,i2)
-              DO i3 = 1, npts(i2)
-                vsur(1:3,i3,i1) = vsur(1:3,i3,i2)
-              ENDDO
-              npts(i2) = npts(0)
-              hsur(i2) = hsur(0)
-              dsur(i2) = dsur(0)
-              csur(1:3,i2) = csur(1:3,0)
-              bsur(1:3,i2) = bsur(1:3,0)
-              DO i3 = 1, npts(0)
-                vsur(1:3,i3,i2) = vsur(1:3,i3,0)
-              ENDDO
-
-              cont = .TRUE.
-            ENDIF
-
+      IF (.TRUE.) THEN
+c...    Find range of distances:
+        mindsur =  1.0D+20
+        maxdsur = -1.0D+20
+        DO isur = 1, nsur        
+          mindsur = MIN(mindsur,dsur(isur))
+          maxdsur = MAX(maxdsur,dsur(isur))
+        ENDDO
+        mindsur = mindsur - 0.00001D0
+        maxdsur = maxdsur + 0.00001D0
+c        WRITE(0,*) 'MIN,MAX:',mindsur,maxdsur
+c...    Bin objects by distance from viewer:
+        nbin = 1000
+        nlist = 0
+        ALLOCATE(ilist(nbin))
+        ALLOCATE(dlist(0:nsur))
+        ilist(1) = 1
+        DO ibin = 1, nbin-1
+          frac1 = DBLE(ibin - 1) / DBLE(nbin - 1)
+          frac2 = DBLE(ibin    ) / DBLE(nbin - 1)
+          limit1 = mindsur + frac1 * (maxdsur - mindsur) 
+          limit2 = mindsur + frac2 * (maxdsur - mindsur) 
+          DO isur = 1, nsur
+            IF (dsur(isur).GE.limit1.AND.dsur(isur).LT.limit2) THEN
+              nlist = nlist + 1
+              dlist(nlist) = isur
+            ENDIF 
+          ENDDO
+          ilist(ibin+1) = nlist + 1
+c          WRITE(0,*) 'LIST:',ilist(ibin+1)-ilist(ibin),nlist,nsur
+        ENDDO
+c...    Sort the list of objects:
+        DO ibin = 1, nbin-1
+          IF (MOD(ibin,nbin/10).EQ.0) WRITE(0,*) 'PROCESSING BIN ',ibin
+          DO i1 = ilist(ibin), ilist(ibin+1)-2
+            DO i2 = i1+1, ilist(ibin+1)-1
+              IF (dsur(dlist(i1)).GT.dsur(dlist(i2))) THEN
+c...            Swap:
+                dlist(0)  = dlist(i1)
+                dlist(i1) = dlist(i2)
+                dlist(i2) = dlist(0)
+              ENDIF
+            ENDDO
           ENDDO
         ENDDO
-      ENDDO
+
+        DEALLOCATE(ilist)
+
+      ENDIF
 
 c.... Estimate center of surface:
-      csur = 0.0D0
-      DO isur = 1, nsur
-        DO ipts = 1, npts(isur)
-          csur(1:3,isur) = csur(1:3,isur) + vsur(1:3,ipts,isur)
-        ENDDO
-        csur(1:3,isur) = csur(1:3,isur) / DBLE(REAL(npts(isur)))
-      ENDDO
+c      csur = 0.0D0
+c      DO isur = 1, nsur
+c        DO ipts = 1, npts(isur)
+c          csur(1:3,isur) = csur(1:3,isur) + vsur(1:3,ipts,isur)
+c        ENDDO
+c        csur(1:3,isur) = csur(1:3,isur) / DBLE(REAL(npts(isur)))
+c      ENDDO
 
 c...  *TEMP* -- how do I do this properly?
-      xxmin =  HI
-      xxmax = -HI
-      yymin =  HI
-      yymax = -HI
-      DO isur = 1, nsur
-        DO ipts = 1, npts(isur)
-          xxmin = MIN(xxmin,SNGL(vsur(1,ipts,isur)))
-          xxmax = MAX(xxmax,SNGL(vsur(1,ipts,isur)))
-          yymin = MIN(yymin,SNGL(vsur(2,ipts,isur)))
-          yymax = MAX(yymax,SNGL(vsur(2,ipts,isur)))
+      
+      IF (xxmin.EQ.HI) THEN
+        DO isur = 1, nsur
+          DO ipts = 1, npts(isur)
+            xxmin = MIN(xxmin,SNGL(vsur(1,ipts,isur)))
+            xxmax = MAX(xxmax,SNGL(vsur(1,ipts,isur)))
+            yymin = MIN(yymin,SNGL(vsur(2,ipts,isur)))
+            yymax = MAX(yymax,SNGL(vsur(2,ipts,isur)))
+          ENDDO
         ENDDO
-      ENDDO
-      IF (xxmin.LT.0.0) xxmin = xxmin * 1.10
-      IF (xxmin.GT.0.0) xxmin = xxmin * 0.90
-      IF (xxmax.GT.0.0) xxmax = xxmax * 1.10
-      IF (yymin.LT.0.0) yymin = yymin * 1.10
-      IF (yymin.GT.0.0) yymin = yymin * 0.90
-      IF (yymax.GT.0.0) yymax = yymax * 1.10
-      IF (yymax.LT.0.0) yymax = yymax * 0.90
-
-c      xxmin = -0.220
-c      xxmax = +0.220
-!       yymin = -2.250  !! < -- use this !!
-!       yymax = +2.250
-c      xxmin = -0.025
-c      xxmax = +0.025
-c      yymin = -0.025
-c      yymax = +0.025
+        IF (xxmin.LT.0.0) xxmin = xxmin * 1.10
+        IF (xxmin.GT.0.0) xxmin = xxmin * 0.90
+        IF (xxmax.GT.0.0) xxmax = xxmax * 1.10
+        IF (yymin.LT.0.0) yymin = yymin * 1.10
+        IF (yymin.GT.0.0) yymin = yymin * 0.90
+        IF (yymax.GT.0.0) yymax = yymax * 1.10
+        IF (yymax.LT.0.0) yymax = yymax * 0.90
+      ENDIF
 
       map1x = 0.05
       map1y = 0.05
 
-      IF (.FALSE..AND.xxmax-xxmin.GT.yymax-yymin) THEN
+      IF (xxmax-xxmin.GT.yymax-yymin) THEN
+c      IF (.FALSE..AND.xxmax-xxmin.GT.yymax-yymin) THEN
         map2x = map1x + 0.90
         map2y = map1y + 0.90 * (yymax - yymin) / (xxmax - xxmin)
       ELSE
         map2x = map1x + 0.90 * (xxmax - xxmin) / (yymax - yymin)
         map2y = map1y + 0.90 
       ENDIF
-
-      map2x = map1x + 0.90
-      map2y = map1y + 0.90
+c      map2x = map1x + 0.90
+c      map2y = map1y + 0.90
 
       CALL GRTSET_TRIM(' ',' ',' ',' ',' ',    ! TITLE,REF,nVIEW,PLANE,glabel,
      .                 xXMIN,xXMAX,yYMIN,yYMAX,
      .                 ' ',' ',' ',            ! TABLE,XLAB,YLAB,
      .                 0,' ',0,' ',1)          ! 0,smooth,0,ANLY,1)
 
-      WRITE(0,*) 'CX,CY:',cxmin,cxmax,cymin,cymax
+c      WRITE(0,*) 'CX,CY:',cxmin,cxmax,cymin,cymax
 
 c...  Draw polygons:
       CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
@@ -1633,28 +1745,32 @@ c...  Draw polygons:
       CALL RGB
 
       last_icolour = -999
-      DO isur = 1, nsur
 
-c        WRITE(0,*) 'drawing  - ',isur,nsur
-c        IF (MOD(isur,10).EQ.0) WRITE(0,*) 'drawing  - ',isur,nsur
+c      IF (solid) THEN
+c...    Solid:
 
-        IF (solid) THEN
-c...      Solid:
+      WRITE(0,*)
+c      WRITE(0,*) 'NSUR,NSUR_SOLID:',nsur,nsur_solid
+
+      DO i2 = 1, nlist
+        isur = dlist(i2)
+
+c        IF (vsur(3,1,isur).GT.0.0D0) CYCLE
+         
+        IF (isur.GE.nsur_solid) THEN
+          last_icolour = -999
+c          WRITE(0,*) 'ISUR:',i2,dlist(i2),nsur,nlist
 
 c...      Determine light shading:   *** NEEDS WORK! ***
 
 c...      Find angle between surface and light vector:
           IF (.TRUE.) THEN
-
             IF (hsur(isur).LT.0.OR.npts(isur).EQ.2) THEN
               ldots = 1.0D0
               r = DSQRT( csur(1,isur)**2 + csur(3,isur)**2 )
               IF (hsur(isur).EQ.-3.OR.hsur(isur).EQ.-2)   
 c     .          ldots = MAX(0.8D0,MIN(1.0D0,(r - 1.0D0) / 0.5D0))   ! DIII-D
      .          ldots = MAX(0.8D0,MIN(1.0D0,(r - 0.2D0) / 0.7D0))   ! MAST
-
-              
-
             ELSE
               nv(1:3) = bsur(1:3,isur)
               ndotv = nv(1) * vv(1) + nv(2) * vv(2) + nv(3) * vv(3)
@@ -1671,11 +1787,11 @@ c              ldots = 0.6 * ldots + 0.4
               ldots = 0.7 * ldots + 0.3
 c              ldots = 0.90 * ldots + 0.10
 
-              IF (.TRUE.) THEN           
+              IF (.FALSE.) THEN           
                 IF (MOD(isur,1000).EQ.0.OR.isur.GT.15400) 
      .            WRITE(0,*) '  - ',isur,dsur(isur),
      .                       hsur(isur)
-              ELSEIF (isur.LT.100) THEN
+              ELSEIF (.FALSE..AND.isur.LT.100) THEN
                 WRITE(0,*) '  - ',isur,dsur(isur),ldots
                 WRITE(0,*) '    ',vv
                 WRITE(0,*) '    ',nv
@@ -1686,66 +1802,44 @@ c              ldots = 0.90 * ldots + 0.10
               ENDIF
 
             ENDIF
-
-c            IF (npts(isur).EQ.2)  WRITE(0,*) 'HSUR:',isur,hsur(isur),
-c     .        ldots
-
-
-            SELECTCASE (MOD(ABS(hsur(isur)),100))
-c            SELECTCASE (hsur(isur))
+c...        Set colour:
+            SELECTCASE (MOD(ABS(hsur(isur-1)),100))  ! *** HACK *** No idea why the -1 is necessary...
               CASE (1)
-                CALL ColSet(SNGL(ldots),
-     .                      0.0,
-     .                      0.0,
-     .                      255)
+                CALL ColSet(SNGL(ldots),0.0,0.0,255)
               CASE (2)
-                CALL ColSet(0.0,
-     .                      SNGL(ldots),
-     .                      0.0,
-     .                      255)
+                CALL ColSet(0.0,SNGL(ldots),0.0,255)
               CASE (3)
-                CALL ColSet(0.0,
-     .                      0.0,
-     .                      SNGL(ldots),
-     .                      255)
+                CALL ColSet(0.0,0.0,SNGL(ldots),255)
+              CASE (4)  ! Black
+                CALL ColSet(0.0        ,0.0,0.0,255)
               CASE DEFAULT
-                CALL ColSet(SNGL(ldots),
-     .                      SNGL(ldots),
-     .                      SNGL(ldots),
-     .                      255)
+                CALL ColSet(SNGL(ldots),SNGL(ldots),SNGL(ldots),255)
             ENDSELECT
-
-c           CALL ColSet(1.0,
-c    .                  SNGL(ldots),
-c    .                  SNGL(ldots),
-c    .                  255)
-c            CALL SetCol255_04(2,SNGL(ldots),0.0,1.0)
-
             CALL FILCOL(255)
             CALL LINCOL(255) 
-
           ELSE
           ENDIF
-
+c...      Plot polygon:
           DO ipts = 1, npts(isur)
             xsur(ipts) = SNGL(vsur(1,ipts,isur))  
             ysur(ipts) = SNGL(vsur(2,ipts,isur))
           ENDDO
-
           IF (npts(isur).EQ.2) THEN
             CALL PTPLOT(xsur,ysur,1,1,1)             ! NEED THIS FOR COLOUR TO TAKE, FOR SOME REASON
             CALL PTJOIN(xsur,ysur,1,npts(isur),1)
           ELSE
             CALL PTPLOT(xsur,ysur,1,npts(isur),1)
           ENDIF
+c        ENDDO
 
         ELSE
-c...      Wireframe:
+c...    Wireframe:
+c        DO isur = 1, nsur
 
           IF (hsur(isur).LT.0) THEN
             icolour = ncols + ABS(hsur(isur))
           ELSE
-            icolour = ncols + 1
+            icolour = hsur(isur) 
           ENDIF
           IF (icolour.NE.last_icolour) THEN
             CALL LINCOL(icolour) 
@@ -1766,27 +1860,34 @@ c            IF (ipts2.GT.npts(nsur)) ipts2 = 1
             CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
             CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
           ENDDO
+
         ENDIF
 
       ENDDO
+
+
+
+
+      CALL DrawFrame
 
       WRITE(0,*) 'DONE DRAWING'
 
       WRITE(0,*) 'DEALLOCATING MEMORY'
 
 c...  Clear memory:
-      IF (ALLOCATED(npts)) DEALLOCATE(npts)
-      IF (ALLOCATED(hsur)) DEALLOCATE(hsur)
-      IF (ALLOCATED(dsur)) DEALLOCATE(dsur)
-      IF (ALLOCATED(csur)) DEALLOCATE(csur)
-      IF (ALLOCATED(bsur)) DEALLOCATE(bsur)
-      IF (ALLOCATED(vsur)) DEALLOCATE(vsur)
+      IF (ALLOCATED(npts))  DEALLOCATE(npts)
+      IF (ALLOCATED(hsur))  DEALLOCATE(hsur)
+      IF (ALLOCATED(dsur))  DEALLOCATE(dsur)
+      IF (ALLOCATED(csur))  DEALLOCATE(csur)
+      IF (ALLOCATED(bsur))  DEALLOCATE(bsur)
+      IF (ALLOCATED(vsur))  DEALLOCATE(vsur)
+      IF (ALLOCATED(dlist)) DEALLOCATE(dlist)
 
       WRITE(0,*) 'LEAVING DRAWING ROUTINE'
 
       RETURN
  98   WRITE(0,*) 'ERROR DrawSolidPlot: File not found'
-      WRITE(0,*) '   '//file(1:LEN_TRIM(file))
+      WRITE(0,*) '   FNAME= "'//fname(1:LEN_TRIM(fname))//'"'
  99   STOP
       END
 c
@@ -1794,16 +1895,17 @@ c ======================================================================
 c
 c subroutine: Output985
 c
-      SUBROUTINE Output985(iopt,MAXPIXEL,npixel,pixel,image)
+      SUBROUTINE WireframePlot985(iopt,MAXPIXEL,npixel,pixel,image,
+     .                            iplot)
       USE mod_out985
       USE mod_out985_variables
       USE mod_interface
       IMPLICIT none
 
       INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
+      INTEGER, INTENT(IN) :: iplot
       TYPE(type_view) :: pixel(MAXPIXEL)
       REAL*8 image(1100,1100)
-
 
       INCLUDE 'params'      
       INCLUDE 'comgra'
@@ -1819,16 +1921,15 @@ c
       CHARACTER*36 XLAB
       CHARACTER*72 YLAB
       CHARACTER*72 SMOOTH
-      CHARACTER*128 cdum1
+      CHARACTER*256 cdum1
 
       INTEGER axis1(3)
-      LOGICAL axisdata
       REAL    angle1(3)
 
       INTEGER CH1
 
       INTEGER   nxbin,nybin,ipixel,nbin,isrf,isrf1,isrf2,isid,
-     .          idet,iplot,iobj,i1,i2,i3,i4,ix,iy
+     .          idet,nplot,iobj,i1,i2,i3,i4,ix,iy,iplot1
       REAL      deltar,deltaz,qmin,qmax,qval,ang1,ang2,ang,
      .          frac1,frac2,xcen,ycen,xnear,ynear,count
       REAL      XXMIN,XXMAX,YYMIN,YYMAX,dangle
@@ -1872,28 +1973,23 @@ c     -Project onto the R,Z plane:
 
       slopt = 1
 
-
-
-c...  Look for zoom data:
-      READ(5,'(A80)',END=150) graph1
-      IF (graph1(8:11).EQ.'Zoom'.OR.graph1(8:11).EQ.'ZOOM'.OR.
-     .    graph1(8:11).EQ.'zoom') THEN
-        READ(graph1,*) cdum1,xcen,ycen,xnear,ynear
-        xxmin = xcen - xnear
-        xxmax = xcen + xnear
-        yymin = ycen - ynear
-        yymax = ycen + ynear
-      ELSE
-        xxmin =  0.0
-        xxmax =  6.0
-        yymin = -3.0
-        yymax =  3.0
-        BACKSPACE 5
-      ENDIF
-150   CONTINUE
-
-
-
+c...  Set the "zoom" for the plot:
+      xxmin =  0.0  ! Not sure if these are any good...
+      xxmax =  6.0
+      yymin = -3.0
+      yymax =  3.0
+      DO iplot1 = iplot+1, opt%nplots
+        READ(opt%plots(iplot1),*) cdum1
+        IF (cdum1(1:4).EQ.'zoom') THEN
+          READ(opt%plots(iplot1),*) cdum1,xcen,ycen,xnear,ynear
+          xxmin = xcen - xnear
+          xxmax = xcen + xnear
+          yymin = ycen - ynear
+          yymax = ycen + ynear
+        ELSE
+          EXIT
+        ENDIF   
+      ENDDO      
 
       axis1 (1) = 1
       axis1 (2) = 2
@@ -1902,29 +1998,23 @@ c...  Look for zoom data:
       angle1(2) = 0.0
       angle1(3) = 0.0
 
-      axisdata = .FALSE.
-
-      iplot = 0
+      nplot = 0
+      iplot1 = iplot1 - 1
       DO WHILE (.TRUE.) 
 c...    Wireframe:
-
-        READ(5,'(A256)') graph1
-        IF (graph1(8:11).EQ.'Axis'.OR.graph1(8:11).EQ.'AXIS'.OR.
-     .      graph1(8:11).EQ.'axis') THEN
-          READ(graph1,*) cdum1,(axis1(i1),angle1(i1),i1=1,3)
-
-          iplot = iplot + 1
-          IF (iplot.EQ.5) THEN
-           iplot = 1
+        iplot1 = iplot1 + 1
+        READ(opt%plots(iplot1),*) cdum1
+c        WRITE(0,*) 'AXIS:',cdum1(1:LEN_TRIM(cdum1))
+        IF (cdum1(1:4).EQ.'axis') THEN
+          READ(opt%plots(iplot1),*) cdum1,(axis1(i1),angle1(i1),i1=1,3)
+          nplot = nplot + 1
+          IF (nplot.EQ.5) THEN
+           nplot = 1
            CALL FRAME
           ENDIF
-c          IF (axisdata) CALL FRAME
         ELSE
-          BACKSPACE 5
-          IF (axisdata) EXIT
-        ENDIF
-
-        axisdata = .TRUE.  ! Improper use, but handy at the moment...
+          EXIT
+        ENDIF   
 
 c...    Setup transformation matrix:
         CALL Calc_Transform2(mat,0.0D0,1,0)
@@ -1933,13 +2023,12 @@ c...    Setup transformation matrix:
           CALL Calc_Transform2(mat,angle,axis1(i1),1)
         ENDDO
 
-
 c...    Use GRTSET_TRIM:
         slopt4 = 1
 c...    Stopping resizing of scale font in ghost1.o6a:
         iopt_ghost = 1
 
-        SELECTCASE (iplot)
+        SELECTCASE (nplot)
           CASE(1)
             map1x = 0.07
             map1y = 0.55
@@ -1962,21 +2051,16 @@ c...    Stopping resizing of scale font in ghost1.o6a:
      >                   xXMIN,xXMAX,yYMIN,yYMAX,
      .                   TABLE,XLAB,YLAB,
      .                   0,smooth,0,ANLY,1)
-c        CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
-c     .               YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NRS)
  
 c...    Draw polygons:
         CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
         CALL MAP   (CXMIN,CXMAX,CYMIN,CYMAX)
 
         count = 0.0
-
         DO iobj = 1, nobj
-
 c          IF (iobj.NE.1035) CYCLE  ! *TEMP*
 c          IF (iobj.NE.471) CYCLE  ! *TEMP*
 c          IF (iobj.NE.471.AND.iobj.NE.472.AND.iobj.NE.458) CYCLE  ! *TEMP*
-
 
           CALL LINCOL(ncols+obj(iobj)%colour) 
 
@@ -2003,15 +2087,11 @@ c            IF (obj(iobj)%ik.NE.16) CYCLE
             IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
               count = count + 
      .                1.0 / REAL(MAX(obj(iobj)%nsur,obj(iobj)%nside))
-c             IF (count.GT.100.0) CYCLE
-              IF (count.GT.15000.0) CYCLE
+              IF (count.GT.100.0) CYCLE
+c              IF (count.GT.15000.0) CYCLE
             ENDIF
 
-
-
-
 c *** NEED TO STORE LINE SEGMENTS AND DELETE DUPLICATES... 
-
 
             IF (obj(iobj)%nside.NE.0) THEN
               isrf1 = obj(iobj)%iside(isid,1)
@@ -2021,35 +2101,23 @@ c *** NEED TO STORE LINE SEGMENTS AND DELETE DUPLICATES...
               isrf2 = 1
             ENDIF
 
-
-            IF     (obj(iobj)%gsur(isid).EQ.GT_TC) THEN
-
-c              count = count + 20
-
+            IF (obj(iobj)%gsur(isid).EQ.GT_TC) THEN
               dangle =  15.0 * PI / 180.0
-
-c              IF (.FALSE.) THEN
-              IF (.TRUE..OR.iplot.EQ.1) THEN
+              IF (.TRUE..OR.nplot.EQ.1) THEN
                 ang1 = 0.0
                 ang2 = 1.0 * PI / 180.0
               ELSE
                 ang1 = 0.0
                 ang2 = 359.0 * PI / 180.0
               ENDIF
-
-                ang1 = 0.0
-                ang2 = 359.0 * PI / 180.0
-
+              ang1 = 0.0
+              ang2 = 359.0 * PI / 180.0
               DO ang = 0.0, 1.0 * PI / 180.0, dangle
 c              DO ang = ang1, ang2, dangle
-
 c                IF (ang.GT.0.0.AND.
 c     .              obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
-
 c                DO isur = 1, 1  ! THIS IS HERE FOR WHEN SIDES ARE USED!
-
                 DO isrf = isrf1, isrf2
-
                   IF (obj(iobj)%nside.NE.0) THEN
                     p1(1,1) = vtx(1,srf(isrf)%ivtx(1))
                     p1(2,1) = vtx(2,srf(isrf)%ivtx(1))
@@ -2092,7 +2160,6 @@ c...              Rotate vertices:
                     call transform_vect(mat,p1(1,i3))
                     call transform_vect(mat,p2(1,i3))
                   ENDDO
-
                   CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
                   CALL JOIN   (SNGL(p1(1,2)),SNGL(p1(2,2))) 
                   CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
@@ -2103,10 +2170,14 @@ c...              Rotate vertices:
                   CALL JOIN   (SNGL(p2(1,2)),SNGL(p2(2,2))) 
                 ENDDO
               ENDDO
-
             ELSEIF (obj(iobj)%gsur(isid).EQ.GT_TD) THEN
-
               IF (obj(iobj)%nside.NE.0) THEN
+
+c...            Filter:
+                count = 0.0
+                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+                WRITE(0,*) 'GO MAN',iobj,isid
+
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
                     i4 = i3 + 1
@@ -2138,29 +2209,25 @@ c...              Rotate vertices:
             ELSE
               CALL ER('Plot985','Unknown surface geometry type',*98)
             ENDIF
-
           ENDDO
         ENDDO 
 c...    Draw pixel views:
-        IF (.FALSE.) THEN
+        IF (.TRUE.) THEN
           CALL LINCOL(ncols+55) 
-          DO i1 = 1, npixel
-            IF (pixel(i1)%yindex.NE.1) CYCLE
-            p1(1,1) = pixel(i1)%v1(1)
-            p1(2,1) = pixel(i1)%v1(2)
-            p1(3,1) = pixel(i1)%v1(3)
-            p2(1,1) = pixel(i1)%v2(1)
-            p2(2,1) = pixel(i1)%v2(2)
-            p2(3,1) = pixel(i1)%v2(3)
-
+          DO i1 = 1, MIN(500,npixel)
+            p1(1,1) = pixel(i1)%global_v1(1)
+            p1(2,1) = pixel(i1)%global_v1(2)
+            p1(3,1) = pixel(i1)%global_v1(3)
+            p2(1,1) = pixel(i1)%global_v2(1)
+            p2(2,1) = pixel(i1)%global_v2(2)
+            p2(3,1) = pixel(i1)%global_v2(3)
             call transform_vect(mat,p1(1,1))
             call transform_vect(mat,p2(1,1))
-
             CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
             CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
           ENDDO
         ELSEIF (.TRUE.) THEN
-c        ELSEIF (.TRUE..AND.iplot.GT.1) THEN
+c        ELSEIF (.TRUE..AND.nplot.GT.1) THEN
           CALL LINCOL(ncols+55) 
 c          DO i1 = 1, MIN(1,nchord)
           DO i1 = 1, MIN(500,nchord)
@@ -2456,7 +2523,7 @@ c        nbin = 1 !6  ! Binning (NBIN=1 is no binning)
 
         WRITE(0,*) ' *** NXBIN',nxbin,nybin
 
-        qmin =  0.0
+        qmin =  HI
         qmax = -HI
         DO ix = 1, nxbin
           DO iy = 1, nybin
@@ -2468,11 +2535,12 @@ c                qval = qval + SNGL(opt%img_image(nbin*(ix-1)+1+i2,
 c     .                                           nbin*(iy-1)+1+i3))
 c              ENDDO
 c            ENDDO           
+            qmin = MIN(qmin,qval)  ! Need to average here, and below?  
             qmax = MAX(qmax,qval)  ! Need to average here, and below?  
           ENDDO
         ENDDO
 
-c        WRITE(0,*) 'QVAL:',qmax,nxbin,nybin
+        WRITE(0,*) 'QVAL MASK IMAGE:',qmin,qmax,nxbin,nybin
 c        STOP 'sdfsd'
 
 
@@ -2554,20 +2622,66 @@ c...    Spectra:
       ENDIF
 
 
-      IF (.TRUE.) THEN
-c....   Solid:
-        WRITE(0,*) 'DRAWING SOLID 3D PLOT'
-        CALL FRAME
-        CALL DrawSolidPlot(opt,nobj,obj)
-        WRITE(0,*) 'DRAWING FRAME'
-        CALL DrawFrame
-        WRITE(0,*) 'DONE'
-        CALL FRAME
-      ENDIF
-
-
-
       RETURN
 98    WRITE(0,*) 'OBJECT,SIDE,TYPE=',i1,i2,obj(i1)%gsur(i2)
 99    STOP
+      END
+
+
+c
+c ======================================================================
+c
+c subroutine: Output985
+c
+      SUBROUTINE Output985(iopt,MAXPIXEL,npixel,pixel,image)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_interface
+      IMPLICIT none
+
+      INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
+      TYPE(type_view) :: pixel(MAXPIXEL)
+      REAL*8 image(1100,1100)
+
+      INTEGER   iplot,option
+      LOGICAL   debug
+      CHARACTER buffer*1024
+
+      debug = .FALSE.
+
+      IF (debug) THEN
+        WRITE(0,*) 'PLOT LIST:',opt%nplots
+        DO iplot = 1, opt%nplots
+          WRITE(0,*) TRIM(opt%plots(iplot))
+        ENDDO
+      ENDIF
+
+      DO iplot = 1, opt%nplots
+        WRITE(buffer,'(1024X)')
+c        WRITE(0,*) 'PLOTS:',opt%plots(iplot)
+        READ(opt%plots(iplot),*) buffer
+        IF (buffer(1:4).NE.'plot') CYCLE
+        READ(opt%plots(iplot),*) opt%plots(iplot),option
+        SELECTCASE (option)
+          CASE (000)
+          CASE (001)
+c....       Wireframe (all plots currently...):
+            CALL WireframePlot985
+     .             (iopt,MAXPIXEL,npixel,pixel,image,iplot)
+            CALL FRAME
+          CASE (002)
+c....       Solid:
+c            WRITE(0,*) 'DRAWING SOLID 3D PLOT'
+            CALL SolidPlot985(opt,nobj,obj,iplot)
+            CALL FRAME
+          CASE DEFAULT
+            CALL WN('Output985','Unrecognised plot option')
+            WRITE(0,*) '  BUFFER= "',buffer(1:LEN_TRIM(buffer)),'"'
+        ENDSELECT
+      ENDDO      
+
+c      CALL FRAME
+
+      RETURN
+ 99   STOP
       END

@@ -897,6 +897,8 @@ c     >    nenum,99,0.0,temax,0.0,150.0,IGNORS,ITEC,AVS,NAVS,
      >    nenum,99,temin,temax,-HI,HI,IGNORS,ITEC,AVS,NAVS,
      >    JOB,TITLE2,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,IOPT,2,1.0,0)
 
+c         IPP/09 Krieger - I think colors should be reset here
+          call setup_col(ncols,col_opt)
       endif 
 
 c
@@ -1005,7 +1007,7 @@ c...    New 2D plots (including EIRENE triangle plots):
         call setup_col(n_cols,5)
         CALL Plot987(job,graph,ref,title,iopt,
      .               xxmin,xxmax,yymin,yymax,ft,fp,zadj,
-     .               ismoth,ignors,itec,avs,navs)
+     .               ismoth,ignors,itec,avs,navs,nizs)
         call setup_col(n_cols,col_opt)
       ELSEIF (iref.EQ.988) THEN
 c...    Line shapes:
@@ -1034,12 +1036,9 @@ c...    Dump EIRENE reaction data to file:
         CALL DumpRates(iopt)
 
       ELSEIF (iref.EQ.999) THEN
-
         call setup_col(n_cols,5)
-        CALL Development(iopt)
+        CALL Development(iopt,nizs,cizsc,crmi,cion,absfac)
         call setup_col(n_cols,col_opt)
-
-
 c slmod end
 
       ENDIF

@@ -2005,6 +2005,10 @@ C
       MSS=MSURF
       IF (MSS.GT.NLIM) MSS=-(MSURF-NLIM)
       WRITE (iunout,*) 'MSURF = ',MSS
+c slmod begin
+      WRITE (iunout,*) 'VELX,Y,Z = ',VELX,VELY,VELZ
+      WRITE (iunout,*) 'CRTX,Y,Z = ',CRTX,CRTY,CRTZ
+c slmod end
       WRITE (iunout,*) 'COSIN.LT.0. ', COSIN
       WRITE (iunout,*) 'DO NOT SPUTTER FOR PARTICLE NO. NPANU= ',NPANU
       RETURN

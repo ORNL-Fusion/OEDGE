@@ -3,7 +3,7 @@
 CC=cc
 FC=f90
 
-GHOST=/afs/ipp/common/soft/ghost_v8/@sys/lib
+LOCALLIB=/afs/ipp/u/divimp/lib/@sys/lib
 
 VER=sun
 
@@ -16,15 +16,15 @@ OUTF90SRC=$(OUTSRC)/f90
 
 VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
 
-# FFLAGS=-I$(COMMONS) -w -O -xlibmil -xlibmopt -ftrap=%none
-# CFLAGS=-I$(COMMONS) -w -O -xlibmil
+FFLAGS=-I$(COMMONS) -w -O -xlibmil -xlibmopt -ftrap=%none
+CFLAGS=-I$(COMMONS) -w -O -xlibmil
 
-FFLAGS=-I$(COMMONS) -w -g -C -xlibmil -xlibmopt -ftrap=%none
-CFLAGS=-I$(COMMONS) -w -g    -xlibmil           
+# FFLAGS=-w -g -C -xlibmil -xlibmopt -I$(COMMONS) -ftrap=%none
+# CFLAGS=-w -g    -xlibmil           -I$(COMMONS)
 
 F90FLAGS=$(FFLAGS)
 
-LIBS= -L$(GHOST) -lghost -lpostcl -L../lib/@sys -ljpeg
+LIBS= -L$(LOCALLIB) -lghost -lpostcl -ljpeg
 
 TARG=out6
 
@@ -38,3 +38,9 @@ $(TARG): $(OBJECTS)
 clean:
 	-rm *.o
 	-rm *.mod
+
+store:
+	mv *.o *.mod objects/@sys
+
+restore:
+	mv objects/@sys/* .

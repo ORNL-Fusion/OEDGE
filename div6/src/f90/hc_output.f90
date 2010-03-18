@@ -532,15 +532,17 @@ Contains
                 &HC_Species,Launch_Reg), HC_Species = 1, Num_HCs, 1)
           ! jdemod
 
-          Write (Output_Unit_HC_Data,541) "Avg num of particles enter main plasma per launch","n/a",( HC_Num_Enter_Main_Plasma (&
+          ! IPP/09 Krieger - shortened lines (SUNWorkshop chokes over len>132)
+
+          Write(Output_Unit_HC_Data,541) "Avg num of particles enter main plasma per launch","n/a",( HC_Num_Enter_Main_Plasma (&
 &HC_Species,Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)
-          Write (Output_Unit_HC_Data,541) "Avg num of particles exit main plasma per launch","n/a",( HC_Tot_Fragments_Exit_Main (&
-&HC_Species,Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)			
-          Write (Output_Unit_HC_Data,541) "Avg num of particles entering core per launch","n/a",( HC_Num_Entered_Core (HC_Species,&
+          Write(Output_Unit_HC_Data,541) "Avg num of particles exit main plasma per launch","n/a",( HC_Tot_Fragments_Exit_Main (&
+&HC_Species,Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)
+          Write(Output_Unit_HC_Data,541) "Avg num of particles entering core per launch","n/a",( HC_Num_Entered_Core (HC_Species,&
 &Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)
-          Write (Output_Unit_HC_Data,541) "Avg num of particles reaching centre per launch","n/a",( HC_Num_Reach_Centre (HC_Species,&
+          Write(Output_Unit_HC_Data,541) "Avg num of particles reaching centre per launch","n/a",( HC_Num_Reach_Centre (HC_Species,&
 &Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)
-          Write (Output_Unit_HC_Data,541) "Avg num of ions stoppped follow in core per launch","n/a",( &
+          Write(Output_Unit_HC_Data,541) "Avg num of ions stoppped follow in core per launch","n/a",( &
 &HC_Stopped_Follow_Ion_In_Core (HC_Species,Launch_Reg) / Particle_Launch_Sum (Launch_Reg), HC_Species = 1, Num_HCs, 1)
  
           ! Void region statistics.

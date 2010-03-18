@@ -2,6 +2,7 @@ c     -*-Fortran-*-
 c
       subroutine bgplasma(title,equil)
 c slmod begin
+      use error_handling
       USE mod_sol28_global
 c slmod end
       implicit none
@@ -100,9 +101,10 @@ c...  Assign IKBOUNDS array:
 c...  Determine if SOL28 is going to be called:
       callsol28 = .FALSE.
       if (cioptf.eq.28) callsol28 = .TRUE.
-      if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) THEN
+      if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) then
         do id = 1, nbgplas
-          if (bgplasopt(id,5).eq.28.0) callsol28 = .TRUE.
+          if (bgplasopt(id,5).eq.28.0.or.bgplasopt(id,8).eq.28.0)
+     .      callsol28 = .TRUE.
         enddo
       endif
       if (callsol28.AND.s28mode.GE.4.0) CALL SetupSOL28
@@ -121,7 +123,8 @@ C-----------------------------------------------------------------------
 C     INITIALISE COUNTER FOR USE IF SOL IS TO BE CALCULATED ITERATIVELY
 C-----------------------------------------------------------------------
 C
-      IF (CPINOPT.EQ.1.or.(cneuta.eq.1.and.ciopte.eq.4)) THEN
+      IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).or.
+     .    (cneuta.eq.1.and.ciopte.eq.4)) THEN
         LPINOPT = .TRUE.
         IITERSOL = 1
         IITERPIN = 0
@@ -132,6 +135,14 @@ c       being used:
           CALL SetupIteration(iitersol)
           CALL SaveSolution
           IITERSOL = 2
+          IITERPIN = 1
+        elseif (citersol.eq.2) then
+          WRITE(0,*) 
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) 
+          IITERSOL = 1
           IITERPIN = 1
         ENDIF
 c slmod end
@@ -592,8 +603,9 @@ c
 c slmod begin
       if (liter) then
         goto 360
-      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
-     .        rel_opt.ne.0) then
+      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
+c      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
+c     .        rel_opt.ne.0) then
 c...    Calculate plasma solution one more time, so that it is consistent
 c       with the current PIN source terms:
         lpinopt = .false.
@@ -620,7 +632,8 @@ C-----------------------------------------------------------------------
 C     INITIALISE COUNTER FOR USE IF SOL IS TO BE CALCULATED ITERATIVELY
 C-----------------------------------------------------------------------
 C
-      IF (CPINOPT.EQ.1.or.(cneuta.eq.1.and.ciopte.eq.4)) THEN
+      IF ((CPINOPT.EQ.1.OR.CPINOPT.EQ.4).or.
+     .    (cneuta.eq.1.and.ciopte.eq.4)) THEN
         LPINOPT = .TRUE.
         IITERSOL = 1
         IITERPIN = 0
@@ -629,8 +642,16 @@ c...    Avoid the 0th call to PIN if boundary condition relaxation is
 c       being used:
         IF (rel_opt.EQ.2.OR.rel_opt.EQ.3) THEN
           CALL SetupIteration(iitersol)
-          CALL SaveSolution
+c          CALL SaveSolution
           IITERSOL = 2
+          IITERPIN = 1
+        elseif (citersol.eq.2) then
+          WRITE(0,*) 
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+          WRITE(0,*) '*********************************************'
+          WRITE(0,*)
+          IITERSOL = 1
           IITERPIN = 1
         ENDIF 
 c slmod end
@@ -1006,8 +1027,9 @@ c
 c slmod begin
       if (liter) then
         goto 361
-      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
-     .        rel_opt.ne.0) then
+      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
+c      elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt.and.
+c     .        rel_opt.ne.0) then
 c...    Calculate plasma solution one more time, so that it is consistent
 c       with the current PIN source terms:
         lpinopt = .false.
@@ -1105,7 +1127,7 @@ c     IF Ofield = 4 and PIN has been run - call the E-field
 c     calculation routine again to revise the values based on the
 c     PIN generated Leq values.
 c
-      if (cpinopt.eq.1.and.ofield.eq.4) then
+      if ((cpinopt.eq.1.or.cpinopt.eq.4).and.ofield.eq.4) then
 c
          call calcef4(lpinavail)
 c
@@ -1151,15 +1173,11 @@ c...TEMP:
       CALL OutputEIRENE(67,'DONE CALCULATING PLASMA SOLUTION')
       WRITE(67,*)
 
-      IF (sloutput) WRITE(0,*) 'LAST SAVE SOLUTION'
       IF (cpinopt.EQ.0.OR.citersol.EQ.0.OR.rel_opt.EQ.0.OR.
      .    citersol.EQ.2)
      .  CALL SaveSolution
 
-      IF (sloutput) WRITE(0,*) 'END OF BGPLASMA'
-
-      if (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
-
+      IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
 c      CALL SaveSolution
 c slmod end
       return
@@ -1612,6 +1630,10 @@ c
       subroutine PINEXE(title,equil,lpinopt,litersol,iitersol,
      >                  liter,tmpcsopt,tmpcioptf,lpinavail,
      >                  iiterpin)
+      use error_handling
+c slmod begin
+      USE mod_sol28_global
+c slmod end
       implicit none
       logical lpinopt,litersol,liter,lpinavail
       integer iitersol,tmpcsopt,tmpcioptf,iiterpin
@@ -1631,6 +1653,10 @@ c     Local variables
 c
       integer retcode,ik,ir
       real pintim
+c slmod begin
+      integer iparam
+      character pin_command*1024
+c slmod end
 c
 c     Initialization
 c
@@ -1731,7 +1757,7 @@ c
            ENDIF
 
         ELSEIF (pincode.EQ.4.OR.pincode.EQ.5) THEN
-c...       Calling EIRENE04/06:
+c...       Calling EIRENE04/06/07:
            SELECTCASE (pincode)
              CASE(4)
                CALL WriteEireneFiles_04
@@ -1749,11 +1775,22 @@ c...       Calling EIRENE04/06:
      .         ' (step ',rel_step,'  subiteration ',rel_iter,
      .         ')'
            ELSE
-             WRITE(0     ,*) 'Calling EIRENE0x, iteration',iitersol
+             WRITE(0     ,*) 'Calling EIRENE0x, iteration',iitersol,
+     .                                                     nitersol
              WRITE(PINOUT,*) 'Calling EIRENE0x, iteration',iitersol
            ENDIF
-
-           CALL InvokePIN(actpin,pintim,retcode)
+c...       Pass iteration number to the EIRENE script if tetrahedrons
+c          are being called:  *** HACK *** special for filaments at the moment...
+           IF (citersol.GT.0.AND.
+     .         (eirgeom.EQ.3.OR.opt_eir%ntime.NE.0)) THEN
+             iparam = iitersol    
+           ELSE
+             iparam = -1
+           ENDIF
+           WRITE(pin_command,'(A,I5.3)') TRIM(actpin),iparam
+           WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
+           CALL InvokePIN(pin_command,pintim,retcode)
+c           CALL InvokePIN(actpin,pintim,retcode)
 
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
@@ -1766,7 +1803,7 @@ c...       Read PIN results:
              CASE(4)
                CALL ReadEireneResults_04
              CASE(5)
-               CALL ReadEireneResults_06
+               CALL ReadEireneResults_06(iitersol)
            ENDSELECT
 
 c
@@ -1797,52 +1834,52 @@ c       until return codes are available
 c
 c       Choose 30 seconds as time limit for now.
 c
+c       jdemod - reduce the time limit to 2 seconds for exit and 10 seconds for warning
+c
 c slmod begin
-        if ((retcode.ne.0.or.pintim.lt.5.0).and.
+        if ((retcode.ne.0.or.pintim.lt.10.0).and.
      .      pincode.ne.4.and.pincode.ne.5) then
 c
-           if (pintim.lt.5.0) then
+           if (pintim.lt.10.0) then 
 c
-c        if (retcode.ne.0.or.pintim.lt.30.0) then
+c             jdemod - change to warning for 10s
 c
-c           if (pintim.lt.30.0) then
-c slmod end
+              write(error_message_data,'(a,f8.3,a)')
+     >         'PIN WARNING: LESS THAN 10 SECONDS USED IN PIN'//
+     >         ': TIME USED = ',pintim,' (S) : CHECK FOR'//
+     >         ' INPUT ERROR'
+              call errmsg(error_message_data)
+
+
+           elseif (pintim.lt.2.0) then
 c
-           call prc('PIN ERROR: LESS THAN 10 SECONDS USED IN PIN')
-           call prr('           TIME USED = ',pintim)
-           call prc('           THERE IS LIKELY AN ERROR IN THE')
-           call prc('           PIN INPUT - CHECK THE PIN OUTPUT')
-           call prc('           FILES FOR AN EXACT DESCRIPTION')
+c             jdemod - exit if less than 2 seconds
 c
-           write(6,*) 'PIN ERROR: LESS THAN 10 SECONDS USED IN PIN'
-           write(6,*) '           TIME USED = ',pintim
-           write(6,*) '           THERE IS LIKELY AN ERROR IN THE'
-           write(6,*) '           PIN INPUT - CHECK THE PIN OUTPUT'
-           write(6,*) '           FILES FOR AN EXACT DESCRIPTION'
-c
-           write(0,*) 'PIN ERROR: LESS THAN 10 SECONDS USED IN PIN'
-           write(0,*) '           TIME USED = ',pintim
-           write(0,*) '           THERE IS LIKELY AN ERROR IN THE'
-           write(0,*) '           PIN INPUT - CHECK THE PIN OUTPUT'
-           write(0,*) '           FILES FOR AN EXACT DESCRIPTION'
-c
+              write(error_message_data,'(a,f8.3,a)')
+     >         'PIN ERROR: LESS THAN 2 SECONDS USED IN PIN'//
+     >         ': TIME USED = ',pintim,' (S) : CHECK FOR'//
+     >         ' INPUT ERROR: PROGRAM HALT'
+              call errmsg(error_message_data)
+              stop 'PIN < 2 SECONDS'
+
            endif
+c
+c          check PIN return code
 c
            if (retcode.ne.0) then
 c
               retcode = retcode/256
-              call prc('ERROR: PIN DID NOT EXECUTE CORRECTLY')
-              call pri('PIN RETURN CODE = ', retcode)
 c
-              write(6,*) 'ERROR: PIN DID NOT EXECUTE CORRECTLY'
-              write(6,*) 'PIN RETURN CODE = ',retcode
+c             Issue error message for PIN return code 
+c             jdemod - not sure about the divide by 256 unless the 
+c                      retcode starts off large
 c
-              write(0,*) 'ERROR: PIN DID NOT EXECUTE CORRECTLY'
-              write(0,*) 'PIN RETURN CODE = ',retcode
+              call errmsg('ERROR: PIN DID NOT EXECUTE CORRECTLY:'//
+     >                    ' PROGRAM HALT : PIN RETURN CODE =',retcode)
+c
+              stop 'PIN EXECUTION ERROR'
 c
            endif
-c
-           stop 1
 c
         endif
 c
@@ -1877,7 +1914,7 @@ C
            IF (IITERSOL.GE.NITERSOL) litersol = .false.
 c slmod begin - tmp
            WRITE(PINOUT,*) 'IITER,NITER,LITER=',
-     .                     iitersol,nitersol,litersol
+     .       iitersol,nitersol,litersol,lpinopt
 c slmod end
 C
 C          STORE VALUES OF PLASMA PARAMETERS FOR CONVERGENCE STUDY
@@ -1921,7 +1958,7 @@ C
            IITERSOL = IITERSOL + 1
            liter = .true.
 c slmod begin
-           IF (rel_opt.NE.0.AND..NOT.litersol) liter = .FALSE.
+           IF (citersol.EQ.2.AND..NOT.litersol) liter = .FALSE.
 c slmod end
         ENDIF
 c
