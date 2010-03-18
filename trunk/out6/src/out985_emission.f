@@ -1,8 +1,4 @@
 c     -*-Fortran-*-
-
-
-      
-
 c
 c ====================================================================== 
 c
@@ -16,8 +12,10 @@ c
 
       INTEGER GetNumberOfObjects
 
-      INTEGER iint,ipla,i2,iobj,ipixel,max_ik,max_ir,max_in,count,ndat
+      INTEGER iint,ipla,i2,iobj,ipixel,max_ik,max_ir,max_in,count,ndat,
+     .        iobject,i1,i3,p(4)
       REAL    wlngth,delta
+      CHARACTER fname*512
       REAL, ALLOCATABLE :: osm(:,:),tdata(:)
 
 
@@ -32,6 +30,8 @@ c...  Check for the presence of standard (OSM) and triangle (EIRENE) grid elemen
              max_ik = MAX(max_ik,obj(iobj)%ik)
              max_ir = MAX(max_ir,obj(iobj)%ir)
           CASE (OP_EIRENE_GRID)
+             max_ik = MAX(max_ik,obj(iobj)%ik)
+             max_ir = MAX(max_ir,obj(iobj)%ir)
              max_in = MAX(max_in,obj(iobj)%in)
           CASE DEFAULT
         ENDSELECT
@@ -54,7 +54,7 @@ c...  Allocate memory for spectrum and plasma data storage:
      .      nplasma = nplasma + 1
         ENDDO
         ALLOCATE(spectrum(MAXSPECBIN,count*nspectrum))
-        ALLOCATE(plasma  (count*nplasma  ))
+        ALLOCATE(plasma  (           count*nplasma  ))
         spectrum = 0.0
 c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
       ENDIF
@@ -71,29 +71,61 @@ c...      Fluid grid quantity:
           CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
         ENDIF
 
-        IF (max_in.GT.0) THEN
+        IF (.FALSE..AND.max_in.GT.0) THEN
 c...      EIRENE grid:
-          ndat = GetNumberOfObjects()
+
+c...      Check which name 
+          fname = 'default'
+          i2 = 0
+          i3 = 0
+          DO iobject = 1, opt%obj_num
+            IF (opt%obj_type(iobject).EQ.6) THEN
+              DO i1 = 1, LEN_TRIM(opt%obj_fname(iobject))
+                IF (opt%obj_fname(iobject)(i1:i1).EQ.'.') THEN
+                  IF (i2.EQ.0) i2 = i1
+                  i3 = i1
+                ENDIF
+c                WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
+              ENDDO
+              fname ='eirene'//opt%obj_fname(iobject)(i2:i3)//'transfer'
+              WRITE(0,*) 'fname:',fname(1:LEN_TRIM(fname))
+              EXIT
+            ENDIF
+          ENDDO
+
+          ndat = GetNumberOfObjects(fname(1:LEN_TRIM(fname)))
           ALLOCATE(tdata(ndat))
-          CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
+
+          p = [0,0,0,0]
+          IF (opt%int_line(iint).EQ.'B_ALPHA')    p = [6,1,7 ,1]  ! Dalpha
+          IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
+          IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
+          IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0] ! D+ density
+          WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
+          IF (p(1).EQ.0) CALL ER('AssignEmissionData','Unrecognised '//
+     .                           'EIRENE data tag',*99)
+          CALL LoadTriangleData(p(1),p(2),p(3),p(4),tdata,fname)  
+          
+c          CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
+
+          WRITE(0,*) 'DONE'
         ENDIF
 
-
         opt%int_wlngth(iint) = wlngth
-
 
 c...    Assign data to objects:
         DO iobj = 1, nobj
           IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
 
           SELECTCASE (obj(iobj)%subtype)
-            CASE (OP_FLUID_GRID)
+            CASE (OP_FLUID_GRID,OP_EIRENE_GRID)
 c...          Fluid grid:
-              obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir)
+              obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir) 
 
-            CASE (OP_EIRENE_GRID)
-c...          Eirene grid:
-              obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
+c            CASE (OP_EIRENE_GRID)
+cc...          Eirene grid:
+c              obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
+cc     .            * obj(iobj)%quantity(iint)
 
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:

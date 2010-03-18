@@ -6702,9 +6702,12 @@ C-----------------------------------------------------------------------
 c
 c     Iterative SOL Option
 c
-      if (cpinopt.eq.1) then  
+c slmod begin
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then  
 c
-
+c      if (cpinopt.eq.1) then  
+c slmod end
+c
        IF (CITERSOL.EQ.0) THEN
        CALL PRC ('  PIN ITERATION OPT 0: THE SOL IS NOT CALCULATED ITERA
      >TIVELY.')
@@ -7422,7 +7425,11 @@ C-----------------------------------------------------------------------
 c
        if (cpinopt.eq.0) then
           call prr ('                       Lsource = SMAX * ', ceflen)
-       elseif (cpinopt.eq.1) then
+c slmod begin
+       elseif (cpinopt.eq.1.or.cpinopt.eq.4) then
+c
+c       elseif (cpinopt.eq.1) then
+c slmod end
           call prc ('                       Lsource = Lequiv from PIN')
        endif
 c
@@ -7828,12 +7835,16 @@ c
        CALL PRC ('  PIN RUN OPT      0 : PIN NOT EXECUTED FOR BG')
        call prc ('                       PLASMA SOLUTION')
 
-      ELSEIF (CPINOPT.EQ.1) THEN
-
-       CALL PRC ('  PIN RUN OPT      1 : PIN IS EXECUTED. SOME RESULTS R
-     >ETAINED.')
-       CALL PRC ('                       THE PIN INVOCATION COMMAND IS:'
-     >)
+      ELSEIF (CPINOPT.EQ.1.OR.CPINOPT.EQ.4) THEN
+       IF (CPINOPT.EQ.1) THEN
+         CALL PRC ('  PIN RUN OPT      1 : PIN IS EXECUTED. SOME '// 
+     >             'RESULTS RETAINED.')
+       ELSE
+         CALL PRC ('  PIN RUN OPT      4 : PIN IS EXECUTED. SOME '// 
+     >             'RESULTS RETAINED.  PIN IMPURITY SOURCE USED.')
+       ENDIF
+       CALL PRC ('                       THE PIN INVOCATION '//
+     >           'COMMAND IS:')
        LEN = LENSTR(actpin)
        CALL PRC ('                      '//ACTPIN(1:LEN))
 c

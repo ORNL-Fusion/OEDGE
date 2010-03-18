@@ -15,28 +15,29 @@ c
       IF (nion.NE.1)
      .  CALL ER('SolveFluidEquations','One fluid ion only please',*99)
 
-
-
       IF (log.GT.0) THEN
-        WRITE(logfp,*) 'ION      :',mi(ion),ai(ion)
+        WRITE(logfp,*) 'ABOUT TO CALL PLASMA SOLVER'
+        WRITE(logfp,*) 
+        WRITE(logfp,*) 'ION DATA :',mi(ion),ai(ion)
         WRITE(logfp,*) '         :',zi(ion),ci(ion)
         WRITE(logfp,*) 
         ic = 0
         WRITE(logfp,*) 'TARGET LO:',ic
-        WRITE(logfp,*) '         :',cs,machno(ic,ion)
-        WRITE(logfp,*) '         :',isat(ictarg(LO),ion),area(ic)
-        WRITE(logfp,*) '         :',ne(ic),ni(ic,ion)
-        WRITE(logfp,*) '         :',vi(ic,ion)
-        WRITE(logfp,*) '         :',pe(ic),pi(ic,ion)
-        WRITE(logfp,*) '         :',te(ic),ti(ic,ion)
+        WRITE(logfp,*) '  cs,M      :',cs,machno(ic,ion)
+        WRITE(logfp,*) '  jsat,area :',isat(ictarg(LO),ion),area(ic)
+        WRITE(logfp,*) '  ne,ni     :',ne(ic),ni(ic,ion)
+        WRITE(logfp,*) '  vi        :',vi(ic,ion)
+        WRITE(logfp,*) '  pe,pi     :',pe(ic),pi(ic,ion)
+        WRITE(logfp,*) '  te,ti     :',te(ic),ti(ic,ion)
         ic = icmax + 1
         WRITE(logfp,*) 'TARGET HI:',ic
-        WRITE(logfp,*) '         :',cs,machno(ic,ion)
-        WRITE(logfp,*) '         :',isat(ictarg(HI),ion),area(ic)
-        WRITE(logfp,*) '         :',ne(ic),ni(ic,ion)
-        WRITE(logfp,*) '         :',vi(ic,ion)
-        WRITE(logfp,*) '         :',pe(ic),pi(ic,ion)
-        WRITE(logfp,*) '         :',te(ic),ti(ic,ion)
+        WRITE(logfp,*) '  cs,M      :',cs,machno(ic,ion)
+        WRITE(logfp,*) '  jsat,area :',isat(ictarg(HI),ion),area(ic)
+        WRITE(logfp,*) '  ne,ni     :',ne(ic),ni(ic,ion)
+        WRITE(logfp,*) '  vi        :',vi(ic,ion)
+        WRITE(logfp,*) '  pe,pi     :',pe(ic),pi(ic,ion)
+        WRITE(logfp,*) '  te,ti     :',te(ic),ti(ic,ion)
+c        WRITE(logfp,*) 'MOMINT:',momint(1:icmax,ion)
       ENDIF
 
 c...  Assign target conditions to standard fluid arrays:
@@ -48,8 +49,8 @@ c...  Assign target conditions to standard fluid arrays:
       ENDDO
 
 
-      SELECTCASE (0)
-        CASE (0)
+      SELECTCASE (sol_option)
+        CASE (28)
           CALL SimpleAsPie(ion)
 c        CASE (1)
 c...      Portal to SOL23:
@@ -89,18 +90,31 @@ c
 
       anl_imaginary = .FALSE.
 
+      IF (log.GT.0) THEN
+        WRITE(logfp,*) 'SOL28'
+        WRITE(logfp,'(3A4,2A10,A6,3A10,5X,2(2A10,2X),4A10)')
+     .    'i','iSL','iSH','ni','vi','M','pe+pi','te','ti',
+     .    'par','mom','qcond','qconv','a','b','c','r'
+      ENDIF
+
 c...  Density and velocity:
       DO WHILE (cont)
         cont = .FALSE.
-
         IF (log.GT.0) THEN
           ic = 0
-          WRITE(logfp,'(A,I4,8X,42X,1P,2D10.2,2X,5D10.2,0P,3F8.2)')
-     .      '  SOL28:',ic,
+          WRITE(logfp,'(I4,8X,1P,D10.2,D10.2,0P,F6.2,1P,D10.2,
+     .                  0P,2F10.4,5X,1P,2D10.2,2X,2D10.2)')
+     .      ic,
+     .      ni(ic,ion),vi(ic,ion),machno(ic,ion),pe(ic)+pi(ic,ion),
+     .      te(ic),ti(ic,ion),
      .      parsrc(ic,ion),momsrc(ic,ion),
-     .      ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
-     .      qcond(ic),qconv(ic),te(ic),ti(ic,ion),
-     .      machno(ic,ion)
+     .      qcond(ic),qconv(ic)
+c          WRITE(logfp,'(A,I4,8X,42X,1P,2D10.2,2X,5D10.2,0P,3F8.2)')
+c     .      '  SOL28:',ic,
+c     .      parsrc(ic,ion),momsrc(ic,ion),
+c     .      ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
+c     .      qcond(ic),qconv(ic),te(ic),ti(ic,ion),
+c     .      machno(ic,ion)
         ENDIF
 
         DO ic = 1, icmax
@@ -150,25 +164,42 @@ c...
           machno(ic,ion) = DABS(vi(ic,ion)) / cs
 
           IF (log.GT.0) 
-     .       WRITE(logfp,'(A,3I4,1P,4D10.2,2X,2D10.2,2X,5D10.2,
-     .                     0P,3F8.2)')
-     .        '  SOL28:',ic,anl_ic_super(LO),anl_ic_super(HI),
-     .        a1,b1,c1,r1,
+     .       WRITE(logfp,'(3I4,1P,2D10.2,0P,F6.2,1P,D10.2,
+     .                     0P,2F10.4,5X,1P,2D10.2,2X,2D10.2,2X,4D10.2)')
+     .        ic,anl_ic_super(LO),anl_ic_super(HI),
+     .        ni(ic,ion),
+     .        vi(ic,ion),machno(ic,ion)*DSIGN(1.0D0,vi(ic,ion)),
+     .        pe(ic)+pi(ic,ion),
+     .        te(ic),ti(ic,ion),
      .        par(ic,ion),mom(ic,ion),
-     .        ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
-     .        qcond(ic),qconv(ic),te(ic),ti(ic,ion),
-     .        machno(ic,ion)
+     .        qcond(ic),qconv(ic),
+     .        a1,b1,c1,r1
+c     .       WRITE(logfp,'(A,3I4,1P,4D10.2,2X,2D10.2,2X,5D10.2,
+c     .                     0P,3F8.2)')
+c     .        '  SOL28:',ic,anl_ic_super(LO),anl_ic_super(HI),
+c     .        a1,b1,c1,r1,
+c     .        par(ic,ion),mom(ic,ion),
+c     .        ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
+c     .        qcond(ic),qconv(ic),te(ic),ti(ic,ion),
+c     .        machno(ic,ion)
 
         ENDDO  ! End of IC loop
 
         IF (log.GT.0) THEN
           ic = icmax + 1
-          WRITE(logfp,'(A,I4,8X,42X,1P,2D10.2,2X,5D10.2,0P,3F8.2)')
-     .      '  SOL28:',ic,
+          WRITE(logfp,'(I4,8X,1P,D10.2,D10.2,0P,F6.2,1P,D10.2,
+     .                  0P,2F10.4,5X,1P,2D10.2,2X,2D10.2)')
+     .      ic,
+     .      ni(ic,ion),vi(ic,ion),machno(ic,ion),pe(ic)+pi(ic,ion),
+     .      te(ic),ti(ic,ion),
      .      parsrc(ic,ion),momsrc(ic,ion),
-     .      ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
-     .      qcond(ic),qconv(ic),te(ic),ti(ic,ion),
-     .      machno(ic,ion)
+     .      qcond(ic),qconv(ic)
+c          WRITE(logfp,'(A,I4,8X,42X,1P,2D10.2,2X,5D10.2,0P,3F8.2)')
+c     .      '  SOL28:',ic,
+c     .      parsrc(ic,ion),momsrc(ic,ion),
+c     .      ni(ic,ion),vi(ic,ion),pe(ic)+pi(ic,ion),
+c     .      qcond(ic),qconv(ic),te(ic),ti(ic,ion),
+c     .      machno(ic,ion)
         ENDIF
 
       ENDDO  ! End of main loop

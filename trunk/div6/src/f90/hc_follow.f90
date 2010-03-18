@@ -1616,7 +1616,11 @@ Contains
                       ! Made it to particle for the first time.
                       !HC_Num_Orig_Reach_State (Cur_HC_Spec,Launch_Reg) =  HC_Num_Orig_Reach_State (Cur_HC_Spec,Launch_Reg) + 1.0
                       !Particle_Reach_State (Cur_HC_Spec, Launch_Reg) = Particle_Reach_State (Cur_HC_Spec, Launch_Reg) + 1.0
-                      HC_Num_Orig_Reach_State (Cur_HC_Spec,Launch_Reg) =  HC_Num_Orig_Reach_State (Cur_HC_Spec,Launch_Reg) + sput_weight
+
+                      ! IPP/09 Krieger - shortened line (SUNWorkshop chokes over len>132)
+
+                      HC_Num_Orig_Reach_State(Cur_HC_Spec,Launch_Reg) =  HC_Num_Orig_Reach_State(Cur_HC_Spec,Launch_Reg) + &
+                                                                         &sput_weight
                       Particle_Reach_State (Cur_HC_Spec, Launch_Reg) = Particle_Reach_State (Cur_HC_Spec, Launch_Reg) + sput_weight
                    End If
  

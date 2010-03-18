@@ -985,8 +985,8 @@ c
 
       count = count + 1
       WRITE(PINOUT,'(1X,A,I3,A)') 'Saving plasma (',count,')'
-      IF (sloutput) 
-     .  WRITE(0     ,'(1X,A,I3,A)') 'Saving plasma (',count,')'
+c      IF (sloutput) 
+c     .  WRITE(0     ,'(1X,A,I3,A)') 'Saving plasma (',count,')'
 c      IF (rel_opt.GT.0)
 c     .WRITE(0     ,'(1X,A,I3,A)') 'Saving plasma (',count,')'
 
@@ -1442,7 +1442,7 @@ c...    RELMODE=20 option, where RELMODE can be changed on the fly:
           status = .TRUE.
 
           IF (init.AND.relmode.EQ.2) THEN
-            CALL ISet(supflx,2*MAXNRS,1)
+            supflx = 1
             init = .FALSE.
           ENDIF
 

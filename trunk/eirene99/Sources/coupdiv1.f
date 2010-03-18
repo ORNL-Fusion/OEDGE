@@ -3843,10 +3843,10 @@ c...  Count radial surface segments:
 c
 c     jdemod - removing NUMSURF hack for now
 c
-      WRITE(0,*) '------------------------------'
+      WRITE(6,*) '------------------------------'
 c      WRITE(0,*) 'NUMSURF HACK!'
-      WRITE(0,*) 'NUMSURF HACK REMOVED!'
-      WRITE(0,*) '------------------------------'
+      WRITE(6,*) 'NUMSURF HACK REMOVED!'
+      WRITE(6,*) '------------------------------'
 c      NUMSURF = NUMSURF + 4
 c
 c     jdemod 
@@ -4237,13 +4237,26 @@ c        RATIO2=EXP(RATIO2)
 c        RDUMD2P=PDENM(IION,IN)*RATIO2
         RDUMD2P=1.0
 
-        WRITE(32,8975) IN-NSURF,
-     .    1.0D-06*VOL(IN),
-     .    1.0D+06*(PAPL(IPLS,IN)+PMPL(IPLS,IN)+PIPL(IPLS,IN))/ELCHA,
-c...    D2+ density:
-     .    1.0D+06*RDUMD2P,
-     .    1.0D+06*(PAIO(IPLS,IN)+PMIO(IPLS,IN)+PIIO(IPLS,IN))/ELCHA,
-     .    1.0D+06*PIIO(1,IN),DEIN(IN)/PIIO(1,IN)
+c       IPP/08 Krieger - SUN runtime system leads to floating
+c       exception if in dein(in)/piio(1,in) the denominator is zero.
+c       Fixed by checking condition and setting output to zero
+        if (piio(1,in).eq.0.0) then
+          WRITE(32,8975) IN-NSURF,
+     .      1.0D-06*VOL(IN),
+     .      1.0D+06*(PAPL(IPLS,IN)+PMPL(IPLS,IN)+PIPL(IPLS,IN))/ELCHA,
+c...      D2+ density:
+     .      1.0D+06*RDUMD2P,
+     .      1.0D+06*(PAIO(IPLS,IN)+PMIO(IPLS,IN)+PIIO(IPLS,IN))/ELCHA,
+     .      1.0D+06*PIIO(1,IN),0.0
+        else
+          WRITE(32,8975) IN-NSURF,
+     .      1.0D-06*VOL(IN),
+     .      1.0D+06*(PAPL(IPLS,IN)+PMPL(IPLS,IN)+PIPL(IPLS,IN))/ELCHA,
+c...      D2+ density:
+     .      1.0D+06*RDUMD2P,
+     .      1.0D+06*(PAIO(IPLS,IN)+PMIO(IPLS,IN)+PIIO(IPLS,IN))/ELCHA,
+     .      1.0D+06*PIIO(1,IN),DEIN(IN)/PIIO(1,IN)
+         endif
       ENDDO
 8975  FORMAT(I6,1P,E12.4,2X,10(E14.4:))
 8976  FORMAT(6X,   A12  ,2X,10(A14  :))

@@ -2,19 +2,28 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
-      SUBROUTINE InterpolateTeProfile(mode)  ! Pass quantity to be interpolated... so that this routine is non-Te specific...
+      SUBROUTINE InterpolateProfile(mode)  ! Pass quantity to be interpolated... so that this routine is non-Te specific...
+      USE mod_sol28_params
       USE mod_sol28_solver
       IMPLICIT none
  
       INTEGER, INTENT(IN) :: mode
 
-      INTEGER i1,ic,inode1,inode2,in1,in2,target
-      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,A,B,C
+      INTEGER i1,ic,inode1,inode2,in1,in2,target,ion
+      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,A,B,C,t(0:S28_MAXNKS+1)
       REAL*8, POINTER :: s(:)
+
+      ion = 1
+
+      t = 0.0D0
 
 c...  Find first node in series with Te specified:
       DO inode1 = 1, nnode
-        IF (node(inode1)%te.NE.0.0) EXIT
+        IF ((mode.EQ.1.AND.node(inode1)%te     .NE.0.0).OR.
+     .      (mode.EQ.2.AND.node(inode1)%ti(ion).NE.0.0).OR.
+     .      (opt%bc(LO).EQ.3.AND.inode1.EQ.1)) EXIT
+c        IF (node(inode1)%te.NE.0.0.OR.
+c     .      (opt%bc(LO).EQ.3.AND.inode1.EQ.1)) EXIT
       ENDDO
       IF (inode1.GT.nnode) CALL ER('InterpolatePro','NODE1 bad',*99)
 
@@ -25,12 +34,19 @@ c     where Te is defined:
 
 c...    Find next node in series with Te data:        
         DO inode2 = inode1+1, nnode
-          IF (node(inode2)%te.NE.0.0) EXIT
+          IF ((mode.EQ.1.AND.node(inode2)%te     .NE.0.0).OR.
+     .        (mode.EQ.2.AND.node(inode2)%ti(ion).NE.0.0).OR.
+     .        (opt%bc(HI).EQ.3.AND.inode2.EQ.nnode)) EXIT
+c          IF (node(inode2)%te.NE.0.0.OR.
+c     .        (opt%bc(HI).EQ.3.AND.inode2.EQ.nnode)) EXIT
         ENDDO
-        IF (inode1.GT.nnode) CALL ER('InterpolatePro','NODE2 bad',*99)
+        IF (inode1.GE.nnode) CALL ER('InterpolatePro','NODE2 bad',*99)
 
 c...    Check which side of the symmetry point the nodes are on
 c       and assign 's' (distance along magnetic field line) accordingly:
+c        WRITE(logfp,*) 'PRECRIP:',inode1,mnode,inode2,nnode
+c        WRITE(0    ,*) 'PRECRIP:',inode1,mnode,inode2,nnode
+
         IF     (inode1.LT.mnode.AND.inode2.LE.mnode) THEN
           target = LO
           s => sfor
@@ -48,38 +64,49 @@ c       and assign 's' (distance along magnetic field line) accordingly:
 
 c...    Cycle if...:  *** NOT GOOD ENOUGH SINCE YOU COULD HAVE Evolve... CALLED UPSTREAM
 c       OF THE TARGET IN A DEFINED REGION... what a mess...
-        IF ((mode.EQ.1.AND.node(in2)%par_mode.EQ.6.AND.
-     .       opt%bc(target).GE.2).OR.
-     .      (mode.EQ.2.AND.node(in2)%par_mode.NE.6)) THEN
-          inode1 = inode2
-          CYCLE
-        ENDIF
+c        IF ((mode.EQ.1.AND.node(in2)%par_mode.EQ.6.AND.
+c     .       opt%bc(target).GE.2).OR.
+c     .      (mode.EQ.2.AND.node(in2)%par_mode.NE.6)) THEN
+c          inode1 = inode2
+c          CYCLE
+c        ENDIF
 
 c...
         s1 = s(node(in1)%icell)
         s2 = s(node(in2)%icell)
         IF (in1.EQ.1.OR.in1.EQ.nnode) s1 = 0.0
 
-        v1 = DBLE(node(in1)%te)
-        v2 = DBLE(node(in2)%te)
+        SELECTCASE (mode) 
+          CASE (1)
+            v1 = DBLE(node(in1)%te)
+            v2 = DBLE(node(in2)%te)
+          CASE (2)
+            v1 = DBLE(node(in1)%ti(ion))
+            v2 = DBLE(node(in2)%ti(ion))
+          CASE DEFAULT
+            CALL ER('InterpolateProfile','Unknown MODE',*99)
+        ENDSELECT
+
+c        WRITE(0,*) 'V1,2:',v1,v2
 
         deltav = v2 - v1
         deltas = s2 - s1
 
+c        SELECTCASE (node_par_mode(in2)) 
         SELECTCASE (node(in2)%par_mode) 
           CASE (1)
 c...        Power law:
             x = DBLE(node(in2)%par_exp)
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
-              te(ic) = deltav * frac**x + v1
+              t(ic) = deltav * frac**x + v1
             ENDDO
           CASE (2)
 c...        Exponential:
             x = DBLE(node(in2)%par_exp)
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
-              te(ic) = deltav * frac**x + v1
+              t(ic) = deltav * frac**x + v1
             ENDDO
           CASE (3)
 c...        Pure conduction (no dependence on power distribution):
@@ -88,7 +115,7 @@ c...        Pure conduction (no dependence on power distribution):
             B = v2
             C = (B**(1/x) - A) / deltas
             DO ic = node(inode1)%icell, node(inode2)%icell
-              te(ic) = (A + C * (s(ic) - s1))**x 
+              t(ic) = (A + C * (s(ic) - s1))**x 
 c              frac = (s(ic) - s1) / deltas   ...old, flawed method...
 c              te(ic) = deltav * frac**x + v1
             ENDDO
@@ -98,25 +125,40 @@ c...        Pleasant:
             x = 2.0D0 / 7.0D0
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
-              te(ic) = (1.0D0 - frac) * (deltav * frac**x      + v1) + 
-     .                          frac  * (deltav * frac**0.05D0 + v1)         
+              t(ic) = (1.0D0 - frac) * (deltav * frac**x      + v1) + 
+     .                         frac  * (deltav * frac**0.05D0 + v1)         
             ENDDO
           CASE (6)
 c...        Te evolution:
-            CALL EvolveTeProfile(in1,in2,s,target)
+            CALL CalculateTeProfile(in1,in2,s,target)
+            t = te
+            IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
+     .                             'not ready',*99)
+c            CALL EvolveTeProfile(in1,in2,s,target)
           CASE DEFAULT
+c            WRITE(0,*) 'DAT:',in2,node_par_mode(in2)
             WRITE(0,*) 'DAT:',in2,node(in2)%par_mode
             STOP 'NO DEFAULT AS YET'
         ENDSELECT 
 c...    
         inode1 = inode2
       ENDDO
-      
+
+      SELECTCASE (mode) 
+        CASE (1)
+          te = t
+        CASE (2)
+          ti(:,ion) = t(:)
+        CASE DEFAULT
+          CALL ER('InterpolateProfile','Unknown MODE',*99)
+      ENDSELECT
+
       RETURN
- 99   WRITE(0,*) 'NNODE    :',nnode
-      WRITE(0,*) 'NODE 1 Te:',node(1:nnode)%te
-      WRITE(0,*) 'NODE 1 IC:',node(1:nnode)%icell
-      WRITE(0,*) 'NODE 1,2 :',inode1,inode2
+ 99   WRITE(0,*) 'MODE      =',mode
+      WRITE(0,*) 'NNODE     =',nnode
+      WRITE(0,*) 'NODE 1 Te =',node(1:nnode)%te
+      WRITE(0,*) 'NODE 1 IC =',node(1:nnode)%icell
+      WRITE(0,*) 'NODE 1,2  =',inode1,inode2
       STOP
       END
 c
@@ -258,14 +300,14 @@ c...  Cell volume normalization:    ! Do I need an area based normalization as w
       IF (sumval.NE.0.0D0) val(ic1:ic2) = val(ic1:ic2) / sumval
 
 
-      IF (log.GT.0) THEN
-        WRITE(logfp,*) 'INTEGR:',sumval,ic1,ic2
-        sumval = 0.0D0
-        DO ic = ic1, ic2
-          sumval = sumval + val(ic) * vol(ic)
-        ENDDO    
-        WRITE(logfp,*) '      :',sumval
-      ENDIF
+c      IF (log.GT.0) THEN
+c        WRITE(logfp,*) 'INTEGR:',sumval,ic1,ic2
+c        sumval = 0.0D0
+c        DO ic = ic1, ic2
+c          sumval = sumval + val(ic) * vol(ic)
+c        ENDDO    
+c        WRITE(logfp,*) '      :',sumval
+c      ENDIF
 
       RETURN
  99   STOP
@@ -333,6 +375,7 @@ c
 
       INTEGER ic,ic1,ic2
       REAL*8  val
+      REAL*8, ALLOCATABLE :: tmp_integ(:)
 
       IF     (target.EQ.LO.OR.target.EQ.HI) THEN
         ic1 = icbnd1(target)
@@ -353,7 +396,11 @@ c...      Return only the total volume integral:
           ENDDO
           integ(TOTAL) = val
 
-        CASE (1)
+        CASE (1:2)
+          IF (mode.EQ.2) THEN
+            ALLOCATE(tmp_integ(0:ic2))
+            tmp_integ(0:ic2) = integ(0:ic2)
+          ENDIF
 c...      Standard volume integration over range:
           integ(0:icmax) = 0.0D0
           DO ic = ic1, ic2-1
@@ -364,6 +411,11 @@ c...      Standard volume integration over range:
           val = 0.5D0 * vol(ic2) * array(ic2)
           integ(ic2  ) = integ(ic2) + val
           integ(TOTAL) = integ(ic2) + val
+          IF (mode.EQ.2) THEN
+            integ(ic1:ic2) = integ(ic1:ic2) + tmp_integ(ic1:ic2)
+            integ(TOTAL  ) = integ(TOTAL  ) + tmp_integ(TOTAL  )
+            DEALLOCATE(tmp_integ)
+          ENDIF
 
         CASEDEFAULT
           STOP 'YOU NAUGHTY BOY, NO SCALING OPTION FOR THIS'
