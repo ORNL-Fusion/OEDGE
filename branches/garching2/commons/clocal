@@ -1,0 +1,8 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /CLOCAL/ LFPS,LFSS,LFTS,LLLFPS,LTOLDS                      
+      save /clocal/
+c
+      REAL LTOLDS(MAXNKS,MAXNRS,MAXIZS),                                
+     >  LFPS (MAXNKS,MAXNRS,MAXIZS)    ,LFSS  (MAXNKS,MAXNRS,MAXIZS),   
+     >  LFTS (MAXNKS,MAXNRS,MAXIZS)    ,LLLFPS(MAXNKS,MAXNRS,MAXIZS)    

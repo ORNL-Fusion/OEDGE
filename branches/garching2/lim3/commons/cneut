@@ -1,0 +1,13 @@
+C                                                                               
+      COMMON /CNEUT/  SPUTYS,XATIZS,YATIZS,PATIZS,VINS  ,SNEWS ,                
+     >                XPRODS,YPRODS,PPRODS,RMAXS ,RANVA ,RANVB ,RANVC,          
+     >                FLUX1 ,ENEGY1,YIELD1,FY1   ,FYCUM ,RMAX1 ,RANVD,          
+     >                FLUX2 ,ENEGY2,YIELD2,FY2   ,FSPLIT,RMAX2                  
+      REAL SPUTYS(MAXIMP),XATIZS(MAXIMP),YATIZS(MAXIMP),PATIZS(MAXIMP)          
+      REAL VINS  (MAXIMP),XPRODS(MAXIMP),YPRODS(MAXIMP)                         
+      REAL PPRODS(MAXIMP),RMAXS (MAXIMP),RANVA (MAXIMP),RANVB (MAXIMP)          
+      REAL RANVC (MAXIMP),SNEWS (MAXIMP),RANVD (MAXIMP)                         
+      REAL FLUX1 (-MAXQXS:1,2), ENEGY1(-MAXQXS:1,2), YIELD1(-MAXQXS:1,2)        
+      REAL FY1   (-MAXQXS:1,2), FYCUM (-MAXQXS:1,2), RMAX1 (-MAXQXS:1,2)        
+      REAL FLUX2 (-MAXQXS:1,2), ENEGY2(-MAXQXS:1,2), YIELD2(-MAXQXS:1,2)        
+      REAL FY2   (-MAXQXS:1,2), FSPLIT(-MAXQXS:1,2), RMAX2 (-MAXQXS:1,2)        

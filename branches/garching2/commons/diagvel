@@ -1,0 +1,39 @@
+c     -*-Fortran-*-
+c                                                                       
+c     This file contains the declarations for debugging the             
+c     velocity distribution. When this option is not needed             
+c     these variables can be minimized so that memory is not            
+c     used.                                                             
+c                                                                       
+      integer  nvel,nvtime,maxvizs,maxvnks
+      real     velsep                                                   
+      parameter (nvel=50,nvtime=10,velsep=0.1)                          
+      parameter (maxvizs=maxizs,maxvnks=maxnks)
+c                                                                       
+      common /diagvel/ velplate,debugv,cstepv,                          
+     >                 velspace,velweight,velts,veltsw,ts,
+     >                 velcoord,velcell
+      save /diagvel/
+c                                                                       
+      real velplate,velspace(-nvel:nvel+1,maxvizs,maxvnks)
+      real velweight(-nvel:nvel+1,maxizs,maxvnks)
+      real velts(nvel,nvtime),veltsw(nvel,nvtime),ts(nvtime)            
+c
+c     The following 2 are really only used as local variables at the moment
+c
+      real velcoord(-nvel:nvel+1)
+      real velcell(maxnks)
+c
+      integer cstepv                                                    
+c                                                                       
+      logical debugv                                                    
+c                                                                       
+c     Vtime is a local variable but data values are initialized                                                                        
+c
+      real vtime(nvtime)                                                
+      data vtime /0.1, 0.2, 0.4, 0.6, 0.8, 1.0,                         
+     >            1.5, 2.0, 3.0, 5.0/                                   
+
+                                                                        
+                                                                        
+                                                                        
