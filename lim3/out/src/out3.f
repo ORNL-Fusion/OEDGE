@@ -462,11 +462,15 @@ C-----------------------------------------------------------------------
 c
 c     Check for new specified value of absfac and assign it if specified
 c     
+
       if (new_absfac.gt.0.0) then 
          absfac = new_absfac
          call errmsg('WARNING:VALUE OF ABSFAC OVER-RIDDEN BY INPUT:',
      >               absfac)
       endif
+
+c      write(0,*) 'ABSFAC:',absfac,new_absfac
+C
 c
 c     If a modified scaling for the net erosion plots has been speficied
 c     then calculate it now. 
@@ -1047,11 +1051,11 @@ c
 c     Write out the erosion data
 c        
         write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
-        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
-     >            'TOTAL REMOVAL','NET EROSION' 
+        write(6,'(5(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+     >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(4(4x,g18.8))') odouts(io),nerods(io,1),
-     >            nerods(io,3),nerods(io,4)
+           write(6,'(5(4x,g18.8))') odouts(io),nerods(io,1),
+     >            nerods(io,2),nerods(io,3),nerods(io,4)
 
         end do
 
@@ -1446,7 +1450,7 @@ C
       IF (IERR.NE.0)        GOTO 9999                                           
       IF (BREF(1:1).NE.'2'.and.bref(1:3).ne.'000') GOTO 1958                                           
       IF (IPLOT.EQ.0)       GOTO 1000                                           
-C                                                                               
+c
       DO 1010 J = 1, 7                                                          
         S(J) = ' '                                                              
  1010 CONTINUE                                                                  
@@ -1646,7 +1650,11 @@ C
         IF (IPLANE.EQ.99) THEN                                                  
           IF (VMIN.LT.0.0) VMIN = MAX (VMIN,-CL)                                
           IF (VMAX.GT.0.0) VMAX = MIN (VMAX, CL)                                
-          IF (BREF(2:2).EQ.'W') VMIN = MAX (VMIN, 0.0)                          
+c
+c         jdemod - aug/09 - remove limitation for "-"y plots for wall quantities - since +/-y may be assymmetric (?)
+c     
+c          IF (BREF(2:2).EQ.'W') VMIN = MAX (VMIN, 0.0)                          
+c
         ELSE                                                                    
           IF (VMIN.LT.0.0) VMIN = MAX (VMIN,-YS(NY3D))                          
           IF (VMAX.GT.0.0) VMAX = MIN (VMAX, YS(NY3D))                          
@@ -1855,8 +1863,10 @@ c
 c
 c     Write out the erosion data
 c        
-        write(6,'(a)') 'EROSION AS A FUNCTION OF Y:'
-        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+        write(6,'(a)') 'EROSION AS A FUNCTION OF X:    Y<0    Y>0'
+        write(6,'(7(2x,a20))') 'X','TOTAL DEPOSITION',
+     >            'TOTAL REMOVAL','NET EROSION',
+     >            'TOTAL DEPOSITION',
      >            'TOTAL REMOVAL','NET EROSION' 
         do io = 1,nxs
            write(6,'(8(4x,g18.8))') xs(io),neroxs(io,1,1),
@@ -2033,6 +2043,15 @@ C     ===========================
               WALLS(IY,IZ) = WALLS(IY,IZ) + WALLS(-IY,IZ)                       
  1150     CONTINUE                                                              
         ENDIF                                                                   
+
+        write(6,'(a)') '2WY:'
+        write(6,'(a,3i5)') 'WALLS:',nys,maxiz
+        do iy = -nys,nys
+           write(6,'(a,10(1x,g12.5))') 'WALLS:',youts(iy),
+     >          (walls(iy,iz),iz=-2,maxiz+1)
+        end do
+
+c
         CALL LIM_DRAW (YOUTS,YWIDS,WALLS,2*MAXNYS+1,2*MAXNYS+1,ANLY,                
      >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
      >    JOB,TITLE,YLAB,FLAB,ZLABS(-2),REF,YVIEW,PLANE,TABLE,IPLOT,2)          

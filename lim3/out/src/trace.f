@@ -110,6 +110,7 @@ c
       write(outunit,*) 'BAXLAB:',trim(baxlab),':'
       write(outunit,*) 'BLABS1:',trim(blabs(1)),':'
 
+
 c
 c      
 c jdemod - removing printout
@@ -289,9 +290,12 @@ C-----------------------------------------------------------------------
 c
       write(outunit,*)
       write(outunit,'(a)') 'PLOT DATA:',REF
+      write(outunit,'(a,2(1x,g15.6))') 'PLOT RANGE:',astart,aend
+c      write(outunit,'(a,5i6)') 'IA VALUES:',ia1,ia2,ia3,ia4
+      
       write(outunit,'(31(1x,a12))') 'AXIS:',(blabs(ib)(1:12),ib=1,nbs)
 c
-      do ia = ia3,ia4
+      do ia = ia1,ia2
          write(outunit,'(30(1x,g12.5))')
      >       as(ia),(cs(ia,ib),ib=1,nbs)
       end do 

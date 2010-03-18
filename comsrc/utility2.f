@@ -538,7 +538,7 @@ c
                maxexpt = max(maxexpt,expt_data(num_expt,1))
 c
 c               write (6,'(A,2I6,5G12.4)') 'NUM:',
-c     .           num_expt,in,xval,yval(1),yval(2),yval(3),scalef
+c     >           num_expt,in,xval,yval(1),yval(2),yval(3),scalef
 c
             endif
 c

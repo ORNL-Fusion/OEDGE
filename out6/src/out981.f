@@ -80,12 +80,17 @@ C
       CYMAX  = YMAX
       IPLOTS = 0
       COL   = init_col()
-      NPLOTS = NBBS
+c     jdemod - changed NPLOTS to GRA_NPLOTS to avoid name
+c              collision with NPLOTS used elsewhere in the code
+      GRA_NPLOTS = NBBS
       ISPOT  = 12
-      IF (NPLOTS.GT.10) ISPOT = 10
-      IF (NPLOTS.GT.15) ISPOT = 8
+      IF (GRA_NPLOTS.GT.10) ISPOT = 10
+      IF (GRA_NPLOTS.GT.15) ISPOT = 8
 c 
-      write(6,*) 'NPLOTS:',nplots,ispot
+      write(6,*) 'NPLOTS:',gra_nplots,ispot
+c
+c     jdemod - end
+c
 C
 C---- DRAW TITLES
 C

@@ -734,7 +734,8 @@ c
       real power,tmin,tmax
       integer iexp,l,lenstr,iten
 c slmod begin
-      INTEGER L1,thickness
+      INTEGER L1
+c      INTEGER L1,thickness
 
 c...
       IF (slopt4.EQ.1) THEN
@@ -748,7 +749,7 @@ c...
       IF (slopt.NE.0) THEN
         thickness = 1
       ELSE
-        thickness = 2
+        thickness = 1
       ENDIF
 
 c...   Need to restore this call to get thick lines by default:
@@ -765,12 +766,12 @@ C
       CYMAX  = YMAX
       IPLOTS = 0
       COL   = init_col()
-      NPLOTS = NBBS
+      GRA_NPLOTS = NBBS
       ISPOT  = 12
-      IF (NPLOTS.GT.10) ISPOT = 10
-      IF (NPLOTS.GT.15) ISPOT = 8
+      IF (GRA_NPLOTS.GT.10) ISPOT = 10
+      IF (GRA_NPLOTS.GT.15) ISPOT = 8
 c 
-      write(6,*) 'NPLOTS:',nplots,ispot
+      write(6,*) 'GRA_NPLOTS:',gra_nplots,ispot
 C
 C---- DRAW TITLES
 C
@@ -1133,8 +1134,8 @@ c      IF (ICOL.LT.1) ICOL = NCOLS
 c
       IF (IPLOTS.LE.1) THEN
          CALL FULL
-c         write(6,*) 'FULL:',iplots,ibrok,nplots
-      ELSEIF (NPLOTS.LE.5) THEN
+c         write(6,*) 'FULL:',iplots,ibrok,gra_nplots
+      ELSEIF (GRA_NPLOTS.LE.5) THEN
          CALL BROKEN (3*IBROK,2*IBROK,3*IBROK,2*IBROK)
 c         write(6,*) 'BROKEN1:',ibrok,3*IBROK,2*IBROK,3*IBROK,2*IBROK
       ELSE
@@ -1537,7 +1538,7 @@ c      IF (ICOL.LT.1) ICOL = NCOLS
 c
       IF (IPLOTS.LE.1) THEN
          CALL FULL
-      ELSEIF (NPLOTS.LE.5) THEN
+      ELSEIF (GRA_NPLOTS.LE.5) THEN
          CALL BROKEN (3*IBROK,2*IBROK,3*IBROK,2*IBROK)
       ELSE
          CALL BROKEN (2*IBROK,1*IBROK,2*IBROK,1*IBROK)
