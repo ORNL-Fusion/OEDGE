@@ -68,11 +68,11 @@ c slmod
 c      CALL RDI (CIOPTE,.TRUE., 0,.TRUE., 9,'INJECTION OPT        ',IERR)        
 c slmod end
       CALL RDI (CIOPTF,.TRUE., 0,.TRUE., 9,'SOL OPT              ',IERR)        
-      CALL RDI (CIOPTG,.TRUE., 0,.TRUE., 6,'PLASMA DECAY OPT     ',IERR)        
-      CALL RDI (CIOPTK,.TRUE.,-1,.TRUE., 6,'PLASMA ION TEMP OPT  ',IERR)
+      CALL RDI (CIOPTG,.TRUE., 0,.TRUE., 7,'PLASMA DECAY OPT     ',IERR)        
+      CALL RDI (CIOPTK,.TRUE.,-1,.TRUE., 7,'PLASMA ION TEMP OPT  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE., 1,'TEB GRAD COEFF OPT   ',IERR)
       CALL RDI (CIOPTM,.TRUE., 0,.TRUE., 1,'TIB GRAD COEFF OPT   ',IERR)
-      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,11,'LIMITER EDGE OPT     ',IERR)        
+      CALL RDI (CIOPTH,.TRUE., 0,.TRUE.,12,'LIMITER EDGE OPT     ',IERR)        
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 2,'CX RECOMB OPT        ',IERR)        
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)        
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 1,'DIFFUSION TYPE OPTION',IERR)
@@ -113,7 +113,7 @@ C
       CALL RDR(CLTIN2,.TRUE. ,0.0,.FALSE.,0.0,'TEMP DECAY LTIN2',  IERR)        
       CALL RDR(CGTIN2,.TRUE. ,0.0,.FALSE.,0.0,'TEMP DECAY GTIN2',  IERR)        
 
-      CALL RDRARN(CTBINS,NTBS,MAXINS,-MACHLO,MACHHI,.TRUE.,0.0,MACHHI,            
+      CALL RDRARN(CTBINS,NTBS,MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
      >                                      1,'SET OF X,TB VALUES',JERR)        
       IF (JERR.NE.0) GOTO 1001                                                  
 C
@@ -142,8 +142,8 @@ C
       CALL RDR(CLTIIN2,.TRUE. ,0.0,.FALSE.,0.0,'TEMP DECAY LTIIN2',IERR)       
       CALL RDR(CGTIIN2,.TRUE. ,0.0,.FALSE.,0.0,'TEMP DECAY GTIIN2',IERR)      
 
-      CALL RDRARN(CTIBINS,NTIBS,MAXINS,-MACHLO,MACHHI,.TRUE.,0.0,MACHHI,         
-     >                                      1,'SET OF X,TB VALUES',JERR)        
+      CALL RDRARN(CTIBINS,NTIBS,MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,         
+     >                                     1,'SET OF X,TBI VALUES',JERR)        
       IF (JERR.NE.0) GOTO 1001                                                  
 C
 C     READ IN ION TEMPERATURE GRADIENT INFORMATION, IF ANY
@@ -165,7 +165,7 @@ C
       CALL RDR(CGNIN2,.TRUE. ,0.0,.FALSE.,0.0,'DENSITY DECAYGNIN2',IERR)        
       CALL RDR(CNBA  ,.TRUE. ,0.0,.FALSE.,0.0,'DENSITY NBA       ',IERR)        
       CALL RDR(CGAMMA,.TRUE. ,0.0,.FALSE.,0.0,'DENSITY GAMMA     ',IERR)        
-      CALL RDRARN(CNBINS,NNBS,MAXINS,-MACHLO,MACHHI,.TRUE.,0.0,MACHHI,            
+      CALL RDRARN(CNBINS,NNBS,MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
      >                                      1,'SET OF X,NB VALUES',JERR)        
       IF (JERR.NE.0) GOTO 1001                                                  
 C                                                                               
@@ -332,7 +332,7 @@ C
 C---- READ IN YIELD MODIFIER FUNCTION AND FLAG                                  
 C                                                                               
       CALL RDRARN(CYMFS,NYMFS,MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
-     >                                      2,'SET OF X,M(X) VALS',IERR)        
+     >                             2,'SET OF X,M(Y<0),M(Y>0) VALS',IERR)        
 
       if (cymfs(1,1).gt.cymfs(nymfs,1)) then 
          call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
@@ -502,13 +502,16 @@ c slmod end
 C                                                                               
 C                                                                               
 C                                                                               
-      SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI)                                
+      SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)                                
       use eckstein_2002_yield_data
+      use eckstein_2007_yield_data
       use variable_wall
       use iter_bm
       use yreflection
 C     
       implicit none 
+
+      integer :: nnbs,ntbs,ntibs,nymfs
 c
       REAL      XSCALO,XSCALI
       INTEGER   NIZS 
@@ -539,6 +542,7 @@ c slmod end
 c      DATA RADDEG /57.29577952/                                                 
       INTEGER IX 
       integer iz,icxsc 
+      integer in
 
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
@@ -584,10 +588,18 @@ C-----------------------------------------------------------------------
        CALL PRR ('    INBOARD CONSTANT           TBIN  (EV)   ', CTBIN)         
 C                                                                               
       ELSE                                                                      
+       if (cioptg.eq.7) then 
+c
+       CALL PRC ('    OUTBOARD Te FITTED TO SET OF GIVEN VALUES')                   
+c          
+       else
+c
        CALL PRR ('  TEMPERATURE OUTBOARD Y < 0   TBOUT<(EV)   ', CTBOUL)        
        CALL PRR ('    OUTBOARD EXP DECAY Y < 0   LTOUT<(M)    ', CLTOUL)        
        CALL PRR ('    OUTBOARD BASE VALUE Y > 0  TBOUT>(EV)   ', CTBOUG)        
        CALL PRR ('    OUTBOARD EXP DECAY Y > 0   LTOUT>(M)    ', CLTOUG)        
+c
+       endif
 C                                                                               
       IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.6) THEN                                      
        CALL PRR ('    INBOARD BASE VALUE         TBIN  (EV)   ', CTBIN)         
@@ -613,8 +625,8 @@ C
         CALL PRR('    ATIN<X<A EXPONENTIAL DECAY LTIN2 (M)    ', CLTIN2)        
        ENDIF                                                                    
 C                                                                               
-      ELSEIF (CIOPTG.EQ.3) THEN                                                 
-       CALL PRC ('    INBOARD FITTED TO SET OF GIVEN VALUES')                   
+      ELSEIF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                 
+       CALL PRC ('    INBOARD Te FITTED TO SET OF GIVEN VALUES')                   
 C                                                                               
       ELSEIF (CIOPTG.EQ.4) THEN                                                 
        CALL PRR ('    INBOARD BASE VALUE         TBIN  (EV)   ', CTBIN)         
@@ -642,6 +654,18 @@ C
       ENDIF                                                                     
 C                                                                               
       ENDIF                                                                     
+c     
+c
+      if (cioptg.eq.3.or.cioptg.eq.7) then 
+         call prc('    INPUT RADIAL ELECTRON TEMPERATURE PROFILE:')
+         call prc('         X (m)      Teb (eV) ')
+         do ix = 1,ntbs
+            call prr2('      ',ctbins(ix,1),ctbins(ix,2))
+         end do
+
+      endif
+
+
 C
 C     ELECTRON TEMPERATURE GRADIENT FUNCTIONS  
 C      
@@ -660,10 +684,18 @@ C-----------------------------------------------------------------------
        CALL PRR ('    INBOARD CONSTANT           TIBIN  (EV)  ', CTIBIN)        
 C                                                                               
       ELSE                                                                      
+       if (cioptk.eq.7) then 
+c
+          CALL PRC ('    OUTBOARD Ti FITTED TO SET OF GIVEN VALUES')                   
+c
+       else
+c
        CALL PRR ('  ION TEMPERATURE OUTB Y < 0   TIBOUT<(EV)  ',CTIBOUL)        
        CALL PRR ('    OUTBOARD EXP DECAY Y < 0   LTIOUT<(M)   ',CLTIOUL)        
        CALL PRR ('    OUTBOARD BASE VALUE Y > 0  TIBOUT>(EV)  ',CTIBOUG)        
        CALL PRR ('    OUTBOARD EXP DECAY Y > 0   LTIOUT>(M)   ',CLTIOUG)        
+c
+       endif
 C                                                                               
       IF (CIOPTK.EQ.1.OR.CIOPTK.EQ.6) THEN                                      
        CALL PRR ('    ION INBOARD BASE VALUE     TIBIN  (EV)  ',CTIBIN)         
@@ -689,8 +721,8 @@ C
         CALL PRR('    ATIIN<X<A EXPONENTIAL DECAY LTIIN2 (M)  ',CLTIIN2)        
        ENDIF                                                                    
 C                                                                               
-      ELSEIF (CIOPTK.EQ.3) THEN                                                 
-       CALL PRC ('    ION INBOARD FITTED TO SET OF GIVEN VALUES')           
+      ELSEIF (CIOPTK.EQ.3.or.cioptk.eq.7) THEN                                                 
+       CALL PRC ('    INBOARD Ti FITTED TO SET OF GIVEN VALUES')           
 C                                                                               
       ELSEIF (CIOPTK.EQ.4) THEN                                                 
        CALL PRR ('    ION INBOARD BASE VALUE     TIBIN (EV)   ',CTIBIN)        
@@ -718,6 +750,17 @@ C
       ENDIF                                                                     
 C                                                                               
       ENDIF                                                                     
+
+      if (cioptk.eq.3.or.cioptk.eq.7) then 
+         call prc('    INPUT RADIAL ION TEMPERATURE PROFILE:')
+         call prc('         X (m)      Teb (eV) ')
+         do ix = 1,ntibs
+            call prr2('      ',ctibins(ix,1),ctibins(ix,2))
+         end do
+
+      endif
+
+
 C
 C     ION TEMPERATURE GRADIENT FUNCTIONS  
 C      
@@ -736,11 +779,19 @@ C-----------------------------------------------------------------------
        CALL PRR ('    INBOARD CONSTANT           NBIN  (M**-3)', CNBIN)         
 C                                                                               
       ELSE                                                                      
+       if (cioptg.eq.7) then 
+c
+       CALL PRC ('    OUTBOARD DENSITY FITTED TO SET OF GIVEN VALUES')                   
+c          
+       else
+c
        CALL PRR ('  ION DENSITY OUTBOARD Y < 0   NBOUT<(M**-3)', CNBOUL)        
        CALL PRR ('    OUTBOARD EXP DECAY Y < 0   LNOUT<(M)    ', CLNOUL)        
        CALL PRR ('    OUTBOARD BASE VALUE Y > 0  NBOUT>(M**-3)', CNBOUG)        
        CALL PRR ('    OUTBOARD EXP DECAY Y > 0   LNOUT>(M)    ', CLNOUG)        
-C                                                                               
+c
+       endif
+C     
       IF (CIOPTG.EQ.1) THEN                                                     
        CALL PRR ('    INBOARD BASE VALUE         NBIN  (M**-3)', CNBIN)         
        IF (CANIN.LE.0.0) THEN                                                   
@@ -765,8 +816,8 @@ C
         CALL PRR('    ANIN<X<A EXPONENTIAL DECAY LNIN2 (M)    ', CLNIN2)        
        ENDIF                                                                    
 C                                                                               
-      ELSEIF (CIOPTG.EQ.3) THEN                                                 
-       CALL PRC ('    INBOARD FITTED TO SET OF GIVEN VALUES')                   
+      ELSEIF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                 
+       CALL PRC ('    INBOARD DENSITY FITTED TO SET OF GIVEN VALUES')                   
 C                                                                               
       ELSEIF (CIOPTG.EQ.4) THEN                                                 
        CALL PRR ('    INBOARD BASE VALUE         NBIN  (M**-3)', CNBIN)         
@@ -799,6 +850,17 @@ C
       ENDIF                                                                     
 C                                                                               
       ENDIF                                                                     
+
+      if (cioptg.eq.3.or.cioptg.eq.7) then 
+         call prc('    INPUT RADIAL ELECTRON DENSITY PROFILE:')
+         call prc('         X (m)      ne (m-3) ')
+         do ix = 1,nnbs
+            call prr2('      ',cnbins(ix,1),cnbins(ix,2))
+         end do
+
+      endif
+
+
 C-----------------------------------------------------------------------        
 C     CALL PRR  ('  PINCH PARAMETER              S            ', CVIN)          
 C
@@ -1210,6 +1272,11 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       LINEAR TEMPERATURE INBOARD')           
        CALL PRC ('                       "STANDARD JET" DENSITY INBOARD'        
      >)                                                                         
+      ELSEIF (CIOPTG.EQ.7) THEN                                                 
+       CALL PRC ('  PLASMA DECAY OPT 7 : FITTED TO GIVEN VALUES OUTBOARD
+     >')                 
+       CALL PRC ('                       FITTED TO GIVEN VALUES INBOARD'        
+     >)                                                                         
       ENDIF                                                                    
       IF (NTEG.GT.0) 
      > CALL PRC ('                       TEMPERATURE GRADIENT OUTBOARD')     
@@ -1381,6 +1448,75 @@ C-----------------------------------------------------------------------
        call prc('                       DERIVED PARAMETERS:')
        call prr('                       T_Re-entrant = Y_re = ', y_re)
        call prr('                       C                   = ', c_lim)
+      elseif (ciopth.eq.12) then
+       call prc('  LIMITER EDGE OPT 12: ITER HALF LIMITER SHAPE')
+       call prc('                       DEFINED BY:')
+       CALL prc('                       X = - (f(t) + g(p))')
+       call prc('                       Y = (t_re - t) / cos_beta')
+       call prc('                       '//
+     >      'f(t)=- lam * ln(1 -/+ C*(t - t_re-entrant)/lam ))')
+       call prc('                       g(p) = p**2 / (2 * rho_p_pol')
+
+       call prc('                       THIS INCLUDES THE EFFECT OF'//
+     >          ' MAGNETIC PITCH AND IS')
+       call prc('                       MAPPED SO THAT LIMITER TIP')
+       call prc('                       IS AT Y=0,X=0')
+       call prc('                       ONLY A SINGLE TANGENCY POINT')
+       call prc('                       IS SUPPORTED')
+       call prc('                       INPUT PARAMETERS:')
+       call prr('                       Toroidal setback  = ',
+     >                                  rtor_setback)
+       call prr('                       Slot     setback  = ',
+     >                                  rslot_setback)
+       call prr('                       BM Toroidal half width    = ',
+     >                                  bm_tor_wid)
+       call prr('                       Slot Toroidal half width  = ',
+     >                                  slot_tor_wid)
+       call prr('                       Lambda_design  = ',
+     >                                  lambda_design)
+       call prr('                       Bth/Bphi       =',
+     >              bth_bphi_ratio)
+       call prr('                       p_zero         =',p_0_value)
+       call prr('                       Rho_p_Pol      =',rho_p_pol)
+       call prr('                       R_ow           =',r_ow)
+       call prb
+       call prc('                       DERIVED PARAMETERS:')
+       call prr('                       Beta                =',lim_beta)
+       call prr('                       cos(Beta)           =',cos_beta)
+       call prr('                       T_Re-entrant        =', y_re)
+       call prr('                       C                   =', c_lim)
+       call prb
+       call prc('                       Shadow Locations:')
+       call prr('                       RR Neighbour BM Shadow'//
+     >                ' Depth = ', rr_shadow)
+       call prc('                       Re-entrant shadow :')    
+       call prr('                       Depth at +t_re = ',slot_shadow1)
+       call prr('                       Depth at -t_re = ',slot_shadow2)
+
+       call prb
+       call prc('                       X axis shifts to obtain'//
+     >          ' X,Y=0.0')
+       call prr('                       Y<0 shift = ',lim_xshift(1))
+       call prr('                       Y>0 shift = ',lim_xshift(2))
+       call prb
+       call prc('                       Revised shadow'//
+     >          ' locations with shift')
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' RR Neighbour BM Shadow = ',rr_shadow+lim_xshift(1))
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' Re-entrant shadow "+"  = ',slot_shadow1+lim_xshift(1))
+       call prr('                       X_SHIFT CORRECTED:'//
+     >          ' Re-entrant shadow "-"  = ',slot_shadow2+lim_xshift(1))
+       call prb
+       call prc(' Note: The X-shift corrected "+" shadow should be 0.0')
+       call prc(' To determine re-entrant shadowing compare the "+"'//
+     >          ' and "-" values')
+       call prc(' These values are the depth or distance from'//
+     >          ' the FLFS to the surface at +/- t_re') 
+       call prc(' The smaller will fully shadow the larger while the '//
+     >          'larger shadows the difference in the two values')
+     
+
       ENDIF                                                                     
 C                                                                               
       call prb
@@ -1919,6 +2055,7 @@ c slmod end
 c
 C-----------------------------------------------------------------------
 
+      call prb
       call prc(' PHYSICAL SPUTTERING DATA SOURCE OPTION:')
       IF     (CSPUTOPT.EQ.1) THEN
        CALL PRC ('  SPUTTER SOURCE   1 : Formulation due to Bohdansky')
@@ -1961,11 +2098,18 @@ C-----------------------------------------------------------------------
              call prr('     - DATA SELECTED FOR INCIDENT ANGLE =',
      >                  extra_sputter_angle)
           endif
-          call print_eck2002_yields(7)
+          call print_eck2002_yields(datunit)
        elseif (cion.eq.74) then 
           ! W selected 
              CALL PRC ('    TUNGSTEN SPUTTERING DATA SELECTED:')
        endif
+      ELSEIF (CSPUTOPT.EQ.6) THEN
+       CALL PRC ('  SPUTTER SOURCE   6 : Based on Eckstein'//
+     >                               ' "Sputtering Yields" 2007')
+       call prc ('                       Defaults to '//
+     >      'Sputter data option 3 (modified  Eckstein IPP9/82 (1993))') 
+       call prc ('                       if 2007 data is unavailable')
+       call print_eck2007_yields(datunit)
 
       ENDIF
 C-----------------------------------------------------------------------        
@@ -2069,6 +2213,114 @@ C-----------------------------------------------------------------------
        CALL PRR('                       Q - MULT    (SECONDARIES)  = ', 
      >     QMULTS)
       ENDIF
+
+      call prb
+      call prc('   YIELD MODIFIER SPECIFICATIONS FROM INPUT:') 
+      call prb
+
+      call prc('   BASE YIELD MULTIPLIER IS 1.0 UNLESS'//
+     >             ' SPECIFIED OTHERWISE')
+      call prb
+
+      if (nymfs.gt.0) then 
+         if (cymflg.eq.-2) then 
+            call prc('   YMF FLAG OPTION -2 : BASE YMF'//
+     >             ' APPLIED TO SELF-SPUTTERING ONLY')
+         elseif (cymflg.eq.-1) then 
+            call prc('   YMF FLAG OPTION -1 : BASE YMF'//
+     >             ' APPLIED TO PRIMARY SPUTTERING ONLY')
+         elseif (cymflg.eq.0) then 
+            call prc('   YMF FLAG OPTION -2 : BASE YMF'//
+     >             ' APPLIED TO PRIMARY AND SELF-SPUTTERING')
+         endif
+         call prb
+         call prc ('   SPECIFIED SELF-SPUTTERING YIELD DATA:')
+         call prc ('     X (m)         YMF (Y<0)     YMF (Y>0) ') 
+         do in = 1,nymfs
+            write(coment,'(2x,3(2x,g12.5))') cymfs(in,1),
+     >            cymfs(in,2),cymfs(in,3)
+            call prc(coment)
+         end do
+         call prb
+      endif
+c
+      if (ss_nymfs.gt.0) then 
+         call prc ('   INPUT L27: SEPARATE SELF'//
+     >             ' SPUTTERING YIELDS HAVE BEEN'//
+     >             ' SPECIFIED AND ARE USED FOR SELF-SPUTTERING')
+         call prc ('              OVERRIDING THE YMF FLAG')
+         call prb
+         call prc ('   SPECIFIED SELF-SPUTTERING YIELD DATA:')
+         call prc ('     X (m)         YMF (Y<0)     YMF (Y>0) ') 
+         do in = 1,ss_nymfs
+            write(coment,'(2x,3(2x,g12.5))') ss_cymfs(in,1),
+     >            ss_cymfs(in,2),ss_cymfs(in,3)
+            call prc(coment)
+         end do
+         call prb
+      endif
+
+c
+c----------------------------------------------------------
+c
+c    Self-sputtering option     
+c
+c----------------------------------------------------------
+c
+c     TAG I04:
+c
+c      if (cselfs.eq.0) then
+c        call prc ('  SELF-SPUTTER OPT 0 : SELF-SPUTTERING IS OFF')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c      elseif (cselfs.eq.1) then
+c        call prc ('  SELF-SPUTTER OPT 1 : SELF-SPUTTERING IS ON')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c       CALL PRC ('                       PROPER SELF-SPUTTERING USING AC
+c     >TUAL ZIMP')
+c       CALL PRC ('                       VALUES ON EXIT AND SAME VEL/ANG
+c     > FLAG.')
+c       CALL PRC ('                       EIMP=3TB.ZIMP+5.22E-9.MI.VEXIT.
+c     >VEXIT+2TI')
+c       CALL PRR ('                       EMAX=EIMP.  THRESHOLD YIELD=',
+c     >   CTRESH)
+c
+c      elseif (cselfs.eq.2) then
+c        call prc ('  SELF-SPUTTER OPT 2 : SELF-SPUTTERING IS ON')
+c        call prc ('                       SELF-SPUTTERING IS CONTROLLED'
+c     >)
+c        call prc ('                       THROUGH THIS OPTION ONLY!')
+c        call prc ('                       COMMENTS IN OTHER SPUTTER OPTI
+c     >ONS')
+c        call prc ('                       MAY BE MISLEADING AND WILL BE'
+c     >)
+c        call prc ('                       CORRECTED AT A FUTURE DATE.')
+c       CALL PRC ('                       SELF-SPUTTERING ENERGY IS FIXED
+c     >')
+c       CALL PRC ('                       FOR EACH SEGMENT WITH A FIXED Y
+c     >IELD.')
+c       call prr ('                       ENERGY FOR FIXED YIELD SPUTTERI
+c     >NG (eV) =',ctem1)
+c       CALL PRR ('                       THRESHOLD YIELD=',
+c     >   CTRESH)
+c      endif
+c
+
+
+
 c
 C-----------------------------------------------------------------------        
 c
@@ -2093,6 +2345,53 @@ c
        call prc ('                       THIS OVER-RIDES ALL SPUTTER OPT
      >IONS - EXCEPT 8')
       endif
+c
+c-----------------------------------------------------------------------
+c
+c   External sputtering flux and energy option: TAG L14 and L15
+c
+c-----------------------------------------------------------------------
+c
+      if (extfluxopt.eq.0) then 
+       CALL PRC ('  EXTERNAL FLUX OPT 0: OFF')
+       call prc ('                       LIMITER PRIMARY FLUX AND'//
+     >    ' ENERGY ARE DETERMINED FROM THE SPECIFIED BACKGROUND PLASMA')
+      else
+       CALL PRC ('  EXTERNAL FLUX OPT 1: ON')
+       call prc ('                       LIMITER PRIMARY FLUX AND'//
+     >    ' ENERGY ARE EXTERNALLY IMPOSED')
+       if (extfluxopt.eq.1) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF X')   
+       elseif (extfluxopt.eq.2) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF Y')   
+       elseif (extfluxopt.eq.3) then 
+         call prc('                       EXTERNAL DATA SPECIFIED'//
+     >          ' AS A FUNCTION OF D (DISTANCE ALONG SURFACE)')   
+       endif
+       call prc('                       NEGATIVE COORDINATE DATA'//
+     >          ' APPLIES TO THE Y<0 SIDE OF THE LIMITER')
+
+       call prb
+       call prc('    EXTERNALLY IMPOSED FLUX AND ENERGY DATA:')
+       if (extfluxopt.eq.1) then 
+         call prc('      X (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       elseif (extfluxopt.eq.2) then 
+         call prc('      Y (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       elseif (extfluxopt.eq.3) then 
+         call prc('      D (m)           FLUX (m-2s-1)     ENERGY (eV)')
+       endif
+       do in = 1,nextfluxdata
+          write(coment,'(4x,g12.5,3x,e14.5,3x,f10.2)') 
+     >             extfluxdata(in,1),
+     >             extfluxdata(in,2),extfluxdata(in,3)
+          call prc(coment)
+       end do
+       call prb
+      endif
+
+
 
 C
 C-----------------------------------------------------------------------        

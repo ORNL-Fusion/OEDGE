@@ -2,6 +2,7 @@ c     -*-Fortran-*-
 c
       subroutine bgplasma(title,equil)
 c slmod begin
+      use error_handling
       USE mod_sol28_global
 c slmod end
       implicit none
@@ -1629,6 +1630,7 @@ c
       subroutine PINEXE(title,equil,lpinopt,litersol,iitersol,
      >                  liter,tmpcsopt,tmpcioptf,lpinavail,
      >                  iiterpin)
+      use error_handling
 c slmod begin
       USE mod_sol28_global
 c slmod end
@@ -1832,52 +1834,52 @@ c       until return codes are available
 c
 c       Choose 30 seconds as time limit for now.
 c
+c       jdemod - reduce the time limit to 2 seconds for exit and 10 seconds for warning
+c
 c slmod begin
-        if ((retcode.ne.0.or.pintim.lt.5.0).and.
+        if ((retcode.ne.0.or.pintim.lt.10.0).and.
      .      pincode.ne.4.and.pincode.ne.5) then
 c
-           if (pintim.lt.5.0) then
+           if (pintim.lt.10.0) then 
 c
-c        if (retcode.ne.0.or.pintim.lt.30.0) then
+c             jdemod - change to warning for 10s
 c
-c           if (pintim.lt.30.0) then
-c slmod end
+              write(error_message_data,'(a,f8.3,a)')
+     >         'PIN WARNING: LESS THAN 10 SECONDS USED IN PIN'//
+     >         ': TIME USED = ',pintim,' (S) : CHECK FOR'//
+     >         ' INPUT ERROR'
+              call errmsg(error_message_data)
+
+
+           elseif (pintim.lt.2.0) then
 c
-           call prc('PIN ERROR: LESS THAN 10 SECONDS USED IN PIN')
-           call prr('           TIME USED = ',pintim)
-           call prc('           THERE IS LIKELY AN ERROR IN THE')
-           call prc('           PIN INPUT - CHECK THE PIN OUTPUT')
-           call prc('           FILES FOR AN EXACT DESCRIPTION')
+c             jdemod - exit if less than 2 seconds
 c
-           write(6,*) 'PIN ERROR: LESS THAN 10 SECONDS USED IN PIN'
-           write(6,*) '           TIME USED = ',pintim
-           write(6,*) '           THERE IS LIKELY AN ERROR IN THE'
-           write(6,*) '           PIN INPUT - CHECK THE PIN OUTPUT'
-           write(6,*) '           FILES FOR AN EXACT DESCRIPTION'
-c
-           write(0,*) 'PIN ERROR: LESS THAN 10 SECONDS USED IN PIN'
-           write(0,*) '           TIME USED = ',pintim
-           write(0,*) '           THERE IS LIKELY AN ERROR IN THE'
-           write(0,*) '           PIN INPUT - CHECK THE PIN OUTPUT'
-           write(0,*) '           FILES FOR AN EXACT DESCRIPTION'
-c
+              write(error_message_data,'(a,f8.3,a)')
+     >         'PIN ERROR: LESS THAN 2 SECONDS USED IN PIN'//
+     >         ': TIME USED = ',pintim,' (S) : CHECK FOR'//
+     >         ' INPUT ERROR: PROGRAM HALT'
+              call errmsg(error_message_data)
+              stop 'PIN < 2 SECONDS'
+
            endif
+c
+c          check PIN return code
 c
            if (retcode.ne.0) then
 c
               retcode = retcode/256
-              call prc('ERROR: PIN DID NOT EXECUTE CORRECTLY')
-              call pri('PIN RETURN CODE = ', retcode)
 c
-              write(6,*) 'ERROR: PIN DID NOT EXECUTE CORRECTLY'
-              write(6,*) 'PIN RETURN CODE = ',retcode
+c             Issue error message for PIN return code 
+c             jdemod - not sure about the divide by 256 unless the 
+c                      retcode starts off large
 c
-              write(0,*) 'ERROR: PIN DID NOT EXECUTE CORRECTLY'
-              write(0,*) 'PIN RETURN CODE = ',retcode
+              call errmsg('ERROR: PIN DID NOT EXECUTE CORRECTLY:'//
+     >                    ' PROGRAM HALT : PIN RETURN CODE =',retcode)
+c
+              stop 'PIN EXECUTION ERROR'
 c
            endif
-c
-           stop 1
 c
         endif
 c

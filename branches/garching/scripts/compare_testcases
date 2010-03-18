@@ -3,7 +3,7 @@
 #
 echo 'COMPARING Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+set scriptdir = $PWD/scripts
 
 source $scriptdir/init_testcases
 

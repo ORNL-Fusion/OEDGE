@@ -11,6 +11,8 @@ c
 !      Use HC_WBC_Comp ! Records ion death statistics for WBC comparison.
 !      Use HC_Utilities ! Sheath E-field calc by Brooks.
 c
+      use error_handling
+      use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
 c
@@ -780,9 +782,11 @@ C
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5)THEN
+      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)THEN
         CALL SYLD96 (MATTAR,MATP,CNEUTD,
      >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        call init_eckstein_2007(mattar,matp)
       ENDIF
 c
 C
@@ -1018,8 +1022,8 @@ c sltmp
 
       DO 800  IMP = 1, NATIZ
 c slmod begin
-        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-c        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
      .    WRITE(0,*) 'debug imp:',imp,natiz
 c slmod end
 c
@@ -1581,6 +1585,10 @@ c
 c
            irstart = idatizs (imp,3)
            ikstart = idatizs (imp,4)
+c
+c          Transferred source terms and localization data  
+c          based on entire molecule 
+c
            incore = Travel_Locations (imp,1)
            inedge = Travel_Locations (imp,2)
            inmsol = Travel_Locations (imp,3)
@@ -1606,9 +1614,10 @@ c
            ! Updating num_entered_core is done by DIVIMP for each HC.
            num_entered_core = num_entered_core + sputy
 c
-           ! Updating all other position variables is done by
-           ! passed information from DIVIMP-HC.
-           if (.not.incore) then
+           ! jdemod - wtsource data for each HC particle is accumulated
+           !          in the HC code ... continued for ions here  
+           !
+           if (.not.incore) then  
               incore = .true.
 c
               ncore(ikstart,irstart) = ncore(ikstart,irstart) + sputy
@@ -2686,15 +2695,31 @@ c
 C     K. Schmid 2008 output charge state resolved wall impact information
       write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
      >               wallpts
-3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
-      do 3007 in = 1,wallpts
+c
+c     jdemod - the <NIZS> repeat specification does not appear to be 
+c              standardized and breaks some compilers so I changed the 
+c              repeat value to 100 which should be large enough in most
+c              cases. 
+c
+3006  Format(i5,' ',g12.5,g12.5,100(' ',g12.5))
+c3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
+c
+      if (nizs.le.100) then 
+         do in = 1,wallpts
 C        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
 C     >       wallsiz(in, 1:NIZS)
-          write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
-3007  continue
-      write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
+         end do
+         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
      >      wallsiz(maxpts+1, 1:NIZS)
-      write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
+         write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
+      else
+         call errmsg('ERROR PRINTING CHARGE'//
+     >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
+      endif
+c
+c     jdemod end
+c
 C
 C
 C     CALCULATE TOTALS
@@ -2802,7 +2827,7 @@ c
      >                                 tneut)
         call prr ('NUMBER OF MTC EVENTS FOR ORIG NEUTRALS    ',
      >                                 mtcinf(1,1))
-        if (mtcinf(1,1).gt.0.0) then
+        if (mtcinf(1,1).gt.0.0.and.tneut.gt.0) then  
 
          call prr ('AVERAGE NUMBER OF MTC EVENTS/NEUTRAL     ',
      >                   mtcinf(1,1)/tneut)
@@ -2959,8 +2984,11 @@ c
          call prr0('  - NUMBER ENTERING MAIN           ',recmain)
          call prr0('  - NUMBER EXITING MAIN            ',recexit)
          call prr0('  - NUMBER STRIKING CENTRAL MIRROR ',reccent)
-         call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
+         if (tatiz.gt.0) then 
+             call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
+         endif
+
 c
          call prb
 c
@@ -3051,8 +3079,11 @@ c
          call prr0('   - NUMBER ENTERING MAIN           ',refmain)
          call prr0('   - NUMBER EXITING MAIN            ',refexit)
          call prr0('   - NUMBER STRIKING CENTRAL MIRROR ',refcent)
-         call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
+         if (tatiz.gt.0) then 
+            call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
+         endif
+
          call prb
       endif
 c
@@ -3073,7 +3104,9 @@ c
          end do
       end do
 c
-      call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)
+      if (tmpiz.gt.0) then 
+         call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
+      endif
 c
       call prb
       call prchtml('SUMMARY OF INITIAL IMPURITY NEUTRAL IONIZATION',
@@ -4367,9 +4400,9 @@ c
             absfac_neut = absfac
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes since for
-c                 neutral launch cases - the various quantities are
-c                 not defined for ion injection cases - so the ABSFAC
+c           Note: the calculated absolute factor only makes sense for 
+c                 neutral launch cases - the various quantities are 
+c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
 c
             if (cneuta.eq.0.and.tneut.gt.0.0) then

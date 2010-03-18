@@ -300,8 +300,9 @@ c
             ENDIF
             CVVXP  = CVVXP + XTRIPP * SPUTY
             CVVXS  = CVVXS + XTRIPS * SPUTY
-            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,100.*XTRIPP/
-     >        (Z-YATIZS(IMP)),100.*XTRIPS/(Z-YATIZS(IMP)),IMP,SPUTY,
+            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
+     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
+     >            100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
      >         ZA02AS (1) - STATIM
            ENDIF
 c
