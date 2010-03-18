@@ -1,0 +1,51 @@
+      INCLUDE 'p01'
+C--------------------------------
+C
+C COMMONS AND DECLARATIONS FOR EX... SUBROUTINES
+C
+      INCLUDE 'p02'
+C
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C
+      PARAMETER(MU=MEQUAT)
+C
+C../UNK/
+      INCLUDE 'c06'
+C
+C../CSWEEP/
+      INCLUDE 'c16'
+C../LOCAL/
+      INCLUDE 'c17'
+C../LOCALX/
+      INCLUDE 'c21'
+C../LOCALY/
+      INCLUDE 'c18'
+C
+      LOGICAL LPRINT,DEBUG,LTIME,LTRAN,LTAG,LTREN
+C
+C../CCNSAX/
+      INCLUDE 'c19'
+C../CCNSAY/
+      INCLUDE 'c20'
+C../CDDXUY/
+      INCLUDE 'c24'
+C../CTIMTG/
+      INCLUDE 'c14'
+C../JVALUE/
+      INCLUDE 'c30'
+C../C.FLUX/
+      INCLUDE 'c32'
+C../COMCPU/
+      COMMON /COMCPU/ TBASE , TCPU
+C../CTRANC/
+      INCLUDE 'cwork'
+C
+      INCLUDE 'ctranc'

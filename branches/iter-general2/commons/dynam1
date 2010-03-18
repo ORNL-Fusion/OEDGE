@@ -1,0 +1,14 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /DYNAM1/ DDLIMS,DDTS,ddvoid
+      save /dynam1/
+      DOUBLE PRECISION DDLIMS(MAXNKS,MAXNRS,-1:MAXIZS),                 
+     >  DDTS(MAXNKS,MAXNRS,-1:MAXIZS),ddvoid(3)
+      
+c
+      common /dynam1a/ CHISQ1,CHISQ2,CHISQ3,CHISQ4,CHISQ5 
+      save /dynam1a/
+      double precision CHISQ1(maxpiniter),CHISQ2(maxpiniter),
+     >                 CHISQ3(maxpiniter),
+     >                 CHISQ4(maxpiniter),CHISQ5(maxpiniter)
+C                                                                       
