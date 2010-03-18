@@ -11,6 +11,7 @@ DIVDIR=$HOME/divimp
 DIVRES=$DIVDIR/results
 DIVDAT=$DIVDIR/data
 DIVSHOTS=$DIVDIR/shots
+DIVCASES=$DIVDIR/cases
 
 LIMDIR=$HOME/lim
 LIMRES=$LIMDIR/results
@@ -36,6 +37,11 @@ fi
 if [[ ! ( -d $DIVSHOTS ) ]] then
    mkdir $DIVSHOTS
 fi
+
+if [[ ! ( -d $DIVCASES ) ]] then
+   mkdir $DIVCASES
+fi
+
 #
 # LIM
 #

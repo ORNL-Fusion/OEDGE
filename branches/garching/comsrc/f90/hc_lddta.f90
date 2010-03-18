@@ -152,13 +152,14 @@ Subroutine Load_HC_Data_Ehrhardt_Langer ()
   Integer :: C_Product_Counter
   Integer :: Current_Reaction
 
+  integer :: ierr
   character*256 :: divhome
   character*256 :: el_data_filename
 
 
   ! get divimp directory so we can look up data files
 
-  call GetEnv('DIVHOME',divhome)
+  call get_div_exec_dir(divhome,ierr)
 
   write(0,'(a,a,a)') 'Load_HC_Data_Erhardt_Langer:DIVIMP HOME:',trim(divhome),':'
 
@@ -656,6 +657,8 @@ Subroutine Load_HC_Data_Janev_reiter ()
   !
   !
   integer,parameter :: max_files = 10
+
+  integer ierr
   character*256 :: divhome
 
   character*256 :: files(max_files)
@@ -669,7 +672,8 @@ Subroutine Load_HC_Data_Janev_reiter ()
   !
   filecount = 10
 
-  call GetEnv('DIVHOME',divhome)
+  ! get divimp directory where reference data is stored
+  call get_div_exec_dir(divhome,ierr)
 
   write(0,'(a,a,a)') 'Load_HC_Data_Janev_Reiter:DIVIMP HOME:',trim(divhome),':'
 
