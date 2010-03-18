@@ -97,6 +97,7 @@ export EIRDIR=$EXEROOT/eirene07
 #   need to be changed to access the EXEROOT and not RUNROOT ... however
 #   at the present time DIVHOME is the only environment variable with
 #   a common meaning between these scripts and Steve's versions
+# - code has been modified to use DIVMAINDIR if available then DIVHOME
 #
 export DIVHOME=$RUNROOT
 
