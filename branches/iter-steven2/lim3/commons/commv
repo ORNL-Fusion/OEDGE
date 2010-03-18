@@ -1,0 +1,24 @@
+C                                                                               
+      COMMON /COMMV/  CRTABS, CRTRCS, CRVABS, CRAVAV, CRXMIN, CTBS,             
+     >                CICIZS, CIFIZS, CILIZS, CISIZS, CICABS, CIFABS,           
+     >                CILABS, CISABS, CICUTS, CICCOL, CICSTX, CICSTZ,           
+     >                CICRXA, CIFRXA, CICY2L, CIFY2L, COUTS,  CICAY0,           
+     >                CICA2L, CICAAW, CTEXS,  CTTT,                             
+     >                CFLRXA, CFLY2L,                                           
+     >                CICRCS, CIFRCS, CILRCS, CISRCS, CISRXA, CITRXA,
+     >                CIY0IZ, CI2LIZ, ZIY0IZ, ZI2LIZ,            
+     >                CTY0IZ, CT2LIZ, ZTY0IZ, ZT2LIZ            
+      REAL            CRTABS(MAXIZS), CRTRCS(MAXIZS), CRVABS(MAXIZS)            
+      REAL            CRAVAV(MAXIZS), CRXMIN, CITRXA, CTBS(MAXIZS)              
+      REAL            CICIZS(MAXIZS), CIFIZS(MAXIZS), CILIZS(MAXIZS)            
+      REAL            CISIZS(MAXIZS), CICABS(MAXIZS), CIFABS(MAXIZS)            
+      REAL            CILABS(MAXIZS), CISABS(MAXIZS), CICUTS(MAXIZS)            
+      REAL            CICCOL, CICSTX, CICSTZ, CICRXA, CIFRXA, CICY2L            
+      REAL            CIFY2L, CICAY0, CICA2L, CICAAW, CISRXA, CTTT              
+      REAL            CICRCS(MAXIZS), CIFRCS(MAXIZS), CILRCS(MAXIZS)            
+      REAL            CISRCS(MAXIZS), COUTS(MAXIZS),  CTEXS(10)
+      REAL            CIY0IZ(MAXIZS), CI2LIZ(MAXIZS), ZIY0IZ(MAXIZS)
+      REAL            ZI2LIZ(MAXIZS)                 
+      REAL            CTY0IZ(MAXIZS), CT2LIZ(MAXIZS), ZTY0IZ(MAXIZS)
+      REAL            ZT2LIZ(MAXIZS)                 
+      LOGICAL         CFLRXA, CFLY2L                                            

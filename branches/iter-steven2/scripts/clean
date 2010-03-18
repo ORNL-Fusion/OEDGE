@@ -1,0 +1,60 @@
+#!/bin/sh
+cd /u/progs/div6/results
+#
+# DIVIMP files
+#
+rm -f $1.lim
+rm -f $1.lim.Z
+rm -f $1.sol
+rm -f $1.inp
+#
+# Print files
+#
+rm -f $1.ps
+rm -f $1.psg
+rm -f $1.psga
+#
+# OUT files
+#
+rm -f $1.out
+rm -f $1.out.Z
+rm -f $1.ing
+rm -f $1.grp 
+rm -f $1.plt
+#
+# OUT re-run files
+#
+rm -f $1.outa
+rm -f $1.inga
+rm -f $1.grpa
+rm -f $1.plta
+#
+# PIN files
+#
+rm -f $1.gho
+rm -f $1.pin
+rm -f $1.pinraw
+rm -f $1.pinnim
+rm -f $1.pinout
+rm -f $1.pinprn
+rm -f $1.pinraw.Z
+rm -f $1.pinnim.Z
+rm -f $1.pinout.Z
+rm -f $1.nimpin
+rm -f $1.divpin
+#
+# Eirene files
+#
+rm -f $1.eir
+rm -f $1.eirprn
+#
+# Miscellaneous files
+#
+rm -f $1.inf
+#
+# Compress any .raw files
+#
+compress $1.raw
+#
+cd ..
+

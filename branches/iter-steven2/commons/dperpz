@@ -1,0 +1,12 @@
+c     -*-Fortran-*-
+c
+c     Common block for the dperpz transport option - a parallel displacement 
+c     resulting from a perpendicular step along the paramagnetic axis. 
+c
+      common /dperpz/ base_dperpz_step,dperpz_opt
+      save /dperpz/
+c     
+      integer dperpz_opt
+      real base_dperpz_step
+c
+    

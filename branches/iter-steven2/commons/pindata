@@ -1,0 +1,93 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /PINDATA/ PINATOM,PINION,PINALPHA,pinmol,                  
+     >       pinz0,pinionz,pinena,pinenm,pinenz,                        
+     >       pinqi,pinqe,pinmp,pinrec,divrec,
+     >       hioniz,zioniz,h2ioniz,                 
+     >       srecyc,srecom,hescpd,hescal,zsput,zsputn,
+     >       zescpd,zescal,hesclk,zesclk,
+     >       hescpd_last,hescal_last,phfgal_last,phfuga_last,
+     >       pinvdist,hcorr,hval,hwalks,
+c
+c            Original PIN wall quantities
+c
+     >       rvesm_pin,zvesm_pin,jvesm_pin,
+     >       fluxhw_pin,flxhw2_pin,
+     >       flxhw3_pin,flxhw4_pin,flxhw5_pin,
+     >       flxhw6_pin,nvesm_pin,
+c
+c            Copies of PIN wall quantities that may be 
+c            modified to match the DIVIMP wall - if baffles
+c            have been included in a redefined wall.
+c
+     >       rvesm,zvesm,jvesm,fluxhw,flxhw2,
+c slmod begin - new
+c...         Added FLXHW7, the average molecular hydrogen energy:
+c... jdemod  added flxhw8, the Eirene reported wall ion flux
+     >       flxhw3,flxhw4,flxhw5,flxhw6,flxhw7,flxhw8,nvesm,
+c
+c     >       flxhw3,flxhw4,flxhw5,flxhw6,nvesm,
+c slmod end
+c
+     >       nvesp,pincor,cnimbin,nlines,
+     >       pinpuff,hpcpuf,phfgal,swpvhpf,jhpuf1,jhpuf2,
+     >       tpufh,ihybrid,phfuga,ppcpuf,acthpcpuf,
+     >       gaugedat,ihcorr,iiterpin,piniz_info,pinprint,
+     >       piniseed,pinseed
+c
+c    >       ,hextrl,phxtra
+c
+      save /PINDATA/
+c
+      integer maxlines
+      parameter (maxlines=50)
+C                                                                       
+c slmod begin
+      REAL, TARGET :: PINATOM(MAXNKS,MAXNRS),PINION(MAXNKS,MAXNRS),                
+c
+c      REAL PINATOM(MAXNKS,MAXNRS),PINION(MAXNKS,MAXNRS),                
+c slmod end
+     >     PINALPHA(MAXNKS,MAXNRS),pinmol(maxnks,maxnrs),               
+     >     pinz0(maxnks,maxnrs),pinionz(maxnks,maxnrs),                 
+     >     pinena(maxnks,maxnrs),pinenm(maxnks,maxnrs),                 
+     >     pinenz(maxnks,maxnrs),pinqi(maxnks,maxnrs),                  
+     >     pinqe(maxnks,maxnrs),pinmp(maxnks,maxnrs),
+     >     pinrec(maxnks,maxnrs),divrec(maxnks,maxnrs),
+     >     hioniz,zioniz,h2ioniz,
+     >     srecyc,srecom,hescpd,hescal,zsput,zsputn,
+     >     zescpd,zescal,hesclk,zesclk,
+     >     hescpd_last,hescal_last,phfgal_last,phfuga_last,
+     >     pinvdist(3,14,maxnks,maxnrs),hwalks(maxnws,2),pincor,
+c
+     >     rvesm_pin(maxseg,2),zvesm_pin(maxseg,2),
+     >     fluxhw_pin(maxseg),flxhw2_pin(maxseg),
+     >     flxhw3_pin(maxseg),flxhw4_pin(maxseg),
+     >     flxhw5_pin(maxseg),flxhw6_pin(maxseg),
+c
+     >     rvesm(maxseg,2),zvesm(maxseg,2),
+     >     fluxhw(maxseg),flxhw2(maxseg),
+     >     flxhw3(maxseg),flxhw4(maxseg),
+c slmod begin - new
+c...       Added FLXHW7, the average molecular hydrogen energy:
+c... jdemod  added flxhw8, the Eirene reported wall ion flux
+     >     flxhw5(maxseg),flxhw6(maxseg),flxhw7(maxseg),
+     >     flxhw8(maxseg),
+c
+c     >     flxhw5(maxseg),flxhw6(maxseg),
+c slmod end
+c
+     >     hpcpuf,phfgal,tpufh,phfuga,ppcpuf,acthpcpuf,
+     >     gaugedat(5,2),piniz_info(maxnrs,4),
+     >     hcorr(maxnks,maxnrs),hval(maxnks,maxnrs)
+c
+c    >     ,hextrl,phxtra
+C                                                                       
+      integer nvesm,nvesp,jvesm(maxseg),nlines,pinpuff,
+     >        swpvhpf,jhpuf1(2),jhpuf2(2),ihybrid,ihcorr,
+     >        iiterpin,pinprint,piniseed,pinseed,
+     >        nvesm_pin,jvesm_pin(maxseg)
+
+c
+      character*80 cnimbin(maxlines)
+c
+
