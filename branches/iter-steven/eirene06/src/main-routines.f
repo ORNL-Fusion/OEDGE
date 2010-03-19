@@ -3708,7 +3708,16 @@ C
 
 C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
       FLXFAC(ISTR)=0.
-      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod begin
+      IF (SCALV(ISTR).LT.0.D0) THEN
+c...    Set the flux to a particular value:
+        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE',ISTR
+        FLUXT(ISTR)=-SCALV(ISTR)
+        IF (WTT.NE.0.D0) FLXFAC(ISTR)=FLUXT(ISTR)/WTT
+      ELSEIF (SCALV(ISTR).NE.0.D0) THEN
+c
+c      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod end
 C  NON DEFAULT SCALING OPTION
         IS=ISCLS(ISTR)
         IT=ISCLT(ISTR)

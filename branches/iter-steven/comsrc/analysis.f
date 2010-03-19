@@ -118,10 +118,10 @@ c      WRITE(fp,*) 'Target conditions:'
           mach = kvds(id) / GetCs(kteds(id),ktids(id))
 
           WRITE(fp,'(1X,I4,I5,2F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
-     .             ' ,F6.2,1P,E12.4,0P,1X,A)')
+     .             ' ,F6.2,1P,E12.4,0P,1X,A,2F10.5)')
      .      ir,model,psitarg(ir,1),rho(ir,CELL1),
      .      kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
-     .      irtag(ir)
+     .      irtag(ir),rp(id),zp(id)
         ENDDO
       ENDDO
 c

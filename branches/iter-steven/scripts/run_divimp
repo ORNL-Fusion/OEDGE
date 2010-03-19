@@ -1,4 +1,4 @@
-#!/bin/tcsh -x
+#!/bin/tcsh 
 #
   alias ls ls
 #

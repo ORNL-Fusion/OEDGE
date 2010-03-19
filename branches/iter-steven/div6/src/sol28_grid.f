@@ -163,7 +163,10 @@ c...  Set the geometry:
       ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
         geometry = UDND
       ELSE
-        STOP 'NOT TESTED YET'
+        WRITE(0,*) 'NXPT   =',grid%nxpt
+        WRITE(0,*) 'ZXPT1,2=',grid%zxpt
+        WRITE(0,*) 'Z0     =',grid%z0
+        STOP 'NOT TESTED YET - A'
       ENDIF
 
 c...  A bit of a mess... but...
@@ -181,7 +184,7 @@ c...  A bit of a mess... but...
                   ilist(1) = GetTube(grid%ixpt(2,1),IND_OBJECT)
                 ENDIF
               CASE DEFAULT
-                STOP 'NOT TESTED YET'
+                STOP 'NOT TESTED YET - B'
             ENDSELECT
           ENDIF
           tcheck = 0
@@ -257,7 +260,7 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
               ENDIF
             CASE (LDND)
-              STOP 'NOT CHECKED'
+              STOP 'NOT CHECKED - A'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -266,7 +269,7 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 1
               ENDIF
             CASE (CDND)
-              STOP 'NOT CHECKED'
+              STOP 'NOT CHECKED - B'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 1

@@ -1951,8 +1951,12 @@ c...  Also from READPIN?
 c...  Dump EIRENE calculated impurity distribution data:
       IF (ALLOCATED(eirdat)) THEN
         CALL inOpenInterface('idl.eirene_imp')
-        CALL inPutData(irsep -1,'GRID_ISEP' ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
-        CALL inPutData(irwall-1,'GRID_IPFZ' ,'N/A')  ! the boundary rings are not present
+        CALL inPutData(0.0       ,'IMP_INITIAL_IZ'    ,'N/A')
+        CALL inPutData(0.0       ,'IMP_MAX_IZ'        ,'N/A')
+        CALL inPutData(SNGL(cion),'IMP_Z'             ,'N/A')
+        CALL inPutData(crmi      ,'IMP_A'             ,'N/A')
+        CALL inPutData(irsep -1  ,'GRID_ISEP'         ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
+        CALL inPutData(irwall-1  ,'GRID_IPFZ'         ,'N/A')  ! the boundary rings are not present
         CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  
         DO ir = 2, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE

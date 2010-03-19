@@ -817,10 +817,6 @@ c...            Load main node interpolation data:
                 ENDIF
                 node_data = .TRUE.
                 node_fit  = .FALSE.
-c                IF (node_tmp%rad_mode.EQ.5) THEN
-c                  node_fit  = .TRUE.
-c                  node_data = .FALSE.
-c                ENDIF
               ELSEIF (node_type.EQ.0.0.AND.node_data) THEN
                 osmnode(osmnnode) = node_tmp
                 osmnode(osmnnode)%fit_type = 0.0
@@ -851,7 +847,7 @@ c...              Load data for radial fits to pedestal prescription:
      .                  osmnode(osmnnode)%fit_quantity,
      .                  osmnode(osmnnode)%fit_p(1:7)
                     CASE DEFAULT
-                      CALL ER('LoadMiscOption','Bad TYPE',*99)
+                      CALL ER('LoadMiscOption','Bad TYPE for S74',*99)
                   ENDSELECT
                 ELSE
 c...              Load data for radial fits to functions:
@@ -875,8 +871,6 @@ c...            Spacer, ignore:
 
 
           WRITE(88,*) 'DEBUG 11:',osmnode(11)%type,osmnode(11)%fit_type
-
-
           DO i1 = 1, osmnnode
             WRITE(logfp,*) 'nodes:',osmnode(i1)%type,
      .                     osmnode(i1)%par_mode,

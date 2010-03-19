@@ -283,6 +283,10 @@ C
      >                                    RENEGY)
 c slmod begin
 c DUMP WALL IMPURITY FLUX DATA HERE...     
+c CICABS - total ion flux to target
+c CRAVAV - absolute velocity as the ion is lost
+c CRTBS  - average background ele temperature at loss
+c CRTABS - average background ion temperature at loss
 c slmod end
          ENDIF
 C

@@ -933,6 +933,7 @@ c         = 3 - PSIn over range of applicability (like coord=2)
 c         = 4 - RHO
 c         = 5 - PSIn (raw)
 c         = 6 - linear on line segment, but from tube link to infinity
+c         = 7 - psin, from tube link to infinity
 
         index = NINT(osmnode(i1)%type)
         mode  = osmnode(i1)%rad_mode
@@ -1171,7 +1172,7 @@ c...        Base second radial interpolation value on the first value:
             IF (osmnode(i3)%te   .LT.0.0) te1= -osmnode(i3)%te    * te0
             IF (osmnode(i3)%ti(1).LT.0.0) ti1= -osmnode(i3)%ti(1) * ti0
 
-            IF (coord.EQ.3) psin0 = tube(it1)%psin
+            IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
 c            IF (coord.EQ.4) rho0  = tube(it1)%rho
 
 c            WRITE(0,*) 'te0:',te0
@@ -1247,6 +1248,11 @@ c...          Assuming a 1:1 mapping between grid and data:
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)
             IF (debug) WRITE(logfp,*) '6: VAL=',val
+          ELSEIF (coord.EQ.7) THEN
+            val0 = 0.0  ! Necessary?
+            val1 = 0.0  
+            val  = ABS(tube(it)%psin - psin0)
+            WRITE(logfp,*) ' psin 7:',psin0,tube(it)%psin,val
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             IF ((osmnode(i2)%tube_range(1).NE.
@@ -1528,7 +1534,7 @@ c           parameters:
                 osmnode(ifit)%tube_range = osmnode(i0)%tube_range
                 SELECTCASE (type)
                   CASE (1:2)  ! Core + pedestal + SOL
-                    CALL SimplePlasmaProfile(type,ifit,val,coord,result)
+                    CALL osm_UpstreamProfile(type,ifit,val,coord,result)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown fit '//
      .                      'type for MODE=6',*99)
