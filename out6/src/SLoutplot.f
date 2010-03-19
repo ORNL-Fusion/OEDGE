@@ -69,9 +69,9 @@ c
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
       REAL   , INTENT(IN) :: crmi,absfac
 
-      INTEGER   ik,ir,iz,id,in,status,ike,
+      INTEGER   ik,ir,iz,id,in,status,ike,target,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin
+      REAL      totfypin,impact_energy
       CHARACTER tag*64
 
       index = -1
@@ -94,7 +94,7 @@ c...  Dump impurity data:
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(cion ,'IMP_Z'         ,'N/A')
+      CALL inPutData(SNGL(cion),'IMP_Z'         ,'N/A')
       CALL inPutData(crmi ,'IMP_A'         ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
@@ -126,12 +126,12 @@ c...  Dump impurity data:
       CALL inOpenInterface('idl.divimp_imp_ionisation')
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
-      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(cion ,'IMP_Z'         ,'N/A')
-      CALL inPutData(crmi ,'IMP_A'         ,'N/A')
-      CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(cion    ,'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
@@ -153,6 +153,62 @@ c...  Dump impurity data:
         ENDDO
       ENDDO
       CALL inCloseInterface 
+c
+c     Target fluxes
+c
+c From mom.f in div6:
+c CICABS - total ion flux to target
+c CRAVAV - absolute velocity as the ion is lost
+c CRTBS  - average background ele temperature at loss
+c CRTABS - average background ion temperature at loss
+c     RENEGY = 3.0 * REAL(IZ) * CTBS(IZ) / CICABS(IZ) +
+c              5.22E-9 * CRMI * VEXIT * VEXIT +
+c              2.0 * CRTABS(IZ) / CICABS(IZ)
+
+c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
+c     which I'm leaving off for now...
+
+      CALL inOpenInterface('idl.divimp_imp_target')
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      DO id = 1, nds
+        ir = irds(id)
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        tube(1) = ir - 1                         ! TUBE is set to the OSM fluid grid system, where
+        IF (ir.GT.irwall) tube(1) = tube(1) - 2  ! the boundary rings are not present
+        target = IKHI
+        IF (ikds(id).EQ.1) target = IKLO
+        CALL inPutData(id             ,'INDEX'     ,'N/A')                     
+        CALL inPutData(target         ,'TARGET'    ,'N/A')                     
+        CALL inPutData(tube(1)        ,'TUBE'      ,'N/A')                     
+        CALL inPutData(wallindex(id)  ,'WALL_INDEX','N/A')                     
+      ENDDO
+      DO id = 1, nds
+        ir = irds(id)
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        CALL inPutData(rp(id)   ,'R'     ,'m')
+        CALL inPutData(zp(id)   ,'Z'     ,'m') 
+        CALL inPutData(dds(id)  ,'LENGTH','m') 
+        CALL inPutData(kteds(id),'TE'    ,'eV')                     
+        CALL inPutData(ktids(id),'TI'    ,'eV')                     
+        DO iz = 1, MIN(nizs,cion)
+          WRITE(tag,'(A,I0.2,A)') 'IMP_',iz,'_'
+          impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing the ion velocity contribution...
+     .                    2.0 * ktids(id) 
+          CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
+          CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
+          CALL inPutData(1.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
+        ENDDO      
+      ENDDO  
+      CALL inCloseInterface 
+
+
 
       RETURN
  99   STOP

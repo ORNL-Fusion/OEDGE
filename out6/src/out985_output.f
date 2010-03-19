@@ -2176,8 +2176,7 @@ c...              Rotate vertices:
 c...            Filter:
                 count = 0.0
                 IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
-                WRITE(0,*) 'GO MAN',iobj,isid
-
+c                WRITE(0,*) 'GO MAN',iobj,isid
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
                     i4 = i3 + 1

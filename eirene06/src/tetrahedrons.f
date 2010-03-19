@@ -2364,6 +2364,7 @@ C ===== SOURCE: tet_step.f
       I1=NTECK(ITSIDE(1,ISIDE),ITET)
       I2=NTECK(ITSIDE(2,ISIDE),ITET)
       I3=NTECK(ITSIDE(3,ISIDE),ITET)
+      WRITE(0,*) 'DEBUG TET_STEP: 1.00',nrs,size(rrstep,2)
       RRSTEP(IS,NRS+1)=RRSTEP(IS,NRS) +
      .               ARTRI3(XTETRA(I1),YTETRA(I1),ZTETRA(I1),
      .                      XTETRA(I2),YTETRA(I2),ZTETRA(I2),

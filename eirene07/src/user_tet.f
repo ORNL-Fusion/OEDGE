@@ -2192,11 +2192,15 @@ CDR
       DATA IFIRST/0/
       SAVE
 
+      WRITE(0,*) 'DEBUG: UPTUSR 1.00',ifirst
+
       IF (IFIRST.EQ.0) THEN
         IFIRST=1
+        WRITE(0,*) 'DEBUG: UPTUSR 2.00'
         DO IAT=1,NATMI
           CNDYNA(IAT)=1.D3*AMUA*RMASSA(IAT)
         END DO
+        WRITE(0,*) 'DEBUG: UPTUSR 3.00'
         DO IPL=1,NPLSI
           CNDYNP(IPL)=1.D3*AMUA*RMASSP(IPL)
         END DO
@@ -2206,12 +2210,14 @@ CDR  PROVIDE A RADIAL UNIT VECTOR PER CELL
 CDR  VPX,VPY,  NEEDED FOR PROJECTING PARTICLE VELOCITIES
 CDR  SAME FOR POLOIDAL UNIT VECTOR VRX,VRY
 C
+        WRITE(0,*) 'DEBUG: UPTUSR 4.00'
         DO I=1,NRAD
           VPX(I)=0.
           VPY(I)=0.
           VRX(I)=0.
           VRY(I)=0.
         END DO
+        WRITE(0,*) 'DEBUG: UPTUSR 5.00'
         DO IR=1,NR1STM
           DO IP=1,NP2NDM
             IRD=IR+(IP-1)*NR1P2
@@ -2221,6 +2227,7 @@ C
             VRY(IRD)=PPLNY(IR,IP)
           END DO
         END DO
+        WRITE(0,*) 'DEBUG: UPTUSR 6.00'
         IA1=NATMI+NMOLI
         IA2=2*IA1
         IA3=3*IA1
