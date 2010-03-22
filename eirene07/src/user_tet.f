@@ -1489,6 +1489,9 @@ c     gauge" region:
         ALLOCATE(T_VOL(NGAUGE))
         ALLOCATE(T_PDENM(NSTRAI,NGAUGE,NITER+1))
         ALLOCATE(T_EDENM(NSTRAI,NGAUGE,NITER+1))
+        T_VOL=0.0D0
+        T_PDENM=0.0D0
+        T_EDENM=0.0D0
       ENDIF
 
       T_VOL=0.0D0       
@@ -1504,8 +1507,10 @@ c     gauge" region:
             T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)+EDENM(IMOL,IR)*VOL(IR)
           ENDIF
         ENDDO
-        T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)/T_VOL(IG)
-        T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)/T_VOL(IG)
+        IF (T_VOL(IG).GT.0.0D0) THEN
+          T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)/T_VOL(IG)
+          T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)/T_VOL(IG)
+        ENDIF
         WRITE(logfp,*) 'GAUGE:',IS,IT,IG,T_EDENM(IS,IG,IT)
       ENDDO
 

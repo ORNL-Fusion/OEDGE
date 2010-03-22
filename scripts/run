@@ -1,4 +1,4 @@
-#!/bin/tcsh 
+#!/bin/tcsh
 #
 # ======================================================================
 # STOP THE PRESSES, AND RELAUNCH ON THE CLUSTER AS qsub PROCESS
