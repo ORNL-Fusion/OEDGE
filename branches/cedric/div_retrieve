@@ -53,7 +53,7 @@ fi
 # Set up directory entries
 #
 
-DIVDIR=$HOME/divimp
+DIVDIR=$HOME/divimp_ced
 ARCDIR=$DIVDIR/$1
 RESDIR=$DIVDIR/results
 DATDIR=$DIVDIR/data
