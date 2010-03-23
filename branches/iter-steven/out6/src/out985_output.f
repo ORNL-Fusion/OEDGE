@@ -2340,7 +2340,7 @@ c            DO ipixel = 1, npixel
             WRITE(file,'(1024X)')          
             WRITE(file,'(A,I1)') 
      .        'output.'//TRIM(opt%fmap)//'.idl.los_',idet  
-            CALL inOpenInterface(TRIM(file))
+            CALL inOpenInterface(TRIM(file),ITF_WRITE)
             DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
               ix = pixel(ipixel)%xindex
               iy = pixel(ipixel)%yindex
@@ -2385,7 +2385,7 @@ c...      Inversion mesh coverage:
             qmax = 0.0
             file = 'output.trc'
             WRITE(0,*) 'DUMP INVERSION COVERAGE:',file(1:LEN_TRIM(file))
-            CALL inOpenInterface(file)   ! TRIM(file) would not work, compiler bug...
+            CALL inOpenInterface(file,ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
             DO iobj = 1, nobj
               IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
               IF (obj(iobj)%type.NE.GT_TC) CYCLE

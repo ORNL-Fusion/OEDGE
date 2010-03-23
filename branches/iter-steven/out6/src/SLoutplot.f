@@ -23,7 +23,7 @@ c
 
       unit = 'ph m-3 s-1'
 
-      CALL inOpenInterface('idl.fluid_eirene')
+      CALL inOpenInterface('idl.fluid_eirene',ITF_WRITE)
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
@@ -89,7 +89,7 @@ c       (from code in divoutput.f)
       IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Dump impurity data:
-      CALL inOpenInterface('idl.divimp_imp_density')
+      CALL inOpenInterface('idl.divimp_imp_density',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
@@ -123,7 +123,7 @@ c...  Dump impurity data:
       ENDDO
       CALL inCloseInterface 
 
-      CALL inOpenInterface('idl.divimp_imp_ionisation')
+      CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
@@ -168,7 +168,7 @@ c              2.0 * CRTABS(IZ) / CICABS(IZ)
 c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
 c     which I'm leaving off for now...
 
-      CALL inOpenInterface('idl.divimp_imp_target')
+      CALL inOpenInterface('idl.divimp_imp_target',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
@@ -309,7 +309,7 @@ c...  Dump data for processing in IDL:
       file = 'osm.idl'
       WRITE(6,*) '999: Dumping OSM data to interface file'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file)
+      CALL inOpenInterface(file,ITF_WRITE)
       n = 10  ! Resolution parameter for all cells... need something more refined...
       CALL inPutData(irsep,'grid_irsep','none')            
       CALL inPutData(nrs  ,'grid_nrs  ','none')            
@@ -415,7 +415,7 @@ c
       file = 'osm.idl.targets'
       WRITE(6,*) '999: Dumping OSM data to interface file - targets'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file)
+      CALL inOpenInterface(file,ITF_WRITE)
       ir = irtrap
       IF (nopriv) ir = irsep
       DO WHILE(ir.NE.irwall-1)
@@ -1312,7 +1312,7 @@ c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
      .    (midpro(i1,i2),i2=1,ncol)
       ENDDO
 
-      CALL inOpenInterface('osm.idl.midplane')
+      CALL inOpenInterface('osm.idl.midplane',ITF_WRITE)
 c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
       CALL inPutData(ring  (     1:npro ),'MID_RING','none')
       CALL inPutData(r     (     1:npro ),'MID_R'   ,'m')
@@ -1414,7 +1414,7 @@ c...  Zeff:
      .    avolpro(i1,nizs+4)
       ENDDO
 
-      CALL inOpenInterface('osm.idl.core_impurities')
+      CALL inOpenInterface('osm.idl.core_impurities',ITF_WRITE)
  
       CALL inPutData(absfac         ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(impurity_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')

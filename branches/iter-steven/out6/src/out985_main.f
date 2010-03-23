@@ -1474,7 +1474,7 @@ c      TYPE(type_options985) :: opt
 c...      Also generate mod_interface file:
           WRITE(file,'(1024X)')          
           file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
-          CALL inOpenInterface(TRIM(file))
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
           DO iy = 1, nybin
             CALL inPutData(image(1:nxbin,iy),'data','unknown')
           ENDDO

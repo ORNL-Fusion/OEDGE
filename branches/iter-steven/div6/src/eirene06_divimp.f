@@ -1950,7 +1950,7 @@ c...  Also from READPIN?
 
 c...  Dump EIRENE calculated impurity distribution data:
       IF (ALLOCATED(eirdat)) THEN
-        CALL inOpenInterface('idl.eirene_imp')
+        CALL inOpenInterface('idl.eirene_imp',ITF_WRITE)
         CALL inPutData(0.0       ,'IMP_INITIAL_IZ'    ,'N/A')
         CALL inPutData(0.0       ,'IMP_MAX_IZ'        ,'N/A')
         CALL inPutData(SNGL(cion),'IMP_Z'             ,'N/A')

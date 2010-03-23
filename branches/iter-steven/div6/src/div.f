@@ -4817,7 +4817,7 @@ c
      >       in * d_pinch_vel, d_pinch_v(in)
       end do 
 c slmod begin
-      CALL inOpenInterface('idl.divimp_summary')
+      CALL inOpenInterface('idl.divimp_summary',ITF_WRITE)
       i = nimps
       IF (cneuth.NE.-1) i = i + nimps2  ! Check for a supplementary launch
       CALL inPutData(i               ,'IONS_REQUESTED'       ,'N/A')

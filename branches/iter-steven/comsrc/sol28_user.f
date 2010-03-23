@@ -108,7 +108,7 @@ c      itube1 = 4
 c      itube2 = 4  ! ntube
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_plasma')
+      CALL inOpenInterface('osm.idl.fluid_plasma',ITF_WRITE)
 
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
@@ -142,7 +142,7 @@ c...  ------------------------------------------------------------------
       CALL inCloseInterface 
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_sources')
+      CALL inOpenInterface('osm.idl.fluid_sources',ITF_WRITE)
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
         ic2 = tube(itube)%cell_index(HI)
@@ -169,7 +169,7 @@ c....   Cells centres:
 
 c...  ------------------------------------------------------------------
       IF (ALLOCATED(pin)) THEN
-        CALL inOpenInterface('osm.idl.fluid_eirene')
+        CALL inOpenInterface('osm.idl.fluid_eirene',ITF_WRITE)
         DO itube = itube1, itube2
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
@@ -192,7 +192,7 @@ c....     Cells centres:
       ENDIF
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.params')
+      CALL inOpenInterface('osm.idl.params',ITF_WRITE)
       CALL inPutData(2.0,'flupar mass','amu')
       CALL inCloseInterface 
 c
@@ -201,7 +201,7 @@ c     Write out target data:
 c
       IF (.NOT.ALLOCATED(target)) GOTO 20
 
-      CALL inOpenInterface('osm.idl.fluid_targets')
+      CALL inOpenInterface('osm.idl.fluid_targets',ITF_WRITE)
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
 
@@ -250,7 +250,7 @@ c
  20   CONTINUE
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.osm_nodes')
+      CALL inOpenInterface('osm.idl.osm_nodes',ITF_WRITE)
       DO itube = 1, ntube
         CALL inPutData(itube             ,'TUBE'  ,'N/A')
         CALL inPutData(store_sopt (itube),'S_OPT' ,'N/A')
