@@ -1976,7 +1976,7 @@ c       --------------------------------------------------------------
         WRITE(outfp,*) '  MAXIR=',maxir
       ENDIF
 
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO i1 = 1, nknot
         CALL inPutData(knot(i1)%ik,'IK','none')
         CALL inPutData(knot(i1)%ir,'IR','none')
@@ -2670,11 +2670,7 @@ c...  Assign data to the global arrays:
       grid_load%ikto       = ikto       
       grid_load%nks(1:nrs) = nks(1:nrs)
 
-
-
-
-
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO ir = 1, nrs
         CALL inPutData(nks(ir),'NKS','NA')    
         DO ik = 1, nks(ir)

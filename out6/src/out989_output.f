@@ -368,7 +368,7 @@ c          nbin = 1 !6  ! Binning (NBIN=1 is no binning)
      .        header%shot,header%frame,header%time,header%channel
 
             file = opt%fmap(1:LEN_TRIM(opt%fmap))//'.idl.b'
-            CALL inOpenInterface(file)
+            CALL inOpenInterface(file,ITF_WRITE)
             CALL inPutData(header%shot   ,'shot'   ,'none')
             CALL inPutData(header%frame  ,'frame'  ,'none')
             CALL inPutData(header%time   ,'time'   ,'s')
@@ -556,7 +556,7 @@ c...    Inverted profile:
      .          opt%out_suffix(1:LEN_TRIM(opt%out_suffix))
           WRITE(file,'(514X)')          
           file = opt%fmap(1:LEN_TRIM(opt%fmap))//'.idl.x'
-          CALL inOpenInterface(file)   ! TRIM(file) would not work, compiler bug...
+          CALL inOpenInterface(file,ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
           DO i1 = 1, ninv
             WRITE(fp,'(I7,1P,E22.12,0P,I5,10(2F11.6))')  
      .        i1,qpts(i1,2),
@@ -1124,7 +1124,7 @@ c...      Dump data for processing in IDL:
 c          file = filename(1:LEN_TRIM(filename))//'osm'
 c          WRITE(6,*) '989: Duming OSM data to interface file'
 c          WRITE(6,*) '     FILE = >',file,'<'
-c          CALL inOpenInterface(file)
+c          CALL inOpenInterface(file,ITF_WRITE)
 c         Moved to SLoutplot.f        
 
         ENDIF
