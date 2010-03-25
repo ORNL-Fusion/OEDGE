@@ -1058,7 +1058,7 @@ c...  Bricks:
       LOGICAL :: hack  = .FALSE.
 
       REAL*8 a(3,3),b(3,7),c(3,4),ang,ang1,ang2,dang(500,2),
-     .       theta,frac,xcen,ycen
+     .       theta,frac,xcen,ycen,adelta
 
       REAL*8     DTOL
       PARAMETER (DTOL=1.0D-07)
@@ -1170,6 +1170,9 @@ c        dang(12,2) = 180.0D0   !  180.0D0
         ENDDO
       ENDIF
 
+      adelta = dang(nseg,2) - dang(1,1)
+      dang = dang - 0.5D0 * adelta      
+
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
      .    'ANGLES:',isector,dang(isector,1:2)
@@ -1203,7 +1206,13 @@ c...    Filter:
         xcen = SUM(a(1,1:3)) / 3.0
         ycen = SUM(a(2,1:3)) / 3.0
 c        IF (xcen.LT.0.01) CYCLE
-        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
+c        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
+c        IF (ycen.GT.-2.0) CYCLE
+c        IF (ycen.LT.3.0) CYCLE
+c        IF (try(itry)%index(IND_IR).GT.1 .AND.
+c     .      try(itry)%index(IND_IR).LT.20) CYCLE 
+        
+
 
 
 c...    Check orientation...?

@@ -5822,24 +5822,29 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
+         IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+         WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
         GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
         GOTO 300
       ELSE
+         IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
 c     slmod end

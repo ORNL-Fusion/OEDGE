@@ -23,7 +23,7 @@ c
 
       unit = 'ph m-3 s-1'
 
-      CALL inOpenInterface('idl.fluid_eirene')
+      CALL inOpenInterface('idl.fluid_eirene',ITF_WRITE)
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
@@ -69,9 +69,9 @@ c
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
       REAL   , INTENT(IN) :: crmi,absfac
 
-      INTEGER   ik,ir,iz,id,in,status,ike,
+      INTEGER   ik,ir,iz,id,in,status,ike,target,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin
+      REAL      totfypin,impact_energy
       CHARACTER tag*64
 
       index = -1
@@ -89,12 +89,12 @@ c       (from code in divoutput.f)
       IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Dump impurity data:
-      CALL inOpenInterface('idl.divimp_imp_density')
+      CALL inOpenInterface('idl.divimp_imp_density',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(cion ,'IMP_Z'         ,'N/A')
+      CALL inPutData(SNGL(cion),'IMP_Z'         ,'N/A')
       CALL inPutData(crmi ,'IMP_A'         ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
@@ -123,15 +123,15 @@ c...  Dump impurity data:
       ENDDO
       CALL inCloseInterface 
 
-      CALL inOpenInterface('idl.divimp_imp_ionisation')
+      CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
-      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(cion ,'IMP_Z'         ,'N/A')
-      CALL inPutData(crmi ,'IMP_A'         ,'N/A')
-      CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(cion    ,'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
@@ -153,6 +153,62 @@ c...  Dump impurity data:
         ENDDO
       ENDDO
       CALL inCloseInterface 
+c
+c     Target fluxes
+c
+c From mom.f in div6:
+c CICABS - total ion flux to target
+c CRAVAV - absolute velocity as the ion is lost
+c CRTBS  - average background ele temperature at loss
+c CRTABS - average background ion temperature at loss
+c     RENEGY = 3.0 * REAL(IZ) * CTBS(IZ) / CICABS(IZ) +
+c              5.22E-9 * CRMI * VEXIT * VEXIT +
+c              2.0 * CRTABS(IZ) / CICABS(IZ)
+
+c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
+c     which I'm leaving off for now...
+
+      CALL inOpenInterface('idl.divimp_imp_target',ITF_WRITE)
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      DO id = 1, nds
+        ir = irds(id)
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        tube(1) = ir - 1                         ! TUBE is set to the OSM fluid grid system, where
+        IF (ir.GT.irwall) tube(1) = tube(1) - 2  ! the boundary rings are not present
+        target = IKHI
+        IF (ikds(id).EQ.1) target = IKLO
+        CALL inPutData(id             ,'INDEX'     ,'N/A')                     
+        CALL inPutData(target         ,'TARGET'    ,'N/A')                     
+        CALL inPutData(tube(1)        ,'TUBE'      ,'N/A')                     
+        CALL inPutData(wallindex(id)  ,'WALL_INDEX','N/A')                     
+      ENDDO
+      DO id = 1, nds
+        ir = irds(id)
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        CALL inPutData(rp(id)   ,'R'     ,'m')
+        CALL inPutData(zp(id)   ,'Z'     ,'m') 
+        CALL inPutData(dds(id)  ,'LENGTH','m') 
+        CALL inPutData(kteds(id),'TE'    ,'eV')                     
+        CALL inPutData(ktids(id),'TI'    ,'eV')                     
+        DO iz = 1, MIN(nizs,cion)
+          WRITE(tag,'(A,I0.2,A)') 'IMP_',iz,'_'
+          impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing the ion velocity contribution...
+     .                    2.0 * ktids(id) 
+          CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
+          CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
+          CALL inPutData(1.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
+        ENDDO      
+      ENDDO  
+      CALL inCloseInterface 
+
+
 
       RETURN
  99   STOP
@@ -253,7 +309,7 @@ c...  Dump data for processing in IDL:
       file = 'osm.idl'
       WRITE(6,*) '999: Dumping OSM data to interface file'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file)
+      CALL inOpenInterface(file,ITF_WRITE)
       n = 10  ! Resolution parameter for all cells... need something more refined...
       CALL inPutData(irsep,'grid_irsep','none')            
       CALL inPutData(nrs  ,'grid_nrs  ','none')            
@@ -359,7 +415,7 @@ c
       file = 'osm.idl.targets'
       WRITE(6,*) '999: Dumping OSM data to interface file - targets'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file)
+      CALL inOpenInterface(file,ITF_WRITE)
       ir = irtrap
       IF (nopriv) ir = irsep
       DO WHILE(ir.NE.irwall-1)
@@ -1256,7 +1312,7 @@ c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
      .    (midpro(i1,i2),i2=1,ncol)
       ENDDO
 
-      CALL inOpenInterface('osm.idl.midplane')
+      CALL inOpenInterface('osm.idl.midplane',ITF_WRITE)
 c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
       CALL inPutData(ring  (     1:npro ),'MID_RING','none')
       CALL inPutData(r     (     1:npro ),'MID_R'   ,'m')
@@ -1358,7 +1414,7 @@ c...  Zeff:
      .    avolpro(i1,nizs+4)
       ENDDO
 
-      CALL inOpenInterface('osm.idl.core_impurities')
+      CALL inOpenInterface('osm.idl.core_impurities',ITF_WRITE)
  
       CALL inPutData(absfac         ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(impurity_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')
