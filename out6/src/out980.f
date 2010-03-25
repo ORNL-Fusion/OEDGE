@@ -700,6 +700,7 @@ c...temp!
       CALL RZero(touts1 ,MAXTHE*MAXNGS)
       CALL RZero(array  ,MAXNKS*MAXNRS)
 
+      xlab = 'degrees'
 
 c...  Read ADAS data specifications from input file:
       IF (.NOT.(plot.GE.4.AND.plot.LE.15).AND.plot.NE.24) THEN
@@ -879,7 +880,7 @@ c     0 - NIMBUS
 c     1 - EIRENE97
 c     2 - EIRENE99
 c
-      IF (pincode.EQ.-1) THEN
+      IF (pincode.EQ.-1.OR.pincode.EQ.5) THEN
         IF (graph(5:5).EQ.'0'.OR.graph(5:5).EQ.'1'.OR.
      .      graph(5:5).EQ.'2'.OR.graph(5:5).EQ.'9') THEN
           READ(graph(5:5),*) plotcode
@@ -890,7 +891,7 @@ c
         plotcode = pincode
       ENDIF 
 
-c      WRITE(0,*) 'PLOTCODE:',plotcode
+      WRITE(0,*) 'PLOTCODE:',plotcode
 c
 c
 c     PLOTS
@@ -1091,7 +1092,8 @@ c       one case:
         DO WHILE (status)
 
 c...      Conduct the LOS integrations for the ADAS data:
-          IF ((plotcode.EQ.-1.OR.(plotcode.EQ.0.AND.plot.EQ.2).OR.
+          IF ((plotcode.EQ.-1.OR.(plotcode.EQ.0.AND.plot.EQ.1).OR.
+     .                           (plotcode.EQ.0.AND.plot.EQ.2).OR.
      .                           (plotcode.EQ.9.AND.plot.EQ.1)).OR.
      .        .FALSE.) THEN
             ngs = ngs + 1
@@ -1110,9 +1112,13 @@ c...      Conduct the LOS integrations for the ADAS data:
             CALL RVALKR(CVALSA,plrpad,1,1,1,FT,FP,
      >                  MFACT,XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
 
+            WRITE(0,*) 'CVALSA:',1,irsep,cvalsa(1,irsep)
+
 c            WRITE(0,*) '980: USING slLOSINT'
             CALL slLOSINT(TVALS(1,ngs),TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,
      .                    AVPTS,CVALSA,0.0)
+
+        
 
 c...        Store y-axis data for this data set:
             numthe1(ngs) = numthe
@@ -1146,6 +1152,7 @@ c              IF (elabs(1)(5:5).EQ.' ') elabs(ngs) = '    OSM+EIRENE'
      >                    MFACT,XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
             ENDIF
 
+            WRITE(0,*) 'CVALSA:',1,irsep,cvalsa(1,irsep)
 
 c            WRITE(0,*) '980: USING slLOSINT'
             CALL slLOSINT(TVALS(1,ngs),TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,
@@ -2303,6 +2310,8 @@ c        WRITE(0,*) '980:19 USING slLOSINT'
         ylab = '..........'
 
 
+      WRITE(0,*) 'XLAB:'//xlab
+
 c       DO ir = 1, nrs
 c         DO ik = 1, nks(ir)
 c           ktebs(ik,ir) = 0.5
@@ -2522,8 +2531,11 @@ c...  Set the y-axis scale, and scale the data to be plotted:
 
       title2 = title
 
+      WRITE(0,*) 'XLAB:'//xlab
+
       CALL CustomisePlot(title2,xlab,ylab,elabs)
 
+      WRITE(0,*) 'XLAB:'//xlab
      
       IF (slopt2.NE.1.AND.slopt2.NE.2)
      .  CALL SetPlotComments(980,job,extra_comments,0,tarshift(IKHI))
@@ -2537,6 +2549,8 @@ c        DO i1 = 1, numth2
 c          tvals2(i1,1) = LO
 c        ENDDO
 
+
+      WRITE(0,*) 'XLAB:'//xlab
 
 
       IF (plot.EQ.4.OR.plot.EQ.10.OR.plot.EQ.24.or.plot.eq.25.OR.

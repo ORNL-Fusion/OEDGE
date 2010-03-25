@@ -37,10 +37,15 @@ c
       REAL    HI,LO,ROOT2,PI,RADDEG,EMI,DEGRAD,ECH,AMU,machhi,machlo,
      >        kboltz,cspeed,eps0
       CHARACTER*5 VERSON                                                
-      PARAMETER (VERSON='6A/42'  ,MAXNTS=1   ,MAXNWS=10000 ,MAXNXS=1,   
-     >  MAXNKS=200  ,MAXNRS=100  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
-     >  MAXNGS=50   ,MAXIZS=74   ,MAXINS=150 ,MAXIMP=100000,MAXVMF=5,   
-     >  MAXPTS=400  ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,
+      PARAMETER (VERSON='6A/41'  ,MAXNTS=1   ,MAXNWS=10000 ,MAXNXS=1,   
+     >  MAXNKS=225  ,MAXNRS=200  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,  ! changed 04.03.2010
+c     >  MAXNKS=300  ,MAXNRS=200  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,  ! ITER
+c     >  MAXNKS=200  ,MAXNRS=100  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
+c     >  MAXNKS=200  ,MAXNRS=100  ,MAXNOC=100 ,MAXNDS=110   ,MAXNYS=1,
+     >  MAXNGS=50   ,MAXIZS=74   ,MAXINS=MAXNRS ,MAXIMP=100000,MAXVMF=5,  ! ITER
+c     >  MAXNGS=50   ,MAXIZS=74   ,MAXINS=150 ,MAXIMP=100000,MAXVMF=5,   
+     >  MAXPTS=750  ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,  ! ITER
+c     >  MAXPTS=500  ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,  
      >  MAXGXS=401  ,MAXGYS=400  ,MAXIXS=1   ,MAXIYS=1     ,IPINOUT=16,
      >  ISECT =128  ,MAXTHE=5000 ,MAXSN=5000 ,MAXSEG=1000  ,INIMOUT=37,
      >  MAXPLTS=24  ,MAXNFLA=21  ,maxpiniter=500           ,IPINDAT=15, 
@@ -146,10 +151,9 @@ c
 c
 c slmod begin - temporary
       INTEGER, PARAMETER :: LINEAR_GRID = 6        ! Tag for ULS grids   
-c jdemod
-      integer,parameter :: GEN_GRID = 7
+      INTEGER, PARAMETER :: GEN_GRID    = 7        ! For Dave...  
 
 c...  Some global options of convenience:
-      LOGICAL, PARAMETER :: sloutput  = .FALSE.,   ! Selects SL screen output 
+      LOGICAL, PARAMETER :: sloutput  = .TRUE.,   ! Selects SL screen output 
      .                      ippchange = .TRUE.     ! Selects recent IPP Garching updates
 c slmod end

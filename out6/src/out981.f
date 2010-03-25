@@ -454,8 +454,10 @@ c      deltay = 0.20
 c      yymin = yycen - 0.25 * yydis
 c      yymax = yycen + 0.25 * yydis
 
-      CALL SLSET (0.10,0.10+deltax,0.80,0.80+deltay,
+      CALL SLSET (0.10,0.10+deltax,0.70,0.70+deltay,
      .            xxmin,xxmax,yymin,yymax)
+c      CALL SLSET (0.10,0.10+deltax,0.80,0.80+deltay,
+c     .            xxmin,xxmax,yymin,yymax)
 c      CALL SLSET (0.10,0.10+deltax,0.70+0.008,0.70+deltay,
 c     .            xxmin,xxmax,yymin,yymax)
 c      CALL SLSET (0.10,0.10+deltax,0.05,0.05+deltay,
@@ -530,8 +532,8 @@ c     .                           0.70-(i1-1)*0.20,0.0,0.0,0.0,0.0)
              iopt_ghost = 2   
            ENDIF
          ELSE
-           CALL SLSET (0.10,0.90,0.25,0.65,0.0,0.0,0.0,0.0)
-c           CALL SLSET (0.10,0.90,0.15,0.65,0.0,0.0,0.0,0.0)
+c           CALL SLSET (0.10,0.90,0.25,0.65,0.0,0.0,0.0,0.0)
+           CALL SLSET (0.10,0.90,0.15,0.65,0.0,0.0,0.0,0.0)
          ENDIF
 
 c...     Blank ref for now:
@@ -618,7 +620,7 @@ c        CALL FRAME
 c        multiplot = 0
 c      ENDIF
 
-c...  Add a caption to the plot:
+c...  Don't clear the page to start a new plot:
       READ(5,'(A5000)') dummy
       IF   (dummy(8:14).EQ.'Noframe'.OR.dummy(8:12).EQ.'noframe'.OR.
      .      dummy(8:14).EQ.'NOFRAME') THEN

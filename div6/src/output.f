@@ -691,9 +691,7 @@ c
 c
         DO ik = 1, nks(ir)
           in = korpg(ik,ir)
-
-
-cc...temp: korpg=0
+c...temp: korpg=0
           IF (in.EQ.0) in = MAXNKS*MAXNRS
 c
           note = ' '
@@ -716,9 +714,6 @@ c
         ENDDO
       ENDDO
 c
-
-
-600   CONTINUE
 
       CLOSE(fp)
 c-----------------------------------
@@ -1258,7 +1253,37 @@ c...temp: korpg=0
         ENDDO
       ENDIF
 
-600   CONTINUE  ! ???
+      WRITE(fp,*)
+      WRITE(fp,*) 'DALPHA DATA:'
+c
+      DO ir = 1, nrs
+        WRITE(fp,*)
+        WRITE(fp,'(2A3,7A12,1X,A)')
+     .    'ik','ir',
+     .    'pinalpha','pinline6','pinline1','pinline2',
+     .    'pinline3','pinline4','pinline5',irtag(ir)
+c
+        DO ik = 1, nks(ir)
+          note = ' '
+          IF (ik.EQ.ikto2 (ir)) note = note(1:LEN_TRIM(note))//' IKTO2'
+          IF (ik.EQ.ikti2 (ir)) note = note(1:LEN_TRIM(note))//' IKTI2'
+          IF (ik.EQ.ikmids(ir)) note = note(1:LEN_TRIM(note))//' IKMIDS'
+          IF (ik.EQ.ikbound(ir,IKLO))
+     .      note = note(1:LEN_TRIM(note))//' IK1'
+          IF (ik.EQ.ikbound(ir,IKHI))
+     .      note = note(1:LEN_TRIM(note))//' IK2'
+          if (in.eq. MAXNKS*MAXNRS)      
+     >      note = trim(note)//' INVALID CELL'
+
+          WRITE(fp,'(2I3,1P,7E12.4,0P,A)')
+     .      ik,ir,
+     .      pinalpha(ik,ir),
+     .      pinline (ik,ir,6  ,H_BALPHA),
+     .      pinline (ik,ir,1:5,H_BALPHA),
+c     .      pinline (ik,ir,7  ,H_BALPHA),
+     .      note(1:LEN_TRIM(note))
+        ENDDO
+      ENDDO
 
       CLOSE(fp)
 

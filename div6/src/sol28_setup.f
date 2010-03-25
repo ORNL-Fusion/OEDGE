@@ -829,7 +829,7 @@ c
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
 
-      debug = .FALSE. 
+      debug = .TRUE. 
 
       node_n = 0
 
@@ -1534,7 +1534,7 @@ c           parameters:
                 osmnode(ifit)%tube_range = osmnode(i0)%tube_range
                 SELECTCASE (type)
                   CASE (1:2)  ! Core + pedestal + SOL
-                    CALL SimplePlasmaProfile(type,ifit,val,coord,result)
+                    CALL osm_UpstreamProfile(type,ifit,val,coord,result)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown fit '//
      .                      'type for MODE=6',*99)

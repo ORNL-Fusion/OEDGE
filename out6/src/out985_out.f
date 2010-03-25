@@ -249,12 +249,12 @@ c...      DIVIMP precalculated quantities (should mode DALHPA and DGAMMA here):
               CASE (-1)  ! Sum over all charge states 
                 osm = 0.0
                 DO iz = 0, MIN(cion,nizs)
-                  WRITE(0,*) 'IZ!',iz,absfac
+c                  WRITE(0,*) 'IZ!',iz,absfac
                   osm(1:ik,1:ir) = osm(1:ik,1:ir) +  powls(1:ik,1:ir,iz)
                 ENDDO
                 IF (absfac.GT.0.0) osm = osm * absfac
                 DO iz = 0, 1
-                  WRITE(0,*) 'IZ!',iz
+c                  WRITE(0,*) 'IZ!',iz
                   osm(1:ik,1:ir) = osm(1:ik,1:ir) + hpowls(1:ik,1:ir,iz)
                 ENDDO
 
