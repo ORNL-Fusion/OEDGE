@@ -2,7 +2,12 @@
 #
 echo 'SETTING UP Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+#
+# Note: localdist needs to be set to whichever divimp directory you
+#       want to run the test cases in. 
+#
+
+set scriptdir = $PWD/scripts
 
 source $scriptdir/init_testcases
 

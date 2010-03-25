@@ -101,8 +101,8 @@ c      WRITE(fp,*)
 c      WRITE(fp,*) 'Target conditions:'
       DO i1 = 2, 1, -1
         WRITE(fp,*)
-        WRITE(fp,'(1X,A4,A5,1X,2A10,2A12,1X,A10,A6,A12)')
-     .    'ir','sol','Te','Ti','Ne','Jsat','v','M','p'
+        WRITE(fp,'(1X,A4,A5,2A9,1X,2A10,2A12,1X,A10,A6,A12)')
+     .    'ir','sol','psin','rho','Te','Ti','Ne','Jsat','v','M','p'
         DO ir = irsep, nrs
           IF (idring(ir).EQ.-1) CYCLE
 
@@ -117,10 +117,11 @@ c      WRITE(fp,*) 'Target conditions:'
           jsat = GetJsat     (kteds(id),ktids(id),knds(id),kvds(id))
           mach = kvds(id) / GetCs(kteds(id),ktids(id))
 
-          WRITE(fp,'(1X,I4,I5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P,F6.2,'//
-     .             ' 1P,E12.4,0P,1X,A)')
-     .      ir,model,kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
-     .      irtag(ir)
+          WRITE(fp,'(1X,I4,I5,2F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
+     .             ' ,F6.2,1P,E12.4,0P,1X,A,2F10.5)')
+     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
+     .      kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
+     .      irtag(ir),rp(id),zp(id)
         ENDDO
       ENDDO
 c
@@ -345,12 +346,9 @@ c      WRITE(fp,*)
 c      WRITE(fp,*) 'Full plasma analysis:'
       WRITE(fp, 9) 'GLOBAL','LOW SOL','HIGH SOL','CORE','PFZ','IW'
 9     FORMAT(3X,30X,6A11)
-c
-c     jdemod - added some more EPS10 values to prevent division by zeroes
-c
       WRITE(fp,10) 'Continuity      ion/(flx+rec)',
-     .  rdum(17)/(rdum(16)+EPS10),rdum( 6)/(rdum( 1)+rdum( 7)+EPS10),
-     .                    rdum( 8)/(rdum( 2)+rdum( 9)+EPS10)
+     .  rdum(17)/rdum(16),rdum( 6)/(rdum( 1)+rdum( 7)),
+     .                    rdum( 8)/(rdum( 2)+rdum( 9))
       WRITE(fp,14) 'Ionisation           ion/tot ',
      .  rdum( 6)/(rdum(17)+EPS10),rdum( 8)/(rdum(17)+EPS10),
      .  rdum(12)/(rdum(17)+EPS10),rdum(10)/(rdum(17)+EPS10)
@@ -511,16 +509,7 @@ c...temp
           CALL CalcIntegral3(pinrec,ikbound(ir,IKLO),ikm,ir,rdum(7),2)
           rdum(8) = knbs(ikbound(ir,IKLO),ir) *
      .              kvhs(ikbound(ir,IKLO),ir)
-c
-c         jdemod - avoiding division by zero in case flux is zero on a
-c                  boundary ring or in case solver assigned gamma decay 
-c                  faster than first cell size
-c
-          if ((rdum(7)-rdum(8)) .ne. 0.0) then 
-             rdum(9) = rdum(6) / (rdum(7) - rdum(8))
-          else
-             rdum(9) = 0.0
-          endif
+          rdum(9) = rdum(6) / (rdum(7) - rdum(8))
 
           WRITE(fp,'(3X,I4,4F10.4,2X,1P,5E10.2,0P,F10.2)')
      .      ir,rdum(1)/(rdum(5)+EPS10),rdum(2)/(rdum(5)+EPS10),
@@ -550,9 +539,7 @@ c...temp
           CALL CalcIntegral3(pinrec,ikm,ikbound(ir,IKHI),ir,rdum(7),2)
           rdum(8) = knbs(ikbound(ir,IKHI),ir) *
      .              kvhs(ikbound(ir,IKHI),ir)
-
-
-          rdum(9) = rdum(6) / (rdum(7) + rdum(8)+EPS10)
+          rdum(9) = rdum(6) / (rdum(7) + rdum(8))
 
           WRITE(fp,'(3X,I4,4F10.4,2X,1P,5E10.2,0P,F10.2)')
      .      ir,rdum(1)/(rdum(5)+EPS10),rdum(2)/(rdum(5)+EPS10),
@@ -747,9 +734,7 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
 
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/(rdum(1)+EPS10),
-     .      rdum(3)/(rdum(1)+EPS10),
-     .      rdum(3)/(rdum(2)+EPS10)
+     .      rdum(2)/rdum(1),rdum(3)/rdum(1),rdum(3)/rdum(2)
         ENDIF
       ENDDO
 
@@ -767,9 +752,7 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
 
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/(rdum(1)+EPS10),
-     .      rdum(3)/(rdum(1)+EPS10),
-     .      rdum(3)/(rdum(2)+EPS10)
+     .      rdum(2)/rdum(1),rdum(3)/rdum(1),rdum(3)/rdum(2)
         ENDIF
       ENDDO
 

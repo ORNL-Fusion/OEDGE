@@ -55,9 +55,9 @@ $ EIRENE options:
 '*E28 1.0 Strata setup data:'
 ' ' '     (dummy line) '
 '   Type  Region1 Region2    Tracks   Multi          '     3     EIRSTRATA
-     1.0     -3.0    -3.0       4000.0    -1.0
-     2.0     -3.0    -3.0       4000.0    -1.0
-     3.0     -3.0    -3.0       4000.0    -1.0
+     1.0     -3.0    -3.0     10000.0    -1.0
+     2.0     -3.0    -3.0     10000.0    -1.0
+     3.0     -3.0    -3.0     10000.0    -1.0
 $
 $ The pressure gauges are represented in EIRENE by toroidal
 $ cylinders.  Their geometry is specified as follows:
@@ -136,9 +136,9 @@ $                 Y of the first cell on the ring, otherwise use
 $                 vertex Y on the last cell of the ring.
 $ X,Y   - see VT
 $
-'*077 1.0 Additional surfaces:'
-' ' '     (dummy line) '
-' Type  vt1  x1(m)   y1(m)    vt2   x2(m)   y2(m)    '     0
+$'*077 1.0 Additional surfaces:'
+$' ' '     (dummy line) '
+$' Type  vt1  x1(m)   y1(m)    vt2   x2(m)   y2(m)    '     0
 $
 '*079 1.0 Plasma data for uniform private flux zone:'
 ' ' '     (dummy line) '

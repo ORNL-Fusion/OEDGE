@@ -2960,6 +2960,9 @@ c...  Free arrays:
       IF (MARsum1.NE.0.0) WRITE(0,*) 'MARSUM SOL 982:',MARsum1
       IF (MARsum2.NE.0.0) WRITE(0,*) 'MARSUM PFZ 982:',MARsum2
 
+c     IPP/09 - Krieger - should reset colors here
+      call setup_col(ncntr,icntr)
+
       RETURN
  9012 FORMAT(1X,'PLOT',I3,4X,A)
  98   CALL ER('PLOT982','Problem reading external datafile',*99)

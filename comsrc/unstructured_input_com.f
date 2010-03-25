@@ -80,7 +80,7 @@ c
 
       INTEGER    itag
       LOGICAL    status,sol28_first
-      CHARACTER  buffer*512
+      CHARACTER  buffer*1024
 
       DATA sol28_first /.TRUE./
       SAVE
@@ -115,27 +115,30 @@ c     individually:
 c -----------------------------------------------------------------------
       IF     (line(2:2).EQ.'{') THEN
         IF (sol28_first) THEN 
-          WRITE(0,*) 'INITIALIZING SOL28 OPTIONS'
+c          WRITE(0,*) 'INITIALIZING SOL28 OPTIONS'
           CALL InitializeOptions
           sol28_first = .FALSE.
         ENDIF
 c...    SOL28/OSM input options:
-        s28mode = 4.0
-        WRITE(buffer,'(A)') line
-c        WRITE(0,*) 'buffer:',buffer(1:100)
-c...    Isolate tag string:
-        DO itag = 2, LEN_TRIM(buffer)
-          IF (buffer(itag:itag).EQ.'}') EXIT
-        ENDDO
-c...    Remove the portion of the data line that comes after a comment
-c       character:
-        DO i1 = 1, LEN_TRIM(buffer)
-          IF (buffer(i1:i1).EQ.'$'.OR.buffer(i1:i1).EQ.'*') EXIT
-        ENDDO 
-        buffer(i1:LEN_TRIM(buffer)) = ' '
-        CALL ProcessInputTag(5,itag,buffer,status)
+        IF (line(3:5).EQ.'999'.OR.line(3:6).EQ.'EXIT') THEN   ! Not great...
+          CALL ProcessIterationBlocks
+        ELSE
+          s28mode = 4.0
+          WRITE(buffer,'(A)') line2
+c          WRITE(0,*) 'buffer:',buffer(1:100)
+c...      Isolate tag string:
+          DO itag = 2, LEN_TRIM(buffer)
+            IF (buffer(itag:itag).EQ.'}') EXIT
+          ENDDO
+c...      Remove the portion of the data line that comes after a comment
+c         character:
+          DO i1 = 1, LEN_TRIM(buffer)
+            IF (buffer(i1:i1).EQ.'$'.OR.buffer(i1:i1).EQ.'*') EXIT
+          ENDDO 
+          buffer(i1:LEN_TRIM(buffer)) = ' '
+          CALL ProcessInputTag(5,itag,buffer,status)
+        ENDIF
         ntaglist = ntaglist - 1
-
 C
 C Series G
 C
@@ -158,26 +161,19 @@ c
 c
 c
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'001') THEN
-        CALL ReadR(line,dperp6,0.0,100.0,'DPERP6')
+c      ELSEIF (TAG(1:3).EQ.'001') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'002') THEN
-        CALL ReadI(line,efpopt,0,1,'EFPOPT')
+c      ELSEIF (TAG(1:3).EQ.'002') THEN
 c -----------------------------------------------------------------------
 c      ELSEIF (TAG(1:3).EQ.'003') THEN
-c        CALL ReadI(line,wgdopt,0,1,'WGDOPT')
 c -----------------------------------------------------------------------
 c      ELSEIF (TAG(1:3).EQ.'004') THEN
-c        CALL ReadR(line,drspan,-HI,HI,'DRSPAN')
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'005') THEN
-        CALL ReadR(line,drfrac,-HI,HI,'DRFRAC')
+c      ELSEIF (TAG(1:3).EQ.'005') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'006') THEN
-        CALL ReadR(line,drsour,-HI,HI,'DRSOUR')
+c      ELSEIF (TAG(1:3).EQ.'006') THEN
 c -----------------------------------------------------------------------
-      ELSEIF (TAG(1:3).EQ.'007') THEN
-        CALL ReadI(line,drdecy,0,0,'DRDECY')
+c      ELSEIF (TAG(1:3).EQ.'007') THEN
 c -----------------------------------------------------------------------
       ELSEIF (TAG(1:3).EQ.'008') THEN
         CALL ReadI(line,outmode,0,3,'Output mode for user information')
@@ -229,10 +225,10 @@ c            eirtime = eirtime * 0.25
       ELSEIF (TAG(1:3).EQ.'021') THEN
         CALL ReadI(line,eirdata,0,1,'EIRENE input file')
       ELSEIF (TAG(1:3).EQ.'022') THEN
-        CALL ReadI(line,eirmat1,1,4,'EIRENE target material')
+        CALL ReadI(line,eirmat1,1,5,'EIRENE target material')
 c      ELSEIF (TAG(1:3).EQ.'023') THEN
       ELSEIF (TAG(1:3).EQ.'024') THEN
-        CALL ReadI(line,eirmat2,1,4,'EIRENE wall material')
+        CALL ReadI(line,eirmat2,1,5,'EIRENE wall material')
       ELSEIF (TAG(1:3).EQ.'058') THEN
 c...    Load data for EIRENE pressure gauge specifications (additional
 c       surface data):
@@ -333,7 +329,6 @@ c...        Assign default value to the surface recycling coefficient:
 c...       Move data to accomodate 2.3:
            eirspdat(i1,10) = eirspdat(i1,9)
            eirspdat(i1,9) = 1.0
-
            WRITE(fp,'(A,I4,9F12.6)') '> ',i1,(eirspdat(i1,i2),i2=1,9)
           ENDDO
         ELSEIF (line(7:9).EQ.'2.3') THEN
@@ -356,9 +351,10 @@ c...    Additional surfaces for EIRENE
           CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
      .              -MACHHI,MACHHI,9,'EIRENE additional surfaces',ierr)
           IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
-c... NEED TO ADD A FLAG HERE THAT HELPS BUILDNEUTRAL WALL GET THE INDEXING RIGHT, c
-c    SINCE IT CURRENTLY ASSUMES THE FOLLOWING SHIFT IN INDECIES, WHICH IS DEFUNCT FOR
-c    EIRENE04... 
+
+          eirnasdat = MAX(1,eirnasdat)  ! To preserve the default settings in InitializeUnstructuredInput
+                                        ! in unstructured_input.f
+
 c...      Shift data around so that it is compatible with the existing code.  The 
 c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
@@ -376,9 +372,10 @@ c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
             WRITE(SLOUT,'(I6,10F10.4)') i1,(eirasdat(i1,i2),i2=1,10)
           ENDDO
-
+c For deletion...
         ELSEIF (line(7:9).EQ.'1.1') THEN
-
+          CALL WN('RUI','Additional wall data format 1.1 soon to be '//
+     .                  'obsolete (unstructured input tag *077)')
           CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
      .              -MACHHI,MACHHI,8,'EIRENE additional surfaces',ierr)
           IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
@@ -395,12 +392,10 @@ c         z-coordinate data is now in elements 8 and 9:
           DO i1 = 1, eirnasdat
             WRITE(SLOUT,'(I6,9F10.4)') i1,(eirasdat(i1,i2),i2=1,9)
           ENDDO
-
-        ELSEIF (line(7:9).EQ.'1.0') THEN
-          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
-     .              -MACHHI,MACHHI,6,'EIRENE additional surfaces',ierr)
-          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
-
+c        ELSEIF (line(7:9).EQ.'1.0') THEN
+c          CALL RdRarn(eirasdat,eirnasdat,MAXNAS2,-MACHHI,MACHHI,.FALSE.,
+c     .              -MACHHI,MACHHI,6,'EIRENE additional surfaces',ierr)
+c          IF (ierr.NE.0) CALL ER('GetInput','EIRASDAT',*99)
         ELSE
           CALL ER('RUI','Unsupported version for 077 EIRASDAT',*99)
         ENDIF
@@ -683,14 +678,6 @@ c -----------------------------------------------------------------------
         CALL ReadR(line,rflexopt(5),0.0,10.0,'Real flex option 5')
       ELSEIF (TAG(1:3).EQ.'072') THEN
         CALL ReadR(line,rflexopt(6),0.0,1.0E+25,'Real flex option 6')
-
-
-
-
-        IF (stopopt.EQ.99) osm_testep = 0.25
-
-
-
 c -----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------

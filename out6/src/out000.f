@@ -231,6 +231,9 @@ c...        Look for more data:
         ENDIF
 115     CONTINUE
 
+c       IPP/09 - Krieger - I think that has to go there ...
+        call setup_col(n_cols,col_opt) 
+
         READ(5,'(A256)') dummy
         IF   (dummy(8:14).EQ.'Noframe'.OR.dummy(8:14).EQ.'noframe'.OR.
      .        dummy(8:14).EQ.'NOFRAME') THEN
@@ -2616,6 +2619,8 @@ c
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
+c       IPP/09 - Krieger - better zero array before use
+        call rzero(plastmp,maxnks*maxnrs)
         DO 801 IR = 1,NRS
           DO 801 IK = 1,NKS(IR)
             PLASTMP(IK,IR) = WALLS(IK,IR,MAXIZS+1)
@@ -2646,7 +2651,11 @@ c
           stepid = 1
           switchid = ndsin
         endif
-c
+
+C       Schmid IPP/06 - Dump DEPS to ascii
+        open(99, file='TargetDeposition.dat', status='replace')
+        write(6,*) 'Storing TargetDeposition.dat'
+        write(99,*) 'ID, IZ, DEPS(ID,IZ)'
         DO 825 ID = startid, endid, stepid
           JD = JD + 1
 c
@@ -2655,9 +2664,12 @@ c         DO 820 IZ = 1, NIZS
 c
           DO 820 IZ = 1, min(NIZS,maxngs)
             DVALS(JD,IZ) = DEPS(ID,IZ)
+            write(99,1000) ID,'',IZ,'',DEPS(ID,IZ)
   820     CONTINUE
           IF (ID.EQ.switchid) JD = JD + 2
   825   CONTINUE
+        close(99)
+ 1000   Format(I4,A1,I4,A1,E12.4)        
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL DRAW (DOUTS,DWIDS,DVALS,MAXNDS+2,NDS+2,ANLY,
      >    NIZS,99,DOUTS(1),DOUTS(NDS+2),0.0,HI,IGNORS,ITEC,AVS,NAVS,
@@ -3091,30 +3103,33 @@ c
 c
 c       Trap wall ring
 c
-        ELABS(1) = 'N   Nexits '
-        XLAB = '   POLOIDAL DIST (M)'
-        YLAB = '           '
-        IR = IRTRAP
-        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
-        WRITE (IPLOT,9012) NPLOTS,REF
-        CALL rzero (kvals, maxnks*maxngs)
-		write(iplot,*) 'Wall exits - Trap wall ring:', ir
-		write(iplot,'(a)') ' IK  L-Pol.  N'
-        DO IK = 1, NKS(IR)
-          KOUTS(IK) = KPS(IK,IR)
-          KWIDS(IK) = 0.0
-          IF (IK.GT.1) KWIDS(IK) = 0.5 * (KPS(IK,IR)-KPS(IK-1,IR))
-          IF (IK.LT.NKS(IR)) KWIDS(IK) = KWIDS(IK) +
+c       Krieger IPP/09 - do this plot only if trap exists
+        if (irtrap.le.nrs) then
+          ELABS(1) = 'N   Nexits '
+          XLAB = '   POLOIDAL DIST (M)'
+          YLAB = '           '
+          IR = IRTRAP
+          WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+          WRITE (IPLOT,9012) NPLOTS,REF
+          CALL rzero (kvals, maxnks*maxngs)
+		  write(iplot,*) 'Wall exits - Trap wall ring:', ir
+		  write(iplot,'(a)') ' IK  L-Pol.  N'
+          DO IK = 1, NKS(IR)
+            KOUTS(IK) = KPS(IK,IR)
+            KWIDS(IK) = 0.0
+            IF (IK.GT.1) KWIDS(IK) = 0.5 * (KPS(IK,IR)-KPS(IK-1,IR))
+            IF (IK.LT.NKS(IR)) KWIDS(IK) = KWIDS(IK) +
      >                               0.5 * (KPS(IK+1,IR)-KPS(IK,IR))
-          KVALS(IK,1) = WALLS(IK,IR,MAXIZS+1) / kwids(ik)
-          write(iplot,'(1x,i2,1x,f6.3,2x,1p,e12.5)')
+            KVALS(IK,1) = WALLS(IK,IR,MAXIZS+1) / kwids(ik)
+            write(iplot,'(1x,i2,1x,f6.3,2x,1p,e12.5)')
      >        ik, kouts(ik), kvals(ik,1)
-        END DO
-*       KVALS(1,1) = 0.0
-*       KVALS(NKS(IR),1) = 0.0
-        CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IR),ANLY,
-     >    1,1,KOUTS(1),KOUTS(NKS(IR)),0.,HI,IGNORS,ITEC,AVS,NAVS,
-     >    JOB,TITLE,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,2,2,1.0,0)
+          END DO
+*         KVALS(1,1) = 0.0
+*         KVALS(NKS(IR),1) = 0.0
+          CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IR),ANLY,
+     >      1,1,KOUTS(1),KOUTS(NKS(IR)),0.,HI,IGNORS,ITEC,AVS,NAVS,
+     >      JOB,TITLE,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,2,2,1.0,0)
+        endif
 c
 c       Neutral exits on wall elements
 c

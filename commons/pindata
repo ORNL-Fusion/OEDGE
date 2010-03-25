@@ -42,7 +42,11 @@ c
       integer maxlines
       parameter (maxlines=50)
 C                                                                       
-      REAL PINATOM(MAXNKS,MAXNRS),PINION(MAXNKS,MAXNRS),                
+c slmod begin
+      REAL, TARGET :: PINATOM(MAXNKS,MAXNRS),PINION(MAXNKS,MAXNRS),                
+c
+c      REAL PINATOM(MAXNKS,MAXNRS),PINION(MAXNKS,MAXNRS),                
+c slmod end
      >     PINALPHA(MAXNKS,MAXNRS),pinmol(maxnks,maxnrs),               
      >     pinz0(maxnks,maxnrs),pinionz(maxnks,maxnrs),                 
      >     pinena(maxnks,maxnrs),pinenm(maxnks,maxnrs),                 

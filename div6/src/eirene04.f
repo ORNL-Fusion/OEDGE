@@ -1001,7 +1001,7 @@ c      REAL    tarte,tarti,tarne,tarv,tarflux,tarisat,tarM
 
       IF (photons.EQ.-1) THEN
 c...    Load ionisation data from previous EIRENE call:
-        CALL LoadTriangleData(7,0,13,0,tdata)  
+        CALL LoadTriangleData(7,0,13,0,tdata,'default')  
       ELSE
         tdata = -999.0
       ENDIF
@@ -1521,6 +1521,9 @@ c
       IMPLICIT none
 
       INTEGER fp,i1,i2
+
+      WRITE(0,*) 'ERROR: Old triangle .raw file not supported'
+      STOP 
 
       fp = 99
       OPEN(UNIT=fp,FILE='triangles.raw',ACCESS='SEQUENTIAL',

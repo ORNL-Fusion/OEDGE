@@ -283,18 +283,25 @@ C
 C  each internal iteration or time-step starts here
 101   CONTINUE
 c  re-initialize some "ifirst"-blocks
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: A',NSTRAI,FLUX(3:4),NFILEL
       CALL GRNXTB(3,'EIRENE.F')
 
       IF (MY_PE == 0) THEN
 
       TIMI=SECOND_OWN()
 C
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: B',NSTRAI,FLUX(3:4),NFILEL
       CALL INPUT
-
+c slmod begin
+c BUG (OR SOMETHING): I can't recall now (how sad) but when NFILE
+c slmod end
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: B.1',NSTRAI,FLUX(3:4),NFILEL
       CALL ALLOC_COUTAU
 C
 C  CHECK PARAMETER STATEMENTS, STORAGE REQUIREMENTS
 C
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: C',NSTRAI,FLUX(3:4),ITIMV,
+c     .                            NFILEL
       CALL SETPRM
 
       CALL ALLOC_CSTEP
@@ -304,6 +311,7 @@ C
       CALL ALLOC_CSDVI_COP
       CALL ALLOC_CLAST
 
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: D',NSTRAI,FLUX(3:4),NFILEL
       CALL STTXT1
 C
       TIME=SECOND_OWN()
@@ -461,6 +469,8 @@ C
 
       if (nprs > 1) CALL BROADCAST
 
+c      IF (NSTRAI.GT.0) WRITE(0,*) 'DEBUG: E',NSTRAI,FLUX(3:4),NFILEL
+
       CALL MCARLO
 C
 C               4.         OUTPUT , INTERFACE  AND PLOTTING
@@ -559,7 +569,7 @@ C  DO ONE MORE COMPLETE TIME-CYCLE IN THIS EIRENE RUN
       ENDIF
 c slmod begin
 c...  Good place?
-      WRITE(0,*) 'CHECK IF THERE IS ANOTHER PLACE FOR OUTUSR CALL'
+c      WRITE(0,*) 'CHECK IF THERE IS ANOTHER PLACE FOR OUTUSR CALL'
       CALL OUTUSR
 c slmod end
       call REINITIALIZATION_OF_EIRENE
@@ -1548,6 +1558,9 @@ C
      .           INODES, J, ISEE, IPTSI, I1, I2, I3, IA, IT, IMCP,
      .           ISUM, NPX, IS, NEW_ITER, ISPC, IN
       INTEGER, EXTERNAL :: RANGET_EIRENE
+c slmod begin
+      INTEGER :: count = 0
+c slmod end
 C
       LOGICAL :: LGSTOP, NLPOLS, NLTORS
       DATA N2/2/
@@ -1674,7 +1687,15 @@ C  REMAINING CPU TIME, SUBSTRACT N2 SECONDS FOR PRINTOUT AND PLOTS
           CALL LEER(1)
         ENDIF
         XPT=XPT+FLOAT(NPTS(ISTRA))
-        XFL=XFL+FLUX(ISTRA)
+c slmod begin
+        IF (SCALV(ISTRA).LT.0.0D0) THEN
+          XFL=XFL-FLUX(ISTRA)*SCALV(ISTRA)
+        ELSE
+          XFL=XFL+FLUX(ISTRA)
+        ENDIF
+c
+c        XFL=XFL+FLUX(ISTRA)
+c slmod end
 7     CONTINUE
       XPT1=0.
       XFL1=0.
@@ -1682,12 +1703,23 @@ C  REMAINING CPU TIME, SUBSTRACT N2 SECONDS FOR PRINTOUT AND PLOTS
       DO 8 ISTRA=1,NSTRAI
         if (npts(istra) .gt. 0) then
           XPT1=XPT1+NPTS(ISTRA)
-          XFL1=XFL1+FLUX(ISTRA)
+c slmod begin
+          IF (SCALV(ISTRA).LT.0.0D0) THEN
+            XFL1=XFL1-FLUX(ISTRA)*SCALV(ISTRA)
+          ELSE
+            XFL1=XFL1+FLUX(ISTRA)
+          ENDIF
+c
+c          XFL1=XFL1+FLUX(ISTRA)
+c slmod end
           XTIM(ISTRA)=XTIM(0)+XX1*((1.-ALLOC)*XPT1/(XPT+EPS60)+
      +                             (   ALLOC)*XFL1/(XFL+EPS60))
           nsteff=nsteff+1
+          WRITE(6,*) 'DEBUG: A ',istra,xtim(istra),NPTS(ISTRA),
+     .                   FLUX(ISTRA),scalv(istra)
         else
           xtim(istra)=xtim(istra-1)
+          WRITE(6,*) 'DEBUG: B ',istra,xtim(istra)
         end if
 8     CONTINUE
 
@@ -1953,6 +1985,14 @@ C  IS BIRTH PROCESS SURVIVED?
 C
 102       CONTINUE
 C  FOLLOW NEUTRAL PARTICLE
+c slmod begin
+c          WRITE(0,*) 'ISTRA,IPANU=',istra,ipanu
+c          IF (istra.EQ.2.AND.ipanu.EQ.15163) THEN
+c            count = count + 1
+c            IF (count.EQ.100) STOP 'HALTING EIRENE'
+c            trcgrd = .TRUE.
+c          ENDIF
+c slmod end           
           IF (ITYP.EQ.0.OR.ITYP.EQ.1.OR.ITYP.EQ.2) THEN
             CALL FOLNEUT
 C  FOLLOW TEST ION
@@ -2301,7 +2341,11 @@ c slmod end
         IESTR=ISTRA
         ISTRAA=ISTRA
         ISTRAE=ISTRA
-        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod begin
+        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER,IPANU)
+c
+c        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod end
         NEW_ITER=1
       ENDIF
 C
@@ -3752,7 +3796,16 @@ C
 
 C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
       FLXFAC(ISTR)=0.
-      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod begin
+      IF (SCALV(ISTR).LT.0.D0) THEN
+c...    Set the flux to a particular value:
+        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE',ISTR
+        FLUXT(ISTR)=-SCALV(ISTR)
+        IF (WTT.NE.0.D0) FLXFAC(ISTR)=FLUXT(ISTR)/WTT
+      ELSEIF (SCALV(ISTR).NE.0.D0) THEN
+c
+c      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod end
 C  NON DEFAULT SCALING OPTION
         IS=ISCLS(ISTR)
         IT=ISCLT(ISTR)

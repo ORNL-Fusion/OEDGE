@@ -91,12 +91,12 @@ contains
     len1 = len_trim(msg)
 
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
     else
 
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
 
     endif
 
@@ -116,9 +116,9 @@ contains
        write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
     else
 
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
 
     endif
 
@@ -204,9 +204,9 @@ contains
     if (present(unit)) then 
        write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     endif
 
   end subroutine rdbgmsg
@@ -224,9 +224,9 @@ contains
     if (present(unit)) then 
        write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     else
-       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
-       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
-       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
     endif
 
   end subroutine r8dbgmsg

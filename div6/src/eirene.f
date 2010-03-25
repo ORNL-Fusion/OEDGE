@@ -230,10 +230,7 @@ c          STOP 'Ring tricks'
 
       ENDIF
 
-
-
-      WRITE(0,*) '??BALANCE??: ',irsep-2,nrs-irtrap
-
+c      WRITE(0,*) '??BALANCE??: ',irsep-2,nrs-irtrap
 
       IF ((irsep-2.NE.nrs-irtrap).and.(nrs-irtrap).gt.0) THEN
         WRITE(0,*)
@@ -5851,8 +5848,8 @@ c...      Update the IK indecies of the boundary region:
         ilswch2(2:2) = '3'
 
         DO i1 = 1, nlist
-          WRITE(0,*) 'REGIONS:',irtrap,cutpt2-1
-          WRITE(0,*) 'REGIONS:',i1,irlist(i1),ik1list(i1),ik2list(i1)
+c          WRITE(0,*) 'REGIONS:',irtrap,cutpt2-1
+c          WRITE(0,*) 'REGIONS:',i1,irlist(i1),ik1list(i1),ik2list(i1)
 
 c...      Adjust indecies based on their relation to the grid cut points and the
 c         separatrix:
@@ -5878,7 +5875,7 @@ c            IF (ik2list(i1).GT.ikto) ik2list(i1) = ik2list(i1) + 1
 c            IF (ik2list(i1).GT.ikti) ik2list(i1) = ik2list(i1) + 1
           ENDIF
 
-          WRITE(0,*) 'REGIONS:',i1,irlist(i1),ik1list(i1),ik2list(i1)
+c          WRITE(0,*) 'REGIONS:',i1,irlist(i1),ik1list(i1),ik2list(i1)
 
           nstsi = nstsi + 1
           WRITE(fp2,'(A,I2,A)') '* RADIAL FLUXSURFACE ',ir,

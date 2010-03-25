@@ -1,4 +1,4 @@
-c     -*-Fortran-*- 
+c     -*-Fortran-*-
 c
       SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
      >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
@@ -11,6 +11,7 @@ c
 !      Use HC_WBC_Comp ! Records ion death statistics for WBC comparison.
 !      Use HC_Utilities ! Sheath E-field calc by Brooks.
 c
+      use error_handling
       use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
@@ -57,7 +58,7 @@ C
       include    'diagvel'
       include    'cedge2d'
       include    'promptdep'
-      include    'reiser_com' 
+      include    'reiser_com'
       include    'printopt'
 c
       include    'fperiph_com'
@@ -83,7 +84,7 @@ c slmod end
 c
 c     Output velocity along the field line from launch_one
 c
-      real vout 
+      real vout
 
 
       integer fperiph
@@ -101,15 +102,15 @@ c
       integer ipos
       external ipos
 
-      real ndrand 
+      real ndrand
       external ndrand
 
       character*77 comment
 
       !
-      ! Spara is now local to the transport routines - it is not 
+      ! Spara is now local to the transport routines - it is not
       ! available for printing in the remaining debug statements at
-      ! this level - the quick workaround is to replace it with 
+      ! this level - the quick workaround is to replace it with
       ! a value that is always zero.
       !
       real zero_spara
@@ -159,12 +160,12 @@ c
       Ftotal = 0.0
       COPTION = 0
 c
-c psmod 
+c psmod
 c
 c      cisterrcnt = 0
 c
 c     The following "leakage" variables are used to monitor leakage
-c     along the field lines away from the targets. 
+c     along the field lines away from the targets.
 c
       hasleaked = .false.
       cleakt    =  0.0
@@ -172,15 +173,15 @@ c
 c
 c     Initialize extra source total particle influx  [#/m/s]
 c
-      neut2d_fytot = 0.0  
+      neut2d_fytot = 0.0
 c
-c     Initialize recombination, reflection, and MTC variables 
+c     Initialize recombination, reflection, and MTC variables
 c
       recstruk    = 0.0
-      recloss     = 0.0 
-      mtcrecstruk = 0.0 
+      recloss     = 0.0
+      mtcrecstruk = 0.0
       recwalln    = 0.0
-      mtcrecwalln = 0.0 
+      mtcrecwalln = 0.0
       recMAIN     = 0.0
       recEXIT     = 0.0
       recATIZ     = 0.0
@@ -189,14 +190,14 @@ c
       recTMAX     = 0.0
       recFAIL     = 0.0
 c
-c     Ion Reflection  
+c     Ion Reflection
 c
-      refflag     = 0  
+      refflag     = 0
       refstruk    = 0.0
-      refloss     = 0.0 
-      mtcrefstruk = 0.0 
+      refloss     = 0.0
+      mtcrefstruk = 0.0
       refwalln    = 0.0
-      mtcrefwalln = 0.0 
+      mtcrefwalln = 0.0
       refMAIN     = 0.0
       refEXIT     = 0.0
       refATIZ     = 0.0
@@ -208,13 +209,13 @@ c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
       call rzero (mtcinf,7*3)
-      call rzero (mtctotcnt,12*3) 
+      call rzero (mtctotcnt,12*3)
 c
-c     The following are used to monitor leakage across the separatrix 
+c     The following are used to monitor leakage across the separatrix
 c     into the "CORE" plasma region.
 c
       hasleakedcore = .false.
-      nleakcore = 0  
+      nleakcore = 0
       totleakcore = 0.0
 c
       procterm = .false.
@@ -232,7 +233,7 @@ C
           IF (CNEUTB.EQ.2) THEN
 c
 c       Change to 1.0 - even though this is not accurate - it allows
-c       display of plots which are needed even in these cases.    
+c       display of plots which are needed even in these cases.
 c
             WSSF = 1.0
           ELSE
@@ -246,7 +247,7 @@ c
       ELSEIF (CNEUTB.EQ.2) THEN
 c
 c       Change to 1.0 - even though this is not accurate - it allows
-c       display of plots which are needed even in these cases.    
+c       display of plots which are needed even in these cases.
 c
         WSSF = 1.0
       ELSE
@@ -256,7 +257,7 @@ C
 C---- SET UP FACTORS IN COMMON COMTAU
 C
       IF (DEBUGL) CALL TEST
- 
+
       TAUTIM = ZA02AS (1)
 
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
@@ -288,8 +289,8 @@ c
       CALL RZERO (Ffi, MAXNKS*MAXNRS*MAXIZS)
       CALL RZERO (Fthi, MAXNKS*MAXNRS*MAXIZS)
       CALL RZERO (Fvbg, MAXNKS*MAXNRS*MAXIZS)
-      CALL RZERO (DIFF, MAXNKS*MAXNRS*MAXIZS) 
-      CALL RZERO (VELavg, MAXNKS*MAXNRS*MAXIZS) 
+      CALL RZERO (DIFF, MAXNKS*MAXNRS*MAXIZS)
+      CALL RZERO (VELavg, MAXNKS*MAXNRS*MAXIZS)
 
 
 c
@@ -345,6 +346,8 @@ c
       CALL RZERO (wallse, maxpts+1)
       CALL RZERO (wallse_i, maxpts+1)
       CALL RZERO (wallsi, maxpts+1)
+      write(6,*) 'RESETTING WALLSIZ'
+      CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -364,38 +367,38 @@ c      call dinit (dvmaxv,6*(maxizs+1),-1.0d20)
 c      call dinit (dvminv,6*(maxizs+1),1.0d20)
 c
 c     Launchdat contains ancillary data for both book-keeping and
-c     later specifying how to launch each initial and sputtered 
+c     later specifying how to launch each initial and sputtered
 c     particle. This eventually will allow for every particle to
 c     be launched with specific and differing conditions if such
-c     is desired while still making use of the existing frame work.  
+c     is desired while still making use of the existing frame work.
 c     Initially LAUNCHDAT is all zeroes - which will be used for
-c     the DEFAULT conditions. 
+c     the DEFAULT conditions.
 c
-c     David Elder.                        July 12, 1995 
+c     David Elder.                        July 12, 1995
 c
-c     - at this time only launchdat(imp,2) is used - if this is 0 
+c     - at this time only launchdat(imp,2) is used - if this is 0
 c       it specifies a regular target sputter/relaunch. If it is 1
-c       it specifies a target relaunch originating from the far 
-c       periphery.  
+c       it specifies a target relaunch originating from the far
+c       periphery.
 c
-c     - launchdat(imp,3) now specifies whether the launched neutral 
+c     - launchdat(imp,3) now specifies whether the launched neutral
 c       underwent any wall reflections - and if so - how many. It
 c       will be 0.0 for those with no wall reflections
 c
 c     - launchdat(imp,1) is now used to specify a specific launch option
-c       to be used in LAUNCH for each particle - this will allow for a 
+c       to be used in LAUNCH for each particle - this will allow for a
 c       mixture of target and wall recycled particles to be launched in
-c       the same group.   
+c       the same group.
 c
 c
 
-      call rzero (launchdat, maximp*4) 
+      call rzero (launchdat, maximp*4)
 c
 c     See comment in LAUNCH subroutine for information on
 c     contents of ionizdat array and wtsource array.
 c
-      call rzero (ionizdat , 2*2*2*2*5) 
-      call rzero (wtsource,maxpts*maxnrs*4*6) 
+      call rzero (ionizdat , 2*2*2*2*5)
+      call rzero (wtsource,maxpts*maxnrs*4*6)
       call rzero (wtdep,maxpts*(maxpts+1)*3)
 c
       IW = 1
@@ -484,7 +487,7 @@ c
       CVVXP  = 0.0
       CVVXS  = 0.0
 c
-      cvvrefm = 0.0 
+      cvvrefm = 0.0
       cvvnrfm = 0.0
       cvvfpref = 0.0
       cvvfpnrf = 0.0
@@ -497,11 +500,11 @@ C     INITIAL VALUES
 C
       DIFFR = SQRT(2.0*CDPERPFP*QTIM)
 c
-c     Set up values of the drift velocity for each 
-c     flux tube. 
+c     Set up values of the drift velocity for each
+c     flux tube.
 c
 
-      call setup_drftv 
+      call setup_drftv
 
 
 ! jdemod - moved to before prdata since that routine needs the files
@@ -535,11 +538,11 @@ c
 c
 c     Calculate transport coefficients from OSM
 c
-      if (cpinopt.eq.1) then 
+      if (cpinopt.eq.1.or.cpinopt.eq.4) then
          call oskin
-      endif 
+      endif
 c
-      if (cprint.eq.1.or.cprint.eq.9) then 
+      if (cprint.eq.1.or.cprint.eq.9) then
          call probescan
       endif
 c
@@ -550,7 +553,7 @@ c     a partial print out of case options and summary of SOL results.
 c
       if (ctestsol.ne.0.0) then
 c
-c        Print out POWER summary even when impurities are not run.  
+c        Print out POWER summary even when impurities are not run.
 c
          call pr_power_summary
 c
@@ -561,14 +564,14 @@ c
          return
       endif
 c
-c     Add header to define start of simulation information 
+c     Add header to define start of simulation information
 c
-      if (iter.eq.1) then 
-         call prb 
+      if (iter.eq.1) then
+         call prb
          call prchtml('--- IMPURITY SIMULATION'//
      >        ' DIAGNOSTIC INFORMATION ---','pr_runtime','0','B')
          call prb
-      endif      
+      endif
 c
 C
 C-----------------------------------------------------------------------
@@ -612,24 +615,24 @@ c
                enddo
             enddo
 c
-c        Injection option 7 - other setup code - fill PIN arrays with 
-c        corresponding data loaded from the neutral code. 
+c        Injection option 7 - other setup code - fill PIN arrays with
+c        corresponding data loaded from the neutral code.
 c
 c IPP/01 geier - add ciopte=8
-         elseif (ciopte.eq.7.or.ciopte.eq.8) then 
+         elseif (ciopte.eq.7.or.ciopte.eq.8) then
 c
-c           Set up PIN arrays with appropriate values    
+c           Set up PIN arrays with appropriate values
 c
-            zioniz = 0.0 
+            zioniz = 0.0
             zioniz_tor = 0.0
 c
             do ir = 1,nrs
                do ik = 1,nks(ir)
 c
-c                 Convert e2diz0 to a density 
+c                 Convert e2diz0 to a density
 c
-                  if (karea2(ik,ir).gt.0.0) then 
-                     e2diz0(ik,ir) = e2diz0(ik,ir) / karea2(ik,ir)  
+                  if (karea2(ik,ir).gt.0.0) then
+                     e2diz0(ik,ir) = e2diz0(ik,ir) / karea2(ik,ir)
                   else
                      e2diz0(ik,ir) = 0.0
                   endif
@@ -639,22 +642,22 @@ c
                   pinionz(ik,ir) = e2diz0(ik,ir)
                   pinz0(ik,ir) = e2dz0(ik,ir)
                   pinenz(ik,ir) = ktibs(ik,ir)
-c 
+c
 c                 Calculate a value of zioniz for the ion source rate.
-c 
+c
                   zioniz = zioniz + e2diz0(ik,ir) * karea2(ik,ir)
                   zioniz_tor = zioniz_tor + e2diz0(ik,ir)*karea2(ik,ir)
-     >                                       * rs(ik,ir)   
-c 
+     >                                       * rs(ik,ir)
+c
                end do
             end do
-c 
+c
             lpinz0 = .true.
             write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
-c 
+c
 c           Copy neutral density to ddlims as for pinz0 for injection
-c           option 4. 
-c             
+c           option 4.
+c
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
@@ -662,18 +665,18 @@ c
             enddo
 c
          endif
-c 
+c
 C-----------------------------------------------------------------------
-c        Calculate injection probabilities 
+c        Calculate injection probabilities
 C-----------------------------------------------------------------------
 c
 
          injnum = 0
          do 2500 ir = 1,nrs
-	    do 2500 ik = 1,nks(ir)
+         do 2500 ik = 1,nks(ir)
                iprob = pinionz(ik,ir) * karea2(ik,ir)
 c
-               if (cprint.eq.7.or.cprint.eq.9) then 
+               if (cprint.eq.7.or.cprint.eq.9) then
                   write(6,'(a,2i6,3(1x,g15.8))') 'injp:',
      >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
                endif
@@ -700,14 +703,14 @@ c
 c
 c     The code has been modified to run PIN after any SOL calculations
 c     and so this extra call is unnecessary.
-c 
 c
-c     If Injection option is 4 - i.e. from PIN result - then be sure to 
+c
+c     If Injection option is 4 - i.e. from PIN result - then be sure to
 c     run PIN on the finalized background plasma - one does not
-c     want to just use the PIN result from a past iteration of the 
+c     want to just use the PIN result from a past iteration of the
 c     background plasma solver.
 c
-c      if (ciopte.eq.4.and.cneuta.eq.1) then 
+c      if (ciopte.eq.4.and.cneuta.eq.1) then
 c
 c       Set up for PIN call
 c
@@ -723,7 +726,7 @@ c       Load PIN results
 c
 c        CALL READPIN
 c
-c      endif  
+c      endif
 c
 C
 C-----------------------------------------------------------------------
@@ -809,7 +812,7 @@ c
           KMFCS(ID) = 1.0
         endif
 c
-      end do 
+      end do
 c
 c     Set defaults for walls
 c
@@ -818,13 +821,13 @@ c
 c       Target and Wall yield multipliers
 c
         if (nymfs.gt.0.and.cymfs(1,1).eq.0) then
-           if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then 
+           if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
               KMFPWS(ID) = CYMFS(1,3)
               KMFCWS(ID) = CYMFS(1,5)
-           else 
+           else
               KMFPWS(ID) = CYMFS(1,6)
               KMFCWS(ID) = CYMFS(1,7)
-           endif 
+           endif
 c
 c          default wall reflection value
 c
@@ -850,41 +853,41 @@ c        Loop through specified segments - wall indices only
 c
          do id = cymfs(in,1),cymfs(in,2)
 c
-            if (id.ge.1.and.id.le.wallpts) then 
+            if (id.ge.1.and.id.le.wallpts) then
 c
 c              Set reflection value
 c
                wallpt(id,25) = cymfs(in,8)
 c
-               if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then 
+               if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
                   KMFPWS(ID) = CYMFS(in,3)
                   KMFCWS(ID) = CYMFS(in,5)
 c
-c                 Assign corresponding regular target values. 
+c                 Assign corresponding regular target values.
 c
-                  if (wallpt(id,18).ge.1.and.wallpt(id,18).le.nds) then  
+                  if (wallpt(id,18).ge.1.and.wallpt(id,18).le.nds) then
                      KMFPS(int(wallpt(ID,18))) = CYMFS(in,3)
                      KMFSS(int(wallpt(id,18))) = CYMFS(in,4)
 c
 c                    Check for target ion reflection and set flag
 c
-                     if (kmfss(int(wallpt(id,18))).le.-99.0) then 
-c   
+                     if (kmfss(int(wallpt(id,18))).le.-99.0) then
+c
                         refflag = 1
 c
-                     endif 
+                     endif
 c
                      KMFCS(INT(wallpt(id,18))) = CYMFS(in,5)
-                  endif 
+                  endif
 c
-               else 
+               else
                   KMFPWS(ID) = CYMFS(in,6)
                   KMFCWS(ID) = CYMFS(in,7)
-               endif 
+               endif
             endif
          enddo
 c
-      enddo  
+      enddo
 c
 c     Print out some wall chatracteristics
 c
@@ -895,7 +898,7 @@ c     >         kmfss(wallpt(in,18)),wallpt(in,25)
 c      end do
 c
 c      do in = 1,nds
-c         write (6,'(a,2i5,4(1x,g12.5))') 'Wall index:', 
+c         write (6,'(a,2i5,4(1x,g12.5))') 'Wall index:',
 c     >          in,wallindex(in),
 c     >          kteds(in),ktids(in),knds(in),kvds(in)
 c      enddo
@@ -906,7 +909,7 @@ c
 ! ammod begin.
 C---- TOGGLE KINDS,KOUTDS BETWEEN 0 AND INFINITY
 C---- (AND WHEN CTARGOPT = 0 OR 4 KBACDS, KFORDS)
-! Note, this was moved above the call to neut to 
+! Note, this was moved above the call to neut to
 ! facilitate ion transport in the HC routines.
 c
       DO 111 IR = 1, NRS
@@ -1006,7 +1009,7 @@ C
       DQTIM  = DBLE(QTIM)
       IMPLIM = 4
 c
-      num_entered_core = 0.0      
+      num_entered_core = 0.0
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
@@ -1018,10 +1021,11 @@ c sltmp
       IF (grdnmod.NE.0) iw = MAX(1,stopopt)
 
       DO 800  IMP = 1, NATIZ
-
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,100).EQ.0) 
-     .    WRITE(0,*) 'debug imp:',imp
-
+c slmod begin
+c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+     .    WRITE(0,*) 'debug imp:',imp,natiz
+c slmod end
 c
 c       Particle initialization
 c
@@ -1031,16 +1035,16 @@ c
 c
 c       Recombination counter
 c
-        reccnt = 0 
+        reccnt = 0
 c
 c       Initialize the IFATE value to zero
 c
         ifate = 0
 c
-c        if (imp.eq.87) then 
+c        if (imp.eq.87) then
 c           cstepl = 1.0
 c           debugl = .true.
-c        elseif (imp.eq.88) then 
+c        elseif (imp.eq.88) then
 c           write (6,*) 'IMP 88: STOP'
 c           stop
 c        else
@@ -1077,7 +1081,7 @@ c        routine. (As a double check.)
 c
         ik = 0
         ir = 0
-        idstart = 0 
+        idstart = 0
         idtype = -1
 c
         IF (CNEUTA.EQ.0) THEN
@@ -1087,12 +1091,12 @@ c
 
           SPUTY = SPUTYS(IMP)
           TEMI  = TEMTIZS(IMP)
-          idstart = idatizs(imp,1) 
-          idtype  = idatizs(imp,2) 
+          idstart = idatizs(imp,1)
+          idtype  = idatizs(imp,2)
 c
 c         Assign starting wall index of particle
 c
-          if (idtype.eq.1.or.idtype.eq.2.or.idtype.eq.3) then 
+          if (idtype.eq.1.or.idtype.eq.2.or.idtype.eq.3) then
              iwstart = wallindex(idstart)
           else
              iwstart = idstart
@@ -1118,7 +1122,7 @@ c
             SPUTY = 1.0
 c slmod begin
           ELSEIF (CIOPTE.EQ.9) THEN
-c...        Impurity injection at a random point along a specified 
+c...        Impurity injection at a random point along a specified
 c           line (SL 25.6.2003):
 
             NRAND = NRAND + 1
@@ -1147,7 +1151,7 @@ c...        Impurity injection at a random location within a rectangle specified
 c           by the corner pionts:
 c           R1,Z1 = (CXSCA,CYSCA)
 c           R2,Z2 = (CXSCB,CYSCB)
-c 
+c
 c           line (SL 25.6.2003):
 
             NRAND = NRAND + 1
@@ -1237,7 +1241,7 @@ c
 c
             SPUTY = 1.0
 c
-	  elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
 c
 c           Find the initial injection bin
 c
@@ -1263,10 +1267,10 @@ c
 c            VEL   = 1.56E4 * SQRT(2.0*pinenz(ik,ir)/CRMI)
 c     >              * 0.5  * PORM * QTIM
 c
-            if (ciopte.eq.8) then 
+            if (ciopte.eq.8) then
 c
                sigma_vel=sqrt(9.648e7*pinenz(ik,ir)/crmi)
-               vel= ndrand(sigma_vel,0.)*qtim 
+               vel= ndrand(sigma_vel,0.)*qtim
 c
             else
 c
@@ -1282,12 +1286,12 @@ c
 c         Set initial ion temperature.
 c
 c Geier IPP/01 added  .or.ciopte.eq.8
-          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then 
+          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
              TEMI = pinenz(ik,ir)
           else
              TEMI = CTEM1
           endif
-c 
+c
 c
 c         Set initial time step for injected ions
 c
@@ -1296,11 +1300,11 @@ c
 c
         ENDIF
 c
-c       Temporarily record starting position of ion so that it 
+c       Temporarily record starting position of ion so that it
 c       can be recorded later if necessary.
 c
         rstart = r
-        zstart = z 
+        zstart = z
 C
         IF (IW.LT.MAXNWS) THEN
           WALKS(IW,1) = 100.0 * RMAX
@@ -1330,13 +1334,13 @@ c
         DSPUTY = DBLE (SPUTY)
 c
 c       Move setting of initial value of cist so that time spent as
-c       neutrals can be included. 
+c       neutrals can be included.
 c
 c        CIST   = 1.0
 c
 c        cisterr = .false.
 c
-c       Initialize time in ionization state. 
+c       Initialize time in ionization state.
 c
         cistiz = 1.0
 c
@@ -1345,7 +1349,7 @@ c
 C
 C------ FIND NEAREST POINT IN (R,Z) CONTOUR MAP
 C
-        if (debugl) 
+        if (debugl)
      >   write (6,'(a,3i7,3(1x,f12.5))') 'ION:',
      >           imp,ik,ir,rstart,zstart,sstart
 c
@@ -1362,10 +1366,10 @@ c          the plasma ... This could possibly be invoked
 c          if an R,Z injection position outside the grid
 c          was specified.
 c
-           write (6,'(a,3i6,3(1x,g12.5))') 
+           write (6,'(a,3i6,3(1x,g12.5))')
      >          'GRID ERROR: Particle not on grid',
      >          imp,ik,ir,cist,r,z
-           write (0,'(a,3i6,3(1x,g12.5))') 
+           write (0,'(a,3i6,3(1x,g12.5))')
      >          'GRID ERROR: Particle not on grid',
      >          imp,ik,ir,cist,r,z
            goto 800
@@ -1378,7 +1382,7 @@ c
 c       SET Initial S and CROSS postion for particles.
 c
 C
-        if (init_pos_opt.eq.0) then 
+        if (init_pos_opt.eq.0) then
 c
            CROSS  = 0.0
            K      = KKS(IR)
@@ -1389,7 +1393,7 @@ c
               S  = KSS(IK,IR)
            endif
 c
-        elseif (init_pos_opt.eq.1) then 
+        elseif (init_pos_opt.eq.1) then
 c
            CROSS  = 0.0
            K      = KKS(IR)
@@ -1400,22 +1404,25 @@ c
               call getscross_approx(r,z,s,cross,ik,ir)
            endif
 
-        endif 
+        endif
 c
 c       Record approximate starting S-distance from nearest target.
-c 
+c
         sstart = min(s,ksmaxs(ir)-s)
 c
+c       Krieger IPP/08 - added debug output line
+c       write(0,'(a,i6,a,f7.1)') 'Progress indicator: ion=',imp,
+c    >                           '  time=',za02as(1)-statim
         if ( status.le.10.and.
      >      ((natiz.lt.1000).or.
      >       (natiz.lt.10000.and.(imp/10)*10.0.eq.imp).or.
-     >       ((imp/100)*100.0.eq.imp)) ) then 
+     >       ((imp/100)*100.0.eq.imp)) ) then
 
-           write (6,'(a,i6,2i4,5(1x,g13.5))') 
+           write (6,'(a,i6,2i4,5(1x,g13.5))')
      >                   'ION-A:',imp,ik,ir,rstart,zstart,sstart,
      >                       cist
 c     >                       ,ZA02AS (1) - STATIM
-        endif 
+        endif
 c
 c
         M  = 2
@@ -1430,8 +1437,8 @@ c
         endif
 
 c
-c       SET Theta value for non-orthogonal transport 
-c 
+c       SET Theta value for non-orthogonal transport
+c
         if (northopt.eq.1.or.northopt.eq.3) then
 c
 c          Calculate theta is in ion_parallel_transport.f
@@ -1466,13 +1473,13 @@ c
         SMAX   = KSMAXS(IR)
 c
 c       Set range for poloidal drift velocity
-c 
+c
 c
 c       The drift range is now done in setup_drftvel on a ring by ring basis
 c
-c        if (cpdrft.eq.1.or.cpdrft.eq.2.or.cpdrft.eq.3) then 
-c           sdrft_start = cdrftv_start*smax 
-c           sdrft_end   = cdrftv_end*smax 
+c        if (cpdrft.eq.1.or.cpdrft.eq.2.or.cpdrft.eq.3) then
+c           sdrft_start = cdrftv_start*smax
+c           sdrft_end   = cdrftv_end*smax
 c        endif
 c
         AVXPOS(M) = AVXPOS(M) + R * SPUTY
@@ -1574,7 +1581,7 @@ c       the logical variable to true and accumulate the count
 c       in the appropriate starting bin.
 c
         if (global_hc_follow_option.ne.0.and.
-     >      (idtype.eq.2.or.idtype.eq.5)) then 
+     >      (idtype.eq.2.or.idtype.eq.5)) then
 c
            irstart = idatizs (imp,3)
            ikstart = idatizs (imp,4)
@@ -1600,11 +1607,11 @@ c
            intrap = .false.
         endif
 c
-        if (irstart.lt.irsep) then         
+        if (irstart.lt.irsep) then
 c
-c          Add checking to see if the flags have been previously set 
+c          Add checking to see if the flags have been previously set
 c
-	   ! Updating num_entered_core is done by DIVIMP for each HC.      
+           ! Updating num_entered_core is done by DIVIMP for each HC.
            num_entered_core = num_entered_core + sputy
 c
            ! jdemod - wtsource data for each HC particle is accumulated
@@ -1633,23 +1640,23 @@ c
               inedge = .true.
               nedge(ikstart,irstart) = nedge(ikstart,irstart) + sputy
 c
-              if (ir.gt.irwall.and.ir.le.nrs) then 
+              if (ir.gt.irwall.and.ir.le.nrs) then
 c
 c                Particle starting in trap region
-c  
+c
                  intrap = .true.
                  ntrap(ikstart,irstart) = ntrap(ikstart,irstart) + sputy
               elseif ((z.ge.zxp.and.refct.eq.1).or.
-     >                (z.le.zxp.and.refct.eq.0)) then  
+     >                (z.le.zxp.and.refct.eq.0)) then
 c
-c                Divertor region 
+c                Divertor region
 c
                  indiv = .true.
                  ndivert(ikstart,irstart) = ndivert(ikstart,irstart)
      >                                      +sputy
               else
 c
-c                Main SOL Region 
+c                Main SOL Region
 c
                  inmsol = .true.
                  nmsol(ikstart,irstart) = nmsol(ikstart,irstart)+sputy
@@ -1667,7 +1674,7 @@ c
           CFLRIN = .FALSE.
           CICRNJ = CICRNJ + SPUTY
           IF (CSTOP.EQ.1) THEN
-            stopped_follow = stopped_follow+sputy             
+            stopped_follow = stopped_follow+sputy
             IFATE = 7
             GOTO 790
           ENDIF
@@ -1675,19 +1682,19 @@ c
 c
 c       Check for PROMPT REDEPOSITION of the ORIGINAL ION
 c
-        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then 
+        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
 c
-c          Check for prompt deposition 
+c          Check for prompt deposition
 c
            call promptdep(ik,ir,id,r,z,riz,sputy,crmi,temi,
-     >                    sheath_fraction,rc)  
+     >                    sheath_fraction,rc)
 c
 c          A return code of 1 indicates that prompt redeposition
 c          has occurred. The routine also returns the impact energy
-c          of the depositing ion. 
+c          of the depositing ion.
 c
 
-           if (rc.eq.1) then 
+           if (rc.eq.1) then
 c
 c ---        REFLECT ---- IONS may need to be reflected here
 c
@@ -1695,29 +1702,29 @@ c            Set default non reflection condition
 c
              reflect_ion = .false.
 c
-             if (kmfss(id).le.-99.0) then 
+             if (kmfss(id).le.-99.0) then
 c
 c               Probability of reflection starts at 0.0 for a value
 c               of -99.0 and rises to 1.0 for a value of -100.0 or more
-c 
-                refprob = min(abs(kmfss(id)+99.0),1.0) 
-c 
+c
+                refprob = min(abs(kmfss(id)+99.0),1.0)
+c
 c               Select random number
 c
                 NRAND = NRAND + 1
                 CALL SURAND2 (SEED, 1, RAN)
 c
                 if (ran.le.refprob) reflect_ion = .true.
-c               
+c
              endif
 c
 c            Test for reflection
 c
-             if (reflect_ion) then  
+             if (reflect_ion) then
 c
 c               Call Launch_one to launch a single reflected neutral -
-c               then branch to the appropriate location depending 
-c               on the result.    
+c               then branch to the appropriate location depending
+c               on the result.
 c
 c
 c               Follow reflected impurities
@@ -1747,37 +1754,37 @@ c
 c               For all results other than reionization to state 1 - the code
 c               will stop following the particle at this point and exit
 c               as it would have for the old recombination implementation.
-c	 
+c
                 if (rc.ne.5) goto 790
-c	 
+c
 c               Deal with particle that was re-ionized
-c	 
+c
                 r = rizpos
-                z = zizpos 
+                z = zizpos
                 iz= 1
-c	 
+c
 c               Look near last recorded ik,ir
-c	 
+c
                 call gridpos(ik,ir,r,z,.false.,griderr)
-c	 
-c               If a griderr then exit anyway and issue error message 
-c               since this shouldn't happen. 
-c               
-                if (griderr) then 
-	 
+c
+c               If a griderr then exit anyway and issue error message
+c               since this shouldn't happen.
+c
+                if (griderr) then
+
                    write (6,*) 'PTR ION ERROR: NOT ON GRID:',r,z
                    goto 790
-c	   
+c
                 else
-c	 
-c                  If on grid - re-assign S-value - to cell centre if 
-c                  it left the cell - otherwise leave as is. 
-c	 
-                   if (ik.ne.ikorg.or.ir.ne.irorg) then 
+c
+c                  If on grid - re-assign S-value - to cell centre if
+c                  it left the cell - otherwise leave as is.
+c
+                   if (ik.ne.ikorg.or.ir.ne.irorg) then
 c
 c                     Also need to reset the SMAX value for the new ring
 c
-                      smax = ksmaxs(ir) 
+                      smax = ksmaxs(ir)
 c
                       if (init_pos_opt.eq.0) then
                          s = kss(ik,ir)
@@ -1786,12 +1793,12 @@ c
 c
                          call getscross_approx(r,z,s,cross,ik,ir)
 c
-                      endif 
+                      endif
 c
-                   endif   
-c	 
-                endif 
-c	 
+                   endif
+c
+                endif
+c
 c               Continue as if the particle had not struck the target
 c
              else
@@ -1799,7 +1806,7 @@ c
 c            ION is NOT reflected - continue as normal
 c
 c
-c              Check for self-sputtering 
+c              Check for self-sputtering
 c
 c              Record all the regular loss statistics
 c
@@ -1823,23 +1830,23 @@ c
                CTBS  (IZ) = CTBS  (IZ) + KTEBS(IK,IR) * SPUTY
                IM         = MIN (INT(TEMI/(0.2*CTEB0))+1, 10)
                CTEXS(IM)  = CTEXS(IM) + TEMI * SPUTY
-c 
+c
                acttarg(iz) = acttarg(iz) + sputy
 C
                RDEP   = RDEP + SPUTY
 c
-               if (id.lt.1.or.id.gt.nds) then    
+               if (id.lt.1.or.id.gt.nds) then
                   write (6,*) 'DEPS Error:',id,iz,sputy
-               else 
+               else
                   DEPS(ID,IZ) = DEPS(ID,IZ) + SPUTY
                   NEROS(ID,1) = NEROS(ID,1) + SPUTY
                endif
 c
-c              Prompt deposition energy is returned by the promptdep 
-c              subroutine - it is calculated as some fraction of the 
-c              3 kTe sheath/MPS drop - there are no contributions 
+c              Prompt deposition energy is returned by the promptdep
+c              subroutine - it is calculated as some fraction of the
+c              3 kTe sheath/MPS drop - there are no contributions
 c              for ion velocity. This is because the ion should
-c              have had no time for energy transfer collisions and 
+c              have had no time for energy transfer collisions and
 c              should simply have its' own initial energy.
 c
                ENERGY = sheath_fraction * RIZ * KTEBS(IK,IR) +
@@ -1851,12 +1858,12 @@ c              Record average energy
 c
                promptdeps(id,5) = promptdeps(id,5) + sputy * energy
 c
-               if (kmfss(id).ge.0.0) then  
+               if (kmfss(id).ge.0.0) then
                   RYIELD = YIELD (6, MATTAR, ENERGY,
      >                     ktebs(ik,ir),ktibs(ik,ir)) * KMFSS(ID)
-               elseif (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0) then 
+               elseif (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0) then
                   RYIELD = abs(KMFSS(ID))
-               elseif (kmfss(id).le.-99.0) then 
+               elseif (kmfss(id).le.-99.0) then
                   RYIELD = YIELD (6, MATTAR, ENERGY,
      .                            ktebs(ik,ir),ktibs(ik,ir))
                endif
@@ -1894,9 +1901,9 @@ c
                   ENDIF
 
 c
-c                 No adjustments for initial position or position on target options 
+c                 No adjustments for initial position or position on target options
 c                 since promptly redeposited particles are assumed to have not
-c                 travelled too far.  
+c                 travelled too far.
 c
                   R = RP(ID)
                   Z = ZP(ID)
@@ -1906,10 +1913,10 @@ c
 c
 c                 For segments with a fixed sputtering yield - allow for
 c                 the energy of the sputtered particle to be set to a
-c                 specific value. 
+c                 specific value.
 c
                   if (cselfs.eq.2.and.
-     >               (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0)) 
+     >               (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0))
      >               then
                      eprods(nprod) = ctem1
                   else
@@ -1920,7 +1927,7 @@ c
                   launchdat(nprod,2) = 0.0
 c
 c                 Record self-sputtering event
-c 
+c
                   promptdeps(id,6) = promptdeps(id,6) + spunew
 c
                ENDIF
@@ -1930,22 +1937,22 @@ c              jdemod - added update of wall deposition in the case of prompt de
 c
 c              Update wall deposition
 c
-               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)               
+               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
 
 c
-c              Exit due to prompt deposition 
+c              Exit due to prompt deposition
 c
                ifate = 10
 
-! ammod begin.	       
-	       ! WBC comparison addition for ion prompt deposition.
+! ammod begin.
+               ! WBC comparison addition for ion prompt deposition.
                call global_hc_wbc_comp(iz,crmi,vel,temi,sputy)
-! ammod end.	       
+! ammod end.
                goto 790
 
              endif
 
-           endif 
+           endif
 
         endif
 C
@@ -1958,7 +1965,7 @@ c
 c       Check to see if more random numbers are required
 c
         if (debug0) write(0,*) 'Before GRN',kk,kklim
-c        
+c
         call get_random_numbers(kk,kklim,nrand,seed)
 c
         if (debug0) write(0,*) 'After  GRN',kk,kklim
@@ -1972,22 +1979,22 @@ c       Update ion temperature
 c
         TEMI = MAX (LO, TEMI + (KTIBS(IK,IR)-TEMI) * LFTS(IK,IR,IZ))
 c
-c       Execute transport step  
+c       Execute transport step
 c
-        if (debug_all) 
+        if (debug_all)
      >     write(6,*) 'DEBUG A:',s,smax,slast,theta,cross
 c
         if (debug0) write(0,*) 'Before EX',ifate,ik,ir,iz,s,r,z
 c
         call execute_transport_step(seed,nrand,neutim)
 c
-        if (debug_all) 
+        if (debug_all)
      >     write(6,*) 'DEBUG B:',s,smax,slast,theta,cross
 
 c
         if (debug0) write(0,*) 'After EX',ifate,ik,ir,iz,s,r,z
-        
-c 
+
+c
         if (ifate.ne.0) goto 790
 c
 C
@@ -2002,7 +2009,7 @@ c        endif
 c
 c-------------------------------------------------------------------c
 c
-c 
+c
 C
 C------ CHECK FOR COLLISION
 C
@@ -2014,37 +2021,37 @@ C
 C------ SCORE PARTICLE IN ARRAYS
 C
         DDLIMS(IK,IR,IZ) = DDLIMS(IK,IR,IZ) + DSPUTY
-        
+
         DDTS  (IK,IR,IZ) = DDTS  (IK,IR,IZ) + DSPUTY * DBLE(TEMI)
 c
-        if (subgrid_opt.gt.0) then 
+        if (subgrid_opt.gt.0) then
            call getrz(ik,ir,s,cross,r,z,rzopt)
            call update_subgrid(r,z,iz,sputy)
         endif
 
 c
-        if (ddlims(ik,ir,iz).lt.0.0) then 
+        if (ddlims(ik,ir,iz).lt.0.0) then
            write (6,'(a,3i4,2g16.8)') 'DDLIM Error:',ik,ir,iz,
      >                          ddlims(ik,ir,iz),dsputy
 
-        endif  
+        endif
 c
-c       Determine the time bin for the particle 
+c       Determine the time bin for the particle
 c
-        if (nts.gt.0) then 
+        if (nts.gt.0) then
 c
            IT = IPOS (sngl(CIST), CTIMES(1,IZ), NTS+1)
 c
 c          IF (CIST.GE.CTIMES(IT,IZ)) THEN
 c
-c          Record time dependent contribution at each time step 
+c          Record time dependent contribution at each time step
 c
            LIMS(IK,IR,IZ,IT) = LIMS(IK,IR,IZ,IT) + SPUTY
 c
 c          IT = IT + 1
 c          ENDIF
 C
-        endif 
+        endif
 c
 c
 c       (RIV)
@@ -2107,7 +2114,7 @@ C       LOOP BACK IF CUTOFF TIME NOT YET REACHED
 C-----------------------------------------------------------------------
 C
         IF (DEBUG) THEN
- 
+
          if (debug0)  write(0,*) 'IN Debug ',tstepl,cstepl,cist
 
 
@@ -2143,15 +2150,15 @@ c
         if (debug0) write(0,*) 'Before TI',cist,cstmax
 
 C
-c       Increment time - check to see if less than maximum 
+c       Increment time - check to see if less than maximum
 c
         IF (CIST.LT.CSTMAX) THEN
 c
-c         Increment timing and go to beginning of particle iteration 
+c         Increment timing and go to beginning of particle iteration
 c
           cist = cist + 1.0d0
 c
-c         Update time in ionization state IZ 
+c         Update time in ionization state IZ
 c
           cistiz = cistiz + 1.0d0
 c
@@ -2178,7 +2185,7 @@ C-----------------------------------------------------------------------
 C
   790   CONTINUE
 
-        if (ifate.eq.3) then 
+        if (ifate.eq.3) then
            CICUTS(IZ) = CICUTS(IZ) + SPUTY
            CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
            TCUT = TCUT + SPUTY
@@ -2191,15 +2198,15 @@ c
 c
 c       Record recombination counts
 c
-        if (reccnt.gt.10) then 
+        if (reccnt.gt.10) then
            rectotcnt(11) = rectotcnt(11) + sputy
-        else  
+        else
            rectotcnt(reccnt) = rectotcnt(reccnt) + sputy
         endif
 c
-c       Reset time in ionization state IZ 
+c       Reset time in ionization state IZ
 c
-        cistiz = 1.0 
+        cistiz = 1.0
 c
         DO 792 JZ = CIZSC, MAXCIZ
           RIONS(JZ) = RIONS(JZ) + SPUTY
@@ -2219,9 +2226,9 @@ C
         IF (CFLRIN) THEN
           CICRNO = CICRNO + SPUTY
           CIKRNO = CIKRNO + KATIZS(IMP) * SPUTY
-          cirrno = cirrno + xatizs(imp) * sputy  
-          cizrno = cizrno + yatizs(imp) * sputy  
-          cisrno = cisrno + satizs(imp) * sputy  
+          cirrno = cirrno + xatizs(imp) * sputy
+          cizrno = cizrno + yatizs(imp) * sputy
+          cisrno = cisrno + satizs(imp) * sputy
           CKTRNO = CKTRNO + KKK / CIST * SPUTY
         ENDIF
 C
@@ -2297,12 +2304,12 @@ c
         ik = 0
         ir = 0
 c
-        if (avatiz(m).ne.0.0) then   
+        if (avatiz(m).ne.0.0) then
            call gridpos(ik,ir,avxpos(m)/avatiz(m),avypos(m)/avatiz(m),
      >                  .true.,griderr)
         else
            griderr = .true.
-        endif 
+        endif
 c
         if (griderr) then
            AVTPOS(M) = -1.0
@@ -2318,9 +2325,9 @@ C
       write(7,'(/40X,a,4x,a)')  INNER,OUTER
 c
 c      if (zxp.le.z0) then
-c         WRITE (7,'(/40X,''OUTER    INNER'')')                             
+c         WRITE (7,'(/40X,''OUTER    INNER'')')
 c      else
-c         WRITE (7,'(/40X,''INNER    OUTER'')')                             
+c         WRITE (7,'(/40X,''INNER    OUTER'')')
 c      endif
 c
 c     changed format to allow for larger numbers, Krieger IPP/97
@@ -2355,13 +2362,13 @@ c
      >                                         NINT(sngl(CISTOT)/RATIZ)
       WRITE (6,'(1X,A,I13)') 'MAXIMUM NUMBER OF ITERATIONS       ',
      >                                                     NINT(CISMAX)
-      
+
       TATIZ  = TATIZ  + RATIZ
       TDEP   = TDEP   + RDEP
       TWALL  = TWALL  + RWALL
       TNEUT  = TNEUT  + RNEUT
       TWALLN = TWALLN + RWALLN
-      TMTCWALLN = TMTCWALLN + MTCWALLN 
+      TMTCWALLN = TMTCWALLN + MTCWALLN
       TCENT  = TCENT  + RCENT
       TTMAX  = TTMAX  + RTMAX
       TSTRUK = TSTRUK + RSTRUK
@@ -2395,13 +2402,13 @@ C
  8700   CONTINUE
 
 
-! ammod begin.        
-c jdemod - some code changes required to make this option work - likely create a global 
+! ammod begin.
+c jdemod - some code changes required to make this option work - likely create a global
 c          version of hc_self_sputter
 c
 c
 c        If (global_HC_Follow_Option .eq. 0 .or. HC_Self_Sputter .eq. 0) Then
-c	   ! Launch self-sputtered particles via the DIVIMP method.
+c          ! Launch self-sputtered particles via the DIVIMP method.
 c
         CALL LAUNCH (1,NPROD,1,NATIZ,RSTRUK,MTCSTRUK,RMAIN,REXIT,
      >               RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,NRAND,
@@ -2409,11 +2416,11 @@ c
 
 c
 c        Else
-c	   ! Launch self-sputtered particles via DIVIMP-HC.
-c	   ! Note:  These will only be as a result of C+ striking
-c	   ! the target region and self sputtering (all CHx self
-c	   ! sputtering has already been taken care of).  Start
-c	   ! HC_Launch with CNEUTB and CNEUTC as set above.
+c          ! Launch self-sputtered particles via DIVIMP-HC.
+c          ! Note:  These will only be as a result of C+ striking
+c          ! the target region and self sputtering (all CHx self
+c          ! sputtering has already been taken care of).  Start
+c          ! HC_Launch with CNEUTB and CNEUTC as set above.
 c           CALL HC_Launch (1,NPROD,1,NATIZ,RSTRUK,MTCSTRUK,RMAIN,REXIT,
 c     >               RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,
 c     >               NRAND,NEUTIM,RFAIL,STATUS,6,MATTAR,3,CNEUTB,CNEUTC)
@@ -2431,7 +2438,7 @@ C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
       goto 8701
- 
+
 c
 c     Try to capture a SIGUSR1 signal as a process termination.
 c     This is used to issue an error message and (hopefully) print out
@@ -2456,7 +2463,7 @@ c
 
 
 
- 
+
       WRITE(6,*) 'FINISHED PARTICLES'
 c
 c     Print out the parallel diffusive step characterization.
@@ -2465,11 +2472,11 @@ c     changed by Krieger, IPP 12/94
 c
       do 8702 in=1,6
 c
-         dvparastep(in,nizs+1) = 0.0         
+         dvparastep(in,nizs+1) = 0.0
          vparastep(in,nizs+1) = 0.0
-         dvparacnt(in,nizs+1) = 0.0         
+         dvparacnt(in,nizs+1) = 0.0
 c
-         do iz = 1,nizs 
+         do iz = 1,nizs
 c
             if (abs(dvparacnt(in,iz)).gt.1.e-14) then
               dvparanorm(in,iz)=dvparastep(in,iz)/dvparacnt(in,iz)
@@ -2509,23 +2516,23 @@ c
 c
 c     changed by Krieger, IPP 12/94
 c
-      do iz = 1,nizs+1 
+      do iz = 1,nizs+1
         write(6,*)   'Summary of Velocity Diffusive steps: State=',iz
-        write(6,2151)                                                     
-        write(6,2152) (dvparacnt(in,iz),in=1,6)                              
-        write(6,2152) (dvparanorm(in,iz),in=1,6)               
-        write(6,2152) (vparanorm(in,iz)/qtim,in=1,6)               
-        if (iz.ne.nizs+1) then  
-           write(6,2152) (dvmaxv(in,iz)/qtim,in=1,6) 
-           write(6,2152) (dvminv(in,iz)/qtim,in=1,6) 
-        endif 
+        write(6,2151)
+        write(6,2152) (dvparacnt(in,iz),in=1,6)
+        write(6,2152) (dvparanorm(in,iz),in=1,6)
+        write(6,2152) (vparanorm(in,iz)/qtim,in=1,6)
+        if (iz.ne.nizs+1) then
+           write(6,2152) (dvmaxv(in,iz)/qtim,in=1,6)
+           write(6,2152) (dvminv(in,iz)/qtim,in=1,6)
+        endif
       end do
 c
-      write(6,*)   'Summary of Spatial Diffusive steps'                 
-      write(6,2151)                                                     
-      write(6,2152) (dsparacnt(in),in=1,4)                              
-      write(6,2152) (dsparanorm(in),in=1,4)               
-c 
+      write(6,*)   'Summary of Spatial Diffusive steps'
+      write(6,2151)
+      write(6,2152) (dsparacnt(in),in=1,4)
+      write(6,2152) (dsparanorm(in),in=1,4)
+c
  2151 format(5x,'OUTSOL-',8x,'OUTSOL+',8x,'INSOL -',8x,'INSOL +',
      >8x,'CORE - ',8x,'CORE + ')
  2152 format(6g15.6)
@@ -2543,11 +2550,11 @@ C
       ! Complete launch, follow and recording of all particles.
       ! Print hydrocarbon diagnostics.
       If (global_hc_follow_option .ne. 0) Then
-!	 write (0,*) "Doing HC End a"
-	 Call global_HC_End (NIMPS,NIMPS2,REXIT,RMAIN,RNEUT,NEUTIM,NIZS)
+!        write (0,*) "Doing HC End a"
+        Call global_HC_End (NIMPS,NIMPS2,REXIT,RMAIN,RNEUT,NEUTIM,NIZS)
       End If
 ! ammod end.
-          
+
 
 c
 ! ammod begin
@@ -2574,7 +2581,7 @@ c     >     "vb",kvhs(M,injir),"e",kes(M,injir)
 c      End Do
 c      write (91,*) "By Ring:",irwall
 c      Do N=1,irwall-1
-c	! Find cell at injir S.
+c       ! Find cell at injir S.
 c
 C       FOR NOW SIMPLY FIND GRID POINT CLOSEST TO DESIRED
 C       INJECTION POSITION. THIS IS ALL THAT IS CURRENTLY DONE.
@@ -2593,7 +2600,7 @@ C
 c          STMP = KSMAXS(N) - STMP
 c        ENDIF
 c
-c	! FIND NEAREST IK CORRESPONDING TO DISTANCE S ALONG CONTOUR INJI
+c        ! FIND NEAREST IK CORRESPONDING TO DISTANCE S ALONG CONTOUR INJI
 c        IK = 1
 c  758   IF (IK.LT.NKS(N).AND.STMP.GT.KSS(IK,N)) THEN
 c          IK = IK + 1
@@ -2606,13 +2613,13 @@ c        ENDIF
 c        IF (IK.GT.1.AND.
 c     >     (STMP-KSS(IK-1,N).LT.KSS(IK,N)-STMP))
 c     >      IK = IK - 1
-c	M = IK
+c        M = IK
 c
-c	If (N .lt. irsep) Then
-c		M = 14
-c	Else
-c		M = 34
-c	EndIf
+c        If (N .lt. irsep) Then
+c          M = 14
+c        Else
+c          M = 34
+c        EndIf
 c
 c         write (91,18) "Ring",N,"cell",M,"counts",DDLIMS(M,N,1),
 c     >     "length",ksb(M,N)-ksb(M-1,N),"Center S",kss(M,N),
@@ -2683,6 +2690,37 @@ c
       write(6,'(a,5(1x,f9.2))') 'Walls End:',
      >      wallse(maxpts+1),wallse_i(maxpts+1),
      >      wallsi(maxpts+1),wallsn(maxpts+1)
+
+
+C     K. Schmid 2008 output charge state resolved wall impact information
+      write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
+     >               wallpts
+c
+c     jdemod - the <NIZS> repeat specification does not appear to be 
+c              standardized and breaks some compilers so I changed the 
+c              repeat value to 100 which should be large enough in most
+c              cases. 
+c
+3006  Format(i5,' ',g12.5,g12.5,100(' ',g12.5))
+c3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
+c
+      if (nizs.le.100) then 
+         do in = 1,wallpts
+C        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
+C     >       wallsiz(in, 1:NIZS)
+             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
+         end do
+         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+     >      wallsiz(maxpts+1, 1:NIZS)
+         write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
+      else
+         call errmsg('ERROR PRINTING CHARGE'//
+     >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
+      endif
+c
+c     jdemod end
+c
+C
 C
 C     CALCULATE TOTALS
 C
@@ -2691,14 +2729,14 @@ C
          TNTOTS(IZ,1) = TNTOTS(IZ,1) + WALLS(IK,IRWALL,IZ)
 3010  CONTINUE
 c
-c     Sum up wall loss particles that may not have been in 
-c     wall ring at the time of the particle loss 
+c     Sum up wall loss particles that may not have been in
+c     wall ring at the time of the particle loss
 c
       DO IZ = 0,MAXIZS+1
          do ir = 1,irwall-1
             DO IK = 1,NKS(IR)
                TNTOTS(IZ,3) = TNTOTS(IZ,3) + WALLS(IK,IR,IZ)
-            end do 
+            end do
          end do
       end do
 c
@@ -2714,14 +2752,14 @@ C
          TNTOTS(IZ,2) = TNTOTS(IZ,2) + WALLS(IK,IRTRAP,IZ)
 3020  CONTINUE
 c
-c     Sum up wall loss particles that may not have been in 
-c     wall ring at the time of the particle loss 
+c     Sum up wall loss particles that may not have been in
+c     wall ring at the time of the particle loss
 c
       DO IZ = 0,MAXIZS+1
          do ir = irtrap+1,nrs
             DO IK = 1,NKS(IR)
                TNTOTS(IZ,4) = TNTOTS(IZ,4) + WALLS(IK,IR,IZ)
-            end do 
+            end do
          end do
       end do
 c
@@ -2744,10 +2782,10 @@ c      CALL PRC ('---  S U M M A R Y   D E T A I L S  ---')
      >            'pr_summary','0','B')
       CALL PRB
 c
-c     Convert to printing out real numbers so that exact values 
+c     Convert to printing out real numbers so that exact values
 c     for fractional weights are printed.
 c
-      call prb 
+      call prb
 c      call prc ('ORIGINAL NEUTRAL PARTICLE SUMMARY:')
       call prchtml('ORIGINAL NEUTRAL PARTICLE SUMMARY:',
      >             'pr_neut','0','B')
@@ -2756,10 +2794,10 @@ c
       CALL PRr0('TOTAL NUMBER OF NEUTRALS LAUNCHED        ',TNEUT)
       CALL PRr0('TOTAL NO OF NEUTRALS PLATING ON WALL+TRAP',TWALLN)
 C
-      if (mtcopt.eq.1) then 
+      if (mtcopt.eq.1) then
          call prr0('TOTAL NO OF THESE NEUTRALS HAVING MTC    ',
      >                                                   TMTCWALLN)
-      ENDIF 
+      ENDIF
 C
       CALL PRr2('TOTAL NO OF NEUTRALS PLATING ON WALLS    ',
      >              TNTOTS(0,1),tntots(0,3))
@@ -2767,7 +2805,7 @@ C
      >              TNTOTS(0,2),tntots(0,4))
       CALL PRr0('TOTAL NO OF NEUTRALS STRIKING TARGET     ',TSTRUK)
 C
-      if (mtcopt.EQ.1) THEN 
+      if (mtcopt.EQ.1) THEN
          CALL PRr0('TOTAL NO OF THESE NEUTRALS HAVING MTC    ',
      >                                                   TMTCSTRUK)
       ENDIF
@@ -2780,10 +2818,10 @@ C
       CALL PRr0('TOTAL NEUTRALS ENTERING MAIN PLASMA      ',TMAIN)
       CALL PRr0('TOTAL OF THESE NEUTRALS EXITING MAIN P.  ',TEXIT)
 c
-      if (mtcopt.eq.1) then   
+      if (mtcopt.eq.1) then
         call prb
-        call prc ('NEUTRAL MOMENTUM TRANSFER COLLISION SUMMARY:') 
-        call prb 
+        call prc ('NEUTRAL MOMENTUM TRANSFER COLLISION SUMMARY:')
+        call prb
         call prc ('ORIGINAL NEUTRALS:')
         call prr ('NUMBER OF ORIGINAL NEUTRALS               ',
      >                                 tneut)
@@ -2802,17 +2840,17 @@ c
          call prr ('AVERAGE DISATNCE TO FIRST MTC EVENT      ',
      >                    mtcinf(5,1)/mtcinf(1,1))
 c
-        endif 
+        endif
 c
-        if (cfolrec.eq.1) then 
-c 
-          call prb 
+        if (cfolrec.eq.1) then
+c
+          call prb
           call prc ('RECOMBINED NEUTRALS:')
           call prr ('NUMBER OF RECOMBINED NEUTRALS              ',
      >                                 recneut)
           call prr ('NUMBER OF MTC EVENTS FOR REC.NEUTRALS      ',
      >                                 mtcinf(1,2))
-          if (mtcinf(1,2).gt.0.0) then  
+          if (mtcinf(1,2).gt.0.0) then
 
             call prr ('AVERAGE NUMBER OF MTC EVENTS/REC.NEUTRAL ',
      >                   mtcinf(1,2)/recneut)
@@ -2831,23 +2869,23 @@ c
         call prc('NUMBER OF NEUTRALS HAVING "N" MTC EVENTS')
         call prc('                      ORIGINAL / RECOMB.')
 c
-        do in = 0,11 
-           if (in.ne.11) then 
+        do in = 0,11
+           if (in.ne.11) then
              write(comment,'(i5,1x,''MTC EVENTS: '',f12.3,2x,
      >                          f12.3)')
      >                    in,mtctotcnt(in,1),mtctotcnt(in,2)
-           else          
+           else
              write(comment,'(''  >10 MTC EVENTS: '',f12.3,
      >                       2x,f12.3)')
      >                    mtctotcnt(in,1),mtctotcnt(in,2)
            endif
 c
-           if (mtctotcnt(in,1).gt.0.0.or.mtctotcnt(in,2).gt.0.0) 
+           if (mtctotcnt(in,1).gt.0.0.or.mtctotcnt(in,2).gt.0.0)
      >           then
               call prc(comment)
            endif
-c 
-        end do 
+c
+        end do
 c
       endif
 c
@@ -2858,7 +2896,7 @@ c      call prc ('ION SUMMARY:')
       CALL PRr0('TOTAL NUMBER OF IONS CREATED             ',TATIZ)
       CALL PRr0('TOTAL NO OF IONS PLATING ON WALL+TRAP    ',TWALL)
       CALL PRr0('TOTAL NO OF IONS PLATING ON WALL         ',
-     >          TNTOTS(MAXIZS+1,1)-TNTOTS(0,1)) 
+     >          TNTOTS(MAXIZS+1,1)-TNTOTS(0,1))
       CALL PRr0('TOTAL NO OF IONS PLATING ON TRAP         ',
      >          TNTOTS(MAXIZS+1,2)-TNTOTS(0,2))
       CALL PRr0('TOTAL NO OF IONS PLATING ON TARGET       ',TDEP)
@@ -2877,7 +2915,7 @@ c
 C
       ENDIF
 c
-      if (cstop.eq.1) then 
+      if (cstop.eq.1) then
          call prr0('TOTAL IONS NOT FOLLOWED AFTER CORE ENTRY ',
      >              stopped_follow)
       endif
@@ -2886,54 +2924,54 @@ C
       CALL PRr0('TOTAL IONS RECOMBINED TO FORM NEUTRALS   ',TBELOW)
 
 c
-      if (cfolrec.eq.1) then 
+      if (cfolrec.eq.1) then
 c
 c        Sum up over recombined neutral array to get results for
 c        all recombined ions.
 c
-         do in = 1,14 
+         do in = 1,14
             do id = 1,6
                recinf(in,7) = recinf(in,7) + recinf(in,id)
-            end do 
+            end do
          end do
 c
-c        Normalize array values 
+c        Normalize array values
 c
-         do in = 2,3 
+         do in = 2,3
             do id = 1,7
-               if (recinf(14,id).eq.0.0) then 
+               if (recinf(14,id).eq.0.0) then
                   recinf(in,id) = 0.0
                else
                   recinf(in,id) = recinf(in,id)/recinf(14,id)
-               endif 
-            end do 
+               endif
+            end do
          end do
 c
-         do in = 4,13 
+         do in = 4,13
             do id = 1,7
-               if (recinf(1,id).eq.0.0) then 
+               if (recinf(1,id).eq.0.0) then
                   recinf(in,id) = 0.0
                else
                   recinf(in,id) = recinf(in,id)/recinf(1,id)
-               endif 
-            end do 
+               endif
+            end do
          end do
 
 c
-         call prb 
+         call prb
          call prc('SUMMARY OF RECOMBINED IMPURITY'//
      >                ' NEUTRAL RESULTS:')
-         call prr0('  TOTAL NUMBER FOLLOWED            ',recneut) 
+         call prr0('  TOTAL NUMBER FOLLOWED            ',recneut)
          call prr0('  - TOTAL NUMBER ENDING ON TARGET  ',recstruk)
-c   
-         if (mtcopt.eq.1) then   
+c
+         if (mtcopt.eq.1) then
             CALL PRR0('   - NUMBER ENDING ON TARG AFTER MTC',
      >                                                MTCRECSTRUK)
          endif
 c
          call prr0('  - TOTAL NUMBER ENDING ON WALLS   ',recwalln)
 c
-         if (mtcopt.eq.1) then 
+         if (mtcopt.eq.1) then
             call prr0('   - NUMBER ENDING ON WALL AFTER MTC',
      >                                                mtcrecwalln)
          endif
@@ -2945,7 +2983,7 @@ c
          call prr0('  - NUMBER ENDING AT MAX TIME      ',rectmax)
          call prr0('  - NUMBER ENTERING MAIN           ',recmain)
          call prr0('  - NUMBER EXITING MAIN            ',recexit)
-         call prr0('  - NUMBER STRIKING CENTRAL MIRROR ',reccent)   
+         call prr0('  - NUMBER STRIKING CENTRAL MIRROR ',reccent)
          if (tatiz.gt.0) then 
              call prr0('  AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
@@ -2953,49 +2991,49 @@ c
 
 c
          call prb
-c         
-         if (recinf(1,5).gt.0.0) then 
+c
+         if (recinf(1,5).gt.0.0) then
             call prr('  TOTAL NUMBER OF REIONIZATIONS       ',
      >                  recinf(1,5))
             call prr('  AVERAGE TIME FOR RE-IONIZATION      ',
      >                       recinf(4,5)*qtim)
             call prr('  AVERAGE TIME TO FIRST RE-IONIZATION ',
      >                recinf(2,5)*qtim)
-            call prr('  AVERAGE DISTANCE TO RE-IONIZATION   ', 
+            call prr('  AVERAGE DISTANCE TO RE-IONIZATION   ',
      >                recinf(5,5))
-            call prr('  AVERAGE DIST TO FIRST RE-IONIZATION ', 
+            call prr('  AVERAGE DIST TO FIRST RE-IONIZATION ',
      >                recinf(3,5))
-            call prr('  AVERAGE TEMP OF RE-IONIZED NEUTRALS ', 
+            call prr('  AVERAGE TEMP OF RE-IONIZED NEUTRALS ',
      >                recinf(6,5))
-            call prr('  AVERAGE VEL OF RE-IONIZED NEUTRALS  ', 
+            call prr('  AVERAGE VEL OF RE-IONIZED NEUTRALS  ',
      >                recinf(7,5))
-            call prr('  AVERAGE NE AT RECOM.POSITION        ', 
+            call prr('  AVERAGE NE AT RECOM.POSITION        ',
      >                recinf(8,5))
-            call prr('  AVERAGE NH AT RECOM.POSITION        ', 
+            call prr('  AVERAGE NH AT RECOM.POSITION        ',
      >                recinf(9,5))
-            call prr('  AVERAGE TE AT RECOM.POSITION        ', 
+            call prr('  AVERAGE TE AT RECOM.POSITION        ',
      >                recinf(10,5))
-            call prr('  AVERAGE R  AT RECOM.POSITION        ', 
+            call prr('  AVERAGE R  AT RECOM.POSITION        ',
      >                recinf(11,5))
-            call prr('  AVERAGE Z  AT RECOM.POSITION        ', 
+            call prr('  AVERAGE Z  AT RECOM.POSITION        ',
      >                recinf(12,5))
-            call prr('  AVERAGE S  OR (SMAX-S) AT RECOM.    ', 
+            call prr('  AVERAGE S  OR (SMAX-S) AT RECOM.    ',
      >                recinf(13,5))
-            call prr('  AVERAGE VEL OF RE-IONIZED NEUTRALS  ', 
+            call prr('  AVERAGE VEL OF RE-IONIZED NEUTRALS  ',
      >                recinf(7,5))
             call prr('  RECOMBINATION VELOCITY MULTIPLIER   ',
-     >                       cvrmult)         
+     >                       cvrmult)
          endif
 c
          call prb
          call prc('NUMBER OF IONS HAVING "N" RECOMBINATIONS')
 c
-         do in = 0,11 
+         do in = 0,11
 c
-            if (in.ne.11) then 
+            if (in.ne.11) then
               write(comment,'(i5,'' RECOMBINATIONS: '',f12.3)')
      >                    in,rectotcnt(in)
-            else          
+            else
              write(comment,'(''  >10 RECOMBINATIONS: '',f12.3)')
      >                      rectotcnt(in)
             endif
@@ -3003,32 +3041,32 @@ c
             if (rectotcnt(in).gt.0.0) then
                call prc(comment)
             endif
-c 
-         end do 
 c
-      endif 
+         end do
+c
+      endif
 c
 c     Back to original
 c
 c
-c     Print out summary for ions reflected as neutrals 
+c     Print out summary for ions reflected as neutrals
 c
-      if (refflag.eq.1) then 
+      if (refflag.eq.1) then
 
-         call prb 
+         call prb
          call prc('SUMMARY OF REFLECTED (ION) IMPURITY'//
      >                ' NEUTRAL RESULTS:')
-         call prr0('   TOTAL NUMBER FOLLOWED            ',refneut) 
+         call prr0('   TOTAL NUMBER FOLLOWED            ',refneut)
          call prr0('   - TOTAL NUMBER ENDING ON TARGET  ',refstruk)
-c   
-         if (mtcopt.eq.1) then   
+c
+         if (mtcopt.eq.1) then
             CALL PRR0('   - NUMBER ENDING ON TARG AFTER MTC',
      >                                                MTCREfSTRUK)
          endif
 c
          call prr0('   - TOTAL NUMBER ENDING ON WALLS   ',refwalln)
 c
-         if (mtcopt.eq.1) then 
+         if (mtcopt.eq.1) then
             call prr0('   - NUMBER ENDING ON WALL AFTER MTC',
      >                                                mtcrefwalln)
          endif
@@ -3040,7 +3078,7 @@ c
          call prr0('   - NUMBER ENDING AT MAX TIME      ',reftmax)
          call prr0('   - NUMBER ENTERING MAIN           ',refmain)
          call prr0('   - NUMBER EXITING MAIN            ',refexit)
-         call prr0('   - NUMBER STRIKING CENTRAL MIRROR ',refcent)   
+         call prr0('   - NUMBER STRIKING CENTRAL MIRROR ',refcent)
          if (tatiz.gt.0) then 
             call prr0('   AVERAGE NO. OF RECOMB/ORIG ION   ',
      >                          recneut/tatiz)
@@ -3049,7 +3087,7 @@ c
          call prb
       endif
 c
-c      
+c
 c
       call prr0('TOTAL IONS CROSSING SEPARATRIX       ',
      >                                           totleakcore)
@@ -3064,7 +3102,7 @@ c
             tmpncore = tmpncore + ncore (ik,ir)
             tmpiz = tmpiz + tizs (ik,ir,0)
          end do
-      end do   
+      end do
 c
       if (tmpiz.gt.0) then 
          call prr('TAUP CORE CALCULATED: ',tmpncore/tmpiz)        
@@ -3073,30 +3111,30 @@ c
       call prb
       call prchtml('SUMMARY OF INITIAL IMPURITY NEUTRAL IONIZATION',
      >             'pr_ioniz','0','B')
-      call prc('FOR NEUTRALS ORIGINATING FROM SIDE 1 and SIDE 2')   
+      call prc('FOR NEUTRALS ORIGINATING FROM SIDE 1 and SIDE 2')
       call prb
-c 
-      if (refct.eq.1) then  
+c
+      if (refct.eq.1) then
          call prc('  NOTE: The (R,Z) values listed are for grid')
          call prc('  coordinates prior to the grid being reflected')
          call prc('  in the R-axis.')
-      endif 
+      endif
 c
 C-----------------------------------------------------------------------
 c
 c
 c      The subroutine PRIONIZ takes care of printing the
 c      summary of the ionization data requested. It checks
-c      to see if the index combination is valid before 
-c      printing - so if reflected data are chosen 
+c      to see if the index combination is valid before
+c      printing - so if reflected data are chosen
 c      for printing and reflection is off the routine
-c      prints nothing. The default values of irflct and 
-c      ifp of 1 each are always printed. 
+c      prints nothing. The default values of irflct and
+c      ifp of 1 each are always printed.
 c
 c      If values greater than 2 are requested - the printing
 c      routine will generate the various SUMS of the independent
 c      components - note that the S data will not be printed
-c      OR calculated for values with a component in the main 
+c      OR calculated for values with a component in the main
 c      plasma.
 c
        do isol = 1,3
@@ -3107,15 +3145,15 @@ c
          end do
        end do
 c
-      call prb        
+      call prb
 c
 c
 c     Print out the summary of average S position and field line
-c     of ionization for all neutrals from all target elements.   
+c     of ionization for all neutrals from all target elements.
 c
 c
-c      call prchtml('ANALYSIS OF CORE LEAKAGE','pr_leakage','0','B')  
-c 
+c      call prchtml('ANALYSIS OF CORE LEAKAGE','pr_leakage','0','B')
+c
 c      call prleakage
 c
       CALL PRR('TOTAL FLUX*YIELD (ALL SOURCES)           ',FYTOT)
@@ -3149,39 +3187,39 @@ C
 
 c
 c     BOUNDARY RING DATA:
-c  
+c
 c     DEAL WITH ANY DENSITY DATA IN THE BOUNDARY RINGS:
-c     THESE RINGS ARE VIRTUAL AND DO NOT CONTAIN ANY 
-c     MEANINGFUL INFORMATION. IN ORDER TO AVOID 
-c     PROBLEMS IN SUMMARIES OR OTHER PLACES WHERE THIS 
-c     DATA MIGHT BE ACCIDENTALLY INCLUDED - IT IS SET 
+c     THESE RINGS ARE VIRTUAL AND DO NOT CONTAIN ANY
+c     MEANINGFUL INFORMATION. IN ORDER TO AVOID
+c     PROBLEMS IN SUMMARIES OR OTHER PLACES WHERE THIS
+c     DATA MIGHT BE ACCIDENTALLY INCLUDED - IT IS SET
 c     TO ZERO HERE.
 c
 c     The rings affected are IR=1, IR=IRWALL and IR=IRTRAP
 c     for grid types 0 and 3 - JET and SONNET
-c  
-      if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.4.or.cgridopt.eq.5) then  
 c
-         ir =1 
-         do ik = 1,nks(ir) 
+      if (cgridopt.eq.0.or.cgridopt.eq.3.or.
+     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c
+         ir =1
+         do ik = 1,nks(ir)
             do iz = -1,nizs
-              ddlims(ik,ir,iz) = 0.0 
+              ddlims(ik,ir,iz) = 0.0
             end do
          end do
 c
-         ir = irwall 
-         do ik = 1,nks(ir) 
+         ir = irwall
+         do ik = 1,nks(ir)
             do iz = -1,nizs
-               ddlims(ik,ir,iz) = 0.0 
+               ddlims(ik,ir,iz) = 0.0
             end do
          end do
 c
          if (irtrap.lt.nrs) then
             ir = irtrap
-            do ik = 1,nks(ir) 
+            do ik = 1,nks(ir)
                do iz = -1,nizs
-                  ddlims(ik,ir,iz) = 0.0 
+                  ddlims(ik,ir,iz) = 0.0
                end do
             end do
          endif
@@ -3231,7 +3269,7 @@ C
 C====================== Recorded Ion Velocity (RIV) ===================
 C
 C
-      call check_ddlim(nizs,1)  
+      call check_ddlim(nizs,1)
 c
       if (debugv) then
 
@@ -3251,7 +3289,7 @@ c
      >                         / 9.58084e7 * crmi
 c
                 sdvs3(ik,ir,iz,1)=sdvs3(ik,ir,iz,1)
-     >                           /sdvs3(ik,ir,iz,2)/qtim 
+     >                           /sdvs3(ik,ir,iz,2)/qtim
 c
                 sdvs3(ik,ir,iz,2)=sdvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
 
@@ -3269,19 +3307,19 @@ c
            end do
         end do
 c
-c       Print out debug information on cells and their contents 
+c       Print out debug information on cells and their contents
 c       where there are particles with Vz > Vb (local)
 c
         write (6,*) 'SUMMARY OF IMPURITY ION VELOCITIES'//
      >              ' EXCEEDING LOCAL SOUND SPEED:'
 c
         write (6,*) ' IK   IR   IZ  VB=(2kT/m)^0.5   AVERAGE VZ  '//
-     >              '    FRACTION       NUMBER' 
+     >              '    FRACTION       NUMBER'
 c
         do ir = 1,nrs
            do ik = 1,nks(ir)
               do iz = 1,nizs
-c  
+c
                  if (sdvs3(ik,ir,iz,2).gt.0.0) then
                     write (6,'(3i5,1x,g13.5,1x,g13.5,1x,2g16.8)')
      >                    ik,ir,iz,sdvb(ik,ir),sdvs3(ik,ir,iz,1),
@@ -3297,7 +3335,7 @@ c
 c
 c       Calculate the distribution of velocities
 c
-        if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then  
+        if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then
            ikv = nks(injir)
         else
            ikv = 1
@@ -3321,7 +3359,7 @@ c
 c
               do 4226 in = -nvel,nvel+1
                  if (veltot(iz).ne.0.0) then
-                    velweight(in,iz,ik) = velweight(in,iz,ik) 
+                    velweight(in,iz,ik) = velweight(in,iz,ik)
      >                       / veltot(iz)
                  endif
  4226         continue
@@ -3331,13 +3369,13 @@ c
 c
         end do
 c
-        do ik = 1,ikv 
+        do ik = 1,ikv
 c
            if (ikv.eq.1) then
               write (6,*) 'Velocity Weight Distribution: ',
      >                                velplate/qtim
               vel = velplate/qtim
-           else 
+           else
               write (6,*) 'Velocity Weight Distribution: Knot=',ik,
      >                                velcell(ik)/qtim
               vel = velcell(ik)/qtim
@@ -3390,12 +3428,12 @@ c
 c       End of debugv
 c
       endif
- 
+
  9031 FORMAT(/1X,' IK IR    R      Z  ',12(2X,A7))
  9032 FORMAT(1X,131('-'))
  9033 FORMAT(1X,2I3,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
- 
+
 
 
 C
@@ -3449,7 +3487,7 @@ c
 C
 C====================== TEMPERATURES ===================================
 C
-c     Include neutrals 
+c     Include neutrals
 c
       DO 4290 IZ = -1, NIZS
         DSUM1 = 0.0D0
@@ -3482,17 +3520,17 @@ C
       DO 4430 IZ = -1, NIZS
        DO 4420 IR = 1, NRS
         DO 4410 IK = 1, NKS(IR)
-         if (kareas(ik,ir).ne.0.0) then 
+         if (kareas(ik,ir).ne.0.0) then
             FACT = FACTA(IZ) / KAREAS(IK,IR)
          else
             FACT = 0.0
-         endif       
+         endif
 c
          TIZS(IK,IR,IZ) = FACT * TIZS(IK,IR,IZ)
 c
-c        Normalize ionization of chemiclaly sputtered component. 
+c        Normalize ionization of chemiclaly sputtered component.
 c
-         if (iz.eq.0) then 
+         if (iz.eq.0) then
             chemizs(ik,ir) = fact *chemizs(ik,ir)
          endif
 c
@@ -3509,11 +3547,11 @@ C
       DO 4630 IZ = -1, NIZS
        DO 4620 IR = 1, NRS
         DO 4610 IK = 1, NKS(IR)
-          if (kareas(ik,ir).ne.0.0) then 
+          if (kareas(ik,ir).ne.0.0) then
              DACT = DBLE (FACTB(IZ) / KAREAS(IK,IR))
           else
              DACT = 0.0
-          endif       
+          endif
 c
           DDLIMS(IK,IR,IZ) = DACT * DDLIMS(IK,IR,IZ)
 c
@@ -3526,7 +3564,7 @@ c
 c
 c         Normalize the neutral density due to chemical sputtering
 c
-          if (iz.eq.0) then  
+          if (iz.eq.0) then
              chemden(ik,ir) = dact * chemden(ik,ir)
           endif
 c
@@ -3540,10 +3578,10 @@ c     Normalize data on the subgrid if it is in use.
 c
       call norm_subgrid(nizs,cneuta,tneut,tatiz,fsrate,qtim)
 c
-c     Void region - number density - no areas involved.  
+c     Void region - number density - no areas involved.
 c
       do in = 1,3
-         ddvoid(in) = ddvoid(in) * factb(0) 
+         ddvoid(in) = ddvoid(in) * factb(0)
       end do
 C
 C================= DEPOSITION, NET EROSION AND WALLS ===================
@@ -3581,14 +3619,14 @@ C       ONLY NORMALIZE THE INTEGRATED DATA FOR NOW
 C
         DO 889 IR = 1, NRS
           DO 888 IK = 1, NKS(IR)
-            if (kareas(ik,ir).ne.0.0) then 
+            if (kareas(ik,ir).ne.0.0) then
                WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1)
      >                             / KAREAS(IK,IR) * FACTA(0)
             else
 c               WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1)
 c     >                             / KAREAS(IK,IR) * FACTA(0)
                WALLS(IK,IR,MAXIZS+1) = 0.0
-            endif       
+            endif
   888     CONTINUE
   889   CONTINUE
 C
@@ -3599,7 +3637,7 @@ C
       CALL RZERO (HPOWLS, MAXNKS*MAXNRS*2)
       CALL RZERO (HLINES, MAXNKS*MAXNRS*2)
 c
-      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1) then  
+      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1) then
          CALL RZERO (e2dPOWLS, MAXNKS*MAXNRS*MAXe2dizs)
          CALL RZERO (e2dLINES, MAXNKS*MAXNRS*maxe2dizs)
       endif
@@ -3662,11 +3700,11 @@ C
 
 
 c
-c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including 
+c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including
 c     impurity data have been loaded for reference.
 c
-     
-      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1) then   
+
+      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1) then
 
 C
 C---- LOAD POWER DATA ONE RING AT A TIME.
@@ -3680,12 +3718,12 @@ C
         DO  IK = 1, NKS(IR)
           PTES(IK) = KTEBS(IK,IR)
           PNES(IK) = KNBS(IK,IR) * 1.E-6 * RIZB
-        end do 
+        end do
         DO IK = 1, NKS(IR)
           PDVOLS(IK) = 1.0E6 * KAREAS(IK,IR)
           DO IZ = 0, cre2dIZS
              PNZS(IZ+1,1,IK) = 1.0E-6 * e2dnzs(ik,ir,iz)
-          end do 
+          end do
         end do
 C
 C------ CALCULATE POWER LOSS (W.CM**-3) AND LINE RAD (W.CM**-3)
@@ -3705,10 +3743,10 @@ c
         end do
 c
       end do
-c           
+c
 c     Corresponds to if (cre2d.eq.1...
 c
-      end if 
+      end if
 c
 c
 c     ADAS - use ADAS data when ADPAK is not available
@@ -3812,11 +3850,11 @@ c        CALL ADASRD(YEAR,YEARDF,1,1,ICLASS,NKS(IR),PTESA,PNESA,PCOEF)
  1190 CONTINUE
 
 c
-c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including 
+c     Calculate E2DLINES and E2DPOWLS if EDGE2D data including
 c     impurity data have been loaded for reference.
 c
-     
-      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.0) then   
+
+      if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.0) then
 c
 c
 c
@@ -3829,19 +3867,19 @@ C
           PNESA(IK) = KNBS(IK,IR) * RIZB
           PNBS(IK) = KNBS(IK,IR)
 c
-          if (cpinopt.eq.1) then 
+          if (cpinopt.eq.1.or.cpinopt.eq.4) then
              PNHS(IK) = PINATOM(IK,IR)
           else
              PNHS(IK) = E2DATOM(IK,IR)
-          endif  
+          endif
 c
         end do
         DO IK = 1, NKS(IR)
           DO IZ = 0, cre2dIZS
              PNZSA(IK,IZ) = e2dnzs(ik,ir,iz)
           end do
-        end do 
-         
+        end do
+
 C
 C------ GET POWER LOSS FROM ADAS DATA FILES. LOAD TOTAL LINE RADIATION
 C------ INTO LINES AND ADD RECOMBINATION AND BREMSSTRAHLUNG POWER TO
@@ -3885,25 +3923,25 @@ c            write (6,'(a,15x,3g16.8)') '      POW:',
 c     >          e2dlines(ik,ir,iz),e2dpowls(ik,ir,iz),e2dnzs(ik,ir,iz)
 c
           end do
-        end do 
+        end do
 c
-      end do 
+      end do
 c
 c     End of EDGE2D Power calculations
 c
-      end if 
+      end if
 c
 c     End of selection for nocorona/ADAS
 c
       endif
-c 
+c
 C
 C================ GLOBAL TOTALS OVER ENTIRE PLASMA =====================
 C
 c
-c     Analyse the Radiation source. Determine mean ne and niz 
-c     from the radiating volume. (Assumed to be highest 2/3 of 
-c     radiating cells. 
+c     Analyse the Radiation source. Determine mean ne and niz
+c     from the radiating volume. (Assumed to be highest 2/3 of
+c     radiating cells.
 c
       call radproc(nizs,rions,nimps)
 c
@@ -3919,7 +3957,7 @@ c
           DACT = KAREAS(IK,IR)
 c
 c         Be sure to EXCLUDE the repeated cell that closes
-c         the core rings - otherwise - it's area will be 
+c         the core rings - otherwise - it's area will be
 c         counted twice.
 c
           IF (IR.LT.IRSEP.and.ik.ne.nks(ir)) THEN
@@ -3930,7 +3968,7 @@ c
             DTOTS(34) = DTOTS(34) + DACT * DBLE(HLINES(IK,IR,0))
      >                            + DACT * DBLE(HLINES(IK,IR,1))
             if ((kss(ik,ir).ge.0.25*kss(nks(ir)-1,ir)).and.
-     >          (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then 
+     >          (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then
                 dtots(36) = dtots(36) + dact
             endif
 c
@@ -3951,7 +3989,7 @@ c
 c
           if ((ir.lt.irsep).and.
      >        (kss(ik,ir).ge.0.25*kss(nks(ir)-1,ir)).and.
-     >        (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then 
+     >        (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then
               dtots(36) = dtots(36) + dact
 c
               if (ir.eq.irsep-1)
@@ -3959,7 +3997,7 @@ c
 c
           endif
 c
-c         Add up area in the divertor region.  
+c         Add up area in the divertor region.
 c
           if (cgridopt.eq.0) then
             IF (ZS(IK,IR).GT.ZXP) THEN
@@ -3979,7 +4017,7 @@ c
               DTOTS(3) = DTOTS(3) + DACT * DDLIMS(IK,IR,IZ)
 c
               if ((kss(ik,ir).ge.0.25*kss(nks(ir)-1,ir)).and.
-     >            (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then 
+     >            (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then
                   dtots(35) = dtots(35) + dact * ddlims(ik,ir,iz)
                   dtots(36) = dtots(36) + dact
               endif
@@ -3988,7 +4026,7 @@ c
               DTOTS(5) = DTOTS(5) + DACT * DBLE(LINES(IK,IR,IZ))
 c
               if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1.and.
-     >             iz.le.cre2dizs) then 
+     >             iz.le.cre2dizs) then
                  e2dtots(1) = e2dtots(1) + dact * e2dnzs(ik,ir,iz)
                  e2dtots(2) = e2dtots(2) + dact * e2dpowls(ik,ir,iz)
                  e2dtots(3) = e2dtots(3) + dact * e2dlines(ik,ir,iz)
@@ -3998,37 +4036,37 @@ c
                 ditots(iz,1) = ditots(iz,1) + dact * ddlims(ik,ir,iz)
                 ditots(maxizs+1,1) = ditots(maxizs+1,1) + dact *
      >                             ddlims(ik,ir,iz)
-                 
+
                 if ((kss(ik,ir).ge.0.25*kss(nks(ir)-1,ir)).and.
-     >             (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then 
-                    ditots(iz,2) = ditots(iz,2) 
+     >             (kss(ik,ir).le.0.75*kss(nks(ir)-1,ir))) then
+                    ditots(iz,2) = ditots(iz,2)
      >                               + dact * ddlims(ik,ir,iz)
                     ditots(maxizs+1,2) = ditots(maxizs+1,2) + dact *
      >                             ddlims(ik,ir,iz)
                 endif
               endif
 c
-            ELSEif (ir.ge.irsep.and.ir.le.irwall) then 
+            ELSEif (ir.ge.irsep.and.ir.le.irwall) then
 c
               DTOTS(6) = DTOTS(6) + DACT * DDLIMS(IK,IR,IZ)
               DTOTS(7) = DTOTS(7) + DACT * DBLE(POWLS(IK,IR,IZ))
               DTOTS(8) = DTOTS(8) + DACT * DBLE(LINES(IK,IR,IZ))
 c
               if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1.and.
-     >             iz.le.cre2dizs) then 
+     >             iz.le.cre2dizs) then
                  e2dtots(4) = e2dtots(4) + dact * e2dnzs(ik,ir,iz)
                  e2dtots(5) = e2dtots(5) + dact * e2dpowls(ik,ir,iz)
                  e2dtots(6) = e2dtots(6) + dact * e2dlines(ik,ir,iz)
               endif
 c
-            ELSEif (ir.ge.irwall.and.ir.le.nrs) then 
+            ELSEif (ir.ge.irwall.and.ir.le.nrs) then
 c
               DTOTS(37) = DTOTS(37) + DACT * DDLIMS(IK,IR,IZ)
               DTOTS(38) = DTOTS(38) + DACT * DBLE(POWLS(IK,IR,IZ))
               DTOTS(39) = DTOTS(39) + DACT * DBLE(LINES(IK,IR,IZ))
 c
               if ((cre2d.eq.1.or.cre2d.eq.2).and.cre2dizs.gt.-1.and.
-     >             iz.le.cre2dizs) then 
+     >             iz.le.cre2dizs) then
                  e2dtots(7) = e2dtots(7) + dact * e2dnzs(ik,ir,iz)
                  e2dtots(8) = e2dtots(8) + dact * e2dpowls(ik,ir,iz)
                  e2dtots(9) = e2dtots(9) + dact * e2dlines(ik,ir,iz)
@@ -4044,7 +4082,7 @@ c
                 DTOTS(22)= DTOTS(22)+ DACT * DDLIMS(IK,IR,IZ)
               ENDIF
 c
-            elseif (.not.xpoint_up) then 
+            elseif (.not.xpoint_up) then
 c
               IF (ZS(IK,IR).LT.ZXP) THEN
                 DTOTS(21)= DTOTS(21)+ DACT * DDLIMS(IK,IR,IZ)
@@ -4062,16 +4100,16 @@ C
           do 4035 iz = 0,nizs
 c
 c
-c           ptots(1,iz) - power in core 
+c           ptots(1,iz) - power in core
 c                 2     - line rad in core
-c                 3     - power in main SOL  
+c                 3     - power in main SOL
 c                 4     - line rad in main SOL
-c                 5     - power in PP 
+c                 5     - power in PP
 c                 6     - line rad in PP
 c
 c                 7     - power in main SOL below XP (DIVERTOR)
 c                 8     - line rad          below        "
-c                 9     - power in main SOL above XP 
+c                 9     - power in main SOL above XP
 c                10     - line rad          above XP
 c
 c               maxizs+1 = sum of ion power and line rad
@@ -4083,55 +4121,55 @@ c
 c
               ptots(2,iz) = ptots(2,iz) + dact * dble(lines(ik,ir,iz))
 c
-              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then 
+              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then
                  e2dptots(1,iz)=e2dptots(1,iz)+dact*e2dpowls(ik,ir,iz)
                  e2dptots(2,iz)=e2dptots(2,iz)+dact*e2dlines(ik,ir,iz)
               endif
 c
-            elseif (ir.ge.irsep.and.ir.le.irwall) then 
+            elseif (ir.ge.irsep.and.ir.le.irwall) then
 c
               ptots(3,iz) = ptots(3,iz) + dact * dble(powls(ik,ir,iz))
 
               ptots(4,iz) = ptots(4,iz) + dact * dble(lines(ik,ir,iz))
 c
-              if (zs(ik,ir).gt.zxp) then 
-                 if (xpoint_up) then 
-                    ptots(7,iz) = ptots(7,iz) + 
+              if (zs(ik,ir).gt.zxp) then
+                 if (xpoint_up) then
+                    ptots(7,iz) = ptots(7,iz) +
      >                                dact * dble(powls(ik,ir,iz))
-                    ptots(8,iz) = ptots(8,iz) + 
+                    ptots(8,iz) = ptots(8,iz) +
      >                                dact * dble(lines(ik,ir,iz))
-                 else                 
-                    ptots(9,iz) = ptots(9,iz) + 
+                 else
+                    ptots(9,iz) = ptots(9,iz) +
      >                                dact * dble(powls(ik,ir,iz))
-                    ptots(10,iz) = ptots(10,iz) + 
+                    ptots(10,iz) = ptots(10,iz) +
      >                                dact * dble(lines(ik,ir,iz))
                  endif
               else
-                 if (xpoint_up) then 
-                    ptots(9,iz) = ptots(9,iz) + 
+                 if (xpoint_up) then
+                    ptots(9,iz) = ptots(9,iz) +
      >                                dact * dble(powls(ik,ir,iz))
-                    ptots(10,iz) = ptots(10,iz) + 
+                    ptots(10,iz) = ptots(10,iz) +
      >                                dact * dble(lines(ik,ir,iz))
-                 else                 
-                    ptots(7,iz) = ptots(7,iz) + 
+                 else
+                    ptots(7,iz) = ptots(7,iz) +
      >                                dact * dble(powls(ik,ir,iz))
-                    ptots(8,iz) = ptots(8,iz) + 
+                    ptots(8,iz) = ptots(8,iz) +
      >                                dact * dble(lines(ik,ir,iz))
                  endif
               endif
 c
-              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then 
+              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then
                  e2dptots(3,iz)=e2dptots(3,iz)+dact*e2dpowls(ik,ir,iz)
                  e2dptots(4,iz)=e2dptots(4,iz)+dact*e2dlines(ik,ir,iz)
               endif
 c
-            elseif (ir.ge.irtrap.and.ir.le.nrs) then 
+            elseif (ir.ge.irtrap.and.ir.le.nrs) then
 c
               ptots(5,iz) = ptots(5,iz) + dact * dble(powls(ik,ir,iz))
 
               ptots(6,iz) = ptots(6,iz) + dact * dble(lines(ik,ir,iz))
 c
-              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then 
+              if ((cre2d.eq.1.or.cre2d.eq.2).and.iz.le.cre2dizs) then
                  e2dptots(5,iz)=e2dptots(5,iz)+dact*e2dpowls(ik,ir,iz)
                  e2dptots(6,iz)=e2dptots(6,iz)+dact*e2dlines(ik,ir,iz)
               endif
@@ -4142,13 +4180,13 @@ c
 4040    CONTINUE
 4050  CONTINUE
 c
-c     Sum up over ptots arrays -    
+c     Sum up over ptots arrays -
 c
-      if (tatiz.ne.0) then 
+      if (tatiz.ne.0) then
          dact = dble(tneut)/dble(tatiz)
-      else 
+      else
          dact = 1.0
-      endif 
+      endif
 c
       do in = 1,10
          do iz = 1,nizs
@@ -4172,11 +4210,11 @@ c
 c
 c     neutral power sol
 c
-      DTOTS(25)= ptots(3,0) 
+      DTOTS(25)= ptots(3,0)
 c
 c     neutral power trap
 c
-      DTOTS(40)= ptots(5,0) 
+      DTOTS(40)= ptots(5,0)
 c
 c     neutral line sol
 c
@@ -4193,15 +4231,15 @@ c
 c       Code changes because the absolute factor is calculated for
 c       one ION entering the system/second - the previous formula
 c       would have been valid for an absolute factor based on
-c       one NEUTRAL entering/second. 
+c       one NEUTRAL entering/second.
 c
 c        dact = dble(tatiz)/dble(tneut)
 c
-        if (tatiz.ne.0) then 
+        if (tatiz.ne.0) then
            dact = dble(tneut)/dble(tatiz)
-        else 
+        else
            dact = 1.0
-        endif 
+        endif
 c
 c       total power main
 c
@@ -4234,7 +4272,7 @@ c
      >                        + dact * dtots(39)
 c
       else
-        dtots(27) = dtots(4) 
+        dtots(27) = dtots(4)
         dtots(28) = dtots(5)
         dtots(29) = dtots(7) + dtots(38)
         dtots(30) = dtots(8) + dtots(39)
@@ -4268,27 +4306,27 @@ C
 C    NOTE3: ABSFAC MODIFIED TO BE EQUAL TO 1.0 FOR INJECTION CASES
 C           THIS ALLOWS TABLES OF DENSITIES TO BE OBTAINED IN OUT
 c
-c    NOTE4: ABSFAC has historically been scaled to 1 ion/sec entering 
-c           the system. However, this resulted in a bug in the treatment 
+c    NOTE4: ABSFAC has historically been scaled to 1 ion/sec entering
+c           the system. However, this resulted in a bug in the treatment
 c           of neutral particle densities - these densities were scaled by
-c           1/TNEUT - the total number of neutrals entering the system. 
+c           1/TNEUT - the total number of neutrals entering the system.
 c           However, ABSFAC represented the total number of ions entering the
 c           system - thus the neutral densities were incorrect
-c           by a factor of TATIZ/TNEUT. This could be corrected by scaling 
+c           by a factor of TATIZ/TNEUT. This could be corrected by scaling
 c           the neutral data to one ion entering the system/sec or by scaling
 c           all of the results to 1 particle/s where a "particle" is a neutral
-c           for initial neutral launch cases and and ion for ion injection 
-c           cases. This means that absfac needs to be modified by removing the 
+c           for initial neutral launch cases and and ion for ion injection
+c           cases. This means that absfac needs to be modified by removing the
 c           TATIZ/TNEUT factor. In other words absfac becomes the same as absfac_neut
 C
 c
 c     jdemod - I think Karl's code is appropriate for any case with a specified
 c              absolute factor and self-sputtering assuming the absolute
 c              scaling factor specified is not intended to scale the entire
-c              source including self sputtering. 
+c              source including self sputtering.
 c
 C     IPP/08 Krieger - added code for proper handling of self sputtering
-c     cases with homogeneous wall launch and predefined ABSFAC      
+c     cases with homogeneous wall launch and predefined ABSFAC
 c     This was added by K. Schmid but I do not know if it is still
 c     required in the new version
 c      if(nabsfac.gt.0.0.and.cselfs.gt.0.and.cneutbSAV.eq.2) then
@@ -4297,7 +4335,7 @@ c            ABSFAC = WSSF*(nabsfac + SSEF * nabsfac)*CSEF
 c     >                          + neut2d_fytot
 c            absfac_neut = absfac
 c         endif
-c         if (cneuta.eq.0.and.tneut.gt.0.0) then 
+c         if (cneuta.eq.0.and.tneut.gt.0.0) then
 c            absfac_ion = absfac * tatiz/tneut
 c         else
 c            absfac_ion = absfac
@@ -4310,7 +4348,7 @@ c
 c      if (nabsfac.gt.0.0.and.cioptf.eq.21) then
 c         absfac = qrat * nabsfac /(dtots(27)+dtots(29)) + neut2d_fytot
 c         absfac_neut = absfac
-c         if (cneuta.eq.0.and.tneut.gt.0.0) then 
+c         if (cneuta.eq.0.and.tneut.gt.0.0) then
 c            absfac_ion = absfac * tatiz/tneut
 c         else
 c            absfac_ion = absfac
@@ -4323,7 +4361,7 @@ c
       if (nabsfac.gt.0.0) then
          absfac = (nabsfac + SSEF*nabsfac) + neut2d_fytot
          absfac_neut = absfac
-         if (cneuta.eq.0.and.tneut.gt.0.0) then 
+         if (cneuta.eq.0.and.tneut.gt.0.0) then
             absfac_ion = absfac * tatiz/tneut
          else
             absfac_ion = absfac
@@ -4335,11 +4373,11 @@ c
       elseif (lpinz0) then
          absfac = zioniz*(tatiz/nimps) + neut2d_fytot
          absfac_neut = absfac
-         if (cneuta.eq.0.and.tneut.gt.0.0) then 
+         if (cneuta.eq.0.and.tneut.gt.0.0) then
             absfac_ion = absfac * tatiz/tneut
          else
             absfac_ion = absfac
-         endif         
+         endif
 c
          DO IR = 1,NRS
            DO IK = 1,NKS(IR)
@@ -4356,18 +4394,18 @@ c            - old code can be removed later
 c
 c
 c
-c         if (.true.) then 
+c         if (.true.) then
 c
             ABSFAC = 1.0
-            absfac_neut = absfac 
+            absfac_neut = absfac
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes since for 
+c           Note: the calculated absolute factor only makes sense for 
 c                 neutral launch cases - the various quantities are 
 c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
 c
-            if (cneuta.eq.0.and.tneut.gt.0.0) then 
+            if (cneuta.eq.0.and.tneut.gt.0.0) then
                ABSFAC = WSSF*FTOT*YEFF*CSEF + neut2d_fytot
                absfac_neut = absfac
                absfac_ion = absfac * tatiz/tneut
@@ -4379,7 +4417,7 @@ c
 c         else
 c
 c            ABSFAC = 1.0
-c            absfac_neut = absfac 
+c            absfac_neut = absfac
 c            IF (TNEUT.GT.0.0.and.(tatiz.le.tneut)) then
 c               ABSFAC = WSSF*FTOT*YEFF*CSEF*TATIZ/TNEUT
 c     >                          + neut2d_fytot
@@ -4428,12 +4466,12 @@ C=======================================================================
 c
 c     IMPURITY CONTENT
 c
-      call rzero (impurity_content,(maxizs+1)*4*2)   
+      call rzero (impurity_content,(maxizs+1)*4*2)
 c
 
 c
       do ir = 1,nrs
-        do ik = 1,nks(ir)  
+        do ik = 1,nks(ir)
 c
           IF (ABS(RS(IK,IR)-RXP).LT.0.4.and.
      >       ((cgridopt.eq.0.and.ZS(IK,IR).GT.ZXP).or.
@@ -4445,18 +4483,18 @@ c
             DTOTS(12)= DTOTS(12)+ DACT * DBLE(ZEFFS(IK,IR,3))
           ENDIF
 c
-c         Calculate the impurity content of various regions 
-c         on the grid. (Include impurity content reported by 
+c         Calculate the impurity content of various regions
+c         on the grid. (Include impurity content reported by
 c         supplemental code - PINZ0 - can be used by PIN, EIRENE or
 c         may be loaded with a UEDGE result.)
 c
-c         X-point up        
+c         X-point up
 c
-          if (xpoint_up) then           
+          if (xpoint_up) then
 c
-c            Divertor 
+c            Divertor
 c
-             if (zs(ik,ir).ge.zxp) then  
+             if (zs(ik,ir).ge.zxp) then
 c
                 dtots(43) = dtots(43) + ddlims(ik,ir,0)
      >                                  * kareas(ik,ir)
@@ -4466,16 +4504,16 @@ c
 c
 c               Outer
 c
-                if (ik.lt.nks(ir)/2) then 
+                if (ik.lt.nks(ir)/2) then
 c
                    do iz = 0,nizs
 c
-                      impurity_content(iz,2,1)=impurity_content(iz,2,1) 
+                      impurity_content(iz,2,1)=impurity_content(iz,2,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
 c
-                      if (iz.le.cre2dizs) then  
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,2,2)=
-     >                           impurity_content(iz,2,2) 
+     >                           impurity_content(iz,2,2)
      >                         + e2dnzs(ik,ir,iz) * kareas(ik,ir)
 
                       endif
@@ -4487,15 +4525,15 @@ c
 c
                    do iz = 0,nizs
 c
-                      impurity_content(iz,1,1)=impurity_content(iz,1,1) 
+                      impurity_content(iz,1,1)=impurity_content(iz,1,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
 c
 
-                      if (iz.le.cre2dizs) then  
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,1,2)=
-     >                            impurity_content(iz,1,2) 
+     >                            impurity_content(iz,1,2)
      >                          + e2dnzs(ik,ir,iz) * kareas(ik,ir)
-                      endif 
+                      endif
                    end do
 c
                 endif
@@ -4503,24 +4541,24 @@ c
 c            Main
 c
              else
-c 
+c
                 dtots(42) = dtots(42) + ddlims(ik,ir,0)
      >                                  * kareas(ik,ir)
 c
                 dtots(45) = dtots(45) + pinz0(ik,ir)
      >                                  * kareas(ik,ir)
 c
-                if (ir.lt.irsep) then 
+                if (ir.lt.irsep) then
 c
                    do iz = 0,nizs
-c	  
+c
                       impurity_content(iz,4,1)=
-     >                       impurity_content(iz,4,1) 
+     >                       impurity_content(iz,4,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
-c	  
-                      if (iz.le.cre2dizs) then  
+c
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,4,2)=
-     >                       impurity_content(iz,4,2) 
+     >                       impurity_content(iz,4,2)
      >                     + e2dnzs(ik,ir,iz) * kareas(ik,ir)
                       endif
                    end do
@@ -4528,14 +4566,14 @@ c
                 else
 c
                    do iz = 0,nizs
-c	  
+c
                       impurity_content(iz,3,1)=
-     >                       impurity_content(iz,3,1) 
+     >                       impurity_content(iz,3,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
-c	  
-                      if (iz.le.cre2dizs) then  
+c
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,3,2)=
-     >                       impurity_content(iz,3,2) 
+     >                       impurity_content(iz,3,2)
      >                     + e2dnzs(ik,ir,iz) * kareas(ik,ir)
                       endif
                    end do
@@ -4545,12 +4583,12 @@ c
 c
              endif
 c
-          elseif (.not.xpoint_up) then           
+          elseif (.not.xpoint_up) then
 c
-c            Divertor 
+c            Divertor
 c
-             if (zs(ik,ir).le.zxp) then  
-c 
+             if (zs(ik,ir).le.zxp) then
+c
                 dtots(43) = dtots(43) + ddlims(ik,ir,0)
      >                                  * kareas(ik,ir)
 c
@@ -4559,16 +4597,16 @@ c
 c
 c               Inner
 c
-                if (ik.lt.nks(ir)/2) then 
+                if (ik.lt.nks(ir)/2) then
 c
                    do iz = 0,nizs
 c
-                      impurity_content(iz,1,1)=impurity_content(iz,1,1) 
+                      impurity_content(iz,1,1)=impurity_content(iz,1,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
 c
-                      if (iz.le.cre2dizs) then  
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,1,2)=
-     >                          impurity_content(iz,1,2) 
+     >                          impurity_content(iz,1,2)
      >                        + e2dnzs(ik,ir,iz) * kareas(ik,ir)
                       endif
                    end do
@@ -4579,12 +4617,12 @@ c
 c
                    do iz = 0,nizs
 c
-                      impurity_content(iz,2,1)=impurity_content(iz,2,1) 
+                      impurity_content(iz,2,1)=impurity_content(iz,2,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
 c
-                      if (iz.le.cre2dizs) then  
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,2,2)=
-     >                          impurity_content(iz,2,2) 
+     >                          impurity_content(iz,2,2)
      >                        + e2dnzs(ik,ir,iz) * kareas(ik,ir)
                       endif
                    end do
@@ -4594,57 +4632,57 @@ c
 c            Main
 c
              else
-c 
+c
                 dtots(42) = dtots(42) + ddlims(ik,ir,0)
      >                                  * kareas(ik,ir)
 c
                 dtots(45) = dtots(45) + pinz0(ik,ir)
      >                                  * kareas(ik,ir)
 c
-c               Sum up for each charge state  
+c               Sum up for each charge state
 c
-                if (ir.lt.irsep) then 
+                if (ir.lt.irsep) then
 c
                    do iz = 0,nizs
-c	  
+c
                       impurity_content(iz,4,1)=
-     >                       impurity_content(iz,4,1) 
+     >                       impurity_content(iz,4,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
-c	  
-                      if (iz.le.cre2dizs) then  
+c
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,4,2)=
-     >                       impurity_content(iz,4,2) 
+     >                       impurity_content(iz,4,2)
      >                     + e2dnzs(ik,ir,iz) * kareas(ik,ir)
-                      endif 
+                      endif
 c
                    end do
 c
                 else
 c
                    do iz = 0,nizs
-c	  
+c
                       impurity_content(iz,3,1)=
-     >                       impurity_content(iz,3,1) 
+     >                       impurity_content(iz,3,1)
      >                     + ddlims(ik,ir,iz) * kareas(ik,ir)
-c	  
-                      if (iz.le.cre2dizs) then  
+c
+                      if (iz.le.cre2dizs) then
                          impurity_content(iz,3,2)=
-     >                       impurity_content(iz,3,2) 
+     >                       impurity_content(iz,3,2)
      >                     + e2dnzs(ik,ir,iz) * kareas(ik,ir)
-                      endif 
+                      endif
 c
                    end do
 c
-                endif 
+                endif
 c
              endif
 c
           endif
 c
-        end do 
-      end do 
+        end do
+      end do
 c
-c     
+c
 c
       IF (DTOTS(9).NE.0.0D0) THEN
         DTOTS(10) = DTOTS(10) / DTOTS(9)
@@ -4669,14 +4707,14 @@ c
           sptots(j,iz) = sngl(ptots(j,iz))
 4095  continue
 c
-      do in = 1,2 
+      do in = 1,2
         do 4096 iz = 1,nizs
             sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
 4096    continue
 c
         sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
 c
-      end do 
+      end do
 c
 C-----------------------------------------------------------------------
 c
@@ -4686,17 +4724,17 @@ C-----------------------------------------------------------------------
 c
       call prb
 c
-      tmpsrc = wallsn(maxpts+1) + wallsi(maxpts+1)      
+      tmpsrc = wallsn(maxpts+1) + wallsi(maxpts+1)
       tmpmult = absfac * 2.0 * PI * R0
 c
       call prb
       call prchtml('SUMMARY OF PARTICLE DEPOSITION/EROSION',
      >             'pr_depero','0','B')
-      call prb  
+      call prb
 c
 c     Louvers for JET grids only
 c
-      if (cgridopt.eq.0) then 
+      if (cgridopt.eq.0) then
          call prc('- LOUVER AREA IS ASSUMED TO BE THE OUTERMOST'//
      >         ' TWO ELEMENTS OF')
          call prc('  EACH TARGET')
@@ -4708,40 +4746,40 @@ c
       call prr('- NEUTRALS            : ',wallsn(maxpts+1))
       call prr('- IONS                : ',wallsi(maxpts+1))
 c
-      if (cgridopt.eq.0) then 
+      if (cgridopt.eq.0) then
 
          tmpdep = wallsn(wallindex(2)) + wallsn(wallindex(3))
 c
          call prr('NEUTRAL DEPOSITION ON '//inner//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ', 
+         call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
 c
          tmpdep = wallsn(wallindex(nds-1)) + wallsn(wallindex(nds-2))
 c
          call prr('NEUTRAL DEPOSITION ON '//outer//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ', 
+         call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
 c
-      endif 
-c   
+      endif
+c
       call prb
 c
-c     Calculate and summarize region deposition probabilities.  
-c       
-c     Based on contents of wallse wallse_i and wtdep array. 
+c     Calculate and summarize region deposition probabilities.
+c
+c     Based on contents of wallse wallse_i and wtdep array.
 c
 c     Calculate totals over 4 regions:
 c
-c     - Outer target  
+c     - Outer target
 c     - Inner target
 c     - Main vessel Wall
-c     - PFZ Wall 
+c     - PFZ Wall
 c
-c     with particle sources from each of the 4 regions - this gives 16 nubmers 
+c     with particle sources from each of the 4 regions - this gives 16 nubmers
 c     in the end showing the probability that a particle beginning in one of
-c     the four regions will deposit in one of the other four regions. 
+c     the four regions will deposit in one of the other four regions.
 c
 c
 c     Sum total deposition (ion+neutral) into third array element
@@ -4752,37 +4790,37 @@ c
 c
             wtdep(iw,in,3) = wtdep(iw,in,1) + wtdep(iw,in,2)
 c
-         end do 
+         end do
 c
       end do
 c
-c     Print and calculate wall deposition  
+c     Print and calculate wall deposition
 c
       call pr_calc_walldep
 c
       call prb
 C
 C-----------------------------------------------------------------------
-C                     PRINT REISER INFORMATION TO .LIM FILE 
+C                     PRINT REISER INFORMATION TO .LIM FILE
 C                     FOR POSSIBLE PLOTS.
 C-----------------------------------------------------------------------
 C
 c psmod
 c
-c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from 
+c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cprint.eq.8.or.cprint.eq.9) then 
-         WRITE(6,*)'Writing impurity force data to .lim file' 
+      if (cprint.eq.8.or.cprint.eq.9) then
+         WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
 c
 c psmod
 c
 c
-c     Calculate the wall distribution of any hydrogenic or impurity 
-c     radiation in POWLS and HPOWLS.  
-c       
+c     Calculate the wall distribution of any hydrogenic or impurity
+c     radiation in POWLS and HPOWLS.
+c
       call calc_wallprad(nizs)
 C
 C-----------------------------------------------------------------------
@@ -4818,17 +4856,19 @@ c
       do in = -max_d_pinch_v,max_d_pinch_v
          write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
      >       in * d_pinch_vel, d_pinch_v(in)
-      end do 
-
+      end do
+c slmod begin
+      CALL OutputData(87,'END OF DIV')
+c slmod end
 c
-c      if (cisterrcnt.ne.0) then 
+c      if (cisterrcnt.ne.0) then
 c         call prb
 c         call prc('WARNING: DIVIMP TIMING ERRORS ENCOUNTERED.')
 c         call prc('         NUMBER OF PARTICLE TRACKS EXCEEDING')
 c         call pri('         MAXIMUM TIME RESOLUTION = ',cisterrcnt)
 c         call prc('         MAXIMUM TIME STEPS =  16777216.00')
 c         call prr('         MAXIMUM TIME_TRACK = ',16777216.00*qtim)
-c      endif 
+c      endif
 c
 c     In case of terminated procedure ... STOP the program at
 c     this point.
@@ -4887,11 +4927,11 @@ c     specified for CSTGRAD times SMAX for the injection ring)
 c
 c     NOTE: CSTGRAD is also used to specify the region of the ring
 c           where temperature gradient forces -> 0 - this may or
-c           may not be compatible with its use in this function to 
-c           define the impurity integration region - care should 
+c           may not be compatible with its use in this function to
+c           define the impurity integration region - care should
 c           be taken when looking at these results when using the options
 c           which need cstgrad to be specified to turn off the temperature
-c           gradient forces. 
+c           gradient forces.
 c
 c
       real    nt(maxnrs,maxizs),cp,lastcp,nextcp,lastmid,nextmid
@@ -5035,12 +5075,12 @@ c
          call prb
       endif
 c
- 
+
 4690  format (i4,6(1x,g12.7))
 4700  format (2x,'Ionization state: ',i4,' content = ',g12.5)
 4710  format (18(1x,' IZ= ',i4,1x))
 4720  format (18(1x,g10.4))
- 
+
       return
       end
 c
@@ -5055,13 +5095,13 @@ c
       include 'comtor'
       include 'fperiph_com'
 c
-c     PRIONIZ: 
+c     PRIONIZ:
 c
-c     This routine prints the ionization data selected 
-c     by the indicators isol, irflct, and ifp for both 
-c     the "INNER" and "OUTER" target regions. 
-c     
-c     The raw data itself is in the array pionizdat - 
+c     This routine prints the ionization data selected
+c     by the indicators isol, irflct, and ifp for both
+c     the "INNER" and "OUTER" target regions.
+c
+c     The raw data itself is in the array pionizdat -
 c     which is compiled in the NEUT subroutine. This
 c     data refers to the initial ionization characteristics
 c     of the neutrals and does not deal with where these
@@ -5070,27 +5110,27 @@ c
 c
 c
 c          Here is a summary of the array and its contents
-c   
+c
 c          PIONIZDAT(2    ,2  ,2    ,2      ,5)
 c                   isol  m   ifp   irflct  quant
 c
-c          isol = 1 for SOL information 
+c          isol = 1 for SOL information
 c               = 2 for MAIN plasma information
-c  
+c
 c          m    = 1 for target 1   ik > nks(ir)/2
-c               = 2 for target 2   ik =< nks(i2)/2 
+c               = 2 for target 2   ik =< nks(i2)/2
 c
 c          ifp  = 1 for a neutral resulting from a regular
-c                   launch    
+c                   launch
 c               = 2 for a neutral resulting from a Far Periphery
 c                   relaunch
 c
 c          irflct = 1 for a neutral that has NOT been reflected
-c                 = 2 for a neutral that has been reflected 
+c                 = 2 for a neutral that has been reflected
 c
 c          quant= 1 total weight of neutrals
 c               = 2 weighted R coordinate
-c               = 3 weighted Z coordinate 
+c               = 3 weighted Z coordinate
 c               = 4 weighted K value
 c               = 5 weighted S value
 c
@@ -5098,13 +5138,13 @@ c
       character*15 fptext(3)
       character*19 rfttext(3)
 c
-      integer ifplb,irflctlb,isollb,i,j,k 
-      integer ifpub,irflctub,isolub 
-      real n1,n2,r1,r2,z1,z2,k1,k2,s1,s2 
+      integer ifplb,irflctlb,isollb,i,j,k
+      integer ifpub,irflctub,isolub
+      real n1,n2,r1,r2,z1,z2,k1,k2,s1,s2
 c
       soltext(1) = ' SOL        '
       soltext(2) = ' MAIN       '
-      soltext(3) = ' SOL + MAIN ' 
+      soltext(3) = ' SOL + MAIN '
 c
       fptext(1)  = ' ORDINARY      '
       fptext(2)  = ' FP            '
@@ -5118,16 +5158,16 @@ c---------------------------------------------------------------------
 c
 c
 c
-c     IF all of the indices are less than 3 - i.e. no summary data 
-c     requested. 
+c     IF all of the indices are less than 3 - i.e. no summary data
+c     requested.
 c
-      if (isol.lt.3.and.irflct.lt.3.and.ifp.lt.3) then  
+      if (isol.lt.3.and.irflct.lt.3.and.ifp.lt.3) then
          n1 = pionizdat(isol,1,ifp,irflct,1)
          n2 = pionizdat(isol,2,ifp,irflct,1)
 c
          r1 = pionizdat(isol,1,ifp,irflct,2)
          r2 = pionizdat(isol,2,ifp,irflct,2)
-c             
+c
          z1 = pionizdat(isol,1,ifp,irflct,3)
          z2 = pionizdat(isol,2,ifp,irflct,3)
 c
@@ -5150,7 +5190,7 @@ c
          s1 = 0.0
          s2 = 0.0
 c
-         if (isol.eq.3) then 
+         if (isol.eq.3) then
             isollb = 1
             isolub = 2
          else
@@ -5158,7 +5198,7 @@ c
             isolub = isol
          endif
 c
-         if (irflct.eq.3) then 
+         if (irflct.eq.3) then
             irflctlb = 1
             irflctub = 2
          else
@@ -5166,7 +5206,7 @@ c
             irflctub = irflct
          endif
 c
-         if (ifp.eq.3) then 
+         if (ifp.eq.3) then
             ifplb = 1
             ifpub = 2
          else
@@ -5189,22 +5229,22 @@ c
                   s2 = s2 + pionizdat(i,2,j,k,5)
                end do
             end do
-         end do 
+         end do
 c
       endif
 c
 c
-      if (n1.gt.0.0.or.n2.gt.0.0) then 
+      if (n1.gt.0.0.or.n2.gt.0.0) then
 c
          call prc ('SUMMARY OF NEUTRAL IONIZATION FOR'
      >               //soltext(isol))
 c
-         if (fpropt.eq.1) then 
-            call prc (' FOR: '//fptext(ifp)//' LAUNCHED NEUTRALS') 
-         endif 
+         if (fpropt.eq.1) then
+            call prc (' FOR: '//fptext(ifp)//' LAUNCHED NEUTRALS')
+         endif
 c
-         if (nrfopt.eq.1.or.nrfopt.eq.2) then 
-            call prc (' FOR: '//rfttext(irflct)//' PARTICLES') 
+         if (nrfopt.eq.1.or.nrfopt.eq.2) then
+            call prc (' FOR: '//rfttext(irflct)//' PARTICLES')
          endif
 c
          call prr2 (' NUMBER OF PARTICLES IN DATA  ',n1,n2)
@@ -5218,14 +5258,14 @@ c
 c
 c     Don't print Average S for data involving MAIN ionizations
 c
-         if (isol.eq.1) then 
+         if (isol.eq.1) then
             call prr2 (' AVERAGE <S> FOR IONISATIONS  ',
      >                     s1/MAX(LO,n1),s2/MAX(LO,n2))
          endif
 c
       endif
 c
-      return 
+      return
       end
 c
 c
@@ -5233,24 +5273,24 @@ c
       subroutine probescan
       implicit none
 c
-c     PROBESCAN: Calculate the background plasma values along 
+c     PROBESCAN: Calculate the background plasma values along
 c                a specified vertical and horizontal line at
 c                specified R and Z coordinates. The vertical
-c                probe corresponds to a CMOD diagnostic. The 
+c                probe corresponds to a CMOD diagnostic. The
 c                horizontal to a JET midplane probe.
 c
       include 'params'
       include 'cgeom'
       include 'comtor'
 c
-c     Local variable  
-c 
+c     Local variable
+c
       real r,z,s,rscan,d1,d2,d3,d4,d5,isat,zscan
       real te,ti,ne
       real fact, factc
       integer ir,ik,isection,sectcnt
       character*80 comment
-      logical first,found  
+      logical first,found
 c
 c
       call prb
@@ -5261,13 +5301,13 @@ c
       rscan = crploc
       zscan = czploc
 c
-c     Different implementation for polygon based grids.  
+c     Different implementation for polygon based grids.
 c
-      if (cgridopt.eq.0.or.cgridopt.eq.3.and.pdopt.eq.1) then  
+      if (cgridopt.eq.0.or.cgridopt.eq.3.and.pdopt.eq.1) then
 c
 c        Do vertical probe and then horizontal probe. If the scanning
 c        value is -99.0 then ignore that scan. This is just an
-c        alternate method to turn the table off. 
+c        alternate method to turn the table off.
 c
 c
          if (rscan.ne.-99.0.and.rlocnum.gt.0) then
@@ -5277,12 +5317,12 @@ c
 c
             do ir = 2,irwall-1
 c
-               found = .false. 
+               found = .false.
                sectcnt = 0
 c
                do ik = 1,nks(ir)
 c
-c                 Various distances 
+c                 Various distances
 c
                   d1 = abs(rscan-krb(ik-1,ir))
                   d2 = abs(rscan-krb(ik,ir))
@@ -5293,58 +5333,58 @@ c
 c
                   d5 = abs(krb(ik,ir)-rs(ik,ir))
 c
-c                 Intersection in first half of cell 
+c                 Intersection in first half of cell
 c
-                  if (d1.le.d4.and.d3.le.d4) then 
+                  if (d1.le.d4.and.d3.le.d4) then
 
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 
 c
-c                       Intersection in first half cell 
+c                       Intersection in first half cell
 c
-                        if (ik.eq.1) then 
+                        if (ik.eq.1) then
 
-                            
-                           factc = d1/d4 
-                           te = kteds(idds(ir,2)) + factc * 
+
+                           factc = d1/d4
+                           te = kteds(idds(ir,2)) + factc *
      >                         (ktebs(1,ir)-kteds(idds(ir,2)))
-                           ti = ktids(idds(ir,2)) + factc * 
+                           ti = ktids(idds(ir,2)) + factc *
      >                         (ktibs(1,ir)-ktids(idds(ir,2)))
-                           ne = knds(idds(ir,2)) + factc * 
+                           ne = knds(idds(ir,2)) + factc *
      >                         (knbs(1,ir)-knds(idds(ir,2)))
-                           s = ksb(ik-1,ir) + factc * 
+                           s = ksb(ik-1,ir) + factc *
      >                        (kss(ik,ir)-ksb(ik-1,ir))
-                           z = kzb(ik-1,ir) + factc * 
+                           z = kzb(ik-1,ir) + factc *
      >                        (zs(ik,ir)-kzb(ik-1,ir))
 c
                            isat = 0.5 * ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
-c 
+c
                            found = .true.
-                           goto 10  
+                           goto 10
 c
 c                       Intersection in any other FIRST half cell
 c
                         else
 c
-                           factc = d1/d4 
+                           factc = d1/d4
                            fact  = (d1/d4 * (kps(ik,ir)-kpb(ik-1,ir))
      >                              +  kpb(ik-1,ir)-kps(ik-1,ir)) /
      >                               (kps(ik,ir)-kps(ik-1,ir))
 c
-                           te = ktebs(ik-1,ir) + fact * 
+                           te = ktebs(ik-1,ir) + fact *
      >                         (ktebs(ik,ir)-ktebs(ik-1,ir))
-                           ti = ktibs(ik-1,ir) + fact * 
+                           ti = ktibs(ik-1,ir) + fact *
      >                         (ktibs(ik,ir)-ktibs(ik-1,ir))
-                           ne = knbs(ik-1,ir) + fact * 
+                           ne = knbs(ik-1,ir) + fact *
      >                         (knbs(ik,ir)-knbs(ik-1,ir))
 c
-                           s  = ksb(ik-1,ir) + factc * 
+                           s  = ksb(ik-1,ir) + factc *
      >                         (kss(ik,ir)-ksb(ik-1,ir))
-                           z  = kzb(ik-1,ir) + factc * 
+                           z  = kzb(ik-1,ir) + factc *
      >                         (zs(ik,ir)-kzb(ik-1,ir))
 c
                            isat = 0.5 * ech*ne*
@@ -5352,7 +5392,7 @@ c
      >                            *(1.0+RIZB)/CRMB)
 c
                            found = .true.
-                           goto 10  
+                           goto 10
 
                         endif
 c
@@ -5360,59 +5400,59 @@ c
                      endif
 
 c
-c                 Intersection in second half of cell. 
+c                 Intersection in second half of cell.
 c
-                  elseif (d2.le.d5.and.d3.le.d5) then 
-                
+                  elseif (d2.le.d5.and.d3.le.d5) then
+
 
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 
 c
-c                       Intersection in first half cell 
+c                       Intersection in first half cell
 c
-                        if (ik.eq.nks(ir)) then 
+                        if (ik.eq.nks(ir)) then
 
-                           factc = d3/d5 
+                           factc = d3/d5
 
-                           te = ktebs(ik,ir) + factc * 
+                           te = ktebs(ik,ir) + factc *
      >                         (kteds(idds(ir,1))-ktebs(ik,ir))
-                           ti = ktibs(ik,ir) + factc * 
+                           ti = ktibs(ik,ir) + factc *
      >                         (ktids(idds(ir,1))-ktibs(ik,ir))
-                           ne = knbs(ik,ir) + factc * 
+                           ne = knbs(ik,ir) + factc *
      >                         (knds(idds(ir,1))- knbs(ik,ir))
 c
-                           s  = kss(ik,ir) + factc * 
+                           s  = kss(ik,ir) + factc *
      >                         (ksb(ik,ir)-kss(ik,ir))
-                           z  = zs(ik,ir) + factc * 
+                           z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
                            isat = 0.5 * ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
-                           goto 10  
+                           goto 10
 c
 c                       Intersection in any other FIRST half cell
 c
                         else
 c
-                           factc =  d3/d5 
+                           factc =  d3/d5
                            fact  = (d3/d5 * (kpb(ik,ir)-kps(ik,ir))
      >                              +  kps(ik+1,ir)-kpb(ik,ir)) /
      >                               (kps(ik+1,ir)-kps(ik,ir))
 c
-                           te = ktebs(ik,ir) + fact * 
+                           te = ktebs(ik,ir) + fact *
      >                         (ktebs(ik+1,ir)-ktebs(ik,ir))
-                           ti = ktibs(ik,ir) + fact * 
+                           ti = ktibs(ik,ir) + fact *
      >                         (ktibs(ik+1,ir)-ktibs(ik,ir))
-                           ne = knbs(ik,ir) + fact * 
+                           ne = knbs(ik,ir) + fact *
      >                         (knbs(ik+1,ir)-knbs(ik,ir))
 c
-                           s  = kss(ik,ir) + factc * 
+                           s  = kss(ik,ir) + factc *
      >                         (ksb(ik,ir)-kss(ik,ir))
-                           z  = zs(ik,ir) + factc * 
+                           z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
                            isat = 0.5 * ech*ne*
@@ -5420,41 +5460,41 @@ c
      >                            *(1.0+RIZB)/CRMB)
 c
                            found = .true.
-                           goto 10  
+                           goto 10
 c
                         endif
 c
                      endif
 c
-                  endif 
+                  endif
 c
 c              END DO FOR IK
 c
                end do
 c
- 10            if (found) then 
+ 10            if (found) then
 c
-                  if (first) then 
+                  if (first) then
                      write (6,*) 'Table of Reciprocating'//
-     >                      ' Probe diagnostic data: R= ',rscan            
+     >                      ' Probe diagnostic data: R= ',rscan
                      write (6,*) '- For Intersection Number = ',
-     >                             rlocnum 
-                     write (6,200) 
+     >                             rlocnum
+                     write (6,200)
 c
-                     if (cprint.ne.1.and.cprint.ne.9) first = .false. 
+                     if (cprint.ne.1.and.cprint.ne.9) first = .false.
 c
                   endif
 c
                   write(6,300) ik,ir,te,ti,ne,isat,s,z
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
-                     if (first) then 
+                     if (first) then
                         call prr('Table of Probe Diagnostic data: R= ',
      >                           rscan)
                         call pri ('- For Intersection Number = ',
-     >                             rlocnum) 
+     >                             rlocnum)
 c
-                        write (comment,200) 
+                        write (comment,200)
                         call prc(comment)
 c
                         first = .false.
@@ -5464,13 +5504,13 @@ c
                      write(comment,300) ik,ir,te,ti,ne,isat,s,z
                      call prc(comment)
 c
-                  endif 
+                  endif
 c
                endif
 c
-c           End DO for IR  
+c           End DO for IR
 c
-            end do   
+            end do
 c
 c        End if for RSCAN.ne.-99.0
 c
@@ -5487,12 +5527,12 @@ c
 c
             do ir = 2,irwall-1
 c
-               found = .false. 
+               found = .false.
                sectcnt = 0
 c
                do ik = 1,nks(ir)
 c
-c                 Various distances 
+c                 Various distances
 c
                   d1 = abs(zscan-kzb(ik-1,ir))
 c
@@ -5504,57 +5544,57 @@ c
 c
                   d5 = abs(kzb(ik,ir)-zs(ik,ir))
 c
-c                 Intersection in first half of cell 
+c                 Intersection in first half of cell
 c
-                  if (d1.le.d4.and.d3.le.d4) then 
+                  if (d1.le.d4.and.d3.le.d4) then
 
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 c
-c                       Intersection in first half cell 
+c                       Intersection in first half cell
 c
-                        if (ik.eq.1) then 
-c                            
-                           factc = d1/d4 
+                        if (ik.eq.1) then
 c
-                           te = kteds(idds(ir,2)) + factc * 
+                           factc = d1/d4
+c
+                           te = kteds(idds(ir,2)) + factc *
      >                         (ktebs(1,ir)-kteds(idds(ir,2)))
-                           ti = ktids(idds(ir,2)) + factc * 
+                           ti = ktids(idds(ir,2)) + factc *
      >                         (ktibs(1,ir)-ktids(idds(ir,2)))
-                           ne = knds(idds(ir,2)) + factc * 
+                           ne = knds(idds(ir,2)) + factc *
      >                         (knbs(1,ir)-knds(idds(ir,2)))
-                           s = ksb(ik-1,ir) + factc * 
+                           s = ksb(ik-1,ir) + factc *
      >                        (kss(ik,ir)-ksb(ik-1,ir))
-                           r = krb(ik-1,ir) + factc * 
+                           r = krb(ik-1,ir) + factc *
      >                        (rs(ik,ir)-krb(ik-1,ir))
 c
                            isat = 0.5 * ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
-c 
+c
                            found = .true.
-                           goto 20  
+                           goto 20
 c
 c                       Intersection in any other FIRST half cell
 c
                         else
 c
-                           factc = d1/d4 
+                           factc = d1/d4
                            fact  = (d1/d4 * (kps(ik,ir)-kpb(ik-1,ir))
      >                              +  kpb(ik-1,ir)-kps(ik-1,ir)) /
      >                               (kps(ik,ir)-kps(ik-1,ir))
 c
-                           te = ktebs(ik-1,ir) + fact * 
+                           te = ktebs(ik-1,ir) + fact *
      >                         (ktebs(ik,ir)-ktebs(ik-1,ir))
-                           ti = ktibs(ik-1,ir) + fact * 
+                           ti = ktibs(ik-1,ir) + fact *
      >                         (ktibs(ik,ir)-ktibs(ik-1,ir))
-                           ne = knbs(ik-1,ir) + fact * 
+                           ne = knbs(ik-1,ir) + fact *
      >                         (knbs(ik,ir)-knbs(ik-1,ir))
 c
-                           s  = ksb(ik-1,ir) + factc * 
+                           s  = ksb(ik-1,ir) + factc *
      >                         (kss(ik,ir)-ksb(ik-1,ir))
-                           r  = krb(ik-1,ir) + factc * 
+                           r  = krb(ik-1,ir) + factc *
      >                         (rs(ik,ir)-krb(ik-1,ir))
 c
                            isat = 0.5 * ech*ne*
@@ -5562,7 +5602,7 @@ c
      >                            *(1.0+RIZB)/CRMB)
 c
                            found = .true.
-                           goto 20  
+                           goto 20
 
                         endif
 c
@@ -5570,57 +5610,57 @@ c
                      endif
 
 c
-c                 Intersection in second half of cell. 
+c                 Intersection in second half of cell.
 c
-                  elseif (d2.le.d5.and.d3.le.d5) then 
+                  elseif (d2.le.d5.and.d3.le.d5) then
 c
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 c
-c                       Intersection in first half cell 
+c                       Intersection in first half cell
 c
-                        if (ik.eq.nks(ir)) then 
+                        if (ik.eq.nks(ir)) then
 
-                           factc = d3/d5 
+                           factc = d3/d5
 
-                           te = ktebs(ik,ir) + factc * 
+                           te = ktebs(ik,ir) + factc *
      >                         (kteds(idds(ir,1))-ktebs(ik,ir))
-                           ti = ktibs(ik,ir) + factc * 
+                           ti = ktibs(ik,ir) + factc *
      >                         (ktids(idds(ir,1))-ktibs(ik,ir))
-                           ne = knbs(ik,ir) + factc * 
+                           ne = knbs(ik,ir) + factc *
      >                         (knds(idds(ir,1))- knbs(ik,ir))
 c
-                           s  = kss(ik,ir) + factc * 
+                           s  = kss(ik,ir) + factc *
      >                         (ksb(ik,ir)-kss(ik,ir))
-                           r  = rs(ik,ir) + factc * 
+                           r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
                            isat = 0.5 * ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
-                           goto 20  
+                           goto 20
 c
 c                       Intersection in any other FIRST half cell
 c
                         else
 c
-                           factc =  d3/d5 
+                           factc =  d3/d5
                            fact  = (d3/d5 * (kpb(ik,ir)-kps(ik,ir))
      >                              +  kps(ik+1,ir)-kpb(ik,ir)) /
      >                               (kps(ik+1,ir)-kps(ik,ir))
 c
-                           te = ktebs(ik,ir) + fact * 
+                           te = ktebs(ik,ir) + fact *
      >                         (ktebs(ik+1,ir)-ktebs(ik,ir))
-                           ti = ktibs(ik,ir) + fact * 
+                           ti = ktibs(ik,ir) + fact *
      >                         (ktibs(ik+1,ir)-ktibs(ik,ir))
-                           ne = knbs(ik,ir) + fact * 
+                           ne = knbs(ik,ir) + fact *
      >                         (knbs(ik+1,ir)-knbs(ik,ir))
 c
-                           s  = kss(ik,ir) + factc * 
+                           s  = kss(ik,ir) + factc *
      >                         (ksb(ik,ir)-kss(ik,ir))
-                           r  = rs(ik,ir) + factc * 
+                           r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
                            isat = 0.5 * ech*ne*
@@ -5628,41 +5668,41 @@ c
      >                            *(1.0+RIZB)/CRMB)
 c
                            found = .true.
-                           goto 20  
+                           goto 20
 c
                         endif
 c
                      endif
 c
-                  endif 
+                  endif
 c
 c              END DO FOR IK
 c
                end do
 c
- 20            if (found) then 
+ 20            if (found) then
 c
-                  if (first) then 
+                  if (first) then
                      write (6,*) 'Table of Reciprocating'//
-     >                      ' Probe diagnostic data: Z= ',zscan            
+     >                      ' Probe diagnostic data: Z= ',zscan
                      write (6,*) '- For Intersection Number = ',
-     >                             zlocnum 
-                     write (6,201) 
+     >                             zlocnum
+                     write (6,201)
 c
-                     if (cprint.ne.1.and.cprint.ne.9) first = .false. 
+                     if (cprint.ne.1.and.cprint.ne.9) first = .false.
 c
                   endif
 c
                   write(6,300) ik,ir,te,ti,ne,isat,s,r
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
-                     if (first) then 
+                     if (first) then
                         call prr('Table of Probe Diagnostic data: Z= ',
      >                           zscan)
                         call pri ('- For Intersection Number = ',
-     >                             zlocnum) 
+     >                             zlocnum)
 c
-                        write (comment,201) 
+                        write (comment,201)
                         call prc(comment)
 c
                         first = .false.
@@ -5672,23 +5712,23 @@ c
                      write(comment,300) ik,ir,te,ti,ne,isat,s,r
                      call prc(comment)
 c
-                  endif 
+                  endif
 c
                endif
 c
-c           End DO for IR  
+c           End DO for IR
 c
-            end do   
+            end do
 c
          end if
 c
 c     Else - for grids without polygon data and all the extra grid
-c     quantities calculated 
-c     
+c     quantities calculated
+c
       else
 c
-c        Scanning for both probes - regular grid 
-c          
+c        Scanning for both probes - regular grid
+c
          if (rscan.ne.-99.0.and.rlocnum.gt.0) then
 c
             first = .true.
@@ -5696,12 +5736,12 @@ c
 c
             do ir = irsep,irwall-1
 c
-               found = .false. 
+               found = .false.
                sectcnt = 0
 c
                do ik = 1,nks(ir)-1
 c
-c                 Various distances 
+c                 Various distances
 c
                   d1 = abs(rscan-rs(ik,ir))
 c
@@ -5709,25 +5749,25 @@ c
 c
                   d3 = abs(rs(ik+1,ir)-rs(ik,ir))
 c
-                  if (d1.le.d3.and.d2.le.d3) then 
+                  if (d1.le.d3.and.d2.le.d3) then
 
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 c
 c                       Found point - calculate values and
 c                       goto next
-c 
-                        te = ktebs(ik,ir) + d1/d3 * 
+c
+                        te = ktebs(ik,ir) + d1/d3 *
      >                      (ktebs(ik+1,ir)-ktebs(ik,ir))
-                        ti = ktibs(ik,ir) + d1/d3 * 
+                        ti = ktibs(ik,ir) + d1/d3 *
      >                      (ktibs(ik+1,ir)-ktibs(ik,ir))
-                        ne = knbs(ik,ir) + d1/d3 * 
+                        ne = knbs(ik,ir) + d1/d3 *
      >                      (knbs(ik+1,ir)-knbs(ik,ir))
-                        s  = kss(ik,ir) + d1/d3 * 
+                        s  = kss(ik,ir) + d1/d3 *
      >                      (kss(ik+1,ir)-kss(ik,ir))
 c
-                        z  = zs(ik,ir) + d1/d3 * 
+                        z  = zs(ik,ir) + d1/d3 *
      >                      (zs(ik+1,ir)-zs(ik,ir))
 c
                         isat = 0.5 * ech*ne*
@@ -5735,7 +5775,7 @@ c
      >                         *(1.0+RIZB)/CRMB)
 c
                         found = .true.
-                        goto 30  
+                        goto 30
 c
                      endif
 
@@ -5745,29 +5785,29 @@ c              END DO FOR IK
 c
                end do
 c
- 30            if (found) then 
+ 30            if (found) then
 c
-                  if (first) then 
+                  if (first) then
                      write (6,*) 'Table of Reciprocating'//
-     >                      ' Probe diagnostic data: R= ',rscan            
+     >                      ' Probe diagnostic data: R= ',rscan
                      write (6,*) '- For Intersection Number = ',
-     >                             rlocnum 
-                     write (6,200) 
+     >                             rlocnum
+                     write (6,200)
 c
-                     if (cprint.ne.1.and.cprint.ne.9) first = .false. 
+                     if (cprint.ne.1.and.cprint.ne.9) first = .false.
 c
                   endif
 c
                   write(6,300) ik,ir,te,ti,ne,isat,s,z
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
-                     if (first) then 
+                     if (first) then
                         call prr('Table of Probe Diagnostic data: R= ',
      >                           rscan)
                         call pri ('- For Intersection Number = ',
-     >                             rlocnum) 
+     >                             rlocnum)
 c
-                        write (comment,200) 
+                        write (comment,200)
                         call prc(comment)
 c
                         first = .false.
@@ -5777,13 +5817,13 @@ c
                      write(comment,300) ik,ir,te,ti,ne,isat,s,z
                      call prc(comment)
 c
-                  endif 
+                  endif
 c
                endif
 c
-c           End DO for IR  
+c           End DO for IR
 c
-            end do   
+            end do
 c
 c        End if for RSCAN.ne.-99.0
 c
@@ -5799,12 +5839,12 @@ c
 c
             do ir = irsep,irwall-1
 c
-               found = .false. 
+               found = .false.
                sectcnt = 0
 c
                do ik = 1,nks(ir)
 c
-c                 Various distances 
+c                 Various distances
 c
                   d1 = abs(zscan-zs(ik,ir))
 c
@@ -5812,25 +5852,25 @@ c
 c
                   d3 = abs(zs(ik+1,ir)-zs(ik,ir))
 c
-                  if (d1.le.d3.and.d2.le.d3) then 
+                  if (d1.le.d3.and.d2.le.d3) then
 
                      sectcnt = sectcnt + 1
 c
-                     if (sectcnt.eq.isection) then 
+                     if (sectcnt.eq.isection) then
 c
 c                       Found point - calculate values and
 c                       goto next
-c 
-                        te = ktebs(ik,ir) + d1/d3 * 
+c
+                        te = ktebs(ik,ir) + d1/d3 *
      >                      (ktebs(ik+1,ir)-ktebs(ik,ir))
-                        ti = ktibs(ik,ir) + d1/d3 * 
+                        ti = ktibs(ik,ir) + d1/d3 *
      >                      (ktibs(ik+1,ir)-ktibs(ik,ir))
-                        ne = knbs(ik,ir) + d1/d3 * 
+                        ne = knbs(ik,ir) + d1/d3 *
      >                      (knbs(ik+1,ir)-knbs(ik,ir))
-                        s  = kss(ik,ir) + d1/d3 * 
+                        s  = kss(ik,ir) + d1/d3 *
      >                      (kss(ik+1,ir)-kss(ik,ir))
 c
-                        r  = rs(ik,ir) + d1/d3 * 
+                        r  = rs(ik,ir) + d1/d3 *
      >                      (rs(ik+1,ir)-rs(ik,ir))
 c
                         isat = 0.5 * ech*ne*
@@ -5838,7 +5878,7 @@ c
      >                         *(1.0+RIZB)/CRMB)
 c
                         found = .true.
-                        goto 40  
+                        goto 40
 c
                      endif
 
@@ -5848,29 +5888,29 @@ c              END DO FOR IK
 c
                end do
 c
- 40            if (found) then 
+ 40            if (found) then
 c
-                  if (first) then 
+                  if (first) then
                      write (6,*) 'Table of Reciprocating'//
-     >                      ' Probe diagnostic data: Z= ',zscan            
+     >                      ' Probe diagnostic data: Z= ',zscan
                      write (6,*) '- For Intersection Number = ',
-     >                             zlocnum 
-                     write (6,201) 
+     >                             zlocnum
+                     write (6,201)
 c
-                     if (cprint.ne.1.and.cprint.ne.9) first = .false. 
+                     if (cprint.ne.1.and.cprint.ne.9) first = .false.
 c
                   endif
 c
                   write(6,300) ik,ir,te,ti,ne,isat,s,r
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
-                     if (first) then 
+                     if (first) then
                         call prr('Table of Probe Diagnostic data: Z= ',
      >                           zscan)
                         call pri ('- For Intersection Number = ',
-     >                             zlocnum) 
+     >                             zlocnum)
 c
-                        write (comment,201) 
+                        write (comment,201)
                         call prc(comment)
 c
                         first = .false.
@@ -5880,11 +5920,11 @@ c
                      write(comment,300) ik,ir,te,ti,ne,isat,s,r
                      call prc(comment)
 c
-                  endif 
+                  endif
 c
                endif
 c
-c           End DO for IR  
+c           End DO for IR
 c
             end do
 c
@@ -5894,7 +5934,7 @@ c
       end if
 c
 c
-c     Format statements 
+c     Format statements
 c
 
 200   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
@@ -5922,12 +5962,12 @@ c
       real    rions(maxizs)
 c
 c     RADPROC: This routine processes the impurity ionization array
-c              trying to determine specific quantities and 
-c              characteristics about where the radiation is 
+c              trying to determine specific quantities and
+c              characteristics about where the radiation is
 c              occuring. These quantities include the volume weighted
-c              average of the local densities within the radiating 
-c              volume. The radiating volume is defined as the volume 
-c              that radiates the top 2/3's of the energy. 
+c              average of the local densities within the radiating
+c              volume. The radiating volume is defined as the volume
+c              that radiates the top 2/3's of the energy.
 c
       integer ik,ir,in,count(0:maxizs+1),top(0:maxizs+1),num,iz,iz2
 c
@@ -5942,7 +5982,7 @@ c
       real neav(0:maxizs+1),nizav(0:maxizs+1),volav(0:maxizs+1)
       real teav(0:maxizs+1),lzav(0:maxizs+1)
       real pradt(0:maxizs+1),ddtmp
-      real frad(0:maxizs+1) 
+      real frad(0:maxizs+1)
       real sdtot(maxnks,maxnrs)
 c
       real radord(maxnks*maxnrs,0:maxizs+1,5)
@@ -5951,45 +5991,45 @@ c
       call rzero(rad,maxnks*maxnrs*(maxizs+2))
       call rzero(sdtot,maxnks*maxnrs)
 c
-c     Get array containg all Radiation and the TOTAL.  
+c     Get array containg all Radiation and the TOTAL.
 c
       do iz = 0,nizs
          do ir = 1,nrs
             do ik = 1,nks(ir)
-               rad(ik,ir,iz) = powls(ik,ir,iz) * kareas(ik,ir)  
+               rad(ik,ir,iz) = powls(ik,ir,iz) * kareas(ik,ir)
                radtot(iz) = radtot(iz) + rad(ik,ir,iz)
                rad(ik,ir,nizs+1) = rad(ik,ir,nizs+1) + rad(ik,ir,iz)
                radtot(nizs+1) = radtot(nizs+1) + rad(ik,ir,iz)
                sdtot(ik,ir) = sdtot(ik,ir) + ddlims(ik,ir,iz)
             end do
          end do
-      end do 
+      end do
 c
-c     Sort/order each ionization state and the total  
+c     Sort/order each ionization state and the total
 c
 c
       do iz = 0,nizs+1
          count(iz) = 0
          do ir = 1,nrs
             do ik = 1,nks(ir)
-               if (rad(ik,ir,iz).gt.0.0) then 
+               if (rad(ik,ir,iz).gt.0.0) then
                   count(iz) = count(iz) + 1
                   radord(count(iz),iz,1) = rad(ik,ir,iz)
                   radord(count(iz),iz,2) = -1
                   radord(count(iz),iz,3) = -1
                   radord(count(iz),iz,4) = ik
                   radord(count(iz),iz,5) = ir
-               endif 
-            end do 
+               endif
+            end do
          end do
       end do
 c
-c     Now have unsorted array - need to sort it. 
+c     Now have unsorted array - need to sort it.
 c
       call sortrad(radord,count,top,nizs)
 c
-c     Now that we have sorted arrays - can take the top 2/3 of the 
-c     total radiated power and calculated avearged densities. 
+c     Now that we have sorted arrays - can take the top 2/3 of the
+c     total radiated power and calculated avearged densities.
 c
       do iz = 0,nizs+1
 c
@@ -6002,9 +6042,9 @@ c
          teav(iz)  = 0.0
          volav(iz) = 0.0
 c
-c         if (count(iz).eq.0) cycle         
+c         if (count(iz).eq.0) cycle
 c
-         if (count(iz).ne.0) then          
+         if (count(iz).ne.0) then
 c
 c         do while(num.ne.-1
 c     >               .and.pradt(iz).lt.0.66*radtot(iz))
@@ -6012,24 +6052,24 @@ c
 c           do 20 while(num.ne.-1
 c     >               .and.pradt(iz).lt.0.66*radtot(iz))
 c
- 30       if (num.eq.-1.or.pradt(iz).ge.0.66*radtot(iz)) goto 20         
+ 30       if (num.eq.-1.or.pradt(iz).ge.0.66*radtot(iz)) goto 20
 c
             pradt(iz) = pradt(iz) + radord(num,iz,1)
 c
-            ik = radord(num,iz,4)                         
-            ir = radord(num,iz,5)                         
+            ik = radord(num,iz,4)
+            ir = radord(num,iz,5)
 c
-            neav(iz) = neav(iz) + radord(num,iz,1) * knbs(ik,ir) 
-            teav(iz) = teav(iz) + radord(num,iz,1) * ktebs(ik,ir) 
+            neav(iz) = neav(iz) + radord(num,iz,1) * knbs(ik,ir)
+            teav(iz) = teav(iz) + radord(num,iz,1) * ktebs(ik,ir)
 c
-            if (iz.eq.nizs+1) then 
+            if (iz.eq.nizs+1) then
 c
-               nizav(iz)= nizav(iz)+radord(num,iz,1)*sdtot(ik,ir) 
+               nizav(iz)= nizav(iz)+radord(num,iz,1)*sdtot(ik,ir)
 c
             else
-               nizav(iz)= nizav(iz)+radord(num,iz,1)*ddlims(ik,ir,iz) 
-            endif 
-c             
+               nizav(iz)= nizav(iz)+radord(num,iz,1)*ddlims(ik,ir,iz)
+            endif
+c
             volav(iz)= volav(iz)+ kareas(ik,ir)
 c
             num = radord(num,iz,2)
@@ -6042,7 +6082,7 @@ c
 c
 c        Calculate averages
 c
-         if (volav(iz).ne.0.0) then 
+         if (volav(iz).ne.0.0) then
             neav(iz) = neav(iz) / pradt(iz)
             nizav(iz)= nizav(iz) / pradt(iz)
             teav(iz) = teav(iz) / pradt(iz)
@@ -6051,10 +6091,10 @@ c
 c           Add checks for conditions that could cause a division by zero
 c
             if (iz.eq.0) then
-               if (cieizs(iz).le.0.0.or.citizs(iz).le.0.0) then 
+               if (cieizs(iz).le.0.0.or.citizs(iz).le.0.0) then
                   frad(iz) = 0.0
                else
-                  frad(iz) = radtot(iz) / 
+                  frad(iz) = radtot(iz) /
      >                    ( fsrate*cieizs(iz)/citizs(iz) *
      >                      neav(iz) * 1.0)
                endif
@@ -6063,9 +6103,9 @@ c
      >             rions(iz).le.0.0.or.nimps.le.0) then
                   frad(iz) = 0.0
                else
-                  frad(iz) = radtot(iz) / 
+                  frad(iz) = radtot(iz) /
      >                    ( qtim*cieizs(iz)/citizs(iz) *
-     >                      neav(iz) * 
+     >                      neav(iz) *
      >                      rions(iz)/float(nimps))
                endif
             else
@@ -6086,41 +6126,41 @@ c
 
       end do
 c
-c     Print out summary of data 
-c     
+c     Print out summary of data
+c
       write (6,*) 'SUMMARY of Radiation Source: LOCAL Conditions'
-      write (6,*) 
-      write (6,1020) 
+      write (6,*)
+      write (6,1020)
 c
       do iz = 0,nizs+1
 c
-         if (iz.eq.nizs+1) then 
+         if (iz.eq.nizs+1) then
             write(6,1010) radtot(iz),pradt(iz),neav(iz),
      >         nizav(iz)*absfac,
      >         nizav(iz),teav(iz),volav(iz),lzav(iz)
-         else 
+         else
             write(6,1000) iz,radtot(iz),pradt(iz),neav(iz),
      >         nizav(iz)*absfac,
      >         nizav(iz),teav(iz),volav(iz),lzav(iz),frad(iz)
          endif
 c
-      end do 
+      end do
 c
       call prc('SUMMARY of Radiation Source: LOCAL Conditions')
       call prb
-      write (coment,1021) 
+      write (coment,1021)
       len = lenstr(coment)
       call prc(coment(1:len))
 c
       do iz = 0,nizs+1
 c
-         if (iz.eq.nizs+1) then 
+         if (iz.eq.nizs+1) then
             write(coment,1011) radtot(iz),pradt(iz),neav(iz),
      >         nizav(iz)*absfac,
      >         nizav(iz),teav(iz),volav(iz),lzav(iz)
             len = lenstr(coment)
             call prc(coment(1:len))
-         else 
+         else
             write(coment,1001) iz,radtot(iz),pradt(iz),neav(iz),
      >         nizav(iz)*absfac,
      >         nizav(iz),teav(iz),volav(iz),lzav(iz),frad(iz)
@@ -6128,15 +6168,15 @@ c
             call prc(coment(1:len))
          endif
 c
-      end do 
+      end do
 c
 c     Write ALL ionization states data to output file
-c      
+c
       call prb
       iz = nizs+1
       call prc('TOTAL Radiation Source: Local Conditions')
       call prr('   Total Radiation         : ',radtot(iz))
-      call prr('   Radiation Cutoff        : ',pradt(iz))  
+      call prr('   Radiation Cutoff        : ',pradt(iz))
       call prr('   Average Ne              : ',neav(iz))
       call prr('   Average Ni (All states) : ',nizav(iz)*absfac)
       call prr('   Raw     Ni (All states) : ',nizav(iz))
@@ -6148,37 +6188,37 @@ c
  1020 format (5x,'Ion State',5x,'Total Rad',4x,'Cutoff Rad',
      >             9x,'Ne AV',8x,'Niz AV',7x,'Niz Raw',7x,'Te AV',
      >             7x,'Volume',7x,'Lz EST',6x,'Frad')
- 1010 format (8x,'ALL',3x,8(g13.5)) 
- 1000 format (7x,i4,3x,9(g13.5)) 
+ 1010 format (8x,'ALL',3x,8(g13.5))
+ 1000 format (7x,i4,3x,9(g13.5))
 c
  1021 format ('Ion',1x,'Tot Rad',1x,'Cut Rad',
      >             3x,'Ne AV',2x,'Niz AV',1x,'Niz Raw',3x,'Te AV',
      >             2x,'Volume',2x,'Lz EST',4x,'Frad')
- 1011 format ('ALL',9(1x,1p,g7.1)) 
- 1001 format (i3,9(1x,1p,g7.1)) 
+ 1011 format ('ALL',9(1x,1p,g7.1))
+ 1001 format (i3,9(1x,1p,g7.1))
 c
       return
-      end  
+      end
 c
 c
 c
       subroutine prleakage
       implicit none
       include 'params'
-      include 'cgeom' 
+      include 'cgeom'
       include 'comtor'
       include 'printopt'
 c
 c     PRLEAKAGE: The purpose of this subroutine is to print out
 c                an analysis of the core leakage data. The code
 c                now tracks the source type of the particle by
-c                wall or target element index, ring in which 
+c                wall or target element index, ring in which
 c                the particle is ionized, and whether the particle
 c                was produced by physical or chemical sputtering.
 c
 c                This code sums up over this data - producing both
-c                element by element output and a summary of 
-c                leakage by wall and target segment.    
+c                element by element output and a summary of
+c                leakage by wall and target segment.
 c
 c
 c        Local Variables
@@ -6191,7 +6231,7 @@ c         real targleak(3,4)
 c         real wallsrc(5,3)
 c         real wallleak(5,3)
 c
-         real totsrc,totleak 
+         real totsrc,totleak
 c
          integer id,ir,in,itmp
 c
@@ -6205,21 +6245,21 @@ c
 c
 c        Print out target sources
 c
-         if (cprint.eq.2.or.cprint.eq.9) then 
+         if (cprint.eq.2.or.cprint.eq.9) then
 c
             call prc('SUMMARY OF RING OF IONIZATION FROM'//
      >            ' EACH TARGET ELEMENT:')
             call prc('- ELEMENTS WITH ZERO PRODUCTION ARE'//
      >                 ' NOT LISTED')
             call prb
-c        
-         endif  
+c
+         endif
 c
          do id = 1,nds
 c
-            totsource(1) = 0.0  
-            totsource(2) = 0.0  
-            totsource(3) = 0.0  
+            totsource(1) = 0.0
+            totsource(2) = 0.0
+            totsource(3) = 0.0
 c
             totsleak(1) = 0.0
             totsleak(2) = 0.0
@@ -6231,36 +6271,36 @@ c
 c
 c                 Total ionization and leakage
 c
-                  totsource(in)= totsource(in)+wtsource(id,ir,1,in) 
-                  totsleak(in) = totsleak(in) +wtsource(id,ir,3,in) 
+                  totsource(in)= totsource(in)+wtsource(id,ir,1,in)
+                  totsleak(in) = totsleak(in) +wtsource(id,ir,3,in)
 c
 c                 Average S for ionized particles
 c
-                  if (wtsource(id,ir,1,in).gt.0.0) then 
+                  if (wtsource(id,ir,1,in).gt.0.0) then
                      wtsource(id,ir,2,in) = wtsource(id,ir,2,in)
-     >                             / wtsource(id,ir,1,in) 
-                  else 
+     >                             / wtsource(id,ir,1,in)
+                  else
                      wtsource(id,ir,2,in) = 0.0
-                  endif                
+                  endif
 c
 c                 Average starting S for core leaked particles
 c
-                  if (wtsource(id,ir,3,in).gt.0.0) then 
+                  if (wtsource(id,ir,3,in).gt.0.0) then
                      wtsource(id,ir,4,in) = wtsource(id,ir,4,in)
-     >                             / wtsource(id,ir,3,in) 
-                  else 
+     >                             / wtsource(id,ir,3,in)
+                  else
                      wtsource(id,ir,4,in) = 0.0
-                  endif                
+                  endif
 c
 c                 Collect data for summaries
 c
-                  if (id.le.ndsin) then 
-                     targsrc(1,in)=targsrc(1,in)+wtsource(id,ir,1,in) 
-                     targleak(1,in)=targleak(1,in)+wtsource(id,ir,3,in) 
+                  if (id.le.ndsin) then
+                     targsrc(1,in)=targsrc(1,in)+wtsource(id,ir,1,in)
+                     targleak(1,in)=targleak(1,in)+wtsource(id,ir,3,in)
                   else
-                     targsrc(2,in)=targsrc(2,in)+wtsource(id,ir,1,in) 
-                     targleak(2,in)=targleak(2,in)+wtsource(id,ir,3,in) 
-                  endif 
+                     targsrc(2,in)=targsrc(2,in)+wtsource(id,ir,1,in)
+                     targleak(2,in)=targleak(2,in)+wtsource(id,ir,3,in)
+                  endif
 c
                end do
 c
@@ -6268,31 +6308,31 @@ c
 c
 c           Print Target souce element by element
 c
-            if (cprint.eq.2.or.cprint.eq.9) then 
+            if (cprint.eq.2.or.cprint.eq.9) then
 c
 c              Total Source
 c
                if (totsource(1).gt.0.0.or.totsource(2).gt.0.0
-     >             .or.totsource(3).gt.0.0) then            
+     >             .or.totsource(3).gt.0.0) then
 
                   call prb
                   write (comment,9050) id,irds(id),rp(id),zp(id)
                   call prc(comment)
 
-                  write (comment,9052)  
+                  write (comment,9052)
      >               totsource(1)+totsource(2)+totsource(3),
      >               totsleak(1)+totsleak(2)+totsleak(3),
      >               (totsleak(1)+totsleak(2)+totsleak(3))/
      >               (totsource(1)+totsource(2)+totsource(3))
                   call prc(comment)
 
-               endif 
+               endif
 c
 c              Physical Sputter Source
 c
                in = 1
 c
-               if (totsource(in).gt.0.0) then            
+               if (totsource(in).gt.0.0) then
 
                   write (comment,9053)
      >               totsource(in),totsleak(in),
@@ -6301,7 +6341,7 @@ c
 c
                   do ir = 1,nrs
 c
-                     if (wtsource(id,ir,1,in).gt.0.0) then 
+                     if (wtsource(id,ir,1,in).gt.0.0) then
 
                        write (comment,9057) ir,wtsource(id,ir,1,in),
      >                    wtsource(id,ir,2,in),wtsource(id,ir,3,in),
@@ -6309,8 +6349,8 @@ c
                         call prc(comment)
 
                      endif
-c  
-                  enddo 
+c
+                  enddo
 c
                endif
 c
@@ -6318,7 +6358,7 @@ c              Chemical Sputter Source
 c
                in = 2
 c
-               if (totsource(in).gt.0.0) then            
+               if (totsource(in).gt.0.0) then
 
                   write (comment,9054)
      >               totsource(in),totsleak(in),
@@ -6327,7 +6367,7 @@ c
 c
                   do ir = 1,nrs
 c
-                     if (wtsource(id,ir,1,in).gt.0.0) then 
+                     if (wtsource(id,ir,1,in).gt.0.0) then
 
                        write (comment,9057) ir,wtsource(id,ir,1,in),
      >                    wtsource(id,ir,2,in),wtsource(id,ir,3,in),
@@ -6335,8 +6375,8 @@ c
                         call prc(comment)
 
                      endif
-c  
-                  enddo 
+c
+                  enddo
 c
                endif
 c
@@ -6345,7 +6385,7 @@ c              Self-Sputter Source
 c
                in = 3
 c
-               if (totsource(in).gt.0.0) then            
+               if (totsource(in).gt.0.0) then
 
                   write (comment,9058)
      >               totsource(in),totsleak(in),
@@ -6354,7 +6394,7 @@ c
 c
                   do ir = 1,nrs
 c
-                     if (wtsource(id,ir,1,in).gt.0.0) then 
+                     if (wtsource(id,ir,1,in).gt.0.0) then
 
                        write (comment,9057) ir,wtsource(id,ir,1,in),
      >                    wtsource(id,ir,2,in),wtsource(id,ir,3,in),
@@ -6362,8 +6402,8 @@ c
                        call prc(comment)
 
                      endif
-c  
-                  enddo 
+c
+                  enddo
 c
                endif
 c
@@ -6371,26 +6411,26 @@ c           End of Print option
 c
             endif
 c
-         enddo 
+         enddo
 
 
-         if (cprint.eq.2.or.cprint.eq.9) then 
+         if (cprint.eq.2.or.cprint.eq.9) then
 c
 c           Print OUT WALL sources
 c
-            call prb      
+            call prb
             call prc('SUMMARY OF RING OF IONIZATION FROM'//
      >            ' EACH WALL ELEMENT:')
             call prc('- ELEMENTS WITH ZERO PRODUCTION ARE'//
      >                 ' NOT LISTED')
-            call prb 
+            call prb
 c
-         endif 
+         endif
 c
          do id = 1,wallpts
 c
-            totsource(4) = 0.0  
-            totsource(5) = 0.0  
+            totsource(4) = 0.0
+            totsource(5) = 0.0
 c
             totsleak(4) = 0.0
             totsleak(5) = 0.0
@@ -6401,63 +6441,63 @@ c
 c
 c                 Total ionization and leakage
 c
-                  totsource(in)= totsource(in)+wtsource(id,ir,1,in) 
-                  totsleak(in) = totsleak(in) +wtsource(id,ir,3,in) 
+                  totsource(in)= totsource(in)+wtsource(id,ir,1,in)
+                  totsleak(in) = totsleak(in) +wtsource(id,ir,3,in)
 c
 c                 Average S for ionized particles
 c
-                  if (wtsource(id,ir,1,in).gt.0.0) then 
+                  if (wtsource(id,ir,1,in).gt.0.0) then
                      wtsource(id,ir,2,in) = wtsource(id,ir,2,in)
-     >                             / wtsource(id,ir,1,in) 
-                  else 
+     >                             / wtsource(id,ir,1,in)
+                  else
                      wtsource(id,ir,2,in) = 0.0
-                  endif                
+                  endif
 c
 c                 Average starting S for core leaked particles
 c
-                  if (wtsource(id,ir,3,in).gt.0.0) then 
+                  if (wtsource(id,ir,3,in).gt.0.0) then
                      wtsource(id,ir,4,in) = wtsource(id,ir,4,in)
-     >                             / wtsource(id,ir,3,in) 
-                  else 
+     >                             / wtsource(id,ir,3,in)
+                  else
                      wtsource(id,ir,4,in) = 0.0
-                  endif                
+                  endif
 c
-c                 Collect Summary information 
+c                 Collect Summary information
 c
 c                 1 = Inner target
 c                 4 = Outer target
 c                 2,3,5,6,7 = Main wall
 c                 8 = PP Wall
-c   
+c
 c
                   itmp = in -3
 c
 c                 Inner target
 c
-                  if (wallpt(id,16).eq.4) then 
+                  if (wallpt(id,16).eq.4) then
 c
                      wallsrc(1,itmp)=wallsrc(1,itmp)
-     >                              +wtsource(id,ir,1,in) 
+     >                              +wtsource(id,ir,1,in)
                      wallleak(1,itmp)=wallleak(1,itmp)
-     >                               +wtsource(id,ir,3,in) 
+     >                               +wtsource(id,ir,3,in)
 c
 c                 Outer Target
 c
-                  elseif (wallpt(id,16).eq.1) then 
+                  elseif (wallpt(id,16).eq.1) then
 c
                      wallsrc(2,itmp)=wallsrc(2,itmp)
-     >                              +wtsource(id,ir,1,in) 
+     >                              +wtsource(id,ir,1,in)
                      wallleak(2,itmp)=wallleak(2,itmp)
-     >                               +wtsource(id,ir,3,in) 
+     >                               +wtsource(id,ir,3,in)
 c
-c                 PP Wall 
+c                 PP Wall
 c
-                  elseif (wallpt(id,16).eq.8) then 
+                  elseif (wallpt(id,16).eq.8) then
 c
                      wallsrc(3,itmp)=wallsrc(3,itmp)
-     >                              +wtsource(id,ir,1,in) 
+     >                              +wtsource(id,ir,1,in)
                      wallleak(3,itmp)=wallleak(3,itmp)
-     >                               +wtsource(id,ir,3,in) 
+     >                               +wtsource(id,ir,3,in)
 c
 c                 Main Wall
 c
@@ -6465,12 +6505,12 @@ c
      >                    wallpt(id,16).eq.3.or.
      >                    wallpt(id,16).eq.5.or.
      >                    wallpt(id,16).eq.6.or.
-     >                    wallpt(id,16).eq.7) then 
+     >                    wallpt(id,16).eq.7) then
 c
                      wallsrc(4,itmp)=wallsrc(4,itmp)
-     >                              +wtsource(id,ir,1,in) 
+     >                              +wtsource(id,ir,1,in)
                      wallleak(4,itmp)=wallleak(4,itmp)
-     >                               +wtsource(id,ir,3,in) 
+     >                               +wtsource(id,ir,3,in)
 c
                   endif
 c
@@ -6479,16 +6519,16 @@ c
             end do
 c
 
-            if (cprint.eq.2.or.cprint.eq.9) then  
+            if (cprint.eq.2.or.cprint.eq.9) then
 c
 c              Total Source
 c
-               if (totsource(4).gt.0.0.or.totsource(5).gt.0.0) then            
+               if (totsource(4).gt.0.0.or.totsource(5).gt.0.0) then
 c
                   call prb
 c
-                  if (wallpt(id,18).le.0.0) then 
-c              
+                  if (wallpt(id,18).le.0.0) then
+c
                      write (comment,9051) id,wallpt(id,1),wallpt(id,2)
                      call prc(comment)
 c
@@ -6498,22 +6538,22 @@ c
      >                                 int(wallpt(id,18))
                      call prc(comment)
 c
-                  endif 
+                  endif
 c
-                  write (comment,9053)  
+                  write (comment,9053)
      >               totsource(4)+totsource(5),
      >               totsleak(4)+totsleak(5),
      >               (totsleak(4)+totsleak(5))/
      >               (totsource(4)+totsource(5))
                   call prc(comment)
- 
-               endif 
+
+               endif
 c
 c              Physical Sputter Source
-c 
+c
                in = 4
-c 
-               if (totsource(in).gt.0.0) then            
+c
+               if (totsource(in).gt.0.0) then
 
                   write (comment,9053)
      >               totsource(in),totsleak(in),
@@ -6522,7 +6562,7 @@ c
 c
                   do ir = 1,nrs
 c
-                     if (wtsource(id,ir,1,in).gt.0.0) then 
+                     if (wtsource(id,ir,1,in).gt.0.0) then
 
                        write (comment,9057) ir,wtsource(id,ir,1,in),
      >                    wtsource(id,ir,2,in),wtsource(id,ir,3,in),
@@ -6530,8 +6570,8 @@ c
                        call prc(comment)
 
                      endif
-c  
-                  enddo 
+c
+                  enddo
 c
                endif
 c
@@ -6539,7 +6579,7 @@ c              Chemical Sputter Source
 c
                in = 5
 c
-               if (totsource(in).gt.0.0) then            
+               if (totsource(in).gt.0.0) then
 
                   write (comment,9054)
      >               totsource(in),totsleak(in),
@@ -6548,7 +6588,7 @@ c
 c
                   do ir = 1,nrs
 c
-                     if (wtsource(id,ir,1,in).gt.0.0) then 
+                     if (wtsource(id,ir,1,in).gt.0.0) then
 
                        write (comment,9057) ir,wtsource(id,ir,1,in),
      >                    wtsource(id,ir,2,in),wtsource(id,ir,3,in),
@@ -6556,8 +6596,8 @@ c
                        call prc(comment)
 
                      endif
-c  
-                  enddo 
+c
+                  enddo
 c
                endif
 c
@@ -6565,13 +6605,13 @@ c          End of Print Option
 c
            endif
 c
-        end do 
+        end do
 c
 c
-c       Calculate and Print Leakage Summaries - 
+c       Calculate and Print Leakage Summaries -
 c
 c       targsrc(x,y)  ->  x = 1 = inner target
-c                         x = 2 = outer target   
+c                         x = 2 = outer target
 c                         x = 3 = totals over x
 c
 c                         y = 1 = physical
@@ -6580,16 +6620,16 @@ c                         y = 3 = self
 c                         y = 4 = totals over y
 c
 c       wallsrc(x,y)  ->  x = 1 = inner target
-c                         x = 2 = outer target 
+c                         x = 2 = outer target
 c                         x = 3 = pp wall
 c                         x = 4 = main wall
 c                         x = 5 = totals over x
 c
 c                         y = 1 = physical
 c                         y = 2 = chemical
-c                         y = 3 = totals over y 
+c                         y = 3 = totals over y
 c
-c 
+c
 c       Sum over x
 c
         do in = 1,3
@@ -6602,21 +6642,21 @@ c
 c       Sum over y
 c
         do in = 1,2
-c           
+c
            targsrc(in,4) = targsrc(in,1)+targsrc(in,2)
      >                    +targsrc(in,3)
            targleak(in,4) = targleak(in,1)+targleak(in,2)
      >                     +targleak(in,3)
 c
            wallsrc(5,in) = wallsrc(1,in) + wallsrc(2,in)+
-     >                     wallsrc(3,in) + wallsrc(4,in)           
+     >                     wallsrc(3,in) + wallsrc(4,in)
            wallleak(5,in) = wallleak(1,in) + wallleak(2,in)+
-     >                      wallleak(3,in) + wallleak(4,in)           
+     >                      wallleak(3,in) + wallleak(4,in)
 c
         end do
 c
-        targsrc(3,4) = targsrc(3,1)+targsrc(3,2)+targsrc(3,3) 
-        targleak(3,4)= targleak(3,1)+targleak(3,2)+targleak(3,3) 
+        targsrc(3,4) = targsrc(3,1)+targsrc(3,2)+targsrc(3,3)
+        targleak(3,4)= targleak(3,1)+targleak(3,2)+targleak(3,3)
 c
         do in = 1,4
 c
@@ -6631,22 +6671,22 @@ c
         totsrc = targsrc(3,4) + wallsrc(5,3)
         totleak = targleak(3,4) + wallleak(5,3)
 c
-c 
-c       Only print out if there is actually some core leakage. 
 c
-        if (totsrc.gt.0.0.and.totleak.gt.0.0) then 
+c       Only print out if there is actually some core leakage.
+c
+        if (totsrc.gt.0.0.and.totleak.gt.0.0) then
 c
            call prb
            call prc('SUMMARY OF LEAKAGE DATA:')
            call prb
 c
-c           if (zxp.lt.z0) then 
+c           if (zxp.lt.z0) then
 c              call prc('********************************')
 c              call prc('        WARNING!!!              ')
 c              call prc(' Meaning of Inner/Outer MUST be ')
 c              call prc(' reversed for X-point down grids')
 c              call prc('********************************')
-c           endif              
+c           endif
 c
            call prb
            write(comment,'(a,e12.3)')
@@ -6668,7 +6708,7 @@ c
 c
 c          Target Source Leakage
 c
-           if (targsrc(3,4).gt.0.0) then 
+           if (targsrc(3,4).gt.0.0) then
               call prb
               call prc (' Source due to target ION flux:')
               call prb
@@ -6676,94 +6716,94 @@ c
               call prc(comment)
            endif
 c
-c          Inner Target 
+c          Inner Target
 c
-           if (targsrc(1,4).gt.0.0) then 
+           if (targsrc(1,4).gt.0.0) then
 c
-c             Inner Target - total 
+c             Inner Target - total
 c
               write(comment,9060) inner,targsrc(1,4),targleak(1,4),
-     >            targsrc(1,4)/totsrc,targleak(1,4)/totleak             
+     >            targsrc(1,4)/totsrc,targleak(1,4)/totleak
               call prc(comment)
 c
-c             Inner Target - Physical 
+c             Inner Target - Physical
 c
               write(comment,9064) targsrc(1,1),targleak(1,1),
-     >            targsrc(1,1)/totsrc,targleak(1,1)/totleak             
+     >            targsrc(1,1)/totsrc,targleak(1,1)/totleak
               call prc(comment)
 c
 c             Inner Target - Chemical
 c
               write(comment,9065) targsrc(1,2),targleak(1,2),
-     >            targsrc(1,2)/totsrc,targleak(1,2)/totleak             
+     >            targsrc(1,2)/totsrc,targleak(1,2)/totleak
               call prc(comment)
-c        
+c
 c             Inner Target - Self
 c
               write(comment,9068) targsrc(1,3),targleak(1,3),
-     >            targsrc(1,3)/totsrc,targleak(1,3)/totleak             
+     >            targsrc(1,3)/totsrc,targleak(1,3)/totleak
               call prc(comment)
-c        
-           endif  
 c
-c          Outer Target 
+           endif
 c
-           if (targsrc(2,4).gt.0.0) then 
+c          Outer Target
 c
-c             Outer Target - total 
+           if (targsrc(2,4).gt.0.0) then
+c
+c             Outer Target - total
 c
               write(comment,9060) outer,targsrc(2,4),targleak(2,4),
-     >            targsrc(2,4)/totsrc,targleak(2,4)/totleak             
+     >            targsrc(2,4)/totsrc,targleak(2,4)/totleak
               call prc(comment)
 c
-c             Outer Target - Physical 
+c             Outer Target - Physical
 c
               write(comment,9064) targsrc(2,1),targleak(2,1),
-     >            targsrc(2,1)/totsrc,targleak(2,1)/totleak             
+     >            targsrc(2,1)/totsrc,targleak(2,1)/totleak
               call prc(comment)
 c
 c             Outer Target - Chemical
 c
               write(comment,9065) targsrc(2,2),targleak(2,2),
-     >            targsrc(2,2)/totsrc,targleak(2,2)/totleak             
+     >            targsrc(2,2)/totsrc,targleak(2,2)/totleak
               call prc(comment)
-c        
+c
 c             Outer Target - Self
 c
               write(comment,9068) targsrc(2,3),targleak(2,3),
-     >            targsrc(2,3)/totsrc,targleak(2,3)/totleak             
+     >            targsrc(2,3)/totsrc,targleak(2,3)/totleak
               call prc(comment)
-c        
-           endif  
+c
+           endif
 c
 c          Totals
 c
-           if (targsrc(3,4).gt.0.0) then 
+           if (targsrc(3,4).gt.0.0) then
 c
-c             Target Total 
+c             Target Total
 c
               write(comment,9066) targsrc(3,4),targleak(3,4),
-     >            targsrc(3,4)/totsrc,targleak(3,4)/totleak             
+     >            targsrc(3,4)/totsrc,targleak(3,4)/totleak
               call prc(comment)
 c
-c             Target - Physical 
+c             Target - Physical
 c
               write(comment,9064) targsrc(3,1),targleak(3,1),
-     >            targsrc(3,1)/totsrc,targleak(3,1)/totleak             
+     >            targsrc(3,1)/totsrc,targleak(3,1)/totleak
               call prc(comment)
 c
 c             Target - Chemical
 c
               write(comment,9065) targsrc(3,2),targleak(3,2),
-     >            targsrc(3,2)/totsrc,targleak(3,2)/totleak             
+     >            targsrc(3,2)/totsrc,targleak(3,2)/totleak
               call prc(comment)
-c        
+c
 c             Target - Self
 c
               write(comment,9068) targsrc(3,3),targleak(3,3),
-     >            targsrc(3,3)/totsrc,targleak(3,3)/totleak             
+     >            targsrc(3,3)/totsrc,targleak(3,3)/totleak
               call prc(comment)
-c        
+c
           endif
 c
 c--------------------------------------------------------------
@@ -6771,8 +6811,8 @@ c
 c
 c          Wall Source leakage
 c
-           if (wallsrc(5,3).gt.0.0) then 
-              call prb 
+           if (wallsrc(5,3).gt.0.0) then
+              call prb
               call prc (' Source due to wall and target ATOM flux:')
               call prb
               write(comment,9070)
@@ -6781,141 +6821,141 @@ c
 c
 c          Inner Target
 c
-           if (wallsrc(1,3).gt.0.0) then 
+           if (wallsrc(1,3).gt.0.0) then
 c
-c             Inner Target - total 
+c             Inner Target - total
 c
               write(comment,9060) inner,wallsrc(1,3),wallleak(1,3),
-     >            wallsrc(1,3)/totsrc,wallleak(1,3)/totleak             
+     >            wallsrc(1,3)/totsrc,wallleak(1,3)/totleak
               call prc(comment)
 c
-c             Inner Target - Physical 
+c             Inner Target - Physical
 c
               write(comment,9064) wallsrc(1,1),wallleak(1,1),
-     >            wallsrc(1,1)/totsrc,wallleak(1,1)/totleak             
+     >            wallsrc(1,1)/totsrc,wallleak(1,1)/totleak
               call prc(comment)
 c
 c             Inner Target - Chemical
 c
               write(comment,9065) wallsrc(1,2),wallleak(1,2),
-     >            wallsrc(1,2)/totsrc,wallleak(1,2)/totleak             
+     >            wallsrc(1,2)/totsrc,wallleak(1,2)/totleak
               call prc(comment)
-c        
-           endif  
+c
+           endif
 c
 c          Outer Target
 c
-           if (wallsrc(2,3).gt.0.0) then 
+           if (wallsrc(2,3).gt.0.0) then
 c
-c             Outer Target - total 
+c             Outer Target - total
 c
               write(comment,9060) outer,wallsrc(2,3),wallleak(2,3),
-     >            wallsrc(2,3)/totsrc,wallleak(2,3)/totleak             
+     >            wallsrc(2,3)/totsrc,wallleak(2,3)/totleak
               call prc(comment)
 c
-c             Outer Target - Physical 
+c             Outer Target - Physical
 c
               write(comment,9064) wallsrc(2,1),wallleak(2,1),
-     >            wallsrc(2,1)/totsrc,wallleak(2,1)/totleak             
+     >            wallsrc(2,1)/totsrc,wallleak(2,1)/totleak
               call prc(comment)
 c
 c             Outer Target - Chemical
 c
               write(comment,9065) wallsrc(2,2),wallleak(2,2),
-     >            wallsrc(2,2)/totsrc,wallleak(2,2)/totleak             
+     >            wallsrc(2,2)/totsrc,wallleak(2,2)/totleak
               call prc(comment)
-c        
-           endif  
+c
+           endif
 c
 c          PP Wall
 c
-           if (wallsrc(3,3).gt.0.0) then 
+           if (wallsrc(3,3).gt.0.0) then
 c
 c             PP Wall - Total
 c
               write(comment,9062) wallsrc(3,3),wallleak(3,3),
-     >            wallsrc(3,3)/totsrc,wallleak(3,3)/totleak             
+     >            wallsrc(3,3)/totsrc,wallleak(3,3)/totleak
               call prc(comment)
 c
-c             PP Wall - Physical 
+c             PP Wall - Physical
 c
               write(comment,9064) wallsrc(3,1),wallleak(3,1),
-     >            wallsrc(3,1)/totsrc,wallleak(3,1)/totleak             
+     >            wallsrc(3,1)/totsrc,wallleak(3,1)/totleak
               call prc(comment)
 c
 c             PP Wall - Chemical
 c
               write(comment,9065) wallsrc(3,2),wallleak(3,2),
-     >            wallsrc(3,2)/totsrc,wallleak(3,2)/totleak             
+     >            wallsrc(3,2)/totsrc,wallleak(3,2)/totleak
               call prc(comment)
-c        
-           endif  
+c
+           endif
 c
 c          Main Wall
 c
-           if (wallsrc(4,3).gt.0.0) then 
+           if (wallsrc(4,3).gt.0.0) then
 c
 c             Main Wall - Total
 c
               write(comment,9063) wallsrc(4,3),wallleak(4,3),
-     >            wallsrc(4,3)/totsrc,wallleak(4,3)/totleak             
+     >            wallsrc(4,3)/totsrc,wallleak(4,3)/totleak
               call prc(comment)
 c
-c             Main Wall - Physical 
+c             Main Wall - Physical
 c
               write(comment,9064) wallsrc(4,1),wallleak(4,1),
-     >            wallsrc(4,1)/totsrc,wallleak(4,1)/totleak             
+     >            wallsrc(4,1)/totsrc,wallleak(4,1)/totleak
               call prc(comment)
 c
 c             Main Wall - Chemical
 c
               write(comment,9065) wallsrc(4,2),wallleak(4,2),
-     >            wallsrc(4,2)/totsrc,wallleak(4,2)/totleak             
+     >            wallsrc(4,2)/totsrc,wallleak(4,2)/totleak
               call prc(comment)
-c        
-           endif  
+c
+           endif
 c
 c          Totals
 c
-           if (wallsrc(5,3).gt.0.0) then 
+           if (wallsrc(5,3).gt.0.0) then
 c
-c             Wall Total 
+c             Wall Total
 c
               write(comment,9067) wallsrc(5,3),wallleak(5,3),
-     >            wallsrc(5,3)/totsrc,wallleak(5,3)/totleak             
+     >            wallsrc(5,3)/totsrc,wallleak(5,3)/totleak
               call prc(comment)
 c
-c             Wall - Physical 
+c             Wall - Physical
 c
               write(comment,9064) wallsrc(5,1),wallleak(5,1),
-     >            wallsrc(5,1)/totsrc,wallleak(5,1)/totleak             
+     >            wallsrc(5,1)/totsrc,wallleak(5,1)/totleak
               call prc(comment)
 c
 c             Wall - Chemical
 c
               write(comment,9065) wallsrc(5,2),wallleak(5,2),
-     >            wallsrc(5,2)/totsrc,wallleak(5,2)/totleak             
+     >            wallsrc(5,2)/totsrc,wallleak(5,2)/totleak
               call prc(comment)
-c        
+c
           endif
 c
        else
-c   
+c
           call prc('NO CORE LEAKAGE -'//
      >            ' SOURCE ANALYSIS NOT PRINTED')
 
        endif
 c
-       call prb 
+       call prb
 c
 c
-c     Format statements  
-c            
+c     Format statements
+c
  9050 format('Target-ID:',i4,' Ring:',i4,'  R:',f8.3,'  Z:',f8.3)
  9051 format('Wall-ID:',i4,'  R:',f8.3,'  Z:',f8.3)
  9059 format('Wall-ID:',i4,'  R:',f8.3,'  Z:',f8.3,
      >       4x,'Matching Target-ID:',i4)
-c                 
+c
  9052 format('Totals  -Launched:',f8.3,'  Leak:',f8.3,
      >       '  Prob:',f8.5)
  9053 format('  Phys  -Launched:',f8.3,'  Leak:',f8.3,
@@ -6927,10 +6967,10 @@ c
 c
  9055 format(4x,'Ring',7x,'Number',7x,'Average S',5x,
      >       'Leaked to Core',4x,'Av. S Leak')
- 9056 format(4x,i4,3x,f13.5,4x,f9.3,4x,f9.3,4x,f9.3)  
+ 9056 format(4x,i4,3x,f13.5,4x,f9.3,4x,f9.3,4x,f9.3)
 c
  9057 format('    Ring:',i4,'  Num:',f8.3,'  S:',f8.3,
-     > '  Leak:',f8.3,'  Av S:',f8.3)  
+     > '  Leak:',f8.3,'  Av S:',f8.3)
 c
 c IPP/08 Krieger - changed format statements
  9060 format(' ',a5,' TARGET:',2(1x,g12.3),2(1x,g12.3))
@@ -6958,7 +6998,7 @@ c
 c     End of PRLEAKAGE
 c
       return
-      end 
+      end
 c
 c
 c
@@ -6972,8 +7012,8 @@ c     Common blocks
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'  
-      include 'promptdep' 
+      include 'comtor'
+      include 'promptdep'
 c
 c     PROMPTDEP: This routine estimates if the position (R,Z)
 c                of an ion in charge state RIZ is within one
@@ -6983,13 +7023,13 @@ c                the target.
 c
 c     David Elder,    November 1997
 c
-c     Assumptions: 1) The distance to the target is defined by 
+c     Assumptions: 1) The distance to the target is defined by
 c                     the closest target element on the ring
-c                     of ionization. This will break down if 
-c                     the particle is far from the target - 
-c                     however this is not expected to be the 
-c                     case for promptly redeposited ions. 
-c 
+c                     of ionization. This will break down if
+c                     the particle is far from the target -
+c                     however this is not expected to be the
+c                     case for promptly redeposited ions.
+c
 c
 c
 c     Local Variables
@@ -7000,12 +7040,12 @@ c
       real    larmor,b_field
       real    targ_dist,dist_to_point
       external dist_to_point
-      external larmor 
+      external larmor
 c
-c     First check the particle grid position 
-c       
+c     First check the particle grid position
+c
       rc = 0
-      ik_local = ik 
+      ik_local = ik
       ir_local = ir
 c
       call gridpos(ik_local,ir_local,r,z,.false.,griderr)
@@ -7013,7 +7053,7 @@ c
 c     Find nearest target element - assume for now it is closest target
 c     on current ring.
 c
-      if (ik_local.lt.nks(ir_local)/2) then 
+      if (ik_local.lt.nks(ir_local)/2) then
          it = 2
       else
          it = 1
@@ -7021,7 +7061,7 @@ c
 c
 c     Define target index
 c
-      id = idds(ir_local,it) 
+      id = idds(ir_local,it)
 c
 c     Calculate Larmor radius - use toroidal field for now.
 c
@@ -7029,50 +7069,50 @@ c
 c
       larmor_radius = larmor(massi,temi,b_field,riz)
 c
-c     Find distance to target from ionization position to linear 
-c     extension of target element. 
+c     Find distance to target from ionization position to linear
+c     extension of target element.
 c
       targ_dist = dist_to_point(r,z,rp(id),zp(id),thetas(id))
 c
 c     Does Prompt depostion occur?
 c
-c     Use simple initial assumptions - 
+c     Use simple initial assumptions -
 c
 c     1) IF dist_to_point <= MPS then prompt redeposition
 c        at reduced impact energy.
 c     2) IF dist_to_point <= larmor_radius then redeposition
 c        at full energy.
-c       
+c
 c
 c      write(6,*) 'DEBUG PD:',ik,ir,targ_dist,
 c     >           mps_thickness(ir_local,it),larmor_radius,bfield
 c
 c
-      if (targ_dist.le.mps_thickness(ir_local,it)) then         
+      if (targ_dist.le.mps_thickness(ir_local,it)) then
 c
 c        Redeposition due to MPS effect
 c
-         sheath_drop = targ_dist/mps_thickness(ir_local,it) 
+         sheath_drop = targ_dist/mps_thickness(ir_local,it)
      >                     * mps_energy(ir,it)
-     >                     + (3.0-mps_energy(ir_local,it)) 
+     >                     + (3.0-mps_energy(ir_local,it))
 c
 c        set return code - prompt deposition has occurred
-c         
+c
 c
 c        Record prompt deposition
 c
          promptdeps(id,1) = promptdeps(id,1) + sputy
-         promptdeps(id,2) = promptdeps(id,2) + targ_dist*sputy     
-         promptdeps(id,3) = promptdeps(id,3) + larmor_radius*sputy         
+         promptdeps(id,2) = promptdeps(id,2) + targ_dist*sputy
+         promptdeps(id,3) = promptdeps(id,3) + larmor_radius*sputy
          promptdeps(id,4) = promptdeps(id,4) + sheath_drop*sputy
 c
          rc = 1
 c
-      elseif (targ_dist.le.larmor_radius) then         
+      elseif (targ_dist.le.larmor_radius) then
 c
 c        Redeposition due to Larmor Radius effect
 c
-c        Inside Larmor_radius but outside MPS 
+c        Inside Larmor_radius but outside MPS
 c
          sheath_drop = 3.0
 c
@@ -7080,18 +7120,18 @@ c
 c        Record prompt deposition
 c
          promptdeps(id,1) = promptdeps(id,1) + sputy
-         promptdeps(id,2) = promptdeps(id,2) + targ_dist*sputy         
-         promptdeps(id,3) = promptdeps(id,3) + larmor_radius*sputy       
+         promptdeps(id,2) = promptdeps(id,2) + targ_dist*sputy
+         promptdeps(id,3) = promptdeps(id,3) + larmor_radius*sputy
          promptdeps(id,4) = promptdeps(id,4) + sheath_drop*sputy
 c
 c        set return code - prompt deposition has occurred
-c         
+c
          rc = 1
 c
-      endif     
+      endif
 C
       return
-      end 
+      end
 c
 c
 c
@@ -7101,11 +7141,11 @@ c
 c
 c     DIST_TO_POINT:
 c
-c     This routine calculates the perpendicular distance from the 
+c     This routine calculates the perpendicular distance from the
 c     point R,Z to the linear extension of the element specified by
-c     a point on the element and the normal angle THETA to the target surface. 
+c     a point on the element and the normal angle THETA to the target surface.
 c
-c     Theta is defined as the angle normal to each target 
+c     Theta is defined as the angle normal to each target
 c     segment measured from the positive R-axis.
 c
 c     The line of the target is defined by the equation ar+bz=c
@@ -7115,10 +7155,10 @@ c
 c     The perpendicular distance D is equal to the magnitude of the vector
 c     from (r1,z1) to (rp,zp) projected onto the normal to the line.
 c
-c     B = p1 -> pp       D = | B cos (alpha) |  
-c     alpha = angle between B and N (normal to the line) 
+c     B = p1 -> pp       D = | B cos (alpha) |
+c     alpha = angle between B and N (normal to the line)
 c
-c     But B .dot. N =  | B | | N| cos (alpha) 
+c     But B .dot. N =  | B | | N| cos (alpha)
 c
 c     Therefore   D = | B .dot. N|  / |N|
 c
@@ -7126,7 +7166,7 @@ c     B = <rp-r1, zp-z1>   N = <cos(theta),sin(theta)>
 c
 c     D = |cos(theta) * (rp-z1) + sin(theta) * (zp -z1)| / |N|
 c
-c     |N| = 1 
+c     |N| = 1
 c
 c     This is the formula used here in this function.
 c
@@ -7134,7 +7174,7 @@ c
       dist_to_point = abs(cos(theta)*(rp-r1) + sin(theta)*(zp-z1))
 c
       return
-      end 
+      end
 c
 c
 c
@@ -7146,33 +7186,37 @@ c
       real sputy
 c
       include 'params'
-      include 'cgeom' 
+      include 'cgeom'
       include 'comtor'
       include 'dynam3'
 c
 c     UPDATE_WALLDEP:
 c
-c     This routine records the ion impact with the wall segment 
+c     This routine records the ion impact with the wall segment
 c     closest to where the particle left the grid. If ID is not
-c     equal to zero this is treated as a specified target index 
+c     equal to zero this is treated as a specified target index
 c     and is mapped to the equivalent wall index through the
 c     wallindex array. If it is zero - the R,Z of the cell centre
-c     specified by the ik,ir indices is used to find the shortest 
+c     specified by the ik,ir indices is used to find the shortest
 c     distance to the nearest wall segment centre - this is then
-c     used for recording the exit wall segment for the ion. 
-c 
-c     David Elder     Nov 5, 1998 
+c     used for recording the exit wall segment for the ion.
 c
+c     David Elder     Nov 5, 1998
+c
+c     Added a wallsiz array that records the wall impact information in a
+c     charge resolved maner
+c
+c     K. Schmid Feb. 2008 and june 2009
       real best,dsq,r,z
       integer ind,id
-c      
+c
 c     If neither a target nor wall segment has been specified find the wall segment centre
-c     closest to the cell centre of the particle exit. 
+c     closest to the cell centre of the particle exit.
 c
       write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
      >         iwstart,idtype,sputy
 c
-      if (idt.eq.0.and.idw.eq.0) then 
+      if (idt.eq.0.and.idw.eq.0) then
 c
           R = RS(ik,ir)
           Z = ZS(ik,ir)
@@ -7188,85 +7232,98 @@ c
              ENDIF
 650       CONTINUE
 C
-c          WRITE(6,'(a,2i5,5(1x,g13.6))') 
+c          WRITE(6,'(a,2i5,5(1x,g13.6))')
 c     >              'DSQ:',ind,WALLPTS,DSQ,R,Z,ROLD,ZOLD
 C
 
-          if (ind.lt.1.or.ind.gt.wallpts) then 
+          if (ind.lt.1.or.ind.gt.wallpts) then
 
-             write(6,*) 'Wallsi: No wall found:',idt,ind,ik,ir   
+             write(6,*) 'Wallsi: No wall found:',idt,ind,ik,ir
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
-                wtdep(iwstart,maxpts+1,1) = 
+                wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
 
           else
 
              wallsi(ind) = wallsi(ind) + sputy
+             wallsiz(ind, iz) = wallsiz(ind, iz) + sputy
 
-             if (iwstart.ge.1.and.iwstart.le.wallpts) then 
+             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
 
-                wtdep(iwstart,ind,1) = 
+             if (iwstart.ge.1.and.iwstart.le.wallpts) then
+
+                wtdep(iwstart,ind,1) =
      >                    wtdep(iwstart,ind,1) + sputy
              endif
 
           endif
 
 c
-c      Target segment specified 
+c      Target segment specified
 c
-       elseif (idt.gt.0) then 
+       elseif (idt.gt.0) then
 c
-          if (wallindex(idt).ne.0) then 
+          if (wallindex(idt).ne.0) then
 
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
+             wallsiz(wallindex(idt), iz) =
+     >            wallsiz(wallindex(idt), iz) + sputy
+             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
+     >          ' sputy: ', sputy,
+     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
 
-             if (iwstart.ge.1.and.iwstart.le.wallpts) then 
+             if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
-                wtdep(iwstart,wallindex(idt),1) = 
+                wtdep(iwstart,wallindex(idt),1) =
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
              endif
 
-          else 
+          else
 
-             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt) 
+             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
-             if (iwstart.ge.1.and.iwstart.le.wallpts) then 
+             if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
-                wtdep(iwstart,maxpts+1,1) = 
+                wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
 
-          endif 
+          endif
 c
-c      Wall segment specified 
+c      Wall segment specified
 c
-       elseif (idw.ge.1.and.idw.le.wallpts) then 
+       elseif (idw.ge.1.and.idw.le.wallpts) then
 c
              wallsi(idw) = wallsi(idw)+ sputy
+             wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
+         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
 
-             if (iwstart.ge.1.and.iwstart.le.wallpts) then 
+             if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
-                wtdep(iwstart,idw,1) = 
+                wtdep(iwstart,idw,1) =
      >                    wtdep(iwstart,idw,1) + sputy
              endif
 
-       else 
+       else
 
-          write (6,'(a,3i5)') 'Wallsi: wall?:',idw 
+          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+          wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
-          if (iwstart.ge.1.and.iwstart.le.wallpts) then 
+          if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
-             wtdep(iwstart,maxpts+1,1) = 
+             wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
           endif
 
-       endif 
+       endif
 c
 c
 c
@@ -7277,21 +7334,21 @@ c
 c
        integer function verify_id(ik,ir,itarg)
        implicit none
-       integer ik,ir,itarg 
+       integer ik,ir,itarg
 c
        include 'params'
        include 'cgeom'
 c
-c      VERIFY_ID: This routine looks at the target segment 
-c                 associated with the given ik,ir indices and 
-c                 then returns the closest valid target 
+c      VERIFY_ID: This routine looks at the target segment
+c                 associated with the given ik,ir indices and
+c                 then returns the closest valid target
 c                 segment id. The reason for this is to catch
-c                 cases where a particle strikes the wall and 
-c                 target at the same time - it must be assured of 
+c                 cases where a particle strikes the wall and
+c                 target at the same time - it must be assured of
 c                 a relaunch from a valid target index.
 c
 c                 David Elder,     Nov 11, 1998
-c 
+c
 c
        integer id
 c
@@ -7299,19 +7356,19 @@ c
 c
        do while (dds(id).eq.0.0)
 c
-          if (ir.le.irwall) then 
-c       
-             ir = irins(ik,ir) 
+          if (ir.le.irwall) then
+c
+             ir = irins(ik,ir)
              id = idds(ir,itarg)
 
-          else 
+          else
 
-             ir = irouts(ik,ir) 
+             ir = irouts(ik,ir)
              id = idds(ir,itarg)
 
           endif
 c
-       end do        
+       end do
 c
        verify_id = id
 c
@@ -7333,7 +7390,7 @@ c
          KK = 0
       ENDIF
 
- 
+
       return
       end
 c
@@ -7359,12 +7416,12 @@ c
            sdvs (ik,ir,iz)  = sdvs(ik,ir,iz)  + sputy * fvel
            sdvs2(ik,ir,iz)  = sdvs2(ik,ir,iz) + sputy * fvel**2.0
 c
-           if (abs(fvel).gt.sdvb(ik,ir)) then 
+           if (abs(fvel).gt.sdvb(ik,ir)) then
 c
               sdvs3(ik,ir,iz,1) = sdvs3(ik,ir,iz,1) + sputy * abs(fvel)
-              sdvs3(ik,ir,iz,2) = sdvs3(ik,ir,iz,2) + sputy 
+              sdvs3(ik,ir,iz,2) = sdvs3(ik,ir,iz,2) + sputy
 c
-           endif 
+           endif
 c
 c          Split up the velocity distribution and assign it
 c          to an appropriate bin.
@@ -7374,10 +7431,10 @@ c
            if (in.ge.0.and.fvel.ge.0.0) then
               in = in + 1
            endif
-c         
-c          Set knot currently occupied. 
 c
-           if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then  
+c          Set knot currently occupied.
+c
+           if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then
               ikv = ik
            else
               ikv = 1
@@ -7396,7 +7453,7 @@ c
       implicit none
       real    neutim
       real*8  seed
-      integer nrand,nizs 
+      integer nrand,nizs
       include    'params'
       include    'dynam3'
       include    'dynam4'
@@ -7418,7 +7475,7 @@ c
 c
 c     Output velocity along the field line from launch_one
 c
-      real vout 
+      real vout
 
 
       integer ipos
@@ -7458,9 +7515,9 @@ c
 c
 c              IFATE = 5
 c
-c             Record recombination statistics 
+c             Record recombination statistics
 c
-              if (cfolrec.eq.0) then       
+              if (cfolrec.eq.0) then
                  reccnt = reccnt + 1
 c
 c                Set IFATE to 5 for recombined impurity
@@ -7469,11 +7526,11 @@ c
 c
 c                 GOTO 790
 c
-              elseif (cfolrec.eq.1) then 
+              elseif (cfolrec.eq.1) then
 c
 c                Follow recombined impurities
 c
-                 cist_recstart = cist 
+                 cist_recstart = cist
 c
                  ikorg = ik
                  irorg = ir
@@ -7492,29 +7549,29 @@ c               line vout value returned by launch_one
 c
                 vel = vout * qtim
 c
-                 cist_elapsed = cist - cist_recstart                 
-                 dist_travelled = 2.0 * abs(vel) * 
+                 cist_elapsed = cist - cist_recstart
+                 dist_travelled = 2.0 * abs(vel) *
      >                            cist_elapsed * qtim
 c
-                 recinf(1,rc) = recinf(1,rc) + sputy      
+                 recinf(1,rc) = recinf(1,rc) + sputy
                  reccnt = reccnt + 1
-c              
-                 if (reccnt.eq.1) then 
-                    recinf(14,rc) = recinf(14,rc) + sputy
-                    recinf(2,rc) = recinf(2,rc) + cist_elapsed * sputy 
-                    recinf(3,rc) = recinf(3,rc) + dist_travelled* sputy 
-                 endif 
 c
-                 recinf(4,rc) = recinf(4,rc) + cist_elapsed * sputy 
-                 recinf(5,rc) = recinf(5,rc) + dist_travelled * sputy 
-                 recinf(6,rc) = recinf(6,rc) + temi * sputy 
+                 if (reccnt.eq.1) then
+                    recinf(14,rc) = recinf(14,rc) + sputy
+                    recinf(2,rc) = recinf(2,rc) + cist_elapsed * sputy
+                    recinf(3,rc) = recinf(3,rc) + dist_travelled* sputy
+                 endif
+c
+                 recinf(4,rc) = recinf(4,rc) + cist_elapsed * sputy
+                 recinf(5,rc) = recinf(5,rc) + dist_travelled * sputy
+                 recinf(6,rc) = recinf(6,rc) + temi * sputy
                  recinf(7,rc) = recinf(7,rc) + sputy * abs(vrec)
 c
 c                Other quantities
 c
                  recinf(8,rc) = recinf(8,rc) + knbs(ikorg,irorg) * sputy
                  recinf(9,rc) = recinf(9,rc) + knhs(ikorg,irorg) * sputy
-                 recinf(10,rc) = recinf(10,rc) + 
+                 recinf(10,rc) = recinf(10,rc) +
      >                           ktebs(ikorg,irorg) * sputy
                  recinf(11,rc) = recinf(11,rc) + r  * sputy
                  recinf(12,rc) = recinf(12,rc) + z  * sputy
@@ -7529,11 +7586,11 @@ c                For all results other than reionization to state 1 - the code
 c                will stop following the particle at this point and exit
 c                as it would have for the old recombination implementation.
 c
-                 if (rc.ne.5) then 
+                 if (rc.ne.5) then
 c
 c                   Set IFATE to 5 - though it is not lost directly due to recombination
-c                   the particle is removed as part of the recombination process.  
-c 
+c                   the particle is removed as part of the recombination process.
+c
                     ifate = 5
 c
 c                   Exit from this routine
@@ -7545,17 +7602,17 @@ c
 c                   Deal with particle that was re-ionized
 c
                     r = rizpos
-                    z = zizpos 
+                    z = zizpos
                     iz= 1
 c
 c                   Look near last recorded ik,ir
 c
                     call gridpos(ik,ir,r,z,.false.,griderr)
 c
-c                   If a griderr then exit anyway and issue error message 
-c                   since this shouldn't happen. 
-c                 
-                    if (griderr) then 
+c                   If a griderr then exit anyway and issue error message
+c                   since this shouldn't happen.
+c
+                    if (griderr) then
 
                        write (6,*) 'RECOMBINATION ERROR: NOT ON GRID:',r,z
 c
@@ -7568,29 +7625,29 @@ c
                     else
 c
 c                      If on grid - re-assign S-value - to cell centre
-c                      if it left the cell - otherwise leave as is. 
+c                      if it left the cell - otherwise leave as is.
 c
-                       if (ik.ne.ikorg.or.ir.ne.irorg) then 
+                       if (ik.ne.ikorg.or.ir.ne.irorg) then
 c
 c                         Also need to reset the SMAX value for the new ring
 c
-                          smax = ksmaxs(ir) 
+                          smax = ksmaxs(ir)
 c
                           if (init_pos_opt.eq.0) then
                              s = kss(ik,ir)
                              cross = 0.0
                           elseif (init_pos_opt.eq.1) then
-c 
-                             call getscross_approx(r,z,s,cross,ik,ir)
-c 
-                          endif 
 c
-                       endif   
+                             call getscross_approx(r,z,s,cross,ik,ir)
+c
+                          endif
+c
+                       endif
 c
                     endif
 
 
-                 endif 
+                 endif
 c
               endif
 c
@@ -7651,7 +7708,7 @@ C
 C-----------------------------------------------------------------------
 C       ION REMOVAL
 C-----------------------------------------------------------------------
- 
+
         KK = KK + 1
         IF( RANV(KK).LT.KPLOS(IK,IR,IZ) ) THEN
             IFATE = 8
@@ -7770,36 +7827,36 @@ C
 
       return
       end
-c     
-c     
-c     
+c
+c
+c
       subroutine setup_drftv
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor' 
+      include 'comtor'
       include 'driftvel'
       include 'fperiph_com'
-c     
+c
 c     SETUP_DRFTV:
-c     
-c     Setup the drift velocity for each ring 
-c     
+c
+c     Setup the drift velocity for each ring
+c
 c     Local variables
-c     
+c
       real startp,endp
       integer irstart,irend,ir,in,ikmid,ik
       real calc_cs
       external calc_cs
-c     
-c     Iniitalize to zero in all cases - this is all that is 
+c
+c     Iniitalize to zero in all cases - this is all that is
 c     done for option 0
-c     
-      call rzero(pol_drftv,maxnrs) 
-c     
+c
+      call rzero(pol_drftv,maxnrs)
+c
 c     Initialize start and end regions for each ring such that
 c     a drift is not possible unless the values are set correctly
-c     
+c
       do ir = 1,nrs
          sdrft_start(ir) = ksmaxs(ir)
          sdrft_end(ir) = 0.0
@@ -7807,169 +7864,169 @@ c
 
 c
 c      write(0,*) 'CPDRFT=',cpdrft
-c     
+c
 c     Exit this routine if the poloidal drift option is not active
-c     
+c
 
       if (cpdrft.eq.0) return
-      
-c     
-c     
+
+c
+c
 c     Assign the flow velocity if the option is ON
-c     
+c
 c     Note: The following IF can be eliminated though it allows
-c     for different behaviours to be supported in future options. 
-c     
+c     for different behaviours to be supported in future options.
+c
       IF (CPDRFT.EQ.1.or.cpdrft.eq.2.or.cpdrft.eq.3) THEN
-c     
+c
 c     Assign/calculate the drift velocity for each flux tube
-c     
+c
          call get_drftv_rings(irstart,irend)
-c     
+c
 c     If no per ring data is entered assign the default value - old behaviour
-c     Initialize to base value  
-c     
+c     Initialize to base value
+c
 c     The base value may be interpreted as a MACH number if the mach option is
 c     set.
-c     
-c     
-         if (drftvel_machopt.eq.0) then 
-c     
+c
+c
+         if (drftvel_machopt.eq.0) then
+c
             do ir = irstart,irend
                pol_drftv(ir) = CDRFTV * QTIM
             end do
-c     
-         elseif (drftvel_machopt.eq.1.or.drftvel_machopt.eq.2) then 
-c     
-            call rzero(ringcs,maxnrs) 
-c     
+c
+         elseif (drftvel_machopt.eq.1.or.drftvel_machopt.eq.2) then
+c
+            call rzero(ringcs,maxnrs)
+c
 c     Opt 1 : 2 x TE based sound speed
 c     Opt 2 : TE + TI based sound speed
-c     
+c
             do ir = irstart,irend
                ikmid = ikmids(ir)
-               ringcs(ir) = 
+               ringcs(ir) =
      >              (calc_cs(ktebs(ikmid,ir),ktibs(ikmid,ir),crmb,
      >              drftvel_machopt)+
      >              calc_cs(ktebs(ikmid+1,ir),ktibs(ikmid+1,ir),crmb,
      >              drftvel_machopt))
      >              /2.0
-c     
+c
 c     Assign default drift velocity
-c     
+c
                pol_drftv(ir) = CDRFTV * QTIM * ringcs(ir)
-c     
+c
             enddo
-c     
+c
          endif
-c     
+c
 c     Overwrite the default value with per ring information
-c     
-         if (ndrftvel.gt.0) then 
-c     
-c     If the mach number option is ON - calculate the sound speed on 
-c     each ring at the mid-point - averaged over the two cells on 
-c     either side of the midpoint. 
+c
+         if (ndrftvel.gt.0) then
+c
+c     If the mach number option is ON - calculate the sound speed on
+c     each ring at the mid-point - averaged over the two cells on
+c     either side of the midpoint.
 c     For MACH option 1 use 2 x TE,
-c     For MACH option 2 use TE+TI 
-c     
+c     For MACH option 2 use TE+TI
+c
 c     Assign input velocity directly for each ring
-c     
+c
             if (drftvel_machopt.eq.0) then
-c     
+c
 c     Now assign per ring velocities
-c     
-c     Assign per ring data 
-c     
+c
+c     Assign per ring data
+c
                do in = 1,ndrftvel
-                  ir = int(ringdrftvel(in,1)) 
+                  ir = int(ringdrftvel(in,1))
                   pol_drftv(ir) = ringdrftvel(in,2) * qtim
-               enddo 
+               enddo
 
-c     
+c
 c     Opt 1 : 2 x TE based sound speed
 c     Opt 2 : TE + TI based sound speed
-c     
-            elseif (drftvel_machopt.eq.1.or.drftvel_machopt.eq.2) then 
-c     
-c     
+c
+            elseif (drftvel_machopt.eq.1.or.drftvel_machopt.eq.2) then
+c
+c
 c     Now assign detiled per ring velocities
-c     
-               do in = 1,ndrftvel              
+c
+               do in = 1,ndrftvel
 
-                  ir = int(ringdrftvel(in,1)) 
-c     
+                  ir = int(ringdrftvel(in,1))
+c
                   pol_drftv(ir) = ringdrftvel(in,2) * ringcs(ir) * qtim
-c     
-               enddo 
+c
+               enddo
 
-            endif 
+            endif
 
          endif
 
 c
 c         write(0,*) 'Drift Dist Opt=',drft_distopt,
 c     >                 cdrftv_start,cdrftv_end
-c     
+c
 c     Calculate the drift regions for each affected ring in terms of S
-c     
+c
          do ir = irstart,irend
 
-c     
-c     Distance specified as fraction of S parallel   
-c     
-            if (drft_distopt.eq.0) then 
+c
+c     Distance specified as fraction of S parallel
+c
+            if (drft_distopt.eq.0) then
                sdrft_start(ir) = cdrftv_start * ksmaxs(ir)
                sdrft_end(ir)   = cdrftv_end * ksmaxs(ir)
-c     
+c
 c     Distance specified as a fraction of the poloidal distance along the field lines
-c     
-            elseif (drft_distopt.eq.1) then 
+c
+            elseif (drft_distopt.eq.1) then
 
                startp = kpmaxs(ir) * cdrftv_start
                endp   = kpmaxs(ir) * cdrftv_end
 
-               do ik = 1,nks(ir) 
+               do ik = 1,nks(ir)
                                 ! found startp bin
                   if ((kpb(ik-1,ir).le.startp).and.
-     >                 (kpb(ik,ir).ge.startp)) then 
-c     
-                     sdrft_start(ir) = ksb(ik-1,ir) + 
+     >                 (kpb(ik,ir).ge.startp)) then
+c
+                     sdrft_start(ir) = ksb(ik-1,ir) +
      >                    (ksb(ik,ir)-ksb(ik-1,ir)) *
      >                    (startp-kpb(ik-1,ir))/
      >                    (kpb(ik,ir)-kpb(ik-1,ir))
-c     
+c
                   elseif ((kpb(ik-1,ir).le.endp).and.
      >                    (kpb(ik,ir).ge.endp)) then
-c     
-                     sdrft_end(ir) = ksb(ik-1,ir) + 
+c
+                     sdrft_end(ir) = ksb(ik-1,ir) +
      >                    (ksb(ik,ir)-ksb(ik-1,ir)) *
      >                    (endp-kpb(ik-1,ir))/(kpb(ik,ir)-kpb(ik-1,ir))
-c     
+c
                   endif
 
                end do
-               
-c     
+
+c
 c     Distance specified relative to a specified Z value
-c     
-            elseif (drft_distopt.eq.2) then 
-c     
+c
+            elseif (drft_distopt.eq.2) then
+c
 c     This option must be run on two half rings since the Z
-c     values repeat (meaning that Z by itself can not 
+c     values repeat (meaning that Z by itself can not
 c     be distinguished between inner and outer the way the
-c     S and P coordinates can be. 
-c     
+c     S and P coordinates can be.
+c
 c     In this case cdrftv_start and cdrftv_end will contain
 c     separate Z coordinates to apply to the first and second
 c     halves of the ring
-c     
+c
 c
 c     Need to first check if the Z value specified is
 c     beyond the end of the flux tube
 c
                if (abs(kzb(0,ir)-z0).lt.
-     >             abs(cdrftv_start-z0)) then 
+     >             abs(cdrftv_start-z0)) then
 
                   sdrft_start = 0.0
 
@@ -7977,18 +8034,18 @@ c
 
 
                   do ik = 1,nks(ir)/2
-                     
+
 
                      if (((kzb(ik-1,ir).le.cdrftv_start).and.
      >                    (kzb(ik,ir).ge.cdrftv_start)).or.
      >                    ((kzb(ik-1,ir).ge.cdrftv_start).and.
-     >                    (kzb(ik,ir).le.cdrftv_start)) ) then                    
-c     
-                        sdrft_start(ir) = ksb(ik-1,ir) + 
+     >                    (kzb(ik,ir).le.cdrftv_start)) ) then
+c
+                        sdrft_start(ir) = ksb(ik-1,ir) +
      >                       (ksb(ik,ir)-ksb(ik-1,ir)) *
      >                       (cdrftv_start-kzb(ik-1,ir))/
      >                       (kzb(ik,ir)-kzb(ik-1,ir))
-c     
+c
                      endif
                   end do
 
@@ -7998,7 +8055,7 @@ c     Need to first check if the Z value specified is
 c     beyond the end of the flux tube
 
                if (abs(kzb(nks(ir),ir)-z0).lt.
-     >             abs(cdrftv_end-z0)) then 
+     >             abs(cdrftv_end-z0)) then
 
                   sdrft_end = ksmaxs(ir)
 
@@ -8009,13 +8066,13 @@ c     beyond the end of the flux tube
                      if (((kzb(ik-1,ir).le.cdrftv_end).and.
      >                    (kzb(ik,ir).ge.cdrftv_end)).or.
      >                    ((kzb(ik-1,ir).ge.cdrftv_end).and.
-     >                    (kzb(ik,ir).le.cdrftv_end)) ) then                    
-c     
-                        sdrft_end(ir) = ksb(ik-1,ir) + 
+     >                    (kzb(ik,ir).le.cdrftv_end)) ) then
+c
+                        sdrft_end(ir) = ksb(ik-1,ir) +
      >                       (ksb(ik,ir)-ksb(ik-1,ir)) *
      >                       (cdrftv_end-kzb(ik-1,ir))/
      >                       (kzb(ik,ir)-kzb(ik-1,ir))
-c     
+c
                      endif
                   end do
 
@@ -8048,17 +8105,17 @@ c     >           sdrft_start(ir),sdrft_end(ir),ksmaxs(ir),kpmaxs(ir)
       ENDIF
 
 
-c     
+c
 c     If far periphery transport is active
-c     
-      if (fpopt.eq.5) then 
-c     
+c
+      if (fpopt.eq.5) then
+c
 c     Set up far periphery flow velocity
-c     
-c     NOTE!: fp_flow_velocity is an array with an element 
+c
+c     NOTE!: fp_flow_velocity is an array with an element
 c     for each peripheral region
-c     
-         if (fp_flow_opt.eq.0) then 
+c
+         if (fp_flow_opt.eq.0) then
             fp_flow_velocity = 0.0
          elseif (fp_flow_opt.eq.1) then
             do in = 1,num_fp_regions
@@ -8070,7 +8127,7 @@ c
 
       endif
 
-      return 
+      return
       end
 c
 c
@@ -8082,13 +8139,13 @@ c
 c
 c     Local variables
 c
-      real temp 
+      real temp
 c
 c     Calculate the sound speed
 c
-      if (opt.eq.1) then 
+      if (opt.eq.1) then
          temp = 2.0 * te
-      elseif (opt.eq.2) then 
+      elseif (opt.eq.2) then
          temp = te * ti
       endif
 
@@ -8110,29 +8167,29 @@ c       Option 3 applies only to the PFZ
 c
 c       Added drift region option - preferred procedure to using the CPDRFT method
 c       to limit flow regions.
-c  
+c
 c       Region 1 - SOL + PFZ
 c
-        if (drft_region.eq.1) then       
+        if (drft_region.eq.1) then
            irstart = irsep
            irend   = nrs
            if (cpdrft.eq.3) irstart = irtrap
 c
-c       Region 2 - SOL only 
+c       Region 2 - SOL only
 c
-        elseif (drft_region.eq.2) then   
+        elseif (drft_region.eq.2) then
            irstart = irsep
            irend   = irwall
 c
 c       Region 3 - PFZ only
 c
-        elseif (drft_region.eq.3) then   
+        elseif (drft_region.eq.3) then
            irstart = irtrap
            irend   = nrs
 c
 c       Region 4 - CORE only
 c
-        elseif (drft_region.eq.4) then   
+        elseif (drft_region.eq.4) then
            irstart = 2
            irend   = irsep-1
         endif
@@ -8147,18 +8204,18 @@ c
 c
       integer ir
       real pol_vel,start_s,end_s
-c     
-c     Return the drift velocity characteristics - value and range 
+c
+c     Return the drift velocity characteristics - value and range
 c     for the specified ring
 c
-      include 'params'	 
+      include 'params'
       include 'driftvel'
-c     
+c
       pol_vel = pol_drftv(ir)
       start_s = sdrft_start(ir)
       end_s   = sdrft_end(ir)
 c
-      return 
+      return
       end
 c
 c
@@ -8180,25 +8237,25 @@ C     FOR SOME ION INJECTION CASES - ALLOW THE SCALING FACTOR TO
 C     BE SET TO THE INVERSE OF THE NUMBER OF IONS INJECTED.
 C
 c
-c     Changed this normalization - ddlims(,,-1) should also be  
-c     normalized to total neutrals entering/second so that the 
+c     Changed this normalization - ddlims(,,-1) should also be
+c     normalized to total neutrals entering/second so that the
 c     density is properly comparable to the ddlims(,,0) entry
-c     containing the total neutral density. 
+c     containing the total neutral density.
 c
 c     jdemod - there is a problem with normalization of the density
 c     data for neutrals. It is scaled by 1/TNEUT while the ions are
 c     scaled by 1/TATIZ - however, ABSFAC is multiplied by TATIZ/TNEUT.
-c     This results in the neutral densities being incorrect when they 
-c     are used in OUT if there are multiplied by ABSFAC. 
+c     This results in the neutral densities being incorrect when they
+c     are used in OUT if there are multiplied by ABSFAC.
 c
-c     To correct this situation - either the neutral data could be 
+c     To correct this situation - either the neutral data could be
 c     scaled to one ion entering the system/sec - which doesn't make
-c     a lot of sense logically - but then ABSFAC would be left as is. 
+c     a lot of sense logically - but then ABSFAC would be left as is.
 c     On the other hand, all of the data could be scaled by the number
 c     of particles launched for the simulation - ions for ion injection
 c     and neutrals for a neutral launch. This would then put consistent
 c     densities in all of the arrays - and the ABSFAC value would be
-c     the total absolute particle influx - though this is usually neutrals. 
+c     the total absolute particle influx - though this is usually neutrals.
 c
 c      IF (RNEUT1.GT.0.0) THEN
 c         FACTA(-1) = 1.0 / RNEUT1
@@ -8212,13 +8269,13 @@ c
       integer iz
 c
 c     Modified normalization scalings (default)
-c      
+c
 c     Set normalization to zero initially
 c
       facta = 0.0
       factb = 0.0
 c
-      if (normopt.eq.0) then 
+      if (normopt.eq.0) then
 c
 c        Neutral launch - cneuta = 0
 c
@@ -8226,19 +8283,19 @@ c
             particle_norm_factor = 1.0/TNEUT
          ELSEIF (CNEUTA.eq.1.and.tatiz.gt.0) THEN
             particle_norm_factor = 1.0/TATIZ
-         else 
+         else
             particle_norm_factor = 1.0
          ENDIF
 C
          IF (NIZS.GT.0) THEN
            DO IZ = -1, NIZS
              facta(iz) = particle_norm_factor
-             if (iz.lt.1) then 
+             if (iz.lt.1) then
                 factb(iz) = facta(iz) * fsrate
              else
                 factb(iz) = facta(iz) * qtim
              endif
-           enddo  
+           enddo
          ENDIF
 c
       elseif (normopt.eq.1) then

@@ -12,10 +12,10 @@ c
      .                      IKLO = 1    , IKHI = 2    , MAXNAS2  = 200,
      .                      MAXPTS = 500
 
-      REAL, PARAMETER :: PI = 3.141592, ECH = 1.602E-19
+      REAL, PARAMETER :: PI = 3.141592, ECH = 1.6022E-19
  
-      INTEGER irsep,irtrap,nrs,nlpdato,nlpdati,idring(MAXNRS),
-     .        lpdatsw,relmode,rel_step
+      INTEGER irsep,irtrap,irwall,nrs,nlpdato,nlpdati,idring(MAXNRS),
+     .        lpdatsw,relmode,rel_step,ikti,ikto,irsep2
       LOGICAL connected
       REAL    psitarg(MAXNRS,2),lpdati(MAXNRS,4),lpdato(MAXNRS,4),
      .        te_mult_i,te_mult_o,ti_mult_i,ti_mult_o,n_mult_i,n_mult_o,

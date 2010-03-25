@@ -240,7 +240,7 @@ c
 c
 c ======================================================================
 c
-      SUBROUTINE PointInPolygon(p3,iobj,iside,isur,plane,result,status)
+      SUBROUTINE PointInPoly(p3,iobj,iside,isur,plane,result,status)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -258,7 +258,7 @@ c...  Project the point and polygon onto the closes plane:
 c      output = .TRUE.
 
 c
-      lastcp = 0.0
+      lastcp = 0.0D0
 c
       inpoly = .false.
 
@@ -269,13 +269,11 @@ c
       ENDIF
 
       DO v = 1, nv
-
          if (v.eq.nv) then
             nextv = 1
          else
             nextv = v+1
          endif
-
          IF     (plane.EQ.1) THEN
            x0 = p3(2) 
            y0 = p3(3) 
@@ -335,13 +333,14 @@ c...         Need to know which surface for the side:
          cp = ( (x0-x1) * (y2-y1) ) - ( (y0-y1) * (x2-x1) )
 c
 c
-         if (v.eq.1.and.cp.ne.0.0) lastcp = cp
+         if (v.eq.1.and.cp.ne.0.0D0) lastcp = cp
 
          IF (status.EQ.1) THEN
             WRITE(0,'(A,2I6,2F12.6)') 'CP:',v,nextv,cp,lastcp
           ENDIF
+c         WRITE(6,'(A,3D18.6)') 'CP:',cp,lastcp,cp*lastcp
 c
-          if ((lastcp * cp).lt.0.0) GOTO 10
+          if ((lastcp * cp).lt.0.0D0) GOTO 10
 c
           if (cp.ne.0.0) lastcp = cp
 c
@@ -350,8 +349,9 @@ c
       inpoly = .true.
 
       IF (status.EQ.1) THEN
-         WRITE(0,'(A,2I6,2F12.6)') 'GOOD!'
+         WRITE(0,'(A)') 'GOOD!'
       ENDIF
+c      WRITE(6,'(A)') 'GOOD!'
 
  10   CONTINUE
 
@@ -644,6 +644,7 @@ c       intersection point is on the polygon:
 c...    This will always be satisfied, unless the chord and surface normal are orthogonal?
 
         IF (status.EQ.1) WRITE(0,*) 'U:',u
+c        WRITE(6,*) '  u:',u
 
         IF (u.GT.0.0D0.AND.u.LT.1.0D0+DTOL) THEN
 
@@ -680,7 +681,7 @@ c...      Project onto the appropriate plane:
           ENDIF
 
 c...      Check if the point is inside the surface polygon:
-          CALL PointInPolygon(p3,iobj,iside,isur,plane,result,status)
+          CALL PointInPoly(p3,iobj,iside,isur,plane,result,status)
 
           IF (result) THEN
             n = n + 1
@@ -739,20 +740,28 @@ c...  Input:
 
 
       IF     (mode.EQ.IT_VWINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: vessel wall'
         nsurlist = nvwlist
         surlist => vwlist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: vessel wall'
       ELSEIF (mode.EQ.IT_GBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: grid boundary'
         nsurlist = ngblist
         surlist => gblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: grid boundary'
       ELSEIF (mode.EQ.IT_OBINTER) THEN
-        IF (nchord.EQ.-1) WRITE(0,*) 'SEARCH: object map'
         nsurlist = noblist
         surlist => oblist
+        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: object map'
       ELSE
         CALL ER('FindSurfaceIntersections','MODE problem',*99)
       ENDIF
+      IF (nchord.EQ.dchord) THEN
+        WRITE(fp,*) '  NSURLIST:',nsurlist
+        IF (nsurlist.GT.0) THEN
+          WRITE(fp,*) '  SURLIST1:',surlist(1:nsurlist,1)
+          WRITE(fp,*) '  SURLIST2:',surlist(1:nsurlist,2)
+        ENDIF
+      ENDIF
+
 
       DO i3 = 1, nsurlist
         iobj  = surlist(i3,1)
@@ -782,10 +791,17 @@ c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
           d = -1.0D0         
           CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status) 
 
+c          WRITE(fp,*) 'D:',d(1:n)
+
           DO i4 = 1, n
             IF (ninter.LT.MAXINTER) THEN  
-              IF (d(i4).GT.1.0D-10) THEN  ! Don't include intersection where 
-                ninter = ninter + 1       ! the point is *on* a surface...
+
+              IF (obj(iobj)%gsur(iside).EQ.GT_TC.AND.  ! Don't include intersection where 
+     .            d(i4).GT.1.0D-10.OR.                 ! the point is *on* a surface...
+     .            obj(iobj)%gsur(iside).EQ.GT_TD.AND.  
+     .            d(i4).GT.1.0D-20) THEN
+c              IF (d(i4).GT.1.0D-10) THEN  
+                ninter = ninter + 1        
                 dinter(ninter) = d(i4)
                 vinter(1:3,ninter) = v(1:3,i4)
 

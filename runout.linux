@@ -50,7 +50,7 @@ DATAROOT=$HOME/$PROGDIR
 #  PINEXE    - PIN executable
 #  EIREXE    - EIRENE executable
 #
-export DIVRUNDIR=$RUNROOT
+export DIVRUNDIR=$RUNROOT/cases
 export DIVDATDIR=$RUNROOT/data
 export DIVRESDIR=$RUNROOT/results
 #
@@ -67,6 +67,39 @@ export OUTEXE=$OUTEXEDIR/out6O$VER
 export PINEXE=$PINEXEDIR/pin6O
 export EIREXE=$EIREXEDIR/eirene
 export EIREXE99=$EIREXE99DIR/Sources/eirene
+
+#
+# jdemod - the following variables are relevant to some of the 
+#          EIRENE07 run scripts - these should not be needed in OUT
+#          but there may be related code or scripts that use them
+#
+# add eirene07 directory
+export EIRDIR=$EXEROOT/eirene07
+#
+#
+# Setup DIVHOME for the Eirene07 run script
+# - this is also needed for data loading code in DIVIMP so it can
+#   find the data directories
+# - NOTE: when Steve's run scripts are updated to allow different 
+#   users to access common code then the code in hc_lddta.f90 will
+#   need to be changed to access the EXEROOT and not RUNROOT ... however
+#   at the present time DIVHOME is the only environment variable with
+#   a common meaning between these scripts and Steve's versions
+# - this is needed in OUT to load HC data for plotting
+#
+export DIVHOME=$RUNROOT
+
+# Location of graphics library used by EIRENE:
+export GLI_HOME=$DIVHOME/libsrc
+
+# Set local directories:
+export RUNDIR=$RUNROOT
+export BATDIR=$EXEROOT/scripts
+export EXEDIR=$DIVRUNDIR/$CASENAME
+export DATDIR=$DIVDATDIR
+export OUTDIR=$OUTEXEDIR
+#
+
 #
 #-------------------------------------
 #
@@ -89,8 +122,19 @@ fi
 #  Change to Execution directory
 #
 cd $DIVRUNDIR
-mkdir $1
-cd $1
+
+#
+# Remove specific directory for the case if it already exists
+#
+if [[ -e $CASENAME ]] then 
+      echo "Deleting old case directory:" $DIVRUNDIR/$CASENAME
+      rm -rf $CASENAME
+fi
+#
+# Create run directory
+#
+mkdir $CASENAME
+cd $CASENAME
 #
 #  Execute OUT
 #
@@ -103,45 +147,61 @@ cd $1
 #
 #  Copy and uncompress the results of the DIVIMP run 
 #
-cp $DIVRESDIR/$1.raw.Z $DIVRUNDIR/$1/$1.raw.Z
-uncompress -f -v $1.raw.Z
-mv $1.raw fort.8
+cp $DIVRESDIR/$CASENAME.raw.Z $DIVRUNDIR/$CASENAME/$CASENAME.raw.Z
+uncompress -f -v $CASENAME.raw.Z
+mv $CASENAME.raw fort.8
 #
-# Supplimentary raw files (SL)
+# Supplementary raw files (SL)
 # Some consolidation of these files needs to
 # take place, but it has not been done yet (Sep 6, 2000)
 #
-if [[ -f $DIVRESDIR/$1.raw.src.Z ]] then
-   cp $DIVRESDIR/$1.raw.src.Z $DIVRUNDIR/$1
-   uncompress -f -v $1.raw.src.Z
-   mv $1.raw.src source.dat
+if [[ -f $DIVRESDIR/$CASENAME.raw.src.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.src.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.src.Z
+   mv $CASENAME.raw.src source.dat
 fi
-if [[ -f $DIVRESDIR/$1.raw.pla.Z ]] then
-   cp $DIVRESDIR/$1.raw.pla.Z $DIVRUNDIR/$1
-   uncompress -f -v $1.raw.pla
-   mv $1.raw.pla plasma.dat
+if [[ -f $DIVRESDIR/$CASENAME.raw.pla.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.pla.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.pla
+   mv $CASENAME.raw.pla plasma.dat
 fi
-if [[ -f $DIVRESDIR/$1.raw.geo.Z ]] then
-   cp $DIVRESDIR/$1.raw.geo.Z $DIVRUNDIR/$1
-   uncompress -f -v $1.raw.geo
-   mv $1.raw.geo geomty.dat
+if [[ -f $DIVRESDIR/$CASENAME.raw.geo.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.geo.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.geo
+   mv $CASENAME.raw.geo geomty.dat
 fi
-if [[ -f $DIVRESDIR/$1.eirtrc ]] then
-   cp $DIVRESDIR/$1.eirtrc eirtrac.dat
+if [[ -f $DIVRESDIR/$CASENAME.eirtrc ]] then
+   cp $DIVRESDIR/$CASENAME.eirtrc eirtrac.dat
 fi
 #
 # Info file for output
 #
 if [[ -f  $EQUDIR/info.dat ]] then 
-  ln -s $EQUDIR/info.dat $DIVRUNDIR/$1/info.dat
+  ln -s $EQUDIR/info.dat $DIVRUNDIR/$CASENAME/info.dat
 fi 
 #
 # Link to EIRENE AMJUEL data files (SL)
 #
-ln -s "$EIREXE99DIR/a+m/HYDHEL"     .
-ln -s "$EIREXE99DIR/a+m/SPUTER"     .
-ln -s "$EIREXE99DIR/a+m/AMJUEL.TEX" AMJUEL
-ln -s "$EIREXE99DIR/a+m/METHANE"    .
+#ln -s "$EIREXE99DIR/a+m/HYDHEL"     .
+#ln -s "$EIREXE99DIR/a+m/SPUTER"     .
+#ln -s "$EIREXE99DIR/a+m/AMJUEL.TEX" AMJUEL
+#ln -s "$EIREXE99DIR/a+m/METHANE"    .
+
+#
+# Eirene07 uses the data files from the Eirene04 tree. However, all versions of Eirene except 07 are not supported. At some point we 
+# should clean this up. 
+#
+# Try this for now - may need to flag this file for differetiating 99 from 07 - or move the linkage to the EIRENE run scripts assuming divimp doesn't use them
+#
+
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/TRIM
+
+
 #
 #  Connect an experimental data input file to unit 13.
 #  If one has been specified. 
@@ -150,31 +210,31 @@ ln -s "$EIREXE99DIR/a+m/METHANE"    .
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.experiment ]] then 
-    ln -s $EQUDIR/$4.experiment $DIVRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$4.experiment $DIVRUNDIR/$CASENAME/fort.13
   else
     if [[ -f $EQUDIR/$3.$4.experiment ]] then 
-      ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$1/fort.13
+      ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$CASENAME/fort.13
     else
       if [[ -f $EQUDIR/$3.experiment ]] then 
-         ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13
+         ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
       fi 
     fi
   fi
 else
   if [[ -f $EQUDIR/$3.experiment ]] then 
-    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
   fi 
 fi
 #
 # Link to the toroidal camera inversion data (SL)
 #
 if [[ -f $EQUDIR/$3.camera ]] then
-   ln -s $EQUDIR/$3.camera $DIVRUNDIR/$1/camera.dat
+   ln -s $EQUDIR/$3.camera $DIVRUNDIR/$CASENAME/camera.dat
 fi
 #
 #if [[ -n $3 ]] then 
 #   if [[ -f $EQUDIR/$3.experiment ]] then 
-#      ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13
+#      ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
 #   fi 
 #fi
 #
@@ -185,86 +245,74 @@ $OUTEXE < $DIVDATDIR/$2.d6o > outouta
 #
 #  Copy or move results.
 #
-#
+
+
 #  .outa - OUT debugging file 
-#
-if [[ -f outouta ]] then 
-   mv outouta $DIVRESDIR/$1.outa
-fi
-#
-#  .psga - Postscript plots 
-#
+mvc outouta $CASENAME.outa
+
+#  Postscript plots 
 #  Change to using $plotext .psg and .pdf so that
 #  the files will not necessarily overwrite
 #
 if [[ -f POSTSCPT.LIS ]] then 
-  ps2pdf POSTSCPT.LIS $DIVRESDIR/$1$PLOTEXT.pdf
-  mv POSTSCPT.LIS $DIVRESDIR/$1$PLOTEXT.psg
+  ps2pdf POSTSCPT.LIS $CASENAME$PLOTEXT.pdf
+  mv POSTSCPT.LIS $CASENAME$PLOTEXT.psg
 fi
-#
+
+
 #  .daga OUT output file
-#
-if [[ -f fort.7 ]] then 
-   mv fort.7  $DIVRESDIR/$1.daga
-fi
-#
+mvc fort.7 $CASENAME.daga
+
 #  Echo of input
-#
-if [[ -f fort.9 ]] then
-   mv fort.9  $DIVRESDIR/$1.inga
-fi
-#
+mvc fort.9 $CASENAME.inga
+
 #  Special print file 
-#
-if [[ -f fort.26 ]] then
-   mv fort.26 $DIVRESDIR/$1.grpa
-fi
-#
+mvc fort.26 $CASENAME.grpa
+
 #  Special print file 
-#
-if [[ -f fort.49 ]] then
-   mv fort.49 $DIVRESDIR/$1.plta
-fi
-#
-#  Print out for Kevin
-#
-if [[ -f fort.56 ]] then 
-   mv fort.56  $DIVRESDIR/$1.probe
-fi
-#
+mvc fort.49 $CASENAME.plta
+
+#  Print out for Kevin Erents
+mvc fort.56 $CASENAME.probe
+
 #  Erosion/Deposition print out
-#
-if [[ -f fort.57 ]] then 
-   mv fort.57  $DIVRESDIR/$1.deposition
-fi
-#
+mvc fort.57 $CASENAME.deposition
+
 # AUG file
-#
-if [[ -f fort.59 ]] then
-   mv fort.59 $DIVRESDIR/$1.AUGdiv
-fi
-#
+mvc fort.59 $CASENAME.augdiv_out
+
 # Core file in case OUT crashed
+mvc core $CASENAME.out.core
+
+#---------------------------------------
 #
-if [[ -f core ]] then 
-  mv core  $DIVRESDIR/$1.core
-fi
+# Move any files starting with $CASENAME 
+# to the results directory
 #
-# Move image files if any ...
-#
-if [[ -f $1_image01.jpg ]] then 
-  mv *image*.jpg $DIVRESDIR
-fi
+
+mv -f $CASENAME* $DIVRESDIR
+
+#---------------------------------------
 #
 #  Clean-up
 #
+
+# remove unwanted fortran output 
 rm fort.*
+
+# remove other raw files that may have been linked 
+rm -f plasma.dat
+rm -f geomty.dat
+rm -f source.dat
+
 #
 # Remove camera file if linked
 #
 if [[ -f camera.dat ]] then 
    rm -f camera.dat
 fi
+
+
 #
 # Remove info.dat file if linked
 #
@@ -296,23 +344,31 @@ if [[ -f METHANE ]] then
    rm -f METHANE
 fi
 #
+if [[ -e TRIM ]] then 
+   rm -f TRIM
+fi
+#
+if [[ -f H2VIBR ]] then 
+   rm -f H2VIBR
+fi
+#
 # Final cleanup
 #
 cd $DIVRUNDIR
-rmdir $1
+rmdir $CASENAME
 cd $DIVRESDIR
 #
 #  Compress and generate any remaining print files
 #
-#compress $1.outa
-if [[ -f $1.plta ]] then
-   a2ps -R $1.plta --output=$1.plta.ps
+#compress $CASENAME.outa
+if [[ -f $CASENAME.plta ]] then
+   a2ps -R $CASENAME.plta --output=$CASENAME.plta.ps
 fi
 #
 #  Print
 #
-#lp $1.plt.ps 
-#lp $1.psga
+#lp $CASENAME.plt.ps 
+#lp $CASENAME.psga
 #
 #  Return to starting directory. 
 #

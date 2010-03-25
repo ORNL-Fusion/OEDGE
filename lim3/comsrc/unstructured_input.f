@@ -222,6 +222,14 @@ c     L07: bm_tor_wid - toroidal half width of the BM (blanket module)
 c     L08: slot_tor_wid - toroidal half witdth of the center slot of BM 
 c     L09: lambda_design - design SOL decay length
 c
+c     Additional parameters* for EDGE option 12 - ITER limiter shape modified for pitch angle
+c
+c     *see below
+c     L23: Bth_Bphi_ratio ... magnetic field ratio 
+c     L24: p_0_value ... central p value for this limiter surface slice
+c     L25: Rho_p_pol ... constant for g(p) function
+c     L26: R_ow ... R value for calculating shadow line
+c
       rtor_setback  = 0.07
       rslot_setback = 0.01
       bm_tor_wid    = 0.5954 
@@ -240,6 +248,8 @@ c     Default locations are also 0.0 for off - these MUST be specified to turn t
 c     option on. 
 c
 c     yreflection_event_count - global initialization of counter to 0.0
+c
+c     These variables are in the yreflection module
 c
       yreflection_opt = 0
       cmir_refl_lower = 0.0
@@ -285,6 +295,63 @@ c     extfluxdata
 c
       nextfluxdata = 0
       extfluxdata = 0.0
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L16 to L22: Inputs related to X and Y absorption surfaces
+c
+c
+c     L16 : xabsorb_opt : 0 = off 1=on
+c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
+c
+c     L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
+c     L19 : yabsorb1a  : first absorption surface 
+c     L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
+c     L21 : yabsorb2a  : 
+c     L22 : yabsorb2_frame : frame reference for surface - 0 for no reflection cases
+c     
+c     Default locations are also 0.0 for off - these MUST be specified to turn the 
+c     option on. 
+c
+c     yreflection_event_count - global initialization of counter to 0.0
+c
+c     These variables are in the yreflection module
+c
+      xabsorb_opt = 0
+      xabsorb = 1e6
+c
+c     Default values of Y absorber surfaces are at frame 0 ... coordinate 0.0
+c     There are no valid defaults for absorber surfaces
+c
+      yabsorb_opt = 0
+      yabsorb1a = 0.0
+      yabsorb1_frame = 0
+      yabsorb2a = 0.0
+       yabsorb2_frame = 0
+
+c
+c -----------------------------------------------------------------------
+c
+c     Additional parameters for EDGE option 12 - ITER limiter shape modified for pitch angle
+c
+c     L23: Bth_Bphi_ratio ... magnetic field ratio 
+c     L24: p_0_value ... central p value for this limiter surface slice
+c     L25: Rho_p_pol ... constant for g(p) function
+c     L26: R_ow ... R value for calculating shadow line (outer wall radius)
+c
+      bth_bphi_ratio = 0.154
+      p_0_value = 0.0
+      rho_p_pol = 3.0
+      r_ow = 4.0   ! need to get a good default value
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L27: Optional self-sputtering yield modifier input
+c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
+c
+      ss_nymfs = 0
+      ss_cymfs = 1.0
+
 c
 c -----------------------------------------------------------------------
 c
@@ -532,6 +599,15 @@ c     L05: bm_tor_wid - toroidal half width of the BM (blanket module)
 c     L06: slot_tor_wid - toroidal half witdth of the center slot of BM 
 c     L07: lambda_design - design SOL decay length
 c
+c     Additional parameters for EDGE option 12 - ITER limiter shape modified for pitch angle
+c
+c     *see below
+c
+c     L23: Bth/Bphi ... magnetic field ratio 
+c     L24: p_0 ... central p value for this limiter surface slice
+c     L25: Rho_p_pol
+c     L26: R_ow ... R value for calculating shadow line
+c
       elseif (tag(1:3).EQ.'L05') THEN
         CALL ReadR(line,rtor_setback,0.0,HI,
      >          'Radial setback at BM edge (M)')
@@ -623,6 +699,96 @@ c
      >               MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
      >               2,'External sputtering flux data',IERR)
 
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L16 to L22: Inputs related to X and Y absorption surfaces
+c
+c
+c     L16 : xabsorb_opt : 0 = off 1=on
+c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
+c
+c     L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
+c     L19 : yabsorb1a  : first absorption surface 
+c     L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
+c     L21 : yabsorb2a  : 
+c     L22 : yabsorb2_frame : frame reference for surface - 0 for no reflection cases
+c     
+c     These variables are in the yreflection module
+c
+      elseif (tag(1:3).EQ.'L16') THEN
+c       L16 : xabsorb_opt : 0 = off 1=on
+        CALL ReadI(line,xabsorb_opt,0,1,'X-absorption Option')
+c
+      elseif (tag(1:3).EQ.'L17') THEN
+c       L17 : xabsorb : -CAW < Xabs < CA ... if X > Xabs particle removed  
+        CALL ReadR(line,xabsorb,-HI,HI,
+     >               'X absorption surface - X > Xabs')
+
+      elseif (tag(1:3).EQ.'L18') THEN
+c       L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
+        CALL ReadI(line,yabsorb_opt,0,2,'Y-Absorption Option')
+c
+      elseif (tag(1:3).EQ.'L19') THEN
+c       L19 : yabsorb1a  : first absorption surface 
+        CALL ReadR(line,yabsorb1a,-HI,HI,
+     >               'Y location of first absorber')
+
+      elseif (tag(1:3).EQ.'L20') THEN
+c       L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
+        CALL ReadI(line,yabsorb1_frame,-1000,1000,
+     >                'Frame for absorption surface')
+c
+      elseif (tag(1:3).EQ.'L21') THEN
+c       L21 : yabsorb2a  : 
+        CALL ReadR(line,yabsorb2a,-HI,HI,
+     >               'Y location of second absorber')
+
+      elseif (tag(1:3).EQ.'L22') THEN
+c       L22 : yabsorb2_frame : frame reference for surface - 0 for no reflection cases
+        CALL ReadI(line,yabsorb2_frame,-1000,1000,
+     >                'Frame for absorption surface')
+c
+c -----------------------------------------------------------------------
+c
+c     Additional parameters for EDGE option 12 - ITER limiter shape modified for pitch angle
+c
+c     L23: Bth_Bphi_ratio ... magnetic field ratio 
+c     L24: p_0_value ... central p value for this limiter surface slice
+c     L25: Rho_p_pol ... constant for g(p) function
+c     L26: R_ow ... R value for calculating shadow line
+c
+      elseif (tag(1:3).EQ.'L23') THEN
+        CALL ReadR(line,bth_bphi_ratio,0.0,HI,
+     >          'Magnetic field ratio at limiter')
+      elseif (tag(1:3).EQ.'L24') THEN
+        CALL ReadR(line,p_0_value,-HI,HI,
+     >           'Base p value for slice across limiter')
+      elseif (tag(1:3).EQ.'L25') THEN
+        CALL ReadR(line,rho_p_pol,0.0,HI,
+     >            'Rho value for calculating g(p) function')
+      elseif (tag(1:3).EQ.'L26') THEN
+        CALL ReadR(line,r_ow,0.0,HI,
+     >            'R value for calculating location of shadowline')
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L27: Optional self-sputtering yield modifier input
+c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
+c
+      elseif (tag(1:3).EQ.'L27') THEN
+
+         CALL RDRARN(ss_cymfs,ss_nymfs,
+     >               MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
+     >               2,'SET of SS YMF X,M(Y<0),M(Y>0)',IERR)
+         if (ss_cymfs(1,1).gt.ss_cymfs(ss_nymfs,1)) then 
+            call errmsg('READIN PARAMETER: ','CYMFS DATA MUST'//
+     >       ' BE ENTERED IN ASCENDING ORDER IN X')
+            stop
+         endif
+
 c
 c -----------------------------------------------------------------------
 c
@@ -673,7 +839,9 @@ c     This option allows an absolute scaling factor for the LIM
 c     run results to be specified in the OUT routine. It's default
 c     value is zero.
 c
-        CALL ReadR(line,new_absfac,0.0,HI,
+c        CALL ReadR(line,new_absfac,0.0,HI,
+c     >                   'Imposed ABSFAC in OUT')
+        CALL ReadDP(line,new_absfac,0.0,HI,
      >                   'Imposed ABSFAC in OUT')
 c
 c -----------------------------------------------------------------------
@@ -861,6 +1029,7 @@ c
       STOP
       END
 c
+c
 c ======================================================================
 c
 c
@@ -899,6 +1068,45 @@ c
       STOP
       END
 c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadDP(line,dpval,rmin,rmax,tag)
+      use error_handling
+      IMPLICIT none
+
+      CHARACTER line*72,tag*(*)
+      REAL rmin,rmax
+      real*8 dpval
+
+      INCLUDE 'params'
+      INCLUDE 'slcom'
+
+      REAL*8 r
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,r
+
+      IF (r.LT.rmin.OR.r.GT.rmax)
+     .  CALL ER('ReadDP','Out of bounds: '//line,*99)
+
+      dpval = r
+
+      WRITE(DBGUNIT,'(A)')        line
+      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',dpval
+
+      RETURN
+
+ 98   call errmsg('READDP','Problem reading unstructured input')
+      WRITE(DATUNIT,*) 'Problem reading unstructured input'
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(DATUNIT,'(5X,A,3G10.3)')
+     .  'R,RVAL,RMIN,RMAX = ',r,dpval,rmin,rmax
+      STOP
+      END
+
 c
 c ======================================================================
 c

@@ -157,6 +157,16 @@ contains
     !          Velocity 
     !
     iv = min(int(vin/vin_scale),debug_neutv_nbins)
+! slmod begin
+!   Not sure what is happening here, but it is a very rare 
+!   event.  First observed when I started running a supplimental 
+!   neutral launch (i-fwp-0120j) - SL, 01/12/2009
+    if (iv.lt.0) then
+      write(0,*) 'WARNING record_vdist: IV.LT.0'
+      write(6,*) 'WARNING record_vdist: IV.LT.0'
+      return
+    endif
+! slmod end
     vin_dist(iv) = vin_dist(iv) + sputy
     !
     !          Angles

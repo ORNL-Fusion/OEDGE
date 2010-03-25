@@ -111,12 +111,7 @@ c     are needed in GETMODEL:
 c slmod end
       CALL RDRARN(BGPLASOPT,NBGPLAS,2*MAXNRS,-MACHHI,MACHHI,.FALSE.,
      >            0.0,MACHHI,7,'SET OF BG PLASMA OPTIONS BY RING',IERR)
-c slmod end
-c...  Option 3 added, for loading SOLPS2.5 data from Rhozansky:
-      call rdi (cre2d ,.TRUE., 0,.true.,3 ,'READ E2D BG FOR REF  ',ierr)
-c
-c      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
-c slmod begin
+      call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
       call rdi (e2dtargopt,.TRUE., 0,.true.,6 ,'EDGE2D TARG COND',ierr)
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 9,'CX RECOMB OPT        ',IERR)
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)
@@ -494,7 +489,11 @@ C
 C
 C     COMMANDS RELATING TO PIN EXECUTION
 C
-      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,1  ,'RUNPIN 0-NO 1-YES',IERR)
+c slmod begin
+      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,4  ,'RUNPIN 0-NO 1-YES',IERR)
+c 
+c      CALL RDI(CPINOPT,.TRUE.,0  ,.TRUE. ,1  ,'RUNPIN 0-NO 1-YES',IERR)
+c slmod end
       CALL RDC(CPINCOM,'COMMAND TO RUN PIN',IERR)
       READ(CPINCOM(11:80),'(A69)') ACTPIN
 c

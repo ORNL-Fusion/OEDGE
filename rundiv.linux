@@ -28,6 +28,14 @@ VER=pgi
 #
 #PROGDIR=`basename \`pwd\``
 #
+# Note: progdir should point to where ever the local installation is without
+#       $HOME ... 
+# 
+#       e.g. divimp = /home/<user>/divimp
+#            merge/garching-merge = /home/<user>/merge/garching-merge 
+#            ...
+#
+#
 PROGDIR=divimp
 #
 RUNROOT=$HOME/$PROGDIR
@@ -53,7 +61,7 @@ DATAROOT=$HOME/$PROGDIR
 #  PINEXE    - PIN executable
 #  EIREXE    - EIRENE executable
 #
-export DIVRUNDIR=$RUNROOT
+export DIVRUNDIR=$RUNROOT/cases
 export DIVDATDIR=$RUNROOT/data
 export DIVRESDIR=$RUNROOT/results
 #
@@ -72,49 +80,180 @@ export PINEXE=$PINEXEDIR/pin6O
 export PIN5EXE=$PIN5EXEDIR/pin5O
 export EIREXE=$EIREXEDIR/Sources/eirene
 export EIREXE99=$EIREXE99DIR/eirene
+
 #
+# jdemod - the following variables are relevant to some of the 
+#          EIRENE07 run scripts
+#
+# add eirene07 directory
+export EIRDIR=$EXEROOT/eirene07
+#
+#
+# Setup DIVHOME for the Eirene07 run script
+# - this is also needed for data loading code in DIVIMP so it can
+#   find the data directories
+# - NOTE: when Steve's run scripts are updated to allow different 
+#   users to access common code then the code in hc_lddta.f90 will
+#   need to be changed to access the EXEROOT and not RUNROOT ... however
+#   at the present time DIVHOME is the only environment variable with
+#   a common meaning between these scripts and Steve's versions
+# - code has been modified to use DIVMAINDIR if available then DIVHOME
+#
+export DIVHOME=$RUNROOT
+
+# Location of graphics library used by EIRENE:
+export GLI_HOME=$DIVHOME/libsrc
+
+# Set local directories:
+export RUNDIR=$RUNROOT
+export BATDIR=$EXEROOT/scripts
+export EXEDIR=$DIVRUNDIR/$CASENAME
+export DATDIR=$DIVDATDIR
+export OUTDIR=$OUTEXEDIR
+#
+
+
 #------------------------------------- 
 #
 #
 # Change to execution directory
 #
 cd $DIVRUNDIR
-mkdir $1
-cd $1
+
+#
+# Remove specific directory for the case if it already exists
+#
+if [[ -e $CASENAME ]] then 
+      echo "Deleting old case directory:" $DIVRUNDIR/$CASENAME
+      rm -rf $CASENAME
+fi
+#
+# Create case directory and change to it
+#
+mkdir $CASENAME
+cd    $CASENAME
+
+
+#
+# Additional setup for EIRENE07 and supplemental programs
+#
+#
+# Copy in triangle meshing program ... this is compiled separately and 
+# the executable is expected in the divimp bin directory
+#
+cp $DIVMAINDIR/bin/triangle triangle
+#
+# Set the name of the Eirene07 input file template
+#
+EIRFILE=eirene07.dat
+
+#
+# Copy in the Eirene07 template and the executable file 
+# - this will be used by the runeire07 script
+#
+cp $EIRDIR/$EIRFILE eirene.template
+cp $EIRDIR/eirene $EXEDIR/eirene07
+
+
+#
+# Copy scripts to the execution directory from the scripts directory. 
+# CPC is a copy script with a couple of checks added - found in the scripts
+# directory
+#
+# jdemod - I moved the runeire99 and runpin scripts into the scripts directory to 
+#          be consistent. Note: many of these scripts do not actually exist - the 
+#          cpc script only copies them if they exist ... only runpin, runeire99, 
+#          runeire06 and runeire07 are in the repository. 
+#
+
+cpc $GLI_HOME/gksfont.dat .
+cpc $BATDIR/runeire99    reire99
+cpc $BATDIR/runeire02    reire02
+cpc $BATDIR/runeire04    reire04
+cpc $BATDIR/runeire06    reire06
+cpc $BATDIR/runeire06.64 reire06.64
+cpc $BATDIR/runeire07    reire07
+
+#
+# Old Nimbus script support
+#
+cpc $BATDIR/runpin       rpindiv
+
+#
+# jdemod - old script copy code - deprecated
+#
+# These are the scripts that will run the apprpriate hydrogenic
+# neutral code depending on the type of grid. PIN/NIMBUS or EIRENE.
+#
+#
+#cp $DIVMAINDIR/runpin rpindiv
+#cp $DIVMAINDIR/runpin5 rpindiv5
+#cp $DIVMAINDIR/runeire reirediv
+#cp $DIVMAINDIR/runeire99 reire99
+#cp $DIVMAINDIR/scripts/runeire07 reire07
+#
+
+#
+# Original AMJUEL Links for eirene99 - replaced by below 
 #
 # Link to EIRENE AMJUEL data files (SL)
 #
-  ln -s "$EIREXE99DIR/a+m/HYDHEL"     .
-  ln -s "$EIREXE99DIR/a+m/SPUTER"     .
-  ln -s "$EIREXE99DIR/a+m/AMJUEL.TEX" AMJUEL
-  ln -s "$EIREXE99DIR/a+m/H2VIBR.TEX" H2VIBR
-  ln -s "$EIREXE99DIR/a+m/METHANE"    .
+#  ln -s "$EIREXE99DIR/a+m/HYDHEL"     .
+#  ln -s "$EIREXE99DIR/a+m/SPUTER"     .
+#  ln -s "$EIREXE99DIR/a+m/AMJUEL.TEX" AMJUEL
+#  ln -s "$EIREXE99DIR/a+m/H2VIBR.TEX" H2VIBR
+#  ln -s "$EIREXE99DIR/a+m/METHANE"    .
+#
+#
+# Eirene07 uses the data files from the Eirene04 tree. However, all versions of Eirene except 07 are not supported. At some point we 
+# should clean this up. 
+#
+# Try this for now - may need to flag this file for differetiating 99 from 07 - or move the linkage to the EIRENE run scripts assuming divimp doesn't use them
+#
+
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/TRIM
+
 #
 #  Unit  4 is the equilibrium input file
 #  Unit 13 is the xy grid file (if available)
 #  Unit 14 is the DIVIMP input file - assigned to unit 14 for NIMBUS purposes
 #                                   - now connected in the runpin script
 #
+
 if [[ -f  $EQUDIR/$3 ]] then
-  ln -s $EQUDIR/$3 $DIVRUNDIR/$1/fort.4
+  ln -s $EQUDIR/$3 $DIVRUNDIR/$CASENAME/fort.4
 else
   echo "Grid file " $EQUDIR/$3 " does not exist."
   echo "Abnormal Script Termination - Script Exiting"
-  cd ..
-  rm -rf $1
+  # remove case execution directory
+  cd $DIVRUNDIR
+  rm -rf $CASENAME
   exit 1
 fi
+
+#
+# copy grid.dat file if it exists
+#
+if [[ -f  $EQUDIR/$3.dat ]] then 
+  cp -a $EQUDIR/$3.dat $DIVRUNDIR/$CASENAME/grid.dat
+fi  
+
 #
 # Info file for Eirene option related print outs
 #
 if [[ -f  $EQUDIR/info.dat ]] then 
-  ln -s $EQUDIR/info.dat $DIVRUNDIR/$1/info.dat
+  ln -s $EQUDIR/info.dat $DIVRUNDIR/$CASENAME/info.dat
 fi  
 #
 # JET hybrid wall data file
 #
 if [[ -f  $EQUDIR/hybrid.dat ]] then 
-  ln -s $EQUDIR/hybrid.dat $DIVRUNDIR/$1/fort.28
+  ln -s $EQUDIR/hybrid.dat $DIVRUNDIR/$CASENAME/fort.28
 #else
 #  echo "JET hybrid wall data file not found."
 fi  
@@ -127,46 +266,46 @@ fi
 #
 if [[ -f  $DIVRESDIR/$5.cfd ]] then 
   echo "Linking ..." $DIVRESDIR/$5.cfd
-  ln -s $DIVRESDIR/$5.cfd $DIVRUNDIR/$1/fort.74
+  ln -s $DIVRESDIR/$5.cfd $DIVRUNDIR/$CASENAME/fort.74
 fi  
 #
 #  Other files that are not usually used.
 #
-# cp $EQUDIR/$3.grd $DIVRUNDIR/$1/fort.13
-# cp $EQUDIR/$3.dat $DIVRUNDIR/$1/fort.12
-# cp $EQUDIR/$3.prn $DIVRUNDIR/$1/fort.10
+# cp $EQUDIR/$3.grd $DIVRUNDIR/$CASENAME/fort.13
+# cp $EQUDIR/$3.dat $DIVRUNDIR/$CASENAME/fort.12
+# cp $EQUDIR/$3.prn $DIVRUNDIR/$CASENAME/fort.10
 #
 #  divimp_plasma.dat is a background plasma solution - if required.   
 #
 if [[ -f  $DIVRESDIR/$6.bgp ]] then 
   echo "Linking ..." $DIVRESDIR/$6.bgp
-  ln -s $DIVRESDIR/$6.bgp $DIVRUNDIR/$1/divimp_plasma.dat
+  ln -s $DIVRESDIR/$6.bgp $DIVRUNDIR/$CASENAME/divimp_plasma.dat
 fi  
 #
 #  divimp_aux_data.dat contains various data from a previous DIVIMP run
 #
 if [[ -f  $DIVRESDIR/$6.auxdata ]] then 
   echo "Linking ..." $DIVRESDIR/$6.auxdata
-  ln -s $DIVRESDIR/$6.auxdata $DIVRUNDIR/$1/divimp_aux_data.dat
+  ln -s $DIVRESDIR/$6.auxdata $DIVRUNDIR/$CASENAME/divimp_aux_data.dat
 fi  
 #
 #  A fluid plasma solution is linked to fort.11 - if one is available.
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4 ]] then 
-    ln -s $EQUDIR/$4 $DIVRUNDIR/$1/fort.11
+    ln -s $EQUDIR/$4 $DIVRUNDIR/$CASENAME/fort.11
   else
     if [[ -f $EQUDIR/$3.$4 ]] then 
-      ln -s $EQUDIR/$3.$4 $DIVRUNDIR/$1/fort.11
+      ln -s $EQUDIR/$3.$4 $DIVRUNDIR/$CASENAME/fort.11
     else
       if [[ -f $EQUDIR/$3.g80 ]] then 
-         ln -s $EQUDIR/$3.g80 $DIVRUNDIR/$1/fort.11
+         ln -s $EQUDIR/$3.g80 $DIVRUNDIR/$CASENAME/fort.11
       fi 
     fi 
   fi
 else
   if [[ -f $EQUDIR/$3.g80 ]] then 
-    ln -s $EQUDIR/$3.g80 $DIVRUNDIR/$1/fort.11
+    ln -s $EQUDIR/$3.g80 $DIVRUNDIR/$CASENAME/fort.11
   fi 
 fi
 #
@@ -174,19 +313,19 @@ fi
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.aux ]] then 
-    ln -s $EQUDIR/$4.aux $DIVRUNDIR/$1/fort.12
+    ln -s $EQUDIR/$4.aux $DIVRUNDIR/$CASENAME/fort.12
   else
     if [[ -f $EQUDIR/$3.$4.aux ]] then 
-      ln -s $EQUDIR/$3.$4.aux $DIVRUNDIR/$1/fort.12
+      ln -s $EQUDIR/$3.$4.aux $DIVRUNDIR/$CASENAME/fort.12
     else
       if [[ -f $EQUDIR/$3.aux ]] then 
-         ln -s $EQUDIR/$3.aux $DIVRUNDIR/$1/fort.12
+         ln -s $EQUDIR/$3.aux $DIVRUNDIR/$CASENAME/fort.12
       fi 
     fi
   fi 
 else
   if [[ -f $EQUDIR/$3.aux ]] then 
-    ln -s $EQUDIR/$3.aux $DIVRUNDIR/$1/fort.12
+    ln -s $EQUDIR/$3.aux $DIVRUNDIR/$CASENAME/fort.12
   fi 
 fi
 #
@@ -194,19 +333,19 @@ fi
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.experiment ]] then 
-    ln -s $EQUDIR/$4.experiment $DIVRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$4.experiment $DIVRUNDIR/$CASENAME/fort.13
   else
     if [[ -f $EQUDIR/$3.$4.experiment ]] then 
-      ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$1/fort.13
+      ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$CASENAME/fort.13
     else
       if [[ -f $EQUDIR/$3.experiment ]] then 
-         ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13
+         ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
       fi 
     fi
   fi
 else
   if [[ -f $EQUDIR/$3.experiment ]] then 
-    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
   fi 
 fi
 #
@@ -216,36 +355,28 @@ fi
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.extflx ]] then 
-    ln -s $EQUDIR/$4.extflx $DIVRUNDIR/$1/ext_flux.dat
+    ln -s $EQUDIR/$4.extflx $DIVRUNDIR/$CASENAME/ext_flux.dat
   else
     if [[ -f $EQUDIR/$3.$4.extflx ]] then 
-      ln -s $EQUDIR/$3.$4.extflx $DIVRUNDIR/$1/ext_flux.dat
+      ln -s $EQUDIR/$3.$4.extflx $DIVRUNDIR/$CASENAME/ext_flux.dat
     else
       if [[ -f $EQUDIR/$3.extflx ]] then 
-         ln -s $EQUDIR/$3.extflx $DIVRUNDIR/$1/ext_flux.dat
+         ln -s $EQUDIR/$3.extflx $DIVRUNDIR/$CASENAME/ext_flux.dat
       fi 
     fi
   fi 
 else
   if [[ -f $EQUDIR/$3.extflx ]] then 
-    ln -s $EQUDIR/$3.extflx $DIVRUNDIR/$1/ext_flux.dat
+    ln -s $EQUDIR/$3.extflx $DIVRUNDIR/$CASENAME/ext_flux.dat
   fi 
 fi
 #
 # Link to the toroidal camera inversion data (SL)
 #
 if [[ -f $EQUDIR/$3.camera ]] then
-   ln -s $EQUDIR/$3.camera $DIVRUNDIR/$1/camera.dat
+   ln -s $EQUDIR/$3.camera $DIVRUNDIR/$CASENAME/camera.dat
 fi
 #
-# These are the scripts that will run the apprpriate hydrogenic
-# neutral code depending on the type of grid. PIN/NIMBUS or EIRENE.
-#
-#
-cp $DIVMAINDIR/runpin rpindiv
-#cp $DIVMAINDIR/runpin5 rpindiv5
-#cp $DIVMAINDIR/runeire reirediv
-cp $DIVMAINDIR/runeire99 reire99
 #
 # Execute DIVIMP
 #
@@ -265,28 +396,28 @@ cp $DIVMAINDIR/runeire99 reire99
 #
 #  Link DIVIMP input data file - so name can be extracted. 
 #
-if [[ -f  $DIVDATDIR/$1.d6i ]] then
-  ln -s $DIVDATDIR/$1.d6i fort.5
+if [[ -f  $DIVDATDIR/$CASENAME.d6i ]] then
+  ln -s $DIVDATDIR/$CASENAME.d6i fort.5
 else
-  echo "DIVIMP Input file " $DIVDATDIR/$1.d6i " does not exist."
+  echo "DIVIMP Input file " $DIVDATDIR/$CASENAME.d6i " does not exist."
   echo "Abnormal Script Termination - Script Exiting"
   cd ..
-  rm -rf $1
+  rm -rf $CASENAME
   exit 1
 fi
 #
 # Copy EIRENE input file template:
 #
-#if [[ -f $EIREXEDIR/$1.dat ]] then 
-#  ln -s $EIREXEDIR/$1.dat $DIVRUNDIR/$1/fort.80
+#if [[ -f $EIREXEDIR/$CASENAME.dat ]] then 
+#  ln -s $EIREXEDIR/$CASENAME.dat $DIVRUNDIR/$CASENAME/fort.80
 #else
-#  ln -s $EIREXEDIR/eirene98.dat $DIVRUNDIR/$1/fort.80
+#  ln -s $EIREXEDIR/eirene98.dat $DIVRUNDIR/$CASENAME/fort.80
 #fi
 #
-if [[ -f $EIREXE99DIR/$1.dat ]] then 
-  ln -s $EIREXE99DIR/$1.dat $DIVRUNDIR/$1/fort.80
+if [[ -f $EIREXE99DIR/$CASENAME.dat ]] then 
+  ln -s $EIREXE99DIR/$CASENAME.dat $DIVRUNDIR/$CASENAME/fort.80
 else
-  ln -s $EIREXE99DIR/eirene99.dat $DIVRUNDIR/$1/fort.80
+  ln -s $EIREXE99DIR/eirene99.dat $DIVRUNDIR/$CASENAME/fort.80
 fi
 #
 #  Run DIVIMP - Use optimized version.
@@ -300,130 +431,72 @@ echo DIVIMP Finished.
 if [[ -n $PINCASE ]] then
   echo "PIN/NIMBUS case: " $PINCASE
 fi
-#
+
+
 #  Save SOL22 plot file 
-#
-if [[ -f POSTSCPT.LIS ]] then 
-   mv POSTSCPT.LIS $DIVRESDIR/$1.sol22.ps 
-fi
-#
-#  Copy or move results.
+mvc POSTSCPT.LIS $CASENAME.sol22.ps
+
 #  .lim Debugging file
-#
-if [[ -f divout1 ]] then 
-   mv divout1 $DIVRESDIR/$1.lim
-fi
-#
+mvc divout1 $CASENAME.lim
+
 #  .dat case output file
-#
-if [[ -f fort.7 ]] then 
-   mv fort.7  $DIVRESDIR/$1.dat
-fi
-#
+mvc fort.7 $CASENAME.dat
+
 #  .html case output file
-#
-if [[ -f fort.22 ]] then 
-   mv fort.22  $DIVRESDIR/$1.html
-fi
-#
+mvc fort.22 $CASENAME.html
+
 #  .inp input echo file + other information
-#
-if [[ -f fort.9 ]] then 
-   mv fort.9 $DIVRESDIR/$1.inp
-fi
-#
+mvc fort.9  $CASENAME.inp
+
 #  PIN input plasma file
-#
-if [[ -f fort.17 ]] then 
-   mv fort.17  $DIVRESDIR/$1.pin
-fi
-#
+mvc fort.17 $CASENAME.pin
+
 #  Additional information from SOL option 22.
-#
-if [[ -f fort.21 ]] then 
-   mv fort.21  $DIVRESDIR/$1.sol22
-fi
-#
+mvc fort.21 $CASENAME.sol22
+
 #  Print-out from PIN
-#
-if [[ -f fort.24 ]] then 
-  mv fort.24  $DIVRESDIR/$1.pinprn
-fi
-#
+mvc fort.24 $CASENAME.pinprn
+
 # TRAN file for JET postprocessors
-#
-if [[ -f fort.41 ]] then 
-   mv fort.41  $DIVRESDIR/$1.tran
-fi
-#
+mvc fort.41 $CASENAME.tran
+
 #  Diagnostic information from THETA module (among others)
-#
-if [[ -f fort.50 ]] then 
-   mv fort.50  $DIVRESDIR/$1.theta
-fi
-#
-#  Print out for Kevin
-#
-if [[ -f fort.56 ]] then 
-   mv fort.56  $DIVRESDIR/$1.probe
-fi
-#
+mvc fort.50 $CASENAME.theta
+
+#  Print out for Kevin Erents
+mvc fort.56 $CASENAME.probe
+
 #  Additional information from SOL option 23.
-#
-if [[ -f fort.71 ]] then 
-   mv fort.71  $DIVRESDIR/$1.sol23
-fi
-#
+mvc fort.71 $CASENAME.sol23
+
 #  Excel print information from sol23
-#
-if [[ -f fort.73 ]] then 
-   mv fort.73  $DIVRESDIR/$1.exl23
-fi
-#
+mvc fort.73 $CASENAME.exl23
+
 #  CFD solution file
-#
-if [[ -f fort.75 ]] then 
-   mv fort.75   $DIVRESDIR/$1.cfd
-fi
-#
-#  Diagnostic files (SL)
-#
-if [[ -f fort.88 ]] then 
-   mv fort.88  $DIVRESDIR/$1.src
-fi
-#
-if [[ -f fort.87 ]] then 
-   mv fort.87  $DIVRESDIR/$1.g3 
-fi
-#
-#  DIVIMP format background plasma file - if writing one
-#  has been requested. 
-#
-if [[ -f divimp_plasma.out ]] then 
-  mv divimp_plasma.out $DIVRESDIR/$1.bgp
-fi
-#
+mvc fort.75 $CASENAME.cfd
+
+#  DIVIMP format background plasma file - if writing one has been requested. 
+mvc divimp_plasma.out $CASENAME.bgp
+
 #  Additional DIVIMP data file - output in a standardized tagged format. 
-#
-if [[ -f divimp_aux_data.out ]] then 
-  mv divimp_aux_data.out  $DIVRESDIR/$1.auxdata
-fi
-#
+mvc divimp_aux_data.out $CASENAME.auxdata
+
 # Core file in case DIVIMP crashed
+mvc core $CASENAME.core
+
 #
-if [[ -f core ]] then 
-  mv core  $DIVRESDIR/$1.core
-fi
-#
-# mv fort.25  $DIVRESDIR/$1.lst.grd
-# mv fort.27  $DIVRESDIR/$1.cell.grd
+# mv fort.25  $DIVRESDIR/$CASENAME.lst.grd
+# mv fort.27  $DIVRESDIR/$CASENAME.cell.grd
 #
 #  Convert the DIVIMP output data file to postscript. 
 #
-a2ps $DIVRESDIR/$1.dat --output=$DIVRESDIR/$1.ps 
+a2ps $CASENAME.dat --output=$CASENAME.ps 
 #
-# a2ps -nn $DIVRESDIR/$1.sol > $DIVRESDIR/$1.sol.ps 
-# mv POSTSCPT.LIS $DIVRESDIR/$1.sol.psg
+# a2ps -nn $DIVRESDIR/$CASENAME.sol > $DIVRESDIR/$CASENAME.sol.ps 
+# mv POSTSCPT.LIS $DIVRESDIR/$CASENAME.sol.psg
+
+#
+#------------------------------------------------------------
 #
 #  Execute OUT
 #
@@ -439,138 +512,274 @@ echo OUTput processing complete.
 #
 #  Copy or move results of OUT run.
 #
+
 #  .out - OUT debugging file 
-#
-if [[ -f outout1 ]] then 
-   mv outout1 $DIVRESDIR/$1.out
-fi
+mvc outout1 $CASENAME.out
+
 #  .raw complete results file
-#
-if [[ -f fort.8 ]] then 
-   mv fort.8 $DIVRESDIR/$1.raw
-fi  
-#
+mvc fort.8 $CASENAME.raw
+
+
 #  Erosion/Deposition print out
-#
-if [[ -f fort.57 ]] then 
-   mv fort.57  $DIVRESDIR/$1.deposition
-fi
-#
+mvc fort.57 $CASENAME.deposition
+
 # AUG file
-#
-if [[ -f fort.59 ]] then
-   mv fort.59 $DIVRESDIR/$1.AUGdiv
-fi
-#
-# Supplimentary .raw files (SL)
-#
-if [[ -f plasma.dat ]] then 
-   mv plasma.dat  $DIVRESDIR/$1.raw.pla
-fi
-if [[ -f source.dat ]] then 
-   mv source.dat  $DIVRESDIR/$1.raw.src
-fi
-if [[ -f geomty.dat ]] then 
-   mv geomty.dat  $DIVRESDIR/$1.raw.geo
-fi
-#
+mvc fort.59 $CASENAME.augdiv
+
 #  .dag OUT output file
-#
-if [[ -f fort.7 ]] then 
-   mv fort.7  $DIVRESDIR/$1.dag
-fi
-#
-#  .psg - Postscript plots 
-#
+mvc fort.7 $CASENAME.dag
+
+#  .psg - Postscript plots - create pdf too
 if [[ -f POSTSCPT.LIS ]] then 
-  ps2pdf POSTSCPT.LIS $DIVRESDIR/$1.pdf
-  mv POSTSCPT.LIS $DIVRESDIR/$1.psg 
+  ps2pdf POSTSCPT.LIS $CASENAME.pdf
+  mvc POSTSCPT.LIS $CASENAME.psg 
 fi
-#
+
 #  .ing - Echo of input to graphing routines
-#
-if [[ -f fort.9 ]] then 
-   mv fort.9 $DIVRESDIR/$1.ing
-fi
-#
+mvc fort.9 $CASENAME.ing
+
 #  Special printed listing of some plot information.
-#
-if [[ -f fort.26 ]] then
-   mv fort.26 $DIVRESDIR/$1.grp
-fi 
-#
+mvc fort.26 $CASENAME.grp
+
 #  Special printed listing of some plot information.
-#
-if [[ -f fort.49 ]] then
-   mv fort.49 $DIVRESDIR/$1.plt
-fi
+mvc fort.49 $CASENAME.plt
+
 #
 # Save HC output files 
 #
-if [[ -f hc_alert.txt ]] then
-   mv hc_alert.txt $DIVRESDIR/$1.hc_alert
-fi
-#
-if [[ -f hc_cpos_stat.txt ]] then
-   mv hc_cpos_stat.txt $DIVRESDIR/$1.hc_cpos_stat
-fi
-#
-if [[ -f hc_output.txt ]] then
-   mv hc_output.txt $DIVRESDIR/$1.hc_output
-fi
-#
-if [[ -f hc_scratch.txt ]] then
-   mv hc_scratch.txt $DIVRESDIR/$1.hc_scratch
-fi
-#
-if [[ -f temphc.txt ]] then
-   mv temphc.txt $DIVRESDIR/$1.temphc
-fi
-#
-# Some additional files from the relax subroutine?
-#
-if [[ -f geomty.dat ]] then
-   mv  geomty.dat $DIVRESDIR/$1.geomty.dat
-fi
-if [[ -f plasma.dat ]] then
-   mv  plasma.dat $DIVRESDIR/$1.plasma.dat
-fi
-if [[ -f source.dat ]] then
-   mv  source.dat $DIVRESDIR/$1.source.dat
-fi
+# HC alerts 
+mvc hc_alert.txt  $CASENAME.hc_alert
+
+# HC particle tracking stats
+mvc hc_cpos_stat.txt  $CASENAME.hc_cpos_stat
+
+# HC general output
+mvc hc_output.txt  $CASENAME.hc_output
+
+# HC scratch 
+mvc hc_scratch.txt  $CASENAME.hc_scratch
+
+# HC temp file
+mvc temphc.txt  $CASENAME.temphc
+
+
 #
 # EIRENE related output:
 #
-if [[ -f fort.81 ]] then
-   mv fort.81 $DIVRESDIR/$1.eirdat
-fi
-if [[ -f eirtrac.dat ]] then
-   mv eirtrac.dat $DIVRESDIR/$1.eirtrc
-fi
-#if [[ -f fort.80 ]] then
-#   mv fort.80 $DIVRESDIR/$1.eirtmp
-#fi
-if [[ -f fort.52 ]] then
-   mv fort.52 $DIVRESDIR/$1.eirgeo
-fi
-if [[ -f fort.50 ]] then
-   mv fort.50 $DIVRESDIR/$1.debug
-fi
-if [[ -f fort.85 ]] then
-   mv fort.85 $DIVRESDIR/$1.g1
-fi
-if [[ -f addsur.dat ]] then
-   mv addsur.dat $DIVRESDIR/$1.eirsur
-fi
+
+# Eirene dat file
+mvc fort.81  $CASENAME.eirdat
+
+# Eirene particle tracks (?)
+mvc eirtrac $CASENAME.eirtrc
+
+# Out debug file (?) ... a fort.50 from divimp has already been moved - this one could be out
+mvc fort.50 $CASENAME.out.debug
+
+
 #
 # Move image files if any ...
 #
-if [[ -f $1_image01.jpg ]] then 
+if [[ -f $CASENAME_image01.jpg ]] then 
   mv *image*.jpg $DIVRESDIR
 fi
+
+
+#
+# jdemod - these are the old copy commands - saved until script is verified in use
+#
+#
+# Supplementary .raw files (SL)
+#
+#if [[ -f plasma.dat ]] then 
+#   mv plasma.dat  $DIVRESDIR/$CASENAME.raw.pla
+#fi
+#if [[ -f source.dat ]] then 
+#   mv source.dat  $DIVRESDIR/$CASENAME.raw.src
+#fi
+#if [[ -f geomty.dat ]] then 
+#   mv geomty.dat  $DIVRESDIR/$CASENAME.raw.geo
+#fi
+#
+# Some additional files from the relax subroutine (?)
+#
+#if [[ -f geomty.dat ]] then
+#   mv  geomty.dat $DIVRESDIR/$CASENAME.geomty.dat
+#fi
+#if [[ -f plasma.dat ]] then
+#   mv  plasma.dat $DIVRESDIR/$CASENAME.plasma.dat
+#fi
+#if [[ -f source.dat ]] then
+#   mv  source.dat $DIVRESDIR/$CASENAME.source.dat
+#fi
+#
+#if [[ -f addsur.dat ]] then
+#   mv addsur.dat $DIVRESDIR/$CASENAME.eirsur
+#fi
+#
+#if [[ -f fort.85 ]] then
+#   mv fort.85 $DIVRESDIR/$CASENAME.g1
+#fi
+#
+#  Diagnostic files (SL)
+#
+#if [[ -f fort.88 ]] then 
+#   mv fort.88  $DIVRESDIR/$CASENAME.src
+#fi
+#
+#if [[ -f fort.87 ]] then 
+#   mv fort.87  $DIVRESDIR/$CASENAME.g3 
+#fi
+#if [[ -f fort.80 ]] then
+#   mv fort.80 $DIVRESDIR/$CASENAME.eirtmp
+#fi
+
+#if [[ -f fort.52 ]] then
+#   mv fort.52 $DIVRESDIR/$CASENAME.eirgeo
+#fi
+
+
+
+#
+# Additional files that may be generated by the newer code version and EIRENE07
+# The mvc scripts checks to see if the file exists before moving it - this eliminates
+# some executione error messages if the case did not produce those file. 
+#
+
+mvc plasma.dat       $CASENAME.raw.pla
+mvc source.dat       $CASENAME.raw.src
+mvc geomty.dat       $CASENAME.raw.geo
+
+mvc triangles.raw    $CASENAME.raw.tri
+mvc fort.79          $CASENAME.raw.rel
+mvc vac-grid.dat     $CASENAME.raw.vac
+mvc jummap.dat       $CASENAME.raw.jum
+mvc osm.raw          $CASENAME.raw.osm
+mvc osm_geometry.raw $CASENAME.raw.ogd
+mvc osm_legacy.raw   $CASENAME.raw.old
+
+#   Process tetrahedron files:
+#rename ".raw" ".raw.tet" -- tetrahedrons*.raw
+#rename ".raw" ".raw.fil" -- filaments*.raw
+#rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet
+#rename "filaments"    "$CASENAME" -- filaments*.raw.fil
+
+#
+# Move some additional files
+# Note: some of these were already done (e.g. g1) but have been centralized here
+# Note: moved these into numerical order to make it easier to see what is copied
+#
+
+# fort.25 - grid file echo (?)
+mvc fort.25 $CASENAME.sonnet
+
+# fort.52 - eirene geometry file
+mvc fort.52 $CASENAME.eig
+
+# (?) Eirene debug files (?)
+mvc fort.65 $CASENAME.e1
+mvc fort.66 $CASENAME.e2
+mvc fort.67 $CASENAME.e3
+
+# (?) Eirene debug files (?) Diagnostic files (?)
+mvc fort.85 $CASENAME.g1
+mvc fort.86 $CASENAME.g2
+mvc fort.87 $CASENAME.g3
+mvc fort.88 $CASENAME.src
+
+# fort.90 - OSM log file
+mvc fort.90 $CASENAME.osm.log
+
+mvc dump.dat $CASENAME.dump
+
+mvc line.dat   $CASENAME.dat.line
+mvc strata.dat $CASENAME.dat.strata
+mvc bgk.dat    $CASENAME.dat.bgk
+
+#  mvc acd.dat    $CASENAME.dat.acd
+mvc rec.dat    $CASENAME.dat.rec
+
+mvc addsur.dat    $CASENAME.addsur
+
+mvc triangles.dat       $CASENAME.triangles
+mvc triangles.npco_char $CASENAME.triangles.npco_char
+mvc triangles.elemente  $CASENAME.triangles.elemente
+mvc triangles.neighbors $CASENAME.triangles.neighbor
+mvc triangles.plasma    $CASENAME.triangles.plasma
+mvc triangles.efield    $CASENAME.triangles.efield
+
+
+mvc quadrangles.geometry $CASENAME.quadrangles.geometry
+mvc quadrangles.plasma   $CASENAME.quadrangles.plasma
+mvc quadrangles.efield   $CASENAME.quadrangles.efield
+
+mvc objects.dat       $CASENAME.triangles
+mvc objects.npco_char $CASENAME.objects.npco_char
+mvc objects.elemente  $CASENAME.objects.elemente
+mvc objects.neighbors $CASENAME.objects.neighbor
+mvc objects.plasma    $CASENAME.objects.plasma
+mvc objects.centre    $CASENAME.objects.centre
+mvc objects.efield    $CASENAME.objects.efield
+
+mvc osm.idl $CASENAME.osm
+
+mvc plasma-transfer.dat $CASENAME.rzplasma
+mvc celldata.dat        $CASENAME.celldata
+
+# jdemod - comment out renames for now since the files don't seem to exist (at least in all cases)
+#rename ".transfer" ".eir"      -- eirene*.transfer
+#rename ".input"    ".eirdat"   -- eirene*.input
+#rename ".output"   ".eirprn"   -- eirene*.output
+#rename "eirene"    "$CASENAME" -- eirene*.eir*
+
+mvc eirene.transfer     $CASENAME.eir2
+mvc eirene.input        $CASENAME.eirdat2
+
+# apparently an eirene output file
+mvc eirene04.txt $CASENAME.eir04txt
+
+# not sure what this file is ...
+mvc idl.divimp_launch $CASENAME.idl_launch
+
+# grid clipping output?
+mvc output.clipping $CASENAME.clipping
+
+
+# copy "core analysis" file
+cpc core_analysis.dat $CASENAME.midplane.dat
+
+#
+#  mvc core_analysis.dat ~/idl/lc/$CASENAME.dat
+#
+
+#
+# ----------------------------------------------------------------------
+# Move files for upload to the web:
+#
+#  mvc $CASENAME.html $RESDIR/transfer
+#  mvc $CASENAME.pdf  $RESDIR/transfer
+#
+# ----------------------------------------------------------------------
+#
+# Move all files to results directory, over-writing any previous results:
+# jdemod - not sure what *.A and *.map files might be
+#rm *.A
+#  zipc *.A
+#rm *.map
+
+# echo "Case:" $CASENAME  $DIVRESDIR
+
+#
+# Move results files
+# Note: jdemod - this is a critical step since all files have simply be renamed to $CASENAME so far
+#
+
+mv -f $CASENAME.* $DIVRESDIR
+
+
 #
 # cp fort.13 $EQUDIR/$3.grd 
-# a2ps -nn -p $DIVRESDIR/$1.plt > $DIVRESDIR/$1.plt.ps
+# a2ps -nn -p $DIVRESDIR/$CASENAME.plt > $DIVRESDIR/$CASENAME.plt.ps
 #
 #
 # Clean-up
@@ -581,12 +790,29 @@ rm -f rpindiv
 rm -f rpindiv5
 rm -f reirediv
 rm -f reire99
+rm -f reire02
+rm -f reire04
+rm -f reire06
+rm -f reire07
+
+# remove eirene related files that we don't want saved
+rm -f eirene07
+rm -f eirene.template
+# the following appears to be a binary file
+rm -f eirene.13
+
+# remove the triangle program and any remaining output
+rm -f triangle*
+rm -f tmp
+
 #
 rm -f HYDHEL
 rm -f SPUTER
 rm -f AMJUEL
 rm -f H2VIBR
 rm -f METHANE
+rm -f TRIM
+
 #
 # Remove camera file if linked
 #
@@ -601,72 +827,75 @@ if [[ -f info.dat ]] then
 fi 
 #
 cd $DIVRUNDIR
-rmdir $1
+rmdir $CASENAME
+
+
+#-------------------------------
+#
+# Changing to results directory to clean up and compress
+#
+
 cd $DIVRESDIR
 #
 # Compress the larger output files - check for file existence
 #                                    before compressing.
 #
-if [[ -f $1.raw ]] then
-   compress -f -v $1.raw
+if [[ -f $CASENAME.raw ]] then
+   compress -f -v $CASENAME.raw
 fi
 # (SL)
-if [[ -f $1.raw.src ]] then
-   compress -f -v $1.raw.src
+if [[ -f $CASENAME.raw.src ]] then
+   compress -f -v $CASENAME.raw.src
 fi
-if [[ -f $1.raw.pla ]] then
-   compress -f -v $1.raw.pla
+if [[ -f $CASENAME.raw.pla ]] then
+   compress -f -v $CASENAME.raw.pla
 fi
-if [[ -f $1.raw.geo ]] then
-   compress -f -v $1.raw.geo
+if [[ -f $CASENAME.raw.geo ]] then
+   compress -f -v $CASENAME.raw.geo
 fi
-if [[ -f $1.raw.rel ]] then
-   compress -f -v $1.raw.rel
-fi
-#
-if [[ -f $1.lim ]] then
-   compress -f -v $1.lim
+if [[ -f $CASENAME.raw.rel ]] then
+   compress -f -v $CASENAME.raw.rel
 fi
 #
-if [[ -f $1.sol22 ]] then
-   compress -f -v $1.sol22
+if [[ -f $CASENAME.lim ]] then
+   compress -f -v $CASENAME.lim
 fi
 #
-if [[ -f $1.sol22 ]] then
-   compress -f -v $1.sol23
+if [[ -f $CASENAME.sol22 ]] then
+   compress -f -v $CASENAME.sol22
 fi
 #
-#if [[ -f $1.sol22 ]] then
-#   compress -f -v $1.sol22
-#fi
-#
-if [[ -f $1.out ]] then
-   compress -f -v $1.out
+if [[ -f $CASENAME.sol23 ]] then
+   compress -f -v $CASENAME.sol23
 fi
 #
-if [[ -f $1.pinout ]] then
-   compress -f -v $1.pinout
+if [[ -f $CASENAME.out ]] then
+   compress -f -v $CASENAME.out
+fi
+#
+if [[ -f $CASENAME.pinout ]] then
+   compress -f -v $CASENAME.pinout
 fi 
 #
-if [[ -f $1.pinraw ]] then
-   compress -f -v $1.pinraw
+if [[ -f $CASENAME.pinraw ]] then
+   compress -f -v $CASENAME.pinraw
 fi 
 #
-if [[ -f $1.pinnim ]] then
-   compress -f -v $1.pinnim
+if [[ -f $CASENAME.pinnim ]] then
+   compress -f -v $CASENAME.pinnim
 fi 
 #
-if [[ -f $1.pinmc ]] then
-   compress -f -v $1.pinmc
+if [[ -f $CASENAME.pinmc ]] then
+   compress -f -v $CASENAME.pinmc
 fi 
 #
 #  Print
 #
-# lp $1.ps
-# lp $1.sol.ps
-# lp $1.plt.ps
-# lp $1.psg
-# lp $1.sol.ps
+# lp $CASENAME.ps
+# lp $CASENAME.sol.ps
+# lp $CASENAME.plt.ps
+# lp $CASENAME.psg
+# lp $CASENAME.sol.ps
 #
 #  Return to base directory.
 #
