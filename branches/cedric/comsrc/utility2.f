@@ -839,7 +839,7 @@ c          IF (.TRUE.) THEN
 c            WRITE(0,*) 'CONVERTING PSIN TO R'
 
 c            IF (lblock(i).EQ.2.AND.MOD(REAL(lcount),2.0).EQ.0) THEN 
-c              edata(i1,1) = (edata(i1,1) - (-1.36600006)) *   ! left off  * HACK *
+c              edata(i1,1) = (edata(i1,1) - (-1.36600006)) *  
 c     .                      (0.226 / 0.281) + (-1.366)
 c            ENDIF
 
@@ -3924,8 +3924,7 @@ c
       rval = r
 
       WRITE(SLOUT,'(A)') line
-      ! jdemod - change format so that number fits 
-      WRITE(SLOUT,'(5X,2A,I8,1P,E12.2)') tag,' = ',ival,rval
+      WRITE(SLOUT,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
@@ -3965,8 +3964,7 @@ c
       ival = i
 
       WRITE(SLOUT,'(A)')        line
-      ! jdemod - change format so that number fits 
-      WRITE(SLOUT,'(5X,2A,I8)') tag,' = ',ival
+      WRITE(SLOUT,'(5X,2A,I4)') tag,' = ',ival
 
       RETURN
 98    WRITE(EROUT,*) 'Problem reading unstructured input'
@@ -4876,7 +4874,6 @@ c
       DO ik = iks, ike
 
         IF     (tag.EQ.'MOCK P2') THEN
-c...LEFT OFF
           IF (iks.EQ.1.AND.ik.EQ.iks) THEN
             deltas = kss(1,ir) - ksb(0,ir)
             sval   = 0.5 * (kss(1,ir) + ksb(0,ir))
@@ -6349,145 +6346,4 @@ c      READ(fp,ERR=98) tri,ver,add
  98   CALL ER('LoadTriangles','Problems reading data file',*99)
  99   STOP
       END
-c
-c ======================================================================
-c
-c subroutine: PointOnLine
-c
-      LOGICAL FUNCTION PointOnLine(x,y,s,t,mode,output)
-      USE mod_eirene04
-      IMPLICIT none
 
-      REAL*8     DTOL
-c      PARAMETER (DTOL=1.0D-05)
-
-      INTEGER mode
-      LOGICAL test,output
-      REAL*8  x(0:2),y(0:2),s,t
-
-      IF     (mode.EQ.1.OR.mode.EQ.4) THEN
-c...    Include end points as .TRUE.:
-        DTOL = +1.0D-05
-      ELSEIF (mode.EQ.2.OR.mode.EQ.3) THEN
-c...    Don't include end points as .TRUE.:
-        DTOL = -1.0D-05
-      ELSE
-        CALL ER('PointOnLine','Invalid MODE',*99)
-      ENDIF
- 
-      test = .TRUE.
-      
-      s = -999.0D0
-      t = -999.0D0
-
-      IF (DABS(x(0)-x(1)).LT.DABS(DTOL)) THEN
-c...    This always fails for MODE.EQ.2:  ! WHY WAS I EVER HAPPY WITH THIS? 
-        test = test.AND.DABS(x(0)-x(2)).LT.DABS(DTOL)
-c        test = test.AND.DABS(x(0)-x(2)).LT.DTOL  ! BUG
-      ELSE
-        s = (x(2) - x(0)) / (x(1) - x(0))
-        test = test.AND.s.GT.0.0D0-DTOL.AND.s.LT.1.0D0+DTOL
-      ENDIF
-
-      IF (test) THEN
-        IF (DABS(y(0)-y(1)).LT.DABS(DTOL)) THEN
-          IF (output) THEN
-            WRITE(0,*) '  T1',y(0),DABS(DTOL)
-            WRITE(0,*) '  T1',y(1),DABS(y(0)-y(1))
-            WRITE(0,*) '  T1',y(2),DABS(y(0)-y(2))
-          ENDIF
-          test = test.AND.DABS(y(0)-y(2)).LT.DABS(DTOL)
-c          test = test.AND.DABS(y(0)-y(2)).LT.DTOL ! BUG
-        ELSE
-          IF (output) WRITE(0,*) '  T2'
-          t = (y(2) - y(0)) / (y(1) - y(0))
-          test = test.AND.t.GT.0.0D0-DTOL.AND.t.LT.1.0D0+DTOL
-        ENDIF
-c...    This requirement is a little more relaxed due to small cells:   ! *PERHAPS SCALE ACCORDING TO SIDE LENGTH?*
-        IF (mode.NE.3.AND.mode.NE.4.AND.
-     .      s.NE.-999.0D0.AND.t.NE.-999.0D0)
-     .    test=test.AND.DABS(s-t).LT.100.0D0*DABS(DTOL)
-      ENDIF
-
-      IF (output) WRITE(0,'(A,2F12.6,1P,E14.7,L2)') 
-     .  'S&T:',s,t,DABS(s-t),test
-
-      IF (.NOT.test) s = -1.0D0
-
-      PointOnLine = test
-
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
-c
-c ======================================================================
-c
-c function: CalcTriangleArea
-c
-c
-c
-      DOUBLE PRECISION FUNCTION CalcTriangleArea(x1,y1,x2,y2,x3,y3)
-      IMPLICIT none
-
-      DOUBLE PRECISION x1,y1,x2,y2,x3,y3
-
-      INTEGER          i1,i2,i3
-      DOUBLE PRECISION area,vx(4),vy(4),t1,t2
-
-      area = 0.0D0
-
-      IF     (y1.EQ.y3) THEN
-        area = 0.5D0 * DABS(x1 - x3) * DABS(y1 - y2)
-      ELSEIF (y2.EQ.y3) THEN
-        area = 0.5D0 * DABS(x2 - x3) * DABS(y2 - y1)
-      ELSEIF (y1.EQ.y2) THEN
-        area = 0.5D0 * DABS(x1 - x2) * DABS(y1 - y3)
-      ELSE
-        vx(1) = x1
-        vy(1) = y1
-        vx(2) = x2
-        vy(2) = y2
-        vx(3) = x3
-        vy(3) = y3
-
-        IF     (y1.LT.y2.AND.y1.GT.y3.OR.
-     .          y1.LT.y3.AND.y1.GT.y2) THEN
-          i1 = 2
-          i2 = 1
-          i3 = 3
-        ELSEIF (y2.LT.y1.AND.y2.GT.y3.OR.
-     .          y2.LT.y3.AND.y2.GT.y1) THEN
-          i1 = 1
-          i2 = 2
-          i3 = 3
-        ELSEIF (y3.LT.y2.AND.y3.GT.y1.OR.
-     .          y3.LT.y1.AND.y3.GT.y2) THEN
-          i1 = 1
-          i2 = 3
-          i3 = 2
-        ELSE
-          CALL ER('CalcTriangleArea','Invalid vertex data',*99)
-        ENDIF
-
-        CALL CalcInter(vx(i1),vy(i1),vx(i3),vy(i3),
-     .                 -100.0D0,vy(i2),+100.0D0,vy(i2),t1,t2)
-
-        IF (t1.GT.0.0D0.AND.t1.LT.1.0D0) THEN
-          vx(4) = vx(i1) + t1 * (vx(i3) - vx(i1))
-          vy(4) = vy(i1) + t1 * (vy(i3) - vy(i1))
-
-          area = 0.5 * DABS(vx(i2) - vx(4)) * DABS(vy(i1) - vy(i2)) +
-     .           0.5 * DABS(vx(i2) - vx(4)) * DABS(vy(i3) - vy(i2))
-        ELSE
-          CALL ER('CalcTriangleArea','Intersection not found',*99)
-        ENDIF
-      ENDIF
-
-      CalcTriangleArea = area
-
-      RETURN
-99    STOP
-      END

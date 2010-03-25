@@ -258,7 +258,9 @@ c-------------------/z1 =  1  908.9nm CI... (other comments)
 c     This enables us to map the Z data blocks of a pls file
 c     to more than one spectral line of a given ionization state
 
-      year='95'
+c     IPP/09 Krieger - fix to use specified year for impurities
+c     year='95'
+      write(year,'(i2.2)') iyearz
       yeardf='89'
       call ADASCHK(YEAR,YEARDF,cion,maplist,lambda)     
       write(6,*) 'PLRP LINES IN ADAS PLS FILE:'

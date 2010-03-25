@@ -11,6 +11,7 @@ DIVDIR=$HOME/divimp
 DIVRES=$DIVDIR/results
 DIVDAT=$DIVDIR/data
 DIVSHOTS=$DIVDIR/shots
+DIVCASES=$DIVDIR/cases
 
 #
 # Create directory tree if it does not exist
@@ -30,6 +31,10 @@ fi
 
 if [[ ! ( -d $DIVSHOTS ) ]] then
    mkdir $DIVSHOTS
+fi
+
+if [[ ! ( -d $DIVCASES ) ]] then
+   mkdir $DIVCASES
 fi
 
 #

@@ -129,9 +129,9 @@ $                 Y of the first cell on the ring, otherwise use
 $                 vertex Y on the last cell of the ring.
 $ X,Y   - see VT
 $
-'*077 1.0 Additional surfaces:'
-' ' '     (dummy line) '
-' Type  vt1  x1(m)   y1(m)    vt2   x2(m)   y2(m)    '     0
+$'*077 1.0 Additional surfaces:'
+$' ' '     (dummy line) '
+$' Type  vt1  x1(m)   y1(m)    vt2   x2(m)   y2(m)    '     0
 $
 '*079 1.0 Plasma data for uniform private flux zone:'
 ' ' '     (dummy line) '

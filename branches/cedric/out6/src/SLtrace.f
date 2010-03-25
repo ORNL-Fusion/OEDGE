@@ -561,7 +561,9 @@ c
 c slmod begin
       IF (nplts.EQ.1) THEN
         IF (slopt2.EQ.1) THEN
-          CALL THICK (2)
+c         IPP/08 Krieger - revert to thin lines for the moment
+c         CALL THICK (2)
+          CALL THICK (1)
           CALL CTRMAG(30)
           CALL PLOTCS(0.03,0.94,TITLE(1:MIN(45,LEN_TRIM(TITLE))))
           L = LENSTR(REF)
@@ -846,7 +848,9 @@ c slmod begin
           xp = xpt + 1.02*xwid + 0.25 * xsep
           yp = ypt + ywid - (in - 1) * (ywid / ngs) * 0.4
           call full
-          CALL THICK(2)
+c         IPP/08 Krieger - revert to thin lines for the moment
+c         CALL THICK(2)
+          CALL THICK(1)
           call positn(xp,yp)
           call join  (xp+0.05,yp)
           CALL THICK(1)
@@ -1030,7 +1034,9 @@ c slmod begin
           CALL TYPENI (ITEN)
           CALL NORMAL
         ENDIF
-        CALL THICK(2)
+c       IPP/08 Krieger - revert to thin lines for the moment
+c       CALL THICK(2)
+        CALL THICK(1)
         CALL CTRMAG (20)
         L=LENSTR(xlab)
         CALL PCSCEN (xpt+0.5*xwid,ypt-0.9*ysep,xlab(1:L))
@@ -1140,7 +1146,9 @@ c slmod begin
         ENDIF
         CALL NORMAL
         CALL CTRMAG (20)
-        CALL THICK(2)
+c       IPP/08 Krieger - revert to thin lines for the moment
+c       CALL THICK(2)
+        CALL THICK(1)
         L = LENSTR (YLAB)
         CALL PCSCEN (xpt-1.0*xsep,ypt+0.5*ywid,YLAB(:L))
         CALL THICK(1)
@@ -1306,7 +1314,9 @@ c slmod begin
 c            CALL FULL
             CALL LinCol(colour(plottype(icol)+ncols))
           ENDIF
-          IF (slopt2.EQ.1) CALL THICK(2)
+c         IPP/08 Krieger - revert to thin lines for the moment
+c         IF (slopt2.EQ.1) CALL THICK(2)
+          IF (slopt2.EQ.1) CALL THICK(1)
         ENDIF
 c slmod end
 c

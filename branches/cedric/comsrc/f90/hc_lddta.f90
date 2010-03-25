@@ -151,9 +151,21 @@ Subroutine Load_HC_Data_Ehrhardt_Langer ()
   Integer :: Io_Result = 0
   Integer :: C_Product_Counter
   Integer :: Current_Reaction
- 
-  character*38 el_data_filename
-  data el_data_filename/"../hc_data/hc_xsec_ehrhardt_langer.dat"/
+
+  integer :: ierr
+  character*256 :: divhome
+  character*256 :: el_data_filename
+
+
+  ! get divimp directory so we can look up data files
+
+  call get_div_exec_dir(divhome,ierr)
+
+  write(0,'(a,a,a)') 'Load_HC_Data_Erhardt_Langer:DIVIMP HOME:',trim(divhome),':'
+
+  ! set datafile name
+
+  el_data_filename=trim(divhome)//'/hc_data/hc_xsec_ehrhardt_langer.dat'
 
   ! initialize
   current_reaction = 0
@@ -645,7 +657,11 @@ Subroutine Load_HC_Data_Janev_reiter ()
   !
   !
   integer,parameter :: max_files = 10
-  character*100 :: files(max_files)
+
+  integer ierr
+  character*256 :: divhome
+
+  character*256 :: files(max_files)
 
   integer :: filecount
   integer :: strlen,in,i,rc
@@ -656,23 +672,29 @@ Subroutine Load_HC_Data_Janev_reiter ()
   !
   filecount = 10
 
+  ! get divimp directory where reference data is stored
+  call get_div_exec_dir(divhome,ierr)
+
+  write(0,'(a,a,a)') 'Load_HC_Data_Janev_Reiter:DIVIMP HOME:',trim(divhome),':'
+
   !
   ! e-reactions
   !
-  files(1) = '../hc_data/hc_sigmav_jr_CHy_DE.dat'
-  files(2) = '../hc_data/hc_sigmav_jr_CHy+_DE.dat'
-  files(3) = '../hc_data/hc_sigmav_jr_CHy+_DI.dat'
-  files(4) = '../hc_data/hc_sigmav_jr_CHy+_DR.dat'
-  files(5) = '../hc_data/hc_sigmav_jr_CI_DI.dat'
-  files(6) = '../hc_data/hc_sigmav_jr_CH_I_DI.dat'
-  files(7) = '../hc_data/hc_sigmav_jr_CH2_I_DI.dat'
-  files(8) = '../hc_data/hc_sigmav_jr_CH3_I_DI.dat'
-  files(9) = '../hc_data/hc_sigmav_jr_CH4_I_DI.dat'
+
+  files(1) = trim(divhome)//'/hc_data/hc_sigmav_jr_CHy_DE.dat'
+  files(2) = trim(divhome)//'/hc_data/hc_sigmav_jr_CHy+_DE.dat'
+  files(3) = trim(divhome)//'/hc_data/hc_sigmav_jr_CHy+_DI.dat'
+  files(4) = trim(divhome)//'/hc_data/hc_sigmav_jr_CHy+_DR.dat'
+  files(5) = trim(divhome)//'/hc_data/hc_sigmav_jr_CI_DI.dat'
+  files(6) = trim(divhome)//'/hc_data/hc_sigmav_jr_CH_I_DI.dat'
+  files(7) = trim(divhome)//'/hc_data/hc_sigmav_jr_CH2_I_DI.dat'
+  files(8) = trim(divhome)//'/hc_data/hc_sigmav_jr_CH3_I_DI.dat'
+  files(9) = trim(divhome)//'/hc_data/hc_sigmav_jr_CH4_I_DI.dat'
 
   !
   ! p-reactions
   !
-  files(10) = '../hc_data/hc_sigmav_jr_CHy_CX.dat'
+  files(10) = trim(divhome)//'/hc_data/hc_sigmav_jr_CHy_CX.dat'
 
   call init_load_jr
 

@@ -3080,22 +3080,43 @@ c
            ZIW(IND) = ZP(ID)
            IND = IND +1
         end do
-        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
-           IR = IRTRAP+1
-        elseif (cgridopt.eq.2) then
-           ir = irtrap2+1
+c slmod begin
+        if (.not.nopriv) then
+          if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+             IR = IRTRAP+1
+          elseif (cgridopt.eq.2) then
+             ir = irtrap2+1
+          endif
+          in = korpg(nks(ir),ir)
+          RIW(IND) = rvertp(4,in)
+          ZIW(IND) = zvertp(4,in)
+          IND = IND +1
+          IONTI1 = IND-1
+          DO IK = NKS(IR),1,-1
+             in = korpg(ik,ir)
+             RIW(IND) = rvertp(1,in)
+             ZIW(IND) = zvertp(1,in)
+             IND = IND+1
+          end do
         endif
-        in = korpg(nks(ir),ir)
-        RIW(IND) = rvertp(4,in)
-        ZIW(IND) = zvertp(4,in)
-        IND = IND +1
-        IONTI1 = IND-1
-        DO IK = NKS(IR),1,-1
-           in = korpg(ik,ir)
-           RIW(IND) = rvertp(1,in)
-           ZIW(IND) = zvertp(1,in)
-           IND = IND+1
-        end do
+c
+c        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c           IR = IRTRAP+1
+c        elseif (cgridopt.eq.2) then
+c           ir = irtrap2+1
+c        endif
+c        in = korpg(nks(ir),ir)
+c        RIW(IND) = rvertp(4,in)
+c        ZIW(IND) = zvertp(4,in)
+c        IND = IND +1
+c        IONTI1 = IND-1
+c        DO IK = NKS(IR),1,-1
+c           in = korpg(ik,ir)
+c           RIW(IND) = rvertp(1,in)
+c           ZIW(IND) = zvertp(1,in)
+c           IND = IND+1
+c        end do
+c slmod end
         IONTI2 = IND-1
 c
         if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then

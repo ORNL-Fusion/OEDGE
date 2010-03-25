@@ -29,16 +29,22 @@ C ===== SOURCE: infcop.f
 *DK INFCOP
       SUBROUTINE INFCOP
       IMPLICIT NONE
-      INTEGER, INTENT(IN) :: I1, I2, I3
+c slmod begin
+      INTEGER, INTENT(IN) :: I1, I2, I3, IPANU
+c
+c      INTEGER, INTENT(IN) :: I1, I2, I3
+c slmod end
       ENTRY IF0COP
       RETURN
       ENTRY IF1COP
       RETURN
       ENTRY IF2COP(I1)
       RETURN
-      ENTRY IF3COP(I1,I2,I3)
 c slmod begin
-      CALL OUTUS1(I1,I2,I3)
+      ENTRY IF3COP(I1,I2,I3,IPANU)
+      CALL OUTUS1(I1,I2,I3,IPANU)
+c
+c      ENTRY IF3COP(I1,I2,I3)
 c slmod end
       RETURN
       ENTRY IF4COP

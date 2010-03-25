@@ -339,6 +339,43 @@ c
 c
 c
 c
+      subroutine get_div_exec_dir(dirname,ierr)
+      implicit none
+      integer  ierr
+      character dirname*(*)
+c
+c     Get name from environment variable
+c     
+      integer len1,lenstr
+      external lenstr 
+      character*256 :: divhome, divmaindir
+
+c
+      ierr = 0
+c
+      dirname = ' '
+
+c
+c     This fix is to work around Steve's scripts where
+c     DIVMAINDIR is not yet defined
+c
+      CALL GetEnv('DIVHOME',divhome)
+      CALL GetEnv('DIVMAINDIR',divmaindir)
+c
+c     If divmaindir is not defined then use divhome
+c
+      if (len_trim(divmaindir).le.1) then 
+         dirname = trim(divhome)
+      else
+         dirname = trim(divmaindir)
+      endif
+c
+      return
+c
+      end
+c
+c
+c
       subroutine killdiv
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
