@@ -2183,6 +2183,8 @@ C  SPECTRA IN SELECTED CELLS
       TEXTYP(4) = 'BULK IONS '
       IADTYP(0:4) = (/ 0, NSPH, NSPA, NSPAM, NSPAMI /)
 
+      WRITE(0,*) 'DEBUG: NADSPC=',NADSPC
+
       DO ISPC=1,NADSPC
         IF (ESTIML(ISPC)%PSPC%ISRFCLL /= 0) THEN
           CALL LEER (1)
@@ -2221,8 +2223,14 @@ C  SPECTRA IN SELECTED CELLS
      .           ESTIML(ISPC)%PSPC%SGMS
         END IF
       END DO
-      
-      IF (NSPCPR > 0) CALL OUTSPEC
+
+      WRITE(0,*) 'DEBUG: NSPCPR=',NSPCPR,ISTRA
+c slmod begin      
+      IF (NSPCPR > 0) CALL OUTSPEC(ISTRA)
+c
+c      IF (NSPCPR > 0) CALL OUTSPEC
+c slmod end
+
 C
 C   OUTPUT OF VOLUME AVERAGED TALLIES FINISHED
 C
@@ -6297,7 +6305,11 @@ C
 C ===== SOURCE: outspec.f
 !pb  25.10.06:  format specifications corrected
 
-      SUBROUTINE OUTSPEC
+c slmod begin
+      SUBROUTINE OUTSPEC(ISTRA)
+c
+c      SUBROUTINE OUTSPEC
+c slmod end
 
       USE PRECISION
       USE PARMMOD
@@ -6308,12 +6320,19 @@ C ===== SOURCE: outspec.f
       USE CTRCEI
       USE CTEXT
       USE CSDVI
-
+c slmod begin
+      USE MOD_INTERFACE
+c slmod end
       IMPLICIT NONE
       INTEGER :: IADTYP(0:4)
       INTEGER :: IOUT, ISPC, I, IT, IE
       REAL(DP) :: EN
       CHARACTER(10) :: TEXTYP(0:4)
+c slmod begin
+      INTEGER,INTENT(IN) :: ISTRA
+      INTEGER            :: ISURFACE
+      CHARACTER FILE*128,TAG*3,UNITS*32
+c slmod end
 
 C  SPECTRA
 
@@ -6439,6 +6458,46 @@ C  SPECTRA
         IF (NSIGI_SPC > 0)
      .    WRITE (IOUT,'(A,ES12.4)') ' STANDARD DEVIATION  ',
      .                   ESTIML(ISPC)%PSPC%SGMS
+c slmod begin
+         WRITE(0,*) 'ISTRA=',istra
+        IF (istra.EQ.0) THEN
+          tag = 'sum'
+        ELSE
+          WRITE(tag ,'(I3.3)') istra 
+        ENDIF
+        WRITE(file,'(A,I3.3,A)') 'idl.eirene_spectrum_',ispc,'_'//tag
+        WRITE(0,*) TRIM(file)
+        UNITS='?'
+        IF (IT == 1) UNITS='Amps/BIN(eV)'
+        IF (IT == 2) UNITS='Watt/BIN(eV)'
+        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        IF (NSIGI_SPC == 0) THEN
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+            EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+            CALL inPutData(EN                       ,'BIN' ,'eV')
+            CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))
+            CALL inPutData(-1.0D0                   ,'STDE','N/A')
+          END DO
+        ELSE
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+            EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+            CALL inPutData(EN                       ,'BIN' ,'eV')
+            CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))
+            CALL inPutData(ESTIML(ISPC)%PSPC%SDV(IE),'STDE','N/A')
+          END DO
+        END IF
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCINT,'INTEGRAL','?')      
+        CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','N/A')
+        CALL inPutData(it,'SPECTRUM_TYPE','N/A')
+        IF (I >  NLIM) CALL inPutData(I-NLIM,'SURFACE_INDEX','N/A')
+        IF (I <= NLIM) CALL inPutData(I     ,'SURFACE_INDEX','N/A')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_ENERGY','eV')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_ENERGY','eV')
+        CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')
+        CALL inCloseInterface
+c slmod end
       END DO
 
       RETURN
