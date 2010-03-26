@@ -4869,6 +4869,7 @@ C
      .          ' SURFACE INDEX FOR SPECTRUM OUT OF BOUNDS'
               WRITE (iunout,*) ' SPECTRUM NUMBER = ',J
               WRITE (iunout,*) ' SURFACE NUMBER = ',ISPSRF
+              WRITE (iunout,*) ' NUMBER OF SURF = ',NSTSI
               IERROR = IERROR + 1
             END IF
             ISPSRF = NLIM+ISPSRF

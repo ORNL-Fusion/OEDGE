@@ -2719,7 +2719,7 @@ C  ON NON DEFAULT SURFACE (ADD. OR STD.) ISTS=INMTI(IPOLGN,NRCELL)
       ELSE
         GOTO 9999
       ENDIF
-      IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+      IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN A',
      .                         NRCELL,MRSURF,PT,NINCX,IPOLGN
 
       RETURN
@@ -2789,7 +2789,7 @@ C PARTICLE OUTSIDE STANDARD MESH IN CELL NACELL, NRCELL=0
         MRSURF = ITRINO(ISTS_CELL)
         IPOLGN = ISIDNO(ISTS_CELL)
         NINCX = ITRINO(ISTS_CELL)
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN B',
      .                                NRCELL,MRSURF,PT,NINCX,IPOLGN
       END IF
 
@@ -2936,6 +2936,16 @@ C  DURCHSUCHE NACHBARDREIECK
         IF (NLSRFX) THEN
           IZELL=NTBAR(IPOLG,NRCELL)
           IPOLGO=NTSEITE(IPOLG,NRCELL)
+c slmod begin
+c          IF (IZELL.EQ.0) THEN
+c            WRITE(6,*) 'IPOLG =',ipolg
+c            WRITE(6,*) 'NRCELL=',nrcell
+c            WRITE(6,*) 'IZELL =',izell
+c            WRITE(6,*) 'IPOLGO=',ipolgo
+c            WRITE (iunout,*) ' IZELL = 0 IN TIMER '
+c            CALL EXIT_OWN(1)
+c          END IF
+c slmod end
           NRCELL=IZELL
           NLSRFX=.FALSE.
           GOTO 11020
@@ -2966,7 +2976,7 @@ C  ON NON DEFAULT SURFACE (ADD. OR STD.) ISTS=INMTI(IPOLGN,NRCELL)
         ELSE
           GOTO 9999
         ENDIF
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN C',
      .                           NRCELL,MRSURF,PT,NINCX,IPOLGN
 
         RETURN
@@ -3100,7 +3110,7 @@ C  SEITENNUMMER DES NEUEN DREIECKS
         MRSURF=NTMZ
         IPOLGN=NTMS
         NINCX=NTMZ-NRCELL
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN D',
      .                           NRCELL,MRSURF,PT,NINCX,IPOLGN
       END IF
       RETURN
