@@ -16,7 +16,7 @@ c
       CHARACTER cdum1*256
 
       SELECTCASE (opt%int_database(opt%int_num))
-        CASE (1,3)
+        CASE (1,3,4)
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_line(opt%int_num)

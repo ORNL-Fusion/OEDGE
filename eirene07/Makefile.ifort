@@ -4,7 +4,7 @@
 F77=ifort
 
 #FFLAGS= -c -O
-FFLAGS= -c -CB -traceback
+FFLAGS= -c -CB -traceback -O0
 #FFLAGS= -c -O2
 
 

@@ -65,51 +65,57 @@ c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
 
 c...    Assign/calculate quantity of interest:
 
-        IF (max_ik.GT.0.AND.max_ir.GT.0) THEN
-c...      Fluid grid quantity:
-          IF (.NOT.ALLOCATED(osm)) ALLOCATE(osm(max_ik,max_ir))
-          CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
-        ENDIF
+        SELECTCASE (opt%int_database(iint))
+c         --------------------------------------------------------------
+          CASE(1:3)
+c          IF (max_ik.GT.0.AND.max_ir.GT.0) THEN
+c...        Fluid grid quantity:
+            IF (.NOT.ALLOCATED(osm)) ALLOCATE(osm(max_ik,max_ir))
+            CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
+c         --------------------------------------------------------------
+          CASE(4)
+c           IF (.FALSE..AND.max_in.GT.0) THEN
+c...        Take data from the EIRENE transfer file:
 
-        IF (.FALSE..AND.max_in.GT.0) THEN
-c...      EIRENE grid:
+c...        Check which name 
+            fname = 'default'
+            i2 = 0
+            i3 = 0
+            DO iobject = 1, opt%obj_num
+              IF (opt%obj_type(iobject).EQ.6) THEN
+                DO i1 = 1, LEN_TRIM(opt%obj_fname(iobject))
+                  IF (opt%obj_fname(iobject)(i1:i1).EQ.'.') THEN
+                    IF (i2.EQ.0) i2 = i1
+                    i3 = i1
+                  ENDIF
+c                  WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
+                ENDDO
+                fname = 'eirene'//opt%obj_fname(iobject)(i2:i3)//
+     .                  'transfer'
+                WRITE(0,*) 'fname:',fname(1:LEN_TRIM(fname))
+                EXIT
+              ENDIF
+            ENDDO
 
-c...      Check which name 
-          fname = 'default'
-          i2 = 0
-          i3 = 0
-          DO iobject = 1, opt%obj_num
-            IF (opt%obj_type(iobject).EQ.6) THEN
-              DO i1 = 1, LEN_TRIM(opt%obj_fname(iobject))
-                IF (opt%obj_fname(iobject)(i1:i1).EQ.'.') THEN
-                  IF (i2.EQ.0) i2 = i1
-                  i3 = i1
-                ENDIF
-c                WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
-              ENDDO
-              fname ='eirene'//opt%obj_fname(iobject)(i2:i3)//'transfer'
-              WRITE(0,*) 'fname:',fname(1:LEN_TRIM(fname))
-              EXIT
-            ENDIF
-          ENDDO
+            ndat = GetNumberOfObjects(fname(1:LEN_TRIM(fname)))
+            ALLOCATE(tdata(ndat))
 
-          ndat = GetNumberOfObjects(fname(1:LEN_TRIM(fname)))
-          ALLOCATE(tdata(ndat))
-
-          p = [0,0,0,0]
-          IF (opt%int_line(iint).EQ.'B_ALPHA')    p = [6,1,7 ,1]  ! Dalpha
-          IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
-          IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
-          IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0] ! D+ density
-          WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
-          IF (p(1).EQ.0) CALL ER('AssignEmissionData','Unrecognised '//
-     .                           'EIRENE data tag',*99)
-          CALL LoadTriangleData(p(1),p(2),p(3),p(4),tdata,fname)  
-          
-c          CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
-
-          WRITE(0,*) 'DONE'
-        ENDIF
+            p = [0,0,0,0]
+            IF (opt%int_line(iint).EQ.'B_ALPHA')    p = [6,1,7 ,1]  ! Dalpha
+            IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
+            IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
+            IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0]  ! D+ density
+            WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
+            IF (p(1).EQ.0) CALL ER('AssignEmissionData','Bad '//
+     .                             'EIRENE data tag',*99)
+            CALL LoadTriangleData(p(1),p(2),p(3),p(4),tdata,fname)  
+c            CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
+            WRITE(0,*) 'DONE'
+c         --------------------------------------------------------------
+          CASE DEFAULT
+            CALL ER('ray_AssignEmssionData','Invalid database '//
+     .              'specification',*99)
+        ENDSELECT
 
         opt%int_wlngth(iint) = wlngth
 
@@ -118,15 +124,16 @@ c...    Assign data to objects:
           IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
 
           SELECTCASE (obj(iobj)%subtype)
-            CASE (OP_FLUID_GRID,OP_EIRENE_GRID)
+            CASE (OP_FLUID_GRID)
 c...          Fluid grid:
               obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir) 
-
-c            CASE (OP_EIRENE_GRID)
-cc...          Eirene grid:
-c              obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
-cc     .            * obj(iobj)%quantity(iint)
-
+            CASE (OP_EIRENE_GRID)
+c...          Eirene grid:
+              IF (ALLOCATED(osm)) THEN
+               obj(iobj)%quantity(iint) = osm(obj(iobj)%ik,obj(iobj)%ir) 
+              ELSE
+               obj(iobj)%quantity(iint) = tdata(obj(iobj)%in)
+              ENDIF
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:
 

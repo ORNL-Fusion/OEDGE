@@ -570,7 +570,7 @@ c
       ion = 1
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_grid')
+      CALL inOpenInterface('osm.idl.fluid_grid',ITF_WRITE)
 
 c      DO igrp = 1, ngrp
 c        CALL inPutData(grp(igrp)%origin,'GRP_ORIGIN','none')
@@ -655,7 +655,7 @@ c
 
       WRITE(dummy,'(1024X)')
 
-      CALL inOpenInterface('osm.idl.fluid_wall')
+      CALL inOpenInterface('osm.idl.fluid_wall',ITF_WRITE)
       DO iw = 1, nwall
         CALL inPutData(wall(iw)%class            ,'WALL_CLASS' ,'none')
         CALL inPutData(wall(iw)%index(WAL_GROUP ),'WALL_GROUP' ,'none')

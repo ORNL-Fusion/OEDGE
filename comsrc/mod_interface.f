@@ -37,7 +37,7 @@
      .                              DTY_I = 2,     ! integer (4 byte)
      .                              DTY_R = 3,     ! single precision real (4 byte)
      .                              DTY_D = 4      ! double precision real (8 byte)    
-   
+
 
 !...  Define some preset data and unit strings:   *** REMOVE THESE? ***
 
@@ -123,7 +123,7 @@
       ENDTYPE type_data
 
 
-      INTEGER :: MAXNDAT = 100,   
+      INTEGER :: MAXNDAT = 200,   
      .           MAXNTAG = 100,
      .           MAXNMAX = 100000, ! 100 KB allocated for each data item
      .           MAXJUMP = 100E+6  ! 100 MB is the max jump in memory allocation per item
@@ -140,6 +140,10 @@
       TYPE(type_data), ALLOCATABLE :: dat(:)
 
 
+!...  Data types: 
+      INTEGER, PARAMETER, PUBLIC :: ITF_READ  = 1,  ! open interface for reading data
+     .                              ITF_WRITE = 2   ! open interface for writing data
+
 !...  Routines:
 !     ==================================================================
 !
@@ -150,9 +154,10 @@
 !     ---------------------------------------------------------------------
 !
 !...eventually want to specify whether or not the data is to be dumped to a file, and what the unit # is...also some default max. src array size?
-      SUBROUTINE inOpenInterface(file_name)
+      SUBROUTINE inOpenInterface(file_name,io_select)
       IMPLICIT none
 
+      INTEGER  , INTENT(IN) :: io_select
       CHARACTER, INTENT(IN) :: file_name*(*)
 
 !     Blank file name string (just to be sure):

@@ -133,7 +133,7 @@ c
       LOGICAL :: status = .TRUE. 
 
 c...  Set default values:
-      CALL InitializeOptions
+      CALL osm_InitializeOptions
 
 c...  Open log file (may be closed below if logfp is set to 0):
 c      OPEN(UNIT=logfp,FILE='osm_log.dat',ACCESS='SEQUENTIAL',
@@ -345,19 +345,22 @@ c
       LOGICAL   osmGetLine
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
-      INTEGER   i1,idum1
+      INTEGER   i1,idum(5)
+      CHARACTER cdum*1024
       REAL      stratum_type,version,rdum(7)
 
       SELECTCASE (buffer(3:itag-1))
+c       ----------------------------------------------------------------
         CASE('EIR IMPURITY SPUTTERING')
           CALL ReadOptionI(buffer,1,opt_eir%ilspt) 
+c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
             opt_eir%nvoid = opt_eir%nvoid + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
-            READ(buffer,*) idum1
-            IF (idum1.EQ.-2) THEN
+            READ(buffer,*) idum(1)
+            IF (idum(1).EQ.-2) THEN
               READ(buffer,*) 
      .          opt_eir%void_zone(    opt_eir%nvoid),
      .          opt_eir%void_grid(1:2,opt_eir%nvoid)
@@ -375,6 +378,7 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
      .          opt_eir%void_ti  (    opt_eir%nvoid)
             ENDIF
           ENDDO
+c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
           opt_eir%nstrata = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -417,6 +421,30 @@ c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%strata,rdum(1:6)
 c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%nstrata,
 c     .                              opt_eir%sorad(opt_eir%nstrata)
 c          STOP
+c       ----------------------------------------------------------------
+        CASE('EIR PARTICLE SPECTRA')
+          opt_eir%nadspc = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%nadspc = opt_eir%nadspc + 1
+            READ(buffer,*) 
+     .        opt_eir%isrfcll   (opt_eir%nadspc),  ! Type of spectrum, 0=surface flux, 1=cell average                    
+     .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface index, <0=non-default standard, >0=additional surfaces          
+     .        opt_eir%ispsrf_ref(opt_eir%nadspc),  ! Which code does the surface index refer to?                             
+     .        opt_eir%iptyp     (opt_eir%nadspc),  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?                  
+     .        opt_eir%ipsp      (opt_eir%nadspc),  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.   
+     .        opt_eir%isptyp    (opt_eir%nadspc),  ! Spectrum type wrt units, 1=1/eV/s, 2=1/s                                  
+     .        opt_eir%nsps      (opt_eir%nadspc),  ! Number of bins                                                          
+     .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
+     .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
+     .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
+            IF (opt_eir%idirec(opt_eir%nadspc).NE.0) 
+     .        READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
+     .                       rdum(1:2),idum(1),
+     .          opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
+     .          opt_eir%spcvy(opt_eir%nadspc),
+     .          opt_eir%spcvz(opt_eir%nadspc)
+          ENDDO
+c       ----------------------------------------------------------------
        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
       ENDSELECT 
@@ -898,7 +926,7 @@ c...            Spacer, ignore:
 c
 c ======================================================================
 c
-      SUBROUTINE InitializeOptions
+      SUBROUTINE osm_InitializeOptions
       USE mod_sol28_global
       USE mod_options
       USE mod_eirene06
@@ -1002,19 +1030,19 @@ c...  Filament options:
 c...  Eirene options:
       opt_eir%nstrata = 0
 
-      opt_eir%nvoid = 0
-c      opt_eir%nvoid = 1
-c      opt_eir%void_zone(  1) =   -1
-c      opt_eir%void_grid(1,1) =    2
-c      opt_eir%void_grid(2,1) =  999
-c      opt_eir%void_wall(:,1) =   -1
-c      opt_eir%void_add (:,1) =   -1
-c      opt_eir%void_hole(:,1) = -1.0
-c      opt_eir%void_res (  1) =  0.1
-c      opt_eir%void_code(  1) =   -1
-c      opt_eir%void_ne  (  1) =  0.0
-c      opt_eir%void_te  (  1) =  0.0
-c      opt_eir%void_ti  (  1) =  0.0
+c      opt_eir%nvoid = 0
+      opt_eir%nvoid = 1
+      opt_eir%void_zone(  1) =   -1
+      opt_eir%void_grid(1,1) =    2
+      opt_eir%void_grid(2,1) =  999
+      opt_eir%void_wall(:,1) =   -1
+      opt_eir%void_add (:,1) =   -1
+      opt_eir%void_hole(:,1) = -1.0
+      opt_eir%void_res (  1) =  0.1
+      opt_eir%void_code(  1) =   -1
+      opt_eir%void_ne  (  1) =  0.0
+      opt_eir%void_te  (  1) =  0.0
+      opt_eir%void_ti  (  1) =  0.0
 
       opt_eir%time  = 30
       opt_eir%niter = 0
@@ -1040,6 +1068,8 @@ c      opt_eir%void_ti  (  1) =  0.0
       opt_eir%mat2    = 2
       opt_eir%ctargt  = 300.0
       opt_eir%cwallt  = 300.0
+
+      opt_eir%nadspc  = 0  ! Energy spectra definitions
 
       eirfp = 88     
       geofp = 88
