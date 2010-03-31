@@ -57,8 +57,8 @@ $
 $
 $
 $
-'985   XXX XX Inversion map + image           '   1     
-{RAY TRACE}  1
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  0
   {GEOMETRY}  1
      'fluid grid       ( 1)'  0  4  100  0  0 1.0
      'triangle grid    ( 2)'  0  2  100  0  0 1.0  -1  -1
@@ -76,11 +76,12 @@ $
         'axis' 1 +90.0   2 +00.0   3  00.0
         'axis' 1 +00.0   2 +90.0   3  00.0
         'axis' 1 +30.0   2 +35.0   3  00.0
-     'plot   3D solid    (002)'  0
-        'zoom                          '  0.00  0.10  0.15 0.15
-        'axis   roll/tilt/swing        '  +00.0   75.0   00.0
-        'item   geometry elements (001)'   1  0  000
-        'item   2D separatrix     (002)'   0  1  000
+     'plot   3D solid    (002)'  2
+        'zoom                          '  0.00  0.00  1.10 1.10
+        'axis   roll/tilt/swing        '  +00.0   00.0   00.0
+        'item   geometry elements (001)'   0  0  000
+        'item   tetrahedrons      (021)'  21  0  000  'tetrahedrons.raw' 
+        'item   2D separatrix     (002)'   2  1  000
         'item   field line        (002)'   0  4  000  0.00001000 0.0 0.0   SEPARATRIX (RING 22)
         'item   3D flux-tube      (003)'   0  0  000  0.00055000
      'plot   3D solid    (002)'  0
@@ -110,11 +111,103 @@ $
   {DETECTOR}  1
      'focal length       '   0.0
      'distortion         '   0.0
+     'x,y,phi position   '   1.10000D+00   0.00001D+00   65.00000D+00  
+     'roll,tilt,swing    '   0.00000D+00   0.00000D+00  115.00000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    '  10.0D+00    10.00D+00                       
+     'pixel array        '    2       2  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'default'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'999   STOP'  0
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
+  {DETECTOR}  1
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.10000D+00   0.00001D+00   65.00000D+00  
+     'roll,tilt,swing    '   0.00000D+00   0.00000D+00  115.00000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    '  10.0D+00    10.00D+00                       
+     'pixel array        '  100     100  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'default'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'999  STOP'  0
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
+  {DETECTOR}  1
+     'focal length       '   0.0
+     'distortion         '   0.0
      'x,y,z position     '   1.10000D+00   0.00001D+00    0.00000D+00  
      'roll,tilt,swing    '   0.00000D+00   0.00000D+00   90.00000D+00
      'size               '   0.20D-07    0.20D-07
-     'view cone angle    ' 130.0D+00   130.00D+00                       
-     'pixel array        '    2       2  
+     'view cone angle    '  15.0D+00    15.00D+00                       
+     'pixel array        '   50      50  
+     'pixel solid angle  '    5       5    1  1.0  1.0
+     'output label       ' 'default'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1     
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
+  {DETECTOR}  1
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,z position     '   0.65000D+00   0.60001D+00    0.00000D+00  
+     'roll,tilt,swing    '  90.00000D+00  90.00000D+00    0.00000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    '  70.0D+00    70.00D+00                       
+     'pixel array        '  100     100  
      'pixel solid angle  '    1       1    1  1.0  1.0
      'output label       ' 'default'
      {DETECTOR MASK}  0

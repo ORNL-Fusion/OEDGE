@@ -1211,7 +1211,7 @@ c        IF (ycen.GT.-2.0) CYCLE
 c        IF (ycen.LT.3.0) CYCLE
 c        IF (try(itry)%index(IND_IR).GT.1 .AND.
 c     .      try(itry)%index(IND_IR).LT.20) CYCLE 
-        
+        IF (ycen.GT.0.2.OR.xcen.GT.0.7) CYCLE        
 
 
 
@@ -1552,6 +1552,14 @@ c...  Impose filament structures:
         CALL BuildConnectionMap(istart,iend)
         CALL FixTetrahedrons(istart,iend)
       ENDIF
+
+      WRITE(0,*) 
+      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
+      WRITE(0,*) 
+      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
+      iend = nobj
+      CALL BuildConnectionMap(istart,iend)
+      CALL FixTetrahedrons(istart,iend)
 
       CALL CheckTetrahedronStructure
 

@@ -245,6 +245,7 @@ c
       IMPLICIT none
 
 c      REAL FindSeparatrixRadius
+      REAL*8 CalcPerp
 
       INTEGER iobj,iobj1,tmp_nobj,ifilament,ivtx,icell,iside,mode,iloop
 
@@ -253,14 +254,16 @@ c      REAL FindSeparatrixRadius
 
       INTEGER n,index(10000),ring
       REAL    fraction(10000)
-      REAL*8  len1,len2,v(3,10000),scale
+      REAL*8  len1,len2,v(3,10000),scale,a(3),b(3),p(3),t,pdist
 
       obj(1:nobj)%segment(1) = 0
 
 c      RETURN
 
-      SELECTCASE (3)
+      SELECTCASE (4)
+c       ----------------------------------------------------------------
         CASE(-1)
+c       ----------------------------------------------------------------
         CASE(0)
           DO iobj = 1, nobj
             IF (obj(iobj)%index(IND_IK).NE.15.OR.
@@ -274,7 +277,7 @@ c      RETURN
             IF (obj(iobj)%segment(1).GT.0) CALL DivideTetrahedron(iobj)
           ENDDO
           CALL CleanObjectArray
-
+c       ----------------------------------------------------------------
         CASE(1)
           DO iobj = 1, nobj
             IF (obj(iobj)%index(IND_IS).EQ.3) obj(iobj)%segment(1) = 1
@@ -285,7 +288,7 @@ c      RETURN
             IF (obj(iobj)%segment(1).GT.0) CALL DivideTetrahedron(iobj)
           ENDDO
           CALL CleanObjectArray
-
+c       ----------------------------------------------------------------
         CASE (2)
           CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,1.0E+20,1.0E+20,
      .                               n,v,index,fraction,ring,10000)
@@ -295,7 +298,7 @@ c      RETURN
             IF (obj(iobj)%segment(1).GT.0) CALL DivideTetrahedron(iobj)
           ENDDO
           CALL CleanObjectArray
-
+c       ----------------------------------------------------------------
         CASE (3)
 
           DO iloop = 1, 2
@@ -361,6 +364,62 @@ c             possible anyway):
 c...          Increase spatial resolution along the filament:
               tmp_nobj = nobj
               DO iobj = 1, tmp_nobj
+                IF (obj(iobj)%segment(1).GT.0)         ! *** BUG *** do do this only on the first pass?  -SL, 29/03/2010
+     .            CALL DivideTetrahedron(iobj)
+              ENDDO
+            ENDIF
+
+            CALL CleanObjectArray
+          ENDDO  ! LOOP
+c       ----------------------------------------------------------------
+        CASE (4)
+          DO iloop = 1, 3
+            obj(1:nobj)%segment(1) = 0
+            IF (iloop.LE.2) THEN  ! line segment and tetrahedron centroid 
+              scale = 0.150D0   
+            ELSE
+              scale = 0.050D0 
+            ENDIF
+
+            CALL CalcDerivedQuantity(MODE_OBJ_CENTRE)
+            a(1) = 0.0D0
+            a(2) = 0.0D0
+            a(3) = 0.0D0
+            b(1) = 0.6D0
+            b(2) = 0.0D0
+            b(3) = 0.0D0
+            DO iobj = 1, nobj                       
+              p(1:3) = obj_centroid(1:3,iobj)
+              pdist = CalcPerp(a,b,p,t)
+c              IF (pdist.NE.-1.0D0) THEN
+c                WRITE(0,*) 'PDIST=',i1,iobj,pdist
+c                WRITE(0,*) '     =',v(1:3,i1 )
+c                WRITE(0,*) '     =',v(1:3,i1+1)
+c              ENDIF
+              IF (pdist.GE.0.0D0.AND.pdist.LE.scale) THEN
+                obj(iobj)%segment(1) = 1  ! *** HACK ***
+              ENDIF
+            ENDDO
+            CALL ClearDerivedQuantity(MODE_OBJ_CENTRE)
+
+            IF (iloop.EQ.1) THEN
+c...          Resolve the nighbouring tetrahedrons as well to make sure that the
+c             tetrahedrons along the filament are fully resolved (or as resolved as
+c             possible anyway):
+              DO iobj = 1, nobj                       
+                IF (obj(iobj)%segment(1).NE.1) CYCLE  
+                DO iside = 1, obj(iobj)%nside         
+                 iobj1 = obj(iobj)%omap(iside)
+                 IF (iobj1.LE.0) CYCLE
+                 IF (obj(iobj1)%segment(1).EQ.0) 
+     .             obj(iobj1)%segment(1) = 2  ! *** HACK ***
+                ENDDO
+              ENDDO           
+c...          Increase spatial resolution:
+              tmp_nobj = nobj
+              DO iobj = 1, tmp_nobj
+                IF (obj(iobj)%segment(1).GT.0)
+     .    WRITE(0,*) ' DIVIDING TETRAHEDRON!',iobj 
                 IF (obj(iobj)%segment(1).GT.0) 
      .            CALL DivideTetrahedron(iobj)
               ENDDO
@@ -368,7 +427,7 @@ c...          Increase spatial resolution along the filament:
 
             CALL CleanObjectArray
           ENDDO  ! LOOP
-
+c       ----------------------------------------------------------------
       ENDSELECT
 
       RETURN

@@ -1223,11 +1223,16 @@ c...        BUG?
             CALL Transform_Vect(mat,chord%v1)
             CALL Transform_Vect(mat,chord%v2)
 c...        Translate:
-            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
-            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
-c            DO i2 = 1, 3
-c            ENDDO
+c            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
+c            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
+            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  ! PHI rotation added 29/03/2010 -SL
+            chord%v2(1:2) = chord%v2(1:2) + chord%trans(1:2)
         
+            angle = chord%trans(3) * 3.141596D0 / 180.0D0 
+            CALL Calc_Transform2(mat,0.0D0,1,0)            ! Rotate about y-axis
+            CALL Calc_Transform2(mat,angle,2,1)
+            CALL Transform_Vect(mat,chord%v1)
+            CALL Transform_Vect(mat,chord%v2)
           ENDIF 
 
 
@@ -1235,7 +1240,7 @@ c            ENDDO
 c...        Toroidal rotation of camera, while preserving the view orientation with 
 c           respect to the centre of the torus:
 c            angle = 14.76D0 * 3.141596D0 / 180.0D0 ! LWIR
-            angle = 18.7D0 * 3.141596D0 / 180.0D0 ! LWIR
+            angle = 18.7D0 * 3.141596D0 / 180.0D0 ! LWIR / MWIR?
 c            angle = 4.04D0 * 3.141596D0 / 180.0D0
 c            angle = 9.0D0 * 3.141596D0 / 180.0D0  ! For viewing one have of the plasma from HU12...
 c...        Rotate about y-axis (swing):
