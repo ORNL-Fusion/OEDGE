@@ -1,4 +1,4 @@
-#!/bin/tcsh -x
+#!/bin/tcsh 
 #
   alias ls ls
 #
@@ -228,7 +228,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   rename ".output"   ".eirprn"   -- eirene*.output
   rename "eirene"    "$CASENAME" -- eirene*.eir*
 #  mvc eirene.transfer     $CASENAME.eir
-#  mvc eirene.input        $CASENAME.eirdat
+
+  mvc eirene.spectra $CASENAME.eir.spectra
 
   cpc core_analysis.dat $CASENAME.dat.midplane
 #  mvc core_analysis.dat ~/idl/lc/$CASENAME.dat
