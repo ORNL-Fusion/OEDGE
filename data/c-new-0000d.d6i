@@ -1,6 +1,6 @@
 'Ref DIV Title  ' 'setup SOL28, tetrahedrons'
 'Run comment    ' 'based on i-fwp-0203a'
-'Equil File Name' 'cmod_slo.carre.001'
+'Equil File Name' 'cmod_slo.carre_v3' 
 $
 $ ======================================================================
 $                              OSM OPTIONS
@@ -53,9 +53,10 @@ $  2.0   -90000  1.0     1.0   4    1    0.0                                    
   1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
   1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
   2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
-$                                                COS MAX   POSX   Y     Z    VECX  Y    Z         
-$                                                ------------------------------------------      
-  3.0  -90000   1.00E+5 1.0   2    1    0.038    1.0 90.0  0.4403 0.00  0.0  1.0   0.0  0.0  'inboard midplane puff'  
+$                                                COS MAX   POSX   Y     Z       VECX  Y    Z         
+$                                                ---------------------------------------------      
+$  3.0  -90000   1.0E+10 1.0   1    1    1000.0   1.0  0.0  0.4403 0.00  0.0     -1.0   0.0  0.0  'inboard midplane puff'  
+  3.0  -90000   1.0E+05 1.0   2    1     0.038    1.0 90.0  0.4403 0.00  0.0001  -1.0  0.0  0.0  'inboard midplane puff'  
 $
 '{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
 $ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
@@ -182,7 +183,7 @@ $ EIRENE options:
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     3     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '     2     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '    30     EIRTIME
+'*020   Run time (CPU seconds)                       '   120     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2

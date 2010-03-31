@@ -835,18 +835,12 @@ c      WRITE(0,*) 'NOBJ:',nobj
 
         CASE (2)
           DO iobj = 1, nobj
-
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
 c     .            (obj(iobj)%index(IND_IR).NE.17)) CYCLE
 c     .            (obj(iobj)%index(IND_IR).NE.5)) CYCLE
- 
-
-
             IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE     
 c            IF (obj(iobj)%index(IND_IR).NE.5) CYCLE
             IF (obj(iobj)%segment(1).EQ.0) CYCLE
-
-
 
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
@@ -865,7 +859,7 @@ c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
 
 c              isrf = ABS(obj(iobj)%iside(iside))
               DO WHILE(isrf.GT.0)
-                IF (nsur.GE.MAXSURFACE) THEN
+                IF (nsur.GE.MAXSURFACE-10000) THEN
                   WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
                   RETURN
                 ENDIF
@@ -886,9 +880,7 @@ c              isrf = ABS(obj(iobj)%iside(iside))
           ENDDO
 
         CASE (3)
-
 c...      Search for tetrahedrons that are close to a particular trajectory:
-
           CALL SelectTetrahedrons(nsur,npts,vsur,
      .                            MAXSURFACE,MAXPOINTS,status)
 
@@ -1895,7 +1887,7 @@ c ======================================================================
 c
 c subroutine: Output985
 c
-      SUBROUTINE WireframePlot985(iopt,MAXPIXEL,npixel,pixel,image,
+      SUBROUTINE WireframePlot985_OLD(iopt,MAXPIXEL,npixel,pixel,image,
      .                            iplot)
       USE mod_out985
       USE mod_out985_variables
@@ -2626,6 +2618,801 @@ c...    Spectra:
 99    STOP
       END
 
+c
+c ======================================================================
+c
+c subroutine: Output985
+c
+      SUBROUTINE WireframePlot985(iopt,MAXPIXEL,npixel,pixel,image,
+     .                            iplot)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_interface
+      IMPLICIT none
+
+      INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
+      INTEGER, INTENT(IN) :: iplot
+      TYPE(type_view) :: pixel(MAXPIXEL)
+      REAL*8 image(1100,1100)
+
+      INCLUDE 'params'      
+      INCLUDE 'comgra'
+      INCLUDE 'colours'
+      INCLUDE 'slout'
+
+      COMMON /GHOSTCOM/ iopt_ghost
+      INTEGER           iopt_ghost
+
+      CHARACTER glabel*512,caption*1024
+      CHARACTER TITLE*80,TITLE2*80,JOB*72,GRAPH*80,GRAPH1*256
+      CHARACTER*36 REF,NVIEW,PLANE,ANLY,TABLE,ZLABS(-2:MAXIZS+1)
+      CHARACTER*36 XLAB
+      CHARACTER*72 YLAB
+      CHARACTER*72 SMOOTH
+      CHARACTER*256 cdum1
+
+      INTEGER axis1(3)
+      REAL    angle1(3)
+
+      INTEGER CH1
+
+      INTEGER   nxbin,nybin,ipixel,nbin,isrf,isrf1,isrf2,isid,
+     .          idet,nplot,iobj,i1,i2,i3,i4,ix,iy,iplot1
+      REAL      deltar,deltaz,qmin,qmax,qval,ang1,ang2,ang,
+     .          frac1,frac2,xcen,ycen,xnear,ynear,count
+      REAL      XXMIN,XXMAX,YYMIN,YYMAX,dangle
+      REAL*8    angle,p1(3,6),p2(3,6),x1,x2,z1,mat(3,3)
+
+      INTEGER dat1,dat2
+      REAL, ALLOCATABLE :: xdat(:),ydat(:)
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+
+
+c *TEMP*
+      INTEGER, ALLOCATABLE :: nv(:)
+      REAL   , ALLOCATABLE :: rv(:,:),zv(:,:),cq(:)
+
+
+
+c...  PLOT A: 3D surface geometry plot for a given X,Y,Z along a particular view
+c     -Translate and rotate as necessary:
+c     -Project onto the R,Z plane:
+
+      glabel = job  (CH1(job  ):LEN_TRIM(job  ))//'     '//
+     .         graph(CH1(graph):LEN_TRIM(graph))
+
+      ! jdemod - changed the : to ) to balance the parentheses in the format specifiers
+      !          NOTE: these write statements will produce lines of 512 characters each
+      !                right-padded with blanks 
+      WRITE(nview ,'(512(A))') (' ',i1=1,LEN(nview )) 
+      WRITE(plane ,'(512(A))') (' ',i1=1,LEN(plane )) 
+      WRITE(anly  ,'(512(A))') (' ',i1=1,LEN(anly  )) 
+      WRITE(table ,'(512(A))') (' ',i1=1,LEN(table )) 
+      WRITE(xlab  ,'(512(A))') (' ',i1=1,LEN(xlab  )) 
+      WRITE(ylab  ,'(512(A))') (' ',i1=1,LEN(ylab  )) 
+      WRITE(smooth,'(512(A))') (' ',i1=1,LEN(smooth)) 
+      WRITE(graph ,'(512(A))') (' ',i1=1,LEN(graph )) 
+      WRITE(job   ,'(512(A))') (' ',i1=1,LEN(job   )) 
+
+      XLAB = '   R  (M)'
+      YLAB = '   Z  (M)'
+
+
+
+      slopt = 1
+
+c...  Set the "zoom" for the plot:
+      xxmin =  0.0  ! Not sure if these are any good...
+      xxmax =  6.0
+      yymin = -3.0
+      yymax =  3.0
+      DO iplot1 = iplot+1, opt%nplots
+        READ(opt%plots(iplot1),*) cdum1
+        IF (cdum1(1:4).EQ.'zoom') THEN
+          READ(opt%plots(iplot1),*) cdum1,xcen,ycen,xnear,ynear
+          xxmin = xcen - xnear
+          xxmax = xcen + xnear
+          yymin = ycen - ynear
+          yymax = ycen + ynear
+        ELSE
+          EXIT
+        ENDIF   
+      ENDDO      
+
+      axis1 (1) = 1
+      axis1 (2) = 2
+      axis1 (3) = 3
+      angle1(1) = 0.0
+      angle1(2) = 0.0
+      angle1(3) = 0.0
+
+      nplot = 0
+      iplot1 = iplot1 - 1
+      DO WHILE (.TRUE.) 
+c...    Wireframe:
+        iplot1 = iplot1 + 1
+        READ(opt%plots(iplot1),*) cdum1
+c        WRITE(0,*) 'AXIS:',cdum1(1:LEN_TRIM(cdum1))
+        IF (cdum1(1:4).EQ.'axis') THEN
+          READ(opt%plots(iplot1),*) cdum1,(axis1(i1),angle1(i1),i1=1,3)
+          nplot = nplot + 1
+          IF (nplot.EQ.5) THEN
+           nplot = 1
+           CALL FRAME
+          ENDIF
+        ELSE
+          EXIT
+        ENDIF   
+
+c...    Setup transformation matrix:
+        CALL Calc_Transform2(mat,0.0D0,1,0)
+        DO i1 = 1, 3
+          angle = DBLE(angle1(i1)*PI/180.0)
+          CALL Calc_Transform2(mat,angle,axis1(i1),1)
+        ENDDO
+
+c...    Use GRTSET_TRIM:
+        slopt4 = 1
+c...    Stopping resizing of scale font in ghost1.o6a:
+        iopt_ghost = 1
+
+        SELECTCASE (nplot)
+          CASE(1)
+            map1x = 0.07
+            map1y = 0.55
+          CASE(2)
+            map1x = 0.57
+            map1y = 0.55
+          CASE(3)
+            map1x = 0.07
+            map1y = 0.08
+          CASE(4)
+            map1x = 0.57
+            map1y = 0.08
+          CASEDEFAULT
+        ENDSELECT
+
+        map2x = map1x + 0.40
+        map2y = map1y + 0.40
+
+        CALL GRTSET_TRIM(TITLE,REF,nVIEW,PLANE,glabel,
+     >                   xXMIN,xXMAX,yYMIN,yYMAX,
+     .                   TABLE,XLAB,YLAB,
+     .                   0,smooth,0,ANLY,1)
+ 
+c...    Draw polygons:
+        CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
+        CALL MAP   (CXMIN,CXMAX,CYMIN,CYMAX)
+
+        count = 0.0
+        DO iobj = 1, nobj
+c          IF (iobj.NE.1035) CYCLE  ! *TEMP*
+c          IF (iobj.NE.471) CYCLE  ! *TEMP*
+c          IF (iobj.NE.471.AND.iobj.NE.472.AND.iobj.NE.458) CYCLE  ! *TEMP*
+
+          CALL LINCOL(ncols+obj(iobj)%colour) 
+
+          DO isid = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
+
+c             IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+
+c            IF (isid.NE.2) CYCLE
+
+c            IF (obj(iobj)%flag(isid).NE.-1.AND.
+c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
+
+            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+
+c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
+
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE   ! Recent filter...
+
+c            IF (obj(iobj)%imap(1,isid).NE.0) CYCLE
+c            IF (obj(iobj)%ik.NE.16) CYCLE
+
+
+            IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
+              count = count + 
+     .                1.0 / REAL(MAX(obj(iobj)%nsur,obj(iobj)%nside))
+              IF (count.GT.100.0) CYCLE
+c              IF (count.GT.15000.0) CYCLE
+            ENDIF
+
+c *** NEED TO STORE LINE SEGMENTS AND DELETE DUPLICATES... 
+
+            IF (obj(iobj)%nside.NE.0) THEN
+              isrf1 = obj(iobj)%iside(isid,1)
+              isrf2 = obj(iobj)%iside(isid,2)
+            ELSE
+              isrf1 = 1
+              isrf2 = 1
+            ENDIF
+
+            IF (obj(iobj)%gsur(isid).EQ.GT_TC) THEN
+              dangle =  15.0 * PI / 180.0
+              IF (.TRUE..OR.nplot.EQ.1) THEN
+                ang1 = 0.0
+                ang2 = 1.0 * PI / 180.0
+              ELSE
+                ang1 = 0.0
+                ang2 = 359.0 * PI / 180.0
+              ENDIF
+              ang1 = 0.0
+              ang2 = 359.0 * PI / 180.0
+              DO ang = 0.0, 1.0 * PI / 180.0, dangle
+c              DO ang = ang1, ang2, dangle
+c                IF (ang.GT.0.0.AND.
+c     .              obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
+c                DO isur = 1, 1  ! THIS IS HERE FOR WHEN SIDES ARE USED!
+                DO isrf = isrf1, isrf2
+                  IF (obj(iobj)%nside.NE.0) THEN
+                    p1(1,1) = vtx(1,srf(isrf)%ivtx(1))
+                    p1(2,1) = vtx(2,srf(isrf)%ivtx(1))
+                    p1(3,1) = p1(1,1) * DTAN(-0.5D0*dangle)
+                    p2(1,1) = p1(1,1)
+                    p2(2,1) = p1(2,1)
+                    p2(3,1) = p2(1,1) * DTAN(+0.5D0*dangle)
+
+                    p1(1,2) = vtx(1,srf(isrf)%ivtx(2))
+                    p1(2,2) = vtx(2,srf(isrf)%ivtx(2))
+                    p1(3,2) = p1(1,2) * DTAN(-0.5D0*dangle)
+                    p2(1,2) = p1(1,2)
+                    p2(2,2) = p1(2,2)
+                    p2(3,2) = p2(1,2) * DTAN(+0.5D0*dangle)
+                  ELSE
+                    p1(1,1) = obj(iobj)%v(1,obj(iobj)%ipts(1,isid)) 
+                    p1(2,1) = obj(iobj)%v(2,obj(iobj)%ipts(1,isid)) 
+                    p1(3,1) = DBLE(p1(1,1))*DTAN(DBLE(-0.5*dangle))
+                    p2(1,1) = p1(1,1)
+                    p2(2,1) = p1(2,1)
+                    p2(3,1) = DBLE(p2(1,1))*DTAN(DBLE(+0.5*dangle))
+
+                    p1(1,2) = obj(iobj)%v(1,obj(iobj)%ipts(2,isid)) 
+                    p1(2,2) = obj(iobj)%v(2,obj(iobj)%ipts(2,isid)) 
+                    p1(3,2) = DBLE(p1(1,2))*DTAN(DBLE(-0.5*dangle))
+                    p2(1,2) = p1(1,2)
+                    p2(2,2) = p1(2,2)
+                    p2(3,2) = DBLE(p2(1,2))*DTAN(DBLE(+0.5*dangle))
+                  ENDIF
+c...              Rotate vertices:
+                  DO i3 = 1, 2
+                    x1 = p1(1,i3)
+                    z1 = p1(3,i3)
+                    p1(1,i3) = DCOS(DBLE(ang)) * x1 - DSIN(DBLE(ang))*z1
+                    p1(3,i3) = DSIN(DBLE(ang)) * x1 + DCOS(DBLE(ang))*z1
+                    x1 = p2(1,i3)
+                    z1 = p2(3,i3)
+                    p2(1,i3) = DCOS(DBLE(ang)) * x1 - DSIN(DBLE(ang))*z1
+                    p2(3,i3) = DSIN(DBLE(ang)) * x1 + DCOS(DBLE(ang))*z1
+                    call transform_vect(mat,p1(1,i3))
+                    call transform_vect(mat,p2(1,i3))
+                  ENDDO
+                  CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+                  CALL JOIN   (SNGL(p1(1,2)),SNGL(p1(2,2))) 
+                  CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+                  CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+                  CALL POSITN (SNGL(p1(1,2)),SNGL(p1(2,2)))
+                  CALL JOIN   (SNGL(p2(1,2)),SNGL(p2(2,2))) 
+                  CALL POSITN (SNGL(p2(1,1)),SNGL(p2(2,1)))
+                  CALL JOIN   (SNGL(p2(1,2)),SNGL(p2(2,2))) 
+                ENDDO
+              ENDDO
+            ELSEIF (obj(iobj)%gsur(isid).EQ.GT_TD) THEN
+              IF (obj(iobj)%nside.NE.0) THEN
+
+c...            Filter:
+                count = 0.0
+                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c                WRITE(0,*) 'GO MAN',iobj,isid
+                DO isrf = isrf1, isrf2
+                  DO i3 = 1, srf(isrf)%nvtx
+                    i4 = i3 + 1
+                    IF (i4.GT.srf(isrf)%nvtx) i4 = 1
+                    p1(1:3,1) = vtx(1:3,srf(isrf)%ivtx(i3))
+                    p2(1:3,1) = vtx(1:3,srf(isrf)%ivtx(i4))
+                    call transform_vect(mat,p1(1,1))
+                    call transform_vect(mat,p2(1,1))
+                    CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+                    CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+                  ENDDO
+                ENDDO
+              ELSE
+                DO i3 = 1, obj(iobj)%npts(isid)
+                  i4 = i3 + 1
+                  IF (i4.EQ.obj(iobj)%npts(isid)+1) i4 = 1
+                  p1(1,1) = obj(iobj)%v(1,obj(iobj)%ipts(i3,isid))
+                  p1(2,1) = obj(iobj)%v(2,obj(iobj)%ipts(i3,isid))
+                  p1(3,1) = obj(iobj)%v(3,obj(iobj)%ipts(i3,isid))
+                  p2(1,1) = obj(iobj)%v(1,obj(iobj)%ipts(i4,isid))
+                  p2(2,1) = obj(iobj)%v(2,obj(iobj)%ipts(i4,isid))
+                  p2(3,1) = obj(iobj)%v(3,obj(iobj)%ipts(i4,isid))
+                  call transform_vect(mat,p1(1,1))
+                  call transform_vect(mat,p2(1,1))
+                  CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+                  CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+                ENDDO
+              ENDIF
+            ELSE
+              CALL ER('Plot985','Unknown surface geometry type',*98)
+            ENDIF
+          ENDDO
+        ENDDO 
+c...    Draw pixel views:
+        IF (.TRUE.) THEN
+          CALL LINCOL(ncols+55) 
+          DO i1 = 1, MIN(500,npixel)
+            p1(1,1) = pixel(i1)%global_v1(1)
+            p1(2,1) = pixel(i1)%global_v1(2)
+            p1(3,1) = pixel(i1)%global_v1(3)
+            p2(1,1) = pixel(i1)%global_v2(1)
+            p2(2,1) = pixel(i1)%global_v2(2)
+            p2(3,1) = pixel(i1)%global_v2(3)
+            call transform_vect(mat,p1(1,1))
+            call transform_vect(mat,p2(1,1))
+            CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+            CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+          ENDDO
+        ELSEIF (.TRUE.) THEN
+c        ELSEIF (.TRUE..AND.nplot.GT.1) THEN
+          CALL LINCOL(ncols+55) 
+c          DO i1 = 1, MIN(1,nchord)
+          DO i1 = 1, MIN(500,nchord)
+            p1(1,1) = s_chord(i1)%v1(1)
+            p1(2,1) = s_chord(i1)%v1(2)
+            p1(3,1) = s_chord(i1)%v1(3)
+            p2(1,1) = s_chord(i1)%v2(1)
+            p2(2,1) = s_chord(i1)%v2(2)
+            p2(3,1) = s_chord(i1)%v2(3)
+            call transform_vect(mat,p1(1,1))
+            call transform_vect(mat,p2(1,1))
+            CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+            CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+          ENDDO
+        ENDIF
+c...    Frame:
+        CALL LINCOL(1)
+        CALL DrawFrame
+      ENDDO
+
+
+      RETURN
+98    WRITE(0,*) 'OBJECT,SIDE,TYPE=',i1,i2,obj(i1)%gsur(i2)
+99    STOP
+      END
+
+c
+c ======================================================================
+c
+c subroutine: Output985
+c
+      SUBROUTINE ImagePlot985(iopt,MAXPIXEL,npixel,pixel,image,
+     .                        iplot)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_interface
+      IMPLICIT none
+
+      INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
+      INTEGER, INTENT(IN) :: iplot
+      TYPE(type_view) :: pixel(MAXPIXEL)
+      REAL*8 image(1100,1100)
+
+      INCLUDE 'params'      
+      INCLUDE 'comgra'
+      INCLUDE 'colours'
+      INCLUDE 'slout'
+
+      COMMON /GHOSTCOM/ iopt_ghost
+      INTEGER           iopt_ghost
+
+      CHARACTER glabel*512,caption*1024
+      CHARACTER TITLE*80,TITLE2*80,JOB*72,GRAPH*80,GRAPH1*256
+      CHARACTER*36 REF,NVIEW,PLANE,ANLY,TABLE,ZLABS(-2:MAXIZS+1)
+      CHARACTER*36 XLAB
+      CHARACTER*72 YLAB
+      CHARACTER*72 SMOOTH
+      CHARACTER*256 cdum1
+
+      INTEGER axis1(3)
+      REAL    angle1(3)
+
+      INTEGER CH1
+
+      INTEGER   nxbin,nybin,ipixel,nbin,isrf,isrf1,isrf2,isid,
+     .          idet,nplot,iobj,i1,i2,i3,i4,ix,iy,iplot1
+      REAL      deltar,deltaz,qmin,qmax,qval,ang1,ang2,ang,
+     .          frac1,frac2,xcen,ycen,xnear,ynear,count
+      REAL      XXMIN,XXMAX,YYMIN,YYMAX,dangle
+      REAL*8    angle,p1(3,6),p2(3,6),x1,x2,z1,mat(3,3)
+
+      INTEGER dat1,dat2
+      REAL, ALLOCATABLE :: xdat(:),ydat(:)
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+
+
+c *TEMP*
+      INTEGER, ALLOCATABLE :: nv(:)
+      REAL   , ALLOCATABLE :: rv(:,:),zv(:,:),cq(:)
+
+
+
+c...  PLOT B: 3D LOS integration through the 3D objects
+c     -build list of primary chords
+c     -build list of secondary chords (reflections)
+c     -fast routine for determining the intersection between a line and a surface
+c     -ray trace (using connection map and wedge index to speed things up)
+
+
+
+      IF (npixel.GT.1) THEN
+c...    Image:
+
+        DO idet = 1, opt%ndet
+
+c          CALL FRAME
+
+          nxbin = 0
+          nybin = 0
+          qmin =  0.0
+c          qmin =  HI
+          qmax = -HI
+          DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c          DO ipixel = 1, npixel
+            ix = pixel(ipixel)%xindex
+            iy = pixel(ipixel)%yindex
+            nxbin = MAX(nxbin,ix)
+            nybin = MAX(nybin,iy)
+c            qmin = MIN(qmin,pixel(ipixel)%integral)
+            qmax = MAX(qmax,SNGL(pixel(ipixel)%integral(1)))
+          ENDDO
+c          qmin = MIN(qmin,0.0)
+
+          WRITE(0,*) 'QMAD:',qmin,qmax
+
+          IF (qmin.EQ.qmax) THEN
+            WRITE(0,*) 'PROBLEM... CYCLING'
+            CYCLE
+          ENDIF
+
+          IF (nxbin.GE.nybin) THEN
+            map1x = 0.05            
+            map2x = map1x + 0.55
+            map2y = 0.95
+            map1y = map2y - 0.55 * REAL(nybin) / REAL(nxbin)
+          ELSE
+            map1x = 0.05            
+            map2x = map1x + 0.55 * REAL(nxbin) / REAL(nybin)
+            map1y = 0.40 
+            map2y = map1y + 0.55 
+          ENDIF 
+
+          CALL PSPACE(map1x,map2x,map1y,map2y)
+          CALL MAP   (0.0,1.0,1.0,0.0)
+
+          ALLOCATE(nv(1))
+          ALLOCATE(rv(4,1))  
+          ALLOCATE(zv(4,1))
+          ALLOCATE(cq(1))
+
+          IF (.NOT..TRUE.) THEN
+            DO frac1 = 0.0, 1.0*0.99999, 0.01                  ! Needs more work, grouping regons of common colour. 
+              CALL SetCol255_04(2,frac1+0.005,0.0,1.0)         ! Otherwise, not much savings... 
+              CALL FILCOL(255)                         
+              CALL LINCOL(255)                         
+              DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c              DO ipixel = 1, npixel
+                cq(1) = SNGL(pixel(ipixel)%integral(1))
+                frac2 = (cq(1) - qmin) / (qmax - qmin)
+                IF (frac2.LT.frac1.OR.frac2.GE.frac1+0.01) CYCLE
+
+                ix = pixel(ipixel)%xindex
+                iy = pixel(ipixel)%yindex
+                deltar = 1.0 / REAL(nxbin)
+                deltaz = 1.0 / REAL(nybin)
+                i1 = 1
+                rv(1,i1) = (ix - 1) * deltar 
+                zv(1,i1) = (iy - 1) * deltaz
+                rv(2,i1) = (ix - 1) * deltar 
+                zv(2,i1) = (iy    ) * deltaz
+                rv(3,i1) = (ix    ) * deltar 
+                zv(3,i1) = (iy    ) * deltaz
+                rv(4,i1) = (ix    ) * deltar 
+                zv(4,i1) = (iy - 1) * deltaz
+                CALL PTPLOT(rv(1,i1),zv(1,i1),1,4,1)
+              ENDDO
+            ENDDO
+          ELSE
+c            DO ipixel = 1, npixel
+            WRITE(file,'(1024X)')          
+            WRITE(file,'(A,I1)') 
+     .        'output.'//TRIM(opt%fmap)//'.idl.los_',idet  
+            CALL inOpenInterface(TRIM(file),ITF_WRITE)
+            DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+              ix = pixel(ipixel)%xindex
+              iy = pixel(ipixel)%yindex
+              deltar = 1.0 / REAL(nxbin)
+              deltaz = 1.0 / REAL(nybin)
+              i1 = 1
+              rv(1,i1) = (ix - 1) * deltar 
+              zv(1,i1) = (iy - 1) * deltaz
+              rv(2,i1) = (ix - 1) * deltar 
+              zv(2,i1) = (iy    ) * deltaz
+              rv(3,i1) = (ix    ) * deltar 
+              zv(3,i1) = (iy    ) * deltaz
+              rv(4,i1) = (ix    ) * deltar 
+              zv(4,i1) = (iy - 1) * deltaz
+              cq(1) = SNGL(pixel(ipixel)%integral(1))
+              CALL SetCol255_04(2,cq(i1),qmin,qmax)    ! Should really reorganize this loop, to draw all pixels of a 
+              CALL FILCOL(255)                         ! particular shade, from a limited set of contours, to 
+              CALL LINCOL(255)                         ! try and shrink the size of the .ps file... 
+              CALL PTPLOT(rv(1,i1),zv(1,i1),1,4,1)
+              CALL inPutData(ix,'i','none')
+              CALL inPutData(iy,'j','none')
+              CALL inPutData(cq(i1),'data','ph m-2 s-1')
+            ENDDO
+            CALL inCloseInterface
+          ENDIF
+c...      Clear arrays:
+          DEALLOCATE(nv)
+          DEALLOCATE(rv)
+          DEALLOCATE(zv)
+          DEALLOCATE(cq)
+          CALL DrawColourScale(1,2,qmin,qmax,'none')
+c...      Frame the plot:
+          CALL DrawFrame
+
+c...      Inversion mesh coverage:
+          IF (.TRUE.) THEN
+            cxmin =  HI
+            cxmax = -HI
+            cymin =  HI
+            cymax = -HI
+            qmin = 0.0
+            qmax = 0.0
+            file = 'output.trc'
+            WRITE(0,*) 'DUMP INVERSION COVERAGE:',file(1:LEN_TRIM(file))
+            CALL inOpenInterface(file,ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
+            DO iobj = 1, nobj
+              IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
+              IF (obj(iobj)%type.NE.GT_TC) CYCLE
+              CALL inPutData(obj(iobj)%nver,'npts','none')            
+              DO i2 = 1, obj(iobj)%nver
+                WRITE(tag_x,'(A,I1)') 'x',i2
+                WRITE(tag_y,'(A,I1)') 'y',i2
+                CALL inPutData(obj(iobj)%v(1,i2),tag_x,'m')            
+                CALL inPutData(obj(iobj)%v(2,i2),tag_y,'m')            
+                cxmin = MIN(cxmin,obj(iobj)%v(1,i2))
+                cxmax = MAX(cxmax,obj(iobj)%v(1,i2))
+                cymin = MIN(cymin,obj(iobj)%v(2,i2))
+                cymax = MAX(cymax,obj(iobj)%v(2,i2))
+              ENDDO
+              CALL inPutData(obj(iobj)%path,'path','m')            
+              qmax = MAX(qmax,obj(iobj)%path)
+            ENDDO     
+            CALL inCloseInterface
+          ENDIF
+          WRITE(0,*) 'PROFILE QMIN,QMAX :',qmin,qmax
+          IF (qmax.GT.0.0) THEN
+            map1x = 0.05
+            map1y = 0.02
+            IF (cxmax-cxmin.GT.cymax-cymin) THEN
+              map2x = map1x + 0.35
+              map2y = map1y + 0.35 * (cymax - cymin) / (cxmax - cxmin)
+            ELSE
+              map2x = map1x + 0.35 * (cxmax - cxmin) / (cymax - cymin)
+              map2y = map1y + 0.35 
+            ENDIF
+            CALL PSPACE(map1x,map2x,map1y,map2y)
+            CALL MAP   (cxmin,cxmax,cymin,cymax)
+            DO iobj = 1, nobj
+              IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
+              IF     (obj(iobj)%path.GT.0.01*qmax) THEN
+                CALL SetCol255_04(2,obj(iobj)%path,qmin,qmax)
+              ELSEIF (obj(iobj)%path.GT.0.0) THEN
+                CALL SetCol255_04(1,qmax*0.9      ,qmin,qmax)
+              ELSE
+                CALL SetCol255_04(1,qmax*0.6      ,qmin,qmax)
+              ENDIF
+              CALL FILCOL(255)
+              CALL LINCOL(255) 
+              CALL PTPLOT(REAL(obj(iobj)%v(1,1:4)),
+     .                    REAL(obj(iobj)%v(2,1:4)),
+     .                    1,obj(iobj)%nver,1)
+c             WRITE(0,*) 'plot:',obj(iobj)%v(1,1:4),
+c    .                           obj(iobj)%v(2,1:4)
+            ENDDO
+c...      Annotate:
+c          CALL LinCol(ncols+1)
+c          CALL CTRMAG(12)
+c          WRITE(caption,'(A,3I4)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
+c          CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
+c...      Frame:
+c          CALL DrawGrid(-95)
+c          CALL Supimp('PARTIAL')
+            Call DrawFrame
+          ENDIF
+
+
+c...      Line plot:
+          IF (.FALSE.) THEN
+            slopt2 = 1
+            iopt_ghost = 1  ! 2
+            plottype(1) = 2
+            plottype(2) = 3
+            map1x = 0.65             
+            map2x = map1x + 0.55
+            map1y = 0.77 
+            map2y = map1y + 0.15
+c...        Assign data:
+            dat1 = 35600+1
+            dat2 = 35600+200
+            ALLOCATE(xdat(dat2-dat1+1))
+            ALLOCATE(ydat(dat2-dat1+1))
+            xlabel = 'pixel    '
+            ylabel = 'signal   '
+            DO i1 = dat1, dat2
+              xdat(i1-dat1+1) = REAL(i1)
+            ENDDO
+            ydat(1:dat2-dat1+1) = SNGL(pixel(dat1:dat2)%integral(1))
+            IF (idet.EQ.1) THEN
+              WRITE(6,*) '*PIXEL DATA'
+              WRITE(6,*) '*'
+              WRITE(6,*) dat2-dat1+1
+              DO i1 = 1, dat2-dat1+1
+                WRITE(6,*) REAL(i1),xdat(i1),ydat(i1)
+              ENDDO
+            ENDIF
+            cxmin = 1.0
+            cxmax = REAL(dat2-dat1+1)
+            cymin =  HI
+            cymax = -HI
+            DO i1 = 1, dat2-dat1+1
+              cymin = MIN(cymin,ydat(i1))
+              cymax = MAX(cymax,ydat(i1))
+            ENDDO
+            CALL GRTSET_TRIM(' ',' ',' ',' ',' ',      ! TITLE,REF,nVIEW,PLANE,glabel,
+     .                       cxmin,cxmax,cymin,cymax,
+     .                       ' ',xlabel,ylabel,        ! TABLE,XLAB,YLAB,
+     .                       0,' ',0,' ',1)            ! 0,smooth,0,ANLY,1)
+            CALL GRTRAC(xdat,ydat,dat2-dat1+1,'ref ','LINE',1)        
+            DEALLOCATE(xdat)
+            DEALLOCATE(ydat)
+            CALL DrawFrame
+
+          ENDIF
+
+        ENDDO
+      ENDIF
+
+
+      IF (.TRUE..AND.opt%img_opt.NE.0) THEN
+c...    Plot loaded camera image (if there is one):
+
+c        IF (opt%img_nxbin.GE.100) THEN
+c          nbin = opt%img_nxbin / 50          ! Should also check opt%nybin
+c          nbin = 1
+c        ELSE
+          nbin = 1
+c        ENDIF
+
+c...    Plot image:
+c        nbin = 1 !6  ! Binning (NBIN=1 is no binning)
+        IF (nbin.GT.1.AND.
+     .      (nbin.GE.opt%img_nxbin.OR.
+     .       nbin.GE.opt%img_nybin))
+     .    CALL ER('985','Bin request greater than image resolution',
+     .            *99)
+
+        nxbin = opt%img_nxbin / nbin
+        nybin = opt%img_nybin / nbin
+
+        WRITE(0,*) ' *** NXBIN',nxbin,nybin
+
+        qmin =  HI
+        qmax = -HI
+        DO ix = 1, nxbin
+          DO iy = 1, nybin
+            qval = opt%img_image(ix,iy)
+c            qval = 0.0
+c            DO i2 = 0, nbin-1
+c              DO i3 = 0, nbin-1
+c                qval = qval + SNGL(opt%img_image(nbin*(ix-1)+1+i2,
+c     .                                           nbin*(iy-1)+1+i3))
+c              ENDDO
+c            ENDDO           
+            qmin = MIN(qmin,qval)  ! Need to average here, and below?  
+            qmax = MAX(qmax,qval)  ! Need to average here, and below?  
+          ENDDO
+        ENDDO
+
+        WRITE(0,*) 'QVAL MASK IMAGE:',qmin,qmax,nxbin,nybin
+c        STOP 'sdfsd'
+
+
+        IF (nxbin.GE.nybin) THEN
+          map1x = 0.65            
+          map2x = map1x + 0.55
+          map2y = 0.95
+          map1y = map2y - 0.55 * REAL(nybin) / REAL(nxbin)
+        ELSE
+          map1x = 0.65            
+          map2x = map1x + 0.55 * REAL(nxbin) / REAL(nybin)
+          map1y = 0.40
+          map2y = map1y + 0.55 
+        ENDIF 
+
+        CALL PSPACE(map1x,map2x,map1y,map2y)
+        CALL MAP   (0.0,1.0,1.0,0.0)
+        ALLOCATE(nv(1))
+        ALLOCATE(rv(4,1))  
+        ALLOCATE(zv(4,1))
+        ALLOCATE(cq(1))
+        deltar = 1.0 / REAL(nxbin)
+        deltaz = 1.0 / REAL(nybin)
+        DO ix = 1, nxbin
+          DO iy = 1, nybin
+            i1 = 1
+            rv(1,i1) = REAL(ix - 1) * deltar 
+            zv(1,i1) = REAL(iy - 1) * deltaz
+            rv(2,i1) = REAL(ix - 1) * deltar 
+            zv(2,i1) = REAL(iy    ) * deltaz
+            rv(3,i1) = REAL(ix    ) * deltar 
+            zv(3,i1) = REAL(iy    ) * deltaz
+            rv(4,i1) = REAL(ix    ) * deltar 
+            zv(4,i1) = REAL(iy - 1) * deltaz
+            cq(i1) = opt%img_image(ix,iy)
+c            cq(i1) = 0.0
+c            DO i2 = 0, nbin-1
+c              DO i3 = 0, nbin-1
+c                cq(i1) = cq(i1) + SNGL(opt%img_image(nbin*(ix-1)+1+i2,
+c     .                                               nbin*(iy-1)+1+i3))
+c              ENDDO
+c            ENDDO
+            CALL SetCol255_04(2,cq(i1),qmin,qmax)   ! See above note on reducing size of .ps file...
+            CALL FILCOL(255)
+            CALL LINCOL(255) 
+            CALL PTPLOT(rv(1,i1),zv(1,i1),1,4,1)
+          ENDDO
+        ENDDO
+c...    Clear arrays:
+        IF (ALLOCATED(nv)) DEALLOCATE(nv)
+        IF (ALLOCATED(rv)) DEALLOCATE(rv)
+        IF (ALLOCATED(zv)) DEALLOCATE(zv)
+        IF (ALLOCATED(cq)) DEALLOCATE(cq)
+c...    Annotate:
+        CALL LinCol(ncols+1)
+        CALL CTRMAG(12)
+        WRITE(caption,'(A,2I5)') 'XBIN,YBIN:',nxbin,nybin
+        CALL PLOTST(0.02,0.03,caption(1:LEN_TRIM(caption)))
+        CALL DrawFrame
+c...    Clear memory:
+c        IF (ALLOCATED(opt%img_image)) DEALLOCATE(opt%img_image)     
+      ENDIF
+
+
+      IF (.TRUE.) THEN
+c...    Spectra:
+        slopt2 = 1
+        iopt_ghost = 1
+        DO idet = 1, opt%ndet
+          WRITE(0,*) 'PLOTTING LINE SHAPES',
+     .        opt%det_istart(idet),
+     .        opt%det_iend  (idet)
+          CALL FRAME
+          CALL PlotLineShapes(opt%det_istart(idet),
+     .                        opt%det_iend  (idet),
+     .                        MAXPIXEL,npixel,pixel)
+        ENDDO
+        WRITE(0,*) 'DONE'
+      ENDIF
+
+
+      RETURN
+98    WRITE(0,*) 'OBJECT,SIDE,TYPE=',i1,i2,obj(i1)%gsur(i2)
+99    STOP
+      END
+
 
 c
 c ======================================================================
@@ -2672,6 +3459,11 @@ c....       Wireframe (all plots currently...):
 c....       Solid:
 c            WRITE(0,*) 'DRAWING SOLID 3D PLOT'
             CALL SolidPlot985(opt,nobj,obj,iplot)
+            CALL FRAME
+          CASE (003)
+c....       Image plot, and line shapes for the moment:
+            CALL ImagePlot985
+     .             (iopt,MAXPIXEL,npixel,pixel,image,iplot)
             CALL FRAME
           CASE DEFAULT
             CALL WN('Output985','Unrecognised plot option')
