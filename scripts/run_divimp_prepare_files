@@ -192,6 +192,11 @@
 # Copy device and case group data files:
 #
   if ( $DEVICE != "unknown" ) then
+#   Defaults:
+    foreach filename (`ls $DIVHOME/shots/$DEVICE/default/*`)
+      ln -fs $filename .
+    end
+#   Case specific files (including default over-rides):
     if ( -e $DIVHOME/shots/$DEVICE/$DEVDIR ) then
       foreach filename (`ls $DIVHOME/shots/$DEVICE/$DEVDIR/*`)
         ln -fs $filename .
@@ -200,6 +205,10 @@
       echo Device directory $DEVICE/$DEVDIR does not exist
     endif
   endif
+#
+# ----------------------------------------------------------------------
+#
+  ln -sf ~/fuse_data/mast/images . >& \dev\null
 #
 #   ----------------------------------------------------------------------
 #   Unzip .raw files (check that list is the same as in main run script):
