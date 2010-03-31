@@ -18,6 +18,12 @@ c      RETURN
 
       CALL LoadLegacyData('osm_legacy.raw')
 
+      CALL GenerateTubeGroups
+      CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+      CALL GenerateTargetGroups
+      CALL DumpData_OSM('output.grid_targets','Done analysing targets')
+
 c      CALL SetTargetConditions(itube)
 
       IF (opt%osm_load.NE.0) CALL LoadReferenceSolution(1)
@@ -275,7 +281,7 @@ c
         wall(iwall)%index(WAL_INDEX ) = -1    
         wall(iwall)%index(WAL_TUBE  ) = -1    
         wall(iwall)%index(WAL_TARGET) = NINT(wallpt(iwall,16))    
-        wall(iwall)%material_tag      = 'unknown'
+        wall(iwall)%material_tag      = 'no_set'
         wall(iwall)%material          = -1
         wall(iwall)%temperature       =      wallpt(iwall,19)
         wall(iwall)%v1(1)             = DBLE(wallpt(iwall,20))
@@ -416,7 +422,8 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
-      CALL CalcTubeDimensions(tube_3D_data,dangle)
+      dangle = 0.0
+c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE

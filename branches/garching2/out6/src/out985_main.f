@@ -657,7 +657,7 @@ c      DO i1 = 200000, npixel
 c      DO i1 = 4325, 4325
       DO i1 = 1, npixel
 
-        IF (MOD(i1,npixel/10).EQ.0) 
+        IF (MOD(i1,MAX(1,npixel/10)).EQ.0) 
 c        IF (MOD(i1,1).EQ.0) 
 c        IF (MOD(i1,1000).EQ.0) 
      .    WRITE(0,'(A,I7,A,I7)') 'PROCESSING PIXEL ',i1,' OF ',npixel
@@ -1474,7 +1474,7 @@ c      TYPE(type_options985) :: opt
 c...      Also generate mod_interface file:
           WRITE(file,'(1024X)')          
           file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
-          CALL inOpenInterface(TRIM(file))
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
           DO iy = 1, nybin
             CALL inPutData(image(1:nxbin,iy),'data','unknown')
           ENDDO

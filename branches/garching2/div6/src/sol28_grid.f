@@ -162,6 +162,8 @@ c...  Set the geometry:
         geometry = LSND
       ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
         geometry = UDND
+      ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).LT.grid%zxpt(2)) THEN
+        geometry = LDND
       ELSE
         WRITE(0,*) 'NXPT   =',grid%nxpt
         WRITE(0,*) 'ZXPT1,2=',grid%zxpt
@@ -178,6 +180,12 @@ c...  A bit of a mess... but...
           ELSE
             SELECTCASE (geometry)
               CASE (UDND)
+                IF (itarget.EQ.LO) THEN
+                  ilist(1) = GetTube(grid%ixpt(2,2),IND_OBJECT)
+                ELSE
+                  ilist(1) = GetTube(grid%ixpt(2,1),IND_OBJECT)
+                ENDIF
+              CASE (LDND)
                 IF (itarget.EQ.LO) THEN
                   ilist(1) = GetTube(grid%ixpt(2,2),IND_OBJECT)
                 ELSE
@@ -260,7 +268,6 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
               ENDIF
             CASE (LDND)
-              STOP 'NOT CHECKED - A'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -1976,7 +1983,7 @@ c       --------------------------------------------------------------
         WRITE(outfp,*) '  MAXIR=',maxir
       ENDIF
 
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO i1 = 1, nknot
         CALL inPutData(knot(i1)%ik,'IK','none')
         CALL inPutData(knot(i1)%ir,'IR','none')
@@ -2670,11 +2677,7 @@ c...  Assign data to the global arrays:
       grid_load%ikto       = ikto       
       grid_load%nks(1:nrs) = nks(1:nrs)
 
-
-
-
-
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO ir = 1, nrs
         CALL inPutData(nks(ir),'NKS','NA')    
         DO ik = 1, nks(ir)

@@ -44,6 +44,7 @@
      .  GRD_BOUNDARY =  -1,
      .  EIR_MAXNSTRATA = 100,
      .  EIR_MAXNVOID   = 100,
+     .  EIR_MAXNSPECTRA= 100,
      .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5
 
 
@@ -185,7 +186,25 @@ c
          INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
          INTEGER   :: ilspt           ! Sputering option
-
+!...     Particle energy spectra:
+         INTEGER      :: nadspc
+         INTEGER      :: ispsrf     (EIR_MAXNSPECTRA)  ! Surface index, <0=non-default standard, >0=additional surfaces
+         CHARACTER*32 :: ispsrf_ref (EIR_MAXNSPECTRA)  ! Which code does the surface index refer to?
+         INTEGER      :: iptyp      (EIR_MAXNSPECTRA)  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?
+         INTEGER      :: ipsp       (EIR_MAXNSPECTRA)  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.
+         INTEGER      :: isptyp     (EIR_MAXNSPECTRA)  ! Spectrum type wrt units, 1=1/eV/s, 2=1/s
+         INTEGER      :: nsps       (EIR_MAXNSPECTRA)  ! Number of bins
+         INTEGER      :: isrfcll    (EIR_MAXNSPECTRA)  ! Kind of spectrum, 0=surface flux
+         INTEGER      :: idirec     (EIR_MAXNSPECTRA)  ! If >0 then a projection on a direction is used in the statistics (??)
+         REAL         :: spcmn      (EIR_MAXNSPECTRA)  ! Lower bound of energy range for spectrum
+         REAL         :: spcmx      (EIR_MAXNSPECTRA)  ! Upper bound
+         REAL         :: spc_shift  (EIR_MAXNSPECTRA)  ! ??? for future use perhaps
+         REAL         :: spcplt_x   (EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcplt_y   (EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcplt_same(EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
+         REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
+         REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
 !         REAL      :: puff_type   (EIR_MAXNPUFF)

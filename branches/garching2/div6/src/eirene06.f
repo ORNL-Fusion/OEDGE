@@ -1058,7 +1058,7 @@ c...  Bricks:
       LOGICAL :: hack  = .FALSE.
 
       REAL*8 a(3,3),b(3,7),c(3,4),ang,ang1,ang2,dang(500,2),
-     .       theta,frac,xcen,ycen
+     .       theta,frac,xcen,ycen,adelta
 
       REAL*8     DTOL
       PARAMETER (DTOL=1.0D-07)
@@ -1170,6 +1170,9 @@ c        dang(12,2) = 180.0D0   !  180.0D0
         ENDDO
       ENDIF
 
+      adelta = dang(nseg,2) - dang(1,1)
+      dang = dang - 0.5D0 * adelta      
+
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
      .    'ANGLES:',isector,dang(isector,1:2)
@@ -1203,7 +1206,13 @@ c...    Filter:
         xcen = SUM(a(1,1:3)) / 3.0
         ycen = SUM(a(2,1:3)) / 3.0
 c        IF (xcen.LT.0.01) CYCLE
-        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
+c        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
+c        IF (ycen.GT.-2.0) CYCLE
+c        IF (ycen.LT.3.0) CYCLE
+c        IF (try(itry)%index(IND_IR).GT.1 .AND.
+c     .      try(itry)%index(IND_IR).LT.20) CYCLE 
+        IF (ycen.GT.0.2.OR.xcen.GT.0.7) CYCLE        
+
 
 
 c...    Check orientation...?
@@ -1543,6 +1552,14 @@ c...  Impose filament structures:
         CALL BuildConnectionMap(istart,iend)
         CALL FixTetrahedrons(istart,iend)
       ENDIF
+
+      WRITE(0,*) 
+      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
+      WRITE(0,*) 
+      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
+      iend = nobj
+      CALL BuildConnectionMap(istart,iend)
+      CALL FixTetrahedrons(istart,iend)
 
       CALL CheckTetrahedronStructure
 
@@ -4546,7 +4563,7 @@ c          CALL WriteLine(fp2,buffer)
 c          CALL CopyBlock(fp1,fp2)
         ENDIF
 
-c...  Advance input stream to the start of the next input block:
+c...    Advance input stream to the start of the next input block:
 40      CALL ReadLine(fp1,buffer,1,*97,*98)
         IF (buffer(1:3).NE.'***') GOTO 40
         BACKSPACE fp1
@@ -4560,8 +4577,13 @@ c...  Advance input stream to the start of the next input block:
         ELSE
         ENDIF
 
-        CALL WriteLine(fp2,buffer)
-        CALL CopyBlock(fp1,fp2)
+        CALL WriteBlock10_06
+c...    Advance input stream to the start of the next input block:
+42      CALL ReadLine(fp1,buffer,1,*97,*98)
+        IF (buffer(1:3).NE.'***') GOTO 42
+        BACKSPACE fp1
+c        CALL WriteLine(fp2,buffer)
+c        CALL CopyBlock(fp1,fp2)
 
         IF (output) WRITE(eirfp,*) 'DONE'
       ELSEIF (buffer(1:6).EQ.'*** 11') THEN
@@ -5141,8 +5163,72 @@ c
 c
 c
 c
+      SUBROUTINE WriteBlock10_06
+      USE mod_eirene06
+      USE mod_sol28_global
+      IMPLICIT none
+
+      INTEGER i
+
+      WRITE(fp06,90) '*** 10. DATA FOR ADDITIONAL VOLUME AND SURFACE '//
+     .                       'AVERAGED TALLIES - OSM'
+
+      IF (.TRUE.) THEN
+        WRITE(fp06,91) 7,0,0,0,0,opt_eir%nadspc
+        WRITE(fp06,90) '** 10A. ADDITIONAL VOLUME AVERAGED '//
+     .                         'TRACKLENGTH TALLIES'
+        DO i = 1, 7
+          WRITE(fp06,90) '     1     1     0     1'
+          WRITE(fp06,90) 'dalpha'
+          WRITE(fp06,90) 'dalpha                  none'
+        ENDDO
+        WRITE(fp06,90) '** 10B. ADDITIONAL VOLUME AVERAGED '//
+     .                         'COLLISION TALLIES'
+        WRITE(fp06,90) '** 10C. ALGEBRAIC TALLIES'
+        WRITE(fp06,90) '** 10D.'
+        WRITE(fp06,90) '** 10E.'
+        WRITE(fp06,90) '** 10F. SPECTRA'
+        DO i = 1, opt_eir%nadspc
+          IF (opt_eir%ispsrf_ref(i)(1:6).EQ.'eirene') THEN
+            WRITE(fp06,91) opt_eir%ispsrf (i), 
+     .                     opt_eir%iptyp  (i), 
+     .                     opt_eir%ipsp   (i), 
+     .                     opt_eir%isptyp (i), 
+     .                     opt_eir%nsps   (i),
+     .                     opt_eir%isrfcll(i), 
+     .                     opt_eir%idirec (i)
+            WRITE(fp06,93) opt_eir%spcmn  (i),
+     .                     opt_eir%spcmx  (i)
+            IF (opt_eir%idirec(i).NE.0) 
+     .        WRITE(fp06,93) opt_eir%spcvx,
+     .                       opt_eir%spcvy,
+     .                       opt_eir%spcvz
+          ELSE
+            CALL ER('WriteBlock10_06','Invalid code referenc',*99)
+          ENDIF
+        ENDDO
+      ELSE
+        CALL ER('WriteBlock11_06','Trouble',*99)
+      ENDIF
+
+      RETURN
+90    FORMAT(A)
+91    FORMAT(20(I6:))
+92    FORMAT(1P,20(E12.4:))
+93    FORMAT(1P,20(E12.5:))
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: WriteBlock11_06
+c
+c
+c
+c
       SUBROUTINE WriteBlock11_06
       USE mod_eirene06
+      USE mod_sol28_global
       IMPLICIT none
 
       WRITE(fp06,90) '*** 11. DATA FOR NUMERICAL/GRAPHICAL OUTPUT (OSM)'
@@ -5152,7 +5238,7 @@ c
 c        WRITE(fp06,90) 'FTFFF TTFFF FFTFF TTTTT T'  ! Turn on particle tracking TRCGRD
 c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,90) 'Ttttt ttttt tttt'
-        WRITE(fp06,91) 4
+        WRITE(fp06,91) 4,MIN(1,opt_eir%nadspc)
         WRITE(fp06,91) 14,0
         WRITE(fp06,91) -2,0
         WRITE(fp06,91) -3,0
