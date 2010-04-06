@@ -1,0 +1,1 @@
+/home/ITER/lisgos/idl/magnetics/b.pro

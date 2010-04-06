@@ -2183,7 +2183,7 @@ C  SPECTRA IN SELECTED CELLS
       TEXTYP(4) = 'BULK IONS '
       IADTYP(0:4) = (/ 0, NSPH, NSPA, NSPAM, NSPAMI /)
 
-      WRITE(0,*) 'DEBUG: NADSPC=',NADSPC
+c      WRITE(0,*) 'DEBUG: NADSPC=',NADSPC
 
       DO ISPC=1,NADSPC
         IF (ESTIML(ISPC)%PSPC%ISRFCLL /= 0) THEN
@@ -2224,7 +2224,7 @@ C  SPECTRA IN SELECTED CELLS
         END IF
       END DO
 
-      WRITE(0,*) 'DEBUG: NSPCPR=',NSPCPR,ISTRA
+c      WRITE(0,*) 'DEBUG: NSPCPR=',NSPCPR,ISTRA
 c slmod begin      
       IF (NSPCPR > 0) CALL OUTSPEC(ISTRA)
 c
@@ -6491,8 +6491,8 @@ c slmod begin
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCINT,'INTEGRAL','?')      
         CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','N/A')
         CALL inPutData(it,'SPECTRUM_TYPE','N/A')
-        IF (I >  NLIM) CALL inPutData(I-NLIM,'SURFACE_INDEX','N/A')
-        IF (I <= NLIM) CALL inPutData(I     ,'SURFACE_INDEX','N/A')
+        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'SURFACE_INDEX','N/A')
+        IF (I <= NLIM) CALL inPutData(I        ,'SURFACE_INDEX','N/A')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_ENERGY','eV')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_ENERGY','eV')
         CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')

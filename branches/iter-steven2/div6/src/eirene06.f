@@ -5326,7 +5326,8 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
      .      surface(i1)%reflect.EQ.LOCAL
         ENDIF
 
-        IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2) THEN  ! Need to fix this...
+        IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2.AND.
+     .      i1.NE.3) THEN  ! Need to fix this...
           warning_reported = .TRUE.
           WRITE(0,*)
           WRITE(0,*) '--------------------------------------------'

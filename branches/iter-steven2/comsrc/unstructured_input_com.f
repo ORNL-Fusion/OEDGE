@@ -116,7 +116,7 @@ c -----------------------------------------------------------------------
       IF     (line(2:2).EQ.'{') THEN
         IF (sol28_first) THEN 
 c          WRITE(0,*) 'INITIALIZING SOL28 OPTIONS'
-          CALL InitializeOptions
+c          CALL osm_InitializeOptions  Now called from InitializeVariables in setup.f
           sol28_first = .FALSE.
         ENDIF
 c...    SOL28/OSM input options:

@@ -3100,6 +3100,7 @@ c     values need to well documented.
 c
       call InitializeUnstructuredInput
 
+      CALL osm_InitializeOptions
 c
       return
       END
