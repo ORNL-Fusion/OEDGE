@@ -1,0 +1,30 @@
+.r strsplit
+.r psopen
+.r undefined 
+.r is_string 
+.r truecolor 
+.r is_integer 
+.r not_string 
+.r psclose 
+.r interface
+.r cortex_utility
+.r cortex_load_geometry
+.r cortex_load_plasma
+.r cortex_load_results
+.r grid_readequfile
+.r cortex_plot_2D_grid
+.r cortex_plot_1D_targets
+.r cortex_plot_1D_parallel
+.r cortex_plot_1D_midplane
+.r cortex_plot_1D_radial
+.r cortex_plot_1D_pedestal
+.r cortex_plot_1D_core
+.r cortex_plot_1D_summary
+.r cortex_plot_1D_spectrum
+.r cortex_plot_1D_wall
+.r cortex_plot_1D_integrals
+.r cortex_plot_2D_contour
+.r cortex_input
+.r cortex_main
+SAVE,FILENAME='cortex.sav',/ROUTINES
+

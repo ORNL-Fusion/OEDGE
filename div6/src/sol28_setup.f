@@ -1653,19 +1653,30 @@ c...  Check for target data:
         node_s(node_n)%par_exp  = 0.0
         node_s(node_n)%par_set  = 0
       ENDIF
-c...  Target nodes:
+c...  Define target node location defaults:
       node_s(1     )%s = 0.0
       node_s(node_n)%s = tube(it)%smax
-      node_s(1     )%icell = 0
-      node_s(node_n)%icell = tube(it)%n + 1
+c      node_s(1     )%icell = 0
+c      node_s(node_n)%icell = tube(it)%n + 1
 c...  Assign cell indices:
-      DO i1 = 2, node_n-1
-        DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-          IF (node_s(i1)%s.GE.cell(ic)%sbnd(1).AND.
-     .        node_s(i1)%s.LE.cell(ic)%sbnd(2))THEN
-            node_s(i1)%icell = ic - tube(it)%cell_index(LO) + 1
-          ENDIF
-        ENDDO
+       WRITE(logfp,*) 'length',tube(it)%smax
+      DO i1 = 1, node_n
+c      DO i1 = 2, node_n-1
+        IF     (node_s(i1)%s.LT.0.00001) THEN
+          node_s(i1)%s     = 0.0
+          node_s(i1)%icell = 0
+        ELSEIF (node_s(i1)%s.GT.0.99999*tube(it)%smax) THEN
+          node_s(i1)%s     = tube(it)%smax
+          node_s(i1)%icell = tube(it)%n + 1
+        ELSE
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+            IF (node_s(i1)%s.GE.cell(ic)%sbnd(1).AND.
+     .          node_s(i1)%s.LE.cell(ic)%sbnd(2)) THEN
+              node_s(i1)%icell = ic - tube(it)%cell_index(LO) + 1
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
       ENDDO
 
       IF (log.GT.0) THEN
@@ -1756,6 +1767,10 @@ c...       Delete degenerate node:
         ENDDO
       ENDIF
 
+
+
+
+
       IF (log.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
@@ -1768,6 +1783,47 @@ c...       Delete degenerate node:
      .      node_s(i1)%te,node_s(i1)%ti(1)
         ENDDO
       ENDIF
+
+
+c     THE ABOVE CODE FOR SPECIFICALLY CHECKING SYMMETRY POINTS MAY BE
+c     REDUNDANT -- NEED TO CHECK
+
+c...  Try to combine nodes if there is more than one:
+      DO i1 = 1, node_n
+        i2 = i1
+        DO WHILE(i2.LT.node_n)
+          i2 = i2 + 1
+          IF (node_s(i1)%icell.EQ.node_s(i2)%icell) THEN
+c...       Check for quantity assigned multiple values:
+           IF ((node_s(i1)%ne.NE.0.0.AND.node_s(i2)%ne.NE.0.0).OR.
+     .         (node_s(i1)%v .NE.0.0.AND.node_s(i2)%v .NE.0.0).OR.
+     .         (node_s(i1)%pe.NE.0.0.AND.node_s(i2)%pe.NE.0.0).OR.
+     .         (node_s(i1)%te.NE.0.0.AND.node_s(i2)%te.NE.0.0).OR.
+     .         (node_s(i1)%ti(1).NE.0.0.AND.node_s(i2)%ti(1).NE.0.0)) 
+     .       CALL ER('AssignNodeValues_New','Degenerate '//
+     .               'symmetry point node found',*99)
+c...       Copy over data:
+           IF (node_s(i2)%ne.NE.0.0) node_s(i1)%ne = node_s(i2)%ne
+           IF (node_s(i2)%v .NE.0.0) node_s(i1)%v  = node_s(i2)%v 
+           IF (node_s(i2)%pe.NE.0.0) node_s(i1)%pe = node_s(i2)%pe
+           IF (node_s(i2)%te.NE.0.0) node_s(i1)%te = node_s(i2)%te
+           IF (node_s(i2)%ti(1).NE.0.) node_s(i1)%ti(1)=node_s(i2)%ti(1)
+c...       Allow partial assignment of sheath-limited tubes by combining blocks:
+           IF (node_s(i1)%par_set.EQ.0.AND.node_s(i2)%par_set.NE.0)
+     .       node_s(i1)%par_set = node_s(i2)%par_set
+c...       Delete degenerate node:
+           IF (i2.LT.node_n) THEN
+             node_s(i2:node_n-1) = node_s(i2+1:node_n)
+             node_i(i2:node_n-1) = node_i(i2+1:node_n)
+           ENDIF
+           node_n = node_n - 1
+          ENDIF
+        ENDDO
+      ENDDO
+
+
+
+
 
 
 c...  Sort nodes based on s-distance along the field line:

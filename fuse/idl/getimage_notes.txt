@@ -1,0 +1,265 @@
+; .r dc_load dc_save dc_utility dc_calibrate dc_filter dc
+;
+; 
+;
+; image=getimage(shot=15912,channel=1,frame=1,/raw,filter="empty")
+; image=getimage(shot=724,channel=1,frame=1,/raw,filter="empty")
+;
+; Detachment sessions
+; -------------------
+; file='/home/ITER/lisgos/fuse/machines/mast/calibration_data_cameras/13_01_2010/DivCam_1/Channel_1/pos6000001.bmp'
+; image=getimage(file=file,channel=1,/colour,filter='empty',/raw,/plots,/centre,depth=8,shift=[0,0],radius=200)
+;
+; view registration
+; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,/colour,/save)  ; HL01, channel 1, rbc
+; image=getimage(shot=24808,frame=1,channel=2,/plots,/nocal,rotate=270,/debug,/save)           ; HL01, channel 2, rdb
+; 
+; Diamond
+; --------
+; image=getimage(shot=20348,frame=27,channel=3,colour=3,filter='empty',/plots,scale=2.5,/save,/nocal)
+; image=getimage(shot=19576,frame=1,channel=3,colour=3,filter='empty',/plots,/save,/nocal)
+; image=getimage(shot=19576,frame=10,channel=3,colour=3,filter='empty',/plots,/save,scale=3.0,/nocal)
+;
+; Linear camera
+; -------------
+; 
+; IDL> restore, 'write_radius.fnc'
+;  ms    - inverted data that is put into 'ADA_Dalpha inverted'
+;  tcam  - time series
+;  rscam - radial poistion
+;  frcam - radial position for raw data (?)
+;  fcam  - raw data that is put into 'ADA_Dalpha raw_full' (in Volts)
+; show,shots[i],'m4',ms,tcam,rscam,cam,traw,acam,rcam,fcam,facam,frcam,tint
+;
+; MWIR
+; ----
+; image=getimage(shot=19374,frame=68,channel=1,colour=3,camera='MWIR',/plots,/clean,/save)
+;
+; LWIR
+; ----
+; image=getimage(shot=19374,frame=42,channel=1,colour=3,camera='LWIR',/plots,/save) 
+;
+; C-Mod
+; -----
+; image=getimage(shot=1060725023,frame=32,channel=1,device='CMOD',/plots,/save)
+; image=getimage(shot=1060725023,frame=32,channel=1,device='CMOD',/plots,/centre,radius=275,depth=11,shift=[65,25]) 
+;
+; ELMs
+; ----
+; image=getimage(shot=15622,frame=194,channel=2,colour=4,camera='PHOTRON',/plots,/save,/clean)
+;
+; Pellets
+; -------
+; Registration:
+; image=getimage(shot=17985,frame=15,maskleft=245,maskright=370,maskbottom=480,masktop=50,channel=1,/colour,/plots,/clean,/save)
+; image=getimage(shot=17985,frame=15,maskleft=245,maskright=370,channel=1,/colour,/plots,/clean,/save)
+; image=getimage(shot=20579,frame=683,channel=1,colour=3,camera='PHOTRON',/plots,rotate=180,/save,/clean)
+; image=getimage(shot=20579,frame=683,channel=3,colour=3,camera='PHOTRON',/plots,rotate=270,/save,/clean)
+;
+; image=getimage(file='data/728_composite_image.bmp',channel=1,/colour,shot=17107,filter='He 728.1',/raw,/clean)
+;
+; image=getimage(shot=20579,frame=770,channel=1,colour=0,camera='PHOTRON',/plots,rotate=180,/save,/clean) 
+; image=getimage(shot=20579,frame=770,channel=3,colour=0,camera='PHOTRON',/plots,rotate=270,/save,/clean) 
+; 
+; image=getimage(date=20061215,line=728.1,channel=1,shift=[-23,-5],/colour,/calibrate,/save,path='./calibration/')
+; image=getimage(date=20060929,channel=2,shift=[-23,-4],/colour,/calibrate,/save,path='./calibration/')
+;
+;
+;
+; No filter
+; ---------
+;
+; 
+; image=getimage(file='data/calibration/20060613/000505.ipx',channel=1,shift=[-24,+1],radius=535,/colour,/calibrate,/plots,/save,filter='empty')
+; image=getimage(file='data/calibration/20060613/000549.ipx',channel=2,shift=[-20,+1],radius=495,/colour,/calibrate,/plots,/save)
+; image=getimage(file='data/calibration/20060620/000600.ipx',channel=2,shift=[-16,-8],radius=520,/colour,/calibrate,/plots,/save)
+
+; image=getimage(file='data/calibration/20060731/000100.ipx',channel=1,shift=[-27,-2],/colour,/calibrate)
+; image=getimage(file='data/calibration/20061219/000245.ipx',channel=1,shift=[-21,-2],/colour,/calibrate)
+;
+; Wondering now if the images James took were wall out of focus, since John and I fixed the focus
+; on ... .  Perhaps the focus was off for previous calibration images as well.  The image 
+;
+; The vignetting is almost identicle on these images, once the horizontal shift is taken into account.
+;
+;
+; image=getimage(file='data/calibration/20060731/000100.ipx',channel=1,shift=[-26,-1],radius=522,/colour,/calibrate,/save)
+; image=getimage(file='data/calibration/20060731/000101.ipx',channel=2,shift=[-17,-5],radius=519,/colour,/calibrate,/save)
+;
+; Ohmic
+; -----
+;
+; image=getimage(shot=17461,frame=13,channel=1,maskradius=480,maskbox=[1,297,818,1000],maskbottom=925,/colour,/plots,/save)
+; image=getimage(shot=17461,frame=13,channel=2,maskradius=480,maskbox=[1,300,800,1000],maskbottom=925,/colour,/plots,/save)
+;
+; H-mode
+; ------
+;
+; image=getimage(shot=17467,frame=13,channel=2,maskradius=450,maskbox=[1,300,800,1000,665,675,855,865],maskbottom=925,/colour,/plots,/clean,/save) 
+;
+; HeI 728 filter
+; --------------
+;
+; image=getimage(file='data/calibration/20061219/000208.ipx',channel=1,shift=[-23,-4],radius=525,/colour,/calibrate,/save)
+;
+; Composite lamp image:
+;
+; image=getimage(file='data/728_composite_image.bmp',channel=1,shot=17107,filter='He 728.1',/colour)
+; image=getimage(file='data/728_composite_image.bmp',channel=1,shot=17107,filter='He 728.1',maskradius=480,/clean,/colour)
+;
+;
+; image=getimage(shot=17107,frame=13,channel=1,maskradius=480,/colour,/clean)
+;
+; image=getimage(shot=17107,frame=12,channel=1,maskradius=470,masktop=60,maskbox=[606,685,60,105],/colour,/plots,/clean,/save)
+; image=getimage(shot=17107,frame=12,channel=2,maskradius=480,masktop=70,maskbox=[601,1000,70,122],/colour,/plots,/clean,/save)
+
+;
+;  20060929 is a poor vinetting calibration image -- noisy 
+;
+; Helium
+; ------
+;
+; image=getimage(shot=18845,frame=18,channel=1,maskradius=450,maskbox=[1,300,820,1000],/colour,/plots,/clean,/save)
+; image=getimage(shot=18850,frame=18,channel=1,maskradius=450,maskbox=[1,300,820,1000],/colour,/plots,/clean,/save) 
+; image=getimage(shot=18845,frame=13,channel=2,maskradius=450,maskbox=[1,290,800,1000],/colour,/plots,/clean,/save) 
+;
+; 16821 - Dgamma, Dalpha
+;
+; John's flash images:
+; image=getimage(shot=16821,file='data/channel_1_flash.ipx',frame=3,channel=2,filter='empty',/raw,/clean,/save)
+;
+;
+;
+; divcam,shot=15018,frame=17,channel=1,/patch,/clean,/maskradius
+; divcam,shot=15169,frame=13,channel=2,/clean,/maskradius,maskleft=375,maskbox=[1,553,1,209,1,550,798,999]
+; divcam,shot=15189,frame=13,channel=1,/clean,/maskradius,masktop=74,maskbox=[613,999,0,122]
+; divcam,file='calibration/728_right1.bmp',channel=1,/colour,/analyse,/clean
+;
+; divcam,calibrate=1,channel=1,shift=[25,5],radius=500
+;
+;
+; View registration
+; -----------------------------------------------
+; image=getimage(shot=18824,frame=1,channel=1,maskradius=510,/plots,scale=100.0,/clean)  
+; image=getimage(shot=18824,frame=3,channel=1,maskradius=510,/plots,scale=15.0,/clean) 
+; image=getimage(shot=18824,frame=3,channel=2,maskradius=510,/plots,scale=5.0,/clean)
+; image=getimage(shot=18824,frame=1,channel=2,maskradius=510,/plots,scale=75.0,/clean)
+;
+; ZEBRA
+; -----------------------------------------------
+; image=getimage(shot=18472,frame=30,channel=1,/colour,camera='ZEBRA',/plots,maskradius=62,maskleft=5,/clean,/save)
+;
+; RGBCAM
+; -----------------------------------------------
+; image=getimage(shot=18360,frame=56,channel=4,/colour,camera='RGB',/plots,/clean)
+;
+; a=[6,266,1,390,40,506,115,599,212,640,212,640,1]
+; image=getimage(shot=18360,frame=56,channel=4,/colour,camera='RGB',/plots,/clean,maskradius=310,maskpoly=a,scale=5.0,/save)
+;
+; LINCAM
+; -----------------------------------------------
+; image=getimage(shot=17469,frame=127,channel=1,camera='LINCAM',/plots,/save)
+;
+
+
+
+** Structure HEADER, 30 tags, length=160, data length=158:
+   ID              STRING    'IPX 01'
+   SIZE            ULONG              282
+   CODEC           STRING    ''
+   DATE_TIME       STRING    '29/09/06 10:28:39'
+   SHOT            LONG               724
+   TRIGGER         FLOAT           0.00000
+   LENS            STRING    'Tamron HB35'
+   FILTER          STRING    'no filter'
+   VIEW            STRING    'Lab'
+   NUMFRAMES       ULONG               10
+   CAMERA          STRING    'IPX-1M48-L ASSY-0070-0001-RA06 SW v1.40 BL v1.36'
+   WIDTH           UINT          1000
+   HEIGHT          UINT          1000
+   DEPTH           UINT            12
+   ORIENT          ULONG                0
+   TAPS            UINT             2
+   COLOR           UINT             0
+   HBIN            UINT             0
+   LEFT            UINT             1
+   RIGHT           UINT          1000
+   VBIN            UINT             0
+   TOP             UINT             1
+   BOTTOM          UINT          1000
+   OFFSET          INT       Array[2]
+   GAIN            FLOAT     Array[2]
+   PREEXP          ULONG               10
+   EXPOSURE        ULONG                0
+   STROBE          ULONG                0
+   BOARD_TEMP      FLOAT           53.2500
+   CCD_TEMP        FLOAT       2.80261e-39
+
+./rda015912.ipx
+% Compiled module: IPX_OPEN.
+** Structure HEADER, 30 tags, length=160, data length=158:
+   ID              STRING    'IPX 01'
+   SIZE            ULONG              286
+   CODEC           STRING    'JP2'
+   DATE_TIME       STRING    '20/07/2006 10:27:31'
+   SHOT            LONG             15912
+   TRIGGER         FLOAT        -0.0100000
+   LENS            STRING    'Unknown lens'
+   FILTER          STRING    'CIII 465/1.5 nm'
+   VIEW            STRING    'CAM1_HM02_01A'
+   NUMFRAMES       ULONG               24
+   CAMERA          STRING    'IPX-1M48-L ASSY-0070-0001-RA06 SW v1.40 BL v1.36'
+   WIDTH           UINT          1000
+   HEIGHT          UINT          1000
+   DEPTH           UINT            12
+   ORIENT          ULONG                0
+   TAPS            UINT             2
+   COLOR           UINT             0
+   HBIN            UINT             0
+   LEFT            UINT             1
+   RIGHT           UINT          1000
+   VBIN            UINT             0
+   TOP             UINT             1
+   BOTTOM          UINT          1000
+   OFFSET          INT       Array[2]
+   GAIN            FLOAT     Array[2]
+   PREEXP          ULONG             1000
+   EXPOSURE        ULONG             5000
+   STROBE          ULONG                0
+   BOARD_TEMP      FLOAT           57.7500
+   CCD_TEMP        FLOAT           0.00000
+
+./rba023925.ipx
+% Compiled module: IPX_OPEN.
+** Structure HEADER, 30 tags, length=160, data length=158:
+   ID              STRING    'IPX 01'
+   SIZE            ULONG              286
+   CODEC           STRING    'JP2'
+   DATE_TIME       STRING    '17/12/2009 12:43:44'
+   SHOT            LONG             23925
+   TRIGGER         FLOAT         -0.100000
+   LENS            STRING    ''
+   FILTER          STRING    ''
+   VIEW            STRING    'HL07 DivCam 2 channel 1'
+   NUMFRAMES       ULONG               21
+   CAMERA          STRING    ''
+   WIDTH           UINT           512
+   HEIGHT          UINT           448
+   DEPTH           UINT             8
+   ORIENT          ULONG                0
+   TAPS            UINT             0
+   COLOR           UINT             0
+   HBIN            UINT             0
+   LEFT            UINT           257
+   RIGHT           UINT           768
+   VBIN            UINT             0
+   TOP             UINT           361
+   BOTTOM          UINT           808
+   OFFSET          INT       Array[2]
+   GAIN            FLOAT     Array[2]                                           
+   PREEXP          ULONG                0
+   EXPOSURE        ULONG               50
+   STROBE          ULONG                0
+   BOARD_TEMP      FLOAT           0.00000
+   CCD_TEMP        FLOAT           0.00000
+

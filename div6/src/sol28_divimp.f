@@ -422,7 +422,8 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
-      CALL CalcTubeDimensions(tube_3D_data,dangle)
+      dangle = 0.0
+c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE

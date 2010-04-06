@@ -5,12 +5,13 @@ c
       SUBROUTINE ListTargetData(fp,title)
       USE mod_sol28_params
       USE mod_sol28_global
+      USE mod_sol28_targets
       IMPLICIT none      
 
       INTEGER  , INTENT(IN) :: fp
       CHARACTER, INTENT(IN) :: title*(*)
 
-      INTEGER     itarget,itube,ion
+      INTEGER     itarget,itube,ion,i
       CHARACTER*2 target_tag(2) 
 
       ion = 1
@@ -18,15 +19,35 @@ c
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
 
-      WRITE(fp,*)
-      WRITE(fp,'(A)') 'TARGET DATA:'
-      WRITE(fp,'(A)') '  '//TRIM(title)
-      DO itarget = LO, HI
+      IF (title.NE.'none') THEN 
+        WRITE(fp,*)
+        WRITE(fp,'(A)') 'TARGET DATA:'
+        WRITE(fp,'(A)') '  '//TRIM(title)
+      ENDIF
+
+c      DO itarget = 1, ntarget
+c        WRITE(fp,'(I4,I4,2X,A12,I4,2X,I4,2X,1024I4)') itarget,
+c     .    target(itarget)%location,
+c     .    target(itarget)%tag,
+c     .    target(itarget)%position,
+c     .    target(itarget)%nlist,
+c     .    (target(itarget)%ilist(i),i=1,target(itarget)%nlist)
+c      ENDDO
+
+c      DO itarget = LO, HI
+c        WRITE(fp,*)
+c        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,A8,2X,A)') 
+c     .    'TUBE','psin','jsat','ne','ni','vi','M','pe','pi','Te','Ti',
+c     .    'Gamma',target_tag(itarget)
+c        DO itube = 1, ntube
+
+      DO itarget = 1, ntarget
         WRITE(fp,*)
         WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,A8,2X,A)') 
      .    'TUBE','psin','jsat','ne','ni','vi','M','pe','pi','Te','Ti',
-     .    'Gamma',target_tag(itarget)
-        DO itube = 1, ntube
+     .    'Gamma',target(itarget)%tag
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
           IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
           WRITE(fp,'(I6,F8.4,1P,E16.6,3E10.2,0P,F6.2,
      .               1P,2E10.2,0P,2F10.6,F8.2)')
@@ -304,6 +325,8 @@ c
      .    target(itarget)%nlist,
      .    (target(itarget)%ilist(i),i=1,target(itarget)%nlist)
       ENDDO
+
+      CALL ListTargetData(fp,'none')
 
       WRITE(fp,*)
       WRITE(fp,'(A)') 'MATERIAL DATA:'

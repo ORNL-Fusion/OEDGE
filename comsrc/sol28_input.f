@@ -133,7 +133,7 @@ c
       LOGICAL :: status = .TRUE. 
 
 c...  Set default values:
-      CALL InitializeOptions
+      CALL osm_InitializeOptions
 
 c...  Open log file (may be closed below if logfp is set to 0):
 c      OPEN(UNIT=logfp,FILE='osm_log.dat',ACCESS='SEQUENTIAL',
@@ -427,7 +427,7 @@ c       ----------------------------------------------------------------
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
             opt_eir%nadspc = opt_eir%nadspc + 1
             READ(buffer,*) 
-     .        opt_eir%isrfcll   (opt_eir%nadspc),  ! Type of spectrum, 0=surface flux                                          
+     .        opt_eir%isrfcll   (opt_eir%nadspc),  ! Type of spectrum, 0=surface flux, 1=cell average                    
      .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface index, <0=non-default standard, >0=additional surfaces          
      .        opt_eir%ispsrf_ref(opt_eir%nadspc),  ! Which code does the surface index refer to?                             
      .        opt_eir%iptyp     (opt_eir%nadspc),  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?                  
@@ -926,7 +926,7 @@ c...            Spacer, ignore:
 c
 c ======================================================================
 c
-      SUBROUTINE InitializeOptions
+      SUBROUTINE osm_InitializeOptions
       USE mod_sol28_global
       USE mod_options
       USE mod_eirene06
@@ -1030,19 +1030,19 @@ c...  Filament options:
 c...  Eirene options:
       opt_eir%nstrata = 0
 
-      opt_eir%nvoid = 0
-c      opt_eir%nvoid = 1
-c      opt_eir%void_zone(  1) =   -1
-c      opt_eir%void_grid(1,1) =    2
-c      opt_eir%void_grid(2,1) =  999
-c      opt_eir%void_wall(:,1) =   -1
-c      opt_eir%void_add (:,1) =   -1
-c      opt_eir%void_hole(:,1) = -1.0
-c      opt_eir%void_res (  1) =  0.1
-c      opt_eir%void_code(  1) =   -1
-c      opt_eir%void_ne  (  1) =  0.0
-c      opt_eir%void_te  (  1) =  0.0
-c      opt_eir%void_ti  (  1) =  0.0
+c      opt_eir%nvoid = 0
+      opt_eir%nvoid = 1
+      opt_eir%void_zone(  1) =   -1
+      opt_eir%void_grid(1,1) =    2
+      opt_eir%void_grid(2,1) =  999
+      opt_eir%void_wall(:,1) =   -1
+      opt_eir%void_add (:,1) =   -1
+      opt_eir%void_hole(:,1) = -1.0
+      opt_eir%void_res (  1) =  0.1
+      opt_eir%void_code(  1) =   -1
+      opt_eir%void_ne  (  1) =  0.0
+      opt_eir%void_te  (  1) =  0.0
+      opt_eir%void_ti  (  1) =  0.0
 
       opt_eir%time  = 30
       opt_eir%niter = 0

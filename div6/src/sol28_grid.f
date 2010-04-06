@@ -836,7 +836,7 @@ c
 
       INTEGER GetObject
 
-      INTEGER   fp,walfp,iopt,i1,i2,i3,itube,iobj,itarget,nwall_1,iwall,
+      INTEGER   fp,iopt,i1,i2,i3,itube,iobj,itarget,nwall_1,iwall,
      .          tmp_nwall,imat
       CHARACTER buffer*1024
 
@@ -849,14 +849,16 @@ c
 c...  Build the list of line segments that make up the wall:   
       nwall = 0
       DO iopt = 1, nopt_wall
-c        WRITE(0,*) 'NOPT_WALL:',iopt,nopt_wall
+c        WRITE(0,*) 'NOPT_WALL:',iopt,nopt_wall,
+c     .             opt_wall(iopt)%file_format
+c        WRITE(0,*) TRIM(opt_wall(iopt)%file_name)
         SELECTCASE(opt_wall(iopt)%file_format)
           CASE(1)
-            walfp = 99
-            OPEN(UNIT=walfp,FILE=TRIM(opt_wall(iopt)%file_name),
-     .           ACCESS='SEQUENTIAL',ERR=98)     
+            fp = 99
+            OPEN(UNIT=fp,FILE=TRIM(opt_wall(iopt)%file_name),
+     .           ACCESS='SEQUENTIAL',STATUS='OLD',ERR=98)     
             DO WHILE(.TRUE.) 
-              READ(walfp,'(A1024)',END=10) buffer        
+              READ(fp,'(A1024)',END=10) buffer        
               IF (buffer(1:1).EQ.'*'.OR.LEN_TRIM(buffer).LT.5) CYCLE  ! A bit arbitrary on the length test...
               nwall = nwall + 1
               wall(nwall) = opt_wall(iopt)
@@ -877,14 +879,16 @@ c...          Check if end points are degenerate:
               ENDIF
             ENDDO
  10         CONTINUE
-            CLOSE(walfp)
+            CLOSE(fp)
           CASE DEFAULT
             CALL ER('ProcessWall','Unknown format',*99)
         ENDSELECT
       ENDDO
-c      WRITE(0,*) 'NWALL:',nwall
+c     WRITE(0,*) 'NWALL:',nwall
 
       CALL SaveWallGeometry
+
+c     STOP 'sdfsdfsdfsd'
 
 c...  Sequence the wall so that each line segment in the list follows 
 c     the once it's geometrically connected to:
@@ -1018,9 +1022,11 @@ c...  Assign wall to the appropriate entry in the list of defined materials:
 
       RETURN
  98   CALL ER('ProcessWall','File access error',*99)
- 99   WRITE(0,*) 'IOPT=  ',iopt
-      WRITE(0,*) 'FILE=  ',TRIM(opt_wall(iopt)%file_name)
-      WRITE(0,*) 'FORMAT=',opt_wall(iopt)%file_format
+ 99   WRITE(0,*) 'IOPT=      ',iopt
+      WRITE(0,*) 'NOPT_WALL= ',nopt_wall
+      WRITE(0,*) 'FILE=      ',TRIM(opt_wall(iopt)%file_name)
+      WRITE(0,*) 'FORMAT=    ',opt_wall(iopt)%file_format
+      CALL DumpData_OSM('output.error_processwall','ProcessWall error')
       STOP
       END
 c
