@@ -67,6 +67,8 @@ $
      'custom: 3D wall  (-1)'  0 -9  000  0  0 1.0  -1  -1
      'custom: test box (-1)'  0 10  000  0  0 1.0  -1  -1   
      'custom: TD   box (-1)'  0 11  000  0  0 1.0  -1  -1   
+     'inversion grid   ( 3)'  0  2  000  0  0 1.0   2   2   0.8000 -0.5000   1.0000  +0.5000   			
+     'inversion grid   ( 3)'  0  2  000  0  0 1.0   2   2   0.4000 -0.5000   1.0000  +0.5000   			
      'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
      'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
   {PLOTS}  1
@@ -76,6 +78,7 @@ $
         'axis' 1 +90.0   2 +00.0   3  00.0
         'axis' 1 +00.0   2 +90.0   3  00.0
         'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  3
      'plot   3D solid    (002)'  2
         'zoom                          '  0.00  0.00  1.10 1.10
         'axis   roll/tilt/swing        '  +00.0   00.0   00.0
@@ -96,11 +99,11 @@ $
      'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
      'table           (3)'  0  
   {INTEGRATION}  1 
-     'line-of-sight   (1)'  1  000  01 002 00 0                 1 'B_ALPHA'
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
      'line-of-sight   (1)'  0  000  01 002 00 0                 1 'B_GAMMA'
      'line-of-sight   (1)'  0  000  01 002 00 0                 1 'C0_DENSITY'
      'line-of-sight   (1)'  0  000  01 002 00 0                 1 'D+_DENSITY'
-     'line-of-sight   (1)'  1  000  04 009 -1 0                 3 'PRAD'
+     'line-of-sight   (1)'  0  000  04 009 -1 0                 3 'PRAD'
      'line shape      (2)'  0  000  01 002 00 0  00011 0.0 0.5  1 'B_ALPHA'
      'line shape      (2)'  0  000  06 012 02 0  00011 0.0 0.2  2 '*' 96 'pju' 30 80 130 0
      'avg Te=2        (3)'  0  000  06 012 02 0  2              1 'B_ALPHA'
@@ -108,7 +111,7 @@ $
      'avg Tb=5        (3)'  0  000  06 012 02 0  5              1 'B_ALPHA'
      'avg vi=7        (3)'  0  000  06 012 02 0  7              1 'B_ALPHA'
      'avg Ti=8        (3)'  0  000  06 012 02 0  8              1 'B_ALPHA'
-  {DETECTOR}  1
+  {DETECTOR}  0
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,phi position   '   1.10000D+00   0.00001D+00   65.00000D+00  
@@ -122,17 +125,28 @@ $
        'image black   (1)'  1 2 'images/15021_14_2.idl'
        'x-radius      (2)'  0 
        'no midplane   (3)'  0 
+  {DETECTOR}  2                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    '   0.00000D+00   8.05000D+00   62.21000D+00
+     'size               '   0.200D-07     0.20D-07
+     'view cone angle    '   2.744D+00     1.00D+00                       
+     'pixel array        '   19       1  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'midplane_dalpha'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
 {END}
-$
-$
-$
-'999   STOP'  0
 $
 $
 $
 '985   XXX XX Inversion map + image           '   1
 {RAY TRACE}  1
   {GEOMETRY}  1
+     'inversion grid   ( 3)'  0  2  000  0  0 1.0   2   2   0.4000 -0.5000   1.0000  +0.5000   			
      'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
      'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
   {PLOTS}  1
@@ -158,7 +172,7 @@ $
 $
 $
 $
-'999  STOP'  0
+'999  STOP'  3
 $
 $
 $
@@ -200,7 +214,7 @@ $
   {REFLECTIONS}  0
   {INTEGRATION}  1 
      'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
-  {DETECTOR}  1
+  {DETECTOR} 1
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,z position     '   0.65000D+00   0.60001D+00    0.00000D+00  
