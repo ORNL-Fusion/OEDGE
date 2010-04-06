@@ -110,13 +110,23 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
     ymax = -1.0E+35
     FOR idata = 1, ndata DO BEGIN
       val = cortex_ExtractStructure(data_array,idata)
-      val = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-          file = val.file
 ;          integral = '   PARTICLE FLUX INTEGRAL= ' + STRING(val.integral,FORMAT='(E12.4)')
           integral = ' '
+
+;          help,val_array.integral,/struct
+;stop
+;          ntrace = N_ELEMENTS(TAG_NAMES(data_array))
+;          IF (ntrace LE 0) THEN BEGIN
+;            PRINT, 'ERROR cortex_PlotIntegrals: No data found'
+;            RETURN, -1
+;          ENDIF
+
+          val = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
+
+          file = val.file
           str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
           str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
           labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'

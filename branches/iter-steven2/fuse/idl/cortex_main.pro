@@ -37,11 +37,12 @@ PRO cortex_GeneratePlots, args
 
   IF (nargs EQ 4) THEN BEGIN
     input_file = args[2] + '/' + input_file
-    path       = args[3] + '/'
+    data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
     input_file = '/home/ITER/lisgos/divimp/data/' + input_file
-    path       = '/home/ITER/lisgos/divimp/results/'
+    data_path  = '/home/ITER/lisgos/divimp/results/'
   ENDELSE
+
 
 ;  PRINT,'INPUT FILE  ',input_file
 ;  PRINT,'RESULTS DIR ',path
@@ -80,7 +81,7 @@ print,'frame',frame
 
 ; Setup PostScript printing:
   IF (ps EQ 'on') THEN BEGIN
-    file = path + case_name + '.idl.ps'
+    file = data_path + case_name + '.idl.ps'
 ;      PRINT, 'POSTSCRIPT FILE=',file
     PSOPEN, filename=file
   ENDIF
@@ -94,6 +95,8 @@ print,'frame',frame
 ;    HELP,plot_array,/struct
 
     plot = cortex_ExtractStructure(plot_array,iplot)
+
+    IF (plot.data_path NE 'default') THEN path = plot.data_path ELSE path = data_path
 
 ;    PRINT,' '
 ;    PRINT,' ',iplot
@@ -126,12 +129,10 @@ print,'frame',frame
 ;         --------------------------------------------------------------         
           1: BEGIN
             FOR i = 0, ncase-1 DO BEGIN
-              data_path = path + plot.case_name[i] + '.'
+              file_path = path + plot.case_name[i] + '.'
               j = WHERE(plot.data_file NE 'unknown',count)
               FOR j = 0, count-1 DO BEGIN
-   print,j
-print,data_path + plot.data_file[0]
-                integral = cortex_LoadIntegrals(data_path + plot.data_file[0])
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[0])
                 name = 'data' + STRING(j+1,FORMAT='(I0)')
                 IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
                                  integral_array = CREATE_STRUCT(integral_array,name,integral)
@@ -157,8 +158,8 @@ print,data_path + plot.data_file[0]
 ;         --------------------------------------------------------------         
           1: BEGIN
             FOR i = 0, ncase-1 DO BEGIN
-              data_path = path + plot.case_name[i] + '.'
-              wall = cortex_LoadWallProfiles(data_path + plot.data_file[0])
+              file_path = path + plot.case_name[i] + '.'
+              wall = cortex_LoadWallProfiles(file_path + plot.data_file[0])
               plot_data = { wall : wall, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
               name = 'data' + STRING(i+1,FORMAT='(I0)')
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
@@ -180,11 +181,11 @@ print,data_path + plot.data_file[0]
 ;         --------------------------------------------------------------         
           1: BEGIN
             FOR i = 0, ncase-1 DO BEGIN
-              data_path = path + plot.case_name[i] + '.'
-              plasma = cortex_LoadPlasmaData(data_path + plot.data_file[0])
-              source = cortex_LoadSourceData(data_path + plot.data_file[1])
-              eirene = cortex_LoadEireneData(data_path + plot.data_file[2])
-              target = cortex_LoadTargetData(data_path + plot.data_file[3])
+              file_path = path + plot.case_name[i] + '.'
+              plasma = cortex_LoadPlasmaData(file_path + plot.data_file[0])
+              source = cortex_LoadSourceData(file_path + plot.data_file[1])
+              eirene = cortex_LoadEireneData(file_path + plot.data_file[2])
+              target = cortex_LoadTargetData(file_path + plot.data_file[3])
               plot_data = { plasma : plasma, source : source, eirene : eirene, target : target }
               IF (plot.nodes) THEN BEGIN
                 node = cortex_LoadNodeData  (path + plot.case_name[i] + '.' + plot.data_file[4])
@@ -208,9 +209,9 @@ print,data_path + plot.data_file[0]
           100: BEGIN
             tube = plot.tubes
             IF (cortex_CheckTubes(tube,plot.tag,plot.option)) THEN BREAK
-            data_path = path + plot.case_name[0] + '.'
-            eirene = cortex_LoadEIRENEImpurityData        (data_path + plot.data_file[0])
-            divimp = cortex_LoadDIVIMPImpurityData_Density(data_path + plot.data_file[1])
+            file_path = path + plot.case_name[0] + '.'
+            eirene = cortex_LoadEIRENEImpurityData        (file_path + plot.data_file[0])
+            divimp = cortex_LoadDIVIMPImpurityData_Density(file_path + plot.data_file[1])
             plot_data = { eirene : eirene, divimp : divimp }
             data_array = CREATE_STRUCT('data1',plot_data)
             status = cortex_PlotParallelProfiles(plot, tube, data_array, ps=ps)
@@ -219,9 +220,9 @@ print,data_path + plot.data_file[0]
           101: BEGIN
             tube = plot.tubes
             IF (cortex_CheckTubes(tube,plot.tag,plot.option)) THEN BREAK
-            data_path = path + plot.case_name[0] + '.'
-            eirene = cortex_LoadEIRENEImpurityData           (data_path + plot.data_file[0])
-            divimp = cortex_LoadDIVIMPImpurityData_Ionisation(data_path + plot.data_file[1])
+            file_path = path + plot.case_name[0] + '.'
+            eirene = cortex_LoadEIRENEImpurityData           (file_path + plot.data_file[0])
+            divimp = cortex_LoadDIVIMPImpurityData_Ionisation(file_path + plot.data_file[1])
             plot_data = { eirene : eirene, divimp : divimp }
             data_array = CREATE_STRUCT('data1',plot_data)
             status = cortex_PlotParallelProfiles(plot, tube, data_array, ps=ps)
@@ -397,14 +398,14 @@ print,data_path + plot.data_file[0]
         END
 ;     ------------------------------------------------------------------
       'PLOT 2D CONTOUR': BEGIN
-        data_path = path + plot.case_name[0] + '.'
-        grid = cortex_LoadFluidGrid (data_path + plot.data_file[0])
-        wall = cortex_LoadWall      (data_path + plot.data_file[1])
-        IF (plot.option GE   1 AND plot.option LE  99) THEN plot_data = cortex_LoadPlasmaData(data_path + plot.data_file[2])
-        IF (plot.option GE 100 AND plot.option LE 199) THEN plot_data = cortex_LoadSourceData(data_path + plot.data_file[3])
-        IF (plot.option GE 200 AND plot.option LE 299) THEN plot_data = cortex_LoadEIRENEData(data_path + plot.data_file[4])        
-        IF (plot.option GE 300 AND plot.option LE 399) THEN plot_data = cortex_LoadEIRENEImpurityData(data_path + plot.data_file[5])        
-        IF (plot.option GE 400 AND plot.option LE 400) THEN plot_data = cortex_LoadDIVIMPImpurityData_Density(data_path + plot.data_file[6])        
+        file_path = path + plot.case_name[0] + '.'
+        grid = cortex_LoadFluidGrid (file_path + plot.data_file[0])
+        wall = cortex_LoadWall      (file_path + plot.data_file[1])
+        IF (plot.option GE   1 AND plot.option LE  99) THEN plot_data = cortex_LoadPlasmaData(file_path + plot.data_file[2])
+        IF (plot.option GE 100 AND plot.option LE 199) THEN plot_data = cortex_LoadSourceData(file_path + plot.data_file[3])
+        IF (plot.option GE 200 AND plot.option LE 299) THEN plot_data = cortex_LoadEIRENEData(file_path + plot.data_file[4])        
+        IF (plot.option GE 300 AND plot.option LE 399) THEN plot_data = cortex_LoadEIRENEImpurityData(file_path + plot.data_file[5])        
+        IF (plot.option GE 400 AND plot.option LE 400) THEN plot_data = cortex_LoadDIVIMPImpurityData_Density(file_path + plot.data_file[6])        
         IF (plot.option LE   0 OR  plot.option GE 401) THEN BEGIN
           PRINT, 'ERROR cortex_GeneratePlots: Unrecognised 2D contour plot option'
           PRINT, '  PLOT TAG = ',plot.tag
@@ -450,7 +451,7 @@ PRO cortex_Main, args
 
   cortex_GeneratePlots, args
 
-  IF (N_ELEMENTS(args) EQ 4) THEN EXIT, status=0
+ ;  IF (N_ELEMENTS(args) EQ 4) THEN EXIT, status=0
 END
 ;
 ;

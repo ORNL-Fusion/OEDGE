@@ -2,7 +2,12 @@
 *
 *
 
-{PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT}  c-new-0000h  {DATA FILE}  idl.midplane_dalpha_los_01
+${DATA PATH}  ~/divimp/results
+
+{PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0000h {CASE} c-new-0001a >d
+                           {DATA FILE}    idl.midplane_dalpha_los_01
+
+
 
 {EXIT}
 
