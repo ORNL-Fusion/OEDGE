@@ -1,36 +1,65 @@
 ;
 ; ========================================================================
 ;
-PRO FindImageCentre, image, radius, shift, depth, clean
+PRO FindImageCentre, image, radius, shift, depth, clean, background, rotate
 ;PRO FindImageCentre, image, radius=radius, shift=shift, depth=depth
   
   image_centre = image.raw
 
+  extension = STRMID(image.file,2,/REVERSE_OFFSET) 
+  PRINT,'FILE EXTENSION = ',extension
+  CASE extension OF
+    'bmp': order = 0
+    'ipx': order = 1
+    ELSE: BEGIN
+      PRINT,'ERROR getimage_FindImageCentre: Unknown file type'
+      RETURN
+      END
+  ENDCASE
+
+  PRINT,'ORDER=',order
+
+  IF (KEYWORD_SET(rotate)) THEN BEGIN
+    rotate_code = 0
+    IF (rotate EQ 90 ) THEN rotate_code = 1
+    IF (rotate EQ 180) THEN rotate_code = 2
+    IF (rotate EQ 270) THEN rotate_code = 3
+    image_centre = ROTATE(image_centre,rotate_code)
+  ENDIF
+
+; Subtrack non-zero background by sampling around the edge of the image:
+  IF (KEYWORD_SET(background)) THEN BEGIN
+    IF (background EQ 1) THEN BEGIN
+      xwidth = N_ELEMENTS(image.raw[*,0])
+      ywidth = N_ELEMENTS(image.raw[0,*])
+      idelta = xwidth / 10
+      jdelta = ywidth / 10
+
+      idata =         TOTAL(image.raw[0              :idelta ,0       ])
+      idata = idata + TOTAL(image.raw[xwidth-idelta-1:xwidth-1,0       ])
+      idata = idata + TOTAL(image.raw[0              :idelta ,ywidth-1])
+      idata = idata + TOTAL(image.raw[xwidth-idelta-1:xwidth-1,ywidth-1])
+      idata = idata / (4.0 * FLOAT(idelta+1))
+      
+      jdata =         TOTAL(image.raw[0       ,0              :jdelta  ])
+      jdata = jdata + TOTAL(image.raw[xwidth-1,0              :jdelta  ])
+      jdata = jdata + TOTAL(image.raw[0       ,ywidth-jdelta-1:ywidth-1])
+      jdata = jdata + TOTAL(image.raw[xwidth-1,ywidth-jdelta-1:ywidth-1])
+      jdata = jdata / (4.0 * FLOAT(jdelta+1))
+      
+      PRINT,'X,Y BACKGROUND LEVELS = ',idata,jdata
+      PRINT,'X,YWIDTH=',xwidth,ywidth
+     
+      image_centre = image_centre - (idata + jdata) / 2
+    ENDIF ELSE BEGIN
+      image_centre = image_centre - background
+    ENDELSE
+    image_centre[WHERE(image_centre LT 0)] = 0     
+  ENDIF
+
   IF (KEYWORD_SET(radius)) THEN image.radius = radius
   IF (KEYWORD_SET(shift) ) THEN ShiftImage,-shift[0],-shift[1],image_centre
   IF (KEYWORD_SET(depth) ) THEN image.depth = depth
-
-; Check for a non-zero background level:
-  xwidth = N_ELEMENTS(image.raw[*,0])
-  ywidth = N_ELEMENTS(image.raw[0,*])
-  idelta = xwidth / 10
-  jdelta = ywidth / 10
-
-  idata =         TOTAL(image.raw[0              :idelta ,0       ])
-  idata = idata + TOTAL(image.raw[xwidth-idelta-1:xwidth-1,0       ])
-  idata = idata + TOTAL(image.raw[0              :idelta ,ywidth-1])
-  idata = idata + TOTAL(image.raw[xwidth-idelta-1:xwidth-1,ywidth-1])
-  idata = idata / (4.0 * FLOAT(idelta+1))
-
-  jdata =         TOTAL(image.raw[0       ,0              :jdelta  ])
-  jdata = jdata + TOTAL(image.raw[xwidth-1,0              :jdelta  ])
-  jdata = jdata + TOTAL(image.raw[0       ,ywidth-jdelta-1:ywidth-1])
-  jdata = jdata + TOTAL(image.raw[xwidth-1,ywidth-jdelta-1:ywidth-1])
-  jdata = jdata / (4.0 * FLOAT(jdelta+1))
-
-  PRINT,'X,Y BACKGROUND LEVELS = ',idata,jdata
-
-  image_centre = image_centre - (idata + jdata) / 2
 
   RemoveArtificialBlack, image
 
@@ -39,7 +68,7 @@ PRO FindImageCentre, image, radius, shift, depth, clean
   limit = (2 ^ image.depth - 2) * 0.10
   image_centre[WHERE(image_centre GT limit)] = limit
 
-  PRINT,limit
+  PRINT,'LIMIT=',limit
 
   angle = FINDGEN(360) 
   reference_radius = image.radius - 30
@@ -57,9 +86,8 @@ PRO FindImageCentre, image, radius, shift, depth, clean
 
   print,min(image_centre),max(image_centre)
 
-  LOADCT,3
   WINDOW,0,XSIZE=image.xdim,YSIZE=image.ydim,RETAIN=2
-  TVSCL,image_centre,/ORDER
+  TVSCL,image_centre,ORDER=order
 
   image = CREATE_STRUCT(image,'data',image_centre)
 END

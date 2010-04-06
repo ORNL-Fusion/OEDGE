@@ -7,8 +7,23 @@
 ;
 ; Detachment sessions
 ; -------------------
-; file='/home/ITER/lisgos/fuse/machines/mast/calibration_data_cameras/13_01_2010/DivCam_1/Channel_1/pos6000001.bmp'
-; image=getimage(file=file,channel=1,/colour,filter='empty',/raw,/plots,/centre,depth=8,shift=[0,0],radius=200)
+; file='./cal_data/FCC_13012010_1_pos6000001.bmp'
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/centre,/background)
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/calibrate,path='./cal_data/',/save)
+;
+; file='cal_data/DIVCAM_13012010_2_000103.ipx'
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/centre)
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/calibrate,path='./cal_data/',/save)
+;
+; file='./cal_data/FCC_14012010_3_pos6000001.bmp'
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-68,-36],radius=260,/centre)
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-68,-36],radius=260,/calibrate,path='./cal_data/',/save)
+;
+; file='cal_data/DIVCAM_14012010_4_000104.ipx'
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/centre)
+; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/calibrate,path='./cal_data/',/save)
+;
+;
 ;
 ; view registration
 ; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,/colour,/save)  ; HL01, channel 1, rbc

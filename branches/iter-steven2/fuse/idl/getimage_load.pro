@@ -38,10 +38,9 @@ FUNCTION LoadImage,device,camera,file,date,line,shot,channel,frame,path,  $
                    plots
 
 
-  IF (KEYWORD_SET(file)) THEN BEGIN
+  IF (file NE 'none') THEN BEGIN
 
     extension = STRMID(file,2,/REVERSE_OFFSET) 
-  
     PRINT,'FILE EXTENSION = ',extension
 
     CASE extension OF
@@ -61,10 +60,8 @@ FUNCTION LoadImage,device,camera,file,date,line,shot,channel,frame,path,  $
             ENDELSE        
           ENDFOR
           image_raw = image_sum / N_ELEMENTS(desc.frametime)
-    
           print,'Calibration file:'
           print,file
-    
           shot   = -1
           frame  = frame - 1
           time   = -1.0
@@ -192,6 +189,7 @@ FUNCTION LoadImage,device,camera,file,date,line,shot,channel,frame,path,  $
 ;         --------------------------------------------------------------
           'ZEBRA': BEGIN
             format = 'zeb'
+            file = 'seb.ipx'
             desc = read_rzz(0,0,shot)
             IF (NOT KEYWORD_SET(window)) THEN window = 'HM10'
             END
@@ -265,7 +263,7 @@ print,file
 ;help,desc.header,/struct
             image_raw = ipx_frame(desc,frame,time=time)
 ;
-            IF (background) THEN BEGIN
+            IF (background AND NOT KEYWORD_SET(calibrate)) THEN BEGIN
               file = image_path+STRTRIM(STRING(background),1)+'.ipx'
               PRINT,file,' (background subtraction)'
               background_desc = ipx_open(file) 
@@ -457,6 +455,11 @@ print,file
   image.channel = channel
   image.frame   = frame
   image.time    = time
+
+  IF (NOT KEYWORD_SET(file)) THEN BEGIN
+    PRINT,'ERROR getimage_LoadImage: File name not set'
+    STOP    
+  ENDIF ELSE image.file = file
 ;
 ;
 ;

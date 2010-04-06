@@ -1,19 +1,23 @@
 ;
 ; ======================================================================
 ;
-PRO SaveImageData, image, calibrate, path, scale, sname, save_png
+PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
 
   binary = 0
 
   IF (KEYWORD_SET(calibrate)) THEN BEGIN
 
-    path_cal = './calibration/'
+    IF (NOT KEYWORD_SET(path)) THEN BEGIN
+      PRINT,'ERROR getimage_SaveImageData: Calibration save path not set'
+      RETURN
+    ENDIF
 
     str = STRSPLIT(image.cal.file,'/',/extract)
 
     i = N_ELEMENTS(str)
 
-    fname = path_cal+'cal_'+str[i-2]+'_'+str[i-1]+'.sav'  
+    fname = path + 'cal_' + str[i-1] + '.sav'  
+;    fname = path + 'cal_' + str[i-2] + '_' + str[i-1] + '.sav'  
 
     cal_xcen	  = image.xcen     
     cal_ycen	  = image.ycen    
