@@ -955,7 +955,7 @@ c...      Plasma quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I14))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -986,11 +986,11 @@ c...        Output:
           ENDDO
         ENDDO
       ENDDO
- 80   FORMAT(A,20(I6))
- 81   FORMAT(20(I6))
- 82   FORMAT(I6,1P,20(E14.6))
+ 80   FORMAT(A,20(I8))
+ 81   FORMAT(20(I8))
+ 82   FORMAT(I8,1P,20(E14.6))
  83   FORMAT(6X,1P,20(I14))
- 84   FORMAT(2I6,1P,20(E14.6))
+ 84   FORMAT(2I8,1P,20(E14.6))
  85   FORMAT(12X,1P,20(I14))
 
       WRITE(logfp,*) 'SUMION:',sumion,sumion*ELCHA  ! *TEMP*
@@ -1018,7 +1018,7 @@ c...    Volume averaged tallies:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1078,7 +1078,7 @@ c...  Test molecules:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1177,7 +1177,7 @@ c...      Done determining n_H2+, load remaining quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1234,7 +1234,7 @@ c          DDUM(7)=EDENPH(IPHOT,IR)/(PDENPH(IPHOT,IR)+EPS10)  ! Energy per parti
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1266,7 +1266,7 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
@@ -1298,7 +1298,7 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
@@ -1340,13 +1340,13 @@ c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,90) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
       ENDIF
- 90   FORMAT(I6,3F12.0,1P,20(E12.4))
+ 90   FORMAT(I8,3F12.0,1P,20(E12.4))
 c
 c     ----------------------------------------------------------------------
 c...  Particle source:
@@ -1412,7 +1412,7 @@ c...  Insert iteration data, if any:
 c...        Output:
             ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+              WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
             WRITE(FP,82) IS,(DDUM(I1),I1=1,ITALLY)
