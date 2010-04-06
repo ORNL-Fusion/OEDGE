@@ -39,7 +39,7 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,n
+FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
 
   n = n + 1
 
@@ -73,6 +73,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,n
     case_name       : string_array      ,  $
     case_set        : [0,long_array]    ,  $
     case_set_name   : string_array      ,  $
+    data_path       : default.data_path ,  $
     data_file       : string_array      ,  $
     tubes           : long_array        ,  $
     state           : -1                ,  $
@@ -125,6 +126,8 @@ END
 FUNCTION cortex_LoadPlotData,case_name,input_file,result
 
   file_name = input_file
+
+  default = { data_path : 'default' }
 
   fp = 1
   FREE_LUN,fp
@@ -187,7 +190,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D LOS INTEGRAL': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
         plot_struct.title        = 'LOS INTEGRALS'
@@ -209,7 +212,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D WALL PROFILE': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
         plot_struct.title        = 'WALL PROFILES'
@@ -233,7 +236,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D PARALLEL PROFILE': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
         plot_struct.title        = 'PROFILES PARALLEL TO THE MAGNETIC FIELD (FLUX-TUBES)'
@@ -269,7 +272,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D EIRENE ENERGY SPECTRUM': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
         plot_struct.title        = 'EIRENE ENERGY SPECTRUM'
@@ -280,7 +283,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D TARGET PROFILE': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = 1
         plot_struct.title        = 'TARGET PLOT'
@@ -292,7 +295,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D RADIAL PROFILE': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag     = tag
         plot_struct.option  = FIX(data)
         plot_struct.default = case_name
@@ -328,7 +331,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D SUMMARY': BEGIN
         ncase = 0
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag     = tag
         plot_struct.option  = FIX(data)
         plot_struct.default = case_name
@@ -352,7 +355,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 1D PEDESTAL MODEL': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = 1
         plot_struct.title        = 'PEDESTAL MODEL'
@@ -364,7 +367,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 2D FLUID GRID': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = 1
         plot_struct.title        = '2D GRID PLOT'
@@ -377,7 +380,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 2D FLUID GRID - DEBUG': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = 1
         plot_struct.title        = '2D GRID PLOT - DEBUG'
@@ -389,7 +392,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'PLOT 2D CONTOUR': BEGIN
         ncase = 1
         nset  = 0
-        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = data
         plot_struct.title        = '2D CONTOUR / SHADED PLOT'
@@ -407,7 +410,11 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'TITLE'        : plot_struct.title        = STRTRIM(data,2)
       'PLOT TITLE'   : plot_struct.plot_title   = STRTRIM(data,2)
       'NOTES'        : plot_struct.notes        = STRTRIM(data,2)
-      'DATA FILE'    : plot_struct.data_file    = data_array
+      'DATA PATH'    : default.data_path        = data
+      'DATA FILE'    : BEGIN
+        i = WHERE(plot_struct.data_file NE 'unknown',count)  ; Not sure I like this scheme...
+        plot_struct.data_file[count] = data_array
+        END
       'NO FRAME'     : plot_struct.frame        = 0
       'NO ERASE'     : plot_struct.frame        = 0
       'OUTLINE'      : plot_struct.outline      = 1
@@ -493,7 +500,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
          END
 ;     ------------------------------------------------------------------
       'EXIT': BEGIN
-        dummy = cortex_ProcessPlotStruct(plot_struct,plot_array,n)
+        dummy = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         result = plot_array
         RETURN, 0
         END

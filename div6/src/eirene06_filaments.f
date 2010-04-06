@@ -373,10 +373,12 @@ c...          Increase spatial resolution along the filament:
           ENDDO  ! LOOP
 c       ----------------------------------------------------------------
         CASE (4)
-          DO iloop = 1, 2
+          DO iloop = 1, 3
             obj(1:nobj)%segment(1) = 0
-            IF (iloop.LE.1) THEN  ! line segment and tetrahedron centroid 
-              scale = 0.150D0   
+            IF     (iloop.LE.2) THEN  ! line segment and tetrahedron centroid 
+             scale = 0.100D0   
+c           ELSEIF (iloop.LE.2) THEN  ! line segment and tetrahedron centroid 
+c             scale = 0.150D0   
             ELSE
               scale = 0.050D0 
             ENDIF
