@@ -47,9 +47,9 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
        plot_xn = 1
        plot_yn = 1
        title = plot.title 
-       subtitle = ['ATOM PARTICLE FLUX DENSITY / m-2 s-1','AVERAGE ATOM ENERGY / eV','ATOM ENERGY FLUX DENSITY ON THE WALL/ MW m-2']
-       xtitle   = 'WALL SEGMENT INDEX'
-       ytitle   = ['flux_p (m-2 s-1)','E_avg (eV)','flux_e (MW m-2)']
+       subtitle = ['EMISSION LINE INTEGRAL / photons m-2 s-1']
+       xtitle   = 'array index'
+       ytitle   = ['integral (photons m-2 s-1)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
        END
@@ -131,12 +131,17 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
           str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
           labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
 
+
           ntrace = [1, 1, 1]  ; Number of data lines on each plot
           xdata = val.xindex
+          FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val.yindex[i]])  ; *** TEMP *** 
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
             1: ydata[*,0] = val.signal
           ENDCASE
+print,xdata
+   print,ydata[*,0]
+
           END
 ;       ----------------------------------------------------------------
         ELSE: BEGIN  

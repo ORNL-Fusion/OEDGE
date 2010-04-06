@@ -111,6 +111,7 @@ FUNCTION GetImageDataStructure, xdim, ydim
     channel   : -1                          ,  $  ;  Channel number for multi-camera systems     
     shutter   : -1.0                        ,  $  ;  
     gain      : [-1.0,-1.0]                 ,  $  ;  
+    file      : 'none'                      ,  $  ;  Name of image file if file specified directly
 			           
     registration : 0                 ,  $  ;  View registration information
 

@@ -2221,7 +2221,8 @@ c...    Draw pixel views:
 c        ELSEIF (.TRUE..AND.nplot.GT.1) THEN
           CALL LINCOL(ncols+55) 
 c          DO i1 = 1, MIN(1,nchord)
-          DO i1 = 1, MIN(500,nchord)
+c          DO i1 = 1, MIN(500,nchord)
+          DO i1 = 1, MIN(500,npixel)
             p1(1,1) = s_chord(i1)%v1(1)
             p1(2,1) = s_chord(i1)%v1(2)
             p1(3,1) = s_chord(i1)%v1(3)
@@ -2414,6 +2415,12 @@ c            DO ipixel = 1, npixel
               CALL inPutData(ix,'i','none')
               CALL inPutData(iy,'j','none')
               CALL inPutData(cq(i1),'data','ph m-2 s-1')
+              CALL inPutData(pixel(ipixel)%global_v1(1),'x1','m')
+              CALL inPutData(pixel(ipixel)%global_v1(2),'y1','m')
+              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
+              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
+              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
+              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
             ENDDO
             CALL inCloseInterface
           ENDIF

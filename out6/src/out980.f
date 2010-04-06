@@ -526,8 +526,6 @@ c
       INCLUDE 'slcom'
       INCLUDE 'slout'
 
-
-
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
 
@@ -540,65 +538,23 @@ c
       INTEGER IOPT,J,NIZS,ITER,NITERS,IZ,JZ,ISMOTH,JK,IN,inc
       integer  nplts,ringnos(maxplts),ip,pnks(maxplts)
       CHARACTER TITLE*80,TITLE2*80,JOB*72,GRAPH*80,GRAPH1*512,graph6*128
-c
-c      real mvals(maxnks,maxplts,maxngs)
-c      real mouts (maxnks,maxplts),mwids (maxnks,maxplts)
-c      character*36 pltlabs(maxplts)
-c
       CHARACTER*36 XLAB
 c    >            ,XPOINT
       CHARACTER*72 YLAB
       CHARACTER*36 REF,NVIEW,PLANE,ANLY,TABLE
-c    >            ,ZLABS(-2:MAXIZS+1)
-c      CHARACTER*36 NAME,PLABS(-2:MAXPLRP),KLAB
-c
       CHARACTER*128 elabs(MAXNGS)
 
       INTEGER IX,IY,IG,NGS,IERR,IXMIN,IXMAX,M,ID,JR
 
       INTEGER ii1,ii2,midnks,i1,i2,ret,plt_opt1,osm_cfs,npts,ntime,
      .        in1,in2,xtype,ytype,btype,id1,id2
-c
-c      integer  sctype,ngrm
-c      real pltmins(maxplts),pltmaxs(maxplts)
-c      real pltfact
-c
-c      REAL tauii,pii
-c
-c      INTEGER nenum,tenum,opt_const,plot_mode(30),iter1,iter2,
-c     .        xaxis,ring,mode,inorm(MAXNGS)
-c
-c
-c      REAL          te1,ti1,ne1,te2,ti2,ne2,norm,
-c     .              rdum1,rdum2,rdum3,rdum4,rdum5,rdum6,rdum7,
-c     .              radum1(MAXNRS),radum2(MAXNRS),radum3(MAXNRS)
-c
-c      REAL    nemin,nestep,temin,temax,neTe,frac1,xrange1,xrange2,
-c     .        max1,max2,ynorm(MAXNGS)
-c
-c
       REAL cdata(MAXNKS,MAXNRS)
       REAL    XXMIN,XXMAX,YYMIN,YYMAX,SUM(10),VAL,VALTOT
       CHARACTER*72 SMOOTH
       integer icntr
       integer nconts,nclev
       real conts(maxpts),clev(maxpts)
-c
-c      REAL XOUTS(MAXGXS),XWIDS(MAXGXS),XVALS(MAXGXS,MAXNGS)
-c      REAL YOUTS(MAXGYS),YWIDS(MAXGYS),YVALS(MAXGYS,MAXNGS)
-c
-c
-c      CHARACTER*128 dataline,cdum1,cdum2
-c
       CHARACTER*128 cdum1,cdum2
-
-c...630:
-c      INTEGER i,k
-c      REAL    PLTMAX,PLTMIN
-c      REAL LOUTS(MAXSEG),LWIDS(MAXSEG),LVALS(MAXSEG,MAXNGS)
-c      REAL ydata(MAXSEG)
-c      integer llabs(maxseg)
-c
 c...980:
       INTEGER NUMTHE,AVPTS,ATYPE,step,iflag,ln1,ln2
       INTEGER numth2,numthe1(MAXNGS),idum1,idum2,i3,i4,i5
@@ -677,10 +633,7 @@ c
       plane = ' '
       anly  = ' '
       TABLE = 'SYMBOL TABLE'
-
       ngs = 0
-
-
       iflag = 1
       IF (ismoth.EQ.-1) THEN
         ismoth = 99
@@ -690,8 +643,6 @@ c
       READ(graph(14:15),*) plot
       WRITE(6,*) 'OUT980: PLOT=',plot
       WRITE(0,*) 'OUT980: PLOT=',plot
-
-
 c...temp!
       CALL RSet (tvals  ,MAXTHE*MAXNGS,LO)
       CALL RSet (tvals2 ,MAXTHE*MAXNGS,LO)
@@ -699,13 +650,10 @@ c...temp!
       CALL RZero(touts2 ,MAXTHE)
       CALL RZero(touts1 ,MAXTHE*MAXNGS)
       CALL RZero(array  ,MAXNKS*MAXNRS)
-
       xlab = 'degrees'
-
 c...  Read ADAS data specifications from input file:
       IF (.NOT.(plot.GE.4.AND.plot.LE.15).AND.plot.NE.24) THEN
         WRITE(6,*) 'READING LINE 1'
-
 c...    Making ADAS line optional, since I have been sloppy about
 c       what graphs actually need this data, and I don't want to
 c       have to clean up all my old OUT files:
@@ -713,7 +661,6 @@ c       have to clean up all my old OUT files:
         IF (graph6(8:11).EQ.'Adas'.OR.graph6(8:11).EQ.'ADAS'.OR.
      .      graph6(8:11).EQ.'adas') THEN
           BACKSPACE 5
-
           CALL RDG1 (GRAPH3,ADASID,adasyr,adasex,ISELE,ISELR,ISELX,
      .               ISELD,IERR)
           IF (IERR.NE.0) THEN
@@ -721,14 +668,11 @@ c       have to clean up all my old OUT files:
             IERR = 0
             GOTO 99
           ENDIF
-
         ELSE
           BACKSPACE 5
         ENDIF
  6      CONTINUE
-
       ENDIF
-
 c...  Read 2nd line of ADAS data for line ratio plot:
       IF (plot.EQ.3) THEN
         WRITE(6,*) 'READING LINE 2'
@@ -740,7 +684,6 @@ c...  Read 2nd line of ADAS data for line ratio plot:
           GOTO 99
         ENDIF
       ENDIF
-
 c...  Read plots specifications:
       CALL RDG2 (GRAPH2,ROBS,ZOBS,THEMIN,DTHE,THERES,NUMTHE,
      >           IZMIN,IZMAX,AVPTS,NUMSMOOTH,ATYPE,IERR)
@@ -751,7 +694,6 @@ c...  Read plots specifications:
          IERR = 0
          GOTO 99
       ENDIF
-
 c...  Shift viewing vertex if necessary (this blows at the moment
 c     because it is based on an simple z-shift, which is only
 c     'good' for DIII-D since the target plate is horizontal -- and
@@ -763,7 +705,6 @@ c     different in theory, which isn't good):
         robs = robs + tarshift(IKHI)        
         WRITE(6,*) 'ROBS= ',robs
       ENDIF
-
 c...  Quick and dirty method of making R or theta or PSIN plots optional:
 c
 c     jdemod - use also for plots vs. PSIN
@@ -786,13 +727,9 @@ c
 c
 c     jdemod
 c
-
 c...For C-Mod:
 c     if (cgridopt.eq.3) themin = themin + 180.0
-
       slopt = 1
-
-
 c...  Create THETA vector:
       idum2  = numthe
       numthe = 0
@@ -814,7 +751,6 @@ c...  Create THETA vector:
         ENDIF
         BACKSPACE 5
       ENDIF
-
 c...  Specify width of viewing cone (this rather convoluted method
 c     of reading in the data allows more than one 'CONE' data line
 c     to be specified in the OUT input file):
@@ -849,8 +785,6 @@ c         from THERES:
         ENDIF
         BACKSPACE 5
       ENDIF
-
-
 c...  Set scale factor:
       units = '                    '
       IF (ATYPE.EQ.0) THEN
@@ -871,7 +805,6 @@ c...  Set scale factor:
 c        YLAB = 'PLRP (PH M-2 S-1 SR-1)'
       ENDIF
       WRITE(0,*) '980:',mfact,units
-
 c...  Decide what to plot - PINCODE is passed from DIVIMP 
 c     and is the parameter specifiying which neutral code
 c     was run:
@@ -890,8 +823,7 @@ c
       ELSE
         plotcode = pincode
       ENDIF 
-
-      WRITE(0,*) 'PLOTCODE:',plotcode
+      WRITE(0,*) '980 PLOTCODE=',plotcode
 c
 c
 c     PLOTS
@@ -899,9 +831,7 @@ c
 c
       oldraw = .FALSE.
       oldline = 0
-
       IF (plot.EQ.1.OR.plot.EQ.2.OR.plot.EQ.23) THEN
-
 c...    Turn on colour plot lines:
         slopt2 = 1
 c        slopt2 = 2
@@ -930,14 +860,11 @@ c...      Dbeta:
           YLAB = 'Dbeta '//units
           line = H_BBETA
         ENDIF
-
 c...    Store the x-axis data:
         numth2 = 0
         CALL LoadArray(touts2,numth2,touts,1,numthe)
-
         elabs(1) = '                                                  '
         elabs(2) = '                                                  '
-
 c...    Load experimental data:
         if (machine.EQ.DIIID.AND.iseld.ne.0) then
           ngs = ngs + 1
@@ -945,11 +872,9 @@ c...    Load experimental data:
           CALL load_expt(iseld,touts1(1,ngs),tvals(1,ngs),numthe1(ngs),
      .                   MAXTHE,MAXNGS,MAXDATX,datatitle,1)
           elabs(ngs) = '    '//datatitle(1:LEN_TRIM(datatitle))
-
+c...      FOR OUTER TARGET, MAP PSIn to ANGLE:
           IF (.NOT..TRUE.) THEN
-c...        FOR OUTER TARGET, MAP PSIn to ANGLE:
             WRITE(0,*) '980: PSIn to ANGLE mapping',plot,iseld
-
             DO i1 = 1, numthe1(ngs)
               WRITE(6,*) 'DATA:',touts1(i1,ngs),tvals(i1,ngs)
             ENDDO
@@ -1010,10 +935,6 @@ c                STOP
           CALL LoadArray(touts2,numth2,touts1(1,ngs),1,numthe1(ngs))
 c...      Plot black squares:
           plottype(ngs) = -55
-
-
-
-
 c...SPECIAL
           IF (.NOT..TRUE..AND.plot.EQ.1) THEN
             ngs = ngs + 1
@@ -1078,19 +999,16 @@ c                STOP
             DO i1 = 1, numthe1(ngs)
               WRITE(6,*) 'DATA 2:',touts1(i1,ngs),tvals(i1,ngs)
             ENDDO
-
             CALL LoadArray(touts2,numth2,touts1(1,ngs),1,numthe1(ngs))
 c...        Plot black squares:
             plottype(ngs) = -2
           ENDIF
 c...      END OF DIII-D BUSINESS
         ENDIF
-
 c...    A loop is required in case results are plotted for more than
 c       one case:
         status = .TRUE.
         DO WHILE (status)
-
 c...      Conduct the LOS integrations for the ADAS data:
           IF ((plotcode.EQ.-1.OR.(plotcode.EQ.0.AND.plot.EQ.1).OR.
      .                           (plotcode.EQ.0.AND.plot.EQ.2).OR.
@@ -1117,18 +1035,13 @@ c...      Conduct the LOS integrations for the ADAS data:
 c            WRITE(0,*) '980: USING slLOSINT'
             CALL slLOSINT(TVALS(1,ngs),TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,
      .                    AVPTS,CVALSA,0.0)
-
-        
-
 c...        Store y-axis data for this data set:
             numthe1(ngs) = numthe
             DO i1 = 1, numthe
               touts1(i1,ngs) = touts(i1)
             ENDDO
-
-c            WRITE(0,*) 'PLOT 980: DONE'
+            WRITE(0,*) 'PLOT 980: DONE'
           ENDIF
-
 c...      Conduct the LOS integrations for the EIRENE data:
           IF ((plotcode.EQ.-1.OR.(plotcode.EQ.0.AND.plot.EQ.1).OR.
      .         plotcode.EQ. 1.OR. plotcode.EQ.2.OR.
@@ -1142,7 +1055,6 @@ c...      Conduct the LOS integrations for the EIRENE data:
               IF (elabs(ngs)(5:5).EQ.' ') elabs(ngs) = '    NIMBUS'
             ELSE
               IF (elabs(ngs)(5:5).EQ.' ') elabs(ngs) = '    EIRENE'
-c              IF (elabs(1)(5:5).EQ.' ') elabs(ngs) = '    OSM+EIRENE'
             ENDIF
             IF (plotcode.EQ.0) THEN
               CALL RVALKR(CVALSA,pinalpha           ,1,1,1,FT,FP,
@@ -1153,20 +1065,14 @@ c              IF (elabs(1)(5:5).EQ.' ') elabs(ngs) = '    OSM+EIRENE'
             ENDIF
 
             WRITE(0,*) 'CVALSA:',1,irsep,cvalsa(1,irsep)
-
-c            WRITE(0,*) '980: USING slLOSINT'
+            WRITE(0,*) '980: USING slLOSINT'
             CALL slLOSINT(TVALS(1,ngs),TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,
      .                    AVPTS,CVALSA,0.0)
-
-
-
-
 c...        Store y-axis data for this data set:
             numthe1(ngs) = numthe
             DO i1 = 1, numthe
               touts1(i1,ngs) = touts(i1)
             ENDDO
-
             IF (.FALSE.) THEN
               IF (machine.EQ.CMOD.AND.iseld.EQ.3) THEN
                 WRITE(0,*) '980: **************************' 
@@ -1185,10 +1091,7 @@ c...        Store y-axis data for this data set:
                 ENDDO
               ENDIF  
             ENDIF
-
-
           ENDIF
-
 c...      Check if additional data is to be plotted from another DIVIMP
 c         case:
           status = .FALSE.
@@ -1259,9 +1162,7 @@ c...      Cycle again, but for reflections:
             BACKSPACE 5
           ENDIF
 10        CONTINUE
-
         ENDDO
-
 c...    Restore main .raw file if necessary:
         IF (oldline.NE.0) THEN
           DO ir = 1, nrs
@@ -1270,12 +1171,7 @@ c...    Restore main .raw file if necessary:
             ENDDO
           ENDDO
         ENDIF
-
-
-
-c...    Restore main .raw file if necessary:
         IF (oldraw) CALL LoadData(' ',' ',NULL,-2)
-
 c...    Load experimental data:
         if (machine.EQ.CMOD.AND.iseld.ne.0) then
           ngs = ngs + 1
@@ -1287,10 +1183,8 @@ c...    Load experimental data:
           CALL LoadArray(touts2,numth2,touts1(1,ngs),1,numthe1(ngs))
 c...      Plot black squares:
           plottype(ngs) = -55
-       
           IF (iseld.EQ.3) plottype(ngs) = 2
           IF (iseld.EQ.6) plottype(ngs) = 2
-
           IF (.NOT..TRUE.) THEN
 c...       Load Kbot straight: 
            ngs = ngs + 1
@@ -1302,15 +1196,12 @@ c...       Load Kbot straight:
 c...       Plot black squares:
            plottype(ngs) = -55
           ENDIF
-
         ENDIF
 c...    Map individual y-axis data sets to the master y-axis data array:
         DO i1 = 1, ngs
           CALL MapArray(touts2      ,tvals2(1,i1),1,numth2,
      .                  touts1(1,i1),tvals (1,i1),1,numthe1(i1))
         ENDDO
-
-
 c...    Adjust the x-axis data if required:
         if (plotr) then
           WRITE(6,*) 'PLOTR: ',zadj
@@ -1319,7 +1210,7 @@ c...    Adjust the x-axis data if required:
           themax = touts2(numth2)
           write(XLAB,'(''RADIUS (M) AT Z='',f6.3)') zadj
         endif
-
+c     ------------------------------------------------------------------
       ELSEIF (plot.EQ.3) THEN
 c       
 c...    Line ratios:
@@ -1327,27 +1218,21 @@ c
 c  subopt 0: thesis
 c  subopt 1: Dbeta/Dalpha for DIII-D
 c
-
         subopt = 1
-         
         ngs  = 0
         ref  = graph(7:46)
         YLAB = 'Dbeta / Dalpha'
 c        YLAB = 'Dalpha / Dgamma'
         XLAB = 'Viewing angle (degrees)'
-
         slopt2 = 1
 c        slopt2 = 2
         DO i1 = 1, 9
           plottype(i1) = i1 
         ENDDO
         plottype(1) = 55
-
 c        WRITE(0,*) '980:03 USING slLOSINT'
-
         numth2 = 0
         CALL LoadArray(touts2,numth2,touts,1,numthe)
-
 c...    Experiment : HARDCODED!
         IF (subopt.EQ.0) THEN
           CALL Load_Expt_Data(13,7,xdata,etype,edata,
@@ -1694,6 +1579,7 @@ c-----------
 c
 c jdemod - added plot 25 
 c
+c     ------------------------------------------------------------------
       ELSEIF (plot.EQ.25.OR.plot.EQ.26) THEN
 
         IF (plot.EQ.25) THEN

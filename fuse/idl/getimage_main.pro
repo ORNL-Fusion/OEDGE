@@ -80,6 +80,7 @@ FUNCTION GetImage,           $
     IF (NOT KEYWORD_SET(window )) THEN window = 'none'
     IF (NOT KEYWORD_SET(channel)) THEN channel = -1
   ENDIF ELSE BEGIN
+    file = 'none'
 ;  ENDIF
 ;  IF (NOT KEYWORD_SET(file)) THEN BEGIN
     IF (NOT KEYWORD_SET(shot) AND NOT calibrate) THEN BEGIN
@@ -159,7 +160,10 @@ FUNCTION GetImage,           $
   ENDIF		     
 ;		     
 ; Initialise colour scheme:
-  IF (KEYWORD_SET(plots)) THEN LOADCT,4
+  IF (KEYWORD_SET(plots) AND KEYWORD_SET(colour)) THEN BEGIN
+    DEVICE, DECOMPOSED=0
+    IF (colour EQ 1) THEN LOADCT, 3 ELSE LOADCT, colour
+  ENDIF
 ;
 ; ----------------------------------------------------------------------
 ; Load the image data:
@@ -188,9 +192,7 @@ FUNCTION GetImage,           $
       PRINT,'shift  = ',shift
       PRINT,'depth  = ',depth
     ENDIF
-
-    FindImageCentre,image,radius,shift,depth,clean
-
+    FindImageCentre,image,radius,shift,depth,clean, background, rotate
     RETURN, image
   ENDIF
 ;
@@ -210,7 +212,6 @@ FUNCTION GetImage,           $
     image.vignette = 1.0
 
     FOR i1 = 0, cal.n-1 DO BEGIN
-
       angle1 = cal.angle[i1]
       IF (i1 LT cal.n-1) THEN BEGIN
         i2 = i1 + 1
@@ -219,29 +220,22 @@ FUNCTION GetImage,           $
         i2 = 0
         angle2 = cal.angle[i2] + 360.0
       ENDELSE
-
       j = WHERE(image.map_theta GE angle1 AND  $
                 image.map_theta LE angle2 AND  $
-                image.map_r LE image.radius)
-
+                image.map_r LE image.radius, count)
       frac = (image.map_theta[j] - angle1) / (angle2 - angle1)
 
-      print,angle1,angle2,N_ELEMENTS(j),MIN(frac),MAX(frac)
+      print,angle1,angle2,count,MIN(frac),MAX(frac)
 ;      print,i1,cal.A[i1,0:cal.ndeg]
 ;      print,i2,cal.A[i2,0:cal.ndeg]
 
       cval1 = POLY(image.map_r[j],cal.A[i1,0:cal.ndeg])
       cval2 = POLY(image.map_r[j],cal.A[i2,0:cal.ndeg])
-
       sf = cval1 + frac * (cval2 - cval1) 
-
       i = WHERE(sf LT 1.0E-5)
       IF (i[0] NE -1) THEN sf[i] = 1.0
-
       image.vignette[j] = 1.0 / sf
-
       image.cal.mode = -1
-
     ENDFOR
 
     RemoveArtificialBlack, image
@@ -527,11 +521,21 @@ FUNCTION GetImage,           $
 ; ----------------------------------------------------------------------
 ;
   IF (KEYWORD_SET(plots)) THEN BEGIN
+
+    extension = STRMID(image.file,2,/REVERSE_OFFSET) 
+    CASE extension OF
+      'bmp': order = 0
+      'ipx': order = 1
+      ELSE: BEGIN
+        PRINT,'ERROR GetImage: Unknown file type'
+        RETURN, -1
+        END
+    ENDCASE
+
     IF (KEYWORD_SET(colour)) THEN BEGIN
       DEVICE, DECOMPOSED=0
       IF (colour EQ 1) THEN colour = 4
       LOADCT,colour
-      IF (calibrate) THEN safe_colors,/first
     ENDIF ELSE BEGIN
       loadct,0
     ENDELSE
@@ -551,7 +555,7 @@ FUNCTION GetImage,           $
       plot,image.data
     ENDIF ELSE BEGIN
       WINDOW,0,xsize=image.xdim,ysize=image.ydim,retain=2      
-      TVSCL,image_raw,/ORDER
+      TVSCL,image_raw,ORDER=order
     ENDELSE
 
     max_val = MAX(image.data)
@@ -567,8 +571,15 @@ FUNCTION GetImage,           $
     IF (image.ydim EQ 1) THEN BEGIN
     ENDIF ELSE BEGIN
       window,1,xsize=image.xdim,ysize=image.ydim,retain=2
-      TVSCL,image_data,/ORDER
+      TVSCL,image_data,ORDER=order
     ENDELSE
+
+    IF (KEYWORD_SET(calibrate)) THEN BEGIN
+      WINDOW,3,XSIZE=image.xdim,YSIZE=image.ydim,RETAIN=2
+      TVSCL,image.vignette,ORDER=order
+      WINDOW,4,XSIZE=image.xdim,YSIZE=image.ydim,RETAIN=2
+      TVSCL,image_data*image.vignette,ORDER=order
+    ENDIF
 
 ;    safe_colors,/first
 ;    window,2,retain=2
@@ -583,7 +594,7 @@ FUNCTION GetImage,           $
 ; ----------------------------------------------------------------------
 ;
   IF (KEYWORD_SET(save) OR KEYWORD_SET(save_png)) THEN   $
-    SaveImageData, image, calibrate, path, scale, sname, save_png
+    SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
 ;
 ; ----------------------------------------------------------------------
 ;

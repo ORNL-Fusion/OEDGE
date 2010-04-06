@@ -1,6 +1,12 @@
 * First ever CORTEX input file
 *
 *
+
+{PLOT 1D LOS INTEGRAL}  1  {DATA FILE}  idl.divspec_outer_divertor_los_01
+
+{EXIT}
+
+
 {PLOT 2D FLUID GRID}  1   {SHOW} 10 Red   $ {FLUX SURFACES} 
                           {SHOW} 17 Red   
 {PLOT 1D RADIAL PROFILE}  1    
