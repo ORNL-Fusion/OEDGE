@@ -20,6 +20,7 @@ c
       include 'cedge2d'
       include 'temp' 
 
+      integer   printiz
 
       INTEGER   CION,CIOPTA,cprint
       REAL      CRMI,RIZB,crmb
@@ -685,6 +686,11 @@ c
       write (6,*) 'PRINT RATE DATA: ',cdatopt
       write (6,*)
 
+      
+c      printiz = cion-1
+
+      printiz = 1
+
 
       if (cdatopt.eq.1) then 
 
@@ -721,7 +727,7 @@ c
          PTESA(29) = 100.0
          PTESA(30) = 150.0
 
-         do in = 1,5 
+         do in = 1,4
 
             tmpne = 1.0e17 * 10**(in) 
 
@@ -738,7 +744,7 @@ C
 c
             ICLASS = 2
 C
-            DO IZ = 0, CION-1
+            DO IZ = 0, min(printiz,cion-1)
                CALL ADASRD(YEAR,CION,IZ+1,ICLASS,Ntemp,PTESA,PNESA,   
      >              PCOEF(1,IZ+1))                                      
 
@@ -747,11 +753,11 @@ c
             write (6,*) 'ADAS Ionization rate coefficients:'//
      >                  ' Density = ', tmpne
 c
-            write(6,1001) (iz,iz=0,cion-1)
+            write(6,1001) (iz,iz=0,min(printiz,cion-1))
 c
             do ik = 1,ntemp
                write (6,1000) ik,ptesa(ik),
-     >                 (pcoef(ik,iz+1),iz=0,cion-1)
+     >                 (pcoef(ik,iz+1),iz=0,min(printiz,cion-1))
             end do
 c
 C
@@ -759,7 +765,7 @@ c           RECOMBINATION
 c
             iclass = 1
 c
-            DO IZ = 1, CION
+            DO IZ = 1, min(printiz+1,cion)
                CALL ADASRD(YEAR,CION,IZ,ICLASS,Ntemp,PTESA,PNESA,   
      >              PCOEF(1,IZ))                                      
 
@@ -768,11 +774,11 @@ c
             write (6,*) 'ADAS Recombination rate coefficients:'//
      >                  ' Density = ', tmpne
 c
-            write(6,1001)  (iz,iz=1,cion)
+            write(6,1001)  (iz,iz=1,min(printiz+1,cion))
 c
             do ik = 1,ntemp
                write (6,1000) ik,ptesa(ik),
-     >                 (pcoef(ik,iz),iz=1,cion)
+     >                 (pcoef(ik,iz),iz=1,min(printiz+1,cion))
             end do
 c
 c        End density loop
@@ -817,17 +823,18 @@ c
          PTESA(29) = 100.0
          PTESA(30) = 150.0
 c
-c         do in = 1,4 
+         do in = 1,4 
 c
-c            tmpne = 1.0e17 * 10**(in) 
+            tmpne = 1.0e17 * 10**(in) 
 c
-            tmpne = 1.0e18
+c            tmpne = 1.0e18
 
 C
 C---- CALCULATE IONISATION RATES ...
 C
 C
-            DO IZ = 0, CION-1
+c            DO IZ = 0, CION-1
+            DO IZ = 0, min(printiz,cion-1)
                do ik = 1,ntemp
                   call mcrates(ptesa(ik),ptesa(ik),tmpne,
      >                         iz,cion,cion,rion,rrec,rcxr,0)
@@ -838,17 +845,17 @@ c
             write (6,*) 'B2-FRATES Ionization rate coefficients:'
      >                  //' Density = ', tmpne
 c
-            write(6,1001)  (iz,iz=0,cion-1)
+            write(6,1001)  (iz,iz=0,min(printiz,cion-1))
 c
             do ik = 1,ntemp
                write (6,1000) ik,ptesa(ik),
-     >                 (pcoef(ik,iz+1),iz=0,cion-1)
+     >                 (pcoef(ik,iz+1),iz=0,min(printiz,cion-1))
             end do
 
 C
 c           RECOMBINATION
 c
-            DO IZ = 1, CION
+            DO IZ = 1, min(printiz+1,cion)
                do ik = 1,ntemp
                   call mcrates(ptesa(ik),ptesa(ik),tmpne,
      >                         iz,cion,cion,rion,rrec,rcxr,0)
@@ -859,17 +866,17 @@ c
             write (6,*) 'B2-FRATES Recombination rate coefficients:'
      >                  //' Density = ', tmpne
 c
-            write(6,1001)  (iz,iz=1,cion)
+            write(6,1001)  (iz,iz=1,min(printiz+1,cion))
 c
             do ik = 1,ntemp
                write (6,1000) ik,ptesa(ik),
-     >                 (pcoef(ik,iz+1),iz=1,cion)
+     >                 (pcoef(ik,iz+1),iz=1,min(printiz+1,cion))
             end do
 
 C
 c           Charge Exchange
 c
-            DO IZ = 1, CION
+            DO IZ = 1, min(printiz+1,cion)
                do ik = 1,ntemp
                   call mcrates(ptesa(ik),ptesa(ik),tmpne,
      >                         iz,cion,cion,rion,rrec,rcxr,0)
@@ -880,17 +887,17 @@ c
             write (6,*) 'B2-FRATES CX Recombination rate coefficients:'
      >                  //' Density = ', tmpne
 c
-            write(6,1001)  (iz,iz=1,cion)
+            write(6,1001)  (iz,iz=1,min(printiz+1,cion))
 c
             do ik = 1,ntemp
                write (6,1000) ik,ptesa(ik),
-     >                 (pcoef(ik,iz+1),iz=1,cion)
+     >                 (pcoef(ik,iz+1),iz=1,min(printiz+1,cion))
             end do
 
 c
 c        End density loop
 c
-c        end do
+         end do
 c
 c
 c     INEL atomic physics data

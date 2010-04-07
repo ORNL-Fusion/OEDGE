@@ -2009,7 +2009,14 @@ c       edge of the plasma cell associated with the wall segment is
 c       assigned and the code continues as if ionization had occured
 c       at this location. 
 c
-        if (fp_neut_opt.gt.0) then 
+c        if (fp_neut_opt.gt.0) then 
+c
+c        jdemod - added test for iwstart.ne.-1 since fp neutral ionization 
+c                 only makes sense at the moment for particles associated with
+c                 a wall element. The code would need to be modified to
+c                 accommodate free space launches.
+c
+        if (fp_neut_opt.gt.0.and.iwstart.ne.-1) then 
 c
 c          Split evaluation into 2 IF statements since iwstart is not 
 c          always properly defined.       

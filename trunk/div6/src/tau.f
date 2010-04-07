@@ -5667,6 +5667,7 @@ c
 c     
 c     
       subroutine raug
+      use error_handling
       implicit none
       include 'params'
       include 'cgeom'
@@ -6247,7 +6248,7 @@ c
 c     
          npolyp = in
 c     
-         stop
+         stop 'Incomplete grid'
 c     
       endif
 c     
@@ -6442,13 +6443,15 @@ c
       if ((cneur.eq.4.or.ctrap.eq.4.or.cneur.eq.5.or.ctrap.eq.5)
      >     .and.nves.eq.0) then
 c     
-         write (6,*) 'Error reading SONNET geometry file!'
-         write (6,*) 'The Neutral Wall data was not appended'
-         write (6,*) '(but is requored for specified options.)'
+         write(error_message_data,'(a)')
+     >       'ERROR reading grid file. Neutral wall data not found.'
+         call errmsg(error_message_data)
+
          call prc('Error reading SONNET geometry file!')
          call prc('The Neutral Wall data was not appended')
          call prc('(but is requored for specified wall options)')
-         stop
+
+         stop 'Neutral wall data not found.'
 c     
       end if
 c     
@@ -11081,14 +11084,14 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-         WRITE(0,*)
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*)
-         RETURN
-      ENDIF
+c      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+c         WRITE(0,*)
+c         WRITE(0,*)'-------------------------------------------------'
+c         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+c         WRITE(0,*)'-------------------------------------------------'
+c         WRITE(0,*)
+c         RETURN
+c      ENDIF
 c     slmod end
 c     
 C     >     QLOSS(MAXNRS)

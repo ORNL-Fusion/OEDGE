@@ -15,7 +15,7 @@ export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=/work/projects/divimp/adas
 #
-VER=pgi
+VER=ifort
 #
 # If this script is run from the root of the code directory then
 # the line assigning PROGDIR will pick up the correct local path - otherwise 

@@ -7632,7 +7632,7 @@ c
       integer iselect,istate,nizs,ierr,itype      
       character*(*) ylab,blab,ref 
 c
-c     LOAD_DATA_ARRAY
+c     LOAD_DIVDATA_ARRAY
 c
 c     This routine loads a 2D DIVIMP array of size MAXNKS,MAXNRS with
 c     a quantity specified by the values of iselect and istate. 
