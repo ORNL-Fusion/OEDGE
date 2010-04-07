@@ -6257,7 +6257,7 @@ c            STOP 'sdfsd'
           ENDDO    
  
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF ((mode.GE.4.AND.mode.LE.9).OR.mode.EQ.11) THEN
 c...    Refine the divertor region:
 
@@ -6322,7 +6322,7 @@ c            WRITE(0,*) '  POLOIDAL:',ik,ir,status
      .                *99)
           ENDIF
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF (mode.EQ.10) THEN
 c...    Refine the x-point:
 
@@ -6373,7 +6373,7 @@ c...      PFZ:
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF (mode.EQ.12) THEN
 c...    Double the number of cells on the ring (split each cell in half):
         DO i1 = 1, NINT(param)
@@ -6384,15 +6384,19 @@ c...    Double the number of cells on the ring (split each cell in half):
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO    
         ENDDO
-
+c     -------------------------------------------------------------------
+      ELSEIF (mode.EQ.14) THEN
+c...    Inner midplane:
+        DO ik = nks(ir), 1, -1
+          IF (rs(ik,ir).LT.r0.AND.ABS(zs(ik,ir)-z0).LT.param) THEN
+            CALL SplitCell(ik,ir,0.5D0,status)
+            IF (status.EQ.-1)
+     .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
+          ENDIF
+        ENDDO
       ELSE
         CALL ER('PoloidalRefinement','Invalid MODE',*99)
       ENDIF
-
-
-
-
-
 
       RETURN
  99   WRITE(0,'(A,2I6,F10.2)') 'DATA=',ir,mode,param
@@ -7192,8 +7196,8 @@ c...        Poloidal refinement:
 
             CALL SetupGrid
 
-            irs  = NINT(grdmod(i1,4))
-            ire  = NINT(grdmod(i1,5))
+            irs = NINT(grdmod(i1,4))
+            ire = NINT(grdmod(i1,5))
             IF (irs.EQ.-99) irs = irsep
             IF (ire.EQ.-99) ire = nrs
             DO ir = irs, ire
