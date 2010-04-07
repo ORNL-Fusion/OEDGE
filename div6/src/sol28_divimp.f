@@ -311,7 +311,14 @@ c
       TYPE(type_object) newobj
 
       REAL tube_3D_data(5,MAXNKS,MAXNRS),dangle
-
+c
+c     jdemod - start - add temporary initialization of dangle to avoid a floating point divide by zero 
+c                      later since dangle is not defined by the current code execution path
+c
+      dangle = 360.0
+c
+c     jdemomd - end
+c
       load_bfield_data = .FALSE.
 
       IF (load_bfield_data) THEN
@@ -494,12 +501,20 @@ c        ENDIF
         cell(cind1:cind2)%volume_3D  = tube_3D_data(5,1:ike,ir)
 
         DO ik = 1, nks(ir)
+c
+c         jdemod start - floating point error when dangle is zero - changed to prevent this
+c                      - the problem is that dangle is not defined in the current execution path
+c                        so an initialization at the top of this routine has been added temporarily
+c
           WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
      .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
      .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
      .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
      .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
      .                               (360.0/dangle) 
+c
+c         jdemod end
+c
         ENDDO
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
