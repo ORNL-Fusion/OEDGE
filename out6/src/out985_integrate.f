@@ -1249,7 +1249,8 @@ c     .                              chord%spectrum(1:100)
 
 c...      Store representative vector for this pixel:
 c          WRITE(0,*) ix,MAX(1,nxbin/2+1),iy,MAX(1,nybin/2+1),nchord
-          IF (ix.EQ.MAX(1,nxbin/2+1).AND.iy.EQ.MAX(1,nybin/2+1)) THEN
+          IF (ix.EQ.MAX(1,nxbin/2+1).AND.iy.EQ.MAX(1,nybin/2+1).AND.
+     .        nchord.LT.SIZE(s_chord,1)) THEN
             pixel%global_v1 = SNGL(s_chord(nchord)%v1)
             pixel%global_v2 = SNGL(s_chord(nchord)%v2)
 c            pixel%global_v1 = SNGL(chord%v1)
