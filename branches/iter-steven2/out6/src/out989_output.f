@@ -361,7 +361,7 @@ c...    Frame:
 
 
 c...  Plot inverted profile:
-      IF (.FALSE..AND.ninv.GT.0.AND.plot_option) THEN    ! *** TURNED OFF FOR NOW BECAUSE OF A SEG FAULT -- SL, 09/04/2010
+      IF (ninv.GT.0.AND.plot_option) THEN  
 c        WRITE(0,*) 'INVERTED PROFILE B'
 
         IF (.TRUE..AND.(opt%nxbin.GT.1.OR.opt%nybin.GT.1)) THEN
