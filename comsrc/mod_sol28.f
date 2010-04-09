@@ -741,7 +741,7 @@ c...    Strata:
       INTEGER nopt
       TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
       TYPE(type_options_eirene  ) :: opt_eir   ! *** ADD SIMILAR FUNCTIONALITY? ***
-      INTEGER log, logfp
+      INTEGER logop, logfp
 
 !...  Nasty...
       INTEGER, PARAMETER :: MAX_NITERATION = 1000
@@ -813,7 +813,7 @@ c...    Strata:
 
 
       TYPE(type_options_osm), SAVE :: opt
-      INTEGER :: log,logfp
+      INTEGER :: logop,logfp
 
       REAL*8, SAVE :: chisq(0:7),t_chisq(0:7),m_chisq(0:7)
 

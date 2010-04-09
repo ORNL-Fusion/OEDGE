@@ -5,42 +5,105 @@ c
       SUBROUTINE ListTargetData(fp,title)
       USE mod_sol28_params
       USE mod_sol28_global
+      USE mod_sol28_targets
       IMPLICIT none      
 
       INTEGER  , INTENT(IN) :: fp
       CHARACTER, INTENT(IN) :: title*(*)
 
-      INTEGER     itarget,itube,ion
+      REAL osm_GetGamma,osm_GetFlux,osm_GetHeatFlux
+
+      INTEGER     itarget,itube,ion,i,ipos
       CHARACTER*2 target_tag(2) 
+      REAL        area,heat_flux_density,heat(-1:ntarget)
 
       ion = 1
 
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
 
-      WRITE(fp,*)
-      WRITE(fp,'(A)') 'TARGET DATA:'
-      WRITE(fp,'(A)') '  '//TRIM(title)
-      DO itarget = LO, HI
+      IF (title.NE.'none') THEN 
         WRITE(fp,*)
-        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,A8,2X,A)') 
+        WRITE(fp,'(A)') 'TARGET DATA:'
+        WRITE(fp,'(A)') '  '//TRIM(title)
+      ENDIF
+
+c     *** SOME INCONSISTENCY IN THIS ROUTINE WRT GAMMA, WHERE I'M PRESENTLY USING THE
+c         (CRIPPLED) FORMULATION FROM STANGEBY, BUT IN SOME CASES I TRY TO BACK GAMMA 
+c         OUT IN THE SOLVER, AND SO SHOULD BE USING THAT... ***
+
+      DO itarget = 1, ntarget
+        WRITE(fp,*)
+        WRITE(fp,'(2X,A)') TRIM(target(itarget)%tag)
+        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,2A9)') 
      .    'TUBE','psin','jsat','ne','ni','vi','M','pe','pi','Te','Ti',
-     .    'Gamma',target_tag(itarget)
-        DO itube = 1, ntube
+     .    'gamma','heat'
+        WRITE(fp,'(6X,8X,A16,3A10,6X,4A10,2A9)') 
+     .    '(Amps)','(m-3)','(m-3)','(m s-1)','(?)','(?)',
+     .    '(eV)','(eV)','(?)','(MW m-2)'
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
           IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          ipos = target(itarget)%position
+          area = 2.0 * V_PI * tube(itube)%rp (ipos) * 
+     .                        tube(itube)%dds(ipos)
+          heat_flux_density = osm_GetHeatFlux(ipos,itube) / area /1.0E+6
           WRITE(fp,'(I6,F8.4,1P,E16.6,3E10.2,0P,F6.2,
-     .               1P,2E10.2,0P,2F10.6,F8.2)')
+     .               1P,2E10.2,0P,2F10.4,F9.2,F9.2)')
      .      itube,tube(itube)%psin,
-     .      tube(itube)%jsat  (itarget,ion),
-     .      tube(itube)%ne    (itarget),
-     .      tube(itube)%ni    (itarget,ion),
-     .      tube(itube)%vi    (itarget,ion),
-     .      tube(itube)%machno(itarget),
-     .      tube(itube)%pe    (itarget),
-     .      tube(itube)%pi    (itarget,ion),
-     .      tube(itube)%te    (itarget),
-     .      tube(itube)%ti    (itarget,ion),
-     .      tube(itube)%gamma (itarget,ion)
+     .      tube(itube)%jsat  (ipos,ion),
+     .      tube(itube)%ne    (ipos),
+     .      tube(itube)%ni    (ipos,ion),
+     .      tube(itube)%vi    (ipos,ion),
+     .      tube(itube)%machno(ipos),
+     .      tube(itube)%pe    (ipos),
+     .      tube(itube)%pi    (ipos,ion),
+     .      tube(itube)%te    (ipos),
+     .      tube(itube)%ti    (ipos,ion),
+     .      tube(itube)%gamma (ipos,ion),
+     .      heat_flux_density
+        ENDDO
+      ENDDO
+
+      heat = 0.0
+      DO itarget = 1, ntarget
+        ipos = target(itarget)%position
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
+          IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          heat(itarget) = heat(itarget) + osm_GetHeatFlux(ipos,itube)
+        ENDDO
+        heat(0) = heat(0) + heat(itarget)
+      ENDDO
+      heat = heat / 1.0E+6  ! Convert to MW m-2
+
+      WRITE(fp,*)
+      WRITE(fp,'(2X,A,F9.3,A)') 'TOTAL HEAT FLUX =',heat(0),' MW m-2'
+
+      DO itarget = 1, ntarget
+        WRITE(fp,*)
+        WRITE(fp,'(2X,A,F7.3,A,F7.2,A)') 
+     .    'HEAT FLUX TO '//TRIM(target(itarget)%tag)//
+     .    ' TARGET =',heat(itarget),
+     .    '  MW m-2',heat(itarget)/heat(0)*100.0, ' % '
+        WRITE(fp,'(A6,2A8,2A12,2A10,A12)')
+     .    'TUBE','psin','rho','gamma','isat','Te','Ti','heat flux'
+        ipos = target(itarget)%position
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
+          IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          heat(-1) = osm_GetHeatFlux(ipos,itube) / 1.0E+6
+          WRITE(fp,'(I6,2F8.4,1P,2E12.4,0P,2F10.2,
+     .               1P,E12.4,0P,2(2X,F7.2,A))')
+     .      itube,
+     .      tube(itube)%psin,
+     .      tube(itube)%rho ,
+     .      osm_GetGamma   (ipos,itube),
+     .      osm_GetFlux    (ipos,itube),
+     .      tube(itube)%te (ipos),
+     .      tube(itube)%ti (ipos,ion),
+     .      heat(-1),heat(-1)/heat(itarget)*100.0,' %',
+     .      heat(-1)/heat(0)*100.0,' %'
         ENDDO
       ENDDO
 
@@ -304,6 +367,8 @@ c
      .    target(itarget)%nlist,
      .    (target(itarget)%ilist(i),i=1,target(itarget)%nlist)
       ENDDO
+
+      CALL ListTargetData(fp,'none')
 
       WRITE(fp,*)
       WRITE(fp,'(A)') 'MATERIAL DATA:'
