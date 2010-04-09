@@ -6628,11 +6628,11 @@ c             vertex:
               c1 = d_rvertp(1,id1)
               c2 = d_zvertp(1,id1)
               IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-      WRITE(0,*) 'A1,2=',a1,a2
-      WRITE(0,*) 'B1,2=',b1,b2
-      WRITE(0,*) 'C1,2=',c1,c2
-      WRITE(0,*) '     ',dist,tol
-                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR A',t1
+c      WRITE(0,*) 'A1,2=',a1,a2
+c      WRITE(0,*) 'B1,2=',b1,b2
+c      WRITE(0,*) 'C1,2=',c1,c2
+c      WRITE(0,*) '     ',dist,tol
+c                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR A',t1
                 CALL SplitCell(ik2,ir2,t1,status)
                 CALL BuildMap
               ELSE
@@ -6699,12 +6699,12 @@ c     .            DABS(d_zvertp(4,id1)-d_zvertp(3,id2)).GT.DTOL) THEN
               b2 = d_zvertp(3,id2)
               c1 = d_rvertp(4,id1)
               c2 = d_zvertp(4,id1)
-              WRITE(0,*) 'A1,2=',a1,a2
-              WRITE(0,*) 'B1,2=',b1,b2
-              WRITE(0,*) 'C1,2=',c1,c2
-              WRITE(0,*) '     ',ik1,ik2,nks(ir2)
+c              WRITE(0,*) 'A1,2=',a1,a2
+c              WRITE(0,*) 'B1,2=',b1,b2
+c              WRITE(0,*) 'C1,2=',c1,c2
+c              WRITE(0,*) '     ',ik1,ik2,nks(ir2)
               IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR B',t1
+c                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR B',t1
                 CALL SplitCell(ik2,ir2,t1,status)
                 CALL BuildMap
               ELSE
@@ -6735,7 +6735,7 @@ c...        Find and split the appropriate cell:
               c2 = d_zvertp(3,id1)
               IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
                 IF (t1.GT.0.0D0+DTOL.AND.t1.LT.1.0D0-DTOL) THEN
-                  WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR C',t1
+c                  WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR C',t1
                   CALL SplitCell(ik2,ir2,t1,status)
                   CALL BuildMap
                   EXIT
@@ -6799,7 +6799,7 @@ c            ENDIF
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
 c...          Make sure the points are exactly the same, since small errors
 c             can creep in when cutting the grid: 
-              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(1,id1) = d_rvertp(iv,id)
               d_zvertp(1,id1) = d_zvertp(iv,id)
             ENDIF
@@ -6808,7 +6808,7 @@ c             can creep in when cutting the grid:
             length2 = MIN(SideLength(id ,1),SideLength(id ,2))
             tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
-              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(4,id2) = d_rvertp(iv,id)
               d_zvertp(4,id2) = d_zvertp(iv,id)
             ENDIF

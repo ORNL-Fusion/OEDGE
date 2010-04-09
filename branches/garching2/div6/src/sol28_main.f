@@ -15,7 +15,7 @@ c
      .        alpha(2),beta(2),delta,A,B,C,D,a1,b1,c1,radical,cs
 
  
-      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -195,7 +195,7 @@ c    .                        integral(3)) * ECH
 
       ENDDO
 
-      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: DONE'
       
       RETURN
  99   STOP
@@ -734,7 +734,7 @@ c       result of analyzing the present state of the solution:
 
       ion = 1
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'Local control options:'
         WRITE(logfp,'(A,I10)') 'first_bc   = ',first_bc
@@ -839,7 +839,7 @@ c...    Turn off energy transport model if the symmetry point temperature is too
      .       node(mnode)%te.LE.node(mnode+1)%te).AND.
      .      node(mnode)%par_mode.EQ.6) THEN
           node(mnode)%par_mode = 3
-          IF (log.GT.0)
+          IF (logop.GT.0)
      .      WRITE(logfp,*) 'Symmetry point temperature too low '//
      .                     'for energy transport model, reverting '//
      .                     'to conduction transport prescription'
@@ -941,7 +941,7 @@ c...  User control:
       CALL User_SetupSolverOptions(count)
 
 c...  Output:
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'OSM control options:'
         WRITE(logfp,'(A,I10)') 'COUNT        = ',count
@@ -1267,7 +1267,7 @@ c          t_chisq(7) =MAX(chisq(7),((ti(i,ion)-h_ti(i,ion))/ti(i,ion))**2)
         m_chisq(0) = SUM(m_chisq(1:7))
 c...    Do the target conditions as well...
       ENDIF
-      IF (log.GE.1) THEN
+      IF (logop.GE.1) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'T_CHISQ:',count,t_chisq(0:7)
         WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'M_CHISQ:',count,m_chisq(0:7)
@@ -1338,7 +1338,7 @@ c     .    ref_nion,ref_icmax1
       ELSE
         ref_nion = 0
       ENDIF
-      IF (log.GT.0.AND.ref_nion.EQ.0.AND.ref_nion1.NE.0) THEN
+      IF (logop.GT.0.AND.ref_nion.EQ.0.AND.ref_nion1.NE.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'Reference solution data not available '//
      .                 'for this tube because the geometry''s '
@@ -1351,7 +1351,7 @@ c     .    ref_nion,ref_icmax1
       node(1:nnode) = node1(1:nnode) 
 
       opt = opt_global
-      log = opt%log
+      logop = opt%log
       logfp = opt%logfp
 
 c      WRITE(0,*) '-->',opt%bc(1:2)
@@ -1403,7 +1403,7 @@ c...  Basic initialization:
 c...  Control:
       cnt_options = .TRUE.
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 'M,NNODE:',mnode,nnode
         WRITE(logfp,*) '  1    :',node(1    )%s ,node(1    )%te,
      .                            node(1    )%ne,node(mnode)%pe
@@ -1436,7 +1436,7 @@ c...  Main loop:
 c...    Loop counter:
         count = count + 1
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) '==============================='
           WRITE(logfp,*) 'COUNT:',tube%ir,count
           WRITE(logfp,*) '==============================='
@@ -1500,7 +1500,7 @@ c...      Near-target sonic transition being processed:
           cont = .TRUE. 
         ELSEIF (count.GE.7) THEN
 c          WRITE(logfp,*) 'SORRY, GIVING UP... NO CONVERGENCE'
-          IF (count.GT.MAX_ITERATIONS.AND.log.GT.1) 
+          IF (count.GT.MAX_ITERATIONS.AND.logop.GT.1) 
      .      WRITE(logfp,*) 'MAXIMUM ITERATIONS REACHED'
           cont = .FALSE.
         ELSEIF (.FALSE.) THEN
@@ -1621,7 +1621,7 @@ c      REAL    totsrc
 
       debug_count = debug_count + 1
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'RANGE:',itstart,itend,grid%isep
         WRITE(logfp,*) 'TE   :',tube(itstart)%te(LO),
@@ -1683,7 +1683,7 @@ c              WRITE(0,*) 'SELECTING SOLVER OPTION:',isol,sol_option
             ENDIF
           ENDDO
 
-          IF (log.GT.0) THEN
+          IF (logop.GT.0) THEN
             WRITE(logfp,'(A   )') '------------------------------------'
             WRITE(logfp,'(A,I6)') ' SOLVING TUBE: ',itube
             WRITE(logfp,'(A,I6)') ' SOL OPTON   : ',sol_option

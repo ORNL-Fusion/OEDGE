@@ -854,7 +854,7 @@ c          map2y = map1y + 0.40
         IF (reset_origin) THEN
           map1x = 0.05 
         ELSE
-          map1x = save_map2x
+          map1x = save_map2x + 0.02
         ENDIF
 c        map1x = 0.05 + REAL(numplots) * dx
         map2x = map1x + dx

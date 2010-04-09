@@ -66,7 +66,7 @@ c...    Check that rings from different grid regions are not in the same group
 c       of rings:
         DO i2 = NINT(osms28(i1,11)), NINT(osms28(i1,12))-1
           IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
-            IF (log.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
+            IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
               WRITE(logfp,*)
               WRITE(logfp,*) '-------------------------------------'
               WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
@@ -468,7 +468,7 @@ c >>>> EH? >>>>              IF (i1.EQ.3) s(3) = cell(ic)%s
           ENDDO
         ENDDO
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) 
           DO i1 = 1, node_n
             WRITE(logfp,'(A,3I6,F10.2,E10.2,F10.2)') 
@@ -504,7 +504,7 @@ c...        Also check that there isn't more than one node in each cell:
           ENDDO
         ENDDO
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) 
           DO i1 = 1, node_n
             WRITE(logfp,'(A,3I6,F10.2,E10.2,F10.2)') 
