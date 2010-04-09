@@ -196,7 +196,7 @@ c...  Local:
 
       CALL AssignLegacyVariables
 
-      IF (log.GT.0) WRITE(logfp,*) 'SETTING TARGET CONDITIONS'
+      IF (logop.GT.0) WRITE(logfp,*) 'SETTING TARGET CONDITIONS'
       
       IF (tarninter(LO).EQ.0.OR.tarninter(HI).EQ.0) THEN
 c        CALL ER('InterpolateTargetData','No data to '//
@@ -829,7 +829,7 @@ c
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
 
-      debug = .TRUE. 
+      debug = .FALSE. 
 
       node_n = 0
 
@@ -908,7 +908,7 @@ c       of rings:
         DO i2 = osmnode(i1)%tube_range(1), osmnode(i1)%tube_range(2)-1
           IF (i2.GT.ntube-1) EXIT          
           IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
-            IF (log.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
+            IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
               WRITE(logfp,*)
               WRITE(logfp,*) '-------------------------------------'
               WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
@@ -1581,7 +1581,7 @@ c...    Store node values:
         node_s(node_n)%par_exp  = osmnode(i3)%par_exp
         node_s(node_n)%par_set  = osmnode(i3)%par_set
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) 
           DO i4 = 1, node_n
             WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1679,7 +1679,7 @@ c      DO i1 = 2, node_n-1
         ENDIF
       ENDDO
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1771,7 +1771,7 @@ c...       Delete degenerate node:
 
 
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1844,7 +1844,7 @@ c...      Also check that there isn't more than one node in each cell:
         ENDDO
       ENDDO
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
      .      'NODE:',i1,node_i(i1),
@@ -1863,7 +1863,7 @@ c...  Set node indeces:
 c...  Assign values to nodes:
       node(1:nnode) = node_s(1:nnode)
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE A -:',nnode,mnode
         DO i1 = 1, node_n
@@ -2020,7 +2020,7 @@ c...  Sort out velocities from Mach numbers:
         ENDIF
       ENDDO
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE B -:',nnode,mnode
         DO i1 = 1, node_n

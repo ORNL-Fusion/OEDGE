@@ -1050,7 +1050,7 @@ c
 
       debug = .FALSE.
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'LOADING SUPPLIMENTAL GRID DATA'
       ENDIF
@@ -1159,7 +1159,7 @@ c         endless sub-versions of the file, one for each case:
         CALL osm_DeriveGridQuantities
       ENDIF
 
-      IF (log.GT.0) WRITE(logfp,*) 'DONE'
+      IF (logop.GT.0) WRITE(logfp,*) 'DONE'
 
       RETURN
  98   CALL ER('ProcessGrid','Format error in supplimental file',*99)

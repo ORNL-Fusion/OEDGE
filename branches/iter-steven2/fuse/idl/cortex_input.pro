@@ -290,6 +290,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct.default      = case_name
         plot_struct.case_name[0] = case_name
         plot_struct.data_file[0] = 'idl.fluid_targets'
+        plot_struct.data_file[1] = 'idl.midplane'
         END
 ;     ------------------------------------------------------------------
       'PLOT 1D RADIAL PROFILE': BEGIN

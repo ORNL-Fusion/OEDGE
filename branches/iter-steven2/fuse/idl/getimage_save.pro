@@ -72,6 +72,10 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
             IF (image_data[ix,iy] LT bottom ) THEN image_data[ix,iy] = bottom
           ENDFOR
         ENDFOR
+
+        DEVICE, DECOMPOSED=0
+        LOADCT, 3
+
         image_byte = BYTSCL(image_data)
         WINDOW,6,xsize=image.xdim,ysize=image.ydim,retain=2
         LOADCT,3 ; 5

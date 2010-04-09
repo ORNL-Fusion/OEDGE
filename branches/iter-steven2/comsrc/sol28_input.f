@@ -512,13 +512,13 @@ c
 
       SELECTCASE (buffer(3:itag-1))
         CASE('F LOG')
-          READ(buffer,*) cdum1,log
-          IF (log.LT.0) THEN
+          READ(buffer,*) cdum1,logop
+          IF (logop.LT.0) THEN
             CLOSE(logfp)
             logfp = 0
-            log   = -log
+            logop = -logop
           ENDIF
-          opt%log   = log
+          opt%log   = logop
           opt%logfp = logfp
         CASE('F OSM_LOAD')
           opt%osm_load = 1
@@ -941,9 +941,9 @@ c...  Input variables:
       niteration = 0
 
 c...  Output options:
-      log       = 1
+      logop     = 1
       logfp     = 88
-      opt%log   = log
+      opt%log   = logop
       opt%logfp = logfp
 
       opt%osm_load = 0

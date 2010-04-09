@@ -12,7 +12,7 @@ c
 
       cnt_integrate = .TRUE.
  
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -142,7 +142,7 @@ c...
 c...
       CALL IntegrateSources(1)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: DONE'
 
       RETURN
  99   STOP
@@ -389,7 +389,7 @@ c
       INTEGER ion, target, ic1, ic2
       REAL*8  source(icmax)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: BEGIN'
   
 c...  Set everything to zero?  No, because for performance optimization I really
 c     need to keep the number of non-necessary re-assignments to a minimum, 
@@ -449,7 +449,7 @@ c...
 c...
       CALL IntegrateSources(2)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: DONE'
 
       RETURN
  99   STOP
@@ -575,7 +575,7 @@ c
       INTEGER ion, target, ic1, ic2
       REAL*8  source(icmax)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -670,7 +670,7 @@ c         ----------------------------------------------------------------
 
       CALL IntegrateSources(3)
 c...
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: DONE'
 
       RETURN
  99   WRITE(0,*) '  TARGET = ',target
@@ -709,7 +709,7 @@ c...        Integral:
             CALL IntegrateArray(FULL,parsrc(1,ion),1,parint(0,ion))
 
 c...        Detailed check:
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               CALL IntegrateArray(FULL,parrec(1,ion),0,integral(1))
               CALL IntegrateArray(FULL,parion(1,ion),0,integral(2))
               CALL IntegrateArray(FULL,parusr(1,ion),0,integral(3))
@@ -744,7 +744,7 @@ c...        Calculate net momentum source along the flux tube:
 c...        Integral:
             CALL IntegrateArray(FULL,momsrc(1,ion),1,momint(0,ion))
 
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               ic1 = ictarg(LO)
               ic2 = ictarg(HI)
 
@@ -792,7 +792,7 @@ c           integrate along the field line:
             qe(ic1) = -eneint(icmid  ,1)
             qe(ic2) = -(eneint(TOTAL,1)-eneint(icmid,1))
 
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               WRITE(logfp,*) 'ENERGY CHECK  -targets :',qe(ic1),
      .                                                  qe(ic2)
               WRITE(logfp,*) '              -integral:',

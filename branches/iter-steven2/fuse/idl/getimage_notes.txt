@@ -8,27 +8,88 @@
 ; Detachment sessions
 ; -------------------
 ; file='./cal_data/FCC_13012010_1_pos6000001.bmp'
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/centre,/background)
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/calibrate,path='./cal_data/',/save)
+; image=getimage(file=file,channel=3,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/centre,/background)
+; image=getimage(file=file,channel=3,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/calibrate,path='./cal_data/',/save)
 ;
 ; file='cal_data/DIVCAM_13012010_2_000103.ipx'
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/centre)
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/calibrate,path='./cal_data/',/save)
+; image=getimage(file=file,channel=2,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/centre)
+; image=getimage(file=file,channel=2,filter='empty',/raw,/plots,colour=5,shift=[-22,45],radius=485,/calibrate,path='./cal_data/',/save)
 ;
 ; file='./cal_data/FCC_14012010_3_pos6000001.bmp'
 ; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-68,-36],radius=260,/centre)
 ; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-68,-36],radius=260,/calibrate,path='./cal_data/',/save)
 ;
 ; file='cal_data/DIVCAM_14012010_4_000104.ipx'
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/centre)
-; image=getimage(file=file,channel=1,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/calibrate,path='./cal_data/',/save)
+; image=getimage(file=file,channel=4,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/centre)
+; image=getimage(file=file,channel=4,filter='empty',/raw,/plots,colour=5,shift=[-5,103],radius=490,/calibrate,path='./cal_data/',/save)
 ;
+; View registration:
 ;
-;
-; view registration
 ; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,/colour,/save)  ; HL01, channel 1, rbc
 ; image=getimage(shot=24808,frame=1,channel=2,/plots,/nocal,rotate=270,/debug,/save)           ; HL01, channel 2, rdb
-; 
+; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',/plots,/colour,/save)             ; HL07, channel 3, rba
+; image=getimage(shot=24808,frame=19,channel=2,/plots,/nocal,/debug,/save)                     ; HL01, channel 2, rdd
+;
+; Finding centre of camera view:
+;
+; -to find the centres: artificial black and vignetting were hardcoded out, i.e.
+;       ; image_data = image_data * image.vignette
+;       ; image_data[WHERE(image.map_r GT image.radius)] = -1  ; Artifical black outside calibrated region
+;                       and for the plots
+;       ; image_data[ix,iy] = 0; max_val           
+;
+; rbc - HL01
+; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,colour=5,radius=240,shift=[-3,10],centre=0.05)
+;    -3 - (-19) = +16, 10 - (-9) = +19
+; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[16,19],scale=10.0)
+; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[16,19])
+; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[26,19]) -seems better
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[26,19]) -seems OK, no filter correction
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],/debug) -filter correction applied, but DIVCAM one...
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24860,frame=342,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24861,frame=694,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+;
+; rdb - HL01
+; image=getimage(shot=24808,frame=1,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[40,10],radius=500,centre=0.15)
+; 40 - (-22) = +62, 10 - (45) = -35
+; image=getimage(shot=24808,frame=1,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[62,-35],scale=5.0)
+; image=getimage(shot=24808,frame=1,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[67,-35],scale=5.0) -looks better, but isn't when looking at an actual image
+; image=getimage(shot=24808,frame=10,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[62,-35])
+; image=getimage(shot=24808,frame=10,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[62,-35])
+; image=getimage(shot=24808,frame=10,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[60,-35])  -best I think
+; image=getimage(shot=24860,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[60,-35])
+; image=getimage(shot=24860,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35])  -better, something is wrong...
+; image=getimage(shot=24860,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)
+; image=getimage(shot=24860,frame=11,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)  -not great, still not centred
+; image=getimage(shot=24861,frame=16,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)  
+;
+; rba - HL07
+; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',colour=5,/plots,shift=[-20,-5],radius=275,/centre)
+; -20 - (-68) = +48, -5 - (-36) = +31
+; image=getimage(shot=24815,frame=294,channel=1,camera='FFC',/plots,shift=[48,31],colour=5,scale=10.0)  
+; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',/plots,shift=[48,31],colour=5,scale=10.0)  
+; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',/plots,shift=[48,36],colour=5,scale=10.0)  -fine tuning
+; image=getimage(shot=24815,frame=289,channel=1,camera='FFC',/plots,shift=[48,36],colour=5)
+; image=getimage(shot=24815,frame=289,channel=1,camera='FFC',/plots,shift=[48,31],colour=5)
+; image=getimage(shot=24815,frame=289,channel=1,camera='FFC',/plots,shift=[43,36],colour=5) -seems best
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',/plots,shift=[43,36],colour=5) -no filter correction yet...
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5) -not perfect... 
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)
+; image=getimage(shot=24860,frame=342,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)  -again, not great on the centring
+; image=getimage(shot=24861,frame=692,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)
+;
+; rdd - HL07
+; image=getimage(shot=24808,frame=1,channel=4,/plots,colour=5,filter='empty',shift=[0,40],radius=500,centre=0.01) -center plasma image
+; 0 - (-5) = +5, 40 - (103) = -63                                                                                 -calculate difference between calibration centre and plasma centre
+; image=getimage(shot=24808,frame=1,channel=4,/plots,colour=5,filter='empty',shift=[5,-63],scale=5.0)             -check on centering
+; image=getimage(shot=24808,frame=10,channel=4,/plots,colour=5,filter='empty',shift=[5,-63])                      -good!
+; image=getimage(shot=24860,frame=17,channel=4,/plots,colour=5,shift=[5 ,-63])  -not great
+; image=getimage(shot=24860,frame=17,channel=4,/plots,colour=5,shift=[10,-63])  -better at ISP, but still not great
+; image=getimage(shot=24860,frame=17,channel=4,/plots,colour=5,shift=[5,-63],/clean,/save)  -better than using the 10, since the filter correciton is now applied (wasn before?)
+; image=getimage(shot=24860,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save)
+; image=getimage(shot=24861,frame=16,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save)
+;
 ; Diamond
 ; --------
 ; image=getimage(shot=20348,frame=27,channel=3,colour=3,filter='empty',/plots,scale=2.5,/save,/nocal)
