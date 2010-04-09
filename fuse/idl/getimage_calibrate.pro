@@ -1,7 +1,7 @@
 ;
 ; ========================================================================
 ;
-PRO FindImageCentre, image, radius, shift, depth, clean, background, rotate
+PRO FindImageCentre, image, centre, radius, shift, depth, clean, background, rotate
 ;PRO FindImageCentre, image, radius=radius, shift=shift, depth=depth
   
   image_centre = image.raw
@@ -65,10 +65,19 @@ PRO FindImageCentre, image, radius, shift, depth, clean, background, rotate
 
   IF (clean) THEN image_centre = CleanImage(image_centre)
 
-  limit = (2 ^ image.depth - 2) * 0.10
-  image_centre[WHERE(image_centre GT limit)] = limit
+  
+  IF (FLOAT(centre) NE 1.0) THEN cut_off = centre ELSE cut_off = 0.10
 
+  limit = (2 ^ image.depth - 2) * cut_off
+
+  PRINT,'CUT OFF=',cut_off
   PRINT,'LIMIT=',limit
+
+  i = WHERE(image_centre GT limit, count)
+  IF (count GT 0) THEN image_centre[WHERE(image_centre GT limit)] = limit ELSE BEGIN  $
+    PRINT, 'ERROR getimage_FindImageCentre: No data above cut off level'
+    STOP
+  ENDELSE
 
   angle = FINDGEN(360) 
   reference_radius = image.radius - 30
@@ -213,8 +222,7 @@ PRO LoadCalibrationData, image
   channel = image.channel
   line    = image.line
 
-
-  path = './'
+  path = '~/fuse_data/mast/camera_calibration/'
 
   fp = 2
   FREE_LUN,fp
@@ -308,7 +316,7 @@ PRO LoadCalibrationData, image
          IF (i EQ -1) THEN BEGIN
            cal = cal_dummy
            i = 1
-           print,'turning off'
+           print,'turning off absolute calibration ???'
          ENDIF
 
          (*cal).window_tag = str[(i-1)/2+1]
@@ -500,7 +508,7 @@ PRO LoadVignetteMap, image, date, line
       IF ( (shot GE 13943 AND shot LE 13950) OR  $
            (shot GE 15021 AND shot LE 15021) OR  $
            (shot GE 15115 AND shot LE 15186) OR  $
-           (shot GE 16746 AND shot LE 99999) ) THEN BEGIN  ; M6B
+           (shot GE 16746 AND shot LE 23000) ) THEN BEGIN  ; M6B
         path_cal = './calibration/'
 
         CASE channel OF
@@ -549,6 +557,42 @@ PRO LoadVignetteMap, image, date, line
          ENDIF 
 
       ENDIF
+
+      IF (shot GE 24800 AND shot LE 24869) THEN BEGIN  ; Detachment
+
+        path_cal = '~/fuse_data/mast/camera_calibration/'
+
+        CASE channel OF
+          1: BEGIN
+            file = 'cal_'+STRING(image.cal.v_date,format='(I8)')+'_'+image.cal.v_file+'.sav'
+            END
+          2: BEGIN
+            file = 'cal_'+STRING(image.cal.v_date,format='(I8)')+'_'+image.cal.v_file+'.sav'
+            END
+          3: BEGIN
+            file = 'cal_'+STRING(image.cal.v_date,format='(I8)')+'_'+image.cal.v_file+'.sav'
+            END
+          4: BEGIN
+            file = 'cal_'+STRING(image.cal.v_date,format='(I8)')+'_'+image.cal.v_file+'.sav'
+            END
+         ENDCASE
+ 
+         PRINT,'Vignette file'
+         PRINT,file
+         RESTORE,filename=path_cal+file,/verbose  
+
+         IF (KEYWORD_SET(cal_xcen)) THEN BEGIN
+           status = 1
+           image.xcen      = cal_xcen
+           image.ycen      = cal_ycen
+           image.radius    = cal_radius
+           image.vignette  = cal_vignette
+           image.map_r     = cal_map_r
+           image.map_theta = cal_map_theta
+         ENDIF 
+
+      ENDIF
+
       
 ;      shot = '/net/fuslsa/data/MAST_IMAGES/rda/rda013796.ipx'
 ;      frame = 2 ; 12
@@ -568,7 +612,7 @@ PRO LoadVignetteMap, image, date, line
   ENDCASE
 
   IF (status EQ -1) THEN BEGIN
-    PRINT,'Error LoadVinetteMap: map not found'
+    PRINT,'Error LoadVignetteMap: map not found'
     PRINT,'  shot    : ',image.shot
     PRINT,'  channel : ',image.channel
     PRINT,'  line    : ',image.line
@@ -653,6 +697,9 @@ PRO ShiftImage,xshift,yshift,image
 
   xwidth = N_ELEMENTS(image[*,0])
   ywidth = N_ELEMENTS(image[0,*])
+
+print,xwidth,ywidth
+print,xshift,yshift
 
 ; x-axis shift:
   IF (xshift NE 0) THEN BEGIN

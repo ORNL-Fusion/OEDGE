@@ -10,6 +10,63 @@ END
 ;
 ; ======================================================================
 ;
+FUNCTION GetFilterTransmissionProfile, filter, camera, plots
+
+
+  optics ={id           : 0  ,  $
+           distance     : 0.0,  $ 
+           radius       : 0.0,  $
+           height       : 0.0 }
+
+
+  CASE camera OF
+    'DIVCAM': BEGIN
+      optics.id       = 0
+      optics.distance = 310.0 - 22.5 ; 290.0 - 22.5      
+      optics.radius   = 10.0 ; 10.0    
+      optics.height   = 30.0 ; 33.0
+      END
+    'FFC': BEGIN
+      optics.id       = 0
+      optics.distance = 310.0 - 22.5 + 51.0  ; Extra tube length, but not quite enough... measured by James on 08/04/2010
+      optics.radius   = 10.0 ; 10.0          ; am I making an error here, in the geometry assumptions/setup, and 
+      optics.height   = 30.0 ; 33.0          ; the fact that I'm not filling the CCD...
+      END
+    ELSE: BEGIN
+      PRINT,'ERROR getimage_GetFilterTransmissionProfile: Camera not recognised'
+      PRINT,'  CAMERA= ',camera
+      END
+  ENDCASE
+
+  print,'LINE:',filter.line
+
+  n = filter.n
+  
+  nr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
+  tr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
+
+  FOR i = 0, n-1 DO BEGIN
+    nr[i] = FLOAT(i) / FLOAT(n-1)
+    height = nr[i] * optics.height
+    tr[i] = PixelTransmission(optics.distance,optics.radius,height,filter)
+  ENDFOR
+
+  filter.nr = nr
+  filter.tr = tr
+
+;  filter.tr = 1.0
+
+  IF (KEYWORD_SET(plots)) THEN BEGIN
+    window,3,retain=2
+    plot,filter.nr*500,filter.tr,psym=6
+  ENDIF
+
+  RETURN, filter
+
+END
+;
+; ======================================================================
+;
 FUNCTION PixelTransmission,distance,radius,height,filter
 
 ; Parameters:
@@ -81,53 +138,22 @@ FUNCTION PixelTransmission,distance,radius,height,filter
 END
 ;
 ; ======================================================================
-;
-FUNCTION GetFilterTransmissionProfile, filter, plots
-
-
-  optics ={id           : 0  ,  $
-           distance     : 0.0,  $ 
-           radius       : 0.0,  $
-           height       : 0.0 }
-
-  optics.id       = 0
-  optics.distance = 310.0 - 22.5 ; 290.0 - 22.5      
-  optics.radius   = 10.0 ; 10.0    
-  optics.height   = 30.0 ; 33.0
-
-  print,'LINE:',filter.line
-
-  n = filter.n
-  
-  nr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
-  tr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
-
-  FOR i = 0, n-1 DO BEGIN
-    nr[i] = FLOAT(i) / FLOAT(n-1)
-    height = nr[i] * optics.height
-    tr[i] = PixelTransmission(optics.distance,optics.radius,height,filter)
-  ENDFOR
-
-  filter.nr = nr
-  filter.tr = tr
-
-;  filter.tr = 1.0
-
-  IF (KEYWORD_SET(plots)) THEN BEGIN
-    safe_colors,/first
-    window,3,retain=2
-    plot,filter.nr*500,filter.tr,psym=6
-  ENDIF
-
-  RETURN, filter
-
-END
-;
-; ======================================================================
 ; 
 PRO GetDivCamFilterData, image, wavelength, plots
 
   CASE wavelength OF
+    411.2: BEGIN
+      image.line                = 411.2
+      image.filter.line         = 410.174 ; air?
+      image.filter.tag          = 'Ddelta'
+      image.filter.cwl          = 411.18
+      image.filter.fwhm         = 5.35
+      image.filter.transmission = 0.4502
+      image.filter.cavities     = 2
+      image.filter.supplier     = 'Andover surplus'
+      image.filter.index        = 1.45
+      END
+
     434.0: BEGIN
       image.line                = 434.0
       image.filter.line         = 434.0462  ; air
@@ -188,6 +214,18 @@ PRO GetDivCamFilterData, image, wavelength, plots
       image.filter.cavities     = 2         ; ???
       image.filter.supplier     = 'Andover custom'
       image.filter.index        = 1.45      ; ???
+      END
+
+    486.2: BEGIN 
+      image.line                = 468.7
+      image.filter.line         = 468.132918  ; average of 3 lines from NIST, weighted by strength
+      image.filter.tag          = 'Dbeta'     ;    30 P   4861.2786
+      image.filter.cwl          = 468.15      ;    10 P	  4861.2870
+      image.filter.fwhm         = 1.64        ;    60 P	  4861.3615
+      image.filter.transmission = 0.4500
+      image.filter.cavities     = 3
+      image.filter.supplier     = 'Andover custom'
+      image.filter.index        = 2.05
       END
 
     514.0: BEGIN 
@@ -356,7 +394,7 @@ PRO GetDivCamFilterData, image, wavelength, plots
   ENDIF
 
   ; Radial transmission profile which may be important for narrow filters:
-  image.filter = GetFilterTransmissionProfile(image.filter,plots)
+  image.filter = GetFilterTransmissionProfile(image.filter,image.camera,plots)
 
 END
 ;
@@ -370,6 +408,17 @@ PRO AssignFilterData, image, filter, plots
     RETURN
   ENDIF
 
+  PRINT,'FILTER ID=',filter,image.shot
+  IF (image.shot GE 24800 AND image.shot LE 24869) THEN BEGIN
+    filter = STRTRIM(filter,2)
+    CASE filter OF
+      '486/2/25D (AC-0101-01)' : filter = 'Dbeta 486.15/1.64 nm'
+      '434.0/1.5/25D (AC-M116-': filter = 'Dgamma 434.01/1.49 nm'
+      ELSE:
+    ENDCASE
+    PRINT,'NEW FILTER ID=',filter    
+  ENDIF
+
   CASE image.device OF
 
     'MAST': BEGIN
@@ -378,12 +427,9 @@ PRO AssignFilterData, image, filter, plots
 
         'DIVCAM': BEGIN
           str = STRSPLIT(filter,/extract)                          
-
           ; Check if a neutral density filter is in series with the the filter:
           nd = [str[0],'1.0']
-
           IF (STRMATCH(str[0],'*/*') EQ 1) THEN nd = STRSPLIT(str[0],'/',/extract)
-
           ; ------------------------------------------------
           ; HACK!   *** LOOK HERE ***
           ; ------------------------------------------------
@@ -393,12 +439,46 @@ PRO AssignFilterData, image, filter, plots
             PRINT,' *** OVER-RIDRING NEUTRAL DENSITY FILTER SCALING! ***'
             PRINT,' ***'
           ENDIF
-
           image.filter.nd = 1.0 / FLOAT(nd[1])
-
           ; Get wavelength identifier:
           wlngth = STRSPLIT(str[1],'/',/extract)                          
+          PRINT,'WLNGTH[0] =',STRTRIM(STRING(wlngth[0]),2)
+          CASE STRTRIM(STRING(wlngth[0]),2) OF
+            '411.18': wlngth[0] = 411.2
+            '434.01': wlngth[0] = 434.0
+            '486.15': wlngth[0] = 486.2
+            '656.70': wlngth[0] = 656.0
+            ELSE:
+          ENDCASE
+          PRINT,'WLNGTH[0] REMAPPED=',wlngth[0]
 
+          GetDivCamFilterData, image, FLOAT(wlngth[0]), plots
+          END
+
+        'FFC': BEGIN
+          str = STRSPLIT(filter,/extract)                          
+          ; Check if a neutral density filter is in series with the the filter:
+          nd = [str[0],'1.0']
+          IF (STRMATCH(str[0],'*/*') EQ 1) THEN nd = STRSPLIT(str[0],'/',/extract)
+          ; ------------------------------------------------
+          ; HACK!   *** LOOK HERE ***
+          ; ------------------------------------------------
+          IF (nd[1] EQ '16') THEN BEGIN
+            nd[1] = '19.4'
+            PRINT,' ***'
+            PRINT,' *** OVER-RIDRING NEUTRAL DENSITY FILTER SCALING! ***'
+            PRINT,' ***'
+          ENDIF
+          image.filter.nd = 1.0 / FLOAT(nd[1])
+          ; Get wavelength identifier:
+          wlngth = STRSPLIT(str[1],'/',/extract)                          
+          PRINT,'WLNGTH[0] =',STRTRIM(STRING(wlngth[0]),2)
+          CASE STRTRIM(STRING(wlngth[0]),2) OF
+            '434.01': wlngth[0] = 434.0
+            '656.70': wlngth[0] = 656.0
+            ELSE:
+          ENDCASE
+          PRINT,'WLNGTH[0] REMAPPED=',wlngth[0]
           GetDivCamFilterData, image, FLOAT(wlngth[0]), plots
           END
 

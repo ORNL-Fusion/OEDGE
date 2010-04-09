@@ -57,13 +57,13 @@ c
       INTEGER           iopt_ghost
 
       INTEGER   nxbin,nybin,nbin,ix,iy,i1,i2,i3,ik,ir,fp,iimg,n1,id,
-     .          ike,n
+     .          ike,n,i
       LOGICAL   outofgrid
       REAL      deltar,deltaz,qmin,qmax,qval,xcen,ycen,p1(4),p2(4),t,
      .          x1,x2,y1,y2
       REAL*8    maxpixel
       CHARACTER caption*1024,xlabel*36,ylabel*64,file*512,filename*512,
-     .          tag_x*11,tag_y*11
+     .          tag_x*11,tag_y*11,camera*64
       INTEGER, ALLOCATABLE :: nv(:)
       REAL   , ALLOCATABLE :: rv(:,:),zv(:,:),cq(:),image(:,:),
      .                        x(:),y(:),v(:),s(:)
@@ -88,23 +88,41 @@ c...  Copy image data to a properly sized array:
 c...  Activate MaxEnt + other output:
       IF (opt%nxbin.GT.1.OR.opt%nybin.GT.1) THEN    
         fp = 99
+        WRITE(camera,'(64X)')
+        i1 = 1
+        i2 = 1
+        DO i = 1, LEN_TRIM(opt%img_fname(1))
+          IF (opt%img_fname(1)(i:i).EQ.'/') THEN
+            i1 = i + 1
+            i2 = 1
+          ENDIF
+          IF (opt%img_fname(1)(i:i).EQ.'.'.AND.i2.EQ.1) i2 = i-1 
+        ENDDO
+        camera = opt%img_fname(1)(i1:i2)
+
+        WRITE(0,*) 'CAMERA',camera
+
         IF (opt%out_suffix(1:4).NE.'none') THEN
 C         Krieger IPP/07 - SUN compiler chokes on format
 C         statements w/o explicit length - removed explicit format
 C         should be fixed by DIVIMP guru 
 c         -not sure what to do about this since specifying the length is a problem... -SL
-          WRITE(filename,'(A,3(I,A))')
-     .      './images/',
-     .      header%shot ,  '_',
-     .      header%frame,  '_',
-     .      header%channel,'_'//
+c          WRITE(filename,'(A,3(I,A))')
+c     .      './images/'//camera(1:LEN_TRIM(camera))//'_',
+c     .      header%shot ,  '_',
+c     .      header%frame,  '_',
+c     .      header%channel,'_'//
+          WRITE(filename,'(A)')
+     .      './images/'//camera(1:LEN_TRIM(camera))//'_'//
      .      opt%out_suffix(1:LEN_TRIM(opt%out_suffix))//'.'
         ELSE
-          WRITE(filename,'(A,3(I,A))')
-     .      './images/',
-     .      header%shot ,  '_',
-     .      header%frame,  '_',
-     .      header%channel,'.'
+          WRITE(filename,'(A)')
+     .      './images/'//camera(1:LEN_TRIM(camera))//'.'
+c          WRITE(filename,'(A,3(I,A))')
+c     .      './images/'//camera(1:LEN_TRIM(camera))//'_',
+c     .      header%shot ,  '_',
+c     .      header%frame,  '_',
+c     .      header%channel,'.'
         ENDIF
 c...    Remove blanks:
         n1 = LEN_TRIM(filename)
@@ -123,7 +141,8 @@ c...    Remove blanks:
       ELSE
         fp = 0
       ENDIF
-      WRITE(0,*) 'MAXENT:',opt%nxbin,opt%nybin,fp
+      WRITE(0,*) 'FILE  : ',filename(1:LEN_TRIM(filename))
+      WRITE(0,*) 'MAXENT: ',opt%nxbin,opt%nybin,fp
 
       IF (nxbin.GE.100) THEN
         nbin = nxbin / 50          ! Should also check opt%nybin
@@ -342,7 +361,7 @@ c...    Frame:
 
 
 c...  Plot inverted profile:
-      IF (ninv.GT.0.AND.plot_option) THEN
+      IF (.FALSE..AND.ninv.GT.0.AND.plot_option) THEN    ! *** TURNED OFF FOR NOW BECAUSE OF A SEG FAULT -- SL, 09/04/2010
 c        WRITE(0,*) 'INVERTED PROFILE B'
 
         IF (.TRUE..AND.(opt%nxbin.GT.1.OR.opt%nybin.GT.1)) THEN
@@ -456,7 +475,6 @@ c          WRITE(caption,'(A,3I5)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
           ENDIF
         ENDIF
 
-
         CALL LoadTriangles
 
         nxbin = opt%nxbin
@@ -535,7 +553,7 @@ c          CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c...    Inverted profile:
         IF (fp.GT.0) THEN
 
-          file = filename(1:LEN_TRIM(filename))//'cgm'
+          file = filename(1:LEN_TRIM(filename))//'cgm_old'
           WRITE(0,*) 'DUMP INVERSION:',file(1:LEN_TRIM(file))
           OPEN(fp,FILE=file(1:LEN_TRIM(file)),
      .         FORM='FORMATTED',STATUS='REPLACE',ERR=97)
@@ -547,6 +565,21 @@ c...    Inverted profile:
      .        npts(i1),(xpts(i2,i1),ypts(i2,i1),i2=1,npts(i1))
           ENDDO     
           CLOSE(fp)
+
+          file = filename(1:LEN_TRIM(filename))//'cgm'
+          CALL inOpenInterface(file,ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
+          DO i1 = 1, ninv
+           CALL inPutData(i1,'i','none')
+           CALL inPutData(npts(i1),'npts','none')            
+           DO i2 = 1, npts(i1)
+             WRITE(tag_x,'(A,I1)') 'x',i2
+             WRITE(tag_y,'(A,I1)') 'y',i2
+             CALL inPutData(xpts(i2,i1),tag_x,'m')            
+             CALL inPutData(ypts(i2,i1),tag_y,'m')            
+           ENDDO
+           CALL inPutData(qpts(i1,2),'data','ph m-3 s-1')            
+          ENDDO     
+          CALL inCloseInterface
 
           file = opt%fmap(1:LEN_TRIM(opt%fmap))//'.ray.x'
           OPEN(fp,FILE=file(1:LEN_TRIM(file)),

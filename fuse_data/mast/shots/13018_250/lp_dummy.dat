@@ -1,0 +1,11 @@
+* Testing
+*
+*
+{NUMBER OF COLUMNS}  3 
+*
+* PSIn   jsat     Te
+*  ?     (Amps)   (eV)
+{DATA LIST} 
+ 0.0     1.0E+5   15.0
+10.0     1.0E+5   15.0
+{END}

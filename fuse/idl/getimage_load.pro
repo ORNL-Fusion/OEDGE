@@ -285,9 +285,9 @@ print,file
             image_path = "$MAST_IMAGES/" + STRING(shot/1000,FORMAT='(I3.3)') + $ 
                          "/" +  STRTRIM(STRING(shot),2) 
             CASE channel OF
-              1: image_path = image_path + "/rba0"  
-              2: image_path = image_path + "/rbb0"  
-              3: image_path = image_path + "/rbc0"  
+              1: image_path = image_path + "/rba0"  ; rba is usually on HL07 with DIVCAM 4
+              2: image_path = image_path + "/rbb0"  ; 
+              3: image_path = image_path + "/rbc0"  ; rbc is usually on HL01 with DIVCAM 2
             ENDCASE
             file = image_path + STRTRIM(STRING(shot,FORMAT='(i5.5)'),2) + ".ipx"
 
@@ -297,8 +297,34 @@ print,file
             PRINT,file
             desc = ipx_open(file) 
             image_raw = ipx_frame(desc,frame,time=time)
-;stop
-            format = 'ipx_photron'
+;           Rebuild image to match calibration data:
+            image_new = MAKE_ARRAY(1024,1024,/INTEGER,VALUE=0)
+            width  = desc.header.width
+            height = desc.header.height
+            left   = desc.header.left
+            top    = desc.header.top
+            FOR iy = 0, height-1 DO BEGIN
+              image_new[left-1:left-1+width-1,iy+top-1] = image_raw[0:width-1,iy]
+            ENDFOR
+            image_raw = image_new
+; 
+            IF (NOT KEYWORD_SET(filter)) THEN BEGIN
+              image_path = "$MAST_IMAGES/" + STRING(shot/1000,FORMAT='(I3.3)') + $ 
+                           "/" +  STRTRIM(STRING(shot),2) 
+              filter_file = 'none'
+              CASE channel OF
+                1: filter_file = image_path + "/rdc0"  ; rda is usually on HL07 with DIVCAM 4
+                3: filter_file = image_path + "/rda0"  ; rdc is usually on HL01 with DIVCAM 2
+                ELSE:
+              ENDCASE
+              IF (filter_file NE 'none') THEN BEGIN
+                filter_file = filter_file + STRTRIM(STRING(shot,FORMAT='(i5.5)'),2) + ".ipx"
+                PRINT, 'FILTER FILE= ',filter_file
+                desc_filter = ipx_open(filter_file) 
+                filter = desc_filter.header.filter
+              ENDIF
+              format = 'ipx_photron'
+            ENDIF
             END
         ENDCASE        
         END
@@ -320,6 +346,8 @@ print,file
       image.gain    = desc.header.gain[0]
       image.xwin = [desc.header.left,desc.header.right ]
       image.ywin = [desc.header.top ,desc.header.bottom]
+
+
       IF (NOT KEYWORD_SET(window)) THEN window = desc.header.view
       IF (NOT KEYWORD_SET(filter)) THEN filter = 'unknown'
       image.cal.window_tag = window

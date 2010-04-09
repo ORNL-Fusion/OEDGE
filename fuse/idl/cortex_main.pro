@@ -251,12 +251,15 @@ print,'frame',frame
 ;     ------------------------------------------------------------------
       'PLOT 1D TARGET PROFILE': BEGIN
         FOR i = 0, ncase-1 DO BEGIN
-          tar = cortex_LoadTargetData(path + plot.case_name[i] + '.' + plot.data_file[0])
+          file = path + plot.case_name[i] + '.'
+          target   = cortex_LoadTargetData      (file + plot.data_file[0])
+          midplane = cortex_LoadMidplaneProfiles(file + plot.data_file[1])
+          plot_data = { target : target, midplane : midplane }
           name = 'data' + STRING(i+1,FORMAT='(I0)')
-          IF (i EQ 0) THEN tar_array = CREATE_STRUCT(          name,tar) ELSE  $
-                           tar_array = CREATE_STRUCT(tar_array,name,tar)
+          IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                           data_array = CREATE_STRUCT(data_array,name,plot_data)
         ENDFOR
-        status = cortex_PlotTargetProfiles(tar_array, ps=ps)
+        status = cortex_PlotTargetProfiles(plot,data_array, ps=ps)
         END
 ;     ------------------------------------------------------------------
       'PLOT 1D RADIAL PROFILE': BEGIN

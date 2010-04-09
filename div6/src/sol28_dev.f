@@ -158,7 +158,7 @@ c...        Scale Psol to improve match to specified target temperature:
               CASE DEFAULT
                 STOP 'NOT READY, SORRY'
             ENDSELECT
-            IF (log.GE.2) THEN
+            IF (logop.GE.2) THEN
               WRITE(logfp,'(A,I3,3F11.4,1P,2E14.6,0P)') 
      .          'ADJUST:',count,te(ic1),te1,vsign,adjust,Psol
             ENDIF
@@ -168,7 +168,7 @@ c...        Scale Psol to improve match to specified target temperature:
             node(inode2)%te = node(inode2)%te - adjust
             te2 = DBLE(node(inode2)%te)
 
-            IF (log.GE.2) THEN
+            IF (logop.GE.2) THEN
               WRITE(logfp,'(A,3F11.4,1P,E14.6,0P,F11.4)') 
      .          'ADJUST:',te(ic1),te1,vsign,adjust,te2
             ENDIF
@@ -226,7 +226,7 @@ c          WRITE(0,*) 'ENEA:',psol,ic1,ic2,icstep,stotal
       ENDSELECT
 
 
-      IF (log.GE.2) THEN
+      IF (logop.GE.2) THEN
         WRITE(logfp,'(A)') 'DONE TE ITERATIONS'
       ENDIF
 
@@ -413,7 +413,7 @@ c       treatment of the last half-cell on each ring also needs careful review.
 c        qe(ic) = qcond(ic) + qconv(ic)
 
 
-        IF (log.GE.2) THEN
+        IF (logop.GE.2) THEN
           IF (ic.EQ.ic2+icstep) THEN
             WRITE(logfp,'(A4,A8,2X,3A12,2X,2A12)')
      .        'IND','Te','qcond','qconv_e','qconv_i','qano','qe_src'   

@@ -45,6 +45,7 @@ FUNCTION GetImage,           $
    sname      = sname,       $
    png_save   = png_save,    $
    raw        = raw,         $
+   full       = full,        $
    date       = date,        $
    line       = line,        $
    type       = type,        $
@@ -62,7 +63,7 @@ FUNCTION GetImage,           $
   IF (N_ELEMENTS(debug    ) EQ 0) THEN debug      = 0  
   IF (N_ELEMENTS(png      ) EQ 0) THEN png        = 0  
   IF (N_ELEMENTS(flip     ) EQ 0) THEN flip       = 0  
-  IF (N_ELEMENTS(centre   ) EQ 0) THEN centre     = 0  
+  IF (N_ELEMENTS(centre   ) EQ 0) THEN centre     = 0
 
   IF (NOT KEYWORD_SET(date      )) THEN date       = -1
   IF (NOT KEYWORD_SET(line      )) THEN line       = -1.0
@@ -121,6 +122,14 @@ FUNCTION GetImage,           $
         4: channel_tag = 'd'
       ENDCASE
       END
+    'FFC': BEGIN
+      CASE (channel) OF
+       -1: channel_tag = 'unknown'
+        1: channel_tag = 'a'
+        2: channel_tag = 'b'
+        3: channel_tag = 'c'
+      ENDCASE
+      END
     'RGB': BEGIN
       CASE (channel) OF
         1: channel_tag = 'L BREM R'
@@ -172,6 +181,12 @@ FUNCTION GetImage,           $
   image = LoadImage(device,camera,file,date,line,shot,channel,             $
                     frame,path,calibrate,shift,radius,filter,window,  $
                     clean,background,plots)     ; Make some of these optional...
+
+
+  IF (KEYWORD_SET(debug)) THEN BEGIN
+    PRINT,'filter     = ',filter
+    PRINT,'window     = ',window
+  ENDIF		     
 ;
 ; ----------------------------------------------------------------------
 ; Manipulate the image:
@@ -183,16 +198,13 @@ FUNCTION GetImage,           $
 ;
 ; ----------------------------------------------------------------------
 ;
-; 
-;
-;
-  IF (centre) THEN BEGIN                       
+  IF (centre NE 0) THEN BEGIN                       
     IF (KEYWORD_SET(debug)) THEN BEGIN
       PRINT,'radius = ',radius
       PRINT,'shift  = ',shift
       PRINT,'depth  = ',depth
     ENDIF
-    FindImageCentre,image,radius,shift,depth,clean, background, rotate
+    FindImageCentre,image,centre,radius,shift,depth,clean,background,rotate
     RETURN, image
   ENDIF
 ;
@@ -263,10 +275,41 @@ FUNCTION GetImage,           $
 ;
   IF (KEYWORD_SET(rotate)) THEN BEGIN
     rotate_code = 0
-    IF (rotate EQ 90 ) THEN rotate_code = 1
-    IF (rotate EQ 180) THEN rotate_code = 2
-    IF (rotate EQ 270) THEN rotate_code = 3
+;    IF (rotate EQ 90 ) THEN rotate_code = 1
+;    IF (rotate EQ 180) THEN rotate_code = 2
+;    IF (rotate EQ 270) THEN rotate_code = 3
+;    top  = image.ywin[0]
+;    left = image.xwin[0]
+;    width  = image.xwin[1] - image.xwin[0] + 1
+;    height = image.ywin[1] - image.ywin[0] + 1
+    xwin = image.xwin
+    ywin = image.ywin
+    CASE rotate OF
+       90: BEGIN
+        rotate_code = 1 
+        image.xwin[0] = ywin[1] ; bottom becomes left
+        image.xwin[1] = ywin[0] ; top becomes right
+        image.ywin[0] = xwin[0] ; left becomes top
+        image.ywin[1] = xwin[1] ; right become bottom
+        END
+      180: BEGIN
+        rotate_code = 2 
+        image.xwin[0] = xwin[1] ; right becomes left  
+        image.xwin[1] = xwin[0] ; left become right
+        image.ywin[0] = ywin[1] ; bottom to top
+        image.ywin[1] = ywin[0] ; top to bottom
+       END
+      270: BEGIN
+        rotate_code = 3 
+        image.xwin[0] = ywin[0] ; top becomes left
+        image.xwin[1] = ywin[1] ; bottom becomes right
+        image.ywin[0] = image.xdim - xwin[1] + 1 ; right becomes top
+        image.ywin[1] = image.xdim - xwin[0] + 1 ; left becomes bottom
+       END
+    ENDCASE
+
     image_data = ROTATE(image_data,rotate_code)
+
   ENDIF
 ;
 
@@ -356,13 +399,57 @@ FUNCTION GetImage,           $
 ;          IF (rotate EQ 270) THEN rotate_code = 3
 ;          image_data = ROTATE(image_data,rotate_code)
 ;        ENDIF
-        GetImageMaps, image
-        IF (clean) THEN image_data = CleanImage(image_data)
+;        GetImageMaps, image
+;        IF (clean) THEN image_data = CleanImage(image_data)
 ;        image = CREATE_STRUCT(image,'data',image_data)
 ;        dim = SIZE(image_data,/DIMENSIONS)
 ;        image.xdim = dim[0]
 ;        image.ydim = dim[1]
 ;        image_data[dim[0]/2,dim[1]-1] = 2^image.depth-1
+
+
+        IF (KEYWORD_SET(nocal)) THEN BEGIN
+;          image = CREATE_STRUCT(image,'data',image.raw)
+;          image_data = image.raw
+        ENDIF ELSE BEGIN
+          LoadCalibrationData, image
+          IF (KEYWORD_SET(shift)) THEN BEGIN
+            image_vignette  = image.vignette
+            image_map_r     = image.map_r
+            image_map_theta = image.map_theta
+            ShiftImage,shift[0],shift[1],image_vignette
+            ShiftImage,shift[0],shift[1],image_map_r
+            ShiftImage,shift[0],shift[1],image_map_theta
+            i = WHERE(image_vignette  EQ -1.0, count_i)
+            j = WHERE(image_map_r     EQ -1.0, count_j)
+            k = WHERE(image_map_theta EQ -1.0, count_k)
+            IF (count_i GT 0) THEN image_vignette [i] = 0.0
+            IF (count_j GT 0) THEN image_map_r    [j] = 0.0
+            IF (count_k GT 0) THEN image_map_theta[k] = 0.0
+            image.vignette  = image_vignette 
+            image.map_r     = image_map_r    
+            image.map_theta = image_map_theta
+          ENDIF
+          image_data = image_data * image.vignette
+          image_data[WHERE(image.map_r GT image.radius)] = -1  ; Artifical black outside calibrated region
+        ENDELSE
+
+        RemoveArtificialBlack, image
+
+;       Clean:
+        IF (clean) THEN image_data = CleanImage(image_data)
+
+        CASE image.cal.mode OF      
+         -1:  ; none
+          1: BEGIN  ; camera + filter + cube (full system)
+            PRINT,'Absolute FFC calibration not applied'
+            END
+          ELSE: BEGIN
+            PRINT,'ERROR GetImage: Unrecognized FFC calibration mode'
+            PRINT,'  MODE = ',image.cal.mode
+            END
+        ENDCASE
+
         END
 ;     ------------------------------------------------------------------    
       'DIVCAM': BEGIN
@@ -371,8 +458,25 @@ FUNCTION GetImage,           $
 ;          image_data = image.raw
         ENDIF ELSE BEGIN
           LoadCalibrationData, image
+          IF (KEYWORD_SET(shift)) THEN BEGIN
+            image_vignette  = image.vignette
+            image_map_r     = image.map_r
+            image_map_theta = image.map_theta
+            ShiftImage,shift[0],shift[1],image_vignette
+            ShiftImage,shift[0],shift[1],image_map_r
+            ShiftImage,shift[0],shift[1],image_map_theta
+            i = WHERE(image_vignette  EQ -1.0, count_i)
+            j = WHERE(image_map_r     EQ -1.0, count_j)
+            k = WHERE(image_map_theta EQ -1.0, count_k)
+            IF (count_i GT 0) THEN image_vignette [i] = 0.0
+            IF (count_j GT 0) THEN image_map_r    [j] = 0.0
+            IF (count_k GT 0) THEN image_map_theta[k] = 0.0
+            image.vignette  = image_vignette 
+            image.map_r     = image_map_r    
+            image.map_theta = image_map_theta
+          ENDIF
           image_data = image_data * image.vignette
-;          image = CREATE_STRUCT(image,'data',image_data)
+          image_data[WHERE(image.map_r GT image.radius)] = -1  ; Artifical black outside calibrated region
         ENDELSE
 
         RemoveArtificialBlack, image
@@ -468,9 +572,11 @@ FUNCTION GetImage,           $
     ENDCASE
 
     ; Filter blue-shift correction:
-    IF (image.camera EQ 'DIVCAM' AND image.filter.tag NE 'empty' AND  $
+    IF ((image.camera EQ 'DIVCAM' OR image.camera EQ 'FFC') AND  $
+        image.filter.tag NE 'empty' AND  $
         NOT KEYWORD_SET(nocal)) THEN BEGIN
       xdat = image.filter.nr * image.radius
+
 ;      print,'MAX XDAT:  ',max(xdat)
 ;      print,'IMAGE.RAD: ',image.radius
 ;      print,'IMA MAP:' ,N_ELEMENTS(WHERE(image.map_r GE image.radius))
@@ -482,10 +588,37 @@ FUNCTION GetImage,           $
       image.blueshift[WHERE(image.map_r GE image.radius)] = 1.0
 
       image_data = image_data / image.blueshift
+
+      PRINT,'Blueshift filter correciton applied'
     ENDIF
 
   ENDIF
 ;
+;
+;
+;
+  IF (NOT KEYWORD_SET(full) AND  $
+      (camera EQ 'DIVCAM' OR camera EQ 'FFC')) THEN BEGIN
+print,image.xwin
+print,image.ywin
+
+    top  = image.ywin[0]
+    left = image.xwin[0]
+    width  = image.xwin[1] - image.xwin[0] + 1
+    height = image.ywin[1] - image.ywin[0] + 1
+print,top,left,width,height
+
+    image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
+print,width-1
+print,left-1
+print,left-1+width-1
+print,left-1+width-1
+print,top-1
+    FOR iy = 0, height-1 DO BEGIN
+      image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
+    ENDFOR
+    image_data = image_new
+  ENDIF
 ;
 ;
 ;
@@ -516,6 +649,8 @@ FUNCTION GetImage,           $
     PRINT,'radius  = ',image.radius
     PRINT,'xcen    = ',image.xcen
     PRINT,'ycen    = ',image.ycen
+    PRINT,'xdim    = ',image.xdim
+    PRINT,'ydim    = ',image.ydim
   ENDIF
 ;
 ; ----------------------------------------------------------------------
@@ -534,7 +669,7 @@ FUNCTION GetImage,           $
 
     IF (KEYWORD_SET(colour)) THEN BEGIN
       DEVICE, DECOMPOSED=0
-      IF (colour EQ 1) THEN colour = 4
+      IF (colour EQ 1) THEN colour = 3
       LOADCT,colour
     ENDIF ELSE BEGIN
       loadct,0
@@ -554,7 +689,19 @@ FUNCTION GetImage,           $
       safe_colors,/first
       plot,image.data
     ENDIF ELSE BEGIN
-      WINDOW,0,xsize=image.xdim,ysize=image.ydim,retain=2      
+      limit = (2 ^ image.depth - 2)
+      IF (KEYWORD_SET(shift)) THEN BEGIN
+        angle = FINDGEN(180)*2.0       ; Dotted circle showing where the image boundary is assumed to be
+        reference_radius = image.radius - 30
+        ix = image.xcen + image.radius * SIN (angle*!PI/180.0) 
+        iy = image.ycen + image.radius * COS (angle*!PI/180.0) 
+        image_raw[ix,iy] = max_val
+        angle = FINDGEN(3*360) / 3.0   ; Finer circle showing where the vignette mask is being applied
+        ix = shift[0] + image.xcen + image.radius * SIN (angle*!PI/180.0) 
+        iy = shift[1] + image.ycen + image.radius * COS (angle*!PI/180.0) 
+        image_raw[ix,iy] = max_val
+      ENDIF
+      WINDOW,0,xsize=dim[0],ysize=dim[1],retain=2      
       TVSCL,image_raw,ORDER=order
     ENDELSE
 
@@ -570,6 +717,17 @@ FUNCTION GetImage,           $
 
     IF (image.ydim EQ 1) THEN BEGIN
     ENDIF ELSE BEGIN
+      IF (KEYWORD_SET(shift) AND (camera NE 'FFC' OR KEYWORD_SET(full))) THEN BEGIN
+        angle = FINDGEN(180)*2.0       ; Dotted circle showing where the image boundary is assumed to be
+        reference_radius = image.radius - 30
+        ix = image.xcen + image.radius * SIN (angle*!PI/180.0) 
+        iy = image.ycen + image.radius * COS (angle*!PI/180.0) 
+        image_data[ix,iy] = max_val
+        angle = FINDGEN(3*360) / 3.0   ; Finer circle showing where the vignette mask is being applied
+        ix = shift[0] + image.xcen + image.radius * SIN (angle*!PI/180.0) 
+        iy = shift[1] + image.ycen + image.radius * COS (angle*!PI/180.0) 
+        image_data[ix,iy] = max_val
+      ENDIF
       window,1,xsize=image.xdim,ysize=image.ydim,retain=2
       TVSCL,image_data,ORDER=order
     ENDELSE

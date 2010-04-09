@@ -770,7 +770,7 @@ c...  Cell volume normalization:    ! Do I need an area based normalization as w
       IF (sumval.NE.0.0D0) val(ic1:ic2) = val(ic1:ic2) / sumval
 
 
-c      IF (log.GT.0) THEN
+c      IF (logop.GT.0) THEN
 c        WRITE(logfp,*) 'INTEGR:',sumval,ic1,ic2
 c        sumval = 0.0D0
 c        DO ic = ic1, ic2
@@ -808,7 +808,7 @@ c...  Normalize:
       IF (sumval.NE.0.0D0) val(ic1:ic2) = val(ic1:ic2) / sumval
 
 c...  Check:
-      IF (log.GT.0) THEN  
+      IF (logop.GT.0) THEN  
         WRITE(0,*) 'NORM CHECK:',sumval
         sumval = 0.0D0
         DO ic = ic1, ic2
