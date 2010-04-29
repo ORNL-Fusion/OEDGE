@@ -149,12 +149,12 @@ $
      'inversion grid   ( 3)'  0  2  000  0  0 1.0   2   2   0.4000 -0.5000   1.0000  +0.5000   			
      'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
      'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
-  {PLOTS}  0
+  {PLOTS}  1
      'plot   image       (003)'  3
   {REFLECTIONS}  0
   {INTEGRATION}  1 
      'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
-  {DETECTOR}  0
+  {DETECTOR}  1
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,phi position   '   1.10000D+00   0.00001D+00   65.00000D+00  
@@ -162,7 +162,7 @@ $
      'size               '   0.20D-07    0.20D-07
      'view cone angle    '   5.0D+00     5.00D+00                       
      'pixel array        '  100     100  
-     'pixel solid angle  '    3       3    1  1.0  1.0
+     'pixel solid angle  '    1       1    1  1.0  1.0
      'output label       ' 'default'
      {DETECTOR MASK}  0
        'image black   (1)'  1 2 'images/15021_14_2.idl'
@@ -204,7 +204,7 @@ $
 $
 $
 $
-'999  STOP'  3
+'999  STOP'  0
 $
 $
 $
@@ -213,12 +213,12 @@ $
   {GEOMETRY}  1
      'tetrahedrons     ( 6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
      'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
-  {PLOTS}  0
+  {PLOTS}  1
      'plot   image       (003)'  3
   {REFLECTIONS}  0
   {INTEGRATION}  1 
      'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
-  {DETECTOR} 0
+  {DETECTOR} 1
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,z position     '   0.44000D+00   0.60001D+00    0.00000D+00  
