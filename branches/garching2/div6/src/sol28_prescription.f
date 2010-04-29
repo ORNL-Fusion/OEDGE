@@ -116,15 +116,21 @@ c        a_etb = DBLE(osmnode(index)%fit_p(3)) * a_sep
 
         WRITE(fp,*) 'STEP: ',a_sep,a_end,step
 
-c       Distribute the independent variable so that the points are concentrated
-c       near the separatrix:
-        DO i = 2, NSTEP
-          step = MAX(400.0,DBLE(ABS((i-1)-NSTEP/2))**2)
-          xdata(i,IND_R) = xdata(i-1,IND_R) + step
-c          WRITE(0,*) 'STEP:',i,step
-        ENDDO
-c       Recale so the total length covered is 2a:
-        xdata(:,IND_R) = xdata(:,IND_R)*(2.0D0 * a_sep / xdata(NSTEP,1))
+        IF (.TRUE.) THEN
+c         Distribute the independent variable so that the points are concentrated
+c         near the separatrix:
+          DO i = 2, NSTEP
+            step = MAX(400.0,DBLE(ABS((i-1)-NSTEP/2))**2)
+            xdata(i,IND_R) = xdata(i-1,IND_R) + step
+c            WRITE(0,*) 'STEP:',i,step
+          ENDDO
+c         Recale so the total length covered is 2a:
+          xdata(:,IND_R) = xdata(:,IND_R)*(2.0D0 * a_sep/xdata(NSTEP,1))
+        ELSE
+          DO i = 2, NSTEP
+            xdata(i,IND_R) = xdata(i-1,IND_R) + step
+          ENDDO
+        ENDIF
 
         total = 0.0D0
         DO i = 1, NSTEP/2
@@ -450,6 +456,7 @@ c...  Sample the appropriate profile:
         CALL inOpenInterface('osm.idl.pedestal',ITF_WRITE)
         CALL inPutData(a_sep                  ,'PED_A'       ,'m')   
         CALL inPutData(a_end                  ,'PED_A_END'   ,'m')   
+        CALL inPutData(volume                 ,'CORE_VOLUME' ,'m3')   
         CALL inPutData(xdata(cross(1),IND_R  ),'PED_CROSS_NE','m')   
         CALL inPutData(xdata(cross(2),IND_R  ),'PED_CROSS_TE','m')   
         CALL inPutData(xdata(cross(2),IND_R  ),'PED_CROSS_TI','m')   
