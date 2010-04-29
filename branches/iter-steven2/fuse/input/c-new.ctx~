@@ -4,8 +4,13 @@
 
 ${DATA PATH}  ~/divimp/results
 
-{PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0000h {CASE} c-new-0001a >d
+{PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0009c {CASE} >e
                            {DATA FILE}    idl.midplane_dalpha_los_01
+
+
+
+${PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0000h {CASE} c-new-0001a >d c-new-0008a c-new-0009a
+$                           {DATA FILE}    idl.midplane_dalpha_los_01
 
 
 
