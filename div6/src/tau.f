@@ -20481,11 +20481,19 @@ c
 c
 c     Code default rings for fp geometry and possible plasma reference
 c
+c     jdemod - fp_virt_rings associates the nearest virtual or boundary ring with 
+c              each peripheral region. In this way, values which have been applied to the 
+c              virtual/boundary ring may be selectively applied to the periphery region.
+c              At least initially it is thought that this might be useful for imposing additional flows. 
+c
       fp_irmain = irwall-1
       fp_irpfz   = irtrap+1
       
+      fp_virt_rings(fp_main) = irwall
       fp_rings(fp_main) = fp_irmain
       fp_cells(fp_main) = nks(fp_irmain)
+
+      fp_virt_rings(fp_pfz)= irtrap
       fp_rings(fp_pfz)  = fp_irpfz
       fp_cells(fp_pfz)  = nks(fp_irpfz)
 c
@@ -21052,6 +21060,14 @@ c
             fp_plasma(ik,in,3) = fp_te
             fp_plasma(ik,in,4) = kvhs(ik,ir)
             fp_plasma(ik,in,5) = kes(ik,ir)
+c
+         elseif (fp_plasma_opt.eq.3) then 
+c
+            fp_plasma(ik,in,1) = fp_ne
+            fp_plasma(ik,in,2) = fp_te
+            fp_plasma(ik,in,3) = fp_te
+            fp_plasma(ik,in,4) = 0.0
+            fp_plasma(ik,in,5) = 0.0
 c
          endif
 c

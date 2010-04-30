@@ -5116,7 +5116,44 @@ c
         call prr('                       FP TEMPERATURE = ',fp_te)
         call prr('                       FP DENSITY     = ',fp_ne)
 c
+       elseif (fp_plasma_opt.eq.3) then 
+c
+        call prc('  FP PLASMA OPTION 1 : FP PLASMA SPECIFIED'//
+     >          ' GRID CELL') 
+        call prr('                       FP TEMPERATURE = ',fp_te)
+        call prr('                       FP DENSITY     = ',fp_ne)
+        call prc('                       Vb and E       = 0.0')
+c
        endif
+
+       call prb
+
+       if (fp_flow_opt.eq.0) then
+          call prc('   FP FLOW OPTION 0: POLOIDAL DRIFT'//
+     >             ' FLOW IS OFF IN PERIPHERY')
+       elseif (fp_flow_opt.eq.1) then
+          call prc('   FP FLOW OPTION 1: POLOIDAL DRIFT'//
+     >             ' FLOW MATCHES ASSOCIATED GRID RING')
+          do in = 1,num_fp_regions
+             write(coment,'(a,i6,a,g12.5)') '     FLOW VEL.'//
+     >                ' IN FP_REG: ',in,' = ',fp_flow_velocity(in)
+             call prc(coment)
+          end do
+
+       elseif (fp_flow_opt.eq.2) then
+          call prc('   FP FLOW OPTION 2: POLOIDAL DRIFT'//
+     >             ' FLOW IS SPECIFIED = ',fp_flow_velocity_input)
+       elseif (fp_flow_opt.eq.3) then
+          call prc('   FP FLOW OPTION 3: POLOIDAL DRIFT'//
+     >             ' FLOW MATCHES ASSOCIATED BOUNDARY RING')
+          do in = 1,num_fp_regions
+             write(coment,'(a,i6,a,g12.5)') '     FLOW VEL.'//
+     >                ' IN FP_REG: ',in,' = ',fp_flow_velocity(in)
+             call prc(coment)
+          end do
+
+       endif
+
       endif
 
 C-----------------------------------------------------------------------

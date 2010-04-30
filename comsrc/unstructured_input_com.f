@@ -2432,7 +2432,7 @@ c
 c     TAG I26 : FP plasma option
 c
       ELSEIF (tag(1:3).EQ.'I26') THEN
-        CALL ReadI(line,fp_plasma_opt,0,2,
+        CALL ReadI(line,fp_plasma_opt,0,3,
      >             'FP PLASMA OPTION')
 c
 c -----------------------------------------------------------------------
@@ -2458,9 +2458,10 @@ c     Far periphery transport flow option
 c     0 - no flow in far periphery
 c     1 - flow in far periphery is the same as associated ring
 c     2 - flow in far periphery is specified as input
+c     3 - flow pattern in far periphery is based on associated virtual ring
 c
       ELSEIF (tag(1:3).EQ.'I31') THEN
-        CALL ReadI(line,fp_flow_opt,0,2,
+        CALL ReadI(line,fp_flow_opt,0,3,
      >             'FP FLOW OPTION')
 c
 c -----------------------------------------------------------------------

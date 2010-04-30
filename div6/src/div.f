@@ -8115,6 +8115,9 @@ c
 c     NOTE!: fp_flow_velocity is an array with an element
 c     for each peripheral region
 c
+c
+c        Set up flow velocity in each peripheral region
+c
          if (fp_flow_opt.eq.0) then
             fp_flow_velocity = 0.0
          elseif (fp_flow_opt.eq.1) then
@@ -8123,7 +8126,12 @@ c
             end do
          elseif (fp_flow_opt.eq.2) then
             fp_flow_velocity = fp_flow_velocity_input * qtim
+         elseif (fp_flow_opt.eq.3) then
+            do in = 1,num_fp_regions
+               fp_flow_velocity(in) = pol_drftv(fp_virt_rings(in))
+            end do
          endif
+
 
       endif
 
