@@ -5290,6 +5290,22 @@ C
          DO ID = 1, WALLPTS
             KRMAXW(ID) = 1.0
             IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5) THEN
+
+c
+c              PIN data not available or absolute wall launch probabilities have over-ridden the PIN launch data
+c
+               if (pinsw.eq.0.or.(nwlprob.gt.0.and.wlpabs.eq.1)) then          
+                  if (northopt.eq.0.or.northopt.eq.2) then
+                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+                  elseif (northopt.eq.1.or.northopt.eq.3) then
+                     if (matt.le.ntars) then 
+                        EMAX = CEMAXF * CEBD * 
+     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
+                     else
+                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+                     endif
+                  endif
+               endif
 c
 c              Pin data available
 c
@@ -5309,22 +5325,8 @@ c
                         endif 
                      endif
                   ENDIF
-c
-c              PIN data not available 
-c
-               elseif (pinsw.eq.0) then          
-                  if (northopt.eq.0.or.northopt.eq.2) then
-                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
-                  elseif (northopt.eq.1.or.northopt.eq.3) then
-                     if (matt.le.ntars) then 
-                        EMAX = CEMAXF * CEBD * 
-     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
-                     else
-                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
-                     endif
-                  endif
                endif
-c 
+
                IF (EMAX.GT.0.0) THEN
                   KRMAXW(ID) = 1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))
                ELSEif (cebd.eq.0.0) then 
