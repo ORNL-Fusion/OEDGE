@@ -1,10 +1,25 @@
 ;
 ; a=ray(camera='FFC',shot='24860',frame='760',channel='3',region=2,/sp_peak,fit_cutoff=0.5,fit_sample=100,spt=[0.280,-1.435])
 ;
+; file_a='FFC_24860_760_3_HL01_rbc_Dalpha.cgm'
+; file_g='FFC_24860_760_1_HL07_rba_Dgamma.cgm'
 ;
+; a=ray(file=file_a,shot=24860,region=2,fit_cutoff=0.5,fit_sample=50,spt=[0.280,-1.435],xpt=[0.67,-1.13],/plots)
+; g=ray(file=file_g,shot=24860,region=2,fit_cutoff=0.5,fit_sample=10,spt=[0.280,-1.435],xpt=[0.67,-1.13],/plots)
+; plot,SMOOTH(g.contour.fit_data[10:*],5)*0.05/SMOOTH(a.contour.fit_data[10:*],5),color=Truecolor('Black')
 ;
+; a=ray(file=file_a,shot=24860,region=2,fit_cutoff=0.5,fit_sample=10,spt=[0.280,-1.435],xpt=[0.67,-1.13],/plots)
+; g=ray(file=file_g,shot=24860,region=2,fit_cutoff=0.5,fit_sample=10,spt=[0.280,-1.423],xpt=[0.67,-1.13],/plots)
+; plot,SMOOTH(g.contour.fit_data,5)*0.05/SMOOTH(a.contour.fit_data,5),color=Truecolor('Black'),yrange=[0.0,0.2]
 ;
-
+; file_a='FFC_24860_342_3_HL01_rbc_Dalpha.cgm'
+; a=ray(file=file_a,shot=24860,region=2,fit_cutoff=0.5,fit_sample=10,spt=[0.280,-1.55],xpt=[0.64,-1.25],/plots)
+;
+; file_g='FFC_24860_342_1_HL07_rba_Dgamma.cgm'
+; g=ray(file=file_g,shot=24860,region=2,fit_cutoff=0.5,fit_sample=10,spt=[0.280,-1.55],xpt=[0.64,-1.25],/plots)
+;
+; plot,SMOOTH(g.contour.fit_data,5)*0.05/SMOOTH(a.contour.fit_data,5),color=Truecolor('Black')
+;
 ;
 ; ======================================================================
 ;
@@ -71,27 +86,31 @@ FUNCTION ray,  $
   IF (NOT KEYWORD_SET(nsample)) THEN nsample = 20
   IF (NOT KEYWORD_SET(path   )) THEN path = '~/fuse_data/mast/images/'
 
+  print,'file= ',file
+  print,'path= ',path
+
+
+
   CASE 1 OF
     (KEYWORD_SET(shot) AND KEYWORD_SET(frame) AND KEYWORD_SET(channel)): BEGIN
       path = '~/fuse_data/mast/images/'
-
-      file = path + camera + '_' +                   $
-             STRTRIM(STRING(shot   ),2) + '_' +  $
-             STRTRIM(STRING(frame  ),2) + '_' +  $
-             STRTRIM(STRING(channel),2) 
-      IF (KEYWORD_SET(suffix)) THEN file = file + '_' + STRTRIM(suffix,2)
-      file = file + '.' + STRTRIM(ext,2)
+      file_name = path + camera + '_' +                   $
+                  STRTRIM(STRING(shot   ),2) + '_' +  $
+                  STRTRIM(STRING(frame  ),2) + '_' +  $
+                  STRTRIM(STRING(channel),2) 
+      IF (KEYWORD_SET(suffix)) THEN file_name = file_name + '_' + STRTRIM(suffix,2)
+      file_name = file_name + '.' + STRTRIM(ext,2)
       END
-    (KEYWORD_SET(file)): file = path + file 
+    (KEYWORD_SET(file)): file_name = path + file 
     ELSE: BEGIN
       PRINT,'ERROR ray: Unsufficient input data to know what to do'
       RETURN,-1
       END
   ENDCASE
     
-  print,'file= ',file
+  print,'file= ',file_name
 
-  result = GetInversion(file,shot=shot,frame=frame,channel=channel,region=region)
+  result = GetInversion(file_name,shot=shot,frame=frame,channel=channel,region=region)
 ;  result = GetInversion('FFC',24860,760,3,region=2)
   result = ContourImage(result, sp_peak=sp_peak,spt=spt,xpt=xpt,plots=plots)
   result = ProcessImage(result, 100.0, fit_sample=fit_sample, fit_cutoff=fit_cutoff, progress=progress,plots=plots)

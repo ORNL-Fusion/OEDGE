@@ -877,10 +877,10 @@ c     .  opt_ti_kappa(2)
       INTEGER, SAVE :: nnode,mnode
       TYPE(type_node), SAVE :: node(S28_MAXNNODE)
 
-      TYPE(type_tube), SAVE :: tube
-      TYPE(type_cell        ), SAVE :: cell     (S28_MAXNKS)
-      TYPE(type_neutral), SAVE :: pin      (S28_MAXNKS,S28_MAXNION) 
-      TYPE(type_fluid  ), SAVE :: fluid    (S28_MAXNKS,S28_MAXNION) 
+      TYPE(type_tube   ), SAVE :: tube
+      TYPE(type_cell   ), SAVE :: cell (S28_MAXNKS)
+      TYPE(type_neutral), SAVE :: pin  (S28_MAXNKS,S28_MAXNION) 
+      TYPE(type_fluid  ), SAVE :: fluid(S28_MAXNKS,S28_MAXNION) 
 
       INTEGER ref_nion
       TYPE(type_tube) :: ref_tube

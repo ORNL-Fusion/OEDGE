@@ -283,7 +283,7 @@ c
       INTEGER   fp,it,ic,ion,i,iobj,iwall,imat,itarget
       CHARACTER tube_tag(4)*4,tag*64
       REAL      cs
-      REAL*8    x(10),y(10)
+      REAL*8    x(10),y(10),zp(2),x1,x2,y1,y2
 
       tube_tag(1) = 'SOL '
       tube_tag(2) = 'PFZ '
@@ -335,14 +335,25 @@ c
       WRITE(fp,'(A)') 'TUBE DATA:'
       WRITE(fp,*)
       IF (ntube.GT.0) THEN
-        WRITE(fp,'(2A6,A5,2A9,9A10)') 
+        WRITE(fp,'(2A6,A5,2A9,11A10)') 
      .    'Index','Type','#','Cell_LO','Cell_HI',
      .    'psi_n','rho(m)','L (m)',
      .    'costet_LO','costet_HI',
      .    'rp_LO'    ,'rp_HI'    ,
+     .    'zp_LO'    ,'zp_HI'    ,
      .    'dds_LO'   ,'dds_HI'   
         DO it = 1, ntube
-          WRITE(fp,'(I6,A6,I5,2I9,11F10.4)')
+
+          iobj = GetObject(tube(it)%cell_index(LO),IND_CELL)
+          CALL GetVertex(iobj,1,x1,y1)         
+          CALL GetVertex(iobj,2,x2,y2)         
+          zp(LO) = 0.5D0 * (y1 + y2)
+          iobj = GetObject(tube(it)%cell_index(HI),IND_CELL)
+          CALL GetVertex(iobj,3,x1,y1)         
+          CALL GetVertex(iobj,4,x2,y2)         
+          zp(HI) = 0.5D0 * (y1 + y2)
+
+          WRITE(fp,'(I6,A6,I5,2I9,13F10.4)')
      .      it,
      .      tube_tag(tube(it)%type),
      .      tube(it)%cell_index(HI)-tube(it)%cell_index(LO)+1,
@@ -352,6 +363,7 @@ c
      .      tube(it)%smax,
      .      tube(it)%costet(1:2),
      .      tube(it)%rp    (1:2),
+     .      zp(1:2),
      .      tube(it)%dds   (1:2)
         ENDDO
       ENDIF
@@ -415,8 +427,9 @@ c
             WRITE(fp,*)
             WRITE(fp,10) '   TUBE =',it
             WRITE(fp,10) '   ION  =',ion
-            WRITE(fp,'(3X,A8,9A11)') 
-     .        'Cell','bratio','s','sbnd1','sbnd2','p','q','R','Z','vol'
+            WRITE(fp,'(3X,A8,10A11)') 
+     .        'Cell','bratio','s','sbnd1','sbnd2','p','q','R','Z','vol',
+     .        'metric'
             WRITE(fp,'(11X,9A11)') 
      .        ' ','(m)','(m)','(m)','(m)',' ','(m)','(m)','(m3)'
             WRITE(fp,'(11X,6F11.5,2F11.5)')
@@ -431,14 +444,15 @@ c
             i = 0
             DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)        
               i = i + 1
-              WRITE(fp,'(I3,I8,6F11.5,3F11.5)') i,ic,
+              WRITE(fp,'(I3,I8,6F11.5,4F11.5)') i,ic,
      .          field(ic)%bratio,
      .          cell (ic)%s,
      .          cell (ic)%sbnd(1:2),
      .          cell (ic)%p,
      .          -1.0,
      .          cell (ic)%cencar(1:2),
-     .          cell (ic)%vol
+     .          cell (ic)%vol,
+     .          cell (ic)%metric
             ENDDO
             WRITE(fp,'(11X,6F11.5,2F11.5)')
      .        tube(it)%bratio(HI),

@@ -33,12 +33,12 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
   IF (KEYWORD_SET(maskbottom)) THEN image.mask[*,maskbottom-1:image.ydim-1] = 0.0
 
   IF (NOT KEYWORD_SET(maskbox)) THEN maskbox = 0
-  IF (N_ELEMENTS(maskbox) GT 1) THEN image.mask[maskbox[0 ]-1:maskbox[1 ]-1,       $
-                                                maskbox[2 ]-1:maskbox[3 ]-1] = 0.0
-  IF (N_ELEMENTS(maskbox) GT 4) THEN image.mask[maskbox[4 ]-1:maskbox[5 ]-1,       $
-                                                maskbox[6 ]-1:maskbox[7 ]-1] = 0.0
-  IF (N_ELEMENTS(maskbox) GT 8) THEN image.mask[maskbox[8 ]-1:maskbox[9 ]-1,       $
-                                                maskbox[10]-1:maskbox[11]-1] = 0.0
+  IF (N_ELEMENTS(maskbox) GT 1) THEN image.mask[maskbox[0]-1:maskbox[2 ]-1,       $
+                                                maskbox[1]-1:maskbox[3 ]-1] = 0.0
+  IF (N_ELEMENTS(maskbox) GT 4) THEN image.mask[maskbox[4]-1:maskbox[6 ]-1,       $
+                                                maskbox[5]-1:maskbox[7 ]-1] = 0.0
+  IF (N_ELEMENTS(maskbox) GT 8) THEN image.mask[maskbox[8]-1:maskbox[10]-1,       $
+                                                maskbox[9]-1:maskbox[11]-1] = 2.0
 
   IF (KEYWORD_SET(maskpoly)) THEN BEGIN
     image_pixels = MAKE_ARRAY(2,LONG(image.xdim)*LONG(image.ydim),/LONG)
@@ -50,7 +50,7 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
     ENDFOR
     pt1 = 0
     WHILE (pt1 LT N_ELEMENTS(maskpoly)) DO BEGIN
-      npts = maskpoly(pt1)    
+      npts = maskpoly[pt1]
       pts = MAKE_ARRAY(2,npts,/LONG)
       FOR i1 = 1, npts DO BEGIN
         pts[0,i1-1] = maskpoly[pt1+1+2*(i1-1)  ]
@@ -67,7 +67,7 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
     
 ; Add 1.0 to avoid real black being mistaken for artifical black, i.e.
 ; make sure no no-masked pixels have a value 0.0;
-  image.data = (1.0 + image.data) * image.mask 
+  image.data = (1.0 + image.data) * image.mask[0:image.xdim-1,0:image.ydim-1] 
 
 END
 ;

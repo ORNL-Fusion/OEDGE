@@ -6294,14 +6294,12 @@ c...    Triggers for resetting grid parameters:
         ELSEIF (mode.EQ.7) THEN
           iks = nks(ir) - ikti3
           ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
-        ELSEIF (mode.EQ.8) THEN
-c...      Near target refinement in the inner divertor (outer on JET):
-          iks = 1
-          ike = NINT(param)
-        ELSEIF (mode.EQ.9) THEN
-c...      Near target refinement in the outer divertor (outer on JET):
-          iks = nks(ir) - NINT(param) + 1
-          ike = nks(ir)
+        ELSEIF (mode.EQ.6) THEN
+          iks = NINT(REAL(ikto3-1)*(1.0-param)) + 1
+          ike = ikto3
+        ELSEIF (mode.EQ.7) THEN
+          iks = nks(ir) - ikti3
+          ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
 c        ELSEIF (mode.EQ.11) THEN
 cc...      The whole ring:
 c          iks = 1

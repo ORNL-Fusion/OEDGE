@@ -16,6 +16,8 @@ c
       INTEGER   ik,ir,ike,index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
       CHARACTER unit*10
 
+      WRITE(0,*) 'IDL EIRENE DATA FILES'
+
       index = -1
       DO ik = 1, MAXNKS
         pos(ik) = ik
@@ -74,6 +76,8 @@ c
       REAL      totfypin,impact_energy
       CHARACTER tag*64
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES'
+
       index = -1
       DO ik = 1, MAXNKS
         pos(ik) = ik
@@ -123,6 +127,8 @@ c...  Dump impurity data:
       ENDDO
       CALL inCloseInterface 
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 2'
+
       CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
@@ -168,6 +174,9 @@ c              2.0 * CRTABS(IZ) / CICABS(IZ)
 c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
 c     which I'm leaving off for now...
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 3',nds,MIN(nizs,cion)
+
+
       CALL inOpenInterface('idl.divimp_flux_target',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
@@ -210,6 +219,9 @@ c     which I'm leaving off for now...
 c
 c
 c
+
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
+
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
@@ -311,6 +323,8 @@ c     wallpt (ind,31) = Plasma density at wall segment
         CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
       ENDDO
       CALL inCloseInterface 
+
+      WRITE(0,*) 'DONE'
 
 c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
 c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
@@ -415,6 +429,8 @@ c
       REAL x1,x2,y1,y2,t,mach,p,jsat
       REAL   , ALLOCATABLE :: x(:),y(:),v(:),s(:)
       CHARACTER tag_x*11,tag_y*11,file*512
+
+      WRITE(0,*) 'IDL DUMP DATA FILES'
 
 c...  Dump data for processing in IDL:
       file = 'osm.idl'
@@ -1423,6 +1439,8 @@ c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
      .    ktebs(ikmid1(i1),ring(i1)),ktibs(ikmid1(i1),ring(i1)),
      .    (midpro(i1,i2),i2=1,ncol)
       ENDDO
+
+      WRITE(0,*) 'IDL CORE DATA FILES'
 
       CALL inOpenInterface('osm.idl.midplane',ITF_WRITE)
 c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')

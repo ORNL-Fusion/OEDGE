@@ -30,11 +30,10 @@ END
 ;
 ; ========================================================================
 ;
-PRO inOpenInterface, file_name
+FUNCTION inOpenInterface, file_name
 
 ; Check input:
   
-
 ; Open the data stream:
   fp = 2
   FREE_LUN,fp
@@ -43,13 +42,17 @@ PRO inOpenInterface, file_name
 
   OPENR,fp,file_name,error=error
   IF (error NE 0) THEN BEGIN
-    PRINT,'ERROR inOpenInterface: Unable to access ',file_name
-    EXIT, STATUS=-1  ; *** NEED TO IMPROVE THIS ***
+    PRINT,'ERROR inOpenInterface: Unable to access data file'
+    PRINT,' FILE= ',file_name
+    RETURN, -1
+;    EXIT, STATUS=-1  ; *** NEED TO IMPROVE THIS ***
   ENDIF  
 
   READF,fp,version
 
   ; Check file integrity, ie are there duplicate tags...
+
+  RETURN, 0
 
 END
 ;

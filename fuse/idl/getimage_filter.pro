@@ -10,58 +10,25 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION GetFilterTransmissionProfile, filter, camera, plots
+FUNCTION FilterTransmission,filter,shift
 
+  delta = ABS(filter.cwl + shift - filter.line) 
 
-  optics ={id           : 0  ,  $
-           distance     : 0.0,  $ 
-           radius       : 0.0,  $
-           height       : 0.0 }
+  delta = delta / (filter.fwhm / 2.0)  ;   ??? THIS FACTOR 2 IS CORRECT ???
 
-
-  CASE camera OF
-    'DIVCAM': BEGIN
-      optics.id       = 0
-      optics.distance = 310.0 - 22.5 ; 290.0 - 22.5      
-      optics.radius   = 10.0 ; 10.0    
-      optics.height   = 30.0 ; 33.0
-      END
-    'FFC': BEGIN
-      optics.id       = 0
-      optics.distance = 310.0 - 22.5 + 51.0  ; Extra tube length, but not quite enough... measured by James on 08/04/2010
-      optics.radius   = 10.0 ; 10.0          ; am I making an error here, in the geometry assumptions/setup, and 
-      optics.height   = 30.0 ; 33.0          ; the fact that I'm not filling the CCD...
-      END
-    ELSE: BEGIN
-      PRINT,'ERROR getimage_GetFilterTransmissionProfile: Camera not recognised'
-      PRINT,'  CAMERA= ',camera
-      END
-  ENDCASE
-
-  print,'LINE:',filter.line
-
-  n = filter.n
-  
-  nr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
-  tr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
-
-  FOR i = 0, n-1 DO BEGIN
-    nr[i] = FLOAT(i) / FLOAT(n-1)
-    height = nr[i] * optics.height
-    tr[i] = PixelTransmission(optics.distance,optics.radius,height,filter)
-  ENDFOR
-
-  filter.nr = nr
-  filter.tr = tr
-
-;  filter.tr = 1.0
-
-  IF (KEYWORD_SET(plots)) THEN BEGIN
-    window,3,retain=2
-    plot,filter.nr*500,filter.tr,psym=6
+   IF ( 0 ) THEN BEGIN
+    print,filter.line
+    print,filter.cwl
+    print,'2:',shift
+    print,'3:',ABS(filter.cwl+shift-filter.line)
+    print,'d:',delta
   ENDIF
 
-  RETURN, filter
+  n = N_ELEMENTS(WHERE(filter.yshape NE 0.0))
+
+  tr = INTERPOL(ALOG10(filter.yshape[0:n-1]),filter.xshape[0:n-1],delta)
+
+  RETURN, (10.0^tr)
 
 END
 ;
@@ -134,6 +101,63 @@ FUNCTION PixelTransmission,distance,radius,height,filter
   ENDIF
   
   RETURN,average_tr
+
+END
+;
+; ======================================================================
+;
+FUNCTION GetFilterTransmissionProfile, filter, camera, plots
+
+
+  optics ={id           : 0  ,  $
+           distance     : 0.0,  $ 
+           radius       : 0.0,  $
+           height       : 0.0 }
+
+
+  CASE camera OF
+    'DIVCAM': BEGIN
+      optics.id       = 0
+      optics.distance = 310.0 - 22.5 ; 290.0 - 22.5      
+      optics.radius   = 10.0 ; 10.0    
+      optics.height   = 30.0 ; 33.0
+      END
+    'FFC': BEGIN
+      optics.id       = 0
+      optics.distance = 310.0 - 22.5 + 51.0  ; Extra tube length, but not quite enough... measured by James on 08/04/2010
+      optics.radius   = 10.0 ; 10.0          ; am I making an error here, in the geometry assumptions/setup, and 
+      optics.height   = 30.0 ; 33.0          ; the fact that I'm not filling the CCD...
+      END
+    ELSE: BEGIN
+      PRINT,'ERROR getimage_GetFilterTransmissionProfile: Camera not recognised'
+      PRINT,'  CAMERA= ',camera
+      END
+  ENDCASE
+
+  print,'LINE:',filter.line
+
+  n = filter.n
+  
+  nr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
+  tr = MAKE_ARRAY(n,/FLOAT,VALUE=0.0)
+
+  FOR i = 0, n-1 DO BEGIN
+    nr[i] = FLOAT(i) / FLOAT(n-1)
+    height = nr[i] * optics.height
+    tr[i] = PixelTransmission(optics.distance,optics.radius,height,filter)
+  ENDFOR
+
+  filter.nr = nr
+  filter.tr = tr
+
+;  filter.tr = 1.0
+
+  IF (KEYWORD_SET(plots)) THEN BEGIN
+    window,3,retain=2
+    plot,filter.nr*500,filter.tr,psym=6
+  ENDIF
+
+  RETURN, filter
 
 END
 ;
@@ -412,8 +436,9 @@ PRO AssignFilterData, image, filter, plots
   IF (image.shot GE 24800 AND image.shot LE 24869) THEN BEGIN
     filter = STRTRIM(filter,2)
     CASE filter OF
-      '486/2/25D (AC-0101-01)' : filter = 'Dbeta 486.15/1.64 nm'
       '434.0/1.5/25D (AC-M116-': filter = 'Dgamma 434.01/1.49 nm'
+      '486/2/25D (AC-0101-01)' : filter = 'Dbeta 486.15/1.64 nm'
+      '465/1.5/25D (AC-M116-01': filter = 'CIII 465.29/1.42 nm'
       ELSE:
     ENDCASE
     PRINT,'NEW FILTER ID=',filter    
@@ -446,7 +471,9 @@ PRO AssignFilterData, image, filter, plots
           CASE STRTRIM(STRING(wlngth[0]),2) OF
             '411.18': wlngth[0] = 411.2
             '434.01': wlngth[0] = 434.0
+            '465.29': wlngth[0] = 465.0
             '486.15': wlngth[0] = 486.2
+            '514.20': wlngth[0] = 100.0
             '656.70': wlngth[0] = 656.0
             ELSE:
           ENDCASE
@@ -475,6 +502,8 @@ PRO AssignFilterData, image, filter, plots
           PRINT,'WLNGTH[0] =',STRTRIM(STRING(wlngth[0]),2)
           CASE STRTRIM(STRING(wlngth[0]),2) OF
             '434.01': wlngth[0] = 434.0
+            '465.29': wlngth[0] = 465.0
+            '514.20': wlngth[0] = 514.0
             '656.70': wlngth[0] = 656.0
             ELSE:
           ENDCASE
@@ -526,29 +555,4 @@ END
 ;
 ;
 ;
-
-;
-; ======================================================================
-;
-FUNCTION FilterTransmission,filter,shift
-
-  delta = ABS(filter.cwl + shift - filter.line) 
-
-  delta = delta / (filter.fwhm / 2.0)  ;   ??? THIS FACTOR 2 IS CORRECT ???
-
-   IF ( 0 ) THEN BEGIN
-    print,filter.line
-    print,filter.cwl
-    print,'2:',shift
-    print,'3:',ABS(filter.cwl+shift-filter.line)
-    print,'d:',delta
-  ENDIF
-
-  n = N_ELEMENTS(WHERE(filter.yshape NE 0.0))
-
-  tr = INTERPOL(ALOG10(filter.yshape[0:n-1]),filter.xshape[0:n-1],delta)
-
-  RETURN, (10.0^tr)
-
-END
 

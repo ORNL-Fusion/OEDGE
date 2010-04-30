@@ -2,7 +2,7 @@
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_TargetProfiles, plot, data_array, ps=ps
+FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
 
   PRINT
   PRINT,'----------------------- NEW PLOT -----------------------'

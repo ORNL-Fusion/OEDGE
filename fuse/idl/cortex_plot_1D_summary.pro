@@ -34,8 +34,8 @@ FUNCTION cortex_PlotSummary, plot, plot_array, ps=ps
   focus = 2  ; plot.focus
 
   !P.BACKGROUND = TrueColor('White')
-;  !P.FONT = 1
-;  DEVICE, SET_FONT='Courier', /TT_FONT
+; !P.FONT = 1
+; DEVICE, SET_FONT='Courier', /TT_FONT
 
   title    = plot.title
   notes    = plot.notes
@@ -244,11 +244,11 @@ FUNCTION cortex_PlotSummary, plot, plot_array, ps=ps
   IF (notes NE 'default') THEN ypos = 0.965
 
   n = STRLEN(title) 
-  nmax = LONG(60.0 * 2.0 / (1.5 * charsize))
+  nmax =  LONG(60.0 * 2.0 / (1.5 * charsize)) ; LONG(53.0 * 2.0 / (1.5 * charsize)) ;  LONG(60.0 * 2.0 / (1.5 * charsize))
   IF (n GT nmax) THEN BEGIN
     i = STRPOS(STRMID(title,0,nmax),' ',/REVERSE_SEARCH)
-    str1 = STRMID(title,0  ,i   )
-    str2 = STRMID(title,i+1,nmax)
+    str1 = STRMID(title,0,i)
+    str2 = STRMID(title,i+1)
     XYOUTS, 0.02 * dev_xsize, (ypos + 0.045 * charsize / 1.7) * dev_ysize, CHARSIZE=1.5*charsize, str1, /DEVICE
     XYOUTS, 0.02 * dev_xsize, (ypos                         ) * dev_ysize, CHARSIZE=1.5*charsize, str2, /DEVICE
   ENDIF ELSE BEGIN
@@ -257,11 +257,11 @@ FUNCTION cortex_PlotSummary, plot, plot_array, ps=ps
 
   IF (notes NE 'unknown') THEN BEGIN
     n = STRLEN(notes) 
-    nmax = 125; 105
+    nmax = 125; 110 ; 125;
     IF (n GT nmax) THEN BEGIN
       i = STRPOS(STRMID(notes,0,nmax),' ',/REVERSE_SEARCH)
-      str1 = STRMID(notes,0,nmax)
-      str2 = STRMID(notes,nmax+1,n)
+      str1 = STRMID(notes,0,i)
+      str2 = STRMID(notes,i+1)
       XYOUTS, 0.02 * dev_xsize, (ypos - 0.025) * dev_ysize, CHARSIZE=1.0, str1, /DEVICE
       XYOUTS, 0.02 * dev_xsize, (ypos - 0.050) * dev_ysize, CHARSIZE=1.0, str2, /DEVICE
       ypos = ypos - 0.020

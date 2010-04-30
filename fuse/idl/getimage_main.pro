@@ -13,6 +13,7 @@
 ;
 FUNCTION GetImage,           $
    calibrate  = calibrate,   $
+   reg        = reg      ,   $  ; registration image shot number
    binary     = binary,      $
    debug      = debug,       $
    background = background,  $ 
@@ -64,6 +65,8 @@ FUNCTION GetImage,           $
   IF (N_ELEMENTS(png      ) EQ 0) THEN png        = 0  
   IF (N_ELEMENTS(flip     ) EQ 0) THEN flip       = 0  
   IF (N_ELEMENTS(centre   ) EQ 0) THEN centre     = 0
+
+  IF (NOT KEYWORD_SET(colour)) THEN colour = 5
 
   IF (NOT KEYWORD_SET(date      )) THEN date       = -1
   IF (NOT KEYWORD_SET(line      )) THEN line       = -1.0
@@ -179,7 +182,7 @@ FUNCTION GetImage,           $
 ; ----------------------------------------------------------------------
 ;
   image = LoadImage(device,camera,file,date,line,shot,channel,             $
-                    frame,path,calibrate,shift,radius,filter,window,  $
+                    frame,path,calibrate,reg,shift,radius,filter,window,  $
                     clean,background,plots)     ; Make some of these optional...
 
 
@@ -597,27 +600,46 @@ FUNCTION GetImage,           $
 ;
 ;
 ;
-  IF (NOT KEYWORD_SET(full) AND  $
-      (camera EQ 'DIVCAM' OR camera EQ 'FFC')) THEN BEGIN
-print,image.xwin
-print,image.ywin
+  size_adjust = 1.0
 
-    top  = image.ywin[0]
-    left = image.xwin[0]
-    width  = image.xwin[1] - image.xwin[0] + 1
-    height = image.ywin[1] - image.ywin[0] + 1
-print,top,left,width,height
+  IF (NOT KEYWORD_SET(full)) THEN BEGIN
+    CASE camera OF
+      'FFC': BEGIN
+        print,image.xwin
+        print,image.ywin
 
-    image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
-print,width-1
-print,left-1
-print,left-1+width-1
-print,left-1+width-1
-print,top-1
-    FOR iy = 0, height-1 DO BEGIN
-      image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
-    ENDFOR
-    image_data = image_new
+        top    = image.ywin[0]
+        left   = image.xwin[0]
+        width  = image.xwin[1] - image.xwin[0] + 1
+        height = image.ywin[1] - image.ywin[0] + 1
+        print,top,left,width,height
+        
+        image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
+        print,width-1
+        print,left-1
+        print,left-1+width-1
+        print,left-1+width-1
+        print,top-1
+        FOR iy = 0, height-1 DO BEGIN
+          image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
+        ENDFOR
+        image_data = image_new
+        END
+      'DIVCAM': BEGIN
+print,image.xbin,image.ybin
+        IF (image.xbin EQ 2 AND image.ybin EQ 2) THEN BEGIN
+          image_new = MAKE_ARRAY(500,500,/LONG,VALUE=0L)
+          FOR i = 0, 499 DO BEGIN
+            FOR j = 0, 499 DO BEGIN
+              image_new[i,j] = image_data[2*i,2*j]  ; No need to rescale signal strength since the calibration (should have) been
+            ENDFOR                                  ; done without binning...
+          ENDFOR 
+        ENDIF
+        image_data = image_new
+        size_adjust = 0.5
+        END
+      ELSE:
+    ENDCASE
   ENDIF
 ;
 ;
@@ -720,12 +742,12 @@ print,top-1
       IF (KEYWORD_SET(shift) AND (camera NE 'FFC' OR KEYWORD_SET(full))) THEN BEGIN
         angle = FINDGEN(180)*2.0       ; Dotted circle showing where the image boundary is assumed to be
         reference_radius = image.radius - 30
-        ix = image.xcen + image.radius * SIN (angle*!PI/180.0) 
-        iy = image.ycen + image.radius * COS (angle*!PI/180.0) 
+        ix = image.xcen * size_adjust + image.radius * size_adjust * SIN (angle*!PI/180.0) 
+        iy = image.ycen * size_adjust + image.radius * size_adjust * COS (angle*!PI/180.0) 
         image_data[ix,iy] = max_val
         angle = FINDGEN(3*360) / 3.0   ; Finer circle showing where the vignette mask is being applied
-        ix = shift[0] + image.xcen + image.radius * SIN (angle*!PI/180.0) 
-        iy = shift[1] + image.ycen + image.radius * COS (angle*!PI/180.0) 
+        ix = shift[0] * size_adjust + image.xcen * size_adjust + image.radius * size_adjust * SIN (angle*!PI/180.0) 
+        iy = shift[1] * size_adjust + image.ycen * size_adjust + image.radius * size_adjust * COS (angle*!PI/180.0) 
         image_data[ix,iy] = max_val
       ENDIF
       window,1,xsize=image.xdim,ysize=image.ydim,retain=2
@@ -752,7 +774,7 @@ print,top-1
 ; ----------------------------------------------------------------------
 ;
   IF (KEYWORD_SET(save) OR KEYWORD_SET(save_png)) THEN   $
-    SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
+    SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, order=order
 ;
 ; ----------------------------------------------------------------------
 ;

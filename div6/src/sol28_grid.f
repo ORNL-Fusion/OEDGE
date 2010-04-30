@@ -1260,7 +1260,7 @@ c      USE mod_grid_divimp
 
       debug = .FALSE.
 
-      grd_load_method = 2
+      grd_load_method = 1 ! 2
 
       SELECTCASE (grd_load_method)
         CASE (GRD_LOAD_NEW)
@@ -1513,6 +1513,21 @@ c          STOP 'whoa'
 
           CALL osm_DeriveGridQuantities
 
+          CALL DumpData_OSM('output.grid_load','Done loading grid')
+c...
+          CALL LoadSupplimentalGridData
+          CALL DumpData_OSM('output.grid_sup','Done loading sup data')
+
+          CALL GenerateTubeGroups
+          CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+          CALL GenerateTargetGroups
+          CALL DumpData_OSM('output.grid_targets','Done targets')
+
+          CALL SaveFluidGridGeometry
+
+          CALL ProcessWall
+
         CASE (GRD_LOAD_OLD)
           CALL LoadObjects('osm_geometry.raw',status)  ! Change to LoadGeometryObjects...
           IF (status.EQ.-1) 
@@ -1521,23 +1536,22 @@ c          STOP 'whoa'
           CALL LoadGrid('osm.raw')
 
           CALL LoadLegacyData('osm_legacy.raw')
+
+          CALL DumpData_OSM('output.grid_load','Done loading grid')
+
+          CALL GenerateTubeGroups
+          CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+          CALL GenerateTargetGroups
+          CALL DumpData_OSM('output.grid_targets','Done targets')
+
+          CALL SaveFluidGridGeometry
         CASE DEFAULT
           CALL ER('ProcessGrid','Unrecognized grid source option',*99)
       ENDSELECT
 
-      CALL DumpData_OSM('output.grid_load','Done loading the grid')
 
-c...
-      CALL LoadSupplimentalGridData
-      CALL DumpData_OSM('output.grid_sup','Done loading the sup data')
 
-      CALL GenerateTubeGroups
-      CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
-
-      CALL GenerateTargetGroups
-      CALL DumpData_OSM('output.grid_targets','Done analysing targets')
-
-      CALL SaveFluidGridGeometry
  
       RETURN
  99   WRITE(0,*) 'IK,IR,I =',ik,ir,i

@@ -1,7 +1,7 @@
 ;
 ; ======================================================================
 ;
-PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
+PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, order=order
 
   binary = 0
 
@@ -58,26 +58,44 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate
       ; JPEG
       IF ( image.ydim GT 1 ) THEN BEGIN     
 
-        bottom = 0.2
+;        max_val = LONG(MAX(image_data))
+;        bottom = max_val * 20 / 100
+;        print,'BOTTOM:',bottom,max_val,scale
+;        image_data = image.data * scale
+;        FOR ix = 0, image.xdim-1 DO BEGIN
+;          FOR iy = 0, image.ydim-1 DO BEGIN
+;            IF (image_data[ix,iy] GT max_val) THEN image_data[ix,iy] = max_val
+;            IF (image_data[ix,iy] LT bottom ) THEN image_data[ix,iy] = bottom
+;          ENDFOR
+;        ENDFOR
 
-        max_val = MAX(image.data)
+;        WINDOW,6,xsize=image.xdim,ysize=image.ydim,retain=2
+;        DEVICE, DECOMPOSED=0
+;        LOADCT, 5
+;        TVSCL,image_data,ORDER=order
+;        WSET,6
+;return
+;        image_capture = TVRD(True=1)
 
-        bottom = 0.9* max_val
-        print,'BOTTOM:',bottom,scale
 
-        image_data = image.data * scale
-        FOR ix = 0, image.xdim-1 DO BEGIN
-          FOR iy = 0, image.ydim-1 DO BEGIN
-            IF (image_data[ix,iy] GT max_val) THEN image_data[ix,iy] = max_val
-            IF (image_data[ix,iy] LT bottom ) THEN image_data[ix,iy] = bottom
-          ENDFOR
-        ENDFOR
+; For IR images I think...
+;        max_val = MAX(image_data)
+;        bottom = 0.9* max_val
+;        print,'BOTTOM:',bottom,scale
+;        image_data = image.data * scale
+;        FOR ix = 0, image.xdim-1 DO BEGIN
+;          FOR iy = 0, image.ydim-1 DO BEGIN
+;            IF (image_data[ix,iy] GT max_val) THEN image_data[ix,iy] = max_val
+;            IF (image_data[ix,iy] LT bottom ) THEN image_data[ix,iy] = bottom
+;          ENDFOR
+;        ENDFOR
 
-        DEVICE, DECOMPOSED=0
-        LOADCT, 3
 
         image_byte = BYTSCL(image_data)
         WINDOW,6,xsize=image.xdim,ysize=image.ydim,retain=2
+        DEVICE, DECOMPOSED=0
+        LOADCT, 5
+        WSET,6
         LOADCT,3 ; 5
         TV,image_byte,/order
         TVLCT, red, green, blue, /GET

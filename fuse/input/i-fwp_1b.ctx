@@ -1,0 +1,150 @@
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (1223)  {CASE} i-fwp-1223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1224)  {CASE} i-fwp-1224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1225)  {CASE} i-fwp-1225b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, UPPER PORT GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (1203)  {CASE} i-fwp-1203b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1204)  {CASE} i-fwp-1204b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1205)  {CASE} i-fwp-1205b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, PANEL 12 PUFF, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (1213)  {CASE} i-fwp-1213b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1214)  {CASE} i-fwp-1214b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1215)  {CASE} i-fwp-1215b >d >i >e >g >f >h
+*
+* ----------------------------------------------------------------------
+* MIDPLANE PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (1293)  {CASE} i-fwp-1293b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1294)  {CASE} i-fwp-1294b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1295)  {CASE} i-fwp-1295b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (1253)  {CASE} i-fwp-1253b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1254)  {CASE} i-fwp-1254b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1255)  {CASE} i-fwp-1255b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, PANEL 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (1263)  {CASE} i-fwp-1263b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1264)  {CASE} i-fwp-1264b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1265)  {CASE} i-fwp-1265b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, BAFFLE ELM PACING PELLET, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (1273)  {CASE} i-fwp-1273b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1274)  {CASE} i-fwp-1274b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1275)  {CASE} i-fwp-1275b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE ELM PACING PELLET, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (1283)  {CASE} i-fwp-1283b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1284)  {CASE} i-fwp-1284b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1285)  {CASE} i-fwp-1285b >d >i >e >g >f >h
+
+{EXIT}
+

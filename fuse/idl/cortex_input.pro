@@ -4,7 +4,9 @@
 ; Based on inReadLine in interface.pro, so if improved here, improve there as well...
 ;
 FUNCTION cortex_ReadLine, fp, buffer
-  WHILE (1) DO BEGIN
+  status = -1
+  WHILE NOT EOF(fp) DO BEGIN
+;  WHILE (1) DO BEGIN
     READF,fp,buffer
     i = STRPOS(buffer,'$')
     IF (i EQ  0) THEN CONTINUE 
@@ -35,6 +37,7 @@ FUNCTION cortex_ReadLine, fp, buffer
     IF (STRMATCH(buffer, '*{*'    ) EQ 1) THEN RETURN, 1
     RETURN, 2
   ENDWHILE
+  RETURN, status
 END 
 ;
 ; ======================================================================
@@ -141,6 +144,18 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
   ENDIF
 
   buffer = ' '
+  monster_buffer = buffer
+
+; Load in the entire input file:
+
+  WHILE (1) DO BEGIN
+    status = cortex_ReadLine(fp,buffer)    
+    IF (status EQ -1) THEN BREAK
+    monster_buffer = monster_buffer + STRTRIM(buffer,2) + ' '
+  ENDWHILE
+  buffer = monster_buffer + ' {EXIT} '
+
+;print,monster_buffer
 
   n = 0
   nchop = 0
@@ -151,7 +166,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
   WHILE (1) DO BEGIN
 
     IF (nchop EQ 0) THEN BEGIN
-      status = cortex_ReadLine(fp,buffer)
+;      status = cortex_ReadLine(fp,buffer)
       buffer_array = STRSPLIT(STRTRIM(buffer,2),'{',/EXTRACT)
       nchop = N_ELEMENTS(buffer_array)
       IF (nchop GT 1) THEN BEGIN
@@ -473,9 +488,10 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
             IF (STRLEN(str[nstr]) EQ 0) THEN BEGIN
               new_case = 'none'
             ENDIF ELSE BEGIN
-              new_case = STRMID(plot_struct.case_name[ncase-1],0,  $
-                                STRLEN(case_default)-STRLEN(str[nstr])) + str[nstr]
-;              new_case = STRMID(case_default,0,STRLEN(case_default)-STRLEN(str[nstr])) + str[nstr]
+;              new_case = STRMID(plot_struct.case_name[ncase-1],0,  $
+;                                STRLEN(case_default)-STRLEN(str[nstr])) + str[nstr]
+              new_case = STRMID(case_default,0,STRLEN(case_default)-STRLEN(str[nstr])) + str[nstr]
+              case_default = new_case
             ENDELSE
           ENDIF ELSE BEGIN
             case_default = new_case
