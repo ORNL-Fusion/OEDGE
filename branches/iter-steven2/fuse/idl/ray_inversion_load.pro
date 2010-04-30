@@ -10,7 +10,7 @@ FUNCTION LoadInversion,file,mode,tag_data
     3: BEGIN
 ;     Load output from RAY/OUT:
 ;     ------------------------------------------------------------------
-      inOpenInterface, file
+      status = inOpenInterface(file)
       index = inGetData('i')
       nvtx  = inGetData('npts')
       ndata = LONG(N_ELEMENTS(index))
@@ -49,7 +49,7 @@ FUNCTION LoadInversion,file,mode,tag_data
     1: BEGIN
 ;     Load output from OSM:
 ;     ------------------------------------------------------------------
-      inOpenInterface, file
+      status = inOpenInterface(file)
       a = inGetData(datatag)
       IF (a[0] EQ -1) THEN BEGIN
         PRINT,'ERROR LoadInversion: Tag not found in data file'
@@ -76,7 +76,7 @@ FUNCTION LoadInversion,file,mode,tag_data
       print,'Load method not active'
       stop 
 
-      inOpenInterface, file
+      status = inOpenInterface(file)
 
       a = inGetData('cell_data')
 
@@ -157,7 +157,7 @@ FUNCTION LoadInversion,file,mode,tag_data
     3: BEGIN
 ;     Load output from RAY:
 ;     ------------------------------------------------------------------
-      inOpenInterface, file
+      status = inOpenInterface(file)
       a = inGetData(datatag)
       IF (a[0] EQ -1) THEN BEGIN
         PRINT,'ERROR LoadInversion: Tag not found in data file'
@@ -425,7 +425,7 @@ FUNCTION GetInversion,    $
 ;   --------------------------------------------------------------------
     (ext EQ 'cgm'): BEGIN
 
-      PRINT,file
+;      PRINT,file
 
       result = InterpolateInversion(file,3,region,'data')   
 

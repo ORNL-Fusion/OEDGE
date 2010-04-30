@@ -7,6 +7,25 @@
 ;
 ; Detachment sessions
 ; -------------------
+;
+;
+; 20200419
+;
+; View registration:
+;
+; image=getimage(shot=25037,frame=18,channel=3,camera='FFC',/plots,/nocal,rotate=270,/colour,/save)  ; HL01, channel 1, rbc
+; image=getimage(shot=25037,frame=1,channel=2,/plots,/nocal,rotate=270,/debug,/save)                 ; HL01, channel 2, rdb
+; image=getimage(shot=25037,frame=2,channel=2,/plots,/nocal,rotate=270,/debug,/save)           
+; image=getimage(shot=25037,frame=10,channel=2,/plots,/nocal,rotate=270,/debug,/save)           
+; image=getimage(shot=25037,frame=15,channel=1,camera='FFC',/plots,/nocal,/colour,/save)             ; HL07, channel 3, rba
+; image=getimage(shot=25037,frame=10,channel=4,/plots,/nocal,/debug,/save)                            ; HL01, channel 2, rdd
+;
+;
+;
+; 20100318
+;
+; Calibration:
+;
 ; file='./cal_data/FCC_13012010_1_pos6000001.bmp'
 ; image=getimage(file=file,channel=3,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/centre,/background)
 ; image=getimage(file=file,channel=3,filter='empty',/raw,/plots,depth=8,colour=5,shift=[-19,-9],radius=245,/calibrate,path='./cal_data/',/save)
@@ -28,7 +47,7 @@
 ; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,/colour,/save)  ; HL01, channel 1, rbc
 ; image=getimage(shot=24808,frame=1,channel=2,/plots,/nocal,rotate=270,/debug,/save)           ; HL01, channel 2, rdb
 ; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',/plots,/colour,/save)             ; HL07, channel 3, rba
-; image=getimage(shot=24808,frame=19,channel=2,/plots,/nocal,/debug,/save)                     ; HL01, channel 2, rdd
+; image=getimage(shot=24808,frame=19,channel=4,/plots,/nocal,/debug,/save)                     ; HL01, channel 2, rdd
 ;
 ; Finding centre of camera view:
 ;
@@ -39,16 +58,28 @@
 ;       ; image_data[ix,iy] = 0; max_val           
 ;
 ; rbc - HL01
-; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,colour=5,radius=240,shift=[-3,10],centre=0.05)
+; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',window='HL01,/plots,rotate=270,colour=5,radius=240,shift=[-3,10],centre=0.05)
 ;    -3 - (-19) = +16, 10 - (-9) = +19
-; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[16,19],scale=10.0)
-; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[16,19])
-; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[26,19]) -seems better
-; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[26,19]) -seems OK, no filter correction
-; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],/debug) -filter correction applied, but DIVCAM one...
-; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
-; image=getimage(shot=24860,frame=342,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
-; image=getimage(shot=24861,frame=694,channel=3,camera='FFC',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24815,frame=350,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[16,19],scale=10.0)
+; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[16,19])
+; image=getimage(shot=24815,frame=182,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[26,19]) -seems better
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[26,19]) -seems OK, no filter correction
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/debug) -filter correction applied, but DIVCAM one...
+; image=getimage(shot=24860,frame=760,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24860,frame=342,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24861,frame=694,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],masktop=30,/clean,/save)
+; image=getimage(shot=24861,frame=343,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70)
+; image=getimage(shot=24861,frame=762,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70)
+; maskbox = [282,128,300,155,363,138,378,159]		     
+; image=getimage(shot=24861,frame=343,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70,maskbox=maskbox) 
+; image=getimage(shot=24861,frame=762,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70,maskbox=maskbox)
+; image=getimage(shot=24869,frame=552,channel=3,camera='FFC',window='HL01',/plots,rotate=250,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70)
+; image=getimage(shot=24869,frame=662,channel=3,camera='FFC',window='HL01',/plots,rotate=250,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,masktop=70)
+; mb = [282,128,300,155,363,138,378,159]
+; mp=[14, 0,58,259,58,271,67,303,70,315,62,354,68,365,87,396,87,400,182,448,182,448,220,479,220,479,0,0,0]
+; image=getimage(shot=24869,frame=662,channel=3,camera='FFC',window='HL01',/plots,rotate=270,colour=5,shift=[21,19],/clean,/save,maskleft=65,maskbottom=280,maskpoly=mp,maskbox=mb)
+;
+;
 ;
 ; rdb - HL01
 ; image=getimage(shot=24808,frame=1,channel=2,/plots,colour=5,rotate=270,filter='empty',shift=[40,10],radius=500,centre=0.15)
@@ -63,6 +94,13 @@
 ; image=getimage(shot=24860,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)
 ; image=getimage(shot=24860,frame=11,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)  -not great, still not centred
 ; image=getimage(shot=24861,frame=16,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save)  
+; image=getimage(shot=24860,frame=11,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save,maskleft=125,maskbottom=250)
+; image=getimage(shot=24860,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save,maskleft=125,maskbottom=250)
+; image=getimage(shot=24861,frame=11,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save,maskleft=125,maskbottom=250)
+; image=getimage(shot=24861,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save,maskleft=125,maskbottom=250)
+; maskpoly=[12, 0,55,284,55,294,70,327,70,350,63,377,71,387,92,416,92,417,180,499,302,499,0,0,0]
+; image=getimage(shot=24861,frame=17,channel=2,/plots,colour=5,rotate=270,shift=[20,-35],/clean,/save,maskleft=125,maskbottom=250,maskpoly=maskpoly)
+;
 ;
 ; rba - HL07
 ; image=getimage(shot=24815,frame=521,channel=1,camera='FFC',colour=5,/plots,shift=[-20,-5],radius=275,/centre)
@@ -78,6 +116,20 @@
 ; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)
 ; image=getimage(shot=24860,frame=342,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)  -again, not great on the centring
 ; image=getimage(shot=24861,frame=692,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],colour=5,/save,/clean,masktop=10)
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100)
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100,maskbottom=225)
+; maskbox = [274,103,285,128,350,114,365,132]
+; image=getimage(shot=24860,frame=760,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100,maskbottom=225,maskbox=maskbox)  ; didn't change anything...
+; image=getimage(shot=24861,frame=342,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100,maskbottom=225)
+; image=getimage(shot=24861,frame=343,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100,maskbottom=225)
+; image=getimage(shot=24861,frame=762,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,masktop=10,maskleft=100,maskbottom=225)
+; maskpoly = [5, 1,16,220,16,511,82,512,1,1,1]
+; image=getimage(shot=24869,frame=552,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,maskleft=100,maskbottom=225,maskpoly=maskpoly)
+; image=getimage(shot=24869,frame=662,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,maskleft=100,maskbottom=225,maskpoly=maskpoly)
+; image=getimage(shot=24861,frame=762,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,maskleft=100,maskbottom=225,maskpoly=maskpoly)
+; maskpoly = [11, 0,10,173,10,367,44,370,52,396,56,399,139,475,149,475,447,512,447,511,0,0,0]
+; image=getimage(shot=24861,frame=762,channel=1,camera='FFC',window='HL07',/plots,shift=[43,36],/save,/clean,maskleft=100,maskbottom=225,maskpoly=maskpoly)
+;
 ;
 ; rdd - HL07
 ; image=getimage(shot=24808,frame=1,channel=4,/plots,colour=5,filter='empty',shift=[0,40],radius=500,centre=0.01) -center plasma image
@@ -89,6 +141,17 @@
 ; image=getimage(shot=24860,frame=17,channel=4,/plots,colour=5,shift=[5,-63],/clean,/save)  -better than using the 10, since the filter correciton is now applied (wasn before?)
 ; image=getimage(shot=24860,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save)
 ; image=getimage(shot=24861,frame=16,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save)
+; image=getimage(shot=24860,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310)
+; image=getimage(shot=24860,frame=17,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310)
+; image=getimage(shot=24861,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310)
+; image=getimage(shot=24861,frame=17,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310)
+; maskbox = [294,169,308,193,367,176,380,198]
+; image=getimage(shot=24861,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310,maskbox=maskbox)
+; image=getimage(shot=24861,frame=17,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,masktop=100,maskbottom=310,maskbox=maskbox)
+; maskpoly=[12, 0,90,154,83,291,91,384,109,389,119,413,124,415,207,458,212,463,249,499,271,499,0,0,0]
+; maskbox = [294,169,308,193,367,176,380,198]
+; image=getimage(shot=24861,frame=11,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,maskbottom=310,maskbox=maskbox,maskpoly=maskpoly)
+; image=getimage(shot=24861,frame=17,channel=4,/plots,colour=5,shift=[0,-63],/clean,/save,maskleft=115,maskbottom=310,maskbox=maskbox,maskpoly=maskpoly)
 ;
 ; Diamond
 ; --------

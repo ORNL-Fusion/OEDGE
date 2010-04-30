@@ -558,7 +558,7 @@ PRO LoadVignetteMap, image, date, line
 
       ENDIF
 
-      IF (shot GE 24800 AND shot LE 24869) THEN BEGIN  ; Detachment
+      IF (shot GE 24800 AND shot LE 25037) THEN BEGIN  ; Detachment
 
         path_cal = '~/fuse_data/mast/camera_calibration/'
 

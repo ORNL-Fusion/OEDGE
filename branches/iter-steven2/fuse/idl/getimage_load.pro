@@ -34,7 +34,7 @@ END
 ;
 ;
 FUNCTION LoadImage,device,camera,file,date,line,shot,channel,frame,path,  $
-                   calibrate,shift,radius,filter,window,clean,background, $
+                   calibrate,reg,shift,radius,filter,window,clean,background, $
                    plots
 
 
@@ -325,6 +325,25 @@ print,file
               ENDIF
               format = 'ipx_photron'
             ENDIF
+
+            IF (KEYWORD_SET(reg)) THEN BEGIN
+              image_path = "$MAST_IMAGES/" + STRING(reg/1000,FORMAT='(I3.3)') + $ 
+                           "/" +  STRTRIM(STRING(reg),2) 
+              CASE channel OF
+                1: image_path = image_path + "/rba0"  ; rba is usually on HL07 with DIVCAM 4
+                2: image_path = image_path + "/rbb0"  ; 
+                3: image_path = image_path + "/rbc0"  ; rbc is usually on HL01 with DIVCAM 2
+              ENDCASE
+              reg_file = image_path + STRTRIM(STRING(reg,FORMAT='(i5.5)'),2) + ".ipx"
+              reg_desc = ipx_open(reg_file) 
+              print,reg_file
+              print,desc.header.left  ,reg_desc.header.left    ; Didn't finish this because the current batch of images
+              print,desc.header.right ,reg_desc.header.right   ; do have the same window size for registration and data -- I 
+              print,desc.header.top   ,reg_desc.header.top     ; had mistakenly thought that they didn't...
+              print,desc.header.bottom,reg_desc.header.bottom
+              stop
+            ENDIF
+
             END
         ENDCASE        
         END
@@ -346,8 +365,6 @@ print,file
       image.gain    = desc.header.gain[0]
       image.xwin = [desc.header.left,desc.header.right ]
       image.ywin = [desc.header.top ,desc.header.bottom]
-
-
       IF (NOT KEYWORD_SET(window)) THEN window = desc.header.view
       IF (NOT KEYWORD_SET(filter)) THEN filter = 'unknown'
       image.cal.window_tag = window
@@ -361,6 +378,8 @@ print,file
 ;      print,'dim:',dim
       IF (dim[0] NE 1000 OR dim[1] NE 1000) THEN BEGIN
         IF (dim[0] EQ 500 AND dim[1] EQ 500) THEN BEGIN
+          image.xbin = 2
+          image.ybin = 2
           IF (clean) THEN BEGIN                ; Attempt to clean-up image here rather then after
             image_raw = CleanImage(image_raw)  ; calibration since the current 'cleaning' algorithm
             clean = 0                          ; fails...

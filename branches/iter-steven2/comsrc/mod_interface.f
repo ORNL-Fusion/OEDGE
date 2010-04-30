@@ -123,7 +123,7 @@
       ENDTYPE type_data
 
 
-      INTEGER :: MAXNDAT = 200,   
+      INTEGER :: MAXNDAT = 300,   
      .           MAXNTAG = 100,
      .           MAXNMAX = 100000, ! 100 KB allocated for each data item
      .           MAXJUMP = 100E+6  ! 100 MB is the max jump in memory allocation per item

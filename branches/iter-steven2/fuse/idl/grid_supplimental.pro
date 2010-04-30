@@ -4,6 +4,10 @@
 ; getb,'i-iwl-0002a.dat.cell',machine='EQU',equ='Baseline2008-li0.70.x4.equGRID_ITER_21JAN2001.equ'
 ; getb,'t-new-0001a.dat.cell',machine='EQU',equ='~/divimp/shots/ts2/600kA_LN_1cm/TS2_600kA_LN.x2.cr.equ'
 ; getb,'c-new-0000a.dat.cell',machine='EQU',equ='~/divimp/shots/cmod/1100303017_0138/cmod.1100303017.01380.x8.equ',/CHANGE_SIGN
+; getb,'j-bfg-0006d.dat.cell',machine='EQU',equ='~/divimp/shots/jet/68124_49000/JET_68124_49000.equ',/CHANGE_SIGN
+; getb,'j-bfg-0007d.dat.cell',machine='EQU',equ='~/divimp/shots/jet/68124_49000/JET_68124_49000.equ',/CHANGE_SIGN
+; getb,'j-bfg-0006e.dat.cell',machine='EQU',equ='~/divimp/shots/jet/68124_49000/JET_68124_49000.equ',/CHANGE_SIGN
+; getb,'m-det-0003a.dat.cell',machine='EQU',equ='~/divimp/shots/mast/24860/carre.24860_240.equ'
 ;
 ; ======================================================================
 ;

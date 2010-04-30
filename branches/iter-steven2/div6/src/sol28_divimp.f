@@ -697,6 +697,25 @@ c...      Finish off core rings:
         ENDDO
       ENDDO
 
+c...  
+c      nlpdato = 0
+c      nlpdati = 0
+c      DO ir = irsep, nrs
+c        IF (idring(ir).EQ.BOUNDARY) CYCLE
+c        nlpdato = nlpdato + 1
+c        nlpdati = nlpdati + 1
+c        in = idds(ir,2)
+c        lpdato(nlpdato,1) = REAL(ir)
+c        lpdato(nlpdato,2) = kteds(in)
+c        lpdato(nlpdato,3) = ktids(in)
+c        lpdato(nlpdato,4) = knds(in)
+c        in = idds(ir,1)
+c        lpdati(nlpdati,1) = REAL(ir)
+c        lpdati(nlpdati,2) = kteds(in)
+c        lpdati(nlpdati,3) = ktids(in)
+c        lpdati(nlpdati,4) = knds(in)
+c      ENDIF
+
       RETURN
  99   STOP
       END

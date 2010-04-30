@@ -125,6 +125,9 @@ FUNCTION GetImageDataStructure, xdim, ydim
                                                    
     xdim     : xdim                  ,  $  ;        
     ydim     : ydim                  ,  $  ; 
+
+    xbin     : 1                     ,  $  ; 
+    ybin     : 1                     ,  $  ; 
                                                    
     xwin     : [1,xdim]              ,  $  ;  Pixel x-range of image within [xdim,ydim] image space
     ywin     : [1,ydim]              ,  $  ; 

@@ -36,7 +36,12 @@ END
 ;
 FUNCTION cortex_LoadDIVIMPSummary, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   ions_requested        = inGetData('IONS_REQUESTED') 
   neutrals_launched     = inGetData('NEUTRALS_LAUNCHED') 
   neutrals_failed       = inGetData('NEUTRALS_FAILED') 
@@ -283,6 +288,7 @@ FUNCTION cortex_LoadPedestalModel, file
 
   inOpenInterface, file
   a        = inGetData('PED_A'       )
+  volume   = inGetData('CORE_VOLUME' )
   cross_ne = inGetData('PED_CROSS_NE') 
   cross_te = inGetData('PED_CROSS_TE')
   cross_ti = inGetData('PED_CROSS_TI')
@@ -293,17 +299,40 @@ FUNCTION cortex_LoadPedestalModel, file
   ti       = inGetData('PED_TI'      )
   inCloseInterface  
 
+  new_r = (FINDGEN(100.0) + 0.5) / 100.0 * a
+  new_deltar = r[1] - r[0]
+
+;print,new_r / a
+
+  new_dens = INTERPOL(dens,r,new_r)
+  new_te   = INTERPOL(te  ,r,new_r)
+  new_ti   = INTERPOL(ti  ,r,new_r)
+
+  new_volume = new_r * new_deltar
+  new_volume = new_volume / TOTAL(new_volume) * volume
+
+  PRINT,new_volume
+  print,TOTAL(new_volume)
+
+  volume = volfr * volume
+
   result = {                $
-    verison   : 1.0      ,  $
-    file      : file     ,  $
-    a         : a        ,  $
-    cross_ne  : cross_ne ,  $
-    cross_te  : cross_te ,  $
-    cross_ti  : cross_ti ,  $
-    r         : r        ,  $
-    dens      : dens     ,  $
-    te        : te       ,  $
-    ti        : ti    }
+    verison    : 1.0        ,  $
+    file       : file       ,  $
+    a          : a          ,  $
+    cross_ne   : cross_ne   ,  $
+    cross_te   : cross_te   ,  $
+    cross_ti   : cross_ti   ,  $
+    new_r      : new_r      ,  $
+    new_volume : new_volume ,  $
+    new_dens   : new_dens   ,  $
+    new_te     : new_te     ,  $
+    new_ti     : new_ti     ,  $
+    r          : r          ,  $
+    volume     : volume     ,  $
+    dens       : dens       ,  $
+    te         : te         ,  $
+    ti         : ti    }
   RETURN,result
 END
 ;
@@ -544,7 +573,11 @@ END
 ;
 FUNCTION cortex_LoadCoreProfiles, filename
 
-  inOpenInterface, filename
+  status = inOpenInterface(filename)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   div_influx  = inGetData('DIV_IMPURITY_INFLUX')  
   eir_influx  = inGetData('EIR_IMPURITY_INFLUX')  
