@@ -5305,11 +5305,10 @@ c
                         EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
                      endif
                   endif
-               endif
 c
 c              Pin data available
 c
-               if (pinsw.eq.1.or.pinsw.eq.4) then 
+               elseif (pinsw.eq.1.or.pinsw.eq.4) then 
 c
                   IF (CNEUTD.EQ.1) THEN
                      EMAX = CEMAXF * fydata(id,2)
