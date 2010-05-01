@@ -433,7 +433,7 @@ PRO AssignFilterData, image, filter, plots
   ENDIF
 
   PRINT,'FILTER ID=',filter,image.shot
-  IF (image.shot GE 24800 AND image.shot LE 24869) THEN BEGIN
+  IF (image.shot GE 24800 AND image.shot LE 25037) THEN BEGIN
     filter = STRTRIM(filter,2)
     CASE filter OF
       '434.0/1.5/25D (AC-M116-': filter = 'Dgamma 434.01/1.49 nm'
