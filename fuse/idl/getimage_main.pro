@@ -729,13 +729,15 @@ print,image.xbin,image.ybin
 
     max_val = MAX(image.data)
     image_data = image.data * scale
-;    i = WHERE(image_data GT max_val)
-;    IF (i NE -1) THEN image_rdata[i] = max_val
-    FOR ix = 0, image.xdim-1 DO BEGIN
-      FOR iy = 0, image.ydim-1 DO BEGIN
-        IF (image_data[ix,iy] GT max_val) THEN image_data[ix,iy] = max_val
-      ENDFOR
-    ENDFOR
+;    max_val = (2 ^ image.depth - 2)
+    i = WHERE(image_data GT max_val,count)
+    IF (count GT 0) THEN image_data[i] = max_val
+
+;    FOR ix = 0, image.xdim-1 DO BEGIN
+;      FOR iy = 0, image.ydim-1 DO BEGIN
+;        IF (image_data[ix,iy] GT max_val) THEN image_data[ix,iy] = max_val
+;      ENDFOR
+;    ENDFOR
 
     IF (image.ydim EQ 1) THEN BEGIN
     ENDIF ELSE BEGIN
