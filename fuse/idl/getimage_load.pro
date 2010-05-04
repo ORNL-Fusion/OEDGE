@@ -262,6 +262,7 @@ print,file
             desc = ipx_open(file) 
 ;help,desc.header,/struct
             image_raw = ipx_frame(desc,frame,time=time)
+            image_store = image_raw
 ;
             IF (background AND NOT KEYWORD_SET(calibrate)) THEN BEGIN
               file = image_path+STRTRIM(STRING(background),1)+'.ipx'
@@ -297,6 +298,7 @@ print,file
             PRINT,file
             desc = ipx_open(file) 
             image_raw = ipx_frame(desc,frame,time=time)
+            image_store = image_raw
 ;           Rebuild image to match calibration data:
             image_new = MAKE_ARRAY(1024,1024,/INTEGER,VALUE=0)
             width  = desc.header.width
@@ -502,6 +504,9 @@ print,file
   image.channel = channel
   image.frame   = frame
   image.time    = time
+
+  IF (KEYWORD_SET(image_store)) THEN  $
+    image = CREATE_STRUCT(image,'store',image_store)
 
   IF (NOT KEYWORD_SET(file)) THEN BEGIN
     PRINT,'ERROR getimage_LoadImage: File name not set'

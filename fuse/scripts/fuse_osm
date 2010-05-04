@@ -1,0 +1,181 @@
+#!/bin/tcsh
+#
+# ======================================================================
+#
+  set X86_64 = 0
+  if ( "$1" == "-64") then
+    shift
+    set X86_64 = 1
+  endif
+
+  set CORTEX_ONLY = 0
+  if ( "$1" == "-cortex" || "$1" == "-c" ) then
+    shift
+    set CORTEX_ONLY = 1
+  endif
+
+  setenv CASENAME $1
+  setenv PLOTNAME $2
+  setenv MACHINE  $3
+  setenv SHOTNAME $4
+#
+# ======================================================================
+#
+                         echo
+                         echo  "  Case         :  $CASENAME"
+                         echo  "  Plots        :  $PLOTNAME"
+                         echo  "  Device       :  $MACHINE"
+                         echo  "  Shot         :  $SHOTNAME"
+  if ($CORTEX_ONLY == 1) echo  "  Cortex only  :  yes"
+  if ($X86_64      == 1) echo  "  64 bit       :  yes"
+                         echo
+#
+# ======================================================================
+# Set directories:
+#
+  set DIR_SCRIPTS = $FUSEHOME/scripts
+  set DIR_DAT     = $FUSEHOME/input
+  set DIR_EXE     = $FUSEHOME_DATA/cases/$CASENAME
+  set DIR_EQU     = $FUSEHOME_DATA/$MACHINE/shots/$SHOTNAME
+
+  setenv RESDIR $FUSEHOME_DATA/results  # Legacy?
+
+  if ( $X86_64 ) then
+    set OSMDIR = $FUSEHOME/src/osm.64
+  else
+    set OSMDIR = $FUSEHOME/src/osm
+  endif
+  set OSMEXE = osm
+  set OSMEXT = osm
+
+  set EIRENE_DIR      = $FUSEHOME/src/eirene07
+  set EIRENE_EXE      = eirene 
+  set EIRENE_TEMPLATE = eirene07.dat
+  set EIRENE_SCRIPT   = fuse_osm_eirene
+  set EIRENE_DATABASE = $EIRENE_DIR/Eirene_04/Database
+
+  setenv GLI_HOME $FUSEHOME/libs
+#
+# ======================================================================
+# Create case execution directory:
+#
+  if ( -e $DIR_EXE ) rm -rf $DIR_EXE
+  mkdir $DIR_EXE
+  cd $DIR_EXE
+#
+# ======================================================================
+# Skip ahead to the post processor if and OSM run was not requested:
+#
+  if ( $CORTEX_ONLY == 1 ) goto CORTEX
+#
+# ======================================================================
+# Copy/link files that are required for the OSM run:
+#
+  cp $DIR_DAT/$CASENAME.$OSMEXT osm.input
+
+  if (-e $DIR_EQU) then
+    foreach FILENAME (`ls $FUSEHOME_DATA/$MACHINE/shots/default/*`)
+      ln -fs $FILENAME $DIR_EXE
+    end
+    foreach FILENAME (`ls $DIR_EQU/*`)
+      ln -fs $FILENAME $DIR_EXE
+    end
+  else
+    echo ERROR fuse_osm script: data directory $DIR_EQU not found
+    exit 1
+  endif
+
+  cp    $DIR_SCRIPTS/$EIRENE_SCRIPT     run_eirene
+  cp    $EIRENE_DIR/$EIRENE_TEMPLATE    eirene.template
+  ln -s $DIR_EQU/eirene06_triangles.raw triangles.raw
+
+  ln -s $EIRENE_DATABASE/Surfacedata/SPUTER SPUTER
+  ln -s $EIRENE_DATABASE/Surfacedata/TRIM   TRIM
+  ln -s $EIRENE_DATABASE/AMdata/amjuel.tex  AMJUEL
+  ln -s $EIRENE_DATABASE/AMdata/hydhel.tex  HYDHEL
+  ln -s $EIRENE_DATABASE/AMdata/h2vibr.tex  H2VIBR
+  ln -s $EIRENE_DATABASE/AMdata/methane.tex METHANE
+
+  cp $OSMDIR/$OSMEXE .
+
+  if ( $X86_64 ) then
+    ln -s $FUSEHOME/src/eirene06.64/eirene eirene06
+    ln -s $FUSEHOME/src/eirene07.64/eirene eirene07
+  else
+    ln -s $FUSEHOME/src/eirene06/eirene eirene06
+    ln -s $FUSEHOME/src/eirene07/eirene eirene07
+  endif
+
+  cp $GLI_HOME/gksfont.dat .
+#
+# ----------------------------------------------------------------------
+# Copy TRIANGLE executable, which is used to generate the grid for
+# EIRENE04,06,07:
+#
+  cp $FUSEHOME/src/triangle/triangle .
+#
+# ======================================================================
+# Execute OSM
+#
+  if (-e "osm_successful") rm osm_successful
+  ./$OSMEXE 
+  if (-e "osm_successful") then
+    echo " OSM RUN SUCCESSFUL" 
+  else   
+    echo " OSM RUN FAILED" 
+  endif
+#
+# ======================================================================
+# Process results:
+#
+#  mvc osm.log $CASENAME.stdout
+
+  mvc POSTSCPT.LIS  $CASENAME.ps
+  mvc grid.sup      $CASENAME.grid_sup
+  mvc grid.sup.out  $CASENAME.grid_sup_out
+  mvc fort.88       $CASENAME.log
+  mvc triangles.dat $CASENAME.triangles
+
+  mvc osm.raw $CASENAME.raw.osm
+  zipc $CASENAME.raw.osm
+
+  rename osm     $CASENAME     *.idl.*
+  rename objects $CASENAME.obj objects.*   # Find a way to fix the screen output on this!
+  rename output  $CASENAME.out output.*   
+
+  mvc eirene.transfer $CASENAME.eir
+  mvc eirene.13       $CASENAME.eir13
+  mvc eirene.15       $CASENAME.eir15
+  mvc eirene_log.dat  $CASENAME.eir.log
+  cpc triangles.raw   $CASENAME.raw.tri
+#
+# Move output files to the results directory:
+#
+  if (-e $CASENAME.grid_sup_out ) mv -f *.sup $DIR_EQU
+
+  mv -f $CASENAME.* $RESDIR
+#
+# ======================================================================
+# Execute CORTEX post processing code, if required:
+#
+  CORTEX:
+  if ( $PLOTNAME == 'none' ) then
+    if ( $CORTEX_ONLY == 1 ) echo WARNING fuse_osm script: Cortex run requested but no plot file specified
+  else
+    echo
+    cd $FUSEHOME/idl
+    idl cortex_run.pro -quiet -args $CASENAME $PLOTNAME.ctx $DIR_DAT $RESDIR && echo " CORTEX RUN SUCCESSFUL" || echo " CORTEX RUN FAILED"
+#    idl cortex_run.pro -quiet -args $CASENAME $PLOTNAME.ctx $DIR_DAT $RESDIR > $DIR_EXE/cortex.log && echo " CORTEX RUN SUCCESSFUL" || echo " CORTEX RUN FAILED"
+    echo
+    mvc cortex.log  $RESDIR/$CASENAME.log.ctx
+  endif
+#
+# ======================================================================
+# Clean
+#
+#  cd $DIR_EXE
+#  rm -r -f $CASENAME
+
+  exit 0
+
+

@@ -39,15 +39,10 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
-<<<<<<< .mine
-    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
+;    input_file = '/home/slisgo/fuse/input/' + input_file
+;    data_path  = '/home/slisgo/divimp/results/'
+    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
     data_path  = '/home/ITER/lisgos/divimp/results/'
-=======
-    input_file = '/home/slisgo/fuse/input/' + input_file
-    data_path  = '/home/slisgo/divimp/results/'
-;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
-;    data_path  = '/home/ITER/lisgos/divimp/results/'
->>>>>>> .r207
   ENDELSE
 
 
@@ -266,7 +261,7 @@ print,'frame',frame
           IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
                            data_array = CREATE_STRUCT(data_array,name,plot_data)
         ENDFOR
-;        status = cortex_PlotTargetProfiles(plot,data_array, ps=ps)
+        status = cortex_PlotTargetProfiles(plot,data_array, ps=ps)
         END
 ;     ------------------------------------------------------------------
       'PLOT 1D RADIAL PROFILE': BEGIN

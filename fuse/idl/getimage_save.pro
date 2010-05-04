@@ -1,9 +1,11 @@
 ;
 ; ======================================================================
 ;
-PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, order=order
+PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, order=order, colour=colour
 
   binary = 0
+
+  IF (NOT KEYWORD_SET(colour)) THEN colour = 3
 
   IF (KEYWORD_SET(calibrate)) THEN BEGIN
 
@@ -90,13 +92,16 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
 ;          ENDFOR
 ;        ENDFOR
 
+        max_val = MAX(image_data)
+        image_data = image_data * scale
+        i = WHERE(image_data GT max_val,count)
+        IF (count GT 0) THEN image_data[i] = max_val
 
         image_byte = BYTSCL(image_data)
-        WINDOW,6,xsize=image.xdim,ysize=image.ydim,retain=2
+        WINDOW,6,xsize=image.xdim,ysize=image.ydim,retain=2,/PIXMAP
         DEVICE, DECOMPOSED=0
-        LOADCT, 5
         WSET,6
-        LOADCT,3 ; 5
+        LOADCT, colour
         TV,image_byte,/order
         TVLCT, red, green, blue, /GET
         imageRGB = BYTARR(3, image.xdim, image.ydim)
@@ -104,6 +109,7 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
         imageRGB[1, *, *] = green[image_byte]  
         imageRGB[2, *, *] = blue [image_byte] 
         print,fname+'.jpg'
+
         IF (KEYWORD_SET(save_png)) THEN BEGIN
           WRITE_PNG, fname+'.png', imageRGB, /ORDER
           WDELETE,6
@@ -111,9 +117,34 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
         ENDIF ELSE BEGIN
           help,red
           WRITE_JPEG, fname+'.jpg', imageRGB, TRUE = 1, QUALITY = 100, /ORDER
+
           WDELETE,6
         ENDELSE
       ENDIF 
+
+
+      image_data = image.store2
+      max_val = MAX(image_data)
+      image_data = image_data * scale
+      i = WHERE(image_data GT max_val,count)
+      IF (count GT 0) THEN image_data[i] = max_val
+
+      image_byte = BYTSCL(image_data)
+      dim = SIZE(image_data,/DIMENSIONS)
+      WINDOW,6,xsize=dim[0],ysize=dim[1],retain=2,/PIXMAP
+      DEVICE, DECOMPOSED=0
+      WSET,6
+      LOADCT, colour
+      TV,image_byte,/order
+      TVLCT, red, green, blue, /GET
+      imageRGB = BYTARR(3, image.xdim, image.ydim)
+      imageRGB[0, *, *] = red  [image_byte]  
+      imageRGB[1, *, *] = green[image_byte]  
+      imageRGB[2, *, *] = blue [image_byte] 
+      print,fname+'_raw.jpg'
+      WRITE_JPEG, fname+'_raw.jpg', imageRGB, TRUE = 1, QUALITY = 100, /ORDER
+
+
 
       ; RAY file:
       OPENW,unit,fname+'.idl',/GET_LUN,ERROR=err    

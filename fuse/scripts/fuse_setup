@@ -1,0 +1,26 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Setup links and directories for a new FUSE installation
+# ======================================================================
+#
+mkdir $FUSEHOME_DATA
+mkdir $FUSEHOME_DATA/cases
+mkdir $FUSEHOME_DATA/results
+
+switch ( $1 )
+  case "mast":
+    set DEVICE = mast
+    set COMPILER = ifort
+    breaksw
+  default:
+    echo ERROR fuse_setup script: unknown device $1
+    breaksw
+endsw
+
+mkdir $FUSEHOME_DATA/$DEVICE
+mkdir $FUSEHOME_DATA/$DEVICE/shots
+
+ln -sf $FUSEHOME/src/osm/Makefile.$COMPILER    Makefile
+ln -sf $FUSEHOME/src/eirene/Makefile.$COMPILER Makefile
+
