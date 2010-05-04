@@ -89,8 +89,6 @@ FUNCTION ray,  $
   print,'file= ',file
   print,'path= ',path
 
-
-
   CASE 1 OF
     (KEYWORD_SET(shot) AND KEYWORD_SET(frame) AND KEYWORD_SET(channel)): BEGIN
       path = '~/fuse_data/mast/images/'
@@ -166,6 +164,90 @@ FUNCTION ray,  $
 
   SPAWN, command
 
+  path = home + 'images/'
+
+  a = LoadReconstruction(camera,shot,frame,channel,ext='cgm',path=path)
+
+return,a
+stop
+
+
+
+
+  RETURN, -1
+
+END
+;
+;
+;
+;
+; ======================================================================
+;
+
+FUNCTION ray,  $
+  camera=camera,   $ ;
+  shot=shot,       $ ;
+  frame=frame,     $ ;
+  time=time,       $ ;
+  channel=channel, $ ;
+  suffix=suffix  , $ ;
+  ext=ext        , $ ;
+  region =region , $ ;
+  sp_peak=sp_peak, $ ;
+  fit_sample = fit_sample, $ ;
+  fit_cutoff = fit_cutoff, $ ;
+  progress=progress, $ ;
+  file   =file   , $ ;
+  xpt    =xpt    , $ ;
+  spt    =spt    , $ ;
+  plots  =plots  , $ ;
+  ifile=ifile,     $ ;
+  refresh=refresh    ;
+
+  IF (NOT KEYWORD_SET(camera )) THEN camera  = 'DIVCAM'
+  IF (NOT KEYWORD_SET(ext    )) THEN ext     = 'cgm'
+  IF (NOT KEYWORD_SET(nsample)) THEN nsample = 20
+  IF (NOT KEYWORD_SET(path   )) THEN path = '~/fuse_data/mast/images/'
+
+  print,'file= ',file
+  print,'path= ',path
+
+  CASE 1 OF
+    (KEYWORD_SET(shot) AND KEYWORD_SET(frame) AND KEYWORD_SET(channel)): BEGIN
+      path = '~/fuse_data/mast/images/'
+      file_name = path + camera + '_' +                   $
+                  STRTRIM(STRING(shot   ),2) + '_' +  $
+                  STRTRIM(STRING(frame  ),2) + '_' +  $
+                  STRTRIM(STRING(channel),2) 
+      IF (KEYWORD_SET(suffix)) THEN file_name = file_name + '_' + STRTRIM(suffix,2)
+      file_name = file_name + '.' + STRTRIM(ext,2)
+      END
+    (KEYWORD_SET(file)): file_name = path + file 
+    ELSE: BEGIN
+      PRINT,'ERROR ray: Unsufficient input data to know what to do'
+      RETURN,-1
+      END
+  ENDCASE
+;    
+; Run RAY script that calls the external programme:
+; ----------------------------------------------------------------------
+
+;  Check if the geometry matrix has already been calcualted, or whether 
+;  REFRESH_MATRIX is set:
+
+   command =  home +  $
+    'scripts/run_ray'          + ' ' +  $
+    machine                    + ' ' +  $
+    STRTRIM(STRING(shot),1)    + ' ' +  $
+    STRTRIM(STRING(frame),1)   + ' ' +  $
+    camera                     + ' ' +  $
+    STRTRIM(STRING(channel),1) + ' ' +  $
+    case_name                  + ' ' +  $
+    image_name
+
+  PRINT, command
+
+  SPAWN, command
 
   path = home + 'images/'
 

@@ -6,7 +6,7 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
 
   PRINT
   PRINT,'----------------------- NEW PLOT -----------------------'
-  PRINT
+  PRINT,'PLOT OPTION=',plot.option
 
   MAXNYDATA = 7
   MAXNXDATA = 1000
@@ -49,6 +49,22 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
        subtitle = ['1','2','3']
        xtitle   = 'psi_n'
        ytitle   = ['1','2','3']
+       labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace = [1]
+       END
+    2: BEGIN
+       default_plot_type = 1
+       plot_xboarder = 0.05
+       plot_yboarder = 0.1
+       plot_xspacing = 0.100
+       plot_yspacing = 0.025
+       nplot = 4
+       plot_xn = 2
+       plot_yn = 2
+       title = plot.title 
+       subtitle = ['1','2','3','4']
+       xtitle   = 'psi_n'
+       ytitle   = ['1','2','3','4']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
        END
@@ -118,25 +134,56 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
 
           i = WHERE(val.target.location EQ 2, count_i)
 
-          ndata = MAKE_ARRAY(MAXNYDATA,/LONG,VALUE=0)
           xdata = MAKE_ARRAY(MAXNXDATA,MAXNYDATA,/FLOAT,VALUE=0.0)      
           ydata = MAKE_ARRAY(MAXNXDATA,MAXNYDATA,/FLOAT,VALUE=0.0)      
 
           CASE iplot OF
             1: BEGIN
-              ndata[  0] = count_i
               xdata[*,0] = val.target.psin[i]
               ydata[*,0] = val.target.psin[i]
               END
             2: BEGIN
-              ndata[  0] = count_i
               xdata[*,0] = val.target.psin[i]
               ydata[*,0] = val.target.psin[i]
               END
             3: BEGIN
-              ndata[  0] = count_i
               xdata[*,0] = val.target.psin[i]
               ydata[*,0] = val.target.psin[i]
+              END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          file = val.target.file
+          integral = ' '
+          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
+          ntrace = [1,1,1,1] ; Number of data lines on each plot
+
+          xdata = MAKE_ARRAY(MAXNXDATA,MAXNYDATA,/FLOAT,VALUE=-999.0)      
+          ydata = MAKE_ARRAY(MAXNXDATA,MAXNYDATA,/FLOAT,VALUE=-999.0)      
+
+          CASE iplot OF
+            1: BEGIN
+              i = WHERE(val.target.location[*,0] EQ 2, count_i)
+              xdata[0:count_i-1,0] = val.target.psin[i]
+              ydata[0:count_i-1,0] = val.target.jsat[i,0]
+              END
+            2: BEGIN
+              i = WHERE(val.target.location[*,0] EQ 2, count_i)
+              xdata[0:count_i-1,0] = val.target.psin[i]
+              ydata[0:count_i-1,0] = val.target.te[i,0]
+              END
+            3: BEGIN
+              i = WHERE(val.target.location[*,1] EQ 4, count_i)
+              xdata[0:count_i-1,0] = val.target.psin[i]
+              ydata[0:count_i-1,0] = val.target.jsat[i,1]
+              END
+            4: BEGIN
+              i = WHERE(val.target.location[*,1] EQ 4, count_i)
+              xdata[0:count_i-1,0] = val.target.psin[i]
+              ydata[0:count_i-1,0] = val.target.te[i,1]
               END
           ENDCASE
           END
@@ -216,6 +263,27 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
             3: 
             ELSE:
           ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                          dev_xsize, dev_ysize, charsize_labels, colors
+
+          OPLOT, [xmin,xmax], [0.0,0.0    ], LINESTYLE=1, COLOR=TrueColor('Black') 
+          OPLOT, [1.0 ,1.0 ], [0.0,1.0E+20], LINESTYLE=1, COLOR=TrueColor('Black') 
+          i = WHERE(val.y[*,0] NE -999.0,count_i)
+          IF (count_i GT 0) THEN BEGIN
+            x = val.x[i,0]
+            y = val.y[i,0]
+            j = SORT(x)
+            OPLOT, x[j], y[j], COLOR=TrueColor(colors[idata-1])
+            CASE iplot OF
+              1: 
+              2: 
+              3: 
+              ELSE:
+            ENDCASE
+          ENDIF
           END
 ;       ----------------------------------------------------------------
         ELSE: BEGIN  

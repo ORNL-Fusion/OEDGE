@@ -101,6 +101,9 @@ FUNCTION ProcessImage, inv, chisq_limit, fit_sample=fit_sample, fit_cutoff=fit_c
   res_shift = MAKE_ARRAY((nseg-1)*nypts,/LONG)
   res_i     = MAKE_ARRAY((nseg-1)*nypts,/LONG)
   res_frac  = MAKE_ARRAY((nseg-1)*nypts,/FLOAT)
+  res_dist  = MAKE_ARRAY((nseg-1)*nypts,/FLOAT)
+  res_ix    = MAKE_ARRAY((nseg-1)*nypts,/FLOAT)
+  res_iy    = MAKE_ARRAY((nseg-1)*nypts,/FLOAT)
 
   ix = inv.contour.ix
   iy = inv.contour.iy
@@ -111,6 +114,10 @@ FUNCTION ProcessImage, inv, chisq_limit, fit_sample=fit_sample, fit_cutoff=fit_c
     !P.BACKGROUND = TrueColor('White')
     plot,[0.0],[0.0],/nodata,xrange=[0.25,0.75],yrange=[0.0,5.0E+21],color=Truecolor('Black')
   ENDIF
+
+  dist  = 0.0
+  xpos1 = inv.contour.x[0]
+  ypos1 = inv.contour.y[0]
 
   FOR i = 1, N_ELEMENTS(ix)-1 DO BEGIN
 
@@ -150,6 +157,15 @@ FUNCTION ProcessImage, inv, chisq_limit, fit_sample=fit_sample, fit_cutoff=fit_c
       v2 =  d + c  
       e     = FINDGEN(nxpts) / FLOAT(nxpts-1)
       edata = FLTARR (nxpts) 
+
+      xpos2 = inv.contour.x[i-1] + t * (inv.contour.x[i] - inv.contour.x[i-1])
+      ypos2 = inv.contour.y[i-1] + t * (inv.contour.y[i] - inv.contour.y[i-1])
+      dist = dist + SQRT((xpos2 - xpos1)^2 + (ypos2 - ypos1)^2)
+      xpos1 = xpos2
+      ypos1 = ypos2
+
+      ixpos = FLOAT(ix[i-1]) + t * FLOAT(ix[i] - ix[i-1])
+      iypos = FLOAT(ix[i-1]) + t * FLOAT(ix[i] - ix[i-1])
 
 ;      print,'THETA:',theta,c,v1,v2
 
@@ -270,6 +286,10 @@ FUNCTION ProcessImage, inv, chisq_limit, fit_sample=fit_sample, fit_cutoff=fit_c
           res_chisq[icolour-1] = chisq
           res_i    [icolour-1] = i
           res_frac [icolour-1] = t
+
+          res_dist[icolour-1] = dist
+          res_ix  [icolour-1] = ixpos
+          res_iy  [icolour-1] = iypos
         ENDIF
       ENDFOR
 
@@ -289,6 +309,10 @@ FUNCTION ProcessImage, inv, chisq_limit, fit_sample=fit_sample, fit_cutoff=fit_c
     nx          : nxpts                   ,  $  ;
     ny          : nypts * (nseg-1)        ,  $  ; 
     segment     : res_i                   ,  $  ;
+    dist        : res_dist                ,  $  ;
+    ix          : res_ix                  ,  $  ;
+    iy          : res_iy                  ,  $  ;
+    peak        : res_fit[nxpts/2,*]      ,  $  ;
     distance    : res_frac                ,  $  ;
     chisq_limit : chisq_limit             ,  $  ; 
     chisq       : res_chisq               ,  $  ;
@@ -574,8 +598,13 @@ FUNCTION ContourImage, inv, sp_peak=sp_peak, spt=spt, xpt=xpt, plots=plots
 ;      ENDFOR
 ;    ENDFOR
 ;    TRIANGULATE, xtri, ytri, tr, b
-    xout = x[0] + (FINDGEN(101)-1.0) / 100.0 * (x[nseg-1] - x[0])
-    yout = y[0] + (FINDGEN(101)-1.0) / 100.0 * (y[nseg-1] - y[0]) 
+    xout = x[0] + (FINDGEN(101)) / 100.0 * (x[nseg-1] - x[0])
+    yout = y[0] + (FINDGEN(101)) / 100.0 * (y[nseg-1] - y[0]) 
+    dist = SQRT((xout - x[0])^2 + (yout - y[0])^2)
+
+    ix_out = FLOAT(ix[0]) + (FINDGEN(101)) / 100.0 * FLOAT(ix[nseg-1] - x[0])
+    iy_out = FLOAT(iy[0]) + (FINDGEN(101)) / 100.0 * FLOAT(iy[nseg-1] - y[0])
+
     n = N_ELEMENTS(xout)
 ;   Interpolation:
 ;    fit = TRIGRID(xtri, ytri, dtri, tr, xout=xout, yout=yout)  
@@ -600,9 +629,12 @@ FUNCTION ContourImage, inv, sp_peak=sp_peak, spt=spt, xpt=xpt, plots=plots
     y_spt : y_spt     ,  $  ;
     x_xpt : x_xpt     ,  $  ; 
     y_xpt : y_xpt     ,  $  ;
-    fit_x    : xout   ,  $     ;
-    fit_y    : yout   ,  $     ;
-    fit_data : line_fit2 }     ;
+    fit_x    : xout   ,  $  ;
+    fit_y    : yout   ,  $  ;
+    dist     : dist   ,  $  ;
+    data_ix  : ix_out ,  $  ;
+    data_iy  : iy_out ,  $  ;
+    data     : line_fit2 }     ;
 ;    fit2  : line_fit2 }     ;
  
   result = CREATE_STRUCT(inv, 'contour', contour)

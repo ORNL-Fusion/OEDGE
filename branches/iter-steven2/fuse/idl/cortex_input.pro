@@ -300,7 +300,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         nset  = 0
         plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
-        plot_struct.option       = 1
+        plot_struct.option       = FIX(data)
         plot_struct.title        = 'TARGET PLOT'
         plot_struct.default      = case_name
         plot_struct.case_name[0] = case_name

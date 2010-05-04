@@ -41,7 +41,8 @@ FUNCTION cortex_PlotMidplaneProfiles, plot, mid, ps=ps
   plot_xtitle = 'rho (m)'
   plot_ytitle = ['L (m)','ne (m-3)','v|| (m s-1)','Mach no.','p (Pa)','Te,i (eV)']
 
-  colors = ['Black','Red','Green','Blue','Orange','Purple', 'Hotpink', 'Darkseagreen', 'Silver']
+  colors = ['Black',   'Red','Green','Blue','Orange','Purple', 'Hotpink', 'Darkseagreen', 'Silver',  $
+            'Darkred', 'Greenyellow']
 
   plot_xboarder = 0.05
   plot_yboarder = 0.1

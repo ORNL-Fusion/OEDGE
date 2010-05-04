@@ -313,7 +313,11 @@ FUNCTION GetImage,           $
 
     image_data = ROTATE(image_data,rotate_code)
 
-  ENDIF
+    image_store2 = ROTATE(image.store,rotate_code)
+    image = CREATE_STRUCT(image,'store2',image_store2)     
+  ENDIF ELSE BEGIN
+    image = CREATE_STRUCT(image,'store2',image.store)     
+  ENDELSE
 ;
 
 ; *** Need to expand the image out to the same size as the calibration image...
@@ -776,7 +780,8 @@ print,image.xbin,image.ybin
 ; ----------------------------------------------------------------------
 ;
   IF (KEYWORD_SET(save) OR KEYWORD_SET(save_png)) THEN   $
-    SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, order=order
+    SaveImageData, image, path, scale, sname, save_png,  $
+      calibrate=calibrate, order=order, colour=colour
 ;
 ; ----------------------------------------------------------------------
 ;

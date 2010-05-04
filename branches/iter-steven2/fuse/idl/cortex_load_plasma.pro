@@ -3,7 +3,12 @@
 ;
 FUNCTION cortex_LoadWallProfiles, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   index           = inGetData('INDEX')
   index_pin       = inGetData('INDEX_PIN')
   r_cen           = inGetData('R_CEN')
@@ -77,7 +82,12 @@ END
 ;
 FUNCTION cortex_LoadNodeData, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   tube  = inGetData('TUBE') 
   s_opt = inGetData('S_OPT') 
   i_sym = inGetData('M_NODE') 
@@ -136,7 +146,12 @@ END
 ;
 FUNCTION cortex_LoadEireneData, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   index    = inGetData('INDEX') 
   pos      = inGetData('POS')   
   tube     = inGetData('TUBE') 
@@ -175,7 +190,12 @@ END
 ;
 FUNCTION cortex_LoadEnergySpectrum, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   bin           = inGetData('BIN')
   flux          = inGetData('FLUX')
   stdev         = inGetData('STDE') 
@@ -208,7 +228,12 @@ END
 ;
 FUNCTION cortex_LoadSourceData, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   index   = inGetData('INDEX') 
   tube    = inGetData('TUBE' ) 
   s       = inGetData('S'    ) 
@@ -251,7 +276,12 @@ END
 ;
 FUNCTION cortex_LoadPlasmaData, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   index = inGetData('INDEX') 
   tube  = inGetData('TUBE') 
   s     = inGetData('S') 
@@ -286,7 +316,12 @@ END
 ;
 FUNCTION cortex_LoadPedestalModel, file
 
-  inOpenInterface, file
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   a        = inGetData('PED_A'       )
   volume   = inGetData('CORE_VOLUME' )
   cross_ne = inGetData('PED_CROSS_NE') 
@@ -340,11 +375,17 @@ END
 ;
 FUNCTION cortex_LoadTargetData, file
 
-  inOpenInterface, file
-  tube    = inGetData('TAR_TUBE')
-  ring    = inGetData('TAR_RING')
-  rho     = inGetData('TAR_RHO')  
-  psin    = inGetData('TAR_PSIN')  
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
+  tube        = inGetData('TAR_TUBE')
+  ring        = inGetData('TAR_RING')
+  rho         = inGetData('TAR_RHO')  
+  psin        = inGetData('TAR_PSIN')  
+  lo_location = inGetData('TAR_LO_LOCATION')
   lo_s    = inGetData('TAR_LO_S')
   lo_p    = inGetData('TAR_LO_P')
   lo_jsat = inGetData('TAR_LO_JSAT')
@@ -354,6 +395,7 @@ FUNCTION cortex_LoadTargetData, file
   lo_pi   = inGetData('TAR_LO_PI')
   lo_te   = inGetData('TAR_LO_TE')
   lo_ti   = inGetData('TAR_LO_TI')
+  hi_location = inGetData('TAR_HI_LOCATION')
   hi_s    = inGetData('TAR_HI_S')
   hi_p    = inGetData('TAR_HI_P')
   hi_jsat = inGetData('TAR_HI_JSAT')
@@ -365,6 +407,7 @@ FUNCTION cortex_LoadTargetData, file
   hi_ti   = inGetData('TAR_HI_TI')
   inCloseInterface
 
+  location = MAKE_ARRAY(N_ELEMENTS(lo_location),2,/FLOAT,VALUE=0.0)
   s    = MAKE_ARRAY(N_ELEMENTS(lo_s   ),2,/FLOAT,VALUE=0.0)
   p    = MAKE_ARRAY(N_ELEMENTS(lo_p   ),2,/FLOAT,VALUE=0.0)
   jsat = MAKE_ARRAY(N_ELEMENTS(lo_jsat),2,/FLOAT,VALUE=0.0)
@@ -374,6 +417,9 @@ FUNCTION cortex_LoadTargetData, file
   pi   = MAKE_ARRAY(N_ELEMENTS(lo_pi  ),2,/FLOAT,VALUE=0.0)
   te   = MAKE_ARRAY(N_ELEMENTS(lo_te  ),2,/FLOAT,VALUE=0.0)
   ti   = MAKE_ARRAY(N_ELEMENTS(lo_ti  ),2,/FLOAT,VALUE=0.0)
+
+  location[*,0] = lo_location[*]
+  location[*,1] = hi_location[*]
 
   s   [*,0] = lo_s   [*]
   s   [*,1] = hi_s   [*]
@@ -401,6 +447,7 @@ FUNCTION cortex_LoadTargetData, file
     ring    : ring ,  $
     rho     : rho  ,  $
     psin    : psin ,  $
+    location : location,  $
     s       : s    ,  $
     p       : p    ,  $
     jsat    : jsat ,  $
@@ -415,9 +462,14 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadMidplaneProfiles, filename
+FUNCTION cortex_LoadMidplaneProfiles, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   ring   = inGetData('MID_RING')  
   r      = inGetData('MID_R')  
   rho    = inGetData('MID_RHO')  
@@ -433,7 +485,7 @@ FUNCTION cortex_LoadMidplaneProfiles, filename
 
   result = {  $
     version : 1.0      ,  $
-    file    : filename ,  $
+    file    : file     ,  $
     ring    : ring     ,  $
     r       : r        ,  $
     rho     : rho      ,  $
@@ -451,9 +503,14 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadEIRENEImpurityData, filename
+FUNCTION cortex_LoadEIRENEImpurityData, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
   grid_isep = inGetData('GRID_ISEP')
   grid_ipfz = inGetData('GRID_IPFZ')
   pos  = inGetData('POS')  
@@ -467,7 +524,7 @@ FUNCTION cortex_LoadEIRENEImpurityData, filename
 
   result = {  $
     version   : 1.0       ,  $
-    file      : filename  ,  $
+    file      : file      ,  $
     grid_isep : grid_isep ,  $
     grid_ipfz : grid_ipfz ,  $
     pos       : pos       ,  $
@@ -481,9 +538,13 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadDIVIMPImpurityData_Density, filename
+FUNCTION cortex_LoadDIVIMPImpurityData_Density, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   div_influx  = inGetData('DIV_IMPURITY_INFLUX')  
   eir_influx  = inGetData('EIR_IMPURITY_INFLUX')  
@@ -507,7 +568,7 @@ FUNCTION cortex_LoadDIVIMPImpurityData_Density, filename
 
   result = {  $
     version     : 1.0         ,  $
-    file        : filename    ,  $
+    file        : file        ,  $
     grid_isep   : grid_isep   ,  $
     grid_ipfz   : grid_ipfz   ,  $
     div_influx  : div_influx  ,  $
@@ -526,9 +587,13 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadDIVIMPImpurityData_Ionisation, filename
+FUNCTION cortex_LoadDIVIMPImpurityData_Ionisation, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   div_influx  = inGetData('DIV_IMPURITY_INFLUX')  
   eir_influx  = inGetData('EIR_IMPURITY_INFLUX')  
@@ -552,7 +617,7 @@ FUNCTION cortex_LoadDIVIMPImpurityData_Ionisation, filename
 
   result = {  $
     version     : 1.0         ,  $
-    file        : filename    ,  $
+    file        : file        ,  $
     grid_isep   : grid_isep   ,  $
     grid_ipfz   : grid_ipfz   ,  $
     div_influx  : div_influx  ,  $
@@ -571,9 +636,9 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadCoreProfiles, filename
+FUNCTION cortex_LoadCoreProfiles, file    
 
-  status = inOpenInterface(filename)
+  status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
     RETURN, result
@@ -609,7 +674,7 @@ FUNCTION cortex_LoadCoreProfiles, filename
 
   result = {  $
     version     : 1.0         ,  $
-    file        : filename    ,  $
+    file        : file        ,  $
     div_influx  : div_influx  ,  $
     eir_influx  : eir_influx  ,  $
     div_init_iz : div_init_iz ,  $
