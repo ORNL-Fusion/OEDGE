@@ -785,6 +785,8 @@ print,image.xbin,image.ybin
 ;
 ; ----------------------------------------------------------------------
 ;
+  CLOSE,/ALL  ; *** A BIT SLOPPY, AND DANGEROUS! but a quick fix for multiple calls running out of units... ***
+
   RETURN, image
 
 END

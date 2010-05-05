@@ -1,6 +1,31 @@
 * First ever CORTEX input file
 *
 
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+
+{EXIT}
+
+
+
+{EXIT}
+
+
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, MCR - SCALE FACTOR 0.14
   {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
@@ -74,15 +99,6 @@
 {EXIT}
 
 
-{PLOT 1D RADIAL PROFILE}  1    
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
 
 
 *
