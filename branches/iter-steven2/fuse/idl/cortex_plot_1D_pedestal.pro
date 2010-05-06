@@ -30,7 +30,9 @@ FUNCTION cortex_RadiationLoss, dens, te, A, impurity_fraction
 ; PLT Coll.-rad. excit. line power coefft. R & U (or none)             ***
 ; PLS Coll.-rad. specific line excit. power coefft. R & U (or none)
 
- te=adas_vector(low=10, high=1000, num=100) 
+PRINT,' ADAS CALL COMMENTED OUT! '
+stop
+; te=adas_vector(low=10, high=1000, num=100) 
  dens=MAKE_ARRAY(100,/FLOAT,VALUE=1.0E+18)
 
   run_adas405, uid='adas', elem=elem, year=96, te=te, dens=dens*1.0E-06, frac=frac

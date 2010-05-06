@@ -39,10 +39,17 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
+<<<<<<< .mine
+    input_file = '/home/slisgo/fuse/input/' + input_file
+    data_path  = '/home/slisgo/divimp/results/'
+;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
+;    data_path  = '/home/ITER/lisgos/divimp/results/'
+=======
 ;    input_file = '/home/slisgo/fuse/input/' + input_file
 ;    data_path  = '/home/slisgo/divimp/results/'
     input_file = '/home/ITER/lisgos/divimp/data/' + input_file
     data_path  = '/home/ITER/lisgos/divimp/results/'
+>>>>>>> .r220
   ENDELSE
 
 
