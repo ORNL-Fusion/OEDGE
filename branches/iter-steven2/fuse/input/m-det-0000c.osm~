@@ -1,4 +1,4 @@
-${TITLE}   'detached plasmas, loading data onto the small grid'
+${TITLE}   'detached plasmas, loading data onto the small grid, heat flux calculation'
 ${COMMENT} '24861 at 240 ms to start...'
 $
 $ I/O:
@@ -13,7 +13,7 @@ $ ======================================================================
 $
 '{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
-'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
 '{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
 $'{}          Execute DIVIMP                                  '    0   $ (0)
@@ -99,29 +99,29 @@ $ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M     
 $                                                              (m-3)    (m s-1)  (eV m-3}  (eV)   (eV)  (V)  
 $ inner divertor
   3.0   2  2    4    5   1.0                  0     0.0  0                                                
-  'lp_24861_220-240ms_2_inner_lower.dat'      1     0.0        1.0      0.0      0.0       0.0    0.0    0.0
-  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0    0.0
-  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0    0.0 
-  3.0   2  2    4    5   1.0                  0     0.0  0                                                
-  'lp_24861_220-240ms_2_inner_lower_hack.dat' 1     0.0        0.0      0.0      0.0       1.0    1.0    0.0
-  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0    0.0
-  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0    0.0 
+  'lp_24861_220-240ms_2_inner_lower.dat'      1     0.03       1.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
+  3.0   2  2    4    5   1.0                  0     0.0  0                                               
+  'lp_24861_220-240ms_2_inner_lower_hack.dat' 1     0.03       0.0      0.0      0.0       1.0    1.0   0.0
+  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0   0.0
+  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0   0.0 
 $ outer divertor
+  3.0   4  4    4    5   1.0                  0     0.0  0                                               
+  'lp_24861_220-240ms_4_outer_lower_seg6.dat' 1     0.032      1.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
   3.0   4  4    4    5   1.0                  0     0.0  0                                                
-  'lp_24861_220-240ms_4_outer_lower_seg6.dat' 1     0.0        1.0      0.0      0.0       0.0    0.0    0.0
-  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0    0.0
-  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0    0.0 
-  3.0   4  4    4    5   1.0                  0     0.0  0                                                
-  'lp_24861_220-240ms_4_outer_lower_hack.dat' 1     0.0        0.0      0.0      0.0       1.0    1.0    0.0
-  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0    0.0
-  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0    0.0 
+  'lp_24861_220-240ms_4_outer_lower_hack.dat' 1     0.032      0.0      0.0      0.0       1.0    1.0   0.0
+  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0   0.0
+  0.0                          0.0    0.0                      0.0      0.0      0.0       4.0    4.0   0.0 
 $ outer midplane
-  2.0   1  99   4    5   1.0                  3     0.0  2                                                
-  'ts_24861_230-250ms_inner_midplane.dat'     1     0.0        1.0      0.0      0.0       1.0    1.0   0.0
-  0.0                          1.0000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0
+  2.0   1  99   4    5   1.0                  3     0.0  0                                                
+  'ts_24861_230-250ms_inner_midplane.dat'     1     0.0396     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
+  0.0                          1.0000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
   0.0                          1.8000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
 $ PFZ upstream
-  2.0   13 18   3    6   0.01                 3     0.0  2                                                
+  2.0   13 18   3    6   0.01                 3     0.0  0                                                
   0.0                          0.750 -1.200                    1.0E+18  0.0      0.0     -99.0 -99.0    0.0
   0.0                          0.600 -1.500                    1.0E+15  0.0      0.0       2.0   2.0    0.0
 $

@@ -1,41 +1,44 @@
 * First ever CORTEX input file
 *
 
+{STRING} list_4200 i-fwp-4200a i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a 
+                   i-fwp-4205a i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+
+{STRING} list_4210 i-fwp-4210a i-fwp-4211a i-fwp-4212a i-fwp-4213a i-fwp-4214a 
+                   i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
+
+
+
+{PLOT 1D RADIAL PROFILE}  1   {CASE}  list_4200 sub a b
+  
+
 {PLOT 1D RADIAL PROFILE}  1    
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
-  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
-                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
-
-
-{PLOT 1D RADIAL PROFILE}  1    
-  {CASE DEFAULT} i-fwp-4200a {CASE} >c
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
-  {CASE DEFAULT} i-fwp-4200a {CASE} >c
-{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
-  {CASE DEFAULT} i-fwp-4200a {CASE} >c
-
+  {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+         i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
 {EXIT}
 
-
-
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
 {EXIT}
 
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, MCR - SCALE FACTOR 0.14
   {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
-  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  0223b : 0223y : 0223z : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+$  {XLABELS}  0223b : 0223y : 0223z : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+
   {YRANGE}   1.0E-06 1.0E-00
   {YLIMIT}   0.03
   {SCALE FACTOR} 0.14
-  {SET} 0213 {CASE DEFAULT} i-fwp-4210b {CASE} i-fwp-4211b i-fwp-4212b i-fwp-4213b 
-                                               i-fwp-4214b i-fwp-4215b i-fwp-4216b 
-                                               i-fwp-4217b i-fwp-4218b i-fwp-4219b
+  {SET} 0213 {CASE} i-fwp-0223b i-fwp-0223y i-fwp-0223z 
+                    i-fwp-4210b i-fwp-4211b i-fwp-4212b i-fwp-4213b 
+                    i-fwp-4214b i-fwp-4215b i-fwp-4216b 
+                    i-fwp-4217b i-fwp-4218b i-fwp-4219b
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, BELOW PORT PUFF - SCALE FACTOR 0.14
@@ -44,9 +47,20 @@
   {YRANGE}   1.0E-06 1.0E-00
   {YLIMIT}   0.03
   {SCALE FACTOR} 0.14
-  {SET} 0213 {CASE DEFAULT} i-fwp-4210b {CASE} i-fwp-4221b i-fwp-4222b i-fwp-4223b 
-                                               i-fwp-4224b i-fwp-4225b i-fwp-4226b 
-                                               i-fwp-4227b i-fwp-4228b i-fwp-4229b
+  {SET} 0213 {CASE} i-fwp-4220b i-fwp-4221b i-fwp-4222b i-fwp-4223b 
+                    i-fwp-4224b i-fwp-4225b i-fwp-4226b 
+                    i-fwp-4227b i-fwp-4228b i-fwp-4229b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, PUFF AT CROWN - SCALE FACTOR 0.14
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} 0213 {CASE} i-fwp-4230b i-fwp-4231b i-fwp-4232b i-fwp-4233b 
+                    i-fwp-4234b i-fwp-4235b i-fwp-4236b 
+                    i-fwp-4237b i-fwp-4238b i-fwp-4239b
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, PUFF AT PORT - SCALE FACTOR 0.14
@@ -55,21 +69,21 @@
   {YRANGE}   1.0E-06 1.0E-00
   {YLIMIT}   0.03
   {SCALE FACTOR} 0.14
-  {SET} 0213 {CASE DEFAULT} i-fwp-4210b {CASE} i-fwp-4231b i-fwp-4232b i-fwp-4233b 
-                                               i-fwp-4234b i-fwp-4235b i-fwp-4236b 
-                                               i-fwp-4237b i-fwp-4238b i-fwp-4239b
+  {SET} 0213 {CASE} i-fwp-4240b i-fwp-4241b i-fwp-4242b i-fwp-4243b 
+                    i-fwp-4244b i-fwp-4245b i-fwp-4246b 
+                    i-fwp-4247b i-fwp-4248b i-fwp-4249b
 
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
   {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
-  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  0293b : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   1.0E-06 1.0E-00
   {YLIMIT}   0.03
   {SCALE FACTOR} 0.28
-  {SET} 0213 {CASE DEFAULT} i-fwp-4210b {CASE} i-fwp-4241b i-fwp-4242b i-fwp-4243b 
-                                               i-fwp-4244b i-fwp-4245b i-fwp-4246b 
-                                               i-fwp-4247b i-fwp-4248b i-fwp-4249b
+  {SET} 0213 {CASE} i-fwp-0293b i-fwp-4240b i-fwp-4241b i-fwp-4252b i-fwp-4253b 
+                    i-fwp-4244b i-fwp-4255b i-fwp-4256b 
+                    i-fwp-4247b i-fwp-4258b i-fwp-4259b
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, PUFF ABOVE PORT - SCALE FACTOR 0.28
@@ -78,12 +92,39 @@
   {YRANGE}   1.0E-06 1.0E-00
   {YLIMIT}   0.03
   {SCALE FACTOR} 0.28
-  {SET} 0213 {CASE DEFAULT} i-fwp-4210b {CASE} i-fwp-4251b i-fwp-4252b i-fwp-4253b 
-                                               i-fwp-4254b i-fwp-4255b i-fwp-4256b 
-                                               i-fwp-4257b i-fwp-4258b i-fwp-4259b
+  {SET} 0213 {CASE} i-fwp-4260b i-fwp-4261b i-fwp-4262b i-fwp-4263b 
+                    i-fwp-4264b i-fwp-4265b i-fwp-4266b 
+                    i-fwp-4267b i-fwp-4268b i-fwp-4269b
 
 
 {EXIT}
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+
+{EXIT}
+
+
+
+{EXIT}
+
+
 
 {PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4200a {CASE} >c
 {PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4201a {CASE} >c

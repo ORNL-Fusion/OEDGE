@@ -22,6 +22,7 @@
     chmod u+x $script_name
     rm run_qsub_1 run_qsub_2
     qsub $script_name
+    #qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
 #    qstat -f | grep -i exec_host
     exit
   endif

@@ -1,1 +1,1 @@
-/home/ITER/lisgos/codes/divimp-iter-steven/eirene07/src/photons.f
+../../eirene07/src/photons.f

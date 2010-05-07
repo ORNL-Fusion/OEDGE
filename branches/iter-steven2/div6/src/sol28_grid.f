@@ -1546,6 +1546,9 @@ c...
           CALL DumpData_OSM('output.grid_targets','Done targets')
 
           CALL SaveFluidGridGeometry
+
+          CALL ProcessWall
+
         CASE DEFAULT
           CALL ER('ProcessGrid','Unrecognized grid source option',*99)
       ENDSELECT
