@@ -1,13 +1,21 @@
 ;
 ; ======================================================================
 ;
+; To start:
+;
+; > ln -s ~slisgo/fuse_data/mast/idl_data ~/fuse/idl/data_ray
+; > cd ~/fuse/idl      
+; > idl
+; > @ray_make
+; > .r psi_2010
+;
 ; Examples:
 ;
 ; result=ray_psi2010_process(1,/a_only,/plots)  align the strike- and x-points
-; result=ray_psi2010_process(1)                 process both lines and store the data in ./data_ray
+; result=ray_psi2010_process(1)                 process both lines and store the data in ./data_ray/ray_<ID>.sav
 ; ray_psi2010_plots,A,B,param1			A - reconstruction data index (see below in file), 
 ;					        B - plot number : 1 - comparison plot
-;								  2 - plot of reonstruction to window with proper aspect ratio
+;								  2 - plot of reconstruction to window with proper aspect ratio
 ;						param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file
