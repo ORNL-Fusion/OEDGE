@@ -123,6 +123,96 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
 
   RETURN, struct
 END
+
+;
+; ======================================================================
+;
+FUNCTION cortex_ApplySubstitutions, buffer
+
+  debug = 0
+
+  str = STRSPLIT(STRTRIM(buffer,2),'{',/EXTRACT)
+
+  ilist = 0
+  FOR i = 0, N_ELEMENTS(str)-1 DO BEGIN
+    IF (STRUPCASE(STRMID(str[i],0,6)) EQ 'STRING') THEN BEGIN
+      i1 = STRPOS(str[i],'}') + 1
+      i2 = STRLEN(str[i])
+      str1 = STRTRIM(STRMID(str[i],i1,i2),2)
+      i1 = STRPOS(str1,' ')
+      str2 = STRTRIM(STRMID(str1,0   ,i1          ),2)
+      str3 = STRTRIM(STRMID(str1,i1+1,STRLEN(str1)),2)
+      IF (ilist EQ 0) THEN BEGIN
+        list_tag = str2
+        list_str = str3
+      ENDIF ELSE BEGIN
+        list_tag = [list_tag,str2]
+        list_str = [list_str,str3]
+      ENDELSE
+      ilist = ilist + 1
+      str[i] = 'empty'
+    ENDIF
+  ENDFOR
+
+  IF (debug) THEN FOR i = 0, ilist-1 DO print,list_tag[i]
+  IF (debug) THEN FOR i = 0, ilist-1 DO print,list_str[i]
+
+  FOR i = 0, 0 DO BEGIN ; ilist-1 DO BEGIN
+    FOR j = 0, 4 DO BEGIN ; N_ELEMENTS(str)-1 DO BEGIN 
+
+      status = 1
+      WHILE (status) DO BEGIN
+        status = 0
+        str1 = str[j]
+        str2 = list_tag[i]
+        str3 = list_str[i]
+
+        IF (debug) THEN BEGIN
+          print,str1
+          print,str2
+          print,str3
+        ENDIF
+
+        len = STRLEN(str2)
+        FOR k = 0, STRLEN(str1)-len DO BEGIN 
+          IF (debug) THEN PRINT,'>'+str2+'<>'+STRMID(str1,k,len)+'<'
+          IF STRCMP(str2,STRMID(str1,k,len),/FOLD_CASE) THEN BEGIN
+            str_sub = STRSPLIT(STRTRIM(STRMID(str1,k),2),' ',/EXTRACT)
+            IF (N_ELEMENTS(str_sub) GE 4) THEN BEGIN
+              IF (str_sub[1] EQ 'sub') THEN BEGIN
+                IF (debug) THEN print,str3
+                str_tmp = str3
+                FOR l = 0, 99 DO str_tmp = STR_REPLACE(str_tmp,str_sub[2],str_sub[3])
+                str3 = str_tmp
+                IF (debug) THEN print,str3
+              ENDIF
+              IF (debug) THEN print,str1
+              str_tmp = STRMID(str1,0,k-1) + ' ' + str_sub[0]
+              FOR l = 4, N_ELEMENTS(str_sub)-1 DO str_tmp = str_tmp + ' ' + str_sub[l] 
+              str1 = str_tmp
+            ENDIF
+            IF (debug) THEN print,'working'
+            IF (debug) THEN  print,str1
+            str1 = STR_REPLACE(str1,str2,str3)
+            IF (debug) THEN print,str1
+            IF (debug) THEN print, 'done'
+            str[j] = str1
+            status = 1
+            BREAK
+          ENDIF
+        ENDFOR
+      ENDWHILE
+
+    ENDFOR
+  ENDFOR
+
+; Rebuild buffer:
+  buffer = ' '
+  FOR i = 0, N_ELEMENTS(str)-1 DO IF (str[i] NE 'empty') THEN buffer = buffer + ' {' + str[i]
+
+  RETURN, STRTRIM(buffer,2)
+
+END
 ;
 ; ======================================================================
 ;
@@ -156,6 +246,8 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
   buffer = monster_buffer + ' {EXIT} '
 
 ;print,monster_buffer
+
+  buffer = cortex_ApplySubstitutions(buffer)
 
   n = 0
   nchop = 0
@@ -192,7 +284,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
 ;   Extract tag and isolate data:
     i1 = STRPOS(buffer,'{')
     i2 = STRPOS(buffer,'}')
-    tag  = STRMID(buffer,i1+1,i2-i1-1)
+    tag  = STRUPCASE(STRMID(buffer,i1+1,i2-i1-1))
     data = STRMID(buffer,i2+1)
     data_array = STRSPLIT(data,/EXTRACT)
 

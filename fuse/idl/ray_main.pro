@@ -184,7 +184,7 @@ END
 ; ======================================================================
 ;
 
-FUNCTION ray,  $
+FUNCTION ray_new,  $
   camera=camera,   $ ;
   shot=shot,       $ ;
   frame=frame,     $ ;
