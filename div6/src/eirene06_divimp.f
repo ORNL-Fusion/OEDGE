@@ -811,6 +811,7 @@ c         standard surface that already exists:
         surface(nsurface)%reflect  = LOCAL
         surface(nsurface)%ewall    = -wtemp * 1.38E-23 / ECH
         surface(nsurface)%material = wmater
+        surface(nsurface)%iliin    = 2         ! Reflection type (ILIIN=2 is 100% absorbing)
         surface(nsurface)%ilcol    = 4         
         surface(nsurface)%surtxt   = '* tetrahedron dump surface'
       ENDIF

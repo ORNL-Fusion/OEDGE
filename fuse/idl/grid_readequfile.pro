@@ -1,6 +1,7 @@
 ; b=grid_readequfile('/home/ITER/lisgos/fuse_data/mast/shots/13018_250/13018_250_mod.equ',/debug)
 ; b=grid_readequfile('/home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ',/debug)
 ; b=grid_readequfile('/home/ITER/lisgos/divimp/shots/mast/24860/carre.24860_240.equ',/debug)
+; b=grid_readequfile('/home/ITER/lisgos/divimp/shots/mast/22421/22421_239.equ')
 ;
 ; ======================================================================
 ;

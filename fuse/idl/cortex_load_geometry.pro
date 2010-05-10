@@ -3,17 +3,17 @@
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadAnnotationData, code, filename
+FUNCTION cortex_LoadAnnotationData, code, file
 
 print,code
-print,filename
+print,file
 
   fp = 3
   FREE_LUN, fp
-  OPENR, fp, filename, error=err
+  OPENR, fp, file, error=err
   IF (err NE 0) THEN BEGIN
     PRINT,'ERROR cortex_LoadAnnotationData: Unable to open data file
-    PRINT,' FILE=',filename
+    PRINT,' FILE=',file
     RETURN, -1
   ENDIF
 
@@ -49,9 +49,13 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadWall, filename
+FUNCTION cortex_LoadWall, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   class  = inGetData('WALL_CLASS')  
   group  = inGetData('WALL_GROUP')  
@@ -82,9 +86,13 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadFluidGrid, filename
+FUNCTION cortex_LoadFluidGrid, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   grd_isep = inGetData('GRD_ISEP')  
   grd_ipfz = inGetData('GRD_IPFZ')  
@@ -171,9 +179,13 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadFluidGrid_Debug, filename
+FUNCTION cortex_LoadFluidGrid_Debug, file
 
-  inOpenInterface, filename
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
 
   ik   = inGetData('IK')  
   ir   = inGetData('IR')  
@@ -325,8 +337,8 @@ END
 PRO cortex_load_geometry
 ;  interface
 ;  path = '/home/ITER/lisgos/divimp/results/'
-;  filename = path + 'i-new-0006a.idl.fluid_grid'
-;  geo = LoadFluidGridGeometry(filename)
+;  file = path + 'i-new-0006a.idl.fluid_grid'
+;  geo = LoadFluidGridGeometry(file)
 END
 ;
 ; ======================================================================

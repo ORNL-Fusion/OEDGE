@@ -1211,7 +1211,9 @@ c        IF (ycen.GT.-2.0) CYCLE
 c        IF (ycen.LT.3.0) CYCLE
 c        IF (try(itry)%index(IND_IR).GT.1 .AND.
 c     .      try(itry)%index(IND_IR).LT.20) CYCLE 
-        IF (ycen.LT.3.6.OR.xcen.LT.4.5) CYCLE        
+c        IF (ycen.LT.3.6.OR.xcen.LT.4.5) CYCLE        ! ITER 1
+        IF (ycen.LT.3.0) CYCLE
+c        IF (ycen.LT.3.6.OR.xcen.LT.4.5) CYCLE        
 c        IF (ycen.GT.0.2.OR.xcen.GT.0.7) CYCLE        ! C-Mod inner wall puff study
 
 

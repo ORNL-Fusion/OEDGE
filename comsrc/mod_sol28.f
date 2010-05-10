@@ -96,6 +96,7 @@ c
          CHARACTER :: f_osm_load*512   ! Name of file to be loaded
 !...     Grid:
          INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
+         INTEGER   :: f_grid_load_method       ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
          CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
          INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
          INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
