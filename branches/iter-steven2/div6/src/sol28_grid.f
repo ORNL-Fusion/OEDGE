@@ -1247,7 +1247,7 @@ c      USE mod_grid_divimp
       INTEGER CalcPoint
       REAL*8  CalcPolygonArea
 
-      INTEGER   status, grd_load_method,ir,ik,iside,i1,i2,id,i,target,
+      INTEGER   status,ir,ik,iside,i1,i2,id,i,target,
      .          fp,itube,icell,iobj
       LOGICAL   debug
       REAL      deltap,deltas,area,volume
@@ -1260,9 +1260,9 @@ c      USE mod_grid_divimp
 
       debug = .FALSE.
 
-      grd_load_method = 1 ! 2
+c      opt%f_grid_load_method = 2 ! 1
 
-      SELECTCASE (grd_load_method)
+      SELECTCASE (opt%f_grid_load_method)
         CASE (GRD_LOAD_NEW)
           CALL LoadGeneralisedGrid
 c...      Assign geometry structures:

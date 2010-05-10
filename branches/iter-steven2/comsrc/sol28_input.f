@@ -536,6 +536,8 @@ c
           WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
         CASE('GRID FORMAT')
           CALL ReadOptionI(buffer,1,opt%f_grid_format)
+        CASE('GRID LOAD METHOD')
+          CALL ReadOptionI(buffer,1,opt%f_grid_load_method)
         CASE('GRID FILE')
           READ(buffer,*) cdum1,opt%f_grid_file
         CASE('GRID STRIP CELLS')
@@ -966,10 +968,12 @@ c...  OSM options:
       WRITE(opt_eir%f_eirene_15 ,'(512X)')
 
       opt%f_grid_format = 0
+      opt%f_grid_load_method = 2 
       WRITE(opt%f_grid_file,'(512X)')
       opt%f_grid_strip = 0
       opt%grd_ntdel = 0
       opt%grd_tdel  = 0
+
 
       opt%mat_opt  = 1
       opt%mat_file = 'materials.dat'
