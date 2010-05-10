@@ -5,6 +5,19 @@
 ; image=getimage(shot=15912,channel=1,frame=1,/raw,filter="empty")
 ; image=getimage(shot=724,channel=1,frame=1,/raw,filter="empty")
 ;
+;
+;
+; image=getimage(shot=22426,frame=187,channel=1,camera='FFC',/plots,/nocal,/colour,filter='Dalpha 656.0/10.0',/save)
+; image=getimage(shot=22421,frame= 41,channel=1,camera='FFC',/plots,/nocal,/colour,filter='Dalpha 656.0/10.0',/save)
+; image=getimage(shot=22421,frame=176,channel=1,camera='FFC',/plots,/nocal,/colour,filter='Dalpha 656.0/10.0',/save)
+;
+;
+;
+; 22426    
+; rba   41 0.238606    176 0.280026   
+; rdb   12 0.238559     14 0.279821    15 0.300456
+; rdd   12 0.238559     14 0.279821    15 0.300456
+;
 ; Detachment sessions
 ; -------------------
 ;

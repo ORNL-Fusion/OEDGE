@@ -69,6 +69,7 @@ FUNCTION ray,  $
   channel=channel, $ ;
   suffix=suffix  , $ ;
   ext=ext        , $ ;
+  full=full      , $ ;
   region =region , $ ;
   sp_peak=sp_peak, $ ;
   fit_sample = fit_sample, $ ;
@@ -108,7 +109,7 @@ FUNCTION ray,  $
     
   print,'file= ',file_name
 
-  result = GetInversion(file_name,shot=shot,frame=frame,channel=channel,region=region)
+  result = GetInversion(file_name,shot=shot,frame=frame,channel=channel,region=region,full=full)
 ;  result = GetInversion('FFC',24860,760,3,region=2)
   result = ContourImage(result, sp_peak=sp_peak,spt=spt,xpt=xpt,plots=plots)
   result = ProcessImage(result, 100.0, fit_sample=fit_sample, fit_cutoff=fit_cutoff, progress=progress,plots=plots)

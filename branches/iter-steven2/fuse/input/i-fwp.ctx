@@ -4,13 +4,41 @@
 {STRING} list_4200 i-fwp-4200a i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a 
                    i-fwp-4205a i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
 
-{STRING} list_4210 i-fwp-4210a i-fwp-4211a i-fwp-4212a i-fwp-4213a i-fwp-4214a 
-                   i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
+${STRING} list_4210 i-fwp-4210a i-fwp-4211a i-fwp-4212a i-fwp-4213a i-fwp-4214a 
+$                  i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
 
 
+{STRING} list_425x i-fwp-4250a i-fwp-4251a i-fwp-4252a i-fwp-4253a i-fwp-4254a 
+                   i-fwp-4255a i-fwp-4256a i-fwp-4257a i-fwp-4258a i-fwp-4259a
+                    
 
-{PLOT 1D RADIAL PROFILE}  1   {CASE}  list_4200 sub a b
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0293b : 0293d : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} b {CASE} i-fwp-0293b >d list_425x sub a b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0293b : 0293d : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} d {CASE} i-fwp-0293b >d list_425x sub a d
+
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b  {FOCUS}  5 
   
+{EXIT}
+  
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE} i-fwp-4201b i-fwp-4202b i-fwp-4203b i-fwp-4204b i-fwp-4205b 
+                                    i-fwp-4206b i-fwp-4207b i-fwp-4208b i-fwp-4209b
 
 {PLOT 1D RADIAL PROFILE}  1    
   {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
