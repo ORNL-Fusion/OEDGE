@@ -325,8 +325,9 @@ print,file
                 desc_filter = ipx_open(filter_file) 
                 filter = desc_filter.header.filter
               ENDIF
-              format = 'ipx_photron'
             ENDIF
+
+            format = 'ipx_photron'
 
             IF (KEYWORD_SET(reg)) THEN BEGIN
               image_path = "$MAST_IMAGES/" + STRING(reg/1000,FORMAT='(I3.3)') + $ 

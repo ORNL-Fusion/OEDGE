@@ -157,8 +157,8 @@ FUNCTION cortex_ApplySubstitutions, buffer
   IF (debug) THEN FOR i = 0, ilist-1 DO print,list_tag[i]
   IF (debug) THEN FOR i = 0, ilist-1 DO print,list_str[i]
 
-  FOR i = 0, 0 DO BEGIN ; ilist-1 DO BEGIN
-    FOR j = 0, 4 DO BEGIN ; N_ELEMENTS(str)-1 DO BEGIN 
+  FOR i = 0, ilist-1 DO BEGIN
+    FOR j = 0, N_ELEMENTS(str)-1 DO BEGIN 
 
       status = 1
       WHILE (status) DO BEGIN
@@ -209,6 +209,9 @@ FUNCTION cortex_ApplySubstitutions, buffer
 ; Rebuild buffer:
   buffer = ' '
   FOR i = 0, N_ELEMENTS(str)-1 DO IF (str[i] NE 'empty') THEN buffer = buffer + ' {' + str[i]
+
+;print,buffer
+;stop
 
   RETURN, STRTRIM(buffer,2)
 
