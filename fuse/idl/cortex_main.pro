@@ -372,7 +372,8 @@ print,'frame',frame
         wall = cortex_LoadWall(file + plot.data_file[1])
         IF (plot.nodes) THEN node = cortex_LoadNodeData(file + plot.data_file[2]) ELSE node = 0
         IF (plot.annotate_n NE 0) THEN BEGIN
-          annotate = -1
+          annotate = { version : 1.0 } 
+;          status_annotate = -1
           FOR i = 0, plot.annotate_n-1 DO BEGIN
             CASE plot.annotate_code[i] OF
               1: annotate_data = cortex_LoadAnnotationData(plot.annotate_code[i],plot.annotate_file[i]) 
@@ -384,9 +385,12 @@ print,'frame',frame
                 END
             ENDCASE
             name = 'data' + STRING(i+1,FORMAT='(I0)')
-            IF (annotate EQ -1) THEN annotate = CREATE_STRUCT(         name,annotate_data)  ELSE  $
-                                     annotate = CREATE_STRUCT(annotate,name,annotate_data)
+;            IF (status_annotate EQ -1) THEN annotate = CREATE_STRUCT(         name,annotate_data)  ELSE  $
+                                            annotate = CREATE_STRUCT(annotate,name,annotate_data)
+;            status_annotate = 0
           ENDFOR 
+;help,annotate,/struct
+;stop
         ENDIF ELSE annotate = 0 
         status = cortex_PlotFluidGrid(plot, grid, wall, node, annotate, 'main', 'full', ps=ps)
         END

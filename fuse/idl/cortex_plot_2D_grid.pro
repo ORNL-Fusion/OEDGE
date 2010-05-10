@@ -342,7 +342,11 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;
 ; Annotate the grid (add pretty stuff):
 ; ----------------------------------------------------------------------
-  IF (plot.annotate_n) THEN BEGIN
+  IF (plot.annotate_n GT 0) THEN BEGIN
+
+;help,plot.annotate,/struct
+;print,shit
+;stop
     FOR i = 0, plot.annotate_n-1 DO BEGIN
 ; check if the data is there... somehow...
       val = cortex_ExtractStructure(annotation,i+1)   

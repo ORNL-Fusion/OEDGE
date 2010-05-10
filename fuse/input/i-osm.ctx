@@ -20,7 +20,7 @@ $  {SHOW}  36   Red
 
 {PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  {NO FRAME}  
 {PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  
-                         {EQU PARAMS}  25  0.1  1.1
+                         {EQU PARAMS}  25  0.1  1.1  
                          {ZOOM}        4.0  2.5   7.0  6.0
 {EXIT}
 

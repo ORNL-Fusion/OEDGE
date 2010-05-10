@@ -21,14 +21,14 @@
     cat run_qsub_1 run_qsub_2 > $script_name
     chmod u+x $script_name
     rm run_qsub_1 run_qsub_2
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
+#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
     qsub $script_name
     qstat -f | grep -i exec
     #qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
