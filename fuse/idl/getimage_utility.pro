@@ -22,23 +22,28 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
   image.mask = 1.0
 
   IF (KEYWORD_SET(maskradius)) THEN BEGIN
+    PRINT, 'MASKRADIUS IS BROKEN FOR FFC...'
+    STOP 
     i = WHERE(image.map_r GE maskradius)
     IF (i[0] NE -1) THEN image.mask[i] = 0.0
   ENDIF
 
-  IF (KEYWORD_SET(maskleft  )) THEN image.mask[0          :maskleft-1  ,*] = 0.0
-  IF (KEYWORD_SET(maskright )) THEN image.mask[maskright-1:image.xdim-1,*] = 0.0
+  xshift = image.xshift
+  yshift = image.yshift
 
-  IF (KEYWORD_SET(masktop   )) THEN image.mask[*,0           :masktop-1   ] = 0.0
-  IF (KEYWORD_SET(maskbottom)) THEN image.mask[*,maskbottom-1:image.ydim-1] = 0.0
+  IF (KEYWORD_SET(maskleft  )) THEN image.mask[0                 :maskleft-1  +xshift,*] = 0.0
+  IF (KEYWORD_SET(maskright )) THEN image.mask[maskright-1+xshift:image.xdim-1       ,*] = 0.0
+
+  IF (KEYWORD_SET(masktop   )) THEN image.mask[*,0                  :masktop-1+yshift] = 0.0
+  IF (KEYWORD_SET(maskbottom)) THEN image.mask[*,maskbottom-1+yshift:image.ydim-1    ] = 0.0
 
   IF (NOT KEYWORD_SET(maskbox)) THEN maskbox = 0
-  IF (N_ELEMENTS(maskbox) GT 1) THEN image.mask[maskbox[0]-1:maskbox[2 ]-1,       $
-                                                maskbox[1]-1:maskbox[3 ]-1] = 0.0
-  IF (N_ELEMENTS(maskbox) GT 4) THEN image.mask[maskbox[4]-1:maskbox[6 ]-1,       $
-                                                maskbox[5]-1:maskbox[7 ]-1] = 0.0
-  IF (N_ELEMENTS(maskbox) GT 8) THEN image.mask[maskbox[8]-1:maskbox[10]-1,       $
-                                                maskbox[9]-1:maskbox[11]-1] = 2.0
+  IF (N_ELEMENTS(maskbox) GT 1) THEN image.mask[maskbox[0]-1+xshift:maskbox[2 ]-1+xshift,       $
+                                                maskbox[1]-1+yshift:maskbox[3 ]-1+yshift] = 0.0
+  IF (N_ELEMENTS(maskbox) GT 4) THEN image.mask[maskbox[4]-1+xshift:maskbox[6 ]-1+xshift,       $
+                                                maskbox[5]-1+yshift:maskbox[7 ]-1+yshift] = 0.0
+  IF (N_ELEMENTS(maskbox) GT 8) THEN image.mask[maskbox[8]-1+xshift:maskbox[10]-1+xshift,       $
+                                                maskbox[9]-1+yshift:maskbox[11]-1+yshift] = 2.0
 
   IF (KEYWORD_SET(maskpoly)) THEN BEGIN
     image_pixels = MAKE_ARRAY(2,LONG(image.xdim)*LONG(image.ydim),/LONG)
@@ -53,8 +58,8 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
       npts = maskpoly[pt1]
       pts = MAKE_ARRAY(2,npts,/LONG)
       FOR i1 = 1, npts DO BEGIN
-        pts[0,i1-1] = maskpoly[pt1+1+2*(i1-1)  ]
-        pts[1,i1-1] = maskpoly[pt1+1+2*(i1-1)+1]
+        pts[0,i1-1] = maskpoly[pt1+1+2*(i1-1)  ] + xshift
+        pts[1,i1-1] = maskpoly[pt1+1+2*(i1-1)+1] + yshift
       ENDFOR
       o=obj_new('IDLanROI',pts)
       p=o->containspoints(image_pixels)

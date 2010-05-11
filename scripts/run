@@ -30,7 +30,7 @@
 #    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
 #    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
     qsub $script_name
-    qstat -f | grep -i exec
+#    qstat -f | grep -i exec
     #qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
 #    qstat -f | grep -i exec_host
     exit

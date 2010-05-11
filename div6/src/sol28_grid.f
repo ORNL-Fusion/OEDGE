@@ -1533,11 +1533,20 @@ c...
           IF (status.EQ.-1) 
      .      CALL ER('SetupGrid','Geometry data not found',*99)
 
-          CALL LoadGrid('osm.raw')
+          CALL LoadGrid('osm_store.raw')
 
           CALL LoadLegacyData('osm_legacy.raw')
 
           CALL DumpData_OSM('output.grid_load','Done loading grid')
+
+
+          CALL osm_DeriveGridQuantities
+
+          CALL DumpData_OSM('output.grid_load','Done loading grid')
+c...
+          CALL LoadSupplimentalGridData
+          CALL DumpData_OSM('output.grid_sup','Done loading sup data')
+
 
           CALL GenerateTubeGroups
           CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
