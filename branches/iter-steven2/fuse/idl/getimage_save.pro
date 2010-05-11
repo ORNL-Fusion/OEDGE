@@ -137,7 +137,11 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
       LOADCT, colour
       TV,image_byte,/order
       TVLCT, red, green, blue, /GET
-      imageRGB = BYTARR(3, image.xdim, image.ydim)
+      imageRGB = BYTARR(3, dim[0], dim[1])
+
+print,image.xdim,image.ydim
+print,dim[0],dim[1]
+
       imageRGB[0, *, *] = red  [image_byte]  
       imageRGB[1, *, *] = green[image_byte]  
       imageRGB[2, *, *] = blue [image_byte] 

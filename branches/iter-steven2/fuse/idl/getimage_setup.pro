@@ -126,6 +126,9 @@ FUNCTION GetImageDataStructure, xdim, ydim
     xdim     : xdim                  ,  $  ;        
     ydim     : ydim                  ,  $  ; 
 
+    xshift   : 0                     ,  $  ;        
+    yshift   : 0                     ,  $  ; 
+
     xbin     : 1                     ,  $  ; 
     ybin     : 1                     ,  $  ; 
                                                    

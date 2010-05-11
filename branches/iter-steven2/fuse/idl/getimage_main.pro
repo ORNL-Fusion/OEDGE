@@ -616,14 +616,30 @@ FUNCTION GetImage,           $
         left   = image.xwin[0]
         width  = image.xwin[1] - image.xwin[0] + 1
         height = image.ywin[1] - image.ywin[0] + 1
-        print,top,left,width,height
+        print,left,top,width,height
         
+;        top_old = top
+;        left_old = left
+;        xframe = MIN([left,1024-left-width ])
+;        yframe = MIN([top ,1024-top -height])
+;        print,xframe,yframe
+;        xframe = MIN([xframe,yframe])
+;        yframe = xframe
+;        left   = xframe 
+;        width  = 1024 - 2 * xframe 
+;        top    = yframe 
+;        height = 1024 - 2 * yframe 
+;        print,left,top,width,height
+;        image.xshift = left_old - left
+;        image.yshift = top_old  - top
+
         image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
         print,width-1
         print,left-1
         print,left-1+width-1
         print,left-1+width-1
         print,top-1
+
         FOR iy = 0, height-1 DO BEGIN
           image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
         ENDFOR
