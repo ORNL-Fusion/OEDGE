@@ -154,6 +154,48 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       IF (KEYWORD_SET(image1)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
       IF (KEYWORD_SET(image2)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
 
+      END
+;   --------------------------------------------------------------------
+    3: BEGIN  ; Surface plot
+      IF (NOT KEYWORD_SET(ps)) THEN BEGIN
+        WINDOW,2,RETAIN=2,XSIZE=800,YSIZE=800
+        DEVICE, DECOMPOSED=0
+      ENDIF
+
+      IF (NOT (KEYWORD_SET(image1) OR KEYWORD_SET(image2))) THEN BEGIN
+        PRINT, 'NEED TO SAY /image1 OR /image2'
+        STOP
+      ENDIF
+      IF (KEYWORD_SET(image1)) THEN file = data.afile
+      IF (KEYWORD_SET(image2)) THEN file = data.bfile
+      IF (KEYWORD_SET(image1)) THEN data = data.a
+      IF (KEYWORD_SET(image2)) THEN data = data.b
+
+      LOADCT,3
+      !P.BACKGROUND = 255
+      SHADE_SURF, data.data, data.x, data.y, AZ=-45.0, AX=30.0, color=0,  $
+                  XTITLE='R (m)', YTITLE='Z (m)', ZTITLE = 'arb',  $
+                  CHARSIZE = 3.0, ZSTYLE=1,YSTYLE=1,XSTYLE=1
+
+      XYOUTS,0.50,0.98,title,/NORMAL,color=Truecolor('Black'),CHARSIZE=1.5, ALIGNMENT=0.5
+      XYOUTS,0.50,0.96,file ,/NORMAL,color=Truecolor('Black') , ALIGNMENT=0.5
+      END
+;   --------------------------------------------------------------------
+    4: BEGIN  ; Big contour plot with separatrix over plotted
+      IF (NOT KEYWORD_SET(ps)) THEN BEGIN
+        IF (KEYWORD_SET(image1)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
+        IF (KEYWORD_SET(image2)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
+        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.5,YSIZE=dim[1]*1.5
+        DEVICE, DECOMPOSED=0
+      ENDIF
+
+      IF (NOT (KEYWORD_SET(image1) OR KEYWORD_SET(image2))) THEN BEGIN
+        PRINT, 'NEED TO SAY /image1 OR /image2'
+        STOP
+      ENDIF
+      IF (KEYWORD_SET(image1)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
+      IF (KEYWORD_SET(image2)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
+
       file = '~/fuse_data/mast/shots/25028/25028_312.equ'
       b = grid_readequfile(file)
       CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Red'), /OVERPLOT
@@ -161,21 +203,6 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       file = '~/fuse_data/mast/shots/25029/25029_312.equ'
       b = grid_readequfile(file)
       CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Green'), /OVERPLOT
-
-      END
-;   --------------------------------------------------------------------
-    3: BEGIN  ; Surface plot
-      IF (NOT KEYWORD_SET(ps)) THEN BEGIN
-        WINDOW,2,RETAIN=2,XSIZE=500,YSIZE=500
-        DEVICE, DECOMPOSED=0
-      ENDIF
-
-      IF (KEYWORD_SET(image1)) THEN data = data.a
-      IF (KEYWORD_SET(image2)) THEN data = data.b
-
-;      SHADE_SRF, data.data.x, data.y, 
-;      CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Red'), /OVERPLOT
-
 
       END
 ;   --------------------------------------------------------------------
