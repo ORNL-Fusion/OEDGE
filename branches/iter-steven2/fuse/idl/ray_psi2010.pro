@@ -154,6 +154,29 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       IF (KEYWORD_SET(image1)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
       IF (KEYWORD_SET(image2)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
 
+      file = '~/fuse_data/mast/shots/25028/25028_312.equ'
+      b = grid_readequfile(file)
+      CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Red'), /OVERPLOT
+
+      file = '~/fuse_data/mast/shots/25029/25029_312.equ'
+      b = grid_readequfile(file)
+      CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Green'), /OVERPLOT
+
+      END
+;   --------------------------------------------------------------------
+    3: BEGIN  ; Surface plot
+      IF (NOT KEYWORD_SET(ps)) THEN BEGIN
+        WINDOW,2,RETAIN=2,XSIZE=500,YSIZE=500
+        DEVICE, DECOMPOSED=0
+      ENDIF
+
+      IF (KEYWORD_SET(image1)) THEN data = data.a
+      IF (KEYWORD_SET(image2)) THEN data = data.b
+
+;      SHADE_SRF, data.data.x, data.y, 
+;      CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Red'), /OVERPLOT
+
+
       END
 ;   --------------------------------------------------------------------
    ENDCASE
@@ -235,6 +258,52 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_24861_554_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_25028_603_3_HL01_rbc_Dalpha.cgm'
      END    
+;
+;         24861    24862   24866   24867   25028
+;    rbc   67 us    67 us   50 us  100 us   50 us
+;    rdb    2 ms     3 ms    1 ms            3 ms
+;    rba  200 us   200 us  100 us  200 us  167 ms
+;    rdd  600 us   200 us  200 us          200 ms
+;
+   21: BEGIN
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 201 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 * (67.0  / 50.0 )
+     bscale = 2.0 * (200.0 / 167.0) 
+     aspt = [0.280,-1.4775]
+     axpt = [0.70 ,-1.14 ]
+     bspt = [0.280,-1.465]
+     bxpt = [0.70 ,-1.14 ]
+     afile='FFC_25028_603_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_25028_603_1_HL07_rba_Dgamma.cgm'
+     END    
+   22: BEGIN
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 242 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 * (67.0  / 50.0 )
+     bscale = 2.0 * (200.0 / 167.0) 
+     aspt = [0.280,-1.430]
+     axpt = [0.705,-1.155]
+     bspt = [0.280,-1.420]
+     bxpt = [0.710,-1.140]
+     afile='FFC_25028_810_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_25028_810_1_HL07_rba_Dgamma.cgm'
+     END    
+   23: BEGIN
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 * (67.0  / 50.0 )
+     bscale = 2.0 * (200.0 / 167.0) 
+     aspt = [0.280,-1.420]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.4075]
+     bxpt = [0.730,-1.160]
+     afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
+     END    
    30: BEGIN
      title = 'REFERENCE and NO i/b GAS D_alpha : 24861 and 24862 at 201 ms'
      plot_option = 1
@@ -261,14 +330,20 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_24862_554_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_24862_554_1_HL07_rba_Dgamma.cgm'
      END    
-;
-;         24861    24862   24866   24867
-;    rbc   67 us    67 us   50 us  100 us
-;    rdb    2 ms     3 ms    1 ms
-;    rba  200 us   200 us  100 us  200 us
-;    rdd  600 us   200 us  200 us
-;
    40: BEGIN
+     title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 201 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 
+     bscale = 1.0 * (67.0 / 50.0)
+     aspt = [0.280,-1.475]
+     axpt = [0.70 ,-1.14 ]
+     bspt = [0.280,-1.4725]
+     bxpt = [0.70 ,-1.14 ]
+     afile='FFC_24861_554_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_24866_554_3_HL01_rbc_Dalpha.cgm'
+     END    
+   41: BEGIN
      title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 242 ms'
      plot_option = 1
      fit_sample=10
@@ -281,33 +356,46 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_24861_762_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_24866_766_3_HL01_rbc_Dalpha.cgm'
      END    
-   41: BEGIN
+   42: BEGIN
+     title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 201 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 * (67.0  /  50.0)
+     bscale = 2.0 * (200.0 / 100.0)
+     aspt = [0.280,-1.4725]
+     axpt = [0.70 ,-1.14 ]
+     bspt = [0.280,-1.4575]
+     bxpt = [0.70 ,-1.14 ]
+     afile='FFC_24866_554_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_24866_553_1_HL07_rba_Dgamma.cgm'
+     END    
+   43: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 242 ms'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
      bscale = 2.0 * (200.0 / 100.0)
-     aspt = [0.280,-1.415]
+     aspt = [0.280,-1.420]
      axpt = [0.685,-1.135]
      bspt = [0.280,-1.405]
      bxpt = [0.685,-1.135]
      afile='FFC_24866_766_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_24866_766_1_HL07_rba_Dgamma.cgm'
      END    
-   42: BEGIN
+   44: BEGIN
      title = 'DENSIT RAMP D_alpha / D_gamma : 24866 at 271 ms'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
      bscale = 2.0 * (200.0 / 100.0)
-     aspt = [0.280,-1.405]
+     aspt = [0.280,-1.410]
      axpt = [0.685,-1.135]
      bspt = [0.280,-1.390]
      bxpt = [0.685,-1.135]
      afile='FFC_24866_903_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_24866_903_1_HL07_rba_Dgamma.cgm'
      END    
-   43: BEGIN
+   45: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 312 ms'
      plot_option = 1
      fit_sample=10
@@ -377,6 +465,8 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
   ENDCASE
 
+  title = STRTRIM(STRING(option),2) + ': ' + title
+
   PRINT, '----------------------------------------------------------------------'
   PRINT, 'PROCESSING: ',title
   PRINT, '----------------------------------------------------------------------'
@@ -407,7 +497,7 @@ END
 PRO ray_psi2010_pass, option=option
 
   IF (NOT KEYWORD_SET(option)) THEN  $
-    option = [1, 10,11,12, 20, 30,31, 40,41,42,43, 50,51,52, 60]
+    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60]
 
   FOR i = 0, N_ELEMENTS(option)-1 DO result = ray_psi2010_process(option[i])
 END
@@ -419,7 +509,7 @@ PRO ray_psi2010_output, ps, option=option, nlevels=nlevels, pos=pos
   PSOPEN, filename = 'data_ray/' + ps + '.ps'
 
   IF (NOT KEYWORD_SET(option)) THEN  $
-    option = [1, 10,11,12, 20, 30,31, 40,41,42,43, 50,51,52, 60]
+    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60]
 
   FOR i = 0, N_ELEMENTS(option)-1 DO ray_psi2010_plots,option[i],1,param1=pos, ps='on'
 
