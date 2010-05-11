@@ -9,6 +9,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
    1: BEGIN
      l_shots  = [25028,25028,25029,25029,25029,25029]
      l_frames = [  603,  673,  392,  603,  810, 1158]
+     l_shots  = [25028,25028,25028]
+     l_frames = [  392,  810, 1158]
 
      channel = 3
      camera  = 'FFC'
@@ -30,6 +32,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
    2: BEGIN
      l_shots  = [25028,25028,25029,25029,25029]
      l_frames = [   14,   15,   11,   14,   17]
+     l_shots  = [25028,25028]
+     l_frames = [   11,   17]
 
      channel = 2
      rotate  = 270
@@ -51,6 +55,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
 
      l_shots  = [25028,25028,25029,25029,25029,25029]
      l_frames = [  603,  673,  392,  603,  810, 1158]
+     l_shots  = [25028,25028,25028]
+     l_frames = [  392,  810, 1158]
 
              ; 25028, 673 has a strong RHS artifact, and some strangeness near the target
 	     ; choose different frame perhaps
@@ -72,6 +78,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
    4: BEGIN
      l_shots  = [25028,25028,25029,25029,25029]
      l_frames = [   14,   15,   11,   14,   17]
+     l_shots  = [25028,25028]
+     l_frames = [   11,   17]
 
      channel = 4
      shift   = [0,-63]
