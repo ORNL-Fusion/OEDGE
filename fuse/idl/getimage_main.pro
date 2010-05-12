@@ -618,20 +618,21 @@ FUNCTION GetImage,           $
         height = image.ywin[1] - image.ywin[0] + 1
         print,left,top,width,height
         
-;        top_old = top
-;        left_old = left
-;        xframe = MIN([left,1024-left-width ])
-;        yframe = MIN([top ,1024-top -height])
-;        print,xframe,yframe
-;        xframe = MIN([xframe,yframe])
-;        yframe = xframe
-;        left   = xframe 
-;        width  = 1024 - 2 * xframe 
-;        top    = yframe 
-;        height = 1024 - 2 * yframe 
-;        print,left,top,width,height
-;        image.xshift = left_old - left
-;        image.yshift = top_old  - top
+; big stuff!
+        top_old = top
+        left_old = left
+        xframe = MIN([left,1024-left-width ])
+        yframe = MIN([top ,1024-top -height])
+        print,xframe,yframe
+        xframe = MIN([xframe,yframe])
+        yframe = xframe
+        left   = xframe 
+        width  = 1024 - 2 * xframe 
+        top    = yframe 
+        height = 1024 - 2 * yframe 
+        print,left,top,width,height
+        image.xshift = left_old - left
+        image.yshift = top_old  - top
 
         image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
         print,width-1
@@ -640,9 +641,20 @@ FUNCTION GetImage,           $
         print,left-1+width-1
         print,top-1
 
+ print,'MOD!',width MOD 2, height MOD 2
+
+        IF (width  MOD 2 NE 0) THEN width  = width  - 1   ; convenient for now in RAY...
+        IF (height MOD 2 NE 0) THEN height = height - 1
+
         FOR iy = 0, height-1 DO BEGIN
           image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
         ENDFOR
+
+        image_new[0                   :image.xshift-1,*] = 0
+        image_new[width-image.xshift-1:width-1       ,*] = 0
+        image_new[*,0                    :image.yshift-1] = 0
+        image_new[*,height-image.yshift-1:height-1      ] = 0
+
         image_data = image_new
         END
       'DIVCAM': BEGIN

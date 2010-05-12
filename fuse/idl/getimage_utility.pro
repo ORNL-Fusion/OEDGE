@@ -22,7 +22,9 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
   image.mask = 1.0
 
   IF (KEYWORD_SET(maskradius)) THEN BEGIN
-    PRINT, 'MASKRADIUS IS BROKEN FOR FFC...'
+    PRINT, ' '
+    PRINT, 'AUTOMATIC MASKRADIUS IS BROKEN FOR FFC...'
+    PRINT, ' '
     STOP 
     i = WHERE(image.map_r GE maskradius)
     IF (i[0] NE -1) THEN image.mask[i] = 0.0
@@ -30,6 +32,18 @@ PRO MaskImage, image, maskradius, maskleft, maskright, masktop, maskbottom, mask
 
   xshift = image.xshift
   yshift = image.yshift
+
+  width  = image.xdim
+  height = image.ydim
+
+  IF (xshift GT 0) THEN BEGIN
+    image.mask[0             :xshift-1,*] = 0.0
+    image.mask[width-xshift-1:width-1 ,*] = 0.0
+  ENDIF
+  IF (yshift GT 0) THEN BEGIN
+    image.mask[*,0              :yshift-1] = 0.0
+    image.mask[*,height-yshift-1:height-1] = 0.0
+  ENDIF
 
   IF (KEYWORD_SET(maskleft  )) THEN image.mask[0                 :maskleft-1  +xshift,*] = 0.0
   IF (KEYWORD_SET(maskright )) THEN image.mask[maskright-1+xshift:image.xdim-1       ,*] = 0.0

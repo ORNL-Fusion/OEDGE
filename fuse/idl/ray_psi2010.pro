@@ -14,16 +14,33 @@
 ; result=ray_psi2010_process(1,/a_only,/plots)  align the strike- and x-points
 ; result=ray_psi2010_process(1)                 process both lines and store the data in ./data_ray/ray_<ID>.sav
 ; ray_psi2010_plots,A,B,param1=param1		A - reconstruction data index (see below in file), 
-;					        B - plot number : 1 - comparison plot
-;								  2 - plot of reconstruction to window with proper aspect ratio
-;                                                                     YOU NEED TO SPECIFY /image1 or /image2
-;						param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
+;					        B - plot number : 
+;     1 - basic comparison plot
+;     	  param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
+;     2 - plot of reconstruction to window with proper aspect ratio
+;         YOU NEED TO SPECIFY /show_a or /show_b
+;         you can turn off the dotten line with /no_line
+;     3 - shaded surface plot, need to say /show_a or /show_b
+;     4 - plot of reconstruction with separatrix overlayed -- work in progress
+;     5 - plot of the two reconstructions showing where they intersect
+;         line 'a' - dark gray, line 'b' - light gray, both added - white
+;         Can specify /show_a or /show_b.
+;         Need to set the cutoff for each line, i.e. the fraction of the peak value below which the
+;         profile is set to zero, to isolate the basic contour of the emission -- this will be
+;         different for each line -- see example below.
+;
+;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
+;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
+;
 ; ray_psi2010_pass				reprocess and save all reconstructions
-; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file
+; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
+;
+;
 ;
 ; ======================================================================
 ;
-PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, ypos, title=title, fill=fill
+PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, ypos,  $
+                         title=title, fill=fill, no_line=no_line
 
   xmin = MIN(data.x)
   xmax = MAX(data.x)
@@ -42,7 +59,8 @@ PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, yp
   levels = (FINDGEN(nlevels) / FLOAT(nlevels)) * (MAX(data.data) - MIN(data.data)) + MIN(data.data)
   CONTOUR,data.data,data.x,data.y,  $
           levels=levels,c_colors=c_colors,/FILL,/OVERPLOT
-  OPLOT,data.contour.x,data.contour.y,LINESTYLE=1,color=Truecolor('White')
+  IF (NOT KEYWORD_SET(no_line)) THEN  $
+    OPLOT,data.contour.x,data.contour.y,LINESTYLE=1,color=Truecolor('White')
 
 ;  IF (KEYWORD_SET(fill)) THEN file_colour = 'White' ELSE file_colour = 'Black'
   file_colour = 'White' 
@@ -53,8 +71,8 @@ END
 ; ======================================================================
 ;
 PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1, fill=fill, ps=ps,  $
-               image1=image1,image2=image2,  $
-               nlevels=nlevels
+               show_a=show_a,show_b=show_b,  $
+               nlevels=nlevels,cutoff=cutoff,no_line=no_line
 
   CASE (SIZE(data,/TNAME)) OF
     'INT': BEGIN
@@ -73,7 +91,8 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
   IF (NOT KEYWORD_SET(title  )) THEN title   = data.title
   IF (NOT KEYWORD_SET(ascale )) THEN ascale  = data.ascale ELSE ascale = 1.0
   IF (NOT KEYWORD_SET(bscale )) THEN bscale  = data.bscale ELSE ascale = 1.0
-  IF (NOT KEYWORD_SET(color  )) THEN color   = 5
+  IF (NOT KEYWORD_SET(color  )) THEN  $
+    IF (option EQ 5) THEN color = 0 ELSE color = 5
   IF (NOT KEYWORD_SET(nlevels)) THEN nlevels = 50
 
   c_colors = LONG(FINDGEN(nlevels) * (255.0 / FLOAT(nlevels-1)) )
@@ -145,15 +164,13 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 ;   --------------------------------------------------------------------
     2: BEGIN  ; Big contour plot
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
-        IF (KEYWORD_SET(image1)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
-        IF (KEYWORD_SET(image2)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
+        IF (KEYWORD_SET(show_a)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
+        IF (KEYWORD_SET(show_b)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
         WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.5,YSIZE=dim[1]*1.5
         DEVICE, DECOMPOSED=0
       ENDIF
-
-      IF (KEYWORD_SET(image1)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
-      IF (KEYWORD_SET(image2)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
-
+      IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
+      IF (KEYWORD_SET(show_b)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
       END
 ;   --------------------------------------------------------------------
     3: BEGIN  ; Surface plot
@@ -162,14 +179,14 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
         DEVICE, DECOMPOSED=0
       ENDIF
 
-      IF (NOT (KEYWORD_SET(image1) OR KEYWORD_SET(image2))) THEN BEGIN
-        PRINT, 'NEED TO SAY /image1 OR /image2'
+      IF (NOT (KEYWORD_SET(show_a) OR KEYWORD_SET(show_b))) THEN BEGIN
+        PRINT, 'NEED TO SAY /show_a OR /show_b'
         STOP
       ENDIF
-      IF (KEYWORD_SET(image1)) THEN file = data.afile
-      IF (KEYWORD_SET(image2)) THEN file = data.bfile
-      IF (KEYWORD_SET(image1)) THEN data = data.a
-      IF (KEYWORD_SET(image2)) THEN data = data.b
+      IF (KEYWORD_SET(show_a)) THEN file = data.afile
+      IF (KEYWORD_SET(show_b)) THEN file = data.bfile
+      IF (KEYWORD_SET(show_a)) THEN data = data.a
+      IF (KEYWORD_SET(show_b)) THEN data = data.b
 
       LOADCT,3
       !P.BACKGROUND = 255
@@ -183,18 +200,18 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 ;   --------------------------------------------------------------------
     4: BEGIN  ; Big contour plot with separatrix over plotted
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
-        IF (KEYWORD_SET(image1)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
-        IF (KEYWORD_SET(image2)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
+        IF (KEYWORD_SET(show_a)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
+        IF (KEYWORD_SET(show_b)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
         WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.5,YSIZE=dim[1]*1.5
         DEVICE, DECOMPOSED=0
       ENDIF
 
-      IF (NOT (KEYWORD_SET(image1) OR KEYWORD_SET(image2))) THEN BEGIN
-        PRINT, 'NEED TO SAY /image1 OR /image2'
+      IF (NOT (KEYWORD_SET(show_a) OR KEYWORD_SET(show_b))) THEN BEGIN
+        PRINT, 'NEED TO SAY /show_a OR /show_b'
         STOP
       ENDIF
-      IF (KEYWORD_SET(image1)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
-      IF (KEYWORD_SET(image2)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
+      IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
+      IF (KEYWORD_SET(show_b)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title
 
       file = '~/fuse_data/mast/shots/25028/25028_312.equ'
       b = grid_readequfile(file)
@@ -203,6 +220,37 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       file = '~/fuse_data/mast/shots/25029/25029_312.equ'
       b = grid_readequfile(file)
       CONTOUR, b.psi, b.x, b.y, levels=[b.psi_boundary], color=TrueColor('Green'), /OVERPLOT
+
+      END
+;   --------------------------------------------------------------------
+    5: BEGIN  ; show intersection between images
+
+      IF (NOT KEYWORD_SET(ps)) THEN BEGIN
+        dim = SIZE(data.a.data,/DIMENSIONS)
+        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.7,YSIZE=dim[1]*1.7
+        DEVICE, DECOMPOSED=0
+      ENDIF
+
+      IF (NOT KEYWORD_SET(cutoff)) THEN cutoff = [0.1,0.1]
+
+      vala = cutoff[0] * MAX(data.a.data)
+      valb = cutoff[1] * MAX(data.b.data)
+
+      data.a.data[WHERE(data.a.data LT vala)] = 0.0
+      data.a.data[WHERE(data.a.data GE vala)] = 1.0
+      data.b.data[WHERE(data.b.data LT valb)] = 0.0
+      data.b.data[WHERE(data.b.data GE valb)] = 2.0
+
+      IF (NOT KEYWORD_SET(show_a) AND NOT KEYWORD_SET(show_b)) THEN BEGIN
+        data_c = data.a
+        data_c.data = data.a.data + data.b.data
+      ENDIF ELSE BEGIN
+        IF (KEYWORD_SET(show_a)) THEN data_c = data.a
+        IF (KEYWORD_SET(show_b)) THEN data_c = data.b
+      ENDELSE
+
+      ray_psi2010_contour, data_c, file, color, 'Black', nlevels,c_colors,  $
+                           0.16, 0.90, fill=fill, title=title, /no_line
 
       END
 ;   --------------------------------------------------------------------
@@ -490,6 +538,33 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_24869_552_3_HL01_rbc_CII.cgm'
      bfile='FFC_24869_552_1_HL07_rba_CIII.cgm'
      END    
+   70: BEGIN 
+     title = 'REFERENCE Dgamma and CIII : 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 2.0
+     aspt = [0.280,-1.4075]
+     axpt = [0.730,-1.160]
+     bspt = [0.280,-1.370]
+     bxpt = [0.730,-1.160]
+     afile='FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
+     bfile='FFC_25029_1158_1_HL07_rba_CIII.cgm'
+     END
+   71: BEGIN 
+     title = 'REFERENCE Dalpha and CII : 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 5.0
+     aspt = [0.280,-1.420]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.395]
+     bxpt = [0.725,-1.175]
+     afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_25029_1158_3_HL01_rbc_CII.cgm'
+     END
+
   ENDCASE
 
   title = STRTRIM(STRING(option),2) + ': ' + title
