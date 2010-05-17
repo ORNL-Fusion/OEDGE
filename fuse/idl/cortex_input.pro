@@ -71,7 +71,10 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     ytitle          : 'default'         ,  $
     xlabels         : string_array      ,  $
     charsize        : 1.0               ,  $
-    color_table     : 3                 ,  $
+    thick           : 1.0               ,  $
+    xstyle          : 1                 ,  $
+    ystyle          : 1                 ,  $
+    color_table     : 5                 ,  $
     default         : 'default'         ,  $
     case_name       : string_array      ,  $
     case_set        : [0,long_array]    ,  $
@@ -79,7 +82,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     data_path       : default.data_path ,  $
     data_file       : string_array      ,  $
     tubes           : long_array        ,  $
-    state           : -1                ,  $
+    state           : 0                 ,  $
     nodes           : 0                 ,  $
     annotate_n      : 0                 ,  $  ; Number of annotations requested for 2D fluid grid plot
     annotate_code   : long_array        ,  $  ; Type of annotation
@@ -515,7 +518,8 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct.data_file[3] = 'idl.fluid_sources'
         plot_struct.data_file[4] = 'idl.fluid_eirene'
         plot_struct.data_file[5] = 'idl.eirene_imp'
-        plot_struct.data_file[6] = 'idl.divimp_imp'
+        plot_struct.data_file[6] = 'idl.divimp_imp_density'
+        plot_struct.data_file[7] = 'idl.divimp_imp_ionisation'
         END
 ;     ------------------------------------------------------------------
       'TITLE'        : plot_struct.title        = STRTRIM(data,2)
@@ -539,6 +543,9 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'NODES'        : plot_struct.nodes        = 1
       'XLABELS'      : plot_struct.xlabels      = STRSPLIT(data,':',/EXTRACT)
       'CHARSIZE'     : plot_struct.charsize     = FLOAT(data)
+      'THICK'        : plot_struct.thick        = FLOAT(data)
+      'XSTYLE'       : plot_struct.xstyle       = FIX(data)
+      'YSTYLE'       : plot_struct.ystyle       = FIX(data)
       'COLOR TABLE'  : plot_struct.color_table  = FIX(data)
       'FOCUS'        : plot_struct.focus        = LONG(STRTRIM(data,2))
       'WARNINGS'     : plot_struct.warnings     = 1
@@ -590,6 +597,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
             ENDELSE
           ENDIF ELSE BEGIN
             case_default = new_case
+            IF (i EQ 0 AND nset EQ 0) THEN ncase = 0  ;  NEW RULE! WILL SCREW SOME THINGS UP! -SL, 14/06.2010
           ENDELSE
           plot_struct.case_name[ncase] = new_case
           plot_struct.case_set [ncase] = nset

@@ -286,8 +286,8 @@ print,'frame',frame
               grid   = cortex_LoadFluidGrid (path + plot.case_name[i] + '.' + plot.data_file[0])
               wall   = cortex_LoadWall      (path + plot.case_name[i] + '.' + plot.data_file[1])
               plasma = cortex_LoadPlasmaData(path + plot.case_name[i] + '.' + plot.data_file[2])
-              target = cortex_LoadTargetData(path + plot.case_name[i] + '.' + plot.data_file[3])
-
+;              target = cortex_LoadTargetData(path + plot.case_name[i] + '.' + plot.data_file[3])
+              target = -1
               FOR j = 1, plot.line_seg_n DO BEGIN
                 inter = cortex_SliceGrid(plot.line_seg[0+(j-1)*4:3+(j-1)*4],grid,status)
                 IF (status EQ -1) THEN BEGIN

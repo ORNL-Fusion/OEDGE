@@ -54,6 +54,7 @@ FUNCTION GetImage,           $
    depth      = depth,       $
    window     = window,      $
    nocal      = nocal,       $
+   no_square  = no_square,   $
    plots      = plots
 ;
 ; ----------------------------------------------------------------------
@@ -619,20 +620,22 @@ FUNCTION GetImage,           $
         print,left,top,width,height
         
 ; big stuff!
-        top_old = top
-        left_old = left
-        xframe = MIN([left,1024-left-width ])
-        yframe = MIN([top ,1024-top -height])
-        print,xframe,yframe
-        xframe = MIN([xframe,yframe])
-        yframe = xframe
-        left   = xframe 
-        width  = 1024 - 2 * xframe 
-        top    = yframe 
-        height = 1024 - 2 * yframe 
-        print,left,top,width,height
-        image.xshift = left_old - left
-        image.yshift = top_old  - top
+        IF (NOT KEYWORD_SET(no_square)) THEN BEGIN
+          top_old = top
+          left_old = left
+          xframe = MIN([left,1024-left-width ])
+          yframe = MIN([top ,1024-top -height])
+          print,xframe,yframe
+          xframe = MIN([xframe,yframe])
+          yframe = xframe
+          left   = xframe 
+          width  = 1024 - 2 * xframe 
+          top    = yframe 
+          height = 1024 - 2 * yframe 
+          print,left,top,width,height
+          image.xshift = left_old - left
+          image.yshift = top_old  - top
+        ENDIF
 
         image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
         print,width-1
@@ -650,10 +653,10 @@ FUNCTION GetImage,           $
           image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
         ENDFOR
 
-        image_new[0                   :image.xshift-1,*] = 0
-        image_new[width-image.xshift-1:width-1       ,*] = 0
-        image_new[*,0                    :image.yshift-1] = 0
-        image_new[*,height-image.yshift-1:height-1      ] = 0
+;        image_new[0                   :image.xshift-1,*] = 0
+;        image_new[width-image.xshift-1:width-1       ,*] = 0
+;        image_new[*,0                    :image.yshift-1] = 0
+;        image_new[*,height-image.yshift-1:height-1      ] = 0
 
         image_data = image_new
         END

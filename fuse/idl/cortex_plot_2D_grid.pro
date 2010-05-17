@@ -20,6 +20,13 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
   window_xsize = 700
   window_ysize = 700
 
+  !P.CHARSIZE = plot.charsize
+  !P.CHARTHICK = plot.thick
+  !P.THICK    = plot.thick
+  !X.THICK    = plot.thick
+  !Y.THICK    = plot.thick
+  !Z.THICK    = plot.thick
+
   !P.BACKGROUND = TrueColor('White')
 
   IF (mode EQ 'subordinate' OR mode EQ 'overlay') THEN BEGIN
@@ -169,14 +176,17 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;
 ;   Store the plot information
 ;   ----------------------------------------------------------------------
-    plot.xrange   = [xmin,xmax]
-    plot.yrange   = [ymin,ymax]
+;    plot.xrange   = [xmin,xmax]
+;    plot.yrange   = [ymin,ymax]
+    plot.zoom = [xmin,ymin,xmax,ymax]
+    xrange = [xmin,xmax]
+    yrange = [ymin,ymax]
     plot.position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 ;
 ;   Create the axes:
 ;   ----------------------------------------------------------------------
     IF (type NE 'equ') THEN  $
-      PLOT, plot.xrange, plot.yrange, /NODATA, XSTYLE=1, YSTYLE=1, /NOERASE,    $
+      PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1, /NOERASE,    $
             POSITION=plot.position,                                    $
             TITLE=plot_title, XTITLE=plot_xtitle, YTITLE=plot_ytitle,  $
             COLOR=TrueColor('Black')
@@ -193,7 +203,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
       levels = plot.equ_params[1] * (FINDGEN(plot.equ_params[0]) / plot.equ_params[0] - 0.5) +  $
                plot.equ_params[2]
       CONTOUR, grid.psin, grid.x, grid.y, LEVELS=levels, XSTYLE=1, YSTYLE=1, /NOERASE, $
-               POSITION=plot.position,  XRANGE=plot.xrange,YRANGE=plot.yrange,  $
+               POSITION=plot.position,  XRANGE=xrange,YRANGE=yrange,  $
                TITLE=plot_title, XTITLE=plot_xtitle, YTITLE=plot_ytitle,  $
                COLOR=TrueColor('Black')
       END

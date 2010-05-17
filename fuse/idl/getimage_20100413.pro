@@ -7,10 +7,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
 
   CASE option OF
    1: BEGIN
-     l_shots  = [25028,25028,25029,25029,25029,25029]
-     l_frames = [  603,  673,  392,  603,  810, 1158]
-     l_shots  = [25028,25028,25028]
-     l_frames = [  392,  810, 1158]
+     l_shots  = [25028,25028,25028,25028,25028,25029,25029,25029,25029]
+     l_frames = [  392,  603,  673,  810, 1158,  392,  603,  810, 1158]
 
      channel = 3
      camera  = 'FFC'
@@ -53,10 +51,8 @@ PRO getimage_20100413,option,plots=plots,scale=scale
      maskpoly = [14, 0,49,146,49,263,57,329,66,332,73,362,76,366,85,392,  $
                     92,394,175,424,178,461,218,510,241,511,0,0,0]
 
-     l_shots  = [25028,25028,25029,25029,25029,25029]
-     l_frames = [  603,  673,  392,  603,  810, 1158]
-     l_shots  = [25028,25028,25028]
-     l_frames = [  392,  810, 1158]
+     l_shots  = [25028,25028,25028,25028,25028,25029,25029,25029,25029]
+     l_frames = [  392,  603,  673,  810, 1158,  392,  603,  810, 1158]
 
              ; 25028, 673 has a strong RHS artifact, and some strangeness near the target
 	     ; choose different frame perhaps

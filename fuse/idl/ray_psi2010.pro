@@ -564,6 +564,87 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_25029_1158_3_HL01_rbc_CII.cgm'
      END
+   80: BEGIN 
+     title = 'REFERENCE Ddelta: 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 1.0
+     aspt = [0.280,-1.420]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.420]
+     bxpt = [0.725,-1.175]
+     afile='DIVCAM_25028_17_2_HL01_rdb_Ddelta.cgm'
+     bfile='DIVCAM_25029_17_2_HL01_rdb_Ddelta.cgm'
+     END
+   81: BEGIN 
+     title = 'REFERENCE Dbeta: 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 1.0
+     aspt = [0.280,-1.4075]
+     axpt = [0.730,-1.160]
+     bspt = [0.280,-1.4075]
+     bxpt = [0.730,-1.160]
+     afile='DIVCAM_25028_17_4_HL07_rdd_Dbeta.cgm'
+     bfile='DIVCAM_25029_17_4_HL07_rdd_Dbeta.cgm'
+     END
+;  =====================================================================
+;  =====================================================================
+;  Comparing new and old inversions of 20100413:
+   100: BEGIN
+     title = 'REFERENCE REPASS D_alpha : 25028 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0 * (67.0  / 50.0 )
+     bscale = 1.0 * (67.0  / 50.0 )
+     aspt = [0.280,-1.420]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.420]
+     bxpt = [0.725,-1.175]
+     afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
+     bfile='old_FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
+     END    
+   101: BEGIN
+     title = 'REFERENCE REPASS D_gamma : 25028 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 2.0 * (200.0 / 167.0) 
+     bscale = 2.0 * (200.0 / 167.0) 
+     aspt = [0.280,-1.4075]
+     axpt = [0.730,-1.160]
+     bspt = [0.280,-1.4075]
+     bxpt = [0.730,-1.160]
+     afile='FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
+     bfile='old_FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
+     END    
+   110: BEGIN 
+     title = 'REFERENCE REPASS CII : 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 5.0
+     bscale = 5.0
+     aspt = [0.280,-1.395]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.395]
+     bxpt = [0.725,-1.175]
+     afile='FFC_25029_1158_3_HL01_rbc_CII.cgm'
+     bfile='old_FFC_25029_1158_3_HL01_rbc_CII.cgm'
+     END
+   111: BEGIN 
+     title = 'REFERENCE Repass CIII : 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 1.0
+     aspt = [0.280,-1.4075]
+     axpt = [0.730,-1.160]
+     bspt = [0.280,-1.4075]
+     bxpt = [0.730,-1.160]
+     afile='FFC_25029_1158_1_HL07_rba_CIII.cgm'
+     bfile='old_FFC_25029_1158_1_HL07_rba_CIII.cgm'
+     END
 
   ENDCASE
 
@@ -599,7 +680,7 @@ END
 PRO ray_psi2010_pass, option=option
 
   IF (NOT KEYWORD_SET(option)) THEN  $
-    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60]
+    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60, 70,71, 80,81, 100,101, 110,111]
 
   FOR i = 0, N_ELEMENTS(option)-1 DO result = ray_psi2010_process(option[i])
 END
@@ -611,7 +692,7 @@ PRO ray_psi2010_output, ps, option=option, nlevels=nlevels, pos=pos
   PSOPEN, filename = 'data_ray/' + ps + '.ps'
 
   IF (NOT KEYWORD_SET(option)) THEN  $
-    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60]
+    option = [1, 10,11,12, 20,21,22,23, 30,31, 40,41,42,43,44,45, 50,51,52, 60, 70,71, 80,81, 100,101, 110,111]
 
   FOR i = 0, N_ELEMENTS(option)-1 DO ray_psi2010_plots,option[i],1,param1=pos, ps='on'
 

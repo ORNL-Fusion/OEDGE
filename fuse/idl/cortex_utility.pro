@@ -110,26 +110,26 @@ FUNCTION cortex_ExtractStructure, struct, index
   IF (index EQ 38) THEN result = struct.data38
   IF (index EQ 39) THEN result = struct.data39
   IF (index EQ 40) THEN result = struct.data40
-  IF (index EQ 41) THEN result = struct.data21
-  IF (index EQ 42) THEN result = struct.data22
-  IF (index EQ 43) THEN result = struct.data23
-  IF (index EQ 44) THEN result = struct.data24
-  IF (index EQ 45) THEN result = struct.data25
-  IF (index EQ 46) THEN result = struct.data26
-  IF (index EQ 47) THEN result = struct.data27
-  IF (index EQ 48) THEN result = struct.data28
-  IF (index EQ 49) THEN result = struct.data29
-  IF (index EQ 50) THEN result = struct.data30
-  IF (index EQ 51) THEN result = struct.data31
-  IF (index EQ 52) THEN result = struct.data32
-  IF (index EQ 53) THEN result = struct.data33
-  IF (index EQ 54) THEN result = struct.data34
-  IF (index EQ 55) THEN result = struct.data35
-  IF (index EQ 56) THEN result = struct.data36
-  IF (index EQ 57) THEN result = struct.data37
-  IF (index EQ 58) THEN result = struct.data38
-  IF (index EQ 59) THEN result = struct.data39
-  IF (index EQ 60) THEN result = struct.data40
+  IF (index EQ 41) THEN result = struct.data41
+  IF (index EQ 42) THEN result = struct.data42
+  IF (index EQ 43) THEN result = struct.data43
+  IF (index EQ 44) THEN result = struct.data44
+  IF (index EQ 45) THEN result = struct.data45
+  IF (index EQ 46) THEN result = struct.data46
+  IF (index EQ 47) THEN result = struct.data47
+  IF (index EQ 48) THEN result = struct.data48
+  IF (index EQ 49) THEN result = struct.data49
+  IF (index EQ 50) THEN result = struct.data50
+  IF (index EQ 51) THEN result = struct.data51
+  IF (index EQ 52) THEN result = struct.data52
+  IF (index EQ 53) THEN result = struct.data53
+  IF (index EQ 54) THEN result = struct.data54
+  IF (index EQ 55) THEN result = struct.data55
+  IF (index EQ 56) THEN result = struct.data56
+  IF (index EQ 57) THEN result = struct.data57
+  IF (index EQ 58) THEN result = struct.data58
+  IF (index EQ 59) THEN result = struct.data59
+  IF (index EQ 60) THEN result = struct.data60
 
   IF (N_ELEMENTS(TAG_NAMES(result)) EQ 1) THEN BEGIN
     PRINT, 'ERROR Cortex ExtractStructure: Structure element not found'

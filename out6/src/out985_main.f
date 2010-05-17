@@ -1566,10 +1566,11 @@ c      MAX3D = 4000000
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
 
-      MAXNPIXEL= 1000*1000 ! 480*640 ! 1000*1000
+      MAXNPIXEL= 550*550 ! 480*640 ! 1000*1000
       WRITE(0,*) '  ALLOCATING PIXELS',MAXNPIXEL
       ALLOCATE(pixel(MAXNPIXEL))
 
+c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
 
       opt%load = 1

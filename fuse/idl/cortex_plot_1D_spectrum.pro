@@ -30,6 +30,13 @@ FUNCTION cortex_PlotEnergySpectrum, plot, data_array, ps=ps
   charsize = plot.charsize
   charsize_labels = charsize
 
+  !P.CHARSIZE  = charsize
+  !P.CHARTHICK = plot.thick
+  !P.THICK     = plot.thick
+  !X.THICK     = plot.thick
+  !Y.THICK     = plot.thick
+  !Z.THICK     = plot.thick
+
   xy_label = [0.96,0.04,0.12,0.88]
 
   IF (focus) THEN BEGIN
@@ -187,7 +194,10 @@ FUNCTION cortex_PlotEnergySpectrum, plot, data_array, ps=ps
 
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
 
-          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]) 
+          val_y = val.y[*,0]
+          IF (N_ELEMENTS(val.y[*,0]) GT 100) THEN val_y = SMOOTH(val_y,10)
+
+          OPLOT, val.x, val_y, COLOR=TrueColor(colors[idata-1]) 
           CASE iplot OF
             1: 
             ELSE:

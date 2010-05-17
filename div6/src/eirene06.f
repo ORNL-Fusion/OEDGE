@@ -1431,8 +1431,6 @@ c...            Find toroidal angle of vertex relative to the minimum
 c               toroidal angle in sector 1, since these tetrahedrons
 c               may be stretched
 
-                 
-
                 a(1:3,1) = vtx(1:3,newsrf%ivtx(i1))
 
                 IF (DABS(a(1,1)).LT.DTOL) THEN
@@ -1565,6 +1563,20 @@ c...  Impose filament structures:
       CALL FixTetrahedrons(istart,iend)
 
       CALL CheckTetrahedronStructure
+
+      IF (.FALSE.) THEN
+c...    I can do the dirty deed here!  Look a reference for the surface in question,
+c       and if it's not in the right segment, swap it over! Ha, ha, ha...  
+c          newobj%index(IND_IS) = isector
+c        DO iobj = istart, iend
+c          DO iside = 1, obj(iobj)%nside
+c            iobj1 (iside) = obj(iobj)%omap(iside)                    
+c            iside1(iside) = obj(iobj)%smap(iside)
+c            isrf = ABS(obj(iobj)%iside(iside))
+c            isrf1 (iside) = srf(isrf)%index(IND_SURFACE)             ! Surface (block 2A)
+c          ENDDO
+c        ENDDO
+      ENDIF
 
       WRITE(eirfp,*) '  NOBJ:',nobj
       WRITE(eirfp,*) '  NSRF:',nsrf
