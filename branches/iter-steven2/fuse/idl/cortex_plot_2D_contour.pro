@@ -40,7 +40,15 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 
   title    = plot.title
   notes    = plot.notes
+
   charsize = plot.charsize
+
+  !P.CHARSIZE  = charsize
+  !P.CHARTHICK = plot.thick
+  !P.THICK     = plot.thick
+  !X.THICK     = plot.thick
+  !Y.THICK     = plot.thick
+  !Z.THICK     = plot.thick
 
   xtitle = 'R (m)'
   ytitle = 'Z (m)'
@@ -114,8 +122,11 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 ;
 ; Store the plot information
 ; ----------------------------------------------------------------------
-  plot.xrange   = [xmin,xmax]
-  plot.yrange   = [ymin,ymax]
+  plot.zoom = [xmin,ymin,xmax,ymax]
+  plot_xrange    = [xmin,xmax]
+  plot_yrange    = [ymin,ymax]  
+;  plot.xrange   = [xmin,xmax]
+;  plot.yrange   = [ymin,ymax]
   plot.position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 ;
 ; Draw the plot:
@@ -160,7 +171,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
                    '?:?' ,  $
                    '?:?']
   IF (plot.option GE 400 AND plot.option LE  499) THEN  BEGIN
-    state = 0
+    state = plot.state
     plot_labels = ['DIVIMP IMPURITY DENSITY: n_I +'+STRTRIM(STRING(state),2)+' (m-3)',  $
                    '?:?' ,  $
                    '?:?' ,  $
@@ -186,7 +197,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 ;   ------------------------------------------------------------------
     300: data = plot_data.imp_dens[*,0]  ; EIRENE
 ;   ------------------------------------------------------------------
-    400: data = plot_data.imp_dens[*,0] * plot_data.div_influx   ; DIVIMP
+    400: data = plot_data.imp_dens[*,state] * plot_data.div_influx   ; DIVIMP
 ;   ------------------------------------------------------------------
     ELSE: BEGIN
       PRINT, 'ERROR cortex_Plot2D: Unrecognised option'
@@ -212,8 +223,13 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
     IF (data[i] GT 0.0) THEN data[i] = ALOG10(data[i]) ELSE data[i] = 0.0
 
   xrange = [MIN(data),MAX(data)]
+  IF (N_ELEMENTS(WHERE(plot.xrange EQ 0.0)) NE 2) THEN  $
+    xrange = plot.xrange
 
-  PLOT, plot.xrange, plot.yrange, /NODATA, XSTYLE=1, YSTYLE=1, /NOERASE,  $
+  xstyle = plot.xstyle
+  ystyle = plot.ystyle
+
+  PLOT, plot_xrange, plot_yrange, /NODATA, XSTYLE=xstyle, YSTYLE=ystyle, /NOERASE,  $
         POSITION=plot.position,                                           $
         TITLE=plot_title, XTITLE=xtitle, YTITLE=ytitle,                   $
         COLOR=TrueColor('Black')
@@ -243,6 +259,8 @@ print,'xrange=',xrange[0:1]
       v[*,iside] = cortex_GetVertex(grid,iobj,iside)
 
     frac = (data[iobj] - xrange[0]) / (xrange[1] - xrange[0])
+    frac = MAX([frac,0.0])
+    frac = MIN([frac,1.0])
     color = LONG(frac * 255.0)
     POLYFILL, v[0,*], v[1,*], /DATA, COLOR=color, NOCLIP=0 
   ENDFOR
@@ -262,8 +280,8 @@ print,'ypos',ypos
   IF (1) THEN BEGIN
     x0 = (0.95 * xpos[0] + 0.05 * xpos[1]) * dev_xsize
     x1 = (0.05 * xpos[0] + 0.95 * xpos[1]) * dev_xsize
-    y0 = (ypos[0] - 0.12 * (ypos[1] - ypos[0])) * dev_ysize
-    y1 = (ypos[0] - 0.10 * (ypos[1] - ypos[0])) * dev_ysize
+    y0 = (ypos[0] - 0.11 * (ypos[1] - ypos[0])) * dev_ysize
+    y1 = (ypos[0] - 0.09 * (ypos[1] - ypos[0])) * dev_ysize
 ;    y0 = (ypos[0] - 0.15 * (ypos[1] - ypos[0])) * dev_ysize
 ;    y1 = (ypos[0] - 0.13 * (ypos[1] - ypos[0])) * dev_ysize
 
@@ -281,10 +299,10 @@ print,'ypos',ypos
     ENDFOR
 ;   This is nasty...
     log_prefix = ''
-    IF (plot.log NE 0) THEN log_prefix = 'LOG '
+    IF (plot.log NE 0) THEN log_prefix = 'LOG10 '
     PLOT, xrange, [0.0,0.0], POSITION=[x0,y0,x1,y1], YTICKFORMAT='(A1)',  $
           TICKLEN=0, /NODATA, /DEVICE, /NOERASE,  $
-          XTITLE=log_prefix+scale_label,COLOR=TrueColor('Black')
+          XTITLE=log_prefix+scale_label,COLOR=TrueColor('Black'), XSTYLE=1
   ENDIF ELSE BEGIN
     x0 = 0.10 * xmin + 0.90 * xmax
     x1 = 0.05 * xmin + 0.95 * xmax

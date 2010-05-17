@@ -102,6 +102,7 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
         DEVICE, DECOMPOSED=0
         WSET,6
         LOADCT, colour
+;        LOADCT, 0
         TV,image_byte,/order
         TVLCT, red, green, blue, /GET
         imageRGB = BYTARR(3, image.xdim, image.ydim)
@@ -109,6 +110,12 @@ PRO SaveImageData, image, path, scale, sname, save_png, calibrate=calibrate, ord
         imageRGB[1, *, *] = green[image_byte]  
         imageRGB[2, *, *] = blue [image_byte] 
         print,fname+'.jpg'
+
+        fname = output_path+                           $
+                STRTRIM(       image.camera  ,1)+'_'+  $
+                STRTRIM(STRING(image.shot   ),1)+'_'+  $
+                STRTRIM(STRING(image.channel),1)+'_'+  $
+                STRTRIM(STRING(image.frame  ),1)
 
         IF (KEYWORD_SET(save_png)) THEN BEGIN
           WRITE_PNG, fname+'.png', imageRGB, /ORDER

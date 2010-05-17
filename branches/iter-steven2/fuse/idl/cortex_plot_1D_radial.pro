@@ -111,13 +111,24 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
 
   focus = plot.focus
 
+  charsize = plot.charsize
+
+  !P.CHARSIZE = charsize
+  !P.CHARTHICK = plot.thick
+  !P.THICK    = plot.thick
+  !X.THICK    = plot.thick
+  !Y.THICK    = plot.thick
+  !Z.THICK    = plot.thick
+
   !P.BACKGROUND = TrueColor('White')
 
   plot_title  = plot.title
   plot_xtitle = 'psi_n'
-  plot_ytitle = '??? (???)'
+  plot_ytitle = ['1','n_e (m-3)','3','v_parallel / M','5','T_e (eV)']
 
-  colors = ['Red','Green','Blue']
+  colors = ['Black',   'Red','Green','Blue','Orange','Purple', 'Hotpink', 'Darkseagreen', 'Silver',  $
+            'Darkred', 'Greenyellow']
+;  colors = ['Red','Green','Blue']
 ;
 ; Plot 2D grid with the line segment for the radial profile:
 ; ----------------------------------------------------------------------
@@ -133,7 +144,7 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
   plot_data = cortex_ExtractStructure(plot_array,1)
   grid = plot_data.grid
   wall = plot_data.wall
-  cortex_PlotFluidGrid, plot_grid, grid, wall, 0, 0, 'subordinate', 'outline', ps='on'
+  status = cortex_PlotFluidGrid(plot_grid, grid, wall, 0, 0, 'subordinate', 'outline', ps='on')
 ;
 ; Line segment annotation on the grid plot:
 ; ----------------------------------------------------------------------
@@ -141,8 +152,10 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
   FOR i = 1, plot_grid.line_seg_n DO BEGIN
     v1 = plot.line_seg[0+(i-1)*4:1+(i-1)*4]
     v2 = plot.line_seg[2+(i-1)*4:3+(i-1)*4]
+    xrange = [plot_grid.zoom[0],plot_grid.zoom[2]]
+    yrange = [plot_grid.zoom[1],plot_grid.zoom[3]]
     PLOT, [v1[0],v2[0]], [v1[1],v2[1]], XSTYLE=5, YSTYLE=5, /NOERASE,  $
-          XRANGE=plot_grid.xrange, YRANGE=plot_grid.yrange,            $
+          XRANGE=xrange, YRANGE=yrange,                                $
           POSITION=plot_grid.position, COLOR=TrueColor(colors[i-1])
   ENDFOR
 ;
@@ -209,6 +222,9 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
       xmax = MIN([plot.xrange[1],xmax])
     ENDIF
 
+    PRINT, plot.xrange
+    PRINT, '1 XMIN,MAX=',iplot,xmin,xmax
+
     ymin =  1.0E+35
     ymax = -1.0E+35
     FOR idata = 1, ndata DO BEGIN
@@ -237,7 +253,8 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
         IF (iplot EQ 3) THEN ydata = plasma.vi[i]
         IF (iplot EQ 4) THEN ydata = plasma.vi[i] / plasma.cs[i]
         IF (iplot EQ 5) THEN ydata = plasma.pe[i] + plasma.pi[i]
-        IF (iplot EQ 6) THEN ydata = [plasma.te[i],plasma.ti[i]]
+        IF (iplot EQ 6) THEN ydata = plasma.te[i]
+;        IF (iplot EQ 6) THEN ydata = [plasma.te[i],plasma.ti[i]]
         ymin = MIN([ymin,ydata])
         ymax = MAX([ymax,ydata])
       ENDFOR ; iseg loop
@@ -247,29 +264,33 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
     ymin = ymin - 0.05 * ydelta
     ymax = ymax + 0.05 * ydelta
 
-    PRINT, 'XMIN,MAX=',xmin,xmax
-    PRINT, 'YMIN,MAX=',ymin,ymax
+    PRINT, '2 XMIN,MAX=',iplot,xmin,xmax
+    PRINT, '2 YMIN,MAX=',iplot,ymin,ymax
 
 ;   Axes:
     xrange = [xmin,xmax]
     yrange = [ymin,ymax]
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 
+;    IF (iplot EQ 6) THEN yrange = [0.0,500.0]
+
+    ytitle = STRTRIM(plot_ytitle[iplot-1],2)
+
     CASE (iplot) OF
       focus: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle, /NOERASE
+                   POSITION=position,YTITLE=ytitle, /NOERASE
       1    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTICKFORMAT='(A1)',/NOERASE                                    
+                   POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE                                    
       2    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTICKFORMAT='(A1)',/NOERASE
+                   POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE
       3    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTITLE=plot_xtitle,/NOERASE
+                   POSITION=position,YTITLE=ytitle,XTITLE=plot_xtitle,/NOERASE
       4    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTICKFORMAT='(A1)',/NOERASE
+                   POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE
       5    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTICKFORMAT='(A1)',/NOERASE
+                   POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE
       6    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-                   POSITION=position,YTITLE=plot_ytitle,XTITLE=plot_xtitle,/NOERASE                                 
+                   POSITION=position,YTITLE=ytitle,XTITLE=plot_xtitle,/NOERASE                                 
     ENDCASE
 
 ;    XYOUTS, 0.95*xmin+0.05*xmax, 0.1*ymin+0.9*ymax, plot_title
@@ -297,9 +318,9 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
           OPLOT, xdata, plasma.pe[i], COLOR=TrueColor(colors[idata+iseg-2]), LINESTYLE=2 
           OPLOT, xdata, plasma.pi[i], COLOR=TrueColor(colors[idata+iseg-2]), LINESTYLE=1
         ENDIF
-        IF (iplot EQ 6) THEN BEGIN
-          OPLOT, xdata, plasma.ti[i], COLOR=TrueColor(colors[idata+iseg-2]), LINESTYLE=2 
-        ENDIF
+;        IF (iplot EQ 6) THEN BEGIN
+;          OPLOT, xdata, plasma.ti[i], COLOR=TrueColor(colors[idata+iseg-2]), LINESTYLE=2 
+;        ENDIF
 
       ENDFOR  ; iseg loop
     ENDFOR  ; idata loop

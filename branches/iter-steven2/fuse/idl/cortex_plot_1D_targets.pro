@@ -22,6 +22,15 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
   charsize = plot.charsize
   charsize_labels = charsize
 
+  !P.CHARSIZE = charsize
+  !P.CHARTHICK = plot.thick
+  !P.THICK    = plot.thick
+  !X.THICK    = plot.thick
+  !Y.THICK    = plot.thick
+  !Z.THICK    = plot.thick
+
+
+
   xy_label = [0.96,0.04,0.12,0.88]
 
   IF (focus) THEN BEGIN
@@ -62,9 +71,10 @@ FUNCTION cortex_PlotTargetProfiles, plot, data_array, ps=ps
        plot_xn = 2
        plot_yn = 2
        title = plot.title 
-       subtitle = ['1','2','3','4']
+       subtitle = ['INNER TARGET ION SATURATION CURRENT / A m-2','INNER TARGET T_e / eV',  $
+                   'OUTER TARGET ION SATURATION CURRENT / A m-2','OUTER TARGET T_e / eV']
        xtitle   = 'psi_n'
-       ytitle   = ['1','2','3','4']
+       ytitle   = ['j_sat (A m-2)','T_e (eV)','j_sat (A m-2)','T_e (eV)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
        END
