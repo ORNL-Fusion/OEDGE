@@ -1,0 +1,378 @@
+#!/bin/ksh
+echo "runout V 6.27 : DIV Input =" $1 ": OUT Input =" $2 ": <Optional Grid = $3>"
+if [ $# -lt 2 ]
+then 
+   echo "usage: $0 <DIV case name> <OUT input file> <Optional - Grid file name> <Optional - Experimental dataffile reference> <Optional - File name extension for output plot PDF>"
+   echo "       Specify \"none\" for any placeholder options.  "
+   exit 1
+fi
+#
+# Set Run-time environment variables
+#
+#-------------------------------------
+#
+export CASENAME=$1
+export XLFRTEOPTS=namelist=old
+export ADASCENT=$HOME/adas
+#
+VER=pgi
+#
+# If this script is run from the root of the code directory then
+# the line assigning PROGDIR will pick up the correct local path - otherwise 
+# PROGDIR should be set to the local installation directory. The 
+# default is divimp since the alternate is only really useful when
+# working with multiple versions of the code 
+#
+#PROGDIR=`basename \`pwd\``
+#
+PROGDIR=divimp
+#
+RUNROOT=$HOME/$PROGDIR
+EXEROOT=$HOME/$PROGDIR
+DATAROOT=$HOME/$PROGDIR
+#
+#  Loctions of the various DIVIMP files 
+#
+#  DIVRUNDIR - Directory where DIVIMP will run - must have read/write access
+#  DIVDATDIR - Directory containing the input data files
+#  DIVRESDIR - Directory where the results from the case will be stored
+#
+#  DIVMAINDIR- Main DIVIMP directory containing the source code tree 
+#  DIVEXEDIR - Directory containing the DIVIMP executable
+#  DIVOUTDIR - Directory containing the OUT excutable
+#  PINEXEDIR - Directory containing the PIN executable
+#  EIREXEDIR - Directory containing the EIRENE executable 
+#
+#  EQUDIR    - Directory containg the equilibrium, background plasma and pump files
+#
+#  DIVEXE    - DIVIMP executable
+#  OUTEXE    - OUT executable
+#  PINEXE    - PIN executable
+#  EIREXE    - EIRENE executable
+#
+export DIVRUNDIR=$RUNROOT/cases
+export DIVDATDIR=$RUNROOT/data
+export DIVRESDIR=$RUNROOT/results
+#
+export DIVMAINDIR=$EXEROOT
+export DIVEXEDIR=$EXEROOT/div6
+export OUTEXEDIR=$EXEROOT/out6
+export PINEXEDIR=$EXEROOT/pin6
+export EIREXEDIR=$EXEROOT/eirene
+export EIREXE99DIR=$EXEROOT/eirene99
+export EQUDIR=$DATAROOT/shots
+#
+export DIVEXE=$DIVEXEDIR/div6O$VER
+export OUTEXE=$OUTEXEDIR/out6O$VER
+export PINEXE=$PINEXEDIR/pin6O
+export EIREXE=$EIREXEDIR/eirene
+export EIREXE99=$EIREXE99DIR/Sources/eirene
+
+#
+# jdemod - the following variables are relevant to some of the 
+#          EIRENE07 run scripts - these should not be needed in OUT
+#          but there may be related code or scripts that use them
+#
+# add eirene07 directory
+export EIRDIR=$EXEROOT/eirene07
+#
+#
+# Setup DIVHOME for the Eirene07 run script
+# - this is also needed for data loading code in DIVIMP so it can
+#   find the data directories
+# - NOTE: when Steve's run scripts are updated to allow different 
+#   users to access common code then the code in hc_lddta.f90 will
+#   need to be changed to access the EXEROOT and not RUNROOT ... however
+#   at the present time DIVHOME is the only environment variable with
+#   a common meaning between these scripts and Steve's versions
+# - this is needed in OUT to load HC data for plotting
+#
+export DIVHOME=$RUNROOT
+
+# Location of graphics library used by EIRENE:
+export GLI_HOME=$DIVHOME/libsrc
+
+# Set local directories:
+export RUNDIR=$RUNROOT
+export BATDIR=$EXEROOT/scripts
+export EXEDIR=$DIVRUNDIR/$CASENAME
+export DATDIR=$DIVDATDIR
+export OUTDIR=$OUTEXEDIR
+#
+
+#
+#-------------------------------------
+#
+# Additional Setup
+#
+# Set plot file name extension
+#
+if [[ -n $5 ]] then     
+  export PLOTEXT=-$5
+else
+  export PLOTEXT=-a
+fi
+#
+#-------------------------------------
+#
+# Execute the code
+#
+#-------------------------------------
+#
+#  Change to Execution directory
+#
+cd $DIVRUNDIR
+
+#
+# Remove specific directory for the case if it already exists
+#
+if [[ -e $CASENAME ]] then 
+      echo "Deleting old case directory:" $DIVRUNDIR/$CASENAME
+      rm -rf $CASENAME
+fi
+#
+# Create run directory
+#
+mkdir $CASENAME
+cd $CASENAME
+#
+#  Execute OUT
+#
+#  Unit  4 is the equilibrium input file
+#  Unit  8 is the binary output file from DIVIMP
+#  Unit  9 is an echo of the input to OUT
+#  Unit 13 is the xy grid
+#  Unit 26 is a print file containing the data from all plots
+#  Unit 49 is a summary of all plots
+#
+#  Copy and uncompress the results of the DIVIMP run 
+#
+cp $DIVRESDIR/$CASENAME.raw.Z $DIVRUNDIR/$CASENAME/$CASENAME.raw.Z
+uncompress -f -v $CASENAME.raw.Z
+mv $CASENAME.raw fort.8
+#
+# Supplementary raw files (SL)
+# Some consolidation of these files needs to
+# take place, but it has not been done yet (Sep 6, 2000)
+#
+if [[ -f $DIVRESDIR/$CASENAME.raw.src.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.src.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.src.Z
+   mv $CASENAME.raw.src source.dat
+fi
+if [[ -f $DIVRESDIR/$CASENAME.raw.pla.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.pla.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.pla
+   mv $CASENAME.raw.pla plasma.dat
+fi
+if [[ -f $DIVRESDIR/$CASENAME.raw.geo.Z ]] then
+   cp $DIVRESDIR/$CASENAME.raw.geo.Z $DIVRUNDIR/$CASENAME
+   uncompress -f -v $CASENAME.raw.geo
+   mv $CASENAME.raw.geo geomty.dat
+fi
+if [[ -f $DIVRESDIR/$CASENAME.eirtrc ]] then
+   cp $DIVRESDIR/$CASENAME.eirtrc eirtrac.dat
+fi
+#
+# Info file for output
+#
+if [[ -f  $EQUDIR/info.dat ]] then 
+  ln -s $EQUDIR/info.dat $DIVRUNDIR/$CASENAME/info.dat
+fi 
+#
+# Link to EIRENE AMJUEL data files (SL)
+#
+#ln -s "$EIREXE99DIR/a+m/HYDHEL"     .
+#ln -s "$EIREXE99DIR/a+m/SPUTER"     .
+#ln -s "$EIREXE99DIR/a+m/AMJUEL.TEX" AMJUEL
+#ln -s "$EIREXE99DIR/a+m/METHANE"    .
+
+#
+# Eirene07 uses the data files from the Eirene04 tree. However, all versions of Eirene except 07 are not supported. At some point we 
+# should clean this up. 
+#
+# Try this for now - may need to flag this file for differetiating 99 from 07 - or move the linkage to the EIRENE run scripts assuming divimp doesn't use them
+#
+
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
+ln -sf $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
+ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/TRIM
+
+
+#
+#  Connect an experimental data input file to unit 13.
+#  If one has been specified. 
+#
+#  Unit 13 contains experimental data for the case - if available. 
+#
+if [[ -n $4 ]] then     
+  if [[ -f $EQUDIR/$4.experiment ]] then 
+    ln -s $EQUDIR/$4.experiment $DIVRUNDIR/$CASENAME/fort.13
+  else
+    if [[ -f $EQUDIR/$3.$4.experiment ]] then 
+      ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$CASENAME/fort.13
+    else
+      if [[ -f $EQUDIR/$3.experiment ]] then 
+         ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
+      fi 
+    fi
+  fi
+else
+  if [[ -f $EQUDIR/$3.experiment ]] then 
+    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
+  fi 
+fi
+#
+# Link to the toroidal camera inversion data (SL)
+#
+if [[ -f $EQUDIR/$3.camera ]] then
+   ln -s $EQUDIR/$3.camera $DIVRUNDIR/$CASENAME/camera.dat
+fi
+#
+#if [[ -n $3 ]] then 
+#   if [[ -f $EQUDIR/$3.experiment ]] then 
+#      ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$CASENAME/fort.13
+#   fi 
+#fi
+#
+#
+#  Execute OUT
+#
+$OUTEXE < $DIVDATDIR/$2.d6o > outouta
+#
+#  Copy or move results.
+#
+
+
+#  .outa - OUT debugging file 
+mvc outouta $CASENAME.outa
+
+#  Postscript plots 
+#  Change to using $plotext .psg and .pdf so that
+#  the files will not necessarily overwrite
+#
+if [[ -f POSTSCPT.LIS ]] then 
+  ps2pdf POSTSCPT.LIS $CASENAME$PLOTEXT.pdf
+  mv POSTSCPT.LIS $CASENAME$PLOTEXT.psg
+fi
+
+
+#  .daga OUT output file
+mvc fort.7 $CASENAME.daga
+
+#  Echo of input
+mvc fort.9 $CASENAME.inga
+
+#  Special print file 
+mvc fort.26 $CASENAME.grpa
+
+#  Special print file 
+mvc fort.49 $CASENAME.plta
+
+#  Print out for Kevin Erents
+mvc fort.56 $CASENAME.probe
+
+#  Erosion/Deposition print out
+mvc fort.57 $CASENAME.deposition
+
+# AUG file
+mvc fort.59 $CASENAME.augdiv_out
+
+# Core file in case OUT crashed
+mvc core $CASENAME.out.core
+
+#---------------------------------------
+#
+# Move any files starting with $CASENAME 
+# to the results directory
+#
+
+mv -f $CASENAME* $DIVRESDIR
+
+#---------------------------------------
+#
+#  Clean-up
+#
+
+# remove unwanted fortran output 
+rm fort.*
+
+# remove other raw files that may have been linked 
+rm -f plasma.dat
+rm -f geomty.dat
+rm -f source.dat
+
+#
+# Remove camera file if linked
+#
+if [[ -f camera.dat ]] then 
+   rm -f camera.dat
+fi
+
+
+#
+# Remove info.dat file if linked
+#
+if [[ -f info.dat ]] then 
+  rm -f info.dat
+fi 
+#
+# Remove eirtrac.dat if linked
+#
+if [[ -f eirtrac.dat ]] then
+   rm -f eirtrac.dat
+fi
+#
+# Unlink the EIRENE files
+#
+if [[ -f HYDHEL ]] then 
+   rm -f HYDHEL
+fi
+#
+if [[ -f SPUTER ]] then 
+   rm -f SPUTER
+fi
+#
+if [[ -f AMJUEL ]] then 
+   rm -f AMJUEL
+fi
+#
+if [[ -f METHANE ]] then 
+   rm -f METHANE
+fi
+#
+if [[ -e TRIM ]] then 
+   rm -f TRIM
+fi
+#
+if [[ -f H2VIBR ]] then 
+   rm -f H2VIBR
+fi
+#
+# Final cleanup
+#
+cd $DIVRUNDIR
+rmdir $CASENAME
+cd $DIVRESDIR
+#
+#  Compress and generate any remaining print files
+#
+#compress $CASENAME.outa
+if [[ -f $CASENAME.plta ]] then
+   a2ps -R $CASENAME.plta --output=$CASENAME.plta.ps
+fi
+#
+#  Print
+#
+#lp $CASENAME.plt.ps 
+#lp $CASENAME.psga
+#
+#  Return to starting directory. 
+#
+cd $DIVRUNDIR
+
+
+

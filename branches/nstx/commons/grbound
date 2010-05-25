@@ -1,0 +1,32 @@
+c     -*-Fortran-*-
+c                                                                       
+c       This common block contains the information about                
+c       the inner and outer bounds of the defined plasma                
+c       grid region. This information is stored for re-use              
+c       by the GA15A and GA15B subroutines.                             
+c                                                                       
+      common /grbound/ ionwpts,ioncpts,neutwpts,
+     >        riw,ziw,rcw,zcw,rnw,znw, 
+     >        iwindw,iwwork,iwtdum,iwxdum,iwydum,                       
+     >        icindw,icwork,ictdum,icxdum,icydum,                       
+     >        nwindw,nwwork,nwtdum,nwxdum,nwydum,                       
+     >        lastin,outgrid
+      save /grbound/
+c                                                                       
+      real    riw(maxpts),ziw(maxpts),rcw(maxpts),zcw(maxpts),          
+     >        rnw(maxpts),znw(maxpts),
+     >        iwwork(4*maxpts),iwtdum(maxpts),iwxdum(maxpts),           
+     >        iwydum(maxpts),                                           
+     >        icwork(4*maxpts),ictdum(maxpts),icxdum(maxpts),           
+     >        icydum(maxpts),
+     >        nwwork(4*maxpts),nwtdum(maxpts),nwxdum(maxpts),           
+     >        nwydum(maxpts)                                            
+c                                                                       
+      integer ionwpts,ioncpts,neutwpts,iwindw(2,maxpts),
+     >        icindw(2,maxpts),nwindw(2,maxpts),lastin
+c                                                                       
+      logical outgrid                                                   
+                                                                        
+                                                                        
+                                                                        
+                                                                        
