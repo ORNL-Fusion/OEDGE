@@ -278,91 +278,66 @@ c
                 theta3 = thetag(ik3,ir)
               ENDIF
             ENDDO
+            IF (theta3.EQ.0.0) THEN 
+              ik3 = ik + 1
+              theta3 = thetag(ik3,ir)
+            ENDIF
           ELSE
             ik3 = ik + 1
             theta3 = thetag(ik3,ir)
           ENDIF
 
-
-c          IF (ir.EQ.20) 
-c            WRITE(0,'(A,3I6,3F12.4)') 'METRIC:',count,ik,ir,
-c     .                 theta1,theta2,theta3
-
           IF    ((theta1.LT.theta2.AND.theta2.GT.theta3.AND.
      .            theta1.LT.theta3).OR.
      .           (theta1.GT.theta2.AND.theta2.LT.theta3.AND.
      .            theta1.LT.theta3)) THEN
-
             frac = (kps(ik ,ir) - kps(ik-1,ir)) /
      .             (kps(ik3,ir) - kps(ik-1,ir))
-
             thetag(ik,ir) = theta1 + frac * (theta3 - theta1)
-
             ik = 1
             count = count + 1
-
-          ELSEIF (theta2.GE.theta3.AND.ik.EQ.nks(ir)-1) THEN
+          ELSEIF ((theta2.GE.theta3.AND.ik    .EQ.nks(ir)-1).OR.
+     .            (theta1.LT.theta2.AND.theta2.GE.theta3   )) THEN
             frac = (kps(ik3,ir) - kps(ik-1,ir)) /
      .             (kps(ik ,ir) - kps(ik-1,ir))
-
             thetag(ik+1,ir) = thetag(ik-1,ir) +
      .                        frac * (thetag(ik,ir) - thetag(ik-1,ir))
             ik = 1
             count = count + 1
-
- 
-
           ELSEIF (theta1.GT.theta2.AND.theta2.GE.theta3) THEN
             IF (ik.EQ.2) THEN
               CALL WN('RepairMetric','Starting point '//
      .                'for metric is poorly defined')
-
               thetag(ik,ir) = theta1 + 0.5 * ABS(theta1 - theta2)
-
             ELSE
-
               frac = (kps(ik  ,ir) - kps(ik-2,ir)) /
      .               (kps(ik-1,ir) - kps(ik-2,ir))
- 
               thetag(ik,ir) = thetag(ik-2,ir) +
      .                        frac * (thetag(ik-1,ir) - thetag(ik-2,ir))
             ENDIF
-
             ik = 1
             count = count + 1
-
           ELSEIF (theta1.LT.theta2.AND.theta2.LT.theta3) THEN
           ELSE
             CALL ER('RepairMetric','Unrecognized metric problem '//
      .              'sequence',*98)
 c     .              'sequence',*99)
-
           ENDIF
-
-c          IF (count.EQ.10) STOP 'COUTING>>FSDFD'
-
         ENDDO
-
       ENDDO
 
 c...  Check 1st and last points:
       DO ir = irsep, nrs
         IF (idring(ir).EQ.-1) CYCLE
-
         IF (thetag(1,ir).GT.thetag(2,ir)) THEN
           count = count + 1
-
-          thetag(1,ir) = 2.0 * thetag(2,ir) - 
-     .                         thetag(3,ir)
+          thetag(1,ir) = 2.0 * thetag(2,ir) - thetag(3,ir)
         ENDIF
-
         IF (thetag(nks(ir),ir).LT.thetag(nks(ir)-1,ir)) THEN
           count = count + 1
-
           thetag(nks(ir),ir) = 2.0 * thetag(nks(ir)-1,ir) - 
      .                               thetag(nks(ir)-2,ir)
         ENDIF
-       
       ENDDO
 
       IF (count.GT.0) THEN
