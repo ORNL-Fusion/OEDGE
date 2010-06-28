@@ -23,6 +23,8 @@
   {SET} Dperp =  0.1 m s-2  (3224)  {CASE} i-fwp-1224b i-fwp-3224d >i >e >g >f >h
   {SET} Dperp = 10.0 m s-2  (3225)  {CASE} i-fwp-1225b i-fwp-3225d >i >e >g >f >h
 
+{EXIT}
+
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    TUNGSTEN, UPPER PORT PLUG, UPPER PORT GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.14 (10/18 x 0.25)
   {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry

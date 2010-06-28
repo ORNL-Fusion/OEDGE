@@ -350,21 +350,29 @@ c...                Data source:
             ENDIF
             READ(buffer(i+1:n),*) idum1
             WRITE(0,*) 'LOADING DETECTOR:',idum1
-            IF (idum1.NE.0) THEN
-              load_detector = .FALSE.
-              opt%ccd = idum1
-              READ(fp,*) cdum1,opt%focallength
-              READ(fp,*) cdum1,opt%distortion
-              READ(fp,*) cdum1,opt%cen(1:3)
-              READ(fp,*) cdum1,opt%roll,opt%tilt,opt%swing
-              READ(fp,*) cdum1,opt%width(1:2)
-              READ(fp,*) cdum1,opt%angle(1:2)  ! Maybe only need to load the first entry
-              READ(fp,*) cdum1,opt%nxbin,opt%nybin
-              READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
-     .                         opt%sa_par1 ,opt%sa_par2
-              READ(fp,*) cdum1,opt%fmap
-            ENDIF
-
+            SELECTCASE(idum1)
+              CASE(0)
+              CASE(1:2)
+                load_detector = .FALSE.
+                opt%ccd = idum1
+                READ(fp,*) cdum1,opt%focallength
+                READ(fp,*) cdum1,opt%distortion
+                READ(fp,*) cdum1,opt%cen(1:3)
+                READ(fp,*) cdum1,opt%roll,opt%tilt,opt%swing
+                READ(fp,*) cdum1,opt%width(1:2)
+                READ(fp,*) cdum1,opt%angle(1:2)  ! Maybe only need to load the first entry
+                READ(fp,*) cdum1,opt%nxbin,opt%nybin
+                READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
+     .                           opt%sa_par1 ,opt%sa_par2
+                READ(fp,*) cdum1,opt%fmap
+              CASE(3:4)
+                load_detector = .FALSE.
+                opt%ccd = idum1 - 2
+                 
+              CASE DEFAULT
+                CALL ER('LoadOptions985_New','Unknown DETECTOR '//
+     .                  'option',*99)          
+            ENDSELECT
           CASE('DETECTOR MASK')
             IF (mode.NE.DETECTOR_ONLY.OR.load_detector) CYCLE            
             READ(buffer(i+1:n),*) idum1

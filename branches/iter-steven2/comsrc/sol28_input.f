@@ -332,6 +332,42 @@ c              WRITE(0,*) '>>'//buffer(i:i+24)//'<<'
 c
 c ======================================================================
 c
+      SUBROUTINE SplitBuffer(buffer,buffer_array)
+      IMPLICIT none
+
+      CHARACTER, INTENT(IN)  :: buffer*(*)
+      CHARACTER, INTENT(OUT) :: buffer_array*256(*)
+
+      INTEGER i,j,k,n,m
+
+      buffer_array(1) = ' '
+
+      n = LEN_TRIM(buffer)
+      m = 0
+
+      j = 0
+      DO i = 1, n
+        IF (buffer(i:i).EQ.' ' .AND.j.GT.0.OR.
+     .      buffer(i:i).EQ.'"' .AND.j.LT.0.OR. 
+     .      buffer(i:i).EQ.''''.AND.j.LT.0) THEN
+          m = m + 1
+c          WRITE(0,*) '>>>',j,i
+          IF (j.LT.0) j = -j + 1
+          buffer_array(m) = buffer(j:i-1)
+c          WRITE(0,*) m,buffer(j:i-1)            
+          j = 0
+        ENDIF
+        IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
+        IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
+        IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE LoadEireneOption(fp,buffer,itag)
       USE mod_sol28_params
       USE mod_sol28_global
@@ -346,13 +382,20 @@ c
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1,idum(5)
-      CHARACTER cdum*1024
+      CHARACTER cdum*1024,buffer_array*256(100)
       REAL      stratum_type,version,rdum(7)
+
+      DO i1 = 1, 100
+        WRITE(buffer_array(i1),'(256X)')
+      ENDDO
 
       SELECTCASE (buffer(3:itag-1))
 c       ----------------------------------------------------------------
         CASE('EIR IMPURITY SPUTTERING')
           CALL ReadOptionI(buffer,1,opt_eir%ilspt) 
+c       ----------------------------------------------------------------
+        CASE('EIR TET DUMP')
+          CALL ReadOptionI(buffer,1,opt_eir%tet_iliin) 
 c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
@@ -443,6 +486,47 @@ c       ----------------------------------------------------------------
      .          opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
      .          opt_eir%spcvy(opt_eir%nadspc),
      .          opt_eir%spcvz(opt_eir%nadspc)
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR TETRAHEDRON GRID')
+          opt_eir%tet_n = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%tet_n = opt_eir%tet_n + 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            SELECTCASE (TRIM(buffer_array(1)))
+              CASE('1.0')
+                READ(buffer,*) 
+     .            opt_eir%tet_type(opt_eir%tet_n),  !                
+     .            opt_eir%tet_x1  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_y1  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_x2  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_y2  (opt_eir%tet_n)   ! 
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown tetrahedron grid '//
+     .                  'TYPE found',*99)
+            ENDSELECT
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR SURFACE PROPERTIES')
+          opt_eir%sur_n  = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%sur_n = opt_eir%sur_n + 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)
+            opt_eir%sur_index (opt_eir%sur_n) = TRIM(buffer_array(2))
+            opt_eir%sur_sector(opt_eir%sur_n) = TRIM(buffer_array(3))
+            READ(buffer_array( 4),*) opt_eir%sur_iliin (opt_eir%sur_n)
+            READ(buffer_array( 5),*) opt_eir%sur_ilside(opt_eir%sur_n)
+            READ(buffer_array( 6),*) opt_eir%sur_ilswch(opt_eir%sur_n)
+            READ(buffer_array( 7),*) opt_eir%sur_tr1   (opt_eir%sur_n)
+            READ(buffer_array( 8),*) opt_eir%sur_tr2   (opt_eir%sur_n)
+            READ(buffer_array( 9),*) opt_eir%sur_recyct(opt_eir%sur_n)
+            READ(buffer_array(10),*) opt_eir%sur_ilspt (opt_eir%sur_n)
+            READ(buffer_array(11),*) opt_eir%sur_temp  (opt_eir%sur_n)
+            opt_eir%sur_mat(opt_eir%sur_n) = TRIM(buffer_array(12))
+            READ(buffer_array(13),*) opt_eir%sur_hard  (opt_eir%sur_n)
+            READ(buffer_array(14),*) opt_eir%sur_remap (opt_eir%sur_n)
+            opt_eir%sur_tag(opt_eir%sur_n) = TRIM(buffer_array(15))
           ENDDO
 c       ----------------------------------------------------------------
        CASE DEFAULT
@@ -932,6 +1016,7 @@ c
       USE mod_sol28_global
       USE mod_options
       USE mod_eirene06
+      USE mod_eirene_history
       USE mod_legacy
       USE mod_solps
       IMPLICIT none
@@ -1057,6 +1142,8 @@ c      opt_eir%nvoid = 0
 
       opt_eir%ilspt = 0
 
+      opt_eir%tet_iliin = 2  ! Absorbing surface
+
       opt_eir%geom  = 2
       opt_eir%data  = 1
       opt_eir%trim  = 1
@@ -1073,6 +1160,8 @@ c      opt_eir%nvoid = 0
       opt_eir%ctargt  = 300.0
       opt_eir%cwallt  = 300.0
 
+      opt_eir%sur_n   = 0  ! Surface properties 
+      opt_eir%tet_n   = 0  ! Tetrahedron mesh definition
       opt_eir%nadspc  = 0  ! Energy spectra definitions
 
       eirfp = 88     
@@ -1085,6 +1174,8 @@ c...  SOLPS related variables:
       IF (ALLOCATED(map_divimp)) DEALLOCATE(map_divimp)
       IF (ALLOCATED(solps_cen )) DEALLOCATE(solps_cen )
       IF (ALLOCATED(map_osm   )) DEALLOCATE(map_osm   )
+
+      nhistory = 0
 
 c...  User:
       CALL User_InitializeOptions

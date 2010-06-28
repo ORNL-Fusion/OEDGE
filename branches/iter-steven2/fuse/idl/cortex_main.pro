@@ -1,4 +1,19 @@
 ; example : cortex_main,['t-new-0000a','i-osm.ctx']
+; 
+PRO cortex_batch
+
+  cortex_main,['i-fwp-4200a','i-fwp.ctx']
+  cortex_main,['i-fwp-4201a','i-fwp.ctx']
+  cortex_main,['i-fwp-4202a','i-fwp.ctx']
+  cortex_main,['i-fwp-4203a','i-fwp.ctx']
+  cortex_main,['i-fwp-4204a','i-fwp.ctx']
+  cortex_main,['i-fwp-4205a','i-fwp.ctx']
+  cortex_main,['i-fwp-4206a','i-fwp.ctx']
+  cortex_main,['i-fwp-4207a','i-fwp.ctx']
+  cortex_main,['i-fwp-4208a','i-fwp.ctx']
+  cortex_main,['i-fwp-4209a','i-fwp.ctx']
+
+END
 ;
 ; ======================================================================
 ;
@@ -39,12 +54,16 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
+
+    family = STRMID(input_file,0,5)
+
 ;    input_file = '/home/slisgo/fuse/input/' + input_file
 ;    data_path  = '/home/slisgo/divimp/results/'
     input_file = '/home/ITER/lisgos/fuse/input/' + input_file
-    data_path  = '/home/ITER/lisgos/fuse_data/results/'
+    data_path  = '/home/ITER/lisgos/fuse_data/results/' + family + '/'
 ;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
 ;    data_path  = '/home/ITER/lisgos/divimp/results/'
+
   ENDELSE
 
 

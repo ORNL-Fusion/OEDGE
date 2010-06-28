@@ -1083,6 +1083,37 @@ c...      Output:
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
+c...    Surfaces fluxes:
+        ICOUNT=39
+        ITALLY=8
+        WRITE(FP,80) '* TEST MOLECULES - SURFACE FLUXES',IMOL
+        WRITE(FP,81) ITALLY
+        WRITE(FP,81) NSUR
+        WRITE(FP,85) (I1,I1=1,ITALLY)
+        CONV = 1.602176D-19
+        DO IR=1,NTRII 
+          DO IS=1,NSIDE
+            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            DDUM=0.0D0
+c...        Output:
+            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            DDUM(1)=DBLE(IS)                   ! Side index of the triangle
+            DDUM(2)=POTML  (IMOL,MSURFG)/CONV  ! Incident molecule particle flux (s-1)
+            DDUM(3)=EOTML  (IMOL,MSURFG)/CONV  ! Incident molecule energy   flux (eV s-1)
+            DDUM(4)=PRFAML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident atoms     (s-1)
+            DDUM(5)=PRFMML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident mols.     (s-1)
+            DDUM(6)=PRFIML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident test ions (s-1)
+c            DDUM(7)=PRFPHML(IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident photons   (s-1)
+            DDUM(7)=PRFPML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident bulk ions (s-1)
+            DDUM(8)=ERFAML (IMOL,MSURFG)/CONV  ! ???
+            ICOUNT=ICOUNT+14
+            IF (ICOUNT.EQ.40) THEN
+              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              ICOUNT=0
+            ENDIF
+            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          ENDDO
+        ENDDO
       ENDDO
 c
 c     ----------------------------------------------------------------------
@@ -1400,7 +1431,7 @@ c...  Insert iteration data, if any:
             DDUM=0.0D0
             IF (IS.EQ.NSTRAI+1) THEN
               DDUM(1)=T_VOL(IG)
-              DDUM(2)=SUM(T_EDENM(1:NSTRAI,IG,IT))*FACT       ! mTorr?
+              DDUM(2)=SUM(T_EDENM(1:NSTRAI,IG,IT))*FACT       ! mTorr
               DDUM(3)=SUM(T_PDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total particles 
               DDUM(4)=SUM(T_EDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total energy
             ELSE

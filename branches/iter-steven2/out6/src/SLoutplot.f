@@ -321,6 +321,8 @@ c     wallpt (ind,31) = Plasma density at wall segment
         CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
         CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
         CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
+        CALL inPutData(fluxhw(in)-flxhw6(in),'MOL_PAR_FLUX'  ,'m-2 s-1')                     
+        CALL inPutData(flxhw7(in)           ,'MOL_AVG_ENERGY','eV')                     
       ENDDO
       CALL inCloseInterface 
 

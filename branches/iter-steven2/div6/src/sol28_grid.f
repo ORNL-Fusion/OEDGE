@@ -158,7 +158,10 @@ c...  Targets directly associated with the primary separatrix:
       ntarget = 0
 
 c...  Set the geometry:
-      IF     (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
+      IF     (grid%nxpt.EQ.0) THEN
+        geometry = LINEAR
+        grid%nxpt = 1  ! To be set to 0 below...
+      ELSEIF (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
         geometry = LSND
       ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
         geometry = UDND
@@ -253,6 +256,9 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
           new_target(ntarget)%ilist(1:nlist) = ilist(1:nlist)
 
           SELECTCASE (geometry)
+            CASE (LINEAR)
+              IF (itarget.EQ.LO) new_target(ntarget)%location = 3
+              IF (itarget.EQ.HI) new_target(ntarget)%location = 4
             CASE (LSND)
               IF (itarget.EQ.LO) new_target(ntarget)%location = 2
               IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -297,6 +303,7 @@ c          WRITE(0,*) 'LOCATION=',new_target(ntarget)%location
 
       ENDDO  ! x-point
 
+
 c...  Transfer to mod_sol28_target array:
       IF (ALLOCATED(target)) DEALLOCATE(target)
       ALLOCATE(target(ntarget))
@@ -304,6 +311,8 @@ c...  Transfer to mod_sol28_target array:
       DEALLOCATE(new_target)
 
 c...  Add a check to make sure a tube is assigned twice, no more, no less...
+
+      IF (geometry.EQ.LINEAR) grid%nxpt = 0  ! Was set to 1 above to activate the target assembly code
 
       RETURN
  99   STOP
@@ -354,6 +363,9 @@ c...  Find x-points:
       ixpt = 0
       rxpt = 0.0D0
       zxpt = 0.0D0
+
+      itsep  = 1
+      itsep2 = 0
 
       it = grid%isep
       cind1 = tube(it)%cell_index(LO)
@@ -1537,16 +1549,14 @@ c...
 
           CALL LoadLegacyData('osm_legacy.raw')
 
-          CALL DumpData_OSM('output.grid_load','Done loading grid')
-
+          CALL DumpData_OSM('output.grid_load1','Done loading grid')
 
           CALL osm_DeriveGridQuantities
 
-          CALL DumpData_OSM('output.grid_load','Done loading grid')
+          CALL DumpData_OSM('output.grid_load2','Done loading grid')
 c...
           CALL LoadSupplimentalGridData
           CALL DumpData_OSM('output.grid_sup','Done loading sup data')
-
 
           CALL GenerateTubeGroups
           CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')

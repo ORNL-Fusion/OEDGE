@@ -55,6 +55,7 @@ FUNCTION GetImage,           $
    window     = window,      $
    nocal      = nocal,       $
    no_square  = no_square,   $
+   kill       = kill     ,   $
    plots      = plots
 ;
 ; ----------------------------------------------------------------------
@@ -637,6 +638,10 @@ FUNCTION GetImage,           $
           image.yshift = top_old  - top
         ENDIF
 
+
+        IF (keyword_set(kill)) THEN width = 266
+          
+
         image_new = MAKE_ARRAY(width,height,/INTEGER,VALUE=0)
         print,width-1
         print,left-1
@@ -649,9 +654,17 @@ FUNCTION GetImage,           $
         IF (width  MOD 2 NE 0) THEN width  = width  - 1   ; convenient for now in RAY...
         IF (height MOD 2 NE 0) THEN height = height - 1
 
-        FOR iy = 0, height-1 DO BEGIN
-          image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
-        ENDFOR
+        IF (keyword_set(kill)) THEN BEGIN
+          FOR iy = 0, height-1 DO BEGIN
+            FOR ix = 0, width-1 DO BEGIN
+              image_new[ix,iy] = image_data[left-1+width-ix,iy+top-1]
+            ENDFOR
+          ENDFOR
+        ENDIF ELSE BEGIN
+          FOR iy = 0, height-1 DO BEGIN
+            image_new[0:width-1,iy] = image_data[left-1:left-1+width-1,iy+top-1]
+          ENDFOR
+        ENDELSE
 
 ;        image_new[0                   :image.xshift-1,*] = 0
 ;        image_new[width-image.xshift-1:width-1       ,*] = 0

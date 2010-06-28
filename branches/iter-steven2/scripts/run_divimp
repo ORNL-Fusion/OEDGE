@@ -39,8 +39,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #  setenv DIVHOME ~/divimp
 
   setenv ADASCENT $DIVHOME/adas/
-  setenv RESDIR   $DIVHOME/results
   setenv EIRDIR   $DIVHOME/$EIRTEMP
+  source $DIVHOME/scripts/results_resdir $CASENAME
 
 # Location of graphics library used by EIRENE:
   setenv GLI_HOME $DIVHOME/libsrc
@@ -312,11 +312,13 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #
 # ----------------------------------------------------------------------
 #
-# Move all files to results directory, over-writing any previous results:
+# Move all files to results directory, replacing any previous results:
 #
   rm *.A
 #  zipc *.A
-#   rm *.map
+  rm *.map
+
+  if ($OUTONLY == "no") rm $RESDIR/$CASENAME*
 
   mv -f $CASENAME.* $RESDIR
 #

@@ -5,6 +5,27 @@
 *
 
 
+* FOR THE PSI...
+{PLOT 1D SUMMARY}  1   $ {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.21 (14/18 x 0.5 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+
+  {YRANGE}   1.0E-09 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.21
+  {SET} Dperp =  1.0 m s-2  (1223)  {CASE} i-fwp-1223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (1224)  {CASE} i-fwp-1224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (1225)  {CASE} i-fwp-1225b >d >i >e >g >f >h
+
+{EXIT}
+
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    TUNGSTEN UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
   {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry

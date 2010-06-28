@@ -838,9 +838,10 @@ c      WRITE(0,*) 'NOBJ:',nobj
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
 c     .            (obj(iobj)%index(IND_IR).NE.17)) CYCLE
 c     .            (obj(iobj)%index(IND_IR).NE.5)) CYCLE
-            IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE     
+c            IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE     
+            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
 c            IF (obj(iobj)%index(IND_IR).NE.5) CYCLE
-            IF (obj(iobj)%segment(1).EQ.0) CYCLE
+c            IF (obj(iobj)%segment(1).EQ.0) CYCLE
 
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
@@ -854,6 +855,9 @@ c              ENDIF
  
               isrf = ABS(isrf)
 
+              IF (srf(isrf)%index(IND_SURFACE).EQ.0 ) CYCLE
+              IF (srf(isrf)%index(IND_SURFACE).NE.21) CYCLE
+
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
 
@@ -865,7 +869,7 @@ c              isrf = ABS(obj(iobj)%iside(iside))
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = -2 ! 301
+     .            hsur(nsur) = 301 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
      .            hsur(nsur) = -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
@@ -980,7 +984,6 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
 
       CALL setup_col(16,5)
    
-
       CALL THICK2(5)
 
       solid = .FALSE.
@@ -1036,7 +1039,7 @@ c...      Add geometry item to list of objects to be plotted:
           SELECTCASE (option)
 c           ------------------------------------------------------------
             CASE (001) ! LOS integration geometry objects
-              nsur_solid = nsur + 1
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
 
               DO iobj = 1, nobj
@@ -1247,6 +1250,7 @@ c...              Output:
               ENDDO
 c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
               CALL TestTetrahedrons(fname,nsur,npts,vsur,hsur,
@@ -1345,13 +1349,13 @@ c...    Decide which surfaces are to be deleted:
 
           r = DSQRT( csur(1,isur)**2 + csur(3,isur)**2 )
 
-          IF (csur(3,isur).GT.0.01D0.AND.                          ! MAST
-     .        r.GT.0.75.AND.DABS(csur(2,isur)).LT.1.5) THEN        
+c          IF (csur(3,isur).GT.0.01D0.AND.                          ! MAST
+c     .        r.GT.0.75.AND.DABS(csur(2,isur)).LT.1.5) THEN        
 c          IF (r.GT.1.20.AND.                                       ! DIII-D
 c     .        csur(2,isur).GT.-1.0.AND.csur(2,isur).LT.1.2) THEN
 c...        Tag for deletion:
-            npts(isur) = -999
-          ENDIF
+c            npts(isur) = -999
+c          ENDIF
         ENDDO
 
 c...    Delete:
@@ -1963,7 +1967,8 @@ c     -Project onto the R,Z plane:
 c      XLAB = '   R  (M)'
 c      YLAB = '   Z  (M)'
 
-
+      CALL THICK (1)
+      CALL THICK2(1)
 
       slopt = 1
 
@@ -2196,6 +2201,46 @@ c                WRITE(0,*) 'GO MAN',iobj,isid
                   CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
                   CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
                 ENDDO
+              ENDIF
+            ELSE
+              CALL ER('Plot985','Unknown surface geometry type',*98)
+            ENDIF
+          ENDDO
+        ENDDO 
+c...    Surface highlighting:
+        DO iobj = 1, 0 ! nobj
+          CALL LINCOL(ncols+obj(iobj)%colour+2) 
+          DO isid = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
+
+            IF ((obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+     .           obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY).OR.
+     .          obj(iobj)%esurf(isid).NE.21) CYCLE
+
+            IF (obj(iobj)%nside.NE.0) THEN
+              isrf1 = obj(iobj)%iside(isid,1)
+              isrf2 = obj(iobj)%iside(isid,2)
+            ELSE
+              isrf1 = 1
+              isrf2 = 1
+            ENDIF
+
+            IF     (obj(iobj)%gsur(isid).EQ.GT_TC) THEN
+            ELSEIF (obj(iobj)%gsur(isid).EQ.GT_TD) THEN
+              IF (obj(iobj)%nside.NE.0) THEN
+                DO isrf = isrf1, isrf2
+                  DO i3 = 1, srf(isrf)%nvtx
+                    i4 = i3 + 1
+                    IF (i4.GT.srf(isrf)%nvtx) i4 = 1
+                    p1(1:3,1) = vtx(1:3,srf(isrf)%ivtx(i3))
+                    p2(1:3,1) = vtx(1:3,srf(isrf)%ivtx(i4))
+                    call transform_vect(mat,p1(1,1))
+                    call transform_vect(mat,p2(1,1))
+                    CALL POSITN (SNGL(p1(1,1)),SNGL(p1(2,1)))
+                    CALL JOIN   (SNGL(p2(1,1)),SNGL(p2(2,1))) 
+                  ENDDO
+                ENDDO
+              ELSE
+                STOP 'OUT OF DATE'
               ENDIF
             ELSE
               CALL ER('Plot985','Unknown surface geometry type',*98)

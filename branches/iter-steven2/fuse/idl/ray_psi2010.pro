@@ -7,7 +7,7 @@
 ; > cd ~/fuse/idl      
 ; > idl
 ; > @ray_make
-; > .r psi_2010
+; > .r ray_psi2010
 ;
 ; Examples:
 ;
@@ -19,7 +19,7 @@
 ;     	  param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
 ;     2 - plot of reconstruction to window with proper aspect ratio
 ;         YOU NEED TO SPECIFY /show_a or /show_b
-;         you can turn off the dotten line with /no_line
+;         you can turn off the dotted line with /no_line
 ;     3 - shaded surface plot, need to say /show_a or /show_b
 ;     4 - plot of reconstruction with separatrix overlayed -- work in progress
 ;     5 - plot of the two reconstructions showing where they intersect
@@ -31,6 +31,9 @@
 ;
 ;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
 ;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
+;        ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
+;         ray_psi2010_plots,51,5,cutoff=[0.10,0.05]          overlap of CII and CIII for detached reference
+;        ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
 ;
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
@@ -163,10 +166,16 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       END
 ;   --------------------------------------------------------------------
     2: BEGIN  ; Big contour plot
+      IF (KEYWORD_SET(cutoff)) THEN BEGIN
+        vala = cutoff * MAX(data.a.data)
+        valb = cutoff * MAX(data.b.data)
+        data.a.data[WHERE(data.a.data GE vala)] = vala
+        data.b.data[WHERE(data.b.data GE valb)] = valb
+      ENDIF
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
         IF (KEYWORD_SET(show_a)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
         IF (KEYWORD_SET(show_b)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
-        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.5,YSIZE=dim[1]*1.5
+        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.8,YSIZE=dim[1]*1.8
         DEVICE, DECOMPOSED=0
       ENDIF
       IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
@@ -227,7 +236,7 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
         dim = SIZE(data.a.data,/DIMENSIONS)
-        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.7,YSIZE=dim[1]*1.7
+        WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.8,YSIZE=dim[1]*1.8
         DEVICE, DECOMPOSED=0
       ENDIF
 

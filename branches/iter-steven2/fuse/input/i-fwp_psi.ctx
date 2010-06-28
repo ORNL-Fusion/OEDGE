@@ -1,28 +1,7 @@
 * First ever CORTEX input file
 *
 
-{PLOT 2D CONTOUR}  1    {LOG} {COLOR TABLE}  5    {XRANGE} 18.0 21.0  {NO FRAME}
-  {CHARSIZE} 1.1 {THICK} 2.0
 
-{PLOT 2D CONTOUR}  7    {LOG} {COLOR TABLE}  5    {XRANGE} 0.1  3.0
-  {CHARSIZE} 1.1 {THICK} 2.0
-
-{PLOT 2D CONTOUR}  1    {LOG} {COLOR TABLE}  5   {XRANGE} 18.0 21.0 
-  {ZOOM}  4.1 -4.7  6.1 -2.5
-  {CHARSIZE} 1.1 {THICK} 2.0
-
-{PLOT 2D CONTOUR}  7    {LOG} {COLOR TABLE}  5   {XRANGE} 0.1  3.0
-  {ZOOM}  4.1 -4.7  6.1 -2.5
-  {CHARSIZE} 1.1 {THICK} 2.0
-
-$ PLOT 2D CONTOUR}  1    {LOG} {COLOR TABLE}  5   {XRANGE} 18.0 21.0 
-$  {ZOOM}  4.1 -4.7  6.1 -2.5
-$ PLOT 2D CONTOUR}  7    {LOG} {COLOR TABLE}  5   {XRANGE} 0.1  3.0
-$  {ZOOM}  4.1 -4.7  6.1 -2.5
-
-$  {PLOT TITLE} None
-
-{EXIT}
 
 
 
@@ -49,7 +28,7 @@ $                  i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
 {STRING} midplane_scale_factor 0.28
 
 $
-$
+$ UPPER PORT, MCR  - series 10
 $
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, MCR: SCALE FACTOR upper_scale_factor
@@ -127,6 +106,88 @@ $
   {SET} 3h {CASE} i-fwp-0223b >h list_horizontal_h sub xxx 421
   {SET} 4h {CASE} i-fwp-0224b >h list_horizontal_h sub xxx 431
   {SET} 5h {CASE} i-fwp-0225b >h list_horizontal_h sub xxx 441
+$
+$ UPPER PORT, BM12
+$
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3b {CASE} i-fwp-0223b >d list_horizontal_b sub xxx 422
+  {SET} 4b {CASE} i-fwp-0224b >d list_horizontal_b sub xxx 432
+  {SET} 5b {CASE} i-fwp-0225b >d list_horizontal_b sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3d {CASE} i-fwp-0223b >d list_horizontal_d sub xxx 422
+  {SET} 4d {CASE} i-fwp-0224b >d list_horizontal_d sub xxx 432
+  {SET} 5d {CASE} i-fwp-0225b >d list_horizontal_d sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xi : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3i {CASE} i-fwp-0223b >i list_horizontal_i sub xxx 422
+  {SET} 4i {CASE} i-fwp-0224b >i list_horizontal_i sub xxx 432
+  {SET} 5i {CASE} i-fwp-0225b >i list_horizontal_i sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xe : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3e {CASE} i-fwp-0223b >e list_horizontal_e sub xxx 422
+  {SET} 4e {CASE} i-fwp-0224b >e list_horizontal_e sub xxx 432
+  {SET} 5e {CASE} i-fwp-0225b >e list_horizontal_e sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xg : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3g {CASE} i-fwp-0223g >g list_horizontal_g sub xxx 422
+  {SET} 4g {CASE} i-fwp-0224g >g list_horizontal_g sub xxx 432
+  {SET} 5g {CASE} i-fwp-0225g >g list_horizontal_g sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xf : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3f {CASE} i-fwp-0223b >f list_horizontal_f sub xxx 422
+  {SET} 4f {CASE} i-fwp-0224b >f list_horizontal_f sub xxx 432
+  {SET} 5f {CASE} i-fwp-0225b >f list_horizontal_f sub xxx 442
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS: UPPER PORT, BM12 PUFF: SCALE FACTOR upper_scale_factor
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  023xb : 023xh : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} upper_scale_factor
+  {SET} 3h {CASE} i-fwp-0223b >h list_horizontal_h sub xxx 422
+  {SET} 4h {CASE} i-fwp-0224b >h list_horizontal_h sub xxx 432
+  {SET} 5h {CASE} i-fwp-0225b >h list_horizontal_h sub xxx 442
+
+{EXIT}
+
 
 {EXIT}
 
