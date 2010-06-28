@@ -21,18 +21,7 @@
     cat run_qsub_1 run_qsub_2 > $script_name
     chmod u+x $script_name
     rm run_qsub_1 run_qsub_2
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
     qsub $script_name
-#    qstat -f | grep -i exec
-    #qsub /home/ITER/lisgos/divimp/scripts/batch_dummy
-#    qstat -f | grep -i exec_host
     exit
   endif
 #
@@ -47,14 +36,7 @@
     source $DIR_SCRIPT/run_osm uls $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
   else if ( "$1" == "-osm" ) then
     shift
-#    set DEVICE = $1 
-#    if      ( $DEVICE == "iter" || $DEVICE == "mast" ) then
-#      shift
-      source $DIR_SCRIPT/run_osm $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
-#    else
-#      echo ERROR: unknown device specification: $DEVICE
-#      exit
-#    endif
+    source $DIR_SCRIPT/run_osm $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
   else if ( "$1" == "-ray" ) then
     shift
     source $DIR_SCRIPT/run_ray mast $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11

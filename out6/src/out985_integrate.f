@@ -1201,10 +1201,10 @@ c...        BUG?
 c...        Translate:
 c            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
 c            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
-            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  ! PHI rotation added 29/03/2010 -SL
+            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  
             chord%v2(1:2) = chord%v2(1:2) + chord%trans(1:2)
-        
-            angle = chord%trans(3) * 3.141596D0 / 180.0D0 
+c...        PHI rotoation:        
+            angle = chord%trans(3) * 3.141596D0 / 180.0D0  ! PHI rotation added 29/03/2010 -SL
             CALL Calc_Transform2(mat,0.0D0,1,0)            ! Rotate about y-axis
             CALL Calc_Transform2(mat,angle,2,1)
             CALL Transform_Vect(mat,chord%v1)

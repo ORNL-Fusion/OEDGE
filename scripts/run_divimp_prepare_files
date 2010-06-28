@@ -34,6 +34,9 @@
 #      cpc $RESDIR/$SAVENAME.raw.gz .
 #      unzipc $RESDIR/$SAVENAME.raw.gz
 #      mvc $SAVENAME.raw fort.8
+
+      results_unpack $CASENAME
+
       cpc $RESDIR/$CASENAME.dump         dump.dat
       cpc $RESDIR/$CASENAME.eirtrc       eirtrac.dat
       cpc $RESDIR/$CASENAME.triangles    triangles.dat

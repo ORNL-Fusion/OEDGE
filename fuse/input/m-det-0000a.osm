@@ -11,7 +11,7 @@ $
 $ Control:
 $ ======================================================================
 $
-'{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
+'{C KIN}      Number of fluid-kinetic iterations              '    2   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
 '{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
@@ -23,6 +23,7 @@ $ ======================================================================
 $
 '{GRID FILE}        File name of the fluid grid to be loaded '  'carre.24860_240.sm'   $ OPT%F_GRID_FILE
 '{GRID STRIP CELLS} Remove boundary cells from SONNET grid   '   1                     $ OPT%F_GRID_STRIP
+'{GRID LOAD METHOD} 1-DIVIMP files  2-grid file              '   1                     $ OPT%F_GRID_LOAD_METHOD
 '{GRID FORMAT}      1-SONNET                                 '   1                     $ OPT%F_GRID_FORMAT
 $'{GRID DEL TUBES}   Delete these tubes after loading grid    '  16                     $ OPT%GRD_TDEL
 $

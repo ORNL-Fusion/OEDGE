@@ -18,6 +18,12 @@ FUNCTIOn grid_AnalyseBoundary, psi_x, psi_y, psi, xpoint_zone, mode, plots=plots
 
   print,min(psi),max(psi)
 
+  count_last = 0
+  count_max  = 0
+
+  psib_mark1 = -999.0
+  psib_mark2 = -999.0
+
   WHILE ( psib LT psib_2 ) DO BEGIN
 ;
 ;   Generate the contour data for the separatrix:
@@ -29,21 +35,12 @@ FUNCTIOn grid_AnalyseBoundary, psi_x, psi_y, psi, xpoint_zone, mode, plots=plots
     y = path_xy[1,*]
 
     i = WHERE( x GE xpoint_zone[0] AND x LE xpoint_zone[1]  AND  $
-               y GE xpoint_zone[2] AND y LE xpoint_zone[3], count)
-    IF (count EQ 0) THEN BEGIN
-      PRINT, 'no contours in x-point zone - x scan'
-;      STOP
+               y GE xpoint_zone[2] AND y LE xpoint_zone[3], count_pts)
+    
+    IF (count_pts EQ 0) THEN BEGIN
+      PRINT, 'no contours in x-point zone'
     ENDIF
-;    x = x[i]
-;    y = y[i]
 
-;    i = WHERE( y GE xpoint_zone[2] AND y LE xpoint_zone[3], count)
-;    IF (count EQ 0) THEN BEGIN
-;      PRINT, 'no contours in x-point zone - y scan'
-;      STOP
-;    ENDIF
-;    x = x[i]
-;    y = y[i]
 
     n = N_ELEMENTS(x)
 
@@ -56,10 +53,7 @@ FUNCTIOn grid_AnalyseBoundary, psi_x, psi_y, psi, xpoint_zone, mode, plots=plots
     i = [i,n-1]
 
     print,count,' --- ',i
-
-
-
-
+    print,psib_mark1,psib_mark2,count_max,count,count_last
     IF (count GT 0) THEN BEGIN
 
       IF (psib EQ psib_1) THEN  $
@@ -76,11 +70,30 @@ FUNCTIOn grid_AnalyseBoundary, psi_x, psi_y, psi, xpoint_zone, mode, plots=plots
       ENDFOR
     ENDIF
 
+    IF (count_pts GT 0) THEN BEGIN
+      IF (count GT count_last) THEN BEGIN
+        psib_mark1 = psib
+        count_max = count
+      ENDIF
+      IF (count LT count_last AND count EQ count_max-1) THEN psib_mark2 = psib
+      count_last = count
+    ENDIF  
+
+
 ;    contour,psi,levels=[psib]
 
-  psib = psib + psib_step
 
-CONTINUE
+
+    psib = psib + psib_step
+
+
+
+
+
+
+    CONTINUE
+
+
 
     RETURN, -1
 
@@ -144,6 +157,25 @@ CONTINUE
     psib = psib + psib_step
 
   ENDWHILE 
+
+
+; *** LEF TOFF *** SOMETHIGNS NOT RIGHT!
+
+    CONTOUR, psi, psi_x, psi_y, LEVELS=[psib_mark1], /PATH_DATA_COORDS,  $
+             PATH_XY=path_xy, PATH_INFO=path_info
+    x = path_xy[0,*]
+    y = path_xy[1,*]
+    OPLOT, x, y, COLOR=TrueColor('Purple') 
+
+    CONTOUR, psi, psi_x, psi_y, LEVELS=[psib_mark2], /PATH_DATA_COORDS,  $
+             PATH_XY=path_xy, PATH_INFO=path_info
+    x = path_xy[0,*]
+    y = path_xy[1,*]
+    OPLOT, x, y, COLOR=TrueColor('Orange') 
+
+
+    print,psib_mark1,psib_mark2
+
 
 return, -1
 
@@ -288,10 +320,10 @@ PRO grid_Main
 ;  a = grid_ReadEQUFile('/home/ITER/lisgos/divimp/shots/ts/upgrade_1MA_1cm/TS2_1MA_LN.x2.cr.equ')
 ;  b = grid_AnalyseBoundary(a.x,a.y,a.psi_raw,xpoint_zone,1,/plots)
 
-;  xpoint_zone = [4.0,6.0,-3.8,5.5]
-;  a = grid_ReadEQUFile('/home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ')
-;  b = grid_AnalyseBoundary(a.x,a.y,a.psi_raw,xpoint_zone,1,/plots)
+  xpoint_zone = [4.0,6.0,-3.8,5.5]
+  a = grid_ReadEQUFile('/home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ')
+  b = grid_AnalyseBoundary(a.x,a.y,a.psi_raw,xpoint_zone,1,/plots)
 
 
-  HELP,a,/struct
+;  HELP,a,/struct
 END

@@ -1398,9 +1398,13 @@ c...        Exponential decay to :
             A = p0 - p1
             B = p1
             IF (pc) pe(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = te0 - te1
             B = te1 
             IF (tec) te(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = ti0 - ti1
             B = ti1 
             IF (tic) ti(inode) = A * EXP(-val / C) + B

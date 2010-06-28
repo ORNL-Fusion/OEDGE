@@ -45,7 +45,9 @@
      .  EIR_MAXNSTRATA = 100,
      .  EIR_MAXNVOID   = 100,
      .  EIR_MAXNSPECTRA= 100,
-     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5
+     .  EIR_MAXNSUR    = 100,
+     .  EIR_MAXNTET    = 100,
+     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5, LINEAR = 6
 
 
       REAL, PUBLIC, PARAMETER ::   
@@ -187,6 +189,33 @@ c
          INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
          INTEGER   :: ilspt           ! Sputering option
+!...     3D:
+         INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
+!          tetrahedral mesh generation        
+         INTEGER   :: tet_n
+         REAL      :: tet_type  (EIR_MAXNTET)
+         REAL      :: tet_x1    (EIR_MAXNTET)
+         REAL      :: tet_y1    (EIR_MAXNTET)
+         REAL      :: tet_x2    (EIR_MAXNTET)
+         REAL      :: tet_y2    (EIR_MAXNTET)
+!...     Surface properties in EIRENE:
+         INTEGER       :: sur_n       
+         REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
+         CHARACTER*128 :: sur_index   (EIR_MAXNSUR)  ! Poloidal index 
+         CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector 
+         INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
+         INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
+         INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
+         INTEGER       :: sur_tr1     (EIR_MAXNSUR)  ! ?
+         INTEGER       :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         INTEGER       :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
+         INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
+         INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
+         CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.
+         REAL          :: sur_coverage(EIR_MAXNSUR)  ! defunct...
+         INTEGER       :: sur_hard    (EIR_MAXNSUR)  ! Make sure the specified surface properties are isolated to this surface only
+         INTEGER       :: sur_remap   (EIR_MAXNSUR)  ! For the evil remapping scheme, currently used to deal with perfectly conformal surfaces
+         CHARACTER*256 :: sur_tag     (EIR_MAXNSUR)
 !...     Particle energy spectra:
          INTEGER      :: nadspc
          INTEGER      :: ispsrf     (EIR_MAXNSPECTRA)  ! Surface index, <0=non-default standard, >0=additional surfaces
@@ -686,7 +715,9 @@ c...    Strata:
       USE mod_sol28      
       IMPLICIT none
 
-      TYPE(type_options_filament) :: opt_fil
+      TYPE(type_options_eirene  ) :: opt_eir   ! EIRENE options
+      TYPE(type_options_filament) :: opt_fil   ! Filament options
+
       END MODULE mod_options
 !
 ! ----------------------------------------------------------------------
@@ -715,6 +746,7 @@ c...    Strata:
       MODULE mod_sol28_global
       USE mod_sol28      
       USE mod_geometry
+      USE mod_options
       IMPLICIT none
 
       PUBLIC
@@ -741,7 +773,6 @@ c...    Strata:
       INTEGER, PARAMETER :: MAX_NOPT = 10
       INTEGER nopt
       TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
-      TYPE(type_options_eirene  ) :: opt_eir   ! *** ADD SIMILAR FUNCTIONALITY? ***
       INTEGER logop, logfp
 
 !...  Nasty...

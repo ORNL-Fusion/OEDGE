@@ -75,6 +75,7 @@ MODULE MOD_OUT985
      INTEGER :: in
      INTEGER :: ivolume
      INTEGER :: sample
+     INTEGER :: esurf(MAX3DSIDE)
 !    Geometry (original):
      INTEGER :: nsur
      INTEGER :: nver
