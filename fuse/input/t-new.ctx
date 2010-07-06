@@ -2,6 +2,12 @@
 *
 *
 
+{PLOT 1D RADIAL PROFILE}  1  
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2
+
+{EXIT}
+
+
 {PLOT 1D PEDESTAL MODEL}  1    
   {CASE DEFAULT} t-new-0005a {CASE} >b t-new-0006a
 

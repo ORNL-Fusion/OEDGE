@@ -32,7 +32,7 @@
 ;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
 ;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
 ;        ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
-;         ray_psi2010_plots,51,5,cutoff=[0.10,0.05]          overlap of CII and CIII for detached reference
+;        ray_psi2010_plots,51,5,cutoff=[0.10,0.05]           overlap of CII and CIII for detached reference
 ;        ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
 ;
 ; ray_psi2010_pass				reprocess and save all reconstructions
@@ -350,7 +350,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;    rdd  600 us   200 us  200 us          200 ms
 ;
    21: BEGIN
-     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 201 ms'
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 201 ms'             ; 21
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -363,7 +363,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='FFC_25028_603_1_HL07_rba_Dgamma.cgm'
      END    
    22: BEGIN
-     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 242 ms'
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 242 ms'             ; 22
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -376,7 +376,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='FFC_25028_810_1_HL07_rba_Dgamma.cgm'
      END    
    23: BEGIN
-     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 312 ms'
+     title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 312 ms'             ; 23
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -389,7 +389,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
      END    
    30: BEGIN
-     title = 'REFERENCE and NO i/b GAS D_alpha : 24861 and 24862 at 201 ms'
+     title = 'REFERENCE and NO i/b GAS D_alpha : 24861 and 24862 at 201 ms'     ; 30
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -415,7 +415,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='FFC_24862_554_1_HL07_rba_Dgamma.cgm'
      END    
    40: BEGIN
-     title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 201 ms'
+     title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 201 ms'   ; 40
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -573,6 +573,32 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
      bfile='FFC_25029_1158_3_HL01_rbc_CII.cgm'
      END
+   72: BEGIN 
+     title = 'REFERENCE Dgamma and CII : 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 2.0
+     aspt = [0.280,-1.4075]
+     axpt = [0.730,-1.160]
+     bspt = [0.280,-1.395]
+     bxpt = [0.725,-1.175]
+     afile='FFC_25028_1158_1_HL07_rba_Dgamma.cgm'
+     bfile='FFC_25029_1158_3_HL01_rbc_CII.cgm'
+     END
+   73: BEGIN 
+     title = 'REFERENCE Dalpha and CIII : 24028 and 25029 at 312 ms'
+     plot_option = 1
+     fit_sample=10
+     ascale = 1.0
+     bscale = 5.0
+     aspt = [0.280,-1.420]
+     axpt = [0.725,-1.175]
+     bspt = [0.280,-1.370]
+     bxpt = [0.730,-1.160]
+     afile='FFC_25028_1158_3_HL01_rbc_Dalpha.cgm'
+     bfile='FFC_25029_1158_1_HL07_rba_CIII.cgm'
+     END
    80: BEGIN 
      title = 'REFERENCE Ddelta: 24028 and 25029 at 312 ms'
      plot_option = 1
@@ -599,6 +625,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      afile='DIVCAM_25028_17_4_HL07_rdd_Dbeta.cgm'
      bfile='DIVCAM_25029_17_4_HL07_rdd_Dbeta.cgm'
      END
+
 ;  =====================================================================
 ;  =====================================================================
 ;  Comparing new and old inversions of 20100413:

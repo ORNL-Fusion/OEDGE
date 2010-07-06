@@ -7083,6 +7083,17 @@ c
 c     Define target index
 c
       id = idds(ir_local,it)
+c slmod begin
+      IF (id.EQ.0) THEN
+        WRITE(0,*) 'WHOA! PROBLEM!'
+        WRITE(0,*) griderr
+        WRITE(0,*) r,z
+        WRITE(0,*) ik_local,ir_local
+        WRITE(0,*) ik,ir
+        WRITE(0,*) it
+        id = idds(irsep,2)
+      ENDIF
+c slmod end
 c
 c     Calculate Larmor radius - use toroidal field for now.
 c
