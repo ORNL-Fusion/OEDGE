@@ -1,0 +1,12 @@
+C
+C*DK MASJ3
+      SUBROUTINE MASJ3 (A,I,J,K)
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      CHARACTER(24), INTENT(IN) :: A
+      INTEGER, INTENT(IN) :: I, J, K
+      WRITE (iunout,60) A,I,J,K
+60    FORMAT (1X,A24,1X,3(I6,3X))
+      RETURN
+      END

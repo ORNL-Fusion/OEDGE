@@ -1,0 +1,2079 @@
+C  11.01.05:   text re. switching off generation limit corrected
+C              electron particle balance wtote instead of wtotp
+C
+      SUBROUTINE OUTEIR(INDOUT)
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CADGEO
+      USE CCONA
+      USE CLOGAU
+      USE CGRID
+      USE CSPEZ
+      USE CTRCEI
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_BGK
+      USE CSDVI_COP
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE CTEXT
+      USE COUTAU
+      USE CSPEI
+
+      IMPLICIT NONE
+C
+      INTEGER, INTENT(IN) :: INDOUT
+      REAL(DP) :: VECTOR(NRAD)
+      REAL(DP) :: TOTA(0:NATM),DIFA(0:NATM,0:NSTRA),
+     .            DIFRA(0:NATM,0:NSTRA)
+      REAL(DP) :: TOTM(0:NMOL),DIFM(0:NMOL,0:NSTRA),
+     .            DIFRM(0:NMOL,0:NSTRA)
+      REAL(DP) :: TOTI(0:NION),DIFI(0:NION,0:NSTRA),
+     .            DIFRI(0:NION,0:NSTRA)
+      REAL(DP) :: TOTPH(0:NPHOT),DIFPH(0:NPHOT,0:NSTRA),
+     .            DIFRPH(0:NPHOT,0:NSTRA)
+      REAL(DP) :: DIFR, TOTT, PGAINP, PLOSSP, DIFT, EGAINE, SPA, ELOSSE,
+     .            EGAINP, ELOSSP, PGAINE, PLOSSE, SMEAN, OUTAUI, TALAV,
+     .            TALTOT, DIF
+      INTEGER :: IALS, IALV, J, JJ, IS, NFTI, NFTE, I0, K, NF, N, IALG,
+     .           ITAL, IPRV, KMAX, KK, ILAST, ICOUNT, I, IINDEX, ISPC, 
+     .           IT
+      INTEGER :: IADTYP(0:4)
+      LOGICAL :: LCOVN(NCV)
+C
+      CHARACTER(72) :: TXTTL
+      CHARACTER(24) :: TXTSP, TXTUN
+      CHARACTER(6) :: CISTRA
+      CHARACTER(10) :: TEXTYP(0:4)
+C
+C
+C ISTRA IS THE STRATUM NUMBER. ISTRA=0 STANDS FOR: SUM OVER STRATA
+      ISTRA=INDOUT
+C
+C MAKE SURE TO PRINT COVARIANCE TALLIES ONLY ONCE
+      DO N=1,NSIGCI
+        LCOVN(N)=.FALSE.
+      ENDDO
+C
+      IF (XMCP(ISTRA).LT.1.) THEN
+        WRITE (IUNOUT,*) 'OUTEIR CALLED, ISTRA, XMCP: ',
+     .                    ISTRA,XMCP(ISTRA)
+        WRITE (IUNOUT,*) 'PRINTOUT ABANDONNED FOR THIS STRATUM '
+        CALL LEER(1)
+        GOTO 1000
+      ENDIF
+C
+C
+      IF (ISTRA.EQ.IESTR) THEN
+C  NOTHING TO BE DONE
+      ELSEIF (NFILEN.EQ.1.OR.NFILEN.EQ.2) THEN
+        IESTR=ISTRA
+        CALL RSTRT(ISTRA,NSTRAI,NESTM1,NESTM2,NADSPC,
+     .             ESTIMV,ESTIMS,ESTIML,
+     .             NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .             NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .             NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .             NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,
+     .             NSIGI_SPC,TRCFLE)
+        IF (NLSYMP(ISTRA).OR.NLSYMT(ISTRA)) THEN
+          CALL SYMET(ESTIMV,NTALV,NRTAL,NR1TAL,NP2TAL,NT3TAL,
+     .               NADDV,NFIRST,NLSYMP(ISTRA),NLSYMT(ISTRA))
+        ENDIF
+      ELSEIF ((NFILEN.EQ.6.OR.NFILEN.EQ.7).AND.ISTRA.EQ.0) THEN
+        IESTR=ISTRA
+        CALL RSTRT(ISTRA,NSTRAI,NESTM1,NESTM2,NADSPC,
+     .             ESTIMV,ESTIMS,ESTIML,
+     .             NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .             NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .             NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .             NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,
+     .             NSIGI_SPC,TRCFLE)
+        IF (NLSYMP(ISTRA).OR.NLSYMT(ISTRA)) THEN
+          CALL SYMET(ESTIMV,NTALV,NRTAL,NR1TAL,NP2TAL,NT3TAL,
+     .               NADDV,NFIRST,NLSYMP(ISTRA),NLSYMT(ISTRA))
+        ENDIF
+      ELSE
+        WRITE (iunout,*) 'ERROR IN OUTEIR: DATA FOR STRATUM ISTRA= ',
+     .                    ISTRA
+        WRITE (iunout,*) 'ARE NOT AVAILABLE. PRINTOUT ABANDONNED'
+        RETURN
+      ENDIF
+C
+C
+      CALL PAGE
+      IF (ISTRA.NE.0) THEN
+        CALL FTCRI(ISTRA,CISTRA)
+        CALL MASBOX ('THIS IS STRATUM NUMBER ISTRA='//CISTRA)
+        WRITE (iunout,*) TXTSOU(ISTRA)
+        CALL LEER(1)
+        CALL MASAGE ('TYPE OF PRIMARY SOURCE:                      ')
+        CALL MASL4('NLPNT,NLLNE,NLSRF,NLVOL         ',
+     .              NLPNT(ISTRA),NLLNE(ISTRA),NLSRF(ISTRA),NLVOL(ISTRA))
+        CALL MASL5('NLPHOT,NLATM,NLMOL,NLION,NLPLS          ',
+     .              NLPHOT(ISTRA),NLATM(ISTRA),NLMOL(ISTRA),
+     .              NLION (ISTRA),NLPLS(ISTRA))
+        CALL MASAGE ('SPECIES INDEX OF SOURCE PARTICLES             ')
+        CALL MASJ1 ('NSPEZ=  ',NSPEZ(ISTRA))
+      ELSE
+        CALL MASBOX ('THIS IS THE SUM OVER THE STRATA')
+        CALL LEER(1)
+      ENDIF
+      CALL MASAGE ('NUMBER OF MONTE-CARLO HISTORIES               ')
+      CALL MASR1('NHIST=  ',XMCP(ISTRA))
+      CALL LEER(3)
+C
+C  PRINT THOSE VOLUME AVERAGED TALLIES, WHICH HAVE BEEN SELECTED
+C  AND WHICH ARE DIFFERENT FROM ZERO
+      IALG=0
+      DO 100 IPRV=1,NVOLPR
+        ITAL=NPRTLV(IPRV)
+        IF ((ITAL > 0) .AND. (ITAL <= NTALV)) THEN
+          IF (.NOT.LIVTALV(ITAL)) THEN
+            CALL LEER(2)
+            WRITE (iunout,*) TXTTAL(1,ITAL)
+            CALL MASAGE
+     .        ('TALLY SWITCHED OFF => NO OUTPUT AVAILABLE      ')
+            CALL LEER(2)
+            CYCLE
+          END IF
+        END IF
+C
+C  USER SUPPLIED POST PROCESSED TALLY, ITAL=0
+C
+        IF (ITAL.EQ.0) THEN
+C   CALL TO TALUSR: A POST PROCESSED USER SUPPLIED TALLY
+          ICOUNT=1
+120       CALL TALUSR(ICOUNT,VECTOR,TALTOT,TALAV,
+     .                TXTTL,TXTSP,TXTUN,ILAST,*121)
+          WRITE (iunout,*) 'USER SUPPLIED POST PROCESSED TALLY NO. ',
+     .                ICOUNT
+          CALL PRTTAL(TXTTL,TXTSP,TXTUN,
+     .                VECTOR,NR1ST,NP2ND,NT3RD,NBMLT,NSBOX,
+     .                NFLAGV(IPRV),NTLVFL(IPRV))
+          CALL LEER(2)
+          CALL MASAGE
+     .       ('TOTAL ("UNITS*CM**3), AND MEAN VALUE ("UNITS") ')
+          CALL MASR2 ('TOTAL, MEAN:    ',TALTOT,TALAV)       
+          CALL LEER(3)
+121       ICOUNT=ICOUNT+1
+          IF (ICOUNT.LE.ILAST) GOTO 120
+        ELSEIF (ITAL.GT.0.AND.ITAL.NE.NTALR) THEN
+          I0=0
+          IF (NFRSTI(ITAL).GT.1) I0=1
+          NFTI=1
+          NFTE=NFSTVI(ITAL)
+          IF (NSPEZV(IPRV,1).GT.0) THEN
+            NFTI=NSPEZV(IPRV,1)
+            NFTE=MAX(NFTI,NSPEZV(IPRV,2))
+          ENDIF
+          NF=NFIRST(ITAL)
+          DO 119 K=NFTI,NFTE
+            IF (K.GT.NFSTVI(ITAL)) GOTO 106
+            CALL FETCH_OUTAU (OUTAUI,ITAL,K,ISTRA,IUNOUT)
+            IF (OUTAUI.EQ.0.D0) GOTO 118
+C
+            DO 110 I=1,NSBOX_TAL
+              VECTOR(I)=ESTIMV(NADDV(ITAL)+K,I)
+110         CONTINUE
+            TALTOT=OUTAUI
+            TALAV=TALTOT/VOLTOT
+C
+            CALL PRTTAL(TXTTAL(K,ITAL),TXTSPC(K,ITAL),TXTUNT(K,ITAL),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                  NFLAGV(IPRV),NTLVFL(IPRV))
+            CALL LEER(2)
+            CALL MASAGE
+     .      ('TOTAL ("UNITS*CM**3), AND MEAN VALUE ("UNITS") ')
+            CALL MASR2 ('TOTAL, MEAN:    ',TALTOT,TALAV)
+            CALL LEER(3)
+C
+C  CHECK IF STANDARD DEVIATION IS AVAILABLE FOR THIS TALLY "ITAL"
+            DO 101 N=1,NSIGVI
+              IF (IIH(N).NE.ITAL) GOTO 101
+              IF (IGH(N).NE.K.AND.IGH(N).NE.0) GOTO 101
+              GOTO 111
+101         CONTINUE
+            GOTO 106
+111         CONTINUE
+            DO 112 I=1,NSBOX_TAL
+              VECTOR(I)=SIGMA(N,I)
+112         CONTINUE
+            SMEAN=SGMS(N)
+C
+            CALL MASAGE
+     .      ('RELATIVE STANDARD DEVIATION                   ')
+            IF (IGH(N).GT.0) TXTSP=TXTSPC(K,ITAL)
+            IF (IGH(N).EQ.0) TXTSP='TOTAL                   '
+            CALL PRTTAL
+     .           (TXTTAL(K,ITAL),TXTSP,'%                       ',
+     .            VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .            NFLAGV(IPRV),NTLVFL(IPRV))
+            CALL LEER(2)
+            CALL MASAGE
+     .      ('STANDARD DEVIATION OF MEAN VALUE (%)          ')
+            CALL MASR1 ('MEAN    ',SMEAN)
+            CALL LEER(3)
+C
+106         CONTINUE
+C  CHECK IF BGK-STANDARD DEVIATION IS AVAILABLE FOR THIS TALLY "ITAL"
+            IF (NSIGI_BGK.GT.0) THEN
+              IF (ITAL.EQ.NTALB) THEN
+                KMAX=NBGVI_STAT
+                KK=K
+              ELSEIF (ITAL.EQ.1) THEN
+                KMAX=NATMI
+                KK=NBGVI+K
+              ELSEIF (ITAL.EQ.5) THEN
+                KMAX=NATMI
+                KK=NBGVI+NATMI+K
+              ELSEIF (ITAL.EQ.2) THEN
+                KMAX=NMOLI
+                KK=NBGVI+2*NATMI+K
+              ELSEIF (ITAL.EQ.6) THEN
+                KMAX=NMOLI
+                KK=NBGVI+2*NATMI+NMOLI+K
+              ELSE
+                KMAX=0
+              ENDIF
+              IF (K.GT.KMAX) GOTO 119
+              DO I=1,NSBOX_TAL
+                VECTOR(I)=SIGMA_BGK(KK,I)
+              ENDDO
+              SMEAN=SGMS_BGK(KK)
+C
+              CALL MASAGE
+     .        ('RELATIVE STANDARD DEVIATION (BGK)              ')
+              TXTSP=TXTSPC(K,ITAL)
+              CALL PRTTAL(TXTTAL(K,ITAL),TXTSP,'%                     ',
+     .                    VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                    NFLAGV(IPRV),NTLVFL(IPRV))
+              CALL LEER(2)
+              CALL MASAGE
+     .        ('STANDARD DEVIATION OF MEAN VALUE (%)          ')
+              CALL MASR1 ('MEAN    ',SMEAN)
+              CALL LEER(3)
+              GOTO 119
+            ENDIF
+C
+C  CHECK IF COP-STANDARD DEVIATION IS AVAILABLE FOR THIS TALLY "ITAL"
+            IF (NSIGI_COP.GT.0) THEN
+              IF (ITAL.EQ.NTALM) THEN
+                KMAX=NCPVI_STAT
+              ELSE
+                KMAX=0
+              ENDIF
+              IF (K.GT.KMAX) GOTO 119
+              DO I=1,NSBOX_TAL
+                VECTOR(I)=SIGMA_COP(K,I)
+              ENDDO
+              SMEAN=SGMS_COP(K)
+C
+              CALL MASAGE
+     .        ('RELATIVE STANDARD DEVIATION (COPV)             ')
+              TXTSP=TXTSPC(K,ITAL)
+              CALL PRTTAL(TXTTAL(K,ITAL),TXTSP,'%                     ',
+     .                    VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                    NFLAGV(IPRV),NTLVFL(IPRV))
+              CALL LEER(2)
+              CALL MASAGE
+     .        ('STANDARD DEVIATION OF MEAN VALUE (%)          ')
+              CALL MASR1 ('MEAN    ',SMEAN)
+              CALL LEER(3)
+              GOTO 119
+            ENDIF
+C
+C  CHECK IF COVARIANCE IS AVAILABLE
+            DO 103 N=1,NSIGCI
+              IF (LCOVN(N)) GOTO 103
+              IF  (IIHC(1,N).NE.ITAL.AND.IIHC(2,N).NE.ITAL) GOTO 103
+              IF  (IGHC(1,N).NE.K.AND.IGHC(1,N).NE.0.AND.
+     .             IGHC(2,N).NE.K.AND.IGHC(2,N).NE.0) GOTO 103
+              LCOVN(N)=.TRUE.
+              GOTO 113
+103         CONTINUE
+            GOTO 119
+113         CONTINUE
+C
+            DO 114 I=1,NSBOX_TAL
+              VECTOR(I)=SIGMAC(0,N,I)
+114         CONTINUE
+            SMEAN=SGMCS(0,N)
+C
+            CALL MASAGE
+     .      ('COVARIANCE                                    ')
+            IF (IGHC(1,N).GT.0) TXTSP=TXTSPC(IGHC(1,N),IIHC(1,N))
+            IF (IGHC(1,N).EQ.0) TXTSP='TOTAL                   '
+            WRITE (iunout,*) 'BETWEEN ESTIMATOR: '
+            ISPZ=MAX(1,IGHC(1,N))
+            CALL PRTTAL(TXTTAL(ISPZ,IIHC(1,N)),TXTSP,
+     .                  TXTUNT(ISPZ,IIHC(1,N)),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                 -1,0)
+            WRITE (iunout,*) 'AND ESTIMATOR: '
+            ISPZ=MAX(1,IGHC(2,N))
+            CALL PRTTAL(TXTTAL(ISPZ,IIHC(2,N)),TXTSP,
+     .                  TXTUNT(ISPZ,IIHC(2,N)),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                  NFLAGV(IPRV),0)
+            CALL LEER(2)
+            CALL MASAGE
+     .      ('COVARIANCE OF MEAN VALUES                      ')
+            CALL MASR1 ('MEAN    ',SMEAN)
+            CALL LEER(3)
+C
+            DO 115 I=1,NSBOX_TAL
+              VECTOR(I)=SIGMAC(1,N,I)
+115         CONTINUE
+            SMEAN=SGMCS(1,N)
+C
+            CALL MASAGE
+     .      ('STANDARD DEVIATION FOR 1ST TALLY               ')
+            IF (IGHC(1,N).GT.0) TXTSP=TXTSPC(IGHC(1,N),IIHC(1,N))
+            IF (IGHC(1,N).EQ.0) TXTSP='TOTAL                   '
+            ISPZ=MAX(1,IGHC(1,N))
+            CALL PRTTAL(TXTTAL(ISPZ,IIHC(1,N)),TXTSP,
+     .                  TXTUNT(ISPZ,IIHC(1,N)),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                  NFLAGV(IPRV),0)
+            CALL LEER(2)
+            CALL MASAGE
+     .      ('STANDARD DEVIATION OF MEAN VALUE              ')
+            CALL MASR1 ('MEAN    ',SMEAN)
+            CALL LEER(3)
+C
+            DO 116 I=1,NSBOX_TAL
+              VECTOR(I)=SIGMAC(2,N,I)
+116         CONTINUE
+            SMEAN=SGMCS(2,N)
+C
+            CALL MASAGE
+     .      ('STANDARD DEVIATION FOR 2ND TALLY              ')
+            IF (IGHC(2,N).GT.0) TXTSP=TXTSPC(IGHC(2,N),IIHC(2,N))
+            IF (IGHC(2,N).EQ.0) TXTSP='TOTAL                   '
+            ISPZ=MAX(1,IGHC(2,N))
+            CALL PRTTAL(TXTTAL(ISPZ,IIHC(2,N)),TXTSP,
+     .                  TXTUNT(ISPZ,IIHC(2,N)),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                  NFLAGV(IPRV),0)
+            CALL LEER(2)
+            CALL MASAGE
+     .      ('STANDARD DEVIATION OF MEAN VALUE              ')
+            CALL MASR1 ('MEAN    ',SMEAN)
+            CALL LEER(3)
+            GOTO 119
+C
+118         CONTINUE
+            CALL PRTTAL(TXTTAL(K,ITAL),TXTSPC(K,ITAL),TXTUNT(K,ITAL),
+     .                VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,-1,0)
+            CALL MASAGE('IDENTICAL ZERO, NOT PRINTED                  ')
+            CALL LEER(2)
+119       CONTINUE
+C
+C  ALGEBRAIC TALLY, ITAL=NTALR
+C
+        ELSEIF (ITAL.EQ.NTALR) THEN
+C
+C   REDO ALGEBRAIC EXPRESSION IN TALLIES, IN CASE NFILEN=2
+          IF ((NFILEN.EQ.2..OR.NFILEN.EQ.7).AND.IALG.EQ.0) THEN
+            IALG=1
+            CALL ALGTAL
+C
+            DO 130 IALV=1,NALVI
+              CALL INTTAL (ALGV,VOLTAL,IALV,NALV,NSBOX_TAL,
+     .                     ALGVI(IALV,ISTRA),
+     .                     NR1TAL,NP2TAL,NT3TAL,NBMLT)
+130         CONTINUE
+C
+            DO 132 IALS=1,NALSI
+              ALGSI(IALS,ISTRA)=0.
+              DO 131 J=1,NLIMPS
+                ALGSI(IALS,ISTRA)=ALGSI(IALS,ISTRA)+ALGS(IALS,J)
+131           CONTINUE
+132         CONTINUE
+          ENDIF
+C
+          I0=0
+          IF (NFRSTI(ITAL).GT.1) I0=1
+          NFTI=1
+          NFTE=NFSTVI(ITAL)
+          IF (NSPEZV(IPRV,1).GT.0) THEN
+            NFTI=NSPEZV(IPRV,1)
+            NFTE=MAX(NFTI,NSPEZV(IPRV,2))
+          ENDIF
+          NF=NFIRST(ITAL)
+          DO 159 K=NFTI,NFTE
+            CALL FETCH_OUTAU (OUTAUI,ITAL,K,ISTRA,IUNOUT)
+            IF (OUTAUI.EQ.0.D0) GOTO 158
+C
+            DO 155 I=1,NSBOX_TAL
+              IINDEX=NADDV(ITAL)*NRAD+(I-1)*NF+K
+              VECTOR(I)=ESTIMV(NADDV(ITAL)+K,I)
+155         CONTINUE
+            TALTOT=OUTAUI
+            TALAV=TALTOT/VOLTOT
+            CALL PRTTAL(TXTTAL(K,ITAL),TXTSPC(K,ITAL),TXTUNT(K,ITAL),
+     .                  VECTOR,NR1TAL,NP2TAL,NT3TAL,NBMLT,NSBOX_TAL,
+     .                  NFLAGV(IPRV),NTLVFL(IPRV))
+            CALL LEER(2)
+            CALL MASAGE
+     .         ('TOTAL ("UNITS*CM**3), AND MEAN VALUE ("UNITS") ')
+                CALL MASR2 ('TOTAL, MEAN:    ',TALTOT,TALAV)
+            CALL LEER(3)
+            GOTO 159
+C
+158         CONTINUE
+            CALL PRTTAL(TXTTAL(K,ITAL),TXTSPC(K,ITAL),TXTUNT(K,ITAL),
+     .                  VECTOR,NR1ST,NP2ND,NT3RD,NBMLT,NSBOX,-1,0)
+            CALL MASAGE('IDENTICAL ZERO, NOT PRINTED                  ')
+            CALL LEER(2)
+159       CONTINUE
+C
+        ENDIF
+C
+100   CONTINUE
+
+C  SPECTRA IN SELECTED CELLS
+
+      TEXTYP(0) = 'PHOTONS   '
+      TEXTYP(1) = 'ATOMS     '
+      TEXTYP(2) = 'MOLECULES '
+      TEXTYP(3) = 'TEST IONS '
+      TEXTYP(4) = 'BULK IONS '
+      IADTYP(0:4) = (/ 0, NSPH, NSPA, NSPAM, NSPAMI /)
+
+      DO ISPC=1,NADSPC
+        IF (ESTIML(ISPC)%PSPC%ISRFCLL /= 0) THEN
+          CALL LEER (1)
+          WRITE (iunout,'(A,I6)') ' SPECTRUM CALCULATED FOR CELL ',
+     .      ESTIML(ISPC)%PSPC%ISPCSRF
+          IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
+            WRITE (iunout,'(A,3(ES12.4,A1))') 
+     .      ' IN DIRECTION (',ESTIML(ISPC)%PSPC%SPCVX,',',
+     .      ESTIML(ISPC)%PSPC%SPCVY,',',ESTIML(ISPC)%PSPC%SPCVZ,')'
+          END IF
+          IT = ESTIML(ISPC)%PSPC%ISPCTYP
+          IF (IT == 1) THEN
+            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+     .        'SPECTRAL PARTICLE DENSITY IN #/CM**3/BIN(EV)   '
+          ELSEIF (IT == 2) THEN
+            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+     .        'SPECTRAL ENERGY DENSITY IN EV/CM**3/BIN(EV)    '
+          ELSEIF (IT == 3) THEN
+            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+     .        'SPECTRAL MOMENTUM DENSITY IN (G*CM/S)/CM**3/BIN(EV)    '
+          END IF
+          WRITE (iunout,'(A20,A8)') ' TYPE OF PARTICLE : ',
+     .                       TEXTYP(ESTIML(ISPC)%PSPC%IPRTYP)
+          IF (ESTIML(ISPC)%PSPC%IPRSP == 0) THEN
+            WRITE (iunout,'(A10,10X,A16)') ' SPECIES :',
+     .                                     'SUM OVER SPECIES'
+          ELSE
+            WRITE (iunout,'(A10,10X,A8)') ' SPECIES :',
+     .             TEXTS(IADTYP(ESTIML(ISPC)%PSPC%IPRTYP)+
+     .                   ESTIML(ISPC)%PSPC%IPRSP)
+          END IF
+          WRITE (iunout,'(A22,ES12.4)') ' INTEGRAL OF SPECTRUM ',
+     .           ESTIML(ISPC)%PSPC%SPCINT
+          IF (NSIGI_SPC > 0)
+     .      WRITE (iunout,'(A22,ES12.4)') ' STANDARD DEVIATION   ',
+     .           ESTIML(ISPC)%PSPC%SGMS
+        END IF
+      END DO
+      
+      IF (NSPCPR > 0) CALL OUTSPEC
+C
+C   OUTPUT OF VOLUME AVERAGED TALLIES FINISHED
+C
+      IF (TRCBLPH.OR.TRCBLA.OR.TRCBLM.OR.TRCBLI.OR.
+     .    TRCBLP .OR.TRCBLE) THEN
+        CALL LEER (3)
+        CALL HEADNG('                               ',31)
+        CALL HEADNG('= GLOBAL BALANCES (AMP/WATT) =',31)
+        CALL LEER (3)
+      ENDIF
+C
+C
+C  TEST PARTICLE FLUX BALANCE - AND ENERGY FLUX BALANCE
+C
+      CALL MASAGE ('TEST PARTICLE INFLUX FROM  SOURCE (AMP)       ')
+      CALL MASAGE ('INFLUX/(1.602*E-19) IS THE "ATOMIC" FLUX, PART./S')
+      CALL MASR1 ('INFLUX= ',FLUXT(ISTRA))
+      CALL LEER(2)
+C
+C  NEUTRAL ATOMS PARTICLE BALANCE
+C
+      DIFA(0,ISTRA)=0.
+      TOTA(0)=0.
+      IF (.NOT.TRCBLA) GOTO 410
+      IF (.NOT.LOGATM(0,ISTRA)) GOTO 410
+      CALL HEADNG('PARTICLE FLUX BALANCE (AMP), NEUTRAL ATOMS',43)
+      CALL LEER(1)
+C   ATOMS FROM PRIMARY SOURCE
+      IF (ANY(WTOTA(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM PRIMARY SOURCE              ')
+        CALL MASYR1 ('WTOTA  = ',
+     .                WTOTA,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',WTOTA(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPPAT) THEN
+        IF (LMSPPAT) THEN
+        CALL MASAGE ('ATOMS FROM RECOMBINING BULK IONS               ')
+        CALL MASAGE ('PPAT   SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PPATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS FROM RECOMBINING BULK IONS               ')
+        CALL MASYR1 ('PPATI  = ',
+     .                PPATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPATI(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPAAT) THEN
+        IF (LMSPAAT) THEN
+        CALL MASAGE ('ATOMS BORN BY ATOM - PLASMA INTERACTIONS       ')
+        CALL MASAGE ('PAAT   SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PAATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS BORN BY ATOM - PLASMA INTERACTIONS       ')
+        CALL MASYR1 ('PAATI  = ',
+     .                PAATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PAATI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPMAT) THEN
+        IF (LMSPMAT) THEN
+        CALL MASAGE ('ATOMS BORN BY MOLECULE - PLASMA INTERACTIONS   ')
+        CALL MASAGE ('PMAT   SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PMATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS BORN BY MOLECULE - PLASMA INTERACTIONS   ')
+        CALL MASYR1 ('PMATI  = ',
+     .                PMATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMATI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPIAT) THEN
+        IF (LMSPIAT) THEN
+        CALL MASAGE ('ATOMS BORN BY TEST ION - PLASMA INTERACTIONS   ')
+        CALL MASAGE ('PIAT   SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PIATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS BORN BY TEST ION - PLASMA INTERACTIONS   ')
+        CALL MASYR1 ('PIATI  = ',
+     .                PIATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PIATI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPPHAT) THEN
+        IF (LMSPPHAT) THEN
+        CALL MASAGE ('ATOMS BORN BY PHOTON - PLASMA INTERACTIONS     ')
+        CALL MASAGE ('PPHAT  SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PPHATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS BORN BY PHOTON - PLASMA INTERACTIONS     ')
+        CALL MASYR1 ('PPHATI = ',
+     .                PPHATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPHATI(0,ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LPGENA) THEN
+        IF (LMSPGENA) THEN
+        CALL MASAGE ('ATOMS LOST DUE TO GENERATION-OR FLUID LIMIT'    )
+        CALL MASAGE ('PGENA  SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PGENAI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMS LOST DUE TO GENERATION-OR FLUID LIMIT')
+        CALL MASYR1 ('PGENAI = ',
+     .                PGENAI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PGENAI(0,ISTRA))
+      ENDIF
+C   ESCAPING FLUX
+      IF (.NOT.LPOTAT) THEN
+        IF (LMSPOTAT) THEN
+        CALL MASAGE ('ATOMIC EFFLUX ONTO THE SURFACES                ')
+        CALL MASAGE ('POTAT  SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(POTATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC EFFLUX ONTO THE SURFACES                ')
+        CALL MASYR1 ('POTATI = ',
+     .                POTATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',POTATI(0,ISTRA))
+      ENDIF
+C   REFLECTED FLUX
+      IF (.NOT.LPRFAAT) THEN
+        IF (LMSPRFAAT) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: ATOMS       ')
+        CALL MASAGE ('PRFAAT SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PRFAAI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: ATOMS       ')
+        CALL MASYR1 ('PRFAAI = ',
+     .                PRFAAI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFAAI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFMAT) THEN
+        IF (LMSPRFMAT) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: MOLECULES   ')
+        CALL MASAGE ('PRFMAT SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PRFMAI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: MOLECULES   ')
+        CALL MASYR1 ('PRFMAI = ',
+     .                PRFMAI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFMAI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFIAT) THEN
+        IF (LMSPRFIAT) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: TEST IONS   ')
+        CALL MASAGE ('PRFIAT SWITCHED OFF => MISSING IN BALANCE      ')
+        ENDIF
+      ELSE IF (ANY(PRFIAI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: TEST IONS   ')
+        CALL MASYR1 ('PRFIAI = ',
+     .                PRFIAI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFIAI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFPHAT) THEN
+        IF (LMSPRFPHAT) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: PHOTONS')
+        CALL MASAGE ('PRFPHAT SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFPHAI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('ATOMIC INFLUX FROM SURFACES, ORIG: PHOTONS')
+        CALL MASYR1 ('PRFPHAI= ',
+     .                PRFPHAI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFPHAI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LSPTAT) THEN
+        IF (LMSSPTAT) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY ATOMS:                       ')
+        CALL MASAGE ('SPTAT   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(SPTATI(1:NATM,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY ATOMS:                       ')
+        CALL MASYR1 ('SPTATI = ',
+     .                SPTATI,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',SPTATI(0,ISTRA))
+      ENDIF
+      DO 405 IATM=0,NATMI
+        DIFA(IATM,ISTRA)=
+     +       POTATI(IATM,ISTRA)+PPATI(IATM,ISTRA)+
+     +       PGENAI(IATM,ISTRA)+
+     +       WTOTA(IATM,ISTRA)+
+     +       PAATI (IATM,ISTRA)+PRFAAI (IATM,ISTRA)+
+     +       PMATI (IATM,ISTRA)+PRFMAI (IATM,ISTRA)+
+     +       PIATI (IATM,ISTRA)+PRFIAI (IATM,ISTRA)+
+     +       PPHATI(IATM,ISTRA)+PRFPHAI(IATM,ISTRA)
+        TOTA(IATM)=
+     +  ABS(POTATI(IATM,ISTRA))+ABS(PAATI(IATM,ISTRA))+
+     +       ABS(PPATI(IATM,ISTRA))+ABS(PMATI(IATM,ISTRA))+
+     +       ABS(PIATI(IATM,ISTRA))+ABS(WTOTA(IATM,ISTRA))+
+     +       ABS(PRFAAI(IATM,ISTRA))+ABS(PRFMAI(IATM,ISTRA))+
+     +       ABS(PRFIAI(IATM,ISTRA))+ABS(PGENAI(IATM,ISTRA))+
+     +       ABS(PPHATI(IATM,ISTRA))+ABS(PRFPHAI(IATM,ISTRA))
+        TOTA(IATM)=TOTA(IATM)+EPS60
+        DIF=SIGN (1._DP,DIFA(IATM,ISTRA))*
+     .      MAX(0._DP,ABS(DIFA(IATM,ISTRA))/TOTA(IATM)-EPS10)
+        DIFRA(IATM,ISTRA)=DIF*100.
+        DIFA(IATM,ISTRA)=DIF*TOTA(IATM)
+405   CONTINUE
+      CALL MASAGE ('ABSOLUTE ERRORS IN PARTICLE BALANCE            ')
+      CALL MASYR1 ('DIFA =   ',
+     .              DIFA,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFA(0,ISTRA))
+      CALL MASAGE ('RELATIVE ERRORS IN PARTICLE BALANCE (%)        ')
+      CALL MASYR1 ('DIFRA =  ',
+     .              DIFRA,LOGATM,ISTRA,0,NATM,0,NSTRA,TEXTS(NSPH+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFRA(0,ISTRA))
+      CALL LEER(2)
+C
+C  NEUTRAL MOLECULES PARTICLE BALANCE
+C
+410   CONTINUE
+      DIFM(0,ISTRA)=0.
+      TOTM(0)=0.
+      IF (.NOT.TRCBLM) GOTO 420
+      IF (.NOT.LOGMOL(0,ISTRA)) GOTO 420
+      CALL LEER (2)
+      CALL HEADNG('PARTICLE FLUX BALANCE (AMP), NEUTRAL MOLECULES',47)
+      CALL LEER(1)
+C  MOLECULES FROM PRIMARY SOURCE
+      IF (ANY(WTOTM(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM PRIMARY SOURCE          ')
+        CALL MASYR1 ('WTOTM  = ',
+     .                WTOTM,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',WTOTM(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPPML) THEN
+        IF (LMSPPML) THEN
+        CALL MASAGE ('MOLECULES FROM RECOMBINING BULK IONS          ')
+        CALL MASAGE ('PPML    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES FROM RECOMBINING BULK IONS          ')
+        CALL MASYR1 ('PPMLI  = ',
+     .                PPMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPMLI(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPAML) THEN
+        IF (LMSPAML) THEN
+        CALL MASAGE ('MOLECULES BORN BY ATOM - PLASMA INTERACTIONS    ')
+        CALL MASAGE ('PAML    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PAMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES BORN BY ATOM - PLASMA INTERACTIONS    ')
+        CALL MASYR1 ('PAMLI  = ',
+     .                PAMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMMLI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPMML) THEN
+        IF (LMSPMML) THEN
+        CALL MASAGE ('MOLECULES BORN BY MOLECULE - PLASMA INTERACTIONS')
+        CALL MASAGE ('PMML    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PMMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES BORN BY MOLECULE - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PMMLI  = ',
+     .                PMMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMMLI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPIML) THEN
+        IF (LMSPIML) THEN
+        CALL MASAGE ('MOLECULES BORN BY TEST ION - PLASMA INTERACTIONS')
+        CALL MASAGE ('PIML    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PIMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES BORN BY TEST ION - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PIMLI  = ',
+     .                PIMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PIMLI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPPHML) THEN
+        IF (LMSPPHML) THEN
+        CALL MASAGE ('MOLECULES BORN BY PHOTON - PLASMA INTERACTIONS')
+        CALL MASAGE ('PPHML   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPHMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES BORN BY PHOTON - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PPHMLI = ',
+     .                PPHMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPHMLI(0,ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LPGENM) THEN
+        IF (LMSPGENM) THEN
+        CALL MASAGE ('MOLECULES LOST DUE TO GENERATION-OR FLUID LIMIT')
+        CALL MASAGE ('PGENM   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PGENMI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULES LOST DUE TO GENERATION-OR FLUID LIMIT')
+        CALL MASYR1 ('PGENMI = ',
+     .                PGENMI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PGENMI(0,ISTRA))
+      ENDIF
+C  ESCAPING MOLECULES
+      IF (.NOT.LPOTML) THEN
+        IF (LMSPOTML) THEN
+        CALL MASAGE ('MOLECULAR EFFLUX ONTO THE SURFACES             ')
+        CALL MASAGE ('POTML   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(POTMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR EFFLUX ONTO THE SURFACES             ')
+        CALL MASYR1 ('POTMLI = ',
+     .                POTMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',POTMLI(0,ISTRA))
+      ENDIF
+C  REFLECTED MOLECULES
+      IF (.NOT.LPRFAML) THEN
+        IF (LMSPRFAML) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: ATOMS    ')
+        CALL MASAGE ('PRFAML  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFAMI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: ATOMS    ')
+        CALL MASYR1 ('PRFAMI = ',
+     .                PRFAMI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFAMI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFMML) THEN
+        IF (LMSPRFMML) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: MOLECULES')
+        CALL MASAGE ('PRFMML  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFMMI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: MOLECULES')
+        CALL MASYR1 ('PRFMMI = ',
+     .                PRFMMI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFMMI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFIML) THEN
+        IF (LMSPRFIML) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: TEST IONS')
+        CALL MASAGE ('PRFIML  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFIMI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: TEST IONS')
+        CALL MASYR1 ('PRFIMI = ',
+     .                PRFIMI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFIMI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFPHML) THEN
+        IF (LMSPRFPHML) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: PHOTONS')
+        CALL MASAGE ('PRFPHML SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFPHMI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('MOLECULAR INFLUX FROM SURFACES, ORIG: PHOTONS')
+        CALL MASYR1 ('PRFPHMI= ',
+     .                PRFPHMI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFPHMI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LSPTML) THEN
+        IF (LMSSPTML) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY MOLECULES:                   ')
+        CALL MASAGE ('SPTML   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(SPTMLI(1:NMOL,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY MOLECULES:                   ')
+        CALL MASYR1 ('SPTMLI = ',
+     .                SPTMLI,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',SPTMLI(0,ISTRA))
+      ENDIF
+      DO 415 IMOL=0,NMOLI
+        DIFM(IMOL,ISTRA)=
+     +     POTMLI(IMOL,ISTRA)+PMMLI(IMOL,ISTRA)+PPMLI(IMOL,ISTRA)+
+     +     PIMLI(IMOL,ISTRA)+PGENMI(IMOL,ISTRA)+
+     +     WTOTM(IMOL,ISTRA)+PRFAMI(IMOL,ISTRA)+PRFMMI(IMOL,ISTRA)+
+     +     PRFIMI(IMOL,ISTRA)+PAMLI(IMOL,ISTRA)+
+     +     PPHMLI(IMOL,ISTRA)+PRFPHMI(IMOL,ISTRA)
+        TOTM(IMOL)=
+     +     ABS(POTMLI(IMOL,ISTRA))+ABS(PMMLI(IMOL,ISTRA))+
+     +     ABS(PPMLI(IMOL,ISTRA))+ABS(WTOTM(IMOL,ISTRA))+
+     +     ABS(PIMLI(IMOL,ISTRA))+ABS(PGENMI(IMOL,ISTRA))+
+     +     ABS(PRFAMI(IMOL,ISTRA))+ABS(PRFMMI(IMOL,ISTRA))+
+     +     ABS(PAMLI(IMOL,ISTRA))+
+     +     ABS(PRFIMI(IMOL,ISTRA))+
+     +     ABS(PPHMLI(IMOL,ISTRA))+ABS(PRFPHMI(IMOL,ISTRA))
+        TOTM(IMOL)=TOTM(IMOL)+EPS60
+        DIF=SIGN (1._DP,DIFM(IMOL,ISTRA))*
+     .      MAX(0._DP,ABS(DIFM(IMOL,ISTRA))/TOTM(IMOL)-EPS10)
+        DIFRM(IMOL,ISTRA)=DIF*100.
+        DIFM(IMOL,ISTRA)=DIF*TOTM(IMOL)
+415   CONTINUE
+      CALL MASAGE ('ABSOLUTE ERRORS IN PARTICLE BALANCE            ')
+      CALL MASYR1 ('DIFM =   ',
+     .              DIFM,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFM(0,ISTRA))
+      CALL MASAGE ('RELATIVE ERRORS IN PARTICLE BALANCE (%)        ')
+      CALL MASYR1 ('DIFRM =  ',
+     .              DIFRM,LOGMOL,ISTRA,0,NMOL,0,NSTRA,TEXTS(NSPA+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFRM(0,ISTRA))
+      CALL LEER(2)
+C
+C  TEST IONS PARTICLE BALANCE
+C
+420   CONTINUE
+      DIFI(0,ISTRA)=0.
+      TOTI(0)=0.
+      IF (.NOT.TRCBLI) GOTO 430
+      IF (.NOT.LOGION(0,ISTRA)) GOTO 430
+      CALL LEER (2)
+      CALL HEADNG('PARTICLE FLUX BALANCE (AMP), TEST IONS',39)
+      CALL LEER(1)
+C  TEST IONS FROM PRIMARY SOURCE
+      IF (ANY(WTOTI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS INFLUX FROM PRIMARY SOURCE          ')
+        CALL MASYR1 ('IOFLUX = ',
+     .                WTOTI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',WTOTI(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPPIO) THEN
+        IF (LMSPPIO) THEN
+        CALL MASAGE ('TEST IONS FROM RECOMBINING BULK IONS          ')
+        CALL MASAGE ('PPIO    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS FROM RECOMBINING BULK IONS          ')
+        CALL MASYR1 ('PPIOI  = ',
+     .                PPIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPIOI(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPIIO) THEN
+        IF (LMSPIIO) THEN
+        CALL MASAGE ('TEST IONS BORN BY TEST ION - PLASMA INTERACTIONS')
+        CALL MASAGE ('PIIO    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PIIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS BORN BY TEST ION - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PIIOI  = ',
+     .                PIIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PIIOI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPAIO) THEN
+        IF (LMSPAIO) THEN
+        CALL MASAGE ('TEST IONS BORN BY ATOM - PLASMA INTERACTIONS')
+        CALL MASAGE ('PAIO    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PAIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS BORN BY ATOM - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PAIOI  = ',
+     .                PAIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PAIOI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPMIO) THEN
+        IF (LMSPMIO) THEN
+        CALL MASAGE ('TEST IONS BORN BY MOLECULE - PLASMA INTERACTIONS')
+        CALL MASAGE ('PMIO    SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PMIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS BORN BY MOLECULE - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PMIOI  = ',
+     .                PMIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMIOI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPPHIO) THEN
+        IF (LMSPPHIO) THEN
+        CALL MASAGE ('TEST IONS BORN BY PHOTON - PLASMA INTERACTIONS')
+        CALL MASAGE ('PPHIO   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPHIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS BORN BY PHOTON - PLASMA INTERACTIONS')
+        CALL MASYR1 ('PPHIOI = ',
+     .                PPHIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPHIOI(0,ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LPGENI) THEN
+        IF (LMSPGENI) THEN
+        CALL MASAGE ('TEST ION LOST DUE TO GENERATION-OR FLUID LIMIT')
+        CALL MASAGE ('PGENI   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PGENII(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS LOST DUE TO GENERATION-OR FLUID LIMIT')
+        CALL MASYR1 ('PGENII = ',
+     .                PGENII,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PGENII(0,ISTRA))
+      ENDIF
+C  ESCAPING TEST IONS
+      IF (.NOT.LPOTIO) THEN
+        IF (LMSPOTIO) THEN
+        CALL MASAGE ('TEST IONS EFFLUX ONTO THE SURFACES             ')
+        CALL MASAGE ('POTIO   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(POTIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST IONS EFFLUX ONTO THE SURFACES             ')
+        CALL MASYR1 ('POTIOI = ',
+     .                POTIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',POTIOI(0,ISTRA))
+      ENDIF
+C  REFLECTED TEST IONS
+      IF (.NOT.LPRFAIO) THEN
+        IF (LMSPRFAIO) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: ATOMS     ')
+        CALL MASAGE ('PRFAIO  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFAII(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: ATOMS     ')
+        CALL MASYR1 ('PRFAII = ',
+     .                PRFAII,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFAII(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFMIO) THEN
+        IF (LMSPRFMIO) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: MOLECULES ')
+        CALL MASAGE ('PRFMIO  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFMII(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: MOLECULES ')
+        CALL MASYR1 ('PRFMII = ',
+     .                PRFMII,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFMII(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFIIO) THEN
+        IF (LMSPRFIIO) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: TEST IONS')
+        CALL MASAGE ('PRFIIO  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFIII(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: TEST IONS')
+        CALL MASYR1 ('PRFIII = ',
+     .                PRFIII,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFIII(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFPHIO) THEN
+        IF (LMSPRFPHIO) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: PHOTONS ')
+        CALL MASAGE ('PRFPHIO SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFPHII(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('TEST ION INFLUX FROM SURFACES, ORIG: PHOTONS ')
+        CALL MASYR1 ('PRFPHII= ',
+     .              PRFPHII,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFPHII(0,ISTRA))
+      ENDIF
+      IF (.NOT.LSPTIO) THEN
+        IF (LMSSPTIO) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY TEST IONS:                   ')
+        CALL MASAGE ('SPTIO   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(SPTIOI(1:NION,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY TEST IONS:                   ')
+        CALL MASYR1 ('SPTIOI = ',
+     .                SPTIOI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',SPTIOI(0,ISTRA))
+      ENDIF
+      DIFI(0,ISTRA)=0.
+      TOTI(0)=0.
+      DO 425 IION=0,NIONI
+        DIFI(IION,ISTRA)=
+     +     PIIOI(IION,ISTRA)+POTIOI(IION,ISTRA)+PPIOI(IION,ISTRA)+
+     +     WTOTI(IION,ISTRA)+PMIOI(IION,ISTRA)+PAIOI(IION,ISTRA)+
+     +     PRFAII(IION,ISTRA)+PRFMII(IION,ISTRA)+
+     +     PRFIII(IION,ISTRA)+
+     +     PPHIOI(IION,ISTRA)+PRFPHII(IION,ISTRA)
+        TOTI(IION)=
+     +     ABS(PIIOI(IION,ISTRA))+ABS(POTIOI(IION,ISTRA))+
+     +     ABS(PPIOI(IION,ISTRA))+ABS(WTOTI(IION,ISTRA))+
+     +     ABS(PMIOI(IION,ISTRA))+ABS(PAIOI(IION,ISTRA))+
+     +     ABS(PRFAII(IION,ISTRA))+ABS(PRFMII(IION,ISTRA))+
+     +     ABS(PRFIII(IION,ISTRA))+
+     +     ABS(PPHIOI(IION,ISTRA))+ABS(PRFPHII(IION,ISTRA))
+        TOTI(IION)=TOTI(IION)+EPS60
+        DIF=SIGN (1._DP,DIFI(IION,ISTRA))*
+     .      MAX(0._DP,ABS(DIFI(IION,ISTRA))/TOTI(IION)-EPS10)
+        DIFRI(IION,ISTRA)=DIF*100.
+        DIFI(IION,ISTRA)=DIF*TOTI(IION)
+425   CONTINUE
+      CALL MASAGE ('ABSOLUTE ERRORS IN PARTICLE BALANCE            ')
+      CALL MASYR1 ('DIFI =   ',
+     .              DIFI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFI(0,ISTRA))
+      CALL MASAGE ('RELATIVE ERRORS IN PARTICLE BALANCE (%)        ')
+      CALL MASYR1 ('DIFRI =  ',
+     .              DIFRI,LOGION,ISTRA,0,NION,0,NSTRA,TEXTS(NSPAM+1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFRI(0,ISTRA))
+      CALL LEER(2)
+C
+C  PHOTONS PARTICLE BALANCE
+C
+430   CONTINUE
+      DIFPH(0,ISTRA)=0.
+      TOTPH(0)=0.
+      IF (.NOT.TRCBLPH) GOTO 439
+      IF (.NOT.LOGPHOT(0,ISTRA)) GOTO 439
+      CALL LEER(2)
+      CALL HEADNG('PARTICLE FLUX BALANCE (AMP), PHOTONS',36)
+      CALL LEER(1)
+C   PHOTONS FROM PRIMARY SOURCE
+      IF (ANY(WTOTPH(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM PRIMARY SOURCE            ')
+        CALL MASYR1 ('WTOTPH = ',
+     .                WTOTPH,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',WTOTPH(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPPPHT) THEN
+        IF (LMSPPPHT) THEN
+        CALL MASAGE ('PHOTONS FROM RECOMBINING BULK IONS             ')
+        CALL MASAGE ('PPPHT   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS FROM RECOMBINING BULK IONS             ')
+        CALL MASYR1 ('PPPHTI = ',
+     .                PPPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPPHTI(0,ISTRA))
+      ENDIF
+C
+      IF (.NOT.LPPHPHT) THEN
+        IF (LMSPPHPHT) THEN
+        CALL MASAGE ('PHOTONS BORN BY PHOTON - PLASMA INTERACTIONS   ')
+        CALL MASAGE ('PPHPHT  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PPHPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS BORN BY PHOTON - PLASMA INTERACTIONS   ')
+        CALL MASYR1 ('PPHPHTI= ',
+     .                PPHPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPHPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPAPHT) THEN
+        IF (LMSPAPHT) THEN
+        CALL MASAGE ('PHOTONS BORN BY ATOM - PLASMA INTERACTIONS     ')
+        CALL MASAGE ('PAPHT   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PAPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS BORN BY ATOM - PLASMA INTERACTIONS     ')
+        CALL MASYR1 ('PAPHTI = ',
+     .                PAPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PAPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPMPHT) THEN
+        IF (LMSPMPHT) THEN
+        CALL MASAGE ('PHOTONS BORN BY MOLECULE - PLASMA INTERACTIONS ')
+        CALL MASAGE ('PMPHT   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PMPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS BORN BY MOLECULE - PLASMA INTERACTIONS ')
+        CALL MASYR1 ('PMPHTI = ',
+     .                PMPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPIPHT) THEN
+        IF (LMSPIPHT) THEN
+        CALL MASAGE ('PHOTONS BORN BY TEST ION - PLASMA INTERACTIONS ')
+        CALL MASAGE ('PIPHT   SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PIPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS BORN BY TEST ION - PLASMA INTERACTIONS ')
+        CALL MASYR1 ('PIPHTI = ',
+     .                PIPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PIPHTI(0,ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LPGENPH) THEN
+        IF (LPGENPH) THEN
+        CALL MASAGE ('PHOTONS ABSORBED DUE TO GENERAT.-OR FLUID LIMIT')
+        CALL MASAGE ('PGENPH  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PGENPHI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONS ABSORBED DUE TO GENERAT.-OR FLUID LIMIT')
+        CALL MASYR1 ('PGENPHI= ',
+     .                PGENPHI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PGENPHI(0,ISTRA))
+      ENDIF
+C   ESCAPING FLUX
+      IF (.NOT.LPOTPHT) THEN
+        IF (LMSPOTPHT) THEN
+        CALL MASAGE ('PHOTONIC EFFLUX ONTO THE SURFACES              ')
+        CALL MASAGE ('POTPHT  SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(POTPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC EFFLUX ONTO THE SURFACES              ')
+        CALL MASYR1 ('POTPHTI= ',
+     .                POTPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',POTPHTI(0,ISTRA))
+      ENDIF
+C   REFLECTED FLUX
+      IF (.NOT.LPRFAPHT) THEN
+        IF (LMSPRFAPHT) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: ATOMS     ')
+        CALL MASAGE ('PRFAPHT SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFAPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: ATOMS     ')
+        CALL MASYR1 ('PRFAPHTI=',
+     .                PRFAPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFAPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFMPHT) THEN
+        IF (LMSPRFMPHT) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: MOLECULES ')
+        CALL MASAGE ('PRFMPHT SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFMPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: MOLECULES ')
+        CALL MASYR1 ('PRFMPHTI=',
+     .                PRFMPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFMPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFIPHT) THEN
+        IF (LMSPRFIPHT) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: TEST IONS ')
+        CALL MASAGE ('PRFIPHT SWITCHED OFF => MISSING IN BALANCE     ')
+        ENDIF
+      ELSE IF (ANY(PRFIPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: TEST IONS ')
+        CALL MASYR1 ('PRFIPHTI = ',
+     .                PRFIPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFIPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LPRFPHPHT) THEN
+        IF (LMSPRFPHPHT) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: PHOTONS   ')
+        CALL MASAGE ('PRFPHPHT SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(PRFPHPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('PHOTONIC INFLUX FROM SURFACES, ORIG: PHOTONS   ')
+        CALL MASYR1 ('PRFPHPHTI',
+     .                PRFPHPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PRFPHPHTI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LSPTPHT) THEN
+        IF (LMSSPTPHT) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY PHOTONS:                     ')
+        CALL MASAGE ('SPTPHT   SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(SPTPHTI(1:NPHOT,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY PHOTONS:                     ')
+        CALL MASYR1 ('SPTPHTI = ',
+     .                SPTPHTI,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS( +1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',SPTPHTI(0,ISTRA))
+      ENDIF
+      DO 435 IPHOT=0,NPHOTI
+        DIFPH(IPHOT,ISTRA)=
+     +  POTPHTI(IPHOT,ISTRA)+PAPHTI(IPHOT,ISTRA)+PPPHTI(IPHOT,ISTRA)+
+     +       PMPHTI(IPHOT,ISTRA)+PIPHTI(IPHOT,ISTRA)+
+     +       PGENPHI(IPHOT,ISTRA)+
+     +       WTOTPH(IPHOT,ISTRA)+
+     +       PPHPHTI(IPHOT,ISTRA)+
+     +       PRFAPHTI(IPHOT,ISTRA)+
+     +       PRFMPHTI(IPHOT,ISTRA)+
+     +       PRFIPHTI(IPHOT,ISTRA)+
+     +       PRFPHPHTI(IPHOT,ISTRA)
+        TOTPH(IPHOT)=
+     +  ABS(POTPHTI(IPHOT,ISTRA))+ABS(PAPHTI(IPHOT,ISTRA))+
+     +       ABS(PPPHTI(IPHOT,ISTRA))+ABS(PMPHTI(IPHOT,ISTRA))+
+     +       ABS(PIPHTI(IPHOT,ISTRA))+ABS(WTOTPH(IPHOT,ISTRA))+
+     +       ABS(PRFAPHTI(IPHOT,ISTRA))+ABS(PRFMPHTI(IPHOT,ISTRA))+
+     +       ABS(PRFIPHTI(IPHOT,ISTRA))+
+     +       ABS(PGENPHI(IPHOT,ISTRA))+
+     +       ABS(PPHPHTI(IPHOT,ISTRA))+
+     +       ABS(PRFPHPHTI(IPHOT,ISTRA))
+        TOTPH(IPHOT)=TOTPH(IPHOT)+EPS60
+        DIF=SIGN (1._DP,DIFPH(IPHOT,ISTRA))*
+     .      MAX(0._DP,ABS(DIFPH(IPHOT,ISTRA))/TOTPH(IPHOT)-EPS10)
+        DIFRPH(IPHOT,ISTRA)=DIF*100.
+        DIFPH(IPHOT,ISTRA)=DIF*TOTPH(IPHOT)
+435   CONTINUE
+      CALL MASAGE ('ABSOLUTE ERRORS IN PARTICLE BALANCE            ')
+      CALL MASYR1 ('DIFPH=   ',
+     .              DIFPH,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(   +1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFPH(0,ISTRA))
+      CALL MASAGE ('RELATIVE ERRORS IN PARTICLE BALANCE (%)        ')
+      CALL MASYR1 ('DIFRPH=  ',
+     .              DIFRPH,LOGPHOT,ISTRA,0,NPHOT,0,NSTRA,TEXTS(  +1))
+      CALL MASAGE ('SUM OVER SPECIES                               ')
+      CALL MASR1 ('TOTAL=  ',DIFRPH(0,ISTRA))
+      CALL LEER(2)
+C
+C  TOTAL TEST PARTICLE BALANCE
+C
+439   CONTINUE
+      CALL MASAGE ('TRASH: TEST PARTICLES KILLED DUE TO ERRORS     ')
+      CALL MASR1 ('PTRASH= ',PTRASH(ISTRA))
+      CALL LEER(3)
+      IF (TRCBLA.OR.TRCBLM.OR.TRCBLI) THEN
+        CALL MASAGE ('TOTAL ERROR IN PARTICLE FLUXBALANCE            ')
+        DIFT=DIFA(0,ISTRA)+DIFM(0,ISTRA)+DIFI(0,ISTRA)+DIFPH(0,ISTRA)+
+     .       PTRASH(ISTRA)
+        TOTT=TOTA(0)+TOTM(0)+TOTI(0)+TOTPH(0)+ABS(PTRASH(ISTRA))+EPS60
+        DIFR=DIFT/TOTT*100.
+        CALL MASR2 ('DIF: ABS, REL(%)',DIFT,DIFR)
+        CALL LEER(2)
+      ENDIF
+C
+C
+C   ENERGY FLUX BALANCE,  ATOMS
+C
+      DIFA(0,ISTRA)=0.
+      TOTA(0)=0.
+      IF (.NOT.TRCBLA) GOTO 440
+      IF (.NOT.LOGATM(0,ISTRA)) GOTO 440
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), NEUTRAL ATOMS',41)
+      CALL LEER(1)
+      CALL MASAGE ('ENERGY FLUX FROM PRIMARY SOURCE                ')
+      CALL MASR1 ('ETOTA=  ',ETOTA(ISTRA))
+      CALL MASAGE ('ENERGY FLUX FROM RECOMBINING BULK IONS         ')
+      CALL MASR1 ('EPATI=  ',EPATI(ISTRA))
+      IF (LOGATM(0,ISTRA)) THEN
+        IF (LEAAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM ATOM PLASMA INTERACTION       ')
+          CALL MASR1 ('EAATI=  ',EAATI(ISTRA))
+        ELSE IF (LMSEAAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM ATOM PLASMA INTERACTION       ')
+          CALL MASAGE
+     .      ('EAAT     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ENDIF
+      IF (LOGMOL(0,ISTRA)) THEN
+        IF (LEMAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+          CALL MASR1 ('EMATI=  ',EMATI(ISTRA))
+        ELSE IF (LMSEMAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+          CALL MASAGE
+     .      ('EMAT     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ENDIF
+      IF (LOGION(0,ISTRA)) THEN
+        IF (LEIAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS  ')
+          CALL MASR1 ('EIATI=  ',EIATI(ISTRA))
+        ELSE IF (LMSEIAT) THEN
+          CALL MASAGE('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS  ')
+          CALL MASAGE
+     .      ('EIAT     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ENDIF
+      IF (LOGPHOT(0,ISTRA)) THEN
+        IF (LEPHAT) THEN
+          CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTIONS')
+          CALL MASR1 ('EPHATI= ',EPHATI(ISTRA))
+        ELSE IF (LMSEPHAT) THEN
+          CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTIONS')
+          CALL MASAGE
+     .      ('EPHAT    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LEGENA) THEN
+        IF (LMSEGENA) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASAGE ('EGENA    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EGENAI(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASR1 ('EGENAI= ',EGENAI(0,ISTRA))
+      ENDIF
+C   EFFLUX TO SURFACES
+      IF (LEOTAT) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASR1 ('EOTATI= ',EOTATI(0,ISTRA))
+      ELSE IF (LMSEOTAT) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASAGE ('EOTAT    SWITCHED OFF => MISSING IN BALANCE    ')
+      ENDIF
+C   REFLECTED FROM SURFACES
+      CALL MASAGE ('REFLECTED FROM NON TRANSPARENT SURFACES         ')
+      CALL MASR1 ('ERFATI= ',ERFAAI(0,ISTRA)+ERFMAI(0,ISTRA)+
+     +                       ERFIAI(0,ISTRA)+ERFPHAI(0,ISTRA))
+      IF (LMSERFAAT) CALL MASAGE
+     .      ('ERFAAT SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFMAT) CALL MASAGE
+     .      ('ERFMAT SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFIAT) CALL MASAGE
+     .      ('ERFIAT SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFPHAT) CALL MASAGE
+     .      ('ERFPHAT SWITCHED OFF => MISSING IN BALANCE     ')
+      CALL MASAGE ('ABSOLUTE AND RELATIVE ERROR IN BALANCE          ')
+      DIFA(0,ISTRA)=EOTATI(0,ISTRA)+EPATI(ISTRA)+EAATI(ISTRA)+
+     +     ETOTA(ISTRA)+EMATI(ISTRA)+EIATI(ISTRA)+EGENAI(0,ISTRA)+
+     +     ERFAAI(0,ISTRA)+ERFMAI(0,ISTRA)+ERFIAI(0,ISTRA)+
+     +     EPHATI(ISTRA)+ERFPHAI(0,ISTRA)
+
+      TOTA(0)=ABS(EOTATI(0,ISTRA))+ABS(EPATI(ISTRA))+ABS(EAATI(ISTRA))+
+     +     ABS(ETOTA(ISTRA))+ABS(EMATI(ISTRA))+ABS(EIATI(ISTRA))+
+     +     ABS(EGENAI(0,ISTRA))+
+     +     ABS(ERFAAI(0,ISTRA)+ERFMAI(0,ISTRA)+ERFIAI(0,ISTRA))+
+     +     ABS(EPHATI(ISTRA))+ABS(ERFPHAI(0,ISTRA))
+
+      TOTA(0)=TOTA(0)+EPS60
+      DIFRA(0,ISTRA)=SIGN(1._DP,DIFA(0,ISTRA))*
+     *        MAX(0._DP,ABS(DIFA(0,ISTRA))/TOTA(0)*100._DP-1.E-5_DP)
+      DIFA(0,ISTRA)=DIFRA(0,ISTRA)/100.*TOTA(0)
+      CALL MASR2 ('DIF: ABS, REL(%)',DIFA(0,ISTRA),DIFRA(0,ISTRA))
+      CALL LEER(2)
+C
+440   CONTINUE
+C   ENERGY FLUX BALANCE,  MOLECULES
+      DIFM(0,ISTRA)=0.
+      TOTM(0)=0.
+      IF (.NOT.TRCBLM) GOTO 450
+      IF (.NOT.LOGMOL(0,ISTRA)) GOTO 450
+C
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), NEUTRAL MOLECULES',45)
+      CALL LEER(1)
+      CALL MASAGE ('FROM PRIMARY SOURCE                            ')
+      CALL MASR1 ('ETOTM = ',ETOTM(ISTRA))
+      IF (.NOT.LEPML) THEN
+        IF (LMSEPML) THEN
+        CALL MASAGE ('FROM RECOMBINING BULK IONS                     ')
+        CALL MASAGE ('EPML SWITCHED OFF => MISSING IN BALANCE        ')
+        ENDIF
+      ELSEIF (EPMLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('FROM RECOMBINING BULK IONS                     ')
+        CALL MASR1 ('EPMLI=  ',EPMLI(ISTRA))
+      END IF
+      IF (.NOT.LEAML) THEN
+        IF (LMSEAML) THEN
+        CALL MASAGE ('ENERGY FLUX FROM ATOM PLASMA INTERACTIONS     ')
+        CALL MASAGE ('EAML     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EAMLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM ATOM PLASMA INTERACTIONS     ')
+        CALL MASR1 ('EAMLI = ',EAMLI(ISTRA))
+      ENDIF
+      IF (LEMML) THEN
+        CALL MASAGE ('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EMMLI = ',EMMLI(ISTRA))
+      ELSE IF (LMSEMML) THEN
+        CALL MASAGE ('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EMML SWITCHED OFF => MISSING IN BALANCE        ')
+      END IF
+      IF (.NOT.LEIML) THEN
+        IF (LMSEIML) THEN
+        CALL MASAGE ('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS ')
+        CALL MASAGE ('EIML     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EIMLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS ')
+        CALL MASR1 ('EIMLI = ',EIMLI(ISTRA))
+      ENDIF
+      IF (.NOT.LEPHML) THEN
+        IF (LMSEPHML) THEN
+        CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTIONS')
+        CALL MASAGE ('EPHML    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPHMLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTIONS')
+        CALL MASR1 ('EPHMLI= ',EPHMLI(ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LEGENM) THEN
+        IF (LMSEGENM) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASAGE ('EGENM    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EGENMI(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASR1 ('EGENMI= ',EGENMI(0,ISTRA))
+      ENDIF
+C   EFFLUX ONTO SURFACES
+      IF (LEOTML) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASR1 ('EOTMLI= ',EOTMLI(0,ISTRA))
+      ELSE IF (LMSEOTML) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASAGE ('EOTML SWITCHED OFF => MISSING IN BALANCE       ')
+      END IF
+      CALL MASAGE ('REFLECTED FROM NON TRANSPARENT SURFACES        ')
+      CALL MASR1 ('ERFMLI= ',ERFAMI(0,ISTRA)+ERFMMI(0,ISTRA)+
+     +                       ERFIMI(0,ISTRA)+ERFPHMI(0,ISTRA))
+      IF (LMSERFAML) CALL MASAGE
+     .      ('ERFAML SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFMML) CALL MASAGE
+     .      ('ERFMML SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFIML) CALL MASAGE
+     .      ('ERFIML SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFPHML) CALL MASAGE
+     .      ('ERFPHML SWITCHED OFF => MISSING IN BALANCE     ')
+      CALL MASAGE ('ABSOLUTE AND RELATIVE ERROR IN BALANCE          ')
+      DIFM(0,ISTRA)=
+     +     EAMLI(ISTRA)+EOTMLI(0,ISTRA)+EIMLI(ISTRA)+EMMLI(ISTRA)+
+     +     ETOTM(ISTRA)+EPMLI(ISTRA)+
+     +     ERFAMI(0,ISTRA)+ERFMMI(0,ISTRA)+ERFIMI(0,ISTRA)+
+     +     EPHMLI(ISTRA)+ERFPHMI(0,ISTRA)
+
+      TOTM(0)=ABS(EAMLI(ISTRA))+ABS(EOTMLI(0,ISTRA))+ABS(EIMLI(ISTRA))+
+     +        ABS(EMMLI(ISTRA))+ABS(ETOTM(ISTRA))+ABS(EPMLI(ISTRA))+
+     +        ABS(ERFAMI(0,ISTRA)+ERFMMI(0,ISTRA)+ERFIMI(0,ISTRA))+
+     +        ABS(EPHMLI(ISTRA))+ABS(ERFPHMI(0,ISTRA))
+
+      TOTM(0)=TOTM(0)+EPS60
+      DIFRM(0,ISTRA)=SIGN(1._DP,DIFM(0,ISTRA))*
+     *        MAX(0._DP,ABS(DIFM(0,ISTRA))/TOTM(0)*100._DP-1.E-5_DP)
+      DIFM(0,ISTRA)=DIFRM(0,ISTRA)/100.*TOTM(0)
+      CALL MASR2 ('DIF: ABS, REL(%)',DIFM(0,ISTRA),DIFRM(0,ISTRA))
+      CALL LEER(2)
+C
+450   CONTINUE
+C   ENERGY FLUX BALANCE,  TEST IONS
+      DIFI(0,ISTRA)=0.
+      TOTI(0)=0.
+      IF (.NOT.TRCBLI) GOTO 460
+      IF (.NOT.LOGION(0,ISTRA)) GOTO 460
+C
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), TEST IONS',37)
+      CALL LEER(1)
+      CALL MASAGE ('FROM PRIMARY SOURCE                            ')
+      CALL MASR1 ('ETOTI = ',ETOTI(ISTRA))
+      IF (.NOT.LEPIO) THEN
+        IF (LMSEPIO) THEN
+        CALL MASAGE ('FROM RECOMBINING BULK IONS                     ')
+        CALL MASAGE ('EPIO SWITCHED OFF => MISSING IN BALANCE        ')
+        ENDIF
+      ELSEIF (EPIOI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('FROM RECOMBINING BULK IONS                     ')
+        CALL MASR1 ('EPIOI=  ',EPIOI(ISTRA))
+      END IF
+      IF (.NOT.LEAIO) THEN
+        IF (LMSEAIO) THEN
+        CALL MASAGE ('ENERGY GAINED FROM ATOM PLASMA INTERACTIONS   ')
+        CALL MASAGE ('EAIO     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EAIOI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAINED FROM ATOM PLASMA INTERACTIONS   ')
+        CALL MASR1 ('EAIOI = ',EAIOI(ISTRA))
+      ENDIF
+      IF (LEMIO) THEN
+        CALL MASAGE ('ENERGY GAINED FROM MOLECULE PLASMA INTERACTIONS')
+        CALL MASR1 ('EMIOI = ',EMIOI(ISTRA))
+      ELSE IF (LMSEMIO) THEN
+        CALL MASAGE ('ENERGY GAINED FROM MOLECULE PLASMA INTERACTIONS')
+        CALL MASAGE ('EMIO SWITCHED OFF => MISSING IN BALANCE        ')
+      END IF
+      IF (.NOT.LEIIO) THEN
+        IF (LMSEIIO) THEN
+        CALL MASAGE ('ENERGY GAINED FROM TEST ION PLASMA INTERACTIONS')
+        CALL MASAGE ('EIIO     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EIIOI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAINED FROM TEST ION PLASMA INTERACTIONS')
+        CALL MASR1 ('EIIOI = ',EIIOI(ISTRA))
+      ENDIF
+      IF (.NOT.LEPHIO) THEN
+        IF (LMSEPHIO) THEN
+        CALL MASAGE ('ENERGY GAINED FROM PHOTON PLASMA INTERACTIONS')
+        CALL MASAGE ('EPHIO    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPHIOI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAINED FROM PHOTON PLASMA INTERACTIONS')
+        CALL MASR1 ('EPHIOI= ',EPHIOI(ISTRA))
+      ENDIF
+      IF (EELFI(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAINED FROM ELECTRIC FIELDS')
+        CALL MASR1 ('EELFI = ',EELFI(0,ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LEGENI) THEN
+        IF (LMSEGENI) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASAGE ('EGENI    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EGENII(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASR1 ('EGENII= ',EGENII(0,ISTRA))
+      ENDIF
+C   EFFLUX ONTO SURFACES
+      IF (.NOT.LEOTIO) THEN
+        IF (LMSEOTIO) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASAGE ('EOTIOI   SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EOTIOI(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES      ')
+        CALL MASR1 ('EOTIOI= ',EOTIOI(0,ISTRA))
+      ENDIF
+C   REFLECTED FROM SURFACES
+      CALL MASAGE ('REFLECTED FROM NON TRANSPARENT SURFACES        ')
+      CALL MASR1 ('ERFIOI= ',ERFAII(0,ISTRA)+ERFMII(0,ISTRA)+
+     +                       ERFIII(0,ISTRA)+ERFPHII(0,ISTRA))
+      IF (LMSERFAIO) CALL MASAGE
+     .      ('ERFAIO SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFMIO) CALL MASAGE
+     .      ('ERFMIO SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFIIO) CALL MASAGE
+     .      ('ERFIIO SWITCHED OFF => MISSING IN BALANCE      ')
+      IF (LMSERFPHIO) CALL MASAGE
+     .      ('ERFPHIO SWITCHED OFF => MISSING IN BALANCE     ')
+C
+      CALL MASAGE ('ABSOLUTE AND RELATIVE ERROR IN BALANCE          ')
+      DIFI(0,ISTRA)=
+     +     EAIOI(ISTRA)+EOTIOI(0,ISTRA)+EIIOI(ISTRA)+EMIOI(ISTRA)+
+     +     ETOTI(ISTRA)+EPIOI(ISTRA)+EELFI(0,ISTRA)+
+     +     ERFAII(0,ISTRA)+ERFMII(0,ISTRA)+ERFIII(0,ISTRA)+
+     +     EPHIOI(ISTRA)+ERFPHII(0,ISTRA)
+
+      TOTI(0)=ABS(EAIOI(ISTRA))+ABS(EOTIOI(0,ISTRA))+ABS(EIIOI(ISTRA))+
+     +        ABS(EMIOI(ISTRA))+ABS(ETOTI(ISTRA))+ABS(EPIOI(ISTRA))+
+     +        ABS(ERFAII(0,ISTRA)+ERFMII(0,ISTRA)+ERFIII(0,ISTRA))+
+     +        ABS(EPHIOI(ISTRA))+ABS(ERFPHII(0,ISTRA))
+
+      TOTI(0)=TOTI(0)+EPS60
+      DIFRI(0,ISTRA)=SIGN(1._DP,DIFI(0,ISTRA))*
+     *        MAX(0._DP,ABS(DIFI(0,ISTRA))/TOTI(0)*100._DP-1.E-5_DP)
+      DIFI(0,ISTRA)=DIFRI(0,ISTRA)/100.*TOTI(0)
+      CALL MASR2 ('DIF: ABS, REL(%)',DIFI(0,ISTRA),DIFRI(0,ISTRA))
+      CALL LEER(2)
+
+460   CONTINUE
+C
+C   ENERGY FLUX BALANCE,  PHOTONS
+C
+      DIFPH(0,ISTRA)=0.
+      TOTPH(0)=0.
+      IF (.NOT.TRCBLPH) GOTO 469
+      IF (.NOT.LOGPHOT(0,ISTRA)) GOTO 469
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), PHOTONS',36)
+      CALL LEER(1)
+      CALL MASAGE ('ENERGY FLUX FROM PRIMARY SOURCE                ')
+      CALL MASR1 ('ETOTPH= ',ETOTPH(ISTRA))
+      IF (LEPPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM RECOMBINING BULK IONS         ')
+        CALL MASR1 ('EPPHTI= ',EPPHTI(ISTRA))
+      ELSE IF (LMSEPPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM RECOMBINING BULK IONS         ')
+        CALL MASAGE ('EPPHT SWITCHED OFF => MISSING IN BALANCE       ')
+      END IF
+      IF (.NOT.LEPHPHT) THEN
+        IF (LMSEPHPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTION    ')
+        CALL MASAGE ('EPHPHT   SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPHPHTI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM PHOTON PLASMA INTERACTION    ')
+        CALL MASR1 ('EPHPHTI=',EPHPHTI(ISTRA))
+      ENDIF
+      IF (.NOT.LEAPHT) THEN
+        IF (LMSEAPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM ATOM PLASMA INTERACTION       ')
+        CALL MASAGE ('EAPHT    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EAPHTI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM ATOM PLASMA INTERACTION       ')
+        CALL MASR1 ('EAPHTI= ',EAPHTI(ISTRA))
+      ENDIF
+      IF (.NOT.LEMPHT) THEN
+        IF (LMSEMPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EMPHT    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EMPHTI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EMPHTI= ',EMPHTI(ISTRA))
+      ENDIF
+      IF (.NOT.LEIPHT) THEN
+        IF (LMSEIPHT) THEN
+        CALL MASAGE ('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EIPHT    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EIPHTI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY FLUX FROM TEST ION PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EIPHTI= ',EIPHTI(ISTRA))
+      ENDIF
+C   GENERATION LIMIT
+      IF (.NOT.LEGENPH) THEN
+        IF (LMSEGENPH) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASAGE ('EGENPH   SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EGENPHI(0,ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY ABSORBED DUE TO GENERATION LIMIT        ')
+        CALL MASR1 ('EGENPHI=',EGENPHI(0,ISTRA))
+      ENDIF
+      IF (LEOTPHT) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES       ')
+        CALL MASR1 ('EOTPHTI=',EOTPHTI(0,ISTRA))
+      ELSE IF (LMSEOTPHT) THEN
+        CALL MASAGE ('ENERGY FLUX ONTO NON TRANSPARENT SURFACES       ')
+        CALL MASAGE ('EOTPHT SWITCHED OFF => MISSING IN BALANCE      ')
+      END IF
+      CALL MASAGE ('REFLECTED FROM NON TRANSPARENT SURFACES         ')
+      CALL MASR1 ('ERFPHTI=',ERFAPHTI(0,ISTRA)+ERFMPHTI(0,ISTRA)+
+     +                       ERFIPHTI(0,ISTRA)+ERFPHPHTI(0,ISTRA))
+      IF (LMSERFAPHT) CALL MASAGE
+     .      ('ERFAPHT SWITCHED OFF => MISSING IN BALANCE     ')
+      IF (LMSERFMPHT) CALL MASAGE
+     .      ('ERFMPHT SWITCHED OFF => MISSING IN BALANCE     ')
+      IF (LMSERFIPHT) CALL MASAGE
+     .      ('ERFIPHT SWITCHED OFF => MISSING IN BALANCE     ')
+      IF (LMSERFPHPHT) CALL MASAGE
+     .      ('ERFPHPHT SWITCHED OFF => MISSING IN BALANCE    ')
+      CALL MASAGE ('ABSOLUTE AND RELATIVE ERROR IN BALANCE          ')
+      DIFPH(0,ISTRA)=EOTPHTI(0,ISTRA)+EPPHTI(ISTRA)+EAPHTI(ISTRA)+
+     +     ETOTPH(ISTRA)+EMPHTI(ISTRA)+EIPHTI(ISTRA)+EGENPHI(0,ISTRA)+
+     +     ERFAPHTI(0,ISTRA)+ERFMPHTI(0,ISTRA)+ERFIPHTI(0,ISTRA)+
+     +     EPHPHTI(ISTRA)+ERFPHPHTI(0,ISTRA)
+
+      TOTPH(0)=ABS(EOTPHTI(0,ISTRA))+ABS(EPPHTI(ISTRA))+
+     +     ABS(EAPHTI(ISTRA))+
+     +     ABS(ETOTPH(ISTRA))+ABS(EMPHTI(ISTRA))+ABS(EIPHTI(ISTRA))+
+     +     ABS(EGENPHI(0,ISTRA))+
+     +     ABS(ERFAPHTI(0,ISTRA)+ERFMPHTI(0,ISTRA)+ERFIPHTI(0,ISTRA))+
+     +     ABS(EPHPHTI(ISTRA))+ABS(ERFPHPHTI(0,ISTRA))
+
+      TOTPH(0)=TOTPH(0)+EPS60
+      DIFRPH(0,ISTRA)=SIGN(1._DP,DIFPH(0,ISTRA))*
+     *        MAX(0._DP,ABS(DIFPH(0,ISTRA))/TOTPH(0)*100._DP-1.E-5_DP)
+      DIFPH(0,ISTRA)=DIFRPH(0,ISTRA)/100.*TOTPH(0)
+      CALL MASR2 ('DIF: ABS, REL(%)',DIFPH(0,ISTRA),DIFRPH(0,ISTRA))
+      CALL LEER(2)
+C
+C  TOTAL TEST PARTICLE ENERGY FLUX BALANCE
+C
+469   CONTINUE
+      CALL MASAGE ('ETRASH: ENERGY ABSORBED DUE TO ERRORS          ')
+      CALL MASR1 ('ETRASH= ',ETRASH(ISTRA))
+      CALL LEER(3)
+      IF (TRCBLA.OR.TRCBLM.OR.TRCBLI) THEN
+        CALL MASAGE ('TOTAL ERROR IN ENERGY FLUXBALANCE              ')
+        DIFT=DIFA(0,ISTRA)+DIFM(0,ISTRA)+DIFI(0,ISTRA)+DIFPH(0,ISTRA)+
+     +       ETRASH(ISTRA)
+
+        TOTT=TOTA(0)+TOTM(0)+TOTI(0)+TOTPH(0)+ABS(ETRASH(ISTRA))+EPS60
+        DIFR=DIFT/TOTT*100.
+        CALL MASR2 ('DIF: ABS, REL(%)',DIFT,DIFR)
+        CALL LEER(2)
+      ENDIF
+C
+600   CONTINUE
+C
+C  INTEGRATED BULK ION SOURCE TERMS
+C
+      IF (.NOT.TRCBLP) GOTO 700
+      IF (.NOT.LOGPLS(0,ISTRA)) GOTO 700
+      CALL HEADNG ('PARTICLE FLUX BALANCE (AMP), BULK IONS',39)
+      CALL LEER(1)
+C  PRIMARY SOURCE ORIGINATING FROM BULK PARTICLES
+      IF (ANY(WTOTP(1:NPLS,ISTRA).NE.0.D0)) THEN
+        IF (.NOT.LPPPL) THEN
+        IF (LMSPPPL) THEN
+        CALL MASAGE ('BULK PARTICLE FLUX                             ')
+        CALL MASAGE ('(DEFINING THE TEST PARTICLE SOURCE             ')
+        CALL MASAGE ('STRENGTH (AMP))                                ')
+        CALL MASAGE ('PPPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+        ELSE IF (ANY(PPPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('BULK PARTICLE FLUX                             ')
+        CALL MASAGE ('(DEFINING THE TEST PARTICLE SOURCE             ')
+        CALL MASAGE ('STRENGTH (AMP))                                ')
+        CALL MASYR1 ('PPPLI =  ',PPPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPPLI(0,ISTRA))
+        ENDIF
+      ENDIF
+C  ATOMS PLASMA INTERACTION
+      IF (.NOT.LPAPL) THEN
+        IF (LMSPAPL) THEN
+        CALL MASAGE ('BULK PARTICLES BORN BY ATOM PLASMA INTERACTIONS')
+        CALL MASAGE ('PAPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(PAPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('BULK PARTICLES BORN BY ATOM PLASMA INTERACTIONS')
+        CALL MASYR1 ('PAPLI  = ',PAPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PAPLI(0,ISTRA))
+      ENDIF
+C  MOLECULE PLASMA INTERACTION
+      IF (.NOT.LPMPL) THEN
+        IF (LMSPMPL) THEN
+        CALL MASAGE ('BULK IONS BORN BY MOLECULE PLASMA INTERACTIONS')
+        CALL MASAGE ('PMPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(PMPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('BULK IONS BORN BY MOLECULE PLASMA INTERACTIONS')
+        CALL MASYR1 ('PMPLI  = ',PMPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PMPLI(0,ISTRA))
+      ENDIF
+C  TEST ION PLASMA INTERACTION
+      IF (.NOT.LPIPL) THEN
+        IF (LMSPIPL) THEN
+        CALL MASAGE ('BULK IONS BORN BY TEST ION PLASMA INTERACTIONS')
+        CALL MASAGE ('PIPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(PIPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('BULK IONS BORN BY TEST ION PLASMA INTERACTIONS')
+        CALL MASYR1 ('PIPLI  = ',PIPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PIPLI(0,ISTRA))
+      ENDIF
+C  PHOTON PLASMA INTERACTION
+      IF (.NOT.LPPHPL) THEN
+        IF (LMSPPHPL) THEN
+        CALL MASAGE ('BULK IONS BORN BY PHOTON PLASMA INTERACTIONS')
+        CALL MASAGE ('PPHPL    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(PPHPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('BULK IONS BORN BY PHOTON PLASMA INTERACTIONS')
+        CALL MASYR1 ('PPHPLI = ',PPHPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',PPHPLI(0,ISTRA))
+      ENDIF
+      IF (.NOT.LSPTPL) THEN
+        IF (LMSSPTPL) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY BULK IONS:                   ')
+        CALL MASAGE ('SPTPL    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (ANY(SPTPLI(1:NPLS,ISTRA).NE.0.D0)) THEN
+        CALL MASAGE ('FLUX SPUTTERED BY BULK IONS:                   ')
+        CALL MASYR1 ('SPTPLI = ',SPTPLI,
+     .                LOGPLS,ISTRA,0,NPLS,0,NSTRA,TEXTS(NSPAMI+1))
+        CALL MASAGE ('SUM OVER SPECIES                               ')
+        CALL MASR1 ('TOTAL=  ',SPTPLI(0,ISTRA))
+      ENDIF
+      CALL LEER(2)
+      PLOSSP=PPPLI(0,ISTRA)
+      PGAINP=PAPLI(0,ISTRA)+PMPLI(0,ISTRA)+PIPLI(0,ISTRA)+
+     +       PPHPLI(0,ISTRA)
+
+      CALL MASAGE ('TOTAL LOSS  ---  TOTAL GAIN                    ')
+      CALL MASR2 ('LOSS--GAIN      ',PLOSSP,PGAINP)
+      CALL LEER(2)
+C
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), BULK IONS',37)
+      CALL LEER(1)
+      IF (ETOTP(ISTRA).NE.0.D0) THEN
+      IF (.NOT.LEPPL) THEN
+        IF (LMSEPPL) THEN
+        CALL MASAGE ('BULK ION ENERGY FLUX  BEING                    ')
+        CALL MASAGE ('NEUTRALIZED  (DEFINING THE TEST PARTICLES      ')
+        CALL MASAGE ('SOURCE STRENGTH (WATT))                        ')
+        CALL MASAGE ('EPPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPPLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('BULK ION ENERGY FLUX  BEING                    ')
+        CALL MASAGE ('NEUTRALIZED  (DEFINING THE TEST PARTICLES      ')
+        CALL MASAGE ('SOURCE STRENGTH (WATT))                        ')
+        CALL MASR1 ('EPPLI=  ',EPPLI(ISTRA))
+      ENDIF
+      ENDIF
+      IF (.NOT.LEAPL) THEN
+        IF (LMSEAPL) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO ATOM PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EAPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EAPLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO ATOM PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EAPLI=  ',EAPLI(ISTRA))
+      ENDIF
+      IF (.NOT.LEMPL) THEN
+        IF (LMSEMPL) THEN
+        CALL MASAGE ('ENERGY GAIN FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EMPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EMPLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN FROM MOLECULE PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EMPLI=  ',EMPLI(ISTRA))
+      ENDIF
+      IF (.NOT.LEIPL) THEN
+        IF (LMSEIPL) THEN
+        CALL MASAGE ('ENERGY GAIN FROM TEST ION PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EIPL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EIPLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN FROM TEST ION PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EIPLI=  ',EIPLI(ISTRA))
+      ENDIF
+      IF (.NOT.LEPHPL) THEN
+        IF (LMSEPHPL) THEN
+        CALL MASAGE ('ENERGY GAIN FROM PHOTON PLASMA INTERACTIONS  ')
+        CALL MASAGE ('EPHPL    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPHPLI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN FROM PHOTON PLASMA INTERACTIONS  ')
+        CALL MASR1 ('EPHPLI= ',EPHPLI(ISTRA))
+      ENDIF
+      CALL LEER(2)
+      ELOSSP=EPPLI(ISTRA)
+      EGAINP=EAPLI(ISTRA)+EMPLI(ISTRA)+EIPLI(ISTRA)+EPHPLI(ISTRA)
+      CALL MASAGE ('TOTAL LOSS  ---   TOTAL GAIN                   ')
+      CALL MASR2 ('LOSS--GAIN      ',ELOSSP,EGAINP)
+      CALL LEER(2)
+C
+700   CONTINUE
+C
+C  INTEGRATED ELECTRON SOURCE TERMS
+C
+      IF (.NOT.TRCBLE) GOTO 800
+C
+      CALL HEADNG ('PARTICLE FLUX BALANCE (AMP), ELECTRONS',39)
+      CALL LEER(1)
+      IF (WTOTE(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('BULK ELECTRON PARTICLE FLUX BEING NEUTRALIZED  ')
+        CALL MASR1 ('PTOTE=  ',WTOTE(ISTRA))
+      ENDIF
+C  ATOMS PLASMA INTERACTION
+      IF (.NOT.LPAEL) THEN
+        IF (LMSPAEL) THEN
+        CALL MASAGE ('ELECTRONS BORN BY ATOM PLASMA INTERACTIONS')
+        CALL MASAGE ('PAEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (PAELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ELECTRONS BORN BY ATOM PLASMA INTERACTIONS')
+        CALL MASR1 ('PAELI=  ',PAELI(ISTRA))
+      ENDIF
+C  MOLECULE PLASMA INTERACTION
+      IF (.NOT.LPMEL) THEN
+        IF (LMSPMEL) THEN
+        CALL MASAGE ('ELECTRONS BORN BY MOLECULE PLASMA INTERACTIONS')
+        CALL MASAGE ('PMEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (PMELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ELECTRONS BORN BY MOLECULE PLASMA INTERACTIONS')
+        CALL MASR1 ('PMELI=  ',PMELI(ISTRA))
+      ENDIF
+C  TEST ION PLASMA INTERACTION
+      IF (.NOT.LPIEL) THEN
+        IF (LMSPIEL) THEN
+        CALL MASAGE ('ELECTRONS BORN BY TEST ION PLASMA INTERACTIONS')
+        CALL MASAGE ('PIEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (PIELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ELECTRONS BORN BY TEST ION PLASMA INTERACTIONS')
+        CALL MASR1 ('PIELI=  ',PIELI(ISTRA))
+      ENDIF
+C  PHOTON PLASMA INTERACTION
+      IF (.NOT.LPPHEL) THEN
+        IF (LMSPPHEL) THEN
+        CALL MASAGE ('ELECTRONS BORN BY PHOTON PLASMA INTERACTIONS')
+        CALL MASAGE ('PPHEL    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (PPHELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ELECTRONS BORN BY PHOTON PLASMA INTERACTIONS')
+        CALL MASR1 ('PPHELI=  ',PPHELI(ISTRA))
+      ENDIF
+      CALL LEER(2)
+      PLOSSE=WTOTE(ISTRA)
+      PGAINE=PAELI(ISTRA)+PMELI(ISTRA)+PIELI(ISTRA)+PPHELI(ISTRA)
+      CALL MASAGE ('TOTAL LOSS  ---  TOTAL GAIN                    ')
+      CALL MASR2 ('LOSS--GAIN      ',PLOSSE,PGAINE)
+      CALL LEER(2)
+C
+      CALL HEADNG ('ENERGY FLUX BALANCE (WATT), ELECTRONS',37)
+      CALL LEER(1)
+C  TO BE WRITTEN: ETOTE FOR RECOMBINATION
+C     IF (ETOTE(ISTRA).NE.0.D0) THEN
+C       CALL MASAGE ('BULK ELECTRON ENERGY FLUX BEING LOST           ')
+C       CALL MASAGE ('UPON RECOMBINATION                             ')
+C       CALL MASR1 ('ETOTE=  ',ETOTE(ISTRA))
+C     ENDIF
+      IF (.NOT.LEAEL) THEN
+        IF (LMSEAEL) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO ATOM PLASMA INTERACTIONS')
+        CALL MASAGE ('EAEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EAELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO ATOM PLASMA INTERACTIONS')
+        CALL MASR1 ('EAELI=  ',EAELI(ISTRA))
+      ENDIF
+      IF (.NOT.LEMEL) THEN
+        IF (LMSEMEL) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO MOLECULE PLASMA INTERACTIONS')
+        CALL MASAGE ('EMEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EMELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO MOLECULE PLASMA INTERACTIONS')
+        CALL MASR1 ('EMELI=  ',EMELI(ISTRA))
+      ENDIF
+      IF (.NOT.LEIEL) THEN
+        IF (LMSEIEL) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO TEST ION PLASMA INTERACTIONS')
+        CALL MASAGE ('EIEL     SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EIELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO TEST ION PLASMA INTERACTIONS')
+        CALL MASR1 ('EIELI=  ',EIELI(ISTRA))
+      ENDIF
+      IF (.NOT.LEPHEL) THEN
+        IF (LMSEPHEL) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO PHOTON PLASMA INTERACTIONS')
+        CALL MASAGE ('EPHEL    SWITCHED OFF => MISSING IN BALANCE    ')
+        ENDIF
+      ELSE IF (EPHELI(ISTRA).NE.0.D0) THEN
+        CALL MASAGE ('ENERGY GAIN DUE TO PHOTON PLASMA INTERACTIONS')
+        CALL MASR1 ('EPHELI=  ',EPHELI(ISTRA))
+      ENDIF
+      ELOSSE=EMELI(ISTRA)+EAELI(ISTRA)+EIELI(ISTRA)+EPHELI(ISTRA)
+      EGAINE=0.
+      CALL MASAGE ('TOTAL LOSS  ---   TOTAL GAIN                   ')
+      CALL MASR2 ('LOSS--GAIN      ',ELOSSE,EGAINE)
+      CALL LEER(2)
+800   CONTINUE
+C
+      WRITE (iunout,*) 
+     .  'SURFACES, AT WHICH TEST PARTICLES FLUXES ARE REDUCED'
+      IF (LSPUMP) THEN
+        WRITE (iunout,'(1X,A5,1X,A8,A12)') 
+     .        'NO.','SPECIES ',' PUMPED FLUX'
+        DO J=1,NLIMPS
+          JJ=J
+          IF (J.GT.NLIM) JJ=-(J-NLIM)
+          SPA=0.D0
+          DO IS=1,NSPTOT
+            IF (SPUMP(IS,J).GT.0.) THEN
+              WRITE (iunout,'(1X,I5,1X,A8,1PE12.4)') 
+     .               JJ,TEXTS(IS),SPUMP(IS,J)
+              SPA=SPA+SPUMP(IS,J)*NPRT(IS)
+            ENDIF
+          ENDDO
+          IF (SPA.GT.0.D0) CALL LEER(1)
+        ENDDO
+      ELSE IF (LMSSPUMP) THEN
+        CALL MASAGE ('SPUMP SWITCHED OFF => MISSING IN BALANCE       ')
+      END IF
+
+      IF (SUM(ABS(CEMETERYV)) > 0._DP) THEN
+        CALL LEER(2)
+        WRITE (iunout,*) ' CEMETERYV != 0 '
+        WRITE (iunout,*) ' CHECK SUBROUTINE UPDATE FOR BUGS! '
+        CALL LEER(2)
+      END IF
+C
+C   DETAILED OUTPUT OF FLUXES ONTO AND FROM SURFACES
+      IF (NSURPR.GT.0) THEN
+        CALL OUTFLX('FLUXES AT SURFACES              ',ISTRA)
+      ENDIF
+
+      IF (SUM(ABS(CEMETERYS)) > 0._DP) THEN
+        CALL LEER(2)
+        WRITE (iunout,*) ' CEMETERYS != 0 '
+        WRITE (iunout,*) ' CHECK SUBROUTINE UPDATE FOR BUGS! '
+        CALL LEER(2)
+      END IF
+C
+      CALL PAGE
+C
+1000  CONTINUE
+6666  FORMAT (3X,1A8,8X,12(A4,2X,A8,3X))
+7777  FORMAT (1X,3A8)
+      RETURN
+      END

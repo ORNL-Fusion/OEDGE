@@ -1,0 +1,2310 @@
+!PB 12.01.06: index added to calc_spectrum indicating particle starts on surface
+!PB 02.03.06: store startpoint of trajectory 
+cdr 12.05.06: argument vn added to ph_energy, for doppler+motional stark effect
+c             directly to be included in line shape sampling
+!pb 27.09.06: spttot updated with sputtering of bulk ions (total sputtered flux tally)
+!pb           spatial resolution of sptpl and spttot added 
+!pb  8.11.06: set timestep index for time dependent mode
+!pb  8.11.06: as SORLIM can be negative ISOR=ABS(SORLIM)
+!pb 08.11.06: definition of splitting arrays changed 
+!             RSPLST(NLEVEL,1:NPARTT) --> RSPLST(1:NPARTT,NLEVEL)
+!   04.01.07: updating of sputter tallies ordered as in ESCAPE
+
+      SUBROUTINE LOCATE
+c  old option:
+c              sorind=irrc for volume sources
+c  new option (additionally):
+c              sorind=0 for volume sources
+c              then: automatically detect all relevant irrc and
+c                    sample, if more than one:
+c                    1.) ipls (must be specified), and icell
+c                    2.) find irrc (random) amongst tabrc1
+c                    3.) find ityp, iatm,....
+c
+c  to be done?  pppl and eppl: primary particle/energy source rates,
+c                              bulk particles
+c  done in jan05
+c  jan05:  2nd bulk secondary for irrc processes in pppl, eppl
+c          (also affected: comxs, xstrc, xsectp)
+c
+c  for testing sampling and evaluation of line profiles:
+c  re-activate ILOOP loop, plot e-spectrum sampled with ph_energy
+c                          plot e-spectrum evaluated with ph_getcoeff
+c  jet 2005, patch 1:
+c  nov.05:  step functions shstep and elstep connected.
+c           shwl in parameter list for calls to smvol1, smpnt1, smsrf1.
+c           shstep overrules all other sheath options, if shstep (=shwl) gt.0
+c           elstep is now nemod1=8,9  (was previously: -2, -3, but this
+c           could not be chosen in input, due to use of IDEZ function for nemods
+C
+C  LOCATE MONTE-CARLO PARTICLE
+C
+C  CALLED AT ENTRY LOCAT0 AT INITIALISATION FOR EACH STRATUM ISTRA
+C     PURPOSE: PRECOMPUTING SOME QUANTITIES TO SPEED UP RANDOM SAMPLING
+C              DURING PARTICLE TRACING
+C
+C  CALLED AT ENTRY LOCAT1 FOR EACH NEW LAUNCHED MONTE CARLO TRAJECTORY
+C  FROM PARTICLE LOOP IN SUBR. MCARLO
+C     PURPOSE: SET INITIAL TEST FLIGHT STATE, DEFINED BY THE VARIABLES
+C              NO. 1 ... TO NPARTC+MPARTC OF COMMON BLOCK "COMPRT"
+C              I.E.,
+C                  X0... TO IUPDTE
+C     UPDATE SOURCE ESTIMATORS FOR BALANCES: PPPL,PPML,PPAT, EPPL,  ETC.
+C     UPDATE CUMULATED SOURCE WEIGHT FOR SCALING: WTOTA, WTOTP, ETC.
+C
+C
+C  CALLED PROGRAMS: SAMPNT (POINT SOURCE)
+C                   SAMLNE (LINE SOURCE)  (NOT READY)
+C                   SAMSRF (SURFACE SOURCE)
+C                   SAMVOL (VOLUME SOURCE)
+C  LOCAL VARIABLES: TEWL,TIWL(IPLS),DIWL(IPLS),
+C                   VXWL(IPLS),VYWL(IPLS),VZWL(IPLS),EFWL(IPLS),SHWL
+C
+C                   THESE ARE BACKGROUND PARAMETERS USED FOR SAMPLING
+C                   IN VELOCITY SPACE, IN CASE NLPLS, I.E., IF THE
+C                   TEST FLIGHT STARTS AS BACKGROUND PARTICLE, THEN
+C                   "RECOMBINING" INTO A TEST PARTICLE
+C                   EG. AT A SURFACE (NLSRF) OR IN THE VOLUME (NLVOL)
+C                   IN THE OPPOSITE CASE (.NOT.NLPLS) PARAMETERS
+C                   FOR THE SAMPLING DISTRIBUTION ARE SPECIFIED
+C                   BY INPUT PARAMETERS IN BLOCK 7.,EG. SORENE,SORENI
+C                   SORVDX,SORVDY,SORVDZ AND APPROPRIATE NEMOD2 AND
+C                   NEMOD3 FLAGS
+C
+C                   WEISPZ(ISPZ):
+C
+C                   ANALOG SPECIES SAMPLING DISTRIBUTION
+C                   SPECIES SAMPLING MAY ALSO BE DONE BY BIASED SOURCE
+C                   SAMPLING, USING THE DATM,DMOL,DION OR DPLS DISTRIB.
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CUPD
+      USE CPOLYG
+      USE CGRID
+      USE CSPEZ
+      USE CZT1
+      USE CTRCEI
+      USE CGEOM
+      USE CTETRA
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE COMSPL
+      USE CLGIN
+      USE COUTAU
+      USE COMXS
+      USE CTRIG
+      USE CRAND
+      USE CSPEI
+      USE CFPLK
+      USE PHOTON
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN) :: IPANU
+      REAL(DP) :: DUMT(3),DUMV(3)
+      REAL(DP), ALLOCATABLE, SAVE :: WMM(:), WEISPZ(:), X1LINE(:,:),
+     .                               X2LINE(:,:)
+      REAL(DP) :: VXWL(NPLS), VYWL(NPLS), VZWL(NPLS), VPWL(NPLS),
+     .            TIWL(NPLS), DIWL(NPLS), EFWL(NPLS), SHWL, TEWL,
+     .            CUMDIS(0:NREC)
+      REAL(DP) :: YIELD1, YIELD2, FMASS, FCHAR, VELXS, VELYS, FTABRC1,
+     .          VELZS, E0S, WEIGHS, VELS, FLX, VPARZ, VPAR, VTERM,
+     .          VPERP, VPARX, VPARY, EMAXW, ESHET, SHEATH, GAMMA, CUR,
+     .          VYSPTP, VZSPTP, ESPTC, ESPTP, VSPTP, VXSPTP, VSPTC, SG,
+     .          VXSPTC, VYSPTC, VZSPTC, A, ZV, SUM1, ZEP1,
+     .          EMAX, VWD, VXWD, VYWD, VZWD, CS, VELQ, VO, SUMM,
+     .          VXO, VYO, VZO, DAT, RSQDV, DML, FR, DIO, DPL, TIWD,
+     .          TEWD, DPH, E00, DE, HW, SHIFT, DVDW, FAC, dwde, prmax,
+     .          raw, res
+      REAL(DP) :: VEL_B, VELX_B, VELY_B, VELZ_B, VN, xl, xr, xm, yl,
+     .            yr, ym, prmin, sig, zmfp, ean, een, ye,
+     .            fpathph, flxfc, zmfp_cut, zmfp_e0, zmfp_e00,
+     .            fac_e0, fac_e00,
+     .            hwvdw_pb,pla,B_NU, EN, spcvl, spcmx,
+     .            xleft, xright, weights
+      real(sp), allocatable :: eplot(:), y1plot(:), y2plot(:)
+      real(sp) :: y1a,y1e,y2a,y2e,e00_plot
+      real(DP) :: EMINSP,EMAXSP
+      real(dp) :: cflag(7,3)
+      REAL(DP), SAVE :: SNORM
+      REAL(DP), EXTERNAL :: RANF_EIRENE
+      INTEGER, ALLOCATABLE, SAVE :: IICSOR(:), ITISOR(:),
+     .                              IUPSOR(:), IFPSOR(:)
+      INTEGER, SAVE :: NEMOD1, NEMOD2, NEMOD3, NEMDSP
+      INTEGER :: ISSPTP, ISSPTC, ISTS, IP, ISPZS, IRC, IIRC, IRRC,
+     .           I2, IM, J, I1, IMP, NPANUO, ILINE, ISURF, ITRSF,
+     .           IUPATH, IPOINT, ISOUR, ISRFS, I, ISTEP,
+     .           ISECT, IDUMM, ICOS, NFLAG, NCELLT, IPLSTI,
+     .           IPLV, IDUM, IO, NO, IVOLM, ISOR, INDTEC, IPL, IPP,
+     .           IPLTI, IROT, IL, IGND, ICELL, KK, IR, ILOOP, ISPC, nen,
+     .           NLOOP, IE, ictoff, iloc, ITOLD
+      INTEGER, SAVE :: NLIMSQ
+      INTEGER, EXTERNAL :: IDEZ
+      LOGICAL :: NLSPUT, NLTST, NL_add_Doppler
+      integer, save :: ifrstpb=0
+      integer :: ityp_b1,ityp_b2,ipls_b1,ipls_b2
+      real(dp) :: weight_b1,weight_b2,e0_b1,e0_b2
+C
+      ENTRY LOCAT0
+C
+C  PREPARE DATA FOR SAMPLING SUBSTRATA FOR STRATUM ISTRA: 1--10
+C
+      IF (.NOT.ALLOCATED(WMM)) THEN
+        ALLOCATE (WMM(NSRFS))
+        ALLOCATE (WEISPZ(NSPZ))
+        ALLOCATE (IICSOR(NSRFS))
+        ALLOCATE (ITISOR(NSRFS))
+        ALLOCATE (IUPSOR(NSRFS))
+        ALLOCATE (IFPSOR(NSRFS))
+      END IF
+
+      DO 1 ISPZ=1,NSPZ
+        WEISPZ(ISPZ)=-1.
+1     CONTINUE
+C
+      SUMM=0.
+      DO 2 ISRFS=1,NSRFSI(ISTRA)
+2       SUMM=SUMM+SORWGT(ISRFS,ISTRA)
+      IF (SUMM.LE.0.D0) THEN
+        WRITE (iunout,*) 'NO SOURCE MODEL FOR STRATUM NO ISTRA=',ISTRA
+        WRITE (iunout,*) 'BECAUSE THE SUM OF THE FLUXES'
+        WRITE (iunout,*) 'FROM THE SUBSTRATA DEFINED BY'
+        WRITE (iunout,*) 'SORWGT(SUBSTRATUM,STRATUM) IS .LE. ZERO'
+        WRITE (iunout,*) 'THIS STRATUM IS TURNED OF !!'
+        NPTS(ISTRA)=0
+        RETURN
+      ENDIF
+      SUM1=0.
+      NLIMSQ=NSRFSI(ISTRA)
+      DO 4 ISOUR=1,NSRFSI(ISTRA)
+        SUM1=SUM1+SORWGT(ISOUR,ISTRA)
+        WMM(ISOUR)=SUM1/SUMM
+4     CONTINUE
+C
+C  PREPARE SOME DATA FOR ENERGY SAMPLING AND HISTORY INITIALIZATION
+C
+      NEMOD1=IDEZ(NEMODS(ISTRA),1,4)
+      NEMOD2=IDEZ(NEMODS(ISTRA),2,4)
+      NEMOD3=IDEZ(NEMODS(ISTRA),3,4)
+      NEMDSP=IDEZ(NEMODS(ISTRA),4,4)
+C
+      DO 5 ISRFS=1,NSRFSI(ISTRA)
+        IF (SORIFL(ISRFS,ISTRA).NE.0) THEN
+          IDUMM=SORIFL(ISRFS,ISTRA)
+          ITISOR(ISRFS)=IDEZ(IDUMM,1,4)
+          IF (ITISOR(ISRFS).EQ.2) ITISOR(ISRFS)=-1
+          IFPSOR(ISRFS)=IDEZ(IDUMM,2,4)
+          IF (IFPSOR(ISRFS).EQ.2) IFPSOR(ISRFS)=-1
+          IUPSOR(ISRFS)=IDEZ(IDUMM,3,4)
+          IF (IUPSOR(ISRFS).EQ.2) IUPSOR(ISRFS)=-1
+          IICSOR(ISRFS)=IDEZ(IDUMM,4,4)
+          IF (IICSOR(ISRFS).EQ.2) IICSOR(ISRFS)=-1
+        ELSE
+          ITISOR(ISRFS)=0
+          IFPSOR(ISRFS)=0
+          IUPSOR(ISRFS)=0
+          IICSOR(ISRFS)=0
+        ENDIF
+5     CONTINUE
+C
+      SNORM=SQRT(SORCTX(ISTRA)**2+SORCTY(ISTRA)**2+SORCTZ(ISTRA)**2)
+      IF (SNORM.GT.EPS10) THEN
+        SORCTX(ISTRA)=SORCTX(ISTRA)/SNORM
+        SORCTY(ISTRA)=SORCTY(ISTRA)/SNORM
+        SORCTZ(ISTRA)=SORCTZ(ISTRA)/SNORM
+      ENDIF
+C
+      IF (NLVOL(ISTRA).AND.NLPLS(ISTRA).AND.NEMOD1.EQ.1) THEN
+        WRITE (iunout,*) 'WARNING: NEMOD1=1: NEW MEANING: '
+        WRITE (iunout,*) '                   MONOENERGETIC SOURCE'
+      ENDIF
+      IF (TRCSOU) THEN
+        WRITE (iunout,*) 'NEMOD1,NEMOD2,NEMOD3 ',NEMOD1,NEMOD2,NEMOD3
+        WRITE (iunout,*) 'SNORM  ',SNORM
+        WRITE (iunout,*) 'ISRFS,IICSOR(I),ITISOR(I),IFPSOR(I),IUPSOR(I)'
+        DO 6 I=1,NSRFSI(ISTRA)
+          WRITE (iunout,*) I,IICSOR(I),ITISOR(I),IFPSOR(I),IUPSOR(I)
+6       CONTINUE
+      ENDIF
+C
+C  PREPARE SOME DATA FOR SPECIES SAMPLING
+C
+
+      IF (NLVOL(ISTRA) .AND. (NEMOD1 == 9) .AND.
+     .    ANY(SORIND(1:NSRFSI(ISTRA),ISTRA) > 0)) THEN
+
+        IF (ALLOCATED(X1LINE)) THEN
+          IF (SIZE(X1LINE) /= NSRFSI(ISTRA)) THEN
+            DEALLOCATE(X1LINE)
+            DEALLOCATE(X2LINE)
+            ALLOCATE(X1LINE(NSRFSI(ISTRA),NRAD))
+            ALLOCATE(X2LINE(NSRFSI(ISTRA),NRAD))
+          END IF
+        ELSE
+          ALLOCATE(X1LINE(NSRFSI(ISTRA),NRAD))
+          ALLOCATE(X2LINE(NSRFSI(ISTRA),NRAD))
+        END IF
+
+        X1LINE = -1._DP
+        X2LINE = 0._DP
+      END IF
+
+      RETURN
+C
+      ENTRY LOCAT1(IPANU)
+C
+C  TENTATIVELY ASSUME: A TEST PARTICLE WILL BE BORN
+      LGPART=.TRUE.
+      LCART =.TRUE.
+C
+C   SET SOME DEFAULT DATA TO INITIALIZE THIS HISTORY
+C
+      SCOS_SAVE=0._DP
+      WEIGHT=1.0
+      IATM=0
+      IMOL=0
+      IION=0
+      IPLS=0
+      IPHOT=0
+      ITYP_B1=0
+      ITYP_B2=0
+C
+      ITIME=1
+      IFPATH=1
+      IUPDTE=1
+      IC_ION=0
+      IC_NEUT=0
+C
+      NCELL=0
+      NBLOCK=1
+      NACELL=0
+      NBLCKA=0
+      NRCELL=0
+      NPCELL=1
+      NTCELL=1
+      IPOLG=1
+      IPOLGN=1
+      IPERID=1
+      ICOL=0
+      XLEFT = HUGE(1._DP)
+      XRIGHT = 0._DP
+C
+C  DETAILED PRINTOUT OF TRAJECTORY FOR THIS PARTICLE?
+C
+      NLTRC=NPANU.GE.I1TRC.AND.NPANU.LE.I2TRC
+C
+C  =====================================================
+C  =SAMPLE STARTING POINT FOR  ATOMS, MOLECULES OR IONS=
+C  =====================================================
+C
+      LGTIME=NPRNLI.GT.0
+C  DISTANCE TO "TIME-SURFACE"
+      IF (.NOT.LGTIME) THEN
+        DTIMVI=1.D30
+      ELSEIF (LGTIME) THEN
+        DTIMVI=TIME0+DTIMV
+      ENDIF
+C
+C   SOURCE DUE TO TIME DEP. MODE, READ PARTICLES FROM CENSUS: RPARTC,IPARTC
+      IF (NLCNS(ISTRA).AND.ISTRA.EQ.NSTRAI) THEN
+C   LABELS  11---20
+C   AT PRESENT: ONLY ONE SUBSTRATUM
+        ISECT=1
+        NLSTOR=IPANU.LE.ISTOR(ISECT,ISTRA)
+C
+        IF (NLMOVIE) THEN
+          IMP=IPANU
+        ELSE
+C   RANDOM SEARCH IN RPARTW ARRAY
+          A=RANF_EIRENE()*RPARTW(IPRNL)
+C   BINARY SEARCH
+          I1=0
+          I2=IPRNL
+9         IM=(I1+I2)/2
+          IF(A.LT.RPARTW(IM)) THEN
+            I2=IM
+            GOTO 9
+          ELSEIF(A.GT.RPARTW(IM+1)) THEN
+            I1=IM
+            GOTO 9
+          ENDIF
+          IMP=IM+1
+C  PARTICLE NO. IMP FROM CENSUS ARRAY IDENTIFIED
+        ENDIF
+C
+C  LAUNCH PARTICLE NO. IMP FROM CENSUS ARRAY
+C
+        DO 11 J=1,NPARTT
+          RPSTT(J)=RPARTC(J,IMP)
+11      CONTINUE
+        NPANUO=NPANU
+        DO 12 J=1,MPARTT
+          IPSTT(J)=IPARTC(J,IMP)
+12      CONTINUE
+        ITYP=ISPEZI(ISPZ,-1)
+        IPHOT=ISPEZI(ISPZ,0)
+        IATM=ISPEZI(ISPZ,1)
+        IMOL=ISPEZI(ISPZ,2)
+        IION=ISPEZI(ISPZ,3)
+        IPLS=ISPEZI(ISPZ,4)
+        CALL NCELLN(NCELL,NRCELL,NPCELL,NTCELL,NACELL,NBLOCK,
+     .              NR1ST,NP2ND,NT3RD,NBMLT,NLRAD,NLPOL,NLTOR)
+        NBLCKA=NSTRD*(NBLOCK-1)+NACELL
+        NCELLT=NCLTAL(NCELL)
+        NPANU=NPANUO
+        NLSRFX=.FALSE.
+        NLSRFY=.FALSE.
+        NLSRFZ=.FALSE.
+        MSURF=NLIM+NSTS
+C
+        WEIGHT=1.D0
+!pb  set number of timestep for time dependent mode
+        ITMSTP=1
+C
+        IF (ITYP.EQ.1) THEN
+          WTOTA(IATM,ISTRA)=WTOTA(IATM,ISTRA)+WEIGHT
+          ETOTA(ISTRA)=ETOTA(ISTRA)+E0*WEIGHT
+          LOGATM(IATM,ISTRA)=.TRUE.
+        ELSEIF (ITYP.EQ.2) THEN
+          WTOTM(IMOL,ISTRA)=WTOTM(IMOL,ISTRA)+WEIGHT
+          ETOTM(ISTRA)=ETOTM(ISTRA)+E0*WEIGHT
+          LOGMOL(IMOL,ISTRA)=.TRUE.
+        ELSEIF (ITYP.EQ.3) THEN
+          WTOTI(IION,ISTRA)=WTOTI(IION,ISTRA)+WEIGHT
+          ETOTI(ISTRA)=ETOTI(ISTRA)+E0*WEIGHT
+          LOGION(IION,ISTRA)=.TRUE.
+        ELSEIF (ITYP.EQ.0) THEN
+          WTOTPH(IPHOT,ISTRA)=WTOTPH(IPHOT,ISTRA)+WEIGHT
+          ETOTPH(ISTRA)=ETOTPH(ISTRA)+E0*WEIGHT
+          LOGPHOT(IPHOT,ISTRA)=.TRUE.
+        ELSE
+          WRITE (iunout,*) 'ERROR IN LOCATE, CALL EXIT '
+          WRITE (iunout,*) 'INVALID ITYP ON CENSUS     '
+          CALL EXIT_OWN(1)
+        ENDIF
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+        IF (NLSTOR) CALL STORE(1)
+C
+        GOTO 5000
+C
+C  POINT SOURCE MODEL  21---30
+C
+      ELSEIF (NLPNT(ISTRA)) THEN
+C
+C   FIRSTLY FIND POINT NUMBER IPOINT
+        IPOINT=1
+        IF (NLIMSQ.GT.1) THEN
+          ZV=RANF_EIRENE( )
+          DO 21 IPOINT=1,NLIMSQ
+            IF (ZV.LT.WMM(IPOINT)) GOTO 22
+21        CONTINUE
+22        CONTINUE
+        ENDIF
+        ISECT=IPOINT
+        NLSTOR=IPANU.LE.ISTOR(ISECT,ISTRA)
+C
+C   NEXT FIND CO-ORDINATES AND CELL INDICES,
+C   LOCAL BACKGROUND TEMPERATURES TIWL AND TEWL, AND
+C   LOCAL PLASMA DRIFT VELOCITIES VXWL,VYWL,VZWL FOR EACH BULK
+C   ION SPECIES IPLS=1,NPLSI
+C
+C   NLPT=POINT INDEX IN (NSRFS) SOURCE ARRAYS
+        CALL SAMPNT (IPOINT,
+     .               TIWL,TEWL,DIWL,VXWL,VYWL,VZWL,EFWL,SHWL,WEISPZ)
+        IF (.NOT.LGPART) RETURN
+C
+        IF (ITISOR(IPOINT).NE.0) THEN
+          ITIME=ITISOR(IPOINT)
+        ENDIF
+        IF (IFPSOR(IPOINT).NE.0) THEN
+          IFPATH=IFPSOR(IPOINT)
+        ENDIF
+        IF (IUPSOR(IPOINT).NE.0) THEN
+          IUPATH=IUPSOR(IPOINT)
+        ENDIF
+        MSURF=0
+C
+C   LINE SOURCE  31---50
+C
+      ELSEIF (NLLNE(ISTRA)) THEN
+        ILINE=1
+        ISECT=ILINE
+        MSURF=0
+        WRITE (iunout,*) 'LINE SOURCE OPTION STILL TO BE WRITTEN. EXIT'
+        CALL EXIT_OWN(1)
+C
+C   SURFACE SOURCE MODEL  51---70
+C
+      ELSEIF (NLSRF(ISTRA)) THEN
+C
+C   FIRST FIND SOURCE-SURFACE NUMBER ISURF
+        ISURF=1
+        IF (NLIMSQ.GT.1) THEN
+          ZV=RANF_EIRENE( )
+          DO 51 ISURF=1,NLIMSQ
+            IF (ZV.LT.WMM(ISURF)) GOTO 52
+51        CONTINUE
+52        CONTINUE
+        ENDIF
+        ISECT=ISURF
+        NLSTOR=IPANU.LE.ISTOR(ISECT,ISTRA)
+C
+C   NEXT FIND POSITION ON THIS SOURCE SURFACE, AS WELL AS
+C   CELL INDICES, LOCAL TEMPERATURES TIWL AND TEWL, AND
+C   LOCAL PLASMA DRIFT VELOCITIES VXWL,VYWL,VZWL FOR EACH BULK
+C   ION SPECIES IPLS=1,NPLSI
+C
+        CALL SAMSF1 (ISURF,
+     .               TIWL,TEWL,DIWL,VXWL,VYWL,VZWL,EFWL,SHWL,WEISPZ)
+        IF (.NOT.LGPART) RETURN
+C
+C   MSURF: NUMBER OF NON-DEFAULT (OR ADDITIONAL) SURFACE
+C   MSURF=0 MEANS: SOURCE NOT ON ANY KNOWN SURFACE.
+C                  DEFAULT SURFACE INTERACTION MODEL
+        MSURF=0
+        IF (LEVGEO.EQ.4) THEN
+          IF (MASURF == 0) THEN
+            MSURF=ABS(INMTI(IPOLG,NRCELL))
+          ELSE
+            MSURF=MASURF
+          END IF
+        ELSEIF (LEVGEO.EQ.5) THEN
+          MSURF=ABS(INMTIT(IPOLG,NRCELL))
+!pb          IF (MSURF > 0) MSURF=MSURF+NLIM !changed in infcop
+        ELSE
+          IF (MASURF.GT.0) THEN
+            MSURF=MASURF
+            ITRSF=0
+          ELSEIF (MRSURF.GT.0) THEN
+            ITRSF=INMP1I(MRSURF,NPCELL,NTCELL)
+          ELSEIF (MPSURF.GT.0) THEN
+            ITRSF=INMP2I(NRCELL,MPSURF,NTCELL)
+          ELSEIF (MTSURF.GT.0) THEN
+            ITRSF=INMP3I(NRCELL,NPCELL,MTSURF)
+          ENDIF
+          IF (ITRSF.GT.0) MSURF=NLIM+ITRSF
+        ENDIF
+C
+C  SET ICOS AND SCOS SUCH AS IF THE SOURCE PARTICLE HAD ARRIVED
+C  AT THE SURFACE FROM THE CORRECT SIDE AND IS NOW REFLECTED
+C  (NOTE: THE FLAG "IWEI" USED IN SUBR. STDCOL AND ADDCOL
+C  WILL ALWAYS BE POSITIVE WITH THIS DEFINITION OF SCOS)
+C  THIS DEFAULT SETTING MAY BE OVERRULED BY SORIFL FLAG
+C
+        IF (IICSOR(ISURF).NE.0) THEN
+          ICOS=IICSOR(ISURF)
+        ELSEIF (ILSIDE(MSURF).NE.0) THEN
+          ICOS=ISIGN(1,ILSIDE(MSURF))
+        ELSE
+C  TRY TO FIND ICOS AUTOMATICALLY, IF POSSIBLE
+          IF (LEVGEO.EQ.3.AND.MRSURF.GT.0) THEN
+            IF (MRSURF.EQ.NRCELL) THEN
+              ICOS=-1
+            ELSE
+              ICOS=1
+            ENDIF
+          ELSEIF (LEVGEO.EQ.3.AND.MPSURF.GT.0) THEN
+            IF (MPSURF.EQ.NPCELL) THEN
+              ICOS=-1
+            ELSE
+              ICOS=1
+            ENDIF
+          ELSEIF (LEVGEO.EQ.4.AND.MRSURF.GT.0) THEN
+C  CURRENTLY: ONLY MATH. POSITIVELY ORIENTED TRIANGLES,
+C             HENCE: NORMAL VECTOR OUTSIDE.
+            ICOS=1
+          ELSE
+            GOTO 990
+          ENDIF
+        ENDIF
+C
+        SCOS=ICOS
+C
+        IF (ITISOR(ISURF).NE.0) THEN
+          ITIME=ITISOR(ISURF)
+        ELSEIF (ISWICH(1,MSURF).NE.0) THEN
+          ITIME=ISWICH(1,MSURF)*ICOS
+        ENDIF
+        IF (IFPSOR(ISURF).NE.0) THEN
+          IFPATH=IFPSOR(ISURF)
+        ELSEIF (ISWICH(2,MSURF).NE.0) THEN
+          IFPATH=ISWICH(2,MSURF)*ICOS
+        ENDIF
+        IF (IUPSOR(ISURF).NE.0) THEN
+          IUPDTE=IUPSOR(ISURF)
+        ELSEIF (ISWICH(3,MSURF).NE.0) THEN
+          IUPDTE=ISWICH(3,MSURF)*ICOS
+        ENDIF
+C
+C  FIND SURFACE NORMAL AT PLACE OF BIRTH
+C
+        IF (INDIM(ISURF,ISTRA).EQ.0) THEN
+          CALL ADDNOR(X0,Y0,Z0,SCOS,MSURF,IPERID,*55,*55)
+        ELSEIF (INDIM(ISURF,ISTRA).GT.0) THEN
+          CALL STDNOR (X0,Y0,Z0,INDIM(ISURF,ISTRA),SCOS,MSURF,*55,*55)
+        ENDIF
+55      CONTINUE
+C
+C  VOLUME SOURCE MODEL  71---90
+C
+      ELSEIF (NLVOL(ISTRA)) THEN
+C  SUBSTRATA OF VOLUME SOURCE: IVOLM
+        IVOLM=1
+        IF (NLIMSQ.GT.1) THEN
+          ZV=RANF_EIRENE( )
+          DO 71 IVOLM=1,NLIMSQ
+            IF (ZV.LT.WMM(IVOLM)) GOTO 72
+71        CONTINUE
+72        CONTINUE
+        ENDIF
+        ISECT=IVOLM
+        CALL SAMVL1(IVOLM,
+     .              TIWL,TEWL,DIWL,VXWL,VYWL,VZWL,EFWL,SHWL,WEISPZ)
+        IF (.NOT.LGPART) RETURN
+        NLSTOR=IPANU.LE.ISTOR(ISECT,ISTRA)
+        MSURF=0
+      ENDIF
+C
+      IRCELL=NRCELL
+      IPCELL=NPCELL
+      ITCELL=NTCELL
+      NCELL=NRCELL+((NPCELL-1)+(NTCELL-1)*NP2T3)*NR1P2+NBLCKA
+      NSTCLL=NCELL
+      NCELLT=NCLTAL(NCELL)
+C
+C  SAMPLE STARTING TIME
+C
+      ITMSTP=1
+      IF (.NOT.LGTIME) THEN
+        TIME=0.
+      ELSEIF (LGTIME) THEN
+        ISOR=ABS(SORLIM(ISECT,ISTRA))
+        INDTEC=IDEZ(ISOR,4,4)
+        IF (INDTEC.EQ.0) INDTEC=2
+        IF (INDTEC.LE.1) TIME=TIME0
+        IF (INDTEC.EQ.2) TIME=TIME0+RANF_EIRENE()*DTIMV
+      ENDIF
+C
+C  INITIAL POSITION OF PARTICLE IS DEFINED NOW, FURTHERMORE:
+C    NRCELL,NPCELL,NTCELL,IPOLG,IPERID,NBLOCK,NACELL,
+C    AND THE LOCAL BACKGROUND PARAMETERS
+C    TEWL,(TIWL(IPLS),DIWL(IPLS),VXWL(IPLS),VYWL(IPLS),VZWL(IPLS),IPLS=1,NPLSI)
+C
+C    PLUS: WEISPZ FOR SOURCE SPECIES SAMPLING
+C          WEISPZ IS THE ANALOG SAMPLING DISTRIBUTION
+C          DPLS,DATM,DMOL,DION ARE THE NONANALOG SAMPLING DISTRIBUTIONS
+C
+C    PLUS: CRTX,CRTY,CRTZ,SCOS
+C
+C .........................................................................
+C
+C  FIND TYPE AND SPECIES INDEX AND RELATED CONSTANTS 100---199
+C .........................................................................
+C
+      IF (NLATM(ISTRA)) THEN
+        ITYP=1
+        IF (NSPEZ(ISTRA).LT.0) THEN
+C  CHECK RADON-NIKODYM CONDITION FOR NON-ANALOG SAMPLING
+          DO IATM=1,NATMI
+            IF (DATD(IATM).LE.0.D0.AND.WEISPZ(IATM).GT.0.D0) THEN
+              GOTO 992
+            ENDIF
+          ENDDO
+        ENDIF
+C  FIXED SPECIES INDEX
+        IATM=NSPEZ(ISTRA)
+        IF (IATM.LT.0.OR.IATM.GT.NATMI) THEN
+C  SPECIES SAMPLING FROM DATM
+          FR=RANF_EIRENE( )
+          DO 102 I=1,NATMIM
+            IATM=I
+            IF (FR.LE.DATM(IATM)) GOTO 101
+102       CONTINUE
+          IATM=NATMI
+101       CONTINUE
+          IF (NSPEZ(ISTRA).LT.0) THEN
+C  WEIGHT CORRECTION
+            DAT=DATD(IATM)
+            IF (WEISPZ(IATM).LT.0.D0) GOTO 999
+            WEIGHT=WEIGHT*WEISPZ(IATM)/DAT
+          ENDIF
+        ELSEIF (IATM.EQ.0) THEN
+C  ANALOG SPECIES SAMPLING FROM WEISPZ
+          FR=RANF_EIRENE( )
+          SUMM=0.
+          DO 112 I=1,NATMIM
+            IATM=I
+            IF (WEISPZ(IATM).LT.0.D0) GOTO 999
+            SUMM=SUMM+WEISPZ(IATM)
+            IF (FR.LE.SUMM) GOTO 111
+112       CONTINUE
+          IATM=NATMI
+111       CONTINUE
+        ENDIF
+        RSQDV=RSQDVA(IATM)*SQ2I
+      ELSEIF (NLMOL(ISTRA)) THEN
+        ITYP=2
+        IF (NSPEZ(ISTRA).LT.0) THEN
+C  CHECK RADON-NIKODYM CONDITION FOR NON-ANALOG SAMPLING
+          DO IMOL=1,NMOLI
+            IF (DMLD(IMOL).LE.0.D0.AND.WEISPZ(IMOL).GT.0.D0) THEN
+              GOTO 992
+            ENDIF
+          ENDDO
+        ENDIF
+C  FIXED SPECIES INDEX
+        IMOL=NSPEZ(ISTRA)
+        IF (IMOL.LT.0.OR.IMOL.GT.NMOLI) THEN
+C  NONANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          DO 104 I=1,NMOLIM
+            IMOL=I
+            IF (FR.LE.DMOL(IMOL)) GOTO 103
+104       CONTINUE
+          IMOL=NMOLI
+103       CONTINUE
+C  WEIGHT CORRECTION
+          IF (NSPEZ(ISTRA).LT.0) THEN
+            DML=DMLD(IMOL)
+            IF (WEISPZ(IMOL).LT.0.D0) GOTO 999
+            WEIGHT=WEIGHT*WEISPZ(IMOL)/DML
+          ENDIF
+        ELSEIF (IMOL.EQ.0) THEN
+C  ANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          SUMM=0.
+          DO 114 I=1,NMOLIM
+            IMOL=I
+            IF (WEISPZ(IMOL).LT.0.D0) GOTO 999
+            SUMM=SUMM+WEISPZ(IMOL)
+            IF (FR.LE.SUMM) GOTO 113
+114       CONTINUE
+          IMOL=NMOLI
+113       CONTINUE
+        ENDIF
+        RSQDV=RSQDVM(IMOL)*SQ2I
+      ELSEIF (NLION(ISTRA)) THEN
+        ITYP=3
+        IF (NSPEZ(ISTRA).LT.0) THEN
+C  CHECK RADON-NIKODYM CONDITION FOR NON-ANALOG SAMPLING
+          DO IION=1,NIONI
+            IF (DIOD(IION).LE.0.D0.AND.WEISPZ(IION).GT.0.D0) THEN
+              GOTO 992
+            ENDIF
+          ENDDO
+        ENDIF
+C  FIXED SPECIES INDEX
+        IION=NSPEZ(ISTRA)
+        IF (IION.LT.0.OR.IION.GT.NIONI) THEN
+C  NONANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          DO 106 I=1,NIONIM
+            IION=I
+            IF (FR.LE.DION(IION)) GOTO 105
+106       CONTINUE
+          IION=NIONI
+105       CONTINUE
+C  WEIGHT CORRECTION
+          IF (NSPEZ(ISTRA).LT.0) THEN
+            DIO=DIOD(IION)
+            IF (WEISPZ(IION).LT.0.D0) GOTO 999
+            WEIGHT=WEIGHT*WEISPZ(IION)/DIO
+          ENDIF
+        ELSEIF (IION.EQ.0) THEN
+C  ANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          SUMM=0.
+          DO 116 I=1,NIONIM
+            IION=I
+            IF (WEISPZ(IION).LT.0.D0) GOTO 999
+            SUMM=SUMM+WEISPZ(IION)
+            IF (FR.LE.SUMM) GOTO 115
+116       CONTINUE
+          IION=NIONI
+115       CONTINUE
+        ENDIF
+        RSQDV=RSQDVI(IION)*SQ2I
+      ELSEIF (NLPLS(ISTRA)) THEN
+        ITYP=4
+        IF (NSPEZ(ISTRA).LT.0) THEN
+C  CHECK RADON-NIKODYM CONDITION FOR NON-ANALOG SAMPLING
+          DO IPLS=1,NPLSI
+            IF (DPLD(IPLS).LE.0.D0.AND.WEISPZ(IPLS).GT.0.D0) THEN
+              GOTO 992
+            ENDIF
+          ENDDO
+        ENDIF
+C
+C  FIXED SPECIES INDEX
+        IPLS=NSPEZ(ISTRA)
+        IF (IPLS.LT.0.OR.IPLS.GT.NPLSI) THEN
+C  NONANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          DO 108 I=1,NPLSIM
+            IPLS=I
+            IF (FR.LE.DPLS(IPLS)) GOTO 107
+108       CONTINUE
+          IPLS=NPLSI
+107       CONTINUE
+C  WEIGHT CORRECTION
+          IF (NSPEZ(ISTRA).LT.0) THEN
+            DPL=DPLD(IPLS)
+            IF (WEISPZ(IPLS).LT.0.D0) GOTO 999
+            WEIGHT=WEIGHT*WEISPZ(IPLS)/DPL
+          ENDIF
+        ELSEIF (IPLS.EQ.0) THEN
+C  ANALOG SPECIES SAMPLING
+          FR=RANF_EIRENE( )
+          SUMM=0.
+          DO 118 I=1,NPLSIM
+            IPLS=I
+            IF (WEISPZ(IPLS).LT.0.D0) GOTO 999
+            SUMM=SUMM+WEISPZ(IPLS)
+            IF (FR.LE.SUMM) GOTO 117
+118       CONTINUE
+          IPLS=NPLSI
+117       CONTINUE
+        ENDIF
+        RSQDV=RSQDVP(IPLS)*SQ2I
+      ELSEIF(NLPHOT(ISTRA)) THEN
+        ITYP=0
+        IF (NSPEZ(ISTRA).LT.0) THEN
+C  CHECK RADON-NIKODYM CONDITION FOR NON-ANALOG SAMPLING
+          DO IPHOT=1,NPHOTI
+            IF (DPHD(IPHOT).LE.0.D0.AND.WEISPZ(IPHOT).GT.0.D0) THEN
+              GOTO 992
+            ENDIF
+          ENDDO
+        ENDIF
+C  FIXED SPECIES INDEX
+        IPHOT=NSPEZ(ISTRA)
+        IF (IPHOT.LT.0.OR.IPHOT.GT.NPHOTI) THEN
+C  SPECIES SAMPLING FROM DPHOT
+          FR=RANF_EIRENE( )
+          DO 1021 I=1,NPHOTIM
+            IPHOT=I
+            IF (FR.LE.DPHOT(IPHOT)) GOTO 1011
+1021      CONTINUE
+          IPHOT=NPHOTI
+1011      CONTINUE
+          IF (NSPEZ(ISTRA).LT.0) THEN
+C  WEIGHT CORRECTION
+            DPH=DPHD(IPHOT)
+            IF (WEISPZ(IPHOT).LT.0.D0) GOTO 999
+            WEIGHT=WEIGHT*WEISPZ(IPHOT)/DPH
+          ENDIF
+        ELSEIF (IPHOT.EQ.0) THEN
+C  ANALOG SPECIES SAMPLING FROM WEISPZ
+          FR=RANF_EIRENE( )
+          SUMM=0.
+          DO 1121 I=1,NPHOTIM
+            IPHOT=I
+            IF (WEISPZ(IPHOT).LT.0.D0) GOTO 999
+            SUMM=SUMM+WEISPZ(IPHOT)
+            IF (FR.LE.SUMM) GOTO 1111
+1121      CONTINUE
+          IPHOT=NPHOTI
+1111      CONTINUE
+        ENDIF
+        RSQDV=0.
+csw end branch
+      ENDIF
+C
+      ISPZ=ISPEZ(ITYP,IPHOT,IATM,IMOL,IION,IPLS)
+C  .............................................................
+C
+C  SPECIES SAMPLING DONE
+C  .............................................................
+C
+C  MAKE SURE NOT TO WASTE TIME IN PARTICLES WITH ZERO WEIGHT
+C
+      LGPART=WEIGHT.GT.0.D0
+      IF (.NOT.LGPART) RETURN
+C
+C  PARAMETERS FOR VELOCITY SAMPLING DISTRIBUTION:
+C  TEWD,TIWD,VXWD,VYWD,VZDW
+C
+      IF (NEMOD2.EQ.1) THEN
+C  SET SAMPLING TEMPERATURES FROM FIXED INPUT DATA
+        TIWD=ABS(SORENI(ISTRA))
+        TEWD=ABS(SORENE(ISTRA))
+      ELSEIF (NEMOD2.EQ.2) THEN
+C  NOT IN USE
+      ELSEIF (NEMOD2.EQ.3) THEN
+C  SET SAMPLING TEMPERATURES FROM LOCAL PLASMA DATA FOR SPECIES IPLTI
+        IPLTI=NEMDSP
+        IF (IPLTI.LT.1.OR.IPLTI.GT.NPLSI) GOTO 999
+        TIWD=TIWL(IPLTI)
+        TEWD=TEWL
+      ELSE
+C  DEFAULT: ONLY FOR NLPLS=TRUE, OR NLION=TRUE
+C  SET SAMPLING TEMPERATURES FROM LOCAL PLASMA DATA FOR SPECIES IPLS
+        TEWD=TEWL
+        IF (NLPLS(ISTRA)) THEN
+          IPL=IPLS
+          TIWD=TIWL(IPL)
+        ELSEIF (NLION(ISTRA)) THEN
+          TIWD=0.
+          DO IPP=1,NPLSI
+            IF (NMASSI(IION).EQ.NMASSP(IPP).AND.
+     .          NCHARI(IION).EQ.NCHARP(IPP).AND.
+     .          NCHRGI(IION).EQ.NCHRGP(IPP)) THEN
+              IPL=IPP
+              TIWD=TIWL(IPL)
+            ENDIF
+          ENDDO
+        ELSE
+C  SET SAMPLING ION-TEMPERATURE TO ZERO
+          TIWD=0.
+        ENDIF
+      ENDIF
+C
+      IF (NEMOD3.EQ.1) THEN
+C  SET SAMPLING DRIFT VELOCITIES FROM INPUT DATA FOR DRIFT VELOCITY
+        VXWD=SORVDX(ISTRA)
+        VYWD=SORVDY(ISTRA)
+        VZWD=SORVDZ(ISTRA)
+      ELSEIF (NEMOD3.EQ.2) THEN
+C  SET SAMPLING DRIFT VELOCITIES FROM INPUT DATA FOR MACH NUMBER
+        CS=SQRT(1.*TIWD+TEWD)*RSQDV
+        VXWD=SORVDX(ISTRA)*CS
+        VYWD=SORVDY(ISTRA)*CS
+        VZWD=SORVDZ(ISTRA)*CS
+      ELSEIF (NEMOD3.EQ.3) THEN
+        IPLV=NEMDSP
+        IF (IPLV.LT.1.OR.IPLV.GT.NPLSI) GOTO 999
+        VXWD=VXWL(IPLV)
+        VYWD=VYWL(IPLV)
+        VZWD=VZWL(IPLV)
+      ELSE
+C  DEFAULT: ONLY FOR NLPLS=TRUE, OR NLION=TRUE
+C  SET SAMPLING DRIFT VELOCITIES FROM BACKGROUND DATA FOR SPECIES IPL
+        IF (NLPLS(ISTRA)) THEN
+          IPL=IPLS
+          VXWD=VXWL(IPL)
+          VYWD=VYWL(IPL)
+          VZWD=VZWL(IPL)
+        ELSEIF (NLION(ISTRA)) THEN
+          VXWD=0.
+          VYWD=0.
+          VZWD=0.
+          DO IPP=1,NPLSI
+            IF (NMASSI(IION).EQ.NMASSP(IPP).AND.
+     .          NCHARI(IION).EQ.NCHARP(IPP).AND.
+     .          NCHRGI(IION).EQ.NCHRGP(IPP)) THEN
+              IPL=IPP
+              VXWD=VXWL(IPL)
+              VYWD=VYWL(IPL)
+              VZWD=VZWL(IPL)
+            ENDIF
+          ENDDO
+        ELSE
+          VXWD=0.
+          VYWD=0.
+          VZWD=0.
+        ENDIF
+      ENDIF
+C
+C  .....................................
+C
+C  FIND VELOCITY VECTOR NEXT
+C  .....................................
+C
+C  PURELY ATOMIC SOURCE?  200 --- 299
+C
+      IF (NLATM(ISTRA)) THEN
+        IF (NEMOD1.EQ.1) THEN
+          EMAX=SORENI(ISTRA)
+        ELSEIF (NEMOD1.EQ.6) THEN
+          EMAX=0.
+        ELSE
+          GOTO 998
+        ENDIF
+
+        LOGATM(IATM,ISTRA)=.TRUE.
+        IF (EMAX.GT.0) THEN
+          E0=EMAX
+          VEL=SQRT(E0)*RSQDVA(IATM)
+C
+C  COSINE LIKE OR GAUSSIAN ANGLE DISTRIBUTION
+C
+C  IN CASE (CRTX,CRTY,CRTZ) NE (0.,0.,0.)
+C  USE REFLECTION MODEL ANGULAR DISTRIBUTION
+          VELX=CRTX
+          VELY=CRTY
+          VELZ=CRTZ
+          CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C         VEL_MEAN=VEL
+C         E0_MEAN=E0
+        ELSEIF (EMAX.LE.0.D0.AND..NOT.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM SHIFTED TRUNCATED MAXWELLIAN FLUX
+C              AROUND INNER (!) NORMAL AT TEMP. TW (EV) = TIWD
+          IF (TIWD.LE.0.) TIWD=ABS(EMAX)
+          VWD=SQRT(VXWD**2+VYWD**2+VZWD**2)
+          CALL VELOCS (TIWD,0._DP,VWD,VXWD,VYWD,VZWD,RSQDVA(IATM),
+     .                 CVRSSA(IATM),
+     .                 -CRTX,-CRTY,-CRTZ,E0,VELX,VELY,VELZ,VEL)
+C  MODIFY ANGULAR DISTRIBUTION IN CASE SORCOS .NE. 0.5 (I.E., IN CASE
+C  A NON-COSINE DISTRIBUTION IS REQUESTED
+          IF (ABS(SORCOS(ISTRA)-0.5).GT.1.D-5) THEN
+            VELX=CRTX
+            VELY=CRTY
+            VELZ=CRTZ
+            CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                  SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C           VEL_MEAN=VEL
+C           E0_MEAN=E0
+          ENDIF
+        ELSEIF (EMAX.LE.0..AND.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM MAXWELLIAN AT TEMP. TW (EV) =TIWD
+C
+          IF (TIWD.LE.0.) TIWD=ABS(EMAX)
+          NFLAG=2
+          IDUM=1
+          DUMT(1)=SQRT(TIWD/RMASSA(IATM))*CVEL2A
+          DUMT(2)=DUMT(1)
+          DUMT(3)=DUMT(1)
+          DUMV(1)=0
+          DUMV(2)=0
+          DUMV(3)=0
+          CALL VELOCX(0,VXO,VYO,VZO,VO,IO,NO,VELQ,NFLAG,
+     .                IDUM,DUMT,DUMV)
+          E0=VELQ*CVRSSA(IATM)
+C         E0_MEAN=1.5*TIWD+0.
+        ELSE
+          GOTO 998
+        ENDIF
+C
+        WTOTA(IATM,ISTRA)=WTOTA(IATM,ISTRA)+WEIGHT
+        ETOTA(ISTRA)=ETOTA(ISTRA)+E0*WEIGHT
+        IF (NADSI.GE.1.AND.NLSRF(ISTRA)) CALL UPSUSR(WEIGHT,2)
+        IF (NADSPC.GE.1.AND.NLSRF(ISTRA)) CALL CALC_SPECTRUM(WEIGHT,2,0)
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+        IF (NLSTOR) CALL STORE(1)
+C
+C  PURELY MOLECULAR SOURCE?  300 --- 399
+C
+      ELSEIF (NLMOL(ISTRA)) THEN
+C
+        IF (NEMOD1.EQ.1) THEN
+          EMAX=SORENI(ISTRA)
+        ELSEIF (NEMOD1.EQ.6) THEN
+          EMAX=0.
+        ELSE
+          GOTO 998
+        ENDIF
+C
+        LOGMOL(IMOL,ISTRA)=.TRUE.
+        IF (EMAX.GT.0.D0) THEN
+C  MONOENERGETIC DISTRIBUTION
+          E0=EMAX
+          VEL=RSQDVM(IMOL)*SQRT(E0)
+C
+C  COSINE LIKE OR GAUSSIAN ANGLE DISTRIBUTION
+C
+C  IN CASE (CRTX,CRTY,CRTZ) NE (0.,0.,0.)
+C  USE REFLECTION MODEL ANGULAR DISTRIBUTION
+          VELX=CRTX
+          VELY=CRTY
+          VELZ=CRTZ
+          CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C         VEL_MEAN=VEL
+C         E0_MEAN=E0
+!pb        ELSEIF (EMAX.LE.0..AND.TIWD.GT.0..AND..NOT.NLVOL(ISTRA)) THEN
+        ELSEIF (EMAX.LE.0..AND..NOT.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM SHIFTED TRUNCATED MAXWELLIAN FLUX
+C              AROUND INNER (!) NORMAL AT TEMP. TIWL
+C
+          IF (TIWD.LE.0.) TIWD=ABS(EMAX)
+          VWD=SQRT(VXWD**2+VYWD**2+VZWD**2)
+          CALL VELOCS (TIWD,0._DP,VWD,VXWD,VYWD,VZWD,RSQDVM(IMOL),
+     .                 CVRSSM(IMOL),
+     .                 -CRTX,-CRTY,-CRTZ,E0,VELX,VELY,VELZ,VEL)
+C  MODIFY ANGULAR DISTRIBUTION IN CASE SORCOS .NE. 0.5 (I.E., IN CASE
+C  A NON-COSINE DISTRIBUTION IS REQUESTED
+          IF (ABS(SORCOS(ISTRA)-0.5).GT.1.D-5) THEN
+            VELX=CRTX
+            VELY=CRTY
+            VELZ=CRTZ
+            CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                  SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C           VEL_MEAN=VEL
+C           E0_MEAN=E0
+          ENDIF
+!pb        ELSEIF (EMAX.LE.0..AND.TIWD.GT.0..AND.NLVOL(ISTRA)) THEN
+        ELSEIF (EMAX.LE.0..AND.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM MAXWELLIAN AT TEMP. TW (EV) =TIWD
+C
+          IF (TIWD.LE.0.) TIWD=ABS(EMAX)
+          NFLAG=2
+          IDUM=1
+          DUMT(1)=SQRT(TIWD/RMASSM(IMOL))*CVEL2A
+          DUMT(2)=DUMT(1)
+          DUMT(3)=DUMT(1)
+          DUMV(1)=0
+          DUMV(2)=0
+          DUMV(3)=0
+          CALL VELOCX(0,VXO,VYO,VZO,VO,IO,NO,VELQ,NFLAG,
+     .                IDUM,DUMT,DUMV)
+          E0=VELQ*CVRSSM(IMOL)
+C         E0_MEAN=1.5*TIWD+0.
+        ELSE
+          GOTO 998
+        ENDIF
+C
+        WTOTM(IMOL,ISTRA)=WTOTM(IMOL,ISTRA)+WEIGHT
+        ETOTM(ISTRA)=ETOTM(ISTRA)+WEIGHT*E0
+        IF (NADSI.GE.1) CALL UPSUSR(WEIGHT,2)
+        IF (NADSPC.GE.1) CALL CALC_SPECTRUM(WEIGHT,2,0)
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+        IF (NLSTOR) CALL STORE(1)
+C
+C  PURELY TEST IONIC SOURCE?  400 --- 499
+C
+      ELSEIF (NLION(ISTRA)) THEN
+C
+        IF (NEMOD1.EQ.1) THEN
+          EMAX=SORENI(ISTRA)
+        ELSEIF (NEMOD1.EQ.2.OR.NEMOD1.EQ.3) THEN
+          EMAX=SORENI(ISTRA)*TIWD+SORENE(ISTRA)*TEWD
+        ELSEIF (NEMOD1.EQ.4.OR.NEMOD1.EQ.5) THEN
+          VPERP=VXWD*CRTX+VYWD*CRTY+VZWD*CRTZ
+          IF (VPERP.GT.0.D0) GOTO 996
+          VPARX=VXWD-VPERP*CRTX
+          VPARY=VYWD-VPERP*CRTY
+          VPARZ=VZWD-VPERP*CRTZ
+          VPAR=SQRT(VPARX**2+VPARY**2+VPARZ**2)
+          VTERM=SQRT(TIWD/RMASSI(IION))*CVELAA
+          VPERP=VPERP/VTERM
+          VPAR=VPAR/VTERM
+          EMAX=EMAXW(TIWD,VPERP,VPAR)
+        ELSEIF (NEMOD1.EQ.6.OR.NEMOD1.EQ.7) THEN
+          EMAX=0.
+        ELSEIF (NEMOD1.EQ.8.OR.NEMOD1.EQ.9) THEN
+          EMAX=0.
+C         EMAX=EFWL   to be written: find proper species index for efwl
+        ELSE
+          GOTO 998
+        ENDIF
+C
+        IF (NEMOD1.EQ.3.OR.NEMOD1.EQ.5.OR.
+     .      NEMOD1.EQ.7.OR.NEMOD1.EQ.9)   THEN
+C  SET ELECTROSTATIC SHEATH ACCELERATION ENERGY "ESHET", eV
+          IF (SHWL.GT.0.) THEN
+            ESHET=NCHRGI(IION)*SHWL*TEWL
+          ELSE
+C  SHEATH POTENTIAL NOT YET SET IN SAMSRF. TRY TO FIND IT NOW
+            IF (FSHEAT(MSURF).LE.0.D0) THEN
+              GAMMA=0.
+              CUR=0.
+              DO IP=1,NPLSI
+                VPWL(IP)=SQRT(VXWL(IP)**2+VYWL(IP)**2+VZWL(IP)**2)
+                DIWL(IP)=DIWL(IP)
+              ENDDO
+              ESHET=NCHRGI(IION)*SHEATH(TEWL,DIWL,VPWL,
+     .                                  NCHRGP,GAMMA,CUR,NPLSI,MSURF)
+            ELSE
+              ESHET=NCHRGI(IION)*FSHEAT(MSURF)*TEWL
+            ENDIF
+
+          ENDIF
+C   NO SHEATH POTENTIAL TO BE ADDED
+        ELSE
+          ESHET=0.
+        ENDIF
+
+        LOGION(IION,ISTRA)=.TRUE.
+        IF (EMAX.GT.0.D0) THEN
+C  CONSTANT VELOCITY 
+          E0=EMAX
+          VEL=SQRT(E0)*RSQDVI(IION)
+C
+C  COSINE LIKE OR GAUSSIAN ANGLE DISTRIBUTION
+C
+C  IN CASE (CRTX,CRTY,CRTZ) NE (0.,0.,0.D0)
+C  USE REFLECTION MODEL ANGULAR DISTRIBUTION
+          VELX=CRTX
+          VELY=CRTY
+          VELZ=CRTZ
+          CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C         VEL_MEAN=VEL
+C         E0_MEAN=E0
+        ELSEIF (EMAX.LE.0..AND.TIWD.GT.0..AND..NOT.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM SHIFTED TRUNCATED MAXWELLIAN FLUX
+C              AROUND INNER (!) NORMAL AT TEMP. TW (EV)
+          VWD=SQRT(VXWD**2+VYWD**2+VZWD**2)
+          CALL VELOCS (TIWD,0._DP,VWD,VXWD,VYWD,VZWD,RSQDVI(IION),
+     .                  CVRSSI(IION),
+     .                 -CRTX,-CRTY,-CRTZ,E0,VELX,VELY,VELZ,VEL)
+C  MODIFY ANGULAR DISTRIBUTION IN CASE SORCOS .NE. 0.5 (I.E., IN CASE
+C  A NON-COSINE DISTRIBUTION IS REQUESTED
+          IF (ABS(SORCOS(ISTRA)-0.5).GT.EPS10) THEN
+            VELX=CRTX
+            VELY=CRTY
+            VELZ=CRTZ
+            CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                  SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+          ENDIF
+        ELSEIF (EMAX.LE.0..AND.TIWD.GT.0..AND.NLVOL(ISTRA)) THEN
+C
+C  SAMPLE FROM MAXWELLIAN AT TEMP. TW (EV) =TIWD
+C
+          IF (TIWD.LE.0.) TIWD=ABS(EMAX)
+          NFLAG=2
+          IDUM=1
+          DUMT(1)=SQRT(TIWD/RMASSI(IION))*CVEL2A
+          DUMT(2)=DUMT(1)
+          DUMT(3)=DUMT(1)
+          DUMV(1)=0
+          DUMV(2)=0
+          DUMV(3)=0
+          CALL VELOCX(0,VXO,VYO,VZO,VO,IO,NO,VELQ,NFLAG,
+     .                IDUM,DUMT,DUMV)
+          E0=VELQ*CVRSSI(IION)
+        ELSE
+          GOTO 998
+        ENDIF
+C
+        WTOTI(IION,ISTRA)=WTOTI(IION,ISTRA)+WEIGHT
+        ETOTI(ISTRA)=ETOTI(ISTRA)+E0*WEIGHT
+        IF (NADSI.GE.1) CALL UPSUSR(WEIGHT,2)
+        IF (NADSPC.GE.1) CALL CALC_SPECTRUM(WEIGHT,2,0)
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+        IF (NLSTOR) CALL STORE(1)
+C
+C  PURELY BULK IONIC SOURCE?   500  ---  599
+C
+C  SOURCE DEFINED BY PRE COLLISION RATE OF BULK PARTICLES
+C  THE RESULTING TEST PARTICLES MAY BE EITHER ATOMS, MOLECULES OR TEST
+C  IONS. IN THIS CASE NOT THE TOTAL TEST PARTICLE FLUX BUT THE
+C  THE TOTAL BULK ION FLUX IS SCALED TO A PRESCRIBED VALUE
+C
+C  SET ENERGY OF THE INCIDENT BULK ION : EMAX
+C  IF EMAX=0, SAMPLE FROM SHIFTED TRUNCATED MAXWELLIAN
+C  (ADD SHEATH CONTRIBUTION ESHET IF REQUESTED)
+C
+      ELSEIF (NLPLS(ISTRA)) THEN
+C
+        IF (NLSRF(ISTRA)) THEN
+C
+          IF (NEMOD1.EQ.1) THEN
+            EMAX=SORENI(ISTRA)
+          ELSEIF (NEMOD1.EQ.2.OR.NEMOD1.EQ.3) THEN
+            EMAX=SORENI(ISTRA)*TIWD+SORENE(ISTRA)*TEWD
+          ELSEIF (NEMOD1.EQ.4.OR.NEMOD1.EQ.5) THEN
+            VPERP=VXWD*CRTX+VYWD*CRTY+VZWD*CRTZ
+            IF (VPERP.LT.0.D0) GOTO 996
+            VPARX=VXWD-VPERP*CRTX
+            VPARY=VYWD-VPERP*CRTY
+            VPARZ=VZWD-VPERP*CRTZ
+            VPAR=SQRT(VPARX**2+VPARY**2+VPARZ**2)
+            VTERM=SQRT(TIWD/RMASSP(IPLS))*CVELAA
+            VPERP=VPERP/VTERM
+            VPAR=VPAR/VTERM
+            EMAX=EMAXW(TIWD,VPERP,VPAR)
+          ELSEIF (NEMOD1.EQ.6.OR.NEMOD1.EQ.7) THEN
+            EMAX=0.
+          ELSEIF (NEMOD1.EQ.8.OR.NEMOD1.EQ.9) THEN
+            EMAX=EFWL(IPLS)
+          ELSE
+            GOTO 998
+          ENDIF
+C
+          IF (NEMOD1.EQ.3.OR.NEMOD1.EQ.5.OR.
+     .      NEMOD1.EQ.7.OR.NEMOD1.EQ.9)   THEN
+C  SET ELECTROSTATIC SHEATH ACCELERATION ENERGY "ESHET", eV
+            IF (SHWL.GT.0.) THEN
+              ESHET=NCHRGP(IPLS)*SHWL*TEWL
+            ELSE
+C  SHEATH POTENTIAL NOT YET SET IN SAMSRF. TRY TO FIND IT NOW                 
+              IF (FSHEAT(MSURF).LE.0.D0) THEN
+                GAMMA=0.
+                CUR=0.
+                DO 550 IP=1,NPLSI
+                  VPWL(IP)=SQRT(VXWL(IP)**2+VYWL(IP)**2+VZWL(IP)**2)
+C                 DIWL(IP)=DIWL(IP)
+550             CONTINUE
+                ESHET=NCHRGP(IPLS)*SHEATH(TEWL,DIWL,VPWL,
+     .                                  NCHRGP,GAMMA,CUR,NPLSI,MSURF)
+              ELSE
+                ESHET=NCHRGP(IPLS)*FSHEAT(MSURF)*TEWL
+              ENDIF
+C
+            ENDIF
+          ELSE
+C   NO SHEATH POTENTIAL TO BE ADDED
+            ESHET=0.
+          ENDIF
+C
+          CRTX=-CRTX
+          CRTY=-CRTY
+          CRTZ=-CRTZ
+C
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+          IF (EMAX.GT.0.D0) THEN
+C  CONSTANT VELOCITY 
+            E0=EMAX+ESHET
+            VEL=SQRT(E0)*RSQDVP(IPLS)
+C
+C  COSINE LIKE OR GAUSSIAN ANGLE DISTRIBUTION
+C
+C  IN CASE (CRTX,CRTY,CRTZ) NE (0.,0.,0.D0)
+C  USE REFLECTION MODEL ANGULAR DISTRIBUTION
+            VELX=CRTX
+            VELY=CRTY
+            VELZ=CRTZ
+C  TRUNCATED COSINE DISTRIBUTION ONTO WALL
+            CALL REFANG(SORCOS(ISTRA),SORMAX(ISTRA),SORCTX(ISTRA),
+     .                  SORCTY(ISTRA),SORCTZ(ISTRA),NAMODS(ISTRA),SNORM)
+C           E0_MEAN=E0
+C           VEL_MEAN=VEL
+          ELSEIF (EMAX.LE.0.D0.AND.TIWD.GT.0.D0) THEN
+C  SAMPLE FROM SHIFTED TRUNCATED MAXWELLIAN FLUX AND ACCELERATE IN SHEATH
+            VWD=SQRT(VXWD**2+VYWD**2+VZWD**2)
+            CALL VELOCS(TIWD,ESHET,VWD,VXWD,VYWD,VZWD,RSQDVP(IPLS),
+     .                  CVRSSP(IPLS),
+     .                  -CRTX,-CRTY,-CRTZ,E0,VELX,VELY,VELZ,VEL)
+          ELSE
+            GOTO 998
+          ENDIF
+C
+          CRTX=-CRTX
+          CRTY=-CRTY
+          CRTZ=-CRTZ
+C
+C  A BULK ION, HITTING A SURFACE, HAS BEEN CREATED.
+C
+C  UPDATE PARTICLE EFFLUX  ONTO SURFACE MSURF
+C  UPDATE ENERGY FLUX ONTO SURFACE MSURF
+C
+C  SPATIAL RESOLUTION ON NON DEFAULT STANDARD SURFACE?
+C  FIND MSURFG, THE POSITION FOR STORING THE LOCAL FLUX ON THE
+C               SURFACE AVERAGED TALLY ARRAYS
+C  FIND FLX:  THE FLUX TO THIS SURFACE ELEMENT TO BE USED FOR
+C             CHEMICAL SPUTTERING LFUX DEPENDENCE
+          IF (MSURF.GT.NLIM.AND.NLMPGS.GT.NLIMPS) THEN
+            IF (LEVGEO.LE.3) THEN
+              ISTS=MSURF-NLIM
+              IF (INUMP(ISTS,1).NE.0) MSURFG=NPCELL+(NTCELL-1)*NP2T3
+              IF (INUMP(ISTS,2).NE.0) MSURFG=NRCELL+(NTCELL-1)*NR1P2
+              IF (INUMP(ISTS,3).NE.0) MSURFG=NRCELL+(NPCELL-1)*NR1P2
+              MSURFG=NLIM+NSTS+MSURFG+(ISTS-1)*NGITT
+              FLX=FLXOUT(MSURFG)
+            ELSE IF (LEVGEO.EQ.4) THEN
+              MSURFG=NLIM+NSTS+INSPAT(IPOLG,MRSURF)
+              FLX=FLXOUT(MSURFG)
+            ELSE
+              MSURFG=0
+              FLX=FLXOUT(MSURF)
+            END IF
+          ELSEIF (MSURF.GT.0) THEN
+            MSURFG=0
+            FLX=FLXOUT(MSURF)
+          ELSE
+            MSURFG=0
+            FLX=0
+          ENDIF
+
+C  WTOTP, ETOTP: INTEGRAL FLUXES FOR SCALING
+          WTOTP(IPLS,ISTRA)=WTOTP(IPLS,ISTRA)-WEIGHT
+          ETOTP(ISTRA)=ETOTP(ISTRA)-E0*WEIGHT
+C  NEW (2004) VOLUME AVERAGED TALLIES
+C  PPPL, EPPL AND THEIR INTEGRALS: ALSO FOR GLOBAL PARTICLE BALANCE
+          IF (LPPPL) PPPL(IPLS,NCELLT)=PPPL(IPLS,NCELLT)-WEIGHT
+          IF (LEPPL) EPPL(NCELLT)=EPPL(NCELLT)-E0*WEIGHT
+C  SURFACE AVERAGED TALLIES (NOTE: FLUXES HERE COUNTED POSITIVE,
+C                            BUT INTEGRALS OF OUTGOING SURFACE FLUXES
+C                            POTPLI,... ARE TAKEN NEGATIVE).
+C  POTPL,EOTPL,....FOR PRINTOUT OF SURFACE FLUXES
+          IF (MSURF.GT.0) THEN
+            IF (LPOTPL) POTPL(IPLS,MSURF)=POTPL(IPLS,MSURF)+WEIGHT
+            IF (LEOTPL) EOTPL(IPLS,MSURF)=EOTPL(IPLS,MSURF)+WEIGHT*E0
+            IF (MSURFG.GT.0) THEN
+              IF (LPOTPL) POTPL(IPLS,MSURFG)=POTPL(IPLS,MSURFG)+WEIGHT
+              IF (LEOTPL)
+     .          EOTPL(IPLS,MSURFG)=EOTPL(IPLS,MSURFG)+E0*WEIGHT
+            ENDIF
+          ENDIF
+          IF (NADSI.GE.1) CALL UPSUSR(-WEIGHT,1)
+          IF (NADSPC.GE.1) CALL CALC_SPECTRUM(-WEIGHT,1,0)
+C
+          IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+          IF (NLSTOR) CALL STORE(2)
+C
+C  REFLECT THIS ION AS TEST PARTICLE FROM SURFACE NO. MSURF
+C
+C  BUT FIRST: CALL SPUTTER MODEL IF REQUESTED
+C
+          FMASS=DBLE(NMASSP(IPLS))
+          FCHAR=DBLE(NCHARP(IPLS))
+C
+          WGHTSP=0.
+          WGHTSC=0.
+          YIELD1=0.
+          YIELD2=0.
+          ISSPTP=0
+          ISSPTC=0
+C
+          NLSPUT=.FALSE.
+          IF (ILSPT(MSURF).NE.0) THEN
+C  SAVE INCIDENT PARTICLE'S SPEED AND ENERGY
+            E0S=E0
+            WEIGHS=WEIGHT
+            VELS=VEL
+            VELXS=VELX
+            VELYS=VELY
+            VELZS=VELZ
+            ISPZS=ISPZ
+C
+            CALL SPUTR1(WMINS,FMASS,FCHAR,FLX,
+     .                  ISRS(ISPZ,MSURF),
+     .                  YIELD1,
+     .                  ISSPTP,ESPTP,VSPTP,VXSPTP,VYSPTP,VZSPTP,
+     .                  ISRC(ISPZ,MSURF),
+     .                  YIELD2,
+     .                  ISSPTC,ESPTC,VSPTC,VXSPTC,VYSPTC,VZSPTC)
+            NLSPUT=YIELD1.GT.0..OR.YIELD2.GT.0.
+            WGHTSP=WEIGHT*YIELD1
+            WGHTSC=WEIGHT*YIELD2
+C
+C  UPDATE SPUTTER SURFACE TALLIES. SAME AS IN SUBR. ESCAPE, BUT HERE
+C                                  FOR INCICENT BULK IONS
+C
+            IF (NLSPUT) THEN
+C  UPDATE TOTAL SPUTTERED FLUX TALLY
+              IF (LSPTTOT)
+     .        SPTTOT(MSURF)=SPTTOT(MSURF)+WGHTSP+WGHTSC
+C             IF (ITYP.EQ.4) THEN
+                IF (LSPTPL)
+     .          SPTPL(IPLS,MSURF)=SPTPL(IPLS,MSURF)+WGHTSP+WGHTSC
+C             ENDIF
+              IF (MSURFG.GT.0) THEN
+                IF (LSPTTOT)
+     .          SPTTOT(MSURFG)=SPTTOT(MSURFG)+WGHTSP+WGHTSC
+C               IF (ITYP.EQ.4) THEN
+                  IF (LSPTPL)
+     .            SPTPL(IPLS,MSURFG)=SPTPL(IPLS,MSURFG)+WGHTSP+WGHTSC
+C               ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+C
+C  PHYSICAL SPUTTERING
+C
+          IF (WGHTSP.GT.0..AND.ISSPTP.GT.0) THEN
+C  FOLLOW SPUTTERED PARTICLES LATER. PUT THEM INTO STATISTICAL CELLAR
+C
+            ISPZ=ISSPTP
+            ITYP=ISPEZI(ISPZ,-1)
+            IPHOT=ISPEZI(ISPZ,0)
+            IATM=ISPEZI(ISPZ,1)
+            IMOL=ISPEZI(ISPZ,2)
+            IION=ISPEZI(ISPZ,3)
+            IPLS=ISPEZI(ISPZ,4)
+            E0=ESPTP
+            WEIGHT=WGHTSP
+            VEL=VSPTP
+            VELX=VXSPTP
+            VELY=VYSPTP
+            VELZ=VZSPTP
+C
+C.....................................................................
+C  SPLITTING
+C
+            NLEVEL=NLEVEL+1
+C  SAVE LOCATION, WEIGHT AND OTHER PARAMETERS AT CURRENT LEVEL
+            DO 533 J=1,NPARTC
+              RSPLST(J,NLEVEL)=RPST(J)
+533         CONTINUE
+            DO 534 J=1,MPARTC
+              ISPLST(J,NLEVEL)=IPST(J)
+534         CONTINUE
+C  NUMBER OF NODES AT THIS LEVEL
+            NODES(NLEVEL)=2
+C
+C  SPLITTING DONE. NEXT: SURFACE TALLIES AND VOLUME TALLIES
+C.....................................................................
+C
+            IF (NLTRC.AND.TRCHST) THEN
+              WRITE (iunout,*) 'AFTER SUBR. SPUTER: PHYS. SPUTTERING'
+              WRITE (iunout,'(1X,A8)') TEXTS(ISPZ)
+              CALL MASR1('YIELDP  ',YIELD1)
+              CALL MASR6 (
+     .           'VELX,VELY,VELZ,VEL,E0,WEIGHT                    ',
+     .            VELX,VELY,VELZ,VEL,E0,WEIGHT)
+            ENDIF
+C
+            IF (ITYP.EQ.1) THEN
+              LOGATM(IATM,ISTRA)=.TRUE.
+              IF (LPPAT) PPAT(IATM,NCELLT)=PPAT(IATM,NCELLT)+WEIGHT
+              IF (LEPAT) EPAT(NCELLT)=EPAT(NCELLT)+E0*WEIGHT
+            ELSEIF (ITYP.EQ.2) THEN
+              LOGMOL(IMOL,ISTRA)=.TRUE.
+              IF (LPPML) PPML(IMOL,NCELLT)=PPML(IMOL,NCELLT)+WEIGHT
+              IF (LEPML) EPML(NCELLT)=EPML(NCELLT)+E0*WEIGHT
+            ELSEIF (ITYP.EQ.3) THEN
+              LOGION(IION,ISTRA)=.TRUE.
+              IF (LPPIO) PPIO(IION,NCELLT)=PPIO(IION,NCELLT)+WEIGHT
+              IF (LEPIO) EPIO(NCELLT)=EPIO(NCELLT)+E0*WEIGHT
+            ENDIF
+            ITOLD = 4
+            CALL UPDATE_SURFACE (ITOLD)
+            IF (NADSI.GE.1) CALL UPSUSR(WEIGHT,2)
+            IF (NADSPC.GE.1) CALL CALC_SPECTRUM(WEIGHT,2,0)
+          ENDIF
+C
+C  CHEMICAL SPUTTERING
+C
+          IF (WGHTSC.GT.0..AND.ISSPTC.GT.0) THEN
+C  FOLLOW SPUTTERED PARTICLES LATER. PUT THEM INTO STATISTICAL CELLAR
+            ISPZ=ISSPTC
+            ITYP=ISPEZI(ISPZ,-1)
+            IPHOT=ISPEZI(ISPZ,0)
+            IATM=ISPEZI(ISPZ,1)
+            IMOL=ISPEZI(ISPZ,2)
+            IION=ISPEZI(ISPZ,3)
+            IPLS=ISPEZI(ISPZ,4)
+            E0=ESPTC
+            WEIGHT=WGHTSC
+            VEL=VSPTC
+            VELX=VXSPTC
+            VELY=VYSPTC
+            VELZ=VZSPTC
+C
+C.....................................................................
+C  SPLITTING
+C
+            NLEVEL=NLEVEL+1
+C  SAVE LOCATION, WEIGHT AND OTHER PARAMETERS AT CURRENT LEVEL
+            DO 535 J=1,NPARTC
+              RSPLST(J,NLEVEL)=RPST(J)
+535         CONTINUE
+            DO 536 J=1,MPARTC
+              ISPLST(J,NLEVEL)=IPST(J)
+536         CONTINUE
+C  NUMBER OF NODES AT THIS LEVEL
+            NODES(NLEVEL)=2
+C
+C  SPLITTING DONE. NEXT: SURFACE TALLIES AND VOLUME TALLIES
+C.....................................................................
+C
+            IF (NLTRC.AND.TRCHST) THEN
+              WRITE (iunout,*) 'AFTER SUBR. SPUTER: CHEM. SPUTTERING'
+              WRITE (iunout,'(1X,A8)') TEXTS(ISPZ)
+              CALL MASR1('YIELDC  ',YIELD2)
+              CALL MASR6 (
+     .           'VELX,VELY,VELZ,VEL,E0,WEIGHT                    ',
+     .            VELX,VELY,VELZ,VEL,E0,WEIGHT)
+            ENDIF
+C
+            IF (ITYP.EQ.1) THEN
+              LOGATM(IATM,ISTRA)=.TRUE.
+              IF (LPPAT) PPAT(IATM,NCELLT)=PPAT(IATM,NCELLT)+WEIGHT
+              IF (LEPAT) EPAT(NCELLT)=EPAT(NCELLT)+E0*WEIGHT
+            ELSEIF (ITYP.EQ.2) THEN
+              LOGMOL(IMOL,ISTRA)=.TRUE.
+              IF (LPPML) PPML(IMOL,NCELLT)=PPML(IMOL,NCELLT)+WEIGHT
+              IF (LEPML) EPML(NCELLT)=EPML(NCELLT)+E0*WEIGHT
+            ELSEIF (ITYP.EQ.3) THEN
+              LOGION(IION,ISTRA)=.TRUE.
+              IF (LPPIO) PPIO(IION,NCELLT)=PPIO(IION,NCELLT)+WEIGHT
+              IF (LEPIO) EPIO(NCELLT)=EPIO(NCELLT)+E0*WEIGHT
+            ENDIF
+            ITOLD = 4
+            CALL UPDATE_SURFACE (ITOLD)
+            IF (NADSI.GE.1) CALL UPSUSR(WEIGHT,2)
+            IF (NADSPC.GE.1) CALL CALC_SPECTRUM(WEIGHT,2,0)
+          ENDIF
+C
+C  RESTORE INCIDENT PARTICLE, FOR SURFACE REFLECTION ROUTINE
+C
+          IF (ILSPT(MSURF).NE.0) THEN
+            E0=E0S
+            WEIGHT=WEIGHS
+            VEL=VELS
+            VELX=VELXS
+            VELY=VELYS
+            VELZ=VELZS
+            ISPZ=ISPZS
+            LGPART=.FALSE.
+          ENDIF
+C
+C
+C  NEXT: CALL REFLECTION MODEL
+C
+540       CONTINUE
+          CALL REFLC1 (WMINS,FMASS,FCHAR,NPRT(ISPZ),
+     .                 ISRF(ISPZ,MSURF),ISRT(ISPZ,MSURF))
+          ISPZ=ISPEZ(ITYP,IPHOT,IATM,IMOL,IION,IPLS)
+C
+          IF (NLTRC.AND.TRCHST) THEN
+            IF (LGPART) THEN
+              WRITE (iunout,*) 'AFTER SUBR. REFLEC: '
+              WRITE (iunout,'(1X,A8)') TEXTS(ISPZ)
+              CALL MASR6 (
+     .           'VELX,VELY,VELZ,VEL,E0,WEIGHT                    ',
+     .            VELX,VELY,VELZ,VEL,E0,WEIGHT)
+            ELSE
+              WRITE (iunout,*) 'ABSORBED IN SUBR. REFLEC'
+            ENDIF
+          ENDIF
+C
+C  SURFACE TALLIES (VOLUME TALLIES PPAT,PPML,....WILL BE DONE BELOW,
+C                   ONCE FOR NLPNT,NLLNE,NLSRF,NLVOL)
+C
+          ITOLD = 4
+          CALL UPDATE_SURFACE (ITOLD)
+C
+          IF (NLSTOR) CALL STORE(1)
+          IF (NADSI.GE.1) CALL UPSUSR(WEIGHT,2)
+          IF (NADSPC.GE.1) CALL CALC_SPECTRUM(WEIGHT,2,0)
+C
+        ELSEIF (NLVOL(ISTRA)) THEN
+C
+C  IDENTIFY "INCIDENT" BULK PARTICLE
+C  SAMPLE FROM MAXWELLIAN AT LOCAL PLASMA PARAMETERS TIIN AND (VXIN,VYIN,VZIN)
+C  IN CELL ICELL=NCELL
+C
+!         nloop=npts(istra)
+!         DO ILOOP=1,nloop
+
+          NFLAG=2
+          IDUM=1
+
+c         DUMT(1)=SQRT(TIIN(IPLS,NCELL)/RMASSp(Ipls))*CVEL2A
+c         DUMT(2)=DUMT(1)
+c         DUMT(3)=DUMT(1)
+c         DUMV(1)=0._DP
+c         DUMV(2)=0._DP
+c         DUMV(3)=0._DP
+
+          CALL VELOCX(NCELL,VXO,VYO,VZO,VO,IO,NO,VELQ,NFLAG,
+     .                IDUM,DUMT,DUMV)
+          E0=VELQ*CVRSSP(IPLS)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+          WTOTP(IPLS,ISTRA)=WTOTP(IPLS,ISTRA)-WEIGHT
+          ETOTP(ISTRA)=ETOTP(ISTRA)-E0*WEIGHT
+          IF (LPPPL) PPPL(IPLS,NCELLT)=PPPL(IPLS,NCELLT)-WEIGHT
+          IF (LEPPL) EPPL(NCELLT)=EPPL(NCELLT)-E0*WEIGHT
+          IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+          IF (NLSTOR) CALL STORE(2)
+C
+C  BULK SPECIES DONE
+C  NEXT: IDENTIFY RESULTING TEST PARTICLE SPECIES
+C  FOR THIS: FIRST FIND IRRC
+C
+C  SORLIM GT.0, HENCE: VOLUME RECOMBINATION SOURCE RATES ON TABRC1
+C  RECOMBINING BULK ION (IPLS,E0,WEIGHT,...) IS NOW IDENTIFIED
+C  FIND TYPE AND SPECIES OF NEW TEST PARTICLE FROM RECOMB. PROCESS: IRRC
+          ISTEP=SORIND(IVOLM,ISTRA)
+          IF (ISTEP.EQ.0) THEN
+            IF (SORLIM(IVOLM,ISTRA).LE.0._DP) THEN
+              WRITE (iunout,*) 'SPECIES DISTRIBUTION AFTER SAMUSR ? '
+              WRITE (iunout,*) 'EXIT FROM LOCATE '
+              CALL EXIT_OWN(1)
+            ENDIF
+C  FIND RECOMBINATION PROCESS IRRC (AMONGST THOSE AVAILABLE FOR IPLS)
+            IF (NPRCI(IPLS).EQ.1) THEN
+              IRRC=LGPRC(IPLS,1)
+            ELSE
+              CUMDIS(0)=0.
+              DO IIRC=1,NPRCI(IPLS)
+                IRRC=LGPRC(IPLS,IIRC)
+                IF (NSTORDR >= NRAD) THEN
+                  CUMDIS(IIRC)=CUMDIS(IIRC-1)+TABRC1(IRRC,NCELL)
+                ELSE
+                  CUMDIS(IIRC)=CUMDIS(IIRC-1)+FTABRC1(IRRC,NCELL)
+                END IF
+              END DO
+C  SAMPLE IIRC (AND HENCE: IRRC) FROM CUMDIS
+              ZEP1=RANF_EIRENE()*CUMDIS(NPRCI(IPLS))
+              DO IRC=1,NPRCI(IPLS)-1
+                IF (ZEP1.LE.CUMDIS(IRC)) THEN
+                  IIRC=IRC
+                  GOTO 560
+                ENDIF
+              ENDDO
+              IIRC=NPRCI(IPLS)
+560           IRRC=LGPRC(IPLS,IIRC)
+            ENDIF
+          ELSE
+C  RECOMBINATION PROCESS IRRC IS KNOWN FOR THIS SUBSTRATUM
+            IRRC=ISTEP
+          ENDIF
+C
+C  IRRC NOW IDENTIFIED
+C
+C  IS THERE A BULK SECONDARY ?
+          IF (NPLPRC(IRRC).GT.0) THEN
+            ITYP_B1=4
+            IPLS_B1=NPLPRC(IRRC)
+            IF (IPLS_B1.LE.0.OR.IPLS_B1.GT.NPLSI) GOTO 999
+            LOGPLS(IPLS_B1,ISTRA)=.TRUE.
+            WEIGHT_B1=WEIGHT
+            E0_B1=E0
+            GOTO 570
+C  IS THERE A TEST SECONDARY ?
+          ELSEIF (NATPRC(IRRC).GT.0) THEN
+            ITYP=1
+            IATM=NATPRC(IRRC)
+            RSQDV=RSQDVA(IATM)
+            IF (IATM.LE.0.OR.IATM.GT.NATMI) GOTO 999
+            GOTO 570
+          ELSEIF (NMLPRC(IRRC).GT.0) THEN
+            ITYP=2
+            IMOL=NMLPRC(IRRC)
+            RSQDV=RSQDVM(IMOL)
+            IF (IMOL.LE.0.OR.IMOL.GT.NMOLI) GOTO 999
+            GOTO 570
+          ELSEIF (NIOPRC(IRRC).GT.0) THEN
+            ITYP=3
+            IION=NIOPRC(IRRC)
+            RSQDV=RSQDVI(IION)
+            IF (IION.LE.0.OR.IION.GT.NIONI) GOTO 999
+            GOTO 570
+          ELSEIF (NPHPRC(IRRC).GT.0) THEN
+            ITYP=0
+            IPHOT=NPHPRC(IRRC)
+            RSQDV=0.
+            IF(IPHOT.LE.0.OR.IPHOT.GT.NPHOTI) GOTO 999
+            GOTO 570
+          ELSE
+            GOTO 999
+          ENDIF
+C
+570       CONTINUE
+C  IS THERE A 2ND SECONDARY ?
+C
+C   BULK SECONDARY ?
+          IF (NPLPRC_2(IRRC).GT.0) THEN
+            ITYP_B2=4
+            IPLS_B2=NPLPRC_2(IRRC)
+            IF (IPLS_B2.LE.0.OR.IPLS_B2.GT.NPLSI) GOTO 999
+            LOGPLS(IPLS_B2,ISTRA)=.TRUE.
+            WEIGHT_B2=WEIGHT
+            E0_B2=E0
+            GOTO 580
+C  TEST SECONDARY ?
+          ELSEIF (NATPRC_2(IRRC).GT.0) THEN
+            ITYP=1
+            IATM=NATPRC_2(IRRC)
+            RSQDV=RSQDVA(IATM)
+            IF (IATM.LE.0.OR.IATM.GT.NATMI) GOTO 999
+            GOTO 580
+          ELSEIF (NMLPRC_2(IRRC).GT.0) THEN
+            ITYP=2
+            IMOL=NMLPRC_2(IRRC)
+            RSQDV=RSQDVM(IMOL)
+            IF (IMOL.LE.0.OR.IMOL.GT.NMOLI) GOTO 999
+            GOTO 580
+          ELSEIF (NIOPRC_2(IRRC).GT.0) THEN
+            ITYP=3
+            IION=NIOPRC_2(IRRC)
+            RSQDV=RSQDVI(IION)
+            IF (IION.LE.0.OR.IION.GT.NIONI) GOTO 999
+            GOTO 580
+          ELSEIF (NPHPRC_2(IRRC).GT.0) THEN
+            ITYP=0
+            IPHOT=NPHPRC_2(IRRC)
+            RSQDV=0.
+            IF(IPHOT.LE.0.OR.IPHOT.GT.NPHOTI) GOTO 999
+            GOTO 580
+          ENDIF
+
+C  EXACTLY ONE TEST PARTICLE SECONDARY HAS NOW BEEN IDENTIFIED
+580       CONTINUE
+          IF (ITYP.GE.4.OR.ITYP.LT.0) GOTO 999
+          ISPZ=ISPEZ(ITYP,IPHOT,IATM,IMOL,IION,IPLS)
+C
+C  SPECIES IDENTIFIED
+C  NEXT: NEW VELOCITY, ENERGY, ETC...
+C
+C  NEW OPTIONS
+          IF (NEMOD1.EQ.1) THEN
+C  MONOENERGETIC, ISOTROP
+            EMAX=SORENI(ISTRA)
+            E0=EMAX
+            VEL=SQRT(E0)*RSQDV
+            IF (INIV3.EQ.0) CALL FISOTR
+            VELX=FI1(INIV3)
+            VELY=FI2(INIV3)
+            VELZ=FI3(INIV3)
+            INIV3=INIV3-1
+
+          ELSEIF (ITYP.EQ.0.AND.NEMOD1.EQ.9) THEN
+
+c  this option: only for photon test particles
+c  cut off "black part". this is the part of the emission line which will
+c  be reabsorbed within the same cell. hence it will not contribute to any
+c  radiation transport
+C  REJECTION PREPARED FOR BLACK BODY CONTRIBUTION
+            KK = NREARC(IRRC)
+            call get_reaction(kk)
+            e00=reaction%e0
+            ipl=reaction%ignd
+            VEL=CLIGHT
+! Achtung!!!!!!!!!
+! irot =1 ist falsch, wenn das Photon mehrere Reaktionen ausfuehren kann
+            irot=1
+!  has this cell already been done?
+            IF (X1LINE(IVOLM,NCELL) < 0._DP) THEN
+!  no. find energy interval to be excluded
+              e0=e00
+              zmfp_e00=fpathph(ncell,cflag,1,1)
+              zmfp_cut = TDGTEMX*celdia(ncell)
+              if (zmfp_e00 > zmfp_cut) then
+! mean free path at linecenter is large compared to cell diameter
+! line is not thick  =>  sample from whole line
+                x1line(ivolm,ncell) = huge(1._dp)
+                x2line(ivolm,ncell) = 0._dp
+
+              else
+
+! mean free path at linecenter is small compared to cell diameter
+! line is thick  =>  sample from wings only
+
+! suche linkes Ende des Intervalls
+                call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac_e00,res)
+                if (hwvdw < eps30) hwvdw = e00 - eps6
+                fac_e0 = fac_e00
+                zmfp_e0 = zmfp_e00
+                xl = e00
+                yl = zmfp_e00
+                do while (zmfp_e0 < zmfp_cut)
+                  xr = xl
+                  yr = yl
+                  xl = xl-hwvdw
+                  e0 = xl
+                  call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac_e0,res)
+                  zmfp_e0 = zmfp_e00*fac_e00/fac_e0
+                  yl = zmfp_e0
+                  if (xl < hwvdw) exit
+                end do
+
+                e0 = xl
+
+                do while ((yl-yr)/yl > 1.E-3_dp)
+                  xm = (xr + xl) * 0.5_dp
+                  e0 = xm
+                  call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac_e0,res)
+                  zmfp_e0 = zmfp_e00*fac_e00/fac_e0
+                  ym = zmfp_e0
+                  if (ym < zmfp_cut) then
+                    xr = xm
+                    yr = ym
+                  else if (ym > zmfp_cut) then
+                    xl = xm
+                    yl = ym
+                  else           ! getroffen
+                    xl = xm
+                    xr = xm
+                    exit
+                  end if
+                end do
+                x1line(ivolm,ncell) = xl
+
+! suche rechtes Ende des Intervalls
+                xr = e00
+                yr = zmfp_e00
+                zmfp_e0 = zmfp_e00
+                do while (zmfp_e0 < zmfp_cut)
+                  xl = xr
+                  yl = yr
+                  xr = xr+hwvdw
+                  e0 = xr
+                  call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac_e0,res)
+                  zmfp_e0 = zmfp_e00*fac_e00/fac_e0
+                  yr = zmfp_e0
+                end do
+
+                do while ((yr-yl)/yr > 1.E-3_dp)
+                  xm = (xr + xl) * 0.5_dp
+                  e0 = xm
+                  call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac_e0,res)
+                  zmfp_e0 = zmfp_e00*fac_e00/fac_e0
+                  ym = zmfp_e0
+                  if (ym < zmfp_cut) then
+                    xl = xm
+                    yl = ym
+                  else if (ym > zmfp_cut) then
+                    xr = xm
+                    yr = ym
+                  else           ! getroffen
+                    xl = xm
+                    xr = xm
+                    exit
+                  end if
+                end do
+                x2line(ivolm,ncell) = xr
+
+              endif ! X1LINE(EV), X2LINE(EV) FOR CELL NCELL DONE
+              xleft = x1line(ivolm,ncell)
+              xright = x2line(ivolm,ncell)
+
+            END IF ! NEMOD1=9 OPTION for photons prepared
+
+!  now apply nemod1=9 option for ityp=0
+
+C  PHOTON EMISSION PROFILE OPTIONS 0-9
+C  SAMPLE ONLY FROM LINE PROFILES WITHOUT DOPPLER CONTRIBUTION
+C  I.E., IN THE REST FRAME OF THE EMITTING ATOM
+C  SAVE VELOCITY OF EMITTING (BULK) PARTICLE FOR LATER DOPPLER CORRECTION
+            VEL_B=VEL
+            VELX_B=VELX
+            VELY_B=VELY
+            VELZ_B=VELZ
+C  SAMPLE ISOTROPIC EMISSION OF PHOTON IN REST FRAME OF EMITTING PARTICLE
+            VEL=CLIGHT
+            IF (INIV3.EQ.0) CALL FISOTR
+            VELX=FI1(INIV3)
+            VELY=FI2(INIV3)
+            VELZ=FI3(INIV3)
+            INIV3=INIV3-1
+C  EMITTER VELOCITY COMPONENT IN DIRECTION OF LIGHT EMISSION
+            VN=VEL_B*(VELX_B*VELX+VELY_B*VELY+VELZ_B*VELZ)
+
+C  SAMPLE THE ENERGY (FREQUENCY) OF THE PHOTON
+C  IN CASE OF ZEEMAN SPLITTING, THIS IS CONDITIONAL 
+C  ON THE DIRECTION OF EMISSION 
+            KK = NREARC(IRRC)
+            E0=PH_ENERGY(NCELL,KK,IPLS,VN,NL_ADD_DOPPLER)
+C  CORRECT FOR DOPPLER SHIFT: XNU = XNU_0*(1+N*VEL_B/CLIGHT)
+            IF (NL_ADD_DOPPLER) THEN
+!  line shape profiles with doppler not yet done for nemod1=9 option
+              WRITE (iunout,*) 'LOCATE: NEMOD1 =9 OPTION NOT READY  '
+              WRITE (iunout,*) '        FOR DOPPLER BROADENED LINES '
+              CALL EXIT_OWN(1)
+!             E0=E0*(1._DP+VN/CLIGHT)
+            ENDIF
+
+            if ((e0 > x1line(ivolm,ncell)) .and.
+     .          (e0 < x2line(ivolm,ncell))) then
+              lgpart = .false.
+              weight = 0._dp
+            end IF
+C  nemod1=9 option FOR PHOTONS finished.
+
+!  NEXT: PHOTON DEFAULT OPTION: NEMOD1 IS NOT =9 AND NOT =1
+!        SAME AS NEMOD=9, BUT WITHOUT CUT OFF OF BLACK PART
+
+          ELSEIF (ITYP.EQ.0) THEN
+
+C  PHOTON EMISSION PROFILE OPTIONS 0-9
+C  SAMPLE ONLY FROM LINE PROFILES WITHOUT DOPPLER CONTRIBUTION
+C  I.E., IN THE REST FRAME OF THE EMITTING ATOM
+C  SAVE VELOCITY OF EMITTING (BULK) PARTICLE FOR LATER DOPPLER CORRECTION
+            VEL_B=VEL
+            VELX_B=VELX
+            VELY_B=VELY
+            VELZ_B=VELZ
+C  SAMPLE ISOTROPIC EMISSION OF PHOTON IN REST FRAME OF EMITTING PARTICLE
+            VEL=CLIGHT
+            IF (INIV3.EQ.0) CALL FISOTR
+            VELX=FI1(INIV3)
+            VELY=FI2(INIV3)
+            VELZ=FI3(INIV3)
+            INIV3=INIV3-1
+C  EMITTER VELOCITY COMPONENT IN DIRECTION OF LIGHT EMISSION
+            VN=VEL_B*(VELX_B*VELX+VELY_B*VELY+VELZ_B*VELZ)
+
+c FOR ZEEMAN-SAMPLING TEST:
+c           VELX=1.
+c           VELY=0.
+c           VELZ=0.
+c           BXIN(NCELL)=0.
+c           BYIN(NCELL)=0.
+c           BZIN(NCELL)=1.
+c
+C  SAMPLE THE ENERGY (FREQUENCY) OF THE PHOTON
+C  IN CASE OF ZEEMAN SPLITTING, THIS IS CONDITIONAL 
+C  ON THE DIRECTION OF EMISSION 
+            KK = NREARC(IRRC)
+            E0=PH_ENERGY(NCELL,KK,IPLS,VN,NL_ADD_DOPPLER)
+C
+C  planck value, for this current temperature, only for testing.
+C           IPLSTI=MPLSTI(IPLS)
+C           PLA=PLANCK(E0,TIIN(IPLSTI,NCELL),B_NU,1)
+C
+C  CORRECT FOR DOPPLER SHIFT: XNU = XNU_0*(1+N*VEL_B/CLIGHT)
+            IF (NL_ADD_DOPPLER) THEN
+              E0=E0*(1._DP+VN/CLIGHT)
+            ENDIF
+
+!  options for plotting of sampled volume emission spectra
+c
+c  put spectrum no. 1, and use energy range from input block 10F
+c           if (nadspc < 1) then
+c             write (iunout,*) 'locate: no storage for spectr. no. 1  '
+c             call exit_own(1)
+c           endif
+c           msurf=estiml(1)%pspc%ispcsrf
+c           call calc_spectrum (1._dp,1,0)
+
+          ELSE
+C  AT THIS POINT: ITYP NE 0 (NEW TEST PARTICLE IS NOT A PHOTON)
+C                 AND NEMOD1 NE 1 (NEW TEST PARTICLE NOT SAMPLED
+C                 FROM MONOENERGETIC ISOTROPIC DISTRIBUTION)
+C
+C  OLD DEFAULT: SAMPLING FROM LOCAL MAXWELLIAN, I.E.,
+C               SAMPLED BULK PARTICLE VELOCITY ALSO FOR NEW TEST PARTICLE
+C               E.G.: VOLUME RECOMBINATION OF PLASMA IONS INTO NEUTRALS
+C         E0=E0
+C         VEL=VEL
+C
+          ENDIF
+
+c         end do ! iloop
+c         IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,1)
+c
+c  for (computed) spectrum no. 2: use spectral range as set in input block 10F
+c         if (nadspc < 2) then
+c           write (iunout,*) 'locate: no storage for spectr. no. 2  '
+c           call exit_own(1)
+c         endif
+c  use spectral range as set in input block 10F
+c         ean=estiml(2)%pspc%spcmin+0.5_dp*estiml(2)%pspc%spcdel
+c         een=estiml(2)%pspc%spcmax
+c         de=estiml(2)%pspc%spcdel
+c         nen=estiml(2)%pspc%nspc
+c         allocate(eplot(nen))
+c         allocate(y1plot(nen))
+c         allocate(y2plot(nen))
+cdr  this test is comparison of sampled and evaluated line profiles.
+cdr  sampling is done using upper bulk species ipls. Hence: use also
+cdr  same ipls for evaluation of same line profile in getcoeff.
+c         ipl=reaction%ignd
+c         ipl=ipls
+c
+! Achtung!!!!!!!!!
+! irot =1 ist falsch, wenn das Photon mehrere Reaktionen ausfuehren kann
+c          irot=1
+!pbct          ictoff = nreact(kk)
+c          do i=1,nen
+c            e0=ean+(i-1)*de
+c            eplot(i)=e0
+c            call PH_GETCOEFF(kk,iphot,0,ncell,ipl,fac,res)
+cdr  fac is 1/eV. hence: here times delta_E, because in calc-spectrum
+cdr                      there is a division by delta_E.
+cdr  times nloop, because: nloop particles sampled with ph_energy
+cdr             further below: both spectra will be rescaled with 1/nloop
+c            msurf=estiml(2)%pspc%ispcsrf
+c            call calc_spectrum (fac*ESTIML(2)%PSPC%SPCDEL*nloop,1,0)
+!pbct            spcvl = fac*ESTIML(2)%PSPC%SPCDEL*nloop
+!pbct            call calc_spectrum (spcvl,1,0)
+c
+c  for second plot, not from plteir but explicitly done below
+c  "flux" or "energy flux" units ?
+c            y1plot(i) = fac
+c            y1plot(i) = fac*E0
+c            y2plot(i) = fpathph(ncell,cflag,1,1)
+c          end do
+!pbct          do i=1,nen
+!pbct            ESTIML(2)%PSPC%SPC(I) = 
+!pbct     .          ESTIML(2)%PSPC%SPC(I)/(xintleft(ictoff,ncell) +
+!pbct     .              xint_inf(ictoff,ncell) 
+!pbct     .             -xintright(ictoff,ncell))*xint_inf(ictoff,ncell)
+!pbct          end do
+c
+c          flxfc=1._dp/nloop
+c  substract line center energy e00 from abscissa
+c          e00_plot=reaction%e0
+c          eplot=eplot-e00_plot
+c          DO ISPC=1,NADSPC
+c            ESTIML(ISPC)%PSPC%SPC = ESTIML(ISPC)%PSPC%SPC*FLXFC*
+c    .                               ESTIML(ISPC)%PSPC%SPCDELI
+c            ESTIML(ISPC)%PSPC%SPCINT = SUM(ESTIML(ISPC)%PSPC%SPC*
+c    .                                      ESTIML(ISPC)%PSPC%SPCDEL)
+c            ESTIML(ISPC)%PSPC%ESP_00 = e00_plot
+c          END DO
+c  plot the sampled and the calculated line profiles 
+C  using the spectrum tallies (histograms).
+c          EMINSP=ESTIML(1)%PSPC%ESP_MIN
+c          EMAXSP=ESTIML(1)%PSPC%ESP_MAX
+ 
+!pbct          iloc = maxloc(ESTIML(1)%PSPC%SPC(1:nen),dim=1)+1
+!pbct          spcvl = ESTIML(1)%PSPC%SPC(iloc)/ESTIML(2)%PSPC%SPC(iloc)
+
+!pbct          write (iunout,*) ' estiml(1)   ',ESTIML(1)%PSPC%SPC(iloc)
+!pbct          write (iunout,*) ' estiml(2)   ',ESTIML(2)%PSPC%SPC(iloc)
+!pbct          write (iunout,*) ' scal.factor ',spcvl
+
+!pbct          spcmx = maxval(ESTIML(1)%PSPC%SPC(1:nen))
+c
+!pbct          do i=1,nen
+!pbct            ESTIML(2)%PSPC%SPC(I) = MIN(SPCMX,
+!pbct     .          ESTIML(2)%PSPC%SPC(I))
+!pbct          end do
+c
+c          nadspc=2
+c          xmcp(istra)=nloop
+c          iestr=istra
+c          call plteir(istra)
+
+!pbct          DO ISPC=1,NADSPC
+!pbct             WRITE (56,*) ' SPECTRUM ',ISPC
+!pbct             DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+!pbct                EN = ESTIML(ISPC)%PSPC%SPCMIN +
+!pbct     .               (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+!pbct                WRITE (56,'(I6,2ES12.4)') IE,EN,
+!pbct     .               ESTIML(ISPC)%PSPC%SPC(IE)
+!pbct             END DO
+!pbct             write (56,*) ' integral ',ESTIML(ISPC)%PSPC%SPCINT
+!pbct             WRITE (56,'(///1X)')
+!pbct          END DO
+c
+c  plot the calculated line profile once again (smooth curve)
+c          call grnxtb(1,'LOCATE.F')
+c          call grsclc (5.,2.,32.,24.)
+c          y1a=minval(y1plot)
+c          y1e=maxval(y1plot)
+c          if (y1e.gt.y1a) then
+c            call grsclv (eplot(1),y1a,eplot(nen),y1e)
+c            call graxs (9,'X=1,Y=1,A',1,' ',1,' ')
+c            call grnwpn(2)
+c            call grln(eplot,y1plot,nen)
+c            call grnwpn(3)
+c  indicate line center on plot
+c  here: e00_plot=0, because shift already done on eplot.
+c            e00_plot=reaction%e0-e00_plot
+c            call grjmp(e00_plot,y1a)
+c            call grdrw(e00_plot,y1e)
+c          endif
+c  plot the mean free path vs. photon energy, if finite
+c          y2a=minval(y2plot)
+c          y2e=maxval(y2plot)
+c          if (y2e.gt.y2a) then
+c            call grsclv (eplot(1),y2a,eplot(nen),y2e)
+c            call grnwpn(1)
+c            call graxs (9,'X=2,Y=2,A',1,' ',1,' ')
+c            call grnwpn(4)
+c            call grln(eplot,y2plot,nen)
+c            call grnwpn(1)
+c          endif
+c          call grend
+
+c  print on stream inuout, for further processing
+c          write (iunout,*)
+c    .       'spectrum in locate, emin, emax ',eminsp,emaxsp
+c          write (iunout,*) 'nloop,ncell,Tiin(mplsti(ipls),ncell),',
+c    .                      'Bfin(ncell),dein(ncell),tein(ncell)'
+c          write (iunout,*)  nloop,ncell,Tiin(mplsti(ipls),ncell),
+c    .                       Bfin(ncell),dein(ncell),tein(ncell)
+c          write (iunout,*) 'energy(eV), spectral energy flux,samp,',
+c    .                                  'spectral energy flux,eval,',
+c    .                                  'line shape*E0, mfp(cm)'
+c          do i=1,nen
+c            write (iunout,*) eplot(i), estiml(1)%pspc%spc(i),
+c    .                                  estiml(2)%pspc%spc(i),
+c    .                                  y1plot(i),
+c    .                                  y2plot(i)
+c          enddo
+c          write (iunout,*)
+c    .       'spectrum in locate, emin, emax ',eminsp,emaxsp
+c          stop
+C
+          
+          IF (NLTRC.AND.TRCHST) THEN
+            WRITE (iunout,*) 'AFTER RECOMBINATION: '
+            CALL MASJ6
+     .           ('ITYP,IPHOT,IATM,IMOL,IION,IPLS                  ',
+     .             ITYP,IPHOT,IATM,IMOL,IION,IPLS)
+          ENDIF
+C
+          IF (NLSTOR) CALL STORE(1)
+C
+        ELSEIF (NLLNE(ISTRA)) THEN
+          WRITE (iunout,*) 
+     .      'BULK ION LINE SOURCE NOT READY, EXIT CALLED '
+          CALL EXIT_OWN(1)
+C
+        ELSEIF (NLPNT(ISTRA)) THEN
+          WRITE (iunout,*) 
+     .      'BULK ION POINT SOURCE NOT READY, EXIT CALLED '
+          CALL EXIT_OWN(1)
+        ENDIF
+C
+C  NLPNT,NLLNE,NLSRF,NLVOL DONE.
+C
+C  VOLUME TALLIES FOR TEST-SECONDARIES
+        IF (ITYP.EQ.1) THEN
+          LOGATM(IATM,ISTRA)=.TRUE.
+          IF (LPPAT) PPAT(IATM,NCELLT)=PPAT(IATM,NCELLT)+WEIGHT
+          IF (LEPAT) EPAT(NCELLT)=EPAT(NCELLT)+E0*WEIGHT
+          LAST_EVENT%ISPEZ = IATM
+        ELSEIF (ITYP.EQ.2) THEN
+          LOGMOL(IMOL,ISTRA)=.TRUE.
+          IF (LPPML) PPML(IMOL,NCELLT)=PPML(IMOL,NCELLT)+WEIGHT
+          IF (LEPML) EPML(NCELLT)=EPML(NCELLT)+E0*WEIGHT
+          LAST_EVENT%ISPEZ = IMOL
+        ELSEIF (ITYP.EQ.3) THEN
+          LOGION(IION,ISTRA)=.TRUE.
+          IF (LPPIO) PPIO(IION,NCELLT)=PPIO(IION,NCELLT)+WEIGHT
+          IF (LEPIO) EPIO(NCELLT)=EPIO(NCELLT)+E0*WEIGHT
+          LAST_EVENT%ISPEZ = IION
+        ELSEIF (ITYP.EQ.0) THEN
+          LOGPHOT(IPHOT,ISTRA)=.TRUE.
+          IF (LPPPHT) PPPHT(IPHOT,NCELLT)=PPPHT(IPHOT,NCELLT)+WEIGHT
+          IF (LEPPHT) EPPHT(NCELLT)=EPPHT(NCELLT)+E0*WEIGHT
+          LAST_EVENT%ISPEZ = IPHOT
+          STEMIS=E0*WEIGHT
+          STWEI=WEIGHT
+        ENDIF
+C  TALLIES FOR BULK-SECONDARIES (IF ANY)
+        IF (ITYP_B1.EQ.4) THEN
+          LOGPLS(IPLS_B1,ISTRA)=.TRUE.
+          IF (LPPPL) PPPL(IPLS_B1,NCELLT)=PPPL(IPLS_B1,NCELLT)+WEIGHT_B1
+          IF (LEPPL) EPPL(NCELLT)=EPPL(NCELLT)+E0_B1*WEIGHT_B1
+        ELSEIF (ITYP_B2.EQ.4) THEN
+          LOGPLS(IPLS_B2,ISTRA)=.TRUE.
+          IF (LPPPL) PPPL(IPLS_B2,NCELLT)=PPPL(IPLS_B2,NCELLT)+WEIGHT_B2
+          IF (LEPPL) EPPL(NCELLT)=EPPL(NCELLT)+E0_B2*WEIGHT_B2
+        ENDIF
+C
+      ENDIF
+C
+5000  CONTINUE
+
+      LAST_EVENT%IFLAG = 1
+      LAST_EVENT%NCELL = NCELLT
+      LAST_EVENT%ITYP = ITYP
+      LAST_EVENT%E0 = E0
+      LAST_EVENT%WEIGHT = WEIGHT
+      IF (ITYP.EQ.1) THEN
+        LAST_EVENT%ISPEZ = IATM
+      ELSEIF (ITYP.EQ.2) THEN
+        LAST_EVENT%ISPEZ = IMOL
+      ELSEIF (ITYP.EQ.3) THEN
+        LAST_EVENT%ISPEZ = IION
+      ELSEIF (ITYP.EQ.0) THEN
+        LAST_EVENT%ISPEZ = IPHOT
+      ENDIF
+
+C
+C  HAS THE SOURCE PARTICLE BEEN ABSORBED IN SUBR. REFLEC OR SPUTER?
+C
+      IF (.NOT.LGPART) RETURN
+
+      IF (NLRAY(ISTRA)) THEN
+        TRAJ(ITRJ)%TRJ%VX = VELX
+        TRAJ(ITRJ)%TRJ%VY = VELY
+        TRAJ(ITRJ)%TRJ%VZ = VELZ
+        TRAJ(ITRJ)%TRJ%WGHT = WEIGHT
+        TRAJ(ITRJ)%TRJ%P1 = (/ X0, Y0, Z0 /)
+        TRAJ(ITRJ)%TRJ%TYP = ITYP
+        NLTRJ = .TRUE.
+      END IF
+C
+C  IS THE PARTICLE LAUNCHED OUTSIDE THE COMPUTATIONAL BOX?
+C
+C  TEST FOR CORRECT CELL NUMBER AT BIRTH POINT
+C  KILL PARTICLE, IF WRONG CELL INDICES
+C
+      IF (NLSRFX) THEN
+C  RADIAL CELL NO. MAY BE WRONG
+      ELSEIF (NLSRFY) THEN
+C  POLOIDAL CELL NO. MAY BE WRONG
+        IF (LEVGEO.EQ.1) THEN
+          SG=SIGN(1._DP,VELY)
+        ELSEIF (LEVGEO.EQ.2.OR.LEVGEO.EQ.3) THEN
+          SG=VELX*PPLNX(NRCELL,MPSURF)+VELY*PPLNY(NRCELL,MPSURF)
+        ENDIF
+        IF (SG.LT.0) THEN
+          NPCELL=MPSURF-1
+        ELSEIF (SG.GT.0) THEN
+          NPCELL=MPSURF
+        ELSE
+          WRITE (iunout,*) 'ERROR EXIT IN LOCATE, SG=0 '
+          CALL EXIT_OWN(1)
+        ENDIF
+        IPOLG=NPCELL
+      ELSEIF (NLSRFZ) THEN
+C  TOROIDAL CELL NO. MAY BE WRONG
+      ENDIF
+
+      IF (NLTEST) THEN
+        CALL CLLTST(*997)
+      ELSE
+        NLTST=.FALSE.
+        NLTST=NLTST.OR.(NLRAD.AND.(NRCELL.GT.NR1ST.OR.NRCELL.LT.0))
+        NLTST=NLTST.OR.(NLPOL.AND.(NPCELL.GT.NP2ND.OR.NPCELL.LT.1))
+        NLTST=NLTST.OR.(NLTOR.AND.(NTCELL.GT.NT3RD.OR.NTCELL.LT.1))
+        NLTST=NLTST.OR.(NRCELL.EQ.0.AND.
+     .                            (NACELL.GT.NRADD.OR.NACELL.LT.1))
+        IF (NLTST) GOTO 995
+      ENDIF
+      RETURN
+
+      ENTRY LOCAT2
+
+      IF (ALLOCATED(WMM)) THEN
+        DEALLOCATE (WMM)
+        DEALLOCATE (WEISPZ)
+        DEALLOCATE (IICSOR)
+        DEALLOCATE (ITISOR)
+        DEALLOCATE (IUPSOR)
+        DEALLOCATE (IFPSOR)
+      END IF
+
+      RETURN
+C
+990   CONTINUE
+      WRITE (iunout,*) 'ERROR IN LOCATE: ILSIDE OF SOURCE SURFACE IS 0.'
+      WRITE (iunout,*) 
+     .  'THUS NO OUTER NORMAL CAN BE DEFINED. EXIT CALLED'
+      WRITE (iunout,*) 'SET EITHER ILSIDE NE 0 OR USE SORIFL FLAG '
+      WRITE (iunout,*) 'MSURF,ISTSF,NRCELL,NPCELL,NTCELL '
+      WRITE (iunout,*)  MSURF,ITRSF,NRCELL,NPCELL,NTCELL
+      CALL EXIT_OWN(1)
+991   CONTINUE
+      WRITE (iunout,*) 'ERROR IN LOCATE: INCONSISTENT INPUT FLAGS   '
+      WRITE (iunout,*) 'MSURF = ',MSURF
+      CALL EXIT_OWN(1)
+992   CONTINUE
+      WRITE (iunout,*) 'ERROR IN LOCATE: RADON-NIKODYM CONDITION    '
+      WRITE (iunout,*) 'VIOLATED FOR NON-ANALOG SOURCE SPECIES SAMPLING'
+      WRITE (iunout,*) 'CHECK DATM,DMOL,DION OR DPLS ARRAYS (BLOCK) 6 '
+      CALL EXIT_OWN(1)
+995   CONTINUE
+      WRITE (iunout,*) 'PARTICLE LAUNCHED OUTSIDE THE COMPUTATIONAL BOX'
+      WRITE (iunout,*) 'OR WITH INVALID CELL INDICES'
+      WRITE (iunout,*) 'NPANU,X0,Y0,Z0 ',NPANU,X0,Y0,Z0
+      WRITE (iunout,*) 'NRCELL,NPCELL,NTCELL,NBLOCK,NACELL ',
+     .                  NRCELL,NPCELL,NTCELL,NBLOCK,NACELL
+      CALL EXIT_OWN(1)
+996   CONTINUE
+      WRITE (iunout,*) 'BULK ION LAUNCHED IN WRONG DIRECTION'
+      WRITE (iunout,*) 'NPANU,VXWL,VYWL,VZWL ',
+     .                  NPANU,VXWL(IPLS),VYWL(IPLS),VZWL(IPLS)
+      WRITE (iunout,*) '      CRTX,CRTY,CRTZ ',CRTX,CRTY,CRTZ
+      CALL EXIT_OWN(1)
+997   CONTINUE
+      WRITE (iunout,*) 
+     .  'TEST PARTICLE LAUNCHED WITH INVALID CELL INDICES'
+      IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,18)
+      IF (NLSTOR) CALL STORE(100)
+      WEIGHT=0.
+      LGPART=.FALSE.
+      RETURN
+998   CONTINUE
+      WRITE (iunout,*) 'ERROR IN LOCATE: NEMODS,ITYP= ',
+     .                  NEMODS(ISTRA),ITYP
+      WRITE (iunout,*) 'INVALID OPTION. TIWD= ',TIWD
+      CALL EXIT_OWN(1)
+999   CONTINUE
+      WRITE (iunout,*) 'ERROR IN LOCATE: TYP OR SPECIES OUT OF RANGE'
+      CALL EXIT_OWN(1)
+      END
