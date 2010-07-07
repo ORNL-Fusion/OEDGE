@@ -4,7 +4,8 @@
 F77=/usr/local/intel/fce/9.1.051/bin/ifort
 
 #FFLAGS= -c -g
-FFLAGS= -c -g -CB -traceback -O0
+FFLAGS= -c -g -CB -traceback -O2
+#FFLAGS= -c -g -CB -traceback -O0
 #FFLAGS= -c -O2
 
 

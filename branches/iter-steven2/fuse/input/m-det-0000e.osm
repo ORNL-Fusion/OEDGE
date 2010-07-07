@@ -113,12 +113,12 @@ $ ----------------------------------------------------------------------
 $               ----------radial-----------   ---parallel---   -------------------plasma-------------------
 $ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M      pe        Te     Ti    V  
 $                                                              (m-3)    (m s-1)  (eV m-3}  (eV)   (eV)  (V)  
-$ inner divertor
+$ inner divertor target
   3.0   2  2    4    5   1.0                  0     0.0  0                                                
   'lp_24861_220-240ms_2_inner_lower.dat'      1     0.03       1.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
-$ outer divertor
+$ outer divertor target
   3.0   4  4    4    5   1.0                  0     0.0  0                                               
   'lp_24861_220-240ms_4_outer_lower_seg6.dat' 1     0.032      1.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0

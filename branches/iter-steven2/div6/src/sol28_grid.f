@@ -112,6 +112,10 @@ c
         CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
         IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
      .      tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+       WRITE(88,*) itube
+       WRITE(88,*) a1,a2,b1,b2
+       WRITE(88,*) c1,c2,d1,d2
+       WRITE(88,*) tab,tcd
           CatchTube = .TRUE.
           EXIT
         ENDIF
