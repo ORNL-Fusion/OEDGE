@@ -1,0 +1,58 @@
+#!/bin/tcsh
+
+if ( $#argv != "1" ) then
+  echo results_pack ERROR: Need to specify case name
+  exit
+endif
+
+set CASE = $1
+
+source $DIVHOME/scripts/results_resdir $CASE
+
+echo $RESDIR
+
+cd $RESDIR
+
+if ( -e $CASE.zip && -e $CASE.idl.zip ) then 
+  echo MESSAGE results_pack: already done for $CASE
+else
+  rm tmp.*
+
+  mvc $CASE.dat        tmp.dat
+  mvc $CASE.g3         tmp.g3
+  mvc $CASE.out.end    tmp.out.end
+  mvc $CASE.ps         tmp.ps
+  mvc $CASE.ps.gz      tmp.ps.gz
+  mvc $CASE.ps.zip     tmp.ps.zip
+  mvc $CASE.idl.ps     tmp.idl.ps
+  mvc $CASE.idl.ps.gz  tmp.idl.ps.gz
+  mvc $CASE.idl.ps.zip tmp.idl.ps.zip
+
+  if ( -e $CASE.idl.zip ) rm $CASE.idl.zip
+  zip $CASE.idl.zip $CASE.idl.*
+  mv $CASE.idl.zip tmp.idl.zip
+  rm $CASE.idl.*
+
+  zip $CASE.zip $CASE.*
+  if ( -e $CASE.zip ) then
+    mv $CASE.zip tmp.zip
+    rm $CASE*
+  else
+    echo ERROR results_pack: $CASE.zip file not produced
+    exit
+  endif
+
+  mv  tmp.idl.zip    $CASE.idl.zip
+  mv  tmp.zip        $CASE.zip
+
+  mvc tmp.dat        $CASE.dat        
+  mvc tmp.g3	     $CASE.g3         
+  mvc tmp.out.end    $CASE.out.end    
+  mvc tmp.ps	     $CASE.ps         
+  mvc tmp.ps.gz      $CASE.ps.gz      
+  mvc tmp.ps.zip     $CASE.ps.zip     
+  mvc tmp.idl.ps     $CASE.idl.ps     
+  mvc tmp.idl.ps.gz  $CASE.idl.ps.gz  
+  mvc tmp.idl.ps.zip $CASE.idl.ps.zip 
+
+endif 

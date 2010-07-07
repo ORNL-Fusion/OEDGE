@@ -1,0 +1,37 @@
+#!/bin/tcsh
+
+set FAMILY = i-fwp-
+set GRP = 52
+
+set OFFSET = 0
+
+set PAUSE = 3600
+set HOURS = 2
+@ PAUSE = $PAUSE * $HOURS
+
+#foreach C (h a c)
+foreach C (d i e f g h a c)
+#foreach C (b d i e f g h a c)
+
+  if ( $C == 'a' || $C == 'c' ) then 
+    set GRID = iterm.carre.105
+  else
+    set GRID = iterm_slo.carre.002_fix_2
+  endif
+
+  foreach A (1 2 3 4 5 6) 
+    set DELAY = 0
+    foreach B ( 0 1 2 3 4 5 6 7 8 9)
+      @ START = $DELAY + $OFFSET
+      run -qsub $GRP$A$B$C -sleep $START $FAMILY$GRP$A$B$C i-bfg $GRID 
+      @ DELAY = $DELAY + 80
+    end
+    @ OFFSET = $OFFSET + 10
+  end
+ 
+  echo Waiting... $HOURS
+  date
+  sleep $PAUSE
+
+end
+

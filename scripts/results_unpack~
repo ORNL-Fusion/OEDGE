@@ -1,0 +1,24 @@
+#!/bin/tcsh
+
+if ( $#argv != "1" ) then
+  echo results_unpack ERROR: Need to specify case name
+  exit
+endif
+
+set CASE = $1
+
+set FAMILY1 = `echo $CASE | awk -F- '{print $1"\n"}'`
+set FAMILY2 = `echo $CASE | awk -F- '{print $2"\n"}'`
+set FAMILY = "$FAMILY1"-"$FAMILY2"
+
+cd $DIVHOME/results/$FAMILY
+
+if ( -e $CASE.zip ) then 
+  unzip $CASE.zip
+  rm    $CASE.zip
+endif 
+
+if ( -e $CASE.idl.zip ) then 
+  unzip $CASE.idl.zip
+  rm    $CASE.idl.zip
+endif 
