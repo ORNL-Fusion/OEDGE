@@ -17,7 +17,10 @@ c
       INTEGER  , INTENT(IN) :: index
       CHARACTER, INTENT(IN) :: range*(*)
 
-      INTEGER i,j,k,l,m,n,val1,val2
+      INTEGER i,j,k,l,m,n,val1,val2,val3,o,r,s
+      LOGICAL debug
+
+      debug = .FALSE.
 
       CheckIndex = .FALSE.
 
@@ -30,40 +33,75 @@ c...  Quick check to see if 'infinite range' has been set:
         RETURN
       ENDIF
 
-c      WRITE(0,*) index,range,l
+      IF (debug) WRITE(0,*) index,' >'//TRIM(range)//'< ',l
       j = 0
       k = 0
+      s = 0
+      r = 0
       DO i = 1, l
+        IF (range(i:i).NE.','.AND.j.EQ.0) j = i
+        IF (range(i:i).EQ.','.AND.j.NE.0) k = i - 1
+
         IF (k.GT.0.OR.i.EQ.l) THEN
           IF (i.EQ.1) j = 1
           IF (i.EQ.l) k = l
+
+c          IF (debug) WRITE(0,*) TRIM(range(j:k))
+c          IF (debug) WRITE(0,*) SCAN(range(j:k),"Rr")
+          o = SCAN(range(j:k),"Rr")
+          IF (o.NE.0) THEN
+            o = o + j - 1
+            IF (debug) WRITE(0,*) 'REPEAT:',range(o:k)
+            READ(range(o+1:k),*) r     
+            k = o - 1
+            IF (debug) WRITE(0,*) 'REPEAT:',r
+          ENDIF
+          o = SCAN(range(j:k),"Ss")
+          IF (o.NE.0) THEN
+            o = o + j - 1
+            IF (debug) WRITE(0,*) 'SKIP:',range(o:k)
+            READ(range(o+1:k),*) s
+            k = o - 1
+            IF (debug) WRITE(0,*) 'SKIP:',s
+          ENDIF
+
           m = 0
           DO n = j, k
             IF (range(n:n).EQ.'-') m = n
           ENDDO
           IF (m.GT.0) THEN
-c            WRITE(0,*) 'VALS2: '//TRIM(range(j:m-1)) 
-c            WRITE(0,*) 'VALS2: '//TRIM(range(m+1:k))
+            IF (debug) WRITE(0,*) 'J,M-1:',j,m-1
+            IF (debug) WRITE(0,*) 'M+1,K:',m+1,k
+            IF (debug) WRITE(0,*) 'VALS2: '//TRIM(range(j:m-1)) 
+            IF (debug) WRITE(0,*) 'VALS2: '//TRIM(range(m+1:k))
             READ(range(j:m-1),*) val1
             READ(range(m+1:k),*) val2
-c            WRITE(0,*) '     : ',val1,val2,index
-            IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
+            DO o = 1, r+1
+              IF (debug) WRITE(0,*) '     : ',val1,val2,index,o
+              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
+              val3 = val2 - val1
+              val1 = val2 + 1 + s
+              val2 = val1 + val3
+            ENDDO
           ELSE
-c            WRITE(0,*) 'VALS1 : '//TRIM(range(j:k))
+            IF (debug) WRITE(0,*) 'J,K   :',j,k
+            IF (debug) WRITE(0,*) 'VALS1 : '//TRIM(range(j:k))
             READ(range(j:k),*) val1
-c            WRITE(0,*) '      : ',val1,index
-            IF (index.EQ.val1) CheckIndex = .TRUE.
+            DO o = 1, r+1
+              IF (debug) WRITE(0,*) '      : ',val1,index,o
+              IF (index.EQ.val1) CheckIndex = .TRUE.
+              val1 = val1 + 1 + s
+            ENDDO
           ENDIF
-
           j = 0
           k = 0
+          s = 0
+          r = 0
         ENDIF
-        IF (range(i:i).NE.','.AND.j.EQ.0) j = i
-        IF (range(i:i).EQ.','.AND.j.NE.0) k = i - 1
       ENDDO
 
-c      WRITE(0,*) 'CHECKINDEX:',CheckIndex
-
+      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
+c      STOP 'test'
 c      STOP
 
 
@@ -1671,13 +1709,14 @@ c...  Impose filament structures:
       CALL CheckTetrahedronStructure
 
       IF (.TRUE.) THEN
+c...    Make a linked list for the non-default standard surfaces in the surface 
+c       array (which also includes wall surfaces, which are not of interest here):
         isurface_list = 0
         DO i1 = 1, nsurface
           IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
           isurface_list(surface(i1)%num) = i1
         ENDDO
 
-*** LEFT OFF ***
         WRITE(0,*) 'LIST:'
         WRITE(0,*) isurface_list(1:nsurface)
 
@@ -1698,10 +1737,23 @@ c...      Collect connection map information:
 
             IF (CheckIndex(isector,surface(isurface)%sector)) CYCLE
 
+c            STOP 'TEST'
+
             WRITE(0,*) '        :',isurface,isector,
      .                 srf(isrf)%index(IND_SURFACE)
 
-            srf(isrf)%index(IND_SURFACE) = surface(default_surface)%num
+            IF     (surface(isurface)%subtype.EQ.STRATUM   ) THEN
+             srf(isrf)%index(IND_SURFACE) = 
+     .         srf(isrf)%index(IND_SURFACE) - 1
+             WRITE(0,*) 'STRATUM REMAP'
+c             STOP 'TEST'
+            ELSEIF (surface(isurface)%subtype.EQ.ADDITIONAL) THEN
+             srf(isrf)%index(IND_SURFACE) = surface(default_surface)%num
+             WRITE(0,*) 'WALL REMAP'
+            ELSE
+              CALL ER('ProcessTetrahedrons','Invalid surface SUBTYPE '//
+     .                'when remapping the surface index',*99)
+            ENDIF
 
             WRITE(0,*) '        :',isurface,isector,
      .                 srf(isrf)%index(IND_SURFACE)
