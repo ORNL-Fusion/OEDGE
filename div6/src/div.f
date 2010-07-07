@@ -7062,6 +7062,9 @@ c
       real    targ_dist,dist_to_point
       external dist_to_point
       external larmor
+c slmod begin - tmp
+      LOGICAL getrz_error
+c slmod end
 c
 c     First check the particle grid position
 c
@@ -7084,13 +7087,17 @@ c     Define target index
 c
       id = idds(ir_local,it)
 c slmod begin
+      getrz_error = .FALSE.
       IF (id.EQ.0) THEN
-        WRITE(0,*) 'WHOA! PROBLEM!'
-        WRITE(0,*) griderr
-        WRITE(0,*) r,z
-        WRITE(0,*) ik_local,ir_local
-        WRITE(0,*) ik,ir
-        WRITE(0,*) it
+        getrz_error = .TRUE.
+        WRITE(0,*) 'WARNING promptdep: getrz_confusion, prompt '//
+     .             'redeposition check lost'
+c        WRITE(0,*) 'WHOA! PROBLEM!'
+c        WRITE(0,*) griderr
+c        WRITE(0,*) r,z
+c        WRITE(0,*) ik_local,ir_local
+c        WRITE(0,*) ik,ir
+c        WRITE(0,*) it
         id = idds(irsep,2)
       ENDIF
 c slmod end
@@ -7105,6 +7112,9 @@ c     Find distance to target from ionization position to linear
 c     extension of target element.
 c
       targ_dist = dist_to_point(r,z,rp(id),zp(id),thetas(id))
+c slmod begin
+      IF (getrz_error) targ_dist = 1.0E+20
+c slmod end
 c
 c     Does Prompt depostion occur?
 c

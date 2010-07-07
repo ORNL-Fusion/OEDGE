@@ -839,7 +839,7 @@ c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
 c     .            (obj(iobj)%index(IND_IR).NE.17)) CYCLE
 c     .            (obj(iobj)%index(IND_IR).NE.5)) CYCLE
 c            IF (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE     
-            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
+c            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
 c            IF (obj(iobj)%index(IND_IR).NE.5) CYCLE
 c            IF (obj(iobj)%segment(1).EQ.0) CYCLE
 
@@ -854,9 +854,8 @@ c     .            CYCLE
 c              ENDIF
  
               isrf = ABS(isrf)
-
-              IF (srf(isrf)%index(IND_SURFACE).EQ.0 ) CYCLE
-              IF (srf(isrf)%index(IND_SURFACE).NE.21) CYCLE
+              IF (srf(isrf)%index(IND_SURFACE).NE.2.AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.7) CYCLE
 
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
