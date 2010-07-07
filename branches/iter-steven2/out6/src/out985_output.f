@@ -854,8 +854,8 @@ c     .            CYCLE
 c              ENDIF
  
               isrf = ABS(isrf)
-              IF (srf(isrf)%index(IND_SURFACE).NE.2.AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.7) CYCLE
+              IF (srf(isrf)%index(IND_SURFACE).NE.4.AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.22) CYCLE
 
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE

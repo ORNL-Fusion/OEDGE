@@ -1,4 +1,4 @@
-'Ref DIV Title  ' 'a, adding a redundant upper port plug stratum -- will only work if tetrahedral remapping to stratum 3 is used...'
+'Ref DIV Title  ' 'a, setting up a realistic upper port periodic surface assignment'
 'Run comment    ' 'fully extended grid, based on i-fwp-0114b'
 'Equil File Name' 'iterm_slo.carre.002_fix_2'
 $										 
@@ -169,8 +169,8 @@ $
 '{EIR SURFACE PROPERTIES} 1.0'
 $ Type Ind.  Sec.  ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
 $-------------------------------------------------------------------------------------------
-  1.1  4      1,3,30  1     0      000000  0.0  0.0  1.0    2      -1    Fe    0     0      'upper port-target'
-  2.0  110    1,3,30  1     0      000000  0.0  0.0  1.0    2      -1    Fe    1     0      'upper port-wall'
+  1.1  4      2-3s2r8  1     0      000000  0.0  0.0  1.0    2      -1    Fe    0     0      'upper port-target'
+  2.0  110    2-3s2r8  1     0      000000  0.0  0.0  1.0    2      -1    Fe    1     0      'upper port-wall'
   1.0  120   -1   -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
   2.0  161   -1    1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
   1.0  132   -1   -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
@@ -521,7 +521,7 @@ $
 $ EIRENE options:
 '*026 PIN selection  0-NIMBUS 1-EIRENE97 2-EIRENE99  '     5     PINCODE     (1)
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     3     EIRGEOM
-'*E37 Segments in toroidal geometry approximation    '    30     EIRNTORSEC  (0)
+'*E37 Segments in toroidal geometry approximation    '    32     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
 '*020   Run time (CPU seconds)                       '    60     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
@@ -538,7 +538,7 @@ $ EIRENE options:
 '*E39 TRIM database in EIRENE (0-off, 1-on)          '     1     EIRTRIM     (0)
 '*E21 Range for EIRENE particle track output         '   1   100
 '*E22 Toroidal circumference                        ' -3.1415927 EIRZAA      (-1.0)
-'*E24 Toroidal fraction applied in DIVIMP           '   0.417    EIRTORFRAC  ( 1.0)
+'*E24 Toroidal fraction applied in DIVIMP           '   0.444    EIRTORFRAC  ( 1.0)
 '*E35 Number of toroidal sections                    '     1     EIRNSECTION (1)
 '*E25 Global EIRENE source multiplication factor     '   1.0     EIRSRCMUL   ( 1.0)
 $

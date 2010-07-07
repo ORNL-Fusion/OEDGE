@@ -1283,6 +1283,8 @@ c        dang(12,2) = 180.0D0   !  180.0D0
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
      .    'ANGLES:',isector,dang(isector,1:2)
+        WRITE(eirfp,'(A,I6,2F12.6)') 
+     .    'ANGLES:',isector,dang(isector,1:2)
       ENDDO
 
       dang = dang * D_DEGRAD
@@ -1717,8 +1719,8 @@ c       array (which also includes wall surfaces, which are not of interest here
           isurface_list(surface(i1)%num) = i1
         ENDDO
 
-        WRITE(0,*) 'LIST:'
-        WRITE(0,*) isurface_list(1:nsurface)
+c        WRITE(0,*) 'LIST:'
+c        WRITE(0,*) isurface_list(1:nsurface)
 
         DO iobj = 1, nobj
 c...      Collect connection map information:
@@ -1732,13 +1734,15 @@ c...      Collect connection map information:
             isector  = obj(iobj)%index(IND_IS)
             isurface = isurface_list(isurface)
 
-            WRITE(0,*) 'SECTOR  :',iobj,isrf,isector,
-     .                 srf(isrf)%index(IND_SURFACE)
+c            WRITE(0,*) 'SECTOR  :',iobj,isrf,isector,
+c     .                 srf(isrf)%index(IND_SURFACE)
 
             IF (CheckIndex(isector,surface(isurface)%sector)) CYCLE
 
 c            STOP 'TEST'
 
+            WRITE(0,*) 'SECTOR  :',iobj,isrf,isector,
+     .                 srf(isrf)%index(IND_SURFACE)
             WRITE(0,*) '        :',isurface,isector,
      .                 srf(isrf)%index(IND_SURFACE)
 
@@ -6020,3 +6024,4 @@ c
 c ======================================================================
 c
 c
+
