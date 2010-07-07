@@ -1,0 +1,180 @@
+C
+C
+      SUBROUTINE TSTCHM(I1,XTN,YTN,XT,YT,IINDEX,TESTN,XMI,XMA,YMI,YMA,
+     .                     XT2,YT2)
+C
+C INPUT:
+C I1=0:
+C       FIRST CALL FOR THIS TRACK. INITIALIZE CHECK DATA AND JUMP ONLY
+C       SET XTO,YTO=XTN,YTN
+C    ELSE:
+C       CARRY OUT CHECK FOR TRACK XTO,YTO  TO  XTN,YTN AND RETURN DATA
+C       SET XTO,YTO=XTN,YTN
+C OUTPUT:
+C     TESTN: FLAG FOR NEW POINT XTN,YTN
+C     TESTN= 0:  COMPLETELY WITHIN CHAMBER
+C     TESTN= 1:  EITHER WITHIN X RANGE BUT OUTSIDE Y RANGE,
+C                OR     WITHIN Y RANGE BUT OUTSIDE X RANGE
+C     TESTN= 2:  BOTH: OUTSIDE X RANGE AND OUTSIDE Y RANGE
+C
+C     IINDEX: FLAG FOR TRACK XTO,YTO TO  XTN,YTN
+C     IINDEX= 0:  INITIAL CALL (I1=0), NO PLOT
+C     IINDEX= 1:  COMPLETE TRACK INSIDE
+C     IINDEX= 2:  OLD POINT INSIDE, NEW POINT OUTSIDE
+C     IINDEX= 3:  NEW POINT INSIDE, OLD POINT OUTSIDE
+C     IINDEX= 4:  BOTH POINTS OUTSIDE, AND NO INTERSECTIONS. NO PLOT
+C     IINDEX= 5:  BOTH POINTS OUTSIDE, BUT PART OF TRACK INSIDE.  PLOT
+C     XT,YT: INTERSETION POINT ON BOUNDARY  (IF ANY)
+C     XT2,YT2: SECOND INTERSECTION POINT ON BOUNDARY (IF ANY)
+C
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(INOUT) :: XTN, YTN, XT, YT, XT2, YT2
+      REAL(DP), INTENT(IN) :: XMI, XMA, YMI, YMA
+      REAL(DP), INTENT(OUT) :: TESTN
+      INTEGER, INTENT(IN) :: I1
+      INTEGER, INTENT(OUT) :: IINDEX
+      REAL(DP) :: XS(2),YS(2)
+      REAL(DP) :: TBDXN, TBDYN, TEST, XTO, YTO, TBDXO, TBDYO, T,
+     .          TIME, TESTX, TESTY, TESTO, TSEC, ZXO, ZYO, ZXN,
+     .          ZYN, ZBX1, ZBY1, ZBX2, ZBY2
+      INTEGER :: IT
+
+C
+      SAVE TESTO,TBDXO,TBDYO,XTO,YTO
+C
+      TSEC(ZXO,ZYO,ZXN,ZYN,ZBX1,ZBY1,ZBX2,ZBY2)=
+     .     ((ZXO-ZBX1)*(ZYN-ZYO)-(ZYO-ZBY1)*(ZXN-ZXO))/
+     .     ((ZBX2-ZBX1)*(ZYN-ZYO)-(ZBY2-ZBY1)*(ZXN-ZXO)+1.D-30)
+C
+      IF (I1.EQ.0) THEN
+        TBDXN=0.
+        TBDYN=0.
+        IF (XTN.LT.XMI) TBDXN=-1.
+        IF (XTN.GT.XMA) TBDXN=1.
+        IF (YTN.LT.YMI) TBDYN=-1.
+        IF (YTN.GT.YMA) TBDYN=1.
+        TESTN=ABS(TBDXN)+ABS(TBDYN)
+        IINDEX=0
+        GOTO 100
+      ENDIF
+C
+      TBDXN=0.
+      TBDYN=0.
+      IF (XTN.LT.XMI) TBDXN=-1.
+      IF (XTN.GT.XMA) TBDXN=1.
+      IF (YTN.LT.YMI) TBDYN=-1.
+      IF (YTN.GT.YMA) TBDYN=1.
+      TESTN=ABS(TBDXN)+ABS(TBDYN)
+      TEST=TESTN+TESTO
+      IF (TEST.EQ.0.) THEN
+        IINDEX=1
+      ELSEIF (TESTO.EQ.0..AND.TESTN.NE.0.) THEN
+        IF (TBDXN.LT.0.) THEN
+          XT=XMI
+          TIME=(XT-XTO)/(XTN-XTO)
+          YT=YTO+TIME*(YTN-YTO)
+          IF (YT.LE.YMA.AND.YT.GE.YMI) GOTO 146
+        ELSEIF (TBDXN.GT.0.) THEN
+          XT=XMA
+          TIME=(XT-XTO)/(XTN-XTO)
+          YT=YTO+TIME*(YTN-YTO)
+          IF (YT.LE.YMA.AND.YT.GE.YMI) GOTO 146
+        ENDIF
+        IF (TBDYN.LT.0.) THEN
+          YT=YMI
+          TIME=(YT-YTO)/(YTN-YTO)
+          XT=XTO+TIME*(XTN-XTO)
+        ELSEIF (TBDYN.GT.0.) THEN
+          YT=YMA
+          TIME=(YT-YTO)/(YTN-YTO)
+          XT=XTO+TIME*(XTN-XTO)
+        ENDIF
+146     CONTINUE
+        IINDEX=2
+      ELSEIF (TESTN.EQ.0..AND.TESTO.NE.0.) THEN
+        IF (TBDXO.LT.0.) THEN
+          XT=XMI
+          TIME=(XT-XTN)/(XTN-XTO)
+          YT=YTN+TIME*(YTN-YTO)
+          IF (YT.LE.YMA.AND.YT.GE.YMI) GOTO 148
+        ELSEIF (TBDXO.GT.0.) THEN
+          XT=XMA
+          TIME=(XT-XTN)/(XTN-XTO)
+          YT=YTN+TIME*(YTN-YTO)
+          IF (YT.LE.YMA.AND.YT.GE.YMI) GOTO 148
+        ENDIF
+        IF (TBDYO.LT.0.) THEN
+          YT=YMI
+          TIME=(YT-YTN)/(YTN-YTO)
+          XT=XTN+TIME*(XTN-XTO)
+          ELSEIF (TBDYO.GT.0.) THEN
+          YT=YMA
+          TIME=(YT-YTN)/(YTN-YTO)
+          XT=XTN+TIME*(XTN-XTO)
+        ENDIF
+148     CONTINUE
+        IINDEX=3
+      ELSE
+        TESTX=ABS(TBDXO+TBDXN)
+        TESTY=ABS(TBDYO+TBDYN)
+        IF (TESTX.EQ.2..OR.TESTY.EQ.2.) THEN
+          IINDEX=4
+        ELSE
+C   TEST ALL BOUNDARIES
+          IT=0
+C   LOWER BOUNDARY
+          T=TSEC(XTO,YTO,XTN,YTN,XMI,YMI,XMA,YMI)
+          IF (T.GE.0..AND.T.LE.1.) THEN
+            IT=IT+1
+            XS(IT)=XMI+T*(XMA-XMI)
+            YS(IT)=YMI
+          ENDIF
+C   UPPER BOUNDARY
+          T=TSEC(XTO,YTO,XTN,YTN,XMI,YMA,XMA,YMA)
+          IF (T.GE.0..AND.T.LE.1.) THEN
+            IT=IT+1
+            XS(IT)=XMI+T*(XMA-XMI)
+            YS(IT)=YMA
+          ENDIF
+C   LEFT BOUNDARY
+          T=TSEC(XTO,YTO,XTN,YTN,XMI,YMI,XMI,YMA)
+          IF (T.GE.0..AND.T.LE.1.) THEN
+            IT=IT+1
+            XS(IT)=XMI
+            YS(IT)=YMI+T*(YMA-YMI)
+          ENDIF
+C   RIGHT BOUNDARY
+          T=TSEC(XTO,YTO,XTN,YTN,XMA,YMI,XMA,YMA)
+          IF (T.GE.0..AND.T.LE.1.) THEN
+            IT=IT+1
+            XS(IT)=XMA
+            YS(IT)=YMI+T*(YMA-YMI)
+          ENDIF
+C
+          IF (IT.EQ.0) THEN
+            IINDEX=4
+          ELSEIF (IT.EQ.2) THEN
+            IINDEX=5
+            XT=XS(1)
+            YT=YS(1)
+            XT2=XS(2)
+            YT2=YS(2)
+          ELSE
+            WRITE (iunout,*) ' NONSENSE IN TSTCHM '
+            WRITE (iunout,*) ' XTO,YTO ',XTO,YTO
+            WRITE (iunout,*) ' XTN,YTN ',XTN,YTN
+            IINDEX=4
+          ENDIF
+        ENDIF
+      ENDIF
+100   TESTO=TESTN
+      TBDXO=TBDXN
+      TBDYO=TBDYN
+      XTO=XTN
+      YTO=YTN
+      RETURN
+      END

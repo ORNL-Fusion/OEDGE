@@ -1,0 +1,504 @@
+C
+C
+      SUBROUTINE EIRSRT(LSTOP,LTIME,DELTAT,FLUXES,
+     .                  B2BRM,B2RD,B2Q,B2VP)
+
+      USE PRECISION
+      USE PARMMOD
+      USE BRASPOI
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CINIT
+      USE CPOLYG
+      USE CGRID
+      USE CSPEZ
+      USE CZT1
+      USE CTRCEI
+      USE CCOUPL
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_BGK
+      USE CSDVI_COP
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE COUTAU
+      USE COMXS
+      USE CSPEI
+      USE BRASCL
+
+      IMPLICIT NONE
+C
+      REAL(DP), INTENT(IN) :: FLUXES(NSTRA)
+      REAL(DP), INTENT(IN) :: DELTAT, B2BRM, B2RD, B2Q, B2VP
+      LOGICAL, INTENT(IN) :: LSTOP, LTIME
+
+      REAL(DP) :: FLUXS(NSTRA)
+      REAL(DP) :: FTABEI1, FEELEI1, FLXI, ESIG, RESET_SECOND, DUMMY,
+     .          SECOND_OWN, DTIMVO
+      INTEGER :: IN, IAEI, IRDS, IIDS, ICPV, IMDS, IFIRST, K, JC, NDXY,
+     .           J, IRC, NREC10, NREC11, ITNR
+      REAL(DP), ALLOCATABLE :: OUTAU(:)
+      INTEGER, ALLOCATABLE :: IHELP(:)
+      LOGICAL :: LSTP, LLST, LPLASM
+C
+      TYPE(CELLSIM), POINTER :: CPSIM
+      TYPE(CELLMUL), POINTER :: CPMUL
+C
+C
+      SAVE
+      DATA IFIRST/0/
+C
+      IF (LTIME) THEN
+C
+        B2BREM=B2BRM
+        B2RAD=B2RD
+        B2QIE=B2Q
+        B2VDP=B2VP
+        DUMMY=RESET_SECOND()
+        IF(IFIRST.EQ.0) THEN
+C
+          CALL GRSTRT(35,8)
+C
+C  READ FORMATTED INPUT FILE IUNIN
+C  AND RUN EIRENE FOR ONE TIME-CYCLE: ITIMV=1
+C  WITH OR WITHOUT INITIAL DISTRIBUTION ON FILE FT15 (NFILE-J FLAG)
+C  AS FINAL STRATUM
+C  EXPECT PLASMA DATA ON FORT.31 (NLPLAS=.FALSE.)
+C
+          CALL EIRENE(DELTAT,.FALSE.,.FALSE.,1,.TRUE.)
+C
+C  EIRENE RUN DONE. CENSUS ARRAY WRITTEN
+C  NOW ITIMV=ITIMV+1, NLPLAS=.TRUE.
+C
+          DO 3 ISTRA=1,NSTRAI
+            FLUXS(ISTRA)=FLUX(ISTRA)
+3         CONTINUE
+          IFIRST=1
+        ELSE
+C
+C  NOW: NLPLAS=.TRUE., I.E., PLASMA DATA EXPECTED ON BRAEIR
+C  NOW: ITIMV=ITIMV+1
+C  BUT: COMMON BRAEIR REDONE IN EXTERNAL CODE.
+C  REACTIVATE INDEX MAPPING, EVEN WITHOUT READING INPUT BLOCK 14 AGAIN
+          NCUTB_SAVE=NCUTB
+C
+          DTIMVO=DTIMV
+          DTIMVN=DELTAT
+C
+C-----------------------------------------------------------------------
+C
+C  STRATA 1 TO NTARGI ARE SCALED IN PLASMA CODE  (RECYCLING STRATA)
+C
+C     RETURN TO PLASMA CODE THE PROFILES PER UNIT SOURCE STRENGTH
+C     IE. THE PROFILES ARE SCALED BY 1./FLUX(ISTRA) BEFORE RETURN
+C
+C  STRATA NTARGI+1 TO NSTRAI-1  ARE SCALED BY EIRENE
+C
+C     (EG. GAS PUFF, VOLUME RECOMBINATION, ETC.)
+C     THEY MAY BE RESCALED BY PLASMA CODE FACTORS: FLUXES(ISTRA)
+C     RETURN TO PLASMA CODE THE PROFILES SCALED WITH
+C     SOURCE STRENGTH: FLUX(ISTRA) (AMP)
+C
+C  STRATUM NSTRAI IS RESCALED WITH RATIO OF OLD TO NEW TIMESTEP
+C
+C     RETURN TO PLASMA CODE THE PROFILES WITH FLUX(ISTRA) (AMP)
+C
+          DO ISTRA=NTARGI+1,NSTRAI-1
+            IF (FLUXES(ISTRA).NE.0.) THEN
+              FLUX(ISTRA)=FLUXS(ISTRA)*FLUXES(ISTRA)*ELCHA
+            ELSE
+              FLUX(ISTRA)=FLUXS(ISTRA)
+            ENDIF
+          ENDDO
+C
+          IF (DTIMVN.NE.DTIMVO) THEN
+            FLUX(NSTRAI)=FLUX(NSTRAI)*DTIMVO/DTIMVN
+C
+            WRITE (iunout,*) 'FLUX IS RESCALED BY DTIMV_OLD/DTIMV_NEW '
+            CALL MASR1('FLUX    ',FLUX(NSTRAI))
+            CALL LEER(1)
+          ENDIF
+C
+C-----------------------------------------------------------------------
+C
+          DTIMV=DTIMVN
+C
+C  RUN EIRENE ON TIMESTEP DTIMV
+C  THEN CALL INTERFACING ROUTINE AT ENTRY IF3COP (FROM EIRENE MAIN)
+C
+          IITER=1
+          IPRNLI=0
+          CALL EIRENE_COUPLE (LSTOP,1)
+          IF (LSTOP) THEN
+            CALL GREND
+          ENDIF
+        ENDIF
+        CALL LEER(2)
+        WRITE(*,*) 'EIRENE USED ',SECOND_OWN(),' CPU SECONDS'
+        CALL LEER(2)
+C
+        RETURN
+C
+      ELSEIF (.NOT.LTIME) THEN
+C
+        IF (IFIRST.GE.1) GOTO 10000
+
+        CALL GRSTRT(35,8)
+C
+C  READ FORMATTED INPUT FILE IUNIN
+C  AND RUN EIRENE FOR ONE TIME-CYCLE: ITIMV=1
+C  WITH OR WITHOUT INITIAL DISTRIBUTION ON FILE FT15 (NFILE-J FLAG)
+C  AS FINAL STRATUM
+C  EXPECT PLASMA DATA ON FORT.31 (NLPLAS=.FALSE.)
+C
+        B2BREM=B2BRM
+        B2RAD=B2RD
+        B2QIE=B2Q
+        B2VDP=B2VP
+        LPLASM=.FALSE.
+        LLST=LSTOP
+        ITNR=1
+
+ 10     CONTINUE
+
+        CALL EIRENE(DELTAT,LPLASM,LLST,ITNR,.TRUE.)
+C
+        NDXY=(NDXA-1)*NR1ST+NDYA
+C
+        XMCP_OLD(1:NSTRAI) = XMCP(1:NSTRAI)
+
+        CALL ALLOC_BRASCL
+        CALL INIT_BRASCL1
+C
+C  INITIAL: ATOMS, EI-PROCESSES
+C
+        DO 21 IATM=1,NATMI
+        DO 21 IPLS=1,NPLSI
+        DO 21 IAEI=1,NAEII(IATM)
+          IRDS=LGAEI(IATM,IAEI)
+          IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 21
+          DO 22 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SPLODA(IN,IATM,IPLS)=SPLODA(IN,IATM,IPLS)+
+     .                        TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ELSE
+              SPLODA(IN,IATM,IPLS)=SPLODA(IN,IATM,IPLS)+
+     .                        FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            END IF
+22        CONTINUE
+21      CONTINUE
+        DO 23 IPLS=1,NPLSI
+          IPLSTI=MPLSTI(IPLS)
+          DO 24 IN=1,NDXY
+            SEIODA(IN,IPLS)=DIIN(IPLS,IN)*
+     .                      (1.5*TIIN(IPLSTI,IN)+EDRIFT(IPLS,IN))
+24        CONTINUE
+23      CONTINUE
+C
+        DO 25 IATM=1,NATMI
+        DO 25 IAEI=1,NAEII(IATM)
+          IRDS=LGAEI(IATM,IAEI)
+          DO 25 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEEODA(IN,IATM)=SEEODA(IN,IATM)+EELDS1(IRDS,IN)*
+     .                                        TABDS1(IRDS,IN)
+            ELSE
+              SEEODA(IN,IATM)=SEEODA(IN,IATM)+FEELEI1(IRDS,IN)*
+     .                                        FTABEI1(IRDS,IN)
+            END IF
+25      CONTINUE
+C
+C  INITIAL: TEST IONS, EI-PROCESSES
+C
+        DO 26 IION=1,NIONI
+        DO 26 IIDS=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIDS)
+          DO 26 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEEODI(IN,IION)=SEEODI(IN,IION)+EELDS1(IRDS,IN)*
+     .                                        TABDS1(IRDS,IN)
+            ELSE
+              SEEODI(IN,IION)=SEEODI(IN,IION)+FEELEI1(IRDS,IN)*
+     .                                        FTABEI1(IRDS,IN)
+            END IF
+26      CONTINUE
+C
+        DO 27 IION=1,NIONI
+        DO 27 IPLS=1,NPLSI
+        DO 27 IIDS=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIDS)
+          IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 27
+          DO 28 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SPLODI(IN,IION,IPLS)=SPLODI(IN,IION,IPLS)+
+     .                             TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ELSE
+              SPLODI(IN,IION,IPLS)=SPLODI(IN,IION,IPLS)+
+     .                             FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ENDIF
+28        CONTINUE
+27      CONTINUE
+C
+        DO 29 IION=1,NIONI
+        DO 29 IPLS=1,NPLSI
+        DO 29 IIDS=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIDS)
+          ESIG=EPLDS(IRDS,2)
+          DO 30 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEIODI(IN,IION)=SEIODI(IN,IION)+TABDS1(IRDS,IN)*ESIG
+            ELSE
+              SEIODI(IN,IION)=SEIODI(IN,IION)+FTABEI1(IRDS,IN)*ESIG
+            END IF
+30        CONTINUE
+29      CONTINUE
+C
+C
+C  INITIAL: MOLECULES, EI-PROCESSES
+C
+        DO 35 IMOL=1,NMOLI
+        DO 35 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          DO 35 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEEODM(IN,IMOL)=SEEODM(IN,IMOL)+EELDS1(IRDS,IN)*
+     .                                        TABDS1(IRDS,IN)
+            ELSE
+              SEEODM(IN,IMOL)=SEEODM(IN,IMOL)+FEELEI1(IRDS,IN)*
+     .                                        FTABEI1(IRDS,IN)
+            ENDIF
+35      CONTINUE
+C
+        DO 47 IMOL=1,NMOLI
+        DO 47 IPLS=1,NPLSI
+        DO 47 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 47
+          DO 48 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SPLODM(IN,IMOL,IPLS)=SPLODM(IN,IMOL,IPLS)+
+     .                             TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ELSE
+              SPLODM(IN,IMOL,IPLS)=SPLODM(IN,IMOL,IPLS)+
+     .                             FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            END IF
+48        CONTINUE
+47      CONTINUE
+C
+        DO 49 IMOL=1,NMOLI
+        DO 49 IPLS=1,NPLSI
+        DO 49 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          ESIG=EPLDS(IRDS,2)
+          DO 50 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEIODM(IN,IMOL)=SEIODM(IN,IMOL)+TABDS1(IRDS,IN)*ESIG
+            ELSE
+              SEIODM(IN,IMOL)=SEIODM(IN,IMOL)+FTABEI1(IRDS,IN)*ESIG
+            END IF
+50        CONTINUE
+49      CONTINUE
+C
+C
+        B2BREM=B2BRM
+        B2RAD=B2RD
+        B2QIE=B2Q
+        B2VDP=B2VP
+!pb        CALL INTER3(LSTOP,IFIRST,1,NSTRAI,0)
+C
+        IFIRST=IFIRST+1
+
+        IF (LSTOP) THEN
+          CALL DEALLOC_COMUSR
+          CALL DEALLOC_CESTIM
+          CALL DEALLOC_BRASCL
+          CALL DEALLOC_BRASPOI
+        END IF
+
+        RETURN
+C
+10000   CONTINUE
+C
+        LSTP = LSTOP
+        NCUTB_SAVE=NCUTB
+        CALL INTER1
+C
+        CALL PLASMA
+C
+        CALL PLASMA_DERIV(0)
+C
+        CALL SETAMD(2)
+
+        IF ( ANY(XMCP_OLD(1:NSTRAI) <= 2._DP)) THEN
+           IFIRST=0
+           LPLASM=.TRUE.
+           LSTP=LSTOP
+           ITNR=ITNR+1
+           GOTO 10
+        END IF
+C
+!pb        IF (.NOT.ALLOCATED(SPLNWA)) CALL ALLOC_BRASCL
+        CALL ALLOC_BRASCL
+        CALL INIT_BRASCL2
+C
+C  NEW: ATOMS, EI PROCESSES
+C
+        DO 101 IATM=1,NATMI
+        DO 101 IPLS=1,NPLSI
+          DO 102 IAEI=1,NAEII(IATM)
+            IRDS=LGAEI(IATM,IAEI)
+            IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 101
+            DO 102 IN=1,NDXY
+              IF (NSTORDR >= NRAD) THEN
+                SPLNWA(IN,IATM,IPLS)=SPLNWA(IN,IATM,IPLS)+
+     .                          TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+              ELSE
+                SPLNWA(IN,IATM,IPLS)=SPLNWA(IN,IATM,IPLS)+
+     .                          FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+              END IF
+102       CONTINUE
+101     CONTINUE
+C
+        DO 103 IPLS=1,NPLSI
+          IPLSTI = MPLSTI(IPLS)
+          DO 104 IN=1,NDXY
+            SEINWA(IN,IPLS)=DIIN(IPLS,IN)*
+     .                      (1.5*TIIN(IPLSTI,IN)+EDRIFT(IPLS,IN))
+104       CONTINUE
+103     CONTINUE
+C
+        DO 105 IATM=1,NATMI
+          DO 105 IAEI=1,NAEII(IATM)
+            IRDS=LGAEI(IATM,IAEI)
+            DO 105 IN=1,NDXY
+              IF (NSTORDR >= NRAD) THEN
+                SEENWA(IN,IATM)=SEENWA(IN,IATM)+EELDS1(IRDS,IN)*
+     .                                          TABDS1(IRDS,IN)
+              ELSE
+                SEENWA(IN,IATM)=SEENWA(IN,IATM)+FEELEI1(IRDS,IN)*
+     .                                          FTABEI1(IRDS,IN)
+              END IF
+105     CONTINUE
+C
+C  NEW: TEST IONS, EI PROCESSES
+C
+        DO 106 IION=1,NIONI
+          DO 106 IIDS=1,NIDSI(IION)
+            IRDS=LGIEI(IION,IIDS)
+            DO 106 IN=1,NDXY
+              IF (NSTORDR >= NRAD) THEN
+                SEENWI(IN,IION)=SEENWI(IN,IION)+EELDS1(IRDS,IN)*
+     .                                          TABDS1(IRDS,IN)
+              ELSE
+                SEENWI(IN,IION)=SEENWI(IN,IION)+FEELEI1(IRDS,IN)*
+     .                                          FTABEI1(IRDS,IN)
+              END IF
+106     CONTINUE
+C
+        DO 107 IION=1,NIONI
+        DO 107 IPLS=1,NPLSI
+        DO 107 IIDS=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIDS)
+          IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 107
+          DO 108 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SPLNWI(IN,IION,IPLS)=SPLNWI(IN,IION,IPLS)+
+     .                             TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ELSE
+              SPLNWI(IN,IION,IPLS)=SPLNWI(IN,IION,IPLS)+
+     .                             FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            END IF
+108       CONTINUE
+107     CONTINUE
+C
+        DO 109 IION=1,NIONI
+        DO 109 IPLS=1,NPLSI
+        DO 109 IIDS=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIDS)
+          ESIG=EPLDS(IRDS,2)
+          DO 110 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEINWI(IN,IION)=SEINWI(IN,IION)+TABDS1(IRDS,IN)*ESIG
+            ELSE
+              SEINWI(IN,IION)=SEINWI(IN,IION)+FTABEI1(IRDS,IN)*ESIG
+            END IF
+110       CONTINUE
+109     CONTINUE
+C
+C  NEW: MOLECULES, EI PROCESSES
+C
+        DO 115 IMOL=1,NMOLI
+        DO 115 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          DO 116 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEENWM(IN,IMOL)=SEENWM(IN,IMOL)+EELDS1(IRDS,IN)*
+     .                                        TABDS1(IRDS,IN)
+            ELSE
+              SEENWM(IN,IMOL)=SEENWM(IN,IMOL)+FEELEI1(IRDS,IN)*
+     .                                        FTABEI1(IRDS,IN)
+            END IF
+116       CONTINUE
+115     CONTINUE
+C
+        DO 117 IMOL=1,NMOLI
+        DO 117 IPLS=1,NPLSI
+        DO 117 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          IF (PPLDS(IRDS,IPLS).EQ.0.) GOTO 117
+          DO 118 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SPLNWM(IN,IMOL,IPLS)=SPLNWM(IN,IMOL,IPLS)+
+     .                             TABDS1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            ELSE
+              SPLNWM(IN,IMOL,IPLS)=SPLNWM(IN,IMOL,IPLS)+
+     .                             FTABEI1(IRDS,IN)*PPLDS(IRDS,IPLS)
+            END IF
+118       CONTINUE
+117     CONTINUE
+C
+        DO 119 IMOL=1,NMOLI
+        DO 119 IPLS=1,NPLSI
+        DO 119 IMDS=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMDS)
+          ESIG=EPLDS(IRDS,2)
+          DO 120 IN=1,NDXY
+            IF (NSTORDR >= NRAD) THEN
+              SEINWM(IN,IMOL)=SEINWM(IN,IMOL)+TABDS1(IRDS,IN)*ESIG
+            ELSE
+              SEINWM(IN,IMOL)=SEINWM(IN,IMOL)+FTABEI1(IRDS,IN)*ESIG
+            END IF
+120       CONTINUE
+119     CONTINUE
+C
+        B2BREM=B2BRM
+        B2RAD=B2RD
+        B2QIE=B2Q
+        B2VDP=B2VP
+        CALL INTER3(LSTP,IFIRST,1,NSTRAI,0)
+C
+        IF (LSTP) THEN
+           IFIRST=0
+           LPLASM=.TRUE.
+           LSTP=LSTOP
+           ITNR=ITNR+1
+           GOTO 10
+        END IF
+C
+        IFIRST=IFIRST+1
+
+        IF (LSTOP) THEN
+          CALL DEALLOC_COMUSR
+          CALL DEALLOC_CESTIM
+          CALL DEALLOC_BRASCL
+          CALL DEALLOC_BRASPOI
+        END IF
+
+        RETURN
+C
+      ENDIF
+
+      END
