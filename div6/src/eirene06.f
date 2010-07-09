@@ -1160,8 +1160,9 @@ c...  Bricks:
      .        iobj,isrf,istart,iend,isector,isurface,idum1,
      .        isurface_list(nsurface)
       LOGICAL regular_grid
-      LOGICAL :: debug = .FALSE.
-      LOGICAL :: hack  = .FALSE.
+      LOGICAL :: debug  = .FALSE.
+      LOGICAL :: hack   = .FALSE.
+      LOGICAL :: filter = .FALSE.
 
       REAL*8 a(3,3),b(3,7),c(3,4),ang,ang1,ang2,dang(500,2),
      .       theta,frac,xcen,ycen,adelta
@@ -1292,34 +1293,46 @@ c        dang(12,2) = 180.0D0   !  180.0D0
 c      ang1 = 360.0D0 / DBLE(ntorseg) * D_DEGRAD
 
 c...  Select which triangles will be part of the tetrahedron grid:
-      ALLOCATE(tryxcen (ntry))
-      ALLOCATE(tryycen (ntry))
-      DO itry = 1, ntry
-        DO i1 = 1, 3
-          isrf = try(itry)%iside(i1)
-          i2 = 1
-          IF (isrf.LT.0) i2 = 2 ! Side orientation is switched, so use other end point
-          a(1,i1) = tryvtx(1,trysrf(ABS(isrf))%ivtx(i2))
-          a(2,i1) = tryvtx(2,trysrf(ABS(isrf))%ivtx(i2))
-          a(3,i1) = 0.0D0
-        ENDDO
-        tryxcen(itry) = SNGL(SUM(a(1,1:3))) / 3.0
-        tryycen(itry) = SNGL(SUM(a(2,1:3))) / 3.0
-      ENDDO
       ALLOCATE(trycycle(ntry))
       trycycle = .FALSE.
       DO itet = 1, opt_eir%tet_n
-        IF (opt_eir%tet_type(itet).NE.1.0) CYCLE         
-        DO itry = 1, ntry
-          IF (tryxcen(itry).LT.opt_eir%tet_x1(itet).OR.
-     .        tryycen(itry).GT.opt_eir%tet_y1(itet).OR.
-     .        tryxcen(itry).GT.opt_eir%tet_x2(itet).OR.
-     .        tryycen(itry).LT.opt_eir%tet_y2(itet)) 
-     .      trycycle(itry) = .TRUE.
-        ENDDO
+        IF (opt_eir%tet_type(itet).EQ.1.0) filter = .TRUE.
       ENDDO
-      DEALLOCATE(tryxcen)
-      DEALLOCATE(tryycen)
+      IF (filter) THEN
+        trycycle = .TRUE.
+        ALLOCATE(tryxcen(ntry))
+        ALLOCATE(tryycen(ntry))
+        DO itry = 1, ntry
+          DO i1 = 1, 3
+            isrf = try(itry)%iside(i1)
+            i2 = 1
+            IF (isrf.LT.0) i2 = 2 ! Side orientation is switched, so use other end point
+            a(1,i1) = tryvtx(1,trysrf(ABS(isrf))%ivtx(i2))
+            a(2,i1) = tryvtx(2,trysrf(ABS(isrf))%ivtx(i2))
+            a(3,i1) = 0.0D0
+          ENDDO
+          tryxcen(itry) = SNGL(SUM(a(1,1:3))) / 3.0
+          tryycen(itry) = SNGL(SUM(a(2,1:3))) / 3.0
+        ENDDO
+        DO itet = 1, opt_eir%tet_n
+          IF (opt_eir%tet_type(itet).NE.1.0) CYCLE         
+          WRITE(0,*) 'ITET:',itet
+          WRITE(0,*) '    :',opt_eir%tet_type(itet)
+          WRITE(0,*) '    :',opt_eir%tet_x1  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_y1  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_x2  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_y2  (itet)
+          DO itry = 1, ntry
+            IF (tryxcen(itry).GE.opt_eir%tet_x1(itet).AND.
+     .          tryycen(itry).LE.opt_eir%tet_y1(itet).AND.
+     .          tryxcen(itry).LE.opt_eir%tet_x2(itet).AND.
+     .          tryycen(itry).GE.opt_eir%tet_y2(itet)) 
+     .        trycycle(itry) = .FALSE.
+          ENDDO
+        ENDDO
+        DEALLOCATE(tryxcen)
+        DEALLOCATE(tryycen)
+      ENDIF
 
       ALLOCATE(trycheck(ntry))
       trycheck = .FALSE.

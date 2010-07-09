@@ -870,7 +870,7 @@ c              isrf = ABS(obj(iobj)%iside(iside))
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
      .            hsur(nsur) = 301 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = -3 ! 301
+     .            hsur(nsur) = 301 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
@@ -1798,7 +1798,8 @@ c              ldots = 0.90 * ldots + 0.10
 
             ENDIF
 c...        Set colour:
-            SELECTCASE (MOD(ABS(hsur(isur-1)),100))  ! *** HACK *** No idea why the -1 is necessary...
+            SELECTCASE (MOD(ABS(hsur(isur)),100))  ! *** HACK *** No idea why the -1 is necessary...
+c            SELECTCASE (MOD(ABS(hsur(isur-1)),100))  ! *** HACK *** No idea why the -1 is necessary...
               CASE (1)
                 CALL ColSet(SNGL(ldots),0.0,0.0,255)
               CASE (2)
