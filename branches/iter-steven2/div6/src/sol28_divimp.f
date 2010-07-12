@@ -187,14 +187,14 @@ c...    Assign values to nodes:
         node(1:7)%ne = ne(0:6)
         node(1:7)%te = te(0:6)
 c...    Assign other quantites:
-        node(1:7)%jsat(1)   = 0.0
-        node(1:7)%pe        = 0.0
-        node(1:7)%ni(1)     = 0.0
-        node(1:7)%pi(1)     = 0.0
-        node(1:7)%ti(1)     = 0.0
-        node(1:7)%machno    = 0.0
-        node(1:7)%potential = 0.0
-        node(1:7)%efield    = 0.0
+        node(1:7)%jsat(1) = 0.0
+        node(1:7)%pe      = 0.0
+        node(1:7)%ni(1)   = 0.0
+        node(1:7)%pi(1)   = 0.0
+        node(1:7)%ti(1)   = 0.0
+        node(1:7)%machno  = 0.0
+        node(1:7)%epot    = 0.0
+        node(1:7)%efield  = 0.0
 
         id1 = idds(ir,2)
         id7 = idds(ir,1)
@@ -1305,14 +1305,14 @@ c...    Assign values to nodes:
         node(1:7)%ne = ne(0:6)
         node(1:7)%te = te(0:6)
 c...    Assign other quantites:
-        node(1:7)%jsat(1)   = 0.0
-        node(1:7)%pe        = 0.0
-        node(1:7)%ni(1)     = 0.0
-        node(1:7)%pi(1)     = 0.0
-        node(1:7)%ti(1)     = 0.0
-        node(1:7)%machno    = 0.0
-        node(1:7)%potential = 0.0
-        node(1:7)%efield    = 0.0
+        node(1:7)%jsat(1) = 0.0
+        node(1:7)%pe      = 0.0
+        node(1:7)%ni(1)   = 0.0
+        node(1:7)%pi(1)   = 0.0
+        node(1:7)%ti(1)   = 0.0
+        node(1:7)%machno  = 0.0
+        node(1:7)%epot    = 0.0
+        node(1:7)%efield  = 0.0
 
         id1 = idds(ir,2)
         id7 = idds(ir,1)
@@ -3345,11 +3345,11 @@ c
 
       CALL LoadGeneralisedGrid
 
-      irsep  = grid_load%irsep
-      irsep2 = grid_load%irsep2
-      irwall = grid_load%irwall
-      irtrap = grid_load%irtrap
-      nrs    = grid_load%nrs
+      irsep      = grid_load%irsep
+      irsep2     = grid_load%irsep2
+      irwall     = grid_load%irwall
+      irtrap     = grid_load%irtrap
+      nrs        = grid_load%nrs
       nks(1:nrs) = grid_load%nks(1:nrs)
 
       id = 0
@@ -3414,7 +3414,7 @@ c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxrings   = irwall
       indexiradj = 1
 
-      IF (.NOT..TRUE.) THEN
+      IF (.TRUE.) THEN
 c        id = 0
 c        DO ir = 1, nrs
 c          DO ik = 1, nks(ir)        
@@ -3440,7 +3440,7 @@ c        equil = 'Call to STORE from DumpGrid'
 c        WRITE(0,*) 'CALLING STORE'
 c        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
 c        WRITE(0,*) 'FUN WITH MAST GRIDS!'
-        STOP
+c        STOP 'WHAT?'
       ENDIF
 
 c...  Add virtual boundary cells, which will be stripped off later:

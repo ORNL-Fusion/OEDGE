@@ -335,7 +335,7 @@ c...    Strata:
          REAL    :: ti(0:S28_MAXNION)
          REAL    :: ti_exp(0:S28_MAXNION)
          REAL    :: machno
-         REAL    :: potential
+         REAL    :: epot
          REAL    :: efield
          ! Interpolation parameters:
          INTEGER   :: tube_range(2)
@@ -445,6 +445,8 @@ c...    Strata:
         REAL    :: qe(2,s28_MAXNION)
         REAL    :: te_upstream(2,s28_MAXNION)
         REAL    :: Psol(2,s28_MAXNION)
+        REAL    :: efield(2)               ! Electric field strength
+        REAL    :: epot  (2)               ! Electrostatic potential
 !...    Cells:
         INTEGER :: cell_index(2)           ! Index of flux-tube in the CELL array
 !...    Store solution parameters for upstream bc work:
@@ -952,26 +954,27 @@ c     .  opt_ti_kappa(2)
      .  sfor(0:S28_MAXNKS+1),   
      .  sbak(0:S28_MAXNKS+1)             
 
-
       REAL*8, SAVE ::   
 !...    Geometry:
      .  sbnd  (2,S28_MAXNKS),
      .  sdelta(1:S28_MAXNKS),
-     .  area(0:S28_MAXNKS+1),   
-     .  vol (  S28_MAXNKS)  ,   
+     .  area  (0:S28_MAXNKS+1),   
+     .  vol   (  S28_MAXNKS)  ,   
 !...    Plasma fluid quantities:
-     .  isat(0:S28_MAXNKS+1,0:S28_MAXNION),  
-     .  ne  (0:S28_MAXNKS+1),                 
-     .  ni  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  vi  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  pe  (0:S28_MAXNKS+1),                 
-     .  pi  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  te  (0:S28_MAXNKS+1),                 
-     .  ti  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  qe  (0:S28_MAXNKS+1),                 
-     .  qi  (0:S28_MAXNKS+1,0:S28_MAXNION),
-     .  qcond(0:S28_MAXNKS+1),
-     .  qconv(0:S28_MAXNKS+1),
+     .  isat  (0:S28_MAXNKS+1,0:S28_MAXNION),  
+     .  ne    (0:S28_MAXNKS+1),                 
+     .  ni    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  vi    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  pe    (0:S28_MAXNKS+1),                 
+     .  pi    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  te    (0:S28_MAXNKS+1),                 
+     .  ti    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  qe    (0:S28_MAXNKS+1),                 
+     .  qi    (0:S28_MAXNKS+1,0:S28_MAXNION),
+     .  qcond (0:S28_MAXNKS+1),
+     .  qconv (0:S28_MAXNKS+1),
+     .  efield(0:S28_MAXNKS+1),                ! Electric field strength
+     .  epot  (0:S28_MAXNKS+1),                ! Electrostatic potential
 !...
      .  machno(0:S28_MAXNKS+1,0:S28_MAXNION),  
 !...    ...:
@@ -1011,7 +1014,6 @@ c     .  opt_ti_kappa(2)
      .  momint(0:S28_MAXNKS+1,0:S28_MAXNION),   
      .  eneint(0:S28_MAXNKS+1,0:1),
      .  eniint(0:S28_MAXNKS+1,0:S28_MAXNION)
-
 
       END MODULE mod_sol28_solver
 !

@@ -1860,17 +1860,18 @@ c...  Output:
       REAL*8,  PARAMETER :: HI   = 1.0E+20
       REAL*8,  PARAMETER :: DTOL = 1.0D-07
 
-      INTEGER   i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
+      INTEGER   i,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
      .          i4,izone(NUMZONE+1,NUMZONE),newi1,icore(0:2,2),id,
      .          tmpnks,istart,fp,maxik,maxir,outfp,count,
      .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot
       LOGICAL   cont,deleteknot,debug,swap,cell_deletion
-      REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area
+      REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area,b_scale
       REAL*8    rvdp(4),zvdp(4),areadp
-      CHARACTER buffer*1000
+      CHARACTER buffer*1000,cdum*1000
 
       debug = .FALSE.
       outfp  = 0
+      b_scale = 1.0D0
 
 c...  Read the knot data:
 
@@ -1964,8 +1965,13 @@ c       --------------------------------------------------------------
         CASE (GRD_FORMAT_SONNET)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
-          DO WHILE (buffer(4:8).NE.'=====')
-             READ(grdfp,'(A10)',END=98) buffer
+          DOWHILE (buffer(4:8).NE.'=====')
+            READ(grdfp,'(A1000)',END=98) buffer
+            IF (LEN_TRIM(buffer).GT.0) THEN
+              DO i = 1, LEN_TRIM(buffer)-4
+               IF (buffer(i:i+3).EQ.'b_sc') READ(buffer(i+7:),*) b_scale  ! Scale the field ratio 
+              ENDDO
+            ENDIF
           ENDDO
 c...      Scan the file to see how many cells are in the grid:
           nknot = 0
@@ -2021,6 +2027,12 @@ c       --------------------------------------------------------------
         CASE DEFAULT
           CALL ER('LoadGeneralisedGrid','Unknown grid type',*99)
       ENDSELECT
+
+c...  Scale the magnetic field ratio:
+      knot(1:nknot)%bratio = knot(1:nknot)%bratio * b_scale
+      WRITE(logfp,*)
+      WRITE(logfp,*) 'MAGNETIC FIELD PITCH ANGLE SCALING = ',b_scale
+      WRITE(logfp,*)
 
       IF (debug) THEN
         WRITE(outfp,*) 'GRID LOADED'

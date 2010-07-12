@@ -946,7 +946,7 @@ c                ENDIF
      .            osmnode(osmnnode)%pe,
      .            osmnode(osmnnode)%te,
      .            osmnode(osmnnode)%ti(1),       ! Assumption
-     .            osmnode(osmnnode)%potential
+     .            osmnode(osmnnode)%epot
               ELSEIF (node_type.EQ.-1.0.AND.node_data) THEN
                 osmnode(osmnnode)%type = 0.0
                 IF (node_tmp%rad_mode.EQ.6) THEN
