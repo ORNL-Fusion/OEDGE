@@ -1897,7 +1897,7 @@ c      node(1:nnode)%pe        = 0.0
 c      node(1      :mnode)%ti(1) =node(1      :mnode)%te*opt%ti_ratio(LO) 
 c      node(mnode+1:nnode)%ti(1) =node(mnode+1:nnode)%te*opt%ti_ratio(HI) 
       node(1:nnode)%machno    = 0.0
-      node(1:nnode)%potential = 0.0
+      node(1:nnode)%epot      = 0.0
       node(1:nnode)%efield    = 0.0
 
 c      IF (node(1    )%ne   .EQ.0.) node(1    )%ne   =tube(it)%ne(LO)

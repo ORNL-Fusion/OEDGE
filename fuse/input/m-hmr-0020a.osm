@@ -1,0 +1,199 @@
+$'Ref DIV Title'   'milestone H-mode reference (no i/b puff): for OSM geometry files for James, small grid (updated data)'
+$'Run comment    ' 'based on m-hmr-0016a, pedestal data from m-hmr-0010g, target data from m-hmr-0012w'
+$'Equil File Name' 'sonnet_13018_250.sm'
+$
+$ I/O:
+$ ======================================================================
+$
+'{F LOG} General purpose log file  0-nominal 1-               '   2  
+$'{F OSM_LOAD}   Load reference solution                       '  'i-fwp-0200a.raw.osm.gz'  
+$'{F OSM_DIR}    Directory                                     '  '~/divimp/results/'
+$
+$ Control:
+$ ======================================================================
+$
+'{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
+$'{}          Number of OSM internal iterations               '    0   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
+$'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
+'{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
+$'{}          Execute DIVIMP                                  '    0   $ (0)
+$
+$ Geometry:
+$ ======================================================================
+$
+'{GRID LOAD METHOD} 1-load DIVIMP geomtery files 2-use OSM    '   1                      $OPT%F_GRID_LOAD_METHOD
+'{GRID FILE}        File name of the fluid grid to be loaded  '  'sonnet_13018_250.sm'   $ OPT%F_GRID_FILE
+$'{GRID STRIP CELLS} Remove boundary cells from SONNET grid    '   1                     $ OPT%F_GRID_STRIP
+$'{GRID FORMAT}      1-SONNET                                  '   1                     $ OPT%F_GRID_FORMAT
+$'{GRID DEL TUBES}   Delete these tubes after loading grid     '  16                     $ OPT%GRD_TDEL
+$
+'{WALL 2D SEGMENTS} 1.0'
+$ Type   Class   Group   Mat   Temp(K)   Range1,2   Format  File
+$ -------------------------------------------------------------
+  1.0    1       1       'C'   300       -1 -1      1       'main_wall.dat'    $ LINE SEGMENTS IN A FILE
+$  1.0    2       1       'Be'  300       -1 -1      1       'main_wall.dat'   
+$  1.0    1       2       'W'   300       -1 -1      1       'baffles.dat'
+$  1.0    1       3       'C'   300       -1 -1      1       'targets.dat'
+$  1.0    2       4       'W'   300       -1 -1      1       'dome.dat'         
+$
+'{FILE MATERIALS DATA} Data file for table of material properties'  1  'materials.dat'
+$
+$ Plasma solver options:
+$ ======================================================================
+$
+'{SOLPS LOAD SOLUTION}'  0
+$ File             Format  Column  Type   Tag      Z   A   Charge
+  'i1514_ne.txt'   1	   1       1      'n_e'    0   0   -1
+  'i1514_ni.txt'   1	   1       1      'n_D+'   1   2    1
+  'i1514_up.txt'   1	   1       2      'v_D+'   1   2    1
+  'i1514_te.txt'   1	   1       4      'Te_D+'  0   0   -1
+  'i1514_ti.txt'   1	   1       4      'Ti_D+'  1   2    1
+$
+'{SOL APPLICATION}'
+$  Tube1,2     Solver
+   1 999       28 
+$
+$ Particles:         
+$ ----------------------------------------------------------------------
+'{S P_ION}      Ionisation  1-ref 2-pin 3-prescribed           '    2    $ (3)
+'{S P_ION_FRAC}    Scale ionisation to particle sink           ' 100.0   $ (100.0)
+'{S P_REC}      Volume recombination  0-none 1-PIN 2-ADAS      '    0    $ (0)
+'{S P_ANO}      Cross-field conservation  2-half 3-full 4-flow '    3    $ (2)
+$'{} ExB  0-none                                               '    0    $ (0)
+$'{} Diamagnetic  0-none                                       '    0    $ (0)
+$
+$ Momentum:         
+$ ----------------------------------------------------------------------
+'{S M_ANO}      Cross-field conservation  1-ref 2-full         '    2    $ (2)  
+'{S M_ANO_DIST}   parallel distribution  1-power 2-exp 3-mid   '    3    $ (1)
+'{S M_ANO_EXP}    exponent for distribution                    '   2.0   $ (0.0)
+$
+$ Energy:         
+$ ----------------------------------------------------------------------
+'{S TE_ION}       Volume source: neutrals  1-ref 2-PIN         '    0    $ (0)
+'{S TE_ANO}       Anomalous cross-field electron energy flux   '    3    $ (0)
+'{S TE_ANO_PSOL}    magnitude of anomalous flux                '    1    $ (0)
+'{T TE_FLUXLIMIT} Electron conduction energy flux limiter      '    0    $ (0)
+'{T TE_KAPPA}     Kappa value for Te conduction calculation    ' 2000.0  $ (2000.0) approximate! -1.0=calculate... default?
+'{T TE_CONV}      Te convection                                '    0    $ (0)
+'{T TI}           Ti option  0-fixed ratio                     '    0    $ (0)
+'{S TI_ANO}       Anomalous cross-field ion energy flux        '    0    $ (0)
+'{T TI_RATIO}     Ti,Te ratio                                  '   1.00  $ (1.0)   0.01
+'{T TI_KAPPA}     Kappa value for Ti conduction calculation    '  60.0   $ (60.0)    approximate!  -1.0 = calculate
+'{T TI_CONV}      Ti convection                                '    0    $ (0)
+'{T TI_EQUIL}     Ti,Te equilibration                          '    1    $ (0)
+$
+$' {S E_QE}    PIN electron energy source term                  '    0   $ (0)
+$' {S E_QI}    PIN ion energy source term                       '    0   $ (0)
+$
+$ Boundary conditions:  
+$ ----------------------------------------------------------------------
+'{T BC}    Boundary conditions  1-target 2-upstream            '    1    $ (1)
+'{T SUPER} Supersonic flow near targets  0-no 1-yes            '    1    $ (0)
+$' { } Electric field calculation  0-none 1-simple              '    0    $ (0)
+$
+'{089} 1.0 Inner target surface data:'  
+$   R(m)    Te    Ti  Jsat/Ne
+    -1.0   1.0  99.0      0.0  
+  0.8000   5.0   5.0  1.0E-01  
+  2.0000   5.0   5.0  1.0E-01  
+    -1.0  -1.0  -1.0      1.0    UPPER OUTER TARGET (SOL)
+  1.0000   4.5   4.5  2.4E+04    
+     0.0   1.0   1.0  1.0E+02    
+     0.0   0.09  0.09     0.03   
+    -1.0  -3.0  -3.0      1.0    UPPER OUTER TARGET (PFZ)
+    -5.0   1.0   0.0      0.0    
+     0.0   1.0   1.0  2.4E+02    
+     0.0   0.025 0.025    0.005  
+    -1.0  14.0  16.0      1.0    LOWER INNER TARGET (SOL)
+  1.0048  16.1  16.1  8.6E+03    
+     0.0   1.0   1.0  0.1E+02    
+     0.0   0.026 0.026    0.017  
+    -1.0  10.0  13.0      1.0    LOWER INNER TARGET (PFZ)
+   -14.0   1.0   0.0      0.0      (not consistent with lower, outer data?)
+     0.0   1.0   1.0  0.1E+02     
+     0.0   0.015 0.015    0.012   
+$
+'{088} 1.0 Outer target surface data:'     
+$   R(m)    Te    Ti  Jsat/Ne
+    -1.0   1.0  99.0      0.0  
+  0.8000   5.0   5.0  1.0E-01  
+  2.0000   5.0   5.0  1.0E-01  
+    -1.0   5.0   5.0      1.0    UPPER INNER TARGET (SOL, NEAR SEPARATRIX)
+  1.0000  27.2  27.2  1.1E+04      (decay from outer, upper target)
+     0.0   1.0   1.0  0.2E+03   
+     0.0   0.09  0.09     0.03  
+    -1.0  14.0  16.0      1.0    UPPER INNER TARGET (SOL, FAR SOL)
+    -5.0   2.0   0.0      0.0    
+     0.0   1.0   1.0  0.2E+03   
+     0.0   0.01  0.01     0.02  
+    -1.0  -3.0  -3.0      1.0    UPPER INNER TARGET (PFZ)
+    -5.0   2.0   0.0      0.0    
+     0.0   1.0   1.0  0.1E+02   
+     0.0   0.01  0.01     0.006  
+    -1.0   6.0   9.0      1.0    LOWER OUTER TARGET (SOL)
+  1.0050  14.4  14.4  1.3E+04   
+     0.0   1.0   1.0  0.1E+03   
+     0.0   0.10  0.10     0.02   
+    -1.0  10.0  13.0      1.0    LOWER OUTER TARGET (PFZ)
+    -6.0   2.0   0.0      0.0    
+     0.0   1.0   1.0  0.1E+02   
+     0.0   0.05  0.05     0.009   
+$
+'{S74} 4.1 Midstream interpolation data:'
+$               ----------radial-----------   ---parallel---   -------------------plasma-------------------
+$ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M      pe        Te     Ti    V  
+$                                                              (m-3)    (m s-1)  (eV m-3}  (eV)   (eV)  (V)  
+  2.0   13 15   3    3   0.02                 3     0.0  0                                                
+  0.0                          0.600  0.000                    0.0      0.0      0.0       -99.0  0.0   0.0  $ SOL - INNER
+  0.0                          0.000  0.000                    0.0      0.0      0.0       1.0    0.0   0.0  $   
+  2.0   13 15   3    3   0.007                3     0.0  0                                               
+  0.0                          0.600  0.000                    0.0      0.0    -99.0       0.0    0.0   0.0  
+  0.0                          0.000  0.000                    0.0      0.0      0.01      0.0    0.0   0.0  
+  2.0   1   8   5    5   0.0                  3     0.0  0                                                
+  0.0                          0.884  0.000                                                                  $ SOL - OUTER
+  0.0                          1.500  0.000                                                                  $
+  $    Type  psin1,2    Shift  Qnty  Fit paramters
+ -1.0 -1.0  +0.052                                                                                           $   PSIn SHIFT
+ -1.0  1.0  0.00  0.77  +0.00  1.0   3.24580e+19 -8.22863e+18  1.57572e+19      0.00000      0.00000         $   Ne - POLY (CORE)
+ -1.0  3.0  0.77  0.96  +0.00  1.0      0.901761    0.0272006      5.59775    -0.323021    0.0429939         $      - TANH (PED.)
+ -1.0  2.0  0.96  1.50  +0.00  1.0   7.57788e+18     -24.2483  7.96175e+16      0.00000      0.00000         $      - EXP  (SOL)
+ -1.0  1.0  0.00  0.77  +0.00  4.0       1136.50     -1830.30      1768.18     -1108.34      0.00000         $   Te - POLY
+ -1.0  3.0  0.77  0.94  +0.00  4.0      0.910329    0.0257656      182.861     0.344752      2.69148         $      - TANH 
+ -1.0  2.0  0.94  1.50  +0.00  4.0       39.5220     -32.2474     0.996243      0.00000      0.00000         $      - EXP
+  2.0   16 18   3    3   0.02                 3     0.0  0                                                
+  0.0                          0.500  1.000                    0.0      0.0      0.0       -99.0  0.0   0.0  $ PFZ - UPPER
+  0.0                          0.600  1.500                    0.0      0.0      0.0       1.0    0.0   0.0  $   
+  2.0   16 18   3    3   0.007                3     0.0  0                                               
+  0.0                          0.500  1.000                    0.0      0.0    -99.0       0.0    0.0   0.0  
+  0.0                          0.600  1.500                    0.0      0.0      0.01      0.0    0.0   0.0  
+  2.0    9 12   3    3   0.02                 3     0.0  0                                                
+  0.0                          0.800 -1.300                    0.0      0.0      0.0       -99.0  0.0   0.0  $ PFZ - LOWER
+  0.0                          0.600 -1.500                    0.0      0.0      0.0       1.0    0.0   0.0  $   
+  2.0    9 12   3    3   0.007                3     0.0  0                                               
+  0.0                          0.800 -1.300                    0.0      0.0    -99.0       0.0    0.0   0.0  
+  0.0                          0.600 -1.500                    0.0      0.0      0.01      0.0    0.0   0.0  
+$
+$
+$ EIRENE options:
+$ ======================================================================
+$
+'{E NEUTRAL SOURCES} 1.0 Recycling, gas puffing and neutral beam injection:' 
+$Type  NPTS   Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1   2                            Note
+$-----------------------------------------------------------------------------------------------
+ 1.0  -90000  1.0      1.0   4    1    0.0     1                                           'inner target'
+ 1.0  -90000  1.0      1.0   4    1    0.0     2                                           'outer target'
+ 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
+$
+$'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
+$ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
+$-------------------------------------------------------------------------
+$ -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
+$
+$
+$
+'{EXIT}
+$
+$
+$										  
