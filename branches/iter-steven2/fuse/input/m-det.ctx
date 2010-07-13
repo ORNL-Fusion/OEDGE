@@ -2,7 +2,12 @@
 *
 *
 
-{PLOT 2D FLUID GRID}   1  {NODES}  {NO FRAME}
+{PLOT 1D RADIAL PROFILE}  2   
+  {LINE SEGMENT}  0.75 0.0  2.0 0.0   
+  {CASE}          m-det-0000e >g
+  {XRANGE}        0.9 1.1 
+
+{PLOT 2D FLUID GRID}   1  {NODES}  {NO FRAME}  
 {PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
 
 
