@@ -1,4 +1,4 @@
-'Ref DIV Title  ' 'iron, upper port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, incident fraction test'
+'Ref DIV Title  ' 'iron, upper port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, full toroidal band'
 'Run comment    ' 'fully extended grid, based on i-fwp-0114b'
 'Equil File Name' 'iterm_slo.carre.002_fix_2'
 $										 
@@ -168,8 +168,8 @@ $
 '{EIR SURFACE PROPERTIES} 1.0'
 $ Type Ind.  Sec.      ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
 $-----------------------------------------------------------------------------------------------
-  1.1  4      3s4r7    2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-target'
-  2.0  110    3s4r7    2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-wall'
+  1.1  4      1-31     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-target'
+  2.0  110    1-31     2     0      000000  0.0  0.0  1.0    0      -1    Fe    1     0      'upper port-wall'
   1.0  120   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
   2.0  161   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
   1.0  132   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
@@ -521,7 +521,7 @@ $
 $ EIRENE options:
 '*026 PIN selection  0-NIMBUS 1-EIRENE97 2-EIRENE99  '     5     PINCODE     (1)
 '*010 Geometry data  0-standard 1-from DIVIMP        '     3     EIRGEOM
-'*E37 Segments in toroidal geometry approximation    '    40     EIRNTORSEC  (0)
+'*E37 Segments in toroidal geometry approximation    '    32     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
 '*020   Run time (CPU seconds)                       '  3600     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)

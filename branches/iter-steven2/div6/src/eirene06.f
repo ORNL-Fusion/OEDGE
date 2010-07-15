@@ -2201,7 +2201,9 @@ c...         *** MASSIVE HACK : REMAPPING ***
                             tri(i1)%sideindex(5,v1)=surface(i3)%index(1)
                             EXIT
                           ENDDO
-                          WRITE(0,*) '*** SUPERHACK ***',i3
+                          WRITE(0,*) '*** SUPERHACK ***',i3,
+     .                      surface(i3)%index(3),
+     .                      surface(surface(i3)%index(3))%num
                           IF (i3.EQ.nsurface+1)
      .                      CALL ER('ProcessTriangles_06','Massive re'//
      .                              '-mapping hack failed',*99)

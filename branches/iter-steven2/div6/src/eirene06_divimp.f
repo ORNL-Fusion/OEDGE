@@ -653,7 +653,7 @@ c           property specification:
 
             IF (.NOT.CheckIndex(index1,opt_eir%sur_index(i2))) CYCLE
            
-            WRITE(0,*) 'THROUGH:',i1,i2,index1
+c            WRITE(0,*) 'THROUGH:',i1,i2,index1
 
             IF     (surface(i1)%type.EQ.NON_DEFAULT_STANDARD) THEN
               surface(i1)%surtxt = TRIM(surface(i1)%surtxt)//', '//
@@ -837,24 +837,24 @@ c...    Check if a non-default standard surface has already been defined
 c       that matches the above citeria:
         sur3 = 0
 
-        WRITE(0,*) 'sur:',i1
+c        WRITE(0,*) 'sur:',i1
         DO i2 = ntmp+1, nsurface
  
-          WRITE(0,'(I5,11L2)')  i2,
-     .     surface(i2)%iliin   .EQ.iliin, 
-     .     surface(i2)%ilside  .EQ.ilside,
-     .     surface(i2)%ilswch  .EQ.ilswch,
-     .     surface(i2)%ilspt   .EQ.ilspt, 
-     .     surface(i2)%material.EQ.mater, 
-     .     surface(i2)%ewall   .EQ.ewall, 
-     .     surface(i2)%recycf  .EQ.recycf,
-     .     surface(i2)%recyct  .EQ.recyct,
-     .     surface(i2)%isrs    .EQ.isrs,  
-     .     surface(i2)%recycs  .EQ.recycs,
-     .     surface(i2)%recycc  .EQ.recycc
+c          WRITE(0,'(I5,11L2)')  i2,
+c     .     surface(i2)%iliin   .EQ.iliin, 
+c     .     surface(i2)%ilside  .EQ.ilside,
+c     .     surface(i2)%ilswch  .EQ.ilswch,
+c     .     surface(i2)%ilspt   .EQ.ilspt, 
+c     .     surface(i2)%material.EQ.mater, 
+c     .     surface(i2)%ewall   .EQ.ewall, 
+c     .     surface(i2)%recycf  .EQ.recycf,
+c     .     surface(i2)%recyct  .EQ.recyct,
+c     .     surface(i2)%isrs    .EQ.isrs,  
+c     .     surface(i2)%recycs  .EQ.recycs,
+c     .     surface(i2)%recycc  .EQ.recycc
 
-         WRITE(0,*) 
-     .     surface(i2)%ewall,ewall 
+c         WRITE(0,*) 
+c     .     surface(i2)%ewall,ewall 
 
           IF (surface(i2)%iliin   .EQ.iliin .AND.
      .        surface(i2)%ilside  .EQ.ilside.AND.
