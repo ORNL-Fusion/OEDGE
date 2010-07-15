@@ -1560,7 +1560,7 @@ c      MAX3D = MAX3D985
       WRITE(0,*) 'HERE IN 985'
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 1000000 
+      MAX3D = 2600000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 

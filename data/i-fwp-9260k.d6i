@@ -1,4 +1,4 @@
-'Ref DIV Title  ' 'iron, upper port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, incident fraction test'
+'Ref DIV Title  ' 'iron, midplane port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, incident fraction test, full torus' 
 'Run comment    ' 'fully extended grid, based on i-fwp-0114b'
 'Equil File Name' 'iterm_slo.carre.002_fix_2'
 $										 
@@ -145,14 +145,20 @@ $ 1.1  -90000  1.0      1.0   4    1    0.0     2       111  112                
 $ 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
  1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
  1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
- 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port, default'
- 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       121  128                            'midplane port upper, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       121  128                            'midplane port upper'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       118  120                            'midplane port lower, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       118  120                            'midplane port lower'
+ 1.1   2      -999.0   1.0   4    1    0.0     1       128  131                            'midplane port upper/lower, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     1       128  131                            'midplane port upper/lower'
  2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
 $                                               COS MAX   POSX   Y     Z    VECX  Y     Z         
 $                                               -------------------------------------------      
 $ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 7.62  -1.57  0.0  -1.0  0.65  0.0  'conformal segment diagnostic puff'  
 $ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 8.30   0.88  0.0  -1.0 -0.20  0.0  'conformal segment diagnostic puff'  
-$ 3.0  -90000  1.00E+0  1.0   1    1    1000.0   1.0   0.0 6.10   4.15  0.0  -1.0  -1.0  0.0  'upper port puff'  
+$ 3.0  -90000  1.00E+0  1.0   1    1    1000.0   1.0   0.0 6.10   4.15  0.0  -1.0  -1.0  0.0  'upper port diagnostic puff'  
+$ 3.0  -90000  1.00E+0  1.0   1    1    1000.0   1.0   0.0 8.36   0.50  0.0  -1.0   0.0  0.0  'midplane port diagnostic puff'  
+$ 3.0  -90000  1.04E+3  1.0   2    1    0.038    1.0  90.0 6.15   4.2   0.0   0.9   1.0  0.0  'upper port puff'  (i1537)
  3.0  -90000  1.00E+0  1.0   2    1    0.038    1.0  90.0 7.651  2.795 1.E-4  1.0   1.0   0.0  'sector 12 puff'  (i1537)
 $ 3.0  -90000  1.00E+0  1.0   1    1    100.0    1.0   0.0 7.65  -1.65  0.0  -1.0   0.0  0.0  'horizontal diagnostic puff' 
 $
@@ -165,15 +171,20 @@ $-------------------------------------------------------------------------
  -2     12 12                                                               $ 
 $
 $
+$'{EIR SURFACE PROPERTIES}'
 '{EIR SURFACE PROPERTIES} 1.0'
-$ Type Ind.  Sec.      ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
-$-----------------------------------------------------------------------------------------------
-  1.1  4      3s4r7    2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-target'
-  2.0  110    3s4r7    2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-wall'
-  1.0  120   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
-  2.0  161   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
-  1.0  132   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
-  2.0  201   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, below midplane'
+$ Type Ind.     Sec.     ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
+$-------------------------------------------------------------------------------------------------
+$  1.1  4,6,8    1        2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
+$  2.0  161      1        2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
+
+  1.1  4,6,8     1-39       2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
+  2.0  153-179   1-39       2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
+
+  1.0  120      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
+$  2.0  161      -1       1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
+  1.0  132      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
+$  2.0  201      -1       1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, below midplane'
 $
 $
 $ Type  1.0  filter
@@ -183,10 +194,9 @@ $       4.0  slice assembly  (compilation of slices)
 $       5.0  morphing
 $
 '{EIR TETRAHEDRON GRID} 1.0 Parameters for setting up the 3D EIRENE mesh:'
-$ Type   X1   Y1     X2   Y2              
+$ Type   X1   Y1     X2    Y2              
 $----------------------------------------------------------------------------------
-  1.0    0.0  10.0   10.0 3.0
-  1.0    5.0  10.0   10.0 1.0
+  1.0    6.0  4.0    9.0  -4.0
 $
 $
 '{999}'
@@ -538,7 +548,7 @@ $ EIRENE options:
 '*E39 TRIM database in EIRENE (0-off, 1-on)          '     1     EIRTRIM     (0)
 '*E21 Range for EIRENE particle track output         '   1   100
 '*E22 Toroidal circumference                        ' -3.1415927 EIRZAA      (-1.0)
-'*E24 Toroidal fraction applied in DIVIMP           '   0.444    EIRTORFRAC  ( 1.0)
+'*E24 Toroidal fraction applied in DIVIMP           '   0.444 0.028    EIRTORFRAC  ( 1.0)
 '*E35 Number of toroidal sections                    '     1     EIRNSECTION (1)
 '*E25 Global EIRENE source multiplication factor     '   1.0     EIRSRCMUL   ( 1.0)
 $
@@ -561,9 +571,11 @@ $ 106.0   2.650 -0.900    0.0    0.04   0.0   0.033
 $
 '*076 2.20 Surface properties:'
 ' ' '     (dummy line) '
-' Type Index ILIIN ILSIDE ILSWCH    TR1  TR2  RECYCT     Sec'   6
-   1.1   3.0   1.0    0.0 000000.0  0.0  0.0     1.0    -2.0  UPPER PORT - TARGET SEGMENT(S)
-   2.0 110.0   1.0    0.0 000000.0  0.0  0.0     1.0    -2.0             - WALL   SEGMENT(S)
+' Type Index ILIIN ILSIDE ILSWCH    TR1  TR2  RECYCT     Sec'   8
+   1.1   3.0   1.0    0.0 000000.0  0.0  0.0     1.0    -2.0  MIDPLANE PORT - TARGET SEGMENT(S)
+   0.0   5.0   0.0    0.0 000000.0  0.0  0.0     0.0     0.0  
+   2.0 153.0   1.0    0.0 000000.0  0.0  0.0     1.0    -2.0                - WALL   SEGMENT(S)
+   0.0 179.0   0.0    0.0 000000.0  0.0  0.0     0.0     0.0
    1.0 120.0  -1.0    0.0 000000.0  0.0  0.0     1.0  -161.0  NASTY CONFORMAL WALL SEGMENT(s) - ABOVE MIDPLANE
    2.0 161.0   1.0    0.0 000000.0  0.0  0.0     1.0     0.0  
    1.0 132.0  -1.0    0.0 000000.0  0.0  0.0     1.0  -201.0                                  - BELOW MIDPLANE
@@ -804,7 +816,7 @@ $
 '    Atomic number of impurity ions     Zi           '     26  CION
 '    Characteristic energy Ebd          Ebd   (eV)   '    0.0         CHECK
 '    Z effective (self)                 Zeff         '      1
-'    Initial temperature                Tem1  (eV)   '    6.5  CTEM1
+'    Initial temperature                Tem1  (eV)   '   15.0  CTEM1
 '    Initial temperature (2)            Tem2  (eV)   '    0.0
 '    Initial R position of impurity     R0    (m)    '    2.6500      CHECK
 '    Initial Z position of impurity     Z0    (m)    '    1.6226      CHECK
@@ -928,10 +940,9 @@ $ which is something to keep in mind since you can then never
 $ 
 $
 ' ' 'Set of Yield Modifiers for Primary, Secondary neutrals'      NYFMS, CYFMS
-'      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  3
+'      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  2
          0.0   0.0    0.0     0.0    0.0    0.0    0.0     1.0    DEFAULT
-       110.0 110.0    0.0     0.0    0.0    1.0    0.0     1.0    UPPER PORT - WALL   SEGMENT(S)
-       111.0 112.0    1.0     0.0    0.0    0.0    0.0     1.0               - TARGET SEGMENT(S)
+       153.0 179.0    1.0     0.0    0.0    1.0    0.0     1.0    MIDPLANE PORT
 $       161.0 161.0    0.0     0.0    0.0    1.0    0.0     1.0    CONFORMAL WALL SEGMENTS
 $       201.0 201.0    0.0     0.0    0.0    1.0    0.0     1.0    
 $

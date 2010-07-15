@@ -854,8 +854,12 @@ c     .            CYCLE
 c              ENDIF
  
               isrf = ABS(isrf)
-              IF (srf(isrf)%index(IND_SURFACE).NE.4.AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.22) CYCLE
+              IF (srf(isrf)%index(IND_SURFACE).NE.4.AND.     ! Midplane port
+     .            srf(isrf)%index(IND_SURFACE).NE.6.AND. 
+     .            srf(isrf)%index(IND_SURFACE).NE.8.AND. 
+     .            srf(isrf)%index(IND_SURFACE).NE.26) CYCLE
+c              IF (srf(isrf)%index(IND_SURFACE).NE.4.AND.     ! Upper port
+c     .            srf(isrf)%index(IND_SURFACE).NE.22) CYCLE
 
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
