@@ -1,4 +1,4 @@
-'Ref DIV Title  ' 'iron, midplane port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, incident fraction test, full torus' 
+'Ref DIV Title  ' 'iron, midplane port, extended grid, SOLPS i1537 + SOL28, Dperp= 1.0, vpinch=0.0E0, sector 12 puff, toroidally continuous, toroidally continuous'
 'Run comment    ' 'fully extended grid, based on i-fwp-0114b'
 'Equil File Name' 'iterm_slo.carre.002_fix_2'
 $										 
@@ -12,7 +12,7 @@ $ ======================================================================
 $
 '{F LOG} General purpose log file  0-nominal 1-               '   2  
 '{F OSM_LOAD}   Load reference solution    '  'i-fwp-4200b.raw.osm.gz'  $ Indent 'cause of 72 character limit trouble IN DIVIMP...
-'{F OSM_DIR}    Directory                  '  '~/divimp/results/i-fwp/i-fwp-4/'
+'{F OSM_DIR}    Directory                  '  '~/divimp/results/i-fwp/i-fwp-4/i-fwp/i-fwp-4/'
 $
 $ Control:
 $ ======================================================================
@@ -146,7 +146,10 @@ $ 2.0  -90000  1.0      1.0   4    1    0.0                                     
  1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
  1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
  1.1   2      -999.0   1.0   4    1    0.0     2       121  128                            'midplane port upper, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       121  128                            'midplane port upper, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       118  120                            'midplane port lower, default'
  1.1   2      -999.0   1.0   4    1    0.0     2       121  128                            'midplane port upper'
+ 1.1   2      -999.0   1.0   4    1    0.0     1       128  131                            'midplane port upper/lower, default'
  1.1   2      -999.0   1.0   4    1    0.0     2       118  120                            'midplane port lower, default'
  1.1   2      -999.0   1.0   4    1    0.0     2       118  120                            'midplane port lower'
  1.1   2      -999.0   1.0   4    1    0.0     1       128  131                            'midplane port upper/lower, default'
@@ -168,23 +171,13 @@ $ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
 $-------------------------------------------------------------------------
  -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
  -2     8  8                                                                $ DELETE PROBLEMATIC TANGENTIAL SURFACE
- -2     12 12                                                               $ 
-$
-$
-$'{EIR SURFACE PROPERTIES}'
 '{EIR SURFACE PROPERTIES} 1.0'
 $ Type Ind.     Sec.     ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
 $-------------------------------------------------------------------------------------------------
-$  1.1  4,6,8    1        2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
-$  2.0  161      1        2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
-
-  1.1  4,6,8     1-39       2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
-  2.0  153-179   1-39       2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
-
+  1.1  4,6,8    1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
+  2.0  153-179  1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
   1.0  120      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
-$  2.0  161      -1       1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
   1.0  132      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
-$  2.0  201      -1       1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, below midplane'
 $
 $
 $ Type  1.0  filter
@@ -197,6 +190,26 @@ $
 $ Type   X1   Y1     X2    Y2              
 $----------------------------------------------------------------------------------
   1.0    6.0  4.0    9.0  -4.0
+$
+$
+$-------------------------------------------------------------------------------------------------
+  1.1  4,6,8    1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-target'
+  2.0  153-179  1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'outer midplane-wall'
+  1.0  120      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
+  1.0  132      -1      -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
+$
+$
+$ Type  1.0  filter
+$       2.0  sector template (compilation of zones)
+$       3.0  slice template  (compilation of sectors)
+$       4.0  slice assembly  (compilation of slices)
+$       5.0  morphing
+$
+'{EIR TETRAHEDRON GRID} 1.0 Parameters for setting up the 3D EIRENE mesh:'
+$ Type   X1   Y1     X2    Y2              
+$----------------------------------------------------------------------------------
+  1.0    6.0  4.0    9.0  -4.0
+$
 $
 $
 '{999}'
@@ -548,7 +561,7 @@ $ EIRENE options:
 '*E39 TRIM database in EIRENE (0-off, 1-on)          '     1     EIRTRIM     (0)
 '*E21 Range for EIRENE particle track output         '   1   100
 '*E22 Toroidal circumference                        ' -3.1415927 EIRZAA      (-1.0)
-'*E24 Toroidal fraction applied in DIVIMP           '   0.444 0.028    EIRTORFRAC  ( 1.0)
+'*E24 Toroidal fraction applied in DIVIMP           '   0.444    EIRTORFRAC  ( 1.0)
 '*E35 Number of toroidal sections                    '     1     EIRNSECTION (1)
 '*E25 Global EIRENE source multiplication factor     '   1.0     EIRSRCMUL   ( 1.0)
 $
