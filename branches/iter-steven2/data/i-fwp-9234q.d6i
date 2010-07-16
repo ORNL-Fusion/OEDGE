@@ -145,7 +145,6 @@ $ LFS - PFZ - NEXT
   2.0  127 127  3    6   0.01                 5     0.0  2                                                 
   0.0                          8.000  0.700                    -99.0    0.0      0.0       -99.0  -99.0  0.0  $ SOL - LFS - MAIN
   0.0                          9.000  0.700                    1.0E+15  0.0      0.0       -0.99  -0.99  0.0  $   
- 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port, default'
 $ LFS - PFZ - NEXT
   2.0  128 130  3    6   0.01                 5     0.0  2                                                 
   0.0                          7.700 -0.300                    -99.0    0.0      0.0       -99.0  -99.0  0.0  $ SOL - LFS - MAIN
@@ -164,6 +163,50 @@ $ LFS - PFZ - LAST
   0.0                          6.300 -3.250                    1.0E+15  0.0      0.0       -0.99  -0.99  0.0  $   
 $ HFS												 
   2.0   85  98  3    6   0.02                 5     0.0  2                                                 
+  0.0                          4.300  3.500                    -99.0    0.0      0.0       -99.0  -99.0  0.0  $ SOL - HFS - UPPER
+  0.0                          4.000  3.500                    1.0E+15  0.0      0.0       -0.99  -0.99  0.0  $   
+  2.0   42  80  3    6   0.02                 5     0.0  2                                                 
+  0.0                          4.500 -2.000                    -99.0    0.0      0.0       -99.0  -99.0  0.0  $ SOL - HFS - LOWER
+  0.0                          3.500 -2.000                    1.0E+15  0.0      0.0       -0.99  -0.99  0.0  $   
+$
+$
+$ Eirene options:
+$ ======================================================================
+$
+'{E NEUTRAL SOURCES} 1.0 Recycling, gas puffing and neutral beam injection:' 
+$Type  NPTS   Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1   2                            Note
+$-----------------------------------------------------------------------------------------------
+$ 1.0  -90000  1.0      1.0   4    1    0.0     1                                           'inner target'
+$ 1.0  -90000  1.0      1.0   4    1    0.0     2                                           'outer target'
+$ 1.1  -90000  1.0      1.0   4    1    0.0     2       111  112                            'upper port'
+$ 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
+ 1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
+ 1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port, default'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port'
+ 2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
+$ 1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
+$ 1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
+$ 1.1   -90000  1.0     1.0   4    1    0.0     1        43  142                            'inner target, main chamber'
+$ 1.1   -90000  1.0     1.0   4    1    0.0     2        43  136                            'outer target, main chamber'
+$ 1.1   -90000  1.0     1.0   4    1    0.0     2       111  112                            'upper port'
+$ 2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
+$                                               COS MAX   POSX   Y     Z    VECX  Y     Z         
+$                                               -------------------------------------------      
+$ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 7.62  -1.57  0.0  -1.0  0.65  0.0  'conformal segment diagnostic puff'  
+$ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 8.30   0.88  0.0  -1.0 -0.20  0.0  'conformal segment diagnostic puff'  
+$ 3.0  -90000  1.00E+0  1.0   1    1    1000.0   1.0   0.0 6.10   4.15  0.0  -1.0  -1.0  0.0  'upper port puff'  
+ 3.0  -90000  1.00E+0  1.0   2    1    0.038    1.0  90.0 4.911  4.680 1.E-4  0.0   1.0   0.0  'crown puff'  (i1514)
+$ 3.0  -90000  1.00E+0  1.0   1    1    100.0    1.0   0.0 7.65  -1.65  0.0  -1.0   0.0  0.0  'horizontal diagnostic puff' 
+$
+$
+'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
+$ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
+$-------------------------------------------------------------------------
+ -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
+ -2     8  8                                                                $ DELETE PROBLEMATIC TANGENTIAL SURFACE
+ -2     12 12                                                               $ 
+$
 $
 '{EIR SURFACE PROPERTIES} 1.0'
 $ Type Ind.  Sec.      ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
@@ -188,48 +231,6 @@ $-------------------------------------------------------------------------------
   1.0    0.0  10.0   10.0 3.0
   1.0    5.0  10.0   10.0 1.0
 $
-$
-$ Eirene options:
-$ ======================================================================
-$
-'{E NEUTRAL SOURCES} 1.0 Recycling, gas puffing and neutral beam injection:' 
-$Type  NPTS   Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1   2                            Note
-$-----------------------------------------------------------------------------------------------
-$ 1.0  -90000  1.0      1.0   4    1    0.0     1                                           'inner target'
-$ 1.0  -90000  1.0      1.0   4    1    0.0     2                                           'outer target'
-$ 1.1  -90000  1.0      1.0   4    1    0.0     2       111  112                            'upper port'
-$ 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
- 1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
- 1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
- 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port'
- 2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
-$ 1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
-$ 1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
-$ 1.1   -90000  1.0     1.0   4    1    0.0     1        43  142                            'inner target, main chamber'
-$ 1.1   -90000  1.0     1.0   4    1    0.0     2        43  136                            'outer target, main chamber'
-$ 1.1   -90000  1.0     1.0   4    1    0.0     2       111  112                            'upper port'
-$ 2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
-$                                               COS MAX   POSX   Y     Z    VECX  Y     Z         
-$                                               -------------------------------------------      
-$ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 7.62  -1.57  0.0  -1.0  0.65  0.0  'conformal segment diagnostic puff'  
-$ 3.0   5      1.00E+1  1.0   1    1    1000.0   1.0 180.0 8.30   0.88  0.0  -1.0 -0.20  0.0  'conformal segment diagnostic puff'  
-$ 3.0  -90000  1.00E+0  1.0   1    1    1000.0   1.0   0.0 6.10   4.15  0.0  -1.0  -1.0  0.0  'upper port puff'  
- 3.0  -90000  7.52E+3  1.0   2    1    0.038    1.0  90.0 4.911  4.680 0.0  0.0   1.0   0.0  'crown puff'  (i1514)
-$ 3.0  -90000  1.00E+0  1.0   1    1    100.0    1.0   0.0 7.65  -1.65  0.0  -1.0   0.0  0.0  'horizontal diagnostic puff' 
-$
-$
-'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
-$ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
-$-------------------------------------------------------------------------
- -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
- -2     8  8                                                                $ DELETE PROBLEMATIC TANGENTIAL SURFACE
- -2     12 12                                                               $ 
-$
-$
-$'{EIR SURFACE PROPERTIES}'
-$ Type Index  Seg.  ILIIN ILSIDE ILSWCH    TR1  TR2  RECYCT  T(K)  MAT.  COVER. REMAP ILSPT
-$-----------------------------------------------------------------------------------------------
-$  1.1   3.0   0.0    1.0    0.0 000000.0  0.0  0.0    -1.0  -1.0    -1     0.5  -1   -1     'upper port'
 $
 $
 '{999}'
