@@ -15,8 +15,8 @@
 {STRING} crown_scale_factor           0.14
 {STRING} upper_port_scale_factor      0.14
 
-{STRING} midplane_MCR_scale_factor    0.28
-{STRING} BM12_midplane_scale_factor   0.28
+{STRING} midplane_MCR_scale_factor    0.04 $ 28
+{STRING} BM12_midplane_scale_factor   0.20 $ 28
 
 {STRING} value_yrange          1.0E-08 1.0E-02
 {STRING} value_limit           0.0008
@@ -113,79 +113,79 @@ $ ======================================================================
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-1223b i-fwp-3223d list_horizontal_b sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-1224b i-fwp-3224d list_horizontal_b sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-1225b i-fwp-3225d list_horizontal_b sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-1213b i-fwp-3213d list_horizontal_b sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-1214b i-fwp-3214d list_horizontal_b sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-1215b i-fwp-3215d list_horizontal_b sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-1223b i-fwp-3223d list_horizontal_d sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-1224b i-fwp-3224d list_horizontal_d sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-1225b i-fwp-3225d list_horizontal_d sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-1213b i-fwp-3213d list_horizontal_d sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-1214b i-fwp-3214d list_horizontal_d sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-1215b i-fwp-3215d list_horizontal_d sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xi : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xi : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3i {CASE} i-fwp-1223b i-fwp-3223i list_horizontal_i sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4i {CASE} i-fwp-1224b i-fwp-3224i list_horizontal_i sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5i {CASE} i-fwp-1225b i-fwp-3225i list_horizontal_i sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3i {CASE} i-fwp-1213b i-fwp-3213i list_horizontal_i sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4i {CASE} i-fwp-1214b i-fwp-3214i list_horizontal_i sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5i {CASE} i-fwp-1215b i-fwp-3215i list_horizontal_i sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xe : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xe : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3e {CASE} i-fwp-1223b i-fwp-3223e list_horizontal_e sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4e {CASE} i-fwp-1224b i-fwp-3224e list_horizontal_e sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5e {CASE} i-fwp-1225b i-fwp-3225e list_horizontal_e sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3e {CASE} i-fwp-1213b i-fwp-3213e list_horizontal_e sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4e {CASE} i-fwp-1214b i-fwp-3214e list_horizontal_e sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5e {CASE} i-fwp-1215b i-fwp-3215e list_horizontal_e sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xg : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xg : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3g {CASE} i-fwp-1223b i-fwp-3223g list_horizontal_g sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4g {CASE} i-fwp-1224b i-fwp-3224g list_horizontal_g sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5g {CASE} i-fwp-1225b i-fwp-3225g list_horizontal_g sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3g {CASE} i-fwp-1213b i-fwp-3213g list_horizontal_g sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4g {CASE} i-fwp-1214b i-fwp-3214g list_horizontal_g sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5g {CASE} i-fwp-1215b i-fwp-3215g list_horizontal_g sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xf : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xf : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3f {CASE} i-fwp-1223b i-fwp-3223f list_horizontal_f sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4f {CASE} i-fwp-1224b i-fwp-3224f list_horizontal_f sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5f {CASE} i-fwp-1225b i-fwp-3225f list_horizontal_f sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3f {CASE} i-fwp-1213b i-fwp-3213f list_horizontal_f sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4f {CASE} i-fwp-1214b i-fwp-3214f list_horizontal_f sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5f {CASE} i-fwp-1215b i-fwp-3215f list_horizontal_f sub xxx 742
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d BM12 PUFF, SCALE FACTOR BM12_upper_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xh : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  121xb : 321xh : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} BM12_upper_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3h {CASE} i-fwp-1223b i-fwp-3223h list_horizontal_h sub xxx 722
-  {SET} Dperp = 0.1 m2 s-1   4h {CASE} i-fwp-1224b i-fwp-3224h list_horizontal_h sub xxx 732
-  {SET} Dperp =10.0 m2 s-1   5h {CASE} i-fwp-1225b i-fwp-3225h list_horizontal_h sub xxx 742
+  {SET} Dperp = 1.0 m2 s-1   3h {CASE} i-fwp-1213b i-fwp-3213h list_horizontal_h sub xxx 722
+  {SET} Dperp = 0.1 m2 s-1   4h {CASE} i-fwp-1214b i-fwp-3214h list_horizontal_h sub xxx 732
+  {SET} Dperp =10.0 m2 s-1   5h {CASE} i-fwp-1215b i-fwp-3215h list_horizontal_h sub xxx 742
 
 $ ======================================================================
 $ UPPER PORT, CROWN PUFF
@@ -194,79 +194,79 @@ $ ======================================================================
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-1223b i-fwp-3223d list_horizontal_b sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-1224b i-fwp-3224d list_horizontal_b sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-1225b i-fwp-3225d list_horizontal_b sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_b sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_b sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_b sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-1223b i-fwp-3223d list_horizontal_d sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-1224b i-fwp-3224d list_horizontal_d sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-1225b i-fwp-3225d list_horizontal_d sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_d sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_d sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-1999b i-fwp-3999d list_horizontal_d sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xi : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xi : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3i {CASE} i-fwp-1223b i-fwp-3223i list_horizontal_i sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4i {CASE} i-fwp-1224b i-fwp-3224i list_horizontal_i sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5i {CASE} i-fwp-1225b i-fwp-3225i list_horizontal_i sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3i {CASE} i-fwp-1999b i-fwp-3999i list_horizontal_i sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4i {CASE} i-fwp-1999b i-fwp-3999i list_horizontal_i sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5i {CASE} i-fwp-1999b i-fwp-3999i list_horizontal_i sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xe : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xe : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3e {CASE} i-fwp-1223b i-fwp-3223e list_horizontal_e sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4e {CASE} i-fwp-1224b i-fwp-3224e list_horizontal_e sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5e {CASE} i-fwp-1225b i-fwp-3225e list_horizontal_e sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3e {CASE} i-fwp-1999b i-fwp-3999e list_horizontal_e sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4e {CASE} i-fwp-1999b i-fwp-3999e list_horizontal_e sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5e {CASE} i-fwp-1999b i-fwp-3999e list_horizontal_e sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xg : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xg : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3g {CASE} i-fwp-1223b i-fwp-3223g list_horizontal_g sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4g {CASE} i-fwp-1224b i-fwp-3224g list_horizontal_g sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5g {CASE} i-fwp-1225b i-fwp-3225g list_horizontal_g sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3g {CASE} i-fwp-1999b i-fwp-3999g list_horizontal_g sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4g {CASE} i-fwp-1999b i-fwp-3999g list_horizontal_g sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5g {CASE} i-fwp-1999b i-fwp-3999g list_horizontal_g sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xf : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xf : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3f {CASE} i-fwp-1223b i-fwp-3223f list_horizontal_f sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4f {CASE} i-fwp-1224b i-fwp-3224f list_horizontal_f sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5f {CASE} i-fwp-1225b i-fwp-3225f list_horizontal_f sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3f {CASE} i-fwp-1999b i-fwp-3999f list_horizontal_f sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4f {CASE} i-fwp-1999b i-fwp-3999f list_horizontal_f sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5f {CASE} i-fwp-1999b i-fwp-3999f list_horizontal_f sub xxx 743
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d CROWN PUFF, SCALE FACTOR crown_scale_factor
   {NOTES}    disclaimer
-  {XLABELS}  123xb : 323xh : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {XLABELS}  999xb : 999xh : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
   {YRANGE}   value_yrange
   {YLIMIT}   value_limit
   {SCALE FACTOR} crown_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3h {CASE} i-fwp-1223b i-fwp-3223h list_horizontal_h sub xxx 723
-  {SET} Dperp = 0.1 m2 s-1   4h {CASE} i-fwp-1224b i-fwp-3224h list_horizontal_h sub xxx 733
-  {SET} Dperp =10.0 m2 s-1   5h {CASE} i-fwp-1225b i-fwp-3225h list_horizontal_h sub xxx 743
+  {SET} Dperp = 1.0 m2 s-1   3h {CASE} i-fwp-1999b i-fwp-3999h list_horizontal_h sub xxx 723
+  {SET} Dperp = 0.1 m2 s-1   4h {CASE} i-fwp-1999b i-fwp-3999h list_horizontal_h sub xxx 733
+  {SET} Dperp =10.0 m2 s-1   5h {CASE} i-fwp-1999b i-fwp-3999h list_horizontal_h sub xxx 743
 
 $ ======================================================================
 $ UPPER PORT, PUFF AT PORT
