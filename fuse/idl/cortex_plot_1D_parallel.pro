@@ -2,8 +2,6 @@
 ; *** ADD {SHOW GRID} OPTION ***
 ; 
 
-
-
 ;
 ; ======================================================================
 ;
@@ -121,9 +119,17 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
        ytitle   = ['n (m-3)','Mach no.','p (?)','Te,i','particles (m-3 s-1)',  $
                   'parallel flux','momentum (?)','pressure (?)',  $
                   'D_a (ph m-3 s-1)','D_g (ph m-3 s-1)','D_a / D_g','12']
-       labels   = ['n_e:n_D:n_D2','M','p:p_e:p_i','T_e:T_i',  $
-                  'solver_net:solver_ion:solver_rec:solver_fit:1/eirene_ion (dashed):2/eirene_rec (dashed)',  $
-                  'solver','fit','solver','eirene','eirene','eirene']
+       labels   = ['n_e:n_D:n_D2',  $
+                   'M',             $
+                   'p:p_e:p_i',     $ 
+                   'T_e:T_i',       $
+                  'solver_net:solver_ion:solver_rec:solver_usr:solver_fit:1/eirene_ion (dashed):2/eirene_rec (dashed)',  $
+                  'solver',         $
+                  'solver_net:solver_vol:solver_usr:solver_fit',    $
+                  'solver',         $
+                  'eirene',         $
+                  'eirene',         $
+                  'eirene']
        END
 ;   --------------------------------------------------------------------
     999: BEGIN
@@ -212,7 +218,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
           j = WHERE(val.plasma.tube EQ tube)
           k = WHERE(val.source.tube EQ tube)
           l = WHERE(val.eirene.tube EQ tube)
-          ntrace = [3, 1, 3, 2, 7, 1, 1, 1, 1, 1, 1]  ; Number of data lines on each plot
+          ntrace = [3, 1, 3, 2, 7, 1, 4, 1, 1, 1, 1]  ; Number of data lines on each plot
           CASE iplot OF
             1 : xdata = [val.target.s[i,0],val.plasma.s[j],val.target.s[i,1]]
             2 : xdata = [val.target.s[i,0],val.plasma.s[j],val.target.s[i,1]]
@@ -249,13 +255,18 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                 ydata[*,0] = val.source.par_net[k]
                 ydata[*,1] = val.source.par_ion[k]
                 ydata[*,2] = val.source.par_rec[k]
-                ydata[*,3] = val.source.par_ano[k]
-                ydata[*,4] = val.source.par_usr[k]
+                ydata[*,3] = val.source.par_usr[k]
+                ydata[*,4] = val.source.par_ano[k]
                 ydata[*,5] = val.eirene.ion_net[l]
                 ydata[*,6] = val.eirene.rec_net[l]
                 END
             6 : ydata[*,0] = val.plasma.dens[j] * val.plasma.vi[j]  
-            7 : ydata[*,0] = val.source.mom_net[k]
+            7 : BEGIN
+                ydata[*,0] = val.source.mom_net[k]
+                ydata[*,1] = val.source.mom_vol[k]
+                ydata[*,2] = val.source.mom_usr[k]
+                ydata[*,3] = val.source.mom_ano[k]
+                END
             8 : ydata[*,0] = val.plasma.pe  [j] + val.plasma.pi[j]
             9 : ydata[*,0] = val.eirene.balmer_alpha[k]
             10: ydata[*,0] = val.eirene.balmer_gamma[k]
@@ -400,6 +411,11 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                END
             6: BEGIN
                IF (plot.nodes) THEN cortex_PlotNodes, plot_array, idata, 'jsat', tube, 'Black'
+               END
+            7: BEGIN
+               OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1])
+               OPLOT, val.x, val.y[*,2], COLOR=TrueColor(colors[2])
+               OPLOT, val.x, val.y[*,3], COLOR=TrueColor(colors[3])
                END
             ELSE:
           ENDCASE

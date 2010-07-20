@@ -382,8 +382,11 @@ c
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1,idum(5)
+      LOGICAL   first_pass
       CHARACTER cdum*1024,buffer_array*256(100)
       REAL      stratum_type,version,rdum(7)
+
+      first_pass = .TRUE.
 
       DO i1 = 1, 100
         WRITE(buffer_array(i1),'(256X)')
@@ -423,8 +426,11 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
           ENDDO
 c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
-          opt_eir%nstrata = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            IF (first_pass) THEN
+              opt_eir%nstrata = 0
+              first_pass = .FALSE.
+            ENDIF
             opt_eir%nstrata = opt_eir%nstrata + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
             READ(buffer,*) 
@@ -1117,7 +1123,6 @@ c...  Filament options:
       opt_fil%length2 = -99.0
 
 c...  Eirene options:
-      opt_eir%nstrata = 0
 
 c      opt_eir%nvoid = 0
       opt_eir%nvoid = 1
@@ -1133,45 +1138,40 @@ c      opt_eir%nvoid = 0
       opt_eir%void_te  (  1) =  0.0
       opt_eir%void_ti  (  1) =  0.0
 
-
       opt_eir%nstrata = 3
-      opt_eir%type         (1) = 1
+      opt_eir%type         (1) = 1.0
       opt_eir%npts         (1) = -90000
       opt_eir%flux         (1) = 1.0
       opt_eir%flux_fraction(1) = 1.0
-      opt_eir%species      (1) = 
-      opt_eir%species_index(1) =
-      opt_eir%sorene       (1) =
+      opt_eir%species      (1) = 4
+      opt_eir%species_index(1) = 1
+      opt_eir%sorene       (1) = 0.0
+      opt_eir%target       (1) = 1
+      opt_eir%txtsou       (1) = 'default inner target'
+      opt_eir%range_tube (1,1) = 1
+      opt_eir%range_tube (2,1) = 99999
 
-            IF     (opt_eir%type(opt_eir%nstrata).EQ.1.0) THEN  ! Target surface flux
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%target(opt_eir%nstrata),
-     .          opt_eir%txtsou(opt_eir%nstrata)
-              opt_eir%range_tube(1,opt_eir%nstrata) = 1
-              opt_eir%range_tube(2,opt_eir%nstrata) = 99999
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.1.1) THEN  ! Target surface flux
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%target        (opt_eir%nstrata),
-     .          opt_eir%range_tube(1:2,opt_eir%nstrata),
-     .          opt_eir%txtsou        (opt_eir%nstrata)
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.2.0) THEN  ! Volume recombination
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%txtsou(opt_eir%nstrata)
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.3.0.OR.
-     .              opt_eir%type(opt_eir%nstrata).EQ.3.1) THEN  ! Point source injection (gas puff, beams)
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%sorcos   (opt_eir%nstrata),
-     .          opt_eir%sormax   (opt_eir%nstrata),
-     .          opt_eir%sorad(1:6,opt_eir%nstrata),
-     .          opt_eir%txtsou   (opt_eir%nstrata)
-            ELSE
-              CALL ER('LoadEireneOption','Unknown stratum type',*99)
-            ENDIF
-          ENDDO            
-c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%strata,rdum(1:6)
-c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%nstrata,
-c     .                              opt_eir%sorad(opt_eir%nstrata)
-c          STOP
+      opt_eir%type         (2) = 1.0
+      opt_eir%npts         (2) = -90000
+      opt_eir%flux         (2) = 1.0
+      opt_eir%flux_fraction(2) = 1.0
+      opt_eir%species      (2) = 4
+      opt_eir%species_index(2) = 1
+      opt_eir%sorene       (2) = 0.0
+      opt_eir%target       (2) = 2
+      opt_eir%txtsou       (2) = 'default outer target'
+      opt_eir%range_tube (1,2) = 1
+      opt_eir%range_tube (2,2) = 99999
+
+      opt_eir%type         (3) = 2.0
+      opt_eir%npts         (3) = -90000
+      opt_eir%flux         (3) = 1.0
+      opt_eir%flux_fraction(3) = 1.0
+      opt_eir%species      (3) = 4
+      opt_eir%species_index(3) = 1
+      opt_eir%sorene       (3) = 0.0
+      opt_eir%target       (3) = 1
+      opt_eir%txtsou       (3) = 'default volume recombination'
 
       opt_eir%time  = 30
       opt_eir%niter = 0

@@ -82,7 +82,7 @@ c...        Check which name
             i2 = 0
             i3 = 0
             DO iobject = 1, opt%obj_num
-              IF (opt%obj_type(iobject).EQ.6) THEN
+              IF (opt%obj_type(iobject).EQ.6) THEN  ! Tetrahedrons
                 DO i1 = 1, LEN_TRIM(opt%obj_fname(iobject))
                   IF (opt%obj_fname(iobject)(i1:i1).EQ.'.') THEN
                     IF (i2.EQ.0) i2 = i1

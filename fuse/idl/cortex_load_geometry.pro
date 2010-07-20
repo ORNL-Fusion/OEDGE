@@ -5,6 +5,8 @@
 ;
 FUNCTION cortex_LoadAnnotationData, code, file
 
+;  file = cortex_UpdateFile(file)
+
 print,code
 print,file
 
@@ -51,6 +53,8 @@ END
 ;
 FUNCTION cortex_LoadWall, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -87,6 +91,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadFluidGrid, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -180,6 +186,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadFluidGrid_Debug, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN

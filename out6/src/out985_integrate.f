@@ -15,7 +15,7 @@ c...  Input:
      .       theta,phi,dtheta,dphi,solid_angle,solid_total,
      .       cutoff,dtheta1,dphi1,scale_total,scale_gross
 
-      INTEGER iphi,nphi,n,reflection_model,iref
+      INTEGER iphi,nphi,reflection_model,iref,nexp
       LOGICAL output
       REAL*8 ndotv,ndotr,v1(3),angle,ddum1,scale_factor
 
@@ -46,12 +46,12 @@ c...  Input:
           CASE (1)
             dtheta1 =   DBLE(opt%ref_dtheta(imodel))
             dphi1   =   DBLE(opt%ref_dphi  (imodel))
-            n       =   opt%ref_n(imodel)
+            nexp    =   opt%ref_n(imodel)
             cutoff  =   DBLE(opt%ref_cutoff(imodel))
           CASE(2)
             dtheta1 =   DBLE(opt%ref_dtheta(imodel))
             dphi1   =   DBLE(opt%ref_dphi  (imodel))
-            n       =   1
+            nexp    =   1
             cutoff  =  -1.0D+10
           CASE DEFAULT
             nref = 0
@@ -97,7 +97,7 @@ c...    Loop to generate associated reflection chords:
 
           theta = theta + 0.5D0 * dtheta
 
-          scale_factor = DCOS(theta*D_DEGRAD)**n
+          scale_factor = DCOS(theta*D_DEGRAD)**nexp
 
           IF (scale_factor.LT.cutoff.OR.theta+dtheta.GT.90.0D0) EXIT       ! Exit conditions   
 
@@ -571,9 +571,10 @@ c        WRITE(0,*) obj(vwinter(1:nvwinter)%obj)%nsur
           WRITE(0,'(A,10I8)') 
      .       'WARNING: NO WALL INTERSECTION FOUND'
           IF (refcnt.GT.0) THEN
-            WRITE(0,'(A,10I8)') '       DATA:',
-     .        nchord,refcnt,iobj,obj(iobj)%ik,obj(iobj)%ir,count,
-     .        iobj_primary,obj(iobj_primary)%ik,nvwlist
+            IF (iobj.GE.1.AND.iobj.LE.nobj) 
+     .        WRITE(0,'(A,10I8)') '       DATA:',
+     .          nchord,refcnt,iobj,obj(iobj)%ik,obj(iobj)%ir,count,
+     .          iobj_primary,obj(iobj_primary)%ik,nvwlist
           ENDIF
           nchord = 1
           s_chord(nchord)%v1(1:3) = chord%v1(1:3)

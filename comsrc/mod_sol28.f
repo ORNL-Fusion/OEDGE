@@ -811,7 +811,6 @@ c...    Strata:
       TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
 
-
 !...  Plasma species that are being tracked in the simulation:
       INTEGER, SAVE :: nspecies
       TYPE(type_species), SAVE :: species(100)

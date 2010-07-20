@@ -879,7 +879,7 @@ c...      Return only the total volume integral:
             tmp_integ(0:ic2) = integ(0:ic2)
           ENDIF
 c...      Standard volume integration over range:
-          integ(0:icmax) = 0.0D0
+          integ(0:icmax) = 0.0D0   ! *** should move this up, so that even for (0) it's blanked? ***
           DO ic = ic1, ic2-1
             val = 0.5D0 * vol(ic) * array(ic)
             integ(ic  ) = integ(ic) + val

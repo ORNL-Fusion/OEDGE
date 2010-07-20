@@ -3,6 +3,8 @@
 ;
 FUNCTION cortex_LoadWallProfiles, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -40,6 +42,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadDIVIMPSummary, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -81,6 +85,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadNodeData, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -146,6 +152,8 @@ END
 ;
 FUNCTION cortex_LoadEireneData, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -190,6 +198,8 @@ END
 ;
 FUNCTION cortex_LoadEnergySpectrum, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -228,6 +238,8 @@ END
 ;
 FUNCTION cortex_LoadSourceData, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -240,10 +252,11 @@ FUNCTION cortex_LoadSourceData, file
   par_net = inGetData('PAR_NET')
   par_ion = inGetData('PAR_ION')
   par_rec = inGetData('PAR_REC')
-  par_ano = inGetData('PAR_ANO')
   par_usr = inGetData('PAR_USR')
+  par_ano = inGetData('PAR_ANO')
   mom_net = inGetData('MOM_NET')
   mom_vol = inGetData('MOM_VOL')
+  mom_usr = inGetData('MOM_USR')
   mom_ano = inGetData('MOM_ANO')
   ene_net = inGetData('ENE_NET')
   ene_ion = inGetData('ENE_ION')
@@ -260,10 +273,11 @@ FUNCTION cortex_LoadSourceData, file
     par_net : par_net ,  $
     par_ion : par_ion ,  $ 
     par_rec : par_rec ,  $
-    par_ano : par_ano ,  $
     par_usr : par_usr ,  $
+    par_ano : par_ano ,  $
     mom_net : mom_net ,  $
     mom_vol : mom_vol ,  $
+    mom_usr : mom_usr ,  $
     mom_ano : mom_ano ,  $
     ene_net : ene_net ,  $
     ene_ion : ene_ion ,  $
@@ -275,6 +289,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadPlasmaData, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -315,6 +331,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadPedestalModel, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -374,6 +392,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadTargetData, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -464,6 +484,8 @@ END
 ;
 FUNCTION cortex_LoadMidplaneProfiles, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -505,6 +527,8 @@ END
 ;
 FUNCTION cortex_LoadEIRENEImpurityData, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -539,6 +563,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadDIVIMPImpurityData_Density, file
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
@@ -589,6 +615,8 @@ END
 ;
 FUNCTION cortex_LoadDIVIMPImpurityData_Ionisation, file
 
+  file = cortex_UpdateFile(file)
+
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
     result = CREATE_STRUCT('version',0.0,'file','none')
@@ -637,6 +665,8 @@ END
 ; ======================================================================
 ;
 FUNCTION cortex_LoadCoreProfiles, file    
+
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
