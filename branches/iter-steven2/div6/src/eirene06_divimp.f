@@ -309,8 +309,7 @@ c     ----------------------------------------------------------------------
 c...  Setup non-default standard surfaces related to the magnetic grid:
 c     ----------------------------------------------------------------------
 
-c...  Poloidal surfaces for Eirene strata (needs to be generalized to 
-c     allow more than 2 surface strata):
+c...  Poloidal surfaces for Eirene strata:
       IF (.TRUE.) THEN
 c...    Determine the number of target strata that are defined:
         assigned = .FALSE.
@@ -374,37 +373,37 @@ c          surface(nsurface)%index(2) = nrs                    ! Ring index end
 
         ENDDO
       ELSE
-        DO i1 = IKLO, IKHI 
-          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-          surface(nsurface)%subtype  = STRATUM
-          surface(nsurface)%surtxt   = '* default target (DIVIMP)'
-          IF (cgridopt.EQ.LINEAR_GRID) THEN
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs-1               ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ELSE
-            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-            surface(nsurface)%index(2) = nrs                 ! Ring index end
-            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-            surface(nsurface)%index(5) = 0
-          ENDIF
-          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
-          surface(nsurface)%iliin  = 1
-          surface(nsurface)%ilside = 0
-          surface(nsurface)%ilswch = 0
-          surface(nsurface)%iltor  = 0  
-          surface(nsurface)%ilcell = 0
-          surface(nsurface)%ilcol  = 4
-          surface(nsurface)%material = tmater                ! Set surface material
-          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
-          IF (surface(nsurface)%ilspt.NE.0) THEN
-            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
-            surface(nsurface)%recycs = 1.0
-            surface(nsurface)%recycc = 1.0
-          ENDIF
-        ENDDO
+c        DO i1 = IKLO, IKHI 
+c          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+c          surface(nsurface)%subtype  = STRATUM
+c          surface(nsurface)%surtxt   = '* default target (DIVIMP)'
+c          IF (cgridopt.EQ.LINEAR_GRID) THEN
+c            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+c            surface(nsurface)%index(2) = nrs-1               ! Ring index end
+c            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+c            surface(nsurface)%index(5) = 0
+c          ELSE
+c            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
+c            surface(nsurface)%index(2) = nrs                 ! Ring index end
+c            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
+c            surface(nsurface)%index(5) = 0
+c          ENDIF
+c          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
+c          surface(nsurface)%iliin  = 1
+c          surface(nsurface)%ilside = 0
+c          surface(nsurface)%ilswch = 0
+c          surface(nsurface)%iltor  = 0  
+c          surface(nsurface)%ilcell = 0
+c          surface(nsurface)%ilcol  = 4
+c          surface(nsurface)%material = tmater                ! Set surface material
+c          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
+c          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
+c          IF (surface(nsurface)%ilspt.NE.0) THEN
+c            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
+c            surface(nsurface)%recycs = 1.0
+c            surface(nsurface)%recycc = 1.0
+c          ENDIF
+c        ENDDO
       ENDIF
 
 c...  Core boundary surface:
@@ -479,7 +478,8 @@ c...  PFZ radial boundary:
       ENDIF
 
 c     ------------------------------------------------------------------
-c     Add wall surfaces:
+c     Add wall surfaces to the list (not for inclusion in the EIRENE 
+c     input file):
 c     ------------------------------------------------------------------
 
 c...  Load vessel wall segments from the default DIVIMP vessel 
