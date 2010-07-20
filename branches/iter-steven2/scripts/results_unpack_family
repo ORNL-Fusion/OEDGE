@@ -1,6 +1,6 @@
 #!/bin/tcsh
 
-if ( $#argv != 1 ) then
+if ( $#argv != 1 && $#argv != 2 ) then
   echo ERROR results_unpack_family: Need to specify case family
   exit
 endif
@@ -8,6 +8,8 @@ endif
 set FAMILY = $1
 
 cd $DIVHOME/results/$FAMILY
+
+echo $PWD
 
 ls *.dat *.log | wc -l && set STATUS=1 || set STATUS=0
 

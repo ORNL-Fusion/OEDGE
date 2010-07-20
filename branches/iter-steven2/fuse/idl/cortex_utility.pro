@@ -1,6 +1,39 @@
 ;
 ; ======================================================================
 ;
+FUNCTION cortex_UpdateFile, file
+
+ COMMON options, dir_structure
+
+
+ IF (dir_structure EQ 0) THEN RETURN, file
+
+
+ i = STRPOS(file,'/',/REVERSE_SEARCH)
+
+ str1 = STRMID(file,0,i+1)
+ str2 = STRMID(file,i+1)
+
+ family = STRMID(str2,0,5) + '/'
+ child  = STRMID(str2,0,7) + '/'
+
+; PRINT,str1
+; PRINT,family
+; PRINT,child
+; PRINT,str2
+
+ file = str1 + family + child + str2
+
+; PRINT,file
+
+; PRINT, 'HERE in UIPDATE FILE'
+; STOP
+ RETURN,file
+
+END
+;
+; ======================================================================
+;
 PRO cortex_PageTitle, plot, ps, file, dev_xsize, dev_ysize, title, notes, charsize
 
   ypos = 0.940

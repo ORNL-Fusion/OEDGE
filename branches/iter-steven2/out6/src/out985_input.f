@@ -266,17 +266,17 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 SELECTCASE (idum1)
                   CASE (1)  ! Specular 
                     READ(buffer,*) cdum1,
-     .                opt%ref_model (opt%ref_num),
-     .                opt%ref_wlgth (opt%ref_num),
-     .                opt%ref_k     (opt%ref_num),
-     .                opt%ref_ow    (opt%ref_num),
-     .                opt%ref_pw    (opt%ref_num),
-     .                opt%ref_n     (opt%ref_num),
-     .                opt%ref_cutoff(opt%ref_num),
-     .                opt%ref_otheta(opt%ref_num),
-     .                opt%ref_dtheta(opt%ref_num),
-     .                opt%ref_ophi  (opt%ref_num),
-     .                opt%ref_dphi  (opt%ref_num)
+     .                opt%ref_model (opt%ref_num),  ! 1=specular, 2=diffuse
+     .                opt%ref_wlgth (opt%ref_num),  ! Variation of reflectivity
+     .                opt%ref_k     (opt%ref_num),  ! Drop in signal for uniform reflectivity option
+     .                opt%ref_ow    (opt%ref_num),  ! Not in use...
+     .                opt%ref_pw    (opt%ref_num),  ! Not in use...
+     .                opt%ref_n     (opt%ref_num),  ! Some kind of exponent
+     .                opt%ref_cutoff(opt%ref_num),  ! Don't include contibutions below a certain relative intensity
+     .                opt%ref_otheta(opt%ref_num),  ! THETA angle distribution option (0=none, 1=linear)
+     .                opt%ref_dtheta(opt%ref_num),  ! THETA angle step size
+     .                opt%ref_ophi  (opt%ref_num),  ! PHI angle distribution option (0=none, 1=linear)
+     .                opt%ref_dphi  (opt%ref_num)   ! PHI angle step size
                   CASE (2)  ! Diffuse
                     READ(buffer,*) cdum1,
      .                opt%ref_model (opt%ref_num),

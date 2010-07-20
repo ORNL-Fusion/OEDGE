@@ -1959,6 +1959,7 @@ c       ----------------------------------------------------------------
               IF (isur.NE.-core_boundary) hescal = hescal + pflux
             ELSE
               CALL WN('LoadEireneData','Unknown particle type')
+              WRITE(0,*) '  LABEL= '//TRIM(species)
             ENDIF          
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='

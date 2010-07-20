@@ -40,6 +40,8 @@ END
 ; ======================================================================
 ;
 PRO cortex_GeneratePlots, args
+
+  COMMON options, dir_structure
   
   option = 3
 
@@ -51,16 +53,21 @@ PRO cortex_GeneratePlots, args
   input_file = args[1]
 
   IF (nargs EQ 4) THEN BEGIN
+    dir_structure = 0
+    family = ''
+    child  = ''
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
+    dir_structure = 1
 
-    family = STRMID(input_file,0,5)
+    family = STRMID(case_name,0,5) + '/'
+    child  = STRMID(case_name,0,7) + '/'
 
 ;    input_file = '/home/slisgo/fuse/input/' + input_file
 ;    data_path  = '/home/slisgo/divimp/results/'
     input_file = '/home/ITER/lisgos/fuse/input/' + input_file
-    data_path  = '/home/ITER/lisgos/fuse_data/results/' + family + '/'
+    data_path  = '/home/ITER/lisgos/fuse_data/results/'   ; + family + '/' + child + '/'
 ;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
 ;    data_path  = '/home/ITER/lisgos/divimp/results/'
 
@@ -100,15 +107,14 @@ PRO cortex_GeneratePlots, args
       ENDELSE
     ENDIF
   ENDFOR
-print,'frame',frame
+;print,'frame',frame
 
 ; Setup PostScript printing:
   IF (ps EQ 'on') THEN BEGIN
-    file = data_path + case_name + '.idl.ps'
-;      PRINT, 'POSTSCRIPT FILE=',file
+    file = data_path + family + child + case_name + '.idl.ps'
+    PRINT, 'POSTSCRIPT FILE=',file
     PSOPEN, filename=file
   ENDIF
-
 
 ;  HELP,plot_array,/struct
 ;

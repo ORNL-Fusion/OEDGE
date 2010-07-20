@@ -162,6 +162,7 @@ c....   Cells centres:
         CALL inPutData(fluid(ic1:ic2,ion)%momsrc,'MOM_NET','?')        
         CALL inPutData(fluid(ic1:ic2,ion)%momvol,'MOM_VOL','?')        
         CALL inPutData(fluid(ic1:ic2,ion)%momano,'MOM_ANO','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momusr,'MOM_USR','?')        
         CALL inPutData(fluid(ic1:ic2,ion)%enesrc,'ENE_NET','?')
         CALL inPutData(fluid(ic1:ic2,ion)%eneion,'ENE_ION','?')
         CALL inPutData(fluid(ic1:ic2,ion)%enerec,'ENE_REC','?')
@@ -194,7 +195,22 @@ c....     Cells centres:
         ENDDO
         CALL inCloseInterface 
       ENDIF
-
+c...  ------------------------------------------------------------------
+      IF (ALLOCATED(field)) THEN
+        CALL inOpenInterface('osm.idl.fluid_fields',ITF_WRITE)
+        DO itube = itube1, itube2
+          ic1 = tube(itube)%cell_index(LO)
+          ic2 = tube(itube)%cell_index(HI)
+c....     Cells centres:
+          CALL inPutData(ic(ic1:ic2),'INDEX','none')
+          CALL inPutData(ic(ic1:ic2),'POS','none')
+          CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
+          CALL inPutData(cell(ic1:ic2)%s,'S','m')
+          CALL inPutData(field(ic1:ic2,ion)%epot  ,'EPOT'  ,'?')        
+          CALL inPutData(field(ic1:ic2,ion)%efield,'EFIELD','?')        
+        ENDDO
+        CALL inCloseInterface 
+      ENDIF
 c...  ------------------------------------------------------------------
       CALL inOpenInterface('osm.idl.params',ITF_WRITE)
       CALL inPutData(2.0,'flupar mass','amu')

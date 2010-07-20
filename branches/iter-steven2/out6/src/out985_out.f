@@ -1481,7 +1481,7 @@ c...
             IF (tri(itri)%sur(v1).NE.0) THEN        
 c...          Triangle surface is on a surface (magnetic or vessel wall):
               imap = tri(itri)%map(v1)
-              IF (.FALSE..AND.
+              IF (.TRUE..AND.
      .            tri(itri)%map  (v1).EQ.0    .AND.
      .            tri(itri)%index(2 ).GE.irsep) THEN
 c            .AND.               ! Need surface type identifier...
