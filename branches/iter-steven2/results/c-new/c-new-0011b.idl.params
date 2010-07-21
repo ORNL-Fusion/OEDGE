@@ -1,0 +1,19 @@
+1.00
+{FILE BLOCK FORMAT}     1
+{FILE INDENT}          22
+*
+{FILE INDEX}            1
+*
+*
+{FILE COLUMNS}     1
+{FILE COLUMN WIDTH}            19
+*
+{DATA TAG}            {flupar mass}
+{DATA UNITS}          amu
+{DATA TYPE}                     3
+{DATA N}                        1
+{DATA VALUES}
+        1               2.000000E+00
+*
+{FILE END}
+*
