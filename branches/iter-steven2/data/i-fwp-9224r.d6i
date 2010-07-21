@@ -80,6 +80,7 @@ $ 1.1  -90000  1.0      1.0   4    1    0.0     2       111  112                
 $ 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
  1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
  1.0   2      -999.0   1.0   4    1    0.0     2                                           'outer target'
+ 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port, default'
  1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port'
  2.0   2      -999.0   1.0   4    1    0.0                                                 'volume recombination'
 $ 1.0   2      -999.0   1.0   4    1    0.0     1                                           'inner target'
@@ -105,10 +106,29 @@ $-------------------------------------------------------------------------
  -2     12 12                                                               $ 
 $
 $
-$'{EIR SURFACE PROPERTIES}'
-$ Type Index  Seg.  ILIIN ILSIDE ILSWCH    TR1  TR2  RECYCT  T(K)  MAT.  COVER. REMAP ILSPT
+'{EIR SURFACE PROPERTIES} 1.0'
+$ Type Ind.  Sec.      ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
 $-----------------------------------------------------------------------------------------------
-$  1.1   3.0   0.0    1.0    0.0 000000.0  0.0  0.0    -1.0  -1.0    -1     0.5  -1   -1     'upper port'
+  1.1  4      1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-target'
+  2.0  110    1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-wall'
+  1.0  120   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
+  2.0  161   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
+  1.0  132   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
+  2.0  201   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, below midplane'
+$
+$
+$ Type  1.0  filter
+$       2.0  sector template (compilation of zones)
+$       3.0  slice template  (compilation of sectors)
+$       4.0  slice assembly  (compilation of slices)
+$       5.0  morphing
+$
+'{EIR TETRAHEDRON GRID} 1.0 Parameters for setting up the 3D EIRENE mesh:'
+$ Type   X1   Y1     X2   Y2              
+$----------------------------------------------------------------------------------
+  1.0    0.0  10.0   10.0 3.0
+  1.0    5.0  10.0   10.0 1.0
+$
 $
 $
 '{999}'
@@ -182,7 +202,6 @@ $
   0.0   4.03418	 3.07550       4.03127  3.33175
   0.0   4.03127	 3.33175       4.02837  3.58800
   3.0   0.0         0.0    130.0   150.0  DELETE
- 1.1   2      -999.0   1.0   4    1    0.0     2       111  112                            'upper port, default'
   5.0   0.0         0.0    116.0   120.0  DUPLICATE
   1.0   2.0         0.0    116.0   129.0  CUT - UPPER INNER BAFFLE
   0.0   4.02837	 3.58800       4.12606  3.83231
@@ -207,31 +226,12 @@ $
   0.0   6.7420786800E+00  3.7339116200E+00       6.99097  3.51412   6.58331	 3.86959
   0.0   6.99097	 3.51412       7.39862  3.15864
   5.0   0.0         0.0     93.0    95.0  DUPLICATE    
-$
-'{EIR SURFACE PROPERTIES} 1.0'
-$ Type Ind.  Sec.      ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
-$-----------------------------------------------------------------------------------------------
-  1.1  4      1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-target'
-  2.0  110    1-39     2     0      000000  0.0  0.0  1.0    0      -1    Fe    0     0      'upper port-wall'
-  1.0  120   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     161    'conform, above midplane'
-  2.0  161   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, above midplane'
-  1.0  132   -1       -1     0      000000  0.0  0.0  1.0    0      -1    def   0     201    'conform, below midplane'
-  2.0  201   -1        1     0      000000  0.0  0.0  1.0    0      -1    def   0     0      'conform, below midplane'
-$
-$
-$ Type  1.0  filter
-$       2.0  sector template (compilation of zones)
-$       3.0  slice template  (compilation of sectors)
-$       4.0  slice assembly  (compilation of slices)
-$       5.0  morphing
-$
-'{EIR TETRAHEDRON GRID} 1.0 Parameters for setting up the 3D EIRENE mesh:'
-$ Type   X1   Y1     X2   Y2              
-$----------------------------------------------------------------------------------
-  1.0    0.0  10.0   10.0 3.0
-  1.0    5.0  10.0   10.0 1.0
-$
   4.0   0.0         0.55    96.0    96.0  SPLIT 
+  5.0   0.0         0.0     96.0    97.0  DUPLICATE    
+  1.0   1.0         0.0     94.0    96.0  CUT - UPPER OUTER WALL  
+  0.0   7.6086061600E+00  2.8621221200E+00  7.64854  2.80079
+  0.0   7.64854	          2.80079           7.89846  2.44294   
+  1.0   1.0         0.0     97.0   100.0  CUT - UPPER OUTER WALL  
   0.0   8.0183592  2.1838927    8.07852    2.05647 
   0.0   8.07852    2.05647      8.25857    1.67000
   4.0   0.0         0.7     93.0    93.0  SPLIT 
