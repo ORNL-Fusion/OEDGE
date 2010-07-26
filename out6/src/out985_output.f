@@ -791,12 +791,12 @@ c
 c subroutine: TestTetrahedrons
 c
 c
-      SUBROUTINE TestTetrahedrons(fname,nsur,npts,vsur,hsur,
+      SUBROUTINE TestTetrahedrons(option,fname,nsur,npts,vsur,hsur,
      .                            MAXSURFACE,MAXPOINTS,status)
       USE mod_eirene06_locals
       IMPLICIT none
 
-      INTEGER nsur,MAXSURFACE,MAXPOINTS,status,
+      INTEGER option,nsur,MAXSURFACE,MAXPOINTS,status,
      .        npts(0:MAXSURFACE),hsur(0:MAXSURFACE)
       REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE)
       CHARACTER fname*(*)
@@ -818,7 +818,8 @@ c      WRITE(0,*) 'NOBJ:',nobj
 
       WRITE(0,*) 'NSUR START TETRAHEDRONS:',nsur
 
-      SELECTCASE (2) 
+      SELECTCASE (option) 
+c       ----------------------------------------------------------------   
         CASE (1)
           DO isrf = 1, nsrf
             IF (nsur.EQ.MAXSURFACE) THEN
@@ -832,8 +833,79 @@ c      WRITE(0,*) 'NOBJ:',nobj
               vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
             ENDDO
           ENDDO
+c       ----------------------------------------------------------------   
+        CASE (2)  ! Vessel wall
+          WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=2'
+          DO iobj = 1, nobj
+c           IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) CYCLE     
+            DO iside = 1, obj(iobj)%nside
+              isrf = obj(iobj)%iside(iside)
+              isrf = ABS(isrf)
+              IF (obj(iobj)%omap(iside).NE.0) CYCLE
+c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
+              DO WHILE(isrf.GT.0)
+                IF (nsur.GE.MAXSURFACE-10000) THEN
+                  WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
+                  RETURN
+                ENDIF
+                nsur = nsur + 1
+                IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
+     .            hsur(nsur) = -2 ! 301 ! -2 ! 301
+                IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
+     .            hsur(nsur) = -2 ! 301 ! -3 ! 301
+                npts(nsur) = srf(isrf)%nvtx
+                IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
+                DO i1 = 1, npts(nsur)
+                  vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
+                ENDDO
+                isrf = srf(isrf)%link
+                IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
+              ENDDO
+            ENDDO
+          ENDDO
+c       ----------------------------------------------------------------   
+        CASE (3)
+c...      Search for tetrahedrons that are close to a particular trajectory:
+          CALL SelectTetrahedrons(nsur,npts,vsur,
+     .                            MAXSURFACE,MAXPOINTS,status)
 
-        CASE (2)
+          DO iobj = 1, nobj
+            DO iside = 1, obj(iobj)%nside
+              isrf = ABS(obj(iobj)%iside(iside))
+
+c              IF (iobj.EQ.55008) WRITE(0,*) ' ORIGIN:',
+c     .           grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID,
+c     .           grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID
+
+              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
+     .            (srf(isrf)%index(IND_SURFACE).NE.8.OR..TRUE.)) CYCLE
+
+              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
+     .            obj(iobj)%segment(1).EQ.0) CYCLE  ! *** HACK ***
+     
+              isrf = ABS(obj(iobj)%iside(iside))
+
+c              DO WHILE(isrf.GT.0)
+              IF (nsur.GE.MAXSURFACE) THEN
+                WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
+                RETURN
+              ENDIF
+              nsur = nsur + 1
+              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
+     .          hsur(nsur) = -2 ! 301
+              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
+     .          hsur(nsur) = -3 ! 301
+              npts(nsur) = srf(isrf)%nvtx
+              DO i1 = 1, npts(nsur)
+                vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
+              ENDDO
+c                isrf = srf(isrf)%link
+c                IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
+c              ENDDO
+            ENDDO
+          ENDDO
+c       ----------------------------------------------------------------   
+        CASE (4)
           DO iobj = 1, nobj
 c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
 c     .            (obj(iobj)%index(IND_IR).NE.17)) CYCLE
@@ -884,49 +956,10 @@ c              isrf = ABS(obj(iobj)%iside(iside))
                 IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
               ENDDO
             ENDDO
-          ENDDO
-
-        CASE (3)
-c...      Search for tetrahedrons that are close to a particular trajectory:
-          CALL SelectTetrahedrons(nsur,npts,vsur,
-     .                            MAXSURFACE,MAXPOINTS,status)
-
-          DO iobj = 1, nobj
-            DO iside = 1, obj(iobj)%nside
-              isrf = ABS(obj(iobj)%iside(iside))
-
-c              IF (iobj.EQ.55008) WRITE(0,*) ' ORIGIN:',
-c     .           grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID,
-c     .           grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID
-
-              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
-     .            (srf(isrf)%index(IND_SURFACE).NE.8.OR..TRUE.)) CYCLE
-
-              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID.AND.
-     .            obj(iobj)%segment(1).EQ.0) CYCLE  ! *** HACK ***
-     
-              isrf = ABS(obj(iobj)%iside(iside))
-
-c              DO WHILE(isrf.GT.0)
-              IF (nsur.GE.MAXSURFACE) THEN
-                WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
-                RETURN
-              ENDIF
-              nsur = nsur + 1
-              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .          hsur(nsur) = -2 ! 301
-              IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .          hsur(nsur) = -3 ! 301
-              npts(nsur) = srf(isrf)%nvtx
-              DO i1 = 1, npts(nsur)
-                vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
-              ENDDO
-c                isrf = srf(isrf)%link
-c                IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
-c              ENDDO
-            ENDDO
-          ENDDO
-          
+          ENDDO          
+c       ----------------------------------------------------------------   
+        CASE DEFAULT
+          CALL WN('TestTetrahedrons','Unknown option')
       ENDSELECT
 
       RETURN
@@ -1253,11 +1286,12 @@ c...              Output:
               ENDDO
 c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
-              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
-              CALL TestTetrahedrons(fname,nsur,npts,vsur,hsur,
-     .                              MAXSURFACE,MAXPOINTS,status)
+              IF (sub_option.NE.2.AND.
+     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+              CALL TestTetrahedrons(sub_option,fname,nsur,npts,vsur,
+     .                              hsur,MAXSURFACE,MAXPOINTS,status)
               CALL ClearTetArrays
               WRITE(0,*) 'TETRAHEDRON FILE STATUS:',status
               IF (status.EQ.-1) RETURN

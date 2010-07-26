@@ -165,6 +165,8 @@ c...  Set the geometry:
       IF     (grid%nxpt.EQ.0) THEN
         geometry = LINEAR
         grid%nxpt = 1  ! To be set to 0 below...
+      ELSEIF (grid%nxpt.EQ.1.AND.grid%zxpt(1).GT.grid%z0     ) THEN
+        geometry = USND
       ELSEIF (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
         geometry = LSND
       ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
@@ -498,7 +500,6 @@ c...  Primary PFR:
           tube(it)%type = GRD_PFZ
         ENDIF
       ENDDO
-
 c...  Secondary PFR:
       IF (grid%nxpt.EQ.2) THEN
         a1 = rxpt(2)
@@ -520,6 +521,9 @@ c...  Secondary PFR:
 
 
       RETURN
+
+
+
 
 
 c *** NOT EXECUTED ***

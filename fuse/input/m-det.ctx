@@ -2,6 +2,13 @@
 *
 *
 
+{PLOT 2D FLUID GRID}   1    
+
+{PLOT 1D RADIAL PROFILE}  4   
+  {LINE SEGMENT}  0.4403 0.0  0.60 0.0
+{EXIT}
+
+
 {PLOT 1D RADIAL PROFILE}  2   
   {LINE SEGMENT}  0.95 0.0  1.7 0.0   
 $  {CASE}          m-det-0000e >g

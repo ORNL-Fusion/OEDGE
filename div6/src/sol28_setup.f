@@ -1936,8 +1936,17 @@ c...
               IF (node(i1)%ne.LT.1.0E+10) THEN
                 tube(it)%jsat(itarget,ion) = node(i1)%ne
               ELSE
-                tube(it)%jsat(itarget,ion) = 
-     .            GetJsat2(node(i1)%te,node(i1)%ti(ion),node(i1)%ne,1.0) 
+                IF (node(i1)%te.NE.0.0) THEN
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(node(i1)%te,
+     .                       node(i1)%ti(ion),
+     .                       node(i1)%ne,1.0) 
+                ELSE
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(tube(it)%te(itarget),
+     .                       tube(it)%ti(itarget,ion),
+     .                       node(i1)%ne,1.0) 
+                ENDIF
               ENDIF
             ENDIF
             IF (node(i1)%te     .NE.0.0) 
@@ -1967,6 +1976,7 @@ c           IF (itube.EQ.81) STOP 'dfsd'
             CALL ER('_New','Unknown PAR_SET',*99) 
         ENDSELECT
         node(i1)%jsat(ion) = tube(it)%jsat(itarget,ion)
+        WRITE(88,*) 'work:',i1,node(i1)%jsat(ion)
         node(i1)%ne        = 0.0
         node(i1)%pe        = 0.0
         node(i1)%te        = tube(it)%te  (itarget)

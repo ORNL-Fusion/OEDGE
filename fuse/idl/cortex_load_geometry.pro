@@ -155,6 +155,8 @@ FUNCTION cortex_LoadFluidGrid, file
   FOR i = 0, nvtx-1 DO vtx_map[vtx_index[i]] = i
 
   result = {                 $
+    version   : 1.0       ,  $
+    file      : file      ,  $
     isep      : grd_isep  ,  $
     ipfz      : grd_ipfz  ,  $
     tube_n    : tube_n    ,  $

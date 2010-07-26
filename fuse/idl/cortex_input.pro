@@ -432,6 +432,14 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
             plot_struct.case_name[0] = case_name
             plot_struct.data_file[0] = 'idl.core_impurities'
             END
+          4: BEGIN
+            plot_struct.title        = 'NEW (!) GENERAL RADIAL PLOT'
+            plot_struct.case_name[0] = case_name
+            plot_struct.data_file[0] = 'idl.fluid_grid'
+            plot_struct.data_file[1] = 'idl.fluid_wall'
+            plot_struct.data_file[2] = 'idl.fluid_plasma'
+            plot_struct.data_file[3] = 'idl.fluid_targets'
+            END
           ELSE: BEGIN
             PRINT,'ERROR cortex_LoadPlotData: Unknown 1D radial plot option'
             PRINT,'  FILE_NAME= ',file_name
@@ -520,6 +528,18 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct.data_file[5] = 'idl.eirene_imp'
         plot_struct.data_file[6] = 'idl.divimp_imp_density'
         plot_struct.data_file[7] = 'idl.divimp_imp_ionisation'
+        END
+;     ------------------------------------------------------------------
+      'PLOT 3D TEST': BEGIN
+        ncase = 1
+        nset  = 0
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
+        plot_struct.tag          = tag
+        plot_struct.option       = data
+        plot_struct.title        = '3D'
+        plot_struct.default      = case_name
+        plot_struct.case_name[0] = case_name
+        plot_struct.data_file[0] = 'idl.tet_centroid'
         END
 ;     ------------------------------------------------------------------
       'TITLE'        : plot_struct.title        = STRTRIM(data,2)
