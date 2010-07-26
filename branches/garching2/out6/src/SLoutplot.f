@@ -3,6 +3,73 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE ExportTetrahedrons(fname)
+      USE mod_interface
+      USE mod_geometry
+      USE mod_eirene06_locals
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      CHARACTER, INTENT(IN) :: fname*(*)
+
+      INTEGER GetNumberOfObjects
+
+      INTEGER status,ndat,ik,ir,iobj,ion
+      REAL*8  p(3)
+      REAL, ALLOCATABLE :: tdata(:,:)
+
+      ion = 1
+
+      CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
+      IF (status.EQ.-1) THEN
+        WRITE(0,*) 'MESSAGE ExportTetrahedrons: File not found'
+        RETURN
+      ENDIF
+
+c      CALL LoadGrid('osm.raw')
+
+      ndat = GetNumberOfObjects('default')
+      ALLOCATE(tdata(ndat,2))
+      CALL LoadTriangleData(2,1,1,1,tdata(1,1),'default')  ! Atom density (from plot 987)
+      CALL LoadTriangleData(3,1,1,1,tdata(1,2),'default')  ! Mol. density (from plot 987)
+
+      CALL inOpenInterface('idl.tet_centroid',ITF_WRITE)
+      DO iobj = 1, nobj
+        CALL CalcCentroid(iobj,2,p)
+        CALL inPutData(SNGL(p(1)),'X','m')                     
+        CALL inPutData(SNGL(p(2)),'Y','m')                     
+        CALL inPutData(SNGL(p(3)),'Z','m')                     
+        IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) THEN
+          ik = obj(iobj)%index(IND_IK)
+          ir = obj(iobj)%index(IND_IR)
+c          WRITE(0,*) 'ind:',iobj,i
+          CALL inPutData(knbs (ik,ir),'NE','m-3')        
+          CALL inPutData(ktebs(ik,ir),'TE','eV')
+        ELSE
+          CALL inPutData(0.0         ,'NE','m-3')        
+          CALL inPutData(0.0         ,'TE','eV')
+        ENDIF
+        CALL inPutData(tdata(iobj,1),'N_D' ,'m-3')
+        CALL inPutData(tdata(iobj,2),'N_D2','m-3')
+      ENDDO
+      CALL inCloseInterface
+
+      DEALLOCATE(tdata)
+      CALL geoClean
+c      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE GenerateEIRENEDataFiles
       USE mod_interface
       IMPLICIT none
@@ -15,6 +82,8 @@ c
 
       INTEGER   ik,ir,ike,index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
       CHARACTER unit*10
+
+      WRITE(0,*) 'IDL EIRENE DATA FILES'
 
       index = -1
       DO ik = 1, MAXNKS
@@ -74,6 +143,8 @@ c
       REAL      totfypin,impact_energy
       CHARACTER tag*64
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES'
+
       index = -1
       DO ik = 1, MAXNKS
         pos(ik) = ik
@@ -123,6 +194,8 @@ c...  Dump impurity data:
       ENDDO
       CALL inCloseInterface 
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 2'
+
       CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
@@ -168,7 +241,10 @@ c              2.0 * CRTABS(IZ) / CICABS(IZ)
 c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
 c     which I'm leaving off for now...
 
-      CALL inOpenInterface('idl.divimp_imp_target',ITF_WRITE)
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 3',nds,MIN(nizs,cion)
+
+
+      CALL inOpenInterface('idl.divimp_flux_target',ITF_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
@@ -187,28 +263,146 @@ c     which I'm leaving off for now...
         CALL inPutData(id             ,'INDEX'     ,'N/A')                     
         CALL inPutData(target         ,'TARGET'    ,'N/A')                     
         CALL inPutData(tube(1)        ,'TUBE'      ,'N/A')                     
-        CALL inPutData(wallindex(id)  ,'WALL_INDEX','N/A')                     
+        CALL inPutData(wallindex(id)  ,'INDEX_WALL','N/A')                     
       ENDDO
       DO id = 1, nds
         ir = irds(id)
         IF (idring(ir).EQ.BOUNDARY) CYCLE
-        CALL inPutData(rp(id)   ,'R'     ,'m')
-        CALL inPutData(zp(id)   ,'Z'     ,'m') 
+        CALL inPutData(rp(id)   ,'R_CEN' ,'m')
+        CALL inPutData(zp(id)   ,'Z_CEN' ,'m') 
         CALL inPutData(dds(id)  ,'LENGTH','m') 
         CALL inPutData(kteds(id),'TE'    ,'eV')                     
         CALL inPutData(ktids(id),'TI'    ,'eV')                     
         DO iz = 1, MIN(nizs,cion)
           WRITE(tag,'(A,I0.2,A)') 'IMP_',iz,'_'
-          impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing the ion velocity contribution...
+          impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
      .                    2.0 * ktids(id) 
           CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
           CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
-          CALL inPutData(1.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
+          CALL inPutData(0.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
         ENDDO      
       ENDDO  
       CALL inCloseInterface 
+c
+c
+c
 
+      WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
+      CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+
+c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c     FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c     FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)  --- *HACK* AVERAGE IMPURITY LAUNCH ENERGY
+c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+
+C     WALLPT (IND,1) = R
+C     WALLPT (IND,2) = Z
+C     WALLPT (IND,3) = WEIGHT FACTOR FOR ANTI-CLOCKWISE
+C     WALLPT (IND,4) = WEIGHT FACTOR FOR CLOCKWISE
+C     WALLPT (IND,5) = LENGTH OF 1/2 SEGMENT ANTI-CLOCKWISE
+C     WALLPT (IND,6) = LENGTH OF 1/2 SEGMENT CLOCKWISE
+C     WALLPT (IND,7) = TOTAL LENGTH OF LAUNCH SEGMENT
+C     WALLPT (IND,8) = ANGLE FOR ANTI-CLOCKWISE LAUNCH
+C     WALLPT (IND,9) = ANGLE FOR CLOCKWISE LAUNCH
+C     WALLPT (IND,10) = NET PROBABILITY ANTI-CLOCKWISE
+C     WALLPT (IND,11) = NET PROBABILITY CLOCKWISE
+C     WALLPT (IND,12) = NET PROBABILITY FOR ENTIRE SEGMENT
+C     WALLPT (IND,13) = FINAL PROBABILITY FOR SEGMENT
+c
+c     wallpt (ind,16) = TYPE OF WALL SEGMENT
+c                       1 = Outer Target (JET) - inner for Xpt down
+c                       4 = Inner Target (JET) - outer      "
+c                       7 = Main Wall
+c                       8 = Private Plasma Wall
+c
+c                       9 = Baffle Segment
+c
+c                       These are similar to the quantity in the JVESM
+c                       array associated with the NIMBUS wall
+c                       specification. The difference is that the
+c                       Main Wall is split into Inner and Outer Divertor
+c                       Wall as well as the Main (SOL) Wall - this
+c                       is not done here.
+c
+c     WALLPT (ind,17) = INDEX into the NIMBUS flux data returned
+c                       for each wall segment - ONLY if the NIMBUS
+c                       wall option has been specified. NOTE: if
+c                       the NIMBUS wall has been specified - it is
+c                       still combined with the DIVIMP target polygon
+c                       corners because rounding errors may result in
+c                       small discrepancies between the coordinates.
+c
+c     WALLPT (IND,18) = Index of corresponding target segment if the wall
+c                       segment is also a target segment.
+c
+c     WALLPT (IND,19) = Temperature of wall segment in Kelvin (K)
+c
+c     WALLPT (IND,20) = RSTART
+c     WALLPT (IND,21) = ZSTART
+c     WALLPT (IND,22) = REND
+c     WALLPT (IND,23) = ZEND
+c
+c     wallpt (ind,24) = Used for additional indexing information - used
+c                       as IK knot number for wall and trap wall option 7
+c
+c     wallpt (ind,25) = Value of reflection coefficient - if reflection
+c                       for this segment is turned off the value here
+c                       will be zero. If a positive value is specified
+c                       then regular reflection occurs. If it is negative
+c                       then a PTR (prompt thermal re-emission) type
+c                       reflection is used. The value for this is
+c                       set with the individual YMF's and is read from
+c                       the CYMFS array.
+c
+c     wallpt (ind,26) = IK value of nearest plasma cell to wall segment
+c     wallpt (ind,27) = IR value of nearest plasma cell to wall segment
+c     wallpt (ind,28) = Minimum distance to outermost ring
+c     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
+c     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
+c     wallpt (ind,31) = Plasma density at wall segment
+
+      DO id = 1, wallpts
+        CALL inPutData(id             ,'INDEX'      ,'N/A')                     
+        CALL inPutData(wallpt(id,1)   ,'R_CEN'      ,'m')  
+        CALL inPutData(wallpt(id,2)   ,'Z_CEN'      ,'m')                     
+        CALL inPutData(wallpt(id,20)  ,'R_VERTEX1'  ,'m')                     
+        CALL inPutData(wallpt(id,21)  ,'Z_VERTEX1'  ,'m')                     
+        CALL inPutData(wallpt(id,22)  ,'R_VERTEX2'  ,'m')                     
+        CALL inPutData(wallpt(id,23)  ,'Z_VERTEX2'  ,'m')                     
+        CALL inPutData(wallpt(id,7)   ,'LENGTH'     ,'m')                     
+        CALL inPutData(wallpt(id,19)  ,'TEMPERATURE','K')                     
+        in = wallpt(id,17)
+        CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
+        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
+        CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
+        CALL inPutData(fluxhw(in)-flxhw6(in),'MOL_PAR_FLUX'  ,'m-2 s-1')                     
+        CALL inPutData(flxhw7(in)           ,'MOL_AVG_ENERGY','eV')                     
+      ENDDO
+      CALL inCloseInterface 
+
+      WRITE(0,*) 'DONE'
+
+c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c     FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c     FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)  --- *HACK* AVERAGE IMPURITY LAUNCH ENERGY
+c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
 
       RETURN
  99   STOP
@@ -304,6 +498,8 @@ c
       REAL x1,x2,y1,y2,t,mach,p,jsat
       REAL   , ALLOCATABLE :: x(:),y(:),v(:),s(:)
       CHARACTER tag_x*11,tag_y*11,file*512
+
+      WRITE(0,*) 'IDL DUMP DATA FILES'
 
 c...  Dump data for processing in IDL:
       file = 'osm.idl'
@@ -1200,7 +1396,7 @@ c
      .        tvolp(200,0:100),deltar(200),dpsin(200),frac,p(200),
      .        dp(200),t_D(MAXNKS,MAXNRS),t_D2(MAXNKS,MAXNRS),
      .        r1,r2,z1,z2,rho1(200),scale,impurity_influx,rsmax,rsmin,
-     .        pressure,machno,
+     .        pressure,machno,eirene_influx,
      .        totfpin,totfypin,tmpy,totzfpin,tothpin,totfapin,totmhpin
 
       REAL, ALLOCATABLE :: tdata(:)
@@ -1243,7 +1439,8 @@ c       (from code in divoutput.f)
          totmhpin = totmhpin + (fluxhw(in)-flxhw6(in))* kboltz
      .                        * wallpt(id,19) * wallpt(id,7)
       ENDDO 
-      impurity_influx = totfypin  ! per meter toroidally s-1
+      impurity_influx = absfac  ! per meter toroidally s-1  changed on 02/04/2010 -SL
+      eirene_influx = totfypin  ! per meter toroidally s-1
       IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Outer midplane profiles:
@@ -1311,6 +1508,8 @@ c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
      .    ktebs(ikmid1(i1),ring(i1)),ktibs(ikmid1(i1),ring(i1)),
      .    (midpro(i1,i2),i2=1,ncol)
       ENDDO
+
+      WRITE(0,*) 'IDL CORE DATA FILES'
 
       CALL inOpenInterface('osm.idl.midplane',ITF_WRITE)
 c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
@@ -1416,8 +1615,8 @@ c...  Zeff:
 
       CALL inOpenInterface('osm.idl.core_impurities',ITF_WRITE)
  
-      CALL inPutData(absfac         ,'DIV_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(impurity_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac       ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(eirene_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','NA')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'NA')
       CALL inPutData(cion ,'IMP_Z'         ,'NA')
@@ -3908,10 +4107,16 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles
         RETURN
+      ELSEIF (iopt.EQ.16) THEN
+        CALL ExportTetrahedrons('tetrahedrons.raw')
+        RETURN
       ENDIF
+
+
 
       RETURN
      
+
 
       IF (nrmindex.GT.0) THEN
 

@@ -746,6 +746,24 @@ c
 c
 c ======================================================================
 c
+      INTEGER FUNCTION GetSurfaceIndex(iobj,iside)
+      USE mod_geometry
+      USE mod_sol28_global
+      IMPLICIT none
+
+      INTEGER iobj,iside,isrf
+
+      isrf = ABS(obj(iobj)%iside(iside))
+      isrf = srf(isrf)%index(IND_SURFACE)
+
+      GetSurfaceIndex = isrf
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE GetNextTet(newobj,nsurface,ielement,status)
       USE mod_out985
       USE mod_geometry
@@ -753,13 +771,14 @@ c
       IMPLICIT none
 
       TYPE(type_3D_object) :: newobj
-      INTEGER, INTENT(IN)  ::  nsurface,ielement
+      INTEGER, INTENT(IN)  :: nsurface,ielement
       INTEGER, INTENT(OUT) :: status
       REAL, ALLOCATABLE :: tdata(:)
 
-      REAL GetTetCentre
+      INTEGER GetSurfaceIndex
+      REAL    GetTetCentre
 
-      INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj
+      INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj,iside,isrf
       REAL, ALLOCATABLE :: ycen(:)
 
       SAVE
@@ -800,6 +819,8 @@ c     .          (ycen(iobj).LT.-0.50).OR.(ycen(iobj).GT.0.50))
 c     .          (ycen(iobj).LT.-0.20).OR.(ycen(iobj).GT.0.20))
 c     .          (tdata(iobj).LT.0.5E+23))
 c     DO WHILE (obj(iobj)%segment(1).EQ.0)  ! *** HACK ***
+
+c      DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID)
       DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID)
         iobj = iobj + 1
         IF (iobj.GT.nobj) THEN
@@ -843,6 +864,11 @@ c..   Defunct:  ! ...really?
       newobj%nsur         = 0
       newobj%ipts(2,1)    = 0
 
+c...  Store the associated non-default standard surface index from 
+c     the list in the EIRENE input file:
+      DO iside = 1, obj(iobj)%nside
+        newobj%esurf(iside) = GetSurfaceIndex(iobj,iside)
+      ENDDO
 
       RETURN
  99   STOP
@@ -1011,115 +1037,115 @@ c             the current side corresponds to:
         DEALLOCATE(vsum)
         WRITE(0,*) '  DONE'
       ELSE
-        ALLOCATE(vsum (4,nobj))
-        ALLOCATE(ilist(nobj))
-        ALLOCATE(yobj(nobj))
-
-        WRITE(0,*) '  CALCULATING VSUM'
-        DO iobj = 1, nobj
-          isrf = obj(iobj)%iside(1,1)  
-c          yobj(iobj) = GetTetCentre(iobj)  
-
-
-c        WRITE(0,*) 'CENTRE:',yobj(iobj)
-c        WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
-c        STOP 'sdfsd'
-
-          yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
-          DO isid = 1, obj(iobj)%nside
-            isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
-            vsum(isid,iobj) = srf(isrf)%ivtx(1) +
-     .                        srf(isrf)%ivtx(2) +
-     .                        srf(isrf)%ivtx(3)
-          ENDDO
-        ENDDO
-
-        WRITE(0,*) '  DIVIDING AND CONQUERING'
-        minphi =  1.0E+20
-        maxphi = -1.0E+20
-        miny   =  1.0E+20
-        maxy   = -1.0E+20
-        DO iobj = 1, nobj
-          minphi = MIN(minphi,obj(iobj)%phi)
-          maxphi = MAX(maxphi,obj(iobj)%phi)
-          miny   = MIN(miny  ,yobj(iobj)   )
-          maxy   = MAX(maxy  ,yobj(iobj)   )
-        ENDDO
-        WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
-        WRITE(0,*) '  MIN,MAXY  =',miny,maxy
-        dphi = 15.0
-        dy   = 0.20
-        DO phi = minphi, maxphi, dphi  ! maxphi, dphi
-          DO y = miny, maxy, dy
-            nlist = 0
-            WRITE(0,*) '  BUILDING LIST:',phi,y
-            DO iobj = 1, nobj
-              IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
-     .            ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
-                nlist = nlist + 1
-                ilist(nlist) = iobj
-              ENDIF
-            ENDDO  
-            WRITE(0,*) '           DONE:',nlist
-            WRITE(0,*) '           MAPPING...'
-            DO i1 = 1, nlist-1
-              DO i2 = i1+1, nlist
-                DO i3 = 1, obj(ilist(i1))%nside
-                  IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
-                  DO i4 = 1, obj(ilist(i2))%nside
-c                    WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
-c                    WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
-        
-                    IF (vsum(i3,ilist(i1)).EQ.
-     .                  vsum(i4,ilist(i2))) THEN 
-c...                  Potential match, need proper check:
-                      isrf1 = obj(ilist(i1))%iside(i3,1)
-                      isrf2 = obj(ilist(i2))%iside(i4,1)
-                      c = 0
-                      DO i5 = 1, srf(isrf1)%nvtx
-                        DO i6 = 1, srf(isrf2)%nvtx
-                         IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
-     .                     c = c + 1
-                        ENDDO
-                      ENDDO
-c                      WRITE(0,*) 'c:',c
-                      IF (c.EQ.srf(isrf1)%nvtx) THEN
-c                        WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
-                        obj(ilist(i1))%nmap(  i3) = 1
-                        obj(ilist(i1))%imap(1,i3) = ilist(i2)
-                        obj(ilist(i1))%isur(1,i3) = i4
-                        obj(ilist(i2))%nmap(  i4) = 1
-                        obj(ilist(i2))%imap(1,i4) = ilist(i1)
-                        obj(ilist(i2))%isur(1,i4) = i3
-                        vsum(i3,ilist(i1)) = 0
-                        vsum(i4,ilist(i2)) = 0
-                      ENDIF
-                    ENDIF
-        
-                  ENDDO
-                ENDDO
-              ENDDO
-            ENDDO
-
-          ENDDO
-        ENDDO
-c...    Mark the grid boundary:
-        DO iobj = 1, nobj
-          DO isid = 1, obj(iobj)%nside
-            IF (obj(iobj)%imap(1,isid).EQ.0) THEN
-              obj(iobj)%nmap(  isid) = 1
-              obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
-              obj(iobj)%imap(1,isid) = iobj
-              obj(iobj)%isur(1,isid) = isid
-            ENDIF
-          ENDDO
-        ENDDO
-
-c...    Clear geometry arrays:
-        CALL ClearTetArrays
-        DEALLOCATE(vsum )
-        DEALLOCATE(ilist)
-
+c        ALLOCATE(vsum (4,nobj))
+c        ALLOCATE(ilist(nobj))
+c        ALLOCATE(yobj(nobj))
+c
+c        WRITE(0,*) '  CALCULATING VSUM'
+c        DO iobj = 1, nobj
+c          isrf = obj(iobj)%iside(1,1)  
+cc          yobj(iobj) = GetTetCentre(iobj)  
+c
+c
+cc        WRITE(0,*) 'CENTRE:',yobj(iobj)
+cc        WRITE(0,*) 'CENTRE:',SNGL(vtx(2,srf(isrf)%ivtx(1)))
+cc        STOP 'sdfsd'
+c
+c          yobj(iobj) = SNGL(vtx(2,srf(isrf)%ivtx(1)))
+c          DO isid = 1, obj(iobj)%nside
+c            isrf = obj(iobj)%iside(isid,1)  ! Assuming only one surface per side...
+c            vsum(isid,iobj) = srf(isrf)%ivtx(1) +
+c     .                        srf(isrf)%ivtx(2) +
+c     .                        srf(isrf)%ivtx(3)
+c          ENDDO
+c        ENDDO
+c
+c        WRITE(0,*) '  DIVIDING AND CONQUERING'
+c        minphi =  1.0E+20
+c        maxphi = -1.0E+20
+c        miny   =  1.0E+20
+c        maxy   = -1.0E+20
+c        DO iobj = 1, nobj
+c          minphi = MIN(minphi,obj(iobj)%phi)
+c          maxphi = MAX(maxphi,obj(iobj)%phi)
+c          miny   = MIN(miny  ,yobj(iobj)   )
+c          maxy   = MAX(maxy  ,yobj(iobj)   )
+c        ENDDO
+c        WRITE(0,*) '  MIN,MAXPHI=',minphi,maxphi
+c        WRITE(0,*) '  MIN,MAXY  =',miny,maxy
+c        dphi = 15.0
+c        dy   = 0.20
+c        DO phi = minphi, maxphi, dphi  ! maxphi, dphi
+c          DO y = miny, maxy, dy
+c            nlist = 0
+c            WRITE(0,*) '  BUILDING LIST:',phi,y
+c            DO iobj = 1, nobj
+c              IF (ABS(obj(iobj)%phi-phi).LT.1.5*dphi.AND.
+c     .            ABS(yobj(iobj)   -y  ).LT.1.5*dy  ) THEN
+c                nlist = nlist + 1
+c                ilist(nlist) = iobj
+c              ENDIF
+c            ENDDO  
+c            WRITE(0,*) '           DONE:',nlist
+c            WRITE(0,*) '           MAPPING...'
+c            DO i1 = 1, nlist-1
+c              DO i2 = i1+1, nlist
+c                DO i3 = 1, obj(ilist(i1))%nside
+c                  IF (vsum(i3,ilist(i1)).EQ.0) CYCLE  ! Match already found
+c                  DO i4 = 1, obj(ilist(i2))%nside
+cc                    WRITE(0,*) '-->',ilist(i1),i3,vsum(i3,ilist(i1))
+cc                    WRITE(0,*) '   ',ilist(i2),i4,vsum(i4,ilist(i2))
+c        
+c                    IF (vsum(i3,ilist(i1)).EQ.
+c     .                  vsum(i4,ilist(i2))) THEN 
+cc...                  Potential match, need proper check:
+c                      isrf1 = obj(ilist(i1))%iside(i3,1)
+c                      isrf2 = obj(ilist(i2))%iside(i4,1)
+c                      c = 0
+c                      DO i5 = 1, srf(isrf1)%nvtx
+c                        DO i6 = 1, srf(isrf2)%nvtx
+c                         IF (srf(isrf1)%ivtx(i5).EQ.srf(isrf2)%ivtx(i6)) 
+c     .                     c = c + 1
+c                        ENDDO
+c                      ENDDO
+cc                      WRITE(0,*) 'c:',c
+c                      IF (c.EQ.srf(isrf1)%nvtx) THEN
+cc                        WRITE(0,*) '  ...go!...',ilist(i1),i3,ilist(i2),i4
+c                        obj(ilist(i1))%nmap(  i3) = 1
+c                        obj(ilist(i1))%imap(1,i3) = ilist(i2)
+c                        obj(ilist(i1))%isur(1,i3) = i4
+c                        obj(ilist(i2))%nmap(  i4) = 1
+c                        obj(ilist(i2))%imap(1,i4) = ilist(i1)
+c                        obj(ilist(i2))%isur(1,i4) = i3
+c                        vsum(i3,ilist(i1)) = 0
+c                        vsum(i4,ilist(i2)) = 0
+c                      ENDIF
+c                    ENDIF
+c        
+c                  ENDDO
+c                ENDDO
+c              ENDDO
+c            ENDDO
+c
+c          ENDDO
+c        ENDDO
+cc...    Mark the grid boundary:
+c        DO iobj = 1, nobj
+c          DO isid = 1, obj(iobj)%nside
+c            IF (obj(iobj)%imap(1,isid).EQ.0) THEN
+c              obj(iobj)%nmap(  isid) = 1
+c              obj(iobj)%tsur(  isid) = SP_GRID_BOUNDARY
+c              obj(iobj)%imap(1,isid) = iobj
+c              obj(iobj)%isur(1,isid) = isid
+c            ENDIF
+c          ENDDO
+c        ENDDO
+c
+cc...    Clear geometry arrays:
+c        CALL ClearTetArrays
+c        DEALLOCATE(vsum )
+c        DEALLOCATE(ilist)
+c
       ENDIF
 
 
@@ -1455,7 +1481,7 @@ c...
             IF (tri(itri)%sur(v1).NE.0) THEN        
 c...          Triangle surface is on a surface (magnetic or vessel wall):
               imap = tri(itri)%map(v1)
-              IF (.FALSE..AND.
+              IF (.TRUE..AND.
      .            tri(itri)%map  (v1).EQ.0    .AND.
      .            tri(itri)%index(2 ).GE.irsep) THEN
 c            .AND.               ! Need surface type identifier...

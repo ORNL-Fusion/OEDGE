@@ -1140,10 +1140,10 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A4,2A10,2A20,A20,A12,A8,1X,A7)')
+        WRITE(fp,'(2A4,2A10,2A20,A20,A12,2A8,1X,A7)')
      .    'ik','ir',
      .    'rs','zs','kss (/ max)','ksb (% max)',
-     .    'kps (/ max)','kpb','d_kpb',
+     .    'kps (/ max)','kpb','d_kpb','psi_n',
      .    irtag(ir)
 
         IF (ir.LT.irsep) THEN
@@ -1167,7 +1167,8 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
 c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
-          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
+          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,
+     .               2F8.4,A)')
      .      ik,ir,
      .      rs (ik,ir),zs (ik,ir),
      .      kss(ik,ir),kss(ik,ir)/(ksmaxs(ir)+1.0E-10),
@@ -1175,6 +1176,7 @@ c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
      .                  100.0,
      .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),
      .      kpb(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
+     .      psifl(ik,ir),
      .      note(1:LEN_TRIM(note))
 c     .      kss2(ik,ir)
 

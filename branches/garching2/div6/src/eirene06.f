@@ -10,6 +10,107 @@ c     -WriteEIRENE_06
 c
 c ======================================================================
 c
+      LOGICAL FUNCTION CheckIndex(index,range)
+      USE mod_sol28_global
+      IMPLICIT none
+
+      INTEGER  , INTENT(IN) :: index
+      CHARACTER, INTENT(IN) :: range*(*)
+
+      INTEGER i,j,k,l,m,n,val1,val2,val3,o,r,s
+      LOGICAL debug
+
+      debug = .FALSE.
+
+      CheckIndex = .FALSE.
+
+      l = LEN_TRIM(range)
+
+c...  Quick check to see if 'infinite range' has been set:
+      IF ((l.EQ.1.AND.range(1:1).EQ. '0').OR.
+     .    (l.EQ.2.AND.range(1:2).EQ.'-1')) THEN
+        CheckIndex = .TRUE.
+        RETURN
+      ENDIF
+
+      IF (debug) WRITE(0,*) index,' >'//TRIM(range)//'< ',l
+      j = 0
+      k = 0
+      s = 0
+      r = 0
+      DO i = 1, l
+        IF (range(i:i).NE.','.AND.j.EQ.0) j = i
+        IF (range(i:i).EQ.','.AND.j.NE.0) k = i - 1
+
+        IF (k.GT.0.OR.i.EQ.l) THEN
+          IF (i.EQ.1) j = 1
+          IF (i.EQ.l) k = l
+
+c          IF (debug) WRITE(0,*) TRIM(range(j:k))
+c          IF (debug) WRITE(0,*) SCAN(range(j:k),"Rr")
+          o = SCAN(range(j:k),"Rr")
+          IF (o.NE.0) THEN
+            o = o + j - 1
+            IF (debug) WRITE(0,*) 'REPEAT:',range(o:k)
+            READ(range(o+1:k),*) r     
+            k = o - 1
+            IF (debug) WRITE(0,*) 'REPEAT:',r
+          ENDIF
+          o = SCAN(range(j:k),"Ss")
+          IF (o.NE.0) THEN
+            o = o + j - 1
+            IF (debug) WRITE(0,*) 'SKIP:',range(o:k)
+            READ(range(o+1:k),*) s
+            k = o - 1
+            IF (debug) WRITE(0,*) 'SKIP:',s
+          ENDIF
+
+          m = 0
+          DO n = j, k
+            IF (range(n:n).EQ.'-') m = n
+          ENDDO
+          IF (m.GT.0) THEN
+            IF (debug) WRITE(0,*) 'J,M-1:',j,m-1
+            IF (debug) WRITE(0,*) 'M+1,K:',m+1,k
+            IF (debug) WRITE(0,*) 'VALS2: '//TRIM(range(j:m-1)) 
+            IF (debug) WRITE(0,*) 'VALS2: '//TRIM(range(m+1:k))
+            READ(range(j:m-1),*) val1
+            READ(range(m+1:k),*) val2
+            DO o = 1, r+1
+              IF (debug) WRITE(0,*) '     : ',val1,val2,index,o
+              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
+              val3 = val2 - val1
+              val1 = val2 + 1 + s
+              val2 = val1 + val3
+            ENDDO
+          ELSE
+            IF (debug) WRITE(0,*) 'J,K   :',j,k
+            IF (debug) WRITE(0,*) 'VALS1 : '//TRIM(range(j:k))
+            READ(range(j:k),*) val1
+            DO o = 1, r+1
+              IF (debug) WRITE(0,*) '      : ',val1,index,o
+              IF (index.EQ.val1) CheckIndex = .TRUE.
+              val1 = val1 + 1 + s
+            ENDDO
+          ENDIF
+          j = 0
+          k = 0
+          s = 0
+          r = 0
+        ENDIF
+      ENDDO
+
+      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
+c      STOP 'test'
+c      STOP
+
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE GetObjCentre(iobj,cen)
       USE mod_eirene06
 c      USE mod_geometry
@@ -430,7 +531,10 @@ c      CLOSE(fp)
       RETURN
 96    WRITE(0,*) 'WRITETRIANGEFILES: PROBLEMS WITH FILE ACCESS'
       STOP
-99    STOP
+99    WRITE(0,*) ' CTARDAT  =',ctardat
+      WRITE(0,*) ' TAR_MAXIK=',tar_maxik
+      WRITE(0,*) ' TAR_MAXIR=',tar_maxir
+      STOP
       END
 c
 c
@@ -1048,14 +1152,17 @@ c
       TYPE(type_srf   ) newsrf
       TYPE(type_object) newobj
 
+      LOGICAL CheckIndex
 
 c...  Bricks:
 
       INTEGER itry,nseg,i1,i2,isid,itet,ivtx,save_nobj,save_isrf,
-     .        iobj,isrf,istart,iend,isector,idum1
+     .        iobj,isrf,istart,iend,isector,isurface,idum1,
+     .        isurface_list(nsurface)
       LOGICAL regular_grid
-      LOGICAL :: debug = .FALSE.
-      LOGICAL :: hack  = .FALSE.
+      LOGICAL :: debug  = .FALSE.
+      LOGICAL :: hack   = .FALSE.
+      LOGICAL :: filter = .FALSE.
 
       REAL*8 a(3,3),b(3,7),c(3,4),ang,ang1,ang2,dang(500,2),
      .       theta,frac,xcen,ycen,adelta
@@ -1078,7 +1185,8 @@ C     INTEGER s(4,14) /3, 2, 1, 7,
      .                 3, 1, 6, 7,   6, 1, 4, 7 /
 
       INTEGER ishift,iside,itry1
-      LOGICAL, ALLOCATABLE :: trycheck(:)
+      LOGICAL, ALLOCATABLE :: trycheck(:),trycycle(:)
+      REAL   , ALLOCATABLE :: tryxcen(:) ,tryycen (:)
 
 C     Krieger IPP/07 - SUN compiler chokes on this syntax, wants
 C     variable declaration and initialization separately
@@ -1176,16 +1284,62 @@ c        dang(12,2) = 180.0D0   !  180.0D0
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
      .    'ANGLES:',isector,dang(isector,1:2)
+        WRITE(eirfp,'(A,I6,2F12.6)') 
+     .    'ANGLES:',isector,dang(isector,1:2)
       ENDDO
 
       dang = dang * D_DEGRAD
 
 c      ang1 = 360.0D0 / DBLE(ntorseg) * D_DEGRAD
 
+c...  Select which triangles will be part of the tetrahedron grid:
+      ALLOCATE(trycycle(ntry))
+      trycycle = .FALSE.
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).EQ.1.0) filter = .TRUE.
+      ENDDO
+      IF (filter) THEN
+        trycycle = .TRUE.
+        ALLOCATE(tryxcen(ntry))
+        ALLOCATE(tryycen(ntry))
+        DO itry = 1, ntry
+          DO i1 = 1, 3
+            isrf = try(itry)%iside(i1)
+            i2 = 1
+            IF (isrf.LT.0) i2 = 2 ! Side orientation is switched, so use other end point
+            a(1,i1) = tryvtx(1,trysrf(ABS(isrf))%ivtx(i2))
+            a(2,i1) = tryvtx(2,trysrf(ABS(isrf))%ivtx(i2))
+            a(3,i1) = 0.0D0
+          ENDDO
+          tryxcen(itry) = SNGL(SUM(a(1,1:3))) / 3.0
+          tryycen(itry) = SNGL(SUM(a(2,1:3))) / 3.0
+        ENDDO
+        DO itet = 1, opt_eir%tet_n
+          IF (opt_eir%tet_type(itet).NE.1.0) CYCLE         
+          WRITE(0,*) 'ITET:',itet
+          WRITE(0,*) '    :',opt_eir%tet_type(itet)
+          WRITE(0,*) '    :',opt_eir%tet_x1  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_y1  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_x2  (itet)
+          WRITE(0,*) '    :',opt_eir%tet_y2  (itet)
+          DO itry = 1, ntry
+            IF (tryxcen(itry).GE.opt_eir%tet_x1(itet).AND.
+     .          tryycen(itry).LE.opt_eir%tet_y1(itet).AND.
+     .          tryxcen(itry).LE.opt_eir%tet_x2(itet).AND.
+     .          tryycen(itry).GE.opt_eir%tet_y2(itet)) 
+     .        trycycle(itry) = .FALSE.
+          ENDDO
+        ENDDO
+        DEALLOCATE(tryxcen)
+        DEALLOCATE(tryycen)
+      ENDIF
+
       ALLOCATE(trycheck(ntry))
       trycheck = .FALSE.
 
       DO itry = 1, ntry  ! ntry   
+
+        IF (trycycle(itry)) CYCLE
 
 c        IF (try(itry)%index(IND_IK).NE.1.OR.
 c     .      try(itry)%index(IND_IR).NE.5) CYCLE  ! separatrix on sonnet_13018_250.sm
@@ -1203,16 +1357,18 @@ c...    Assemble brick vertices:
         ENDDO
 
 c...    Filter:
-        xcen = SUM(a(1,1:3)) / 3.0
-        ycen = SUM(a(2,1:3)) / 3.0
+c        xcen = SUM(a(1,1:3)) / 3.0
+c        ycen = SUM(a(2,1:3)) / 3.0
 c        IF (xcen.LT.0.01) CYCLE
 c        IF (xcen.LT.5.0.OR.ycen.LT.3.0) CYCLE
 c        IF (ycen.GT.-2.0) CYCLE
 c        IF (ycen.LT.3.0) CYCLE
 c        IF (try(itry)%index(IND_IR).GT.1 .AND.
 c     .      try(itry)%index(IND_IR).LT.20) CYCLE 
-        IF (ycen.GT.0.2.OR.xcen.GT.0.7) CYCLE        
-
+c        IF (ycen.LT.3.6.OR.xcen.LT.4.5) CYCLE        ! ITER 1
+c        IF (ycen.LT.3.0) CYCLE
+c        IF (ycen.LT.3.6.OR.xcen.LT.4.5) CYCLE        
+c        IF (ycen.GT.0.2.OR.xcen.GT.0.7) CYCLE        ! C-Mod inner wall puff study
 
 
 c...    Check orientation...?
@@ -1374,6 +1530,7 @@ c...      Add object:
 
 c...  Done with these, clear some memory:
       DEALLOCATE(trycheck)
+      DEALLOCATE(trycycle)
       DEALLOCATE(try)
       DEALLOCATE(trysrf)
       DEALLOCATE(tryvtx)
@@ -1427,8 +1584,6 @@ c          newobj%phi = SNGL(ang) / D_DEGRAD
 c...            Find toroidal angle of vertex relative to the minimum
 c               toroidal angle in sector 1, since these tetrahedrons
 c               may be stretched
-
-                 
 
                 a(1:3,1) = vtx(1:3,newsrf%ivtx(i1))
 
@@ -1540,6 +1695,11 @@ c     convention:
       CALL FixTetrahedrons(istart,iend)
 
 c...  Plasma association:
+c      CALL CheckTetrahedronStructure  ! Add this here..?
+
+c...  Add slices here, if requested:
+
+
 
 c...  Impose filament structures:
       IF (opt_fil%opt.NE.0) THEN
@@ -1562,6 +1722,65 @@ c...  Impose filament structures:
       CALL FixTetrahedrons(istart,iend)
 
       CALL CheckTetrahedronStructure
+
+      IF (.TRUE.) THEN
+c...    Make a linked list for the non-default standard surfaces in the surface 
+c       array (which also includes wall surfaces, which are not of interest here):
+        isurface_list = 0
+        DO i1 = 1, nsurface
+          IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+          isurface_list(surface(i1)%num) = i1
+        ENDDO
+
+c        WRITE(0,*) 'LIST:'
+c        WRITE(0,*) isurface_list(1:nsurface)
+
+        DO iobj = 1, nobj
+c...      Collect connection map information:
+          DO iside = 1, obj(iobj)%nside
+            isrf   = ABS(obj(iobj)%iside(iside))
+
+            isurface = srf(isrf)%index(IND_SURFACE)
+
+            IF (isurface.EQ.0) CYCLE
+
+            isector  = obj(iobj)%index(IND_IS)
+            isurface = isurface_list(isurface)
+
+c            WRITE(0,*) 'SECTOR  :',iobj,isrf,isector,
+c     .                 srf(isrf)%index(IND_SURFACE)
+
+            IF (CheckIndex(isector,surface(isurface)%sector)) CYCLE
+
+c            STOP 'TEST'
+
+            WRITE(0,*) 'SECTOR  :',iobj,isrf,isector,
+     .                 srf(isrf)%index(IND_SURFACE)
+            WRITE(0,*) '        :',isurface,isector,
+     .                 srf(isrf)%index(IND_SURFACE)
+
+            IF     (surface(isurface)%subtype.EQ.STRATUM   ) THEN
+             srf(isrf)%index(IND_SURFACE) = 
+     .         srf(isrf)%index(IND_SURFACE) - 1
+             WRITE(0,*) 'STRATUM REMAP'
+c             STOP 'TEST'
+            ELSEIF (surface(isurface)%subtype.EQ.ADDITIONAL) THEN
+             srf(isrf)%index(IND_SURFACE) = surface(default_surface)%num
+             WRITE(0,*) 'WALL REMAP'
+            ELSE
+              CALL ER('ProcessTetrahedrons','Invalid surface SUBTYPE '//
+     .                'when remapping the surface index',*99)
+            ENDIF
+
+            WRITE(0,*) '        :',isurface,isector,
+     .                 srf(isrf)%index(IND_SURFACE)
+
+           ENDDO
+        ENDDO
+
+c        STOP 'MADE IT HERE!'
+
+      ENDIF
 
       WRITE(eirfp,*) '  NOBJ:',nobj
       WRITE(eirfp,*) '  NSRF:',nsrf
@@ -1595,7 +1814,7 @@ c      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
       INTEGER i1,i2,i3,v1,v2,v3,v4,knot,ring,side,target,
      .        xupdate(10),yupdate(10),ix,iy,iscan,problem_triangle
       LOGICAL test,output,malformed,dummy_test, ! surface_assigned,
-     .        wall_assignment,grid_assignment
+     .        wall_assignment,grid_assignment,warning_given
       REAL    xmin,xmax,ymin,ymax,xval,yval
       REAL*8  x(0:2),y(0:2),s,t,dist1,dist2,dist3,dist4
 
@@ -1605,6 +1824,7 @@ c      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
       DATA (xupdate(i1),i1=1,10) /0, -1,  0,  1, -1, 1, -1, 0, 1, 0/ , 
      .     (yupdate(i1),i1=1,10) /0, -1, -1, -1,  0, 0,  1, 1, 1, 0/
 
+      warning_given = .FALSE.
 
       eir_pass = eir_pass + 1
   
@@ -1981,7 +2201,9 @@ c...         *** MASSIVE HACK : REMAPPING ***
                             tri(i1)%sideindex(5,v1)=surface(i3)%index(1)
                             EXIT
                           ENDDO
-                          WRITE(0,*) '*** SUPERHACK ***',i3
+                          WRITE(0,*) '*** SUPERHACK ***',i3,
+     .                      surface(i3)%index(3),
+     .                      surface(surface(i3)%index(3))%num
                           IF (i3.EQ.nsurface+1)
      .                      CALL ER('ProcessTriangles_06','Massive re'//
      .                              '-mapping hack failed',*99)
@@ -2100,8 +2322,13 @@ c            tri(i1)%map(v1) = 0
 c            tri(i1)%sid(v1) = 0
 c            tri(i3)%map(v3) = 0
 c            tri(i3)%sid(v3) = 0
-            WRITE(0,*) 'WARNING ProcessTriangles_06: Map extends '//
-     .                  'through a solid surface, doing nothing',i1,v1
+            IF (.NOT.warning_given) THEN
+              WRITE(0,*) 'WARNING ProcessTriangles_06: Map extends '//
+     .                    'through a solid surface, doing nothing'
+              warning_given = .TRUE.
+            ENDIF
+            WRITE(eirfp,*) 'WARNING ProcessTriangles_06: Map extends '//
+     .                    'through a solid surface, doing nothing',i1,v1
 
           ELSEIF (tri(i1)%map(v1).EQ.0) THEN
             IF ( tri(i1)%sur(v1).EQ.0.OR.
@@ -2372,7 +2599,7 @@ c
       SAVE
 
 
-      debug = .FALSE.
+      debug = .TRUE.
       fp = 88
 
       IF (debug) WRITE(fp,*) 'HERE IN PROCESS VOID',izone
@@ -2722,6 +2949,7 @@ c       this does not imply any associated recycling in EIRENE:
 c...    Look for wall surfaces that are inside each zone:
         IF (opt%void_add(1,ivoid).EQ.-1.AND.
      .      opt%void_add(2,ivoid).EQ.-1) THEN
+
           DO isrf = 1, nsurface
             IF (surface(isrf)%type    .NE.VESSEL_WALL.OR.
      .          surface(isrf)%index(2).EQ.0          .OR.
@@ -2771,6 +2999,51 @@ c                STOP 'dfsdfsd'
               ENDDO
             ENDIF
           ENDDO
+   
+        ELSE
+
+          DO isrf = 1, nsurface
+            IF (surface(isrf)%type    .NE.VESSEL_WALL.OR.
+     .          surface(isrf)%index(2).LT.opt%void_add(1,ivoid).OR.
+     .          surface(isrf)%index(2).GT.opt%void_add(2,ivoid)) CYCLE
+
+            res(isrf) = opt%void_res(ivoid)
+c...        Determine if the segment needs to be sub-divided:
+            x1 = surface(isrf)%v(1,1)
+            y1 = surface(isrf)%v(2,1)
+            x2 = surface(isrf)%v(1,2)
+            y2 = surface(isrf)%v(2,2)
+            len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
+            IF (len.GT.DBLE(res(isrf))) THEN
+              tstep = 1.0D0 / DBLE(INT(len/DBLE(res(isrf))) + 1)
+            ELSE
+              tstep = 1.0D0
+            ENDIF
+            IF (debug) THEN
+              WRITE(fp,*) ' NEW FORCED ADD SEG:',isrf
+c              WRITE(fp,*) '    I3    =',i3
+c              WRITE(fp,*) '    PTS1,2=',pts(i3,1:2)
+c              WRITE(fp,*) '    ISEG11=',pts(seg(iseg1,1),1:2)
+c              WRITE(fp,*) '    ISEG12=',pts(seg(iseg1,2),1:2)
+c              WRITE(fp,*) '    ISRF,RES:',isrf,res(isrf)
+c              WRITE(fp,*) '    X1,Y1:',x1,y1
+c              WRITE(fp,*) '    X2,Y2:',x2,y2
+c              STOP 'dfsdfsd'
+            ENDIF
+            DO t = 0.0D0, 0.9999999D0, tstep 
+              nseg = nseg + 1
+              seg(nseg,1) = npts + 1
+              seg(nseg,2) = npts + 2
+              seg(nseg,4) = isrf
+              npts = npts + 1
+              pts(npts,1) = x1 + t * (x2 - x1)             ! Orientation is correct
+              pts(npts,2) = y1 + t * (y2 - y1) 
+              npts = npts + 1
+              pts(npts,1) = x1 + (t + tstep) * (x2 - x1) 
+              pts(npts,2) = y1 + (t + tstep) * (y2 - y1)
+            ENDDO
+          ENDDO
+
         ENDIF    
  
       ENDDO
@@ -2936,7 +3209,7 @@ c
       REAL    defrecyct,defrecycf
 
       REAL       ECH
-      PARAMETER (ECH=1.6022E-19)
+      PARAMETER (ECH=1.602192E-19)
 
 c...  Assign defaults to surface properties:
       defiliin  = 1
@@ -2966,6 +3239,10 @@ c...  Assign defaults to surface properties:
       surface(nsurface)%recycs = 1.0
       surface(nsurface)%recycc = 1.0
 
+      surface(nsurface)%hard    = 0  
+      WRITE(surface(nsurface)%sector,'(256X)')  ! Not sure if this is necessary, just making sure...
+      surface(nsurface)%sector = '0'
+
       IF     (type.EQ.VESSEL_WALL) THEN
         surface(nsurface)%surtxt   = '* vessel wall (default)'
         surface(nsurface)%reflect = LOCAL
@@ -2977,7 +3254,6 @@ c...    Assume a 2-point line segment:
         surface(nsurface)%ipts(1,1) = 1
         surface(nsurface)%ipts(2,1) = 2
         surface(nsurface)%nver = 2
-
       ELSEIF (type.EQ.NON_DEFAULT_STANDARD) THEN
         surface(nsurface)%surtxt  = '* non-default standard (default)'
         surface(nsurface)%reflect = GLOBAL
@@ -2985,10 +3261,8 @@ c...    Assume a 2-point line segment:
         surface(nsurface)%material = 0.0
         surface(nsurface)%nsur = 0
         surface(nsurface)%nver = 0
-
       ELSEIF (type.EQ.HOLE_IN_GRID) THEN
         surface(nsurface)%surtxt  = '* hole in triangle grid'
-
       ELSE
         CALL ER('NewEireneSurface_06','Invalid type',*99)
       ENDIF
@@ -4914,7 +5188,7 @@ c          CALL ER('WriteBlock04_06','Need to check BEAM setup',*99)
           WRITE(fp06,96) ' 34 AMJUEL H.1 3.1.6FJ  PI ',1,1,0.0,0.0,0.0  ! For beams...
           WRITE(fp06,95) ' 35 AMJUEL H.102.1.8     RC',0,1,1.36E+01     ! Rec e cooling...
         ENDIF
-        IF (.TRUE..OR.opt_eir%ilspt.EQ.2) THEN
+        IF (.TRUE..OR.opt_eir%ilspt.EQ.5) THEN
           WRITE(fp06,95) ' 36 AMJUEL H.2 2.26B0    EI',0,56,0.0
         ENDIF            
 
@@ -4960,13 +5234,13 @@ c          CALL ER('WriteBlock04_06','Need to check BEAM setup',*99)
           WRITE(fp06,91) 34,114,114,  0,01001 
           WRITE(fp06,93) 0.0,4.0,0.0
         ENDIF
-        IF     (opt_eir%ilspt.EQ.1) THEN
+        IF     (opt_eir%ilspt.EQ.2) THEN
           WRITE(fp06,94) 2,'C       ',12,6,1,0,2,2,0,2
           WRITE(fp06,91) 6,115,214,0  ,00000
           WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
           WRITE(fp06,91) 7,114,111,214,01001
           WRITE(fp06,93) 0.0,0.0,0.0,0.0,1.0
-        ELSEIF (opt_eir%ilspt.EQ.2) THEN
+        ELSEIF (opt_eir%ilspt.EQ.5) THEN
           WRITE(fp06,94) 2,'Fe      ',56,26,1,0,2,2,0,1
           WRITE(fp06,91) 36,115,214,0,00000
           WRITE(fp06,93) 2.0,0.0,0.0,0.0,1.0
@@ -5326,7 +5600,8 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
      .      surface(i1)%reflect.EQ.LOCAL
         ENDIF
 
-        IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2) THEN  ! Need to fix this...
+        IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2.AND.
+     .      i1.NE.3) THEN  ! Need to fix this...
           warning_reported = .TRUE.
           WRITE(0,*)
           WRITE(0,*) '--------------------------------------------'
@@ -5471,9 +5746,9 @@ c     nmass = NINT(crmb)
       WRITE(fp06,92) 35.0,0.0,0.0,0.0,1.0                      ! eirsrcmul*eirscale(11)
 c      WRITE(fp06,92) 16.0,0.0,0.0,0.0,1.0E-15                      ! No volume recombination
 
-      IF     (opt_eir%ilspt.EQ.1) THEN
+      IF     (opt_eir%ilspt.EQ.2) THEN
         WRITE(fp06,94) 2,'C+      ',12 ,6 ,1,1,2,2,0,0
-      ELSEIF (opt_eir%ilspt.EQ.2) THEN
+      ELSEIF (opt_eir%ilspt.EQ.5) THEN
         WRITE(fp06,94) 2,'Fe+     ',56 ,26,1,1,2,2,0,0
       ELSEIF (opt_eir%ilspt.EQ.3) THEN
         WRITE(fp06,94) 2,'W+      ',184,74,1,1,2,2,0,0
@@ -5764,3 +6039,4 @@ c
 c ======================================================================
 c
 c
+

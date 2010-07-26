@@ -4955,6 +4955,13 @@ c slmod begin
       vpolmin = (MAXNKS*MAXNRS - in) / 2 + in
       vpolyp  = vpolmin
 
+c...  Assign PSIn values for the targets:
+      psitarg = 0.0
+      DO ir = 1, nrs
+        psitarg(ir,2) = psifl(1      ,ir)       
+        psitarg(ir,1) = psifl(nks(ir),ir)       
+      ENDDO      
+
       CALL OutputData(85,'End of RJET')
 
 c      z0  = -z0
@@ -5769,6 +5776,9 @@ c
 c     jdemod - Add factors to scale grid if desired
 c
       real rscale_grid,zscale_grid
+c slmod begin
+      real b_scale
+c slmod end
 c     
 c     double precision rvert(4),zvert(4)
 c     double precision rcent,zcent
@@ -5822,24 +5832,29 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-c      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
+         IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+         WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
         GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
         GOTO 300
       ELSE
+         IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
 c     slmod end
@@ -5927,6 +5942,14 @@ c
          read (buffer(7:),*) rscale_grid,zscale_grid
 c     
       endif
+c slmod begin
+c...  Some grids required rescaling of the magnetic field ratio:
+      if (buffer(1:8).eq.'B-SCALE:'.or.
+     >    buffer(1:8).eq.'B-Scale:'.or.
+     >    buffer(1:8).eq.'B-scale:') then
+         read (buffer(7:),*) b_scale 
+      endif   
+c slmod end
 c     
       if (buffer(4:8).ne.'=====') goto 100
 c     
@@ -6220,7 +6243,7 @@ c
  300  continue
 c     slmod begin
 
-      CALL OutputData(86,'300 of RAUG')    
+c      CALL OutputData(86,'300 of RAUG')    
 c         STOP 'RAUG MID'
 
       CALL DB('RAUG: Done reading grid')
@@ -6836,7 +6859,6 @@ c
  40      continue
          write(diagunit,'(a)')
  30   continue
-
 c     
 c     jdemod - Output the grid before modifications are made
 c     
@@ -6845,9 +6867,8 @@ c
 c     slmod begin 
       IF (quasidn) CALL PrepQuasiDoubleNull
 
+c...  Tailor/cut grid to wall:
       IF (grdnmod.GT.0) THEN
-c...    New, more sophisticated (yeah, baby) grid cutting method:
-
 c...    Get rid of poloidal boundary cells (to be added again below
 c       after grid manipulations are complete):
         DO ir = irsep, nrs
@@ -6915,33 +6936,6 @@ c     do ik = 1,nks(ir)
 c     korpg(ik,ir) = 0
 c     end do
 c     
-c     slmod begin
-      IF (.FALSE.) THEN
-         nvesm = nves
-         DO i1 = 1, nves-1
-            rvesm(i1,1) = rves(i1)
-            zvesm(i1,1) = zves(i1)
-            rvesm(i1,2) = rves(i1+1)
-            zvesm(i1,2) = zves(i1+1)
-         ENDDO
-         rvesm(i1,1) = rves(i1)
-         zvesm(i1,1) = zves(i1)
-         rvesm(i1,2) = rves(1)
-         zvesm(i1,2) = zves(1)
-         CALL OutputData(86,'Working on it - still')
-         CALL SaveSolution
-         STOP 'WORKING ON IT - STILL'
-      ENDIF
-
-      CALL OutputData(85,'End of RAUG')
-
-c     DO ir = 1, nrs
-c     DO ik = 1, nks(ir)
-c     bratio(ik,ir) = 0.5
-c     kbfs  (ik,ir) = 2.0
-c     ENDDO
-c     ENDDO
-c     slmod end
       return
 c     
 c     Error exit conditions

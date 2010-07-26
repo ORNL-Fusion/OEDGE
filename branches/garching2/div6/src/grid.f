@@ -6294,14 +6294,12 @@ c...    Triggers for resetting grid parameters:
         ELSEIF (mode.EQ.7) THEN
           iks = nks(ir) - ikti3
           ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
-        ELSEIF (mode.EQ.8) THEN
-c...      Near target refinement in the inner divertor (outer on JET):
-          iks = 1
-          ike = NINT(param)
-        ELSEIF (mode.EQ.9) THEN
-c...      Near target refinement in the outer divertor (outer on JET):
-          iks = nks(ir) - NINT(param) + 1
-          ike = nks(ir)
+        ELSEIF (mode.EQ.6) THEN
+          iks = NINT(REAL(ikto3-1)*(1.0-param)) + 1
+          ike = ikto3
+        ELSEIF (mode.EQ.7) THEN
+          iks = nks(ir) - ikti3
+          ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
 c        ELSEIF (mode.EQ.11) THEN
 cc...      The whole ring:
 c          iks = 1
@@ -6632,11 +6630,11 @@ c             vertex:
               c1 = d_rvertp(1,id1)
               c2 = d_zvertp(1,id1)
               IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-c      WRITE(0,*) 'A1,2=',a1,a2
-c      WRITE(0,*) 'B1,2=',b1,b2
-c      WRITE(0,*) 'C1,2=',c1,c2
-c      WRITE(0,*) '     ',dist,tol
-c                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR A',t1
+      WRITE(0,*) 'A1,2=',a1,a2
+      WRITE(0,*) 'B1,2=',b1,b2
+      WRITE(0,*) 'C1,2=',c1,c2
+      WRITE(0,*) '     ',dist,tol
+                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR A',t1
                 CALL SplitCell(ik2,ir2,t1,status)
                 CALL BuildMap
               ELSE
@@ -6703,12 +6701,12 @@ c     .            DABS(d_zvertp(4,id1)-d_zvertp(3,id2)).GT.DTOL) THEN
               b2 = d_zvertp(3,id2)
               c1 = d_rvertp(4,id1)
               c2 = d_zvertp(4,id1)
-c              WRITE(0,*) 'A1,2=',a1,a2
-c              WRITE(0,*) 'B1,2=',b1,b2
-c              WRITE(0,*) 'C1,2=',c1,c2
-c              WRITE(0,*) '     ',ik1,ik2,nks(ir2)
+              WRITE(0,*) 'A1,2=',a1,a2
+              WRITE(0,*) 'B1,2=',b1,b2
+              WRITE(0,*) 'C1,2=',c1,c2
+              WRITE(0,*) '     ',ik1,ik2,nks(ir2)
               IF (CalcPoint(a1,a2,b1,b2,c1,c2,t1).EQ.1) THEN
-c                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR B',t1
+                WRITE(0,*) 'SPLITTING TARGET NEIGHBOUR B',t1
                 CALL SplitCell(ik2,ir2,t1,status)
                 CALL BuildMap
               ELSE
@@ -6803,7 +6801,7 @@ c            ENDIF
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
 c...          Make sure the points are exactly the same, since small errors
 c             can creep in when cutting the grid: 
-              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(1,id1) = d_rvertp(iv,id)
               d_zvertp(1,id1) = d_zvertp(iv,id)
             ENDIF
@@ -6812,7 +6810,7 @@ c             can creep in when cutting the grid:
             length2 = MIN(SideLength(id ,1),SideLength(id ,2))
             tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
-              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(4,id2) = d_rvertp(iv,id)
               d_zvertp(4,id2) = d_zvertp(iv,id)
             ENDIF
@@ -6826,7 +6824,7 @@ c             can creep in when cutting the grid:
             length2 = MIN(SideLength(id ,3),SideLength(id ,4))
             tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
-              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(2,id1) = d_rvertp(iv,id)
               d_zvertp(2,id1) = d_zvertp(iv,id)
             ENDIF
@@ -6835,7 +6833,7 @@ c             can creep in when cutting the grid:
             length2 = MIN(SideLength(id ,3),SideLength(id ,4))
             tol = MIN(1.0D-4, 0.05D0*MIN(length1,length2))
             IF (dist.GT.0.0D0.AND.dist.LT.tol) THEN
-              IF (sloutput) WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
+              WRITE(0,*) 'MASSIVE GRID ZIPPING',ir1,ir2
               d_rvertp(3,id2) = d_rvertp(iv,id)
               d_zvertp(3,id2) = d_zvertp(iv,id)
             ENDIF

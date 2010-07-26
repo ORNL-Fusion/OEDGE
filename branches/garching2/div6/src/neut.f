@@ -5318,8 +5318,12 @@ c
                         endif 
                      endif
                   ENDIF
-               endif
-
+c slmod begin
+c...  Not sure where this 'endif' came from in the Garching version, but
+c     one can't compile with it there, and removing it seems to be the
+c     thing do do. -SL, 26/07/2010
+c               endif
+c slmod end
 c
 c              PIN data not available 
 c

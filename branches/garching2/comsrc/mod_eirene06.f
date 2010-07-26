@@ -23,8 +23,11 @@
      .                              VACUUM_GRID   = 2
 
 !...  Array sizes:
-      INTEGER, PUBLIC, PARAMETER :: VOID_MAXNSEG =1000, 
-     .                              VOID_MAXNHOLE=100
+      INTEGER, PUBLIC, PARAMETER :: VOID_MAXNSEG  = 1000, 
+     .                              VOID_MAXNHOLE = 100 ,
+     .                              MAXNHISTORY   = 100 ,
+     .                              MAXNGAUGE     = 20  ,
+     .                              MAXNSTRATA    = 50
 
       END MODULE MOD_EIRENE06_PARAMETERS
 !
@@ -53,8 +56,10 @@
         REAL    :: ewall,material,recyct,recycf
         INTEGER :: ilspt,isrs
         REAL    :: recycs,recycc
+        INTEGER :: hard           ! Force this surface to be separate from other surfaces (i.e. not automatically grouped with other surfaces with the same properties), for flux reporting from EIRENE
         CHARACTER*256 :: surtxt
-!         Geometry:
+        CHARACTER*256 :: sector   ! Toroidal sector list, don't change array size as initialisation in the code assumes *256
+!       Geometry:  ! defunct?
         INTEGER :: nsur,nver
         INTEGER :: npts(MAXSUR),ipts(MAXPTS,MAXSUR)
         INTEGER :: nlnk(MAXSUR),ilnk(MAXLNK,MAXSUR)
@@ -166,7 +171,7 @@ c...    Quantities returned by EIRENE:
       TYPE(type_strata), PUBLIC, SAVE :: strata(100) ! ,osm_strata(100)
       
 !...  Fluid code defined EIRENE geometry surfaces:
-      INTEGER, PUBLIC, SAVE :: nsurface 
+      INTEGER, PUBLIC, SAVE :: nsurface,default_surface,core_boundary
       
       INTEGER, PUBLIC, SAVE :: fp06
       
@@ -317,6 +322,32 @@ c
 
 
       END MODULE mod_eirene06_locals
-c
-c ======================================================================
-c
+!
+! ======================================================================
+!
+      MODULE mod_eirene_history
+      USE mod_eirene06_parameters
+      IMPLICIT none
+       
+      PUBLIC
+
+      TYPE, PUBLIC :: type_eirene_history
+        INTEGER :: iiter
+        INTEGER :: ngauge
+        INTEGER :: gauge_nstrata    
+        REAL    :: gauge_p_atm      (MAXNSTRATA,MAXNGAUGE)  ! [mTorr]
+        REAL    :: gauge_p_mol      (MAXNSTRATA,MAXNGAUGE)
+        REAL    :: gauge_parden_atm (MAXNSTRATA,MAXNGAUGE)
+        REAL    :: gauge_parden_mol (MAXNSTRATA,MAXNGAUGE)
+        REAL    :: gauge_egyden_atm (MAXNSTRATA,MAXNGAUGE)
+        REAL    :: gauge_egyden_mol (MAXNSTRATA,MAXNGAUGE)
+      ENDTYPE type_eirene_history
+
+
+      INTEGER :: nhistory
+      TYPE(type_eirene_history), SAVE :: history(MAXNHISTORY)
+
+      END MODULE mod_eirene_history
+!
+! ======================================================================
+!

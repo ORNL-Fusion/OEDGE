@@ -332,6 +332,42 @@ c              WRITE(0,*) '>>'//buffer(i:i+24)//'<<'
 c
 c ======================================================================
 c
+      SUBROUTINE SplitBuffer(buffer,buffer_array)
+      IMPLICIT none
+
+      CHARACTER, INTENT(IN)  :: buffer*(*)
+      CHARACTER, INTENT(OUT) :: buffer_array*256(*)
+
+      INTEGER i,j,k,n,m
+
+      buffer_array(1) = ' '
+
+      n = LEN_TRIM(buffer)
+      m = 0
+
+      j = 0
+      DO i = 1, n
+        IF (buffer(i:i).EQ.' ' .AND.j.GT.0.OR.
+     .      buffer(i:i).EQ.'"' .AND.j.LT.0.OR. 
+     .      buffer(i:i).EQ.''''.AND.j.LT.0) THEN
+          m = m + 1
+c          WRITE(0,*) '>>>',j,i
+          IF (j.LT.0) j = -j + 1
+          buffer_array(m) = buffer(j:i-1)
+c          WRITE(0,*) m,buffer(j:i-1)            
+          j = 0
+        ENDIF
+        IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
+        IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
+        IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE LoadEireneOption(fp,buffer,itag)
       USE mod_sol28_params
       USE mod_sol28_global
@@ -346,13 +382,23 @@ c
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1,idum(5)
-      CHARACTER cdum*1024
+      LOGICAL   first_pass
+      CHARACTER cdum*1024,buffer_array*256(100)
       REAL      stratum_type,version,rdum(7)
+
+      first_pass = .TRUE.
+
+      DO i1 = 1, 100
+        WRITE(buffer_array(i1),'(256X)')
+      ENDDO
 
       SELECTCASE (buffer(3:itag-1))
 c       ----------------------------------------------------------------
         CASE('EIR IMPURITY SPUTTERING')
           CALL ReadOptionI(buffer,1,opt_eir%ilspt) 
+c       ----------------------------------------------------------------
+        CASE('EIR TET DUMP')
+          CALL ReadOptionI(buffer,1,opt_eir%tet_iliin) 
 c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
@@ -380,8 +426,11 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
           ENDDO
 c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
-          opt_eir%nstrata = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            IF (first_pass) THEN
+              opt_eir%nstrata = 0
+              first_pass = .FALSE.
+            ENDIF
             opt_eir%nstrata = opt_eir%nstrata + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
             READ(buffer,*) 
@@ -443,6 +492,47 @@ c       ----------------------------------------------------------------
      .          opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
      .          opt_eir%spcvy(opt_eir%nadspc),
      .          opt_eir%spcvz(opt_eir%nadspc)
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR TETRAHEDRON GRID')
+          opt_eir%tet_n = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%tet_n = opt_eir%tet_n + 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            SELECTCASE (TRIM(buffer_array(1)))
+              CASE('1.0')
+                READ(buffer,*) 
+     .            opt_eir%tet_type(opt_eir%tet_n),  !                
+     .            opt_eir%tet_x1  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_y1  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_x2  (opt_eir%tet_n),  ! 
+     .            opt_eir%tet_y2  (opt_eir%tet_n)   ! 
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown tetrahedron grid '//
+     .                  'TYPE found',*99)
+            ENDSELECT
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR SURFACE PROPERTIES')
+          opt_eir%sur_n  = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%sur_n = opt_eir%sur_n + 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)
+            opt_eir%sur_index (opt_eir%sur_n) = TRIM(buffer_array(2))
+            opt_eir%sur_sector(opt_eir%sur_n) = TRIM(buffer_array(3))
+            READ(buffer_array( 4),*) opt_eir%sur_iliin (opt_eir%sur_n)
+            READ(buffer_array( 5),*) opt_eir%sur_ilside(opt_eir%sur_n)
+            READ(buffer_array( 6),*) opt_eir%sur_ilswch(opt_eir%sur_n)
+            READ(buffer_array( 7),*) opt_eir%sur_tr1   (opt_eir%sur_n)
+            READ(buffer_array( 8),*) opt_eir%sur_tr2   (opt_eir%sur_n)
+            READ(buffer_array( 9),*) opt_eir%sur_recyct(opt_eir%sur_n)
+            READ(buffer_array(10),*) opt_eir%sur_ilspt (opt_eir%sur_n)
+            READ(buffer_array(11),*) opt_eir%sur_temp  (opt_eir%sur_n)
+            opt_eir%sur_mat(opt_eir%sur_n) = TRIM(buffer_array(12))
+            READ(buffer_array(13),*) opt_eir%sur_hard  (opt_eir%sur_n)
+            READ(buffer_array(14),*) opt_eir%sur_remap (opt_eir%sur_n)
+            opt_eir%sur_tag(opt_eir%sur_n) = TRIM(buffer_array(15))
           ENDDO
 c       ----------------------------------------------------------------
        CASE DEFAULT
@@ -536,6 +626,8 @@ c
           WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
         CASE('GRID FORMAT')
           CALL ReadOptionI(buffer,1,opt%f_grid_format)
+        CASE('GRID LOAD METHOD')
+          CALL ReadOptionI(buffer,1,opt%f_grid_load_method)
         CASE('GRID FILE')
           READ(buffer,*) cdum1,opt%f_grid_file
         CASE('GRID STRIP CELLS')
@@ -860,7 +952,7 @@ c                ENDIF
      .            osmnode(osmnnode)%pe,
      .            osmnode(osmnnode)%te,
      .            osmnode(osmnnode)%ti(1),       ! Assumption
-     .            osmnode(osmnnode)%potential
+     .            osmnode(osmnnode)%epot
               ELSEIF (node_type.EQ.-1.0.AND.node_data) THEN
                 osmnode(osmnnode)%type = 0.0
                 IF (node_tmp%rad_mode.EQ.6) THEN
@@ -930,6 +1022,7 @@ c
       USE mod_sol28_global
       USE mod_options
       USE mod_eirene06
+      USE mod_eirene_history
       USE mod_legacy
       USE mod_solps
       IMPLICIT none
@@ -966,10 +1059,12 @@ c...  OSM options:
       WRITE(opt_eir%f_eirene_15 ,'(512X)')
 
       opt%f_grid_format = 0
+      opt%f_grid_load_method = 2 
       WRITE(opt%f_grid_file,'(512X)')
       opt%f_grid_strip = 0
       opt%grd_ntdel = 0
       opt%grd_tdel  = 0
+
 
       opt%mat_opt  = 1
       opt%mat_file = 'materials.dat'
@@ -980,7 +1075,7 @@ c...  OSM options:
       opt%sol_option(1) = 28
 
       opt%pin_data   = .FALSE.
-      opt%p_ion      = 3
+      opt%p_ion      = 2   ! changed from 3 on 23/07/2010
       opt%p_ion_exp  = 0.1
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
@@ -988,8 +1083,8 @@ c...  OSM options:
       opt%m_mom      = 0
       opt%m_fit      = 2
       opt%m_ano      = 2
-      opt%m_ano_dist = 1
-      opt%m_ano_exp  = 0.0
+      opt%m_ano_dist = 3   ! changed from 1 on 23/07/2010
+      opt%m_ano_exp  = 2.0 ! changed from 0.0 on 23/07/2010
 
       opt%te_rec = 0
       opt%te_ion = 0
@@ -1028,7 +1123,6 @@ c...  Filament options:
       opt_fil%length2 = -99.0
 
 c...  Eirene options:
-      opt_eir%nstrata = 0
 
 c      opt_eir%nvoid = 0
       opt_eir%nvoid = 1
@@ -1044,6 +1138,41 @@ c      opt_eir%nvoid = 0
       opt_eir%void_te  (  1) =  0.0
       opt_eir%void_ti  (  1) =  0.0
 
+      opt_eir%nstrata = 3
+      opt_eir%type         (1) = 1.0
+      opt_eir%npts         (1) = -90000
+      opt_eir%flux         (1) = 1.0
+      opt_eir%flux_fraction(1) = 1.0
+      opt_eir%species      (1) = 4
+      opt_eir%species_index(1) = 1
+      opt_eir%sorene       (1) = 0.0
+      opt_eir%target       (1) = 1
+      opt_eir%txtsou       (1) = 'default inner target'
+      opt_eir%range_tube (1,1) = 1
+      opt_eir%range_tube (2,1) = 99999
+
+      opt_eir%type         (2) = 1.0
+      opt_eir%npts         (2) = -90000
+      opt_eir%flux         (2) = 1.0
+      opt_eir%flux_fraction(2) = 1.0
+      opt_eir%species      (2) = 4
+      opt_eir%species_index(2) = 1
+      opt_eir%sorene       (2) = 0.0
+      opt_eir%target       (2) = 2
+      opt_eir%txtsou       (2) = 'default outer target'
+      opt_eir%range_tube (1,2) = 1
+      opt_eir%range_tube (2,2) = 99999
+
+      opt_eir%type         (3) = 2.0
+      opt_eir%npts         (3) = -90000
+      opt_eir%flux         (3) = 1.0
+      opt_eir%flux_fraction(3) = 1.0
+      opt_eir%species      (3) = 4
+      opt_eir%species_index(3) = 1
+      opt_eir%sorene       (3) = 0.0
+      opt_eir%target       (3) = 1
+      opt_eir%txtsou       (3) = 'default volume recombination'
+
       opt_eir%time  = 30
       opt_eir%niter = 0
 
@@ -1052,6 +1181,8 @@ c      opt_eir%nvoid = 0
       opt_eir%time0 = 0.0
 
       opt_eir%ilspt = 0
+
+      opt_eir%tet_iliin = 2  ! Absorbing surface
 
       opt_eir%geom  = 2
       opt_eir%data  = 1
@@ -1069,6 +1200,8 @@ c      opt_eir%nvoid = 0
       opt_eir%ctargt  = 300.0
       opt_eir%cwallt  = 300.0
 
+      opt_eir%sur_n   = 0  ! Surface properties 
+      opt_eir%tet_n   = 0  ! Tetrahedron mesh definition
       opt_eir%nadspc  = 0  ! Energy spectra definitions
 
       eirfp = 88     
@@ -1081,6 +1214,8 @@ c...  SOLPS related variables:
       IF (ALLOCATED(map_divimp)) DEALLOCATE(map_divimp)
       IF (ALLOCATED(solps_cen )) DEALLOCATE(solps_cen )
       IF (ALLOCATED(map_osm   )) DEALLOCATE(map_osm   )
+
+      nhistory = 0
 
 c...  User:
       CALL User_InitializeOptions

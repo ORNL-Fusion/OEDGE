@@ -51,7 +51,7 @@ c
 
       fp = 99
       OPEN(UNIT=fp,FILE=fname(1:LEN_TRIM(fname)),ACCESS='SEQUENTIAL',
-     .     FORM='UNFORMATTED',STATUS='OLD',ERR=98)            
+     .     FORM='UNFORMATTED',STATUS='OLD',ERR=97)            
       READ (fp,ERR=98) vgrid
       READ (fp,ERR=98) grid
 c...  Check version numbers:
@@ -137,6 +137,7 @@ c          ENDDO
 c        ENDDO
 
       RETURN
+ 97   CALL ER('LoadGrid','Problem accessing geometry files',*99)
  98   CALL ER('LoadGrid','Problem loading OSM grid file, maybe '//
      .        'MOD_SOL28 has changed?',*99)
  99   WRITE(0,*) '  FILE NAME='//'"'//fname(1:LEN_TRIM(fname))//'"'
