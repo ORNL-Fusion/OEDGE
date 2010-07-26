@@ -402,7 +402,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                ENDIF
                END
             5: BEGIN
-               OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1])
+               OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1]) 
                OPLOT, val.x, val.y[*,2], COLOR=TrueColor(colors[2])
                OPLOT, val.x, val.y[*,3], COLOR=TrueColor(colors[3])
                OPLOT, val.x, val.y[*,4], COLOR=TrueColor(colors[4])

@@ -1570,8 +1570,8 @@ c...        Assign x-axis data:
 
             IF     (xtype.EQ.1.OR.xtype.EQ.10) THEN
               mOUTS(i1+in,ip) = KSS(IK,IR)
-              WRITE(0,*) 'MOUTS:',in,mouts(1:10,ip)
-              WRITE(0,*) '     :',ir,kss  (1:10,ir)
+c              WRITE(0,*) 'MOUTS:',in,mouts(1:10,ip)
+c              WRITE(0,*) '     :',ir,kss  (1:10,ir)
               mWIDS(i1+in,ip) = 0.5 * (KBACDS(IK,IR) + KFORDS(IK,IR))
             ELSEIF (xtype.EQ.2) THEN
               mOUTS(i1+in,ip) = thetag(IK,IR)
@@ -1950,7 +1950,7 @@ c...        Reorder data points:
           ENDDO
         ENDDO
 
-        WRITE(0,*) '978: XTYPE,YTYPE= ',xtype,TRIM(xlab)
+c        WRITE(0,*) '978: XTYPE,YTYPE= ',xtype,TRIM(xlab)
 
 
         CALL SLDRAWM (mouts,mwids,mvals,MAXNKS,pnks,

@@ -1075,7 +1075,7 @@ c...  OSM options:
       opt%sol_option(1) = 28
 
       opt%pin_data   = .FALSE.
-      opt%p_ion      = 3
+      opt%p_ion      = 2   ! changed from 3 on 23/07/2010
       opt%p_ion_exp  = 0.1
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
@@ -1083,8 +1083,8 @@ c...  OSM options:
       opt%m_mom      = 0
       opt%m_fit      = 2
       opt%m_ano      = 2
-      opt%m_ano_dist = 1
-      opt%m_ano_exp  = 0.0
+      opt%m_ano_dist = 3   ! changed from 1 on 23/07/2010
+      opt%m_ano_exp  = 2.0 ! changed from 0.0 on 23/07/2010
 
       opt%te_rec = 0
       opt%te_ion = 0

@@ -11,6 +11,7 @@
 .r cortex_load_geometry
 .r cortex_load_plasma
 .r cortex_load_results
+.r cortex_load_tetrahedrons
 .r grid_readequfile
 .r cortex_plot_2D_grid
 .r cortex_plot_1D_targets

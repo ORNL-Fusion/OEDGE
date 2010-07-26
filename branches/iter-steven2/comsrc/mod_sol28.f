@@ -415,7 +415,7 @@ c...    Strata:
         REAL    :: rho
         REAL    :: psin
         REAL    :: metric(2)             ! Cross-field othogonality metric at ends of tube
-        REAL*8  :: VOlume
+        REAL*8  :: volume
         REAL*8  :: surface_area(2)
         REAL*8  :: target_area(2)
 !...    3D:

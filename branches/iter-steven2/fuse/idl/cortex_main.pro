@@ -9,7 +9,7 @@ PRO cortex_batch
   cortex_main,['i-fwp-4204a','i-fwp.ctx']
   cortex_main,['i-fwp-4205a','i-fwp.ctx']
   cortex_main,['i-fwp-4206a','i-fwp.ctx']
-  cortex_main,['i-fwp-4207a','i-fwp.ctx']
+  cortex_main,['i-fwp-4207a','i-fwp.ctx'] ; hello
   cortex_main,['i-fwp-4208a','i-fwp.ctx']
   cortex_main,['i-fwp-4209a','i-fwp.ctx']
 
@@ -341,6 +341,32 @@ PRO cortex_GeneratePlots, args
             ENDFOR
             status = cortex_PlotCoreProfiles(plot, core_array, ps=ps)
             END
+;         --------------------------------------------------------------         
+          4: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              grid   = cortex_LoadFluidGrid (path + plot.case_name[i] + '.' + plot.data_file[0])
+              wall   = cortex_LoadWall      (path + plot.case_name[i] + '.' + plot.data_file[1])
+              plasma = cortex_LoadPlasmaData(path + plot.case_name[i] + '.' + plot.data_file[2])
+              target = -1
+              FOR j = 1, plot.line_seg_n DO BEGIN
+                inter = cortex_SliceGrid(plot.line_seg[0+(j-1)*4:3+(j-1)*4],grid,status)
+                IF (status EQ -1) THEN BEGIN
+                  plot.line_seg_s = -1
+                ENDIF ELSE BEGIN
+                  name = 'data' + STRING(j,FORMAT='(I0)')
+                  IF (j EQ 1) THEN inter_array = CREATE_STRUCT(            name,inter) ELSE  $
+                                   inter_array = CREATE_STRUCT(inter_array,name,inter)
+                ENDELSE
+              ENDFOR
+
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              plot_data = { grid : grid, wall : wall, inter : inter_array, plasma : plasma, target : target }
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotRadialProfile(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
           ELSE: BEGIN  
             PRINT, 'ERROR cortex_GeneratePlots: Unrecognised radial plot option'
             PRINT, '  OPTION = ',option
@@ -449,6 +475,15 @@ PRO cortex_GeneratePlots, args
           cortex_Exit, nargs
         ENDIF
         status = cortex_Plot2DContour(plot, plot_data, grid, wall, ps=ps)
+        END
+;     ------------------------------------------------------------------
+      'PLOT 3D TEST': BEGIN
+        file_path = path + plot.case_name[0] + '.'
+        plot_data = cortex_LoadTetrahedronData(file_path + plot.data_file[0])
+        help,plot_data,/struct
+        tet = plot_data
+        SAVE, filename='tetrahedron_test.sav', tet
+;        status = cortex_Plot2DContour(plot, plot_data, ps=ps)
         END
 ;     ------------------------------------------------------------------
       ELSE: BEGIN

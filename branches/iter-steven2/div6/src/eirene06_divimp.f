@@ -312,13 +312,14 @@ c     ----------------------------------------------------------------------
 c...  Poloidal surfaces for Eirene strata:
       IF (.TRUE.) THEN
 c...    Determine the number of target strata that are defined:
-        assigned = .FALSE.
-        DO is = 1, opt_eir%nstrata
-          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
-     .             opt_eir%target(is).EQ.IKLO) assigned(IKLO) =.TRUE.
-          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
-     .             opt_eir%target(is).EQ.IKHI) assigned(IKHI) =.TRUE.
-        ENDDO
+c        assigned = .FALSE.
+c        DO is = 1, opt_eir%nstrata
+c          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+c     .             opt_eir%target(is).EQ.IKLO) assigned(IKLO) =.TRUE.
+c          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
+c     .             opt_eir%target(is).EQ.IKHI) assigned(IKHI) =.TRUE.
+c        ENDDO
+        assigned = .TRUE.
 c...    Define the default surfaces for the target strata, since target
 c       strata are not specifically assigned:
         DO i1 = IKLO, IKHI 
@@ -1199,16 +1200,19 @@ c
       srcsrf  = 0 
 
 c...  Decide if default strata should be assigned:
-      assign_LO     = .TRUE.
-      assign_HI     = .TRUE.
-      assign_volrec = .TRUE.
-      DO is = 1, opt_eir%nstrata
-        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
-     .           opt_eir%target(is).EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
-        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
-     .           opt_eir%target(is).EQ.IKHI) assign_HI     =.FALSE.
-        IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
-      ENDDO
+c      assign_LO     = .TRUE.
+c      assign_HI     = .TRUE.
+c      assign_volrec = .TRUE.
+c      DO is = 1, opt_eir%nstrata
+c        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+c     .           opt_eir%target(is).EQ.IKLO) assign_LO     =.FALSE.  ! -1 = LO target, -2 = high target
+c        IF (NINT(opt_eir%type(is))  .EQ.1.AND.
+c     .           opt_eir%target(is).EQ.IKHI) assign_HI     =.FALSE.
+c        IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
+c      ENDDO
+      assign_LO     = .FALSE.
+      assign_HI     = .FALSE.
+      assign_volrec = .FALSE.
 
       WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 

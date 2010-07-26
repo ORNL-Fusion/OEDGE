@@ -4955,6 +4955,13 @@ c slmod begin
       vpolmin = (MAXNKS*MAXNRS - in) / 2 + in
       vpolyp  = vpolmin
 
+c...  Assign PSIn values for the targets:
+      psitarg = 0.0
+      DO ir = 1, nrs
+        psitarg(ir,2) = psifl(1      ,ir)       
+        psitarg(ir,1) = psifl(nks(ir),ir)       
+      ENDDO      
+
       CALL OutputData(85,'End of RJET')
 
 c      z0  = -z0

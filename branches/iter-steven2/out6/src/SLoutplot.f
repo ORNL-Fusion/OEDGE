@@ -3,6 +3,73 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE ExportTetrahedrons(fname)
+      USE mod_interface
+      USE mod_geometry
+      USE mod_eirene06_locals
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      CHARACTER, INTENT(IN) :: fname*(*)
+
+      INTEGER GetNumberOfObjects
+
+      INTEGER status,ndat,ik,ir,iobj,ion
+      REAL*8  p(3)
+      REAL, ALLOCATABLE :: tdata(:,:)
+
+      ion = 1
+
+      CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
+      IF (status.EQ.-1) THEN
+        WRITE(0,*) 'MESSAGE ExportTetrahedrons: File not found'
+        RETURN
+      ENDIF
+
+c      CALL LoadGrid('osm.raw')
+
+      ndat = GetNumberOfObjects('default')
+      ALLOCATE(tdata(ndat,2))
+      CALL LoadTriangleData(2,1,1,1,tdata(1,1),'default')  ! Atom density (from plot 987)
+      CALL LoadTriangleData(3,1,1,1,tdata(1,2),'default')  ! Mol. density (from plot 987)
+
+      CALL inOpenInterface('idl.tet_centroid',ITF_WRITE)
+      DO iobj = 1, nobj
+        CALL CalcCentroid(iobj,2,p)
+        CALL inPutData(SNGL(p(1)),'X','m')                     
+        CALL inPutData(SNGL(p(2)),'Y','m')                     
+        CALL inPutData(SNGL(p(3)),'Z','m')                     
+        IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) THEN
+          ik = obj(iobj)%index(IND_IK)
+          ir = obj(iobj)%index(IND_IR)
+c          WRITE(0,*) 'ind:',iobj,i
+          CALL inPutData(knbs (ik,ir),'NE','m-3')        
+          CALL inPutData(ktebs(ik,ir),'TE','eV')
+        ELSE
+          CALL inPutData(0.0         ,'NE','m-3')        
+          CALL inPutData(0.0         ,'TE','eV')
+        ENDIF
+        CALL inPutData(tdata(iobj,1),'N_D' ,'m-3')
+        CALL inPutData(tdata(iobj,2),'N_D2','m-3')
+      ENDDO
+      CALL inCloseInterface
+
+      DEALLOCATE(tdata)
+      CALL geoClean
+c      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE GenerateEIRENEDataFiles
       USE mod_interface
       IMPLICIT none
@@ -4040,10 +4107,16 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles
         RETURN
+      ELSEIF (iopt.EQ.16) THEN
+        CALL ExportTetrahedrons('tetrahedrons.raw')
+        RETURN
       ENDIF
+
+
 
       RETURN
      
+
 
       IF (nrmindex.GT.0) THEN
 

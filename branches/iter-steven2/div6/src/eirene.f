@@ -15,6 +15,7 @@ c
 c  subroutine: WrtEIRENE
 c
       subroutine wrteirene
+      USE mod_sol28_global
       IMPLICIT none
 
       include 'params'
@@ -25,6 +26,8 @@ c slmod begin
 
       INTEGER ik,ir,in1,in2,i1,id,ik1
 
+      opt%pin_data = .TRUE.
+      opt_iteration(1:nopt)%pin_data = .TRUE.
 c slmod end
 
 c     the purpose of this routine is to bring first the arrays
