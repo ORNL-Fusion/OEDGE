@@ -84,13 +84,15 @@ c              WRITE(logfp,*) '--> DONE'
           ENDSELECT         
           parion(ic1:ic2,ion) = source(ic1:ic2)
 
-
 c...      Cross-field:
 c         ----------------------------------------------------------------
 
-c...      User:
+c...      Generic user particle source specification:
 c         ----------------------------------------------------------------
-          parusr(ic1:ic2,ion) = 0.0D0
+          source = 0.0D0
+          CALL User_ParticleSource(ion,target,source)
+          parusr(ic1:ic2,ion) = source(ic1:ic2)  
+c          parusr(ic1:ic2,ion) = 0.0D0
 
 c...      Anomalous:
 c         ----------------------------------------------------------------
@@ -126,12 +128,6 @@ c             prescribed flow values:
               CALL User_VolumeParAnoSource(target,source)         
           ENDSELECT
           parano(ic1:ic2,ion) = source(ic1:ic2)
-
-c...      Generic user particle source specification:
-c         ----------------------------------------------------------------
-          source = 0.0D0
-          CALL User_ParticleSource(ion,target,source)
-          parion(ic1:ic2,ion) = parion(ic1:ic2,ion) + source(ic1:ic2)  ! *HACK* source needs to go somewhere else...
 
         ENDDO
       ENDDO
@@ -438,7 +434,8 @@ c...      User:
 c         ----------------------------------------------------------------
           source = 0.0D0
           CALL User_MomentumSource(ion,target,source)
-          momvol(ic1:ic2,ion) = momvol(ic1:ic2,ion) + source(ic1:ic2)
+          momusr(ic1:ic2,ion) = source(ic1:ic2)
+c          momvol(ic1:ic2,ion) = momvol(ic1:ic2,ion) + source(ic1:ic2)
 
         ENDDO
       ENDDO
@@ -467,7 +464,7 @@ c
       INTEGER ion,target,ic1,ic2,ic,node1,node2,i1,i2,snode,enode,
      .        inode
       REAL*8  net,integral(10),p1,p2,source(icmax),pmatch,
-     .        srcint(0:icmax)
+     .        srcint(0:icmax),srcint1(0:icmax),srcint2(0:icmax)
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -538,7 +535,9 @@ c...          Check for node density/pressure specifications:
      .                                 opt%m_ano_dist(target),
      .                            DBLE(opt%m_ano_exp (target)),source)
 
-              CALL IntegrateArray(FULL,momvol(1,ion),1,srcint)   ! Not debugged as yet...
+              CALL IntegrateArray(FULL,momvol(1,ion),1,srcint1)   ! Not debugged as yet...
+              CALL IntegrateArray(FULL,momusr(1,ion),1,srcint2)   
+              srcint = srcint1 + srcint2
 
               IF     (node1.EQ.1.AND.node2.EQ.nnode) THEN
                 srcint(0) = srcint(TOTAL)
@@ -740,7 +739,8 @@ c...        Calculate net momentum source along the flux tube:
             momsrc(0      ,ion) = pe(ictarg(LO)) + pi(ictarg(LO),ion)
             momsrc(icmax+1,ion) = pe(ictarg(HI)) + pi(ictarg(HI),ion)
             momsrc(1:icmax,ion) = momvol(1:icmax,ion) + 
-     .                            momano(1:icmax,ion)
+     .                            momano(1:icmax,ion) +
+     .                            momusr(1:icmax,ion)
 c...        Integral:
             CALL IntegrateArray(FULL,momsrc(1,ion),1,momint(0,ion))
 
@@ -750,6 +750,14 @@ c...        Integral:
 
               WRITE(logfp,*) 'MOMENTUM CHECK:',
      .          momsrc(0      ,ion),momsrc(icmax+1,ion)
+
+              CALL IntegrateArray(FULL,momvol(1,ion),0,integral(1))
+              CALL IntegrateArray(FULL,momusr(1,ion),0,integral(2))
+              CALL IntegrateArray(FULL,momano(1,ion),0,integral(3))
+              WRITE(logfp,*) '    vol  :',integral(1)
+              WRITE(logfp,*) '    usr  :',integral(2)
+              WRITE(logfp,*) '    ano  :',integral(3)
+
               WRITE(logfp,*) '    ne:',ne(ic1    ),ne(ic2    )
               WRITE(logfp,*) '    ni:',ni(ic1,ion),ni(ic2,ion)
               WRITE(logfp,*) '    vi:',vi(ic1,ion),vi(ic2,ion)

@@ -1398,9 +1398,13 @@ c...        Exponential decay to :
             A = p0 - p1
             B = p1
             IF (pc) pe(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = te0 - te1
             B = te1 
             IF (tec) te(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = ti0 - ti1
             B = ti1 
             IF (tic) ti(inode) = A * EXP(-val / C) + B
@@ -1893,7 +1897,7 @@ c      node(1:nnode)%pe        = 0.0
 c      node(1      :mnode)%ti(1) =node(1      :mnode)%te*opt%ti_ratio(LO) 
 c      node(mnode+1:nnode)%ti(1) =node(mnode+1:nnode)%te*opt%ti_ratio(HI) 
       node(1:nnode)%machno    = 0.0
-      node(1:nnode)%potential = 0.0
+      node(1:nnode)%epot      = 0.0
       node(1:nnode)%efield    = 0.0
 
 c      IF (node(1    )%ne   .EQ.0.) node(1    )%ne   =tube(it)%ne(LO)
@@ -1914,22 +1918,16 @@ c...
       DO itarget = LO, HI
         IF (itarget.EQ.LO) THEN
           i1 = 1
-c          i2 = -1
           DO i2 = 2, mnode
             IF (node(i2)%par_set.NE.0) EXIT
           ENDDO
           IF (i2.EQ.mnode+1) i2 = 2
-c          IF (i2.EQ.-1.OR.i2.EQ.mnode+1) i2 = 2
-c          i2 = 2
         ELSE
           i1 = nnode
-c          i2 = -1
           DO i2 = nnode-1, mnode, -1
             IF (node(i2)%par_set.NE.0) EXIT
           ENDDO
           IF (i2.EQ.mnode-1) i2 = nnode - 1
-c          IF (i2.EQ.-1.OR.i2.EQ.mnode-1) i2 = nnode - 1
-c          i2 = nnode - 1
         ENDIF
         SELECTCASE(node(i1)%par_set)
           CASE (0) 
@@ -1938,12 +1936,23 @@ c          i2 = nnode - 1
               IF (node(i1)%ne.LT.1.0E+10) THEN
                 tube(it)%jsat(itarget,ion) = node(i1)%ne
               ELSE
-                tube(it)%jsat(itarget,ion) = 
-     .            GetJsat2(node(i1)%te,node(i1)%ti(ion),node(i1)%ne,1.0) 
+                IF (node(i1)%te.NE.0.0) THEN
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(node(i1)%te,
+     .                       node(i1)%ti(ion),
+     .                       node(i1)%ne,1.0) 
+                ELSE
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(tube(it)%te(itarget),
+     .                       tube(it)%ti(itarget,ion),
+     .                       node(i1)%ne,1.0) 
+                ENDIF
               ENDIF
             ENDIF
-            tube(it)%te(itarget    ) = node(i1)%te
-            tube(it)%ti(itarget,ion) = node(i1)%ti(ion)
+            IF (node(i1)%te     .NE.0.0) 
+     .        tube(it)%te(itarget    ) = node(i1)%te
+            IF (node(i1)%ti(ion).NE.0.0) 
+     .        tube(it)%ti(itarget,ion) = node(i1)%ti(ion)
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET for target node',*99) 
         ENDSELECT
@@ -1967,50 +1976,12 @@ c           IF (itube.EQ.81) STOP 'dfsd'
             CALL ER('_New','Unknown PAR_SET',*99) 
         ENDSELECT
         node(i1)%jsat(ion) = tube(it)%jsat(itarget,ion)
+        WRITE(88,*) 'work:',i1,node(i1)%jsat(ion)
         node(i1)%ne        = 0.0
         node(i1)%pe        = 0.0
         node(i1)%te        = tube(it)%te  (itarget)
         node(i1)%ti(ion)   = tube(it)%ti  (itarget,ion)
       ENDDO
-
-c      SELECTCASE(node(nnode)%par_set)
-c        CASE (0) 
-c        CASE (2) 
-c          IF (node(nnode)%ne.NE.0.0) THEN
-c            IF (node(nnode)%ne.LT.1.0E+10) THEN
-c              tube(it)%jsat(HI,ion) = node(nnode)%ne
-c            ELSE
-c              tube(it)%jsat(HI,ion) = 
-c     .          GetJsat2(node(nnode)%te,node(1)%ti(ion),node(nnode)%ne,1.0) 
-c            ENDIF
-c          ENDIF
-c          tube(it)%te(LO    ) = node(1)%te
-c          tube(it)%ti(LO,ion) = node(1)%ti(ion)
-c        CASE DEFAULT
-c          CALL ER('_New','Unknown LO PAR_SET for node 1',*99) 
-c      ENDSELECT
-c      SELECTCASE(node(nnode-1)%par_set)
-c        CASE (0) 
-c          node(nnode)%te = tube(it)%te(HI)
-c        CASE (1) 
-c          node(nnode)%te = node(nnode-1)%te
-c        CASE (2) 
-c          IF (node(nnode-1)%ne.EQ.0.0) 
-c     .      CALL ER('AssignNodeValues_New','Need density for sheath '//
-c     .              'limited particle flux calculation (HI)',*99)
-c          tube(it)%te  (HI)     = node(nnode-1)%te
-c          tube(it)%ti  (HI,ion) = node(nnode-1)%ti(ion)
-c          tube(it)%jsat(HI,ion) = 
-c     .      GetJsat2(node(nnode-1)%te,node(nnode-1)%ti(ion),
-c     .               node(nnode-1)%ne*0.5,1.0) 
-c          node(nnode)%te = node(nnode-1)%te
-c        CASE DEFAULT
-c          CALL ER('_New','Unknown HI PAR_SET',*99) 
-c      ENDSELECT
-c      node(nnode)%jsat(ion) = tube(it)%jsat(HI,ion)
-c      node(nnode)%ne        = 0.0
-c      node(nnode)%pe        = 0.0
-c      node(nnode)%ti(ion)   = tube(it)%ti(HI,ion)
 
 c...  Sort out velocities from Mach numbers:
       DO i1 = 1, node_n

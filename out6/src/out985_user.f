@@ -169,7 +169,7 @@ c...      Center column:
           newvtx(2,1 ) = -2.190D0
           newvtx(1,2 ) =  0.330D0
           newvtx(2,2 ) = -2.150D0
-          newvtx(1,3 ) =  0.190D0
+          newvtx(1,3 ) =  0.190D0 
           newvtx(2,3 ) = -1.905D0
           newvtx(1,4 ) =  0.190D0
           newvtx(2,4 ) = -1.820D0
@@ -185,8 +185,8 @@ c...      Center column:
           newvtx(1,9 ) =  0.280D0  ! 0.280D0
           newvtx(2,9 ) = -1.220D0
 
-          newvtx(1,10) =  0.195D0
-          newvtx(2,10) = -1.080D0
+          newvtx(1,10) =  0.196D0
+          newvtx(2,10) = -1.083D0
 c...      Mirror:
           DO i1 = 1, 10    
             newvtx(1,i1+10) =  newvtx(1,11-i1)

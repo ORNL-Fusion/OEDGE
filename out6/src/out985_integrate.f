@@ -15,7 +15,7 @@ c...  Input:
      .       theta,phi,dtheta,dphi,solid_angle,solid_total,
      .       cutoff,dtheta1,dphi1,scale_total,scale_gross
 
-      INTEGER iphi,nphi,n,reflection_model,iref
+      INTEGER iphi,nphi,reflection_model,iref,nexp
       LOGICAL output
       REAL*8 ndotv,ndotr,v1(3),angle,ddum1,scale_factor
 
@@ -46,12 +46,12 @@ c...  Input:
           CASE (1)
             dtheta1 =   DBLE(opt%ref_dtheta(imodel))
             dphi1   =   DBLE(opt%ref_dphi  (imodel))
-            n       =   opt%ref_n(imodel)
+            nexp    =   opt%ref_n(imodel)
             cutoff  =   DBLE(opt%ref_cutoff(imodel))
           CASE(2)
             dtheta1 =   DBLE(opt%ref_dtheta(imodel))
             dphi1   =   DBLE(opt%ref_dphi  (imodel))
-            n       =   1
+            nexp    =   1
             cutoff  =  -1.0D+10
           CASE DEFAULT
             nref = 0
@@ -97,7 +97,7 @@ c...    Loop to generate associated reflection chords:
 
           theta = theta + 0.5D0 * dtheta
 
-          scale_factor = DCOS(theta*D_DEGRAD)**n
+          scale_factor = DCOS(theta*D_DEGRAD)**nexp
 
           IF (scale_factor.LT.cutoff.OR.theta+dtheta.GT.90.0D0) EXIT       ! Exit conditions   
 
@@ -511,11 +511,8 @@ c
       USE mod_out985_variables
       IMPLICIT none
 
-c      TYPE(type_options985) :: opt
       TYPE(type_view)       :: chord_primary
-c      TYPE(type_3D_object)  :: obj(nobj)
       INTEGER status                    ! Flag nobj so it can't change?
-c      INTEGER nobj,status                    ! Flag nobj so it can't change?
 
       REAL*8     RTOL
       PARAMETER (RTOL=1.0D-06)
@@ -527,7 +524,7 @@ c      INTEGER nobj,status                    ! Flag nobj so it can't change?
       TYPE(type_view) :: chord, tmpchord
 
       REAL   quant
-      REAL*8 val,v1(3),v3(3),v4(3),v1_hold(3),v2_hold(3)
+      REAL*8 val,v1(3),v3(3),v4(3),v1_hold(3),v2_hold(3),s
 
 c      DATA problem_ignored /0/
       LOGICAL problem_message
@@ -559,23 +556,25 @@ c...  Decide if the detector is inside or outside the vessel wall:
         vwindex = 2
       ENDIF
 
-
       cont = .TRUE.
       DO WHILE (cont)
         cont = .FALSE.
-
 c...    Find wall intersections for the chord, building VWINTER list of intersections:
         CALL FindSurfaceIntersections
      .         (chord%v1,chord%v2,IT_VWINTER,status)                       
-c     .         (chord%v1,chord%v2,IT_VWINTER,nobj,obj,status)                       
-
+c        WRITE(0,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
+c        WRITE(0,*) vwinter(1:nvwinter)%dist 
+c        WRITE(0,*) vwinter(1:nvwinter)%obj 
+c        WRITE(0,*) vwinter(1:nvwinter)%sur 
+c        WRITE(0,*) obj(vwinter(1:nvwinter)%obj)%nsur
         IF (status.EQ.-1) THEN
           WRITE(0,'(A,10I8)') 
      .       'WARNING: NO WALL INTERSECTION FOUND'
           IF (refcnt.GT.0) THEN
-            WRITE(0,'(A,10I8)') '       DATA:',
-     .        nchord,refcnt,iobj,obj(iobj)%ik,obj(iobj)%ir,count,
-     .        iobj_primary,obj(iobj_primary)%ik,nvwlist
+            IF (iobj.GE.1.AND.iobj.LE.nobj) 
+     .        WRITE(0,'(A,10I8)') '       DATA:',
+     .          nchord,refcnt,iobj,obj(iobj)%ik,obj(iobj)%ir,count,
+     .          iobj_primary,obj(iobj_primary)%ik,nvwlist
           ENDIF
           nchord = 1
           s_chord(nchord)%v1(1:3) = chord%v1(1:3)
@@ -588,7 +587,6 @@ c     .         (chord%v1,chord%v2,IT_VWINTER,nobj,obj,status)
           status = -1
           RETURN
         ENDIF
-
 c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
         IF (nchord.EQ.dchord) THEN
           WRITE(fp,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
@@ -597,7 +595,6 @@ c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
           WRITE(fp,*) vwinter(1:nvwinter)%sur 
           WRITE(fp,*) obj(vwinter(1:nvwinter)%obj)%nsur
         ENDIF
-
 c *** CMOD CHANGE HERE ***
 c        IF ((refcnt.EQ.0.AND.nvwinter.LT.1).OR.
 c        IF ((refcnt.EQ.0.AND.nvwinter.LT.2).OR.
@@ -871,28 +868,21 @@ c...            *TEMP* (won't work with MPI...)
                 RETURN
               ENDIF
  
-
-
               IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN  ! Aren't all objects integration volumes here?  Or do floating surfaces pass as well?
-
 c...            Line-of-sight integral:
                 DO iint = 1, MAX(1,opt%int_num)
-
                   val = chord%weight * obinter(1)%dist * 
      .                  DBLE(obj(iobj)%quantity(iint))
-
                   chord%integral(iint) = chord%integral(iint) + val
 c     .                                 chord%weight * 
 c     .                                 obinter(1)%dist * 
 c     .                                 DBLE(obj(iobj)%quantity(iint))
-
 c...              Line shape:
                   IF (opt%int_type(iint).EQ.2) THEN
                     CALL CalculateLineShape                         ! I don't like this chord primary business!
      .                     (iint,chord,iobj,val,
      .                      obinter(1)%dist,v1,obinter(1)%v)
                   ENDIF
-
 c...              Averaging:
                   IF (opt%int_type(iint).EQ.3) THEN
                     ipla = obj(iobj)%index_pla
@@ -918,22 +908,16 @@ c...              Averaging:
                     chord%average(iint) = chord%average(iint) + 
      .                                    val * DBLE(quant)
                   ENDIF
-
                 ENDDO
-
 c...            Update inversion map based on track length in object volume: 
                 ivol = obj(iobj)%ivolume
                 chord%track(ivol) = chord%track(ivol) + 
      .                              chord%weight * 
      .                              obinter(1)%dist
-
 c...            Keep track of sampling weight for object:
 c                obj(ivol)%sample = obj(ivol)%sample + obinter(1)%dist  ! Done with %path... 
-
-
                 IF (nchord.EQ.-1) WRITE(0,*) '  DIST:',obinter(1)%dist
               ENDIF
-
 c...          Update surface where start of view chord currently resides:
               iobj    = obinter(1)%obj
               isid    = obinter(1)%sur
@@ -941,14 +925,6 @@ c...          Update surface where start of view chord currently resides:
               v1(1:3) = obinter(1)%v(1:3)
 
               obj(iobj)%flag(isid) = -1  ! *** CHEAT ***
-
-c             IF (nchord.EQ.1) THEN
-c               WRITE(0,*) '  GO:',iobj,isid,isrf
-c             ENDIF
-
-c              IF (refcnt.EQ.149) THEN
-c                WRITE(0,*) ' >>>:',iobj,isid,isrf,obj(iobj)%ivolume
-c              ENDIF
 
 c...          Loop exit conditions:
               IF     (obj(iobj)%tsur(isid).EQ.SP_GRID_SURFACE) THEN
@@ -987,6 +963,7 @@ c         integration volume:
         IF (nchord.LE.500) THEN
           s_chord(nchord)%v1(1:3) = chord%v1(1:3)
           s_chord(nchord)%v2(1:3) = chord%v2(1:3)
+c          WRITE(0,*) 'nchord',nchord
         ENDIF
 
 c...    Spawn reflection chords, if necessary, then loop and add to integral for chord:
@@ -1225,10 +1202,10 @@ c...        BUG?
 c...        Translate:
 c            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
 c            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
-            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  ! PHI rotation added 29/03/2010 -SL
+            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  
             chord%v2(1:2) = chord%v2(1:2) + chord%trans(1:2)
-        
-            angle = chord%trans(3) * 3.141596D0 / 180.0D0 
+c...        PHI rotoation:        
+            angle = chord%trans(3) * 3.141596D0 / 180.0D0  ! PHI rotation added 29/03/2010 -SL
             CALL Calc_Transform2(mat,0.0D0,1,0)            ! Rotate about y-axis
             CALL Calc_Transform2(mat,angle,2,1)
             CALL Transform_Vect(mat,chord%v1)
@@ -1249,16 +1226,6 @@ c...        Rotate about y-axis (swing):
             CALL Transform_Vect(mat,chord%v1)
             CALL Transform_Vect(mat,chord%v2)
           ENDIF
-
-
-
-c      IF (nchord.LE.500) THEN
-c        nchord = nchord + 1
-c        s_chord(nchord)%v1(1:3) = chord%v1(1:3)
-c        s_chord(nchord)%v2(1:3) = chord%v2(1:3)
-c      ENDIF
-c      CYCLE
-
 c... 
           CALL IntegrateChord(chord,status)   ! new name
 
@@ -1282,9 +1249,13 @@ c     .                              chord%spectrum(1:100)
           ENDIF
 
 c...      Store representative vector for this pixel:
-          IF (ix.EQ.nxbin/2+1.AND.iy.EQ.nybin/2+1) THEN
-            pixel%global_v1 = SNGL(chord%v1)
-            pixel%global_v2 = SNGL(chord%v2)
+c          WRITE(0,*) ix,MAX(1,nxbin/2+1),iy,MAX(1,nybin/2+1),nchord
+          IF (ix.EQ.MAX(1,nxbin/2+1).AND.iy.EQ.MAX(1,nybin/2+1).AND.
+     .        nchord.LT.SIZE(s_chord,1)) THEN
+            pixel%global_v1 = SNGL(s_chord(nchord)%v1)
+            pixel%global_v2 = SNGL(s_chord(nchord)%v2)
+c            pixel%global_v1 = SNGL(chord%v1)
+c            pixel%global_v2 = SNGL(chord%v2)
           ENDIF
 
         ENDDO

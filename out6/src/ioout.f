@@ -1936,7 +1936,15 @@ c
          CALL RINOUT ('R FACTA  ',facta ,maxizs+2)
          CALL RINOUT ('R FACTB  ',factb ,maxizs+2)
          CALL RINOUT ('R DWELTS ',dwelts,maxizs+2)
-         CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+c slmod begin
+         IF (IMODE.EQ.1) THEN
+           CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+         ELSE
+           CALL RINOUT ('R DWELFS ',dwelfs,1     )       
+         ENDIF
+c
+c         CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+c slmod end
          CALL RINOUT ('R KALPHS ',kalphs,maxizs)
          CALL RINOUT ('R KBETAS ',kbetas,maxizs)
 c

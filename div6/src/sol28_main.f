@@ -1289,6 +1289,7 @@ c
 c ====================================================================
 c
       SUBROUTINE SOL28_V4(sol_option1,tube1,icmax1,cell1,pin1,fluid1,
+     .                    field1,
      .                    ref_tube1,ref_nion1,ref_icmax1,ref_fluid1,  ! Do these need the "1" business?
      .                    nnode1,mnode1,node1,nion1,opt_global)
       USE mod_sol28_params
@@ -1302,6 +1303,7 @@ c
       TYPE(type_cell   ) :: cell1     (icmax1)
       TYPE(type_neutral) :: pin1      (icmax1,nion1)
       TYPE(type_fluid  ) :: fluid1    (icmax1,nion1)
+      TYPE(type_field  ) :: field1    (icmax1)
       TYPE(type_tube   ) :: ref_tube1
       TYPE(type_fluid  ) :: ref_fluid1(ref_icmax1,ref_nion1)
       TYPE(type_node   ) :: node1     (nnode1)
@@ -1486,7 +1488,6 @@ c...    Evaluate solution:
 c       ----------------------------------------------------------------
         CALL EvaluateFluidSolution(count,MAX_ITERATIONS)
 
-
 c...    Main iteration loop exit conditions:
 c       ----------------------------------------------------------------
         IF     (count.LE.30.AND.(t_chisq(0).GT.1.0D-07.OR.
@@ -1540,6 +1541,7 @@ c     added to the list at the end of AssignSOLPSPlasma:
       tube%gamma (LO,ion) = SNGL(gamma (LO))
       tube%qe    (LO,ion) = SNGL(qe    (ic))
       tube%te_upstream(LO,ion) = SNGL(te(icbnd2(LO)))
+      tube%epot  (LO)     = SNGL(epot  (ic))
 
       ic = ictarg(HI)
       tube%jsat  (HI,ion) = -SNGL(isat  (ic,ion)) * ECH
@@ -1554,6 +1556,7 @@ c     added to the list at the end of AssignSOLPSPlasma:
       tube%gamma (HI,ion) =  SNGL(gamma (HI))
       tube%qe    (HI,ion) =  SNGL(qe    (ic))
       tube%te_upstream(HI,ion) = SNGL(te(icbnd1(HI)))
+      tube%epot  (HI)     =  SNGL(epot  (ic))
 
       DO ion = 1, nion
         fluid(1:icmax,ion)%ne = SNGL(ne(1:icmax))
@@ -1590,6 +1593,10 @@ c...  Pass data back through global arrays (ugly):
       DO ion = 1, nion
         fluid1(1:icmax,ion) = fluid(1:icmax,ion)
       ENDDO
+
+c...  Copy over the electrostatic field solver results:
+      field1(1:icmax)%efield = efield(1:icmax)
+      field1(1:icmax)%epot   = epot  (1:icmax)
 
       RETURN
  99   STOP
@@ -1729,8 +1736,10 @@ c             ----------------------------------------------------------
 c...            Interpolate reference solution:
                 CALL InterpolateReferencePlasma(itube)
 c             ----------------------------------------------------------
-              CASE(28)
-c...            SOL28:
+              CASE(28:30)
+c...            SOL28 - SimpleAsPie analytic particle and momentum solver (SL)
+c                  29 - CestDuGateau, the Runge-Kutta solver (JRH)
+c                  30 - the time-dependent solver (JRH)
                 CALL SetTargetConditions(itube)
 
 c...            Assign solution parameter nodes:
@@ -1753,9 +1762,10 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          cell (cind1:cind2),                       ! each array individually in case
      .                          pin  (cind1:cind2,nion),                  ! some have only nominal allocations, i.e.
      .                          fluid(cind1:cind2,nion),                  ! they are not in use...
+     .                          field(cind1:cind2),
      .                          ref_tube(ref_itube),
      .                          ref_nion,ref_cind2-ref_cind1+1,
-     .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),
+     .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
                 ENDIF
 c              WRITE(0,*) 'TUBE:PSOL',tube(itube)%eneano(1:2)

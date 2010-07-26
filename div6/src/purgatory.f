@@ -529,7 +529,7 @@ c...    Assign other quantites:
         node(1:nnode)%pi(1)     = 0.0
         node(1:nnode)%ti(1)     = 0.0
         node(1:nnode)%machno    = 0.0
-        node(1:nnode)%potential = 0.0
+        node(1:nnode)%epot      = 0.0
         node(1:nnode)%efield    = 0.0
 
         IF (node(1    )%ne   .EQ.0.) node(1    )%ne   =tube(it)%ne(LO)
@@ -580,7 +580,7 @@ c...    Assign other quantites:
         node(1:7)%pi(1)     = 0.0
         node(1:7)%ti(1)     = 0.0
         node(1:7)%machno    = 0.0
-        node(1:7)%potential = 0.0
+        node(1:7)%epot      = 0.0
         node(1:7)%efield    = 0.0
 
         IF (node(1)%ne   .EQ.0.0) node(1)%ne    = tube(it)%ne(LO)
@@ -628,6 +628,9 @@ c
       CHARACTER        buffer*200
 
       DATA material / 9642., 1206., 18474., 904./
+
+
+      STOP 'THIS CODE IS HEADED FOR THE TRASH BIN - B'
 c
 c     Check whether DIVIMP input option requests EIRENE data file:
 c
@@ -1109,6 +1112,9 @@ c
 
       INTEGER           ik,ik1,ir1,ir,id
       DOUBLE PRECISION  x1,x2,x3,x4,y1,y2,y3,y4
+
+
+      STOP 'THIS CODE IS HEADED FOR THE TRASH BIN - C'
 c
 c     Check to see if DIVIMP should write the geometry
 c     file for EIRENE:
@@ -1274,6 +1280,9 @@ c DEFUNCT
 
 
 c      RETURN
+
+      STOP 'THIS CODE IS HEADED FOR THE TRASH BIN- C'
+
 
       WRITE(0,*) 'BUILDING TRIANGLES'
 

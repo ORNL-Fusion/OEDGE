@@ -2114,12 +2114,10 @@ c     ------------------------------------------------------------------
         IF (ringtype(ir).EQ.PFZ) EXIT
       ENDDO
       IF     (ir.NE.irwall.AND.irsep.EQ.irsep2) THEN
-        IF (sloutput) THEN 
-          WRITE(0,*) 
-          WRITE(0,*) 'DOUBLE NULL GRID DETECTED, BUT IRSEP=IRSEP2.' ! This is showing up on the big JET grid for j-bfg-0004c.
-          WRITE(0,*) 'NOT EXECUTING DOUBLE-NULL CODE.'              ! It may just be a 'transient' problem, that goes away once the
-          WRITE(0,*)                                                ! rings are properly ordered, but clearly needs some sorting out.
-        ENDIF
+        WRITE(0,*) 
+        WRITE(0,*) 'DOUBLE NULL GRID DETECTED, BUT IRSEP=IRSEP2.' ! This is showing up on the big JET grid for j-bfg-0004c.
+        WRITE(0,*) 'NOT EXECUTING DOUBLE-NULL CODE.'              ! It may just be a 'transient' problem, that goes away once the
+        WRITE(0,*)                                                ! rings are properly ordered, but clearly needs some sorting out.
       ELSEIF (ir.NE.irwall) THEN                                  ! (A proper double-null grid detector...) -SL, 09/04/2010
         ir1 = irouts(1,irsep2)
         DO ik1 = 1, nks(ir1)
