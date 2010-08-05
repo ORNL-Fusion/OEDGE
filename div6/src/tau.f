@@ -10997,7 +10997,7 @@ C
       INTEGER IK,IR,IKMID,OUEND,INEND,
      >     ID,LOOP
 C     
-      REAL FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
+      REAL*8 FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
      >     TOTFLX,OTOTFLX,ITOTFLX,
      >     totflx_save,ototflx_save,itotflx_save,
      >     netflx_save,onetflx_save,inetflx_save,
@@ -11021,59 +11021,71 @@ c
      >     tionis,itionis,otionis,
      >     surf(maxnks),delqe(maxnks),delqi(maxnks),deldp(maxnks),
      >     qetoto,qetoti,qitoto,qitoti,dptoto,dptoti
-      real qetot,qitot
+      real*8 qetot,qitot
 c     
 c     Power Loss terms
 c     
 c     integer dpploss
 c     parameter (dpploss=1)
 c     
-      real ionploss(maxnrs),iionploss(maxnrs),oionploss(maxnrs)
-      real elecploss(maxnrs),ielecploss(maxnrs),oelecploss(maxnrs)
-      real tiploss, teploss,peifact
+      real*8 ionploss(maxnrs),iionploss(maxnrs),oionploss(maxnrs)
+      real*8 elecploss(maxnrs),ielecploss(maxnrs),oelecploss(maxnrs)
+      real*8 tiploss, teploss,peifact
 c     
-      real qecond(maxnks,maxnrs),
+      real*8 qecond(maxnks,maxnrs),
      >     qicond(maxnks,maxnrs),dpflux(maxnks,maxnrs),
      >     qeconv(maxnks,maxnrs),qiconv(maxnks,maxnrs),
      >     surfa(maxnks,maxnrs),
      >     dgradn(maxnks,maxnrs)
-      real cfgam(maxnrs),icfgam(maxnrs),ocfgam(maxnrs)
-      real cfqe(maxnrs),ocfqe(maxnrs),icfqe(maxnrs)
-      real cfqi(maxnrs),ocfqi(maxnrs),icfqi(maxnrs)
-      real delouti,delouto,qeconvi,qeconvo,qiconvi,qiconvo
-      real qeouto,qeouti,qiouto,qiouti,qeoutconvi,qeoutconvo,
+      real*8 cfgam(maxnrs),icfgam(maxnrs),ocfgam(maxnrs)
+      real*8 cfqe(maxnrs),ocfqe(maxnrs),icfqe(maxnrs)
+      real*8 cfqi(maxnrs),ocfqi(maxnrs),icfqi(maxnrs)
+      real*8 delouti,delouto,qeconvi,qeconvo,qiconvi,qiconvo
+      real*8 qeouto,qeouti,qiouto,qiouti,qeoutconvi,qeoutconvo,
      >     qioutconvi,qioutconvo
 c     
-      real dgradt,dperpt,aperp,apdg
+      real*8 dgradt,dperpt,aperp,apdg
 c     
       integer avmod
 c     
       integer ikin,irin,ikout,irout,ikstart,ikend,ird
       integer irskip,irtmp,in1,in2,in
-      real    totgradn,totgradte,totgradti
-      real    totcfflux,totcffluxe2d, gradnsep,totrec
-      real    ototcfflux,itotcfflux
+      real*8    totgradn,totgradte,totgradti
+      real*8    totcfflux,totcffluxe2d, gradnsep,totrec
+      real*8    ototcfflux,itotcfflux
       logical i
-      real    flxval(maxnrs,13,3)
+      real*8    flxval(maxnrs,13,3)
       logical usedpav,usexpav
-      real    dpav,xpavi,xpavio,xpavii,xpave,xpaveo,xpavei,dptmp,
+      real*8    dpav,xpavi,xpavio,xpavii,xpave,xpaveo,xpavei,dptmp,
      >     dpavi,dpavo,fact,xpavt,xpavti,xpavto,
      >     tmpnflx,tmpion,tmpflx
 c     
 c     For calculation of volumetric quantities.
 c     
-      real srcs(maxnks,maxnrs,8)
-      real srcsint(maxnrs,12)
-      real srcstot(12)
+      real*8 srcs(maxnks,maxnrs,8)
+      real*8 srcsint(maxnrs,12)
+      real*8 srcstot(12)
+      real*8 srcsregtot(maxnrs,2,4)
 c     
       real Quant2Grad
       external quant2grad
-      real grad2n(maxnks,maxnrs)
-      real grad2ti(maxnks,maxnrs)
-      real grad2te(maxnks,maxnrs)
-      real totgrad2n(maxnrs)
-      real totgrad2ti(maxnrs)
-      real totgrad2te(maxnrs)
+      real*8 grad2n(maxnks,maxnrs)
+      real*8 grad2ti(maxnks,maxnrs)
+      real*8 grad2te(maxnks,maxnrs)
+      real*8 totgrad2n(maxnrs)
+      real*8 totgrad2ti(maxnrs)
+      real*8 totgrad2te(maxnrs)
+c
+c     Add Vperp arrays and density gradient storage arrays
+c
+      real*8 vperp(maxnrs,3)   ! 1 = outer, 2 = inner, 3 = total
+      real*8 lambdan(maxnrs,3) ! 3 for inner/outer/total  at midplane
+      real*8 lambdate(maxnrs,3) ! 3 for inner/outer/total  at midplane
+c
+c     Unit number for output
+c
+      integer extract_unit
+
 c     
 c     real pei(maxnks,maxnrs)
 c     
@@ -11121,7 +11133,11 @@ c
 c     Set Gamma values - these should be set to match the SOL option
 c     and eventually may be set automatically
 c     
-      gai = 3.5
+c     jdemod - set gai to match assumptions used in assigning input data
+c      gai = 3.5
+c
+      gai = 2.5
+
       gae = 5.0
 c     
 c     
@@ -11265,6 +11281,7 @@ c
             OUHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * OUFLUX (IR)
          ENDIF
 c     
+
 C     
 c     
  200  CONTINUE
@@ -11289,6 +11306,7 @@ c
       call rzero(srcs,maxnks*maxnrs*8)
       call rzero(srcsint,maxnrs*12)
       call rzero(srcstot,12)
+      call rzero(srcsregtot,maxnrs*2*4)
 c     
       do ir = irsep,nrs
 c     
@@ -11315,13 +11333,19 @@ c
      >              / sqrt(knbs(ik,ir)))  / 15.0
 
 
-               srcs(ik,ir,1) = - 1.14e-32 * knbs(ik,ir)**2 *
+               srcs(ik,ir,1) = -1.14e-32 * knbs(ik,ir)**2 *
      >              (ktebs(ik,ir)-ktibs(ik,ir)) /
      >              (crmb * ktebs(ik,ir)**1.5)
      >              * peifact
      >              * fact
 
-
+               write(6,'(a,2i6,12(1x,g12.5))') 'DBG:Pei:',ik,ir,peifact,
+     >              srcs(ik,ir,1),fact,dppei,
+     >              log(1.5e13 * ktebs(ik,ir)**1.5/ sqrt(knbs(ik,ir))),
+     >              (crmb * ktebs(ik,ir)**1.5),
+     >              -1.14e-32 * knbs(ik,ir)**2 *
+     >              (ktebs(ik,ir)-ktibs(ik,ir)) /
+     >              (crmb * ktebs(ik,ir)**1.5)
 c     
 c     Phelpi
 c     
@@ -11370,12 +11394,16 @@ c
                srcsint(ir,2) = srcsint(ir,2)+srcs(ik,ir,2)*karea2(ik,ir)
                srcsint(ir,3) = srcsint(ir,3)+srcs(ik,ir,3)*karea2(ik,ir)
                srcsint(ir,4) = srcsint(ir,4)+srcs(ik,ir,4)*karea2(ik,ir)
+
                srcsint(ir,5) = srcsint(ir,5)
      >              +dprec*pinion(ik,ir)*karea2(ik,ir)
+
                srcsint(ir,6) = srcsint(ir,6)
      >              +dprec*pinqi(ik,ir)*karea2(ik,ir)
+
                srcsint(ir,7) = srcsint(ir,7)
      >              +dprec*pinqe(ik,ir)*karea2(ik,ir)*dp_pinqe_mult
+
                srcsint(ir,8) = srcsint(ir,8)+abs(srcs(ik,ir,4))
      >              *karea2(ik,ir)
 c     
@@ -11383,7 +11411,7 @@ c
                srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
                srcsint(ir,11)= srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
                srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
-c     
+c
             end do
 c     
 c     Add up sources over grid
@@ -11397,6 +11425,58 @@ c
          end if
 c     
       end do
+c
+c     Sum up total power loss on each ring up to midplane
+c
+c     oumid = outer midplane
+c     inmid = inner midplane
+c      
+      do ir = irsep,nrs
+c
+c        inner
+c
+         do ik = inmid,nks(ir)
+
+            in =5 ! PINQI
+            srcsregtot(ir,1,1) = srcsregtot(ir,1,1) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in =6 ! PINQE
+            srcsregtot(ir,1,2) = srcsregtot(ir,1,2) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in = 8 ! PINION
+            srcsregtot(ir,1,4) = srcsregtot(ir,1,4) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+         end do
+
+c        total power loss
+         srcsregtot(ir,1,3) = srcsregtot(ir,1,1) + srcsregtot(ir,1,2)
+c
+c        outer
+c
+         do ik = 1,oumid
+
+            in =5 ! PINQI
+            srcsregtot(ir,2,1) = srcsregtot(ir,2,1) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in =6 ! PINQE
+            srcsregtot(ir,2,2) = srcsregtot(ir,2,2) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in = 8 ! PINION
+            srcsregtot(ir,2,4) = srcsregtot(ir,2,4) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+         end do
+
+c        total power loss
+         srcsregtot(ir,2,3) = srcsregtot(ir,2,1) + srcsregtot(ir,2,2)
+
+      end do
+
 c     
 c     Print out the tallies of information - cell by cell and ring by ring
 c     
@@ -11829,6 +11909,81 @@ c
 c     This is total plasma area adjacent to the main plasma.
 c     
 c     
+c
+c     Calculate midplane density gradients
+c
+      do ir = irsep,irwall-1
+
+         if (ir.eq.irsep) then
+
+            OSEP = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >           (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+            ISEP = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >           (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+c
+            ODELN  = (KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEP     
+            IDELN  = (KNBS(inMID,IR)-KNBS(inMID,IR+1))/ISEP
+c
+            ODELTE = (KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEP
+            IDELTE = (KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEP
+
+
+         elseif (ir.eq.irwall-1) then
+
+            OSEP = SQRT((ABS(RS(OUMID,IR-1)-RS(OUMID,IR)))**2 +
+     >           (ABS(ZS(OUMID,IR-1)-ZS(OUMID,IR)))**2)
+            ISEP = SQRT((ABS(RS(INMID,IR-1)-RS(INMID,IR)))**2 +
+     >           (ABS(ZS(INMID,IR-1)-ZS(INMID,IR)))**2)
+c
+            ODELN  = (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEP     
+            IDELN  = (KNBS(inMID,IR-1)-KNBS(inMID,IR))/ISEP
+c
+            ODELTE = (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEP
+            IDELTE = (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEP
+
+
+         else
+
+            OSEPF = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >           (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+            ISEPF = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >           (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+
+            OSEPB = SQRT((RS(OUMID,IR-1)-RS(OUMID,IR))**2 +
+     >           (ZS(OUMID,IR-1)-ZS(OUMID,IR))**2 )
+            ISEPB = SQRT((RS(INMID,IR-1)-RS(INMID,IR))**2 +
+     >           (ZS(INMID,IR-1)-ZS(INMID,IR))**2 )
+
+c
+            ODELN  = ((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEPF+
+     >           (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEPB)/2.0
+            IDELN  = ( (KNBS(inMID,IR)-KNBS(inMID,IR+1)) /ISEPF+
+     >           (KNBS(inMID,IR-1)-KNBS(inMID,IR)) /ISEPB )/2.0
+
+c     
+            ODELTE = ((KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEPF+
+     >           (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEPB)/2.0
+            IDELTE = ((KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEPF+
+     >           (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEPB)/2.0
+
+
+         endif
+c
+         DELN   = (ODELN  + IDELN)/2.0
+         DELTE  = (ODELTE + IDELTE)/2.0
+c
+         lambdan(ir,1) = knbs(inmid,ir)/ideln
+         lambdan(ir,2) = knbs(oumid,ir)/odeln
+         lambdan(ir,3) =(knbs(oumid,ir)+knbs(inmid,ir))/(2.0 * deln)
+
+         lambdate(ir,1) = ktebs(inmid,ir)/idelte
+         lambdate(ir,2) = ktebs(oumid,ir)/odelte
+         lambdate(ir,3) =(ktebs(oumid,ir)+ktibs(inmid,ir))/(2.0*delte)
+
+      end do
+
+
+
 
 
       if (dpmethod.eq.0.or.dpmethod.eq.1) then
@@ -13876,6 +14031,22 @@ c
             write(coment,300) ir,idperp(ir),odperp(ir),dperp(ir)
             call prc(coment)
          end do
+c
+         call prb
+         call prc('  Table of Vperp values extracted from OSM')
+         call prc('  -using midplane density gradients for'//
+     >            ' conversion from Dperp')
+         call prc('  Ring         '//Inner//'          '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+c
+            vperp(ir,1) = idperp(ir)/lambdan(ir,1)
+            vperp(ir,2) = odperp(ir)/lambdan(ir,2)
+            vperp(ir,3) = dperp(ir)/lambdan(ir,3)
+c
+            write(coment,300) ir,vperp(ir,1),vperp(ir,2),vperp(ir,3)
+            call prc(coment)
+         end do
 c     
          call prc(' Table of Xperp ION values extracted from OSM')
          call prc('  Ring         '//Inner//'           '//Outer//
@@ -13903,6 +14074,163 @@ c
      >           xperpt(ir)
             call prc(coment)
          end do
+c
+c        Add a print out to an extractor output file for easy import into Excel
+c
+         call find_free_unit_number(extract_unit)
+
+         open(extract_unit,file='tc_extractor.output',form='formatted')
+c
+c        Write out a summary of extracted transport coefficient data
+c         
+         write(extract_unit,'(a)') 'EXTRACTED TRANSPORT COEFFICIENTS'
+         write(extract_unit,'(20x,a,5x,a,5x,a)')  inner, outer,'TOTAL'
+
+         write(extract_unit,'(a)') ' IR  '//
+     >     ' SEP_DIST_'//inner//' SEP_DIST_'//outer//  
+     >     ' MID_DIST_'//inner//' MID_DIST_'//outer//  
+     >     ' DP_'//inner//' XPE_'//inner//
+     >     ' XPI_'//inner//' XPT_'//inner//
+     >     ' DP_'//outer//' XPE_'//outer//
+     >     ' XPI_'//outer//' XPT_'//outer//
+     >     ' DP_TOT  XPE_TOT  XPI_TOT  XPT_TOT'
+
+         do ir = irsep,irwall-1
+            write(extract_unit,'(i6,4(1x,g12.6),12(1x,g12.6))')
+     >        ir,sepdist(idds(ir,1)),sepdist(idds(ir,2)),
+     >        middist(ir,1),middist(ir,2),
+     >        idperp(ir),ichiperpe(ir),ichiperpi(ir),ixperpt(ir),
+     >        odperp(ir),ochiperpe(ir),ochiperpi(ir),oxperpt(ir),
+     >        dperp(ir),chiperpe(ir),chiperpi(ir),xperpt(ir)
+
+         end do
+
+         close (extract_unit)
+
+
+
+c
+c        Add a print out to an extractor output file for easy import into Excel
+c
+         call find_free_unit_number(extract_unit)
+
+         open(extract_unit,file='tc_extractor2.output',form='formatted')
+c
+c        Write out a summary of extracted transport coefficient data
+c         
+c        Get index for actual outer data
+c
+         if (outer.eq.'OUTER') then 
+            in = 2
+         else
+            in = 1
+         endif
+c
+         if (in.eq.1) then 
+            write(extract_unit,'(a)') 'DATA FROM EXTRACTOR'//
+     >                  ' ANALYSIS FOR '//INNER//' SOL'
+         elseif (in.eq.2) then 
+            write(extract_unit,'(a)') 'DATA FROM EXTRACTOR'//
+     >                  ' ANALYSIS FOR '//OUTER//' SOL'
+         endif
+
+         write(extract_unit,'(a)') ' IR '//
+     >     ' Sep_dist_targ '//' Sep_dist_omp '//
+     >     '  ne_targ '//
+     >     ' te_targ '//' ti_targ '//' Q_e_para_targ[W/m2] '//
+     >     ' Q_i_para_targ[W/m2] '//' Q_t_para_targ[W/m2] '//
+     >     ' G_para_targ[part/m2] '//' S_ioniz_omp '//
+     >     ' ne_omp  '//' te_omp '//' ti_omp '// 
+     >     ' Qi_omp[W] '//' Qe_omp[W] '//' Qt_omp[W] '//
+     >     ' S_omp '//' P_omp '//' Lam_n_omp '// 
+     >     ' Lam_Te_omp '//' Dperp_outer '//
+     >     ' Vperp_outer '//
+     >     ' Xperp_tot_outer '//
+     >     ' Xperp_e_outer '//' Xperp_i_outer '
+
+C
+C        printing outer data only
+C
+         do ir = irsep,irwall-1
+
+         if (in.eq.2) then
+c
+c           Use "O" prefix
+c
+            write(extract_unit,'(i6,25(1x,g13.6))')
+     >        ir,
+     >        sepdist(idds(ir,in)),
+     >        middist(ir,in),
+     >        knds(idds(ir,in)),kteds(idds(ir,in)),
+     >        ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in))+
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+c     >        ouheate(ir)*kbfst(ir,in)
+c     >                 /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        ouheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        ouheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in))+
+c     >        ouheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in))),
+     >        srcsregtot(ir,in,4), 
+     >        knbs(oumid,ir),ktebs(oumid,ir),ktibs(oumid,ir),
+     >        srcsregtot(ir,in,1),srcsregtot(ir,in,2),
+     >        srcsregtot(ir,in,3),
+     >        kss(oumid,ir),kps(oumid,ir),
+     >        lambdan(ir,in),lambdate(ir,in),
+     >        odperp(ir),odperp(ir)/lambdan(ir,in),
+     >        oxperpt(ir),ochiperpe(ir),ochiperpi(ir)
+
+         elseif (in.eq.1) then 
+c
+c             Use "I" prefix
+c
+            write(extract_unit,'(i6,25(1x,g13.6))')
+     >        ir,
+     >        sepdist(idds(ir,in)),
+     >        middist(ir,in),
+     >        knds(idds(ir,in)),kteds(idds(ir,in)),
+     >        ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in))+
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+c     >        inheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        inheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        inheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in))+
+c     >        inheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in))),
+     >        srcsregtot(ir,in,4), 
+     >        knbs(inmid,ir),ktebs(inmid,ir),ktibs(inmid,ir),
+     >        srcsregtot(ir,in,1),srcsregtot(ir,in,2),
+     >        srcsregtot(ir,in,3),
+     >        ksmaxs(ir)-kss(inmid,ir),kpmaxs(ir)-kps(inmid,ir),
+     >        lambdan(ir,in),lambdate(ir,in),
+     >        idperp(ir),idperp(ir)/lambdan(ir,in),
+     >        ixperpt(ir),ichiperpe(ir),ichiperpi(ir)
+
+            endif
+
+         end do
+
+         close (extract_unit)
+
 c     
 c     Detailed Ring summaries
 c     

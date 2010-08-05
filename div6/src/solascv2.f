@@ -1996,7 +1996,7 @@ c
 c
 c     Power added to specified distance along field line
 c
-      elseif (actswppelec.eq.1.0) then
+      elseif (actswppelec.eq.2.0) then
 c
          if (s.lt.pp_pow_dist*ringlen) then
             estppelec  = s/(pp_pow_dist*ringlen) * ppelecpow
@@ -2051,7 +2051,7 @@ c
 c
 c     Power added to specified distance along field line
 c
-      elseif (actswppion.eq.1.0) then
+      elseif (actswppion.eq.2.0) then
 c
          if (s.lt.pp_pow_dist*ringlen) then
             estppion  = s/(pp_pow_dist*ringlen) * ppionpow
