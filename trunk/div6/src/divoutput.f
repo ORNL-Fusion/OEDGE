@@ -347,6 +347,10 @@ c      real     totfpin,totfypin,tmpy,totzfpin,tothpin,totfapin
 c      real     totmhpin
       real     tmp_bratio 
 c
+c     Temporary unit number
+c
+      integer tmp_unit
+
       external lenstr
 c
       
@@ -570,6 +574,58 @@ c
          call prc(coment)
 c
       end do
+
+
+
+c
+c     Print out target geometry information to debug file in ring order
+c
+      
+      call find_free_unit_number(tmp_unit)
+
+      open(tmp_unit,file='target_geometry.dat',form='formatted')
+     
+      write(tmp_unit,*)
+      write(tmp_unit,'(a)') 'TARGET ELEMENT GEOMETRY:'
+      write(tmp_unit,*)
+c
+c
+      do in = 1,2
+
+         if (in.eq.1) then 
+            write(tmp_unit,'(a)') INNER//' TARGET:'
+            
+         elseif (in.eq.2) then 
+            write(tmp_unit,'(a)') OUTER//' TARGET:'
+
+         endif
+
+
+         write(tmp_unit,'(1x,'' ID '','' IK '','' IR '',6x,''R'',3x,'//
+     >            '6x,''Z'',3x,5x,''PSI'',2x,3x,''LENGTH'','//
+     >            '6x,''Bth/B'',3x,''SEP DIST'',3x,''MID DIST'')')
+
+
+         do ir = irsep,nrs
+            id = idds(ir,in)
+
+            if (kbfst(irds(id),in).ne.0.0) then
+               tmp_bratio = 1.0 / kbfst(irds(id),in)
+            else
+               tmp_bratio = 0.0
+            endif
+
+            write(tmp_unit,
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,2(1x,g12.5))')
+     >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
+     >       dds(id),tmp_bratio,sepdist2(id),middist(irds(id),in)
+
+         end do
+
+      end do
+      write(tmp_unit,*)
+
+      close(tmp_unit)
 c
       RETURN
       END
