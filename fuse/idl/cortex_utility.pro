@@ -6,7 +6,7 @@ FUNCTION cortex_UpdateFile, file
  COMMON options, dir_structure
 ; hello
 
- IF (dir_structure EQ 0) THEN RETURN, file
+
 
 
  i = STRPOS(file,'/',/REVERSE_SEARCH)
@@ -22,7 +22,11 @@ FUNCTION cortex_UpdateFile, file
 ; PRINT,child
 ; PRINT,str2
 
- file = str1 + family + child + str2
+ CASE dir_structure OF
+   0: 
+   1: file = str1 + family + str2
+   2: file = str1 + family + child + str2
+ ENDCASE
 
 ; PRINT,file
 

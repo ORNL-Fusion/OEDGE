@@ -132,6 +132,23 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                   'eirene']
        END
 ;   --------------------------------------------------------------------
+    2: BEGIN
+       default_plot_type = 1
+       plot_xboarder = 0.05
+       plot_yboarder = 0.1
+       plot_xspacing = 0.100
+       plot_yspacing = 0.025
+       nplot = 7
+       plot_xn = 3
+       plot_yn = 4
+       title = plot.title + ': TUBE = ' + STRTRIM(STRING(tube),2)
+       subtitle = ['PLASMA DENSITY','PLASMA FLOW','ELECTRON PRESSURE','ION PRESSURE', 'TOTAL PRESSURE', $
+                   'ELECTRON TEMPERATURE','ION TEMPERATURE','8','9','10','11','12']
+       xtitle   = 's (m)'
+       ytitle   = ['n (m-3)','Mach no.','p_e (?)','p_i (?)','p (?)','T_e (eV)','T_i (eV)','8','9','10','11','12']
+       labels   = ['','','','','','','','','','','','']
+       END
+;   --------------------------------------------------------------------
     999: BEGIN
        default_plot_type = 2
        plot_xboarder = 0.05
@@ -172,7 +189,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
       END
   ENDCASE
 
-  colors   = ['Black','Red','Blue','Orange','Purple', 'Hotpink', 'Green']
+  colors   = ['Black','Red','Blue','Darkgreen','Purple', 'Hotpink', 'Orange', 'Silver']
 
 ;
 ; Setup plot:
@@ -278,6 +295,48 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                IF (count EQ N_ELEMENTS(k)) THEN dgamma[m] = 1.0
                ydata[*,0] = dalpha / dgamma
                END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          file = val.target.file
+          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+          labels[iplot-1] = labels[iplot-1] + str[0] + ' :'
+          i = WHERE(val.target.tube EQ tube)
+          j = WHERE(val.plasma.tube EQ tube)
+          ntrace = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  ; Number of data lines on each plot
+          xdata_target    = [val.target.s[i,0],val.plasma.s[j],val.target.s[i,1]]
+          xdata_no_target = val.plasma.s[j]
+          CASE iplot OF
+            1 : xdata = xdata_target
+            2 : xdata = xdata_target
+            3 : xdata = xdata_target
+            4 : xdata = xdata_target
+            5 : xdata = xdata_target
+            6 : xdata = xdata_target
+            7 : xdata = xdata_target
+            8 : xdata = xdata_no_target
+            9 : xdata = xdata_no_target
+            10: xdata = xdata_no_target
+            11: xdata = xdata_no_target
+            12: xdata = xdata_no_target
+          ENDCASE
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            1 : ydata[*,0] = [val.target.dens[i,0],val.plasma.dens[j],val.target.dens[i,1]]
+            2 : ydata[*,0] = [val.target.M   [i,0],val.plasma.M   [j],val.target.M   [i,1]]
+            3 : ydata[*,0] = [val.target.pe  [i,0],val.plasma.pe  [j],val.target.pe  [i,1]]
+            4 : ydata[*,0] = [val.target.pi  [i,0],val.plasma.pi  [j],val.target.pi  [i,1]]
+            5 : ydata[*,0] = [val.target.pe  [i,0],val.plasma.pe  [j],val.target.pe  [i,1]] +  $
+                             [val.target.pi  [i,0],val.plasma.pi  [j],val.target.pi  [i,1]] 
+            6 : ydata[*,0] = [val.target.te  [i,0],val.plasma.te  [j],val.target.te  [i,1]]
+            7 : ydata[*,0] = [val.target.ti  [i,0],val.plasma.ti  [j],val.target.ti  [i,1]]
+            8 :
+            9 : 
+            10:
+            11:
+            12:
           ENDCASE
           END
 ;       ----------------------------------------------------------------
@@ -419,6 +478,13 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                END
             ELSE:
           ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                          dev_xsize, dev_ysize, charsize_labels, colors
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]) 
           END
 ;       ----------------------------------------------------------------
         999: BEGIN

@@ -364,6 +364,11 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
              plot_struct.data_file[3] = 'idl.fluid_targets'
              plot_struct.data_file[4] = 'idl.osm_nodes'
              END
+          2: BEGIN
+             plot_struct.data_file[0] = 'idl.fluid_plasma'
+             plot_struct.data_file[1] = 'idl.fluid_targets'
+             plot_struct.data_file[2] = 'idl.osm_nodes'
+             END
           100: BEGIN
              plot_struct.data_file[0] = 'idl.eirene_imp'
              plot_struct.data_file[1] = 'idl.divimp_imp_density'
@@ -439,6 +444,11 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
             plot_struct.data_file[1] = 'idl.fluid_wall'
             plot_struct.data_file[2] = 'idl.fluid_plasma'
             plot_struct.data_file[3] = 'idl.fluid_targets'
+            END
+          5: BEGIN
+            plot_struct.title        = 'NEW (!) GENERAL RADIAL PLOT: Average plasma quantities for debugging'
+            plot_struct.case_name[0] = case_name
+            plot_struct.data_file[1] = 'idl.fluid_plasma'
             END
           ELSE: BEGIN
             PRINT,'ERROR cortex_LoadPlotData: Unknown 1D radial plot option'

@@ -12,13 +12,14 @@ FUNCTION cortex_LoadTetrahedronData, file
     RETURN, result
   ENDIF
 
-  x    = inGetData('X')  
-  y    = inGetData('Y')  
-  z    = inGetData('Z')  
-  dens = inGetData('NE')  
-  te   = inGetData('TE')
-  n_D  = inGetData('N_D')
-  n_D2 = inGetData('N_D2')
+  x      = inGetData('X')  
+  y      = inGetData('Y')  
+  z      = inGetData('Z')  
+  dens   = inGetData('NE')  
+  te     = inGetData('TE')
+  n_D    = inGetData('N_D')
+  n_D2   = inGetData('N_D2')
+  dalpha = inGetData('D_ALPHA')
 
   inCloseInterface
 
@@ -34,7 +35,8 @@ FUNCTION cortex_LoadTetrahedronData, file
     dens    : dens ,  $
     te      : te   ,  $
     n_D     : n_D  ,  $
-    n_D2    : n_D2  }
+    n_D2    : n_D2 ,  $
+    dalpha  : dalpha }
   RETURN, result
 END
 ;

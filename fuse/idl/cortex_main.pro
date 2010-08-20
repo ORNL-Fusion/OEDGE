@@ -59,7 +59,7 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
-    dir_structure = 1
+    dir_structure = 2
 
     family = STRMID(case_name,0,5) + '/'
     child  = STRMID(case_name,0,7) + '/'
@@ -111,7 +111,11 @@ PRO cortex_GeneratePlots, args
 
 ; Setup PostScript printing:
   IF (ps EQ 'on') THEN BEGIN
-    file = data_path + family + child + case_name + '.idl.ps'
+    CASE dir_structure OF
+      0: file = data_path + case_name + '.idl.ps'
+      1: file = data_path + family + case_name + '.idl.ps'
+      2: file = data_path + family + child + case_name + '.idl.ps'
+    ENDCASE
     PRINT, 'POSTSCRIPT FILE=',file
     PSOPEN, filename=file
   ENDIF
@@ -232,6 +236,29 @@ PRO cortex_GeneratePlots, args
                 stop
               ENDIF
               status = cortex_PlotParallelProfiles(plot, tube, data_array, ps=ps)
+              IF (i LT N_ELEMENTS(plot.tubes)-1) THEN ERASE
+            ENDFOR
+            END
+;         --------------------------------------------------------------         
+          2: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              plasma = cortex_LoadPlasmaData(file_path + plot.data_file[0])
+              target = cortex_LoadTargetData(file_path + plot.data_file[1])
+              plot_data = { plasma : plasma, target : target }
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            FOR i = 0, N_ELEMENTS(plot.tubes)-1 DO BEGIN
+              IF (plot.tubes[i] EQ 0) THEN CONTINUE
+              tube = plot.tubes[i]
+              IF (tube LT 0) THEN BEGIN
+                print,'automatic tube selection not working yet, need to load grid data'
+                stop
+              ENDIF
+              status = cortex_PlotParallelProfiles(plot, tube, data_array, ps=ps)
+              IF (i LT N_ELEMENTS(plot.tubes)-1) THEN ERASE
             ENDFOR
             END
 ;         --------------------------------------------------------------         
@@ -361,6 +388,18 @@ PRO cortex_GeneratePlots, args
 
               name = 'data' + STRING(i+1,FORMAT='(I0)')
               plot_data = { grid : grid, wall : wall, inter : inter_array, plasma : plasma, target : target }
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotRadialProfile(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          5: BEGIN  ; Average plasma quantities for each flux-tube
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              plasma = cortex_LoadPlasmaData(file_path + plot.data_file[1])
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              plot_data = { plasma : plasma, dummy : -1 }
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
                                data_array = CREATE_STRUCT(data_array,name,plot_data)
             ENDFOR

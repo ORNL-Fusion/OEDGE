@@ -6,6 +6,7 @@
 ; > ln -s ~slisgo/fuse_data/mast/idl_data ~/fuse/idl/data_ray
 ; > cd ~/fuse/idl      
 ; > idl
+; > @cortex_make  ; *** NEW ***
 ; > @ray_make
 ; > .r ray_psi2010
 ;
@@ -39,6 +40,43 @@
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
 ;
 ;
+; ======================================================================
+;
+PRO ray_psi2010_plot_surfaces, surfaces
+
+; Use discontinuities in the contours to isolate flux surfaces:
+  n = N_ELEMENTS(TAG_NAMES(surfaces))      
+  FOR i = 1, n DO BEGIN
+    cont = cortex_ExtractStructure(surfaces,i)
+    j = WHERE(cont.dist GT 0.1, count_break)
+    j = [-1,j,cont.n-1]
+    FOR k = 0, count_break-2 DO  $
+      OPLOT,cont.x[j[k]+1:j[k+1]],cont.y[j[k]+1:j[k+1]],COLOR=TrueColor('White'),LINESTYLE=2        
+  ENDFOR
+
+END
+;
+; ======================================================================
+;
+FUNCTION ray_psi2010_flux_surfaces, data
+
+  shifts = [+0.004, +0.002, 0.000, -0.002, -0.004]
+
+  xpoint_zone = [0.4,0.8,-1.5,1.5]
+  b = grid_ReadEQUFile('~/fuse_data/mast/shots/25029/25029_312.equ')
+  b = grid_FindNullPoints (b,xpoint_zone,1)
+  b = grid_AnalyseBoundary(b,xpoint_zone,1)
+
+  FOR i = 0, N_ELEMENTS(shifts)-1 DO BEGIN
+    cont = grid_ExtractContour(b.psi, b.x, b.y, b.psi_b+shifts[i])
+    name = 'data' + STRING(i+1,FORMAT='(I0)')
+    IF (i EQ 0) THEN result = CREATE_STRUCT(       name,cont) ELSE  $
+                     result = CREATE_STRUCT(result,name,cont)
+  ENDFOR
+
+  RETURN, result
+END
+;
 ;
 ; ======================================================================
 ;
@@ -67,7 +105,7 @@ PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, yp
 
 ;  IF (KEYWORD_SET(fill)) THEN file_colour = 'White' ELSE file_colour = 'Black'
   file_colour = 'White' 
-  XYOUTS,xpos,ypos,file,/NORMAL,color=Truecolor(file_colour)
+  XYOUTS,xpos,ypos,file,/NORMAL,color=Truecolor(file_colour),CHARSIZE=2.0
 
 END
 ;
@@ -166,6 +204,9 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       END
 ;   --------------------------------------------------------------------
     2: BEGIN  ; Big contour plot
+
+      surfaces = ray_psi2010_flux_surfaces(data)
+
       IF (KEYWORD_SET(cutoff)) THEN BEGIN
         vala = cutoff * MAX(data.a.data)
         valb = cutoff * MAX(data.b.data)
@@ -180,6 +221,11 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       ENDIF
       IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
       IF (KEYWORD_SET(show_b)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
+
+
+      ray_psi2010_plot_surfaces, surfaces
+
+
       END
 ;   --------------------------------------------------------------------
     3: BEGIN  ; Surface plot
@@ -279,6 +325,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
   CASE option OF
    1: BEGIN  
      title = 'D_a/D_g CALIBRATION, ATTACHED CONDITIONS: 24867 at 340 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -292,6 +339,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    10: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0) ; to match 24867, where the relative calibration was done
@@ -305,6 +353,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    11: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 242 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -318,6 +367,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    12: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -331,6 +381,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    20: BEGIN
      title = 'REFERENCE REPEAT D_alpha : 24861 and 25028 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -351,6 +402,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;
    21: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 201 ms'             ; 21
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -364,6 +416,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    22: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 242 ms'             ; 22
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -377,6 +430,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    23: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 312 ms'             ; 23
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -390,6 +444,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    30: BEGIN
      title = 'REFERENCE and NO i/b GAS D_alpha : 24861 and 24862 at 201 ms'     ; 30
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -403,6 +458,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    31: BEGIN
      title = 'NO i/b GAS D_alpha / D_gamma : 24862 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -416,6 +472,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    40: BEGIN
      title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 201 ms'   ; 40
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -429,6 +486,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    41: BEGIN
      title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 242 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -442,6 +500,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    42: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -455,6 +514,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    43: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 242 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -468,6 +528,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    44: BEGIN
      title = 'DENSIT RAMP D_alpha / D_gamma : 24866 at 271 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -481,6 +542,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    45: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -497,6 +559,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;  Carbon:
    50: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -510,6 +573,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    51: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 242 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -523,6 +587,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    52: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -536,6 +601,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    60: BEGIN
      title = 'NO LOWER i/b PUFF CII and CIII : 24869 at 201 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -549,6 +615,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    70: BEGIN 
      title = 'REFERENCE Dgamma and CIII : 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -562,6 +629,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    71: BEGIN 
      title = 'REFERENCE Dalpha and CII : 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -575,6 +643,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    72: BEGIN 
      title = 'REFERENCE Dgamma and CII : 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -588,6 +657,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    73: BEGIN 
      title = 'REFERENCE Dalpha and CIII : 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -601,6 +671,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    80: BEGIN 
      title = 'REFERENCE Ddelta: 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -614,6 +685,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    81: BEGIN 
      title = 'REFERENCE Dbeta: 24028 and 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -631,6 +703,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;  Comparing new and old inversions of 20100413:
    100: BEGIN
      title = 'REFERENCE REPASS D_alpha : 25028 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -644,6 +717,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    101: BEGIN
      title = 'REFERENCE REPASS D_gamma : 25028 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 2.0 * (200.0 / 167.0) 
@@ -657,6 +731,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    110: BEGIN 
      title = 'REFERENCE REPASS CII : 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -670,6 +745,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    111: BEGIN 
      title = 'REFERENCE Repass CIII : 25029 at 312 ms'
+     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
