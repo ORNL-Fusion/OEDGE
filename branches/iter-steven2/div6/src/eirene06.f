@@ -5559,8 +5559,8 @@ c
       IMPLICIT none
 
       INTEGER i1,nstsi,instsi,def_ilcell,ilcell,n
-      LOGICAL warning_reported
-      DATA warning_reported /.FALSE./
+      LOGICAL warning_reported,message
+      DATA    warning_reported,message /.FALSE.,.FALSE./
       SAVE
 
 
@@ -5594,7 +5594,8 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
      .                 surface(i1)%iltor ,surface(i1)%ilcol ,
      .                 0,ilcell,0,0
 
-        IF (surface(i1)%ilspt.GT.0) THEN
+        IF (.NOT.message.AND.surface(i1)%ilspt.GT.0) THEN
+          message = .FALSE.
           WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
      .      i1,surface(i1)%ilspt,surface(i1)%iliin,
      .      surface(i1)%reflect.EQ.LOCAL

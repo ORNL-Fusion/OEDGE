@@ -3431,8 +3431,8 @@ c              zvertp(i2,id) = knot(i1)%zv(i2)
 c            ENDDO
 c          ENDDO
 c        ENDDO
-        CALL SaveSolution
-        CALL OutputData(86,'MAST!')
+c        CALL SaveSolution
+c        CALL OutputData(86,'MAST!')
 c        title = '...'
 c        desc  = 'Call to STORE from DumpGrid'
 c        job   = 'Call to STORE from DumpGrid'

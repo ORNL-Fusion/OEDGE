@@ -176,15 +176,31 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
        ytitle   = ['1 (unit)','2 (unit)','3 (unit)','4 (unit)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        END
+    5: BEGIN
+       default_plot_type = 1
+       plot_xboarder = 0.05
+       plot_yboarder = 0.1
+       plot_xspacing = 0.100
+       plot_yspacing = 0.025
+       nplot = 4
+       plot_xn = 2
+       plot_yn = 2
+       title = plot.title 
+       subtitle = ['1 / unit','2 / unit',  $
+                   '3 / unit','4 / unit']
+       xtitle   = 'flux-tube No.'
+       ytitle   = ['1 (unit)','2 (unit)','3 (unit)','4 (unit)']
+       labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       END
 ;   --------------------------------------------------------------------
     ELSE: BEGIN  
-      PRINT, 'ERROR cortex_PlotTargetProfile: Unrecognised plot option'
+      PRINT, 'ERROR cortex_PlotRadialProfile: Unrecognised plot option'
       PRINT, '  OPTION = ',option,' (',plot.option,')'
       RETURN, -1
       END
   ENDCASE
 
-  colors = ['Black','Red','Green','Blue','Orange','Purple', 'Hotpink', 'Darkseagreen', 'Silver']
+  colors = ['Black','Red','Green','Blue','Darkseagreen', 'Hotpink', 'Orange', 'Silver']
 ;
 ; Setup plot:
 ; ----------------------------------------------------------------------
@@ -210,7 +226,7 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
 
     ndata = N_ELEMENTS(TAG_NAMES(data_array))
     IF (ndata LE 0) THEN BEGIN
-      PRINT, 'ERROR cortex_PlotTargetProfile: No data found'
+      PRINT, 'ERROR cortex_PlotRadialProfile: No data found'
       RETURN, -1
     ENDIF
 
@@ -242,7 +258,7 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
         3: BEGIN
           END
 ;       ----------------------------------------------------------------
-        4: BEGIN
+        4: BEGIN  ; Plot for C-Mod inner wall midplane gas puff
 
 ;          help,val,/struct
           nseg = plot.line_seg_n
@@ -287,6 +303,27 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
               xdata[0:count_i-1,0] = inter.dist
               ydata[0:count_i-1,0] = val.plasma.dens[i]
               END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        5: BEGIN  ; Average quantities on a flux tube (debugging plot)
+
+          file = val.plasma.file
+          integral = ' '
+          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
+
+          ntrace = [1,1,1,1] ; Number of data lines on each plot
+
+          ntube = MAX(val.plasma.tube)
+          xdata = FINDGEN(ntube) + 1.0
+          ydata = xdata
+          CASE iplot OF
+            1: FOR i = 1, ntube DO ydata[i-1] = ALOG10(MEAN(val.plasma.dens[WHERE(val.plasma.tube EQ i)]))
+            2: FOR i = 1, ntube DO ydata[i-1] =        MEAN(val.plasma.vi  [WHERE(val.plasma.tube EQ i)])
+            3: FOR i = 1, ntube DO ydata[i-1] = ALOG10(MEAN(val.plasma.te  [WHERE(val.plasma.tube EQ i)]))
+            4: FOR i = 1, ntube DO ydata[i-1] = ALOG10(MEAN(val.plasma.ti  [WHERE(val.plasma.tube EQ i)]))
           ENDCASE
           END
 ;       ----------------------------------------------------------------
@@ -372,6 +409,13 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
           ENDCASE
           END
 ;       ----------------------------------------------------------------
+        5: BEGIN
+          cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                          dev_xsize, dev_ysize, charsize_labels, colors
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+          OPLOT, val.x, val.y, COLOR=TrueColor(colors[idata-1])
+          END
+;       ----------------------------------------------------------------
         ELSE: BEGIN  
           PRINT, 'ERROR cortex_PlotRadialProfile: Unrecognised plot option'
           PRINT, '  OPTION = ',plot.option,' (',option,')'
@@ -409,7 +453,8 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
   PRINT,'NDATA= ',ndata
 
 
-  IF (plot.option EQ 4) THEN BEGIN
+  IF (plot.option GE 4) THEN BEGIN
+    PRINT, 'Redirecting to new radial plot code!'
     result = cortex_PlotRadialProfile_NEW(plot, plot_array, ps=ps)
     RETURN, result
   ENDIF

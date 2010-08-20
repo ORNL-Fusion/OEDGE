@@ -12,8 +12,18 @@ $                  i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
                    i-fwp-4255a i-fwp-4256a i-fwp-4257a i-fwp-4258a i-fwp-4259a
                     
 
+
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  i-fwp-6214d i-fwp-6215d
+{PLOT 1D RADIAL PROFILE}  2  {CASE}  i-fwp-6214d i-fwp-6215d
+  {LINE SEGMENT}  5.0 0.0  4.0 0.0
+{EXIT}
+
+
 {PLOT 1D RADIAL PROFILE}  1  {CASE}  i-fwp-0200a >b >c >d >e >f >i >g > h
   
+
+
 {EXIT}
 
 

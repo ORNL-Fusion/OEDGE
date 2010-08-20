@@ -295,9 +295,11 @@ c
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
      .        type,index1,index2,ilside,ilswch,region,code,is,nboundary,
      .        tmp_ilspt
-      LOGICAL assigned(2)
+      LOGICAL assigned(2),first_message
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc
+
+      first_message = .TRUE.
 
       nsurface = 0
       default_surface = 0
@@ -701,8 +703,11 @@ c...        Set surface sputtering parameters:
               surface(i1)%isrs   = 2   ! Species index of sputtered atom
               surface(i1)%recycs = 1.0
               surface(i1)%recycc = 1.0
-              WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
-     .                   surface(i1)%ilspt
+              IF (first_message) THEN
+                WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+     .                     surface(i1)%ilspt
+                first_message = .FALSE.
+              ENDIF
             ENDIF
 
 c...        Set local temperature:

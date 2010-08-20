@@ -267,9 +267,14 @@ c
 c     ------------------------------------------------------------------
 c     Write out target data:
 c
+c     If changing anything here, need to change it in DumpDataToIDL in
+c     SLoutplot.f as well, so that the OSM and OUT generated 
+c     idl.fluid_targets files remain in sync.
+c
       IF (.NOT.ALLOCATED(target)) GOTO 20
 
       CALL inOpenInterface('osm.idl.fluid_targets',ITF_WRITE)
+
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
 
@@ -279,7 +284,7 @@ c
         CALL inPutData(tube(itube)%ir  ,'TAR_RING','none')                    
         CALL inPutData(tube(itube)%psin,'TAR_PSIN','none')                    
         CALL inPutData(tube(itube)%rho ,'TAR_RHO' ,'m') 
-        DO ipos = LO, HI
+        DO ipos = LO, HI  
          DO itar = 1, ntarget
            DO i1 = 1, target(itar)%nlist
              IF (itube.EQ.target(itar)%ilist(i1).AND.
@@ -293,7 +298,8 @@ c
      .               'identifiers not found')
              first_call = .FALSE.
            ENDIF
-           CYCLE
+           itarget  = -1
+           location = -1
          ELSE
            itarget  = itar
            location = target(itar)%location
@@ -319,6 +325,7 @@ c
         ENDDO
       ENDDO
       CALL inCloseInterface
+
  20   CONTINUE
 
 c...  ------------------------------------------------------------------

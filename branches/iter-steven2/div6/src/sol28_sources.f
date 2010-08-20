@@ -37,7 +37,7 @@ c             None:
 c             Reference plasma:
               IF (ref_nion.EQ.0)   ! Should have a global check on this somewhere in _main rather than all these independent checks...
      .          CALL ER('AssignParticleSources','Reference plasma '//    ! but right now I'm worried that a non-local check would be
-     .                  'data requrested but none available',*99)        ! overlooked for new quantities...
+     .                  'data requested but none available',*99)         ! overlooked for new quantities...
               source(ic1:ic2) = -DBLE(ref_fluid(ic1:ic2,ion)%parrec) 
             CASE (2)
 c             PIN:          
@@ -501,7 +501,7 @@ c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
           DO inode = node1+1, node2-1
             IF (node(inode)%ne.EQ.-1.0.OR.
      .          node(inode)%pe.EQ.-1.0) THEN
-              STOP 'WHAT THE HELL?'
+              STOP 'WHAT THE HECK?'
               IF (inode.LE.mnode) ic1 = node(inode)%icell
               IF (inode.GE.mnode) ic2 = node(inode)%icell
             ENDIF
