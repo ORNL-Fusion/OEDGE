@@ -8,6 +8,7 @@
 ; > idl
 ; > @cortex_make  ; *** NEW ***
 ; > @ray_make
+; > .r grid_separatrix  ; *** NEW ***
 ; > .r ray_psi2010
 ;
 ; Examples:
@@ -18,9 +19,19 @@
 ;					        B - plot number : 
 ;     1 - basic comparison plot
 ;     	  param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
-;     2 - plot of reconstruction to window with proper aspect ratio
+;
+;         ray_psi2010_plots,1,1,cutoff=0.1,/equ
+; 
+;     2 - plot of poloidal reconstruction to a screen window with proper aspect ratio
 ;         YOU NEED TO SPECIFY /show_a or /show_b
 ;         you can turn off the dotted line with /no_line
+;
+;         ray_psi2010_plots,12,2,/equ,/show_a,/no_line,cutoff=0.1
+;         ray_psi2010_plots,1,1,/equ,/show_b,/no_line,cutoff=0.5   
+;         ray_psi2010_plots,51,2,/equ,/show_a
+;         ray_psi2010_plots,51,2,/equ,/show_b
+;         ray_psi2010_plots,51,2,equ='24861/24861_240.equ',/show_b
+
 ;     3 - shaded surface plot, need to say /show_a or /show_b
 ;     4 - plot of reconstruction with separatrix overlayed -- work in progress
 ;     5 - plot of the two reconstructions showing where they intersect
@@ -30,19 +41,22 @@
 ;         profile is set to zero, to isolate the basic contour of the emission -- this will be
 ;         different for each line -- see example below.
 ;
-;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
-;        ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
-;        ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
-;        ray_psi2010_plots,51,5,cutoff=[0.10,0.05]           overlap of CII and CIII for detached reference
-;        ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
-;
+;         ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
+;         ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
+;         ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
+;         ray_psi2010_plots,51,5,cutoff=[0.10,0.05]           overlap of CII and CIII for detached reference
+;         ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
+;         ray_psi2010_plots,51,5,cutoff=0.5,/equ
+; 
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
 ;
 ;
 ; ======================================================================
 ;
-PRO ray_psi2010_plot_surfaces, surfaces
+PRO ray_psi2010_plot_surfaces, surfaces, color=color
+
+  IF (NOT KEYWORD_SET(color)) THEN color = 'White'
 
 ; Use discontinuities in the contours to isolate flux surfaces:
   n = N_ELEMENTS(TAG_NAMES(surfaces))      
@@ -51,7 +65,7 @@ PRO ray_psi2010_plot_surfaces, surfaces
     j = WHERE(cont.dist GT 0.1, count_break)
     j = [-1,j,cont.n-1]
     FOR k = 0, count_break-2 DO  $
-      OPLOT,cont.x[j[k]+1:j[k+1]],cont.y[j[k]+1:j[k+1]],COLOR=TrueColor('White'),LINESTYLE=2        
+      OPLOT,cont.x[j[k]+1:j[k+1]],cont.y[j[k]+1:j[k+1]],COLOR=TrueColor(color),LINESTYLE=2        
   ENDFOR
 
 END
@@ -62,8 +76,10 @@ FUNCTION ray_psi2010_flux_surfaces, data
 
   shifts = [+0.004, +0.002, 0.000, -0.002, -0.004]
 
-  xpoint_zone = [0.4,0.8,-1.5,1.5]
-  b = grid_ReadEQUFile('~/fuse_data/mast/shots/25029/25029_312.equ')
+  print,data.equ
+
+  xpoint_zone = [0.5,0.8,-1.4,1.4]
+  b = grid_ReadEQUFile('~/fuse_data/mast/shots/'+ data.equ) ; 25029/25029_312.equ')
   b = grid_FindNullPoints (b,xpoint_zone,1)
   b = grid_AnalyseBoundary(b,xpoint_zone,1)
 
@@ -80,8 +96,19 @@ END
 ;
 ; ======================================================================
 ;
-PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, ypos,  $
-                         title=title, fill=fill, no_line=no_line
+PRO ray_psi2010_contour, data_2, colorct, color, nlevels, c_colors, xpos, ypos,  $
+                         title=title, fill=fill, no_line=no_line, equ=equ, a=a, b=b, large=large,  $
+                         text_color=text_color
+
+  IF (KEYWORD_SET(a)) THEN BEGIN
+    data = data_2.a
+    file = data_2.afile
+  ENDIF ELSE BEGIN
+    data = data_2.b
+    file = data_2.bfile
+  ENDELSE
+
+  IF (KEYWORD_SET(large)) THEN charsize = 2.0 ELSE charsize = 1.0
 
   xmin = MIN(data.x)
   xmax = MAX(data.x)
@@ -94,7 +121,7 @@ PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, yp
   ymin = ymin - 0.03 * ydelta
   ymax = ymax + 0.03 * ydelta
 
-  PLOT,[xmax,xmin],[ymin,ymax], /NODATA, $ 
+  PLOT,[xmax,xmin],[ymin,ymax], /NODATA, CHARSIZE=(0.5*(charsize-1.0)+1.0) , $ 
        XSTYLE=1,YSTYLE=1,color=Truecolor(color),TITLE=title,XTITLE='R (m)',YTITLE='Z (m)'
   LOADCT,colorct
   levels = (FINDGEN(nlevels) / FLOAT(nlevels)) * (MAX(data.data) - MIN(data.data)) + MIN(data.data)
@@ -103,17 +130,23 @@ PRO ray_psi2010_contour, data, file, colorct, color, nlevels, c_colors, xpos, yp
   IF (NOT KEYWORD_SET(no_line)) THEN  $
     OPLOT,data.contour.x,data.contour.y,LINESTYLE=1,color=Truecolor('White')
 
-;  IF (KEYWORD_SET(fill)) THEN file_colour = 'White' ELSE file_colour = 'Black'
-  file_colour = 'White' 
-  XYOUTS,xpos,ypos,file,/NORMAL,color=Truecolor(file_colour),CHARSIZE=2.0
-
+  str = STRSPLIT(file,'/',/EXTRACT)
+  n = N_ELEMENTS(str)
+  IF (NOT KEYWORD_SET(text_color)) THEN text_color = 'White'
+  FOR i = 0, n-1 DO BEGIN
+    XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),str[0],/NORMAL,  $
+           color=Truecolor(text_color),CHARSIZE=charsize
+  ENDFOR
+  IF (KEYWORD_SET(equ)) THEN  $
+    XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),data_2.equ,/NORMAL,  $
+    color=Truecolor(text_color),CHARSIZE=charsize
 END
 ;
 ; ======================================================================
 ;
 PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1, fill=fill, ps=ps,  $
                show_a=show_a,show_b=show_b,  $
-               nlevels=nlevels,cutoff=cutoff,no_line=no_line
+               nlevels=nlevels,cutoff=cutoff,no_line=no_line, equ=equ
 
   CASE (SIZE(data,/TNAME)) OF
     'INT': BEGIN
@@ -135,6 +168,20 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
   IF (NOT KEYWORD_SET(color  )) THEN  $
     IF (option EQ 5) THEN color = 0 ELSE color = 5
   IF (NOT KEYWORD_SET(nlevels)) THEN nlevels = 50
+  IF (KEYWORD_SET(equ)) THEN BEGIN
+    IF (equ NE 1) THEN data.equ = equ 
+    surfaces = ray_psi2010_flux_surfaces(data)
+  ENDIF
+  IF (KEYWORD_SET(cutoff)) THEN BEGIN
+    IF (N_ELEMENTS(cutoff) EQ 1) THEN cutoff = [cutoff,cutoff]
+    vala = cutoff[0] * MAX(data.a.data)
+    valb = cutoff[1] * MAX(data.b.data)
+    i = WHERE(data.a.data GE vala, count)
+    IF (count GT 0) THEN data.a.data[i] = vala
+    i = WHERE(data.b.data GE valb, count)
+    IF (count GT 0) THEN data.b.data[i] = valb
+  ENDIF
+
 
   c_colors = LONG(FINDGEN(nlevels) * (255.0 / FLOAT(nlevels-1)) )
 
@@ -144,7 +191,7 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 ;   --------------------------------------------------------------------
     1: BEGIN  ; comparison plot
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
-        WINDOW,2,RETAIN=2
+        WINDOW,2,RETAIN=2,XSIZE=800,YSIZE=800
         DEVICE, DECOMPOSED=0
       ENDIF
 
@@ -154,10 +201,12 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 
       !P.MULTI = [0,2,2]
 
-      ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels, c_colors, 0.11, 0.93, fill=fill
-      ray_psi2010_contour, data.b, data.bfile, color, 'Red'  , nlevels, c_colors, 0.61, 0.93, fill=fill
+      ray_psi2010_contour, data, /a, color, 'Black', nlevels, c_colors, 0.11, 0.93, fill=fill, equ=equ
+      IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces
+      ray_psi2010_contour, data, /b, color, 'Red'  , nlevels, c_colors, 0.61, 0.93, fill=fill, equ=equ
+      IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces
 
-      XYOUTS,0.5,0.975,title,/NORMAL,color=Truecolor('Black'), ALIGNMENT=0.5, CHARSIZE=1.5
+      XYOUTS,0.5,0.980,title,/NORMAL,color=Truecolor('Black'), ALIGNMENT=0.5, CHARSIZE=1.2
 
       ymax = MAX([data.a.contour.data*ascale, data.b.contour.data*bscale])
       CASE 1 OF
@@ -205,26 +254,16 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 ;   --------------------------------------------------------------------
     2: BEGIN  ; Big contour plot
 
-      surfaces = ray_psi2010_flux_surfaces(data)
-
-      IF (KEYWORD_SET(cutoff)) THEN BEGIN
-        vala = cutoff * MAX(data.a.data)
-        valb = cutoff * MAX(data.b.data)
-        data.a.data[WHERE(data.a.data GE vala)] = vala
-        data.b.data[WHERE(data.b.data GE valb)] = valb
-      ENDIF
       IF (NOT KEYWORD_SET(ps)) THEN BEGIN
         IF (KEYWORD_SET(show_a)) THEN dim = SIZE(data.a.data,/DIMENSIONS) 
         IF (KEYWORD_SET(show_b)) THEN dim = SIZE(data.b.data,/DIMENSIONS) 
         WINDOW,2,RETAIN=2,XSIZE=dim[0]*1.8,YSIZE=dim[1]*1.8
         DEVICE, DECOMPOSED=0
       ENDIF
-      IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data.a, data.afile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
-      IF (KEYWORD_SET(show_b)) THEN ray_psi2010_contour, data.b, data.bfile, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line
+      IF (KEYWORD_SET(show_a)) THEN ray_psi2010_contour, data, /a, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line, equ=equ, /large
+      IF (KEYWORD_SET(show_b)) THEN ray_psi2010_contour, data, /b, color, 'Black', nlevels,c_colors, 0.16, 0.90, fill=fill, title=title, no_line=no_line, equ=equ, /large
 
-
-      ray_psi2010_plot_surfaces, surfaces
-
+      IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces
 
       END
 ;   --------------------------------------------------------------------
@@ -297,15 +336,20 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
       data.b.data[WHERE(data.b.data GE valb)] = 2.0
 
       IF (NOT KEYWORD_SET(show_a) AND NOT KEYWORD_SET(show_b)) THEN BEGIN
-        data_c = data.a
-        data_c.data = data.a.data + data.b.data
+        data.a.data = data.a.data + data.b.data
+        data.afile = data.afile + ' / ' + data.bfile
       ENDIF ELSE BEGIN
-        IF (KEYWORD_SET(show_a)) THEN data_c = data.a
-        IF (KEYWORD_SET(show_b)) THEN data_c = data.b
+        IF (KEYWORD_SET(show_b)) THEN BEGIN
+          data.a     = data.b
+          data.afile = data.bfile
+        ENDIF
       ENDELSE
 
-      ray_psi2010_contour, data_c, file, color, 'Black', nlevels,c_colors,  $
-                           0.16, 0.90, fill=fill, title=title, /no_line
+      ray_psi2010_contour, data, /a, color, 'Black', nlevels,c_colors,  $
+                           0.16, 0.90, fill=fill, title=title, /no_line, equ=equ, /large,  $
+                           text_color = 'Red'
+
+      IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces, color='Red' 
 
       END
 ;   --------------------------------------------------------------------
@@ -325,7 +369,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
   CASE option OF
    1: BEGIN  
      title = 'D_a/D_g CALIBRATION, ATTACHED CONDITIONS: 24867 at 340 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24867/24867_335.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -339,7 +383,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    10: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0) ; to match 24867, where the relative calibration was done
@@ -353,7 +397,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    11: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 242 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -367,7 +411,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    12: BEGIN 
      title = 'REFERENCE D_alpha / D_gamma : 24861 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_315.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -381,7 +425,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    20: BEGIN
      title = 'REFERENCE REPEAT D_alpha : 24861 and 25028 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_200equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -402,7 +446,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;
    21: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 201 ms'             ; 21
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -416,7 +460,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    22: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 242 ms'             ; 22
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_250.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -430,7 +474,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    23: BEGIN
      title = 'REFERENCE REPEAT D_alpha / D_gamma : 25028 at 312 ms'             ; 23
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -444,7 +488,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    30: BEGIN
      title = 'REFERENCE and NO i/b GAS D_alpha : 24861 and 24862 at 201 ms'     ; 30
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -458,7 +502,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    31: BEGIN
      title = 'NO i/b GAS D_alpha / D_gamma : 24862 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24862/24862_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (100.0 / 67.0)
@@ -472,7 +516,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    40: BEGIN
      title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 201 ms'   ; 40
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -486,7 +530,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    41: BEGIN
      title = 'REFERENCE and DENSITY RAMP D_alpha : 24861 and 24866 at 242 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24861/24861_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 
@@ -500,7 +544,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    42: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24866/24866_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -514,7 +558,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    43: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 242 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24866/24866_240.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -528,7 +572,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    44: BEGIN
      title = 'DENSIT RAMP D_alpha / D_gamma : 24866 at 271 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24866/24866_265.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -542,7 +586,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    45: BEGIN
      title = 'DENSITY RAMP D_alpha / D_gamma : 24866 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24866/24866_315.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  /  50.0)
@@ -559,7 +603,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;  Carbon:
    50: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25029/25029_200.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -573,7 +617,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    51: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 242 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25029/25029_255.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -587,7 +631,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    52: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24860/25029_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -601,7 +645,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    60: BEGIN
      title = 'NO LOWER i/b PUFF CII and CIII : 24869 at 201 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24869/24869_205.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -615,7 +659,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    70: BEGIN 
      title = 'REFERENCE Dgamma and CIII : 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '24028/24028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -629,7 +673,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    71: BEGIN 
      title = 'REFERENCE Dalpha and CII : 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -643,7 +687,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    72: BEGIN 
      title = 'REFERENCE Dgamma and CII : 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -657,7 +701,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    73: BEGIN 
      title = 'REFERENCE Dalpha and CIII : 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -670,8 +714,8 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='FFC_25029_1158_1_HL07_rba_CIII.cgm'
      END
    80: BEGIN 
-     title = 'REFERENCE Ddelta: 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     title = 'REFERENCE Ddelta: 25028 and 25029 at 312 ms'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -684,8 +728,8 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      bfile='DIVCAM_25029_17_2_HL01_rdb_Ddelta.cgm'
      END
    81: BEGIN 
-     title = 'REFERENCE Dbeta: 24028 and 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     title = 'REFERENCE Dbeta: 25028 and 25029 at 312 ms'
+     equ = '25028/25028_210.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -703,7 +747,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
 ;  Comparing new and old inversions of 20100413:
    100: BEGIN
      title = 'REFERENCE REPASS D_alpha : 25028 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0 * (67.0  / 50.0 )
@@ -717,7 +761,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    101: BEGIN
      title = 'REFERENCE REPASS D_gamma : 25028 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25028/25028_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 2.0 * (200.0 / 167.0) 
@@ -731,7 +775,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END    
    110: BEGIN 
      title = 'REFERENCE REPASS CII : 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25029/25029_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
@@ -745,7 +789,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    111: BEGIN 
      title = 'REFERENCE Repass CIII : 25029 at 312 ms'
-     equ = '~/fuse_data/mast/shots/24860/carre.24860_240.equ'
+     equ = '25029/25029_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 1.0
@@ -774,7 +818,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
   IF (NOT KEYWORD_SET(a_only)) THEN  $
     b = ray(file=bfile,shot=24860,region=2,fit_cutoff=0.5,fit_sample=fit_sample,spt=bspt,xpt=bxpt,plots=plots)
 
-  result = { title : title, afile : afile, bfile : bfile ,  $
+  result = { title : title, afile : afile, bfile : bfile , equ : equ, $
              a : a, b : b ,     $ 
              ascale : ascale ,  $
              bscale : bscale }
