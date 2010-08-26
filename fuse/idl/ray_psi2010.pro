@@ -28,10 +28,11 @@
 ;
 ;         ray_psi2010_plots,12,2,/equ,/show_a,/no_line,cutoff=0.1
 ;         ray_psi2010_plots,1,1,/equ,/show_b,/no_line,cutoff=0.5   
-;         ray_psi2010_plots,51,2,/equ,/show_a
+;         ray_psi2010_plots,51,2,/equ,/show_a,/no_line               x-point almost looks right, shifted in a bit perhaps
 ;         ray_psi2010_plots,51,2,/equ,/show_b
 ;         ray_psi2010_plots,51,2,equ='24861/24861_240.equ',/show_b
-
+;         ray_psi2010_plots,51,2,/equ,/show_a
+;
 ;     3 - shaded surface plot, need to say /show_a or /show_b
 ;     4 - plot of reconstruction with separatrix overlayed -- work in progress
 ;     5 - plot of the two reconstructions showing where they intersect
@@ -46,7 +47,6 @@
 ;         ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
 ;         ray_psi2010_plots,51,5,cutoff=[0.10,0.05]           overlap of CII and CIII for detached reference
 ;         ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
-;         ray_psi2010_plots,51,5,cutoff=0.5,/equ
 ; 
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
@@ -631,7 +631,7 @@ FUNCTION ray_psi2010_process,option,plots=plots,a_only=a_only,b_only=b_only,uber
      END
    52: BEGIN 
      title = 'REFERENCE CII and CIII : 25029 at 312 ms'
-     equ = '24860/25029_310.equ'
+     equ = '25029/25029_310.equ'
      plot_option = 1
      fit_sample=10
      ascale = 5.0
