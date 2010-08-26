@@ -29,33 +29,41 @@ $ ======================================================================
 $ UPPER PORT, MCR  - series 10
 $ ======================================================================
 
-{PLOT 1D SUMMARY}  1  {WARNINGS}
-  {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
-  {NOTES}    disclaimer
-  {XLABELS}  023xb : 223xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
-  {YRANGE}   value_yrange
-  {YLIMIT}   value_limit
-  {SCALE FACTOR} upper_MCR_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-0223b i-fwp-2223d list_horizontal_b sub xxx 621
-  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-0224b i-fwp-2224d list_horizontal_b sub xxx 631
-  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-0225b i-fwp-2225d list_horizontal_b sub xxx 641
-
-{PLOT 1D SUMMARY}  1  {WARNINGS}
-  {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
-  {NOTES}    disclaimer
-  {XLABELS}  023xb : 223xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
-  {YRANGE}   value_yrange
-  {YLIMIT}   value_limit
-  {SCALE FACTOR} upper_MCR_scale_factor
-  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-0223b i-fwp-2223d list_horizontal_d sub xxx 621
-  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-0224b i-fwp-2224d list_horizontal_d sub xxx 631
-  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-0225b i-fwp-2225d list_horizontal_d sub xxx 641
-
-
-
-{EXIT}
-
-
+${PLOT 1D SUMMARY}  1  {WARNINGS}
+$  {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
+$  {NOTES}    disclaimer
+$  {XLABELS}  023xb : 223xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+$  {YRANGE}   1.0E-08 1.0E-00
+$  {YLIMIT}   value_limit
+$  {SCALE FACTOR} upper_MCR_scale_factor
+$  {SET} Dperp = 1.0 m2 s-1  6214  {CASE} i-fwp-0223b i-fwp-2223d list_vertical sub xxxx 6214
+$  {SET} Dperp = 1.0 m2 s-1  6295  {CASE} i-fwp-0223b i-fwp-2223d list_vertical sub xxxx 6295
+${EXIT}
+$
+$
+${PLOT 1D SUMMARY}  1  {WARNINGS}
+$  {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
+$  {NOTES}    disclaimer
+$  {XLABELS}  023xb : 223xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+$  {YRANGE}   value_yrange
+$  {YLIMIT}   value_limit
+$  {SCALE FACTOR} upper_MCR_scale_factor
+$  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-0223b i-fwp-2223d list_horizontal_b sub xxx 621
+$  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-0224b i-fwp-2224d list_horizontal_b sub xxx 631
+$  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-0225b i-fwp-2225d list_horizontal_b sub xxx 641
+$
+${PLOT 1D SUMMARY}  1  {WARNINGS}
+$  {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
+$  {NOTES}    disclaimer
+$  {XLABELS}  023xb : 223xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+$  {YRANGE}   value_yrange
+$  {YLIMIT}   value_limit
+$  {SCALE FACTOR} upper_MCR_scale_factor
+$  {SET} Dperp = 1.0 m2 s-1   3d {CASE} i-fwp-0223b i-fwp-2223d list_horizontal_d sub xxx 621
+$  {SET} Dperp = 0.1 m2 s-1   4d {CASE} i-fwp-0224b i-fwp-2224d list_horizontal_d sub xxx 631
+$  {SET} Dperp =10.0 m2 s-1   5d {CASE} i-fwp-0225b i-fwp-2225d list_horizontal_d sub xxx 641
+$
+${EXIT}
 
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    material, d d d UPPER PORT, SOL_flow, d d d MCR, SCALE FACTOR upper_MCR_scale_factor
