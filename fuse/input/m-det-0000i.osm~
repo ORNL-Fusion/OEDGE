@@ -1,4 +1,4 @@
-${TITLE}   'small grid, smoothed symmetry point'
+${TITLE}   'small grid, specifying parallel flow'
 ${COMMENT} '24861 at 240 ms to start...'
 $
 $ I/O:
@@ -13,7 +13,7 @@ $ ======================================================================
 $
 '{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
-'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
 '{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
 $'{}          Execute DIVIMP                                  '    0   $ (0)
@@ -124,7 +124,7 @@ $ outer divertor target
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
 $ outer midplane
-  2.0   1  99   4    5   1.0                  5     0.0  0                                                
+  2.0   1  99   4    5   1.0                  3     0.0  0                                                
   'ts_24861_230-250ms_inner_midplane.dat'     1     0.0396     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
   0.0                          1.0000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
   0.0                          1.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
@@ -168,18 +168,18 @@ $    ************* flow specification **************
       $ sometimes for flows with M > 0.5 or so, sometimes lower.  So, you need to keep an eye on it...
 
       $ flow at the outer midplane
-  2.0   1  99   1    1   0.0                  5     0.0  0                                                
-  0.0                          1.000  0.000                    0.0      0.0001   0.0       0.0    0.0   0.0
-  0.0                          1.700  0.000                    0.0      0.0001   0.0       0.0    0.0   0.0
+  2.0   1  99   1    1   0.0                  3     0.0  0                                                
+  0.0                          1.000  0.000                    0.0      0.5      0.0       0.0    0.0   0.0
+  0.0                          1.700  0.000                    0.0      0.5      0.0       0.0    0.0   0.0
       $ flow at the outer SOL, near x-point
-  1.0   7  12   1    1   0.0                  5     0.0  0                                                
-  0.0                          0.650 -1.250                    0.0      0.25     0.0       0.0    0.0   0.0
-  0.0                          1.200 -1.250                    0.0      0.25     0.0       0.0    0.0   0.0
+  1.0   7  12   1    1   0.0                  3     0.0  0                                                
+  0.0                          0.650 -1.250                    0.0     -0.2      0.0       0.0    0.0   0.0
+  0.0                          1.200 -1.250                    0.0     -0.2      0.0       0.0    0.0   0.0
 
 $ PFZ upstream
-  2.0   13 18   3    6   0.01                 5     0.0  0                                                
-  0.0                          0.750 -1.200                    0.0      0.0    -99.0     -99.0 -99.0    0.0
-  0.0                          0.600 -1.500                    0.0      0.0      1.0      11.0  11.0    0.0
+  2.0   13 18   3    6   0.01                 3     0.0  0                                                
+  0.0                          0.750 -1.200                    1.0E+18  0.0      0.0     -99.0 -99.0    0.0
+  0.0                          0.600 -1.500                    1.0E+15  0.0      0.0       2.0   2.0    0.0
 $
 $ EIRENE options:
 $ ======================================================================

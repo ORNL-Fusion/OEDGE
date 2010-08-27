@@ -1,14 +1,43 @@
-* First ever CORTEX input file
+* MAST detachment study 2010
 *
 *
-{PLOT 2D FLUID GRID}  1   {SHOW} 10 Red   $ {FLUX SURFACES} 
-                          {SHOW} 17 Red   
-{PLOT 1D RADIAL PROFILE}  1    
-{PLOT 1D RADIAL PROFILE}  1  {XRANGE} -0.01 0.03
 
-{PLOT 1D PARALLEL PROFILE}  1  {TUBES} 10  
-{PLOT 1D PARALLEL PROFILE}  1  {TUBES} 17  
-{PLOT 1D PARALLEL PROFILE}  0  {TUBES}  4 18  {FOCUS}  5  {XRANGE}  0.0 0.5
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}   1    
+
+{PLOT 1D RADIAL PROFILE}  4   
+  {LINE SEGMENT}  0.4403 0.0  0.60 0.0
+{EXIT}
+
+
+{PLOT 1D RADIAL PROFILE}  2   
+  {LINE SEGMENT}  0.95 0.0  1.7 0.0   
+$  {CASE}          m-det-0000e >g
+  {XRANGE}        0.9 1.1 
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES} {FOCUS}  5  {XRANGE}  0.5 1.0
+
+{PLOT 2D FLUID GRID}   1  {NODES}  {NO FRAME}  
+{PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+
+
+{PLOT 1D TARGET PROFILE}  2  
+
+
+
+{EXIT}
+
+
+{PLOT 2D CONTOUR}    200  {LOG}  
+
 {EXIT}
 
 {PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  {NO WALL}
@@ -80,7 +109,9 @@ $  {SHOW}  36   Red
 {PLOT 2D FLUID GRID}  1  {NO FRAME}
 {PLOT 2D FLUID GRID}  1 {EXIT}
 
-
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES} {FOCUS}  5  {XRANGE}  0.0 0.5
+{EXIT}
 
 
 

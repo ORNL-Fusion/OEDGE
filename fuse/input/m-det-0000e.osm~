@@ -1,4 +1,4 @@
-${TITLE}   'small grid, smoothed symmetry point'
+${TITLE}   'detached plasmas, loading data onto the small grid, heat flux calculation, in-file Te specification'
 ${COMMENT} '24861 at 240 ms to start...'
 $
 $ I/O:
@@ -13,7 +13,7 @@ $ ======================================================================
 $
 '{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
-'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
 '{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
 $'{}          Execute DIVIMP                                  '    0   $ (0)
@@ -58,7 +58,7 @@ $ ----------------------------------------------------------------------
 '{S P_ION}      Ionisation  1-ref 2-pin 3-prescribed           '    2    $ (3)
 '{S P_ION_FRAC}    Scale ionisation to particle sink           ' 100.0   $ (100.0)
 '{S P_REC}      Volume recombination  0-none 1-PIN 2-ADAS      '    0    $ (0)
-'{S P_ANO}      Cross-field conservation  2-half 3-full 4-flow '    4    $ (2)
+'{S P_ANO}      Cross-field conservation  2-half 3-full 4-flow '    3    $ (2)
 $'{} ExB  0-none                                               '    0    $ (0)
 $'{} Diamagnetic  0-none                                       '    0    $ (0)
 $
@@ -124,62 +124,14 @@ $ outer divertor target
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
 $ outer midplane
-  2.0   1  99   4    5   1.0                  5     0.0  0                                                
+  2.0   1  99   4    5   1.0                  3     0.0  0                                                
   'ts_24861_230-250ms_inner_midplane.dat'     1     0.0396     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
   0.0                          1.0000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
-  0.0                          1.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
-
-$    ************* flow specification **************
-
-      $ Need {S P_ANO} set to 4, i.e. 'anomalous' particle source term (fitting term) is set to give the 
-      $ requested flow velocity at the interpolation node.  
-
-      $ Note that the values requested in this input file are Mach numbers, but if ABS(v) > 10.0 then 
-      $ they are interpreted as a velocity.
-
-      $ The data block has the format:
-      $       TYPE  T1 T2   1    1   0.0           3     0.0  0                                                
-      $  0.0                          X1     Y1                       0.0      V1       0.0       0.0    0.0   0.0
-      $  0.0                          X2     Y2                       0.0      V2       0.0       0.0    0.0   0.0
-
-      $ where  TYPE    - type of node: 1.0=standard node, 2.0=symmetry node
-      $        T1      - start of tube range over which the interpolation data is applied
-      $        T2      - end of tube range              
-      $        (X1,Y1) - starting point of the 'trajectory' over which the data is applied
-      $        (X2,Y2) - end point
-      $        V1      - interpolation value at (X1,Y1)
-      $        V2      - interpolation value at (X2,Y2)
-
-      $ For this example, a linear interpolation between V1 and V2 is made along the line segment
-      $ (X1,Y1),(X2,Y2).  Note the difference in TYPE, where the first one is TYPE=2.0 since it overlays
-      $ with the outer midplane symmetry node specification, and there can only be one symmetry node on each
-      $ flux-tube, but if two are found at the same location, as is the case here, then they are merged.
-
-      $ So in the first data card/block below the data is applied wherever the trajectory intersects a flux-tube,
-      $ since T1-T2 is 1-99, i.e. all tubes.  But for the second card, the data is only applied for 
-      $ flux-tubes 7-12, i.e. the outer SOL for this grid, which saves the bother of making sure that the 
-      $ trajectory doesn't intersect tubes you are not interested in, the PFZ in this case, but is no longer grid
-      $ independent.  You can get information on the grid structure from the .out. data files in the results directory, 
-      $ where ISEP is the separatrix tube and IPFZ is the first PFZ tube. 
-
-      $ You can have as many of these cards as you like (up to 100 I think!).
-
-      $ Unfortunately, the algorithm isn't perfect (it's pretty simple at the moment), and so it fails 
-      $ sometimes for flows with M > 0.5 or so, sometimes lower.  So, you need to keep an eye on it...
-
-      $ flow at the outer midplane
-  2.0   1  99   1    1   0.0                  5     0.0  0                                                
-  0.0                          1.000  0.000                    0.0      0.0001   0.0       0.0    0.0   0.0
-  0.0                          1.700  0.000                    0.0      0.0001   0.0       0.0    0.0   0.0
-      $ flow at the outer SOL, near x-point
-  1.0   7  12   1    1   0.0                  5     0.0  0                                                
-  0.0                          0.650 -1.250                    0.0      0.25     0.0       0.0    0.0   0.0
-  0.0                          1.200 -1.250                    0.0      0.25     0.0       0.0    0.0   0.0
-
+  0.0                          1.8000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
 $ PFZ upstream
-  2.0   13 18   3    6   0.01                 5     0.0  0                                                
-  0.0                          0.750 -1.200                    0.0      0.0    -99.0     -99.0 -99.0    0.0
-  0.0                          0.600 -1.500                    0.0      0.0      1.0      11.0  11.0    0.0
+  2.0   13 18   3    6   0.01                 3     0.0  0                                                
+  0.0                          0.750 -1.200                    1.0E+18  0.0      0.0     -99.0 -99.0    0.0
+  0.0                          0.600 -1.500                    1.0E+15  0.0      0.0       2.0   2.0    0.0
 $
 $ EIRENE options:
 $ ======================================================================
