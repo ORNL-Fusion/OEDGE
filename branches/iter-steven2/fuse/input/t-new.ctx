@@ -1,6 +1,83 @@
-* First ever CORTEX input file
+* TS2 design study
 *
 *
+
+{STRING}  disclaimer  Diffusive core transport, toroidal symmetry, no ELMs (enhanced
+                      source or pedestal flushing), no seeded impurity sputtering, low 
+                      parallel M_SOL, no far-periphery model, primary sputtering from EIRENE, 
+                      W self-sputtering and prompt redeposition included
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D CONTOUR}  400  {STATE}  0   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  1   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  2   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  3   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  4   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  5   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  6   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  7   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  8   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  9   {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  10  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  11  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  12  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  13  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  14  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  15  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  16  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  17  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  18  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  19  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  20  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  21  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  22  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  23  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  24  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+{PLOT 2D CONTOUR}  400  {STATE}  25  {LOG} {COLOR TABLE}  5  {XRANGE} 15.0 16.0  
+  {SHOW}  25   Red  {SHOW}  60   Red
+  
+$  {CHARSIZE} 1.1 {THICK} 2.0
+
+{EXIT}
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TS2 design study, W targets : core impurity concentration (%)
+  {NOTES}    disclaimer
+  {XLABELS}  4 MW, x cm : 4 MW, 3 cm : 8 MW, x cm : 8 MW, 3 cm
+  {YRANGE}   1.0E-04 1.0E-00
+  {YLIMIT}   1.0E-2
+$  {SCALE FACTOR} 1.0
+  {SET} Dperp = 1.0 m!U2!N s!U-1!N  {CASE} t-new-0011d >12d >13d >14d
+  {SET} Dperp = 1.0 m!U2!N s!U-1!N  {CASE} t-new-0011c >12c >13c >14c
+
+
+{EXIT}
 
 {PLOT 1D TARGET PROFILE}  2  {CASE} t-new-0009a >10a >11a >012a
 

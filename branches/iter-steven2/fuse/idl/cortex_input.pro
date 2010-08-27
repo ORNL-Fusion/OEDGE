@@ -26,12 +26,12 @@ FUNCTION cortex_ReadLine, fp, buffer
       str    = STRSPLIT(buffer,';',/EXTRACT)
       buffer = str[0]
     ENDIF
-    i = STRPOS(buffer,'!') 
-    IF (i EQ  0) THEN CONTINUE 
-    IF (i NE -1) THEN BEGIN
-      str    = STRSPLIT(buffer,'!',/EXTRACT)
-      buffer = str[0]
-    ENDIF
+;    i = STRPOS(buffer,'!') 
+;    IF (i EQ  0) THEN CONTINUE 
+;    IF (i NE -1) THEN BEGIN
+;      str    = STRSPLIT(buffer,'!',/EXTRACT)
+;      buffer = str[0]
+;    ENDIF
     IF (STRLEN(STRTRIM(buffer)) EQ 0) THEN CONTINUE
     IF (STRMATCH(buffer,'*{EXIT}*') EQ 1) THEN RETURN, 0
     IF (STRMATCH(buffer, '*{*'    ) EQ 1) THEN RETURN, 1

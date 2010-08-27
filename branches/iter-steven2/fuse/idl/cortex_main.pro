@@ -59,7 +59,7 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
-    dir_structure = 2
+    dir_structure = 1
 
     family = STRMID(case_name,0,5) + '/'
     child  = STRMID(case_name,0,7) + '/'
@@ -501,8 +501,8 @@ PRO cortex_GeneratePlots, args
 ;     ------------------------------------------------------------------
       'PLOT 2D CONTOUR': BEGIN
         file_path = path + plot.case_name[0] + '.'
-        grid = cortex_LoadFluidGrid (file_path + plot.data_file[0])
-        wall = cortex_LoadWall      (file_path + plot.data_file[1])
+        grid = cortex_LoadFluidGrid(file_path + plot.data_file[0])
+        wall = cortex_LoadWall     (file_path + plot.data_file[1]) 
         IF (plot.option GE   1 AND plot.option LE  99) THEN plot_data = cortex_LoadPlasmaData(file_path + plot.data_file[2])
         IF (plot.option GE 100 AND plot.option LE 199) THEN plot_data = cortex_LoadSourceData(file_path + plot.data_file[3])
         IF (plot.option GE 200 AND plot.option LE 299) THEN plot_data = cortex_LoadEIRENEData(file_path + plot.data_file[4])        

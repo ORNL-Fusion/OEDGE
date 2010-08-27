@@ -364,8 +364,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;       ----------------------------------------------------------------
         1: BEGIN
         
-            OPLOT, val.x, val.y, COLOR=TrueColor(plot.annotate_colour[i])
-
+          OPLOT, val.x, val.y, COLOR=TrueColor(plot.annotate_colour[i])
 
           FOR j = 0, N_ELEMENTS(val.x)-2 DO BEGIN
             x = [val.x[j  ],val.y[j  ]]

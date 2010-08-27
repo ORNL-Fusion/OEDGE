@@ -17,12 +17,12 @@
 ; result=ray_psi2010_process(1)                 process both lines and store the data in ./data_ray/ray_<ID>.sav
 ; ray_psi2010_plots,A,B,param1=param1		A - reconstruction data index (see below in file), 
 ;					        B - plot number : 
-;     1 - basic comparison plot
+;     1 - Basic comparison plot.  Aspect ration of the poloidal reconstructions not correct.
 ;     	  param1 - change the vertical line where the reconstructions are sampled (horizontal pixel number)
 ;
 ;         ray_psi2010_plots,1,1,cutoff=0.1,/equ
 ; 
-;     2 - plot of poloidal reconstruction to a screen window with proper aspect ratio
+;     2 - Plot of poloidal reconstruction to a screen window with proper aspect ratio.
 ;         YOU NEED TO SPECIFY /show_a or /show_b
 ;         you can turn off the dotted line with /no_line
 ;
@@ -33,21 +33,31 @@
 ;         ray_psi2010_plots,51,2,equ='24861/24861_240.equ',/show_b
 ;         ray_psi2010_plots,51,2,/equ,/show_a
 ;
-;     3 - shaded surface plot, need to say /show_a or /show_b
-;     4 - plot of reconstruction with separatrix overlayed -- work in progress
-;     5 - plot of the two reconstructions showing where they intersect
+;     3 - Shaded surface plot, need to say /show_a or /show_b.
+;     4 - Plot of reconstruction with separatrix overlayed -- work in progress.
+;     5 - Plot of the two reconstructions showing where they intersect.
 ;         line 'a' - dark gray, line 'b' - light gray, both added - white
 ;         Can specify /show_a or /show_b.
-;         Need to set the cutoff for each line, i.e. the fraction of the peak value below which the
-;         profile is set to zero, to isolate the basic contour of the emission -- this will be
-;         different for each line -- see example below.
+;         Need to set the cutoff for each line, i.e. the fraction of the peak value above which
+;         profile is set to a given value and below which it is set to zero, to isolate the basic 
+;         contour of the emission -- this will be different for each line -- see example below.         
 ;
 ;         ray_psi2010_plots,71,5,cutoff=[0.05,0.20]
 ;         ray_psi2010_plots,71,5,cutoff=[0.05,0.20],/show_a
 ;         ray_psi2010_plots,1,5,cutoff=[0.02,0.015]           trying to see if Da and Dg overlap for attached case, for relative spatial calibration
 ;         ray_psi2010_plots,51,5,cutoff=[0.10,0.05]           overlap of CII and CIII for detached reference
 ;         ray_psi2010_plots,22,5,cutoff=[0.015,0.0125]        D_a and D_g overlap
-; 
+;
+;
+;         OSM inner divertor contours:
+;         ----------------------------
+;         ray_psi2010_plots,51,5,cutoff=[0.30,0.20],/equ      
+;         ray_psi2010_plots,51,2,/show_a,cutoff=0.60,/equ,/no_line   CII drops to background levels (approx.) at R=0.43, vertical alignment with target (approx.)
+;         ray_psi2010_plots,51,2,/show_b,cutoff=0.40,/equ,/no_line   CIII
+;         ray_psi2010_plots,22,2,/show_a,cutoff=0.70,/equ,/no_line   Dalpha
+;         ray_psi2010_plots,22,2,/show_b,cutoff=0.40,/equ,/no_line   Dgamma
+;
+;
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
 ;
@@ -134,7 +144,7 @@ PRO ray_psi2010_contour, data_2, colorct, color, nlevels, c_colors, xpos, ypos, 
   n = N_ELEMENTS(str)
   IF (NOT KEYWORD_SET(text_color)) THEN text_color = 'White'
   FOR i = 0, n-1 DO BEGIN
-    XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),str[0],/NORMAL,  $
+    XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),STRTRIM(str[i],2),/NORMAL,  $
            color=Truecolor(text_color),CHARSIZE=charsize
   ENDFOR
   IF (KEYWORD_SET(equ)) THEN  $
