@@ -3731,7 +3731,10 @@ c
        real*8 seed
        real :: n(2),ri(2),rr(2)
        real, external :: atan2c
-
+c slmod begin
+       logical first_warning
+       data    first_warning /.true./
+c slmod end
 c
 c       real*8 tnorm_tmp,timp_tmp,dthe,tref_tmp
 c
@@ -3740,9 +3743,14 @@ c       jdemod - Set the maximum reflection angle to 89 degrees
 c                from normal for the random angle cases  
 c
        if (nrfopt.eq.0.or.nrfopt.eq.1) then
-
-c          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
-c          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
+c slmod begin        
+         if (.true.) then 
+           if (first_warning) then
+             call wn('REFANGDP','Using old TREF calculation')
+             first_warning = .false.
+           endif
+           TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+         else
 c
 c          jdemod - formula only works under specific circumstances
 c                 - replace with general vector formulation
@@ -3757,7 +3765,25 @@ c
 c          Calculate reflection angle from reflection vector
 c
            tref = atan2c(rr(2),rr(1))
-
+         endif
+c
+cc          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+cc          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
+cc
+cc          jdemod - formula only works under specific circumstances
+cc                 - replace with general vector formulation
+c
+c           n(1) = cos(tnorm)
+c           n(2) = sin(tnorm)
+c           ri(1) = -cos(timp)
+c           ri(2) = -sin(timp)
+c
+c           rr = ri - 2.0 * n * dot_product(ri,n)
+cc
+cc          Calculate reflection angle from reflection vector
+cc
+c           tref = atan2c(rr(2),rr(1))
+c slmod end
        elseif (nrfopt.eq.2) then
 c
           CALL SURAND2 (SEED, 1, RAN1)

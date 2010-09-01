@@ -718,6 +718,24 @@ c
               CRAVAV(IZ) = CRAVAV(IZ) + ABS(VEL) * SPUTY
               CTBS  (IZ) = CTBS  (IZ) + KTEBS(IK,IR) * SPUTY
               IM         = MIN (INT(TEMI/(0.2*CTEB0))+1, 10)
+c slmod begin
+c...          This problem has appeared on at least one occasion, but not very
+c             often:
+c TEMI is the problem
+c it is being assigned properly in div.f after the neutral launch, so it's being
+c reassigned in a nasty way somewhere along between there and here...
+              IF (IM.LT.1) THEN
+                CALL WN('check_reached_grid_edge','Array bounds '//
+     .                  'violation, setting IM=1')
+                 WRITE(0,*) 'TEMI  =',TEMI
+                 WRITE(0,*) 'CTEB0 =',CTEB0
+                 WRITE(0,*) 'RESULT=',INT(TEMI/(0.2*CTEB0))+1
+                 WRITE(6,*) 'TEMI  =',TEMI
+                 WRITE(6,*) 'CTEB0 =',CTEB0
+                 WRITE(6,*) 'RESULT=',INT(TEMI/(0.2*CTEB0))+1
+                 IM = 1
+              ENDIF
+c slmod end
               CTEXS(IM)  = CTEXS(IM) + TEMI * SPUTY
 c
               RWALL      = RWALL + SPUTY

@@ -295,9 +295,11 @@ c
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
      .        type,index1,index2,ilside,ilswch,region,code,is,nboundary,
      .        tmp_ilspt
-      LOGICAL assigned(2)
+      LOGICAL assigned(2),first_message
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc
+
+      first_message = .TRUE.
 
       nsurface = 0
       default_surface = 0
@@ -701,8 +703,11 @@ c...        Set surface sputtering parameters:
               surface(i1)%isrs   = 2   ! Species index of sputtered atom
               surface(i1)%recycs = 1.0
               surface(i1)%recycc = 1.0
-              WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
-     .                   surface(i1)%ilspt
+              IF (first_message) THEN
+                WRITE(0,*) '*** SPUTTERING ON IN EIRENE ***',
+     .                     surface(i1)%ilspt
+                first_message = .FALSE.
+              ENDIF
             ENDIF
 
 c...        Set local temperature:
@@ -1317,7 +1322,7 @@ c        strata(nstrata)%npts    = 100
 
 c...  User specified neutral injection/puffing:
       DO is = 1, opt_eir%nstrata
-        WRITE(0,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
+        WRITE(PINOUT,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
 
         SELECTCASE (NINT(opt_eir%type(is)))
           CASE (999)  ! For compatibility with old strata definition format, see below
@@ -1525,7 +1530,7 @@ c...  TEMP: make sure regular strata come first until surface to strata mapping 
         ENDIF
       ENDDO
 
-      WRITE(0,*) 'NSTRATA:',nstrata,strata(1:nstrata)%type
+      WRITE(PINOUT,*) 'NSTRATA:',nstrata,strata(1:nstrata)%type
 
 c      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
 c      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
@@ -1591,6 +1596,7 @@ c
       USE mod_eirene06
       USE mod_eirene06_locals
       USE mod_eirene_history
+      USE mod_divimp
       IMPLICIT none
  
       INTEGER, INTENT(IN) :: iitersol,ilspt
@@ -1603,7 +1609,7 @@ c
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,i2,iside,in,iw, 
      .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG),tube,ike,
-     .        i3,i4,idum
+     .        i3,i4,idum,i
 
       LOGICAL goodeof,debug,wall_ignored,warning_message
       REAL    rdum(30),frac,norm,len,cir,area,volume,
@@ -1811,8 +1817,10 @@ c             the standard DIVIMP neutral wall, ignore for now...
             ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN
 c...          Sputtering turned on in EIRENE, assume (for now) this data 
 c             is for the impurity species (loose...):
-              tflux(in,5) = tflux(in,5) + rdum(4) - rdum(2)  ! Emitted atom particle flux *** from atoms *** (s-1)
-              tflux(in,6) = tflux(in,6) + rdum(8)            ! Emitted atom energy flux (eV s-1)
+              tflux(in,5 ) = tflux(in,5 ) + rdum(4) - rdum(2)  ! Emitted atom particle flux from incident D atoms (s-1)
+              tflux(in,6 ) = tflux(in,6 ) + rdum(8)            ! Emitted atom energy   flux          "            (eV s-1)
+              tflux(in,9 ) = tflux(in,9 ) + rdum(7)            ! Emitted atom particle flux from indicent bulk ions (s-1)
+              tflux(in,10) = tflux(in,10) + rdum(9)            ! Emitted atom energy   flux           "             (eV s-1)
             ELSE
               CALL ER('LoadEireneData_06','IATM out of bounds, '//
      .                'unexpected this is...',*99)
@@ -2093,6 +2101,59 @@ c...  Check that flux data was assigned to every wall/target segment:
         WRITE(0,*) '*********************************************'
         WRITE(0,*) 
       ENDIF
+c...  Store data in allocatable structures:
+      IF (.NOT.ALLOCATED(wall_flx)) THEN
+        wall_n       = nvesm + nvesp
+        wall_nlaunch = 0
+        ALLOCATE(wall_flx(wall_n))
+        DO i = 1, wall_n
+          wall_flx(i)%in_par_blk = 0.0
+          wall_flx(i)%in_par_atm = 0.0
+          wall_flx(i)%in_par_mol = 0.0
+          wall_flx(i)%in_ene_blk = 0.0
+          wall_flx(i)%in_ene_atm = 0.0
+          wall_flx(i)%in_ene_mol = 0.0
+          wall_flx(i)%em_par_atm = 0.0
+          wall_flx(i)%em_ene_atm = 0.0
+          wall_flx(i)%launch     = 0.0        
+          wall_flx(i)%prompt     = 0.0        
+        ENDDO
+      ENDIF
+      DO i = 1, wall_n
+        cir = 2.0 * PI * 0.5 * (rvesm(i,1) + rvesm(i,2))
+        len = SQRT((rvesm(i,1) - rvesm(i,2))**2.0 +
+     .             (zvesm(i,1) - zvesm(i,2))**2.0)
+        area = cir * len
+
+        wall_flx(i)%length = len
+        wall_flx(i)%area   = area
+
+c       The first index is for the species index for each species type, i.e
+c       atom (_atm) type number X, where X for atoms is usually equal to 1 (D) or 
+c       2 (D and a sputtered impurity species).
+c
+c       The second index is for the species type of the particle source that's
+c       responsible for producing the incident/emitted particle, following
+c       the EIRENE convention:
+c
+c          0-total,1-bulk particles,2-test atoms,3-test mol.,4-test ions,5-photons
+
+        wall_flx(i)%in_par_blk(1,0) = flxhw8(i)
+        wall_flx(i)%in_par_atm(1,0) = flxhw6(i)
+        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)
+
+        IF (tflux(i,3).NE.0.0) wall_flx(i)%in_ene_blk(1,0)=tflux(i,4 ) /
+     .                                                     tflux(i,3 )
+        wall_flx(i)%in_ene_atm(1,0) = flxhw5(i)
+        wall_flx(i)%in_ene_mol(1,0) = flxhw7(i)
+
+        wall_flx(i)%em_par_atm(2,1) = tflux(i,9 ) / area                  ! Impurity atom influx from bulk ions
+        wall_flx(i)%em_par_atm(2,2) = tflux(i,5 ) / area                  ! Impurity atom influx from test atoms
+        IF (tflux(i,9).NE.0.0) wall_flx(i)%em_ene_atm(2,1)=tflux(i,10) /
+     .                                                     tflux(i,9 )
+        IF (tflux(i,5).NE.0.0) wall_flx(i)%em_ene_atm(2,2)=tflux(i,6 ) / 
+     .                                                     tflux(i,5 )
+      ENDDO
 c...  Not sure what PINCOR is about at the moment, so issue a warning
 c     if it is not unity:
       IF (pincor.NE.1.0) THEN

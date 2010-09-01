@@ -418,10 +418,11 @@ c
       INTEGER status
 
       CALL LoadGrid('osm.raw')
-
-      CALL User_GenerateOutputFiles
-
       CALL LoadObjects('osm_geometry.raw',status)
+
+      CALL GenerateOutputFiles
+
+
 
       CALL SaveFluidGridGeometry       
 
@@ -494,10 +495,12 @@ c
 
       REAL GetJsat,GetCs,CalcPressure
 
-      INTEGER n,ik,ike,ir,i1,i2,id,itube
-      REAL x1,x2,y1,y2,t,mach,p,jsat
+      INTEGER n,ik,ike,ir,i1,i2,id,itube,ipos
+      REAL x1,x2,y1,y2,t,mach,pe,p,jsat
       REAL   , ALLOCATABLE :: x(:),y(:),v(:),s(:)
-      CHARACTER tag_x*11,tag_y*11,file*512
+      CHARACTER   tag_x*11,tag_y*11,file*512
+      CHARACTER*7 tag
+      CHARACTER*2 target_tag(2)
 
       WRITE(0,*) 'IDL DUMP DATA FILES'
 
@@ -608,7 +611,13 @@ c
 c     ----------------------------------------------------------------------
 c     Write out target data:
 c
-      file = 'osm.idl.targets'
+c     If changing anything here, need to change it in GenerateOutputFiles in
+c     sol28_output.f as well, so that the OSM and OUT generated 
+c     idl.fluid_targets files remain in sync.
+c
+      file = 'osm.idl.fluid_targets'
+      target_tag(IKLO) = 'LO'
+      target_tag(IKHI) = 'HI'
       WRITE(6,*) '999: Dumping OSM data to interface file - targets'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
       CALL inOpenInterface(file,ITF_WRITE)
@@ -624,28 +633,35 @@ c
         CALL inPutData(ir           ,'TAR_RING','none')                    
         CALL inPutData(psitarg(ir,2),'TAR_PSIN','none')                    
         CALL inPutData(rho(ir,CELL1),'TAR_RHO' ,'m') 
-        id   = idds(ir,2)
-        p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
-        jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
-        mach = kvds(id) / GetCs(kteds(id),ktids(id))
-        CALL inPutData(jsat     ,'TAR_LO_JSAT','Amps')                    
-        CALL inPutData(knds(id) ,'TAR_LO_NE'  ,'m-3')                    
-        CALL inPutData(kvds(id) ,'TAR_LO_V'   ,'m s-1')                    
-        CALL inPutData(mach     ,'TAR_LO_M'   ,'none')                    
-        CALL inPutData(p        ,'TAR_LO_P'   ,'m-3 eV')                    
-        CALL inPutData(kteds(id),'TAR_LO_TE'  ,'eV')                    
-        CALL inPutData(ktids(id),'TAR_LO_TI'  ,'eV')                    
-        id   = idds(ir,1)
-        p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
-        jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
-        mach = kvds(id) / GetCs(kteds(id),ktids(id))
-        CALL inPutData(jsat     ,'TAR_HI_JSAT','Amps')                    
-        CALL inPutData(knds(id) ,'TAR_HI_NE'  ,'m-3')                     
-        CALL inPutData(kvds(id) ,'TAR_HI_V'   ,'m s-1')                    
-        CALL inPutData(mach     ,'TAR_HI_M'   ,'none')                     
-        CALL inPutData(p        ,'TAR_HI_P'   ,'m-3 eV')                    
-        CALL inPutData(kteds(id),'TAR_HI_TE'  ,'eV')                    
-        CALL inPutData(ktids(id),'TAR_HI_TI'  ,'eV')                    
+        DO ipos = IKLO, IKHI  
+          IF (ipos.EQ.IKLO) THEN
+            id = idds(ir,2)
+          ELSE
+            id = idds(ir,1)
+          ENDIF
+          tag = 'TAR_'//target_tag(ipos)//'_'
+          IF (ipos.EQ.IKLO) THEN
+            CALL inPutData(0.0       ,tag//'S','m')                    
+            CALL inPutData(0.0       ,tag//'P','m') 
+          ELSE
+            CALL inPutData(ksmaxs(ir),tag//'S','m')                    
+            CALL inPutData(-1.0      ,tag//'P','m')                    
+          ENDIF
+          pe = knds(id) * kteds(id)
+          p  = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
+          jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
+          mach = kvds(id) / GetCs(kteds(id),ktids(id))
+         CALL inPutData(-1         ,tag//'TARGET_INDEX','none')     
+         CALL inPutData(-1         ,tag//'LOCATION'    ,'none')                    
+          CALL inPutData(jsat      ,tag//'JSAT'  ,'Amps')                    
+          CALL inPutData(knds(id)  ,tag//'NE'    ,'m-3')                    
+          CALL inPutData(kvds(id)  ,tag//'V'     ,'m s-1')                    
+          CALL inPutData(mach      ,tag//'MACHNO','none')                    
+          CALL inPutData(   pe *ECH,tag//'PE'    ,'Pa')
+          CALL inPutData((p-pe)*ECH,tag//'PI'    ,'Pa')                    
+          CALL inPutData(kteds(id) ,tag//'TE'    ,'eV')                    
+          CALL inPutData(ktids(id) ,tag//'TI'    ,'eV')                    
+        ENDDO                      
       ENDDO
       CALL inCloseInterface
 
@@ -5153,7 +5169,7 @@ c
 c      OPEN(PINOUT2,STATUS='UNKNOWN',FORM='UNFORMATTED')
 c      OPEN(PINOUT3,STATUS='UNKNOWN',FORM='UNFORMATTED')
 c      OPEN(PINOUT4,STATUS='UNKNOWN',FORM='UNFORMATTED')
-
+c
 c      WRITE(0,*) 'IREF,ITER: ',iref,iter
 
       DO i1 = 0, iter
@@ -5179,6 +5195,8 @@ c          CALL ReadGeometry(PINOUT4,error3)
 
 c        WRITE(0,*) 'MARK: IKBOUNDS= ',ikbound(3,IKLO),ikbound(3,IKHI)
 
+c          WRITE(0,*) 'NBR -:',nbr
+
         IF (error1.NE.0.OR.error2.NE.0.OR.error3.NE.0) THEN
           IF (nsteplist.NE.99) 
      .      WRITE(0,'(A)') 'ERROR SetupSourcePlot: Source data not '//
@@ -5200,6 +5218,8 @@ c          CLOSE(PINOUT3)
 c          CLOSE(PINOUT4)
 
           IF (nsteplist.EQ.99) nsteplist = 0
+
+
 
           RETURN
 

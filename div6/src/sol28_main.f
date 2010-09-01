@@ -7,8 +7,6 @@ c
       USE mod_sol28_solver
       IMPLICIT none
 
-      REAL*8 GetNodePressure
-
       INTEGER ion,target,inode,ict1,ict2,ict,off_target
       REAL*8  net,integral(10),p1,p2,source(icmax),pmatch,
      .        srcint(0:icmax),delta_p,isat_total,
@@ -780,7 +778,7 @@ c          ENDIF
           IF (.NOT.opt%pin_data) THEN
             IF (opt%p_rec(target).EQ.2) opt%p_rec(target) = 1
             IF (opt%p_ion(target).EQ.2) THEN
-              IF (opt%osm_load.EQ.0) THEN
+              IF (opt%osm_load.EQ.0.OR.ref_nion.EQ.0) THEN
                 opt%p_ion(target) = 3
                 opt%p_ion_frac(target) = 0.0
               ELSE
@@ -998,8 +996,6 @@ c
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: count
-
-      REAL*8 GetNodePressure
 
       INTEGER ion,target,ic1,ic2,ic,in
       REAL*8  net(3),integral(10),cs,source(icmax),

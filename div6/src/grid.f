@@ -1063,7 +1063,7 @@ c...  Sort indecies:
       ENDDO
 
       ntreg = grdntreg(IKLO) + grdntreg(IKHI)
-      WRITE(0,*)
+c      WRITE(0,*)
       DO i1 = 1, ntreg
         treg(i1) = index(i1)
 c        WRITE(0,*) 'ANGLES:',angle(i1),index(i1)
@@ -2147,6 +2147,85 @@ c         and before it is processed by OEDGE:
       ELSE 
         CALL ER('DupeRing','Core ring duplication requires work',*99)
       ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: ExpandGrid
+c
+      SUBROUTINE ExpandGrid(ndupe,size_frac,ir_reference) 
+      USE mod_grid_divimp
+      IMPLICIT none
+  
+      INTEGER, INTENT(IN) :: ndupe,ir_reference
+      REAL   , INTENT(IN) :: size_frac
+
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      INTEGER ik,id,idupe,irset,irref
+      REAL*8  frac
+
+      IF (idring(ir_reference).EQ.BOUNDARY) 
+     .  CALL ER('ExpandGrid','Trying to expand grid with a boundary '//
+     .          'ring',*99)
+
+      IF (.NOT.ALLOCATED(d_rvertp)) 
+     .  CALL ER('ExpandGrid','Expecting double precision vertex '//
+     .          'arrays to be allocated',*99)
+
+      IF (size_frac.LE.0.0) 
+     .  CALL ER('ExpandGrid','Scaing fraction .LE. 0.0',*99)
+
+
+      irref = ir_reference
+      frac  = DBLE(size_frac + 1.0)
+
+
+      WRITE(0,*) 'FRAC:',frac
+
+      DO idupe = 1, ndupe
+
+        CALL DupeRing(irref)
+
+        IF (irref.LT.irwall) THEN 
+          irset = irwall - 1  ! The convention in DupeRing
+          DO ik = 1, nks(irset) 
+            id = korpg(ik,irset)
+          
+            d_rvertp(2,id) =         d_rvertp(1,id) + 
+     .                       frac * (d_rvertp(2,id) - d_rvertp(1,id))
+            d_zvertp(2,id) =         d_zvertp(1,id) + 
+     .                       frac * (d_zvertp(2,id) - d_zvertp(1,id))
+          
+            d_rvertp(3,id) =         d_rvertp(4,id) + 
+     .                       frac * (d_rvertp(3,id) - d_rvertp(4,id))
+            d_zvertp(3,id) =         d_zvertp(4,id) + 
+     .                       frac * (d_zvertp(3,id) - d_zvertp(4,id))
+          
+            d_rvertp(1,id) = d_rvertp(2,korpg(ik,irref))
+            d_zvertp(1,id) = d_zvertp(2,korpg(ik,irref))
+            d_rvertp(4,id) = d_rvertp(3,korpg(ik,irref))
+            d_zvertp(4,id) = d_zvertp(3,korpg(ik,irref))
+
+            rvertp(1:4,id) = SNGL(d_rvertp(1:4,id))
+            zvertp(1:4,id) = SNGL(d_zvertp(1:4,id))
+          ENDDO
+        ELSE
+          STOP 'PFZ GRID EXTENSION NEEDS WORK'
+        ENDIF
+
+        idring(irset) = idring(irref)
+
+        irref = irset
+
+      ENDDO 
 
       RETURN
 99    STOP
@@ -7034,6 +7113,11 @@ c...      Squish 2 rings together:
             CALL MergeRings(ir) 
           ENDDO
 c          CALL MergeRings(NINT(grdmod(i1,4))) 
+
+        ELSEIF (grdmod(i1,1).EQ.11.0) THEN
+c...      Create a new ring by expanding a ring out radially:
+          CALL ExpandGrid(NINT(grdmod(i1,2)),grdmod(i1,3),
+     .                    NINT(grdmod(i1,4)))
 
         ELSEIF (grdmod(i1,1).EQ.700.0) THEN
 c...      Morph grid:
