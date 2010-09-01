@@ -2271,11 +2271,13 @@ c
         IF (knot(i1)%xpt.NE.0) CYCLE
 
         IF (nxpt.EQ.2) THEN
-          WRITE(0,*)
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*) '-   MORE THAN 2 XPTS FOUND, IGNORING...    -'
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*) '-   MORE THAN 2 XPTS FOUND, IGNORING...    -'
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*)
+          CALL WN('ReadGeneralisedGrid_SL','More than 2 x-points '//
+     .            'found, ignoring...')
           EXIT
         ENDIF
 
@@ -3431,8 +3433,8 @@ c              zvertp(i2,id) = knot(i1)%zv(i2)
 c            ENDDO
 c          ENDDO
 c        ENDDO
-        CALL SaveSolution
-        CALL OutputData(86,'MAST!')
+c        CALL SaveSolution
+c        CALL OutputData(86,'MAST!')
 c        title = '...'
 c        desc  = 'Call to STORE from DumpGrid'
 c        job   = 'Call to STORE from DumpGrid'

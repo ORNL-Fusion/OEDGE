@@ -17,6 +17,7 @@ c
       use subgrid
 c slmod begin
       use mod_interface
+      use mod_divimp
 c slmod end
 c
       implicit none
@@ -1028,8 +1029,10 @@ c sltmp
       DO 800  IMP = 1, NATIZ
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-     .    WRITE(0,*) 'debug imp:',imp,natiz
+        IF (sloutput.AND.natiz.GT.10) THEN 
+          IF (grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+     .      WRITE(0,*) 'debug imp:',imp,natiz
+        ENDIF
 c slmod end
 c
 c       Particle initialization
@@ -1862,6 +1865,12 @@ c
 c              Record average energy
 c
                promptdeps(id,5) = promptdeps(id,5) + sputy * energy
+c slmod begin
+               if (allocated(wall_flx)) then
+                 in = nimindex(id)
+                 wall_flx(in)%prompt = wall_flx(in)%prompt + sputy
+               endif
+c slmod end
 c
                if (kmfss(id).ge.0.0) then
                   RYIELD = YIELD (6, MATTAR, ENERGY,
@@ -7062,6 +7071,9 @@ c
       real    targ_dist,dist_to_point
       external dist_to_point
       external larmor
+c slmod begin - tmp
+      LOGICAL getrz_error
+c slmod end
 c
 c     First check the particle grid position
 c
@@ -7083,6 +7095,21 @@ c
 c     Define target index
 c
       id = idds(ir_local,it)
+c slmod begin
+      getrz_error = .FALSE.
+      IF (id.EQ.0) THEN
+        getrz_error = .TRUE.
+        WRITE(0,*) 'WARNING promptdep: getrz_confusion, prompt '//
+     .             'redeposition check lost'
+c        WRITE(0,*) 'WHOA! PROBLEM!'
+c        WRITE(0,*) griderr
+c        WRITE(0,*) r,z
+c        WRITE(0,*) ik_local,ir_local
+c        WRITE(0,*) ik,ir
+c        WRITE(0,*) it
+        id = idds(irsep,2)
+      ENDIF
+c slmod end
 c
 c     Calculate Larmor radius - use toroidal field for now.
 c
@@ -7094,6 +7121,9 @@ c     Find distance to target from ionization position to linear
 c     extension of target element.
 c
       targ_dist = dist_to_point(r,z,rp(id),zp(id),thetas(id))
+c slmod begin
+      IF (getrz_error) targ_dist = 1.0E+20
+c slmod end
 c
 c     Does Prompt depostion occur?
 c

@@ -320,7 +320,7 @@ c
 
       pressure = 0.0
 
-      IF     (inode.EQ.1) THEN
+      IF     (inode.EQ.1    ) THEN
         pressure = pe(ictarg(LO)) + pi(ictarg(LO),1)
       ELSEIF (inode.EQ.nnode) THEN
         pressure = pe(ictarg(HI)) + pi(ictarg(HI),1)

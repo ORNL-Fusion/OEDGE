@@ -1657,11 +1657,12 @@ c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
 	
       IF (no_data_warning.EQ.1) THEN
-        WRITE(0,*)
-        WRITE(0,*) '****************************************'
-        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME RINGS *'
-        WRITE(0,*) '****************************************'
-        WRITE(0,*)
+c        WRITE(0,*)
+c        WRITE(0,*) '****************************************'
+c        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME RINGS *'
+c        WRITE(0,*) '****************************************'
+c        WRITE(0,*)
+        CALL WN('InterpolateTargetData','Data not found for some rings')
         no_data_warning = 2
       ENDIF
 

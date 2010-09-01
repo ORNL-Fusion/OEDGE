@@ -807,7 +807,7 @@ c
       TYPE(type_node), INTENT(OUT) :: node(*)
       TYPE(type_options_osm) :: opt_tube
 
-      REAL GetJsat2,GetRelaxationFraction,GetCs2
+      REAL GetJsat2,GetRelaxationFraction,GetCs2,CalcPressure
 
       INTEGER, PARAMETER :: MAXNNODES = 50
 
@@ -821,7 +821,7 @@ c
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,
      .        psin0,psin1,psin2,p0,p1,result(3),
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
-     .        hold_tab,hold_tcd,ne_LO,ne_HI
+     .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
      .        hold_c1,hold_c2,hold_d1,hold_d2
 
@@ -1884,10 +1884,9 @@ c...  Assign values to nodes:
       ENDIF
 
 c...  Assign other quantites:
-      node(1:nnode)%jsat(1)   = 0.0
-c      node(1:nnode)%pe        = 0.0
-      node(1:nnode)%ni(1)     = 0.0
-      node(1:nnode)%pi(1)     = 0.0
+      node(1:nnode)%jsat(1) = 0.0
+      node(1:nnode)%ni(1)   = 0.0
+      node(1:nnode)%pi(1)   = 0.0
       DO i1 = 1, nnode
         IF (node(i1)%ti(1).EQ.0.0.AND.i1.LE.mnode) 
      .    node(i1)%ti(1) = node(i1)%te * opt%ti_ratio(LO) 
@@ -1914,7 +1913,7 @@ c      DO i1 = mnode, nnode-1
 c        IF (node(i1)%te.EQ.-98.0) node(i1)%te = node(i1+1)%te
 c      ENDDO
 
-c...  
+c...  Setup target nodes:
       DO itarget = LO, HI
         IF (itarget.EQ.LO) THEN
           i1 = 1
@@ -1962,7 +1961,9 @@ c           IF (itube.EQ.81) STOP 'dfsd'
         SELECTCASE(node(i2)%par_set)
           CASE (0) 
           CASE (1) 
-            node(i1)%te = node(i2)%te
+            tube(it)%te(itarget)     = node(i2)%te
+            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+c            node(i1)%te = node(i2)%te
           CASE (2) 
             IF (node(i2)%ne.EQ.0.0) 
      .        CALL ER('AssignNodeValues_New','Need density for '//
@@ -1976,20 +1977,52 @@ c           IF (itube.EQ.81) STOP 'dfsd'
             CALL ER('_New','Unknown PAR_SET',*99) 
         ENDSELECT
         node(i1)%jsat(ion) = tube(it)%jsat(itarget,ion)
-        WRITE(88,*) 'work:',i1,node(i1)%jsat(ion)
         node(i1)%ne        = 0.0
         node(i1)%pe        = 0.0
         node(i1)%te        = tube(it)%te  (itarget)
         node(i1)%ti(ion)   = tube(it)%ti  (itarget,ion)
       ENDDO
 
-c...  Sort out velocities from Mach numbers:
+c...  Sort velocities from Mach numbers:
       DO i1 = 1, node_n
         IF(node(i1)%v.NE.0.0.AND.ABS(node(i1)%v).LT.10.0) THEN
           node(i1)%machno = node(i1)%v
           node(i1)%v      = 0.0
         ENDIF
       ENDDO
+
+c...  Set electron pressure from a reference node:
+      DO i1 = mnode-1, 1, -1
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1+1, mnode
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
+      DO i1 = mnode+1, nnode
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1-1, mnode, -1
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
+
 
       IF (logop.GT.0) THEN
         WRITE(logfp,*) 
@@ -2004,8 +2037,12 @@ c...  Sort out velocities from Mach numbers:
      .      node(i1)%machno,
      .      node(i1)%pe,
      .      node(i1)%te,node(i1)%ti(1)
+
         ENDDO
+
       ENDIF
+
+
 
       RETURN
 99    WRITE(0,*) ' ITUBE=',itube
