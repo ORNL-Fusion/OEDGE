@@ -1063,7 +1063,7 @@ c...  Sort indecies:
       ENDDO
 
       ntreg = grdntreg(IKLO) + grdntreg(IKHI)
-      WRITE(0,*)
+c      WRITE(0,*)
       DO i1 = 1, ntreg
         treg(i1) = index(i1)
 c        WRITE(0,*) 'ANGLES:',angle(i1),index(i1)
