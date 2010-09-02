@@ -1,0 +1,318 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$
+'954   012 00 Grid #01                        '   1
+'000   Zoom'  6.000 0.500 5.30 5.30 
+'000   Ring' -1   3   0
+$'000   Ring'  85  3   0  JUST MISSES THE TOP OF THE MACHINE
+$
+'954   650 00 Neutral particle tracks         '   0 99
+'000   Zoom'  6.000 0.500 5.30 5.30 
+$
+$
+'999   GENERATE OSM IDL DATA FILES'  12
+'999   MIDPLANE PROFILE ANALYSIS  '   7
+'999   DUMPING DATA TO IDL        '  10
+'999   DUMP EIRENE DATA TO IDL    '  15
+'999   DUMP DIVIMP DATA TO IDL    '  14
+'999   STOP' 0 3
+$
+'954   012 00 Grid                            '   6
+'000   Zoom'  6.000  0.500 5.30 5.30 
+'954   012 00 Grid                            '   6
+'000   Zoom'  8.200  0.800 0.50 0.50 
+'954   012 00 Grid                            '   6
+'000   Zoom'  4.500 -3.500 1.00 1.00 
+'954   012 00 Grid                            '   6
+'000   Zoom'  5.500 -3.700 1.00 1.00 
+$
+$
+$
+'999   STOP                       '   0  3
+$
+$
+$
+'954   012 00 Triangles                       '   0 20
+'000   Zoom'  6.000 0.500 5.30 5.30 
+'954   012 00 Triangles                       '   0 20
+'000   Zoom'  8.3600  0.75 0.010 0.15 
+'954   012 00 Grid                            '   0  1
+'000   Zoom'  8.3450  0.88 0.025 0.20 
+'000   Tind' 
+'000   Ring' 120  3   0
+$
+$
+$ 2D plasma plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D+ density - fluid grid    FULL ' 710
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      16.0   21.0  'LOG10 n_D+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D+ density - fluid grid    DIV  ' 710
+'000   Zoom'  6.100  4.000  0.75 0.95 
+'000   Scale' 2 1 -1.0      17.0   20.0  'LOG10 n_D+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D+ density - fluid grid    DIV  ' 710
+'000   Zoom'  8.150  0.700  0.50 1.50 
+'000   Scale' 1 1 -1.0      17.0   20.0  'LOG10 n_D+ (m!SP!-3!NO!)'
+$'000   Scale' 2 1  1.0E-18   0.01   1.0  'n_D+ (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D+ density - triangle grid      '   0 5
+'000   Zoom'  6.000  0.250  3.00 5.30 
+'000   Scale' 2 1  1.0E-20   0.01   1.0  'n_D+ (10!SP!20!NO! m!SP!-3!NO!)'
+$
+'987   XXX XX Mach number                FULL ' 700
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0      -1.0   1.0   'Mach no.'
+'000   Noframe'
+'987   XXX XX Mach number                DIV  ' 700
+'000   Zoom'  6.100  4.000  0.75 0.95 
+'000   Scale' 2 1  1.0      -1.0   1.0   'Mach no.'
+'000   Noframe'
+'987   XXX XX Mach number                DIV  ' 700
+'000   Zoom'  8.150  0.700  0.50 1.50 
+'000   Scale' 1 1  1.0      -1.0   1.0   'Mach no.'
+$
+'987   XXX XX e  temperature             FULL ' 708
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0       -1.0  4.0   'LOG10 T_e (eV)'
+'000   Noframe'
+'987   XXX XX e  temperature             DIV  ' 708
+'000   Zoom'  6.100  4.000  0.75 0.95 
+'000   Scale' 2 1  1.0        0.1  25.0  'T_e (eV)'
+'000   Noframe'
+'987   XXX XX e  temperature             DIV  ' 708
+'000   Zoom'  8.150  0.700  0.50 1.50 
+'000   Scale' 1 1  1.0        0.1  25.0  'T_e (eV)'
+$
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0       -1.0  4.0   'LOG10 T_i (eV)'
+'000   Noframe'
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom'  6.100  4.000  0.75 0.95 
+'000   Scale' 2 1  1.0        0.1  50.0  'T_i (eV)'
+'000   Noframe'
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom'  8.150  0.700  0.50 1.50 
+'000   Scale' 1 1  1.0        0.1  50.0  'T_i (eV)'
+$
+$ 2D impurity plots - ZOOM
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D  density - triangle grid      ' 600    
+'000   Zoom'  6.000  4.000  0.95 0.95 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity ionisation        FULL ' 800
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ionisation             ' 800
+'000   Zoom'  6.000  4.000  0.95 0.95 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+$
+'987   XXX XX Impurity ioniation         FULL ' 801
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ioniation              ' 801
+'000   Zoom'  6.000  4.000  0.95 0.95 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+$
+$ 2D impurity plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity ionisation        FULL ' 800
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ioniation         FULL ' 801
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 800
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 801
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity density           FULL ' 802
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 803
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 804
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity density           FULL ' 813
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 814
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 815
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -1.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity density           FULL ' 815
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0     -99.0  0.03   '<charge state> n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity force             FULL ' 815
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0E15  -99.0   0.2   '<charge state> net_force_I+ (10!SP!-15!NO! ?)'
+'000   Legrange'
+$
+'987   XXX XX Impurity density           FULL ' 820
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 821
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX D+ density - fluid grid    FULL ' 710
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      16.0   21.0  'LOG10 n_D+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX e  temperature             FULL ' 708
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -1.0    3.0  'LOG10 T_e (eV)'
+'000   Noframe'
+'987   XXX XX D  density - triangle grid FULL '   1
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+$
+'987   XXX XX Mach number - fluid grid   FULL ' 700
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1  1.0      -1.0    1.0  'M'
+'000   Noframe'
+'987   XXX XX ABS(velocity) - fluid grid FULL ' 701
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      -1.0    6.0  'LOG10 vb (m s!SP!-1!NO!)'
+'000   Noframe'
+'987   XXX XX Ionisation - triangle grid FULL '   4
+'000   Zoom'  6.200  0.150  2.80 5.00 
+'000   Scale' 2 1 -1.0      16.0   23.0  'LOG S (LOG10 m!SP!-3!NO! s!SP!-1!NO!)'
+$
+$
+$ 1D plasma plots
+$ ----------------------------------------------------------------------
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 01  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   0 2  
+'000   Data' 8 07 +0.00    22 82 83 84 85 26 110 111
+$
+'955   END-----------------------------------'    0
+$
+$
+$ Triangles
+$ ----------------------------------------------------------------------
+$
+'954   012 00 Triangles                       '  20
+'000   Zoom'  6.000 0.500 5.30 5.30 
+'954   012 00 Triangles                       '   0 20
+'000   Zoom'  8.000 0.500 0.50 0.50 
+'987   XXX XX D  density - triangle grid FULL '   1
+'000   Zoom'  6.600 3.800 0.50 0.50 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (LOG10 m!SP!-3!NO!)'
+'954   012 00 Triangles                       '   0 20
+'000   Zoom'  8.085 -0.885 0.07 0.15 
+'954   012 00 Grid                            '   0  1
+'000   Zoom'  8.085 -0.885 0.07 0.15 
+'000   Tind' 
+'000   Ring' 83   3   0
+'954   012 00 Triangles                       '   0 20
+'000   Zoom'  8.500 0.500 0.02 0.05 
+$
+$ EIRENE plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL '   1
+'000   Zoom'  6.100  0.050  2.40 4.80 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (LOG10 m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D2 density - triangle grid FULL '   2
+'000   Zoom'  6.100  0.050  2.40 4.80 
+'000   Scale' 2 1 -1.0      12.0   21.0  'LOG n_D2 (LOG10 m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Ionisation - triangle grid FULL '   4
+'000   Zoom'  6.100  0.050  2.40 4.80 
+'000   Scale' 2 1 -1.0      16.0   23.0  'LOG S (LOG10 m!SP!-3!NO! s!SP!-1!NO!)'
+$
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  0 99
+'000   Zoom'  6.000 0.500 5.30 5.30 
+$
+'954   650 00 Neutral particle tracks         '  0 99
+'000   Zoom'  5.200 -3.500 1.20 1.20 
+$
+'954   182 00 Ion particle tracks             '  0 99
+'000   Zoom'  6.000 0.500 5.30 5.30 
+$
+$
+$
+'999   STOP' 7
+'999   STOP' 3
+$
+$
+$
