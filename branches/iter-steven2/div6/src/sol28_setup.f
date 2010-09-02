@@ -1961,7 +1961,9 @@ c           IF (itube.EQ.81) STOP 'dfsd'
         SELECTCASE(node(i2)%par_set)
           CASE (0) 
           CASE (1) 
-            node(i1)%te = node(i2)%te
+            tube(it)%te(itarget)     = node(i2)%te
+            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+c            node(i1)%te = node(i2)%te
           CASE (2) 
             IF (node(i2)%ne.EQ.0.0) 
      .        CALL ER('AssignNodeValues_New','Need density for '//

@@ -134,53 +134,26 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 ;
   color_table = plot.color_table
 
-  IF (plot.option GE   1 AND plot.option LE  99) THEN  $
-    plot_labels = ['ELECTRON DENSITY          : n_e (m-3)         ' ,  $
-                   'PARALLEL PLASMA FLOW      : v_parallel (m s-1)' ,  $
-                   'PARALLEL FLOW MACH NUMBER : Mach no.          ' ,  $
-                   'ELECTRON PRESSURE         : p_e (?)           ' ,  $
-                   'ION PRESSURE              : p_i (?)           ' ,  $
-                   'TOTAL PLASMA PRESSURE     : p (?)             ' ,  $
-                   'ELECTRON TEMPERATURE      : T_e (eV)          ' ,  $
-                   'ION TEMPERATURE           : T_i (eV)          '] 
-  IF (plot.option GE 100 AND plot.option LE  199) THEN  $
-    plot_labels = ['?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?']
-  IF (plot.option GE 200 AND plot.option LE  299) THEN  $
-    plot_labels = ['EIRENE ATOM DENSITY : n_D (m-3)' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?']
-  IF (plot.option GE 300 AND plot.option LE  499) THEN  $
-    plot_labels = ['EIRENE IMPURITY ATOM DENSITY: n_I+0 (m-3)' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?']
-  IF (plot.option GE 400 AND plot.option LE  499) THEN  BEGIN
-    state = plot.state
-    plot_labels = ['DIVIMP IMPURITY DENSITY: n_I +'+STRTRIM(STRING(state),2)+' (m-3)',  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?' ,  $
-                   '?:?']
-  ENDIF
+  state = plot.state
+
+  plot_labels = MAKE_ARRAY(1000,/STRING)
+
+  plot_labels[1  ] = 'ELECTRON DENSITY          : n_e (m-3)         '
+  plot_labels[2  ] = 'PARALLEL PLASMA FLOW      : v_parallel (m s-1)'
+  plot_labels[3  ] = 'PARALLEL FLOW MACH NUMBER : Mach no.          '
+  plot_labels[4  ] = 'ELECTRON PRESSURE         : p_e (?)           '
+  plot_labels[5  ] = 'ION PRESSURE              : p_i (?)           '
+  plot_labels[6  ] = 'TOTAL PLASMA PRESSURE     : p (?)             '
+  plot_labels[7  ] = 'ELECTRON TEMPERATURE      : T_e (eV)          '
+  plot_labels[8  ] = 'ION TEMPERATURE           : T_i (eV)          '
+
+  plot_labels[200] = 'EIRENE ATOM DENSITY : n_D (m-3)' 
+  plot_labels[220] = 'EIRENE BALMER ALPHA : D_alpha (ph m-3 s-1)' 
+  plot_labels[222] = 'EIRENE BALMER GAMMA : D_gamma (ph m-3 s-1)' 
+
+  plot_labels[300] = 'EIRENE IMPURITY ATOM DENSITY: n_I+0 (m-3)' 
+
+  plot_labels[400] = 'DIVIMP IMPURITY DENSITY: n_I +'+STRTRIM(STRING(state),2)+' (m-3)'
 
   CASE plot.option OF
 ;   ------------------------------------------------------------------
@@ -194,6 +167,8 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
     8: data = plot_data.ti
 ;   ------------------------------------------------------------------
     200: data = plot_data.atm_dens
+    220: data = plot_data.balmer_alpha
+    222: data = plot_data.balmer_gamma
 ;   ------------------------------------------------------------------
     300: data = plot_data.imp_dens[*,0]  ; EIRENE
 ;   ------------------------------------------------------------------
@@ -208,12 +183,12 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 
 ;  *** FIND A BETTER WAY TO SORT THROUGH THESE ***
   plot_index = plot.option
-  IF (plot.option GE 100 AND plot.option LE 199) THEN plot_index = plot_index -  99
-  IF (plot.option GE 200 AND plot.option LE 299) THEN plot_index = plot_index - 199
-  IF (plot.option GE 300 AND plot.option LE 399) THEN plot_index = plot_index - 299
-  IF (plot.option GE 400 AND plot.option LE 499) THEN plot_index = plot_index - 399
+;  IF (plot.option GE 100 AND plot.option LE 199) THEN plot_index = plot_index -  99
+;  IF (plot.option GE 200 AND plot.option LE 299) THEN plot_index = plot_index - 199
+;  IF (plot.option GE 300 AND plot.option LE 399) THEN plot_index = plot_index - 299
+;  IF (plot.option GE 400 AND plot.option LE 499) THEN plot_index = plot_index - 399
 
-  labels = STRSPLIT(plot_labels[plot_index-1],':',/EXTRACT)
+  labels = STRSPLIT(plot_labels[plot_index],':',/EXTRACT)
   IF (plot.plot_title NE 'unknown') THEN plot_title = plot.plot_title ELSE   $
                                          plot_title = STRTRIM(labels[0],2)
   scale_label = STRTRIM(labels[1],2)
