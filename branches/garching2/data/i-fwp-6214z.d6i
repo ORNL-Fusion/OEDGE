@@ -12,7 +12,7 @@ $ ======================================================================
 $
 '{F LOG} General purpose log file  0-nominal 1-               '   2  
 '{F OSM_LOAD}   Load reference solution    '  'i-fwp-6204z.raw.osm.gz'  
-'{F OSM_DIR}    Directory                  '  '~/divimp/results/i-fwp/i-fwp-6/'
+'{F OSM_DIR}    Directory                  '  '~/divimp/results/'
 $
 $ Control:
 $ ======================================================================
