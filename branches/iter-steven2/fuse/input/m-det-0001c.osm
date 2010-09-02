@@ -1,4 +1,4 @@
-${TITLE}   'working the inner divertor, adding PFZ data (gas=8.7e21)'
+${TITLE}   'working the inner divertor, adding lower i/b gas puff @ 8.7e21 D s-1 (from xPad)'
 ${COMMENT} 'based on m-det-0004f.d6i, grid from 24860 at 240 ms'
 $
 $ I/O:
