@@ -14,7 +14,7 @@ PRO cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos, dev_xsize, dev_y
   FOR i = 0, N_ELEMENTS(str)-1 DO BEGIN       
     icolor = i
     str_label = str[i]
-    str_color = STRSPLIT(str_label,'/',/EXTRACT)
+    str_color = STRSPLIT(str_label,'\',/EXTRACT)
     IF (N_ELEMENTS(str_color) GT 1) THEN BEGIN
       icolor = LONG(str_color[0])
       str_label = str_color[1]
@@ -114,23 +114,24 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
        plot_yn = 4
        title = plot.title + ': TUBE = ' + STRTRIM(STRING(tube),2)
        subtitle = ['PLASMA DENSITY','PLASMA FLOW','PLASMA PRESSURE','PLASMA TEMPERATURE',  $
-                   'PARTICLE SOURCES','PARTICLE FLUX','MOMENTUM SOURCES','PRESSURE','9','10','11','12']
+                   'PARTICLE SOURCES','PARTICLE FLUX','MOMENTUM SOURCES','PRESSURE',  $
+                   'EIRENE','EIRENE','EIRENE','EIRENE']
        xtitle   = 's (m)'
        ytitle   = ['n (m-3)','Mach no.','p (?)','Te,i','particles (m-3 s-1)',  $
                   'parallel flux','momentum (?)','pressure (?)',  $
-                  'D_a (ph m-3 s-1)','D_g (ph m-3 s-1)','D_a / D_g','D_a,D_g (scaled)']
+                  '(ph m-3 s-1)','(ph m-3 s-1)',' ','(ph m-3 s-1)']
        labels   = ['n_e:n_D:n_D2',  $
                    'M',             $
                    'p:p_e:p_i',     $ 
                    'T_e:T_i',       $
-                  'solver_net:solver_ion:solver_rec:solver_usr:solver_fit:1/eirene_ion (dashed):2/eirene_rec (dashed)',  $
+                  'solver_net:solver_ion:solver_rec:solver_usr:solver_fit:1\eirene_ion (dashed):2\eirene_rec (dashed)',  $
                   'solver',         $
                   'solver_net:solver_vol:solver_usr:solver_fit',    $
                   'solver',         $
-                  'eirene',         $
-                  'eirene',         $
-                  'eirene',         $
-                  'eirene1:eirene2']
+                  'D_alpha',         $
+                  'D_gamma',         $
+                  'D_alpha / D_gamma',         $
+                  'D_alpha:D_gamma (scaled)']
        END
 ;   --------------------------------------------------------------------
     2: BEGIN
@@ -303,8 +304,6 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                m = N_ELEMENTS(dalpha) / 2
                ydata[*,0] = dalpha 
                ydata[*,1] = dgamma * (dalpha[m] / dgamma[m])
-print,'alpha/gamma',m,(dalpha[m] / dgamma[m])
-
                END
           ENDCASE
           END
@@ -422,7 +421,6 @@ print,'alpha/gamma',m,(dalpha[m] / dgamma[m])
     xrange = [xmin,xmax]
     yrange = [ymin,ymax]
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
-
 
     plot_type = default_plot_type                                           
     IF (focus NE 0 OR yi EQ plot_yn OR iplot EQ nplot) THEN plot_type = 2   ; Show x-axis label
