@@ -68,36 +68,53 @@ PRO ray_psi2010_plot_surfaces, surfaces, color=color
 
   IF (NOT KEYWORD_SET(color)) THEN color = 'White'
 
-; Use discontinuities in the contours to isolate flux surfaces:
-  n = N_ELEMENTS(TAG_NAMES(surfaces))      
-  FOR i = 1, n DO BEGIN
-    cont = cortex_ExtractStructure(surfaces,i)
-    j = WHERE(cont.dist GT 0.1, count_break)
-    j = [-1,j,cont.n-1]
-    FOR k = 0, count_break-2 DO  $
-      OPLOT,cont.x[j[k]+1:j[k+1]],cont.y[j[k]+1:j[k+1]],COLOR=TrueColor(color),LINESTYLE=2        
-  ENDFOR
+  line_color = color
 
+; Use discontinuities in the contours to isolate flux surfaces:
+  ndata = N_ELEMENTS(TAG_NAMES(surfaces))      
+print,'ndata= ',ndata
+  help,surfaces,/struct
+
+  FOR l = 1, ndata DO BEGIN
+    data  = cortex_ExtractStructure(surfaces,l)
+    ncont = N_ELEMENTS(TAG_NAMES(data))      
+    FOR i = 1, ncont DO BEGIN
+      cont = cortex_ExtractStructure(data,i)
+      j = WHERE(cont.dist GT 0.1, count_break)
+      j = [-1,j,cont.n-1]
+      FOR k = 0, count_break-2 DO  $
+        OPLOT,cont.x[j[k]+1:j[k+1]],cont.y[j[k]+1:j[k+1]],  $
+              COLOR=TrueColor(line_color),LINESTYLE=2        
+    ENDFOR
+    line_color = 'Lightgreen'
+  ENDFOR
 END
 ;
 ; ======================================================================
 ;
-FUNCTION ray_psi2010_flux_surfaces, data
+FUNCTION ray_psi2010_flux_surfaces, equ
 
   shifts = [+0.004, +0.002, 0.000, -0.002, -0.004]
+;  shifts = 0.000
 
-  print,data.equ
+  print,equ
 
-  xpoint_zone = [0.5,0.8,-1.4,1.4]
-  b = grid_ReadEQUFile('~/fuse_data/mast/shots/'+ data.equ) ; 25029/25029_312.equ')
-  b = grid_FindNullPoints (b,xpoint_zone,1)
-  b = grid_AnalyseBoundary(b,xpoint_zone,1)
+  FOR j = 0, N_ELEMENTS(equ)-1 DO BEGIN
+    xpoint_zone = [0.5,0.8,-1.4,1.4]
+    b = grid_ReadEQUFile('~/fuse_data/mast/shots/'+ equ[j]) ; 25029/25029_312.equ')
+    b = grid_FindNullPoints (b,xpoint_zone,1)
+    b = grid_AnalyseBoundary(b,xpoint_zone,1)
 
-  FOR i = 0, N_ELEMENTS(shifts)-1 DO BEGIN
-    cont = grid_ExtractContour(b.psi, b.x, b.y, b.psi_b+shifts[i])
-    name = 'data' + STRING(i+1,FORMAT='(I0)')
-    IF (i EQ 0) THEN result = CREATE_STRUCT(       name,cont) ELSE  $
-                     result = CREATE_STRUCT(result,name,cont)
+    FOR i = 0, N_ELEMENTS(shifts)-1 DO BEGIN
+      cont = grid_ExtractContour(b.psi, b.x, b.y, b.psi_b+shifts[i])
+      name = 'data' + STRING(i+1,FORMAT='(I0)')
+      IF (i EQ 0) THEN conts = CREATE_STRUCT(      name,cont) ELSE  $
+                       conts = CREATE_STRUCT(conts,name,cont)
+    ENDFOR
+
+    name = 'data' + STRING(j+1,FORMAT='(I0)')
+    IF (j EQ 0) THEN result = CREATE_STRUCT(       name,conts) ELSE  $
+                     result = CREATE_STRUCT(result,name,conts)
   ENDFOR
 
   RETURN, result
@@ -147,9 +164,12 @@ PRO ray_psi2010_contour, data_2, colorct, color, nlevels, c_colors, xpos, ypos, 
     XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),STRTRIM(str[i],2),/NORMAL,  $
            color=Truecolor(text_color),CHARSIZE=charsize
   ENDFOR
-  IF (KEYWORD_SET(equ)) THEN  $
-    XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i),data_2.equ,/NORMAL,  $
-    color=Truecolor(text_color),CHARSIZE=charsize
+  IF (KEYWORD_SET(equ)) THEN BEGIN
+    FOR j = 0, N_ELEMENTS(equ)-1 DO BEGIN
+      XYOUTS,xpos,ypos-0.015*charsize*FLOAT(i+j),equ[j],/NORMAL,  $
+       color=Truecolor(text_color),CHARSIZE=charsize
+    ENDFOR
+  ENDIF
 END
 ;
 ; ======================================================================
@@ -179,8 +199,8 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
     IF (option EQ 5) THEN color = 0 ELSE color = 5
   IF (NOT KEYWORD_SET(nlevels)) THEN nlevels = 50
   IF (KEYWORD_SET(equ)) THEN BEGIN
-    IF (equ NE 1) THEN data.equ = equ 
-    surfaces = ray_psi2010_flux_surfaces(data)
+    IF (N_ELEMENTS(equ) EQ 1) THEN IF (equ EQ 1) THEN equ = data.equ 
+    surfaces = ray_psi2010_flux_surfaces(equ)
   ENDIF
   IF (KEYWORD_SET(cutoff)) THEN BEGIN
     IF (N_ELEMENTS(cutoff) EQ 1) THEN cutoff = [cutoff,cutoff]

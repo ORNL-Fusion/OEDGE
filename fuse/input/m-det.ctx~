@@ -4,7 +4,21 @@
 
 $ ----------------------------------------------------------------------
 
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  37 38 40 11 15 20 21 30  {NODES}
+
+{PLOT 2D CONTOUR}  200  {LOG}  {XRANGE}  14.0    18.0     {NO FRAME}
+{PLOT 2D CONTOUR}  220         {XRANGE}  1.0E+20 1.0E+22  {NO FRAME}
+{PLOT 2D CONTOUR}  222         {XRANGE}  5.0E+18 5.0E+20                
+
+{EXIT}
+
 {PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+
+{PLOT 1D RADIAL PROFILE}  2   
+  {LINE SEGMENT}  0.9 0.0  0.0 0.0   
+  {XRANGE}        0.9 1.1 
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11 15 20 21 40 38 37 {NODES}
 
 {EXIT}
 
@@ -20,7 +34,7 @@ $ ----------------------------------------------------------------------
 {PLOT 1D RADIAL PROFILE}  2   
   {LINE SEGMENT}  0.95 0.0  1.7 0.0   
 $  {CASE}          m-det-0000e >g
-  {XRANGE}        0.9 1.1 
+  {XRANGE}        0.9 2.0 
 
 {PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES}
 {PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES} {FOCUS}  5  {XRANGE}  0.5 1.0

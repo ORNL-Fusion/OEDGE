@@ -109,7 +109,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
        plot_yboarder = 0.1
        plot_xspacing = 0.100
        plot_yspacing = 0.025
-       nplot = 11
+       nplot = 12
        plot_xn = 3
        plot_yn = 4
        title = plot.title + ': TUBE = ' + STRTRIM(STRING(tube),2)
@@ -118,7 +118,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
        xtitle   = 's (m)'
        ytitle   = ['n (m-3)','Mach no.','p (?)','Te,i','particles (m-3 s-1)',  $
                   'parallel flux','momentum (?)','pressure (?)',  $
-                  'D_a (ph m-3 s-1)','D_g (ph m-3 s-1)','D_a / D_g','12']
+                  'D_a (ph m-3 s-1)','D_g (ph m-3 s-1)','D_a / D_g','D_a,D_g (scaled)']
        labels   = ['n_e:n_D:n_D2',  $
                    'M',             $
                    'p:p_e:p_i',     $ 
@@ -129,7 +129,8 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                   'solver',         $
                   'eirene',         $
                   'eirene',         $
-                  'eirene']
+                  'eirene',         $
+                  'eirene1:eirene2']
        END
 ;   --------------------------------------------------------------------
     2: BEGIN
@@ -235,7 +236,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
           j = WHERE(val.plasma.tube EQ tube)
           k = WHERE(val.source.tube EQ tube)
           l = WHERE(val.eirene.tube EQ tube)
-          ntrace = [3, 1, 3, 2, 7, 1, 4, 1, 1, 1, 1]  ; Number of data lines on each plot
+          ntrace = [3, 1, 3, 2, 7, 1, 4, 1, 1, 1, 1, 2]  ; Number of data lines on each plot
           CASE iplot OF
             1 : xdata = [val.target.s[i,0],val.plasma.s[j],val.target.s[i,1]]
             2 : xdata = [val.target.s[i,0],val.plasma.s[j],val.target.s[i,1]]
@@ -248,6 +249,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
             9 : xdata = val.eirene.s[j]
             10: xdata = val.eirene.s[j]
             11: xdata = val.eirene.s[j]
+            12: xdata = val.eirene.s[j]
           ENDCASE
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
@@ -294,6 +296,15 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                IF (count GT 0            ) THEN dgamma[m] = dalpha[m] ELSE  $
                IF (count EQ N_ELEMENTS(k)) THEN dgamma[m] = 1.0
                ydata[*,0] = dalpha / dgamma
+               END
+            12: BEGIN
+               dalpha = val.eirene.balmer_alpha[k]
+               dgamma = val.eirene.balmer_gamma[k]
+               m = N_ELEMENTS(dalpha) / 2
+               ydata[*,0] = dalpha 
+               ydata[*,1] = dgamma * (dalpha[m] / dgamma[m])
+print,'alpha/gamma',m,(dalpha[m] / dgamma[m])
+
                END
           ENDCASE
           END
@@ -475,6 +486,9 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1])
                OPLOT, val.x, val.y[*,2], COLOR=TrueColor(colors[2])
                OPLOT, val.x, val.y[*,3], COLOR=TrueColor(colors[3])
+               END
+           12: BEGIN
+               OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1])
                END
             ELSE:
           ENDCASE

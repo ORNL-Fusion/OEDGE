@@ -796,7 +796,8 @@ c      REAL*8  :: CLST(NRAD),ADDV2(7,NRAD)
 c...  Iteration data:
       INTEGER :: ITERNO 
       INTEGER IT,IG,NGAUGE
-      REAL*8 XGAUGE(3),YGAUGE(3),RGAUGE(3),DIST,X1,X2,X3,Y1,Y2,Y3,FACT
+      REAL*8 XGAUGE(3),YGAUGE(3),RGAUGE(3),DIST,X1,X2,X3,Y1,Y2,Y3,FACT,
+     .       sum_dat(3)
       REAL*8, ALLOCATABLE :: XCEN(:),YCEN(:),ZCEN(:),T_VOL(:),
      .                       T_PDENA(:,:,:),T_EDENA(:,:,:),
      .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
@@ -1022,12 +1023,15 @@ c...      Output:
         ENDDO
 c...    Surfaces fluxes:
         ICOUNT=39
-        ITALLY=8
+        ITALLY=9
         WRITE(FP,80) '* TEST ATOMS - SURFACE FLUXES',IATM
         WRITE(FP,81) ITALLY
         WRITE(FP,81) NSUR
         WRITE(FP,85) (I1,I1=1,ITALLY)
         CONV = 1.602176D-19
+
+        sum_dat = 0.0
+
         DO IR=1,NTRII 
           DO IS=1,NSIDE
             IF (INSPAT(IS,IR).EQ.0) CYCLE
@@ -1037,12 +1041,19 @@ c...        Output:
             DDUM(1)=DBLE(IS)                   ! Side index of the triangle
             DDUM(2)=POTAT  (IATM,MSURFG)/CONV  ! Incident atom particle flux (s-1)
             DDUM(3)=EOTAT  (IATM,MSURFG)/CONV  ! Incident atom energy   flux (eV s-1)
+
             DDUM(4)=PRFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident atoms     (s-1)
             DDUM(5)=PRFMAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident mols.     (s-1)
             DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
 c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
             DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
             DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! ???
+            DDUM(9)=ERFPAT (IATM,MSURFG)/CONV  ! ???
+
+            sum_dat(1) = sum_dat(1) + ddum(2) * conv 
+            sum_dat(2) = sum_dat(2) + ddum(4) * conv
+            sum_dat(3) = sum_dat(3) + ddum(7) * conv
+
             ICOUNT=ICOUNT+14
             IF (ICOUNT.EQ.40) THEN
               WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
@@ -1051,9 +1062,14 @@ c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from inciden
             WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
           ENDDO
         ENDDO
+
+        write(6,*) 'sputtering sum_dat:',sum_dat(1:3)
+
       ENDDO
+
+
 c
-c     ----------------------------------------------------------------------=
+c     ----------------------------------------------------------------------
 c...  Test molecules:
       ICOUNT=39
       ITALLY=7

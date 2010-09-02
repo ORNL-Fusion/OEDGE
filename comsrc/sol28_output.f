@@ -963,6 +963,8 @@ c
 
       WRITE(dummy,'(1024X)')
 
+      IF (nwall.EQ.0) RETURN
+
       CALL inOpenInterface('osm.idl.fluid_wall',ITF_WRITE)
       DO iw = 1, nwall
         CALL inPutData(wall(iw)%class            ,'WALL_CLASS' ,'none')
