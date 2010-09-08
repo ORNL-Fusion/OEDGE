@@ -1,0 +1,76 @@
+* PSI geometry plots
+
+
+{STRING} grid_wall_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_wall.dat
+{STRING} grid_dome_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_dome.dat
+
+
+$
+$ ----------------------------------------------------------------------
+$
+
+${PLOT 2D FLUID GRID - DEBUG}   1   
+$  {SHOW}  5  Red
+${EXIT}
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
+  {EQU PARAMS}  14  0.6425  1.0
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {NO WALL}  {NO FRAME} 
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {NO FRAME}  {NO WALL}
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {NO WALL}
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {SHOW}  48    Red
+  {SHOW}  89    Red
+  {SHOW}  103   Red
+  {CHARSIZE} 1.1 {THICK} 5.0
+$
+$ ----------------------------------------------------------------------
+$
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {NO WALL} 
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {NO FRAME}
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {NO WALL} 
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {SHOW}  48    Red   $ 2nd sep.
+  {SHOW}  89    Red
+  {SHOW}  103   Red
+  {NO FRAME}
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {NO WALL} 
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+$  {SHOW}  36   Red
+  {SHOW}  40   Green  $ ?
+  {SHOW}  84   Green  $ ?
+  {SHOW}  109  Green  $ Grazing BM 11
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{EXIT} 
+
+
+
+
+
+
