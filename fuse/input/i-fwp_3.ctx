@@ -1,0 +1,91 @@
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3223)  {CASE} i-fwp-3223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3224)  {CASE} i-fwp-3224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3225)  {CASE} i-fwp-3225b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, UPPER PORT GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3203)  {CASE} i-fwp-3203a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3204)  {CASE} i-fwp-3204a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3205)  {CASE} i-fwp-3205a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, PANEL 12 PUFF, CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3213)  {CASE} i-fwp-3213a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3214)  {CASE} i-fwp-3214a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3215)  {CASE} i-fwp-3215a >b >c >d >i >e >g >f >h
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3293)  {CASE} i-fwp-3293b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3294)  {CASE} i-fwp-3294b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3295)  {CASE} i-fwp-3295b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3253)  {CASE} i-fwp-3253a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3254)  {CASE} i-fwp-3254a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3255)  {CASE} i-fwp-3255a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, PANEL 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3263)  {CASE} i-fwp-3263a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3264)  {CASE} i-fwp-3264a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3265)  {CASE} i-fwp-3265a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, BAFFLE ELM PACING PELLET, CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3273)  {CASE} i-fwp-3273a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3274)  {CASE} i-fwp-3274a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3275)  {CASE} i-fwp-3275a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE ELM PACING PELLET, CX SPUTTERING ONLY, SOL FLOW: M = 0.5
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2  (3283)  {CASE} i-fwp-3283a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3284)  {CASE} i-fwp-3284a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3285)  {CASE} i-fwp-3285a >b >c >d >i >e >g >f >h
+
+{EXIT}
+
