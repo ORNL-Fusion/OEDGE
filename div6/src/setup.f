@@ -1843,7 +1843,7 @@ c
       LOGICAL OutsideBreak
 
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
-     .        ikto3,ikti3,ik1,ik2,ik3,ir3
+     .        ikto3,ikti3,ik1,ik2,ik3,ir3,count
       LOGICAL recalculate,cheat1,status
       REAL rhozero,ikintersec(MAXNRS,2)
 
@@ -1906,19 +1906,28 @@ c     PFZ ring:
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
-            DO WHILE (idring(ir1).NE.BOUNDARY)
+            count = 0
+            DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
               WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik,ir,ik2,ir2,
      .                               nks(ir),irsep,status
-              IF (ir1.LT.irsep) THEN
-                WRITE(88,*) 'BOUNCE!'
+              IF (ir1.LE.irsep) THEN               ! Changed 02/09/2010
+c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
+                WRITE(88,*) 'BOUNCE!'              ! Need to use the OSM method of line intersections!
                 status = .FALSE.
                 EXIT
               ENDIF
               ik1 = ik2
               ir1 = ir2
+              count = count + 1
             ENDDO
+            IF (count.EQ.nrs+1) THEN
+              CALL WN('SetupGrid','Problem with connection '//
+     .                'map when searching for private flux regions')
+              WRITE(0,*) '  IK,IR= ',ik,ir
+              EXIT
+            ENDIF
             IF (.NOT.status) EXIT
           ENDDO
           IF (status) ringtype(ir) = PFZ
@@ -2063,6 +2072,7 @@ c          STOP 'sdfsdf'
       ENDDO
 
       DO ir = nrs, irtrap+1, -1
+        IF (idring(ir).EQ.-99) CYCLE
         WRITE(SLOUT,*) 'CUTPOINTS IN PFZ: IR= ',ir
      
         ikto2(ir) = -1
@@ -2106,7 +2116,8 @@ c          STOP 'sdfsdf'
         ENDDO
 
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
-     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
+     .    CALL WN('SetupGrid','Cannot find cut points in PFZ')
+c     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
       ENDDO
 c
 c     Set IKTO,I2 for double-null grids:

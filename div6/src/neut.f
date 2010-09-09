@@ -5304,6 +5304,8 @@ C---- SET UP LIMITING RANDOM NUMBERS FOR CALCULATING LAUNCH VELOCITY.
 c
 c     For target launch - physical sputtering launch
 C     
+      WRITE(0,*) 'NEUTBATCH: ',cneutb,cneutc
+
       nonzero_krmax = .false.
 c
       if (cneutb.eq.0.or.cneutb.eq.3) then 

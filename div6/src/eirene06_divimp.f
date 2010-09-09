@@ -676,6 +676,7 @@ c            WRITE(0,*) 'THROUGH:',i1,i2,index1
 c...        Set surface sputtering parameters:
             IF (opt_eir%sur_ilspt(i2).NE.0) THEN
               tmp_ilspt = opt_eir%ilspt
+              opt_eir%ilspt = 0
               IF (TRIM(opt_eir%sur_mat(i2)).EQ.'def') THEN
                 opt_eir%ilspt = eirmat2
               ELSE
