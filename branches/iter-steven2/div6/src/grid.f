@@ -2110,17 +2110,21 @@ c      IF (ir.GE.irsep.AND.ir.LT.irwall) THEN
 c...    This ring is to be cut in the middle, so add another ring to the grid
 c       at that will serve as the outer half of the ring being cut:
         IF (ir.LT.irwall) THEN
-          CALL InsertRing(irwall,BEFORE,PERMANENT)
+          CALL InsertRing(irwall  ,BEFORE,PERMANENT)
           irset = irwall - 1
         ELSE
-          CALL InsertRing(nrs,AFTER,PERMANENT)
-          irset = nrs
+c          CALL InsertRing(nrs     ,AFTER ,PERMANENT)
+c          irset = nrs       
+          CALL InsertRing(irtrap+1,BEFORE,PERMANENT)
+          irset = irtrap + 1
         ENDIF
 
 c...    Setup geometric quantities for the new ring:
         nks   (irset) = nks(ir)
         irorg2(irset) = ir
         idring(irset) = TARTOTAR - 100
+        ikti2 (irset) = ikti2(ir)
+        ikto2 (irset) = ikto2(ir)
 
         DO ik = 1, nks(ir)  
 c...      Copy cell geometry data for the ring.  Only a limited
@@ -7098,7 +7102,11 @@ c...      Duplicate a ring:
           irs  = NINT(grdmod(i1,4))
           ire  = NINT(grdmod(i1,5))
           DO ir = irs, ire
-            CALL DupeRing(ir)
+            IF (ir.LT.irwall) THEN
+              CALL DupeRing(ir)
+            ELSE
+              CALL DupeRing(ir+(ir-irs))
+            ENDIF
           ENDDO
 
         ELSEIF (grdmod(i1,1).EQ.9.0) THEN

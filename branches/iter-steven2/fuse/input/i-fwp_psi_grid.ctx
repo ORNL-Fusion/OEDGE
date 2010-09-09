@@ -1,19 +1,28 @@
 * PSI geometry plots
 
 
-{STRING} grid_wall_file /home/ITER/lisgos/divimp/shots/iter/i1514/psi_wall.dat
-{STRING} grid_dome_file /home/ITER/lisgos/divimp/shots/iter/i1514/psi_dome.dat
+{STRING} grid_wall_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_wall.dat
+{STRING} grid_dome_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_dome.dat
+
+{STRING} jet_wall /home/ITER/lisgos/divimp/shots/jet/holy_crap.txt
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
+  {NO FRAME}  {NO WALL}
+  {ANNOTATE} 1    Blue  jet_wall
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{EXIT}
 
 
 $
 $ ----------------------------------------------------------------------
 $
 
-{PLOT 2D FLUID GRID - DEBUG}   1   
-  {SHOW}  5  Red
-{EXIT}
+${PLOT 2D FLUID GRID - DEBUG}   1   
+$  {SHOW}  5  Red
+${EXIT}
 
-{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
   {EQU PARAMS}  14  0.6425  1.0
   {ZOOM}        3.6  -5.0   8.8  5.2
   {NO WALL}  {NO FRAME} 
