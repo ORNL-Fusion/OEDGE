@@ -1633,7 +1633,7 @@ c               ERROR - negative N has been found EVEN with highest level
 c                       of error correction - issue error messages and stop.
 c
                 call errmsg('SOLASCV:SOL22',
-                    ' Unsolvable Negative N error encountered.'//
+     >              ' Unsolvable Negative N error encountered.'//
      >              ' Program Stopping')
 c
 c                write (7,*) 'SOLASCV: SOL22:'//

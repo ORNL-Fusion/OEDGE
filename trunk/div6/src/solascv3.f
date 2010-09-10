@@ -1052,7 +1052,7 @@ c
          CALL PRC(SP//'USUALLY RESULTING FROM A PREVIOUS DIVIMP')
          CALL PRC(SP//'CASE.')
          CALL PRQ(SP//'MULTIPLICATION FACTOR = ',radsrc_mult)
-      elseif (switch(swprad.eq.5.0) then 
+      elseif (switch(swprad).eq.5.0) then 
          CALL PRC(S1//'PRAD OPTION   5 : EXTERNAL RADIATION SOURCE')
          call prc(s1//' **** WARNING ****')
          call prc(s1//' IN DEVELOPMENT - NOT YET IMPLEMENTED')
