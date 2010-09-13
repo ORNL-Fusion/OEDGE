@@ -59,7 +59,7 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
-    dir_structure = 1
+    dir_structure = 2
 
     family = STRMID(case_name,0,5) + '/'
     child  = STRMID(case_name,0,7) + '/'
