@@ -963,13 +963,20 @@ c     .    density = .FALSE.
      .      CALL ER('AssignNode_New','Single target position must '//
      .              'be specified',*99)
           DO i4 = 1, ntarget
-            IF (target(i4)%location.EQ.osmnode(i1)%tube_range(1)) EXIT
+            IF (target(i4)%location.EQ.ABS(osmnode(i1)%tube_range(1))) 
+     .        EXIT
           ENDDO
           IF (i4.LT.ntarget+1) THEN         
-            DO i5 = 1, target(i4)%nlist
-              IF (target(i4)%ilist(i5).EQ.it) EXIT
-            ENDDO
-            IF (i5.LT. target(i4)%nlist+1) THEN
+            IF (osmnode(i1)%tube_range(1).LT.0) THEN
+c             All tubes on grid assigned:
+              i5 = 0  
+            ELSE
+c             Only select tubes identified as being part of this target data block:
+              DO i5 = 1, target(i4)%nlist
+                IF (target(i4)%ilist(i5).EQ.it) EXIT
+              ENDDO
+            ENDIF
+            IF (i5.LT.target(i4)%nlist+1) THEN
               intersection = .TRUE.  !  *** LEFT OFF ***  overwrige the -1,-2 parameter PAR_MODE, to activate
               hold_c1  = 0.0D0
               hold_c2  = 0.0D0

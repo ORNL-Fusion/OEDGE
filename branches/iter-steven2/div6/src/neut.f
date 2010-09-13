@@ -4863,7 +4863,7 @@ c
 c
 c     Initialize 
 c
-      write (6,*) 'WFY:',matt
+      write (6,*) 'WFY:',matt,pinsw,wallpts
 c
 c     Zero FLUX and YIELD array
 c
@@ -5304,8 +5304,6 @@ C---- SET UP LIMITING RANDOM NUMBERS FOR CALCULATING LAUNCH VELOCITY.
 c
 c     For target launch - physical sputtering launch
 C     
-      WRITE(0,*) 'NEUTBATCH: ',cneutb,cneutc
-
       nonzero_krmax = .false.
 c
       if (cneutb.eq.0.or.cneutb.eq.3) then 
@@ -5351,10 +5349,29 @@ C
          DO ID = 1, WALLPTS
             KRMAXW(ID) = 1.0
             IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5) THEN
+c slmod begin
+c...          Moved this up here and added the check for manual specification
+c             of the neutral wall sputtering, as in WFY, so that the code 
+c             doesn't complain if PIN was run but manual settings were
+c             specified:  -SL, 09/09/20
+c
+c              PIN data not available 
+c
+               if (pinsw.eq.0.or.nwlprob.gt.0) then 
+                  if (northopt.eq.0.or.northopt.eq.2) then
+                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+                  elseif (northopt.eq.1.or.northopt.eq.3) then
+                     if (matt.le.ntars) then 
+                        EMAX = CEMAXF * CEBD * 
+     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
+                     else
+                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+                     endif
+                  endif
 c
 c              Pin data available
 c
-               if (pinsw.eq.1.or.pinsw.eq.4) then 
+               elseif (pinsw.eq.1.or.pinsw.eq.4) then 
 c
                   IF (CNEUTD.EQ.1) THEN
                      EMAX = CEMAXF * fydata(id,2)
@@ -5370,21 +5387,24 @@ c
                         endif 
                      endif
                   ENDIF
-c
-c              PIN data not available 
-c
-               elseif (pinsw.eq.0) then          
-                  if (northopt.eq.0.or.northopt.eq.2) then
-                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
-                  elseif (northopt.eq.1.or.northopt.eq.3) then
-                     if (matt.le.ntars) then 
-                        EMAX = CEMAXF * CEBD * 
-     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
-                     else
-                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
-                     endif
-                  endif
                endif
+c
+cc
+cc              PIN data not available 
+cc
+c               elseif (pinsw.eq.0) then          
+c                  if (northopt.eq.0.or.northopt.eq.2) then
+c                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+c                  elseif (northopt.eq.1.or.northopt.eq.3) then
+c                     if (matt.le.ntars) then 
+c                        EMAX = CEMAXF * CEBD * 
+c     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
+c                     else
+c                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+c                     endif
+c                  endif
+c               endif
+c slmod end
 c 
                IF (EMAX.GT.0.0) THEN
                   KRMAXW(ID) = 1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))
