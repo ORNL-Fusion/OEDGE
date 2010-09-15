@@ -272,13 +272,13 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                 ydata[*,1] = [val.target.ti[i,0],val.plasma.ti[j],val.target.ti[i,1]]
                 END
             5 : BEGIN
-                ydata[*,0] = val.source.par_net[k]
-                ydata[*,1] = val.source.par_ion[k]
-                ydata[*,2] = val.source.par_rec[k]
-                ydata[*,3] = val.source.par_usr[k]
-                ydata[*,4] = val.source.par_ano[k]
-                ydata[*,5] = val.eirene.ion_net[l]
-                ydata[*,6] = val.eirene.rec_net[l]
+                ydata[*,0] =  val.source.par_net[k]
+                ydata[*,1] =  val.source.par_ion[k]
+                ydata[*,2] = -val.source.par_rec[k]
+                ydata[*,3] =  val.source.par_usr[k]
+                ydata[*,4] =  val.source.par_ano[k]
+                ydata[*,5] =  val.eirene.ion_net[l]
+                ydata[*,6] = -val.eirene.rec_net[l]
                 END
             6 : ydata[*,0] = val.plasma.dens[j] * val.plasma.vi[j]  
             7 : BEGIN

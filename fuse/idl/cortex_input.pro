@@ -106,6 +106,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     peak            : 0                 ,  $
     scale_factor    : 1.0               ,  $
     log             : 0                 ,  $
+    xdata           : 'psi_n'           ,  $
     xlog            : 0                 ,  $
     ylog            : 0                 ,  $
     smooth          : 0                 ,  $
@@ -588,6 +589,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
                                           plot_struct.peak = 1
       'SCALE FACTOR' : plot_struct.scale_factor = FLOAT(data)
       'LOG'          : plot_struct.log          = 1
+      'XDATA'        : plot_struct.xdata        = STRTRIM(data,2)
       'XLOG'         : plot_struct.xlog         = 1
       'YLOG'         : plot_struct.ylog         = 1
       'SMOOTH'       : plot_struct.smooth       = FIX(data)
