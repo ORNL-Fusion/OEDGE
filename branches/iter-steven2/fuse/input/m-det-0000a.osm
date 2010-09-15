@@ -98,7 +98,7 @@ $ ----------------------------------------------------------------------
 '{S74} 4.1 Target and upstream interpolation data:'
 $               ----------radial-----------   ---parallel---   -------------------plasma-------------------
 $ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M      pe        Te     Ti    V  
-$                                                              (m-3)    (m s-1)  (eV m-3}  (eV)   (eV)  (V)  
+$                                                              (m-3)    (m s-1)  (eV m-3)  (eV)   (eV)  (V)  
 $ targets
 $  3.0   1  1    4    5   1.0                  0     0.0  0                                                
 $    'lp_1_inner_upper.dat'     1      0.0                      1.0      0.0      0.0       1.0    1.0    0.0

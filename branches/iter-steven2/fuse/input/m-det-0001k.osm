@@ -1,5 +1,5 @@
-${TITLE}   'detached plasmas, loading data onto the small grid, heat flux calculation, in-file Te specification'
-${COMMENT} '24861 at 240 ms to start...'
+${TITLE}   'working the inner divertor, adding volume recombination'
+${COMMENT} 'based on m-det-0004f.d6i, grid from 24860 at 240 ms'
 $
 $ I/O:
 $ ======================================================================
@@ -11,11 +11,11 @@ $
 $ Control:
 $ ======================================================================
 $
-'{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
+'{C KIN}      Number of fluid-kinetic iterations              '    5   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
-'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    2   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
-'{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
+'{C EIR_TIME}   runtime (s)                                   '  180   $ (30) OPT_EIR%TIME
 $'{}          Execute DIVIMP                                  '    0   $ (0)
 $
 $ Geometry:
@@ -57,7 +57,7 @@ $ Particles:
 $ ----------------------------------------------------------------------
 '{S P_ION}      Ionisation  1-ref 2-pin 3-prescribed           '    2    $ (3)
 '{S P_ION_FRAC}    Scale ionisation to particle sink           ' 100.0   $ (100.0)
-'{S P_REC}      Volume recombination  0-none 1-PIN 2-ADAS      '    0    $ (0)
+'{S P_REC}      Volume recombination  0-none 2-PIN 3-ADAS      '    2    $ (0)
 '{S P_ANO}      Cross-field conservation  2-half 3-full 4-flow '    3    $ (2)
 $'{} ExB  0-none                                               '    0    $ (0)
 $'{} Diamagnetic  0-none                                       '    0    $ (0)
@@ -65,8 +65,8 @@ $
 $ Momentum:         
 $ ----------------------------------------------------------------------
 '{S M_ANO}      Cross-field conservation  1-ref 2-full         '    2    $ (2)  
-'{S M_ANO_DIST}   parallel distribution  1-power 2-exp 3-mid   '    3    $ (1)
-'{S M_ANO_EXP}    exponent for distribution                    '   2.0   $ (0.0)
+'{S M_ANO_DIST}   parallel distribution  1-power 2-exp 3-mid   '    1    $ (1)
+'{S M_ANO_EXP}    exponent for distribution                    '   0.0   $ (0.0)
 $
 $ Energy:         
 $ ----------------------------------------------------------------------
@@ -89,7 +89,7 @@ $
 $ Boundary conditions:  
 $ ----------------------------------------------------------------------
 '{T BC}    Boundary conditions  1-target 2-upstream            '    1    $ (1)
-'{T SUPER} Supersonic flow near targets  0-no 1-yes            '    1    $ (0)
+'{T SUPER} Supersonic flow near targets  0-no 1-yes            '    0    $ (0)
 $' { } Electric field calculation  0-none 1-simple              '    0    $ (0)
 $
 $
@@ -98,8 +98,10 @@ $ ----------------------------------------------------------------------
 '{089} 1.0 Inner target surface data:'  
 $   R(m)    Te    Ti  Jsat/Ne
     -1.0   1.0  99.0      0.0  
- -2.0000   5.0   5.0  1.0E-01  
-  2.0000   5.0   5.0  1.0E-01  
+ -2.0000   0.9   0.9  1.0E-01  
+  1.0670   0.9   0.9  1.0E-01  
+  1.0671   1.0   1.0  1.0E-01  
+  2.0000   1.0   1.0  1.0E-01  
 $
 '{088} 1.0 Outer target surface data:'     
 $   R(m)    Te    Ti  Jsat/Ne
@@ -118,20 +120,67 @@ $ inner divertor target
   'lp_24861_220-240ms_2_inner_lower.dat'      1     0.005      1.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
+
+$ denisty point at 0.30 m  
+  1.0   11 20   2    1   0.60                 3     0.0  0                                                
+  0.0                     0.29921  -1.416711                   2.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.29921  -1.3250                     1.0E+18  0.0      0.0       0.0    0.0   0.0 
+
+$ CII cutoff - 1 eV
+  1.0   11 20   1    1   0.0                  3     0.0  0                                                
+  0.0                     0.433332  -1.332545                  0.0      0.0      0.0       1.0    1.0   0.0  
+  0.0                     0.429598  -1.2000                    0.0      0.0      0.0       1.0    1.0   0.0 
+$ CIII cutoff - 3 eV
+  1.0   11 20   1    1   0.0                  1     2.0  0                                                
+  0.0                     0.558466  -1.251205                  0.0      0.0    -88.0       3.0    3.0   0.0  
+  0.0                     0.4650    -1.0050                    0.0      0.0    -88.0       3.0    3.0   0.0 
+$ CIII cutoff - 10 eV
+$  1.0   11 16   1    1   0.0                  3     0.0  0                                                
+$  0.0                     0.673424  -1.175227                  0.0      0.0    -88.0      10.0   10.0   0.0  
+$  0.0                     0.5200    -1.0400                    0.0      0.0    -88.0      10.0   10.0   0.0 
+
+$ inner midplane - near-SOL
+  2.0   1  20   4    5   1.0                  3     0.0  0                                                
+  'ts_24861_230-250ms_inner_midplane.dat'     1     0.0200     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
+  0.0                          0.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
+  0.0                          0.1500 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
+
+$ inner midplane - far-OL
+  2.0   21 99   4    5   1.0                  1     1.0  0                                                
+  'ts_24861_230-250ms_inner_midplane.dat'     1     0.0200     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
+  0.0                          0.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
+  0.0                          0.1500 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
+
 $ outer divertor target
   3.0   4  4    4    5   1.0                  0     0.0  0                                               
   'lp_24861_220-240ms_4_outer_lower_seg6.dat' 1     0.032      1.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
-$ inner midplane
-  2.0   1  99   4    5   1.0                  3     0.0  0                                                
-  'ts_24861_230-250ms_inner_midplane.dat'     1     0.0396     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
-  0.0                          0.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
-  0.0                          0.1500 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
+
+
+
+
+$ PFZ denisty point at 0.30 m  
+  1.0   38 40   2    1   0.25                 3     0.0  0                                                
+  0.0                     0.29921  -1.416711                   2.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.29921  -1.5150                     1.0E+18  0.0      0.0       0.0    0.0   0.0 
+
+$ PFZ upstream - CII cutoff - 1 eV
+  1.0   38 40   1    1   0.0                  3     0.0  1                                                
+  0.0                     0.433332  -1.332545                  0.0      0.0    -88.0       1.0    1.0   0.0  
+  0.0                     0.433332  -1.4300                    0.0      0.0    -88.0       1.0    1.0   0.0 
+
+
+$ PFZ upstream - CII cutoff - 3 eV
+  1.0   39 40   1    1   0.0                  1     2.0  0                                                
+  0.0                     0.5900    -1.2300                    0.0      0.0    -88.0       3.0    3.0   0.0  
+  0.0                     0.5900    -1.3300                    0.0      0.0    -88.0       3.0    3.0   0.0 
+
 $ PFZ upstream
   2.0   31 40   3    6   0.01                 3     0.0  0                                                
-  0.0                          0.720 -1.190                    1.0E+18  0.0      0.0     -99.0 -99.0    0.0
-  0.0                          0.590 -1.470                    1.0E+15  0.0      0.0       2.0   2.0    0.0
+  0.0                          0.750 -1.260                    0.0      0.0    -99.0     -99.0 -99.0    0.0
+  0.0                          0.620 -1.470                    0.0      0.0      1.0      11.0  11.0    0.0
+
 $
 $ EIRENE options:
 $ ======================================================================
@@ -139,9 +188,12 @@ $
 '{E NEUTRAL SOURCES} 1.0 Recycling, gas puffing and neutral beam injection:' 
 $Type  NPTS   Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1   2                            Note
 $-----------------------------------------------------------------------------------------------
- 1.0  -90000  1.0      1.0   4    1    0.0     1                                           'inner target'
- 1.0  -90000  1.0      1.0   4    1    0.0     2                                           'outer target'
- 2.0  -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
+ 1.0  -90000  1.0      1.0   4    1    0.0     1                                            'inner target'
+ 1.0  -90000  1.0      1.0   4    1    0.0     2                                            'outer target'
+ 2.0  -90000  1.0      1.0   4    1    0.0                                                  'volume recombination'
+$                                              COS MAX   POSX   Y     Z    VECX  Y     Z         
+$                                              -------------------------------------------      
+ 3.0  -90000  1.39E+3  1.0   2    1    0.038   1.0  30.0 0.30  -1.23  0.0 -1.0  -0.50  0.0  'lower i/b puff'
 $
 $'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
 $ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti

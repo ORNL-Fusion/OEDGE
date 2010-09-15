@@ -6,10 +6,17 @@ FUNCTION cortex_SliceGrid, line, grid, status
   a1 = line[0:1]
   a2 = line[2:3]
 
+  if ( ABS(a1[0]-a2[0]) LT 1.0E-7 ) THEN a1[0] = a1[0] + 0.000001
+
   length = SQRT( (a1[0] - a2[0])^2 + (a1[1] - a2[1])^2 )
 
- print,a1
- print,a2,length
+ print, '  ------slicing-------'
+
+; print,grid.isep
+; print,grid.tube_psin
+
+; print,a1
+; print,a2,length
 ;
 ; Find intersection with the separatrix, if any:
 ;
@@ -50,6 +57,10 @@ FUNCTION cortex_SliceGrid, line, grid, status
 
     s = (c[0] - a1[0]) / (a2[0] - a1[0])    
     t = (c[0] - b1[0]) / (b2[0] - b1[0])    
+
+;   IF (grid.obj_tube[iobj] EQ 11) THEN BEGIN
+;     print, ' -->',iobj,s,t   
+;   ENDIF
 
     IF ( s GE 0.0 AND s LE 1.0 AND  $
          t GE 0.0 AND t LT 1.0) THEN BEGIN
@@ -113,6 +124,8 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
   PRINT
   PRINT,'----------------------- NEW PLOT -----------------------'
   PRINT,'PLOT OPTION=',plot.option
+
+help,data_array.inter,/struct
 
   MAXNYDATA = 7
   MAXNXDATA = 1000
@@ -474,7 +487,14 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
   !P.BACKGROUND = TrueColor('White')
 
   plot_title  = plot.title
-  plot_xtitle = 'psi_n'
+
+print, '>'+plot.xdata+'<'
+
+  CASE plot.xdata OF
+    'psi_n'   : plot_xtitle = 'psi_n'
+    'distance': plot_xtitle = 'distance along line (m)'
+  ENDCASE
+
   plot_ytitle = ['1','n_e (m-3)','3','v_parallel / M','5','T_e (eV)']
 
   colors = ['Black',   'Red','Green','Blue','Orange','Purple', 'Hotpink', 'Darkseagreen', 'Silver',  $
@@ -563,7 +583,10 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
       FOR iseg = 1, plot.line_seg_n DO BEGIN
         IF (plot_grid.line_seg_s[iseg] EQ -1) THEN CONTINUE  ; No intersection with the grid was found
         inter  = cortex_ExtractStructure(plot_data.inter,iseg)
-        xdata = inter.psin ; inter.dist
+        CASE plot.xdata OF
+          'psi_n'   : xdata = inter.psin 
+          'distance': xdata = inter.dist 
+        ENDCASE
         xmin = MIN([xmin,xdata])
         xmax = MAX([xmax,xdata])
       ENDFOR
@@ -573,8 +596,8 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
       xmax = MIN([plot.xrange[1],xmax])
     ENDIF
 
-    PRINT, plot.xrange
-    PRINT, '1 XMIN,MAX=',iplot,xmin,xmax
+;    PRINT, plot.xrange
+;    PRINT, '1 XMIN,MAX=',iplot,xmin,xmax
 
     ymin =  1.0E+35
     ymax = -1.0E+35
@@ -584,8 +607,15 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
       FOR iseg = 1, plot.line_seg_n DO BEGIN
         IF (plot_grid.line_seg_s[iseg] EQ -1) THEN CONTINUE  ; No intersection with the grid was found
         inter  = cortex_ExtractStructure(plot_data.inter,iseg)
-        xdata = inter.psin ; inter.dist
-        k = WHERE(xdata GE xmin AND xdata LE xmax)
+        CASE plot.xdata OF
+          'psi_n'   : xdata = inter.psin 
+          'distance': xdata = inter.dist 
+        ENDCASE
+        k = WHERE(xdata GE xmin AND xdata LE xmax, count)
+        IF (count EQ 0) THEN BEGIN
+          PRINT,'ERROR PlotRadialProfile: No data within x-range'
+          STOP
+        ENDIF
         i = inter.cell[k]
 ;       This is a check to make sure that the 1:1 assumption of OBJ to CELL/PLASMA in OSM
 ;       is valid for this particular data set.  The index information is passed along with
@@ -615,8 +645,8 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
     ymin = ymin - 0.05 * ydelta
     ymax = ymax + 0.05 * ydelta
 
-    PRINT, '2 XMIN,MAX=',iplot,xmin,xmax
-    PRINT, '2 YMIN,MAX=',iplot,ymin,ymax
+;    PRINT, '2 XMIN,MAX=',iplot,xmin,xmax
+;    PRINT, '2 YMIN,MAX=',iplot,ymin,ymax
 
 ;   Axes:
     xrange = [xmin,xmax]
@@ -652,7 +682,10 @@ FUNCTION cortex_PlotRadialProfile, plot, plot_array, ps=ps
       FOR iseg = 1, plot.line_seg_n DO BEGIN
         IF (plot_grid.line_seg_s[iseg] EQ -1) THEN CONTINUE 
         inter  = cortex_ExtractStructure(plot_data.inter,iseg)
-        xdata = inter.psin ; inter.dist
+        CASE plot.xdata OF
+          'psi_n'   : xdata = inter.psin 
+          'distance': xdata = inter.dist 
+        ENDCASE
         i = inter.cell
         IF (iplot EQ 1) THEN ydata = inter.l
         IF (iplot EQ 2) THEN ydata = plasma.dens[i]

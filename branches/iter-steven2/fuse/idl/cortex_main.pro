@@ -350,7 +350,6 @@ PRO cortex_GeneratePlots, args
                                    inter_array = CREATE_STRUCT(inter_array,name,inter)
                 ENDELSE
               ENDFOR
-
               name = 'data' + STRING(i+1,FORMAT='(I0)')
               plot_data = { grid : grid, wall : wall, inter : inter_array, plasma : plasma, target : target }
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
