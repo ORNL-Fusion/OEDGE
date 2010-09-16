@@ -229,6 +229,15 @@ c        jdemod - cgridopt=7 (GEN_GRID)
 c
 c         call readgeneralisedgrid
 c
+c
+c     jdemod - add new ribbon grid for ITER
+c
+      elseif (cgridopt.eq.RIBBON_GRID) then 
+c
+c     
+c
+         call BuildRibbonGrid
+
       endif
 c
 c     Check for a valid grid - a grid with no rings is not valid
@@ -706,7 +715,7 @@ c      CALL OutputData(85,'POLOIDAL GRID TEST')
 c      STOP 'sdfgsdfsd'
 
       if (nbr.gt.0.or.eirgrid.eq.1.or.
-     .    cgridopt.EQ.LINEAR_GRID) then
+     .    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c...    Generalized grid:
         CALL BuildMap
 
@@ -1802,7 +1811,7 @@ c
 c     JET and SONNET grids
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID) then
+     >    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
 c        Only possible for grids with polygon information
 c
@@ -2109,7 +2118,7 @@ c
 c     For grids with polygon information
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID) then
+     >    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
          do ir = 1,nrs
             do ik = 1,nks(ir)
@@ -2437,7 +2446,7 @@ C-----------------------------------------------------------------------
 c
       if ((cprint.eq.6.or.cprint.eq.9)
      >    .and.(cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >          cgridopt.eq.LINEAR_GRID)) then
+     >          cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID))then
          call writegrd(cgridopt)
       endif
 C
@@ -3936,7 +3945,7 @@ c slmod begin
 c...  Sorry for the spagetti, but the (legacy) code between here and
 c     205 is completely broken for linear device grids.  I have set
 c     KAREAS to be assigned from KAREAS2 below:
-      IF (cgridopt.EQ.LINEAR_GRID) GOTO 205
+      IF (cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) GOTO 205
 c slmod end
       JK(1,3) = IK - 1
       IF (IK.EQ.1.AND.IR.LT.IRSEP) JK(1,3) = NKS(IR) - 1
@@ -4084,6 +4093,7 @@ C---- FOR CALCULATING THE AREA OF A POLYGON FROM THE POSITION OF
 C---- ITS VERTICES ASSUMES THAT THE VERTICES ARE ORDERED CLOCKWISE
 C---- AROUND THE PERIMETER.
 C
+
 c slmod begin
  205  CONTINUE
       AREA_SUM = 0.0D0
@@ -4139,8 +4149,10 @@ c     +                            DBLE(RVERTP(L  ,KP) * ZVERTP(LP1,KP))
 c slmod end
       ENDIF
 c slmod begin
-      IF (cgridopt.EQ.LINEAR_GRID) THEN
-        kareas = karea2
+      IF (cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) THEN
+c       jdemod - added indices instead of assigning entire arrays on
+c                each loop iteration
+        kareas(ik,ir) = karea2(ik,ir)
       ENDIF
 c slmod end
 C
@@ -4151,11 +4163,21 @@ c     subroutine.
 c
 c     For ASDEX UPGRADE calculate the values here as for JET.
 c
-      if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     .    cgridopt.EQ.LINEAR_GRID) then
-         KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
+      if (cgridopt.eq.RIBBON_GRID) then 
+         ! KVOLS doesn't have much meaning for a ribbon grid - set equal to kareas to start
+         ! if not one might use 2 PI R * karea * (sin(pitch_angle))  to get cell 
+         ! area projected onto the poloidal plane. 
+         kvols(ik,ir) = kareas(ik,ir)
+         kvols2(ik,ir) = kareas2(ik,ir)
+      else
+
+         if (cgridopt.eq.0.or.cgridopt.eq.3.or.
+        .    cgridopt.EQ.LINEAR_GRID) then
+            KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
+         endif
+         KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
+
       endif
-      KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
 
 c slmod begin
 c...  Scale KVOLS and KVOL2 if only a fraction of the torus is 

@@ -408,9 +408,11 @@ c
       CALL PRI2 ('  MAIN PLASMA RINGS                      ',1,IRSEP-1)
 c
       if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.GEN_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.GEN_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) then
 c...    cgridopt=6 for LINEAR_GRID
 c..     cgridopt=7 for GEN_GRID
+c..     cgridopt=8 for RIBBON_GRID
 c
       CALL PRI2 ('  SOL RINGS                              ',IRSEP,
      >           IRWALL)
@@ -1930,8 +1932,11 @@ c
       ELSEIF (CGRIDOPT.EQ.LINEAR_GRID) then
         CALL PRC ('  GRID OPTION 6:  LINEAR DEVICE GRID BUILT')
       ELSEIF (CGRIDOPT.EQ.GEN_GRID) then
-        CALL PRC ('  GRID OPTION 6:  GENERALIZED GRID FILE :'//
+        CALL PRC ('  GRID OPTION 7:  GENERALIZED GRID FILE :'//
      >            ' SONNET BASE')
+      ELSEIF (CGRIDOPT.EQ.RIBBON_GRID) then
+        CALL PRC ('  GRID OPTION 8:  ITER RIBBON GRID BUILT '//
+     >            ' FROM CASTEM WALL INTERSECTION DATA')
       ENDIF
 c
 c     TMACHINE_OPT is an optional input value used to set the 

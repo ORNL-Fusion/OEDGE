@@ -558,7 +558,8 @@ c...        Assume that the theta value can be extrapolated:
 
 c...  There is sometimes a problem with the near-x-point cells of the
 c     PFZ do to the approximate nature of DTHETG -- just smooth the metric:
-      IF (.NOT.nopriv.AND.cgridopt.NE.LINEAR_GRID) THEN
+      IF (.NOT.nopriv.AND.cgridopt.NE.LINEAR_GRID.and.
+     >    cgridopt.ne.RIBBON_GRID) THEN
         IF (thetag(ikto2(nrs),nrs).GT.thetag(ikti2(nrs),nrs)) THEN
           ir = nrs
           len1 = kps(ikti2(ir)  ,ir) - kps(ikto2(ir),ir)
@@ -663,7 +664,8 @@ c
 c     Intialize the metric on boundary rings:
 c
       CALL ResetRing(1     ,2)
-      IF (cgridopt.NE.LINEAR_GRID) CALL ResetRing(irtrap,irtrap+1)
+      IF (cgridopt.NE.LINEAR_GRID.and.
+     >    cgridopt.ne.RIBBON_GRID) CALL ResetRing(irtrap,irtrap+1)
 c...  BUG: Referencing IRWALL-1 is no good if IRWALL-1 is broken:
       CALL ResetRing(irwall,-1)
 c      CALL ResetRing(irwall,irwall-1)
