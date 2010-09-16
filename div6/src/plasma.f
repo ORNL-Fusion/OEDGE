@@ -118,7 +118,7 @@ c
           IRLIM2 = NRS2
         ENDIF
 c slmod begin
-      elseif (cgridopt.eq.LINEAR_GRID) then
+      elseif (cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
         IRLIM2 = min(nrs,irend)
 c slmod end
       endif

@@ -145,9 +145,10 @@ c
       save /outunits/
 c
 c slmod begin - temporary
-      INTEGER, PARAMETER :: LINEAR_GRID = 6        ! Tag for ULS grids   
+      INTEGER,PARAMETER :: LINEAR_GRID = 6        ! Tag for ULS grids   
 c jdemod
       integer,parameter :: GEN_GRID = 7
+      integer,parameter :: RIBBON_GRID = 8
 
 c...  Some global options of convenience:
       LOGICAL, PARAMETER :: sloutput  = .FALSE.,   ! Selects SL screen output 
