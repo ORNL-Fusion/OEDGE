@@ -4,13 +4,21 @@
 
 $ ----------------------------------------------------------------------
 
-{PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+
+{PLOT 2D FLUID GRID}  1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+{PLOT 2D FLUID GRID}  1  
+  {EQU}         ~/fuse_data/mast/shots/24860/24860_240.equ  
+  {EQU PARAMS}  19  0.73  0.835
+  {NO FRAME}
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+
 
 {PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
   {LINE SEGMENT}  0.29921  -1.416711  0.29921  -1.2750
   
 
-{PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1 
+{PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1  {CASE} >1m
   {LINE SEGMENT}  0.9 0.0  0.0 0.0   
   
 
@@ -18,9 +26,12 @@ ${PLOT 1D PARALLEL PROFILE}  1  {TUBES}  37 38 40 11 15 20 21 25 26 30  {NODES}
 
 {PLOT 1D PARALLEL PROFILE}  1  {TUBES}  37 38 40 11 15 20 21 25 26 30 {NODES}  {XRANGE}  0.0 0.5
 
-{PLOT 2D CONTOUR}  200  {LOG}  {XRANGE}  15.0    19.0     {NO FRAME}
-{PLOT 2D CONTOUR}  220         {XRANGE}  1.0E+20 5.0E+22  {NO FRAME}
-{PLOT 2D CONTOUR}  222         {XRANGE}  5.0E+18 2.0E+21                
+{PLOT 2D CONTOUR}  200  {LOG}  {XRANGE}  15.0    19.0     $ {NO FRAME}
+{PLOT 2D CONTOUR}  220         {XRANGE}  1.0E+20 5.0E+22  {NO FRAME}  {ZOOM}  0.15 -1.70  0.8 -0.9
+{PLOT 2D CONTOUR}  222         {XRANGE}  5.0E+18 1.0E+21              {ZOOM}  0.15 -1.70  0.8 -0.9
+
+{PLOT 2D CONTOUR}  1  {LOG}  {NO FRAME}  {ZOOM}  0.15 -1.70  0.8 -0.9  $ ne
+{PLOT 2D CONTOUR}  7  {LOG}              {ZOOM}  0.15 -1.70  0.8 -0.9  $ Te
 
 {EXIT}
 
