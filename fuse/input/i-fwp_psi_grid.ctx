@@ -23,7 +23,7 @@ $  {SHOW}  5  Red
 ${EXIT}
 
 {PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
-  {EQU PARAMS}  14  0.6425  1.0
+  {EQU PARAMS}  14  0.0     1.0
   {ZOOM}        3.6  -5.0   8.8  5.2
   {NO WALL}  {NO FRAME} 
   {ANNOTATE} 1    Blue  grid_wall_file
