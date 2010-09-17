@@ -2448,6 +2448,76 @@ contains
 
   end subroutine find_field_line_intsects
 
+  subroutine assign_grid_to_divimp(maxnrs,maxnks,mves,nrs,nks,&
+           nves,rves,zves,&
+           idring,psitarg, &    
+           npolyp,korpg,&
+           nvertp,rvertp,zvertp,&
+           rs,zs)
+    implicit none
+    integer :: maxnrs,maxnks,mves
+
+    integer :: nrs,nks(maxnrs),nves,npolyp,idring(maxnrs)
+    integer :: korpg(maxnks,maxnrs)
+    real :: rs(maxnks,maxnrs),zs(maxnks,maxnrs)
+    real :: rves(mves),zves(mves)
+    real :: nvertp(maxnrs*maxnks)
+    real :: rvertp(5,maxnrs*maxnks),zvertp(5,maxnrs*maxnks)
+    real :: psitarg(maxnrs,2)
+
+
+    ! local declarations
+
+    integer :: in,ik,ir,it,is
+    ! Assign grid polygons
+
+    
+    do in = 1,npoly
+       nvertp(in) = nvp(in)
+       do it = 1,4
+          rvertp(it,in) = rvp(it,in)
+          zvertp(it,in) = zvp(it,in)
+       end do
+    end do
+
+    nrs = nrings
+    
+    do ir = 1,nrings
+       nks(ir) = nknots(ir)
+       do ik = 1,nknots(ir)
+          rs(ik,ir) = rcen(ik,ir)
+          zs(ik,ir) = zcen(ik,ir)
+          korpg(ik,ir) = poly_ref(ik,ir)
+       end do 
+    end do
+
+    ! assign R value as psitarg as done for linear grids 
+
+
+
+    ! calculate rves,zves by running along the cell ends and the limiter surface line. 
+    ! one source of these numbers could be the intersects array from field_line_intersections since these
+    ! points are used to define the polygon surfaces at the ends of the rings. 
+
+
+
+
+  end subroutine assign_grid_to_divimp
+
+
+
+  subroutine deallocate_storage
+    implicit none
+
+    if (allocated(av_tan_s)) deallocate(av_tan_s)
+
+
+
+
+
+
+
+  end subroutine deallocate_storage
 
 
 

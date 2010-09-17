@@ -9942,8 +9942,14 @@ c
       call write_grid
 
 
-      call assign_grid_to_divimp(maxnrs,maxnks,mves,nks,nrs,rves,zves,
-     >            
+      call assign_grid_to_divimp(maxnrs,maxnks,mves,nks,nrs,
+     >       nves,rves,zves,
+     >       idring,psitarg,     
+     >       npolyp,korpg,
+     >       nvertp,rvertp,zvertp,
+     >       rs,zs,
+
+
 
       idring(ir)
       psitarg(ir,1)
