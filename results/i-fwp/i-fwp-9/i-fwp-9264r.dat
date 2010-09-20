@@ -10,7 +10,7 @@
  *                                                            *
  * i-fwp-9264r.d6i                                            *
  *                                                            *
- *                   07/21/10 18:20:20 DIVIMP6A/41            *
+ *                   09/20/10 03:12:53 DIVIMP6A/41            *
  *                                                            *
  * iterm_slo.carre.002_fix_2                                  *
  *                                                            *
@@ -901,7 +901,7 @@
      that cannot be set by input to DIVIMP must be changed in the
      template file.
  
-     RUN TIME (CPU seconds)              3600
+     RUN TIME (CPU seconds)             14400
      SURFACE MATERIAL: TARGET                                
                        WALL                                  
      SURFACE TEMPERATURE (eV): TARGET    0.00    
@@ -2193,9 +2193,9 @@
    DIVIMP/EIRENE Information on Hydrogenic Behaviour
    The following are for cylindrical/toroidal geometry. Note that it is the
    toroidal target flux that is currently passed to EIRENE:
-   EIRENE ionization        :   4.1282E+18   6.0732E+18
-     EIR Core ionization    :   1.9783E+17   2.8853E+17
-     EIR SOL  ionization    :   3.9304E+18   5.7846E+18
+   EIRENE ionization        :   4.1263E+18   6.0705E+18
+     EIR Core ionization    :   1.9715E+17   2.8754E+17
+     EIR SOL  ionization    :   3.9292E+18   5.7830E+18
      EIR PP   ionization    :   0.0000E+00   0.0000E+00
      EIR ADD  ionization    :   0.0000E+00   0.0000E+00
    EIRENE recombinations    :   5.5170E+20   7.7300E+20
@@ -2206,10 +2206,10 @@
    DIV recombinations       :   0.0000E+00   0.0000E+00
    DIV total source(REC+FLX):   2.9744E+24   2.8362E+24
    EIR total source(REC+FLX):   2.9750E+24   2.8370E+24
-   Flux lost to core boundary   4.8723E+16 (  0.0% of toroidal EIR total source)
-   Flux lost to pump(s)     :   1.1954E+17 (  0.0% of toroidal EIR total source)
+   Flux lost to core boundary   4.9951E+16 (  0.0% of toroidal EIR total source)
+   Flux lost to pump(s)     :   1.2096E+17 (  0.0% of toroidal EIR total source)
    EIRCOR = (EIR total source)/(EIR ioniz+flux lost)
-   EIRCOR (CYL/TOR) =           692434.938   454543.875
+   EIRCOR (CYL/TOR) =           692305.375   454544.500
    Factor NOT applied to EIRENE data.  This information is
    only reported for the *final* call to EIRENE.
  
@@ -2234,7 +2234,7 @@
            7   1.0           2  1.0000E-10      0.0000
            8   1.0           2  1.0000E-10      0.0000
            9   2.0           2  1.0000E-10      0.0000
-          10   3.0       96063  1.0000E+00      0.0000
+          10   3.0      392518  1.0000E+00      0.0000
  
 
 
@@ -2242,16 +2242,16 @@
           (EXTRACTED FROM PIN RESULTS)
 
       REGION         PHOTONS      IONIZATIONS     JH-FACTOR
-            CORE    2.20595E+31    1.38595E+16        0.00000
-  INNER DIVERTOR    3.34112E+15    4.99011E+16       14.93542
-  INNER MAIN VES    3.22546E+15    1.59529E+16        4.94592
-       INNER SOL    6.56658E+15    6.58540E+16       10.02865
+            CORE    7.14972E+31    1.38124E+16        0.00000
+  INNER DIVERTOR    3.34544E+15    4.98624E+16       14.90462
+  INNER MAIN VES    3.23028E+15    1.59117E+16        4.92578
+       INNER SOL    6.57571E+15    6.57741E+16       10.00258
   OUTER DIVERTOR     0.0000         0.0000            0.00000
-  OUTER MAIN VES    6.98314E+16    2.09502E+17        3.00012
-       OUTER SOL    6.98314E+16    2.09502E+17        3.00012
-      ENTIRE SOL    7.63980E+16    2.75356E+17        3.60424
+  OUTER MAIN VES    6.98243E+16    2.09500E+17        3.00039
+       OUTER SOL    6.98243E+16    2.09500E+17        3.00039
+      ENTIRE SOL    7.64000E+16    2.75274E+17        3.60306
              PFZ     0.0000         0.0000            0.00000
-   ENTIRE PLASMA    2.20595E+31    2.89216E+17        0.00000
+   ENTIRE PLASMA    7.14972E+31    2.89086E+17        0.00000
 
 
 
@@ -2655,8 +2655,8 @@
 (*) CASE EPILOGUE
 
  TOTAL RANDOM NUMBERS USED           1
- TIME SPENT IN PIN/NIMBUS(S)     43008
+ TIME SPENT IN PIN/NIMBUS(S)    151114
  TIME FOLLOWING NEUTRALS (S)         0
  TIME FOLLOWING IONS     (S)         0
- TOTAL CPU TIME USED     (S)     51883
+ TOTAL CPU TIME USED     (S)    159861
 
