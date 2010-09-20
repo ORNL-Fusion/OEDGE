@@ -10,7 +10,7 @@
  *                                                            *
  * i-fwp-9264d.d6i                                            *
  *                                                            *
- *                   07/17/10 16:44:22 DIVIMP6A/41            *
+ *                   09/18/10 00:39:17 DIVIMP6A/41            *
  *                                                            *
  * iterm_slo.carre.002_fix_2                                  *
  *                                                            *
@@ -901,7 +901,7 @@
      that cannot be set by input to DIVIMP must be changed in the
      template file.
  
-     RUN TIME (CPU seconds)              3600
+     RUN TIME (CPU seconds)             14400
      SURFACE MATERIAL: TARGET                                
                        WALL                                  
      SURFACE TEMPERATURE (eV): TARGET    0.00    
@@ -949,7 +949,7 @@
 
      ITER STEP SUBI   BAL.    TARFLX    VOLREC      PUFF     IONIZ  CORE  PUMP
                                (s-1)     (s-1)     (s-1)     (s-1)   (%)   (%)
-        0    0    1*******  2.84E+24  5.38E+19  0.00E+00  6.12E+18   0.0   0.0
+        0    0    1*******  2.84E+24  5.38E+19  0.00E+00  6.13E+18   0.0   0.0
  
    TRANSPARENT AND ABSORBING WALL SURFACE FLUXES:
      [SORRY, TAG "EIRNONSTSUR-HD" NOT FOUND]
@@ -2193,9 +2193,9 @@
    DIVIMP/EIRENE Information on Hydrogenic Behaviour
    The following are for cylindrical/toroidal geometry. Note that it is the
    toroidal target flux that is currently passed to EIRENE:
-   EIRENE ionization        :   4.1606E+18   6.1232E+18
-     EIR Core ionization    :   2.5529E+17   3.7273E+17
-     EIR SOL  ionization    :   3.9053E+18   5.7504E+18
+   EIRENE ionization        :   4.1641E+18   6.1286E+18
+     EIR Core ionization    :   2.5351E+17   3.7006E+17
+     EIR SOL  ionization    :   3.9106E+18   5.7585E+18
      EIR PP   ionization    :   0.0000E+00   0.0000E+00
      EIR ADD  ionization    :   0.0000E+00   0.0000E+00
    EIRENE recombinations    :   3.8115E+19   5.3759E+19
@@ -2206,10 +2206,10 @@
    DIV recombinations       :   0.0000E+00   0.0000E+00
    DIV total source(REC+FLX):   2.9744E+24   2.8362E+24
    EIR total source(REC+FLX):   2.9745E+24   2.8363E+24
-   Flux lost to core boundary   4.3628E+16 (  0.0% of toroidal EIR total source)
-   Flux lost to pump(s)     :   7.4598E+16 (  0.0% of toroidal EIR total source)
+   Flux lost to core boundary   4.3181E+16 (  0.0% of toroidal EIR total source)
+   Flux lost to pump(s)     :   6.9666E+16 (  0.0% of toroidal EIR total source)
    EIRCOR = (EIR total source)/(EIR ioniz+flux lost)
-   EIRCOR (CYL/TOR) =           695160.188   454430.531
+   EIRCOR (CYL/TOR) =           695469.188   454430.219
    Factor NOT applied to EIRENE data.  This information is
    only reported for the *final* call to EIRENE.
  
@@ -2234,7 +2234,7 @@
            7   1.0           2  1.0000E-10      0.0000
            8   1.0           2  1.0000E-10      0.0000
            9   2.0           2  1.0000E-10      0.0000
-          10   3.0       98866  1.0000E+00      0.0000
+          10   3.0      368580  1.0000E+00      0.0000
  
 
 
@@ -2242,16 +2242,16 @@
           (EXTRACTED FROM PIN RESULTS)
 
       REGION         PHOTONS      IONIZATIONS     JH-FACTOR
-            CORE    1.81541E+16    1.78856E+16        0.98521
-  INNER DIVERTOR    3.33257E+15    4.95045E+16       14.85475
-  INNER MAIN VES    3.43819E+15    1.56139E+16        4.54131
-       INNER SOL    6.77077E+15    6.51184E+16        9.61759
+            CORE    1.81457E+16    1.77605E+16        0.97877
+  INNER DIVERTOR    3.32697E+15    4.94527E+16       14.86419
+  INNER MAIN VES    3.43385E+15    1.55635E+16        4.53239
+       INNER SOL    6.76081E+15    6.50162E+16        9.61662
   OUTER DIVERTOR     0.0000         0.0000            0.00000
-  OUTER MAIN VES    7.62066E+16    2.08486E+17        2.73580
-       OUTER SOL    7.62066E+16    2.08486E+17        2.73580
-      ENTIRE SOL    8.29774E+16    2.73604E+17        3.29734
+  OUTER MAIN VES    7.62380E+16    2.08956E+17        2.74084
+       OUTER SOL    7.62380E+16    2.08956E+17        2.74084
+      ENTIRE SOL    8.29988E+16    2.73973E+17        3.30092
              PFZ     0.0000         0.0000            0.00000
-   ENTIRE PLASMA    1.01132E+17    2.91490E+17        2.88229
+   ENTIRE PLASMA    1.01145E+17    2.91733E+17        2.88432
 
 
 
@@ -2655,8 +2655,8 @@
 (*) CASE EPILOGUE
 
  TOTAL RANDOM NUMBERS USED           1
- TIME SPENT IN PIN/NIMBUS(S)     43588
+ TIME SPENT IN PIN/NIMBUS(S)    153128
  TIME FOLLOWING NEUTRALS (S)         0
  TIME FOLLOWING IONS     (S)         0
- TOTAL CPU TIME USED     (S)     52948
+ TOTAL CPU TIME USED     (S)    162526
 
