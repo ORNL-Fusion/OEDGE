@@ -1853,6 +1853,8 @@ c     jdemod
       real*8 rtemp,ztemp
 c     jdemod
 c
+c     jdemod - what does this routine do?
+c
       
 
       REAL       TOL

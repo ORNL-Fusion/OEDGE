@@ -2000,7 +2000,7 @@ c           WRITE(50,*) '  R,Z  = ',r,z
         ENDIF
       ELSE
 c
-c       If the points are all identicle, then return a positive result,
+c       If the points are all identical, then return a positive result,
 c       otherwise indicate that the problem was ill-posed:
 c
         IF (ABS(ar-cr).LT.TOL.AND.ABS(az-cz).LT.TOL) THEN
