@@ -2192,6 +2192,13 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       OF REAL PLASMA POLYGONS ON EACH
      > RING')
        call prc ('                       VIRTUAL POINTS ARE DISCARDED')
+      ELSEIF (CTARGOPT.EQ.7) THEN
+       CALL PRC ('  TARGET OPTION    7 : TARGET IS SPECIFIED BY THE OUTE
+     >R')
+       CALL PRC ('                       POLYGON BOUNDARIES OF THE LAST
+     >SET')
+       CALL PRC ('                       OF PLASMA POLYGONS ON EACH RING
+     >')
       ENDIF
 C-----------------------------------------------------------------------
  999  IF     (CIONR.EQ.0) THEN

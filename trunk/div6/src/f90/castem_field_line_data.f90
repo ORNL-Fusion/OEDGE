@@ -1,7 +1,7 @@
 module castem_field_line_data
 
   use error_handling
-  use utilities
+  !use utilities
   use common_utilities
 
   implicit none
@@ -12,7 +12,8 @@ module castem_field_line_data
 
 
 
-  public :: read_identifier_data, read_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid
+  public :: read_identifier_data, read_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid,&
+            assign_grid_to_divimp,deallocate_castem_storage
 
 
 
@@ -75,8 +76,8 @@ module castem_field_line_data
 
 
   ! grid generation
-   real *8, allocatable :: rvp(:,:), zvp(:,:),rcen(:,:),zcen(:,:)
    integer, allocatable :: nvp(:)
+   real *8, allocatable :: rvp(:,:), zvp(:,:),rcen(:,:),zcen(:,:)
    integer, allocatable :: nknots(:)
    integer :: npoly, nrings, max_nrings, max_nknots,max_npoly
    integer,allocatable :: poly_ref(:,:)
@@ -516,8 +517,7 @@ contains
 
 
   subroutine calculate_limiter_surface
-    use utilities
-    use common_utilities
+    !use common_utilities
     implicit none
 
     integer :: in,if,ierr
@@ -1384,7 +1384,7 @@ contains
     !
 
 
-    real*8,allocatable :: r_bnds(:),s_bnds(:)
+    real*8,allocatable :: r_bnds(:)   !,s_bnds(:)
     integer :: init_grid_size
     integer :: in,in1,it,is
 
@@ -1399,7 +1399,8 @@ contains
     real*8 :: slen, ssep1
     integer :: ncells
 
-    integer :: sbnd_cnt,rbnd_cnt,rbnd_add,new_bnds
+    integer :: rbnd_cnt,rbnd_add,new_bnds
+    !integer :: sbnd_cnt,rbnd_cnt,rbnd_add,new_bnds
 
     integer :: npts1a, npts1b,npts2a,npts2b
     integer :: vert_cnt1,vert_cnt2,ntot1,ntot2
@@ -1426,15 +1427,15 @@ contains
        return
     endif
 
-    if (init_grid_size.gt.0) then 
-       if (allocated(s_bnds)) deallocate(s_bnds)
-       allocate(s_bnds(init_grid_size),stat=ierr)
-    else
-       return
-    endif
+!    if (init_grid_size.gt.0) then 
+!       if (allocated(s_bnds)) deallocate(s_bnds)
+!       allocate(s_bnds(init_grid_size),stat=ierr)
+!    else
+!       return
+!    endif
 
     rbnd_cnt = 0
-    sbnd_cnt = 0
+!    sbnd_cnt = 0
 
 
     do in = 1,av_tan_cnt
@@ -1453,8 +1454,8 @@ contains
           write(6,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
        endif
 
-       sbnd_cnt = sbnd_cnt + 1
-       s_bnds(sbnd_cnt) = av_tan_s(in)
+!       sbnd_cnt = sbnd_cnt + 1
+!       s_bnds(sbnd_cnt) = av_tan_s(in)
 
     end do
 
@@ -1462,11 +1463,11 @@ contains
     ! Add locations that are not tangency points  .. then sort the arrays
     !
 
-    sbnd_cnt = sbnd_cnt + 1
-    s_bnds(sbnd_cnt) = s_limiter_min
+!    sbnd_cnt = sbnd_cnt + 1
+!    s_bnds(sbnd_cnt) = s_limiter_min
 
-    sbnd_cnt = sbnd_cnt + 1
-    s_bnds(sbnd_cnt) = s_limiter_max
+!    sbnd_cnt = sbnd_cnt + 1
+!    s_bnds(sbnd_cnt) = s_limiter_max
 
     rbnd_cnt = rbnd_cnt + 1
     r_bnds(rbnd_cnt) = r_limiter_min
@@ -1476,7 +1477,8 @@ contains
     r_bnds(rbnd_cnt) = maxval(av_tan_r) + (r_limiter_max - maxval(av_tan_r)) * 0.95
 
     call sort_arrays(0,rbnd_cnt,r_bnds)
-    call sort_arrays(0,sbnd_cnt,s_bnds)
+    !call sort_arrays(0,sbnd_cnt,s_bnds)
+    !call sort_arrays(1,sbnd_cnt,s_bnds)
 
     ! run through R bounds and insert extras in situations where the separation is too large. 
 
@@ -1769,7 +1771,7 @@ contains
              end do
 
              vert_cnt1 = ntot1
-             call sort_arrays(0,vert_cnt1,vert_rec1,vert_type1)
+             call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1)
 
              do is = 1,vert_cnt1-1
                 ! place additional vertices between each tangency/surface using the grid generation contraints
@@ -1790,7 +1792,7 @@ contains
              end do
 
              vert_cnt1 = ntot1
-             call sort_arrays(0,vert_cnt1,vert_rec1,vert_type1)
+             call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1)
 
 
           endif
@@ -1811,8 +1813,8 @@ contains
 
           vert_cnt1 = ntot1
           vert_cnt2 = ntot2
-          call sort_arrays(0,vert_cnt1,vert_rec1,vert_type1)
-          call sort_arrays(0,vert_cnt2,vert_rec2,vert_type2)
+          call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1)
+          call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
 
        end if
 
@@ -1910,7 +1912,7 @@ contains
 
        if (grid_option.eq.2) then 
           vert_cnt2 = ntot2
-          call sort_arrays(0,vert_cnt2,vert_rec2,vert_type2)
+          call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
           ! assign "2" arrays to "1" arrays for the next row in grid
 
        endif
@@ -1927,7 +1929,19 @@ contains
 
     end do
 
+    
 
+    ! Deallocate local storage
+
+    if (allocated(r_bnds)) deallocate(r_bnds)
+    !if (allocated(s_bnds)) deallocate(s_bnds)
+    if (allocated(int_type)) deallocate(int_type)
+    if (allocated(int_cnt)) deallocate(int_cnt)
+    if (allocated(ints)) deallocate(ints)
+    if (allocated(vert_rec1)) deallocate(vert_rec1)
+    if (allocated(vert_type1)) deallocate(vert_type1)
+    if (allocated(vert_rec2)) deallocate(vert_rec2)
+    if (allocated(vert_type2)) deallocate(vert_type2)
 
 
 
@@ -2027,8 +2041,8 @@ contains
        npts1 = npts1 + ncells -1
        npts2 = npts2 + ncells -1
 
-       call sort_arrays(0,npts1,s1,s1_type)
-       call sort_arrays(0,npts2,s2,s2_type)
+       call sort_arrays(1,npts1,s1,s1_type)
+       call sort_arrays(1,npts2,s2,s2_type)
 
     elseif (npts1.eq.2.and.npts2.gt.2) then 
        ! Case with one or more tangency points on second boundary
@@ -2089,8 +2103,8 @@ contains
        npts1 = npts1 + ncells -1
        npts2 = npts2 + cells_added
 
-       call sort_arrays(0,npts1,s1,s1_type)
-       call sort_arrays(0,npts2,s2,s2_type)
+       call sort_arrays(1,npts1,s1,s1_type)
+       call sort_arrays(1,npts2,s2,s2_type)
 
     elseif (npts1.gt.2.and.npts2.eq.2) then 
        ! points pre-specified along r1 ... none defined on r2 ... do proportional spacing to match
@@ -2113,8 +2127,8 @@ contains
 
        npts2 = npts2 + (npts1-2)
 
-       call sort_arrays(0,npts1,s1,s1_type)
-       call sort_arrays(0,npts2,s2,s2_type)
+       call sort_arrays(1,npts1,s1,s1_type)
+       call sort_arrays(1,npts2,s2,s2_type)
 
     elseif (npts1.gt.2.and.npts2.gt.2) then 
        ! pre defined corner points along R1 PLUS tangency points on R2
@@ -2155,13 +2169,8 @@ contains
 
        end do
 
-
-
-
-
-
        npts2 = npts2 + cells_added 
-       call sort_arrays(0,npts2,s2,s2_type)
+       call sort_arrays(1,npts2,s2,s2_type)
 
        write(0,'(a,i8,10(1x,g18.8))') 'NEW s2:',npts2,cells_added
 
@@ -2181,6 +2190,8 @@ contains
        nrings = nrings + 1
        nknots(nrings) = npts1 -1 
 
+       write(6,'(a,4i8,10(1x,g18.8))') 'GEN:',npts1,npts2,nrings,nknots(nrings)
+
        do in = 1,npts1 -1 
           npoly = npoly + 1
           nvp(npoly) = 4
@@ -2196,6 +2207,7 @@ contains
           poly_ref(in,nrings) = npoly
           rcen(in,nrings) = sum(rvp(1:nvp(npoly),npoly))/nvp(npoly)
           zcen(in,nrings) = sum(zvp(1:nvp(npoly),npoly))/nvp(npoly)
+          write(6,'(a,3i8,10(1x,g18.8))') 'POLY:',in,npoly,poly_ref(in,nrings),(rvp(it,npoly),zvp(it,npoly),it=1,nvp(npoly)),rcen(in,nrings),zcen(in,nrings)
 
        end do
 
@@ -2450,20 +2462,18 @@ contains
 
   subroutine assign_grid_to_divimp(maxnrs,maxnks,mves,nrs,nks,&
            nves,rves,zves,&
-           idring,psitarg, &    
            npolyp,korpg,&
            nvertp,rvertp,zvertp,&
            rs,zs)
     implicit none
     integer :: maxnrs,maxnks,mves
 
-    integer :: nrs,nks(maxnrs),nves,npolyp,idring(maxnrs)
+    integer :: nrs,nks(maxnrs),nves,npolyp
     integer :: korpg(maxnks,maxnrs)
     real :: rs(maxnks,maxnrs),zs(maxnks,maxnrs)
     real :: rves(mves),zves(mves)
-    real :: nvertp(maxnrs*maxnks)
+    integer :: nvertp(maxnrs*maxnks)
     real :: rvertp(5,maxnrs*maxnks),zvertp(5,maxnrs*maxnks)
-    real :: psitarg(maxnrs,2)
 
 
     ! local declarations
@@ -2472,26 +2482,42 @@ contains
     ! Assign grid polygons
 
     
-    do in = 1,npoly
-       nvertp(in) = nvp(in)
-       do it = 1,4
-          rvertp(it,in) = rvp(it,in)
-          zvertp(it,in) = zvp(it,in)
+    if (npoly.le.maxnrs*maxnks) then 
+       npolyp = npoly
+
+       do in = 1,npoly
+          nvertp(in) = nvp(in)
+          do it = 1,4
+             rvertp(it,in) = rvp(it,in)
+             zvertp(it,in) = zvp(it,in)
+          end do
        end do
-    end do
+    else
+       call errmsg('Too many polygons in ribbon grid:',npoly)
+    endif
 
-    nrs = nrings
-    
-    do ir = 1,nrings
-       nks(ir) = nknots(ir)
-       do ik = 1,nknots(ir)
-          rs(ik,ir) = rcen(ik,ir)
-          zs(ik,ir) = zcen(ik,ir)
-          korpg(ik,ir) = poly_ref(ik,ir)
-       end do 
-    end do
 
-    ! assign R value as psitarg as done for linear grids 
+
+    if (nrs.le.maxnrs) then 
+       nrs = nrings
+     
+       do ir = 1,nrings
+          if (nknots(ir).le.maxnks) then 
+             nks(ir) = nknots(ir)
+             do ik = 1,nknots(ir)
+                rs(ik,ir) = rcen(ik,ir)
+                zs(ik,ir) = zcen(ik,ir)
+                korpg(ik,ir) = poly_ref(ik,ir)
+                write(6,'(a,3i8,10(1x,g18.8))') 'POLY COPY:',ik,ir,korpg(ik,ir),rs(ik,ir),zs(ik,ir)
+             end do 
+          else
+             call errmsg('Too many knots on ribbon grid ring#:',ir)
+          endif
+       end do
+    else
+       call errmsg('Too many rings in ribbon grid:',nrings)
+    endif
+
 
 
 
@@ -2499,6 +2525,26 @@ contains
     ! one source of these numbers could be the intersects array from field_line_intersections since these
     ! points are used to define the polygon surfaces at the ends of the rings. 
 
+    ! Do I need a connection map to build this or is there an easier way?
+
+    ! for now just assign the averaged surface since all intersection points lie on this surface
+    ! ... may need to rebuild later from connection map data
+    
+    ! End points should already be included 
+    if (nves.le.mves) then 
+       nves = av_group_cnt
+       do in = av_group_cnt,1,-1
+          rves(in) = av_r(in)
+          zves(in) = av_s(in)
+          write(6,'(a,i8,5(1x,g18.8))') 'Vessel:',in,av_r(in),av_s(in)
+       end do
+       
+       ! Add 
+
+    else
+       call errmsg('Too many elements in ribbon grid wall specification:',av_group_cnt)
+    endif
+       
 
 
 
@@ -2506,18 +2552,42 @@ contains
 
 
 
-  subroutine deallocate_storage
+  subroutine deallocate_castem_storage
     implicit none
 
+
+    if (allocated(surf_r)) deallocate(surf_r)
+    if (allocated(surf_s)) deallocate(surf_s)
+    if (allocated(surf_fl)) deallocate(surf_fl)
+    if (allocated(surf_int)) deallocate(surf_int)
+    if (allocated(surf_sep)) deallocate(surf_sep)
+
+    if (allocated(av_s)) deallocate(av_s)
+    if (allocated(av_r)) deallocate(av_r)
+    if (allocated(av_type)) deallocate(av_type)
+    if (allocated(av_min_r)) deallocate(av_min_r)
+    if (allocated(av_max_r)) deallocate(av_max_r)
+
+    if (allocated(av_tan_r)) deallocate(av_tan_r)
     if (allocated(av_tan_s)) deallocate(av_tan_s)
+    if (allocated(av_wall_r)) deallocate(av_wall_r)
+    if (allocated(av_wall_s)) deallocate(av_wall_s)
+    if (allocated(tan_ord_r)) deallocate(tan_ord_r)
+    if (allocated(av_tan_ind)) deallocate(av_tan_ind)
+    
+    if (allocated(nvp)) deallocate(nvp)
+    if (allocated(rvp)) deallocate(rvp)
+    if (allocated(zvp)) deallocate(zvp)
 
 
+    if (allocated(rcen)) deallocate(rcen)
+    if (allocated(zcen)) deallocate(zcen)
+
+    if (allocated(nknots)) deallocate(nknots)
+    if (allocated(poly_ref)) deallocate(poly_ref)
 
 
-
-
-
-  end subroutine deallocate_storage
+  end subroutine deallocate_castem_storage
 
 
 

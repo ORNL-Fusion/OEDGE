@@ -230,7 +230,7 @@ c
 c         call readgeneralisedgrid
 c
 c
-c     jdemod - add new ribbon grid for ITER
+c     jdemod - add new ribbon grid for ITER - cgridopt=8
 c
       elseif (cgridopt.eq.RIBBON_GRID) then 
 c
@@ -335,6 +335,10 @@ c     plasma regions up one space in the array and reduces by two the
 c     number of elements on the ring - thus effectively elimintaing the
 c     virtual points at each end of the SOL/PP rings.
 c
+c     bypass for ribbon grid
+c
+      if (cgridopt.ne.RIBBON_GRID) then 
+
       if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
      >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then
 
@@ -687,7 +691,6 @@ c
          endif
 c
       endif
-c
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -700,8 +703,48 @@ c     CALCULATE OTHER GEOMETRY INFORMATION
 C-----------------------------------------------------------------------
 c
 c slmod begin - new
+c     
+c     jdemod - most of setupgrid is not compatible with ribbon grids
+c              also setupgrid would appear to need an already built
+c              connection map which may mean this call is out of order 
+c              since buildmap comes next
+c
       CALL SetupGrid
 c slmod end
+
+
+c
+c     - endif for ribbon code bypass
+c
+      else
+c
+c     copy some code from setupgrid for ribbon grids
+c     setup grid distinguishes between SOL and PFZ rings which may
+c     not be useful on a ribbon grid
+c
+c     Also ribbon grids may not have boundary rings since there would
+c     be so many ... this can be altered in grid generation but it 
+c     might be easiest to leave them out
+c
+c     what is "virloc" and virtag in setupgrid?
+c
+c     All code related to Xpoints is meaningless for ribbon grids
+c
+
+         CALL SetBounds
+
+         DO ir = irsep, nrs
+            osm_model(IKLO,ir) = GetModel(IKLO,ir)
+            osm_model(IKHI,ir) = GetModel(IKHI,ir)
+
+            WRITE(PINOUT,*) 'MODEL : ',osm_model(IKLO,ir),
+     >                                 osm_model(IKHI,ir)
+         ENDDO
+
+      endif
+
+
+
 C
 C-----------------------------------------------------------------------
 C     CALCULATE "NEAREST NEIGHBOURS" FOR EACH POINT
@@ -4168,11 +4211,11 @@ c
          ! if not one might use 2 PI R * karea * (sin(pitch_angle))  to get cell 
          ! area projected onto the poloidal plane. 
          kvols(ik,ir) = kareas(ik,ir)
-         kvols2(ik,ir) = kareas2(ik,ir)
+         kvol2(ik,ir) = karea2(ik,ir)
       else
 
          if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-        .    cgridopt.EQ.LINEAR_GRID) then
+     >       cgridopt.EQ.LINEAR_GRID) then
             KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
          endif
          KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
