@@ -436,7 +436,7 @@ contains
     outunit = 6
 
     write(outunit,'(a,i10)') ' Summary of Field line data read:',n_field_lines
-    write(outunit,'(a,4(1x,i10)') ' Total Intersections expected: ',n_tangency, n_enter, n_leave, n_tangency+n_enter+n_leave
+    write(outunit,'(a,4(1x,i10))') ' Total Intersections expected: ',n_tangency, n_enter, n_leave, n_tangency+n_enter+n_leave
 
     do in = 1, n_field_lines
        write(outunit,'(a,3(1x,i12))') 'FL:',field_line(in)%line_id,field_line(in)%int_tot,field_line(in)%int_stored
