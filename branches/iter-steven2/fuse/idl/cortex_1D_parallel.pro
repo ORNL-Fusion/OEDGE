@@ -117,6 +117,7 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                    'PARTICLE SOURCES','PARTICLE FLUX','MOMENTUM SOURCES','PRESSURE',  $
                    'EIRENE','EIRENE','EIRENE','EIRENE']
        xtitle   = 's (m)'
+       IF (plot.xdata EQ 'tar_dist') THEN xtitle = 'dist from target (m)'
        ytitle   = ['n (m-3)','Mach no.','p (?)','Te,i','particles (m-3 s-1)',  $
                   'parallel flux','momentum (?)','pressure (?)',  $
                   '(ph m-3 s-1)','(ph m-3 s-1)',' ','(ph m-3 s-1)']
@@ -306,6 +307,27 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
                ydata[*,1] = dgamma * (dalpha[m] / dgamma[m])
                END
           ENDCASE
+          IF (plot.xdata EQ 'tar_dist') THEN BEGIN
+            CASE iplot OF
+              1 : xdata2 = [0.28,val.plasma.r[j],2.0]
+              2 : xdata2 = [0.28,val.plasma.r[j],2.0]
+              3 : xdata2 = [0.28,val.plasma.r[j],2.0]
+              4 : xdata2 = [0.28,val.plasma.r[j],2.0]
+              5 : xdata2 = val.source.r[j]
+              6 : xdata2 = val.source.r[j]
+              7 : xdata2 = val.source.r[j]
+              8 : xdata2 = val.source.r[j]
+              9 : xdata2 = val.eirene.r[j]
+              10: xdata2 = val.eirene.r[j]
+              11: xdata2 = val.eirene.r[j]
+              12: xdata2 = val.eirene.r[j]
+            ENDCASE             
+            ydata2 = ydata
+            i = WHERE(xdata LT 4.5)
+            xdata = xdata2[i] - 0.28
+            ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+            FOR j = 0, MAXNYDATA-1 DO ydata[*,j] = ydata2[i,j]
+          ENDIF
           END
 ;       ----------------------------------------------------------------
         2: BEGIN
