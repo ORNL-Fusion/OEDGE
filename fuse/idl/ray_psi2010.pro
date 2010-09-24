@@ -58,6 +58,19 @@
 ;         ray_psi2010_plots,22,2,/show_b,cutoff=0.40,/equ,/no_line   Dgamma
 ;
 ;
+;     	OSM:
+;       ---
+;	ray_psi2010_plots,52,2,/equ,/show_a,cutoff=[0.7],/no_line
+; 	ray_psi2010_plots,52,2,/equ,/show_b,cutoff=[0.5],/no_line
+;	ray_psi2010_plots,23,2,/equ,/show_b,cutoff=[0.5],/no_line
+;	ray_psi2010_plots,23,2,/equ,/show_a,cutoff=[0.9],/no_line
+;
+;	ray_psi2010_plots,1 ,1,/equ,/no_line
+;	ray_psi2010_plots,1 ,1,/equ,/no_line,/ratio
+;	ray_psi2010_plots,23,1,/equ,/no_line
+;	ray_psi2010_plots,23,1,/equ,/no_line,/ratio
+;
+;
 ; ray_psi2010_pass				reprocess and save all reconstructions
 ; ray_psi2010_output,'filename'			put all B=1 plots into a postscript file in ./data_ray
 ;
@@ -176,7 +189,7 @@ END
 ;
 PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1, fill=fill, ps=ps,  $
                show_a=show_a,show_b=show_b,  $
-               nlevels=nlevels,cutoff=cutoff,no_line=no_line, equ=equ
+               nlevels=nlevels,cutoff=cutoff,no_line=no_line, equ=equ, ratio=ratio
 
   CASE (SIZE(data,/TNAME)) OF
     'INT': BEGIN
@@ -231,9 +244,9 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
 
       !P.MULTI = [0,2,2]
 
-      ray_psi2010_contour, data, /a, color, 'Black', nlevels, c_colors, 0.11, 0.93, fill=fill, equ=equ
+      ray_psi2010_contour, data, /a, color, 'Black', nlevels, c_colors, 0.11, 0.93, fill=fill, equ=equ, no_line=no_line
       IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces
-      ray_psi2010_contour, data, /b, color, 'Red'  , nlevels, c_colors, 0.61, 0.93, fill=fill, equ=equ
+      ray_psi2010_contour, data, /b, color, 'Red'  , nlevels, c_colors, 0.61, 0.93, fill=fill, equ=equ, no_line=no_line
       IF (KEYWORD_SET(equ)) THEN ray_psi2010_plot_surfaces, surfaces
 
       XYOUTS,0.5,0.980,title,/NORMAL,color=Truecolor('Black'), ALIGNMENT=0.5, CHARSIZE=1.2
@@ -256,14 +269,18 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
                 XTITLE='radial distance from inner target (m)',YTITLE='(arb)', $
                 TITLE='Profile along inner divertor leg (dotted line)'
           OPLOT,xdata2,ydata2,color=Truecolor('Red')
-          xdata = [data.b.x[ix]-x0, data.b.x[ix]-x0]
-          ydata = [0.0, 10000.0]
-          OPLOT,xdata,ydata,color=Truecolor('Blue'),LINESTYLE=1
+          IF (NOT KEYWORD_SET(ratio)) THEN BEGIN
+            xdata = [data.b.x[ix]-x0, data.b.x[ix]-x0]
+            ydata = [0.0, 10000.0]
+            OPLOT,xdata,ydata,color=Truecolor('Blue'),LINESTYLE=1
+          ENDIF
           END
       ENDCASE
 
       ymax = MAX([data.a.data[ix,*]*ascale,data.b.data[ix,*]*bscale])
-      CASE 1 OF
+      option = 1
+      IF (KEYWORD_SET(ratio)) THEN option = 2
+      CASE option OF
         0: BEGIN
           PLOT ,data.a.data[ix,*]*ascale,YRANGE=[0.0,ymax],color=Truecolor('Black')
           OPLOT,data.b.data[ix,*]*bscale,                  color=Truecolor('Red')
@@ -278,8 +295,19 @@ PRO ray_psi2010_plots, data, option, ascale=ascale, bscale=bscale, param1=param1
                 TITLE='Vertical profile along blue dotted line'
           OPLOT,xdata2,ydata2,color=Truecolor('Red')
           END
+        2: BEGIN
+          x0 = data.b.contour.x[0]
+          xdata1 = data.a.contour.fit_x - x0
+          xdata2 = data.b.contour.fit_x - x0
+          ydata1 = data.a.contour.data * ascale
+          ydata2 = data.b.contour.data * bscale
+          ydata = SMOOTH(ydata1 / ydata2 * 80.0,11)
+          PLOT ,xdata1,ydata,YRANGE=[0.0,140.0],color=Truecolor('Black'),XSTYLE=1,YSTYLE=1, $
+                XTITLE='radial distance from inner target (m)',YTITLE='(arb)', $
+                TITLE='D_alpha / D_gamma ratio (scaled, smoothed)'
+          END
       ENDCASE
-     !P.MULTI = 0
+      !P.MULTI = 0
       END
 ;   --------------------------------------------------------------------
     2: BEGIN  ; Big contour plot

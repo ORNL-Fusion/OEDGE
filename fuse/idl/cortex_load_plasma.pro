@@ -164,6 +164,8 @@ FUNCTION cortex_LoadEireneData, file
   pos      = inGetData('POS')   
   tube     = inGetData('TUBE') 
   s        = inGetData('S') 
+  r        = inGetData('R') 
+  z        = inGetData('Z') 
   ion_net  = inGetData('ION_NET')
   rec_net  = inGetData('REC_NET')
   mom_net  = inGetData('MOM_NET')
@@ -182,6 +184,8 @@ FUNCTION cortex_LoadEireneData, file
     pos          : pos          ,  $  
     tube         : tube         ,  $
     s            : s            ,  $
+    r            : r            ,  $
+    z            : z            ,  $
     ion_net      : ion_net      ,  $
     rec_net      : rec_net      ,  $
     mom_net      : mom_net      ,  $
@@ -248,7 +252,9 @@ FUNCTION cortex_LoadSourceData, file
 
   index   = inGetData('INDEX') 
   tube    = inGetData('TUBE' ) 
-  s       = inGetData('S'    ) 
+  s       = inGetData('S') 
+  r       = inGetData('R') 
+  z       = inGetData('Z') 
   par_net = inGetData('PAR_NET')
   par_ion = inGetData('PAR_ION')
   par_rec = inGetData('PAR_REC')
@@ -270,6 +276,8 @@ FUNCTION cortex_LoadSourceData, file
     index   : index   ,  $
     tube    : tube    ,  $
     s       : s       ,  $
+    r       : r       ,  $
+    z       : z       ,  $
     par_net : par_net ,  $
     par_ion : par_ion ,  $ 
     par_rec : par_rec ,  $
@@ -301,6 +309,8 @@ FUNCTION cortex_LoadPlasmaData, file
   index = inGetData('INDEX') 
   tube  = inGetData('TUBE') 
   s     = inGetData('S') 
+  r     = inGetData('R') 
+  z     = inGetData('Z') 
   dens  = inGetData('NE')
   vi    = inGetData('VI')
   cs    = inGetData('CS')
@@ -317,6 +327,8 @@ FUNCTION cortex_LoadPlasmaData, file
     index   : index ,  $
     tube    : tube  ,  $
     s       : s     ,  $
+    r       : r     ,  $
+    z       : z     ,  $
     dens    : dens  ,  $
     vi      : vi    ,  $
     cs      : cs    ,  $

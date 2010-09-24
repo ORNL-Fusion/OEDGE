@@ -235,6 +235,9 @@ PRO cortex_GeneratePlots, args
                 print,'automatic tube selection not working yet, need to load grid data'
                 stop
               ENDIF
+help,plot.tubes
+help,tube
+print,tube
               status = cortex_PlotParallelProfiles(plot, tube, data_array, ps=ps)
               IF (i LT N_ELEMENTS(plot.tubes)-1) THEN ERASE
             ENDFOR
