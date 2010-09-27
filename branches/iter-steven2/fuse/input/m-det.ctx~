@@ -5,6 +5,7 @@
 $ ----------------------------------------------------------------------
 
 
+
 {PLOT 2D FLUID GRID}  1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
 {PLOT 2D FLUID GRID}  1  
   {EQU}         ~/fuse_data/mast/shots/24860/24860_240.equ  
@@ -15,14 +16,17 @@ $ ----------------------------------------------------------------------
 
 
 {PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
-  {LINE SEGMENT}  0.29921  -1.416711  0.29921  -1.2750
-  
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.2750
 
-{PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1  {CASE} >1m
+{PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.6200
+
+
+{PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1  $ {CASE} >1m
   {LINE SEGMENT}  0.9 0.0  0.0 0.0   
   
 
-${PLOT 1D PARALLEL PROFILE}  1  {TUBES}  37 38 40 11 15 20 21 25 26 30  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11  {XDATA} tar_dist
 
 {PLOT 1D PARALLEL PROFILE}  1  {TUBES}  31 37 38 40 11 15 20 21 25 26 30  {NODES}  {XRANGE}  0.0 0.6
 
