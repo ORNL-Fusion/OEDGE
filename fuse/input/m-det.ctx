@@ -16,8 +16,11 @@ $ ----------------------------------------------------------------------
 
 
 {PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
-  {LINE SEGMENT}  0.29921  -1.416711  0.29921  -1.2750
-  
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.2750
+
+{PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.6200
+
 
 {PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1  $ {CASE} >1m
   {LINE SEGMENT}  0.9 0.0  0.0 0.0   
@@ -25,7 +28,7 @@ $ ----------------------------------------------------------------------
 
 {PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11  {XDATA} tar_dist
 
-{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  31 37 38 40 11 15 20 21 25 26 30  {NODES}  {XRANGE}  0.0 0.6
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  31 33 36 38 40 11 15 18 19 20 21 22 23 24 25 26 30  {NODES}  {XRANGE}  0.0 0.6
 
 {PLOT 2D CONTOUR}  200  {LOG}  {XRANGE}  15.0    19.0     $ {NO FRAME}
 {PLOT 2D CONTOUR}  220         {XRANGE}  1.0E+20 5.0E+22  {NO FRAME}  {ZOOM}  0.15 -1.70  0.8 -0.9
