@@ -237,7 +237,13 @@ c
 c     
 c
          call BuildRibbonGrid
-
+c slmod begin
+         WRITE(0,*) 'BACK IN TAU!'
+         nopriv = .TRUE.
+         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
+         call TailorGrid
+         call OutputData(85,'JUST CALLED TAILORGRID')
+c slmod end
       endif
 c
 c     Check for a valid grid - a grid with no rings is not valid
@@ -337,7 +343,11 @@ c     virtual points at each end of the SOL/PP rings.
 c
 c     bypass for ribbon grid
 c
-      if (cgridopt.ne.RIBBON_GRID) then 
+c slmod begin slmod begin
+      if (.TRUE.) then 
+c      
+c      if (cgridopt.ne.RIBBON_GRID) then 
+c slmod end     
 
       if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
      >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then

@@ -775,7 +775,11 @@ contains
        ! 
 
 
-       do in = 2,n_nodes
+       ! slmod begin
+       do in = 2,n_nodes-1
+       !
+       !do in = 2,n_nodes
+       ! slmod end
           test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
           write(6,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
@@ -1141,7 +1145,9 @@ contains
     do in = 1,max(av_tan_cnt,av_wall_cnt)
 
        if(in.le.av_wall_cnt) then 
-          write(6,'(a,i6,l8,10(1x,g18.8))') 'Wall:',in,av_wall_s(in).lt.av_tan_s(in),av_wall_r(in),av_wall_s(in)
+          ! slmod - array bounds error on AV_TAN_S
+	  ! write(6,'(a,i6,l8,10(1x,g18.8))') 'Wall:',in,av_wall_s(in).lt.av_tan_s(in),av_wall_r(in),av_wall_s(in)
+	  ! slmod end
        endif
 
        if (in.le.av_tan_cnt) then 
@@ -1506,7 +1512,9 @@ contains
     ! write out r_bnds
 
     do in = 1,rbnd_cnt
-       write(6,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(in-1)
+       ! slmod - array bounds error on R_BNDS
+       !write(6,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(in-1)
+       !
     end do
 
 

@@ -3589,11 +3589,11 @@ c     Functions:
 c     Local variables:
       INTEGER IK,IR,STATUS
 
-      INTEGER ii,ncell,wallik(MAXNKS),wallir(MAXNKS),tempik,tempir,
+      INTEGER ii,ncell,wallik(MAXNKS*2),wallir(MAXNKS*2),tempik,tempir,
      .        i,in,ik1,ir1,id1,iavg,istart,i1,i2
       LOGICAL valid
-      REAL    rcen,zcen,cellr(MAXNKS),cellz(MAXNKS),ravg,zavg,
-     .        wallth(MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
+      REAL    rcen,zcen,cellr(MAXNKS*2),cellz(MAXNKS*2),ravg,zavg,
+     .        wallth(MAXNKS*2),xpth,deltaz,deltar,tempr,tempz,tempth
 c
 c Initialize variables:
 c
@@ -3638,7 +3638,7 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
-            IF (ncell+1.EQ.MAXNKS)
+            IF (ncell+1.EQ.MAXNKS*2)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1
@@ -3667,6 +3667,9 @@ c Check this...
         ENDDO
       ENDDO
 c
+      WRITE(0,*) 'ncell',ncell
+c      STOP 'MADe IO!'
+
 c Adjust WALLTH based on x-point location:
 c
       deltar = rxp - rcen
