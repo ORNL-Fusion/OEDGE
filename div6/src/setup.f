@@ -2952,7 +2952,7 @@ c...temp1
       CALL RZero(lpdati2  ,MAXINS*9)
       CALL RZero(lpdato2  ,MAXINS*9)
 
-      DO i1 = 1, MAXNRS
+      DO i1 = 1, MAXINS
         lpdati2(i1,8) = 1.0
         lpdati2(i1,9) = 1.0
         lpdato2(i1,8) = 1.0
