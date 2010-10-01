@@ -330,7 +330,7 @@ c       strata are not specifically assigned:
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* default target (OSM)'
-          IF (cgridopt.EQ.LINEAR_GRID) THEN
+          IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs-1               ! Ring index end
             surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
@@ -381,7 +381,7 @@ c          surface(nsurface)%index(2) = nrs                    ! Ring index end
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* default target (OSM)'
-          IF (cgridopt.EQ.LINEAR_GRID) THEN
+          IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs-1               ! Ring index end
             surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
@@ -414,7 +414,7 @@ c...  (Core boundary surface should ideally be set here (and not above).)
       nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
       surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
       nboundary = 1
-      IF (cgridopt.EQ.LINEAR_GRID) THEN
+      IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
         surface(nsurface)%surtxt   = '* core, reflecting (OSM)'
         surface(nsurface)%index(1) = 1         
         surface(nsurface)%index(2) = MAXNKS    
@@ -472,7 +472,8 @@ c...
 
 c...  PFZ radial boundary:  
       nboundary = nboundary + 1
-      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
+      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs.OR.
+     .    cgridopt.EQ.RIBBON_GRID) THEN
       ELSE
         nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
         surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
@@ -1097,7 +1098,7 @@ c...  Decide if default strata should be assigned:
         IF (     opt_eir%type(is)   .EQ.2.0) assign_volrec =.FALSE.
       ENDDO
 
-      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
+c      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 
 c...  Low IK target:
       IF (assign_LO) THEN
@@ -1200,7 +1201,7 @@ c        strata(nstrata)%npts    = 100
 
 c...  User specified neutral injection/puffing:
       DO is = 1, opt_eir%nstrata
-        WRITE(0,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
+c        WRITE(0,*) 'STRATA:TYPE=',NINT(opt_eir%type(is))
 
         SELECTCASE (NINT(opt_eir%type(is)))
           CASE (999)  ! For compatibility with old strata definition format, see below
@@ -1408,7 +1409,7 @@ c...  TEMP: make sure regular strata come first until surface to strata mapping 
         ENDIF
       ENDDO
 
-      WRITE(0,*) 'NSTRATA:',nstrata,strata(1:nstrata)%type
+c      WRITE(0,*) 'NSTRATA:',nstrata,strata(1:nstrata)%type
 
 c      WRITE(0,*) 'STRATA:',nstrata,strata(1:nstrata)%type
 c      WRITE(0,*) 'STRATA:',strata(1:nstrata)%type
@@ -1950,7 +1951,7 @@ c...  Also from READPIN?
 
 c...  Dump EIRENE calculated impurity distribution data:
       IF (ALLOCATED(eirdat)) THEN
-        CALL inOpenInterface('idl.eirene_imp')
+        CALL inOpenInterface('idl.eirene_imp',ITF_WRITE)
         CALL inPutData(irsep -1,'GRID_ISEP' ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
         CALL inPutData(irwall-1,'GRID_IPFZ' ,'N/A')  ! the boundary rings are not present
         CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  

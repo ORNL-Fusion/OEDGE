@@ -826,9 +826,7 @@ c...  Plot location:
       IF   (cdum1(8:15).EQ.'Position'.OR.cdum1(8:15).EQ.'position'.OR.
      .      cdum1(8:15).EQ.'POSITION') THEN
         READ(cdum1,*) cdum2,posopt,posx,posy,poswidth,posheight
-
-        WRITE(0,*) 'POSITION',posopt,posx,posy,poswidth,posheight
-
+        WRITE(6,*) 'POSITION',posopt,posx,posy,poswidth,posheight
         IF     (posopt.EQ.1) THEN
           map1x = 0.05
           map2x = map1x + 0.80 * (xxmax-xxmin) / (yymax-yymin)
@@ -845,7 +843,13 @@ c          map2y = map1y + 0.40
           map2x = map1x + poswidth * (xxmax-xxmin) / (yymax-yymin)
           map1y = posy
           map2y = map1y + poswidth
+        ELSEIF (posopt.EQ.3) THEN
+          map1x = posx
+          map2x = map1x + poswidth
+          map1y = posy
+          map2y = map1y + posheight
         ENDIF
+
 
       ELSE
         BACKSPACE 5
@@ -1307,7 +1311,7 @@ c...    Magnetic grid:
         ALLOCATE(lcolour(4*MAXNKS*MAXNRS))
 
         nver = 0
-        CALL ALLOC_VERTEX(10*MAXNKS) ! Borrowed from mod_triangle
+        CALL ALLOC_VERTEX(20*MAXNKS) ! Borrowed from mod_triangle
 
         DO ir = 1, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE

@@ -3480,7 +3480,7 @@ c...  Dump triangles (for OUT, not EIRENE):
      .     STATUS='REPLACE',ERR=96)      
       WRITE(fp,*) ntri
       DO i1 = 1, ntri
-        WRITE(fp,'(I6,3(2F14.10,2X))')
+        WRITE(fp,'(I6,3(2F14.9,2X))')
      .    i1,(ver(tri(i1)%ver(i2),1),ver(tri(i1)%ver(i2),2),i2=1,3)
       ENDDO
       CLOSE(fp)      

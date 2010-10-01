@@ -87,8 +87,8 @@ c...  Load the data:
               solps_n              = count
               solps_ik (count)     = idum(1)
               solps_ir (count)     = idum(2)
-              solps_cen(count,1:2) = rdum(1:2) * 1.0D-03
-            ENDIF
+              solps_cen(count,1:2) = rdum(1:2) ! * 1.0D-03 Rescaling removed on 18/08/2010 after noticing that AK modified 
+            ENDIF                              !           the 2dvi script for extracting SOLPS data. -SL
           ENDDO
  50       CONTINUE
         CASE DEFAULT

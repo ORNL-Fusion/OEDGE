@@ -15,7 +15,7 @@ c
       IF (nion.NE.1)
      .  CALL ER('SolveFluidEquations','One fluid ion only please',*99)
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 'ABOUT TO CALL PLASMA SOLVER'
         WRITE(logfp,*) 
         WRITE(logfp,*) 'ION DATA :',mi(ion),ai(ion)
@@ -85,12 +85,12 @@ c
 
       cont = .TRUE.
 
-      IF (log.GT.0) WRITE(logfp,*) 'ICMAX:',icmax
+      IF (logop.GT.0) WRITE(logfp,*) 'ICMAX:',icmax
 
 
       anl_imaginary = .FALSE.
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 'SOL28'
         WRITE(logfp,'(3A4,2A10,A6,3A10,5X,2(2A10,2X),4A10)')
      .    'i','iSL','iSH','ni','vi','M','pe+pi','te','ti',
@@ -100,7 +100,7 @@ c
 c...  Density and velocity:
       DO WHILE (cont)
         cont = .FALSE.
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           ic = 0
           WRITE(logfp,'(I4,8X,1P,D10.2,D10.2,0P,F6.2,1P,D10.2,
      .                  0P,2F10.4,5X,1P,2D10.2,2X,2D10.2)')
@@ -163,7 +163,7 @@ c...
           cs = DSQRT( (te(ic) + ti(ic,ion)) * ECH / mi(ion) )  ! Need improved calculation...
           machno(ic,ion) = DABS(vi(ic,ion)) / cs
 
-          IF (log.GT.0) 
+          IF (logop.GT.0) 
      .       WRITE(logfp,'(3I4,1P,2D10.2,0P,F6.2,1P,D10.2,
      .                     0P,2F10.4,5X,1P,2D10.2,2X,2D10.2,2X,4D10.2)')
      .        ic,anl_ic_super(LO),anl_ic_super(HI),
@@ -185,7 +185,7 @@ c     .        machno(ic,ion)
 
         ENDDO  ! End of IC loop
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           ic = icmax + 1
           WRITE(logfp,'(I4,8X,1P,D10.2,D10.2,0P,F6.2,1P,D10.2,
      .                  0P,2F10.4,5X,1P,2D10.2,2X,2D10.2)')
