@@ -237,12 +237,26 @@ c
 c     
 c
          call BuildRibbonGrid
-c slmod begin
-         WRITE(0,*) 'BACK IN TAU!'
-         nopriv = .TRUE.
-         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
+c slmod begin - ribbon dev
+         WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
+         nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
+         call InsertRing(1  ,BEFORE,PERMANENT)
+         call InsertRing(nrs,AFTER ,PERMANENT)
+         irwall = nrs
+         irtrap = nrs
+         idring(1)   = BOUNDARY
+         idring(nrs) = BOUNDARY
+         ik = nks(irsep) / 2              
+         r0 = rs(ik,irsep)                ! Seems reasonably
+         z0 = zs(ik,irsep)
+         rxp = rvertp(1,korpg(ik,irsep))  ! This is over-written in SetupGrid with a different convention
+         zxp = zvertp(1,korpg(ik,irsep))  ! but I'm afraid to change it just yet...
+c         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
+c         CALL DumpGrid('IN TAU, BEFORE TAILORGRID')
          call TailorGrid
-         call OutputData(85,'JUST CALLED TAILORGRID')
+c         call OutputData(85,'JUST CALLED TAILORGRID')
+c         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
+         call AddPoloidalBoundaryCells
 c slmod end
       endif
 c
@@ -343,7 +357,7 @@ c     virtual points at each end of the SOL/PP rings.
 c
 c     bypass for ribbon grid
 c
-c slmod begin slmod begin
+c slmod begin - ribbon dev
       if (.TRUE.) then 
 c      
 c      if (cgridopt.ne.RIBBON_GRID) then 
@@ -768,7 +782,7 @@ c      CALL OutputData(85,'POLOIDAL GRID TEST')
 c      STOP 'sdfgsdfsd'
 
       if (nbr.gt.0.or.eirgrid.eq.1.or.
-     .    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
+     .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c...    Generalized grid:
         CALL BuildMap
 
@@ -1709,7 +1723,8 @@ c     sure on this at the moment).  This routine is called for all grids
 c     except JET grids: (NOW called for JET grids if Eirene is run)
 
       IF (pincode.EQ.1.OR.pincode.EQ.2.OR.pincode.EQ.3.OR.
-     .    pincode.EQ.4.OR.pincode.EQ.5) 
+     .    pincode.EQ.4.OR.pincode.EQ.5.OR.
+     .    cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) 
      .  CALL AssignNIMBUSWall
 
 c...  Build vacuum grid:
@@ -1864,7 +1879,7 @@ c
 c     JET and SONNET grids
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
 c        Only possible for grids with polygon information
 c
@@ -2171,7 +2186,7 @@ c
 c     For grids with polygon information
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
          do ir = 1,nrs
             do ik = 1,nks(ir)
@@ -20896,9 +20911,27 @@ c
       fp_rings(fp_main) = fp_irmain
       fp_cells(fp_main) = nks(fp_irmain)
 
-      fp_virt_rings(fp_pfz)= irtrap
-      fp_rings(fp_pfz)  = fp_irpfz
-      fp_cells(fp_pfz)  = nks(fp_irpfz)
+c slmod begin - ribbon dev
+c...  A bit awkard since NUM_FP_REGIONS is a parameter set in FPERIF_COM, but 
+c     for the ribbon grid there's no PFR, so just duplicating the main SOL
+c     data here for now so that the code runs through with everything 
+c     initialised -- OR -- just turned off the FP option in the input file, which
+c     was, like, so easy, but leaving this comment here in case of interest. -SL 30/09/2010
+      if (nopriv) then
+        WRITE(0,*) '*** HACK FP SETUP ASSIGNMENT FOR THE PFZ ***'
+        fp_virt_rings(fp_pfz) = irwall
+        fp_rings(fp_pfz) = fp_irmain
+        fp_cells(fp_pfz) = nks(fp_irmain)
+      else
+        fp_virt_rings(fp_pfz)= irtrap
+        fp_rings(fp_pfz)  = fp_irpfz
+        fp_cells(fp_pfz)  = nks(fp_irpfz)
+      endif
+c
+c      fp_virt_rings(fp_pfz)= irtrap
+c      fp_rings(fp_pfz)  = fp_irpfz
+c      fp_cells(fp_pfz)  = nks(fp_irpfz)
+c slmod end
 c
 c     Loop over fp regions and set them up
 c

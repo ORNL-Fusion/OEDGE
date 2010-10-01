@@ -790,12 +790,9 @@ c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
           v =  0.0D0
           d = -1.0D0         
           CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status) 
-
 c          WRITE(fp,*) 'D:',d(1:n)
-
           DO i4 = 1, n
             IF (ninter.LT.MAXINTER) THEN  
-
               IF (obj(iobj)%gsur(iside).EQ.GT_TC.AND.  ! Don't include intersection where 
      .            d(i4).GT.1.0D-10.OR.                 ! the point is *on* a surface...
      .            obj(iobj)%gsur(iside).EQ.GT_TD.AND.  

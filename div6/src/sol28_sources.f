@@ -12,7 +12,7 @@ c
 
       cnt_integrate = .TRUE.
  
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -37,13 +37,14 @@ c             None:
 c             Reference plasma:
               IF (ref_nion.EQ.0)   ! Should have a global check on this somewhere in _main rather than all these independent checks...
      .          CALL ER('AssignParticleSources','Reference plasma '//    ! but right now I'm worried that a non-local check would be
-     .                  'data requrested but none available',*99)        ! overlooked for new quantities...
+     .                  'data requested but none available',*99)         ! overlooked for new quantities...
               source(ic1:ic2) = -DBLE(ref_fluid(ic1:ic2,ion)%parrec) 
             CASE (2)
 c             PIN:          
               source(ic1:ic2) = -1.0D0 * DBLE(pin(ic1:ic2,ion)%rec) 
-c            CASE (3)
-c              Calculated...:
+            CASE (3)
+c              Calculated...: *** NOT READY ***
+              source(ic1:ic2) = 0.0D0
             CASEDEFAULT
               CALL User_VolumeParRecSource(target,source)
           ENDSELECT         
@@ -84,13 +85,15 @@ c              WRITE(logfp,*) '--> DONE'
           ENDSELECT         
           parion(ic1:ic2,ion) = source(ic1:ic2)
 
-
 c...      Cross-field:
 c         ----------------------------------------------------------------
 
-c...      User:
+c...      Generic user particle source specification:
 c         ----------------------------------------------------------------
-          parusr(ic1:ic2,ion) = 0.0D0
+          source = 0.0D0
+          CALL User_ParticleSource(ion,target,source)
+          parusr(ic1:ic2,ion) = source(ic1:ic2)  
+c          parusr(ic1:ic2,ion) = 0.0D0
 
 c...      Anomalous:
 c         ----------------------------------------------------------------
@@ -121,17 +124,15 @@ c...          Full ring:
             CASE (4)
 c             Anomalous term assigned in ConserveParticles, based on
 c             prescribed flow values:
+            CASE (6)
+c...          Outer half ring only:
+              IF (target.EQ.HI)
+     .          CALL SpecifyDistribution(target,0,0,1,0.0D0,source)
             CASEDEFAULT                                            
               STOP 'USER ROUTINE NOT READY: P_ANO'                
               CALL User_VolumeParAnoSource(target,source)         
           ENDSELECT
           parano(ic1:ic2,ion) = source(ic1:ic2)
-
-c...      Generic user particle source specification:
-c         ----------------------------------------------------------------
-          source = 0.0D0
-          CALL User_ParticleSource(ion,target,source)
-          parion(ic1:ic2,ion) = parion(ic1:ic2,ion) + source(ic1:ic2)  ! *HACK* source needs to go somewhere else...
 
         ENDDO
       ENDDO
@@ -142,7 +143,7 @@ c...
 c...
       CALL IntegrateSources(1)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING PARTICLE SOURCES: DONE'
 
       RETURN
  99   STOP
@@ -241,7 +242,7 @@ c             Half ring:
               net(target) = isat(ict,ion) + integral(1) + integral(2)
               parano(ic1:ic2,ion) = -parano(ic1:ic2,ion) * net(target)
 c           ------------------------------------------------------------
-            CASE (3)
+            CASE (3,6)
 c             Full ring:
               IF (opt%bc(LO).NE.1) 
      .          CALL ER('AssignParticleSources','Full ring '//    ! Move this check to SetupSolverOptions...
@@ -389,7 +390,7 @@ c
       INTEGER ion, target, ic1, ic2
       REAL*8  source(icmax)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: BEGIN'
   
 c...  Set everything to zero?  No, because for performance optimization I really
 c     need to keep the number of non-necessary re-assignments to a minimum, 
@@ -438,7 +439,8 @@ c...      User:
 c         ----------------------------------------------------------------
           source = 0.0D0
           CALL User_MomentumSource(ion,target,source)
-          momvol(ic1:ic2,ion) = momvol(ic1:ic2,ion) + source(ic1:ic2)
+          momusr(ic1:ic2,ion) = source(ic1:ic2)
+c          momvol(ic1:ic2,ion) = momvol(ic1:ic2,ion) + source(ic1:ic2)
 
         ENDDO
       ENDDO
@@ -449,7 +451,7 @@ c...
 c...
       CALL IntegrateSources(2)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING MOMENTUM SOURCES: DONE'
 
       RETURN
  99   STOP
@@ -467,7 +469,7 @@ c
       INTEGER ion,target,ic1,ic2,ic,node1,node2,i1,i2,snode,enode,
      .        inode
       REAL*8  net,integral(10),p1,p2,source(icmax),pmatch,
-     .        srcint(0:icmax)
+     .        srcint(0:icmax),srcint1(0:icmax),srcint2(0:icmax)
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -504,7 +506,7 @@ c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
           DO inode = node1+1, node2-1
             IF (node(inode)%ne.EQ.-1.0.OR.
      .          node(inode)%pe.EQ.-1.0) THEN
-              STOP 'WHAT THE HELL?'
+              STOP 'WHAT THE HECK?'
               IF (inode.LE.mnode) ic1 = node(inode)%icell
               IF (inode.GE.mnode) ic2 = node(inode)%icell
             ENDIF
@@ -538,7 +540,9 @@ c...          Check for node density/pressure specifications:
      .                                 opt%m_ano_dist(target),
      .                            DBLE(opt%m_ano_exp (target)),source)
 
-              CALL IntegrateArray(FULL,momvol(1,ion),1,srcint)   ! Not debugged as yet...
+              CALL IntegrateArray(FULL,momvol(1,ion),1,srcint1)   ! Not debugged as yet...
+              CALL IntegrateArray(FULL,momusr(1,ion),1,srcint2)   
+              srcint = srcint1 + srcint2
 
               IF     (node1.EQ.1.AND.node2.EQ.nnode) THEN
                 srcint(0) = srcint(TOTAL)
@@ -575,7 +579,7 @@ c
       INTEGER ion, target, ic1, ic2
       REAL*8  source(icmax)
 
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -670,7 +674,7 @@ c         ----------------------------------------------------------------
 
       CALL IntegrateSources(3)
 c...
-      IF (log.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: DONE'
 
       RETURN
  99   WRITE(0,*) '  TARGET = ',target
@@ -709,7 +713,7 @@ c...        Integral:
             CALL IntegrateArray(FULL,parsrc(1,ion),1,parint(0,ion))
 
 c...        Detailed check:
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               CALL IntegrateArray(FULL,parrec(1,ion),0,integral(1))
               CALL IntegrateArray(FULL,parion(1,ion),0,integral(2))
               CALL IntegrateArray(FULL,parusr(1,ion),0,integral(3))
@@ -740,16 +744,25 @@ c...        Calculate net momentum source along the flux tube:
             momsrc(0      ,ion) = pe(ictarg(LO)) + pi(ictarg(LO),ion)
             momsrc(icmax+1,ion) = pe(ictarg(HI)) + pi(ictarg(HI),ion)
             momsrc(1:icmax,ion) = momvol(1:icmax,ion) + 
-     .                            momano(1:icmax,ion)
+     .                            momano(1:icmax,ion) +
+     .                            momusr(1:icmax,ion)
 c...        Integral:
             CALL IntegrateArray(FULL,momsrc(1,ion),1,momint(0,ion))
 
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               ic1 = ictarg(LO)
               ic2 = ictarg(HI)
 
               WRITE(logfp,*) 'MOMENTUM CHECK:',
      .          momsrc(0      ,ion),momsrc(icmax+1,ion)
+
+              CALL IntegrateArray(FULL,momvol(1,ion),0,integral(1))
+              CALL IntegrateArray(FULL,momusr(1,ion),0,integral(2))
+              CALL IntegrateArray(FULL,momano(1,ion),0,integral(3))
+              WRITE(logfp,*) '    vol  :',integral(1)
+              WRITE(logfp,*) '    usr  :',integral(2)
+              WRITE(logfp,*) '    ano  :',integral(3)
+
               WRITE(logfp,*) '    ne:',ne(ic1    ),ne(ic2    )
               WRITE(logfp,*) '    ni:',ni(ic1,ion),ni(ic2,ion)
               WRITE(logfp,*) '    vi:',vi(ic1,ion),vi(ic2,ion)
@@ -792,7 +805,7 @@ c           integrate along the field line:
             qe(ic1) = -eneint(icmid  ,1)
             qe(ic2) = -(eneint(TOTAL,1)-eneint(icmid,1))
 
-            IF (log.GT.0) THEN
+            IF (logop.GT.0) THEN
               WRITE(logfp,*) 'ENERGY CHECK  -targets :',qe(ic1),
      .                                                  qe(ic2)
               WRITE(logfp,*) '              -integral:',

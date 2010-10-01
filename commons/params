@@ -38,15 +38,19 @@ c
      >        kboltz,cspeed,eps0
       CHARACTER*5 VERSON                                                
       PARAMETER (VERSON='6A/42'  ,MAXNTS=1   ,MAXNWS=10000 ,MAXNXS=1,   
-c slmod begin
-     >  MAXNKS=350  ,MAXNRS=400  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
-c if MAXNKS=400 then strange things start to happen...
-c     >  MAXNKS=200  ,MAXNRS=400  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
-c slmod end
+c slmod begin - ribbon dev
+     >  MAXNKS=200  ,MAXNRS=400  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
      >  MAXNGS=50   ,MAXIZS=74   ,MAXINS=150 ,MAXIMP=100000,MAXVMF=5,   
-     >  MAXPTS=1000 ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,
+     >  MAXPTS=2000 ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,  ! MAXPTS large because of RW and ZW, which don't appear to be used much
      >  MAXGXS=401  ,MAXGYS=400  ,MAXIXS=1   ,MAXIYS=1     ,IPINOUT=16,
-     >  ISECT =128  ,MAXTHE=5000 ,MAXSN=5000 ,MAXSEG=1000  ,INIMOUT=37,
+     >  ISECT =128  ,MAXTHE=5000 ,MAXSN=5000 ,MAXSEG=1100  ,INIMOUT=37,  ! MAXSEG large for R,ZVESM
+c
+c     >  MAXNKS=200  ,MAXNRS=400  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
+c     >  MAXNGS=50   ,MAXIZS=74   ,MAXINS=150 ,MAXIMP=100000,MAXVMF=5,   
+c     >  MAXPTS=1000 ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,
+c     >  MAXGXS=401  ,MAXGYS=400  ,MAXIXS=1   ,MAXIYS=1     ,IPINOUT=16,
+c     >  ISECT =128  ,MAXTHE=5000 ,MAXSN=5000 ,MAXSEG=1000  ,INIMOUT=37,
+c slmod end
      >  MAXPLTS=24  ,MAXNFLA=21  ,maxpiniter=500           ,IPINDAT=15, 
      >  MBUFLE =10  ,MBUFX  =10  ,mves=maxpts,
      >  ROOT2 =1.414213562       ,PI=3.141592654,   

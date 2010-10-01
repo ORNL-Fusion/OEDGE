@@ -44,7 +44,10 @@
      .  GRD_BOUNDARY =  -1,
      .  EIR_MAXNSTRATA = 100,
      .  EIR_MAXNVOID   = 100,
-     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5
+     .  EIR_MAXNSPECTRA= 100,
+     .  EIR_MAXNSUR    = 100,
+     .  EIR_MAXNTET    = 100,
+     .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5, LINEAR = 6
 
 
       REAL, PUBLIC, PARAMETER ::   
@@ -95,6 +98,7 @@ c
          CHARACTER :: f_osm_load*512   ! Name of file to be loaded
 !...     Grid:
          INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
+         INTEGER   :: f_grid_load_method       ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
          CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
          INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
          INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
@@ -185,7 +189,52 @@ c
          INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
          INTEGER   :: ilspt           ! Sputering option
-
+!...     3D:
+         INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
+!          tetrahedral mesh generation        
+         INTEGER   :: tet_n
+         REAL      :: tet_type  (EIR_MAXNTET)
+         REAL      :: tet_x1    (EIR_MAXNTET)
+         REAL      :: tet_y1    (EIR_MAXNTET)
+         REAL      :: tet_x2    (EIR_MAXNTET)
+         REAL      :: tet_y2    (EIR_MAXNTET)
+!...     Surface properties in EIRENE:
+         INTEGER       :: sur_n       
+         REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
+         CHARACTER*128 :: sur_index   (EIR_MAXNSUR)  ! Poloidal index 
+         CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector 
+         INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
+         INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
+         INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
+         INTEGER       :: sur_tr1     (EIR_MAXNSUR)  ! ?
+         INTEGER       :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         INTEGER       :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
+         INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
+         INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
+         CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.
+         REAL          :: sur_coverage(EIR_MAXNSUR)  ! defunct...
+         INTEGER       :: sur_hard    (EIR_MAXNSUR)  ! Make sure the specified surface properties are isolated to this surface only
+         INTEGER       :: sur_remap   (EIR_MAXNSUR)  ! For the evil remapping scheme, currently used to deal with perfectly conformal surfaces
+         CHARACTER*256 :: sur_tag     (EIR_MAXNSUR)
+!...     Particle energy spectra:
+         INTEGER      :: nadspc
+         INTEGER      :: ispsrf     (EIR_MAXNSPECTRA)  ! Surface index, <0=non-default standard, >0=additional surfaces
+         CHARACTER*32 :: ispsrf_ref (EIR_MAXNSPECTRA)  ! Which code does the surface index refer to?
+         INTEGER      :: iptyp      (EIR_MAXNSPECTRA)  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?
+         INTEGER      :: ipsp       (EIR_MAXNSPECTRA)  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.
+         INTEGER      :: isptyp     (EIR_MAXNSPECTRA)  ! Spectrum type wrt units, 1=1/eV/s, 2=1/s
+         INTEGER      :: nsps       (EIR_MAXNSPECTRA)  ! Number of bins
+         INTEGER      :: isrfcll    (EIR_MAXNSPECTRA)  ! Kind of spectrum, 0=surface flux
+         INTEGER      :: idirec     (EIR_MAXNSPECTRA)  ! If >0 then a projection on a direction is used in the statistics (??)
+         REAL         :: spcmn      (EIR_MAXNSPECTRA)  ! Lower bound of energy range for spectrum
+         REAL         :: spcmx      (EIR_MAXNSPECTRA)  ! Upper bound
+         REAL         :: spc_shift  (EIR_MAXNSPECTRA)  ! ??? for future use perhaps
+         REAL         :: spcplt_x   (EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcplt_y   (EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcplt_same(EIR_MAXNSPECTRA)  ! ???
+         REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
+         REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
+         REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
 !         REAL      :: puff_type   (EIR_MAXNPUFF)
@@ -286,7 +335,7 @@ c...    Strata:
          REAL    :: ti(0:S28_MAXNION)
          REAL    :: ti_exp(0:S28_MAXNION)
          REAL    :: machno
-         REAL    :: potential
+         REAL    :: epot
          REAL    :: efield
          ! Interpolation parameters:
          INTEGER   :: tube_range(2)
@@ -366,7 +415,7 @@ c...    Strata:
         REAL    :: rho
         REAL    :: psin
         REAL    :: metric(2)             ! Cross-field othogonality metric at ends of tube
-        REAL*8  :: VOlume
+        REAL*8  :: volume
         REAL*8  :: surface_area(2)
         REAL*8  :: target_area(2)
 !...    3D:
@@ -396,6 +445,8 @@ c...    Strata:
         REAL    :: qe(2,s28_MAXNION)
         REAL    :: te_upstream(2,s28_MAXNION)
         REAL    :: Psol(2,s28_MAXNION)
+        REAL    :: efield(2)               ! Electric field strength
+        REAL    :: epot  (2)               ! Electrostatic potential
 !...    Cells:
         INTEGER :: cell_index(2)           ! Index of flux-tube in the CELL array
 !...    Store solution parameters for upstream bc work:
@@ -666,7 +717,9 @@ c...    Strata:
       USE mod_sol28      
       IMPLICIT none
 
-      TYPE(type_options_filament) :: opt_fil
+      TYPE(type_options_eirene  ) :: opt_eir   ! EIRENE options
+      TYPE(type_options_filament) :: opt_fil   ! Filament options
+
       END MODULE mod_options
 !
 ! ----------------------------------------------------------------------
@@ -695,6 +748,7 @@ c...    Strata:
       MODULE mod_sol28_global
       USE mod_sol28      
       USE mod_geometry
+      USE mod_options
       IMPLICIT none
 
       PUBLIC
@@ -721,8 +775,7 @@ c...    Strata:
       INTEGER, PARAMETER :: MAX_NOPT = 10
       INTEGER nopt
       TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
-      TYPE(type_options_eirene  ) :: opt_eir   ! *** ADD SIMILAR FUNCTIONALITY? ***
-      INTEGER log, logfp
+      INTEGER logop, logfp
 
 !...  Nasty...
       INTEGER, PARAMETER :: MAX_NITERATION = 1000
@@ -757,7 +810,6 @@ c...    Strata:
       TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
       TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
       TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
-
 
 !...  Plasma species that are being tracked in the simulation:
       INTEGER, SAVE :: nspecies
@@ -794,7 +846,7 @@ c...    Strata:
 
 
       TYPE(type_options_osm), SAVE :: opt
-      INTEGER :: log,logfp
+      INTEGER :: logop,logfp
 
       REAL*8, SAVE :: chisq(0:7),t_chisq(0:7),m_chisq(0:7)
 
@@ -858,10 +910,10 @@ c     .  opt_ti_kappa(2)
       INTEGER, SAVE :: nnode,mnode
       TYPE(type_node), SAVE :: node(S28_MAXNNODE)
 
-      TYPE(type_tube), SAVE :: tube
-      TYPE(type_cell        ), SAVE :: cell     (S28_MAXNKS)
-      TYPE(type_neutral), SAVE :: pin      (S28_MAXNKS,S28_MAXNION) 
-      TYPE(type_fluid  ), SAVE :: fluid    (S28_MAXNKS,S28_MAXNION) 
+      TYPE(type_tube   ), SAVE :: tube
+      TYPE(type_cell   ), SAVE :: cell (S28_MAXNKS)
+      TYPE(type_neutral), SAVE :: pin  (S28_MAXNKS,S28_MAXNION) 
+      TYPE(type_fluid  ), SAVE :: fluid(S28_MAXNKS,S28_MAXNION) 
 
       INTEGER ref_nion
       TYPE(type_tube) :: ref_tube
@@ -901,26 +953,27 @@ c     .  opt_ti_kappa(2)
      .  sfor(0:S28_MAXNKS+1),   
      .  sbak(0:S28_MAXNKS+1)             
 
-
       REAL*8, SAVE ::   
 !...    Geometry:
      .  sbnd  (2,S28_MAXNKS),
      .  sdelta(1:S28_MAXNKS),
-     .  area(0:S28_MAXNKS+1),   
-     .  vol (  S28_MAXNKS)  ,   
+     .  area  (0:S28_MAXNKS+1),   
+     .  vol   (  S28_MAXNKS)  ,   
 !...    Plasma fluid quantities:
-     .  isat(0:S28_MAXNKS+1,0:S28_MAXNION),  
-     .  ne  (0:S28_MAXNKS+1),                 
-     .  ni  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  vi  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  pe  (0:S28_MAXNKS+1),                 
-     .  pi  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  te  (0:S28_MAXNKS+1),                 
-     .  ti  (0:S28_MAXNKS+1,0:S28_MAXNION),   
-     .  qe  (0:S28_MAXNKS+1),                 
-     .  qi  (0:S28_MAXNKS+1,0:S28_MAXNION),
-     .  qcond(0:S28_MAXNKS+1),
-     .  qconv(0:S28_MAXNKS+1),
+     .  isat  (0:S28_MAXNKS+1,0:S28_MAXNION),  
+     .  ne    (0:S28_MAXNKS+1),                 
+     .  ni    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  vi    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  pe    (0:S28_MAXNKS+1),                 
+     .  pi    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  te    (0:S28_MAXNKS+1),                 
+     .  ti    (0:S28_MAXNKS+1,0:S28_MAXNION),   
+     .  qe    (0:S28_MAXNKS+1),                 
+     .  qi    (0:S28_MAXNKS+1,0:S28_MAXNION),
+     .  qcond (0:S28_MAXNKS+1),
+     .  qconv (0:S28_MAXNKS+1),
+     .  efield(0:S28_MAXNKS+1),                ! Electric field strength
+     .  epot  (0:S28_MAXNKS+1),                ! Electrostatic potential
 !...
      .  machno(0:S28_MAXNKS+1,0:S28_MAXNION),  
 !...    ...:
@@ -960,7 +1013,6 @@ c     .  opt_ti_kappa(2)
      .  momint(0:S28_MAXNKS+1,0:S28_MAXNION),   
      .  eneint(0:S28_MAXNKS+1,0:1),
      .  eniint(0:S28_MAXNKS+1,0:S28_MAXNION)
-
 
       END MODULE mod_sol28_solver
 !

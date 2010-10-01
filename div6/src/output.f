@@ -1110,7 +1110,7 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,2)
+          WRITE(fp,'(91X,F10.5,I4)') thetat(id),idds(ir,2)
         ENDIF
 
         DO ik = 1, nks(ir)
@@ -1123,7 +1123,7 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
+          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.5,A)')
      .      ik,ir,virtag(ik,ir),
      .      ikins(ik,ir),irins (ik,ir),ikouts(ik,ir),irouts(ik,ir),
      .      kinds(ik,ir),koutds(ik,ir),finds (ik,ir),foutds(ik,ir),
@@ -1134,7 +1134,7 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,1)
+          WRITE(fp,'(91X,F10.5,I4)') thetat(id),idds(ir,1)
         ENDIF
       ENDDO
 

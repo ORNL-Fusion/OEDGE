@@ -196,7 +196,7 @@ c...  Local:
 
       CALL AssignLegacyVariables
 
-      IF (log.GT.0) WRITE(logfp,*) 'SETTING TARGET CONDITIONS'
+      IF (logop.GT.0) WRITE(logfp,*) 'SETTING TARGET CONDITIONS'
       
       IF (tarninter(LO).EQ.0.OR.tarninter(HI).EQ.0) THEN
 c        CALL ER('InterpolateTargetData','No data to '//
@@ -807,7 +807,7 @@ c
       TYPE(type_node), INTENT(OUT) :: node(*)
       TYPE(type_options_osm) :: opt_tube
 
-      REAL GetJsat2,GetRelaxationFraction,GetCs2
+      REAL GetJsat2,GetRelaxationFraction,GetCs2,CalcPressure
 
       INTEGER, PARAMETER :: MAXNNODES = 50
 
@@ -821,7 +821,7 @@ c
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,
      .        psin0,psin1,psin2,p0,p1,result(3),
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
-     .        hold_tab,hold_tcd,ne_LO,ne_HI
+     .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
      .        hold_c1,hold_c2,hold_d1,hold_d2
 
@@ -908,7 +908,7 @@ c       of rings:
         DO i2 = osmnode(i1)%tube_range(1), osmnode(i1)%tube_range(2)-1
           IF (i2.GT.ntube-1) EXIT          
           IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
-            IF (log.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
+            IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
               WRITE(logfp,*)
               WRITE(logfp,*) '-------------------------------------'
               WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
@@ -963,13 +963,20 @@ c     .    density = .FALSE.
      .      CALL ER('AssignNode_New','Single target position must '//
      .              'be specified',*99)
           DO i4 = 1, ntarget
-            IF (target(i4)%location.EQ.osmnode(i1)%tube_range(1)) EXIT
+            IF (target(i4)%location.EQ.ABS(osmnode(i1)%tube_range(1))) 
+     .        EXIT
           ENDDO
           IF (i4.LT.ntarget+1) THEN         
-            DO i5 = 1, target(i4)%nlist
-              IF (target(i4)%ilist(i5).EQ.it) EXIT
-            ENDDO
-            IF (i5.LT. target(i4)%nlist+1) THEN
+            IF (osmnode(i1)%tube_range(1).LT.0) THEN
+c             All tubes on grid assigned:
+              i5 = 0  
+            ELSE
+c             Only select tubes identified as being part of this target data block:
+              DO i5 = 1, target(i4)%nlist
+                IF (target(i4)%ilist(i5).EQ.it) EXIT
+              ENDDO
+            ENDIF
+            IF (i5.LT.target(i4)%nlist+1) THEN
               intersection = .TRUE.  !  *** LEFT OFF ***  overwrige the -1,-2 parameter PAR_MODE, to activate
               hold_c1  = 0.0D0
               hold_c2  = 0.0D0
@@ -1398,9 +1405,13 @@ c...        Exponential decay to :
             A = p0 - p1
             B = p1
             IF (pc) pe(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = te0 - te1
             B = te1 
             IF (tec) te(inode) = A * EXP(-val / C) + B
+            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) '  :',A,B,val,C
             A = ti0 - ti1
             B = ti1 
             IF (tic) ti(inode) = A * EXP(-val / C) + B
@@ -1534,7 +1545,7 @@ c           parameters:
                 osmnode(ifit)%tube_range = osmnode(i0)%tube_range
                 SELECTCASE (type)
                   CASE (1:2)  ! Core + pedestal + SOL
-                    CALL SimplePlasmaProfile(type,ifit,val,coord,result)
+                    CALL osm_UpstreamProfile(type,ifit,val,coord,result)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown fit '//
      .                      'type for MODE=6',*99)
@@ -1581,7 +1592,7 @@ c...    Store node values:
         node_s(node_n)%par_exp  = osmnode(i3)%par_exp
         node_s(node_n)%par_set  = osmnode(i3)%par_set
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) 
           DO i4 = 1, node_n
             WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1653,22 +1664,33 @@ c...  Check for target data:
         node_s(node_n)%par_exp  = 0.0
         node_s(node_n)%par_set  = 0
       ENDIF
-c...  Target nodes:
+c...  Define target node location defaults:
       node_s(1     )%s = 0.0
       node_s(node_n)%s = tube(it)%smax
-      node_s(1     )%icell = 0
-      node_s(node_n)%icell = tube(it)%n + 1
+c      node_s(1     )%icell = 0
+c      node_s(node_n)%icell = tube(it)%n + 1
 c...  Assign cell indices:
-      DO i1 = 2, node_n-1
-        DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-          IF (node_s(i1)%s.GE.cell(ic)%sbnd(1).AND.
-     .        node_s(i1)%s.LE.cell(ic)%sbnd(2))THEN
-            node_s(i1)%icell = ic - tube(it)%cell_index(LO) + 1
-          ENDIF
-        ENDDO
+       WRITE(logfp,*) 'length',tube(it)%smax
+      DO i1 = 1, node_n
+c      DO i1 = 2, node_n-1
+        IF     (node_s(i1)%s.LT.0.00001) THEN
+          node_s(i1)%s     = 0.0
+          node_s(i1)%icell = 0
+        ELSEIF (node_s(i1)%s.GT.0.99999*tube(it)%smax) THEN
+          node_s(i1)%s     = tube(it)%smax
+          node_s(i1)%icell = tube(it)%n + 1
+        ELSE
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+            IF (node_s(i1)%s.GE.cell(ic)%sbnd(1).AND.
+     .          node_s(i1)%s.LE.cell(ic)%sbnd(2)) THEN
+              node_s(i1)%icell = ic - tube(it)%cell_index(LO) + 1
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
       ENDDO
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1756,7 +1778,11 @@ c...       Delete degenerate node:
         ENDDO
       ENDIF
 
-      IF (log.GT.0) THEN
+
+
+
+
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
@@ -1768,6 +1794,47 @@ c...       Delete degenerate node:
      .      node_s(i1)%te,node_s(i1)%ti(1)
         ENDDO
       ENDIF
+
+
+c     THE ABOVE CODE FOR SPECIFICALLY CHECKING SYMMETRY POINTS MAY BE
+c     REDUNDANT -- NEED TO CHECK
+
+c...  Try to combine nodes if there is more than one:
+      DO i1 = 1, node_n
+        i2 = i1
+        DO WHILE(i2.LT.node_n)
+          i2 = i2 + 1
+          IF (node_s(i1)%icell.EQ.node_s(i2)%icell) THEN
+c...       Check for quantity assigned multiple values:
+           IF ((node_s(i1)%ne.NE.0.0.AND.node_s(i2)%ne.NE.0.0).OR.
+     .         (node_s(i1)%v .NE.0.0.AND.node_s(i2)%v .NE.0.0).OR.
+     .         (node_s(i1)%pe.NE.0.0.AND.node_s(i2)%pe.NE.0.0).OR.
+     .         (node_s(i1)%te.NE.0.0.AND.node_s(i2)%te.NE.0.0).OR.
+     .         (node_s(i1)%ti(1).NE.0.0.AND.node_s(i2)%ti(1).NE.0.0)) 
+     .       CALL ER('AssignNodeValues_New','Degenerate '//
+     .               'symmetry point node found',*99)
+c...       Copy over data:
+           IF (node_s(i2)%ne.NE.0.0) node_s(i1)%ne = node_s(i2)%ne
+           IF (node_s(i2)%v .NE.0.0) node_s(i1)%v  = node_s(i2)%v 
+           IF (node_s(i2)%pe.NE.0.0) node_s(i1)%pe = node_s(i2)%pe
+           IF (node_s(i2)%te.NE.0.0) node_s(i1)%te = node_s(i2)%te
+           IF (node_s(i2)%ti(1).NE.0.) node_s(i1)%ti(1)=node_s(i2)%ti(1)
+c...       Allow partial assignment of sheath-limited tubes by combining blocks:
+           IF (node_s(i1)%par_set.EQ.0.AND.node_s(i2)%par_set.NE.0)
+     .       node_s(i1)%par_set = node_s(i2)%par_set
+c...       Delete degenerate node:
+           IF (i2.LT.node_n) THEN
+             node_s(i2:node_n-1) = node_s(i2+1:node_n)
+             node_i(i2:node_n-1) = node_i(i2+1:node_n)
+           ENDIF
+           node_n = node_n - 1
+          ENDIF
+        ENDDO
+      ENDDO
+
+
+
+
 
 
 c...  Sort nodes based on s-distance along the field line:
@@ -1788,7 +1855,7 @@ c...      Also check that there isn't more than one node in each cell:
         ENDDO
       ENDDO
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         DO i1 = 1, node_n
           WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
      .      'NODE:',i1,node_i(i1),
@@ -1807,7 +1874,7 @@ c...  Set node indeces:
 c...  Assign values to nodes:
       node(1:nnode) = node_s(1:nnode)
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE A -:',nnode,mnode
         DO i1 = 1, node_n
@@ -1824,10 +1891,9 @@ c...  Assign values to nodes:
       ENDIF
 
 c...  Assign other quantites:
-      node(1:nnode)%jsat(1)   = 0.0
-c      node(1:nnode)%pe        = 0.0
-      node(1:nnode)%ni(1)     = 0.0
-      node(1:nnode)%pi(1)     = 0.0
+      node(1:nnode)%jsat(1) = 0.0
+      node(1:nnode)%ni(1)   = 0.0
+      node(1:nnode)%pi(1)   = 0.0
       DO i1 = 1, nnode
         IF (node(i1)%ti(1).EQ.0.0.AND.i1.LE.mnode) 
      .    node(i1)%ti(1) = node(i1)%te * opt%ti_ratio(LO) 
@@ -1837,7 +1903,7 @@ c      node(1:nnode)%pe        = 0.0
 c      node(1      :mnode)%ti(1) =node(1      :mnode)%te*opt%ti_ratio(LO) 
 c      node(mnode+1:nnode)%ti(1) =node(mnode+1:nnode)%te*opt%ti_ratio(HI) 
       node(1:nnode)%machno    = 0.0
-      node(1:nnode)%potential = 0.0
+      node(1:nnode)%epot      = 0.0
       node(1:nnode)%efield    = 0.0
 
 c      IF (node(1    )%ne   .EQ.0.) node(1    )%ne   =tube(it)%ne(LO)
@@ -1854,26 +1920,20 @@ c      DO i1 = mnode, nnode-1
 c        IF (node(i1)%te.EQ.-98.0) node(i1)%te = node(i1+1)%te
 c      ENDDO
 
-c...  
+c...  Setup target nodes:
       DO itarget = LO, HI
         IF (itarget.EQ.LO) THEN
           i1 = 1
-c          i2 = -1
           DO i2 = 2, mnode
             IF (node(i2)%par_set.NE.0) EXIT
           ENDDO
           IF (i2.EQ.mnode+1) i2 = 2
-c          IF (i2.EQ.-1.OR.i2.EQ.mnode+1) i2 = 2
-c          i2 = 2
         ELSE
           i1 = nnode
-c          i2 = -1
           DO i2 = nnode-1, mnode, -1
             IF (node(i2)%par_set.NE.0) EXIT
           ENDDO
           IF (i2.EQ.mnode-1) i2 = nnode - 1
-c          IF (i2.EQ.-1.OR.i2.EQ.mnode-1) i2 = nnode - 1
-c          i2 = nnode - 1
         ENDIF
         SELECTCASE(node(i1)%par_set)
           CASE (0) 
@@ -1882,12 +1942,23 @@ c          i2 = nnode - 1
               IF (node(i1)%ne.LT.1.0E+10) THEN
                 tube(it)%jsat(itarget,ion) = node(i1)%ne
               ELSE
-                tube(it)%jsat(itarget,ion) = 
-     .            GetJsat2(node(i1)%te,node(i1)%ti(ion),node(i1)%ne,1.0) 
+                IF (node(i1)%te.NE.0.0) THEN
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(node(i1)%te,
+     .                       node(i1)%ti(ion),
+     .                       node(i1)%ne,1.0) 
+                ELSE
+                  tube(it)%jsat(itarget,ion) = 
+     .              GetJsat2(tube(it)%te(itarget),
+     .                       tube(it)%ti(itarget,ion),
+     .                       node(i1)%ne,1.0) 
+                ENDIF
               ENDIF
             ENDIF
-            tube(it)%te(itarget    ) = node(i1)%te
-            tube(it)%ti(itarget,ion) = node(i1)%ti(ion)
+            IF (node(i1)%te     .NE.0.0) 
+     .        tube(it)%te(itarget    ) = node(i1)%te
+            IF (node(i1)%ti(ion).NE.0.0) 
+     .        tube(it)%ti(itarget,ion) = node(i1)%ti(ion)
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET for target node',*99) 
         ENDSELECT
@@ -1897,7 +1968,9 @@ c           IF (itube.EQ.81) STOP 'dfsd'
         SELECTCASE(node(i2)%par_set)
           CASE (0) 
           CASE (1) 
-            node(i1)%te = node(i2)%te
+            tube(it)%te(itarget)     = node(i2)%te
+            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+c            node(i1)%te = node(i2)%te
           CASE (2) 
             IF (node(i2)%ne.EQ.0.0) 
      .        CALL ER('AssignNodeValues_New','Need density for '//
@@ -1917,46 +1990,7 @@ c           IF (itube.EQ.81) STOP 'dfsd'
         node(i1)%ti(ion)   = tube(it)%ti  (itarget,ion)
       ENDDO
 
-c      SELECTCASE(node(nnode)%par_set)
-c        CASE (0) 
-c        CASE (2) 
-c          IF (node(nnode)%ne.NE.0.0) THEN
-c            IF (node(nnode)%ne.LT.1.0E+10) THEN
-c              tube(it)%jsat(HI,ion) = node(nnode)%ne
-c            ELSE
-c              tube(it)%jsat(HI,ion) = 
-c     .          GetJsat2(node(nnode)%te,node(1)%ti(ion),node(nnode)%ne,1.0) 
-c            ENDIF
-c          ENDIF
-c          tube(it)%te(LO    ) = node(1)%te
-c          tube(it)%ti(LO,ion) = node(1)%ti(ion)
-c        CASE DEFAULT
-c          CALL ER('_New','Unknown LO PAR_SET for node 1',*99) 
-c      ENDSELECT
-c      SELECTCASE(node(nnode-1)%par_set)
-c        CASE (0) 
-c          node(nnode)%te = tube(it)%te(HI)
-c        CASE (1) 
-c          node(nnode)%te = node(nnode-1)%te
-c        CASE (2) 
-c          IF (node(nnode-1)%ne.EQ.0.0) 
-c     .      CALL ER('AssignNodeValues_New','Need density for sheath '//
-c     .              'limited particle flux calculation (HI)',*99)
-c          tube(it)%te  (HI)     = node(nnode-1)%te
-c          tube(it)%ti  (HI,ion) = node(nnode-1)%ti(ion)
-c          tube(it)%jsat(HI,ion) = 
-c     .      GetJsat2(node(nnode-1)%te,node(nnode-1)%ti(ion),
-c     .               node(nnode-1)%ne*0.5,1.0) 
-c          node(nnode)%te = node(nnode-1)%te
-c        CASE DEFAULT
-c          CALL ER('_New','Unknown HI PAR_SET',*99) 
-c      ENDSELECT
-c      node(nnode)%jsat(ion) = tube(it)%jsat(HI,ion)
-c      node(nnode)%ne        = 0.0
-c      node(nnode)%pe        = 0.0
-c      node(nnode)%ti(ion)   = tube(it)%ti(HI,ion)
-
-c...  Sort out velocities from Mach numbers:
+c...  Sort velocities from Mach numbers:
       DO i1 = 1, node_n
         IF(node(i1)%v.NE.0.0.AND.ABS(node(i1)%v).LT.10.0) THEN
           node(i1)%machno = node(i1)%v
@@ -1964,7 +1998,40 @@ c...  Sort out velocities from Mach numbers:
         ENDIF
       ENDDO
 
-      IF (log.GT.0) THEN
+c...  Set electron pressure from a reference node:
+      DO i1 = mnode-1, 1, -1
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1+1, mnode
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
+      DO i1 = mnode+1, nnode
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1-1, mnode, -1
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
+
+
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE B -:',nnode,mnode
         DO i1 = 1, node_n
@@ -1977,8 +2044,12 @@ c...  Sort out velocities from Mach numbers:
      .      node(i1)%machno,
      .      node(i1)%pe,
      .      node(i1)%te,node(i1)%ti(1)
+
         ENDDO
+
       ENDIF
+
+
 
       RETURN
 99    WRITE(0,*) ' ITUBE=',itube
