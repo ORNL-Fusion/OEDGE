@@ -392,7 +392,6 @@ c...  Count number of cells:
         IF (ir.LT.irsep) ike = ike - 1
         ncell = ncell + ike 
       ENDDO
-
 c...  Declare global arrays:
       nfield    = ncell
       npin      = ncell
@@ -401,7 +400,9 @@ c...  Declare global arrays:
       nkinetic  = 1     
       nfluid    = ncell
       nimpurity = 1
-      ALLOCATE(tube    (ntube ))
+      ALLOCATE(tube      (ntube))
+      ALLOCATE(tube_state(ntube))
+      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))

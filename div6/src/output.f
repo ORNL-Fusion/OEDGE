@@ -866,7 +866,7 @@ c f90
       WRITE(fp,'(A10,I10)') ' nds      ',nds
       WRITE(fp,*)
 
-      WRITE(fp,'(A4,2X,2A5,2X,2A8,2X,2A10,2X,4A12,2A4)')
+      WRITE(fp,'(A4,2X,2A5,2X,2A9,2X,2A10,2X,3A12,6X,A12,2A4)')
      .  'in','ikds','irds','rp','zp','dds','dds2',
      .  'thetas','thetas2','costet','thetat','WI','NI'
 
@@ -879,10 +879,11 @@ c      DO in = nds, 1, -1
           note = ' '
         ENDIF
 
-        WRITE(fp,'(I4,2X,2I5,2X,2F8.4,2X,1P,2E10.2,0P,2X,4F12.6,2I4,
-     .             1X,2A)')
+        WRITE(fp,'(I4,2X,2I5,2X,2F9.4,2X,1P,2E10.2,0P,2X,3F12.6,
+     .             F6.1,F12.6,2I4,1X,2A)')
      .    in,ikds(in),irds(in),rp(in),zp(in),dds(in),dds2(in),
-     .    thetas(in)*180.0/PI,thetas2(in)*180.0/PI,costet(in),
+     .    thetas(in)*180.0/PI,thetas2(in)*180.0/PI,
+     .    costet(in),ACOS(costet(in))*180.0/PI,
      .    thetat(in),wallindex(in),nimindex(in),
      .    irtag(irds(in)),note(1:LEN_TRIM(note))
 
