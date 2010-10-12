@@ -32,6 +32,7 @@ $
 $
 '954   012 00 Grid #01                        '   1
 '000   Zoom'  8.335 5.000 0.07 30.0 
+'000   Ring' 388   3   0                             
 '954   012 00 Grid #01                        '   6
 '000   Zoom'  8.335 5.000 0.07 30.0 
 '954   012 00 Grid #01                        '   1
@@ -53,6 +54,11 @@ $
 '000   Zoom'  8.380 0.000 0.01 10.0 
 '000   Tind' 
 '000   Ring' 286   3   0
+$
+'954   012 00 Grid #01                        '   1
+'000   Zoom'  8.305 -19.0 0.02  2.0 
+'000   Tind' 
+'000   Ring' 388   3   0
 $
 '954   012 00 Grid #01                        '   1
 '000   Zoom'  8.350 26.00 0.01 5.0  
@@ -77,7 +83,103 @@ $
 $
 $
 $
-'999   STOP'  3
+$
+$
+$ 1D plasma plots
+$ ----------------------------------------------------------------------
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 01  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   2
+'000   Data' 8 01 +0.00   5
+$
+'955   END-----------------------------------'    0
+$
+$
+$ 2D plasma plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D+ density - fluid grid    FULL ' 710
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1  1.0      -99.   -99.  'n_D+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+$
+'987   XXX XX Mach number                FULL ' 700
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1  1.0      -1.0   1.0   'Mach no.'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+$
+'987   XXX XX e  temperature             FULL ' 708
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1  1.0       -99. -99.   'T_e (eV)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+$
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0       -1.0  4.0   'LOG10 T_i (eV)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+$
+$ 2D ionisation plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+$
+'987   XXX XX Impurity ionisation        FULL ' 800
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ioniation         FULL ' 801
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Ion'
+$
+$ 2D impurity plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX Impurity density           FULL ' 800
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 801
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 802
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 803
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+$
+'987   XXX XX Impurity density           FULL ' 804
+'000   Zoom' 8.335 5.000 0.07  30.0 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Position'  4  0.0 0.0 0.3 0.0
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  8.335 5.000 0.07 30.0
+$
+$
+$
+'999   STOP' 3
 $
 $
 $
