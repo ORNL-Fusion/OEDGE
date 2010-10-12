@@ -780,10 +780,12 @@ c          ENDIF
             IF (opt%p_ion(target).EQ.2) THEN
               IF (opt%osm_load.EQ.0.OR.ref_nion.EQ.0) THEN
                 opt%p_ion(target) = 3
-                opt%p_ion_frac(target) = 0.0
+                IF (opt%p_ion_frac(target).GE.0.0) 
+     .            opt%p_ion_frac(target) = 0.0
               ELSE
                 opt%p_ion(target) = 1
-                opt%p_ion_frac(target) = 100.0
+                IF (opt%p_ion_frac(target).GE.0.0) 
+     .            opt%p_ion_frac(target) = 100.0
                 opt_p_ion_scale(target) = 0
               ENDIF
             ENDIF
@@ -1600,12 +1602,12 @@ c...  Copy over the electrostatic field solver results:
 c
 c ======================================================================
 c
-      SUBROUTINE MainLoop(itstart,itend,ikopt)
+      SUBROUTINE MainLoop(it1,it2,ikopt)
       USE mod_sol28_params
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER itstart,itend,ikopt,count
+      INTEGER it1,it2,ikopt,cnt
 
       INTEGER itube,cind1,cind2,ref_cind1,ref_cind2,ref_itube,iopt,
      .        sol_option,isol
@@ -1618,29 +1620,30 @@ c      REAL    totsrc
       TYPE(type_node) :: node(S28_MAXNNODE)
       TYPE(type_options_osm) :: opt_tube
 
-      INTEGER debug_count
-      DATA    debug_count /0/
+      INTEGER debug_cnt
+      DATA    debug_cnt /0/
       SAVE
 
-      debug_count = debug_count + 1
+      debug_cnt = debug_cnt + 1
 
       IF (logop.GT.0) THEN
         WRITE(logfp,*)
-        WRITE(logfp,*) 'RANGE:',itstart,itend,grid%isep
-        WRITE(logfp,*) 'TE   :',tube(itstart)%te(LO),
-     .                          tube(itstart)%te(HI)
+        WRITE(logfp,*) 'RANGE:',it1,it2,grid%isep
+        WRITE(logfp,*) 'TE   :',tube(it1)%te(LO),
+     .                          tube(it1)%te(HI)
       ENDIF
 
 
       IF (.TRUE.) CALL ListTargetData(logfp,'Before calling solver')
 
+      tube_state(it1:it2) = ibclr(tube_state(it1:it2),1)  ! Flag that solution has not been calculated yet
 
       opt%cosm = 0
 
-      count = 0
+      cnt = 0
       cont  = .TRUE.
       DO WHILE (cont) 
-        count = count + 1
+        cnt = cnt + 1
         cont  = .FALSE.
 
 c...    Calcualte derived quantities (efield, drifts, etc.):
@@ -1648,7 +1651,10 @@ c        CALL CalculateEfield
 c        CALL CalculateGradients
 c        CALL CalculateDrifts
 
-        DO itube = itstart, itend
+        DO itube = it1, it2
+
+          IF (ibits(tube_state(itube),0,1).EQ.0.AND.     ! Default symmetry point was not applied
+     .        ibits(tube_state(itube),1,1).EQ.1) CYCLE   ! Solution has been calculated already
 
 c...      Setup solver options:
 c         CALL SetupLocalOptions(itube,opt)
@@ -1689,11 +1695,12 @@ c              WRITE(0,*) 'SELECTING SOLVER OPTION:',isol,sol_option
           IF (logop.GT.0) THEN
             WRITE(logfp,'(A   )') '------------------------------------'
             WRITE(logfp,'(A,I6)') ' SOLVING TUBE: ',itube
+c            WRITE(0    ,'(A,I6)') ' SOLVING TUBE: ',itube
             WRITE(logfp,'(A,I6)') ' SOL OPTON   : ',sol_option
             WRITE(logfp,'(A,I6)') ' CFLUKIN     : ',opt%cflukin
             WRITE(logfp,'(A,I6)') ' IOPT        : ',opt_iopt       
             WRITE(logfp,'(A,I6)') ' COSM        : ',opt%cosm
-            WRITE(logfp,'(A,I6)') ' DEBUG_COUNT : ',debug_count
+            WRITE(logfp,'(A,I6)') ' DEBUG_CNT   : ',debug_cnt
             WRITE(logfp,'(A   )') '------------------------------------'
           ENDIF
 
@@ -1746,8 +1753,12 @@ c...            Assign solution parameter nodes:
                   store_nnode(itube) = nnode  ! *** TEMP ***
                   store_mnode(itube) = mnode
                   store_node (1:nnode,itube) = node(1:nnode)
+c                  WRITE(0,*) '_state:',tube_state(itube),
+c     .                 ibits(tube_state(itube),0,1),
+c     .                 ibits(tube_state(itube),1,1)
+
                 ELSE
-                  STOP 'NO LONGER SUPPORTED'
+                  STOP 'LEGACY NODES NO LONGER SUPPORTED'
 c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
                 ENDIF
 
@@ -1764,7 +1775,7 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
                 ENDIF
-c              WRITE(0,*) 'TUBE:PSOL',tube(itube)%eneano(1:2)
+                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE DEFAULT
                 CALL ER('MainLoop','Solver option not identified',*99)
@@ -1773,8 +1784,19 @@ c             ----------------------------------------------------------
           ENDIF  ! MPI selection
         ENDDO  ! Tube loop
 
+c        WRITE(0,*) '_count',
+c     .             COUNT(ibits(tube_state(it1:it2),0,1).EQ.0)
+c        WRITE(0,*) ibits(tube_state(it1:it2),0,1)
+        IF    (cnt.GE.3) THEN
+
+        ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
+     .          COUNT(ibits(tube_state(it1:it2),0,1).EQ.1  ).GT.0) THEN
+c...      Check if semi-automated symmetry point specification:
+          cont = .TRUE.
+        ENDIF
+
 c...    Modify conditions for iteration:
-        CALL User_MainLoop(cont,count)
+        CALL User_MainLoop(cont,cnt)
 
       ENDDO ! Iteration loop
 

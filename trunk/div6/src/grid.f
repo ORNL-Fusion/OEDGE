@@ -1342,12 +1342,12 @@ c                 cells radially outward at the ends of the IRWALL group:
                   wallz1(walln,1) = wallz1(walln-1,2)
                   wallr1(walln,2) = rvertp(3,id)
                   wallz1(walln,2) = zvertp(3,id)
-                  DO i2 = walln-2,walln
-                    WRITE(0,*) '  wall:',wallr1(i2,1),
-     .                                   wallz1(i2,1)
-                    WRITE(0,*) '      :',wallr1(i2,2),
-     .                                   wallz1(i2,2)
-                  ENDDO
+c                  DO i2 = walln-2,walln
+c                    WRITE(0,*) '  wall:',wallr1(i2,1),
+c     .                                   wallz1(i2,1)
+c                    WRITE(0,*) '      :',wallr1(i2,2),
+c     .                                   wallz1(i2,2)
+c                  ENDDO
                 ELSE
 c...              Build wall segments by projecting radially outward along
 c                 the fluid cell poloidal boundaries:
@@ -2195,6 +2195,7 @@ c...    Setup geometric quantities for the new ring:
         nks   (irset) = nks(ir)
         irorg2(irset) = ir
         idring(irset) = TARTOTAR - 100
+        psitarg(irset,1:2) = psitarg(ir,1:2)
 
         DO ik = 1, nks(ir)  
 c...      Copy cell geometry data for the ring.  Only a limited
@@ -3657,11 +3658,11 @@ c     Functions:
 c     Local variables:
       INTEGER IK,IR,STATUS
 
-      INTEGER ii,ncell,wallik(MAXNKS),wallir(MAXNKS),tempik,tempir,
+      INTEGER ii,ncell,wallik(2*MAXNKS),wallir(2*MAXNKS),tempik,tempir,
      .        i,in,ik1,ir1,id1,iavg,istart,i1,i2
       LOGICAL valid,debug
-      REAL    rcen,zcen,cellr(MAXNKS),cellz(MAXNKS),ravg,zavg,
-     .        wallth(MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
+      REAL    rcen,zcen,cellr(2*MAXNKS),cellz(2*MAXNKS),ravg,zavg,
+     .        wallth(2*MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
 c
 c Initialize variables:
 c
@@ -3703,7 +3704,7 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
-            IF (ncell+1.EQ.MAXNKS)
+            IF (ncell+1.EQ.2*MAXNKS)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1
@@ -3732,7 +3733,10 @@ c Check this...
         ENDDO
       ENDDO
       
-c      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (ncell+1.GT.MAXNKS)
+     .  CALL ER('GenWallRing','Array bound violation, increase '//
+     .          'MAXNKS',*99)
 
 c...  Adjust WALLTH based on x-point location:
       IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
@@ -3974,11 +3978,11 @@ c     Output:
 
       INTEGER ik,ir,i1,in,incell,ikmin,irmin,ikend,cpc,cpd,id,
      .        nmatch,ikmatch(MAXNKS),irmatch(MAXNRS)
-      LOGICAL clean,sidereset,cont
+      LOGICAL clean,side_reset,cont
       REAL    dist,distmin
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,t1,t2
 
-      sidereset = .FALSE.
+      side_reset = .FALSE.
 
 c
 c     Initialization:
@@ -4063,6 +4067,11 @@ c Assume that the core rings are sturctured...
       ELSE
         CALL ER('FindLink','Illegal side option',*99)
       ENDIF
+
+c      IF (ircell.EQ.388.AND.side.EQ.SIDE14) THEN
+c        WRITE(0,*) 'BUILDMAP 388:',ir
+c      ENDIF
+
 c...  Loop over rings to find neighbouring cells:
       nmatch = 0
       cont = .TRUE.
@@ -4107,15 +4116,15 @@ c         Exclude virtual cells, unless specified cell is also virtual:
           ENDIF
           cpc = CalcPoint(a1,a2,b1,b2,c1,c2,t1)
           cpd = CalcPoint(a1,a2,b1,b2,d1,d2,t2)
-          IF (side.EQ.SIDE23.AND.
-     .        ikcell.EQ.26.AND.ircell.EQ.120.AND.ir.EQ.128) THEN
-            WRITE(88,'(A,4I6,2X,2I6,2F15.8)') 
-     .        'LINK:',ikcell,ircell,ik,ir,cpc,cpd,t1,t2
-            WRITE(88,'(A,4F15.8)')
-     .        '    :',a1,a2,b1,b2
-            WRITE(88,'(A,4F15.8)')
-     .        '    :',c1,c2,d1,d2
-          ENDIF
+c          IF (side.EQ.SIDE14.AND.
+c     .        ircell.EQ.388.AND.ir.EQ.2) THEN
+c            WRITE(88,'(A,4I6,2X,2I6,2F15.8)') 
+c     .        'LINK 388:',ikcell,ircell,ik,ir,cpc,cpd,t1,t2
+c            WRITE(88,'(A,4F15.8)')
+c     .        '        :',a1,a2,b1,b2
+c            WRITE(88,'(A,4F15.8)')
+c     .        '        :',c1,c2,d1,d2
+c          ENDIF
           IF ((cpc.EQ.1.AND.t1.LT.1.0D0).AND.
      .        (cpd.EQ.1.AND.t2.GT.0.0D0)) THEN
 c...        Both end points are connected to a neighbouring cell.  This is 
@@ -4142,17 +4151,17 @@ c           store the cell index in a list of candidates:
 c...      No connection was identified, so check the entire grid:
           cont = .TRUE.
           IF (side.EQ.SIDE14) THEN
-            IF (sidereset) THEN
+            IF (side_reset) THEN
               ir = ir - 1
             ELSE
-              sidereset = .TRUE.
+              side_reset = .TRUE.
               ir = nrs
             ENDIF
           ELSE
-            IF (sidereset) THEN
+            IF (side_reset) THEN
               ir = ir + 1
            ELSE
-              sidereset = .TRUE.
+              side_reset = .TRUE.
               ir = 3
             ENDIF
           ENDIF
@@ -4167,6 +4176,13 @@ c...      No connection was identified, so check the entire grid:
 c...      Exit when a virtual ring is encountered:
           IF ((side.EQ.SIDE14.AND.ir.EQ.1    ).OR.
      .        (side.EQ.SIDE23.AND.ir.EQ.nrs+1)) cont = .FALSE.
+
+
+c          IF (ircell.EQ.388.AND.side.EQ.SIDE14) THEN
+c            WRITE(0,*) 'BUILDMAP 388 searching:',ir
+c          ENDIF
+
+
         ENDIF
       ENDDO
 
@@ -6339,7 +6355,7 @@ c...      Near target refinement in the inner divertor (outer on JET):
           iks = 1
           ike = NINT(param)
         ELSEIF (mode.EQ.9) THEN
-c...      Near target refinement in the outer divertor (outer on JET):
+c...      Near target refinement in the outer divertor (inner on JET):
           iks = nks(ir) - NINT(param) + 1
           ike = nks(ir)
 c        ELSEIF (mode.EQ.11) THEN

@@ -2794,7 +2794,7 @@ c
       CALL CalcCentroid(map_iobj,2,p)
       a1 = p(1)
       a2 = p(2)
-      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))   ! Use GetVertex...
       b2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2))) 
 
       maxtab = 1.0D+20
@@ -2819,6 +2819,16 @@ c
             map_icell = icell
             map_itube = itube
           ENDIF
+c          IF (itube.EQ.1) THEN
+c            WRITE(88,*) 'DYNAMIC:'
+c            WRITE(88,*) '  : ',map_iobj-
+c     .        tube(GetTube(map_iobj,IND_OBJECT))%cell_index(LO)+1,
+c     .                         GetTube(map_iobj,IND_OBJECT)
+c            WRITE(88,*) '  : ',icell
+c            WRITE(88,*) '  : ',tab,maxtab
+c            WRITE(88,*) '  : ',tcd
+c            WRITE(88,*) '  : ',map_icell,map_itube
+c          ENDIF
         ENDDO
       ENDDO
 
