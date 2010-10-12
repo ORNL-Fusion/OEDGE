@@ -164,7 +164,9 @@ c...  Solution arrays:
       nkinetic  = 0
       nfluid    = 0
       nimpurity = 0
-      IF (ALLOCATED(tube    )) DEALLOCATE(tube    )
+      IF (ALLOCATED(tube      )) DEALLOCATE(tube      )
+      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
+      
       IF (ALLOCATED(cell    )) DEALLOCATE(cell    )
       IF (ALLOCATED(field   )) DEALLOCATE(field   )
       IF (ALLOCATED(pin     )) DEALLOCATE(pin     )
