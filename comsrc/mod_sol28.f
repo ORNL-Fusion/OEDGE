@@ -793,6 +793,10 @@ c...    Strata:
       INTEGER, SAVE :: ntube
       TYPE(type_tube), ALLOCATABLE, SAVE :: tube(:) 
 
+      INTEGER*4, SAVE, ALLOCATABLE :: tube_state(:)  ! move into the TUBE array eventually, but only local use for now...
+!       _state BIT 0 - 1-default symmetry point applied
+!              BIT 1 - 1-solution for ring has been successfully calculated
+
       INTEGER, PARAMETER :: MAXNCELL = MAXNTUBE * 100
       INTEGER, SAVE :: nion,ncell,nfield,npin,nphoton,nfluid,nkinetic,
      .                 nimpurity,ndrift
