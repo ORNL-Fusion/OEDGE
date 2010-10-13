@@ -3429,9 +3429,9 @@ c       End of debugv
 c
       endif
 
- 9031 FORMAT(/1X,' IK IR    R      Z  ',12(2X,A7))
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',12(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,1P,12E9.2)
+ 9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
 
@@ -4810,7 +4810,7 @@ c
 c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cprint.eq.8.or.cprint.eq.9) then
+      if (cioptr.gt.0.and.cprint.eq.8.or.cprint.eq.9) then
          WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
@@ -4878,8 +4878,10 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,2F6.2,F8.3,1P,E15.8,
-     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
+ 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+     >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
+     >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
+     >       1xI3,:,1X,A,:,1x,F8.5)
 c nonorth
 c 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,F6.2,F8.3,1P,E15.8,
 c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)

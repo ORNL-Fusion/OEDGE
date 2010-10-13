@@ -1230,6 +1230,10 @@ c       neutral wall specification proceeds clockwise around the vessel:
           wallz1(walln,1) = zves(i1)
           wallr1(walln,2) = rves(i1+1)
           wallz1(walln,2) = zves(i1+1)
+
+c          WRITE(6,'(A,2I8,10(1X,G18.8))') 'WALLS_input:',i1,walln,
+c     >     rves(i1),zves(i1),rves(i1+1),zves(i1+1)
+
         ENDDO
 
       ELSE
@@ -1238,6 +1242,8 @@ c       neutral wall specification proceeds clockwise around the vessel:
 
           
 c      WRITE(0,*) 'FAILURE FOR FLOATING WALL SURFACES'
+
+c      write(0,*) 'Eirnasdat:',eirnasdat
       
      
       DO i1 = 1, eirnasdat
@@ -1314,11 +1320,12 @@ c         the main SOL virtual ring (IRWALL):
           cnt = 0
           ik1 = 1
           ir1 = irins(1,irwall)
+
           DO ik = 2, nks(irwall)+1
             IF (ir1.NE.irins(ik,irwall).OR.ik.EQ.nks(irwall)+1) THEN
               cnt = cnt + 1
               ik2 = ik - 1
-c              WRITE(0,*) 'IK1,2=',cnt,ik1,ik2,ir1
+c
               IF (cnt.GE.NINT(eirasdat(i1,2)).AND.
      .            cnt.LE.NINT(eirasdat(i1,3))) THEN
                 id = korpg(ikins(ik1,irwall),ir1)
@@ -1342,12 +1349,14 @@ c                 cells radially outward at the ends of the IRWALL group:
                   wallz1(walln,1) = wallz1(walln-1,2)
                   wallr1(walln,2) = rvertp(3,id)
                   wallz1(walln,2) = zvertp(3,id)
+
 c                  DO i2 = walln-2,walln
 c                    WRITE(0,*) '  wall:',wallr1(i2,1),
 c     .                                   wallz1(i2,1)
 c                    WRITE(0,*) '      :',wallr1(i2,2),
 c     .                                   wallz1(i2,2)
 c                  ENDDO
+
                 ELSE
 c...              Build wall segments by projecting radially outward along
 c                 the fluid cell poloidal boundaries:
@@ -1420,11 +1429,19 @@ c       ----------------------------------------------------------------
       ENDDO
 
 c...  Process neutral wall data and remove deleted segments:
+
+c      write(6,'(a,i8)') 'Delete zero length elements:',walln
+
       i3 = walln
       DO i1 = i3, 1, -1
         IF (wallr1(i1,1).EQ.wallr1(i1,2).AND.
      .      wallz1(i1,1).EQ.wallz1(i1,2)) THEN
-c          WRITE(0,*) 'DELETEING:',i1
+c
+c     jdemod
+c
+c          WRITE(6,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
+c     >         wallr1(i1,1),wallr1(i1,2),wallz1(i1,1),wallz1(i1,2)
+c
           DO i2 = i1, walln-1
             wallr1(i2,1) = wallr1(i2+1,1)
             wallz1(i2,1) = wallz1(i2+1,1)
@@ -1497,12 +1514,18 @@ c...        No continuous neighbouring segment found, start here:
      .      irstart = ir
         ENDDO
       ENDIF
+
       IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
 c...    For linear grids the 'wall' array does not go all the way around
 c       the simulation domain/volume since the center of the plasma is at
 c       R=0.0:
         rstart = rvertp(1,korpg(1,1))
         zstart = zvertp(1,korpg(1,1))
+        
+        ! jdemod
+        write(0,*) 'Rstart,zstart:',rstart,zstart
+
+
       ELSE
         rstart = rvertp(2,korpg(1,irstart))
         zstart = zvertp(2,korpg(1,irstart))
@@ -1566,16 +1589,40 @@ c...    The next wall segment could not be found:
         IF (i2.EQ.walln+1) 
      .    CALL ER('BuildNeutralWall','Unable to sequence wall',*99)
       ENDDO
+
+c
+c     jdemod
+c     - close the wall specification by connecting the first to the 
+c       last wall points - the specification given here leaves out the
+c       core boundary on ribbon grids. 
+c     - I'm not sure if linear grids need the same fix
+c
+      if (cgridopt.eq.RIBBON_GRID) then 
+         walln = walln+1
+         wallr1(walln,1) = wallr1(walln-1,2)
+         wallz1(walln,1) = wallz1(walln-1,2)
+         wallr1(walln,2) = wallr1(1,1)
+         wallz1(walln,2) = wallz1(1,1)
+         wallc(walln) = 0
+         wallt(walln) = 0
+      endif
+
 c
 c
 c
       pcnt    = 0
       wallpts = 0
 
-      CALL RZero(wallpt ,MAXPTS*19)
-      CALL RZero(wallpt2,MAXPTS*2)
-      CALL RZero(rw     ,MAXPTS)
-      CALL RZero(zw     ,MAXPTS)
+      ! jdemod - sizes wrong in calls to rzero and with new fortran syntax it is
+      !          safer and easier to properly initialize the arrays with an assignment
+      wallpt = 0.0
+      wallpt2 = 0.0
+      rw = 0.0
+      zw = 0.0
+      !CALL RZero(wallpt ,MAXPTS*19)
+      !CALL RZero(wallpt2,MAXPTS*2)
+      !CALL RZero(rw     ,MAXPTS)
+      !CALL RZero(zw     ,MAXPTS)
 
 c...  Assign quantities in the WALLPT array (the principal wall data 
 c     array).  This is usually done in the DOWALL routine:
@@ -1647,6 +1694,17 @@ c     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
 c     wallpt (ind,31) = Plasma density at wall segment
 
       wallpts = walln
+
+      write(0,*) 'BUILDNEUTRALWALL:WALLN:',walln
+      write(6,*) 'BUILDNEUTRALWALL:WALLN:',walln
+
+      do in = 1,walln
+         write(6,'(a,i8,10(1x,g18.8))') 'BNW:',in,
+     >             wallr1(in,1),wallz1(in,1),
+     >             wallr1(in,2),wallz1(in,2),
+     >             wallt(in),wallc(in)
+      end do
+
 
       DO in = 1, walln
         r1 = wallr1(in,1)
@@ -1729,21 +1787,43 @@ c...      Assign RW and ZW:
           pcnt = pcnt + 1
           rw(pcnt) = r1
           zw(pcnt) = z1
+
+          if (in.eq.walln) then 
+             ! jdemod - close the figure describing the neutral wall
+             pcnt = pcnt + 1
+             rw(pcnt) = r3
+             zw(pcnt) = z3
+             pcnt = pcnt + 1
+             rw(pcnt) = wallpt(1,20)
+             zw(pcnt) = wallpt(1,21)
+          endif
+c
 c         This is a little different than in DOWALL... make sure it won't
 c         cause a problem...  
 c           The above is an old comment, and I don't recall what the difference is,
 c           but not too worried since RW and ZW don't appear to be used in anger 
 c           anywhere. -SL, 30/09/2010
-          IF (wallt(in).EQ.1.OR.wallt(in).EQ.4) THEN
-            pcnt = pcnt + 1
-            rw(pcnt) = r2
-            zw(pcnt) = z2
-          ENDIF
-          IF (wallt(in).NE.wallt(in+1)) THEN
-            pcnt = pcnt + 1
-            rw(pcnt) = r3
-            zw(pcnt) = z3
-          ENDIF
+c
+c         jdemod
+c           -rw and zw are the points that define the boundary for neutral transport
+c           -these are used extensively in neut and neutone in calls to GA15A
+c           -However, all that is required is that the points included should
+c            properly specify the neutral bounding surface. If wallpts has been set
+c            up correctly then assigning just r1,z1 and closing the loop should be sufficient
+c
+c
+c         jdemod - remove additional duplicate vertices
+c          IF (wallt(in).EQ.1.OR.wallt(in).EQ.4) THEN
+c            pcnt = pcnt + 1
+c            rw(pcnt) = r2
+c            zw(pcnt) = z2
+c          ENDIF
+c          IF (wallt(in).NE.wallt(in+1)) THEN
+c            pcnt = pcnt + 1
+c            rw(pcnt) = r3
+c            zw(pcnt) = z3
+c          ENDIF
+c
         ENDIF
 
       ENDDO
@@ -1808,6 +1888,14 @@ c...  Assign WALLINDEX:
         in = NINT(wallpt(i1,18))
         IF (in.NE.0) wallindex(in) = i1
       ENDDO
+c
+c
+c      write(6,'(a,2i8)') 'Wallpts:',wallpts,pcnt
+c      do i1 = 1,wallpts
+c         write(6,'(10(1x,g18.8))') wallpt(i1,20),wallpt(i1,21),
+c     >              wallpt(i1,22),wallpt(i1,23),rw(i1),zw(i1)
+c      end do
+
 
 
 
@@ -1845,6 +1933,7 @@ c
 c
 c
       SUBROUTINE BuildGridPolygons
+      use error_handling
       IMPLICIT none
 
       INCLUDE 'params'
@@ -1873,12 +1962,22 @@ c...  Add target segments:
       DO ir = irsep, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         walln = walln + 1
+        if (walln.gt.maxpts) then 
+           ! jdemod - add some bounds checking
+           call errmsg('BuildGridPolygons','NWALL > MAXPTS')
+           stop 'NWALL > MAXPTS'
+        endif
         id = korpg(1,ir)
         wallr1(walln,1) = rvertp(1,id)
         wallz1(walln,1) = zvertp(1,id)
         wallr1(walln,2) = rvertp(2,id)
         wallz1(walln,2) = zvertp(2,id)
         walln = walln + 1
+        if (walln.gt.maxpts) then 
+           ! jdemod - add some bounds checking
+           call errmsg('BuildGridPolygons','NWALL > MAXPTS')
+           stop 'NWALL > MAXPTS'
+        endif
         id = korpg(nks(ir),ir)
         wallr1(walln,1) = rvertp(3,id)
         wallz1(walln,1) = zvertp(3,id)
@@ -1890,6 +1989,11 @@ c...  Add IRWALL boundary ring segments:
       DO ik = 1, nks(ir)
         id = korpg(ikins(ik,ir),irins(ik,ir))
         walln = walln + 1
+        if (walln.gt.maxpts) then 
+           ! jdemod - add some bounds checking
+           call errmsg('BuildGridPolygons','NWALL > MAXPTS')
+           stop 'NWALL > MAXPTS'
+        endif
         IF (irouts(ikins(ik,ir),irins(ik,ir)).EQ.irwall) THEN
           wallr1(walln,1) = rvertp(2,id)
           wallz1(walln,1) = zvertp(2,id)
@@ -1909,6 +2013,11 @@ c...  Add IRTRAP boundary ring segments:
         DO ik = 1, nks(ir)
           id = korpg(ikouts(ik,ir),irouts(ik,ir))
           walln = walln + 1
+        if (walln.gt.maxpts) then 
+           ! jdemod - add some bounds checking
+           call errmsg('BuildGridPolygons','NWALL > MAXPTS')
+           stop 'NWALL > MAXPTS'
+        endif
           wallr1(walln,1) = rvertp(4,id)
           wallz1(walln,1) = zvertp(4,id)
           wallr1(walln,2) = rvertp(1,id)
@@ -1916,7 +2025,8 @@ c...  Add IRTRAP boundary ring segments:
         ENDDO
       ENDIF
 
-c      WRITE(0,*) 'WALLN=',walln
+      WRITE(0,*) 'WALLN=',walln
+      WRITE(6,*) 'WALLN=',walln
 
       DO i1 = 2, walln-1
         DO i2 = i1, walln
@@ -1945,6 +2055,15 @@ c...  Assign:
       riw(ionwpts) = riw(1)
       ziw(ionwpts) = ziw(1)
 
+
+      write(0,*) 'BGP:IONWPTS:',ionwpts
+      write(6,*) 'BGP:IONWPTS:',ionwpts
+
+      do i1 = 1,ionwpts
+         !write(0,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
+         write(6,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
+      end do
+
 c...  Not really sure what this does, but found in IONWALL in WALLS.F, 
 c     seems to setup some work arrays:
       kind = 1
@@ -1953,14 +2072,45 @@ c     seems to setup some work arrays:
       WRITE(SLOUT,'(A,I10)') 'RETURN FROM GA15A, TAU =',iwINDW(2,1)
 
 c...  Core boundary polygon:
+      !
+      ! jdemod
+      ! the description used for the core boundary would seem to leave out 
+      ! the edge of the last polygon - this implicitly assumes that the 
+      ! first and last cells of a core ring are the same - which is not the 
+      ! case for a ribbon grid. 
+      ! ALSO - use of ring #2 here is also based on standard grid assumptions
+      !        though this works for a ribbon grid. 
+      !
       ioncpts = nks(2) 
       DO ik = 1, nks(2) - 1
         id = korpg(ik,2)
         rcw(ik) = rvertp(1,id)
         zcw(ik) = zvertp(1,id)
-      ENDDO
+      enddo
+      if (cgridopt.eq.RIBBON_GRID) then 
+         ! add the information for the last polygon - both vertices 
+         ! for a ribbon grid
+         ioncpts = ioncpts + 1
+        id = korpg(nks(ir),2)
+        rcw(ioncpts) = rvertp(1,id)
+        zcw(ioncpts) = zvertp(1,id)
+         ioncpts = ioncpts + 1
+        rcw(ioncpts) = rvertp(4,id)
+        zcw(ioncpts) = zvertp(4,id)
+      endif
+
+      ! Close the figure
       rcw(ioncpts) = rcw(1)
       zcw(ioncpts) = zcw(1)
+
+
+      write(0,*) 'BGP:IONCPTS:',ioncpts
+      write(6,*) 'BGP:IONCPTS:',ioncpts
+
+      do i1 = 1,ioncpts
+         !write(0,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
+         write(6,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
+      end do
 
       CALL GA15A(IONCPTS,KIND,icWORK,4*MAXPTS,icINDW,MAXPTS,
      >             RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
@@ -5902,10 +6052,6 @@ c...  Copy results into global arrays:
 
 
 c      STOP 'YEAH!'
-
-
-
-
 
 
 
@@ -10096,6 +10242,11 @@ c
       irtrap = nrs
       nbr = 0
 
+c
+c     Flag all cells are non-orthogonal
+c
+      tagdv = 1.0
+c
 
       ! insert zero volume boundary rings? - boundary rings would need be added to every PFZ section - not really feasible?
       
@@ -10328,8 +10479,10 @@ c                z1 = (1.0 - frac) * L
             CASE (4:7) ! Target chamber: fancy
               frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
               frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
-              frac1 = SIGN(0.5,frac1-0.5)*(ABS(frac1-0.5)/0.5)**1.00+0.5
-              frac2 = SIGN(0.5,frac2-0.5)*(ABS(frac2-0.5)/0.5)**1.00+0.5
+              frac1 = SIGN(0.5d0,frac1-0.5d0)*
+     >                  (ABS(frac1-0.5d0)/0.5d0)**1.00+0.5
+              frac2 = SIGN(0.5d0,frac2-0.5d0)*
+     >                  (ABS(frac2-0.5d0)/0.5d0)**1.00+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
           ENDSELECT
