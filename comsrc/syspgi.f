@@ -680,6 +680,7 @@ c
 c
       integer k,i
       integer,allocatable :: temp_seed(:)
+      real :: temp,a
 
       call random_seed(size=k)
 
@@ -689,7 +690,7 @@ c
       allocate(temp_seed(k))
 
       do i = 1,k
-         temp_seed(i) = int(iseed/i)
+         temp_seed(i) = int(iseed/i) + iseed * i**2 
       end do
 
       write(6,*) 'Random Seed Used:',(temp_seed(i),i=1,k)
@@ -703,7 +704,25 @@ c     write(6,*) 'Random seed:',iseed
 c     CALL NEWSRAND (ISEED)
 C
 C     CALL SRAND (ISEED ) FOR CRAY OR IBM DEFAULT GENERATOR
+
+c
+c     jdemod 
 C
+c     Drag off the first 10,000 random numbers in case there is 
+c     an initialization issue - I noticed that the first bunch of 
+c     numbers out of the call to random_number look distinctly 
+c     non-random
+c
+      a = 0.0
+
+      do in = 1,10000
+         call random_number(temp)
+         a = temp
+      end do 
+
+      write(6,*) 'END of Random_seed:',a
+
+
       RETURN
       END
 
@@ -732,6 +751,10 @@ c
 
       DO 100 J = 1, NRANDS
           call random_number(crands(j))
+
+c
+c          write(6,'(a,i8,g18.8)') 'RN:',j,crands(j)
+c          write(0,'(a,i8,g18.8)') 'RN:',j,crands(j)
 c
 c          CRANDS(J) = NEWRAND()
 C

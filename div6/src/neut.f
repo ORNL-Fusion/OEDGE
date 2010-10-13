@@ -1476,6 +1476,18 @@ C
 C
       DO 900 IPROD = 1, NPROD-LPROD+1
 c
+c     jdemod - temp debug
+c     
+c         if (iprod.eq.62) then 
+c            cstepn = 1
+c            debugn = .true.
+c         else
+c            cstepn = 0
+c            debugn = .false.
+c         endif
+c
+c
+
         IF (sloutput.AND.grdnmod.NE.0.AND.
      .      MOD(iprod,MAX(1,(NPROD-LPROD+1)/10)).EQ.0)   ! sltmp
      .    WRITE(0,*) 'debug: iprod',iprod,NPROD-LPROD+1
@@ -2538,10 +2550,17 @@ c slmod end
           GOTO 899
         ENDIF
 C
-        if (iprod.eq.(iprod/100)*100) then 
+        if (iprod.eq.(iprod/100)*100.or.debugn) then 
+
            write (6,'(a,i6,3i4,5(1x,g13.5))')
      >         'LAUNCH:',iprod,id,ik,ir,r,z,vin,angle,tangnt
+
         endif 
+
+c        write (0,'(a,i6,3i4,5(1x,g13.5))')
+c     >         'LAUNCH:',iprod,id,ik,ir,r,z,vin,angle,tangnt
+
+
 C
 C       SET UP THE WALL DEFINITION IN THE ROUTINE THAT
 C       DETERMINES WHETHER A POINT IS INSIDE OR OUTSIDE THE
@@ -2926,10 +2945,16 @@ C
 c                WRITE (6,9003) IPROD,CIST,IK,IR,IX,IY,R,Z,K,
                 WRITE (6,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
      >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
+c
+c               jdemod - tmp debug
+c
+                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
+     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
               ENDIF
             ENDIF
 C
             KK = KK + 1
+
             IF (RANV(KK).GE.KPCHS(IK,IR,0)) GOTO 200
 c
 c  State change event has occurred -
@@ -2957,10 +2982,13 @@ c               call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
 c     >               xvelf,yvelf,
 c     >               sputy,vin,temn,cneutvel,fsrate,kk,crmi,ik,ir)
 
+               write (0,*) '1a:'
+
                call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
      >               xvelf,yvelf,
      >               sputy,vin,temn,cneutvel,fsrate,nrand,crmi,
      >               ktibs(ik,ir))
+               write (0,*) '1b:'
 
 c
 c              Momentum Transfer Collision event
@@ -3259,9 +3287,9 @@ C
 C
         ELSEIF (RESULT.LE.0.0) THEN
 c
-c          if (debugn) write (6,'(a,7(1x,g13.5))') 
-c     >                       'DEBUG2:',cist,r,z,xvelf,
-c     >                        yvelf,vin,result
+          if (debugn) write (6,'(a,7(1x,g13.5))') 
+     >                       'DEBUG2:',cist,r,z,xvelf,
+     >                        yvelf,vin,result
 C
 C       PARTICLE IS FOUND TO BE OUTSIDE BOUNDARY. NEED TO FIND
 C       THE POSITION AND SEGMENT WHERE IT LEFT...
@@ -3340,12 +3368,10 @@ c         Find location of wall intersection - use of indi for intersection inde
 c         for compatibility with existing code 
 c
 
-
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
      >                                sect)
-
 
 c
 c         Verify RNEW,ZNEW 
@@ -3747,17 +3773,22 @@ c
      >                           wallpt(indi,8),wallpt(indi,9)
                     rtmp = rnew + xvelf
                     ztmp = znew + yvelf
+
                     call gridpos(ik,ir,rold,zold,.false.,griderr)
+
                     CALL GA15B(Rtmp,Ztmp,RESULT,PCNT,1,WORK,4*MAXPTS,
      >                  INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
-                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
-     >                           rtmp,ztmp,result,griderr
+
+c                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
+c     >                           rtmp,ztmp,result,griderr
+
                     call gridpos(ik,ir,r,z,.false.,griderr)
+
                     CALL GA15B(R,Z,RESULT,PCNT,1,WORK,4*MAXPTS,
      >                  INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
-                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
-     >                           r,z,result,griderr
-               
+
+c                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
+c     >                           r,z,result,griderr
 c
                     RWALLN(M) = RWALLN(M) + SPUTY
 C
@@ -3981,7 +4012,9 @@ c slmod end
 C
   899  CONTINUE
 
-
+c
+c     jdemod - temp debug
+c
 c       WRITE(0 ,*) 'IFATE:',ifate   ! sltmp
 c       WRITE(0 ,*) '     :',r,z,ik,ir
        IF (ifate.EQ.8) target_loss = target_loss + 1
@@ -5382,18 +5415,38 @@ c     Calculate launch positions of particles.
 c     
       CALL SURAND (SEED, Nneut2, RANVA)
       NRAND = NRAND + Nneut2
+
       CALL SURAND (SEED, Nneut2, RANVB)
       NRAND = NRAND + Nneut2
+
+c      DO IPROd = 1,nneut2
+c         write(6,'(a,i8,10(1x,g18.8))')
+c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
+c         write(0,'(a,i8,10(1x,g18.8))')
+c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
+c      end do
+
+
 C     
       DO IPROD = 1,nneut2
          RAN    = RANVA (IPROD)
 C
 C------ DEPENDING ON OPTION CHOSEN,  SELECT LAUNCH POSITIONS
 C
+c         WRITE(0,*) 'ran:',iprod,ran
+
          IF (CNEUTB.EQ.0.or.cneutb.eq.3) THEN
 c
   485       ID = IPOS (RAN, fyprob, nfymap)
             ID = fyMAP(ID)
+
+
+c            WRITE(0,'(a,5i8,10(1x,g18.8))') 
+c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
+c     >                    ran,rp(id),zp(id)
+c            WRITE(6,'(a,5i8,10(1x,g18.8))') 
+c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
+c     >                    ran,rp(id),zp(id)
 c
             IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0) THEN
               CALL SURAND2 (SEED, 1, RAN)
@@ -5413,8 +5466,8 @@ c              Find launch position along target element.
 c               
                itmp = wallindex(id)
 c
-               write(6,'(a,2i6,5(1x,g12.5))') 'TL1:',id,itmp,rp(id),
-     >                    wallpt(itmp,1),zp(id),wallpt(itmp,2)
+c               write(6,'(a,2i6,5(1x,g12.5))') 'TL1:',id,itmp,rp(id),
+c     >                    wallpt(itmp,1),zp(id),wallpt(itmp,2)
 c
                CALL SURAND2 (SEED, 1, RAN)
                NRAND = NRAND + 1
@@ -5439,9 +5492,9 @@ c
                   ISPRODS(IPROD+Nneut1) = 1
                ENDIF
 
-              write(6,'(a,2i6,8(1x,g12.5))') 'TL2:',id,itmp,x0,y0,
-     >           wallpt(itmp,20),wallpt(itmp,21),wallpt(itmp,22),
-     >           wallpt(itmp,23)
+c              write(6,'(a,2i6,8(1x,g12.5))') 'TL2:',id,itmp,x0,y0,
+c     >           wallpt(itmp,20),wallpt(itmp,21),wallpt(itmp,22),
+c     >           wallpt(itmp,23)
 
            endif
 
@@ -5554,6 +5607,13 @@ C
          eprods(iprod+nneut1) = 0.0 
          SPUTYS(IPROD+Nneut1) = 1.0
          IDPRODS(IPROD+Nneut1) = ID
+
+
+c         write(6,'(a,2i8,10(1x,g18.8))') 'Launch data:',iprod,nneut1,
+c     >         iprod+nneut1,xprods(IPROD+Nneut1),yprods(IPROD+Nneut1),
+c     >         eprods(iprod+nneut1),idprods(iprod+nneut1)
+
+
       end do
 C
 C-----------------------------------------------------------------------

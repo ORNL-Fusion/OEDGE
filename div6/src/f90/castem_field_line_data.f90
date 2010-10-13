@@ -93,6 +93,8 @@ module castem_field_line_data
 
    integer,parameter :: grid_option = 1
 
+   integer,parameter :: outunit = 6
+
 contains
 
 
@@ -144,7 +146,7 @@ contains
     tot_n_intsects = n_enter + n_leave + n_tangency
     intsec_cnt = 0
 
-    write(0,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency
+    write(outunit,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency
 
 
     ! field line array has been allocated ... now read in and allocate the intersection
@@ -193,7 +195,7 @@ contains
     ! Allocate space to hold the total number of recorded intersections for this line
     allocate(fl%int_data(inter_tot),stat=ierr)
 
-    write(6,'(a,3(1x,i8))') 'Assign FL:',id,inter_tot,ierr
+    write(outunit,'(a,3(1x,i8))') 'Assign FL:',id,inter_tot,ierr
 
   end subroutine assign_field_line_data
 
@@ -236,7 +238,7 @@ contains
 
        read(iunit,'(a512)',iostat=ierr) line
 
-       write(6,'(a)') trim(line)
+       !write(outunit,'(a)') trim(line)
 
        if (header_has_been_loaded) then 
 
@@ -353,7 +355,7 @@ contains
     do while (iend.eq.0) 
 
        read(iunit,'(a512)',iostat=iend) line
-       write(6,'(a)') trim(line)
+       !write(outunit,'(a)') trim(line)
 
        if (iend.eq.0) then 
           
@@ -375,7 +377,7 @@ contains
        call errmsg('Incorrect number of intersection points read:',sect_cnt)
     endif
 
-    write(6,'(a,i10)') 'Total intersections read:', sect_cnt
+    !write(outunit,'(a,i10)') 'Total intersections read:', sect_cnt
 
 
   end subroutine read_intersection_data
@@ -576,7 +578,7 @@ contains
 
     n_nodes = tot_n_intsects
 
-    write(0,*) 'n_nodes:',n_nodes,tot_n_intsects
+    write(outunit,*) 'n_nodes:',n_nodes,tot_n_intsects
 
     if (tot_n_intsects.gt.0) then 
        if (allocated(surf_s)) deallocate(surf_s)
@@ -634,7 +636,7 @@ contains
     end do
 
 
-    write(0,*) 'node_cnt:',node_cnt
+    write(outunit,*) 'node_cnt:',node_cnt
 
     call sort_arrays(0,node_cnt,surf_s,surf_r,surf_fl,surf_int)
 
@@ -686,7 +688,7 @@ contains
 
        min_sep = minval(surf_sep)
 
-       write(0,*) 'Minimum intersection separation = ', min_sep
+       write(outunit,*) 'Minimum intersection separation = ', min_sep
 
        do in = 1,n_nodes
           ! look through the list for points that are separated by larger distances
@@ -710,7 +712,7 @@ contains
 
           !          write (6,'(a,i9,2l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,abs(surf_ang(in)-last_ang).gt.ang_limit,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),surf_ang(in)*raddeg,last_ang*raddeg,ang_limit*raddeg
 
-          write (6,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
+          !write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
 
           ! Test to see if next point could be out of series
           !if (surf_sep(in).gt.max_fact * last_sep.or.abs(surf_ang(in)-last_ang).gt.ang_limit) then 
@@ -733,7 +735,7 @@ contains
 
                    !                   write(6,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it),test_ang*raddeg,last_ang*raddeg, abs(test_ang-last_ang)
 
-                   write(6,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
+                   !write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
 
                    ! test for additional in series points 
                    !if (test_sep.lt.max_fact*last_sep.and.abs(test_ang-last_ang).lt.ang_limit) then 
@@ -748,7 +750,7 @@ contains
                          surf_s(in+ix+1)   = surf_s(in+ix)
                          surf_fl(in+ix+1)  = surf_fl(in+ix)
                          surf_int(in+ix+1) = surf_int(in+ix)
-                         write(6,'(a,2i8,5(1x,g18.6))') 'Moving:',in,ix,in+ix,surf_r(in+ix+1), surf_s(in+ix+1)
+                         !write(outunit,'(a,2i8,5(1x,g18.6))') 'Moving:',in,ix,in+ix,surf_r(in+ix+1), surf_s(in+ix+1)
                       end do
 
                       surf_r(in+1)   = tmp_r
@@ -776,21 +778,21 @@ contains
 
 
        ! slmod begin
-       do in = 2,n_nodes-1
+       !do in = 2,n_nodes-1
        !
        !do in = 2,n_nodes
        ! slmod end
-          test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-          write(6,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
+          !test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
+          !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
 
-       end do
+       !end do
 
        !
        ! Allocate temp arrays for averaging
        !
 
-       write(0,*) 'Avgroup:',av_group_cnt, av_group(n_nodes)
+       !write(outunit,*) 'Avgroup:',av_group_cnt, av_group(n_nodes)
 
        av_group_cnt = av_group(n_nodes) +2
 
@@ -941,10 +943,10 @@ contains
 
     endif
 
-    write(0,'(a,10(1x,g18.8))') 'Average:',min_r,max_r
-    do in = 1,av_group_cnt
-       write(6,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
-    end do
+    !write(outunit,'(a,10(1x,g18.8))') 'Average:',min_r,max_r
+    !do in = 1,av_group_cnt
+    !   write(outunit,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
+    !end do
 
 
 
@@ -1035,8 +1037,8 @@ contains
           last_face = 2
        endif
 
-       write(0,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
-       write(6,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       !write(outunit,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       !write(6,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
 
     end do
 
@@ -1141,19 +1143,16 @@ contains
 
     end do
 
-    write(0,'(a,6i10)') 'Tan:',av_tan_cnt, av_wall_cnt,double_tan,double_wall
-    do in = 1,max(av_tan_cnt,av_wall_cnt)
+    !write(outunit,'(a,6i10)') 'Tan:',av_tan_cnt, av_wall_cnt,double_tan,double_wall
 
-       if(in.le.av_wall_cnt) then 
-          ! slmod - array bounds error on AV_TAN_S
-	  ! write(6,'(a,i6,l8,10(1x,g18.8))') 'Wall:',in,av_wall_s(in).lt.av_tan_s(in),av_wall_r(in),av_wall_s(in)
-	  ! slmod end
-       endif
-
-       if (in.le.av_tan_cnt) then 
-          write(6,'(a,i6,l8,10(1x,g18.8))') 'Tan :',in,av_tan_s(in).lt.av_wall_s(in+1),av_tan_r(in),av_tan_s(in)
-       endif
+    do in = 1,av_wall_cnt
+       write(outunit,'(a,i6,10(1x,g18.8))') 'Wall:',in,av_wall_r(in),av_wall_s(in)
     end do
+
+    do in = 1,av_tan_cnt
+       write(outunit,'(a,i6,10(1x,g18.8))') 'Tan :',in,av_tan_r(in),av_tan_s(in)
+    end do
+
 
     ! Find max and min from the reduced intersection data ... loop through revised wall to get this data
 
@@ -1202,8 +1201,8 @@ contains
           av_tan_r(in+1) = av_tan_r(in)
           av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
 
-          write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
-          write(6,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          !write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          !write(6,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
        endif
        
     end do
@@ -1217,7 +1216,7 @@ contains
 
     do in = 1,av_tan_cnt
        tan_ord_r(in) = in
-       write(6,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R:',in,av_tan_r(in),tan_ord_r(in)
+       write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R:',in,av_tan_r(in),tan_ord_r(in)
     end do
 
     ! Sort the S indices by R to get tan_ord_r referencing the R order of the data while sorted by S
@@ -1228,7 +1227,7 @@ contains
 
    
     do in = 1,av_tan_cnt
-       write(6,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
+       write(outunit,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
     end do
 
 
@@ -1451,13 +1450,13 @@ contains
           if (av_tan_r(in1).ne.r_bnds(rbnd_cnt)) then 
              rbnd_cnt = rbnd_cnt + 1
              r_bnds(rbnd_cnt) = av_tan_r(in1)
-             write(6,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
+             !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
 
           endif
        else
           rbnd_cnt = rbnd_cnt + 1
           r_bnds(rbnd_cnt) = av_tan_r(in1)
-          write(6,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
+          !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
        endif
 
 !       sbnd_cnt = sbnd_cnt + 1
@@ -1513,7 +1512,7 @@ contains
 
     do in = 1,rbnd_cnt
        ! slmod - array bounds error on R_BNDS
-       !write(6,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(in-1)
+       write(6,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(max(in-1,1))
        !
     end do
 
@@ -1571,10 +1570,10 @@ contains
 
     ! write out intersection points
     do in = 1,rbnd_cnt
-       write(6,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
-       write(0,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
+       write(outunit,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
+       !write(0,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
        do it = 1,int_cnt(in)
-          write(6,'(a,2i8,10(1x,g18.8))') '  DATA:', in,it,int_type(in,it),ints(in,it),r_bnds(in)
+          write(outunit,'(a,2i8,10(1x,g18.8))') '  DATA:', in,it,int_type(in,it),ints(in,it),r_bnds(in)
        end do
     end do
 
@@ -1736,9 +1735,6 @@ contains
 
     do in = 1,rbnd_cnt -1 
 
-       write(0,*) '5:',in
-
-
        r1 = r_bnds(in)
        r2 = r_bnds(in+1)
 
@@ -1746,7 +1742,7 @@ contains
           do it = 1,int_cnt(in)
              vert_rec1(it) = ints(in,it)
              vert_type1(it) = int_type(in,it)
-             write(6,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
+             !write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
           end do
           vert_cnt1 = int_cnt(in)
        end if
@@ -1827,14 +1823,14 @@ contains
        end if
 
 
-       write(6,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
-       do it = 1,ntot1
-          write(6,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
-       end do
-       write(6,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
-       do it = 1,ntot2
-          write(6,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
-       end do
+       !write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
+       !do it = 1,ntot1
+       !   write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
+       !end do
+       !write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
+       !do it = 1,ntot2
+       !   write(outunit,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
+       !end do
 
        !
        ! Break the calls to gen_ring based on number of paired surface elements
@@ -1851,7 +1847,7 @@ contains
 
        ! assign start/end indices on each row
        do it = 1,vert_cnt1
-          write(0,'(a,10i8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b
+          !write(outunit,'(a,10i8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b
 
           if (vert_type1(it).eq.SURFACE_START) then 
              npts1a = it
@@ -1863,7 +1859,7 @@ contains
              s_end = vert_rec1(npts1b)
 
 
-             write(0,'(a,6i8,10(1x,g18.8))') 'VERTB:',in,it,vert_cnt1,vert_cnt2,npts1a,npts1b,s_start,s_end
+             !write(outunit,'(a,6i8,10(1x,g18.8))') 'VERTB:',in,it,vert_cnt1,vert_cnt2,npts1a,npts1b,s_start,s_end
 
              ! loop through vert_rec2
 
@@ -1889,16 +1885,14 @@ contains
 
              if (npts2a.ne.0.and.npts2b.ne.0) then 
 
-                write(0,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
+                write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
                 call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,max_nknots,max_s_sep,min_cells)
 
              else
 
-                write(0,'(a,6i8,10(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
+                write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
 
              endif
-
-             write (0,*) 'After gen_ring'
 
              ! If the point is a tangency then it is also the next surface_start point
              if (vert_type1(it).eq.TANGENCY) then 
@@ -1907,16 +1901,12 @@ contains
 
           endif
 
-          write(0,*) '1:'
-
        end do
 
 
 
        ! if new vertices need to be retained then sort the vert_rec2 array and assign it to vert_rec1 
        ! for grid option 2 - retain vertices as fixed for next row
-
-       write(0,*) '2:'
 
        if (grid_option.eq.2) then 
           vert_cnt2 = ntot2
@@ -1925,15 +1915,10 @@ contains
 
        endif
 
-       write(0,*) '3:'
-
        ! move over vertices by one row ... either keeping ones added or not
        vert_cnt1 = vert_cnt2
        vert_rec1 = vert_rec2
        vert_type1 = vert_type2
-
-       write(0,*) '4:'
-
 
     end do
 
@@ -2008,15 +1993,15 @@ contains
     do in = npts1a,npts1b
        s1(in-npts1a+1) = vert_rec1(in)
        s1_type(in-npts1a+1) = vert_type1(in)
-       write(0,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
-       write(6,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
+       !write(outunit,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
+       !write(6,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
     end do
 
     do in = npts2a,npts2b
        s2(in-npts2a+1) = vert_rec2(in)
        s2_type(in-npts2a+1) = vert_type2(in)
-       write(0,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
-       write(6,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
+       !write(outunit,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
+       !write(6,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
     end do
 
 
@@ -2063,7 +2048,7 @@ contains
 
        ssep1 = abs(s1(1)-s1(2))/ncells 
 
-       write(0,*) 'GR:NPTS:',npts1,npts2,ncells,slen
+       !write(outunit,*) 'GR:NPTS:',npts1,npts2,ncells,slen
 
        do in = 1,ncells-1
           s1(npts1+in) = s1(1) + ssep1 * in
@@ -2074,12 +2059,12 @@ contains
 
        slen = abs(s2(1)-s2(npts2))
 
-       write(0,'(a,3i8,10(1x,g18.8))') 'GR:NPTS2:',npts2,ncells,ncells2,slen
+       !write(outunit,'(a,3i8,10(1x,g18.8))') 'GR:NPTS2:',npts2,ncells,ncells2,slen
 
        dist = 0.0
        do in = 1,npts2-1
           dist(in) = abs(s2(in+1)-s2(in))/slen * ncells2
-          write(0,'(a,i8,10(1x,g18.8))') 'GR:DIST:',in,dist(in),s2(in+1),s2(in)
+          !write(outunit,'(a,i8,10(1x,g18.8))') 'GR:DIST:',in,dist(in),s2(in+1),s2(in)
        end do
 
        ! assign cell dist an initial distribution of one additional vertex / group ... so that division by zero does not occur in cell assignment algorithm
@@ -2092,7 +2077,7 @@ contains
           !it = maxloc(dist)
           cell_dist(it) = cell_dist(it)+1.0
           !dist(it) = dist(it)/(cell_dist(it)+1.0)
-          WRITE(0,'(a,2i8,10(1x,g18.8))') 'dist2:',in,it,cell_dist(it),dist(it)
+          !WRITE(outunit,'(a,2i8,10(1x,g18.8))') 'dist2:',in,it,cell_dist(it),dist(it)
        end do
 
        !write(0,*) 'DIST sum:',sum(cell_dist),ncells2-1
@@ -2104,7 +2089,7 @@ contains
              cells_added = cells_added + 1
              s2(npts2+cells_added) = s2(in) + ssep2 * it
              s2_type(npts2+cells_added) = NEW_VERTEX
-             write(0,'(a,3i8,10(1x,g18.8))') 'Adding:',in,it,cells_added,ssep2,s2(npts2+cells_added),s2_type(npts2+cells_added)
+             !write(outunit,'(a,3i8,10(1x,g18.8))') 'Adding:',in,it,cells_added,ssep2,s2(npts2+cells_added),s2_type(npts2+cells_added)
           end do
        end do
 
@@ -2156,7 +2141,7 @@ contains
                    cells_added = cells_added + 1
                    s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(in)-s1(last_tan)) * abs(s2(it)-s2(it-1)) + s2(it-1)
                    s2_type(npts2+cells_added) = NEW_VERTEX
-                   write(6,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
+                   !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                 end do
                 last_tan= in
                 ! if we have just finished the match for the last tangency point then process the end of the row
@@ -2166,7 +2151,7 @@ contains
                       cells_added = cells_added + 1
                       s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(npts1)-s1(last_tan)) * abs(s2(npts2)-s2(it)) + s2(it)
                       s2_type(npts2+cells_added) = NEW_VERTEX
-                      write(6,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
+                      !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                    end do
 
                 endif
@@ -2180,7 +2165,7 @@ contains
        npts2 = npts2 + cells_added 
        call sort_arrays(1,npts2,s2,s2_type)
 
-       write(0,'(a,i8,10(1x,g18.8))') 'NEW s2:',npts2,cells_added
+       !write(outunit,'(a,i8,10(1x,g18.8))') 'NEW s2:',npts2,cells_added
 
     endif
 
@@ -2198,7 +2183,7 @@ contains
        nrings = nrings + 1
        nknots(nrings) = npts1 -1 
 
-       write(6,'(a,4i8,10(1x,g18.8))') 'GEN:',npts1,npts2,nrings,nknots(nrings)
+       !write(outunit,'(a,4i8,10(1x,g18.8))') 'GEN:',npts1,npts2,nrings,nknots(nrings)
 
        do in = 1,npts1 -1 
           npoly = npoly + 1
@@ -2215,7 +2200,7 @@ contains
           poly_ref(in,nrings) = npoly
           rcen(in,nrings) = sum(rvp(1:nvp(npoly),npoly))/nvp(npoly)
           zcen(in,nrings) = sum(zvp(1:nvp(npoly),npoly))/nvp(npoly)
-          write(6,'(a,3i8,10(1x,g18.8))') 'POLY:',in,npoly,poly_ref(in,nrings),(rvp(it,npoly),zvp(it,npoly),it=1,nvp(npoly)),rcen(in,nrings),zcen(in,nrings)
+          write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY:',in,npoly,poly_ref(in,nrings),(rvp(it,npoly),zvp(it,npoly),it=1,nvp(npoly)),rcen(in,nrings),zcen(in,nrings)
 
        end do
 
@@ -2230,12 +2215,12 @@ contains
 
     ! copy new vertices and types into vert_rec2 - vert_rec1 was completed on previous iterations
 
-    write(0,'(a,3i8,10(1x,g18.8))') 'Assign vert_rec2:', maxpts,npts2,ntot2
+    !write(outunit,'(a,3i8,10(1x,g18.8))') 'Assign vert_rec2:', maxpts,npts2,ntot2
 
     do in = 1,npts2
        if (s2_type(in).eq.NEW_VERTEX) then 
           ntot2 = ntot2 + 1
-          write(0,'(a,3i8,10(1x,g18.8))') 'REC VERT:', in,ntot2,maxpts,s2(in),s2_type(in)
+          !write(outunit,'(a,3i8,10(1x,g18.8))') 'REC VERT:', in,ntot2,maxpts,s2(in),s2_type(in)
 
           vert_rec2(ntot2) = s2(in)
           vert_type2(ntot2) = FIXED_VERTEX
@@ -2264,7 +2249,7 @@ contains
     
     open(iunit,file=filename,form='formatted')
 
-    write(0,'(a,3i8,10(1x,g18.8))') 'Grid:', npoly,nrings
+    !write(0,'(a,3i8,10(1x,g18.8))') 'Grid:', npoly,nrings
     write(iunit,'(a,3i8,10(1x,g18.8))') 'Grid:', npoly,nrings
 
     do in = 1,nrings
@@ -2363,7 +2348,7 @@ contains
              int_type_base = int_type_base * -1
              intersects(int(int_cnt)) = s_int
 
-             write(6,'(a,2i8,10(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             !write(outunit,'(a,2i8,10(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
 
           endif
 
@@ -2379,7 +2364,7 @@ contains
           int_cnt = int_cnt + 1.0
           int_type(int(int_cnt)) = TANGENCY
           intersects(int(int_cnt)) = av_tan_s(in)
-          write(6,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+          !write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
        end if
     end do
 

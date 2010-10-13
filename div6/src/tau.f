@@ -358,7 +358,7 @@ c
 c     bypass for ribbon grid
 c
 c slmod begin - ribbon dev
-      if (.TRUE.) then 
+c      if (.TRUE.) then 
 c      
 c      if (cgridopt.ne.RIBBON_GRID) then 
 c slmod end     
@@ -736,11 +736,10 @@ c
       CALL SetupGrid
 c slmod end
 
-
 c
 c     - endif for ribbon code bypass
 c
-      else
+c      else
 c
 c     copy some code from setupgrid for ribbon grids
 c     setup grid distinguishes between SOL and PFZ rings which may
@@ -754,19 +753,19 @@ c     what is "virloc" and virtag in setupgrid?
 c
 c     All code related to Xpoints is meaningless for ribbon grids
 c
-
-         CALL SetBounds
-
-         DO ir = irsep, nrs
-            osm_model(IKLO,ir) = GetModel(IKLO,ir)
-            osm_model(IKHI,ir) = GetModel(IKHI,ir)
-
-            WRITE(PINOUT,*) 'MODEL : ',osm_model(IKLO,ir),
-     >                                 osm_model(IKHI,ir)
-         ENDDO
-
-      endif
-
+c
+c         CALL SetBounds
+c
+c         DO ir = irsep, nrs
+c            osm_model(IKLO,ir) = GetModel(IKLO,ir)
+c            osm_model(IKHI,ir) = GetModel(IKHI,ir)
+c
+c            WRITE(PINOUT,*) 'MODEL : ',osm_model(IKLO,ir),
+c     >                                 osm_model(IKHI,ir)
+c         ENDDO
+c
+c      endif
+c
 
 
 C
@@ -1263,6 +1262,11 @@ c
 
       ENDDO
 c
+
+
+
+
+c
       if (cprint.eq.3.or.cprint.eq.9) then
          WRITE(6,'(//1X,''COS ALPHA:'')')
          DO IR = 1, NRS
@@ -1709,6 +1713,7 @@ c
 c slmod begin - new
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
+         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
@@ -3694,10 +3699,10 @@ c     >  /5X,'NO OF POINTS NP     =',I6,5X,'MAX NO. ROWS MKS    =',I6,
 c     >  /5X,'SEPARATRIX   IRSEP  =',I6,5X,'WALL         IRWALL =',I6,
 c     >  /5X,'FIRST TRAP   IRTRAP =',I6,5X,'NO OF RINGS  NRS    =',I6,
 c     >  /5X,'K SPLIT PT   IKT    =',I6,5X,'K REF POINT  IKREF  =',I6)
- 9002 FORMAT(/1X,' IK IR    R           Z          BPH',
+ 9002 FORMAT(/1X,'  IK  IR    R           Z          BPH',
      >  'I     TEB     TIB     NB      E1      VB          S      ',
      >  'BTOT/BTHETA    FEG1    FIG1',/1X,131('-'))
- 9003 FORMAT(1X,2I3,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
+ 9003 FORMAT(1X,2I4,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
 c 9006 FORMAT(/1X,'TAUIN1: AREA OF SOL+TRAP =',F9.6,',  MAIN P =',F9.6,/
 c 9011 FORMAT(/1X,'EDGE PLASMA DATA FOR SHOT',I6,',  TIME',F8.3,' :-',
 c     >  /5X,'RUN                 =',A,
@@ -3705,16 +3710,16 @@ c     >  /5X,'PLASMA       HMASS  =',I6,5X,'IMPURITY     ZMASS  =',I6,
 c     >  /5X,'FIRST RING   IRCENT =',I6,5X,'LOST INN RGS NINOMP =',I6,
 c     >  /5X,'LOST OUT RGS NINOWA =',I6)
 c 9012 FORMAT(1P,6E12.4)
- 9022 FORMAT(/1X,' IK IR    R      Z   IKIN IRIN IKOUT',
+ 9022 FORMAT(/1X,'  IK  IR    R      Z   IKIN IRIN IKOUT',
      >  ' IROUT  INDIST OUTDIST BACDIST FORDIST VOLUME  INPROB',
      >  '  POLDIST',/1X,131('-'))
- 9023 FORMAT(1X,2I3,2F7.3,I5,I3,I8,I3,2X,4F8.3,F8.5,F8.4,F8.3)
- 9032 FORMAT(/1X,' IK IR    R      Z       NH0      NE      TE   ',
+ 9023 FORMAT(1X,2I4,2F7.3,I5,I3,I8,I3,2X,4F8.3,F8.5,F8.4,F8.3)
+ 9032 FORMAT(/1X,'  IK  IR    R      Z       NH0      NE      TE   ',
      >    ' TAUIZ0  CHPROB0',
      >    ' MTCPROB ',
      >  2('TAUIZ',I1,'  TAUEI',I1,'  TAURC',I1,'  CHPROB',I1,
      >  ' RCFRAC',I1,' '),/1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,2X,1P,6E8.1,2(1P,4E8.1,0P,F8.4))
+ 9033 FORMAT(1X,2I4,2F7.3,2X,1P,6E8.1,2(1P,4E8.1,0P,F8.4))
 c 9040 FORMAT(
 c     >   5X,'NO OF R PTS       NXS   =  ',I5,',   DELTAR =',F9.5,
 c     >  /5X,'NO OF Z PTS       NYS   =  ',I5,',   DELTAZ =',F9.5,
@@ -6559,6 +6564,10 @@ c
             write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
          end do
       end do
+c
+c     jdemod - Set all cells to default to non-orthogonal
+c
+      tagdv = 1.0
 c     
 c     
 c     Set total number of rings and total number of polygons
@@ -20208,6 +20217,15 @@ c
 c      Initialization 
 c
        call rzero(wallprad,(maxpts+6)*3)
+
+c
+c      jdemod - do not perform this calculation for ribbon grids at the present time
+c             - too much computation and may not be useful depending on the 
+c               wall intersections calculated.   
+c             - code may also implicitly assume a mostly open geometry 
+c
+       if (cgridopt.eq.RIBBON_GRID) return
+
 c
 c      For every cell on the grid - this code must loop through every element of 
 c      the wall.  
