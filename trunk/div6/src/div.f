@@ -3199,7 +3199,13 @@ c     The rings affected are IR=1, IR=IRWALL and IR=IRTRAP
 c     for grid types 0 and 3 - JET and SONNET
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod begin - ribbon grid
+     >    cgridopt.eq.4.or.cgridopt.eq.5.or.
+     >    cgridopt.eq.LINEAR_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) then
+c
+c     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod end
 c
          ir =1
          do ik = 1,nks(ir)
