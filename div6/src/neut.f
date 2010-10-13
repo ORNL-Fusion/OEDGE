@@ -1242,8 +1242,8 @@ c
       include    'fperiph_com'
 c
       include    'line_profile'
-c slmod begin - sltmp
-      include 'slcom'
+c slmod begin
+      include    'slcom'
 c slmod end
 c
       include    'hc_global_opts'
@@ -1666,9 +1666,18 @@ C         IFXYS(IX,IY) = 1
 c        ENDIF
 C
 c
-c...SLTMP
-c   NEED TO IMPROVE M ASSIGNMENT FOR GENERALIZED GRIDS
-        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin
+        if (cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID.or.
+     >      nbr.gt.0) then
+          if (ikds(id).eq.1) then
+            M = 2                   ! I think this is right...
+          else
+            M = 1
+          endif
+        elseif (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c
+c        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
 c
           M = 2
 c
@@ -2392,8 +2401,14 @@ c
                  cieizs(0) = cieizs(0) + cist * sputy
                  citizs(0) = citizs(0) + sputy
 c	         
+c slmod begin - ribbon dev
                  if (cgridopt.eq.0.or.cgridopt.eq.1.or.
-     >               cgridopt.eq.3) then
+     >               cgridopt.eq.3.or.
+     >               cgridopt.eq.LINEAR_GRID.or.
+     >               cgridopt.eq.RIBBON_GRID) then
+c
+c     >               cgridopt.eq.3) then
+c slmod end
                    if (ik.gt.nks(ir)/2) then
                      xatiz2(1) = xatiz2(1) + R * sputy
                      yatiz2(1) = yatiz2(1) + Z * sputy
@@ -2616,6 +2631,7 @@ c
           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN       ! sltmp
 c          IF (STOPOPT.LT.MAXNWS) THEN
             IF (sloutput) WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
+            IF (STOPOPT.EQ.0) STOPOPT = 1
             WALKS(STOPOPT,1) = R
             WALKS(STOPOPT,2) = Z
             WALKS(STOPOPT+1,1) = HI
@@ -2725,6 +2741,7 @@ C
         Z    = Z + YVELF
 c slmod begin - tmp
         IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
+          IF (STOPOPT.EQ.0) STOPOPT=1
           WALKS(STOPOPT,1) = R
           WALKS(STOPOPT,2) = Z
           WALKS(STOPOPT+1,1) = HI
@@ -2981,9 +2998,9 @@ c
 c               call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
 c     >               xvelf,yvelf,
 c     >               sputy,vin,temn,cneutvel,fsrate,kk,crmi,ik,ir)
-
-               write (0,*) '1a:'
-
+c slmod begin - ribbon grid
+c               write (0,*) '1a:'
+c slmod end
                call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
      >               xvelf,yvelf,
      >               sputy,vin,temn,cneutvel,fsrate,nrand,crmi,
@@ -3248,7 +3265,12 @@ c
            cieizs(0) = cieizs(0) + cist * sputy
            citizs(0) = citizs(0) + sputy
 c
-           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin - ribbon grid
+           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
+     >         cgridopt.eq.LINEAR_GRID.or.cgridopt.EQ.RIBBON_GRID) then
+c
+c           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
              if (ik.gt.nks(ir)/2) then
                xatiz2(1) = xatiz2(1) + R * sputy
                yatiz2(1) = yatiz2(1) + Z * sputy
