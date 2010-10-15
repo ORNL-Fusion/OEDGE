@@ -607,6 +607,10 @@ contains
     ! Using just the closest will not work - especially for the big gaps ... need to go back to sorting by S value then check distances to see if there are any fix ups
     ! needed. 
 
+    ! Initialize averaging from global variable
+    opt_block_av = rg_block_av
+
+
     n_nodes = tot_n_intsects
 
     write(outunit,*) 'n_nodes:',n_nodes,tot_n_intsects
@@ -1646,7 +1650,6 @@ contains
 
     ! initialize module variables to global input values
     grid_option = rg_grid_opt
-    opt_block_av = rg_block_av
     max_s_sep = rg_max_s_sep
     max_r_sep = rg_max_r_sep
     min_cells = rg_min_cells
