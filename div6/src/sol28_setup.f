@@ -857,7 +857,7 @@ c
      .        itarget,hold_ic,i5
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
-     .        first_pass,two_timer
+     .        first_pass,two_timer,default_message
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),
@@ -869,6 +869,10 @@ c
 
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
+
+      DATA default_message / .TRUE. /
+      SAVE     
+
 
       debug = .TRUE. 
 
@@ -984,11 +988,17 @@ c     .      (tube(it)%type.EQ.GRD_SOL.AND..FALSE..OR.
 c     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
 c     .    density = .FALSE.
 
-
-        a1 = DBLE(osmnode(i1-1)%rad_x)
-        a2 = DBLE(osmnode(i1-1)%rad_y)
-        b1 = DBLE(osmnode(i1  )%rad_x)
-        b2 = DBLE(osmnode(i1  )%rad_y)
+        IF (mode.EQ.7.AND..NOT.two_timer) THEN
+          a1 = 0.0
+          a2 = 0.0
+          b1 = 0.0
+          b2 = 0.0
+        ELSE
+          a1 = DBLE(osmnode(i1-1)%rad_x)
+          a2 = DBLE(osmnode(i1-1)%rad_y)
+          b1 = DBLE(osmnode(i1  )%rad_x)
+          b2 = DBLE(osmnode(i1  )%rad_y)
+        ENDIF
 
         intersection = .FALSE.
 
@@ -1041,12 +1051,30 @@ c       ----------------------------------------------------------------
      .          osmnode(i1)%tube_range(1).LE.itube.AND.  
      .          osmnode(i1)%tube_range(2).GE.itube.AND.  
      .          two_timer) THEN                      
-            intersection = .TRUE.
-            hold_c1  = 0.0D0
-            hold_c2  = 0.0D0
-            hold_d1  = 0.0D0
-            hold_d2  = 0.0D0
-            hold_tab = 0.0D0
+          intersection = .TRUE.
+          hold_c1  = 0.0D0
+          hold_c2  = 0.0D0
+          hold_d1  = 0.0D0
+          hold_d2  = 0.0D0
+          hold_tab = 0.0D0
+c...      Check if there's an interesection (optional):
+          hold_ic = -1
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+            iobj = ic
+            isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
+            ivtx(1:2) = srf(isrf)%ivtx(1:2)
+            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+            c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+            isrf = ABS(obj(iobj)%iside(3))
+            ivtx(1:2) = srf(isrf)%ivtx(1:2)
+            d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+            d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+            IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .          tcd.GE.0.0D0.AND.tcd.LT.1.0D0) hold_ic  = ic 
+          ENDDO
+c...      No interesection found, so take the middle of the tube (in s):
+          IF (hold_ic.EQ.-1) THEN           
             DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)            
               IF (cell(ic)%sbnd(1).LE.0.5*tube(it)%smax.AND.
      .            cell(ic)%sbnd(2).GE.0.5*tube(it)%smax) THEN
@@ -1057,8 +1085,11 @@ c       ----------------------------------------------------------------
             IF (ic.EQ.tube(it)%cell_index(HI)+1)
      .        CALL ER('AssignNodeValues_New','Two-timing symmetry '//
      .                'node cell not identified',*99)
+          ENDIF
 c       ----------------------------------------------------------------  
         ELSE
+          WRITE(0,*) 'a1,2,b1,2:',a1,a2,b1,b2
+
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
 c...        Assumed 1:1 mapping between grid and data:
             iobj = ic
@@ -1418,7 +1449,7 @@ c...        Power law between v1 and v2:
             IF (vc ) vb(inode) = v0  + val2**expon * (v1  - v0 )
             IF (pc ) pe(inode) = p0  + val2**expon * (p1  - p0 )
             IF (tec) te(inode) = te0 + val2**expon * (te1 - te0)
-            IF (tic) te(inode) = ti0 + val2**expon * (ti1 - ti0)
+            IF (tic) ti(inode) = ti0 + val2**expon * (ti1 - ti0)
 c         ----------------------------------------------------------
           CASE (2)
 c...        Exponential decay between v1 and v2:
@@ -1649,10 +1680,14 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
      .        CALL ER('AssignNodeValues_New','Ti/Te ratio poorly '//
      .                'defined, need to decide what to do',*99)
 
-            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs)
+            IF (expon.EQ.0.0) expon = 1.0
+            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
             A = n0
             B = 0.0
-            IF (nc) ne(inode) = A * EXP(-val / C) + B
+            IF (nc) THEN
+              ne(inode) = A * EXP(-val / C) + B
+              ne(inode) = MAX(ne(inode),1.0E+14)
+            ENDIF
 
             IF (debug) WRITE(logfp,*) '  lambda:',it,c
           CASE DEFAULT
@@ -1816,7 +1851,15 @@ c...    Assign cell index:
 c        CALL SetBit(tube_state(itube),1,1)
         WRITE(dummy,'(A,I6,A)') 'Symmetry node not identified for '//
      .                          'ITUBE = ',it,', applying default'
-        CALL WN('AssignNodeValues_New',TRIM(dummy))
+        IF (ntube.GT.200) THEN  ! Trying to avoid clutter on the terminal window 
+          WRITE(PINOUT,*) TRIM(dummy)
+          IF (default_message) THEN
+            WRITE(0,*) 'WARNING AssignNodes: Default values applied'
+            default_message = .FALSE.
+          ENDIF
+        ELSE
+          CALL WN('AssignNodeValues_New',TRIM(dummy))
+        ENDIF
       ELSEIF (i2.GT.1) THEN
 c...    Try to combine nodes if there is more than one:
         DO i1 = 1, node_n
