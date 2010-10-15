@@ -1411,10 +1411,13 @@ c       ----------------------------------------------------------------
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
 c...      Automated clipping:
+c          DO i2 = 1, walln
+c            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+c          ENDDO
           d_wallr1 = DBLE(wallr1)
           d_wallz1 = DBLE(wallz1)
-          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,
-     .                        MAXPTS+1,.TRUE.)
+          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,2*MAXPTS+1,.TRUE.)
           wallr1 = SNGL(d_wallr1)
           wallz1 = SNGL(d_wallz1)           
 c          DO i2 = 1, walln
@@ -1514,6 +1517,12 @@ c...        No continuous neighbouring segment found, start here:
      .      irstart = ir
         ENDDO
       ENDIF
+
+      DO i1 = 1, walln-1
+        IF (SQRT((wallr1(i1,1)-wallr1(i1,2))**2 + 
+     .           (wallz1(i1,1)-wallz1(i1,2))**2).LT.1.0E-6) 
+     .   CALL WN('BuildNeutralWall','Very short segment detected')
+      ENDDO
 
       IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
 c...    For linear grids the 'wall' array does not go all the way around
@@ -1922,6 +1931,14 @@ c      ENDIF
       DO i1 = 1, walln
         WRITE(pinout,*)  i1,(wallr1(i1,i2),wallz1(i1,i2),i2=1,2)
       ENDDO
+      nvesm = i1-1
+      DO i2 = 1, i1-1
+        jvesm(i2) = 8
+        rvesm(i2,1) = wallr1(i2,1)
+        zvesm(i2,1) = wallz1(i2,1)
+        rvesm(i2,2) = wallr1(i2,2)
+        zvesm(i2,2) = wallz1(i2,2)
+      ENDDO 
       CALL DumpGrid('UNABLE TO SEQUENCE NEUTRAL WALL')
       STOP
       END
@@ -10333,7 +10350,7 @@ c
       REAL*8  r,delr,L,r1,r2,z1,z2,frac1,frac2,
      .        vessel_radius,brat,frac,r_inner,r_outer,delta
 
-      grid_option = 8 ! 7  ! 6
+      grid_option = 3 ! 8 (wide test grid) ! 7  ! 6
 
       brat = 1.0
 

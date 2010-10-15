@@ -2857,7 +2857,7 @@ c
       INTEGER GetTube       
  
       INTEGER, PARAMETER :: MAXNLIST = 1000
-      REAL*8 , PARAMETER :: DTOL = 1.0D-07
+      REAL*8 , PARAMETER :: DTOL     = 1.0D-07
 
       INTEGER fp,iobj,itube,nlist,ilist(MAXNLIST,2),clist(MAXNLIST,2),
      .        tube_set,i1,i2,i3,swall(nwall),iwall,mlist(MAXNLIST)
@@ -2866,7 +2866,7 @@ c
      .        xlist(MAXNLIST,2),ylist(MAXNLIST,2),store_x2,store_y2
 
       fp = 88
-      debug = .FALSE.
+      debug = .TRUE.
 
       CALL DumpData_OSM('output.clipping','Trying to clip grid')
 
@@ -2942,7 +2942,7 @@ c         specifications or if the line segment is very short:
           y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
 
           IF (debug) THEN
-            WRITE(fp,*) ' --------------------',i2
+            WRITE(fp,*) ' --------------------',i1,i2,iobj
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2
