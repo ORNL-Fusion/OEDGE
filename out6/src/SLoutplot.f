@@ -121,7 +121,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac)
+      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac,
+     .                                   title)
       USE mod_interface
       IMPLICIT none
 
@@ -135,12 +136,15 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER, INTENT(IN) :: nizs,cizsc,cion
-      REAL   , INTENT(IN) :: crmi,absfac
+      INTEGER  , INTENT(IN) :: nizs,cizsc,cion
+      REAL     , INTENT(IN) :: crmi,absfac
+      CHARACTER, INTENT(IN) :: title*(*)
 
-      INTEGER   ik,ir,iz,id,in,status,ike,target,
+      REAL GetFlux
+
+      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin,impact_energy
+      REAL      totfypin,impact_energy,pos1,pos2
       CHARACTER tag*64
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
@@ -277,16 +281,84 @@ c     which I'm leaving off for now...
           WRITE(tag,'(A,I0.2,A)') 'IMP_',iz,'_'
           impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
      .                    2.0 * ktids(id) 
+c
+c  NEROS(,1) - deposition, see NEUT.F, ION_PARALLEL_TRANSPORT.F, ION_TRANSPORT.F
+c  NEROS(,2) - same as (,3), see NEUT.F
+c  NEROS(,3) - erosion, see DIV.F
+c  NEROS(,4) - net (,1) + (,3)
+c  NEROS(,5) - 
+c          FACT = 0.0
+c          IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c          NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c
+c  From OUT000.F:
+c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)
+c        WRITE(ELABS(2),'(A,F8.4)')'    PRIMARY REMOVAL  =',SUM(2)+SUM(7)
+c        WRITE(ELABS(3),'(A,F8.4)')'    TOTAL REMOVAL    =',SUM(3)+SUM(8)
+c        WRITE(ELABS(4),'(A,2F7.4)')'    NET EROSION=',     SUM(4),SUM(9)
+c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
+c
           CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
           CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
           CALL inPutData(0.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
         ENDDO      
       ENDDO  
       CALL inCloseInterface 
-c
-c
-c
 
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.erosion',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - target erosion'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r      = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z      = distance along the field line, s'
+      WRITE(fp,'(A)') '* dist1  = position along the wall of the '//
+     .                'start of the target segment'
+      WRITE(fp,'(A)') '* dist2  = end of the target segment'
+      WRITE(fp,'(A)') '*   So, centre of segment is (dis1+dist2)/2. '//
+     .                ' The origin of this distance-along-the-wall'
+      WRITE(fp,'(A)') '*   is at the upper left corner of the grid '//
+     .                'where rho=0.0 and s=max(s), with the '
+      WRITE(fp,'(A)') '*   distance then proceeding clockwise.'
+      WRITE(fp,'(A)') '* theta   = angle between field line and '//
+     .                'the target in degrees'
+      WRITE(fp,'(A)') '* D+ flux = flux densiy on target relative '//
+     .                'to the surface normal (not the field line)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* The erosion/deposition units are just '//
+     .                'funny DIVIMP units at the moment.  The'
+      WRITE(fp,'(A)') '* ratio of erosion to D+ flux should give '//
+     .                'a relative yield for each segment.'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,3A6,4A10,3A12,A8,A10)')
+     .  '*','wall','targ','cell','ring','r (m)','z (m)',
+     .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
+     .  'theta','D+ flux'
+      pos1 = 0.0
+      pos2 = 0.0
+      DO id = 1, wallpts
+        in = NINT(wallpt(id,18))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        pos2 = pos1 + wallpt(id,7)
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,0P)')
+     .      id,in,
+     .      ikds(in),irds(in),
+     .      rp(in),zp(in),pos1,pos2,
+     .      -neros(in,3),-neros(in,1),-neros(in,4),
+     .      90.0-ACOS(costet(in))*180.0/PI,
+     .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir) 
+        ENDIF
+        pos1 = pos2
+      ENDDO
+c
+c
+c
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
@@ -403,6 +475,64 @@ c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
 c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
 c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
 c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+
+
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.plasma',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - background plasma'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z = distance along the field line, s'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,A6,7A10)') 
+     .  '*','cell','ring','r (m)','z (m)','n (m-3)','v (m s-1)',
+     .  'Te (eV)','Ti (eV)'
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir) 
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike
+          WRITE(fp,'(2I6,2F10.5,1P,2E10.2,0P,2F10.2)')
+     .      ik,ir,
+     .      rs(ik,ir),zs(ik,ir),
+     .      knbs(ik,ir),kvhs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+        ENDDO
+      ENDDO
+
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.impurities',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - impurity densities'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z = distance along the field line, s'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* The 0,1,2,... are the charge states of the '//
+     .                'impurity ions.  The units are absolute densities'
+      WRITE(fp,'(A)') '* in particle/m^3, I think... actually, not '//
+     .                'completely sure for ribbon grids...'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,A6,100A10)') 
+     .  '*','cell','ring','r (m)','z (m)','0','1','2','3','4','5','6'
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir) 
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike
+          WRITE(fp,'(2I6,2F10.5,1P,100E10.2,0P)')
+     .      ik,ir,
+     .      rs(ik,ir),zs(ik,ir),
+     .      (sdlims(ik,ir,iz)*absfac,iz=0,MAXIZS)
+        ENDDO
+      ENDDO
+
 
       RETURN
  99   STOP
@@ -4067,7 +4197,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
+      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2,
+     .                       title)
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4075,8 +4206,9 @@ c
       INCLUDE 'slout'
 
 
-      INTEGER iopt,nizs2,ik,ir,i1,cizsc2,cion2
-      REAL    array(MAXNKS,MAXNRS),crmi2,absfac2
+      INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2
+      REAL      array(MAXNKS,MAXNRS),crmi2,absfac2
+      CHARACTER title*(*)
 
       IF     (iopt.EQ.2) THEN
         RETURN
@@ -4118,7 +4250,8 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         CALL calc_wallprad(nizs2)
         RETURN
       ELSEIF (iopt.EQ.14) THEN
-        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,absfac2)
+        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,
+     .                               absfac2,title)
         RETURN
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles

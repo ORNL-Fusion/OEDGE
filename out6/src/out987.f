@@ -848,9 +848,19 @@ c          map2y = map1y + 0.40
           map2x = map1x + poswidth
           map1y = posy
           map2y = map1y + posheight
+        ELSEIF (posopt.EQ.4) THEN
+          dist = poswidth
+          dx = dist ! * (xxmax-xxmin) / (yymax-yymin)
+          IF (reset_origin) THEN
+            map1x = 0.05 
+          ELSE
+            map1x = save_map2x
+          ENDIF
+          map2x = map1x + dx
+          map1y = 0.20
+          map2y = map1y + 0.70
+          save_map2x = map2x
         ENDIF
-
-
       ELSE
         BACKSPACE 5
         dist = 0.70 ! 0.80
