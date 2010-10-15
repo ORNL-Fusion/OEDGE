@@ -669,6 +669,7 @@ C     IBM  : DUMMY ROUTINE - NO NEED TO CALL RANSET
 C     CRAY : INTERFACE TO RANDOM NO. INITIALISER SYSTEM ROUTINE RANSET
 C
       SUBROUTINE RANINI (ISEED)
+      implicit none
       INTEGER ISEED
 c
 c     Initialization of the intrinsic generator is more complicated
@@ -678,7 +679,7 @@ c     in this routine.
 c
 
 c
-      integer k,i
+      integer k,i,in
       integer,allocatable :: temp_seed(:)
       real :: temp,a
 

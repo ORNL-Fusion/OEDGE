@@ -1250,11 +1250,12 @@ c...temp: korpg=0
      .        note = note(1:LEN_TRIM(note))//' IK1'
             IF (ik.EQ.ikbound(ir,IKHI))
      .        note = note(1:LEN_TRIM(note))//' IK2'
+            ! jdemod - modify fixed charge state in print out to consider maxizs
             WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
      .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
-     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=10,min(25,maxizs),5)
           ENDDO
         ENDDO
       ENDIF

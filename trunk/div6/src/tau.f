@@ -240,6 +240,8 @@ c
 c slmod begin - ribbon dev
          WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
          nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
+
+         !write(0,*) 'NRS=',nrs
          call InsertRing(1  ,BEFORE,PERMANENT)
          call InsertRing(nrs,AFTER ,PERMANENT)
          irwall = nrs

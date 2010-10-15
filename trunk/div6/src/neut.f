@@ -2998,15 +2998,11 @@ c
 c               call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
 c     >               xvelf,yvelf,
 c     >               sputy,vin,temn,cneutvel,fsrate,kk,crmi,ik,ir)
-c slmod begin - ribbon grid
-c               write (0,*) '1a:'
-c slmod end
+
                call execute_mtc(1,mtccnt,mtccist,cist,mtcinf,
      >               xvelf,yvelf,
      >               sputy,vin,temn,cneutvel,fsrate,nrand,crmi,
      >               ktibs(ik,ir))
-               write (0,*) '1b:'
-
 c
 c              Momentum Transfer Collision event
 c             

@@ -1859,6 +1859,7 @@ c
 c
 c
       SUBROUTINE PR_geom_options
+      use ribbon_grid_options
       IMPLICIT none
 c
 C
@@ -1937,6 +1938,22 @@ c
       ELSEIF (CGRIDOPT.EQ.RIBBON_GRID) then
         CALL PRC ('  GRID OPTION 8:  ITER RIBBON GRID BUILT '//
      >            ' FROM CASTEM WALL INTERSECTION DATA')
+        call prc ('                  GRID INPUT PARAMETERS:')
+        call prc ('                  (G47) CASTEM DATA SET = '//
+     >                                trim(rg_castem_data))
+        call pri ('                  (G42) RIBBON GRID'//
+     >         ' GENERATION OPTION =',rg_grid_opt)
+        call prc ('                  0=unstructured,1=structured')
+        call pri ('                  (G43) INTERSECTION AVERAGING =',
+     >                               rg_block_av)
+        call prc ('                  0=off,1=on')
+        call prr ('                  (G44) MAX. ROW  SEPARATION (M) =',
+     >                               rg_max_r_sep)
+        call prr ('                  (G45) MAX. CELL SEPARATION (M) =',
+     >                               rg_max_s_sep)
+        call pri ('                  (G46) MIN. CELLS IN ROW OF GRID=',
+     >                               rg_min_cells)
+
       ENDIF
 c
 c     TMACHINE_OPT is an optional input value used to set the 

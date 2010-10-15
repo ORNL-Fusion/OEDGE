@@ -3,6 +3,9 @@ module castem_field_line_data
   use error_handling
   !use utilities
   use common_utilities
+  
+  ! ribbon grid input options
+  use ribbon_grid_options
 
   implicit none
 
@@ -11,10 +14,8 @@ module castem_field_line_data
   save
 
 
-
   public :: read_identifier_data, read_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid,&
             assign_grid_to_divimp,deallocate_castem_storage
-
 
 
 !  type node_struc
@@ -35,7 +36,7 @@ module castem_field_line_data
 
   type field_line_struc
      integer :: line_id
-     real*8 :: xs,ys,zs
+     real*8 :: xs,ys,zs,dist
      integer :: int_up, int_down, int_tot
      integer :: int_stored
      type (intersection_struc), allocatable :: int_data(:)
@@ -47,7 +48,9 @@ module castem_field_line_data
   integer :: n_tangency, n_enter, n_leave, n_field_lines, tot_n_intsects
   real*8 :: max_field_line_len,min_field_line_len
   real*8 :: max_lc,min_lc
-  real*8 :: min_r, max_r
+  real*8 :: min_dist, max_dist
+  !real*8 :: xstart,ystart,zstart,xend,yend,zend
+
 
   character*256 :: date_castem,date_process
 
@@ -69,9 +72,7 @@ module castem_field_line_data
 
   integer :: intsec_cnt
 
-! options
  
-  logical :: opt_block_av= .true.
 
 
 
@@ -90,10 +91,14 @@ module castem_field_line_data
    real*8,parameter :: WALL = 3.0
    real*8,parameter :: DELETE_POINT = 10.0
 
-
-   integer,parameter :: grid_option = 1
-
    integer,parameter :: outunit = 6
+
+
+   ! options
+
+   integer :: opt_block_av
+   integer :: grid_option
+
 
 contains
 
@@ -107,19 +112,20 @@ contains
 
     ! local variables
     integer :: id,inter_up,inter_down,inter_tot
-    real*8 :: xinit,yinit,zinit
+    real*8 :: xinit,yinit,zinit,dist
     integer :: in
 
 !    init_node%fl = -1
 !    init_node%in = -1
 
     ! initialize min and max r coordinate for grid
-    min_r =  1e24
-    max_r = -1e24
+    min_dist =  1e24
+    max_dist = -1e24
 
     ! initialize min and max s coordinate for grid
     min_lc =  1e24
     max_lc = -1e24
+
 
     ! find free unit number and open the file
     call find_free_unit_number(iunit)
@@ -137,8 +143,12 @@ contains
     header_has_been_loaded = .true.
 
     if (n_field_lines.gt.0) then 
+       if (allocated(field_line)) deallocate(field_line)
        allocate(field_line(n_field_lines),stat=ierr)
-       if (ierr.ne.0) return
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:FIELD_LINE:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -154,29 +164,50 @@ contains
 
     do in = 1,n_field_lines
 
-       read(iunit,*) id,xinit,yinit,zinit,inter_up,inter_down,inter_tot
+       read(iunit,*) id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,dist
 
-       call assign_field_line_data(field_line(in),id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,ierr)
+       ! extract starting location from first field line 
+       !if (id.eq.1) then 
+       !   xstart = xinit
+       !   ystart = yinit
+       !   zstart = zinit
+       !elseif (id.eq.n_field_lines) then 
+       !   xend = xinit
+       !   yend = yinit
+       !   zend = zinit
+       !endif
+
+       call assign_field_line_data(field_line(in),id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,dist,ierr)
 
     end do
+
+    !write(outunit,'(a,10(1x,g18.8))') 'END POINTS:',xstart,ystart,zstart,xend,yend,zend
 
 
   end subroutine read_identifier_data
 
 
-  subroutine assign_field_line_data(fl,id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,ierr)
+  subroutine assign_field_line_data(fl,id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,dist,ierr)
     implicit none
     type(field_line_struc) :: fl
     integer :: id, inter_up,inter_down,inter_tot,ierr
-    real*8 :: xinit,yinit,zinit
+    real*8 :: xinit,yinit,zinit,dist
 
-    min_r = min(min_r,xinit)
-    max_r = max(max_r,xinit)
+    min_dist = min(min_dist,dist)
+    max_dist = max(max_dist,dist)
 
     fl%line_id = id
     fl%xs = xinit
     fl%ys = yinit
     fl%zs = zinit
+
+    ! the following line assumes that the first line in the sheaf is the first read in ... if not this 
+    ! will need to be a post processed calculation
+    ! This arbitrarily uses the R/X coordinate as the starting reference 
+    !fl%dist = xstart+ sqrt((xinit-xstart)**2 + (yinit-ystart)**2 + (zinit-zstart)**2)
+    !
+    ! dist has been added to the IDENTIFIER file so calculation is not required
+    fl%dist = dist
 
     fl%int_up = inter_up
     fl%int_down = inter_down 
@@ -193,7 +224,14 @@ contains
     endif
 
     ! Allocate space to hold the total number of recorded intersections for this line
-    allocate(fl%int_data(inter_tot),stat=ierr)
+    ! only allocate if the line HAS any intersections
+    if (inter_tot.gt.0) then 
+       allocate(fl%int_data(inter_tot),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:FL%INT_DATA:IERR =',ierr)
+          stop
+       endif
+    endif
 
     write(outunit,'(a,3(1x,i8))') 'Assign FL:',id,inter_tot,ierr
 
@@ -442,7 +480,6 @@ contains
 
     do in = 1, n_field_lines
        write(outunit,'(a,3(1x,i12))') 'FL:',field_line(in)%line_id,field_line(in)%int_tot,field_line(in)%int_stored
-
     end do
 
     fname = 'lim.txt'
@@ -508,12 +545,6 @@ contains
     close(outunit)
 
 
-
-
-
-
-
-
   end subroutine print_field_line_summary
 
 
@@ -554,7 +585,7 @@ contains
     ! may not always be true so the code will adjust the intersections as required. 
     !
     ! In addition, this code will also determine how to connect intersections on different limiters ... these would usually be identified by a "tangency" point 
-    ! deivative change in the surface definition forming the bottom side of the tile as opposed to the peaks at limiter tips. Three methods can be used. 
+    ! derivative change in the surface definition forming the bottom side of the tile as opposed to the peaks at limiter tips. Three methods can be used. 
     ! 1) connect the surface intersections
     ! 2) add a surface intersection point at the farthest out location
     ! 3) remove all intersections from the surface until the farther in intersection. 
@@ -571,7 +602,7 @@ contains
     ! Alternatively ... go through the intersection points and join each to its nearest neighbour ... this should work given the grid resolution ... then double check 
     ! by verifying the Lc coordinate monotonicity 
     !
-    ! Start with an initial point at min_r, min_lc and end at min_r, max_lc
+    ! Start with an initial point at min_dist, min_lc and end at min_dist, max_lc
     ! This means the number of nodes in the list should be the total number of intersections + 2 ... the first and last nodes will have no cell reference. 
     ! Using just the closest will not work - especially for the big gaps ... need to go back to sorting by S value then check distances to see if there are any fix ups
     ! needed. 
@@ -583,6 +614,10 @@ contains
     if (tot_n_intsects.gt.0) then 
        if (allocated(surf_s)) deallocate(surf_s)
        allocate(surf_s(n_nodes),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:SURF_S:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -590,6 +625,10 @@ contains
     if (tot_n_intsects.gt.0) then 
        if (allocated(surf_r)) deallocate(surf_r)
        allocate(surf_r(n_nodes),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:SURF_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -597,6 +636,10 @@ contains
     if (tot_n_intsects.gt.0) then 
        if (allocated(surf_fl)) deallocate(surf_fl)
        allocate(surf_fl(n_nodes),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:SURF_FL:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -604,6 +647,10 @@ contains
     if (tot_n_intsects.gt.0) then 
        if (allocated(surf_int)) deallocate(surf_int)
        allocate(surf_int(n_nodes),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:SURF_INT:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -612,12 +659,12 @@ contains
     !surf_fl(1)=1
     !surf_int(1)=-1
     !surf_s(1)=min_lc
-    !surf_r(1)=min_r
+    !surf_r(1)=min_dist
 
     !surf_fl(n_nodes)=1
     !surf_int(n_nodes)=-1
     !surf_s(n_nodes)=max_lc
-    !surf_r(n_nodes)=min_r
+    !surf_r(n_nodes)=min_dist
 
 
     ! Populate the rest of the node list with intersection data 
@@ -630,7 +677,17 @@ contains
           surf_fl(node_cnt)=if
           surf_int(node_cnt)=in
           surf_s(node_cnt)=field_line(if)%int_data(in)%lc
-          surf_r(node_cnt)= field_line(if)%xs
+          !
+          ! jdemod - change this to dist - it will be the same in the case
+          !          of a radial grid but will be better for a grid with a diagonal
+          !          starting line. 
+          !        - what is really needed here is PSIn or equivalent - need to 
+          !          come up with something for starting lines not perpendicular to 
+          !          the field lines in the poloidal plane. 
+          !
+          !surf_r(node_cnt)= field_line(if)%xs
+          surf_r(node_cnt)= field_line(if)%dist
+
           !          node_used(node_cnt) =0
        end do
     end do
@@ -644,13 +701,17 @@ contains
     ! if block averaging is on
     ! calculate intersection data separations
 
-    if (opt_block_av) then 
+    if (opt_block_av.eq.1) then 
 
        tmp_node_cnt = 0
 
        if (tot_n_intsects.gt.0) then 
           if (allocated(surf_sep)) deallocate(surf_sep)
           allocate(surf_sep(n_nodes),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:SURF_SEP:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
@@ -658,6 +719,10 @@ contains
        if (tot_n_intsects.gt.0) then 
           if (allocated(av_group)) deallocate(av_group)
           allocate(av_group(n_nodes),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_GROUP:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
@@ -782,8 +847,8 @@ contains
        !
        !do in = 2,n_nodes
        ! slmod end
-          !test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-          !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
+       !test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
+       !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
 
        !end do
@@ -801,6 +866,10 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_s)) deallocate(av_s)
           allocate(av_s(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_S:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
@@ -808,6 +877,10 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_r)) deallocate(av_r)
           allocate(av_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_R:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
@@ -816,6 +889,10 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_min_r)) deallocate(av_min_r)
           allocate(av_min_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_MIN_R:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
@@ -823,12 +900,16 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_max_r)) deallocate(av_max_r)
           allocate(av_max_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_MAX_R:IERR =',ierr)
+             stop
+          endif
        else
           return
        endif
 
-       av_min_r = max_r + 1.0
-       av_max_r = min_r - 1.0
+       av_min_r = max_dist + 1.0
+       av_max_r = min_dist - 1.0
 
 
        group_id = 0
@@ -875,15 +956,15 @@ contains
 
        ! add first and last points
 
-       av_r(1) = min_r
+       av_r(1) = min_dist
        av_s(1) = min_lc
-       av_min_r(1) = min_r
-       av_max_r(1) = min_r
+       av_min_r(1) = min_dist
+       av_max_r(1) = min_dist
 
-       av_r(av_group_cnt) = min_r
+       av_r(av_group_cnt) = min_dist
        av_s(av_group_cnt) = max_lc
-       av_min_r(av_group_cnt) = min_r
-       av_max_r(av_group_cnt) = min_r
+       av_min_r(av_group_cnt) = min_dist
+       av_max_r(av_group_cnt) = min_dist
 
 
     else
@@ -895,6 +976,11 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_s)) deallocate(av_s)
           allocate(av_s(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_S:IERR =',ierr)
+             stop
+          endif
+          av_s = 0.0
        else
           return
        endif
@@ -902,6 +988,11 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_r)) deallocate(av_r)
           allocate(av_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_R:IERR =',ierr)
+             stop
+          endif
+          av_r = 0.0
        else
           return
        endif
@@ -909,6 +1000,11 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_min_r)) deallocate(av_min_r)
           allocate(av_min_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_MIN_R:IERR =',ierr)
+             stop
+          endif
+          av_min_r = 0.0
        else
           return
        endif
@@ -916,6 +1012,11 @@ contains
        if (av_group_cnt.gt.0) then 
           if (allocated(av_max_r)) deallocate(av_max_r)
           allocate(av_max_r(av_group_cnt),stat=ierr)
+          if (ierr.ne.0) then 
+             call errmsg('ALLOCATION ERROR:AV_MAX_R:IERR =',ierr)
+             stop
+          endif
+          av_max_r = 0.0
        else
           return
        endif
@@ -930,22 +1031,22 @@ contains
 
        ! add end points
 
-       av_r(1) = min_r
+       av_r(1) = min_dist
        av_s(1) = min_lc
-       av_min_r(1) = min_r
-       av_max_r(1) = min_r
+       av_min_r(1) = min_dist
+       av_max_r(1) = min_dist
 
-       av_r(av_group_cnt) = min_r
+       av_r(av_group_cnt) = min_dist
        av_s(av_group_cnt) = max_lc
-       av_min_r(av_group_cnt) = min_r
-       av_max_r(av_group_cnt) = min_r
+       av_min_r(av_group_cnt) = min_dist
+       av_max_r(av_group_cnt) = min_dist
 
 
     endif
 
-    !write(outunit,'(a,10(1x,g18.8))') 'Average:',min_r,max_r
+    !write(outunit,'(a,10(1x,g18.8))') 'Average1:',min_dist,max_dist
     !do in = 1,av_group_cnt
-    !   write(outunit,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
+    !   write(0,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
     !end do
 
 
@@ -955,8 +1056,13 @@ contains
     dir = 1.0   
     last_face = 1
 
-    do in = 1,av_group_cnt-1
+
+    in = 0
+    do while (in.lt.av_group_cnt-1)
+    !do in = 1,av_group_cnt-1
+       in = in+1
        last_dir = dir
+       write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
        dir = av_r(in+1)-av_r(in)
 
        if (dir.eq.0.and.last_face.eq.1) then 
@@ -981,6 +1087,7 @@ contains
           last_face = 2
        endif
 
+       write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
 
     end do
 
@@ -992,6 +1099,10 @@ contains
     if (av_group_cnt.gt.0) then 
        if (allocated(av_type)) deallocate(av_type)
        allocate(av_type(av_group_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_TYPE:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1037,8 +1148,8 @@ contains
           last_face = 2
        endif
 
-       !write(outunit,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
-       !write(6,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       write(outunit,'(a,2i6,10(1x,g18.8))') 'DIR:',in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       !write(0,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
 
     end do
 
@@ -1052,6 +1163,10 @@ contains
     if (av_tan_cnt.gt.0) then 
        if (allocated(av_tan_r)) deallocate(av_tan_r)
        allocate(av_tan_r(av_tan_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_TAN_R:IERR =',ierr)
+          stop
+       endif
        av_tan_r = 0.0
     else
        return
@@ -1062,6 +1177,10 @@ contains
     if (av_tan_cnt.gt.0) then 
        if (allocated(av_tan_s)) deallocate(av_tan_s)
        allocate(av_tan_s(av_tan_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_TAN_S:IERR =',ierr)
+          stop
+       endif
        av_tan_s = 0.0
     else
        return
@@ -1072,6 +1191,10 @@ contains
     if (av_tan_cnt.gt.0) then 
        if (allocated(av_tan_ind)) deallocate(av_tan_ind)
        allocate(av_tan_ind(av_tan_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_TAN_IND:IERR =',ierr)
+          stop
+       endif
        av_tan_ind = 0
     else
        return
@@ -1084,6 +1207,10 @@ contains
     if (av_tan_cnt.gt.0) then 
        if (allocated(tan_ord_r)) deallocate(tan_ord_r)
        allocate(tan_ord_r(av_tan_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:TAN_ORD_R:IERR =',ierr)
+          stop
+       endif
        tan_ord_r = 0.0
     else
        return
@@ -1096,6 +1223,10 @@ contains
     if (av_wall_cnt.gt.0) then 
        if (allocated(av_wall_s)) deallocate(av_wall_s)
        allocate(av_wall_s(av_wall_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_WALL_S:IERR =',ierr)
+          stop
+       endif
        av_wall_s = 0.0
     else
        return
@@ -1104,6 +1235,10 @@ contains
     if (av_wall_cnt.gt.0) then 
        if (allocated(av_wall_r)) deallocate(av_wall_r)
        allocate(av_wall_r(av_wall_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_WALL_R:IERR =',ierr)
+          stop
+       endif
        av_wall_r = 0.0
     else
        return
@@ -1114,50 +1249,74 @@ contains
     tmp_wall_cnt = 0
 
     ! Collect tangency and wall data - check to make sure there are no two consective points with the same R value - i.e. flat tangency point
+    double_tan = 0
+    double_wall = 0
 
     do in = 1,av_group_cnt
 
        if (av_type(in).eq.TANGENCY) then 
           tmp_tan_cnt = tmp_tan_cnt + 1
-          ! record r,s and index into surface array for the tangency point
-          av_tan_r(tmp_tan_cnt) = av_r(in)
-          av_tan_s(tmp_tan_cnt) = av_s(in)
-          av_tan_ind(tmp_tan_cnt) = in
-          if (in.ne.av_group_cnt) then 
-             if(av_type(in+1).eq.TANGENCY) then 
-                double_tan = double_tan+1
+
+          if (tmp_tan_cnt.le.av_tan_cnt) then 
+             ! record r,s and index into surface array for the tangency point
+             av_tan_r(tmp_tan_cnt) = av_r(in)
+             av_tan_s(tmp_tan_cnt) = av_s(in)
+             av_tan_ind(tmp_tan_cnt) = in
+             write(outunit,'(a,i6,10(1x,g18.8))') 'TAN :',tmp_tan_cnt,in,av_r(in),av_s(in)
+             if (in.ne.av_group_cnt) then 
+                if(av_type(in+1).eq.TANGENCY) then 
+                   double_tan = double_tan+1
+                endif
              endif
+          else
+             CALL ERRMSG('Too many tangency points found:',tmp_tan_cnt)
+             stop
           endif
+
        endif
 
        if (av_type(in).eq.WALL) then 
           tmp_wall_cnt = tmp_wall_cnt + 1
-          av_wall_r(tmp_wall_cnt) = av_r(in)
-          av_wall_s(tmp_wall_cnt) = av_s(in)
-          if (in.ne.av_group_cnt) then 
-             if(av_type(in+1).eq.WALL) then 
-                double_wall = double_wall+1
+          if (tmp_wall_cnt.le.av_wall_cnt) then 
+             av_wall_r(tmp_wall_cnt) = av_r(in)
+             av_wall_s(tmp_wall_cnt) = av_s(in)
+             write(outunit,'(a,i6,10(1x,g18.8))') 'WALL:',tmp_wall_cnt,in,av_r(in),av_s(in)
+             if (in.ne.av_group_cnt) then 
+                if(av_type(in+1).eq.WALL) then 
+                   double_wall = double_wall+1
+                endif
              endif
+          else
+             CALL ERRMSG('Too many wall points found:',tmp_wall_cnt)
+             stop
           endif
        endif
 
     end do
 
+
+    write(outunit,*) 'DOUBLES:',double_tan,double_wall
+
     !write(outunit,'(a,6i10)') 'Tan:',av_tan_cnt, av_wall_cnt,double_tan,double_wall
 
-    do in = 1,av_wall_cnt
-       write(outunit,'(a,i6,10(1x,g18.8))') 'Wall:',in,av_wall_r(in),av_wall_s(in)
-    end do
+    !do in = 1,av_wall_cnt
+    !   write(0,'(a,i6,10(1x,g18.8))') 'Wall:',in,av_wall_r(in),av_wall_s(in)
+    !end do
 
-    do in = 1,av_tan_cnt
-       write(outunit,'(a,i6,10(1x,g18.8))') 'Tan :',in,av_tan_r(in),av_tan_s(in)
-    end do
+    !do in = 1,av_tan_cnt
+    !   write(0,'(a,i6,10(1x,g18.8))') 'Tan :',in,av_tan_r(in),av_tan_s(in)
+    !end do
+
+    !write(outunit,'(a,10(1x,g18.8))') 'Average2:',min_dist,max_dist
+    !do in = 1,av_group_cnt
+    !   write(0,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
+    !end do
 
 
     ! Find max and min from the reduced intersection data ... loop through revised wall to get this data
 
-    r_limiter_max = min_r -1.0
-    r_limiter_min = max_r +1.0
+    r_limiter_max = min_dist -1.0
+    r_limiter_min = max_dist +1.0
 
     s_limiter_max = min_lc -1.0
     s_limiter_min = max_lc +1.0
@@ -1165,13 +1324,22 @@ contains
 
     do in = 1,av_group_cnt
 
-       r_limiter_max = max(r_limiter_max,dble(av_r(in)))
-       r_limiter_min = min(r_limiter_min,dble(av_r(in)))
+       if (av_r(in).lt.min_dist-1.0) then 
+          write(0,*) 'PROB:1:',in,min_dist,av_r(in)
+       elseif (av_r(in).gt.max_dist+1) then 
+          write(0,*) 'PROB:2:',in,max_dist,av_r(in)
+       endif
 
-       s_limiter_max = max(s_limiter_max,dble(av_s(in)))
-       s_limiter_min = min(s_limiter_min,dble(av_s(in)))
+       r_limiter_max = max(r_limiter_max,av_r(in))
+       r_limiter_min = min(r_limiter_min,av_r(in))
+
+       s_limiter_max = max(s_limiter_max,av_s(in))
+       s_limiter_min = min(s_limiter_min,av_s(in))
 
     end do
+
+    write(outunit,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
+    !write(0,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
 
 
 
@@ -1194,7 +1362,7 @@ contains
 
     ! go through and adjust tangency points as needed. 
     ! since wall points are not required to be a polygon vertex this processing isn't required for wall extremities
-    
+
     do in = 1,av_tan_cnt-1
        if ((av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep) then 
           ! move tangency point in to match
@@ -1204,7 +1372,7 @@ contains
           !write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
           !write(6,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
        endif
-       
+
     end do
 
 
@@ -1225,9 +1393,13 @@ contains
     ! Re-sort to S - leaving tan_ord_r unchanged
     call sort_arrays(0,av_tan_cnt,av_tan_s,av_tan_r,av_tan_ind)
 
-   
+
     do in = 1,av_tan_cnt
        write(outunit,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
+    end do
+
+    do in = 1,av_wall_cnt
+       write(outunit,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
     end do
 
 
@@ -1248,6 +1420,10 @@ contains
     if (tmp_cnt.gt.0) then 
        if (allocated(tmp_r)) deallocate(tmp_r)
        allocate(tmp_r(tmp_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:TMP_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1255,6 +1431,10 @@ contains
     if (tmp_cnt.gt.0) then 
        if (allocated(tmp_s)) deallocate(tmp_s)
        allocate(tmp_s(tmp_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:TMP_S:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1262,6 +1442,10 @@ contains
     if (tmp_cnt.gt.0) then 
        if (allocated(tmp_min_r)) deallocate(tmp_min_r)
        allocate(tmp_min_r(tmp_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:TMP_MIN_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1269,6 +1453,10 @@ contains
     if (tmp_cnt.gt.0) then 
        if (allocated(tmp_max_r)) deallocate(tmp_max_r)
        allocate(tmp_max_r(tmp_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:TMP_MAX_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1279,6 +1467,7 @@ contains
     ! Copy data from av arrays 
     !
 
+    !write(0,*) 'Nums:',tmp_cnt,av_group_cnt,last_face,num
 
     do in = 1, av_group_cnt
        if (in.le.num) then 
@@ -1300,16 +1489,36 @@ contains
 
     if (last_face.eq.1) then 
        ! last limiter facing was heading toward wall ... therefore move new R outward slightly
+
        if (tmp_r(num).ne.tmp_r(num+2)) then 
           write(0,'(a,i8,10(1x,g18.8))') 'ERROR: non-degenerate wall point being added:',num,tmp_r(num),tmp_r(num+2)
        endif
-       tmp_r(num+1) = (tmp_max_r(num)+tmp_max_r(num+2))/2.0
+       if (tmp_max_r(num).ne.tmp_r(num)) then 
+          ! use max r to set new point 
+          tmp_r(num+1) = (tmp_max_r(num)+tmp_max_r(num+2))/2.0
+       else
+          ! otherwise choose a very small displacement ... abs(max_dist-min_dist)/1000.0
+          tmp_r(num+1) = tmp_r(num) + abs((max_dist-min_dist)/1000.0d0) 
+       endif   
+       tmp_max_r(num+1) = tmp_r(num+1)
+       tmp_min_r(num+1) = tmp_r(num+1)
+       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single wall point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',tmp_s(num),tmp_s(num+1),tmp_s(num+2)
+
     elseif (last_face.eq.2) then 
        ! last limiter facing was heading toward tip ... therefore move new R inward slightly
        if (tmp_r(num).ne.tmp_r(num+2)) then 
           write(0,'(a,i8,10(1x,g18.8))') 'ERROR: non-degenerate wall point being added:',num,tmp_r(num),tmp_r(num+2)
        endif
-       tmp_r(num+1) = (tmp_min_r(num)+tmp_min_r(num+2))/2.0
+       if (tmp_min_r(num).ne.tmp_r(num)) then 
+          tmp_r(num+1) = (tmp_min_r(num)+tmp_min_r(num+2))/2.0
+       else
+          tmp_r(num+1) = tmp_r(num) - abs((max_dist-min_dist)/1000.0d0) 
+       endif
+       tmp_max_r(num+1) = tmp_r(num+1)
+       tmp_min_r(num+1) = tmp_r(num+1)
+       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single tan point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',tmp_s(num),tmp_s(num+1),tmp_s(num+2)
+    else
+       call errmsg('INSERT_LIMITER_POINT:Invalid value of last_face =',last_face)
     endif
 
     ! deallocate and reallocate the av arrays
@@ -1319,6 +1528,10 @@ contains
     if (av_group_cnt.gt.0) then 
        if (allocated(av_s)) deallocate(av_s)
        allocate(av_s(av_group_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('RE-ALLOCATION ERROR:AV_S:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1326,6 +1539,10 @@ contains
     if (av_group_cnt.gt.0) then 
        if (allocated(av_r)) deallocate(av_r)
        allocate(av_r(av_group_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('RE-ALLOCATION ERROR:AV_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1333,6 +1550,10 @@ contains
     if (av_group_cnt.gt.0) then 
        if (allocated(av_min_r)) deallocate(av_min_r)
        allocate(av_min_r(av_group_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('RE-ALLOCATION ERROR:AV_MIN_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1340,6 +1561,10 @@ contains
     if (av_group_cnt.gt.0) then 
        if (allocated(av_max_r)) deallocate(av_max_r)
        allocate(av_max_r(av_group_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('RE-ALLOCATION ERROR:AV_MAX_R:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1355,6 +1580,13 @@ contains
     if (allocated(tmp_r)) deallocate(tmp_r)
     if (allocated(tmp_max_r)) deallocate(tmp_max_r)
     if (allocated(tmp_min_r)) deallocate(tmp_min_r)
+
+
+    !write(0,*) 'EXECUTING INSERT ROUTINE:'
+    !write(outunit,'(a,10(1x,g18.8))') 'Average3:',min_dist,max_dist
+    !do in = 1,av_group_cnt
+    !   write(0,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
+    !end do
 
 
   end subroutine insert_limiter_point
@@ -1394,7 +1626,6 @@ contains
     integer :: in,in1,it,is
 
     real*8 :: max_s_sep, max_r_sep
-    integer :: min_s_cnt, min_r_cnt
 
     real*8, allocatable :: ints(:,:),int_type(:,:),int_cnt(:)
 
@@ -1413,34 +1644,47 @@ contains
     integer :: ierr,max_surf_ints
     integer :: min_cells
 
-    max_s_sep = 0.5
-    max_r_sep = 0.002
+    ! initialize module variables to global input values
+    grid_option = rg_grid_opt
+    opt_block_av = rg_block_av
+    max_s_sep = rg_max_s_sep
+    max_r_sep = rg_max_r_sep
+    min_cells = rg_min_cells
 
-    min_cells = 5
+    !write(0,*) '1',rg_grid_opt,rg_block_av,rg_max_s_sep,rg_max_r_sep,rg_min_cells
+    !write(0,*) '1a',grid_option, opt_block_av, max_s_sep,max_r_sep,min_cells,r_limiter_max,r_limiter_min
+    !write(0,*) '1b',min_dist,max_dist,min_lc,max_lc
+    !write(0,*) 'Calc1:',(r_limiter_max-r_limiter_min)/max_r_sep
+    !write(0,*) 'Calc1a:',int((r_limiter_max-r_limiter_min)/max_r_sep)
+    !write(0,*) 'Calc2:',3 * av_tan_cnt + 1
+    !write(0,*) 'Calc3:',max(3 * av_tan_cnt + 1, int((r_limiter_max-r_limiter_min)/max_r_sep))
 
-
-    min_s_cnt = 5
-    min_r_cnt = 1
 
     init_grid_size = max(3 * av_tan_cnt + 1, int((r_limiter_max-r_limiter_min)/max_r_sep))
 
+    !write(0,*) 'Init_grid_size:',init_grid_size,max_r_sep
 
     if (init_grid_size.gt.0) then 
        if (allocated(r_bnds)) deallocate(r_bnds)
        allocate(r_bnds(init_grid_size),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:R_BNDS:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
 
-!    if (init_grid_size.gt.0) then 
-!       if (allocated(s_bnds)) deallocate(s_bnds)
-!       allocate(s_bnds(init_grid_size),stat=ierr)
-!    else
-!       return
-!    endif
+
+    !    if (init_grid_size.gt.0) then 
+    !       if (allocated(s_bnds)) deallocate(s_bnds)
+    !       allocate(s_bnds(init_grid_size),stat=ierr)
+    !    else
+    !       return
+    !    endif
 
     rbnd_cnt = 0
-!    sbnd_cnt = 0
+    !    sbnd_cnt = 0
 
 
     do in = 1,av_tan_cnt
@@ -1449,43 +1693,51 @@ contains
        if (in.ne.1) then 
           if (av_tan_r(in1).ne.r_bnds(rbnd_cnt)) then 
              rbnd_cnt = rbnd_cnt + 1
+             if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
              r_bnds(rbnd_cnt) = av_tan_r(in1)
              !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
 
           endif
        else
           rbnd_cnt = rbnd_cnt + 1
+          if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
           r_bnds(rbnd_cnt) = av_tan_r(in1)
           !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
        endif
 
-!       sbnd_cnt = sbnd_cnt + 1
-!       s_bnds(sbnd_cnt) = av_tan_s(in)
+       !       sbnd_cnt = sbnd_cnt + 1
+       !       s_bnds(sbnd_cnt) = av_tan_s(in)
 
     end do
+
 
     !
     ! Add locations that are not tangency points  .. then sort the arrays
     !
 
-!    sbnd_cnt = sbnd_cnt + 1
-!    s_bnds(sbnd_cnt) = s_limiter_min
+    !    sbnd_cnt = sbnd_cnt + 1
+    !    s_bnds(sbnd_cnt) = s_limiter_min
 
-!    sbnd_cnt = sbnd_cnt + 1
-!    s_bnds(sbnd_cnt) = s_limiter_max
+    !    sbnd_cnt = sbnd_cnt + 1
+    !    s_bnds(sbnd_cnt) = s_limiter_max
 
     rbnd_cnt = rbnd_cnt + 1
+    if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
     r_bnds(rbnd_cnt) = r_limiter_min
 
     ! put last r_bnd just inside the wall
     rbnd_cnt = rbnd_cnt + 1
+    if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
     r_bnds(rbnd_cnt) = maxval(av_tan_r) + (r_limiter_max - maxval(av_tan_r)) * 0.95
+
+
 
     call sort_arrays(0,rbnd_cnt,r_bnds)
     !call sort_arrays(0,sbnd_cnt,s_bnds)
     !call sort_arrays(1,sbnd_cnt,s_bnds)
 
     ! run through R bounds and insert extras in situations where the separation is too large. 
+
 
     rbnd_add = 0
 
@@ -1495,6 +1747,7 @@ contains
           r_sep_dist = (r_bnds(in+1)-r_bnds(in))/(new_bnds+1)
           do it = 1,new_bnds
              rbnd_add = rbnd_add + 1
+             if (rbnd_cnt+rbnd_add.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt+rbnd_add-1,rbnd_cnt+rbnd_add+10)
              r_bnds(rbnd_cnt+rbnd_add) = r_bnds(in) + r_sep_dist * it
           end do
 
@@ -1529,6 +1782,10 @@ contains
     if (rbnd_cnt.gt.0.and.av_tan_cnt.gt.0) then 
        if (allocated(int_cnt)) deallocate(int_cnt)
        allocate(int_cnt(rbnd_cnt),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:INT_CNT:IERR =',ierr)
+          stop
+       endif
        int_cnt = 0
     else
        return
@@ -1537,6 +1794,10 @@ contains
     if (rbnd_cnt.gt.0.and.av_tan_cnt.gt.0) then 
        if (allocated(ints)) deallocate(ints)
        allocate(ints(rbnd_cnt,max_surf_ints),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:INTS:IERR =',ierr)
+          stop
+       endif
        ints = 0
     else
        return
@@ -1545,6 +1806,10 @@ contains
     if (rbnd_cnt.gt.0.and.av_tan_cnt.gt.0) then 
        if (allocated(int_type)) deallocate(int_type)
        allocate(int_type(rbnd_cnt,max_surf_ints),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:INT_TYPE:IERR =',ierr)
+          stop
+       endif
        int_type = 0
     else
        return
@@ -1618,6 +1883,10 @@ contains
     if (max_npoly.gt.0) then 
        if (allocated(rvp)) deallocate(rvp)
        allocate(rvp(4,max_npoly),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:RVP:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1626,6 +1895,10 @@ contains
     if (max_npoly.gt.0) then 
        if (allocated(zvp)) deallocate(zvp)
        allocate(zvp(4,max_npoly),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:ZVP:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1635,6 +1908,10 @@ contains
     if (max_npoly.gt.0) then 
        if (allocated(nvp)) deallocate(nvp)
        allocate(nvp(max_npoly),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:NVP:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1650,6 +1927,10 @@ contains
     if (max_nrings.gt.0.and.max_nknots.gt.0) then 
        if (allocated(rcen)) deallocate(rcen)
        allocate(rcen(max_nknots,max_nrings),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:RCEN:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1658,6 +1939,10 @@ contains
     if (max_nrings.gt.0.and.max_nknots.gt.0) then 
        if (allocated(zcen)) deallocate(zcen)
        allocate(zcen(max_nknots,max_nrings),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:ZCEN:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1666,6 +1951,10 @@ contains
     if (max_nrings.gt.0.and.max_nknots.gt.0) then 
        if (allocated(poly_ref)) deallocate(poly_ref)
        allocate(poly_ref(max_nknots,max_nrings),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:POLY_REF:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1674,6 +1963,10 @@ contains
     if (max_nrings.gt.0.and.max_nknots.gt.0) then 
        if (allocated(nknots)) deallocate(nknots)
        allocate(nknots(max_nrings),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:NKNOTS:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1684,6 +1977,10 @@ contains
     if (max_nknots.gt.0) then 
        if (allocated(vert_rec1)) deallocate(vert_rec1)
        allocate(vert_rec1(max_nknots),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:VERT_REC1:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1691,6 +1988,10 @@ contains
     if (max_nknots.gt.0) then 
        if (allocated(vert_rec2)) deallocate(vert_rec2)
        allocate(vert_rec2(max_nknots),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:VERT_REC2:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1699,6 +2000,10 @@ contains
     if (max_nknots.gt.0) then 
        if (allocated(vert_type1)) deallocate(vert_type1)
        allocate(vert_type1(max_nknots),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:VERT_TYPE1:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
@@ -1706,10 +2011,13 @@ contains
     if (max_nknots.gt.0) then 
        if (allocated(vert_type2)) deallocate(vert_type2)
        allocate(vert_type2(max_nknots),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:VERT_TYPE2:IERR =',ierr)
+          stop
+       endif
     else
        return
     endif
-
 
 
     ! group data into rings based on intersection and then pass the data to the ring generation routine
@@ -1738,7 +2046,7 @@ contains
        r1 = r_bnds(in)
        r2 = r_bnds(in+1)
 
-       if (grid_option.eq.1.or.in.eq.1) then 
+       if (grid_option.eq.0.or.in.eq.1) then 
           do it = 1,int_cnt(in)
              vert_rec1(it) = ints(in,it)
              vert_type1(it) = int_type(in,it)
@@ -1763,7 +2071,7 @@ contains
        ! Also for the first row we need to define all vertices subject to the constraints of minimum number of cells between tangency positions and maximum allowed S separation
        !
 
-       if (grid_option.eq.2) then
+       if (grid_option.eq.1) then
 
           if (in.eq.1) then 
              do it = 1,av_tan_cnt
@@ -1800,8 +2108,6 @@ contains
 
 
           endif
-
-
 
 
           ! only add the tangency data to rec1 for the first row - otherwise we get duplication
@@ -1867,7 +2173,7 @@ contains
              npts2b = 0
 
              do is = 1,vert_cnt2
-                !write(0,*) 'NPTS2A:',is,vert_cnt2,vert_rec2(is)
+                write(outunit,*) 'NPTS2A:',is,vert_cnt2,vert_rec2(is),s_start,s_end
                 if (vert_rec2(is).ge.s_start.and.vert_rec2(is).le.s_end) then 
                    ! this should assign npts2a and npts2b to appropriate values
                    if (npts2a.eq.0) then 
@@ -1879,7 +2185,7 @@ contains
                 elseif (vert_rec2(is).gt.s_end) then 
                    exit
                 endif
-                !write(0,*) 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
+                write(outunit,*) 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
              end do
 
 
@@ -1904,11 +2210,10 @@ contains
        end do
 
 
-
        ! if new vertices need to be retained then sort the vert_rec2 array and assign it to vert_rec1 
        ! for grid option 2 - retain vertices as fixed for next row
 
-       if (grid_option.eq.2) then 
+       if (grid_option.eq.1) then 
           vert_cnt2 = ntot2
           call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
           ! assign "2" arrays to "1" arrays for the next row in grid
@@ -1922,7 +2227,6 @@ contains
 
     end do
 
-    
 
     ! Deallocate local storage
 
@@ -1993,14 +2297,14 @@ contains
     do in = npts1a,npts1b
        s1(in-npts1a+1) = vert_rec1(in)
        s1_type(in-npts1a+1) = vert_type1(in)
-       !write(outunit,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
+       write(outunit,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
        !write(6,'(a,2i8,10(1x,g18.8))') 'S1:',in,in-npts1a+1,s1(in-npts1a+1),s1_type(in-npts1a+1)
     end do
 
     do in = npts2a,npts2b
        s2(in-npts2a+1) = vert_rec2(in)
        s2_type(in-npts2a+1) = vert_type2(in)
-       !write(outunit,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
+       write(outunit,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
        !write(6,'(a,2i8,10(1x,g18.8))') 'S2:',in,in-npts2a+1,s2(in-npts2a+1),s2_type(in-npts2a+1)       
     end do
 
@@ -2165,7 +2469,7 @@ contains
        npts2 = npts2 + cells_added 
        call sort_arrays(1,npts2,s2,s2_type)
 
-       !write(outunit,'(a,i8,10(1x,g18.8))') 'NEW s2:',npts2,cells_added
+       write(outunit,'(a,i8,10(1x,g18.8))') 'NEW s2:',npts2,cells_added
 
     endif
 
@@ -2183,7 +2487,7 @@ contains
        nrings = nrings + 1
        nknots(nrings) = npts1 -1 
 
-       !write(outunit,'(a,4i8,10(1x,g18.8))') 'GEN:',npts1,npts2,nrings,nknots(nrings)
+       write(outunit,'(a,4i8,10(1x,g18.8))') 'GEN:',npts1,npts2,nrings,nknots(nrings)
 
        do in = 1,npts1 -1 
           npoly = npoly + 1
@@ -2338,17 +2642,27 @@ contains
              ! need to make sure wall point intersections are not included since it results in a zero length polygon side
              ! an intersection point type of 1 indicates that the intersection point lies on both line segments - otherwise ignore the result
              int_cnt = int_cnt + 1.0
-             if (int_type_base.gt.0.0) then 
+
+             ! use int_type to deterimine the direction from an intersection point in order to determine later whether a degenerate intersection on the wall
+             ! or a degenerate intersection at a tangency or wall point has been found. 
+
+             if (r_start-r_end.lt.0.0) then
                 int_type(int(int_cnt)) = SURFACE_START
              else
                 int_type(int(int_cnt)) = SURFACE_END
              endif
 
-             int_type(int(int_cnt)) = int_type_base
-             int_type_base = int_type_base * -1
+             !if (int_type_base.gt.0.0) then 
+             !   int_type(int(int_cnt)) = SURFACE_START
+             !else
+             !   int_type(int(int_cnt)) = SURFACE_END
+             !endif
+             !int_type(int(int_cnt)) = int_type_base
+             !int_type_base = int_type_base * -1
+
              intersects(int(int_cnt)) = s_int
 
-             !write(outunit,'(a,2i8,10(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             write(outunit,'(a,2i8,10(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
 
           endif
 
@@ -2377,6 +2691,12 @@ contains
     ! the one identified as a tangency point.
 
 
+       write(outunit,'(a,10(1x,g18.8))') 'prelim surface intersections output:', int_cnt, r_line
+       do in = 1,int_cnt
+          write(outunit,'(a,i8,10(1x,g18.8))') 'PINT sect:', in,int_type(in),intersects(in)
+       end do
+
+
     deleted = 0
 
     do in = 1,int_cnt-1
@@ -2390,18 +2710,26 @@ contains
                    ! consecutive intersections too close together
                    if (int_type(it).eq.TANGENCY.and.int_type(in).ne.TANGENCY) then 
                       int_type(in) = DELETE_POINT
-
+                      deleted = deleted + 1.0
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1a:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
                    elseif (int_type(in).eq.TANGENCY.and.int_type(it).ne.TANGENCY) then 
                       int_type(it) = DELETE_POINT
-                   else
+                      deleted = deleted + 1.0
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1b:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                   elseif (int_type(in).eq.int_type(it)) then 
+                      ! if the intersection type of the two points is the same .. only delete one of the points
+                      int_type(it) = DELETE_POINT
+                      deleted = deleted + 1.0
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1c:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                   elseif (int_type(in).ne.int_type(it)) then 
+                      ! two points overlapping - should be wall turning point since int_types are different at this stage and tangency dealt with above - delete both
                       int_type(in) = DELETE_POINT
+                      int_type(it) = DELETE_POINT
+                      deleted = deleted + 2.0
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete2 :',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
                    endif
 
-                   deleted = deleted + 1.0
-                   write(6,'(a,2i8,l4,10(1x,g18.8))') 'Delete:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
-
                    if (int_type(in).eq.DELETE_POINT) exit
-
 
                 endif
              endif
@@ -2435,16 +2763,22 @@ contains
     end do
 
     if (last_surface.ne.SURFACE_END) then 
-       write(6,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
+       write(outunit,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
        do in = 1,int_cnt
-          write(6,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
+          write(outunit,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
        end do
+
+       write(0,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
+       do in = 1,int_cnt
+          write(0,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
+       end do
+       call errmsg('SURFACE INTERSECTION ERROR: Last intersection is not a surface on R=',r_line)
        stop
     else   
 
-       write(6,'(a,10(1x,g18.8))') 'surface intersections output:', int_cnt, r_line
+       write(outunit,'(a,10(1x,g18.8))') 'surface intersections output:', int_cnt, r_line
        do in = 1,int_cnt
-          write(6,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
+          write(outunit,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
        end do
 
     endif
@@ -2474,6 +2808,9 @@ contains
     integer :: in,ik,ir,it,is
     ! Assign grid polygons
 
+
+    !write(0,*) 'Assign to DIVIMP:'
+    
     
     if (npoly.le.maxnrs*maxnks) then 
        npolyp = npoly
@@ -2490,8 +2827,8 @@ contains
     endif
 
 
-
-    if (nrs.le.maxnrs) then 
+    !write(0,*) 'Assign NRS:',nrs,nrings
+    if (nrings.le.maxnrs) then 
        nrs = nrings
      
        do ir = 1,nrings
@@ -2501,7 +2838,7 @@ contains
                 rs(ik,ir) = rcen(ik,ir)
                 zs(ik,ir) = zcen(ik,ir)
                 korpg(ik,ir) = poly_ref(ik,ir)
-                write(6,'(a,3i8,10(1x,g18.8))') 'POLY COPY:',ik,ir,korpg(ik,ir),rs(ik,ir),zs(ik,ir)
+                write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY COPY:',ik,ir,korpg(ik,ir),rs(ik,ir),zs(ik,ir)
              end do 
           else
              call errmsg('Too many knots on ribbon grid ring#:',ir)
@@ -2582,8 +2919,52 @@ contains
 
   end subroutine deallocate_castem_storage
 
+  subroutine grow_array(foo,num1,num2)
+    implicit none
+    real*8,allocatable :: foo(:)
+    integer :: num1,num2,ierr,in
 
+    real*8,allocatable :: tmp_foo(:)
 
+    ierr = 0
+
+    if (allocated(foo)) then 
+
+       allocate(tmp_foo(num2),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          stop
+       endif
+
+       tmp_foo = 0.0
+
+       do in = 1,num1
+          tmp_foo(in) = foo(in)
+       end do
+
+       deallocate(foo,stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW DE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          stop
+       endif
+    
+       allocate(foo(num2),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW RE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          stop
+       endif
+
+       foo = tmp_foo
+
+       deallocate(tmp_foo,stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW DE-ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          stop
+       endif
+
+    end if
+
+  end subroutine grow_array
 
 
 end module castem_field_line_data
