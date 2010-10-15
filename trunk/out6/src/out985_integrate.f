@@ -562,7 +562,7 @@ c...  Decide if the detector is inside or outside the vessel wall:
 c...    Find wall intersections for the chord, building VWINTER list of intersections:
         CALL FindSurfaceIntersections
      .         (chord%v1,chord%v2,IT_VWINTER,status)                       
-c        WRITE(0,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
+c        WRITE(0,*) 'WALL INTESRSECTIONS:',vwindex,nvwinter,nvwlist
 c        WRITE(0,*) vwinter(1:nvwinter)%dist 
 c        WRITE(0,*) vwinter(1:nvwinter)%obj 
 c        WRITE(0,*) vwinter(1:nvwinter)%sur 
