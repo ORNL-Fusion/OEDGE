@@ -10116,6 +10116,7 @@ c     and calls it in-line.
 c     
 c     
       SUBROUTINE BuildRibbonGrid
+      use ribbon_grid_options
       use error_handling
       use castem_field_line_data
 
@@ -10131,11 +10132,12 @@ c
       integer :: ierr
       integer :: in,ik,ir,it,is
       character*512 :: cmd,source_dir
-                                !ident_file = 'DATA_IDENTIFIER_260410.txt'
-      ident_file = 'DATA_IDENTIFIER_100610.txt'
 
-                                !intersection_file = 'DATA_RHO_S_260410.txt'
-      intersection_file = 'DATA_RHO_S_100610.txt'
+      !ident_file = 'DATA_IDENTIFIER_260410.txt'
+      ident_file = 'DATA_IDENTIFIER_'//trim(rg_castem_data)//'.txt'
+
+      !intersection_file = 'DATA_RHO_S_260410.txt'
+      intersection_file = 'DATA_RHO_S_'//trim(rg_castem_data)//'.txt'
 
       ierr = 0
 
@@ -10203,6 +10205,8 @@ c
      >     rs,zs)
 
       call deallocate_castem_storage
+
+      write(0,*) 'Completed ribbon grid generation:'
 
       ! Assign Bratio = 1.0 to start - may need a more appropriate value. 
       ! Assign these arrays constant values for now

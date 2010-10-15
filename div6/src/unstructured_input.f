@@ -125,6 +125,7 @@ c subroutine: InitializeUnstructuredInput
 c
       subroutine InitializeUnstructuredInput
       use subgrid_options
+      use ribbon_grid_options
       implicit none
       
       INCLUDE 'params'
@@ -448,6 +449,42 @@ c
       sg_zmin = 0.0
       sg_zmax = 1.4
 c
+c -----------------------------------------------------------------------
+c
+c     Options related to ribbon grids
+c     G42 - grid generation option - <i4>
+c     G43 - intersection point averaging option - opt_block_av - <r4>
+c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
+c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
+c     G46 - min number of cells on ring - min_cells - <i4>
+c     G47 - castem output identifier - <string>
+
+c     G42 - grid option
+c           0 = unstructured
+c           1 = structured
+c           default = unstructured
+c           
+      rg_grid_opt = 0
+c
+c     G43 - block averaging option (removes blobs of intersection data)
+c     
+      rg_block_av = 0
+c
+c     G44 - maximum R separation between rows
+c      
+      rg_max_r_sep = 0.002
+c
+c     G45 - maximum S/Z separation between cells along row
+c
+      rg_max_s_sep = 0.5
+c
+c     G46 - minimum number of cells in a row
+c
+      rg_min_cells = 5
+c
+c     G47 - Castem data set to read in
+c
+      rg_castem_data = '100610'
 c
 c -----------------------------------------------------------------------
 c

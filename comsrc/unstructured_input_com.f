@@ -1923,6 +1923,7 @@ c tag starts with 'G'.
 c
       SUBROUTINE ReadTagSeries_G(tag,line,fp)
       use subgrid_options
+      use ribbon_grid_options
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2066,9 +2067,51 @@ c     G41: ZMIN,ZMAX of the subgrid region
 c
         CALL Read2R(line,sg_zmin,sg_zmax,-HI,HI,'SUBGRID ZMIN,ZMAX')
 c
-c
 c -----------------------------------------------------------------------
 c
+c     Options related to ribbon grids
+c     G42 - grid generation option - <i4>
+c     G43 - intersection point averaging option - opt_block_av - <r4>
+c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
+c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
+c     G46 - min number of cells on ring - min_cells - <i4>
+c     G47 - castem output identifier - <string>
+c
+      ELSEIF (tag(1:3).EQ.'G42') THEN
+c
+c     G42: Ribbon grid option  0=unstructured  1=structured
+c
+        CALL ReadI(line,rg_grid_opt,0,1,'RIBBON GRID OPTION')
+c
+c     G43: Ribbon grid option  1=unstructured  2=structured
+c
+      ELSEIF (tag(1:3).EQ.'G43') THEN
+        CALL ReadI(line,rg_block_av,0,1,'BLOCK AVERAGE OPTION')
+c
+c     G44: Maximum row separation
+c
+      ElseIf (tag(1:3).eq.'G44') Then
+        Call ReadR(line,rg_max_r_sep,0.0,HI,
+     >                       'Maximum Row separation (m)')
+c
+c     G45: Maximum cell separation
+c
+      ElseIf (tag(1:3).eq.'G45') Then
+        Call ReadR(line,rg_max_s_sep,0.0,HI,
+     >                       'Maximum cell separation (m)')
+c
+c     G46: Minimum number of cells in a row
+c
+      ElseIf (tag(1:3).eq.'G46') Then
+        CALL ReadI(line,rg_min_cells,1,9999,'Minimum cells in a row')
+
+c
+c     G47: Castem data set identifier
+c
+      ElseIf (tag(1:3).eq.'G47') Then
+        CALL ReadC(line,rg_castem_data,'CASTEM DATA SET IDENTIFIER')
+c
+c -----------------------------------------------------------------------
       ELSE
         CALL ER('ReadTagSeriesG','Unrecognized tag',*99)
       ENDIF
