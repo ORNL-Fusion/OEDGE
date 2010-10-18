@@ -40,6 +40,9 @@ $
 '954   012 00 Grid                            '  0 1 6 5
 '000   Zoom' 0.650 -0.480  0.200 0.200
 $
+'999   Dump tetrahedron centroids to IDL'   16
+
+$
 $ EIRENE plots
 $ ----------------------------------------------------------------------
 $
@@ -54,6 +57,10 @@ $
 '987   XXX XX Dalpha     - triangle grid FULL '   542 3
 '000   Zoom'  0.750  0.00 0.35 0.65   5.30 5.30 
 '000   Scale' 2 1 -1.0      20.0  -99.0  'LOG Dalpha (ph m!SP!-3!NO! s!SP!-1!NO!)'
+$
+$
+$
+'999   STOP'  0
 $
 $
 $
@@ -129,17 +136,152 @@ $
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
-     'roll,tilt,swing    '   0.00000D+00   8.05000D+00   62.21000D+00
+     'roll,tilt,swing    ' 180.00000D+00   8.05000D+00   64.00453D+00    
      'size               '   0.200D-07     0.20D-07
-     'view cone angle    '   2.744D+00     1.00D+00                       
-     'pixel array        '   19       1  
+     'view cone angle    '   2.111D+00     1.00D+00                       3.9874+00     1.00D+00                       
+     'pixel array        '    9       1  
      'pixel solid angle  '    1       1    1  1.0  1.0
-     'output label       ' 'midplane_dalpha'
+     'output label       ' 'midplane_dalpha_1d'
      {DETECTOR MASK}  0
        'image black   (1)'  1 2 'images/15021_14_2.idl'
        'x-radius      (2)'  0 
        'no midplane   (3)'  0 
 {END}
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  0
+  {GEOMETRY}  1
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   wireframe   (001)'  0
+        'zoom' 0.00  0.00  1.1  1.1
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  0  000  01 002 00 0                 4 'B_ALPHA'
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'D_DENSITY' 
+  {DETECTOR}  2                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    ' 180.00000D+00   8.05000D+00   64.00453D+00    
+     'size               '   0.200D-07     0.20D-07
+     'view cone angle    '   2.111D+00     1.00D+00                       
+     'pixel array        '    9       1  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'midplane_d_den_1d'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  0
+  {GEOMETRY}  1
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   wireframe   (001)'  0
+        'zoom' 0.00  0.00  1.1  1.1
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  0  000  01 002 00 0                 4 'B_ALPHA'
+     'line-of-sight   (1)'  0  000  01 002 00 0                 4 'D_DENSITY' 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'D_AVGENG' 
+  {DETECTOR}  2                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    ' 180.00000D+00   8.05000D+00   64.00453D+00    
+     'size               '   0.200D-07     0.20D-07
+     'view cone angle    '   2.111D+00     1.00D+00                       
+     'pixel array        '    9       1  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'midplane_d_avgeng_1d'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+'985   XXX XX Inversion map + image           '   0 1
+{RAY TRACE}  0
+  {GEOMETRY}  1
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
+  {DETECTOR}  2                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    '   0.00000D+00   8.05000D+00   64.00453D+00    
+     'size               '   0.200D-07     0.200D-07
+     'view cone angle    '   3.764D+00     3.764D+00                       
+     'pixel array        '  100     100  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'midplane_dalpha_2d'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+'985   XXX XX Inversion map + image           '   0
+{RAY TRACE}  0
+  {GEOMETRY}  1
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+     'line segments    ( 5)'  5  3  300  0  0 1.0  -1  -1  'vessel_wall.dat'
+  {PLOTS}  1
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'B_ALPHA'
+  {DETECTOR}  2                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    ' 180.00000D+00   8.05000D+00   64.00453D+00    
+     'size               '   0.200D-07     0.20D-07
+     'view cone angle    '   2.111D+00     1.00D+00                       
+     'pixel array        '    9       1  
+     'pixel solid angle  '   10       1    1  1.0  1.0
+     'output label       ' 'midplane_dalpha_1d_smooth'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'999  STOP'  3 
 $
 $
 $
@@ -190,7 +332,7 @@ $
      'focal length       '   0.0
      'distortion         '   0.0
      'x,y,z position     '   1.10000D+00   0.00010D+00    0.00010D+00  
-     'roll,tilt,swing    '   0.00000D+00   0.00000D+00   90.00000D+00
+     'roll,tilt,swing    '   0.00010D+00   0.00010D+00   90.00010D+00
      'size               '   0.20D-07    0.20D-07
      'view cone angle    '  10.0D+00    10.00D+00                       
      'pixel array        '  100     100
