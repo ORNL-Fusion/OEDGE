@@ -5297,7 +5297,7 @@ c
       real te,ti,ne
       real fact, factc
       integer ir,ik,isection,sectcnt
-      character*80 comment
+      character*256 comment
       logical first,found
 c
 c
@@ -5950,9 +5950,9 @@ c     Format statements
 c
 
 200   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'Z',9x,'PSIn')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'Z',9x,'PSIn')
 201   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'R',9x,'PSIn')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'R',9x,'PSIn')
 300   format(2x,i3,2x,i3,3x,f9.3,x,f9.3,x,e13.5,x,e13.5,
      >       x,f8.3,x,f9.5,1x,f9.5)
 c
