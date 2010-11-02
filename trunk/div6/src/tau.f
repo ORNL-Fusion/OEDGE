@@ -6504,11 +6504,11 @@ c     In the case of sonnet_grid_sub_type=2 - boundary rings have been added
 c     and these will not have corresponding psi values - set psi values to 0.0 as default
 c     Adding one to ir should account for the indexing. 
 c
-            if (sonnet_grid_sub_type.eq.2) then
-               ir = ir +1 
-               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
-     >                        cutring,ik,psi
-            endif
+c            if (sonnet_grid_sub_type.eq.2) then
+c               ir = ir +1 
+c               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
+c     >                        cutring,ik,psi
+c            endif
 c     
             if (ir.le.cutring) ir = ir + maxrings 
 c     
