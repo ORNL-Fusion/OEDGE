@@ -4649,7 +4649,8 @@ c
         fydata(id,5)  = fydata(id,1) * fydata(id,4)
 c     
         if (cprint.eq.5.or.cprint.eq.9) then 
-           write(6,*) 'id:',id,ik,ir,kteds(id),ktids(id),knds(id),
+           write(6,'(a,3i8,10(1x,g18.8))') 'id:',id,ik,ir,
+     >              kteds(id),ktids(id),knds(id),
      >              kbfs(ik,ir),kmfps(id),sheath_te,sheath_ti
         endif 
 c

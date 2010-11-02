@@ -1982,6 +1982,7 @@ c...  Add target segments:
         if (walln.gt.maxpts) then 
            ! jdemod - add some bounds checking
            call errmsg('BuildGridPolygons','NWALL > MAXPTS')
+           write(0,*) 'NWALL = ',nwall,' MAXPTS = ',maxpts
            stop 'NWALL > MAXPTS'
         endif
         id = korpg(1,ir)
@@ -1994,6 +1995,7 @@ c...  Add target segments:
            ! jdemod - add some bounds checking
            call errmsg('BuildGridPolygons','NWALL > MAXPTS')
            stop 'NWALL > MAXPTS'
+           write(0,*) 'NWALL = ',nwall,' MAXPTS = ',maxpts
         endif
         id = korpg(nks(ir),ir)
         wallr1(walln,1) = rvertp(3,id)
@@ -10149,6 +10151,9 @@ c
       integer :: ierr
       integer :: in,ik,ir,it,is
       character*512 :: cmd,source_dir
+
+      ! set grid run descriptor
+      crun = 'ITER FIRST WALL RIBBON GRID'
 
       !ident_file = 'DATA_IDENTIFIER_260410.txt'
       ident_file = 'DATA_IDENTIFIER_'//trim(rg_castem_data)//'.txt'
