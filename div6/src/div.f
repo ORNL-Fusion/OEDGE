@@ -5493,7 +5493,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5509,7 +5509,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                             psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5701,7 +5702,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5717,7 +5718,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5806,7 +5808,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5822,7 +5824,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5909,7 +5912,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5925,7 +5928,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5946,11 +5950,11 @@ c     Format statements
 c
 
 200   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'Z')
+     >       'Ne',4x,'Probe Isat',9x,'s',9x,'Z',9x,'PSIn')
 201   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'R')
+     >       'Ne',4x,'Probe Isat',9x,'s',9x,'R',9x,'PSIn')
 300   format(2x,i3,2x,i3,3x,f9.3,x,f9.3,x,e13.5,x,e13.5,
-     >       x,f8.3,x,f9.5)
+     >       x,f8.3,x,f9.5,1x,f9.5)
 c
       return
       end
