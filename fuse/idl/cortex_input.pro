@@ -64,6 +64,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     verison         : 1.0               ,  $
     tag             : 'unknown'         ,  $
     option          : -1                ,  $
+    id              : 'unknown'         ,  $
     title           : 'unknown'         ,  $
     notes           : 'unknown'         ,  $
     plot_title      : 'unknown'         ,  $
@@ -313,8 +314,9 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         CASE plot_struct.option OF
           0:
           1: 
+          2: plot_struct.data_file[0] = 'idl.ray_profile_' 
           ELSE: BEGIN
-            PRINT,'ERROR cortex_LoadPlotData: Unknown 1D wall profile plot option'
+            PRINT,'ERROR cortex_LoadPlotData: Unknown 1D LOS integral plot option'
             PRINT,'  FILE_NAME= ',file_name
             PRINT,'  TAG      = ',tag
             PRINT,'  OPTION   = ',plot_struct.option
@@ -553,6 +555,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct.data_file[0] = 'idl.tet_centroid'
         END
 ;     ------------------------------------------------------------------
+      'ID'           : plot_struct.id           = STRTRIM(data,2)
       'TITLE'        : plot_struct.title        = STRTRIM(data,2)
       'PLOT TITLE'   : plot_struct.plot_title   = STRTRIM(data,2)
       'NOTES'        : plot_struct.notes        = STRTRIM(data,2)

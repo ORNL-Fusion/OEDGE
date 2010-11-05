@@ -11,7 +11,7 @@ $
 $ Control:
 $ ======================================================================
 $
-'{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
+'{C KIN}      Number of fluid-kinetic iterations              '    2   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
 '{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER

@@ -2,6 +2,53 @@
 *
 *
 
+
+{PLOT 1D LOS INTEGRAL}  1  {YLOG}  {CASE} >c >d >e ${YRANGE}  18 23  
+                           {DATA FILE}    idl.midplane_dalpha_1d_los_01
+  {TITLE} D_alpha: toroidal view of inner wall midplane, see Bruce's memo from 2/2/10 views 18-26 (1-9 here), 
+          squares are the measurements, line is the gas puff model
+${EXIT}
+
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_001    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #1, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_001     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #1, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_001  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #1, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_002    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #2, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_002     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #2, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_002  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #2, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_003    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #3, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_003     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #3, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_003  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #3, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_004    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #4, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_004     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #4, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_004  {XRANGE}  0.85 1.02  {YRANGE}  0.0 200.0  {CASE} >c >d >e  {TITLE}  View #4, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_005    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #5, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_005     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #5, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_005  {XRANGE}  0.85 1.02  {YRANGE}  0.0 400.0  {CASE} >c >d >e  {TITLE}  View #5, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_006    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #6, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_006     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #6, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_006  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #6, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_007    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #7, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_007     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #7, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_007  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #7, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_008    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #8, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_008     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #8, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_008  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #8, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_009    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #9, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_009     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #9, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_009  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #9, average atom energy / eV
+
+{EXIT}
+
+
 ${DATA PATH}  ~/divimp/results
 
 {PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0009b {CASE} >c >d >e
