@@ -20,7 +20,7 @@ c
       INTEGER GetNumberOfObjects
 
       INTEGER status,ndat,ik,ir,iobj,ion
-      REAL*8  p(3)
+      REAL*8  p(3),dist
       REAL, ALLOCATABLE :: tdata(:,:)
 
       ion = 1
@@ -34,13 +34,22 @@ c
 c      CALL LoadGrid('osm.raw')
 
       ndat = GetNumberOfObjects('default')
-      ALLOCATE(tdata(ndat,2))
+      ALLOCATE(tdata(ndat,4))
       CALL LoadTriangleData(2,1,1,1,tdata(1,1),'default')  ! Atom density (from plot 987)
-      CALL LoadTriangleData(3,1,1,1,tdata(1,2),'default')  ! Mol. density (from plot 987)
+      CALL LoadTriangleData(2,1,7,0,tdata(1,2),'default')  ! Atom average energy [eV] (from out985_emission)
+      CALL LoadTriangleData(3,1,1,1,tdata(1,3),'default')  ! Mol. density (from plot 987)
+      CALL LoadTriangleData(6,1,7,1,tdata(1,4),'default')  ! Dalpha       (from plot 987)
 
       CALL inOpenInterface('idl.tet_centroid',ITF_WRITE)
       DO iobj = 1, nobj
         CALL CalcCentroid(iobj,2,p)
+
+c...    Filter:
+        dist = DSQRT( (p(1) - 0.4403D0)**2 +
+     .                (p(2) - 0.0D0   )**2 +
+     .                (p(3) - 0.0D0   )**2)
+        IF (dist.GT.0.15D0) CYCLE  
+
         CALL inPutData(SNGL(p(1)),'X','m')                     
         CALL inPutData(SNGL(p(2)),'Y','m')                     
         CALL inPutData(SNGL(p(3)),'Z','m')                     
@@ -50,12 +59,14 @@ c      CALL LoadGrid('osm.raw')
 c          WRITE(0,*) 'ind:',iobj,i
           CALL inPutData(knbs (ik,ir),'NE','m-3')        
           CALL inPutData(ktebs(ik,ir),'TE','eV')
-        ELSE
+       ELSE
           CALL inPutData(0.0         ,'NE','m-3')        
           CALL inPutData(0.0         ,'TE','eV')
         ENDIF
-        CALL inPutData(tdata(iobj,1),'N_D' ,'m-3')
-        CALL inPutData(tdata(iobj,2),'N_D2','m-3')
+        CALL inPutData(tdata(iobj,1),'D_DENS'  ,'m-3')
+        CALL inPutData(tdata(iobj,2),'D_AVGENG','eV')
+        CALL inPutData(tdata(iobj,3),'D2_DENS' ,'m-3')
+        CALL inPutData(tdata(iobj,4),'D_ALPHA' ,'photons m-3 s-1')
       ENDDO
       CALL inCloseInterface
 

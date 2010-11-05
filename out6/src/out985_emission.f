@@ -105,6 +105,8 @@ c                  WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
             IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
             IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
             IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0]  ! D+ density
+            IF (opt%int_line(iint).EQ.'D_DENSITY')  p = [2,1,1 ,1]  ! D density [m-3]
+            IF (opt%int_line(iint).EQ.'D_AVGENG')   p = [2,1,7 ,0]  ! D average energy [eV}
             WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
             IF (p(1).EQ.0) CALL ER('AssignEmissionData','Bad '//
      .                             'EIRENE data tag',*99)

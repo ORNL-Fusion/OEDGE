@@ -139,6 +139,8 @@ MODULE MOD_OUT985
      INTEGER :: ntrack
      INTEGER, POINTER :: tlist(:)    ! INTERGER*2?
      REAL*8,  POINTER :: track(:)    ! REAL*4? 
+     INTEGER :: nprofile
+     REAL*8,  POINTER :: profile(:,:)  ! REAL*4?   Storing the profile of the sampled emission along the viewing chord
   ENDTYPE type_view
 
   INTEGER, PUBLIC, PARAMETER :: IT_VWINTER = 1,  &
