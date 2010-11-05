@@ -35,6 +35,8 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
   plot_peak = plot.peak
 
+  IF (plot.ylog NE 0) THEN ylog = 1
+
   CASE option OF
 ;   --------------------------------------------------------------------
     1: BEGIN
@@ -50,6 +52,22 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
        subtitle = ['EMISSION LINE INTEGRAL / photons m-2 s-1']
        xtitle   = 'array index'
        ytitle   = ['integral (photons m-2 s-1)']
+       labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace = [1]
+       END
+    2: BEGIN
+       default_plot_type = 1
+       plot_xboarder = 0.05
+       plot_yboarder = 0.1
+       plot_xspacing = 0.100
+       plot_yspacing = 0.025
+       nplot = 1
+       plot_xn = 1
+       plot_yn = 1
+       title = plot.title 
+       subtitle = ['PROFILE ALONG THE DIAGNOSTIC LINE-OF-SIGHT / ' + plot.id]
+       xtitle   = 'distance from last lens (m)' 
+       ytitle   = ['signal (arb)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
        END
@@ -132,15 +150,47 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
           labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
 
 
-          ntrace = [1, 1, 1]  ; Number of data lines on each plot
-          xdata = val.xindex
+          ntrace = [2, 1, 1]  ; Number of data lines on each plot
+          xdata = val.xindex 
           FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val.yindex[i]])  ; *** TEMP *** 
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            1: BEGIN
+               ydata[*,0] = val.signal
+               ydata[*,1] = [2.5,4.5,1.65,1.6,0.1,0.028,0.02,0.02,0.02] * 1E+21 * 4.0 * 3.1415
+               END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          integral = ' '
+
+;          help,val_array.integral,/struct
+;stop
+;          ntrace = N_ELEMENTS(TAG_NAMES(data_array))
+;          IF (ntrace LE 0) THEN BEGIN
+;            PRINT, 'ERROR cortex_PlotIntegrals: No data found'
+;            RETURN, -1
+;          ENDIF
+
+          val = cortex_ExtractStructure(val.profile,1)      ; *** the 1 is temporary, or should be 1 plot? ***
+
+    help,val,/struct
+
+          file = val.file
+          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
+
+          ntrace = [1, 1, 1]  ; Number of data lines on each plot
+
+          xdata = val.path
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
             1: ydata[*,0] = val.signal
           ENDCASE
-print,xdata
-   print,ydata[*,0]
+;   print,xdata
+;   print,ydata[*,0]
 
           END
 ;       ----------------------------------------------------------------
@@ -175,15 +225,17 @@ print,xdata
       ymin = MIN([ymin,ydata1])
       ymax = MAX([ymax,ydata1])
     ENDFOR
-    IF (ymin GT 0.0 AND ymax GT 0.0) THEN ymin = 0.0  ; Makes things a bit clearer on the plots I think...
-    IF (ymin LT 0.0 AND ymax LT 0.0) THEN ymax = 0.0
-    deltay = ymax - ymin
-    ymin = ymin - 0.05 * deltay
-    ymax = ymax + 0.05 * deltay
+    IF (NOT KEYWORD_SET(ylog)) THEN BEGIN
+      IF (ymin GT 0.0 AND ymax GT 0.0) THEN ymin = 0.0  ; Makes things a bit clearer on the plots I think...
+      IF (ymin LT 0.0 AND ymax LT 0.0) THEN ymax = 0.0
+      deltay = ymax - ymin
+      ymin = ymin - 0.05 * deltay
+      ymax = ymax + 0.05 * deltay
+    ENDIF
 
 ;   Axes:
     xrange = [xmin,xmax]
-    yrange = [ymin,ymax]
+    IF (plot.yrange[1] NE 0.0) THEN yrange = plot.yrange ELSE yrange = [ymin,ymax] 
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 
     plot_type = default_plot_type                                           
@@ -191,9 +243,9 @@ print,xdata
 
     CASE (plot_type) OF
       1: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-               POSITION=position,YTITLE=ytitle[iplot-1],XTICKFORMAT='(A1)',/NOERASE                                  
+               POSITION=position,YTITLE=ytitle[iplot-1],XTICKFORMAT='(A1)',/NOERASE, YLOG=ylog                                  
       2: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-               POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle,/NOERASE                                 
+               POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle,/NOERASE, YLOG=ylog                                 
     ENDCASE
 
 ;   Write sub-title for each plot:
@@ -239,16 +291,31 @@ print,xdata
 ;   Data:
     FOR idata = 1, ndata DO BEGIN
       val = cortex_ExtractStructure(data_store,idata)
+
+      cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                      dev_xsize, dev_ysize, charsize_labels, colors
+
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-          cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
-                          dev_xsize, dev_ysize, charsize_labels, colors
 
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
  
           IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
 
+          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
+          CASE iplot OF
+            1: OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[idata-1]), THICK=thick, PSYM=6
+            2: 
+            3: 
+            ELSE:
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+ 
           OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
           CASE iplot OF
             1: 

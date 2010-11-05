@@ -59,15 +59,15 @@ PRO cortex_GeneratePlots, args
     input_file = args[2] + '/' + input_file
     data_path  = args[3] + '/'
   ENDIF ELSE BEGIN
-    dir_structure = 2
+    dir_structure = 1
 
     family = STRMID(case_name,0,5) + '/'
     child  = STRMID(case_name,0,7) + '/'
 
-;    input_file = '/home/slisgo/fuse/input/' + input_file
-;    data_path  = '/home/slisgo/divimp/results/'
-    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
-    data_path  = '/home/ITER/lisgos/fuse_data/results/'   ; + family + '/' + child + '/'
+    input_file = '/home/slisgo/fuse/input/' + input_file
+    data_path  = '/home/slisgo/divimp/results/'
+;    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
+;    data_path  = '/home/ITER/lisgos/fuse_data/results/'   ; + family + '/' + child + '/'
 ;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
 ;    data_path  = '/home/ITER/lisgos/divimp/results/'
 
@@ -171,6 +171,24 @@ PRO cortex_GeneratePlots, args
                                  integral_array = CREATE_STRUCT(integral_array,name,integral)
               ENDFOR
               plot_data = { integral : integral_array, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotIntegrals(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          2: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              count = 1
+              FOR j = 0, count-1 DO BEGIN
+                profile = cortex_LoadProfile(file_path + plot.data_file[0] + plot.id)
+                name = 'data' + STRING(j+1,FORMAT='(I0)')
+                IF (j EQ 0) THEN profile_array = CREATE_STRUCT(              name,profile) ELSE  $
+                                 profile_array = CREATE_STRUCT(profile_array,name,profile)
+              ENDFOR
+              plot_data = { profile : profile_array, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
               name = 'data' + STRING(i+1,FORMAT='(I0)')
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
                                data_array = CREATE_STRUCT(data_array,name,plot_data)

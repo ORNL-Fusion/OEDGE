@@ -13,7 +13,7 @@ $ ======================================================================
 $
 '{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
 $'{}          Number of OSM internal iterations               '    0   $ (0)
-'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    1   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
 $'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
 '{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
 $'{}          Execute DIVIMP                                  '    0   $ (0)
