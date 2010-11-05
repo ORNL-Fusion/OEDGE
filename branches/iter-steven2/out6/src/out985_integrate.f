@@ -544,6 +544,7 @@ c      DATA problem_ignored /0/
 
       chord = chord_primary
       chord%track => chord_primary%track
+      chord%profile => chord_primary%profile
 c      chord%spectrum => chord_primary%spectrum
 
       refcnt = 0
@@ -877,6 +878,29 @@ c...            Line-of-sight integral:
 c     .                                 chord%weight * 
 c     .                                 obinter(1)%dist * 
 c     .                                 DBLE(obj(iobj)%quantity(iint))
+
+
+                  IF (iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THEN
+                    chord%nprofile = chord%nprofile + 1
+
+c           WRITE(6,'(A,8F10.6)') ' distance:', 
+c     .    chord_primary%v1(1:3),
+c     .    obinter(1)%v(1:3),
+c     .                DSQRT((obinter(1)%v(1) - chord_primary%v1(1))**2 +
+c     .                      (obinter(1)%v(2) - chord_primary%v1(2))**2 +
+c     .                      (obinter(1)%v(3) - chord_primary%v1(3))**2),
+c     .            obinter(1)%dist
+
+                    chord%profile(chord%nprofile,1) = 
+     .                DSQRT((obinter(1)%v(1) - chord_primary%v1(1))**2 +
+     .                      (obinter(1)%v(2) - chord_primary%v1(2))**2 +
+     .                      (obinter(1)%v(3) - chord_primary%v1(3))**2)
+c     .                0.5D0 * obinter(1)%dist
+                    chord%profile(chord%nprofile,2) = 
+     .                  chord%weight * DBLE(obj(iobj)%quantity(iint))
+                  ENDIF
+
+
 c...              Line shape:
                   IF (opt%int_type(iint).EQ.2) THEN
                     CALL CalculateLineShape                         ! I don't like this chord primary business!
@@ -914,6 +938,14 @@ c...            Update inversion map based on track length in object volume:
                 chord%track(ivol) = chord%track(ivol) + 
      .                              chord%weight * 
      .                              obinter(1)%dist
+
+
+
+
+c...            Store profile of quantity along the viewing chord: 
+
+
+
 c...            Keep track of sampling weight for object:
 c                obj(ivol)%sample = obj(ivol)%sample + obinter(1)%dist  ! Done with %path... 
                 IF (nchord.EQ.-1) WRITE(0,*) '  DIST:',obinter(1)%dist
@@ -1025,6 +1057,9 @@ c     GET RID OF _PRIMARY BUSINESS!
         chord_primary%integral(i1) = chord%integral(i1)
         chord_primary%average (i1) = chord%average (i1)
       ENDDO
+      chord_primary%nprofile = chord%nprofile
+      chord_primary%profile(:,1) = chord%profile(:,1)
+      chord_primary%profile(:,2) = chord%profile(:,2)
 
       IF (problem_ignored.GE.1) THEN
         IF (.NOT.problem_message) THEN
@@ -1065,7 +1100,7 @@ c      TYPE(type_3D_object)  :: obj(nobj)
 c      INTEGER nobj,status                   
 
 
-      INTEGER i1,ix,iy,nxbin,nybin,n,iobj,iint
+      INTEGER i1,ix,iy,nxbin,nybin,n,iobj,iint,nview
       REAL*8  xangle,yangle,dxangle,dyangle,fact,mat(3,3),angle
 c      TYPE(type_view) :: pixel2,chord
       TYPE(type_view) :: chord
@@ -1073,7 +1108,7 @@ c      TYPE(type_view) :: pixel2,chord
 c      INTEGER, ALLOCATABLE, TARGET :: itest(:)
 c      INTEGER, POINTER :: ptr1(:)
 
-      REAL*8, ALLOCATABLE, TARGET :: ddum1(:)
+      REAL*8, ALLOCATABLE, TARGET :: ddum1(:),ddum2(:,:)
       REAL*4, ALLOCATABLE, TARGET :: rdum1(:)
 
 
@@ -1116,9 +1151,11 @@ c      nybin = pixel2%nybin
       n = opt%n
 
       ALLOCATE(ddum1(n))
+      ALLOCATE(ddum2(nobj,2))
       ALLOCATE(rdum1(100))
 
       status = 0
+      nview  = 0
 
       DO ix = 1, nxbin
         IF (status.LT.0) EXIT
@@ -1129,11 +1166,15 @@ c      nybin = pixel2%nybin
           status = 0
 
           nchord = nchord + 1
+          nview  = nview  + 1
 
           ddum1 = 0.0D0
+          ddum2 = 0.0D0
 
           chord%otrack = 1
           chord%track => ddum1
+          chord%nprofile = 0
+          chord%profile => ddum2  ! Waste of memory?  Just do a direct mapping from PIXEL...
 
           rdum1 = 0.0D0
 c          chord%spectrum => rdum1
@@ -1238,6 +1279,14 @@ c...        Add integral result to pixel value:
             ENDDO
 c...
             pixel%track(1:n) = pixel%track(1:n) + chord%track(1:n)
+            pixel%nprofile = MAX(pixel%nprofile,chord%nprofile)
+
+
+
+            pixel%profile(:,1) = pixel%profile(:,1) + chord%profile(:,1)
+            pixel%profile(:,2) = pixel%profile(:,2) + chord%profile(:,2)
+
+c          write(6,*) '  check 1',pixel%profile(1:pixel%nprofile,1)
 
 c            pixel%spectrum(1:100) = pixel%spectrum(1:100) + 
 c     .                              chord%spectrum(1:100)
@@ -1271,8 +1320,17 @@ c...  Finish up weighted average:
         WRITE(0,*) 'AVERAGE2:',iint,pixel%average(iint)
       ENDDO
 
+c...  This averaging is bogus of course since the profiles won't overlap,
+c     but is fine if there's a single chord, or if the view isn't too wide:  ! *** TRUE? ***
+      pixel%profile(:,1) = pixel%profile(:,1) / DBLE(nview)
+      pixel%profile(:,2) = pixel%profile(:,2) / DBLE(nview)
+
+c      write(6,*) '  nview  ',nview
+c      write(6,*) '  check 2',pixel%profile(1:pixel%nprofile,1)
+
 c...  Clear memory:
       IF (ALLOCATED(ddum1)) DEALLOCATE(ddum1)
+      IF (ALLOCATED(ddum2)) DEALLOCATE(ddum2)
       IF (ALLOCATED(rdum1)) DEALLOCATE(rdum1)
 
       

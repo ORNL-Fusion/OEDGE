@@ -242,7 +242,8 @@ c...  Load up surface and vertex arrays:
 
         READ(fp,'(A2048)',END=10) buffer         
 
-        IF (buffer(1:1).EQ.'*'.OR.LEN_TRIM(buffer).EQ.0) THEN
+        IF (buffer(1:1).EQ.'*'.OR.LEN_TRIM(buffer).EQ.0.OR.
+     .      buffer(1:1).EQ.'#') THEN
           count = 0
           CYCLE
         ENDIF

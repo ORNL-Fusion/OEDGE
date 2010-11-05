@@ -506,7 +506,7 @@ c...  Input:
       REAL Clock2
 
       INTEGER   i1,i2,i3,i4,status,fp,fp2,m,n,codec,iobj,ierr,volcnt,
-     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet
+     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet,npro
       LOGICAL   ascii,message
       REAL      rtime,ttime
       REAL*8    int_sum,solid_total,solid_angle
@@ -514,7 +514,7 @@ c...  Input:
 
       INTEGER, ALLOCATABLE :: idum1(:)
 
-      REAL*8, ALLOCATABLE, TARGET :: ddum1(:)
+      REAL*8, ALLOCATABLE, TARGET :: ddum1(:),ddum2(:,:)
       REAL*4, ALLOCATABLE, TARGET :: mapchk(:)
       REAL*4, ALLOCATABLE, TARGET :: rdum1(:)
 
@@ -639,6 +639,7 @@ c...      Check if surface is part of the vessel wall:
 
 
       ALLOCATE(ddum1(n))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,2))  ! MPI problem?  nobj=m, should be # integration volumes
       ALLOCATE(rdum1(100))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
@@ -665,7 +666,10 @@ c        IF (MOD(i1,1000).EQ.0)
         status = 0
 
         ddum1 = 0.0D0
-        pixel(i1)%track => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        ddum2 = 0.0D0
+        pixel(i1)%track   => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        pixel(i1)%nprofile = 0
+        pixel(i1)%profile => ddum2  ! Dont' make part of view derived type definition, just send on its own?
 
         rdum1 = 0.0
 c        pixel(i1)%spectrum => rdum1  ! also a problem...
@@ -740,6 +744,23 @@ c...        Add some brains:
         ELSE
         ENDIF
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
+
+
+        IF (opt%ndet.EQ.1.AND.
+     .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
+          WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
+          DO i2 = 1,pixel(i1)%nprofile
+            WRITE(6,*) '    ',i2,pixel(i1)%profile(i2,1:2)
+          ENDDO
+          WRITE(file,'(A,I0.3,256X)')          
+     .      'idl.ray_profile_'//TRIM(opt%det_fname(1))//'_',i1
+          WRITE(0,*) ' FILE:'//TRIM(file)
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          npro=pixel(i1)%nprofile
+          CALL inPutData(pixel(i1)%profile(1:npro,1),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,2),'SIGNAL','N/A')
+          CALL inCloseInterface
+        ENDIF
       ENDDO  ! Pixel loop
 
 c...  Confirm that all volumes on the inversion mesh were sampled by the
@@ -879,6 +900,7 @@ c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
 c...  Clear arrays:
       DEALLOCATE(idum1)
       DEALLOCATE(ddum1)
+      DEALLOCATE(ddum2)
       DEALLOCATE(rdum1)
       DEALLOCATE(vwlist)
       DEALLOCATE(gblist)
@@ -1560,8 +1582,8 @@ c      MAX3D = MAX3D985
       WRITE(0,*) 'HERE IN 985'
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 500000 
-c      MAX3D = 4000000 
+c      MAX3D = 500000 
+      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
