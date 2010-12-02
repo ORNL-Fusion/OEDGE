@@ -2076,6 +2076,9 @@ c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
 c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
 c     G46 - min number of cells on ring - min_cells - <i4>
 c     G47 - castem output identifier - <string>
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
 c
       ELSEIF (tag(1:3).EQ.'G42') THEN
 c
@@ -2110,6 +2113,26 @@ c     G47: Castem data set identifier
 c
       ElseIf (tag(1:3).eq.'G47') Then
         CALL ReadC(line,rg_castem_data,'CASTEM DATA SET IDENTIFIER')
+
+c
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G48') THEN
+        CALL Read2R(line,rg_int_win_mins,rg_int_win_maxs,-HI,HI,
+     >             'RIBBON GRID INTERSECTION SUBSET RANGE [S1,S2]')
+c
+c     G49 - min and max S for selecting intersection subset  2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G49') THEN
+        CALL Read2R(line,rg_minr,rg_maxr,-HI,HI,
+     >             'RIBBON GRID SUBSET R RANGE [R1,R2]')
+c
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G50') THEN
+        CALL Read2R(line,rg_minr,rg_maxr,-HI,HI,
+     >             'RIBBON GRID SUBSET S RANGE [S1,S2]')
+
 c
 c -----------------------------------------------------------------------
       ELSE

@@ -458,7 +458,12 @@ c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
 c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
 c     G46 - min number of cells on ring - min_cells - <i4>
 c     G47 - castem output identifier - <string>
-
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c
+c------------------------------------------------------------------------
+c
 c     G42 - grid option
 c           0 = unstructured
 c           1 = structured
@@ -485,6 +490,25 @@ c
 c     G47 - Castem data set to read in
 c
       rg_castem_data = '100610'
+c
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c           if min=max then window option is not selected
+c
+      rg_int_win_mins = 0.0
+      rg_int_win_maxs = 0.0
+c
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c           These are only used for subset grid generation
+c
+      rg_minr=0.0
+      rg_maxr=0.0
+c
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c           These are only used for subset grid generation
+c
+      rg_mins=0.0
+      rg_maxs=0.0
+c
 c
 c -----------------------------------------------------------------------
 c
