@@ -156,7 +156,8 @@ contains
     tot_n_intsects = n_enter + n_leave + n_tangency
     intsec_cnt = 0
 
-    write(outunit,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency
+    write(outunit,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency,n_field_lines
+    write(0,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency,n_field_lines
 
 
     ! field line array has been allocated ... now read in and allocate the intersection
@@ -166,6 +167,7 @@ contains
 
        read(iunit,*) id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,dist
 
+       write(0,*) 'READ:=',in,id,dist
        ! extract starting location from first field line 
        !if (id.eq.1) then 
        !   xstart = xinit
@@ -573,6 +575,9 @@ contains
     integer :: double_tan,double_wall
     real :: dir, last_dir
 
+    logical :: filter_intersections
+    integer :: index_offset
+
     !real :: ,last_ang,test_ang
     !real,parameter :: PI=3.141592654
     !real,parameter :: ang_limit = PI/18.0
@@ -608,8 +613,14 @@ contains
     ! needed. 
 
     ! Initialize averaging from global variable
-    opt_block_av = rg_block_av
 
+    if (rg_int_win_mins.ne.rg_int_win_maxs) then 
+       filter_intersections = .true.
+    else
+       filter_intersections = .false.
+    endif
+
+    opt_block_av = rg_block_av
 
     n_nodes = tot_n_intsects
 
@@ -660,27 +671,21 @@ contains
     endif
 
 
-    !surf_fl(1)=1
-    !surf_int(1)=-1
-    !surf_s(1)=min_lc
-    !surf_r(1)=min_dist
-
-    !surf_fl(n_nodes)=1
-    !surf_int(n_nodes)=-1
-    !surf_s(n_nodes)=max_lc
-    !surf_r(n_nodes)=min_dist
-
-
-    ! Populate the rest of the node list with intersection data 
+    ! Populate the node list with intersection data 
 
     node_cnt = 0
 
     do if = 1,n_field_lines
        do in = 1,field_line(if)%int_tot
-          node_cnt = node_cnt + 1
-          surf_fl(node_cnt)=if
-          surf_int(node_cnt)=in
-          surf_s(node_cnt)=field_line(if)%int_data(in)%lc
+
+          if (.not.filter_intersections.or.&
+             (filter_intersections.and. &
+             (field_line(if)%int_data(in)%lc.ge.rg_int_win_mins).and.&
+             (field_line(if)%int_data(in)%lc.le.rg_int_win_maxs))) then 
+             node_cnt = node_cnt + 1
+             surf_fl(node_cnt)=if
+             surf_int(node_cnt)=in
+             surf_s(node_cnt)=field_line(if)%int_data(in)%lc
           !
           ! jdemod - change this to dist - it will be the same in the case
           !          of a radial grid but will be better for a grid with a diagonal
@@ -690,9 +695,12 @@ contains
           !          the field lines in the poloidal plane. 
           !
           !surf_r(node_cnt)= field_line(if)%xs
-          surf_r(node_cnt)= field_line(if)%dist
+             surf_r(node_cnt)= field_line(if)%dist
 
           !          node_used(node_cnt) =0
+
+          endif
+
        end do
     end do
 
@@ -841,6 +849,10 @@ contains
 
        end do
 
+
+
+
+
        !
        ! Print out grouped data
        ! 
@@ -863,8 +875,14 @@ contains
 
        !write(outunit,*) 'Avgroup:',av_group_cnt, av_group(n_nodes)
 
-       av_group_cnt = av_group(n_nodes) +2
-
+       if (filter_intersections) then 
+          ! need to add 2 points at each end when using a subset
+          av_group_cnt = av_group(n_nodes) +4
+          index_offset = 2
+       else
+          av_group_cnt = av_group(n_nodes) +2
+          index_offset = 1
+       endif
 
 
        if (av_group_cnt.gt.0) then 
@@ -924,27 +942,27 @@ contains
           if (av_group(in).ne.group_id) then 
              ! finish up last group
              if (group_id.ne.0) then
-                av_s(group_id+1) = av_s(group_id+1)/av_cnt
-                av_r(group_id+1) = av_r(group_id+1)/av_cnt
+                av_s(group_id+index_offset) = av_s(group_id+index_offset)/av_cnt
+                av_r(group_id+index_offset) = av_r(group_id+index_offset)/av_cnt
              endif
 
              ! start next group
              group_id = av_group(in)
-             av_cnt = 1
-             av_s(group_id+1) = av_s(group_id+1) + surf_s(in)
-             av_r(group_id+1) = av_r(group_id+1) + surf_r(in)
+             av_cnt = index_offset
+             av_s(group_id+index_offset) = av_s(group_id+index_offset) + surf_s(in)
+             av_r(group_id+index_offset) = av_r(group_id+index_offset) + surf_r(in)
 
-             av_min_r(group_id+1) = min(av_min_r(group_id+1),surf_r(in))
-             av_max_r(group_id+1) = max(av_max_r(group_id+1),surf_r(in))
+             av_min_r(group_id+index_offset) = min(av_min_r(group_id+index_offset),surf_r(in))
+             av_max_r(group_id+index_offset) = max(av_max_r(group_id+index_offset),surf_r(in))
 
           else
              ! continue counting current group
              av_cnt = av_cnt + 1
-             av_s(group_id+1) = av_s(group_id+1) + surf_s(in)
-             av_r(group_id+1) = av_r(group_id+1) + surf_r(in)
+             av_s(group_id+index_offset) = av_s(group_id+index_offset) + surf_s(in)
+             av_r(group_id+index_offset) = av_r(group_id+index_offset) + surf_r(in)
 
-             av_min_r(group_id+1) = min(av_min_r(group_id+1),surf_r(in))
-             av_max_r(group_id+1) = max(av_max_r(group_id+1),surf_r(in))
+             av_min_r(group_id+index_offset) = min(av_min_r(group_id+index_offset),surf_r(in))
+             av_max_r(group_id+index_offset) = max(av_max_r(group_id+index_offset),surf_r(in))
 
           endif
 
@@ -954,28 +972,34 @@ contains
 
        ! finish off last group
 
-       av_s(group_id+1) = av_s(group_id+1)/av_cnt
-       av_r(group_id+1) = av_r(group_id+1)/av_cnt
+       av_s(group_id+index_offset) = av_s(group_id+index_offset)/av_cnt
+       av_r(group_id+index_offset) = av_r(group_id+index_offset)/av_cnt
 
 
        ! add first and last points
+       ! 
+       !av_r(1) = min_dist
+       !av_s(1) = min_lc
+       !av_min_r(1) = min_dist
+       !av_max_r(1) = min_dist
 
-       av_r(1) = min_dist
-       av_s(1) = min_lc
-       av_min_r(1) = min_dist
-       av_max_r(1) = min_dist
-
-       av_r(av_group_cnt) = min_dist
-       av_s(av_group_cnt) = max_lc
-       av_min_r(av_group_cnt) = min_dist
-       av_max_r(av_group_cnt) = min_dist
-
+       !av_r(av_group_cnt) = min_dist
+       !av_s(av_group_cnt) = max_lc
+       !av_min_r(av_group_cnt) = min_dist
+       !av_max_r(av_group_cnt) = min_dist
 
     else
 
        ! copy over all nodes without block averaging - in case they fix the bugs in the data
 
-       av_group_cnt = n_nodes +2
+       if (filter_intersections) then 
+           ! filtered data sets will have two extra points at each end
+           av_group_cnt = n_nodes +4
+           index_offset = 2
+       else
+           av_group_cnt = n_nodes +2
+          index_offset = 1
+       endif
 
        if (av_group_cnt.gt.0) then 
           if (allocated(av_s)) deallocate(av_s)
@@ -1027,11 +1051,43 @@ contains
 
 
        do in = 1,n_nodes
-          av_s(in+1) = surf_s(in)
-          av_r(in+1) = surf_r(in)
-          av_min_r(in+1) = surf_r(in)
-          av_max_r(in+1) = surf_r(in)
+          av_s(in+index_offset) = surf_s(in)
+          av_r(in+index_offset) = surf_r(in)
+          av_min_r(in+index_offset) = surf_r(in)
+          av_max_r(in+index_offset) = surf_r(in)
        end do
+
+    endif
+
+
+
+    if (filter_intersections) then 
+
+       ! add end faces - defined in input file
+
+       av_r(1) = rg_minr
+       av_s(1) = rg_maxs
+       av_min_r(1) = min_dist
+       av_max_r(1) = min_dist
+
+       av_r(2) = rg_maxr
+       av_s(2) = rg_maxs
+       av_min_r(2) = min_dist
+       av_max_r(2) = min_dist
+
+
+       av_r(av_group_cnt-1) = rg_maxr
+       av_s(av_group_cnt-1) = rg_mins
+       av_min_r(av_group_cnt-1) = min_dist
+       av_max_r(av_group_cnt-1) = min_dist
+
+       av_r(av_group_cnt) = rg_minr
+       av_s(av_group_cnt) = rg_mins
+       av_min_r(av_group_cnt) = min_dist
+       av_max_r(av_group_cnt) = min_dist
+
+
+    else
 
        ! add end points
 
@@ -1045,15 +1101,16 @@ contains
        av_min_r(av_group_cnt) = min_dist
        av_max_r(av_group_cnt) = min_dist
 
-
     endif
+
+
+
+
 
     !write(outunit,'(a,10(1x,g18.8))') 'Average1:',min_dist,max_dist
     !do in = 1,av_group_cnt
     !   write(0,'(a,i10,10(1x,g18.8))') 'AV:',in,av_s(in),av_r(in),av_max_r(in),av_min_r(in)
     !end do
-
-
 
     ! go through the data and remove degeneracies in tangency and wall points
 
@@ -1094,6 +1151,8 @@ contains
        write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
 
     end do
+
+
 
 
     ! Now run through and identify IN, OUT and tangency points - tangency points only occur at the top of a limiter ... not sure if IN/OUT are required

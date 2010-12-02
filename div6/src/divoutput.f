@@ -1953,6 +1953,15 @@ c
      >                               rg_max_s_sep)
         call pri ('                  (G46) MIN. CELLS IN ROW OF GRID=',
      >                               rg_min_cells)
+        
+        if (rg_int_win_mins.ne.rg_int_win_maxs) then 
+          Call prr2('                  (G48) INTERSECTION SELECTION'//
+     >            ' RANGE [SMIN,SMAX]=',rg_int_win_mins,rg_int_win_maxs)
+          call prr2('                  (G49) SUBSET GRID WINDOW SIZE '//
+     >            ' [RMIN,RMAX]=',rg_int_win_mins,rg_int_win_maxs)
+          call prr2('                  (G50) SUBSET GRID WINDOW SIZE '//
+     >            ' [SMIN,SMAX]=',rg_int_win_mins,rg_int_win_maxs)
+        endif
 
       ENDIF
 c
