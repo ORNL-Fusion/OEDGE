@@ -2130,7 +2130,7 @@ c
 c     G50 - min and max S for intersection subset grid generation 2 x <r4>
 c
       ELSEIF (tag(1:3).EQ.'G50') THEN
-        CALL Read2R(line,rg_minr,rg_maxr,-HI,HI,
+        CALL Read2R(line,rg_mins,rg_maxs,-HI,HI,
      >             'RIBBON GRID SUBSET S RANGE [S1,S2]')
 
 c
