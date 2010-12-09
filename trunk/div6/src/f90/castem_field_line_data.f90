@@ -93,6 +93,10 @@ module castem_field_line_data
 
    integer,parameter :: outunit = 6
 
+   ! Intersection subset selection
+   logical :: filter_intersections
+
+
 
    ! options
 
@@ -484,68 +488,65 @@ contains
        write(outunit,'(a,3(1x,i12))') 'FL:',field_line(in)%line_id,field_line(in)%int_tot,field_line(in)%int_stored
     end do
 
-    fname = 'lim.txt'
-
+    !fname = 'lim.txt'
     ! find free unit number and open the file
-    call find_free_unit_number(outunit)
+    !call find_free_unit_number(outunit)
+    !open(outunit,file=trim(fname),form='formatted',iostat=ierr)
 
-    open(outunit,file=trim(fname),form='formatted',iostat=ierr)
-
+    write(outunit,*) 'Writing out limiter surface: ' ,n_nodes
     write(0,*) 'Writing out limiter surface: ' ,n_nodes
-
     do in = 1,n_nodes
        write(outunit,'(i8,5(1x,g18.8))') in,surf_r(in),surf_s(in),surf_fl(in),surf_int(in)
     end do
 
-    close(outunit)
+    !close(outunit)
 
-
-    fname = 'lim-av.txt'
-
+    !fname = 'lim-av.txt'
     ! find free unit number and open the file
-    call find_free_unit_number(outunit)
+    !call find_free_unit_number(outunit)
+    !open(outunit,file=trim(fname),form='formatted',iostat=ierr)
 
-    open(outunit,file=trim(fname),form='formatted',iostat=ierr)
-
+    write(outunit,*) 'Writing out averaged limiter surface: ' ,av_group_cnt
     write(0,*) 'Writing out averaged limiter surface: ' ,av_group_cnt
 
     do in = 1,av_group_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
     end do
 
-    close(outunit)
+    !close(outunit)
 
 
-    fname = 'tan-av.txt'
+    !fname = 'tan-av.txt'
 
     ! find free unit number and open the file
-    call find_free_unit_number(outunit)
+    !call find_free_unit_number(outunit)
 
-    open(outunit,file=trim(fname),form='formatted',iostat=ierr)
+    !open(outunit,file=trim(fname),form='formatted',iostat=ierr)
 
     write(0,*) 'Writing out tangency points: ' ,av_tan_cnt
+    write(outunit,*) 'Writing out tangency points: ' ,av_tan_cnt
 
     do in = 1,av_tan_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
     end do
 
-    close(outunit)
+    !close(outunit)
 
-    fname = 'wall-av.txt'
+    !fname = 'wall-av.txt'
 
     ! find free unit number and open the file
-    call find_free_unit_number(outunit)
+    !call find_free_unit_number(outunit)
 
-    open(outunit,file=trim(fname),form='formatted',iostat=ierr)
+    !open(outunit,file=trim(fname),form='formatted',iostat=ierr)
 
     write(0,*) 'Writing out wall points: ' ,av_wall_cnt
+    write(outunit,*) 'Writing out wall points: ' ,av_wall_cnt
 
     do in = 1,av_wall_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
     end do
 
-    close(outunit)
-
+    !close(outunit)
 
   end subroutine print_field_line_summary
 
@@ -559,7 +560,6 @@ contains
     integer :: node_cnt
     real,allocatable :: surf_sep(:),av_group(:)
     !real,allocatable :: surf_ang(:)
-    integer :: tmp_node_cnt 
 
     real :: min_sep
     real,parameter :: max_fact = 5.0
@@ -575,7 +575,6 @@ contains
     integer :: double_tan,double_wall
     real :: dir, last_dir
 
-    logical :: filter_intersections
     integer :: index_offset
 
     !real :: ,last_ang,test_ang
@@ -695,6 +694,7 @@ contains
           !          the field lines in the poloidal plane. 
           !
           !surf_r(node_cnt)= field_line(if)%xs
+          !
              surf_r(node_cnt)= field_line(if)%dist
 
           !          node_used(node_cnt) =0
@@ -715,11 +715,9 @@ contains
 
     if (opt_block_av.eq.1) then 
 
-       tmp_node_cnt = 0
-
        if (tot_n_intsects.gt.0) then 
           if (allocated(surf_sep)) deallocate(surf_sep)
-          allocate(surf_sep(n_nodes),stat=ierr)
+          allocate(surf_sep(node_cnt),stat=ierr)
           if (ierr.ne.0) then 
              call errmsg('ALLOCATION ERROR:SURF_SEP:IERR =',ierr)
              stop
@@ -730,7 +728,7 @@ contains
 
        if (tot_n_intsects.gt.0) then 
           if (allocated(av_group)) deallocate(av_group)
-          allocate(av_group(n_nodes),stat=ierr)
+          allocate(av_group(node_cnt),stat=ierr)
           if (ierr.ne.0) then 
              call errmsg('ALLOCATION ERROR:AV_GROUP:IERR =',ierr)
              stop
@@ -743,13 +741,13 @@ contains
 
        !if (tot_n_intsects.gt.0) then 
        !   if (allocated(surf_ang)) deallocate(surf_ang)
-       !   allocate(surf_ang(n_nodes),stat=ierr)
+       !   allocate(surf_ang(node_cnt),stat=ierr)
        !else
        !   return
        !endif
 
 
-       do in = 1,n_nodes-1
+       do in = 1,node_cnt-1
 
           surf_sep(in) = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
           !surf_ang(in) = atan2c(surf_s(in+1)-surf_s(in),surf_r(in+1)-surf_r(in))
@@ -758,7 +756,7 @@ contains
 
        end do
 
-       surf_sep(n_nodes) = surf_sep(n_nodes-1)
+       surf_sep(node_cnt) = surf_sep(node_cnt-1)
 
 
        ! run through grouping and reordering
@@ -767,7 +765,7 @@ contains
 
        write(outunit,*) 'Minimum intersection separation = ', min_sep
 
-       do in = 1,n_nodes
+       do in = 1,node_cnt
           ! look through the list for points that are separated by larger distances
 
           av_group(in) = av_group_cnt
@@ -800,7 +798,7 @@ contains
              ! Look for additional points that are in series
              do while (.not.leave)
                 it = it+1
-                if (it.ge.max_block_size.or.(it+in+1).ge.n_nodes) then 
+                if (it.ge.max_block_size.or.(it+in+1).ge.node_cnt) then 
                    leave = .true.
                    av_group_cnt = av_group_cnt + 1
                 else
@@ -859,9 +857,9 @@ contains
 
 
        ! slmod begin
-       !do in = 2,n_nodes-1
+       !do in = 2,node_cnt-1
        !
-       !do in = 2,n_nodes
+       !do in = 2,node_cnt
        ! slmod end
        !test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
        !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
@@ -873,14 +871,14 @@ contains
        ! Allocate temp arrays for averaging
        !
 
-       !write(outunit,*) 'Avgroup:',av_group_cnt, av_group(n_nodes)
+       !write(outunit,*) 'Avgroup:',av_group_cnt, av_group(node_cnt)
 
        if (filter_intersections) then 
           ! need to add 2 points at each end when using a subset
-          av_group_cnt = av_group(n_nodes) +4
+          av_group_cnt = av_group(node_cnt) +4
           index_offset = 2
        else
-          av_group_cnt = av_group(n_nodes) +2
+          av_group_cnt = av_group(node_cnt) +2
           index_offset = 1
        endif
 
@@ -936,7 +934,7 @@ contains
 
        group_id = 0
 
-       do in = 1,n_nodes
+       do in = 1,node_cnt
 
 
           if (av_group(in).ne.group_id) then 
@@ -994,10 +992,10 @@ contains
 
        if (filter_intersections) then 
            ! filtered data sets will have two extra points at each end
-           av_group_cnt = n_nodes +4
+           av_group_cnt = node_cnt +4
            index_offset = 2
        else
-           av_group_cnt = n_nodes +2
+           av_group_cnt = node_cnt +2
           index_offset = 1
        endif
 
@@ -1050,7 +1048,7 @@ contains
        endif
 
 
-       do in = 1,n_nodes
+       do in = 1,node_cnt
           av_s(in+index_offset) = surf_s(in)
           av_r(in+index_offset) = surf_r(in)
           av_min_r(in+index_offset) = surf_r(in)
@@ -1066,23 +1064,23 @@ contains
        ! add end faces - defined in input file
 
        av_r(1) = rg_minr
-       av_s(1) = rg_maxs
+       av_s(1) = rg_mins
        av_min_r(1) = min_dist
        av_max_r(1) = min_dist
 
        av_r(2) = rg_maxr
-       av_s(2) = rg_maxs
+       av_s(2) = rg_mins
        av_min_r(2) = min_dist
        av_max_r(2) = min_dist
 
 
        av_r(av_group_cnt-1) = rg_maxr
-       av_s(av_group_cnt-1) = rg_mins
+       av_s(av_group_cnt-1) = rg_maxs
        av_min_r(av_group_cnt-1) = min_dist
        av_max_r(av_group_cnt-1) = min_dist
 
        av_r(av_group_cnt) = rg_minr
-       av_s(av_group_cnt) = rg_mins
+       av_s(av_group_cnt) = rg_maxs
        av_min_r(av_group_cnt) = min_dist
        av_max_r(av_group_cnt) = min_dist
 
@@ -1211,8 +1209,8 @@ contains
           last_face = 2
        endif
 
-       write(outunit,'(a,2i6,10(1x,g18.8))') 'DIR:',in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
-       !write(0,'(a,i6,10(1x,g18.8))') 'DIR:',in,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
 
     end do
 
@@ -1827,7 +1825,7 @@ contains
 
     do in = 1,rbnd_cnt
        ! slmod - array bounds error on R_BNDS
-       write(6,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(max(in-1,1))
+       write(outunit,'(a,i8,10(1x,g18.8))') 'R_BNDS:',in,r_bnds(in),r_bnds(in)-r_bnds(max(in-1,1))
        !
     end do
 
@@ -1840,6 +1838,9 @@ contains
     ! Allocate arrays to hold intersection data
 
     max_surf_ints = 2 * av_tan_cnt + 2
+
+
+    write(0,'(a,2i6)') 'Parameters:',max_surf_ints,av_tan_cnt
 
     if (rbnd_cnt.gt.0.and.av_tan_cnt.gt.0) then 
        if (allocated(int_cnt)) deallocate(int_cnt)
@@ -1881,12 +1882,25 @@ contains
     int_type = 0.0
     ints = 0.0
 
+
+
     ! First r_bnd is assumed to only have 2 points - one at max and one at min
-    int_cnt(1) = 2
-    ints(1,1) = min_lc
-    int_type(1,1) = SURFACE_START
-    ints(1,2) = max_lc
-    int_type(1,2) = SURFACE_END
+    ! These need to be set differently for subset grids
+
+    if (filter_intersections) then 
+       int_cnt(1) = 2
+       ints(1,1) = rg_mins
+       int_type(1,1) = SURFACE_START
+       ints(1,2) = rg_maxs
+       int_type(1,2) = SURFACE_END
+    else
+       int_cnt(1) = 2
+       ints(1,1) = min_lc
+       int_type(1,1) = SURFACE_START
+       ints(1,2) = max_lc
+       int_type(1,2) = SURFACE_END
+    endif
+
 
     ! Find all the other intersections
     do in = 2,rbnd_cnt
@@ -2724,7 +2738,8 @@ contains
 
              intersects(int(int_cnt)) = s_int
 
-             write(outunit,'(a,2i8,10(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             write(outunit,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             write(0,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
 
           endif
 
@@ -2738,6 +2753,10 @@ contains
     do in = 1,av_tan_cnt
        if (av_tan_r(in).eq.r_line) then 
           int_cnt = int_cnt + 1.0
+
+          write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+          write(0,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+
           int_type(int(int_cnt)) = TANGENCY
           intersects(int(int_cnt)) = av_tan_s(in)
           !write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
