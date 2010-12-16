@@ -740,7 +740,8 @@ c
      .          fluid(ic,ion)%ne,
      .          fluid(ic,ion)%ni,
      .          fluid(ic,ion)%vi,
-     .          fluid(ic,ion)%vi/cs,
+                ! jdemod - added eps10 to avoid divide by zero
+     .          fluid(ic,ion)%vi/(cs+eps10),
      .          fluid(ic,ion)%te,
      .          fluid(ic,ion)%ti
             ENDDO

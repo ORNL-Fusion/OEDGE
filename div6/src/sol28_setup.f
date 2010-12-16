@@ -2200,7 +2200,7 @@ c...  Set electron pressure from a reference node:
         WRITE(0,*) ' 2 NODE TI =',node_s(i2)%ti
       ENDIF
       CALL DumpData_OSM('output.error_node','Trouble building nodes')      
-      STOP
+      STOP 'AssignNodeValues_New'
       END
 
 
