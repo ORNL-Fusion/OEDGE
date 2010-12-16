@@ -2604,7 +2604,7 @@ c      WRITE(0,*) 'INSERTRING:',irref,nrs
       RETURN
 99    WRITE(0,*) 'IR   =',ir
       WRITE(0,*) 'IRREF=',irref,nrs
-      STOP
+      STOP 'InsertRing'
       END
 c
 c ======================================================================

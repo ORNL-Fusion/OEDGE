@@ -1249,7 +1249,14 @@ c       are missing, i.e. realistic secondary electron emission (0.0 here), e-i 
 c       energy, atom-atom recombination energy, low collisionality effects, space charge
 c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
         mi = 2.0   ! *** MASS HARDCODED! ***
-        t_ratio = tube(itube)%ti(itarget,ion) / tube(itube)%te(itarget)
+c
+        ! jdemod - fix a division by zero issue - only happens if te set to zero somewhere
+        if (tube(itube)%te(itarget).ne.0.0) then 
+         t_ratio = tube(itube)%ti(itarget,ion) / tube(itube)%te(itarget)
+        else
+           t_ratio = 1.0
+        endif
+c
         delta_e = 0.0
         m_ratio = 9.11E-31 / (mi * AMU)
         log_arguement = 2.0 * PI * m_ratio * (1.0 + t_ratio) * 

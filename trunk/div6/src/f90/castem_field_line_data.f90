@@ -60,7 +60,7 @@ module castem_field_line_data
 
 !  type (node_struc),allocatable :: node_list
 
-  integer :: n_nodes
+  integer :: n_nodes,node_cnt
   real*8,allocatable :: surf_r(:),surf_s(:),surf_fl(:),surf_int(:),surf_sep(:)
   real*8,allocatable :: av_s(:),av_r(:),av_type(:),av_min_r(:),av_max_r(:)
   real*8,allocatable :: av_tan_r(:),av_tan_s(:),av_wall_r(:),av_wall_s(:),tan_ord_r(:),av_tan_ind(:)
@@ -493,9 +493,9 @@ contains
     !call find_free_unit_number(outunit)
     !open(outunit,file=trim(fname),form='formatted',iostat=ierr)
 
-    write(outunit,*) 'Writing out limiter surface: ' ,n_nodes
-    write(0,*) 'Writing out limiter surface: ' ,n_nodes
-    do in = 1,n_nodes
+    write(outunit,*) 'Writing out limiter surface: ' ,node_cnt
+    write(0,*) 'Writing out limiter surface: ' ,node_cnt
+    do in = 1,node_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,surf_r(in),surf_s(in),surf_fl(in),surf_int(in)
     end do
 
@@ -511,6 +511,7 @@ contains
 
     do in = 1,av_group_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
+       write(0,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
     end do
 
     !close(outunit)
@@ -528,6 +529,7 @@ contains
 
     do in = 1,av_tan_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
+       write(0,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
     end do
 
     !close(outunit)
@@ -544,6 +546,7 @@ contains
 
     do in = 1,av_wall_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
+       write(0,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
     end do
 
     !close(outunit)
@@ -557,7 +560,7 @@ contains
     implicit none
 
     integer :: in,if,ierr
-    integer :: node_cnt
+    !integer :: node_cnt
     real,allocatable :: surf_sep(:),av_group(:)
     !real,allocatable :: surf_ang(:)
 
@@ -785,9 +788,9 @@ contains
 
           endif
 
-          !          write (6,'(a,i9,2l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,abs(surf_ang(in)-last_ang).gt.ang_limit,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),surf_ang(in)*raddeg,last_ang*raddeg,ang_limit*raddeg
+          !write (6,'(a,i9,2l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,abs(surf_ang(in)-last_ang).gt.ang_limit,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),surf_ang(in)*raddeg,last_ang*raddeg,ang_limit*raddeg
 
-          !write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
+          write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
 
           ! Test to see if next point could be out of series
           !if (surf_sep(in).gt.max_fact * last_sep.or.abs(surf_ang(in)-last_ang).gt.ang_limit) then 
@@ -810,7 +813,7 @@ contains
 
                    !                   write(6,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it),test_ang*raddeg,last_ang*raddeg, abs(test_ang-last_ang)
 
-                   !write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
+                   write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
 
                    ! test for additional in series points 
                    !if (test_sep.lt.max_fact*last_sep.and.abs(test_ang-last_ang).lt.ang_limit) then 
@@ -825,7 +828,7 @@ contains
                          surf_s(in+ix+1)   = surf_s(in+ix)
                          surf_fl(in+ix+1)  = surf_fl(in+ix)
                          surf_int(in+ix+1) = surf_int(in+ix)
-                         !write(outunit,'(a,2i8,5(1x,g18.6))') 'Moving:',in,ix,in+ix,surf_r(in+ix+1), surf_s(in+ix+1)
+                         write(outunit,'(a,2i8,5(1x,g18.6))') 'Moving:',in,ix,in+ix,surf_r(in+ix+1), surf_s(in+ix+1)
                       end do
 
                       surf_r(in+1)   = tmp_r
@@ -857,15 +860,16 @@ contains
 
 
        ! slmod begin
-       !do in = 2,node_cnt-1
+       do in = 2,node_cnt-1
        !
        !do in = 2,node_cnt
        ! slmod end
-       !test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-       !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
+       test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
+       write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
 
-       !end do
+       end do
+
 
        !
        ! Allocate temp arrays for averaging
@@ -946,7 +950,7 @@ contains
 
              ! start next group
              group_id = av_group(in)
-             av_cnt = index_offset
+             av_cnt = 1
              av_s(group_id+index_offset) = av_s(group_id+index_offset) + surf_s(in)
              av_r(group_id+index_offset) = av_r(group_id+index_offset) + surf_r(in)
 
@@ -1209,7 +1213,7 @@ contains
           last_face = 2
        endif
 
-       write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       write(0,'(a,3i6,10(1x,g18.8))')       'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
        write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
 
     end do
@@ -1400,7 +1404,7 @@ contains
     end do
 
     write(outunit,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
-    !write(0,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
+    write(0,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
 
 
 
@@ -1430,8 +1434,8 @@ contains
           av_tan_r(in+1) = av_tan_r(in)
           av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
 
-          !write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
-          !write(6,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
        endif
 
     end do
@@ -1457,10 +1461,12 @@ contains
 
     do in = 1,av_tan_cnt
        write(outunit,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
+       write(0,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
     end do
 
     do in = 1,av_wall_cnt
        write(outunit,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
+       write(0,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
     end do
 
 
@@ -1704,6 +1710,8 @@ contains
     real*8 :: r1,r2,r_sep_dist
     integer :: ierr,max_surf_ints
     integer :: min_cells
+    logical :: vert_set
+
 
     ! initialize module variables to global input values
     grid_option = rg_grid_opt
@@ -1722,7 +1730,7 @@ contains
 
     init_grid_size = max(3 * av_tan_cnt + 1, int((r_limiter_max-r_limiter_min)/max_r_sep))
 
-    !write(0,*) 'Init_grid_size:',init_grid_size,max_r_sep
+    write(0,*) 'Init_grid_size:',init_grid_size,max_r_sep
 
     if (init_grid_size.gt.0) then 
        if (allocated(r_bnds)) deallocate(r_bnds)
@@ -1755,14 +1763,14 @@ contains
              rbnd_cnt = rbnd_cnt + 1
              if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
              r_bnds(rbnd_cnt) = av_tan_r(in1)
-             !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
+             write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
 
           endif
        else
           rbnd_cnt = rbnd_cnt + 1
           if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
           r_bnds(rbnd_cnt) = av_tan_r(in1)
-          !write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
+          write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
        endif
 
        !       sbnd_cnt = sbnd_cnt + 1
@@ -1803,7 +1811,7 @@ contains
 
     do in = 1,rbnd_cnt-1
        new_bnds = int((r_bnds(in+1)-r_bnds(in))/max_r_sep)
-       if (new_bnds.gt.1) then 
+       if (new_bnds.ge.1) then 
           r_sep_dist = (r_bnds(in+1)-r_bnds(in))/(new_bnds+1)
           do it = 1,new_bnds
              rbnd_add = rbnd_add + 1
@@ -1837,7 +1845,8 @@ contains
 
     ! Allocate arrays to hold intersection data
 
-    max_surf_ints = 2 * av_tan_cnt + 2
+    ! max surf ints needs to be 3 X tangency count since each tangency can generate 2 intersections plus the explicit addition of the tangency point
+    max_surf_ints = 3 * av_tan_cnt + 2
 
 
     write(0,'(a,2i6)') 'Parameters:',max_surf_ints,av_tan_cnt
@@ -1950,9 +1959,11 @@ contains
 
     ! initial estimates of maximum grid size
 
-    max_nrings = av_tan_cnt * rbnd_cnt
-    max_nknots = 200
+    max_nrings = av_wall_cnt * rbnd_cnt
+    max_nknots = max(200,int((max_lc-min_lc)/max_s_sep)*2)
     max_npoly = max_nrings * max_nknots
+
+    write(0,'(a,7i6,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
 
     ! Allocate polygon arrays
     ! rvp
@@ -2126,7 +2137,8 @@ contains
           do it = 1,int_cnt(in)
              vert_rec1(it) = ints(in,it)
              vert_type1(it) = int_type(in,it)
-             !write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
+             write(0,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
+             write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
           end do
           vert_cnt1 = int_cnt(in)
        end if
@@ -2143,7 +2155,7 @@ contains
 
 
        !
-       ! For grid option 2 - add all tangency data between its end points to each ring as vertices for r values less than the tangency point location
+       ! For grid option 1 - add all tangency data between its end points to each ring as vertices for r values less than the tangency point location
        ! Also for the first row we need to define all vertices subject to the constraints of minimum number of cells between tangency positions and maximum allowed S separation
        !
 
@@ -2155,6 +2167,8 @@ contains
                    ntot1 = ntot1+1
                    vert_rec1(ntot1) = av_tan_s(it)
                    vert_type1(ntot1) = FIXED_VERTEX
+                   write(0,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
+                   write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
                 endif
              end do
 
@@ -2164,15 +2178,19 @@ contains
              do is = 1,vert_cnt1-1
                 ! place additional vertices between each tangency/surface using the grid generation contraints
                 slen = vert_rec1(is+1) - vert_rec1(is)
-                ncells = int(slen/max_s_sep) + 1
+                ncells = int(abs(slen)/max_s_sep) + 1
 
                 if (ncells.lt.min_cells) ncells = min_cells
 
-                ssep1 = abs(slen)/ncells 
+                !ssep1 = abs(slen)/ncells 
+                ! remove abs so code will work with ascending or descending orders
+                ssep1 = slen/ncells 
 
                 do it = 1,ncells-1
                    vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1 * it
                    vert_type1(ntot1+it) = FIXED_VERTEX
+                   write(0,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
+                   write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
                 end do
                 ntot1 = ntot1 + ncells -1
 
@@ -2199,20 +2217,32 @@ contains
 
           vert_cnt1 = ntot1
           vert_cnt2 = ntot2
-          call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1)
-          call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
 
        end if
 
 
-       !write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
-       !do it = 1,ntot1
-       !   write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
-       !end do
-       !write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
-       !do it = 1,ntot2
-       !   write(outunit,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
-       !end do
+       call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1)
+       call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
+
+
+       write(0,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
+       do it = 1,ntot1
+          write(0,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
+       end do
+       write(0,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
+       do it = 1,ntot2
+          write(0,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
+       end do
+
+
+       write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
+       do it = 1,ntot1
+          write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
+       end do
+       write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
+       do it = 1,ntot2
+          write(outunit,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
+       end do
 
        !
        ! Break the calls to gen_ring based on number of paired surface elements
@@ -2229,11 +2259,15 @@ contains
 
        ! assign start/end indices on each row
        do it = 1,vert_cnt1
-          !write(outunit,'(a,10i8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b
+          write(0,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
+          write(outunit,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
 
-          if (vert_type1(it).eq.SURFACE_START) then 
+          ! modify code for grid generation from top down (i.e. max S to min S) ... base organization was reversed to start and end tags are reversed
+          !if (vert_type1(it).eq.SURFACE_START) then 
+          if (vert_type1(it).eq.SURFACE_END) then 
              npts1a = it
-          elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_END) then 
+          elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_START) then 
+          !elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_END) then 
              npts1b = it
 
              ! Now find the matching indices in vert_rec2
@@ -2247,18 +2281,22 @@ contains
 
              npts2a = 0
              npts2b = 0
+             vert_set = .false.
 
              do is = 1,vert_cnt2
                 write(outunit,*) 'NPTS2A:',is,vert_cnt2,vert_rec2(is),s_start,s_end
-                if (vert_rec2(is).ge.s_start.and.vert_rec2(is).le.s_end) then 
+                ! s_start is numerically larger than s_end
+                !if (vert_rec2(is).ge.s_start.and.vert_rec2(is).le.s_end) then 
+                if (vert_rec2(is).le.s_start.and.vert_rec2(is).ge.s_end) then 
                    ! this should assign npts2a and npts2b to appropriate values
                    if (npts2a.eq.0) then 
                       npts2a = is
                    endif
 
                    npts2b = is
+                   vert_set=.true.
 
-                elseif (vert_rec2(is).gt.s_end) then 
+                elseif (vert_set) then 
                    exit
                 endif
                 write(outunit,*) 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
@@ -2276,7 +2314,7 @@ contains
 
              endif
 
-             ! If the point is a tangency then it is also the next surface_start point
+             ! If the point is a tangency then it is also the next surface start point
              if (vert_type1(it).eq.TANGENCY) then 
                 npts1a = it
              endif
@@ -2395,14 +2433,14 @@ contains
        ! Average slen
        !slen = max(abs(s1(1)-s1(2)),abs(s2(1)-s2(2)))
 
-       slen = abs(s1(1)-s1(2))
+       slen = s1(2)-s1(1)
 
-       ncells = int(slen/max_slen) + 1
+       ncells = int(abs(slen)/max_slen) + 1
 
        if (ncells.lt.min_cells) ncells = min_cells
 
-       ssep1 = abs(s1(1)-s1(2))/ncells 
-       ssep2 = abs(s2(1)-s2(2))/ncells       
+       ssep1 = (s1(2)-s1(1))/ncells 
+       ssep2 = (s2(2)-s2(1))/ncells       
 
        do in = 1,ncells-1
           s1(npts1+in) = s1(1) + ssep1 * in
@@ -2420,13 +2458,13 @@ contains
     elseif (npts1.eq.2.and.npts2.gt.2) then 
        ! Case with one or more tangency points on second boundary
 
-       slen = abs(s1(1)-s1(2))
+       slen = s1(2)-s1(1)
 
-       ncells = int(slen/max_slen) + 1
+       ncells = int(abs(slen)/max_slen) + 1
 
        if (ncells.lt.min_cells) ncells = min_cells
 
-       ssep1 = abs(s1(1)-s1(2))/ncells 
+       ssep1 = (s1(2)-s1(1))/ncells 
 
        !write(outunit,*) 'GR:NPTS:',npts1,npts2,ncells,slen
 
@@ -2437,13 +2475,13 @@ contains
 
        ncells2 = ncells - npts2 +2
 
-       slen = abs(s2(1)-s2(npts2))
+       slen = (s2(npts2)-s2(1))
 
        !write(outunit,'(a,3i8,10(1x,g18.8))') 'GR:NPTS2:',npts2,ncells,ncells2,slen
 
        dist = 0.0
        do in = 1,npts2-1
-          dist(in) = abs(s2(in+1)-s2(in))/slen * ncells2
+          dist(in) = abs(s2(in+1)-s2(in))/abs(slen) * ncells2
           !write(outunit,'(a,i8,10(1x,g18.8))') 'GR:DIST:',in,dist(in),s2(in+1),s2(in)
        end do
 
@@ -2464,7 +2502,9 @@ contains
 
        cells_added = 0
        do in = 1,npts2-1
-          ssep2 = abs(s2(in+1)-s2(in))/(cell_dist(in)+1.0)
+          ! cell_dist is assigned a base value of 1.0 above so an extra 1.0 is not required here - it must already be non-zero
+          !ssep2 = (s2(in+1)-s2(in))/(cell_dist(in)+1.0)
+          ssep2 = (s2(in+1)-s2(in))/(cell_dist(in))
           do it = 1,cell_dist(in)-1
              cells_added = cells_added + 1
              s2(npts2+cells_added) = s2(in) + ssep2 * it
@@ -2482,16 +2522,15 @@ contains
     elseif (npts1.gt.2.and.npts2.eq.2) then 
        ! points pre-specified along r1 ... none defined on r2 ... do proportional spacing to match
 
-       slen = abs(s1(npts1)-s1(1))
+       slen = (s1(npts1)-s1(1))
 
        do in = 1,npts1
-          dist(in) =   abs((s1(in)-s1(1)))/slen
+          dist(in) =   abs((s1(in)-s1(1)))/abs(slen)
        end do
 
        ! add points with same spacing along r2
 
-
-       slen = abs(s2(npts2)-s2(1))
+       slen = (s2(npts2)-s2(1))
 
        do in = 2,npts1-1
           s2(npts2+in-1) = s2(1) + dist(in) * slen
@@ -2519,7 +2558,7 @@ contains
              if (s1(in).eq.s2(it)) then 
                 do is = last_tan + 1,in-1
                    cells_added = cells_added + 1
-                   s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(in)-s1(last_tan)) * abs(s2(it)-s2(it-1)) + s2(it-1)
+                   s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(in)-s1(last_tan)) * (s2(it)-s2(it-1)) + s2(it-1)
                    s2_type(npts2+cells_added) = NEW_VERTEX
                    !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                 end do
@@ -2529,7 +2568,7 @@ contains
 
                    do is = in+1,npts1-1
                       cells_added = cells_added + 1
-                      s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(npts1)-s1(last_tan)) * abs(s2(npts2)-s2(it)) + s2(it)
+                      s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(npts1)-s1(last_tan)) * (s2(npts2)-s2(it)) + s2(it)
                       s2_type(npts2+cells_added) = NEW_VERTEX
                       !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                    end do
@@ -2554,10 +2593,10 @@ contains
     if (npts1.eq.npts2) then 
 
        ! order of listing vertices is important as is ordering cells
-       ! the base coordinate system for the ITER data is from smaell R to larger R >0 
-       ! and from S < 0 to S > 0 ... the cells are organized wiith DOWN at -S between vertices 1,2
+       ! the base coordinate system for the ITER data is from small R to larger R >0 
+       ! and from S < 0 to S > 0 ... the cells are organized wiith DOWN at +S between vertices 1,2 and UP at -S between 3,4
        ! ... so a cell is   1 = s1(in)  2 = s2(in)   3 = s2(in+1)  4 = s1(in+1)
-
+       !
        ! Lets create the ring and cells
 
        nrings = nrings + 1
@@ -2623,11 +2662,11 @@ contains
 
 
     ! find free unit number and open the file
-    call find_free_unit_number(iunit)
+    !call find_free_unit_number(iunit)
+    !filename = 'grid.out'
+    !open(iunit,file=filename,form='formatted')
 
-    filename = 'grid.out'
-    
-    open(iunit,file=filename,form='formatted')
+    iunit = 6
 
     !write(0,'(a,3i8,10(1x,g18.8))') 'Grid:', npoly,nrings
     write(iunit,'(a,3i8,10(1x,g18.8))') 'Grid:', npoly,nrings
@@ -2648,9 +2687,10 @@ contains
     close(iunit)
 
 
-    filename = 'poly.out'
-    
-    open(iunit,file=filename,form='formatted')
+    !filename = 'poly.out'
+    !open(iunit,file=filename,form='formatted')
+
+    write(iunit,'(a,3i8,10(1x,g18.8))') 'Polygon vertices:', npoly,nrings
 
     do ir = 1,nrings
 
@@ -2701,6 +2741,7 @@ contains
 
     int_cnt = 0.0
     int_type_base = SURFACE_START
+
 
     do in = 1,av_group_cnt -1
 
@@ -2908,7 +2949,8 @@ contains
     endif
 
 
-    !write(0,*) 'Assign NRS:',nrs,nrings
+    write(0,*) 'Assign NRS:',nrs,nrings,maxnrs
+
     if (nrings.le.maxnrs) then 
        nrs = nrings
      

@@ -423,6 +423,7 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
+      ! jdemod - note - dangle set to 0.0 and is used in division later but not assigned a real value
       dangle = 0.0
 c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
@@ -502,13 +503,30 @@ c        ENDIF
         cell(cind1:cind2)%volume_3D  = tube_3D_data(5,1:ike,ir)
 
         DO ik = 1, nks(ir)
-          WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c
+c         jdemod - add if statement to test if dangle=0.0 
+c                - divide by zero error otherwise
+c
+          if (dangle.ne.0.0) then 
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
      .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
      .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
      .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
      .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
      .                               (360.0/dangle) 
+          else
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
+c     .                               * (360.0/dangle) 
+          endif
+c
+c         end jdemod
+c
         ENDDO
+
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN
