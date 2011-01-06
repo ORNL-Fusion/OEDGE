@@ -461,6 +461,7 @@ c     G47 - castem output identifier - <string>
 c     G48 - min and max S for selecting intersection subset  2 x <r4>
 c     G49 - min and max R for intersection subset grid generation 2 x <r4>
 c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c     G51 - length cutoff factor for ring generation <r4> default = 0.0
 c
 c------------------------------------------------------------------------
 c
@@ -508,6 +509,12 @@ c           These are only used for subset grid generation
 c
       rg_mins=0.0
       rg_maxs=0.0
+c
+c     G51 - length cutoff to eliminate short rings far from the separatrix from c           ring generation ... some testing of this will be necessary
+c           to obtain an optimal grid. default value is 0.0 which turns
+c           this feature off.
+c
+      lcutoff = 0.0
 c
 c
 c -----------------------------------------------------------------------

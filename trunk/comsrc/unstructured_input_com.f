@@ -2132,6 +2132,14 @@ c
       ELSEIF (tag(1:3).EQ.'G50') THEN
         CALL Read2R(line,rg_mins,rg_maxs,-HI,HI,
      >             'RIBBON GRID SUBSET S RANGE [S1,S2]')
+c
+c     G51 - cutoff factor for ring generation - rings
+c           in a ribbon grid with a length factor smaller than 
+c           this value will not be generated. 
+c
+      ELSEIF (tag(1:3).EQ.'G51') THEN
+        CALL ReadR(line,lcutoff,-HI,HI,
+     >             'RING CUTOFF LENGTH FACTOR')
 
 c
 c -----------------------------------------------------------------------

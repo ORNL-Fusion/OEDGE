@@ -18,6 +18,9 @@ module ribbon_grid_options
   ! grid generation. 
   ! integer :: rg_box_opt 
   real :: rg_minr,rg_maxr,rg_mins,rg_maxs
+  
+  ! cutoff length limiting range of ring generation
+  real :: lcutoff
 
   character*256 :: rg_castem_data
 

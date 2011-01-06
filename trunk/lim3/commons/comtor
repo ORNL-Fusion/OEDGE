@@ -93,11 +93,12 @@ c
 c     Common block for generic LIM related unstructured input
 c      
       common /lim_unstruc/ shear_short_circuit_opt,calc_3d_power,
-     >                     extfluxopt,nextfluxdata,extfluxdata
+     >                     extfluxopt,nextfluxdata,extfluxdata,
+     >                     vpflow_3d
 c
       integer shear_short_circuit_opt,calc_3d_power,extfluxopt,
      >        nextfluxdata
-      real extfluxdata(maxins,3)
+      real extfluxdata(maxins,3),vpflow_3d
 c
 c     Common block for OUT related unstructured input
 c

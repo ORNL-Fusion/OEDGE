@@ -1713,6 +1713,9 @@ contains
     logical :: vert_set
 
 
+    real*8 :: line_length, rfactor, lfactor  ! variables related to ring reduced grids 
+
+
     ! initialize module variables to global input values
     grid_option = rg_grid_opt
     max_s_sep = rg_max_s_sep
@@ -1926,7 +1929,6 @@ contains
           write(outunit,'(a,2i8,10(1x,g18.8))') '  DATA:', in,it,int_type(in,it),ints(in,it),r_bnds(in)
        end do
     end do
-
 
     ! Now I should have an array containing all the intersection data needed for grid generation - whatever grid generation scheme is used. 
 
@@ -2167,6 +2169,7 @@ contains
                    ntot1 = ntot1+1
                    vert_rec1(ntot1) = av_tan_s(it)
                    vert_type1(ntot1) = FIXED_VERTEX
+
                    write(0,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
                    write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
                 endif
@@ -2302,8 +2305,12 @@ contains
                 write(outunit,*) 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
              end do
 
+             line_length = abs(s_start-s_end)
+             rfactor = (r_limiter_max-r1)/(r_limiter_max-r_limiter_min)
+             lfactor = line_length*rfactor
 
-             if (npts2a.ne.0.and.npts2b.ne.0) then 
+
+             if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.le.lcutoff)) then 
 
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
                 call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,max_nknots,max_s_sep,min_cells)
@@ -2396,6 +2403,7 @@ contains
     real*8 :: dist(maxpts),cell_dist(maxpts),tmp_dist(maxpts)
 
     integer :: val_loc(1)
+
 
     npts1 = npts1b-npts1a+1
     npts2 = npts2b-npts2a+1
