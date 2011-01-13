@@ -5,9 +5,9 @@ module langmuir_probes
 
 contains
 
-  subroutine read_lp_data_file(iunit,lp_data,nlines,ncols)
+  subroutine read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
     implicit none
-    integer :: iunit,nlines,ncols
+    integer :: iunit,nlines,ncols,nextra
     real, allocatable :: lp_data(:,:)
     real, allocatable :: lp_axis(:),lp_proc_data(:,:)
     character*512 :: line
@@ -33,7 +33,7 @@ contains
 
     ! Allocate storage
     if (allocated(lp_data)) deallocate(lp_data)
-    allocate(lp_data(line_cnt,ncols),stat=ierr)
+    allocate(lp_data(line_cnt,ncols+nextra),stat=ierr)
     if (ierr.ne.0) then 
        call errmsg('READ_LP_DATA_FILE:','ERROR ALLOCATING LP_DATA')
        stop 
@@ -48,8 +48,11 @@ contains
     read(iunit,*)
     read(iunit,*)
 
-    ! data format is expected to be:
+    ! data format is expected to be:  
+    ! old version 1 : 9 columns
     !   time(msec)	jsat(A/cm2)	temp(eV)	dens(cm-3)  		csq		probeID		delrsepin	delzsepin	delrsepout
+    ! new version : 9 columns
+    !   time(msec)	jsat(A/acm2)	temp(eV)	dens(cm-3)              csq	        probeID	        delrsepin	delrsepout	psin
 
     do in = 1,line_cnt
        read(iunit,*,iostat=ios) (lp_data(in,it),it=1,ncols)
@@ -183,6 +186,45 @@ contains
 
   end subroutine print_lp_bin_data
 
+
+  subroutine filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra)
+    use filter_elms
+    implicit none
+    character*(*) elm_filename
+    !real,allocatable lp_data(:,:)
+    real lp_data(nlines,ncols+nextra)
+    integer :: ierr
+    integer :: in
+    real :: elm_time_offset
+    integer :: elmref
+    logical :: inelm
+
+    !sd8
+    ! Load ELM time data from file and then add ELM information to the LP data 
+    !
+    
+    call load_elm_times(elm_filename,ierr)
+
+    call set_elm_criteria(elm_start_offset,elm_end_offset,elm_effect_start_offset,elm_effect_end_offset)
+
+    ! An elmref value of 0 means that it is outside time window that is associated with an ELM
+    ! A negative elmref value is inside a possible ELM effect window
+    ! A positive elmref value is inside the most likely ELM effect window
+    do in = 1, nlines
+
+       call get_elm_time(lp_data(in,1),elm_time_offset,elmref,inelm)
+
+       lp_data(in,ncols+1) = elm_time_offset
+       if (inelm) then 
+          lp_data(in,ncols+2) = elmref
+       else
+          lp_data(in,ncols+2) = -elmref
+       endif
+
+    end do
+
+
+  end subroutine filter_lp_data
 
 
 

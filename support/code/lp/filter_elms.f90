@@ -124,6 +124,8 @@ contains
     ! special cases for boundary regions
     if (time.lt.(elm_data(1,2)+elm_effect_start)) then 
        inelm = .false.
+       elm_time_offset = time - elm_data(1,2)
+       elmref = 0
        return
     elseif (time.lt.(elm_data(1,2)+elm_start)) then 
        inelm = .false.
@@ -137,6 +139,8 @@ contains
        return
     elseif (time.gt.elm_data(elm_cnt,2)+elm_effect_end) then 
        inelm = .false.
+       elm_time_offset = time - elm_data(elm_cnt,2)
+       elmref = 0
        return
     elseif (time.gt.elm_data(elm_cnt,2)+elm_end) then 
        inelm = .false.
@@ -168,16 +172,16 @@ contains
        elmref = tpos
        elm_time_offset = deltat2
        return
-    elseif (deltat2.gt.elm_effect_start)
-       inelm = .false.
-       elmref = tpos
-       elm_time_offset = deltat2
-       return
     elseif (deltat1.lt.elm_end) then 
        ! associate with earlier ELM
        inelm = .true.
        elmref = tpos-1
        elm_time_offset = deltat1
+       return
+    elseif (deltat2.gt.elm_effect_start)
+       inelm = .false.
+       elmref = tpos
+       elm_time_offset = deltat2
        return
     elseif (deltat1.lt.elm_effect_end) then 
        ! associate with earlier ELM
@@ -187,15 +191,14 @@ contains
        return
     else
        ! not associated with an ELM
+       ! assign time to closest preceding ELM 
        inelm = .false.
+       elmref = 0
+       elm_time_offset = deltat1
        return
     endif
 
   end subroutine get_elm_time
-
-
-
-
 
 
 

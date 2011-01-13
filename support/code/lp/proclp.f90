@@ -20,7 +20,7 @@ program proclp
 
   real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:)
 
-  integer :: nlines,npts,ndata,ncols
+  integer :: nlines,npts,ndata,ncols,nextra
 
   real :: tmin,tmax,deltar,chisq_lim
   character*5 :: tmins,tmaxs
@@ -38,8 +38,8 @@ program proclp
 
   ! Initialization for current LP data file format
   ! Add two columns for including ELM information
-  ncols =9 + 2
-
+  ncols  = 9 
+  nextra = 2
   !
   ! Read and assign command line arguments
   !
@@ -84,11 +84,11 @@ program proclp
   write(0,*) 'Opening file:',trim(infilename),' Status = ',ierr
 
 
-  call read_lp_data_file(iunit,lp_data,nlines,ncols)
+  call read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
 
   ! Add ELM information to the tabulated LP data
   if (elm_filt) then 
-     call filter_lp_data(elm_filename,lp_data,nlines,ncols)
+     call filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra)
   endif
 
   ! analyse and bin the lp_data
