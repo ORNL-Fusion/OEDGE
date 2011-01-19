@@ -93,7 +93,7 @@ program proclp
 
   ! analyse and bin the lp_data
 
-  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,deltar,tmin,tmax,chisq_lim)
+  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim)
 
 
   ! OUTPUT
@@ -150,6 +150,15 @@ program proclp
 
   close(iunit)
   close(ounit)
+
+
+  ofilename = 'lp_rev_'//trim(infilename)
+  open(ounit,file=ofilename,iostat=ierr)
+
+  call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident)
+
+  close(ounit)
+
 
 end program proclp
 

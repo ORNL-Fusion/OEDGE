@@ -64,11 +64,11 @@ contains
   end subroutine read_lp_data_file
 
 
-  subroutine bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,deltar,tmin,tmax,chisq_lim)
+  subroutine bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim)
     implicit none
     real,allocatable :: lp_axis(:), lp_proc_data(:,:) 
     real,allocatable :: lp_data(:,:)
-    integer :: nlines, ncols,ndata,npts
+    integer :: nlines, ncols,ndata,npts,nextra
     real :: deltar
     real :: tmin,tmax,chisq_lim
     integer :: in,nrbins, ibin,ierr
@@ -187,12 +187,41 @@ contains
   end subroutine print_lp_bin_data
 
 
+  subroutine print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident)
+    implicit none
+    
+    real,allocatable :: lp_data(:,:)
+    integer :: nlines,ncols,nextra
+    integer :: ounit,in
+    character*(*) :: ident
+
+    if (.not.allocated(lp_data)) then 
+       call errmsg('PRINT_LP_DATA','LP_DATA NOT ALLOCATED') 
+       stop
+    endif
+
+    ! print out the revised data with ELM offset added
+
+    write(ounit,'(a,a)') 'ID : ',trim(ident)
+    write(ounit,'(a)')   'IN           Time(s)            R-Rsep           PSIN         Probe        ELM-time            ELM-Index            Jsat(A/cm2)            Te(eV)'
+
+    do in = 1,nlines
+       write(ounit,'(i6,1x,10(1x,g18.8))') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),lp_data(in,6),lp_data(in,10),lp_data(in,11),lp_data(in,2),lp_data(in,3)
+    end do 
+
+
+  end subroutine print_lp_data
+
+
+
+
   subroutine filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra)
     use filter_elms
     implicit none
+    integer :: nlines,ncols,nextra
     character*(*) elm_filename
-    !real,allocatable lp_data(:,:)
-    real lp_data(nlines,ncols+nextra)
+    real,allocatable :: lp_data(:,:)
+    !real lp_data(nlines,ncols+nextra)
     integer :: ierr
     integer :: in
     real :: elm_time_offset
@@ -203,9 +232,16 @@ contains
     ! Load ELM time data from file and then add ELM information to the LP data 
     !
     
+    real :: elm_start_input,elm_end_input, elm_effect_start_input, elm_effect_end_input
+
+    elm_start_input = -0.5
+    elm_end_input   =  4.0
+    elm_effect_start_input = -0.5
+    elm_effect_end_input   =  4.0
+    
     call load_elm_times(elm_filename,ierr)
 
-    call set_elm_criteria(elm_start_offset,elm_end_offset,elm_effect_start_offset,elm_effect_end_offset)
+    call set_elm_criteria(elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
 
     ! An elmref value of 0 means that it is outside time window that is associated with an ELM
     ! A negative elmref value is inside a possible ELM effect window
@@ -215,6 +251,7 @@ contains
        call get_elm_time(lp_data(in,1),elm_time_offset,elmref,inelm)
 
        lp_data(in,ncols+1) = elm_time_offset
+       lp_data(in,ncols+2) = 0
        if (inelm) then 
           lp_data(in,ncols+2) = elmref
        else

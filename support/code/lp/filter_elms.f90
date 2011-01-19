@@ -8,11 +8,11 @@ module filter_elms
   private
 
   real,allocatable :: elm_data(:,:)
-  real :: elm_start_offset, elm_end_offset, elm_effect_start_offset,elm_effect_end_offset
+  real :: elm_start, elm_end, elm_effect_start,elm_effect_end
   integer :: elm_cnt
 
 
-  public :: load_elm_times, set_elm_criteria
+  public :: load_elm_times, set_elm_criteria,get_elm_time
 
 
 contains
@@ -23,7 +23,7 @@ contains
     character*(*) filename
 
 
-    integer unit,ierr
+    integer unit,ierr,in
     character*256 :: line
 
 
@@ -80,18 +80,18 @@ contains
   end subroutine load_elm_times
 
 
-  subroutine set_elm_criteria(elm_start_offset,elm_end_offset,elm_effect_start_offset,elm_effect_end_offset)
+  subroutine set_elm_criteria(elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
     implicit none
-    real :: elm_start_offset, elm_end_offset, elm_effect_start_offset,elm_effect_end_offset
+    real :: elm_start_input, elm_end_input, elm_effect_start_input,elm_effect_end_input
 
 
-    elm_start = elm_start_offset
-    elm_end   = elm_end_offset
+    elm_start = elm_start_input
+    elm_end   = elm_end_input
 
-    elm_effect_start = elm_effect_start_offset
-    elm_effect_end   = elm_effect_end_offset
+    elm_effect_start = elm_effect_start_input
+    elm_effect_end   = elm_effect_end_input
 
-    ! make start offsets negative
+    ! make start inputs negative if they aren't already
     if (elm_start.gt.0.0) elm_start = -elm_start
     if (elm_effect_start.gt.0.0) elm_effect_start = -elm_effect_start
 
@@ -178,7 +178,7 @@ contains
        elmref = tpos-1
        elm_time_offset = deltat1
        return
-    elseif (deltat2.gt.elm_effect_start)
+    elseif (deltat2.gt.elm_effect_start) then
        inelm = .false.
        elmref = tpos
        elm_time_offset = deltat2
