@@ -7123,12 +7123,14 @@ c...          Side 23:
                 y(3) = d_zvertp(v3,id1)
               ENDIF
 
-              IF (ik.EQ.30.AND.ir.EQ.119.AND.iside.EQ.1) THEN
-                STOP 'REMOVE THIS EXCEPTION HANDLE'
-                IF (.NOT.PointOnLine(x,y,s,t,3,.TRUE.)) CYCLE
-              ELSE
+              ! jdemod - came up during processing a ribbon grid - removed since it would appear to
+              !          be a very grid specific debug condition
+              !IF (ik.EQ.30.AND.ir.EQ.119.AND.iside.EQ.1) THEN
+                !STOP 'REMOVE THIS EXCEPTION HANDLE'
+                !IF (.NOT.PointOnLine(x,y,s,t,3,.TRUE.)) CYCLE
+              !ELSE
                 IF (.NOT.PointOnLine(x,y,s,t,3,.FALSE.)) CYCLE
-              ENDIF
+              !ENDIF
 
               IF (DABS(s-t).GT.1.0D-8.AND.DABS(s-t).LT.1.0D0) THEN
                 IF (sloutput) THEN

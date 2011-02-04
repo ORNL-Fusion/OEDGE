@@ -171,7 +171,7 @@ contains
 
        read(iunit,*) id,xinit,yinit,zinit,inter_up,inter_down,inter_tot,dist
 
-       write(0,*) 'READ:=',in,id,dist
+       !write(0,*) 'READ:=',in,id,dist
        ! extract starting location from first field line 
        !if (id.eq.1) then 
        !   xstart = xinit
@@ -790,7 +790,7 @@ contains
 
           !write (6,'(a,i9,2l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,abs(surf_ang(in)-last_ang).gt.ang_limit,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),surf_ang(in)*raddeg,last_ang*raddeg,ang_limit*raddeg
 
-          write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
+          !write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
 
           ! Test to see if next point could be out of series
           !if (surf_sep(in).gt.max_fact * last_sep.or.abs(surf_ang(in)-last_ang).gt.ang_limit) then 
@@ -813,7 +813,7 @@ contains
 
                    !                   write(6,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it),test_ang*raddeg,last_ang*raddeg, abs(test_ang-last_ang)
 
-                   write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
+                   !write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
 
                    ! test for additional in series points 
                    !if (test_sep.lt.max_fact*last_sep.and.abs(test_ang-last_ang).lt.ang_limit) then 
@@ -865,7 +865,7 @@ contains
        !do in = 2,node_cnt
        ! slmod end
        test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-       write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
+       !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
 
        end do
@@ -1125,7 +1125,7 @@ contains
     !do in = 1,av_group_cnt-1
        in = in+1
        last_dir = dir
-       write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
+       !write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
        dir = av_r(in+1)-av_r(in)
 
        if (dir.eq.0.and.last_face.eq.1) then 
@@ -1150,7 +1150,7 @@ contains
           last_face = 2
        endif
 
-       write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
+       !write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
 
     end do
 
@@ -1213,8 +1213,8 @@ contains
           last_face = 2
        endif
 
-       write(0,'(a,3i6,10(1x,g18.8))')       'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
-       write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       !write(0,'(a,3i6,10(1x,g18.8))')       'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       !write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
 
     end do
 
@@ -2310,14 +2310,14 @@ contains
              lfactor = line_length*rfactor
 
 
-             if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.le.lcutoff)) then 
+             if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.ge.lcutoff)) then 
 
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
                 call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,max_nknots,max_s_sep,min_cells)
 
              else
 
-                write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
+                write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
 
              endif
 
