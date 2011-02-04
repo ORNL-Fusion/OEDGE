@@ -1,0 +1,7 @@
+c
+c     Common block to contain DIVIMP related options    
+c
+      integer redefopt
+c
+      common /divopts/ redefopt   
+c

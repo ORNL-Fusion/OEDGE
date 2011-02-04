@@ -1,0 +1,5 @@
+C                                                                               
+      COMMON /DYNAM2/ SDLIMS,SDLIM3,SDTS                                             
+      REAL SDLIMS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                              
+      REAL SDLIM3(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)               
+      REAL SDTS(MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                              

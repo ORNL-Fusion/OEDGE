@@ -1,0 +1,26 @@
+c     -*-Fortran-*-
+c
+c     This file contains the declarations for the transport 
+c     coefficient data - including ring coordinates at the 
+c     inner and outer midplanes.
+c
+      common /transcoef/ inmid,oumid,DPERP,ODPERP,IDPERP,
+     >     CHIPERPI,OCHIPERPI,ICHIPERPI,
+     >     CHIPERPE,OCHIPERPE,ICHIPERPE,
+     >     xperpt,ixperpt,oxperpt,
+     >     gradte,gradti,gradn,
+     >     e2dgradte,e2dgradti,e2dgradn
+c     >     rcouter,rcinner
+      save /transcoef/
+c
+      real DPERP(MAXNRS),ODPERP(MAXNRS),IDPERP(MAXNRS),
+     >     CHIPERPI(MAXNRS),OCHIPERPI(MAXNRS),ICHIPERPI(MAXNRS),
+     >     CHIPERPE(MAXNRS),OCHIPERPE(MAXNRS),ICHIPERPE(MAXNRS),
+     >     gradte(maxnks,maxnrs),gradti(maxnks,maxnrs),
+     >     gradn(maxnks,maxnrs),xperpt(maxnrs),ixperpt(maxnrs),
+     >     oxperpt(maxnrs),
+     >     e2dgradte(maxnks,maxnrs),e2dgradti(maxnks,maxnrs),
+     >     e2dgradn(maxnks,maxnrs)
+c     >     rcouter(maxnrs),rcinner(maxnrs)
+      integer inmid,oumid
+c

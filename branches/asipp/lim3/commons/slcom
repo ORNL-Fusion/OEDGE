@@ -1,0 +1,71 @@
+      COMMON /SLCOM/ 
+c
+     + SLOPT,
+     + optdp,
+     + N2OPT,NEOPT,NIEOPT,
+     + N2FRAC,NENG,NIENG,
+     + N2RATE,NNRATE,NIRATE,N2CPCHS,NNCPCHS,
+
+     + n2_n,n_n,ni_n,
+     + n2_lim,n_lim,      
+     + n2_x,n2_y,n2_p,n_x,n_y,n_p,n_x_max,n_y_max,n_p_max,
+     + n2_e,n_e,ni_e,n2_v,n_v,
+     + n2_t,n_t,
+     + n_beta,n_psi,
+
+     + TITL2,LAMBDA,INJBINT,TAG2,MARK,
+     + TLOSS,WLOSS,TGLOSS,LLOSS,ALOSS,IZLOSS,TSLOSS,TOTVOL,TOTDEN,
+     + BSBIN,YSBIN,IZBIN,NBIN,NSBIN,MIZS,MIMPS,MATIZ,
+     + SVHINS,SEYINS            
+c 
+c ----------------------------------------------------------------------
+c
+c Declarations:
+c
+c Output file unit number - set to general debug unit for now
+c
+      integer slout
+      parameter (slout=dbgunit) 
+
+c
+c DIVIMP ion profile option:
+c
+      INTEGER optdp
+
+      INTEGER SLOPT,N2OPT,NEOPT,NIEOPT
+      REAL    N2FRAC,NENG,NIENG
+      REAL    N2RATE(MAXNXS),NNRATE(MAXNXS),NIRATE(MAXNXS),
+     +        N2CPCHS(MAXNXS),NNCPCHS(MAXNXS)
+c
+c Statistics for N2 break-up:
+c
+      REAL    n2_n,n_n,ni_n
+      REAL    n2_lim,n_lim      
+      REAL    n2_x,n2_y,n2_p,n_x,n_y,n_p,n_x_max,n_y_max,n_p_max
+      REAL    n2_e,n_e,ni_e,n2_v,n_v
+      REAL    n2_t,n_t
+      REAL    n_beta,n_psi
+c
+c LIM3 variables (for the most part):
+c
+      CHARACTER  TITL2*80
+      REAL       LAMBDA
+      INTEGER    INJBINT(-MAXY3D-1:MAXY3D+1)
+c      INTEGER    INJBINP(-MAXNPS:MANNPS)
+      REAL       TAG2(MAXIMP)
+      REAL       MARK
+c
+c Statisitcs:
+c
+      REAL       TLOSS(MAXIMP),WLOSS,TGLOSS,LLOSS,ALOSS,IZLOSS,TSLOSS
+      REAL       TOTVOL,TOTDEN(MAXIZS)
+c
+c Variables for storing the DIVIMP source distribution:
+c
+      REAL       BSBIN(10),YSBIN(10),IZBIN(10)
+      INTEGER    NBIN, NSBIN(10,10),MIZS,MIMPS,MATIZ
+c
+c Moved from LIM3:
+c
+      REAL      SVHINS(-MAXQXS:MAXQXS),SEYINS(-MAXQXS:MAXQXS,MAXIZS)            
+

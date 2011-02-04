@@ -1,0 +1,324 @@
+%CSW switch to latex2e, needed for \usepackage command
+%\documentstyle[12pt,epsf]{article}
+\documentclass[12pt]{article}
+\usepackage{epsf}
+
+\oddsidemargin 0. true cm
+\topmargin -1 true cm
+\textheight 24 true cm
+\textwidth 16 true cm
+%CSW latex2html related commands, have no effect on
+%CSW layout, style etc...
+\usepackage{color}
+\setcounter{secnumdepth}{1}
+\pagecolor{white}
+\usepackage{times}
+%CSW that's it...
+\begin{document}
+\parindent 0pt
+%titelpage
+{\LARGE \bf \center
+\vspace*{3truecm}
+
+The data file SPECTRAL: \\
+Additional Data for Radiation Transfer Module for EIRENE
+\vspace*{3truecm}
+
+D.Reiter \\
+FZ, Forschungszentrum J\"ulich GmbH \\
+52425 J\"ulich \\
+%Post-box 1917 \\
+FRG
+\vspace{5truecm}
+
+Version: \today
+\vspace{3truecm}
+
+Available via E-mail from d.reiter@fz-juelich.de
+}
+\tableofcontents
+%ende titelpage
+\newpage
+
+\section{Record:}
+\begin{itemize}
+\item update  18th mar 03  \\
+Hydrogen atom lines, Lyman, Balmer series: done\\
+\item update  mar.03 \\
+Mercury atom lines\\
+\end{itemize}
+\newpage
+
+This next string is searched by EIRENE in subroutine SLREAC
+to initialize search for a particular set of fit coefficients.
+
+\bigskip
+
+\begin{small}\begin{verbatim}
+
+##BEGIN DATA HERE##
+
+\end{verbatim}\end{small}
+
+\newpage
+
+\section{H.2 :  A$_{ik}$}
+
+
+\subsection{
+1.Ly.2   H(n=2) $\rightarrow$ H(n=1) spontaneous,  Ly$_\alpha$, $[1/s]$
+}
+Reaction 1.Ly.2
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.699000000000D+08
+\end{verbatim}\end{small}
+
+\subsection{
+1.Ly.3   H(n=3) $\rightarrow$ H(n=1) spontaneous,  Ly$_\beta$, $[1/s]$
+}
+Reaction 1.Ly.3
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  5.575000000000D+07
+\end{verbatim}\end{small}
+\subsection{
+1.Ly.4    H(n=4) $\rightarrow$ H(n=1) spontaneous,  Ly$_\gamma$, $[1/s]$
+}
+Reaction 1.Ly.4
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  1.278000000000D+07
+\end{verbatim}\end{small}
+\subsection{
+1.Ly.5    H(n=5) $\rightarrow$ H(n=1) spontaneous,  Ly$_\delta$, $[1/s]$
+}
+Reaction 1.Ly.5 
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.125000000000D+06
+\end{verbatim}\end{small}
+\newpage
+\subsection{
+1.Ba.3    H(n=3) $\rightarrow$ H(n=2) spontaneous,  Ba$_\alpha$, $[1/s]$
+}
+Reaction 1.Ba.3
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.410000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+1.Ba.4    H(n=4) $\rightarrow$ H(n=2) spontaneous,  Ba$_\beta$, $[1/s]$
+}
+Reaction 1.Ba.4 
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  8.419000000000D+06
+\end{verbatim}\end{small}
+\subsection{
+1.Ba.5   H(n=5) $\rightarrow$ H(n=2) spontaneous,  Ba$_\gamma$, $[1/s]$
+}
+Reaction 1.Ba.5 
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  2.530000000000D+06
+\end{verbatim}\end{small}
+\subsection{
+1.Ba.6   H(n=6) $\rightarrow$ H(n=2) spontaneous,  Ba$_\delta$, $[1/s]$
+}
+Reaction 1.Ba.6 
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  9.723000000000D+05
+\end{verbatim}\end{small}
+\subsection{
+1.Pa.4   H(n=4) $\rightarrow$ H(n=3) spontaneous,  Pa$_\alpha$, $[1/s]$
+}
+Reaction 1.Pa.4
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  9.723000000000D+05
+\end{verbatim}\end{small}
+\subsection{
+1.Pa.5   H(n=5) $\rightarrow$ H(n=3) spontaneous,  Pa$_\beta$, $[1/s]$
+}
+Reaction 1.Pa.5
+Wiese et al., 1966, $\Delta E=     ,\lambda=  $
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  9.723000000000D+05
+\end{verbatim}\end{small}
+\newpage
+\subsection{
+Hg184m   $6^1P_1 \rightarrow 6^1S_0 $ $\lambda= 184.949$ $E_1$ = 0 eV
+}
+Reaction Hg184m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  6.770000000000D+08
+\end{verbatim}\end{small}
+
+\subsection{
+Hg184h   $6^1P_1 \rightarrow 6^1S_0 $ $\lambda= 184.949$ $E_1$ = 0 eV
+}
+Reaction Hg184h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.061597910000D+08
+\end{verbatim}\end{small}
+
+\subsection{
+Hg253m   $6^3P_1 \rightarrow 6^1S_0 $ $\lambda= 253.652$ $E_1$ = 0 eV
+}
+Reaction Hg253m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  8.000000000000D+06
+\end{verbatim}\end{small}
+
+\subsection{
+Hg253h   $6^3P_1 \rightarrow 6^1S_0 $ $\lambda= 253.652$ $E_1$ = 0 eV
+}
+Reaction Hg253h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  7.581875000000D+06
+\end{verbatim}\end{small}
+
+\subsection{
+Hg296m   $6^3D_1 \rightarrow 6^3P_0 $ $\lambda= 296.728$ $E_1$ = 4.67 eV
+}
+Reaction Hg296m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.500000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg296h   $6^3D_1 \rightarrow 6^3P_0 $ $\lambda= 296.728$ $E_1$ = 4.67 eV
+}
+Reaction Hg296h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  3.680114800000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg365m   $6^3D_3 \rightarrow 6^3P_2 $ $\lambda= 365.015$ $E_1$ = 5.46 eV
+}
+Reaction Hg365m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  1.290000000000D+08
+\end{verbatim}\end{small}
+
+\subsection{
+Hg365h   $6^3D_3 \rightarrow 6^3P_2 $ $\lambda= 365.015$ $E_1$ = 5.46 eV
+}
+Reaction Hg365h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  1.376859520000D+08
+\end{verbatim}\end{small}
+
+\subsection{
+Hg404m   $7^3S_1 \rightarrow 6^3P_0 $ $\lambda= 404.656$ $E_1$ = 4.67 eV
+}
+Reaction Hg404m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  2.070000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg404h   $7^3S_1 \rightarrow 6^3P_0 $ $\lambda= 404.656$ $E_1$ = 4.67 eV
+}
+Reaction Hg404h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  1.694421200000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg435m   $7^3S_1 \rightarrow 6^3P_1 $ $\lambda= 435.835$ $E_1$ = 4.88 eV
+}
+Reaction Hg435m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  5.570000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg435h   $7^3S_1 \rightarrow 6^3P_1 $ $\lambda= 435.835$ $E_1$ = 4.88 eV
+}
+Reaction Hg435h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  3.684333900000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg546m   $7^3S_1 \rightarrow 6^3P_2 $ $\lambda= 546.074$ $E_1$ = 5.46 eV
+}
+Reaction Hg546m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.870000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg546h   $7^3S_1 \rightarrow 6^3P_2 $ $\lambda= 546.074$ $E_1$ = 5.46 eV
+}
+Reaction Hg546h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  3.132459100000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg576m   $6^3D_2 \rightarrow 6^1P_1 $ $\lambda= 576.959$ $E_1$ = 6.70 eV
+}
+Reaction Hg576m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.630000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg576h   $6^3D_2 \rightarrow 6^1P_1 $ $\lambda= 576.959$ $E_1$ = 6.70 eV
+}
+Reaction Hg576h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  5.397450000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg579m   $6^1D_2 \rightarrow 6^1P_1 $ $\lambda= 579.065$ $E_1$ = 6.70 eV
+}
+Reaction Hg579m
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  4.580000000000D+07
+\end{verbatim}\end{small}
+
+\subsection{
+Hg579h   $6^1D_2 \rightarrow 6^1P_1 $ $\lambda= 579.065$ $E_1$ = 6.70 eV
+}
+Reaction Hg579h
+\begin{small}\begin{verbatim}
+  fit-flag 110
+  b0  5.133401600000D+07
+\end{verbatim}\end{small}
+
+\end{document}

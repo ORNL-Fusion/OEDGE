@@ -1,0 +1,11 @@
+c     -*-Fortran-*-
+C                                                                       
+      common /hrinfo/  soltehr,soltihr,solnehr,solcorhr,                
+     >                 cind,maxind                                      
+      save /hrinfo/
+c
+      real soltehr(0:msolpt*maxnks+msolpt+1),                           
+     >     soltihr(0:msolpt*maxnks+msolpt+1),                           
+     >     solnehr(0:msolpt*maxnks+msolpt+1),                           
+     >     solcorhr(0:msolpt*maxnks+msolpt+1)                           
+      integer cind,maxind                                               
