@@ -49,8 +49,12 @@ contains
 
     end do
 
+
     ierr = 0 
     elm_cnt = elm_cnt -1
+
+    write(0,*) 'Allocating space for ELM data: N_elms =',elm_cnt
+
 
     ! allocate storage for ELM time and magnitude data
 
@@ -73,6 +77,13 @@ contains
     do in = 1,elm_cnt
        read(unit,*,iostat=ierr) elm_data(in,1),elm_data(in,2),elm_data(in,3)
     end do
+
+
+    !do in = 1,elm_cnt
+    !   write(6,'(a,i8,10(1x,g18.8))')  'Elm data:',in, elm_data(in,1),elm_data(in,2),elm_data(in,3)
+    !end do
+
+
 
     close(unit)
 
@@ -162,6 +173,8 @@ contains
 
     deltat1 = time - elm_data(tpos-1,2)
     deltat2 = time - elm_data(tpos,2)
+
+    !write(6,'(a,i10,10(1x,g18.8))') 'Data:',tpos,time,elm_data(tpos-1,1),elm_data(tpos-1,2),elm_data(tpos,2),deltat1,deltat2
 
     ! need to consider cases of closely spaced ELMs ... in this case associate the data point with the later ELM.
     ! decision tree - check for association with later ELM first
