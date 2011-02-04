@@ -18,7 +18,7 @@ program proclp
 
   integer :: iunit, ounit,ierr
 
-  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:)
+  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:)
 
   integer :: nlines,npts,ndata,ncols,nextra
 
@@ -33,7 +33,7 @@ program proclp
   logical :: elm_filt
 
   !
-  elm_filt = .true. 
+  elm_filt = .false.
 
 
   ! Initialization for current LP data file format
@@ -43,7 +43,7 @@ program proclp
   !
   ! Read and assign command line arguments
   !
-  ! Command line is:  'file name'   tmin    tmax   chi_lim
+  ! Command line is:  'file name'   tmin    tmax   chi_lim -e 'elm file name'
   !
   call getarg(1,arg)
   infilename = trim(arg)
@@ -61,8 +61,10 @@ program proclp
   write(chisq,'(f5.3)') chisq_lim
   write(0,*) 'Chisq:',trim(chisq),':'
 
-  if (elm_filt) then 
-     call getarg(5,arg)
+  call getarg(5,arg)
+  if (arg.eq.'-e') then 
+     elm_filt = .true.
+     call getarg(6,arg)
      elm_filename = trim(arg)
      write(0,*) 'ELM=',trim(elm_filename)
   endif   
@@ -93,7 +95,7 @@ program proclp
 
   ! analyse and bin the lp_data
 
-  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim)
+  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt)
 
 
   ! OUTPUT
@@ -155,7 +157,7 @@ program proclp
   ofilename = 'lp_rev_'//trim(infilename)
   open(ounit,file=ofilename,iostat=ierr)
 
-  call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident)
+  call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident,tmin,tmax,chisq_lim)
 
   close(ounit)
 

@@ -416,6 +416,8 @@ contains
       implicit none
       INTEGER NRS,ILOW,IMID
       REAL    R,RS(NRS)
+      integer :: in
+
 !
 !     NRS = 0 is an error condition - however, it appears that LIM
 !     sometimes does this when calculating time points in cases where
