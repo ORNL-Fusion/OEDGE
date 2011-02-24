@@ -510,11 +510,18 @@ c
       rg_mins=0.0
       rg_maxs=0.0
 c
-c     G51 - length cutoff to eliminate short rings far from the separatrix from c           ring generation ... some testing of this will be necessary
+c     G51 - length cutoff to eliminate short rings far from the separatrix from 
+c           ring generation ... some testing of this will be necessary
 c           to obtain an optimal grid. default value is 0.0 which 
 c           effectively turns this feature off.
 c
       lcutoff = 0.0
+c
+c     G52 - Cell spacing factor for determining the distribution of cells
+c           between fixed points on rings. 
+c           default = 1.0 which gives a linear spacing
+c      
+      cell_spacing_factor = 1.0
 c
 c
 c -----------------------------------------------------------------------
