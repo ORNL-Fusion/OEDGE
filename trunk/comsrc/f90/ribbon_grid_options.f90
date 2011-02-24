@@ -22,6 +22,10 @@ module ribbon_grid_options
   ! cutoff length limiting range of ring generation
   real :: lcutoff
 
+  ! factor used to control spacing of cells between "surfaces" 
+  ! Used as an exponential factor
+  real :: cell_spacing_factor
+
   character*256 :: rg_castem_data
 
 end module ribbon_grid_options
