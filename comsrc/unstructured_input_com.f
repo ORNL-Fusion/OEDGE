@@ -2140,6 +2140,13 @@ c
       ELSEIF (tag(1:3).EQ.'G51') THEN
         CALL ReadR(line,lcutoff,-HI,HI,
      >             'RING CUTOFF LENGTH FACTOR')
+c
+c     G52 - cell spacing factor
+c           Used to determine cell boundary spacing along the rings
+c
+      ELSEIF (tag(1:3).EQ.'G52') THEN
+        CALL ReadR(line,cell_spacing_factor,-HI,HI,
+     >             'CELL SPACING FACTOR')
 
 c
 c -----------------------------------------------------------------------

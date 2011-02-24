@@ -1700,6 +1700,7 @@ contains
 
     real*8 :: s_start,s_end
     real*8 :: slen, ssep1
+    real*8,allocatable :: ssep1a(:)
     integer :: ncells
 
     integer :: rbnd_cnt,rbnd_add,new_bnds
@@ -2187,10 +2188,13 @@ contains
 
                 !ssep1 = abs(slen)/ncells 
                 ! remove abs so code will work with ascending or descending orders
-                ssep1 = slen/ncells 
+                !ssep1 = slen/ncells 
+
+                call gen_cell_spacing(ncells,ssep1a)
 
                 do it = 1,ncells-1
-                   vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1 * it
+                   !vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1 * it
+                   vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1a(it) * slen
                    vert_type1(ntot1+it) = FIXED_VERTEX
                    write(0,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
                    write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
@@ -2399,6 +2403,8 @@ contains
     integer :: ncells, ncells2
     integer :: last_tan
     real*8 :: slen,ssep1,ssep2
+    real*8 ::  slen1a,slen2a
+    real*8,allocatable :: ssep1a(:),ssep2a(:)
 
     real*8 :: dist(maxpts),cell_dist(maxpts),tmp_dist(maxpts)
 
@@ -2447,13 +2453,25 @@ contains
 
        if (ncells.lt.min_cells) ncells = min_cells
 
-       ssep1 = (s1(2)-s1(1))/ncells 
-       ssep2 = (s2(2)-s2(1))/ncells       
+
+       !dist1 = s1(2)-s1(1)
+       !dist2 = s2(2)-s2(1)
+
+       !call gen_cell_spacing(dist1,dist2,ncells-1,ssep1,ssep2)
+       call gen_cell_spacing(ncells,ssep1a)
+
+       slen1a = s1(2)-s1(1)
+       slen2a = s2(2)-s2(1)
+
+       !ssep1 = (s1(2)-s1(1))/ncells 
+       !ssep2 = (s2(2)-s2(1))/ncells       
 
        do in = 1,ncells-1
-          s1(npts1+in) = s1(1) + ssep1 * in
+          !s1(npts1+in) = s1(1) + ssep1 * in
+          s1(npts1+in) = s1(1) + ssep1a(in) * slen1a
           s1_type(npts1+in) = NEW_VERTEX
-          s2(npts1+in) = s2(1) + ssep2 * in
+          !s2(npts1+in) = s2(1) + ssep2 * in
+          s2(npts1+in) = s2(1) + ssep1a(in) * slen2a
           s2_type(npts1+in) = NEW_VERTEX
        end do
 
@@ -2472,12 +2490,16 @@ contains
 
        if (ncells.lt.min_cells) ncells = min_cells
 
-       ssep1 = (s1(2)-s1(1))/ncells 
+       !ssep1 = (s1(2)-s1(1))/ncells 
+       slen1a = s1(2)-s1(1)
+       call gen_cell_spacing(ncells,ssep1a)
+
 
        !write(outunit,*) 'GR:NPTS:',npts1,npts2,ncells,slen
 
        do in = 1,ncells-1
-          s1(npts1+in) = s1(1) + ssep1 * in
+          !s1(npts1+in) = s1(1) + ssep1 * in
+          s1(npts1+in) = s1(1) + ssep1a(in) * slen1a
           s1_type(npts1+in) = NEW_VERTEX
        end do
 
@@ -2512,10 +2534,13 @@ contains
        do in = 1,npts2-1
           ! cell_dist is assigned a base value of 1.0 above so an extra 1.0 is not required here - it must already be non-zero
           !ssep2 = (s2(in+1)-s2(in))/(cell_dist(in)+1.0)
-          ssep2 = (s2(in+1)-s2(in))/(cell_dist(in))
+          slen2a = s2(in+1)-s2(in)
+          call gen_cell_spacing(int(cell_dist(in)),ssep2a)
+          !ssep2 = (s2(in+1)-s2(in))/(cell_dist(in))
           do it = 1,cell_dist(in)-1
              cells_added = cells_added + 1
-             s2(npts2+cells_added) = s2(in) + ssep2 * it
+             !s2(npts2+cells_added) = s2(in) + ssep2 * it
+             s2(npts2+cells_added) = s2(in) + ssep2a(it) * slen2a
              s2_type(npts2+cells_added) = NEW_VERTEX
              !write(outunit,'(a,3i8,10(1x,g18.8))') 'Adding:',in,it,cells_added,ssep2,s2(npts2+cells_added),s2_type(npts2+cells_added)
           end do
@@ -3096,6 +3121,42 @@ contains
     end if
 
   end subroutine grow_array
+
+subroutine gen_cell_spacing(ncells,ssep)
+implicit none
+integer :: ncells
+integer :: m
+real*8,allocatable :: ssep(:)
+real*8 :: x,dist
+
+! This routine generates ncells numbers distributed between 0 and 1
+! (leaving out the end points)
+! If the cell_spacing_factor factor is 1.0 these numbers are linearly distributed. Increasing
+! the exponent enhances grid resolution near the ends of the regions. 
+
+
+if (allocated(ssep)) deallocate(ssep)
+
+allocate(ssep(ncells-1))
+
+do m = 1,ncells-1
+   if (m.le.(ncells/2)) then 
+      x = real(m)/real(ncells)
+      ssep(m) =  x**cell_spacing_factor
+   else
+      x = real(ncells-m)/real(ncells)
+
+      ssep(m) = 1.0 - x**cell_spacing_factor
+   endif
+
+   write(0,'(a,1x,i8,10(1x,g18.8))') 'RES:',m,x,ssep(m)
+
+end do
+
+
+end subroutine gen_cell_spacing
+
+
 
 
 end module castem_field_line_data
