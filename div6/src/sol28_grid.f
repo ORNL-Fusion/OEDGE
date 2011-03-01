@@ -112,6 +112,10 @@ c
         CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
         IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
      .      tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+       WRITE(88,*) itube
+       WRITE(88,*) a1,a2,b1,b2
+       WRITE(88,*) c1,c2,d1,d2
+       WRITE(88,*) tab,tcd
           CatchTube = .TRUE.
           EXIT
         ENDIF
@@ -158,10 +162,17 @@ c...  Targets directly associated with the primary separatrix:
       ntarget = 0
 
 c...  Set the geometry:
-      IF     (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
+      IF     (grid%nxpt.EQ.0) THEN
+        geometry = LINEAR
+        grid%nxpt = 1  ! To be set to 0 below...
+      ELSEIF (grid%nxpt.EQ.1.AND.grid%zxpt(1).GT.grid%z0     ) THEN
+        geometry = USND
+      ELSEIF (grid%nxpt.EQ.1.AND.grid%zxpt(1).LT.grid%z0     ) THEN
         geometry = LSND
       ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).GT.grid%zxpt(2)) THEN
         geometry = UDND
+      ELSEIF (grid%nxpt.EQ.2.AND.grid%zxpt(1).LT.grid%zxpt(2)) THEN
+        geometry = LDND
       ELSE
         WRITE(0,*) 'NXPT   =',grid%nxpt
         WRITE(0,*) 'ZXPT1,2=',grid%zxpt
@@ -178,6 +189,12 @@ c...  A bit of a mess... but...
           ELSE
             SELECTCASE (geometry)
               CASE (UDND)
+                IF (itarget.EQ.LO) THEN
+                  ilist(1) = GetTube(grid%ixpt(2,2),IND_OBJECT)
+                ELSE
+                  ilist(1) = GetTube(grid%ixpt(2,1),IND_OBJECT)
+                ENDIF
+              CASE (LDND)
                 IF (itarget.EQ.LO) THEN
                   ilist(1) = GetTube(grid%ixpt(2,2),IND_OBJECT)
                 ELSE
@@ -245,6 +262,9 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
           new_target(ntarget)%ilist(1:nlist) = ilist(1:nlist)
 
           SELECTCASE (geometry)
+            CASE (LINEAR)
+              IF (itarget.EQ.LO) new_target(ntarget)%location = 3
+              IF (itarget.EQ.HI) new_target(ntarget)%location = 4
             CASE (LSND)
               IF (itarget.EQ.LO) new_target(ntarget)%location = 2
               IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -260,7 +280,6 @@ c          WRITE(0,*) 'TCHECK=',tcheck(1:ntube)
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
               ENDIF
             CASE (LDND)
-              STOP 'NOT CHECKED - A'
               IF (ixpt.EQ.1) THEN
                 IF (itarget.EQ.LO) new_target(ntarget)%location = 2
                 IF (itarget.EQ.HI) new_target(ntarget)%location = 4
@@ -290,6 +309,7 @@ c          WRITE(0,*) 'LOCATION=',new_target(ntarget)%location
 
       ENDDO  ! x-point
 
+
 c...  Transfer to mod_sol28_target array:
       IF (ALLOCATED(target)) DEALLOCATE(target)
       ALLOCATE(target(ntarget))
@@ -297,6 +317,8 @@ c...  Transfer to mod_sol28_target array:
       DEALLOCATE(new_target)
 
 c...  Add a check to make sure a tube is assigned twice, no more, no less...
+
+      IF (geometry.EQ.LINEAR) grid%nxpt = 0  ! Was set to 1 above to activate the target assembly code
 
       RETURN
  99   STOP
@@ -347,6 +369,9 @@ c...  Find x-points:
       ixpt = 0
       rxpt = 0.0D0
       zxpt = 0.0D0
+
+      itsep  = 1
+      itsep2 = 0
 
       it = grid%isep
       cind1 = tube(it)%cell_index(LO)
@@ -475,7 +500,6 @@ c...  Primary PFR:
           tube(it)%type = GRD_PFZ
         ENDIF
       ENDDO
-
 c...  Secondary PFR:
       IF (grid%nxpt.EQ.2) THEN
         a1 = rxpt(2)
@@ -497,6 +521,9 @@ c...  Secondary PFR:
 
 
       RETURN
+
+
+
 
 
 c *** NOT EXECUTED ***
@@ -829,7 +856,7 @@ c
 
       INTEGER GetObject
 
-      INTEGER   fp,walfp,iopt,i1,i2,i3,itube,iobj,itarget,nwall_1,iwall,
+      INTEGER   fp,iopt,i1,i2,i3,itube,iobj,itarget,nwall_1,iwall,
      .          tmp_nwall,imat
       CHARACTER buffer*1024
 
@@ -842,14 +869,16 @@ c
 c...  Build the list of line segments that make up the wall:   
       nwall = 0
       DO iopt = 1, nopt_wall
-c        WRITE(0,*) 'NOPT_WALL:',iopt,nopt_wall
+c        WRITE(0,*) 'NOPT_WALL:',iopt,nopt_wall,
+c     .             opt_wall(iopt)%file_format
+c        WRITE(0,*) TRIM(opt_wall(iopt)%file_name)
         SELECTCASE(opt_wall(iopt)%file_format)
           CASE(1)
-            walfp = 99
-            OPEN(UNIT=walfp,FILE=TRIM(opt_wall(iopt)%file_name),
-     .           ACCESS='SEQUENTIAL',ERR=98)     
+            fp = 99
+            OPEN(UNIT=fp,FILE=TRIM(opt_wall(iopt)%file_name),
+     .           ACCESS='SEQUENTIAL',STATUS='OLD',ERR=98)     
             DO WHILE(.TRUE.) 
-              READ(walfp,'(A1024)',END=10) buffer        
+              READ(fp,'(A1024)',END=10) buffer        
               IF (buffer(1:1).EQ.'*'.OR.LEN_TRIM(buffer).LT.5) CYCLE  ! A bit arbitrary on the length test...
               nwall = nwall + 1
               wall(nwall) = opt_wall(iopt)
@@ -870,14 +899,16 @@ c...          Check if end points are degenerate:
               ENDIF
             ENDDO
  10         CONTINUE
-            CLOSE(walfp)
+            CLOSE(fp)
           CASE DEFAULT
             CALL ER('ProcessWall','Unknown format',*99)
         ENDSELECT
       ENDDO
-c      WRITE(0,*) 'NWALL:',nwall
+c     WRITE(0,*) 'NWALL:',nwall
 
       CALL SaveWallGeometry
+
+c     STOP 'sdfsdfsdfsd'
 
 c...  Sequence the wall so that each line segment in the list follows 
 c     the once it's geometrically connected to:
@@ -1011,9 +1042,11 @@ c...  Assign wall to the appropriate entry in the list of defined materials:
 
       RETURN
  98   CALL ER('ProcessWall','File access error',*99)
- 99   WRITE(0,*) 'IOPT=  ',iopt
-      WRITE(0,*) 'FILE=  ',TRIM(opt_wall(iopt)%file_name)
-      WRITE(0,*) 'FORMAT=',opt_wall(iopt)%file_format
+ 99   WRITE(0,*) 'IOPT=      ',iopt
+      WRITE(0,*) 'NOPT_WALL= ',nopt_wall
+      WRITE(0,*) 'FILE=      ',TRIM(opt_wall(iopt)%file_name)
+      WRITE(0,*) 'FORMAT=    ',opt_wall(iopt)%file_format
+      CALL DumpData_OSM('output.error_processwall','ProcessWall error')
       STOP
       END
 c
@@ -1037,7 +1070,7 @@ c
 
       debug = .FALSE.
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'LOADING SUPPLIMENTAL GRID DATA'
       ENDIF
@@ -1146,7 +1179,7 @@ c         endless sub-versions of the file, one for each case:
         CALL osm_DeriveGridQuantities
       ENDIF
 
-      IF (log.GT.0) WRITE(logfp,*) 'DONE'
+      IF (logop.GT.0) WRITE(logfp,*) 'DONE'
 
       RETURN
  98   CALL ER('ProcessGrid','Format error in supplimental file',*99)
@@ -1234,7 +1267,7 @@ c      USE mod_grid_divimp
       INTEGER CalcPoint
       REAL*8  CalcPolygonArea
 
-      INTEGER   status, grd_load_method,ir,ik,iside,i1,i2,id,i,target,
+      INTEGER   status,ir,ik,iside,i1,i2,id,i,target,
      .          fp,itube,icell,iobj
       LOGICAL   debug
       REAL      deltap,deltas,area,volume
@@ -1247,9 +1280,9 @@ c      USE mod_grid_divimp
 
       debug = .FALSE.
 
-      grd_load_method = 2
+c      opt%f_grid_load_method = 2 ! 1
 
-      SELECTCASE (grd_load_method)
+      SELECTCASE (opt%f_grid_load_method)
         CASE (GRD_LOAD_NEW)
           CALL LoadGeneralisedGrid
 c...      Assign geometry structures:
@@ -1500,31 +1533,55 @@ c          STOP 'whoa'
 
           CALL osm_DeriveGridQuantities
 
+          CALL DumpData_OSM('output.grid_load','Done loading grid')
+c...
+          CALL LoadSupplimentalGridData
+          CALL DumpData_OSM('output.grid_sup','Done loading sup data')
+
+          CALL GenerateTubeGroups
+          CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+          CALL GenerateTargetGroups
+          CALL DumpData_OSM('output.grid_targets','Done targets')
+
+          CALL SaveFluidGridGeometry
+
+          CALL ProcessWall
+
         CASE (GRD_LOAD_OLD)
           CALL LoadObjects('osm_geometry.raw',status)  ! Change to LoadGeometryObjects...
           IF (status.EQ.-1) 
      .      CALL ER('SetupGrid','Geometry data not found',*99)
 
-          CALL LoadGrid('osm.raw')
+          CALL LoadGrid('osm_store.raw')
 
           CALL LoadLegacyData('osm_legacy.raw')
+
+          CALL DumpData_OSM('output.grid_load1','Done loading grid')
+
+          CALL osm_DeriveGridQuantities
+
+          CALL DumpData_OSM('output.grid_load2','Done loading grid')
+c...
+          CALL LoadSupplimentalGridData
+          CALL DumpData_OSM('output.grid_sup','Done loading sup data')
+
+          CALL GenerateTubeGroups
+          CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+          CALL GenerateTargetGroups
+          CALL DumpData_OSM('output.grid_targets','Done targets')
+
+          CALL SaveFluidGridGeometry
+
+          CALL ProcessWall
+
         CASE DEFAULT
           CALL ER('ProcessGrid','Unrecognized grid source option',*99)
       ENDSELECT
 
-      CALL DumpData_OSM('output.grid_load','Done loading the grid')
 
-c...
-      CALL LoadSupplimentalGridData
-      CALL DumpData_OSM('output.grid_sup','Done loading the sup data')
 
-      CALL GenerateTubeGroups
-      CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
-
-      CALL GenerateTargetGroups
-      CALL DumpData_OSM('output.grid_targets','Done analysing targets')
-
-      CALL SaveFluidGridGeometry
  
       RETURN
  99   WRITE(0,*) 'IK,IR,I =',ik,ir,i
@@ -1807,17 +1864,18 @@ c...  Output:
       REAL*8,  PARAMETER :: HI   = 1.0E+20
       REAL*8,  PARAMETER :: DTOL = 1.0D-07
 
-      INTEGER   i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
+      INTEGER   i,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
      .          i4,izone(NUMZONE+1,NUMZONE),newi1,icore(0:2,2),id,
      .          tmpnks,istart,fp,maxik,maxir,outfp,count,
      .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot
       LOGICAL   cont,deleteknot,debug,swap,cell_deletion
-      REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area
+      REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area,b_scale
       REAL*8    rvdp(4),zvdp(4),areadp
-      CHARACTER buffer*1000
+      CHARACTER buffer*1000,cdum*1000
 
       debug = .FALSE.
       outfp  = 0
+      b_scale = 1.0D0
 
 c...  Read the knot data:
 
@@ -1911,8 +1969,13 @@ c       --------------------------------------------------------------
         CASE (GRD_FORMAT_SONNET)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
-          DO WHILE (buffer(4:8).NE.'=====')
-             READ(grdfp,'(A10)',END=98) buffer
+          DOWHILE (buffer(4:8).NE.'=====')
+            READ(grdfp,'(A1000)',END=98) buffer
+            IF (LEN_TRIM(buffer).GT.0) THEN
+              DO i = 1, LEN_TRIM(buffer)-4
+               IF (buffer(i:i+3).EQ.'b_sc') READ(buffer(i+7:),*) b_scale  ! Scale the field ratio 
+              ENDDO
+            ENDIF
           ENDDO
 c...      Scan the file to see how many cells are in the grid:
           nknot = 0
@@ -1969,6 +2032,12 @@ c       --------------------------------------------------------------
           CALL ER('LoadGeneralisedGrid','Unknown grid type',*99)
       ENDSELECT
 
+c...  Scale the magnetic field ratio:
+      knot(1:nknot)%bratio = knot(1:nknot)%bratio * b_scale
+      WRITE(logfp,*)
+      WRITE(logfp,*) 'MAGNETIC FIELD PITCH ANGLE SCALING = ',b_scale
+      WRITE(logfp,*)
+
       IF (debug) THEN
         WRITE(outfp,*) 'GRID LOADED'
         WRITE(outfp,*) '  NKNOT=',nknot
@@ -1976,7 +2045,7 @@ c       --------------------------------------------------------------
         WRITE(outfp,*) '  MAXIR=',maxir
       ENDIF
 
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO i1 = 1, nknot
         CALL inPutData(knot(i1)%ik,'IK','none')
         CALL inPutData(knot(i1)%ir,'IR','none')
@@ -2670,11 +2739,7 @@ c...  Assign data to the global arrays:
       grid_load%ikto       = ikto       
       grid_load%nks(1:nrs) = nks(1:nrs)
 
-
-
-
-
-      CALL inOpenInterface('osm.idl.fluid_grid_debug')
+      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
       DO ir = 1, nrs
         CALL inPutData(nks(ir),'NKS','NA')    
         DO ik = 1, nks(ir)
@@ -2729,7 +2794,7 @@ c
       CALL CalcCentroid(map_iobj,2,p)
       a1 = p(1)
       a2 = p(2)
-      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))   ! Use GetVertex...
       b2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2))) 
 
       maxtab = 1.0D+20
@@ -2754,6 +2819,16 @@ c
             map_icell = icell
             map_itube = itube
           ENDIF
+c          IF (itube.EQ.1) THEN
+c            WRITE(88,*) 'DYNAMIC:'
+c            WRITE(88,*) '  : ',map_iobj-
+c     .        tube(GetTube(map_iobj,IND_OBJECT))%cell_index(LO)+1,
+c     .                         GetTube(map_iobj,IND_OBJECT)
+c            WRITE(88,*) '  : ',icell
+c            WRITE(88,*) '  : ',tab,maxtab
+c            WRITE(88,*) '  : ',tcd
+c            WRITE(88,*) '  : ',map_icell,map_itube
+c          ENDIF
         ENDDO
       ENDDO
 
@@ -2782,7 +2857,7 @@ c
       INTEGER GetTube       
  
       INTEGER, PARAMETER :: MAXNLIST = 1000
-      REAL*8 , PARAMETER :: DTOL = 1.0D-07
+      REAL*8 , PARAMETER :: DTOL     = 1.0D-07
 
       INTEGER fp,iobj,itube,nlist,ilist(MAXNLIST,2),clist(MAXNLIST,2),
      .        tube_set,i1,i2,i3,swall(nwall),iwall,mlist(MAXNLIST)
@@ -2791,7 +2866,7 @@ c
      .        xlist(MAXNLIST,2),ylist(MAXNLIST,2),store_x2,store_y2
 
       fp = 88
-      debug = .FALSE.
+      debug = .TRUE.
 
       CALL DumpData_OSM('output.clipping','Trying to clip grid')
 
@@ -2867,7 +2942,7 @@ c         specifications or if the line segment is very short:
           y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
 
           IF (debug) THEN
-            WRITE(fp,*) ' --------------------',i2
+            WRITE(fp,*) ' --------------------',i1,i2,iobj
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2

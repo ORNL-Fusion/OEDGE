@@ -1824,8 +1824,14 @@ c 	      WRITE (0,*) 'Error! Polodal extent.'
 c              STOP
 c slmod end
 c       ELSE
+c
+c       jdemod - possible sign bug on frictional force with inboard flows - works fine if flow is zero
+c
              QUANT =-SEYINS(IQX,CIZ) -                                   
-     >           CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)             
+     >           CFSS(IX,IY,CIZ) * (SVY - SVHINS(IQX))             
+c
+c             QUANT =-SEYINS(IQX,CIZ) -                                   
+c     >           CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)             
 c       ENDIF 
 c
 C--               ENDIF                                                         
@@ -2047,10 +2053,16 @@ c
             SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
      >            CBETAI(CIZ) * CTIGS(IX,IY) 
 c
+c           jdemod
+c
+c           Add frictional coupling to parallel flow beyond the limiter
+c           extent if one is specified. (vpflow_3d (L28) - default is 0.0)
+c           Only in SOL.
+c
             IF (Y.GT.0.0) THEN                                              
               IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
-                QUANT = -CFSS(IX,IY,CIZ)*SVY
+                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
               ELSE 
                 QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
      >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
@@ -2058,7 +2070,7 @@ c
             ELSE                                                            
               IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
-                QUANT = -CFSS(IX,IY,CIZ)*SVY
+                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
               ELSE
                 QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -              
      >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
@@ -2100,6 +2112,7 @@ c
                 IF ((PS(IP).GE.P)) GOTO 450                 
                 IP = IP + 1                                                     
                 GOTO 440                                                        
+
   450         CONTINUE                                                          
                 IF ((JY.LE.1)) GOTO 460                 
                 IF ((YS(JY-1).LT.ABSY)) GOTO 460                 
@@ -2110,6 +2123,7 @@ c
                 IF ((YS(JY).GE.ABSY)) GOTO 470                 
                 JY = JY + 1                                                     
                 GOTO 460                                                        
+
   470         CONTINUE                                                          
                 IF ((IX.LE.1)) GOTO 480                 
                 IF ((XS(IX-1).LT.ALPHA)) GOTO 480                 

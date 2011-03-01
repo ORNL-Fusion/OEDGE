@@ -59,7 +59,8 @@ c     4 - targets at the last points on each ring. (These are the
 c         virtual points.)
 c
 c slmod begin
-      IF (nbr.GT.0.OR.cgridopt.EQ.LINEAR_GRID) THEN
+      IF (nbr.GT.0.OR.cgridopt.EQ.LINEAR_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) THEN
 c...    Generalized grid code:
         CALL BuildTargets
         CALL OutputData(85,'IN DOTARG')
@@ -667,7 +668,7 @@ c  Applicable for JET and Sonnet grids - calculate target angles.
 c
 C
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.LINEAR_GRID) then
+     >     cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
 C
 C  CALCULATE 1.TARGET SEGMENT LENGTHS AND ANGLES FROM THE PLASMA
@@ -1043,7 +1044,8 @@ c     which correspond to id = 1,ndsin are nks(ir),ir and not 1,ir as
 c     were being assigned above. Changed to code below.
 c
 c slmod begin
-      IF (nbr.GT.0.OR.cgridopt.EQ.LINEAR_GRID) THEN
+      IF (nbr.GT.0.OR.cgridopt.EQ.LINEAR_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) THEN
 c...    More reliable method of calculating COSTET for generalized
 c       grids:
 

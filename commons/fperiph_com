@@ -29,13 +29,15 @@ c
 c
 c
 c 
-      common /fp_data/ fp_plasma,
+      common /fp_data/ fp_plasma,fp_virt_rings,
      >                 fp_region,fp_s,fp_rings,fp_cells,
      >                 fp_walldist,min_fp_walldist,
      >                 fp_wallcoords,fp_flow_velocity
+c     >                ,fp_sdrft_start,fp_sdrft_end
       save /fp_data/
 c
       integer fp_region,
+     >        fp_virt_rings(num_fp_regions),
      >        fp_rings(num_fp_regions),
      >        fp_cells(num_fp_regions)
       real fp_plasma(maxnks,num_fp_regions,7),
@@ -43,6 +45,9 @@ c
      >     fp_walldist(0:2*maxnks,num_fp_regions),
      >     fp_wallcoords(0:2*maxnks,num_fp_regions,2),
      >     fp_flow_velocity(num_fp_regions)
+c     >    ,fp_sdrft_start(num_fp_regions),
+c     >    ,fp_sdrft_end(num_fp_regions)
+      
       real fp_s(0:2*maxnks,num_fp_regions)
 c
 c     Hard coded flag for debugging the new fp options

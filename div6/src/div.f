@@ -3199,7 +3199,13 @@ c     The rings affected are IR=1, IR=IRWALL and IR=IRTRAP
 c     for grid types 0 and 3 - JET and SONNET
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod begin - ribbon grid
+     >    cgridopt.eq.4.or.cgridopt.eq.5.or.
+     >    cgridopt.eq.LINEAR_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) then
+c
+c     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod end
 c
          ir =1
          do ik = 1,nks(ir)
@@ -3429,9 +3435,9 @@ c       End of debugv
 c
       endif
 
- 9031 FORMAT(/1X,' IK IR    R      Z  ',12(2X,A7))
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',12(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,1P,12E9.2)
+ 9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
 
@@ -4810,7 +4816,7 @@ c
 c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cprint.eq.8.or.cprint.eq.9) then
+      if (cioptr.gt.0.and.cprint.eq.8.or.cprint.eq.9) then
          WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
@@ -4878,8 +4884,10 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,2F6.2,F8.3,1P,E15.8,
-     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
+ 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+     >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
+     >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
+     >       1xI3,:,1X,A,:,1x,F8.5)
 c nonorth
 c 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,F6.2,F8.3,1P,E15.8,
 c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
@@ -5289,7 +5297,7 @@ c
       real te,ti,ne
       real fact, factc
       integer ir,ik,isection,sectcnt
-      character*80 comment
+      character*256 comment
       logical first,found
 c
 c
@@ -5485,7 +5493,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5501,7 +5509,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                             psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5693,7 +5702,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5709,7 +5718,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5798,7 +5808,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5814,7 +5824,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5901,7 +5912,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5917,7 +5928,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5938,11 +5950,11 @@ c     Format statements
 c
 
 200   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'Z')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'Z',9x,'PSIn')
 201   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'R')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'R',9x,'PSIn')
 300   format(2x,i3,2x,i3,3x,f9.3,x,f9.3,x,e13.5,x,e13.5,
-     >       x,f8.3,x,f9.5)
+     >       x,f8.3,x,f9.5,1x,f9.5)
 c
       return
       end
@@ -8115,6 +8127,9 @@ c
 c     NOTE!: fp_flow_velocity is an array with an element
 c     for each peripheral region
 c
+c
+c        Set up flow velocity in each peripheral region
+c
          if (fp_flow_opt.eq.0) then
             fp_flow_velocity = 0.0
          elseif (fp_flow_opt.eq.1) then
@@ -8123,7 +8138,12 @@ c
             end do
          elseif (fp_flow_opt.eq.2) then
             fp_flow_velocity = fp_flow_velocity_input * qtim
+         elseif (fp_flow_opt.eq.3) then
+            do in = 1,num_fp_regions
+               fp_flow_velocity(in) = pol_drftv(fp_virt_rings(in))
+            end do
          endif
+
 
       endif
 

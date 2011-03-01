@@ -427,7 +427,6 @@ c...  981:
 
 c...  Use GRTSET_TRIM:
       slopt4 = 1
-
 c...  Trigger multi-plot code:
       IF (iopt.EQ.99) THEN
         iopt = 1
@@ -444,30 +443,16 @@ c...    Spagetti (sorry, just want to get this going):
 
       yycen = 0.5 * (yymin + yymax)
       yydis = yymax - yymin
-
       deltax = 0.80
       deltay = 0.18
-c      deltay = 0.20
-
       yymin = yycen - 0.5 * (deltay / deltax) * (xxmax - xxmin)
       yymax = yycen + 0.5 * (deltay / deltax) * (xxmax - xxmin)
-c      yymin = yycen - 0.25 * yydis
-c      yymax = yycen + 0.25 * yydis
-
-      CALL SLSET (0.10,0.10+deltax,0.80,0.80+deltay,
+      CALL SLSET (0.10,0.10+deltax,0.70,0.70+deltay,
      .            xxmin,xxmax,yymin,yymax)
-c      CALL SLSET (0.10,0.10+deltax,0.70+0.008,0.70+deltay,
-c     .            xxmin,xxmax,yymin,yymax)
-c      CALL SLSET (0.10,0.10+deltax,0.05,0.05+deltay,
-c     .            xxmin,xxmax,yymin,yymax)
-c      CALL SUPIMP('FULL')
       CALL SUPIMP('PARTIAL')
-
       CALL FULL
       CALL THICK(1)
-
       CALL MAP    (0.0,1.0,0.0,1.0)
-
       CALL POSITN (0.0,0.0)
       CALL JOIN   (0.0,1.0)              
       CALL POSITN (0.0,1.0)
@@ -476,8 +461,6 @@ c      CALL SUPIMP('FULL')
       CALL JOIN   (1.0,0.0)              
       CALL POSITN (1.0,0.0)
       CALL JOIN   (0.0,0.0)              
-
-
       count  = 0
       nlines = 0
 
@@ -485,7 +468,6 @@ c      CALL SUPIMP('FULL')
       BACKSPACE 5
       IF (graph1(8:11).EQ.'View'.OR.graph1(8:11).EQ.'VIEW'.OR.
      .    graph1(8:11).EQ.'view') THEN
-
 c...    Store views:
         READ(graph1,*) cdum1,idum1,rdum1,rdum1,
      .                 idum1,(lines(i1+nlines),i1=1,idum1)        
@@ -493,11 +475,7 @@ c...    Store views:
           cline(i1+nlines) = count + 1
         ENDDO
         nlines = nlines + idum1
-
         count = count + 1
-c        CALL LinCol(ncols+count)
-c        CALL FilCol(ncols+count)
-
         IF (multiplot.LE.1) CALL DrawHalpha(1,1)
         GOTO 40
       ELSE
@@ -506,102 +484,70 @@ c        CALL FilCol(ncols+count)
       ENDIF
 50    CONTINUE
 
-
-c       DO i1 = 1, 1
-
-
-c...True space
-c         CALL SLSET (0.10,0.90,0.50,0.90,0.0,0.0,0.0,0.0)
-
 c...dev
-         CALL CTRMAG(12)
+      CALL CTRMAG(12)
 
-         IF (multiplot.GT.0) THEN
-           i1 = multiplot
-           CALL SLSET (0.10,0.90,0.80-(i1  )*deltay,
-     .                           0.80-(i1-1)*deltay,0,0.0,0.0,0.0)
-c           CALL SLSET (0.10,0.90,0.70-(i1  )*0.20,
-c     .                           0.70-(i1-1)*0.20,0.0,0.0,0.0,0.0)
-c           CALL SLSET (0.10,0.90,0.70-(i1  )*0.20+0.008,
-c     .                           0.70-(i1-1)*0.20,0.0,0.0,0.0,0.0)
-           IF (multiplot.EQ.3) THEN
-             iopt_ghost = 3
-           ELSE
-             iopt_ghost = 2   
-           ENDIF
-         ELSE
-           CALL SLSET (0.10,0.90,0.25,0.65,0.0,0.0,0.0,0.0)
-c           CALL SLSET (0.10,0.90,0.15,0.65,0.0,0.0,0.0,0.0)
-         ENDIF
-
-c...     Blank ref for now:
-         REF = '                                   '
-
-         CALL Plot980(job,graph,ref,title,iopt,
-     .               xxmin,xxmax,yymin,yymax,ft,fp,zadj,
-     .               ismoth,ignors,itec,avs,navs)
-
-c...     Add picture to legend:
-c        slopt = 2
-c        CALL SLSET(0.95,1.31,0.38,0.73,xxmin,xxmax,yymin,yymax)
-c        CALL DrawHalpha(ret,0)
-c        CALL SUPIMP ('PARTIAL')
-
-
-c...     Draw the views on the LOS plot:
-         CALL PSPACE (map1x,map2x,map1y,map2y)
-         CALL MAP    (cxmin,cxmax,0.0,1.0)
-         CALL BROKEN(6,6,6,6)
-         CALL LinCol(1)
-         DO i2 = 1, nlines
-c           CALL LinCol(ncols+cline(i2))
-c           CALL FilCol(ncols+cline(i2))
-           CALL POSITN (lines(i2),0.0)
-           CALL JOIN   (lines(i2),1.0)        
-         ENDDO
-
-
-c...    Add a comment to the plot:
-49      READ(5,'(A5000)') dummy
-        IF   (dummy(8:11).EQ.'Cmnt'.OR.dummy(8:11).EQ.'cmnt'.OR.
-     .        dummy(8:11).EQ.'CMNT') THEN
-      
-          READ (dummy,*) cdum1,xpos,ypos,size,caption
-      
-c...      Annotate graph:
-          CALL PSPACE (map1x,map2x,map1y,map2y)
-          CALL MAP    (0.0,1.0,0.0,1.0)
-          CALL LinCol(1)
-          CALL CTRMAG(size)
-          CALL PLOTST(xpos,ypos,caption(1:LEN_TRIM(caption)))
-c...      Another comment:        
-          GOTO 49
+      IF (multiplot.GT.0) THEN
+        i1 = multiplot
+        CALL SLSET (0.10,0.90,0.80-(i1  )*deltay,
+     .                        0.80-(i1-1)*deltay,0,0.0,0.0,0.0)
+        IF (multiplot.EQ.3) THEN
+          iopt_ghost = 3
         ELSE
-          BACKSPACE 5
+          iopt_ghost = 2   
         ENDIF
+      ELSE
+        CALL SLSET (0.10,0.90,0.15,0.65,0.0,0.0,0.0,0.0)
+      ENDIF
 
+c...  Blank ref for now:
+      REF = '                                   '
 
+      CALL Plot980(job,graph,ref,title,iopt,
+     .            xxmin,xxmax,yymin,yymax,ft,fp,zadj,
+     .            ismoth,ignors,itec,avs,navs)
 
+c...  Add picture to legend:
+c     slopt = 2
+c     CALL SLSET(0.95,1.31,0.38,0.73,xxmin,xxmax,yymin,yymax)
+c     CALL DrawHalpha(ret,0)
+c     CALL SUPIMP ('PARTIAL')
 
-c...    Complete the plot frame that isn't quite done right
-c       in GRTET_TRIM:
+c...  Draw the views on the LOS plot:
+      CALL PSPACE (map1x,map2x,map1y,map2y)
+      CALL MAP    (cxmin,cxmax,0.0,1.0)
+      CALL BROKEN(6,6,6,6)
+      CALL LinCol(1)
+      DO i2 = 1, nlines
+        CALL POSITN (lines(i2),0.0)
+        CALL JOIN   (lines(i2),1.0)        
+      ENDDO
+c...  Add a comment to the plot:
+49    READ(5,'(A5000)') dummy
+      IF   (dummy(8:11).EQ.'Cmnt'.OR.dummy(8:11).EQ.'cmnt'.OR.
+     .      dummy(8:11).EQ.'CMNT') THEN
+        READ (dummy,*) cdum1,xpos,ypos,size,caption
+c...    Annotate graph:
         CALL PSPACE (map1x,map2x,map1y,map2y)
         CALL MAP    (0.0,1.0,0.0,1.0)
-
-        CALL FULL
-        CALL THICK(1)
-
-        CALL POSITN (0.0,1.0)
-        CALL JOIN   (1.0,1.0)              
-        CALL POSITN (1.0,1.0)
-        CALL JOIN   (1.0,0.0)              
-
-c      ENDDO
-
-
-
-
-
+        CALL LinCol(1)
+        CALL CTRMAG(size)
+        CALL PLOTST(xpos,ypos,caption(1:LEN_TRIM(caption)))
+c...    Another comment:        
+        GOTO 49
+      ELSE
+        BACKSPACE 5
+      ENDIF
+c...  Complete the plot frame that isn't quite done right
+c     in GRTET_TRIM:
+      CALL PSPACE (map1x,map2x,map1y,map2y)
+      CALL MAP    (0.0,1.0,0.0,1.0)
+      CALL FULL
+      CALL THICK(1)
+      CALL POSITN (0.0,1.0)
+      CALL JOIN   (1.0,1.0)              
+      CALL POSITN (1.0,1.0)
+      CALL JOIN   (1.0,0.0)              
 c...  Add a caption to the plot:
       READ(5,'(A5000)') dummy
       IF   (dummy(8:11).EQ.'Note'.OR.dummy(8:11).EQ.'note'.OR.
@@ -611,14 +557,7 @@ c...  Add a caption to the plot:
       ELSE
         BACKSPACE 5
       ENDIF
-
-
-c      IF (multiplot.EQ.0.OR.multiplot.EQ.3) THEN
-c        CALL FRAME
-c        multiplot = 0
-c      ENDIF
-
-c...  Add a caption to the plot:
+c...  Don't clear the page to start a new plot:
       READ(5,'(A5000)') dummy
       IF   (dummy(8:14).EQ.'Noframe'.OR.dummy(8:12).EQ.'noframe'.OR.
      .      dummy(8:14).EQ.'NOFRAME') THEN
@@ -627,7 +566,6 @@ c...  Add a caption to the plot:
         CALL FRAME
         multiplot = 0
       ENDIF
-
 
       RETURN
 99    STOP

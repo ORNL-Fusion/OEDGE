@@ -1657,11 +1657,12 @@ c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
 	
       IF (no_data_warning.EQ.1) THEN
-        WRITE(0,*)
-        WRITE(0,*) '****************************************'
-        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME RINGS *'
-        WRITE(0,*) '****************************************'
-        WRITE(0,*)
+c        WRITE(0,*)
+c        WRITE(0,*) '****************************************'
+c        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME RINGS *'
+c        WRITE(0,*) '****************************************'
+c        WRITE(0,*)
+        CALL WN('InterpolateTargetData','Data not found for some rings')
         no_data_warning = 2
       ENDIF
 
@@ -1842,7 +1843,7 @@ c
       LOGICAL OutsideBreak
 
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
-     .        ikto3,ikti3,ik1,ik2,ik3,ir3
+     .        ikto3,ikti3,ik1,ik2,ik3,ir3,count
       LOGICAL recalculate,cheat1,status
       REAL rhozero,ikintersec(MAXNRS,2)
 
@@ -1905,19 +1906,28 @@ c     PFZ ring:
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
-            DO WHILE (idring(ir1).NE.BOUNDARY)
+            count = 0
+            DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
               WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik,ir,ik2,ir2,
      .                               nks(ir),irsep,status
-              IF (ir1.LT.irsep) THEN
-                WRITE(88,*) 'BOUNCE!'
+              IF (ir1.LE.irsep) THEN               ! Changed 02/09/2010
+c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
+                WRITE(88,*) 'BOUNCE!'              ! Need to use the OSM method of line intersections!
                 status = .FALSE.
                 EXIT
               ENDIF
               ik1 = ik2
               ir1 = ir2
+              count = count + 1
             ENDDO
+            IF (count.EQ.nrs+1) THEN
+              CALL WN('SetupGrid','Problem with connection '//
+     .                'map when searching for private flux regions')
+              WRITE(0,*) '  IK,IR= ',ik,ir
+              EXIT
+            ENDIF
             IF (.NOT.status) EXIT
           ENDDO
           IF (status) ringtype(ir) = PFZ
@@ -2062,6 +2072,7 @@ c          STOP 'sdfsdf'
       ENDDO
 
       DO ir = nrs, irtrap+1, -1
+        IF (idring(ir).EQ.-99) CYCLE
         WRITE(SLOUT,*) 'CUTPOINTS IN PFZ: IR= ',ir
      
         ikto2(ir) = -1
@@ -2105,7 +2116,8 @@ c          STOP 'sdfsdf'
         ENDDO
 
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
-     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
+     .    CALL WN('SetupGrid','Cannot find cut points in PFZ')
+c     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
       ENDDO
 c
 c     Set IKTO,I2 for double-null grids:
@@ -2113,12 +2125,18 @@ c     ------------------------------------------------------------------
       DO ir = irsep+1, irwall-1          ! *** REPLACE CHECK WITH FUNCTION OR DOUBLE_NULL FLAG ***
         IF (ringtype(ir).EQ.PFZ) EXIT
       ENDDO
-      IF (ir.NE.irwall) THEN
+      IF     (ir.NE.irwall.AND.irsep.EQ.irsep2) THEN
+        WRITE(0,*) 
+        WRITE(0,*) 'DOUBLE NULL GRID DETECTED, BUT IRSEP=IRSEP2.' ! This is showing up on the big JET grid for j-bfg-0004c.
+        WRITE(0,*) 'NOT EXECUTING DOUBLE-NULL CODE.'              ! It may just be a 'transient' problem, that goes away once the
+        WRITE(0,*)                                                ! rings are properly ordered, but clearly needs some sorting out.
+      ELSEIF (ir.NE.irwall) THEN                                  ! (A proper double-null grid detector...) -SL, 09/04/2010
         ir1 = irouts(1,irsep2)
         DO ik1 = 1, nks(ir1)
           IF (irins(ik1,ir1).NE.irsep2) EXIT
         ENDDO
         IF (ik1.EQ.nks(ir1)+1) THEN
+          CALL DumpGrid('Identify problems')
           STOP 'DAMNA'
         ELSE
 c...      Outer SOL - IKTO:
@@ -2245,103 +2263,113 @@ c      NEEDS REWORKING!  BIG TIME!
       rho = 0.0
       WRITE(SLOUT,*) 'CALCULATING RHO', r0,z0
 
-      a1 = r0
-      a2 = z0   ! This was not a good idea... removed - SL, 19/10/2009  yes it was... 10/12/2009
-c      a2 = 0.0D0           
-      b1 = r0 + 100.0D0
-      b2 = z0
-c      b2 = 0.0D0
-
-      DO ir = 2, irwall-1
-        DO ik = 1, nks(ir)
-          id = korpg(ik,ir)
-
-          c1 = rvertp(1,id)
-          c2 = zvertp(1,id)
-          d1 = rvertp(4,id)
-          d2 = zvertp(4,id)
-          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
-     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
-     .      rho(ir,IN14) = r0 + SNGL(tab) * 100.0D0
-
-          c1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
-          c2 = 0.5 * (zvertp(1,id) + zvertp(2,id))
-          d1 = 0.5 * (rvertp(3,id) + rvertp(4,id))
-          d2 = 0.5 * (zvertp(3,id) + zvertp(4,id))
-          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
-     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
-     .      rho(ir,CELL1) = r0 + SNGL(tab) * 100.0
-
-          c1 = rvertp(2,id)
-          c2 = zvertp(2,id)
-          d1 = rvertp(3,id)
-          d2 = zvertp(3,id)
-          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
-     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
-     .      rho(ir,OUT23) = r0 + SNGL(tab)* 100.0
+      IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
+        DO ir = 1, nrs
+          id = korpg(1,ir)
+          rho(ir,IN14 ) = rvertp(1,id)   ! Perhaps move to middle cell of each ring, rather
+          rho(ir,CELL1) = rs(1,ir)       ! than just taking the end cell, which will break
+          rho(ir,OUT23) = rvertp(2,id)   ! if the 'linear' grid is distorted at some point
+          psitarg(ir,1) = rho(ir,CELL1)  ! to account for flux expansion -SL, 14/10/2010
+          psitarg(ir,2) = psitarg(ir,1)
         ENDDO
-      ENDDO
-
-      IF (connected) THEN
-        rhozero = rho(irsep2,IN14) 
       ELSE
-        rhozero = rho(irsep ,IN14)
-      ENDIF
-
-      DO ir = 2, irwall-1
-        IF (rho(ir,CELL1).NE.0.0) THEN
-          rho(ir,IN14 ) = rho(ir,IN14)  - rhozero
-          rho(ir,CELL1) = rho(ir,CELL1)  - rhozero
-          rho(ir,OUT23) = rho(ir,OUT23) - rhozero
+        a1 = r0
+        a2 = z0   ! This was not a good idea... removed - SL, 19/10/2009  yes it was... 10/12/2009
+c        a2 = 0.0D0           
+        b1 = r0 + 100.0D0
+        b2 = z0
+c        b2 = 0.0D0
+        
+        DO ir = 2, irwall-1
+          DO ik = 1, nks(ir)
+            id = korpg(ik,ir)
+        
+            c1 = rvertp(1,id)
+            c2 = zvertp(1,id)
+            d1 = rvertp(4,id)
+            d2 = zvertp(4,id)
+            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+            IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .          tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .        rho(ir,IN14) = r0 + SNGL(tab) * 100.0D0
+        
+            c1 = 0.5 * (rvertp(1,id) + rvertp(2,id))
+            c2 = 0.5 * (zvertp(1,id) + zvertp(2,id))
+            d1 = 0.5 * (rvertp(3,id) + rvertp(4,id))
+            d2 = 0.5 * (zvertp(3,id) + zvertp(4,id))
+            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+            IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .          tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .        rho(ir,CELL1) = r0 + SNGL(tab) * 100.0
+        
+            c1 = rvertp(2,id)
+            c2 = zvertp(2,id)
+            d1 = rvertp(3,id)
+            d2 = zvertp(3,id)
+            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+            IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .          tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .        rho(ir,OUT23) = r0 + SNGL(tab)* 100.0
+          ENDDO
+        ENDDO
+        IF (connected) THEN
+          rhozero = rho(irsep2,IN14) 
+        ELSE
+          rhozero = rho(irsep ,IN14)
         ENDIF
-      ENDDO
-
+        DO ir = 2, irwall-1
+          IF (rho(ir,CELL1).NE.0.0) THEN
+            rho(ir,IN14 ) = rho(ir,IN14)  - rhozero
+            rho(ir,CELL1) = rho(ir,CELL1)  - rhozero
+            rho(ir,OUT23) = rho(ir,OUT23) - rhozero
+          ENDIF
+        ENDDO
+        
 c This sucks... it is good to get rho from grid.. what if not a CMOD
 c grid being used...?
-      rho(nrs,IN14 ) = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
-      rho(nrs,OUT23) = rho(irsep,IN14)
-      rho(nrs,CELL1) = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
-
-      DO ir = nrs-1, irtrap+1, -1
-        rho(ir,OUT23) = rho(ir+1,IN14)
-        rho(ir,IN14 ) = rho(ir+1,IN14) - 
-     .                  (rho(ir+1,OUT23) - rho(ir+1,IN14))
-c        rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
-        rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
-      ENDDO
-c...  Find inner midplane "rho", for rings that do not intesect
-c     the outer midplane:
-      a1 = DBLE(r0)
-      b1 = DBLE(r0) - 100.0D0
-      a2 = 0.0D0
-      b2 = 0.0D0
-c...  Find RHOZERO:
-      IF (connected) THEN 
-        ir = irsep2
-      ELSE
-        ir = irsep
+        rho(nrs,IN14 ) = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
+        rho(nrs,OUT23) = rho(irsep,IN14)
+        rho(nrs,CELL1) = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
+        
+        DO ir = nrs-1, irtrap+1, -1
+          rho(ir,OUT23) = rho(ir+1,IN14)
+          rho(ir,IN14 ) = rho(ir+1,IN14) - 
+     .                    (rho(ir+1,OUT23) - rho(ir+1,IN14))
+c          rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
+          rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
+        ENDDO
+c...    Find inner midplane "rho", for rings that do not intesect
+c       the outer midplane:
+        a1 = DBLE(r0)
+        b1 = DBLE(r0) - 100.0D0
+        a2 = 0.0D0
+        b2 = 0.0D0
+c...    Find RHOZERO:
+        IF (connected) THEN 
+          ir = irsep2
+        ELSE
+          ir = irsep
+        ENDIF
+        rhozero = 0.0
+        DO ik = 1, nks(ir)
+          id = korpg(ik,ir)
+          c1 = DBLE(rvertp(1,id))
+          c2 = DBLE(zvertp(1,id))
+          d1 = DBLE(rvertp(4,id))
+          d2 = DBLE(zvertp(4,id))
+          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+     .      rhozero = r0 - SNGL(tab) * 100.0 
+        ENDDO
+        
+        DO ir = irsep, irwall-1      
+          IF (ikmidplane(ir,IKLO).NE.0.AND.
+     .        ikmidplane(ir,IKHI).EQ.0) 
+     .      rho(ir,CELL1) = -(ikintersec(ir,IKLO) - rhozero)
+        ENDDO
       ENDIF
-      rhozero = 0.0
-      DO ik = 1, nks(ir)
-        id = korpg(ik,ir)
-        c1 = DBLE(rvertp(1,id))
-        c2 = DBLE(zvertp(1,id))
-        d1 = DBLE(rvertp(4,id))
-        d2 = DBLE(zvertp(4,id))
-        CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-        IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
-     .      tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
-     .    rhozero = r0 - SNGL(tab) * 100.0 
-      ENDDO
 
-      DO ir = irsep, irwall-1      
-        IF (ikmidplane(ir,IKLO).NE.0.AND.
-     .      ikmidplane(ir,IKHI).EQ.0) 
-     .    rho(ir,CELL1) = -(ikintersec(ir,IKLO) - rhozero)
-      ENDDO
 
       DO ir = 1, nrs
         WRITE(SLOUT,'(A,I4,1P,3E15.7)')
@@ -2950,7 +2978,7 @@ c...temp1
       CALL RZero(lpdati2  ,MAXINS*9)
       CALL RZero(lpdato2  ,MAXINS*9)
 
-      DO i1 = 1, MAXNRS
+      DO i1 = 1, MAXINS
         lpdati2(i1,8) = 1.0
         lpdati2(i1,9) = 1.0
         lpdato2(i1,8) = 1.0
@@ -3100,6 +3128,7 @@ c     values need to well documented.
 c
       call InitializeUnstructuredInput
 
+      CALL osm_InitializeOptions
 c
       return
       END

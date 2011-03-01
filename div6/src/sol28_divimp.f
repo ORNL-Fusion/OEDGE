@@ -18,6 +18,12 @@ c      RETURN
 
       CALL LoadLegacyData('osm_legacy.raw')
 
+      CALL GenerateTubeGroups
+      CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
+
+      CALL GenerateTargetGroups
+      CALL DumpData_OSM('output.grid_targets','Done analysing targets')
+
 c      CALL SetTargetConditions(itube)
 
       IF (opt%osm_load.NE.0) CALL LoadReferenceSolution(1)
@@ -181,14 +187,14 @@ c...    Assign values to nodes:
         node(1:7)%ne = ne(0:6)
         node(1:7)%te = te(0:6)
 c...    Assign other quantites:
-        node(1:7)%jsat(1)   = 0.0
-        node(1:7)%pe        = 0.0
-        node(1:7)%ni(1)     = 0.0
-        node(1:7)%pi(1)     = 0.0
-        node(1:7)%ti(1)     = 0.0
-        node(1:7)%machno    = 0.0
-        node(1:7)%potential = 0.0
-        node(1:7)%efield    = 0.0
+        node(1:7)%jsat(1) = 0.0
+        node(1:7)%pe      = 0.0
+        node(1:7)%ni(1)   = 0.0
+        node(1:7)%pi(1)   = 0.0
+        node(1:7)%ti(1)   = 0.0
+        node(1:7)%machno  = 0.0
+        node(1:7)%epot    = 0.0
+        node(1:7)%efield  = 0.0
 
         id1 = idds(ir,2)
         id7 = idds(ir,1)
@@ -275,7 +281,7 @@ c
         wall(iwall)%index(WAL_INDEX ) = -1    
         wall(iwall)%index(WAL_TUBE  ) = -1    
         wall(iwall)%index(WAL_TARGET) = NINT(wallpt(iwall,16))    
-        wall(iwall)%material_tag      = 'unknown'
+        wall(iwall)%material_tag      = 'no_set'
         wall(iwall)%material          = -1
         wall(iwall)%temperature       =      wallpt(iwall,19)
         wall(iwall)%v1(1)             = DBLE(wallpt(iwall,20))
@@ -386,7 +392,6 @@ c...  Count number of cells:
         IF (ir.LT.irsep) ike = ike - 1
         ncell = ncell + ike 
       ENDDO
-
 c...  Declare global arrays:
       nfield    = ncell
       npin      = ncell
@@ -395,7 +400,9 @@ c...  Declare global arrays:
       nkinetic  = 1     
       nfluid    = ncell
       nimpurity = 1
-      ALLOCATE(tube    (ntube ))
+      ALLOCATE(tube      (ntube))
+      ALLOCATE(tube_state(ntube))
+      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))
@@ -416,7 +423,9 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
-      CALL CalcTubeDimensions(tube_3D_data,dangle)
+      ! jdemod - note - dangle set to 0.0 and is used in division later but not assigned a real value
+      dangle = 0.0
+c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -494,13 +503,30 @@ c        ENDIF
         cell(cind1:cind2)%volume_3D  = tube_3D_data(5,1:ike,ir)
 
         DO ik = 1, nks(ir)
-          WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c
+c         jdemod - add if statement to test if dangle=0.0 
+c                - divide by zero error otherwise
+c
+          if (dangle.ne.0.0) then 
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
      .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
      .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
      .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
      .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
      .                               (360.0/dangle) 
+          else
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
+c     .                               * (360.0/dangle) 
+          endif
+c
+c         end jdemod
+c
         ENDDO
+
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN
@@ -689,6 +715,25 @@ c...      Finish off core rings:
 
         ENDDO
       ENDDO
+
+c...  
+c      nlpdato = 0
+c      nlpdati = 0
+c      DO ir = irsep, nrs
+c        IF (idring(ir).EQ.BOUNDARY) CYCLE
+c        nlpdato = nlpdato + 1
+c        nlpdati = nlpdati + 1
+c        in = idds(ir,2)
+c        lpdato(nlpdato,1) = REAL(ir)
+c        lpdato(nlpdato,2) = kteds(in)
+c        lpdato(nlpdato,3) = ktids(in)
+c        lpdato(nlpdato,4) = knds(in)
+c        in = idds(ir,1)
+c        lpdati(nlpdati,1) = REAL(ir)
+c        lpdati(nlpdati,2) = kteds(in)
+c        lpdati(nlpdati,3) = ktids(in)
+c        lpdati(nlpdati,4) = knds(in)
+c      ENDIF
 
       RETURN
  99   STOP
@@ -1279,14 +1324,14 @@ c...    Assign values to nodes:
         node(1:7)%ne = ne(0:6)
         node(1:7)%te = te(0:6)
 c...    Assign other quantites:
-        node(1:7)%jsat(1)   = 0.0
-        node(1:7)%pe        = 0.0
-        node(1:7)%ni(1)     = 0.0
-        node(1:7)%pi(1)     = 0.0
-        node(1:7)%ti(1)     = 0.0
-        node(1:7)%machno    = 0.0
-        node(1:7)%potential = 0.0
-        node(1:7)%efield    = 0.0
+        node(1:7)%jsat(1) = 0.0
+        node(1:7)%pe      = 0.0
+        node(1:7)%ni(1)   = 0.0
+        node(1:7)%pi(1)   = 0.0
+        node(1:7)%ti(1)   = 0.0
+        node(1:7)%machno  = 0.0
+        node(1:7)%epot    = 0.0
+        node(1:7)%efield  = 0.0
 
         id1 = idds(ir,2)
         id7 = idds(ir,1)
@@ -2245,11 +2290,13 @@ c
         IF (knot(i1)%xpt.NE.0) CYCLE
 
         IF (nxpt.EQ.2) THEN
-          WRITE(0,*)
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*) '-   MORE THAN 2 XPTS FOUND, IGNORING...    -'
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*) '-   MORE THAN 2 XPTS FOUND, IGNORING...    -'
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*)
+          CALL WN('ReadGeneralisedGrid_SL','More than 2 x-points '//
+     .            'found, ignoring...')
           EXIT
         ENDIF
 
@@ -3319,11 +3366,11 @@ c
 
       CALL LoadGeneralisedGrid
 
-      irsep  = grid_load%irsep
-      irsep2 = grid_load%irsep2
-      irwall = grid_load%irwall
-      irtrap = grid_load%irtrap
-      nrs    = grid_load%nrs
+      irsep      = grid_load%irsep
+      irsep2     = grid_load%irsep2
+      irwall     = grid_load%irwall
+      irtrap     = grid_load%irtrap
+      nrs        = grid_load%nrs
       nks(1:nrs) = grid_load%nks(1:nrs)
 
       id = 0
@@ -3388,7 +3435,7 @@ c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxrings   = irwall
       indexiradj = 1
 
-      IF (.NOT..TRUE.) THEN
+      IF (.TRUE.) THEN
 c        id = 0
 c        DO ir = 1, nrs
 c          DO ik = 1, nks(ir)        
@@ -3405,8 +3452,8 @@ c              zvertp(i2,id) = knot(i1)%zv(i2)
 c            ENDDO
 c          ENDDO
 c        ENDDO
-        CALL SaveSolution
-        CALL OutputData(86,'MAST!')
+c        CALL SaveSolution
+c        CALL OutputData(86,'MAST!')
 c        title = '...'
 c        desc  = 'Call to STORE from DumpGrid'
 c        job   = 'Call to STORE from DumpGrid'
@@ -3414,7 +3461,7 @@ c        equil = 'Call to STORE from DumpGrid'
 c        WRITE(0,*) 'CALLING STORE'
 c        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
 c        WRITE(0,*) 'FUN WITH MAST GRIDS!'
-        STOP
+c        STOP 'WHAT?'
       ENDIF
 
 c...  Add virtual boundary cells, which will be stripped off later:

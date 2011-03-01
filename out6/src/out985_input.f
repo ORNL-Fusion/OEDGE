@@ -16,7 +16,7 @@ c
       CHARACTER cdum1*256
 
       SELECTCASE (opt%int_database(opt%int_num))
-        CASE (1,3)
+        CASE (1,3,4)
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_line(opt%int_num)
@@ -266,17 +266,17 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 SELECTCASE (idum1)
                   CASE (1)  ! Specular 
                     READ(buffer,*) cdum1,
-     .                opt%ref_model (opt%ref_num),
-     .                opt%ref_wlgth (opt%ref_num),
-     .                opt%ref_k     (opt%ref_num),
-     .                opt%ref_ow    (opt%ref_num),
-     .                opt%ref_pw    (opt%ref_num),
-     .                opt%ref_n     (opt%ref_num),
-     .                opt%ref_cutoff(opt%ref_num),
-     .                opt%ref_otheta(opt%ref_num),
-     .                opt%ref_dtheta(opt%ref_num),
-     .                opt%ref_ophi  (opt%ref_num),
-     .                opt%ref_dphi  (opt%ref_num)
+     .                opt%ref_model (opt%ref_num),  ! 1=specular, 2=diffuse
+     .                opt%ref_wlgth (opt%ref_num),  ! Variation of reflectivity
+     .                opt%ref_k     (opt%ref_num),  ! Drop in signal for uniform reflectivity option
+     .                opt%ref_ow    (opt%ref_num),  ! Not in use...
+     .                opt%ref_pw    (opt%ref_num),  ! Not in use...
+     .                opt%ref_n     (opt%ref_num),  ! Some kind of exponent
+     .                opt%ref_cutoff(opt%ref_num),  ! Don't include contibutions below a certain relative intensity
+     .                opt%ref_otheta(opt%ref_num),  ! THETA angle distribution option (0=none, 1=linear)
+     .                opt%ref_dtheta(opt%ref_num),  ! THETA angle step size
+     .                opt%ref_ophi  (opt%ref_num),  ! PHI angle distribution option (0=none, 1=linear)
+     .                opt%ref_dphi  (opt%ref_num)   ! PHI angle step size
                   CASE (2)  ! Diffuse
                     READ(buffer,*) cdum1,
      .                opt%ref_model (opt%ref_num),
@@ -350,21 +350,29 @@ c...                Data source:
             ENDIF
             READ(buffer(i+1:n),*) idum1
             WRITE(0,*) 'LOADING DETECTOR:',idum1
-            IF (idum1.NE.0) THEN
-              load_detector = .FALSE.
-              opt%ccd = idum1
-              READ(fp,*) cdum1,opt%focallength
-              READ(fp,*) cdum1,opt%distortion
-              READ(fp,*) cdum1,opt%cen(1:3)
-              READ(fp,*) cdum1,opt%roll,opt%tilt,opt%swing
-              READ(fp,*) cdum1,opt%width(1:2)
-              READ(fp,*) cdum1,opt%angle(1:2)  ! Maybe only need to load the first entry
-              READ(fp,*) cdum1,opt%nxbin,opt%nybin
-              READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
-     .                         opt%sa_par1 ,opt%sa_par2
-              READ(fp,*) cdum1,opt%fmap
-            ENDIF
-
+            SELECTCASE(idum1)
+              CASE(0)
+              CASE(1:2)
+                load_detector = .FALSE.
+                opt%ccd = idum1
+                READ(fp,*) cdum1,opt%focallength
+                READ(fp,*) cdum1,opt%distortion
+                READ(fp,*) cdum1,opt%cen(1:3)
+                READ(fp,*) cdum1,opt%roll,opt%tilt,opt%swing
+                READ(fp,*) cdum1,opt%width(1:2)
+                READ(fp,*) cdum1,opt%angle(1:2)  ! Maybe only need to load the first entry
+                READ(fp,*) cdum1,opt%nxbin,opt%nybin
+                READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
+     .                           opt%sa_par1 ,opt%sa_par2
+                READ(fp,*) cdum1,opt%fmap
+              CASE(3:4)
+                load_detector = .FALSE.
+                opt%ccd = idum1 - 2
+                 
+              CASE DEFAULT
+                CALL ER('LoadOptions985_New','Unknown DETECTOR '//
+     .                  'option',*99)          
+            ENDSELECT
           CASE('DETECTOR MASK')
             IF (mode.NE.DETECTOR_ONLY.OR.load_detector) CYCLE            
             READ(buffer(i+1:n),*) idum1

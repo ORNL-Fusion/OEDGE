@@ -6,7 +6,7 @@ c
       IMPLICIT none
       PUBLIC
      
-      INTEGER, PARAMETER :: MAXNKS = 200, MAXNRS = 200, BOUNDARY = -1, 
+      INTEGER, PARAMETER :: MAXNKS = 600, MAXNRS = 600, BOUNDARY = -1, 
      .                      MAXNAS = 100, MAXPUFF=  20, MAXNAS3  = 1000,
      .                      SLOUT = 50  , PINOUT = 88 , MAXASD   = 30,
      .                      IKLO = 1    , IKHI = 2    , MAXNAS2  = 200,

@@ -365,6 +365,63 @@ c
 c
 c
 c
+      subroutine get_div_data_dir(dirname,ierr)
+      implicit none
+      integer  ierr
+      character dirname*(*)
+c
+c     Get name from environment variable
+c     
+      integer len1,lenstr
+      external lenstr 
+      character*256 :: divdata
+
+c
+c     Initial state is invalid data .. if non-zero length string is 
+c     returned then the return code is set to 1
+c
+      ierr = 1
+c
+      dirname = ' '
+c
+c     Get data directory from environment
+c
+      CALL GetEnv('DIVDATDIR',divdata)
+
+      if (len_trim(divdata).gt.0) ierr = 0
+
+      dirname = trim(divdata)
+
+      return
+c
+      end
+c
+c
+c
+      SUBROUTINE run_system_command(cmd,retcode)
+      CHARACTER*(*) CMD
+      integer retcode
+      integer system
+C
+c     This routine calls the "system" command to issue
+c     an OS level command from inside the code. 
+c
+c     This is mostly useful for file manangement
+c
+c
+c     Initialize the return code to zero for now
+c
+      retcode = 0
+c
+c
+      retcode = SYSTEM(trim(cmd))
+c
+c
+      RETURN
+      END
+c
+c
+c
       subroutine killdiv
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP

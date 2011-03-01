@@ -904,7 +904,7 @@ c...  Draw reflections:
 
       DO i1 = 1, nshow
 c        IF (i1.GE.362.AND.i1.LE.1000) CYCLE
-        IF (i1.GT.1806) CYCLE
+c        IF (i1.GT.1806) CYCLE
 c        IF (i1.GE.22.AND.i1.LE.1000) CYCLE
  
         x1 = rshow(i1)
@@ -982,18 +982,29 @@ c...  Draw indecies on wall surfaces:
       CALL CTRMAG(8)
       IF (iopt.EQ.5.OR.iopt.EQ.6) THEN
         CALL LINCOL(ncols+4)
-	DO i1 = 1, nvesm+nvesp
-          IF (jvesm(i1).NE.1.AND.jvesm(i1).NE.4) THEN
-            x1 = 0.5 * (rvesm(i1,1) + rvesm(i1,2))
-            y1 = 0.5 * (zvesm(i1,1) + zvesm(i1,2))
-
+        IF (nvesm.NE.0) THEN
+          DO i1 = 1, nvesm+nvesp
+            IF (jvesm(i1).NE.1.AND.jvesm(i1).NE.4) THEN
+              x1 = 0.5 * (rvesm(i1,1) + rvesm(i1,2))
+              y1 = 0.5 * (zvesm(i1,1) + zvesm(i1,2))
+              IF (x1.GT.cxmin.AND.x1.LT.cxmax.AND.
+     .            y1.GT.cymin.AND.y1.LT.cymax) THEN
+                WRITE(segnum(1:3),'(I3)') i1
+                CALL PCSCEN(x1,y1,segnum(1:3))
+              ENDIF
+            ENDIF
+          ENDDO
+        ELSEIF (nves.NE.0) THEN
+          DO i1 = 1, nves-1
+            x1 = 0.5 * (rves(i1) + rves(i1+1))
+            y1 = 0.5 * (zves(i1) + zves(i1+1))
             IF (x1.GT.cxmin.AND.x1.LT.cxmax.AND.
      .          y1.GT.cymin.AND.y1.LT.cymax) THEN
               WRITE(segnum(1:3),'(I3)') i1
               CALL PCSCEN(x1,y1,segnum(1:3))
             ENDIF
-          ENDIF
-        ENDDO
+          ENDDO
+        ENDIF
       ENDIF
 
 c...  Draw time-to-ionisation regions:

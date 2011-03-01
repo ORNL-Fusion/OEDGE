@@ -657,7 +657,7 @@ c      DO i1 = 200000, npixel
 c      DO i1 = 4325, 4325
       DO i1 = 1, npixel
 
-        IF (MOD(i1,npixel/10).EQ.0) 
+        IF (MOD(i1,MAX(1,npixel/10)).EQ.0) 
 c        IF (MOD(i1,1).EQ.0) 
 c        IF (MOD(i1,1000).EQ.0) 
      .    WRITE(0,'(A,I7,A,I7)') 'PROCESSING PIXEL ',i1,' OF ',npixel
@@ -1474,7 +1474,7 @@ c      TYPE(type_options985) :: opt
 c...      Also generate mod_interface file:
           WRITE(file,'(1024X)')          
           file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
-          CALL inOpenInterface(TRIM(file))
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
           DO iy = 1, nybin
             CALL inPutData(image(1:nxbin,iy),'data','unknown')
           ENDDO
@@ -1560,16 +1560,17 @@ c      MAX3D = MAX3D985
       WRITE(0,*) 'HERE IN 985'
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 1000000 
+      MAX3D = 500000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
 
-      WRITE(0,*) '  ALLOCATING PIXELS'
-      MAXNPIXEL=480*640 ! 1000*1000
+      MAXNPIXEL= 550*550 ! 480*640 ! 1000*1000
+      WRITE(0,*) '  ALLOCATING PIXELS',MAXNPIXEL
       ALLOCATE(pixel(MAXNPIXEL))
 
+c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
 
       opt%load = 1
