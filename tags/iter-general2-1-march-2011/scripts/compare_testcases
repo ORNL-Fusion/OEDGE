@@ -1,0 +1,129 @@
+#!/bin/tcsh
+#
+#
+echo 'COMPARING Testcases'
+#
+set scriptdir = $PWD/scripts
+
+source $scriptdir/init_testcases
+
+#
+# Check to see if testcase directory already exists
+#
+
+if ( -e $testdir ) then 
+
+#
+#  Uncompress comparison files
+#
+   cd $resultdir
+   uncompress testcase0?.lim.Z
+   uncompress testcase0?.out.Z
+#
+   cd $testdir
+   uncompress testcase0?.lim.Z
+   uncompress testcase0?.out.Z
+#
+#  Compare testcase output text file 
+#
+#  Use relative paths so file names are shorter 
+#
+   cd $resultdir 
+#
+#
+#  Comment out the comparison of testcases_out.txt since they are always different because of
+#  differences in the timing and compression. 
+#
+#   echo "---- Comparing testcase_out.txt file - differences are likely"
+#        
+#  Remove any diff files from previous comparisons 
+#
+#   if ( -e $testsubdir/testcases_out.txt.diff ) then  
+#      rm  $testsubdir/testcases_out.txt.diff
+#   endif
+#
+#   @ resultval = { diff -w -q -b testcases_out.txt $testsubdir/testcases_out.txt }
+#
+#   if ( ! $resultval ) then 
+#      diff -w -b testcases_out.txt $testsubdir/testcases_out.txt >  $testsubdir/testcases_out.txt.diff
+#   endif  
+#
+#  Loop through list of file extensions to be compared 
+#
+   foreach ext ( $extlist ) 
+
+      echo "---- Comparing" $ext "files" 
+#
+#     Loop through list of testcases 
+#
+      foreach testcase ( $testcaselist )
+#        
+#        Remove any diff files from previous comparisons 
+#
+         if ( -e $testsubdir/$testcase$ext.diff ) then  
+            rm  $testsubdir/$testcase$ext.diff
+         endif
+#
+#        Test that the files that need to be compared exist
+#
+         if ( ( -e $testcase$ext) && (-e $testsubdir/$testcase$ext ) ) then 
+
+#
+#           Use a different diff statement for the eirprn file - excludes lines with different strings
+#
+            if ( $ext == '.eirprn' ) then  
+
+#
+#              Get numeric return code - 0 for different - 1 for identical
+#
+               @ resultval = { diff -w -q -b -I "TIM" -I "XTIM" -I "XX XX1" -I "OVERHEAD" -I "CPU" -I "DATE" -I "TIME"  $testcase$ext $testsubdir/$testcase$ext }
+#
+#              If files are different generate a detailed diff file and save it in the test case directory
+#
+               if (! $resultval ) then 
+                  diff -w -b -I "TIM" -I "XTIM" -I "XX XX1" -I "OVERHEAD" -I "CPU" -I "DATE" -I "TIME"  $testcase$ext $testsubdir/$testcase$ext > $testsubdir/$testcase$ext.diff
+
+               endif
+#
+#           The other file extensions
+#
+            else
+#
+#              Get numeric return code - 0 for different - 1 for identical
+#
+               @ resultval = { diff -w -q -b -I "TIME" -I "DIVIMP" $testcase$ext $testsubdir/$testcase$ext }
+#
+#              If files are different generate a detailed diff file and save it in the test case directory
+#
+               if ( ! $resultval ) then 
+                  diff -w -b -I "TIME" -I "DIVIMP" $testcase$ext $testsubdir/$testcase$ext  > $testsubdir/$testcase$ext.diff
+               endif    
+
+            endif
+
+         endif
+      end
+   end
+#
+#  Recompress and clean up
+# 
+   cd $resultdir
+   compress testcase0?.lim
+   compress testcase0?.out
+#
+   cd $testdir
+   compress testcase0?.lim
+   compress testcase0?.out
+#
+#  Return to main DIVIMP directory
+#
+   cd $divmain
+#
+else
+   echo "ERROR: Test cases have not yet been set up on this machine."
+   echo "       Please run setup_testcases."
+endif
+
+
+
+

@@ -1,0 +1,6 @@
+C
+      COMMON /LDH   / SRECYC, SRECOM, HESCPD(MHS), HESCAL(MHS), 
+     &                ZSPUT(MZS), ZSPUTN(MZS),
+     &                ZESCPD(MZS), ZESCAL(MZS), HESCLK(MHS), 
+     &                ZESCLK(MZS),
+     &                HORTON(3,14,MP),izc,ihc,flxref,ipinseed

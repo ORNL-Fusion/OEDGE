@@ -1,0 +1,6 @@
+c     -*-Fortran-*-
+c
+      common /sol22pcx/ lasts,lastpcx,lastsrc
+      save /sol22pcx/
+      real*8 lasts,lastpcx,lastsrc
+c

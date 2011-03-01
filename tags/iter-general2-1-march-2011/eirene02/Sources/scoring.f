@@ -1,0 +1,1702 @@
+C
+C
+      SUBROUTINE GETSCL (ISTRA,FA,FM,FI)
+C
+C  FIND SCALING FACTORS TO ENFORCE PARTICLE BALANCE
+C  SIMPLE VERSION: NOT SPLIT BY SPECIES, ONLY BY TYPE
+C  MODIFIED JAN/95: INCLUDE SURFACE TALLIES IN MATRIX, NOT IN
+C  INHOMOGENITY
+C
+      USE PRECISION
+      USE PARMMOD
+      USE CCONA
+      USE COUTAU
+
+      IMPLICIT NONE
+C
+      INTEGER, INTENT(IN) :: ISTRA
+      REAL(DP), INTENT(OUT) :: FA, FM, FI
+      REAL(DP) :: FC(3), P(3,4), B(3)
+      REAL(DP) :: DTB1, DTB2, DTA, DETER, DTB3, FNEN
+      REAL(DP) :: P11, P12, P13, P21, P22, P23, P31, P32, P33,
+     .          B1, B2, B3
+      INTEGER :: ICOL, IROW, I, J, I1, I2, J1, J2
+      LOGICAL :: LCOLM(3), LROW(3)
+C
+C
+      FC(1)=1.
+      FC(2)=1.
+      FC(3)=1.
+C
+C P(..,1)*FC(1)
+C P(..,2)*FC(2)
+C P(..,3)*FC(3)
+C
+      P(1,1)=PAATI(0,ISTRA)+POTATI(0,ISTRA)+PRFAAI(0,ISTRA)+
+     .       PGENAI(0,ISTRA)
+      P(1,2)=PMATI(0,ISTRA)+PRFMAI(0,ISTRA)
+      P(1,3)=PIATI(0,ISTRA)+PRFIAI(0,ISTRA)
+      P(2,1)=PAMLI(0,ISTRA)+PRFAMI(0,ISTRA)
+      P(2,2)=PMMLI(0,ISTRA)+POTMLI(0,ISTRA)+PRFMMI(0,ISTRA)+
+     .       PGENMI(0,ISTRA)
+      P(2,3)=PIMLI(0,ISTRA)+PRFIMI(0,ISTRA)
+      P(3,1)=PAIOI(0,ISTRA)+PRFAII(0,ISTRA)
+      P(3,2)=PMIOI(0,ISTRA)+PRFMII(0,ISTRA)
+      P(3,3)=PIIOI(0,ISTRA)+POTIOI(0,ISTRA)+PRFIII(0,ISTRA)+
+     .       PGENII(0,ISTRA)
+C
+      B(1)=-(PPATI(0,ISTRA)+WTOTA(0,ISTRA))
+      B(2)=-(PPMLI(0,ISTRA)+WTOTM(0,ISTRA))
+      B(3)=-(PPIOI(0,ISTRA)+WTOTI(0,ISTRA))
+C
+      ICOL=0
+      IROW=0
+      DO 1 I=1,3
+        LROW(I)=P(I,1)**2+P(I,2)**2+P(I,3)**2.GT.EPS30
+        LCOLM(I)=P(1,I)**2+P(2,I)**2+P(3,I)**2.GT.EPS30
+        IF (LROW(I)) IROW=IROW+1
+        IF (LCOLM(I)) ICOL=ICOL+1
+1     CONTINUE
+C
+      IF (IROW.EQ.0) THEN
+C  NO ROW IS NON ZERO, I.E. NO PARTICLES FOLLOWED
+        GOTO 1000
+C
+      ELSEIF (IROW.EQ.1) THEN
+C  ONLY ONE ROW (NO. I) IS NON ZERO, I.E., ONLY ATOMS, ONLY MOLECULES
+C                                    OR  ONLY TEST IONS ARE FOLLOWED
+         DO 10 I=1,3
+           IF (LROW(I)) THEN
+             IF (LCOLM(1)) THEN
+               FC(1)=(B(1)-P(I,2)-P(I,3))/P(I,1)
+             ELSEIF (LCOLM(2)) THEN
+               FC(2)=(B(2)-P(I,3))/P(I,2)
+             ELSE
+C  NOTHING TO BE DONE, ALL FC'S ARE 1.
+             ENDIF
+           ENDIF
+10       CONTINUE
+C
+C
+      ELSEIF (IROW.EQ.2) THEN
+C  TWO ROWS ARE NON ZERO
+        J1=0
+        J2=0
+C  DETERMINE THE INDICES FOR THE NON ZERO ROWS
+        DO 20 J=1,3
+          IF (LROW(J)) THEN
+            IF (J1.EQ.0) THEN
+              J1=J
+            ELSE
+              J2=J
+            ENDIF
+          ENDIF
+20      CONTINUE
+C
+        IF (ICOL.EQ.1) THEN
+C  ONLY ONE COLUMN IS NON ZERO
+          DO 30 I=1,3
+            IF (LCOLM(I)) FC(I)=B(J1)/P(J1,I)
+30        CONTINUE
+C
+        ELSE
+C  MORE THAN ONE COLUMN IS NON ZERO
+          I1=0
+          I2=0
+          IF (ICOL.EQ.2) THEN
+C  DETERMINE THE INDICES FOR THE NON ZERO COLUMNS
+            DO 40 I=1,3
+              IF (LCOLM(I)) THEN
+                IF (I1.EQ.0) THEN
+                  I1=I
+                ELSE
+                  I2=I
+                ENDIF
+              ENDIF
+40          CONTINUE
+C
+          ELSE
+            I1=1
+            I2=2
+            B(J1)=B(J1)-P(J1,3)
+            B(J2)=B(J2)-P(J2,3)
+          ENDIF
+C
+          FNEN=P(J1,I1)*P(J2,I2)-P(J2,I1)*P(J1,I2)
+          IF (ABS(FNEN).GT.EPS12) THEN
+            FC(I1)=(B(J1)*P(J2,I2)-B(J2)*P(J1,I2))/FNEN
+            IF (ABS(P(J1,I2)).GT.EPS12) THEN
+              FC(I2)=(B(J1)-P(J1,I1)*FC(I1))/P(J1,I2)
+            ELSEIF (ABS(P(J2,I2)).GT.EPS12) THEN
+              FC(I2)=(B(J2)-P(J2,I1)*FC(I1))/P(J2,I2)
+            ENDIF
+          ENDIF
+        ENDIF
+C
+C
+      ELSEIF (IROW.EQ.3) THEN
+C
+        IF (ICOL.EQ.1) THEN
+          DO 50 I=1,3
+            IF (LCOLM(I)) FC(I)=B(1)/P(1,I)
+50        CONTINUE
+C
+        ELSEIF (ICOL.EQ.2) THEN
+          I1=0
+          I2=0
+C  DETERMINE THE INDICES FOR THE NON ZERO COLUMNS
+          DO 60 I=1,3
+            IF (LCOLM(I)) THEN
+              IF (I1.EQ.0) THEN
+                I1=I
+              ELSE
+                I2=I
+              ENDIF
+            ENDIF
+60        CONTINUE
+C
+          FNEN=P(1,I1)*P(2,I2)-P(2,I1)*P(1,I2)
+          IF (ABS(FNEN).GT.EPS12) THEN
+            FC(I1)=(B(1)*P(2,I2)-B(2)*P(1,I2))/FNEN
+            IF (ABS(P(1,I2)).GT.EPS12) THEN
+              FC(I2)=(B(1)-P(1,I1)*FC(I1))/P(1,I2)
+            ELSEIF (ABS(P(2,I2)).GT.EPS12) THEN
+              FC(I2)=(B(2)-P(2,I1)*FC(I1))/P(2,I2)
+            ENDIF
+          ENDIF
+C
+        ELSE
+C  THE WHOLE MATRIX IS TO BE USED
+          P11=P(1,1)
+          P21=P(2,1)
+          P31=P(3,1)
+          P12=P(1,2)
+          P22=P(2,2)
+          P32=P(3,2)
+          P13=P(1,3)
+          P23=P(2,3)
+          P33=P(3,3)
+          B1=B(1)
+          B2=B(2)
+          B3=B(3)
+          dta=deter(p11,p21,p31,
+     .              p12,p22,p32,
+     .              p13,p23,p33)
+          dtb1=deter(b1,b2,b3,
+     .               p12,p22,p32,
+     .               p13,p23,p33)
+          dtb2=deter(p11,p21,p31,
+     .               b1,b2,b3,
+     .               p13,p23,p33)
+          dtb3=deter(p11,p21,p31,
+     .               p12,p22,p32,
+     .               b1,b2,b3)
+          fc(1)=dtb1/(dta+1.d-30)
+          fc(2)=dtb2/(dta+1.d-30)
+          fc(3)=dtb3/(dta+1.d-30)
+        ENDIF
+      ENDIF
+C
+1000  CONTINUE
+      CALL LEER(1)
+      WRITE (6,*) 'EIRENE RECOMMENDED RESCALING OF VOLUME AVERAGED '
+      WRITE (6,*) 'TALLIES DUE TO STATISTICAL ERRORS IN BALANCE '
+      CALL MASR3 ('FATM,FMOL,FION          ',FC(1),FC(2),FC(3))
+      CALL LEER(2)
+C
+      FA=FC(1)
+      FM=FC(2)
+      FI=FC(3)
+C
+      RETURN
+      END
+C
+C
+C        **************
+C        *            *
+C        * STATISTICS *
+C        *            *
+C        **************
+C
+C       SUBROUTINE STATIS
+C
+C       SUBROUTINE FGAUSS
+C       SUBROUTINE FMAXWL
+C       SUBROUTINE FCOSIN
+C       SUBROUTINE FISOTR
+C       SUBROUTINE FPOLYT
+C       FUNCTION   FTHOMP(UB,EMAX)
+C
+C
+C
+C
+      SUBROUTINE STATIS
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CUPD
+      USE CGRID
+      USE CSDVI
+      USE COUTAU
+      USE CSPEI
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: XN, FSIG, ZFLUX
+      INTEGER, INTENT(IN) :: NBIN, NRIN, NPIN, NTIN, NSIN
+      LOGICAL, INTENT(IN) :: LP, LT
+      REAL(DP) :: VECTOR(NRAD), VECTRC(2,NRAD),
+     .          SD(0:NRAD),   SDC(2,0:NRAD)
+      INTEGER, ALLOCATABLE, SAVE :: IADD(:),    IGFF(:),
+     .                              IADDW(:),   IGFFW(:),
+     .                              IADDC(:,:), IGFFC(:,:),
+     .                              IND(:,:),   IIND(:),    INDSS(:,:)
+      REAL(DP) :: D1, DS1, D2S, DS2, DSA, DD22, DA1, DD11, D2, DD12,
+     .          ZFLUXQ, DS, ZNM, SD2S, SD2, SG2, SG, DA, D, DD, DA2,
+     .          D2S11, D2S22, D2S12, SG12, SG1, DSA1, DSA2, 
+     .          SAV, SD1S, SD1, XNM
+      INTEGER :: ISCO2, NR1, NP2, NT3, NRW, NSB, NCLMTS, INP, IGF, IC,
+     .           I, IRU, IIN, J, IR, IGS,
+     .           ICO, INDX, INDEX1, INDEX2, IS, ITL2, ISCO1, ITL1, IGE,
+     .           NSYM, IGI, ITL, ISCO, NSYH, J1, J2, IP, IG, IT
+C
+!pb      SAVE
+C
+      ENTRY STATS0
+
+      IMETCL = 0
+      NCLMT = 0
+      LMETSP = .FALSE.
+
+      IF (NSIGI.EQ.0) RETURN
+C
+      IF (.NOT.ALLOCATED(IADD)) THEN
+        AllOCATE (IADD(NSD)) 
+        AllOCATE (IGFF(NSD))
+        AllOCATE (IADDW(NSDW))  
+        AllOCATE (IGFFW(NSDW))
+        AllOCATE (IADDC(2,NCV)) 
+        AllOCATE (IGFFC(2,NCV))
+        AllOCATE (IND(NRTAL,8))  
+        AllOCATE (IIND(NRTAL)) 
+        AllOCATE (INDSS(NRTAL,8))
+      END IF
+
+      CALL INDTAL(IND,NRTAL,NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      DO IR=1,NSBOX_TAL
+        IIND(IR)=0
+        IIN=0
+        DO J=1,8
+          IF (IND(IR,J).NE.0) THEN
+            IIND(IR)=IIND(IR)+1
+            IIN=IIN+1
+            INDSS(IR,IIN)=J
+          ENDIF
+        ENDDO
+      ENDDO
+C
+      DO 101 J=1,NSIGVI
+        IGFF(J)=NFIRST(IIH(J))
+        IADD(J)=NADDV(IIH(J))
+101   CONTINUE
+C
+      DO 102 J=1,NSIGCI
+        IGFFC(1,J)=NFIRST(IIHC(1,J))
+        IGFFC(2,J)=NFIRST(IIHC(2,J))
+        IADDC(1,J)=NADDV(IIHC(1,J))
+        IADDC(2,J)=NADDV(IIHC(2,J))
+102   CONTINUE
+C
+      DO 108 J=1,NSIGSI
+        IGFFW(J)=NFRSTW(IIHW(J))
+        IADDW(J)=NADDW(IIHW(J))
+108   CONTINUE
+C
+      RETURN
+C
+      ENTRY STATS1(NBIN,NRIN,NPIN,NTIN,NSIN,LP,LT)
+C
+      NSB=NBIN
+      NR1=NRIN
+      NP2=NPIN
+      NT3=NTIN
+      NRW=NSIN
+
+      IF ((NSIGVI > 0) .OR. (NSIGCI > 0)) THEN
+       NCLMTS = NCLMT
+       DO I=1,NCLMT
+         IR = ICLMT(I)
+         DO IIN=2,IIND(IR)
+           J=INDSS(IR,IIN)
+           IRU=IND(IR,J)
+           IF (IMETCL(IRU) == 0) THEN
+             NCLMTS = NCLMTS+1
+             IMETCL(IRU) = NCLMTS
+             ICLMT(NCLMTS) = IRU
+           END IF
+         END DO
+       END DO
+      END IF
+C
+C
+      IF (NSIGVI.EQ.0) GOTO 1020
+C
+      DO 1012 IC=1,NSIGVI
+        INP=IADD(IC)
+        IGF=IGFF(IC)
+        IGS=IGH(IC)
+        ITL=IIH(IC)
+        IF (NSPAN(ITL) == 0) THEN
+          ISCO = 1
+        ELSE
+          ISCO = 0
+          IF (IGS == 0) THEN
+            IF ( ANY(LMETSP(NSPAN(ITL):NSPEN(ITL))) ) ISCO = 1
+          ELSE
+            IF (LMETSP(NSPAN(ITL)+IGS-1)) ISCO = 1
+          END IF
+        END IF
+        IF (ISCO == 0) GOTO 1012
+C
+        IF (.NOT.LP.AND..NOT.LT) GOTO 1005
+        IF (IGS.LE.0) THEN
+          IGI=1
+          IGE=IGF
+        ELSE
+          IGI=IGS
+          IGE=IGS
+        ENDIF
+        IF (LP) THEN
+          NSYM=NP2
+          NSYH=(NSYM-1)/2
+          DO 1003 IG=IGI,IGE
+          DO 1003 IR=1,NR1
+          DO 1003 IT=1,NT3
+          DO 1003 IP=1,NSYH
+                J1=IR+((IT-1)*NP2+IP-1)*NR1
+                J2=IR+((IT-1)*NP2+NSYM-IP-1)*NR1
+                INDEX1=INP+(J1-1)*IGF+IG
+                INDEX2=INP+(J2-1)*IGF+IG
+                SAV=(ESTIMV(INP+IG,J1)+ESTIMV(INP+IG,J2))*0.5
+                ESTIMV(INP+IG,J1)=SAV
+                ESTIMV(INP+IG,J2)=SAV
+1003      CONTINUE
+        ENDIF
+        IF (LT) THEN
+          NSYM=NT3
+          NSYH=(NSYM-1)/2
+          DO 1004 IG=IGI,IGE
+          DO 1004 IR=1,NR1
+          DO 1004 IP=1,NP2
+          DO 1004 IT=1,NSYH
+                J1=IR+((IT-1)*NP2+IP-1)*NR1
+                J2=IR+((NSYM-IT-1)*NP2+IP-1)*NR1
+                INDEX1=INP+(J1-1)*IGF+IG
+                INDEX2=INP+(J2-1)*IGF+IG
+                SAV=(ESTIMV(INP+IG,J1)+ESTIMV(INP+IG,J2))*0.5
+                ESTIMV(INP+IG,J1)=SAV
+                ESTIMV(INP+IG,J2)=SAV
+1004      CONTINUE
+        ENDIF
+1005    CONTINUE
+C
+        IF (IGS.NE.0) THEN
+           DO ICO = 1,NCLMT
+             IR = ICLMT(ICO)
+             INDX=INP+(IR-1)*IGF+IGS
+             VECTOR(ICO)=ESTIMV(INP+IGS,IR)
+           END DO
+        ELSE
+          DO 1014 ICO=1,NCLMT
+            VECTOR(ICO)=0.
+1014      CONTINUE
+          DO 1015 IS=1,IGF
+          DO 1015 ICO=1,NCLMT
+            IR = ICLMT(ICO)
+            INDX=INP+(IR-1)*IGF+IS
+            VECTOR(ICO)=VECTOR(ICO)+ESTIMV(INP+IS,IR)
+1015      CONTINUE
+        ENDIF
+
+        SD1S = 0.D0
+        SD = 0.D0
+        DO ICO = 1,NCLMT
+          IR = ICLMT(ICO)
+          SD1 = VECTOR(ICO)-SDVIA(IC,IR)
+          SD1S=SD1S+SD1
+          SDVIA(IC,IR)=VECTOR(ICO)
+          SD(IR) = SD1
+          DO IIN=2,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO ICO = 1,NCLMTS
+          IR = ICLMT(ICO)
+          SD1=SD(IR)
+          SIGMA(IC,IR)=SIGMA(IC,IR)+SD1*SD1
+        END DO
+        SGMS(IC)=SGMS(IC)+SD1S*SD1S
+1012  CONTINUE
+C
+C
+1020  CONTINUE
+      IF (NSIGSI.EQ.0) GOTO 1030
+      DO 1022 IC=1,NSIGSI
+        INP=IADDW(IC)
+        IGF=IGFFW(IC)
+        IGS=IGHW(IC)
+        IF (IGS.NE.0) THEN
+          DO 1023 IR=1,NRW
+            INDX=INP+(IR-1)*IGF+IGS
+            VECTOR(IR)=ESTIMS(INP+IGS,IR)
+1023      CONTINUE
+        ELSE
+          DO 1024 IR=1,NRW
+            VECTOR(IR)=0.
+1024      CONTINUE
+          DO 1025 IS=1,IGF
+          DO 1025 IR=1,NRW
+            INDX=INP+(IR-1)*IGF+IS
+            VECTOR(IR)=VECTOR(IR)+ESTIMS(INP+IS,IR)
+1025      CONTINUE
+        ENDIF
+C
+        SD1S=0.
+        DO 1021 IR=1,NRW
+          SD1=VECTOR(IR)-SDVIAW(IC,IR)
+          SD1S=SD1S+SD1
+          SIGMAW(IC,IR)=SIGMAW(IC,IR)+SD1*SD1
+          SDVIAW(IC,IR)=VECTOR(IR)
+1021    CONTINUE
+        SGMWS(IC)=SGMWS(IC)+SD1S*SD1S
+1022  CONTINUE
+C
+1030  CONTINUE
+C
+      IF (NSIGCI.EQ.0) GOTO 1050
+C
+      DO 1032 IC=1,NSIGCI
+        ITL1=IIHC(1,IC)
+        ITL2=IIHC(2,IC)
+        IF (NSPAN(ITL1) == 0) THEN
+          ISCO1 = 1
+        ELSE
+          ISCO1 = 0
+          IF (IGHC(1,IC) == 0) THEN
+            IF ( ANY(LMETSP(NSPAN(ITL1):NSPEN(ITL1))) ) ISCO1 = 1
+          ELSE
+            IF (LMETSP(NSPAN(ITL1)+IGHC(1,IC)-1)) ISCO1 = 1
+          END IF
+        END IF
+        IF (NSPAN(ITL2) == 0) THEN
+          ISCO2 = 1
+        ELSE
+          ISCO2 = 0
+          IF (IGHC(2,IC) == 0) THEN
+            IF ( ANY(LMETSP(NSPAN(ITL2):NSPEN(ITL2))) ) ISCO2 = 1
+          ELSE
+            IF (LMETSP(NSPAN(ITL2)+IGHC(2,IC)-1)) ISCO2 = 1
+          END IF
+        END IF
+        IF (ISCO1+ISCO2 == 0) GOTO 1032
+C
+        DO 1037 I=1,2
+          INP=IADDC(I,IC)
+          IGF=IGFFC(I,IC)
+          IGS=IGHC(I,IC)
+C
+          IF (.NOT.LP.AND..NOT.LT) GOTO 1035
+          IF (IGS.LE.0) THEN
+            IGI=1
+            IGE=IGF
+          ELSE
+            IGI=IGS
+            IGE=IGS
+          ENDIF
+          IF (LP) THEN
+            NSYM=NP2
+            NSYH=(NSYM-1)/2
+            DO 1033 IG=IGI,IGE
+            DO 1033 IR=1,NR1
+            DO 1033 IT=1,NT3
+            DO 1033 IP=1,NSYH
+                  J1=IR+((IT-1)*NP2+IP-1)*NR1
+                  J2=IR+((IT-1)*NP2+NSYM-IP-1)*NR1
+                  INDEX1=INP+(J1-1)*IGF+IG
+                  INDEX2=INP+(J2-1)*IGF+IG
+                  SAV=(ESTIMV(INP+IG,J1)+ESTIMV(INP+IG,J2))*0.5
+                  ESTIMV(INP+IG,J1)=SAV
+                  ESTIMV(INP+IG,J2)=SAV
+1033        CONTINUE
+          ENDIF
+          IF (LT) THEN
+            NSYM=NT3
+            NSYH=(NSYM-1)/2
+            DO 1034 IG=IGI,IGE
+            DO 1034 IR=1,NR1
+            DO 1034 IP=1,NP2
+            DO 1034 IT=1,NSYH
+                  J1=IR+((IT-1)*NP2+IP-1)*NR1
+                  J2=IR+((NSYM-IT-1)*NP2+IP-1)*NR1
+                  INDEX1=INP+(J1-1)*IGF+IG
+                  INDEX2=INP+(J2-1)*IGF+IG
+                  SAV=(ESTIMV(INP+IG,J1)+ESTIMV(INP+IG,J2))*0.5
+                  ESTIMV(INP+IG,J1)=SAV
+                  ESTIMV(INP+IG,J2)=SAV
+1034        CONTINUE
+          ENDIF
+1035      CONTINUE
+C
+          IF (IGS.NE.0) THEN
+            DO ICO = 1,NCLMT
+              IR = ICLMT(ICO)
+              INDX=INP+(IR-1)*IGF+IGS
+              VECTRC(I,ICO)=ESTIMV(INP+IGS,IR)
+            END DO
+          ELSE
+            DO 1044 ICO=1,NCLMT
+              VECTRC(I,ICO)=0.
+1044        CONTINUE
+            DO 1045 IS=1,IGF
+            DO 1045 ICO=1,NCLMT
+              IR = ICLMT(ICO)
+              INDX=INP+(IR-1)*IGF+IS
+              VECTRC(I,ICO)=VECTRC(I,ICO)+ESTIMV(INP+IS,IR)
+1045        CONTINUE
+          ENDIF
+1037    CONTINUE
+C
+C
+        SD1S = 0.D0
+        SD2S = 0.D0
+        SDC = 0.D0
+        DO ICO = 1,NCLMT
+          IR = ICLMT(ICO)
+          SD1 = VECTRC(1,ICO)-SDVIAC(1,IC,IR)
+          SD2 = VECTRC(2,ICO)-SDVIAC(2,IC,IR)
+          SD1S=SD1S+SD1
+          SD2S=SD2S+SD2
+          SDVIAC(1,IC,IR)=VECTRC(1,ICO)
+          SDVIAC(2,IC,IR)=VECTRC(2,ICO)
+          SDC(1,IR) = SD1
+          SDC(2,IR) = SD2
+          DO IIN=2,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SDC(1,IRU)=SDC(1,IRU)+SD1
+            SDC(2,IRU)=SDC(2,IRU)+SD2
+          END DO
+        END DO
+C
+        DO ICO = 1,NCLMTS
+          IR = ICLMT(ICO)
+          SD1=SDC(1,IR)
+          SD2=SDC(2,IR)
+          SIGMAC(0,IC,IR)=SIGMAC(0,IC,IR)+SD1*SD2
+          SIGMAC(1,IC,IR)=SIGMAC(1,IC,IR)+SD1*SD1
+          SIGMAC(2,IC,IR)=SIGMAC(2,IC,IR)+SD2*SD2
+        END DO
+        SGMCS(0,IC)=SGMCS(0,IC)+SD1S*SD2S
+        SGMCS(1,IC)=SGMCS(1,IC)+SD1S*SD1S
+        SGMCS(2,IC)=SGMCS(2,IC)+SD2S*SD2S
+1032  CONTINUE
+C
+C
+1050  CONTINUE
+      RETURN
+C
+      ENTRY STATS2(XN,FSIG,ZFLUX)
+C
+C  1. FALL  ALLE BEITRAEGE GLEICHES VORZEICHEN: SIG ZWISCHEN 0 UND 1
+C  2. FALL  NEGATIVE UND POSITIVE BEITRAGE KOMMEN VOR:
+C           LT. FORMEL SIND AUCH WERTE GROESSER 1  MOEGLICH.
+C
+      XNM=XN-1.
+      IF (XNM.LE.0.D0) RETURN
+      ZFLUXQ=ZFLUX*ZFLUX
+C
+      IF (NSIGVI.EQ.0) GOTO 2200
+C
+      DO 2112 IC=1,NSIGVI
+        INP=IADD(IC)
+        IGF=IGFF(IC)
+        IGS=IGH(IC)
+        IF (IGS.NE.0) THEN
+          DO 2113 IR=1,NSB
+            INDX=INP+(IR-1)*IGF+IGS
+            VECTOR(IR)=ESTIMV(INP+IGS,IR)
+2113      CONTINUE
+        ELSE
+          DO 2114 IR=1,NSB
+            VECTOR(IR)=0.
+2114      CONTINUE
+          DO 2115 IS=1,IGF
+          DO 2115 IR=1,NSB
+            INDX=INP+(IR-1)*IGF+IS
+            VECTOR(IR)=VECTOR(IR)+ESTIMV(INP+IS,IR)
+2115      CONTINUE
+        ENDIF
+C
+        SD=0.
+        DS=0.
+        DO 2011 IR=1,NSB
+          SD1=VECTOR(IR)
+          DS=DS+SD1
+          DO 2016 IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+2016      CONTINUE
+2011    CONTINUE
+C
+        DO 2111 IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA(IC,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION FOR CURRENT STRATUM
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA(IC,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV(IC,IR)=STV(IC,IR)+SG2*ZFLUXQ/XNM/XN
+          EE(IC,IR)=EE(IC,IR)+D*ZFLUX/XN
+2111    CONTINUE
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS(IC)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS(IC)=SG*FSIG
+C
+        STVS(IC)=STVS(IC)+SG2*ZFLUXQ/XNM/XN
+        EES(IC)=EES(IC)+DS*ZFLUX/XN
+2112  CONTINUE
+C
+2200  CONTINUE
+      IF (NSIGSI.EQ.0) GOTO 2300
+      DO 2212 IC=1,NSIGSI
+        INP=IADDW(IC)
+        IGF=IGFFW(IC)
+        IGS=IGHW(IC)
+        DS=0.
+        IF (IGS.NE.0) THEN
+          DO 2213 IR=1,NRW
+            INDX=INP+(IR-1)*IGF+IGS
+            VECTOR(IR)=ESTIMS(INP+IGS,IR)
+2213      CONTINUE
+        ELSE
+          DO 2214 IR=1,NRW
+            VECTOR(IR)=0.
+2214      CONTINUE
+          DO 2215 IS=1,IGF
+          DO 2215 IR=1,NRW
+            INDX=INP+(IR-1)*IGF+IS
+            VECTOR(IR)=VECTOR(IR)+ESTIMS(INP+IS,IR)
+2215      CONTINUE
+        ENDIF
+        DO 2211 IR=1,NRW
+          D=VECTOR(IR)
+          DS=DS+D
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMAW(IC,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION FOR CURRENT STRATUM
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMAW(IC,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STVW(IC,IR)=STVW(IC,IR)+SG2*ZFLUXQ/XNM/XN
+          FF(IC,IR)=FF(IC,IR)+D*ZFLUX/XN
+2211    CONTINUE
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMWS(IC)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMWS(IC)=SG*FSIG
+C
+        STVWS(IC)=STVWS(IC)+SG2*ZFLUXQ/XNM/XN
+        FFS(IC)=FFS(IC)+DS*ZFLUX/XN
+2212  CONTINUE
+C
+2300  CONTINUE
+C
+      IF (NSIGCI.EQ.0) GOTO 2400
+C
+      DO 2312 IC=1,NSIGCI
+        DO 2317 I=1,2
+          INP=IADDC(I,IC)
+          IGF=IGFFC(I,IC)
+          IGS=IGHC(I,IC)
+          IF (IGS.NE.0) THEN
+            DO 2313 IR=1,NSB
+              INDX=INP+(IR-1)*IGF+IGS
+              VECTRC(I,IR)=ESTIMV(INP+IGS,IR)
+2313        CONTINUE
+          ELSE
+            DO 2314 IR=1,NSB
+              VECTRC(I,IR)=0.
+2314        CONTINUE
+            DO 2315 IS=1,IGF
+            DO 2315 IR=1,NSB
+              INDX=INP+(IR-1)*IGF+IS
+              VECTRC(I,IR)=VECTRC(I,IR)+ESTIMV(INP+IS,IR)
+2315        CONTINUE
+          ENDIF
+2317    CONTINUE
+C
+        SDC=0.
+        DS1=0.
+        DS2=0.
+        DO 2311 IR=1,NSB
+          SD1=VECTRC(1,IR)
+          SD2=VECTRC(2,IR)
+          DS1=DS1+SD1
+          DS2=DS2+SD2
+          DO 2316 IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SDC(1,IRU)=SDC(1,IRU)+SD1
+            SDC(2,IRU)=SDC(2,IRU)+SD2
+2316      CONTINUE
+2311    CONTINUE
+        DO 2411 IR=1,NSB
+          D1=SDC(1,IR)
+          D2=SDC(2,IR)
+          DD12=D1*D2
+          DD11=D1*D1
+          DD22=D2*D2
+          DA1=ABS(D1)
+          DA2=ABS(D2)
+          SG12=         SIGMAC(0,IC,IR)-DD12/XN
+          SG1 =MAX(0._DP,SIGMAC(1,IC,IR)-DD11/XN)
+          SG2 =MAX(0._DP,SIGMAC(2,IC,IR)-DD22/XN)
+C ABSOLUTE STANDARD DEVIATION AND COVARIANCES
+          SIGMAC(0,IC,IR)=SG12/XNM/XN
+          SIGMAC(1,IC,IR)=SQRT(SG1/XNM/XN)
+          SIGMAC(2,IC,IR)=SQRT(SG2/XNM/XN)
+2411    CONTINUE
+        D2S12=DS1*DS2
+        D2S11=DS1*DS1
+        D2S22=DS2*DS2
+        DSA1=ABS(DS1)
+        DSA2=ABS(DS2)
+        SG12=         SGMCS(0,IC)-D2S12/XN
+        SG1 =MAX(0._DP,SGMCS(1,IC)-D2S11/XN)
+        SG2 =MAX(0._DP,SGMCS(2,IC)-D2S22/XN)
+        SGMCS(0,IC)=SG12/XNM/XN
+        SGMCS(1,IC)=SQRT(SG1/XNM/XN)
+        SGMCS(2,IC)=SQRT(SG2/XNM/XN)
+2312  CONTINUE
+C
+2400  RETURN
+
+      ENTRY STATS3
+      
+      IF (ALLOCATED(IADD)) THEN
+         DEAllOCATE (IADD) 
+         DEAllOCATE (IGFF)
+         DEAllOCATE (IADDW)  
+         DEAllOCATE (IGFFW)
+         DEAllOCATE (IADDC) 
+         DEAllOCATE (IGFFC)
+         DEAllOCATE (IND)  
+         DEAllOCATE (IIND) 
+         DEAllOCATE (INDSS)
+      END IF
+
+      RETURN
+      END
+C
+      SUBROUTINE STORE(IFLAG)
+
+C  PURPOSE: STORE TRAJECTORIES
+C  TO BE WRITTEN
+
+      IMPLICIT NONE
+
+      INTEGER :: IFIRST, IFLAG
+      DATA IFIRST/0/
+
+      IF (IFIRST.EQ.0) THEN
+        IFIRST=1
+        OPEN (UNIT=16,ACCESS='SEQUENTIAL',FORM='UNFORMATTED')
+      ENDIF
+      GOTO (10,20,30,40,50,60,70,80,90),IFLAG
+      WRITE (6,*) 'IFLAG OUT OF RANGE IN SUBR. STORE '
+      WRITE (6,*) 'EXIT CALLED '
+      CALL EXIT
+C  LOCATE
+10    CONTINUE
+20    CONTINUE
+C  IONIZATION
+30    CONTINUE
+40    CONTINUE
+50    CONTINUE
+C  SURFACE
+60    CONTINUE
+70    CONTINUE
+80    CONTINUE
+C  NEW CELL
+90    CONTINUE
+      RETURN
+      END
+C
+C
+      SUBROUTINE UPDATE
+C
+C ESTIMATORS ARE UPDATED FOR EACH TRACK TAKING T/VEL SEC.
+C T (CM) IS STORED ON CLPD ARRAY FOR ONE OR MORE CELLS, THAT HAVE
+C BEEN CROSSED WITHOUT COLLISION.
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CUPD
+      USE CGRID
+      USE CSPEZ
+      USE CGEOM
+      USE COMPRT
+      USE CSDVI
+      USE COMXS
+
+      IMPLICIT NONE
+C
+      REAL(DP) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
+     .          XSTORV2(NSTORV,N2ND+N3RD)
+      REAL(DP) :: WTRSIG, DIST, WTR, WTRE0, WV, VELQ
+      INTEGER :: IRD, IACX, IAT1, IRCX, I, IRDO, IIO1, IMCX, IML1,
+     .           IRPI, IPL, IAPI, IICX, IIEI, IMEI, IML2, IMEL, IAT, IA,
+     .           IM, IAT2, IPL1, IIO, IP, IML, IRDS, II, IIO2, NPBGK,
+     .           IAEL, IPL2, IREL, IAEI, IBGK
+C
+C  ESTIMATORS FOR ATOMS
+C
+      ENTRY UPDATM (XSTOR2,XSTORV2)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKA(IATM)
+C
+      IF (NADVI.GT.0) CALL UPTUSR(XSTOR2,XSTORV2,WV)
+      IF (NCPVI.GT.0) CALL UPTCOP(XSTOR2,XSTORV2,WV)
+      IF (NPBGK.GT.0) CALL UPTBGK(XSTOR2,XSTORV2,WV,NPBGK)
+C
+      VELQ=VEL*VEL
+C
+      DO 51 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        EDENA(IATM,IRD)=EDENA(IATM,IRD)+WTRE0
+        PDENA(IATM,IRD)=PDENA(IATM,IRD)+WTR
+        LMETSP(IATM)=.TRUE.
+C
+C  ESTIMATORS FOR SOURCES AND SINKS
+C  NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C  POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 51
+C
+        XSTOR(:,:) = XSTOR2(:,:,I)
+        XSTORV(:)  = XSTORV2(:,I)
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        PAAT(IATM,IRD)=PAAT(IATM,IRD)-WTRSIG
+        EAAT(IRD)     =EAAT(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGACX(IATM,0,0).EQ.0) GOTO 43
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 44  IACX=1,NACXI(IATM)
+          IRCX=LGACX(IATM,IACX,0)
+          IPLS=LGACX(IATM,IACX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              PAAT(IAT1,IRD)= PAAT(IAT1,IRD)+WTRSIG
+              LMETSP(IAT1)=.TRUE.
+C           ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+C             IML1=N1STX(IRCX,2)
+C             LOGMOL(IML1,ISTRA)=.TRUE.
+C             PAML(IML1,IRD)= PAML(IML1,IRD)+WTRSIG
+C             LMETSP(NATMI+IML1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              PAIO(IIO1,IRD)= PAIO(IIO1,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              PAPL(IPL1,IRD)= PAPL(IPL1,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL1)=.TRUE.
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              PAAT(IAT2,IRD)= PAAT(IAT2,IRD)+WTRSIG
+              LMETSP(IAT2)=.TRUE.
+C           ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+C             IML2=N2NDX(IRCX,2)
+C             LOGMOL(IML2,ISTRA)=.TRUE.
+C             PAML(IML2,IRD)= PAML(IML2,IRD)+WTRSIG
+C             LMETSP(NATMI+IML2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              PAIO(IIO2,IRD)= PAIO(IIO2,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              PAPL(IPL2,IRD)= PAPL(IPL2,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL2)=.TRUE.
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,3).NE.0) THEN
+            EAAT(IRD)=EAAT(IRD)          +WTRSIG*E0
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            EAPL(IRD)     =EAPL(IRD)     -WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              EAAT(IRD)     = EAAT(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+C           ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+C             IML1=N1STX(IRCX,2)
+C             LOGMOL(IML1,ISTRA)=.TRUE.
+C             EAML(IRD)     = EAML(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              EAIO(IRD)     = EAIO(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              EAPL(IRD)     = EAPL(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              EAAT(IRD)     = EAAT(IRD)     +WTRSIG*E0
+C           ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+C             IML2=N2NDX(IRCX,2)
+C             LOGMOL(IML2,ISTRA)=.TRUE.
+C             EAML(IRD)     = EAML(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              EAIO(IRD)     = EAIO(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              EAPL(IRD)     = EAPL(IRD)     +WTRSIG*E0
+            ENDIF
+          ENDIF
+C
+44      CONTINUE
+43      CONTINUE
+C
+C  ELASTIC NEUTRAL BULK-ION COLLISION CONTRIBUTION
+C
+        IF (LGAEL(IATM,0,0).EQ.0) GOTO 60
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 61  IAEL=1,NAELI(IATM)
+          IREL=LGAEL(IATM,IAEL,0)
+          IPLS=LGAEL(IATM,IAEL,1)
+C  DO NOT UPDATE BGK TALLIES HERE
+          IBGK=NPBGKP(IPLS,1)
+          IF (IBGK.NE.0) GOTO 61
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVEL(IREL)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEL(IREL,1).NE.0) THEN
+            PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C  UPDATE TRACKLENGTH ESTIMATOR
+C           PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+C           PAPL(IPLS,IRD)=PAPL(IPLS,IRD)+WTRSIG
+C           LMETSP(NSPAMI+IPLS)=.TRUE.
+            PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+            LMETSP(IATM)=.TRUE.
+          ENDIF
+C
+          IF (IESTEL(IREL,3).NE.0) THEN
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+            EAAT(IRD)=EAAT(IRD)+WTRSIG*E0
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            EAPL(IRD)=EAPL(IRD)-WTRSIG*ESIGEL(IREL,1)
+C
+C  FIRST SECONDARY: = INCIDENT ION. REMAINS SAME PARTICLE BY DEFAULT
+            EAPL(IRD)=EAPL(IRD)+WTRSIG*E0
+C  SECOND SECONDARY: = INCIDENT ATOM. REMAINS SAME PARTICLE BY DEFAULT
+            EAAT(IRD)=EAAT(IRD)+WTRSIG*ESIGEL(IREL,1)
+          ENDIF
+C
+61      CONTINUE
+60      CONTINUE
+C
+C  ELECTRON IMPACT COLLISION CONTRIBUTION
+C
+        IF (LGAEI(IATM,0).EQ.0) GOTO 57
+C
+        DO 55 IAEI=1,NAEII(IATM)
+          IRDS=LGAEI(IATM,IAEI)
+          IF (SIGVEI(IRDS).LE.0.D0) GOTO 55
+C
+          WTRSIG=WTR*SIGVEI(IRDS)
+C
+C  COLLISION ESTIMATOR:
+C  NOT AVAILABLE, HENCE: NO NEED FOR COMPENSATION HERE
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+          PAEL(IRD)=PAEL(IRD)+WTRSIG*PELDS(IRDS)
+C
+C  POST COLLISION CONTRIBUTIONS
+          DO IA=1,IPATDS(IRDS,0)
+            IAT=IPATDS(IRDS,IA)
+            LOGATM(IAT,ISTRA)=.TRUE.
+            PAAT(IAT,IRD)=PAAT(IAT,IRD)+PATDS(IRDS,IAT)*WTRSIG
+            LMETSP(IAT)=.TRUE.
+          END DO
+          DO IM=1,IPMLDS(IRDS,0)
+            IML=IPMLDS(IRDS,IM)
+            LOGMOL(IML,ISTRA)=.TRUE.
+            PAML(IML,IRD)=PAML(IML,IRD)+PMLDS(IRDS,IML)*WTRSIG
+            LMETSP(NATMI+IML)=.TRUE.
+          END DO
+          DO II=1,IPIODS(IRDS,0)
+            IIO=IPIODS(IRDS,II)
+            LOGION(IIO,ISTRA)=.TRUE.
+            PAIO(IIO,IRD)=PAIO(IIO,IRD)+PIODS(IRDS,IIO)*WTRSIG
+            LMETSP(NSPAM+IIO)=.TRUE.
+          END DO
+          DO IP=1,IPPLDS(IRDS,0)
+            IPL=IPPLDS(IRDS,IP)
+            LOGPLS(IPL,ISTRA)=.TRUE.
+            PAPL(IPL,IRD)=PAPL(IPL,IRD)+PPLDS(IRDS,IPL)*WTRSIG
+            LMETSP(NSPAMI+IPL)=.TRUE.
+          END DO
+C
+          IF (IESTEI(IRDS,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+            EAAT(IRD)=EAAT(IRD)+WTRSIG*E0
+C
+          ELSE
+C
+            EAEL(IRD)=EAEL(IRD)+WTRSIG*ESIGEI(IRDS,5)
+            EAAT(IRD)=EAAT(IRD)+WTRSIG*ESIGEI(IRDS,1)
+            EAML(IRD)=EAML(IRD)+WTRSIG*ESIGEI(IRDS,2)
+            EAIO(IRD)=EAIO(IRD)+WTRSIG*ESIGEI(IRDS,3)
+            EAPL(IRD)=EAPL(IRD)+WTRSIG*ESIGEI(IRDS,4)
+C
+          ENDIF
+55      CONTINUE
+57      CONTINUE
+C
+C  PLASMA ION IMPACT CONTRIBUTION
+C
+        IF (LGAPI(IATM,0,0).EQ.0) GOTO 59
+        DO 58  IAPI=1,NAPII(IATM)
+          IRPI=LGAPI(IATM,IAPI,0)
+          IPLS=LGAPI(IATM,IAPI,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+
+          WTRSIG=WTR*SIGVPI(IRPI)
+C
+C  PRE COLLISION BULK ION CONTRIBUTION, ASSUME: INCIDENT ION IS LOST
+C
+          PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+          LMETSP(NSPAMI+IPLS)=.TRUE.
+          EAPL(IRD)     =EAPL(IRD)     +WTRSIG*ESIGPI(IRPI,1)
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION
+C
+          EAEL(IRD)=EAEL(IRD)+WTRSIG*ESIGPI(IRPI,2)
+          PAEL(IRD)=PAEL(IRD)+WTRSIG*PELPI(IRPI)
+C
+C SO NICHT  EAIO(IRD)     = EAIO(IRD)     +WTRSIG*E0
+          DO II=1,IPIOPI(IRPI,0)
+            IIO=IPIOPI(IRPI,II)
+            LOGION(IIO,ISTRA)=.TRUE.
+            PAIO(IIO,IRD)= PAIO(IIO,IRD)+WTRSIG*PIOPI(IRPI,IIO)
+            LMETSP(NSPAM+IIO)=.TRUE.
+          ENDDO
+C SO NICHT  EAPL(IRD)     = EAPL(IRD)     +WTRSIG*E0
+          DO IP=1,IPPLPI(IRPI,0)
+            IPL=IPPLPI(IRPI,IP)
+            LOGPLS(IPL,ISTRA)=.TRUE.
+            PAPL(IPL,IRD)= PAPL(IPL,IRD)+WTRSIG*PPLPI(IRPI,IPL)
+            LMETSP(NSPAMI+IPL)=.TRUE.
+          ENDDO
+58      CONTINUE
+59      CONTINUE
+51    CONTINUE
+      RETURN
+C
+C  ESTIMATORS FOR MOLECULES
+C
+      ENTRY UPDMOL (XSTOR2,XSTORV2)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKM(IMOL)
+C
+      IF (NADVI.GT.0) CALL UPTUSR(XSTOR2,XSTORV2,WV)
+      IF (NCPVI.GT.0) CALL UPTCOP(XSTOR2,XSTORV2,WV)
+      IF (NPBGK.GT.0) CALL UPTBGK(XSTOR2,XSTORV2,WV,NPBGK)
+C
+      VELQ=VEL*VEL
+C
+      DO 71 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        EDENM(IMOL,IRD)=EDENM(IMOL,IRD)+WTRE0
+        PDENM(IMOL,IRD)=PDENM(IMOL,IRD)+WTR
+        LMETSP(NATMI+IMOL)=.TRUE.
+C
+C    ESTIMATORS FOR SOURCES AND SINKS
+C    NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C    POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 71
+C
+        XSTOR(:,:) = XSTOR2(:,:,I)
+        XSTORV(:)  = XSTORV2(:,I)
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        PMML(IMOL,IRD)=PMML(IMOL,IRD)-WTRSIG
+        EMML(IRD)     =EMML(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGMCX(IMOL,0,0).EQ.0) GOTO 79
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 76  IMCX=1,NMCXI(IMOL)
+          IRCX=LGMCX(IMOL,IMCX,0)
+          IPLS=LGMCX(IMOL,IMCX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            PMPL(IPLS,IRD)=PMPL(IPLS,IRD)-WTRSIG
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              PMAT(IAT1,IRD)= PMAT(IAT1,IRD)+WTRSIG
+              LMETSP(IAT1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              PMML(IML1,IRD)= PMML(IML1,IRD)+WTRSIG
+              LMETSP(NATMI+IML1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              PMIO(IIO1,IRD)= PMIO(IIO1,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              PMPL(IPL1,IRD)= PMPL(IPL1,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL1)=.TRUE.
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              PMAT(IAT2,IRD)= PMAT(IAT2,IRD)+WTRSIG
+              LMETSP(IAT2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              PMML(IML2,IRD)= PMML(IML2,IRD)+WTRSIG
+              LMETSP(NATMI+IML2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              PMIO(IIO2,IRD)= PMIO(IIO2,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              PMPL(IPL2,IRD)= PMPL(IPL2,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL2)=.TRUE.
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,3).NE.0) THEN
+            EMML(IRD)=EMML(IRD)          +WTRSIG*E0
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            EMPL(IRD)     =EMPL(IRD)     -WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              EMAT(IRD)     = EMAT(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              EMML(IRD)     = EMML(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              EMIO(IRD)     = EMIO(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              EMPL(IRD)     = EMPL(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS MOLECULE IMOL
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              EMAT(IRD)     = EMAT(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              EMML(IRD)     = EMML(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              EMIO(IRD)     = EMIO(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              EMPL(IRD)     = EMPL(IRD)     +WTRSIG*E0
+            ENDIF
+          ENDIF
+C
+76      CONTINUE
+79      CONTINUE
+C
+C  ELASTIC NEUTRAL BULK-ION COLLISION CONTRIBUTION
+C
+        IF (LGMEL(IMOL,0,0).EQ.0) GOTO 80
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 81  IMEL=1,NMELI(IMOL)
+          IREL=LGMEL(IMOL,IMEL,0)
+          IPLS=LGMEL(IMOL,IMEL,1)
+C  DO NOT UPDATE BGK TALLIES HERE
+          IBGK=NPBGKP(IPLS,1)
+          IF (IBGK.NE.0) GOTO 81
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVEL(IREL)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEL(IREL,1).NE.0) THEN
+            PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C  UPDATE TRACKLENGTH ESTIMATOR
+C           PMPL(IPLS,IRD)=PMPL(IPLS,IRD)-WTRSIG
+C           PMPL(IPLS,IRD)=PMPL(IPLS,IRD)+WTRSIG
+C           LMETSP(NSPAMI+IPLS)=.TRUE.
+            PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+            LMETSP(NATMI+IMOL)=.TRUE.
+          ENDIF
+C
+          IF (IESTEL(IREL,3).NE.0) THEN
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+            EMML(IRD)=EMML(IRD)+WTRSIG*E0
+          ELSE
+            EMPL(IRD)=EMPL(IRD)-WTRSIG*ESIGEL(IREL,1)
+            EMPL(IRD)=EMPL(IRD)+WTRSIG*E0
+            EMML(IRD)=EMML(IRD)+WTRSIG*ESIGEL(IREL,1)
+          ENDIF
+C
+81      CONTINUE
+80      CONTINUE
+C
+C  ELECTRON IMPACT COLLISION CONTRIBUTION
+C
+        IF (LGMEI(IMOL,0).EQ.0) GOTO 100
+C
+        DO 90 IMEI=1,NMDSI(IMOL)
+          IRDS=LGMEI(IMOL,IMEI)
+          IF (SIGVEI(IRDS).LE.0.D0) GOTO 90
+C
+          WTRSIG=WTR*SIGVEI(IRDS)
+C
+C  COLLISION ESTIMATOR:
+C  NOT AVAILABLE, HENCE: NO NEED FOR COMPENSATION HERE
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+          PMEL(IRD)=PMEL(IRD)+WTRSIG*PELDS(IRDS)
+C
+C  POST COLLISION CONTRIBUTIONS
+          DO IA=1,IPATDS(IRDS,0)
+            IAT=IPATDS(IRDS,IA)
+            LOGATM(IAT,ISTRA)=.TRUE.
+            PMAT(IAT,IRD)=PMAT(IAT,IRD)+PATDS(IRDS,IAT)*WTRSIG
+            LMETSP(IAT)=.TRUE.
+          END DO
+          DO IM=1,IPMLDS(IRDS,0)
+            IML=IPMLDS(IRDS,IM)
+            LOGMOL(IML,ISTRA)=.TRUE.
+            PMML(IML,IRD)=PMML(IML,IRD)+PMLDS(IRDS,IML)*WTRSIG
+            LMETSP(NATMI+IML)=.TRUE.
+          END DO
+          DO II=1,IPIODS(IRDS,0)
+            IIO=IPIODS(IRDS,II)
+            LOGION(IIO,ISTRA)=.TRUE.
+            PMIO(IIO,IRD)=PMIO(IIO,IRD)+PIODS(IRDS,IIO)*WTRSIG
+            LMETSP(NSPAM+IIO)=.TRUE.
+          END DO
+          DO IP=1,IPPLDS(IRDS,0)
+            IPL=IPPLDS(IRDS,IP)
+            LOGPLS(IPL,ISTRA)=.TRUE.
+            PMPL(IPL,IRD)=PMPL(IPL,IRD)+PPLDS(IRDS,IPL)*WTRSIG
+            LMETSP(NSPAMI+IPL)=.TRUE.
+          END DO
+C
+          IF (IESTEI(IRDS,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+            EMML(IRD)=EMML(IRD)+WTRSIG*E0
+C
+          ELSE
+C
+            EMEL(IRD)=EMEL(IRD)+WTRSIG*ESIGEI(IRDS,5)
+            EMAT(IRD)=EMAT(IRD)+WTRSIG*ESIGEI(IRDS,1)
+            EMML(IRD)=EMML(IRD)+WTRSIG*ESIGEI(IRDS,2)
+            EMIO(IRD)=EMIO(IRD)+WTRSIG*ESIGEI(IRDS,3)
+            EMPL(IRD)=EMPL(IRD)+WTRSIG*ESIGEI(IRDS,4)
+C
+          ENDIF
+90      CONTINUE
+100     CONTINUE
+C
+71    CONTINUE
+      RETURN
+C
+C
+C  ESTIMATORS FOR TEST IONS
+C
+      ENTRY UPDION (XSTOR2,XSTORV2)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKI(IION)
+C
+      IF (NADVI.GT.0) CALL UPTUSR(XSTOR2,XSTORV2,WV)
+      IF (NCPVI.GT.0) CALL UPTCOP(XSTOR2,XSTORV2,WV)
+      IF (NPBGK.GT.0) CALL UPTBGK(XSTOR2,XSTORV2,WV,NPBGK)
+C
+      VELQ=VEL*VEL
+C
+      DO 111 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        EDENI(IION,IRD)=EDENI(IION,IRD)+WTRE0
+        PDENI(IION,IRD)=PDENI(IION,IRD)+WTR
+        LMETSP(NSPAM+IION)=.TRUE.
+C
+C    ESTIMATORS FOR SOURCES AND SINKS
+C    NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C    POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 111
+C
+        XSTOR(:,:) = XSTOR2(:,:,I)
+        XSTORV(:)  = XSTORV2(:,I)
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        PIIO(IION,IRD)=PIIO(IION,IRD)-WTRSIG
+        EIIO(IRD)     =EIIO(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGICX(IION,0,0).EQ.0) GOTO 119
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 116  IICX=1,NICXI(IION)
+          IRCX=LGICX(IION,IICX,0)
+          IPLS=LGICX(IION,IICX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            PIPL(IPLS,IRD)=PIPL(IPLS,IRD)-WTRSIG
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              PIAT(IAT1,IRD)= PIAT(IAT1,IRD)+WTRSIG
+              LMETSP(IAT1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              PIML(IML1,IRD)= PIML(IML1,IRD)+WTRSIG
+              LMETSP(NATMI+IML1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              PIIO(IIO1,IRD)= PIIO(IIO1,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO1)=.TRUE.
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              PIPL(IPL1,IRD)= PIPL(IPL1,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL1)=.TRUE.
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              PIAT(IAT2,IRD)= PIAT(IAT2,IRD)+WTRSIG
+              LMETSP(IAT2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              PIML(IML2,IRD)= PIML(IML2,IRD)+WTRSIG
+              LMETSP(NATMI+IML2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              PIIO(IIO2,IRD)= PIIO(IIO2,IRD)+WTRSIG
+              LMETSP(NSPAM+IIO2)=.TRUE.
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              PIPL(IPL2,IRD)= PIPL(IPL2,IRD)+WTRSIG
+              LMETSP(NSPAMI+IPL2)=.TRUE.
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,3).NE.0) THEN
+            EIIO(IRD)=EIIO(IRD)          +WTRSIG*E0
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            EIPL(IRD)     =EIPL(IRD)     -WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              EIAT(IRD)     = EIAT(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              EIML(IRD)     = EIML(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              EIIO(IRD)     = EIIO(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              EIPL(IRD)     = EIPL(IRD)     +WTRSIG*ESIGCX(IRCX,1)
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              EIAT(IRD)     = EIAT(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              EIML(IRD)     = EIML(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              EIIO(IRD)     = EIIO(IRD)     +WTRSIG*E0
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              EIPL(IRD)     = EIPL(IRD)     +WTRSIG*E0
+            ENDIF
+          ENDIF
+C
+116     CONTINUE
+119     CONTINUE
+C
+C  ELECTRON IMPACT COLLISION CONTRIBUTION
+C
+        IF (LGIEI(IION,0).EQ.0) GOTO 130
+C
+        DO 120 IIEI=1,NIDSI(IION)
+          IRDS=LGIEI(IION,IIEI)
+          IF (SIGVEI(IRDS).LE.0.D0) GOTO 120
+C
+          WTRSIG=WTR*SIGVEI(IRDS)
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+          PIEL(IRD)=PIEL(IRD)+WTRSIG*PELDS(IRDS)
+C
+C  POST COLLISION CONTRIBUTIONS
+          DO IA=1,IPATDS(IRDS,0)
+            IAT=IPATDS(IRDS,IA)
+            LOGATM(IAT,ISTRA)=.TRUE.
+            PIAT(IAT,IRD)=PIAT(IAT,IRD)+PATDS(IRDS,IAT)*WTRSIG
+            LMETSP(IAT)=.TRUE.
+          END DO
+          DO IM=1,IPMLDS(IRDS,0)
+            IML=IPMLDS(IRDS,IM)
+            LOGMOL(IML,ISTRA)=.TRUE.
+            PIML(IML,IRD)=PIML(IML,IRD)+PMLDS(IRDS,IML)*WTRSIG
+            LMETSP(NATMI+IML)=.TRUE.
+          END DO
+          DO II=1,IPIODS(IRDS,0)
+            IIO=IPIODS(IRDS,II)
+            LOGION(IIO,ISTRA)=.TRUE.
+            PIIO(IIO,IRD)=PIIO(IIO,IRD)+PIODS(IRDS,IIO)*WTRSIG
+            LMETSP(NSPAM+IIO)=.TRUE.
+          END DO
+          DO IP=1,IPPLDS(IRDS,0)
+            IPL=IPPLDS(IRDS,IP)
+            LOGPLS(IPL,ISTRA)=.TRUE.
+            PIPL(IPL,IRD)=PIPL(IPL,IRD)+PPLDS(IRDS,IPL)*WTRSIG
+            LMETSP(NSPAMI+IPL)=.TRUE.
+          END DO
+C
+          IF (IESTEI(IRDS,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+            EIIO(IRD)=EIIO(IRD)+WTRSIG*E0
+C
+          ELSE
+C
+            EIEL(IRD)=EIEL(IRD)+WTRSIG*ESIGEI(IRDS,5)
+            EIAT(IRD)=EIAT(IRD)+WTRSIG*ESIGEI(IRDS,1)
+            EIML(IRD)=EIML(IRD)+WTRSIG*ESIGEI(IRDS,2)
+            EIIO(IRD)=EIIO(IRD)+WTRSIG*ESIGEI(IRDS,3)
+            EIPL(IRD)=EIPL(IRD)+WTRSIG*ESIGEI(IRDS,4)
+C
+          ENDIF
+120     CONTINUE
+130     CONTINUE
+C
+111   CONTINUE
+      RETURN
+C
+      END
