@@ -233,6 +233,7 @@ c
 c
 c
       subroutine calcsol_interface (irlim1,irlim2,ikopt)
+      use error_handling
       implicit none
       integer irlim1, irlim2,ikopt
 c
@@ -629,6 +630,23 @@ c
          end do
 c
       endif  
+c
+c     For radiation option 5 calculate the distribution of radiation over the grid
+c     given total radiation from each region. 
+c     1) Inner divertor
+c     2) Outer divertor
+c     3) Inner and outer PFZ
+c     4) Inner SOL to top
+c     5) Outer SOL to top
+c
+c     Distribute Pin_region proportional to targ_flux(ir) * kvols(ik,ir) and 
+c     integrate over region to get the appropriate total prad
+c     Note: Pinqe and Pinqi options should be off when this option is used. 
+c
+
+
+
+
 c
 c
 c     Increase iteration count
@@ -1614,15 +1632,15 @@ c
 c               ERROR - negative N has been found EVEN with highest level
 c                       of error correction - issue error messages and stop.
 c
-                write (6,*) 'SOLASCV: SOL22:'//
-     >               ' Unsolvable Negative N error encountered'
-                write (6,*) 'Program will STOP'
+                call errmsg('SOLASCV:SOL22',
+     >              ' Unsolvable Negative N error encountered.'//
+     >              ' Program Stopping')
 c
-                write (7,*) 'SOLASCV: SOL22:'//
-     >               ' Unsolvable Negative N error encountered'
-                write (7,*) 'Program will STOP'
+c                write (7,*) 'SOLASCV: SOL22:'//
+c     >               ' Unsolvable Negative N error encountered'
+c                write (7,*) 'Program will STOP'
 c
-                stop
+                stop 'SOL22:NEG N'
 c
             endif
 c

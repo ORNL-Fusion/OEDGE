@@ -220,8 +220,6 @@ c
 c
 c              Check if ouside plasma region.
 c
-c               write(6,*) 'before ga15b:',ionwpts,iwindw(2,1)
-c
                CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
 c
@@ -241,6 +239,7 @@ c
 c              Check if in core
 c
                else
+c
                   CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >              icINDW,MAXPTS,RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
 c
@@ -286,8 +285,6 @@ c              Check if ouside plasma region.
 c
                CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
-c
-c               write(6,*) 'gp:ga15b2:',ionwpts,result,r,z
 c
 c              If < 0 particle is outside last ring.
 c
@@ -569,6 +566,7 @@ c     >               ' PARTICLE OFF GRID (10):',ikorg,irorg,r,z
                endif
 c
             elseif (lastin.eq.1) then
+c
                CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >              icINDW,MAXPTS,RcW,ZcW,icTDUM,icXDUM,icYDUM,6)
 c
@@ -616,6 +614,7 @@ c
 c           Check if ouside plasma region.
 c
 c            WRITE(50,*) 'GRIDPOS: CHECK IF OUTSIDE PLASMA REGION'
+
             CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
 c
@@ -668,6 +667,7 @@ c              Check if actually in core
 c
                CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >               icINDW,MAXPTS,RcW,ZcW,icTDUM,icXDUM,icYDUM,6)
+c
 c               WRITE(50,*) 'GRIDPOS: IN CORE?',result
 c
 c               write(6,*) 'gp:ga15b8:',ioncpts,result,r,z
@@ -4868,10 +4868,13 @@ c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 
 c
+      
       CALL GA15A(PCNT,1,WORK,4*MAXPTS,INDWORK,MAXPTS,
      >             RW,ZW,TDUM,XDUM,YDUM,6)
+
       CALL GA15B(Ra,Za,RESULTa,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
       CALL GA15B(Rb,Zb,RESULTb,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
 

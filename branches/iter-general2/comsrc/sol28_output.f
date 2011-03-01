@@ -5,42 +5,105 @@ c
       SUBROUTINE ListTargetData(fp,title)
       USE mod_sol28_params
       USE mod_sol28_global
+      USE mod_sol28_targets
       IMPLICIT none      
 
       INTEGER  , INTENT(IN) :: fp
       CHARACTER, INTENT(IN) :: title*(*)
 
-      INTEGER     itarget,itube,ion
+      REAL osm_GetGamma,osm_GetFlux,osm_GetHeatFlux
+
+      INTEGER     itarget,itube,ion,i,ipos
       CHARACTER*2 target_tag(2) 
+      REAL        area,heat_flux_density,heat(-1:ntarget)
 
       ion = 1
 
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
 
-      WRITE(fp,*)
-      WRITE(fp,'(A)') 'TARGET DATA:'
-      WRITE(fp,'(A)') '  '//TRIM(title)
-      DO itarget = LO, HI
+      IF (title.NE.'none') THEN 
         WRITE(fp,*)
-        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,A8,2X,A)') 
+        WRITE(fp,'(A)') 'TARGET DATA:'
+        WRITE(fp,'(A)') '  '//TRIM(title)
+      ENDIF
+
+c     *** SOME INCONSISTENCY IN THIS ROUTINE WRT GAMMA, WHERE I'M PRESENTLY USING THE
+c         (CRIPPLED) FORMULATION FROM STANGEBY, BUT IN SOME CASES I TRY TO BACK GAMMA 
+c         OUT IN THE SOLVER, AND SO SHOULD BE USING THAT... ***
+
+      DO itarget = 1, ntarget
+        WRITE(fp,*)
+        WRITE(fp,'(2X,A)') TRIM(target(itarget)%tag)
+        WRITE(fp,'(A6,A8,A16,3A10,A6,4A10,2A9)') 
      .    'TUBE','psin','jsat','ne','ni','vi','M','pe','pi','Te','Ti',
-     .    'Gamma',target_tag(itarget)
-        DO itube = 1, ntube
+     .    'gamma','heat'
+        WRITE(fp,'(6X,8X,A16,3A10,6X,4A10,2A9)') 
+     .    '(Amps)','(m-3)','(m-3)','(m s-1)','(?)','(?)',
+     .    '(eV)','(eV)','(?)','(MW m-2)'
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
           IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          ipos = target(itarget)%position
+          area = 2.0 * V_PI * tube(itube)%rp (ipos) * 
+     .                        tube(itube)%dds(ipos)
+          heat_flux_density = osm_GetHeatFlux(ipos,itube) / area /1.0E+6
           WRITE(fp,'(I6,F8.4,1P,E16.6,3E10.2,0P,F6.2,
-     .               1P,2E10.2,0P,2F10.6,F8.2)')
+     .               1P,2E10.2,0P,2F10.4,F9.2,F9.2)')
      .      itube,tube(itube)%psin,
-     .      tube(itube)%jsat  (itarget,ion),
-     .      tube(itube)%ne    (itarget),
-     .      tube(itube)%ni    (itarget,ion),
-     .      tube(itube)%vi    (itarget,ion),
-     .      tube(itube)%machno(itarget),
-     .      tube(itube)%pe    (itarget),
-     .      tube(itube)%pi    (itarget,ion),
-     .      tube(itube)%te    (itarget),
-     .      tube(itube)%ti    (itarget,ion),
-     .      tube(itube)%gamma (itarget,ion)
+     .      tube(itube)%jsat  (ipos,ion),
+     .      tube(itube)%ne    (ipos),
+     .      tube(itube)%ni    (ipos,ion),
+     .      tube(itube)%vi    (ipos,ion),
+     .      tube(itube)%machno(ipos),
+     .      tube(itube)%pe    (ipos),
+     .      tube(itube)%pi    (ipos,ion),
+     .      tube(itube)%te    (ipos),
+     .      tube(itube)%ti    (ipos,ion),
+     .      tube(itube)%gamma (ipos,ion),
+     .      heat_flux_density
+        ENDDO
+      ENDDO
+
+      heat = 0.0
+      DO itarget = 1, ntarget
+        ipos = target(itarget)%position
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
+          IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          heat(itarget) = heat(itarget) + osm_GetHeatFlux(ipos,itube)
+        ENDDO
+        heat(0) = heat(0) + heat(itarget)
+      ENDDO
+      heat = heat / 1.0E+6  ! Convert to MW m-2
+
+      WRITE(fp,*)
+      WRITE(fp,'(2X,A,F9.3,A)') 'TOTAL HEAT FLUX =',heat(0),' MW m-2'
+
+      DO itarget = 1, ntarget
+        WRITE(fp,*)
+        WRITE(fp,'(2X,A,F7.3,A,F7.2,A)') 
+     .    'HEAT FLUX TO '//TRIM(target(itarget)%tag)//
+     .    ' TARGET =',heat(itarget),
+     .    '  MW m-2',heat(itarget)/heat(0)*100.0, ' % '
+        WRITE(fp,'(A6,2A8,2A12,2A10,A12)')
+     .    'TUBE','psin','rho','gamma','isat','Te','Ti','heat flux'
+        ipos = target(itarget)%position
+        DO i = 1, target(itarget)%nlist
+          itube = target(itarget)%ilist(i)
+          IF (tube(itube)%type.EQ.GRD_CORE) CYCLE
+          heat(-1) = osm_GetHeatFlux(ipos,itube) / 1.0E+6
+          WRITE(fp,'(I6,2F8.4,1P,2E12.4,0P,2F10.2,
+     .               1P,E12.4,0P,2(2X,F7.2,A))')
+     .      itube,
+     .      tube(itube)%psin,
+     .      tube(itube)%rho ,
+     .      osm_GetGamma   (ipos,itube),
+     .      osm_GetFlux    (ipos,itube),
+     .      tube(itube)%te (ipos),
+     .      tube(itube)%ti (ipos,ion),
+     .      heat(-1),heat(-1)/heat(itarget)*100.0,' %',
+     .      heat(-1)/heat(0)*100.0,' %'
         ENDDO
       ENDDO
 
@@ -54,7 +117,29 @@ c
 c ======================================================================
 c
       SUBROUTINE GenerateOutputFiles
+      USE mod_interface
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_sol28_targets
+      USE mod_user
       IMPLICIT none
+
+      REAL GetCs2,GetCellPressure
+
+      INTEGER     ion,itube,ipos,icell,itar,ic1,ic2,itube1,itube2,
+     .            location,i1,ival(10),itarget
+      CHARACTER*7 tag
+      CHARACTER*2 target_tag(2)
+      REAL        val(10),rdum
+
+      INTEGER it(ncell),ic(ncell)
+      REAL    cs(ncell),M(ncell),pe(ncell),pi(ncell)  
+
+      LOGICAL first_call
+      DATA    first_call /.TRUE./
+      SAVE
+
+
 
       CALL DumpData_OSM('output.end','Simulation complete')
 
@@ -64,6 +149,225 @@ c...  Save solution:
       CALL SaveFluidGridGeometry
       CALL SaveWallGeometry
 
+
+c...  Output files for CORTEX:
+
+      ion = 1
+
+      itube1 = 1
+      itube2 = ntube
+c      itube1 = 4
+c      itube2 = 4  ! ntube
+
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.fluid_plasma',ITF_WRITE)
+
+      DO itube = itube1, itube2
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)
+        DO icell = ic1, ic2
+          it (icell) = itube
+          ic (icell) = icell
+          cs (icell) = GetCs2(fluid(icell,ion)%te,fluid(icell,ion)%ti)
+          M  (icell) = fluid(icell,ion)%vi / cs(icell)
+          pe (icell) = GetCellPressure(icell,1)
+          pi (icell) = GetCellPressure(icell,2)
+        ENDDO
+
+        CALL inPutData(tube(itube)%psin,'PSIN','none')
+        CALL inPutData(tube(itube)%rho ,'RHO' ,'none')
+
+        CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
+        CALL inPutData(ic(ic1:ic2),'INDEX','none')
+        CALL inPutData(cell(ic1:ic2)%s,'S','m')
+        CALL inPutData(cell(ic1:ic2)%p,'P','m')
+        CALL inPutData(cell(ic1:ic2)%cencar(1),'R','m')
+        CALL inPutData(cell(ic1:ic2)%cencar(2),'Z','m')
+        CALL inPutData(cell(ic1:ic2)%sbnd(1),'SBND1','m')
+        CALL inPutData(cell(ic1:ic2)%sbnd(2),'SBND2','m')
+        CALL inPutData(cell(ic1:ic2)%pbnd(1),'PBND1','m')
+        CALL inPutData(cell(ic1:ic2)%pbnd(2),'PBND2','m')
+        CALL inPutData(fluid(ic1:ic2,ion)%ne,'NE'    ,'m-3')        
+        CALL inPutData(fluid(ic1:ic2,ion)%vi,'VI'    ,'m s-1')        
+        CALL inPutData(cs    (ic1:ic2)      ,'CS'    ,'m s-1')
+        CALL inPutData(M     (ic1:ic2)      ,'MACHNO','m s-1')
+        CALL inPutData(pe    (ic1:ic2)      ,'PE'    ,'Pa')
+        CALL inPutData(pi    (ic1:ic2)      ,'PI'    ,'Pa')
+        CALL inPutData(fluid(ic1:ic2,ion)%te,'TE'    ,'eV')
+        CALL inPutData(fluid(ic1:ic2,ion)%ti,'TI'    ,'eV')
+      ENDDO
+      CALL inCloseInterface 
+
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.fluid_sources',ITF_WRITE)
+      DO itube = itube1, itube2
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)
+c....   Cells centres:
+        CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
+        CALL inPutData(ic(ic1:ic2),'INDEX','none')
+        CALL inPutData(cell(ic1:ic2)%s,'S','m')
+        CALL inPutData(cell(ic1:ic2)%p,'P','m')
+        CALL inPutData(cell(ic1:ic2)%cencar(1),'R','m')
+        CALL inPutData(cell(ic1:ic2)%cencar(2),'Z','m')
+        CALL inPutData(fluid(ic1:ic2,ion)%parsrc,'PAR_NET','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%parion,'PAR_ION','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%parrec,'PAR_REC','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%parano,'PAR_ANO','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%parusr,'PAR_USR','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momsrc,'MOM_NET','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momvol,'MOM_VOL','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momano,'MOM_ANO','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%momusr,'MOM_USR','?')        
+        CALL inPutData(fluid(ic1:ic2,ion)%enesrc,'ENE_NET','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eneion,'ENE_ION','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%enerec,'ENE_REC','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eneano,'ENE_FIT','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eneusr,'ENE_USR','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%enisrc,'ENI_NET','?')
+      ENDDO
+      CALL inCloseInterface 
+
+c...  ------------------------------------------------------------------
+      IF (ALLOCATED(pin)) THEN
+        CALL inOpenInterface('osm.idl.fluid_eirene',ITF_WRITE)
+        DO itube = itube1, itube2
+          ic1 = tube(itube)%cell_index(LO)
+          ic2 = tube(itube)%cell_index(HI)
+c....     Cells centres:
+          CALL inPutData(ic(ic1:ic2),'INDEX','none')
+          CALL inPutData(ic(ic1:ic2),'POS','none')
+          CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
+          CALL inPutData(cell(ic1:ic2)%s,'S','m')
+          CALL inPutData(cell(ic1:ic2)%cencar(1),'R','m')
+          CALL inPutData(cell(ic1:ic2)%cencar(2),'Z','m')
+          CALL inPutData(pin(ic1:ic2,ion)%ion  ,'ION_NET','?')        
+          CALL inPutData(pin(ic1:ic2,ion)%rec  ,'REC_NET','?')        
+          CALL inPutData(pin(ic1:ic2,ion)%mom  ,'MOM_NET','?')
+          CALL inPutData(pin(ic1:ic2,ion)%qe   ,'QE_NET' ,'?')
+          CALL inPutData(pin(ic1:ic2,ion)%qi   ,'QI_NET' ,'?')
+          CALL inPutData(pin(ic1:ic2,ion)%n_atm,'ATM_DENS','?')
+          CALL inPutData(pin(ic1:ic2,ion)%n_mol,'MOL_DENS','?')
+          CALL inPutData(pin(ic1:ic2,ion)%dalpha(1),'BALMER_ALPHA','?')
+          CALL inPutData(pin(ic1:ic2,ion)%dgamma(1),'BALMER_GAMMA','?')
+        ENDDO
+        CALL inCloseInterface 
+      ENDIF
+c...  ------------------------------------------------------------------
+      IF (ALLOCATED(field)) THEN
+        CALL inOpenInterface('osm.idl.fluid_fields',ITF_WRITE)
+        DO itube = itube1, itube2
+          ic1 = tube(itube)%cell_index(LO)
+          ic2 = tube(itube)%cell_index(HI)
+c....     Cells centres:
+          CALL inPutData(ic(ic1:ic2),'INDEX','none')
+          CALL inPutData(ic(ic1:ic2),'POS','none')
+          CALL inPutData(it(ic1:ic2),'TUBE' ,'none')
+          CALL inPutData(cell(ic1:ic2)%s,'S','m')
+          CALL inPutData(field(ic1:ic2)%epot  ,'EPOT'  ,'?')        
+          CALL inPutData(field(ic1:ic2)%efield,'EFIELD','?')        
+        ENDDO
+        CALL inCloseInterface 
+      ENDIF
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.params',ITF_WRITE)
+      CALL inPutData(2.0,'flupar mass','amu')
+      CALL inCloseInterface 
+c
+c     ------------------------------------------------------------------
+c     Write out target data:
+c
+c     If changing anything here, need to change it in DumpDataToIDL in
+c     SLoutplot.f as well, so that the OSM and OUT generated 
+c     idl.fluid_targets files remain in sync.
+c
+      IF (.NOT.ALLOCATED(target)) GOTO 20
+
+      CALL inOpenInterface('osm.idl.fluid_targets',ITF_WRITE)
+
+      target_tag(LO) = 'LO'
+      target_tag(HI) = 'HI'
+
+      DO itube = 1, ntube
+        IF (itube.LT.grid%isep) CYCLE
+        CALL inPutData(itube           ,'TAR_TUBE','none')                    
+        CALL inPutData(tube(itube)%ir  ,'TAR_RING','none')                    
+        CALL inPutData(tube(itube)%psin,'TAR_PSIN','none')                    
+        CALL inPutData(tube(itube)%rho ,'TAR_RHO' ,'m') 
+        DO ipos = LO, HI  
+         DO itar = 1, ntarget
+           DO i1 = 1, target(itar)%nlist
+             IF (itube.EQ.target(itar)%ilist(i1).AND.
+     .           ipos .EQ.target(itar)%position) EXIT
+           ENDDO
+           IF (i1.NE.target(itar)%nlist+1) EXIT
+         ENDDO
+         IF (itar.EQ.ntarget+1.AND.i1.EQ.target(ntarget)%nlist+1) THEN
+           IF (first_call) THEN
+             CALL WN('GenerateOutputFiles','Some target group '//
+     .               'identifiers not found')
+             first_call = .FALSE.
+           ENDIF
+           itarget  = -1
+           location = -1
+         ELSE
+           itarget  = itar
+           location = target(itar)%location
+         ENDIF
+         tag = 'TAR_'//target_tag(ipos)//'_'
+         IF (ipos.EQ.LO) THEN
+           CALL inPutData(0.0             ,tag//'S','m')                    
+           CALL inPutData(0.0             ,tag//'P','m') ! Should have THETA here as well, and the target extent and orientation to the indicent field line               
+         ELSE
+           CALL inPutData(tube(itube)%smax,tag//'S','m')                    
+           CALL inPutData(tube(itube)%pmax,tag//'P','m')                    
+         ENDIF
+c         CALL inPutData(tube(itube)%rp(ipos),tag//'R','m')                    
+c         CALL inPutData(tube(itube)%zp(ipos),tag//'Z','m') 
+         CALL inPutData(itarget ,tag//'TARGET_INDEX','none')                    
+         CALL inPutData(location,tag//'LOCATION'    ,'none')                    
+         CALL inPutData(tube(itube)%jsat(ipos,ion),tag//'JSAT','Amps')                    
+         CALL inPutData(tube(itube)%ne  (ipos    ),tag//'NE'  ,'m-3')                    
+         CALL inPutData(tube(itube)%vi  (ipos,ion),tag//'V'   ,'m s-1')                    
+         CALL inPutData(tube(itube)%machno(ipos)  ,tag//'MACHNO','none')                    
+         CALL inPutData(tube(itube)%pe  (ipos    ),tag//'PE'  ,'m-3 eV')                    
+         CALL inPutData(tube(itube)%pi  (ipos,ion),tag//'PI'  ,'m-3 eV')                    
+         CALL inPutData(tube(itube)%te  (ipos    ),tag//'TE'  ,'eV')                    
+         CALL inPutData(tube(itube)%ti  (ipos,ion),tag//'TI'  ,'eV')                    
+        ENDDO
+      ENDDO
+      CALL inCloseInterface
+
+ 20   CONTINUE
+
+c...  ------------------------------------------------------------------
+      CALL inOpenInterface('osm.idl.osm_nodes',ITF_WRITE)
+      DO itube = 1, ntube
+        CALL inPutData(itube             ,'TUBE'  ,'N/A')
+        CALL inPutData(store_sopt (itube),'S_OPT' ,'N/A')
+        CALL inPutData(store_mnode(itube),'M_NODE','N/A')
+        CALL inPutData(store_nnode(itube),'N_NODE','N/A')
+        DO i1 = 1, MAXVAL(store_nnode(1:ntube))
+          WRITE(tag,'(A,I1,A)') 'NODE_',i1,'_'
+          CALL inPutData(store_node(i1,itube)%s,tag//'S','m')        
+          CALL inPutData(store_node(i1,itube)%jsat(ion),tag//'JSAT','A')        
+          CALL inPutData(store_node(i1,itube)%ne,tag//'DENS','m-3')        
+          CALL inPutData(store_node(i1,itube)%pe,tag//'PE','?')        
+          CALL inPutData(store_node(i1,itube)%te,tag//'TE','eV')        
+          CALL inPutData(store_node(i1,itube)%ti(ion),tag//'TI','eV')        
+        ENDDO
+      ENDDO
+      DO i1 = 1, osmnnode
+        CALL inPutData(osmnode(i1)%type         ,'TYPE'       ,'N/A')
+        CALL inPutData(osmnode(i1)%tube_range(1),'TUBE_RANGE1','N/A')
+        CALL inPutData(osmnode(i1)%tube_range(2),'TUBE_RANGE2','N/A')
+        CALL inPutData(osmnode(i1)%rad_x        ,'RAD_X','(m)')
+        CALL inPutData(osmnode(i1)%rad_y        ,'RAD_Y','(m)')
+      ENDDO
+      CALL inCloseInterface 
+
+
+c...  Give the user a chance to dump some output:
       CALL User_GenerateOutputFiles
 
       RETURN
@@ -220,7 +524,7 @@ c
       INTEGER   fp,it,ic,ion,i,iobj,iwall,imat,itarget
       CHARACTER tube_tag(4)*4,tag*64
       REAL      cs
-      REAL*8    x(10),y(10)
+      REAL*8    x(10),y(10),zp(2),x1,x2,y1,y2
 
       tube_tag(1) = 'SOL '
       tube_tag(2) = 'PFZ '
@@ -272,14 +576,25 @@ c
       WRITE(fp,'(A)') 'TUBE DATA:'
       WRITE(fp,*)
       IF (ntube.GT.0) THEN
-        WRITE(fp,'(2A6,A5,2A9,9A10)') 
+        WRITE(fp,'(2A6,A5,2A9,11A10)') 
      .    'Index','Type','#','Cell_LO','Cell_HI',
      .    'psi_n','rho(m)','L (m)',
      .    'costet_LO','costet_HI',
      .    'rp_LO'    ,'rp_HI'    ,
+     .    'zp_LO'    ,'zp_HI'    ,
      .    'dds_LO'   ,'dds_HI'   
         DO it = 1, ntube
-          WRITE(fp,'(I6,A6,I5,2I9,11F10.4)')
+
+          iobj = GetObject(tube(it)%cell_index(LO),IND_CELL)
+          CALL GetVertex(iobj,1,x1,y1)         
+          CALL GetVertex(iobj,2,x2,y2)         
+          zp(LO) = 0.5D0 * (y1 + y2)
+          iobj = GetObject(tube(it)%cell_index(HI),IND_CELL)
+          CALL GetVertex(iobj,3,x1,y1)         
+          CALL GetVertex(iobj,4,x2,y2)         
+          zp(HI) = 0.5D0 * (y1 + y2)
+
+          WRITE(fp,'(I6,A6,I5,2I9,13F10.4)')
      .      it,
      .      tube_tag(tube(it)%type),
      .      tube(it)%cell_index(HI)-tube(it)%cell_index(LO)+1,
@@ -289,6 +604,7 @@ c
      .      tube(it)%smax,
      .      tube(it)%costet(1:2),
      .      tube(it)%rp    (1:2),
+     .      zp(1:2),
      .      tube(it)%dds   (1:2)
         ENDDO
       ENDIF
@@ -304,6 +620,8 @@ c
      .    target(itarget)%nlist,
      .    (target(itarget)%ilist(i),i=1,target(itarget)%nlist)
       ENDDO
+
+      CALL ListTargetData(fp,'none')
 
       WRITE(fp,*)
       WRITE(fp,'(A)') 'MATERIAL DATA:'
@@ -350,8 +668,9 @@ c
             WRITE(fp,*)
             WRITE(fp,10) '   TUBE =',it
             WRITE(fp,10) '   ION  =',ion
-            WRITE(fp,'(3X,A8,9A11)') 
-     .        'Cell','bratio','s','sbnd1','sbnd2','p','q','R','Z','vol'
+            WRITE(fp,'(3X,A8,10A11)') 
+     .        'Cell','bratio','s','sbnd1','sbnd2','p','q','R','Z','vol',
+     .        'metric'
             WRITE(fp,'(11X,9A11)') 
      .        ' ','(m)','(m)','(m)','(m)',' ','(m)','(m)','(m3)'
             WRITE(fp,'(11X,6F11.5,2F11.5)')
@@ -366,14 +685,15 @@ c
             i = 0
             DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)        
               i = i + 1
-              WRITE(fp,'(I3,I8,6F11.5,3F11.5)') i,ic,
+              WRITE(fp,'(I3,I8,6F11.5,4F11.5)') i,ic,
      .          field(ic)%bratio,
      .          cell (ic)%s,
      .          cell (ic)%sbnd(1:2),
      .          cell (ic)%p,
      .          -1.0,
      .          cell (ic)%cencar(1:2),
-     .          cell (ic)%vol
+     .          cell (ic)%vol,
+     .          cell (ic)%metric
             ENDDO
             WRITE(fp,'(11X,6F11.5,2F11.5)')
      .        tube(it)%bratio(HI),
@@ -420,7 +740,8 @@ c
      .          fluid(ic,ion)%ne,
      .          fluid(ic,ion)%ni,
      .          fluid(ic,ion)%vi,
-     .          fluid(ic,ion)%vi/cs,
+                ! jdemod - added eps10 to avoid divide by zero
+     .          fluid(ic,ion)%vi/(cs+eps10),
      .          fluid(ic,ion)%te,
      .          fluid(ic,ion)%ti
             ENDDO
@@ -570,7 +891,7 @@ c
       ion = 1
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_grid')
+      CALL inOpenInterface('osm.idl.fluid_grid',ITF_WRITE)
 
 c      DO igrp = 1, ngrp
 c        CALL inPutData(grp(igrp)%origin,'GRP_ORIGIN','none')
@@ -655,7 +976,9 @@ c
 
       WRITE(dummy,'(1024X)')
 
-      CALL inOpenInterface('osm.idl.fluid_wall')
+      IF (nwall.EQ.0) RETURN
+
+      CALL inOpenInterface('osm.idl.fluid_wall',ITF_WRITE)
       DO iw = 1, nwall
         CALL inPutData(wall(iw)%class            ,'WALL_CLASS' ,'none')
         CALL inPutData(wall(iw)%index(WAL_GROUP ),'WALL_GROUP' ,'none')

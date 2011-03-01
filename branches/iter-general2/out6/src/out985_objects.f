@@ -303,7 +303,7 @@ c      WRITE(0,*) 'NOBJ:',nobj,MAX3D
       obj(nobj)%surface     = 1      ! SOLID
       obj(nobj)%wedge1      = 0
       obj(nobj)%wedge2      = 0
-      obj(nobj)%colour      = 1
+      obj(nobj)%colour      = MAX(1,opt%obj_colour(ielement)/100)
       obj(nobj)%orientation = 1      ! CW
       obj(nobj)%ik          = 0
       obj(nobj)%ir          = 0

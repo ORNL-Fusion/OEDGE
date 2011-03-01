@@ -7,15 +7,13 @@ c
       USE mod_sol28_solver
       IMPLICIT none
 
-      REAL*8 GetNodePressure
-
       INTEGER ion,target,inode,ict1,ict2,ict,off_target
       REAL*8  net,integral(10),p1,p2,source(icmax),pmatch,
      .        srcint(0:icmax),delta_p,isat_total,
      .        alpha(2),beta(2),delta,A,B,C,D,a1,b1,c1,radical,cs
 
  
-      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
+      IF (logop.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
 
       DO ion = 1, nion
         IF (iontype(ion).NE.ITY_FLUID) CYCLE
@@ -195,7 +193,7 @@ c    .                        integral(3)) * ECH
 
       ENDDO
 
-      IF (log.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: DONE'
+      IF (logop.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: DONE'
       
       RETURN
  99   STOP
@@ -734,7 +732,7 @@ c       result of analyzing the present state of the solution:
 
       ion = 1
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'Local control options:'
         WRITE(logfp,'(A,I10)') 'first_bc   = ',first_bc
@@ -778,14 +776,16 @@ c            opt%te_ion      = 1
 c          ENDIF 
 
           IF (.NOT.opt%pin_data) THEN
-            IF (opt%p_rec(target).EQ.2) opt%p_rec(target) = 1
+            IF (opt%p_rec(target).EQ.2) opt%p_rec(target) = 3
             IF (opt%p_ion(target).EQ.2) THEN
-              IF (opt%osm_load.EQ.0) THEN
+              IF (opt%osm_load.EQ.0.OR.ref_nion.EQ.0) THEN
                 opt%p_ion(target) = 3
-                opt%p_ion_frac(target) = 0.0
+                IF (opt%p_ion_frac(target).GE.0.0) 
+     .            opt%p_ion_frac(target) = 0.0
               ELSE
                 opt%p_ion(target) = 1
-                opt%p_ion_frac(target) = 100.0
+                IF (opt%p_ion_frac(target).GE.0.0) 
+     .            opt%p_ion_frac(target) = 100.0
                 opt_p_ion_scale(target) = 0
               ENDIF
             ENDIF
@@ -839,7 +839,7 @@ c...    Turn off energy transport model if the symmetry point temperature is too
      .       node(mnode)%te.LE.node(mnode+1)%te).AND.
      .      node(mnode)%par_mode.EQ.6) THEN
           node(mnode)%par_mode = 3
-          IF (log.GT.0)
+          IF (logop.GT.0)
      .      WRITE(logfp,*) 'Symmetry point temperature too low '//
      .                     'for energy transport model, reverting '//
      .                     'to conduction transport prescription'
@@ -941,7 +941,7 @@ c...  User control:
       CALL User_SetupSolverOptions(count)
 
 c...  Output:
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'OSM control options:'
         WRITE(logfp,'(A,I10)') 'COUNT        = ',count
@@ -998,8 +998,6 @@ c
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: count
-
-      REAL*8 GetNodePressure
 
       INTEGER ion,target,ic1,ic2,ic,in
       REAL*8  net(3),integral(10),cs,source(icmax),
@@ -1267,7 +1265,7 @@ c          t_chisq(7) =MAX(chisq(7),((ti(i,ion)-h_ti(i,ion))/ti(i,ion))**2)
         m_chisq(0) = SUM(m_chisq(1:7))
 c...    Do the target conditions as well...
       ENDIF
-      IF (log.GE.1) THEN
+      IF (logop.GE.1) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'T_CHISQ:',count,t_chisq(0:7)
         WRITE(logfp,'(A,I4,1P,8E10.2,0P)') 'M_CHISQ:',count,m_chisq(0:7)
@@ -1289,6 +1287,7 @@ c
 c ====================================================================
 c
       SUBROUTINE SOL28_V4(sol_option1,tube1,icmax1,cell1,pin1,fluid1,
+     .                    field1,
      .                    ref_tube1,ref_nion1,ref_icmax1,ref_fluid1,  ! Do these need the "1" business?
      .                    nnode1,mnode1,node1,nion1,opt_global)
       USE mod_sol28_params
@@ -1302,6 +1301,7 @@ c
       TYPE(type_cell   ) :: cell1     (icmax1)
       TYPE(type_neutral) :: pin1      (icmax1,nion1)
       TYPE(type_fluid  ) :: fluid1    (icmax1,nion1)
+      TYPE(type_field  ) :: field1    (icmax1)
       TYPE(type_tube   ) :: ref_tube1
       TYPE(type_fluid  ) :: ref_fluid1(ref_icmax1,ref_nion1)
       TYPE(type_node   ) :: node1     (nnode1)
@@ -1338,7 +1338,7 @@ c     .    ref_nion,ref_icmax1
       ELSE
         ref_nion = 0
       ENDIF
-      IF (log.GT.0.AND.ref_nion.EQ.0.AND.ref_nion1.NE.0) THEN
+      IF (logop.GT.0.AND.ref_nion.EQ.0.AND.ref_nion1.NE.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'Reference solution data not available '//
      .                 'for this tube because the geometry''s '
@@ -1351,7 +1351,7 @@ c     .    ref_nion,ref_icmax1
       node(1:nnode) = node1(1:nnode) 
 
       opt = opt_global
-      log = opt%log
+      logop = opt%log
       logfp = opt%logfp
 
 c      WRITE(0,*) '-->',opt%bc(1:2)
@@ -1403,7 +1403,7 @@ c...  Basic initialization:
 c...  Control:
       cnt_options = .TRUE.
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*) 'M,NNODE:',mnode,nnode
         WRITE(logfp,*) '  1    :',node(1    )%s ,node(1    )%te,
      .                            node(1    )%ne,node(mnode)%pe
@@ -1436,7 +1436,7 @@ c...  Main loop:
 c...    Loop counter:
         count = count + 1
 
-        IF (log.GT.0) THEN
+        IF (logop.GT.0) THEN
           WRITE(logfp,*) '==============================='
           WRITE(logfp,*) 'COUNT:',tube%ir,count
           WRITE(logfp,*) '==============================='
@@ -1486,7 +1486,6 @@ c...    Evaluate solution:
 c       ----------------------------------------------------------------
         CALL EvaluateFluidSolution(count,MAX_ITERATIONS)
 
-
 c...    Main iteration loop exit conditions:
 c       ----------------------------------------------------------------
         IF     (count.LE.30.AND.(t_chisq(0).GT.1.0D-07.OR.
@@ -1500,7 +1499,7 @@ c...      Near-target sonic transition being processed:
           cont = .TRUE. 
         ELSEIF (count.GE.7) THEN
 c          WRITE(logfp,*) 'SORRY, GIVING UP... NO CONVERGENCE'
-          IF (count.GT.MAX_ITERATIONS.AND.log.GT.1) 
+          IF (count.GT.MAX_ITERATIONS.AND.logop.GT.1) 
      .      WRITE(logfp,*) 'MAXIMUM ITERATIONS REACHED'
           cont = .FALSE.
         ELSEIF (.FALSE.) THEN
@@ -1540,6 +1539,7 @@ c     added to the list at the end of AssignSOLPSPlasma:
       tube%gamma (LO,ion) = SNGL(gamma (LO))
       tube%qe    (LO,ion) = SNGL(qe    (ic))
       tube%te_upstream(LO,ion) = SNGL(te(icbnd2(LO)))
+      tube%epot  (LO)     = SNGL(epot  (ic))
 
       ic = ictarg(HI)
       tube%jsat  (HI,ion) = -SNGL(isat  (ic,ion)) * ECH
@@ -1554,6 +1554,7 @@ c     added to the list at the end of AssignSOLPSPlasma:
       tube%gamma (HI,ion) =  SNGL(gamma (HI))
       tube%qe    (HI,ion) =  SNGL(qe    (ic))
       tube%te_upstream(HI,ion) = SNGL(te(icbnd1(HI)))
+      tube%epot  (HI)     =  SNGL(epot  (ic))
 
       DO ion = 1, nion
         fluid(1:icmax,ion)%ne = SNGL(ne(1:icmax))
@@ -1591,18 +1592,22 @@ c...  Pass data back through global arrays (ugly):
         fluid1(1:icmax,ion) = fluid(1:icmax,ion)
       ENDDO
 
+c...  Copy over the electrostatic field solver results:
+      field1(1:icmax)%efield = efield(1:icmax)
+      field1(1:icmax)%epot   = epot  (1:icmax)
+
       RETURN
  99   STOP
       END
 c
 c ======================================================================
 c
-      SUBROUTINE MainLoop(itstart,itend,ikopt)
+      SUBROUTINE MainLoop(it1,it2,ikopt)
       USE mod_sol28_params
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER itstart,itend,ikopt,count
+      INTEGER it1,it2,ikopt,cnt
 
       INTEGER itube,cind1,cind2,ref_cind1,ref_cind2,ref_itube,iopt,
      .        sol_option,isol
@@ -1615,29 +1620,30 @@ c      REAL    totsrc
       TYPE(type_node) :: node(S28_MAXNNODE)
       TYPE(type_options_osm) :: opt_tube
 
-      INTEGER debug_count
-      DATA    debug_count /0/
+      INTEGER debug_cnt
+      DATA    debug_cnt /0/
       SAVE
 
-      debug_count = debug_count + 1
+      debug_cnt = debug_cnt + 1
 
-      IF (log.GT.0) THEN
+      IF (logop.GT.0) THEN
         WRITE(logfp,*)
-        WRITE(logfp,*) 'RANGE:',itstart,itend,grid%isep
-        WRITE(logfp,*) 'TE   :',tube(itstart)%te(LO),
-     .                          tube(itstart)%te(HI)
+        WRITE(logfp,*) 'RANGE:',it1,it2,grid%isep
+        WRITE(logfp,*) 'TE   :',tube(it1)%te(LO),
+     .                          tube(it1)%te(HI)
       ENDIF
 
 
       IF (.TRUE.) CALL ListTargetData(logfp,'Before calling solver')
 
+      tube_state(it1:it2) = ibclr(tube_state(it1:it2),1)  ! Flag that solution has not been calculated yet
 
       opt%cosm = 0
 
-      count = 0
+      cnt = 0
       cont  = .TRUE.
       DO WHILE (cont) 
-        count = count + 1
+        cnt = cnt + 1
         cont  = .FALSE.
 
 c...    Calcualte derived quantities (efield, drifts, etc.):
@@ -1645,7 +1651,10 @@ c        CALL CalculateEfield
 c        CALL CalculateGradients
 c        CALL CalculateDrifts
 
-        DO itube = itstart, itend
+        DO itube = it1, it2
+
+          IF (ibits(tube_state(itube),0,1).EQ.0.AND.     ! Default symmetry point was not applied
+     .        ibits(tube_state(itube),1,1).EQ.1) CYCLE   ! Solution has been calculated already
 
 c...      Setup solver options:
 c         CALL SetupLocalOptions(itube,opt)
@@ -1683,14 +1692,15 @@ c              WRITE(0,*) 'SELECTING SOLVER OPTION:',isol,sol_option
             ENDIF
           ENDDO
 
-          IF (log.GT.0) THEN
+          IF (logop.GT.0) THEN
             WRITE(logfp,'(A   )') '------------------------------------'
             WRITE(logfp,'(A,I6)') ' SOLVING TUBE: ',itube
+c            WRITE(0    ,'(A,I6)') ' SOLVING TUBE: ',itube
             WRITE(logfp,'(A,I6)') ' SOL OPTON   : ',sol_option
             WRITE(logfp,'(A,I6)') ' CFLUKIN     : ',opt%cflukin
             WRITE(logfp,'(A,I6)') ' IOPT        : ',opt_iopt       
             WRITE(logfp,'(A,I6)') ' COSM        : ',opt%cosm
-            WRITE(logfp,'(A,I6)') ' DEBUG_COUNT : ',debug_count
+            WRITE(logfp,'(A,I6)') ' DEBUG_CNT   : ',debug_cnt
             WRITE(logfp,'(A   )') '------------------------------------'
           ENDIF
 
@@ -1729,8 +1739,10 @@ c             ----------------------------------------------------------
 c...            Interpolate reference solution:
                 CALL InterpolateReferencePlasma(itube)
 c             ----------------------------------------------------------
-              CASE(28)
-c...            SOL28:
+              CASE(28:30)
+c...            SOL28 - SimpleAsPie analytic particle and momentum solver (SL)
+c                  29 - CestDuGateau, the Runge-Kutta solver (JRH)
+c                  30 - the time-dependent solver (JRH)
                 CALL SetTargetConditions(itube)
 
 c...            Assign solution parameter nodes:
@@ -1741,8 +1753,12 @@ c...            Assign solution parameter nodes:
                   store_nnode(itube) = nnode  ! *** TEMP ***
                   store_mnode(itube) = mnode
                   store_node (1:nnode,itube) = node(1:nnode)
+c                  WRITE(0,*) '_state:',tube_state(itube),
+c     .                 ibits(tube_state(itube),0,1),
+c     .                 ibits(tube_state(itube),1,1)
+
                 ELSE
-                  STOP 'NO LONGER SUPPORTED'
+                  STOP 'LEGACY NODES NO LONGER SUPPORTED'
 c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
                 ENDIF
 
@@ -1753,12 +1769,13 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          cell (cind1:cind2),                       ! each array individually in case
      .                          pin  (cind1:cind2,nion),                  ! some have only nominal allocations, i.e.
      .                          fluid(cind1:cind2,nion),                  ! they are not in use...
+     .                          field(cind1:cind2),
      .                          ref_tube(ref_itube),
      .                          ref_nion,ref_cind2-ref_cind1+1,
-     .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),
+     .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
                 ENDIF
-c              WRITE(0,*) 'TUBE:PSOL',tube(itube)%eneano(1:2)
+                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE DEFAULT
                 CALL ER('MainLoop','Solver option not identified',*99)
@@ -1767,8 +1784,19 @@ c             ----------------------------------------------------------
           ENDIF  ! MPI selection
         ENDDO  ! Tube loop
 
+c        WRITE(0,*) '_count',
+c     .             COUNT(ibits(tube_state(it1:it2),0,1).EQ.0)
+c        WRITE(0,*) ibits(tube_state(it1:it2),0,1)
+        IF    (cnt.GE.3) THEN
+
+        ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
+     .          COUNT(ibits(tube_state(it1:it2),0,1).EQ.1  ).GT.0) THEN
+c...      Check if semi-automated symmetry point specification:
+          cont = .TRUE.
+        ENDIF
+
 c...    Modify conditions for iteration:
-        CALL User_MainLoop(cont,count)
+        CALL User_MainLoop(cont,cnt)
 
       ENDDO ! Iteration loop
 

@@ -51,7 +51,7 @@ c
 
       fp = 99
       OPEN(UNIT=fp,FILE=fname(1:LEN_TRIM(fname)),ACCESS='SEQUENTIAL',
-     .     FORM='UNFORMATTED',STATUS='OLD',ERR=98)            
+     .     FORM='UNFORMATTED',STATUS='OLD',ERR=97)            
       READ (fp,ERR=98) vgrid
       READ (fp,ERR=98) grid
 c...  Check version numbers:
@@ -137,6 +137,7 @@ c          ENDDO
 c        ENDDO
 
       RETURN
+ 97   CALL ER('LoadGrid','Problem accessing geometry files',*99)
  98   CALL ER('LoadGrid','Problem loading OSM grid file, maybe '//
      .        'MOD_SOL28 has changed?',*99)
  99   WRITE(0,*) '  FILE NAME='//'"'//fname(1:LEN_TRIM(fname))//'"'
@@ -163,7 +164,9 @@ c...  Solution arrays:
       nkinetic  = 0
       nfluid    = 0
       nimpurity = 0
-      IF (ALLOCATED(tube    )) DEALLOCATE(tube    )
+      IF (ALLOCATED(tube      )) DEALLOCATE(tube      )
+      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
+      
       IF (ALLOCATED(cell    )) DEALLOCATE(cell    )
       IF (ALLOCATED(field   )) DEALLOCATE(field   )
       IF (ALLOCATED(pin     )) DEALLOCATE(pin     )
@@ -319,7 +322,7 @@ c
 
       pressure = 0.0
 
-      IF     (inode.EQ.1) THEN
+      IF     (inode.EQ.1    ) THEN
         pressure = pe(ictarg(LO)) + pi(ictarg(LO),1)
       ELSEIF (inode.EQ.nnode) THEN
         pressure = pe(ictarg(HI)) + pi(ictarg(HI),1)
@@ -987,17 +990,17 @@ c ======================================================================
 c
 c
 c
-      REAL FUNCTION CalcFlux(target,itube)
+      REAL FUNCTION CalcFlux(itarget,itube)
       USE mod_sol28_params
       USE mod_sol28_global
       IMPLICIT none
 
       REAL GetCs
 
-      INTEGER target,itube,ion
+      INTEGER itarget,itube,ion
       REAL    area
 
-      IF (target.NE.LO.AND.target.NE.HI) 
+      IF (itarget.NE.LO.AND.itarget.NE.HI) 
      .  CALL ER('CalcFlux','Invalid target region',*99)
 
       IF (itube.LT.grid%isep) THEN
@@ -1005,33 +1008,27 @@ c
       ELSE
         ion = 1
 
-        area = V_PI * (tube(itube)%rp (target) +
-     .                 tube(itube)%dds(target) * 0.5)**2 - 
-     .         V_PI * (tube(itube)%rp (target) -
-     .                 tube(itube)%dds(target) * 0.5)**2
+        area = V_PI * (tube(itube)%rp (itarget) +
+     .                 tube(itube)%dds(itarget) * 0.5)**2 - 
+     .         V_PI * (tube(itube)%rp (itarget) -
+     .                 tube(itube)%dds(itarget) * 0.5)**2
 
-        WRITE(88,*) 'AREA:',area
+c        WRITE(88,*) 'AREA:',area
 
-        area = 2.0 * V_PI * tube(itube)%rp (target) * 
-     .                      tube(itube)%dds(target)
+        area = 2.0 * V_PI * tube(itube)%rp (itarget) * 
+     .                      tube(itube)%dds(itarget)
 
-        WRITE(88,*) 'AREA:',area
+c        WRITE(88,*) 'AREA:',area
 
-        CalcFlux = tube(itube)%ni    (target,ion) * 
-     .             tube(itube)%vi    (target,ion) * 
-     .             tube(itube)%bratio(target) * 
-     .             tube(itube)%costet(target) *
+        CalcFlux = tube(itube)%ni    (itarget,ion) * 
+     .             tube(itube)%vi    (itarget,ion) * 
+     .             tube(itube)%bratio(itarget) * 
+     .             tube(itube)%costet(itarget) *
      .             area
 c        CalcFlux = knds(id) * kvds(id) * dds2(id) * brat *
 c     .             2.0 * PI * rp(id) * costet(id) * eirsrcmul * 
 c     .             eirtorfrac
       ENDIF
-
-
-
-
-c      IF (supflx(region,ir).EQ.1) CalcFlux = CalcFlux * 1.0E-15
-
 
       RETURN
 99    STOP
@@ -1201,7 +1198,109 @@ c...  The first vertex of each side corresponds to i:
       RETURN
  99   STOP
       END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION osm_GetFlux(itarget,itube)
+      IMPLICIT none
 
+      REAL CalcFlux
 
+      INTEGER, INTENT(IN) :: itarget,itube
+      REAL    brat
 
+      osm_GetFlux = CalcFlux(itarget,itube)
 
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION osm_GetGamma(itarget,itube)
+      USE mod_sol28_params
+      USE mod_sol28_global
+      IMPLICIT none
+
+      REAL, PARAMETER :: ECH = 1.6022E-19, AMU = 1.67E-27, PI = 3.141592
+
+      INTEGER, INTENT(IN) :: itarget,itube
+
+      INTEGER ion
+      REAL    mi,t_ratio,delta_e,m_ratio,log_arguement
+
+      ion = 1
+
+      IF     (itarget.EQ.LO) THEN
+      ELSEIF (itarget.EQ.HI) THEN
+      ELSE
+        CALL ER('osm_GetGamma','Invalid target specification',*99)
+      ENDIF
+
+      IF (itube.LT.grid%isep) THEN
+        osm_GetGamma = 0.0
+      ELSE
+c...    Taken from Stangeby 1st edition, equation 25.46, pg 649.  Note that many effects
+c       are missing, i.e. realistic secondary electron emission (0.0 here), e-i recombination
+c       energy, atom-atom recombination energy, low collisionality effects, space charge
+c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
+        mi = 2.0   ! *** MASS HARDCODED! ***
+c
+        ! jdemod - fix a division by zero issue - only happens if te set to zero somewhere
+        if (tube(itube)%te(itarget).ne.0.0) then 
+         t_ratio = tube(itube)%ti(itarget,ion) / tube(itube)%te(itarget)
+        else
+           t_ratio = 1.0
+        endif
+c
+        delta_e = 0.0
+        m_ratio = 9.11E-31 / (mi * AMU)
+        log_arguement = 2.0 * PI * m_ratio * (1.0 + t_ratio) * 
+     .                 (1.0 - delta_e)**-2 
+        osm_GetGamma = 2.5 * t_ratio + 2.0 / (1.0 - delta_e) - 
+     .                 0.5 * LOG( log_arguement )
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION osm_GetHeatFlux(itarget,itube)
+      USE mod_sol28_params
+      USE mod_sol28_global
+      IMPLICIT none
+
+      REAL osm_GetFlux,osm_GetGamma
+
+      REAL, PARAMETER :: ECH = 1.6022E-19
+
+      INTEGER, INTENT(IN) :: itarget,itube
+      INTEGER id,ir
+      REAL    isat,gamma
+
+      IF     (itarget.EQ.LO) THEN
+      ELSEIF (itarget.EQ.HI) THEN
+      ELSE
+        CALL ER('osm_GetHeatFlux','Invalid target specification',*99)
+      ENDIF
+
+      IF (itube.LT.grid%isep) THEN
+        osm_GetHeatFlux = 0.0
+      ELSE
+        isat  = osm_GetFlux (itarget,itube)
+        gamma = osm_GetGamma(itarget,itube)
+        osm_GetHeatFlux = gamma * ABS(isat) * ECH * 
+     .                    tube(itube)%te(itarget)
+      ENDIF
+
+      RETURN
+99    STOP
+      END
