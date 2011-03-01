@@ -1,0 +1,10 @@
+C
+C
+      FUNCTION ELLO (X)
+      USE CLMSUR
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: X
+      REAL(DP) :: ELLO
+      ELLO=BHALB*SQRT(MAX(0.D0,1.D0-X*X/(AHALB*AHALB)))
+      RETURN
+      END
