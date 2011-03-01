@@ -517,7 +517,14 @@ c           effectively turns this feature off.
 c
       lcutoff = 0.0
 c
-c     G52 - Cell spacing factor for determining the distribution of cells
+c     G52 - Cell spacing option - default value is exponential with the exponent
+c           specified by G53. A value of 1.0 for the cell spacing factor gives
+c           a linear spacing. This option works better with structured grids at
+c           the moment. 
+c
+      cell_spacing_option = 0
+
+c     G53 - Cell spacing factor for determining the distribution of cells
 c           between fixed points on rings. 
 c           default = 1.0 which gives a linear spacing
 c      

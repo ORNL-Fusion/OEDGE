@@ -3,7 +3,7 @@ module castem_field_line_data
   use error_handling
   !use utilities
   use common_utilities
-  
+
   ! ribbon grid input options
   use ribbon_grid_options
 
@@ -15,14 +15,14 @@ module castem_field_line_data
 
 
   public :: read_identifier_data, read_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid,&
-            assign_grid_to_divimp,deallocate_castem_storage
+       assign_grid_to_divimp,deallocate_castem_storage
 
 
-!  type node_struc
-!     integer :: fl
-!     integer :: in
-!     real*8  :: s,r
-!  end type node_struc
+  !  type node_struc
+  !     integer :: fl
+  !     integer :: in
+  !     real*8  :: s,r
+  !  end type node_struc
 
   type intersection_struc
      integer :: line_id
@@ -30,8 +30,8 @@ module castem_field_line_data
      real*8  :: xi,yi,zi,lc
      integer :: int_type
      logical :: int_used 
-!     type (node_struc) :: next
-!     type (node_struc) :: last
+     !     type (node_struc) :: next
+     !     type (node_struc) :: last
   end type intersection_struc
 
   type field_line_struc
@@ -56,9 +56,9 @@ module castem_field_line_data
 
   logical :: header_has_been_loaded
 
-!  type (node_struc) :: init_node
+  !  type (node_struc) :: init_node
 
-!  type (node_struc),allocatable :: node_list
+  !  type (node_struc),allocatable :: node_list
 
   integer :: n_nodes,node_cnt
   real*8,allocatable :: surf_r(:),surf_s(:),surf_fl(:),surf_int(:),surf_sep(:)
@@ -72,36 +72,36 @@ module castem_field_line_data
 
   integer :: intsec_cnt
 
- 
+
 
 
 
   ! grid generation
-   integer, allocatable :: nvp(:)
-   real *8, allocatable :: rvp(:,:), zvp(:,:),rcen(:,:),zcen(:,:)
-   integer, allocatable :: nknots(:)
-   integer :: npoly, nrings, max_nrings, max_nknots,max_npoly
-   integer,allocatable :: poly_ref(:,:)
+  integer, allocatable :: nvp(:)
+  real *8, allocatable :: rvp(:,:), zvp(:,:),rcen(:,:),zcen(:,:)
+  integer, allocatable :: nknots(:)
+  integer :: npoly, nrings, max_nrings, max_nknots,max_npoly
+  integer,allocatable :: poly_ref(:,:)
 
-   real*8,parameter :: NEW_VERTEX = 5.0
-   real*8,parameter :: FIXED_VERTEX = 6.0
-   real*8,parameter :: SURFACE_START = 1.0
-   real*8,parameter :: SURFACE_END = -1.0   ! 2.0
-   real*8,parameter :: TANGENCY = 4.0
-   real*8,parameter :: WALL = 3.0
-   real*8,parameter :: DELETE_POINT = 10.0
+  real*8,parameter :: NEW_VERTEX = 5.0
+  real*8,parameter :: FIXED_VERTEX = 6.0
+  real*8,parameter :: SURFACE_START = 1.0
+  real*8,parameter :: SURFACE_END = -1.0   ! 2.0
+  real*8,parameter :: TANGENCY = 4.0
+  real*8,parameter :: WALL = 3.0
+  real*8,parameter :: DELETE_POINT = 10.0
 
-   integer,parameter :: outunit = 6
+  integer,parameter :: outunit = 6
 
-   ! Intersection subset selection
-   logical :: filter_intersections
+  ! Intersection subset selection
+  logical :: filter_intersections
 
 
 
-   ! options
+  ! options
 
-   integer :: opt_block_av
-   integer :: grid_option
+  integer :: opt_block_av
+  integer :: grid_option
 
 
 contains
@@ -119,8 +119,8 @@ contains
     real*8 :: xinit,yinit,zinit,dist
     integer :: in
 
-!    init_node%fl = -1
-!    init_node%in = -1
+    !    init_node%fl = -1
+    !    init_node%in = -1
 
     ! initialize min and max r coordinate for grid
     min_dist =  1e24
@@ -161,7 +161,7 @@ contains
     intsec_cnt = 0
 
     write(outunit,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency,n_field_lines
-    write(0,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency,n_field_lines
+    !write(0,'(a,5(1x,i8))') 'Intsects:',tot_n_intsects,n_enter,n_leave,n_tangency,n_field_lines
 
 
     ! field line array has been allocated ... now read in and allocate the intersection
@@ -253,7 +253,7 @@ contains
     character*256 :: key_strings(10)
     character*512 :: line
     logical :: header_read
-    
+
 
     ! set up strings to scan for in input block
 
@@ -370,7 +370,7 @@ contains
 
     integer :: line_id,inter_id,itype,iend
     real*8 :: xint,yint,zint,lc
-    
+
     integer :: sect_cnt
 
 
@@ -402,7 +402,7 @@ contains
        !write(outunit,'(a)') trim(line)
 
        if (iend.eq.0) then 
-          
+
           read(line,*) line_id,inter_id,xint,yint,zint,lc,itype
 
           call assign_intsect_data(line_id,field_line(line_id),inter_id,xint,yint,zint,lc,itype,ierr)
@@ -455,8 +455,8 @@ contains
        fl%int_data(in)%int_type = itype
        fl%int_data(in)%int_used = .false. 
 
-!       fl%int_data(in)%next = node_init
-!       fl%int_data(in)%last = node_init
+       !       fl%int_data(in)%next = node_init
+       !       fl%int_data(in)%last = node_init
 
        intsec_cnt = intsec_cnt + 1
 
@@ -511,7 +511,7 @@ contains
 
     do in = 1,av_group_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
-       write(0,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
+       !write(0,'(i8,5(1x,g18.8))') in,av_r(in),av_s(in)
     end do
 
     !close(outunit)
@@ -529,7 +529,7 @@ contains
 
     do in = 1,av_tan_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
-       write(0,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
+       !write(0,'(i8,5(1x,g18.8))') in,av_tan_r(in),av_tan_s(in)
     end do
 
     !close(outunit)
@@ -546,7 +546,7 @@ contains
 
     do in = 1,av_wall_cnt
        write(outunit,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
-       write(0,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
+       !write(0,'(i8,5(1x,g18.8))') in,av_wall_r(in),av_wall_s(in)
     end do
 
     !close(outunit)
@@ -681,26 +681,26 @@ contains
        do in = 1,field_line(if)%int_tot
 
           if (.not.filter_intersections.or.&
-             (filter_intersections.and. &
-             (field_line(if)%int_data(in)%lc.ge.rg_int_win_mins).and.&
-             (field_line(if)%int_data(in)%lc.le.rg_int_win_maxs))) then 
+               (filter_intersections.and. &
+               (field_line(if)%int_data(in)%lc.ge.rg_int_win_mins).and.&
+               (field_line(if)%int_data(in)%lc.le.rg_int_win_maxs))) then 
              node_cnt = node_cnt + 1
              surf_fl(node_cnt)=if
              surf_int(node_cnt)=in
              surf_s(node_cnt)=field_line(if)%int_data(in)%lc
-          !
-          ! jdemod - change this to dist - it will be the same in the case
-          !          of a radial grid but will be better for a grid with a diagonal
-          !          starting line. 
-          !        - what is really needed here is PSIn or equivalent - need to 
-          !          come up with something for starting lines not perpendicular to 
-          !          the field lines in the poloidal plane. 
-          !
-          !surf_r(node_cnt)= field_line(if)%xs
-          !
+             !
+             ! jdemod - change this to dist - it will be the same in the case
+             !          of a radial grid but will be better for a grid with a diagonal
+             !          starting line. 
+             !        - what is really needed here is PSIn or equivalent - need to 
+             !          come up with something for starting lines not perpendicular to 
+             !          the field lines in the poloidal plane. 
+             !
+             !surf_r(node_cnt)= field_line(if)%xs
+             !
              surf_r(node_cnt)= field_line(if)%dist
 
-          !          node_used(node_cnt) =0
+             !          node_used(node_cnt) =0
 
           endif
 
@@ -861,11 +861,11 @@ contains
 
        ! slmod begin
        do in = 2,node_cnt-1
-       !
-       !do in = 2,node_cnt
-       ! slmod end
-       test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-       !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
+          !
+          !do in = 2,node_cnt
+          ! slmod end
+          test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
+          !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
 
 
        end do
@@ -995,11 +995,11 @@ contains
        ! copy over all nodes without block averaging - in case they fix the bugs in the data
 
        if (filter_intersections) then 
-           ! filtered data sets will have two extra points at each end
-           av_group_cnt = node_cnt +4
-           index_offset = 2
+          ! filtered data sets will have two extra points at each end
+          av_group_cnt = node_cnt +4
+          index_offset = 2
        else
-           av_group_cnt = node_cnt +2
+          av_group_cnt = node_cnt +2
           index_offset = 1
        endif
 
@@ -1122,7 +1122,7 @@ contains
 
     in = 0
     do while (in.lt.av_group_cnt-1)
-    !do in = 1,av_group_cnt-1
+       !do in = 1,av_group_cnt-1
        in = in+1
        last_dir = dir
        !write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
@@ -1404,7 +1404,7 @@ contains
     end do
 
     write(outunit,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
-    write(0,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
+    !write(0,'(a,10(1x,g18.8))') 'R,S RANGES:',r_limiter_min,r_limiter_max,s_limiter_min,s_limiter_max
 
 
 
@@ -1435,7 +1435,7 @@ contains
           av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
 
           write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
-          write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          !write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
        endif
 
     end do
@@ -1461,12 +1461,12 @@ contains
 
     do in = 1,av_tan_cnt
        write(outunit,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
-       write(0,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
+       !write(0,'(a,i8,10(1x,g18.8))') 'TANS:',in,av_tan_r(in),av_tan_s(in),av_tan_ind(in)
     end do
 
     do in = 1,av_wall_cnt
        write(outunit,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
-       write(0,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
+       !write(0,'(a,i8,10(1x,g18.8))') 'WALL:',in,av_wall_r(in),av_wall_s(in)
     end do
 
 
@@ -1566,7 +1566,7 @@ contains
        else
           ! otherwise choose a very small displacement ... abs(max_dist-min_dist)/1000.0
           tmp_r(num+1) = tmp_r(num) + abs((max_dist-min_dist)/1000.0d0) 
-       endif   
+       endif
        tmp_max_r(num+1) = tmp_r(num+1)
        tmp_min_r(num+1) = tmp_r(num+1)
        write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single wall point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',tmp_s(num),tmp_s(num+1),tmp_s(num+2)
@@ -1734,7 +1734,7 @@ contains
 
     init_grid_size = max(3 * av_tan_cnt + 1, int((r_limiter_max-r_limiter_min)/max_r_sep))
 
-    write(0,*) 'Init_grid_size:',init_grid_size,max_r_sep
+    !write(0,*) 'Init_grid_size:',init_grid_size,max_r_sep
 
     if (init_grid_size.gt.0) then 
        if (allocated(r_bnds)) deallocate(r_bnds)
@@ -1853,7 +1853,7 @@ contains
     max_surf_ints = 3 * av_tan_cnt + 2
 
 
-    write(0,'(a,2i6)') 'Parameters:',max_surf_ints,av_tan_cnt
+    !write(0,'(a,2i6)') 'Parameters:',max_surf_ints,av_tan_cnt
 
     if (rbnd_cnt.gt.0.and.av_tan_cnt.gt.0) then 
        if (allocated(int_cnt)) deallocate(int_cnt)
@@ -1966,7 +1966,7 @@ contains
     max_nknots = max(200,int((max_lc-min_lc)/max_s_sep)*2)
     max_npoly = max_nrings * max_nknots
 
-    write(0,'(a,7i6,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
+    !write(0,'(a,7i6,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
 
     ! Allocate polygon arrays
     ! rvp
@@ -2140,7 +2140,7 @@ contains
           do it = 1,int_cnt(in)
              vert_rec1(it) = ints(in,it)
              vert_type1(it) = int_type(in,it)
-             write(0,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
+             !write(0,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
              write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
           end do
           vert_cnt1 = int_cnt(in)
@@ -2171,7 +2171,7 @@ contains
                    vert_rec1(ntot1) = av_tan_s(it)
                    vert_type1(ntot1) = FIXED_VERTEX
 
-                   write(0,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
+                   !write(0,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
                    write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1B:',ntot1,it,vert_rec1(ntot1),vert_type1(ntot1)
                 endif
              end do
@@ -2196,7 +2196,7 @@ contains
                    !vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1 * it
                    vert_rec1(ntot1+it) = vert_rec1(is)+ ssep1a(it) * slen
                    vert_type1(ntot1+it) = FIXED_VERTEX
-                   write(0,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
+                   !write(0,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
                    write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1C:',ntot1+it,is,vert_rec1(ntot1+it),vert_type1(ntot1+it)
                 end do
                 ntot1 = ntot1 + ncells -1
@@ -2232,14 +2232,14 @@ contains
        call sort_arrays(1,vert_cnt2,vert_rec2,vert_type2)
 
 
-       write(0,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
-       do it = 1,ntot1
-          write(0,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
-       end do
-       write(0,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
-       do it = 1,ntot2
-          write(0,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
-       end do
+       !write(0,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
+       !do it = 1,ntot1
+       !   write(0,'(a,i8,10(1x,g18.8))') 'VERT1D:',in,r1,vert_rec1(it),vert_type1(it)
+       !end do
+       !write(0,'(a,2i8,10(1x,g18.8))') 'VERT2:',vert_cnt2,ntot2
+       !do it = 1,ntot2
+       !   write(0,'(a,i8,10(1x,g18.8))') 'VERT2D:',in,r2,vert_rec2(it),vert_type2(it)
+       !end do
 
 
        write(outunit,'(a,2i8,10(1x,g18.8))') 'VERT1:',vert_cnt1,ntot1
@@ -2266,7 +2266,7 @@ contains
 
        ! assign start/end indices on each row
        do it = 1,vert_cnt1
-          write(0,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
+          !write(0,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
           write(outunit,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
 
           ! modify code for grid generation from top down (i.e. max S to min S) ... base organization was reversed to start and end tags are reversed
@@ -2274,7 +2274,7 @@ contains
           if (vert_type1(it).eq.SURFACE_END) then 
              npts1a = it
           elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_START) then 
-          !elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_END) then 
+             !elseif (vert_type1(it).eq.TANGENCY.or.vert_type1(it).eq.SURFACE_END) then 
              npts1b = it
 
              ! Now find the matching indices in vert_rec2
@@ -2658,7 +2658,8 @@ contains
 
     else
 
-       write(0,'(a,2i10,10(1x,g18.8))') 'ERROR in vertex generation',npts1,npts2
+       call errmsg('GEN_RING','ERROR in vertex generation')
+       write(outunit,'(a,2i10,10(1x,g18.8))') 'ERROR in vertex generation',npts1,npts2
        stop
 
     endif
@@ -2713,10 +2714,10 @@ contains
        do ik = 1,nknots(ir)
 
           write (iunit,'(a,3i8,12(1x,g18.8))') 'Polys:',ik,ir,poly_ref(ik,ir),(rvp(in,poly_ref(ik,ir)),zvp(in,poly_ref(ik,ir)),in=1,nvp(poly_ref(ik,ir))),rcen(ik,ir),zcen(ik,ir)
-       end do 
+       end do
 
     enddo
-    
+
     close(iunit)
 
 
@@ -2730,17 +2731,17 @@ contains
        do ik = 1,nknots(ir)
 
           do in = 1,nvp(poly_ref(ik,ir))
-             
-              write (iunit,'(2(1x,g18.8))') rvp(in,poly_ref(ik,ir)),zvp(in,poly_ref(ik,ir))
 
-          enddo 
+             write (iunit,'(2(1x,g18.8))') rvp(in,poly_ref(ik,ir)),zvp(in,poly_ref(ik,ir))
+
+          enddo
 
           write(iunit,'(a)') 
 
-       end do 
+       end do
 
     enddo
-    
+
     close(iunit)
 
 
@@ -2813,7 +2814,7 @@ contains
              intersects(int(int_cnt)) = s_int
 
              write(outunit,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
-             write(0,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             !write(0,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
 
           endif
 
@@ -2829,7 +2830,7 @@ contains
           int_cnt = int_cnt + 1.0
 
           write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
-          write(0,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+          !write(0,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
 
           int_type(int(int_cnt)) = TANGENCY
           intersects(int(int_cnt)) = av_tan_s(in)
@@ -2846,10 +2847,10 @@ contains
     ! the one identified as a tangency point.
 
 
-       write(outunit,'(a,10(1x,g18.8))') 'prelim surface intersections output:', int_cnt, r_line
-       do in = 1,int_cnt
-          write(outunit,'(a,i8,10(1x,g18.8))') 'PINT sect:', in,int_type(in),intersects(in)
-       end do
+    write(outunit,'(a,10(1x,g18.8))') 'prelim surface intersections output:', int_cnt, r_line
+    do in = 1,int_cnt
+       write(outunit,'(a,i8,10(1x,g18.8))') 'PINT sect:', in,int_type(in),intersects(in)
+    end do
 
 
     deleted = 0
@@ -2923,10 +2924,10 @@ contains
           write(outunit,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
        end do
 
-       write(0,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
-       do in = 1,int_cnt
-          write(0,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
-       end do
+       !write(0,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
+       !do in = 1,int_cnt
+       !   write(0,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
+       !end do
        call errmsg('SURFACE INTERSECTION ERROR: Last intersection is not a surface on R=',r_line)
        stop
     else   
@@ -2943,10 +2944,10 @@ contains
   end subroutine find_field_line_intsects
 
   subroutine assign_grid_to_divimp(maxnrs,maxnks,mves,nrs,nks,&
-           nves,rves,zves,&
-           npolyp,korpg,&
-           nvertp,rvertp,zvertp,&
-           rs,zs)
+       nves,rves,zves,&
+       npolyp,korpg,&
+       nvertp,rvertp,zvertp,&
+       rs,zs)
     implicit none
     integer :: maxnrs,maxnks,mves
 
@@ -2965,8 +2966,8 @@ contains
 
 
     !write(0,*) 'Assign to DIVIMP:'
-    
-    
+
+
     if (npoly.le.maxnrs*maxnks) then 
        npolyp = npoly
 
@@ -2982,11 +2983,11 @@ contains
     endif
 
 
-    write(0,*) 'Assign NRS:',nrs,nrings,maxnrs
+    !write(0,*) 'Assign NRS:',nrs,nrings,maxnrs
 
     if (nrings.le.maxnrs) then 
        nrs = nrings
-     
+
        do ir = 1,nrings
           if (nknots(ir).le.maxnks) then 
              nks(ir) = nknots(ir)
@@ -2995,7 +2996,7 @@ contains
                 zs(ik,ir) = zcen(ik,ir)
                 korpg(ik,ir) = poly_ref(ik,ir)
                 write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY COPY:',ik,ir,korpg(ik,ir),rs(ik,ir),zs(ik,ir)
-             end do 
+             end do
           else
              call errmsg('Too many knots on ribbon grid ring#:',ir)
           endif
@@ -3015,7 +3016,7 @@ contains
 
     ! for now just assign the averaged surface since all intersection points lie on this surface
     ! ... may need to rebuild later from connection map data
-    
+
     ! End points should already be included 
     if (nves.le.mves) then 
        nves = av_group_cnt
@@ -3024,13 +3025,13 @@ contains
           zves(in) = av_s(in)
           write(6,'(a,i8,5(1x,g18.8))') 'Vessel:',in,av_r(in),av_s(in)
        end do
-       
+
        ! Add 
 
     else
        call errmsg('Too many elements in ribbon grid wall specification:',av_group_cnt)
     endif
-       
+
 
 
 
@@ -3060,7 +3061,7 @@ contains
     if (allocated(av_wall_s)) deallocate(av_wall_s)
     if (allocated(tan_ord_r)) deallocate(tan_ord_r)
     if (allocated(av_tan_ind)) deallocate(av_tan_ind)
-    
+
     if (allocated(nvp)) deallocate(nvp)
     if (allocated(rvp)) deallocate(rvp)
     if (allocated(zvp)) deallocate(zvp)
@@ -3103,7 +3104,7 @@ contains
           call errmsg('GROW DE-ALLOCATION ERROR:FOO:IERR =',ierr)
           stop
        endif
-    
+
        allocate(foo(num2),stat=ierr)
        if (ierr.ne.0) then 
           call errmsg('GROW RE-ALLOCATION ERROR:FOO:IERR =',ierr)
@@ -3122,39 +3123,44 @@ contains
 
   end subroutine grow_array
 
-subroutine gen_cell_spacing(ncells,ssep)
-implicit none
-integer :: ncells
-integer :: m
-real*8,allocatable :: ssep(:)
-real*8 :: x,dist
+  subroutine gen_cell_spacing(ncells,ssep)
+    implicit none
+    integer :: ncells
+    integer :: m
+    real*8,allocatable :: ssep(:)
+    real*8 :: x,dist
 
-! This routine generates ncells numbers distributed between 0 and 1
-! (leaving out the end points)
-! If the cell_spacing_factor factor is 1.0 these numbers are linearly distributed. Increasing
-! the exponent enhances grid resolution near the ends of the regions. 
-
-
-if (allocated(ssep)) deallocate(ssep)
-
-allocate(ssep(ncells-1))
-
-do m = 1,ncells-1
-   if (m.le.(ncells/2)) then 
-      x = real(m)/real(ncells)
-      ssep(m) =  x**cell_spacing_factor
-   else
-      x = real(ncells-m)/real(ncells)
-
-      ssep(m) = 1.0 - x**cell_spacing_factor
-   endif
-
-   write(0,'(a,1x,i8,10(1x,g18.8))') 'RES:',m,x,ssep(m)
-
-end do
+    ! This routine generates ncells numbers distributed between 0 and 1
+    ! (leaving out the end points)
+    ! If the cell_spacing_factor factor is 1.0 these numbers are linearly distributed. Increasing
+    ! the exponent enhances grid resolution near the ends of the regions. 
 
 
-end subroutine gen_cell_spacing
+    if (allocated(ssep)) deallocate(ssep)
+
+    allocate(ssep(ncells-1))
+
+    ! cell spacing option 0 - exponential - only supported option so far
+    if (cell_spacing_option.eq.0) then 
+
+       do m = 1,ncells-1
+          if (m.le.(ncells/2)) then 
+             x = real(m)/real(ncells)
+             ssep(m) =  x**cell_spacing_factor
+          else
+             x = real(ncells-m)/real(ncells)
+
+             ssep(m) = 1.0 - x**cell_spacing_factor
+          endif
+
+          !write(6,'(a,1x,2i8,10(1x,g18.8))') 'RES:',ncells,m,x,ssep(m)
+
+       end do
+
+    endif
+
+
+  end subroutine gen_cell_spacing
 
 
 

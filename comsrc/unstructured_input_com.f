@@ -2141,10 +2141,19 @@ c
         CALL ReadR(line,lcutoff,-HI,HI,
      >             'RING CUTOFF LENGTH FACTOR')
 c
-c     G52 - cell spacing factor
-c           Used to determine cell boundary spacing along the rings
+c     G52 - Cell spacing option ... option to calculate the cell
+c           boundary spacing along a ring. Only option 0 is currently
+c           available which uses an exponential factor given in G53. 
+c           A cell_spacing_factor of 1 gives a linear spacing
 c
       ELSEIF (tag(1:3).EQ.'G52') THEN
+        CALL ReadI(line,cell_spacing_option,0,0,'CELL SPACING OPTION')
+
+c
+c     G53 - cell spacing factor
+c           Used to determine cell boundary spacing along the rings
+c
+      ELSEIF (tag(1:3).EQ.'G53') THEN
         CALL ReadR(line,cell_spacing_factor,-HI,HI,
      >             'CELL SPACING FACTOR')
 

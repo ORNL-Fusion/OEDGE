@@ -24,6 +24,7 @@ module ribbon_grid_options
 
   ! factor used to control spacing of cells between "surfaces" 
   ! Used as an exponential factor
+  integer :: cell_spacing_option
   real :: cell_spacing_factor
 
   character*256 :: rg_castem_data

@@ -1963,6 +1963,20 @@ c
      >            ' [SMIN,SMAX]=',rg_int_win_mins,rg_int_win_maxs)
         endif
 
+        call   prr('                   (G51) LENGTH CUTOFF FACTOR'//
+     >                          ' FOR RING GENERATION = ', lcutoff) 
+        call   prc('                         - RINGS WITH A LENGTH'//
+     >                  ' FACTOR LESS THAN THIS WILL NOT BE GENERATED')
+        call   pri('                   (G52) CELL SPACING OPTION = ',
+     >                  cell_spacing_option)
+        call   prc('                         - Option 0 uses an'//
+     >             ' exponential spacing factor.')
+        call   prc('                         - A factor = 1.0'//
+     >                  ' gives linear spacing of cell boundaries')  
+        call   prr('                   (G53) Cell spacing factor = ',
+     >                         cell_spacing_factor)
+
+
       ENDIF
 c
 c     TMACHINE_OPT is an optional input value used to set the 
