@@ -5474,6 +5474,7 @@ c
       subroutine calc_wall_length_coordinate(opt)
       implicit none
       integer opt
+
 c
 c     Use the data in the wallpt array to calculate the 
 c     distance along the walls from the Inside mid-plane
@@ -5489,6 +5490,10 @@ c
 c     OPT is available to allow for different calculation schemes later
 c
 c
+c     jdemod -  The start point of this code is not applicable to ribbon grids
+c               since the 'mid-plane' is not defined. 
+
+c
       include 'params'
       include 'walls_com'
 c
@@ -5501,6 +5506,10 @@ c     Find the element of wall stradling the inside mid-plane.
 c      
       minr = hi
 c
+c     Standard grid cases
+c
+      if (opt.eq.1) then
+
       do in = 1,wallpts
          if ((wallpt(in,21)*wallpt(in,23)).le.0.0) then 
             rminw = min(wallpt(in,20),wallpt(in,22))
@@ -5510,6 +5519,13 @@ c
             endif
          endif
       enddo
+c
+c     Ribbon grid
+c
+      elseif (opt.eq.2) then 
+         ! just start at beginning of wall for now. 
+         startin = 1
+      endif
 c
 c     Now have the starting index - need to go counter clockwise
 c     around the wall from this location recording the 

@@ -1963,7 +1963,8 @@ contains
     ! initial estimates of maximum grid size
 
     max_nrings = av_wall_cnt * rbnd_cnt
-    max_nknots = max(200,int((max_lc-min_lc)/max_s_sep)*2)
+    !max_nknots = max(200,int((max_lc-min_lc)/max_s_sep)*2)
+    max_nknots = max(200,max((min_cells*av_wall_cnt)*2,int((max_lc-min_lc)/max_s_sep)*2))
     max_npoly = max_nrings * max_nknots
 
     !write(0,'(a,7i6,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
@@ -2949,6 +2950,7 @@ contains
        nvertp,rvertp,zvertp,&
        rs,zs)
     implicit none
+    integer :: ierr
     integer :: maxnrs,maxnks,mves
 
     integer :: nrs,nks(maxnrs),nves,npolyp
@@ -2968,6 +2970,8 @@ contains
     !write(0,*) 'Assign to DIVIMP:'
 
 
+    ierr = 0
+
     if (npoly.le.maxnrs*maxnks) then 
        npolyp = npoly
 
@@ -2979,6 +2983,7 @@ contains
           end do
        end do
     else
+       ierr = 1
        call errmsg('Too many polygons in ribbon grid:',npoly)
     endif
 
@@ -2998,15 +3003,20 @@ contains
                 write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY COPY:',ik,ir,korpg(ik,ir),rs(ik,ir),zs(ik,ir)
              end do
           else
+             ierr = 1
              call errmsg('Too many knots on ribbon grid ring#:',ir)
+             call errmsg('                      Knot count = :',nknots(ir))
           endif
        end do
     else
+       ierr = 1
        call errmsg('Too many rings in ribbon grid:',nrings)
     endif
 
-
-
+    if (ierr.ne.0) then 
+       call errmsg('Ribbon grid does not fit into DIVIMP storage - increase MAXNRS and/or MAXNKS counts in params : Exiting')
+       stop 'Exit in assign_grid_to_divimp'
+    endif
 
     ! calculate rves,zves by running along the cell ends and the limiter surface line. 
     ! one source of these numbers could be the intersects array from field_line_intersections since these
