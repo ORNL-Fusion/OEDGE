@@ -1408,7 +1408,7 @@ c        IOPT = 1 = combined Ion + Neutral Deposition
 c             = 2 = ION Deposition
 c             = 3 = NEUTRAL Deposition
 c
-         call print_deposition(57)
+         call print_deposition(57,cgridopt)
 c
          if (iopt.lt.1.or.iopt.gt.3) then 
             write(6,'(a,i4)') 
@@ -1550,13 +1550,15 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+         if (cgridopt.ne.RIBBON_GRID) then 
+            pnames1(wltrap1) = '|'
+            pnames1(wltrap2) = '|'
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+            pnames1((wltrap1+wltrap2)/2) = 'PP'
+            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+         endif
 c
 c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
@@ -1723,13 +1725,16 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+         if (cgridopt.ne.RIBBON_GRID) then 
+            pnames1(wltrap1) = '|'
+            pnames1(wltrap2) = '|'
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+            pnames1((wltrap1+wltrap2)/2) = 'PP'
+            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c
+         endif
 c
 c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
@@ -1874,13 +1879,16 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+         if (cgridopt.ne.RIBBON_GRID) then 
+            pnames1(wltrap1) = '|'
+            pnames1(wltrap2) = '|'
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+            pnames1((wltrap1+wltrap2)/2) = 'PP'
+            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+         endif
+
 c
 c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
@@ -2130,13 +2138,15 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+         if (cgridopt.ne.RIBBON_GRID) then 
+            pnames1(wltrap1) = '|'
+            pnames1(wltrap2) = '|'
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+            pnames1((wltrap1+wltrap2)/2) = 'PP'
+            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+         endif
 c
 c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
@@ -2235,7 +2245,7 @@ c           cases where ABSFAC is not valid
 c
       if (iref.eq.819) then
 
-         call plot_deposition(iopt)
+         call plot_deposition(iopt,cgridopt)
 
 
       endif
@@ -2752,13 +2762,15 @@ c
 c
 c        Set up Pnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+         if (cgridopt.ne.RIBBON_GRID) then 
+            pnames1(wltrap1) = '|'
+            pnames1(wltrap2) = '|'
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+            pnames1((wltrap1+wltrap2)/2) = 'PP'
+            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+         endif
 c
 c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
@@ -3138,7 +3150,7 @@ c
 c
 c
 c
-      subroutine print_deposition(ounit)
+      subroutine print_deposition(ounit,gridopt)
       implicit none
       include 'params'
       include 'cgeom'
@@ -3146,7 +3158,7 @@ c
       include 'walls_com'
       include 'printopt'
 c
-      integer ounit 
+      integer ounit,gridopt
 c
 c     PRINT_DEPOSITION: 
 c
@@ -3165,7 +3177,11 @@ c
 c     Make sure the wall length coordinate calculation has been done - these need to be moved to a central location for efficiency and the code 
 c     should set a flag indicating it has been run. 
 c
-      call calc_wall_length_coordinate(1)
+      if (gridopt.eq.RIBBON_GRID) then 
+         call calc_wall_length_coordinate(2)
+      else
+         call calc_wall_length_coordinate(1)
+      endif
 c
 c     Calculate number of data elements that will be listed. 
 c
@@ -3397,9 +3413,9 @@ c
 c
 c
 c
-      subroutine plot_deposition(iopt)
+      subroutine plot_deposition(iopt,gridopt)
       implicit none
-      integer iopt
+      integer iopt,gridopt
 
       include 'params'
       include 'walls_com'
@@ -3443,7 +3459,11 @@ c
 c
 c     Make sure the wall length coordinate is loaded. 
 c
-      call calc_wall_length_coordinate(1)
+      if (gridopt.eq.RIBBON_GRID) then 
+         call calc_wall_length_coordinate(2)
+      else
+         call calc_wall_length_coordinate(1)
+      endif
 
 c
 c     Load 3 datasets and plot ones selected by iopt
