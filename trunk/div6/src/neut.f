@@ -3469,10 +3469,19 @@ c
 c           Target collision
 c
 c slmod begin
-            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
-     >          (GRDNMOD.EQ.0.AND.
-     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
+c
+c     jdemod - using wlwall1, wlwall2 ... for generalized grids (or ribbon grid)
+c              won't work ... so switch to using wallpt(indi,18) which is a pointer
+c              to the matching target element or 0.0 otherwise
+c
+c              Looks like Steve partially implemented this for some cases
+c
+            if (wallpt(indi,18).ne.0.0) then 
+c
+c            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
+c     >          (GRDNMOD.EQ.0.AND.
+c     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
 c
 c            IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
 c     >           (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
@@ -3541,7 +3550,19 @@ c              Assign a value to ir that corresponds to the
 c              index of the wall segment crossed.
 c
 c slmod begin
-               if (grdnmod.ne.0) then
+c
+c              jdemod - this is more difficult for generalized grids that
+c                       may have multiple nearest rings. 
+c                       walls(ik,ir,iz) is outmoded now and may need replacing
+c                       for more modern grids. 
+c
+c              This is known to be a wall collision so assign irwall unless 
+c              it is in a range for irtrap. Note that wltrap1, wltrap2 are NOT
+c              always well defined for all grids ... however, when they are the
+c              following code should suffice.  
+c
+c               if (grdnmod.ne.0) then
+c
                  if (indi.ge.wltrap1.and.indi.le.wltrap2) then 
 c...                WLTRAP1,2 are still well defined for the generalized geometry, 
 c                   and probably always will be (same login in NEUTONE.F):
@@ -3550,17 +3571,19 @@ c                   and probably always will be (same login in NEUTONE.F):
 c...                Everything else must be IRWALL (or not..?):
                     ir = irwall
                  endif
-               else
-                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
-                    ir = irwall
-                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
-                    ir = irtrap
-                 else
-                    write (6,*) 'Neutral not on wall segment'//
-     >                      ' at collision',
-     >                     indi,ir,ik,r,z
-                 endif
-               endif
+c
+c
+c               else
+c                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
+c                    ir = irwall
+c                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
+c                    ir = irtrap
+c                 else
+c                    write (6,*) 'Neutral not on wall segment'//
+c     >                      ' at collision',
+c     >                     indi,ir,ik,r,z
+c                 endif
+c               endif
 c
 c               if (indi.ge.wlwall1.and.indi.le.wlwall2) then
 c                  ir = irwall
@@ -3620,8 +3643,12 @@ c
      >                              ' AT WALL BUT NO INTERSECTION'//
      >                              ' POINT FOUND',R,Z
 c
-              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c             jdemod - change code for target impact detection
+c
+              if (wallpt(indi,18).ne.0.0) then
+c
+c              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.a
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
 c
                  RSTRUK(M) = RSTRUK(M) + SPUTY
 c
@@ -3667,6 +3694,9 @@ c
 
 
                  GOTO 899
+c
+c             Impact is on a wall element
+c
               ELSE
 c
                  RWALLN(M) = RWALLN(M) + SPUTY
@@ -3896,8 +3926,12 @@ c
 c
 c               Neutral at target segment
 c
-                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c               jdemod - change target detection
+c
+                if (wallpt(indi,18).ne.0.0) then 
+c
+c                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
 
                    write(0,'(a)') 'NEUT: ERROR: NEUTRAL AT WALL'//
      >                        ' REMOVED DUE TO TOO MANY REFLECTIONS'//

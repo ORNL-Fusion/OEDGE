@@ -63,17 +63,32 @@ contains
   end subroutine read_lp_data_file
 
 
-  subroutine bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt)
+  subroutine bin_lp_data_r(lp_axis,lp_axis_psi,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt,remove_outlier)
     implicit none
-    real,allocatable :: lp_axis(:), lp_proc_data(:,:,:) 
+    real,allocatable :: lp_axis_psi(:,:), lp_proc_data(:,:,:) 
+    real,allocatable :: lp_axis(:)
     real,allocatable :: lp_data(:,:)
+
     integer :: nlines, ncols,ndata,npts,nextra
     real :: deltar
     real :: tmin,tmax,chisq_lim
     integer :: in,nrbins, ibin,ierr
     real :: rmin,rmax
-    logical :: elm_filt
+    logical :: elm_filt,remove_outlier
 
+    ! local variables
+
+    integer :: rbin,psibin
+    real,allocatable :: pre_average(:,:)
+    real :: outlier_mult
+    integer :: outlier_cnt
+
+    ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
+    rbin = 8
+    psibin = 9
+
+    outlier_mult = 5.0
+    outlier_cnt = 0
 
     ! For data in the range Tmin to Tmax ... bin and average over range of deltar. 
     ! Averaging Te and Jsat
@@ -89,11 +104,16 @@ contains
     rmin = 1e25
     rmax = -1e25
 
+    !
+    ! PSI is in 9, R-Rsep is in 8
+    !
     do in = 1,nlines
        ! correct time window
        if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
-          rmin = min(lp_data(in,9),rmin)
-          rmax = max(lp_data(in,9),rmax)
+          !rmin = min(lp_data(in,9),rmin)
+          !rmax = max(lp_data(in,9),rmax)
+          rmin = min(lp_data(in,rbin),rmin)
+          rmax = max(lp_data(in,rbin),rmax)
        endif
     end do
 
@@ -113,21 +133,75 @@ contains
     endif
     lp_axis = 0.0
 
+    if (allocated(lp_axis_psi)) deallocate(lp_axis_psi)
+    allocate(lp_axis_psi(nrbins,3),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('BIN_LP_DATA_R','ERROR ALLOCATING LP_AXIS_PSI')
+       stop
+    endif
+    lp_axis_psi = 0.0
+
 
     if (allocated(lp_proc_data)) deallocate(lp_proc_data)
     allocate(lp_proc_data(nrbins,ndata+1,3),stat=ierr)
     if (ierr.ne.0) then 
-       call errmsg('BIN_LP_DATA_R','ERROR ALLOCATING LP_AXIS')
+       call errmsg('BIN_LP_DATA_R','ERROR ALLOCATING LP_PROC_DATA')
        stop
     endif
     lp_proc_data = 0.0
+
+
+    if (allocated(pre_average)) deallocate(pre_average)
+    allocate(pre_average(nrbins,ndata+1),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('BIN_LP_DATA_R','ERROR ALLOCATING PRE_AVERAGE')
+       stop
+    endif
+    pre_average = 0.0
+
+
+
+
+    ! loop through data and record averages to give a base line for outlier removal
+
+    do in = 1,nlines
+       if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
+          !ibin = int((lp_data(in,9)-rmin)/deltar) + 1
+          ibin = int((lp_data(in,rbin)-rmin)/deltar) + 1
+
+          ! record data count
+          pre_average(ibin,ndata+1) = pre_average(ibin,ndata+1) + 1.0
+          ! record data sum
+          ! jsat
+          pre_average(ibin,1) = pre_average(ibin,1) + lp_data(in,2)
+          ! te
+          pre_average(ibin,2) = pre_average(ibin,2) + lp_data(in,3)
+
+       endif
+    end do
+
+    ! calculate pre_average
+
+    do in = 1,nrbins
+       if (pre_average(in,ndata+1).gt.0.0) then 
+          pre_average(in,1) = pre_average(in,1)/pre_average(in,ndata+1)
+          pre_average(in,2) = pre_average(in,2)/pre_average(in,ndata+1)
+       else
+          pre_average(in,:) = 0.0
+       endif
+    end do
+
 
 
     ! loop through data and record results - use lp_axis to record counts on first run through
 
     do in = 1,nlines
        if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
-          ibin = int((lp_data(in,9)-rmin)/deltar) + 1
+
+          !ibin = int((lp_data(in,9)-rmin)/deltar) + 1
+
+          ibin = int((lp_data(in,rbin)-rmin)/deltar) + 1
+
 
           ! Bin average for total ... between ELMs and during ELMs ("during" is not very useful)
 
@@ -139,9 +213,12 @@ contains
           ! te
           lp_proc_data(ibin,2,1) = lp_proc_data(ibin,2,1) + lp_data(in,3)
 
+          lp_axis_psi(ibin,1) = lp_axis_psi(ibin,1) + lp_data(in,psibin)
+
           if (elm_filt) then 
-             if (lp_data(in,11).ne.0) then 
-                ! Associated with ELM
+             ! add data around 1ms offset to ELM average
+             if (lp_data(in,10).ge.0.5.and.lp_data(in,10).le.1.5) then 
+                ! Associated with ELM 
                 ! record data count
                 lp_proc_data(ibin,ndata+1,2) = lp_proc_data(ibin,ndata+1,2) + 1.0
                 ! record data sum
@@ -150,27 +227,37 @@ contains
                 ! te
                 lp_proc_data(ibin,2,2) = lp_proc_data(ibin,2,2) + lp_data(in,3)
 
+                lp_axis_psi(ibin,2) = lp_axis_psi(ibin,2) + lp_data(in,psibin)
 
-             else
+             elseif (lp_data(in,11).eq.0.0) then 
                 ! Between ELM
-                ! record data count
-                lp_proc_data(ibin,ndata+1,3) = lp_proc_data(ibin,ndata+1,3) + 1.0
-                ! record data sum
-                ! jsat
-                lp_proc_data(ibin,1,3) = lp_proc_data(ibin,1,3) + lp_data(in,2)
-                ! te
-                lp_proc_data(ibin,2,3) = lp_proc_data(ibin,2,3) + lp_data(in,3)
+
+                if (.not.remove_outlier.or.&
+                     &(remove_outlier.and.&
+                     &((lp_data(in,2).lt.outlier_mult*pre_average(ibin,1)).and.&
+                     &(lp_data(in,3).lt.outlier_mult*pre_average(ibin,2))))) then 
+
+
+
+                   ! record data count
+                   lp_proc_data(ibin,ndata+1,3) = lp_proc_data(ibin,ndata+1,3) + 1.0
+                   ! record data sum
+                   ! jsat
+                   lp_proc_data(ibin,1,3) = lp_proc_data(ibin,1,3) + lp_data(in,2)
+                   ! te
+                   lp_proc_data(ibin,2,3) = lp_proc_data(ibin,2,3) + lp_data(in,3)
+
+                   lp_axis_psi(ibin,3) = lp_axis_psi(ibin,3) + lp_data(in,psibin)
+
+                else
+                   write(0,'(a,2i8,10(1x,g18.8))') 'OUTLIER removed:',in,ibin,lp_data(in,1),lp_data(in,2),lp_data(in,3),pre_average(ibin,1),pre_average(ibin,2)
+                   outlier_cnt = outlier_cnt + 1
+                endif
 
 
              endif
 
-
           endif
-
-
-
-
-
        endif
     end do
 
@@ -180,6 +267,7 @@ contains
        if (lp_proc_data(in,ndata+1,1).gt.0.0) then 
           lp_proc_data(in,1,1) = lp_proc_data(in,1,1)/lp_proc_data(in,ndata+1,1)
           lp_proc_data(in,2,1) = lp_proc_data(in,2,1)/lp_proc_data(in,ndata+1,1)
+          lp_axis_psi(in,1) = lp_axis_psi(in,1)/lp_proc_data(in,ndata+1,1)
        else
           lp_proc_data(in,:,1) = 0.0
        endif
@@ -190,6 +278,7 @@ contains
           if (lp_proc_data(in,ndata+1,2).gt.0.0) then 
              lp_proc_data(in,1,2) = lp_proc_data(in,1,2)/lp_proc_data(in,ndata+1,2)
              lp_proc_data(in,2,2) = lp_proc_data(in,2,2)/lp_proc_data(in,ndata+1,2)
+             lp_axis_psi(in,2) = lp_axis_psi(in,2)/lp_proc_data(in,ndata+1,2)
           else
              lp_proc_data(in,:,2) = 0.0
           endif
@@ -198,6 +287,7 @@ contains
           if (lp_proc_data(in,ndata+1,3).gt.0.0) then 
              lp_proc_data(in,1,3) = lp_proc_data(in,1,3)/lp_proc_data(in,ndata+1,3)
              lp_proc_data(in,2,3) = lp_proc_data(in,2,3)/lp_proc_data(in,ndata+1,3)
+             lp_axis_psi(in,3) = lp_axis_psi(in,3)/lp_proc_data(in,ndata+1,3)
           else
              lp_proc_data(in,:,3) = 0.0
           endif
@@ -213,10 +303,10 @@ contains
   end subroutine bin_lp_data_r
 
 
-  subroutine print_lp_bin_data(ounit,lp_axis,lp_proc_data,npts,ndata,ident)
+  subroutine print_lp_bin_data(ounit,lp_axis,lp_axis_psi,lp_proc_data,npts,ndata,ident)
     implicit none
     
-    real,allocatable :: lp_axis(:),lp_proc_data(:,:,:)
+    real,allocatable :: lp_axis(:),lp_axis_psi(:,:),lp_proc_data(:,:,:)
     integer :: npts,ndata,ounit,in
     character*(*) :: ident
 
@@ -229,12 +319,17 @@ contains
     ! at the present time this data is  LP_AXIS   LP_PROC_DATA(,1) = Jsat   LP_PROC_DATA(,2) = Te
 
     write(ounit,'(a,a)') 'ID : ',trim(ident)
-    write(ounit,'(a)')   'R-Rsep          Jsat(A/cm2)          Te(eV)         Count'
+    write(ounit,'(a)')   'R-Rsep      PSIN            Jsat(A/cm2)          Te(eV)         Count  '//&
+                              '       PSI(ELM)        Jsat(ELM)            Te(ELM)        Count(ELM)  '//&
+                              '       PSI(NOE)        Jsat(NOE)            Te(NOE)        Count(NOE)'
 
     do in = 1,npts
        if (lp_proc_data(in,1,1).gt.0.0) then 
-          write(ounit,'(10(1x,g18.8))') lp_axis(in),lp_proc_data(in,1,1),lp_proc_data(in,2,1),lp_proc_data(in,ndata+1,1),&
+          write(ounit,'(20(1x,g18.8))') lp_axis(in),lp_axis_psi(in,1),&
+                                                    lp_proc_data(in,1,1),lp_proc_data(in,2,1),lp_proc_data(in,ndata+1,1),&
+                                                    lp_axis_psi(in,2),&  
                                                     lp_proc_data(in,1,2),lp_proc_data(in,2,2),lp_proc_data(in,ndata+1,2),&
+                                                    lp_axis_psi(in,3),&
                                                     lp_proc_data(in,1,3),lp_proc_data(in,2,3),lp_proc_data(in,ndata+1,3)
        endif
     end do 

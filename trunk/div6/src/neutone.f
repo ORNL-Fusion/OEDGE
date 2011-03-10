@@ -763,10 +763,17 @@ c
 c           If the neutral has struck the target
 c
 c slmod begin
-            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
-     >          (GRDNMOD.EQ.0.AND.
-     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
+c
+c
+c            jdemod - modify target detection to use wallpt(indi,18)
+c                     for all grids
+c
+            if (wallpt(indi,18).ne.0.0) then 
+c
+c            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
+c     >          (GRDNMOD.EQ.0.AND.
+c     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
 c
 c            IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
 c     >           (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
@@ -823,7 +830,16 @@ c              Assign a value to ir that corresponds to the
 c              index of the wall segment crossed.
 c
 c slmod begin
-               if (grdnmod.ne.0) then
+c
+c              jdemod - change to simple algorithm for all grids - if 
+c                       impact not on trap ring it must be on wall
+c                       However, there are now grid cases (ribbon) where
+c                       wltrap1, wltrap2 are not well defined
+c
+c
+c               if (grdnmod.ne.0) then
+c
+c
                  if (indi.ge.wltrap1.and.indi.le.wltrap2) then 
 c...                WLTRAP1,2 are still well defined for the generalized geometry, 
 c                   and probably always will be (same login in NEUT.F):
@@ -832,17 +848,19 @@ c                   and probably always will be (same login in NEUT.F):
 c...                Everything else must be IRWALL (or not..?):
                     ir = irwall
                  endif
-               else
-                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
-                    ir = irwall
-                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
-                    ir = irtrap
-                 else
-                    write (6,*) 'Neutral not on wall segment'//
-     >                      ' at collision',
-     >                     indi,ir,ik,r,z
-                 endif
-               endif
+
+c
+c               else
+c                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
+c                    ir = irwall
+c                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
+c                    ir = irtrap
+c                 else
+c                    write (6,*) 'Neutral not on wall segment'//
+c     >                      ' at collision',
+c     >                     indi,ir,ik,r,z
+c                 endif
+c               endif
 c
 c               if (indi.ge.wlwall1.and.indi.le.wlwall2) then
 c                  ir = irwall
@@ -898,8 +916,12 @@ c
      >                              ' AT WALL BUT NO INTERSECTION'//
      >                              ' POINT FOUND',iter_cnt,R,Z
 c
-              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c             jdemod - change to wallpt(indi,18)
+c 
+              if (wallpt(indi,18).ne.0.0) then 
+c
+c              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
 c
                  SSTRUK = SSTRUK + SPUTY
 c
@@ -1041,8 +1063,13 @@ C
 c
                 recloss = recloss + sputy
 c
-                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c             jdemod - change to wallpt(indi,18)
+c
+                if (wallpt(indi,18).ne.0.0) then 
+c
+c                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c
                    write(0,'(a)') 'NEUTONE: ERROR: NEUTRAL AT WALL'//
      >                        ' REMOVED DUE TO TOO MANY REFLECTIONS'//
      >                        ': PARTICLE LIKELY TRAPPED'
