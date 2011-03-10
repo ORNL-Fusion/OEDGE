@@ -18,7 +18,7 @@ program proclp
 
   integer :: iunit, ounit,ierr
 
-  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:)
+  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:),lp_axis_psi(:,:)
 
   integer :: nlines,npts,ndata,ncols,nextra
 
@@ -28,12 +28,13 @@ program proclp
   character*5 :: chisq
   integer :: exp_tmin,exp_tmax
   character*512 :: arg
+  
 
-
-  logical :: elm_filt
+  logical :: elm_filt,remove_outlier
 
   !
   elm_filt = .false.
+  remove_outlier = .true.
 
 
   ! Initialization for current LP data file format
@@ -95,7 +96,7 @@ program proclp
 
   ! analyse and bin the lp_data
 
-  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt)
+  call bin_lp_data_r(lp_axis,lp_axis_psi,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt,remove_outlier)
 
 
   ! OUTPUT
@@ -148,7 +149,7 @@ program proclp
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
-  call print_lp_bin_data(ounit,lp_axis,lp_proc_data,npts,ndata,ident)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_psi,lp_proc_data,npts,ndata,ident)
 
   close(iunit)
   close(ounit)
