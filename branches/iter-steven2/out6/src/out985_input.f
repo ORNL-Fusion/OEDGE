@@ -248,6 +248,17 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
      .                opt%obj_n     (opt%obj_num,1),
      .                opt%obj_n     (opt%obj_num,2),
      .                opt%obj_fname (opt%obj_num)
+                  CASE (8)  ! ITER first wall panel
+                    READ(buffer,*) cdum1,
+     .                opt%obj_type  (opt%obj_num),
+     .                opt%obj_option(opt%obj_num),
+     .                opt%obj_colour(opt%obj_num),
+     .                opt%obj_reflec(opt%obj_num),
+     .                opt%obj_fudge (opt%obj_num),
+     .                opt%obj_factor(opt%obj_num),
+     .                opt%obj_n     (opt%obj_num,1),
+     .                opt%obj_n     (opt%obj_num,2),
+     .                opt%obj_fname (opt%obj_num)
                   CASE DEFAULT
                     CALL User_LoadVesselGeometry(opt,idum1,buffer)
                 ENDSELECT

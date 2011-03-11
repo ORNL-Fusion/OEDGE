@@ -2,6 +2,150 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+      SUBROUTINE ImportOSMGrid
+      USE mod_geometry
+      USE mod_sol28_global
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+      INCLUDE 'pindata'
+
+      INTEGER GetObject
+
+      INTEGER        status,n,ic,it,iobj,ik,ir,id,in
+      REAL*8         rv(4),zv(4)
+      CHARACTER*1024 fname,command
+
+c...  Load reference OSM data file (binary form):
+      fname = TRIM(opt%f_osm_load)
+      n = LEN_TRIM(fname)
+      command = 'cp '//TRIM(opt%f_osm_dir)//TRIM(fname)//' .'
+      CALL CIssue(TRIM(command),status)
+      CALL UnzipFile(fname)
+      CALL LoadGrid (fname)
+
+c...  Load the OSM geometry file:
+      fname = TRIM(opt%f_osm_load)
+      n = LEN_TRIM(fname)
+      IF (fname(n-2:n).EQ.'zip') fname(n-6:n) = 'ogd.zip'
+      IF (fname(n-1:n).EQ.'gz' ) fname(n-5:n) = 'ogd.gz'
+      IF (fname(n-2:n).EQ.'osm') fname(n-2:n) = 'ogd'
+c      WRITE(0,*) 'fname>'//TRIM(fname)//'<'
+      command = 'cp '//TRIM(opt%f_osm_dir)//TRIM(fname)//' .'
+      CALL CIssue(TRIM(command),status)
+      CALL UnzipFile  (fname)
+      CALL LoadObjects(fname,status)
+      IF (status.LT.0) CALL ER('ImportOSMGrid','Halting DIVIMP',*99)
+
+c...
+      ALLOCATE(d_rvertp(5,MAXNKS*MAXNRS))
+      ALLOCATE(d_zvertp(5,MAXNKS*MAXNRS))
+      id = 0
+      DO it = 1, ntube
+        ir = it
+        ik = 0
+        DO ic = tube(it)%cell_index(1), tube(it)%cell_index(2) 
+          id = id + 1
+          ik = ik + 1          
+          iobj = GetObject(ic,IND_CELL)
+          DO in = 1, 4
+            CALL GetVertex(iobj,in,rv(in),zv(in))
+          ENDDO
+          nvertp(id) = 4
+          d_rvertp(1:4,id) = rv
+          d_zvertp(1:4,id) = zv
+          korpg(ik,ir) = id
+          rs(ik,ir) = cell(ic)%cencar(1)
+          zs(ik,ir) = cell(ic)%cencar(2)
+          bratio(ik,ir) = field(ic)%bratio 
+          kbfs  (ik,ir) = 1.0 / bratio(ik,ir)
+        ENDDO
+        IF (it.LT.grid%isep) THEN
+          ik = ik + 1          
+          id = id + 1
+          nvertp(id) = 4
+          d_rvertp(1:4,id) = d_rvertp(1:4,korpg(1,ir))
+          d_zvertp(1:4,id) = d_zvertp(1:4,korpg(1,ir))
+          korpg(ik,ir) = id
+          rs(ik,ir) = rs(1,ir)
+          zs(ik,ir) = zs(1,ir)
+          bratio(ik,ir) = bratio(1,ir)
+          kbfs  (ik,ir) = kbfs  (1,ir)
+        ENDIF
+        nks(ir) = ik
+        psitarg(ir,:) = tube(it)%psin
+      ENDDO
+      rvertp = SNGL(d_rvertp)
+      zvertp = SNGL(d_zvertp)
+
+c...  Add virtual rings:
+      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
+
+      irsep  = grid%isep
+      irwall = grid%ipfz - 1
+      irtrap = grid%ipfz
+      nrs    = ntube
+
+      ikto = grid%ikto
+      ikti = grid%ikti
+
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+      r0  = SNGL(grid%r0)
+      z0  = SNGL(grid%z0)
+      rxp = rvertp(4,korpg(ikto,irsep))
+      zxp = zvertp(4,korpg(ikto,irsep))
+
+      CALL InsertRing(1     ,BEFORE,PERMANENT)
+      CALL InsertRing(irwall,AFTER ,PERMANENT)
+      CALL InsertRing(irtrap,BEFORE,PERMANENT)
+      idring(1     ) = BOUNDARY
+      idring(irtrap) = BOUNDARY
+      idring(irwall) = BOUNDARY
+      psitarg(1     ,:) = 0.0
+      psitarg(irtrap,:) = 0.0
+      psitarg(irwall,:) = 0.0
+
+      cutpt1     = ikto
+      cutpt2     = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring    = irsep - 1
+      maxkpts    = nks(irsep)
+      maxrings   = irwall
+
+c...  Here to avoid the need to call TailorGrid:
+
+c      IF (grdnmod.GT.0) CALL TailorGrid
+ 
+
+      CALL SetupGrid
+      CALL SequenceGrid
+      CALL FindGridBreak
+      CALL SetupGrid
+
+c      CALL OutputData(85,'JUST FINISHED LOADING OSM GRID')
+c      CALL DumpGrid  ('LOADING OSM GRID')
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .    CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .   CALL AddPoloidalBoundaryCells
+
+c...  Clear arrays:
+      CALL geoClean
+      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE SetupSOL28
       USE mod_sol28
       USE mod_sol28_global
@@ -30,12 +174,6 @@ c      CALL SetTargetConditions(itube)
 
 c...  Clear geometry arrays:
       CALL geoClean
-c      nobj = 0
-c      nsrf = 0
-c      nvtx = 0
-c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
       RETURN
  99   STOP
@@ -101,14 +239,6 @@ c...  Fill DIVIMP arrays:
 
 c...  Clear geometry arrays:
       CALL geoClean
-c      nobj = 0
-c      nsrf = 0
-c      nvtx = 0
-c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
-
-c      CALL CleanUp
 
       RETURN
  99   STOP
@@ -298,6 +428,7 @@ c ======================================================================
 c
       SUBROUTINE MapRingstoTubes
       USE mod_sol28_global
+      USE mod_grid_divimp
       USE mod_geometry
       IMPLICIT none
 
@@ -402,6 +533,8 @@ c...  Declare global arrays:
       nfluid    = ncell
       nimpurity = 1
       ALLOCATE(tube    (ntube ))
+      ALLOCATE(tube_state(ntube))
+      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))
@@ -574,12 +707,22 @@ c...
             i1 = iside
             i2 = iside + 1
             IF (i2.EQ.5) i2 = 1
-            a(1) = DBLE(rvertp(i1,id))
-            a(2) = DBLE(zvertp(i1,id))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a(1) = d_rvertp(i1,id)
+              a(2) = d_zvertp(i1,id)
+            ELSE
+              a(1) = DBLE(rvertp(i1,id))
+              a(2) = DBLE(zvertp(i1,id))
+            ENDIF
             a(3) = 0.0D0
             newsrf%ivtx(1) = AddVertex(a) 
-            a(1) = DBLE(rvertp(i2,id))
-            a(2) = DBLE(zvertp(i2,id))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a(1) = d_rvertp(i2,id)
+              a(2) = d_zvertp(i2,id)
+            ELSE
+              a(1) = DBLE(rvertp(i2,id))
+              a(2) = DBLE(zvertp(i2,id))
+            ENDIF
             a(3) = 0.0D0
             newsrf%ivtx(2) = AddVertex(a) 
             newobj%iside(iside) = AddSurface(newsrf)

@@ -188,7 +188,8 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
       REAL, PUBLIC, SAVE :: wtemp,ttemp,wmater,tmater,torus1,torus2
     
 !...  Block  4 variables:
-      INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam  ! Do I need these "SAVE's"?
+      INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam,   ! Do I need these "SAVE's"?
+     .                         whipe  
       REAL   , PUBLIC, SAVE :: torfrac
     
 !...  Block  6 variables:
@@ -298,7 +299,9 @@ c
      .                      IND_IS     = 3,  
      .                      IND_ZONE   = 4,  
      .                      IND_PLASMA = 5,  
-     .                      IND_BFIELD = 6   ! Vaccum zone outside standard grid, from external call to TRIANGLE
+     .                      IND_BFIELD = 6,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
+     .                      IND_ISI    = 7   ! Index of the slice specification in the tetrahedron grid specification array
+
 
       INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)

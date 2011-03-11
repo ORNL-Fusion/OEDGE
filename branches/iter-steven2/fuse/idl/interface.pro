@@ -94,7 +94,7 @@ END
 ;
 ; ========================================================================
 ;
-FUNCTION inGetData,data_tag,full=full
+FUNCTION inGetData,data_tag,full=full,flush=flush
 
 ; Check input:
 

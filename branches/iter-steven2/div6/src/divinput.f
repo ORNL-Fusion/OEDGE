@@ -65,7 +65,7 @@ c slmod end
 c slmod begin
 c...  Added cgridopt=6 for linear device grids:
 c...  jde - added cgridopt=7 for generalized grids
-      call rdi (cgridopt,.true.,0,.true.,7,'GRID OPTION          ',ierr)
+      call rdi (cgridopt,.true.,0,.true.,9,'GRID OPTION          ',ierr)
 c
 c      call rdi (cgridopt,.true.,0,.true.,3,'GRID OPTION          ',ierr)
 c slmod end

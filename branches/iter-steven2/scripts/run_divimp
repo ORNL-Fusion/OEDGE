@@ -52,6 +52,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   set EQUDIR = $DIVHOME/shots
   set DATDIR = $DIVHOME/data
   set OUTDIR = $DIVHOME/out6
+
+  setenv DIVDATDIR $DATDIR  # for ribbon grid code
 #
 # ----------------------------------------------------------------------
 # Set DIVIMP/OUT executables:
@@ -199,7 +201,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc triangles.dat       $CASENAME.triangles
     mvc triangles.npco_char $CASENAME.triangles.npco_char
     mvc triangles.elemente  $CASENAME.triangles.elemente
-    mvc triangles.neighbors $CASENAME.triangles.neighbor
+    mvc triangles.neighbors $CASENAME.triangles.neighbors
     mvc triangles.plasma    $CASENAME.triangles.plasma
     mvc triangles.efield    $CASENAME.triangles.efield
 
@@ -210,7 +212,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc objects.dat       $CASENAME.triangles
     mvc objects.npco_char $CASENAME.objects.npco_char
     mvc objects.elemente  $CASENAME.objects.elemente
-    mvc objects.neighbors $CASENAME.objects.neighbor
+    mvc objects.neighbors $CASENAME.objects.neighbors
     mvc objects.plasma    $CASENAME.objects.plasma
     mvc objects.centre    $CASENAME.objects.centre
     mvc objects.efield    $CASENAME.objects.efield
@@ -251,9 +253,16 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-#  foreach FILENAME (`ls div.*`)
-#    mv $FILENAME $CASENAME.$FILENAME
-#  end
+  foreach FILENAME (`ls div.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+#
+# ----------------------------------------------------------------------
+# MatLab files:
+#
+  foreach FILENAME (`ls mlb.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
 #
   mv *image*.jpg $RESDIR
 #

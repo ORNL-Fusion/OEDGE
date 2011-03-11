@@ -610,7 +610,10 @@ c...  Assemble a list of wall surfaces to speed things up:  (30% faster for curr
         DO i2 = 1, MAX(obj(i1)%nsur,obj(i1)%nside)
 c...      Check if surface is part of the vessel wall:
           IF (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL  ) nvwlist = nvwlist+1
-          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) ngblist = ngblist+1
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME))
+     .      ngblist = ngblist+1
         ENDDO
       ENDDO
       ALLOCATE (vwlist(nvwlist,2))
@@ -624,7 +627,10 @@ c...      Check if surface is part of the vessel wall:
             i3 = i3 + 1
             vwlist(i3,1) = i1
             vwlist(i3,2) = i2
-          ELSEIF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) THEN
+          ENDIF
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME)) THEN
             i4 = i4 + 1
             gblist(i4,1) = i1
             gblist(i4,2) = i2
@@ -746,7 +752,7 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (opt%ndet.EQ.1.AND.
+        IF (.FALSE..AND.opt%ndet.EQ.1.AND.
      .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
           WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
           DO i2 = 1,pixel(i1)%nprofile
@@ -1446,6 +1452,8 @@ c
               CALL ProcessTetrahedronGrid (ielement)
             CASE (7)
               CALL LoadImageReconstruction(ielement)
+            CASE (8)
+              CALL rayLoadITERFWP         (ielement)
             CASE DEFAULT
               CALL User_CustomObjects     (ielement)
           ENDSELECT
@@ -1556,6 +1564,7 @@ c
       SUBROUTINE Main985(iopt)
       USE mod_out985
       USE mod_out985_variables
+      USE mod_out985_clean
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: iopt
@@ -1581,6 +1590,10 @@ c      MAX3D = MAX3D985
 
       WRITE(0,*) 'HERE IN 985'
 
+c     Just in case there are previous allocations from OUT987 tetrahedron plots:
+      CALL Wrapper_ClearObjects  
+      CALL DEALLOC_ALL
+
       WRITE(0,*) '  ALLOCATING OBJECTS'
 c      MAX3D = 500000 
       MAX3D = 4000000 
@@ -1593,7 +1606,7 @@ c      MAX3D = 500000
       ALLOCATE(pixel(MAXNPIXEL))
 
 c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
-      CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
+      CALL ALLOC_CHORD(22500)  ! Just for viewing! (make smaller!)
 
       opt%load = 1
 
@@ -1605,6 +1618,7 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
 
       npixel = 0
       nchord = 0
+      n_pchord = 0
 
       opt%img_nxratio = 1
       opt%img_nyratio = 1
@@ -1765,6 +1779,7 @@ c      nobj985 = nobj
       IF (ALLOCATED(plasma)) DEALLOCATE(plasma)
 
 c...  Put into a subroutine:
+      nobj = 0
       IF (ALLOCATED(obj))   DEALLOCATE(obj)
       IF (ALLOCATED(pixel)) DEALLOCATE(pixel)
       CALL DEALLOC_CHORD

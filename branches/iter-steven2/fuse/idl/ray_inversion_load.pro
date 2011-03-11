@@ -6,10 +6,10 @@
 FUNCTION LoadInversion,file,mode,tag_data
 
   CASE mode OF
-
+;   --------------------------------------------------------------------
     3: BEGIN
 ;     Load output from RAY/OUT:
-;     ------------------------------------------------------------------
+
       status = inOpenInterface(file)
       index = inGetData('i')
       nvtx  = inGetData('npts')
@@ -45,10 +45,10 @@ FUNCTION LoadInversion,file,mode,tag_data
         xvtx    : xvtx  ,  $  ;
         yvtx    : yvtx  }
       END
-
+;   --------------------------------------------------------------------
     1: BEGIN
 ;     Load output from OSM:
-;     ------------------------------------------------------------------
+
       status = inOpenInterface(file)
       a = inGetData(datatag)
       IF (a[0] EQ -1) THEN BEGIN
@@ -70,7 +70,7 @@ FUNCTION LoadInversion,file,mode,tag_data
       type_inv.data[0:n-1] = a
       inCloseInterface
       END
-
+;   --------------------------------------------------------------------
     0: BEGIN
  
       print,'Load method not active'
@@ -106,10 +106,10 @@ FUNCTION LoadInversion,file,mode,tag_data
       inCloseInterface
 
       END
-
+;   --------------------------------------------------------------------
     2: BEGIN
 ;     Load output from RAY - OLD DATA FILE FORMAT:
-;     ------------------------------------------------------------------
+
       fp = 2
       FREE_LUN,fp
       OPENR,fp,file,error=error

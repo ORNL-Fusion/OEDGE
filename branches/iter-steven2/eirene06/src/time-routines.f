@@ -2837,6 +2837,18 @@ C
             I1=ABS(IRICH(1,J))
             SIG2=SIGN(1,IRICH(2,J))
             I2=ABS(IRICH(2,J))
+c slmod begin - debug
+            IF (izell.EQ.0) THEN 
+              WRITE(6,*) 'NPANU =',npanu
+              WRITE(6,*) 'IZELL =',izell
+              WRITE(6,*) 'J     =',j
+              WRITE(6,*) 'I1    =',i1
+              WRITE(6,*) 'NRCELL=',nrcell
+              WRITE(6,*) 'IPOLG =',ipolg
+              WRITE(6,*) 'IPOLGO=',ipolgo
+              STOP 'HALTING THE CODE DUE TO TROUBLE'
+            ENDIF
+c slmod end
             PNORMI=RINCRC(J,IZELL)
             A(1:3,1) = (/ VTETX(I1,IZELL), VTETY(I1,IZELL),
      .                    VTETZ(I1,IZELL)/) * SIG1 * PNORMI

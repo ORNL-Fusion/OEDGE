@@ -213,11 +213,10 @@ c
          call raug
 c slmod begin
       elseif (cgridopt.eq.LINEAR_GRID) then
-c       cgridopt=6, see params common block for LINEAR_GRID definition
-c
-c        GENERATE LINEAR DEVICE GRID
-c
-         call buildlineargrid
+         call BuildLinearGrid
+      elseif (cgridopt.eq.OSM_GRID) then
+         call ImportOSMGrid
+         cgridopt = 3  ! switch to SONNET grid specifier
 c slmod end
 c
 c     jdemod - support for new grid option to be added
@@ -702,9 +701,6 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
-c      CALL OutputData(85,'POLOIDAL GRID TEST')
-c      STOP 'sdfgsdfsd'
-
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.EQ.LINEAR_GRID) then
 c...    Generalized grid:
@@ -1631,6 +1627,7 @@ c
       endif
 c
 c slmod begin - new
+
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
         CALL BuildNeutralWall
@@ -4152,7 +4149,7 @@ c
 c     For ASDEX UPGRADE calculate the values here as for JET.
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     .    cgridopt.EQ.LINEAR_GRID) then
+     .    cgridopt.eq.LINEAR_GRID) then
          KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
       endif
       KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)

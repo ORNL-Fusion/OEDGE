@@ -2115,8 +2115,11 @@ c          STOP 'sdfsdf'
 
         ENDDO
 
-        IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
-     .    CALL WN('SetupGrid','Cannot find cut points in PFZ')
+        IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1) THEN
+          CALL WN('SetupGrid','Cannot find cut points in PFZ')
+          ikto2(ir) = nks(ir) / 2
+          ikti2(ir) = ikto2(ir) + 1
+        ENDIF
 c     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
       ENDDO
 c

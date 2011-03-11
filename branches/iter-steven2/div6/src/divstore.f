@@ -3,10 +3,6 @@ C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
       use subgrid
-c slmod begin
-      use mod_interface
-      use mod_divimp
-c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -61,7 +57,6 @@ c slmod begin
 
       INTEGER      i1,i2,i3,ik,i
       REAL         slver
-      CHARACTER*64 tag
 c slmod end
 C
 c
@@ -692,64 +687,6 @@ c...  6.14 (end of file flag):
       WRITE(8) 123456789
 
 
-c...  Saving data from dynamically allocated arrays:
-      IF (ALLOCATED(wall_flx)) THEN
-        CALL inOpenInterface('idl.divimp_wall_flx',ITF_WRITE)
-        CALL inPutData(wall_n      ,'N_SEGMENTS','N/A')
-        CALL inPutData(wall_nlaunch,'N_LAUNCH'  ,'N/A')
-        CALL inPutData(MAXNLAUNCH  ,'MAXNLAUNCH','N/A')
-        CALL inPutData(MAXNBLK     ,'MAXNBLK'   ,'N/A')
-        CALL inPutData(MAXNATM     ,'MAXNATM'   ,'N/A')
-        CALL inPutData(MAXNMOL     ,'MAXNMOL'   ,'N/A')
-        CALL inPutData(MAXNION     ,'MAXNION'   ,'N/A')
-        CALL inPutData(MAXNPHO     ,'MAXNPHO'   ,'N/A')
-        CALL inPutData(MAXNSRC     ,'MAXNSRC'   ,'N/A')
-        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,1) *
-     .                     wall_flx(:)%length),'TOT_EM_IMP_1','s-1')
-        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,2) *
-     .                     wall_flx(:)%length),'TOT_EM_IMP_2','s-1')
-        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,1) * ECH *
-     .                     wall_flx(:)%area  ),'TOT_EM_IMP_1','s-1')
-        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,2) * ECH * 
-     .                     wall_flx(:)%area  ),'TOT_EM_IMP_2','s-1')
-        CALL inPutData(wall_flx(:)%length,'LENGTH','m' )
-        CALL inPutData(wall_flx(:)%area  ,'AREA  ','m2')
-        DO i = 1, MAXNBLK
-          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_BLK_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_par_blk(i,0),tag,'m-2 s-1')
-          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_BLK_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_ene_blk(i,0),tag,'eV')
-        ENDDO
-        DO i = 1, MAXNATM
-          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_ATM_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_par_atm(i,0),tag,'m-2 s-1')
-          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_ATM_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_ene_atm(i,0),tag,'eV')
-        ENDDO
-        DO i = 1, MAXNMOL
-          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_MOL_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_par_mol(i,0),tag,'m-2 s-1')
-          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_MOL_',i,'_0'
-          CALL inPutData(wall_flx(:)%in_ene_mol(i,0),tag,'eV')
-        ENDDO
-        DO i = 2, 2
-          WRITE(tag,'(A,I1,A,10X)') 'EM_PAR_ATM_',i,'_1'
-          CALL inPutData(wall_flx(:)%em_par_atm(i,1),tag,'m-2 s-1')
-          WRITE(tag,'(A,I1,A,10X)') 'EM_ENE_ATM_',i,'_1'
-          CALL inPutData(wall_flx(:)%em_ene_atm(i,1),tag,'eV')
-          WRITE(tag,'(A,I1,A,10X)') 'EM_PAR_ATM_',i,'_2'
-          CALL inPutData(wall_flx(:)%em_par_atm(i,2),tag,'m-2 s-1')
-          WRITE(tag,'(A,I1,A,10X)') 'EM_ENE_ATM_',i,'_2'
-          CALL inPutData(wall_flx(:)%em_ene_atm(i,2),tag,'eV')
-        ENDDO
-        DO i = 1, wall_nlaunch
-          WRITE(tag,'(A,I0.2,10X)') 'LAUNCH_',i
-          CALL inPutData(wall_flx(:)%launch(i),tag,'???')
-        ENDDO
-        CALL inPutData(wall_flx(:)%prompt,'PROMPT_DEP','s-1 m-2')
-        CALL inCloseInterface
-        DEALLOCATE(wall_flx)
-      ENDIF
 
 c slmod end
 c

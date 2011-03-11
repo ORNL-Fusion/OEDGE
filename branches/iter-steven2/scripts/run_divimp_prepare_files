@@ -15,6 +15,9 @@
   endif
   if !( -e $EQUDIR/$GRIDNAME ) then
     echo "ERROR: magnetic grid file $GRIDNAME not found"
+    echo $EQUDIR
+    echo $GRIDNAME
+    ls   $EQUDIR/$GRIDNAME
     exit (1)
   endif
 #
@@ -185,8 +188,9 @@
   cpc $EQUDIR/$GRIDNAME.experiment fort.13
   cpc $EQUDIR/$GRIDNAME.hsp        grid.hsp
 
-  cpc $EQUDIR/$GRIDNAME.sup        grid.dat
   cpc $EQUDIR/$GRIDNAME.dat        grid.dat
+  cpc $EQUDIR/$GRIDNAME.sup        grid.dat
+  cpc $EQUDIR/$GRIDNAME.bfield     grid.bfield
   cpc $EQUDIR/$GRIDNAME.dat.1      grid.dat.1
   cpc $EQUDIR/$GRIDNAME.dat.2      grid.dat.2
   cpc $EQUDIR/$GRIDNAME.dat.3      grid.dat.3

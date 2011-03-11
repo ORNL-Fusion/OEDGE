@@ -1,6 +1,50 @@
 ;
 ; ======================================================================
 ;
+FUNCTION cortex_LoadWallProfiles_EIRENE, file
+
+  file = cortex_UpdateFile(file)
+
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
+  tot_em_par_atm_2_1  = inGetData('TOT_EM_IMP_1')  ; SPECIES=2 (impurity usually), SOURCE=1 (bulk ions)
+  tot_em_par_atm_2_2  = inGetData('TOT_EM_IMP_2')  ; SPECIES=2 (impurity usually), SOURCE=1 (test atoms)
+  length              = inGetData('LENGTH')
+  area                = inGetData('AREA')
+
+  in_par_atm_1    = inGetData('IN_PAR_ATM_1_0')  ; SPECIES=1 (deuterium usually), SOURCE=0 (all, i.e. bulk ions, atoms, molecules, and test ions)
+  in_ene_atm_1    = inGetData('IN_ENE_ATM_1_0')  
+
+  em_par_atm_2_1  = inGetData('EM_PAR_ATM_2_1')  ; SPECIES=1 (deuterium usually), SOURCE=1 (bulk ions)
+  em_ene_atm_2_1  = inGetData('EM_ENE_ATM_2_1')  
+  em_par_atm_2_2  = inGetData('EM_PAR_ATM_2_2')  ; SPECIES=2 (impurity usually), SOURCE=1 (test atoms)
+  em_ene_atm_2_2  = inGetData('EM_ENE_ATM_2_2')  
+
+  inCloseInterface  
+
+  result = {  $
+    version        : 1.0            ,  $
+    file           : file           ,  $
+    tot_em_par_atm_2_1 : tot_em_par_atm_2_1,  $
+    tot_em_par_atm_2_2 : tot_em_par_atm_2_2,  $
+    length         : length         ,  $
+    area           : area           ,  $
+    in_par_atm_1   : in_par_atm_1   ,  $
+    in_ene_atm_1   : in_ene_atm_1   ,  $
+    em_par_atm_2_1 : em_par_atm_2_1 ,  $
+    em_ene_atm_2_1 : em_ene_atm_2_1 ,  $
+    em_par_atm_2_2 : em_par_atm_2_2 ,  $
+    em_ene_atm_2_2 : em_ene_atm_2_2 }
+
+  RETURN,result
+END
+;
+; ======================================================================
+;
 FUNCTION cortex_LoadWallProfiles, file
 
   file = cortex_UpdateFile(file)
@@ -18,9 +62,12 @@ FUNCTION cortex_LoadWallProfiles, file
   length          = inGetData('LENGTH')
   atom_par_flux   = inGetData('ATOM_PAR_FLUX')
   atom_avg_energy = inGetData('ATOM_AVG_ENERGY')
+  mol_par_flux    = inGetData('MOL_PAR_FLUX')
+  mol_avg_energy  = inGetData('MOL_AVG_ENERGY')
   inCloseInterface  
 
   atom_energy_flux = atom_par_flux * atom_avg_energy * 1.603E-19 * 1.0E-6
+  mol_energy_flux  = mol_par_flux  * mol_avg_energy  * 1.603E-19 * 1.0E-6
   toroidal_area    = 2.0 * 3.141592 * r_cen * length
 
   result = {  $
@@ -34,7 +81,10 @@ FUNCTION cortex_LoadWallProfiles, file
     toroidal_area    : toroidal_area    ,  $
     atom_par_flux    : atom_par_flux    ,  $
     atom_avg_energy  : atom_avg_energy  ,  $
-    atom_energy_flux : atom_energy_flux }
+    atom_energy_flux : atom_energy_flux ,  $
+    mol_par_flux     : mol_par_flux     ,  $  ; keeping units of D m-2 s-1 for now, rather than D2 m-2 s-1
+    mol_avg_energy   : mol_avg_energy   ,  $  ;  (corrected depending on the plot)
+    mol_energy_flux  : mol_energy_flux  }
 
   RETURN,result
 END

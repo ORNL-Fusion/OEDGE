@@ -365,6 +365,63 @@ c
 c
 c
 c
+      subroutine get_div_data_dir(dirname,ierr)
+      implicit none
+      integer  ierr
+      character dirname*(*)
+c
+c     Get name from environment variable
+c     
+      integer len1,lenstr
+      external lenstr 
+      character*256 :: divdata
+
+c
+c     Initial state is invalid data .. if non-zero length string is 
+c     returned then the return code is set to 1
+c
+      ierr = 1
+c
+      dirname = ' '
+c
+c     Get data directory from environment
+c
+      CALL GetEnv('DIVDATDIR',divdata)
+c
+      if (len_trim(divdata).gt.0) ierr = 0
+
+      dirname = trim(divdata)
+
+      return
+c
+      end
+c
+c
+c
+      SUBROUTINE run_system_command(cmd,retcode)
+      CHARACTER*(*) CMD
+      integer retcode
+      integer system
+C
+c     This routine calls the "system" command to issue
+c     an OS level command from inside the code. 
+c
+c     This is mostly useful for file manangement
+c
+c
+c     Initialize the return code to zero for now
+c
+      retcode = 0
+c
+c
+      retcode = SYSTEM(trim(cmd))
+c
+c
+      RETURN
+      END
+c
+c
+c
       subroutine killdiv
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
@@ -612,6 +669,7 @@ C     IBM  : DUMMY ROUTINE - NO NEED TO CALL RANSET
 C     CRAY : INTERFACE TO RANDOM NO. INITIALISER SYSTEM ROUTINE RANSET
 C
       SUBROUTINE RANINI (ISEED)
+      implicit none
       INTEGER ISEED
 c
 c     Initialization of the intrinsic generator is more complicated
@@ -621,8 +679,9 @@ c     in this routine.
 c
 
 c
-      integer k,i
+      integer k,i,in
       integer,allocatable :: temp_seed(:)
+      real :: temp,a
 
       call random_seed(size=k)
 
@@ -632,7 +691,7 @@ c
       allocate(temp_seed(k))
 
       do i = 1,k
-         temp_seed(i) = int(iseed/i)
+         temp_seed(i) = int(iseed/i) + iseed * i**2 
       end do
 
       write(6,*) 'Random Seed Used:',(temp_seed(i),i=1,k)
@@ -646,7 +705,25 @@ c     write(6,*) 'Random seed:',iseed
 c     CALL NEWSRAND (ISEED)
 C
 C     CALL SRAND (ISEED ) FOR CRAY OR IBM DEFAULT GENERATOR
+
+c
+c     jdemod 
 C
+c     Drag off the first 10,000 random numbers in case there is 
+c     an initialization issue - I noticed that the first bunch of 
+c     numbers out of the call to random_number look distinctly 
+c     non-random
+c
+      a = 0.0
+
+      do in = 1,10000
+         call random_number(temp)
+         a = temp
+      end do 
+
+      write(6,*) 'END of Random_seed:',a
+
+
       RETURN
       END
 
@@ -675,6 +752,10 @@ c
 
       DO 100 J = 1, NRANDS
           call random_number(crands(j))
+
+c
+c          write(6,'(a,i8,g18.8)') 'RN:',j,crands(j)
+c          write(0,'(a,i8,g18.8)') 'RN:',j,crands(j)
 c
 c          CRANDS(J) = NEWRAND()
 C

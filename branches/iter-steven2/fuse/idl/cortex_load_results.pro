@@ -39,14 +39,26 @@ FUNCTION cortex_LoadIntegrals, file
   i      = inGetData('i')
   j      = inGetData('j')
   signal = inGetData('data')
+  x1     = inGetData('x1')
+  y1     = inGetData('y1')
+  z1     = inGetData('z1')
+  x2     = inGetData('x2')
+  y2     = inGetData('y2')
+  z2     = inGetData('z2')
   inCloseInterface  
 
   result = {  $
-    version : 1.0  ,  $
-    file    : file ,  $
+    version : 1.0    ,  $
+    file    : file   ,  $
     xindex  : i      ,  $
     yindex  : j      ,  $
-    signal  : signal }
+    signal  : signal ,  $
+    x1      : x1     ,  $
+    y1      : y1     ,  $
+    z1      : z1     ,  $
+    x2      : x2     ,  $
+    y2      : y2     ,  $
+    z2      : z2     }
 
   RETURN,result
 END

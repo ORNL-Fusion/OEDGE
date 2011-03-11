@@ -164,7 +164,9 @@ c...  Solution arrays:
       nkinetic  = 0
       nfluid    = 0
       nimpurity = 0
-      IF (ALLOCATED(tube    )) DEALLOCATE(tube    )
+      IF (ALLOCATED(tube      )) DEALLOCATE(tube      )
+      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
+      
       IF (ALLOCATED(cell    )) DEALLOCATE(cell    )
       IF (ALLOCATED(field   )) DEALLOCATE(field   )
       IF (ALLOCATED(pin     )) DEALLOCATE(pin     )
@@ -1085,12 +1087,12 @@ c Moved here for compatilibity with OUT.
 c 
       SUBROUTINE ProcessIterationBlocks
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       IMPLICIT none
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   fp,i,idum1(1:5)
       CHARACTER buffer*1024,cdum1*512
@@ -1295,3 +1297,31 @@ c
       RETURN
 99    STOP
       END
+c
+c ======================================================================
+c
+      LOGICAL FUNCTION osmCheckTag(buffer,tag)
+      IMPLICIT none
+    
+      CHARACTER :: buffer*(*), tag*(*)
+
+      INTEGER n1,n2,i1
+
+      osmCheckTag = .FALSE.
+
+      n1 = LEN_TRIM(buffer)       
+      n2 = LEN_TRIM(tag   )       
+
+      DO i1 = 1, n1-n2
+        IF (buffer(i1:i1+n2-1).EQ.tag(1:n2)) THEN
+          osmCheckTag = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c

@@ -1,34 +1,40 @@
 ;
 ;
+
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_LoadAnnotationData, code, file
+FUNCTION cortex_LoadAnnotations, code, file
 
 ;  file = cortex_UpdateFile(file)
 
-print,code
-print,file
+;print,code
+;print,file
 
-  fp = 3
-  FREE_LUN, fp
-  OPENR, fp, file, error=err
-  IF (err NE 0) THEN BEGIN
-    PRINT,'ERROR cortex_LoadAnnotationData: Unable to open data file
-    PRINT,' FILE=',file
-    RETURN, -1
-  ENDIF
-
-  buffer = ' '
-  first_line = 1
 
   CASE code OF
+;   --------------------------------------------------------------------
     1: BEGIN
+
+      fp = 3
+      FREE_LUN, fp
+      OPENR, fp, file, error=err
+      IF (err NE 0) THEN BEGIN
+        PRINT,'ERROR cortex_LoadAnnotationData: Unable to open data file
+        PRINT,' FILE=',file
+        RETURN, -1
+      ENDIF
+
+      buffer = ' '
+      first_line = 1
+
       WHILE NOT EOF(fp) DO BEGIN 
         READF,fp,buffer      
         buffer = STRTRIM(buffer,2)
-        IF (STRPOS(buffer,'#') EQ 0) THEN CONTINUE
+; print,'buffer:',buffer
+        IF (STRPOS(buffer,'#') EQ 0 OR STRPOS(buffer,'*') EQ 0) THEN CONTINUE
         str = STRSPLIT(buffer,' '+STRING(9B),/EXTRACT)  ; STRING(9B) is the ASCII TAB character
+        IF (N_ELEMENTS(str) EQ 1) THEN CONTINUE         ; weak check to avoid blank lines
         IF (first_line) THEN BEGIN
           x = FLOAT(str[0])
           y = FLOAT(str[1])
@@ -38,14 +44,65 @@ print,file
         ENDELSE
         first_line = 0
       ENDWHILE
+
+      FREE_LUN, fp
+
+      result = {x : x, y : y}
+
       END
+;   --------------------------------------------------------------------
+    2: BEGIN
+      file = cortex_UpdateFile(file)
+      status = inOpenInterface(file)
+      IF (status LT 0) THEN BEGIN
+        result = CREATE_STRUCT('version',0.0,'file','none')
+        RETURN, result
+      ENDIF      
+      x1 = inGetData('X_1')
+      y1 = inGetData('Y_1')
+      x2 = inGetData('X_2')
+      y2 = inGetData('Y_2')
+      inCloseInterface  
+      result = {x1 : x1, y1 : y1, x2 : x2, y2 : y2}
+      END
+;   --------------------------------------------------------------------
     ELSE:
   ENDCASE
 
-  FREE_LUN, fp
 
-  result = {x : x, y : y}
   
+  RETURN, result
+END
+
+;
+; ======================================================================
+;
+FUNCTION cortex_LoadAnnotationData, plot,file
+
+;  annotate = { version : 1.0 } 
+;  status_annotate = -1
+  annotate_data = -1
+  FOR i = 0, plot.annotate_n-1 DO BEGIN
+    CASE plot.annotate_code[i] OF
+      1: annotate_data = cortex_LoadAnnotations(plot.annotate_code[i],       plot.annotate_file[i]) 
+      2: annotate_data = cortex_LoadAnnotations(plot.annotate_code[i],file + plot.annotate_file[i]) 
+      ELSE: BEGIN
+        PRINT, 'ERROR cortex_LoadAnnotationData: Unknown annotation code'
+        PRINT, '  PLOT TAG = ',plot.tag
+        PRINT, '  CODE     = ',plot.annotate_code[i]
+        annotate_data = -1
+        END
+    ENDCASE
+    name = 'data' + STRING(i+1,FORMAT='(I0)')
+    IF (i EQ 0) THEN annotate = CREATE_STRUCT(         name,annotate_data)  ELSE  $
+                     annotate = CREATE_STRUCT(annotate,name,annotate_data)
+;    status_annotate = 0
+  ENDFOR 
+
+  IF (plot.annotate_n EQ 1) THEN annotate = CREATE_STRUCT(annotate,'dummy',0)  ; Can remove in future...
+
+  result = annotate
+
   RETURN, result
 END
 ;

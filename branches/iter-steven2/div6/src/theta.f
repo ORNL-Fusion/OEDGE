@@ -818,6 +818,7 @@ c      distmin = 0.25 * r0
       cz      = zs   (ikcell,ir)
 
       DO ik = ikstart, ikend
+c        WRITE(0,*) 'CALCTHETA:',ik,ir
         id = korpg(ik,ir)
         ar = rvertp(nv1,id)
         az = zvertp(nv1,id)

@@ -42,8 +42,9 @@ c             Reference plasma:
             CASE (2)
 c             PIN:          
               source(ic1:ic2) = -1.0D0 * DBLE(pin(ic1:ic2,ion)%rec) 
-c            CASE (3)
-c              Calculated...:
+            CASE (3)
+c              Calculated...: *** NOT READY ***
+              source(ic1:ic2) = 0.0D0
             CASEDEFAULT
               CALL User_VolumeParRecSource(target,source)
           ENDSELECT         
@@ -123,6 +124,10 @@ c...          Full ring:
             CASE (4)
 c             Anomalous term assigned in ConserveParticles, based on
 c             prescribed flow values:
+            CASE (6)
+c...          Outer half ring only:
+              IF (target.EQ.HI)
+     .          CALL SpecifyDistribution(target,0,0,1,0.0D0,source)
             CASEDEFAULT                                            
               STOP 'USER ROUTINE NOT READY: P_ANO'                
               CALL User_VolumeParAnoSource(target,source)         
@@ -237,7 +242,7 @@ c             Half ring:
               net(target) = isat(ict,ion) + integral(1) + integral(2)
               parano(ic1:ic2,ion) = -parano(ic1:ic2,ion) * net(target)
 c           ------------------------------------------------------------
-            CASE (3)
+            CASE (3,6)
 c             Full ring:
               IF (opt%bc(LO).NE.1) 
      .          CALL ER('AssignParticleSources','Full ring '//    ! Move this check to SetupSolverOptions...
