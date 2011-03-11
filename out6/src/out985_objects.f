@@ -1,4 +1,1149 @@
-c     -*-Fortran-*-
+c     -*-Fortran-*-c
+c ======================================================================
+c
+      SUBROUTINE MarkEdge(p1,p2,pdat,ndat,min_dist)
+      IMPLICIT none
+
+      INTEGER, INTENT(IN)    :: ndat
+      REAL*8 , INTENT(IN)    :: p1(3),p2(3),min_dist
+      REAL*8 , INTENT(INOUT) :: pdat(5,0:*)
+
+      REAL*8  CalcPerp2
+
+      INTEGER i
+      REAL*8  t
+
+      DO i = 1, ndat
+        pdat(4,i) = CalcPerp2(p1,p2,pdat(1:3,i),t)
+        IF (pdat(4,i).LT.min_dist) pdat(5,i) = 1.0D0
+      ENDDO       
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
+      SUBROUTINE rayLoadITERFWP(ielement)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+c...  Input:
+      INTEGER ielement
+
+      INTEGER AddVertex,AddSurface
+      REAL*8  CalcPerp2
+
+      TYPE(type_surface) newsrf
+      INTEGER   idum1,istart,fp,ndat,i,j,k,ny,nz,iy,iz,psum,
+     .          check_n,dist_list(10),dist_n,tcnt,cnt,
+     .          dtri(3,1000),dsid(3,1000),ntri,i1,i2,i3,i4,ishift,
+     .          ibegin,
+     .          stri(1000),match,list_n,list_i(0:1000),col_i(1000),
+     .          col_max,
+     .          col_n,col_min,col_cnt,icol,new_s,new_i(1000),new_n
+      LOGICAL   cont,status
+      CHARACTER dummy*1024,file*1024
+      REAL*8    newvtx(3,25),mat(3,3),angle,frac ,tmpvtx(3,25),
+     .          pdat(5,0:20000),rad,rdum,check,check_list(0:100),
+     .          avg(3),p1(3),p2(3),p3(3),angle1,angle2,angle3,len1,
+     .          len2,len3,focus(3),v1(3),v2(3),v3(3),t,min_dist,dist,
+     .          step,v_panel(3),dotprod,v_norm(3),v_left(3),v_right(3),
+     .          corner(3,4),d1,d2,d3
+
+      newvtx = 0.0D0
+      istart = nsrf + 1
+
+
+      SELECTCASE (opt%obj_option(ielement))
+c       ----------------------------------------------------------------
+        CASE (1)
+c...      ITER wall (no small feat):
+          IF (.FALSE.) THEN
+            newvtx(1,1) =  4.000D0
+            newvtx(2,1) =  1.000D0
+            newvtx(1,2) =  4.000D0
+            newvtx(2,2) = -1.000D0
+            DO i1 = 2, 2, -1
+              newsrf%type = SP_LINE_SEGMENT
+              newsrf%nvtx = 2
+              newsrf%ivtx(1) = AddVertex(newvtx(1,i1  ))
+              newsrf%ivtx(2) = AddVertex(newvtx(1,i1-1))
+              idum1 = AddSurface(newsrf)
+            ENDDO
+            IF (nobj+1.GT.MAX3D) 
+     .        CALL ER('LoadVesselStructures','Insufficient array '//
+     .                'bounds for all objects',*99)    
+            IF (istart.GT.nsrf) THEN
+              WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+              RETURN
+            ENDIF
+            nobj = nobj + 1
+            WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+            obj(nobj)%index       = ielement  ! nobj
+            obj(nobj)%type        = OP_EMPTY
+            obj(nobj)%mode        = 0      
+            obj(nobj)%surface     = 1      ! SOLID
+            obj(nobj)%wedge1      = 0
+            obj(nobj)%wedge2      = 0
+            obj(nobj)%colour      = 1
+            obj(nobj)%orientation = 1      ! CW
+            obj(nobj)%ik          = 0
+            obj(nobj)%ir          = 0
+            obj(nobj)%in          = -1  ! What should this be?
+            obj(nobj)%ivolume     = 0
+            obj(nobj)%nside       = 1
+            obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+            obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+            obj(nobj)%gsur(1)     = GT_TC
+            obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+            obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..         Defunct:
+            obj(nobj)%nsur        = 0
+            obj(nobj)%ipts(2,1)   = 0
+            obj(nobj)%nmap(1)     = 0
+          ENDIF
+
+
+
+          fp = 99
+          OPEN(fp,FILE='3d_wall.dat',FORM='FORMATTED',STATUS='OLD',
+     .         ERR=98)       
+          ndat = 0
+          DO WHILE (.TRUE.)
+            READ(fp,'(A)',END=10,ERR=98) dummy
+            IF (dummy(1:1).EQ.'*'.OR.LEN_TRIM(dummy).LT.5) CYCLE
+            WRITE(0,*) 'dummy>',TRIM(dummy)//'<'
+            ndat = ndat + 1
+            READ(dummy,*) pdat(1:2,ndat)
+          ENDDO
+ 10       CONTINUE
+          CLOSE(fp)
+          WRITE(0,*) 'Ndat:',ndat
+
+c          pdat(1:2,1) =  (/ 8.09730, -1.48350 /)
+c          pdat(1:2,2) =  (/ 7.87680, -1.36560 /)
+c          pdat(1:2,3) =  (/ 7.28420, -2.24640 /)
+c          pdat(1:2,4) =  (/ 7.46680, -2.41720 /)
+
+          DO i = 1, ndat, 4
+            j = i - 1
+            DO angle = 0.0D0, 359.0D0, 20.0D0
+              newvtx(1:3,1) = (/ pdat(1,1+j), pdat(2,1+j), -0.50D0 /)
+              newvtx(1:3,2) = (/ pdat(1,2+j), pdat(2,2+j),  0.00D0 /)
+              newvtx(1:3,3) = (/ pdat(1,3+j), pdat(2,3+j),  0.00D0 /)
+              newvtx(1:3,4) = (/ pdat(1,4+j), pdat(2,4+j), -0.50D0 /)
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),4)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),4)
+              newvtx(1:3,1) = (/ pdat(1,2+j), pdat(2,2+j),  0.00D0 /)
+              newvtx(1:3,2) = (/ pdat(1,1+j), pdat(2,1+j),  0.50D0 /)
+              newvtx(1:3,3) = (/ pdat(1,4+j), pdat(2,4+j),  0.50D0 /)
+              newvtx(1:3,4) = (/ pdat(1,3+j), pdat(2,3+j),  0.00D0 /)
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),4)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),4)
+c             Top cap:
+              newvtx(1:3,1) = (/ pdat(1,1+j), pdat(2,1+j), +0.50D0 /)
+              newvtx(1:3,2) = (/ pdat(1,2+j), pdat(2,2+j),  0.00D0 /)
+              newvtx(1:3,3) = (/ pdat(1,1+j), pdat(2,1+j), -0.50D0 /)
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),3)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),3)
+c             Bottom:
+              newvtx(1:3,1) = (/ pdat(1,4+j), pdat(2,4+j), -0.50D0 /)
+              newvtx(1:3,2) = (/ pdat(1,3+j), pdat(2,3+j),  0.00D0 /)
+              newvtx(1:3,3) = (/ pdat(1,4+j), pdat(2,4+j), +0.50D0 /)
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),3)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),3)
+            ENDDO
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+c       ----------------------------------------------------------------
+        CASE (2)
+          pdat = -999.0D0
+
+          fp = 99
+          file = opt%obj_fname(ielement)
+          OPEN(fp,FILE=TRIM(file),FORM='FORMATTED',STATUS='OLD',
+     .         ERR=98)       
+          ndat = 0
+          DO WHILE (.TRUE.)
+            READ(fp,'(A)',END=20,ERR=98) dummy
+            IF (dummy(1:1).EQ.'*'.OR.LEN_TRIM(dummy).LT.5) CYCLE
+            WRITE(0,*) 'dummy>',TRIM(dummy)//'<'
+            ndat = ndat + 1
+            READ(dummy,*) rdum,rdum,pdat(1:3,ndat)
+          ENDDO
+ 20       CONTINUE
+          CLOSE(fp)
+          WRITE(0,*) 'Ndat:',ndat
+
+c...      Swap Y and Z to match RAY coordinate system:
+          pdat(5,:) = pdat(3,:)
+          pdat(3,:) = pdat(2,:)
+          pdat(2,:) = pdat(5,:)
+
+          DO angle = 0.0D0, 359.0D0, 360.0D0 
+            DO i = 1, ndat, 4
+              newvtx(1:3,1) = pdat(1:3,i+0)
+              newvtx(1:3,2) = pdat(1:3,i+1)
+              newvtx(1:3,3) = pdat(1:3,i+2)
+              newvtx(1:3,4) = pdat(1:3,i+3)
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),4)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),4)
+            ENDDO
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj,istart,nsrf
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+
+c       ----------------------------------------------------------------
+        CASE (3)
+          pdat = -999.0D0
+
+          fp = 99
+          file = opt%obj_fname(ielement)
+          OPEN(fp,FILE=TRIM(file),FORM='FORMATTED',STATUS='OLD',
+     .         ERR=98)       
+          ndat = 0
+          DO WHILE (.TRUE.)
+            READ(fp,'(A)',END=30,ERR=98) dummy
+            IF (dummy(1:1).EQ.'*'.OR.LEN_TRIM(dummy).LT.5) CYCLE
+            WRITE(0,*) 'dummy>',TRIM(dummy)//'<'
+            ndat = ndat + 1
+            READ(dummy,*) rdum,pdat(1:3,ndat)
+          ENDDO
+ 30       CONTINUE
+          CLOSE(fp)
+          WRITE(0,*) 'Ndat:',ndat
+
+c...      Sort the data:
+          WRITE(0,*) 'SORTING 1...'
+          cont = .TRUE.
+          DO WHILE(cont)
+            cont = .FALSE.
+            DO i = 1, ndat-1
+              IF (pdat(2,i).GT.pdat(2,i+1)) THEN 
+                pdat(:,0  ) = pdat(:,i  )
+                pdat(:,i  ) = pdat(:,i+1)
+                pdat(:,i+1) = pdat(:,0  )
+                cont = .TRUE. 
+              ENDIF
+            ENDDO
+          ENDDO
+          WRITE(0,*) 'SORTING 2...'
+          cont = .TRUE.
+          DO WHILE(cont)
+            cont = .FALSE.
+            DO i = 1, ndat-1
+              IF (pdat(3,i).GT.pdat(3,i+1).AND.
+     .            pdat(2,i).EQ.pdat(2,i+1)) THEN 
+                pdat(:,0  ) = pdat(:,i  )
+                pdat(:,i  ) = pdat(:,i+1)
+                pdat(:,i+1) = pdat(:,0  )
+                cont = .TRUE.
+              ENDIF
+            ENDDO
+          ENDDO
+
+c         Define the back-plane of the panel:          
+
+c         Find average point for the tile:
+          avg(1) = SUM(pdat(1,1:ndat)) / DBLE(ndat)
+          avg(2) = SUM(pdat(2,1:ndat)) / DBLE(ndat)
+          avg(3) = SUM(pdat(3,1:ndat)) / DBLE(ndat)
+          pdat(4,1:ndat) = DSQRT( (avg(1) - pdat(1,1:ndat))**2 + 
+     .                            (avg(2) - pdat(2,1:ndat))**2 + 
+     .                            (avg(3) - pdat(3,1:ndat))**2 )
+
+          pdat(5,:) = 0.0D0  ! Used to mark boundary points
+
+c          DO i = 1, 100
+c            WRITE(0,'(A,I6,3F10.3,F12.6)') 'pdat:',i,pdat(1:4,i)
+c          ENDDO
+
+          list_n = 0
+          DO i = 1, 4
+            j = MAXLOC(pdat(4,1:ndat),1) 
+            pdat(4,j) = -1.0D6
+            pdat(5,j) =  1.0D0
+            list_n         = list_n + 1
+            list_i(list_n) = j
+          ENDDO       
+c         Sort:          
+          DO i = 1, list_n-1
+            DO j = i+1, list_n
+              IF (list_i(i).GT.list_i(j)) THEN
+                list_i(0) = list_i(i)
+                list_i(i) = list_i(j)
+                list_i(j) = list_i(0)
+              ENDIF
+            ENDDO
+          ENDDO
+
+c         Divide all the points into column groups:
+          check = -999.0 
+          col_n = 0
+          DO i = 1, ndat
+            IF (DABS(pdat(2,i)-check).GT.1.0D-6) THEN 
+              col_n = col_n + 1
+              col_i(col_n) = i
+              check = pdat(2,i)
+            ENDIF
+          ENDDO
+          col_n = col_n + 1
+          col_i(col_n) = ndat + 1
+
+
+          min_dist = 0.001D0
+
+          p1 = pdat(1:3,list_i(1))
+          p2 = pdat(1:3,list_i(2))
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+          v1 = pdat(1:3,list_i(2)) - pdat(1:3,list_i(1))
+          v2 = pdat(1:3,list_i(3)) - pdat(1:3,list_i(1))
+          CALL gmCalcCrossProduct(v1,v2,v3)
+          p1 = pdat(1:3,list_i(1))
+          p2 = p1 + v3 
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+          p1 = pdat(1:3,list_i(2))
+          p2 = p1 + v3 
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+
+          p1 = pdat(1:3,list_i(3))
+          p2 = pdat(1:3,list_i(4))
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+          v1 = pdat(1:3,list_i(4)) - pdat(1:3,list_i(3))
+          v2 = pdat(1:3,list_i(1)) - pdat(1:3,list_i(3))
+          CALL gmCalcCrossProduct(v1,v2,v3)
+          p1 = pdat(1:3,list_i(3))
+          p2 = p1 + v3 
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+          p1 = pdat(1:3,list_i(4))
+          p2 = p1 + v3 
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)
+
+c         Also mark the first and last points of the columns with fewer
+c         points:
+          DO i = 1, col_n-1
+            p1 = pdat(1:3,list_i(1))
+            p2 = pdat(1:3,list_i(3))
+            DO j = col_i(i), col_i(i+1)-1
+              pdat(4,j) = CalcPerp2(p1,p2,pdat(1:3,j),t)
+            ENDDO
+            j = MINLOC(pdat(4,col_i(i):col_i(i+1)-1),1)
+            pdat(5,col_i(i)-1+j) = 1.0D0
+            p1 = pdat(1:3,list_i(2))
+            p2 = pdat(1:3,list_i(4))
+            DO j = col_i(i), col_i(i+1)-1
+              pdat(4,j) = CalcPerp2(p1,p2,pdat(1:3,j),t)
+            ENDDO
+            j = MINLOC(pdat(4,col_i(i):col_i(i+1)-1),1)
+            pdat(5,col_i(i)-1+j) = 1.0D0
+          ENDDO       
+
+          DO i = 1, 100 ! ndat-100, ndat
+            WRITE(0,'(A,I6,3F10.3,F12.6,F5.1)') 
+     .        'pdat:',i,pdat(1:3,i),pdat(4:5,i)
+          ENDDO
+
+          WRITE(0,*) 'avg :',SNGL(avg(1:3))
+
+          WRITE(0,*) 'dist:',list_i(1:4)
+
+          col_min = 1E6
+          DO i = 1, col_n-1
+            col_min = MIN(col_i(i+1)-col_i(i),col_min)
+          ENDDO
+          
+
+          DO i = 1, col_n-1
+
+            WRITE(0,'(A,3I6)') 
+     .        'col:',i,col_i(i),col_i(i+1)-col_i(i)
+          ENDDO
+
+
+
+
+          ntri = 0
+          dtri = 0
+          stri = 0
+          dsid = 0
+
+
+c          focus(1:3) = pdat(1:3,2)
+
+          cnt = 0
+
+          i1 = 200
+          i2 = 201
+          i3 = 0
+c          focus(1:3) = pdat(1:3,i1)
+          focus(1:3) = (pdat(1:3,i1) + pdat(1:3,i2)) / 2.0D0
+
+          min_dist = 0.10D0
+
+c         Set the vector 'normal' for the panel:
+          v1 = pdat(1:3,list_i(2)) - pdat(1:3,list_i(1))
+          v2 = pdat(1:3,list_i(3)) - pdat(1:3,list_i(1))
+          CALL gmCalcCrossProduct(v1,v2,v_panel)
+          len1 = DSQRT( v_panel(1)**2 + v_panel(2)**2 + v_panel(3)**2 )
+          v_panel= v_panel / len1  ! Normalize
+
+          v1 = pdat(1:3,list_i(1)) - pdat(1:3,list_i(3))
+          v1 = v1 / DSQRT( v1(1)**2 + v1(2)**2 + v1(3)**2 )
+          v1 = 0.5D0 * (v1 + v_panel)
+          v1 = v1 / DSQRT( v1(1)**2 + v1(2)**2 + v1(3)**2 )
+          v_left = v1
+
+          v1 = pdat(1:3,list_i(3)) - pdat(1:3,list_i(1))
+          v1 = v1 / DSQRT( v1(1)**2 + v1(2)**2 + v1(3)**2 )
+          v1 = 0.5D0 * (v1 + v_panel)
+          v1 = v1 / DSQRT( v1(1)**2 + v1(2)**2 + v1(3)**2 )
+          v_right = v1
+
+          WRITE(0,*) v_panel
+          WRITE(0,*) v_left
+          WRITE(0,*) v_right
+
+          DO WHILE (.TRUE.)
+
+            cnt = cnt + 1
+
+            pdat(4,1:ndat) = SQRT( (focus(1) - pdat(1,1:ndat))**2 + 
+     .                             (focus(2) - pdat(2,1:ndat))**2 + 
+     .                             (focus(3) - pdat(3,1:ndat))**2 )
+
+c           Set correct vector:
+            v_norm = v_panel
+            col_cnt = 0
+            DO i = 1, col_n-1
+              IF ((col_i(i+1)-col_i(i)).GT.col_min) THEN
+                col_cnt = col_cnt+1
+                IF (i1.GE.col_i(i).AND.i1.LT.col_i(i+1).AND.
+     .              i2.GE.col_i(i).AND.i2.LT.col_i(i+1)) THEN
+                  IF (col_cnt.EQ.1.OR.col_cnt.EQ.3) THEN
+                    WRITE(0,*) 'activating left!'
+                    v_norm = v_left
+                  ELSE
+                    WRITE(0,*) 'activating right!'
+                    v_norm = v_right
+                  ENDIF
+                  EXIT
+                ENDIF
+              ENDIF
+            ENDDO              
+
+
+c           Collect nearby points to use when trying to make a new triangle:
+            dist_n = 0
+            j = 0
+            DO WHILE (.TRUE.) 
+              j = j + 1
+              IF (j.EQ.ndat+1) EXIT
+ 
+              i = MINLOC(pdat(4,1:ndat),1) 
+
+c              IF (j.LT.10) WRITE(0,*) '->',i,j,pdat(4,i)
+
+              IF (pdat(4,i).LT.min_dist.AND.
+     .            .NOT.(i.EQ.i1.OR.i.EQ.i2.OR.i.EQ.i3)) THEN  ! Can't duplicate any points on the reference) 
+                dist_n = dist_n + 1
+                dist_list(dist_n) = i
+                IF (dist_n.EQ.10) EXIT
+              ENDIF
+
+              pdat(4,i) = 1.0D+6
+            ENDDO
+
+            IF (dist_n.EQ.0) 
+     .        CALL ER('rayLoadITERFWP','Unable to find nearby '//
+     .                'points',*99)
+
+            WRITE(0,*)
+            WRITE(0,'(A,I6,2X,10I6)') '>',ntri,dist_list(1:dist_n)
+
+c           Try to make a triangle:
+            DO tcnt = 1, dist_n
+
+              status = .FALSE.
+
+              dtri(1,ntri+1) = i1
+              dtri(2,ntri+1) = i2
+              dtri(3,ntri+1) = dist_list(tcnt)            
+
+              p1 = pdat(1:3,dtri(1,ntri+1))
+              p2 = pdat(1:3,dtri(2,ntri+1))
+              p3 = pdat(1:3,dtri(3,ntri+1))
+              
+              len1 = DSQRT ( (p3(1) - p2(1))**2 + (p3(2) - p2(2))**2 + 
+     .                       (p3(3) - p2(3))**2 )
+              len2 = DSQRT ( (p1(1) - p3(1))**2 + (p1(2) - p3(2))**2 + 
+     .                       (p1(3) - p3(3))**2 )
+              len3 = DSQRT ( (p2(1) - p1(1))**2 + (p2(2) - p1(2))**2 + 
+     .                       (p2(3) - p1(3))**2 )
+              
+              angle1 = (len2**2 + len3**2 - len1**2) / (2.0D0*len2*len3)
+              angle2 = (len1**2 + len3**2 - len2**2) / (2.0D0*len1*len3)
+              angle3 = (len1**2 + len2**2 - len3**2) / (2.0D0*len1*len2)
+              angle1 = DACOS(angle1) * 180.0D0 / 3.151492D0
+              angle2 = DACOS(angle2) * 180.0D0 / 3.151492D0
+              angle3 = DACOS(angle3) * 180.0D0 / 3.151492D0
+          
+              WRITE(0,'(A,I6,3F10.2,2X,3I6,2X,3F10.4)') 
+     .            ' ANG:',tcnt,angle1,angle2,angle3,
+     .                    dtri(1:3,ntri+1),
+     .                    len1,len2,len3          
+
+
+c             
+              IF (angle1.GT.170.0D0.OR.angle2.GT.170.0D0.OR.
+     .            angle3.GT.170.0D0) THEN
+                WRITE(0,*) '    ---> angle to large'
+                status = .TRUE.
+              ENDIF
+
+c...          Check if the triangle already exists:
+              IF (.NOT.status) THEN
+                stri(ntri+1) = SUM(dtri(1:3,ntri+1))
+                DO i = 1, ntri
+                  IF (stri(ntri+1).EQ.stri(i)) THEN
+                    match = 0
+                    DO j = 1, 3
+                      DO k = 1, 3
+                        IF (dtri(j,ntri+1).EQ.dtri(k,i)) match = match+1
+                      ENDDO
+                    ENDDO
+                    IF (match.EQ.3) status = .TRUE.
+                  ENDIF
+                ENDDO
+              ENDIF
+
+              IF (.NOT.status) THEN  ! Check that centre point is on the correct side
+                v1 = pdat(1:3,dtri(1,ntri+1)) - 
+     .               pdat(1:3,dtri(3,ntri+1))
+                v2 = pdat(1:3,dtri(2,ntri+1)) - 
+     .               pdat(1:3,dtri(3,ntri+1))
+                CALL gmCalcCrossProduct(v1,v2,v3)
+c...            Get the angle between V3 and V_NORM:
+                dotprod = v3(1) * v_norm(1) + 
+     .                    v3(2) * v_norm(2) + 
+     .                    v3(3) * v_norm(3)
+                len3 = DSQRT(v3(1)**2 + v3(2)**2 + v3(3)**2)
+                angle1 = dotprod / (len3) ! V_NORM is normalized
+ 
+c                WRITE(0,*) 'angle:',angle1
+c                WRITE(0,*) '     :',dtri(1:3,ntri+1)
+c                WRITE(0,*) '     :',pdat(1,dtri(1:3,ntri+1))
+c                WRITE(0,*) '     :',pdat(2,dtri(1:3,ntri+1))
+c                WRITE(0,*) '     :',pdat(3,dtri(1:3,ntri+1))
+c                WRITE(0,*) '  dot:',dotprod
+c                WRITE(0,*) '     :',v1
+c                WRITE(0,*) '     :',v2
+c                WRITE(0,*) '     :',v3
+c                WRITE(0,*) '     :',v_norm
+
+                WRITE(0,*) 'angle:',DACOS(angle1)*180.0D0/3.141592D0
+
+                angle1 = DACOS(angle1) * 180.0D0 / 3.141592D0
+
+                IF (angle1.GT.89.9D0) THEN
+                  WRITE(0,*) '    ---> facing wrong way'
+                  status = .TRUE.
+                ENDIF
+              ENDIF
+
+              IF (.NOT.status) THEN  ! Triangle accepted
+                ntri = ntri + 1
+                IF (ntri.GT.1) THEN
+                  dsid(1,i) = 1  
+                  status = .FALSE.
+                  DO i = 1, ntri-1
+                    DO j = 1, 3
+                      k = j + 1
+                      IF (k.EQ.4) k = 1
+                      IF ((dtri(2,ntri).EQ.dtri(j,i).AND.
+     .                     dtri(3,ntri).EQ.dtri(k,i)).OR.
+     .                    (dtri(2,ntri).EQ.dtri(k,i).AND.
+     .                     dtri(3,ntri).EQ.dtri(j,i))) dsid(2,ntri) = 1
+                      IF ((dtri(3,ntri).EQ.dtri(j,i).AND.
+     .                     dtri(1,ntri).EQ.dtri(k,i)).OR.
+     .                    (dtri(3,ntri).EQ.dtri(k,i).AND.
+     .                     dtri(1,ntri).EQ.dtri(j,i))) dsid(3,ntri) = 1
+                    ENDDO
+                  ENDDO
+                ENDIF
+
+                DO i = 1, 3
+                  j = i + 1
+                  IF (j.EQ.4) j = 1                
+                  IF (pdat(5,dtri(i,ntri)).EQ.1.0D0.AND.
+     .                pdat(5,dtri(j,ntri)).EQ.1.0D0) dsid(i,ntri) = 1
+                ENDDO
+
+
+                WRITE(0,'(A,3I6,2X,3I6)') 
+     .            ' GOD:',dtri(1:3,ntri),dsid(1:3,ntri)
+                WRITE(0,'(A,3F6.1)') 
+     .            '    :',pdat(5,dtri(1:3,ntri))
+
+                EXIT
+
+
+              ELSE
+c                WRITE(0,'(A,3I6)') ' BAD:',stri(ntri+1)
+              ENDIF 
+
+            ENDDO
+
+            IF (cnt.EQ.200) EXIT
+
+            IF (tcnt.EQ.dist_n+1) THEN
+              WRITE(0,*) 'STOPPING BEFCASJG OF'
+              STOP
+            ENDIF
+
+c           Exit condition:
+
+            status = .FALSE.
+            DO i = 1, ntri
+              DO j = 1, 3
+                IF (dsid(j,i).EQ.0) THEN
+                  status = .TRUE.
+                  EXIT
+                ENDIF
+              ENDDO
+              IF (status) EXIT
+            ENDDO
+
+            IF (j.EQ.4.AND.i.EQ.ntri+1) THEN
+              WRITE(0,*) 'NO MORE TRIANGLES TO MAKE',ntri
+              EXIT  ! Exit condition...
+            ENDIF
+
+            dsid(j,i) = 1  ! Mark this side as processed
+
+            WRITE(0,'(A,2I6)') ' SET:',i,j
+
+            j = j + 1
+            IF (j.EQ.4) j = 1
+            i1 = dtri(j,i)
+            j = j - 1
+            IF (j.EQ.0) j = 3
+            i2 = dtri(j,i)
+            j = j - 1
+            IF (j.EQ.0) j = 3
+            i3 = dtri(j,i)
+
+
+            focus(1:3) = 0.5D0 * (pdat(1:3,i1) + pdat(1:3,i2))
+
+            WRITE(0,'(A,3I6,2X,3F10.4)') '    :',i1,i2,i3,focus
+
+
+          ENDDO
+
+c          stop 'sdgfsdfsd'
+
+
+
+          DO angle = 0.0D0, 359.0D0, 360.0D0 
+
+            DO i = 1, ntri
+              newvtx(1:3,1) = pdat(1:3,dtri(1,i))
+              newvtx(1:3,2) = pdat(1:3,dtri(2,i))
+              newvtx(1:3,3) = pdat(1:3,dtri(3,i))
+
+c             Rotate about y-axis (swing):
+              CALL RotateVertices(angle,newvtx(1,1),3)
+              WRITE(0,'(I6,3F12.4,2X,3I6)') 
+     .                i,pdat(1:3,dtri(1,i)),
+     .                    dtri(1:3,i)
+              CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),3)
+            ENDDO
+
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj,istart,nsrf
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+c       ----------------------------------------------------------------
+        CASE (4)
+          pdat = -999.0D0
+
+          fp = 99
+          file = opt%obj_fname(ielement)
+          OPEN(fp,FILE=TRIM(file),FORM='FORMATTED',STATUS='OLD',
+     .         ERR=98)       
+          ndat = 0
+          DO WHILE (.TRUE.)
+            READ(fp,'(A)',END=40,ERR=98) dummy
+            IF (dummy(1:1).EQ.'*'.OR.LEN_TRIM(dummy).LT.5) CYCLE
+c            WRITE(0,*) 'dummy>',TRIM(dummy)//'<'
+            ndat = ndat + 1
+            READ(dummy,*) rdum,pdat(1:3,ndat)
+          ENDDO
+ 40       CONTINUE
+          CLOSE(fp)
+          WRITE(0,*) 'Ndat:',ndat
+
+c...      Sort the data:
+          WRITE(0,*) 'SORTING 1...'
+          cont = .TRUE.
+          DO WHILE(cont)
+            cont = .FALSE.
+            DO i = 1, ndat-1
+c              IF (pdat(1,i).GT.pdat(1,i+1)) THEN 
+              IF (pdat(2,i).GT.pdat(2,i+1)) THEN 
+                pdat(:,0  ) = pdat(:,i  )
+                pdat(:,i  ) = pdat(:,i+1)
+                pdat(:,i+1) = pdat(:,0  )
+                cont = .TRUE. 
+              ENDIF
+            ENDDO
+          ENDDO
+
+c LEFT OFF
+c well seems I've just wasted time with all this since I can't load BM7-10 since they
+c don't follow the same pattern, i.e. they don't seem to have any pattern at all
+c will scrap all this and try creating the panels from the equations...
+
+c         Define the back-plane of the panel:          
+
+c         Find average point for the tile:
+          avg(1) = SUM(pdat(1,1:ndat)) / DBLE(ndat)
+          avg(2) = SUM(pdat(2,1:ndat)) / DBLE(ndat)
+          avg(3) = SUM(pdat(3,1:ndat)) / DBLE(ndat)
+          pdat(4,1:ndat) = DSQRT( (avg(1) - pdat(1,1:ndat))**2 + 
+     .                            (avg(2) - pdat(2,1:ndat))**2 + 
+     .                            (avg(3) - pdat(3,1:ndat))**2 )
+
+          pdat(5,:) = 0.0D0  ! Used to mark boundary points
+
+          DO i = 1, 100
+            WRITE(0,'(A,I6,3F10.3,F12.6)') 'pdat:',i,pdat(1:4,i)
+          ENDDO
+
+
+          list_n = 0
+          DO i = 1, 4
+            j = MAXLOC(pdat(4,1:ndat),1) 
+            pdat(4,j) = -1.0D6
+            pdat(5,j) =  1.0D0
+            list_n         = list_n + 1
+            list_i(list_n) = j
+          ENDDO       
+c         Sort:          
+          DO i = 1, list_n-1
+            DO j = i+1, list_n
+              IF (list_i(i).GT.list_i(j)) THEN
+                list_i(0) = list_i(i)
+                list_i(i) = list_i(j)
+                list_i(j) = list_i(0)
+              ENDIF
+            ENDDO
+          ENDDO
+c         Store the corner points since LIST_I will be messed up after this:
+          DO i = 1, 4
+            corner(1:3,i) = pdat(1:3,list_i(i))
+          ENDDO
+
+c         The corners seem to be ordered properly, but there's no guarantee that this will always be the case...
+c          DO j = 1, 4
+c            i = list_i(j)
+c            WRITE(0,'(A,I6,3F10.3,F12.6)') 'pdat:',i,pdat(1:4,i)
+c          ENDDO
+c          STOP
+
+c         Divide all the points into column groups:
+          check = -999.0 
+          col_n = 0
+          DO i = 1, ndat
+            IF (DABS(pdat(2,i)-check).GT.1.0D-6) THEN 
+              col_n = col_n + 1
+              col_i(col_n) = i
+              check = pdat(2,i)
+            ENDIF
+          ENDDO
+          col_n = col_n + 1
+          col_i(col_n) = ndat + 1
+       
+          DO i = 1, col_n-1
+            WRITE(0,'(A,4I6)') 
+     .        'col:',i,col_i(i),col_i(i+1),col_i(i+1)-col_i(i)
+          ENDDO
+          STOP 'sdfsdfsd'
+ 
+          WRITE(0,*) 'SORTING 2...'
+c          cont = .TRUE.
+c          DO WHILE(cont)
+c            cont = .FALSE.
+c            DO i = 1, ndat-1
+c              IF (pdat(3,i).GT.pdat(3,i+1).AND.
+c     .            pdat(2,i).EQ.pdat(2,i+1)) THEN 
+c                pdat(:,0  ) = pdat(:,i  )
+c                pdat(:,i  ) = pdat(:,i+1)
+c                pdat(:,i+1) = pdat(:,0  )
+c                cont = .TRUE.
+c              ENDIF
+c            ENDDO
+c          ENDDO
+
+
+c         Bottom edge first:
+
+          min_dist = 0.001D0
+          p1(1:3) = corner(1:3,1)  ! Bottom left corner (facing the panel)
+          p2(1:3) = corner(1:3,3)  ! Bottom right
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  
+          DO icol = 1, col_n-1
+            i1 = col_i(icol )
+            i2 = col_i(icol+1) - 1
+            DO i = i1, i2-1
+              DO j = i+1, i2
+                IF (pdat(4,i).GT.pdat(4,j)) THEN
+                  pdat(:,0) = pdat(:,i)
+                  pdat(:,i) = pdat(:,j)
+                  pdat(:,j) = pdat(:,0)
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+c         Top edge:
+          min_dist = 0.001D0
+          p1(1:3) = corner(1:3,2)  ! Top left corner
+          p2(1:3) = corner(1:3,4)  ! Top left
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  
+          DO icol = 1, col_n-1
+            i1 = col_i(icol )
+            i2 = col_i(icol+1) - 1
+            DO i = (i1+i2)/2, i2-1  ! Only sort the top half of the column
+              DO j = i+1, i2
+                IF (pdat(4,i).LT.pdat(4,j)) THEN
+                  pdat(:,0) = pdat(:,i)
+                  pdat(:,i) = pdat(:,j)
+                  pdat(:,j) = pdat(:,0)
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+
+c         Sort the columns that need sorting:
+          col_max = 0
+          DO i = 1, col_n-1
+            col_max = MAX(col_max,col_i(i+1)-col_i(i))
+          ENDDO
+          WRITE(0,*) 'col_max:',col_max
+
+          cnt = 0
+          DO icol = col_n-1, 1, -1
+            i1 = col_i(icol )
+            i2 = col_i(icol+1) - 1
+            IF (i2-i1+1.LT.col_max) CYCLE
+
+            p1 = pdat(1:3,i1)
+            p2 = pdat(1:3,i2)
+            CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  ! just do all points for now...
+
+            step  = 0.005
+            new_s = i1
+
+            cnt = cnt + 1
+            IF (MOD(cnt,2).EQ.1) THEN 
+              WRITE(0,*) 'backward'
+              d1 = 10.5D0*step
+              d2 = -0.5D0*step
+              d3 = -step
+            ELSE
+              WRITE(0,*) 'forward'
+              d1 = -0.5D0*step
+              d2 = 10.5D0*step
+              d3 = step
+            ENDIF
+
+            j = 0
+            DO dist = d1, d2, d3
+              new_n = 0
+              DO i = i1, i2
+                IF (pdat(4,i).GE.dist.AND.pdat(4,i).LT.dist+step) THEN
+                  new_n = new_n + 1
+                  new_i(new_n) = i
+                ENDIF
+              ENDDO
+              IF (new_n.GT.0) THEN
+                j = j + 1
+
+                DO i = 1, new_n
+                  pdat(:,0        ) = pdat(:,new_s+i-1)
+                  pdat(:,new_s+i-1) = pdat(:,new_i(i) )
+                  pdat(:,new_i(i) ) = pdat(:,0        )
+                ENDDO
+
+
+                WRITE(0,*) 'pass...',new_n+new_s,i2+1
+                IF (new_n+new_s.NE.i2+1) THEN  ! Don't add a point if this is the last series of points
+                  col_n = col_n + 1
+                  DO i = col_n, icol+2+(j-1), -1
+                    col_i(i) = col_i(i-1)
+                  ENDDO
+                  col_i(i) = col_i(i-1) + new_n  ! -j
+                ENDIF
+
+                WRITE(0,*) 'pass...',j,cnt,new_s,new_n
+                DO i = i1, i2
+                  WRITE(0,'(A,2I6,3F12.4)') 
+     .              'DIST:',i,new_n,pdat(4,i),dist,dist+step
+                ENDDO
+
+                new_s = new_s + new_n
+              ENDIF              
+
+
+            ENDDO
+
+c            IF (cnt.EQ.2) EXIT
+
+          ENDDO          
+
+          DO k = 1, col_n-1
+            WRITE(0,'(A,4I6)') 
+     .        'col:',k,col_i(k),col_i(k+1),col_i(k+1)-col_i(k)
+          ENDDO
+
+
+
+
+c         Sort again because the above loop can mess things up:
+
+c         Bottom edge first:
+          min_dist = 0.001D0
+          p1(1:3) = corner(1:3,1)  ! Bottom left corner (facing the panel)
+          p2(1:3) = corner(1:3,3)  ! Bottom right
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  
+          DO icol = 1, col_n-1
+            i1 = col_i(icol )
+            i2 = col_i(icol+1) - 1
+            DO i = i1, i2-1
+              DO j = i+1, i2
+                IF (pdat(4,i).GT.pdat(4,j)) THEN
+                  pdat(:,0) = pdat(:,i)
+                  pdat(:,i) = pdat(:,j)
+                  pdat(:,j) = pdat(:,0)
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+c         Top edge:
+          min_dist = 0.001D0
+          p1(1:3) = corner(1:3,2)  ! Top left corner
+          p2(1:3) = corner(1:3,4)  ! Top left
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  
+          DO icol = 1, col_n-1
+            i1 = col_i(icol )
+            i2 = col_i(icol+1) - 1
+            DO i = (i1+i2)/2, i2-1  ! Only sort the top half of the column
+              DO j = i+1, i2
+                IF (pdat(4,i).LT.pdat(4,j)) THEN
+                  pdat(:,0) = pdat(:,i)
+                  pdat(:,i) = pdat(:,j)
+                  pdat(:,j) = pdat(:,0)
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+
+
+          min_dist = 0.001D0
+          p1(1:3) = corner(1:3,1)  ! Bottom left corner (facing the panel)
+          p2(1:3) = corner(1:3,3)  ! Bottom right
+          CALL MarkEdge(p1,p2,pdat,ndat,min_dist)  
+          DO i = 1, 50
+            WRITE(0,'(A,I6,3F10.3,F12.6)') 'pdat:',i,pdat(1:4,i)
+          ENDDO
+
+
+c...      Swap Y and Z to match RAY coordinate system:
+          pdat(5,:) = pdat(3,:)
+          pdat(3,:) = pdat(2,:)
+          pdat(2,:) = pdat(5,:)
+
+          DO angle = 0.0D0, 359.0D0, 360.0D0 
+
+            DO j = 1, col_n-2
+              i1 = col_i(j )
+              i2 = col_i(j+1) - 1
+              i3 = col_i(j+1)
+              i4 = col_i(j+2) - 1
+
+                write(0,*) j,i1,i2,i3,i4
+
+              ibegin = 0
+              ishift = 0
+              IF (ABS(MOD((i2-i1)-(i4-i3),2)).NE.0) 
+     .          CALL ER('rayLoadITERFWP','Odd point differential',*99)
+              IF     (i2-i1.LT.i4-i3) THEN
+                ishift = ((i4-i3) - (i2-i1)) / 2
+              ELSEIF (i2-i1.GT.i4-i3) THEN
+                ibegin = ((i2-i1) - (i4-i3)) / 2
+              ENDIF
+
+              WRITE(0,*) 'ibegin,ishift',ibegin,ishift
+
+              DO i = ibegin, i2-i1-1-ibegin
+                IF (ibegin.NE.0.OR.ishift.NE.0) 
+     .            write(0,*) j,i,i1+i,i3+i+ishift
+                newvtx(1:3,1) = pdat(1:3,i1+i                )
+                newvtx(1:3,2) = pdat(1:3,i1+i+1              )
+                newvtx(1:3,3) = pdat(1:3,i3+i+1+ishift-ibegin)
+                newvtx(1:3,4) = pdat(1:3,i3+i  +ishift-ibegin)
+c               Rotate about y-axis (swing):
+                CALL RotateVertices(angle,newvtx(1,1),4)
+                CALL AddPolygon(SP_PLANAR_POLYGON,newvtx(1,1),4)
+              ENDDO
+
+            ENDDO
+
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj,istart,nsrf
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+c       ----------------------------------------------------------------
+        CASE DEFAULT
+          CALL ER('LoadITERFWP','Unknown geometry sub-option',*99)
+      ENDSELECT
+
+
+      RETURN
+ 98   CALL ER('LoadITERFWP','File not found',*99)
+ 99   STOP
+      END
 c
 c ======================================================================
 c

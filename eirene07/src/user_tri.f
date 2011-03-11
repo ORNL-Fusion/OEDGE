@@ -1047,8 +1047,8 @@ c...        Output:
             DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
 c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
             DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
-            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! ???
-            DDUM(9)=ERFPAT (IATM,MSURFG)/CONV  ! ???
+            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! Emitted atom energy flux from incident atoms (eV s-1)
+            DDUM(9)=ERFPAT (IATM,MSURFG)/CONV  ! Emitted atom energy flux from incident bulk ions (eV s-1)
 
             sum_dat(1) = sum_dat(1) + ddum(2) * conv 
             sum_dat(2) = sum_dat(2) + ddum(4) * conv

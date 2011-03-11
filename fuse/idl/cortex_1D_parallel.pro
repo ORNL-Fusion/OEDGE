@@ -86,7 +86,6 @@ FUNCTION cortex_PlotParallelProfiles, plot, tube, plot_array, ps=ps
   dev_xsize = !D.X_SIZE
   dev_ysize = !D.Y_SIZE
 
-
   notes    = plot.notes
   charsize = plot.charsize
   charsize_labels = charsize

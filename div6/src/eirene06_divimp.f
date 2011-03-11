@@ -22,7 +22,8 @@ c
 
       INTEGER, INTENT(IN) :: iitersol
 
-      INTEGER   ik,ir,in1,in2,i1,id,ik1,status,i,ivoid
+      INTEGER   ik,ir,in1,in2,i1,id,ik1,status,i,ivoid,
+     .          tetrahedron_source,itet
       LOGICAL   saved_triangles,output
       CHARACTER fname*1024
 
@@ -134,6 +135,7 @@ c     specified in block 3 in the EIRENE input file:
       ntorseg   = eirntorseg
       torfrac   = eirtorfrac
       alloc     = eiralloc
+      whipe     = opt_eir%whipe
       beam      = 0
 
       eirfp = 88
@@ -170,9 +172,9 @@ c     and tetrahedrons at the moment):
           CALL SetupEireneStrata
         ELSE
           IF (output) WRITE(0,*) 'building triangles'
-          CALL ALLOC_VERTEX  (20000)   ! NEED TO ADD ACTIVE BOUNDS CHECKING FOR ALL THESE!
-          CALL ALLOC_SURFACE (300)
-          CALL ALLOC_TRIANGLE(25000)
+          CALL ALLOC_VERTEX  (50000)   ! NEED TO ADD ACTIVE BOUNDS CHECKING FOR ALL THESE!
+          CALL ALLOC_SURFACE (3000)
+          CALL ALLOC_TRIANGLE(100000)
 
           CALL DefineEireneSurfaces_06
 
@@ -198,7 +200,11 @@ c         the external program TRIANGLE):
           IF (opt_eir%nvoid.GT.0) THEN
             CALL SetupVoidProcessing(opt_eir)
             DO ivoid = 1, opt_eir%nvoid
-              CALL ProcessVoid(opt_eir%void_zone(ivoid),opt_eir)
+              IF (opt_eir%void_version.EQ.1.0) THEN
+                CALL ProcessVoid_v1_0(opt_eir%void_zone(ivoid),opt_eir)
+              ELSE
+                CALL ProcessVoid     (opt_eir%void_zone(ivoid),opt_eir)
+              ENDIF
             ENDDO
           ELSE
             CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
@@ -213,7 +219,19 @@ c...      Dumps trianlges to a binary file, for use with LoadTriangles:
 
 c...      Tetrahedrons:
           IF (tetrahedrons) THEN
-            CALL ProcessTetrahedrons_06
+            tetrahedron_source = 1
+            DO itet = 1, opt_eir%tet_n
+              IF (opt_eir%tet_type(itet).GT.1.0) THEN
+                tetrahedron_source = 2
+                EXIT
+              ENDIF
+            ENDDO
+            IF (tetrahedron_source.EQ.1) THEN
+              CALL ProcessTetrahedrons_06
+            ELSE
+              CALL AssembleTetrahedrons
+            ENDIF
+
             IF (citersol.GT.0) THEN 
               WRITE(fname,'(A,I3.3,A)') '.',iitersol,'.raw'
               WRITE(0,*) 'FILENAME=','tetrahedrons'//TRIM(fname)
@@ -282,6 +300,7 @@ c
       SUBROUTINE DefineEireneSurfaces_06
       USE mod_eirene06_parameters
       USE mod_eirene06
+      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
       INCLUDE 'params' 
@@ -290,14 +309,15 @@ c
       INCLUDE 'slcom'
 
       INTEGER NewEireneSurface_06
-      LOGICAL CheckIndex
+      LOGICAL CheckIndex,osmGetLine,osmCheckTag
 
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
      .        type,index1,index2,ilside,ilswch,region,code,is,nboundary,
-     .        tmp_ilspt
-      LOGICAL assigned(2),first_message
+     .        tmp_ilspt,fp
+      LOGICAL assigned(2),first_message,active
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc
+      CHARACTER buffer*1024,fname*512,ftag*128
 
       first_message = .TRUE.
 
@@ -321,24 +341,31 @@ c     .             opt_eir%target(is).EQ.IKLO) assigned(IKLO) =.TRUE.
 c          IF (NINT(opt_eir%type(is)) .EQ.1.AND.
 c     .             opt_eir%target(is).EQ.IKHI) assigned(IKHI) =.TRUE.
 c        ENDDO
+
+        nboundary = 0
+
         assigned = .TRUE.
 c...    Define the default surfaces for the target strata, since target
 c       strata are not specifically assigned:
         DO i1 = IKLO, IKHI 
-          IF (assigned(i1)) CYCLE
+          IF (assigned(i1)) CYCLE 
+          STOP 'TURING THIS OBSOLETE STRATA CODE OFF!'
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* default target (DIVIMP)'
+          nboundary = nboundary - 1
           IF (cgridopt.EQ.LINEAR_GRID) THEN
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs-1               ! Ring index end
             surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
             surface(nsurface)%index(5) = 0
+            surface(nsurface)%index(6) = -nboundary
           ELSE
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs                 ! Ring index end
             surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
             surface(nsurface)%index(5) = 0
+            surface(nsurface)%index(6) = -nboundary
           ENDIF
           surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
           surface(nsurface)%iliin  = 1
@@ -355,7 +382,7 @@ c...    Loop over the user specified strata and assemble the
 c       corresponding target surfaces:
         DO is = 1, opt_eir%nstrata 
           IF (NINT(opt_eir%type(is)).NE.1) CYCLE
-
+          nboundary = nboundary - 1
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   ='* user specified target (DIVIMP)'
@@ -363,6 +390,7 @@ c       corresponding target surfaces:
 c          surface(nsurface)%index(2) = nrs                    ! Ring index end
           surface(nsurface)%index(3) = opt_eir%target(is)  ! Target (IKLO=inner, IKHI=outer)
           surface(nsurface)%index(5) = 0
+          surface(nsurface)%index(6) = nboundary
           surface(nsurface)%reflect = LOCAL                   ! Set surface reflection model to LOCAL
           surface(nsurface)%iliin  = 1
           surface(nsurface)%ilside = 0
@@ -376,37 +404,7 @@ c          surface(nsurface)%index(2) = nrs                    ! Ring index end
 
         ENDDO
       ELSE
-c        DO i1 = IKLO, IKHI 
-c          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
-c          surface(nsurface)%subtype  = STRATUM
-c          surface(nsurface)%surtxt   = '* default target (DIVIMP)'
-c          IF (cgridopt.EQ.LINEAR_GRID) THEN
-c            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-c            surface(nsurface)%index(2) = nrs-1               ! Ring index end
-c            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-c            surface(nsurface)%index(5) = 0
-c          ELSE
-c            surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
-c            surface(nsurface)%index(2) = nrs                 ! Ring index end
-c            surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
-c            surface(nsurface)%index(5) = 0
-c          ENDIF
-c          surface(nsurface)%reflect = LOCAL                  ! Set surface reflection model to LOCAL
-c          surface(nsurface)%iliin  = 1
-c          surface(nsurface)%ilside = 0
-c          surface(nsurface)%ilswch = 0
-c          surface(nsurface)%iltor  = 0  
-c          surface(nsurface)%ilcell = 0
-c          surface(nsurface)%ilcol  = 4
-c          surface(nsurface)%material = tmater                ! Set surface material
-c          surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
-c          surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
-c          IF (surface(nsurface)%ilspt.NE.0) THEN
-c            surface(nsurface)%isrs = 2                       ! Species index of sputtered atom
-c            surface(nsurface)%recycs = 1.0
-c            surface(nsurface)%recycc = 1.0
-c          ENDIF
-c        ENDDO
+        STOP 'OBSOLETE STRATUM SETUP CODE'
       ENDIF
 
 c...  Core boundary surface:
@@ -464,9 +462,9 @@ c...
       ENDDO
 
 c...  PFZ radial boundary:  
-      nboundary = nboundary + 1
       IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
       ELSE
+        nboundary = nboundary + 1
         nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
         surface(nsurface)%subtype  = MAGNETIC_GRID_BOUNDARY
         surface(nsurface)%surtxt   = '* radial PFR (DIVIMP)'
@@ -623,6 +621,60 @@ c         where else to put it:
         ELSE
         ENDIF
       ENDDO
+
+
+c...  Additional user specified wall surfaces, new specification:
+      DO i1 = 1, opt_eir%nadd
+        SELECTCASE (opt_eir%add_type(i1))
+c         --------------------------------------------------------------
+          CASE (1)  ! Load line segments from a file 
+            fp = 99
+            fname=TRIM(opt_eir%add_file    (i1))
+            ftag =TRIM(opt_eir%add_file_tag(i1))
+            OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .           STATUS='OLD',ERR=97)
+            active = .FALSE.
+            x2 = -999.0
+            z1 = -1.0D+18
+            z2 =  1.0D+18
+            DO WHILE(osmGetLine(fp,buffer,ALL_LINES))
+c              WRITE(0,*) 'BUFFER ',LEN_TRIM(buffer),'>'//
+c     .                   TRIM(buffer)//'<'
+              IF (buffer(1:1).EQ.'{'.AND.active) EXIT
+              IF (active) THEN 
+                READ(buffer,*,END=10) x1,y1
+                IF (x2.NE.-999.0) THEN 
+c                  WRITE(0,*) 'processing...'
+                  nsurface = NewEireneSurface_06(VESSEL_WALL)
+                  surface(nsurface)%index(2) = opt_eir%add_index(i1)
+                  surface(nsurface)%v(1,1) = DBLE(x1)
+                  surface(nsurface)%v(2,1) = DBLE(y1)
+                  surface(nsurface)%v(3,1) = DBLE(z1)
+                  surface(nsurface)%v(1,2) = DBLE(x2)
+                  surface(nsurface)%v(2,2) = DBLE(y2)
+                  surface(nsurface)%v(3,2) = DBLE(z2)
+                ENDIF
+                x2 = x1
+                y2 = y1
+ 10             CONTINUE
+              ENDIF
+              IF (buffer(1:1).EQ.'{'.AND..NOT.active.AND.
+     .            osmCheckTag(buffer,ftag)) active = .TRUE.
+            ENDDO
+            CLOSE (fp)
+c         --------------------------------------------------------------
+          CASE (2)  ! A hole!
+            nsurface = NewEireneSurface_06(HOLE_IN_GRID)
+            surface(nsurface)%index(2) = opt_eir%add_index(i1)
+            surface(nsurface)%v(1,1)   = DBLE(opt_eir%add_holex(i1))
+            surface(nsurface)%v(2,1)   = DBLE(opt_eir%add_holey(i1))
+c         --------------------------------------------------------------
+          CASE DEFAULT
+            CALL ER('LoadEireneOption','Unknown additional '//
+     .              'surface type',*99)
+        ENDSELECT
+      ENDDO
+
 
 c     ------------------------------------------------------------------
 c...  Over-ride default surface properties:
@@ -956,6 +1008,9 @@ c...  Output:
       ENDDO
 
       RETURN
+ 97   CALL ER('DefineEireneSurfaces_06','Unable to open file',*98)
+ 98   WRITE(0,*) '  FILE= '//TRIM(fname)
+      STOP
  99   WRITE(0,*) '  ILIIN: ',iliin
       STOP
       END
@@ -1134,6 +1189,11 @@ c...      E&M quantities:
           cell(ncell)%e_pot = e_pot(ik,ir)                       ! Electric potential (estimate)
         ENDDO
       ENDDO
+
+c...  Special option to reduce the plasma density to a very low level when
+c     looking at gas dynamics:
+      IF (whipe.GT.0) cell(1:ncell)%plasma(3) = 1.0E+12
+
 
 
       IF (tetrahedrons) THEN
@@ -1427,8 +1487,41 @@ c            STOP 'sdgsdgd'
             strata(nstrata)%sorcos  = opt_eir%sorcos(is)
             strata(nstrata)%sormax  = opt_eir%sormax(is)
           CASE (4)  ! Puff wall surface (not working...)
-            WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
-            STOP 
+            nspez = 1
+            insor = 1
+            nasor = 0
+
+            nstrata = nstrata + 1
+            strata(nstrata)%type    = opt_eir%type(is)
+            strata(nstrata)%indsrc  = -1
+            strata(nstrata)%txtsou  = '* surface injection, '//
+     .                                opt_eir%txtsou(is)
+            strata(nstrata)%ninitl  = -1
+            strata(nstrata)%nemods  =  1
+            strata(nstrata)%npts    = opt_eir%npts(is)
+            strata(nstrata)%flux    = opt_eir%flux(is) *
+     .                                opt_eir%flux_fraction(is)
+            strata(nstrata)%species_tag = 'FFFF'
+            i2 = opt_eir%species(is)
+            strata(nstrata)%species_tag(i2:i2) = 'T'
+            strata(nstrata)%nspez   = nspez
+            strata(nstrata)%distrib = 'FFTFF'
+            strata(nstrata)%inum    = 0
+            strata(nstrata)%indim   = 1 ! 0
+            strata(nstrata)%insor   = 2 ! insor  - surface in 3a list
+            strata(nstrata)%sorwgt  = 1.0
+            strata(nstrata)%sorlim  = 202.0  ! 220.0
+            strata(nstrata)%sorind  = 0.0
+            strata(nstrata)%nrsor   = 0
+            strata(nstrata)%nasor   = nasor
+            strata(nstrata)%sorad(1:6) =opt_eir%sorad(1:6,is) *  ! Convert to cm
+     .                                  100.0  
+            strata(nstrata)%sorene  = opt_eir%sorene(is)
+            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%sorcos  = opt_eir%sorcos(is)
+            strata(nstrata)%sormax  = opt_eir%sormax(is)
+c            WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
+c            STOP 
           CASE DEFAULT
             CALL ER('SetupEireneStrata','Unrecognized strata type',*99)
         ENDSELECT
@@ -1615,7 +1708,7 @@ c
       LOGICAL goodeof,debug,wall_ignored,warning_message
       REAL    rdum(30),frac,norm,len,cir,area,volume,
      .        sumion,amps,pflux
-      CHARACTER buffer*256,species*32,fname*1024
+      CHARACTER buffer*256,species*32,fname*1024,tag*64
 
       INTEGER iobj,igrp
       INTEGER*2, ALLOCATABLE :: fluid_ik(:),fluid_ir(:),wall_in(:,:)
@@ -2074,7 +2167,7 @@ c
         len = SQRT((rvesm(iw,1) - rvesm(iw,2))**2.0 +
      .             (zvesm(iw,1) - zvesm(iw,2))**2.0)
         area = cir * len
-        fluxhw(iw) = (tflux(iw,1) + tflux(iw,7)) / area
+        fluxhw(iw) = (tflux(iw,1) + tflux(iw,7)) / area    ! *** BUG? *** since mixing D and D2?
         flxhw2(iw) = (tflux(iw,1) + tflux(iw,3)) / area  
         flxhw3(iw) = tflux(iw,5) / area
         IF (tflux(iw,5).NE.0.0) flxhw4(iw) = tflux(iw,6) / tflux(iw,5)  ! *** HACK AVERAGE IMPURITY INJECTION ENERGY ***
@@ -2141,15 +2234,17 @@ c          0-total,1-bulk particles,2-test atoms,3-test mol.,4-test ions,5-photo
 
         wall_flx(i)%in_par_blk(1,0) = flxhw8(i)
         wall_flx(i)%in_par_atm(1,0) = flxhw6(i)
-        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)
+        wall_flx(i)%in_par_mol(1,0) = fluxhw(i) - flxhw6(i)
+c        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)  ! *** BUG ***  FLUXHW is not the correct quantitiy 10/03/2011 -SL
 
-        IF (tflux(i,3).NE.0.0) wall_flx(i)%in_ene_blk(1,0)=tflux(i,4 ) /
-     .                                                     tflux(i,3 )
+        IF (tflux(i,3).NE.0.0) 
+     .    wall_flx(i)%in_ene_blk(1,0) = tflux(i,4) / tflux(i,3)
+
         wall_flx(i)%in_ene_atm(1,0) = flxhw5(i)
         wall_flx(i)%in_ene_mol(1,0) = flxhw7(i)
 
-        wall_flx(i)%em_par_atm(2,1) = tflux(i,9 ) / area                  ! Impurity atom influx from bulk ions
-        wall_flx(i)%em_par_atm(2,2) = tflux(i,5 ) / area                  ! Impurity atom influx from test atoms
+        wall_flx(i)%em_par_atm(2,1) = tflux(i,9) / area                  ! Impurity atom influx from bulk ions
+        wall_flx(i)%em_par_atm(2,2) = tflux(i,5) / area                  ! Impurity atom influx from test atoms
         IF (tflux(i,9).NE.0.0) wall_flx(i)%em_ene_atm(2,1)=tflux(i,10) /
      .                                                     tflux(i,9 )
         IF (tflux(i,5).NE.0.0) wall_flx(i)%em_ene_atm(2,2)=tflux(i,6 ) / 
@@ -2253,6 +2348,65 @@ c...  Dump EIRENE iteration data:
        ENDDO
       ENDDO
       CALL inCloseInterface
+
+c...  Saving wall flux data:
+      IF (ALLOCATED(wall_flx)) THEN
+        CALL inOpenInterface('idl.eirene_flux_wall',ITF_WRITE)
+        CALL inPutData(wall_n      ,'N_SEGMENTS','N/A')
+        CALL inPutData(wall_nlaunch,'N_LAUNCH'  ,'N/A')
+        CALL inPutData(MAXNLAUNCH  ,'MAXNLAUNCH','N/A')
+        CALL inPutData(MAXNBLK     ,'MAXNBLK'   ,'N/A')
+        CALL inPutData(MAXNATM     ,'MAXNATM'   ,'N/A')
+        CALL inPutData(MAXNMOL     ,'MAXNMOL'   ,'N/A')
+        CALL inPutData(MAXNION     ,'MAXNION'   ,'N/A')
+        CALL inPutData(MAXNPHO     ,'MAXNPHO'   ,'N/A')
+        CALL inPutData(MAXNSRC     ,'MAXNSRC'   ,'N/A')
+        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,1) *
+     .                     wall_flx(:)%length),'TOT_EM_IMP_1','s-1')
+        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,2) *
+     .                     wall_flx(:)%length),'TOT_EM_IMP_2','s-1')
+        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,1) * ECH *
+     .                     wall_flx(:)%area  ),'TOT_EM_IMP_1','s-1')
+        CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,2) * ECH * 
+     .                     wall_flx(:)%area  ),'TOT_EM_IMP_2','s-1')
+        CALL inPutData(wall_flx(:)%length,'LENGTH','m' )
+        CALL inPutData(wall_flx(:)%area  ,'AREA  ','m2')
+        DO i = 1, MAXNBLK
+          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_BLK_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_par_blk(i,0),tag,'m-2 s-1')
+          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_BLK_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_ene_blk(i,0),tag,'eV')
+        ENDDO
+        DO i = 1, MAXNATM
+          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_ATM_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_par_atm(i,0),tag,'m-2 s-1')
+          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_ATM_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_ene_atm(i,0),tag,'eV')
+        ENDDO
+        DO i = 1, MAXNMOL
+          WRITE(tag,'(A,I1,A,10X)') 'IN_PAR_MOL_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_par_mol(i,0),tag,'m-2 s-1')
+          WRITE(tag,'(A,I1,A,10X)') 'IN_ENE_MOL_',i,'_0'
+          CALL inPutData(wall_flx(:)%in_ene_mol(i,0),tag,'eV')
+        ENDDO
+        DO i = 2, 2
+          WRITE(tag,'(A,I1,A,10X)') 'EM_PAR_ATM_',i,'_1'
+          CALL inPutData(wall_flx(:)%em_par_atm(i,1),tag,'m-2 s-1')
+          WRITE(tag,'(A,I1,A,10X)') 'EM_ENE_ATM_',i,'_1'
+          CALL inPutData(wall_flx(:)%em_ene_atm(i,1),tag,'eV')
+          WRITE(tag,'(A,I1,A,10X)') 'EM_PAR_ATM_',i,'_2'
+          CALL inPutData(wall_flx(:)%em_par_atm(i,2),tag,'m-2 s-1')
+          WRITE(tag,'(A,I1,A,10X)') 'EM_ENE_ATM_',i,'_2'
+          CALL inPutData(wall_flx(:)%em_ene_atm(i,2),tag,'eV')
+        ENDDO
+        DO i = 1, wall_nlaunch
+          WRITE(tag,'(A,I0.2,10X)') 'LAUNCH_',i
+          CALL inPutData(wall_flx(:)%launch(i),tag,'???')
+        ENDDO
+        CALL inPutData(wall_flx(:)%prompt,'PROMPT_DEP','s-1 m-2')
+        CALL inCloseInterface
+      ENDIF
+
 
 c...  Need to save data again since Dalpha has been loaded into OBJ:
 c      CALL SaveGeometryData('tetrahedrons.raw')

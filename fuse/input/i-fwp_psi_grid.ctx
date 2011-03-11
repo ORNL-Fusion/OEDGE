@@ -4,23 +4,88 @@
 {STRING} grid_wall_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_wall.dat
 {STRING} grid_dome_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_dome.dat
 
-{STRING} jet_wall /home/ITER/lisgos/divimp/shots/jet/holy_crap.txt
-
-{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
-  {NO FRAME}  {NO WALL}
-  {ANNOTATE} 1    Blue  jet_wall
-  {CHARSIZE} 1.1 {THICK} 5.0
-
-{EXIT}
-
+${STRING} jet_wall /home/ITER/lisgos/divimp/shots/jet/holy_crap.txt
+$
+${PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
+$  {NO FRAME}  {NO WALL}
+$  {ANNOTATE} 1    Blue  jet_wall
+$  {CHARSIZE} 1.1 {THICK} 5.0
+${EXIT}
 
 $
 $ ----------------------------------------------------------------------
 $
+$ Plots for FWP presentation
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
+  {EQU PARAMS}  17  2.0  1.0
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {NO WALL} 
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
+  {EQU PARAMS}  28  2.0     1.0
+  {ZOOM}     8.0 -0.8  8.6 2.0  
+  {NO WALL} 
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {THICK}  5.0  {XTICKS}  3  {XMINOR}  2
+
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
+  {EQU PARAMS}  28  2.0     1.0
+  {ZOOM}     8.0 -0.8  8.6 2.0  
+  {NO WALL} 
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {THICK}  5.0  {XTICKS}  3  {XMINOR}  2
+  {ASPECT RATIO}  0.25
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
+  {ZOOM}        3.6  -5.0   8.8  5.2
+  {NO WALL}
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {SHOW}  103   Red
+  {THICK} 5.0
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  
+  {ZOOM}     8.0 -0.8  8.6 2.0  
+  {NO WALL}
+  {ANNOTATE} 1    Blue  grid_wall_file
+  {ANNOTATE} 1    Blue  grid_dome_file
+  {SHOW}  103   Red
+  {THICK}  5.0  {XTICKS}  3  {XMINOR}  2
+  {ASPECT RATIO}  0.25
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  {NO WALL}  {CASE DEFAULT}  i-fwp-0200b
+  {ZOOM}     7.8 -0.8  8.6 2.1  
+  {ANNOTATE} 1    Blue grid_wall_file
+  {SHOW}  103   Red
+$  {CHARSIZE} 1.1 {THICK} 5.0
+
+
+
+{PLOT 2D FLUID GRID}  0  {NO WALL}  
+  {ZOOM}     7.8 -0.8  8.6 2.1  
+  {ANNOTATE} 1    Blue grid_wall_file
+  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ
+  {EQU PARAMS}  14  0.0     1.0
+$  {CHARSIZE} 1.1 {THICK} 5.0
+{EXIT}
+
 
 ${PLOT 2D FLUID GRID - DEBUG}   1   
 $  {SHOW}  5  Red
 ${EXIT}
+
+$
+$ ----------------------------------------------------------------------
+$ PSI plots:
 
 {PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/1514/Baseline2008-li0.70.x4.equ  
   {EQU PARAMS}  14  0.0     1.0
@@ -48,9 +113,6 @@ ${EXIT}
   {CHARSIZE} 1.1 {THICK} 5.0
 
 
-
-
-
 $
 $ ----------------------------------------------------------------------
 $
@@ -67,6 +129,7 @@ $
   {ANNOTATE} 1    Blue grid_wall_file
   {SHOW}  103   Red
   {CHARSIZE} 1.1 {THICK} 5.0
+
 $
 $ ----------------------------------------------------------------------
 $

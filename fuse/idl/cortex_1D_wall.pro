@@ -1,10 +1,65 @@
 ;
-; *** ADD {SHOW GRID} OPTION ***
+; ======================================================================
 ; 
+FUNCTIOn cortex_GetValues, str, values
+
+  IF (str EQ 'none') THEN RETURN, 0
+
+  result = 0
+
+  str_comma = STRSPLIT(str,',',/EXTRACT)
+  
+  values = [-1]
+
+  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
+    j = STRPOS(str_comma[i],'-')
+    IF (j EQ -1) THEN BEGIN
+      values = [values,FLOAT(str_comma[i])]
+    ENDIF ELSE BEGIN
+      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
+      print, 'not ready'
+      stop
+;       IF (LONG(val) GE LONG(str_dash[0]) AND  $
+;          LONG(val) LE LONG(str_dash[1])) THEN result = 1
+    ENDELSE
+  ENDFOR
+
+  IF (N_ELEMENTS(values) GT 1) THEN BEGIN
+    values = values[1:N_ELEMENTS(values)-1]
+    RETURN, 1
+  ENDIF ELSE RETURN, 0
+
+END
+;
+; ======================================================================
+; 
+FUNCTION cortex_CheckIndex, val, str
+
+  IF (str EQ 'none') THEN RETURN, 0
+  IF (str EQ 'all' ) THEN RETURN, 1
+
+  result = 0
+
+  str_comma = STRSPLIT(str,',',/EXTRACT)
+  
+  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
+    j = STRPOS(str_comma[i],'-')
+    IF (j EQ -1) THEN BEGIN
+      IF (LONG(val) EQ LONG(str_comma[i])) THEN result = 1
+    ENDIF ELSE BEGIN
+      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
+      IF (LONG(val) GE LONG(str_dash[0]) AND  $
+          LONG(val) LE LONG(str_dash[1])) THEN result = 1
+    ENDELSE
+    IF (result EQ 1) THEN BREAK
+  ENDFOR
+
+  RETURN, result
+END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
+FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annotate=annotate, ps=ps
 
   PRINT
   PRINT,'----------------------- NEW PLOT -----------------------'
@@ -34,24 +89,96 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
   IF (option EQ 100 OR option EQ 101) THEN option = 999
 
   plot_peak = plot.peak
+  plot_sum  = plot.sum
+
+  max_value = REPLICATE(-1.0E+10,10)
+
+  default_type = 1
+  plot_xboarder = 0.05
+  plot_yboarder = 0.1
+  plot_xspacing = 0.100
+  plot_yspacing = 0.025
+
+  save_ypos = [-999.0,-999.0]
+
+  first_plot = 1
 
   CASE option OF
 ;   --------------------------------------------------------------------
     1: BEGIN
-       default_plot_type = 1
-       plot_xboarder = 0.05
-       plot_yboarder = 0.1
-       plot_xspacing = 0.100
-       plot_yspacing = 0.025
        nplot = 3
        plot_xn = 1
        plot_yn = 3
        title = plot.title 
-       subtitle = ['ATOM PARTICLE FLUX DENSITY / m-2 s-1','AVERAGE ATOM ENERGY / eV','ATOM ENERGY FLUX DENSITY ON THE WALL/ MW m-2']
+       subtitle = ['ATOMIC PARTICLE FLUX DENSITY / D m-2 s-1'       ,  $
+                   'AVERAGE ATOM ENERGY / eV'                       ,  $
+                   'ATOMIC ENERGY FLUX DENSITY ON THE WALL / MW m-2']
        xtitle   = 'WALL SEGMENT INDEX'
-       ytitle   = ['flux_p (m-2 s-1)','E_avg (eV)','flux_e (MW m-2)']
+       ytitle   = ['flux_p (D m-2 s-1)','E_avg (eV)','flux_e (MW m-2)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
-       ntrace = [1]
+       ntrace = [1, 1, 1] 
+       plot_type = [1,1,1]  
+       END
+;   --------------------------------------------------------------------
+    2: BEGIN
+       nplot = 3
+       plot_xn = 1
+       plot_yn = 3
+       title = plot.title 
+       subtitle = ['MOLECULAR PARTICLE FLUX DENSITY / D2 m-2 s-1'      ,  $
+                   'AVERAGE MOLECULE ENERGY / eV (per D2)'             ,  $
+                   'MOLECULAR ENERGY FLUX DENSITY ON THE WALL / MW m-2']
+       xtitle   = 'WALL SEGMENT INDEX'
+       ytitle   = ['flux_p (D2 m-2 s-1)','E_avg (eV)','flux_e (MW m-2)']
+       labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace = [1, 1, 1] 
+       plot_type = [1,1,1]  
+       END
+;   --------------------------------------------------------------------
+    3: BEGIN
+       nplot = 6
+
+       IF (plot.title EQ 'unknown') THEN title = 'WALL EROSION RATE SUMMARY' ELSE  $
+                                         title = plot.title 
+       subtitle = ['none','none',  $
+                   'ATOM FLUX / m-2 s-1',        $
+                   'AVERAGE ATOM ENERGY / eV',   $
+                   'IMPURITY INFLUX / m-2 s-1',  $
+                   'EROSION / mm s-1']
+;                   'EROSION / mm per 1000 shots']
+       xtitle = 'WALL INDEX'
+       ytitle = ['none','none',  $
+                 'atom flux density (D m-2 s-1)',        $
+                 'average indicent atom energy (eV)',    $
+                 'impurity influx (particles m-2 s-1)',  $
+                 'erosion rate (mm s-1)']
+;                 'erosion rate (mm / 1000 shots)']
+       labels = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace = [1,1,1,1,1,1]  ; Number of data lines on each plot
+       IF (plot.show_grid) THEN BEGIN
+         plot_xn = 3
+         plot_yn = 2
+         plot_type = [-1,3,1,1,1,1]  ; Type of plot
+       ENDIF ELSE BEGIN
+         plot_xn = 2
+         plot_yn = 2
+         plot_type = [ 0,0,1,1,1,1]  
+       ENDELSE       
+       END
+;   --------------------------------------------------------------------
+    4: BEGIN
+       nplot = 3
+       plot_xn = 1
+       plot_yn = 3
+       title = plot.title 
+       subtitle = ['ATOMIC PARTICLE FLUX DENSITY / D m-2 s-1 (converted to D2 for Pa calculation)',  $
+                   'MOLECULAR PARTICLE FLUX DENSITY / D2 m-2 s-1',  $
+                   'PRESSURE / Pa'                               ]
+       xtitle   = 'WALL SEGMENT INDEX'
+       ytitle   = ['flux_atm (D m-2 s-1)','flux_mol (D2 m-2 s-1)','p_D2 (Pa)']
+       labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace    = [1,1,1] 
+       plot_type = [1,1,1]  
        END
 ;   --------------------------------------------------------------------
     ELSE: BEGIN  
@@ -83,7 +210,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
   yi = 0
 
   FOR iplot = 1, nplot DO BEGIN
-    IF (focus NE 0 AND focus NE iplot) THEN CONTINUE
+    IF ((focus NE 0 AND focus NE iplot) OR (plot_type[iplot-1] EQ 0)) THEN CONTINUE
 
     thick = !P.THICK
 
@@ -104,34 +231,152 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
     xpos  = [xcen - 0.5 * xsize, xcen + 0.5 * xsize]
     ypos  = [ycen - 0.5 * ysize, ycen + 0.5 * ysize]
 
+    ; Fancy trick for breaking the regularity of the plots, if you don't mind
+    ; me saying, so that you can have a tall plot next to some short plots:
+    IF (plot_type[iplot-1] EQ -1) THEN BEGIN
+      IF (save_ypos[0] EQ -999.0) THEN save_ypos = ypos
+      CONTINUE
+    ENDIF ELSE IF (save_ypos[0] NE -999.0) THEN BEGIN
+      ypos[1] = save_ypos[1]
+      save_ypos = [-999.0,-999.0]
+    ENDIF
+
     xmin =  1.0E+35
     xmax = -1.0E+35
     ymin =  1.0E+35
     ymax = -1.0E+35
     FOR idata = 1, ndata DO BEGIN
       val = cortex_ExtractStructure(data_array,idata)
+
+      file = val.wall.file
+      integral = ' '
+      str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+      str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+      IF (first_plot) THEN  $
+        labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
+
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-          file = val.wall.file
-;          integral = '   PARTICLE FLUX INTEGRAL= ' + STRING(val.integral,FORMAT='(E12.4)')
-          integral = ' '
-          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
-          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
+          xdata = FIX(val.wall.index)
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            1: BEGIN
+              ydata[*,0] = val.wall.atom_par_flux
 
-          ntrace = [1, 1, 1]  ; Number of data lines on each plot
+              j = [107, 116, 167, 290]
+              FOR i = 0, 3 DO BEGIN
+                k = WHERE(val.wall.index EQ j[i])
+                flux = ( val.wall.atom_par_flux[k] + val.wall.mol_par_flux[k]) / 2
+                
+                temp = 300 
+ 
+                fact = 2.0 * SQRT(!PI / 2.0)
+
+                mass = 2.0 * 1.67E-27
+
+                pressure = fact * SQRT( mass ) * flux * SQRT( 1.38E-23 * temp )
+
+                print, j[i], val.wall.atom_par_flux[k],  $
+                             val.wall.mol_par_flux [k],  $
+                             flux, temp, pressure, pressure * 7.5,  $
+                       FORMAT='(I6,2E10.2,2X,E10.2,2X,I6,2X,2E10.2)'                     
+              ENDFOR
+
+              END
+            2: BEGIN
+              ydata[*,0] = val.wall.atom_avg_energy
+              ;mid_atom_flux = 0.5 * (MIN(val.wall.atom_par_flux) + MAX(val.wall.atom_par_flux))
+              ;i = WHERE(val.wall.atom_par_flux LT 0.01 * mid_atom_flux, count)
+              ;IF (count GE 1) THEN ydata[i,0] = 0.0
+              END
+            3: ydata[*,0] = val.wall.atom_energy_flux  ; W m-2
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
+          xdata = FIX(val.wall.index)
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            1: ydata[*,0] = val.wall.mol_par_flux 
+            2: ydata[*,0] = val.wall.mol_avg_energy * 2.0 
+            3: ydata[*,0] = val.wall.mol_energy_flux  ; W m-2
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        3: BEGIN
+          xdata = INDGEN(N_ELEMENTS(val.wall.length))
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            2:
+            3: ydata[*,0] = val.wall.in_par_atm_1
+            4: ydata[*,0] = val.wall.in_ene_atm_1
+            5: BEGIN
+              ydata[*,0] = val.wall.em_par_atm_2_2
+              ; Calculate total sputtered source:
+              total_source = TOTAL(val.wall.em_par_atm_2_2 * val.wall.length)
+              print,'total_source',total_source,val.wall.tot_em_par_atm_2_2[0],val.core.div_influx
+              END
+            6: BEGIN
+              ; Calculate thickness eroded per second:
+              CASE FIX(val.summary.ion_atomic_number) OF
+                ;                    Density                          Mass per atom          Assume simple 
+                ;          (in m)    (g/cm^3)   (convert to kg/m^3)   (kg / atom)            cubic structure  
+                 4: atom_diameter = ( 1.85    * 1.0E+3              / (  9.012 * 1.67E-27) )^(-1.0/3.0)
+                26: atom_diameter = ( 7.87    * 1.0E+3              / ( 55.845 * 1.67E-27) )^(-1.0/3.0)
+                74: atom_diameter = (19.35    * 1.0E+3              / (183.840 * 1.67E-27) )^(-1.0/3.0)
+                ELSE: BEGIN
+                  PRINT,'ERROR cortex_PlotWallProfiles: Unrecognised element'
+                  PRINT,'  A =',FIX(val.summary.ion_atomic_number)
+                  END
+              ENDCASE
+              ; Atomic diameter from http://en.wikipedia.org/wiki/Atomic_radius: 
+              ;   Be=2.1E-10, Fe=2.8E-10, W=2.7E-10
+              ; which is about the same as what I get from the above estimate
+              ;print,'atom_diameter',atom_diameter, FIX(val.summary.ion_atomic_number)
+
+              particles_per_m2 = 1.0 / (atom_diameter^2)
+
+              ;              impurity influx           surface atom density     layer thickness
+              ;              (atoms / s / m^2)         (atoms / m^2 / layer)    (m / layer)       convert to mm  
+              ydata[*,0] = ( val.wall.em_par_atm_2_2 / particles_per_m2     ) * atom_diameter   * 1.0E+3         
+
+              ;                          pulse time   number of pulses 
+              ;ydata[*,0] =  ydata[*,0] * 400.0      * 1000.0           
+              END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        4: BEGIN
           xdata = FIX(val.wall.index)
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
             1: ydata[*,0] = val.wall.atom_par_flux
-            2: BEGIN
-              ydata[*,0] = val.wall.atom_avg_energy
-              mid_atom_flux = 0.5 * (MIN(val.wall.atom_par_flux) + MAX(val.wall.atom_par_flux))
-              i = WHERE(val.wall.atom_par_flux LT 0.01 * mid_atom_flux, count)
-              IF (count GE 1) THEN ydata[i,0] = 0.0
+            2: ydata[*,0] = val.wall.mol_par_flux 
+            3: BEGIN
+              atm_flux = val.wall.atom_par_flux / 2.0 !(assuming a chamber where all D is convereted to D2)
+              mol_flux = val.wall.mol_par_flux
+             
+              flux = (atm_flux + mol_flux) 
+              temp = 300.0 
+              fact = 2.0 * SQRT(!PI / 2.0)
+              mass = 2.0 * 1.67E-27
+              pressure = fact * SQRT( mass ) * flux * SQRT( 1.38E-23 * temp )
+
+              ;j = [107, 116, 167, 290]
+              j = [30]
+              PRINT,'Pressure calculation'
+              FOR i = 0, N_ELEMENTS(j)-1 DO BEGIN
+                k = WHERE(val.wall.index EQ j[i])
+                print, j[i], atm_flux[k],  $
+                             mol_flux[k],  $
+                             flux[k], temp, pressure[k], pressure[k] * 7.5,  $
+                       FORMAT='(I6,2E10.2,2X,E10.2,2X,I6,2X,2E10.2)'                     
+              ENDFOR
+
+              ydata[*,0] = pressure
+
               END
-            3: ydata[*,0] = val.wall.atom_energy_flux  ; W m-2
           ENDCASE
           END
 ;       ----------------------------------------------------------------
@@ -169,7 +414,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
     IF (ymin GT 0.0 AND ymax GT 0.0) THEN ymin = 0.0  ; Makes things a bit clearer on the plots I think...
     IF (ymin LT 0.0 AND ymax LT 0.0) THEN ymax = 0.0
     deltay = ymax - ymin
-    ymin = ymin - 0.05 * deltay
+    ymin = ymin - 0.10 * deltay
     ymax = ymax + 0.05 * deltay
 
 ;   Axes:
@@ -177,21 +422,34 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
     yrange = [ymin,ymax]
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 
-    plot_type = default_plot_type                                           
-    IF (focus NE 0 OR yi EQ plot_yn OR iplot EQ nplot) THEN plot_type = 2   ; Show x-axis label
+    type = default_type                                           
+    IF (focus NE 0 OR yi EQ plot_yn OR iplot EQ nplot) THEN type = 2   ; Show x-axis label
 
-    CASE (plot_type) OF
+    IF (plot_type[iplot-1] EQ 3) THEN type = 3
+
+    first_plot = 0
+
+    CASE (type) OF
       1: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
                POSITION=position,YTITLE=ytitle[iplot-1],XTICKFORMAT='(A1)',/NOERASE                                  
       2: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
                POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle,/NOERASE                                 
+      3: BEGIN  
+        plot_grid        = plot
+        plot_grid.size   = 0.6
+        plot_grid.center = [0.6*xpos[0]+0.4*xpos[1],0.5*(ypos[0]+ypos[1])]
+        status = cortex_PlotFluidGrid(plot_grid, grid, wall, 0, annotate, 'subordinate', 'outline', ps='on')
+        END
     ENDCASE
+
+    IF (type EQ 3) THEN CONTINUE
 
 ;   Write sub-title for each plot:
     XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
             (xy_label[2] * ypos[0] + xy_label[3] * ypos[1]) * dev_ysize,  $
             subtitle[iplot-1], CHARSIZE=charsize_labels, /DEVICE
 
+;   Add a trace that gives the peak value for each wall segment:
     IF (plot_peak NE 0) THEN BEGIN
       FOR idata = 1, ndata DO BEGIN
         val = cortex_ExtractStructure(data_store,idata)
@@ -227,10 +485,81 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
       ENDELSE
     ENDIF
 
+;   Add a trace that gives the sum overall traces:
+    IF (plot_sum NE 0) THEN BEGIN
+      FOR idata = 1, ndata DO BEGIN
+        val = cortex_ExtractStructure(data_store,idata)
+        IF (idata EQ 1) THEN BEGIN
+          CASE option OF
+;           --------------------------------------------------------
+            1: BEGIN
+;               CASE iplot OF              ; *** LEFT OFF *** comenting out for now so can @cortex_make
+;                 1: BEGIN
+;                    xdata = val.x
+;                    ydata = val.y
+;                    save_ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+;                    END
+;                 2: xdata = val.x  &  ydata = vay.y * save_ydata[*,0] 
+;                 3: xdata = val.x  &  ydata = val.y
+;                ENDCASE
+               END
+;           --------------------------------------------------------
+          ENDCASE
+        ENDIF ELSE BEGIN
+          FOR i = 0, N_ELEMENTS(xdata)-1 DO BEGIN
+            ydata[i,*] = 0.0
+            FOR j = 0, N_ELEMENTS(ydata[0,*])-1 DO BEGIN
+              IF (xdata[i] NE val.x[i]) THEN BEGIN
+                print, 'trouble'
+                STOP
+              ENDIF
+              CASE option OF
+;               --------------------------------------------------------
+                1: BEGIN
+                   CASE iplot OF              
+                     1: ydata[i,j] = ydata[i,j] + val.y[i,j]
+                     2: ydata[i,j] = ydata[i,j] + val.y[i,j] * save_ydata[j,idata-1]
+                     3: ydata[i,j] = ydata[i,j] + val.y[i,j]
+                    ENDCASE
+                   END
+;               --------------------------------------------------------
+              ENDCASE
+            ENDFOR
+          ENDFOR
+        ENDELSE
+        IF (iplot EQ 1) THEN save_ydata[*,idata-1] = val.y[*,0]
+      ENDFOR
+      IF (iplot EQ 1) THEN save_ydata[*,ndata] = ydata[*,0]
+      IF (iplot EQ 2) THEN ydata[*,0] = ydata[*,0] / save_ydata[*,ndata]
+      IF (plot_sum EQ 2) THEN BEGIN
+        labels[0] = 'sum values:'
+        file  = 'SUM'
+        ndata = 1  
+        name = 'data' + STRING(ndata,FORMAT='(I0)')
+        data = { x : xdata, y : ydata, file : file } 
+        data_store = CREATE_STRUCT(name,data)
+      ENDIF ELSE BEGIN
+        labels[0] = labels[0] + 'sum values :'
+        file  = 'sum values'
+        ndata = ndata + 1  
+        name = 'data' + STRING(ndata,FORMAT='(I0)')
+        data = { x : xdata, y : ydata, file : file } 
+        data_store = CREATE_STRUCT(data_store,name,data)
+      ENDELSE
+;     Need to store the particle flux data so that it can be used
+;     to average the average energy flux on the next pass of IPLOT:
+    ENDIF
+
+    ; Mark vertical lines on plot:
+    IF (cortex_GetValues(plot.xmark,values)) THEN BEGIN
+      FOR i = 0, N_ELEMENTS(values)-1 DO  $
+         OPLOT, [values[i],values[i]], [ymin,ymax], LINESTYLE=1, COLOR=Truecolor('Grey')
+    ENDIF
+
 ;   Data:
     FOR idata = 1, ndata DO BEGIN
       val = cortex_ExtractStructure(data_store,idata)
-      CASE option OF
+      SWITCH option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
           cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
@@ -239,6 +568,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
  
           IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          IF (plot_sum  EQ 1 AND idata EQ ndata) THEN thick = 2.0
 
           OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
           CASE iplot OF
@@ -247,6 +577,43 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
             3: 
             ELSE:
           ENDCASE
+          BREAK
+          END
+;       ----------------------------------------------------------------
+        2:
+        3: BEGIN
+          IF (idata EQ 1) THEN  $
+            cortex_DrawKey, iplot-2, focus, labels, xy_label, xpos, ypos,  $
+                            dev_xsize, dev_ysize, charsize_labels, colors
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+          IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          IF (plot_sum  EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
+
+          i = WHERE(val.x GE xmin AND val.x LE xmax)
+          max_value[iplot] = MAX([max_value[iplot],val.y[i,0]])
+          IF (idata EQ ndata) THEN  $
+            ;XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
+            ;        (xy_label[3] * ypos[0] + xy_label[2] * ypos[1]) * dev_ysize,  $
+            ;XYOUTS, (0.38        * xpos[0] + 0.62        * xpos[1]) * dev_xsize,  $
+            ;        (xy_label[2] * ypos[0] + xy_label[3] * ypos[1]) * dev_ysize,  $
+             XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
+                     (0.97        * ypos[0] + 0.03        * ypos[1]) * dev_ysize,  $
+                    'MAX = '+STRTRIM(STRING(max_value[iplot]),2), CHARSIZE=charsize_labels, /DEVICE
+
+          BREAK
+          END
+;       ----------------------------------------------------------------
+        4: BEGIN
+          IF (idata EQ 1) THEN  $
+            cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                            dev_xsize, dev_ysize, charsize_labels, colors
+
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+          IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          IF (plot_sum  EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
+          BREAK
           END
 ;       ----------------------------------------------------------------
         ELSE: BEGIN  
@@ -254,7 +621,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, ps=ps
           PRINT, '  OPTION = ',plot.option,' (',option,')'
           RETURN, -1
           END
-      ENDCASE
+      ENDSWITCH
 
     ENDFOR  ; idata loop
 

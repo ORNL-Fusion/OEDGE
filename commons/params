@@ -152,6 +152,8 @@ c
 c slmod begin - temporary
       INTEGER, PARAMETER :: LINEAR_GRID = 6        ! Tag for ULS grids   
       INTEGER, PARAMETER :: GEN_GRID    = 7        ! For Dave...  
+      INTEGER, PARAMETER :: OSM_GRID    = 9        ! Import geometry from OSM 
+      integer, parameter :: RIBBON_GRID = 8
 
 c...  Some global options of convenience:
       LOGICAL, PARAMETER :: sloutput  = .TRUE.,   ! Selects SL screen output 

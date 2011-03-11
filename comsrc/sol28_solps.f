@@ -12,7 +12,7 @@ c
 
       INTEGER, INTENT(IN) :: idata
  
-      INTEGER   fp,outfp,column,idum(2),maxik,maxir,count
+      INTEGER   fp,outfp,column,idum(2),maxik,maxir,count,i
       LOGICAL   output,first_call
       CHARACTER filename*1024,buffer*1024
       REAL      rdum(10)
@@ -97,6 +97,16 @@ c...  Load the data:
 
       CLOSE(fp)
 
+
+c     Rescale the cell positions if they are in mm (older data):
+      IF (first_call) THEN
+        i = MAXLOC(solps_cen(1:count,1),1)
+        IF (solps_cen(i,1).GT.30.0) THEN   ! Hopefully no future machine will be larger than 30 m...
+          CALL WN('ReadSOLPSDataFile_OSM','Rescaling SOLPS '//
+     .            'coordinate data to metres from millimetres')
+          solps_cen = solps_cen * 1.0E-3
+        ENDIF
+      ENDIF
 
 
       RETURN

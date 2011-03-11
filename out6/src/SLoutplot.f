@@ -114,6 +114,8 @@ c
         CALL inPutData(pos  (1:ike),'POS'  ,'N/A')                     
         CALL inPutData(tube (1:ike),'TUBE' ,'N/A')                     
         CALL inPutData(kss(1:ike,ir),'S','m')
+        CALL inPutData(rs (1:ike,ir),'R','m')
+        CALL inPutData(zs (1:ike,ir),'Z','m')
         CALL inPutData(pinion (1:ike,ir),'ION_NET','m-3 s-1')        
         CALL inPutData(pinrec (1:ike,ir),'REC_NET','m-3 s-1')        
         CALL inPutData(pinmp  (1:ike,ir),'MOM_NET','?')
@@ -385,6 +387,39 @@ c     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
 c     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
 c     wallpt (ind,31) = Plasma density at wall segment
 
+c from div6/src/div.f
+c
+c      FACT = 0.0
+c      IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c      DO 883 ID = 1, NDS
+c        IF (DDS(ID).NE.0.0) THEN
+c          NEROS(ID,1) =-NEROS(ID,1) / DDS(ID) * FACTA(0)             
+c          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(0)
+cc          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(-1)
+c          NEROS(ID,3) = NEROS(ID,3) / DDS(ID) * FACTA(0)
+c        ELSE
+c          NEROS(ID,1) = 0.0
+c          NEROS(ID,2) = 0.0
+c          NEROS(ID,3) = 0.0
+c        ENDIF
+c        NEROS(ID,4) = NEROS(ID,1) + NEROS(ID,3)
+c        NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c  883 CONTINUE
+
+c from out6/src/out000.f:
+c        DO ID = nds,ndsin+1,-1
+c          JD = JD + 1                                                   
+c          IK = IKDS(ID)                                                 
+c          IR = IRDS(ID)                                                 
+c          tdist(jd) = sqrt((rs(ik,ir)-1.1300)**2+(zs(ik,ir)+0.8200)**2)
+c          DO II = 1, 5
+c            DVALS(JD,II) = NEROS(ID,II)
+c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)  
+c        WRITE(ELABS(2),'(A,F8.4)')'    PRIMARY REMOVAL  =',SUM(2)+SUM(7)
+c        WRITE(ELABS(3),'(A,F8.4)')'    TOTAL REMOVAL    =',SUM(3)+SUM(8)
+c        WRITE(ELABS(4),'(A,2F7.4)')'    NET EROSION=',     SUM(4),SUM(9)
+c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
+
       DO id = 1, wallpts
         CALL inPutData(id             ,'INDEX'      ,'N/A')                     
         CALL inPutData(wallpt(id,1)   ,'R_CEN'      ,'m')  
@@ -397,10 +432,11 @@ c     wallpt (ind,31) = Plasma density at wall segment
         CALL inPutData(wallpt(id,19)  ,'TEMPERATURE','K')                     
         in = wallpt(id,17)
         CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
-        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
+        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'D m-2 s-1')                     
         CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
-        CALL inPutData(fluxhw(in)-flxhw6(in),'MOL_PAR_FLUX'  ,'m-2 s-1')                     
-        CALL inPutData(flxhw7(in)           ,'MOL_AVG_ENERGY','eV')                     
+        CALL inPutData(fluxhw(in)-flxhw6(in),
+     .                                 'MOL_PAR_FLUX'   ,'D2 m-2 s-1')                     
+        CALL inPutData(flxhw7(in)     ,'MOL_AVG_ENERGY','eV')                     
       ENDDO
       CALL inCloseInterface 
 
@@ -432,8 +468,6 @@ c
       CALL LoadObjects('osm_geometry.raw',status)
 
       CALL GenerateOutputFiles
-
-
 
       CALL SaveFluidGridGeometry       
 
@@ -4079,6 +4113,8 @@ c ======================================================================
 c
 c
       SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
+      USE mod_out985
+      USE mod_out985_variables
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4094,6 +4130,9 @@ c
       ELSEIF (iopt.EQ.3) THEN
         WRITE(0,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
         WRITE(6,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
+        CALL Wrapper_ClearObjects  
+        IF (ALLOCATED(obj)) DEALLOCATE(obj)
+        CALL GREND
         STOP
       ELSEIF (iopt.EQ.4) THEN
         CALL CheckImaginaryDensity
@@ -4137,6 +4176,9 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.16) THEN
         CALL ExportTetrahedrons('tetrahedrons.raw')
         RETURN
+      ELSEIF (iopt.EQ.17) THEN
+        CALL AnalyseSolution(6)
+        RETURN
       ENDIF
 
 
@@ -4169,8 +4211,6 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       STOP 'HALTING OUT FROM PLOT 999'
 
       CALL ProbePath2
-
-      CALL AnalyseSolution(6)
 
 c      CALL LoadEIRENEAtomicData
 

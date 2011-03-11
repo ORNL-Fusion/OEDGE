@@ -50,8 +50,9 @@
 !
       CONTAINS
 
-      SUBROUTINE     dummy_routine
-      END SUBROUTINE dummy_routine
+      SUBROUTINE     divClean
+        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+      END SUBROUTINE divClean
 
       END MODULE mod_divimp
 !

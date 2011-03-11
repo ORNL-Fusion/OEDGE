@@ -14,7 +14,6 @@ FUNCTION cortex_SliceGrid, line, grid, status
 
 ; print,grid.isep
 ; print,grid.tube_psin
-
 ; print,a1
 ; print,a2,length
 ;
@@ -51,6 +50,8 @@ FUNCTION cortex_SliceGrid, line, grid, status
     k  = grid.vtx_map[grid.srf_ivtx[1,i]]
     b2 = 0.5 * (grid.vtx[0:1,j] + grid.vtx[0:1,k])
 
+    IF ( ABS(b1[0]-b2[0]) LT 1.0E-7 ) THEN b1[0] = b1[0] + 0.000001D
+
     Lint, a1, a2, b1, b2, c, d, flag=flag
 
     IF (flag NE 1) THEN CONTINUE
@@ -58,12 +59,14 @@ FUNCTION cortex_SliceGrid, line, grid, status
     s = (c[0] - a1[0]) / (a2[0] - a1[0])    
     t = (c[0] - b1[0]) / (b2[0] - b1[0])    
 
-;   IF (grid.obj_tube[iobj] EQ 11) THEN BEGIN
-;     print, ' -->',iobj,s,t   
+;   IF (grid.obj_tube[iobj] EQ 1) THEN BEGIN
+;     print, ' -->',b1,b2,iobj,s,t   
 ;   ENDIF
 
     IF ( s GE 0.0 AND s LE 1.0 AND  $
          t GE 0.0 AND t LT 1.0) THEN BEGIN
+
+;      print,'carve!',s,t,iobj
 
       i = grid.obj_tube[iobj] - 1
 
@@ -653,6 +656,7 @@ print, '>'+plot.xdata+'<'
     yrange = [ymin,ymax]
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 
+;    IF (iplot EQ 6) THEN yrange = [5.0,3000.0]
 ;    IF (iplot EQ 6) THEN yrange = [0.0,500.0]
 
     ytitle = STRTRIM(plot_ytitle[iplot-1],2)
@@ -670,7 +674,7 @@ print, '>'+plot.xdata+'<'
                    POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE
       5    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
                    POSITION=position,YTITLE=ytitle,XTICKFORMAT='(A1)',/NOERASE
-      6    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
+      6    : PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $ ; /YLOG, $
                    POSITION=position,YTITLE=ytitle,XTITLE=plot_xtitle,/NOERASE                                 
     ENDCASE
 

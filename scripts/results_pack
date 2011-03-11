@@ -36,12 +36,20 @@ else
     mkdir tmp_idl
     mv $CASE*.idl.* tmp_idl
   else
+    if ( -e tmp.idl.ps ) then
+      if ( -e temp.idl.ps.gz ) rm tmp.idl.ps.gz
+      gzip tmp.idl.ps
+    endif
     if ( -e $CASE.idl.zip ) rm $CASE.idl.zip
     zip $CASE.idl.zip $CASE.idl.*
     mv $CASE.idl.zip tmp.idl.zip
     rm $CASE.idl.*
   endif
 
+  if ( -e tmp.ps ) then
+    if ( -e temp.ps.gz ) rm tmp.ps.gz
+    gzip tmp.ps
+  endif
   zip $CASE.zip $CASE.*
   if ( -e $CASE.zip ) then
     mv $CASE.zip tmp.zip
@@ -56,17 +64,19 @@ else
     rm -rf tmp_idl
   endif
 
-  mv  tmp.idl.zip    $CASE.idl.zip
-  mv  tmp.zip        $CASE.zip
+  rename tmp $CASE -- tmp*
 
-  mvc tmp.dat        $CASE.dat        
-  mvc tmp.g3	     $CASE.g3         
-  mvc tmp.out.end    $CASE.out.end    
-  mvc tmp.ps	     $CASE.ps         
-  mvc tmp.ps.gz      $CASE.ps.gz      
-  mvc tmp.ps.zip     $CASE.ps.zip     
-  mvc tmp.idl.ps     $CASE.idl.ps     
-  mvc tmp.idl.ps.gz  $CASE.idl.ps.gz  
-  mvc tmp.idl.ps.zip $CASE.idl.ps.zip 
+#  mv  tmp.idl.zip    $CASE.idl.zip
+#  mv  tmp.zip        $CASE.zip
+
+#  mvc tmp.dat        $CASE.dat        
+#  mvc tmp.g3	     $CASE.g3         
+#  mvc tmp.out.end    $CASE.out.end    
+#  mvc tmp.ps	     $CASE.ps         
+#  mvc tmp.ps.gz      $CASE.ps.gz      
+#  mvc tmp.ps.zip     $CASE.ps.zip     
+#  mvc tmp.idl.ps     $CASE.idl.ps     
+#  mvc tmp.idl.ps.gz  $CASE.idl.ps.gz  
+#  mvc tmp.idl.ps.zip $CASE.idl.ps.zip 
 
 endif 

@@ -8,6 +8,7 @@
 ; getb,'j-bfg-0007d.dat.cell',machine='EQU',equ='~/divimp/shots/jet/68124_49000/JET_68124_49000.equ',/CHANGE_SIGN
 ; getb,'j-bfg-0006e.dat.cell',machine='EQU',equ='~/divimp/shots/jet/68124_49000/JET_68124_49000.equ',/CHANGE_SIGN
 ; getb,'m-det-0003a.dat.cell',machine='EQU',equ='~/divimp/shots/mast/24860/carre.24860_240.equ'
+; getb,'m-ch4-0003a.objects.centre',machine='EQU',equ='~/divimp/shots/mast/13948/efm0139.48.280.equ'
 ;
 ; ======================================================================
 ;
@@ -366,7 +367,7 @@ ENDCASE
 ;help,grid,/struct
 ;help,b,/struct
 ; contour,b.psin,b.x,b.y,levels=[0.9,1.0,1.1],c_annotation=''
-
+;stop
 ;
 ; ----------------------------------------------------------------------
 ;

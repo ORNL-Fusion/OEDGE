@@ -1739,7 +1739,7 @@ c also plot the nimbus wall and pump (if any)
 c
 c       IF available
 c
-        if (nvesm.ne.0) then
+        if (.FALSE..AND.nvesm.ne.0) then
 c
 c         Need to modify this to plot the baffles independently if they
 c         are present.
@@ -1771,7 +1771,7 @@ c
 c       Plot the wall read from the grid file if NIMBUS wall is
 c       not available
 c
-        elseif (nves.ne.0) then
+        elseif (.FALSE..AND.nves.ne.0) then
 
           write (6,*) 'Nves:',nves
 

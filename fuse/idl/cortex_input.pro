@@ -57,6 +57,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
 
   long_array   = MAKE_ARRAY(100,/LONG  ,VALUE=0        )
   string_array = MAKE_ARRAY(100,/STRING,VALUE='unknown')
+  float_array  = MAKE_ARRAY(100,/FLOAT ,VALUE='-999.0' )
 
   line_seg = MAKE_ARRAY(4*5,/FLOAT,VALUE=0.0)
 
@@ -89,27 +90,38 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     annotate_code   : long_array        ,  $  ; Type of annotation
     annotate_colour : string_array      ,  $  ; Colour
     annotate_file   : string_array      ,  $  ; Location of data describing the annotation
+    annotate_step   : [1,1,1,1,1,1,1,1] ,  $  ; Index step when plotting
+    annotate_label  : long_array        ,  $  ; Label annotations
     equ             : 'default'         ,  $
     equ_params      : [20,1.0,1.0]      ,  $
+    equ_levels      : float_array       ,  $
     frame           : 1                 ,  $
     frame_bnds      : [0.0,1.0]         ,  $
     outline         : 0                 ,  $
     flux_surfaces   : 0                 ,  $  ; PlotFluidGrid - show tube radial boundaries
+    show_grid       : 0                 ,  $
     no_grid         : 0                 ,  $
     no_wall         : 0                 ,  $
+    no_separatrix   : 0                 ,  $
     area            : [0.0,0.0,0.0,0.0] ,  $
     center          : [0.0,0.0]         ,  $
     size            : 0.0               ,  $
     zoom            : [0.0,0.0,0.0,0.0] ,  $
+    xticks          : -1                ,  $
+    yticks          : -1                ,  $
+    xminor          : -1                ,  $
+    yminor          : -1                ,  $
     xrange          : [0.0,0.0]         ,  $
     yrange          : [0.0,0.0]         ,  $
     ylimit          : [0.0,0.0,0.0,0.0] ,  $
+    xmark           : 'none'            ,  $
     peak            : 0                 ,  $
+    sum             : 0                 ,  $
     scale_factor    : 1.0               ,  $
     log             : 0                 ,  $
     xdata           : 'psi_n'           ,  $
     xlog            : 0                 ,  $
-    ylog            : 0                 ,  $
+    ylog            : -1                ,  $
     smooth          : 0                 ,  $
     position        : [0.0,0.0,0.0,0.0] ,  $
     focus           :  0                ,  $
@@ -118,7 +130,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     line_seg_n      : 0                 ,  $
     line_seg_s      : [0,0,0,0,0]       ,  $
     line_seg        : line_seg          ,  $
-    label_index     : [0L,0L]           ,  $
+    label_index     : 'none'            ,  $
     show_n          : 0                 ,  $
     show_tube       : long_array        ,  $
     show_colour     : string_array      ,  $
@@ -293,7 +305,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
     i1 = STRPOS(buffer,'{')
     i2 = STRPOS(buffer,'}')
     tag  = STRUPCASE(STRMID(buffer,i1+1,i2-i1-1))
-    data = STRMID(buffer,i2+1)
+    data = STRTRIM(STRMID(buffer,i2+1),2)
     data_array = STRSPLIT(data,/EXTRACT)
 
 ;    PRINT,'TAG       :',tag
@@ -301,6 +313,31 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
 ;    PRINT,'DATA_ARRAY:',data_array[0],data_array[1]
 
     CASE tag OF
+
+; LEFT OFF
+; need to set new 2D integral plot that show the image... and does some analysis...
+;     ------------------------------------------------------------------
+      'PLOT 2D LOS INTEGRAL': BEGIN
+        ncase = 1
+        nset  = 0
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
+        plot_struct.tag          = tag
+        plot_struct.option       = FIX(data)
+        plot_struct.title        = '2D LOS INTEGRALS'
+        plot_struct.default      = case_name
+        plot_struct.case_name[0] = case_name
+        CASE plot_struct.option OF
+          0:
+          1: 
+          ELSE: BEGIN
+            PRINT,'ERROR cortex_LoadPlotData: Unknown 2D LOS integral plot option'
+            PRINT,'  FILE_NAME= ',file_name
+            PRINT,'  TAG      = ',tag
+            PRINT,'  OPTION   = ',plot_struct.option
+            RETURN,-1
+            END
+          ENDCASE
+        END
 ;     ------------------------------------------------------------------
       'PLOT 1D LOS INTEGRAL': BEGIN
         ncase = 1
@@ -331,14 +368,20 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
-        plot_struct.title        = 'WALL PROFILES'
         plot_struct.default      = case_name
         plot_struct.case_name[0] = case_name
         CASE plot_struct.option OF
           0:
-          1: BEGIN
-             plot_struct.data_file[0] = 'idl.divimp_flux_wall'
-             END
+          1: plot_struct.data_file[0] = 'idl.divimp_flux_wall'
+          2: plot_struct.data_file[0] = 'idl.divimp_flux_wall'
+          3: BEGIN
+            plot_struct.data_file[0] = 'idl.eirene_flux_wall'   ; Wall fluxes from EIRENE
+            plot_struct.data_file[1] = 'idl.divimp_summary'
+            plot_struct.data_file[2] = 'idl.core_impurities'
+            plot_struct.data_file[3] = 'idl.fluid_grid'
+            plot_struct.data_file[4] = 'idl.fluid_wall'
+            END
+          4: plot_struct.data_file[0] = 'idl.divimp_flux_wall'
           ELSE: BEGIN
             PRINT,'ERROR cortex_LoadPlotData: Unknown 1D wall profile plot option'
             PRINT,'  FILE_NAME= ',file_name
@@ -561,17 +604,22 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'NOTES'        : plot_struct.notes        = STRTRIM(data,2)
       'DATA PATH'    : default.data_path        = data
       'DATA FILE'    : BEGIN
-        i = WHERE(plot_struct.data_file NE 'unknown',count)  ; Not sure I like this scheme...
-        plot_struct.data_file[count] = data_array
+        FOR j = 0, N_ELEMENTS(data_array)-1 DO BEGIN
+          i = WHERE(plot_struct.data_file NE 'unknown',count)  ; Not sure I like this scheme...
+          plot_struct.data_file[count] = data_array[j]
+        ENDFOR
         END
       'NO FRAME'     : plot_struct.frame        = 0
       'NO ERASE'     : plot_struct.frame        = 0
       'OUTLINE'      : plot_struct.outline      = 1
       'FLUX SURFACES': plot_struct.flux_surfaces= 1
+      'SHOW GRID'    : plot_struct.show_grid    = 1
       'NO GRID'      : plot_struct.no_grid      = 1
       'NO WALL'      : plot_struct.no_wall      = 1
+      'NO SEPARATRIX': plot_struct.no_separatrix= 1
       'EQU'          : plot_struct.equ          = STRTRIM(data,2)
       'EQU PARAMS'   : plot_struct.equ_params   = FLOAT(data_array)
+      'EQU LEVELS'   : plot_struct.equ_levels   = FLOAT(data_array)
       'TUBES'        : plot_struct.tubes        = LONG(data_array)
       'STATE'        : plot_struct.state        = LONG(data)
       'NODES'        : plot_struct.nodes        = 1
@@ -584,10 +632,18 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'FOCUS'        : plot_struct.focus        = LONG(STRTRIM(data,2))
       'WARNINGS'     : plot_struct.warnings     = 1
       'ZOOM'         : plot_struct.zoom         = FLOAT(data_array)
+      'XTICKS'       : plot_struct.xticks       = FIX(data)
+      'YTICKS'       : plot_struct.yticks       = FIX(data)
+      'XMINOR'       : plot_struct.xminor       = FIX(data)
+      'YMINOR'       : plot_struct.yminor       = FIX(data)
       'XRANGE'       : plot_struct.xrange       = FLOAT(data_array)
       'YRANGE'       : plot_struct.yrange       = FLOAT(data_array)
       'YLIMIT'       : plot_struct.ylimit       = FLOAT(data_array)
+      'XMARK'        : plot_struct.xmark        = data
       'PEAK'         :  $
+        IF (data_array[0] EQ 'only') THEN plot_struct.peak = 2 ELSE  $
+                                          plot_struct.peak = 1
+      'SUM'          :  $
         IF (data_array[0] EQ 'only') THEN plot_struct.peak = 2 ELSE  $
                                           plot_struct.peak = 1
       'SCALE FACTOR' : plot_struct.scale_factor = FLOAT(data)
@@ -595,15 +651,26 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'XDATA'        : plot_struct.xdata        = STRTRIM(data,2)
       'XLOG'         : plot_struct.xlog         = 1
       'YLOG'         : plot_struct.ylog         = 1
+      'NO_YLOG'      : plot_struct.ylog         = 0
       'SMOOTH'       : plot_struct.smooth       = FIX(data)
-      'INDICES'      :  $
-        IF (N_ELEMENTS(data_array) EQ 1) THEN plot_struct.label_index = [1,1E8] ELSE  $
-                                              plot_struct.label_index = LONG(data_array)
+      'INDICES'      : plot_struct.label_index  = data
       'ASPECT RATIO' : plot_struct.aspect_ratio = FLOAT(data_array)
       'ANNOTATE'     : BEGIN
-        plot_struct.annotate_code  [plot_struct.annotate_n] = LONG(data_array[0])        
-        plot_struct.annotate_colour[plot_struct.annotate_n] = STRTRIM(data_array[1],2)
-        plot_struct.annotate_file  [plot_struct.annotate_n] = STRTRIM(data_array[2],2)        
+        i = plot_struct.annotate_n
+        j = LONG(data_array[0])
+        plot_struct.annotate_code  [i] = j
+        plot_struct.annotate_colour[i] = STRTRIM(data_array[1],2)
+        plot_struct.annotate_file  [i] = STRTRIM(data_array[2],2)        
+        CASE j OF
+          1:
+          2: BEGIN
+            IF (N_ELEMENTS(data_array) GE 4) THEN plot_struct.annotate_step[i] = STRTRIM(data_array[3],2)        
+            IF (N_ELEMENTS(data_array) GE 5) THEN BEGIN
+              IF (STRTRIM(data_array[4],2) EQ 'label') THEN plot_struct.annotate_label[i] = 1       
+            ENDIF
+            END
+          ELSE:
+        ENDCASE
         plot_struct.annotate_n++
         END
       'SET'          : BEGIN

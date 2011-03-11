@@ -27,7 +27,7 @@ FUNCTION cortex_PlotSummary, plot, plot_array, ps=ps
 
   psym = 6
 
-  ylog = 1
+  IF (plot.ylog EQ -1) THEN ylog = 1 ELSE ylog = plot.ylog
 
   nset = MAX(plot.case_set)
 

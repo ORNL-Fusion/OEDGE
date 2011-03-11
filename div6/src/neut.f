@@ -4681,6 +4681,8 @@ c in this subroutine, see above.
 c
       elseif (pinsw.eq.4.and.yieldsw.EQ.0) then 
         IF (sloutput) WRITE(0,*) 'WHA-WHO! 2'
+          IF (.NOT.ALLOCATED(wall_flx)) 
+     .      CALL ER('TFY','WALL_FLX not allocated and PINSW=4')
 c       FYDATA(ID,1)  = Flux
 c                 2   = Energy
 c                 3   = Heat
@@ -4695,7 +4697,7 @@ c                 5   = Flux * Yield
           IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
      .      fydata(id,4) = wall_flx(in)%em_par_atm(2,1) / 
      .                     wall_flx(in)%in_par_blk(1,0)  ! flxhw3(in) / (flxhw2(in) + 1.0E-10)
-          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)  ! flxhw3(in)  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
+          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)  ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
           fydata(id,:) = fydata(id,:) * kmfps(id)
         enddo
 c slmod end
@@ -4804,6 +4806,9 @@ c
 c
       subroutine wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
+c slmod begin
+      use mod_divimp
+c slmod end
       implicit none
       include 'params'
 c
@@ -5107,19 +5112,30 @@ c
 c slmod begin
          elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
            IF (sloutput) WRITE(0,*) 'WHA-WHO! 1'
+           IF (.NOT.ALLOCATED(wall_flx)) 
+     .       CALL ER('WFY','WALL_FLX not allocated and PINSW=4')
 c          FYDATA(ID,1)  = Flux
 c                    2   = Energy
 c                    3   = Heat
 c                    4   = Yield
 c                    5   = Flux * Yield
            do in = 1, wallpts
-             id =  NINT(wallpt(in,17))
+             id = NINT(wallpt(in,17))
              fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
              fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
              fydata(in,3) = 1.0 
-             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))
-             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
+             IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
+     .         fydata(in,4) = wall_flx(id)%em_par_atm(2,2) /
+     .                        wall_flx(in)%in_par_atm(1,0)
+             fydata(in,5) = wall_flx(id)%em_par_atm(2,2)  !  Atoms (species=2) sputtering by test atoms
+c             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))  ! bug, FLXHW2(IN) should have been FLXHW6(ID) 
+c             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
              fydata(id,:) = fydata(id,:) * kmfpws(id)
+c             IF (kmfpws(id).NE.0.0) THEN
+c               WRITE(0,*) '  DEGUB: fydata4,5=',fydata(in,4:5),
+c     .                     MAX(0.0,flxhw3(id) / (flxhw6(id) + 1.0E-10)),
+c     .                     MAX(0.0,flxhw3(id))
+c             ENDIF
            enddo
 c slmod end
          endif 

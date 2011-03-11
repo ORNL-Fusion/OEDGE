@@ -2,6 +2,9 @@ c     -*-Fortran-*-
 c
       PROGRAM RUNDIV                                                    
       use rand_data
+c slmod begin
+      use mod_divimp
+c slmod end
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -500,6 +503,9 @@ c
 
       CALL OutputData  (87,'END OF DIVIMP')
       CALL OutputEIRENE(65,'END OF DIVIMP')
+
+      CALL divClean
+
       STOP 'END OF DIVIMP'
 C                                                                      
  1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - RUN ABORTED')      

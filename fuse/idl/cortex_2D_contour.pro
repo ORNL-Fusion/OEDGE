@@ -1,6 +1,27 @@
 ;
 ; ======================================================================
 ;
+FUNCTION cortex_SetColour, range, frac, lastct
+
+  IF (range[0] LT 0.0 AND range[1] GT 0.0) THEN BEGIN
+    frac = 2.0 * (frac - 0.5)
+    IF (frac LT 0.0 AND lastct NE 1) THEN BEGIN
+      LOADCT, 1, /SILENT  
+      lastct = 1
+    ENDIF 
+    IF (frac GE 0.0 AND lastct NE 3) THEN BEGIN
+      LOADCT, 3, /SILENT 
+      lastct = 3
+    ENDIF
+  ENDIF
+
+  result = LONG(ABS(frac) * 255.0)
+
+  RETURN, result
+END
+;
+; ======================================================================
+;
 FUNCTION cortex_GetVertex, grid, iobj, iside
 
   isrf = grid.obj_iside[iside,iobj]
@@ -30,6 +51,8 @@ END
 ;
 FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 
+  flip = 0
+
   window_id = 0
   window_xsize = 700
   window_ysize = 700
@@ -52,6 +75,11 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 
   xtitle = 'R (m)'
   ytitle = 'Z (m)'
+  IF (flip) THEN BEGIN
+    xtitle = 'distance parallel to field, s (m)'
+    ytitle = 'radial distance (m)'
+  ENDIF
+
 ;
 ; Setup plot area:
 ; ----------------------------------------------------------------------
@@ -97,6 +125,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
                    (FLOAT(window_ysize) / FLOAT(window_xsize))
     WINDOW, window_id, XSIZE=window_xsize, YSIZE=window_ysize
   ENDELSE
+  IF (plot.aspect_ratio GT 0.0) THEN aspect_ratio = plot.aspect_ratio
 ;
 ;
   IF ((xdelta / xsize) LT (ydelta / ysize)) THEN BEGIN
@@ -159,7 +188,10 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 ;   ------------------------------------------------------------------
     1: data = plot_data.dens
     2: data = plot_data.vi
-    3: data = plot_data.vi / plot_data.cs
+    3: BEGIN
+       data = plot_data.vi / plot_data.cs
+       IF (flip) THEN data = -data
+       END
     4: data = plot_data.pe
     5: data = plot_data.pi
     6: data = plot_data.pe + plot_data.pi
@@ -175,7 +207,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
     400: data = plot_data.imp_dens[*,state] * plot_data.div_influx   ; DIVIMP
 ;   ------------------------------------------------------------------
     ELSE: BEGIN
-      PRINT, 'ERROR cortex_Plot2D: Unrecognised option'
+      PRINT, 'ERROR cortex_PlotContour: Unrecognised option'
       PRINT, '  PLOT OPTION = ',plot.option
       RETURN, -1
       END
@@ -204,6 +236,12 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
   xstyle = plot.xstyle
   ystyle = plot.ystyle
 
+  IF (flip) THEN BEGIN
+    plot_xrange_save = plot_xrange
+    plot_xrange = plot_yrange
+    plot_yrange = plot_xrange_save
+  ENDIF
+
   PLOT, plot_xrange, plot_yrange, /NODATA, XSTYLE=xstyle, YSTYLE=ystyle, /NOERASE,  $
         POSITION=plot.position,                                           $
         TITLE=plot_title, XTITLE=xtitle, YTITLE=ytitle,                   $
@@ -219,7 +257,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
     PRINT
   ENDIF
 
-print,'xrange=',xrange[0:1]
+  lastct = -1
 
   FOR iobj = 0, grid.obj_n-1 DO BEGIN
 ;
@@ -236,10 +274,12 @@ print,'xrange=',xrange[0:1]
     frac = (data[iobj] - xrange[0]) / (xrange[1] - xrange[0])
     frac = MAX([frac,0.0])
     frac = MIN([frac,1.0])
-    color = LONG(frac * 255.0)
+    
+    color = cortex_SetColour(xrange,frac,lastct)
+
+    IF (flip) THEN cortex_FlipArray, v
     POLYFILL, v[0,*], v[1,*], /DATA, COLOR=color, NOCLIP=0 
   ENDFOR
-print,plot.xrange[0:1],plot.yrange[0:1]
 ;
 ; Overlay the grid and wall:
 ; ----------------------------------------------------------------------
@@ -249,10 +289,7 @@ print,plot.xrange[0:1],plot.yrange[0:1]
 ; ----------------------------------------------------------------------
   nsteps = 100.0
 
-
-print,'ypos',ypos
-
-  IF (1) THEN BEGIN
+  IF (aspect_ratio LE 1.0) THEN BEGIN
     x0 = (0.95 * xpos[0] + 0.05 * xpos[1]) * dev_xsize
     x1 = (0.05 * xpos[0] + 0.95 * xpos[1]) * dev_xsize
     y0 = (ypos[0] - 0.11 * (ypos[1] - ypos[0])) * dev_ysize
@@ -263,13 +300,14 @@ print,'ypos',ypos
 ;    y0 = (0.10 * ypos[0]                 ) * dev_ysize
 ;    y1 = (0.30 * ypos[0]                 ) * dev_ysize
     LOADCT, color_table
+    lastct = -1
     FOR i = 0, nsteps-1 DO BEGIN
       frac1 = FLOAT(i  ) / nsteps
       frac2 = FLOAT(i+1) / nsteps
       x = [x0 + frac1 * (x1 - x0), x0 + frac2 * (x1 - x0),  $
            x0 + frac2 * (x1 - x0), x0 + frac1 * (x1 - x0)]
       y = [y0, y0, y1 ,y1]
-      color = LONG( 0.5 * (frac1 + frac2) * 255.0) 
+      color = cortex_SetColour(xrange,0.5 * (frac1 + frac2),lastct)
       POLYFILL, x, y, /DEVICE, COLOR=color
     ENDFOR
 ;   This is nasty...
@@ -279,22 +317,27 @@ print,'ypos',ypos
           TICKLEN=0, /NODATA, /DEVICE, /NOERASE,  $
           XTITLE=log_prefix+scale_label,COLOR=TrueColor('Black'), XSTYLE=1
   ENDIF ELSE BEGIN
-    x0 = 0.10 * xmin + 0.90 * xmax
-    x1 = 0.05 * xmin + 0.95 * xmax
-    y0 = 0.70 * ymin + 0.30 * ymax
-    y1 = 0.05 * ymin + 0.95 * ymax
+    x0 = (xpos[1] + 0.09 * (xpos[1] - xpos[0])) * dev_xsize
+    x1 = (xpos[1] + 0.11 * (xpos[1] - xpos[0])) * dev_xsize
+    y0 = (0.95 * ypos[0] + 0.05 * ypos[1]) * dev_ysize
+    y1 = (0.05 * ypos[0] + 0.95 * ypos[1]) * dev_ysize
     LOADCT, color_table
+    lastct = -1
     FOR i = 0, nsteps-1 DO BEGIN
       frac1 = FLOAT(i  ) / nsteps
       frac2 = FLOAT(i+1) / nsteps
       x = [x0, x0, x1 ,x1]
       y = [y0 + frac1 * (y1 - y0), y0 + frac2 * (y1 - y0),  $
            y0 + frac2 * (y1 - y0), y0 + frac1 * (y1 - y0)]
-      color = LONG( 0.5 * (frac1 + frac2) * 255.0) 
-print,color
-      POLYFILL, x, y, /DATA, COLOR=color
+      color = cortex_SetColour(xrange,0.5 * (frac1 + frac2),lastct)
+      POLYFILL, x, y, /DEVICE, COLOR=color
     ENDFOR
-    OPLOT, [x0,x0,x1,x1], [y0,y1,y1,y0], COLOR=TrueColor('Black')
+    log_prefix = ''
+    IF (plot.log NE 0) THEN log_prefix = 'LOG10 '
+    PLOT, [0.0,0.0], xrange, POSITION=[x0,y0,x1,y1], XTICKFORMAT='(A1)',  $
+          TICKLEN=0, /NODATA, /DEVICE, /NOERASE,  $
+          YTITLE=log_prefix+scale_label,COLOR=TrueColor('Black'), YSTYLE=1
+;    OPLOT, [x0,x0,x1,x1], [y0,y1,y1,y0], COLOR=TrueColor('Black')
   ENDELSE
 
 

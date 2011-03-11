@@ -54,6 +54,7 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
        ytitle   = ['integral (photons m-2 s-1)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
+       focus = 1
        END
     2: BEGIN
        default_plot_type = 1
@@ -134,7 +135,10 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 ;          integral = '   PARTICLE FLUX INTEGRAL= ' + STRING(val.integral,FORMAT='(E12.4)')
           integral = ' '
 
-;          help,val_array.integral,/struct
+          nintegral = N_ELEMENTS(TAG_NAMES(val.integral))
+
+;          help,val,/struct
+;          help,val.integral,/struct
 ;stop
 ;          ntrace = N_ELEMENTS(TAG_NAMES(data_array))
 ;          IF (ntrace LE 0) THEN BEGIN
@@ -142,22 +146,41 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 ;            RETURN, -1
 ;          ENDIF
 
-          val = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
+          val_data = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
 
-          file = val.file
-          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
-          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
+          file = val_data.file
 
+          IF (nintegral EQ 1) THEN BEGIN
+            str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+            str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+            labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
+          ENDIF ELSE BEGIN
+            IF (ndata GT 1) THEN BEGIN
+              PRINT,'cortex_1D_integrals: sorry, can only plot one case at the moment '
+              PRINT,'                     if plotting multiple LOS integrals'
+              STOP
+            ENDIF
+            IF (iplot EQ 1) THEN BEGIN
+              str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
+              str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
+              title = title + ' : CASE ' + str[0] 
+            ENDIF
+          ENDELSE
 
-          ntrace = [2, 1, 1]  ; Number of data lines on each plot
-          xdata = val.xindex 
-          FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val.yindex[i]])  ; *** TEMP *** 
+          ntrace = [1, 1, 1]  ; Number of data lines on each plot
+;          ntrace = [2, 1, 1]  ; C-Mod
+          xdata = val_data.xindex 
+          FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val_data.yindex[i]])  ; *** TEMP *** 
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
             1: BEGIN
-               ydata[*,0] = val.signal
-               ydata[*,1] = [2.5,4.5,1.65,1.6,0.1,0.028,0.02,0.02,0.02] * 1E+21 * 4.0 * 3.1415
+               ntrace[iplot-1] = nintegral
+               FOR i = 1, nintegral DO BEGIN
+                 val_data = cortex_ExtractStructure(val.integral,i)
+                 ydata[*,i-1] = val_data.signal
+                 labels[0] = labels[0] + STRING(i-1) + '\' + plot.data_file[i-1] + ':' 
+               ENDFOR
+;               ydata[*,1] = [2.5,4.5,1.65,1.6,0.1,0.028,0.02,0.02,0.02] * 1E+21 * 4.0 * 3.1415  ; C-Mod
                END
           ENDCASE
           END
@@ -305,7 +328,13 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
           OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
           CASE iplot OF
-            1: OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[idata-1]), THICK=thick, PSYM=6
+            1: BEGIN
+;               print,'ntrace:',ntrace[iplot-1]
+               FOR i = 1, ntrace[iplot-1]-1 DO BEGIN
+                 OPLOT, val.x, val.y[*,i], COLOR=TrueColor(colors[i]), THICK=thick; , LINESTYLE=i
+; print,i,val.y[*,i]
+               ENDFOR
+               END
             2: 
             3: 
             ELSE:

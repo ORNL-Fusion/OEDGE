@@ -64,12 +64,12 @@ PRO cortex_GeneratePlots, args
     family = STRMID(case_name,0,5) + '/'
     child  = STRMID(case_name,0,7) + '/'
 
-    input_file = '/home/slisgo/fuse/input/' + input_file
-    data_path  = '/home/slisgo/divimp/results/'
-;    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
+;    input_file = '/home/slisgo/fuse/input/' + input_file
+;    data_path  = '/home/slisgo/divimp/results/'
+    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
 ;    data_path  = '/home/ITER/lisgos/fuse_data/results/'   ; + family + '/' + child + '/'
 ;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
-;    data_path  = '/home/ITER/lisgos/divimp/results/'
+    data_path  = '/home/ITER/lisgos/divimp/results/'
 
   ENDELSE
 
@@ -157,6 +157,35 @@ PRO cortex_GeneratePlots, args
 ;
     CASE plot.tag OF
 ;     ------------------------------------------------------------------
+      'PLOT 2D LOS INTEGRAL': BEGIN
+        CASE plot.option OF
+;         --------------------------------------------------------------         
+          1: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              dummy = WHERE(plot.data_file NE 'unknown',count)
+              FOR j = 0, count-1 DO BEGIN
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_01_signal')
+                name = 'data' + STRING(j+1,FORMAT='(I0)')
+                IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
+                                 integral_array = CREATE_STRUCT(integral_array,name,integral)
+              ENDFOR
+              plot_data = { integral : integral_array, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotImage(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          ELSE: BEGIN  
+            PRINT, 'ERROR cortex_GeneratePlots: Unrecognised image plot option'
+            PRINT, '  OPTION = ',option
+            status = -1
+            END
+        ENDCASE
+        END
+;     ------------------------------------------------------------------
       'PLOT 1D LOS INTEGRAL': BEGIN
         CASE plot.option OF
 ;         --------------------------------------------------------------         
@@ -165,7 +194,7 @@ PRO cortex_GeneratePlots, args
               file_path = path + plot.case_name[i] + '.'
               j = WHERE(plot.data_file NE 'unknown',count)
               FOR j = 0, count-1 DO BEGIN
-                integral = cortex_LoadIntegrals(file_path + plot.data_file[0])
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_01_signal')
                 name = 'data' + STRING(j+1,FORMAT='(I0)')
                 IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
                                  integral_array = CREATE_STRUCT(integral_array,name,integral)
@@ -208,6 +237,50 @@ PRO cortex_GeneratePlots, args
         CASE plot.option OF
 ;         --------------------------------------------------------------         
           1: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              wall = cortex_LoadWallProfiles(file_path + plot.data_file[0])
+              plot_data = { wall : wall, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotWallProfiles(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          2: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              wall = cortex_LoadWallProfiles(file_path + plot.data_file[0])
+              plot_data = { wall : wall, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotWallProfiles(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          3: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              IF (i EQ 0 AND plot.show_grid EQ 1) THEN BEGIN
+                grid_data = cortex_LoadFluidGrid(file_path + plot.data_file[3])
+                wall_data = cortex_LoadWall     (file_path + plot.data_file[4])
+                IF (plot.annotate_n NE 0) THEN  $
+                  annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
+              ENDIF
+              wall    = cortex_LoadWallProfiles_EIRENE(file_path + plot.data_file[0])
+              summary = cortex_LoadDIVIMPSummary      (file_path + plot.data_file[1])
+              core    = cortex_LoadCoreProfiles       (file_path + plot.data_file[2])
+              plot_data = { wall : wall, summary : summary, core : core }
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotWallProfiles(plot, data_array, grid=grid_data, wall=wall_data, annotate=annotate, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          4: BEGIN
             FOR i = 0, ncase-1 DO BEGIN
               file_path = path + plot.case_name[i] + '.'
               wall = cortex_LoadWallProfiles(file_path + plot.data_file[0])
@@ -481,27 +554,8 @@ print,tube
                                         grid = cortex_LoadFluidGrid(file + plot.data_file[0])
         wall = cortex_LoadWall(file + plot.data_file[1])
         IF (plot.nodes) THEN node = cortex_LoadNodeData(file + plot.data_file[2]) ELSE node = 0
-        IF (plot.annotate_n NE 0) THEN BEGIN
-          annotate = { version : 1.0 } 
-;          status_annotate = -1
-          FOR i = 0, plot.annotate_n-1 DO BEGIN
-            CASE plot.annotate_code[i] OF
-              1: annotate_data = cortex_LoadAnnotationData(plot.annotate_code[i],plot.annotate_file[i]) 
-              ELSE: BEGIN
-                PRINT, 'ERROR cortex_GeneratePlots: Unknown annotation code'
-                PRINT, '  PLOT TAG = ',plot.tag
-                PRINT, '  CODE     = ',plot.annotate_code[i]
-                annotate_data = -1
-                END
-            ENDCASE
-            name = 'data' + STRING(i+1,FORMAT='(I0)')
-;            IF (status_annotate EQ -1) THEN annotate = CREATE_STRUCT(         name,annotate_data)  ELSE  $
-                                            annotate = CREATE_STRUCT(annotate,name,annotate_data)
-;            status_annotate = 0
-          ENDFOR 
-;help,annotate,/struct
-;stop
-        ENDIF ELSE annotate = 0 
+        IF (plot.annotate_n NE 0) THEN  $
+          annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
         status = cortex_PlotFluidGrid(plot, grid, wall, node, annotate, 'main', 'full', ps=ps)
         END
 ;     ------------------------------------------------------------------

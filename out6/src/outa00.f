@@ -1815,6 +1815,10 @@ c
 c
 c
       subroutine global_plotsetup 
+c slmod begin
+      use mod_out985
+      use mod_out985_variables
+c slmod end
       implicit none
 
 c
@@ -2068,10 +2072,11 @@ c      call calcnt(nizs)
 
 
       NPLOTS = 0
-c slmod begin - new
+c slmod begin 
       stepopt   = 0
       nsteplist = 0
-      mode       = 0
+      mode      = 0
+      nobj      = 0
 c slmod end
 
 

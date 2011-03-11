@@ -76,15 +76,19 @@ c
 
       CHARACTER fname*(*)
 
-      INTEGER   status
+      INTEGER   status,n
       CHARACTER command*1024
 
-      IF     (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip') THEN
-        command = 'unzip '//TRIM(fname)
-        fname(LEN_TRIM(fname)-3:LEN_TRIM(fname)) = ' '
-      ELSEIF (fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz' ) THEN
-        command = 'gunzip '//TRIM(fname)
-        fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)) = ' '
+      n = LEN_TRIM(fname)
+
+      IF     (fname(n-2:n).EQ.'zip') THEN
+        command = 'unzip -o '//TRIM(fname)
+        fname(n-3:n) = ' '
+      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
+        command = 'gunzip -f '//TRIM(fname)
+        fname(n-2:n) = ' '
+      ELSE
+        RETURN
       ENDIF
 
       CALL CIssue(TRIM(command),status)        
@@ -583,7 +587,8 @@ c
 c subroutine: FindCell_New
 c
 c Identifies the first, last and current cell that the node line segment
-c intersects (I think).
+c intersects (I think) -- sampling from the stated range of tubes for
+c the interpolation node, and not outside this range.
 c
       SUBROUTINE FindCell_New(ind0,ind1,itgive,iccell)
       USE mod_sol28_params
@@ -603,46 +608,35 @@ c
       DO it = osmnode(ind1)%tube_range(1), 
      .        osmnode(ind1)%tube_range(2)
         IF (tube(it)%type.EQ.GRD_BOUNDARY) CYCLE
-
 c        WRITE(0,*) 'FC: IT=',it
-
         DO i1 = ind0+1, ind1
-
 c          WRITE(0,*) 'FC: I1=',i1
-
-          a1 = DBLE(osmnode(i1-1)%rad_x)
+          a1 = DBLE(osmnode(i1-1)%rad_x)  ! Collect line segment end points from the node setup data
           a2 = DBLE(osmnode(i1-1)%rad_y)
           b1 = DBLE(osmnode(i1  )%rad_x)
           b2 = DBLE(osmnode(i1  )%rad_y)
           dist = REAL(DSQRT((a1 - b1)**2 + (a2 - b2)**2))
-
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-
 c...        Assumed 1:1 mapping between grid and data:
             iobj = ic
             isrf = ABS(obj(iobj)%iside(1))
             ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))  ! *** Clean up with GetVertex calls ***
             c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
             isrf = ABS(obj(iobj)%iside(3))
             ivtx(1:2) = srf(isrf)%ivtx(1:2)
             d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
             d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-
             CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
             IF (tab.GE.0.0.AND.tab.LT.1.0.AND.
      .          tcd.GE.0.0.AND.tcd.LT.1.0) THEN
               ic1(it) = ic
               dist1(it) = dist1(it) + REAL(tab) * dist
              ENDIF
-
           ENDDO
-
           IF (ic1(it).EQ.0) dist1(it) = dist1(it) + dist
-
         ENDDO
       ENDDO
-
 c...  Sort intesections:
       iccell = 0
       itcell = 0
@@ -650,21 +644,20 @@ c...  Sort intesections:
       DO it = osmnode(ind1)%tube_range(1), 
      .        osmnode(ind1)%tube_range(2)
         IF (tube(it)%type.EQ.GRD_BOUNDARY.OR.ic1(it).EQ.0) CYCLE
-
 c        WRITE(0,*) 'PICKENS:',ir,ik1(ir),dist1(ir)
         IF     (it.EQ.itgive) THEN
-          iccell(1) = ic1(it)
+          iccell(1) = ic1(it)   ! Current cell
           itcell(1) = it
         ENDIF
         IF (clcell(2).EQ.0.0.OR.dist1(it).LT.clcell(2)) THEN
           iccell(2) = ic1(it)
           itcell(2) = it
-          clcell(2) = dist1(it)
+          clcell(2) = dist1(it) ! Cell farthest 'in'
         ENDIF
         IF (clcell(3).EQ.0.0.OR.dist1(it).GT.clcell(3)) THEN
           iccell(3) = ic1(it)
           itcell(3) = it
-          clcell(3) = dist1(it)
+          clcell(3) = dist1(it) ! Cell farthest 'out'
         ENDIF
       ENDDO
 
@@ -672,7 +665,6 @@ c      WRITE(0,*) 'ICDATA:',iccell(1),iccell(2),iccell(3)
 c      WRITE(0,*) '      :',itcell(1),itcell(2),itcell(3)
 c      WRITE(0,*) '      :',cell(iccell(1))%ik,itcell(1)
 c      WRITE(0,*) '      :',ind0,ind1
-
 c      STOP 'sdfsd'
          
       RETURN
@@ -791,6 +783,59 @@ c      WRITE(0,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
       WRITE(0,*) '  NCOL = ',ncolumns
       STOP
       END
+c     
+c ======================================================================
+c
+c Code from http://coding.derkeiler.com/Archive/Fortran/comp.lang.fortran/2005-01/0953.html
+c
+c
+c      SUBROUTINE SetBit(word,position,value)
+c      IMPLICIT none
+c      INTEGER, INTENT(OUT) :: word
+c      INTEGER, INTENT(IN)  :: position,value
+c     
+c      INTEGER :: bits(0:31)
+c      
+c      IF (value.NE.0.AND.value.NE.1) 
+c     .  CALL ER('SetBit','Invalid VALUE for bit',*99)
+c      IF (position.LT.0.OR.position.GT.31) 
+c     .  CALL ER('SetBit','Invalid POSITION for bit',*99)
+c
+c      bits = IAND(ISHFT(word,[-31:0]),1)  ! unpack WORD
+c
+c      bits(position) = value
+c
+c      word = SUM(ISHFT(bits,[31:0],-1]))   ! pack bits into WORD
+c
+c      RETURN
+c 99   WRITE(0,*) ' VALUE   =',value
+c      WRITE(0,*) ' POSITION=',position
+c      STOP
+c      END
+c     
+c ======================================================================
+c
+c      LOGICAL FUNCTION GetBit(word,position)
+c      IMPLICIT none
+c      INTEGER, INTENT(IN) :: word,position
+c     
+c      INTEGER :: bits(0:31)
+c      
+c      IF (position.LT.0.OR.position.GT.31) 
+c     .  CALL ER('GetBit','Invalid POSITION for bit',*99)
+c
+c      bits = IAND(ISHFT(word,[-31:0]),1)  ! unpack WORD
+c
+c      IF (bits(position).EQ.1) THEN
+c        GetBit = .TRUE.
+c      ELSE
+c        GetBit = .FALSE.
+c      ENDIF
+c
+c      RETURN
+c 99   WRITE(0,*) ' POSITION=',position
+c      STOP
+c      END
 c
 c ======================================================================
 c
@@ -816,9 +861,9 @@ c
      .        itarget,hold_ic,i5
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
-     .        first_pass
+     .        first_pass,two_timer,default_message,node_valid
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
-     .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,
+     .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
      .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v
@@ -829,7 +874,11 @@ c
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
 
-      debug = .FALSE. 
+      DATA default_message / .TRUE. /
+      SAVE     
+
+
+      debug = .TRUE. 
 
       node_n = 0
 
@@ -849,23 +898,18 @@ c
 
       frac = GetRelaxationFraction()
 
+c...  Flag if ITUBE has been processed once already and was assigned a 
+c     default symmetry point, since no proper point was found:
+      two_timer = ibits(tube_state(itube),0,1).EQ.1  
+
 c...  Better/cleaner to pass the tube to this routine, and not need to
 c     use mod_sol28_locals...?
       it = itube
 
-c      IF (osmnnode.EQ.0) 
-c     .  CALL ER('AssignNodeValues_2','Profiles not found',*99)
-
-c      i1 = 1
-
       DO i1 = 2, osmnnode
-c      DO WHILE (i1.LT.osmnnode)
-c        i1 = i1 + 1
         i0 = i1 - 1
-c        IF (osmnode(i1)%type.EQ.0.0) CYCLE
-        
 
-c        WRITE(0,*) 'I0,1:',i0,i1,osmnode(i0)%type,osmnode(i1)%type
+        node_valid = .TRUE.
 
         IF (debug) THEN
           WRITE(logfp,*) 'INTER:',i0,i1,osmnode(i0)%type,
@@ -879,7 +923,6 @@ c        WRITE(0,*) 'I0,1:',i0,i1,osmnode(i0)%type,osmnode(i1)%type
           first_pass = .TRUE.
           CYCLE
         ENDIF
-
 
         index = 0
 
@@ -925,6 +968,7 @@ c   3 - exponential to infinity
 c   4 - from probe data         coordinate   probe number
 c   5 - parameter fits
 c   6 - core + pedestal + SOL automated fits
+c   7 - exponential decay for velocity, temperature, decay based on v_perp and L for density
 c
 
 c   coord = 1 - linear on line segment
@@ -950,15 +994,22 @@ c     .      (tube(it)%type.EQ.GRD_SOL.AND..FALSE..OR.
 c     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
 c     .    density = .FALSE.
 
-
-        a1 = DBLE(osmnode(i1-1)%rad_x)
-        a2 = DBLE(osmnode(i1-1)%rad_y)
-        b1 = DBLE(osmnode(i1  )%rad_x)
-        b2 = DBLE(osmnode(i1  )%rad_y)
+        IF (mode.EQ.7.AND..NOT.two_timer) THEN
+          a1 = 0.0
+          a2 = 0.0
+          b1 = 0.0
+          b2 = 0.0
+        ELSE
+          a1 = DBLE(osmnode(i1-1)%rad_x)
+          a2 = DBLE(osmnode(i1-1)%rad_y)
+          b1 = DBLE(osmnode(i1  )%rad_x)
+          b2 = DBLE(osmnode(i1  )%rad_y)
+        ENDIF
 
         intersection = .FALSE.
 
         IF (osmnode(i1)%type.EQ.3.0) THEN
+c...      Target nodes:
           IF (osmnode(i1)%tube_range(1).NE.osmnode(i1)%tube_range(2))
      .      CALL ER('AssignNode_New','Single target position must '//
      .              'be specified',*99)
@@ -977,7 +1028,7 @@ c             Only select tubes identified as being part of this target data blo
               ENDDO
             ENDIF
             IF (i5.LT.target(i4)%nlist+1) THEN
-              intersection = .TRUE.  !  *** LEFT OFF ***  overwrige the -1,-2 parameter PAR_MODE, to activate
+              intersection = .TRUE.  
               hold_c1  = 0.0D0
               hold_c2  = 0.0D0
               hold_d1  = 0.0D0
@@ -1001,7 +1052,50 @@ c             Only select tubes identified as being part of this target data blo
               ENDIF
             ENDIF
           ENDIF
+c       ----------------------------------------------------------------  
+        ELSEIF (osmnode(i1)%type.EQ.2.1.AND.             ! Semi-automated symmetry point specification
+     .          osmnode(i1)%tube_range(1).LE.itube.AND.  
+     .          osmnode(i1)%tube_range(2).GE.itube.AND.  
+     .          two_timer) THEN                      
+          intersection = .TRUE.
+          hold_c1  = 0.0D0
+          hold_c2  = 0.0D0
+          hold_d1  = 0.0D0
+          hold_d2  = 0.0D0
+          hold_tab = 0.0D0
+c...      Check if there's an interesection (optional):
+          hold_ic = -1
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+            iobj = ic
+            isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
+            ivtx(1:2) = srf(isrf)%ivtx(1:2)
+            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+            c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+            isrf = ABS(obj(iobj)%iside(3))
+            ivtx(1:2) = srf(isrf)%ivtx(1:2)
+            d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+            d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+            IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .          tcd.GE.0.0D0.AND.tcd.LT.1.0D0) hold_ic  = ic 
+          ENDDO
+c...      No interesection found, so take the middle of the tube (in s):
+          IF (hold_ic.EQ.-1) THEN           
+            DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)            
+              IF (cell(ic)%sbnd(1).LE.0.5*tube(it)%smax.AND.
+     .            cell(ic)%sbnd(2).GE.0.5*tube(it)%smax) THEN
+                hold_ic = ic
+                EXIT
+              ENDIF
+            ENDDO
+            IF (ic.EQ.tube(it)%cell_index(HI)+1)
+     .        CALL ER('AssignNodeValues_New','Two-timing symmetry '//
+     .                'node cell not identified',*99)
+          ENDIF
+c       ----------------------------------------------------------------  
         ELSE
+c          WRITE(0,*) 'a1,2,b1,2:',a1,a2,b1,b2
+
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
 c...        Assumed 1:1 mapping between grid and data:
             iobj = ic
@@ -1083,15 +1177,8 @@ c...    Find data boundary values -- NEEDS WORK!:
         i2 = i0
         i3 = i1
 
-c        WRITE(0,*) 'I2,3:',i2,i3,mode
-
-c...    Flag...
-c        tetarget = .FALSE.
-c        IF ((inode.EQ.1.OR.inode.EQ.5).AND.osms28(i3,7).LT.0.0) 
-c     .    tetarget = .TRUE.
-
         IF     (mode.EQ.1.OR.mode.EQ.2.OR.mode.EQ.3.OR.
-     .          mode.EQ.5.OR.mode.EQ.6) THEN
+     .          mode.EQ.5.OR.mode.EQ.6.OR.mode.EQ.7) THEN
 c...      Interpolation boundary values provided in the input file:
 
 c         *CRAP!*
@@ -1121,7 +1208,11 @@ c...        Linking to another plasma region where the solution has
 c           already (!) been calculated: 
             link = .TRUE.
 
-            CALL FindCell_New(i2,i3,it,icell,e1,e2)
+            IF (osmnode(i1)%type.EQ.2.1.AND.two_timer) THEN
+              icell = hold_ic
+            ELSE
+              CALL FindCell_New(i2,i3,it,icell) ! ,e1,e2) -bug, SL, 08/10/2010
+            ENDIF
 
 c...        Assumptions: 1:1 mapping between cells and objects, the
 c           objects are 4 sided and have the standard DIVIMP indexing.  
@@ -1137,28 +1228,33 @@ c           reference tubes with a higher index through side 2-3.
             ic1 = obj(iobj)%omap(iside)
             IF (debug) THEN
               WRITE(logfp,*) ' MAP   ',iobj,ic1,nobj,ncell
+              WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
               WRITE(logfp,*) ' MAP   ',it
               WRITE(logfp,*) ' MAP   ',icell
               WRITE(logfp,*) ' MAP O ',
      .           obj(tube(it)%cell_index(LO):
      .               tube(it)%cell_index(HI))%omap(4)
             ENDIF
-c...        Now have to search an see which tube this cell is in:
-            IF (ic1.EQ.0) THEN
+c...        Now have to search and see which tube this cell is in:
+            IF (ic1.LE.0) THEN
+c            IF (ic1.EQ.0) THEN
 c...          The connection map has failed, perhaps due to generalised
 c             DIVIMP grids, so map the cell on the fly:
               CALL DynamicMap(iobj,iside,ic1,it1)
             ELSE
               DO it1 = 1, ntube   ! *** REPLACE WITH GETTUBE CALL ***
-                IF (debug) WRITE(logfp,*) 
-     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
+c                IF (debug) WRITE(logfp,*) 
+c     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
                 IF (tube(it1)%cell_index(LO).LE.ic1.AND.
      .              tube(it1)%cell_index(HI).GE.ic1) EXIT
               ENDDO
             ENDIF
             IF (it1.EQ.-1.OR.it1.EQ.ntube+1) 
-     .        CALL ER('AssignNodeValues_New','Tube not '//
-     .                'identified',*99)
+     .        CALL ER('AssignNodeValues_New','Tube not identified',*99)
+
+            IF (two_timer.AND.ibits(tube_state(it1),0,1).EQ.1) THEN
+              STOP 'TRYING TO REFERENCE A DEFAULT TUBE'
+            ENDIF            
 
             IF (osmnode(i2)%ne.EQ.-99.0) THEN
               IF (density) THEN
@@ -1180,19 +1276,28 @@ c...        Base second radial interpolation value on the first value:
             IF (osmnode(i3)%ti(1).LT.0.0) ti1= -osmnode(i3)%ti(1) * ti0
 
             IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
-c            IF (coord.EQ.4) rho0  = tube(it1)%rho
 
-c            WRITE(0,*) 'te0:',te0
-c            WRITE(0,*) 'n0:',n0
+            IF (debug) THEN
+              WRITE(logfp,*) 'NODE LINK:',ic1,it1
+              WRITE(logfp,*) '    IK,IR:',cell(ic1)%ik,cell(ic1)%ir
+              WRITE(logfp,*) '     psin:',psin0
+              WRITE(logfp,*) '       ne:',n0  
+              WRITE(logfp,*) '       pe:',p0  
+              WRITE(logfp,*) '      Te0:',te0  
+              WRITE(logfp,*) '      Ti0:',ti0  
+            ENDIF
 
-            WRITE(logfp,*) 'NODE LINK:',ic1,it1
-            WRITE(logfp,*) '    IK,IR:',cell(ic1)%ik,cell(ic1)%ir
-            WRITE(logfp,*) '     psin:',psin0
-            WRITE(logfp,*) '       ne:',n0  
-            WRITE(logfp,*) '       pe:',p0  
-            WRITE(logfp,*) '      Te0:',te0  
-            WRITE(logfp,*) '      Ti0:',ti0  
+c...        Check if the tube being linked to has already been processed  -- MOD moved this here from just below the IF block ---
+c           this iteration:                                                  SL, 26/01/2011
+            IF (ibits(tube_state(it1),1,1).EQ.0) THEN  
+              write(0    ,*) 'linking a tube that is not defined, bad'
+              write(logfp,*) 'linking a tube that is not defined, bad'
+              tube_state(itube) = ibset(tube_state(itube),2)
+              node_valid = .FALSE.
+            ENDIF
+
           ENDIF
+
 
 c...      Make sure that te0,1 are positive:
           IF (tetarget) THEN
@@ -1214,6 +1319,7 @@ c...        Linear along the line segment, nice and simple:
 c...        Just give me PSIn:
             psin0 = tube(it)%psin
             val   = psin0
+            WRITE(logfp,*) ' psin 5:',psin0
           ELSEIF (coord.EQ.6) THEN
 c...        Linear along the line segment, starting at the link:
             IF (.NOT.link) 
@@ -1255,13 +1361,14 @@ c...          Assuming a 1:1 mapping between grid and data:
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)
             IF (debug) WRITE(logfp,*) '6: VAL=',val
-          ELSEIF (coord.EQ.7) THEN
+          ELSEIF (coord.EQ.3.OR.coord.EQ.7) THEN
             val0 = 0.0  ! Necessary?
             val1 = 0.0  
             val  = ABS(tube(it)%psin - psin0)
             WRITE(logfp,*) ' psin 7:',psin0,tube(it)%psin,val
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
+            STOP 'ASSIGNNODEVALUES: CODE IS OBSOLETE'
             IF ((osmnode(i2)%tube_range(1).NE.
      .           osmnode(i3)%tube_range(1)).OR.
      .          (osmnode(i2)%tube_range(2).NE.
@@ -1360,7 +1467,7 @@ c...        Power law between v1 and v2:
             IF (vc ) vb(inode) = v0  + val2**expon * (v1  - v0 )
             IF (pc ) pe(inode) = p0  + val2**expon * (p1  - p0 )
             IF (tec) te(inode) = te0 + val2**expon * (te1 - te0)
-            IF (tic) te(inode) = ti0 + val2**expon * (ti1 - ti0)
+            IF (tic) ti(inode) = ti0 + val2**expon * (ti1 - ti0)
 c         ----------------------------------------------------------
           CASE (2)
 c...        Exponential decay between v1 and v2:
@@ -1392,7 +1499,7 @@ c...        Exponential decay between v1 and v2:
             ENDIF
 c         ----------------------------------------------------------
           CASE (3)
-c...        Exponential decay to :
+c...        Exponential decay to some value:
             IF (debug) WRITE(logfp,*) 'MODE=3: ',te0,te1,val
             C = expon
             A = n0 - n1
@@ -1564,33 +1671,70 @@ c           parameters:
                 ENDSELECT
               ENDIF
             ENDDO                
+c         ----------------------------------------------------------
+          CASE (7)
+c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
+            C = expon
+            A = v0 - v1
+            B = v1
+            IF (vc) vb(inode) = A * EXP(-val / C) + B
+            A = te0 - te1
+            B = te1 
+            IF (tec) te(inode) = A * EXP(-val / C) + B
+            A = ti0 - ti1
+            B = ti1 
+            IF (tic) ti(inode) = A * EXP(-val / C) + B
 
+            IF (pc)
+     .        CALL ER('AssignNodeValues_New','Not allowed to '//
+     .                'specify pressure with MODE=7',*99)
+            IF (te(inode).EQ.0.0)
+     .        CALL ER('AssignNodeValues_New','Te needs to be set '//
+     .                'when calculating convective densities',*99)
+            te_cs = te(inode)
+            ti_cs = ti(inode)
+            IF (ti(inode).EQ.0.0) ti_cs = te_cs * opt%ti_ratio(LO)
+            IF (opt%ti_ratio(LO).NE.opt%ti_ratio(HI))
+     .        CALL ER('AssignNodeValues_New','Ti/Te ratio poorly '//
+     .                'defined, need to decide what to do',*99)
+
+            IF (ABS(expon).LT.2.0E-7) expon = 1.0
+            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
+            A = n0
+            B = 0.0
+            IF (nc) THEN
+              ne(inode) = A * EXP(-val / C) + B
+              IF (debug) THEN 
+                WRITE(logfp,*) '  L    :',tube(it)%smax
+                WRITE(logfp,*) '  Te   :',te_cs
+                WRITE(logfp,*) '  Ti   :',ti_cs
+                WRITE(logfp,*) '  cs   :',GetCs2(te_cs,ti_cs)
+                WRITE(logfp,*) '  A,B,C:',A,B,C
+                WRITE(logfp,*) '  val  :',val
+                WRITE(logfp,*) '  expon:',expon
+                WRITE(logfp,*) '  ne   :',ne(inode)
+              ENDIF
+              ne(inode) = MAX(ne(inode),1.0E+14)
+            ENDIF
           CASE DEFAULT
             CALL ER('AssignNodeValues_2','Invalid MODE B',*99)   
         ENDSELECT
 
-
-
-c        IF (tetarget) THEN
-c          te(inode) = -te(inode)
-c        ENDIF
-
-
 c...    Store node values:
-        node_n = node_n + 1
-        node_i(node_n) = index
-        node_s(node_n)%s     = s (inode)
-        node_s(node_n)%ne    = ne(inode)
-        node_s(node_n)%v     = vb(inode)
-        node_s(node_n)%pe    = pe(inode)
-        node_s(node_n)%te    = te(inode)
-        node_s(node_n)%ti(1) = ti(inode)            
+        IF (node_valid) THEN 
+          node_n = node_n + 1
+          node_i(node_n) = index
+          node_s(node_n)%s     = s (inode)
+          node_s(node_n)%ne    = ne(inode)
+          node_s(node_n)%v     = vb(inode)
+          node_s(node_n)%pe    = pe(inode)
+          node_s(node_n)%te    = te(inode)
+          node_s(node_n)%ti(1) = ti(inode)            
 
-        WRITE(logfp,*) 'TI C:',ti(inode)
-
-        node_s(node_n)%par_mode = osmnode(i3)%par_mode
-        node_s(node_n)%par_exp  = osmnode(i3)%par_exp
-        node_s(node_n)%par_set  = osmnode(i3)%par_set
+          node_s(node_n)%par_mode = osmnode(i3)%par_mode
+          node_s(node_n)%par_exp  = osmnode(i3)%par_exp
+          node_s(node_n)%par_set  = osmnode(i3)%par_set
+        ENDIF
 
         IF (logop.GT.0) THEN
           WRITE(logfp,*) 
@@ -1604,10 +1748,6 @@ c...    Store node values:
      .        node_s(i4)%te,node_s(i4)%ti(1)
           ENDDO
         ENDIF
-
-c        ENDIF  ! OLD IF THERE WAS AN INTESECTION LOOP
-
-c mark end of icell loop
 
       ENDDO  ! END OF OSMNMONE LOOP
 
@@ -1704,6 +1844,7 @@ c      DO i1 = 2, node_n-1
       ENDIF
 
 c...  Check symmetry node is specified:
+      tube_state(itube) = ibclr(tube_state(itube),0)
       i2 = 0
       DO i1 = 1, node_n
         IF (node_i(i1).EQ.2) i2 = i2 + 1
@@ -1733,9 +1874,19 @@ c...    Assign cell index:
           node_s(node_n)%te    = 10.0
           node_s(node_n)%ti(1) = 20.0
         ENDIF
+        tube_state(itube) = ibset(tube_state(itube),0)
+        WRITE(logfp,*) 'default symmetry point applied'
         WRITE(dummy,'(A,I6,A)') 'Symmetry node not identified for '//
      .                          'ITUBE = ',it,', applying default'
-        CALL WN('AssignNodeValues_New',TRIM(dummy))
+        IF (ntube.GT.200) THEN  ! Trying to avoid clutter on the terminal window 
+          WRITE(PINOUT,*) TRIM(dummy)
+          IF (default_message) THEN
+            WRITE(0,*) 'WARNING AssignNodes: Default values applied'
+            default_message = .FALSE.
+          ENDIF
+        ELSE
+          CALL WN('AssignNodeValues_New',TRIM(dummy))
+        ENDIF
       ELSEIF (i2.GT.1) THEN
 c...    Try to combine nodes if there is more than one:
         DO i1 = 1, node_n
@@ -1895,8 +2046,11 @@ c...  Assign other quantites:
       node(1:nnode)%ni(1)   = 0.0
       node(1:nnode)%pi(1)   = 0.0
       DO i1 = 1, nnode
-        IF (node(i1)%ti(1).EQ.0.0.AND.i1.LE.mnode) 
+        IF (node(i1)%ti(1).EQ.0.0.AND.i1.LT.mnode) 
      .    node(i1)%ti(1) = node(i1)%te * opt%ti_ratio(LO) 
+        IF (node(i1)%ti(1).EQ.0.0.AND.i1.EQ.mnode) 
+     .    node(i1)%ti(1) = node(i1)%te * MAX(opt%ti_ratio(LO),
+     .                                       opt%ti_ratio(HI))
         IF (node(i1)%ti(1).EQ.0.0.AND.i1.GT.mnode) 
      .    node(i1)%ti(1) = node(i1)%te * opt%ti_ratio(HI) 
       ENDDO
@@ -2072,6 +2226,7 @@ c...  Set electron pressure from a reference node:
         WRITE(0,*) ' 2 NODE TE =',node_s(i2)%te
         WRITE(0,*) ' 2 NODE TI =',node_s(i2)%ti
       ENDIF
+      CALL DumpData_OSM('output.error_node','Trouble building nodes')      
       STOP
       END
 

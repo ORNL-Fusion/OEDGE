@@ -18,7 +18,6 @@ c ======================================================================
 c
 c
 c
-c
 c ======================================================================
 c
 c subroutine: ProcessTriangles
@@ -1148,15 +1147,17 @@ c
       REAL       TOL
       PARAMETER (TOL=5.0E-07)
 
-      REAL ATAN2C
+      REAL   ATAN2C 
+      REAL*8 SideLength
 
       INTEGER in,ik,ir,i1,i2,i3,id,id1,id2,wdat(0:8,6),ndat,
      .        imin,walln,ii,iv,istart,iend,irstart,ir1,ir2,
-     .        wallc(MAXPTS),wallt(MAXPTS),holdc,holdt,ikn,irn
+     .        wallc(MAXPTS),wallt(MAXPTS),holdc,holdt,ikn,irn,
+     .        ik1,ik2,cnt
       LOGICAL terminate
       REAL    holdr1,holdz1,holdr2,holdz2,rstart,zstart,
      .        wallr1(MAXPTS+1,2),wallz1(MAXPTS+1,2),
-     .        r1,z1,r2,z2,r3,z3,dist,ri,zi
+     .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t,rvector,zvector
       REAL*8  d_wallr1(MAXPTS+1,2),d_wallz1(MAXPTS+1,2)
 
       terminate = .FALSE.
@@ -1239,7 +1240,7 @@ c      WRITE(0,*) 'FAILURE FOR FLOATING WALL SURFACES'
       
      
       DO i1 = 1, eirnasdat
-
+c       ----------------------------------------------------------------
         IF (eirasdat(i1,1).EQ.1.0.OR.eirasdat(i1,1).EQ.98.0) THEN
 
           IF (eirasdat(i1,1).EQ.98.0) THEN
@@ -1309,18 +1310,88 @@ c...        Second vertex:
               wallc (i2)   = -999
             ENDIF
           ENDDO
+c       ----------------------------------------------------------------
+        ELSEIF (eirasdat(i1,1).EQ.96.0.OR.
+     .          eirasdat(i1,1).EQ.97.0) THEN
+c...      Add wall segments that are associated with a specified region of
+c         the main SOL virtual ring (IRWALL):
+          cnt = 0
+          ik1 = 1
+          ir1 = irins(1,irwall)
 
+          DO ik = 2, nks(irwall)+1
+            IF (ir1.NE.irins(ik,irwall).OR.ik.EQ.nks(irwall)+1) THEN
+              cnt = cnt + 1
+              ik2 = ik - 1
+c
+              IF (cnt.GE.NINT(eirasdat(i1,2)).AND.
+     .            cnt.LE.NINT(eirasdat(i1,3))) THEN
+                id = korpg(ikins(ik1,irwall),ir1)
+                walln = walln + 1
+                wallr1(walln,1) = rvertp(2,id)
+                wallz1(walln,1) = zvertp(2,id)
+                IF (eirasdat(i1,1).EQ.96.0) THEN
+c...              Construct wall segments by projecting the fluid grid
+c                 cells radially outward at the ends of the IRWALL group:
+                  t = 0.001
+                  wallr1(walln,2) = rvertp(2,id) + t
+                  wallz1(walln,2) = zvertp(2,id)
+                  id = korpg(ikins(ik2,irwall),ir1)
+                  walln = walln + 1
+                  wallr1(walln,1) = wallr1(walln-1,2)
+                  wallz1(walln,1) = wallz1(walln-1,2)
+                  wallr1(walln,2) = rvertp(3,id) + t
+                  wallz1(walln,2) = zvertp(3,id)
+                  walln = walln + 1
+                  wallr1(walln,1) = wallr1(walln-1,2)
+                  wallz1(walln,1) = wallz1(walln-1,2)
+                  wallr1(walln,2) = rvertp(3,id)
+                  wallz1(walln,2) = zvertp(3,id)
+
+c                  DO i2 = walln-2,walln
+c                    WRITE(0,*) '  wall:',wallr1(i2,1),
+c     .                                   wallz1(i2,1)
+c                    WRITE(0,*) '      :',wallr1(i2,2),
+c     .                                   wallz1(i2,2)
+c                  ENDDO
+
+                ELSE
+c...              Build wall segments by projecting radially outward along
+c                 the fluid cell poloidal boundaries:
+                  t = 2.0
+                  DO i2 = ik1, ik2
+                    id = korpg(ikins(i2,irwall),irins(i2,irwall))               
+                    wallr1(walln,2) = (1.-t)*rvertp(1,id)+t*rvertp(2,id)
+                    wallz1(walln,2) = (1.-t)*zvertp(1,id)+t*zvertp(2,id)
+                    walln = walln + 1
+                    wallr1(walln,1) = wallr1(walln-1,2)
+                    wallz1(walln,1) = wallz1(walln-1,2)
+                  ENDDO              
+                  wallr1(walln,2) = (1.-t)*rvertp(4,id) + t*rvertp(3,id)
+                  wallz1(walln,2) = (1.-t)*zvertp(4,id) + t*zvertp(3,id)
+                ENDIF
+                walln = walln + 1
+                wallr1(walln,1) = wallr1(walln-1,2)
+                wallz1(walln,1) = wallz1(walln-1,2)
+                wallr1(walln,2) = rvertp(3,id)
+                wallz1(walln,2) = zvertp(3,id)
+              ENDIF
+              ik1 = ik
+              ir1 = irins(ik1,irwall)
+            ENDIF
+          ENDDO
+c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.99.0) THEN
 c...      Delete specified segment index from neutral wall specification:
 c          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
 c     .                                   NINT(eirasdat(i1,5))
-          DO i2 = NINT(eirasdat(i1,2)), NINT(eirasdat(i1,5))
+          DO i2 = NINT(eirasdat(i1,2)), MIN(walln,NINT(eirasdat(i1,5)))
             wallr1(i2,1) = r0
             wallz1(i2,1) = z0
             wallr1(i2,2) = r0
             wallz1(i2,2) = z0
           ENDDO
-
+c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.999.0) THEN
 c...      Debug: Save data and avoid attempted wall sequencing:
           nvesm = walln
@@ -1334,7 +1405,7 @@ c...      Debug: Save data and avoid attempted wall sequencing:
           terminate = .TRUE.
 c...      Leave the loop:
           EXIT
-
+c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
@@ -3662,14 +3733,15 @@ c     Functions:
 c     Local variables:
       INTEGER IK,IR,STATUS
 
-      INTEGER ii,ncell,wallik(MAXNKS),wallir(MAXNKS),tempik,tempir,
+      INTEGER ii,ncell,wallik(2*MAXNKS),wallir(2*MAXNKS),tempik,tempir,
      .        i,in,ik1,ir1,id1,iavg,istart,i1,i2
-      LOGICAL valid
-      REAL    rcen,zcen,cellr(MAXNKS),cellz(MAXNKS),ravg,zavg,
-     .        wallth(MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
+      LOGICAL valid,debug
+      REAL    rcen,zcen,cellr(2*MAXNKS),cellz(2*MAXNKS),ravg,zavg,
+     .        wallth(2*MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
 c
 c Initialize variables:
 c
+      debug = .FALSE.
       STATUS = 0
       i = 0
 c
@@ -3691,17 +3763,13 @@ c
 c     Find cells without a neighbour in the 'outward' (increasing
 c     IR) direction:
 c    
-     
       CALL OutputGrid(87,'Before generating wall ring')
      
       ncell = 0
 
-c PFZ BREAK
       DO ir = irsep, nrs
         IF (idring(ir).EQ.-1) CYCLE
-
         DO ik = 1, nks(ir)
-c...DEV
           IF (virtag(ik,ir).EQ.0.AND.
      .        (irouts(ik,ir).EQ.ir.OR.
      .         irins (ik,ir).EQ.ir)) THEN
@@ -3711,7 +3779,7 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
-            IF (ncell+1.EQ.MAXNKS)
+            IF (ncell+1.EQ.2*MAXNKS)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1
@@ -3739,61 +3807,57 @@ c Check this...
           ENDIF
         ENDDO
       ENDDO
-c
-c Adjust WALLTH based on x-point location:
-c
-      deltar = rxp - rcen
-      deltaz = zxp - zcen
+      
+      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (ncell+1.GT.MAXNKS)
+     .  CALL ER('GenWallRing','Array bound violation, increase '//
+     .          'MAXNKS',*99)
 
-c Check this...?
-      xpth = atan3c(deltaz,deltar)
+c...  Adjust WALLTH based on x-point location:
+      IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
+        wallth(1:ncell) = cellz(1:ncell)
+      ELSE
+        deltar = rxp - rcen
+        deltaz = zxp - zcen
+        xpth = atan3c(deltaz,deltar)
 
-      IF (sloutput) 
-     .  WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
-     .    ncell,rcen,zcen,xpth
-
-      DO in = 1, ncell
-        IF (wallth(in).GT.xpth) wallth(in) = wallth(in) - 360.0
-      ENDDO
-
-c...  
-      IF (grdnmod.NE.0.AND.irbreak.GT.irsep) THEN
+        IF (debug) 
+     .    WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
+     .      ncell,rcen,zcen,xpth
+        
         DO in = 1, ncell
-c        WRITE(0,*) 'IN:',in,wallik(in),wallir(in)
-          IF (wallik(in).EQ.1.AND.
-     .        (wallir(in).EQ.grdtseg(grdntseg(1,IKLO),1,IKLO).OR.
-     .         wallir(in).EQ.irwall-1                        )) THEN
-            istart = in
-            EXIT
-          ENDIF
+          IF (wallth(in).GT.xpth) wallth(in) = wallth(in) - 360.0
         ENDDO
-c        WRITE(0,*) 'IN:',istart
-        DO in = 1, ncell
-          IF (wallth(in).GT.wallth(istart)) wallth(in)=wallth(in)-360.0
-        ENDDO
+        IF (grdnmod.NE.0.AND.irbreak.GT.irsep) THEN
+          DO in = 1, ncell
+            IF (wallik(in).EQ.1.AND.
+     .          (wallir(in).EQ.grdtseg(grdntseg(1,IKLO),1,IKLO).OR.
+     .           wallir(in).EQ.irwall-1)) THEN
+              istart = in
+              EXIT
+            ENDIF
+          ENDDO
+          DO in = 1, ncell
+            IF (wallth(in).GT.wallth(istart)) wallth(in)=wallth(in)-360.0
+          ENDDO
+        ENDIF
       ENDIF
 
-
-c
-c     Sort wall segments:
-c    
+c...  Sort wall segments:
 10    status = 0
       DO ii = 1, ncell-1
         IF (wallth(ii).LT.wallth(ii+1)) THEN
           status = 1
-     
           tempik = wallik(ii)
           tempir = wallir(ii)
           tempr  = cellr (ii)
           tempz  = cellz (ii)
           tempth = wallth(ii)
-     
           wallik(ii) = wallik(ii+1)
           wallir(ii) = wallir(ii+1)
           cellr (ii) = cellr (ii+1)
           cellz (ii) = cellz (ii+1)
           wallth(ii) = wallth(ii+1)
-     
           wallik(ii+1) = tempik
           wallir(ii+1) = tempir
           cellr (ii+1) = tempr
@@ -3808,83 +3872,62 @@ c     sub-section of the wall ring that are associated
 c     with a particular non-boundary ring:
 
       IF (.TRUE.) THEN
-
-c...      Make sure that cells for particular IK regions are 
-c         clustered together (the WALLTH ordering gets things
-c         close, but not always quite right):
-          DO i1 = 1, ncell-1          
-c            WRITE(50,*) 'TARGET CELL:',wallik(i1),wallir(i1)
-            DO i2 = i1+1, ncell
-c            WRITE(50,*) '       CELL:',wallik(i2),wallir(i2)            
-c              IF ((wallir(i2)  .EQ.wallir(i1)  .AND.
-c     .             wallik(i2)  .EQ.wallik(i1)+1)) THEN
-c            WRITE(50,*) '       YES!'
-
-              IF ((wallir(i2)  .EQ.wallir(i1)  .AND.
-     .             wallik(i2)  .EQ.wallik(i1)+1).OR.
-     .            (wallir(i2)  .EQ.wallir(i1)  .AND.
-     .             wallir(i1+1).NE.wallir(i1)  .AND.
-     .             .TRUE.)) THEN
-     
-c                WRITE(0,'A,4(2I6,2X)') 'SWAP:',i1,i2,
-c     .            wallik(i1),wallir(i1),
-c     .            wallik(i1+1),wallir(i1+1),
-c     .            wallik(i2),wallir(i2)
-
-                tempik = wallik(i1+1)
-                tempir = wallir(i1+1)
-                tempr  = cellr (i1+1)
-                tempz  = cellz (i1+1)
-                tempth = wallth(i1+1)
-     
-                wallik(i1+1) = wallik(i2)
-                wallir(i1+1) = wallir(i2)
-                cellr (i1+1) = cellr (i2)
-                cellz (i1+1) = cellz (i2)
-                wallth(i1+1) = wallth(i2)
-     
-                wallik(i2) = tempik
-                wallir(i2) = tempir
-                cellr (i2) = tempr
-                cellz (i2) = tempz
-                wallth(i2) = tempth
-
-                EXIT
-
-              ENDIF
-            ENDDO
+c...    Make sure that cells for particular IK regions are 
+c       clustered together (the WALLTH ordering gets things
+c       close, but not always quite right):
+        DO i1 = 1, ncell-1          
+          DO i2 = i1+1, ncell
+            IF ((wallir(i2)  .EQ.wallir(i1)  .AND.
+     .           wallik(i2)  .EQ.wallik(i1)+1).OR.
+     .          (wallir(i2)  .EQ.wallir(i1)  .AND.
+     .           wallir(i1+1).NE.wallir(i1)  .AND.
+     .           .TRUE.)) THEN
+              tempik = wallik(i1+1)
+              tempir = wallir(i1+1)
+              tempr  = cellr (i1+1)
+              tempz  = cellz (i1+1)
+              tempth = wallth(i1+1)
+              wallik(i1+1) = wallik(i2)
+              wallir(i1+1) = wallir(i2)
+              cellr (i1+1) = cellr (i2)
+              cellz (i1+1) = cellz (i2)
+              wallth(i1+1) = wallth(i2)
+              wallik(i2) = tempik
+              wallir(i2) = tempir
+              cellr (i2) = tempr
+              cellz (i2) = tempz
+              wallth(i2) = tempth
+              EXIT
+            ENDIF
           ENDDO
-c...      Sort each region in ascending IK order:
-          DO i1 = 1, ncell-1          
-            DO i2 = i1+1, ncell
-              IF (wallir(i2).EQ.wallir(i1)  .AND.
-     .            wallik(i2).LT.wallik(i1)) THEN
+        ENDDO
+c...    Sort each region in ascending IK order:
+        DO i1 = 1, ncell-1          
+          DO i2 = i1+1, ncell
+            IF (wallir(i2).EQ.wallir(i1)  .AND.
+     .          wallik(i2).LT.wallik(i1)) THEN
      
-                tempik = wallik(i1)
-                tempir = wallir(i1)
-                tempr  = cellr (i1)
-                tempz  = cellz (i1)
-                tempth = wallth(i1)
+              tempik = wallik(i1)
+              tempir = wallir(i1)
+              tempr  = cellr (i1)
+              tempz  = cellz (i1)
+              tempth = wallth(i1)
      
-                wallik(i1) = wallik(i2)
-                wallir(i1) = wallir(i2)
-                cellr (i1) = cellr (i2)
-                cellz (i1) = cellz (i2)
-                wallth(i1) = wallth(i2)
+              wallik(i1) = wallik(i2)
+              wallir(i1) = wallir(i2)
+              cellr (i1) = cellr (i2)
+              cellz (i1) = cellz (i2)
+              wallth(i1) = wallth(i2)
      
-                wallik(i2) = tempik
-                wallir(i2) = tempir
-                cellr (i2) = tempr
-                cellz (i2) = tempz
-                wallth(i2) = tempth
-              ENDIF
-            ENDDO
+              wallik(i2) = tempik
+              wallir(i2) = tempir
+              cellr (i2) = tempr
+              cellz (i2) = tempz
+              wallth(i2) = tempth
+            ENDIF
           ENDDO
-
-
-
+        ENDDO
       ELSE
-
 c        status = 0
 c        DO WHILE (status.EQ.0) 
 c          status = 1
@@ -3913,20 +3956,17 @@ c              wallth(ii+1) = tempth
 c            ENDIF
 c          ENDDO
 c        ENDDO
-
       ENDIF     
 
-      DO ii = 1, ncell
-        WRITE(50,*) 'IRCELLS:',wallik(ii),wallir(ii),wallth(ii)
-      ENDDO
-
+      IF (debug) THEN
+        DO ii = 1, ncell
+          WRITE(50,*) 'IRCELLS:',wallik(ii),wallir(ii),wallth(ii)
+        ENDDO
+      ENDIF
 
 c...  Assign cell quantities for IR=IRWALL:
-
       ir = irwall
-
       nks(ir) = ncell
-
       DO ik = 1, ncell
         rs    (ik,ir) = cellr (ik)
         zs    (ik,ir) = cellz (ik)
@@ -3934,7 +3974,6 @@ c...  Assign cell quantities for IR=IRWALL:
         irins (ik,ir) = wallir(ik)
         ikouts(ik,ir) = ik
         irouts(ik,ir) = irwall
-
         IF (irins(wallik(ik),wallir(ik)).EQ.wallir(ik)) THEN
 c...      For the "secondary PFZ" of double-null extended grids:
           ikins(wallik(ik),wallir(ik)) = ik
@@ -3943,14 +3982,11 @@ c...      For the "secondary PFZ" of double-null extended grids:
           ikouts(wallik(ik),wallir(ik)) = ik
           irouts(wallik(ik),wallir(ik)) = irwall
         ENDIF    
- 
         thetag(ik,ir) = thetag(wallik(ik),wallir(ik))
         virtag(ik,ir) = virtag(wallik(ik),wallir(ik))
       ENDDO
-
       thetat(idds(ir,2)) = thetag(nks(ir),ir)
       thetat(idds(ir,1)) = thetag(nks(ir),ir)
-     
       DO ik = 1, nks(ir)
         kbfs  (ik,ir) = 1.0
         bratio(ik,ir) = 0.0
@@ -3963,10 +3999,8 @@ c...      For the "secondary PFZ" of double-null extended grids:
         thetag(ik,ir) = thetag(ikins(ik,ir),irins(ik,ir))
         virtag(ik,ir) = virtag(ikins(ik,ir),irins(ik,ir))
       ENDDO
-
       thetat(idds(ir,1)) = thetat(idds(irins(nks(ir),ir),1))
       thetat(idds(ir,2)) = thetat(idds(irins(1      ,ir),2))
-
 c...  Scan wall ring and make sure that the cells are ordered properly.  This 
 c     should not be a problem, but you never know:
       IF (grdnmod.NE.0) THEN
@@ -3978,13 +4012,6 @@ c     should not be a problem, but you never know:
      .        CALL ER('GenWallRing','IRWALL cells out of order',*99)
           ENDDO
         ENDDO
-c        DO ik = 1, nks(ir)-1
-c          IF (irins(ik,ir).EQ.irins(ik+1,ir).AND.
-c     .        ikins(ik,ir).GT.ikins(ik+1,ir)) THEN
-c            CALL ER('GenWallRing','Cells out of order. '//
-c     .              'Development required.',*99)
-c          ENDIF
-c        ENDDO
       ENDIF
 
       RETURN
@@ -6259,6 +6286,7 @@ c     position 0.0:
       END
 c     
 c ========================================================================
+c ========================================================================
 c
 c subroutine: PoloidalRefinement
 c
@@ -6373,12 +6401,14 @@ c...    Triggers for resetting grid parameters:
         ELSEIF (mode.EQ.7) THEN
           iks = nks(ir) - ikti3
           ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
-        ELSEIF (mode.EQ.6) THEN
-          iks = NINT(REAL(ikto3-1)*(1.0-param)) + 1
-          ike = ikto3
-        ELSEIF (mode.EQ.7) THEN
-          iks = nks(ir) - ikti3
-          ike = nks(ir) - NINT(REAL(ikti3)*(1.0-param))
+        ELSEIF (mode.EQ.8) THEN
+c...      Near target refinement in the inner divertor (outer on JET):
+          iks = 1
+          ike = MIN(nks(ir)/2,NINT(param))
+        ELSEIF (mode.EQ.9) THEN
+c...      Near target refinement in the outer divertor (inner on JET):
+          iks = MAX(nks(ir)/2,nks(ir) - NINT(param) + 1)
+          ike = nks(ir)
 c        ELSEIF (mode.EQ.11) THEN
 cc...      The whole ring:
 c          iks = 1
@@ -6471,9 +6501,11 @@ c...    Inner midplane:
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDIF
         ENDDO
+c     -------------------------------------------------------------------
       ELSE
         CALL ER('PoloidalRefinement','Invalid MODE',*99)
       ENDIF
+
 
       RETURN
  99   WRITE(0,'(A,2I6,F10.2)') 'DATA=',ir,mode,param
@@ -6971,14 +7003,14 @@ c              ELSE
 c              ENDIF
 
               IF (DABS(s-t).GT.1.0D-8.AND.DABS(s-t).LT.1.0D0) THEN
-                IF (sloutput) THEN
-                  WRITE(0,*) '************************************'
-                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
-                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
-                  WRITE(0,*) '  DOING NOTHING...'
-                  WRITE(0,*) '************************************'
-                  CYCLE
-                ENDIF
+c                IF (sloutput) THEN
+c                  WRITE(0,*) '************************************'
+c                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
+c                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
+c                  WRITE(0,*) '  DOING NOTHING...'
+c                  WRITE(0,*) '************************************'
+c                  CYCLE
+c                ENDIF
 
                 IF (ik1.EQ.nks(ir1)+1) THEN
                   d_rvertp(v4,id1) = x(1) + s * (x(2) - x(1))
@@ -7012,6 +7044,77 @@ c              ENDIF
       WRITE(0,*) 'C1,2 =',c1,c2
       WRITE(0,*) 'D1,2 =',d1,d2
       STOP
+      END
+c
+c ========================================================================
+c
+c subroutine: FindGridBreak
+c
+c Note - there are no virtual rings at this point -- should add them first?
+c
+cc
+      SUBROUTINE FindGridBreak
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+
+      INTEGER i1
+
+c... dicy...
+      irbreak = MAXNRS
+c...  ...
+      DO i1 = 2, grdntseg(1,IKLO)
+        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
+          irbreak = grdtseg(i1-1,1,IKLO) + 1
+          EXIT
+        ENDIF
+      ENDDO
+c...  Search though the target regions and select the first one that
+c     does not end on a virtual ring (which is always IRWALL here):
+      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
+     .    grdntreg(IKLO).GT.2) THEN
+        DO i1 = 2, grdntreg(IKLO) 
+          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKLO)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+c...  ...
+      DO i1 = 2, grdntseg(1,IKHI)
+        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
+     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
+          irbreak = grdtseg(i1-1,1,IKHI) + 1
+          EXIT
+        ENDIF
+      ENDDO
+      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
+     .    grdntreg(IKHI).GT.2) THEN
+        DO i1 = 2, grdntreg(IKHI) 
+c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
+          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKHI)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (irbreak.EQ.MAXNRS) irbreak = 0
+
+c...  Assign NBR:
+      IF     (irbreak.EQ.0) THEN
+        nbr = 0
+      ELSEIF (irbreak.LT.irwall) THEN
+        nbr = irwall - irbreak
+      ELSE
+        nbr = nrs - irbreak + 1
+      ENDIF
+
+      RETURN
+ 99   STOP
       END
 c
 c ========================================================================
@@ -7052,6 +7155,10 @@ c     .        a1,a2,b1,b2,c1,c2,t1
       IF (sloutput) WRITE(fp,*) 'HERE IN TAILORGRID'
 
 
+      IF (ALLOCATED(d_rvertp)) THEN
+        DEALLOCATE(d_rvertp)
+        DEALLOCATE(d_zvertp)
+      ENDIF
       ALLOCATE(d_rvertp(5,MAXNKS*MAXNRS))
       ALLOCATE(d_zvertp(5,MAXNKS*MAXNRS))
       d_rvertp = DBLE(rvertp)
@@ -7185,54 +7292,7 @@ c...  Assign IRBREAK:
       i1 = 1
 
 
-c... dicy...
-      irbreak = MAXNRS
-c...  ...
-      DO i1 = 2, grdntseg(1,IKLO)
-        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
-          irbreak = grdtseg(i1-1,1,IKLO) + 1
-          EXIT
-        ENDIF
-      ENDDO
-c...  Search though the target regions and select the first one that
-c     does not end on a virtual ring (which is always IRWALL here):
-      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
-     .    grdntreg(IKLO).GT.2) THEN
-        DO i1 = 2, grdntreg(IKLO) 
-          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKLO)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-c...  ...
-      DO i1 = 2, grdntseg(1,IKHI)
-        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
-     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
-          irbreak = grdtseg(i1-1,1,IKHI) + 1
-          EXIT
-        ENDIF
-      ENDDO
-      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
-     .    grdntreg(IKHI).GT.2) THEN
-        DO i1 = 2, grdntreg(IKHI) 
-c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
-          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKHI)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-      IF (irbreak.EQ.MAXNRS) irbreak = 0
-
-c...  Assign NBR:
-      IF     (irbreak.EQ.0) THEN
-        nbr = 0
-      ELSEIF (irbreak.LT.irwall) THEN
-        nbr = irwall - irbreak
-      ELSE
-        nbr = nrs - irbreak + 1
-      ENDIF
+      CALL FindGridBreak
 
 
       IF (sloutput) WRITE(fp,*) 'IRBREAK,NBR=',irbreak,nbr

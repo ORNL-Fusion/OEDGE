@@ -1,12 +1,38 @@
 ;
 ; ======================================================================
 ;
+PRO cortex_FlipPoints, v1, v2
+
+  v1_save = v1
+  v2_save = v2
+  v1[0] = v1_save[1]
+  v1[1] = v1_save[0]
+  v2[0] = v2_save[1]
+  v2[1] = v2_save[0]
+
+END
+;
+; ======================================================================
+;
+PRO cortex_FlipArray, p
+
+  p_save = p
+
+  p[0,*] = p_save[1,*]
+  p[1,*] = p_save[0,*]
+
+END
+;
+; ======================================================================
+;
 FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, ps=ps
 
 ; A better system than the one used here is to collect all the data at the beginning of the 
 ; routine, and then find XMIN, etc. since then the data is only being processed once.  It also helps
 ; with storing the data later for redrawing, a bit... this scheme should be implemented for
 ; most of the plots... for another day...
+
+  flip = 0 ; 1
 
   IF (NOT KEYWORD_SET(mode)) THEN mode = 'main'
   IF (NOT KEYWORD_SET(type)) THEN type = 'full'
@@ -15,6 +41,10 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
   IF (plot.flux_surfaces   ) THEN type = 'flux_surfaces'
   IF (plot.no_grid         ) THEN type = 'no_grid'
   IF (plot.equ NE 'default') THEN type = 'equ'
+  IF (plot.xticks NE -1    ) THEN xticks = plot.xticks
+  IF (plot.yticks NE -1    ) THEN yticks = plot.yticks
+  IF (plot.xminor NE -1    ) THEN xminor = plot.xminor
+  IF (plot.yminor NE -1    ) THEN yminor = plot.yminor
 
   window_id = 0
   window_xsize = 700
@@ -37,6 +67,10 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
   ENDELSE
   plot_xtitle = 'R (m)'
   plot_ytitle = 'Z (m)'
+  IF (flip) THEN BEGIN
+    plot_xtitle = 'distance parallel to field, s (m)'
+    plot_ytitle = 'radial distance (m)'
+  ENDIF
 
   colors = ['Red','Green','Blue']
 ;
@@ -71,7 +105,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
       ymin = MIN([ymin,MIN(wall.v1[1,*]),MIN(wall.v2[1,*])])
       ymax = MAX([ymax,MAX(wall.v1[1,*]),MAX(wall.v2[1,*])])
     ENDIF
-    IF (plot.annotate_n) THEN BEGIN
+    IF (plot.annotate_n GT 0) THEN BEGIN
       FOR i = 0, plot.annotate_n-1 DO BEGIN
         val = cortex_ExtractStructure(annotation,i+1)   
         CASE plot.annotate_code[i] OF
@@ -82,6 +116,8 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
             ymin = MIN([ymin,MIN(val.y[*])])
             ymax = MAX([ymax,MAX(val.y[*])])
             END
+;         ----------------------------------------------------------------
+          2: 
 ;         ----------------------------------------------------------------
           ELSE: BEGIN
             PRINT, 'ERROR cortex_PlotFluidGrid: Unrecognised annotation code'
@@ -185,11 +221,18 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;
 ;   Create the axes:
 ;   ----------------------------------------------------------------------
+    IF (flip) THEN BEGIN
+      xrange_save = xrange
+      xrange = yrange
+      yrange = xrange_save
+    ENDIF
+
     IF (type NE 'equ') THEN  $
       PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1, /NOERASE,    $
             POSITION=plot.position,                                    $
             TITLE=plot_title, XTITLE=plot_xtitle, YTITLE=plot_ytitle,  $
-            COLOR=TrueColor('Black')
+            COLOR=TrueColor('Black'),  $
+            XTICKS=xticks,YTICKS=yticks,XMINOR=xminor,YMINOR=yminor
   ENDELSE
 ;
 ; Plot the grid:
@@ -200,12 +243,23 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;   ----------------------------------------------------------------
     'equ': BEGIN
 ;      levels = 0.10 * (FINDGEN(25) / 25.0 - 0.5) + 1.1
-      levels = plot.equ_params[1] * (FINDGEN(plot.equ_params[0]) / plot.equ_params[0] - 0.5) +  $
-               plot.equ_params[2]
+      IF (plot.equ_levels[0] NE -999.0) THEN  $
+        levels = plot.equ_levels[WHERE(plot.equ_levels NE -999.0)]  $
+      ELSE  $
+        levels = plot.equ_params[1] *   $
+                 (FINDGEN(plot.equ_params[0]) / plot.equ_params[0] - 0.5) +  $
+                 plot.equ_params[2]
+
+;      levels = (plot.equ_params[2] - plot.equ_params[1]) *   $
+;               (FINDGEN(plot.equ_params[0]) / plot.equ_params[0] - 0.5) +  $
+;               plot.equ_params[1]
+print,levels
+
       CONTOUR, grid.psin, grid.x, grid.y, LEVELS=levels, XSTYLE=1, YSTYLE=1, /NOERASE, $
                POSITION=plot.position,  XRANGE=xrange,YRANGE=yrange,  $
                TITLE=plot_title, XTITLE=plot_xtitle, YTITLE=plot_ytitle,  $
-               COLOR=TrueColor('Black')
+               COLOR=TrueColor('Black'),  $
+               XTICKS=xticks,YTICKS=yticks,XMINOR=xminor,YMINOR=yminor
       END
 ;   ----------------------------------------------------------------
     ELSE: BEGIN
@@ -235,6 +289,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
                 k  = grid.vtx_map[grid.srf_ivtx[1,i]]
                 v1 = grid.vtx[*,j]
                 v2 = grid.vtx[*,k]
+                IF (flip) THEN cortex_FlipPoints, v1, v2
                 OPLOT, [v1[0],v2[0]], [v1[1],v2[1]], COLOR=TrueColor(color)
               ENDIF
               END
@@ -251,6 +306,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
                 k  = grid.vtx_map[grid.srf_ivtx[1,i]]
                 v1 = grid.vtx[*,j]
                 v2 = grid.vtx[*,k]
+                IF (flip) THEN cortex_FlipPoints, v1, v2
                 OPLOT, [v1[0],v2[0]], [v1[1],v2[1]], COLOR=TrueColor(color)
               ENDIF
               END
@@ -263,8 +319,8 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
                 k  = grid.vtx_map[grid.srf_ivtx[1,i]]
                 v1 = grid.vtx[*,j]
                 v2 = grid.vtx[*,k]
+                IF (flip) THEN cortex_FlipPoints, v1, v2
                 OPLOT, [v1[0],v2[0]], [v1[1],v2[1]], COLOR=TrueColor('Black')
-      
               ENDIF
               END
 ;           --------------------------------------------------------
@@ -281,7 +337,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;
 ; Overlay the separatrix:
 ; ----------------------------------------------------------------------
-  IF (type NE 'equ') THEN BEGIN
+  IF (type NE 'equ' and NOT plot.no_separatrix) THEN BEGIN
 
     FOR i1 = -1, plot.show_n-1 DO BEGIN
 
@@ -314,6 +370,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
         v[0:1,j] = grid.vtx[0:1,m]
         IF (j EQ n-1) THEN v[0:1,j+1] = grid.vtx[0:1,m] 
       ENDFOR
+      IF (flip) THEN cortex_FlipArray, v
       OPLOT, v[0,*], v[1,*], COLOR=TrueColor(color)
     ENDFOR
   ENDIF
@@ -325,6 +382,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
       IF (node.type[i] EQ 0.0 OR node.type[i] NE node.type[i+1]) THEN CONTINUE
       v1 = [node.x[i  ],node.y[i  ]]
       v2 = [node.x[i+1],node.y[i+1]]
+      IF (flip) THEN cortex_FlipPoints, v1, v2      
       OPLOT, [v1[0],v2[0]], [v1[1],v2[1]], THICK=4.0, COLOR=TrueColor('Green')
     ENDFOR
   ENDIF
@@ -337,15 +395,39 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;      IF (wall.class[iwall] NE 1 OR wall.target[iwall] NE 0) THEN CONTINUE
       v1 = wall.v1[*,iwall]
       v2 = wall.v2[*,iwall]
+      IF (flip) THEN cortex_FlipPoints, v1, v2
       OPLOT, [v1[0],v2[0]], [v1[1],v2[1]], COLOR=TrueColor('Blue')
 ;
 ;     Label segments:
-      IF (N_ELEMENTS(WHERE(plot.label_index EQ 0)) NE 2 AND  $
-          iwall GE plot.label_index[0] AND  $                    ; Shouldn't use indexing based on the array index
-          iwall LE plot.label_index[1]) THEN BEGIN               ; Replace with a wall index array in the structure
+;      IF (N_ELEMENTS(WHERE(plot.label_index EQ 0)) NE 2 AND  $
+;          iwall GE plot.label_index[0] AND  $                    ; Shouldn't use indexing based on the array index
+;          iwall LE plot.label_index[1]) THEN BEGIN               ; Replace with a wall index array in the structure
+    ENDFOR
+  ENDIF
+
+  IF (plot.label_index NE 'none') THEN BEGIN
+    FOR iwall = 0, wall.n-1 DO BEGIN
+      IF (wall.class[iwall] NE 1) THEN CONTINUE
+      IF (cortex_CheckIndex(iwall+1,plot.label_index)) THEN BEGIN   ; This IWALL+1 business is poor
+        v1 = wall.v1[*,iwall]
+        v2 = wall.v2[*,iwall]
         vlabel = 0.5 * (v1 + v2)
-        XYOUTS, vlabel[0], vlabel[1], CHARSIZE=0.5, $
-                STRTRIM(STRING(iwall),2), COLOR=TrueColor('Red')
+        IF (flip) THEN cortex_FlipPoints, vlabel, v2      
+        IF (plot.label_index NE 'all') THEN BEGIN
+          OPLOT, [vlabel[0]], [vlabel[1]], COLOR=TrueColor('Black'),  $
+                 PSYM=6, SYMSIZE=0.4
+          charsize = 1.0
+print, 'vlable!',vlabel[0],xmin,xmax,xmin+0.80*(xmax-xmin)
+          IF (vlabel[0] GT xmin+0.80*(xmax-xmin)) THEN  $
+            alignment = 1.0 ELSE  $
+            alignment = 0.0            
+          XYOUTS, vlabel[0], vlabel[1], CHARSIZE=charsize, ALIGNMENT=alignment, $
+                  ' '+STRTRIM(STRING(iwall+1),2)+' ', COLOR=TrueColor('Black')   ; This IWALL+1 business is poor
+        ENDIF ELSE BEGIN
+          charsize = 0.5
+          XYOUTS, vlabel[0], vlabel[1], CHARSIZE=charsize, ALIGNMENT=0.5, $
+                  STRTRIM(STRING(iwall+1),2), COLOR=TrueColor('Black')        ; This IWALL+1 business is poor
+        ENDELSE
       ENDIF           
     ENDFOR
   ENDIF
@@ -353,7 +435,6 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ; Annotate the grid (add pretty stuff):
 ; ----------------------------------------------------------------------
   IF (plot.annotate_n GT 0) THEN BEGIN
-
 ;help,plot.annotate,/struct
 ;print,shit
 ;stop
@@ -363,12 +444,23 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
       CASE plot.annotate_code[i] OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-        
           OPLOT, val.x, val.y, COLOR=TrueColor(plot.annotate_colour[i])
-
           FOR j = 0, N_ELEMENTS(val.x)-2 DO BEGIN
             x = [val.x[j  ],val.y[j  ]]
             y = [val.x[j+1],val.y[j+1]]
+          ENDFOR
+          END
+
+;       ----------------------------------------------------------------
+        2: BEGIN
+          FOR j = 0, N_ELEMENTS(val.x1)-1 DO BEGIN
+            IF ((j+1) MOD plot.annotate_step[i] NE 0 AND  $
+                j NE 0 AND j NE N_ELEMENTS(val.x1)-1) THEN CONTINUE
+            x = [val.x1[j],val.x2[j]]
+            y = [val.y1[j],val.y2[j]]
+            OPLOT, x, y, COLOR=TrueColor(plot.annotate_colour[i])
+            XYOUTS, x[1], y[1], CHARSIZE=charsize, ALIGNMENT=1.0, $
+                    ' '+STRTRIM(STRING(j+1),2), COLOR=TrueColor(plot.annotate_colour[i])
           ENDFOR
           END
 ;       ----------------------------------------------------------------
@@ -382,12 +474,6 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
       ENDCASE
     ENDFOR
   ENDIF
-
-
-;  POLYFILL, [ 0.6, 1.0, 1.0, 0.6], $
-;            [ 0.0, 0.0, 1.0, 1.0], /DATA, $
-;            COLOR=TrueColor('Black')
-
 
   IF (NOT KEYWORD_SET(ps)) THEN BEGIN
     PRINT, 'STOPPING SO YOU CAN SEE THE PLOT'

@@ -12,19 +12,27 @@ $ ----------------------------------------------------------------------
 {PLOT 1D SUMMARY}  1  {WARNINGS}
   {TITLE}    TS2 design study, W targets : core impurity concentration (%)
   {NOTES}    disclaimer
-  {XLABELS}  P_SOLPS = 4 MW, x-point clearance = 13 cm : P_SOLPS = 4 MW, 3 cm : P_SOLPS = 8 MW, 13 cm : P_SOLPS = 8 MW, 3 cm
+  {XLABELS}  P_SOLPS = 4 MW, x-point clearance = 13 cm : P_SOLPS = 4 MW, 3 cm : 
+             P_SOLPS = 8 MW, 13 cm : P_SOLPS = 8 MW, 3 cm :
+             P_SOLPS = 8 MW (052), 13 cm : P_SOLPS = 8 MW (048), 3 cm 
   {YRANGE}   1.0E-04 1.0E-00
   {YLIMIT}   1.0E-2
 $  {SCALE FACTOR} 1.0
-  {SET} Dperp = 1.0 m!U2!N s!U-1!N  {CASE} t-new-0011d >12d >13d >14d
-  {SET} Dperp = 1.0 m!U2!N s!U-1!N  {CASE} t-new-0011c >12c >13c >14c
+  {SET} Dperp = 1.0 m!U2!N s!U-1!N          {CASE} t-new-0011d >12d >13d >14d >15d >16d
+  {SET} Dperp = 1.0 m!U2!N s!U-1!N, re-run  {CASE} >           >    >17d >14d >18d
+$  {SET} Dperp = 1.0 m!U2!N s!U-1!N  {CASE} t-new-0011c >12c >13c >14c >15c >16c
 
-{PLOT 1D RADIAL PROFILE}  1  {CASE}  t-new-0011d >12d >13d >14d  {XRANGE}  -0.03 0.03
+$ {PLOT 1D TARGET PROFILE}  2  {CASE}  t-new-0011d >12d >13d >14d >15d >16d  
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  t-new-0011d >12d >13d >14d >15d >16d  {XRANGE}  -0.03 0.03
 
 {PLOT 2D FLUID GRID}  1  {SHOW}  25 Red  {SHOW}  60 Red  {CASE}  t-new-0011z  
 {PLOT 2D FLUID GRID}  1  {SHOW}  25 Red  {SHOW}  60 Red  {CASE}  t-new-0012z
 {PLOT 2D FLUID GRID}  1  {SHOW}  25 Red  {SHOW}  60 Red  {CASE}  t-new-0011z  {ZOOM} 1.9 -0.9  2.5 -0.3
 {PLOT 2D FLUID GRID}  1  {SHOW}  25 Red  {SHOW}  60 Red  {CASE}  t-new-0012z  {ZOOM} 1.9 -0.9  2.5 -0.3
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES} 11  {CASE} t-new-0013z  
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES} 11  {CASE} t-new-0015z
 
 {EXIT}
 

@@ -782,6 +782,76 @@ c       otherwise indicate that the problem was ill-posed:
 
       RETURN
       END
+c ======================================================================
+c
+c function: CalcPerp2
+c
+c Calculate the perpendicular distance from a point to a line, but never
+c mind the check if the intersection point is between the end points (combine
+c with CalcPerp in the future to avoid code repetition).
+c
+      REAL*8 FUNCTION CalcPerp2(a,b,c,t) 
+
+      IMPLICIT none
+
+      REAL*8, INTENT(IN)  :: a(3),b(3),c(3)
+      REAL*8, INTENT(OUT) :: t
+
+      REAL*8 p(3),delta(3),dist
+
+      REAL*8     DTOL
+      PARAMETER (DTOL = 1.0D-7)
+
+
+      CalcPerp2 = -1.0D0
+
+      delta = b - a
+
+      IF (DABS(delta(1)).GT.DTOL.OR.DABS(delta(2)).GT.DTOL.OR.
+     .    DABS(delta(3)).GT.DTOL) THEN
+
+        t = ((c(1) - a(1)) * delta(1) + (c(2) - a(2)) * delta(2) + 
+     .       (c(3) - a(3)) * delta(3)) /
+     .      (delta(1)**2 + delta(2)**2 + delta(3)**2)
+
+        p(1:3) = a(1:3) + t * delta(1:3)
+
+        IF (.TRUE.) THEN
+c       IF ((t+DTOL).GE.0.0D0.AND.(t-DTOL).LE.1.0D0) THEN
+
+          dist = DSQRT((p(1) - c(1))**2 + (p(2) - c(2))**2 +
+     .                 (p(3) - c(3))**2)
+
+c          WRITE(0,*) 'A=',a
+c          WRITE(0,*) 'B=',b
+c          WRITE(0,*) 'C=',c
+c          WRITE(0,*) 'P=',p
+c          WRITE(0,*) 'DELTA=',delta
+
+          IF (dist.LT.DTOL*10.0D0) THEN
+c           Point C is on the line AB:
+            CalcPerp2 = 0.0D0
+          ELSE
+c           Point of perpendicular intersection is displaced from
+c           the point C:
+            CalcPerp2 = dist
+          ENDIF
+        ELSE
+          CalcPerp2 = -1.0D0
+        ENDIF
+      ELSE
+c       If the points are all identicle, then return a positive result,
+c       otherwise indicate that the problem was ill-posed:
+        IF (DABS(a(1) - c(1)).LT.DTOL.AND.DABS(a(2) - c(2)).LT.DTOL.AND.
+     .      DABS(a(3) - c(3)).LT.DTOL) THEN
+          CalcPerp2 =  0.0D0
+        ELSE
+          CalcPerp2 = -1.0D0
+        ENDIF
+      ENDIF
+
+      RETURN
+      END
 c
 c ======================================================================
 c

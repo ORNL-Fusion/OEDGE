@@ -14,6 +14,7 @@
 .r cortex_load_tetrahedrons
 .r grid_readequfile
 .r cortex_2D_grid
+.r cortex_1D_wall
 .r cortex_1D_targets
 .r cortex_1D_parallel
 .r cortex_1D_midplane
@@ -22,8 +23,8 @@
 .r cortex_1D_core
 .r cortex_1D_summary
 .r cortex_1D_spectrum
-.r cortex_1D_wall
 .r cortex_1D_integrals
+.r cortex_2D_integrals
 .r cortex_2D_contour
 .r cortex_input
 .r cortex_main
