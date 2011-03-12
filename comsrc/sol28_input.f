@@ -408,7 +408,7 @@ c       ----------------------------------------------------------------
           opt_eir%nvoid = 0
           READ(buffer(itag+2:itag+4),*) opt_eir%void_version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
             opt_eir%nvoid = opt_eir%nvoid + 1
             IF     (opt_eir%void_version.EQ.1.0) THEN 
               READ(buffer,*) idum(1)
@@ -453,7 +453,7 @@ c       ----------------------------------------------------------------
           opt_eir%nadd = 0
           READ(buffer(itag+2:itag+4),*) opt_eir%add_version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
             opt_eir%nadd = opt_eir%nadd + 1
             IF     (opt_eir%add_version.EQ.1.0) THEN 
               CALL SplitBuffer(buffer,buffer_array) 

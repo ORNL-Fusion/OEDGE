@@ -2846,7 +2846,11 @@ c slmod begin - debug
               WRITE(6,*) 'NRCELL=',nrcell
               WRITE(6,*) 'IPOLG =',ipolg
               WRITE(6,*) 'IPOLGO=',ipolgo
-              STOP 'HALTING THE CODE DUE TO TROUBLE'
+              PT=1.D30
+              NINCX=0
+              WRITE(iunout,*) 'ERROR (TIMER): Killing trajectory'
+              RETURN
+c              STOP 'HALTING THE CODE DUE TO TROUBLE'
             ENDIF
 c slmod end
             PNORMI=RINCRC(J,IZELL)
