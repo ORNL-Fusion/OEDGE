@@ -967,7 +967,7 @@ c       ----------------------------------------------------------------
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
               IF (obj(iobj)%omap(iside).NE.0) CYCLE
-              IF (srf(isrf)%index(IND_SURFACE).NE.11) CYCLE  ! *** HACK *** 
+              IF (srf(isrf)%index(IND_SURFACE).NE.33) CYCLE  ! *** HACK *** 
 c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
               DO WHILE (isrf.GT.0)
                 IF (nsur.GE.MAXSURFACE-10000) THEN
@@ -976,9 +976,9 @@ c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 101 ! 301 ! -2 ! 301
+     .            hsur(nsur) = 100 ! 301 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 101 ! 301 ! -3 ! 301
+     .            hsur(nsur) = 100 ! 301 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)

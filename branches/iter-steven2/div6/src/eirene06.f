@@ -2089,7 +2089,7 @@ c need to reset trycycle for each slice
           WRITE(0,*) 'processing:',itet,opt_eir%tet_index(itet)
 
           nslice = nslice + 1
-          slice_i(nslice) = itet
+          slice_i(nslice) = itet  
           SELECTCASE(opt_eir%tet_mode(itet))
             CASE (1)
               dang(nslice,1) = 0.0D0
@@ -2105,6 +2105,7 @@ c need to reset trycycle for each slice
         ENDDO ! Slices
       ENDDO ! Sectors
 
+      WRITE(0,*) 'SLICE INDEX: '
       DO i1 = 1, nslice
         WRITE(0,*) i1,slice_i(i1),dang(i1,1:2)
       ENDDO
@@ -2151,7 +2152,9 @@ c...
 
         islice_index = slice_i(islice)
 
-        WRITE(0,*) '===== tet slice ===>',islice_index
+        WRITE(0 ,*) '===== tet slice ===>',islice_index,
+     .              opt_eir%tet_index(islice_index)
+        WRITE(88,*) '===== tet slice ===>',islice_index
 
         IF (trycycle_last.NE.islice_index) THEN
           trycycle = .FALSE.
@@ -2164,7 +2167,7 @@ c...
           IF (nlist.GT.0) hole_found = .FALSE.
 
           DO ilist = 1, nlist
-            WRITE(0,*) '      ----> go ',list(ilist)
+c            WRITE(0,*) '      ----> go ',list(ilist)
             DO isurface = 1, nsurface            
               IF (surface(isurface)%type    .EQ.HOLE_IN_GRID.AND.
      .            surface(isurface)%index(2).EQ.list(ilist)) EXIT
@@ -2202,7 +2205,7 @@ c                WRITE(0,*) '      ',surface(isurface)%v(1:2,1)
 
             status = .TRUE.
             DO WHILE (status)
-              WRITE(0,*) '        ----> pass '
+c              WRITE(0,*) '        ----> pass '
               status = .FALSE.
               DO i1 = 1, ntry
                 IF (.NOT.trycycle(i1)) CYCLE
@@ -2243,7 +2246,8 @@ c check the stratum labels in .eirdat and figure out why they don't match whatś
 c compare a case with a transparent target and one without
 c ...there was something else but i cant remember what...
 
-        CALL BuildBricks(islice,islice_index,ang1,ang2,trycycle)
+        CALL BuildBricks(islice,opt_eir%tet_index(islice_index),
+     .                   ang1,ang2,trycycle)
 
         WRITE(eirfp,*) '  NTRY:',ntry
         WRITE(eirfp,*) '  NOBJ:',nobj
@@ -2253,6 +2257,34 @@ c ...there was something else but i cant remember what...
         ashift = ashift + dang(islice,2)
 
         trycycle_last = islice_index
+
+
+
+
+
+
+c        isurface_list = 0
+c        DO i1 = 1, nsurface
+c          IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+c          isurface_list(surface(i1)%num) = i1
+c        ENDDO
+c        DO iobj = 1, nobj
+c          DO iside = 1, obj(iobj)%nside
+c            isrf     = ABS(obj(iobj)%iside(iside))
+c            isurface = srf(isrf)%index(IND_SURFACE)
+c            IF (isurface.EQ.0) CYCLE
+c            isurface = isurface_list(isurface)
+c
+c            WRITE(0 ,*) 'slicing check',islice,
+c     .                   opt_eir%tet_index(islice_index),
+c     .                   obj(iobj)%index(IND_ISI),isurface
+c
+c            WRITE(88,*) 'slicing check',islice,
+c     .                   opt_eir%tet_index(islice_index),
+c     .                   obj(iobj)%index(IND_ISI),isurface
+c          ENDDO
+c        ENDDO
+
       ENDDO
 
 c...  Done with these, clear some memory:
@@ -2276,6 +2308,198 @@ c     PERHAPS THE NORMAL WITH RESPECT TO THE CENTER VECTOR?
 
 c...  Build connection map:
       CALL BuildConnectionMap(istart,iend)
+
+c.... For Eirene, need to make sure the tetrahedrons are arranged according to
+c     convention:
+      CALL FixTetrahedrons(istart,iend)
+
+
+
+
+c        isurface_list = 0
+c        DO i1 = 1, nsurface
+c          IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+c          isurface_list(surface(i1)%num) = i1
+c        ENDDO
+c        DO iobj = 1, nobj
+c          DO iside = 1, obj(iobj)%nside
+c            isrf     = ABS(obj(iobj)%iside(iside))
+c            isurface = srf(isrf)%index(IND_SURFACE)
+c            IF (isurface.EQ.0) CYCLE
+c            isurface = isurface_list(isurface)
+c            WRITE(0 ,*) 'slicing check 2',
+c     .                   obj(iobj)%index(IND_ISI),isurface
+c            WRITE(88,*) 'slicing check 2',
+c     .                   obj(iobj)%index(IND_ISI),isurface
+c          ENDDO
+c        ENDDO
+
+
+
+
+
+c...  Plasma association:
+c      CALL CheckTetrahedronStructure  ! Add this here..?
+
+c...  Add slices here, if requested:
+
+c...  Impose filament structures:
+      IF (opt_fil%opt.NE.0) THEN
+        WRITE(eirfp,*) '  NOBJ:',nobj
+        WRITE(eirfp,*) '  NSRF:',nsrf
+        WRITE(eirfp,*) '  NVTX:',nvtx
+        CALL ResolveFilament   
+        CALL AssignFilamentPlasma   
+        iend = nobj
+        CALL BuildConnectionMap(istart,iend)
+        CALL FixTetrahedrons(istart,iend)
+      ENDIF
+
+
+
+
+      WRITE(0,*) 
+      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
+      WRITE(0,*) 
+      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
+      iend = nobj
+      CALL BuildConnectionMap(istart,iend)
+      CALL FixTetrahedrons(istart,iend)
+
+
+
+c      isurface_list = 0
+c      DO i1 = 1, nsurface
+c        IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+c        isurface_list(surface(i1)%num) = i1
+c      ENDDO
+c      DO iobj = 1, nobj
+c        DO iside = 1, obj(iobj)%nside
+c          isrf     = ABS(obj(iobj)%iside(iside))
+c          isurface = srf(isrf)%index(IND_SURFACE)
+c          IF (isurface.EQ.0) CYCLE
+c          isurface = isurface_list(isurface)
+c          WRITE(0 ,*) 'slicing check 3',
+c     .                 obj(iobj)%index(IND_ISI),isurface
+c          WRITE(88,*) 'slicing check 3',
+c     .                 obj(iobj)%index(IND_ISI),isurface
+c        ENDDO
+c      ENDDO
+
+
+
+      CALL CheckTetrahedronStructure
+
+
+
+
+
+
+c      isurface_list = 0
+c      DO i1 = 1, nsurface
+c        IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+c        isurface_list(surface(i1)%num) = i1
+c      ENDDO
+c      DO iobj = 1, nobj
+c        DO iside = 1, obj(iobj)%nside
+c          isrf     = ABS(obj(iobj)%iside(iside))
+c          isurface = srf(isrf)%index(IND_SURFACE)
+c          IF (isurface.EQ.0) CYCLE
+c          isurface = isurface_list(isurface)
+c          WRITE(0 ,*) 'slicing check 4',
+c     .                 obj(iobj)%index(IND_ISI),isurface
+c          WRITE(88,*) 'slicing check 4',
+c     .                 obj(iobj)%index(IND_ISI),isurface
+c        ENDDO
+c      ENDDO
+
+
+
+      IF (.TRUE.) THEN
+c...    Make a linked list for the non-default standard surfaces in the surface 
+c       array (which also includes wall surfaces, which are not of interest here):
+        isurface_list = 0
+        DO i1 = 1, nsurface
+          IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
+          isurface_list(surface(i1)%num) = i1
+        ENDDO
+
+c        WRITE(fp,*) 'LIST:'
+c        WRITE(fp,*) isurface_list(1:nsurface)
+
+        DO iobj = 1, nobj
+c...      Collect connection map information:
+          DO iside = 1, obj(iobj)%nside
+            isrf   = ABS(obj(iobj)%iside(iside))
+
+            isurface = srf(isrf)%index(IND_SURFACE)
+
+            IF (isurface.EQ.0) CYCLE
+
+            isurface = isurface_list(isurface)
+            islice   = obj(iobj)%index(IND_ISI)
+
+
+c            WRITE(fp,*) 'SECTOR 1:',iobj,isrf,islice,isurface,
+c     .                 ' '//TRIM(surface(isurface)%sector)
+
+            IF (TRIM(surface(isurface)%sector).EQ.'-1') THEN
+c I used to assume that a -1 mean always .TRUE. for CheckIndex,
+c but this went bad when using CheckIndex with void processing,
+c so I've removed this assumption...
+              STOP '**** FIX -1 SPECIFICATION ****'
+            ENDIF
+
+
+
+            IF (surface(isurface)%sector(1:3).NE.'all') THEN
+c              WRITE(0 ,*) 'SECTOR 2:',iobj,isrf,obj(iobj)%index(IND_IS),
+c     .                    islice,' '//TRIM(surface(isurface)%sector)
+              WRITE(88,*) 'SECTOR 2:',iobj,isrf,obj(iobj)%index(IND_IS),
+     .                    islice,' '//TRIM(surface(isurface)%sector)
+            ENDIF
+
+            IF (islice.EQ.2) THEN
+c              WRITE(0 ,*) 'slicing',islice,isurface
+              WRITE(88,*) 'slicing',islice,isurface
+            ENDIF
+
+c...        This check seems backwards, and so it can hurt the brain, but
+c           it works because the surface properties over-ride is applied to
+c           all slices by default, so the objective here is to identify
+c           slices that are not included in the over-ride and to point them
+c           to some default surface:
+            IF (CheckIndex(islice,surface(isurface)%sector)) CYCLE
+
+
+
+            WRITE(fp,*) 'SECTOR 2:',iobj,isrf,obj(iobj)%index(IND_IS),
+     .                  islice,
+     .                  ' '//TRIM(surface(isurface)%sector)
+            WRITE(fp,*) '        :',isurface,islice,
+     .                  srf(isrf)%index(IND_SURFACE)
+
+            IF     (surface(isurface)%subtype.EQ.STRATUM   ) THEN
+              srf(isrf)%index(IND_SURFACE) = 
+     .                                  srf(isrf)%index(IND_SURFACE) - 1
+             WRITE(fp,*) 'STRATUM REMAP'
+c             STOP 'TEST'
+            ELSEIF (surface(isurface)%subtype.EQ.ADDITIONAL) THEN
+             srf(isrf)%index(IND_SURFACE) = surface(default_surface)%num
+             WRITE(fp,*) 'WALL REMAP'
+            ELSE
+              CALL ER('ProcessTetrahedrons','Invalid surface SUBTYPE '//
+     .                'when remapping the surface index',*99)
+            ENDIF
+
+            WRITE(fp,*) '        :',isurface,islice,
+     .                  srf(isrf)%index(IND_SURFACE)
+
+           ENDDO
+        ENDDO
+
+      ENDIF
+
 
 c     Looking for the special tetrahedron catch all surface of desperation...
       IF (surface(nsurface)%type    .NE.NON_DEFAULT_STANDARD.OR.
@@ -2321,8 +2545,6 @@ c     .                              obj(iobj)%index(IND_ISI)
 
           ENDIF
 
-
-
           IF (iside.NE.1.AND.
      .        obj(iobj)%omap(iside)       .EQ.0.AND.
      .        srf(isrf)%index(IND_SURFACE).LE.0) THEN
@@ -2332,108 +2554,6 @@ c     .                              obj(iobj)%index(IND_ISI)
 
         ENDDO
       ENDDO
-
-c.... For Eirene, need to make sure the tetrahedrons are arranged according to
-c     convention:
-      CALL FixTetrahedrons(istart,iend)
-
-c...  Plasma association:
-c      CALL CheckTetrahedronStructure  ! Add this here..?
-
-c...  Add slices here, if requested:
-
-
-
-c...  Impose filament structures:
-      IF (opt_fil%opt.NE.0) THEN
-        WRITE(eirfp,*) '  NOBJ:',nobj
-        WRITE(eirfp,*) '  NSRF:',nsrf
-        WRITE(eirfp,*) '  NVTX:',nvtx
-        CALL ResolveFilament   
-        CALL AssignFilamentPlasma   
-        iend = nobj
-        CALL BuildConnectionMap(istart,iend)
-        CALL FixTetrahedrons(istart,iend)
-      ENDIF
-
-      WRITE(0,*) 
-      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
-      WRITE(0,*) 
-      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
-      iend = nobj
-      CALL BuildConnectionMap(istart,iend)
-      CALL FixTetrahedrons(istart,iend)
-
-      CALL CheckTetrahedronStructure
-
-      IF (.TRUE.) THEN
-c...    Make a linked list for the non-default standard surfaces in the surface 
-c       array (which also includes wall surfaces, which are not of interest here):
-        isurface_list = 0
-        DO i1 = 1, nsurface
-          IF (surface(i1)%type.NE.NON_DEFAULT_STANDARD) CYCLE
-          isurface_list(surface(i1)%num) = i1
-        ENDDO
-
-c        WRITE(fp,*) 'LIST:'
-c        WRITE(fp,*) isurface_list(1:nsurface)
-
-        DO iobj = 1, nobj
-c...      Collect connection map information:
-          DO iside = 1, obj(iobj)%nside
-            isrf   = ABS(obj(iobj)%iside(iside))
-
-            isurface = srf(isrf)%index(IND_SURFACE)
-
-            IF (isurface.EQ.0) CYCLE
-
-            isurface = isurface_list(isurface)
-            islice   = obj(iobj)%index(IND_ISI)
-
-
-c            WRITE(fp,*) 'SECTOR 1:',iobj,isrf,islice,isurface,
-c     .                 ' '//TRIM(surface(isurface)%sector)
-
-            IF (TRIM(surface(isurface)%sector).EQ.'-1') THEN
-c I used to assume that a -1 mean always .TRUE. for CheckIndex,
-c but this went bad when using CheckIndex with void processing,
-c so I've removed this assumption...
-              STOP '**** FIX -1 SPECIFICATION ****'
-            ENDIF
-c...        This check seems backwards, and so it can hurt the brain, but
-c           it works because the surface properties over-ride is applied to
-c           all slices by default, so the objective here is to identify
-c           slices that are not included in the over-ride and to point them
-c           to some default surface:
-            IF (CheckIndex(islice,surface(isurface)%sector)) CYCLE
-
-            WRITE(fp,*) 'SECTOR 2:',iobj,isrf,obj(iobj)%index(IND_IS),
-     .                  islice,
-     .                  ' '//TRIM(surface(isurface)%sector)
-            WRITE(fp,*) '        :',isurface,islice,
-     .                  srf(isrf)%index(IND_SURFACE)
-
-            IF     (surface(isurface)%subtype.EQ.STRATUM   ) THEN
-              srf(isrf)%index(IND_SURFACE) = 
-     .                                  srf(isrf)%index(IND_SURFACE) - 1
-             WRITE(fp,*) 'STRATUM REMAP'
-c             STOP 'TEST'
-            ELSEIF (surface(isurface)%subtype.EQ.ADDITIONAL) THEN
-             srf(isrf)%index(IND_SURFACE) = surface(default_surface)%num
-             WRITE(fp,*) 'WALL REMAP'
-            ELSE
-              CALL ER('ProcessTetrahedrons','Invalid surface SUBTYPE '//
-     .                'when remapping the surface index',*99)
-            ENDIF
-
-            WRITE(fp,*) '        :',isurface,islice,
-     .                  srf(isrf)%index(IND_SURFACE)
-
-           ENDDO
-        ENDDO
-
-      ENDIF
-
 
 
       WRITE(eirfp,*) '  NOBJ:',nobj
