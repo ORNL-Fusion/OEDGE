@@ -8291,8 +8291,10 @@ c     not performed when the data is read in because the KSS values
 c     of the grid points have not yet been calculated at that
 c     time.
 c
-      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit
-      INTEGER ik,ir
+      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2
+      INTEGER ik,ir,irlimit
+c      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit  ! gfortran
+c      INTEGER ik,ir
 C
 C       CALCULATE ELECTRIC FIELD
 C
@@ -18243,12 +18245,12 @@ c
      >                         error_comment(1:len_trim(error_comment)))
 
 c
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),   ! gfortran didn't like these outputs, and for not good reason it seems to me
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 c
                         endif
 c
@@ -18283,12 +18285,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 
 c
                         endif
@@ -18329,12 +18331,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 c
                         endif
 c
@@ -18374,12 +18376,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 c
-              write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                         zvertp(id,in)),
-     >                         id = 1,4)
-              write(6,'(i6,8(1x,g12.5))') testin,((rvertp(id,testin),
-     >                         zvertp(id,testin)),
-     >                         id = 1,4)
+c              write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                         zvertp(id,in)),
+c     >                         id = 1,4)
+c              write(6,'(i6,8(1x,g12.5))') testin,((rvertp(id,testin),
+c     >                         zvertp(id,testin)),
+c     >                         id = 1,4)
 c
                         endif
 c

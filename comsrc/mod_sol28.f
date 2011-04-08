@@ -284,7 +284,8 @@ c...    Strata:
         INTEGER   :: npts           (EIR_MAXNSTRATA)
         REAL      :: flux           (EIR_MAXNSTRATA)
         REAL      :: flux_fraction  (EIR_MAXNSTRATA)
-        CHARACTER :: species_tag*128(EIR_MAXNSTRATA)
+        CHARACTER*128 :: species_tag(EIR_MAXNSTRATA)
+!         CHARACTER*128 :: species_tag*128(EIR_MAXNSTRATA)  ! gfortranH
         INTEGER   :: species        (EIR_MAXNSTRATA)
         INTEGER   :: species_index  (EIR_MAXNSTRATA)
         REAL      :: energy         (EIR_MAXNSTRATA)
@@ -295,7 +296,8 @@ c...    Strata:
 !        REAL      :: cos_max     
 !        CHARACTER :: note*512    
 !        INTEGER   :: indsrc  ! ...
-        CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)
+        CHARACTER*512 :: txtsou  (EIR_MAXNSTRATA)
+!         CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)  ! gfortran
 !        INTEGER   :: ninitl       
 !        INTEGER   :: nemods       
 !        CHARACTER :: species_tag*4
@@ -759,6 +761,8 @@ c...    Strata:
       USE mod_sol28      
       IMPLICIT none
 
+      SAVE
+
       TYPE(type_options_eirene  ) :: opt_eir   ! EIRENE options
       TYPE(type_options_filament) :: opt_fil   ! Filament options
 
@@ -813,10 +817,10 @@ c...    Strata:
 
 
 !...
-      TYPE(type_options_osm     ) :: opt
+      TYPE(type_options_osm), SAVE :: opt
       INTEGER, PARAMETER :: MAX_NOPT = 10
       INTEGER nopt
-      TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
+      TYPE(type_options_osm), SAVE :: opt_iteration(1:MAX_NOPT)
       INTEGER logop, logfp
 
 !...  Nasty...

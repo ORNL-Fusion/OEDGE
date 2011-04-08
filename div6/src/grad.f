@@ -722,8 +722,8 @@ c           name in the result statement which should be the default
 c           behaviour in any case.
 c
 c
-      RECURSIVE REAL FUNCTION Quant2Grad(ir,s,quant,targval)
-c     .               RESULT (res_Quant2Grad)
+      RECURSIVE REAL FUNCTION Quant2Grad(ir,s,quant,targval) ! RESULT(res)
+     .               RESULT (res_Quant2Grad)
 c     .               RESULT (Quant2Grad)
 
       IMPLICIT none
@@ -752,7 +752,7 @@ c slmod end
 c
 c Output:
 c
-c      REAL    res_Quant2Grad
+      REAL    res_Quant2Grad
 c
 c
 c Check for valid IR value:
@@ -760,15 +760,15 @@ c
       IF (ir.LT.irsep.OR.ir.EQ.irtrap.OR.ir.EQ.irwall) THEN
         WRITE(6,*) 'ERROR (Quant2Grad): Cannot calculate second order ',
      .             'gradient for virtual rings (IR = ',ir,')'
-        quant2grad = 1.0
+c        quant2grad = 1.0
 c
-c        res_quant2grad = 1.0
+        res_quant2grad = 1.0
 c
         return
       ELSEIF (nrs-irtrap.LT.2.OR.irwall-irsep.LT.2) THEN
-        quant2grad = 1.0
+c        quant2grad = 1.0
 c
-c        res_quant2grad = 1.0
+        res_quant2grad = 1.0
 c
         return
       ENDIF
@@ -796,9 +796,10 @@ c... BUG - OCT 2, 2000
      .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
 c        s = (s - ksb(0,ir)) * (ksb(nks(ir+1),ir+1) - ksb(0,ir+1)) /
 c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-        Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
+c        res = Quant2Grad(ir+1,s1,quant,targval)
+c        Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)  ! gfortran
 c
-c        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
+        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
 c
         RETURN
       ELSEIF (ir.EQ.irwall-1) THEN
@@ -806,9 +807,10 @@ c
      .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
 c        s = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
 c     .                         (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-        Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
+c        res = Quant2Grad(ir-1,s1,quant,targval)
+c        Quant2Grad = Quant2Grad(ir-1,s1,quant,targval) !gfortran
 c
-c        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
+        res_Quant2Grad = Quant2Grad(ir+1,s1,quant,targval)
 c
         RETURN
 c slmod begin
@@ -823,7 +825,11 @@ c     conditions -> requires nested if clause
      .                           (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
 c         s  = (s - ksb(0,ir)) * (ksb(nks(ir-1),ir-1) - ksb(0,ir-1)) /
 c     .                          (ksb(nks(ir)  ,ir  ) - ksb(0,ir  ))
-          Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
+c          res = Quant2Grad(ir-1,s1,quant,targval)
+c          Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)  ! gfortran
+c
+        res_Quant2Grad = Quant2Grad(ir-1,s1,quant,targval)
+c
           RETURN
         ENDIF
 c slmod end
@@ -859,10 +865,11 @@ c         approximate the second derivative in this region by taking
 c         the derivative on the neighbouring SOL ring:
 c
 
-          Quant2Grad = Quant2Grad(ir+1,GetS(ir+1,thetav),quant,targval)
+c          res = Quant2Grad(ir+1,GetS(ir+1,thetav),quant,targval)
+c          Quant2Grad = Quant2Grad(ir+1,GetS(ir+1,thetav),quant,targval) ! gfortran
 c
-c          res_Quant2Grad = 
-c     >                Quant2Grad(ir+1,GetS(ir+1,thetav),quant,targval)
+          res_Quant2Grad = 
+     >                Quant2Grad(ir+1,GetS(ir+1,thetav),quant,targval)
 c
           RETURN
         ENDIF
@@ -892,9 +899,10 @@ c
       gradi = (deni - den) / (0.5 * (widi + wid))
       grado = (deno - den) / (0.5 * (wido + wid))
 
-      Quant2Grad = (gradi + grado) / wid
+c      res = (gradi + grado) / wid
+c      Quant2Grad = (gradi + grado) / wid  ! gfortran
 c
-c      res_Quant2Grad = (gradi + grado) / wid
+      res_Quant2Grad = (gradi + grado) / wid
 c
 c      Quant2Grad = (((deni - den) / (0.5 * (wid + widi))) +
 c     .            ((deno - den) / (0.5 * (wid + wido)))) / wid
@@ -915,19 +923,19 @@ c
       if (cprint.eq.8.or.cprint.eq.9) then     
   
          WRITE(SLOUT,'(2I3,A,E12.6,A,E12.6,A,F8.3,A)') 
-     .     ik,ir,' >> GRAD: ',Quant2Grad,' <<     TGRAD: ',tgrad,
-     .     '   DIFF = ',(Quant2Grad - tgrad) / Quant2Grad * 100.0,' %'
+c     .     ik,ir,' >> GRAD: ',Quant2Grad,' <<     TGRAD: ',tgrad,
+c     .     '   DIFF = ',(Quant2Grad - tgrad) / Quant2Grad * 100.0,' %'
 c
-c     .     ik,ir,' >> GRAD: ',res_Quant2Grad,' <<     TGRAD: ',tgrad,
-c     .     '   DIFF = ',
-c     .     (res_Quant2Grad - tgrad) / Quant2Grad * 100.0,' %'
+     .     ik,ir,' >> GRAD: ',res_Quant2Grad,' <<     TGRAD: ',tgrad,
+     .     '   DIFF = ',
+     .     (res_Quant2Grad - tgrad) / res_Quant2Grad * 100.0,' %'
 c
       endif
 c
 c
-      IF (((Quant2Grad - tgrad) / Quant2Grad * 100.0).GT.0.01) THEN
+c      IF (((Quant2Grad - tgrad) / Quant2Grad * 100.0).GT.0.01) THEN
 c
-c      IF (((res_Quant2Grad-tgrad)/res_Quant2Grad*100.0).GT.0.01)THEN
+      IF (((res_Quant2Grad-tgrad)/res_Quant2Grad*100.0).GT.0.01)THEN
 c
         if (cprint.eq.8.or.cprint.eq.9) then   
 

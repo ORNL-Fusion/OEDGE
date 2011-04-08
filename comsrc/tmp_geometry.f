@@ -1869,7 +1869,12 @@ c
           obj_volume = 0.0D0
           DO iobj = 1, nobj
             IF (grp(obj(iobj)%group)%type.NE.GRP_TETRAHEDRON) CYCLE
-            CALL gmCalcTetrahedronVolume(iobj)
+            WRITE(0,*) 'STOPPING, SOMETHING MESS UP HERE, CHECK CODE'
+            STOP
+c...        Not sure what's up here, since I was calling a function as if it's a 
+c           subroutine.  Need to debug when the runtime error appears, from above.
+c           Trying to compile with gfortran caught this.
+c            CALL gmCalcTetrahedronVolume(iobj)
           ENDDO
 
         CASE (MODE_OBJ_TUBE)

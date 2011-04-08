@@ -585,7 +585,7 @@ c
       INTEGER ik,ir,in,ii,i1,i2,id
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
-      CHARACTER*7   irtag(0:MAXNRS)
+      CHARACTER*7   irtag(0:MAXNRS),fname
       CHARACTER*128 note
 
       write(6,*) 'OutputGrid2:',trim(comment)
@@ -613,7 +613,8 @@ c----------------------------------
         ENDDO
       ENDDO
 
-      OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp
+      OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       CALL SetBounds
 
@@ -744,7 +745,7 @@ c
       INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
-      CHARACTER*7   irtag(0:MAXNRS)
+      CHARACTER*7   irtag(0:MAXNRS),fname
       CHARACTER*128 note
       CHARACTER     ring_tag(4)*4
 
@@ -782,7 +783,8 @@ c f90 strange
         ENDDO
       ENDDO
 
-      OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp
+      OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       CALL SetBounds
 
@@ -1319,7 +1321,7 @@ c
       CHARACTER*(*) note
       INTEGER      ik,ir,in
       CHARACTER*20 tag
-
+      CHARACTER*7  fname
       CHARACTER*64 machine2
 
       CALL GetEnv('DIVNAME',machine2)
@@ -1360,8 +1362,9 @@ c
 c     Unit 67 is the PIN output before each SOL 22 iteration, so the file
 c     needs to remain open:
 c
+      WRITE(fname,'(A,I2)') 'fort.',fp
       IF (fp.NE.67.AND.fp.NE.SLOUT.AND.fp.NE.PINOUT)
-     .  OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+     .  OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       WRITE(fp,*) 'EIRENE data '//note(1:LEN_TRIM(note))//':'
 

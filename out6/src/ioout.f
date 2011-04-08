@@ -769,8 +769,11 @@ C
       MESAGE = 'EXPECTING 1 CHARACTER STRING, 2 INTEGERS AND'//
      >         ' NEXPT INTEGER PAIRS'
 c
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,plotid,nexpt,
-     >       ((expt_ds(in),expt_col(in)),in=1,min(nexpt,maxexpt))
+      WRITE(0,*) ' STOP: GFORTRAN DOES NOT LIKE THESE LINES FOR SOME'   ! gfortran
+      WRITE(0,*) ' REASON. CHECK THE CODE' 
+      STOP
+c      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,plotid,nexpt, 
+c     >           ((expt_ds(in),expt_col(in)),in=1,min(nexpt,maxexpt))
 
       nexpt = min(nexpt,maxexpt)  
 c

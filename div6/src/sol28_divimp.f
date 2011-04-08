@@ -1674,8 +1674,8 @@ c                z1 = (1.0 - frac) * L
             CASE (4:7) ! Target chamber: fancy
               frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
               frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
-              frac1 = SIGN(0.5,frac1-0.5)*(ABS(frac1-0.5)/0.5)**1.00+0.5
-              frac2 = SIGN(0.5,frac2-0.5)*(ABS(frac2-0.5)/0.5)**1.00+0.5
+              frac1=SIGN(.5D0,frac1-.5D0)*(ABS(frac1-0.5)/0.5)**1.00+0.5
+              frac2=SIGN(.5D0,frac2-.5D0)*(ABS(frac2-0.5)/0.5)**1.00+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
           ENDSELECT

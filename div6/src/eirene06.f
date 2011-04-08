@@ -5957,16 +5957,16 @@ c ======================================================================
 c
 c function: TrianglePosition
 c
-      LOGICAL FUNCTION TrianglePosition
-      USE mod_eirene06_parameters
-      USE mod_eirene06
-      IMPLICIT none
- 
-      TrianglePosition = .FALSE.
-
-      RETURN
- 99   STOP
-      END
+c      LOGICAL FUNCTION TrianglePosition
+c      USE mod_eirene06_parameters
+c      USE mod_eirene06
+c      IMPLICIT none
+c 
+c      TrianglePosition = .FALSE.
+c
+c      RETURN
+c 99   STOP
+c      END
 c
 c ======================================================================
 c
@@ -7406,7 +7406,8 @@ c
       WRITE(fp06,90) '*** 11. DATA FOR NUMERICAL/GRAPHICAL OUTPUT (OSM)'
 
       IF (.TRUE.) THEN
-        WRITE(fp06,90) 'FTFFF FTFFF FFTFF TTTTT T'
+        WRITE(fp06,90) 'FTFFF FTFFF FFTFF TTTTT TFFFF FFFFF FFFFF'
+c        WRITE(fp06,90) 'FTFFF FTFFF FFTFF TTTTT T'
 c        WRITE(fp06,90) 'FTFFF TTFFF FFTFF TTTTT T'  ! Turn on particle tracking TRCGRD
 c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,90) 'Ttttt ttttt tttt'

@@ -2206,7 +2206,8 @@ c
      >             'ERROR in "position_in_poly": point not'//
      >             ' found in cell: ITER=',iter
          write(6,'(a,8(1x,g12.5))') 'Last poly:',
-     >                          ((rv(iv),zv(iv)),iv=1,4)
+     >                          (rv(iv),zv(iv),iv=1,4)
+c     >                          ((rv(iv),zv(iv)),iv=1,4)  ! gfortran
          write(6,'(a,8(1x,g12.5))') 'Point R,Z,S,C:',r,z,
      >                              s_frac,cross_frac
 c

@@ -335,8 +335,9 @@ c
       SUBROUTINE SplitBuffer(buffer,buffer_array)
       IMPLICIT none
 
-      CHARACTER, INTENT(IN)  :: buffer*(*)
-      CHARACTER, INTENT(OUT) :: buffer_array*256(*)
+      CHARACTER    , INTENT(IN)  :: buffer*(*)
+      CHARACTER*256, INTENT(OUT) :: buffer_array(*)
+c      CHARACTER, INTENT(OUT) :: buffer_array*256(*)  ! gfortran
 
       INTEGER i,j,k,n,m
 
@@ -384,7 +385,8 @@ c
 
       INTEGER   i1,idum(5)
       LOGICAL   first_pass
-      CHARACTER cdum*1024,buffer_array*256(100)
+      CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
+      CHARACTER*256 buffer_array(100)
       REAL      stratum_type,version,rdum(7)
 
       first_pass = .TRUE.

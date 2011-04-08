@@ -1410,7 +1410,7 @@ c            IF (target.EQ.IKLO) strata(nstrata)%insor = -2
 c            IF (target.EQ.IKHI) strata(nstrata)%insor = -3
             strata(nstrata)%sorwgt  = 1.0
             strata(nstrata)%sorlim  = 124.0
-            strata(nstrata)%sorind  = SNGL(srcsrf)
+            strata(nstrata)%sorind  = REAL(srcsrf)
 c            IF (target.EQ.IKLO) strata(nstrata)%sorind = 1.0
 c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%nrsor   = -1
@@ -1787,7 +1787,7 @@ c      pinrec = 0.0
       ELSE
         frac = 1.0
       ENDIF
-      IF (sldebug)
+      IF (sldebug.NE.0)
      .  WRITE(0     ,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
       WRITE(PINOUT,*) 'RELAXATION FRACTION FOR EIRENE06:',frac
 
@@ -2294,7 +2294,7 @@ c...  Dump EIRENE calculated impurity distribution data:
         CALL inOpenInterface('idl.eirene_imp',ITF_WRITE)
         CALL inPutData(0.0       ,'IMP_INITIAL_IZ'    ,'N/A')
         CALL inPutData(0.0       ,'IMP_MAX_IZ'        ,'N/A')
-        CALL inPutData(SNGL(cion),'IMP_Z'             ,'N/A')
+        CALL inPutData(REAL(cion),'IMP_Z'             ,'N/A')
         CALL inPutData(crmi      ,'IMP_A'             ,'N/A')
         CALL inPutData(irsep -1  ,'GRID_ISEP'         ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
         CALL inPutData(irwall-1  ,'GRID_IPFZ'         ,'N/A')  ! the boundary rings are not present
