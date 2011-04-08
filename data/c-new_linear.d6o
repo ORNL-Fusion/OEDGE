@@ -40,15 +40,6 @@ $
 '000   Zoom'  0.100 +0.280 0.130 0.300
 $
 $
-$
-'999   Output tetrahedron data'  16
-$
-$
-$
-'999   STOP'  3
-$
-$
-$
 '987   XXX XX D density                       '   0  1  600
 '000   Zoom'  0.100 +0.280 0.130 0.300
 '000   Scale' 2 1  1.0  -99.0 -99.0  'n_D (m!SP!-3!NO!)'
@@ -61,7 +52,7 @@ $
 '000   Zoom'  0.100 +0.280 0.130 0.300
 '000   Scale' 2 1  1.0  -99.0 -99.0  'p_D2 (Pa)'
 $
-'954   650 00 Neutral particle tracks         '   0 99
+'954   650 00 Neutral particle tracks         '  99
 '000   Zoom'  0.100 +0.280 0.130 0.300
 $
 $
