@@ -735,7 +735,7 @@ c       result of analyzing the present state of the solution:
       IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'Local control options:'
-        WRITE(logfp,'(A,I10)') 'first_bc   = ',first_bc
+        WRITE(logfp,'(A,L10)') 'first_bc   = ',first_bc
         WRITE(logfp,'(A,L10)') 'set_cnt_bc = ',set_cnt_bc
       ENDIF
 

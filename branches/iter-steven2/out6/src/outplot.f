@@ -7253,9 +7253,12 @@ c
 c
       write(6,*) 'GRIDPOS:',ik,ir,r,z,griderr,korpg(ik,ir),
      >                      nvertp(korpg(ik,ir))
-      write(6,'(8(1x,g12.5))') ((rvertp(in,korpg(ik,ir)),
-     >                         zvertp(in,korpg(ik,ir))),
-     >                         in = 1,4)
+
+      WRITE(0,*) ' STOP: GFORTRAN COMPLAINING, CHECK CODE' 
+      STOP
+c      write(6,'(8(1x,g12.5))') ((rvertp(in,korpg(ik,ir)),
+c     >                         zvertp(in,korpg(ik,ir))),
+c     >                         in = 1,4)
 c
 
 

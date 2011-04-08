@@ -1253,7 +1253,7 @@ c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
         delta_e = 0.0
         m_ratio = 9.11E-31 / (mi * AMU)
         log_arguement = 2.0 * PI * m_ratio * (1.0 + t_ratio) * 
-     .                 (1.0 - delta_e)**-2 
+     .                 (1.0 - delta_e)**(-2)
         osm_GetGamma = 2.5 * t_ratio + 2.0 / (1.0 - delta_e) - 
      .                 0.5 * LOG( log_arguement )
       ENDIF

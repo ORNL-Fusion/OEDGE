@@ -48,7 +48,7 @@ c...    Filter:
         dist = DSQRT( (p(1) - 0.4403D0)**2 +
      .                (p(2) - 0.0D0   )**2 +
      .                (p(3) - 0.0D0   )**2)
-        IF (dist.GT.0.15D0) CYCLE  
+c        IF (dist.GT.0.15D0) CYCLE  
 
         CALL inPutData(SNGL(p(1)),'X','m')                     
         CALL inPutData(SNGL(p(2)),'Y','m')                     
@@ -178,7 +178,7 @@ c...  Dump impurity data:
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'         ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'         ,'N/A')
       CALL inPutData(crmi ,'IMP_A'         ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
@@ -262,7 +262,7 @@ c     which I'm leaving off for now...
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
       CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
@@ -307,7 +307,7 @@ c
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
       CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 

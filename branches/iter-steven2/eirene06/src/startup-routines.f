@@ -4841,6 +4841,7 @@ c
 c  search for input block 11a
 1110  READ (IUNIN,'(A72)') ZEILE
       IF (ZEILE(1:1) .EQ. '*') GOTO 1110
+      write(0,*) 'debug:',TRIM(zeile)
       READ (ZEILE,6665) TRCPLT,TRCHST,TRCNAL,TRCMOD,TRCSIG,
      .                  TRCGRD,TRCSUR,TRCREF,TRCFLE,TRCAMD,
      .                  TRCINT,TRCLST,TRCSOU,TRCREC,TRCTIM,

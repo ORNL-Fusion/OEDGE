@@ -126,8 +126,10 @@ c
       USE mod_grid_divimp
       IMPLICIT none
 
-      CHARACTER*16, PARAMETER ::
-     .  type_name(4) = ['density','velocity','pressure','temperaure']
+      CHARACTER*10, PARAMETER ::
+     .  type_name(4) = ['density   ','velocity  ','pressure  ',
+     .                  'temperaure']
+c     .  type_name(4) = ['density','velocity','pressure','temperaure']  ! gfortran
 
       INTEGER i,ik,ir
  

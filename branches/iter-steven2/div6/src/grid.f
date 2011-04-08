@@ -1383,8 +1383,8 @@ c                 the fluid cell poloidal boundaries:
 c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.99.0) THEN
 c...      Delete specified segment index from neutral wall specification:
-c          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
-c     .                                   NINT(eirasdat(i1,5))
+          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
+     .                                   NINT(eirasdat(i1,5))
           DO i2 = NINT(eirasdat(i1,2)), MIN(walln,NINT(eirasdat(i1,5)))
             wallr1(i2,1) = r0
             wallz1(i2,1) = z0
@@ -10189,8 +10189,8 @@ c                z1 = (1.0 - frac) * L
             CASE (4:7) ! Target chamber: fancy
               frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
               frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
-              frac1 = SIGN(0.5,frac1-0.5)*(ABS(frac1-0.5)/0.5)**1.00+0.5
-              frac2 = SIGN(0.5,frac2-0.5)*(ABS(frac2-0.5)/0.5)**1.00+0.5
+              frac1 = SIGN(.5D0,frac1-.5D0)*(ABS(frac1-.5)/0.5)**1.0+0.5
+              frac2 = SIGN(.5D0,frac2-.5D0)*(ABS(frac2-.5)/0.5)**1.0+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
           ENDSELECT

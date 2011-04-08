@@ -489,7 +489,8 @@ c
       parameter (nplasf=17)
 c
 c slmod begin - f90
-      OPEN(UNIT=NPLASF,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      OPEN(UNIT=NPLASF,FILE='fort.17',ACCESS='SEQUENTIAL',  ! FILE= is for gfortran (a bit dangerous here, but code is almost obsolete anyway...)
+     .     STATUS='REPLACE')
 c
 c      rewind(nplasf)
 c slmod end
@@ -3394,7 +3395,7 @@ c
      .          add,ilst(1024)
       LOGICAL   output,firstcall
       REAL      x0,y0,r,vcel(MAXASCDAT),zaa,roa,fact
-      CHARACTER buffer*200,geostr*4
+      CHARACTER buffer*200,geostr*4,fname*64
 
       DATA firstcall /.TRUE./
       SAVE
@@ -3413,7 +3414,9 @@ c
       fp2   = EIROUT
 
       OPEN(UNIT=fp1,FORM='FORMATTED',ERR=95,STATUS='OLD')
-      OPEN(UNIT=fp2,FORM='FORMATTED',ERR=95,STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp2  ! gfortran
+      OPEN(UNIT=fp2,FILE=TRIM(fname),FORM='FORMATTED',ERR=95,
+     .     STATUS='REPLACE')
 
 c      fp2 = 0
 c      REWIND(fp1)
@@ -7764,7 +7767,7 @@ c
         nxcut2 = ikti
       ENDIF
 
-      OPEN(UNIT=52,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      OPEN(UNIT=52,FILE='fort.52',ACCESS='SEQUENTIAL',STATUS='REPLACE')  ! gfortran
 c
 c     Write the header to the geometry file:
 c

@@ -281,6 +281,7 @@ C
        write(6,'(a,a)') 'ADAS:',dsname 
 c
        INQUIRE(FILE=DSNAME,EXIST=LEXIST)                                
+
 C                                                                       
        IF ( (.NOT.LEXIST) .AND. (YEARSV.NE.YEARDF) ) THEN              
           WRITE(I4UNIT(-1),1060) DSNAME , YEARDF                      
@@ -289,7 +290,7 @@ C
           GOTO 10                                            
        ENDIF                                                         
 C                                                                       
-       IF( .NOT.LEXIST ) GOTO 9999                                      
+       IF( .NOT.LEXIST ) GOTO 9999
 C                                                                       
        TITLF=BLANKS                                                     
        WRITE(TITLF,1000) DSNAME                                         
@@ -378,10 +379,11 @@ C-----------------------------------------------------------------------
 C DATA SET OPENING/EXISTENCE ERROR HANDLING                             
 C-----------------------------------------------------------------------
 C                                                                       
- 9999  IFAIL  = 1                                                       
+c 9999  IFAIL  = 1                                                       
        YEARSV = '  '                                                    
        IZ0SV  = 0                                                       
        ICLSV  = 0                                                       
+ 9999  stop 'ok to here 2'
        RETURN                                                           
 C                                                                       
 C-----------------------------------------------------------------------
