@@ -78,8 +78,8 @@ FCOMP_pgi=pgf95
 ARCH=
 OPTC= -O $(EMU)
 #OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
-OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
-OPTO= -O -Mbyteswapio -Mlist
+OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk -traceback
+OPTO= -O -Mbyteswapio -Mlist -traceback
 OPTS=
 #
 #

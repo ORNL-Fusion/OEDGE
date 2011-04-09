@@ -196,7 +196,12 @@ c
 c
       DOUBLE PRECISION DSPUTY,DTOTS(20),DTEMI,DQFACT,DELTAX                     
       DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DWOL,DSUM4               
-      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS),DIST             
+      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS,10),DIST             
+c
+c     jdemod - add variables for recording forces
+c     
+      real ff,fe,feg,fig,fvh,fvel
+
 c
 c      double precision dy1,dy2
 c     
@@ -418,7 +423,7 @@ c slmod end
       CALL RZERO (SDYXS,  MAXNXS*MAXIZS)                                        
       CALL RZERO (SDYYS,  (2*MAXNYS+1)*MAXIZS)                                  
       CALL RZERO (SDYZS,  MAXIZS)                                               
-      CALL DZERO (DOUTS,  MAXIZS)                                               
+      CALL DZERO (DOUTS,  MAXIZS*10)                                               
       CALL RZERO (RIONS,  MAXIZS)                                               
       IF (IMODE.NE.2)                                                           
      >CALL RZERO (LIM5,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1)*          
@@ -2052,6 +2057,13 @@ c
 c
             SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
      >            CBETAI(CIZ) * CTIGS(IX,IY) 
+
+c
+c           jdemod = - record temperature gradient forces
+c
+            feg = calphe(ciz) * ctegs(ix,iy)
+            fig = cbetai(ciz) * ctigs(ix,iy)
+
 c
 c           jdemod
 c
@@ -2063,22 +2075,58 @@ c
               IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
                 QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                ! jdemod - assign forces
+                fe = 0.0
+                ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                fvel = svy
+                fvh = vpflow_3d
               ELSE 
                 QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
      >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
+                ! jdemod - assign forces
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * CEYS(IQY))
+                fvh  = CFVHXS(IX,IY)*CVHYS(IQY)
+                fvel = svy
               ENDIF 
             ELSE                                                            
               IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
                 QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                ! jdemod - assign forces
+                fe = 0.0
+                ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                fvel = svy
+                fvh = vpflow_3d
               ELSE
                 QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -              
      >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
+                ! jdemod - assign forces
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * CEYS(IQY))
+                fvh  = CFVHXS(IX,IY)*CVHYS(IQY)
+                fvel = svy
               ENDIF
             ENDIF                                                           
             SVY = SVY + QUANT                                               
-            DOUTS(CIZ) = DOUTS(CIZ) + DSPUTY * DQFACT                       
+
+            DOUTS(CIZ,10) = DOUTS(CIZ,10) + DSPUTY * DQFACT                       
             IF (ALPHA.LT.CRXMIN) CRXMIN = ALPHA                             
+
+
+            ! jdemod - record some force statistics
+            DOUTS(IZ,1) = DOUTS(IZ,1) + DSPUTY
+            DOUTS(IZ,2) = DOUTS(IZ,2) + DSPUTY * DTEMI / CFPS(IX,IY,CIZ)
+            DOUTS(IZ,3) = DOUTS(IZ,3) + DSPUTY / CFSS(IX,IY,CIZ)
+            DOUTS(IZ,4) = DOUTS(IZ,4) + DSPUTY * abs(FF)
+            DOUTS(IZ,5) = DOUTS(IZ,5) + DSPUTY * abs(FE)
+            DOUTS(IZ,6) = DOUTS(IZ,6) + DSPUTY * abs(FEG)
+            DOUTS(IZ,7) = DOUTS(IZ,7) + DSPUTY * abs(FIG)
+            DOUTS(IZ,8) = DOUTS(IZ,8) + DSPUTY * abs(FVEL)
+            DOUTS(IZ,9) = DOUTS(IZ,9) + DSPUTY * abs(FVH)
+
+
+
           ENDIF                                                             
 C                                                                               
 C-----------------------------------------------------------------------        
