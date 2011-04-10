@@ -2111,21 +2111,19 @@ c
             SVY = SVY + QUANT                                               
 
             DOUTS(CIZ,10) = DOUTS(CIZ,10) + DSPUTY * DQFACT                       
-            IF (ALPHA.LT.CRXMIN) CRXMIN = ALPHA                             
-
 
             ! jdemod - record some force statistics
-            DOUTS(IZ,1) = DOUTS(IZ,1) + DSPUTY
-            DOUTS(IZ,2) = DOUTS(IZ,2) + DSPUTY * DTEMI / CFPS(IX,IY,CIZ)
-            DOUTS(IZ,3) = DOUTS(IZ,3) + DSPUTY / CFSS(IX,IY,CIZ)
-            DOUTS(IZ,4) = DOUTS(IZ,4) + DSPUTY * abs(FF)
-            DOUTS(IZ,5) = DOUTS(IZ,5) + DSPUTY * abs(FE)
-            DOUTS(IZ,6) = DOUTS(IZ,6) + DSPUTY * abs(FEG)
-            DOUTS(IZ,7) = DOUTS(IZ,7) + DSPUTY * abs(FIG)
-            DOUTS(IZ,8) = DOUTS(IZ,8) + DSPUTY * abs(FVEL)
-            DOUTS(IZ,9) = DOUTS(IZ,9) + DSPUTY * abs(FVH)
+            DOUTS(CIZ,1) = DOUTS(CIZ,1) + DSPUTY
+            DOUTS(CIZ,2) = DOUTS(CIZ,2) + DSPUTY * DTEMI/CFPS(IX,IY,CIZ)
+            DOUTS(CIZ,3) = DOUTS(CIZ,3) + DSPUTY / CFSS(IX,IY,CIZ)
+            DOUTS(CIZ,4) = DOUTS(CIZ,4) + DSPUTY * abs(FF)
+            DOUTS(CIZ,5) = DOUTS(CIZ,5) + DSPUTY * abs(FE)
+            DOUTS(CIZ,6) = DOUTS(CIZ,6) + DSPUTY * abs(FEG)
+            DOUTS(CIZ,7) = DOUTS(CIZ,7) + DSPUTY * abs(FIG)
+            DOUTS(CIZ,8) = DOUTS(CIZ,8) + DSPUTY * abs(FVEL)
+            DOUTS(CIZ,9) = DOUTS(CIZ,9) + DSPUTY * abs(FVH)
 
-
+            IF (ALPHA.LT.CRXMIN) CRXMIN = ALPHA                             
 
           ENDIF                                                             
 C                                                                               

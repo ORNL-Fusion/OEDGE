@@ -370,9 +370,9 @@ C
       CICOUT = 0.0                                                              
       WRITE (6,'(A,(8G11.4))') ' MONPRI: SDTZS ',(SDTZS (IZ),IZ=1,NIZS)         
       WRITE (6,'(A,(8G11.4))') ' MONPRI: SDYZS ',(SDYZS (IZ),IZ=1,NIZS)         
-      do in = 1,10
-          WRITE (6,'(A,i4,A,(8G11.4))') ' MONPRI: DOUTS:',in,':',
-     >                       (DOUTS (IZ,IN),IZ=1,NIZS)         
+      do iz = 1,nizs
+          WRITE (6,'(A,i4,A,(8G11.4))') ' MONPRI: DOUTS:',iz,':',
+     >                       (DOUTS (IZ,IN),In=1,10)         
       end do
       WRITE (6,'(A,(8G11.4))') ' MONPRI: RIONS ',(RIONS (IZ),IZ=1,NIZS)         
       WRITE (6,'(A,(8G11.4))') ' MONPRI: STOTS ',(STOTS (IM),IM=1,20)           
