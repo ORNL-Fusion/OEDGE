@@ -1532,16 +1532,20 @@ c
       WRITE (6,*) ' CHI Values in the SOL (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------- '
       DO IK = 1, NKS(IRSEP) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*(Velavg(IK,IR,IZ)
      >              -KVHS(IK,IR)/QTIM),IR=IRWALL,IRSEP,-1)
+         endif
       END DO 
 
       WRITE (6,*) ' '
       WRITE (6,*) ' CHI Values (when Vz=0) in the SOL (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------------------- '
       DO IK = 1, NKS(IRSEP) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(-SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*
      >               KVHS(IK,IR)/QTIM,IR=IRWALL,IRSEP,-1)
+         endif
       END DO
 c
 c     MAIN REGION
@@ -1599,16 +1603,20 @@ c
       WRITE (6,*) ' CHI Values in MAIN (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------- '
       DO IK = 1, NKS(1) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*(Velavg(IK,IR,IZ)
      >              -KVHS(IK,IR)/QTIM),IR=IRSEP-1,1,-1)
+         endif
       END DO 
 
       WRITE (6,*) ' '
       WRITE (6,*) ' CHI Values (when Vz=0) in MAIN (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------------------- '
       DO IK = 1, NKS(1) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(-SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*
      >               KVHS(IK,IR)/QTIM,IR=IRSEP-1,1,-1)
+         endif
       END DO
 c
 c     TRAP REGION
@@ -1666,16 +1674,20 @@ c
       WRITE (6,*) ' CHI Values in TRAP (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------- '
       DO IK = 1, NKS(IRTRAP) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*(Velavg(IK,IR,IZ)
      >              -KVHS(IK,IR)/QTIM),IR=NRS,IRTRAP,-1)
+         endif
       END DO 
 
       WRITE (6,*) ' '
       WRITE (6,*) ' CHI Values (when Vz=0) in TRAP (IZ=',IZ,'): '
       WRITE (6,*) ' ---------------------------------- '
       DO IK = 1, NKS(IRTRAP) 
+         if (ktibs(ik,ir).ne.0.0) then 
        WRITE (6,10)(-SQRT(CRMB/(2*KTIBS(IK,IR)*EMI))*
      >               KVHS(IK,IR)/QTIM,IR=NRS,IRTRAP,-1)
+         endif
       END DO
      
       WRITE (6,*) ' '

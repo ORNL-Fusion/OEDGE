@@ -4226,26 +4226,54 @@ c     each segment.
 c
       do ik = 1,wallpts
 c
+c        jdemod
+c
+c        Ribbon grid - more general solution desirable
+c                      only assigns wall or target start region
+c
+         if (cgridopt.eq.RIBBON_GRID) then 
+
+c         
+c           Starting on wall
+c
+            if (wallpt(ik,18).eq.0.0) then 
+
+               start_region = 1  
+c	 
+c           Starting on target (use target 1)
+c	 
+            else
+c
+               start_region = 3
+c	 
+            endif
+
+         else
+
+c
 c        Starting on main wall 
 c
-         if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
-            start_region = 1  
+           if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
+              start_region = 1  
 c	 
 c        Starting on PFZ wall
-c	 
-         elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
-            start_region = 2
+c	  
+           elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
+              start_region = 2
 c	 
 c        Starting on target 1 
 c	 
-         elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
-            start_region = 3
+           elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
+              start_region = 3
 c	 
 c        Starting on target 2
 c	 
-         elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
-            start_region = 4
+           elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
+              start_region = 4
+           endif
+
          endif
+
 c
 c        Total erosion (ion+neutral) 
 c
@@ -4257,6 +4285,32 @@ c
 c        Loop over wall summing up end regions 
 c
          do in = 1,wallpts 
+
+            if (cgridopt.eq.RIBBON_GRID) then 
+
+c
+c           Ending on wall 
+c
+            if (wallpt(in,18).eq.0.0) then 
+               walldep(start_region,1) = walldep(start_region,1) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,1) = walldep_i(start_region,1) 
+     >                                 + wtdep(ik,in,1) 
+c
+c           Ending on target 
+c
+            else
+               walldep(start_region,3) = walldep(start_region,3) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,3) = walldep_i(start_region,3) 
+     >                                 + wtdep(ik,in,1) 
+            endif
+
+
+            else
+c
+c           Other grids
+c
 c
 c           Ending on main wall 
 c
@@ -4289,6 +4343,8 @@ c
      >                                 + wtdep(ik,in,3) 
                walldep_i(start_region,4) = walldep_i(start_region,4) 
      >                                 + wtdep(ik,in,1) 
+            endif
+c
             endif
 c
          end do

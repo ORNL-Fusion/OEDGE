@@ -80,6 +80,11 @@ c slmod begin - temp
       include 'slcom'
 c slmod end
 
+c
+c     Controls code debugging output
+c
+      logical :: debug_code
+
 
 c
 c     Output velocity along the field line from launch_one
@@ -156,6 +161,12 @@ C psmod
 c
       debug0 = .false.
       debug_all=.false.
+
+c
+c     jdemod - added a debug code flag that will activate write(0,*) markers
+c              for tracking crashes that do not report the exact location
+c
+      debug_code = .false.
 c
       Ftotal = 0.0
       COPTION = 0
@@ -205,6 +216,8 @@ c
       refCENT     = 0.0
       refTMAX     = 0.0
       refFAIL     = 0.0
+c
+      if (debug_code) write(0,*) '1:'
 c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
@@ -526,6 +539,7 @@ C-----------------------------------------------------------------------
 C
       IF (ITER.EQ.1) CALL PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
 
+      if (debug_code) write(0,*) '2:'
 
 
 c
@@ -789,6 +803,9 @@ C
         call init_eckstein_2007(mattar,matp)
       ENDIF
 c
+      if (debug_code) write(0,*) '3:'
+
+
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
 C     FOR BOTH NEUTRAL AND ION INJECTION CASES.
@@ -969,6 +986,9 @@ C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
 C
 
+      if (debug_code) write(0,*) '4:'
+
+
   200 CONTINUE
       IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
       NPROD  = 0
@@ -1010,6 +1030,9 @@ C
       IMPLIM = 4
 c
       num_entered_core = 0.0
+
+      if (debug_code) write(0,*) '5:'
+
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
@@ -2288,6 +2311,7 @@ C
 C
   805 CONTINUE
 
+      if (debug_code) write(0,*) '6:'
 
 C
 C
@@ -2437,6 +2461,9 @@ C-----------------------------------------------------------------------
 C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '7:'
+
+
       goto 8701
 
 c
@@ -2720,6 +2747,9 @@ C     >       wallsiz(in, 1:NIZS)
 c
 c     jdemod end
 c
+
+      if (debug_code) write(0,*) '8:'
+
 C
 C
 C     CALCULATE TOTALS
@@ -2771,6 +2801,7 @@ c
       endif
 
 
+      if (debug_code) write(0,*) '9:'
 
 
 C
@@ -3119,6 +3150,9 @@ c
          call prc('  coordinates prior to the grid being reflected')
          call prc('  in the R-axis.')
       endif
+
+      if (debug_code) write(0,*) '10:'
+
 c
 C-----------------------------------------------------------------------
 c
@@ -3440,6 +3474,7 @@ c
  9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
+      if (debug_code) write(0,*) '11:'
 
 
 C
@@ -3647,6 +3682,9 @@ c
          CALL RZERO (e2dPOWLS, MAXNKS*MAXNRS*MAXe2dizs)
          CALL RZERO (e2dLINES, MAXNKS*MAXNRS*maxe2dizs)
       endif
+
+      if (debug_code) write(0,*) '12:'
+
 c
 c     Choose Nocorona or ADAS
 c
@@ -3941,6 +3979,9 @@ c     End of selection for nocorona/ADAS
 c
       endif
 c
+
+      if (debug_code) write(0,*) '13:'
+
 C
 C================ GLOBAL TOTALS OVER ENTIRE PLASMA =====================
 C
@@ -4283,6 +4324,9 @@ c
         dtots(29) = dtots(7) + dtots(38)
         dtots(30) = dtots(8) + dtots(39)
       endif
+
+
+      if (debug_code) write(0,*) '14:'
 
 c
 C
@@ -4689,6 +4733,9 @@ c
       end do
 c
 c
+      if (debug_code) write(0,*) '16:'
+
+
 c
       IF (DTOTS(9).NE.0.0D0) THEN
         DTOTS(10) = DTOTS(10) / DTOTS(9)
@@ -4715,10 +4762,15 @@ c
 c
       do in = 1,2
         do 4096 iz = 1,nizs
-            sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           if (ditots(maxizs+2,in).ne.0.0) then 
+              sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           endif  
+
 4096    continue
 c
-        sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        if (ditots(maxizs+2,in).ne.0.0) then 
+          sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        endif
 c
       end do
 c
@@ -4758,20 +4810,29 @@ c
 c
          call prr('NEUTRAL DEPOSITION ON '//inner//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+            call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
          tmpdep = wallsn(wallindex(nds-1)) + wallsn(wallindex(nds-2))
 c
          call prr('NEUTRAL DEPOSITION ON '//outer//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+           call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
       endif
 c
       call prb
 c
+      if (debug_code) write(0,*) '17:'
+
+
 c     Calculate and summarize region deposition probabilities.
 c
 c     Based on contents of wallse wallse_i and wtdep array.
@@ -4816,7 +4877,7 @@ c
 c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cioptr.gt.0.and.cprint.eq.8.or.cprint.eq.9) then
+      if (cioptr.gt.0.and.(cprint.eq.8.or.cprint.eq.9)) then
          WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
@@ -4833,6 +4894,9 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '18:'
+
+
       IF (NIZS.GT.0)
      >     CALL MONPRI (FACTA(1),VFLUID,NIZS,SDTZS ,sdtzs2,
      >           STOTS,DOUTS,RIONS,TDEP,TWALL,DPARAS,DCROSS,
@@ -4866,6 +4930,10 @@ c
 c slmod begin
       CALL OutputData(87,'END OF DIV')
 c slmod end
+
+      if (debug_code) write(0,*) '19:'
+
+
 c
 c      if (cisterrcnt.ne.0) then
 c         call prb
