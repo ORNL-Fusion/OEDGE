@@ -2156,7 +2156,16 @@ c
       ELSEIF (tag(1:3).EQ.'G53') THEN
         CALL ReadR(line,cell_spacing_factor,-HI,HI,
      >             'CELL SPACING FACTOR')
-
+c
+c     G54 - Cell spacing option ... option to calculate the cell
+c           boundary spacing along a ring. Only option 0 is currently
+c           available which uses an exponential factor given in G53. 
+c           A cell_spacing_factor of 1 gives a linear spacing
+c
+      ELSEIF (tag(1:3).EQ.'G54') THEN
+        CALL ReadI(line,ribbon_input_format_opt,0,0,
+     >     'INTERSECTION DATA INPUT DATA FORMAT OPTION: 0=CASTEM 1=RAY')
+c
 c
 c -----------------------------------------------------------------------
       ELSE

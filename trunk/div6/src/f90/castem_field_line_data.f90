@@ -14,7 +14,7 @@ module castem_field_line_data
   save
 
 
-  public :: read_identifier_data, read_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid,&
+  public :: read_identifier_data, read_castem_intersection_data,print_field_line_summary,calculate_limiter_surface,generate_grid,write_grid,&
        assign_grid_to_divimp,deallocate_castem_storage
 
 
@@ -359,7 +359,7 @@ contains
 
 
 
-  subroutine read_intersection_data(file,ierr)
+  subroutine read_castem_intersection_data(file,ierr)
     implicit none
     character*(*) :: file
     integer :: ierr
@@ -424,7 +424,145 @@ contains
     !write(outunit,'(a,i10)') 'Total intersections read:', sect_cnt
 
 
-  end subroutine read_intersection_data
+  end subroutine read_castem_intersection_data
+
+
+  subroutine read_ray_intersection_data(file,ierr)
+    implicit none
+    character*(*) :: file
+    integer :: ierr
+
+
+    integer :: iunit
+    character*512 :: line
+
+    integer :: line_id,inter_id,itype,iend
+    real*8 :: xint,yint,zint,lc
+
+    integer :: sect_cnt
+
+
+    ! find free unit number and open the file
+    call find_free_unit_number(iunit)
+
+    open(iunit,file=trim(file),status='old',iostat=ierr)
+
+    if (ierr.ne.0) then 
+       call errmsg('Error opening Intersection file:'//trim(file),ierr)
+       return
+    endif
+
+
+!    {VERSION}
+!  2.0
+
+
+!    {TRACE SUMMARY}
+
+!
+!* number of traces
+!       300
+!*
+!*  INDEX      - field line trace number
+!*  RHO_REL    - cross-field coordinate for the ribbon grid, with the origin on the inner most surface
+!*  RHO_ABS    - distance from the separatrix mapped to the outer midplane, from the true magnetic equilibrium
+!*  ORIGIN     - index of origin point on each field line (only useful for the _full data file)
+!*  X,Y,Z      - location of the origin point in Cartesian coordinates
+!*  # TANGENT  - number of tangency points
+!*  # INTER_LO - number of intersection points for S < 0
+!*  # INTER_HI - number of intersection points for S > 0
+!
+!*  CODE:
+!*
+!*    0 - tangency point
+!*    1 - wall intersection point, where the field line goes from inside the vacuum vessel volume to outside
+!*    2 - wall intersection point, where the field line goes from outside the vacuum vessel volume to inside
+!*    3 - point is inside the vacuum vessel volume
+!*    4 - point is outside
+!
+!*
+!*   index     rho_rel     rho_abs  origin    code           x           y           z     # tangent  # inter_lo  # inter_hi
+!*                 (m)         (m)                                   (m)         (m)         (m)
+!        1   0.0000000  -1.0000000     340       3   8.3000000   0.6000000   0.0000000             0           0           0
+!
+
+!    {TRACE DATA}
+
+!*
+!*  S      - distance along the field the trace, with S=0 at the origin point
+!*  IMPACT - impact angle at the surface for each intersection point
+!*  WIDTH  - for radial grid morphing
+!*  METRIC - for radial grid morphing
+!*
+!*   trace    npts
+!        1       0                                                                      (       1     930)
+!*   index    code             s             x           y           z        impact         width      metric          dphi
+!*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+!*   trace    npts
+!        2       0                                                                      (     931    1860)
+!*   trace    npts
+!        3       1                                                                      (    1861    2790)
+!*   index    code             s             x           y           z        impact         width      metric          dphi
+!*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+!      910       0    32.5711013     1.3734468   4.6236794  -5.0580945    -1.0000000    -1.0000000  -1.0000000   -74.799  -0.309      1881  3
+!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ! this call positions the file at the beginning of the data listing
+    call read_file_header(iunit,ierr)
+
+    if (ierr.ne.0) then 
+       call errmsg('Error reading Intersection file header:',ierr)
+       return
+    endif
+
+    ! load the intersection data into the allocated arrays
+
+    sect_cnt = 0
+
+    do while (iend.eq.0) 
+
+       read(iunit,'(a512)',iostat=iend) line
+       !write(outunit,'(a)') trim(line)
+
+       if (iend.eq.0) then 
+
+          read(line,*) line_id,inter_id,xint,yint,zint,lc,itype
+
+          call assign_intsect_data(line_id,field_line(line_id),inter_id,xint,yint,zint,lc,itype,ierr)
+          sect_cnt = sect_cnt + 1
+
+       endif
+
+    end do
+
+    ! set error condition if no valid intersection data found
+    if (sect_cnt.eq.0) then
+       ierr = -2
+    endif
+
+    if (sect_cnt.ne.(n_tangency+n_enter+n_leave)) then 
+       call errmsg('Incorrect number of intersection points read:',sect_cnt)
+    endif
+
+    !write(outunit,'(a,i10)') 'Total intersections read:', sect_cnt
+
+
+  end subroutine read_ray_intersection_data
+
+
 
   subroutine assign_intsect_data(line_id,fl,inter_id,xint,yint,zint,lc,itype,ierr)
     implicit none
