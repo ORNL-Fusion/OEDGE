@@ -10157,62 +10157,99 @@ c
       ! set grid run descriptor
       crun = 'ITER FIRST WALL RIBBON GRID'
 
-      !ident_file = 'DATA_IDENTIFIER_260410.txt'
-      ident_file = 'DATA_IDENTIFIER_'//trim(rg_castem_data)//'.txt'
 
-      !intersection_file = 'DATA_RHO_S_260410.txt'
-      intersection_file = 'DATA_RHO_S_'//trim(rg_castem_data)//'.txt'
 
       ierr = 0
 
-      ! copy files to the execution directory
+      ! get path to the data directory
       
       call get_div_data_dir(source_dir,ierr)
       
       if (ierr.ne.0) then 
          ! error getting data directory
          call errmsg('BuildRibbonGrid',
-     >               'Error obtaining data directory from environment')
+     >            'Error obtaining data directory from environment')
          stop 'Build Ribbon Grid 1'
       endif
+
+
+
+      if (ribbon_input_format_opt.eq.0) then 
+         ! CASTEM formatted input file
+
+         !ident_file = 'DATA_IDENTIFIER_260410.txt'
+         ident_file = 'DATA_IDENTIFIER_'//trim(rg_castem_data)//'.txt'
+
+         !intersection_file = 'DATA_RHO_S_260410.txt'
+         intersection_file = 'DATA_RHO_S_'//trim(rg_castem_data)//'.txt'
+
       
-      cmd = 'cp '//trim(source_dir)//'/'//trim(ident_file)//' .'
-      call run_system_command(cmd,ierr)
-
-      if (ierr.ne.0) then 
-         ! error copying ident file
-         call errmsg('BuildRibbonGrid',
+         cmd = 'cp '//trim(source_dir)//'/'//trim(ident_file)//' .'
+         call run_system_command(cmd,ierr)
+ 
+         if (ierr.ne.0) then 
+            ! error copying ident file
+            call errmsg('BuildRibbonGrid',
      >               'Error copying ident file cmd='//trim(cmd))
-         stop 'Build Ribbon Grid 2'
+            stop 'Build Ribbon Grid 2a'
+         endif
+
+         cmd = 'cp '//trim(source_dir)//'/'//
+     >                trim(intersection_file)//' .'
+         call run_system_command(cmd,ierr)
+
+         if (ierr.ne.0) then 
+            ! error copying ident file
+            call errmsg('BuildRibbonGrid',
+     >                  'Error copying intersection file cmd='//trim(cmd))
+            stop 'Build Ribbon Grid 3'
+         endif
+
+
+         call read_identifier_data(ident_file,ierr)
+
+         if (ierr.ne.0) then 
+            call errmsg('Error reading IDENTIFIER data',ierr)
+            return
+         endif
+
+
+         call read_castem_intersection_data(intersection_file,ierr)
+
+         if (ierr.ne.0) then 
+            call errmsg('Error reading INTERSECTION data',ierr)
+            return
+         endif
+
+      elseif (ribbon_input_format_opt.eq.1) then
+         ! RAY formatted input file
+
+         !intersection_file = 'DATA_RHO_S_260410.txt'
+         intersection_file = trim(rg_castem_data)
+
+      
+         cmd = 'cp '//trim(source_dir)//'/'//trim(ident_file)//' .'
+         call run_system_command(cmd,ierr)
+ 
+         if (ierr.ne.0) then 
+            ! error copying ident file
+            call errmsg('BuildRibbonGrid',
+     >               'Error copying ident file cmd='//trim(cmd))
+            stop 'Build Ribbon Grid 2b'
+         endif
+
+         call read_ray_intersection_data(intersection_file,ierr)
+
+         if (ierr.ne.0) then 
+            call errmsg('Error reading INTERSECTION data',ierr)
+            return
+         endif
+
+
+
+
       endif
 
-      cmd = 'cp '//trim(source_dir)//'/'//trim(intersection_file)//' .'
-      call run_system_command(cmd,ierr)
-
-      if (ierr.ne.0) then 
-         ! error copying ident file
-         call errmsg('BuildRibbonGrid',
-     >               'Error copying intersection file cmd='//trim(cmd))
-         stop 'Build Ribbon Grid 3'
-      endif
-
-
-
-
-      call read_identifier_data(ident_file,ierr)
-
-      if (ierr.ne.0) then 
-         call errmsg('Error reading IDENTIFIER data',ierr)
-         return
-      endif
-
-
-      call read_intersection_data(intersection_file,ierr)
-
-      if (ierr.ne.0) then 
-         call errmsg('Error reading INTERSECTION data',ierr)
-         return
-      endif
 
       call calculate_limiter_surface
 
