@@ -10157,7 +10157,8 @@ c
       ! set grid run descriptor
       crun = 'ITER FIRST WALL RIBBON GRID'
 
-
+      write(0,*) 'Building ribbon grid:'
+      write(0,*) 'RG_CASTEM_DATA:',trim(rg_castem_data),':'
 
       ierr = 0
 
@@ -10172,7 +10173,7 @@ c
          stop 'Build Ribbon Grid 1'
       endif
 
-
+      write(0,*) 
 
       if (ribbon_input_format_opt.eq.0) then 
          ! CASTEM formatted input file
@@ -10201,7 +10202,7 @@ c
          if (ierr.ne.0) then 
             ! error copying ident file
             call errmsg('BuildRibbonGrid',
-     >                  'Error copying intersection file cmd='//trim(cmd))
+     >               'Error copying intersection file cmd='//trim(cmd))
             stop 'Build Ribbon Grid 3'
          endif
 
@@ -10228,9 +10229,15 @@ c
          intersection_file = trim(rg_castem_data)
 
       
-         cmd = 'cp '//trim(source_dir)//'/'//trim(ident_file)//' .'
+         cmd = 'cp '//trim(source_dir)//'/'//
+     >                trim(intersection_file)//' .'
+
+         write(0,*) 'cmd:',cmd
+
          call run_system_command(cmd,ierr)
  
+         write(0,*) 'cmd:',cmd
+
          if (ierr.ne.0) then 
             ! error copying ident file
             call errmsg('BuildRibbonGrid',

@@ -3981,17 +3981,21 @@ c
       INTEGER i
       CHARACTER comment*72
 
+      integer erout1
+
+      erout1 = 0
+
       READ (line,*,ERR=98,END=98) comment,cval
 
       WRITE(SLOUT,'(A)')        line
       WRITE(SLOUT,'(5X,2A,A)') tag,' = ',cval
 
       RETURN
-98    WRITE(EROUT,*) 'Problem reading unstructured input'
-99    WRITE(EROUT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(EROUT,'(5X,2A)')    'TAG  = ''',tag,''''
-      WRITE(EROUT,'(5X,2A)')    'CVAL = ''',cval,''''
-      STOP
+98    WRITE(EROUT1,*) 'Problem reading unstructured input'
+99    WRITE(EROUT1,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(EROUT1,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(EROUT1,'(5X,2A)')    'CVAL = ''',cval,''''
+      STOP 'READC'
       END
 c
 c ======================================================================
