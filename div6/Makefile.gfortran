@@ -78,7 +78,7 @@ OPTS=
 #OPT_INTEL = -CB 
 OPT_INTEL = -g -CB -traceback -O0
 #
-OPT_GFORTRAN = -g -fbounds-check -fbacktrace -fimplicit-none -finit-local-zero -O0 
+OPT_GFORTRAN = -g -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0 
 #
 OPT = $(OPT_GFORTRAN)
 #
