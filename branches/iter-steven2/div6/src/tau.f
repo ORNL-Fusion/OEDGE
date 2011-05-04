@@ -1628,12 +1628,16 @@ c
 c
 c slmod begin - new
 
+      write(0,*) 'debug: building wall'
+
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
       ENDIF
+
+      write(0,*) 'debug: done building wall'
 
 c...  This assigns the xVESM arrays from the WALLPT array.  It also
 c     adds the wall segments that are specified in the DIVIMP

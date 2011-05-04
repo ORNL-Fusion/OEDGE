@@ -397,7 +397,7 @@ c...    Collect connection map information:
      .        surface(nsurface)%subtype.EQ.ADDITIONAL.AND.
      .        surface(nsurface)%index(1).EQ.-1) THEN
             isrf1(1) = surface(nsurface)%num
-            WRITE(0,*) 'CRAP 1'
+c            WRITE(0,*) 'CRAP 1'
           ELSE
             STOP 'SORT OUT THIS ANNOYING BUSINESS, AGAIN...'
           ENDIF
@@ -1195,6 +1195,7 @@ c...  Build new triangle objects and surfaces:
       DO itri = 1, ntri
 c...     
         try(itri)%group             = tri(itri)%type      ! Just works by luck...
+        try(itri)%index             = 0
         try(itri)%index(IND_IK    ) = tri(itri)%index(1)
         try(itri)%index(IND_IR    ) = tri(itri)%index(2)
         try(itri)%index(IND_IS    ) = 0
@@ -3637,7 +3638,8 @@ c
       LOGICAL PointInVoid,CheckIndex
 
       INTEGER, PARAMETER :: MAXNSEG = 10000, MAXNPTS = 20000,
-     .                      IKLO    = 1    , IKHI    = 2
+     .                      IKLO    = 1    , IKHI    = 2    ,
+     .                      MAXNSRF = 10000  ! gfortran, 64-bit
       REAL*8 , PARAMETER :: DTOL=1.0D-06
 
       INTEGER   fp,ivoid,isrf,isrf1,isrf2,i1,i2,itri,v1,v2,code,
@@ -3646,7 +3648,7 @@ c
      .          index,index1,index2,zone_list(100),zone_n
       LOGICAL   debug,cont,link
       CHARACTER command*512,range*128
-      REAL      area,ne,te,ti,res(nsurface)
+      REAL      area,ne,te,ti,res(MAXNSRF)
       REAL*8    x1,x2,y1,y2,len,t,tstep,xhole(50),yhole(50),
      .          pts(MAXNPTS,2)
 
@@ -3660,6 +3662,10 @@ c
       IF (debug) WRITE(fp,*) 'HERE IN PROCESS VOID',izone
 
       IF (izone.LT.0) THEN
+
+        IF (nsurface.GT.MAXNSRF)
+     .    CALL ER('ProcessVoid_v1_0','Increase MAXNSRF')
+
         res = 0.0  ! Initialisation
 
         zone_n    = 0
@@ -4326,7 +4332,8 @@ c
       LOGICAL PointInVoid
 
       INTEGER, PARAMETER :: MAXNSEG = 10000, MAXNPTS = 20000,
-     .                      IKLO    = 1    , IKHI    = 2
+     .                      IKLO    = 1    , IKHI    = 2    ,
+     .                      MAXNSRF = 10000  ! gfortran, 64-bit
       REAL*8 , PARAMETER :: DTOL=1.0D-06
 
       INTEGER   fp,ivoid,isrf,isrf1,isrf2,i1,i2,itri,v1,v2,code,
@@ -4334,7 +4341,7 @@ c
      .          i3,i4,i5,iseg1,iseg2,ilink,tmp_nseg,ninter,icell
       LOGICAL   debug,cont,link
       CHARACTER command*512
-      REAL      area,ne,te,ti,res(nsurface)
+      REAL, SAVE ::      area,ne,te,ti,res(MAXNSRF) !(nsurface)
       REAL*8    x1,x2,y1,y2,len,t,tstep,xhole(50),yhole(50),
      .          pts(MAXNPTS,2)
 
@@ -4346,7 +4353,19 @@ c
       IF (debug) WRITE(fp,*) 'HERE IN PROCESS VOID',izone
 
       IF (izone.LT.0) THEN
+        IF (debug) WRITE(fp,*) 'INITIALIZATION'
+
+        IF (nsurface.GT.MAXNSRF)
+     .    CALL ER('ProcessVoid_v1_0','Increase MAXNSRF')
+
         res = 0.0  ! Initialisation
+
+c        DO isrf = 1, nsurface
+c           WRITE(fp,*) 'res chk:',isrf,res(isrf),
+c     .                            surface(isrf)%index(1:2)
+c        ENDDO
+
+
 c        IF (izone.EQ.-999) res = 0.0  ! Initialisation
 
 c...    Loop over the wall surfaces to make sure they match up exactly 

@@ -1409,6 +1409,7 @@ c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
+          CALL DumpData_OSM('output.trouble1','trouble1')
 c...      Automated clipping:
           d_wallr1 = DBLE(wallr1)
           d_wallz1 = DBLE(wallz1)

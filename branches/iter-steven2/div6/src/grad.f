@@ -752,7 +752,7 @@ c slmod end
 c
 c Output:
 c
-      REAL    res_Quant2Grad
+c      REAL    res_Quant2Grad
 c
 c
 c Check for valid IR value:

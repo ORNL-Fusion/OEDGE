@@ -688,6 +688,7 @@ c...
         DO ik = 1, ike
           id = korpg(ik,ir)         
           newobj%group         = ngrp
+          newobj%index         = 0
           newobj%index(IND_IK) = ik
           newobj%index(IND_IR) = ir
           newobj%index(IND_IS) = 0
