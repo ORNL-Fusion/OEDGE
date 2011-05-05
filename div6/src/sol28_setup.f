@@ -852,23 +852,24 @@ c
       TYPE(type_node), INTENT(OUT) :: node(*)
       TYPE(type_options_osm) :: opt_tube
 
-      REAL GetJsat2,GetRelaxationFraction,GetCs2,CalcPressure
+      INTEGER CalcPoint
+      REAL    GetJsat2,GetRelaxationFraction,GetCs2,CalcPressure
 
       INTEGER, PARAMETER :: MAXNNODES = 50
 
       INTEGER ic,ic1,ic2,it,it1,i0,i1,i2,i3,i4,ifit,index,mode,type,
      .        iobj,isrf,ivtx(2),nfit,icell(3),ion,coord,inode,iside,
-     .        itarget,hold_ic,i5
+     .        itarget,hold_ic,i5,check
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
      .        first_pass,two_timer,default_message,node_valid
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
-     .        psin0,psin1,psin2,p0,p1,result(3),
+     .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
-     .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v
+     .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v,node_ne
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
-     .        hold_c1,hold_c2,hold_d1,hold_d2
+     .        hold_c1,hold_c2,hold_d1,hold_d2,pts(3,4)
 
 
       INTEGER node_n,node_i(0:MAXNNODES)
@@ -1054,10 +1055,10 @@ c             Only select tubes identified as being part of this target data blo
           ENDIF
 c       ----------------------------------------------------------------  
         ELSEIF (osmnode(i1)%type.EQ.2.1.AND.             ! Semi-automated symmetry point specification
-     .          osmnode(i1)%tube_range(1).LE.itube.AND.  
-     .          osmnode(i1)%tube_range(2).GE.itube.AND.  
+c     .          osmnode(i1)%tube_range(1).LE.itube.AND.  
+c     .          osmnode(i1)%tube_range(2).GE.itube.AND.  
      .          two_timer) THEN                      
-          intersection = .TRUE.
+          intersection = .FALSE.
           hold_c1  = 0.0D0
           hold_c2  = 0.0D0
           hold_d1  = 0.0D0
@@ -1077,13 +1078,34 @@ c...      Check if there's an interesection (optional):
             d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
             CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
             IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .          tcd.GE.0.0D0.AND.tcd.LT.1.0D0) hold_ic  = ic 
+     .          tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+              intersection = .TRUE.
+              hold_ic  = ic 
+              IF (debug) THEN
+                WRITE(logfp,*) '  intersection'
+                WRITE(logfp,*) '  tcd ',tcd
+                WRITE(logfp,*) '  c1,2',c1,c2
+                WRITE(logfp,*) '  d1,2',d1,d2
+              ENDIF
+              hold_c1  = c1 
+              hold_c2  = c2
+              hold_d1  = d1
+              hold_d2  = d2
+              hold_tab = tab
+              hold_tcd = tcd
+              EXIT
+            ENDIF
           ENDDO
 c...      No interesection found, so take the middle of the tube (in s):
           IF (hold_ic.EQ.-1) THEN           
+            IF (debug)
+     .        write(logfp,*) 'debug: trying to find...'
             DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)            
               IF (cell(ic)%sbnd(1).LE.0.5*tube(it)%smax.AND.
      .            cell(ic)%sbnd(2).GE.0.5*tube(it)%smax) THEN
+                IF (debug)
+     .            write(logfp,*) 'debug: made up interesecton',ic,
+     .                           tube(it)%cell_index(LO:HI)
                 hold_ic = ic
                 EXIT
               ENDIF
@@ -1115,8 +1137,8 @@ c...        Assumed 1:1 mapping between grid and data:
      .            osmnode(i0)%par_mode.EQ.-2))) THEN
               intersection = .TRUE.
               hold_ic  = ic
-              hold_c1  = c1
-              hold_c2  = c2
+              hold_c1  = c1  ! why not just trigger an exit here and avoid the whole "hold_" business?
+              hold_c2  = c2  ! (also find this above for compatibility, but with an EXIT)
               hold_d1  = d1
               hold_d2  = d2
               hold_tab = tab
@@ -1125,7 +1147,8 @@ c...        Assumed 1:1 mapping between grid and data:
           ENDDO
         ENDIF
 
-        IF (.NOT.intersection) CYCLE
+        IF (.NOT.intersection.AND.
+     .      .NOT.(osmnode(i1)%type.EQ.2.1.AND.two_timer)) CYCLE
 
 c...    An intersection between the line segment and the ring has been found:
 
@@ -1171,7 +1194,11 @@ c       decay data to neighbouring ring:
 
         inode = 1 !inode + 1
 
-        s(inode) = cell(ic)%sbnd(1) + SNGL(tcd) * cell(ic)%ds
+        IF (intersection) THEN
+          s(inode) = cell(ic)%sbnd(1) + SNGL(tcd) * cell(ic)%ds
+        ELSE
+          s(inode) = cell(ic)%s
+        ENDIF
 
 c...    Find data boundary values -- NEEDS WORK!:
         i2 = i0
@@ -1194,11 +1221,12 @@ c         *CRAP!*
           ti1 = osmnode(i3)%ti(1)
 
           IF (debug) THEN
-            WRITE(logfp,*) 'N0,1 :',n0,n1
-            WRITE(logfp,*) 'V0,1 :',v0,v1
-            WRITE(logfp,*) 'P0,1 :',p0,p1
-            WRITE(logfp,*) 'Te0,1:',te0,te1
-            WRITE(logfp,*) 'Ti0,1:',ti0,ti1
+            WRITE(logfp,*) 's,smax:',s,tube(it)%smax
+            WRITE(logfp,*) 'N0,1  :',n0,n1
+            WRITE(logfp,*) 'V0,1  :',v0,v1
+            WRITE(logfp,*) 'P0,1  :',p0,p1
+            WRITE(logfp,*) 'Te0,1 :',te0,te1
+            WRITE(logfp,*) 'Ti0,1 :',ti0,ti1
           ENDIF
 
           IF (osmnode(i2)%ne.EQ.-99.0.OR.
@@ -1270,10 +1298,11 @@ c     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
             IF (osmnode(i2)%ti(1).EQ.-99.0) ti0 = fluid(ic1,1)%ti
 
 c...        Base second radial interpolation value on the first value:
-            IF (osmnode(i3)%ne   .LT.0.0) n1 = -osmnode(i3)%ne    * n0
-            IF (osmnode(i3)%pe   .LT.0.0) p1 = -osmnode(i3)%pe    * p0
-            IF (osmnode(i3)%te   .LT.0.0) te1= -osmnode(i3)%te    * te0
-            IF (osmnode(i3)%ti(1).LT.0.0) ti1= -osmnode(i3)%ti(1) * ti0
+            IF (osmnode(i3)%ne   .LT.  0.0) n1 = -osmnode(i3)%ne   * n0
+            IF (osmnode(i3)%pe   .LT.  0.0.AND.
+     .          osmnode(i3)%pe   .NE.-88.0) p1 = -osmnode(i3)%pe   * p0
+            IF (osmnode(i3)%te   .LT.  0.0) te1= -osmnode(i3)%te   * te0
+            IF (osmnode(i3)%ti(1).LT.  0.0) ti1= -osmnode(i3)%ti(1)* ti0
 
             IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
 
@@ -1327,37 +1356,85 @@ c...        Linear along the line segment, starting at the link:
      .                'link to calculated plasma',*99)
             val0 = 0.0
             val1 = 1.0
-            val = -1.0
-            f1 = c1 + tcd * (d1 - c1)  ! Point where the current focus tube intersects
-            f2 = c2 + tcd * (d2 - c2)  ! the interpolation line segment
-            DO ic2 = ic1-1, ic1+1
-c...          Assuming a 1:1 mapping between grid and data:
-              iobj = ic2                                        ! *** Replace with GETVERTEX! ***
-              isrf = ABS(obj(iobj)%iside(1))
-              ivtx(1:2) = srf(isrf)%ivtx(1:2)
-              c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-              c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-              isrf = ABS(obj(iobj)%iside(3))
-              ivtx(1:2) = srf(isrf)%ivtx(1:2)
-              d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-              d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-              CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-              IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .            tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
-                e1 = a1 + tab * (b1 - a1)  ! Point where the linked tube intesects 
-                e2 = a2 + tab * (b2 - a2)  ! the interpoloation line segment
-                val = SNGL(DSQRT((e1-f1)**2+(e2-f2)**2))
-                IF (debug) THEN
-                  WRITE(logfp,*) '-> it1,ic2,range_it1',it1,ic2,
-     .                           tube(it1)%cell_index(LO:HI)
-                  WRITE(logfp,*) '  e1,2',e1,e2
-                  WRITE(logfp,*) '  f1,2',f1,f2
-                  WRITE(logfp,*) '  val ',val
-                ENDIF
-                EXIT
+            val  = 1.0E+6
+            IF (intersection) THEN
+              f1 = c1 + tcd * (d1 - c1)  ! Point where the current focus tube intersects
+              f2 = c2 + tcd * (d2 - c2)  ! the interpolation line segment
+              IF (debug) THEN
+                WRITE(logfp,*) '  tcd ',tcd
+                WRITE(logfp,*) '  c1,2',c1,c2
+                WRITE(logfp,*) '  d1,2',d1,d2
+                WRITE(logfp,*) '  f1,2',f1,f2
               ENDIF
-            ENDDO
-            IF (val.EQ.-1.0) 
+              DO ic2 = ic1-1, ic1+1
+c...            Assuming a 1:1 mapping between grid and data:
+                iobj = ic2                                        ! *** Replace with GETVERTEX! ***
+                isrf = ABS(obj(iobj)%iside(1))
+                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+                isrf = ABS(obj(iobj)%iside(3))
+                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+                  e1 = a1 + tab * (b1 - a1)  ! Point where the linked tube intesects 
+                  e2 = a2 + tab * (b2 - a2)  ! the interpoloation line segment
+                  val = SNGL(DSQRT((e1-f1)**2+(e2-f2)**2))
+                  IF (debug) THEN
+                    WRITE(logfp,*) '-> it1,ic2,range_it1',it1,ic2,
+     .                             tube(it1)%cell_index(LO:HI)
+                    WRITE(logfp,*) '  e1,2',e1,e2
+                    WRITE(logfp,*) '  f1,2',f1,f2
+                    WRITE(logfp,*) '  val ',val
+                  ENDIF
+                  EXIT
+                ENDIF
+              ENDDO
+            ELSE
+              f1 = cell(ic)%cencar(1)  ! Centre of the focus cell on the current tube
+              f2 = cell(ic)%cencar(2)  
+c...          Scan along the link tube and find the shortest perpendicular 
+c             distance to the focus cell:
+              DO ic1 = tube(it1)%cell_index(LO),
+     .                 tube(it1)%cell_index(HI)
+                iobj = ic1 
+c               Get the centreline of the cell:
+                CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
+                CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
+                c1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                c2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
+                CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
+                d1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                d2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                check = CalcPoint(c1,c2,d1,d2,f1,f2,tcd)
+                IF (debug) THEN
+                  WRITE(logfp,*) '  check ',check,tcd
+                  WRITE(logfp,*) '        ',c1,c2
+                  WRITE(logfp,*) '        ',d1,d2
+                  WRITE(logfp,*) '        ',f1,f2
+                ENDIF          
+                IF (check.EQ.2) THEN
+                  e1 = c1 + tcd * (d1 - c1)  
+                  e2 = c2 + tcd * (d2 - c2)  
+                  dist = SNGL(DSQRT( (e1-f1)**2 + (e2-f2)**2 ))
+                  WRITE(logfp,*) '  val check ',val,dist
+                  WRITE(logfp,*) '            ',e1,e2
+                  IF (dist.LT.val) THEN
+                    IF (debug) THEN
+                      WRITE(logfp,*) '  val update',dist
+                    ENDIF
+                    val = dist
+                  ENDIF
+                ENDIF
+              ENDDO
+c              WRITE(0,*) 'itube,it1=',itube,it1
+c              STOP 'sdfdsf'
+            ENDIF
+            IF (val.EQ.1.0E+6) 
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)
             IF (debug) WRITE(logfp,*) '6: VAL=',val
@@ -1458,6 +1535,15 @@ c...    Check if quantities should be assigned:
         IF (te0.EQ.0.0.OR.te1.EQ.0.0) tec = .FALSE.
         IF (ti0.EQ.0.0.OR.ti1.EQ.0.0) tic = .FALSE.
 
+        IF (debug) THEN
+          WRITE(logfp,*) 'again'
+          WRITE(logfp,*) 'N0,1 :',n0,n1
+          WRITE(logfp,*) 'V0,1 :',v0,v1
+          WRITE(logfp,*) 'P0,1 :',p0,p1
+          WRITE(logfp,*) 'Te0,1:',te0,te1
+          WRITE(logfp,*) 'Ti0,1:',ti0,ti1
+        ENDIF
+
         SELECTCASE (mode)
 c         ----------------------------------------------------------
           CASE (1)
@@ -1499,7 +1585,7 @@ c...        Exponential decay between v1 and v2:
             ENDIF
 c         ----------------------------------------------------------
           CASE (3)
-c...        Exponential decay to some value:
+c...        Exponential decay toward some value:
             IF (debug) WRITE(logfp,*) 'MODE=3: ',te0,te1,val
             C = expon
             A = n0 - n1
@@ -1512,13 +1598,14 @@ c...        Exponential decay to some value:
             A = p0 - p1
             B = p1
             IF (pc) pe(inode) = A * EXP(-val / C) + B
-            WRITE(logfp,*) 'pc:',pc,tec
+            WRITE(logfp,*) 'pc:',pc
+            WRITE(logfp,*) '  :',p0,p1
             WRITE(logfp,*) '  :',A,B,val,C
             A = te0 - te1
             B = te1 
             IF (tec) te(inode) = A * EXP(-val / C) + B
-            WRITE(logfp,*) 'pc:',pc,tec
-            WRITE(logfp,*) '  :',A,B,val,C
+            WRITE(logfp,*) 'tec:',tec
+            WRITE(logfp,*) '   :',A,B,val,C
             A = ti0 - ti1
             B = ti1 
             IF (tic) ti(inode) = A * EXP(-val / C) + B
@@ -1698,8 +1785,22 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
      .        CALL ER('AssignNodeValues_New','Ti/Te ratio poorly '//
      .                'defined, need to decide what to do',*99)
 
+            SELECTCASE (opt%radvel)
+              CASE (0)
+                CALL ER('AssignNodeValues_New','Radial velocity '//
+     .                  'option not set',*99) 
+              CASE (1)
+                radvel = opt%radvel_param(1)
+              CASE DEFAULT
+                CALL ER('AssignNodeValues_New','Invalid radial '//
+     .                  'velocity option',*99) 
+            ENDSELECT
+
             IF (ABS(expon).LT.2.0E-7) expon = 1.0
-            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
+            C = tube(it)%smax * radvel / GetCs2(te_cs,ti_cs) * expon
+c            C = tube(it)%smax * 10.0 / GetCs2(te_cs,ti_cs) * expon
+c            C = tube(it)%smax * 30.0 / GetCs2(te_cs,ti_cs) * expon
+c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
             A = n0
             B = 0.0
             IF (nc) THEN
@@ -1739,7 +1840,7 @@ c...    Store node values:
         IF (logop.GT.0) THEN
           WRITE(logfp,*) 
           DO i4 = 1, node_n
-            WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
+            WRITE(logfp,'(A,3I6,E10.2,3E10.2,2F10.2)') 
      .        ' >>> BUILDING NODES:',i4,node_i(i4),
      .        node_s(i4)%icell,node_s(i4)%s,
      .        node_s(i4)%ne,
@@ -2066,13 +2167,37 @@ c      IF (node(1    )%ti(1).EQ.0.) node(1    )%ti(1)=tube(it)%ti(LO,1)
 c      IF (node(nnode)%ti(1).EQ.0.) node(nnode)%ti(1)=tube(it)%ti(HI,1)
 
 
-c...  Really don't like this but needed for C-Mod cases:   *** NO LONGER DONE THIS WAY ***
-c      DO i1 = 2, mnode
-c        IF (node(i1)%te.EQ.-98.0) node(i1)%te = node(i1-1)%te
-c      ENDDO
-c      DO i1 = mnode, nnode-1
-c        IF (node(i1)%te.EQ.-98.0) node(i1)%te = node(i1+1)%te
-c      ENDDO
+c...  Set electron pressure from a reference node:
+      DO i1 = mnode-1, 1, -1
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1+1, mnode
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
+      DO i1 = mnode+1, nnode
+        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
+        node_pe = -1.0
+        DO i2 = i1-1, mnode, -1
+          IF     (node(i2)%pe.GT.0.0) THEN
+            node_pe = node(i2)%pe
+          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
+            node_pe = node(i2)%ne * node(i2)%te
+          ENDIF
+        ENDDO
+        IF (node_pe.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Pressure reference '//
+     .            'requested but none found',*99) 
+        node(i1)%pe = node_pe
+      ENDDO
 
 c...  Setup target nodes:
       DO itarget = LO, HI
@@ -2124,16 +2249,20 @@ c           IF (itube.EQ.81) STOP 'dfsd'
           CASE (1) 
             tube(it)%te(itarget)     = node(i2)%te
             tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
-c            node(i1)%te = node(i2)%te
           CASE (2) 
-            IF (node(i2)%ne.EQ.0.0) 
-     .        CALL ER('AssignNodeValues_New','Need density for '//
-     .                'sheath limited particle flux calculation',*99)
-            tube(it)%te  (itarget)     = node(i2)%te
-            tube(it)%ti  (itarget,ion) = node(i2)%ti(ion)
+            tube(it)%te(itarget)     = node(i2)%te
+            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+            IF     (node(i2)%ne.NE.0.0) THEN
+              node_ne = 0.5 * node(i2)%ne
+            ELSEIF (node(i2)%pe.NE.0.0) THEN         
+              node_ne = 0.5 * node(i2)%pe / node(i2)%te
+            ELSE
+              CALL ER('AssignNodeValues_New','Need density or '//
+     .                'pressure for sheath limited particle flux '//
+     .                'calculation',*99)
+            ENDIF
             tube(it)%jsat(itarget,ion) = 
-     .        GetJsat2(node(i2)%te,node(i2)%ti(ion),0.5*node(i2)%ne,1.0) 
-            node(i1)%te = node(i2)%te
+     .        GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET',*99) 
         ENDSELECT
@@ -2152,37 +2281,6 @@ c...  Sort velocities from Mach numbers:
         ENDIF
       ENDDO
 
-c...  Set electron pressure from a reference node:
-      DO i1 = mnode-1, 1, -1
-        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
-        node_pe = -1.0
-        DO i2 = i1+1, mnode
-          IF     (node(i2)%pe.GT.0.0) THEN
-            node_pe = node(i2)%pe
-          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
-            node_pe = node(i2)%ne * node(i2)%te
-          ENDIF
-        ENDDO
-        IF (node_pe.EQ.-1.0) 
-     .    CALL ER('AssignNodeValues_New','Pressure reference '//
-     .            'requested but none found',*99) 
-        node(i1)%pe = node_pe
-      ENDDO
-      DO i1 = mnode+1, nnode
-        IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
-        node_pe = -1.0
-        DO i2 = i1-1, mnode, -1
-          IF     (node(i2)%pe.GT.0.0) THEN
-            node_pe = node(i2)%pe
-          ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
-            node_pe = node(i2)%ne * node(i2)%te
-          ENDIF
-        ENDDO
-        IF (node_pe.EQ.-1.0) 
-     .    CALL ER('AssignNodeValues_New','Pressure reference '//
-     .            'requested but none found',*99) 
-        node(i1)%pe = node_pe
-      ENDDO
 
 
       IF (logop.GT.0) THEN

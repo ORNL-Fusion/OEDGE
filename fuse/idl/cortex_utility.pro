@@ -1,5 +1,64 @@
 ;
 ; ======================================================================
+; 
+FUNCTIOn cortex_GetValues, str, values
+
+  IF (str EQ 'none') THEN RETURN, 0
+
+  result = 0
+
+  str_comma = STRSPLIT(str,',',/EXTRACT)
+  
+  values = [-1]
+
+  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
+    j = STRPOS(str_comma[i],'-')
+    IF (j EQ -1) THEN BEGIN
+      values = [values,FLOAT(str_comma[i])]
+    ENDIF ELSE BEGIN
+      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
+      print, 'not ready'
+      stop
+;       IF (LONG(val) GE LONG(str_dash[0]) AND  $
+;          LONG(val) LE LONG(str_dash[1])) THEN result = 1
+    ENDELSE
+  ENDFOR
+
+  IF (N_ELEMENTS(values) GT 1) THEN BEGIN
+    values = values[1:N_ELEMENTS(values)-1]
+    RETURN, 1
+  ENDIF ELSE RETURN, 0
+
+END
+;
+; ======================================================================
+; 
+FUNCTION cortex_CheckIndex, val, str
+
+  IF (str EQ 'none') THEN RETURN, 0
+  IF (str EQ 'all' ) THEN RETURN, 1
+
+  result = 0
+
+  str_comma = STRSPLIT(str,',',/EXTRACT)
+  
+  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
+    j = STRPOS(str_comma[i],'-')
+    IF (j EQ -1) THEN BEGIN
+      IF (LONG(val) EQ LONG(str_comma[i])) THEN result = 1
+    ENDIF ELSE BEGIN
+      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
+      IF (LONG(val) GE LONG(str_dash[0]) AND  $
+          LONG(val) LE LONG(str_dash[1])) THEN result = 1
+    ENDELSE
+    IF (result EQ 1) THEN BREAK
+  ENDFOR
+
+  RETURN, result
+END
+
+;
+; ======================================================================
 ;
 FUNCTION cortex_UpdateFile, file
 

@@ -217,7 +217,7 @@ c      x1 = x1 - dradius
         y1 = 0.0
         z1 = 0.0
 
-        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                             index,fraction,ring,10000)
         IF (ring.NE.val_ring) 
      .    CALL ER('ProcessFluxTube','Invalid ring A',*99)
@@ -236,7 +236,7 @@ c        x1 = x1 + dradius
 c        x1 = x1 - dradius
         IF (mode.EQ.1) THEN
           x1 = rseparatrix + rvalue(1)
-          CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+          CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                               index,fraction,ring,10000)
           IF (ring.NE.val_ring) 
      .      CALL ER('ProcessFluxTube','Invalid ring B',*99)
@@ -265,7 +265,7 @@ c...      Rotate these points toroidally:
 
 c        x1 = x1 + 2.0 * dradius
         x1 = rseparatrix + rvalue(3)
-        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                             index,fraction,ring,10000)
         IF (ring.NE.val_ring) 
      .    CALL ER('ProcessFluxTube','Invalid ring C',*99)
@@ -698,7 +698,7 @@ c
 c subroutine: TraceFieldLine_DIVIMP
 c
       SUBROUTINE TraceFieldLine_DIVIMP(xin,yin,zin,mode,chop,
-     .                                 length1,length2,
+     .                                 length1,length2,rlimit,
      .                                 n,v,index,fraction,ring,MAXN)
       IMPLICIT none
 
@@ -708,27 +708,25 @@ c
       INCLUDE 'slout'
       INCLUDE 'slcom'
 
-      INTEGER FindMidplaneCell
-      REAL    FindSeparatrixRadius
-
       INTEGER, INTENT(IN) :: mode,MAXN,chop
       REAL   , INTENT(IN) :: xin,yin,zin
-      REAL*8              :: length1,length2
-c      INTEGER, INTENT(IN) :: region,mode,MAXN
-c      REAL   , INTENT(IN) :: rad_coord,in_phi
+      REAL*8              :: length1,length2,rlimit
       INTEGER, INTENT(OUT) :: n,index(MAXN),ring
       REAL   , INTENT(OUT) :: fraction(MAXN)
       REAL*8 , INTENT(OUT) :: v(3,MAXN)
 
+      INTEGER FindMidplaneCell,CalcPoint
+      LOGICAL InCell
+      REAL    FindSeparatrixRadius, ATAN2C
 
-      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike
+      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike,status
       LOGICAL finished,debug
-      REAL    rsep
+      REAL    rsep,rin
       REAL*8  r(2),z(2),deltar,deltaz,deltac,deltap,phi,dphi,rval,pval,
      .        frac1,frac2,angle1,angle2,brat,rfrac,r12frac,z12frac,
      .        rhoin,phiin,frac,rpos,rvalmin,zvalmin,zvalmax,
-     .        len1,len2,lenmax1,lenmax2,
-     .        dpol,dtor,alpha
+     .        len1,len2,lenmax1,lenmax2,p1(2),p2(2),t,ar,az,br,bz,
+     .        dpol,dtor,alpha,origin(3),d1,d2
 
       REAL       TOL
       PARAMETER (TOL=1.0D-06)
@@ -739,29 +737,28 @@ c      REAL   , INTENT(IN) :: rad_coord,in_phi
 
       dphi = 0.5 !  1.0 ! 5.0 ! 10.0  ! Make this an adjustable parameter...
 
-      IF (yin.NE.0.0) 
-     .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
+c      IF (yin.NE.0.0) 
+c     .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
 
 c...  Convert from Cartesean coordinates to RHO and PHI:
       rsep = FindSeparatrixRadius(1)
       rhoin = DBLE(SQRT(xin**2 + zin**2) - rsep)
-      IF (ABS(xin).LT.1.0E-06) THEN
-        IF (zin.GT.0.0) THEN
-          phiin = 90.0
-        ELSE
-          phiin = 270.0
-        ENDIF
-      ELSE
-        phiin = DBLE(ATAN(ABS(zin / xin)) * 180.0 / PI)
-        IF (xin.LT.0.0.and.zin.GT.0.0) phiin = 180.0 - phiin
-        IF (xin.LT.0.0.and.zin.LT.0.0) phiin = 180.0 + phiin
-        IF (xin.GT.0.0.and.zin.LT.0.0) phiin = 360.0 - phiin
-      ENDIF
-c      rhoin = xin  ! *** TEMP ***
-c      phiin = zin  ! *** TEMP ***
-c      WRITE(0,*) '==INPUT:',rhoin,phiin
-c      WRITE(0,*) '       :',xin,zin,rsep
-c      STOP 'sdfsdf'
+      phiin = DBLE(ATAN2C(zin,xin) * 180.0 / PI)
+      IF (phiin.LT.0.0D0) phiin = phiin + 360.0D0
+
+c      IF (ABS(xin).LT.1.0E-06) THEN
+c        IF (zin.GT.0.0) THEN
+c          phiin = 90.0
+c        ELSE
+c          phiin = 270.0
+c        ENDIF
+c      ELSE
+c        phiin = DBLE(ATAN(ABS(zin / xin)) * 180.0 / PI)
+c        IF (xin.LT.0.0.and.zin.GT.0.0) phiin = 180.0 - phiin
+c        IF (xin.LT.0.0.and.zin.LT.0.0) phiin = 180.0 + phiin
+c        IF (xin.GT.0.0.and.zin.LT.0.0) phiin = 360.0 - phiin
+c      ENDIF
+
 
       IF (debug) THEN
         WRITE(0,*) 'TRACE  MODE,CHOP : ',mode,chop
@@ -814,72 +811,162 @@ c          WRITE(0,*) 'ZVALs:',zvalmin,zvalmax
           zvalmax =  1.0D+20
           lenmax1 =  length1
           lenmax2 =  length2
+        CASE(7)  ! No trace below or above vertical boundaries, or inside RLIMIT
+          rvalmin =  rlimit
+          zvalmin =  length1
+          zvalmax =  length2
+          lenmax1 =  1.0D+20
+          lenmax2 =  1.0D+20
         CASE DEFAULT
           CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
       ENDSELECT
 c      WRITE(0,*) 'CHOP:',chop,rvalmin,zvalmin,zvalmax
 
 c...  Find where we are on the outer midplane:
-      DO ir = 2, irwall
+      IF (.TRUE.) THEN
 
-c...    For now, ignore the inner SOL for a CDN grid (CONNECTED
-c       currently assigned/hacked in FindSeparatrixRadius, which
-c       has to be called before this check is made, nasty):
-        IF (connected.AND.ir.GE.irsep.AND.ir.LT.irsep2) CYCLE
+        rin = SQRT(xin**2 + zin**2)
+        DO ir = 2, irwall
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          DO ik = 1, nks(ir)
+            IF (InCell(ik,ir,rin,yin)) EXIT
+          ENDDO
+          IF (ik.NE.nks(ir)+1) EXIT
+        ENDDO
+        IF (ir.EQ.irwall+1) 
+     .    CALL ER('TraceFieldLine_DIVIMP','Cell indices not found',*99)
 
-        IF (rho(ir,CELL1).EQ.0.0) CYCLE
+c       Find the distance from the point in question to each of the cell sides:
+        id = korpg(ik,ir)
+        ar = DBLE(rvertp(1,id))
+        az = DBLE(zvertp(1,id))
+        br = DBLE(rvertp(4,id))
+        bz = DBLE(zvertp(4,id))
+        status = CalcPoint(ar,az,br,bz,DBLE(rin),DBLE(yin),t)
+        p1(1) = ar + t * (br - ar)
+        p1(2) = az + t * (bz - az)
 
-        IF (debug) WRITE(0,*) 'TRACE IR SCAN : ',
-     .    ir,SNGL(rhoin),rho(ir,SIDE14),rho(ir,SIDE23)
+c        WRITE(0,*) ':',t,status
 
-        IF (rhoin.GE.DBLE(rho(ir,SIDE14)).AND.
-     .      rhoin.LT.DBLE(rho(ir,SIDE23))) THEN
-c...      Find midplane cell:   ! *** NEED TO DO THIS SO THAT PHI IS REFERENCED PROPERLY TO PHI=0 AT THE OUTER MIDPLANE ***
-          ikm = -1              !     NEED A BETTER WAY...          
-          ikm = FindMidplaneCell(ir)
-          IF (ikm.EQ.-1) CALL ER('TraceFieldLine_DIVIMP','No '//
-     .                           'midplane cell found',*99)
+c        WRITE(0,*) 'IK,IR  :',ik,ir
+c        WRITE(0,*) 'AR,AZ  :',ar,az
+c        WRITE(0,*) 'BR,BZ  :',br,bz
+c        WRITE(0,*) 'P1     :',p1(1:2)
 
-          IF (debug) WRITE(0,*) 'TRACE RING,IKM : ',ir,ikm
+        ar = DBLE(rvertp(2,id))
+        az = DBLE(zvertp(2,id))
+        br = DBLE(rvertp(3,id))
+        bz = DBLE(zvertp(3,id))
+        status = CalcPoint(ar,az,br,bz,DBLE(rin),DBLE(yin),t)
+        p2(1) = ar + t * (br - ar)
+        p2(2) = az + t * (bz - az)
+
+c        WRITE(0,*) ':',t,status
+
+c        WRITE(0,*) 'AR,AZ  :',ar,az
+c        WRITE(0,*) 'BR,BZ  :',br,bz
+c        WRITE(0,*) 'P2     :',p2(1:2)
+c        WRITE(0,*) 'RIN,YIN:',rin,yin
+
+        d1 = DSQRT( (DBLE(rin)-p1(1))**2 + (DBLE(yin)-p1(2))**2 ) 
+        d2 = DSQRT( (DBLE(rin)-p2(1))**2 + (DBLE(yin)-p2(2))**2 ) 
+
+        frac = d1 / (d1 + d2)
+
+c        WRITE(0,*) 'D1,2:',d1,d2
+c        WRITE(0,*) 'FRAC:',frac
+
+        rhoin = (1.0D0 - frac) * DBLE(rho(ir,SIDE14)) + 
+     .                   frac  * DBLE(rho(ir,SIDE23))
+
+c       Assign the symmetry cell for the field-line trace:
+        ikm = ik
+        IF (t.GT.0.5D0) ikm = ikm + 1  ! Advance a bit along the ring if the point is closer to the far boundary
+ 
+c...    Decide how to assign the magnetic field line pitch angle information:
+        SELECTCASE (mode)
+          CASE (1)
+c...        Just take the pitch angle at the center of the cell all the time:
+            ir1 = 0
+            r12frac = frac
+            z12frac = frac ! 0.5D0
+            rfrac = 0.0D0
+          CASE (2)
+c...        Interpolate the field line pitch angle, gives a continuous b-field:
+            r12frac = frac
+            z12frac = frac
+            IF (rhoin.LT.rho(ir,CELL1)) THEN
+              ir1 = irins(ik,ir)
+              rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                 DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+            ELSE
+              ir1 = irouts(ik,ir)
+              rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                 DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+            ENDIF
+          CASE DEFAULT
+            CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
+        ENDSELECT
+
+      ELSE
+
+        STOP 'OLD METHOD'
+
+        DO ir = 2, irwall
+c...      For now, ignore the inner SOL for a CDN grid (CONNECTED
+c         currently assigned/hacked in FindSeparatrixRadius, which
+c         has to be called before this check is made, nasty):
+          IF (connected.AND.ir.GE.irsep.AND.ir.LT.irsep2) CYCLE
           
-c...      Decide how to assign the magnetic field line pitch angle information:
-          SELECTCASE (mode)
-            CASE (1)
-c...          Just the pitch angle at the center of the cell all the time:
-              ir1 = 0
-              frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
-     .               DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
-c              frac = 0.5D0
-              r12frac = frac
-              z12frac = frac ! 0.5D0
-              rfrac = 0.0D0
-            CASE (2)
-c...          Interpolate the field line pitch angle, gives a continuous :
-              frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
-     .               DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
-              r12frac = frac
-              z12frac = frac
-              IF (rhoin.LT.rho(ir,CELL1)) THEN
-                ir1 = irins(ikm,ir)
+          IF (rho(ir,CELL1).EQ.0.0) CYCLE
+          
+          IF (debug) WRITE(0,*) 'TRACE IR SCAN : ',
+     .      ir,SNGL(rhoin),rho(ir,SIDE14),rho(ir,SIDE23)
+          
+          IF (rhoin.GE.DBLE(rho(ir,SIDE14)).AND.
+     .        rhoin.LT.DBLE(rho(ir,SIDE23))) THEN
+c...        Find midplane cell:   ! *** NEED TO DO THIS SO THAT PHI IS REFERENCED PROPERLY TO PHI=0 AT THE OUTER MIDPLANE ***
+            ikm = -1              !     NEED A BETTER WAY...          
+            ikm = FindMidplaneCell(ir)
+            IF (ikm.EQ.-1) CALL ER('TraceFieldLine_DIVIMP','No '//
+     .                             'midplane cell found',*99)
+          
+            IF (debug) WRITE(0,*) 'TRACE RING,IKM : ',ir,ikm
+            
+c...        Decide how to assign the magnetic field line pitch angle information:
+            SELECTCASE (mode)
+              CASE (1)
+c...            Just take the pitch angle at the center of the cell all the time:
+                ir1 = 0
+                frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
+     .                 DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
+                r12frac = frac
+                z12frac = frac ! 0.5D0
+                rfrac = 0.0D0
+              CASE (2)
+c...            Interpolate the field line pitch angle, gives a continuous b-field:
+                frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
+     .                 DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
+                r12frac = frac
+                z12frac = frac
+                IF (rhoin.LT.rho(ir,CELL1)) THEN
+                  ir1 = irins(ikm,ir)
+                  rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                     DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+                ELSE
+                  ir1 = irouts(ikm,ir)
+                  rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                     DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+                ENDIF
+              CASE DEFAULT
+                CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
+            ENDSELECT
+            EXIT
+          ENDIF
+        ENDDO
+  
+      ENDIF
 
-                WRITE(0,*) 'IRs:',ir,ir1
-                rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
-     .                   DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
-              ELSE
-                ir1 = irouts(ikm,ir)
-                rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
-     .                   DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
-c                WRITE(fp,*) rhoin,rho(ir,CELL1),rho(ir1,CELL1)
-              ENDIF
-            CASE DEFAULT
-              CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
-          ENDSELECT
-
-          WRITE(fp,'(A,2I6,3F10.4)') 
-     .      ' ==MIDPLANE:',ikm,ir,REAL(frac),REAL(rfrac),REAL(rhoin)
-          EXIT
-        ENDIF
-      ENDDO
       IF (ir.EQ.irwall+1) 
      .  CALL ER('TraceFieldLine_DIVIMP','Ring not identified',*99)
 
@@ -915,17 +1002,22 @@ c        WRITE(0,'(A,5F10.5)')
 c     .    'BRAT:',REAL(brat),REAL(r(1:2)),REAL(z(1:2))
         deltar = r(2) - r(1)
         deltaz = z(2) - z(1)
-        dpol = DSQRT(deltar**2 + deltaz**2)
-        alpha = DASIN(brat)
-        dtor = dpol / DTAN(alpha)
+        dpol   = DSQRT(deltar**2 + deltaz**2)
+        alpha  = DASIN(brat)
+        dtor   = dpol / DTAN(alpha)
         deltac = dtor
 c        deltac = ABS(deltaz) / brat
         deltap = -1.0D0 * deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
         finished = .FALSE.
         DO WHILE (angle1.GT.deltap)
-          angle2 = MAX(angle1-dphi,deltap) 
-          frac1 = angle1 / deltap
+c          IF (ik.EQ.ikm) THEN                         ! *** MAKE THIS AN OPTION *** 
+c            angle2 = MAX(angle1-0.1D0*dphi,deltap) 
+c          ELSE
+            angle2 = MAX(angle1-      dphi,deltap) 
+c          ENDIF
+c          angle2 = MAX(angle1-dphi,deltap) 
+c          frac1 = angle1 / deltap
           frac2 = angle2 / deltap
           IF (angle1.EQ.0.0D0.AND.ik.EQ.ikm) THEN
             n = n + 1
@@ -981,6 +1073,8 @@ c     .        (zxp.GT.0.0.AND.v(2,n).GE.zvalmax).OR.
         phi = phi + deltap
       ENDDO
 
+      origin(1:3) = v(1:3,1)
+
 c...  Swap order of these points, so that they start at the low IK target
 c     and proceed to the midplane:
       DO i1 = 1, n/2
@@ -1004,7 +1098,6 @@ c...    Don't follow the field line at all if length restriction set to zero:
         IF ((chop.EQ.4.OR.chop.EQ.5.OR.chop.EQ.6).AND.
      .      lenmax2.EQ.0.0D0) EXIT
         id = korpg(ik,ir)
-c        frac = 0.5D0 * (1.0D0 + rfrac)
         r(1) =          r12frac  * DBLE(rvertp(2,id)) + 
      .         (1.0D0 - r12frac) * DBLE(rvertp(1,id))
         z(1) =          z12frac  * DBLE(zvertp(2,id)) + 
@@ -1025,20 +1118,23 @@ c        frac = 0.5D0 * (1.0D0 + rfrac)
           brat = (1.0D0 - rfrac) * DBLE(bratio(ik,ir  )) + 
      .                    rfrac  * DBLE(bratio(ik1,ir1))
         ENDIF
-c        brat = DBLE(bratio(ik,ir))
         deltar = r(2) - r(1)
         deltaz = z(2) - z(1)
         dpol = DSQRT(deltar**2 + deltaz**2)
         alpha = DASIN(brat)
         dtor = dpol / DTAN(alpha)
         deltac = dtor
-c        deltac = ABS(deltaz) / brat
         deltap = deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
         finished = .FALSE.
         DO WHILE (angle1.LT.deltap)
-          angle2 = MIN(angle1+dphi,deltap) 
-          frac1 = angle1 / deltap
+c          IF (ik.EQ.ikm+1) THEN
+c            angle2 = MIN(angle1+0.1D0*dphi,deltap) 
+c          ELSE
+            angle2 = MIN(angle1+      dphi,deltap) 
+c          ENDIF
+c          angle2 = MIN(angle1+dphi,deltap) 
+c          frac1 = angle1 / deltap
           frac2 = angle2 / deltap
           n = n + 1
           IF (n.GT.MAXN) CALL ER('TraceFieldLine_DIVIMP','N bust',*99)
@@ -1088,7 +1184,7 @@ c      ENDDO
 
 c      WRITE(0,*) 'n:',n
 
-      WRITE(0,*) 'LENGTH:',len1,len2,len1+len2
+c      WRITE(0,*) 'LENGTH:',len1,len2,len1+len2
 
       SELECTCASE (chop)
         CASE(1)
@@ -1103,9 +1199,16 @@ c      WRITE(0,*) 'n:',n
           length1 = len1
           length2 = len2
         CASE(6)
+        CASE(7)
         CASE DEFAULT
           CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
       ENDSELECT
+
+c...  Add the origin:
+      v(1:3,n+1) = origin(1:3)
+
+c      WRITE(0,* ) '============ORIGIN1',v(1:3,n+1)
+
 
       RETURN
  99   WRITE(0,*) ' CHOP= ',chop

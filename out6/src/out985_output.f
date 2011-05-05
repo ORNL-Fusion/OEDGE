@@ -563,9 +563,9 @@ c...      Convert from r,z,phi to x,y,z (y okay already):
           ENDDO
 
         CASE (4)
-c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,3,len1,len2,
-         CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,5,len1,len2,
-c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,1,len1,len2,
+c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,3,len1,len2,0.0D0,
+         CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,5,len1,len2,0.0D0,
+c          CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,1,len1,len2,0.0D0,
      .                               n,v,index,fraction,ring,200000)
           WRITE(0,*) 'FIELD LINE TRACE:',len1,len2
           DO i1 = 1, n-1
@@ -803,7 +803,7 @@ c
       CHARACTER fname*(*)
 
       INTEGER iobj,iside,isrf,i1,iobj1
-      REAL*8  phi
+      REAL*8  phi,phi_max
 
       CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
 c      CALL LoadObjects('tetrahedrons.001.raw',status)
@@ -962,12 +962,20 @@ c              isrf = ABS(obj(iobj)%iside(iside))
 c       ----------------------------------------------------------------   
         CASE (5)  ! Vessel wall, with toroidal end surfaces taken away, and the top surface...
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=5'
+          phi_max = 0.0
           DO iobj = 1, nobj
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
               IF (obj(iobj)%omap(iside).NE.0) CYCLE
-              IF (srf(isrf)%index(IND_SURFACE).NE.33) CYCLE  ! *** HACK *** 
+
+              IF (srf(isrf)%index(IND_SURFACE).NE.33.AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.3 .AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.5 .AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.7 .AND.
+     .            srf(isrf)%index(IND_SURFACE).NE.9 .AND. 
+     .            srf(isrf)%index(IND_SURFACE).NE.11) CYCLE
+
 c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
               DO WHILE (isrf.GT.0)
                 IF (nsur.GE.MAXSURFACE-10000) THEN
@@ -989,9 +997,13 @@ c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
                 DO i1 = 1, npts(nsur)
                   phi = DATAN(vsur(3,i1,nsur) / vsur(1,i1,nsur)) * 
      .                  180.0D0 / 3.141592D0
-                  IF (phi.GT.0.1D0.AND.phi.LT.6.7D0) check = .FALSE.
+                  phi_max = MAX(phi,phi_max)
+                  IF (phi.GT.0.1D0.AND.phi.LT.20.229) check =.FALSE.
 c                IF (phi.LT.0.1D0.OR.phi.GT.24.9D0) nsur = nsur - 1  ! *** HACK ***
 c                WRITE(0,*) 'phi= ',phi
+                ENDDO
+                DO i1 = 1, npts(nsur)
+                  IF (vsur(2,i1,nsur).GT.-2.25D0) check = .TRUE.
                 ENDDO
                 IF (check) nsur = nsur - 1
 
@@ -1000,6 +1012,7 @@ c                WRITE(0,*) 'phi= ',phi
               ENDDO
             ENDDO
           ENDDO
+          WRITE(0,*) 'PHI_MAX=',phi_max
 c       ----------------------------------------------------------------   
         CASE DEFAULT
           CALL WN('TestTetrahedrons','Unknown option')
@@ -1016,6 +1029,7 @@ c
 c
       SUBROUTINE SolidPlot985(opt,nobj,obj,iplot)
       USE MOD_OUT985
+      USE mod_out985_ribbon
       USE mod_filament
       USE mod_options
       IMPLICIT none
@@ -1040,10 +1054,11 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
       REAL    FindSeparatrixRadius
 
 
-      INTEGER nsur,iobj,isur,isrf,i1,i2,i3,ipts,ipts1,ipts2,pass,nx,ny,
+      INTEGER nsur,iobj,isur,isrf,i1,i2,i3,n1,ipts,ipts1,ipts2,pass,
+     .        nx,ny,iadd,
      .        ix,iy,iver,count,fp,ntmp,nlight,isrf1,isrf2,status,
      .        icolour,last_icolour,ir,ifilament,ikm,id,ibin,nbin,nlist,
-     .        option,sub_option,iplot1,idum1,nsur_solid
+     .        option,sub_option,iplot1,idum1,nsur_solid,itrace
       LOGICAL cont,solid
       REAL    XXMIN,XXMAX,YYMIN,YYMAX,theta,theta1,theta2,
      .        xsur(MAXPOINTS),ysur(MAXPOINTS),frac,
@@ -1118,8 +1133,10 @@ c...      Add geometry item to list of objects to be plotted:
           SELECTCASE (option)
 c           ------------------------------------------------------------
             CASE (001) ! LOS integration geometry objects
-c              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
+
+              IF (sub_option.EQ.1.AND.nsur_solid.EQ.MAXSURFACE+1) 
+     .          nsur_solid = nsur + 1
 
               DO iobj = 1, nobj
                 DO isur = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
@@ -1279,6 +1296,44 @@ c     .               MAXSURFACE,MAXPOINTS,nsur,npts,hsur,vsur)
 c              CALL ProcessFluxTube(xin,yin,zin,
 c     .               MAXSURFACE,MAXPOINTS,nsur,npts,hsur,vsur)
 c              npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
+c           ------------------------------------------------------------
+            CASE (004) ! Ribbon trace
+              READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
+c              WRITE(0,*) 'solid trace:',nsur
+              DO itrace = 1, trace_n
+
+                i1 = trace_i(2,itrace)
+                i2 = trace_i(3,itrace)
+                n1 = i2 - i1 
+
+                IF (nsur+n1.GT.MAXSURFACE) THEN
+                  CALL WN('SolidPlot985','Cannot plot all traces')
+                  EXIT
+                ENDIF
+
+                npts(nsur+1:nsur+n1) = 2
+                hsur(nsur+1:nsur+n1) = icolour
+                DO i3 = 1,3
+                  vsur(i3,1,nsur+1:nsur+n1) = trace(i3,i1:i2-1)
+                  vsur(i3,2,nsur+1:nsur+n1) = trace(i3,i1+1:i2)
+                ENDDO
+
+                iadd = 0
+                DO i3 = 1, n1
+                  IF (trace(4,i3+i1-1).GT.0.0D0) THEN
+                    IF (iadd.EQ.0) THEN 
+                      iadd = 2
+                    ELSE
+                      iadd = 0
+                    ENDIF
+c                    WRITE(0,*) 'iadd:',iadd,icolour
+                  ENDIF
+                  hsur(nsur+i3) = icolour + iadd
+                ENDDO
+
+                nsur = nsur + n1
+c                WRITE(0,*) 'solid trace:',i1,i2,n1,nsur
+              ENDDO
 c           ------------------------------------------------------------
             CASE (020) ! Filaments
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour
@@ -1916,24 +1971,20 @@ c        ENDDO
 
         ELSE
 c...    Wireframe:
-c        DO isur = 1, nsur
-
           IF (hsur(isur).LT.0) THEN
             icolour = ncols + ABS(hsur(isur))
           ELSE
-            icolour = hsur(isur) 
+            icolour = ncols + MOD(ABS(hsur(isur)),100)
+            IF (icolour.EQ.ncols) icolour = 55
           ENDIF
           IF (icolour.NE.last_icolour) THEN
             CALL LINCOL(icolour) 
             last_icolour = icolour
           ENDIF
-c          CALL LINCOL(ncols+1) 
 
           DO ipts1 = 1, npts(isur)  
-c          DO ipts1 = 1, npts(nsur)  
             ipts2 = ipts1 + 1 
             IF (ipts2.GT.npts(isur)) ipts2 = 1
-c            IF (ipts2.GT.npts(nsur)) ipts2 = 1
             IF (ipts1.EQ.2.AND.npts(isur).EQ.2) CYCLE
 
             p1(1:3,1) = vsur(1:3,ipts1,isur)
@@ -1951,6 +2002,9 @@ c            IF (ipts2.GT.npts(nsur)) ipts2 = 1
 
 
       CALL DrawFrame
+
+           WRITE(6,*) 'hsur',hsur(1:nsur)
+
 
       WRITE(0,*) 'DONE DRAWING'
 

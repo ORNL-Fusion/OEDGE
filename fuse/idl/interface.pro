@@ -1,10 +1,18 @@
 ;
-; ...option to read and store entire data file to speed things up
-;
-
-;
 ; ======================================================================
+;
+; inGetDataStructure
 ; 
+; A function that returns an empty data structure, to be filled when
+; reading in the data file.  The type and size of the array is set from
+; information in the data file header.
+;
+; DATA_TYPE	INTEGER	  A code that specifies whether or not the data is
+;                         INTEGER*4 / LONG, REAL*4 / FLOAT, or REAL*8 /
+;                         DOUBLE.
+; N		INTEGER   Specifies the number of elements in the data
+;                         array.
+;
 FUNCTION inGetDataStructure, data_type, n
 
   header = {                                        $
@@ -30,27 +38,32 @@ END
 ;
 ; ========================================================================
 ;
-FUNCTION inOpenInterface, file_name
+; FUNCTION inOpenInterface
+;
+; Opens the data file.
+;
+FUNCTION inOpenInterface, file_name, debug=debug
 
-; Check input:
-  
+; Check that FILE_NAME is valid:
+;   STILL TO DO
+
 ; Open the data stream:
   fp = 2
   FREE_LUN,fp
 
-  PRINT, 'Opening interface for ',file_name
+  IF (KEYWORD_SET(debug)) THEN PRINT, 'Opening interface for ',file_name
 
   OPENR,fp,file_name,error=error
   IF (error NE 0) THEN BEGIN
     PRINT,'ERROR inOpenInterface: Unable to access data file'
     PRINT,' FILE= ',file_name
     RETURN, -1
-;    EXIT, STATUS=-1  ; *** NEED TO IMPROVE THIS ***
   ENDIF  
 
   READF,fp,version
 
-  ; Check file integrity, ie are there duplicate tags...
+; Perhaps need to check the file integrity, ie are there duplicate tags...
+;   STILL TO DO
 
   RETURN, 0
 
@@ -64,6 +77,19 @@ PRO inCloseInterface
 END
 ;
 ; ========================================================================
+;
+; FUNCTION inReadLine
+;
+; Reads in a single line from the data file.  Comment characters are 
+; processed, i.e. everything on a line that is after a "$" or "*" is
+; ignored.  If an entire line is ignored (the comment character is at the
+; very beginning or there are only spaces) then another line is read, 
+; until a line with something on it is found or the end of the file is
+; reached.
+;
+; FP		INTEGER  The file pointer, which was set when the file 
+;                        was opened
+; BUFFER 	STRING   The contents of the data line from the file.
 ;
 FUNCTION inReadLine, fp, buffer
 
@@ -93,46 +119,64 @@ FUNCTION inReadLine, fp, buffer
 END 
 ;
 ; ========================================================================
+; 
+; FUNCTION inGetData
 ;
-FUNCTION inGetData,data_tag,full=full,flush=flush
+; Main routine for accessing the formatted CORTEX data file.  A tag is 
+; supplied and the file that's currently open for access (from a previous
+; call to inOpenInterface) is scanned to see if the tag exists. If yes,
+; then great.
+;
+; DATA_TAG	STRING  Uh, the tag used to identify the data.
+; FULL		        Send back a data structure that includes the meta-
+;                       data, like the data type and the file where the
+;                       data was loaded from.  If FULL is not specified
+;                       then only the data itself is returned, i.e. a 
+;                       one dimensional array of the appropriate type.
+; FLUSH			Clear the data from previous calls to inGetData
+;                       that's currently begin held in memory.  NOT 
+;                       IMPLIMENTED YET.
+;
+FUNCTION inGetData,data_tag,full=full,flush=flush,debug=debug
 
-; Check input:
+; Check that the input parameters are valid:
+;   STILL TO DO
 
 ; Initializations:
-  fp = 2
-  buffer = ' '
+  fp          = 2
+  buffer      = ' '
   data_column = -1
 
-; Search for data already in memory:
+; Search to see if the requested data is already in memory:
+;   STILL TO DO
 
-
-
-
-; Nothing found, access the data file:
+; Nothing found so access the data file:
   IF (1) THEN BEGIN
 
     cont = 1  
     WHILE (cont GE 1) DO BEGIN
+;     Read a line from the data file:
       IF (cont EQ 1) THEN status = inReadLine(fp, buffer)
       cont = 1
 
 ;     Extract tag and isolate data:
-      i1 = STRPOS(buffer,'{')
-      i2 = STRPOS(buffer,'}')
-      tag  = STRMID(buffer,i1+1,i2-i1-1)
-      data = STRMID(buffer,i2+1)
+      i1   = STRPOS(buffer,'{')           
+      i2   = STRPOS(buffer,'}')           
+      tag  = STRMID(buffer,i1+1,i2-i1-1)  
+      data = STRMID(buffer,i2+1)          
 
-;      print,'TAG:',tag,'>'+data+'<'
+      IF (KEYWORD_SET(debug)) THEN PRINT,'TAG:',tag,'>'+data+'<'
 
       CASE tag OF
-;       File info:
+;       Collect information about how the data is arranged in the file: 
         'FILE INDENT'      : file_indent  = LONG(data)
         'FILE INDEX'       : file_index   = LONG(data)
         'FILE COLUMNS'     : file_columns = LONG(data)
         'FILE COLUMN WIDTH': column_width = LONG(STRSPLIT(data,/EXTRACT))
 ;       Data related tags:
-        'DATA TAG'   : BEGIN
-;          Search for match to specified tag in the current set of data columns:
+        'DATA TAG': BEGIN
+;          Search for a match to the requested data tag in the current 
+;          set of data columns:
            FOR i = 0, file_columns-1 DO BEGIN
              i1   = STRPOS(data,'{')
              i2   = STRPOS(data,'}')
@@ -144,7 +188,7 @@ FUNCTION inGetData,data_tag,full=full,flush=flush
         'DATA TYPE'  : data_type = LONG(STRSPLIT(data,/EXTRACT))
         'DATA N'     : data_n    = LONG(STRSPLIT(data,/EXTRACT))
         'DATA VALUES': BEGIN
-;          Read and assign numerical data stored in the interface data file:
+;          Read and assign the numerical data stored in the file:
            IF (data_column NE -1) THEN BEGIN
              struct = inGetDataStructure(data_type[data_column],data_n[data_column])
              struct.tag = data_tag
@@ -157,7 +201,7 @@ FUNCTION inGetData,data_tag,full=full,flush=flush
                i1 = file_indent
                IF (data_column GT 0) THEN i1 = i1 + LONG(TOTAL(column_width[0:data_column-1]))
                data = STRMID(buffer,i1,column_width[data_column])
-;               print,i1,i2,'>'+data+'<',n
+               IF (KEYWORD_SET(debug)) THEN PRINT,i1,i2,'>'+data+'<',n
                CASE struct.type OF
                  ; 1:
                  2: struct.data[n] = LONG  (data)
@@ -171,14 +215,15 @@ FUNCTION inGetData,data_tag,full=full,flush=flush
              ENDIF
            ENDWHILE
            data_column = -1
-           cont = 2
+           cont        =  2
            END
-        ELSE:  ; Keep looking through file
+        ELSE:  
+;         Keep looking through the file:
       ENDCASE
 ;     End of file marker:
       IF (STRMATCH(buffer,'*{FILE END}*') EQ 1) THEN BREAK
     ENDWHILE
-;   Rewind the data file:
+;   Rewind the data file for the next read-through:
     POINT_LUN, fp, 0
   ENDIF
 
@@ -188,11 +233,10 @@ FUNCTION inGetData,data_tag,full=full,flush=flush
     STOP
   ENDIF
 
-  IF (KEYWORD_SET(full)) THEN RETURN, struct
-
-  IF (N_ELEMENTS(struct.data) EQ 1) THEN RETURN, (struct.data)[0]
-
-  RETURN, struct.data
+  ; Pass something back:
+  IF (KEYWORD_SET(full)           ) THEN RETURN, struct            ; the entire structure, with meta-data
+  IF (N_ELEMENTS(struct.data) EQ 1) THEN RETURN, (struct.data)[0]  ; just a single value, if that's all there is
+                                         RETURN, struct.data       ; the data array
 END
 ;
 ; ======================================================================
@@ -240,14 +284,14 @@ PRO inTest,tube=tube
 
   !P.MULTI = 0
 
-
-
 END
 ;
 ; ======================================================================
 ;
+; This is just here to make IDL happy, i.e. to have a subroutine in the
+; file that has the same name as the file itself.
+;  
 PRO interface
-  PRINT, 'what a pain'
 END
 ;
 ; ======================================================================

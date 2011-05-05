@@ -793,7 +793,10 @@ c
 
       LOGICAL osmGetLine
 
+      CHARACTER buffer_array*256(100)
+
       SELECTCASE (buffer(3:itag-1))
+c       ----------------------------------------------------------------
         CASE('SOL APPLICATION')
           opt%sol_n = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -801,8 +804,22 @@ c
             READ(buffer,*) opt%sol_tube  (1:2,opt%sol_n),
      .                     opt%sol_option(    opt%sol_n)
           ENDDO
-      CASE DEFAULT
+c       ----------------------------------------------------------------
+        CASE('SOL RADIAL VELOCITY')
+          CALL SplitBuffer(buffer,buffer_array) 
+          READ(buffer_array(2),*) opt%radvel
+          SELECTCASE (opt%radvel)
+            CASE (0) 
+            CASE (1) 
+              READ(buffer_array(3),*) opt%radvel_param(1)
+            CASE DEFAULT
+              CALL ER('LoadSolverOption','Invalid radial velocity, '//
+     .                'option',*99)
+          ENDSELECT
+c       ----------------------------------------------------------------
+        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
+c       ----------------------------------------------------------------
       ENDSELECT 
 
       RETURN
@@ -1185,6 +1202,8 @@ c...  OSM options:
 
       opt%bc    = 1
       opt%super = 0
+
+      opt%radvel = 0
 
       ref_nion   = 0
       ref_nfluid = 1

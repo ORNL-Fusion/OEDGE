@@ -128,7 +128,7 @@ FUNCTION cortex_PlotRadialProfile_NEW, plot, data_array, ps=ps
   PRINT,'----------------------- NEW PLOT -----------------------'
   PRINT,'PLOT OPTION=',plot.option
 
-help,data_array.inter,/struct
+;help,data_array.inter,/struct
 
   MAXNYDATA = 7
   MAXNXDATA = 1000

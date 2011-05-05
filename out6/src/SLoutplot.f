@@ -151,10 +151,10 @@ c
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
       REAL   , INTENT(IN) :: crmi,absfac
 
-      INTEGER   ik,ir,iz,id,in,status,ike,target,
+      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin,impact_energy
-      CHARACTER tag*64
+      REAL      totfypin,impact_energy,pos1,pos2
+      CHARACTER tag*64,title*1024
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
 
@@ -296,10 +296,108 @@ c     which I'm leaving off for now...
         ENDDO      
       ENDDO  
       CALL inCloseInterface 
-c
-c
-c
 
+c  NEROS(,1) - deposition, see NEUT.F, ION_PARALLEL_TRANSPORT.F, ION_TRANSPORT.F
+c  NEROS(,2) - same as (,3), see NEUT.F
+c  NEROS(,3) - erosion, see DIV.F
+c  NEROS(,4) - net (,1) + (,3)
+c  NEROS(,5) - 
+c          FACT = 0.0
+c          IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c          NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c
+c from div6/src/div.f
+c
+c      FACT = 0.0
+c      IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c      DO 883 ID = 1, NDS
+c        IF (DDS(ID).NE.0.0) THEN
+c          NEROS(ID,1) =-NEROS(ID,1) / DDS(ID) * FACTA(0)             
+c          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(0)
+cc          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(-1)
+c          NEROS(ID,3) = NEROS(ID,3) / DDS(ID) * FACTA(0)
+c        ELSE
+c          NEROS(ID,1) = 0.0
+c          NEROS(ID,2) = 0.0
+c          NEROS(ID,3) = 0.0
+c        ENDIF
+c        NEROS(ID,4) = NEROS(ID,1) + NEROS(ID,3)
+c        NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c  883 CONTINUE
+c
+c from out6/src/out000.f:
+c        DO 835 ID = startid, endid, stepid
+c          JD = JD + 1
+c          DO 830 II = 1, 5
+c            DVALS(JD,II) = NEROS(ID,II)
+c            IF (NEROS(ID,II).GT.0.0) THEN
+c              SUM(II)   = SUM(II)   + NEROS(ID,II) * DWIDS(JD)
+c            ELSE
+c              SUM(II+5) = SUM(II+5) + NEROS(ID,II) * DWIDS(JD)
+c            ENDIF
+c  830     CONTINUE
+c          IF (ID.EQ.switchid) JD = JD + 2
+c  835   CONTINUE
+c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)  
+c        WRITE(ELABS(2),'(A,F8.4)')'    PRIMARY REMOVAL  =',SUM(2)+SUM(7)
+c        WRITE(ELABS(3),'(A,F8.4)')'    TOTAL REMOVAL    =',SUM(3)+SUM(8)
+c        WRITE(ELABS(4),'(A,2F7.4)')'    NET EROSION=',     SUM(4),SUM(9)
+c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
+
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.erosion',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - target erosion'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r      = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z      = distance along the field line, s'
+      WRITE(fp,'(A)') '* dist1  = position along the wall of the '//
+     .                'start of the target segment'
+      WRITE(fp,'(A)') '* dist2  = end of the target segment'
+      WRITE(fp,'(A)') '*   So, centre of segment is (dis1+dist2)/2. '//
+     .                ' The origin of this distance-along-the-wall'
+      WRITE(fp,'(A)') '*   is at the upper left corner of the grid '//
+     .                'where rho=0.0 and s=max(s), with the '
+      WRITE(fp,'(A)') '*   distance then proceeding clockwise.'
+      WRITE(fp,'(A)') '* theta   = angle between field line and '//
+     .                'the target in degrees'
+      WRITE(fp,'(A)') '* D+ flux = flux densiy on target relative '//
+     .                'to the surface normal (not the field line)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* The erosion/deposition units are just '//
+     .                'funny DIVIMP units at the moment.  The'
+      WRITE(fp,'(A)') '* ratio of erosion to D+ flux should give '//
+     .                'a relative yield for each segment.'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,3A6,4A10,3A12,A8,A10)')
+     .  '*','wall','targ','cell','ring','r (m)','z (m)',
+     .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
+     .  'theta','D+ flux'
+      pos1 = 0.0
+      pos2 = 0.0
+      DO id = 1, wallpts
+        in = NINT(wallpt(id,18))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        pos2 = pos1 + wallpt(id,7)
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,0P)')
+     .      id,in,
+     .      ikds(in),irds(in),
+     .      rp(in),zp(in),pos1,pos2,
+     .      -neros(in,3),-neros(in,1),-neros(in,4),
+     .      90.0-ACOS(costet(in))*180.0/PI,
+     .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir) 
+        ENDIF
+        pos1 = pos2
+      ENDDO
+c
+c
+c
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
@@ -387,39 +485,6 @@ c     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
 c     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
 c     wallpt (ind,31) = Plasma density at wall segment
 
-c from div6/src/div.f
-c
-c      FACT = 0.0
-c      IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
-c      DO 883 ID = 1, NDS
-c        IF (DDS(ID).NE.0.0) THEN
-c          NEROS(ID,1) =-NEROS(ID,1) / DDS(ID) * FACTA(0)             
-c          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(0)
-cc          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(-1)
-c          NEROS(ID,3) = NEROS(ID,3) / DDS(ID) * FACTA(0)
-c        ELSE
-c          NEROS(ID,1) = 0.0
-c          NEROS(ID,2) = 0.0
-c          NEROS(ID,3) = 0.0
-c        ENDIF
-c        NEROS(ID,4) = NEROS(ID,1) + NEROS(ID,3)
-c        NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
-c  883 CONTINUE
-
-c from out6/src/out000.f:
-c        DO ID = nds,ndsin+1,-1
-c          JD = JD + 1                                                   
-c          IK = IKDS(ID)                                                 
-c          IR = IRDS(ID)                                                 
-c          tdist(jd) = sqrt((rs(ik,ir)-1.1300)**2+(zs(ik,ir)+0.8200)**2)
-c          DO II = 1, 5
-c            DVALS(JD,II) = NEROS(ID,II)
-c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)  
-c        WRITE(ELABS(2),'(A,F8.4)')'    PRIMARY REMOVAL  =',SUM(2)+SUM(7)
-c        WRITE(ELABS(3),'(A,F8.4)')'    TOTAL REMOVAL    =',SUM(3)+SUM(8)
-c        WRITE(ELABS(4),'(A,2F7.4)')'    NET EROSION=',     SUM(4),SUM(9)
-c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
-
       DO id = 1, wallpts
         CALL inPutData(id             ,'INDEX'      ,'N/A')                     
         CALL inPutData(wallpt(id,1)   ,'R_CEN'      ,'m')  
@@ -450,6 +515,63 @@ c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
 c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
 c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
 c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.plasma',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - background plasma'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z = distance along the field line, s'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,A6,7A10)') 
+     .  '*','cell','ring','r (m)','z (m)','n (m-3)','v (m s-1)',
+     .  'Te (eV)','Ti (eV)'
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir) 
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike
+          WRITE(fp,'(2I6,2F10.5,1P,2E10.2,0P,2F10.2)')
+     .      ik,ir,
+     .      rs(ik,ir),zs(ik,ir),
+     .      knbs(ik,ir),kvhs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+        ENDDO
+      ENDDO
+
+c...  ASCII data file for Sophie and MatLab:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.impurities',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - impurity densities'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z = distance along the field line, s'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* The 0,1,2,... are the charge states of the '//
+     .                'impurity ions.  The units are absolute densities'
+      WRITE(fp,'(A)') '* in particle/m^3, I think... actually, not '//
+     .                'completely sure for ribbon grids...'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,A6,100A10)') 
+     .  '*','cell','ring','r (m)','z (m)','0','1','2','3','4','5','6'
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir) 
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike
+          WRITE(fp,'(2I6,2F10.5,1P,100E10.2,0P)')
+     .      ik,ir,
+     .      rs(ik,ir),zs(ik,ir),
+     .      (sdlims(ik,ir,iz)*absfac,iz=0,MAXIZS)
+        ENDDO
+      ENDDO
+
 
       RETURN
  99   STOP
@@ -3079,11 +3201,11 @@ c...      Temperature gradient:
 c
 c ======================================================================
 c
-c sburoutine: AnalyseStrata
+c sburoutine: Main chamber recycling
 c
-c Calculate neutral production and destruction based on strata:
+c Add up the recycling in the main chamber
 c
-      SUBROUTINE AnalyseStrata
+      SUBROUTINE MainChamberRecycling(fp)
       IMPLICIT none
 
       INCLUDE 'params'
@@ -3093,9 +3215,62 @@ c
       INCLUDE 'slcom'
       INCLUDE 'slout'
 
+      INTEGER, INTENT(IN) :: fp
+
+      REAL GetFlux
+
+      INTEGER ir
+      REAL    sumflx(4)
+
+      sumflx = 0.0
+
+      DO ir = irsep, nrs
+        IF (idring(ir)   .EQ.BOUNDARY) CYCLE
+        IF (psitarg(ir,1).GT.1.0262  ) THEN  !Special for ITER grids
+c          WRITE(0,*) 'MCR CONTRIBUTION',ir
+          sumflx(3) = sumflx(3) + ABS(GetFlux(IKLO,ir)) / eirtorfrac
+          sumflx(4) = sumflx(4) + ABS(GetFlux(IKHI,ir)) / eirtorfrac
+        ELSE
+          sumflx(1) = sumflx(1) + ABS(GetFlux(IKLO,ir)) / eirtorfrac
+          sumflx(2) = sumflx(2) + ABS(GetFlux(IKHI,ir)) / eirtorfrac
+        ENDIF
+      ENDDO      
+
+      WRITE(fp,*) 
+      WRITE(fp,*) 'Divertor recycling:'
+      WRITE(fp,*) '  inner=',sumflx(1)      
+      WRITE(fp,*) '  outer=',sumflx(2)      
+      WRITE(fp,*) '  total=',sumflx(1)+sumflx(2)      
+      WRITE(fp,*) 'Main chamber recycling:'
+      WRITE(fp,*) '  inner=',sumflx(3)      
+      WRITE(fp,*) '  outer=',sumflx(4)      
+      WRITE(fp,*) '  total=',sumflx(3)+sumflx(4)      
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c sburoutine: AnalyseStrata
+c
+c Calculate neutral production and destruction based on strata:
+c
+      SUBROUTINE AnalyseStrata(fp)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      INTEGER, INTENT(IN) :: fp
+
       REAL GetFlux,ATAN2C,CalcWidth,GetCs
 
-      INTEGER ik,ir,i1,fp,numstrata,ir1,id,ik1,optflow,ikm,irdiv1,irdiv2
+      INTEGER ik,ir,i1,numstrata,ir1,id,ik1,optflow,ikm,irdiv1,irdiv2
       REAL    ion(MAXSTRATA,MAXNRS,4),rec(MAXNRS),srcstr,tarflx,
      .        flux(2,MAXNRS),sumion(0:MAXSTRATA,4),sumstr(0:7),intion,
      .        intrec,deltar,deltaz,alpha,beta,cost,width,ionflx,flxvel,
@@ -3114,9 +3289,9 @@ c      irdiv2 = 21
       irdiv1 = irwall - 1
       irdiv2 = irwall - 1
 
-      fp = 99
-      OPEN (UNIT=fp,FILE='outdata.dat',ACCESS='SEQUENTIAL',
-     .      STATUS='REPLACE')
+c      fp = 99
+c      OPEN (UNIT=fp,FILE='outdata.dat',ACCESS='SEQUENTIAL',
+c     .      STATUS='REPLACE')
 
 
       sum1 = 0.0
@@ -3530,7 +3705,7 @@ c     .      ir,ik,a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
 c        ik1 = ik + 1
         ik1 = ik
 
-c...    Neutral soure and sink in inner SOL:
+c...    Neutral source and sink in inner SOL:
         intrec = 0.0
         intion = 0.0
         DO ik = 1, ik1
@@ -3650,10 +3825,7 @@ c...  Add puffing sources:
         ENDIF
       ENDDO
 
-
-      CLOSE(fp)
-
-
+c      CLOSE(fp)
 
       RETURN
 99    STOP
@@ -4178,6 +4350,9 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         RETURN
       ELSEIF (iopt.EQ.17) THEN
         CALL AnalyseSolution(6)
+        RETURN
+      ELSEIF (iopt.EQ.18) THEN
+        CALL MainChamberRecycling(6)
         RETURN
       ENDIF
 

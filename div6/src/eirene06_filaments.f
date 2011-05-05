@@ -88,7 +88,7 @@ c...    Identify objects associated with this filament:
 c            IF (chop.EQ.6) WRITE(0,*) '====WORKING:',r,rsep,
 c     .         filament(ifilament)%ir_space(1,icell)
           ENDIF
-          CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+          CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,0.0D0,
      .                               n,v,index,fraction,ring,10000)  ! *** HACK *** (the 10000)
           CALL SelectTetrahedrons(n,v(1:3,1:n),mode,scale,
      .           ifilament,icell)
@@ -292,7 +292,7 @@ c       ----------------------------------------------------------------
 c       ----------------------------------------------------------------
         CASE (2)
           CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,1.0E+20,1.0E+20,
-     .                               n,v,index,fraction,ring,10000)
+     .                           0.0D0,n,v,index,fraction,ring,10000)
           CALL SelectTetrahedrons(n,v(1:3,1:n))
           tmp_nobj = nobj
           DO iobj = 1, tmp_nobj
@@ -340,7 +340,7 @@ c     .            nir,filament(ifilament)%ir_space(1:nir,icell)
                   len2 = 1.0D+20
                 ENDIF
 c         WRITE(0,*) '============>LENGTH:',len1,len2,chop
-                CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+                CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,0.0D0,
      .                                   n,v,index,fraction,ring,10000)  ! *** HACK *** (the 10000)
                 CALL SelectTetrahedrons(n,v(1:3,1:n),mode,scale,
      .                 ifilament,icell)
