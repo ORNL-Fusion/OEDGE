@@ -143,8 +143,8 @@ c...  Add a surface that corresponds to the plane of the plot:
             ivtx2 = ivtx + 1
             IF (ivtx2.GT.srf(isrf)%nvtx) ivtx2 = 1
 
-            v1 = SNGL(vtx(1:3,srf(isrf)%ivtx(ivtx )))
-            v2 = SNGL(vtx(1:3,srf(isrf)%ivtx(ivtx2)))
+            v1 = vtx(1:3,srf(isrf)%ivtx(ivtx ))
+            v2 = vtx(1:3,srf(isrf)%ivtx(ivtx2))
 
             n = 0
             CALL LineThroughSurface(v1,v2,nobj,1,nsrf,n,v,d,0,DTOL)
@@ -1057,7 +1057,7 @@ c...  Read scale information:
       IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
      .      cdum1(8:12).EQ.'SCALE') THEN
         scale_set = .TRUE.
-        WRITE(0,*) 'CDUM1:>'//TRIM(cdum1)//'<'
+c        WRITE(0,*) 'CDUM1:>'//TRIM(cdum1)//'<'
         READ(cdum1,*) cdum2,scaleopt,colouropt,scalefact,qmin,qmax,
      .                label
         IF (qmin.EQ.-99.0) qmin =  HI
@@ -1103,7 +1103,7 @@ c          map2y = map1y + 0.40
         IF (reset_origin) THEN
           map1x = 0.05 
         ELSE
-          map1x = save_map2x + 0.02
+          map1x = save_map2x + 0.04
         ENDIF
 c        map1x = 0.05 + REAL(numplots) * dx
         map2x = map1x + dx

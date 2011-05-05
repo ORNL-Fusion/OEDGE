@@ -276,13 +276,15 @@ c
      .          iobj1(4),iside1(4),isrf1(4),
      .          ik,ir,it,ctardat,max_ik,max_ir,max_is,max_plasma,
      .          tar_maxik,tar_maxir,itarget
-      LOGICAL   filter
+      LOGICAL   filter,warning
       REAL      tot_flux,frac,target_flux,frac1
       INTEGER, ALLOCATABLE :: tar_objects(:)
       REAL   , ALLOCATABLE :: tdata(:)      
       REAL*8 , ALLOCATABLE :: tar_area(:), tar_totarea(:,:)
 
       WRITE(eirfp,*) 'WRITING EIRENE OBJECT FILES'
+
+      warning = .TRUE.
 
       version = 1.00
 
@@ -397,7 +399,14 @@ c...    Collect connection map information:
      .        surface(nsurface)%subtype.EQ.ADDITIONAL.AND.
      .        surface(nsurface)%index(1).EQ.-1) THEN
             isrf1(1) = surface(nsurface)%num
-c            WRITE(0,*) 'CRAP 1'
+            IF (warning) THEN
+              WRITE(0,*) 
+              WRITE(0,*) '----------------------------------'
+              WRITE(0,*) '   CLEANING TETRADRON MAP, BAD!'
+              WRITE(0,*) '----------------------------------'
+              WRITE(0,*) 
+              warning = .FALSE.
+            ENDIF
           ELSE
             STOP 'SORT OUT THIS ANNOYING BUSINESS, AGAIN...'
           ENDIF
@@ -499,6 +508,9 @@ c...  First count up how many surfaces are targets:
         ENDDO
       ENDDO
       IF (ctardat.EQ.0.OR.tar_maxik.EQ.0.OR.tar_maxir.EQ.0) THEN 
+c...    So, no target segments were identified on the tetrahedral grid.  Check
+c       if a region of interest was specified, and if so, assume that 
+c       target recycling needs to be turned off:
         DO i1 = 1, opt_eir%tet_n
           IF (opt_eir%tet_type(i1).EQ.1.0) filter = .TRUE.
         ENDDO
@@ -4341,7 +4353,7 @@ c
      .          i3,i4,i5,iseg1,iseg2,ilink,tmp_nseg,ninter,icell
       LOGICAL   debug,cont,link
       CHARACTER command*512
-      REAL, SAVE ::      area,ne,te,ti,res(MAXNSRF) !(nsurface)
+      REAL      area,ne,te,ti,res(MAXNSRF) !(nsurface)
       REAL*8    x1,x2,y1,y2,len,t,tstep,xhole(50),yhole(50),
      .          pts(MAXNPTS,2)
 

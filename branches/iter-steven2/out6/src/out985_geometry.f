@@ -2,6 +2,38 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+c function: raySurfaceNormal
+c
+c
+      SUBROUTINE raySurfaceNormal(isrf,nv)
+      USE mod_out985
+      IMPLICIT none
+
+      INTEGER, INTENT(IN ) :: isrf
+      REAL*8 , INTENT(OUT) :: nv(3)
+
+      INTEGER i1
+      REAL*8  av(3),bv(3),length
+
+      av(1:3) = vtx(1:3,srf(isrf)%ivtx(1)) - 
+     .          vtx(1:3,srf(isrf)%ivtx(2))
+      bv(1:3) = vtx(1:3,srf(isrf)%ivtx(3)) - 
+     .          vtx(1:3,srf(isrf)%ivtx(2))
+
+      nv(1) =  av(2) * bv(3) - av(3) * bv(2)
+      nv(2) = -av(1) * bv(3) + av(3) * bv(1)
+      nv(3) =  av(1) * bv(2) - av(2) * bv(1) 
+
+      length = DSQRT(nv(1)**2 + nv(2)**2 + nv(3)**2) 
+
+      nv = nv / length
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
 c function: AddSurface
 c
 c

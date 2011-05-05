@@ -4870,7 +4870,6 @@ FUNCTION grid_SpliceContour, val_x, val_y, mode, spacing=spacing
 
   IF (1 EQ 1) THEN BEGIN
 
-
 ;   Setup the distribution of points along the contour:
     CASE mode OF
       1: BEGIN
@@ -4888,6 +4887,7 @@ FUNCTION grid_SpliceContour, val_x, val_y, mode, spacing=spacing
         STOP
         END
     ENDCASE
+
   ENDIF
 
 
@@ -4940,6 +4940,9 @@ FUNCTION grid_SpliceContour, val_x, val_y, mode, spacing=spacing
 ; left off
 ; need to return the distribution (POSITION) information for each application
 ; so that the same distribution can be applied to all corresponding sections...
+
+
+
 
 
   result = -1
@@ -5066,8 +5069,8 @@ FUNCTION grid_CreatePoloidalPoints, c_array, wall, debug=debug, xrange=xrange, y
       print,'i,j,k',i,j,k,i1,i2,N_ELEMENTS(ctr.x),x1,y1,x2,y2,FORMAT='(A,3I6,6X,3I6,6X,4F10.4)'
 
       IF (k EQ j+1) THEN BEGIN
-        ; The identified points are consecutive along the ring, so need to interpolate
-        ; before trying to splice the ring:
+        ; The identified two points that are consecutive along the ring, so 
+        ; need to interpolate before trying to splice the ring:
         frac = DINDGEN(11) / 10.0D
         new_x = x[j]
         new_y = y[j]

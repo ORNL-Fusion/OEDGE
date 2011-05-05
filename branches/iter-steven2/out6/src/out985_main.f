@@ -1595,8 +1595,8 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       CALL DEALLOC_ALL
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-c      MAX3D = 500000 
-      MAX3D = 4000000 
+      MAX3D = 500000 
+c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
@@ -1623,13 +1623,15 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
-      opt%nplots = -1
+      opt%nplots  = -1
 
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
         opt%int_num = 0
         opt%ref_num = 0
-        opt%ndet = 0
+        opt%ndet    = 0
+        opt%rib_n   = 0
+
         CALL LoadOptions985_New(opt,ALL_OPTIONS,status)
       ENDIF
 
@@ -1694,42 +1696,36 @@ c      STOP 'DONE MAN'  ! LEFT OFF
 c      opt%ob_nsector = -1
 c      opt%ob_invgrd  =  0
 
-c      IF (opt%ob_model.GT.0) THEN
-        WRITE(0,*) '  BUILDING 3D OBJECTS'
-c        WRITE(0,*) '    toroidal extent ',
-c     .    opt%ob_nsector,opt%ob_angle_start,
-c     .    opt%ob_angle_end,opt%ob_yrotation
-c        WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
-c        WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
-c        WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
-c        WRITE(0,*) '    vessel wall     ',opt%ob_wall
-c        WRITE(0,*) '    targets         ',opt%ob_targ
-c        WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
-c        WRITE(0,*) '    field line(s)   ',opt%ob_line
-c        WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
+
+      WRITE(0,*) '  BUILDING 3D OBJECTS'
+c      WRITE(0,*) '    toroidal extent ',
+c     .  opt%ob_nsector,opt%ob_angle_start,
+c     .  opt%ob_angle_end,opt%ob_yrotation
+c      WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
+c      WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
+c      WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
+c      WRITE(0,*) '    vessel wall     ',opt%ob_wall
+c      WRITE(0,*) '    targets         ',opt%ob_targ
+c      WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
+c      WRITE(0,*) '    field line(s)   ',opt%ob_line
+c      WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
  
-        CALL BuildObjects
+      CALL BuildObjects
 
-        opt%obj_angle_start = 0.0
-        opt%obj_angle_end = 360.0
-        opt%obj_yrotation = 0.0
-        opt%obj_nsector = -1
+      opt%obj_angle_start = 0.0
+      opt%obj_angle_end   = 360.0
+      opt%obj_yrotation   = 0.0
+      opt%obj_nsector     = -1
+c...  Rotate all object vertices about the y-axis, to simulate when
+c     the camera is located somewhere other than straight in along
+c     the X or Z axes: 
+      CALL Calc_Transform2(mat,0.0D0,1,0)
+      CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
+      DO ivtx = 1, nvtx
+        CALL Transform_Vect(mat,vtx(1,ivtx))
+      ENDDO
 
-c...    Rotate all object vertices about the y-axis, to simulate when
-c       the camera is located somewhere other than straight in along
-c       the X or Z axes: 
-        CALL Calc_Transform2(mat,0.0D0,1,0)
-        CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
-        DO ivtx = 1, nvtx
-          CALL Transform_Vect(mat,vtx(1,ivtx))
-        ENDDO
-
-        WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
-c      ENDIF
-
-
-      IF (opt%int_num.GT.0) 
-     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
+      WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
 
 
       WRITE(0,*) '  NCHORD',nchord
@@ -1738,15 +1734,23 @@ c      ENDIF
       WRITE(0,*) '  NSRF  ',nsrf
       WRITE(0,*) '  NVTX  ',nvtx
 
-      IF (opt%ndet.GT.0) THEN
+c...
+      IF (opt%int_num.GT.0) 
+     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
 
+c...
+      IF (opt%ndet.GT.0) THEN
         WRITE(0,*) '  PROCESSING PIXELS'
         CALL ProcessPixels(npixel,pixel)
-c        CALL ProcessPixels(opt,npixel,pixel,nobj,obj)
-c        CALL ProcessPixels
         WRITE(0,*) '  DONE PROCESSING PIXELS'
-
         CALL DumpImage(npixel,pixel)
+      ENDIF
+
+c...
+      IF (opt%rib_n.GT.0) THEN
+        WRITE(0,*) '  PROCESSING RIBBON'
+        CALL rayGenerateRibbonGrid
+        WRITE(0,*) '  DONE PROCESSING RIBBON'
       ENDIF
 
 

@@ -477,9 +477,9 @@ c *CRUDE* Should be elsewhere... can IDRING take the place of RINGTYPE for EIREN
           ringtype(ir) = BOUNDARY
           CYCLE
         ENDIF
-        IF (ir.LT.irsep) ringtype(ir) = CORE
-        IF (ir.GE.irsep.AND.ir.LT.irwall) ringtype(ir) = SOL1
-        IF (ir.GT.irtrap.AND.ir.LE.nrs) ringtype(ir) = PFZ
+        IF (ir.LT.irsep                  ) ringtype(ir) = CORE
+        IF (ir.GE.irsep .AND.ir.LT.irwall) ringtype(ir) = SOL1
+        IF (ir.GT.irtrap.AND.ir.LE.nrs   ) ringtype(ir) = PFZ
       ENDDO
 c...  Special for secondary PFZ in generalized grids:
       IF (grdnmod.NE.0) THEN

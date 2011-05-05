@@ -91,8 +91,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
-      $DIVEXE < fort.5 > divout1
-#      nice +10 $DIVEXE < fort.5 > divout1
+#      $DIVEXE < fort.5 > divout1
+      nice +10 $DIVEXE < fort.5 > divout1
 #    Xpgdbg $DIVEXE < fort.5 > divout1
 
 #     Process this output now, since these file units conflict with OUT:
@@ -261,6 +261,13 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # MatLab files:
 #
   foreach FILENAME (`ls mlb.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+#
+# ----------------------------------------------------------------------
+# Field line traces for ribbon grid:
+#
+  foreach FILENAME (`ls trace.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
 #

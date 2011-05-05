@@ -1934,6 +1934,8 @@ c ======================================================================
 c
 c function: CalcPoint
 c
+c Calculate the perpendicular distance from a point to a line.
+c
       INTEGER FUNCTION CalcPoint(ar,az,br,bz,cr,cz,t)
 
       IMPLICIT none
@@ -1961,14 +1963,6 @@ c     Output:
 
         r = ar + t * deltar
         z = az + t * deltaz
-
-        IF (ar.EQ.2.80421400) THEN
-          WRITE(50,*) '           --->',t
-          WRITE(50,*) '           --->',
-     .                DSQRT((ar-cr)**2+(az-cz)**2)
-          WRITE(50,*) '           --->',
-     .                DSQRT((br-cr)**2+(bz-cz)**2)
-        ENDIF
 
 c...NEW
         IF     (DSQRT((ar-cr)**2+(az-cz)**2).LT.TOL) THEN

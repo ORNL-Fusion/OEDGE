@@ -156,6 +156,10 @@ c
          INTEGER   :: ti_rec(2)        ! Energy source from neutral code associated with volume recombination
          INTEGER   :: super(2)         ! Allow for supersonic flows near targets
          REAL      :: s28mode          ! Node assignment routine
+
+         INTEGER   :: radvel           ! Option for specifying the radial velocity with MODE=7 in S74 (far-SOL)
+         REAL      :: radvel_param(2)  ! Parmeters used to specify the radial velocty and distribution
+
 !...     Materials data to load:
          INTEGER   :: mat_opt
          CHARACTER :: mat_file*512

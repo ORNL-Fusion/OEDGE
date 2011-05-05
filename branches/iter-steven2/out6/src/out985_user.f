@@ -783,14 +783,14 @@ c..       Defunct:
         CASE (-7)
 c...      Big screen, to catch rays from incomplete 3D grids:
 
-          newvtx(1,1) =  0.000D0
-          newvtx(2,1) =  3.000D0
-          newvtx(1,2) =  3.000D0
-          newvtx(2,2) =  3.000D0
-          newvtx(1,3) =  3.000D0
-          newvtx(2,3) = -3.000D0
-          newvtx(1,4) =  0.000D0
-          newvtx(2,4) = -3.000D0
+          newvtx(1,1) =   0.000D0
+          newvtx(2,1) =  10.000D0
+          newvtx(1,2) =   8.370D0
+          newvtx(2,2) =  10.000D0
+          newvtx(1,3) =   8.370D0
+          newvtx(2,3) = -10.000D0
+          newvtx(1,4) =   0.000D0
+          newvtx(2,4) = -10.000D0
 
           DO i1 = 4, 2, -1
             newsrf%type = SP_LINE_SEGMENT

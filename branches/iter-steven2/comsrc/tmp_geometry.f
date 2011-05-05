@@ -672,7 +672,7 @@ c       a filament flux-tube:
               len2 = MAX(0.0D0,DBLE(opt_fil%length2))
               chop = 5
             ENDIF
-            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,0.0D0,
      .                                 n,v,10000)  ! *** HACK *** (the 10000)
             filament(ifilament)%lcell(1,icell) = len1
             filament(ifilament)%lcell(2,icell) = len2

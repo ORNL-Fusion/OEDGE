@@ -722,7 +722,7 @@ c           name in the result statement which should be the default
 c           behaviour in any case.
 c
 c
-      RECURSIVE REAL FUNCTION Quant2Grad(ir,s,quant,targval) ! RESULT(res)
+      RECURSIVE REAL FUNCTION Quant2Grad(ir,s,quant,targval) 
      .               RESULT (res_Quant2Grad)
 c     .               RESULT (Quant2Grad)
 

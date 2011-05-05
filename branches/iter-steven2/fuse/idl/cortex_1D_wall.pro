@@ -1,63 +1,5 @@
 ;
 ; ======================================================================
-; 
-FUNCTIOn cortex_GetValues, str, values
-
-  IF (str EQ 'none') THEN RETURN, 0
-
-  result = 0
-
-  str_comma = STRSPLIT(str,',',/EXTRACT)
-  
-  values = [-1]
-
-  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
-    j = STRPOS(str_comma[i],'-')
-    IF (j EQ -1) THEN BEGIN
-      values = [values,FLOAT(str_comma[i])]
-    ENDIF ELSE BEGIN
-      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
-      print, 'not ready'
-      stop
-;       IF (LONG(val) GE LONG(str_dash[0]) AND  $
-;          LONG(val) LE LONG(str_dash[1])) THEN result = 1
-    ENDELSE
-  ENDFOR
-
-  IF (N_ELEMENTS(values) GT 1) THEN BEGIN
-    values = values[1:N_ELEMENTS(values)-1]
-    RETURN, 1
-  ENDIF ELSE RETURN, 0
-
-END
-;
-; ======================================================================
-; 
-FUNCTION cortex_CheckIndex, val, str
-
-  IF (str EQ 'none') THEN RETURN, 0
-  IF (str EQ 'all' ) THEN RETURN, 1
-
-  result = 0
-
-  str_comma = STRSPLIT(str,',',/EXTRACT)
-  
-  FOR i = 0, N_ELEMENTS(str_comma)-1 DO BEGIN
-    j = STRPOS(str_comma[i],'-')
-    IF (j EQ -1) THEN BEGIN
-      IF (LONG(val) EQ LONG(str_comma[i])) THEN result = 1
-    ENDIF ELSE BEGIN
-      str_dash = STRSPLIT(str_comma[i],'-',/EXTRACT)
-      IF (LONG(val) GE LONG(str_dash[0]) AND  $
-          LONG(val) LE LONG(str_dash[1])) THEN result = 1
-    ENDELSE
-    IF (result EQ 1) THEN BREAK
-  ENDFOR
-
-  RETURN, result
-END
-;
-; ======================================================================
 ;
 FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annotate=annotate, ps=ps
 
@@ -116,7 +58,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
        xtitle   = 'WALL SEGMENT INDEX'
        ytitle   = ['flux_p (D m-2 s-1)','E_avg (eV)','flux_e (MW m-2)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
-       ntrace = [1, 1, 1] 
+       ntrace    = [1,1,1] 
        plot_type = [1,1,1]  
        END
 ;   --------------------------------------------------------------------
@@ -144,15 +86,15 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
                    'ATOM FLUX / m-2 s-1',        $
                    'AVERAGE ATOM ENERGY / eV',   $
                    'IMPURITY INFLUX / m-2 s-1',  $
-                   'EROSION / mm s-1']
-;                   'EROSION / mm per 1000 shots']
+;                   'EROSION / mm s-1']
+                   'EROSION / mm per 1000 shots']   ; For the 1000 shot plot
        xtitle = 'WALL INDEX'
        ytitle = ['none','none',  $
                  'atom flux density (D m-2 s-1)',        $
                  'average indicent atom energy (eV)',    $
                  'impurity influx (particles m-2 s-1)',  $
-                 'erosion rate (mm s-1)']
-;                 'erosion rate (mm / 1000 shots)']
+;                 'erosion rate (mm s-1)']
+                 'erosion rate (mm / 1000 shots)']  ; For the 1000 shot plot
        labels = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1,1,1,1,1,1]  ; Number of data lines on each plot
        IF (plot.show_grid) THEN BEGIN
@@ -308,6 +250,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
           xdata = INDGEN(N_ELEMENTS(val.wall.length))
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
+            1:
             2:
             3: ydata[*,0] = val.wall.in_par_atm_1
             4: ydata[*,0] = val.wall.in_ene_atm_1
@@ -342,7 +285,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
               ydata[*,0] = ( val.wall.em_par_atm_2_2 / particles_per_m2     ) * atom_diameter   * 1.0E+3         
 
               ;                          pulse time   number of pulses 
-              ;ydata[*,0] =  ydata[*,0] * 400.0      * 1000.0           
+              ydata[*,0] =  ydata[*,0] * 400.0      * 1000.0             ; For the 1000 shot plot
               END
           ENDCASE
           END
@@ -354,7 +297,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
             1: ydata[*,0] = val.wall.atom_par_flux
             2: ydata[*,0] = val.wall.mol_par_flux 
             3: BEGIN
-              atm_flux = val.wall.atom_par_flux / 2.0 !(assuming a chamber where all D is convereted to D2)
+              atm_flux = val.wall.atom_par_flux / 2.0 ; (assuming a chamber where all D is convereted to D2)
               mol_flux = val.wall.mol_par_flux
              
               flux = (atm_flux + mol_flux) 
@@ -414,7 +357,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
     IF (ymin GT 0.0 AND ymax GT 0.0) THEN ymin = 0.0  ; Makes things a bit clearer on the plots I think...
     IF (ymin LT 0.0 AND ymax LT 0.0) THEN ymax = 0.0
     deltay = ymax - ymin
-    ymin = ymin - 0.10 * deltay
+    ymin = ymin - 0.12 * deltay
     ymax = ymax + 0.05 * deltay
 
 ;   Axes:
@@ -562,8 +505,9 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
       SWITCH option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-          cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
-                          dev_xsize, dev_ysize, charsize_labels, colors
+          IF (idata EQ 1) THEN  $
+            cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                            dev_xsize, dev_ysize, charsize_labels, colors
 
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
  
