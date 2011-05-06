@@ -2,6 +2,38 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+c function: raySurfaceNormal
+c
+c
+      SUBROUTINE raySurfaceNormal(isrf,nv)
+      USE mod_out985
+      IMPLICIT none
+
+      INTEGER, INTENT(IN ) :: isrf
+      REAL*8 , INTENT(OUT) :: nv(3)
+
+      INTEGER i1
+      REAL*8  av(3),bv(3),length
+
+      av(1:3) = vtx(1:3,srf(isrf)%ivtx(1)) - 
+     .          vtx(1:3,srf(isrf)%ivtx(2))
+      bv(1:3) = vtx(1:3,srf(isrf)%ivtx(3)) - 
+     .          vtx(1:3,srf(isrf)%ivtx(2))
+
+      nv(1) =  av(2) * bv(3) - av(3) * bv(2)
+      nv(2) = -av(1) * bv(3) + av(3) * bv(1)
+      nv(3) =  av(1) * bv(2) - av(2) * bv(1) 
+
+      length = DSQRT(nv(1)**2 + nv(2)**2 + nv(3)**2) 
+
+      nv = nv / length
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
 c function: AddSurface
 c
 c
@@ -371,7 +403,8 @@ c      IF (obj(iobj)%nside.NE.0) inpoly = .FALSE.
 c
 c ====================================================================== 
 c
-      SUBROUTINE LineThroughSurface(v1,v2,iobj,iside,isur,n,v,d,status)
+      SUBROUTINE LineThroughSurface(v1,v2,iobj,iside,isur,n,v,d,status,
+     .                              DTOL)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -380,9 +413,10 @@ c
       INTEGER n
       INTEGER iobj,iside,isur,mode,status
       REAL*8  v(3,MAXINTER),d(MAXINTER)
+      REAL*8, INTENT(IN) :: DTOL 
 
-      REAL*8     DTOL 
-      PARAMETER (DTOL=1.0D-10)
+c      REAL*8     DTOL 
+c      PARAMETER (DTOL=1.0D-12)  ! (DTOL=1.0D-10) ! changed 10/11/2010 -SL
 
       INTEGER i1,is,plane,fp
       LOGICAL result,output
@@ -467,6 +501,15 @@ c        d = -1.0D0
           r4 = obj(iobj)%v(1,obj(iobj)%ipts(2,iside))
           y3 = obj(iobj)%v(2,obj(iobj)%ipts(1,iside))
           y4 = obj(iobj)%v(2,obj(iobj)%ipts(2,iside))
+
+
+c          IF (obj(iobj)%ik.EQ.66.AND.obj(iobj)%ir.EQ.56) THEN
+c              WRITE(0,*) obj(iobj)%v(1,obj(iobj)%ipts(1,iside))
+c              WRITE(0,*) obj(iobj)%v(1,obj(iobj)%ipts(2,iside))
+c              WRITE(0,*) obj(iobj)%v(2,obj(iobj)%ipts(1,iside))
+c              WRITE(0,*) obj(iobj)%v(2,obj(iobj)%ipts(2,iside))
+c          ENDIF
+
         ENDIF
         dr34 = r4 - r3
         dy34 = y4 - y3
@@ -535,8 +578,12 @@ c...        No intersection because...
 
             DO is = 1, 2
 
-              IF (nchord.EQ.dchord) WRITE(fp,*) '   s2:',s(is)
-c                                         *** GONNA SCREW THINGS UP? ***
+              IF (nchord.EQ.dchord) THEN
+                WRITE(fp,*) '   s2:',s(is),dr34,dy34
+                WRITE(fp,*) '     :',r3,r4
+                WRITE(fp,*) '     :',y3,y4
+              ENDIF
+c                                       *** GONNA SCREW THINGS UP? ***
               IF (s(is).GE.DTOL.AND.s(is).LE.1.0D0+DTOL2) THEN
 
                 y = y1 + s(is) * dy12
@@ -728,7 +775,7 @@ c...  Input:
      .        srfinter(0:MAXINTER),
      .        nsurlist,count,n
       LOGICAL cont     
-      REAL*8  v(3,MAXINTER),d(MAXINTER),
+      REAL*8  v(3,MAXINTER),d(MAXINTER),DTOL,
      .        vinter(3,0:MAXINTER),dinter(0:MAXINTER)
 
       INTEGER, POINTER :: surlist(:,:)
@@ -738,6 +785,7 @@ c...  Input:
       ninter = 0
       dinter = 0.0D0
 
+      DTOL = 1.0D-10
 
       IF     (mode.EQ.IT_VWINTER) THEN
         nsurlist = nvwlist
@@ -763,60 +811,74 @@ c...  Input:
       ENDIF
 
 
-      DO i3 = 1, nsurlist
-        iobj  = surlist(i3,1)
-        iside = surlist(i3,2)
+      cont = .TRUE.
+      DO WHILE (cont) 
+        cont = .FALSE.
+        DO i3 = 1, nsurlist
+          iobj  = surlist(i3,1)
+          iside = surlist(i3,2)
 
-        IF (nchord.EQ.dchord) THEN
-          WRITE(fp,*) ' INTER?:',mode,i3,iobj,iside
-        ENDIF
-
-        IF (obj(iobj)%nside.NE.0) THEN
-          IF (obj(iobj)%nside.GT.1) THEN
-            isrf1 = obj(iobj)%iside(iside,1)    
-            isrf2 = obj(iobj)%iside(iside,2)            
-c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
-          ELSE
-            isrf1 = obj(iobj)%iside(1,1)    
-            isrf2 = obj(iobj)%iside(1,2)
+          IF (nchord.EQ.dchord) THEN
+            WRITE(fp,*) ' INTER?:',mode,i3,iobj,iside
           ENDIF
-        ELSE
-          isrf1 = 1
-          isrf2 = 1
-        ENDIF
 
-        DO isrf = isrf1, isrf2
-          n = 0
-          v =  0.0D0
-          d = -1.0D0         
-          CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status) 
-c          WRITE(fp,*) 'D:',d(1:n)
-          DO i4 = 1, n
-            IF (ninter.LT.MAXINTER) THEN  
-              IF (obj(iobj)%gsur(iside).EQ.GT_TC.AND.  ! Don't include intersection where 
-     .            d(i4).GT.1.0D-10.OR.                 ! the point is *on* a surface...
-     .            obj(iobj)%gsur(iside).EQ.GT_TD.AND.  
-     .            d(i4).GT.1.0D-20) THEN
-c              IF (d(i4).GT.1.0D-10) THEN  
-                ninter = ninter + 1        
-                dinter(ninter) = d(i4)
-                vinter(1:3,ninter) = v(1:3,i4)
-
-                ointer(ninter) = iobj    ! Reform naming here...
-                sinter(ninter) = iside
-                srfinter(ninter) = isrf
-
-                IF (nchord.EQ.dchord) THEN
-                  WRITE(fp,*) '    HIT:',iobj,iside,isrf
-                ENDIF
-
-              ENDIF
+          IF (obj(iobj)%nside.NE.0) THEN
+            IF (obj(iobj)%nside.GT.1) THEN
+              isrf1 = obj(iobj)%iside(iside,1)    
+              isrf2 = obj(iobj)%iside(iside,2)            
+c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
             ELSE
-              CALL ER('FindSurfaceIntersections','Zounds!',*99)
+              isrf1 = obj(iobj)%iside(1,1)    
+              isrf2 = obj(iobj)%iside(1,2)
             ENDIF
+          ELSE
+            isrf1 = 1
+            isrf2 = 1
+          ENDIF
 
+          DO isrf = isrf1, isrf2
+            n = 0
+            v =  0.0D0
+            d = -1.0D0         
+            CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status,
+     .                              DTOL)
+            IF (nchord.EQ.dchord) THEN
+              WRITE(fp,*) 'D:',d(1:n)
+            ENDIF
+            DO i4 = 1, n
+              IF (ninter.LT.MAXINTER) THEN  
+                IF (obj(iobj)%gsur(iside).EQ.GT_TC.AND.  ! Don't include intersection where 
+     .              d(i4).GT.DTOL   .OR.                 ! the point is *on* a surface...
+c     .              d(i4).GT.1.0D-10.OR.                ! changed 10/11/2010 -SL 
+     .              obj(iobj)%gsur(iside).EQ.GT_TD.AND.  
+     .              d(i4).GT.1.0D-20) THEN
+c                IF (d(i4).GT.1.0D-10) THEN  
+                  ninter = ninter + 1        
+                  dinter(ninter) = d(i4)
+                  vinter(1:3,ninter) = v(1:3,i4)
+
+                  ointer(ninter) = iobj    ! Reform naming here...
+                  sinter(ninter) = iside
+                  srfinter(ninter) = isrf
+
+                  IF (nchord.EQ.dchord) THEN
+                    WRITE(fp,*) '    HIT:',iobj,iside,isrf
+                  ENDIF
+
+                ENDIF
+              ELSE
+                CALL ER('FindSurfaceIntersections','Zounds!',*99)
+              ENDIF
+
+            ENDDO
           ENDDO
         ENDDO
+        IF (ninter.EQ.0.AND.DTOL.EQ.1.0D-10) THEN
+c          WRITE(0 ,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
+          WRITE(fp,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
+          DTOL = 1.0D-14
+          cont = .TRUE.
+        ENDIF
       ENDDO
 
           IF (nchord.EQ.dchord) THEN
@@ -857,7 +919,10 @@ c...    Sort intersections with respect to distance from the viewing location:
         ENDDO
 c...    Check if 2 are the same, which can happen if the chord cuts at a seam:
         DO i1 = ninter-1, 1, -1
-          IF (DABS(dinter(i1)-dinter(i1+1)).LT.1.0D-05) THEN
+          IF (DABS(dinter(i1)-dinter(i1+1)).LT.1.0D-09) THEN   ! I'm not sure how low this tolerance can be set...
+            WRITE(0,*) '  TRIM FAT:',nchord,dinter(i1),dinter(i1+1),
+     .                  DABS(dinter(i1)-dinter(i1+1))
+c          IF (DABS(dinter(i1)-dinter(i1+1)).LT.1.0D-05) THEN 
             DO i2 = i1+1, ninter-1
               dinter(i2)  = dinter(i2+1)
               ointer(i2)  = ointer(i2+1)

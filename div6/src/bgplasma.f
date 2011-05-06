@@ -107,7 +107,34 @@ c...  Determine if SOL28 is going to be called:
      .      callsol28 = .TRUE.
         enddo
       endif
-      if (callsol28.AND.s28mode.GE.4.0) CALL SetupSOL28
+      if (callsol28.AND.s28mode.GE.4.0) THEN
+        CALL SetupSOL28
+c...    If these are set to zero, on account of SOL28 and the fact that it
+c       doesn't use the standard target data arrays, then initialize:
+        IF (ncoredat.EQ.0) THEN
+          coredat = 0.0
+          DO ir = 2, irsep
+            ncoredat = ncoredat + 1
+            coredat(ncoredat,1) = REAL(ir)
+          ENDDO
+        ENDIF
+        IF (nlpdato.EQ.0) THEN
+          lpdato = 0.0
+          DO ir = irsep, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            nlpdato = nlpdato + 1
+            lpdato(nlpdato,1) = REAL(ir)
+          ENDDO
+        ENDIF
+        IF (nlpdati.EQ.0) THEN
+          lpdati = 0.0
+          DO ir = irsep, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            nlpdati = nlpdati + 1
+            lpdati(nlpdati,1) = REAL(ir)
+          ENDDO
+        ENDIF
+      ENDIF
 c slmod end
 c
 c     Piece-meal SOL options

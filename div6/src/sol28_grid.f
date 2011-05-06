@@ -1389,6 +1389,7 @@ c              ENDIF
               field(ncell)%bratio = knot(id)%bratio
 
               newobj%group         = ngrp
+              newobj%index         = 0
               newobj%index(IND_IK) = ik
               newobj%index(IND_IR) = ir
               newobj%index(IND_IS) = 0
@@ -2794,7 +2795,7 @@ c
       CALL CalcCentroid(map_iobj,2,p)
       a1 = p(1)
       a2 = p(2)
-      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))   ! Use GetVertex...
+      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
       b2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2))) 
 
       maxtab = 1.0D+20
@@ -2819,16 +2820,6 @@ c
             map_icell = icell
             map_itube = itube
           ENDIF
-c          IF (itube.EQ.1) THEN
-c            WRITE(88,*) 'DYNAMIC:'
-c            WRITE(88,*) '  : ',map_iobj-
-c     .        tube(GetTube(map_iobj,IND_OBJECT))%cell_index(LO)+1,
-c     .                         GetTube(map_iobj,IND_OBJECT)
-c            WRITE(88,*) '  : ',icell
-c            WRITE(88,*) '  : ',tab,maxtab
-c            WRITE(88,*) '  : ',tcd
-c            WRITE(88,*) '  : ',map_icell,map_itube
-c          ENDIF
         ENDDO
       ENDDO
 
@@ -2857,7 +2848,7 @@ c
       INTEGER GetTube       
  
       INTEGER, PARAMETER :: MAXNLIST = 1000
-      REAL*8 , PARAMETER :: DTOL     = 1.0D-07
+      REAL*8 , PARAMETER :: DTOL = 1.0D-07
 
       INTEGER fp,iobj,itube,nlist,ilist(MAXNLIST,2),clist(MAXNLIST,2),
      .        tube_set,i1,i2,i3,swall(nwall),iwall,mlist(MAXNLIST)
@@ -2866,7 +2857,7 @@ c
      .        xlist(MAXNLIST,2),ylist(MAXNLIST,2),store_x2,store_y2
 
       fp = 88
-      debug = .TRUE.
+      debug = .FALSE.
 
       CALL DumpData_OSM('output.clipping','Trying to clip grid')
 
@@ -2942,7 +2933,7 @@ c         specifications or if the line segment is very short:
           y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
 
           IF (debug) THEN
-            WRITE(fp,*) ' --------------------',i1,i2,iobj
+            WRITE(fp,*) ' --------------------',i2
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2

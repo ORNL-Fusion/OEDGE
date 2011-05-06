@@ -236,7 +236,8 @@ c
 c
 c     
 c
-         call BuildRibbonGrid
+          CALL divLoadRibbonData
+c         call BuildRibbonGrid
 c slmod begin - ribbon dev
          WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
          nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
@@ -256,8 +257,8 @@ c slmod begin - ribbon dev
 c         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
 c         CALL DumpGrid('IN TAU, BEFORE TAILORGRID')
          call TailorGrid
-c         call OutputData(85,'JUST CALLED TAILORGRID')
-c         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
+         call OutputData(86,'JUST CALLED TAILORGRID')
+         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
          call AddPoloidalBoundaryCells
 c slmod end
       endif

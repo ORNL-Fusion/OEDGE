@@ -1087,12 +1087,12 @@ c Moved here for compatilibity with OUT.
 c 
       SUBROUTINE ProcessIterationBlocks
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       IMPLICIT none
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   fp,i,idum1(1:5)
       CHARACTER buffer*1024,cdum1*512
@@ -1249,18 +1249,17 @@ c       are missing, i.e. realistic secondary electron emission (0.0 here), e-i 
 c       energy, atom-atom recombination energy, low collisionality effects, space charge
 c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
         mi = 2.0   ! *** MASS HARDCODED! ***
-c
-        ! jdemod - fix a division by zero issue - only happens if te set to zero somewhere
-        if (tube(itube)%te(itarget).ne.0.0) then 
-         t_ratio = tube(itube)%ti(itarget,ion) / tube(itube)%te(itarget)
-        else
-           t_ratio = 1.0
-        endif
-c
+        IF (tube(itube)%te(itarget).NE.0.0) THEN
+          t_ratio = tube(itube)%ti(itarget,ion) / 
+     .              tube(itube)%te(itarget)
+        ELSE
+          t_ratio = 1.0
+        ENDIF
+
         delta_e = 0.0
         m_ratio = 9.11E-31 / (mi * AMU)
         log_arguement = 2.0 * PI * m_ratio * (1.0 + t_ratio) * 
-     .                 (1.0 - delta_e)**-2 
+     .                 (1.0 - delta_e)**(-2)
         osm_GetGamma = 2.5 * t_ratio + 2.0 / (1.0 - delta_e) - 
      .                 0.5 * LOG( log_arguement )
       ENDIF
@@ -1304,3 +1303,31 @@ c
       RETURN
 99    STOP
       END
+c
+c ======================================================================
+c
+      LOGICAL FUNCTION osmCheckTag(buffer,tag)
+      IMPLICIT none
+    
+      CHARACTER :: buffer*(*), tag*(*)
+
+      INTEGER n1,n2,i1
+
+      osmCheckTag = .FALSE.
+
+      n1 = LEN_TRIM(buffer)       
+      n2 = LEN_TRIM(tag   )       
+
+      DO i1 = 1, n1-n2
+        IF (buffer(i1:i1+n2-1).EQ.tag(1:n2)) THEN
+          osmCheckTag = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c

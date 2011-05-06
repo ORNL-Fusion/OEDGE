@@ -506,7 +506,7 @@ c...  Input:
       REAL Clock2
 
       INTEGER   i1,i2,i3,i4,status,fp,fp2,m,n,codec,iobj,ierr,volcnt,
-     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet
+     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet,npro
       LOGICAL   ascii,message
       REAL      rtime,ttime
       REAL*8    int_sum,solid_total,solid_angle
@@ -514,7 +514,7 @@ c...  Input:
 
       INTEGER, ALLOCATABLE :: idum1(:)
 
-      REAL*8, ALLOCATABLE, TARGET :: ddum1(:)
+      REAL*8, ALLOCATABLE, TARGET :: ddum1(:),ddum2(:,:)
       REAL*4, ALLOCATABLE, TARGET :: mapchk(:)
       REAL*4, ALLOCATABLE, TARGET :: rdum1(:)
 
@@ -610,7 +610,10 @@ c...  Assemble a list of wall surfaces to speed things up:  (30% faster for curr
         DO i2 = 1, MAX(obj(i1)%nsur,obj(i1)%nside)
 c...      Check if surface is part of the vessel wall:
           IF (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL  ) nvwlist = nvwlist+1
-          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) ngblist = ngblist+1
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME))
+     .      ngblist = ngblist+1
         ENDDO
       ENDDO
       ALLOCATE (vwlist(nvwlist,2))
@@ -624,7 +627,10 @@ c...      Check if surface is part of the vessel wall:
             i3 = i3 + 1
             vwlist(i3,1) = i1
             vwlist(i3,2) = i2
-          ELSEIF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) THEN
+          ENDIF
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME)) THEN
             i4 = i4 + 1
             gblist(i4,1) = i1
             gblist(i4,2) = i2
@@ -639,6 +645,7 @@ c...      Check if surface is part of the vessel wall:
 
 
       ALLOCATE(ddum1(n))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,2))  ! MPI problem?  nobj=m, should be # integration volumes
       ALLOCATE(rdum1(100))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
@@ -665,7 +672,10 @@ c        IF (MOD(i1,1000).EQ.0)
         status = 0
 
         ddum1 = 0.0D0
-        pixel(i1)%track => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        ddum2 = 0.0D0
+        pixel(i1)%track   => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        pixel(i1)%nprofile = 0
+        pixel(i1)%profile => ddum2  ! Dont' make part of view derived type definition, just send on its own?
 
         rdum1 = 0.0
 c        pixel(i1)%spectrum => rdum1  ! also a problem...
@@ -740,6 +750,23 @@ c...        Add some brains:
         ELSE
         ENDIF
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
+
+
+        IF (.FALSE..AND.opt%ndet.EQ.1.AND.
+     .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
+          WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
+          DO i2 = 1,pixel(i1)%nprofile
+            WRITE(6,*) '    ',i2,pixel(i1)%profile(i2,1:2)
+          ENDDO
+          WRITE(file,'(A,I0.3,256X)')          
+     .      'idl.ray_profile_'//TRIM(opt%det_fname(1))//'_',i1
+          WRITE(0,*) ' FILE:'//TRIM(file)
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          npro=pixel(i1)%nprofile
+          CALL inPutData(pixel(i1)%profile(1:npro,1),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,2),'SIGNAL','N/A')
+          CALL inCloseInterface
+        ENDIF
       ENDDO  ! Pixel loop
 
 c...  Confirm that all volumes on the inversion mesh were sampled by the
@@ -879,6 +906,7 @@ c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
 c...  Clear arrays:
       DEALLOCATE(idum1)
       DEALLOCATE(ddum1)
+      DEALLOCATE(ddum2)
       DEALLOCATE(rdum1)
       DEALLOCATE(vwlist)
       DEALLOCATE(gblist)
@@ -1424,6 +1452,8 @@ c
               CALL ProcessTetrahedronGrid (ielement)
             CASE (7)
               CALL LoadImageReconstruction(ielement)
+            CASE (8)
+              CALL rayLoadITERFWP         (ielement)
             CASE DEFAULT
               CALL User_CustomObjects     (ielement)
           ENDSELECT
@@ -1534,6 +1564,7 @@ c
       SUBROUTINE Main985(iopt)
       USE mod_out985
       USE mod_out985_variables
+      USE mod_out985_clean
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: iopt
@@ -1559,6 +1590,10 @@ c      MAX3D = MAX3D985
 
       WRITE(0,*) 'HERE IN 985'
 
+c     Just in case there are previous allocations from OUT987 tetrahedron plots:
+      CALL Wrapper_ClearObjects  
+      CALL DEALLOC_ALL
+
       WRITE(0,*) '  ALLOCATING OBJECTS'
       MAX3D = 500000 
 c      MAX3D = 4000000 
@@ -1571,7 +1606,7 @@ c      MAX3D = 4000000
       ALLOCATE(pixel(MAXNPIXEL))
 
 c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
-      CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
+      CALL ALLOC_CHORD(22500)  ! Just for viewing! (make smaller!)
 
       opt%load = 1
 
@@ -1583,17 +1618,20 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
 
       npixel = 0
       nchord = 0
+      n_pchord = 0
 
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
-      opt%nplots = -1
+      opt%nplots  = -1
 
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
         opt%int_num = 0
         opt%ref_num = 0
-        opt%ndet = 0
+        opt%ndet    = 0
+        opt%rib_n   = 0
+
         CALL LoadOptions985_New(opt,ALL_OPTIONS,status)
       ENDIF
 
@@ -1658,42 +1696,36 @@ c      STOP 'DONE MAN'  ! LEFT OFF
 c      opt%ob_nsector = -1
 c      opt%ob_invgrd  =  0
 
-c      IF (opt%ob_model.GT.0) THEN
-        WRITE(0,*) '  BUILDING 3D OBJECTS'
-c        WRITE(0,*) '    toroidal extent ',
-c     .    opt%ob_nsector,opt%ob_angle_start,
-c     .    opt%ob_angle_end,opt%ob_yrotation
-c        WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
-c        WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
-c        WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
-c        WRITE(0,*) '    vessel wall     ',opt%ob_wall
-c        WRITE(0,*) '    targets         ',opt%ob_targ
-c        WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
-c        WRITE(0,*) '    field line(s)   ',opt%ob_line
-c        WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
+
+      WRITE(0,*) '  BUILDING 3D OBJECTS'
+c      WRITE(0,*) '    toroidal extent ',
+c     .  opt%ob_nsector,opt%ob_angle_start,
+c     .  opt%ob_angle_end,opt%ob_yrotation
+c      WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
+c      WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
+c      WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
+c      WRITE(0,*) '    vessel wall     ',opt%ob_wall
+c      WRITE(0,*) '    targets         ',opt%ob_targ
+c      WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
+c      WRITE(0,*) '    field line(s)   ',opt%ob_line
+c      WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
  
-        CALL BuildObjects
+      CALL BuildObjects
 
-        opt%obj_angle_start = 0.0
-        opt%obj_angle_end = 360.0
-        opt%obj_yrotation = 0.0
-        opt%obj_nsector = -1
+      opt%obj_angle_start = 0.0
+      opt%obj_angle_end   = 360.0
+      opt%obj_yrotation   = 0.0
+      opt%obj_nsector     = -1
+c...  Rotate all object vertices about the y-axis, to simulate when
+c     the camera is located somewhere other than straight in along
+c     the X or Z axes: 
+      CALL Calc_Transform2(mat,0.0D0,1,0)
+      CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
+      DO ivtx = 1, nvtx
+        CALL Transform_Vect(mat,vtx(1,ivtx))
+      ENDDO
 
-c...    Rotate all object vertices about the y-axis, to simulate when
-c       the camera is located somewhere other than straight in along
-c       the X or Z axes: 
-        CALL Calc_Transform2(mat,0.0D0,1,0)
-        CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
-        DO ivtx = 1, nvtx
-          CALL Transform_Vect(mat,vtx(1,ivtx))
-        ENDDO
-
-        WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
-c      ENDIF
-
-
-      IF (opt%int_num.GT.0) 
-     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
+      WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
 
 
       WRITE(0,*) '  NCHORD',nchord
@@ -1702,15 +1734,23 @@ c      ENDIF
       WRITE(0,*) '  NSRF  ',nsrf
       WRITE(0,*) '  NVTX  ',nvtx
 
-      IF (opt%ndet.GT.0) THEN
+c...
+      IF (opt%int_num.GT.0) 
+     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
 
+c...
+      IF (opt%ndet.GT.0) THEN
         WRITE(0,*) '  PROCESSING PIXELS'
         CALL ProcessPixels(npixel,pixel)
-c        CALL ProcessPixels(opt,npixel,pixel,nobj,obj)
-c        CALL ProcessPixels
         WRITE(0,*) '  DONE PROCESSING PIXELS'
-
         CALL DumpImage(npixel,pixel)
+      ENDIF
+
+c...
+      IF (opt%rib_n.GT.0) THEN
+        WRITE(0,*) '  PROCESSING RIBBON'
+        CALL rayGenerateRibbonGrid
+        WRITE(0,*) '  DONE PROCESSING RIBBON'
       ENDIF
 
 
@@ -1743,6 +1783,7 @@ c      nobj985 = nobj
       IF (ALLOCATED(plasma)) DEALLOCATE(plasma)
 
 c...  Put into a subroutine:
+      nobj = 0
       IF (ALLOCATED(obj))   DEALLOCATE(obj)
       IF (ALLOCATED(pixel)) DEALLOCATE(pixel)
       CALL DEALLOC_CHORD

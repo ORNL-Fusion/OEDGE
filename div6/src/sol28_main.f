@@ -735,7 +735,7 @@ c       result of analyzing the present state of the solution:
       IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         WRITE(logfp,'(A    )') 'Local control options:'
-        WRITE(logfp,'(A,I10)') 'first_bc   = ',first_bc
+        WRITE(logfp,'(A,L10)') 'first_bc   = ',first_bc
         WRITE(logfp,'(A,L10)') 'set_cnt_bc = ',set_cnt_bc
       ENDIF
 
@@ -1734,10 +1734,12 @@ c             ----------------------------------------------------------
               CASE(2)
 c...            Assign SOLPS solution:
                 CALL AssignSOLPSPlasma(itube)
+                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE(3)
 c...            Interpolate reference solution:
                 CALL InterpolateReferencePlasma(itube)
+                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE(28:30)
 c...            SOL28 - SimpleAsPie analytic particle and momentum solver (SL)
@@ -1792,6 +1794,11 @@ c        WRITE(0,*) ibits(tube_state(it1:it2),0,1)
         ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
      .          COUNT(ibits(tube_state(it1:it2),0,1).EQ.1  ).GT.0) THEN
 c...      Check if semi-automated symmetry point specification:
+          cont = .TRUE.
+        ELSEIF (COUNT(ibits(tube_state(it1:it2),2,1).EQ.1  ).GT.0) THEN  
+c...      Check if any invalid links were present:
+          IF (cnt.EQ.2) STOP 'Problemo man'
+          tube_state(it1:it2) = IBCLR(tube_state(it1:it2),2)
           cont = .TRUE.
         ENDIF
 
