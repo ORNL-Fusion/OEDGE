@@ -20,7 +20,7 @@ c
       INTEGER GetNumberOfObjects
 
       INTEGER status,ndat,ik,ir,iobj,ion
-      REAL*8  p(3)
+      REAL*8  p(3),dist
       REAL, ALLOCATABLE :: tdata(:,:)
 
       ion = 1
@@ -34,13 +34,22 @@ c
 c      CALL LoadGrid('osm.raw')
 
       ndat = GetNumberOfObjects('default')
-      ALLOCATE(tdata(ndat,2))
+      ALLOCATE(tdata(ndat,4))
       CALL LoadTriangleData(2,1,1,1,tdata(1,1),'default')  ! Atom density (from plot 987)
-      CALL LoadTriangleData(3,1,1,1,tdata(1,2),'default')  ! Mol. density (from plot 987)
+      CALL LoadTriangleData(2,1,7,0,tdata(1,2),'default')  ! Atom average energy [eV] (from out985_emission)
+      CALL LoadTriangleData(3,1,1,1,tdata(1,3),'default')  ! Mol. density (from plot 987)
+      CALL LoadTriangleData(6,1,7,1,tdata(1,4),'default')  ! Dalpha       (from plot 987)
 
       CALL inOpenInterface('idl.tet_centroid',ITF_WRITE)
       DO iobj = 1, nobj
         CALL CalcCentroid(iobj,2,p)
+
+c...    Filter:
+        dist = DSQRT( (p(1) - 0.4403D0)**2 +
+     .                (p(2) - 0.0D0   )**2 +
+     .                (p(3) - 0.0D0   )**2)
+c        IF (dist.GT.0.15D0) CYCLE  
+
         CALL inPutData(SNGL(p(1)),'X','m')                     
         CALL inPutData(SNGL(p(2)),'Y','m')                     
         CALL inPutData(SNGL(p(3)),'Z','m')                     
@@ -50,12 +59,14 @@ c      CALL LoadGrid('osm.raw')
 c          WRITE(0,*) 'ind:',iobj,i
           CALL inPutData(knbs (ik,ir),'NE','m-3')        
           CALL inPutData(ktebs(ik,ir),'TE','eV')
-        ELSE
+       ELSE
           CALL inPutData(0.0         ,'NE','m-3')        
           CALL inPutData(0.0         ,'TE','eV')
         ENDIF
-        CALL inPutData(tdata(iobj,1),'N_D' ,'m-3')
-        CALL inPutData(tdata(iobj,2),'N_D2','m-3')
+        CALL inPutData(tdata(iobj,1),'D_DENS'  ,'m-3')
+        CALL inPutData(tdata(iobj,2),'D_AVGENG','eV')
+        CALL inPutData(tdata(iobj,3),'D2_DENS' ,'m-3')
+        CALL inPutData(tdata(iobj,4),'D_ALPHA' ,'photons m-3 s-1')
       ENDDO
       CALL inCloseInterface
 
@@ -103,6 +114,8 @@ c
         CALL inPutData(pos  (1:ike),'POS'  ,'N/A')                     
         CALL inPutData(tube (1:ike),'TUBE' ,'N/A')                     
         CALL inPutData(kss(1:ike,ir),'S','m')
+        CALL inPutData(rs (1:ike,ir),'R','m')
+        CALL inPutData(zs (1:ike,ir),'Z','m')
         CALL inPutData(pinion (1:ike,ir),'ION_NET','m-3 s-1')        
         CALL inPutData(pinrec (1:ike,ir),'REC_NET','m-3 s-1')        
         CALL inPutData(pinmp  (1:ike,ir),'MOM_NET','?')
@@ -121,8 +134,7 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac,
-     .                                   title)
+      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac)
       USE mod_interface
       IMPLICIT none
 
@@ -136,16 +148,13 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER  , INTENT(IN) :: nizs,cizsc,cion
-      REAL     , INTENT(IN) :: crmi,absfac
-      CHARACTER, INTENT(IN) :: title*(*)
-
-      REAL GetFlux
+      INTEGER, INTENT(IN) :: nizs,cizsc,cion
+      REAL   , INTENT(IN) :: crmi,absfac
 
       INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
       REAL      totfypin,impact_energy,pos1,pos2
-      CHARACTER tag*64
+      CHARACTER tag*64,title*1024
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
 
@@ -169,7 +178,7 @@ c...  Dump impurity data:
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'         ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'         ,'N/A')
       CALL inPutData(crmi ,'IMP_A'         ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
@@ -253,7 +262,7 @@ c     which I'm leaving off for now...
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
       CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
@@ -281,7 +290,13 @@ c     which I'm leaving off for now...
           WRITE(tag,'(A,I0.2,A)') 'IMP_',iz,'_'
           impact_energy = 3.0 * kteds(id) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
      .                    2.0 * ktids(id) 
-c
+          CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
+          CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
+          CALL inPutData(0.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
+        ENDDO      
+      ENDDO  
+      CALL inCloseInterface 
+
 c  NEROS(,1) - deposition, see NEUT.F, ION_PARALLEL_TRANSPORT.F, ION_TRANSPORT.F
 c  NEROS(,2) - same as (,3), see NEUT.F
 c  NEROS(,3) - erosion, see DIV.F
@@ -291,19 +306,43 @@ c          FACT = 0.0
 c          IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
 c          NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
 c
-c  From OUT000.F:
-c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)
+c from div6/src/div.f
+c
+c      FACT = 0.0
+c      IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c      DO 883 ID = 1, NDS
+c        IF (DDS(ID).NE.0.0) THEN
+c          NEROS(ID,1) =-NEROS(ID,1) / DDS(ID) * FACTA(0)             
+c          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(0)
+cc          NEROS(ID,2) = NEROS(ID,2) / DDS(ID) * FACTA(-1)
+c          NEROS(ID,3) = NEROS(ID,3) / DDS(ID) * FACTA(0)
+c        ELSE
+c          NEROS(ID,1) = 0.0
+c          NEROS(ID,2) = 0.0
+c          NEROS(ID,3) = 0.0
+c        ENDIF
+c        NEROS(ID,4) = NEROS(ID,1) + NEROS(ID,3)
+c        NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c  883 CONTINUE
+c
+c from out6/src/out000.f:
+c        DO 835 ID = startid, endid, stepid
+c          JD = JD + 1
+c          DO 830 II = 1, 5
+c            DVALS(JD,II) = NEROS(ID,II)
+c            IF (NEROS(ID,II).GT.0.0) THEN
+c              SUM(II)   = SUM(II)   + NEROS(ID,II) * DWIDS(JD)
+c            ELSE
+c              SUM(II+5) = SUM(II+5) + NEROS(ID,II) * DWIDS(JD)
+c            ENDIF
+c  830     CONTINUE
+c          IF (ID.EQ.switchid) JD = JD + 2
+c  835   CONTINUE
+c        WRITE(ELABS(1),'(A,F8.4)')'    TOTAL DEPOSITION =',SUM(1)+SUM(6)  
 c        WRITE(ELABS(2),'(A,F8.4)')'    PRIMARY REMOVAL  =',SUM(2)+SUM(7)
 c        WRITE(ELABS(3),'(A,F8.4)')'    TOTAL REMOVAL    =',SUM(3)+SUM(8)
 c        WRITE(ELABS(4),'(A,2F7.4)')'    NET EROSION=',     SUM(4),SUM(9)
 c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
-c
-          CALL inPutData(deps(id,iz)  ,TRIM(tag)//'FLUX','m-2 s-1')                     
-          CALL inPutData(impact_energy,TRIM(tag)//'E0'  ,'eV')                     
-          CALL inPutData(0.0          ,TRIM(tag)//'VI'  ,'m s-1')                     
-        ENDDO      
-      ENDDO  
-      CALL inCloseInterface 
 
 c...  ASCII data file for Sophie and MatLab:
       fp = 99
@@ -366,7 +405,7 @@ c
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(SNGL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
       CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
       CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
@@ -458,10 +497,11 @@ c     wallpt (ind,31) = Plasma density at wall segment
         CALL inPutData(wallpt(id,19)  ,'TEMPERATURE','K')                     
         in = wallpt(id,17)
         CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
-        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
+        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'D m-2 s-1')                     
         CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
-        CALL inPutData(fluxhw(in)-flxhw6(in),'MOL_PAR_FLUX'  ,'m-2 s-1')                     
-        CALL inPutData(flxhw7(in)           ,'MOL_AVG_ENERGY','eV')                     
+        CALL inPutData(fluxhw(in)-flxhw6(in),
+     .                                 'MOL_PAR_FLUX'   ,'D2 m-2 s-1')                     
+        CALL inPutData(flxhw7(in)     ,'MOL_AVG_ENERGY','eV')                     
       ENDDO
       CALL inCloseInterface 
 
@@ -475,7 +515,6 @@ c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
 c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
 c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
 c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
-
 
 c...  ASCII data file for Sophie and MatLab:
       fp = 99
@@ -551,8 +590,6 @@ c
       CALL LoadObjects('osm_geometry.raw',status)
 
       CALL GenerateOutputFiles
-
-
 
       CALL SaveFluidGridGeometry       
 
@@ -3164,11 +3201,11 @@ c...      Temperature gradient:
 c
 c ======================================================================
 c
-c sburoutine: AnalyseStrata
+c sburoutine: Main chamber recycling
 c
-c Calculate neutral production and destruction based on strata:
+c Add up the recycling in the main chamber
 c
-      SUBROUTINE AnalyseStrata
+      SUBROUTINE MainChamberRecycling(fp)
       IMPLICIT none
 
       INCLUDE 'params'
@@ -3178,9 +3215,62 @@ c
       INCLUDE 'slcom'
       INCLUDE 'slout'
 
+      INTEGER, INTENT(IN) :: fp
+
+      REAL GetFlux
+
+      INTEGER ir
+      REAL    sumflx(4)
+
+      sumflx = 0.0
+
+      DO ir = irsep, nrs
+        IF (idring(ir)   .EQ.BOUNDARY) CYCLE
+        IF (psitarg(ir,1).GT.1.0262  ) THEN  !Special for ITER grids
+c          WRITE(0,*) 'MCR CONTRIBUTION',ir
+          sumflx(3) = sumflx(3) + ABS(GetFlux(IKLO,ir)) / eirtorfrac
+          sumflx(4) = sumflx(4) + ABS(GetFlux(IKHI,ir)) / eirtorfrac
+        ELSE
+          sumflx(1) = sumflx(1) + ABS(GetFlux(IKLO,ir)) / eirtorfrac
+          sumflx(2) = sumflx(2) + ABS(GetFlux(IKHI,ir)) / eirtorfrac
+        ENDIF
+      ENDDO      
+
+      WRITE(fp,*) 
+      WRITE(fp,*) 'Divertor recycling:'
+      WRITE(fp,*) '  inner=',sumflx(1)      
+      WRITE(fp,*) '  outer=',sumflx(2)      
+      WRITE(fp,*) '  total=',sumflx(1)+sumflx(2)      
+      WRITE(fp,*) 'Main chamber recycling:'
+      WRITE(fp,*) '  inner=',sumflx(3)      
+      WRITE(fp,*) '  outer=',sumflx(4)      
+      WRITE(fp,*) '  total=',sumflx(3)+sumflx(4)      
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c sburoutine: AnalyseStrata
+c
+c Calculate neutral production and destruction based on strata:
+c
+      SUBROUTINE AnalyseStrata(fp)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      INTEGER, INTENT(IN) :: fp
+
       REAL GetFlux,ATAN2C,CalcWidth,GetCs
 
-      INTEGER ik,ir,i1,fp,numstrata,ir1,id,ik1,optflow,ikm,irdiv1,irdiv2
+      INTEGER ik,ir,i1,numstrata,ir1,id,ik1,optflow,ikm,irdiv1,irdiv2
       REAL    ion(MAXSTRATA,MAXNRS,4),rec(MAXNRS),srcstr,tarflx,
      .        flux(2,MAXNRS),sumion(0:MAXSTRATA,4),sumstr(0:7),intion,
      .        intrec,deltar,deltaz,alpha,beta,cost,width,ionflx,flxvel,
@@ -3199,9 +3289,9 @@ c      irdiv2 = 21
       irdiv1 = irwall - 1
       irdiv2 = irwall - 1
 
-      fp = 99
-      OPEN (UNIT=fp,FILE='outdata.dat',ACCESS='SEQUENTIAL',
-     .      STATUS='REPLACE')
+c      fp = 99
+c      OPEN (UNIT=fp,FILE='outdata.dat',ACCESS='SEQUENTIAL',
+c     .      STATUS='REPLACE')
 
 
       sum1 = 0.0
@@ -3615,7 +3705,7 @@ c     .      ir,ik,a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
 c        ik1 = ik + 1
         ik1 = ik
 
-c...    Neutral soure and sink in inner SOL:
+c...    Neutral source and sink in inner SOL:
         intrec = 0.0
         intion = 0.0
         DO ik = 1, ik1
@@ -3735,10 +3825,7 @@ c...  Add puffing sources:
         ENDIF
       ENDDO
 
-
-      CLOSE(fp)
-
-
+c      CLOSE(fp)
 
       RETURN
 99    STOP
@@ -4197,8 +4284,9 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2,
-     .                       title)
+      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
+      USE mod_out985
+      USE mod_out985_variables
       IMPLICIT none
 
       INCLUDE 'params'
@@ -4206,15 +4294,17 @@ c
       INCLUDE 'slout'
 
 
-      INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2
-      REAL      array(MAXNKS,MAXNRS),crmi2,absfac2
-      CHARACTER title*(*)
+      INTEGER iopt,nizs2,ik,ir,i1,cizsc2,cion2
+      REAL    array(MAXNKS,MAXNRS),crmi2,absfac2
 
       IF     (iopt.EQ.2) THEN
         RETURN
       ELSEIF (iopt.EQ.3) THEN
         WRITE(0,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
         WRITE(6,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
+        CALL Wrapper_ClearObjects  
+        IF (ALLOCATED(obj)) DEALLOCATE(obj)
+        CALL GREND
         STOP
       ELSEIF (iopt.EQ.4) THEN
         CALL CheckImaginaryDensity
@@ -4250,14 +4340,22 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         CALL calc_wallprad(nizs2)
         RETURN
       ELSEIF (iopt.EQ.14) THEN
-        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,
-     .                               absfac2,title)
+        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,absfac2)
         RETURN
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles
         RETURN
       ELSEIF (iopt.EQ.16) THEN
         CALL ExportTetrahedrons('tetrahedrons.raw')
+        RETURN
+      ELSEIF (iopt.EQ.17) THEN
+        CALL AnalyseSolution(6)
+        RETURN
+      ELSEIF (iopt.EQ.18) THEN
+        CALL MainChamberRecycling(6)
+        RETURN
+      ELSEIF (iopt.EQ.19) THEN
+        CALL divLoadRibbonData
         RETURN
       ENDIF
 
@@ -4291,8 +4389,6 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       STOP 'HALTING OUT FROM PLOT 999'
 
       CALL ProbePath2
-
-      CALL AnalyseSolution(6)
 
 c      CALL LoadEIRENEAtomicData
 

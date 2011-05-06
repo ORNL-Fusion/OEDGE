@@ -110,9 +110,9 @@ c
 
       LOGICAL GetLine
 
-      INTEGER i1,i2,fp,idum1,idum2,i,n
+      INTEGER i1,i2,fp,idum1,idum2,i,n,inext
       LOGICAL load_detector
-      CHARACTER cdum1*128,dummy*1024,buffer*1024
+      CHARACTER cdum1*128,dummy*1024,buffer*1024,buffer_array*256(100)
 
       TYPE(type_header) :: header
       REAL*8 :: image(1000,1000)
@@ -153,9 +153,9 @@ c...    Isolate tag string:
         ENDDO
 
         SELECTCASE (buffer(2:i-1))
-
+c         --------------------------------------------------------------
           CASE('RAY TRACE') 
-
+c         --------------------------------------------------------------
           CASE('GEOMETRY')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
@@ -248,12 +248,24 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
      .                opt%obj_n     (opt%obj_num,1),
      .                opt%obj_n     (opt%obj_num,2),
      .                opt%obj_fname (opt%obj_num)
+                  CASE (8)  ! ITER first wall panel
+                    READ(buffer,*) cdum1,
+     .                opt%obj_type  (opt%obj_num),
+     .                opt%obj_option(opt%obj_num),
+     .                opt%obj_colour(opt%obj_num),
+     .                opt%obj_reflec(opt%obj_num),
+     .                opt%obj_fudge (opt%obj_num),
+     .                opt%obj_factor(opt%obj_num),
+     .                opt%obj_n     (opt%obj_num,1),
+     .                opt%obj_n     (opt%obj_num,2),
+     .                opt%obj_sym   (opt%obj_num),
+     .                opt%obj_fname (opt%obj_num)
                   CASE DEFAULT
                     CALL User_LoadVesselGeometry(opt,idum1,buffer)
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('REFLECTIONS')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
@@ -291,7 +303,7 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('INTEGRATION')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
@@ -342,7 +354,7 @@ c...                Data source:
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('DETECTOR')
             IF (mode.NE.DETECTOR_ONLY.OR..NOT.load_detector) THEN
               BACKSPACE(fp)
@@ -373,6 +385,7 @@ c...                Data source:
                 CALL ER('LoadOptions985_New','Unknown DETECTOR '//
      .                  'option',*99)          
             ENDSELECT
+c         --------------------------------------------------------------
           CASE('DETECTOR MASK')
             IF (mode.NE.DETECTOR_ONLY.OR.load_detector) CYCLE            
             READ(buffer(i+1:n),*) idum1
@@ -418,7 +431,55 @@ c...                Load image and look for pure/artificial black (pixel value=0
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
+          CASE('RIBBON')
+            READ(buffer(i+1:n),*) idum1
+            WRITE(0,*) 'LOADING RIBBON:',idum1
+            IF (idum1.LE.0) CYCLE
+            DO WHILE(GetLine(fp,buffer,NO_TAG))
+              READ(buffer,*) cdum1,idum1
+              IF (idum1.EQ.0) CYCLE
+              CALL SplitBuffer(buffer,buffer_array) 
+              opt%rib_n = opt%rib_n + 1
+              i1 = opt%rib_n
+              SELECTCASE (idum1)
+                CASE (1)  ! 
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_nrad (  i1)
+                  READ(buffer_array(4),*) opt%rib_nphi (  i1)
+                  READ(buffer_array(5),*) opt%rib_phi  (1,i1)
+                  READ(buffer_array(6),*) opt%rib_phi  (2,i1)
+                  READ(buffer_array(7),*) opt%rib_scale(  i1)
+                  READ(buffer_array(8),*) opt%rib_trace(  i1)
+                  SELECTCASE (opt%rib_trace(i1))
+                    CASE (1) 
+                      READ(buffer_array(9 ),*) opt%rib_dphi(i1)
+                      READ(buffer_array(10),*) opt%rib_r   (1,i1)
+                      READ(buffer_array(11),*) opt%rib_z   (1,i1)
+                      READ(buffer_array(12),*) opt%rib_r   (2,i1)
+                      READ(buffer_array(13),*) opt%rib_z   (2,i1)
+                      inext = 14
+                    CASE (2) 
+                      opt%rib_tfile(i1) = TRIM(buffer_array(9))
+                      inext = 10
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'trace option',*99)
+                  ENDSELECT
+                  READ(buffer_array(inext),*) opt%rib_limit(i1)
+                  SELECTCASE (opt%rib_limit(i1))
+                    CASE (0) 
+                      opt%rib_tag(i1) = TRIM(buffer_array(inext+1))
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'ribbon limit',*99)
+                  ENDSELECT
+                CASE DEFAULT
+                  CALL ER('LoadOptions985_New','Unrecognized '//
+     .                    'ribbon grid option',*99)
+              ENDSELECT
+            ENDDO
+c         --------------------------------------------------------------
           CASE('PLOTS')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             IF (opt%nplots.EQ.-1) opt%nplots = 0
@@ -430,11 +491,11 @@ c...                Load image and look for pure/artificial black (pixel value=0
 c                WRITE(0,*) opt%nplots,buffer(1:LEN_TRIM(buffer))
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('END')
             status = -1
             EXIT
-
+c         --------------------------------------------------------------
           CASE DEFAULT
             CALL ER('LoadOptions985_New','Unrecognized tag',*99)
         ENDSELECT

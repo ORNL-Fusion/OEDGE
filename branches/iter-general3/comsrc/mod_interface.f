@@ -171,7 +171,8 @@
       IF (.NOT.ALLOCATED(dat)) ALLOCATE(dat(MAXNDAT))
 
 !...  Just to be sure:
-      dat(1:MAXNDAT)%n = 0
+      dat(1:MAXNDAT)%n    = 0
+      dat(1:MAXNDAT)%nmax = 0
 
 !...  Return handle:
 
@@ -238,6 +239,9 @@
       nmax = dat(idat)%nmax
 
 !...  Check if more memory needs to be allocated:
+
+c      write(0,*) ' max  ' ,nsrc,n,nmax,nmax-n
+
       IF (nsrc.GT.nmax-n) THEN
         IF (.NOT.ALLOCATED(dat(idat)%idata)) THEN
 !         Fresh start:
@@ -256,6 +260,12 @@
       ENDIF
 
 !...  Store data:
+c      write(0,*) ' mod_i' ,n,nsrc,idat,' '//TRIM(dtag)
+c      write(0,*) ' mod_i' ,src(1:nsrc)
+c      write(0,*) '      ' ,SIZE(dat,1)
+c      write(0,*) '      ' ,SIZE(dat(1)%idata,1)
+c      write(0,*) '      ' ,dat(1)%idata(1)
+
       dat(idat)%nmax = nmax
       dat(idat)%idata(n+1:n+nsrc) = src(1:nsrc)
       dat(idat)%n = dat(idat)%n + nsrc
