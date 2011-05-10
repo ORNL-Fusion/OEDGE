@@ -15,8 +15,8 @@ module castem_field_line_data
 
 
   public :: read_identifier_data, read_castem_intersection_data,read_ray_intersection_data,print_field_line_summary,&
-            calculate_castem_limiter_surface,calculate_ray_limiter_surface,generate_grid,write_grid,&
-            assign_grid_to_divimp,deallocate_castem_storage
+       calculate_castem_limiter_surface,calculate_ray_limiter_surface,generate_grid,write_grid,&
+       assign_grid_to_divimp,deallocate_castem_storage
 
 
   !  type node_struc
@@ -28,7 +28,7 @@ module castem_field_line_data
   type intersection_struc
      integer :: line_id
      integer :: intsect_id
-     real*8  :: xi,yi,zi,lc,metric
+     real*8  :: xi,yi,zi,lc,metric,angle
      integer :: int_type
      integer :: bump
      logical :: int_used 
@@ -67,6 +67,7 @@ module castem_field_line_data
   real*8,allocatable :: av_s(:),av_r(:),av_type(:),av_min_r(:),av_max_r(:)
   real*8,allocatable :: av_tan_r(:),av_tan_s(:),av_wall_r(:),av_wall_s(:),tan_ord_r(:),av_tan_ind(:)
 
+
   real*8 :: r_limiter_max,r_limiter_min,s_limiter_max,s_limiter_min,min_tan_sep
 
   integer :: av_group_cnt
@@ -75,6 +76,11 @@ module castem_field_line_data
   integer :: intsec_cnt
 
 
+  ! arrays to help with defining the limiter surface from RAY data
+  integer :: nbumps
+  integer, allocatable :: bump_inf(:,2)
+
+  real*8,allocatable :: av_tan_bump(:), av_tan_fl(:)
 
 
 
@@ -94,6 +100,14 @@ module castem_field_line_data
   real*8,parameter :: DELETE_POINT = 10.0
 
   integer,parameter :: outunit = 6
+
+  ! RAY intersection point type codes
+  integer,parameter :: RAY_TAN = 0
+  integer,parameter :: RAY_ENTER=1
+  integer,parameter :: RAY_EXIT= 2
+  integer,parameter :: RAY_END = 5
+
+
 
   ! Intersection subset selection
   logical :: filter_intersections
@@ -383,7 +397,7 @@ contains
     character*512 :: line
 
     integer :: line_id,inter_id,itype,iend,bump_id
-    real*8 :: xint,yint,zint,lc,metric
+    real*8 :: xint,yint,zint,lc,metric,angle
 
     integer :: sect_cnt
 
@@ -424,8 +438,9 @@ contains
           !
           bump_id = 0
           metric  = 0.0
+          angle = 0.0
 
-          call assign_intsect_data(line_id,field_line(line_id),inter_id,xint,yint,zint,lc,itype,bump_id,metric,ierr)
+          call assign_intsect_data(line_id,field_line(line_id),inter_id,xint,yint,zint,lc,itype,bump_id,metric,angle,ierr)
           sect_cnt = sect_cnt + 1
 
        endif
@@ -527,31 +542,31 @@ contains
     !
     !    {TRACE DATA}
     !
-!*  S      - distance along the field the trace, with S=0 at the origin point
-!*  IMPACT - impact angle at the surface for each intersection point
-!*  WIDTH  - for radial grid morphing
-!*  METRIC - for radial grid morphing
-!*
-!*   trace    npts
-!        1       2                                                                      (       1     930)
-!*   index    code             s             x           y           z        impact         width      metric          dphi
-!*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
-!        1       5   -21.6504992    -5.9383600  -3.3095700  -1.0995400    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500       930  0
-!      930       5    33.4137013     2.1597300   4.6354500  -4.7369100    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000         1  0
-!*   trace    npts
-!        2       2                                                                      (     931    1860)
-!*   index    code             s             x           y           z        impact         width      metric          dphi
-!*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
-!        1       5   -21.6518355    -5.9388400  -3.3108800  -1.0996300    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500      1860  0
-!      930       5    33.4186278     2.1604400   4.6389600  -4.7384700    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000       931  0
-!*   trace    npts
-!        3       3                                                                      (    1861    2790)
-!*   index    code             s             x           y           z        impact         width      metric          dphi
-!*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
-!        1       5   -21.6004287    -5.9330700  -3.3081800  -1.1522000    -1.0000000    -1.0000000  -1.0000000  -169.010  -0.500      2790  0
-!      910       0    32.5711013     1.3734468   4.6236794  -5.0580945    -1.0000000    -1.0000000  -1.0000000   -74.799  -0.309      1881  3
-!      930       5    33.4216754     2.1608600   4.6413200  -4.7393800    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000      1861  0
-!
+    !*  S      - distance along the field the trace, with S=0 at the origin point
+    !*  IMPACT - impact angle at the surface for each intersection point
+    !*  WIDTH  - for radial grid morphing
+    !*  METRIC - for radial grid morphing
+    !*
+    !*   trace    npts
+    !        1       2                                                                      (       1     930)
+    !*   index    code             s             x           y           z        impact         width      metric          dphi
+    !*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+    !        1       5   -21.6504992    -5.9383600  -3.3095700  -1.0995400    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500       930  0
+    !      930       5    33.4137013     2.1597300   4.6354500  -4.7369100    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000         1  0
+    !*   trace    npts
+    !        2       2                                                                      (     931    1860)
+    !*   index    code             s             x           y           z        impact         width      metric          dphi
+    !*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+    !        1       5   -21.6518355    -5.9388400  -3.3108800  -1.0996300    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500      1860  0
+    !      930       5    33.4186278     2.1604400   4.6389600  -4.7384700    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000       931  0
+    !*   trace    npts
+    !        3       3                                                                      (    1861    2790)
+    !*   index    code             s             x           y           z        impact         width      metric          dphi
+    !*                           (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+    !        1       5   -21.6004287    -5.9330700  -3.3081800  -1.1522000    -1.0000000    -1.0000000  -1.0000000  -169.010  -0.500      2790  0
+    !      910       0    32.5711013     1.3734468   4.6236794  -5.0580945    -1.0000000    -1.0000000  -1.0000000   -74.799  -0.309      1881  3
+    !      930       5    33.4216754     2.1608600   4.6413200  -4.7393800    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000      1861  0
+    !
     !
     ierr = 0
 
@@ -562,26 +577,26 @@ contains
 
        if (iend.eq.0) then 
 
-       if (line(1:9).eq.'{VERSION}') then 
+          if (line(1:9).eq.'{VERSION}') then 
 
-          !write(0,*) '2:'
-          call read_ray_version(iunit,ver,ierr)
-          if (ierr.ne.0) then 
-             call errmsg('READ_RAY_VERSION: ERROR READING VERSION NUMBER:',ierr)
-             stop 'ERROR:read_ray_version'
+             !write(0,*) '2:'
+             call read_ray_version(iunit,ver,ierr)
+             if (ierr.ne.0) then 
+                call errmsg('READ_RAY_VERSION: ERROR READING VERSION NUMBER:',ierr)
+                stop 'ERROR:read_ray_version'
+             endif
+
+          elseif  (line(1:15).eq.'{TRACE SUMMARY}') then 
+
+             !write(0,*) '3:'
+             call read_ray_trace_summary(iunit,ierr)
+
+          elseif (line(1:12).eq.'{TRACE DATA}') then 
+
+             !write(0,*) '4:'
+             call read_ray_trace_data(iunit,ierr)
+
           endif
-
-       elseif  (line(1:15).eq.'{TRACE SUMMARY}') then 
-
-          !write(0,*) '3:'
-          call read_ray_trace_summary(iunit,ierr)
-
-       elseif (line(1:12).eq.'{TRACE DATA}') then 
-
-          !write(0,*) '4:'
-          call read_ray_trace_data(iunit,ierr)
-
-       endif
 
        else
           finished = .true.
@@ -646,7 +661,7 @@ contains
     do while (.not.finished)
 
        read (iunit,'(a)') line
-       
+
        !write(0,'(a)') ':'//trim(line)//':'
 
        ! All data lines start with a blank
@@ -737,20 +752,20 @@ contains
     n_leave = 0
 
 
-!{TRACE DATA}
-!*
-!*  S      - distance along the field the trace, with S=0 at the origin point
-!*  IMPACT - impact angle at the surface for each intersection point
-!*  WIDTH  - for radial grid morphing
-!*  METRIC - for radial grid morphing
-!*
-!*   trace    npts
-!        1       2                                                                      (       1     932)
-!*   index    code    bump             s             x           y           z        impact         width      metric          dphi
-!*                                                       (m)           (m)         (m)         (m)     (degrees)                               (degrees)
-!        1       5       0   -21.6504992    -5.9383600  -3.3095700  -1.0995400    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500       932  0
-!      932       5       0    33.4137013     2.1597300   4.6354500  -4.7369100    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000         1  0
-!*   trace    npts
+    !{TRACE DATA}
+    !*
+    !*  S      - distance along the field the trace, with S=0 at the origin point
+    !*  IMPACT - impact angle at the surface for each intersection point
+    !*  WIDTH  - for radial grid morphing
+    !*  METRIC - for radial grid morphing
+    !*
+    !*   trace    npts
+    !        1       2                                                                      (       1     932)
+    !*   index    code    bump             s             x           y           z        impact         width      metric          dphi
+    !*                                                       (m)           (m)         (m)         (m)     (degrees)                               (degrees)
+    !        1       5       0   -21.6504992    -5.9383600  -3.3095700  -1.0995400    -1.0000000    -1.0000000  -1.0000000  -169.510  -0.500       932  0
+    !      932       5       0    33.4137013     2.1597300   4.6354500  -4.7369100    -1.0000000    -1.0000000  -1.0000000   -65.490   0.000         1  0
+    !*   trace    npts
 
     ! After the {TRACE DATA} tag we expect a compilation of intersections and tangency points for all of the field line traces 
     ! These will be listed in the following format - a trace identifier with the trace index and the number of intersections followed by the 
@@ -784,16 +799,16 @@ contains
                 !       this should be consolidated for use here to an internal typing system
                 !       Additional intersection data from RAY will be assigned later. 
 
-                call assign_intsect_data(line_id,field_line(line_id),sect_cnt,xint,yint,zint,s,itype,bump_id,metric,ierr)
+                call assign_intsect_data(line_id,field_line(line_id),sect_cnt,xint,yint,zint,s,itype,bump_id,metric,angle_to_surf,ierr)
 
                 select case (itype)
-                case(0) ! tangency
+                case(RAY_TAN) ! tangency
                    n_tangency = n_tangency + 1
-                case(1) ! enter surface
+                case(RAY_ENTER) ! enter surface
                    n_enter = n_enter + 1
-                case(2) ! leave surface
+                case(RAY_EXIT) ! leave surface
                    n_leave = n_leave + 1
-                case(5) ! end point (counts as enter surface)
+                case(RAY_END) ! end point (counts as enter surface)
                    n_enter = n_enter + 1
                 case default
                    call errmsg('Unexpected intersection type code =',itype)
@@ -823,12 +838,12 @@ contains
 
 
 
-  subroutine assign_intsect_data(line_id,fl,inter_id,xint,yint,zint,lc,itype,bump_id,metric,ierr)
+  subroutine assign_intsect_data(line_id,fl,inter_id,xint,yint,zint,lc,itype,bump_id,metric,angle_to_surf,ierr)
     implicit none
     integer :: line_id
     type(field_line_struc) :: fl
     integer :: inter_id,itype,ierr,bump_id
-    real*8 :: xint,yint,zint,lc,metric
+    real*8 :: xint,yint,zint,lc,metric,angle_to_surf
     integer :: in
 
     ! Find min and max for lc
@@ -850,10 +865,11 @@ contains
        fl%int_data(in)%zi = zint
        fl%int_data(in)%lc = lc
        fl%int_data(in)%metric = metric
+       fl%int_data(in)%angle = angle_to_surf
        fl%int_data(in)%int_type = itype
        fl%int_data(in)%int_used = .false. 
        fl%int_data(in)%bump = bump_id
-       
+
 
        !       fl%int_data(in)%next = node_init
        !       fl%int_data(in)%last = node_init
@@ -2148,7 +2164,7 @@ contains
     ! 
     ! Might be worthwhile calculating the bump order first - bump order is defined by tangency points since each bump must have one (I hope).
     ! Need to calculate the bump index of the tangency points. 
-    
+
 
 
 
@@ -2165,6 +2181,30 @@ contains
     ! needed. 
 
     ! Initialize averaging from global variable
+
+
+    ! Generate list of tangency points including S, RHO and bump information
+
+    call find_ray_tangency
+
+    ! map start and end rows of all bumps
+    call map_bumps
+
+    ! now we need to use this data to map the limiter surface into the arrays used by the grid generator. Keep in mind that subsets of the data can be specified. 
+    ! The tangency points are used to determine which bumps are present in any specific subset. 
+    
+    
+
+
+
+
+
+    ! Start at min_rho,min_lc to generate wall ... 
+    
+
+
+
+
 
     if (rg_int_win_mins.ne.rg_int_win_maxs) then 
        filter_intersections = .true.
@@ -3024,11 +3064,141 @@ contains
 
 
 
+  subroutine find_ray_tangency
+
+    implicit none
+    integer :: tan_cnt,in,is
+
+
+    av_tan_cnt = n_tangency
+
+
+    if (av_tan_cnt.gt.0) then 
+       if (allocated(av_tan_r)) deallocate(av_tan_r)
+       allocate(av_tan_r(av_tan_cnt),stat=ierr)
+
+       if (allocated(av_tan_s)) deallocate(av_tan_s)
+       allocate(av_tan_s(av_tan_cnt),stat=ierr)
+
+       if (allocated(av_tan_bump)) deallocate(av_tan_bump)
+       allocate(av_tan_bump(av_tan_cnt),stat=ierr)
+
+       if (allocated(av_tan_fl)) deallocate(av_tan_fl)
+       allocate(av_tan_fl(av_tan_cnt),stat=ierr)
+
+       if (allocated(av_tan_ind)) deallocate(av_tan_ind)
+       allocate(av_tan_ind(av_tan_cnt),stat=ierr)
+
+       if (allocated(tan_ord_r)) deallocate(tan_ord_r)
+       allocate(tan_ord_r(av_tan_cnt),stat=ierr)
+
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:AV_TAN ARRAYS FOR RAY DATA:IERR =',ierr)
+          stop
+       endif
+       av_tan_r = 0.0
+       av_tan_s = 0.0
+       av_tan_bump = 0.0
+       av_tan_fl = 0.0
+       av_tan_ind = 0.0
+    else
+       return
+    endif
 
 
 
+    tan_cnt = 0
+
+    do in = 1,n_field_lines
+       do is = 1,field_line(in)%int_tot
+          if (field_line(in)%int_data(is)%itype.eq.RAY_TAN) then 
+             tan_cnt = tan_cnt + 1
+             if (tan_cnt.le.av_tan_cnt) then 
+                av_tan_r(tan_cnt) = field_line(in)%dist
+                av_tan_s(tan_cnt) = field_line(in)%int_data(is)%lc
+                av_tan_bump(tan_cnt) = field_line(in)%int_data(is)%bump
+                av_tan_fl(tan_cnt) = in
+                av_tan_ind(tan_cnt) = is
+             else
+                call errmsg('FIND_RAY_TANGENCY:TOO MANY TANGENT POINTS FOUND',av_tan_cnt)
+                stop 'FIND_RAY_TANGENCY'
+             endif
+
+          endif
+       end do
+    end do
+
+    if (tan_cnt.ne.av_tan_cnt) then
+       call errmsg('FIND_RAY_TANGENCY:MISMATCH IN TANGENCY COUNT',tan_cnt)
+       stop 'FIND_RAY_TANGENCY'
+    endif
+
+    ! sort tangency point arrays by S
+    call sort_arrays(0,av_tan_cnt,av_tan_s,av_tan_r,av_tan_ind,av_tan_bump,av_tan_fl)
+    
+    ! write the S ordered array index into another array
+    do in = 1,av_tan_cnt
+       tan_ord_r(in) = in
+       !write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R:',in,av_tan_r(in),tan_ord_r(in)
+    end do
+
+    ! Sort the S indices by R to get tan_ord_r referencing the R order of the data while sorted by S
+    call sort_arrays(0,av_tan_cnt,av_tan_r,av_tan_s,av_tan_ind,av_tan_bump,av_tan_fl,tan_ord_r)
+
+    ! Re-sort to S - leaving tan_ord_r unchanged
+    ! The av_tan_bump array should now contain the bump order
+    call sort_arrays(0,av_tan_cnt,av_tan_s,av_tan_r,av_tan_ind,av_tan_bump,av_tan_fl)
 
 
+  end subroutine find_ray_tangency
+
+
+
+.
+
+
+    subroutine map_bumps
+      implicit none
+      
+
+      integer :: bump_id,last_bump_id
+
+
+      nbumps = max(av_tan_bump)
+
+
+    if (nbumps.gt.0) then 
+       if (allocated(bump_inf)) deallocate(bump_inf)
+       allocate(bump_inf(nbumps,2),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:BUMP_INF:IERR =',ierr)
+          stop
+       endif
+    else
+       return
+    endif
+
+    bump_inf= 0
+
+    do in = 1,n_field_lines
+       last_bump_id = 0
+       int_cnt = 0
+       do is = 1,field_line(in)%int_tot
+          bump_id = field_line(in)%int_data(is)%bump
+          ! calculate the start and end rows for each bump
+          if (bump_id.ne.0) then 
+
+             if (bump_inf(bump_id,1).eq.0) then 
+                bump_inf(bump_id,1) = in
+             endif   
+
+             bump_inf(bump_id,2) = in
+
+          endif
+       end do
+    end do
+
+  end subroutine map_bumps
 
 
 
