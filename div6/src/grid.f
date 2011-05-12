@@ -10222,6 +10222,9 @@ c
             return
          endif
 
+         call calculate_castem_limiter_surface
+
+
       elseif (ribbon_input_format_opt.eq.1) then
          ! RAY formatted input file
 
@@ -10252,13 +10255,11 @@ c
             return
          endif
 
-
-
+         call calculate_ray_limiter_surface
 
       endif
 
 
-      call calculate_limiter_surface
 
       call print_field_line_summary
 
