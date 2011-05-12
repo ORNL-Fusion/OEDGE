@@ -1,0 +1,16 @@
+lbof sep clvl vesl phys 1.2 lbsz  writ
+phys 'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      te -18 'TDV/te1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      ne -18 'TDV/ne1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      ti -18 'TDV/ti1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      ni -18 'TDV/ni1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      up -18 'TDV/up1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      dab2 -18 'TDV/na1537.txt' user drop
+'ITER#1537 (F57 ref-20-NF-C0, tau=0.4e-6, ntime=150)  - 57.3 ms' extl
+      dmb2 -18 'TDV/nm1537.txt' user drop
