@@ -108,6 +108,10 @@ module castem_field_line_data
   integer,parameter :: RAY_END = 5
 
 
+  ! Wall definition
+  integer :: n_wall_segments,max_wall_segments
+  real*8 :: wall_segments(:,:),wall_start_r,wall_start_s
+
 
   ! Intersection subset selection
   logical :: filter_intersections
@@ -3332,7 +3336,6 @@ contains
        int_type(1,2) = SURFACE_END
     endif
 
-
     ! Find all the other intersections
     do in = 2,rbnd_cnt
 
@@ -3387,8 +3390,11 @@ contains
     !max_npoly = max_nrings * max_nknots
     max_npoly = max(2*rbnd_cnt * max_nknots,max_nrings * min_cells *4)
 
-    write(0,'(a,7i12,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
+    write(0,'(a,7i12,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_se
 
+    max_wall_segments = max_nrings * 2 + (av_tan_cnt +1) * 2 
+
+    !
     ! Allocate polygon arrays
     ! rvp
     if (max_npoly.gt.0) then 
@@ -3549,6 +3555,8 @@ contains
     !
     ! Set up the initial vertex arrays
     !
+
+    call init_wall(rbnds(1),ints(1,1))
 
 
 
@@ -3761,6 +3769,11 @@ contains
 
              if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.ge.lcutoff)) then 
 
+                call add_wall_segment(r1,r2,vert_rec1(npts1a),vert_rec2(npts2a))
+                call add_wall_segment(r1,r2,vert_rec1(npts1b),vert_rec2(npts2b))
+
+
+
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
                 call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,max_nknots,max_s_sep,min_cells)
 
@@ -3812,10 +3825,104 @@ contains
     if (allocated(vert_type2)) deallocate(vert_type2)
 
 
-
   end subroutine generate_grid
 
 
+  subroutine init_wall(r_start,s_start)
+    implicit none
+    ! initialize data structures for collecting wall elements
+    real*8 :: r_start,s_start
+
+    n_wall_segments = 0
+
+    wall_start_r = r_start
+    wall_start_s = s_start
+
+    if (max_wall_segments.gt.0) then 
+       if (allocated(wall_segments)) deallocate(wall_segments)
+       allocate(wall_segments(max_wall_segments,4),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:WALL SEGMENTS:IERR =',ierr)
+          stop
+       endif
+    else
+       return
+    endif
+
+  end subroutine init_wall
+
+  subroutine add_wall_segment(r1,r2,s1,s2) 
+    implicit none
+    real*8 :: r1,r2,s1,s2
+
+    ! add a wall segment to the list
+    n_wall_segments = n_wall_segments + 1
+
+    if (n_wall_segments.gt.max_wall_segments) then 
+       call grow_array2(wall_segments,max_wall_segments,max_wall_segments+50,4,4)
+    endif
+
+    wall_segments(n_wall_segments,1) = r1
+    wall_segments(n_wall_segments,2) = s1
+    wall_segments(n_wall_segments,3) = r2
+    wall_segments(n_wall_segments,4) = s1
+
+  end subroutine add_wall_segment
+
+  subroutine finalize_wall
+    implicit none
+    ! take all the accumulated wall segments - connect them together and connect ends to the av_wall data 
+
+    logical :: done
+    real*8 :: r_start,s_start,rp,zp,rn,zn
+    integer :: rc
+
+
+    done = .false. 
+
+    r_start = wall_start_r
+    s_start = wall_start_s
+
+    nwall = 0
+
+    nwall = nwall+1
+    wall_r(nwall) = r_start
+    wall_s(nwall) = s_start
+
+    rp = r_start
+    sp = s_start
+
+
+    do while (.not.done)
+
+
+       get_next_point(rp,sp,rn,sn,walli,rc)
+
+       ! continuing on a set of connected segments
+       if (rc.eq.0) then 
+          nwall = nwall + 1
+          wall_r(nwall) = rn
+          wall_s(nwall) = sn
+          ! mark this wall segment as used
+          wall_segments(walli,5) = 1
+
+          rp = rn
+          sp = sn
+
+       ! Need to find a wall point and then conenct back to the next contiguous set of wall segments
+       else
+          ! How do I find a wall point , the next surface point AND know when I have reached the end ?
+
+
+       endif
+
+
+    end do
+
+
+
+
+  end subroutine finalize_wall
 
 
 
@@ -4474,6 +4581,9 @@ contains
 
     ! End points should already be included 
 
+    ! This doesn't work because there are too many data points ... need to use the polygon grid ends or at least the end vertices combined
+    ! with the av_wall points to define a wall. 
+
     nves = av_group_cnt
 
     if (nves.le.mves) then 
@@ -4578,6 +4688,58 @@ contains
     end if
 
   end subroutine grow_array
+
+  subroutine grow_array2(foo,num1,num2,numa,numb)
+    implicit none
+    real*8,allocatable :: foo(:,:)
+    integer :: num1,num2,numa,numb,ierr,in,is
+
+    real*8,allocatable :: tmp_foo(:,:)
+
+    ierr = 0
+
+    if (allocated(foo)) then 
+
+       if (allocated(tmp_foo)) deallocate(tmp_foo)
+       allocate(tmp_foo(num2,numb),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          stop
+       endif
+
+       tmp_foo = 0.0
+
+       do in = 1,num1
+          do is = 1,numa
+             tmp_foo(in,is) = foo(in,is)
+          end do 
+       end do
+
+       deallocate(foo,stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW DE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          stop
+       endif
+
+       allocate(foo(num2,numb),stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW RE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          stop
+       endif
+
+       foo = tmp_foo
+
+       deallocate(tmp_foo,stat=ierr)
+       if (ierr.ne.0) then 
+          call errmsg('GROW DE-ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          stop
+       endif
+
+    end if
+
+  end subroutine grow_array2
+
+
 
   subroutine gen_cell_spacing(ncells,ssep)
     implicit none
