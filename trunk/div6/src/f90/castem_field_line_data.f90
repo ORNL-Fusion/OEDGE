@@ -64,7 +64,7 @@ module castem_field_line_data
 
   integer :: n_nodes,node_cnt
   real*8,allocatable :: surf_r(:),surf_s(:),surf_fl(:),surf_int(:),surf_sep(:)
-  real*8,allocatable :: av_s(:),av_r(:),av_type(:),av_min_r(:),av_max_r(:)
+  real*8,allocatable :: av_s(:),av_r(:),av_type(:),av_min_r(:),av_max_r(:),av_angle(:), av_metric(:)
   real*8,allocatable :: av_tan_r(:),av_tan_s(:),av_wall_r(:),av_wall_s(:),tan_ord_r(:),av_tan_ind(:)
 
 
@@ -78,7 +78,7 @@ module castem_field_line_data
 
   ! arrays to help with defining the limiter surface from RAY data
   integer :: nbumps
-  integer, allocatable :: bump_inf(:,2)
+  integer, allocatable :: bump_inf(:,:)
 
   real*8,allocatable :: av_tan_bump(:), av_tan_fl(:)
 
@@ -737,7 +737,8 @@ contains
     character*512 :: line
 
     integer :: node_id,itype,id2,code2
-    real*8 :: s,xint,yint,zint,angle_to_surf,width,metric,toroidal_angle,dphi,bump_id
+    real*8 :: s,xint,yint,zint,angle_to_surf,width,metric,toroidal_angle,dphi
+    integer :: bump_id
 
     integer :: line_id,int_cnt
     integer :: sect_cnt
@@ -1889,23 +1890,6 @@ contains
   end subroutine calculate_castem_limiter_surface
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   subroutine insert_limiter_point(num,last_face)
     implicit none
     integer :: num
@@ -1918,49 +1902,26 @@ contains
 
     ! allocate tmp_r, tmp_s and tmp_type
     if (tmp_cnt.gt.0) then 
+
        if (allocated(tmp_r)) deallocate(tmp_r)
        allocate(tmp_r(tmp_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:TMP_R:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
 
-    if (tmp_cnt.gt.0) then 
        if (allocated(tmp_s)) deallocate(tmp_s)
        allocate(tmp_s(tmp_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:TMP_S:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
 
-    if (tmp_cnt.gt.0) then 
        if (allocated(tmp_min_r)) deallocate(tmp_min_r)
        allocate(tmp_min_r(tmp_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:TMP_MIN_R:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
 
-    if (tmp_cnt.gt.0) then 
        if (allocated(tmp_max_r)) deallocate(tmp_max_r)
        allocate(tmp_max_r(tmp_cnt),stat=ierr)
+
        if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:TMP_MAX_R:IERR =',ierr)
+          call errmsg('ALLOCATION ERROR:TMP_ ARRAYS:IERR =',ierr)
           stop
        endif
     else
        return
     endif
-
 
 
     !
@@ -2093,8 +2054,6 @@ contains
 
 
 
-
-
   subroutine calculate_ray_limiter_surface
     !use common_utilities
     implicit none
@@ -2114,11 +2073,19 @@ contains
     integer :: group_id
     integer :: av_cnt
 
-    integer :: tmp_wall_cnt, tmp_tan_cnt,last_face
+    integer :: tmp_wall_cnt, tmp_tan_cnt,last_face,av_tmp_tan_cnt
     integer :: double_tan,double_wall
     real :: dir, last_dir
 
     integer :: index_offset
+
+    real*8 :: av_type_org
+
+
+    ! new variables
+    logical :: done
+    integer :: tan_cnt,bump
+    integer :: sfl, efl, ifl
 
     !real :: ,last_ang,test_ang
     !real,parameter :: PI=3.141592654
@@ -2180,30 +2147,6 @@ contains
     ! Using just the closest will not work - especially for the big gaps ... need to go back to sorting by S value then check distances to see if there are any fix ups
     ! needed. 
 
-    ! Initialize averaging from global variable
-
-
-    ! Generate list of tangency points including S, RHO and bump information
-
-    call find_ray_tangency
-
-    ! map start and end rows of all bumps
-    call map_bumps
-
-    ! now we need to use this data to map the limiter surface into the arrays used by the grid generator. Keep in mind that subsets of the data can be specified. 
-    ! The tangency points are used to determine which bumps are present in any specific subset. 
-    
-    
-
-
-
-
-
-    ! Start at min_rho,min_lc to generate wall ... 
-    
-
-
-
 
 
     if (rg_int_win_mins.ne.rg_int_win_maxs) then 
@@ -2212,492 +2155,265 @@ contains
        filter_intersections = .false.
     endif
 
-    opt_block_av = rg_block_av
 
-    n_nodes = tot_n_intsects
 
-    write(outunit,*) 'n_nodes:',n_nodes,tot_n_intsects
+    ! Initialize averaging from global variable
 
-    if (tot_n_intsects.gt.0) then 
-       if (allocated(surf_s)) deallocate(surf_s)
-       allocate(surf_s(n_nodes),stat=ierr)
+
+    ! Generate list of tangency points including S, RHO and bump information
+
+    call find_ray_tangency
+
+    ! map start and end rows of all bumps
+
+    call map_bumps
+
+    ! now we need to use this data to map the limiter surface into the arrays used by the grid generator. Keep in mind that subsets of the data can be specified. 
+    ! The tangency points are used to determine which bumps are present in any specific subset. 
+
+    av_group_cnt = tot_n_intsects
+
+
+
+    if (av_group_cnt.gt.0) then 
+       if (allocated(av_s)) deallocate(av_s)
+       allocate(av_s(av_group_cnt),stat=ierr)
+
+       if (allocated(av_r)) deallocate(av_r)
+       allocate(av_r(av_group_cnt),stat=ierr)
+
+       if (allocated(av_min_r)) deallocate(av_min_r)
+       allocate(av_min_r(av_group_cnt),stat=ierr)
+
+       if (allocated(av_max_r)) deallocate(av_max_r)
+       allocate(av_max_r(av_group_cnt),stat=ierr)
+
+       if (allocated(av_angle)) deallocate(av_angle)
+       allocate(av_angle(av_group_cnt),stat=ierr)
+
+       if (allocated(av_metric)) deallocate(av_metric)
+       allocate(av_metric(av_group_cnt),stat=ierr)
+
+       if (allocated(av_type)) deallocate(av_type)
+       allocate(av_type(av_group_cnt),stat=ierr)
+
        if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:SURF_S:IERR =',ierr)
+          call errmsg('ALLOCATION ERROR:AV_ ARRAYS:IERR =',ierr)
           stop
        endif
     else
        return
     endif
 
-    if (tot_n_intsects.gt.0) then 
-       if (allocated(surf_r)) deallocate(surf_r)
-       allocate(surf_r(n_nodes),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:SURF_R:IERR =',ierr)
-          stop
-       endif
-    else
-       return
+    write(0,'(a,i9)') 'AV_GROUP_CNT:',av_group_cnt
+
+
+    av_cnt = 0
+
+    if (filter_intersections) then 
+
+       ! add end faces - defined in input file
+       av_cnt = av_cnt + 1
+
+       av_r(av_cnt) = rg_minr
+       av_s(av_cnt) = rg_mins
+       av_min_r(av_cnt) = min_dist
+       av_max_r(av_cnt) = min_dist
+
+       av_type(av_cnt) = RAY_END
+       av_metric(av_cnt) = -1
+       av_angle(av_cnt)  = -1
+
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+
+
+       av_cnt = av_cnt + 1
+
+       av_r(av_cnt) = rg_maxr
+       av_s(av_cnt) = rg_mins
+       av_min_r(av_cnt) = min_dist
+       av_max_r(av_cnt) = min_dist
+
+       av_type(av_cnt) = RAY_END
+       av_metric(av_cnt) = -1
+       av_angle(av_cnt)  = -1
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+
+
+!    End point addition is not needed except for intersection subsets
+! 
+!
+!    else
+!
+!       ! add end points
+!       av_cnt = av_cnt + 1
+!
+!       av_r(av_cnt) = min_dist
+!       av_s(av_cnt) = min_lc
+!       av_min_r(av_cnt) = min_dist
+!       av_max_r(av_cnt) = min_dist
+!
+!       av_type(av_cnt) = RAY_END
+!       av_metric(av_cnt) = -1
+!       av_angle(av_cnt)  = -1
+!
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!
+!
     endif
 
-    if (tot_n_intsects.gt.0) then 
-       if (allocated(surf_fl)) deallocate(surf_fl)
-       allocate(surf_fl(n_nodes),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:SURF_FL:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
 
-    if (tot_n_intsects.gt.0) then 
-       if (allocated(surf_int)) deallocate(surf_int)
-       allocate(surf_int(n_nodes),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:SURF_INT:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
+    ! Map out following the field line start position until reaching the end row of the first bump
+
+    done = .false.
+
+    tan_cnt = 1
 
 
-    ! Populate the node list with intersection data 
+    do while (.not.done)
 
-    node_cnt = 0
+       bump = av_tan_bump(tan_cnt)
 
-    do if = 1,n_field_lines
-       do in = 1,field_line(if)%int_tot
+       write (0,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
+       write (6,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
 
-          if (.not.filter_intersections.or.&
-               (filter_intersections.and. &
-               (field_line(if)%int_data(in)%lc.ge.rg_int_win_mins).and.&
-               (field_line(if)%int_data(in)%lc.le.rg_int_win_maxs))) then 
-             node_cnt = node_cnt + 1
-             surf_fl(node_cnt)=if
-             surf_int(node_cnt)=in
-             surf_s(node_cnt)=field_line(if)%int_data(in)%lc
-             !
-             ! jdemod - change this to dist - it will be the same in the case
-             !          of a radial grid but will be better for a grid with a diagonal
-             !          starting line. 
-             !        - what is really needed here is PSIn or equivalent - need to 
-             !          come up with something for starting lines not perpendicular to 
-             !          the field lines in the poloidal plane. 
-             !
-             !surf_r(node_cnt)= field_line(if)%xs
-             !
-             surf_r(node_cnt)= field_line(if)%dist
+       sfl = bump_inf(bump,1)
+       efl = bump_inf(bump,2)
 
-             !          node_used(node_cnt) =0
+       ! Assign start
+       if (tan_cnt.eq.1.and.(.not.filter_intersections)) then 
+          do ifl = 1,efl
+             call assign_ray_surf(ifl,bump,0,av_cnt)
+    write(0,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
-          endif
+
+          end do
+       end if
+
+
+       ! Do first half of bump (first intersections + tangency)
+       ! always want RAY_ENTER intersection - no matter what assymmetries
+       do ifl = efl,sfl+1,-1
+          call assign_ray_surf(ifl,bump,1,av_cnt)
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
        end do
+
+       ! add tangency point
+          call assign_ray_surf(sfl,bump,3,av_cnt)
+          ! assign the tan index into the av arrays 
+          av_tan_ind(tan_cnt) = av_cnt
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+
+       ! allow for assymmetric limiters
+       efl = bump_inf(bump,3)
+
+       ! Do second half of bump (second intersections)
+
+       do ifl = sfl+1,efl
+          ! if beyond first half intersections then request only RAY_EXIT  point for bump on field line
+          call assign_ray_surf(ifl,bump,2,av_cnt)
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+
+       end do
+
+       ! Transition to next bump or END
+
+       ! Assign end
+       if (tan_cnt.eq.av_tan_cnt.and.(.not.filter_intersections)) then 
+          do ifl = efl,1,-1
+             call assign_ray_surf(ifl,bump,4,av_cnt)
+
+    write(0,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+
+          end do
+
+          done = .true.
+       else
+          tan_cnt = tan_cnt + 1
+
+       end if
     end do
-
-
-    write(outunit,*) 'node_cnt:',node_cnt
-
-    call sort_arrays(0,node_cnt,surf_s,surf_r,surf_fl,surf_int)
-
-
-    ! if block averaging is on
-    ! calculate intersection data separations
-
-    if (opt_block_av.eq.1) then 
-
-       if (tot_n_intsects.gt.0) then 
-          if (allocated(surf_sep)) deallocate(surf_sep)
-          allocate(surf_sep(node_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:SURF_SEP:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       if (tot_n_intsects.gt.0) then 
-          if (allocated(av_group)) deallocate(av_group)
-          allocate(av_group(node_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_GROUP:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       av_group_cnt = 1
-
-       !if (tot_n_intsects.gt.0) then 
-       !   if (allocated(surf_ang)) deallocate(surf_ang)
-       !   allocate(surf_ang(node_cnt),stat=ierr)
-       !else
-       !   return
-       !endif
-
-
-       do in = 1,node_cnt-1
-
-          surf_sep(in) = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-          !surf_ang(in) = atan2c(surf_s(in+1)-surf_s(in),surf_r(in+1)-surf_r(in))
-
-          !             surf_sep(in1,in2) = sqrt((surf_s(in1)-surf_s(in2))**2 + (surf_r(in1)-surf_r(in2))**2)
-
-       end do
-
-       surf_sep(node_cnt) = surf_sep(node_cnt-1)
-
-
-       ! run through grouping and reordering
-
-       min_sep = minval(surf_sep)
-
-       write(outunit,*) 'Minimum intersection separation = ', min_sep
-
-       do in = 1,node_cnt
-          ! look through the list for points that are separated by larger distances
-
-          av_group(in) = av_group_cnt
-
-
-          if (in.eq.1) then 
-             last_sep = 10.0 * min_sep
-             !last_ang = surf_ang(in)
-          else
-             last_sep = surf_sep(in-1)
-
-             !if (last_sep.gt.max_fact * min_sep) then 
-             !   last_ang = surf_ang(in)
-             !else
-             !   last_ang = surf_ang(in-1)
-             !endif
-
-          endif
-
-          !write (6,'(a,i9,2l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,abs(surf_ang(in)-last_ang).gt.ang_limit,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),surf_ang(in)*raddeg,last_ang*raddeg,ang_limit*raddeg
-
-          !write (outunit,'(a,i9,l8,10(1x,g18.6))') 'SEP:',in,surf_sep(in).gt.max_fact * last_sep,surf_sep(in),max_fact*last_sep,surf_s(in),surf_r(in),av_group(in)
-
-          ! Test to see if next point could be out of series
-          !if (surf_sep(in).gt.max_fact * last_sep.or.abs(surf_ang(in)-last_ang).gt.ang_limit) then 
-          if (surf_sep(in).gt.max_fact * last_sep) then 
-             it = 1
-             leave = .false.
-
-             ! Look for additional points that are in series
-             do while (.not.leave)
-                it = it+1
-                if (it.ge.max_block_size.or.(it+in+1).ge.node_cnt) then 
-                   leave = .true.
-                   av_group_cnt = av_group_cnt + 1
-                else
-
-                   test_sep = sqrt((surf_s(in+it)-surf_s(in))**2 + (surf_r(in+it)-surf_r(in))**2)
-                   ! found a closer point - swap it with the next one up
-
-                   !test_ang = atan2c(surf_s(in+it)-surf_s(in),surf_r(in+it)-surf_r(in))
-
-                   !                   write(6,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it),test_ang*raddeg,last_ang*raddeg, abs(test_ang-last_ang)
-
-                   !write(outunit,'(a,3i8,l8,10(1x,g18.6))') 'test:',in,it,in+it,test_sep.lt.max_fact*last_sep,test_sep,max_fact*last_sep,surf_s(in+it),surf_r(in+it)
-
-                   ! test for additional in series points 
-                   !if (test_sep.lt.max_fact*last_sep.and.abs(test_ang-last_ang).lt.ang_limit) then 
-                   if (test_sep.lt.max_fact*last_sep) then 
-                      tmp_r = surf_r(in+it)
-                      tmp_s = surf_s(in+it)
-                      tmp_fl = surf_fl(in+it)
-                      tmp_int = surf_int(in+it)
-
-                      do ix = it-1,1,-1
-                         surf_r(in+ix+1)   = surf_r(in+ix)
-                         surf_s(in+ix+1)   = surf_s(in+ix)
-                         surf_fl(in+ix+1)  = surf_fl(in+ix)
-                         surf_int(in+ix+1) = surf_int(in+ix)
-                         write(outunit,'(a,2i8,5(1x,g18.6))') 'Moving:',in,ix,in+ix,surf_r(in+ix+1), surf_s(in+ix+1)
-                      end do
-
-                      surf_r(in+1)   = tmp_r
-                      surf_s(in+1)   = tmp_s
-                      surf_fl(in+1)  = tmp_fl
-                      surf_int(in+1) = tmp_int
-
-                      do ix = 0,it
-                         surf_sep(in+ix) = sqrt((surf_s(in+ix+1)-surf_s(in+ix))**2 + (surf_r(in+ix+1)-surf_r(in+ix))**2)
-                      end do
-                      leave = .true.
-                   end if
-                end if
-
-
-             end do
-
-          end if
-
-       end do
-
-
-
-
-
-       !
-       ! Print out grouped data
-       ! 
-
-
-       ! slmod begin
-       do in = 2,node_cnt-1
-          !
-          !do in = 2,node_cnt
-          ! slmod end
-          test_sep = sqrt((surf_s(in+1)-surf_s(in))**2 + (surf_r(in+1)-surf_r(in))**2)
-          !write(outunit,'(a,i8,l8,10(1x,g18.6))') 'Nodes:', in,surf_sep(in).gt.max_fact*surf_sep(in-1),surf_r(in),surf_s(in),surf_sep(in),test_sep,av_group(in)
-
-
-       end do
-
-
-       !
-       ! Allocate temp arrays for averaging
-       !
-
-       !write(outunit,*) 'Avgroup:',av_group_cnt, av_group(node_cnt)
-
-       if (filter_intersections) then 
-          ! need to add 2 points at each end when using a subset
-          av_group_cnt = av_group(node_cnt) +4
-          index_offset = 2
-       else
-          av_group_cnt = av_group(node_cnt) +2
-          index_offset = 1
-       endif
-
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_s)) deallocate(av_s)
-          allocate(av_s(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_S:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_r)) deallocate(av_r)
-          allocate(av_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_R:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       ! record max and min r values in each grouping
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_min_r)) deallocate(av_min_r)
-          allocate(av_min_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_MIN_R:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_max_r)) deallocate(av_max_r)
-          allocate(av_max_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_MAX_R:IERR =',ierr)
-             stop
-          endif
-       else
-          return
-       endif
-
-       av_min_r = max_dist + 1.0
-       av_max_r = min_dist - 1.0
-
-
-       group_id = 0
-
-       do in = 1,node_cnt
-
-
-          if (av_group(in).ne.group_id) then 
-             ! finish up last group
-             if (group_id.ne.0) then
-                av_s(group_id+index_offset) = av_s(group_id+index_offset)/av_cnt
-                av_r(group_id+index_offset) = av_r(group_id+index_offset)/av_cnt
-             endif
-
-             ! start next group
-             group_id = av_group(in)
-             av_cnt = 1
-             av_s(group_id+index_offset) = av_s(group_id+index_offset) + surf_s(in)
-             av_r(group_id+index_offset) = av_r(group_id+index_offset) + surf_r(in)
-
-             av_min_r(group_id+index_offset) = min(av_min_r(group_id+index_offset),surf_r(in))
-             av_max_r(group_id+index_offset) = max(av_max_r(group_id+index_offset),surf_r(in))
-
-          else
-             ! continue counting current group
-             av_cnt = av_cnt + 1
-             av_s(group_id+index_offset) = av_s(group_id+index_offset) + surf_s(in)
-             av_r(group_id+index_offset) = av_r(group_id+index_offset) + surf_r(in)
-
-             av_min_r(group_id+index_offset) = min(av_min_r(group_id+index_offset),surf_r(in))
-             av_max_r(group_id+index_offset) = max(av_max_r(group_id+index_offset),surf_r(in))
-
-          endif
-
-          !          write(6,'(a,2i10,10(1x,g18.8))') 'Nodes2:',in,group_id,surf_s(in),surf_r(in),av_min_r(group_id+1),av_max_r(group_id+1)
-
-       end do
-
-       ! finish off last group
-
-       av_s(group_id+index_offset) = av_s(group_id+index_offset)/av_cnt
-       av_r(group_id+index_offset) = av_r(group_id+index_offset)/av_cnt
-
-
-       ! add first and last points
-       ! 
-       !av_r(1) = min_dist
-       !av_s(1) = min_lc
-       !av_min_r(1) = min_dist
-       !av_max_r(1) = min_dist
-
-       !av_r(av_group_cnt) = min_dist
-       !av_s(av_group_cnt) = max_lc
-       !av_min_r(av_group_cnt) = min_dist
-       !av_max_r(av_group_cnt) = min_dist
-
-    else
-
-       ! copy over all nodes without block averaging - in case they fix the bugs in the data
-
-       if (filter_intersections) then 
-          ! filtered data sets will have two extra points at each end
-          av_group_cnt = node_cnt +4
-          index_offset = 2
-       else
-          av_group_cnt = node_cnt +2
-          index_offset = 1
-       endif
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_s)) deallocate(av_s)
-          allocate(av_s(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_S:IERR =',ierr)
-             stop
-          endif
-          av_s = 0.0
-       else
-          return
-       endif
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_r)) deallocate(av_r)
-          allocate(av_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_R:IERR =',ierr)
-             stop
-          endif
-          av_r = 0.0
-       else
-          return
-       endif
-       ! record max and min r values in each grouping
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_min_r)) deallocate(av_min_r)
-          allocate(av_min_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_MIN_R:IERR =',ierr)
-             stop
-          endif
-          av_min_r = 0.0
-       else
-          return
-       endif
-
-       if (av_group_cnt.gt.0) then 
-          if (allocated(av_max_r)) deallocate(av_max_r)
-          allocate(av_max_r(av_group_cnt),stat=ierr)
-          if (ierr.ne.0) then 
-             call errmsg('ALLOCATION ERROR:AV_MAX_R:IERR =',ierr)
-             stop
-          endif
-          av_max_r = 0.0
-       else
-          return
-       endif
-
-
-       do in = 1,node_cnt
-          av_s(in+index_offset) = surf_s(in)
-          av_r(in+index_offset) = surf_r(in)
-          av_min_r(in+index_offset) = surf_r(in)
-          av_max_r(in+index_offset) = surf_r(in)
-       end do
-
-    endif
 
 
 
     if (filter_intersections) then 
 
        ! add end faces - defined in input file
+       av_cnt = av_cnt + 1
+       av_r(av_cnt) = rg_maxr
+       av_s(av_cnt) = rg_maxs
+       av_min_r(av_cnt) = min_dist
+       av_max_r(av_cnt) = min_dist
 
-       av_r(1) = rg_minr
-       av_s(1) = rg_mins
-       av_min_r(1) = min_dist
-       av_max_r(1) = min_dist
+       av_type(av_cnt) = RAY_END
+       av_metric(av_cnt) = -1
+       av_angle(av_cnt)  = -1
 
-       av_r(2) = rg_maxr
-       av_s(2) = rg_mins
-       av_min_r(2) = min_dist
-       av_max_r(2) = min_dist
-
-
-       av_r(av_group_cnt-1) = rg_maxr
-       av_s(av_group_cnt-1) = rg_maxs
-       av_min_r(av_group_cnt-1) = min_dist
-       av_max_r(av_group_cnt-1) = min_dist
-
-       av_r(av_group_cnt) = rg_minr
-       av_s(av_group_cnt) = rg_maxs
-       av_min_r(av_group_cnt) = min_dist
-       av_max_r(av_group_cnt) = min_dist
+    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
 
-    else
+       av_cnt = av_cnt + 1
+       av_r(av_cnt) = rg_minr
+       av_s(av_cnt) = rg_maxs
+       av_min_r(av_cnt) = min_dist
+       av_max_r(av_cnt) = min_dist
 
-       ! add end points
+       av_type(av_cnt) = RAY_END
+       av_metric(av_cnt) = -1
+       av_angle(av_cnt)  = -1
 
-       av_r(1) = min_dist
-       av_s(1) = min_lc
-       av_min_r(1) = min_dist
-       av_max_r(1) = min_dist
+    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
-       av_r(av_group_cnt) = min_dist
-       av_s(av_group_cnt) = max_lc
-       av_min_r(av_group_cnt) = min_dist
-       av_max_r(av_group_cnt) = min_dist
 
+!    End point addition is not needed except for intersection subsets
+!    else
+!
+!       ! add end points
+!       av_cnt = av_cnt + 1
+!       av_r(av_cnt) = min_dist
+!       av_s(av_cnt) = max_lc
+!       av_min_r(av_cnt) = min_dist
+!       av_max_r(av_cnt) = min_dist
+!
+!       av_type(av_cnt) = RAY_END
+!       av_metric(av_cnt) = -1
+!       av_angle(av_cnt)  = -1
+!
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RP:',0,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!
+!
     endif
 
 
 
+    write(0,*) 'AV_CNT, av_group_cnt =',av_cnt, av_group_cnt
+    write(6,*) 'AV_CNT, av_group_cnt =',av_cnt, av_group_cnt
 
+
+    av_group_cnt = av_cnt
+
+
+    do in = 1,av_group_cnt
+       write(6,'(a,i8,10(1x,g18.8))') 'LIM:',in,av_r(in),av_s(in),av_type(in)
+
+    end do
 
     !write(outunit,'(a,10(1x,g18.8))') 'Average1:',min_dist,max_dist
     !do in = 1,av_group_cnt
@@ -2705,44 +2421,48 @@ contains
     !end do
 
     ! go through the data and remove degeneracies in tangency and wall points
+    ! Assume for now that RAY data does not have this problem
 
-    dir = 1.0   
-    last_face = 1
+    !dir = 1.0   
+    !last_face = 1
 
 
-    in = 0
-    do while (in.lt.av_group_cnt-1)
-       !do in = 1,av_group_cnt-1
-       in = in+1
-       last_dir = dir
-       !write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
-       dir = av_r(in+1)-av_r(in)
+    !in = 0
+    !do while (in.lt.av_group_cnt-1)
+    !do in = 1,av_group_cnt-1
+    !  in = in+1
+    !  last_dir = dir
+    !  !write(outunit,'(a,2i8)') 'Index:',in,av_group_cnt
+    !  dir = av_r(in+1)-av_r(in)
+    !
+    !  if (dir.eq.0.and.last_face.eq.1) then 
+    !     ! fix wall degeneracy
+    !     call insert_limiter_point(in,last_face)
+    !     last_face = 2
+    !  elseif (dir.eq.0.and.last_face.eq.2) then 
+    !     ! fix tangency degeneracy
+    !     call insert_limiter_point(in,last_face)
+    !     last_face = 1
+    !  elseif (last_dir.eq.0.and.last_face.eq.1) then 
+    !     last_face = 2
+    !  elseif (last_dir.eq.0.and.last_face.eq.2) then 
+    !     last_face = 1
+    !  elseif (dir.lt.0.and.last_dir.gt.0) then
+    !     last_face = 2
+    !  elseif (dir.gt.0.and.last_dir.lt.0) then
+    !     last_face = 1
+    !  elseif (dir.gt.0.and.last_dir.gt.0) then
+    !     last_face = 1
+    !  elseif (dir.lt.0.and.last_dir.lt.0) then
+    !     last_face = 2
+    !  endif
 
-       if (dir.eq.0.and.last_face.eq.1) then 
-          ! fix wall degeneracy
-          call insert_limiter_point(in,last_face)
-          last_face = 2
-       elseif (dir.eq.0.and.last_face.eq.2) then 
-          ! fix tangency degeneracy
-          call insert_limiter_point(in,last_face)
-          last_face = 1
-       elseif (last_dir.eq.0.and.last_face.eq.1) then 
-          last_face = 2
-       elseif (last_dir.eq.0.and.last_face.eq.2) then 
-          last_face = 1
-       elseif (dir.lt.0.and.last_dir.gt.0) then
-          last_face = 2
-       elseif (dir.gt.0.and.last_dir.lt.0) then
-          last_face = 1
-       elseif (dir.gt.0.and.last_dir.gt.0) then
-          last_face = 1
-       elseif (dir.lt.0.and.last_dir.lt.0) then
-          last_face = 2
-       endif
+    !  !write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
 
-       !write(outunit,'(a,2i6,10(1x,g18.8))') 'FIND:',in,last_face,dir,last_dir,av_r(in),av_s(in)
+    ! end do
 
-    end do
+
+
 
 
 
@@ -2751,19 +2471,20 @@ contains
 
 
     ! allocate av_type
-    if (av_group_cnt.gt.0) then 
-       if (allocated(av_type)) deallocate(av_type)
-       allocate(av_type(av_group_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_TYPE:IERR =',ierr)
-          stop
-       endif
-    else
-       return
-    endif
+    !if (av_group_cnt.gt.0) then 
+    !   if (allocated(av_type)) deallocate(av_type)
+    !   allocate(av_type(av_group_cnt),stat=ierr)
+    !   if (ierr.ne.0) then 
+    !      call errmsg('ALLOCATION ERROR:AV_TYPE:IERR =',ierr)
+    !      stop
+    !   endif
+    !else
+    !   return
+    !endif
 
     dir = 1.0   
-    av_tan_cnt = 0
+    ! Tangency has already been defined from RAY data - however, leave code for now to check this 
+    av_tmp_tan_cnt = 0
     av_wall_cnt = 0
 
     last_face = 1
@@ -2771,30 +2492,40 @@ contains
     do in = 1,av_group_cnt-1
        last_dir = dir
        dir = av_r(in+1)-av_r(in)
+       av_type_org = av_type(in)
 
        if (dir.eq.0.and.last_face.eq.1) then 
           av_type(in) = WALL
           av_wall_cnt = av_wall_cnt + 1
-          last_face = 2
+          last_face = 1
        elseif (dir.eq.0.and.last_face.eq.2) then 
           av_type(in) = TANGENCY
-          av_tan_cnt = av_tan_cnt + 1
-          last_face = 1
+          av_tmp_tan_cnt = av_tmp_tan_cnt + 1
+          last_face = 2
        elseif (last_dir.eq.0.and.last_face.eq.1) then 
           av_type(in) = WALL
           av_wall_cnt = av_wall_cnt + 1
-          last_face = 2
+          if (dir.lt.0) then 
+             last_face = 2
+          else
+             last_face = 1
+          endif
        elseif (last_dir.eq.0.and.last_face.eq.2) then 
           av_type(in) = TANGENCY
-          av_tan_cnt = av_tan_cnt + 1
-          last_face = 1
+          av_tmp_tan_cnt = av_tmp_tan_cnt + 1
+          if (dir.gt.0) then 
+             last_face = 1
+          else
+             last_face = 2
+          endif
        elseif (dir.lt.0.and.last_dir.gt.0) then
           av_type(in) = WALL
           av_wall_cnt = av_wall_cnt + 1
           last_face = 2
        elseif (dir.gt.0.and.last_dir.lt.0) then
           av_type(in) = TANGENCY
-          av_tan_cnt = av_tan_cnt + 1
+          av_tmp_tan_cnt = av_tmp_tan_cnt + 1
+          last_face = 1
        elseif (dir.gt.0.and.last_dir.gt.0) then
           av_type(in) = SURFACE_START
           last_face = 1
@@ -2803,97 +2534,101 @@ contains
           last_face = 2
        endif
 
-       !write(0,'(a,3i6,10(1x,g18.8))')       'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
-       !write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tan_cnt,in,last_face,dir,last_dir,av_type(in),av_r(in),av_s(in)
+       write(0,'(a,3i6,10(1x,g18.8))')       'DIR:',av_tmp_tan_cnt,in,last_face,dir,last_dir,av_type_org,av_type(in),av_r(in),av_s(in)
+       write(outunit,'(a,3i6,10(1x,g18.8))') 'DIR:',av_tmp_tan_cnt,in,last_face,dir,last_dir,av_type_org,av_type(in),av_r(in),av_s(in)
 
     end do
 
 
+       write(0,'(a,3i6,10(1x,g18.8))')       'END:',av_tmp_tan_cnt,in,last_face,dir,last_dir,av_type_org,av_type(in),av_r(in),av_s(in)
+       write(outunit,'(a,3i6,10(1x,g18.8))') 'END:',av_tmp_tan_cnt,in,last_face,dir,last_dir,av_type_org,av_type(in),av_r(in),av_s(in)
+
+
     av_type(av_group_cnt) = SURFACE_END
+
+
+
+
 
     !
     ! Tangency points
     !
 
-    if (av_tan_cnt.gt.0) then 
-       if (allocated(av_tan_r)) deallocate(av_tan_r)
-       allocate(av_tan_r(av_tan_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_TAN_R:IERR =',ierr)
-          stop
-       endif
-       av_tan_r = 0.0
-    else
-       return
-    endif
+    !if (av_tan_cnt.gt.0) then 
+    !   if (allocated(av_tan_r)) deallocate(av_tan_r)
+    !   allocate(av_tan_r(av_tan_cnt),stat=ierr)
+    !   if (ierr.ne.0) then 
+    !      call errmsg('ALLOCATION ERROR:AV_TAN_R:IERR =',ierr)
+    !      stop
+    !   endif
+    !   av_tan_r = 0.0
+    !else
+    !   return
+    !endif
 
 
 
-    if (av_tan_cnt.gt.0) then 
-       if (allocated(av_tan_s)) deallocate(av_tan_s)
-       allocate(av_tan_s(av_tan_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_TAN_S:IERR =',ierr)
-          stop
-       endif
-       av_tan_s = 0.0
-    else
-       return
-    endif
+    !if (av_tan_cnt.gt.0) then 
+    !   if (allocated(av_tan_s)) deallocate(av_tan_s)
+    !   allocate(av_tan_s(av_tan_cnt),stat=ierr)
+    !   if (ierr.ne.0) then 
+    !      call errmsg('ALLOCATION ERROR:AV_TAN_S:IERR =',ierr)
+    !      stop
+    !   endif
+    !   av_tan_s = 0.0
+    !else
+    !   return
+    !endif
 
 
     ! Need index to limiter surface vertex as well
-    if (av_tan_cnt.gt.0) then 
-       if (allocated(av_tan_ind)) deallocate(av_tan_ind)
-       allocate(av_tan_ind(av_tan_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_TAN_IND:IERR =',ierr)
-          stop
-       endif
-       av_tan_ind = 0
-    else
-       return
-    endif
+    !if (av_tan_cnt.gt.0) then 
+    !   if (allocated(av_tan_ind)) deallocate(av_tan_ind)
+    !   allocate(av_tan_ind(av_tan_cnt),stat=ierr)
+    !   if (ierr.ne.0) then 
+    !      call errmsg('ALLOCATION ERROR:AV_TAN_IND:IERR =',ierr)
+    !      stop
+    !   endif
+    !   av_tan_ind = 0
+    !else
+    !   return
+    !endif
 
     !
     ! Tangency point radial order
     !
 
-    if (av_tan_cnt.gt.0) then 
-       if (allocated(tan_ord_r)) deallocate(tan_ord_r)
-       allocate(tan_ord_r(av_tan_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:TAN_ORD_R:IERR =',ierr)
-          stop
-       endif
-       tan_ord_r = 0.0
-    else
-       return
-    endif
+    !if (av_tan_cnt.gt.0) then 
+    !   if (allocated(tan_ord_r)) deallocate(tan_ord_r)
+    !   allocate(tan_ord_r(av_tan_cnt),stat=ierr)
+    !   if (ierr.ne.0) then 
+    !      call errmsg('ALLOCATION ERROR:TAN_ORD_R:IERR =',ierr)
+    !      stop
+    !  endif
+    !   tan_ord_r = 0.0
+    !else
+    !   return
+    !endif
+
+
 
     !
     ! wall points
     !
 
     if (av_wall_cnt.gt.0) then 
+
        if (allocated(av_wall_s)) deallocate(av_wall_s)
        allocate(av_wall_s(av_wall_cnt),stat=ierr)
+
+       if (allocated(av_wall_r)) deallocate(av_wall_r)
+       allocate(av_wall_r(av_wall_cnt),stat=ierr)
+
        if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_WALL_S:IERR =',ierr)
+          call errmsg('ALLOCATION ERROR:AV_WALL ARRAYS:IERR =',ierr)
           stop
        endif
        av_wall_s = 0.0
-    else
-       return
-    endif
-
-    if (av_wall_cnt.gt.0) then 
-       if (allocated(av_wall_r)) deallocate(av_wall_r)
-       allocate(av_wall_r(av_wall_cnt),stat=ierr)
-       if (ierr.ne.0) then 
-          call errmsg('ALLOCATION ERROR:AV_WALL_R:IERR =',ierr)
-          stop
-       endif
        av_wall_r = 0.0
     else
        return
@@ -2914,18 +2649,19 @@ contains
 
           if (tmp_tan_cnt.le.av_tan_cnt) then 
              ! record r,s and index into surface array for the tangency point
-             av_tan_r(tmp_tan_cnt) = av_r(in)
-             av_tan_s(tmp_tan_cnt) = av_s(in)
-             av_tan_ind(tmp_tan_cnt) = in
-             write(outunit,'(a,i6,10(1x,g18.8))') 'TAN :',tmp_tan_cnt,in,av_r(in),av_s(in)
+             !av_tan_r(tmp_tan_cnt) = av_r(in)
+             !av_tan_s(tmp_tan_cnt) = av_s(in)
+             !av_tan_ind(tmp_tan_cnt) = in
+             write(outunit,'(a,i6,10(1x,g18.8))') 'TAN :',tmp_tan_cnt,in,av_r(in),av_s(in),av_tan_r(tmp_tan_cnt),av_tan_s(tmp_tan_cnt)
              if (in.ne.av_group_cnt) then 
                 if(av_type(in+1).eq.TANGENCY) then 
                    double_tan = double_tan+1
                 endif
              endif
-          else
-             CALL ERRMSG('Too many tangency points found:',tmp_tan_cnt)
-             stop
+          !else
+          !   write(0,'(a,2i10)') 'TANGENCIES:',av_tan_cnt, tmp_tan_cnt
+          !   CALL ERRMSG('Too many tangency points found:',tmp_tan_cnt)
+          !   stop
           endif
 
        endif
@@ -2949,6 +2685,10 @@ contains
 
     end do
 
+    write(0,'(a,3i10)') 'TANGENCIES:',av_tan_cnt, tmp_tan_cnt,av_tmp_tan_cnt
+    write(outunit,'(a,3i10)') 'TANGENCIES:',av_tan_cnt, tmp_tan_cnt,av_tmp_tan_cnt
+
+
 
     write(outunit,*) 'DOUBLES:',double_tan,double_wall
 
@@ -2969,6 +2709,7 @@ contains
 
 
     ! Find max and min from the reduced intersection data ... loop through revised wall to get this data
+
 
     r_limiter_max = min_dist -1.0
     r_limiter_min = max_dist +1.0
@@ -3021,11 +2762,13 @@ contains
     do in = 1,av_tan_cnt-1
        if ((av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep) then 
           ! move tangency point in to match
-          av_tan_r(in+1) = av_tan_r(in)
-          av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
 
           write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
           !write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+
+          av_tan_r(in+1) = av_tan_r(in)
+          av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
+
        endif
 
     end do
@@ -3039,7 +2782,7 @@ contains
 
     do in = 1,av_tan_cnt
        tan_ord_r(in) = in
-       write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R:',in,av_tan_r(in),tan_ord_r(in)
+       write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R2:',in,av_tan_r(in),av_tan_s(in),tan_ord_r(in)
     end do
 
     ! Sort the S indices by R to get tan_ord_r referencing the R order of the data while sorted by S
@@ -3068,7 +2811,7 @@ contains
 
     implicit none
     integer :: tan_cnt,in,is
-
+    integer :: ierr
 
     av_tan_cnt = n_tangency
 
@@ -3111,7 +2854,7 @@ contains
 
     do in = 1,n_field_lines
        do is = 1,field_line(in)%int_tot
-          if (field_line(in)%int_data(is)%itype.eq.RAY_TAN) then 
+          if (field_line(in)%int_data(is)%int_type.eq.RAY_TAN) then 
              tan_cnt = tan_cnt + 1
              if (tan_cnt.le.av_tan_cnt) then 
                 av_tan_r(tan_cnt) = field_line(in)%dist
@@ -3135,11 +2878,11 @@ contains
 
     ! sort tangency point arrays by S
     call sort_arrays(0,av_tan_cnt,av_tan_s,av_tan_r,av_tan_ind,av_tan_bump,av_tan_fl)
-    
+
     ! write the S ordered array index into another array
     do in = 1,av_tan_cnt
        tan_ord_r(in) = in
-       !write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_R:',in,av_tan_r(in),tan_ord_r(in)
+       write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_RA:',in,av_tan_r(in),av_tan_s(in),tan_ord_r(in)
     end do
 
     ! Sort the S indices by R to get tan_ord_r referencing the R order of the data while sorted by S
@@ -3149,27 +2892,140 @@ contains
     ! The av_tan_bump array should now contain the bump order
     call sort_arrays(0,av_tan_cnt,av_tan_s,av_tan_r,av_tan_ind,av_tan_bump,av_tan_fl)
 
+    do in = 1,av_tan_cnt
+       write(outunit,'(a,i8,10(1x,g18.8))') 'TAN_ORD_RB:',in,av_tan_r(in),av_tan_s(in),tan_ord_r(in)
+    end do
 
   end subroutine find_ray_tangency
 
 
+  subroutine assign_ray_surf(fl,bump,intn,av_cnt)
+    implicit none
+    integer :: fl,bump,intn,av_cnt
+    integer :: int_id
 
-.
+    ! intn defines which intersection on a specific field line is to be loaded into the 
+    ! av_ arrays ... if the specified intn is unavailable the code just continues to execute without inserting 
+    ! an intersection point
+    !
+    ! intn : 0 = field line start position
+    !        1 = RAY_ENTER intersection with specific bump (or tangency)
+    !        2 = RAY_EXIT intersection with specific bump
+    !        3 = RAY_TAN intersection for specific bump
+    !        4 = field line end position 
+    !
+
+    ! assign all the quantities for the av_ arrays
+    ! av_s, av_r, av_min_r, av_max_r, av_metric, av_angle, av_type
+
+    call get_ray_intersection(int_id,fl,bump,intn)
 
 
-    subroutine map_bumps
-      implicit none
-      
+    ! Intersection ID has been assigned
+    if (int_id.ge.0) then 
 
-      integer :: bump_id,last_bump_id
+       av_cnt = av_cnt + 1
+       av_s(av_cnt)      = field_line(fl)%int_data(int_id)%lc
+       av_r(av_cnt)      = field_line(fl)%dist
+       av_type(av_cnt)   = field_line(fl)%int_data(int_id)%int_type
+       av_metric(av_cnt) = field_line(fl)%int_data(int_id)%metric
+       av_angle(av_cnt)  = field_line(fl)%int_data(int_id)%angle
+       av_min_r(av_cnt)  = av_r(av_cnt)
+       av_max_r(av_cnt)  = av_r(av_cnt)
+
+    endif
+
+  end subroutine assign_ray_surf
 
 
-      nbumps = max(av_tan_bump)
+
+  subroutine get_ray_intersection(int_id,fl,bump,intn)
+    implicit none
+    integer :: int_id,fl,bump,intn
+    ! return index to desired intersection point
+    ! 
+    ! intn : 0 = field line start position
+    !        1 = RAY_ENTER intersection with specific bump (or tangency)
+    !        2 = RAY_EXIT intersection with specific bump
+    !        3 = RAY_TAN intersection for specific bump
+    !        4 = field line end position 
+    !
+
+    integer :: int_cnt,int_num,icnt
+    logical :: done
+    integer :: required_intsect
+
+    done = .false.
+    int_id = -1
+
+    int_num = field_line(fl)%int_tot
+
+    ! Note: required_intsect is used either for position or type depending on use
+    if (intn.eq.0) then 
+       required_intsect = 1
+    elseif (intn.eq.1) then 
+       required_intsect = RAY_ENTER
+    elseif (intn.eq.2) then 
+       required_intsect = RAY_EXIT
+    elseif (intn.eq.3) then 
+       required_intsect = RAY_TAN
+    elseif (intn.eq.4) then 
+       required_intsect = int_num
+    endif
+
+
+    ! return the field line start position - if available - type 5
+    if (intn.eq.0.or.intn.eq.4) then 
+
+       if (field_line(fl)%int_data(required_intsect)%int_type.eq.RAY_END) then 
+          int_id = required_intsect
+       endif
+
+    elseif(intn.eq.1.or.intn.eq.2.or.intn.eq.3) then 
+
+       icnt = 0
+       do while (.not.done)
+          icnt = icnt + 1
+
+          if (field_line(fl)%int_data(icnt)%bump.eq.bump.and.field_line(fl)%int_data(icnt)%int_type.eq.required_intsect) then 
+             if (.not.filter_intersections.or.&
+                  (filter_intersections.and. &
+                  (field_line(fl)%int_data(icnt)%lc.ge.rg_int_win_mins).and.&
+                  (field_line(fl)%int_data(icnt)%lc.le.rg_int_win_maxs))) then 
+
+                int_id = icnt
+                done = .true.
+
+             endif
+
+          endif
+
+          if (icnt.eq.int_num) done=.true.
+
+       end do
+
+    endif
+
+
+
+  end subroutine get_ray_intersection
+
+
+
+  subroutine map_bumps
+    implicit none
+
+
+    integer :: bump_id,last_bump_id
+    integer :: ierr,in,int_cnt,is
+
+
+    nbumps = maxval(av_tan_bump)
 
 
     if (nbumps.gt.0) then 
        if (allocated(bump_inf)) deallocate(bump_inf)
-       allocate(bump_inf(nbumps,2),stat=ierr)
+       allocate(bump_inf(nbumps,3),stat=ierr)
        if (ierr.ne.0) then 
           call errmsg('ALLOCATION ERROR:BUMP_INF:IERR =',ierr)
           stop
@@ -3185,14 +3041,24 @@ contains
        int_cnt = 0
        do is = 1,field_line(in)%int_tot
           bump_id = field_line(in)%int_data(is)%bump
+
           ! calculate the start and end rows for each bump
           if (bump_id.ne.0) then 
 
              if (bump_inf(bump_id,1).eq.0) then 
                 bump_inf(bump_id,1) = in
-             endif   
+                if (field_line(in)%int_data(is)%int_type.ne.RAY_TAN) then
+                   write(0,'(a,4i10,10(1x,g18.8))') 'BUMP START NOT TANGENCY:',bump_id,in,is,field_line(in)%int_data(is)%int_type
 
-             bump_inf(bump_id,2) = in
+                endif
+             endif
+
+             ! This allows for assymmetric bumps - the assymmetric sections will only have one intersection (either an entrance or exit depending)
+             if (field_line(in)%int_data(is)%int_type.eq.RAY_ENTER) then 
+                bump_inf(bump_id,2) = in
+             elseif (field_line(in)%int_data(is)%int_type.eq.RAY_EXIT) then
+                bump_inf(bump_id,3) = in
+             endif
 
           endif
        end do
@@ -3266,6 +3132,8 @@ contains
 
     real*8 :: line_length, rfactor, lfactor  ! variables related to ring reduced grids 
 
+    integer :: rings_processed
+    integer :: start_count,end_count
 
     ! initialize module variables to global input values
     grid_option = rg_grid_opt
@@ -3317,7 +3185,7 @@ contains
              rbnd_cnt = rbnd_cnt + 1
              if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
              r_bnds(rbnd_cnt) = av_tan_r(in1)
-             write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),r_bnds(rbnd_cnt-1),av_tan_s(in1),av_tan_s(in)
+             write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in),r_bnds(rbnd_cnt-1)
 
           endif
        else
@@ -3512,10 +3380,12 @@ contains
 
     ! initial estimates of maximum grid size
 
-    max_nrings = av_wall_cnt * rbnd_cnt
+    max_nrings = (av_tan_cnt+1) * rbnd_cnt
     !max_nknots = max(200,int((max_lc-min_lc)/max_s_sep)*2)
-    max_nknots = max(200,max((min_cells*av_wall_cnt)*2,int((max_lc-min_lc)/max_s_sep)*2))
-    max_npoly = max_nrings * max_nknots
+    max_nknots = max(200,max((min_cells*(av_tan_cnt+1))*2,int((max_lc-min_lc)/max_s_sep)*2))
+    ! This value is much too large
+    !max_npoly = max_nrings * max_nknots
+    max_npoly = max(2*rbnd_cnt * max_nknots,max_nrings * min_cells *4)
 
     write(0,'(a,7i12,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
 
@@ -3815,6 +3685,8 @@ contains
        npts2a = 0
        npts2b = 0
 
+       rings_processed = 0
+
        ! assign start/end indices on each row
        do it = 1,vert_cnt1
           !write(0,'(a,7i8,g18.8)') 'VERT:',in,it,vert_cnt1,npts1a,npts1b,npts2a,npts2b,vert_type1(it)
@@ -3831,9 +3703,10 @@ contains
              ! Now find the matching indices in vert_rec2
              s_start = vert_rec1(npts1a)
              s_end = vert_rec1(npts1b)
+             rings_processed = rings_processed + 1
 
 
-             !write(outunit,'(a,6i8,10(1x,g18.8))') 'VERTB:',in,it,vert_cnt1,vert_cnt2,npts1a,npts1b,s_start,s_end
+             write(outunit,'(a,6i8,10(1x,g18.8))') 'VERTB:',in,it,vert_cnt1,vert_cnt2,npts1a,npts1b,s_start,s_end
 
              ! loop through vert_rec2
 
@@ -3841,23 +3714,44 @@ contains
              npts2b = 0
              vert_set = .false.
 
+             end_count = 0
+             start_count = 0
+
              do is = 1,vert_cnt2
-                write(outunit,*) 'NPTS2A:',is,vert_cnt2,vert_rec2(is),s_start,s_end
                 ! s_start is numerically larger than s_end
                 !if (vert_rec2(is).ge.s_start.and.vert_rec2(is).le.s_end) then 
-                if (vert_rec2(is).le.s_start.and.vert_rec2(is).ge.s_end) then 
+                !if (vert_rec2(is).le.s_start.and.vert_rec2(is).ge.s_end) then 
                    ! this should assign npts2a and npts2b to appropriate values
-                   if (npts2a.eq.0) then 
+                !   if (npts2a.eq.0) then 
+                !      npts2a = is
+                !   endif
+
+                !   npts2b = is
+                !   vert_set=.true.
+
+                !elseif (vert_set) then 
+                !   exit
+                !endif
+                !
+                ! Need to change algorithm - want the pair of SURFACE_END/SURFACE_START values corresponding to rings_processed
+
+                if (vert_type2(is).eq.SURFACE_END) then
+                   end_count = end_count + 1
+                   if (end_count.eq.rings_processed) then 
                       npts2a = is
+                      write(outunit,'(a,2i10,10(1x,g18.8))') 'NPTS2A:',is,vert_cnt2,vert_rec2(is),s_start,s_end
                    endif
-
-                   npts2b = is
-                   vert_set=.true.
-
-                elseif (vert_set) then 
-                   exit
                 endif
-                write(outunit,*) 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
+
+                if (vert_type2(is).eq.SURFACE_START) then
+                   start_count = start_count + 1
+                   if (start_count.eq.rings_processed) then 
+                      npts2b = is
+                      write(outunit,'(a,2i10,10(1x,g18.8))') 'NPTS2B:',is,vert_cnt2,vert_rec2(is)
+                      exit
+                   endif
+                endif
+
              end do
 
              line_length = abs(s_start-s_end)
@@ -3875,6 +3769,7 @@ contains
                 write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
 
              endif
+             
 
              ! If the point is a tangency then it is also the next surface start point
              if (vert_type1(it).eq.TANGENCY) then 
@@ -4578,8 +4473,10 @@ contains
     ! ... may need to rebuild later from connection map data
 
     ! End points should already be included 
+
+    nves = av_group_cnt
+
     if (nves.le.mves) then 
-       nves = av_group_cnt
        do in = av_group_cnt,1,-1
           rves(in) = av_r(in)
           zves(in) = av_s(in)
@@ -4590,9 +4487,8 @@ contains
 
     else
        call errmsg('Too many elements in ribbon grid wall specification:',av_group_cnt)
+       stop "Too many points in ribbon grid wall"
     endif
-
-
 
 
   end subroutine assign_grid_to_divimp
