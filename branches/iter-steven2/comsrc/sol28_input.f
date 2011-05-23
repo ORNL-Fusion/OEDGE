@@ -793,7 +793,7 @@ c
 
       LOGICAL osmGetLine
 
-      CHARACTER buffer_array*256(100)
+      CHARACTER*256 buffer_array(100)  ! gfortran
 
       SELECTCASE (buffer(3:itag-1))
 c       ----------------------------------------------------------------

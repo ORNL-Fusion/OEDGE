@@ -110,9 +110,10 @@ c
 
       LOGICAL GetLine
 
-      INTEGER i1,i2,fp,idum1,idum2,i,n,inext
-      LOGICAL load_detector
-      CHARACTER cdum1*128,dummy*1024,buffer*1024,buffer_array*256(100)
+      INTEGER       i1,i2,fp,idum1,idum2,i,n,inext
+      LOGICAL       load_detector
+      CHARACTER     cdum1*128,dummy*1024,buffer*1024
+      CHARACTER*256 buffer_array(100)
 
       TYPE(type_header) :: header
       REAL*8 :: image(1000,1000)
