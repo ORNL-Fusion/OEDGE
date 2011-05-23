@@ -66,10 +66,10 @@ PRO cortex_GeneratePlots, args
 
 ;    input_file = '/home/slisgo/fuse/input/' + input_file
 ;    data_path  = '/home/slisgo/divimp/results/'
-    input_file = '/home/ITER/lisgos/fuse/input/' + input_file
+    input_file = '/$HOME/fuse/input/' + input_file
 ;    data_path  = '/home/ITER/lisgos/fuse_data/results/'   ; + family + '/' + child + '/'
 ;    input_file = '/home/ITER/lisgos/divimp/data/' + input_file
-    data_path  = '/home/ITER/lisgos/divimp/results/'
+    data_path  = '/$HOME/divimp/results/'
 
   ENDELSE
 
@@ -175,7 +175,7 @@ PRO cortex_GeneratePlots, args
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
                                data_array = CREATE_STRUCT(data_array,name,plot_data)
             ENDFOR
-            status = cortex_PlotImage(plot, data_array, ps=ps)
+;            status = cortex_PlotImage(plot, data_array, ps=ps)
             END
 ;         --------------------------------------------------------------         
           ELSE: BEGIN  
