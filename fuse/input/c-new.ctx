@@ -1,6 +1,46 @@
-* First ever CORTEX input file
+* 
+* CORTEX example file for c-new series of cases
+* =============================================
 *
+* Copy ~/slisgo/fuse to $HOME/fuse.
 *
+* You need to add $FUSEHOME/idl and $FUSEHOME/idl/utils to your IDL path.  See ~slisgo/idl_startup.pro,
+* if necessary.
+* 
+* > cd $FUSEHOME/idl
+* > idl
+* IDL> @cortex_make
+* IDL> cortex_main,['c-new-0017b','c-new.ctx']
+*
+* The output is in $RESULTS/c-new/$CASEHAME.idl.ps.  Note that the page is formatted for A4 paper --
+* not sure how to adjust this at the moment, but have a look in $FUSEHOME/idl/utils/psopen.pro (or 
+* whatever it's called).
+*
+* See if that works...
+
+
+* Transfer the tetrahedron grid data that's stored in $DIVHOME/results/c-new/$CASENAME.idl.tet_centroid
+* to IDL save set $FUSEHOME/idl/tetrahedron_test.sav.  This is the file I supplied to Micheal, i.e. he
+* has some code to play around with this and produce some line-of-sight integrations, 3D plots, etc.
+
+{PLOT 3D TEST}  1
+
+* Just a plot of the grid
+
+{PLOT 2D FLUID GRID}  1  
+
+
+{EXIT}
+
+
+* ------------------ below here is junk ------------------ 
+
+
+{PLOT 1D PARALLEL PROFILE}  1  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; 
+
+{EXIT}
+
+
 
 
 {PLOT 1D LOS INTEGRAL}  1  {YLOG}  {CASE} >c >d >e ${YRANGE}  18 23  

@@ -4,7 +4,7 @@
 ;
 FUNCTION cortex_LoadTetrahedronData, file
 
-;  file = cortex_UpdateFile(file)
+  file = cortex_UpdateFile(file)
 
   status = inOpenInterface(file)
   IF (status LT 0) THEN BEGIN
