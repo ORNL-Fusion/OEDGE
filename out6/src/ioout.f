@@ -770,7 +770,7 @@ C
      >         ' NEXPT INTEGER PAIRS'
 c
       WRITE(0,*) ' STOP: GFORTRAN DOES NOT LIKE THESE LINES FOR SOME'   ! gfortran
-      WRITE(0,*) ' REASON. CHECK THE CODE' 
+      WRITE(0,*) ' REASON. CHECK THE CODE TO SEE WHAT A FIX MIGHT BE.' 
       STOP
 c      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,plotid,nexpt, 
 c     >           ((expt_ds(in),expt_col(in)),in=1,min(nexpt,maxexpt))

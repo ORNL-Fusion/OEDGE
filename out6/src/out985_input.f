@@ -475,6 +475,12 @@ c         --------------------------------------------------------------
                       CALL ER('LoadOptions985_New','Unrecognized '//
      .                        'ribbon limit',*99)
                   ENDSELECT
+                CASE (2)  ! crop to region of interest
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_r1(i1)
+                  READ(buffer_array(4),*) opt%rib_r2(i1)
+                  READ(buffer_array(5),*) opt%rib_s1(i1)
+                  READ(buffer_array(6),*) opt%rib_s2(i1)
                 CASE DEFAULT
                   CALL ER('LoadOptions985_New','Unrecognized '//
      .                    'ribbon grid option',*99)

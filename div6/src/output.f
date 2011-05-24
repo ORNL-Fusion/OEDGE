@@ -1252,7 +1252,8 @@ c...temp: korpg=0
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
      .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
-     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
+c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO
         ENDDO
       ENDIF

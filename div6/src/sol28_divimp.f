@@ -634,12 +634,28 @@ c        ENDIF
         cell(cind1:cind2)%volume_3D  = tube_3D_data(5,1:ike,ir)
 
         DO ik = 1, nks(ir)
-          WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c
+c         jdemod - add if statement to test if dangle=0.0 
+c                - divide by zero error otherwise
+c
+          if (dangle.ne.0.0) then 
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
      .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
      .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
      .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
      .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
      .                               (360.0/dangle) 
+          else
+            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
+c     .                               * (360.0/dangle) 
+          endif
+c
+c         end jdemod
+c
         ENDDO
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
@@ -3655,4 +3671,75 @@ c...  For consistency with original SONNET code in tau.d6a:
       END
 c
 c ======================================================================
+c
+c subroutine: FindGridBreak
+c
+c Note - there are no virtual rings at this point -- should add them first?
+c
+cc
+      SUBROUTINE FindGridBreak
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+
+      INTEGER i1
+
+c... dicy...
+      irbreak = MAXNRS
+c...  ...
+      DO i1 = 2, grdntseg(1,IKLO)
+        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
+          irbreak = grdtseg(i1-1,1,IKLO) + 1
+          EXIT
+        ENDIF
+      ENDDO
+c...  Search though the target regions and select the first one that
+c     does not end on a virtual ring (which is always IRWALL here):
+      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
+     .    grdntreg(IKLO).GT.2) THEN
+        DO i1 = 2, grdntreg(IKLO) 
+          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKLO)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+c...  ...
+      DO i1 = 2, grdntseg(1,IKHI)
+        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
+     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
+          irbreak = grdtseg(i1-1,1,IKHI) + 1
+          EXIT
+        ENDIF
+      ENDDO
+      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
+     .    grdntreg(IKHI).GT.2) THEN
+        DO i1 = 2, grdntreg(IKHI) 
+c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
+          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKHI)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (irbreak.EQ.MAXNRS) irbreak = 0
+
+c...  Assign NBR:
+      IF     (irbreak.EQ.0) THEN
+        nbr = 0
+      ELSEIF (irbreak.LT.irwall) THEN
+        nbr = irwall - irbreak
+      ELSE
+        nbr = nrs - irbreak + 1
+      ENDIF
+
+      RETURN
+ 99   STOP
+      END
+c
+c ========================================================================
 c

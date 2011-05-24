@@ -347,6 +347,10 @@ c      real     totfpin,totfypin,tmpy,totzfpin,tothpin,totfapin
 c      real     totmhpin
       real     tmp_bratio 
 c
+c     Temporary unit number
+c
+      integer tmp_unit
+
       external lenstr
 c
       
@@ -404,9 +408,11 @@ c
       CALL PRI2 ('  MAIN PLASMA RINGS                      ',1,IRSEP-1)
 c
       if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.GEN_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.GEN_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) then
 c...    cgridopt=6 for LINEAR_GRID
 c..     cgridopt=7 for GEN_GRID
+c..     cgridopt=8 for RIBBON_GRID
 c
       CALL PRI2 ('  SOL RINGS                              ',IRSEP,
      >           IRWALL)
@@ -570,6 +576,58 @@ c
          call prc(coment)
 c
       end do
+
+
+
+c
+c     Print out target geometry information to debug file in ring order
+c
+      
+      call find_free_unit_number(tmp_unit)
+
+      open(tmp_unit,file='target_geometry.dat',form='formatted')
+     
+      write(tmp_unit,*)
+      write(tmp_unit,'(a)') 'TARGET ELEMENT GEOMETRY:'
+      write(tmp_unit,*)
+c
+c
+      do in = 1,2
+
+         if (in.eq.1) then 
+            write(tmp_unit,'(a)') INNER//' TARGET:'
+            
+         elseif (in.eq.2) then 
+            write(tmp_unit,'(a)') OUTER//' TARGET:'
+
+         endif
+
+
+         write(tmp_unit,'(1x,'' ID '','' IK '','' IR '',6x,''R'',3x,'//
+     >            '6x,''Z'',3x,5x,''PSI'',2x,3x,''LENGTH'','//
+     >            '6x,''Bth/B'',3x,''SEP DIST'',3x,''MID DIST'')')
+
+
+         do ir = irsep,nrs
+            id = idds(ir,in)
+
+            if (kbfst(irds(id),in).ne.0.0) then
+               tmp_bratio = 1.0 / kbfst(irds(id),in)
+            else
+               tmp_bratio = 0.0
+            endif
+
+            write(tmp_unit,
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,2(1x,g12.5))')
+     >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
+     >       dds(id),tmp_bratio,sepdist2(id),middist(irds(id),in)
+
+         end do
+
+      end do
+      write(tmp_unit,*)
+
+      close(tmp_unit)
 c
       RETURN
       END
@@ -1801,6 +1859,7 @@ c
 c
 c
       SUBROUTINE PR_geom_options
+      use ribbon_grid_options
       IMPLICIT none
 c
 C
@@ -1874,8 +1933,50 @@ c
       ELSEIF (CGRIDOPT.EQ.LINEAR_GRID) then
         CALL PRC ('  GRID OPTION 6:  LINEAR DEVICE GRID BUILT')
       ELSEIF (CGRIDOPT.EQ.GEN_GRID) then
-        CALL PRC ('  GRID OPTION 6:  GENERALIZED GRID FILE :'//
+        CALL PRC ('  GRID OPTION 7:  GENERALIZED GRID FILE :'//
      >            ' SONNET BASE')
+      ELSEIF (CGRIDOPT.EQ.RIBBON_GRID) then
+        CALL PRC ('  GRID OPTION 8:  ITER RIBBON GRID BUILT '//
+     >            ' FROM CASTEM WALL INTERSECTION DATA')
+        call prc ('                  GRID INPUT PARAMETERS:')
+        call prc ('                  (G47) CASTEM DATA SET = '//
+     >                                trim(rg_castem_data))
+        call pri ('                  (G42) RIBBON GRID'//
+     >         ' GENERATION OPTION =',rg_grid_opt)
+        call prc ('                  0=unstructured,1=structured')
+        call pri ('                  (G43) INTERSECTION AVERAGING =',
+     >                               rg_block_av)
+        call prc ('                  0=off,1=on')
+        call prr ('                  (G44) MAX. ROW  SEPARATION (M) =',
+     >                               rg_max_r_sep)
+        call prr ('                  (G45) MAX. CELL SEPARATION (M) =',
+     >                               rg_max_s_sep)
+        call pri ('                  (G46) MIN. CELLS IN ROW OF GRID=',
+     >                               rg_min_cells)
+        
+        if (rg_int_win_mins.ne.rg_int_win_maxs) then 
+          Call prr2('                  (G48) INTERSECTION SELECTION'//
+     >            ' RANGE [SMIN,SMAX]=',rg_int_win_mins,rg_int_win_maxs)
+          call prr2('                  (G49) SUBSET GRID WINDOW SIZE '//
+     >            ' [RMIN,RMAX]=',rg_int_win_mins,rg_int_win_maxs)
+          call prr2('                  (G50) SUBSET GRID WINDOW SIZE '//
+     >            ' [SMIN,SMAX]=',rg_int_win_mins,rg_int_win_maxs)
+        endif
+
+        call   prr('                   (G51) LENGTH CUTOFF FACTOR'//
+     >                          ' FOR RING GENERATION = ', lcutoff) 
+        call   prc('                         - RINGS WITH A LENGTH'//
+     >                  ' FACTOR LESS THAN THIS WILL NOT BE GENERATED')
+        call   pri('                   (G52) CELL SPACING OPTION = ',
+     >                  cell_spacing_option)
+        call   prc('                         - Option 0 uses an'//
+     >             ' exponential spacing factor.')
+        call   prc('                         - A factor = 1.0'//
+     >                  ' gives linear spacing of cell boundaries')  
+        call   prr('                   (G53) Cell spacing factor = ',
+     >                         cell_spacing_factor)
+
+
       ENDIF
 c
 c     TMACHINE_OPT is an optional input value used to set the 
@@ -2131,6 +2232,13 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       OF REAL PLASMA POLYGONS ON EACH
      > RING')
        call prc ('                       VIRTUAL POINTS ARE DISCARDED')
+      ELSEIF (CTARGOPT.EQ.7) THEN
+       CALL PRC ('  TARGET OPTION    7 : TARGET IS SPECIFIED BY THE OUTE
+     >R')
+       CALL PRC ('                       POLYGON BOUNDARIES OF THE LAST
+     >SET')
+       CALL PRC ('                       OF PLASMA POLYGONS ON EACH RING
+     >')
       ENDIF
 C-----------------------------------------------------------------------
  999  IF     (CIONR.EQ.0) THEN
@@ -5116,7 +5224,44 @@ c
         call prr('                       FP TEMPERATURE = ',fp_te)
         call prr('                       FP DENSITY     = ',fp_ne)
 c
+       elseif (fp_plasma_opt.eq.3) then 
+c
+        call prc('  FP PLASMA OPTION 1 : FP PLASMA SPECIFIED'//
+     >          ' GRID CELL') 
+        call prr('                       FP TEMPERATURE = ',fp_te)
+        call prr('                       FP DENSITY     = ',fp_ne)
+        call prc('                       Vb and E       = 0.0')
+c
        endif
+
+       call prb
+
+       if (fp_flow_opt.eq.0) then
+          call prc('   FP FLOW OPTION 0: POLOIDAL DRIFT'//
+     >             ' FLOW IS OFF IN PERIPHERY')
+       elseif (fp_flow_opt.eq.1) then
+          call prc('   FP FLOW OPTION 1: POLOIDAL DRIFT'//
+     >             ' FLOW MATCHES ASSOCIATED GRID RING')
+          do in = 1,num_fp_regions
+             write(coment,'(a,i6,a,g12.5)') '     FLOW VEL.'//
+     >                ' IN FP_REG: ',in,' = ',fp_flow_velocity(in)
+             call prc(coment)
+          end do
+
+       elseif (fp_flow_opt.eq.2) then
+          call prc('   FP FLOW OPTION 2: POLOIDAL DRIFT'//
+     >             ' FLOW IS SPECIFIED = ',fp_flow_velocity_input)
+       elseif (fp_flow_opt.eq.3) then
+          call prc('   FP FLOW OPTION 3: POLOIDAL DRIFT'//
+     >             ' FLOW MATCHES ASSOCIATED BOUNDARY RING')
+          do in = 1,num_fp_regions
+             write(coment,'(a,i6,a,g12.5)') '     FLOW VEL.'//
+     >                ' IN FP_REG: ',in,' = ',fp_flow_velocity(in)
+             call prc(coment)
+          end do
+
+       endif
+
       endif
 
 C-----------------------------------------------------------------------

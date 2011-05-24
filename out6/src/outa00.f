@@ -1082,6 +1082,12 @@ c slmod end
              YYMIN = ZXP - 0.5
              YYMAX = ZXP + 0.5
            ENDIF
+        elseif (cgridopt.eq.RIBBON_GRID) then 
+           ! jdemod - add some options for plotting ribbon grids
+           XXMIN = RMIN-0.05
+           XXMAX = RMAX+0.05
+           YYMIN = ZMIN-0.1
+           YYMAX = ZMAX+0.1
         else
            XXMIN = RXP - xnear
            XXMAX = RXP + xnear
@@ -1095,6 +1101,7 @@ c slmod end
              YYMIN = ZXP - ynear
              YYMAX = ZXP + ynear
            ENDIF
+
         endif
 CX      XXMIN = 2.45
 CX      XXMAX = 2.65
@@ -1142,6 +1149,13 @@ c        IXMIN = MAX (1  , INT((XXMIN-RMIN)/DR)+1)
 c        IXMAX = MIN (NXS, INT((XXMAX-RMIN)/DR)+1)
 c        IYMIN = MAX (1  , INT((YYMIN-ZMIN)/DZ)+1)
 c        IYMAX = MIN (NYS, INT((YYMAX-ZMIN)/DZ)+1)
+        
+      elseif (cgridopt.eq.RIBBON_GRID) then 
+        ! jdemod - add some options for plotting ribbon grids
+        XXMIN = RMIN-0.05
+        XXMAX = RMAX+0.05
+        YYMIN = ZMIN-0.1
+        YYMAX = ZMAX+0.1
       ELSE
         XPOINT= ' '
         ASPECT= 0.5 * (ZMAXp-ZMINp)
@@ -2072,11 +2086,11 @@ c      call calcnt(nizs)
 
 
       NPLOTS = 0
-c slmod begin 
+c slmod begin
+      nobj      = 0
       stepopt   = 0
       nsteplist = 0
       mode      = 0
-      nobj      = 0
 c slmod end
 
 

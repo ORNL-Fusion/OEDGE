@@ -6503,6 +6503,16 @@ c...    Inner midplane:
           ENDIF
         ENDDO
 c     -------------------------------------------------------------------
+      ELSEIF (mode.EQ.15) THEN
+c...    Outer midplane:
+        DO ik = nks(ir), 1, -1
+          IF (rs(ik,ir).GT.r0.AND.ABS(zs(ik,ir)-z0).LT.param) THEN
+            CALL SplitCell(ik,ir,0.5D0,status)
+            IF (status.EQ.-1)
+     .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
+          ENDIF
+        ENDDO
+c     -------------------------------------------------------------------
       ELSE
         CALL ER('PoloidalRefinement','Invalid MODE',*99)
       ENDIF
@@ -7045,77 +7055,6 @@ c                ENDIF
       WRITE(0,*) 'C1,2 =',c1,c2
       WRITE(0,*) 'D1,2 =',d1,d2
       STOP
-      END
-c
-c ========================================================================
-c
-c subroutine: FindGridBreak
-c
-c Note - there are no virtual rings at this point -- should add them first?
-c
-cc
-      SUBROUTINE FindGridBreak
-      USE mod_grid_divimp
-      IMPLICIT none
-
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-
-      INTEGER i1
-
-c... dicy...
-      irbreak = MAXNRS
-c...  ...
-      DO i1 = 2, grdntseg(1,IKLO)
-        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
-          irbreak = grdtseg(i1-1,1,IKLO) + 1
-          EXIT
-        ENDIF
-      ENDDO
-c...  Search though the target regions and select the first one that
-c     does not end on a virtual ring (which is always IRWALL here):
-      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
-     .    grdntreg(IKLO).GT.2) THEN
-        DO i1 = 2, grdntreg(IKLO) 
-          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKLO)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-c...  ...
-      DO i1 = 2, grdntseg(1,IKHI)
-        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
-     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
-          irbreak = grdtseg(i1-1,1,IKHI) + 1
-          EXIT
-        ENDIF
-      ENDDO
-      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
-     .    grdntreg(IKHI).GT.2) THEN
-        DO i1 = 2, grdntreg(IKHI) 
-c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
-          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKHI)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-      IF (irbreak.EQ.MAXNRS) irbreak = 0
-
-c...  Assign NBR:
-      IF     (irbreak.EQ.0) THEN
-        nbr = 0
-      ELSEIF (irbreak.LT.irwall) THEN
-        nbr = irwall - irbreak
-      ELSE
-        nbr = nrs - irbreak + 1
-      ENDIF
-
-      RETURN
- 99   STOP
       END
 c
 c ========================================================================

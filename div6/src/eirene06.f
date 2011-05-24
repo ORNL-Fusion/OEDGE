@@ -1846,20 +1846,21 @@ c...  Impose filament structures:
         WRITE(eirfp,*) '  NOBJ:',nobj
         WRITE(eirfp,*) '  NSRF:',nsrf
         WRITE(eirfp,*) '  NVTX:',nvtx
-        CALL ResolveFilament   
+        CALL ResolveFilament(-1)
         CALL AssignFilamentPlasma   
         iend = nobj
         CALL BuildConnectionMap(istart,iend)
-        CALL FixTetrahedrons(istart,iend)
+        CALL FixTetrahedrons   (istart,iend)
       ENDIF
 
-      WRITE(0,*) 
-      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
-      WRITE(0,*) 
-      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
-      iend = nobj
-      CALL BuildConnectionMap(istart,iend)
-      CALL FixTetrahedrons(istart,iend)
+c...  Manual refinement:
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).NE.5.0) CYCLE
+        CALL ResolveFilament(itet)
+        iend = nobj
+        CALL BuildConnectionMap(istart,iend)
+        CALL FixTetrahedrons   (istart,iend)
+      ENDDO
 
       CALL CheckTetrahedronStructure
 
@@ -2078,6 +2079,7 @@ c need to reset trycycle for each slice
       IF (itet.EQ.opt_eir%tet_n+1) 
      .  CALL ER('AssembleTetrahedrons','No composite data line '//
      .          'found',*99)
+
       CALL GetList(nlist_sec,list_sec,opt_eir%tet_composite(itet))
 
       DO i1 = 1, nlist_sec
