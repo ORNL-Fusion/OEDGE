@@ -24,7 +24,7 @@ c     rtlcx   - ln(rtcx) where rtcx[m**3/s] is 'b2frates'
 c               data for c-x on neutral hydrogen
 c
       integer   maxrtnsd,maxrtnt,maxrtnn
-      parameter (maxrtnsd=maxizs,maxrtnt=50,maxrtnn=20)
+      parameter (maxrtnsd=maxizs+1,maxrtnt=50,maxrtnn=50)
 c
       common /adpak/ rtnt,rtnn,rtns,rtnsd,rtza,rtzn,rtza2,rtt,rtn,
      >               rtlt,rtln,rtlsa,rtlra,rtlqa,rtlcx,

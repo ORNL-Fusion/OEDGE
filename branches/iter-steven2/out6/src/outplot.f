@@ -91,7 +91,8 @@ c     than testing at every place that this routine can be called
 c     from.
 c
 c slmod begin
-      if (cgridopt.eq.0.or.cgridopt.eq.3.or.cgridopt.eq.6) then
+      if (cgridopt.eq.0.or.cgridopt.eq.3.or.cgridopt.eq.6.or.
+     .    cgridopt.eq.8) then
 c
 c      if (cgridopt.eq.0.or.cgridopt.eq.3) then
 c slmod end
@@ -1428,15 +1429,17 @@ c slmod begin
           BACKSPACE 5
         ENDIF          
 
-c slmod end
-        DO ir = 2,nrs
 c slmod begin
+        DO ir = 2, nrs
+c
+c        DO ir = 1, nrs
+c slmod end
            IF (ir.EQ.irwall) CYCLE
            IF (idring(ir).LT.0) CYCLE
-
+c
+c        DO ir = 2, nrs
 c           IF (ir.NE.49) CYCLE
 c slmod end
-
            DO ik = 1, nks(ir)
 
               DEFCOL = NCOLS+1
@@ -1452,7 +1455,6 @@ c
 
 c slmod begin
                     IF (nbr.GT.0) THEN
-
                       IF (ik.EQ.1) THEN
                         PVALS(1,1) = RVERTP(1,I)
                         PVALS(1,2) = ZVERTP(1,I)
@@ -1467,7 +1469,6 @@ c slmod begin
                       PVALS(2,2) = ZVERTP(4,I)
                       CALL GRTRAC (PVALS(1,1),PVALS(1,2),
      .                             2,NAME,'LINE',-1)        
-
                       IF (ir.EQ.2.OR.ir.EQ.irtrap+1) THEN
                         PVALS(1,1) = RVERTP(1,I)
                         PVALS(1,2) = ZVERTP(1,I)
@@ -1548,7 +1549,15 @@ c...    Highlight a ring:
           DEFCOL = NCOLS + rcol
           DO ik = 1, nks(ir)
              IF (rmode.EQ.1.AND.ik.NE.ikto.AND.ik.NE.ikti) CYCLE
-             i = korpg(ik,ir)
+             IF (idring(ir).EQ.BOUNDARY) THEN
+               IF (irins(ik,ir).EQ.ir) THEN
+                 i = korpg(ikouts(ik,ir),irouts(ik,ir))
+               ELSE
+                 i = korpg(ikins(ik,ir),irins(ik,ir))
+               ENDIF
+             ELSE
+               i = korpg(ik,ir)
+             ENDIF
              if (i.gt.0) then 
                 if (nvertp(i).gt.0) then  
                   IF (.FALSE.) THEN
@@ -1558,6 +1567,20 @@ c...    Highlight a ring:
                     PVALS(2,2) = ZVERTP(4,I)
                     CALL GRTRAC (PVALS(1,1),PVALS(1,2),
      .                           2,NAME,'LINE',-1)        
+                  ELSEIF (idring(ir).EQ.BOUNDARY) THEN
+                    IF (irins(ik,ir).EQ.ir) THEN
+                      PVALS(1,1) = RVERTP(1,I)
+                      PVALS(1,2) = ZVERTP(1,I)
+                      PVALS(2,1) = RVERTP(4,I)
+                      PVALS(2,2) = ZVERTP(4,I)
+                    ELSE
+                      PVALS(1,1) = RVERTP(2,I)
+                      PVALS(1,2) = ZVERTP(2,I)
+                      PVALS(2,1) = RVERTP(3,I)
+                      PVALS(2,2) = ZVERTP(3,I)
+                    ENDIF
+                    CALL GRTRAC (PVALS(1,1),PVALS(1,2),
+     .                           2,NAME,'LINE',-1)
                   ELSE
                     DO J = 1, NVERTP(I)
                       PVALS(J,1) = RVERTP(J,I)
@@ -1672,8 +1695,10 @@ c slmod begin
 
         reset_colour = .TRUE.
         READ(fp,*) i
+c        WRITE(0,*) 'i:',i
         DO j = 1, i
           READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3)
+c          WRITE(0,*) id,(pvals(k,1),pvals(k,2),k=1,3)
 
 c          IF (id.NE.5342) CYCLE
 
@@ -1739,7 +1764,7 @@ c also plot the nimbus wall and pump (if any)
 c
 c       IF available
 c
-        if (.FALSE..AND.nvesm.ne.0) then
+        if (nvesm.ne.0) then
 c
 c         Need to modify this to plot the baffles independently if they
 c         are present.
@@ -1771,7 +1796,7 @@ c
 c       Plot the wall read from the grid file if NIMBUS wall is
 c       not available
 c
-        elseif (.FALSE..AND.nves.ne.0) then
+        elseif (nves.ne.0) then
 
           write (6,*) 'Nves:',nves
 
@@ -1789,7 +1814,8 @@ c slmod end
 c slmod begin
 c...    Changes made to accommodate broken grids (look
 c       out, here they come): 
-        IF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID) THEN
+        IF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
+     .                  CGRIDOPT.EQ.RIBBON_GRID) THEN
           DEFCOL = NCOLS + 1
 	  IR = IRWALL
           DO IK = 1, NKS(IR)
@@ -1866,7 +1892,8 @@ C
         ENDDO
         CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
 C
-        IF (CGRIDOPT.NE.LINEAR_GRID.AND..NOT.NOPRIV) THEN
+        IF (CGRIDOPT.NE.LINEAR_GRID.AND..NOT.NOPRIV.AND.
+     .      CGRIDOPT.NE.RIBBON_GRID) THEN
           IR = IRTRAP + 1
           DO IK = 1, NKS(IR)
             K = KORPG(IK,IR)
@@ -7253,12 +7280,13 @@ c
 c
       write(6,*) 'GRIDPOS:',ik,ir,r,z,griderr,korpg(ik,ir),
      >                      nvertp(korpg(ik,ir))
-
+c slmod begin
       WRITE(0,*) ' STOP: GFORTRAN COMPLAINING, CHECK CODE' 
       STOP
 c      write(6,'(8(1x,g12.5))') ((rvertp(in,korpg(ik,ir)),
 c     >                         zvertp(in,korpg(ik,ir))),
 c     >                         in = 1,4)
+c slmod end
 c
 
 
@@ -7635,7 +7663,7 @@ c
       integer iselect,istate,nizs,ierr,itype      
       character*(*) ylab,blab,ref 
 c
-c     LOAD_DATA_ARRAY
+c     LOAD_DIVDATA_ARRAY
 c
 c     This routine loads a 2D DIVIMP array of size MAXNKS,MAXNRS with
 c     a quantity specified by the values of iselect and istate. 

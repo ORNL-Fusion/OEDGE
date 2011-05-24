@@ -116,7 +116,7 @@ c -----------------------------------------------------------------------
       IF     (line(2:2).EQ.'{') THEN
         IF (sol28_first) THEN 
 c          WRITE(0,*) 'INITIALIZING SOL28 OPTIONS'
-c          CALL osm_InitializeOptions  Now called from InitializeVariables in setup.f
+c          CALL InitializeOptions
           sol28_first = .FALSE.
         ENDIF
 c...    SOL28/OSM input options:
@@ -1923,6 +1923,7 @@ c tag starts with 'G'.
 c
       SUBROUTINE ReadTagSeries_G(tag,line,fp)
       use subgrid_options
+      use ribbon_grid_options
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2066,9 +2067,98 @@ c     G41: ZMIN,ZMAX of the subgrid region
 c
         CALL Read2R(line,sg_zmin,sg_zmax,-HI,HI,'SUBGRID ZMIN,ZMAX')
 c
-c
 c -----------------------------------------------------------------------
 c
+c     Options related to ribbon grids
+c     G42 - grid generation option - <i4>
+c     G43 - intersection point averaging option - opt_block_av - <r4>
+c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
+c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
+c     G46 - min number of cells on ring - min_cells - <i4>
+c     G47 - castem output identifier - <string>
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G42') THEN
+c
+c     G42: Ribbon grid option  0=unstructured  1=structured
+c
+        CALL ReadI(line,rg_grid_opt,0,1,'RIBBON GRID OPTION')
+c
+c     G43: Ribbon grid option  1=unstructured  2=structured
+c
+      ELSEIF (tag(1:3).EQ.'G43') THEN
+        CALL ReadI(line,rg_block_av,0,1,'BLOCK AVERAGE OPTION')
+c
+c     G44: Maximum row separation
+c
+      ElseIf (tag(1:3).eq.'G44') Then
+        Call ReadR(line,rg_max_r_sep,0.0,HI,
+     >                       'Maximum Row separation (m)')
+c
+c     G45: Maximum cell separation
+c
+      ElseIf (tag(1:3).eq.'G45') Then
+        Call ReadR(line,rg_max_s_sep,0.0,HI,
+     >                       'Maximum cell separation (m)')
+c
+c     G46: Minimum number of cells in a row
+c
+      ElseIf (tag(1:3).eq.'G46') Then
+        CALL ReadI(line,rg_min_cells,1,9999,'Minimum cells in a row')
+
+c
+c     G47: Castem data set identifier
+c
+      ElseIf (tag(1:3).eq.'G47') Then
+        CALL ReadC(line,rg_castem_data,'CASTEM DATA SET IDENTIFIER')
+
+c
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G48') THEN
+        CALL Read2R(line,rg_int_win_mins,rg_int_win_maxs,-HI,HI,
+     >             'RIBBON GRID INTERSECTION SUBSET RANGE [S1,S2]')
+c
+c     G49 - min and max S for selecting intersection subset  2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G49') THEN
+        CALL Read2R(line,rg_minr,rg_maxr,-HI,HI,
+     >             'RIBBON GRID SUBSET R RANGE [R1,R2]')
+c
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c
+      ELSEIF (tag(1:3).EQ.'G50') THEN
+        CALL Read2R(line,rg_mins,rg_maxs,-HI,HI,
+     >             'RIBBON GRID SUBSET S RANGE [S1,S2]')
+c
+c     G51 - cutoff factor for ring generation - rings
+c           in a ribbon grid with a length factor smaller than 
+c           this value will not be generated. 
+c
+      ELSEIF (tag(1:3).EQ.'G51') THEN
+        CALL ReadR(line,lcutoff,-HI,HI,
+     >             'RING CUTOFF LENGTH FACTOR')
+c
+c     G52 - Cell spacing option ... option to calculate the cell
+c           boundary spacing along a ring. Only option 0 is currently
+c           available which uses an exponential factor given in G53. 
+c           A cell_spacing_factor of 1 gives a linear spacing
+c
+      ELSEIF (tag(1:3).EQ.'G52') THEN
+        CALL ReadI(line,cell_spacing_option,0,0,'CELL SPACING OPTION')
+
+c
+c     G53 - cell spacing factor
+c           Used to determine cell boundary spacing along the rings
+c
+      ELSEIF (tag(1:3).EQ.'G53') THEN
+        CALL ReadR(line,cell_spacing_factor,-HI,HI,
+     >             'CELL SPACING FACTOR')
+
+c
+c -----------------------------------------------------------------------
       ELSE
         CALL ER('ReadTagSeriesG','Unrecognized tag',*99)
       ENDIF
@@ -2432,7 +2522,7 @@ c
 c     TAG I26 : FP plasma option
 c
       ELSEIF (tag(1:3).EQ.'I26') THEN
-        CALL ReadI(line,fp_plasma_opt,0,2,
+        CALL ReadI(line,fp_plasma_opt,0,3,
      >             'FP PLASMA OPTION')
 c
 c -----------------------------------------------------------------------
@@ -2458,9 +2548,10 @@ c     Far periphery transport flow option
 c     0 - no flow in far periphery
 c     1 - flow in far periphery is the same as associated ring
 c     2 - flow in far periphery is specified as input
+c     3 - flow pattern in far periphery is based on associated virtual ring
 c
       ELSEIF (tag(1:3).EQ.'I31') THEN
-        CALL ReadI(line,fp_flow_opt,0,2,
+        CALL ReadI(line,fp_flow_opt,0,3,
      >             'FP FLOW OPTION')
 c
 c -----------------------------------------------------------------------

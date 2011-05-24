@@ -37,7 +37,14 @@ c
       include 'temp'
 C
       INTEGER IK,IR,IZ,in,ntemp
-      REAL    VCX,V,Q(MAXIZS),SIGCX
+c slmod begin
+c...  The Intel compiler complains about this since MAXINS can be small (4 say), but
+c     Q is assigned with larger indeces below (up to 8 at the moment).  So, just define Q with 
+c     a larger dimension than necessary, since not committing a lot of memory. -SL, 14/10/2010
+      REAL    VCX,V,Q(256),SIGCX
+c
+c      REAL    VCX,V,Q(MAXIZS),SIGCX
+c slmod end
       REAL    SMAX,S
 c
       real sigvcx_maggi,sigvcx_maggi_mod

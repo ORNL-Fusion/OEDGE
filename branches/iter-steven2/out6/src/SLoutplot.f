@@ -134,7 +134,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac)
+      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac,
+     .                                   title9)
       USE mod_interface
       IMPLICIT none
 
@@ -148,8 +149,9 @@ c
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
-      INTEGER, INTENT(IN) :: nizs,cizsc,cion
-      REAL   , INTENT(IN) :: crmi,absfac
+      INTEGER  , INTENT(IN) :: nizs,cizsc,cion
+      REAL     , INTENT(IN) :: crmi,absfac
+      CHARACTER, INTENT(IN) :: title9*(*)
 
       INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
@@ -350,7 +352,7 @@ c...  ASCII data file for Sophie and MatLab:
      .      STATUS='REPLACE')
       WRITE(fp,'(A)') '* DIVIMP data for MatLab - target erosion'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '* Title: '//TRIM(title9)
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '* r      = rho in ribbon grid land'
       WRITE(fp,'(A)') '* z      = distance along the field line, s'
@@ -376,6 +378,7 @@ c...  ASCII data file for Sophie and MatLab:
      .  '*','wall','targ','cell','ring','r (m)','z (m)',
      .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
      .  'theta','D+ flux'
+      WRITE(fp,*) absfac
       pos1 = 0.0
       pos2 = 0.0
       DO id = 1, wallpts
@@ -392,6 +395,15 @@ c...  ASCII data file for Sophie and MatLab:
      .      -neros(in,3),-neros(in,1),-neros(in,4),
      .      90.0-ACOS(costet(in))*180.0/PI,
      .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir) 
+        ELSE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,0P)')
+     .      id,in,
+     .      0,0,
+     .      0.5*(wallpt(id,20)+wallpt(id,22)),
+     .      0.5*(wallpt(id,21)+wallpt(id,23)),pos1,pos2,
+     .      0.0,0.0,0.0,
+     .      0.0,
+     .      0.0
         ENDIF
         pos1 = pos2
       ENDDO
@@ -4284,7 +4296,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
+      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2,
+     .                       title)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -4296,6 +4309,7 @@ c
 
       INTEGER iopt,nizs2,ik,ir,i1,cizsc2,cion2
       REAL    array(MAXNKS,MAXNRS),crmi2,absfac2
+      CHARACTER title*(*)
 
       IF     (iopt.EQ.2) THEN
         RETURN
@@ -4340,7 +4354,8 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         CALL calc_wallprad(nizs2)
         RETURN
       ELSEIF (iopt.EQ.14) THEN
-        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,absfac2)
+        CALL GenerateDIVIMPDataFiles
+     .         (nizs2,cizsc2,crmi2,cion2,absfac2,title)
         RETURN
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles
@@ -4353,6 +4368,9 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         RETURN
       ELSEIF (iopt.EQ.18) THEN
         CALL MainChamberRecycling(6)
+        RETURN
+      ELSEIF (iopt.EQ.19) THEN
+        CALL divLoadRibbonData
         RETURN
       ENDIF
 

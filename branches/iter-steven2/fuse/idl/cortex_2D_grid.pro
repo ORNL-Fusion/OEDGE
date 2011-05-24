@@ -32,7 +32,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ; with storing the data later for redrawing, a bit... this scheme should be implemented for
 ; most of the plots... for another day...
 
-  flip = 0 ; 1
+  flip = 0  ; ribbon grid plots
 
   IF (NOT KEYWORD_SET(mode)) THEN mode = 'main'
   IF (NOT KEYWORD_SET(type)) THEN type = 'full'

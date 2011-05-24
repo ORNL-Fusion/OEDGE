@@ -1561,8 +1561,7 @@ c     .              (iobj.EQ.2))
 c     .              (iobj.EQ.2.AND.iside.NE.1).OR.
 c     .              (i1.NE.1)) 
 c     .            subdivide = .FALSE.  ! *** DEBUG ***
-c                 subdivide = .FALSE. 
-
+                subdivide = .FALSE.   ! *** TURNED THIS OFF while building C-Mod gas puff grids!  -SL, 24/05/2011
 
                 IF (subdivide) THEN
                   IF (output) THEN
@@ -1576,14 +1575,13 @@ c                 subdivide = .FALSE.
 
                 DO WHILE (.NOT.finished.AND.subdivide)  ! *** THIS IS WRONG... *** 
 
+c                 --------------------------------------------------------
                   IF     (omap1.EQ.0) THEN
 c                   Hit a wall, need to reverse direction.  If stuck between two 
 c                   wall surfaces then just let things bounce back and forth:                    
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'corresponding side',*99)
@@ -1596,21 +1594,18 @@ c                   wall surfaces then just let things bounce back and forth:
 
                     change = change + 1
                     IF (change.EQ.2) finished = .TRUE.
-
+c                 --------------------------------------------------------
                   ELSEIF (obj(omap1)%segment(1).NE.0) THEN   ! *** HACK: NEED TO DECOUPLE THIS FROM THE DELETE FLAG... ***
 c                  ELSEIF (obj(omap1)%segment(1).EQ.1) THEN   
 c                   Identify common line segment between the current side
 c                   and the neighbour:
                     iobj1  = omap1
                     iside1 = smap1
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
 c...                Need this line because...
                     IF (omap1.EQ.0) iside1 = iside2
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'neighbouring object',*99)
@@ -1621,6 +1616,7 @@ c...                Need this line because...
                       WRITE(fp,*) '  NEXT TETRA:',iobj1,iside1
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
+c                 --------------------------------------------------------
                   ELSE
                     IF (output) THEN
                       WRITE(fp,*) '  SORRY...  :',iobj1,iside1,
@@ -1628,6 +1624,7 @@ c...                Need this line because...
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
                     subdivide = .FALSE.
+c                 --------------------------------------------------------
                   ENDIF
                   count = count + 1
 

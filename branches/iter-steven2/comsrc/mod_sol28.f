@@ -25,7 +25,7 @@
       PUBLIC
 
       INTEGER, PARAMETER ::   
-     .  s28_MAXNKS   = 200, 
+     .  s28_MAXNKS   = 500, 
      .  s28_MAXNION  =  10, 
      .  s28_MAXPTS   =   4, 
      .  s28_MAXSIDE  =   6, 
@@ -212,14 +212,17 @@ c
          INTEGER       :: tet_n
          REAL          :: tet_type     (EIR_MAXNTET)
          REAL          :: tet_x1       (EIR_MAXNTET)  ! Crop boundary for the grid, if necessary (tet_type = 1.0)
-         REAL          :: tet_y1       (EIR_MAXNTET)  !   lower inner point = (x1,y1)
+         REAL          :: tet_y1       (EIR_MAXNTET)  !   lower inner point = (x1,y1)  (and for refinement)
+         REAL          :: tet_z1       (EIR_MAXNTET)  !     (for refinement only)
          REAL          :: tet_x2       (EIR_MAXNTET)  !   upper outer point = (x2,y2)
          REAL          :: tet_y2       (EIR_MAXNTET)
+         REAL          :: tet_z2       (EIR_MAXNTET)  
          INTEGER       :: tet_index    (EIR_MAXNTET)  ! Index of slice (tet_type=2.0 and 3.0)
                                                       ! Tet_type = 2.0, slices:
          INTEGER       :: tet_mode     (EIR_MAXNTET)  !   method for deciding the angular width of the slice
          REAL*8        :: tet_param1   (EIR_MAXNTET)  !   1st parameter used to specify the angular width
          REAL*8        :: tet_param2   (EIR_MAXNTET)  !   2nd parameter
+         REAL*8        :: tet_param3   (EIR_MAXNTET)  !   3rd general purpose parameter
          CHARACTER*128 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
          CHARACTER*128 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
                                                       ! Tet_type = 3.0, sectors:
@@ -835,8 +838,8 @@ c...    Strata:
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
 
-      INTEGER store_sopt(500),store_mnode(500),store_nnode(500)
-      TYPE(type_node) store_node(20,500)
+      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000)
+      TYPE(type_node) store_node(20,1000)
 !...  
       INTEGER, PARAMETER :: MAXNTUBE = 100
       TYPE(type_grid), SAVE :: grid

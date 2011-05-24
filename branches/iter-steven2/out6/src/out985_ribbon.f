@@ -1,6 +1,72 @@
 c      
 c     -*-Fortran-*-
+c
+c ======================================================================
+c
+c subroutine: outCrossSeparatrix
+c
+      LOGICAL FUNCTION outCrossSeparatrix(ir,p1,p2)
+      IMPLICIT none
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
 
+      INTEGER, INTENT(IN) :: ir
+      REAL*8 , INTENT(IN) :: p1(2),p2(2)
+
+      INTEGER ik,id
+      REAL*8  p3(2),p4(2),t1,t2
+
+      outCrossSeparatrix = .FALSE.
+
+      DO ik = 1, nks(ir)
+        id = korpg(ik,ir)
+
+        p3(1) = DBLE(rvertp(2,id))
+        p3(2) = DBLE(zvertp(2,id))
+        p4(1) = DBLE(rvertp(3,id))
+        p4(2) = DBLE(zvertp(3,id))
+
+        CALL CalcInter(p1(1),p1(2),p2(1),p2(2),
+     .                 p3(1),p3(2),p4(1),p4(2),t1,t2)
+
+        IF (t1.GT.0.0D0.AND.t1.LT.1.0D0.AND.
+     .      t2.GT.0.0D0.AND.t2.LT.1.0D0) THEN
+          outCrossSeparatrix = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+
+      RETURN
+ 99   STOP
+      END
+c
+c ====================================================================== 
+c
+      SUBROUTINE rayDeleteTrace(tdat,itrace)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_out985_ribbon
+      IMPLICIT none
+
+      INTEGER, INTENT(IN   ) :: itrace
+      REAL*8 , INTENT(INOUT) :: tdat(6,ntrace)
+
+      INTEGER i,n
+
+      n = trace_i(3,itrace) - trace_i(2,itrace) + 1
+    
+      CALL rayDeleteTracePoints(tdat,trace_i(2,itrace),n,itrace)
+
+      DO i = itrace, trace_n-1
+        trace_i(:,i) = trace_i(:,i+1)
+      ENDDO
+      trace_n = trace_n - 1
+
+      RETURN
+ 99   STOP
+      END
 c
 c ====================================================================== 
 c
@@ -37,22 +103,26 @@ c
 c
 c ====================================================================== 
 c
-      SUBROUTINE rayProcessRibbon(tdat,scale)
+      SUBROUTINE rayProcessRibbon(tdat,scale,clean)
       USE mod_out985
       USE mod_out985_variables
       USE mod_out985_ribbon
       IMPLICIT none
 
-      REAL*8 DATAN2C
+      REAL*8  DATAN2C
+      LOGICAL outCrossSeparatrix
 
       REAL, PARAMETER :: PI = 3.141592
 
+      LOGICAL, INTENT(IN) :: clean
       REAL*8, INTENT(INOUT) :: tdat(6,ntrace)
       REAL*8, INTENT(IN   ) :: scale
 
-      INTEGER itrace,i1,i2,io,i,j,k,n
+      INTEGER itrace,i1,i2,io,i,j,k,n,ir
       LOGICAL debug,cont
-      REAL*8  diff,s_ref,min_diff
+      REAL*8  diff,s_ref,min_diff,p1(2),p2(2),save_r1
+
+      REAL*8, ALLOCATABLE :: rho_local(:)
 
 
       debug = .TRUE.
@@ -152,8 +222,8 @@ c       get rid of them:
                 IF (DABS(tdat(1,j)-tdat(1,i)).LT.1.0D-6) n = n + 1
               ENDDO        
 
-              IF (debug) WRITE(0,'(A,4I8,2X,F10.6,2X,3F10.6)') 
-     .              'deleting!',itrace,i,n,ntrace,tdat(1,i),trace(1:3,i)
+c              IF (debug) WRITE(0,'(A,4I8,2X,F10.6,2X,3F10.6)') 
+c     .              'deleting!',itrace,i,n,ntrace,tdat(1,i),trace(1:3,i)
   
               CALL rayDeleteTracePoints(tdat,i,n,itrace)
               EXIT
@@ -164,66 +234,163 @@ c       get rid of them:
       ENDDO  ! itrace
 
 
-c...  Crop the ends, if necessary:
-      itrace = 1
-      i1 = trace_i(2,itrace)
-      io = trace_i(4,itrace) 
-      i2 = trace_i(3,itrace)
-c...  First half of the trace (-ve S values):
-      DO i = io-1, i1, -1
-        IF (tdat(5,i).EQ.1.0D0.OR.tdat(5,i).EQ.2.0D0) EXIT
-      ENDDO
-      IF (i.GT.i1) THEN
-        WRITE(0,*) 'crop1',itrace
-        WRITE(0,*) '     ',i1,io,i2       
-        WRITE(0,*) '     ',i
-        WRITE(0,*) '     ',i1,i-i1,itrace
-        CALL rayDeleteTracePoints(tdat,i1,i-i1,itrace)
-        WRITE(0,*) '     ',trace_i(2,itrace),trace_i(4,itrace),
-     .                     trace_i(3,itrace)
-        tdat(5,i1) = -tdat(5,i1) 
-        s_ref = tdat(1,i1)
-        DO itrace = 2, trace_n
-c          write(0,*) 'itrace=',itrace
-          i1 = trace_i(2,itrace)
-          io = trace_i(4,itrace) 
-          DO j = i1, io-2
-            IF (tdat(5,j).NE.1.0D0.AND.tdat(5,j).NE.2.0D0) CYCLE
-            diff = tdat(1,j) - s_ref
-            IF (diff.GE.0.0D0.AND.diff.LE.scale) THEN
-              s_ref = tdat(1,j)
-              CALL rayDeleteTracePoints(tdat,i1,j-i1,itrace)
-              tdat(5,i1) = -tdat(5,i1) 
-c              write(0,*) '     cut 1',j-i1+1,trace_i(4,itrace)-i1+1
-c              write(0,*) '          ',tdat(5,i1)
+c...  Crop to boundary:
+
+c      r1 = 
+c      r2 = 
+c      s1 = 
+c      s2 = 
+
+      write(0,*) 'crop:'
+      write(0,*) crop_r1,crop_r2,crop_s1,crop_s2
+
+      IF (DABS(crop_r1+1.0D0).GT.1.0D-5) THEN
+
+        ALLOCATE(rho_local(trace_n))
+        rho_local =  0.0D0
+        save_r1   = -1.0D0
+        DO itrace = 1, trace_n                 
+          DO i = trace_i(2,itrace), trace_i(3,itrace)
+            IF (tdat(1,i).EQ.0.0D0) THEN
+              i1 = i
               EXIT
             ENDIF
           ENDDO
-          IF (j.EQ.io-1) THEN
-c...        No intersection point found, so just clear out the trace
-c           based on S only: 
-            k = -1
-            min_diff = scale * 10.0D0
-            DO j = i1, io-2
-              diff = DABS(tdat(1,j) - s_ref)
-              IF (diff.LT.min_diff) THEN
-                min_diff = diff
-                k = j
+          IF (itrace.GT.1) THEN
+            rho_local(itrace) = rho_local(itrace-1) + 
+     .                  SNGL(DSQRT((trace(1,i1)-trace(1,i2))**2 + 
+     .                             (trace(2,i1)-trace(2,i2))**2 + 
+     .                             (trace(3,i1)-trace(3,i2))**2))
+c...        Check if the line crosses the separatrix:
+            IF (crop_r1.LT.0.0D0) THEN
+              p1(1) = DSQRT(trace(1,i2)**2 + trace(3,i2)**2)
+              p1(2) = trace(2,i2)
+              p2(1) = DSQRT(trace(1,i1)**2 + trace(3,i1)**2)
+              p2(2) = trace(2,i1)
+              ir = NINT(REAL(DABS(crop_r1)))
+              IF (outCrossSeparatrix(ir,p1,p2)) THEN
+                write(0,*) 'ir=',ir
+                write(0,*) 'p1=',p1(1:2)
+                write(0,*) 'p2=',p2(1:2)
+                write(0,*) 'rho_local',itrace,rho_local(itrace)
+                save_r1 = crop_r1
+                crop_r1 = rho_local(itrace-1)
+                write(0,*) 'setting separatrix crop',crop_r1
+                write(6,*) 'setting separatrix crop',crop_r1
               ENDIF
-            ENDDO
-            IF (k.EQ.-1) THEN
-              CALL ER('rayProcessRibbon','No valid link found',*99)
-            ELSE
-c              write(0,*) '     cut 2',k-i1+1,trace_i(4,itrace)-i1+1
-              s_ref = tdat(1,k)
-              CALL rayDeleteTracePoints(tdat,i1,k-i1,itrace)
-c              write(0,*) '          ',tdat(5,i1)
             ENDIF
           ENDIF
-        ENDDO 
+          i2 = i1
+        ENDDO
+
+        DO itrace = trace_n, 1, -1
+          IF (rho_local(itrace).LT.crop_r1.OR.
+     .        rho_local(itrace).GT.crop_r2) THEN
+c            write(0,*) 'deleting itrace rho',
+c     .        rho_local(itrace),crop_r1,crop_r2
+            DO i = itrace, trace_n-1
+              rho_local(i) = rho_local(i+1)
+            ENDDO
+            CALL rayDeleteTrace(tdat,itrace)
+          ENDIF
+        ENDDO
+
+c...    Restore CROP_R1 if necessary:
+        IF (save_r1.NE.-1.0D0) crop_r1 = save_r1
+
+        DO itrace = 1, trace_n
+          i1 = -1
+          i2 = -1
+          DO i = trace_i(2,itrace), trace_i(3,itrace)
+            IF (i1.EQ.-1.AND.-tdat(1,i).LT.crop_s1) i1 = i
+            IF (             -tdat(1,i).LT.crop_s1) i2 = i
+          ENDDO
+c          IF (i1.NE.-1) write(0,*) 'h crop',itrace,i1,i2
+          IF (i1.NE.-1) 
+     .      CALL rayDeleteTracePoints(tdat,i1,i2-i1+1,itrace)
+        ENDDO
+
+        DO itrace = 1, trace_n
+          i1 = -1
+          i2 = -1
+          DO i = trace_i(2,itrace), trace_i(3,itrace)
+            IF (i1.EQ.-1.AND.-tdat(1,i).GT.crop_s2) i1 = i
+            IF (             -tdat(1,i).GT.crop_s2) i2 = i
+          ENDDO
+c          IF (i1.NE.-1) write(0,*) 'h crop',itrace,i1,i2
+          IF (i1.NE.-1) 
+     .      CALL rayDeleteTracePoints(tdat,i1,i2-i1+1,itrace)
+        ENDDO
+
+        DEALLOCATE(rho_local)
 
       ENDIF
 
+
+
+c      stop
+
+c...  Crop the end(s) first trace to nearest intersection(s):
+      IF (clean) THEN
+        itrace = 1
+        i1 = trace_i(2,itrace)
+        io = trace_i(4,itrace) 
+        i2 = trace_i(3,itrace)
+c...    First half of the trace (-ve S values):
+        DO i = io-1, i1, -1
+          IF (tdat(5,i).EQ.1.0D0.OR.tdat(5,i).EQ.2.0D0) EXIT
+        ENDDO
+        IF (i.GT.i1) THEN
+          WRITE(0,*) 'crop1',itrace
+          WRITE(0,*) '     ',i1,io,i2       
+          WRITE(0,*) '     ',i
+          WRITE(0,*) '     ',i1,i-i1,itrace
+          CALL rayDeleteTracePoints(tdat,i1,i-i1,itrace)
+          WRITE(0,*) '     ',trace_i(2,itrace),trace_i(4,itrace),
+     .                       trace_i(3,itrace)
+          tdat(5,i1) = -tdat(5,i1) 
+          s_ref = tdat(1,i1)
+          DO itrace = 2, trace_n
+c            write(0,*) 'itrace=',itrace
+            i1 = trace_i(2,itrace)
+            io = trace_i(4,itrace) 
+            DO j = i1, io-2
+              IF (tdat(5,j).NE.1.0D0.AND.tdat(5,j).NE.2.0D0) CYCLE
+              diff = tdat(1,j) - s_ref
+              IF (diff.GE.0.0D0.AND.diff.LE.scale) THEN
+                s_ref = tdat(1,j)
+                CALL rayDeleteTracePoints(tdat,i1,j-i1,itrace)
+                tdat(5,i1) = -tdat(5,i1) 
+c                write(0,*) '     cut 1',j-i1+1,trace_i(4,itrace)-i1+1
+c                write(0,*) '          ',tdat(5,i1)
+                EXIT
+              ENDIF
+            ENDDO
+            IF (j.EQ.io-1) THEN
+c...          No intersection point found, so just clear out the trace
+c             based on S only: 
+              k = -1
+              min_diff = scale * 10.0D0
+              DO j = i1, io-2
+                diff = DABS(tdat(1,j) - s_ref)
+                IF (diff.LT.min_diff) THEN
+                  min_diff = diff
+                  k = j
+                ENDIF
+              ENDDO
+              IF (k.EQ.-1) THEN
+                CALL ER('rayProcessRibbon','No valid link found',*99)
+              ELSE
+c                write(0,*) '     cut 2',k-i1+1,trace_i(4,itrace)-i1+1
+                s_ref = tdat(1,k)
+                CALL rayDeleteTracePoints(tdat,i1,k-i1,itrace)
+c                write(0,*) '          ',tdat(5,i1)
+              ENDIF
+            ENDIF
+          ENDDO 
+
+        ENDIF
+      ENDIF  ! clean.EQ..TRUE.
 
 
 c       DO i = 1, ntrace
@@ -239,7 +406,7 @@ c       ENDDO
 c
 c ====================================================================== 
 c
-      SUBROUTINE rayBuildBump(tdat,ntangent,itangent,scale)
+      SUBROUTINE rayBuildBump(tdat,ntangent,itangent,scale,status)
       USE mod_out985
       USE mod_out985_variables
       USE mod_out985_ribbon
@@ -248,12 +415,15 @@ c
       INTEGER, INTENT(IN)    :: ntangent,itangent(2,1000)
       REAL*8 , INTENT(IN   ) :: scale
       REAL*8 , INTENT(INOUT) :: tdat(6,ntrace)
+      LOGICAL, INTENT(OUT  ) :: status
 
       INTEGER itrace,i,it,i1,i2,j,k,dist1_i,dist2_i,count,count1,count2,
      .        fp,dcount
       LOGICAL debug
       REAL*8  dist,dist1,dist2,slope1,slope2,slope,diff,mindiff,
      .        last_dist,bump,frac,check
+
+      status = .TRUE.
 
       debug = .TRUE.
       fp    = 6
@@ -371,8 +541,10 @@ c...    Valid intersection point not found, so pick one:
           count1 = count1 + 1
           mindiff = 10.0D0 * scale
 c          mindiff = 1.0D0
-          DO i = trace_i(2,itrace), trace_i(3,itrace)
-            IF (tdat(5,i).LT.-0.000001D0.OR.i.EQ.dist2_i) CYCLE
+          DO i = trace_i(2,itrace), dist2_i-1
+            IF (tdat(5,i).LT.-0.000001D0) CYCLE
+c          DO i = trace_i(2,itrace), trace_i(3,itrace)
+c            IF (tdat(5,i).LT.-0.000001D0.OR.i.EQ.dist2_i) CYCLE
             slope = DABS(tdat(1,i) - tdat(1,i1))
 c            slope = (tdat(1,i) - tdat(1,i1))
             IF (.FALSE..AND.count1.EQ.1) THEN
@@ -400,8 +572,10 @@ c            slope = (tdat(1,i) - tdat(1,i1))
           count2 = count2 + 1
           mindiff = 10.0D0 * scale
 c          mindiff = 1.0D0
-          DO i = trace_i(2,itrace), trace_i(3,itrace)
+          DO i = dist1_i+1, trace_i(3,itrace)
             IF (tdat(5,i).LT.-0.000001D0.OR.i.EQ.dist1_i) CYCLE
+c          DO i = trace_i(2,itrace), trace_i(3,itrace)
+c            IF (tdat(5,i).LT.-0.000001D0.OR.i.EQ.dist1_i) CYCLE
             slope = DABS(tdat(1,i) - tdat(1,i2))
 c            slope = (tdat(1,i) - tdat(1,i2))
             IF (.FALSE..AND.count2.EQ.1) THEN
@@ -426,7 +600,8 @@ c            slope = (tdat(1,i) - tdat(1,i2))
         ENDIF
 
 c...    Stop the bump if no valid points found:
-        IF (dist1_i.EQ.-1.AND.dist2_i.EQ.-1) EXIT
+        IF (dist1_i.EQ.-1.OR.dist2_i.EQ.-1) EXIT
+c        IF (dist1_i.EQ.-1.AND.dist2_i.EQ.-1) EXIT
 
 c...    Stop the bump if it is getting narrower when moving out radially:
 c        dist = DABS(tdat(1,dist1_i) - tdat(1,dist2_i))
@@ -454,7 +629,7 @@ c        tdat(5,dist1_i:dist2_i) = -4.0D0
       ENDDO  ! itrace
 
 
-      
+c...  Fill in any holes in the bump:      
       DO itrace = itangent(1,ntangent)+1, trace_n
 
         DO i = trace_i(2,itrace), trace_i(3,itrace)
@@ -540,6 +715,8 @@ c...  Reset code:
       ENDDO
 
 c...  Reassign bump markers:
+c      write(0,*) 'count',count,tdat(1,itangent(2,ntangent))
+ 
       DO itrace = itangent(1,ntangent)+1, trace_n
         i1 = -1
         i2 = -1
@@ -547,9 +724,29 @@ c...  Reassign bump markers:
           IF (tdat(5,i).EQ.-2.0) i1 = i
           IF (tdat(5,i).EQ.-1.0) i2 = i
           IF (i1.NE.-1.AND.i2.NE.-1) THEN
-            tdat(5,i1:i2) = -4.0D0
-            tdat(5,i1   ) = -2.0D0
-            tdat(5,i2   ) = -1.0D0
+            IF (count.LE.3) THEN
+              status = .FALSE.
+              IF ((tdat(6,i1).EQ.0.0D0.OR.tdat(6,i1).EQ.bump).OR.
+     .            (tdat(6,i2).EQ.0.0D0.OR.tdat(6,i1).EQ.bump)) THEN
+                IF (debug) THEN
+                  write(fp,*) 'removing false tangency point',itrace
+                  write(fp,*) '   itrace=',itrace
+                  write(fp,*) '    i1,i2=',i1,i2
+                ENDIF
+                tdat(5,i1:i2) = 3.0D0
+                tdat(6,i1:i2) = 0.0D0
+              ENDIF
+            ELSE
+              IF (debug) THEN
+                write(fp,*) 'setting -ve markers'
+                write(fp,*) '   itrace=',itrace
+                write(fp,*) '    i1,i2=',i1,i2
+              ENDIF
+              tdat(5,i1:i2) = -4.0D0
+              tdat(5,i1   ) = -2.0D0
+              tdat(5,i2   ) = -1.0D0
+            ENDIF
+            EXIT
 c            tdat(6,i1:i2) = DBLE(REAL(ntangent))
 c            WRITE(0,*) 'i1,2',i1,i2
           ENDIF
@@ -576,9 +773,9 @@ c
 
       INTEGER fp,ntangent,i,j,i1,i2,i3,itrace,n,
      .        itangent(2,1000)  ! 1=itrace,2=index
-      LOGICAL debug
+      LOGICAL debug,status
 
-      fp = -1
+      fp = 6
 
       ntangent = 0
 
@@ -620,34 +817,23 @@ c             Generate a new tangency point:
               trace(5,i3) = 0.0D0
 c             Delete points spanning tangency pair (inclusive):
               n = i - i3
-
               IF (fp.NE.-1) write(fp,*) 'new point - n',n
-
               CALL rayDeleteTracePoints(tdat,i3+1,n,itrace)
-
-c              DO j = i3+1, ntrace-n
-c                tdat (1,j) = tdat (1,j+n)
-c                tdat (3,j) = tdat (3,j+n)
-c                tdat (4,j) = tdat (4,j+n)
-c                tdat (5,j) = tdat (5,j+n)
-c                tdat (6,j) = tdat (6,j+n)
-c                trace(:,j) = trace(:,j+n)
-c              ENDDO
-c              ntrace = ntrace - n
-c              DO j = itrace, trace_n
-c                IF (trace_i(2,j).GT.i3) trace_i(2,j) = trace_i(2,j) - n
-c                IF (trace_i(3,j).GT.i3) trace_i(3,j) = trace_i(3,j) - n
-c                IF (trace_i(4,j).GT.i3) trace_i(4,j) = trace_i(4,j) - n
-c              ENDDO
-
-              i3 = -1
-
-              CALL rayBuildBump(tdat,ntangent,itangent,scale)
-
+              CALL rayBuildBump(tdat,ntangent,itangent,scale,status)
+              IF (.NOT.status) THEN
+c...            Something was invalid about the tangency point, so delete it:
+                tdat(5,i3) = 3.0D0
+                tdat(6,i3) = 0.0D0
+                ntangent = ntangent - 1
+                IF (fp.NE.-1) write(fp,*) '   *** DELETING POINT ***'
+              ENDIF
+              i3 = -1          
             ENDIF
           ENDIF
         ENDDO
       ENDDO
+
+c      stop 'sdfsd'
 
 c        DO i = 1, ntrace
 c          IF (tdat(5,i).EQ.0.0D0) STOP 'AH HA 2!'
@@ -669,13 +855,14 @@ c        ENDDO
 c
 c ====================================================================== 
 c
-      SUBROUTINE rayStoreRibbon(irib,tdat)
+      SUBROUTINE rayStoreRibbon(irib,tdat,clean)
       USE mod_out985
       USE mod_out985_variables
       USE mod_out985_ribbon
       IMPLICIT none
  
       INTEGER, INTENT(IN   ) :: irib
+      LOGICAL, INTENT(IN   ) :: clean
       REAL*8 , INTENT(INOUT) :: tdat(6,ntrace)
 
       INTEGER i1,i2,i3,i4,i5,i6,iloop,fp,itrace,i,npts,code,bump
@@ -848,7 +1035,7 @@ c          IF (npts.EQ.0) CYCLE
      .        i,NINT(REAL(trace(4,i)))
 
 c...        Check if the CODE sequencing makes sense:
-            IF (iloop.EQ.1.AND.i.NE.i1.AND.i.NE.i2.AND.
+            IF (clean.AND.iloop.EQ.1.AND.i.NE.i1.AND.i.NE.i2.AND.
      .          (.NOT.inside.AND.code.EQ.2.OR.
      .                inside.AND.code.EQ.1)) THEN
               WRITE(0,*) 'WARNING rayStoreRibbon: Invalid sequence '//
@@ -862,7 +1049,7 @@ c...        Check if the CODE sequencing makes sense:
 c...        Check if the BUMP sequencing makes sense:
 
 c...        Check if the intersection angles make sense:
-            IF (iloop.EQ.1.AND.
+            IF (clean.AND.iloop.EQ.1.AND.
      .          (angle.LT.0.0.OR.angle.GT.90.0.OR.
      .           (angle.EQ.0.0.AND.(code.EQ.1.OR.code.EQ.2)))
      .         ) THEN
@@ -999,8 +1186,9 @@ c
       REAL   , PARAMETER :: PI        = 3.141592
 
       INTEGER irib,iphi,irad,i1,i2,i3,i4,fp,i,j,o,n,itrace
+      LOGICAL clean
       REAL    xin,yin,zin,x1,y1,z1,x2,y2,z2,phi1,phi2,phi,
-     .        frac,frac_point,length
+     .        frac,frac_point,length,frac_step,frac_mark
       REAL*8  mat(3,3)
 
 
@@ -1021,8 +1209,21 @@ c
       WRITE(0,*) 'limit =',opt%rib_limit(1)
       WRITE(0,*) 'tag   =',TRIM(opt%rib_tag(1))
 
+      crop_r1 = -1.0D0
+      crop_r2 = -1.0D0
+      crop_s1 = -1.0D0
+      crop_s2 = -1.0D0
 
       DO irib = 1, opt%rib_n
+
+c...    Set active region of interset for cropping:
+        IF (opt%rib_option(irib).EQ.2) THEN
+          crop_r1 = DBLE(opt%rib_r1(irib))
+          crop_r2 = DBLE(opt%rib_r2(irib))
+          crop_s1 = DBLE(opt%rib_s1(irib))
+          crop_s2 = DBLE(opt%rib_s2(irib))
+          CYCLE
+        ENDIF
 
         x1 = opt%rib_r(1,irib)
         y1 = opt%rib_z(1,irib)
@@ -1118,6 +1319,9 @@ c           --------------------------------------------------------------
 
 c         STOP
 
+          frac_step = 0.1
+          frac_mark = frac_step
+
           DO irad = 1, opt%rib_nrad(irib)
 
             frac = REAL(irad - 1) / REAL(MAX(1,opt%rib_nrad(irib)-1))
@@ -1126,7 +1330,10 @@ c         STOP
             yin = v1(2) + frac * (v2(2) - v1(2))
             zin = v1(3) + frac * (v2(3) - v1(3))
           
-            WRITE(0,*) 'frac:',frac,frac_point
+            IF (frac.GE.frac_mark) THEN
+              WRITE(0,*) 'frac:',frac,frac_point
+              frac_mark = frac_mark + frac_step
+            ENDIF
 
             CALL rayProcessTrace(irib,irad,xin,yin,zin,phi,
      .                           frac.LT.frac_point)
@@ -1136,9 +1343,11 @@ c         STOP
           ALLOCATE(tdat(6,ntrace))
           tdat = 0.0D0
 
-          CALL rayProcessRibbon(tdat,DBLE(opt%rib_scale(irib)))
+          clean = .TRUE.
 
-          IF (.NOT..TRUE.) THEN
+          CALL rayProcessRibbon(tdat,DBLE(opt%rib_scale(irib)),clean)
+
+          IF (clean) THEN
             CALL rayCleanRibbon(tdat,DBLE(opt%rib_scale(irib)))
           ELSE
             DO i = 1, ntrace
@@ -1146,7 +1355,7 @@ c         STOP
             ENDDO
           ENDIF
 
-          CALL rayStoreRibbon(irib,tdat)
+          CALL rayStoreRibbon(irib,tdat,clean)
 
           DEALLOCATE(tdat)
 
@@ -1221,8 +1430,8 @@ c...  Do the field line trace:
 c       ----------------------------------------------------------------
         CASE(1)  ! Lame DIVIMP field line tracing
           len1   = -3.5D0
-          len2   =  5.0D0
-          rlimit =  5.5D0
+          len2   =  6.0D0  ! 5.0D0
+          rlimit =  4.6D0
           v_dat = 0
           CALL TraceFieldLine_DIVIMP(xin,yin,zin,2,7,len1,len2,rlimit,
      .                            nv,v,index,fraction,ring,MAX_NTRACE)

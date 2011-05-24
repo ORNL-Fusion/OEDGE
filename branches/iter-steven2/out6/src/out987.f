@@ -1076,7 +1076,7 @@ c...  Plot location:
      .      cdum1(8:15).EQ.'POSITION') THEN
         READ(cdum1,*) cdum2,posopt,posx,posy,poswidth,posheight
 
-        WRITE(0,*) 'POSITION',posopt,posx,posy,poswidth,posheight
+c        WRITE(0,*) 'POSITION',posopt,posx,posy,poswidth,posheight
 
         IF     (posopt.EQ.1) THEN
           map1x = 0.05
@@ -1094,6 +1094,13 @@ c          map2y = map1y + 0.40
           map2x = map1x + poswidth * (xxmax-xxmin) / (yymax-yymin)
           map1y = posy
           map2y = map1y + poswidth
+        ELSEIF (posopt.EQ.3) THEN
+          map1x = posx
+          map2x = map1x + poswidth 
+          map1y = posy
+          map2y = map1y + posheight
+        ELSE
+          STOP 'BAD POISTION OPTION'
         ENDIF
 
       ELSE
@@ -1116,6 +1123,8 @@ c        map1x = 0.05 + REAL(numplots) * dx
 c      CALL THICK2(6)
       CALL THICK2(1)
       CALL THICK(1)
+
+      write(0,*) 'map',map1x,map2x,map1y,map2y
 
       IF (numplots.NE.0) ylabel = 'none'
 

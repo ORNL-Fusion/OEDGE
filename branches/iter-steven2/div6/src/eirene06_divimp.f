@@ -222,7 +222,8 @@ c...      Tetrahedrons:
           IF (tetrahedrons) THEN
             tetrahedron_source = 1
             DO itet = 1, opt_eir%tet_n
-              IF (opt_eir%tet_type(itet).GT.1.0) THEN
+              IF (opt_eir%tet_type(itet).GE.2.0.AND.
+     .            opt_eir%tet_type(itet).LE.4.0) THEN
                 tetrahedron_source = 2
                 EXIT
               ENDIF

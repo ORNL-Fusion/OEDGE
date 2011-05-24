@@ -1052,6 +1052,19 @@ c
          CALL PRC(SP//'USUALLY RESULTING FROM A PREVIOUS DIVIMP')
          CALL PRC(SP//'CASE.')
          CALL PRQ(SP//'MULTIPLICATION FACTOR = ',radsrc_mult)
+      elseif (switch(swprad).eq.5.0) then 
+         CALL PRC(S1//'PRAD OPTION   5 : EXTERNAL RADIATION SOURCE')
+         call prc(s1//' **** WARNING ****')
+         call prc(s1//' IN DEVELOPMENT - NOT YET IMPLEMENTED')
+         call prc(s1//' **** WARNING ****')
+         CALL PRC(SP//'TOTAL RADIATION TO BE APPLIED IN SOL22 IS')
+         CALL PRC(SP//'SPECIFIED IN THE INPUT ON A PER REGION BASIS')
+         CALL PRC(SP//'BASED ON EXPERIMENTAL BOLOMETRY DATA')
+         CALL PRC(SP//'THIS IS THEN BE DISTRIBUTED TO EACH RING AND')
+         CALL PRC(SP//'CELL USING VARIOUS MECHANISMS')
+c         call prq(sp//'REGION N ', prad_for_region)
+
+
       endif
 c
       call prb

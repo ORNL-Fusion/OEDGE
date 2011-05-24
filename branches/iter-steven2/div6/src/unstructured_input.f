@@ -125,6 +125,7 @@ c subroutine: InitializeUnstructuredInput
 c
       subroutine InitializeUnstructuredInput
       use subgrid_options
+      use ribbon_grid_options
       implicit none
       
       INCLUDE 'params'
@@ -447,6 +448,87 @@ c     G41: ZMIN and ZMAX values of the gridded region
 c
       sg_zmin = 0.0
       sg_zmax = 1.4
+c
+c -----------------------------------------------------------------------
+c
+c     Options related to ribbon grids
+c     G42 - grid generation option - <i4>
+c     G43 - intersection point averaging option - opt_block_av - <r4>
+c     G44 - maximum R separation in grid generator - max_r_sep - <r4>
+c     G45 - maximum S/Z separation in grid generator - max_s_sep - <r4>
+c     G46 - min number of cells on ring - min_cells - <i4>
+c     G47 - castem output identifier - <string>
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c     G51 - length cutoff factor for ring generation <r4> default = 0.0
+c
+c------------------------------------------------------------------------
+c
+c     G42 - grid option
+c           0 = unstructured
+c           1 = structured
+c           default = unstructured
+c           
+      rg_grid_opt = 0
+c
+c     G43 - block averaging option (removes blobs of intersection data)
+c     
+      rg_block_av = 0
+c
+c     G44 - maximum R separation between rows
+c      
+      rg_max_r_sep = 0.002
+c
+c     G45 - maximum S/Z separation between cells along row
+c
+      rg_max_s_sep = 0.5
+c
+c     G46 - minimum number of cells in a row
+c
+      rg_min_cells = 5
+c
+c     G47 - Castem data set to read in
+c
+      rg_castem_data = '100610'
+c
+c     G48 - min and max S for selecting intersection subset  2 x <r4>
+c           if min=max then window option is not selected
+c
+      rg_int_win_mins = 0.0
+      rg_int_win_maxs = 0.0
+c
+c     G49 - min and max R for intersection subset grid generation 2 x <r4>
+c           These are only used for subset grid generation
+c
+      rg_minr=0.0
+      rg_maxr=0.0
+c
+c     G50 - min and max S for intersection subset grid generation 2 x <r4>
+c           These are only used for subset grid generation
+c
+      rg_mins=0.0
+      rg_maxs=0.0
+c
+c     G51 - length cutoff to eliminate short rings far from the separatrix from 
+c           ring generation ... some testing of this will be necessary
+c           to obtain an optimal grid. default value is 0.0 which 
+c           effectively turns this feature off.
+c
+      lcutoff = 0.0
+c
+c     G52 - Cell spacing option - default value is exponential with the exponent
+c           specified by G53. A value of 1.0 for the cell spacing factor gives
+c           a linear spacing. This option works better with structured grids at
+c           the moment. 
+c
+      cell_spacing_option = 0
+
+c     G53 - Cell spacing factor for determining the distribution of cells
+c           between fixed points on rings. 
+c           default = 1.0 which gives a linear spacing
+c      
+      cell_spacing_factor = 1.0
 c
 c
 c -----------------------------------------------------------------------

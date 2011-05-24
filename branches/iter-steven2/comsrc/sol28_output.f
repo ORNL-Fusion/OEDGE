@@ -741,7 +741,7 @@ c
      .          fluid(ic,ion)%ne,
      .          fluid(ic,ion)%ni,
      .          fluid(ic,ion)%vi,
-     .          fluid(ic,ion)%vi/cs,
+     .          fluid(ic,ion)%vi/(cs+eps10),
      .          fluid(ic,ion)%te,
      .          fluid(ic,ion)%ti
             ENDDO

@@ -51,7 +51,7 @@ END
 ;
 FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, ps=ps
 
-  flip = 0
+  flip = 0  ; for ribbon grid plots
 
   window_id = 0
   window_xsize = 700
