@@ -110,8 +110,11 @@ module castem_field_line_data
 
   ! Wall definition
   integer :: n_wall_segments,max_wall_segments
-  real*8 :: wall_segments(:,:),wall_start_r,wall_start_s
+  real*8,allocatable :: wall_segments(:,:)
+  real*8 :: wall_start_r,wall_start_s
 
+  integer :: nwall
+  real*8,allocatable :: wall_r(:),wall_s(:)
 
   ! Intersection subset selection
   logical :: filter_intersections
@@ -3390,7 +3393,7 @@ contains
     !max_npoly = max_nrings * max_nknots
     max_npoly = max(2*rbnd_cnt * max_nknots,max_nrings * min_cells *4)
 
-    write(0,'(a,7i12,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_se
+    write(0,'(a,7i12,3g18.8)') 'Max values:',av_tan_cnt,av_wall_cnt,rbnd_cnt,max_nrings,max_nknots,max_npoly,int((max_lc-min_lc)/max_s_sep),max_lc,min_lc,max_s_sep
 
     max_wall_segments = max_nrings * 2 + (av_tan_cnt +1) * 2 
 
@@ -3556,7 +3559,7 @@ contains
     ! Set up the initial vertex arrays
     !
 
-    call init_wall(rbnds(1),ints(1,1))
+    call init_wall(r_bnds(1),ints(1,1))
 
 
 
@@ -3769,9 +3772,9 @@ contains
 
              if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.ge.lcutoff)) then 
 
+                ! record wall segments at each end of ring
                 call add_wall_segment(r1,r2,vert_rec1(npts1a),vert_rec2(npts2a))
                 call add_wall_segment(r1,r2,vert_rec1(npts1b),vert_rec2(npts2b))
-
 
 
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
@@ -3779,6 +3782,11 @@ contains
 
              else
 
+                if (npts1b.gt.npts1a) then 
+                   ! Not generating a ring - add a wall segment 
+                   call add_wall_segment(r1,r1,vert_rec1(npts1a),vert_rec1(npts1b))
+                endif
+                
                 write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
 
              endif
@@ -3832,6 +3840,7 @@ contains
     implicit none
     ! initialize data structures for collecting wall elements
     real*8 :: r_start,s_start
+    integer :: ierr
 
     n_wall_segments = 0
 
@@ -3840,7 +3849,7 @@ contains
 
     if (max_wall_segments.gt.0) then 
        if (allocated(wall_segments)) deallocate(wall_segments)
-       allocate(wall_segments(max_wall_segments,4),stat=ierr)
+       allocate(wall_segments(max_wall_segments,5),stat=ierr)
        if (ierr.ne.0) then 
           call errmsg('ALLOCATION ERROR:WALL SEGMENTS:IERR =',ierr)
           stop
@@ -3859,13 +3868,16 @@ contains
     n_wall_segments = n_wall_segments + 1
 
     if (n_wall_segments.gt.max_wall_segments) then 
-       call grow_array2(wall_segments,max_wall_segments,max_wall_segments+50,4,4)
+       call grow_array2(wall_segments,max_wall_segments,max_wall_segments+50,5,5)
+       max_wall_segments = max_wall_segments + 50
     endif
 
     wall_segments(n_wall_segments,1) = r1
     wall_segments(n_wall_segments,2) = s1
     wall_segments(n_wall_segments,3) = r2
-    wall_segments(n_wall_segments,4) = s1
+    wall_segments(n_wall_segments,4) = s2
+    ! flag to mark when the segement gets used
+    wall_segments(n_wall_segments,5) = 0
 
   end subroutine add_wall_segment
 
@@ -3874,9 +3886,38 @@ contains
     ! take all the accumulated wall segments - connect them together and connect ends to the av_wall data 
 
     logical :: done
-    real*8 :: r_start,s_start,rp,zp,rn,zn
-    integer :: rc
+    real*8 :: r_start,s_start,rp,sp,rn,sn
+    integer :: rc,walli
+    integer :: ierr,in
 
+
+    ! Allocate storage for wall points
+
+    if (n_wall_segments.gt.0) then 
+
+       if (allocated(wall_r)) deallocate(wall_r)
+       allocate(wall_r(n_wall_segments+1),stat=ierr)
+
+       if (allocated(wall_s)) deallocate(wall_s)
+       allocate(wall_s(n_wall_segments+1),stat=ierr)
+
+       if (ierr.ne.0) then 
+          call errmsg('ALLOCATION ERROR:WALL R,S ARRAYS:IERR =',ierr)
+          stop
+       endif
+    else
+       return
+    endif
+
+    write(0,'(a,i8,2(1x,g18.8))') 'WALL_SEGMENTS:',n_wall_segments,wall_start_r,wall_start_s
+    do in = 1,n_wall_segments
+       write(0,'(a,i8,5(1x,g18.8))') 'WS:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),wall_segments(in,4),wall_segments(in,5)
+    end do
+
+    write(6,'(a,i8,2(1x,g18.8))') 'WALL_SEGMENTS:',n_wall_segments,wall_start_r,wall_start_s
+    do in = 1,n_wall_segments
+       write(6,'(a,i8,5(1x,g18.8))') 'WS:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),wall_segments(in,4),wall_segments(in,5)
+    end do
 
     done = .false. 
 
@@ -3892,14 +3933,19 @@ contains
     rp = r_start
     sp = s_start
 
+    write(0,*) 'START:',rp,sp
+
 
     do while (.not.done)
 
+       write(0,*) 'SEARCH:',rp,sp
 
-       get_next_point(rp,sp,rn,sn,walli,rc)
+       call get_next_point(rp,sp,rn,sn,walli,rc)
+
+       write(0,'(a,3i8,6(1x,g18.8))') 'FIND:',nwall,walli,rc,rp,sp,rn,sn
 
        ! continuing on a set of connected segments
-       if (rc.eq.0) then 
+       if (rc.ne.0) then 
           nwall = nwall + 1
           wall_r(nwall) = rn
           wall_s(nwall) = sn
@@ -3909,20 +3955,86 @@ contains
           rp = rn
           sp = sn
 
-       ! Need to find a wall point and then conenct back to the next contiguous set of wall segments
        else
-          ! How do I find a wall point , the next surface point AND know when I have reached the end ?
+          ! wall segments have been added along grid edges when a ring is not generated so ... the wall should be contiguous and this should not happen. 
+          ! This should only happen at the very end of the wall
+          
+          call check_wall_segments(ierr)
+          
+          if (ierr.ne.0) then 
 
+             call errmsg('FINALIZE WALL: ALL WALL SEGMENTS NOT USED',ierr)
+             stop 'Finalize_wall'
 
+          endif
+
+          ! Add a connection back to start point 
+          nwall = nwall + 1
+          wall_r(nwall) = r_start
+          wall_s(nwall) = s_start
+
+          done = .true.
        endif
 
 
     end do
 
 
-
-
   end subroutine finalize_wall
+
+  subroutine check_wall_segments(ierr)
+    implicit none
+    integer :: ierr,in
+
+
+    ! Loop through the wall segments and verify that all are marked as used - print any that are not
+
+    ierr = 0
+
+    do in = 1,n_wall_segments
+       if (wall_segments(in,5).eq.0) then 
+          ierr = ierr + 1
+       endif 
+    end do
+
+  end subroutine check_wall_segments
+
+
+
+  subroutine get_next_point(rp,sp,rn,sn,walli,rc)
+    implicit none
+    real*8 :: rp,sp,rn,sn
+    integer :: walli, rc
+
+    integer :: in
+
+    rc = 0
+
+    
+
+    do in = 1,n_wall_segments
+
+       if (wall_segments(in,5).ne.0) cycle
+
+       if (wall_segments(in,1).eq.rp.and.wall_segments(in,2).eq.sp) then 
+          rc = 1
+          walli = in
+          rn = wall_segments(in,3)
+          sn = wall_segments(in,4)
+       endif
+
+       if (wall_segments(in,3).eq.rp.and.wall_segments(in,4).eq.sp) then 
+          rc = 2
+          walli = in
+          rn = wall_segments(in,1)
+          sn = wall_segments(in,2)
+       endif
+
+
+    end do
+
+    return
+  end subroutine get_next_point
 
 
 
@@ -4584,21 +4696,45 @@ contains
     ! This doesn't work because there are too many data points ... need to use the polygon grid ends or at least the end vertices combined
     ! with the av_wall points to define a wall. 
 
-    nves = av_group_cnt
-
-    if (nves.le.mves) then 
-       do in = av_group_cnt,1,-1
-          rves(in) = av_r(in)
-          zves(in) = av_s(in)
-          write(6,'(a,i8,5(1x,g18.8))') 'Vessel:',in,av_r(in),av_s(in)
-       end do
+    !nves = av_group_cnt
+    !
+    !if (nves.le.mves) then 
+    !   do in = av_group_cnt,1,-1
+    !      rves(in) = av_r(in)
+    !      zves(in) = av_s(in)
+    !      write(6,'(a,i8,5(1x,g18.8))') 'Vessel:',in,av_r(in),av_s(in)
+    !   end do
 
        ! Add 
 
+    !else
+    !   call errmsg('Too many elements in ribbon grid wall specification:',av_group_cnt)
+    !   stop "Too many points in ribbon grid wall"
+    !endif
+
+
+    !
+    ! Assign the new vessel wall calculated from connecting grid edges
+    !
+
+    call finalize_wall
+
+
+    nves = n_wall_segments
+
+    if (nves.gt.0.and.nves.le.mves) then 
+       do in = 1,n_wall_segments
+          rves(in) = wall_r(in)
+          zves(in) = wall_s(in)
+          write(6,'(a,i8,5(1x,g18.8))') 'Vessel:',in,wall_r(in),wall_s(in)
+       end do
+
     else
-       call errmsg('Too many elements in ribbon grid wall specification:',av_group_cnt)
+       call errmsg('Invalid number of elements in ribbon grid wall specification:',n_wall_segments)
        stop "Too many points in ribbon grid wall"
     endif
+
+
 
 
   end subroutine assign_grid_to_divimp
@@ -4703,7 +4839,7 @@ contains
        if (allocated(tmp_foo)) deallocate(tmp_foo)
        allocate(tmp_foo(num2,numb),stat=ierr)
        if (ierr.ne.0) then 
-          call errmsg('GROW ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          call errmsg('GROW2 ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
           stop
        endif
 
@@ -4717,13 +4853,13 @@ contains
 
        deallocate(foo,stat=ierr)
        if (ierr.ne.0) then 
-          call errmsg('GROW DE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          call errmsg('GROW2 DE-ALLOCATION ERROR:FOO:IERR =',ierr)
           stop
        endif
 
        allocate(foo(num2,numb),stat=ierr)
        if (ierr.ne.0) then 
-          call errmsg('GROW RE-ALLOCATION ERROR:FOO:IERR =',ierr)
+          call errmsg('GROW2 RE-ALLOCATION ERROR:FOO:IERR =',ierr)
           stop
        endif
 
@@ -4731,7 +4867,7 @@ contains
 
        deallocate(tmp_foo,stat=ierr)
        if (ierr.ne.0) then 
-          call errmsg('GROW DE-ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
+          call errmsg('GROW2 DE-ALLOCATION ERROR:TMP_FOO:IERR =',ierr)
           stop
        endif
 
