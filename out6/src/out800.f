@@ -1399,6 +1399,8 @@ C-----------------------------------------------------------------------
 c
 c     811 - plot of all deposition - ion and neutral
 c
+c     IPP/10 - some minor edits
+c
       if (iref.eq.811) then
 c
 c        This plots a sectional bar chart showing combined
@@ -1453,7 +1455,6 @@ c
             return
          endif 
 c
-c
          if (iopt.eq.1) then 
             write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
      >          'Total Deposition:',
@@ -1468,7 +1469,6 @@ c
      >          totsrc,'Particles'
          endif
 
-c
          call rzero(valsts,maxpts*maxsets)
 c
          novals = maxpts
@@ -1558,28 +1558,21 @@ c
          pnames1((wltrap1+wltrap2)/2) = 'PP'
          pnames2((wltrap1+wltrap2)/2) = 'Wall'
 c
-c
          pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
          pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
-c         pnames1((wlwall1+wlwall2)/2) = 'Top'
-c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
 c        Mark Z-distances for some wall sections
 c
+c        Top of wall
 c
-c        Max of wall
-c
-         pnames1(wlmax) = 'Top'
-c
-c         pnames2(wlmax) = 'Main Wall'
-c
-c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
+         pnames1(wlmax) = 'TOP'
 c
 c        0.02 - Outside
 c
          pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),
+     >     '(a,f4.1,a)')
+     >     'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
@@ -1611,8 +1604,6 @@ c
          write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
      >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
-c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
-c
          pnames1((wlwall2+wltrap1)/2) = INNER
          pnames2((wlwall2+wltrap1)/2) = 'Target'
          pnames1((wltrap2+wallpts)/2) = OUTER
@@ -1642,8 +1633,6 @@ c
          call frame
 c
       endif
-
-
 c
 C-----------------------------------------------------------------------
 c
