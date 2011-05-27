@@ -3931,6 +3931,10 @@ c                    STOP 'dfsdfsd'
 
             index = surface(isrf)%index(1)  
 
+            WRITE(fp,*) 'Trying 4-:',isrf,index,
+     .                   surface(isrf)%type,VESSEL_WALL,
+     .                   .NOT.CheckIndex(index,range)
+
             IF (surface(isrf)%type.NE.VESSEL_WALL.OR.
      .          .NOT.CheckIndex(index,range)) CYCLE
 
