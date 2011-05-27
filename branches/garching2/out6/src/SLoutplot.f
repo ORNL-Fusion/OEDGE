@@ -4083,6 +4083,8 @@ c
       ELSEIF (iopt.EQ.3) THEN
         WRITE(0,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
         WRITE(6,*) 'OUT TERMINATED BY PLOT 999, OPTION 3'
+c       IPP/10 if code stops normally, exit code should be zero
+        call exit(0)
         STOP
       ELSEIF (iopt.EQ.4) THEN
         CALL CheckImaginaryDensity

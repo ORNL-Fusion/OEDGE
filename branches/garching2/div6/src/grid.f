@@ -8953,8 +8953,11 @@ c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
             zvertp(i2,id) = knot(i1)%zv(i2)
           ENDDO
 c...      Store these in case B2 data from Rhozansky is being loaded:
-          divimp_ik(ik,ir) = knot(i1)%ik 
-          divimp_ir(ik,ir) = knot(i1)%ir
+C         IPP/11 - Karl: put in check for divimp_ik allocated
+          IF (ALLOCATED(divimp_ik)) THEN
+            divimp_ik(ik,ir) = knot(i1)%ik 
+            divimp_ir(ik,ir) = knot(i1)%ir
+          ENDIF
         ENDDO
       ENDDO
 

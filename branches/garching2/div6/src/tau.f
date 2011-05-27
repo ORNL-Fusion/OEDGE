@@ -5806,6 +5806,9 @@ c
       indexnadj = 0
       indexiradj = 0
       indexikadj = 0
+c     IPP/11 - Karl: initialized in to prevent runtime error by overzealous
+c     INTEL system
+      in=0
 c
       nves = 0 
       npsi = 0
