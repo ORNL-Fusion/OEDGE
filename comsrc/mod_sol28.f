@@ -229,7 +229,7 @@ c
          CHARACTER*128 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
                                                       ! Tet_type = 4.0, full grid composite:
          CHARACTER*128 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
-         INTEGER       :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
+         REAL          :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
 
 !...     Surface properties in EIRENE:
          INTEGER       :: sur_n       
@@ -239,9 +239,9 @@ c
          INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
          INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
          INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
-         INTEGER       :: sur_tr1     (EIR_MAXNSUR)  ! ?
-         INTEGER       :: sur_tr2     (EIR_MAXNSUR)  ! ?
-         INTEGER       :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
+         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
          INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
          INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
          CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.

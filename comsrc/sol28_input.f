@@ -691,6 +691,7 @@ c       ----------------------------------------------------------------
         CASE('EIR SURFACE PROPERTIES')
           opt_eir%sur_n  = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            WRITE(0,*) 'buffer:'//TRIM(buffer)
             opt_eir%sur_n = opt_eir%sur_n + 1
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)

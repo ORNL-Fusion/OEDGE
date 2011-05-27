@@ -652,7 +652,7 @@ c          IF (debug) WRITE(0,*) 'go...',ir,i1,i2
           DO ik = 1, nks(ir)
             id = id + 1
 
-            bratio(ik,ir) = SNGL(brat)
+            bratio(ik,ir) = brat
             kbfs  (ik,ir) = 1.0 / brat
             bts   (ik,ir) = cbphi 
 
