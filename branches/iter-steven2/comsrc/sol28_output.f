@@ -897,9 +897,9 @@ c      DO igrp = 1, ngrp
 c        CALL inPutData(grp(igrp)%origin,'GRP_ORIGIN','none')
 c        CALL inPutData(grp(igrp)%type  ,'GRP_TYPE'  ,'none')
 c      ENDDO
-      write(0,*) 'isep' ,grid%isep 
+c      write(0,*) 'isep' ,grid%isep 
       CALL inPutData(grid%isep,'GRD_ISEP' ,'none')
-      write(0,*) 'ipfz' ,grid%ipfz
+c      write(0,*) 'ipfz' ,grid%ipfz
       CALL inPutData(grid%ipfz,'GRD_IPFZ' ,'none')
 
       CALL inPutData(ntube             ,'TUBE_N'   ,'none')
