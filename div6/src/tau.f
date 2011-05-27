@@ -1626,19 +1626,13 @@ c
          ctrap = 4
       endif
 c
-c slmod begin - new
-
-      write(0,*) 'debug: building wall'
-
+c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
       ENDIF
-
-      write(0,*) 'debug: done building wall'
-
 c...  This assigns the xVESM arrays from the WALLPT array.  It also
 c     adds the wall segments that are specified in the DIVIMP
 c     input file (if any, see unstructured input tag 077).  It may
@@ -1646,7 +1640,6 @@ c     be better to put this elsewhere, especially if the NIMBUS wall
 c     is overwritten after a call to EIRENE in some circumstances (not 
 c     sure on this at the moment).  This routine is called for all grids
 c     except JET grids: (NOW called for JET grids if Eirene is run)
-
       IF (pincode.EQ.1.OR.pincode.EQ.2.OR.pincode.EQ.3.OR.
      .    pincode.EQ.4.OR.pincode.EQ.5) 
      .  CALL AssignNIMBUSWall
@@ -5833,7 +5826,7 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
@@ -10280,6 +10273,7 @@ c
       subroutine TARGFLUX
 c slmod begin
       USE mod_eirene06
+      USE mod_eirene_history
 c slmod end 
       IMPLICIT NONE
 C
@@ -10311,7 +10305,7 @@ c
 c slmod begin - new
       INCLUDE 'slcom'
 
-      INTEGER fp,i1,i2,i
+      INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
 c slmod end
 
@@ -10806,6 +10800,48 @@ c       and reported here -- fix:
      .        strata(i1)%fluxt,
      .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
           ENDDO
+
+          CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
+          CALL PRB
+          i4 = history(1)%ngauge
+          WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .      'ITER',(i2,i2=1,i4),(i2,i2=1,i4)
+          DO i1 = 1, nhistory
+            i3 = history(i1)%gauge_nstrata
+            IF (i1.GT.1) 
+     .        WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .          '    ',(i2,i2=1,i4),(i2,i2=1,i4)
+            WRITE(fp,'(3X,5X,4X,20(A))') 
+     .        '(E19 m-3)',('        ',i2=1,i4-1),'    (eV)'
+            WRITE(fp,92) i1,' atm ',
+     .                   history(i1)%gauge_parden_atm(i3,1:i4) / 1.E19,
+     .                   history(i1)%gauge_egyden_atm(i3,1:i4) /
+     .                  (history(i1)%gauge_parden_atm(i3,1:i4) +
+     .                   1.0E-10)
+            WRITE(fp,92) i1,' mol ',
+     .                   history(i1)%gauge_parden_mol(i3,1:i4) / 1.E19,
+     .                   history(i1)%gauge_egyden_mol(i3,1:i4) /
+     .                  (history(i1)%gauge_parden_mol(i3,1:i4) + 
+     .                   1.0E-10)
+ 92         FORMAT(3X,I5,A,20(1X,F7.3))
+c
+            WRITE(fp,'(3X,5X,5X,20(A))') 
+     .        ' (mTorr)',('        ',i2=1,i4-1),'    (Pa)'
+            WRITE(fp,93) i1,' atm ',
+     .                   history(i1)%gauge_p_atm(i3,1:i4),
+     .                   history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
+            WRITE(fp,93) i1,' mol ',
+     .                   history(i1)%gauge_p_mol(i3,1:i4),
+     .                   history(i1)%gauge_p_mol(i3,1:i4) / 7.502  
+            WRITE(fp,93) i1,' tot ',
+     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                   history(i1)%gauge_p_mol(i3,1:i4)),
+     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                   history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
+ 93         FORMAT(3X,I5,A,20(1X,F7.3))
+c
+          ENDDO
+
         ELSE
           CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
           CALL PRB

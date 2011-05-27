@@ -2089,7 +2089,8 @@ c            WRITE(0,*) 'i2,3',i2,i3
             READ(fp,*,END=97,ERR=97) 
             DO i4 = 1, i3
               READ(fp,*,END=97,ERR=97) 
-     .          idum,rdum(1),
+     .          idum,
+     .          history(nhistory)%gauge_vol       (   i2),   ! [m-3]
      .          history(nhistory)%gauge_p_atm     (i4,i2),   ! [mTorr]
      .          history(nhistory)%gauge_parden_atm(i4,i2),   ! [particles m-3]
      .          history(nhistory)%gauge_egyden_atm(i4,i2),   ! [eV m-3]
@@ -2325,13 +2326,14 @@ c...  Dump EIRENE iteration data:
       CALL inOpenInterface('idl.eirene_history',ITF_WRITE)
       DO i1 = 1, nhistory
        DO i2 = 1, history(i1)%ngauge
+        CALL inPutData(history(i1)%gauge_vol(i2),'VOLUME','m-3')
         DO i3 = 1, history(i1)%gauge_nstrata
          CALL inPutData(history(i1)%iiter,'FLUID_ITERATION','N/A')        !
          CALL inPutData(i1               ,'HISTORY','N/A')                !
          CALL inPutData(i2               ,'GAUGE'  ,'N/A')                !
          CALL inPutData(i3               ,'STRATA' ,'N/A')                !
-         rdum(1) = history(i1)%gauge_p_atm(i3,i2) / 7.502D0  ! from 101.3 Pa = 760 mTorr
-         rdum(2) = history(i1)%gauge_p_mol(i3,i2) / 7.502D0  
+         rdum(1) = history(i1)%gauge_p_atm(i3,i2) / 7.502  ! from 101.3 Pa = 760 mTorr
+         rdum(2) = history(i1)%gauge_p_mol(i3,i2) / 7.502  
          rdum(3) = history(i1)%gauge_egyden_atm(i3,i2) /
      .            (history(i1)%gauge_parden_atm(i3,i2) + 1.0E-10)
          rdum(4) = history(i1)%gauge_egyden_mol(i3,i2) /

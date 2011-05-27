@@ -796,7 +796,7 @@ c      REAL*8  :: CLST(NRAD),ADDV2(7,NRAD)
 c...  Iteration data:
       INTEGER :: ITERNO 
       INTEGER IT,IG,NGAUGE
-      REAL*8 XGAUGE(3),YGAUGE(3),RGAUGE(3),DIST,X1,X2,X3,Y1,Y2,Y3,FACT,
+      REAL*8 XGAUGE(4),YGAUGE(4),RGAUGE(4),DIST,X1,X2,X3,Y1,Y2,Y3,FACT,
      .       sum_dat(3)
       REAL*8, ALLOCATABLE :: XCEN(:),YCEN(:),ZCEN(:),T_VOL(:),
      .                       T_PDENA(:,:,:),T_EDENA(:,:,:),
@@ -1527,16 +1527,19 @@ C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
 
 c...  Check for triangle centers that are inside the "pressure
 c     gauge" region:
-      NGAUGE = 3
+      NGAUGE = 4
       XGAUGE(1) =  845.0D0  ! ITER midplane
       YGAUGE(1) =   62.0D0
       RGAUGE(1) =    8.0D0
-      XGAUGE(2) =  475.0D0  ! ITER divertor, below dome
+      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
       YGAUGE(2) = -420.0D0
       RGAUGE(2) =   20.0D0
-      XGAUGE(3) =    4.0D0
-      YGAUGE(3) =   17.5D0
-      RGAUGE(3) =    2.0D0
+      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
+      YGAUGE(3) = -380.0D0
+      RGAUGE(3) =   10.0D0
+      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
+      YGAUGE(4) = -420.0D0
+      RGAUGE(4) =   10.0D0
 
       IS=ISTRAA
       IT=ITERNO

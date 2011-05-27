@@ -332,11 +332,11 @@ c      stop
 
 c...  Crop the end(s) first trace to nearest intersection(s):
       IF (clean) THEN
+c...    First half of the trace (-ve S values):
         itrace = 1
         i1 = trace_i(2,itrace)
         io = trace_i(4,itrace) 
         i2 = trace_i(3,itrace)
-c...    First half of the trace (-ve S values):
         DO i = io-1, i1, -1
           IF (tdat(5,i).EQ.1.0D0.OR.tdat(5,i).EQ.2.0D0) EXIT
         ENDDO
@@ -348,19 +348,23 @@ c...    First half of the trace (-ve S values):
           CALL rayDeleteTracePoints(tdat,i1,i-i1,itrace)
           WRITE(0,*) '     ',trace_i(2,itrace),trace_i(4,itrace),
      .                       trace_i(3,itrace)
-          tdat(5,i1) = -tdat(5,i1) 
+          tdat(5,i1) = -1.0D0
+c          tdat(5,i1) = -tdat(5,i1) 
           s_ref = tdat(1,i1)
+c...      Scan down the rest of the traces and crop them as well, hopefully
+c         following the surface contour:
           DO itrace = 2, trace_n
 c            write(0,*) 'itrace=',itrace
             i1 = trace_i(2,itrace)
             io = trace_i(4,itrace) 
-            DO j = i1, io-2
+            DO j = i1, io-2  ! Not allowed to mess with the origin point
               IF (tdat(5,j).NE.1.0D0.AND.tdat(5,j).NE.2.0D0) CYCLE
               diff = tdat(1,j) - s_ref
               IF (diff.GE.0.0D0.AND.diff.LE.scale) THEN
                 s_ref = tdat(1,j)
                 CALL rayDeleteTracePoints(tdat,i1,j-i1,itrace)
-                tdat(5,i1) = -tdat(5,i1) 
+                tdat(5,i1) = -1.0D0
+c                tdat(5,i1) = -tdat(5,i1) 
 c                write(0,*) '     cut 1',j-i1+1,trace_i(4,itrace)-i1+1
 c                write(0,*) '          ',tdat(5,i1)
                 EXIT
@@ -379,17 +383,71 @@ c             based on S only:
                 ENDIF
               ENDDO
               IF (k.EQ.-1) THEN
-                CALL ER('rayProcessRibbon','No valid link found',*99)
+                CALL ER('rayProcessRibbon','No valid link found 1',*99)
               ELSE
 c                write(0,*) '     cut 2',k-i1+1,trace_i(4,itrace)-i1+1
                 s_ref = tdat(1,k)
                 CALL rayDeleteTracePoints(tdat,i1,k-i1,itrace)
+                tdat(5,i1) = -1.0D0
 c                write(0,*) '          ',tdat(5,i1)
               ENDIF
             ENDIF
           ENDDO 
-
         ENDIF
+c...    Last half of the trace (+ve S values):
+        itrace = 1
+        i1 = trace_i(2,itrace)
+        io = trace_i(4,itrace) 
+        i2 = trace_i(3,itrace)
+        DO i = io+1, i2
+          IF (tdat(5,i).EQ.1.0D0.OR.tdat(5,i).EQ.2.0D0) EXIT
+        ENDDO
+        IF (i.LT.i2) THEN
+          WRITE(0,*) 'crop2',itrace
+          WRITE(0,*) '     ',i1,io,i2       
+          WRITE(0,*) '     ',i
+          WRITE(0,*) '     ',i2,i2-i,itrace
+          CALL rayDeleteTracePoints(tdat,i+1,i2-i,itrace)
+          tdat(5,i) = -2.0D0
+c          tdat(5,i) = -tdat(5,i) 
+          s_ref = tdat(1,i)
+          DO itrace = 2, trace_n
+            io = trace_i(4,itrace) 
+            i2 = trace_i(3,itrace)
+            DO j = io+2, i2
+              IF (tdat(5,j).NE.1.0D0.AND.tdat(5,j).NE.2.0D0) CYCLE
+              diff = s_ref - tdat(1,j)
+              IF (diff.GE.0.0D0.AND.diff.LE.scale) THEN
+                s_ref = tdat(1,j)
+                CALL rayDeleteTracePoints(tdat,j+1,i2-j,itrace)
+c                tdat(5,j) = -tdat(5,j) 
+                tdat(5,j) = -2.0D0
+                EXIT
+              ENDIF
+            ENDDO
+            IF (j.EQ.i2+1) THEN
+              k = -1
+              min_diff = scale * 10.0D0
+              DO j = io+2, i2
+                diff = DABS(tdat(1,j) - s_ref)
+                IF (diff.LT.min_diff) THEN
+                  min_diff = diff
+                  k = j
+                ENDIF
+              ENDDO
+              IF (k.EQ.-1) THEN
+                CALL ER('rayProcessRibbon','No valid link found 2',*99)
+              ELSE
+                s_ref = tdat(1,k)
+                CALL rayDeleteTracePoints(tdat,k+1,i2-k,itrace)
+                tdat(5,k) = -2.0D0
+              ENDIF
+            ENDIF
+          ENDDO 
+        ENDIF
+
+c        STOP 'fsdfds'
+
       ENDIF  ! clean.EQ..TRUE.
 
 
