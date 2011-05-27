@@ -60,6 +60,16 @@ $
 $ EIRENE plots
 $ ----------------------------------------------------------------------
 $
+'987   XXX XX D2 density - triangle grid FULL '   2
+'000   Zoom'  5.750 -3.25 2.25 2.65 
+'000   Scale' 2 1  1.0    1.0E+20 1.0E+21 'n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  9.1501  2.4834
+'987   XXX XX D2 density - triangle grid FULL '   2
+'000   Zoom'  5.750 -3.25 2.25 2.65 
+'000   Scale' 2 1  1.0    1.0E+20 1.0E+21 'n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  9.8904  3.2237
+$
+'999  STOP' 3
 $
 '987   XXX XX D  density - triangle grid FULL '   0  1
 '000   Zoom'  5.500  0.00 2.75 5.00 
@@ -68,10 +78,10 @@ $
 '000   Noframe'
 '987   XXX XX D2 density - triangle grid FULL '   2
 '000   Zoom'  5.500  0.00 2.75 5.00 
-'000   Scale' 2 1 -1.0      12.0   22.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
 '000   Tetrahedons'  2  -4.0
-$'000   Noframe'
-'987   XXX XX D2 pressure- triangle grid FULL '   0  8
+'000   Noframe'
+'987   XXX XX D2 pressure- triangle grid FULL '   8
 '000   Zoom'  5.500  0.00 2.75 5.00 
 '000   Scale' 2 1 -1.0     -1.0     2.0    'LOG10 p_D2 (Pa)'
 '000   Tetrahedons'  2  -4.0
@@ -89,25 +99,25 @@ $
 $
 $
 '987   XXX XX D2 density - triangle grid FULL '   2
-'000   Zoom'  5.750 -2.65 2.25 2.55 
-'000   Scale' 2 1 -1.0      12.0   22.0  'LOG10 n_D2 (m!SP!-3!NO!)'
-'000   Tetrahedons'  1  0.0001
+'000   Zoom'  5.750 -3.25 2.25 2.55 
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  6.668   0.0001
 '987   XXX XX D2 density - triangle grid FULL '   2
-'000   Zoom'  5.750 -2.65 2.25 2.55 
-'000   Scale' 2 1 -1.0      12.0   22.0  'LOG10 n_D2 (m!SP!-3!NO!)'
-'000   Tetrahedons'  1  0.2301
+'000   Zoom'  5.750 -3.25 2.25 2.55 
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  6.8968  0.2301
 '987   XXX XX D2 density - triangle grid FULL '   2
-'000   Zoom'  4.000 -2.00 4.00 4.00 
-'000   Scale' 2 1 -1.0      18.0  -99.0  'LOG10 n_D2 (m!SP!-3!NO!)'
-'000   Tetrahedons'  1  1.8396
+'000   Zoom'  5.750 -3.25 2.25 2.55 
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  8.5062  1.8396
 '987   XXX XX D2 density - triangle grid FULL '   2
-'000   Zoom'  4.000 -2.00 4.00 4.00 
-'000   Scale' 2 1 -1.0      18.0  -99.0  'LOG10 n_D2 (m!SP!-3!NO!)'
-'000   Tetrahedons'  1  2.4834
+'000   Zoom'  5.750 -3.25 2.25 2.55 
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  9.1501  2.4834
 '987   XXX XX D2 density - triangle grid FULL '   2
-'000   Zoom'  4.000 -2.00 4.00 4.00 
-'000   Scale' 2 1 -1.0      18.0  -99.0  'LOG10 n_D2 (m!SP!-3!NO!)'
-'000   Tetrahedons'  1  3.2237
+'000   Zoom'  5.750 -3.25 2.25 2.55 
+'000   Scale' 2 1 -1.0      18.0   23.0  'LOG10 n_D2 (m!SP!-3!NO!)'
+'000   Tetrahedons'  1  9.8904  3.2237
 $
 $
 $
