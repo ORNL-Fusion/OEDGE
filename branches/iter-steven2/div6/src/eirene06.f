@@ -3741,7 +3741,6 @@ c...  Make sure this zone hasn't been process already:
       zone_n = zone_n + 1
       zone_list(zone_n) = izone
 
-
       nseg  = 0
       seg   = 0
       npts  = 0       
@@ -3750,7 +3749,6 @@ c...  Make sure this zone hasn't been process already:
       ne    = 0.0
       te    = 0.0
       ti    = 0.0
-
 
       DO ivoid = 1, opt%nvoid
         IF (opt%void_zone(ivoid).NE.izone) CYCLE
@@ -3810,11 +3808,10 @@ c...    Search through the list of standard wall line segments and build
 c       a list for each zone that completes the individual voids:
         range = TRIM(opt%void2_wall(ivoid))
 
-        WRITE(fp,*) 'WALL I1,2=- ',i1,i2
+        WRITE(fp,*) 'WALL I1,2-= ',i1,i2
 
         IF (range(1:3).EQ.'def') THEN
-
-c         Find the wall segments for this zone automatically -- just keep
+c         Find the wall segments for this zone automatically.  Just keep
 c         mindlessly filing through the wall segments until the path is 
 c         closed:
           cont = .TRUE.
@@ -3831,6 +3828,7 @@ c             Check both ends of the current focus segment:
               DO ilink = 1, 2
                 link = .FALSE.
                 DO iseg2 = 1, nseg
+                  IF (debug) WRITE(fp,*) '  Trying-:',iseg2
                   IF (iseg1.EQ.iseg2) CYCLE
                   i3 = seg(iseg1,ilink)
 c                 Check both ends of the test segment:
@@ -3866,7 +3864,7 @@ c             looking at the next segment:
      .              (DABS(pts(i3,1)-x2).LT.DTOL.AND.
      .               DABS(pts(i3,2)-y2).LT.DTOL)) THEN
 
-                  WRITE(fp,*) 'Wall surface 1',isrf,
+                  WRITE(fp,*) 'Wall surface 1-',isrf,
      .                   surface(isrf)%index(1:2)
 
                   IF (res(isrf).EQ.0.0) THEN
@@ -3925,18 +3923,14 @@ c                    STOP 'dfsdfsd'
           ENDDO
 
         ELSEIF (range(1:4).NE.'none') THEN
-c        ELSEIF (i1.GT.0.AND.i2.GT.0) THEN
-c         Select the wall segments based on the index values in I1 and I2:
           DO isrf = 1, nsurface
 
             index = surface(isrf)%index(1)  
 
             IF (surface(isrf)%type.NE.VESSEL_WALL.OR.
      .          .NOT.CheckIndex(index,range)) CYCLE
-c     .          (surface(isrf)%index(1).LT.i1.OR.
-c     .           surface(isrf)%index(1).GT.i2)) CYCLE
 
-            WRITE(fp,*) 'Wall surface 2',isrf,surface(isrf)%index(1)
+            WRITE(fp,*) 'Wall surface 2-',isrf,surface(isrf)%index(1)
 
             x1 = surface(isrf)%v(1,1)
             y1 = surface(isrf)%v(2,1)
@@ -4512,7 +4506,7 @@ c       a list for each zone that completes the individual voids:
         i1 = opt%void_wall(1,ivoid)
         i2 = opt%void_wall(2,ivoid)
 
-        WRITE(fp,*) 'WALL I1,2=- ',i1,i2
+        WRITE(fp,*) 'WALL I1,2= ',i1,i2
 
         IF     (i1.EQ.-1.AND.i2.EQ.-1) THEN
 c         Find the wall segments for this zone automatically -- just keep

@@ -29,7 +29,7 @@ c      WRITE(0,*) 'NPLASM:',nplasma
 
       SELECTCASE (obj(iobj)%subtype)
 
-        CASE (OP_FLUID_GRID)
+        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
 c...      Fluid grid:
           ik = obj(iobj)%ik
           ir = obj(iobj)%ir
@@ -80,7 +80,6 @@ c          IF (ir.EQ.irsep) THEN
 c            WRITE(0,*) 'BFIELD:',plasma(ipla)%bfield(1:3)
 c          ENDIF
 
-
           za = opt%int_z(iint) * 1000 + opt%int_a(iint)
 
           SELECTCASE (za)
@@ -102,23 +101,20 @@ c             available:
               av = opt%int_a(iint) 
               iz = opt%int_charge(iint)
 
-
-              IF     (iz.GE.1.AND.iz.LE.nizs) THEN
-                IF (.NOT.debugv) 
-     .            CALL ER('AssignPlasmaQuantities','Impurity velocity'//
-     .                    ' data not present',*99)
+              IF     (iz.GE.0.AND.iz.LE.nizs) THEN
+c                IF (.NOT.debugv)  ! *** PROFILE HACK ***
+c     .            CALL ER('AssignPlasmaQuantities','Impurity velocity'//
+c     .                    ' data not present',*99)
                 plasma(ipla)%ni(iint) = sdlims(ik,ir,iz)
-                plasma(ipla)%vi(iint) = sdvs  (ik,ir,iz) 
+c                plasma(ipla)%vi(iint) = sdvs  (ik,ir,iz)  ! *** PROFILE HACK ***
                 plasma(ipla)%ti(iint) = sdts  (ik,ir,iz)
 
-                IF (ir.EQ.irsep)
-     .                WRITE(0,*) sdvs(ik,ir,iz),velavg(ik,ir,iz)
-
+c                IF (ir.EQ.irsep)
+c     .                WRITE(0,*) sdvs(ik,ir,iz),velavg(ik,ir,iz)
 
 c                IF (ir.EQ.irsep) THEN
 c                  WRITE(0,*) 'VEL:',iz,ik,ir,sdvs(ik,ir,iz)
 c                ENDIF
-
               ELSEIF (iz.EQ.0.AND..FALSE.) THEN
               ELSE
                 CALL ER('AssignPlasmaQuantities','Impurity data '//
@@ -127,9 +123,9 @@ c                ENDIF
 
           ENDSELECT
 
-        CASE (OP_EIRENE_GRID)
-c...      Eirene grid:
-          STOP 'NOT READY: OP_EIRENE_GRID'
+c        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
+cc...      Eirene grid:
+c          STOP 'NOT READY: OP_EIRENE_GRID'
         CASE (OP_INVERSION_GRID)
 c...      Inversion mesh:
           STOP 'NOT READY: OP_INVERSION_GRID'
@@ -170,7 +166,7 @@ c
       za = opt%int_z(iint) * 1000 + opt%int_a(iint)
 
       SELECT CASE (opt%int_database(iint))
-
+c       ----------------------------------------------------------------
         CASE (1)
 c...      PIN: 
           IF (opt%int_line(iint).EQ.'UNITY') THEN
@@ -204,7 +200,7 @@ c...            ???:
 
             ENDSELECT
           ENDIF      
-   
+c       ----------------------------------------------------------------   
         CASE (2)
 c...      ADAS: 
 
@@ -218,10 +214,10 @@ c     >                   plrpad,wlngth2,IRCODE)
 
               iz = opt%int_charge(iint)
 
-              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
+c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
 
-              IF (iz.GE.1.AND.iz.LE.nizs) THEN   ! Add some checks to make sure the impurity requested matches what's available...
-                CALL LDADAS(opt%int_z(iint),iz,
+              IF (iz.GE.0.AND.iz.LE.nizs) THEN     ! Add some checks to make sure the impurity 
+                CALL LDADAS(opt%int_z(iint),iz,    ! requested matches what's available...
      .                      opt%int_adasid(iint),
      .                      opt%int_adasyr(iint),
      .                      opt%int_adasex(iint),
@@ -239,11 +235,11 @@ c     >                   plrpad,wlngth2,IRCODE)
           IF (ircode.NE.0) 
      .      CALL ER('GetFluidGridEmission','IRCODE.NE.0',*99)
 
-          osm(1:ik,1:ir) = plrpad(1:ik,1:ik)  
+          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * absfac 
           WRITE(0,*) 'WLNGTH:',wlngth2
-
+c       ----------------------------------------------------------------
         CASE (3) 
-c...      DIVIMP precalculated quantities (should mode DALHPA and DGAMMA here):
+c...      DIVIMP precalculated quantities (should move DALHPA and DGAMMA here):
           IF     (TRIM(opt%int_line(iint)).EQ.'PRAD') THEN
             SELECTCASE (opt%int_charge(iint))
               CASE (-1)  ! Sum over all charge states 
@@ -264,9 +260,10 @@ c                  WRITE(0,*) 'IZ!',iz
           ELSE
             CALL ER('GetFluidGridEmission','Unknown DIVIMP tag',*99)
           ENDIF
-
+c       ----------------------------------------------------------------
         CASE DEFAULT
           STOP 'UNRECOGNIZED DATABASE'
+c       ----------------------------------------------------------------
       ENDSELECT
 
       RETURN

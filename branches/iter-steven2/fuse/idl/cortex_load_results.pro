@@ -12,7 +12,7 @@ FUNCTION cortex_LoadProfile, file
   ENDIF
 
   path   = inGetData('PATH')
-  signal = inGetData('SIGNAL')
+  signal = inGetData('SIGNAL_01')
   inCloseInterface  
 
   result = {  $

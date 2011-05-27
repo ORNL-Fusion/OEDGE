@@ -15,12 +15,15 @@ c
       REAL      rdum1
       CHARACTER cdum1*256
 
+      write(0,*) opt%int_database(opt%int_num)
+
       SELECTCASE (opt%int_database(opt%int_num))
         CASE (1,3,4)
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_line(opt%int_num)
         CASE (2)
+          write(0,*) '>'//TRIM(dummy)//'<'
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_adasid(opt%int_num),
@@ -48,7 +51,7 @@ c
 
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
-      INTEGER i,n
+      INTEGER i,j,n
 
       GetLine = .TRUE. 
 
@@ -65,7 +68,9 @@ c...    Remove leading spaces:
 c...    Remove portion of line after comment charcter:
         n = LEN_TRIM(buffer)
         DO i = 1, n
-          IF (buffer(i:i).EQ.'$'.OR.buffer(i:i).EQ.'*') EXIT
+          j = MAX(1,i-1)
+          IF ( buffer(i:i).EQ.'$'.OR.
+     .        (buffer(i:i).EQ.'*'.AND.buffer(j:j).NE.'''')) EXIT
         ENDDO 
         buffer(i:n) = ' '
 
@@ -314,39 +319,40 @@ c         --------------------------------------------------------------
                 IF (idum1.EQ.0) CYCLE
                 WRITE(0,*) 'LOADING INTEGRATION:',idum1
                 opt%int_num = opt%int_num + 1
+                i1 = opt%int_num
                 SELECTCASE (idum1)
                   CASE (1)  ! Straight-up line integral:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,6,0)
                   CASE (2)  ! Line shape integral:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_shape   (opt%int_num),
-     .                                   opt%int_instr   (opt%int_num),
-     .                                   opt%int_width   (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_shape   (i1),
+     .                                   opt%int_instr   (i1),
+     .                                   opt%int_width   (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,7,2)
                   CASE (3)  ! Line-of-sight weighted average:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_average (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_average (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,7,0)
                   CASE DEFAULT

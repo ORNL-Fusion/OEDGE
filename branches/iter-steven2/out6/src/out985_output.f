@@ -2541,6 +2541,23 @@ c     -build list of secondary chords (reflections)
 c     -fast routine for determining the intersection between a line and a surface
 c     -ray trace (using connection map and wedge index to speed things up)
 
+      IF (.TRUE.) THEN
+        idet = 1
+        WRITE(file,'(1024X)')          
+        WRITE(file,'(A,I0.2,A)') 
+     .    'idl.'//TRIM(opt%fmap)//'_',idet,'_views'
+        write(0,*) 'wriging',TRIM(file)
+        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        DO ipixel = 1, npixel
+          CALL inPutData(pixel(ipixel)%global_v1(1),'X_1','m')
+          CALL inPutData(pixel(ipixel)%global_v1(2),'Y_1','m')
+          CALL inPutData(pixel(ipixel)%global_v2(1),'X_2','m')
+          CALL inPutData(pixel(ipixel)%global_v2(2),'Y_2','m')
+        ENDDO
+        CALL inCloseInterface
+      ENDIF
+
+
       IF (npixel.GT.1) THEN
 c...    Image:
 
@@ -2638,7 +2655,7 @@ c            DO ipixel = 1, npixel
               zv(3,i1) = (iy    ) * deltaz
               rv(4,i1) = (ix    ) * deltar 
               zv(4,i1) = (iy - 1) * deltaz
-              cq(1) = SNGL(pixel(ipixel)%integral(1))
+              cq(1) = SNGL(pixel(ipixel)%integral(1))  ! *HARDCODED*
               CALL SetCol255_04(2,cq(i1),qmin,qmax)    ! Should really reorganize this loop, to draw all pixels of a 
               CALL FILCOL(255)                         ! particular shade, from a limited set of contours, to 
               CALL LINCOL(255)                         ! try and shrink the size of the .ps file... 
@@ -2663,20 +2680,6 @@ c...      Clear arrays:
           CALL DrawColourScale(1,2,qmin,qmax,'none')
 c...      Frame the plot:
           CALL DrawFrame
-c...
-          IF (.TRUE.) THEN
-            WRITE(file,'(1024X)')          
-            WRITE(file,'(A,I0.2,A)') 
-     .        'idl.'//TRIM(opt%fmap)//'_',idet,'_views'
-            CALL inOpenInterface(TRIM(file),ITF_WRITE)
-            DO ipixel = 1, npixel
-              CALL inPutData(pixel(ipixel)%global_v1(1),'X_1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(2),'Y_1','m')
-              CALL inPutData(pixel(ipixel)%global_v2(1),'X_2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(2),'Y_2','m')
-            ENDDO
-            CALL inCloseInterface
-          ENDIF
 
 c...      Inversion mesh coverage:
           IF (.TRUE.) THEN
@@ -2922,6 +2925,8 @@ c...    Spectra:
         ENDDO
         WRITE(0,*) 'DONE'
       ENDIF
+
+
 
 
       RETURN
