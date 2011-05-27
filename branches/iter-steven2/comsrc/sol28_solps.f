@@ -20,7 +20,7 @@ c
       SAVE
 
       first_call = .FALSE.
-      output = .TRUE.
+      output = .FALSE.
       outfp = 0
       fp = 99
 

@@ -158,7 +158,7 @@ C
        INTEGER   L1, MCLASS                                                     
 C                                                                       
        PARAMETER ( L1    =  1 )                                         
-c slmod begin - new
+c slmod begin
        integer iread,lck
        PARAMETER ( IREAD = 12 , LCK = 500 )  ! incerased from 250 - SL, 27/01/2010
 c
@@ -2116,6 +2116,15 @@ C IF NEW EMITTING ION ENTERED OR SOURCE DATA USERID HAS CHANGED:
 C - OPEN THE REQUESTED DATA SET & READ IN COMPLETE SET OF RATE DATA.
 C-----------------------------------------------------------------------
 C
+c slmod begin
+               IF ( (IZLAST.NE.IZIN)  .OR.
+     &              (IZ0LST.NE.IZ0IN) .OR.
+     &              (UIDLST.NE.UIDIN) .OR.
+     &              (GRPLST.NE.GRPIN) .OR.
+     &              (TYPLST.NE.TYPIN) .OR.
+     &              (EXTLST.NE.EXTIN)      )  
+     .           WRITE(0,*) 'adas debug fresh: izin=',izin,izlast
+c slmod end
                IF ( (IZLAST.NE.IZIN)  .OR.
      &              (IZ0LST.NE.IZ0IN) .OR.
      &              (UIDLST.NE.UIDIN) .OR.

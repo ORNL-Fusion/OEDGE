@@ -338,6 +338,7 @@ c
         INTEGER :: iiter
         INTEGER :: ngauge
         INTEGER :: gauge_nstrata    
+        REAL    :: gauge_vol        (           MAXNGAUGE)  ! [m-3]
         REAL    :: gauge_p_atm      (MAXNSTRATA,MAXNGAUGE)  ! [mTorr]
         REAL    :: gauge_p_mol      (MAXNSTRATA,MAXNGAUGE)
         REAL    :: gauge_parden_atm (MAXNSTRATA,MAXNGAUGE)

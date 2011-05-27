@@ -665,8 +665,8 @@ c       ----------------------------------------------------------------
                 opt_eir%tet_composite(i1) = TRIM(buffer_array(2))  !         
                 READ(buffer_array(3),*) opt_eir%tet_offset   (i1)  !         
               CASE ('5.0')  ! Grid refinement
-                READ(buffer_array(1 ),*) opt_eir%tet_type(i1)  !         
-                READ(buffer_array(2 ),*) opt_eir%tet_mode(i1)  !         
+                READ(buffer_array(1),*) opt_eir%tet_type(i1)  !         
+                READ(buffer_array(2),*) opt_eir%tet_mode(i1)  !         
                 SELECTCASE (opt_eir%tet_mode(i1))
                   CASE (4)
                     READ(buffer_array(3 ),*) opt_eir%tet_param1(i1)  !         

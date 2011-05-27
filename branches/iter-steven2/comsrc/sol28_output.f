@@ -485,10 +485,10 @@ c...    Build the map:
      .        grp(obj(iobj)%group)%type  .NE.GRP_QUADRANGLE) CYCLE
           DO i1 = 1, idim2
             imap = obj(iobj)%index(i1)
-           WRITE(fp,*) 'GETOBJECT: ',i1,iobj,imap,idim2
+c            WRITE(fp,*) 'GETOBJECT: ',i1,iobj,imap,idim2
             IF (imap.EQ.0) CYCLE
             IF (i1.EQ.IND_IK.OR.i1.EQ.IND_IR.OR.i1.EQ.IND_IS) CYCLE
-           WRITE(fp,*) '         : ',iobj,i1,imap,obj_index_map(imap,i1)
+c            WRITE(fp,*) '         : ',iobj,i1,imap,obj_index_map(imap,i1)
             IF (obj_index_map(imap,i1).EQ.0) THEN
               obj_index_map(obj(iobj)%index(i1),i1) = iobj
             ELSE
