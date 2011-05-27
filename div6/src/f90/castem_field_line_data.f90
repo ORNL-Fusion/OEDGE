@@ -3774,7 +3774,10 @@ contains
 
                 ! record wall segments at each end of ring
                 call add_wall_segment(r1,r2,vert_rec1(npts1a),vert_rec2(npts2a))
+                write(6,'(a,2i8.8(1x,g18.8))') 'ADD WS1:',npts1a,npts2a,r1,vert_rec1(npts1a),r2,vert_rec2(npts2a)
+
                 call add_wall_segment(r1,r2,vert_rec1(npts1b),vert_rec2(npts2b))
+                write(6,'(a,2i8.8(1x,g18.8))') 'ADD WS2:',npts1b,npts2b,r1,vert_rec1(npts1b),r2,vert_rec2(npts2b)
 
 
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
@@ -3785,6 +3788,7 @@ contains
                 if (npts1b.gt.npts1a) then 
                    ! Not generating a ring - add a wall segment 
                    call add_wall_segment(r1,r1,vert_rec1(npts1a),vert_rec1(npts1b))
+                   write(6,'(a,2i8.8(1x,g18.8))') 'ADD WS3:',npts1a,npts1b,r1,vert_rec1(npts1a),r1,vert_rec1(npts1b)
                 endif
                 
                 write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
