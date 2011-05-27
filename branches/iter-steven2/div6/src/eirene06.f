@@ -3823,12 +3823,13 @@ c         closed:
 c           Check if there is already a link to this segment:
             tmp_nseg = nseg
             DO iseg1 = 1, tmp_nseg
+              IF (debug) WRITE(fp,*) '  Trying1-:',iseg1,seg(iseg1,3)
               IF (seg(iseg1,3).EQ.1) CYCLE
 c             Check both ends of the current focus segment:
               DO ilink = 1, 2
                 link = .FALSE.
                 DO iseg2 = 1, nseg
-                  IF (debug) WRITE(fp,*) '  Trying-:',iseg2
+                  IF (debug) WRITE(fp,*) '  Trying2-:',iseg2
                   IF (iseg1.EQ.iseg2) CYCLE
                   i3 = seg(iseg1,ilink)
 c                 Check both ends of the test segment:
@@ -3853,6 +3854,9 @@ c             looking at the next segment:
 
               cont = .TRUE.
               DO isrf = 1, nsurface
+                WRITE(fp,*) 'Trying 3-:',isrf,
+     .                       surface(isrf)%type,VESSEL_WALL,
+     .                       seg(iseg1,4)
                 IF (surface(isrf)%type.NE.VESSEL_WALL.OR.    
      .              seg(iseg1,4).EQ.isrf) CYCLE
                 x1 = surface(isrf)%v(1,1)
