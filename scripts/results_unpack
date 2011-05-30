@@ -1,0 +1,22 @@
+#!/bin/tcsh
+
+if ( $#argv != 1 ) then
+  echo results_unpack ERROR: Need to specify case name
+  exit
+endif
+
+set CASE = $1
+
+source $DIVHOME/scripts/results_resdir $CASE
+
+cd $RESDIR
+
+if ( -e $CASE.zip ) then 
+  unzip $CASE.zip
+  rm    $CASE.zip
+endif 
+
+if ( -e $CASE.idl.zip ) then 
+  unzip $CASE.idl.zip
+  rm    $CASE.idl.zip
+endif 
