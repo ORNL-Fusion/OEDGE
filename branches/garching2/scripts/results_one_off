@@ -1,0 +1,19 @@
+#!/bin/tcsh
+
+
+
+  results_pack_family i-fwp/i-fwp-0 no_idl
+  results_pack_family i-fwp/i-fwp-1 no_idl
+
+#  results_pack_family   i-fwp/i-fwp-5 no_idl
+#  results_pack_family   i-fwp/i-fwp-6 no_idl
+#  results_pack_family   i-fwp/i-fwp-7 no_idl
+
+  results_unpack_family i-fwp/i-fwp-2
+  results_pack_family   i-fwp/i-fwp-2 no_idl
+
+  results_unpack_family i-fwp/i-fwp-3
+  results_pack_family   i-fwp/i-fwp-3 no_idl
+
+
+

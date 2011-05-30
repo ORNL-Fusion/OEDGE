@@ -1,0 +1,101 @@
+#!/bin/tcsh
+
+set DIVIMP_VERSION = $1
+
+set CODE_HOME = /home/ITER/lisgos/codes
+set DIVIMP_LOCAL = /home/ITER/lisgos/divimp_local
+
+if ( $DIVIMP_VERSION == "" ) then
+  echo  ERROR: Directory tag not specified
+  exit
+endif
+
+if ( -e $CODE_HOME/$DIVIMP_VERSION ) then
+  echo Code repository found
+else
+  echo ERROR: DIVIMP code version not found
+  exit
+endif
+
+cd $DIVIMP_LOCAL  
+mkdir $DIVIMP_VERSION
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+ln -s $DIVIMP_LOCAL/adas .
+ln -s $DIVIMP_LOCAL/main/data .
+ln -s $DIVIMP_LOCAL/main/shots .
+ln -s $DIVIMP_LOCAL/main/triangle .
+#ln -s $DIVIMP_LOCAL/main/cases .
+ln -s $FUSEHOME_DATA/results .
+ln -s $DIVIMP_LOCAL/main/scripts .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir div6
+cd div6
+ln -s $DIVIMP_LOCAL/main/div6/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/div6/OBJECT_LIST .
+ln -s $CODE_HOME/$DIVIMP_VERSION/div6/src .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir out6
+cd out6
+ln -s $DIVIMP_LOCAL/main/out6/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/out6/OBJECT_LIST .
+ln -s $CODE_HOME/$DIVIMP_VERSION/out6/src .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+ln -s $CODE_HOME/$DIVIMP_VERSION/commons .
+ln -s $CODE_HOME/$DIVIMP_VERSION/comsrc .
+ln -s $CODE_HOME/$DIVIMP_VERSION/libsrc .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir eirene99
+cd eirene99
+ln -s $DIVIMP_LOCAL/main/eirene99/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene99/Sources .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene99/a+m .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene99/TRIM .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene99/eirene99.dat .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir eirene06
+cd eirene06
+ln -s $DIVIMP_LOCAL/main/eirene06/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene06/src .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene06/modules .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene06/Eirene_04 .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene06/case .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene06/eirene06.dat .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir eirene07
+cd eirene07
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/src .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/modules .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/Eirene_04 .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/Eirene_07 .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/case .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/eirene07.dat .
+
+cd $DIVIMP_LOCAL/$DIVIMP_VERSION
+mkdir eirene10
+cd eirene10
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene10/Makefile.ifort Makefile
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene10/Eirene .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene10/src .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene10/modules .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/Eirene_04 .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/Eirene_07 .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene07/case .
+ln -s $CODE_HOME/$DIVIMP_VERSION/eirene10/eirene10.dat .
+
+cd
+rm divimp
+ln -sf $DIVIMP_LOCAL/$DIVIMP_VERSION divimp
+
+
+
+
+
+

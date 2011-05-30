@@ -1,0 +1,60 @@
+#!/bin/tcsh
+
+set DIVIMP_DIRECTORY = $1
+
+set DIVIMP_SOURCE = $2
+
+set CODE_HOME = /home/ITER/lisgos/codes
+set DIVIMP_LOCAL = /home/ITER/lisgos/divimp
+
+if ( -e $CODE_HOME/$DIVIMP_SOURCE ) then
+  echo Code repository found
+else
+  echo ERROR: DIVIMP code version not found
+  exit
+endif
+
+cd $DIVIMP_LOCAL  
+
+switch ( $1 )
+  case "div6/src/f90":
+  case "out6/src/f90":
+  case "comsrc/f90":
+    alias ls ls
+    set DIRECTORY = $DIVIMP_DIRECTORY
+    cd $DIRECTORY
+    foreach FILENAME (`ls *.f90`)
+    echo ===========================
+    echo $FILENAME
+    diff -b -B $FILENAME $CODE_HOME/$DIVIMP_SOURCE/$DIRECTORY/$FILENAME
+    end
+    breaksw
+  case "commons":
+    alias ls ls
+    set DIRECTORY = $DIVIMP_DIRECTORY
+    cd $DIRECTORY
+    foreach FILENAME (`ls *`)
+    echo ===========================
+    echo $FILENAME
+    diff -b -B $FILENAME $CODE_HOME/$DIVIMP_SOURCE/$DIRECTORY/$FILENAME
+    end
+    breaksw
+  default:
+    alias ls ls
+    set DIRECTORY = $DIVIMP_DIRECTORY
+    cd $DIRECTORY
+    #foreach FILENAME (`ls *`)
+    foreach FILENAME (`ls *.f`)
+    #foreach FILENAME (`ls *.f90`)
+    echo ===========================
+    echo $FILENAME
+    diff -b -B $FILENAME $CODE_HOME/$DIVIMP_SOURCE/$DIRECTORY/$FILENAME
+    end
+    breaksw
+endsw
+
+
+
+
+
+
