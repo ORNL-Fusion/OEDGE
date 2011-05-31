@@ -6934,7 +6934,7 @@ c...    BGK or photons:
         WRITE(fp06,91) 2,0,time,nfile,0,niter,0,ntime,ntime0
         WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  
 c        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
-        WRITE(fp06,90) 'FFFFF FFFF'
+        WRITE(fp06,90) 'FFFFF FFFFF FFFFF FFFFF'
       ELSEIF (.TRUE.) THEN
 c...    Standard (no BGK or photons):
         WRITE(fp06,91) 2,0,time,nfile,0,0,ntime,ntime0
@@ -6943,7 +6943,7 @@ c        WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  ! NGSTAL=1
 c        WRITE(fp06,91) 1,1,0,0,1,0,0,0,5  ! *** MEMORY SAVING ***
         WRITE(fp06,91) 1,1,0,0,1,9,1,0,5  
 c        WRITE(fp06,91) 1,1,0,0,1,9,0,0,5  
-        WRITE(fp06,90) 'TFFFF FFFF'
+        WRITE(fp06,90) 'TFFFF FFFFF FFFFF FFFFF'
 c        WRITE(fp06,90) 'FFFFF FFFF'
       ELSE
         CALL ER('WriteBlock01_06','Trouble',*99)
