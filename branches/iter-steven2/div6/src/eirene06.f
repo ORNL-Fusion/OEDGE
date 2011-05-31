@@ -4135,8 +4135,12 @@ c        ENDDO
 c...  Register whether or not all of the segments that were loaded were needed
 c     to close the path, or whether there are some extra ones:    
       IF (i2.NE.nseg-1) THEN
+        WRITE(fp,'(A,I)') 'termination',i2
         DO i3 = 1, nseg
-          WRITE(fp,*) 'segment order',i2,seg(i3,5)   
+          WRITE(fp,'(A,I6,2(2X,2F12.6),2X,3I6)') 
+     .      'segments ',i3,pts(seg(i3,1),1:2),pts(seg(i3,2),1:2),
+     .      seg(i3,5:7)
+c          WRITE(fp,*) 'segment order',i2,seg(i3,5)   
         ENDDO
         CALL WN('ProcessVoid','Non standard wall job')
       ENDIF

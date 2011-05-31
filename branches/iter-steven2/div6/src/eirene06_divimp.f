@@ -1004,9 +1004,10 @@ c...  Assign block 3a surface index to non-default standard surfaces:
 c...  Output:
       WRITE(eirfp,*) 'EIRENE SURFACE DEFINITION DATA:'
       DO i1 = 1, nsurface
-        WRITE(eirfp,'(3I6,2X,A)')
+        WRITE(eirfp,'(4I6,2X,A)')
      .    i1,
      .    surface(i1)%subtype,
+     .    surface(i1)%index(6),
      .    surface(i1)%iliin,                  
      .    TRIM(surface(i1)%surtxt)
       ENDDO
