@@ -183,7 +183,7 @@ $ EIRENE options:
 '*010 Geometry data  0-standard 1-from DIVIMP        '     1     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '    54     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       ' 18000     EIRTIME
+'*020   Run time (CPU seconds)                       ' 30 18000     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2
@@ -266,7 +266,7 @@ $
 '    XY Grid option 0-off 1-on                       '     0
 '    Cell Area Calculation Option 0-approx 1-polygon '     1
 '    On-AXIS Toroidal B-field value                  '    2.0
-'    Source Data Option 0-Nocorona 1-Adas            '     1
+'    Source Data Option 0-Nocorona 1-Adas            '     0
 '    USERID for ADAS H data (*=use central database) '   '*'
 '    Year for ADAS H data                            '    96
 '    USERID for ADAS Z data (*=use central database) '   '*'

@@ -1,4 +1,4 @@
-#!/bin/tcsh 
+#!/bin/tcsh
 
   set ITERATION=$1
 
@@ -113,6 +113,8 @@
 #  mvc fort.13         $EXEDIR/eirene.13
 #  mvc fort.15         $EXEDIR/eirene.15
 #  cpc fort.90         $EXEDIR/eirtrac.dat
+
+exit
 
 # Clean
   cd $DIVHOME/cases

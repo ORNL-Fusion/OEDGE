@@ -509,7 +509,7 @@ $ EIRENE options:
 '*010 Geometry data  0-standard 1-from DIVIMP        '     1     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '    60     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '  3600     EIRTIME
+'*020   Run time (CPU seconds)                       ' 30  3600     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2
@@ -990,7 +990,7 @@ $
 '      PIN Puff Injection temperature (eV)           '   0.5
 '      PIN Puff location indices JHPUF1(1 and 2)'  -17 -1000
 '      PIN Puff location indices JHPUF2(1 and 2)'  -16 -1001
-'TN408 Calculate SOL iteratively? 0-NO 1-YES         '    2
+'TN408 Calculate SOL iteratively? 0-NO 1-YES         '    0 2
 'TN408 Secondary SOL option for iterative calculation'   -2
 'TN408 Ionization option for iterative SOL           '    3
 '      Number of Pin/SOL iterations                  '    3
