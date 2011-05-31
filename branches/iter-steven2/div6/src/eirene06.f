@@ -3790,7 +3790,8 @@ c       list of triangles for sides that match up with these surfaces:
                 pts(npts,1) = ver(tri(itri)%ver(v2),1)
                 pts(npts,2) = ver(tri(itri)%ver(v2),2)
                 IF (debug) THEN
-                  WRITE(fp,'(A,5I6)') 'GRID:',nseg,itri,isrf,isrf1,isrf2
+                  WRITE(fp,'(A,2I6,2X,A)') 'GRID:',isrf,index,range
+                  WRITE(fp,'(5I6)') nseg,itri,isrf,isrf1,isrf2
                   WRITE(fp,*) '    PTS1=',pts(npts-1,1:2)
                   WRITE(fp,*) '    PTS2=',pts(npts  ,1:2)
                 ENDIF
