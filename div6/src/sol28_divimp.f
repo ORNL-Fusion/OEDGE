@@ -102,6 +102,9 @@ c...  Add virtual rings:
       rxp = rvertp(4,korpg(ikto,irsep))
       zxp = zvertp(4,korpg(ikto,irsep))
 
+      WRITE(0,*) 'whoa=',r0,z0,rxp,zxp
+      stop 'dsdfsf'
+
       CALL InsertRing(1     ,BEFORE,PERMANENT)
       CALL InsertRing(irwall,AFTER ,PERMANENT)
       CALL InsertRing(irtrap,BEFORE,PERMANENT)
