@@ -211,8 +211,6 @@ c         the external program TRIANGLE):
             CALL WritePolyFile_06(eirntri,MAXNRS,eirtri)
           ENDIF
 
-          STOP 'LOST IN THE VOID'
-
 c...      Re-builds connection map, taking into account the new triangles:
           CALL ProcessTriangles_06(0)
 
