@@ -352,6 +352,8 @@ c...  Calculate the magnetic axis, approximately:
       it = 1
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
+      r0 = 0.0D0
+      z0 = 0.0D0
       DO ic = cind1, cind2
         iobj = cell2obj(ic)
         isrf = obj(iobj)%iside(1)
