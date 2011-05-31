@@ -1124,7 +1124,7 @@ c      CALL THICK2(6)
       CALL THICK2(1)
       CALL THICK(1)
 
-      write(0,*) 'map',map1x,map2x,map1y,map2y
+c      write(0,*) 'map',map1x,map2x,map1y,map2y
 
       IF (numplots.NE.0) ylabel = 'none'
 

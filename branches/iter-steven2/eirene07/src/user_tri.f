@@ -780,8 +780,8 @@ C ===== SOURCE: outusr.f
      .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
      .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
      .             ISTRAA,ISTRAE,NEW_ITER,JFEXMN,JFEXMX,MSURFG
-      INTEGER   :: PROB1,PROB2
-      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI),SAVE_IPANU(100),IPANU
+      INTEGER   :: PROB1,PROB2,SAVE_IPANU(100),IPANU
+      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
       REAL*8    :: DDUM(20),RECPAR,RECMOM,RECENG,RECELE,RECADD,EEADD,
      .             SIGNUM,RH2PH2(0:8,0:8),DEF,TEF,RATIO,DEJ,TEI,  
      .             FPRM(6),RCMIN, RCMAX, CONV
@@ -1565,7 +1565,7 @@ c     gauge" region:
           DIST = DSQRT( (XCEN(IR)-XGAUGE(IG))**2 + 
      .                  (YCEN(IR)-YGAUGE(IG))**2)
           IF (DIST.LE.RGAUGE(IG)) THEN
-            T_VOL  (   IG   )=T_VOL  (   IG   )+              +VOL(IR)
+            T_VOL  (   IG   )=T_VOL  (   IG   )+               VOL(IR)
             T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)+PDENA(IMOL,IR)*VOL(IR)
             T_EDENA(IS,IG,IT)=T_EDENA(IS,IG,IT)+EDENA(IMOL,IR)*VOL(IR)
             T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)+PDENM(IMOL,IR)*VOL(IR)

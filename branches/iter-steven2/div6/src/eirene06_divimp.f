@@ -432,12 +432,17 @@ c...  Core boundary surface:
 c...  Setup SOL radial boundary surfaces:
       ik1 = 0
       ik2 = 0
-      DO ik = 1, nks(irwall)-1
+      DO ik = 1, nks(irwall)
+c      DO ik = 1, nks(irwall)-1
 c...
         IF (ik1.EQ.0) ik1 = ik
-        IF ((ikins(ik,irwall).NE.ikins(ik+1,irwall)-1).OR.
-     .      (irins(ik,irwall).NE.irins(ik+1,irwall)  )) ik2 = ik
-        IF (ik.EQ.nks(irwall)-1.AND.ik2.EQ.0) ik2 = nks(irwall)
+        IF (ik.LT.nks(irwall).AND.
+     .      ((ikins(ik,irwall).NE.ikins(ik+1,irwall)-1).OR.
+     .       (irins(ik,irwall).NE.irins(ik+1,irwall)  ))) ik2 = ik
+        IF (ik.EQ.nks(irwall).AND.ik2.EQ.0) ik2 = nks(irwall)
+c        IF ((ikins(ik,irwall).NE.ikins(MIN(nks(irwall),ik+1),irwall)-1).OR.
+c     .      (irins(ik,irwall).NE.irins(ik+1,irwall)  )) ik2 = ik
+c        IF (ik.EQ.nks(irwall)-1.AND.ik2.EQ.0) ik2 = nks(irwall)
 
         IF (ik2.NE.0) THEN
           IF (irouts(ikins(ik1,irwall),irins(ik1,irwall)).EQ.

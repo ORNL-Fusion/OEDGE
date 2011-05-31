@@ -59,9 +59,10 @@ $
 '000   Scale' 2 1 -1.0      20.0  -99.0  'LOG Dalpha (ph m!SP!-3!NO! s!SP!-1!NO!)'
 $
 $
+$ 3D plot to see the boundary of the tetrahedral grid
+$ ======================================================================
 $
-$
-'985   XXX XX Image inversion                 '   1
+'985   XXX XX Image inversion                 '   0  (change to 1 when running on alc-compute-1)
 {RAY TRACE}  0
   {GEOMETRY}  1
      'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'

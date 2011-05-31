@@ -69,7 +69,7 @@ $-----------------------------------------------------------------------
   1.0    0.75 -0.20  0.95  0.20                                          $ rectangle for cropping the tetrahedron grid
 $        Refinement  #Pass  Dist  Size   X1   Y1  Z1    X2   Y2  Z2
 $        -----------------------------------------------------------
-  5.0    4           2      0.05  0.0    0.93 0.0 0.0   0.80 0.0 0.0
+$  5.0    4           2      0.05  0.0    0.93 0.0 0.0   0.80 0.0 0.0
 $
 '{EIR TET DUMP} Surface reflection model for the tororidal end surfaces'  2  $ 2=absorbing, 1=reflecting
 $
