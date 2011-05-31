@@ -3826,6 +3826,13 @@ c...  Adjust WALLTH based on x-point location:
      .    WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
      .      ncell,rcen,zcen,xpth
         
+        write(88,*) 'what the fuck',rxp,rcen
+        write(88,*) '             ',zxp,zcen
+        write(88,*) '             ',xpth
+        DO ii = 1, ncell
+          write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
+        ENDDO
+
         DO in = 1, ncell
           IF (wallth(in).GT.xpth) wallth(in) = wallth(in) - 360.0
         ENDDO
@@ -3844,6 +3851,7 @@ c...  Adjust WALLTH based on x-point location:
         ENDIF
       ENDIF
 
+      write(88,*) '             '
       DO ii = 1, ncell
         write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
       ENDDO
