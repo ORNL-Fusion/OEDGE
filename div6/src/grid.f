@@ -3844,6 +3844,11 @@ c...  Adjust WALLTH based on x-point location:
         ENDIF
       ENDIF
 
+      DO ii = 1, ncell
+        write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
+      ENDDO
+
+
 c...  Sort wall segments:
 10    status = 0
       DO ii = 1, ncell-1
