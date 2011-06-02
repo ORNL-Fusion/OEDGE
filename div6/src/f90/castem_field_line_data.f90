@@ -3568,15 +3568,14 @@ contains
 
                 do is = 1,vert_cnt2
                    if (vert_rec1(it).eq.vert_rec2(is)) then 
-                      write(0,'(a,2i10,10(1x,g18.8))') 'Assign vert_used1:',it,is,vert_used2(is)
+                      write(6,'(a,2i10,10(1x,g18.8))') 'Assign vert_used1:',it,is,vert_used2(is),vert_rec1(it),vert_rec2(is)
                       vert_used1(it) = vert_used2(is)
                    endif
                 end do
-                write(0,*) 'Vert_used2:',vert_cnt2,in,it,vert_used1(it)
+                write(6,'(a,3i8,10(1x,g18.8))') 'Vert_used2:',vert_cnt2,in,it,vert_used1(it)
 
              endif
              
-             !vert_used1(it) = 0.0
              !write(0,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
              write(outunit,'(a,i8,10(1x,g18.8))') 'VERT1A:',it,vert_rec1(it),vert_type1(it)
           end do
@@ -3643,9 +3642,6 @@ contains
              end do
 
              vert_cnt1 = ntot1
-
-             ! set vertices in first row to used in previous row
-             vert_used1(1:ntot1) = 1.0
 
              call sort_arrays(1,vert_cnt1,vert_rec1,vert_type1,vert_used1)
 
@@ -3828,12 +3824,16 @@ contains
                 write(6,'(a,2i8,8(1x,g18.8))') 'ADD WS2:',npts1b,npts2b,r1,vert_rec1(npts1b),r2,vert_rec2(npts2b)
 
                 ! set end points as used for grid generation
-                vert_used2(npts2a) = 1.0
-                vert_used2(npts2b) = 1.0
+                !vert_used2(npts2a) = 1.0
+                vert_used2(npts2a:npts2b) = 1.0
+                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE+:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),vert_rec2(npts2b),vert_used2(npts2b)
 
-
+                
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
                 call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,vert_used2,max_nknots,max_s_sep,min_cells)
+
+
+
 
              else
 
@@ -3844,8 +3844,9 @@ contains
                    write(6,'(a,2i8,8(1x,g18.8))') 'ADD WS3:',npts1a,npts1b,r1,vert_rec1(npts1a),r1,vert_rec1(npts1b)
 
                    if (npts2a.gt.0.and.npts2b.gt.0) then 
-                      vert_used2(npts2a) = 0.0
-                      vert_used2(npts2b) = 0.0
+                      !vert_used2(npts2a) = 0.0
+                      vert_used2(npts2a:npts2b) = 0.0
+                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE-:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),vert_rec2(npts2b),vert_used2(npts2b)
                    endif
 
                 endif
