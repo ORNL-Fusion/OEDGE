@@ -2112,28 +2112,24 @@ c
 c     G47: Castem data set identifier
 c
       ElseIf (tag(1:3).eq.'G47') Then
-         write(0,*) 'G47'
         CALL ReadC(line,rg_castem_data,'CASTEM DATA SET IDENTIFIER')
         write(0,*) 'RG_CASTEM_DATA:',trim(rg_castem_data),':'
 c
 c     G48 - min and max S for selecting intersection subset  2 x <r4>
 c
       ELSEIF (tag(1:3).EQ.'G48') THEN
-         write(0,*) 'G48'
         CALL Read2R(line,rg_int_win_mins,rg_int_win_maxs,-HI,HI,
      >             'RIBBON GRID INTERSECTION SUBSET RANGE [S1,S2]')
 c
 c     G49 - min and max S for selecting intersection subset  2 x <r4>
 c
       ELSEIF (tag(1:3).EQ.'G49') THEN
-         write(0,*) 'G49'
         CALL Read2R(line,rg_minr,rg_maxr,-HI,HI,
      >             'RIBBON GRID SUBSET R RANGE [R1,R2]')
 c
 c     G50 - min and max S for intersection subset grid generation 2 x <r4>
 c
       ELSEIF (tag(1:3).EQ.'G50') THEN
-         write(0,*) 'G50'
         CALL Read2R(line,rg_mins,rg_maxs,-HI,HI,
      >             'RIBBON GRID SUBSET S RANGE [S1,S2]')
 c
@@ -2142,7 +2138,6 @@ c           in a ribbon grid with a length factor smaller than
 c           this value will not be generated. 
 c
       ELSEIF (tag(1:3).EQ.'G51') THEN
-         write(0,*) 'G51'
         CALL ReadR(line,lcutoff,-HI,HI,
      >             'RING CUTOFF LENGTH FACTOR')
 c
@@ -2152,7 +2147,6 @@ c           available which uses an exponential factor given in G53.
 c           A cell_spacing_factor of 1 gives a linear spacing
 c
       ELSEIF (tag(1:3).EQ.'G52') THEN
-         write(0,*) 'G52'
         CALL ReadI(line,cell_spacing_option,0,0,'CELL SPACING OPTION')
 
 c
@@ -2160,7 +2154,6 @@ c     G53 - cell spacing factor
 c           Used to determine cell boundary spacing along the rings
 c
       ELSEIF (tag(1:3).EQ.'G53') THEN
-         write(0,*) 'G53'
        CALL ReadR(line,cell_spacing_factor,-HI,HI,
      >             'CELL SPACING FACTOR')
 c
@@ -2170,7 +2163,6 @@ c           available which uses an exponential factor given in G53.
 c           A cell_spacing_factor of 1 gives a linear spacing
 c
       ELSEIF (tag(1:3).EQ.'G54') THEN
-         write(0,*) 'G54'
         CALL ReadI(line,ribbon_input_format_opt,0,1,
      >     'INTERSECTION DATA INPUT DATA FORMAT OPTION: 0=CASTEM 1=RAY')
 c
