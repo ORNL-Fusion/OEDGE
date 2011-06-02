@@ -1721,6 +1721,7 @@ c...    Generalized grid:
         CALL DOWALL
       ENDIF
 
+
 c...  This assigns the xVESM arrays from the WALLPT array.  It also
 c     adds the wall segments that are specified in the DIVIMP
 c     input file (if any, see unstructured input tag 077).  It may
@@ -1772,6 +1773,8 @@ c     angle for each cell and the difference from orthogonality for the
 c     target segments.
 c
       call calcorth
+
+
 c
 C
 C-----------------------------------------------------------------------
@@ -1877,6 +1880,8 @@ C
         ENDIF
 C
   320 CONTINUE
+
+
 c
 c     Calculate the KSS2 and KPS2 arrays - based on the complete
 c     grid - using the mid-points of the sides to define the S limits
@@ -2138,6 +2143,8 @@ c
 
 C
   322 CONTINUE
+
+
 c
 c     Assign the KSS2 and KPS2 values to KSS and KPS if the PDOPT=1 has
 c     been specified.
@@ -2177,6 +2184,8 @@ c
       if (s_reflect_opt.ne.0) then 
          call calc_s_reflect
       endif 
+
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2234,6 +2243,7 @@ c
          end do
 c
       endif
+
 c
 c     Calculate required values for perpendicular step options 1 and 2
 c
@@ -2508,12 +2518,14 @@ c     Calculate the R,Z values of the inner and outer mid-planes
 C-----------------------------------------------------------------------
 c
       call find_midplane
+
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
 C-----------------------------------------------------------------------
 C
       CALL TAUVOL
+
 c
 C-----------------------------------------------------------------------
 c     Write out the grid - formatted and including vertices.
@@ -2524,6 +2536,7 @@ c
      >          cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID))then
          call writegrd(cgridopt)
       endif
+
 C
 C-----------------------------------------------------------------------
 C     INITIALIZE 3D B FIELD VECTORS IN THE bfield module
@@ -2688,6 +2701,7 @@ c     combining various different SOL and plasma options.
 c
 C-----------------------------------------------------------------------
 c
+
       call bgplasma(title,equil)
 c slmod begin - temp
       CALL DB('DONE CALCULATING BACKGROUND PLASMA')
@@ -2808,6 +2822,7 @@ c
       if (uedge_bg.eq.1) then
          call check_fluxes
       endif
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2856,6 +2871,7 @@ C-----------------------------------------------------------------------
 C     TEMPERATURE GRADIENT FORCES IN THE SOL
 C-----------------------------------------------------------------------
 C
+
       DO 660 IZ = 1, NIZS
         IF     (CIOPTM.EQ.0) THEN
           KALPHS(IZ) = 0.0
@@ -2941,6 +2957,7 @@ c
 c
   680 CONTINUE
 c
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2979,6 +2996,7 @@ c     temperature gradient forces.
 c
 C-----------------------------------------------------------------------
 c
+
       call calcapp_fgradmod
 c
 c psmod
@@ -2999,6 +3017,7 @@ c
 c-----------------------------------------------------------------------
 c
       CALL COEFF(NIZS)
+
 c
 c-----------------------------------------------------------------------
 c
@@ -3370,6 +3389,7 @@ c
 C-----------------------------------------------------------------------
 c
       call assign_wall_plasma 
+
 c
 C
 C-----------------------------------------------------------------------
@@ -3688,6 +3708,7 @@ c...Add print option:
       IF (sloutput) WRITE(0,*) 'END OF TAUIN1'
 c slmod end
 c
+
       RETURN
 C
 C
@@ -4010,6 +4031,8 @@ c slmod end
       KTOTV2(IR) = 0.0
       RNGCHK     = 0.0
       WRITE (9,9005)
+
+
       DO 900 IK = 1, NKS(IR)
 C
 C---- SET UP 5 BY 5 MATRIX OF (IK,IR) VALUES SURROUNDING POINT, USING
@@ -4112,6 +4135,8 @@ C
 C---- CALCULATE THE FOUR AREAS (SOME MAY BE 0) AND SUM THEM.
 C---- AREA OF 4-SIDED IRREGULAR FIGURE IS THAT OF TWO TRIANGLES.
 C
+
+
       KAREAS(IK,IR) = 0.0
       DO 200 I = 2, 3
        DO 200 J = 2, 3
@@ -4171,6 +4196,7 @@ C
 
 c slmod begin
  205  CONTINUE
+
       AREA_SUM = 0.0D0
 c slmod end
       KP = KORPG(IK,IR)
@@ -4254,6 +4280,7 @@ c
 
       endif
 
+
 c slmod begin
 c...  Scale KVOLS and KVOL2 if only a fraction of the torus is 
 c     being modelled in EIRENE:
@@ -4288,6 +4315,7 @@ c
          kareas(ik,ir) = karea2(ik,ir)
          kvols(ik,ir) = kvol2(ik,ir)
       endif
+
 C
       WRITE (9,9006) IK,IR,RS(IK,IR),ZS(IK,IR),KAREAS(IK,IR),
      >  KVOLS(IK,IR),KAREA2(IK,IR),KVOL2(IK,IR),ACHK,CVMF(IK,IR),
@@ -4314,6 +4342,8 @@ C
       TOTV2  = TOTV2  + KTOTV2(IR)
       TOTCHK = TOTCHK + RNGCHK
   910 CONTINUE
+
+
       WRITE (9,9008) TOTA,TOTV,TOTA2,TOTV2,TOTCHK
 c
 c     Calculate some characteristics of Areas
@@ -4325,14 +4355,30 @@ c
       do ir = 1,nrs
         do ik = 1,nks(ir)
            if (ik.eq.1) then
-             apol = karea2(ik,ir) / ksb(ik,ir)
+              if (ksb(ik,ir).ne.0.0) then 
+                apol = karea2(ik,ir) / ksb(ik,ir)
+              else
+                apol = 0.0
+              endif
            else
-             apol = karea2(ik,ir) / (ksb(ik,ir)-ksb(ik-1,ir))
+              if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0.0) then
+                 apol = karea2(ik,ir) / (ksb(ik,ir)-ksb(ik-1,ir))
+              else
+                 apol = 0.0
+              endif
            endif
 c
-           apara = apol / kbfs(ik,ir)
+           if (kbfs(ik,ir).ne.0.0) then 
+              apara = apol / kbfs(ik,ir)
+           else
+              apara = 0.0
+           endif
 c
-           afact = apara / rs(ik,ir)
+           if (rs(ik,ir).ne.0.0) then 
+              afact = apara / rs(ik,ir)
+           else
+              afact = 0.0
+           endif
 c
            write (6,'(''Areas:'',2i4,5(2x,e15.6))') ir,ik,
      >                karea2(ik,ir),kbfs(ik,ir),
@@ -4340,12 +4386,15 @@ c
 c
         end do
       end do
+
+
 c
       endif
 c
 c     Loop through and check for zero volume cells.
 c     Print an informational message.
 c
+
       cnt = 0
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -8845,7 +8894,7 @@ c     vertices - cell centre information as well as magnetic field.
 c
 c     This information is only printed if the expanded print option
 c     has been selected. It is printed in a format compatible with
-c     the SONET grid generator output.
+c     the SONNET grid generator output.
 c
 c     David Elder, March 8, 1995
 c
@@ -9021,7 +9070,12 @@ c
 c
 c           Print magnetic field and center coordinates
 c
-            write(iounit,6003) 1.0/kbfs(ik,ir),rs(ik,ir),zs(ik,ir)
+            if (kbfs(ik,ir).ne.0.0) then 
+               write(iounit,6003) 1.0/kbfs(ik,ir),rs(ik,ir),zs(ik,ir)
+            else
+               ! Write a 0.0 if the magnetic field is undefined
+               write(iounit,6003) 0.0,rs(ik,ir),zs(ik,ir)
+            endif
 c
 c           Print second two vertices
 c
@@ -16283,7 +16337,8 @@ c      nvertp(in)
 c
 c      rvertp(in,1..4),zvertp(in,1..4)
 c
-      
+c      brs, bzs, bts
+c      
 
 c
 c
@@ -18812,7 +18867,7 @@ c
      >                                ik,ir,ik+1,ir,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18853,7 +18908,7 @@ c
      >                                ik,ir,ik-1,ir,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18899,7 +18954,7 @@ c
      >                                ik,ir,ikn,irn,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18944,7 +18999,7 @@ c
      >                                ik,ir,ikn,irn,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 c
@@ -18969,6 +19024,16 @@ c         endif
 c
       end do
 c
+      if (err.ne.0) then 
+
+          write(error_comment,'(a,6i5)') 
+     >          'GEOMETRY ERRORS:MISMATCHED POLYGON SIDES:'//
+     >                   'FOUND ON GRID: COUNT=',err
+          call errmsg('TAU MODULE: ROUTINE GRID_CHECK',
+     >                  error_comment)
+
+      endif
+
       write (6,*) 'POLYGON GEOMETRY ERRORS:', err, ' OF ', cnt
 c
       return

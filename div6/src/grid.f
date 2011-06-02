@@ -1230,9 +1230,11 @@ c       neutral wall specification proceeds clockwise around the vessel:
           wallz1(walln,1) = zves(i1)
           wallr1(walln,2) = rves(i1+1)
           wallz1(walln,2) = zves(i1+1)
-
-c          WRITE(6,'(A,2I8,10(1X,G18.8))') 'WALLS_input:',i1,walln,
-c     >     rves(i1),zves(i1),rves(i1+1),zves(i1+1)
+c
+c         jdemod - turn on debugging
+c
+          WRITE(6,'(A,2I8,10(1X,G18.8))') 'WALLS_input:',i1,walln,
+     >     rves(i1),zves(i1),rves(i1+1),zves(i1+1)
 
         ENDDO
 
@@ -1442,8 +1444,8 @@ c      write(6,'(a,i8)') 'Delete zero length elements:',walln
 c
 c     jdemod
 c
-c          WRITE(6,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
-c     >         wallr1(i1,1),wallr1(i1,2),wallz1(i1,1),wallz1(i1,2)
+          WRITE(6,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
+     >         wallr1(i1,1),wallr1(i1,2),wallz1(i1,1),wallz1(i1,2)
 c
           DO i2 = i1, walln-1
             wallr1(i2,1) = wallr1(i2+1,1)
@@ -1708,13 +1710,18 @@ c     wallpt (ind,31) = Plasma density at wall segment
       write(6,*) 'BUILDNEUTRALWALL:WALLN:',walln
 
       do in = 1,walln
-         write(6,'(a,i8,10(1x,g18.8))') 'BNW:',in,
+
+c         write(0,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
+c     >             wallt(in),wallc(in),
+c     >             wallr1(in,1),wallz1(in,1),
+c     >             wallr1(in,2),wallz1(in,2)
+         write(6,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
+     >             wallt(in),wallc(in),
      >             wallr1(in,1),wallz1(in,1),
-     >             wallr1(in,2),wallz1(in,2),
-     >             wallt(in),wallc(in)
+     >             wallr1(in,2),wallz1(in,2)
       end do
 
-
+c
       DO in = 1, walln
         r1 = wallr1(in,1)
         z1 = wallz1(in,1)
@@ -1837,6 +1844,7 @@ c
 
       ENDDO
 
+
       IF (pcnt.GT.MAXPTS) 
      .  CALL ER('BuildNeutralWall','RZ,ZW out of bounds. Increase '//
      .          'MAXPTS.',*99)
@@ -1897,6 +1905,8 @@ c...  Assign WALLINDEX:
         in = NINT(wallpt(i1,18))
         IF (in.NE.0) wallindex(in) = i1
       ENDDO
+
+
 c
 c
 c      write(6,'(a,2i8)') 'Wallpts:',wallpts,pcnt
@@ -10235,12 +10245,10 @@ c
          cmd = 'cp '//trim(source_dir)//'/'//
      >                trim(intersection_file)//' .'
 
-         write(0,*) 'cmd:',cmd
+c         write(0,*) 'cmd:',trim(cmd)
 
          call run_system_command(cmd,ierr)
  
-         write(0,*) 'cmd:',cmd
-
          if (ierr.ne.0) then 
             ! error copying ident file
             call errmsg('BuildRibbonGrid',
