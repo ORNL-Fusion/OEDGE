@@ -95,6 +95,8 @@ c
       INTEGER it,cind1,cind2,ic,iobj,isrf,ivtx(2)
       REAL*8  c1,c2,d1,d2,tab,tcd
 
+      CatchTube = .FALSE.
+
       it = itube
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -108,7 +110,6 @@ c
         ivtx(1:2) = srf(isrf)%ivtx(1:2)
         d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
         d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-
         CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
         IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
      .      tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN

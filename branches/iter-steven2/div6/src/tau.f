@@ -6469,6 +6469,9 @@ c
 c     
       end if
 c     
+c slmod begin - CU flag
+      in = -1
+c slmod end
       write (6,'(a,9(1x,i6))') 'Index:',
      >     indexcnt,indexnadj,indexiradj,indexikadj,
      >     ik,ir,in,maxrings,
