@@ -1315,7 +1315,8 @@ c...    Output:
         ENDIF
         DO I1=1,ITALLY
           IF (DDUM(I1).LT.1.0D-30) DDUM(I1)=1.0D-30
-          IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D+30
+          IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D-29   ! Asssume an invalid quantity, like from molecules
+c          IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D+30  ! that reach the core. SL, 08/06/11
         ENDDO
         WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
       ENDDO
