@@ -11,7 +11,7 @@ $ I/O:
 $ ======================================================================
 $
 '{F LOG} General purpose log file  0-nominal 1-               '   2  
-'{F OSM_LOAD}   Load reference solution    '  'i-ref-0001a.raw.osm.gz'  $ Indent 'cause of 72 character limit trouble IN DIVIMP...
+'{F OSM_LOAD}   Load reference solution    '  'i-ref-1001a.raw.osm.gz'  $ Indent 'cause of 72 character limit trouble IN DIVIMP...
 '{F OSM_DIR}    Directory                  '  '~/divimp/results/i-ref/'
 $
 $ Control:
