@@ -99,6 +99,11 @@ c
 c     IPP/08 Krieger - initialized variable IT to avoid runtime error
 c     in write statment further down
       it = 0
+c slmod begin
+c...  Needs initialization:
+      totrf = 0
+      maxrf = 0
+c slmod end
 c
 c     Set other initialization values - use iprod for local ion index 
 c

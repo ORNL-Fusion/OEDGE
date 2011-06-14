@@ -2363,7 +2363,7 @@ c...  Impose filament structures:
         WRITE(eirfp,*) '  NOBJ:',nobj
         WRITE(eirfp,*) '  NSRF:',nsrf
         WRITE(eirfp,*) '  NVTX:',nvtx
-        CALL ResolveFilament   
+        CALL ResolveFilament(-1)
         CALL AssignFilamentPlasma   
         iend = nobj
         CALL BuildConnectionMap(istart,iend)
@@ -2373,15 +2373,14 @@ c...  Impose filament structures:
 
 
 
-      WRITE(0,*) 
-      WRITE(0,*) '**** CALLING ResolveFilament FOR CMOD ***' 
-      WRITE(0,*) 
-      CALL ResolveFilament  ! *** GLORIOUS HARDCODED HACK ***
-      iend = nobj
-      CALL BuildConnectionMap(istart,iend)
-      CALL FixTetrahedrons(istart,iend)
-
-
+c...  Manual refinement:
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).NE.5.0) CYCLE
+        CALL ResolveFilament(itet)
+        iend = nobj
+        CALL BuildConnectionMap(istart,iend)
+        CALL FixTetrahedrons   (istart,iend)
+      ENDDO
 
 c      isurface_list = 0
 c      DO i1 = 1, nsurface
