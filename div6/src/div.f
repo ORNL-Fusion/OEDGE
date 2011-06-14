@@ -1029,8 +1029,10 @@ c sltmp
       DO 800  IMP = 1, NATIZ
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-        IF (sloutput.AND.natiz.GT.10) THEN 
-          IF (grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
+        IF (sloutput) THEN 
+          IF ((natiz.GT.10.AND.
+     .         grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0).OR.
+     .        (natiz.LE.10)) 
      .      WRITE(0,*) 'debug imp:',imp,natiz
         ENDIF
 c slmod end

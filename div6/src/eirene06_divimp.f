@@ -2029,6 +2029,7 @@ c             the standard DIVIMP neutral wall, ignore for now...
             IF (fluid_ik(icount).NE.0) THEN
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
+               
               IF (ilin.EQ.1) THEN
                 pinline(ik,ir,1:5,H_BALPHA)=pinline(ik,ir,1:5,H_BALPHA)+ 
      .                                      rdum(1:5)
