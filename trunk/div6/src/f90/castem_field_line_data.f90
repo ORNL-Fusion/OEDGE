@@ -2286,18 +2286,19 @@ contains
 
        bump = av_tan_bump(tan_cnt)
 
-       !write (0,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
-       !write (6,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
+!       write (0,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
+!       write (6,'(a,10(1x,i8))') 'BUMP_ASSYMETRY:', bump, bump_inf(bump,1),bump_inf(bump,2),bump_inf(bump,3),bump_inf(bump,2)-bump_inf(bump,3)
 
        sfl = bump_inf(bump,1)
        efl = bump_inf(bump,2)
 
        ! Assign start
-       if (tan_cnt.eq.1.and.(.not.filter_intersections)) then 
+       if (tan_cnt.eq.1) then 
+       !if (tan_cnt.eq.1.and.(.not.filter_intersections)) then 
           do ifl = 1,efl
              call assign_ray_surf(ifl,bump,0,av_cnt)
-    !write(0,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
-    !write(6,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RS:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
 
           end do
@@ -2309,8 +2310,8 @@ contains
        do ifl = efl,sfl+1,-1
           call assign_ray_surf(ifl,bump,1,av_cnt)
 
-    !write(0,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
-    !write(6,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RF:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
        end do
 
@@ -2319,8 +2320,8 @@ contains
           ! assign the tan index into the av arrays 
           av_tan_ind(tan_cnt) = av_cnt
 
-    !write(0,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
-    !write(6,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RT:',sfl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
        ! allow for assymmetric limiters
        efl = bump_inf(bump,3)
@@ -2331,20 +2332,21 @@ contains
           ! if beyond first half intersections then request only RAY_EXIT  point for bump on field line
           call assign_ray_surf(ifl,bump,2,av_cnt)
 
-    !write(0,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
-    !write(6,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RB:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
        end do
 
        ! Transition to next bump or END
 
        ! Assign end
-       if (tan_cnt.eq.av_tan_cnt.and.(.not.filter_intersections)) then 
+       if (tan_cnt.eq.av_tan_cnt) then 
+       !if (tan_cnt.eq.av_tan_cnt.and.(.not.filter_intersections)) then 
           do ifl = efl,1,-1
              call assign_ray_surf(ifl,bump,4,av_cnt)
 
-    !write(0,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
-    !write(6,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(0,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
+!    write(6,'(a,2i8,10(1x,g18.8))') 'RE:',ifl,av_cnt,av_r(av_cnt),av_s(av_cnt),av_type(av_cnt)
 
           end do
 
@@ -2755,6 +2757,7 @@ contains
     !    
     ! set separation limit to r_limiter_max - r_limiter_min / 100 ... or just choose an absolute value like 0.001m 
     !
+
     min_tan_sep = (r_limiter_max-r_limiter_min)/100.0
 
 
@@ -2819,6 +2822,7 @@ contains
     implicit none
     integer :: tan_cnt,in,is
     integer :: ierr
+    real*8 :: s_tmp
 
     av_tan_cnt = n_tangency
 
@@ -2857,30 +2861,51 @@ contains
 
 
 
+    ! Only add tangency points that are within the window for grid generation
+
     tan_cnt = 0
+    nbumps=0
 
     do in = 1,n_field_lines
        do is = 1,field_line(in)%int_tot
+
+          s_tmp = field_line(in)%int_data(is)%lc
+
           if (field_line(in)%int_data(is)%int_type.eq.RAY_TAN) then 
-             tan_cnt = tan_cnt + 1
-             if (tan_cnt.le.av_tan_cnt) then 
-                av_tan_r(tan_cnt) = field_line(in)%dist
-                av_tan_s(tan_cnt) = field_line(in)%int_data(is)%lc
-                av_tan_bump(tan_cnt) = field_line(in)%int_data(is)%bump
-                av_tan_fl(tan_cnt) = in
-                av_tan_ind(tan_cnt) = is
+              if (.not.filter_intersections.or.&
+                 (filter_intersections.and.(s_tmp.ge.rg_int_win_mins.and.s_tmp.le.rg_int_win_maxs))) then 
+                tan_cnt = tan_cnt + 1
+                if (tan_cnt.le.av_tan_cnt) then 
+                   av_tan_r(tan_cnt) = field_line(in)%dist
+                   av_tan_s(tan_cnt) = field_line(in)%int_data(is)%lc
+                   av_tan_bump(tan_cnt) = field_line(in)%int_data(is)%bump
+                   av_tan_fl(tan_cnt) = in
+                   av_tan_ind(tan_cnt) = is
+                else
+                   call errmsg('FIND_RAY_TANGENCY:TOO MANY TANGENT POINTS FOUND',av_tan_cnt)
+                   stop 'FIND_RAY_TANGENCY'
+                endif
+             endif
+             nbumps = max(nbumps,field_line(in)%int_data(is)%bump)
+             if (tan_cnt.ne.0) then 
+                !write(0,*) 'Nbumps:',nbumps,tan_cnt,av_tan_bump(tan_cnt)
+                write(6,*) 'Nbumps:',nbumps,tan_cnt,av_tan_bump(tan_cnt)
              else
-                call errmsg('FIND_RAY_TANGENCY:TOO MANY TANGENT POINTS FOUND',av_tan_cnt)
-                stop 'FIND_RAY_TANGENCY'
+                !write(0,*) 'Nbumps:',nbumps,tan_cnt,in,is
+                write(6,*) 'Nbumps:',nbumps,tan_cnt,in,is
              endif
 
           endif
        end do
     end do
 
-    if (tan_cnt.ne.av_tan_cnt) then
+    ! Only check that all tangency points are used when intersection filtering is off
+    if (tan_cnt.ne.av_tan_cnt.and.(.not.filter_intersections)) then
        call errmsg('FIND_RAY_TANGENCY:MISMATCH IN TANGENCY COUNT',tan_cnt)
        stop 'FIND_RAY_TANGENCY'
+    else
+       ! set av_tan_cnt to the number of tangencies found for the case using a subset of the intersection data
+       av_tan_cnt = tan_cnt
     endif
 
     ! sort tangency point arrays by S
@@ -2910,6 +2935,7 @@ contains
     implicit none
     integer :: fl,bump,intn,av_cnt
     integer :: int_id
+    real*8 :: s_tmp
 
     ! intn defines which intersection on a specific field line is to be loaded into the 
     ! av_ arrays ... if the specified intn is unavailable the code just continues to execute without inserting 
@@ -2931,15 +2957,21 @@ contains
     ! Intersection ID has been assigned
     if (int_id.ge.0) then 
 
-       av_cnt = av_cnt + 1
-       av_s(av_cnt)      = field_line(fl)%int_data(int_id)%lc
-       av_r(av_cnt)      = field_line(fl)%dist
-       av_type(av_cnt)   = field_line(fl)%int_data(int_id)%int_type
-       av_metric(av_cnt) = field_line(fl)%int_data(int_id)%metric
-       av_angle(av_cnt)  = field_line(fl)%int_data(int_id)%angle
-       av_min_r(av_cnt)  = av_r(av_cnt)
-       av_max_r(av_cnt)  = av_r(av_cnt)
+       s_tmp = field_line(fl)%int_data(int_id)%lc
 
+       if (.not.filter_intersections.or.&
+          (filter_intersections.and.(s_tmp.ge.rg_int_win_mins.and.s_tmp.le.rg_int_win_maxs))) then 
+
+          av_cnt = av_cnt + 1
+          av_s(av_cnt)      = field_line(fl)%int_data(int_id)%lc
+          av_r(av_cnt)      = field_line(fl)%dist
+          av_type(av_cnt)   = field_line(fl)%int_data(int_id)%int_type
+          av_metric(av_cnt) = field_line(fl)%int_data(int_id)%metric
+          av_angle(av_cnt)  = field_line(fl)%int_data(int_id)%angle
+          av_min_r(av_cnt)  = av_r(av_cnt)
+          av_max_r(av_cnt)  = av_r(av_cnt)
+
+       endif
     endif
 
   end subroutine assign_ray_surf
@@ -3027,8 +3059,7 @@ contains
     integer :: ierr,in,int_cnt,is
 
 
-    nbumps = maxval(av_tan_bump)
-
+    ! nbumps - the maximum value of the bump index is obtained in the ray_tangency routine
 
     if (nbumps.gt.0) then 
        if (allocated(bump_inf)) deallocate(bump_inf)
@@ -3072,12 +3103,6 @@ contains
     end do
 
   end subroutine map_bumps
-
-
-
-
-
-
 
 
 
@@ -3277,7 +3302,10 @@ contains
     ! Allocate arrays to hold intersection data
 
     ! max surf ints needs to be 3 X tangency count since each tangency can generate 2 intersections plus the explicit addition of the tangency point
-    max_surf_ints = 3 * av_tan_cnt + 2
+    ! In addition - if the join between segments happens to lie along a value of R used in the grid then every intersection can generate 2 intersection points
+    !             - so the maximum should be  (2 *  (2 * av_tan_cnt) + av_tan_cnt) = 5 * av_tan_cnt
+    !max_surf_ints = 3 * av_tan_cnt + 2
+    max_surf_ints = 5 * av_tan_cnt + 2
 
 
     !write(0,'(a,2i6)') 'Parameters:',max_surf_ints,av_tan_cnt
@@ -3546,6 +3574,7 @@ contains
     !
     ! Set up the initial vertex arrays
     !
+
 
     call init_wall(r_bnds(1),ints(1,1))
 
@@ -3827,6 +3856,13 @@ contains
                 !vert_used2(npts2a) = 1.0
                 vert_used2(npts2a:npts2b) = 1.0
                 write(6,'(a,2i8,10(1x,g18.8))') 'VUSE+:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),vert_rec2(npts2b),vert_used2(npts2b)
+
+                ! IF the outermost boundary of this ring IS the last R boundary then we also have to add the connecting wall segment on r2 since we won't be back to add it later. 
+                if (in.eq.rbnd_cnt-1) then 
+                   call add_wall_segment(r2,r2,vert_rec2(npts2a),vert_rec2(npts2b),3)
+                   !write(0,'(a,2i8,8(1x,g18.8))') 'ADD WS2:',npts1b,npts2b,r1,vert_rec1(npts1b),r2,vert_rec2(npts2b)
+                   write(6,'(a,2i8,8(1x,g18.8))') 'ADD WS4:',npts2a,npts2b,r2,vert_rec1(npts2a),r2,vert_rec2(npts2b)
+                endif
 
                 
                 write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
@@ -4587,14 +4623,18 @@ contains
 
     do in = 1,av_tan_cnt
        if (av_tan_r(in).eq.r_line) then 
-          int_cnt = int_cnt + 1.0
+          if ((.not.filter_intersections).or.(filter_intersections.and.&
+             &(av_tan_s(in).ge.rg_int_win_mins.and.av_tan_s(in).le.rg_int_win_maxs))) then 
 
-          write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
-          !write(0,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+             int_cnt = int_cnt + 1.0
 
-          int_type(int(int_cnt)) = TANGENCY
-          intersects(int(int_cnt)) = av_tan_s(in)
-          !write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+             write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+             !write(0,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+
+             int_type(int(int_cnt)) = TANGENCY
+             intersects(int(int_cnt)) = av_tan_s(in)
+             write(outunit,'(a,2i8,10(1x,g18.8))') 'Int Tan:',in,sect_type,int_cnt,av_tan_r(in),av_tan_s(in)
+          end if 
        end if
     end do
 
