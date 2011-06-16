@@ -262,7 +262,7 @@ $ EIRENE options:
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     3     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '    25     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '  9600     EIRTIME
+'*020   Run time (CPU seconds)                       '   300     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2
@@ -270,7 +270,7 @@ $ EIRENE options:
 '*018   Wall data     0-standard   1-seamless        '     1     EIRNEUT
 '*019   Debug option  0-off                          '     0     EIRDEBUG
 '*E11 n-n collisions  0-off 1-standard mesh          '     0     EIRBGK      (0)
-'*E12 Lyman alpha opacity  0-off 1-rec 2-rec&ion     '     5     EIROPACITY  (0)
+'*E12 Lyman alpha opacity  0-off 1-rec 2-rec&ion     '     0 5   EIROPACITY  (0)
 '*E14 CX D2+ production  0-off 1-Dalpha only 2-full  '     2     EIRCXD2     (0)
 '*E26 Fujimoto D2+ rates  0-off 1-on                 '     1     EIRFUJI     (0)
 '*E15 Proton-D2 collisions  0-off 1-on               '     1     EIRPH2      (0)
