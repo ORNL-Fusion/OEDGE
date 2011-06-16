@@ -1,4 +1,4 @@
-'Ref DIV Title  ' 'SOLPS 1534 + OSM, 3 cassettes, '
+'Ref DIV Title  ' 'a'
 'Run comment    ' 'fully extended grid, based on i-div-0007g'
 'Equil File Name' 'iterm_slo.carre.002_fix_2'
 $										 
@@ -262,7 +262,7 @@ $ EIRENE options:
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     3     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '    25     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '  9600     EIRTIME
+'*020   Run time (CPU seconds)                       '  300 9600     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2
@@ -285,7 +285,7 @@ $
 $
 '*077 2.0 Additional surfaces:'
 ' ' '     (dummy line) '
-' Type  vt1  x1(m)  y1(m)  z1(m)     vt2  x2(m)  y2(m)   z2(m) Ind'  36
+' Type  vt1  x1(m)  y1(m)  z1(m)     vt2  x2(m)  y2(m)   z2(m) Ind'  35
   99.0   2.0   0.0    0.0    42.0      0.0   0.0    0.0     0.0    0.0  DELETE STANDARD WALL SEGMENTS
   99.0  55.0   0.0    0.0    77.0      0.0   0.0    0.0     0.0    0.0  
   99.0  85.0   0.0    0.0    95.0      0.0   0.0    0.0     0.0    0.0  
@@ -321,7 +321,7 @@ $
 -164.0   0.0   0.0    0.0     0.0      2.0  142.0   3.0     0.0    0.0 
 -177.0   2.0  145.0   4.0     0.0      0.0   0.0    0.0     0.0    0.0 
   -1.0   0.0   0.0    0.0     0.0      2.0 -145.0   1.0     0.0    0.0 
-999.0  0.0   0.0    0.0    0.0      0.0   0.0     0.0    0.0	    0.0
+$999.0  0.0   0.0    0.0    0.0      0.0   0.0     0.0    0.0	    0.0
 $
 '    Grid Option    0-JET 1-ASDEX 2-ITER             '     9
 '    Non-Orthogonal Grid option 0-off 1-JET N.O.     '     3

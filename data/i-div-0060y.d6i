@@ -11,7 +11,7 @@ $ I/O:
 $ ======================================================================
 $
 '{F LOG} General purpose log file  0-nominal 1-               '   2  
-'{F OSM_LOAD}   Load reference solution    '  'i-ref-1000b.raw.osm.gz'  
+'{F OSM_LOAD}   Load reference solution    '  'i-ref-1000a.raw.osm.gz'  
 '{F OSM_DIR}    Directory                  '  '~/divimp/results/i-ref/'
 $
 $ Control:
@@ -110,57 +110,57 @@ $  1     2,-3,-4,16,-5,-6,-7,-8,15   6-12,237      100-199   0.2                
   10    12                            default       none      0.2                         $            #8
   11    14                            default       none      0.2                         $            #9
 $
-'{EIR ADDITIONAL SURFACES} 1.0'
+$'{EIR ADDITIONAL SURFACES} 1.0'
 $ Type  Index  File                      Data_tag            Tag
 $---------------------------------------------------------------
-  1     100    divertor_space_v9.txt     'VESSEL PORT'       'main VV wall at port'
-  1     101    divertor_space_v9.txt     'OUTER VESSEL'      'outer curved VV wall'
-  1     110    divertor_space_v9.txt     'INNER DIVERTOR'    'inner divertor'
-  1     111    divertor_space_v9.txt     'OUTER DIVERTOR'    'outer divertor'
-  1     112    divertor_space_v9.txt     'CONNECTOR 1 A'     'connector 1 A'
-  1     113    divertor_space_v9.txt     'CONNECTOR 2 A'     'connector 2 A'
-  1     114    divertor_space_v9.txt     'CONNECTOR 5 A'     'connector 5 A'
-  1     115    divertor_space_v9.txt     'CONNECTOR 6 A'     'connector 6 A'
-  1     120    divertor_space_v9.txt     'INNER REFLECTOR'   'inner reflector plate'
-  1     121    divertor_space_v9.txt     'OUTER REFLECTOR'   'outer reflector plate'
-  1     122    divertor_space_v9.txt     'CONNECTOR 3 A'     'connector 3 A'
-  1     123    divertor_space_v9.txt     'CONNECTOR 4 A'     'connector 4 A'
-  1     130    divertor_space_v9.txt     'MUSHROOM'          'top of dome'
-  1     140    divertor_space_v9.txt     'INNER CASSETTE'    'inner cassette'
-  1     141    divertor_space_v9.txt     'OUTER CASSETTE'    'outer cassette'
-  1     142    divertor_space_v9.txt     'CASSETTE HOLE'     'cassette bypass to port'
-  1     143    divertor_space_v9.txt     'CONNECTOR 1 B'     'connector 1 B'
-  1     144    divertor_space_v9.txt     'CONNECTOR 2 B'     'connector 2 B'
-  1     145    divertor_space_v9.txt     'CONNECTOR 3 B'     'connector 3 B'
-  1     146    divertor_space_v9.txt     'CONNECTOR 4 B'     'connector 4 B'
-  1     147    divertor_space_v9.txt     'CONNECTOR 5 B'     'connector 5 B'
-  1     148    divertor_space_v9.txt     'CONNECTOR 6 B'     'connector 6 B'
-  1     150    divertor_space_v9.txt     'OUTER TRIANGLE'    'outer sub-dome triangle'
-  1     151    divertor_space_v9.txt     'INNER TRIANGLE'    'inner sub-dome triangle'
+$  1     100    divertor_space_v9.txt     'VESSEL PORT'       'main VV wall at port'
+$  1     101    divertor_space_v9.txt     'OUTER VESSEL'      'outer curved VV wall'
+$  1     110    divertor_space_v9.txt     'INNER DIVERTOR'    'inner divertor'
+$  1     111    divertor_space_v9.txt     'OUTER DIVERTOR'    'outer divertor'
+$  1     112    divertor_space_v9.txt     'CONNECTOR 1 A'     'connector 1 A'
+$  1     113    divertor_space_v9.txt     'CONNECTOR 2 A'     'connector 2 A'
+$  1     114    divertor_space_v9.txt     'CONNECTOR 5 A'     'connector 5 A'
+$  1     115    divertor_space_v9.txt     'CONNECTOR 6 A'     'connector 6 A'
+$  1     120    divertor_space_v9.txt     'INNER REFLECTOR'   'inner reflector plate'
+$  1     121    divertor_space_v9.txt     'OUTER REFLECTOR'   'outer reflector plate'
+$  1     122    divertor_space_v9.txt     'CONNECTOR 3 A'     'connector 3 A'
+$  1     123    divertor_space_v9.txt     'CONNECTOR 4 A'     'connector 4 A'
+$  1     130    divertor_space_v9.txt     'MUSHROOM'          'top of dome'
+$  1     140    divertor_space_v9.txt     'INNER CASSETTE'    'inner cassette'
+$  1     141    divertor_space_v9.txt     'OUTER CASSETTE'    'outer cassette'
+$  1     142    divertor_space_v9.txt     'CASSETTE HOLE'     'cassette bypass to port'
+$  1     143    divertor_space_v9.txt     'CONNECTOR 1 B'     'connector 1 B'
+$  1     144    divertor_space_v9.txt     'CONNECTOR 2 B'     'connector 2 B'
+$  1     145    divertor_space_v9.txt     'CONNECTOR 3 B'     'connector 3 B'
+$  1     146    divertor_space_v9.txt     'CONNECTOR 4 B'     'connector 4 B'
+$  1     147    divertor_space_v9.txt     'CONNECTOR 5 B'     'connector 5 B'
+$  1     148    divertor_space_v9.txt     'CONNECTOR 6 B'     'connector 6 B'
+$  1     150    divertor_space_v9.txt     'OUTER TRIANGLE'    'outer sub-dome triangle'
+$  1     151    divertor_space_v9.txt     'INNER TRIANGLE'    'inner sub-dome triangle'
 $              Hole_x  Hole_y                                         
 $              -----------------------------------------------------------------------------
-$  2     102    7.5     -4.5                                  'space in the port'
-  2     210    4.3     -3.0                                  'inner divertor hole'
-  2     211    6.0     -3.5                                  'outer divertor hole'
-  2     220    4.3     -4.0                                  'inner reflector plate hole'
-  2     221    5.3     -4.5                                  'outer reflector plate hole'
-  2     230    5.0     -3.9                                  'dome top hole'
-  2     240    3.8     -3.0                                  'inner cassette hole'
-  2     241    6.5     -3.8                                  'outer cassette hole'
-  2     250    4.1952  -2.90                                 'connector 1 A'
-  2     251    4.0990  -3.65                                 'connector 2 A'
-  2     252    4.32    -4.2196                               'connector 3 A'
-  2     253    5.73    -4.3496                               'connector 5 A'
-  2     254    6.10    -3.5553                               'connector 6 A'
-  2     255    4.1316  -3.03                                 'connector 1 B'
-  2     256    3.9885  -3.44                                 'connector 2 B'
-  2     257    4.18    -4.25                                 'connector 3 B'
-  2     258    5.88    -4.35                                 'connector 5 B'
-  2     259    6.23    -3.5913                               'connector 6 B'
-  2     260    5.7     -4.7                                  'cassette bypass hole'
-  2     261    5.37    -4.6033                               'connector 4 A'
-  2     262    5.20    -4.7360                               'connector 4 B'
-  2     270    4.5     -4.2                                  'sub-dome triangle hole'
+$$  2     102    7.5     -4.5                                  'space in the port'
+$  2     210    4.3     -3.0                                  'inner divertor hole'
+$  2     211    6.0     -3.5                                  'outer divertor hole'
+$  2     220    4.3     -4.0                                  'inner reflector plate hole'
+$  2     221    5.3     -4.5                                  'outer reflector plate hole'
+$  2     230    5.0     -3.9                                  'dome top hole'
+$  2     240    3.8     -3.0                                  'inner cassette hole'
+$  2     241    6.5     -3.8                                  'outer cassette hole'
+$  2     250    4.1952  -2.90                                 'connector 1 A'
+$  2     251    4.0990  -3.65                                 'connector 2 A'
+$  2     252    4.32    -4.2196                               'connector 3 A'
+$  2     253    5.73    -4.3496                               'connector 5 A'
+$  2     254    6.10    -3.5553                               'connector 6 A'
+$  2     255    4.1316  -3.03                                 'connector 1 B'
+$  2     256    3.9885  -3.44                                 'connector 2 B'
+$  2     257    4.18    -4.25                                 'connector 3 B'
+$  2     258    5.88    -4.35                                 'connector 5 B'
+$  2     259    6.23    -3.5913                               'connector 6 B'
+$  2     260    5.7     -4.7                                  'cassette bypass hole'
+$  2     261    5.37    -4.6033                               'connector 4 A'
+$  2     262    5.20    -4.7360                               'connector 4 B'
+$  2     270    4.5     -4.2                                  'sub-dome triangle hole'
 $
 '{EIR SURFACE PROPERTIES} 1.0'
 $ Type Index       Slice_index  ILIIN ILSIDE ILSWCH  TR1  TR2  RECYCT ILSPT  T(K)  Mat.  Hard  Remap  Tag 
@@ -262,7 +262,7 @@ $ EIRENE options:
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     3     EIRGEOM
 '*E37 Segments in toroidal geometry approximation    '    25     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '   300     EIRTIME
+'*020   Run time (CPU seconds)                       '  9600     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     5     EIRMAT1
 '*024             wall                               '     5     EIRMAT2
@@ -270,7 +270,7 @@ $ EIRENE options:
 '*018   Wall data     0-standard   1-seamless        '     1     EIRNEUT
 '*019   Debug option  0-off                          '     0     EIRDEBUG
 '*E11 n-n collisions  0-off 1-standard mesh          '     0     EIRBGK      (0)
-'*E12 Lyman alpha opacity  0-off 1-rec 2-rec&ion     '     0 5   EIROPACITY  (0)
+'*E12 Lyman alpha opacity  0-off 1-rec 2-rec&ion     '     5     EIROPACITY  (0)
 '*E14 CX D2+ production  0-off 1-Dalpha only 2-full  '     2     EIRCXD2     (0)
 '*E26 Fujimoto D2+ rates  0-off 1-on                 '     1     EIRFUJI     (0)
 '*E15 Proton-D2 collisions  0-off 1-on               '     1     EIRPH2      (0)
@@ -285,7 +285,7 @@ $
 $
 '*077 2.0 Additional surfaces:'
 ' ' '     (dummy line) '
-' Type  vt1  x1(m)  y1(m)  z1(m)     vt2  x2(m)  y2(m)   z2(m) Ind'  35
+' Type  vt1  x1(m)  y1(m)  z1(m)     vt2  x2(m)  y2(m)   z2(m) Ind'  57
   99.0   2.0   0.0    0.0    42.0      0.0   0.0    0.0     0.0    0.0  DELETE STANDARD WALL SEGMENTS
   99.0  55.0   0.0    0.0    77.0      0.0   0.0    0.0     0.0    0.0  
   99.0  85.0   0.0    0.0    95.0      0.0   0.0    0.0     0.0    0.0  
@@ -321,6 +321,28 @@ $
 -164.0   0.0   0.0    0.0     0.0      2.0  142.0   3.0     0.0    0.0 
 -177.0   2.0  145.0   4.0     0.0      0.0   0.0    0.0     0.0    0.0 
   -1.0   0.0   0.0    0.0     0.0      2.0 -145.0   1.0     0.0    0.0 
+ 14.0  4.91389 -3.94193   5.01716 -3.98262  -1.0E+18 +1.0E+18  0.0 0.0   1.0  DOME
+  0.0  0.0      0.0       5.02865 -3.95345   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.08557 -3.97953   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.11898 -4.02081   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.14904 -4.02405   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.20088 -4.00907   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.24565 -3.98914   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.19676 -3.90456   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.12861 -3.82968   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       5.04587 -3.77133   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.95246 -3.73227   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.85281 -3.71435   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.75164 -3.71843   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.63917 -3.75021   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.65831 -3.79531   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.69441 -3.85168   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.72324 -3.86077   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.77460 -3.85322   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.82198 -3.87216   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.81061 -3.90124   0.0      0.0      0.0 0.0   0.0
+  0.0  0.0      0.0       4.91389 -3.94193   0.0      0.0      0.0 0.0   0.0
+ 15.0  4.9000  -3.8000    0.0      0.0       0.0      0.0      0.0 0.0   2.0  DOME - HOLE
 $999.0  0.0   0.0    0.0    0.0      0.0   0.0     0.0    0.0	    0.0
 $
 '    Grid Option    0-JET 1-ASDEX 2-ITER             '     9
@@ -672,7 +694,7 @@ $
 3.5400  -2.54484 
 3.5400	-2.5120   START OF MAIN WALL WITH GAPS
 3.7900	-2.5120
-4.0369061  -2.5125625        from divertor_spave_v7.txt 	 4.0400	-2.5120
+4.0400	-2.5120
 4.0400	-1.5270
 3.7900	-1.5270
 3.5400	-1.5270
@@ -786,7 +808,7 @@ $
 7.4397	-2.4461
 7.2572	-2.2753
 6.2580	-3.0510
-6.6463763  -3.2565994 		 from divertor_space_v7.txt     6.7600	-3.1000   END OF MAIN WALL WITH GAPS
+6.7600	-3.1000   END OF MAIN WALL WITH GAPS
 6.7600	-3.23689  OUTER BAFFLE AND TARGET
 6.23648 -3.23689  
 6.11722 -3.24602
