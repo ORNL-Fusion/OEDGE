@@ -134,7 +134,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac)
+      SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac,
+     .                                   title9)
       USE mod_interface
       IMPLICIT none
 
@@ -147,13 +148,17 @@ c
       INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
+      INCLUDE 'div1'
+      INCLUDE 'div2'
 
-      INTEGER, INTENT(IN) :: nizs,cizsc,cion
-      REAL   , INTENT(IN) :: crmi,absfac
+      INTEGER  , INTENT(IN) :: nizs,cizsc,cion
+      REAL     , INTENT(IN) :: crmi,absfac
+      CHARACTER, INTENT(IN) :: title9*(*)
 
-      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
-     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin,impact_energy,pos1,pos2
+      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,in2,
+     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(nvesm)
+      REAL      totfypin,impact_energy,pos1,pos2,angle,flux,r1,z1,
+     .          nparticles,fact2,count(10)
       CHARACTER tag*64,title*1024
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
@@ -302,14 +307,14 @@ c  NEROS(,2) - same as (,3), see NEUT.F
 c  NEROS(,3) - erosion, see DIV.F
 c  NEROS(,4) - net (,1) + (,3)
 c  NEROS(,5) - 
-c          FACT = 0.0
-c          IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
-c          NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c          FACT2 = 0.0
+c          IF (TDEP.GT.0.0) FACT2 = TNEUT / TDEP
+c          NEROS(ID,5) = FACT2 * NEROS(ID,1) + NEROS(ID,3)
 c
 c from div6/src/div.f
 c
-c      FACT = 0.0
-c      IF (TDEP.GT.0.0) FACT = TNEUT / TDEP
+c      FACT2 = 0.0
+c      IF (TDEP.GT.0.0) FACT2 = TNEUT / TDEP
 c      DO 883 ID = 1, NDS
 c        IF (DDS(ID).NE.0.0) THEN
 c          NEROS(ID,1) =-NEROS(ID,1) / DDS(ID) * FACTA(0)             
@@ -322,7 +327,7 @@ c          NEROS(ID,2) = 0.0
 c          NEROS(ID,3) = 0.0
 c        ENDIF
 c        NEROS(ID,4) = NEROS(ID,1) + NEROS(ID,3)
-c        NEROS(ID,5) = FACT * NEROS(ID,1) + NEROS(ID,3)
+c        NEROS(ID,5) = FACT2 * NEROS(ID,1) + NEROS(ID,3)
 c  883 CONTINUE
 c
 c from out6/src/out000.f:
@@ -346,11 +351,11 @@ c        WRITE(ELABS(5),'(A,2F7.4)')'    NENNL      =',    SUM(5),SUM(10)
 
 c...  ASCII data file for Sophie and MatLab:
       fp = 99
-      OPEN (UNIT=fp,FILE='mlb.erosion',ACCESS='SEQUENTIAL',
+      OPEN (UNIT=fp,FILE='mlb.erosion_old',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
       WRITE(fp,'(A)') '* DIVIMP data for MatLab - target erosion'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '* Title: '//TRIM(title)
+      WRITE(fp,'(A)') '* Title: '//TRIM(title9)
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '* r      = rho in ribbon grid land'
       WRITE(fp,'(A)') '* z      = distance along the field line, s'
@@ -376,6 +381,7 @@ c...  ASCII data file for Sophie and MatLab:
      .  '*','wall','targ','cell','ring','r (m)','z (m)',
      .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
      .  'theta','D+ flux'
+      WRITE(fp,*) absfac
       pos1 = 0.0
       pos2 = 0.0
       DO id = 1, wallpts
@@ -392,23 +398,256 @@ c...  ASCII data file for Sophie and MatLab:
      .      -neros(in,3),-neros(in,1),-neros(in,4),
      .      90.0-ACOS(costet(in))*180.0/PI,
      .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir) 
+        ELSE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,0P)')
+     .      id,in,
+     .      0,0,
+     .      0.5*(wallpt(id,20)+wallpt(id,22)),
+     .      0.5*(wallpt(id,21)+wallpt(id,23)),pos1,pos2,
+     .      0.0,0.0,0.0,
+     .      0.0,
+     .      0.0
         ENDIF
         pos1 = pos2
       ENDDO
+
+
+
 c
 c
 c
+      DO in = 1, nvesm
+        DO id = 1, wallpts
+          IF (wallpt(id,17).EQ.in) THEN
+            ivesm(in) = id
+            EXIT
+          ENDIF
+        ENDDO
+        IF (id.EQ.wallpts+1) 
+     .    CALL ER('GenerateDIVIMPDataFiles','Wall map failed',*99)
+      ENDDO
+
+      nparticles = 0.0
+      DO id = 1, wallpts
+        nparticles = nparticles + wallse(id)
+      ENDDO
+
+      WRITE(0,*) 'npart=',nparticles
+
+      CALL inOpenInterface('idl.divimp_erosion',ITF_WRITE)
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(r0        ,'R0'                 ,'m')          
+      CALL inPutData(z0        ,'Z0'                 ,'m')          
+      pos1 = 0.0
+      pos2 = 0.0
+      count = 0.0
+c      DO id = 1, wallpts
+c        in = NINT(wallpt(id,18))
+c        in2= NINT(wallpt(id,17))
+      DO in2= 1, nvesm
+        id = ivesm(in2)
+        in = NINT(wallpt(id,18))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        pos2 = pos1 + wallpt(id,7)
+        fact2 = nparticles * (pos2 - pos1)
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          r1 = rp(in)
+          z1 = zp(in)
+          CALL inPutData(id      ,'INDEX_ID'  ,'N/A')          
+          CALL inPutData(in2     ,'INDEX_IN'  ,'N/A')          
+          CALL inPutData(ikds(in),'INDEX_IKDS','N/A')          
+          CALL inPutData(irds(in),'INDEX_IRDS','N/A')          
+          CALL inPutData(r1      ,'R'    ,'m')          
+          CALL inPutData(z1      ,'Z'    ,'m')          
+          CALL inPutData(pos1    ,'DIST1','m')
+          CALL inPutData(pos2    ,'DIST2','m')          
+c          CALL inPutData(neros(in,3)*absfac,'TOT_ERO','s-1 m-2')          
+c          CALL inPutData(neros(in,1)*absfac,'TOT_DEP','s-1 m-2')          
+          CALL inPutData(neros(in,3)*dds(in)/dds2(in)       
+     .                              ,'TOT_ERO','s-1 m-2')          
+          CALL inPutData(neros(in,1),'TOT_DEP','s-1 m-2')          
+c          write(0,*) 'ddsg:',dds2(in),pos2-pos1,wallpt(id,7)
+          CALL inPutData(wallse(id) / fact2,'TOT_ERO2','s-1 m-2')          
+          CALL inPutData(-(wallsn(id)+wallsi(id)) / fact2,
+     .                                      'TOT_DEP2','s-1 m-2')          
+          CALL inPutData((wallse(id)-(wallsn(id)+wallsi(id))) / fact2,
+     .                                      'TOT_NET2','s-1 m-2')          
+          CALL inPutData(neros(in,4)*absfac,'TOT_NET','s-1 m-2')          
+          angle = 90.0-ACOS(costet(in))*180.0/PI
+          CALL inPutData(angle,'IMPACT_ANGLE','degrees')          
+          flux = knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir)
+          CALL inPutData(flux      ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'ATM_DEP','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_NET','s-1 m-2')          
+          CALL inPutData(flxhw6(in2),'SURFACE_ATM_FLUX','D s-1 m-2')          
+           count(1) = count(1) + wallse(id)
+           count(2) = count(2) + wallsn(id)!+wallsi(id)
+           count(3) = count(3) + (wallse(id)-(wallsn(id)+wallsi(id)))
+        ELSE
+          r1 = 0.5 * (rvesm(in2,1) + rvesm(in2,2))
+          z1 = 0.5 * (zvesm(in2,1) + zvesm(in2,2))
+          CALL inPutData(id ,'INDEX_ID'  ,'N/A')          
+          CALL inPutData(in2,'INDEX_IN'  ,'N/A')          
+          CALL inPutData(-1 ,'INDEX_IKDS','N/A')          
+          CALL inPutData(-1 ,'INDEX_IRDS','N/A')          
+c          r1 = 0.5*(wallpt(id,20)+wallpt(id,22))
+c          z1 = 0.5*(wallpt(id,21)+wallpt(id,23))
+          CALL inPutData(r1  ,'R'    ,'m')          
+          CALL inPutData(z1  ,'Z'    ,'m')          
+          CALL inPutData(pos1,'DIST1','m')
+          CALL inPutData(pos2,'DIST2','m')          
+          CALL inPutData(0.0        ,'TOT_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'TOT_DEP','s-1 m-2')          
+
+
+          CALL inPutData(wallse(id) / fact2,'TOT_ERO2','s-1 m-2')          
+          CALL inPutData(-(wallsn(id)+wallsi(id)) / fact2,
+     .                   'TOT_DEP2','s-1 m-2')          
+          CALL inPutData((wallse(id)-(wallsn(id)+wallsi(id))) / fact2,
+     .                   'TOT_NET2','s-1 m-2')          
+c          CALL inPutData(wallse(id)          / (pos2-pos1) / 1.012E+05
+c     .        ,'TOT_ERO2','(s-1 m-2)')          
+c          CALL inPutData(-(wallsn(id)+wallsi(id))/(pos2-pos1)/1.012E+05
+c     .        ,'TOT_DEP2','(s-1 m-2)')          
+
+
+          CALL inPutData(0.0        ,'TOT_NET','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'ATM_DEP','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_NET','s-1 m-2')          
+          CALL inPutData(-1.0       ,'IMPACT_ANGLE'    ,'degrees')          
+          CALL inPutData(0.0        ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
+          CALL inPutData(flxhw6(in2),'SURFACE_ATM_FLUX','D  s-1 m-2')          
+        ENDIF
+        pos1 = pos2
+      ENDDO
+      CALL inCloseInterface 
+      write(0,*) 'total=',count
+         write(0,*) 'wallsn=',sum(wallsn(1:maxpts))
+
+c...  ASCII data file for Sophie and MatLab - new format:
+      fp = 99
+      OPEN (UNIT=fp,FILE='mlb.erosion',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* DIVIMP data for MatLab - target erosion'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title: '//TRIM(title9)
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* r      = rho in ribbon grid land'
+      WRITE(fp,'(A)') '* z      = distance along the field line, s'
+      WRITE(fp,'(A)') '* dist1  = position along the wall of the '//
+     .                'start of the target segment'
+      WRITE(fp,'(A)') '* dist2  = end of the target segment'
+      WRITE(fp,'(A)') '*   So, centre of segment is (dis1+dist2)/2. '//
+     .                ' The origin of this distance-along-the-wall'
+      WRITE(fp,'(A)') '*   is at the upper left corner of the grid '//
+     .                'where rho=0.0 and s=max(s), with the '
+      WRITE(fp,'(A)') '*   distance then proceeding clockwise.'
+      WRITE(fp,'(A)') '* theta   = angle between field line and '//
+     .                'the target in degrees'
+      WRITE(fp,'(A)') '* D+ flux = flux densiy on target relative '//
+     .                'to the surface normal (not the field line)'
+      WRITE(fp,'(A)') '* density = plasma density right at the surface'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* The erosion/deposition units are just '//
+     .                'funny DIVIMP units at the moment.  The'
+      WRITE(fp,'(A)') '* ratio of erosion to D+ flux should give '//
+     .                'a relative yield for each segment.'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A,1P,E12.4,0P)') 'SCALE_FACTOR          ',absfac
+      WRITE(fp,'(A,F12.2)')    'NEUT_CREATED          ',tneut
+      WRITE(fp,'(A,F12.2)')    'NEUT_REMOVED          ',tstruk+twalln+
+     .                                                  tatiz
+      WRITE(fp,'(A,F12.2)')    'NEUT_ABSORBED_CORE    ',wallsn(nvesm)
+      WRITE(fp,'(A,F12.2)')    'NEUT_ABSORBED_TARGET  ',tstruk  ! not quite right if reflections are on?
+      WRITE(fp,'(A,F12.2)')    'NEUT_ABSORBED_WALL    ',twalln-
+     .                                                  wallsn(nvesm)
+      WRITE(fp,'(A,F12.2)')    'IONS_CREATED          ',tatiz
+      WRITE(fp,'(A,F12.2)')    'IONS_REMOVED          ',stopped_follow+
+     .                                                  tdep+twall
+      WRITE(fp,'(A,F12.2)')    'IONS_ABSORBED_CORE    ',stopped_follow
+      WRITE(fp,'(A,F12.2)')    'IONS_ABSORBED_TARGET  ',tdep
+      WRITE(fp,'(A,F12.2)')    'IONS_ABSORBED_WALL    ',twall
+c      WRITE(fp,'(A,F12.2)')    'SELF_SPUTTERING_FACTOR',csef
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A1,A5,3A6,4A10,3A12,A8,A10,A16)')
+     .  '*','wall','targ','cell','ring','r (m)','z (m)',
+     .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
+     .  'theta','D+ flux','density (m-3)'
+      pos1 = 0.0
+      pos2 = 0.0
+c      DO id = 1, wallpts
+c        in = NINT(wallpt(id,18))
+      count = 0.0
+      DO in2= 1, nvesm-1
+        id = ivesm(in2)
+        in = NINT(wallpt(id,18))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        pos2 = pos1 + wallpt(id,7)
+        fact2 = nparticles * (pos2 - pos1)
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,E16.2,
+     .               3E12.2,0P)')
+     .      id,in,
+     .      ikds(in),irds(in),
+     .      rp(in),zp(in),pos1,pos2,
+     .        wallse(id)                          / fact2,
+     .      -(wallsn(id)+wallsi(id))              / fact2,
+     .       (wallse(id)-(wallsn(id)+wallsi(id))) / fact2,
+     .      90.0-ACOS(costet(in))*180.0/PI,
+     .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir), 
+     .      knds(in),
+     .      -neros(in,3),-neros(in,1),-neros(in,4)
+          count(1) = count(1) + wallse(id)
+          count(2) = count(2) + wallsn(id) ! +wallsi(id)
+          count(3) = count(3) + (wallse(id)-(wallsn(id)+wallsi(id)))
+c          write(0,*) 'what 1',id,wallsn(id),count(2)
+        ELSE
+          WRITE(fp,'(4I6,4F10.5,1P,3E12.2,0P,F8.2,1P,E10.2,E16.2,
+     .               3E12.2,0p)')
+     .      id,in,
+     .      0,0,
+     .      0.5*(wallpt(id,20)+wallpt(id,22)),
+     .      0.5*(wallpt(id,21)+wallpt(id,23)),pos1,pos2,
+     .        wallse(id)                          / fact2,
+     .      -(wallsn(id)+wallsi(id))              / fact2,
+     .       (wallse(id)-(wallsn(id)+wallsi(id))) / fact2,
+     .      0.0,
+     .      0.0,
+     .      0.0,
+     .      0.0,0.0,0.0
+           count(2) = count(2) + wallsn(id) !+wallsi(id)
+c          write(0,*) 'what 2',id,wallsn(id),count(2) 
+        ENDIF
+        pos1 = pos2
+      ENDDO
+
+      write(0,*) 'total=',count
+         write(0,*) 'wallsn parf=',id,sum(wallsn(1:id))
+
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
-      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
-      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
       CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
-      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
-      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
 
 c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
 c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
@@ -4284,7 +4523,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2)
+      SUBROUTINE Development(iopt,nizs2,cizsc2,crmi2,cion2,absfac2,
+     .                       title)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -4296,6 +4536,7 @@ c
 
       INTEGER iopt,nizs2,ik,ir,i1,cizsc2,cion2
       REAL    array(MAXNKS,MAXNRS),crmi2,absfac2
+      CHARACTER title*(*)
 
       IF     (iopt.EQ.2) THEN
         RETURN
@@ -4340,7 +4581,8 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         CALL calc_wallprad(nizs2)
         RETURN
       ELSEIF (iopt.EQ.14) THEN
-        CALL GenerateDIVIMPDataFiles(nizs2,cizsc2,crmi2,cion2,absfac2)
+        CALL GenerateDIVIMPDataFiles
+     .         (nizs2,cizsc2,crmi2,cion2,absfac2,title)
         RETURN
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles

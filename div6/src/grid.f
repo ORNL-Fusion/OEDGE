@@ -3827,11 +3827,11 @@ c     Functions:
 c     Local variables:
       INTEGER IK,IR,STATUS
 
-      INTEGER ii,ncell,wallik(2*MAXNKS),wallir(2*MAXNKS),tempik,tempir,
+      INTEGER ii,ncell,wallik(3*MAXNKS),wallir(3*MAXNKS),tempik,tempir,
      .        i,in,ik1,ir1,id1,iavg,istart,i1,i2
       LOGICAL valid,debug
-      REAL    rcen,zcen,cellr(2*MAXNKS),cellz(2*MAXNKS),ravg,zavg,
-     .        wallth(2*MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
+      REAL    rcen,zcen,cellr(3*MAXNKS),cellz(3*MAXNKS),ravg,zavg,
+     .        wallth(3*MAXNKS),xpth,deltaz,deltar,tempr,tempz,tempth
 c
 c Initialize variables:
 c
@@ -3873,7 +3873,7 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
-            IF (ncell+1.EQ.2*MAXNKS)
+            IF (ncell+1.EQ.3*MAXNKS)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1

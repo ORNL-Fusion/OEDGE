@@ -510,7 +510,7 @@ c...  Input:
       LOGICAL   ascii,message
       REAL      rtime,ttime
       REAL*8    int_sum,solid_total,solid_angle
-      CHARACTER file*1024
+      CHARACTER file*1024,tag*9
 
       INTEGER, ALLOCATABLE :: idum1(:)
 
@@ -644,9 +644,9 @@ c...      Check if surface is part of the vessel wall:
       WRITE(0,*) '  DONE',nvwlist,ngblist
 
 
-      ALLOCATE(ddum1(n))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(ddum2(nobj,2))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(rdum1(100))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum1(n                         ))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-5:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(rdum1(100                       ))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
       pixcnt = m
@@ -752,19 +752,28 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.FALSE..AND.opt%ndet.EQ.1.AND.
+        IF (.TRUE..AND.opt%ndet.EQ.1.AND.   ! *** PROFILE HACK *** 
      .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
-          WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
-          DO i2 = 1,pixel(i1)%nprofile
-            WRITE(6,*) '    ',i2,pixel(i1)%profile(i2,1:2)
-          ENDDO
+c          WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
+c          DO i2 = 1,pixel(i1)%nprofile
+c            WRITE(6,*) '    ',i2,pixel(i1)%profile(i2,1)
+c          ENDDO
           WRITE(file,'(A,I0.3,256X)')          
      .      'idl.ray_profile_'//TRIM(opt%det_fname(1))//'_',i1
           WRITE(0,*) ' FILE:'//TRIM(file)
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           npro=pixel(i1)%nprofile
-          CALL inPutData(pixel(i1)%profile(1:npro,1),'PATH'  ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,2),'SIGNAL','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-5),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-4),'DELTA' ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-3),'WEIGHT','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-2),'NE'    ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-1),'TE'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro, 0),'TI'    ,'eV' )
+          write(0,*) 'opt%int_num=',opt%int_num
+          DO i2 = 1, MAX(1,opt%int_num)
+            WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
+            CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'N/A')
+          ENDDO
           CALL inCloseInterface
         ENDIF
       ENDDO  ! Pixel loop
@@ -1596,6 +1605,7 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
       MAX3D = 500000 
+c      MAX3D = 1500000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 

@@ -785,9 +785,9 @@ c...      Big screen, to catch rays from incomplete 3D grids:
 
           newvtx(1,1) =   0.000D0
           newvtx(2,1) =  10.000D0
-          newvtx(1,2) =   8.370D0
-          newvtx(2,2) =  10.000D0
-          newvtx(1,3) =   8.370D0
+          newvtx(1,2) =   9.000D0  ! Just outside the current viewin radius (hardcoded)
+          newvtx(2,2) =  10.000D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
+          newvtx(1,3) =   9.000D0
           newvtx(2,3) = -10.000D0
           newvtx(1,4) =   0.000D0
           newvtx(2,4) = -10.000D0
@@ -897,51 +897,6 @@ c..       Defunct:
 
         CASE (-9)
 c...      ITER wall (no small feat):
-
-          IF (.FALSE.) THEN
-            newvtx(1,1) =  4.000D0
-            newvtx(2,1) =  1.000D0
-            newvtx(1,2) =  4.000D0
-            newvtx(2,2) = -1.000D0
-            DO i1 = 2, 2, -1
-              newsrf%type = SP_LINE_SEGMENT
-              newsrf%nvtx = 2
-              newsrf%ivtx(1) = AddVertex(newvtx(1,i1  ))
-              newsrf%ivtx(2) = AddVertex(newvtx(1,i1-1))
-              idum1 = AddSurface(newsrf)
-            ENDDO
-            IF (nobj+1.GT.MAX3D) 
-     .        CALL ER('LoadVesselStructures','Insufficient array '//
-     .                'bounds for all objects',*99)    
-            IF (istart.GT.nsrf) THEN
-              WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
-              RETURN
-            ENDIF
-            nobj = nobj + 1
-            WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
-            obj(nobj)%index       = ielement  ! nobj
-            obj(nobj)%type        = OP_EMPTY
-            obj(nobj)%mode        = 0      
-            obj(nobj)%surface     = 1      ! SOLID
-            obj(nobj)%wedge1      = 0
-            obj(nobj)%wedge2      = 0
-            obj(nobj)%colour      = 1
-            obj(nobj)%orientation = 1      ! CW
-            obj(nobj)%ik          = 0
-            obj(nobj)%ir          = 0
-            obj(nobj)%in          = -1  ! What should this be?
-            obj(nobj)%ivolume     = 0
-            obj(nobj)%nside       = 1
-            obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
-            obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
-            obj(nobj)%gsur(1)     = GT_TC
-            obj(nobj)%tsur(1)     = SP_VESSEL_WALL
-            obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
-c..         Defunct:
-            obj(nobj)%nsur        = 0
-            obj(nobj)%ipts(2,1)   = 0
-            obj(nobj)%nmap(1)     = 0
-          ENDIF
 
           fp = 99
           OPEN(fp,FILE='3d_wall.dat',FORM='FORMATTED',STATUS='OLD',

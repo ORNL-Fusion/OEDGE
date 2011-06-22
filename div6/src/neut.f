@@ -4157,7 +4157,7 @@ c
          tmpsum = tmpsum + wallse(in)
       end do
 c
-c      call prr  ('TEMP: TOTAL EROSION: ',tmpsum)
+      call prr  ('TEMP: TOTAL EROSION: ',tmpsum)
 c
       IF (STATUS.LE.10) THEN
       CALL PRI2 ('NUMBER OF NEUTRALS STOPPED AT WALL ',

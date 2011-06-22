@@ -95,6 +95,8 @@ c
       INTEGER it,cind1,cind2,ic,iobj,isrf,ivtx(2)
       REAL*8  c1,c2,d1,d2,tab,tcd
 
+      CatchTube = .FALSE.
+
       it = itube
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -349,6 +351,8 @@ c
       CALL SetupCell2Obj(ncell,IND_CELL)  ! *** GET RID OF THIS! ***
 
 c...  Calculate the magnetic axis, approximately:
+      r0 = 0.0D0
+      z0 = 0.0D0
       it = 1
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)

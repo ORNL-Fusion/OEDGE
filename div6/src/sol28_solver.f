@@ -12,6 +12,8 @@ c
 
       ion = 1
 
+      cs = -99.0D0
+
       IF (nion.NE.1)
      .  CALL ER('SolveFluidEquations','One fluid ion only please',*99)
 

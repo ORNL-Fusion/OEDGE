@@ -45,6 +45,42 @@
      .           wall_nlaunch    
 
       TYPE(type_wall_flux), ALLOCATABLE :: wall_flx(:)
+
+
+
+!     DIVIMP input options:
+!     ------------------------------------------------------------------
+      TYPE, PUBLIC :: type_options_divimp
+         REAL*4    :: version = 1.0
+!...     Ribbon grid:
+         INTEGER       :: rib_n
+         INTEGER       :: rib_type
+         INTEGER       :: rib_format
+         CHARACTER*512 :: rib_file            ! file containing ribbon data
+         INTEGER       :: rib_region          ! region of interest
+         REAL          :: rib_r1              ! region of interest
+         REAL          :: rib_z1            
+         REAL          :: rib_r2  
+         REAL          :: rib_z2  
+         INTEGER       :: rib_rad_opt         ! radial refinement
+         REAL          :: rib_rad_a      
+         REAL          :: rib_rad_b
+         REAL          :: rib_rad_c
+         REAL          :: rib_rad_d
+         INTEGER       :: rib_pol_opt         ! poloidal refinement
+         INTEGER       :: rib_pol_n       
+         REAL          :: rib_pol_a        
+         REAL          :: rib_pol_b
+         REAL          :: rib_pol_c
+         REAL          :: rib_pol_d
+         INTEGER       :: rib_pol_n_def       ! poloidal refinement
+         REAL          :: rib_pol_a_def    
+         REAL          :: rib_pol_b_def
+         REAL          :: rib_pol_c_def
+         REAL          :: rib_pol_d_def
+      ENDTYPE type_options_divimp
+ 
+      TYPE(type_options_divimp) :: opt_div
 !
 !     ==================================================================
 !

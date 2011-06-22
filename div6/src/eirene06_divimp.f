@@ -322,11 +322,10 @@ c
 
       first_message = .TRUE.
 
-      nsurface = 0
+      nsurface        = 0
       default_surface = 0
       core_boundary   = 0
-
-      opt_eir%ilspt = 0
+      opt_eir%ilspt   = 0
 
 c     ----------------------------------------------------------------------
 c...  Setup non-default standard surfaces related to the magnetic grid:
@@ -402,7 +401,6 @@ c          surface(nsurface)%index(2) = nrs                    ! Ring index end
           surface(nsurface)%material = tmater                ! Set surface material
           surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
           surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
-
         ENDDO
       ELSE
         STOP 'OBSOLETE STRATUM SETUP CODE'
