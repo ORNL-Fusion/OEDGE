@@ -52,6 +52,8 @@ c
 C
       INTEGER IR,IZ,IT,IN
 c slmod begin 
+      INCLUDE 'div1'
+      INCLUDE 'div2'
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
 
@@ -211,6 +213,7 @@ c
       CALL RINOUT ('W PRDEPS',PROMPTDEPS,MAXNDS*6)
 c
       CALL RINOUT ('W WALLSN',WALLSN,MAXPTS+1)
+         write(0,*) 'wallsn=',sum(wallsn(1:maxpts))
       CALL RINOUT ('W WALLSE',WALLSE,MAXPTS+1)
       CALL RINOUT ('W WALLSEI',WALLSE_I,MAXPTS+1)
       CALL RINOUT ('W WALLSI',WALLSI,MAXPTS+1)
@@ -550,7 +553,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.5
+      slver = 3.6
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -673,6 +676,9 @@ c...  6.29:
       WRITE(8) eirntorseg
 c...  6.33:
       WRITE(8) ciopte,cxsc,cysc,cxsca,cysca,cxscb,cyscb
+c...  6.36:
+      WRITE(8) tatiz,twall,tdep,stopped_follow,tbyond,tbelow,
+     .         tneut,twalln,tstruk
 
 c...  slver = 3.5: *TEMP*
       CALL RINOUT('W EIRPH1',eirpho1,MAXNKS*MAXNRS)
@@ -682,7 +688,6 @@ c...  6.41:
       WRITE(8) debugv,cstepv
       IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
         
-
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
 

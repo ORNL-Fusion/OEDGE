@@ -25,7 +25,7 @@
       PUBLIC
 
       INTEGER, PARAMETER ::   
-     .  s28_MAXNKS   = 200, 
+     .  s28_MAXNKS   = 500, 
      .  s28_MAXNION  =  10, 
      .  s28_MAXPTS   =   4, 
      .  s28_MAXSIDE  =   6, 

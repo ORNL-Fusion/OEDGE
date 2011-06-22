@@ -889,6 +889,7 @@ c
       neutc_temp = 0.0 
       neutc_area = 0.0
       neutc_div_density = 0.0 
+      neutc_divedge_density = 0.0 
 c
       ir = irtrap+1
       do ik = 1,nks(ir)

@@ -1799,6 +1799,8 @@ c
       integer   maxrev,version_code
       parameter (maxrev=100)
 c slmod begin 
+      INCLUDE 'div1'
+      INCLUDE 'div2'
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -2072,6 +2074,7 @@ c...     MAXNDS repair required:
 c
       if (version_code.ge.(5*maxrev+14)) then 
          CALL RINOUT ('R WALLSN',WALLSN,MAXPTS_+1)
+         write(0,*) 'wallsn=',sum(wallsn(1:maxpts_))
          CALL RINOUT ('R WALLSE',WALLSE,MAXPTS_+1)
          if (version_code.ge.(6*maxrev+24)) then 
             CALL RINOUT ('R WALLSEI',WALLSE_I,MAXPTS_+1)
@@ -2895,6 +2898,10 @@ c...    This is temporary:
         READ(8) ciopte,cxsc,cysc,cxsca,cysca,cxscb,cyscb
       ENDIF
 
+      IF (slver.GE.3.6) THEN
+        READ(8) tatiz,twall,tdep,stopped_follow,tbyond,tbelow,
+     .          tneut,twalln,tstruk
+      ENDIF
 c *TEMP*
       IF (slver.GE.3.5) THEN
         CALL RINOUT('R EIRPH1',eirpho1,MAXNKS*MAXNRS)

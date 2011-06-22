@@ -191,6 +191,8 @@ c     miscellaneous:
 c      SELECTCASE (buffer(3:4))
         CASE ('C','CO','CON')
           CALL LoadControlOption(fp,buffer,itag)
+        CASE ('D','DIV')
+          CALL LoadDivimpOption(fp,buffer,itag)
         CASE ('E','EI','EIR')
           CALL LoadEireneOption(fp,buffer,itag)
         CASE ('FI')
@@ -363,6 +365,82 @@ c          WRITE(0,*) m,buffer(j:i-1)
           IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
         ENDIF
       ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE LoadDivimpOption(fp,buffer,itag)
+      USE mod_sol28_io
+      USE mod_divimp
+      IMPLICIT none
+
+      INTEGER  , INTENT(IN)  :: fp,itag
+      CHARACTER  :: buffer*(*)
+
+      LOGICAL   osmGetLine
+
+      INTEGER       i1,idum(5)
+      LOGICAL       first_pass
+      CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
+      CHARACTER*256 buffer_array(100)
+      REAL          version
+
+      first_pass = .TRUE.
+
+      DO i1 = 1, 100
+        WRITE(buffer_array(i1),'(256X)')
+      ENDDO
+
+      SELECTCASE (buffer(3:itag-1))
+c       ----------------------------------------------------------------
+        CASE('DIV RIBBON GRID')
+          READ(buffer(itag+2:itag+4),*) version
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+            opt_div%rib_n = 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array(1),*) opt_div%rib_type
+            SELECTCASE (opt_div%rib_type)
+              CASE(1)
+                READ(buffer_array( 2),*) opt_div%rib_format
+                opt_div%rib_file = TRIM(buffer_array(3))
+              CASE(2)
+                READ(buffer_array(2),*) opt_div%rib_rad_opt
+                READ(buffer_array(3),*) opt_div%rib_rad_a
+                READ(buffer_array(4),*) opt_div%rib_rad_d
+                READ(buffer_array(5),*) opt_div%rib_rad_b
+                READ(buffer_array(6),*) opt_div%rib_rad_c
+              CASE(3)
+                READ(buffer_array(2),*) opt_div%rib_pol_opt
+                READ(buffer_array(3),*) opt_div%rib_pol_n
+                READ(buffer_array(4),*) opt_div%rib_pol_a
+                READ(buffer_array(5),*) opt_div%rib_pol_b
+                READ(buffer_array(6),*) opt_div%rib_pol_c
+                READ(buffer_array(7),*) opt_div%rib_pol_d
+              CASE(4)
+                READ(buffer_array(2),*) opt_div%rib_region
+                READ(buffer_array(3),*) opt_div%rib_r1
+                READ(buffer_array(4),*) opt_div%rib_r2
+                READ(buffer_array(5),*) opt_div%rib_z1
+                READ(buffer_array(6),*) opt_div%rib_z2
+              CASE(5)  ! defaults
+                READ(buffer_array(2),*) opt_div%rib_pol_n_def
+                READ(buffer_array(3),*) opt_div%rib_pol_a_def
+                READ(buffer_array(4),*) opt_div%rib_pol_b_def
+                READ(buffer_array(5),*) opt_div%rib_pol_c_def
+                READ(buffer_array(6),*) opt_div%rib_pol_d_def
+              CASE DEFAULT
+                CALL ER('LoadDivimpOption','Unknown ribbon grid '//
+     .                  'option',*99)
+            ENDSELECT
+          ENDDO
+c       ----------------------------------------------------------------
+       CASE DEFAULT
+          CALL User_LoadOptions(fp,itag,buffer)
+      ENDSELECT 
 
       RETURN
  99   STOP
@@ -1121,6 +1199,7 @@ c
       USE mod_eirene_history
       USE mod_legacy
       USE mod_solps
+      USE mod_divimp
       IMPLICIT none
 
       CALL InitializeLegacyVariables
@@ -1320,6 +1399,24 @@ c...  SOLPS related variables:
       IF (ALLOCATED(map_osm   )) DEALLOCATE(map_osm   )
 
       nhistory = 0
+
+c...  Divimp options:
+      opt_div%rib_n = 0
+      opt_div%rib_format = -1
+      opt_div%rib_r1 = -1.0E+6
+      opt_div%rib_r2 =  1.0E+6
+      opt_div%rib_z1 = -1.0E+6
+      opt_div%rib_z2 =  1.0E+6
+      opt_div%rib_rad_opt = 0
+      opt_div%rib_pol_opt = 0
+
+      opt_div%rib_pol_n_def = 11 
+      opt_div%rib_pol_a_def = 0.3
+      opt_div%rib_pol_b_def = 0.1
+      opt_div%rib_pol_c_def = 1.0
+      opt_div%rib_pol_d_def = 0.1
+
+c     left off need to add inputs for the above...
 
 c...  User:
       CALL User_InitializeOptions

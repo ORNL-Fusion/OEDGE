@@ -257,8 +257,8 @@ c slmod begin - ribbon dev
 c         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
 c         CALL DumpGrid('IN TAU, BEFORE TAILORGRID')
          call TailorGrid
-         call OutputData(86,'JUST CALLED TAILORGRID')
-         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
+c         call OutputData(86,'JUST CALLED TAILORGRID')
+c         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
          call AddPoloidalBoundaryCells
 c slmod end
       endif
@@ -3995,6 +3995,7 @@ c slmod begin
 c slmod end
       real    apara,apol,afact
 C
+      ACHK   = 0.0
       TOTA   = 0.0
       TOTV   = 0.0
       TOTA2  = 0.0
@@ -10388,6 +10389,7 @@ c
       subroutine TARGFLUX
 c slmod begin
       USE mod_eirene06
+      USE mod_eirene_history
 c slmod end 
       IMPLICIT NONE
 C
@@ -10419,8 +10421,9 @@ c
 c slmod begin - new
       INCLUDE 'slcom'
 
-      INTEGER fp,i1,i2,i
+      INTEGER fp,i1,i2,i3,i
       REAL    puffsrc,addion,addiont,rc
+      REAL, ALLOCATABLE :: totp(:,:)
 c slmod end
 
 C
@@ -10914,6 +10917,28 @@ c       and reported here -- fix:
      .        strata(i1)%fluxt,
      .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
           ENDDO
+          CALL PRB
+          CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
+          CALL PRB
+          WRITE(fp,'(3X,A6,5X,20(2X,I6))') 
+     .      'ITER',(i1,i1=1,history(1)%ngauge)
+          ALLOCATE(totp(history(1)%ngauge,2))
+          DO i1 = 1, nhistory
+            totp = 0.0
+            DO i2 = 1, history(i1)%ngauge
+              DO i3 = 1, history(i1)%gauge_nstrata
+                totp(i2,1) = totp(i2,1) + history(i1)%gauge_p_atm(i3,i2)
+                totp(i2,2) = totp(i2,2) + history(i1)%gauge_p_mol(i3,i2)
+              ENDDO
+            ENDDO
+            WRITE(fp,92) i1,' atm ',totp(1:history(i1)%ngauge,1)
+            WRITE(fp,92) i1,' mol ',totp(1:history(i1)%ngauge,2)
+            WRITE(fp,92) i1,' tot ',totp(1:history(i1)%ngauge,1) +
+     .                              totp(1:history(i1)%ngauge,2)
+ 92         FORMAT(3X,I5,A,20(2X,F6.2))
+          ENDDO
+          DEALLOCATE(totp)
+
         ELSE
           CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
           CALL PRB

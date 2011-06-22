@@ -37,7 +37,6 @@ c...  Check for the presence of standard (OSM) and triangle (EIRENE) grid elemen
         ENDSELECT
       ENDDO
 
-
 c...  Allocate memory for spectrum and plasma data storage:
       nplasma = 0
       nspectrum = 0
@@ -58,6 +57,12 @@ c...  Allocate memory for spectrum and plasma data storage:
         spectrum = 0.0
 c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
       ENDIF
+
+      DO iobj = 1, nobj   ! *** PROFILE HACK ***
+        IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) 
+     .    nplasma = nplasma + 1
+      ENDDO
+      ALLOCATE(plasma(nplasma))
 
       nplasma = 0
       nspectrum = 0
@@ -138,7 +143,6 @@ c...          Eirene grid:
               ENDIF
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:
-
             CASE DEFAULT
               CALL ER('AssignEmissionData','Unknown integration '//
      .                'sub-type',*99)
@@ -169,11 +173,10 @@ c...      Map SPECTRUM array to PIXEL array:
 
         ENDIF
           
-
 c...    Additional information for generating line shapes and weighted
 c       averages (velocities, temperatures, B-field, ...):
-        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
-
+        IF (.TRUE.) THEN  ! *** PROFILE HACK ***
+c        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
           DO iobj = 1, nobj
             IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
             IF (obj(iobj)%index_pla.EQ.0) THEN

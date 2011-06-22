@@ -565,7 +565,7 @@ c
 
       INTEGER i1,i2,i3,iobj,isid,isrf,ivol,isid2,iobj2,count,refcnt,
      .        iobj_hold,isid_hold,inum,vwindex,iobj_primary,ipla,iint,
-     .        problem_ignored,fp
+     .        problem_ignored,fp,ipro
       LOGICAL cont
       TYPE(type_view) :: chord, tmpchord
 
@@ -965,8 +965,8 @@ c     .                                 obinter(1)%dist *
 c     .                                 DBLE(obj(iobj)%quantity(iint))
 
 
-                  IF (.FALSE..AND.iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THEN
-                    chord%nprofile = chord%nprofile + 1
+                  IF (.TRUE.) THEN   ! *** PROFILE HACK ***
+
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
 c     .    chord_primary%v1(1:3),
@@ -976,12 +976,24 @@ c     .                      (obinter(1)%v(2) - chord_primary%v1(2))**2 +
 c     .                      (obinter(1)%v(3) - chord_primary%v1(3))**2),
 c     .            obinter(1)%dist
 
-                    chord%profile(chord%nprofile,1) = 
-     .                DSQRT((obinter(1)%v(1) - chord_primary%v1(1))**2 +
-     .                      (obinter(1)%v(2) - chord_primary%v1(2))**2 +
-     .                      (obinter(1)%v(3) - chord_primary%v1(3))**2)
-c     .                0.5D0 * obinter(1)%dist
-                    chord%profile(chord%nprofile,2) = 
+                    IF (iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THEN
+                      chord%nprofile = chord%nprofile + 1
+
+                      ipro = chord%nprofile
+
+                      chord%profile(ipro,-5) = 
+     .                  DSQRT((obinter(1)%v(1)-chord_primary%v1(1))**2 +
+     .                        (obinter(1)%v(2)-chord_primary%v1(2))**2 +
+     .                        (obinter(1)%v(3)-chord_primary%v1(3))**2)
+c     .                  0.5D0 * obinter(1)%dist
+                      chord%profile(ipro,-4) = obinter(1)%dist
+                      chord%profile(ipro,-3) = chord%weight
+                      ipla = obj(iobj)%index_pla
+                      chord%profile(ipro,-2) = plasma(ipla)%nb
+                      chord%profile(ipro,-1) = plasma(ipla)%te
+                      chord%profile(ipro, 0) = plasma(ipla)%tb
+                    ENDIF
+                    chord%profile(ipro,iint) = 
      .                  chord%weight * DBLE(obj(iobj)%quantity(iint))
                   ENDIF
 
@@ -1159,8 +1171,12 @@ c     GET RID OF _PRIMARY BUSINESS!
         chord_primary%average (i1) = chord%average (i1)
       ENDDO
       chord_primary%nprofile = chord%nprofile
-      chord_primary%profile(:,1) = chord%profile(:,1)
-      chord_primary%profile(:,2) = chord%profile(:,2)
+
+
+c      DO i1 = -5, MAX(1,opt%int_num)  ! not required because pointers being used
+c        chord_primary%profile(:,i1) = chord%profile(:,i1)
+c        chord_primary%profile(:,2) = chord%profile(:,2)
+c      ENDDO
 
       IF (problem_ignored.GE.1) THEN
         IF (.NOT.problem_message) THEN
@@ -1254,9 +1270,9 @@ c      nybin = pixel2%nybin
 
       n = opt%n
 
-      ALLOCATE(ddum1(n))
-      ALLOCATE(ddum2(nobj,2))
-      ALLOCATE(rdum1(100))
+      ALLOCATE(ddum1(n                         ))
+      ALLOCATE(ddum2(nobj,-5:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(rdum1(100                       ))
 
       status = 0
       nview  = 0
@@ -1385,11 +1401,9 @@ c...        Add integral result to pixel value:
 c...
             pixel%track(1:n) = pixel%track(1:n) + chord%track(1:n)
             pixel%nprofile = MAX(pixel%nprofile,chord%nprofile)
-
-
-
-            pixel%profile(:,1) = pixel%profile(:,1) + chord%profile(:,1)
-            pixel%profile(:,2) = pixel%profile(:,2) + chord%profile(:,2)
+            DO i1 = -5, MAX(1,opt%int_num)
+             pixel%profile(:,i1)=pixel%profile(:,i1)+chord%profile(:,i1)
+            ENDDO
 
 c          write(6,*) '  check 1',pixel%profile(1:pixel%nprofile,1)
 
@@ -1433,8 +1447,10 @@ c...  Finish up weighted average:
 
 c...  This averaging is bogus of course since the profiles won't overlap,
 c     but is fine if there's a single chord, or if the view isn't too wide:  ! *** TRUE? ***
-      pixel%profile(:,1) = pixel%profile(:,1) / DBLE(nview)
-      pixel%profile(:,2) = pixel%profile(:,2) / DBLE(nview)
+      DO i1 = -5, MAX(1,opt%int_num)
+        pixel%profile(:,i1) = pixel%profile(:,i1) / DBLE(nview)
+      ENDDO
+c      pixel%profile(:,2) = pixel%profile(:,2) / DBLE(nview)
 
 c      write(6,*) '  nview  ',nview
 c      write(6,*) '  check 2',pixel%profile(1:pixel%nprofile,1)
@@ -1443,9 +1459,6 @@ c...  Clear memory:
       IF (ALLOCATED(ddum1)) DEALLOCATE(ddum1)
       IF (ALLOCATED(ddum2)) DEALLOCATE(ddum2)
       IF (ALLOCATED(rdum1)) DEALLOCATE(rdum1)
-
-      
-
 
       RETURN
  99   STOP

@@ -140,9 +140,9 @@ MODULE MOD_OUT985
      INTEGER :: otrack
      INTEGER :: ntrack
      INTEGER, POINTER :: tlist(:)    ! INTERGER*2?
-     REAL*8,  POINTER :: track(:)    ! REAL*4? 
+     REAL*8 , POINTER :: track(:)    ! REAL*4? 
      INTEGER :: nprofile
-     REAL*8,  POINTER :: profile(:,:)  ! REAL*4?   Storing the profile of the sampled emission along the viewing chord
+     REAL*8 , POINTER :: profile(:,:)  ! REAL*4?   Storing the profile of the sampled emission along the viewing chord
   ENDTYPE type_view
 
   INTEGER, PUBLIC, PARAMETER :: IT_VWINTER = 1,  &
@@ -179,7 +179,7 @@ MODULE MOD_OUT985
 
   INTEGER, PARAMETER, PUBLIC :: MAX_OPT_MASK      = 20,  &
   &                             MAX_OPT_MASK_NVTX = 10,  &
-  &                             MAX_OPT_RIB       = 10
+  &                             MAX_OPT_RIB       = 50
 
 
   TYPE, PUBLIC :: type_options985
@@ -344,6 +344,13 @@ MODULE MOD_OUT985
      INTEGER        :: rib_limit (  MAX_OPT_RIB)  ! Limit the extent of the field line generation
      INTEGER        :: rib_param (4,MAX_OPT_RIB)  
      CHARACTER(128) :: rib_tag   (  MAX_OPT_RIB)
+
+     REAL           :: rib_r1    (  MAX_OPT_RIB)  ! region of interest (OPTION=2)
+     REAL           :: rib_r2    (  MAX_OPT_RIB)
+     REAL           :: rib_s1    (  MAX_OPT_RIB)
+     REAL           :: rib_s2    (  MAX_OPT_RIB)
+
+     INTEGER        :: rib_wipe  (  MAX_OPT_RIB)
 
   ENDTYPE type_options985
 
@@ -599,11 +606,14 @@ MODULE mod_out985_ribbon
 
   INTEGER :: trace_n  ,  &
              maxntrace,  &
-             ntrace
+             ntrace   ,  &
+             wipe_n   ,  &
+             wipe_list(100)
+
   INTEGER, ALLOCATABLE :: trace_i(:,:)
   REAL*8 , ALLOCATABLE :: trace  (:,:)
 
-
+  REAL*8 crop_r1,crop_r2,crop_s1,crop_s2  ! active region of interest
 
   CONTAINS
 ! ----------------------------------------------------------------------
