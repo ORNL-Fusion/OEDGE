@@ -1,6 +1,6 @@
 ; ELM movie
 ;
-; ipx2jpeg,15622,startframe=382,lastframe=494
+; ipx2jpeg,15622,startframe=382,lastframe=482
 ; 
 
 PRO ipx2jpeg, shotnr, startframe=startframe, lastframe=lastframe, rotate=rotate
@@ -85,9 +85,13 @@ IF NOT keyword_set(lastframe) THEN lastframe = nframes
 
 ;            frame = REBIN(frame,dim[0]*2,dim[1]*2)
 
+            frame = frame[dim[0]/2:dim[0]-1,*]  ; take outer half only
+
             dim = SIZE(frame,/DIMENSIONS)
 
             print,'MAX 1',MAX(frame)
+
+
 
             frame[0,0] = 1023
             print,'MAX 2',MAX(frame)
