@@ -2706,6 +2706,15 @@ c
 c slmod begin - temp
       CALL DB('DONE CALCULATING BACKGROUND PLASMA')
 c slmod end
+c
+c
+C-----------------------------------------------------------------------
+c
+c     Write the grid cell and polygon information including magnetic 
+c     field vectors in a DIVIMP specific format. This is stored in the
+c     file divimp_grid.out
+c
+      call wrtdivgrid
 C
 C-----------------------------------------------------------------------
 c
@@ -2724,7 +2733,7 @@ c     time
 c
 c      if (cprint.eq.10) then
 c
-         call wrtdivbg
+       call wrtdivbg
 c
 c      endif
 c
@@ -16290,6 +16299,7 @@ c
 c
 c
       subroutine wrtdivgrid
+      use bfield
       implicit none
       include 'params'
       include 'cgeom'
@@ -16305,13 +16315,10 @@ c     Instead of using a unit number - assign a file name.
 c
 c
       integer of,ierr
-      integer ik,ir,id
+      integer ik,ir,id,in
+      integer nvert
 c
-c      integer of
-c
-c     Write to unit 98
-c
-c      parameter(of=98)
+      nvert = maxval(nvertp)
 c
       call find_free_unit_number(of)
 c
@@ -16337,55 +16344,76 @@ c      nvertp(in)
 c
 c      rvertp(in,1..4),zvertp(in,1..4)
 c
-c      brs, bzs, bts
+c      bts
+c      br, bz, bt
 c      
-
 c
 c
-c     Write Title line
-c
-      write (of,10) 'DIVIMP BACKGROUND PLASMA:'
-      write (of,200) nrs,irsep,nds
+c     Write Title line - header information - NRS, IRSEP, NDS, NPOLYP, NVERT, NKS
+c 
+      write (of,10) 'DIVIMP GRID DATA:'
+      write (of,200) nrs,irsep,nds,npolyp,nvert
+      write (0,'(a,5i8)') 'GRID NUMBERS:', nrs,irsep,nds,npolyp,nvert
       write (of,10) 'KNOTS:'
       write (of,400)  (nks(ir),ir=1,nrs)
 c
-c     Write out BG quantities - volume
+c     Spatial coordinates of cell center points and parallel mid-point boundaries - RS, ZS, KRB, KZB
+c      
+      write (of,10) 'RS:'
+      write (of,500) ((rs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'ZS:'
+      write (of,500) ((zs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'RBND:'
+      write (of,500) ((krb(ik,ir),ik=0,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'ZBND:'
+      write (of,500) ((kzb(ik,ir),ik=0,nks(ir)),ir=1,nrs)
 c
+c     Cell connection map information - IKINS, IRINS, IKOUTS, IROUTS
 c
-c     Density - volume and target
+      write (of,10) 'IRINS:'
+      write (of,400) ((ikins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IKINS:'
+      write (of,400) ((ikins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IROUTS:'
+      write (of,400) ((irouts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IKOUTS:'
+      write (of,400) ((ikouts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IDDS:'
+      write (of,400) ((idds(ir,in),ir=1,nrs),in=1,2)
 c
-      write (of,10)  'KNBS:'
-      write (of,500) ((knbs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-      write (of,10)  'KNDS:'
-      write (of,500) (knds(id),id=1,nds)
+c     Pointer from grid cell to polygon index - KORPG
 c
-c     Te - volume and target
+      write (of,10) 'KORPG:'
+      write (of,400) ((korpg(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
 c
-      write (of,10)  'KTEBS:'
-      write (of,500) ((ktebs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-      write (of,10)  'KTEDS:'
-      write (of,500) (kteds(id),id=1,nds)
+c     Polygon information - NVERP, RVERTP,ZVERTP
 c
-c     Ti - volume and target
+      write (of,10) 'NVERTP:'
+      write (of,400) (nvertp(in),in=1,npolyp)
+
+      write (of,10) 'RVERTP:'
+      write (of,500) ((rvertp(ik,in),ik=1,nvert),in=1,npolyp)
+
+      write (of,10) 'ZVERTP:'
+      write (of,500) ((zvertp(ik,in),ik=1,nvert),in=1,npolyp)
+
 c
-      write (of,10)  'KTIBS:'
-      write (of,500) ((ktibs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-      write (of,10)  'KTIDS:'
-      write (of,500) (ktids(id),id=1,nds)
+c     Magnetic field - BTOT, BR,BZ,BT
 c
-c     Velocity - volume and target
+      write (of,10) 'BTOT:'
+      write (of,500) ((bts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 c
-      write (of,10)  'KVHS:'
-      write (of,500) ((kvhs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-      write (of,10)  'KVDS:'
-      write (of,500) (kvds(id),id=1,nds)
+c     write the BR,BZ and BT vector components from inside the b-field module
 c
-c     Electric Field - volume and target
-c
-      write (of,10)  'KES:'
-      write (of,500) ((kes(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-      write (of,10)  'KEDS:'
-      write (of,500) (keds(id),id=1,nds)
+      call write_bvectors(of,nrs,nks)
 c 
 c     Blank line at end
 c
@@ -16399,19 +16427,19 @@ c
 c
       close(of)
 
-      write (6,*) 'ERROR WRITING DIVIMP PLASMA BACKGROUND:'
+
+      write (6,*) 'ERROR WRITING DIVIMP GRID:'
      >       //' FILE EXISTS',ierr
-      call pri('ERROR WRITING DIVIMP PLASMA BACKGROUND FILE:'
+      call pri('ERROR WRITING DIVIMP GRID FILE:'
      >          //' ERR NO = ',ierr)
 c
       return
 c
 c     Formatting
 c
-  10  format(a,1x,3(1x,i5))
+  10  format(a)
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
- 300  format('KNOTS:')
+ 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)
  400  format(12i6)
  500  format(6e18.10)
 c
@@ -21930,7 +21958,7 @@ c
       real bt(maxnks,maxnrs)
 c
 c     This routine calculates the direction of the magnetic field vector
-c     for each cell on the grid - assuming a cylindi=rical geometry. 
+c     for each cell on the grid - assuming a cylindrical geometry. 
 c
 c     This code does not calculate the absolute magnitude of the B field only the 
 c     normalized direction vector.
