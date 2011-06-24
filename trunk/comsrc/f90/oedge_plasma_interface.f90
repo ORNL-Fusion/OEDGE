@@ -1513,126 +1513,123 @@ c
       logical inpoly,res
       external inpoly
       real rc(4),zc(4)
-c
+
       lastcp = 0.0
-c
+
       incell = .false.
       k = korpg(ik,ir)
       if (k.eq.0) return
       nv = nvertp(k)
       if (nv.eq.0) return
-      do 10 v = 1,nv
+      do v = 1,nv
          if (v.eq.nv) then
             nextv = 1
          else
             nextv = v+1
          endif
-c
-c        Want the vector cross-product Rx X Rw
-c
-c         vxr = r - rvertp(v,k)
-c         vxz = z - zvertp(v,k)
-c         vwr = rvertp(nextv,k) - rvertp(v,k)
-c         vwz = zvertp(nextv,k) - zvertp(v,k)
-c
-c         cp = vxr*vwz - vxz*vwr
-c
-c         if (cp.lt.0.0)  return
-c
-c          if (   (
-c     >     ( (r-rvertp(v,k)) *
-c     >       (zvertp(nextv,k)-zvertp(v,k)) )
-c     >    -( (z-zvertp(v,k)) *
-c     >       (rvertp(nextv,k)-rvertp(v,k)) )
-c     >           )
-c     >         .lt.0.0) return
-c
-          cp =    (
-     >     ( (r-rvertp(v,k)) *
-     >       (zvertp(nextv,k)-zvertp(v,k)) )
-     >    -( (z-zvertp(v,k)) *
-     >       (rvertp(nextv,k)-rvertp(v,k)) )
-     >           )
-c
-c         There is a problem for points that should 
-c         lie on the boundary of the cell - i.e. that 
-c         are calculated based on the polygon corners and 
-c         which are mathematically on the polygon surface. 
-c         Numerically, these points can have a cross product
-c         which is close to zero but can vary to either side. 
-c         In order to consider these points in the cell - the 
-c         cross products are set to zero for values less than
-c         a specified limit. In this case the limit is set to 1.0e-7 
-c
-c         This value was determined by examining the range of cross 
-c         product values generated when sampling 50,000 points 
-c         calculated on a polygon with a scale size of 1.0m. 
-c         The maximum error cross product in this case was 6e-8.
-c
-c         D. Elder, Dec 13, 2006
-c
-c         Upon consideration - it might be best to not allow these points
-c         to be considered inside the cell since if they are detected they
-c         can be moved slightly to an appropriate location. 
-c
-c          if (abs(cp).lt.1.0e-7) cp = 0.0 
-c
+!
+!        Want the vector cross-product Rx X Rw
+!
+!         vxr = r - rvertp(v,k)
+!         vxz = z - zvertp(v,k)
+!         vwr = rvertp(nextv,k) - rvertp(v,k)
+!         vwz = zvertp(nextv,k) - zvertp(v,k)
+!
+!         cp = vxr*vwz - vxz*vwr
+!
+!         if (cp.lt.0.0)  return
+!
+!          if (   (
+!     >     ( (r-rvertp(v,k)) *
+!     >       (zvertp(nextv,k)-zvertp(v,k)) )
+!     >    -( (z-zvertp(v,k)) *
+!     >       (rvertp(nextv,k)-rvertp(v,k)) )
+!     >           )
+!     >         .lt.0.0) return
+!
+          cp =    (((r-rvertp(v,k)) * (zvertp(nextv,k)-zvertp(v,k))) &
+                  -((z-zvertp(v,k)) * (rvertp(nextv,k)-rvertp(v,k))))
+
+!
+!         There is a problem for points that should 
+!         lie on the boundary of the cell - i.e. that 
+!         are calculated based on the polygon corners and 
+!         which are mathematically on the polygon surface. 
+!         Numerically, these points can have a cross product
+!         which is close to zero but can vary to either side. 
+!         In order to consider these points in the cell - the 
+!         cross products are set to zero for values less than
+!         a specified limit. In this case the limit is set to 1.0e-7 
+!
+!         This value was determined by examining the range of cross 
+!         product values generated when sampling 50,000 points 
+!         calculated on a polygon with a scale size of 1.0m. 
+!         The maximum error cross product in this case was 6e-8.
+!
+!         D. Elder, Dec 13, 2006
+!
+!         Upon consideration - it might be best to not allow these points
+!         to be considered inside the cell since if they are detected they
+!         can be moved slightly to an appropriate location. 
+!
+!          if (abs(cp).lt.1.0e-7) cp = 0.0 
+!
           if (v.eq.1.and.cp.ne.0.0) lastcp = cp
-c
+
           if ((lastcp * cp).lt.0.0) return
-c
+
           if (cp.ne.0.0) lastcp = cp
-c
-10    continue
-c
-c     Particle has been found in cell
-c
+
+       end do
+
+!
+!     Particle has been found in cell
+!
       incell = .true.
-c
-c     Check particles in the first or last cell of core rings
-c     for more accurate assessement.
-c
-      if (ir.lt.irsep.and.
-     >   (ik.eq.1.or.ik.eq.nks(ir))) then 
-c
-c        For a particle found to be in the first or last cell of 
-c        a core ring - need to decide if it is in the first
-c        half or second half and revise incell result accordingly. 
-c
-c        Only the second half of the first cell or the first half
-c        of the last cell should return true
-c
-c
-c        NOTE: Keep in mind that the first and last cells of core
-c              rings are supposed to be identical - if this changes
-c              then this code needs to be modified. 
-c         
-c        Check to see if particle is in the first half of the 
-c        cell - set vertices for call to inpoly.-  
-c         
-c        k was set to cell geometry index at the beginning of this
-c        routine.
-c
+!
+!     Check particles in the first or last cell of core rings
+!     for more accurate assessement.
+!
+      if (ir.lt.irsep.and.(ik.eq.1.or.ik.eq.nks(ir))) then 
+!
+!        For a particle found to be in the first or last cell of 
+!       a core ring - need to decide if it is in the first
+!        half or second half and revise incell result accordingly. 
+!
+!        Only the second half of the first cell or the first half
+!        of the last cell should return true
+!
+!
+!        NOTE: Keep in mind that the first and last cells of core
+!              rings are supposed to be identical - if this changes
+!              then this code needs to be modified. 
+!         
+!        Check to see if particle is in the first half of the 
+!        cell - set vertices for call to inpoly.-  
+!         
+!        k was set to cell geometry index at the beginning of this
+!        routine.
+!
          rc(1) = rvertp(1,k)
          rc(2) = rvertp(2,k)
          rc(3) = (rvertp(2,k) + rvertp(3,k)) /2.0
          rc(4) = (rvertp(1,k) + rvertp(4,k)) /2.0
-c
+
          zc(1) = zvertp(1,k)
          zc(2) = zvertp(2,k)
          zc(3) = (zvertp(2,k) + zvertp(3,k)) /2.0
          zc(4) = (zvertp(1,k) + zvertp(4,k)) /2.0
-c
-c        Check to see of point is in first half of cell
-c
+!
+!        Check to see of point is in first half of cell
+!
          res = inpoly(r,z,4,rc,zc)
-c
-c        Change value of incell to false for either of the 
-c        invalid cases
-c        First half and in first cell
-c        Last half and in last cell. 
-c
-c
+!
+!        Change value of incell to false for either of the 
+!        invalid cases
+!        First half and in first cell
+!        Last half and in last cell. 
+!
+
          if ((ik.eq.1.and.res).or.
      >       (ik.eq.nks(ir).and.(.not.res))) then 
             incell = .false.
