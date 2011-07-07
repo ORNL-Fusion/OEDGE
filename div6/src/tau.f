@@ -10502,6 +10502,8 @@ c
       real pincoreizt,pinsolizt,pinppizt ,allizt,totrect
       real totrece,totrecte,eircor,pincortmp
       integer saveunit
+c
+      integer outer_in
 C
 C---- Calculate the Particle Fluxes into the Divertor
 C
@@ -11029,13 +11031,19 @@ c
 c
       if (pinprint.eq.1) then
 c
+         if (xpoint_up) then 
+            outer_in = 2
+         else
+            outer_in = 1
+         endif
+
          call prb
 c
          call prc('RING SUMMARY OF PIN IONIZATION AND'//
      >         ' NEUTRAL CONTENT:')
 c
          call prc('  RING   IONIZATION     IZ DENS.    NEUTRALS'//
-     >            '    NEUT DENS.')
+     >            '    NEUT DENS.   OMP-DIST')
          do ir = 1,nrs
 c
             if (ir.eq.irsep) then
@@ -11044,8 +11052,9 @@ c
                call prc('    ------ Private Plasma ----------')
             endif
 c
-            write(comment,'(2x,i4,1p,4(1x,g12.4))') ir,
-     >                       (piniz_info(ir,id),id=1,4)
+            write(comment,'(2x,i4,1p,5(1x,g12.4))') ir,
+     >                       (piniz_info(ir,id),id=1,4),
+     >                       middist(ir,outer_in)
             call prc(comment)
 c
          enddo
@@ -11057,7 +11066,7 @@ c
          do ir = 1,irsep-1
 c
             ringizdist = ringizdist + piniz_info(ir,1) *
-     >                                abs(middist(ir,2))
+     >                               abs(middist(ir,outer_in))
             ringiz     = ringiz      + piniz_info(ir,1)
 c
             do ik = 1,nks(ir)-1
@@ -11065,6 +11074,12 @@ c
                ringizsepdist = ringizsepdist +
      >                         pinion(ik,ir)*karea2(ik,ir)
      >                         *separatrix_dist(ik,ir)
+
+               if (ir.eq.irsep-1) then 
+                  write(6,'(a,2i8,5(1x,g18.8))') 'RINGIZ:',
+     >                 ik,ir,separatrix_dist(ik,ir),middist(ir,outer_in)
+               endif
+
 
             end do
 c
@@ -16374,7 +16389,7 @@ c
 c     Cell connection map information - IKINS, IRINS, IKOUTS, IROUTS
 c
       write (of,10) 'IRINS:'
-      write (of,400) ((ikins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,400) ((irins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
       write (of,10) 'IKINS:'
       write (of,400) ((ikins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
