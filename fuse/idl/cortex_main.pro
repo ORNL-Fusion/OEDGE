@@ -109,6 +109,7 @@ PRO cortex_GeneratePlots, args
   ENDFOR
 ;print,'frame',frame
 
+
 ; Setup PostScript printing:
   IF (ps EQ 'on') THEN BEGIN
     CASE dir_structure OF
@@ -165,7 +166,7 @@ PRO cortex_GeneratePlots, args
               file_path = path + plot.case_name[i] + '.'
               dummy = WHERE(plot.data_file NE 'unknown',count)
               FOR j = 0, count-1 DO BEGIN
-                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_01_signal')
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_signal')
                 name = 'data' + STRING(j+1,FORMAT='(I0)')
                 IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
                                  integral_array = CREATE_STRUCT(integral_array,name,integral)
@@ -192,14 +193,18 @@ PRO cortex_GeneratePlots, args
           1: BEGIN
             FOR i = 0, ncase-1 DO BEGIN
               file_path = path + plot.case_name[i] + '.'
+              ; Load core impurtiy concentration data, if required:
+              IF (plot.concentration NE 0.0) THEN  $
+                   core = cortex_LoadCoreProfiles(file_path + 'idl.core_impurities')  $
+              ELSE core = -1
               j = WHERE(plot.data_file NE 'unknown',count)
               FOR j = 0, count-1 DO BEGIN
-                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_01_signal')
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_signal')
                 name = 'data' + STRING(j+1,FORMAT='(I0)')
                 IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
                                  integral_array = CREATE_STRUCT(integral_array,name,integral)
               ENDFOR
-              plot_data = { integral : integral_array, dummy : 1.0 }  ; Dummy is there to calm down the error check in ExtractStructure, which is lame, and needs fixing...
+              plot_data = { integral : integral_array, core : core }
               name = 'data' + STRING(i+1,FORMAT='(I0)')
               IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
                                data_array = CREATE_STRUCT(data_array,name,plot_data)
@@ -290,6 +295,25 @@ PRO cortex_GeneratePlots, args
                                data_array = CREATE_STRUCT(data_array,name,plot_data)
             ENDFOR
             status = cortex_PlotWallProfiles(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          5: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              IF (i EQ 0 AND plot.show_grid EQ 1) THEN BEGIN
+                grid_data = cortex_LoadFluidGrid(file_path + plot.data_file[2])
+                wall_data = cortex_LoadWall     (file_path + plot.data_file[3])
+                IF (plot.annotate_n NE 0) THEN  $
+                  annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
+              ENDIF
+              wall    = cortex_LoadWallErosion_DIVIMP(file_path + plot.data_file[0])
+              summary = cortex_LoadDIVIMPSummary     (file_path + plot.data_file[1])
+              plot_data = { wall : wall, summary : summary }
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotWallProfiles(plot, data_array, grid=grid_data, wall=wall_data, annotate=annotate, ps=ps)
             END
 ;         --------------------------------------------------------------         
           ELSE: BEGIN  
@@ -549,14 +573,57 @@ print,tube
         END
 ;     ------------------------------------------------------------------
       'PLOT 2D FLUID GRID': BEGIN
-        file = path + plot.case_name[0] + '.'
-        IF (plot.equ NE 'default') THEN grid = grid_ReadEQUFile    (plot.equ                ) ELSE  $
-                                        grid = cortex_LoadFluidGrid(file + plot.data_file[0])
-        wall = cortex_LoadWall(file + plot.data_file[1])
-        IF (plot.nodes) THEN node = cortex_LoadNodeData(file + plot.data_file[2]) ELSE node = 0
-        IF (plot.annotate_n NE 0) THEN  $
-          annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
-        status = cortex_PlotFluidGrid(plot, grid, wall, node, annotate, 'main', 'full', ps=ps)
+        IF (plot.load AND KEYWORD_SET(grid_save)) THEN BEGIN
+            plot_save = plot
+            grid       = grid_save.grid     
+            wall       = grid_save.wall     
+            node       = grid_save.node     
+;            annotate   = grid_save.annotate 
+            plot       = grid_save.plot
+            plot.frame = plot_save.frame
+            plot.frame_bnds = plot_save.frame_bnds
+            plot.save  = plot_save.save  
+            plot.load  = plot_save.load  
+            IF (plot_save.annotate_n NE 0) THEN BEGIN            
+              n = plot_save.annotate_n
+              i = plot.annotate_n
+              j = i + n - 1
+              plot.annotate_n           = plot.annotate_n + n
+              plot.annotate_code  [i:j] = plot_save.annotate_code  [0:n-1]
+	      plot.annotate_colour[i:j] = plot_save.annotate_colour[0:n-1]
+	      plot.annotate_file  [i:j] = plot_save.annotate_file  [0:n-1]
+	      plot.annotate_step  [i:j] = plot_save.annotate_step  [0:n-1]
+	      plot.annotate_label [i:j] = plot_save.annotate_label [0:n-1]
+            ENDIF
+            IF (plot.annotate_n NE 0) THEN  $
+              annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
+        ENDIF ELSE BEGIN
+          file = path + plot.case_name[0] + '.'
+          IF (plot.equ NE 'default') THEN grid = grid_ReadEQUFile    (plot.equ                ) ELSE  $
+                                          grid = cortex_LoadFluidGrid(file + plot.data_file[0])
+          wall = cortex_LoadWall(file + plot.data_file[1])
+          IF (plot.nodes) THEN node = cortex_LoadNodeData(file + plot.data_file[2]) ELSE node = 0
+          IF (plot.annotate_n NE 0) THEN  $
+            annotate = cortex_LoadAnnotationData(plot,file) ELSE annotate = 0 
+        ENDELSE
+        IF (plot.save) THEN BEGIN
+          grid_save = {            $
+            grid     : grid     ,  $
+            wall     : wall     ,  $
+            node     : node     ,  $
+;            annotate : annotate ,  $
+            plot     : plot     }
+        ENDIF ELSE BEGIN
+           print, plot.frame_bnds
+
+          status = cortex_PlotFluidGrid(plot, grid, wall, node, annotate, 'main', 'full', ps=ps)
+
+          frame_bnds = plot.frame_bnds          
+          IF (plot.load) THEN BEGIN
+            plot            = plot_save
+            plot.frame_bnds = frame_bnds
+          ENDIF
+        ENDELSE
         END
 ;     ------------------------------------------------------------------
       'PLOT 2D FLUID GRID - DEBUG': BEGIN

@@ -35,7 +35,7 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
   plot_peak = plot.peak
 
-  IF (plot.ylog NE 0) THEN ylog = 1
+  IF (plot.ylog EQ 1) THEN ylog = 1
 
   CASE option OF
 ;   --------------------------------------------------------------------
@@ -49,9 +49,9 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
        plot_xn = 1
        plot_yn = 1
        title = plot.title 
-       subtitle = ['EMISSION LINE INTEGRAL / photons m-2 s-1']
-       xtitle   = 'array index'
-       ytitle   = ['integral (photons m-2 s-1)']
+       subtitle = ['EMISSION LINE INTEGRAL / photons ster-1 m-2 s-1']
+       xtitle   = 'view index'
+       ytitle   = ['integral (photons ster-1 m-2 s-1)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
        ntrace = [1]
        focus = 1
@@ -129,6 +129,7 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
     ymax = -1.0E+35
     FOR idata = 1, ndata DO BEGIN
       val = cortex_ExtractStructure(data_array,idata)
+
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
@@ -136,15 +137,6 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
           integral = ' '
 
           nintegral = N_ELEMENTS(TAG_NAMES(val.integral))
-
-;          help,val,/struct
-;          help,val.integral,/struct
-;stop
-;          ntrace = N_ELEMENTS(TAG_NAMES(data_array))
-;          IF (ntrace LE 0) THEN BEGIN
-;            PRINT, 'ERROR cortex_PlotIntegrals: No data found'
-;            RETURN, -1
-;          ENDIF
 
           val_data = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
 
@@ -172,13 +164,61 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
           xdata = val_data.xindex 
           FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val_data.yindex[i]])  ; *** TEMP *** 
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+
+          ; Set scaling of results, based on whether a specific concentration is being forced:
+          IF (plot.concentration NE 0.0) THEN BEGIN
+            n = N_ELEMENTS(val.core.i_frac)
+            scale = plot.concentration / val.core.i_frac[n-1] 
+          ENDIF ELSE scale = 1.0
+          scale = scale / (4.0 * !PI)          
+
           CASE iplot OF
             1: BEGIN
+;help,val_data,/struct
+;help,ydata
+               j = plot.signal
                ntrace[iplot-1] = nintegral
                FOR i = 1, nintegral DO BEGIN
                  val_data = cortex_ExtractStructure(val.integral,i)
-                 ydata[*,i-1] = val_data.signal
-                 labels[0] = labels[0] + STRING(i-1) + '\' + plot.data_file[i-1] + ':' 
+                 ydata[*,i-1] = val_data.signal[*,j-1] * scale
+
+                 IF (nintegral EQ 1) THEN BEGIN
+;print,val_data.atomic_number
+;print,val_data.atomic_number[j-1]
+                   IF (idata EQ 1) THEN BEGIN
+                     atomic_number = val_data.atomic_number[j-1]
+                     CASE atomic_number OF 
+                       1: element_name = 'DEUTERIUM'
+                       2: element_name = 'HELIUM'
+                       4: element_name = 'BERYLLIUM'
+                       ELSE: BEGIN
+                         PRINT,'ERROR cortex_PlotIntegrals: Unknown element'
+                         STOP
+                         END
+                     ENDCASE
+                     wavelength = val_data.wavelength[j-1]
+                     charge     = val_data.charge    [j-1]
+                     title = title + ', ' + element_name + ' +' + STRING(charge,FORMAT='(I0)') +  $
+                             ', WAVELENGTH=' + STRING(wavelength,FORMAT='(F5.1)') + ' nm'
+
+                     CASE FIX(wavelength) OF
+                       656: title = title + ' (D_alpha)'
+                       ELSE:
+                     ENDCASE
+
+                     IF (plot.concentration NE 0.0) THEN  $
+                       title = title + ' (ION CONC.=' + STRING(plot.concentration,FORMAT='(F6.2)') + ' %)'
+
+                   ENDIF ELSE BEGIN
+
+                   ENDELSE
+                 ENDIF ELSE BEGIN
+                   print, 'not sure what to do here with multiple lines'
+                   stop
+                 ENDELSE
+
+
+;                 labels[0] = labels[0] + STRING(i-1) + '\' + plot.data_file[i-1] + ':' 
                ENDFOR
 ;               ydata[*,1] = [2.5,4.5,1.65,1.6,0.1,0.028,0.02,0.02,0.02] * 1E+21 * 4.0 * 3.1415  ; C-Mod
                END

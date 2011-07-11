@@ -36,29 +36,47 @@ FUNCTION cortex_LoadIntegrals, file
     RETURN, result
   ENDIF
 
-  i      = inGetData('i')
-  j      = inGetData('j')
-  signal = inGetData('data')
-  x1     = inGetData('x1')
-  y1     = inGetData('y1')
-  z1     = inGetData('z1')
-  x2     = inGetData('x2')
-  y2     = inGetData('y2')
-  z2     = inGetData('z2')
+  n        = inGetData('N_SIGNAL')
+  z        = inGetData('ATOMIC_NUMBER')
+  a        = inGetData('ATOMIC_MASS')
+  charge   = inGetData('CHARGE')
+  database = inGetData('DATABASE')
+  wlngth   = inGetData('WAVELENGTH')
+  i        = inGetData('I')
+  j        = inGetData('J')
+  x1       = inGetData('X1')
+  y1       = inGetData('Y1')
+  z1       = inGetData('Z1')
+  x2       = inGetData('X2')
+  y2       = inGetData('Y2')
+  z2       = inGetData('Z2')
+
+  signal = MAKE_ARRAY(N_ELEMENTS(i),n,/DOUBLE,VALUE=0.0D)
+  FOR k = 1, n DO BEGIN
+    tag = 'SIGNAL_'+STRING(k,FORMAT='(I02)')
+    signal[*,k-1] = inGetData(tag)
+  ENDFOR
+
   inCloseInterface  
 
   result = {  $
-    version : 1.0    ,  $
-    file    : file   ,  $
-    xindex  : i      ,  $
-    yindex  : j      ,  $
-    signal  : signal ,  $
-    x1      : x1     ,  $
-    y1      : y1     ,  $
-    z1      : z1     ,  $
-    x2      : x2     ,  $
-    y2      : y2     ,  $
-    z2      : z2     }
+    version       : 1.0     ,  $
+    file          : file    ,  $
+    n_signal      : n       ,  $
+    xindex        : i       ,  $
+    yindex        : j       ,  $
+    atomic_number : z       ,  $
+    atomic_mass   : a       ,  $
+    charge        : charge  ,  $ 
+    wavelength    : wlngth  ,  $ 
+    database      : database,  $
+    signal        : signal  ,  $
+    x1            : x1      ,  $
+    y1            : y1      ,  $
+    z1            : z1      ,  $
+    x2            : x2      ,  $
+    y2            : y2      ,  $
+    z2            : z2      }
 
   RETURN,result
 END

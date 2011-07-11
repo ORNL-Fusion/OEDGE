@@ -111,7 +111,7 @@ PRO cortex_PageTitle, plot, ps, file, dev_xsize, dev_ysize, title, notes, charsi
   ENDIF
 
   n = STRLEN(title) 
-  nmax = LONG(60.0 * 2.0 / (1.5 * charsize))
+  nmax = LONG(75.0 * 2.0 / (1.5 * charsize))
   IF (n GT nmax) THEN BEGIN
     i = STRPOS(STRMID(title,0,nmax),' ',/REVERSE_SEARCH)
     str1 = STRMID(title,0  ,i   )
@@ -124,7 +124,7 @@ PRO cortex_PageTitle, plot, ps, file, dev_xsize, dev_ysize, title, notes, charsi
 
   IF (notes NE 'unknown') THEN BEGIN
     n = STRLEN(notes) 
-    nmax = 105
+    nmax = 125
     IF (n GT nmax) THEN BEGIN
       i = STRPOS(STRMID(notes,0,nmax),' ',/REVERSE_SEARCH)
       str1 = STRMID(notes,0,nmax)
