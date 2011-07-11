@@ -33,7 +33,8 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
   plot_peak = plot.peak
   plot_sum  = plot.sum
 
-  max_value = REPLICATE(-1.0E+10,10)
+  max_value   = REPLICATE(-1.0E+10,10)
+  max_erosion = max_value
 
   default_type = 1
   plot_xboarder = 0.05
@@ -123,6 +124,42 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
        plot_type = [1,1,1]  
        END
 ;   --------------------------------------------------------------------
+    5: BEGIN
+       IF (plot.title EQ 'unknown') THEN  $
+         title = 'DIVIMP WALL EROSION' ELSE  $
+         title = plot.title 
+       subtitle = ['none','none',  $
+                   'PARTICLE FLUX TO SURFACE / m-2 s-1'  ,  $
+                   'EROSION / s-1 m-2'                   ,  $
+                   'DEPOSITION (as ions only) / s-1 m-2' ,  $
+                   'NET EROSION / mm per 1000 pulses, 400 s each']
+       xtitle = 'WALL INDEX'
+       ytitle = ['none','none',  $
+                 'particle flux (m-2 s-1)',  $
+                 'erosion (m-2 s-1)'      ,  $
+                 'deposition (m-2 s-1)'   ,  $
+                 'net erosion (m-2 s-1)']
+       labels = MAKE_ARRAY(100,VALUE=' ',/STRING)
+       ntrace = [1,1,1,1,1,1]  ; Number of data lines on each plot
+       IF (plot.show_grid) THEN BEGIN
+         plot_xn = 3
+         plot_yn = 2
+         plot_type = [-1,3,1,1,1,1]  
+       ENDIF ELSE BEGIN
+         plot_xn = 2
+         plot_yn = 2
+         plot_type = [ 0,0,1,1,1,1]  
+       ENDELSE       
+       nplot = 6
+       ndata = N_ELEMENTS(TAG_NAMES(data_array))
+       IF (ndata EQ 1) THEN BEGIN
+         labels[0] = 'ions:atoms'
+         labels[1] = 'total:atoms'
+         ntrace[2] = 2
+         ntrace[3] = 2
+       ENDIF
+       END
+;   --------------------------------------------------------------------
     ELSE: BEGIN  
       PRINT, 'ERROR cortex_PlotWallProfile: Unrecognised plot option'
       PRINT, '  OPTION = ',option,' (',plot.option,')'
@@ -150,6 +187,8 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
   ysize = (1.0  - 2.0 * plot_yboarder - FLOAT(plot_yn-1) * plot_yspacing) / FLOAT(plot_yn) 
   xi = 1
   yi = 0
+
+  title_mod = 1
 
   FOR iplot = 1, nplot DO BEGIN
     IF ((focus NE 0 AND focus NE iplot) OR (plot_type[iplot-1] EQ 0)) THEN CONTINUE
@@ -194,8 +233,13 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
       integral = ' '
       str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
       str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-      IF (first_plot) THEN  $
-        labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
+      IF (ndata GT 1 OR option NE 5) THEN BEGIN
+        IF (first_plot) THEN  $
+          labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
+      ENDIF ELSE BEGIN
+        IF (title_mod) THEN title = title + ', CASE= ' + str[0]
+        title_mod = 0
+      ENDELSE
 
       CASE option OF
 ;       ----------------------------------------------------------------
@@ -247,7 +291,7 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
           END
 ;       ----------------------------------------------------------------
         3: BEGIN
-          xdata = INDGEN(N_ELEMENTS(val.wall.length))
+          xdata = INDGEN(N_ELEMENTS(val.wall.length)) + 1
           ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
           CASE iplot OF
             1:
@@ -273,10 +317,10 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
                   PRINT,'  A =',FIX(val.summary.ion_atomic_number)
                   END
               ENDCASE
-              ; Atomic diameter from http://en.wikipedia.org/wiki/Atomic_radius: 
-              ;   Be=2.1E-10, Fe=2.8E-10, W=2.7E-10
-              ; which is about the same as what I get from the above estimate
-              ;print,'atom_diameter',atom_diameter, FIX(val.summary.ion_atomic_number)
+              ; Atomic diameter from http://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
+              ;   Be=2.1E-10, Fe=2.5E-10, W=2.7E-10
+              ; which is about the same as what I get from the above estimate.
+              print,'atom_diameter',atom_diameter, FIX(val.summary.ion_atomic_number)
 
               particles_per_m2 = 1.0 / (atom_diameter^2)
 
@@ -286,6 +330,24 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
 
               ;                          pulse time   number of pulses 
               ydata[*,0] =  ydata[*,0] * 400.0      * 1000.0             ; For the 1000 shot plot
+
+              ; Integrate up to get the total erosion:
+              CASE FIX(val.summary.ion_atomic_number) OF
+                 4: mass = 9.0122
+                26: mass = 55.845
+                74: mass = 183.84
+                ELSE: BEGIN
+                  PRINT,'ERROR cortex_PlotWallProfiles: Unrecognised element'
+                  PRINT,'  A =',FIX(val.summary.ion_atomic_number)
+                  END
+              ENDCASE
+              i = WHERE(ydata[*,0] GT 0.00001, count) 
+              tot_area    = TOTAL(val.wall.area[i]) 
+              tot_erosion = TOTAL(val.wall.em_par_atm_2_2 * val.wall.area) *  $
+                            mass * 1.67E-27 * 1000.0 *  $
+                            14.0 * 3600.0
+              print,'debug',count,237-5,tot_area,tot_erosion
+
               END
           ENDCASE
           END
@@ -318,6 +380,100 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
               ENDFOR
 
               ydata[*,0] = pressure
+
+              END
+          ENDCASE
+          END
+;       ----------------------------------------------------------------
+        5: BEGIN
+          xdata = INDGEN(N_ELEMENTS(val.wall.index)) + 1
+          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+          CASE iplot OF
+            1:
+            2:
+            3: BEGIN
+              IF (ndata EQ 1) THEN BEGIN
+                ydata[*,0] = val.wall.ion_flux
+                ydata[*,1] = val.wall.atm_flux
+              ENDIF ELSE  $
+                ydata[*,0] = val.wall.ion_flux + val.wall.atm_flux
+              END
+            4: BEGIN
+              ydata[*,0] = val.wall.tot_ero
+              ydata[*,1] = val.wall.atm_ero
+              END
+            5: ydata[*,0] = val.wall.tot_dep
+            6: BEGIN
+              ; Calculate thickness eroded per second:
+              CASE FIX(val.wall.atomic_number) OF
+                ;                    Density                          Mass per atom          Assume simple 
+                ;          (in m)    (g/cm^3)   (convert to kg/m^3)   (kg / atom)            cubic structure  
+                 4: atom_diameter = ( 1.85    * 1.0E+3              / (  9.012 * 1.67E-27) )^(-1.0/3.0)
+                26: atom_diameter = ( 7.87    * 1.0E+3              / ( 55.845 * 1.67E-27) )^(-1.0/3.0)
+                74: atom_diameter = (19.35    * 1.0E+3              / (183.840 * 1.67E-27) )^(-1.0/3.0)
+                ELSE: BEGIN
+                  PRINT,'ERROR cortex_PlotWallProfiles: Unrecognised element'
+                  PRINT,'  A =',FIX(val.summary.ion_atomic_number)
+                  END
+              ENDCASE
+              ; Atomic diameter from http://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
+              ;   Be=2.1E-10, Fe=2.5E-10, W=2.7E-10
+              ; which is about the same as what I get from the above estimate.
+              print,'atom_diameter',atom_diameter, FIX(val.summary.ion_atomic_number)
+
+              particles_per_m2 = 1.0 / (atom_diameter^2)
+
+              ;              impurity influx     surface atom density     layer thickness
+              ;              (atoms / s / m^2)   (atoms / m^2 / layer)    (m / layer)       convert to mm  
+              ydata[*,0] = ( val.wall.tot_net  / particles_per_m2     ) * atom_diameter   * 1.0E+3         
+
+              ;                          pulse time   number of pulses 
+              ydata[*,0] =  ydata[*,0] * 400.0      * 1000.0             ; For the 1000 shot plot
+
+              ; Integrate up to get the total erosion:
+              CASE FIX(val.summary.ion_atomic_number) OF
+                 4: mass = 9.0122
+                26: mass = 55.845
+                74: mass = 183.84
+                ELSE: BEGIN
+                  PRINT,'ERROR cortex_PlotWallProfiles: Unrecognised element'
+                  PRINT,'  A =',FIX(val.summary.ion_atomic_number)
+                  END
+              ENDCASE
+
+              tot_area = TOTAL(val.wall.area) 
+
+              length   = val.wall.dist_2 - val.wall.dist_1
+
+
+              circ = 2.0 * !PI * val.wall.r0
+              print,'r0',val.wall.r0
+
+              i = WHERE(plot.xrange EQ 0.0, count)
+              IF (count EQ 2) THEN i = INDGEN(N_ELEMENTS(val.wall.index)) ELSE  $
+                                   i = WHERE(xdata GE plot.xrange[0] AND xdata LE plot.xrange[1], count)        
+              IF (count EQ 0) THEN BEGIN
+                PRINT,'cortex_PlotWallProfiles','No data within XRANGE'
+                STOP
+              ENDIF
+
+              tot_erosion = TOTAL(val.wall.tot_ero[i] * length[i] * circ) *  $
+                            mass * 1.67E-27 * 1000.0 *  $
+                            14.0 * 3600.0
+              tot_deposit = TOTAL(val.wall.tot_dep[i] * length[i] * circ) *  $
+                            mass * 1.67E-27 * 1000.0 *  $
+                            14.0 * 3600.0
+              net_erosion = TOTAL(val.wall.tot_net[i] * length[i] * circ) *  $
+                            mass * 1.67E-27 * 1000.0 *  $
+                            14.0 * 3600.0
+
+              print,'debug',count,tot_area,tot_erosion,tot_deposit,net_erosion
+              print,'debug',ndata
+
+              length = val.wall.dist_2 - val.wall.dist_1
+              absfac1 = TOTAL(val.wall.ion_ero * length)
+              absfac2 = TOTAL(val.wall.atm_ero * length)
+              print,'debug: absfact=',absfac1,absfac2,absfac1+absfac2,val.wall.absfac
 
               END
           ENDCASE
@@ -525,7 +681,8 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
           END
 ;       ----------------------------------------------------------------
         2:
-        3: BEGIN
+        3: 
+        5: BEGIN
           IF (idata EQ 1) THEN  $
             cortex_DrawKey, iplot-2, focus, labels, xy_label, xpos, ypos,  $
                             dev_xsize, dev_ysize, charsize_labels, colors
@@ -536,15 +693,39 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
 
           i = WHERE(val.x GE xmin AND val.x LE xmax)
           max_value[iplot] = MAX([max_value[iplot],val.y[i,0]])
-          IF (idata EQ ndata) THEN  $
+          IF (idata EQ ndata) THEN BEGIN
             ;XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
             ;        (xy_label[3] * ypos[0] + xy_label[2] * ypos[1]) * dev_ysize,  $
             ;XYOUTS, (0.38        * xpos[0] + 0.62        * xpos[1]) * dev_xsize,  $
             ;        (xy_label[2] * ypos[0] + xy_label[3] * ypos[1]) * dev_ysize,  $
-             XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
-                     (0.97        * ypos[0] + 0.03        * ypos[1]) * dev_ysize,  $
+            XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
+                    (0.97        * ypos[0] + 0.03        * ypos[1]) * dev_ysize,  $
                     'MAX = '+STRTRIM(STRING(max_value[iplot]),2), CHARSIZE=charsize_labels, /DEVICE
+            IF (option EQ 5 AND iplot EQ 6) THEN  $
+              XYOUTS, (0.50 * xpos[0] + 0.50 * xpos[1]) * dev_xsize,  $
+                      (0.97 * ypos[0] + 0.03 * ypos[1]) * dev_ysize,  $
+                      'NET = '+STRTRIM(STRING(net_erosion),2) + ' g in 14 h',  $
+                      CHARSIZE=charsize_labels, /DEVICE
+          ENDIF
 
+          ; Integrate up to get the total erosion:
+          IF (iplot EQ 4) THEN BEGIN
+;            tot_erosion = 0.0
+          ENDIF        
+
+          IF (option EQ 5 AND ndata EQ 1) THEN BEGIN
+             print,'trying..',iplot
+            SWITCH iplot OF
+              3: 
+              4: BEGIN
+                print,'herererere!',max(val.y[*,1])
+                OPLOT, val.x, val.y[*,1], COLOR=TrueColor(colors[1]), THICK=thick
+                max_value[iplot] = MAX([max_value[iplot],val.y[i,1]])
+                BREAK
+                END
+              ELSE:
+            ENDSWITCH
+          ENDIF
           BREAK
           END
 ;       ----------------------------------------------------------------

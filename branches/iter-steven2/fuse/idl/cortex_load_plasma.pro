@@ -1,6 +1,75 @@
 ;
 ; ======================================================================
 ;
+FUNCTION cortex_LoadWallErosion_DIVIMP, file
+
+  file = cortex_UpdateFile(file)
+
+  status = inOpenInterface(file)
+  IF (status LT 0) THEN BEGIN
+    result = CREATE_STRUCT('version',0.0,'file','none')
+    RETURN, result
+  ENDIF
+
+  absfac        = inGetData('DIV_IMPURITY_INFLUX')   
+  index         = inGetData('INDEX_ID')
+  atomic_number = inGetData('IMP_Z')   
+  atomic_mass   = inGetData('IMP_A')   
+  r0            = inGetData('R0')    
+  z0            = inGetData('Z0')    
+  r             = inGetData('R')     
+  z             = inGetData('Z')    
+  dist_1        = inGetData('DIST1')    
+  dist_2        = inGetData('DIST2')    
+  tot_ero       = inGetData('TOT_ERO2') * absfac
+  tot_dep       = inGetData('TOT_DEP2') * absfac
+  tot_net       = inGetData('TOT_NET2') * absfac
+  atm_ero       = inGetData('ATM_ERO')    
+  atm_dep       = inGetData('ATM_DEP') 
+  atm_net       = inGetData('ATM_NET')
+  ion_flux      = inGetData('SURFACE_ION_FLUX')
+  atm_flux      = inGetData('SURFACE_ATM_FLUX')
+
+  inCloseInterface  
+
+  length = dist_2 - dist_1
+  area   = 2.0 * !PI * r * length 
+
+  ion_ero = tot_ero - atm_ero
+  ion_dep = tot_dep - atm_dep
+  ion_net = tot_net - atm_net
+
+  result = {  $
+    version       : 1.0           ,  $
+    file          : file          ,  $
+    index         : index         ,  $
+    absfac        : absfac        ,  $
+    atomic_number : atomic_number ,  $
+    atomix_mass   : atomic_mass   ,  $
+    r0            : r0            ,  $
+    z0            : z0            ,  $
+    r             : r             ,  $
+    z             : z             ,  $
+    dist_1        : dist_1        ,  $
+    dist_2        : dist_2        ,  $
+    area          : area          ,  $
+    tot_ero       : tot_ero       ,  $
+    tot_dep       : tot_dep       ,  $
+    tot_net       : tot_net       ,  $
+    ion_ero       : ion_ero       ,  $
+    ion_dep       : ion_dep       ,  $
+    ion_net       : ion_net       ,  $
+    atm_ero       : atm_ero       ,  $
+    atm_dep       : atm_dep       ,  $
+    atm_net       : atm_net       ,  $
+    ion_flux      : ion_flux      ,  $
+    atm_flux      : atm_flux      } 
+
+  RETURN,result
+END
+;
+; ======================================================================
+;
 FUNCTION cortex_LoadWallProfiles_EIRENE, file
 
   file = cortex_UpdateFile(file)

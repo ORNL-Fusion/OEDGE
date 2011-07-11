@@ -85,6 +85,8 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     data_file       : string_array      ,  $
     tubes           : long_array        ,  $
     state           : 0                 ,  $
+    flip            : 0                 ,  $
+    signal          : 1                 ,  $
     nodes           : 0                 ,  $
     annotate_n      : 0                 ,  $  ; Number of annotations requested for 2D fluid grid plot
     annotate_code   : long_array        ,  $  ; Type of annotation
@@ -100,6 +102,8 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     outline         : 0                 ,  $
     flux_surfaces   : 0                 ,  $  ; PlotFluidGrid - show tube radial boundaries
     show_grid       : 0                 ,  $
+    load            : 0                 ,  $
+    save            : 0                 ,  $
     no_grid         : 0                 ,  $
     no_wall         : 0                 ,  $
     no_separatrix   : 0                 ,  $
@@ -118,6 +122,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     peak            : 0                 ,  $
     sum             : 0                 ,  $
     scale_factor    : 1.0               ,  $
+    concentration   : 0.0               ,  $
     log             : 0                 ,  $
     xdata           : 'psi_n'           ,  $
     xlog            : 0                 ,  $
@@ -345,7 +350,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
         plot_struct.tag          = tag
         plot_struct.option       = FIX(data)
-        plot_struct.title        = 'LOS INTEGRALS'
+        plot_struct.title        = 'LINE-OF-SIGHT INTEGRAL'
         plot_struct.default      = case_name
         plot_struct.case_name[0] = case_name
         CASE plot_struct.option OF
@@ -382,6 +387,12 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
             plot_struct.data_file[4] = 'idl.fluid_wall'
             END
           4: plot_struct.data_file[0] = 'idl.divimp_flux_wall'
+          5: BEGIN
+            plot_struct.data_file[0] = 'idl.divimp_erosion'   
+            plot_struct.data_file[1] = 'idl.divimp_summary'
+            plot_struct.data_file[2] = 'idl.fluid_grid'
+            plot_struct.data_file[3] = 'idl.fluid_wall'
+            END
           ELSE: BEGIN
             PRINT,'ERROR cortex_LoadPlotData: Unknown 1D wall profile plot option'
             PRINT,'  FILE_NAME= ',file_name
@@ -614,6 +625,8 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'OUTLINE'      : plot_struct.outline      = 1
       'FLUX SURFACES': plot_struct.flux_surfaces= 1
       'SHOW GRID'    : plot_struct.show_grid    = 1
+      'LOAD'         : plot_struct.load         = 1
+      'SAVE'         : plot_struct.save         = 1
       'NO GRID'      : plot_struct.no_grid      = 1
       'NO WALL'      : plot_struct.no_wall      = 1
       'NO SEPARATRIX': plot_struct.no_separatrix= 1
@@ -622,6 +635,8 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'EQU LEVELS'   : plot_struct.equ_levels   = FLOAT(data_array)
       'TUBES'        : plot_struct.tubes        = LONG(data_array)
       'STATE'        : plot_struct.state        = LONG(data)
+      'FLIP'         : plot_struct.flip         = 1
+      'SIGNAL'       : plot_struct.signal       = LONG(data)
       'NODES'        : plot_struct.nodes        = 1
       'XLABELS'      : plot_struct.xlabels      = STRSPLIT(data,':',/EXTRACT)
       'CHARSIZE'     : plot_struct.charsize     = FLOAT(data)
@@ -647,6 +662,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         IF (data_array[0] EQ 'only') THEN plot_struct.peak = 2 ELSE  $
                                           plot_struct.peak = 1
       'SCALE FACTOR' : plot_struct.scale_factor = FLOAT(data)
+      '% CONCENTRATION': plot_struct.concentration= FLOAT(data)
       'LOG'          : plot_struct.log          = 1
       'XDATA'        : plot_struct.xdata        = STRTRIM(data,2)
       'XLOG'         : plot_struct.xlog         = 1

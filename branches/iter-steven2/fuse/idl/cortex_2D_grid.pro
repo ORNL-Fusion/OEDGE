@@ -32,7 +32,9 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ; with storing the data later for redrawing, a bit... this scheme should be implemented for
 ; most of the plots... for another day...
 
-  flip = 0  ; ribbon grid plots
+  flip = plot.flip  ; ribbon grid plots
+
+  print,'flip=',flip
 
   IF (NOT KEYWORD_SET(mode)) THEN mode = 'main'
   IF (NOT KEYWORD_SET(type)) THEN type = 'full'
@@ -142,8 +144,8 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
     ymin = plot.zoom[1]
     ymax = plot.zoom[3]
   ENDELSE
-  PRINT, 'XMIN,MAX=',xmin,xmax
-  PRINT, 'YMIN,MAX=',ymin,ymax
+;  PRINT, 'XMIN,MAX=',xmin,xmax
+;  PRINT, 'YMIN,MAX=',ymin,ymax
 
   xdelta = xmax - xmin
   ydelta = ymax - ymin

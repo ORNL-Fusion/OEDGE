@@ -201,10 +201,12 @@ FUNCTION cortex_LoadFluidGrid, file
 
   inCloseInterface
 
+  help,nsrf
+
 ; Setup index mapping for surfaces:   *** NOT CURRENTLY IN USE ***
   maxindex = MAX(srf_index)
   srf_map = MAKE_ARRAY(maxindex+1,/LONG,VALUE=0)
-  FOR i = 0, nsrf-1 DO srf_map[srf_index[i]] = i
+  FOR i = 0L, nsrf-1L DO srf_map[srf_index[i]] = i
 
 ; Setup index mapping for vertices:
   maxindex = MAX(vtx_index)
