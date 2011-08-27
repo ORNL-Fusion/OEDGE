@@ -4454,10 +4454,14 @@ c
       fp = PINOUT
 
       CALL RSet(sgn,MAXNRS,1.0)
-      DO ir = irtrap, nrs
-        sgn(ir) = -1.0
-      ENDDO
- 
+c
+c     jdemod - sepdist2 is now adjusted to be negative in PFZ so the
+c              sgn array should no longer be needed
+c
+c      DO ir = irtrap, nrs
+c        sgn(ir) = -1.0
+c      ENDDO
+c
       CALL RZero(sddat,MAXINS)
       CALL RZero(tedat,MAXINS)
       CALL RZero(tidat,MAXINS)
