@@ -5504,7 +5504,11 @@ c
       LOGICAL cont,found,next
 
       REAL       TOL
-      PARAMETER (TOL=1.0E-04)
+c
+c     jdemod - change tol to 1.0e-5 for some high resolution grids I was using (sub-mm at midplane)
+c
+      PARAMETER (TOL=1.0E-05)
+c      PARAMETER (TOL=1.0E-04)
 
 
 c      CALL DUMPGRID('BUUMMMER')
@@ -5729,7 +5733,11 @@ c
       REAL    deltar,deltaz,angle1(0:MAXNRS),angle2(0:MAXNRS)
 
       REAL       TOL
-      PARAMETER (TOL=1.0E-04)
+c
+c     jdemod - changed tolerance to 1.0e-5 since I was using some grids with sub-mm resolution at mid-plane
+c
+      PARAMETER (TOL=1.0E-05)
+C      PARAMETER (TOL=1.0E-04)
 c      PARAMETER (TOL=1.0E-03)
 
       debug = .TRUE.
@@ -5752,7 +5760,7 @@ c...      Check low IK index target:
      .        ABS(zvertp(1,id1)-zvertp(2,id2)).LT.TOL) THEN 
             rvertp(1,id1) = rvertp(2,id2)
             zvertp(1,id1) = zvertp(2,id2)
-            WRITE(0,*) 'DEBUG: PROBLEM LOW  ',ir1,ir2
+            WRITE(0,*) 'DEBUG: PROBLEM LOW  ',ir1,ir2,id1,id2
           ENDIF
 c...      Check high IK index target:
           id1 = korpg(nks(ir1),ir1)

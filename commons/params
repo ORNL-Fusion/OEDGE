@@ -39,6 +39,8 @@ c
       CHARACTER*5 VERSON                                                
       PARAMETER (VERSON='6A/42'  ,MAXNTS=1   ,MAXNWS=10000 ,MAXNXS=1,   
 c slmod begin - ribbon dev
+c ribbon grids need very large values for MAXNRS, MAXNKS and MAXPTS  (e.g. MAXNRS=500, MAXNKS=400, MAXPTS=1300) depending on options
+c
      >  MAXNKS=120  ,MAXNRS=200  ,MAXNOC=100 ,MAXNDS=2*MAXNRS,MAXNYS=1,
      >  MAXNGS=50   ,MAXIZS=20   ,MAXINS=150 ,MAXIMP=100000,MAXVMF=5,    ! MAXIZS to 20 from 74 ... MAXIMP to 500000
      >  MAXPTS=1000 ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,  ! MAXPTS large because of RW and ZW, which don't appear to be used much

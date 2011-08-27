@@ -2933,6 +2933,12 @@ c...  Collect the cuts:
 c         Increase the length of the line segment in case there's
 c         a nominal mismatch between the wall and target 
 c         specifications or if the line segment is very short:
+
+          ! jdemod
+          if (debug) then 
+             write(fp,*) 'DEBUG XY1:',x1,y1,x2,y2
+          endif
+
           store_x2 = x2
           store_y2 = y2
           length = DSQRT((x1-x2)**2 + (y1-y2)**2)
@@ -2941,12 +2947,18 @@ c         specifications or if the line segment is very short:
  1        x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)
           y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
 
+          ! jdemod
+          if (debug) then 
+             write(fp,*) 'DEBUG XY2:',x1,y1,x2,y2
+          endif
+
           IF (debug) THEN
             WRITE(fp,*) ' --------------------',i1,i2,iobj
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2
           ENDIF
+
 c         Search the wall for intersections:
           s12max = 1.0D+10
           DO iwall = 1, nwall
@@ -2957,7 +2969,10 @@ c         Search the wall for intersections:
             CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
             IF (debug) THEN
               WRITE(fp,*) '  CALCINTER :-',i1,i2,iwall
-              WRITE(fp,*) '    S12,34  :',s12,s34
+              WRITE(fp,*) '    S12,34,M:',s12,s34,s12max
+              ! jdemod - added X1,Y1 and X2,Y2 to output
+              WRITE(fp,*) '    X1,Y1   :',x1,y1
+              WRITE(fp,*) '    X2,Y2   :',x2,y2
               WRITE(fp,*) '    X3,Y3   :',x3,y3
               WRITE(fp,*) '    X4,Y4   :',x4,y4
             ENDIF
@@ -3001,7 +3016,9 @@ c...  Check if a line segment is cut more than once at either end:
           ELSE
             CALL ER('ClipWallToGrid','Wall segment cut at the same '//
      .              'end more than once',*99)
-          ENDIF
+            ! jdemod
+            write(fp,*) 'CLIST DEBUG:',i1,i2,swall(clist(i1,i2))
+         ENDIF
         ENDDO
       ENDDO
 
