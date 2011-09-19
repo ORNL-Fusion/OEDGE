@@ -55,9 +55,18 @@ contains
 
     do in = 1,line_cnt
        read(iunit,*,iostat=ios) (lp_data(in,it),it=1,ncols)
+
+
+       if (lp_data(in,8).gt.0.0.and.lp_data(in,9).lt.1.0) then 
+          write (6,'(10(1x,g18.8))') (lp_data(in,it),it=1,ncols)
+       endif
+
+
     end do
 
     nlines = line_cnt
+
+
 
 
   end subroutine read_lp_data_file

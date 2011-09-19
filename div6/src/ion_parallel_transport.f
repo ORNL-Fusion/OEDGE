@@ -821,9 +821,11 @@ c
 c     Set coordinate to zero and determine target element 
 c     of impact 
 c     
-            write(6,'(a,2i6,4(2x,g12.5))') 
+            if (cprint.eq.9) then 
+               write(6,'(a,2i6,4(2x,g12.5))') 
      >                   'Update_walldep1: Struck target',
      >                   ik,ir,s,smax,ksmaxs(ir)
+            endif
 c
             IF (S.LE.0.0) THEN
                S  = 0.0
@@ -859,9 +861,12 @@ c
             if (.not.reflect_ion) then
 
 
-             write(6,'(a,1i6,6x,3(2x,g12.5))') 
+               if (cprint.eq.9) then
+                  write(6,'(a,1i6,6x,3(2x,g12.5))') 
      >                   'Update_walldep2: Struck target',
      >                   id,cross,r,z
+               endif
+
 
                call struck_target
 
@@ -1222,8 +1227,10 @@ c
 c     Add ion weight to wall element closest to grid 
 c     departure.
 c     
-      write(6,'(a)') 'Update_walldep3: '//
+      if (cprint.eq.9) then 
+         write(6,'(a)') 'Update_walldep3: '//
      >         'struck target'
+      endif
 
       call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
 c     

@@ -7293,8 +7293,12 @@ c
 c     If neither a target nor wall segment has been specified find the wall segment centre
 c     closest to the cell centre of the particle exit.
 c
-      write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
+      if (cprint.eq.9) then 
+
+         write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
      >         iwstart,idtype,sputy
+
+      endif
 c
       if (idt.eq.0.and.idw.eq.0) then
 c
@@ -7317,8 +7321,12 @@ c     >              'DSQ:',ind,WALLPTS,DSQ,R,Z,ROLD,ZOLD
 C
 
           if (ind.lt.1.or.ind.gt.wallpts) then
-
-             write(6,*) 'Wallsi: No wall found:',idt,ind,ik,ir
+c
+             if (cprint.eq.9) then 
+                write(6,'(a,4i10)') 'Wallsi: No wall found:',
+     >                             idt,ind,ik,ir
+             endif
+c
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
              wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
@@ -7333,7 +7341,9 @@ c
              wallsi(ind) = wallsi(ind) + sputy
              wallsiz(ind, iz) = wallsiz(ind, iz) + sputy
 
-             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
+c             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7353,9 +7363,11 @@ c
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
              wallsiz(wallindex(idt), iz) =
      >            wallsiz(wallindex(idt), iz) + sputy
-             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
-     >          ' sputy: ', sputy,
-     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
+
+
+c             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
+c     >          ' sputy: ', sputy,
+c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7365,9 +7377,9 @@ c
 
           else
 
-             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
-             wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
+c                   wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+c                   wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7383,7 +7395,10 @@ c
 c
              wallsi(idw) = wallsi(idw)+ sputy
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
-         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+
+c
+c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7393,7 +7408,8 @@ c
 
        else
 
-          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
           wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
