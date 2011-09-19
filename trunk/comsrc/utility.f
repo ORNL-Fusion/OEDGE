@@ -1193,7 +1193,7 @@ c
       real dist_frac,direction_factor
 c     IPP/08 Krieger - additional variables for iteration of
 c     out-of-cell particles
-      real rstep,zstep,rorig,zorig
+      real rstep,zstep,rorig,zorig,rstart,zstart
 c
       logical test_result,incell
       external incell
@@ -1205,6 +1205,9 @@ c
       iw = wallindex(id)  
       ik = ikds(id)
       ir = irds(id)  
+
+      rstart = r
+      zstart = z
 c
 c     CROSS is positive when moving "INWARD" and negative when
 c     moving "OUTWARD". However, all target and wall elements are
@@ -1324,21 +1327,29 @@ c
 c        Point inside cell was not found
 c     
          if (.not.test_result) then 
-            write(6,'(a,i10,2i6,4g18.8)') 
+            write(6,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
-            write(0,'(a,i10,2i6,4g18.8)') 
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
+            write(0,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
          else
-            write(6,'(a,i10,2i6,4g18.8)') 
+            write(6,'(a,i10,4i6,10g18.8)') 
      >       'POSITION_ON_TARGET:'//
      >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
 
          endif
+      endif
+
+      if (.not.test_result) then 
+         r = rstart
+         z = zstart
       endif
 
 c

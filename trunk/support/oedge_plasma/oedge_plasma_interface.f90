@@ -77,7 +77,7 @@ module oedge_plasma_interface
   integer :: ik_last,ir_last,iq_last
 
 
-  public :: get_oedge_plasma,init_oedge_plasma,close_oedge_plasma
+  public :: get_oedge_plasma,init_oedge_plasma,close_oedge_plasma,find_free_unit_number
 
 
 
@@ -192,10 +192,12 @@ contains
   end subroutine close_oedge_plasma
 
 
-  subroutine get_oedge_plasma(r,z,ne,te,ti,vb,ef,btoto,bro,bzo,bto,ierr)
+  subroutine get_oedge_plasma(rin,zin,ne,te,ti,vb,ef,btoto,bro,bzo,bto,ierr)
     implicit none
 
-    real*8 :: r,z,ne,te,ti,vb,ef,btoto,bro,bzo,bto
+    real*8 :: rin,zin,ne,te,ti,vb,ef,btoto,bro,bzo,bto
+
+    real*8 :: r,z
 
     integer :: ierr
 
@@ -204,9 +206,11 @@ contains
     ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
     ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
     
-    r = r + r_offset
-    z = z + z_offset 
+    r = rin + r_offset
+    z = zin + z_offset 
 
+    !write(0,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
+    !write(6,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
 
     ! Get the OEDGE plasma conditions at the specified R,Z location
     ! Two options - value in cell and interpolated - value in cell is quicker - interpolated is smoother
