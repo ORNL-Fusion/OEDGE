@@ -1,0 +1,404 @@
+**==SRPUF
+C
+C=======================================================================
+      SUBROUTINE SRPUF(PUFFW,JSTART,JSTOP,LPRIVP,
+     &                 PUFFT,ISTART,ISTOPL,
+     &                 FLNMC,FLPMC,FRAPUF)
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C+ .....................................................................
+C
+C ROUTINE : SRPUF
+C
+C PURPOSE : A GENERIC PUFFING ROUTINE
+C
+C INPUT   : (R*4) PUFFW     = WALL PUFF RATE
+C           (I*4) JSTART(1) = START OF 1ST WALL PUFFING REGION
+C                       (2) = START OF 2ND WALL PUFFING REGION
+C           (I*4) JSTOP (1) = END   OF 1ST WALL PUFFING REGION
+C                       (2) = END   OF 2ND WALL PUFFING REGION
+C           (LOG) LPRIVP    = T --- PRIVATE WALL REGION PUFFING
+C           (R*4) PUFFT     = TARGET PUFF RATE
+C           (I*4) ISTART(1) = START OF 1ST TARGET PUFFING REGION
+C                       (2) = START OF 2ND TARGET PUFFING REGION
+C           (I*4) ISTOPL(1) = END   OF 1ST TARGET PUFFING REGION
+C                       (2) = END   OF 2ND TARGET PUFFING REGION
+C           (R*4) RNIMB     = NOMINAL VESSEL RADIUS
+C           (R*8) FLNMC(K)  = PERPENDICULAR FLUX
+C           (R*8) FLPMC(K)  = POLOIDAL FLUX
+C
+C OUTPUT  : (R*8) FLNMC(K)    = PERPENDICULAR FLUX UPDATED BY PUFF
+C           (R*8) FLPMC(K)    = POLOIDAL FLUX UPDATED BY PUFF
+C           (R*8) FRAPUF(K,1) = PUFFED FRACTION OF PERPENDICULAR FLUX
+C           (R*8) FRAPUF(K,2) = PUFFED FRACTION OF POLOIDAL      FLUX
+C
+C- .....................................................................
+C
+C
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C../UNK/
+      INCLUDE 'c06'
+C
+      DIMENSION JSTART(2),JSTOP(2),ISTART(2),ISTOPL(2)
+      DIMENSION FLNMC(MP),FLPMC(MP),FRAPUF(MP,2)
+      LOGICAL LPRIVP
+C
+      DIMENSION BUFFER(3*MP)
+C
+      IF( PUFFW.LE.0.0D0 .AND. PUFFT.LE.0.0D0 ) GOTO 1090
+C
+C
+C FIND AREA OF INJECTION
+C ----------------------
+C
+      CALL PFAREA(JSTART(1),JSTOP(1),LPRIVP,ISTART(1),ISTOPL(1),
+     &            BUFFER(1),WAREA,TAREA)
+C
+      IF( PUFFW.GT.0.0D0 .AND. WAREA.LE.0.0D0 )THEN
+        MSG1 = 'WALL PUFF REQUESTED BUT NO REGION AVAILABLE'
+        CALL ERRMSS(LOUT,'SRPUF',1,MSG1,' ',' ')
+      ENDIF
+      IF( PUFFT.GT.0.0D0 .AND. TAREA.LE.0.0D0 )THEN
+        MSG1 = 'TARGET PUFF REQUESTED BUT NO REGION AVAILABLE'
+        CALL ERRMSS(LOUT,'SRPUF',1,MSG1,' ',' ')
+      ENDIF
+C
+C
+C ADD PUFFS TO GIVEN FLUXES
+C -------------------------
+C
+C CONTRIBUTION FROM WALLS
+C
+C
+      DO 1080 J=1,NR
+        IF(BUFFER(J).EQ.0.0D0) GOTO 1080
+        NX=NI(J)
+        IF(NX.LE.0) GOTO 1080
+C                       SOURCE OF PUFFED NEUTRALS FROM SURFACE J
+        PUFFK = PUFFW*BUFFER(J)/WAREA
+        IF(LPRIVP) THEN
+          I1=1
+        ELSE
+          I1=NX
+        ENDIF
+        K=KORX(J,I1)
+        FRAPUF(K,1) = FRAPUF(K,1)*FLNMC(K)+PUFFK
+        FLNMC(K) = FLNMC(K)+PUFFK
+        IF(FLNMC(K).NE.0.0D0) THEN
+          FRAPUF(K,1) = FRAPUF(K,1)/FLNMC(K)
+        ELSE
+          FRAPUF(K,1) = 0.0D0
+        ENDIF
+ 1080 CONTINUE
+C
+C CONTRIBUTION FROM TARGETS
+C
+      DO 1390 L=1,2
+        DO 1380 I=IOPEN,NC
+          IP = L*MP+I
+          IF(BUFFER(IP).EQ.0.0D0) GOTO 1380
+          NY=NJ(I)
+          IF(NY.LE.0) GOTO 1380
+          PUFFK = PUFFT*BUFFER(IP)/TAREA
+          IF(L.EQ.1) THEN
+            J1=1
+          ELSE
+            J1=NY
+          ENDIF
+          K=KORY(I,J1)
+          FRAPUF(K,2) = FRAPUF(K,2)*FLPMC(K)+PUFFK
+          FLPMC(K)    = FLPMC(K)+PUFFK
+          IF(FLPMC(K).NE.0.0) THEN
+            FRAPUF(K,2)=FRAPUF(K,2)/FLPMC(K)
+          ENDIF
+ 1380   CONTINUE
+ 1390 CONTINUE
+C
+C
+C
+ 1090 CONTINUE
+      RETURN
+      END
+**++EOF
+**==LIPUF
+C
+C=======================================================================
+      FUNCTION LIPUF( I , ISTART , IEND )
+      IMPLICIT REAL*8 (A-H,O-Z)
+      LOGICAL LIPUF
+C
+C+ .....................................................................
+C
+C ROUTINE : RING PUFF
+C           -    ---
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO DETERMINE IF RING # I IS IN A PUFFING REGION.
+C
+C INPUT   : (I*4) I        = RING INDEX
+C           (I*4) ISTART   = START OF PUFFING REGION
+C           (I*4) IEND     = END   OF PUFFING REGION
+C
+C OUTPUT  : (LOG) LIPUF    = T --- RING # I IS IN/ON   PUFFING REGION
+C                          = F --- RING # I IS OUTSIDE PUFFING REGION
+C
+C /C04/   : (I*4) IOPEN    = FIRST OPEN FIELD RING
+C           (I*4) NC       = NUMBER OF RINGS
+C
+C (C)     : JET JOINT UNDERTAKING (1997)
+C
+C AUTHOR  : JAMES SPENCE
+C           JET K1/0/80
+C           TEL   - +44 (0) 1235 464865  (EXT. 4865)
+C           EMAIL - JSPENCE@JET.UK
+C
+C HISTORY : V1.R1.M0 --- 01/12/97 --- CREATION
+C
+C- .....................................................................
+C
+C..INPUT
+      INTEGER*4 I , ISTART , IEND
+C
+C..PARAMETERS
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C
+C../PARAM/
+      INCLUDE 'c04'
+C
+C../PARAME/
+      INCLUDE 'c05'
+C
+C..LOCALS
+      INTEGER*4 IREL
+C
+C------------------------------- CHECK INPUT ---------------------------
+C
+      IF( I.LT.IOPEN .OR. I.GT.NC ) THEN
+          LIPUF = .FALSE.
+          GOTO 9999
+      END IF
+C
+C------------------------- SET RELATIVE ADDRESSING ---------------------
+C
+      IF( I.LE.NXW )THEN
+          IREL = I - IOPEN + 1
+      ELSE
+          IREL = I - NC - 1
+      ENDIF
+C
+C-----------------------------------------------------------------------
+C
+      LIPUF = IREL.GE.ISTART .AND. IREL.LE.IEND
+C
+C-----------------------------------------------------------------------
+C
+ 9999 RETURN
+      END
+**++EOF
+**==LJPUF
+C
+C=======================================================================
+      FUNCTION LJPUF( J , JPUF1 , JPUF2 , LPUFF )
+      IMPLICIT REAL*8 (A-H,O-Z)
+      LOGICAL LJPUF
+C
+C+ .....................................................................
+C
+C ROUTINE : ROW PUFF
+C           -   ---
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO DETERMINE IF ROW # J IN IN A PUFFING REGION.
+C
+C INPUT   : (I*4) J        = ROW INDEX
+C           (I*4) JPUF1(1) = START OF 1ST PUFFING REGION
+C                      (2) = START OF 2ND PUFFING REGION
+C           (I*4) JPUF2(1) = END   OF 1ST PUFFING REGION
+C                      (2) = END   OF 2ND PUFFING REGION
+C           (LOG) LPUFF    = T --- PRIVATE REGION PUFFING
+C                          = F --- WALL    REGION PUFFING
+C
+C OUTPUT  : (LOG) LJPUF    = T --- ROW # J IS IN/ON   PUFFING REGION
+C                          = F --- ROW # J IS OUTSIDE PUFFING REGION
+C
+C /C04/   : (I*4) NR       = NUMBER OF ROWS
+C
+C /C05/   : (I*4) JPLFT    = FIRST NON-DIVERTOR ROW
+C           (I*4) JPRGT    = LAST  NON-DIVERTOR ROW
+C
+C NOTES   : 2ND PUFFING REGION (JPUF?(2)) IS UNUSED FOR LPUFF = T (PRIV)
+C
+C (C)     : JET JOINT UNDERTAKING (1997)
+C
+C AUTHOR  : JAMES SPENCE
+C           JET K1/0/80
+C           TEL   - +44 (0) 1235 464865  (EXT. 4865)
+C           EMAIL - JSPENCE@JET.UK
+C
+C HISTORY : V1.R1.M0 --- 12/09/97 --- CREATION
+C
+C- .....................................................................
+C
+C..INPUT
+      INTEGER*4 J    , JPUF1(2) , JPUF2(2)
+      LOGICAL   LPUFF
+C
+C..PARAMETERS
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C
+C../PARAM/
+      INCLUDE 'c04'
+C
+C../PARAME/
+      INCLUDE 'c05'
+C
+C-----------------------------------------------------------------------
+C
+      IF( LPUFF )THEN
+C
+C..PRIVATE REGION
+          LJPUF = (J.LT.JPRGT .OR. J.GT.JPLFT) .AND.
+     &            J.GE.(1+JPUF1(1)) .AND. J.LE.(NR-JPUF2(1))
+      ELSE
+C
+C..WALL REGION
+          LJPUF = (J.GE.(JPRGT+JPUF1(1)) .AND. J.LE.(JPRGT+JPUF2(1)))
+     &                                   .OR.
+     &            (J.LE.(JPLFT-JPUF1(2)) .AND. J.GE.(JPLFT-JPUF2(2)))
+      ENDIF
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+      END
+**++EOF
+**==PFAREA
+C
+C=======================================================================
+      SUBROUTINE PFAREA(  JSTART , JSTOP  , LPRIVP , ISTART , ISTOPL  ,
+     &                    PAREA  , WAREA  , TAREA )
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C+ .....................................................................
+C
+C ROUTINE : PFAREA
+C
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO SET UP AREA ELEMENTS AND SUMS FOR WALL AND TARGET PUFFS
+C
+C INPUT   : (I*4) JSTART(1) = START OF 1ST WALL PUFFING REGION
+C                       (2) = START OF 2ND WALL PUFFING REGION
+C           (I*4) JSTOP (1) = END   OF 1ST WALL PUFFING REGION
+C                       (2) = END   OF 2ND WALL PUFFING REGION
+C           (LOG) LPRIVP    = T --- PRIVATE WALL REGION PUFFING
+C           (I*4) ISTART(1) = START OF 1ST TARGET PUFFING REGION
+C                       (2) = START OF 2ND TARGET PUFFING REGION
+C           (I*4) ISTOPL(1) = END   OF 1ST TARGET PUFFING REGION
+C                       (2) = END   OF 2ND TARGET PUFFING REGION
+C
+C OUTPUT  : (R*8) PAREA     = ARRAY OF AREA ELEMENTS (WALL THEN TARGET)
+C           (R*8) WAREA     = WALL   AREA SUM
+C           (R*8) TAREA     = TARGET AREA SUM
+C
+C HISTORY : V1.R1.M0 --- 28/11/97 --- CREATION
+C
+C- .....................................................................
+C
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C../UNK/
+      INCLUDE 'c06'
+C
+      DIMENSION JSTART(2),JSTOP(2),ISTART(2),ISTOPL(2)
+      DIMENSION PAREA(3*MP)
+C
+      LOGICAL LPRIVP
+C
+      LOGICAL LOG , LJPUF , LIPUF
+C
+C SET UP THE WALL REGIONS
+C -----------------------
+C
+      WAREA = 0.0D0
+      DO 1050 J=1,NR
+        PAREA(J)=0.0D0
+        NX=NI(J)
+        IF(NX.LE.0) GOTO 1050
+        LOG = LJPUF( J , JSTART(1) , JSTOP(1) , LPRIVP )
+        IF(LPRIVP)THEN
+          I1=1
+          I2=NX
+          I3=1
+        ELSE
+          I1=NX
+          I2=1
+          I3=-1
+        ENDIF
+        IF(.NOT.LOG) GOTO 1050
+        DO 1030 I=I1,I2,I3
+          K=KORX(J,I)
+          IF(DVOL(K,5).GT.0.0D0) THEN
+C                       AREAS OF PUFFING SURFACES
+            PAREA(J) = TWOPI*RMESH(K)*HTETA(K)*DTHETA(K)
+            GOTO 1040
+          ENDIF
+ 1030   CONTINUE
+ 1040   WAREA = WAREA+PAREA(J)
+ 1050 CONTINUE
+C
+C SET UP TARGET REGIONS (L=1 => OUTER, L=2 => INNER)
+C --------------------------------------------------
+C
+      TAREA = 0.0D0
+      DO 1155 L=1,2
+        DO 1150 I=IOPEN,NC
+          IP = L*MP+I
+          PAREA(IP) = 0.0D0
+          NY=NJ(I)
+          IF(NY.LE.0) GOTO 1150
+          LOG = LIPUF( I , ISTART(L) , ISTOPL(L) )
+          IF(.NOT.LOG) GOTO 1150
+          IF( L.EQ.1 )THEN
+            J1 = 1
+            J2 = NY
+            J3 = 1
+          ELSE
+            J1 = NY
+            J2 = 1
+            J3 = -1
+          ENDIF
+          DO 1130 J=J1,J2,J3
+            K=KORY(I,J)
+            IF(DVOL(K,5).GT.0.0D0) THEN
+              PAREA(IP) = TWOPI*RMESH(K)*HRO(K)*DRHO(K)
+              GOTO 1140
+            ENDIF
+ 1130     CONTINUE
+ 1140     TAREA = TAREA+PAREA(IP)
+ 1150   CONTINUE
+ 1155 CONTINUE
+C
+C
+      RETURN
+      END

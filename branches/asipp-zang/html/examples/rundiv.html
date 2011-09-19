@@ -1,0 +1,410 @@
+ <HTML>
+ <HEAD>
+   <TITLE> DIVIMP Input File </TITLE>
+   <STYLE TYPE="text/css">
+     BODY     { color:black; 
+                background:white }
+     A:link   { color:blue; 
+                text-decoration: none;
+                font-weight:normal}
+     A:active { color:green; 
+                text-decoration: none;
+                font-weight:bold}
+     A:visited{ color:red; 
+                text-decoration: none;
+                font-weight:normal}
+ 
+     H1       { font-weight:bold} 
+ 
+     H2       { font-weight:bold} 
+ 
+     H3       { font-weight:bold; 
+                color:crimson} 
+ </STYLE>
+ </HEAD>
+ <BODY>
+ <PRE>#!/bin/ksh</PRE>
+ <PRE>echo rundiv V 6.02 : DIV Input = $1 : OUT Input = $2 : Grid = $3 : BG Data = $4</PRE>
+ <PRE>if [ $# -lt 3 ]</PRE>
+ <PRE>then</PRE>
+ <PRE>   echo "usage: $0 <DIV input file> <OUT input file> <geometry file name> <background plasma filename extention - optional>"</PRE>
+ <PRE>   exit 1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># Set Run-time environment variables</PRE>
+ <PRE>#</PRE>
+ <PRE># These should be all that require changing for most installations</PRE>
+ <PRE>#</PRE>
+ <PRE>#-------------------------------------</PRE>
+ <PRE>#</PRE>
+ <PRE>export CASENAME=$1</PRE>
+ <PRE>export XLFRTEOPTS=namelist=old</PRE>
+ <PRE>export ADASCENT=/u/adas/adas</PRE>
+ <PRE>#</PRE>
+ <PRE>RUNROOT=/u/progs/div6</PRE>
+ <PRE>EXEROOT=/u/progs/div6</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Loctions of the various DIVIMP files</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVRUNDIR - Directory where DIVIMP will run - must have read/write access</PRE>
+ <PRE>#  DIVDATDIR - Directory containing the input data files</PRE>
+ <PRE>#  DIVRESDIR - Directory where the results from the case will be stored</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVMAINDIR- Main DIVIMP directory containing the source code tree</PRE>
+ <PRE>#  DIVEXEDIR - Directory containing the DIVIMP executable</PRE>
+ <PRE>#  DIVOUTDIR - Directory containing the OUT excutable</PRE>
+ <PRE>#  PINEXEDIR - Directory containing the PIN executable</PRE>
+ <PRE>#  EIREXEDIR - Directory containing the EIRENE executable</PRE>
+ <PRE>#</PRE>
+ <PRE>#  EQUDIR    - Directory containg the equilibrium, background plasma and pump files</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVEXE    - DIVIMP executable</PRE>
+ <PRE>#  OUTEXE    - OUT executable</PRE>
+ <PRE>#  PINEXE    - PIN executable</PRE>
+ <PRE>#  EIREXE    - EIRENE executable</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVRUNDIR=$RUNROOT</PRE>
+ <PRE>export DIVDATDIR=$RUNROOT/data</PRE>
+ <PRE>export DIVRESDIR=$RUNROOT/results</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVMAINDIR=$EXEROOT</PRE>
+ <PRE>export DIVEXEDIR=$EXEROOT/div6</PRE>
+ <PRE>export OUTEXEDIR=$EXEROOT/out6</PRE>
+ <PRE>export PINEXEDIR=$EXEROOT/pin6</PRE>
+ <PRE>export EIREXEDIR=$EXEROOT/eirene</PRE>
+ <PRE>export EQUDIR=$EXEROOT/shots</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVEXE=$DIVEXEDIR/div6O</PRE>
+ <PRE>export OUTEXE=$OUTEXEDIR/out6O</PRE>
+ <PRE>export PINEXE=$PINEXEDIR/pin6O</PRE>
+ <PRE>export EIREXE=$EIREXEDIR/Sources/eirene</PRE>
+ <PRE>#</PRE>
+ <PRE>#-------------------------------------</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE># Change to execution directory</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE>mkdir $1</PRE>
+ <PRE>cd $1</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit  4 is the equilibrium input file</PRE>
+ <PRE>#  Unit 13 is the xy grid file (if available)</PRE>
+ <PRE>#  Unit 14 is the DIVIMP input file - assigned to unit 14 for NIMBUS purposes</PRE>
+ <PRE>#                                   - now connected in the runpin script</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f  $EQUDIR/$3 ]] then</PRE>
+ <PRE>  ln -s $EQUDIR/$3 $DIVRUNDIR/$1/fort.4</PRE>
+ <PRE>else</PRE>
+ <PRE>  echo "Grid file " $EQUDIR/$3 " does not exist."</PRE>
+ <PRE>  echo "Abnormal Script Termination - Script Exiting"</PRE>
+ <PRE>  cd ..</PRE>
+ <PRE>  rm -r $1</PRE>
+ <PRE>  exit 1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f  $EQUDIR/hybrid.dat ]] then</PRE>
+ <PRE>  ln -s $EQUDIR/hybrid.dat $DIVRUNDIR/$1/fort.28</PRE>
+ <PRE>#else</PRE>
+ <PRE>#  echo "JET hybrid wall data file not found."</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Other files that are not usually used.</PRE>
+ <PRE>#</PRE>
+ <PRE># cp $EQUDIR/$3.grd $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE># cp $EQUDIR/$3.dat $DIVRUNDIR/$1/fort.12</PRE>
+ <PRE># cp $EQUDIR/$3.prn $DIVRUNDIR/$1/fort.10</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit 11 is a background plasma solution - if required.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $4 ]] then</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.$4 ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.$4 $DIVRUNDIR/$1/fort.11</PRE>
+ <PRE>  fi</PRE>
+ <PRE>else</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.g80 ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.g80 $DIVRUNDIR/$1/fort.11</PRE>
+ <PRE>  fi</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit 12 is an auxiliary file for the background plasma solution - if required.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $4 ]] then</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.$4.aux ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.$4.aux $DIVRUNDIR/$1/fort.12</PRE>
+ <PRE>  fi</PRE>
+ <PRE>else</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.aux ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.aux $DIVRUNDIR/$1/fort.12</PRE>
+ <PRE>  fi</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit 13 contains experimental data for the case - if available.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $4 ]] then</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.$4.experiment ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE>  fi</PRE>
+ <PRE>else</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.experiment ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE>  fi</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># These are the scripts that will run the apprpriate hydrogenic</PRE>
+ <PRE># neutral code depending on the type of grid. PIN/NIMBUS or EIRENE.</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE>cp $DIVMAINDIR/runpin rpindiv</PRE>
+ <PRE>cp $DIVMAINDIR/runeire reirediv</PRE>
+ <PRE>#</PRE>
+ <PRE># Execute DIVIMP</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit  7 is the text output from DIVIMP</PRE>
+ <PRE>#  Unit  9 is an echo of the DIVIMP input</PRE>
+ <PRE>#  Unit 17 is the passing file from DIVIMP to PIN</PRE>
+ <PRE>#  Unit 21 is the print file from the CALCSOL option</PRE>
+ <PRE>#  Unit 25 is a diagnostic print file of grid information</PRE>
+ <PRE>#  Unit 26 is used by OUT to print the numerics for plots</PRE>
+ <PRE>#  Unit 27 is another grid print file</PRE>
+ <PRE>#  Unit 50 is a diagnostic file from the Theta routines and Steve's code</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Link DIVIMP input data file - so name can be extracted.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f  $DIVDATDIR/$1.d6i ]] then</PRE>
+ <PRE>  ln -s $DIVDATDIR/$1.d6i fort.5</PRE>
+ <PRE>else</PRE>
+ <PRE>  echo "DIVIMP Input file " $DIVDATDIR/$1.d6i " does not exist."</PRE>
+ <PRE>  echo "Abnormal Script Termination - Script Exiting"</PRE>
+ <PRE>  cd ..</PRE>
+ <PRE>  rm -r $1</PRE>
+ <PRE>  exit 1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># Copy EIRENE input file template:</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $RUNROOT/eirene/$1.dat ]] then</PRE>
+ <PRE>  ln -s $RUNROOT/eirene/$1.dat $RUNROOT/$1/fort.80</PRE>
+ <PRE>else</PRE>
+ <PRE>  ln -s $RUNROOT/eirene/eirene98.dat $RUNROOT/$1/fort.80</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Run DIVIMP - Use optimized version.</PRE>
+ <PRE>#</PRE>
+ <PRE>echo Starting DIVIMP ...</PRE>
+ <PRE>#</PRE>
+ <PRE>$DIVEXE < fort.5 > divout1</PRE>
+ <PRE>#</PRE>
+ <PRE>echo DIVIMP Finished.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $PINCASE ]] then</PRE>
+ <PRE>  echo "PIN/NIMBUS case: " $PINCASE</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Save SOL22 plot file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f POSTSCPT.LIS ]] then</PRE>
+ <PRE>   mv POSTSCPT.LIS $DIVRESDIR/$1.sol22.ps</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Copy or move results.</PRE>
+ <PRE>#  .lim Debugging file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f divout1 ]] then</PRE>
+ <PRE>   mv divout1 $DIVRESDIR/$1.lim</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  .dat case output file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.7 ]] then</PRE>
+ <PRE>   mv fort.7  $DIVRESDIR/$1.dat</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  .inp input echo file + other information</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.9 ]] then</PRE>
+ <PRE>   mv fort.9 $DIVRESDIR/$1.inp</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  PIN input plasma file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.17 ]] then</PRE>
+ <PRE>   mv fort.17  $DIVRESDIR/$1.pin</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Additional information from SOL option 22.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.21 ]] then</PRE>
+ <PRE>   mv fort.21  $DIVRESDIR/$1.sol22</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Additional information from SOL option 23.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.71 ]] then</PRE>
+ <PRE>   mv fort.71  $DIVRESDIR/$1.sol23</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Print-out from PIN</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.24 ]] then</PRE>
+ <PRE>  mv fort.24  $DIVRESDIR/$1.pinprn</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Diagnostic information from THETA module (among others)</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.50 ]] then</PRE>
+ <PRE>   mv fort.50  $DIVRESDIR/$1.theta</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVIMP format background plasma file - if writing one</PRE>
+ <PRE>#  has been requested.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.62 ]] then</PRE>
+ <PRE>  mv fort.62  $DIVRESDIR/$1.bgp</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># Core file in case DIVIMP crashed</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f core ]] then</PRE>
+ <PRE>  mv core  $DIVRESDIR/$1.core</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># mv fort.25  $DIVRESDIR/$1.lst.grd</PRE>
+ <PRE># mv fort.27  $DIVRESDIR/$1.cell.grd</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Convert the DIVIMP output data file to postscript.</PRE>
+ <PRE>#</PRE>
+ <PRE>a2ps -nn $DIVRESDIR/$1.dat > $DIVRESDIR/$1.ps</PRE>
+ <PRE>#</PRE>
+ <PRE># a2ps -nn $DIVRESDIR/$1.sol > $DIVRESDIR/$1.sol.ps</PRE>
+ <PRE># mv POSTSCPT.LIS $DIVRESDIR/$1.sol.psg</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Execute OUT</PRE>
+ <PRE>#</PRE>
+ <PRE>echo Starting OUTput processing ...</PRE>
+ <PRE>#</PRE>
+ <PRE>$OUTEXE < $DIVDATDIR/$2.d6o > outout1</PRE>
+ <PRE>#</PRE>
+ <PRE>echo OUTput processing complete.</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Copy or move results of OUT run.</PRE>
+ <PRE>#</PRE>
+ <PRE>#  .out - OUT debugging file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f outout1 ]] then</PRE>
+ <PRE>   mv outout1 $DIVRESDIR/$1.out</PRE>
+ <PRE>fi</PRE>
+ <PRE>#  .raw complete results file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.8 ]] then</PRE>
+ <PRE>   mv fort.8 $DIVRESDIR/$1.raw</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  .psg - Postscript plots</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f POSTSCPT.LIS ]] then</PRE>
+ <PRE>   mv POSTSCPT.LIS $DIVRESDIR/$1.psg</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  .ing - Echo of input to graphing routines</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.17 ]] then</PRE>
+ <PRE>   mv fort.9 $DIVRESDIR/$1.ing</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Special printed listing of some plot information.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.26 ]] then</PRE>
+ <PRE>   mv fort.26 $DIVRESDIR/$1.grp</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Special printed listing of some plot information.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.49 ]] then</PRE>
+ <PRE>   mv fort.49 $DIVRESDIR/$1.plt</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># EIRENE related output:</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.81 ]] then</PRE>
+ <PRE>   mv fort.81 $DIVRESDIR/$1.eirdat</PRE>
+ <PRE>fi</PRE>
+ <PRE>if [[ -f fort.80 ]] then</PRE>
+ <PRE>   mv fort.80 $DIVRESDIR/$1.eirtmp</PRE>
+ <PRE>fi</PRE>
+ <PRE>if [[ -f fort.52 ]] then</PRE>
+ <PRE>   mv fort.52 $DIVRESDIR/$1.eirgeo</PRE>
+ <PRE>fi</PRE>
+ <PRE>if [[ -f fort.50 ]] then</PRE>
+ <PRE>   mv fort.50 $DIVRESDIR/$1.debug</PRE>
+ <PRE>fi</PRE>
+ <PRE>if [[ -f fort.85 ]] then</PRE>
+ <PRE>   mv fort.85 $DIVRESDIR/$1.g1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># cp fort.13 $EQUDIR/$3.grd</PRE>
+ <PRE># a2ps -nn -p $DIVRESDIR/$1.plt > $DIVRESDIR/$1.plt.ps</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE># Clean-up</PRE>
+ <PRE>#</PRE>
+ <PRE>rm fort.*</PRE>
+ <PRE>rm rpindiv</PRE>
+ <PRE>rm reirediv</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE>rmdir $1</PRE>
+ <PRE>cd $DIVRESDIR</PRE>
+ <PRE>#</PRE>
+ <PRE># Compress the larger output files - check for file existence</PRE>
+ <PRE>#                                    before compressing.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.raw ]] then</PRE>
+ <PRE>   compress -f -v $1.raw</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.lim ]] then</PRE>
+ <PRE>   compress -f -v $1.lim</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.sol22 ]] then</PRE>
+ <PRE>   compress -f -v $1.sol22</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.out ]] then</PRE>
+ <PRE>   compress -f -v $1.out</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.pinout ]] then</PRE>
+ <PRE>   compress -f -v $1.pinout</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.pinraw ]] then</PRE>
+ <PRE>   compress -f -v $1.pinraw</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.pinnim ]] then</PRE>
+ <PRE>   compress -f -v $1.pinnim</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f $1.pinmc ]] then</PRE>
+ <PRE>   compress -f -v $1.pinmc</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Print</PRE>
+ <PRE>#</PRE>
+ <PRE># lp $1.ps</PRE>
+ <PRE># lp $1.sol.ps</PRE>
+ <PRE># lp $1.plt.ps</PRE>
+ <PRE># lp $1.psg</PRE>
+ <PRE># lp $1.sol.ps</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Return to base directory.</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>

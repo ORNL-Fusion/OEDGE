@@ -1,0 +1,14 @@
+#!/bin/tcsh
+
+if ( $# != 1 ) then
+  exit
+endif
+
+if (( -e $1 ) && !( -z $1 )) then
+  gzip $1
+#  zip $1.gz $1
+#  rm  $1
+endif
+
+
+
