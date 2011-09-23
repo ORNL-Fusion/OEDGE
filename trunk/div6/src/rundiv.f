@@ -499,7 +499,7 @@ c
       call create_html(jfcb)
 
 
-      STOP 'END OF DIVIMP'
+      STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'
 C                                                                      
  1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - RUN ABORTED')      
       STOP 'ERROR OCCURED DURING DATA INPUT - RUN ABORTED'                                                            

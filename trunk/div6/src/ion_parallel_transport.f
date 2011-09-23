@@ -1232,7 +1232,7 @@ c
      >         'struck target'
       endif
 
-      call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
+      call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy,energy)
 c     
 c     
       IFATE = 2
