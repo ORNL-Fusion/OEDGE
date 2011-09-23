@@ -3121,7 +3121,12 @@ c        end do
 c slmod end
         IONTI2 = IND-1
 c
-        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin
+        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
+     .      cgridopt.eq.LINEAR_GRID) then
+c
+c        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
            endid = nds-1
         elseif (cgridopt.eq.2) then
            endid = ndsin2-1

@@ -250,25 +250,19 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
             1: BEGIN
               ydata[*,0] = val.wall.atom_par_flux
 
-              j = [107, 116, 167, 290]
-              FOR i = 0, 3 DO BEGIN
-                k = WHERE(val.wall.index EQ j[i])
-                flux = ( val.wall.atom_par_flux[k] + val.wall.mol_par_flux[k]) / 2
-                
-                temp = 300 
- 
-                fact = 2.0 * SQRT(!PI / 2.0)
-
-                mass = 2.0 * 1.67E-27
-
-                pressure = fact * SQRT( mass ) * flux * SQRT( 1.38E-23 * temp )
-
-                print, j[i], val.wall.atom_par_flux[k],  $
-                             val.wall.mol_par_flux [k],  $
-                             flux, temp, pressure, pressure * 7.5,  $
-                       FORMAT='(I6,2E10.2,2X,E10.2,2X,I6,2X,2E10.2)'                     
-              ENDFOR
-
+             ; j = [107, 116, 167, 290]
+             ; FOR i = 0, 3 DO BEGIN
+             ;   k = WHERE(val.wall.index EQ j[i])
+             ;   flux = ( val.wall.atom_par_flux[k] + val.wall.mol_par_flux[k]) / 2
+             ;   temp = 300 
+             ;   fact = 2.0 * SQRT(!PI / 2.0)
+             ;   mass = 2.0 * 1.67E-27
+             ;   pressure = fact * SQRT( mass ) * flux * SQRT( 1.38E-23 * temp )
+             ;   print, j[i], val.wall.atom_par_flux[k],  $
+             ;                val.wall.mol_par_flux [k],  $
+             ;                flux, temp, pressure, pressure * 7.5,  $
+             ;          FORMAT='(I6,2E10.2,2X,E10.2,2X,I6,2X,2E10.2)'                     
+             ; ENDFOR
               END
             2: BEGIN
               ydata[*,0] = val.wall.atom_avg_energy
@@ -276,7 +270,24 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
               ;i = WHERE(val.wall.atom_par_flux LT 0.01 * mid_atom_flux, count)
               ;IF (count GE 1) THEN ydata[i,0] = 0.0
               END
-            3: ydata[*,0] = val.wall.atom_energy_flux  ; W m-2
+            3: BEGIN
+              ydata[*,0] = val.wall.atom_energy_flux  ; W m-2
+
+;              help,val.wall,/struct
+
+              i = WHERE(plot.xrange EQ 0.0, count)
+              IF (count EQ 2) THEN i = INDGEN(N_ELEMENTS(val.wall.index)) ELSE  $
+                                   i = WHERE(xdata GE plot.xrange[0] AND xdata LE plot.xrange[1], count)        
+              IF (count EQ 0) THEN BEGIN
+                PRINT,'cortex_PlotWallProfiles','No data within XRANGE'
+                STOP
+              ENDIF
+
+              print, 'total power:',TOTAL(val.wall.atom_energy_flux[i] *  $
+                                          val.wall.toroidal_area   [i]),  $
+                                    TOTAL(val.wall.toroidal_area   [i])
+ 
+              END
           ENDCASE
           END
 ;       ----------------------------------------------------------------
@@ -677,15 +688,66 @@ FUNCTION cortex_PlotWallProfiles, plot, data_array, grid=grid, wall=wall, annota
             3: 
             ELSE:
           ENDCASE
+
+          ; Show the peak average quantity over a specificed plot range:
+          IF (iplot EQ 1 AND plot.show_avg AND cortex_GetValues(plot.xmark,values)) THEN BEGIN
+            IF (idata EQ 1) THEN BEGIN
+              val_wall = cortex_ExtractStructure(data_array,idata)
+              max_average = MAKE_ARRAY(N_ELEMENTS(values),/FLOAT,VALUE=0.0)
+            ENDIF
+            print, '       >>>>>---------<<<<<'
+            FOR i = 0, N_ELEMENTS(values)-1, 2 DO BEGIN
+              j = WHERE(xdata GE values[i] AND xdata LE values[i+1])
+              print,'trying',values[i:i+1]
+              print,'check ',xdata[j]
+              print,'check ',val_wall.wall.length[j]
+              print,'ydata ',val.y[j,0]
+              weight = val_wall.wall.length[j] / TOTAL(val_wall.wall.length[j])
+              print,'weight',weight
+              print,'weight',TOTAL(weight)
+              print,'-->   ',TOTAL(val.y[j,0]*weight)
+              max_average[i] = MAX([max_average[i],TOTAL(val.y[j,0]*weight)])
+              print,'max_avg=',i,idata,max_average[i]
+            ENDFOR
+            IF (idata EQ ndata) THEN BEGIN
+              FOR i = 0, N_ELEMENTS(values)-1, 2 DO  $
+                XYOUTS, values[i] + 0.005 * (xmax - xmin),  $
+                        0.0       - 0.075 * (ymax - ymin),  $
+                        'MAX_AVG = '+STRTRIM(STRING(MAX(max_average[i]),FORMAT='(E10.2)'),2),  $
+                        CHARSIZE=charsize_labels
+            ENDIF
+          ENDIF
+
           BREAK
           END
 ;       ----------------------------------------------------------------
-        2:
+        2: BEGIN
+          IF (idata EQ 1) THEN  $
+            cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
+                            dev_xsize, dev_ysize, charsize_labels, colors
+
+          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
+ 
+          IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
+          IF (plot_sum  EQ 1 AND idata EQ ndata) THEN thick = 2.0
+
+          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
+          CASE iplot OF
+            1: 
+            2: 
+            3: 
+            ELSE:
+          ENDCASE
+          BREAK
+          END
+;       ----------------------------------------------------------------
         3: 
+;       ----------------------------------------------------------------
         5: BEGIN
           IF (idata EQ 1) THEN  $
             cortex_DrawKey, iplot-2, focus, labels, xy_label, xpos, ypos,  $
                             dev_xsize, dev_ysize, charsize_labels, colors
+
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
           IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
           IF (plot_sum  EQ 1 AND idata EQ ndata) THEN thick = 2.0

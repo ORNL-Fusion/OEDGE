@@ -3,14 +3,14 @@ c
 c ======================================================================
 c
       SUBROUTINE GenerateReflectionChords(mode,imodel,weight,vv,nv,
-     .                                    nref,rv,rw)
+     .                                    nref,rv,rw,sw,reflvl)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
 
 c...  Input:
-      INTEGER mode,imodel,nref,i,j,i1
-      REAL*8 weight,vv(3),nv(3),rv(3,nref),rw(nref),ra(nref),
+      INTEGER mode,imodel,nref,i,j,i1,reflvl
+      REAL*8 weight,vv(3),nv(3),rv(3,nref),rw(nref),sw(nref),ra(nref),
      .       mat1(3,3),mat2(3,3),mat3(3,3),
      .       theta,phi,dtheta,dphi,solid_angle,solid_total,
      .       cutoff,dtheta1,dphi1,scale_total,scale_gross
@@ -25,20 +25,17 @@ c...  Input:
 
       reflection_model = opt%ref_model(imodel)
 
-
       scale_gross = weight
-
 
       SELECTCASE (opt%ref_wlgth(imodel))
         CASE(0) 
-          scale_gross = scale_gross * DBLE(opt%ref_k(imodel))        
+          scale_gross = scale_gross * DBLE(opt%ref_k(imodel)**reflvl)       ! LEVEL=2: need to square this... 
         CASE DEFAULT
           CALL User_SurfaceReflectivity(imodel,scale_gross)
       ENDSELECT
-
+c      WRITE(0,*) 'scale_gross=',scale_gross
 
       IF (output) WRITE(0,*) 'REFLECTION MODEL:',reflection_model
-
 
       IF (.TRUE.) THEN
 
@@ -79,6 +76,7 @@ c        solid_angle = dtheta * D_DEGRAD
         rv(2,1) = 0.0D0
         rv(3,1) = 1.0D0
         rw(1) = scale_factor * solid_angle
+        sw(1) = scale_factor
         ra(1) = solid_angle
 
         IF (output) WRITE(0,*) '  DATA:',1,solid_angle
@@ -106,7 +104,7 @@ c          scale_factor = 1.0D0
 
           IF (scale_factor.LT.cutoff.OR.theta+dtheta.GT.90.0D0) EXIT       ! Exit conditions   
 
-c          IF (output) WRITE(0,*) '  DATA:',nref,scale_factor,theta
+c          IF (output) WRITE(0,*) '  DATA:',nref,scakele_factor,theta
 
 
           dphi = dphi1
@@ -130,17 +128,15 @@ c     .      '  DATA:',nref,scale_factor,theta,
 c     .                solid_angle/ DBLE(REAL(nphi)),
 c     .           scale_factor,solid_angle
 
-
           nref = nref + 1
           rv(1:3,nref) = rv(1:3,1)
           rw(nref) = scale_factor * solid_angle
+          sw(nref) = scale_factor
           ra(nref) = solid_angle
-
 c...
           CALL Calc_Transform2(mat1,0.0D0,1,0)
           CALL Calc_Transform2(mat1,theta*D_DEGRAD,1,1)
           CALL Transform_Vect (mat1,rv(1,nref))
-
 c...      
           CALL Calc_Transform2(mat1,0.0D0,3,0)
           CALL Calc_Transform2(mat1,dphi*D_DEGRAD,3,1)
@@ -156,37 +152,22 @@ c...
             CALL Transform_Vect(mat1,rv(1,nref))
 c...        Calculate solid angle and set weight:
             rw(nref) = scale_factor * solid_angle
+            sw(nref) = scale_factor
             ra(nref) = solid_angle
           ENDDO
-
         ENDDO
-
-
-
       ENDIF
-
-
-
-
-
-
 
       SELECTCASE (reflection_model)
         CASE (1)  ! Specular
-
 c...      Calculate specular reflection vector:
           ndotv = nv(1) * vv(1) + nv(2) * vv(2) + nv(3) * vv(3)
           v1(1:3) = 2.0D0 * ndotv * nv(1:3) - vv(1:3)
-
         CASE (2)  ! Diffuse
           v1(1:3) = nv(1:3)
-
         CASE DEFAULT
            STOP 'STOP: SOMETHING WRONG'
       ENDSELECT
-
-
-
 
 
       IF (.TRUE.) THEN
@@ -262,6 +243,7 @@ c...    Clean up:
             DO i1 = iref, nref-1
               rv(1:3,i1) = rv(1:3,i1+1)
               rw(    i1) = rw(    i1+1)
+              sw(    i1) = sw(    i1+1)
             ENDDO
             nref = nref - 1
           ENDIF
@@ -271,6 +253,7 @@ c...    Clean up:
 
 
       IF (.TRUE.) THEN
+
 c...    Normalize total solid angle:
         solid_total = 0.0D0
         DO iref = 1, nref
@@ -278,6 +261,7 @@ c...    Normalize total solid angle:
 c          WRITE(0,*) 'SA:',iref,ra(iref),solid_total
         ENDDO
         rw(1:nref) = rw(1:nref) / solid_total
+
 c        DO iref = 1, nref
 c          scale_total = scale_total + rw(iref)
 c        ENDDO
@@ -303,12 +287,12 @@ c        rw(1:nref) = rw(1:nref) / scale_total
         rw(1:nref) = rw(1:nref) * scale_factor 
       ENDIF
 
+c      WRITE(6,*) 'SCALE REF:',solid_total,scale_factor
+c      WRITE(6,*) '         :',rw(1:nref)
+c      WRITE(6,*) '         :',ra(1:nref)
 
         IF (output) WRITE(0,*) '  WEIGHT 1:',rw(1)
         IF (output) WRITE(0,*) '  WEIGHT  :',rw(2:nref)
-c        WRITE(0,*) '  WEIGHT 1:',rw(1)
-c        WRITE(0,*) '  WEIGHT  :',rw(2:nref)
-
 
 
 c      WRITE(0,*) 'NREF:',nref
@@ -319,27 +303,23 @@ c      WRITE(0,*) 'NREF:',nref
 c
 c ======================================================================
 c
-      SUBROUTINE AssignReflectionChord(chord,iobj,iside,isrf,refcnt)
-c     .                                 nobj,obj,refcnt)
+      SUBROUTINE AssignReflectionChord(chord,iobj,iside,isrf,
+     .                                 refcnt,reflvl)
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
 
 c...  Input:
-      INTEGER iobj,iside,isrf,refcnt
-c      INTEGER iobj,iside,isrf,nobj,refcnt
-c      TYPE(type_options985) :: opt
-      TYPE(type_view)       :: chord
-c      TYPE(type_3D_object)  :: obj(nobj)
-
+      INTEGER iobj,iside,isrf,refcnt,reflvl
+      TYPE(type_view) :: chord
 
       INTEGER nref,imodel
       LOGICAL output
       REAL*8  av(3),bv(3),nv(3),vv(3),tv(3),length,ndotv,theta
 
-      REAL*8, ALLOCATABLE :: rv(:,:),rw(:)
+      REAL*8, ALLOCATABLE :: rv(:,:),rw(:),sw(:)
 
-      TYPE(type_view) :: chord_hold
+      TYPE(type_view) :: chord_hold,chord_primary
  
       SAVE
 
@@ -349,12 +329,18 @@ c      TYPE(type_3D_object)  :: obj(nobj)
 
 c      RETURN
 
+c     ------------------------------------------------------------------
       IF (refcnt.EQ.1) THEN
 c...    Initialize:    
 
 c...    Store incident chord view+weight, normalize:
+        IF (reflvl.EQ.1) chord_primary = chord
+
         chord_hold = chord
 c        WRITE(0,*) 'INTEGRAL:',nchord,chord%integral(1)
+
+c        WRITE(0,'(A,3F10.3)') 'ref  chord%v1,2=',chord%v1
+c        WRITE(0,'(A,3F10.3)') '               =',chord%v2
 
         vv(1:3) = chord%v1(1:3) - chord%v2(1:3)
 c...    Normalize:
@@ -403,9 +389,9 @@ c....
             tv(3) = obj(iobj)%v(1,obj(iobj)%ipts(2,iside)) *
      .              DABS(DSIN(theta)) * DSIGN(1.0D0,chord%v2(3))
 
-c            WRITE(0,*) '  THETA=',theta
+c            WRITE(0,*) '  THETA=',theta,iobj,iside
 c            WRITE(0,*) '  AV   =',SNGL(av)
-c            WRITE(0,*) '  TV   =',SNGL(av)
+c            WRITE(0,*) '  TV   =',SNGL(tv)
 c            WRITE(0,*) '  V2   =',SNGL(chord%v2(1:3))
 
 c
@@ -426,6 +412,10 @@ c            bv(2) =  0.0D0            ! vector with the y-axis unit vector
 c            bv(3) = -chord%v2(1) 
           ENDIF
 
+c          WRITE(0,*) '  THETA=',theta,iobj,iside
+c          WRITE(0,*) '  TV   =',SNGL(tv)
+c          WRITE(0,*) '  AV   =',SNGL(av)
+
           av(1:3) = av(1:3) - tv(1:3)
 c          av(1:3) = av(1:3) - chord%v2(1:3)
 c          WRITE(0,*) '  AV   =',SNGL(av)
@@ -433,6 +423,9 @@ c          WRITE(0,*) '  AV   =',SNGL(av)
           bv(1) =  chord%v2(3)      ! Cross-product of the surface intersection
           bv(2) =  0.0D0            ! vector with the y-axis unit vector
           bv(3) = -chord%v2(1) 
+c          WRITE(0,*) '  BV   =',SNGL(bv)
+
+c          WRITE(0,*) '  AV   =',SNGL(av)
 c          WRITE(0,*) '  BV   =',SNGL(bv)
 
         ELSEIF (obj(iobj)%gsur(iside).EQ.GT_TD) THEN
@@ -494,10 +487,12 @@ c...    Call GenerateReflectionChords then again to assign...
           WRITE(0,*) '  UNEXPECTED RESET OF rv AND zv ARRAYS'
           DEALLOCATE(rv)
           DEALLOCATE(rw)
+          DEALLOCATE(sw)
         ENDIF 
 
         ALLOCATE(rv(3,nref))
         ALLOCATE(rw(nref))
+        ALLOCATE(sw(nref))
 
         imodel = obj(iobj)%reflec(iside)
         IF (imodel.GT.opt%ref_num) 
@@ -505,7 +500,7 @@ c...    Call GenerateReflectionChords then again to assign...
      .            'appears invalid',*99)  
 
         CALL GenerateReflectionChords(0,imodel,chord%weight,vv,nv,
-     .                                nref,rv,rw)
+     .                                nref,rv,rw,sw,reflvl)
 
         IF (output) THEN
           WRITE(0,*) 'SURFACE:',iobj,iside,isrf
@@ -514,35 +509,40 @@ c...    Call GenerateReflectionChords then again to assign...
 c          WRITE(0,*) 'REFLEC(1): ',reflec(1)%v2(1:3)
         ENDIF
 
-
-
         IF (output) WRITE(0,*) 'FINGERS CROSSED'
-      ENDIF
 
+      ENDIF  ! End of initialization
+c     ------------------------------------------------------------------
 
       IF (nref.EQ.0.OR.refcnt.GT.nref) THEN
         IF (output) WRITE(0,*) 'TURNING OFF REFECTION'
         refcnt = 0
         IF (ALLOCATED(rv)) DEALLOCATE(rv)
         IF (ALLOCATED(rw)) DEALLOCATE(rw)
+        IF (ALLOCATED(sw)) DEALLOCATE(sw)
 c...    Restore:
-        chord%v1(1:3) = chord_hold%v1(1:3)  
-        chord%v2(1:3) = chord_hold%v2(1:3) 
+        chord%v1(1:3) = chord_primary%v1(1:3)  
+        chord%v2(1:3) = chord_primary%v2(1:3) 
+c        chord%v1(1:3) = chord_hold%v1(1:3)  
+c        chord%v2(1:3) = chord_hold%v2(1:3) 
 c        WRITE(0,*) 'INTEGRAL:',nchord,chord%integral(1)
         RETURN
       ENDIF
 
 c       refcnt = 0
 
-      chord%weight  = rw(refcnt)
+      chord%weight      = rw(refcnt)
+      chord%weight_save = sw(refcnt)
       chord%v1(1:3) = chord_hold%v2(1:3)
       chord%v2(1:3) = chord_hold%v2(1:3) + 100.0D0 * rv(1:3,refcnt)
+
+c      WRITE(0,*) '---------chord weight',chord%weight
+c      WRITE(6,*) '---------chord weight',chord%weight
 
 c      WRITE(0,*) 'CHORD LENGTH: ',
 c     .  DSQRT((chord%v2(1)-chord%v1(1))**2 + 
 c     .        (chord%v2(2)-chord%v1(2))**2 + 
 c     .        (chord%v2(3)-chord%v1(3))**2)
-
 
       IF (output) WRITE(0,*) 'DONE MAKING REFLECTIONS'
 
@@ -565,9 +565,14 @@ c
 
       INTEGER i1,i2,i3,iobj,isid,isrf,ivol,isid2,iobj2,count,refcnt,
      .        iobj_hold,isid_hold,inum,vwindex,iobj_primary,ipla,iint,
-     .        problem_ignored,fp,ipro
-      LOGICAL cont
+     .        problem_ignored,fp,ipro,iobj_hack,iobj_hack2
+      LOGICAL cont,ref_debug
       TYPE(type_view) :: chord, tmpchord
+
+      INTEGER, PARAMETER :: MAXREFNIND = 5000000
+      INTEGER reflvl,refnind,refind,reford,refend,refmark
+      INTEGER, ALLOCATABLE :: refobj(:),refsid(:),refsrf(:),ref_hack(:)
+      TYPE(type_view), ALLOCATABLE :: ref_chord(:)
 
       REAL   quant
       REAL*8 val,v1(3),v3(3),v4(3),v1_hold(3),v2_hold(3),s,length,frac
@@ -577,10 +582,18 @@ c      DATA problem_ignored /0/
       DATA    problem_message / .FALSE. /
       SAVE
 
+      ref_debug = .FALSE.
+
       problem_ignored = 0
 
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
       fp = 6
+
+      reford  = opt%ref_opt
+      reflvl  = 1
+      refind  = 0
+      refmark = 0
+      refnind = 0
 
 c      IF (nchord.EQ.dchord+1) THEN
 c        WRITE(0,*) 'TERMINATING TRACE AFTER DIAGNOSTIC CHORD'
@@ -602,6 +615,9 @@ c...  Decide if the detector is inside or outside the vessel wall:
       ELSE
         vwindex = 2
       ENDIF
+
+      iobj_hack  = -1
+      iobj_hack2 = -1
 
       cont = .TRUE.
       DO WHILE (cont)
@@ -663,12 +679,14 @@ c         intersects the vessel wall:
           chord%v2(1:3) = vwinter(vwindex)%v(1:3)  
         ELSEIF (refcnt.GT.0) THEN
           IF (vwinter(1)%dist.LT.1.0D-5) THEN
-            iobj          = vwinter(2)%obj
-            chord%v2(1:3) = vwinter(2)%v(1:3) 
+            refend = 2
           ELSE
-            iobj          = vwinter(1)%obj
-            chord%v2(1:3) = vwinter(1)%v(1:3) 
+            refend = 1
           ENDIF
+          iobj          = vwinter(refend)%obj
+          chord%v2(1:3) = vwinter(refend)%v(1:3) 
+c          write(fp,*) 'reflected iobj...',
+c     .      nchord,iobj,refend,vwinter(1)%dist
           tmpchord = chord
         ELSE
           CALL ER('IntegrateChord','Bad',*99)
@@ -727,7 +745,7 @@ c     .        (chord%v2(3)-chord%v1(3))**2)
           ngbinter = 0
           CALL FindSurfaceIntersections
      .           (chord%v1,chord%v2,IT_GBINTER,status)                       
-c     .           (chord%v1,chord%v2,IT_GBINTER,nobj,obj,status)                       
+
         ELSE
 c...      Cheat, try last set of grid intersections first (if there is an appropriate one): 
         ENDIF
@@ -740,17 +758,49 @@ c...      Cheat, try last set of grid intersections first (if there is an approp
           WRITE(fp,*) obj(gbinter(1:ngbinter)%obj)%nsur
         ENDIF
 
-c        WRITE(0,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
-c        WRITE(0,*) gbinter(1:ngbinter)%dist 
-c        WRITE(0,*) gbinter(1:ngbinter)%obj 
-c        WRITE(0,*) gbinter(1:ngbinter)%sur 
-c        WRITE(0,*) obj(gbinter(1:ngbinter)%obj)%nsur
+c        WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
+c        WRITE(fp,*) gbinter(1:ngbinter)%dist 
+c        WRITE(fp,*) gbinter(1:ngbinter)%obj 
+c        WRITE(fp,*) gbinter(1:ngbinter)%sur 
+c        WRITE(fp,*) obj(gbinter(1:ngbinter)%obj)%nsur
 
 c        IF (refcnt.GT.0) WRITE(0,*) 'GRID INTESRSECTIONS:',ngbinter
+
+
+c...    So, this is necessary in case a chord is reflected from a wall surface
+c       that's inside the integration volume, i.e. need to start the chord
+c       off inside that volume rather than assuming it starts outside the grid: - 15/07/11, SL (was painful)
+        iobj_hack2 = -1
+        IF (refcnt.GT.0.AND.iobj_hack.NE.-1) THEN
+c          WRITE(fp,*) 'ammending with hack....'
+          IF (nchord.EQ.dchord) 
+     .      WRITE(fp,*) 'ammending with hack....'
+          IF (ref_debug) WRITE(6,*) 'ammending with hack....'
+          gbinter(2:ngbinter+1) = gbinter(1:ngbinter)
+          gbinter(1)%dist = 0.1D0 * gbinter(2)%dist  ! arbitrary
+          gbinter(1)%obj  = iobj_hack
+          gbinter(1)%sur  = 0
+          gbinter(1)%v    = chord%v1(1:3)
+          ngbinter = ngbinter + 1
+
+c          WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
+c          WRITE(fp,*) gbinter(1:ngbinter)%dist 
+c          WRITE(fp,*) gbinter(1:ngbinter)%obj 
+c          WRITE(fp,*) gbinter(1:ngbinter)%sur 
+c          WRITE(fp,*) obj(gbinter(1:ngbinter)%obj)%nsur
+
+        ENDIF
 
         IF (ngbinter.GT.0) THEN  
 c...      Intersections detected (NGBINTER.GT.0):
           DO i1 = 1, ngbinter, 2    ! The 2 since exit for each entrance, unless a floater is hit...
+
+c        IF (nchord.EQ.dchord) THEN
+c          WRITE(fp,*) 'check:',ngbinter,refcnt,
+c     .       iobj_hold,obj(iobj_hold)%type.EQ.OP_INTEGRATION_VOLUME
+c          WRITE(fp,*) '     :',SNGL(chord%v1(1:3))
+c          WRITE(fp,*) '     :',iobj_hack
+c        ENDIF
 
             IF (refcnt.GT.0.AND.
      .          obj(iobj_hold)%type.EQ.OP_INTEGRATION_VOLUME) THEN
@@ -759,13 +809,17 @@ c             the integration mesh, i.e. from a target surface:
               iobj = iobj_hold
               isid = isid_hold
               v1(1:3) = chord%v1(1:3)
+c            ELSEIF (refcnt.GT.0.AND.iobj_hack.NE.-1) THEN
+c              iobj = iobj_hack
+c              isid = 0
+c              v1(1:3) = chord%v1(1:3)
             ELSE
               iobj = gbinter(i1)%obj
               isid = gbinter(i1)%sur
               v1(1:3) = gbinter(i1)%v(1:3)
             ENDIF
 
-            obj(iobj)%flag(isid) = -1         ! *** CHEAT ***
+c            obj(iobj)%flag(isid) = -1         ! *** CHEAT ***
 
             count = 0
             DO WHILE (.TRUE.) 
@@ -840,17 +894,38 @@ c                  SINCE THE VOLUME SOMETIMES HAS 'EXTRA' SURFACES ASSOCIATED WI
 c                  FROM, LIKE FOR THE X-POINT WITH THE MAGNETIC GRID (NEEDS TO BE RESOLVED)***
                 IF (.TRUE.) THEN
 
-                  IF (i1.NE.ngbinter) problem_ignored =problem_ignored+1
+c...              Check if the end point of the chord is inside the current integration volume:
+c                  IF (obj(iobj)%gsur(1).EQ.GT_TC) THEN
+c                    WRITE(0,*) 'better',iobj
+c                  ENDIF
+
+c                  IF (i1.NE.ngbinter) problem_ignored =problem_ignored+1
+                 problem_ignored = problem_ignored + 1
 c                  IF (i1.NE.ngbinter) 
-                  WRITE(0,*) 'PROBLEM IGNORED...',nchord,refcnt
+c                  WRITE(0,*) 'PROBLEM IGNORED...',nchord,refcnt
+
+                 IF (ref_debug) 
+     .             write(6,*) 'refcnt,reflvl=',refcnt,reflvl
+                 IF (refcnt.EQ.0) iobj_hack  = iobj
+                 IF (refcnt.GT.0) iobj_hack2 = iobj
+                 IF (ref_debug) 
+     .             write(6,*) 'setting iobj_hack',iobj,iobj_hack,
+     .                         iobj_hack2
+
 
 c                IF (i1.EQ.ngbinter) THEN
 c                IF (nobinter.EQ.2) THEN
 c...              Put chord on vessel wall surface:
                   nobinter = 1
-                  obinter(1)%obj    = vwinter(vwindex)%obj
-                  obinter(1)%sur    = vwinter(vwindex)%sur 
-                  obinter(1)%v(1:3) = vwinter(vwindex)%v(1:3)   ! =chord%v2(1:3)
+                  IF (refcnt.EQ.0) THEN 
+                    obinter(1)%obj    = vwinter(vwindex)%obj
+                    obinter(1)%sur    = vwinter(vwindex)%sur 
+                    obinter(1)%v(1:3) = vwinter(vwindex)%v(1:3)   ! =chord%v2(1:3)
+                  ELSE
+                    obinter(1)%obj    = vwinter(refend)%obj
+                    obinter(1)%sur    = vwinter(refend)%sur 
+                    obinter(1)%v(1:3) = vwinter(refend)%v(1:3)   ! =chord%v2(1:3)
+                  ENDIF
 c                  obinter(1)%obj    = vwinter(1)%obj
 c                  obinter(1)%sur    = vwinter(1)%sur 
 c                  obinter(1)%v(1:3) = vwinter(1)%v(1:3)   ! =chord%v2(1:3)
@@ -877,11 +952,17 @@ c...            Try to identify when an intersection is invalid for a GT_TC surf
      .              obinter(i2)%dist.LT.RTOL) THEN
 c...              Check if the ISID2 surface is the same as the ISID (the surface
 c                 that the chord is currently on), and if so, delete the intersection:
-                  DO i3 = 1, obj(iobj)%nmap(isid)
-                    IF (obj(iobj)%imap(i3,isid).EQ.iobj2.AND.
-     .                  obj(iobj)%isur(i3,isid).EQ.isid2)
-     .                obinter(i2)%dist = -999.0D0
-                  ENDDO
+                  IF (isid.EQ.0) THEN
+                    write(0,*) 'strange event here, ISID=0'
+                    write(6,*) 'strange event here, ISID=0'
+                    obinter(i2)%dist = -999.0D0
+                  ELSE
+                    DO i3 = 1, obj(iobj)%nmap(isid)
+                      IF (obj(iobj)%imap(i3,isid).EQ.iobj2.AND.
+     .                    obj(iobj)%isur(i3,isid).EQ.isid2)
+     .                  obinter(i2)%dist = -999.0D0
+                    ENDDO
+                  ENDIF
                 ENDIF
 c...            Clean-up the list:
                 IF (obinter(i2)%dist.EQ.-999.0D0) THEN
@@ -956,16 +1037,29 @@ c...            *TEMP* (won't work with MPI...)
  
               IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN  ! Aren't all objects integration volumes here?  Or do floating surfaces pass as well?
 c...            Line-of-sight integral:
+
+
+
+
+
                 DO iint = 1, MAX(1,opt%int_num)
                   val = chord%weight * obinter(1)%dist * 
      .                  DBLE(obj(iobj)%quantity(iint))
+
                   chord%integral(iint) = chord%integral(iint) + val
 c     .                                 chord%weight * 
 c     .                                 obinter(1)%dist * 
 c     .                                 DBLE(obj(iobj)%quantity(iint))
 
 
-                  IF (.TRUE.) THEN   ! *** PROFILE HACK ***
+                IF (ref_debug)
+     .             write(6,'(A,2I6,F10.4,3F10.4,1P,E10.2,0P,
+     .                      I6,1P,E10.2,0P)') 
+     .              '   weight',nchord,refcnt,chord%weight,
+     .              obinter(1)%v(1:3),chord%integral(iint)/(4*3.14),
+     .              iobj,obj(iobj)%quantity(iint)
+
+                  IF (.FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
@@ -976,7 +1070,8 @@ c     .                      (obinter(1)%v(2) - chord_primary%v1(2))**2 +
 c     .                      (obinter(1)%v(3) - chord_primary%v1(3))**2),
 c     .            obinter(1)%dist
 
-                    IF (iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THEN
+                    IF (iint.EQ.1) THEN
+c                    IF (iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THEN
                       chord%nprofile = chord%nprofile + 1
 
                       ipro = chord%nprofile
@@ -984,15 +1079,28 @@ c     .            obinter(1)%dist
                       chord%profile(ipro,-5) = 
      .                  DSQRT((obinter(1)%v(1)-chord_primary%v1(1))**2 +
      .                        (obinter(1)%v(2)-chord_primary%v1(2))**2 +
-     .                        (obinter(1)%v(3)-chord_primary%v1(3))**2)
-c     .                  0.5D0 * obinter(1)%dist
+     .                        (obinter(1)%v(3)-chord_primary%v1(3))**2)-
+     .                  0.5D0 * obinter(1)%dist
                       chord%profile(ipro,-4) = obinter(1)%dist
                       chord%profile(ipro,-3) = chord%weight
                       ipla = obj(iobj)%index_pla
                       chord%profile(ipro,-2) = plasma(ipla)%nb
                       chord%profile(ipro,-1) = plasma(ipla)%te
                       chord%profile(ipro, 0) = plasma(ipla)%tb
+
+                      chord%profile(ipro,-7) = plasma(ipla)%nD
+                      chord%profile(ipro,-6) = plasma(ipla)%nD2
                     ENDIF
+
+                    IF (opt%int_charge(iint).GT.3) 
+     .                STOP 'NOT ENOUGH PROFILE SPACE'
+                    IF (opt%int_z(iint).GT.1)
+     .                chord%profile(ipro,-11+opt%int_charge(iint)) =  
+     .                   plasma(ipla)%ni(iint)                        
+
+c                    write(0,*) 'test',-11+opt%int_charge(iint),
+c     .                         plasma(ipla)%ni(iint)
+
                     chord%profile(ipro,iint) = 
      .                  chord%weight * DBLE(obj(iobj)%quantity(iint))
                   ENDIF
@@ -1036,24 +1144,19 @@ c...            Update inversion map based on track length in object volume:
      .                              chord%weight * 
      .                              obinter(1)%dist
 
-
-
-
-c...            Store profile of quantity along the viewing chord: 
-
-
-
 c...            Keep track of sampling weight for object:
 c                obj(ivol)%sample = obj(ivol)%sample + obinter(1)%dist  ! Done with %path... 
                 IF (nchord.EQ.-1) WRITE(0,*) '  DIST:',obinter(1)%dist
               ENDIF
+c              write(fp,*) '    iobj',iobj,chord%integral(1)  ! low check
+
 c...          Update surface where start of view chord currently resides:
               iobj    = obinter(1)%obj
               isid    = obinter(1)%sur
               isrf    = obinter(1)%srf
               v1(1:3) = obinter(1)%v(1:3)
 
-              obj(iobj)%flag(isid) = -1  ! *** CHEAT ***
+c              obj(iobj)%flag(isid) = -1  ! *** CHEAT ***
 
 c...          Loop exit conditions:
               IF     (obj(iobj)%tsur(isid).EQ.SP_GRID_SURFACE) THEN
@@ -1093,6 +1196,8 @@ c         integration volume:
 c        IF (nchord.LE.22500.AND.refcnt.EQ.0) THEN  ! reflection debug
           s_chord(nchord)%v1(1:3) = chord%v1(1:3)
           s_chord(nchord)%v2(1:3) = chord%v2(1:3)
+c          WRITE(0,'(A,3F10.3)') 'ref3 chord%v1,2=',chord%v1
+c          WRITE(0,'(A,3F10.3)') '               =',chord%v2
 c          WRITE(0,*) 'nchord >>>',nchord
         ENDIF
 
@@ -1103,14 +1208,36 @@ c          WRITE(0,*) 'nchord >>>',nchord
 
 c...    Spawn reflection chords, if necessary, then loop and add to integral for chord:
         IF (opt%ref_num.GT.0) THEN
-          refcnt = refcnt + 1
+
+          IF (ref_debug)
+     .      write(6,*) 'spawning reflection chord'
+
+50        refcnt = refcnt + 1
           IF (refcnt.EQ.1) THEN
-            iobj = vwinter(vwindex)%obj
-            isid = vwinter(vwindex)%sur
-            isrf = vwinter(vwindex)%srf
-c            iobj = vwinter(2)%obj
-c            isid = vwinter(2)%sur
-c            isrf = vwinter(2)%srf
+            IF (reford.GT.1.AND.reflvl.GT.1) THEN 
+c            IF (reford.EQ.2.AND.reflvl.EQ.2) THEN ! old
+              refind = refind + 1
+              iobj = refobj(refind)
+              isid = refsid(refind)
+              isrf = refsrf(refind)
+              iobj_hack = ref_hack(refind)
+c              iobj_hack = ref_hack(refnind)  ! bug! 19/09/2011
+              chord%v1     = ref_chord(refind)%v1
+              chord%v2     = ref_chord(refind)%v2
+              chord%weight = ref_chord(refind)%weight_save
+              IF (ref_debug) THEN
+                WRITE(6,*) 'Pulling up a ghost...',reflvl,refind,
+     .                     chord%weight
+                WRITE(6,*) iobj,isid,isrf
+                WRITE(6,*) iobj_hack
+                WRITE(6,'(3F12.5)') chord%v1
+                WRITE(6,'(3F12.5)') chord%v2
+              ENDIF
+            ELSE
+              iobj = vwinter(vwindex)%obj
+              isid = vwinter(vwindex)%sur
+              isrf = vwinter(vwindex)%srf
+            ENDIF
 c...        Check if reflection model specified for this object side:
             IF (obj(iobj)%reflec(isid).EQ.0) THEN
               refcnt = 0
@@ -1122,13 +1249,65 @@ c...        Check if reflection model specified for this object side:
             iobj = -1
             isid = -1
             isrf = -1
+c...        LEVEL=2: LEVEL=1 store the current reflection chord IOBJ,ISID,ISRF values for 
+c           application later, as above, as well as the wall intersections, which are used in 
+c           AssignReflectionChord. Set REFCNT to 1.
+            IF (reford.GT.1.AND.reford.GT.reflvl) THEN
+c            IF (reford.EQ.2.AND.reflvl.EQ.1) THEN  ! old
+              IF (.NOT.ALLOCATED(ref_chord)) THEN
+                ALLOCATE(refobj   (MAXREFNIND))                     !  wrong way to do things
+                ALLOCATE(refsid   (MAXREFNIND))                     !  should just follow each chord to it's bitter end rather than
+                ALLOCATE(refsrf   (MAXREFNIND))                     !  storing all the primary reflections in a list
+                ALLOCATE(ref_hack (MAXREFNIND))
+                ALLOCATE(ref_chord(MAXREFNIND))
+              ENDIF
+              refnind = refnind + 1
+              IF (refnind.GT.MAXREFNIND) 
+     .          CALL ER('IntegrateChord','Increase MAREFNIND',*99)
+              refobj(refnind) = vwinter(refend)%obj
+              refsid(refnind) = vwinter(refend)%sur
+              refsrf(refnind) = vwinter(refend)%srf
+              ref_hack(refnind) = iobj_hack2
+              ref_chord(refnind) = chord
+              IF (ref_debug) THEN
+                WRITE(6,*) 'Storing reflected chord...',refnind,refend,
+     .                      reflvl,chord%weight
+                WRITE(6,*) 'iobj_hack=', iobj_hack
+              ENDIF
+            ENDIF
           ENDIF
-          IF (refcnt.GT.0) 
-     .       CALL AssignReflectionChord(chord,iobj,isid,isrf,refcnt)          
 
-          IF (refcnt.NE.0) cont = .TRUE.
+          IF (refcnt.GT.0) 
+     .       CALL AssignReflectionChord(chord,iobj,isid,isrf,
+     .                                  refcnt,reflvl)          
+
+c...      LEVEL=2:  Ugly, but if Assign... tries to trigger a loop exit, need to prep the 
+c         next LEVEL=1 reflection chord to be processed need to spagetti back up.  Need to set
+c         chord%weight to chord%weight*chord%weight
+
+          IF (refcnt.EQ.0) THEN
+            IF (reford.GT.1.AND.refind.LT.refnind) THEN
+c            IF (reford.EQ.2.AND.refind.LT.refnind) THEN  ! old
+              IF (ref_debug) 
+     .          WRITE(6,*) 'Trying to leave...',refind,refnind
+
+              IF (refind.EQ.refmark) THEN 
+                reflvl  = reflvl + 1
+                refmark = refnind
+                IF (ref_debug) 
+     .            WRITE(6,*) 'Moving up...',reflvl,refmark,refind
+              ENDIF
+
+              refcnt = 0
+              GOTO 50
+            ENDIF
+          ELSE
+            cont = .TRUE.
+          ENDIF
+c          IF (refcnt.NE.0) cont = .TRUE.
 
           IF (cont) nchord = nchord + 1  ! Debugging
+
 
 c          IF (cont) THEN
 c            tmpchord = chord
@@ -1147,11 +1326,8 @@ c          ENDIF
 
         ENDIF
 
-c        WRITE(0,*) 'CLEAR OF VESEEL WALL LOOP',cont
       ENDDO
       
-
-c      WRITE(0,*) 'CLEAR OF LOOP'
 
 c... *TEMP* (won't work with MPI...) 
 c      IF (nchord.LE.22500) THEN
@@ -1182,12 +1358,13 @@ c      ENDDO
         IF (.NOT.problem_message) THEN
           WRITE(0,*) 
           WRITE(0,*) '=============================================='
-          WRITE(0,*) '"PROBLEM IGNORED"...',nchord
+          WRITE(0,*) '"PROBLEM IGNORED"...',nchord,problem_ignored
           WRITE(0,*) '=============================================='
           WRITE(0,*) 
           problem_message = .TRUE.
         ENDIF
-        IF (.NOT.(opt%ref_num.NE.0.AND.refcnt.GT.0)) THEN
+        IF (opt%ref_num.NE.0.AND.refcnt.GT.0) THEN
+c        IF (.NOT.(opt%ref_num.NE.0.AND.refcnt.GT.0)) THEN
           STOP 'SHOULD NOT BE HERE RIGHT NOW'
           chord_primary%integral = 0.0
           chord_primary%average  = 0.0
@@ -1201,6 +1378,16 @@ c      chord_primary%spectrum(1:100) = chord%spectrum(1:100)
 c      WRITE(0,*) 'SPECTRUM STORED'
 
 c      WRITE(0,*) 'DONE INTEGRATING CHORD+REFLEC'
+
+      IF (ALLOCATED(ref_chord)) THEN
+        DEALLOCATE(refobj)
+        DEALLOCATE(refsid)
+        DEALLOCATE(refsrf)
+        DEALLOCATE(ref_hack)
+        DEALLOCATE(ref_chord)
+      ENDIF
+
+c      WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
 
       RETURN
  99   STOP
@@ -1270,9 +1457,9 @@ c      nybin = pixel2%nybin
 
       n = opt%n
 
-      ALLOCATE(ddum1(n                         ))
-      ALLOCATE(ddum2(nobj,-5:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(rdum1(100                       ))
+      ALLOCATE(ddum1(n                          ))
+      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(rdum1(100                        ))
 
       status = 0
       nview  = 0
@@ -1401,7 +1588,7 @@ c...        Add integral result to pixel value:
 c...
             pixel%track(1:n) = pixel%track(1:n) + chord%track(1:n)
             pixel%nprofile = MAX(pixel%nprofile,chord%nprofile)
-            DO i1 = -5, MAX(1,opt%int_num)
+            DO i1 = -11, MAX(1,opt%int_num)
              pixel%profile(:,i1)=pixel%profile(:,i1)+chord%profile(:,i1)
             ENDDO
 
@@ -1447,7 +1634,7 @@ c...  Finish up weighted average:
 
 c...  This averaging is bogus of course since the profiles won't overlap,
 c     but is fine if there's a single chord, or if the view isn't too wide:  ! *** TRUE? ***
-      DO i1 = -5, MAX(1,opt%int_num)
+      DO i1 = -11, MAX(1,opt%int_num)
         pixel%profile(:,i1) = pixel%profile(:,i1) / DBLE(nview)
       ENDDO
 c      pixel%profile(:,2) = pixel%profile(:,2) / DBLE(nview)

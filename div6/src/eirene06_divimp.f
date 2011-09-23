@@ -132,6 +132,7 @@ c     specified in block 3 in the EIRENE input file:
       opacity   = eiropacity
       photons   = eirphoton
       trim_data = eirtrim
+      ermin     = eirermin
       bgk       = eirbgk
       ntorseg   = eirntorseg
       torfrac   = eirtorfrac
@@ -1724,6 +1725,8 @@ c
 
       wall_ignored = .FALSE.
       debug        = .FALSE.
+      icount = 0
+      iside  = 0
 
       ALLOCATE(tdata(MAXNKS,MAXNRS,5 ))
       ALLOCATE(tflux(MAXSEG       ,10))

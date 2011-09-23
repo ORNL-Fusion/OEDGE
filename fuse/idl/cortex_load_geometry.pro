@@ -201,7 +201,7 @@ FUNCTION cortex_LoadFluidGrid, file
 
   inCloseInterface
 
-  help,nsrf
+;  help,nsrf
 
 ; Setup index mapping for surfaces:   *** NOT CURRENTLY IN USE ***
   maxindex = MAX(srf_index)

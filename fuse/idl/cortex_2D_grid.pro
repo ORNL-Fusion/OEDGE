@@ -34,7 +34,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 
   flip = plot.flip  ; ribbon grid plots
 
-  print,'flip=',flip
+;  print,'flip=',flip
 
   IF (NOT KEYWORD_SET(mode)) THEN mode = 'main'
   IF (NOT KEYWORD_SET(type)) THEN type = 'full'
@@ -158,14 +158,14 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
     ysize = 210.0  
     display_ratio = 3.25 / 3.35  ; Small correction based on measurements from the GhostView display of the plot
     aspect_ratio = (xdelta / xsize) / (ydelta / ysize) * display_ratio
-    plot_xboarder = 0.05
+    plot_xboarder = 0.075 ; 0.05
   ENDIF ELSE BEGIN
     PRINT, 'NEED TO FIX WINDOW ASPECT RATIO'
     RETURN, -1
     display_ratio = 4.4
     aspect_ratio = xdelta / ydelta / display_ratio *            $ 
                    (FLOAT(window_ysize) / FLOAT(window_xsize))
-    plot_xboarder = 0.05
+    plot_xboarder = 0.075 ; 0.05
     WINDOW, window_id, XSIZE=window_xsize, YSIZE=window_ysize
   ENDELSE
   IF (plot.aspect_ratio GT 0.0) THEN aspect_ratio = plot.aspect_ratio
@@ -199,6 +199,8 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ; Check if the plot fits in the allocated portion of the page, and scale the plot
 ; as necessary:
 ; ----------------------------------------------------------------------
+;print,'xpos',xpos
+;print,'    ',plot.frame_bnds[0:1]
   IF (xpos[0] LT plot.frame_bnds[0] OR xpos[1] GT plot.frame_bnds[1]) THEN BEGIN
     ratio = size * (plot.frame_bnds[1] - plot.frame_bnds[0]) / (xpos[1] - xpos[0]) 
     print,'ratio',ratio
@@ -255,7 +257,7 @@ FUNCTION cortex_PlotFluidGrid, plot, grid, wall, node, annotation, mode, type, p
 ;      levels = (plot.equ_params[2] - plot.equ_params[1]) *   $
 ;               (FINDGEN(plot.equ_params[0]) / plot.equ_params[0] - 0.5) +  $
 ;               plot.equ_params[1]
-print,levels
+;print,levels
 
       CONTOUR, grid.psin, grid.x, grid.y, LEVELS=levels, XSTYLE=1, YSTYLE=1, /NOERASE, $
                POSITION=plot.position,  XRANGE=xrange,YRANGE=yrange,  $
@@ -419,7 +421,7 @@ print,levels
           OPLOT, [vlabel[0]], [vlabel[1]], COLOR=TrueColor('Black'),  $
                  PSYM=6, SYMSIZE=0.4
           charsize = 1.0
-print, 'vlable!',vlabel[0],xmin,xmax,xmin+0.80*(xmax-xmin)
+;print, 'vlable!',vlabel[0],xmin,xmax,xmin+0.80*(xmax-xmin)
           IF (vlabel[0] GT xmin+0.80*(xmax-xmin)) THEN  $
             alignment = 1.0 ELSE  $
             alignment = 0.0            
@@ -438,7 +440,6 @@ print, 'vlable!',vlabel[0],xmin,xmax,xmin+0.80*(xmax-xmin)
 ; ----------------------------------------------------------------------
   IF (plot.annotate_n GT 0) THEN BEGIN
 ;help,plot.annotate,/struct
-;print,shit
 ;stop
     FOR i = 0, plot.annotate_n-1 DO BEGIN
 ; check if the data is there... somehow...

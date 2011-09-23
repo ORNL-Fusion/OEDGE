@@ -100,6 +100,7 @@ PRO cortex_GeneratePlots, args
       index = WHERE(TAG_NAMES(plot_array) EQ STRUPCASE(tag), count)
       IF (count NE 0) THEN BEGIN
         plot_array.(index[0]).frame_bnds = [frac1,frac2]
+;print,frac1,frac2
       ENDIF ELSE BEGIN
         PRINT, 'ERROR cortex_GeneratePlots: TAG not found'
         PRINT, '  TAG = ',tag
@@ -134,7 +135,7 @@ PRO cortex_GeneratePlots, args
 
 ;    PRINT,' '
 ;    PRINT,' ',iplot
-    PRINT,'---- PLOT STRUCTURE:',iplot,plot.tag
+    PRINT,'---- PLOT STRUCTURE:',iplot,' ',plot.tag
 ;    HELP,plot,/struct    
 
     IF (plot.option EQ 0) THEN CONTINUE
@@ -614,7 +615,7 @@ print,tube
 ;            annotate : annotate ,  $
             plot     : plot     }
         ENDIF ELSE BEGIN
-           print, plot.frame_bnds
+;           print, plot.frame_bnds
 
           status = cortex_PlotFluidGrid(plot, grid, wall, node, annotate, 'main', 'full', ps=ps)
 
@@ -644,6 +645,8 @@ print,tube
         file_path = path + plot.case_name[0] + '.'
         grid = cortex_LoadFluidGrid(file_path + plot.data_file[0])
         wall = cortex_LoadWall     (file_path + plot.data_file[1]) 
+        IF (plot.annotate_n NE 0) THEN  $
+          annotate = cortex_LoadAnnotationData(plot,file_path) ELSE annotate = 0 
         IF (plot.option GE   1 AND plot.option LE  99) THEN plot_data = cortex_LoadPlasmaData(file_path + plot.data_file[2])
         IF (plot.option GE 100 AND plot.option LE 199) THEN plot_data = cortex_LoadSourceData(file_path + plot.data_file[3])
         IF (plot.option GE 200 AND plot.option LE 299) THEN plot_data = cortex_LoadEIRENEData(file_path + plot.data_file[4])        
@@ -654,7 +657,55 @@ print,tube
           PRINT, '  PLOT TAG = ',plot.tag
           cortex_Exit, nargs
         ENDIF
-        status = cortex_Plot2DContour(plot, plot_data, grid, wall, ps=ps)
+        status = cortex_Plot2DContour(plot, plot_data, grid, wall, annotate, ps=ps)
+        END
+;     ------------------------------------------------------------------
+      'PLOT 2D IMAGE': BEGIN
+        CASE plot.option OF
+;         --------------------------------------------------------------         
+          1: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              j = WHERE(plot.data_file NE 'unknown',count)
+              FOR j = 0, count-1 DO BEGIN
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_signal')
+                name = 'data' + STRING(j+1,FORMAT='(I0)')
+                IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
+                                 integral_array = CREATE_STRUCT(integral_array,name,integral)
+              ENDFOR
+              plot_data = { integral : integral_array, dummy :  0 }
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotImage(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          2: BEGIN
+            FOR i = 0, ncase-1 DO BEGIN
+              file_path = path + plot.case_name[i] + '.'
+              j = WHERE(plot.data_file NE 'unknown',count)
+              FOR j = 0, count-1, 2 DO BEGIN
+                integral = cortex_LoadIntegrals(file_path + plot.data_file[j] + '_signal')
+                integral = CREATE_STRUCT(integral,'stripe',plot.data_file[j+1])
+                name = 'data' + STRING(j/2+1,FORMAT='(I0)')
+                IF (j EQ 0) THEN integral_array = CREATE_STRUCT(               name,integral) ELSE  $
+                                 integral_array = CREATE_STRUCT(integral_array,name,integral)
+              ENDFOR
+              plot_data = { integral : integral_array, dummy :  0 }
+              name = 'data' + STRING(i+1,FORMAT='(I0)')
+              IF (i EQ 0) THEN data_array = CREATE_STRUCT(           name,plot_data) ELSE  $
+                               data_array = CREATE_STRUCT(data_array,name,plot_data)
+            ENDFOR
+            status = cortex_PlotImage(plot, data_array, ps=ps)
+            END
+;         --------------------------------------------------------------         
+          ELSE: BEGIN  
+            PRINT, 'ERROR cortex_GeneratePlots: Unrecognised image plot option'
+            PRINT, '  OPTION = ',option
+            status = -1
+            END
+        ENDCASE
         END
 ;     ------------------------------------------------------------------
       'PLOT 3D TEST': BEGIN

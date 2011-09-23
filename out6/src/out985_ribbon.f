@@ -118,7 +118,7 @@ c
       REAL*8, INTENT(INOUT) :: tdat(6,ntrace)
       REAL*8, INTENT(IN   ) :: scale
 
-      INTEGER itrace,i1,i2,io,i,j,k,n,ir
+      INTEGER itrace,i1,i2,io,i,j,k,n,ir,irib
       LOGICAL debug,cont
       REAL*8  diff,s_ref,min_diff,p1(2),p2(2),save_r1
 
@@ -197,7 +197,6 @@ c         Assign CODE variable:
           ENDIF
         ENDDO
 
-
 c...    For debugging:
         DO i = i1, i2
           tdat(3,i) = DATAN2C(trace(3,i),trace(1,i)) * 180.0D0/DBLE(PI)
@@ -221,10 +220,8 @@ c       get rid of them:
               DO j = i+1, i2
                 IF (DABS(tdat(1,j)-tdat(1,i)).LT.1.0D-6) n = n + 1
               ENDDO        
-
 c              IF (debug) WRITE(0,'(A,4I8,2X,F10.6,2X,3F10.6)') 
 c     .              'deleting!',itrace,i,n,ntrace,tdat(1,i),trace(1:3,i)
-  
               CALL rayDeleteTracePoints(tdat,i,n,itrace)
               EXIT
             ENDIF
@@ -232,6 +229,10 @@ c     .              'deleting!',itrace,i,n,ntrace,tdat(1,i),trace(1:3,i)
         ENDDO
 
       ENDDO  ! itrace
+
+
+c.... Need to calcualte and store the connection lengths here:
+
 
 
 c...  Crop to boundary:
@@ -327,11 +328,13 @@ c          IF (i1.NE.-1) write(0,*) 'h crop',itrace,i1,i2
       ENDIF
 
 
-
 c      stop
 
-c...  Crop the end(s) first trace to nearest intersection(s):
+
       IF (clean) THEN
+
+c...    Crop the end(s) first trace to nearest intersection(s):
+
 c...    First half of the trace (-ve S values):
         itrace = 1
         i1 = trace_i(2,itrace)
@@ -448,13 +451,55 @@ c                tdat(5,j) = -tdat(5,j)
 
 c        STOP 'fsdfds'
 
+c...    Wipe portions of the intersection data
+        IF (wipe_n.GT.0) THEN
+          WRITE(0,*) 'list',wipe_list(1:wipe_n)
+
+          ALLOCATE(rho_local(trace_n))
+          rho_local =  0.0D0
+          DO itrace = 1, trace_n                 
+            DO i = trace_i(2,itrace), trace_i(3,itrace)
+              IF (tdat(1,i).EQ.0.0D0) THEN
+                i1 = i
+                EXIT
+              ENDIF
+            ENDDO
+            IF (itrace.GT.1) 
+     .        rho_local(itrace) = rho_local(itrace-1) + 
+     .                    SNGL(DSQRT((trace(1,i1)-trace(1,i2))**2 + 
+     .                               (trace(2,i1)-trace(2,i2))**2 + 
+     .                               (trace(3,i1)-trace(3,i2))**2))
+            i2 = i1
+          ENDDO
+
+          DO j = 1, wipe_n
+            irib = wipe_list(j)
+            WRITE(0,*) 'params',opt%rib_r1(irib),opt%rib_r2(irib),
+     .                          opt%rib_s1(irib),opt%rib_s2(irib)
+ 
+            DO itrace = 2, trace_n
+              i1 = trace_i(2,itrace) 
+              i2 = trace_i(3,itrace)
+              write(0,*) 'rho',itrace,rho_local(itrace)
+              write(0,*) 'i12',i1,i2,ntrace
+              write(0,*) 'srg',tdat(1,i1),tdat(1,i2)
+              DO i = i1, i2
+                IF (rho_local(itrace).GE.opt%rib_r1(irib).AND.
+     .              rho_local(itrace).LE.opt%rib_r2(irib).AND.
+     .              tdat(1,i)        .GE.opt%rib_s1(irib).AND.
+     .              tdat(1,i)        .LE.opt%rib_s2(irib)) THEN
+                  write(0,*) 'found',tdat(5,i)
+                  tdat(5,i) = 3.0D0
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+c         stop 'the promised land'
+          DEALLOCATE(rho_local)
+        ENDIF
+
+
       ENDIF  ! clean.EQ..TRUE.
-
-
-c       DO i = 1, ntrace
-c         IF (tdat(5,i).EQ.0.0D0) STOP 'AH HA!'
-c       ENDDO
-
 
 
 
@@ -820,6 +865,58 @@ c      IF (count.EQ.1) STOP 'got ya!'
 c
 c ====================================================================== 
 c
+      LOGICAL FUNCTION rayCheckClearance(itrace,ipoint,tdat,scale)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_out985_ribbon
+      IMPLICIT none
+ 
+      INTEGER, INTENT(IN) :: itrace,ipoint
+      REAL*8 , INTENT(IN) :: tdat(6,ntrace)
+      REAL*8 , INTENT(IN) :: scale
+
+      INTEGER fp,i1,i2,i3,i
+      REAL*8  dist1,dist2
+
+      rayCheckClearance = .FALSE.
+
+      fp = 6
+
+      write(fp,*) 'checkclearance',itrace,ipoint,tdat(1,ipoint)
+
+      DO i1 = itrace-1, 1, -1
+        dist1 = 1.0D+6
+        dist2 = 1.0D+6
+        i2 = trace_i(2,i1)
+        i3 = trace_i(3,i1)
+        DO i = i2, i3
+c          write(fp,*) 'ipopint',ipoint
+c          write(fp,*) 'i      ',i,i2,i3
+c          write(fp,*) '       ',tdat(1,i)
+c          write(fp,*) '       ',tdat(1,ipoint)
+c          write(fp,*) '       ',tdat(5,i)
+c          write(fp,*) 'what:',i,ipoint,tdat(1,i),tdat(1,ipoint),
+c     .                        tdat(5,i)
+          IF (tdat(1,i).LE.tdat(1,ipoint).AND.tdat(5,i).LT.0.0D0)
+     .      dist1 = MIN(dist1,tdat(1,ipoint)-tdat(1,i))
+          IF (tdat(1,i).GE.tdat(1,ipoint).AND.tdat(5,i).LT.0.0D0)
+     .      dist2 = MIN(dist2,tdat(1,i)-tdat(1,ipoint))
+        ENDDO
+        WRITE(fp,*) 'tan check',i1,SNGL(dist1),SNGL(dist2),
+     .     SNGL(dist1+dist2)
+        IF (dist1+dist2.LT.5.0D0*scale) THEN
+          write(fp,*) 'KILLER!',dist1,dist2,tdat(1,ipoint)
+          rayCheckClearance = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ====================================================================== 
+c
       SUBROUTINE rayCleanRibbon(tdat,scale)
       USE mod_out985
       USE mod_out985_variables
@@ -828,6 +925,8 @@ c
  
       REAL*8 , INTENT(INOUT) :: tdat(6,ntrace)
       REAL*8 , INTENT(IN   ) :: scale
+
+      LOGICAL rayCheckClearance
 
       INTEGER fp,ntangent,i,j,i1,i2,i3,itrace,n,
      .        itangent(2,1000)  ! 1=itrace,2=index
@@ -861,6 +960,8 @@ c            IF (DABS(tdat(1,i)-tdat(1,i3)).GT.0.05D0) THEN
 c             The points are too far apart to be a tangency pair:
               IF (fp.NE.-1) write(fp,*) 'too far apart'
               i3 = i
+            ELSEIF (rayCheckClearance(itrace,i3,tdat,scale)) THEN
+c...          Make sure the space above the tangency point is legit:
             ELSE
               IF (fp.NE.-1) write(fp,*) 'new point!'
 c             Generate a new tangency point:
@@ -1272,6 +1373,8 @@ c
       crop_s1 = -1.0D0
       crop_s2 = -1.0D0
 
+      wipe_n = 0
+
       DO irib = 1, opt%rib_n
 
 c...    Set active region of interset for cropping:
@@ -1281,6 +1384,20 @@ c...    Set active region of interset for cropping:
           crop_s1 = DBLE(opt%rib_s1(irib))
           crop_s2 = DBLE(opt%rib_s2(irib))
           CYCLE
+        ENDIF
+
+c...    Set regions to wipe clean of all intersection points:
+        IF (opt%rib_option(irib).EQ.3) THEN
+          SELECTCASE (opt%rib_wipe(irib))
+            CASE (-1) 
+              wipe_n = 0
+            CASE ( 1,2) 
+              wipe_n = wipe_n + 1
+              wipe_list(wipe_n) = irib
+            CASE DEFAULT
+              CALL ER('rayGenerateRibbonGrid','Unrecognized '//
+     .              'wipe option',*99)
+          ENDSELECT
         ENDIF
 
         x1 = opt%rib_r(1,irib)
@@ -1294,20 +1411,12 @@ c...    Set active region of interset for cropping:
         phi2 = opt%rib_phi(2,irib)
 
         DO iphi = 1, opt%rib_nphi(irib)
-
-
 c...      Setup storage for the field line traces:
           IF (ALLOCATED(trace)) DEALLOCATE(trace)
           CALL AllocTrace(-1,MP_INITIALIZE)
 c...      Count up the total number of traces there will be:      
-c          trace_n = 0
-c          DO irib = 1, opt%rib_n
-c            trace_n = trace_n + opt%rib_nphi(irib) * opt%rib_nrad(irib)
-c          ENDDO
-c          WRITE(0,*) 'trace_n=',trace_n
           IF (ALLOCATED(trace_i)) DEALLOCATE(trace_i)
           ALLOCATE(trace_i(4,opt%rib_nrad(irib)))
-c          ALLOCATE(trace_i(3,trace_n))
           trace_n = 0
 
 c         Need to rotate the points according to phi:

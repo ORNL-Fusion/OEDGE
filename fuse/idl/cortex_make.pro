@@ -25,6 +25,7 @@
 .r cortex_1D_spectrum
 .r cortex_1D_integrals
 .r cortex_2D_integrals
+.r cortex_2D_image
 .r cortex_2D_contour
 .r cortex_input
 .r cortex_main

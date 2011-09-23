@@ -494,7 +494,7 @@ c      WRITE(0,*) 'A: done 4'
 c
 c ====================================================================== 
 c
-      SUBROUTINE ProcessPixels(npixel,pixel)
+      SUBROUTINE ProcessPixels(npixel,pixel,title)
       USE mod_out985
       USE mod_out985_variables
       USE mod_interface
@@ -502,15 +502,18 @@ c
 c...  Input:
       INTEGER npixel
       TYPE(type_view) :: pixel(npixel)
+      CHARACTER, INTENT(IN) :: title*(*)
 
       REAL Clock2
+
+      REAL, PARAMETER :: PI = 3.141593
 
       INTEGER   i1,i2,i3,i4,status,fp,fp2,m,n,codec,iobj,ierr,volcnt,
      .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet,npro
       LOGICAL   ascii,message
-      REAL      rtime,ttime
+      REAL      rtime,ttime,fact
       REAL*8    int_sum,solid_total,solid_angle
-      CHARACTER file*1024,tag*9
+      CHARACTER file*1024,tag*9,dummy*256
 
       INTEGER, ALLOCATABLE :: idum1(:)
 
@@ -644,9 +647,9 @@ c...      Check if surface is part of the vessel wall:
       WRITE(0,*) '  DONE',nvwlist,ngblist
 
 
-      ALLOCATE(ddum1(n                         ))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(ddum2(nobj,-5:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(rdum1(100                       ))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum1(n                          ))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(rdum1(100                        ))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
       pixcnt = m
@@ -655,14 +658,33 @@ c...      Check if surface is part of the vessel wall:
 
 c...  MPI!  (for MPI to work the various lists -- vw,gb,ob -- need to be passed like the objects are passed, I think)
 
-
+c...  Collect data, time and case information:
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
 
       vcount = 0
 
 c...  Loop over pixels:
 c      DO i1 = 200000, npixel
 c      DO i1 = 4325, 4325
+
+      idet = 1
+      opt%ccd = opt%det_ccd(idet)
+      WRITE(0,*) '================= IDET=',idet,'================='
+
       DO i1 = 1, npixel
+
+c...    Keep track of which detector the current pixel belongs to:
+        IF (i1.GT.opt%det_iend(idet)) THEN
+          idet = idet + 1
+          opt%ccd = opt%det_ccd(idet)
+          WRITE(0,*) '================= IDET=',idet,'================='
+        ENDIF
 
         IF (MOD(i1,MAX(1,npixel/10)).EQ.0) 
 c        IF (MOD(i1,1).EQ.0) 
@@ -752,15 +774,15 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.TRUE..AND.opt%ndet.EQ.1.AND.   ! *** PROFILE HACK *** 
+        IF (.FALSE..AND.   ! *** PROFILE HACK ***
+     .      (i1.EQ.opt%det_istart(idet).OR.
+     .       i1.EQ.opt%det_iend  (idet).OR.
+     .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
      .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
-c          WRITE(6,*) 'NPROFILE:',i1,pixel(i1)%nprofile
-c          DO i2 = 1,pixel(i1)%nprofile
-c            WRITE(6,*) '    ',i2,pixel(i1)%profile(i2,1)
-c          ENDDO
           WRITE(file,'(A,I0.3,256X)')          
-     .      'idl.ray_profile_'//TRIM(opt%det_fname(1))//'_',i1
-          WRITE(0,*) ' FILE:'//TRIM(file)
+     .      'idl.profile_'//TRIM(opt%det_fname(idet))//'_',
+     .      i1-opt%det_istart(idet)+1
+c          WRITE(0,*) ' FILE:'//TRIM(file)
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           npro=pixel(i1)%nprofile
           CALL inPutData(pixel(i1)%profile(1:npro,-5),'PATH'  ,'m'  )
@@ -769,12 +791,121 @@ c          ENDDO
           CALL inPutData(pixel(i1)%profile(1:npro,-2),'NE'    ,'m-3')
           CALL inPutData(pixel(i1)%profile(1:npro,-1),'TE'    ,'eV' )
           CALL inPutData(pixel(i1)%profile(1:npro, 0),'TI'    ,'eV' )
-          write(0,*) 'opt%int_num=',opt%int_num
+c          write(0,*) 'opt%int_num=',opt%int_num
           DO i2 = 1, MAX(1,opt%int_num)
             WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
             CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'N/A')
           ENDDO
           CALL inCloseInterface
+c...      Dump to a more accessible ASCII file:
+          WRITE(file,'(A,I0.3,256X)')          
+     .      'profile.'//TRIM(opt%det_fname(idet))//'_',
+     .      i1-opt%det_istart(idet)+1
+          fp = 99
+
+          OPEN(fp,FILE=file(1:LEN_TRIM(file)),
+     .         FORM='FORMATTED',STATUS='REPLACE',ERR=97)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '* CASE            '//TRIM(dummy(21:))
+          WRITE(fp,'(A)') '* TITLE           '//TRIM(title)
+          WRITE(fp,'(A)') '* DATE AND TIME   '//dummy(1:18)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{DATA FILE VERSION}'
+          WRITE(fp,'(A)') '     1.0'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{VIEW IDENTIFIER AND CHORD INDEX}'
+          WRITE(fp,*) '  '//TRIM(opt%det_fname(idet)),
+     .                i1-opt%det_istart(idet)+1
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{R,Z START AND END POINTS OF THE CHORD (m)}'
+          WRITE(fp,'(3F10.4)') pixel(i1)%global_v1(1:2)
+          WRITE(fp,'(3F10.4)') pixel(i1)%global_v2(1:2)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{EMISSION SIGNALS}'   
+          WRITE(fp,*) opt%int_num
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* Z          - atomic number of particle'
+          WRITE(fp,'(A)') '* A          - atomic weight'
+          WRITE(fp,'(A)') '* CHARGE     - electric charge'
+          WRITE(fp,'(A)') '* WAVELENGTH - of the line'
+          WRITE(fp,'(A)') '* INTEGRAL   - signal strength integrated '//
+     .      'along the chord, in units of [photons ster-1 '//
+     .      'm-2 s-1]'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A2,A6,3A8,2A12)') 
+     .      '* ','SIGNAL','Z'   ,'A'   ,'CHARGE','WAVELENGTH','INTEGRAL'
+          WRITE(fp,'(A2,A6,3A8,2A12)')
+     .      '* ','     ','    ','     ','      ','(nm)'      ,'        '
+          fact = 4.0 * PI
+          DO i2 = 1, opt%int_num
+            WRITE(fp,'(2X,I6,3I8,F12.2,1P,E12.2,0P)') i2,
+     .        opt%int_z         (i2)     ,
+     .        opt%int_a         (i2)     ,
+     .        opt%int_charge    (i2)     ,
+     .        opt%int_wlngth    (i2)     ,
+     .        pixel(i1)%integral(i2)/fact
+          ENDDO
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{INTEGRATION VOLUMES}'
+          WRITE(fp,*) npro
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* DIST   - distance along the chord '//
+     .      '(line-of-sight)'
+          WRITE(fp,'(A)') '* DELTA  - length of the path through the '//
+     .      'current integation volume (triangular "cell")'
+          WRITE(fp,'(A)') '* WEIGHT - set to unity for now, but will '//
+     .      'be used when reflections are included in the analysis'
+          WRITE(fp,'(A)') '* n_e    - electron density'
+          WRITE(fp,'(A)') '* T_e    - electron temperature'
+          WRITE(fp,'(A)') '* T_i    - background hydrogenic ion '//
+     .      'temperature'
+          WRITE(fp,'(A)') '* n_D    - deuterium atom density'
+          WRITE(fp,'(A)') '* n_D2   - deuterium molecule density'
+          WRITE(fp,'(A)') '* n_i+X  - density of impurity with charge X'
+          WRITE(fp,'(A)') '* SIGNAL - local emission in units of '//
+     .      '[photons ster-1 m-3 s-1]'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A2,A6,4A10,2A8,6A10,10(A9,I1))') 
+     .      '* ','INDEX','DIST','DELTA','WEIGHT','n_e'  ,'T_e' ,'T_i',
+     .      'n_D','n_D2',
+     .      'n_i+0','n_i+1','n_i+2','n_i+3',
+     .      ('SIGNAL_',i2,i2=1,opt%int_num)
+          WRITE(fp,'(A2,A6,4A10,2A8,6A10)') 
+     .      '* ',' '    ,'(m)' ,'(m)'  ,' '     ,'(m-3)','(eV)','(eV)',
+     .      ('(m-3)',i2=1,6)
+50 	  FORMAT(50X,10I10)
+51 	  FORMAT(50X,1P,10F10.2,0P)
+          DO i2 = 1, npro
+            WRITE(fp,'(2X,I6,1P,4E10.2,0P,2F8.1,1P,16E10.2,0P)') i2,
+     .        pixel(i1)%profile(i2,-5),  ! path
+     .        pixel(i1)%profile(i2,-4),  ! delta
+     .        pixel(i1)%profile(i2,-3),  ! weight
+     .        pixel(i1)%profile(i2,-2),  ! ne
+     .        pixel(i1)%profile(i2,-1),  ! te
+     .        pixel(i1)%profile(i2, 0),  ! ti
+     .        pixel(i1)%profile(i2,-7),  ! nD
+     .        pixel(i1)%profile(i2,-6),  ! nD2
+     .        pixel(i1)%profile(i2,-11:-8),  !  4 lowest impurity charge states
+     .       (pixel(i1)%profile(i2,i3)/fact,i3=1,opt%int_num)
+          ENDDO
+          CLOSE(fp)
         ENDIF
       ENDDO  ! Pixel loop
 
@@ -1570,13 +1701,14 @@ c ======================================================================
 c
 c subroutine: Main985
 c
-      SUBROUTINE Main985(iopt)
+      SUBROUTINE Main985(iopt,title)
       USE mod_out985
       USE mod_out985_variables
       USE mod_out985_clean
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: iopt
+      INTEGER  , INTENT(IN) :: iopt
+      CHARACTER, INTENT(IN) :: title*(*)
 
       REAL*8, PARAMETER :: PI = 3.141592654
 
@@ -1630,6 +1762,8 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       nchord = 0
       n_pchord = 0
 
+      opt%ref_opt = 0
+
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
@@ -1657,6 +1791,7 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
             IF (save_opt_ccd.EQ.0) save_opt_ccd = opt%ccd
 
             opt%ndet = opt%ndet + 1
+            opt%det_ccd  (opt%ndet) = opt%ccd  
             opt%det_nxbin(opt%ndet) = opt%nxbin
             opt%det_nybin(opt%ndet) = opt%nybin
             opt%det_fname(opt%ndet) = opt%fmap
@@ -1751,7 +1886,7 @@ c...
 c...
       IF (opt%ndet.GT.0) THEN
         WRITE(0,*) '  PROCESSING PIXELS'
-        CALL ProcessPixels(npixel,pixel)
+        CALL ProcessPixels(npixel,pixel,title)
         WRITE(0,*) '  DONE PROCESSING PIXELS'
         CALL DumpImage(npixel,pixel)
       ENDIF

@@ -6,10 +6,15 @@
 ; ======================================================================
 ;
 PRO cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos, dev_xsize, dev_ysize,  $
-                    charsize_labels, colors
+                    charsize_labels, colors, step=step
 
-  step = 0.1
-  IF (focus) THEN step = 0.05
+  IF (KEYWORD_SET(step)) THEN BEGIN
+    offset = 0.05
+  ENDIF ELSE BEGIN
+    offset = 0.10
+    step = 0.1
+    IF (focus) THEN step = 0.05
+  ENDELSE
   str = STRSPLIT(labels[iplot-1],':',/EXTRACT)
   FOR i = 0, N_ELEMENTS(str)-1 DO BEGIN       
     icolor = i
@@ -19,7 +24,7 @@ PRO cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos, dev_xsize, dev_y
       icolor = LONG(str_color[0])
       str_label = str_color[1]
     ENDIF
-    frac = step * FLOAT(i) + 0.1
+    frac = step * FLOAT(i) + offset
     XYOUTS, ( xy_label[0]         * xpos[0] +  xy_label[1]         * xpos[1]) * dev_xsize,  $
             ((xy_label[2] + frac) * ypos[0] + (xy_label[3] - frac) * ypos[1]) * dev_ysize,  $
            str_label, CHARSIZE=charsize_labels,COLOR=TrueColor(colors[icolor]), /DEVICE

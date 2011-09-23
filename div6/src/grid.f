@@ -1383,8 +1383,8 @@ c                 the fluid cell poloidal boundaries:
 c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.99.0) THEN
 c...      Delete specified segment index from neutral wall specification:
-          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
-     .                                   NINT(eirasdat(i1,5))
+c          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
+c     .                                   NINT(eirasdat(i1,5))
           DO i2 = NINT(eirasdat(i1,2)), MIN(walln,NINT(eirasdat(i1,5)))
             wallr1(i2,1) = r0
             wallz1(i2,1) = z0

@@ -37,6 +37,9 @@ c...  Check for the presence of standard (OSM) and triangle (EIRENE) grid elemen
         ENDSELECT
       ENDDO
 
+      WRITE(0,*) 'max_ik,ir=',max_ik,max_ir,'go'
+
+
 c...  Allocate memory for spectrum and plasma data storage:
       nplasma = 0
       nspectrum = 0
@@ -63,6 +66,20 @@ c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
      .    nplasma = nplasma + 1
       ENDDO
       ALLOCATE(plasma(nplasma))
+      DO i1 = 1, nplasma
+        plasma(i1)%nD  = 0.0
+        plasma(i1)%nD2 = 0.0
+        plasma(i1)%ne  = 0.0
+        plasma(i1)%te  = 0.0
+        plasma(i1)%nb  = 0.0
+        plasma(i1)%vb  = 0.0
+        plasma(i1)%tb  = 0.0
+        plasma(i1)%si  = 0.0  
+        plasma(i1)%ni  = 0.0
+        plasma(i1)%vi  = 0.0
+        plasma(i1)%ti  = 0.0
+        plasma(i1)%bfield = 0.0
+      ENDDO
 
       nplasma = 0
       nspectrum = 0
@@ -73,10 +90,11 @@ c...    Assign/calculate quantity of interest:
         SELECTCASE (opt%int_database(iint))
 c         --------------------------------------------------------------
           CASE(1:3)
-c          IF (max_ik.GT.0.AND.max_ir.GT.0) THEN
 c...        Fluid grid quantity:
             IF (.NOT.ALLOCATED(osm)) ALLOCATE(osm(max_ik,max_ir))
+            WRITE(0,*) 'max_ik,ir=',max_ik,max_ir
             CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
+            WRITE(0,*) 'max_ik,ir=',max_ik,max_ir
 c         --------------------------------------------------------------
           CASE(4)
 c           IF (.FALSE..AND.max_in.GT.0) THEN
@@ -191,12 +209,13 @@ c        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
 
         ENDIF
 
+        IF (ALLOCATED(osm   )) DEALLOCATE(osm)
+        IF (ALLOCATED(tdata )) DEALLOCATE(tdata)
+c        IF (ALLOCATED(plasma)) DEALLOCATE(plasma)     
 
-      ENDDO
+      ENDDO  ! iint
 
    
-      IF (ALLOCATED(osm  )) DEALLOCATE(osm  )
-      IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
 
 
       RETURN

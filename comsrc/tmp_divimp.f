@@ -55,6 +55,7 @@ c
          INTEGER*4 :: itrace(2)
          INTEGER*4 :: bump  (2)
          INTEGER*4 :: link    
+         INTEGER*4 :: bottom
          INTEGER*4 :: scan
          REAL*4    :: srange(2)
          REAL*4    :: target_r(4)
@@ -137,6 +138,7 @@ c...
       ring(:)%itrace(1) = -1
       ring(:)%itrace(2) = -1
       ring(:)%link      = -1
+      ring(:)%bottom    = -1
       ring(:)%scan      = -1
 
       nring = 1
@@ -358,6 +360,7 @@ c                IF (debug) WRITE(0,*) '          good!',depth,factor
 
                 IF (i.EQ.ntrace.OR.factor.GT.1.0) THEN
 c...              Complete the ring:
+                  ring(iring)%bottom      = 1  ! At the bottom of a PFR
                   ring(iring)%itrace  (2) = i
                   ring(iring)%target_r(3) = trace(i)%rho
                   ring(iring)%target_z(3) = trace(i)%s(i1)
@@ -384,6 +387,7 @@ c           define the local PFR), so just use the last valid trace:
               CALL ER('divLoadRibbonData','No valid outer ring '//
      .                'boundary found',*99)
             ELSE
+              ring(iring)%bottom      = 1  ! At the bottom of a PFR
               ring(iring)%itrace  (2) = store_i
               ring(iring)%target_r(3) = trace(store_i)%rho
               ring(iring)%target_z(3) = trace(store_i)%s(store_i1)
@@ -496,6 +500,7 @@ c...                Make new ring:
                     ring(iring+1)%target_r(1) = trace(i)%rho
                     ring(iring+1)%target_z(1) = trace(i)%s(i2)
 c...                Adjust old ring:
+                    ring(iring  )%bottom      = -2
                     ring(iring  )%itrace  (2) = i
                     ring(iring  )%target_r(3) = trace(i)%rho
                     ring(iring  )%target_z(3) = trace(i)%s(i1)
@@ -536,7 +541,7 @@ c     ==================================================================
 
 c...      Setup the poloidal cell boundaries:
 c         --------------------------------------------------------------
-          IF (opt_div%rib_pol_opt.NE.0.AND.
+          IF (opt_div%rib_pol_opt.NE.0.AND.ring(ir)%bottom.NE.1.AND.
      .        location.GE.r1.AND.location.LE.r2.AND.
      .        ((s1.GE.z1.AND.s1.LE.z2).OR.
      .         (s2.GE.z1.AND.s2.LE.z2))) THEN

@@ -194,6 +194,7 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
     
 !...  Block  6 variables:
       INTEGER, PUBLIC, SAVE :: trim_data
+      REAL   , PUBLIC, SAVE :: ermin
     
 !...  Block 13 variables:
       REAL, PUBLIC, SAVE :: dtimv,time0

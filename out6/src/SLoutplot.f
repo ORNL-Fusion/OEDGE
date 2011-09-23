@@ -3,6 +3,69 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE DumpMarieHelene(title9)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+
+      INTEGER ik,ir,fp,ike,ierr
+      REAL    fact
+      CHARACTER dummy*1024
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+c     E = h v; v = c / l; E = h c / l 
+c      
+
+           !  m2 kg / s  m / s    m
+      fact = 6.63E-34 * 3.0E+8 / 656.0E-9  ! 
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='mhf.h_alpha',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '# Data file for Marie-Helene: D_alpha [W m-3]'
+      WRITE(fp,'(A)') '#    (based on SOLPS format from A. Kukushkin)'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '# Version     : 1.0'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(2A5,3A12)') '#  ix','iy','x','y','z01'
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+          WRITE(fp,'(2I5,1P,3E12.4,0P)') 
+     .      ik,ir,rs(ik,ir),zs(ik,ir),pinalpha(ik,ir)*fact
+        ENDDO
+      ENDDO
+      CLOSE(fp)
+ 
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE ExportTetrahedrons(fname)
       USE mod_interface
       USE mod_geometry
@@ -153,10 +216,11 @@ c
       REAL     , INTENT(IN) :: crmi,absfac
       CHARACTER, INTENT(IN) :: title9*(*)
 
-      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,
-     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
-      REAL      totfypin,impact_energy,pos1,pos2
-      CHARACTER tag*64,title*1024
+      INTEGER   ik,ir,iz,id,in,status,ike,target,fp,in2,ierr,
+     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(nvesm)
+      REAL      totfypin,impact_energy,pos1,pos2,angle,flux,r1,z1,
+     .          nparticles,fact,rdum1
+      CHARACTER tag*64,title*1024,dummy*1024
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
 
@@ -208,6 +272,62 @@ c...  Dump impurity data:
         ENDDO
       ENDDO
       CALL inCloseInterface 
+
+
+c HERE?
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='mom',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '# DIVIMP data file for Martin O''Mullane (as '// 
+     .                'if there''s any other) '
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '# Version     : 1.0'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Dalpha is from EIRENE.'
+      WRITE(fp,'(A)') '#'
+      dummy='0123456789'
+
+      WRITE(fp,'(2A5,2A10,2X,A10,2A9,2X,A12,2X,10(A10))') 
+     .  '#  ix','iy','x'  ,'y'  ,'ne'   ,'Te'  ,'Ti'  ,'Dalpha',
+     .  ('iz+'//dummy(iz+1:iz+1),iz=0,MIN(6,MIN(nizs,cion)))
+      WRITE(fp,'(10X,2A10,2X,A10,2A9,2X,A12,2X,10(A10))') 
+     .               '(m)','(m)','(m-3)','(eV)','(eV)','(ph m-3 s-1)',
+     .  ('(m-3)'                ,iz=0,MIN(6,MIN(nizs,cion)))
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+c         Make sure that Dalpha isn't behaving badly:
+          IF (ktebs(ik,ir).GT.1.0E+3.AND.
+     .      pinline(ik,ir,4,H_BALPHA).GT.1.0E+20) THEN
+            rdum1 = SUM(pinline(ik,ir,1:3,H_BALPHA))+ 
+     .                  pinline(ik,ir,5  ,H_BALPHA)
+          ELSE
+            rdum1 = pinalpha(ik,ir)
+          ENDIF
+          WRITE(fp,'(2I5,2F10.5,2X,1P,E10.2,0P,2F9.2,1P,
+     .               2X,E12.2,2X,10E10.2,0P)') 
+     .      ik,ir,rs(ik,ir),zs(ik,ir),
+     .      knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir),
+     .      rdum1,
+     .      (sdlims(ik,ir,iz)*absfac,iz=0,MIN(6,MIN(nizs,cion)))
+        ENDDO
+      ENDDO
+      CLOSE(fp)
+
+
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES 2'
 
@@ -410,6 +530,124 @@ c...  ASCII data file for Sophie and MatLab:
 c
 c
 c
+      DO in = 1, nvesm
+        DO id = 1, wallpts
+          IF (wallpt(id,17).EQ.in) THEN
+            ivesm(in) = id
+            EXIT
+          ENDIF
+        ENDDO
+        IF (id.EQ.wallpts+1) 
+     .    CALL ER('GenerateDIVIMPDataFiles','Wall map failed',*99)
+      ENDDO
+
+      nparticles = 0.0
+      DO id = 1, wallpts
+        nparticles = nparticles + wallse(id)
+      ENDDO
+
+      WRITE(0,*) 'npart=',nparticles
+
+      CALL inOpenInterface('idl.divimp_erosion',ITF_WRITE)
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
+      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(r0        ,'R0'                 ,'m')          
+      CALL inPutData(z0        ,'Z0'                 ,'m')          
+      pos1 = 0.0
+      pos2 = 0.0
+c      DO id = 1, wallpts
+c        in = NINT(wallpt(id,18))
+c        in2= NINT(wallpt(id,17))
+      DO in2= 1, nvesm
+        id = ivesm(in2)
+        in = NINT(wallpt(id,18))
+c        in2= NINT(wallpt(id,17))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        pos2 = pos1 + wallpt(id,7)
+        fact = nparticles * (pos2 - pos1)
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          r1 = rp(in)
+          z1 = zp(in)
+          CALL inPutData(id      ,'INDEX_ID'  ,'N/A')          
+          CALL inPutData(in2     ,'INDEX_IN'  ,'N/A')          
+          CALL inPutData(ikds(in),'INDEX_IKDS','N/A')          
+          CALL inPutData(irds(in),'INDEX_IRDS','N/A')          
+          CALL inPutData(r1      ,'R'    ,'m')          
+          CALL inPutData(z1      ,'Z'    ,'m')          
+          CALL inPutData(pos1    ,'DIST1','m')
+          CALL inPutData(pos2    ,'DIST2','m')          
+c          CALL inPutData(neros(in,3)*absfac,'TOT_ERO','s-1 m-2')          
+c          CALL inPutData(neros(in,1)*absfac,'TOT_DEP','s-1 m-2')          
+
+          CALL inPutData(neros(in,3)*dds(in)/dds2(in)       
+     .                              ,'TOT_ERO','s-1 m-2')          
+          CALL inPutData(neros(in,1)       ,'TOT_DEP','s-1 m-2')          
+
+c          write(0,*) 'ddsg:',dds2(in),pos2-pos1,wallpt(id,7)
+
+          CALL inPutData(wallse(id) / fact,'TOT_ERO2','s-1 m-2')          
+          CALL inPutData(-(wallsn(id)+wallsi(id)) / fact,
+     .                   'TOT_DEP2','s-1 m-2')          
+          CALL inPutData((wallse(id)-(wallsn(id)+wallsi(id))) / fact,
+     .                   'TOT_NET2','s-1 m-2')          
+
+          CALL inPutData(neros(in,4)*absfac,'TOT_NET','s-1 m-2')          
+          angle = 90.0-ACOS(costet(in))*180.0/PI
+          CALL inPutData(angle,'IMPACT_ANGLE','degrees')          
+          flux = knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir)
+          CALL inPutData(flux      ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'ATM_DEP','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_NET','s-1 m-2')          
+          CALL inPutData(flxhw6(in2),'SURFACE_ATM_FLUX','D s-1 m-2')          
+        ELSE
+          r1 = 0.5 * (rvesm(in2,1) + rvesm(in2,2))
+          z1 = 0.5 * (zvesm(in2,1) + zvesm(in2,2))
+          CALL inPutData(id ,'INDEX_ID'  ,'N/A')          
+          CALL inPutData(in2,'INDEX_IN'  ,'N/A')          
+          CALL inPutData(-1 ,'INDEX_IKDS','N/A')          
+          CALL inPutData(-1 ,'INDEX_IRDS','N/A')          
+c          r1 = 0.5*(wallpt(id,20)+wallpt(id,22))
+c          z1 = 0.5*(wallpt(id,21)+wallpt(id,23))
+          CALL inPutData(r1  ,'R'    ,'m')          
+          CALL inPutData(z1  ,'Z'    ,'m')          
+          CALL inPutData(pos1,'DIST1','m')
+          CALL inPutData(pos2,'DIST2','m')          
+          CALL inPutData(0.0        ,'TOT_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'TOT_DEP','s-1 m-2')          
+
+
+          CALL inPutData(wallse(id) / fact,'TOT_ERO2','s-1 m-2')          
+          CALL inPutData(-(wallsn(id)+wallsi(id)) / fact,
+     .                   'TOT_DEP2','s-1 m-2')          
+          CALL inPutData((wallse(id)-(wallsn(id)+wallsi(id))) / fact,
+     .                   'TOT_NET2','s-1 m-2')          
+c          CALL inPutData(wallse(id)          / (pos2-pos1) / 1.012E+05
+c     .        ,'TOT_ERO2','(s-1 m-2)')          
+c          CALL inPutData(-(wallsn(id)+wallsi(id))/(pos2-pos1)/1.012E+05
+c     .        ,'TOT_DEP2','(s-1 m-2)')          
+
+
+          CALL inPutData(0.0        ,'TOT_NET','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_ERO','s-1 m-2')          
+          CALL inPutData(0.0        ,'ATM_DEP','s-1 m-2')          
+          CALL inPutData(flxhw3(in2),'ATM_NET','s-1 m-2')          
+          CALL inPutData(-1.0       ,'IMPACT_ANGLE'    ,'degrees')          
+          CALL inPutData(0.0        ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
+          CALL inPutData(flxhw6(in2),'SURFACE_ATM_FLUX','D  s-1 m-2')          
+        ENDIF
+        pos1 = pos2
+      ENDDO
+      CALL inCloseInterface 
+
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
@@ -4371,6 +4609,9 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         RETURN
       ELSEIF (iopt.EQ.19) THEN
         CALL divLoadRibbonData
+        RETURN
+      ELSEIF (iopt.EQ.20) THEN
+        CALL DumpMarieHelene(title)
         RETURN
       ENDIF
 
