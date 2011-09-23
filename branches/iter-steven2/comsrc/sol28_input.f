@@ -691,7 +691,7 @@ c       ----------------------------------------------------------------
         CASE('EIR SURFACE PROPERTIES')
           opt_eir%sur_n  = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-            WRITE(0,*) 'buffer:'//TRIM(buffer)
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)
             opt_eir%sur_n = opt_eir%sur_n + 1
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)
@@ -743,7 +743,7 @@ c
         CASE('FIL TARGET FLUX')
           CALL ReadOptionI(buffer,1,opt_fil%target_flux)
         CASE('FIL LENGTH')
-          WRITE(0,*) 'BUFFER:',TRIM(buffer)
+c          WRITE(0,*) 'BUFFER:',TRIM(buffer)
           CALL ReadOptionR(buffer,2,length)
           opt_fil%length1 = length(1)
           opt_fil%length2 = length(2)

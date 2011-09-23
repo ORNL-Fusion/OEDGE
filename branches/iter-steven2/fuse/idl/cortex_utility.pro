@@ -158,7 +158,7 @@ FUNCTION cortex_ExtractStructure, struct, index
 ;    RETURN
 ;  ENDELSE
 
-  IF (index LT 1 OR index GT 60) THEN BEGIN                        ; *** FIX THIS MINDLESS IMPLEMENTATION! ***
+  IF (index LT 1 OR index GT 79) THEN BEGIN                        ; *** FIX THIS MINDLESS IMPLEMENTATION! ***
     PRINT,'ERROR cortrex_ExtractStructure: Index out of bounds'
     PRINT,' INDEX  = ',index
     PRINT,' STRUCT = '
@@ -226,6 +226,25 @@ FUNCTION cortex_ExtractStructure, struct, index
   IF (index EQ 58) THEN result = struct.data58
   IF (index EQ 59) THEN result = struct.data59
   IF (index EQ 60) THEN result = struct.data60
+  IF (index EQ 61) THEN result = struct.data61
+  IF (index EQ 62) THEN result = struct.data62
+  IF (index EQ 63) THEN result = struct.data63
+  IF (index EQ 64) THEN result = struct.data64
+  IF (index EQ 65) THEN result = struct.data65
+  IF (index EQ 66) THEN result = struct.data66
+  IF (index EQ 67) THEN result = struct.data67
+  IF (index EQ 68) THEN result = struct.data68
+  IF (index EQ 69) THEN result = struct.data69
+  IF (index EQ 70) THEN result = struct.data70
+  IF (index EQ 71) THEN result = struct.data71
+  IF (index EQ 72) THEN result = struct.data72
+  IF (index EQ 73) THEN result = struct.data73
+  IF (index EQ 74) THEN result = struct.data74
+  IF (index EQ 75) THEN result = struct.data75
+  IF (index EQ 76) THEN result = struct.data76
+  IF (index EQ 77) THEN result = struct.data77
+  IF (index EQ 78) THEN result = struct.data78
+  IF (index EQ 79) THEN result = struct.data79
 
   IF (N_ELEMENTS(TAG_NAMES(result)) EQ 1) THEN BEGIN
     PRINT, 'ERROR Cortex ExtractStructure: Structure element not found'

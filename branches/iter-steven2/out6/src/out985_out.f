@@ -34,6 +34,8 @@ c...      Fluid grid:
           ik = obj(iobj)%ik
           ir = obj(iobj)%ir
 
+          plasma(ipla)%nD = pinatom(ik,ir)
+          plasma(ipla)%nD2= pinmol (ik,ir)
           plasma(ipla)%ne = knes (ik,ir)
           plasma(ipla)%te = ktebs(ik,ir)   ! Don't keep assigning this over and over...
           plasma(ipla)%nb = knbs (ik,ir)
@@ -105,9 +107,10 @@ c             available:
 c                IF (.NOT.debugv)  ! *** PROFILE HACK ***
 c     .            CALL ER('AssignPlasmaQuantities','Impurity velocity'//
 c     .                    ' data not present',*99)
-                plasma(ipla)%ni(iint) = sdlims(ik,ir,iz)
+                plasma(ipla)%ni(iint) = sdlims(ik,ir,iz) * absfac
 c                plasma(ipla)%vi(iint) = sdvs  (ik,ir,iz)  ! *** PROFILE HACK ***
                 plasma(ipla)%ti(iint) = sdts  (ik,ir,iz)
+
 
 c                IF (ir.EQ.irsep)
 c     .                WRITE(0,*) sdvs(ik,ir,iz),velavg(ik,ir,iz)
@@ -149,8 +152,11 @@ c
       USE mod_out985_variables
       IMPLICIT none
 
-      INTEGER iint,ik,ir
+      INTEGER, INTENT(IN) :: iint,ik,ir
+      LOGICAL display_warning 
       REAL    osm(ik,ir),wlngth2
+
+      DATA display_warning /.TRUE./
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
@@ -160,7 +166,7 @@ c
       INCLUDE 'outcom'
 
 
-      INTEGER za,iz
+      INTEGER za,iz,ik1,ir1
       REAL    plrpad(MAXNKS,MAXNRS)
 
       za = opt%int_z(iint) * 1000 + opt%int_a(iint)
@@ -178,6 +184,33 @@ c...      PIN:
 
                 IF     (opt%int_line(iint).EQ.'B_ALPHA') THEN
                   osm(1:ik,1:ir) = pinline(1:ik,1:ir,6,H_BALPHA)
+c                 *** TEMP *** get rid of bad D2+ data at high temperatures
+                  DO ir1 = 1, nrs
+                    DO ik1 = 1, nks(ir1)
+                      IF (ktebs(ik,ir).GT.1.0E+3.AND.
+     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
+                        pinline(ik1,ir1,4,H_BALPHA) = 0.0
+                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+                        IF (display_warning) THEN
+                          display_warning = .FALSE.
+                          WRITE(0,*)
+                          WRITE(0,*) '===================='
+                          WRITE(0,*) '  CLIPPING D_ALPHA  '
+                          WRITE(0,*) '===================='
+                          WRITE(0,*)
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                  ENDDO
+                  IF (.NOT.display_warning) THEN
+                    DO ir1 = 1, nrs
+                      DO ik1 = 1, nks(ir)
+                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                      ENDDO
+                    ENDDO
+                  ENDIF
+
                   wlngth2 = 656.3  ! Air
 
                 ELSEIF (opt%int_line(iint).EQ.'B_GAMMA') THEN
@@ -346,6 +379,7 @@ c...    Core:
           ylist(2,nlist) = zvp(4,id)
         ENDDO
 c...    Everywhere else, radially:
+         
         WRITE(0,*)
         WRITE(0,*) '  ================================== '
         WRITE(0,*) '  GRID CLIPPING HACK: RING 32 FORCED '
@@ -353,6 +387,7 @@ c...    Everywhere else, radially:
         WRITE(0,*)
         DO ir = 3, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
+           STOP 'OLD HACK'
           IF (ir.EQ.36) CYCLE                      ! *** HACK ***
           DO ik = 1, nks(ir)-1
             IF     (irins(ik,ir).EQ.irwall.OR.
@@ -627,9 +662,9 @@ c
      .                   'Q AND PARTIAL'// 
      .      ' DERIVATIVES QX AND QY RELATIVE TO MACHINE PRECISION EPS'//  
      .      t12, 'FUNCTION   MAX ERROR   MAX ERROR/EPS'/)
-5100        FORMAT (t15, 'Q       ', e9.3, '       ', f4.2)
-5200        FORMAT (t15, 'QX      ', e9.3)
-5300        FORMAT (t15, 'QY      ', e9.3)
+5100        FORMAT (t15, 'Q       ', e10.3, '       ', f5.2)
+5200        FORMAT (t15, 'QX      ', e10.3)
+5300        FORMAT (t15, 'QY      ', e10.3)
 5400        FORMAT (///' *** ERROR IN QSHEP2 -- IER =', i2, ' ***')
 5500        FORMAT (///' *** ERROR IN QS2GRD -- IER =', i2, ' ***')
 5600        FORMAT (///' *** ERROR -- INTERPOLATED VALUES ',  
@@ -1337,7 +1372,8 @@ c...      Vertices:
           obj(nobj)%v(3,4) =  1.0D0
         ENDIF
 c     ------------------------------------------------------------------
-      ELSEIF (opt%obj_option(ielement).EQ.2) THEN
+      ELSEIF (opt%obj_option(ielement).EQ.2.OR.
+     .        opt%obj_option(ielement).EQ.9) THEN
         ivol = 0
         DO itri = 1, ntri
           IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
@@ -1391,7 +1427,7 @@ c...
             IF (tri(itri)%sur(v1).NE.0) THEN        
 c...          Triangle surface is on a surface (magnetic or vessel wall):
               imap = tri(itri)%map(v1)
-              IF (.TRUE..AND.
+              IF (opt%obj_option(ielement).EQ.2.AND.
      .            tri(itri)%map  (v1).EQ.0    .AND.
      .            tri(itri)%index(2 ).GE.irsep) THEN
 c            .AND.               ! Need surface type identifier...
@@ -2085,8 +2121,8 @@ c                ENDIF
               ELSE
                 obj(nobj)%tsur(2) = SP_GRID_SURFACE
                 obj(nobj)%reflec(2) = 0
-                obj(nobj)%nmap(2) = -noutmap(ik,ir)
-                DO i1 = 1, noutmap(ik,ir)
+                obj(nobj)%nmap(2) = -MIN(20,noutmap(ik,ir))
+                DO i1 = 1, MIN(20,noutmap(ik,ir))
                   obj(nobj)%imap(i1,2) = ikoutmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,2) = iroutmap(ik,ir,i1)
                 ENDDO
@@ -2137,8 +2173,8 @@ c                    obj(nobj)%reflec(3) = opt%ob_stdgrd_reflec
               ELSE
                 obj(nobj)%tsur(4) = SP_GRID_SURFACE
                 obj(nobj)%reflec(4) = 0
-                obj(nobj)%nmap(4) = -ninmap(ik,ir)
-                DO i1 = 1, ninmap(ik,ir)
+                obj(nobj)%nmap(4) = -MIN(20,ninmap(ik,ir))
+                DO i1 = 1, MIN(20,ninmap(ik,ir))
                   obj(nobj)%imap(i1,4) = ikinmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,4) = irinmap(ik,ir,i1)
                 ENDDO
@@ -2228,8 +2264,8 @@ c              obj(nobj)%ipts(4,2) = 2
               ELSE
                 obj(nobj)%tsur(3) = SP_GRID_SURFACE
                 obj(nobj)%reflec(3) = 0
-                obj(nobj)%nmap(3) = -noutmap(ik,ir)
-                DO i1 = 1, noutmap(ik,ir)
+                obj(nobj)%nmap(3) = -MIN(20,noutmap(ik,ir))
+                DO i1 = 1, MIN(20,noutmap(ik,ir))
                   obj(nobj)%imap(i1,3) = ikoutmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,3) = iroutmap(ik,ir,i1)
                 ENDDO
@@ -2289,8 +2325,8 @@ c              obj(nobj)%ipts(4,4) = 4
               ELSE
                 obj(nobj)%tsur(5) = SP_GRID_SURFACE
                 obj(nobj)%reflec(5) = 0
-                obj(nobj)%nmap(5) = -ninmap(ik,ir)
-                DO i1 = 1, ninmap(ik,ir)
+                obj(nobj)%nmap(5) = -MIN(20,ninmap(ik,ir))
+                DO i1 = 1, MIN(20,ninmap(ik,ir))
                   obj(nobj)%imap(i1,5) = ikinmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,5) = irinmap(ik,ir,i1)
                 ENDDO

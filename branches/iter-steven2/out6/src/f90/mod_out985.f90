@@ -125,6 +125,7 @@ MODULE MOD_OUT985
      REAL*8  :: average (MAXNINT)
      REAL*8  :: scale
      REAL*8  :: weight
+     REAL*8  :: weight_save   ! For tertiary+ reflections
      REAL*8  :: v1(3)
      REAL*8  :: v2(3)
      REAL*8  :: xwidth        ! Don't store these here, use OPT... 
@@ -156,8 +157,10 @@ MODULE MOD_OUT985
 
   INTEGER, PUBLIC, PARAMETER :: MAXIONSTATE = 20  ! Should match the number of possible lines to be integrated
 
-  TYPE, PUBLIC :: type_plasma
-     REAL    :: ne
+  TYPE, PUBLIC :: type_plasma   
+     REAL    :: nD
+     REAL    :: nD2
+     REAL    :: ne           ! *** IF ADDING THINGS HERE, ALSO UPDATE THE INITIALIZATION IN out985_emission.f ***
      REAL    :: te
      REAL    :: nb
      REAL    :: vb
@@ -194,11 +197,12 @@ MODULE MOD_OUT985
      INTEGER   :: nybin                      ! nbin(2) !xbin,ybin
      CHARACTER :: fmap*1024
      INTEGER   :: ndet
-     INTEGER   :: det_nxbin(MAXNDET)
-     INTEGER   :: det_nybin(MAXNDET)             ! nbin(2) !xbin,ybin
+     INTEGER   :: det_ccd   (MAXNDET)
+     INTEGER   :: det_nxbin (MAXNDET)
+     INTEGER   :: det_nybin (MAXNDET)             ! nbin(2) !xbin,ybin
      INTEGER   :: det_istart(MAXNDET)
-     INTEGER   :: det_iend(MAXNDET)
-     CHARACTER :: det_fname(MAXNDET)*1024
+     INTEGER   :: det_iend  (MAXNDET)
+     CHARACTER :: det_fname (MAXNDET)*1024
      INTEGER   :: n
      INTEGER   :: m
      REAL*8    :: roll
@@ -214,22 +218,22 @@ MODULE MOD_OUT985
      REAL      :: obj_angle_end
      REAL      :: obj_yrotation
      INTEGER   :: obj_num         ! New object descriptors
-     INTEGER   :: obj_type(20)
-     INTEGER   :: obj_option(20)
-     INTEGER   :: obj_colour(20)
-     INTEGER   :: obj_reflec(20)
-     INTEGER   :: obj_fudge (20)
-     REAL      :: obj_factor(20)
-     INTEGER   :: obj_material(20)
-     INTEGER   :: obj_orientation(20)
-     INTEGER   :: obj_n(20,2)
-     REAL      :: obj_r(20,2)
-     REAL      :: obj_z(20,2)
-     REAL      :: obj_psi(20,2)
-     REAL*8    :: obj_scale(20)
-     REAL      :: obj_yangle(20)
-     INTEGER   :: obj_sym(20)
-     CHARACTER :: obj_fname(20)*256
+     INTEGER   :: obj_type  (40)
+     INTEGER   :: obj_option(40)
+     INTEGER   :: obj_colour(40)
+     INTEGER   :: obj_reflec(40)
+     INTEGER   :: obj_fudge (40)
+     REAL      :: obj_factor(40)
+     INTEGER   :: obj_material(40)
+     INTEGER   :: obj_orientation(40)
+     INTEGER   :: obj_n(40,2)
+     REAL      :: obj_r(40,2)
+     REAL      :: obj_z(40,2)
+     REAL      :: obj_psi(40,2)
+     REAL*8    :: obj_scale(40)
+     REAL      :: obj_yangle(40)
+     INTEGER   :: obj_sym(40)
+     CHARACTER :: obj_fname(40)*256
      INTEGER       :: int_num
      INTEGER       :: int_type(MAXNINT)    ! Put these in a structure?
      INTEGER       :: int_colour(MAXNINT)
@@ -304,6 +308,7 @@ MODULE MOD_OUT985
      INTEGER   :: img_nxratio
      INTEGER   :: img_nyratio
      ! Reflection models:
+     INTEGER   :: ref_opt
      INTEGER   :: ref_num
      INTEGER   :: ref_model(10)
      INTEGER   :: ref_wlgth(10)
@@ -350,6 +355,8 @@ MODULE MOD_OUT985
      REAL           :: rib_s1    (  MAX_OPT_RIB)
      REAL           :: rib_s2    (  MAX_OPT_RIB)
 
+     INTEGER        :: rib_wipe  (  MAX_OPT_RIB)
+
   ENDTYPE type_options985
 
 
@@ -391,7 +398,7 @@ MODULE MOD_OUT985
   !...  Utility, wall lists:
   INTEGER, PUBLIC :: nvwlist,ngblist,noblist
   INTEGER, PUBLIC, TARGET, ALLOCATABLE :: vwlist(:,:),gblist(:,:)
-  INTEGER, PUBLIC, TARGET :: oblist(20,2)
+  INTEGER, PUBLIC, TARGET :: oblist(40,2)
 
   INTEGER, PUBLIC :: nvwinter,ngbinter,nobinter
   ! jdemod - these need to be declared allocatable
@@ -604,7 +611,10 @@ MODULE mod_out985_ribbon
 
   INTEGER :: trace_n  ,  &
              maxntrace,  &
-             ntrace
+             ntrace   ,  &
+             wipe_n   ,  &
+             wipe_list(100)
+
   INTEGER, ALLOCATABLE :: trace_i(:,:)
   REAL*8 , ALLOCATABLE :: trace  (:,:)
 

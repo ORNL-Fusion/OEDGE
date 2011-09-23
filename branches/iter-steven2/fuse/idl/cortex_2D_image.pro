@@ -4,7 +4,7 @@
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
+FUNCTION cortex_PlotImage, plot, data_array, ps=ps
 
   PRINT
   PRINT,'----------------------- NEW PLOT -----------------------'
@@ -37,10 +37,13 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
   IF (plot.ylog EQ 1) THEN ylog = 1
 
+  save_xpos = [-999.0,-999.0]
+  save_ypos = [-999.0,-999.0]
+
   CASE option OF
 ;   --------------------------------------------------------------------
     1: BEGIN
-       default_plot_type = 1
+       plot_type = [1]
        plot_xboarder = 0.05
        plot_yboarder = 0.1
        plot_xspacing = 0.100
@@ -49,32 +52,32 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
        plot_xn = 1
        plot_yn = 1
        title = plot.title 
-       subtitle = ['EMISSION LINE INTEGRAL / photons m-2 s-1 ster-1']
-       xtitle   = 'view index'
-       ytitle   = ['integral (photons m-2 s-1 ster-1)']
+       subtitle = ['EMISSION LINE INTEGRAL / photons ster-1 m-2 s-1']
+       xtitle   = ['view index']
+       ytitle   = ['integral (photons ster-1 m-2 s-1)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
-       ntrace = [1]
-       focus = 1
+       ntrace   = [1]
+       focus    =  1
        END
     2: BEGIN
-       default_plot_type = 1
+       plot_type = [3,-1,1]
        plot_xboarder = 0.05
        plot_yboarder = 0.1
        plot_xspacing = 0.100
        plot_yspacing = 0.025
-       nplot = 1
-       plot_xn = 1
+       nplot = 3
+       plot_xn = 3
        plot_yn = 1
        title = plot.title 
-       subtitle = ['PROFILE ALONG THE DIAGNOSTIC LINE-OF-SIGHT / ' + plot.id]
-       xtitle   = 'distance from last lens (m)' 
-       ytitle   = ['signal (arb)']
+       subtitle = ['none'   ,'none','EMISSION LINE INTEGRAL / photons ster-1 m-2 s-1']
+       xtitle   = ['x index','none','view index']
+       ytitle   = ['y index','none','integral (photons m-2 s-1 ster-1)']
        labels   = MAKE_ARRAY(100,VALUE=' ',/STRING)
-       ntrace = [1]
+       ntrace   = [1,1,1]
        END
 ;   --------------------------------------------------------------------
     ELSE: BEGIN  
-      PRINT, 'ERROR cortex_PlotIntegrals: Unrecognised plot option'
+      PRINT, 'ERROR cortex_PlotImage: Unrecognised plot option'
       PRINT, '  OPTION = ',option,' (',plot.option,')'
       RETURN, -1
       END
@@ -108,7 +111,7 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
     ndata = N_ELEMENTS(TAG_NAMES(data_array))
     IF (ndata LE 0) THEN BEGIN
-      PRINT, 'ERROR cortex_PlotIntegrals: No data found'
+      PRINT, 'ERROR cortex_PlotImage: No data found'
       RETURN, -1
     ENDIF
 
@@ -123,6 +126,20 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
     xpos  = [xcen - 0.5 * xsize, xcen + 0.5 * xsize]
     ypos  = [ycen - 0.5 * ysize, ycen + 0.5 * ysize]
 
+    ; Fancy trick for breaking the regularity of the plots, if you don't mind
+    ; me saying, so that you can have a tall plot next to some short plots:
+    IF (plot_type[iplot-1] EQ -1) THEN BEGIN
+      IF (save_xpos[0] EQ -999.0) THEN BEGIN
+        save_xpos = xpos
+        save_ypos = ypos
+      ENDIF
+      CONTINUE
+    ENDIF ELSE IF (save_xpos[0] NE -999.0) THEN BEGIN
+      xpos[0] = save_xpos[0]
+      ypos[1] = save_ypos[1]
+      save_xpos = [-999.0,-999.0]
+    ENDIF
+
     xmin =  1.0E+35
     xmax = -1.0E+35
     ymin =  1.0E+35
@@ -134,49 +151,38 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-;          integral = '   PARTICLE FLUX INTEGRAL= ' + STRING(val.integral,FORMAT='(E12.4)')
+          print,'die'
+          stop
+          END
+;       ----------------------------------------------------------------
+        2: BEGIN
           integral = ' '
-
           nintegral = N_ELEMENTS(TAG_NAMES(val.integral))
 
           val_data = cortex_ExtractStructure(val.integral,1)      ; *** the 1 is temporary, or should be 1 plot? ***
 
           file = val_data.file
-;          print,'file= ',file
 
-          IF (nintegral EQ 1) THEN BEGIN
+          j = plot.signal
+
+          IF (ndata GT 1) THEN BEGIN
+            PRINT,'cortex_PlotImage: Sorry, can only plot one case at the moment '
+            PRINT,'                  if plotting multiple LOS integrals'
+            STOP
+          ENDIF
+          IF (iplot EQ 3) THEN BEGIN
             str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
             str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-            labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
-          ENDIF ELSE BEGIN
-            IF (ndata GT 1) THEN BEGIN
-              PRINT,'cortex_1D_integrals: sorry, can only plot one case at the moment '
-              PRINT,'                     if plotting multiple LOS integrals'
-              STOP
-            ENDIF
-            IF (iplot EQ 1) THEN BEGIN
-              str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
-              str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-              case_name = str
-;              labels[0] = labels[0] + STRING(idata-1) + '\' + str[0] + integral + ' :'
-;              title = title + ': CASE ' + str[0] 
-
-              labels[0] = ''
-              FOR i = 0, nintegral-1 DO BEGIN
-                file =  plot.data_file[i]
-                str = STRSPLIT(file,'.',/EXTRACT)
-                str = str[N_ELEMENTS(str)-1]
-                labels[0] = labels[0] + case_name +  ', ' + str + ' :'
-              ENDFOR
-
-            ENDIF
-          ENDELSE
-
-          ntrace = [1, 1, 1]  ; Number of data lines on each plot
-;          ntrace = [2, 1, 1]  ; C-Mod
-          xdata = val_data.xindex 
-          FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val_data.yindex[i]])  ; *** TEMP *** 
-          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+            case_name = str
+            labels[iplot-1] = ''
+            FOR i = 0, nintegral-1 DO BEGIN
+              file =  plot.data_file[2*i]
+              str = STRSPLIT(file,'.',/EXTRACT)
+              str = str[N_ELEMENTS(str)-1]
+              labels[iplot-1] = labels[iplot-1] + case_name +  ', ' + str + ' ' + plot.data_file[2*i+1] + ' :'
+            ENDFOR
+;            stop
+          ENDIF
 
           ; Set scaling of results, based on whether a specific concentration is being forced:
           IF (plot.concentration NE 0.0) THEN BEGIN
@@ -187,21 +193,68 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
           ENDIF ELSE scale = 1.0
           scale = scale / (4.0 * !PI)          
 
+          xdata = [0.0,1.0] ; val_data.xindex 
+;          FOR i = 0, N_ELEMENTS(xdata)-1 DO xdata[i] = MAX([xdata[i],val_data.yindex[i]])  ; *** TEMP *** 
+;          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
+
           CASE iplot OF
+;           ------------------------------------------------------------
             1: BEGIN
-;help,val_data,/struct
-;help,ydata
-;print,'scale= ',scale
+              i = 1
+              val_data = cortex_ExtractStructure(val.integral,i)
+              xdata = val_data.xindex 
+              ydata = val_data.yindex 
+              nx = MAX(xdata)
+              ny = MAX(ydata)
+              xdata = INDGEN(nx) + 1
+              ydata = INDGEN(ny) + 1
+              zdata = ROTATE(TRANSPOSE(REFORM(val_data.signal[*,j-1],nx,ny)),3)  ; Outch!
+              END
+;           ------------------------------------------------------------
+            2: ydata = [0.0,1.0]
+;           ------------------------------------------------------------
+            3: BEGIN
                j = plot.signal
                ntrace[iplot-1] = nintegral
                FOR i = 1, nintegral DO BEGIN
                  val_data = cortex_ExtractStructure(val.integral,i)
-                 ydata[*,i-1] = val_data.signal[*,j-1] * scale
- 
+
+                 k = LONG(STRMID(val_data.stripe,1))
+                 CASE STRMID(val_data.stripe,0,1) OF
+                   'r': k = WHERE(val_data.yindex EQ MAX(val_data.yindex) - k + 1, n)
+                   'c': k = WHERE(val_data.xindex EQ k                           , n)  ; *** MIGHT NEED SOMETHING LIKE THE LINE ABOVE!? ***
+                   ELSE: BEGIN
+                     PRINT,'cortex_PlotImage: Trouble understanding specification'
+                     PRINT,' SELECTOR=',STRMID(val_data.stripe,0,1)
+                     END
+                 ENDCASE
+
                  IF (i EQ 1) THEN BEGIN
-;                 IF (nintegral EQ 1) THEN BEGIN
-;print,val_data.atomic_number
-;print,val_data.atomic_number[j-1]
+                   xdata = DINDGEN(n) + 1.0
+                   ydata = MAKE_ARRAY(n,MAXNYDATA,/FLOAT,VALUE=0.0)      
+                 ENDIF ELSE BEGIN
+                   IF (N_ELEMENTS(xdata) NE n) THEN BEGIN
+;                    print,'shit!',n,(n / N_ELEMENTS(xdata))
+;                    print,'k',k
+                     n = N_ELEMENTS(xdata)
+                     l = FINDGEN(n) / FLOAT(n-1)
+;                    print,'l',l
+;                    print,'l',N_ELEMENTS(k)
+                     l = LONG(l * FLOAT(N_ELEMENTS(k)-1))
+;                    print,'l',l
+                     k = k[l]
+;                    print,'k',k
+                   ENDIF
+                 ENDELSE
+
+                 ydata[*,i-1] = val_data.signal[k,j-1] * scale
+
+                 CASE STRMID(val_data.stripe,0,1) OF
+                   'r': 
+                   'c': ydata[*,i-1] = REVERSE(ydata[*,i-1])
+                 ENDCASE
+
+                 IF (i EQ 1) THEN BEGIN
                    IF (idata EQ 1) THEN BEGIN
                      atomic_number = val_data.atomic_number[j-1]
                      CASE atomic_number OF 
@@ -209,7 +262,7 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
                        2: element_name = 'HELIUM'
                        4: element_name = 'BERYLLIUM'
                        ELSE: BEGIN
-                         PRINT,'ERROR cortex_PlotIntegrals: Unknown element'
+                         PRINT,'ERROR cortex_PlotImage: Unknown element'
                          STOP
                          END
                      ENDCASE
@@ -230,57 +283,19 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
 
                    ENDELSE
                  ENDIF ELSE BEGIN
-;                   print, 'not sure what to do here with multiple lines'
-;                   stop
+;           stop
+;                   ydata = [0.0,1.0]
                  ENDELSE
 
 
-;                 labels[0] = labels[0] + STRING(i-1) + '\' + plot.data_file[i-1] + ':' 
+
                ENDFOR
-;               ydata[*,1] = [2.5,4.5,1.65,1.6,0.1,0.028,0.02,0.02,0.02] * 1E+21 * 4.0 * 3.1415  ; C-Mod
-
-;   print,xdata
-;   print,ydata[*,0]
-
                END
-
-
           ENDCASE
-          END
-;       ----------------------------------------------------------------
-        2: BEGIN
-          integral = ' '
-
-;          help,val_array.integral,/struct
-;stop
-;          ntrace = N_ELEMENTS(TAG_NAMES(data_array))
-;          IF (ntrace LE 0) THEN BEGIN
-;            PRINT, 'ERROR cortex_PlotIntegrals: No data found'
-;            RETURN, -1
-;          ENDIF
-
-          val = cortex_ExtractStructure(val.profile,1)      ; *** the 1 is temporary, or should be 1 plot? ***
-
-    help,val,/struct
-
-          file = val.file
-          str = STRSPLIT(file,'/',/EXTRACT)                   ; Extract case name to STR
-          str = STRSPLIT(str[N_ELEMENTS(str)-1],'.',/EXTRACT)
-          labels[0] = labels[0] + STRING(idata-1) + '/' + str[0] + integral + ' :'
-
-          ntrace = [1, 1, 1]  ; Number of data lines on each plot
-
-          xdata = val.path
-          ydata = MAKE_ARRAY(N_ELEMENTS(xdata),MAXNYDATA,/FLOAT,VALUE=0.0)      
-          CASE iplot OF
-            1: ydata[*,0] = val.signal
-          ENDCASE
-
-
           END
 ;       ----------------------------------------------------------------
         ELSE: BEGIN  
-          PRINT, 'ERROR cortex_PlotIntegrals: Unrecognised plot option'
+          PRINT, 'ERROR cortex_PlotImage: Unrecognised plot option'
           PRINT, '  OPTION = ',plot.option
           RETURN, -1
           END
@@ -291,10 +306,11 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
       data = { x : xdata, y : ydata, file : file } 
       IF (idata EQ 1) THEN data_store = CREATE_STRUCT(           name,data) ELSE  $
                            data_store = CREATE_STRUCT(data_store,name,data)
+
       IF (N_ELEMENTS(WHERE(plot.xrange EQ 0.0)) NE 2) THEN BEGIN
         i = WHERE(xdata GE plot.xrange[0] AND xdata LE plot.xrange[1])        
         IF (N_ELEMENTS(i) EQ 1) THEN BEGIN
-          PRINT,'ERROR cortex_PlotIntegrals: No data within XRANGE'
+          PRINT,'ERROR cortex_PlotImage: No data within XRANGE'
           PRINT,'  IPLOT          = ',iplot
           PRINT,'  IDATA          = ',idata
           PRINT,'  XRANGE         = ',plot.xrange
@@ -323,15 +339,42 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
     IF (plot.yrange[1] NE 0.0) THEN yrange = plot.yrange ELSE yrange = [ymin,ymax] 
     position = [xpos[0],ypos[0],xpos[1],ypos[1]]
 
-    plot_type = default_plot_type                                           
-    IF (focus NE 0 OR yi EQ plot_yn OR iplot EQ nplot) THEN plot_type = 2   ; Show x-axis label
+    type = plot_type[iplot-1]
 
-    CASE (plot_type) OF
+    IF (type NE 3 AND (focus NE 0 OR yi EQ plot_yn OR iplot EQ nplot)) THEN type = 2   ; Show x-axis label
+
+    CASE (type) OF
       1: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
                POSITION=position,YTITLE=ytitle[iplot-1],XTICKFORMAT='(A1)',/NOERASE, YLOG=ylog                                  
       2: PLOT, xrange, yrange, /NODATA, XSTYLE=1, YSTYLE=1,  $
-               POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle,/NOERASE, YLOG=ylog                                 
+               POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle[iplot-1],/NOERASE, YLOG=ylog                                 
+      3: BEGIN
+        nlevels = 100
+        LOADCT,3
+        c_colors = LONG(FINDGEN(nlevels) * (255.0 / FLOAT(nlevels-1)) )
+
+        aspect_ratio = FLOAT(N_ELEMENTS(xdata)) / FLOAT(N_ELEMENTS(ydata))
+        xwidth = xpos[1] - xpos[0]
+        ywidth = ypos[1] - ypos[0]
+
+       display_ratio = 0.69 ; 3.25 / 3.35  ; Small correction based on measurements from the GhostView display of the plot
+
+        ypos[0] = ypos[1] - xwidth / (aspect_ratio * display_ratio)
+
+    position = [xpos[0],ypos[0],xpos[1],ypos[1]]
+
+; print,ypos
+;stop
+
+        CONTOUR, ALOG10(zdata), xdata, ydata, NLEVELS=nlevels, /FILL, C_COLORS=c_colors,  $ ; /FILL,  $
+                 XRANGE=[1,MAX(xdata)], XSTYLE=1, $ 
+                 YRANGE=[1,MAX(ydata)], YSTYLE=1, $
+;                 C_LABELS=[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], $
+                 POSITION=position,YTITLE=ytitle[iplot-1],XTITLE=xtitle[iplot-1],/NOERASE ; , YLOG=ylog
+        END
     ENDCASE
+
+    IF (type EQ 3) THEN CONTINUE
 
 ;   Write sub-title for each plot:
     XYOUTS, (xy_label[0] * xpos[0] + xy_label[1] * xpos[1]) * dev_xsize,  $
@@ -378,46 +421,29 @@ FUNCTION cortex_PlotIntegrals, plot, data_array, ps=ps
       val = cortex_ExtractStructure(data_store,idata)
 
       cortex_DrawKey, iplot, focus, labels, xy_label, xpos, ypos,  $
-                      dev_xsize, dev_ysize, charsize_labels, colors
+                      dev_xsize, dev_ysize, charsize_labels, colors, step = 0.04
 
       CASE option OF
 ;       ----------------------------------------------------------------
         1: BEGIN
-
-          OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
- 
-          IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
-
-          OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
-          CASE iplot OF
-            1: BEGIN
-;               print,'ntrace:',ntrace[iplot-1]
-               FOR i = 1, ntrace[iplot-1]-1 DO BEGIN
-                 OPLOT, val.x, val.y[*,i], COLOR=TrueColor(colors[i]), THICK=thick; , LINESTYLE=i
-; print,i,val.y[*,i]
-               ENDFOR
-               END
-            2: 
-            3: 
-            ELSE:
-          ENDCASE
           END
 ;       ----------------------------------------------------------------
         2: BEGIN
-
           OPLOT, [xmin,xmax], [0.0,0.0], LINESTYLE=1, COLOR=TrueColor('Black') 
- 
+          IF (plot_peak EQ 1 AND idata EQ ndata) THEN thick = 2.0
           OPLOT, val.x, val.y[*,0], COLOR=TrueColor(colors[idata-1]), THICK=thick
           CASE iplot OF
-            1: 
-            2: 
-            3: 
+            3: BEGIN
+               FOR i = 1, ntrace[iplot-1]-1 DO BEGIN
+                 OPLOT, val.x, val.y[*,i], COLOR=TrueColor(colors[i]), THICK=thick; , LINESTYLE=i
+               ENDFOR
+               END
             ELSE:
           ENDCASE
           END
 ;       ----------------------------------------------------------------
         ELSE: BEGIN  
-          PRINT, 'ERROR cortex_PlotIntegrals: Unrecognised plot option'
+          PRINT, 'ERROR cortex_PlotImage: Unrecognised plot option'
           PRINT, '  OPTION = ',plot.option,' (',option,')'
           RETURN, -1
           END

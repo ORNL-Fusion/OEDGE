@@ -784,13 +784,13 @@ c..       Defunct:
 c...      Big screen, to catch rays from incomplete 3D grids:
 
           newvtx(1,1) =   0.000D0
-          newvtx(2,1) =  10.000D0
+          newvtx(2,1) =   5.500D0
           newvtx(1,2) =   9.000D0  ! Just outside the current viewin radius (hardcoded)
-          newvtx(2,2) =  10.000D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
+          newvtx(2,2) =   5.500D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
           newvtx(1,3) =   9.000D0
-          newvtx(2,3) = -10.000D0
+          newvtx(2,3) =  -5.500D0
           newvtx(1,4) =   0.000D0
-          newvtx(2,4) = -10.000D0
+          newvtx(2,4) =  -5.500D0
 
           DO i1 = 4, 2, -1
             newsrf%type = SP_LINE_SEGMENT

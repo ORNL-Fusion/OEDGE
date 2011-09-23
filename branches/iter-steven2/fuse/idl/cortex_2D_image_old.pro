@@ -49,7 +49,9 @@ END
 ;
 ; ======================================================================
 ;
-FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
+FUNCTION cortex_Plot2DImage, plot, plot_data, ps=ps
+
+
 
   flip = plot.flip  ; for ribbon grid plots
 
@@ -63,6 +65,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
 
   title    = plot.title
   notes    = plot.notes
+
   charsize = plot.charsize
 
   !P.CHARSIZE  = charsize
@@ -78,13 +81,12 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
     xtitle = 'distance parallel to field, s (m)'
     ytitle = 'radial distance (m)'
   ENDIF
-
 ;
 ; Setup plot area:
 ; ----------------------------------------------------------------------
   IF (N_ELEMENTS(WHERE(plot.center EQ 0.0)) EQ 2) THEN BEGIN 
     size = 0.8
-    xcen = 0.5 * TOTAL(plot.frame_bnds) * 0.85
+    xcen = 0.5 * TOTAL(plot.frame_bnds)
     ycen = 0.5
   ENDIF ELSE BEGIN
     size = 0.8
@@ -96,10 +98,10 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
 ; Setup plot zoom:
 ; ----------------------------------------------------------------------
   IF (N_ELEMENTS(WHERE(plot.zoom EQ 0.0)) EQ 4) THEN BEGIN 
-    xmin = MIN([[grid.vtx[0,*]],[wall.v1[0,*]],[wall.v2[0,*]]]) - 0.1
-    xmax = MAX([[grid.vtx[0,*]],[wall.v1[0,*]],[wall.v2[0,*]]]) + 0.1
-    ymin = MIN([[grid.vtx[1,*]],[wall.v1[1,*]],[wall.v2[1,*]]]) - 0.1
-    ymax = MAX([[grid.vtx[1,*]],[wall.v1[1,*]],[wall.v2[1,*]]]) + 0.1
+    xmin = MIN([[grid.vtx[0,*]],[wall.v1[0,*]],[wall.v2[0,*]]]) - 0.2
+    xmax = MAX([[grid.vtx[0,*]],[wall.v1[0,*]],[wall.v2[0,*]]]) + 0.2
+    ymin = MIN([[grid.vtx[1,*]],[wall.v1[1,*]],[wall.v2[1,*]]]) - 0.2
+    ymax = MAX([[grid.vtx[1,*]],[wall.v1[1,*]],[wall.v2[1,*]]]) + 0.2
   ENDIF ELSE BEGIN
     xmin = plot.zoom[0]
     xmax = plot.zoom[2]
@@ -136,7 +138,6 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
     ypos = [ycen - 0.5 * size / aspect_ratio,  $
             ycen + 0.5 * size / aspect_ratio]
   ENDELSE
-;
 ; Check if the plot fits in the allocated portion of the page, and scale the plot
 ; as necessary:
   IF (xpos[0] LT plot.frame_bnds[0] OR xpos[1] GT plot.frame_bnds[1]) THEN BEGIN
@@ -176,7 +177,6 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
   plot_labels[8  ] = 'ION TEMPERATURE           : T_i (eV)          '
 
   plot_labels[200] = 'EIRENE ATOM DENSITY : n_D (m-3)' 
-  plot_labels[201] = 'EIRENE MOLECULAR DENSITY : n_D2 (m-3)' 
   plot_labels[220] = 'EIRENE BALMER ALPHA : D_alpha (ph m-3 s-1)' 
   plot_labels[222] = 'EIRENE BALMER GAMMA : D_gamma (ph m-3 s-1)' 
 
@@ -199,7 +199,6 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
     8: data = plot_data.ti
 ;   ------------------------------------------------------------------
     200: data = plot_data.atm_dens
-    201: data = plot_data.mol_dens
     220: data = plot_data.balmer_alpha
     222: data = plot_data.balmer_gamma
 ;   ------------------------------------------------------------------
@@ -224,9 +223,8 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
   labels = STRSPLIT(plot_labels[plot_index],':',/EXTRACT)
   IF (plot.plot_title NE 'unknown') THEN plot_title = plot.plot_title ELSE   $
                                          plot_title = STRTRIM(labels[0],2)
-  IF (plot.no_title) THEN plot_title = ' '
-
   scale_label = STRTRIM(labels[1],2)
+
 
   IF (plot.log) THEN FOR i = 0, N_ELEMENTS(data)-1 DO  $                    ; A nicer way to do this..?
     IF (data[i] GT 0.0) THEN data[i] = ALOG10(data[i]) ELSE data[i] = 0.0
@@ -285,7 +283,7 @@ FUNCTION cortex_Plot2DContour, plot, plot_data, grid, wall, annotate, ps=ps
 ;
 ; Overlay the grid and wall:
 ; ----------------------------------------------------------------------
-  status = cortex_PlotFluidGrid(plot, grid, wall, 0, annotate, 'overlay', 'outline', ps=ps)
+  status = cortex_PlotFluidGrid(plot, grid, wall, 0, 0, 'overlay', 'outline', ps=ps)
 ;
 ; Plot the scale: 
 ; ----------------------------------------------------------------------

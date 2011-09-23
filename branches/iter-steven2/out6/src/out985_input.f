@@ -277,6 +277,7 @@ c         --------------------------------------------------------------
             READ(buffer(i+1:n),*) idum1
             WRITE(0,*) 'LOADING REFLECTIONS:',idum1
             IF (idum1.NE.0) THEN
+              opt%ref_opt = idum1
               DO WHILE(GetLine(fp,buffer,NO_TAG))
                 READ(buffer,*) cdum1,idum1
                 IF (idum1.EQ.0) CYCLE
@@ -320,6 +321,7 @@ c         --------------------------------------------------------------
                 WRITE(0,*) 'LOADING INTEGRATION:',idum1
                 opt%int_num = opt%int_num + 1
                 i1 = opt%int_num
+                opt%int_wlngth(i1) = -1.0
                 SELECTCASE (idum1)
                   CASE (1)  ! Straight-up line integral:
                     READ(buffer,*) cdum1,opt%int_type    (i1),                
@@ -487,6 +489,20 @@ c         --------------------------------------------------------------
                   READ(buffer_array(4),*) opt%rib_r2(i1)
                   READ(buffer_array(5),*) opt%rib_s1(i1)
                   READ(buffer_array(6),*) opt%rib_s2(i1)
+                CASE (3)  ! whipe zone, where all points of intersection within the zone are deleted
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_wipe(i1)
+                  SELECTCASE(opt%rib_wipe(i1))
+                    CASE(-1)
+                    CASE( 1)  ! box
+                      READ(buffer_array(4),*) opt%rib_r1(i1)
+                      READ(buffer_array(5),*) opt%rib_r2(i1)
+                      READ(buffer_array(6),*) opt%rib_s1(i1)
+                      READ(buffer_array(7),*) opt%rib_s2(i1)
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'wipe option',*99)
+                  ENDSELECT
                 CASE DEFAULT
                   CALL ER('LoadOptions985_New','Unrecognized '//
      .                    'ribbon grid option',*99)

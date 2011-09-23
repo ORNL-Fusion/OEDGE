@@ -10,13 +10,13 @@
 !
 !     Parameters:
 !     ------------------------------------------------------------------
-      INTEGER, PARAMETER :: MAXNLAUNCH = 10,  
-     .                      MAXNBLK    =  1,
-     .                      MAXNATM    =  2,
-     .                      MAXNMOL    =  1,
-     .                      MAXNION    =  1,
-     .                      MAXNPHO    =  1,
-     .                      MAXNSRC    =  5  ! bulk, atoms, molecules, test ions, photons
+      INTEGER, PARAMETER :: MAXNLAUNCH = 1000,  
+     .                      MAXNBLK    =    1,
+     .                      MAXNATM    =    2,
+     .                      MAXNMOL    =    1,
+     .                      MAXNION    =    1,
+     .                      MAXNPHO    =    1,
+     .                      MAXNSRC    =    5  ! bulk, atoms, molecules, test ions, photons
 !
 !     Impurity-wall interaction structure:
 !     ------------------------------------------------------------------

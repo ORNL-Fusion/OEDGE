@@ -198,8 +198,8 @@ FUNCTION grid_RefineSeparatrices, b, debug=debug, xrange=xrange, yrange=yrange
 
   result = b
 
-  result = CREATE_STRUCT(result,'psi_1st_xpoint',1E+10)
-  result = CREATE_STRUCT(result,'psi_2nd_xpoint',1E+10)
+  result = CREATE_STRUCT(result,'psi_1st_xpoint',1.0E+10)
+  result = CREATE_STRUCT(result,'psi_2nd_xpoint',1.0E+10)
 
 help,b,/struct
 
@@ -687,21 +687,28 @@ FUNCTION grid_InstallXPoints, b, scan_params, contour_array,  $
       status = 1
       focus_x = b.x[b.null_i[1]]
       focus_y = b.y[b.null_j[1]]
-      clean_range = 0.01
+      clean_range = 0.01  ; parameter
     ENDIF
-    IF (ctr.separatrix GE 3) THEN BEGIN
-;     Secondary x-point was inside the vessel
-;    IF (ctr.origin EQ 2) THEN BEGIN
+    IF (ctr.separatrix GE 2) THEN BEGIN
+;     Secondary x-point on the vessel wall:
       status = 2
       focus_x = b.x[b.null_i[2]]
       focus_y = b.y[b.null_j[2]]
-      clean_range = 0.02
+      clean_range = 0.01  ; parameter
+    ENDIF
+    IF (ctr.separatrix GE 3) THEN BEGIN
+;     Secondary x-point was inside the vessel
+      status = 2
+      focus_x = b.x[b.null_i[2]]
+      focus_y = b.y[b.null_j[2]]
+      clean_range = 0.02  ; parameter
       count_2nd++
     ENDIF
     IF (status EQ 0) THEN CONTINUE
 
     print,tag
 
+    print,'before',ctr.separatrix,ctr.tangent_i
     x = ctr.x
     y = ctr.y      
 
@@ -722,10 +729,10 @@ FUNCTION grid_InstallXPoints, b, scan_params, contour_array,  $
              (scan_params.failure_2nd_pfz EQ 1 AND           $ 
               ((x[i] LE focus_x AND x[i+1] GT focus_x) OR    $
                (x[i] GE focus_x AND x[i+1] LT focus_x))) ) THEN BEGIN
-          if (scan_params.failure_2nd_pfz EQ 1) then begin
-            print, '*** outdated code I think, remove ***'
-            stop
-          endif
+;          if (scan_params.failure_2nd_pfz EQ 1) then begin
+;            print, '*** outdated code I think, remove ***'
+;            stop
+;          endif
           print, 'found'
           j = i
         ENDIF
@@ -752,22 +759,33 @@ FUNCTION grid_InstallXPoints, b, scan_params, contour_array,  $
       IF (KEYWORD_SET(debug)) THEN BEGIN
         OPLOT,x[i],y[i],color=Truecolor('White'),PSYM=6
       ENDIF
-      x = [ x[ 0 : i[0]-1 ], focus_x, x[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(x)-1 ] ]
-      y = [ y[ 0 : i[0]-1 ], focus_y, y[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(y)-1 ] ]
+      frac = (DINDGEN(5) + 1.0D) / 6.0D
+      pad1_x = x[i[0]-1] + frac * (focus_x - x[i[0]-1])
+      pad1_y = y[i[0]-1] + frac * (focus_y - y[i[0]-1])
+      pad2_x = focus_x + frac * (x[i[N_ELEMENTS(i)-1]+1] - focus_x)
+      pad2_y = focus_y + frac * (y[i[N_ELEMENTS(i)-1]+1] - focus_y)
+      x = [ x[ 0 : i[0]-1 ], pad1_x, focus_x, pad2_x, x[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(x)-1 ] ]
+      y = [ y[ 0 : i[0]-1 ], pad1_y, focus_y, pad2_y, y[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(y)-1 ] ]
       proximity = SQRT ( (x-focus_x)^2 + (y-focus_y)^2 )
       i = WHERE(proximity LT distance AND x GT focus_x) 
       IF (KEYWORD_SET(debug)) THEN BEGIN
         OPLOT,x[i],y[i],color=Truecolor('White'),PSYM=6
       ENDIF
-      x = [ x[ 0 : i[0]-1 ], focus_x, x[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(x)-1 ] ]
-      y = [ y[ 0 : i[0]-1 ], focus_y, y[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(y)-1 ] ]
+      pad1_x = x[i[0]-1] + frac * (focus_x - x[i[0]-1])
+      pad1_y = y[i[0]-1] + frac * (focus_y - y[i[0]-1])
+      pad2_x = focus_x + frac * (x[i[N_ELEMENTS(i)-1]+1] - focus_x)
+      pad2_y = focus_y + frac * (y[i[N_ELEMENTS(i)-1]+1] - focus_y)
+      x = [ x[ 0 : i[0]-1 ], pad1_x, focus_x, pad2_x, x[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(x)-1 ] ]
+      y = [ y[ 0 : i[0]-1 ], pad1_y, focus_y, pad2_y, y[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(y)-1 ] ]
     ENDIF ELSE BEGIN
       i = WHERE(proximity LT distance)
       IF (KEYWORD_SET(debug)) THEN BEGIN
         OPLOT,x[i],y[i],color=Truecolor('White'),PSYM=6
       ENDIF
-      x = [ x[ 0 : i[0]-1 ], focus_x, x[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(x)-1 ] ]
-      y = [ y[ 0 : i[0]-1 ], focus_y, y[ i[N_ELEMENTS(i)-1]+1 : N_ELEMENTS(y)-1 ] ]
+      n = N_ELEMENTS(i)
+      x = [ x[ 0 : MAX([0,i[0]-1]) ], focus_x, x[ MIN([i[n-1]+1,N_ELEMENTS(x)-1]) : N_ELEMENTS(x)-1 ] ]
+      y = [ y[ 0 : MAX([0,i[0]-1]) ], focus_y, y[ MIN([i[n-1]+1,N_ELEMENTS(y)-1]) : N_ELEMENTS(y)-1 ] ]
+      IF (ctr.separatrix EQ 2) THEN save_j = i[0]
     ENDELSE
 
     IF (KEYWORD_SET(debug)) THEN BEGIN
@@ -809,9 +827,18 @@ FUNCTION grid_InstallXPoints, b, scan_params, contour_array,  $
     ; *** should remove this I think ***
     IF (status EQ 2 AND scan_params.failure_2nd_pfz EQ 1) THEN ctr.tangent_i = save_j
 
+    IF (ctr.separatrix EQ 2) THEN BEGIN
+     ctr.tangent_i  = save_j
+     ctr.tangent_p1 = [focus_x,focus_y] 
+    ENDIF
+
+    print,'after',ctr.separatrix,ctr.tangent_i
+
     contour_array = grid_UpdateStructure(contour_array,tag,ctr)
 
   ENDFOR
+
+;stop
 
   RETURN, contour_array
 
@@ -909,7 +936,7 @@ END
 ;
 ; ======================================================================
 ;
-PRO grid_TrimContours, b, contour_array, wall,  $
+PRO grid_TrimContours, b, contour_array, wall, kill=kill,  $
                        debug=debug, xrange=xrange, yrange=yrange
   ; ------------------------------------------------------------------
   COMMON params, CORE, SOL, PFZ, FORWARD, BACKWARD, LOWER_NULL, UPPER_NULL, HFS, LFS
@@ -923,6 +950,19 @@ PRO grid_TrimContours, b, contour_array, wall,  $
   tags = STRUPCASE(TAG_NAMES(contour_array))
   nctr = N_ELEMENTS(tags)
 
+  IF (KEYWORD_SET(debug)) THEN BEGIN
+    PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
+    FOR i = 1, nctr DO BEGIN
+      ctr = grid_ExtractStructure(contour_array,tags[i-1])      
+      OPLOT,ctr.x,ctr.y,color=Truecolor('Red')    
+      OPLOT,ctr.x,ctr.y,color=Truecolor('White'),PSYM=3
+      npts = N_ELEMENTS(ctr.x)
+      XYOUTS,ctr.x[npts/2],ctr.y[npts/2],STRTRIM(STRING(i),2),color=Truecolor('White')
+    ENDFOR
+  ENDIF
+
+
+
 ;***  perhaps need to re-specify wall_pt from wall.x/y here, for a fresh start each time this
 ;     routine is called
 
@@ -931,7 +971,8 @@ PRO grid_TrimContours, b, contour_array, wall,  $
 
   FOR ictr = 0, nctr-1 DO BEGIN
 
-print, 'ictr',ictr
+    print, '--------------------'
+    print, 'ictr',ictr+1
 
     tag = tags[ictr]
     ctr = grid_ExtractStructure(contour_array,tag)      
@@ -945,8 +986,11 @@ print, 'ictr',ictr
     tangent_i = ctr.tangent_i
 
     OPLOT,x,y,color=Truecolor('Red'),psym=3
-
-    FOR i = 0, N_ELEMENTS(x)-2 DO BEGIN
+;
+;   -------------------------------------------------------------------- 
+;   
+;
+    FOR i = 0, N_ELEMENTS(x)-3 DO BEGIN
       result = grid_Intersection([x[i],y[i]], [x[i+1],y[i+1]],  $
                                  wall_pt1, wall_pt2, 1, status=status)
       IF (status) THEN BREAK
@@ -955,12 +999,36 @@ print, 'ictr',ictr
       PRINT,'ERROR grid_TrimContours: No wall intersection found 1'
       STOP
     ENDIF ELSE BEGIN
-      ;print,'shit 1',i,N_ELEMENTS(x)-1
+      print,'shit 1',i,N_ELEMENTS(x)-1
       x = x[i:N_ELEMENTS(x)-1] ; This clean up appears to be required, but I'm not sure why...
       y = y[i:N_ELEMENTS(y)-1]
+
+;      dist = grid_PerpDistance(x[0],y[0],[REFORM(wall_pt1[0,*]),wall_pt1[0,0]],  $
+;                                         [REFORM(wall_pt1[1,*]),wall_pt1[1,0]])
+;      IF (dist LT 0.001D) THEN BEGIN  ; parameter, threshold distance between the last point on the contour (outside the wall) and the wall
+;        length = grid_Length(x[0:1],y[0:1])
+;        print, 'point on wall, inner!',x[0],y[0],dist,length
+;        frac = (length + 0.001D) / length  ; paremeter, 1 mm extension (see below also)
+;;        x[0] = x[1] + frac * (x[0] - x[1])
+;;        y[0] = y[1] + frac * (y[0] - y[1])
+;;        xspan = 0.01D ; 0.50D ; 0.01D
+;;        yspan = 0.05D ; 0.50D ; 0.05D
+;;        xrange = [x[0] - xspan, x[0] + xspan]
+;;        yrange = [y[0] - yspan, y[0] + yspan]
+;;        PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
+;;        OPLOT,wall_pt1[0,*],wall_pt1[1,*],color=Truecolor('Orange')
+;;        OPLOT,wall_pt1[0,*],wall_pt1[1,*],color=Truecolor('Orange'), PSYM=7
+;;        OPLOT,[x[0]],[y[0]],color=Truecolor('Magenta'),PSYM=6
+;;        stop
+;      ENDIF
+
       IF (tangent_i NE -1) THEN tangent_i = tangent_i - i
     ENDELSE
-
+;
+;   -------------------------------------------------------------------- 
+;   
+;
+;   print,'HUNTING!'
     FOR i = N_ELEMENTS(x)-2, 1, -1 DO BEGIN
       result = grid_Intersection([x[i],y[i]], [x[i+1],y[i+1]],  $
                                  wall_pt1, wall_pt2, 1, status=status)
@@ -968,14 +1036,39 @@ print, 'ictr',ictr
     ENDFOR
     IF (NOT status) THEN BEGIN
       PRINT,'ERROR grid_TrimContours: No wall intersection found 2'
+
+      xspan = 0.02D ; 0.50D ; 0.01D
+      yspan = 0.5D ; 0.50D ; 0.05D
+      i = N_ELEMENTS(x)-1
+      xrange = [x[i] - xspan, x[i] + xspan]
+      yrange = [y[i] - yspan, y[i] + yspan]
+      PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
+      OPLOT,wall_pt1[0,*],wall_pt1[1,*],color=Truecolor('Orange')
+      OPLOT,wall_pt1[0,*],wall_pt1[1,*],color=Truecolor('Orange'), PSYM=7
+      OPLOT,x,y,color=Truecolor('Magenta'),PSYM=6
+
       STOP
     ENDIF ELSE BEGIN
+      print,'shit 2',i,N_ELEMENTS(x)-1
       x = x[0:i+1]
       y = y[0:i+1]
+;      ; Check that the end point isn't too close to the wall:
+;      n = N_ELEMENTS(x)
+;      dist = grid_PerpDistance(x[n-1],y[n-1],[REFORM(wall_pt1[0,*]),wall_pt1[0,0]],  $
+;                                             [REFORM(wall_pt1[1,*]),wall_pt1[1,0]])
+;      IF (dist LT 0.001D) THEN BEGIN  ; parameter, threshold distance between the last point on the contour (outside the wall) and the wall
+;        length = grid_Length(x[n-2:n-1],y[n-2:n-1])
+;        print, 'point on wall, outer!',x[n-1],y[n-1],dist,length
+;        frac = (length + 0.001D) / length
+;        x[n-1] = x[n-2] + frac * (x[n-1] - x[n-2])
+;        y[n-1] = y[n-2] + frac * (y[n-1] - y[n-2])
+;;        stop
+;      ENDIF
+
 ;      ctr.wall_p2 = [result.x[0],result.y[0]]
     ENDELSE
 
-    OPLOT,x,y,color=Truecolor('Pink')    
+    OPLOT,x,y,color=Truecolor('Pink'),PSYM=6
 
     ctr = grid_UpdateStructure(ctr,'x',x)    
     ctr = grid_UpdateStructure(ctr,'y',y)    
@@ -984,15 +1077,24 @@ print, 'ictr',ictr
 
   ENDFOR
 
+  IF (KEYWORD_SET(kill)) THEN stop
+
 END
 ;
 ; ======================================================================
 ;
-PRO grid_UpdateWall, b, contour_array, wall,  $
+PRO grid_UpdateWall, b, contour_array, wall, kill=kill, $
                           debug=debug, xrange=xrange, yrange=yrange
   ; ------------------------------------------------------------------
   COMMON params, CORE, SOL, PFZ, FORWARD, BACKWARD, LOWER_NULL, UPPER_NULL, HFS, LFS
   ; ------------------------------------------------------------------
+
+
+  grid_TrimContours, b, contour_array, wall, kill=kill,  $
+                     debug=debug, xrange=xrange, yrange=yrange
+
+;  IF (KEYWORD_SET(kill)) THEN  $
+;    grid_Debug,b,contour_array,wall,xrange,yrange
 
 
 
@@ -1018,7 +1120,7 @@ PRO grid_UpdateWall, b, contour_array, wall,  $
 
   FOR ictr = 1, nctr DO BEGIN
 
-print, 'ictr targets ',ictr,' ',tags[ictr-1]
+    print, 'ictr targets ',ictr,' ',tags[ictr-1]
 
     tag = tags[ictr-1]
     ctr = grid_ExtractStructure(contour_array,tag)      
@@ -1134,8 +1236,10 @@ print, 'ictr targets ',ictr,' ',tags[ictr-1]
                                  wall_pt1, wall_pt2, 1, status=status)
       IF (NOT status) THEN BEGIN
         PRINT,'ERROR grid_UpdateWall: No wall intersection found (2)'
-        xrange = [x[n-2] - 0.01D, x[n-2] + 0.01D]
-        yrange = [y[n-2] - 0.05D, y[n-2] + 0.05D]
+        xspan = 0.11D ; 0.50D ; 0.01D
+        yspan = 0.15D ; 0.50D ; 0.05D
+        xrange = [x[n-2] - xspan, x[n-2] + xspan]
+        yrange = [y[n-2] - yspan, y[n-2] + yspan]
         PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
         OPLOT,wall.x,wall.y,color=Truecolor('Yellow')
         OPLOT,wall_pt1[0,*],wall_pt1[1,*],color=Truecolor('Orange')
@@ -1218,8 +1322,9 @@ print, 'ictr targets ',ictr,' ',tags[ictr-1]
 
   ENDFOR
 ;
-; Look after tangency points:
 ; ----------------------------------------------------------------------
+; LOOK AFTER TANGENCY POINTS
+; 
   FOR ictr = 1, nctr DO BEGIN
 
     print, 'ictr tangency ',ictr,' ',tags[ictr-1]
@@ -1239,11 +1344,10 @@ print, 'ictr targets ',ictr,' ',tags[ictr-1]
     p1        = ctr.tangent_p1
     p2        = ctr.tangent_p2
  
-    length = SQRT( (p1[0]-p2[0])^2 + (p1[1]-p2[1])^2 )
-    p3 = p1 + 0.01D / length * (p2 - p1)                  ; *** This distance -- looking forward and backward -- should
-    p4 = p1 - 0.01D / length * (p2 - p1)                  ; be the same as the threshold distance for saying how far
-                                                          ; outside the wall the 2nd x-point can be before being forced inside
-
+    length = SQRT( (p1[0]-p2[0])^2 + (p1[1]-p2[1])^2 )   ; *** This distance -- looking forward and backward -- should	      
+    p3 = p1 + 0.01D / length * (p2 - p1)                 ; be the same as the threshold distance for saying how far	       
+    p4 = p1 - 0.01D / length * (p2 - p1)                 ; outside the wall the 2nd x-point can be before being forced inside 
+                                                          
     ;OPLOT,[p3[0],p4[0]], [p3[1],p4[1]], color=Truecolor('Green') 
     ;OPLOT,x,y,color=Truecolor('Red')    
     ;OPLOT,x,y,color=Truecolor('White'),PSYM=3
@@ -1329,11 +1433,16 @@ print, 'ictr targets ',ictr,' ',tags[ictr-1]
   ENDFOR
 
 
+
   wall = grid_UpdateStructure(wall,'pti',wall_pti)
   wall = grid_UpdateStructure(wall,'ptc',wall_ptc)
   wall = grid_UpdateStructure(wall,'ptt',wall_ptt)
   wall = grid_UpdateStructure(wall,'pt1',wall_pt1)
   wall = grid_UpdateStructure(wall,'pt2',wall_pt2)
+
+
+
+  grid_ZoneWall, wall.pt1, wall.pt2, debug=debug, xrange=xrange, yrange=yrange
 
 
 ;  n=N_ELEMENTS(wall_pti)
@@ -1543,7 +1652,8 @@ PRO grid_ProcessWall, b, wall, scan_params, contour_array, $
     focus_x = wall.pt1[0,i]
     focus_y = wall.pt1[1,i]
 
-    if (count eq 8) then rage = 1 else rage = 0
+
+;    if (count eq 8) then rage = 1 else rage = 0
 
 
     status = grid_AddContour(b, wall, scan_params, contour_array, wall_ptt[i], $
@@ -1588,16 +1698,268 @@ PRO grid_ProcessWall, b, wall, scan_params, contour_array, $
 
 ;  n=N_ELEMENTS(wall_pti)
 ;  FOR j = 0, n-1 DO BEGIN
-;    print,j,wall.pti[j],wall.pt1[0,j],wall.pt1[1,j],wall.pt2[0,j],wall.pt2[1,j]
+;    print,j,wall.pti[j],wall.pt1[0,j],wall.pt1[1,j],wall.pt2[0,j],wall.pt2[1,j],wall_ptc[j]
 ;  ENDFOR
+;stop
 
-
-;  n=N_ELEMENTS(wall_pti)
-;  FOR j = 0, n-1 DO BEGIN
-;    print,j,wall.pti[j],wall.pt1[0,j],wall.pt1[1,j],wall.pt2[0,j],wall.pt2[1,j]
-;  ENDFOR
 
   grid_ZoneWall, wall.pt1, wall.pt2, debug=debug, xrange=xrange, yrange=yrange
 
   RETURN
+END
+;
+; ======================================================================
+;
+FUNCTION grid_RadialRefinement,c_array, wall, b,  $
+                          debug=debug, xrange=xrange, yrange=yrange
+  ; ------------------------------------------------------------------
+  COMMON params, CORE, SOL, PFZ, FORWARD, BACKWARD, LOWER_NULL, UPPER_NULL, HFS, LFS
+  ; ------------------------------------------------------------------
+
+  tags  = STRUPCASE(TAG_NAMES(c_array))
+  nctr  = N_ELEMENTS(tags)
+  nwall = N_ELEMENTS(wall.ptc)
+
+  IF (KEYWORD_SET(debug)) THEN BEGIN
+    PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
+    OPLOT,wall.x,wall.y,color=Truecolor('Yellow')
+    OPLOT,[wall.pt1[0,*]],[wall.pt1[1,*]],color=Truecolor('Hotpink'),PSYM=6
+    FOR i = 0, nctr-1 DO BEGIN
+      ctr = grid_ExtractStructure(c_array,tags[i])      
+      OPLOT,ctr.x,ctr.y,color=Truecolor('Red')    
+      npts = N_ELEMENTS(ctr.x)
+      XYOUTS,ctr.x[npts/2],ctr.y[npts/2],STRTRIM(STRING(i+1),2),color=Truecolor('White')
+    ENDFOR
+  ENDIF
+
+help,c_array,/struct
+
+;
+; ----------------------------------------------------------------------
+; SCAN OVER THE CONTOURS AND INCREASE THE RADIAL RESOLUTION
+;  
+
+;
+; ----------------------------------------------------------------------
+; FIND WHERE TO START THE GRID WHEN FOLLOWING THE WALL
+;
+  ; Start with the contour that's just outside the low-index primary
+  ; strike-point (the inner target strike-point for lower single null):
+  ctr1  = grid_ExtractStructure(c_array,'contour1')  ; separatrix
+  ictr1 = (ctr1.map_out[0])[0]                       ; step out radially by one contour
+  iwall1 = WHERE(wall.ptc EQ ictr1 AND wall.ptt EQ 1, count)
+  IF (count NE 1) THEN BEGIN
+    PRINT,'ERROR grid_RadialRefinement: Something is wrong with the wall'
+    PRINT,'  IWALL1=',iwall1
+    STOP 
+  ENDIF
+  ctr1   = grid_ExtractStructure(c_array,tags[ictr1-1])  
+  istart = iwall1
+
+  ictr_new = 0
+;
+; ----------------------------------------------------------------------
+; FOLLOW THE WALL AND BUILD THE GRID RINGS
+;
+  WHILE (1) DO BEGIN  
+;  
+;   --------------------------------------------------------------------
+;   SCAN BACKWARD ALONG THE WALL TO FIND THE NEIGHBOURING CONTOUR
+;
+    print,'new contour ----------- ',iwall1,ictr1,'-----------',FORMAT='(A,2I6,A)'
+
+    iwall2 = iwall1
+    WHILE (1) DO BEGIN
+      iwall2--
+      IF (iwall2 LT 0) THEN iwall2 = N_ELEMENTS(wall.ptc) - 1
+      IF (wall.ptc[iwall2] NE -1 AND (wall.ptt[iwall2] EQ 1 OR  $
+                                      wall.ptt[iwall2] EQ 3)) THEN BREAK
+    ENDWHILE
+
+    ictr2 = (wall.ptc[iwall2])[0]
+    ctr2  = grid_ExtractStructure(c_array,tags[ictr2-1])      
+ 
+    print,'            ----------- ',iwall2,ictr2,'-----------',FORMAT='(A,2I6,A)'
+
+    IF (KEYWORD_SET(debug)) THEN BEGIN
+      OPLOT,[wall.pt1[0,iwall1],wall.pt1[0,iwall2]],  $
+            [wall.pt1[1,iwall1],wall.pt1[1,iwall2]],color=Truecolor('Lightblue'),PSYM=1
+    ENDIF
+;  
+;   --------------------------------------------------------------------
+;   DECIDE IF A NEW CONTOUR IS REQUIRED  
+    print,ctr1.psi,ctr2.psi
+
+    psi_val = 0.5D * (ctr1.psi + ctr2.psi)
+
+    IF (1) THEN BEGIN
+
+      print, 'psi_val = ',psi_val
+
+      ctr = grid_ExtractContour(b.psi, b.x, b.y, psi_val)
+
+      ibrk = WHERE(ctr.dist GT 0.10)  ; PARAMETER
+      nseg = N_ELEMENTS(ibrk) 
+      ibrk = [-1,ibrk,ctr.n-1]
+;
+;     ------------------------------------------------------------------
+;     LOOP OVER INDIVIDUAL CONTOUR SEGMENTS AND EXAMINE
+;  
+      new_contour = 0
+
+      FOR iseg = 0, nseg DO BEGIN
+
+        print,'----------------------------------------'
+        print,'contour seg:',iseg,ibrk[iseg]+1,ibrk[iseg+1]
+
+        ; Not a real segment so skip it, may need to strengthen this check:
+        IF (ibrk[iseg]+2 EQ ibrk[iseg+1] OR  $
+            ibrk[iseg]+1 EQ ibrk[iseg+1] OR  $
+            ibrk[iseg]   EQ ibrk[iseg+1]) THEN CONTINUE  
+
+        x = ctr.x[ibrk[iseg]+1:ibrk[iseg+1]]
+        y = ctr.y[ibrk[iseg]+1:ibrk[iseg+1]]
+
+        IF (KEYWORD_SET(debug)) THEN  $
+          PLOT,[x,x[0]],[y,y[0]],color=Truecolor('Silver'), PSYM=3,  $
+               XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+;
+;       ------------------------------------------------------------------
+;       TEST IF THE CONTOUR IS IN THE RIGHT PLACE
+;  
+        FOR i = 0, N_ELEMENTS(x)-2 DO BEGIN  
+;         Find intersections with the wall segments:
+          result = grid_Intersection([x[i],y[i]],[x[i+1],y[i+1]],  $
+                                     wall.pt1[*,iwall2:iwall1],    $
+                                     wall.pt2[*,iwall2:iwall1], 0, status=status)
+          IF (KEYWORD_SET(debug)) THEN  $
+            PLOT,[x[i]],[y[i]],color=Truecolor('Orange'), PSYM=3,  $
+                 XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+          IF (status) THEN BREAK
+        ENDFOR
+;
+;       --------------------------------------------------------------------
+;       THE CONTOUR INTERSECTS THE WALL IN THE RIGHT PLACE, SO TALLY-HO!
+;  
+        IF (status) THEN BEGIN
+;
+;         ------------------------------------------------------------------
+;         TRIM THE OTHER END
+;  
+          x = x[i:N_ELEMENTS(x)-1]
+          y = y[i:N_ELEMENTS(y)-1]
+          FOR i = 1, N_ELEMENTS(x)-2 DO BEGIN  
+            result = grid_Intersection([x[i],y[i]],[x[i+1],y[i+1]],  $
+                                       wall.pt1,wall.pt2,1,status=status)
+            IF (status) THEN BREAK
+          ENDFOR
+          IF (NOT status) THEN BEGIN
+            PRINT,'ERROR grid_RadialRefinement: Second wall intersection not found'
+            STOP
+          ENDIF 
+          x = x[0:i+1]
+          y = y[0:i+1]
+
+          IF (KEYWORD_SET(debug)) THEN  $
+            PLOT,x,y,color=Truecolor('Cyan'), PSYM=3,  $
+                 XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+;
+;         ------------------------------------------------------------------
+;         ADD THE CONTOUR TO THE LIST AND EXIT THE LOOP
+;  
+          ctr = {  $
+            state      : 0           ,  $
+            origin     : 0           ,  $
+            separatrix : 0           ,  $
+            region     : ctr2.region ,  $  ; is this OK? probably not
+            psi        : psi_val     ,  $
+            tangent_i  : -1          ,  $
+            tangent_p1 : [0.0D,0.0D] ,  $
+            tangent_p2 : [0.0D,0.0D] ,  $
+            x          : x           ,   $
+            y          : y          }
+
+          ictr_new++
+          tag = 'contour' + STRING(nctr+ictr_new,FORMAT='(I0)')
+
+          c_array = CREATE_STRUCT(c_array,tag,ctr)
+
+          new_contour = 1
+          BREAK
+        ENDIF
+
+      ENDFOR
+
+      IF (NOT new_contour) THEN BEGIN
+        PRINT,'grid_RadialRefinement: New contour not found'
+        STOP
+      ENDIF
+
+    ENDIF
+
+
+
+    IF (ictr_new EQ 2) THEN BREAK  ; ***** EARLY EXIT ****
+
+
+
+
+;
+;   --------------------------------------------------------------------
+;   ADVANCE TO THE NEXT CONTOUR
+;
+    WHILE (1) DO BEGIN
+      status = 0
+      iwall1++
+      IF (iwall1 GT N_ELEMENTS(wall.ptc)-1) THEN iwall1 = 0
+
+      IF (wall.ptc[iwall1] NE -1 AND wall.ptt[iwall1] EQ 1) THEN BEGIN
+        ictr1 = (wall.ptc[iwall1])[0]
+        ctr1  = grid_ExtractStructure(c_array,tags[ictr1-1])              
+        CASE ctr1.region OF
+          SOL: status = 1
+          PFZ: IF (ctr1.map_in[0] NE -1) THEN status = 1 
+        ENDCASE
+      ENDIF 
+
+;     Special case for tangency points in private flux regions:
+      IF (wall.ptc[iwall1] NE -1 AND wall.ptt[iwall1] EQ 3) THEN BEGIN
+        ictr1 = (wall.ptc[iwall1])[0]
+        ctr1  = grid_ExtractStructure(c_array,tags[ictr1-1])              
+        CASE ctr1.region OF
+          SOL: 
+          PFZ: BEGIN
+            IF (ctr1.map_in[1] NE -1) THEN BEGIN
+              status = 1
+            ENDIF ELSE BEGIN
+              IF (ctr1.map_in[1] EQ -1) THEN BEGIN
+                ; Do nothing, because there's no ring outside the section of
+                ; the contour past the tangency point:
+              ENDIF ELSE BEGIN
+                print, 'radial refinemet: case not handeled yet'
+                stop
+              ENDELSE
+            ENDELSE
+           END
+        ENDCASE
+      ENDIF 
+    
+      IF (status) THEN BREAK
+    ENDWHILE
+
+    ; Exit the loop if back around to the start of the primary separatrix:
+    IF (iwall1 EQ istart) THEN BREAK
+
+  ENDWHILE
+
+  help,c_array,/struct
+
+  grid_UpdateWall, b, c_array, wall, $
+                   debug=debug, xrange=xrange, yrange=yrange
+
+  c_array = grid_BuildRadialMap(c_array, wall,  $
+                                debug=debug, xrange=xrange, yrange=yrange)
+
+  RETURN, c_array
+
 END

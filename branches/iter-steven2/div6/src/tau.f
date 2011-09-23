@@ -3904,6 +3904,7 @@ c slmod begin
 c slmod end
       real    apara,apol,afact
 C
+      ACHK   = 0.0
       TOTA   = 0.0
       TOTV   = 0.0
       TOTA2  = 0.0

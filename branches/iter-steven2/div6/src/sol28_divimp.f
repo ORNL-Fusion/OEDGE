@@ -83,7 +83,7 @@ c...
       zvertp = SNGL(d_zvertp)
 
 c...  Add virtual rings:
-      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
+c      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
 
       irsep  = grid%isep
       irwall = grid%ipfz - 1

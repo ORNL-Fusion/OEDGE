@@ -593,7 +593,7 @@ c     .           SQRT((plasma(1 ,iplasma)+plasma(2 ,iplasma))/
 c     .                (plasma(17,iplasma)+plasma(18,iplasma)))
 
               IF (opt_fil%target_flux.EQ.1) THEN
-                IF (plasma(19,iplasma).LT.0.001.OR.
+                IF ( plasma(19,iplasma)                    .LT.0.001.OR.
      .              (plasma(17,iplasma)+plasma(18,iplasma)).LT.0.001)
      .            CALL ER('WriteEireneObjects','Error in target '//
      .                    'data scaling',*99)
@@ -7469,8 +7469,8 @@ c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,92) 230.0,230.0, 80.0,0.0,-750.0
         WRITE(fp06,92)  95.0, 95.0,800.0,0.0,   0.0,750.0
         WRITE(fp06,92)  45.0, 20.0
-c        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
-        WRITE(fp06,91) 1,20,1,2,3,4,5,6,9,0,1
+        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
+c        WRITE(fp06,91) 1,20,1,2,3,4,5,6,9,0,1
         WRITE(fp06,91) 0
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)
@@ -7683,6 +7683,7 @@ c     nmass = NINT(crmb)
       WRITE(fp06,94) 1,psym(nmass,1),nmass,1,1,1,1,-4,0,1      ! D+
       WRITE(fp06,91) 8,115,111,0,30000
 !      WRITE(fp06,92) 0.0,0.0,0.0,0.0,1.0                      ! eirsrcmul*eirscale(11)
+!      WRITE(fp06,92) 35.0,0.0,0.0,0.0,torfrac   ! added 18.07.2011 -SL
       WRITE(fp06,92) 35.0,0.0,0.0,0.0,1.0                      ! eirsrcmul*eirscale(11)
 c      WRITE(fp06,92) 16.0,0.0,0.0,0.0,1.0E-15                      ! No volume recombination
 
@@ -7854,7 +7855,8 @@ c              variable:
       WRITE(fp2,91) 1.0
       WRITE(fp2,91) 1.0
       WRITE(fp2,91) 1.0
-      WRITE(fp2,91) 1.0,50.0,0.1
+      WRITE(fp2,91) ermin,50.0,0.1
+c      WRITE(fp2,91) 1.0,50.0,0.1
 
 c      WRITE(fp2,91) eirermin,50.0,0.1,eirrinteg,eireinteg
 

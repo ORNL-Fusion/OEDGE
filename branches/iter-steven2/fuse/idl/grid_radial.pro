@@ -54,8 +54,6 @@ FUNCTION grid_Intersection, p1, p2, seg1, seg2, mode, status=status, debug=debug
       END
 ;   ----------------------------------------------------------------------
     1: BEGIN
-
-
       deltax = (zone_maxx - zone_minx) / DOUBLE(zone_nx)
       deltay = (zone_maxy - zone_miny) / DOUBLE(zone_ny)
      
@@ -141,7 +139,10 @@ FUNCTION grid_Intersection, p1, p2, seg1, seg2, mode, status=status, debug=debug
         min_s[min_c] = s
         min_t[min_c] = t
       ENDIF
-      IF ( t GE 0.0D AND t LT 1.0D ) THEN BEGIN
+
+
+;      IF ( t GE 0.0D AND t LE 1.0D ) THEN BEGIN
+      IF ( t GE 0.0D AND t LT 1.0D ) THEN BEGIN  ; -changed 01/09/2011, SL
 
 ;      print, 'ok'
         IF (KEYWORD_SET(int_x)) THEN BEGIN
@@ -163,7 +164,11 @@ FUNCTION grid_Intersection, p1, p2, seg1, seg2, mode, status=status, debug=debug
     ENDIF
   ENDFOR
 
-; print,'min_s,t',min_s,min_t
+  IF (min_c NE -1) THEN BEGIN
+    help,min_s
+    print,'min_s',min_s[WHERE(min_s NE -1.0D)],FORMAT='(A,10D16.10)'
+    print,'min_t',min_t[WHERE(min_t NE -1.0D)],FORMAT='(A,10D16.10)'
+  ENDIF
   
 ;print,'set',KEYWORD_SET(int_x)
 
@@ -220,22 +225,37 @@ print,int_t
       print,min_i[0:min_c]
       print,min_s[0:min_c]
       print,min_t[0:min_c]
-      IF (min_c EQ 1) THEN BEGIN
-        status = 1
-        IF (min_t[0]-1.0D LT -min_t[1]) THEN i = 0 ELSE i = 1
-        result = {                   $
-          i    : min_i[i]         ,  $
-          s    : min_s[i]         ,  $
-          t    : min_t[i]         ,  $ 
-          x    : seg2[0,min_i[0]] ,  $
-          y    : seg2[1,min_i[0]] }
-help,result,/struct
-;stop
-      ENDIF ELSE BEGIN
-;       No valid intersection found between the line and segment list:
-        status =  0 
-        result = -1
-      ENDELSE
+      CASE min_c OF
+;       ----------------------------------------------------------------
+        0: BEGIN
+          status = 1
+          IF (min_t[0] LT 0.5D0) THEN b1 = seg1[*,min_i[0]] ELSE b1 = seg2[*,min_i[0]]
+          result = {             $
+            i    : min_i[0]   ,  $
+            s    : min_s[0]   ,  $
+            t    : min_t[0]   ,  $ 
+            x    : (b1[0])[0] ,  $
+            y    : (b1[1])[0] }
+          END
+;       ----------------------------------------------------------------
+        1: BEGIN
+          status = 1
+          IF (min_t[0]-1.0D LT -min_t[1]) THEN i = 0 ELSE i = 1
+          result = {                   $
+            i    : min_i[i]         ,  $
+            s    : min_s[i]         ,  $
+            t    : min_t[i]         ,  $ 
+            x    : seg2[0,min_i[0]] ,  $
+            y    : seg2[1,min_i[0]] }
+          END
+;       ----------------------------------------------------------------
+        ELSE: BEGIN
+;         No valid intersection found between the line and segment list:
+          status =  0 
+          result = -1
+          END
+;       ----------------------------------------------------------------
+      ENDCASE
     ENDIF ELSE BEGIN
 ;     No valid intersection found between the line and segment list:
       status =  0 ; Can only be 0 or 1 since used as a logical variable below
@@ -594,7 +614,7 @@ END
 ;
 ; From http://www.dfanning.com/tips/point_in_polygon.html.
 ;
-FUNCTION grid_PerpDistance, x, y, px, py, id=id
+FUNCTION grid_PerpDistance, x, y, px, py, id=id, nostop=nostop
 
   n = N_ELEMENTS(px)  
   min_dist = 1E+6
@@ -605,12 +625,20 @@ FUNCTION grid_PerpDistance, x, y, px, py, id=id
       s = (p1[0] - px[i]) / (px[i+1] - px[i]) ELSE  $
       s = (p1[1] - py[i]) / (py[i+1] - py[i])
          
-    IF (s GE 0.0D AND s LT 1.0D and dist LT min_dist) THEN min_dist = dist
+    IF (s GE 0.0D AND s LT 1.0D AND dist LT min_dist) THEN min_dist = dist
+ 
+;    print, 'perp',s,dist,min_dist
+;    print, '    ',px[i],py[i],'    ',px[i+1],py[i+1]
+;    print, '    ',x,y
   ENDFOR
 
   IF (min_dist EQ 1E+6) THEN BEGIN
-    PRINT, 'ERROR grid_PerpDistance: Failure'
-    STOP
+    IF (KEYWORD_SET(nostop)) THEN BEGIN
+      min_dist = 1.0D6
+    ENDIF ELSE BEGIN
+      PRINT, 'ERROR grid_PerpDistance: Failure'
+      STOP
+    ENDELSE
   ENDIF
 
   result = min_dist
@@ -678,6 +706,8 @@ PRO grid_SetActiveContour, contour_array, int_nlast, region, active_contour, sto
   n = N_ELEMENTS(TAG_NAMES(contour_array))
   status = 0
 
+  psi_end = psi_1st_xpoint - user_finish
+
   FOR state = 0, 1 DO BEGIN
     FOR i = 1, n DO BEGIN  
       tag = 'contour' + STRING(i,FORMAT='(I0)')
@@ -703,7 +733,8 @@ PRO grid_SetActiveContour, contour_array, int_nlast, region, active_contour, sto
             int_nlast[region] = 2
             boundary1_p1 = cnt.boundary1_p1
             boundary1_p2 = cnt.boundary1_p2
-            boundary2_p1 = cnt.tangent_p1
+            boundary2_p1 = cnt.tangent_p2 + 1.01D * (cnt.tangent_p1 - cnt.tangent_p2) 
+;            boundary2_p1 = cnt.tangent_p1 ; temp
             boundary2_p2 = cnt.tangent_p2
             IF (region EQ SOL AND direction EQ BACKWARD) THEN BEGIN
               IF (process_2nd EQ 2) THEN psi_end = psi_2nd_xpoint ELSE $
@@ -719,7 +750,8 @@ PRO grid_SetActiveContour, contour_array, int_nlast, region, active_contour, sto
             psi_start = psi_val
             direction = cnt.direction
             int_nlast[region] = 2
-            boundary1_p1 = cnt.tangent_p1
+            boundary1_p1 = cnt.tangent_p2 + 1.01D * (cnt.tangent_p1 - cnt.tangent_p2) 
+;            boundary1_p1 = cnt.tangent_p1 ; temp
             boundary1_p2 = cnt.tangent_p2
             boundary2_p1 = cnt.boundary2_p1
             boundary2_p2 = cnt.boundary2_p2
@@ -783,43 +815,150 @@ PRO grid_RefineContour, x, y, i, n_pts=n_pts,  $
   frac = (DINDGEN(n_pts-1) + 1.0D) / DOUBLE(n_pts)
   new_x = x[i1] + frac * (x[i2] - x[i1])
   new_y = y[i1] + frac * (y[i2] - y[i1])
-  IF (ABS(x[i]-x[i+1]) LT  $
-      ABS(y[i]-y[i+1])) THEN BEGIN
-    IF (ref_y[0] GT ref_y[1]) THEN BEGIN
-      new_y = REVERSE(new_y)
-      ref_x = REVERSE(ref_x)
-      ref_y = REVERSE(ref_y)
-      status = 1
-;      print,'reversing y!'
-    ENDIF ELSE status = 0
-    new_x = SPLINE( ref_y, ref_x, new_y ,/DOUBLE)              
-  ENDIF ELSE BEGIN
-    IF (ref_x[0] GT ref_x[1]) THEN BEGIN
-      new_x = REVERSE(new_x)
-      ref_x = REVERSE(ref_x)
-      ref_y = REVERSE(ref_y)
-      status = 1
-;      print,'reversing x!'
-    ENDIF ELSE status = 0
-    new_y = SPLINE( ref_x, ref_y, new_x ,/DOUBLE)              
 
-;print,i1,i2
-;print,x[i1],x[i2]
-;print,ref_x
-;print,ref_y
-;print,new_x
-;print,new_y
-;PLOT,[new_x],[new_y],color=Truecolor('Green'), PSYM=6,  $
-;     XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
-;PLOT,x,y,color=Truecolor('Orange'),  $
-;     XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,PSYM=3,/NOERASE
-;stop
-  ENDELSE
 
-  IF (status) THEN BEGIN
-    new_x = REVERSE(new_x)
-    new_y = REVERSE(new_y)
+  a = MAX(ref_x,imax,SUBSCRIPT_MIN=imin)
+  a = MAX(ref_y,jmax,SUBSCRIPT_MIN=jmin)
+
+;  print,'imax',imax,N_ELEMENTS(ref_x)-1
+;  print,'jmax',jmax,N_ELEMENTS(ref_y)-1
+
+  debug_local = 0
+
+  IF (debug_local) THEN BEGIN
+    print, '-----REFINING-----'
+    print,'new_x',new_x
+    print,'new_y',new_y
+    print,'deltax,y',ABS(x[i]-x[i+1]),ABS(y[i]-y[i+1])
   ENDIF
+
+
+  force = -1
+  IF ( ((imax NE 0 AND imax NE N_ELEMENTS(ref_x)-1) OR  $
+        (imin NE 0 AND imin NE N_ELEMENTS(ref_x)-1)) AND  $
+       ( jmax EQ 0 OR  jmax EQ N_ELEMENTS(ref_y)-1)  AND  $
+       ( jmin EQ 0 OR  jmin EQ N_ELEMENTS(ref_y)-1) ) THEN force = 1
+
+  IF (debug_local) THEN BEGIN
+    print,'imax,min  = ',imax,imin,N_ELEMENTS(ref_x)-1
+    print,'jmax,min  = ',jmax,jmin,N_ELEMENTS(ref_y)-1
+    print,'force = ',force
+  ENDIF
+
+  indep_x = 0
+  indep_y = 0
+  ecount  = 0
+
+  store_ref_x = ref_x
+  store_ref_y = ref_y
+  store_new_x = new_x
+  store_new_y = new_y
+
+  FOR ipass = 1, 2 DO BEGIN
+
+    IF ((force EQ -1 AND ABS(x[i]-x[i+1]) LT ABS(y[i]-y[i+1])) OR  $
+         force EQ  1) THEN BEGIN
+      indep_y = 1
+      IF (debug_local) THEN print,'indep = y'
+      IF (ref_y[0] GT ref_y[1]) THEN BEGIN
+        new_y = REVERSE(new_y)
+        ref_x = REVERSE(ref_x)
+        ref_y = REVERSE(ref_y)
+        status = 1
+        IF (debug_local) THEN print,'reversing y!'
+      ENDIF ELSE status = 0
+      j = SORT(ref_y)
+      ref_x = ref_x[j]
+      ref_y = ref_y[j]
+      new_x = SPLINE( ref_y, ref_x, new_y ,/DOUBLE)              
+    ENDIF ELSE BEGIN
+      indep_x = 1
+      IF (debug_local) THEN print,'indep = x'
+      IF (ref_x[0] GT ref_x[1]) THEN BEGIN
+        new_x = REVERSE(new_x)
+        ref_x = REVERSE(ref_x)
+        ref_y = REVERSE(ref_y)
+        status = 1
+        IF (debug_local) THEN print,'reversing x!'
+      ENDIF ELSE status = 0
+      j = SORT(ref_x)
+      ref_x = ref_x[j]
+      ref_y = ref_y[j]
+      new_y = SPLINE( ref_x, ref_y, new_x ,/DOUBLE)              
+    ENDELSE
+
+    IF (status) THEN BEGIN
+      new_x = REVERSE(new_x)
+      new_y = REVERSE(new_y)
+
+      ref_x = REVERSE(ref_x)
+      ref_y = REVERSE(ref_y)
+    ENDIF
+
+    IF (debug_local) THEN BEGIN
+      print, '------------------',ipass
+      print,'ref_x',ref_x
+      print,'ref_y',ref_y
+      print, '-'
+      print,'new_x',new_x
+      print,'new_y',new_y
+    ENDIF
+;
+;   ----------------------------------------------------------------------
+;   CHECK THAT THE INTERPOLATED POINTS ARE OK
+;
+    ; Calcualte the perpendicular distance between the interpolated points
+    ; and a line segment between the bounding range of the independent
+    ; variable:
+    dist = 0.0D
+    FOR j = 0, N_ELEMENTS(new_x)-1 DO  $
+      dist = [dist,grid_PerpDistance(new_x[j],new_y[j],  $
+                     [x[i1],x[i2]], [y[i1],y[i2]],/nostop)]  
+    ; Check that these distances are not creater than 20% of these end
+    ; points, which indicates that the interpolation failed:
+    limit = SQRT( (x[i1]-x[i2])^2 + (y[i1]-y[i2])^2 )
+    IF (MAX(dist) GT 0.2D * limit) THEN BEGIN
+      ecount++
+      IF (debug_local) THEN BEGIN
+        PRINT,'limit ',limit
+        PRINT,'dist ',dist 
+        IF (ecount EQ 1) THEN BEGIN
+          xspan = 10.0D0 * limit
+          yspan = xspan
+    
+          PLOT, x,y,COLOR=Truecolor('Red'),  $
+                XRANGE=[0.5D*(x[i1]+x[i2])-xspan,0.5D*(x[i1]+x[i2])+xspan],  $
+                YRANGE=[0.5D*(y[i1]+y[i2])-xspan,0.5D*(y[i1]+y[i2])+xspan],  $
+                XSTYLE=1,YSTYLE=1
+          OPLOT, ref_x,ref_y,COLOR=Truecolor('White'),PSYM=3
+          OPLOT, x[i1:i2],y[i1:i2],COLOR=Truecolor('Yellow'),PSYM=7
+          OPLOT, new_x,new_y,COLOR=Truecolor('Green'),PSYM=6
+        ENDIF
+      ENDIF
+;     Restore the interpolation reference data and try again:
+      ref_x = store_ref_x
+      ref_y = store_ref_y
+      new_x = store_new_x
+      new_y = store_new_y
+      IF (indep_x) THEN force = 1 ELSE force = 2
+      PRINT, 'PROBLEM DETECTED'
+;      STOP
+    ENDIF ELSE BREAK
+
+  ENDFOR ; IPASS loop
+
+  IF (ecount EQ 2) THEN BEGIN
+    IF (debug_local) THEN  $
+      OPLOT, new_x,new_y,COLOR=Truecolor('Pink'),PSYM=6
+    STOP
+  ENDIF
+
+  IF (ecount EQ 1) THEN BEGIN
+    IF (debug_local) THEN  $
+      OPLOT, new_x,new_y,COLOR=Truecolor('Silver'),PSYM=6
+    ;STOP
+  ENDIF
+
 
   OPLOT,[new_x],[new_y],color=Truecolor('Red'), PSYM=6
 
@@ -892,15 +1031,19 @@ END
 ;
 FUNCTION grid_LocatePoint,x,y,p1,s=s,t=t
 
+;  print,'point location search',N_ELEMENTS(x)
+
   ; Find where the point is along the contour:
   n = N_ELEMENTS(x)
   FOR i = 0, n-2 DO BEGIN
     IF (ABS(x[i+1]-x[i]) GT 1.0D-8) THEN s = (p1[0] - x[i]) / (x[i+1] - x[i]) ELSE s = -999.0D
     IF (ABS(y[i+1]-y[i]) GT 1.0D-8) THEN t = (p1[1] - y[i]) / (y[i+1] - y[i]) ELSE t = -999.0D
-    ;print,i,s,t
+;    print,i,s,t,x[i+1]-x[i],y[i+1]-y[i],FORMAT='(I6,2F18.12,2F18.12)'
     IF ((ABS(s-t) LT 1.0D-7 AND s LT 0.9999999D) OR  $
-        (s EQ -999.0D AND (t GE 0.0D AND t LT 1.0D)) OR  $
-        (t EQ -999.0D AND (s GE 0.0D AND s LT 1.0D))) THEN BREAK 
+        (s EQ -999.0D AND (t GE -1.0D-10 AND t LT 1.0D)) OR  $
+        (t EQ -999.0D AND (s GE -1.0D-10 AND s LT 1.0D))) THEN BREAK 
+;        (s EQ -999.0D AND (t GE 0.0D AND t LT 1.0D)) OR  $
+;        (t EQ -999.0D AND (s GE 0.0D AND s LT 1.0D))) THEN BREAK 
   ENDFOR
   IF (i EQ n-1) THEN BEGIN
     PRINT, 'ERROR grid_LocatePoint: Location of point on line not found'
@@ -919,7 +1062,6 @@ FUNCTION grid_GetOrthogonal, x_val,y_val,p1_val,direction,length,ictr=ictr,ctrs=
   COMMON params, CORE, SOL, PFZ, FORWARD, BACKWARD, LOWER_NULL, UPPER_NULL, HFS, LFS
   ; ------------------------------------------------------------------
 
-
   x = x_val
   y = y_val
 
@@ -936,14 +1078,13 @@ FUNCTION grid_GetOrthogonal, x_val,y_val,p1_val,direction,length,ictr=ictr,ctrs=
 ; the problem, now, naturally, is with the ITER grid, where there's a tangency point that faces
 ; away from the separatrix... can't exactly see what to do with it just yet...
 
-
       ; Find out which contour has the cross-field vector that's associated 
       ; with the secondary null: 
 
       FOR i = 1, nctr DO BEGIN
         ctr = grid_ExtractStructure(ctrs,tags[i-1])      
 
-        print,ctr.separatrix,ctr.tangent_p1[0]
+;        print,ctr.separatrix,ctr.tangent_p1[0]
 
         IF ((ctr.separatrix EQ 2) OR  $
             ((ctr.separatrix EQ 3 OR ctr.separatrix EQ 4) AND  $
@@ -973,25 +1114,15 @@ FUNCTION grid_GetOrthogonal, x_val,y_val,p1_val,direction,length,ictr=ictr,ctrs=
   p1 = p1_val
 
   ; Find where the point is along the contour:
-  i = grid_LocatePoint(x,y,p1,s=s)
-;  n = N_ELEMENTS(x)
-;  FOR i = 0, n-2 DO BEGIN
-;    IF (ABS(x[i+1]-x[i]) GT 1.0D-8) THEN s = (p1[0] - x[i]) / (x[i+1] - x[i]) ELSE s = -999.0D
-;    IF (ABS(y[i+1]-y[i]) GT 1.0D-8) THEN t = (p1[1] - y[i]) / (y[i+1] - y[i]) ELSE t = -999.0D
-;    ;print,i,s,t
-;    IF ((ABS(s-t) LT 1.0D-7 AND s LT 0.9999999D) OR  $
-;        (s EQ -999.0D AND (t GE 0.0D AND t LT 1.0D)) OR  $
-;        (t EQ -999.0D AND (s GE 0.0D AND s LT 1.0D))) THEN BREAK 
-;  ENDFOR
-;  IF (i EQ n-1) THEN BEGIN
-;    PRINT, 'ERROR grid_GetOrthogonal: Location of point on line not found'
-;    STOP
-;  ENDIF
-  IF (ABS(s) GT 1.0E-7) THEN BEGIN
+  i = grid_LocatePoint(x,y,p1,s=s,t=t)
+
+  IF (ABS(s) GT 1.0D-7) THEN BEGIN
     ; This is a non-standard situation at present, so some of the logic below
     ; needs to be modified to make this case valid.
-    PRINT, 'ERROR grid_GetOrthogonal: Normal vector requested away from vertex'
-    STOP
+    IF (t LT 1.0D-7) THEN s = t ELSE BEGIN
+      PRINT, 'ERROR grid_GetOrthogonal: Normal vector requested away from vertex'
+      STOP
+    ENDELSE
   ENDIF
 
 ;  print,'test',i
@@ -1173,7 +1304,10 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
   process_2nd_pfz =  0
   psi_span       = 0.0D0
   psi_2nd_xpoint = -999.0D
+
   IF (N_ELEMENTS(b.null_i) GE 3) THEN BEGIN
+    xpt2_x = b.x[b.null_i[2]] 
+    xpt2_y = b.y[b.null_j[2]] 
     ; Check whether or not the non-primary x-points are inside the vessel wall:
     psi_2nd_xpoint = b.psi_2nd_xpoint
     psi_span       = ABS(psi_1st_xpoint - psi_2nd_xpoint)
@@ -1200,6 +1334,10 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
       ENDELSE
     ENDIF 
   ENDIF
+
+;print,psi_1st_xpoint,psi_end,user_finish,psi_2nd_xpoint,MAX(b.psi)
+;stop
+
 
 
   ; Setup local wall segment arrays:
@@ -1257,6 +1395,11 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
   active_2nd = 0
   process_pfz = 0
   failure_2nd_pfz = 0
+  careful_2nd = 0
+  careful_min = 1.0E+6
+  immediate_trouble = 0
+  local_count = 0
+;  last_iseg = -1  ; keeping track of the last valid contour segment
 
 ;  be_careful = 0
 ;
@@ -1266,30 +1409,37 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
   WHILE (the_search_continues) DO BEGIN
 
     iteration_count = iteration_count + 1
+    local_count = local_count + 1
+
+;   IF (contour_n EQ 16) THEN BEGIN
+;     help,contour_array,/struct
+;     print,'saving contour_array'
+;     SAVE,filename='contour_array.sav',contour_array,psi_start,psi_end,psi_val,psi_adjust,psi_step
+;     STOP
+;   ENDIF
 
     IF (0 EQ 1 AND contour_n EQ 0) THEN BEGIN
       RESTORE,'contour_array.sav'
       region = SOL
-      active_contour = 20
-      contour_n = 20
+      active_contour = 17
+      contour_n = 16
       grid_SetActiveContour, contour_array, int_nlast, region, active_contour, store_forced,  $
                              psi_start, psi_end, psi_val, psi_adjust, psi_step, sht_count, last_good_psi_val,   $
                              boundary1_p1, boundary1_p2, boundary2_p1, boundary2_p2,  $
                              the_search_continues, contour_n, direction, process_2nd,  $
                              psi_1st_xpoint, psi_2nd_xpoint, user_step, user_finish
-      the_search_continues = 1
+;      the_search_continues = 1
 ;      psi_start = psi_2nd_xpoint - 0.1D 
 ;      psi_end   = psi_1st_xpoint 
 ;      psi_val   = psi_start
 ;      direction = BACKWARD
 ;      psi_step  = -0.005D * direction
 
-      psi_start = psi_2nd_xpoint - 0.001D
-      psi_val = psi_start
-      active_2nd = HFS
-      process_2nd = 2
-      int_nlast[SOL] = 2
-
+;      psi_start = psi_2nd_xpoint - 0.001D
+;      psi_val = psi_start
+;      active_2nd = HFS
+;      process_2nd = 2
+;      int_nlast[SOL] = 2
 
 ;      ; Start secondary PFZ processing:
 ;      process_2nd = 3
@@ -1334,11 +1484,12 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
 
     ENDIF
 
-    print,'===========',contour_n,iteration_count,'============='
+    print,'===========',contour_n,iteration_count,local_count,'============='
     print,'psi_values: ',psi_start,psi_val,psi_end,process_2nd, direction
 
 
 ; help,b,/struct
+
 
     IF (process_2nd EQ 0 AND psi_val LT psi_2nd_xpoint) THEN process_2nd = 1
 
@@ -1358,7 +1509,7 @@ FUNCTION grid_AnalyseBoundary, b, wall, user_step, user_finish, machine, $
 
     ctr = grid_ExtractContour(psi, psi_x, psi_y, psi_val)
 
-    ibrk = WHERE(ctr.dist GT 0.10)
+    ibrk = WHERE(ctr.dist GT 0.10)  ; PARAMETER
     nseg = N_ELEMENTS(ibrk) 
     ibrk = [-1,ibrk,ctr.n-1]
 
@@ -1473,6 +1624,10 @@ print,'... nseg',nseg
       store_y = y
       cont    = 1
       first_pass = 1
+;
+;     ------------------------------------------------------------------
+;     DECIDE IF THIS SEGMENT IS THE ONE OF INTEREST
+;  
       WHILE (cont EQ 1 OR cont EQ 3) DO BEGIN
         cont = 0
 
@@ -1486,7 +1641,6 @@ print,'... nseg',nseg
         IF (boundary1_p1[0] NE -999.0D) THEN BEGIN
           ; Find intersections with first boundary:
           FOR i = N_ELEMENTS(x)-2, 0, -1 DO BEGIN
-;          FOR i = N_ELEMENTS(x)-2, 1, -1 DO BEGIN  -changed 14/12/2010 -- not sure why this was here...
             result = grid_Intersection([x[i],y[i]], [x[i+1],y[i+1]],  $
                                        boundary1_p1, boundary1_p2, 0, status=status)
             IF (status) THEN BREAK
@@ -1514,7 +1668,6 @@ print,'... nseg',nseg
               PLOT,wall.x,wall.y,color=Truecolor('Yellow'),  $
                    XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
               print,'... nseg',nseg
-            
               stop
             ENDIF
 
@@ -1564,15 +1717,12 @@ print,'... nseg',nseg
         
         print, 'failure', failure
 
-
         psi_check = 0
         IF (first_pass AND (process_2nd EQ -1 AND psi_span GT 0.0D0)) THEN BEGIN
 print, 'cont check:', cont
           psi_delta = ABS(psi_val - psi_2nd_xpoint)
           psi_check = (psi_delta LT 0.05D * psi_span) AND (psi_val LT psi_2nd_xpoint)
         ENDIF
-
-
 
         IF ((failure EQ 1 AND boundary2_p1[0] EQ -999.0D AND NOT psi_check) OR  $
             (failure EQ 2 AND boundary1_p1[0] EQ -999.0D AND NOT psi_check) OR  $
@@ -1611,31 +1761,51 @@ print, 'cont check:', cont
               PLOT,wall.x,wall.y,color=Truecolor('Yellow'),  $
                    XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
 
-
               IF (cont EQ 3) THEN stop
 
               mean_x = MEAN(x)
 
               IF (failure EQ 1) THEN test_x = boundary1_p1[0] ELSE  $
                                      test_x = boundary2_p1[0]
-              secondary_x = b.x[b.null_i[2]]
-              print, 'testing',secondary_x,mean_x,test_x,failure,process_2nd
-              ; This check is not fool proof unfortunately, since it's feasible that
-              ; the tangency point for the bounday near the second null is inside
-              ; the null and the correct contour is outside...
-              IF ((process_2nd EQ -1 AND  $
-                   (mean_x LT secondary_x AND 0.95D*test_x LT secondary_x OR  $
-                   (mean_x GT secondary_x AND 1.05D*test_x GT secondary_x))) OR  $
-                  (process_2nd GE  0 AND psi_val      LT psi_2nd_xpoint AND  $
-                                         last_psi_val GT psi_2nd_xpoint)) THEN BEGIN
+;
+;             ----------------------------------------------------------
+;             TRY TO CORRECT FOR A DOUBLE-NULL GRID:
+;
+              IF (N_ELEMENTS(b.null_i) GE 3) THEN BEGIN
+
+                secondary_x = b.x[b.null_i[2]]
+                print, 'testing',secondary_x,mean_x,test_x,failure,process_2nd
+                ; This check is not fool proof unfortunately, since it's feasible that
+                ; the tangency point for the bounday near the second null is inside
+                ; the null and the correct contour is outside...
+                IF ((process_2nd EQ -1 AND  $
+                     (mean_x LT secondary_x AND 0.95D*test_x LT secondary_x OR     $
+                     (mean_x GT secondary_x AND 1.05D*test_x GT secondary_x))) OR  $
+                    (process_2nd GE  0 AND psi_val      LT psi_2nd_xpoint AND      $
+                                           last_psi_val GT psi_2nd_xpoint)) THEN   $
+	         cont = 3 ELSE cont = 2 ; Failure
+;
+;             ----------------------------------------------------------
+;             TRY TO CORRECT FOR A SINGLE-NULL GRID:
+;
+              ENDIF ELSE BEGIN
+                print,'failure',failure
+                print,'iseg   ',iseg ; ,last_iseg
+                cont = 3
+              ENDELSE 
+;
+;             ----------------------------------------------------------
+;             TURN OFF ONE OF THE BOUNDARIES AND TRY AGAIN
+;
+              IF (cont EQ 3) THEN BEGIN
 
                 seg_active[iseg] = 1
-
+	        
                 save_boundary1_p1 = boundary1_p1
                 save_boundary1_p2 = boundary1_p2
                 save_boundary2_p1 = boundary2_p1
                 save_boundary2_p2 = boundary2_p2
-
+	        
                 IF (failure EQ 2) THEN BEGIN
                   print, '>>>>>>>>> turning off second boundary'
                   new_boundary1_p1 = boundary1_p1
@@ -1649,17 +1819,17 @@ print, 'cont check:', cont
                   new_boundary2_p1 = boundary2_p1
                   new_boundary2_p2 = boundary2_p2
                 ENDELSE
-
+	        
                 boundary1_p1 = new_boundary1_p1
                 boundary1_p2 = new_boundary1_p2
                 boundary2_p1 = new_boundary2_p1
                 boundary2_p2 = new_boundary2_p2
-
+	        
                 x = store_x
                 y = store_y
-   
+   	        
                 cont = 3
-              ENDIF ELSE cont = 2 ; Failure
+              ENDIF
 
             ENDELSE
 
@@ -1678,45 +1848,15 @@ print, 'cont check:', cont
         CONTINUE
       ENDIF 
 
-
+      ; Debugging:
       CASE contour_n OF
         221: BEGIN 
           xrange = [4.0,5.0] ; top, in a bit
           yrange = [4.0,5.0] 
           END
-        220: BEGIN 
-          xrange = [4.5,5.5] ; top
-          yrange = [4.0,5.0] 
-          END
-        220: BEGIN 
-          xrange = [4.5,5.5] ; top
-          yrange = [4.0,5.0] 
-          END
-        221: BEGIN 
-          xrange = [4.5,5.5] ; top
-          yrange = [4.0,5.0] 
-          END
-        222: BEGIN 
-          xrange = [4.5,5.5] ; top
-          yrange = [4.0,5.0] 
-          END
-        299: BEGIN 
-          xrange = [5.0,7.0] ; top
-          yrange = [3.6,4.8] 
-          END
         ELSE: BEGIN
           xrange = user_xrange
           yrange = user_yrange
-;          xrange = [ 3.8,4.2]  ; First intesection on CC
-;          yrange = [ 1.0,2.0]
-;          xrange = [4.5,5.5] ; top
-;          yrange = [4.0,5.0] 
-;          xrange = [ 4.5,5.5]
-;          yrange = [ 4.0,5.5]
-;          xrange = [ 3.8,4.2]
-;          yrange = [-2.0,-1.0]
-;          xrange = [ 7.0,8.0 ]
-;          yrange = [ 3.0,4.0 ]
           END
       ENDCASE
       PLOT, xrange, yrange ,/NODATA, XSTYLE=1, YSTYLE=1
@@ -1737,39 +1877,38 @@ print, 'cont check:', cont
            color=Truecolor('Green'),  $
            XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
 
-
       ; Only take the parts of the contour segment that are inside the main wall, by dropping
       ; all points before and after the first and last wall intersections, respectively:       
       grid_ClipToWall, x, y, wall_pt1, wall_pt2, cycle, xrange, yrange
 
       print,'CYCLE:',cycle
 
-    IF (0 EQ 1 AND iteration_count EQ 27 AND iseg EQ 1) THEN BEGIN
-      
-      stop
-
-      xrange = user_xrange
-      yrange = user_yrange
-;      xrange = [ 4.5,5.5]
-;      yrange = [ 4.0,5.5]
-;      xrange = [ 3.8,4.2]
-;      yrange = [-2.0,-1.0]
-         PLOT,x,y,color=Truecolor('White'), PSYM=3, $ 
-              XRANGE=xrange,YRANGE=yrange,/NOERASE,XSTYLE=1,YSTYLE=1
-         PLOT,[boundary1_p1[0],boundary1_p2[0]],  $
-              [boundary1_p1[1],boundary1_p2[1]],  $
-              color=Truecolor('Lightgreen'),  $
-              XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
-         PLOT,[boundary2_p1[0],boundary2_p2[0]],  $
-              [boundary2_p1[1],boundary2_p2[1]],  $
-              color=Truecolor('Green'),  $
-              XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
-print,'... nseg',nseg
-      stop
-    ENDIF
+      IF (0 EQ 1 AND iteration_count EQ 27 AND iseg EQ 1) THEN BEGIN
+        stop
+        xrange = user_xrange
+        yrange = user_yrange
+;        xrange = [ 4.5,5.5]
+;        yrange = [ 4.0,5.5]
+;        xrange = [ 3.8,4.2]
+;        yrange = [-2.0,-1.0]
+        PLOT,x,y,color=Truecolor('White'), PSYM=3, $ 
+             XRANGE=xrange,YRANGE=yrange,/NOERASE,XSTYLE=1,YSTYLE=1
+        PLOT,[boundary1_p1[0],boundary1_p2[0]],  $
+             [boundary1_p1[1],boundary1_p2[1]],  $
+             color=Truecolor('Lightgreen'),  $
+             XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+        PLOT,[boundary2_p1[0],boundary2_p2[0]],  $
+             [boundary2_p1[1],boundary2_p2[1]],  $
+             color=Truecolor('Green'),  $
+             XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+        print,'... nseg',nseg
+        stop
+      ENDIF
 
       ; Cycle if no wall interesections were found:
       IF (cycle) THEN CONTINUE
+
+;      last_iseg = iseg
 
       ; Check if the contour is radially outward of the secondary x-point,
       ; if that's the current region of interest (PROCESS_2ND = 2):
@@ -1800,6 +1939,25 @@ print,'... nseg',nseg
           CONTINUE 
         ENDIF
       ENDIF
+
+
+      print,process_2nd,psi_val, psi_2nd_xpoint,psi_2nd_xpoint+MAX(b.psi)
+
+      IF (process_2nd EQ -1 AND careful_2nd EQ 0 AND  $
+          psi_val LT (0.05D * psi_1st_xpoint +        $
+                      0.95D * psi_2nd_xpoint)    AND  $
+          psi_val GT psi_2nd_xpoint) THEN BEGIN
+
+        dist = MIN( SQRT( (xpt2_x - x)^2 + (xpt2_y - y)^2 ) )
+;        help,xpt2_x,xpt2_y,dist
+        IF (dist LT 0.10D) THEN BEGIN  ; parameter
+          careful_2nd = 1
+          psi_step   = psi_step   * 0.05D
+          psi_adjust = psi_adjust * 0.05D
+        ENDIF
+ 
+      ENDIF
+
 
       seg_valid = 1
 ;
@@ -1847,29 +2005,45 @@ print,'... nseg',nseg
   
         int_n = N_ELEMENTS(int_i)
 
-        ; Check if there are multiple wall intersections very close together, and 
-        ; spatially refine the contour locally.  This creates overhead as the
-        ; contour is passed through more than once, but I can't see a more efficent
-        ; way of making this general check:
-        FOR j = 0, int_n-2 DO BEGIN
-          IF ((int_i[j+1]-int_i[j] LE 2) OR  $
-              (int_n EQ 3 AND j EQ 1 AND only_once)) THEN BEGIN
-            grid_RefineContour, x, y, int_i[j],  $
-                                debug=debug, xrange=xrange, yrange=yrange
-            cont = 1  ; Loop through the contour again to refine intersection data
-            print,'cycling...'
-            IF (int_n EQ 3 AND j EQ 1) THEN BEGIN
-              ; this can happen when concecutive contour points are vertical and the wall segment is
-              ; vertical, or more generally when the contour is poorly resolved and tangential, and
-              ; also when you're right at the tolerance for contour position refinement and so are
-              ; ready to store the contour... this seems to sort things out, but perhaps good to add
-              ; some additional checking that it's the right thing to do
-              only_once = 0
-              print,'handling N_INT=3 special... (new)'
+        IF (careful_2nd NE 1) THEN BEGIN
+          ; Check if there are multiple wall intersections very close together, and 
+          ; spatially refine the contour locally.  This creates overhead as the
+          ; contour is passed through more than once, but I can't see a more efficent
+          ; way of making this general check:
+          FOR j = 0, int_n-2 DO BEGIN
+            IF ((int_i[j+1]-int_i[j] LE 2) OR  $
+                (int_n EQ 3 AND j EQ 1 AND only_once)) THEN BEGIN
+              grid_RefineContour, x, y, int_i[j],  $
+                                  debug=debug, xrange=xrange, yrange=yrange
+              cont = 1  ; Loop through the contour again to refine intersection data
+              print,'refining and cycling...'
+              IF (int_n EQ 3 AND j EQ 1) THEN BEGIN
+                ; this can happen when concecutive contour points are vertical and the wall segment is
+                ; vertical, or more generally when the contour is poorly resolved and tangential, and
+                ; also when you're right at the tolerance for contour position refinement and so are
+                ; ready to store the contour... this seems to sort things out, but perhaps good to add
+                ; some additional checking that it's the right thing to do
+                only_once = 0
+                print,'handling N_INT=3 special... (new)'
+              ENDIF
             ENDIF
-          ENDIF
-        ENDFOR
+          ENDFOR
+        ENDIF ELSE BEGIN
+          print,'NOT refining and cycling...'
+        ENDELSE
       ENDWHILE ; Wall intersection loop
+;     Record the fact that there are more than two intersections on the first pass,
+;     which isn't good since this is a small step from the last intersection (although
+;     doesn't necessarily mean trouble: 
+      IF (local_count EQ 1 AND int_n NE 2) THEN BEGIN
+        print, 'REGISTERING THAT THINGS ARE LOOKING SHAKY'
+        immediate_trouble = immediate_trouble + 1
+      ENDIF ELSE BEGIN
+        IF (immediate_trouble GT 0 AND int_n EQ 2) THEN BEGIN
+          print, 'EVERYTHING IS OK NOW!'
+          immediate_trouble = 0
+        ENDIF
+      ENDELSE
 ;
 ;     ------------------------------------------------------------------
 ;     PROCESS ??? ('tangecy points')
@@ -1919,7 +2093,7 @@ print,'... nseg',nseg
             IF (store_forced GT 0) THEN store_contour = 1
             length = grid_Length(x,y) 
 ;            print,'length:',length,sht_count
-            IF (length LT 0.1D) THEN BEGIN
+            IF (length LT 0.1D) THEN BEGIN  ; parameter
               sht_count = sht_count + 1
               IF (sht_count GE 3) THEN store_contour = 1
             ENDIF ELSE  sht_count = 0
@@ -1957,9 +2131,6 @@ print,'... nseg',nseg
           ENDELSE
         ENDELSE
       ENDELSE
-
-;      IF (cycle) THEN CONTINUE
-
 
       PRINT,'     psi_adjust 2:',psi_adjust,int_n,int_nlast[region],store_contour
 
@@ -2020,9 +2191,10 @@ print,'... nseg',nseg
         ENDELSE  
         store_contour = 0
       ENDIF
-
-
-
+;
+;     ------------------------------------------------------------------
+;     STORE THE CONTOUR AND MOVE ON
+;
       IF (store_contour) THEN BEGIN
 
         CASE int_n OF 
@@ -2044,8 +2216,23 @@ print,'... nseg',nseg
             ; that this is a 'real' tangecy point between the contour and the wall) was not found:
             tangent_i = int_i[1] + 1 + (int_i[2] - int_i[1]) / 2  ; OK?
             END
+          6: BEGIN
+            ; Well, the only case of this happening so far is when the wall and the decrete contour 
+            ; really look conformal, so make an approximation:
+            print,'LOADS OF TANGENCY POINTS! TAKING A CHANCE!'
+            tangent_i = LONG(MEAN(int_i[1:4]))
+            print,int_i
+	    print,tangent_i
+;            stop
+            END
           ELSE: BEGIN
        
+            print,'int_n',int_n
+            print,'int_i',int_i
+            xspan = 0.1D
+            yspan = 0.1D
+            xrange = [int_x[1]-xspan,int_x[1]+xspan]
+            yrange = [int_y[1]-xspan,int_y[1]+xspan]
             PLOT,[boundary1_p1[0],boundary1_p2[0]],  $
                  [boundary1_p1[1],boundary1_p2[1]],  $
                  color=Truecolor('Lightgreen'),  $
@@ -2054,10 +2241,17 @@ print,'... nseg',nseg
                  [boundary2_p1[1],boundary2_p2[1]],  $
                  color=Truecolor('Green'),  $
                  XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+            PLOT,wall.x,wall.y,color=Truecolor('Yellow'),  $
+                 XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
             PLOT,x,y,  $
                  color=Truecolor('Red'), PSYM=3, $
                  XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
-            PLOT,wall.x,wall.y,color=Truecolor('Yellow'),  $
+
+            print,int_x
+            print,int_y
+
+            PLOT,int_x,int_y,  $
+                 color=Truecolor('Lightblue'), PSYM=6, $
                  XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
        
             PRINT,'ERROR grid_AnalyseBoundary: Tangency point ill-defined'
@@ -2085,6 +2279,42 @@ print,'... nseg',nseg
 
           PLOT,[p1[0],p2[0]],[p1[1],p2[1]],color=Truecolor('Lightgreen'),  $
                XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+
+          IF (careful_2nd EQ 1) THEN BEGIN
+            careful_2nd = 2
+
+            dist = MIN( SQRT( (xpt2_x - x)^2 + (xpt2_y - y)^2 ) )
+
+            ; If the tangency point is very close to the secondary null then
+            ; use a non-standard contour boundary check ("parallel" to the wall
+            ; at the tangency point rather than perpendicular):           
+
+            IF (dist LT 0.05D) THEN BEGIN  ; parameter
+              careful_n  = contour_n + 1
+              careful_p1 = p1
+              careful_p2 = p2
+
+              FOR frac = 0.05D, 1.0D, 0.05D DO BEGIN         
+                p3 = p1 + frac * (p2 - p1)
+                p4 = [p3[0],p3[1]] + [-(p2[1]-p1[1]), (p2[0]-p1[0])]
+                p5 = [p3[0],p3[1]] + [ (p2[1]-p1[1]),-(p2[0]-p1[0])]
+
+                PLOT,[p4[0],p5[0]],[p4[1],p5[1]],color=Truecolor('Lightgreen'),  $
+                     XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+
+                dummy = grid_Intersection([p4[0],p4[1]], [p5[0],p5[1]],  $
+                                          wall_pt1, wall_pt2, 0, status=status)
+                print,frac,status
+                IF (NOT status) THEN BREAK
+              ENDFOR
+              p1 = p4
+              p2 = p5
+            ENDIF
+          ENDIF
+
+
+
+
 ;          p2 = [p1[0] + 1.0D / length * vx,  $
 ;                p1[1] + 1.0D / length * vy]
 ;          PLOT,[p1[0],p2[0]],[p1[1],p2[1]],color=Truecolor('Green'),  $
@@ -2172,27 +2402,25 @@ print,'... nseg',nseg
           endif
 
         ENDIF
-      ENDIF
 
 
+        immediate_trouble = 0
+        local_count = 0
+;        last_iseg = -1
 
+      ENDIF  ; STORE_CONTOUR = TRUE block
 
-;      PLOT,x,y,color=Truecolor('Orange'),  $
-;           XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,PSYM=3,/NOERASE
-;      PLOT,[x[0]],[y[0]],color=Truecolor('Orange'),  $
-;           XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,PSYM=6,/NOERASE
-;print,seg_valid
-;         if (seg_active[iseg] EQ 1) THEN STOP
+    ENDFOR  ; ISEG loop (list of contour segments)
 
-    ENDFOR  ; Contour segment loop
-
-    PRINT,'seg_valid', seg_valid
+    PRINT,'seg_valid final', seg_valid
 
     IF (NOT seg_valid) THEN BEGIN
       print,' '
       print,'  PROBLEM !', last_good_psi_val
       print,'           ', active_contour
+      print,'           ', contour_n
       print,' '
+      if (active_contour EQ 16) then stop ; temp
 
       IF (last_good_psi_val EQ 0.0D) THEN BEGIN
         PRINT, 'ABANDONING ACTIVE CONTOUR'
@@ -2227,10 +2455,40 @@ print,'... nseg',nseg
     WHILE (cont) DO BEGIN
       cont = 0
       psi_val = psi_val + psi_adjust
+
+      IF (ABS(psi_adjust) LE tol_adjust) THEN BEGIN
+
+        PRINT,'--- PSI SUPER KICK! ---------------'
+        print,'psi_values: ',psi_start,psi_val,psi_end,psi_adjust,immediate_trouble
+
+        IF (immediate_trouble) THEN BEGIN
+          print,'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+          print,'giving it a kick'
+          print,'last_good_psi_val',last_good_psi_val          
+
+          psi_val    = psi_start + DOUBLE(immediate_trouble) * 5.0D * psi_step 
+          psi_adjust = psi_step          
+
+          local_count = 0
+
+          BREAK
+        ENDIF ELSE BEGIN
+
+        ENDELSE
+      ENDIF
+
       IF ((direction EQ FORWARD  AND psi_val GT psi_start) OR  $
           (direction EQ BACKWARD AND psi_val LT psi_start)) THEN BEGIN
+
         PRINT,'--- PROTECTING PSI_VAL! ---------------'
-        print,'psi_values: ',psi_start,psi_val,psi_end
+        print,'psi_values: ',psi_start,psi_val,psi_end,psi_adjust,immediate_trouble
+
+;        IF (active_contour EQ 16) THEN BEGIN
+;          xrange = [3.7,3.9]  ; temp
+;          yrange = [0.0,0.5]
+;          xrange_user = xrange
+;          yrange_user = yrange
+;        ENDIF
 
         psi_val = psi_val - psi_adjust 
         IF (psi_val*direction GT psi_start) THEN BEGIN
@@ -2362,6 +2620,24 @@ print,'... nseg',nseg
 
   ENDWHILE  ; PSIN loop
 
+; 
+; ---------------------------------------------------------------------- 
+; CORRECT THE TANGENCY SEGMENT ASSOCIATED WITH THE 'CAREFUL' CONTOUR
+; THAT WAS JUST INSIDE THE SECONDARY X-POINT
+;
+  IF (KEYWORD_SET(careful_p1)) THEN BEGIN
+
+    PRINT,'REPLACING THE TANGENT VECTOR NEAR 2nd X-POINT'
+
+    tag = 'contour'+STRTRIM(STRING(careful_n),2)
+    print,'updating careful contour >'+tag+'<'
+    ctr = grid_ExtractStructure(contour_array,tag)      
+    ctr.tangent_p1 = careful_p1
+    ctr.tangent_p2 = careful_p2
+    contour_array = grid_UpdateStructure(contour_array,tag,ctr)
+    PLOT,[careful_p1[0],careful_p2[0]],[careful_p1[1],careful_p2[1]],color=Truecolor('Lightblue'),  $
+         XRANGE=xrange,YRANGE=yrange,XSTYLE=1,YSTYLE=1,/NOERASE
+  ENDIF
 
   print, '......all done......'
 
@@ -2374,7 +2650,7 @@ print,'... nseg',nseg
                   
   
   IF (KEYWORD_SET(save)) THEN  $
-    SAVE,filename='stored_scan_'+machine+'.sav',b,wall,contour_array,scan_params
+    SAVE,filename='stored_step1_'+machine+'.sav',b,wall,contour_array,scan_params
 
   xrange = user_xrange
   yrange = user_yrange

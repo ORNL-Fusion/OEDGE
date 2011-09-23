@@ -1083,7 +1083,7 @@ c...  Input:
 
       INTEGER   MAXSURFACE       ,MAXPOINTS
 c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
-      PARAMETER(MAXSURFACE=310000,MAXPOINTS=10)
+      PARAMETER(MAXSURFACE=500000,MAXPOINTS=10)
 
       INTEGER FindMidplaneCell
       REAL    FindSeparatrixRadius
@@ -2517,7 +2517,7 @@ c
 
       INTEGER CH1
 
-      INTEGER   nxbin,nybin,ipixel,nbin,isrf,isrf1,isrf2,isid,
+      INTEGER   nxbin,nybin,ipixel,nbin,isrf,isrf1,isrf2,isid,i,
      .          idet,nplot,iobj,i1,i2,i3,i4,ix,iy,iplot1
       REAL      deltar,deltaz,qmin,qmax,qval,ang1,ang2,ang,
      .          frac1,frac2,xcen,ycen,xnear,ynear,count
@@ -2526,7 +2526,7 @@ c
 
       INTEGER dat1,dat2
       REAL, ALLOCATABLE :: xdat(:),ydat(:)
-      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512,tag*64
 
 
 c *TEMP*
@@ -2542,19 +2542,55 @@ c     -fast routine for determining the intersection between a line and a surfac
 c     -ray trace (using connection map and wedge index to speed things up)
 
       IF (.TRUE.) THEN
-        idet = 1
-        WRITE(file,'(1024X)')          
-        WRITE(file,'(A,I0.2,A)') 
-     .    'idl.'//TRIM(opt%fmap)//'_',idet,'_views'
-        write(0,*) 'wriging',TRIM(file)
-        CALL inOpenInterface(TRIM(file),ITF_WRITE)
-        DO ipixel = 1, npixel
-          CALL inPutData(pixel(ipixel)%global_v1(1),'X_1','m')
-          CALL inPutData(pixel(ipixel)%global_v1(2),'Y_1','m')
-          CALL inPutData(pixel(ipixel)%global_v2(1),'X_2','m')
-          CALL inPutData(pixel(ipixel)%global_v2(2),'Y_2','m')
+c        idet = 1
+        DO idet = 1, opt%ndet
+          WRITE(file,'(1024X)')          
+          WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_views'
+c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_views'
+c          WRITE(file,'(A)') 'idl.'//TRIM(opt%fmap)//'_views'
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c          DO ipixel = 1, npixel
+            CALL inPutData(pixel(ipixel)%global_v1(1),'X_1','m')
+            CALL inPutData(pixel(ipixel)%global_v1(2),'Y_1','m')
+            CALL inPutData(pixel(ipixel)%global_v2(1),'X_2','m')
+            CALL inPutData(pixel(ipixel)%global_v2(2),'Y_2','m')
+          ENDDO
+          CALL inCloseInterface
         ENDDO
-        CALL inCloseInterface
+
+        DO idet = 1, opt%ndet
+          WRITE(file,'(1024X)')          
+          WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
+c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
+10        FORMAT(A)
+c10        FORMAT(A,I0.2,A)
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
+          DO i = 1, opt%int_num
+            CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','n/a')
+            CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','n/a')
+            CALL inPutData(opt%int_charge  (i),'CHARGE','n/a')
+            CALL inPutData(opt%int_database(i),'DATABASE','n/a')
+            CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
+          ENDDO
+          DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+            CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
+            CALL inPutData(pixel(ipixel)%yindex,'J','n/a')
+            CALL inPutData(pixel(ipixel)%global_v1(1),'X1','m')
+            CALL inPutData(pixel(ipixel)%global_v1(2),'Y1','m')
+            CALL inPutData(pixel(ipixel)%global_v1(3),'Z1','m')
+            CALL inPutData(pixel(ipixel)%global_v2(1),'X2','m')
+            CALL inPutData(pixel(ipixel)%global_v2(2),'Y2','m')
+            CALL inPutData(pixel(ipixel)%global_v2(3),'Z2','m')
+            DO i = 1, opt%int_num
+              WRITE(tag,'(A,I0.2)') 'SIGNAL_',i
+              CALL inPutData(pixel(ipixel)%integral(i),tag,'ph m-2 s-1')
+            ENDDO
+          ENDDO
+          CALL inCloseInterface
+        ENDDO
+
       ENDIF
 
 
@@ -2637,10 +2673,10 @@ c              DO ipixel = 1, npixel
             ENDDO
           ELSE
 c            DO ipixel = 1, npixel
-            WRITE(file,'(1024X)')          
-            WRITE(file,'(A,I0.2,A)') 
-     .        'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
-            CALL inOpenInterface(TRIM(file),ITF_WRITE)
+c            WRITE(file,'(1024X)')          
+c            WRITE(file,'(A,I0.2,A)') 
+c     .        'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
+c            CALL inOpenInterface(TRIM(file),ITF_WRITE)
             DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
               ix = pixel(ipixel)%xindex
               iy = pixel(ipixel)%yindex
@@ -2660,17 +2696,17 @@ c            DO ipixel = 1, npixel
               CALL FILCOL(255)                         ! particular shade, from a limited set of contours, to 
               CALL LINCOL(255)                         ! try and shrink the size of the .ps file... 
               CALL PTPLOT(rv(1,i1),zv(1,i1),1,4,1)
-              CALL inPutData(ix,'i','none')
-              CALL inPutData(iy,'j','none')
-              CALL inPutData(cq(i1),'data','ph m-2 s-1')
-              CALL inPutData(pixel(ipixel)%global_v1(1),'x1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(2),'y1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
-              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
+c              CALL inPutData(ix,'i','none')
+c              CALL inPutData(iy,'j','none')
+c              CALL inPutData(cq(i1),'data','ph m-2 s-1')
+c              CALL inPutData(pixel(ipixel)%global_v1(1),'x1','m')
+c              CALL inPutData(pixel(ipixel)%global_v1(2),'y1','m')
+c              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
+c              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
+c              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
+c              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
             ENDDO
-            CALL inCloseInterface
+c            CALL inCloseInterface
           ENDIF
 c...      Clear arrays:
           DEALLOCATE(nv)

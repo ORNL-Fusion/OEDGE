@@ -67,6 +67,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     option          : -1                ,  $
     id              : 'unknown'         ,  $
     title           : 'unknown'         ,  $
+    no_title        : 0                 ,  $
     notes           : 'unknown'         ,  $
     plot_title      : 'unknown'         ,  $
     xtitle          : 'default'         ,  $
@@ -119,6 +120,7 @@ FUNCTION cortex_ProcessPlotStruct,plot_struct,plot_array,default,n
     yrange          : [0.0,0.0]         ,  $
     ylimit          : [0.0,0.0,0.0,0.0] ,  $
     xmark           : 'none'            ,  $
+    show_avg        : 0                 ,  $
     peak            : 0                 ,  $
     sum             : 0                 ,  $
     scale_factor    : 1.0               ,  $
@@ -597,6 +599,29 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
         plot_struct.data_file[7] = 'idl.divimp_imp_ionisation'
         END
 ;     ------------------------------------------------------------------
+      'PLOT 2D IMAGE': BEGIN
+        ncase = 1
+        nset  = 0
+        plot_struct = cortex_ProcessPlotStruct(plot_struct,plot_array,default,n)
+        plot_struct.tag          = tag
+        plot_struct.option       = FIX(data)
+        plot_struct.title        = 'IMAGE ANALYSIS'
+        plot_struct.default      = case_name
+        plot_struct.case_name[0] = case_name
+        CASE plot_struct.option OF
+          0:
+          1: 
+          2: 
+          ELSE: BEGIN
+            PRINT,'ERROR cortex_LoadPlotData: Unknown 2D image plot option'
+            PRINT,'  FILE_NAME= ',file_name
+            PRINT,'  TAG      = ',tag
+            PRINT,'  OPTION   = ',plot_struct.option
+            RETURN,-1
+            END
+          ENDCASE
+        END
+;     ------------------------------------------------------------------
       'PLOT 3D TEST': BEGIN
         ncase = 1
         nset  = 0
@@ -611,6 +636,7 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
 ;     ------------------------------------------------------------------
       'ID'           : plot_struct.id           = STRTRIM(data,2)
       'TITLE'        : plot_struct.title        = STRTRIM(data,2)
+      'NO TITLE'     : plot_struct.no_title     = 1
       'PLOT TITLE'   : plot_struct.plot_title   = STRTRIM(data,2)
       'NOTES'        : plot_struct.notes        = STRTRIM(data,2)
       'DATA PATH'    : default.data_path        = data
@@ -654,7 +680,14 @@ FUNCTION cortex_LoadPlotData,case_name,input_file,result
       'XRANGE'       : plot_struct.xrange       = FLOAT(data_array)
       'YRANGE'       : plot_struct.yrange       = FLOAT(data_array)
       'YLIMIT'       : plot_struct.ylimit       = FLOAT(data_array)
-      'XMARK'        : plot_struct.xmark        = data
+      'XMARK'        : BEGIN
+                       str = STRSPLIT(STRTRIM(data,2),' ',/EXTRACT)
+                       IF (str[0] EQ 'avg') THEN BEGIN
+                         plot_struct.show_avg = 1
+                         data = str[1]
+                       ENDIF
+                       plot_struct.xmark        = data
+                       END
       'PEAK'         :  $
         IF (data_array[0] EQ 'only') THEN plot_struct.peak = 2 ELSE  $
                                           plot_struct.peak = 1

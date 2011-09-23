@@ -774,11 +774,14 @@ c...  Input:
      .        ninter,ointer(0:MAXINTER),sinter(0:MAXINTER),
      .        srfinter(0:MAXINTER),
      .        nsurlist,count,n
-      LOGICAL cont     
+      LOGICAL cont,trim_fat
       REAL*8  v(3,MAXINTER),d(MAXINTER),DTOL,
      .        vinter(3,0:MAXINTER),dinter(0:MAXINTER)
 
       INTEGER, POINTER :: surlist(:,:)
+
+      DATA trim_fat /.TRUE./
+      SAVE
 
       fp = 6
 
@@ -810,6 +813,11 @@ c...  Input:
         ENDIF
       ENDIF
 
+      IF (dchord.EQ.nchord) THEN
+        WRITE(fp,*) '=================================================='
+        WRITE(fp,*) 'CHORD V1=',SNGL(v1(1:3))
+        WRITE(fp,*) '      V2=',SNGL(v2(1:3))
+      ENDIF
 
       cont = .TRUE.
       DO WHILE (cont) 
@@ -875,7 +883,8 @@ c                IF (d(i4).GT.1.0D-10) THEN
         ENDDO
         IF (ninter.EQ.0.AND.DTOL.EQ.1.0D-10) THEN
 c          WRITE(0 ,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
-          WRITE(fp,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
+          IF (nchord.EQ.dchord) 
+     .      WRITE(fp,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
           DTOL = 1.0D-14
           cont = .TRUE.
         ENDIF
@@ -920,7 +929,15 @@ c...    Sort intersections with respect to distance from the viewing location:
 c...    Check if 2 are the same, which can happen if the chord cuts at a seam:
         DO i1 = ninter-1, 1, -1
           IF (DABS(dinter(i1)-dinter(i1+1)).LT.1.0D-09) THEN   ! I'm not sure how low this tolerance can be set...
-            WRITE(0,*) '  TRIM FAT:',nchord,dinter(i1),dinter(i1+1),
+            IF (trim_fat) THEN
+              WRITE(0,*) 
+              WRITE(0,'(A,I6,3F18.12)') '  
+     .          TRIM FAT:',nchord,dinter(i1),dinter(i1+1),
+     .          DABS(dinter(i1)-dinter(i1+1))
+              WRITE(0,*) 
+              trim_fat = .FALSE.
+            ENDIF
+            WRITE(6,*) '  TRIM FAT:',nchord,dinter(i1),dinter(i1+1),
      .                  DABS(dinter(i1)-dinter(i1+1))
 c          IF (DABS(dinter(i1)-dinter(i1+1)).LT.1.0D-05) THEN 
             DO i2 = i1+1, ninter-1
@@ -1004,7 +1021,7 @@ c...    Surfaces bounding the current object:
         IF (.TRUE.) THEN
 c        IF (ninter.EQ.1) THEN
           IF (nchord.EQ.dchord) THEN
-            WRITE(fp,*) 'NUMBER OF GRID INTERSECTIONS:',
+            WRITE(fp,*) 'NUMBER OF OBJECT INTERSECTIONS:',
      .      ninter,nchord
           ENDIF
           nobinter = ninter
