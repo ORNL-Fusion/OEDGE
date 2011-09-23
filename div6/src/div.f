@@ -359,8 +359,8 @@ c
       CALL RZERO (wallse, maxpts+1)
       CALL RZERO (wallse_i, maxpts+1)
       CALL RZERO (wallsi, maxpts+1)
-      write(6,*) 'RESETTING WALLSIZ'
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
+      call rzero (wallseiz,(maxpts+1) * MAXIZS)
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -1960,7 +1960,8 @@ c              jdemod - added update of wall deposition in the case of prompt de
 c
 c              Update wall deposition
 c
-               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
+               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy,
+     >                             energy)
 
 c
 c              Exit due to prompt deposition
@@ -2708,9 +2709,24 @@ c
          wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
          wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
          wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         
+         do iz= 1,nizs
+            if (wallsiz(in,iz).gt.0.0) then 
+               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
+            endif
+         enddo
 
-         write(6,'(a,i7,5(1x,f9.2))') 'Walls Data:',in,
-     >      wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         if (iz.lt.80) then 
+            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+     >          'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs)
+         else
+            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         endif
 
 3005  continue
 c
@@ -7258,12 +7274,13 @@ c
 c
 c
 c
-      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy)
+      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
+     >                          eimp)
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
       integer,intent(in) ::  idt,idw
-      real sputy
+      real sputy,eimp
 c
       include 'params'
       include 'cgeom'
@@ -7295,10 +7312,13 @@ c     closest to the cell centre of the particle exit.
 c
       if (cprint.eq.9) then 
 
-         write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
-     >         iwstart,idtype,sputy
+         write(6,'(a,7i6,5(1x,g12.5))') 'Update_walldep:',ik,ir,iz,
+     >         idt,idw,
+     >         iwstart,idtype,sputy,eimp
 
       endif
+c
+c     Left grid through periphery ... add Teb factor to energy when element is known
 c
       if (idt.eq.0.and.idw.eq.0) then
 c
@@ -7328,7 +7348,9 @@ c
              endif
 c
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c
+             wallsiz(maxpts+1,iz) = wallsiz(maxpts+1,iz) + sputy
+             wallseiz(maxpts+1,iz)= wallseiz(maxpts+1,iz) + eimp * sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7339,7 +7361,14 @@ c
           else
 
              wallsi(ind) = wallsi(ind) + sputy
-             wallsiz(ind, iz) = wallsiz(ind, iz) + sputy
+             wallsiz(ind,iz)  = wallsiz(ind,iz) + sputy
+
+c
+c            Add plasma temperature at deposition element to impact energy
+c
+             eimp = eimp + 3.0 * iz * wallpt(ind,29) 
+
+             wallseiz(ind,iz) = wallseiz(ind,iz) + eimp * sputy
 
 c
 c             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
@@ -7363,6 +7392,8 @@ c
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
              wallsiz(wallindex(idt), iz) =
      >            wallsiz(wallindex(idt), iz) + sputy
+             wallseiz(wallindex(idt), iz) =
+     >            wallseiz(wallindex(idt), iz) + eimp * sputy
 
 
 c             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
@@ -7395,6 +7426,7 @@ c
 c
              wallsi(idw) = wallsi(idw)+ sputy
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
+             wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
 
 c
 c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
@@ -7412,6 +7444,7 @@ c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
 
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
           wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+          wallseiz(maxpts+1, iz) = wallseiz(maxpts+1, iz) + eimp * sputy
 c
           if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
