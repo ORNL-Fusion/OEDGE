@@ -86,6 +86,11 @@ c slmod begin - temp
       integer i
 c slmod end
 
+c
+c     Controls code debugging output
+c
+      logical :: debug_code
+
 
 c
 c     Output velocity along the field line from launch_one
@@ -162,6 +167,12 @@ C psmod
 c
       debug0 = .false.
       debug_all=.false.
+
+c
+c     jdemod - added a debug code flag that will activate write(0,*) markers
+c              for tracking crashes that do not report the exact location
+c
+      debug_code = .false.
 c
       Ftotal = 0.0
       COPTION = 0
@@ -211,6 +222,8 @@ c
       refCENT     = 0.0
       refTMAX     = 0.0
       refFAIL     = 0.0
+c
+      if (debug_code) write(0,*) '1:'
 c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
@@ -352,8 +365,8 @@ c
       CALL RZERO (wallse, maxpts+1)
       CALL RZERO (wallse_i, maxpts+1)
       CALL RZERO (wallsi, maxpts+1)
-      write(6,*) 'RESETTING WALLSIZ'
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
+      call rzero (wallseiz,(maxpts+1) * MAXIZS)
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -532,6 +545,7 @@ C-----------------------------------------------------------------------
 C
       IF (ITER.EQ.1) CALL PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
 
+      if (debug_code) write(0,*) '2:'
 
 
 c
@@ -795,6 +809,9 @@ C
         call init_eckstein_2007(mattar,matp)
       ENDIF
 c
+      if (debug_code) write(0,*) '3:'
+
+
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
 C     FOR BOTH NEUTRAL AND ION INJECTION CASES.
@@ -975,6 +992,9 @@ C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
 C
 
+      if (debug_code) write(0,*) '4:'
+
+
   200 CONTINUE
       IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
       NPROD  = 0
@@ -1016,6 +1036,9 @@ C
       IMPLIM = 4
 c
       num_entered_core = 0.0
+
+      if (debug_code) write(0,*) '5:'
+
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
@@ -1953,7 +1976,8 @@ c              jdemod - added update of wall deposition in the case of prompt de
 c
 c              Update wall deposition
 c
-               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
+               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy,
+     >                             energy)
 
 c
 c              Exit due to prompt deposition
@@ -2304,6 +2328,7 @@ C
 C
   805 CONTINUE
 
+      if (debug_code) write(0,*) '6:'
 
 C
 C
@@ -2453,6 +2478,9 @@ C-----------------------------------------------------------------------
 C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '7:'
+
+
       goto 8701
 
 c
@@ -2697,9 +2725,24 @@ c
          wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
          wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
          wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         
+         do iz= 1,nizs
+            if (wallsiz(in,iz).gt.0.0) then 
+               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
+            endif
+         enddo
 
-         write(6,'(a,i7,5(1x,f9.2))') 'Walls Data:',in,
-     >      wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         if (iz.lt.80) then 
+            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+     >          'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs)
+         else
+            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         endif
 
 3005  continue
 c
@@ -2736,6 +2779,9 @@ C     >       wallsiz(in, 1:NIZS)
 c
 c     jdemod end
 c
+
+      if (debug_code) write(0,*) '8:'
+
 C
 C
 C     CALCULATE TOTALS
@@ -2787,6 +2833,7 @@ c
       endif
 
 
+      if (debug_code) write(0,*) '9:'
 
 
 C
@@ -3135,6 +3182,9 @@ c
          call prc('  coordinates prior to the grid being reflected')
          call prc('  in the R-axis.')
       endif
+
+      if (debug_code) write(0,*) '10:'
+
 c
 C-----------------------------------------------------------------------
 c
@@ -3215,7 +3265,13 @@ c     The rings affected are IR=1, IR=IRWALL and IR=IRTRAP
 c     for grid types 0 and 3 - JET and SONNET
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod begin - ribbon grid
+     >    cgridopt.eq.4.or.cgridopt.eq.5.or.
+     >    cgridopt.eq.LINEAR_GRID.or.
+     >    cgridopt.eq.RIBBON_GRID) then
+c
+c     >    cgridopt.eq.4.or.cgridopt.eq.5) then
+c slmod end
 c
          ir =1
          do ik = 1,nks(ir)
@@ -3445,11 +3501,12 @@ c       End of debugv
 c
       endif
 
- 9031 FORMAT(/1X,' IK IR    R      Z  ',12(2X,A7))
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',12(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,1P,12E9.2)
+ 9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
+      if (debug_code) write(0,*) '11:'
 
 
 C
@@ -3657,6 +3714,9 @@ c
          CALL RZERO (e2dPOWLS, MAXNKS*MAXNRS*MAXe2dizs)
          CALL RZERO (e2dLINES, MAXNKS*MAXNRS*maxe2dizs)
       endif
+
+      if (debug_code) write(0,*) '12:'
+
 c
 c     Choose Nocorona or ADAS
 c
@@ -3951,6 +4011,9 @@ c     End of selection for nocorona/ADAS
 c
       endif
 c
+
+      if (debug_code) write(0,*) '13:'
+
 C
 C================ GLOBAL TOTALS OVER ENTIRE PLASMA =====================
 C
@@ -4293,6 +4356,9 @@ c
         dtots(29) = dtots(7) + dtots(38)
         dtots(30) = dtots(8) + dtots(39)
       endif
+
+
+      if (debug_code) write(0,*) '14:'
 
 c
 C
@@ -4699,6 +4765,9 @@ c
       end do
 c
 c
+      if (debug_code) write(0,*) '16:'
+
+
 c
       IF (DTOTS(9).NE.0.0D0) THEN
         DTOTS(10) = DTOTS(10) / DTOTS(9)
@@ -4725,10 +4794,15 @@ c
 c
       do in = 1,2
         do 4096 iz = 1,nizs
-            sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           if (ditots(maxizs+2,in).ne.0.0) then 
+              sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           endif  
+
 4096    continue
 c
-        sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        if (ditots(maxizs+2,in).ne.0.0) then 
+          sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        endif
 c
       end do
 c
@@ -4768,20 +4842,29 @@ c
 c
          call prr('NEUTRAL DEPOSITION ON '//inner//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+            call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
          tmpdep = wallsn(wallindex(nds-1)) + wallsn(wallindex(nds-2))
 c
          call prr('NEUTRAL DEPOSITION ON '//outer//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+           call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
       endif
 c
       call prb
 c
+      if (debug_code) write(0,*) '17:'
+
+
 c     Calculate and summarize region deposition probabilities.
 c
 c     Based on contents of wallse wallse_i and wtdep array.
@@ -4826,7 +4909,7 @@ c
 c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cprint.eq.8.or.cprint.eq.9) then
+      if (cioptr.gt.0.and.(cprint.eq.8.or.cprint.eq.9)) then
          WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
@@ -4843,6 +4926,9 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '18:'
+
+
       IF (NIZS.GT.0)
      >     CALL MONPRI (FACTA(1),VFLUID,NIZS,SDTZS ,sdtzs2,
      >           STOTS,DOUTS,RIONS,TDEP,TWALL,DPARAS,DCROSS,
@@ -4892,6 +4978,10 @@ c slmod begin
 
       CALL OutputData(87,'END OF DIV')
 c slmod end
+
+      if (debug_code) write(0,*) '19:'
+
+
 c
 c      if (cisterrcnt.ne.0) then
 c         call prb
@@ -4910,8 +5000,10 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,2F6.2,F8.3,1P,E15.8,
-     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
+ 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+     >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
+     >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
+     >       1xI3,:,1X,A,:,1x,F8.5)
 c nonorth
 c 9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,F6.2,F8.3,1P,E15.8,
 c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
@@ -5321,7 +5413,7 @@ c
       real te,ti,ne
       real fact, factc
       integer ir,ik,isection,sectcnt
-      character*80 comment
+      character*256 comment
       logical first,found
 c
 c
@@ -5517,7 +5609,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5533,7 +5625,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                             psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5725,7 +5818,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5741,7 +5834,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5830,7 +5924,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,z
+                  write(6,300) ik,ir,te,ti,ne,isat,s,z,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5846,7 +5940,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,z
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,z,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5933,7 +6028,7 @@ c
 c
                   endif
 c
-                  write(6,300) ik,ir,te,ti,ne,isat,s,r
+                  write(6,300) ik,ir,te,ti,ne,isat,s,r,psitarg(ir,1)
 c
                   if (cprint.eq.1.or.cprint.eq.9) then
                      if (first) then
@@ -5949,7 +6044,8 @@ c
 c
                      endif
 c
-                     write(comment,300) ik,ir,te,ti,ne,isat,s,r
+                     write(comment,300) ik,ir,te,ti,ne,isat,s,r,
+     >                                  psitarg(ir,1)
                      call prc(comment)
 c
                   endif
@@ -5970,11 +6066,11 @@ c     Format statements
 c
 
 200   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'Z')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'Z',9x,'PSIn')
 201   format(3x,'IK',3x,'IR',7X,'Te',8X,'Ti',10x,
-     >       'Ne',4x,'Probe Isat',9x,'s',9x,'R')
+     >       'Ne',4x,'Probe_Isat',9x,'s',9x,'R',9x,'PSIn')
 300   format(2x,i3,2x,i3,3x,f9.3,x,f9.3,x,e13.5,x,e13.5,
-     >       x,f8.3,x,f9.5)
+     >       x,f8.3,x,f9.5,1x,f9.5)
 c
       return
       end
@@ -7231,12 +7327,13 @@ c
 c
 c
 c
-      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy)
+      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
+     >                          eimp)
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
       integer,intent(in) ::  idt,idw
-      real sputy
+      real sputy,eimp
 c
       include 'params'
       include 'cgeom'
@@ -7266,8 +7363,15 @@ c
 c     If neither a target nor wall segment has been specified find the wall segment centre
 c     closest to the cell centre of the particle exit.
 c
-      write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
-     >         iwstart,idtype,sputy
+      if (cprint.eq.9) then 
+
+         write(6,'(a,7i6,5(1x,g12.5))') 'Update_walldep:',ik,ir,iz,
+     >         idt,idw,
+     >         iwstart,idtype,sputy,eimp
+
+      endif
+c
+c     Left grid through periphery ... add Teb factor to energy when element is known
 c
       if (idt.eq.0.and.idw.eq.0) then
 c
@@ -7290,10 +7394,16 @@ c     >              'DSQ:',ind,WALLPTS,DSQ,R,Z,ROLD,ZOLD
 C
 
           if (ind.lt.1.or.ind.gt.wallpts) then
-
-             write(6,*) 'Wallsi: No wall found:',idt,ind,ik,ir
+c
+             if (cprint.eq.9) then 
+                write(6,'(a,4i10)') 'Wallsi: No wall found:',
+     >                             idt,ind,ik,ir
+             endif
+c
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c
+             wallsiz(maxpts+1,iz) = wallsiz(maxpts+1,iz) + sputy
+             wallseiz(maxpts+1,iz)= wallseiz(maxpts+1,iz) + eimp * sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7304,9 +7414,18 @@ c
           else
 
              wallsi(ind) = wallsi(ind) + sputy
-             wallsiz(ind, iz) = wallsiz(ind, iz) + sputy
+             wallsiz(ind,iz)  = wallsiz(ind,iz) + sputy
 
-             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
+c            Add plasma temperature at deposition element to impact energy
+c
+             eimp = eimp + 3.0 * iz * wallpt(ind,29) 
+
+             wallseiz(ind,iz) = wallseiz(ind,iz) + eimp * sputy
+
+c
+c             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7326,9 +7445,13 @@ c
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
              wallsiz(wallindex(idt), iz) =
      >            wallsiz(wallindex(idt), iz) + sputy
-             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
-     >          ' sputy: ', sputy,
-     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
+             wallseiz(wallindex(idt), iz) =
+     >            wallseiz(wallindex(idt), iz) + eimp * sputy
+
+
+c             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
+c     >          ' sputy: ', sputy,
+c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7338,9 +7461,9 @@ c
 
           else
 
-             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
-             wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
+c                   wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+c                   wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7356,7 +7479,11 @@ c
 c
              wallsi(idw) = wallsi(idw)+ sputy
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
-         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+             wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
+
+c
+c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7366,9 +7493,11 @@ c
 
        else
 
-          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
           wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+          wallseiz(maxpts+1, iz) = wallseiz(maxpts+1, iz) + eimp * sputy
 c
           if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -8168,6 +8297,9 @@ c
 c     NOTE!: fp_flow_velocity is an array with an element
 c     for each peripheral region
 c
+c
+c        Set up flow velocity in each peripheral region
+c
          if (fp_flow_opt.eq.0) then
             fp_flow_velocity = 0.0
          elseif (fp_flow_opt.eq.1) then
@@ -8176,7 +8308,12 @@ c
             end do
          elseif (fp_flow_opt.eq.2) then
             fp_flow_velocity = fp_flow_velocity_input * qtim
+         elseif (fp_flow_opt.eq.3) then
+            do in = 1,num_fp_regions
+               fp_flow_velocity(in) = pol_drftv(fp_virt_rings(in))
+            end do
          endif
+
 
       endif
 

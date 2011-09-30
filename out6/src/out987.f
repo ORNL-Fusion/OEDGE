@@ -1296,7 +1296,6 @@ c          map2y = map1y + 0.40
         ELSE
           STOP 'BAD POISTION OPTION'
         ENDIF
-
       ELSE
         BACKSPACE 5
         dist = 0.70 ! 0.80
@@ -1809,7 +1808,7 @@ c...    Magnetic grid:
         ALLOCATE(lcolour(4*MAXNKS*MAXNRS))
 
         nver = 0
-        CALL ALLOC_VERTEX(10*MAXNKS) ! Borrowed from mod_triangle
+        CALL ALLOC_VERTEX(20*MAXNKS) ! Borrowed from mod_triangle
 
         DO ir = 1, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE

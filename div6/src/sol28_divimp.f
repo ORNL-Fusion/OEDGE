@@ -527,7 +527,6 @@ c...  Count number of cells:
         IF (ir.LT.irsep) ike = ike - 1
         ncell = ncell + ike 
       ENDDO
-
 c...  Declare global arrays:
       nfield    = ncell
       npin      = ncell
@@ -536,7 +535,9 @@ c...  Declare global arrays:
       nkinetic  = 1     
       nfluid    = ncell
       nimpurity = 1
-      ALLOCATE(tube    (ntube ))
+      ALLOCATE(tube      (ntube))
+      ALLOCATE(tube_state(ntube))
+      tube_state = 0
       ALLOCATE(tube_state(ntube))
       tube_state = 0
       ALLOCATE(cell    (ncell ))
@@ -559,6 +560,7 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
+      ! jdemod - note - dangle set to 0.0 and is used in division later but not assigned a real value
       dangle = 0.0
 c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
@@ -661,6 +663,7 @@ c
 c         end jdemod
 c
         ENDDO
+
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN

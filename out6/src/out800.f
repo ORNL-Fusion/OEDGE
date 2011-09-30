@@ -420,74 +420,10 @@ c
             end do
             ymax = max(ymax,tmpsum)
          end do
+
 c
-c        Set up Pnames and cnames labels
-c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
-c
-         pnames1(int((wltrap1+wltrap2)/2.0)) = 'PP'
-         pnames2(int((wltrap1+wltrap2)/2.0)) = 'Wall'
-c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
-c         pnames1((wlwall1+wlwall2)/2) = 'Top'
-c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
-c
-c        Mark Z-distances for some wall sections
-c
-c        Max of wall
-c
-         pnames1(wlmax) = 'Top'
-c
-c         pnames2(wlmax) = 'Main Wall'
-c
-c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
-c
-c        0.02 - Outside
-c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
-c
-c        0.2
-c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
-c
-c        0.4
-c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
-c
-c        0.6
-c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
-c
-c        0.8
-c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
-c
-c        0.98 - Inside
-c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
-c
-c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
-c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
 c
          cnames(1)  = 'Physical'
          cnames(2)  = 'Chemical'
@@ -679,21 +615,27 @@ c
                end do
             end do
          endif
+
+
 c
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+
+c-------------- jdemod - remove later
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+c         pnames1(wltrap1) = '|'
+c         pnames1(wltrap2) = '|'
+c         pnames1(wlwall1) = '|'
+c         pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         pnames1((wltrap1+wltrap2)/2) = 'PP'
+c         pnames2((wltrap1+wltrap2)/2) = 'Wall'
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
@@ -702,7 +644,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -710,47 +652,50 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c----------------
+
+
          cnames(1)  = 'Physical'
          cnames(2)  = 'Chemical'
          cnames(3)  = 'Self'
@@ -927,20 +872,25 @@ c
             end do
             ymax = max(ymax,tmpsum)
          end do
+
+c
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c--------- jdemod - remove later
 c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+c         pnames1(wltrap1) = '|'
+c         pnames1(wltrap2) = '|'
+c         pnames1(wlwall1) = '|'
+c         pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         pnames1((wltrap1+wltrap2)/2) = 'PP'
+c         pnames2((wltrap1+wltrap2)/2) = 'Wall'
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
@@ -950,7 +900,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -958,47 +908,49 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c-------------------
+
          cnames(1)  = 'Physical'
          cnames(2)  = 'Chemical'
          cnames(3)  = 'Self'
@@ -1244,30 +1196,37 @@ c
             ymax = max(ymax,tmpsum)
          end do
 c
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c--------- jdemod - remove later
+c
 c        Set up Pnames and cnames labels
 c
-         pnames1(wltrap1) = '|'
-         pnames1(wltrap2) = '|'
-         pnames1(wlwall1) = '|'
-         pnames1(wlwall2) = '|'
+c         pnames1(wltrap1) = '|'
+c         pnames1(wltrap2) = '|'
+c         pnames1(wlwall1) = '|'
+c         pnames1(wlwall2) = '|'
 c
-         pnames1((wltrap1+wltrap2)/2) = 'PP'
-         pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         pnames1((wltrap1+wltrap2)/2) = 'PP'
+c         pnames2((wltrap1+wltrap2)/2) = 'Wall'
 c
 c
-         pnames2(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames2(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames2(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames2(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c
 c        Max of wall
 c
-         pnames2(wlmax) = 'Top'
+c         pnames2(wlmax) = 'Top'
 c
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c
+c---------------
+
          cnames(1)  = 'Physical'
          cnames(2)  = 'Chemical'
          cnames(3)  = 'Self'
@@ -1550,19 +1509,24 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         if (cgridopt.ne.RIBBON_GRID) then 
-            pnames1(wltrap1) = '|'
-            pnames1(wltrap2) = '|'
-            pnames1(wlwall1) = '|'
-            pnames1(wlwall2) = '|'
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c-----  jdemod - remove later
+c     
 c
-            pnames1((wltrap1+wltrap2)/2) = 'PP'
-            pnames2((wltrap1+wltrap2)/2) = 'Wall'
-         endif
+c         if (cgridopt.ne.RIBBON_GRID) then 
+c            pnames1(wltrap1) = '|'
+c            pnames1(wltrap2) = '|'
+c            pnames1(wlwall1) = '|'
+c            pnames1(wlwall2) = '|'
+c
+c            pnames1((wltrap1+wltrap2)/2) = 'PP'
+c            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         endif
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
@@ -1571,7 +1535,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -1579,47 +1543,49 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c-------------------------
+
          if (iopt.eq.1) then 
             cnames(1)  = 'Ion  Dep'
             cnames(2)  = 'Neut Dep'
@@ -1725,20 +1691,25 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         if (cgridopt.ne.RIBBON_GRID) then 
-            pnames1(wltrap1) = '|'
-            pnames1(wltrap2) = '|'
-            pnames1(wlwall1) = '|'
-            pnames1(wlwall2) = '|'
+
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c------  jdemod - remove later
 c
-            pnames1((wltrap1+wltrap2)/2) = 'PP'
-            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         if (cgridopt.ne.RIBBON_GRID) then 
+c            pnames1(wltrap1) = '|'
+c            pnames1(wltrap2) = '|'
+c            pnames1(wlwall1) = '|'
+c            pnames1(wlwall2) = '|'
 c
-         endif
+c            pnames1((wltrap1+wltrap2)/2) = 'PP'
+c            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c
+c         endif
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
@@ -1747,7 +1718,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -1755,47 +1726,50 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c------------
+c
+
          cnames(1)  = 'Erosion'
 c
          ylab = 'Fraction of Total'
@@ -1879,20 +1853,25 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         if (cgridopt.ne.RIBBON_GRID) then 
-            pnames1(wltrap1) = '|'
-            pnames1(wltrap2) = '|'
-            pnames1(wlwall1) = '|'
-            pnames1(wlwall2) = '|'
-c
-            pnames1((wltrap1+wltrap2)/2) = 'PP'
-            pnames2((wltrap1+wltrap2)/2) = 'Wall'
-         endif
 
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c------------- jdemod - remove later
+c
+c         if (cgridopt.ne.RIBBON_GRID) then 
+c            pnames1(wltrap1) = '|'
+c            pnames1(wltrap2) = '|'
+c            pnames1(wlwall1) = '|'
+c            pnames1(wlwall2) = '|'
+c
+c            pnames1((wltrap1+wltrap2)/2) = 'PP'
+c            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         endif
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
@@ -1901,7 +1880,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -1909,47 +1888,49 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c--------------
+
          cnames(1)  = 'Net Deposition'
 c
          ylab = 'Net Number Deposited'
@@ -2138,26 +2119,30 @@ c
 c
 c        Set up Pnames and cnames labels
 c
-         if (cgridopt.ne.RIBBON_GRID) then 
-            pnames1(wltrap1) = '|'
-            pnames1(wltrap2) = '|'
-            pnames1(wlwall1) = '|'
-            pnames1(wlwall2) = '|'
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c--------- jdemod - remove later
 c
-            pnames1((wltrap1+wltrap2)/2) = 'PP'
-            pnames2((wltrap1+wltrap2)/2) = 'Wall'
-         endif
+c         if (cgridopt.ne.RIBBON_GRID) then 
+c            pnames1(wltrap1) = '|'
+c            pnames1(wltrap2) = '|'
+c            pnames1(wlwall1) = '|'
+c            pnames1(wlwall2) = '|'
+c
+c            pnames1((wltrap1+wltrap2)/2) = 'PP'
+c            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         endif
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c
 c        Mark Z-distances for some wall sections
 c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -2165,47 +2150,49 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
-         pnames1((wlwall2+wltrap1)/2) = INNER
-         pnames2((wlwall2+wltrap1)/2) = 'Target'
-         pnames1((wltrap2+wallpts)/2) = OUTER
-         pnames2((wltrap2+wallpts)/2) = 'Target'
+c         pnames1((wlwall2+wltrap1)/2) = INNER
+c         pnames2((wlwall2+wltrap1)/2) = 'Target'
+c         pnames1((wltrap2+wallpts)/2) = OUTER
+c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
+c---------------
+
          cnames(1)  = 'Probablity'
 c
          if (iopt.ge.1.and.iopt.le.4) then
@@ -2762,19 +2749,23 @@ c
 c
 c        Set up Pnames labels
 c
-         if (cgridopt.ne.RIBBON_GRID) then 
-            pnames1(wltrap1) = '|'
-            pnames1(wltrap2) = '|'
-            pnames1(wlwall1) = '|'
-            pnames1(wlwall2) = '|'
+         call setup_pnames(pnames1,pnames2,wlmax,0)
+
+c----- jdemod - remove later
 c
-            pnames1((wltrap1+wltrap2)/2) = 'PP'
-            pnames2((wltrap1+wltrap2)/2) = 'Wall'
-         endif
+c         if (cgridopt.ne.RIBBON_GRID) then 
+c            pnames1(wltrap1) = '|'
+c            pnames1(wltrap2) = '|'
+c            pnames1(wlwall1) = '|'
+c            pnames1(wlwall2) = '|'
+c
+c            pnames1((wltrap1+wltrap2)/2) = 'PP'
+c            pnames2((wltrap1+wltrap2)/2) = 'Wall'
+c         endif
 c
 c
-         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
-         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c         pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+c         pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
 c         pnames1((wlwall1+wlwall2)/2) = 'Top'
 c         pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
 c
@@ -2783,7 +2774,7 @@ c
 c
 c        Max of wall
 c
-         pnames1(wlmax) = 'Top'
+c         pnames1(wlmax) = 'Top'
 c
 c         pnames2(wlmax) = 'Main Wall'
 c
@@ -2791,39 +2782,39 @@ c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
 c
 c        0.02 - Outside
 c
-         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
-     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c         pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+c     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
 c
 c        0.2
 c
-         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
 c
 c        0.4
 c
-         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
 c
 c        0.6
 c
-         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
 c
 c        0.8
 c
-         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
 c
 c        0.98 - Inside
 c
-         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
-         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
-     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c         pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+c         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+c     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
 c
 c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
 c
@@ -2835,11 +2826,14 @@ c         pnames2((wlwall2+wltrap1)/2) = 'Target'
 c         pnames1((wltrap2+wallpts)/2) = OUTER
 c         pnames2((wltrap2+wallpts)/2) = 'Target'
 c
-         pnames1(wallindex(idds(irsep,1))) = '^'
-         pnames2((wlwall2+wltrap1)/2) = INNER//' Target'
-         pnames1(wallindex(idds(irsep,2))) = '^'
-         pnames2((wltrap2+wallpts)/2) = OUTER//' Target'
+c         pnames1(wallindex(idds(irsep,1))) = '^'
+c         pnames2((wlwall2+wltrap1)/2) = INNER//' Target'
+c         pnames1(wallindex(idds(irsep,2))) = '^'
+c         pnames2((wltrap2+wallpts)/2) = OUTER//' Target'
 c
+c-----------
+
+
          if (ival.eq.1) then          
             ylab = 'Particles/m2/s'
          else   
@@ -3611,5 +3605,97 @@ c
       end
 
 
+
+      subroutine setup_pnames(pnames1,pnames2,wlmax,opt)
+      implicit none
+      include 'params'
+      include 'walls_com'
+      include 'printopt'
+      character*15 pnames1(maxpts),pnames2(maxpts)
+      integer wlmax
+      integer opt
+
+c
+c        Set up Pnames and cnames labels
+c
+         if ((wltrap1.gt.0.and.wltrap1.le.maxpts).and.
+     >      (wltrap2.gt.0.and.wltrap2.lt.maxpts)) then 
+
+           pnames1(wltrap1) = '|'
+           pnames1(wltrap2) = '|'
+           pnames1(int((wltrap1+wltrap2)/2.0)) = 'PP'
+           pnames2(int((wltrap1+wltrap2)/2.0)) = 'Wall'
+           pnames1((wltrap2+wallpts)/2) = OUTER
+           pnames2((wltrap2+wallpts)/2) = 'Target'
+
+         endif
+
+         if ((wlwall1.gt.0.and.wlwall1.lt.maxpts).and.
+     >       (wlwall2.gt.0.and.wlwall2.lt.maxpts)) then 
+
+            pnames1(wlwall1) = '|'
+            pnames1(wlwall2) = '|'
+            pnames1(wlwall1+ INT(0.1*(wlwall2-wlwall1))) = Outer
+            pnames1(wlwall1+ INT(0.9*(wlwall2-wlwall1))) = Inner
+c           pnames1((wlwall1+wlwall2)/2) = 'Top'
+c           pnames2((wlwall1+wlwall2)/2) = 'Z (m)'
+c
+c        0.02 - Outside
+c
+            pnames1(wlwall1+ INT(0.02*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.02*(wlwall2-wlwall1))),'(a,f4.1,
+     >     a)') 'Z=',wallpt(wlwall1+ INT(0.02*(wlwall2-wlwall1)),2),'m'
+c
+c        0.2
+c
+            pnames1(wlwall1+ INT(0.2*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.2*(wlwall2-wlwall1))),'(f4.1)')
+     >              wallpt(wlwall1+ INT(0.2*(wlwall2-wlwall1)),2)
+c
+c        0.4
+c
+            pnames1(wlwall1+ INT(0.4*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.4*(wlwall2-wlwall1))),'(f4.1)')
+     >              wallpt(wlwall1+ INT(0.4*(wlwall2-wlwall1)),2)
+c
+c        0.6
+c
+            pnames1(wlwall1+ INT(0.6*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.6*(wlwall2-wlwall1))),'(f4.1)')
+     >              wallpt(wlwall1+ INT(0.6*(wlwall2-wlwall1)),2)
+c
+c        0.8
+c
+            pnames1(wlwall1+ INT(0.8*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.8*(wlwall2-wlwall1))),'(f4.1)')
+     >              wallpt(wlwall1+ INT(0.8*(wlwall2-wlwall1)),2)
+c
+c        0.98 - Inside
+c
+            pnames1(wlwall1+ INT(0.98*(wlwall2-wlwall1))) = '^'
+         write(pnames2(wlwall1+ INT(0.98*(wlwall2-wlwall1))),'(f4.1)')
+     >              wallpt(wlwall1+ INT(0.98*(wlwall2-wlwall1)),2)
+c
+
+            pnames1((wlwall2+wltrap1)/2) = INNER
+            pnames2((wlwall2+wltrap1)/2) = 'Target'
+
+
+         endif
+
+c
+c        Mark Z-distances for some wall sections
+c
+c        Max of wall
+c
+         pnames1(wlmax) = 'Top'
+c
+c         pnames2(wlmax) = 'Main Wall'
+c
+c         write(pnames2(wlmax),'(f5.1)') wallpt(wlmax,2)
+c         pnames2((wlwall1+wlwall2)/2) = 'Main Wall'
+c
+       return
+       end
 
 

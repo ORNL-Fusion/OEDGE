@@ -1245,8 +1245,8 @@ c
       include    'fperiph_com'
 c
       include    'line_profile'
-c slmod begin - sltmp
-      include 'slcom'
+c slmod begin
+      include    'slcom'
 c slmod end
 c
       include    'hc_global_opts'
@@ -1490,6 +1490,18 @@ C
 C
       DO 900 IPROD = 1, NPROD-LPROD+1
 c
+c     jdemod - temp debug
+c     
+c         if (iprod.eq.62) then 
+c            cstepn = 1
+c            debugn = .true.
+c         else
+c            cstepn = 0
+c            debugn = .false.
+c         endif
+c
+c
+
         IF (sloutput.AND.grdnmod.NE.0.AND.
      .      MOD(iprod,MAX(1,(NPROD-LPROD+1)/10)).EQ.0)   ! sltmp
      .    WRITE(0,*) 'debug: iprod',iprod,NPROD-LPROD+1
@@ -1702,9 +1714,18 @@ C         IFXYS(IX,IY) = 1
 c        ENDIF
 C
 c
-c...SLTMP
-c   NEED TO IMPROVE M ASSIGNMENT FOR GENERALIZED GRIDS
-        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin
+        if (cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID.or.
+     >      nbr.gt.0) then
+          if (ikds(id).eq.1) then
+            M = 2                   ! I think this is right...
+          else
+            M = 1
+          endif
+        elseif (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c
+c        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
 c
           M = 2
 c
@@ -2057,7 +2078,14 @@ c       edge of the plasma cell associated with the wall segment is
 c       assigned and the code continues as if ionization had occured
 c       at this location. 
 c
-        if (fp_neut_opt.gt.0) then 
+c        if (fp_neut_opt.gt.0) then 
+c
+c        jdemod - added test for iwstart.ne.-1 since fp neutral ionization 
+c                 only makes sense at the moment for particles associated with
+c                 a wall element. The code would need to be modified to
+c                 accommodate free space launches.
+c
+        if (fp_neut_opt.gt.0.and.iwstart.ne.-1) then 
 c
 c          Split evaluation into 2 IF statements since iwstart is not 
 c          always properly defined.       
@@ -2421,8 +2449,14 @@ c
                  cieizs(0) = cieizs(0) + cist * sputy
                  citizs(0) = citizs(0) + sputy
 c	         
+c slmod begin - ribbon dev
                  if (cgridopt.eq.0.or.cgridopt.eq.1.or.
-     >               cgridopt.eq.3) then
+     >               cgridopt.eq.3.or.
+     >               cgridopt.eq.LINEAR_GRID.or.
+     >               cgridopt.eq.RIBBON_GRID) then
+c
+c     >               cgridopt.eq.3) then
+c slmod end
                    if (ik.gt.nks(ir)/2) then
                      xatiz2(1) = xatiz2(1) + R * sputy
                      yatiz2(1) = yatiz2(1) + Z * sputy
@@ -2579,10 +2613,17 @@ c slmod end
           GOTO 899
         ENDIF
 C
-        if (iprod.eq.(iprod/100)*100) then 
+        if (iprod.eq.(iprod/100)*100.or.debugn) then 
+
            write (6,'(a,i6,3i4,5(1x,g13.5))')
      >         'LAUNCH:',iprod,id,ik,ir,r,z,vin,angle,tangnt
+
         endif 
+
+c        write (0,'(a,i6,3i4,5(1x,g13.5))')
+c     >         'LAUNCH:',iprod,id,ik,ir,r,z,vin,angle,tangnt
+
+
 C
 C       SET UP THE WALL DEFINITION IN THE ROUTINE THAT
 C       DETERMINES WHETHER A POINT IS INSIDE OR OUTSIDE THE
@@ -2973,10 +3014,16 @@ C
 c                WRITE (6,9003) IPROD,CIST,IK,IR,IX,IY,R,Z,K,
                 WRITE (6,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
      >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
+c
+c               jdemod - tmp debug
+c
+                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
+     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
               ENDIF
             ENDIF
 C
             KK = KK + 1
+
             IF (RANV(KK).GE.KPCHS(IK,IR,0)) GOTO 200
 c
 c  State change event has occurred -
@@ -3008,7 +3055,6 @@ c     >               sputy,vin,temn,cneutvel,fsrate,kk,crmi,ik,ir)
      >               xvelf,yvelf,
      >               sputy,vin,temn,cneutvel,fsrate,nrand,crmi,
      >               ktibs(ik,ir))
-
 c
 c              Momentum Transfer Collision event
 c             
@@ -3269,7 +3315,12 @@ c
            cieizs(0) = cieizs(0) + cist * sputy
            citizs(0) = citizs(0) + sputy
 c
-           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin - ribbon grid
+           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
+     >         cgridopt.eq.LINEAR_GRID.or.cgridopt.EQ.RIBBON_GRID) then
+c
+c           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
              if (ik.gt.nks(ir)/2) then
                xatiz2(1) = xatiz2(1) + R * sputy
                yatiz2(1) = yatiz2(1) + Z * sputy
@@ -3308,9 +3359,9 @@ C
 C
         ELSEIF (RESULT.LE.0.0) THEN
 c
-c          if (debugn) write (6,'(a,7(1x,g13.5))') 
-c     >                       'DEBUG2:',cist,r,z,xvelf,
-c     >                        yvelf,vin,result
+          if (debugn) write (6,'(a,7(1x,g13.5))') 
+     >                       'DEBUG2:',cist,r,z,xvelf,
+     >                        yvelf,vin,result
 C
 C       PARTICLE IS FOUND TO BE OUTSIDE BOUNDARY. NEED TO FIND
 C       THE POSITION AND SEGMENT WHERE IT LEFT...
@@ -3389,12 +3440,10 @@ c         Find location of wall intersection - use of indi for intersection inde
 c         for compatibility with existing code 
 c
 
-
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
      >                                sect)
-
 
 c
 c         Verify RNEW,ZNEW 
@@ -3474,10 +3523,19 @@ c
 c           Target collision
 c
 c slmod begin
-            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
-     >          (GRDNMOD.EQ.0.AND.
-     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
+c
+c     jdemod - using wlwall1, wlwall2 ... for generalized grids (or ribbon grid)
+c              won't work ... so switch to using wallpt(indi,18) which is a pointer
+c              to the matching target element or 0.0 otherwise
+c
+c              Looks like Steve partially implemented this for some cases
+c
+            if (wallpt(indi,18).ne.0.0) then 
+c
+c            IF ((GRDNMOD.NE.0.AND.WALLPT(INDI,18).NE.0.0).OR.
+c     >          (GRDNMOD.EQ.0.AND.
+c     >           ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)))) THEN
 c
 c            IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
 c     >           (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
@@ -3546,7 +3604,19 @@ c              Assign a value to ir that corresponds to the
 c              index of the wall segment crossed.
 c
 c slmod begin
-               if (grdnmod.ne.0) then
+c
+c              jdemod - this is more difficult for generalized grids that
+c                       may have multiple nearest rings. 
+c                       walls(ik,ir,iz) is outmoded now and may need replacing
+c                       for more modern grids. 
+c
+c              This is known to be a wall collision so assign irwall unless 
+c              it is in a range for irtrap. Note that wltrap1, wltrap2 are NOT
+c              always well defined for all grids ... however, when they are the
+c              following code should suffice.  
+c
+c               if (grdnmod.ne.0) then
+c
                  if (indi.ge.wltrap1.and.indi.le.wltrap2) then 
 c...                WLTRAP1,2 are still well defined for the generalized geometry, 
 c                   and probably always will be (same login in NEUTONE.F):
@@ -3555,17 +3625,19 @@ c                   and probably always will be (same login in NEUTONE.F):
 c...                Everything else must be IRWALL (or not..?):
                     ir = irwall
                  endif
-               else
-                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
-                    ir = irwall
-                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
-                    ir = irtrap
-                 else
-                    write (6,*) 'Neutral not on wall segment'//
-     >                      ' at collision',
-     >                     indi,ir,ik,r,z
-                 endif
-               endif
+c
+c
+c               else
+c                 if (indi.ge.wlwall1.and.indi.le.wlwall2) then
+c                    ir = irwall
+c                 elseif (indi.ge.wltrap1.and.indi.le.wltrap2) then 
+c                    ir = irtrap
+c                 else
+c                    write (6,*) 'Neutral not on wall segment'//
+c     >                      ' at collision',
+c     >                     indi,ir,ik,r,z
+c                 endif
+c               endif
 c
 c               if (indi.ge.wlwall1.and.indi.le.wlwall2) then
 c                  ir = irwall
@@ -3625,8 +3697,12 @@ c
      >                              ' AT WALL BUT NO INTERSECTION'//
      >                              ' POINT FOUND',R,Z
 c
-              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c             jdemod - change code for target impact detection
+c
+              if (wallpt(indi,18).ne.0.0) then
+c
+c              IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.a
+c     >            (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
 c
                  RSTRUK(M) = RSTRUK(M) + SPUTY
 c
@@ -3672,6 +3748,9 @@ c
 
 
                  GOTO 899
+c
+c             Impact is on a wall element
+c
               ELSE
 c
                  RWALLN(M) = RWALLN(M) + SPUTY
@@ -3796,17 +3875,22 @@ c
      >                           wallpt(indi,8),wallpt(indi,9)
                     rtmp = rnew + xvelf
                     ztmp = znew + yvelf
+
                     call gridpos(ik,ir,rold,zold,.false.,griderr)
+
                     CALL GA15B(Rtmp,Ztmp,RESULT,PCNT,1,WORK,4*MAXPTS,
      >                  INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
-                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
-     >                           rtmp,ztmp,result,griderr
+
+c                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
+c     >                           rtmp,ztmp,result,griderr
+
                     call gridpos(ik,ir,r,z,.false.,griderr)
+
                     CALL GA15B(R,Z,RESULT,PCNT,1,WORK,4*MAXPTS,
      >                  INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
-                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
-     >                           r,z,result,griderr
-               
+
+c                    write (6,'(a,2i5,8(1x,g13.6),l4)') 'MORE3:',ik,ir,
+c     >                           r,z,result,griderr
 c
                     RWALLN(M) = RWALLN(M) + SPUTY
 C
@@ -3898,8 +3982,12 @@ c
 c
 c               Neutral at target segment
 c
-                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
-     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
+c               jdemod - change target detection
+c
+                if (wallpt(indi,18).ne.0.0) then 
+c
+c                IF ((INDI.GT.WLWALL2.AND.INDI.LT.WLTRAP1).OR.
+c     >              (INDI.GT.WLTRAP2.AND.INDI.LE.WALLPTS)) THEN
 
                    write(0,'(a)') 'NEUT: ERROR: NEUTRAL AT WALL'//
      >                        ' REMOVED DUE TO TOO MANY REFLECTIONS'//
@@ -4032,7 +4120,9 @@ c slmod end
 C
   899  CONTINUE
 
-
+c
+c     jdemod - temp debug
+c
 c       WRITE(0 ,*) 'IFATE:',ifate   ! sltmp
 c       WRITE(0 ,*) '     :',r,z,ik,ir
        IF (ifate.EQ.8) target_loss = target_loss + 1
@@ -4653,7 +4743,8 @@ c
         fydata(id,5)  = fydata(id,1) * fydata(id,4)
 c     
         if (cprint.eq.5.or.cprint.eq.9) then 
-           write(6,*) 'id:',id,ik,ir,kteds(id),ktids(id),knds(id),
+           write(6,'(a,3i8,10(1x,g18.8))') 'id:',id,ik,ir,
+     >              kteds(id),ktids(id),knds(id),
      >              kbfs(ik,ir),kmfps(id),sheath_te,sheath_ti
         endif 
 c
@@ -5421,7 +5512,7 @@ c                     endif
 c                  endif
 c               endif
 c slmod end
-c 
+
                IF (EMAX.GT.0.0) THEN
                   KRMAXW(ID) = 1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))
                ELSEif (cebd.eq.0.0) then 
@@ -5478,18 +5569,38 @@ c     Calculate launch positions of particles.
 c     
       CALL SURAND (SEED, Nneut2, RANVA)
       NRAND = NRAND + Nneut2
+
       CALL SURAND (SEED, Nneut2, RANVB)
       NRAND = NRAND + Nneut2
+
+c      DO IPROd = 1,nneut2
+c         write(6,'(a,i8,10(1x,g18.8))')
+c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
+c         write(0,'(a,i8,10(1x,g18.8))')
+c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
+c      end do
+
+
 C     
       DO IPROD = 1,nneut2
          RAN    = RANVA (IPROD)
 C
 C------ DEPENDING ON OPTION CHOSEN,  SELECT LAUNCH POSITIONS
 C
+c         WRITE(0,*) 'ran:',iprod,ran
+
          IF (CNEUTB.EQ.0.or.cneutb.eq.3) THEN
 c
   485       ID = IPOS (RAN, fyprob, nfymap)
             ID = fyMAP(ID)
+
+
+c            WRITE(0,'(a,5i8,10(1x,g18.8))') 
+c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
+c     >                    ran,rp(id),zp(id)
+c            WRITE(6,'(a,5i8,10(1x,g18.8))') 
+c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
+c     >                    ran,rp(id),zp(id)
 c
             IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0) THEN
               CALL SURAND2 (SEED, 1, RAN)
@@ -5509,8 +5620,8 @@ c              Find launch position along target element.
 c               
                itmp = wallindex(id)
 c
-               write(6,'(a,2i6,5(1x,g12.5))') 'TL1:',id,itmp,rp(id),
-     >                    wallpt(itmp,1),zp(id),wallpt(itmp,2)
+c               write(6,'(a,2i6,5(1x,g12.5))') 'TL1:',id,itmp,rp(id),
+c     >                    wallpt(itmp,1),zp(id),wallpt(itmp,2)
 c
                CALL SURAND2 (SEED, 1, RAN)
                NRAND = NRAND + 1
@@ -5535,9 +5646,9 @@ c
                   ISPRODS(IPROD+Nneut1) = 1
                ENDIF
 
-              write(6,'(a,2i6,8(1x,g12.5))') 'TL2:',id,itmp,x0,y0,
-     >           wallpt(itmp,20),wallpt(itmp,21),wallpt(itmp,22),
-     >           wallpt(itmp,23)
+c              write(6,'(a,2i6,8(1x,g12.5))') 'TL2:',id,itmp,x0,y0,
+c     >           wallpt(itmp,20),wallpt(itmp,21),wallpt(itmp,22),
+c     >           wallpt(itmp,23)
 
            endif
 
@@ -5650,6 +5761,13 @@ C
          eprods(iprod+nneut1) = 0.0 
          SPUTYS(IPROD+Nneut1) = 1.0
          IDPRODS(IPROD+Nneut1) = ID
+
+
+c         write(6,'(a,2i8,10(1x,g18.8))') 'Launch data:',iprod,nneut1,
+c     >         iprod+nneut1,xprods(IPROD+Nneut1),yprods(IPROD+Nneut1),
+c     >         eprods(iprod+nneut1),idprods(iprod+nneut1)
+
+
       end do
 C
 C-----------------------------------------------------------------------

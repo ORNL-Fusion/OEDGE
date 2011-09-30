@@ -656,6 +656,7 @@ C------ FOR LARMOR RADIUS EFFECT, IQX=1 BECOMES A VALUE WITHIN {KQX,0}.
 C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"           
 C------ WILL BE ALTERNATELY 1 AND 2 IN LAUNCH.                                  
 C                                                                               
+c
         IF (CNEUTB.EQ.0.OR.CNEUTB.EQ.5) THEN                                 
 c          write(6,*) 'before fycum ipos' 
   285     IQX = IPOS (RAN, FYCUM(ICUT(J),J), 1-ICUT(J)) + ICUT(J) - 1           
@@ -864,11 +865,19 @@ c
           THETA = 0.0
         ENDIF                                                                   
 C                                                                               
+c       Set the value of P0 for the various options - the default is the 
+c       value set for P0 in the input file. 
+c
         IF (CNEUTC.EQ.11.OR.CNEUTB.EQ.5) THEN                             
           NRAND = NRAND + 1                                                     
           CALL SURAND (SEED, 1, RAN)                                            
           P0 = CPSC * (2.0 * RAN - 1.0)                                         
 c slmod
+c
+c       jdemod - for cneutb=9 and cneutb=10 P0 is assigned in the relevant
+c                preceding code sections ... so really this part of the if 
+c                statement is really to avoid doing anything else.                 
+c
         ELSEIF (CNEUTB.EQ.9.OR.CNEUTB.EQ.10) THEN
           P0 = P0
           WRITE(78,*) Y0,P0,X0,PHI*180.0/PI

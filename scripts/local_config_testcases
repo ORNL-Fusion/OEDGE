@@ -2,6 +2,6 @@
 #
 # Set local configuration
 #
-set localdir = merge/divimp-merge
+set localdir = divimp
 
 
