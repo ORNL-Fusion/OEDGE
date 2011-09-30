@@ -1,6 +1,442 @@
 c     -*-Fortran-*-
 c
 c
+c
+c ======================================================================
+c
+c subroutine: ExtractQuantity
+c
+      SUBROUTINE ExtractQuantity(ngauge,gauge,gauge_tag,tdata,iopt)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: ngauge,iopt
+      REAL   , INTENT(IN) :: gauge(5,ngauge),tdata(*)
+      CHARACTER*256, INTENT(IN) :: gauge_tag(ngauge)
+
+      INTEGER iobj,igauge,count,iside,isrf,ivtx
+      REAL    obj_centroid(3,nobj),p(3),val,dist
+
+      WRITE(0,*) 'nobj=',nobj
+c...  Calculate the centres of each tetrahedron:
+      DO iobj = 1, nobj
+        IF (obj(iobj)%nside.NE.4) CYCLE
+        p = 0.0
+        count = 0
+        DO iside = 1, obj(iobj)%nside
+          isrf = ABS(obj(iobj)%iside(iside,1))
+          DO ivtx = 1, srf(isrf)%nvtx
+            count = count + 1
+            p(1:3) = p(1:3) + SNGL(vtx(1:3,srf(isrf)%ivtx(ivtx)))
+          ENDDO
+        ENDDO
+        p(1:3) = p(1:3) / REAL(count)
+        obj_centroid(1:3,iobj) = p(1:3)
+      ENDDO
+
+c...  Loop over gauges:
+      DO igauge = 1, ngauge
+
+c...    Convert gauge r,z,phi position to x,y,z:
+        IF (ABS(gauge(4,igauge)+90.0).LT.1.0E-6.OR.
+     .      ABS(gauge(4,igauge)-90.0).LT.1.0E-6) THEN
+          p(1) = 0.0
+          p(3) = gauge(2,igauge) * SIGN(1.0,gauge(4,igauge))
+        ELSE
+          p(1) = gauge(2,igauge) * COS(gauge(4,igauge)* 3.14159 / 180.0)
+          p(3) = gauge(2,igauge) * SIN(gauge(4,igauge)* 3.14159 / 180.0)
+        ENDIF
+        p(2) = gauge(3,igauge)
+
+        WRITE(0,*) 'iguage=',gauge(5,igauge),igauge
+        WRITE(0,*) '       ',p(1:3)
+
+c...    Check which tetrahedrons are within the gauge volume:
+        count = 0
+        val   = 0.0
+        DO iobj = 1, nobj
+          IF (obj(iobj)%nside.NE.4) CYCLE
+          dist = SQRT((p(1)-SNGL(obj_centroid(1,iobj)))**2 + 
+     .                (p(2)-SNGL(obj_centroid(2,iobj)))**2 + 
+     .                (p(3)-SNGL(obj_centroid(3,iobj)))**2)
+          IF (dist.LT.gauge(5,igauge)) THEN
+            count = count + 1
+            WRITE(0,*) '    ---> go!',count,iobj,nobj
+            val  = val + tdata(iobj)
+          ENDIF   
+        ENDDO
+        IF (count.GT.0) val = val / REAL(count)
+
+        WRITE(0,10)
+     .    'GAUGE:',iopt,gauge(2:4,igauge),p(1:3),
+     .             gauge(5,igauge),count,val,TRIM(gauge_tag(igauge))
+        WRITE(6,10)
+     .    'GAUGE:',iopt,gauge(2:4,igauge),p(1:3),
+     .             gauge(5,igauge),count,val,TRIM(gauge_tag(igauge))
+10      FORMAT(A,I4,2(3F8.2),2X,F8.2,I6,1P,E10.2,0P,2X,A)
+
+      ENDDO
+
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: SortPolygonPoints
+c
+      SUBROUTINE SortPolygonPoints(nv,rv,zv,problem_detected)
+      IMPLICIT none
+
+      INTEGER, INTENT(INOUT) :: nv
+      LOGICAL, INTENT(INOUT) :: problem_detected
+      REAL   , INTENT(INOUT) :: rv(nv),zv(nv)
+
+      REAL*8, PARAMETER :: DTOL = 0.00001D0
+
+      INTEGER i1,i2,i3,i4
+      REAL*8  drv(nv),dzv(nv),t12,t34
+
+      drv = DBLE(rv)
+      dzv = DBLE(zv)
+
+      i4 = -1
+
+      DO i1 = 1, 3              
+
+        i2 = i1 + 1
+        IF (i2.EQ.nv) i2 = 1
+        i3 = i2 + 1
+        IF (i3.EQ.nv) i3 = 1
+
+        CALL CalcInter(drv(i1),dzv(i1),drv(i2),dzv(i2),
+     .                 drv(i3),dzv(i3),drv(nv),dzv(nv),t12,t34)
+
+c        WRITE(0,*) 'og->',i1,i2,i3,nv,i4
+c        WRITE(0,*) 'og->',drv(i1),dzv(i1)
+c        WRITE(0,*) 'og->',drv(i2),dzv(i2)
+c        WRITE(0,*) 'og->',drv(i3),dzv(i3)
+c        WRITE(0,*) 'og->',drv(nv),dzv(nv)
+c        WRITE(0,*) 'og->',t12,t34
+
+        IF (t12.GE.0.0D0-DTOL.AND.t12.LE.1.0D0+DTOL.AND.
+     .      t34.GE.0.0D0-DTOL.AND.t34.LE.1.0D0+DTOL) THEN
+          IF (i4.EQ.-1) THEN
+            i4 = i1
+          ELSE
+            i4 = -1
+            EXIT
+c            CALL ER('SortPolygonPoints','Something wrong',*99)
+          ENDIF
+        ENDIF 
+
+      ENDDO
+      IF (i4.EQ.-1) THEN
+c...    No intersection found, which is strange, so reduce the 
+c.      polygon to a triangle:
+        nv = 3
+        problem_detected = .TRUE.
+      ELSE
+c     .   CALL ER('SortPolygonPoints','Intersection not found',*99)
+
+c      WRITE(0,*) 'i4=',i4
+
+        DO i1 = i4+2, nv
+          rv(i1) = SNGL(drv(i1-1))
+          zv(i1) = SNGL(dzv(i1-1))
+        ENDDO
+        rv(i4+1) = SNGL(drv(nv))
+        zv(i4+1) = SNGL(dzv(nv))      
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: SpliceTetrahedrons
+c
+      SUBROUTINE SpliceTetrahedrons(ntet,tet_axis,tet_value,
+     .                              itet,nv,rv,zv)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+      INTEGER, INTENT(INOUT) :: ntet
+      INTEGER, INTENT(IN   ) :: tet_axis
+      REAL   , INTENT(IN   ) :: tet_value
+      INTEGER, INTENT(OUT  ) :: itet(*),nv(ntet)
+      REAL   , INTENT(OUT  ) :: rv(4,ntet),zv(4,ntet)
+
+      INTEGER AddVertex,AddSurface
+      REAL    ATAN2C
+
+      INTEGER iobj,iside,isrf,ivtx,ivtx2,i1,i2
+      LOGICAL check_lt,check_gt,debug,status
+      REAL    p1(3),val
+
+c     For surface intersection code:
+      INTEGER n,npts,point_kill
+      REAL*8  v(3,MAXINTER),d(MAXINTER)
+      REAL*8  DTOL, v1(3),v2(3),pts(3,10)
+
+      TYPE(type_3D_object) :: newobj
+      TYPE(type_surface  ) :: newsrf
+      REAL*8                  newvtx(3,4)
+
+      point_kill = 0
+
+      debug = .FALSE.
+
+      status = .FALSE.
+
+      DTOL = 1.0D-10
+
+c..   Count the number of tetrahedrons that bound the surface of interest:
+      IF (ntet.EQ.1) THEN 
+        ntet = 0
+        DO iobj = 1, nobj
+          check_lt = .FALSE.
+          check_gt = .FALSE.
+          DO iside = 1, obj(iobj)%nside
+            isrf = ABS(obj(iobj)%iside(iside,1))
+            DO ivtx = 1, srf(isrf)%nvtx
+              p1 = SNGL(vtx(1:3,srf(isrf)%ivtx(ivtx)))
+              SELECTCASE (tet_axis)
+                CASE(1)  ! phi
+                  IF (ABS(p1(1)).LT.1.0E-6) THEN
+                    val = 90.0 * SIGN(1.0,p1(3))
+                  ELSE
+                    val = ATAN2C(p1(3),p1(1)) * 180.0 / 3.141592
+                  ENDIF
+                CASE(2)  ! Y (height)
+                  val = p1(2)
+                CASE DEFAULT
+                  CALL ER('SpliceTetrahedrons','Unknown option',*99)
+              ENDSELECT
+
+              IF (val.LT.tet_value) check_lt = .TRUE.
+              IF (val.GT.tet_value) check_gt = .TRUE.
+              IF (debug)
+     .          WRITE(0,'(A,4I8,2X,3F14.7,2X,3F8.3,2L4)') 
+     .            'val:',iobj,iside,isrf,ivtx,val,tet_value,
+     .            obj(iobj)%phi,p1,
+     .            check_lt,check_gt
+            ENDDO
+          ENDDO
+          IF (check_lt.AND.check_gt) THEN
+c...        The tetrahedron crosses the surface so add it to the list:
+            ntet = ntet + 1
+            itet(ntet) = iobj
+          ENDIF 
+c          IF (ntet.EQ.200) RETURN
+        ENDDO
+        RETURN
+      ENDIF
+
+c     STOP 'whit'
+
+c...  Add a surface to the list of objects that corresponds to the plane,
+c     so that the stardard surface intersection code in RAY can be called:
+      SELECTCASE (tet_axis)
+c       ----------------------------------------------------------------
+        CASE(1)
+          IF (ABS(tet_value+90.0).LT.1.0E-6.OR.
+     .        ABS(tet_value-90.0).LT.1.0E-6) THEN
+            p1(1) =  0.0
+            p1(3) = 20.0 * SIGN(1.0,tet_value)
+          ELSE
+            p1(1) = 20.0 * COS(tet_value * 3.14159 / 180.0)
+            p1(3) = 20.0 * SIN(tet_value * 3.14159 / 180.0)
+          ENDIF
+          newvtx(1:3,1) = (/       0.0D0 ,  20.0D0,       0.0D0 /)
+          newvtx(1:3,2) = (/ DBLE(p1(1)) ,  20.0D0, DBLE(p1(3)) /)
+          newvtx(1:3,3) = (/ DBLE(p1(1)) , -20.0D0, DBLE(p1(3)) /)
+          newvtx(1:3,4) = (/       0.0D0 , -20.0D0,       0.0D0 /)
+c       ----------------------------------------------------------------
+        CASE(2)
+          newvtx(1:3,1) = (/  50.0D0 , DBLE(tet_value),  50.0D0 /)
+          newvtx(1:3,2) = (/  50.0D0 , DBLE(tet_value), -50.0D0 /)
+          newvtx(1:3,3) = (/ -50.0D0 , DBLE(tet_value), -50.0D0 /)
+          newvtx(1:3,4) = (/ -50.0D0 , DBLE(tet_value),  50.0D0 /)
+c       ----------------------------------------------------------------
+        CASE DEFAULT
+          CALL ER('SpliceTetrahedrons','Unknown option',*99)
+c       ----------------------------------------------------------------
+      ENDSELECT
+      IF (debug) THEN
+        WRITE(0,*) newvtx(1:3,1)
+        WRITE(0,*) newvtx(1:3,2)
+        WRITE(0,*) newvtx(1:3,3)
+        WRITE(0,*) newvtx(1:3,4)
+      ENDIF
+      newsrf%type = SP_PLANAR_POLYGON
+      newsrf%nvtx = 4
+      DO i1 = 1, 4
+        newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+      ENDDO
+      newobj%nside        = 1
+      newobj%iside(1,1:2) = AddSurface(newsrf)
+      newobj%gsur(1:4)    = GT_TD
+      newobj%nsur         = 0
+      newobj%ipts(2,1)    = 0
+      nobj = nobj + 1
+      obj(nobj) = newobj
+
+      pts = 0.0D0
+
+      DO i1 = 1, ntet
+        iobj = itet(i1)  ! Set index to the next tetrahedron in the list
+        npts = 0
+     
+        DO iside = 1, obj(iobj)%nside
+          isrf = ABS(obj(iobj)%iside(iside,1))
+          DO ivtx = 1, srf(isrf)%nvtx
+            ivtx2 = ivtx + 1
+            IF (ivtx2.GT.srf(isrf)%nvtx) ivtx2 = 1
+            v1 = vtx(1:3,srf(isrf)%ivtx(ivtx ))
+            v2 = vtx(1:3,srf(isrf)%ivtx(ivtx2))
+
+            n = 0
+            CALL LineThroughSurface(v1,v2,nobj,1,nsrf,n,v,d,0,DTOL)
+            IF (debug)            
+     .         WRITE(0,'(A,4I6,2(2X,3F8.3),I6)') 
+     .           '   :',iobj,iside,isrf,ivtx,v1,v2,n
+            IF (n.EQ.1) THEN
+              DO i2 = 1, npts
+                IF (DABS(v(1,1)-pts(1,i2)).LT.DTOL.AND.
+     .              DABS(v(2,1)-pts(2,i2)).LT.DTOL.AND.
+     .              DABS(v(3,1)-pts(3,i2)).LT.DTOL) EXIT
+              ENDDO
+              IF (i2.EQ.npts+1) THEN
+                npts = npts + 1
+                pts(1:3,npts) = v(1:3,1)
+                IF (debug) THEN
+                  DO i2 = 1, npts
+                    WRITE(0,'(A,I4,3F12.7)') '  -- ',i2,pts(1:3,i2)
+                  ENDDO
+                ENDIF
+              ENDIF
+            ENDIF
+ 
+          ENDDO
+        ENDDO
+
+        IF     (npts.EQ.3) THEN
+          SELECTCASE (tet_axis)
+c           ------------------------------------------------------------
+            CASE(1)
+              nv(    i1) = 3
+              rv(1:3,i1) = SNGL(DSQRT(pts(1,1:3)**2 + pts(3,1:3)**2))
+              zv(1:3,i1) = SNGL(pts(2,1:3))
+c           ------------------------------------------------------------
+            CASE(2)
+              nv(    i1) = 3
+              rv(1:3,i1) =  SNGL(pts(1,1:3))
+              zv(1:3,i1) = -SNGL(pts(3,1:3))
+c           ------------------------------------------------------------
+            CASE DEFAULT
+              CALL ER('SpliceTetrahedrons','Unknown option',*99)           
+c           ------------------------------------------------------------
+          ENDSELECT
+        ELSEIF (npts.EQ.4) THEN 
+          SELECTCASE (tet_axis)
+c           ------------------------------------------------------------
+            CASE(1)
+              nv(    i1) = 4
+              rv(1:4,i1) = SNGL(DSQRT(pts(1,1:4)**2 + pts(3,1:4)**2))
+              zv(1:4,i1) = SNGL(pts(2,1:4))
+c           ------------------------------------------------------------
+            CASE(2)
+              nv(    i1) = 4
+              rv(1:4,i1) =  SNGL(pts(1,1:4))
+              zv(1:4,i1) = -SNGL(pts(3,1:4))
+c           ------------------------------------------------------------
+            CASE DEFAULT
+              CALL ER('SpliceTetrahedrons','Unknown option',*99)           
+c           ------------------------------------------------------------
+          ENDSELECT
+c...      Now, need to order the points:
+
+c...     
+          CALL SortPolygonPoints(nv(i1),rv(1:4,i1),zv(1:4,i1),status)
+        ELSE
+c...      An error, kill point:
+          nv(i1)     = 3
+          rv(1:4,i1) = 0.0
+          zv(1:4,i1) = 0.0
+          point_kill = point_kill + 1
+c        ELSE
+c          CALL ER('SpliceTetrahedrons','Incorrect number of points',*99)
+        ENDIF
+
+      ENDDO
+
+      WRITE(0,*) 'ntet=',ntet
+
+      nvtx = nvtx - 4
+      nsrf = nsrf - 1
+      nobj = nobj - 1
+
+      IF (status) THEN
+        WRITE(0,*) '  --------------------------------------------'
+        WRITE(0,*) '  WARNING SpliceTetrahedrons: Sorting problems'
+        WRITE(0,*) '  --------------------------------------------'        
+      ENDIF
+      IF (point_kill.GT.0) THEN
+        WRITE(0,*) '  --------------------------------------------'
+        WRITE(0,*) '  WARNING SpliceTetrahedrons: kill=',point_kill
+        WRITE(0,*) '  --------------------------------------------'        
+      ENDIF
+
+      RETURN
+ 99   WRITE(0,*) 'NPTS=',npts
+      STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: GetTetrahedrons
+c
+      SUBROUTINE GetTetrahedrons(ntri)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+      INTEGER, INTENT(OUT) :: ntri
+
+      INTEGER GetNumberOfObjects
+
+      IF (nobj.GT.0) THEN
+        WRITE(0,*) 'MESSAGE GetTetrahedrons: Not reloading since '//
+     .             'objects exist'
+        ntri = nobj
+        RETURN
+      ENDIF
+
+      MAX3D = GetNumberOfObjects('eirene.transfer')
+      ALLOCATE(obj(MAX3D+1))  ! Need to the space for an extra object for SpliceTetrahedrons
+      nobj = 0
+      CALL ALLOC_SURFACE(-1,MP_INITIALIZE)
+
+      opt%obj_type  (1) = 6
+      opt%obj_option(1) = 2
+      opt%obj_fname (1) = 'tetrahedrons.raw'
+      CALL ProcessTetrahedronGrid(1)
+
+      WRITE(0,*) 'NOBJECTS=',nobj,MAX3D
+
+c     STOP 'wtf?'
+
+      ntri = nobj
+
+      RETURN
+ 99   STOP
+      END
+c
 c ======================================================================
 c
 c subroutine: DrawGrid
@@ -356,7 +792,7 @@ c...    Text:
         DO rscale = 100.0, 0.0, -dscale
           qval = qmin + (qmax - qmin) * rscale / 100.0
           IF     (qval.GT.-1.0.AND.qval.LT.10.0) THEN
-            WRITE(nums,'(F3.1)') qval
+            WRITE(nums,'(F4.1)') qval
           ELSEIF (ABS(qval).LT.100.0) THEN
             WRITE(nums,'(I3)') NINT(qval)
           ELSEIF (ABS(qval).LT.1000.0) THEN
@@ -437,9 +873,12 @@ c...    Text:
         DO rscale = 100.0, 0.0, -dscale
           qval = qmin + (qmax - qmin) * rscale / 100.0
 c          qval = qval / qmax
-          IF     (qval.GT.-0.999.AND.qval.LT.10.0) THEN
+          IF     (qval.GT.-0.999.AND.qval.LT.1.0) THEN
 c          IF     (qmax.GT.0.1.AND.qmax.LE.1.0) THEN
-            WRITE(nums,'(F3.1)') qval
+            WRITE(nums,'(F5.2)') qval
+          ELSEIF (qval.GT.-0.999.AND.qval.LT.10.0) THEN
+c          IF     (qmax.GT.0.1.AND.qmax.LE.1.0) THEN
+            WRITE(nums,'(F4.1)') qval
           ELSEIF (ABS(qval).LT.999.0) THEN
 c          ELSEIF ((qmax.GT. 1.0.AND.qmax.LE. 999.9).OR.
 c     .            (qmax.LE.-1.0.AND.qmax.GT.-999.9)) THEN
@@ -687,6 +1126,7 @@ c
      .                   ismoth,ignors,itec,avs,navs,nizs)
       USE mod_eirene06_parameters
       USE mod_eirene06 
+      USE mod_out985_clean 
       IMPLICIT none
 
       INCLUDE 'params'
@@ -723,16 +1163,18 @@ c
       CHARACTER table*36,nview*36,anly*36,plane*36,
      .          YLABEL*256,XLABEL*36,smooth*64,glabel*512
 
-      INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,
-     .        nline,lastcolour,scaleopt,colouropt,posopt
+      INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,tet_axis,ntet,
+     .        nline,lastcolour,scaleopt,colouropt,posopt,ngauge
       LOGICAL setqmin,setqmax,inside,scale_set,double_null
       REAL    qmin,qmax,frac,frac5,fmod5,scalefact,fact,
-     .        posx,posy,poswidth,posheight,rdum(4),taus
+     .        posx,posy,poswidth,posheight,rdum(4),taus,tet_value,
+     .        gauge(5,100),val,p(3),r
       CHARACTER label*512,cdum1*512,cdum2*512
+      CHARACTER*256 gauge_tag(100)
 
       REAL, POINTER :: gdata(:,:)
 
-      INTEGER, ALLOCATABLE :: lines2(:,:),nv(:),lcolour(:)
+      INTEGER, ALLOCATABLE :: lines2(:,:),nv(:),lcolour(:),itet(:)
       REAL   , ALLOCATABLE :: tdata(:),tdata1(:)
       REAL, TARGET, ALLOCATABLE :: gdata1(:,:)
       REAL   , ALLOCATABLE :: rv(:,:),zv(:,:),cq(:)
@@ -809,6 +1251,7 @@ c...  Read scale information:
       IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
      .      cdum1(8:12).EQ.'SCALE') THEN
         scale_set = .TRUE.
+c        WRITE(0,*) 'CDUM1:>'//TRIM(cdum1)//'<'
         READ(cdum1,*) cdum2,scaleopt,colouropt,scalefact,qmin,qmax,
      .                label
         IF (qmin.EQ.-99.0) qmin =  HI
@@ -826,7 +1269,9 @@ c...  Plot location:
       IF   (cdum1(8:15).EQ.'Position'.OR.cdum1(8:15).EQ.'position'.OR.
      .      cdum1(8:15).EQ.'POSITION') THEN
         READ(cdum1,*) cdum2,posopt,posx,posy,poswidth,posheight
-        WRITE(6,*) 'POSITION',posopt,posx,posy,poswidth,posheight
+
+c        WRITE(0,*) 'POSITION',posopt,posx,posy,poswidth,posheight
+
         IF     (posopt.EQ.1) THEN
           map1x = 0.05
           map2x = map1x + 0.80 * (xxmax-xxmin) / (yymax-yymin)
@@ -845,22 +1290,13 @@ c          map2y = map1y + 0.40
           map2y = map1y + poswidth
         ELSEIF (posopt.EQ.3) THEN
           map1x = posx
-          map2x = map1x + poswidth
+          map2x = map1x + poswidth 
           map1y = posy
           map2y = map1y + posheight
-        ELSEIF (posopt.EQ.4) THEN
-          dist = poswidth
-          dx = dist ! * (xxmax-xxmin) / (yymax-yymin)
-          IF (reset_origin) THEN
-            map1x = 0.05 
-          ELSE
-            map1x = save_map2x
-          ENDIF
-          map2x = map1x + dx
-          map1y = 0.20
-          map2y = map1y + 0.70
-          save_map2x = map2x
+        ELSE
+          STOP 'BAD POISTION OPTION'
         ENDIF
+
       ELSE
         BACKSPACE 5
         dist = 0.70 ! 0.80
@@ -868,7 +1304,7 @@ c          map2y = map1y + 0.40
         IF (reset_origin) THEN
           map1x = 0.05 
         ELSE
-          map1x = save_map2x
+          map1x = save_map2x + 0.04
         ENDIF
 c        map1x = 0.05 + REAL(numplots) * dx
         map2x = map1x + dx
@@ -881,6 +1317,8 @@ c        map1x = 0.05 + REAL(numplots) * dx
 c      CALL THICK2(6)
       CALL THICK2(1)
       CALL THICK(1)
+
+c      write(0,*) 'map',map1x,map2x,map1y,map2y
 
       IF (numplots.NE.0) ylabel = 'none'
 
@@ -895,14 +1333,20 @@ c     .                  TABLE,XLABEL,YLABEL,
 c     .                  0,smooth,0,ANLY,1)
 
 
-      IF (iopt.LT.500) CALL LoadTriangles_06  ! just LoadTriangles before...
+c...  Decide if tetrahedrons are being plotted:      
+      READ(5,'(A512)') cdum1
+      IF   (cdum1(8:12).EQ.'Tetra'.OR.cdum1(8:12).EQ.'tetra'.OR.
+     .      cdum1(8:12).EQ.'TETRA') THEN
+        READ(cdum1,*) cdum2,tet_axis,tet_value  ! 1 = phi, 2 = y, 3 = r
+        tetrahedrons = .TRUE.
+      ELSE
+        BACKSPACE 5
+        tetrahedrons = .FALSE.
+      ENDIF
 
-c...problem is some small triangles driving up the neutral density? ... check against magnetic 
-c grid neutral density plot? or check agains ionisation plot to see if scales are the same... 
-c...check .eirdat file...
-c      WRITE(0,*) 'DEBUG: IOPT',iopt
-
+c     ==================================================================
       IF (iopt.GE.500) THEN
+c     ==================================================================
 
         ALLOCATE(gdata1(MAXNKS,MAXNRS))
         gdata1 = 0.0
@@ -997,7 +1441,6 @@ c            DO ir = irsep, nrs
             ENDDO
             gdata => gdata1
           CASE (799:875) 
-c              WRITE(0,*) 'DEBUG: here 1'
               iz = iopt - 800
               READ(5,'(A512)') cdum1
 c             ----------------------------------------------------------
@@ -1047,9 +1490,6 @@ c             ----------------------------------------------------------
                   ENDDO
                 ENDIF
                 gdata1 = gdata1 * absfac
-        WRITE(6,*) 'powls ioout :',powls(1,irsep,:)
-        WRITE(6,*) 'ddlims ioout:',sdlims(1,irsep,:)
-        WRITE(6,*) 'gdata1      :',gdata1(1,irsep)
 c             ----------------------------------------------------------
               ELSEIF (cdum1(8:15).EQ.'Legrange'.OR.    ! Net force on impurities, from OUT 
      .                cdum1(8:15).EQ.'LEGRANGE'.OR.    ! plot 669/670
@@ -1117,10 +1557,18 @@ c          IF (ir.LT.irsep.OR.ir.GE.irtrap) CYCLE
             cq(nc) = gdata(ik,ir)
           ENDDO
         ENDDO
+c     ==================================================================
+      ELSEIF (iopt.LT.500) THEN
+c     ==================================================================
 
-      ELSEIF (iopt.LT.90) THEN
+        IF (.NOT.tetrahedrons) THEN
+          CALL LoadTriangles_06  
+        ELSE
+          CALL GetTetrahedrons(ntri)
+          write(0,*) 'ntri=',ntri
+        ENDIF
 
-        ALLOCATE(tdata(ntri))
+        ALLOCATE(tdata(ntri+1))
         tdata = 0.0
         IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata,'default')  ! D  density
         IF (.FALSE..AND.iopt.EQ.1) THEN
@@ -1164,31 +1612,24 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
 
         IF (iopt.EQ.5 ) CALL LoadTriangleData(1,1,10,0,tdata,'default')  ! D+ density
         IF (iopt.EQ.6 ) CALL LoadTriangleData(1,1,15,0,tdata,'default')  ! D+ temperature
-        IF (iopt.EQ.8 ) THEN                                             ! D2 pressure from D2 energy density
-          CALL LoadTriangleData(3,1,6,1,tdata,'default') 
-          fact = ECH * 0.667 * 7.502
-c          fact = ECH * 1.0E+06 * 7.502
+        IF (iopt.EQ.7 ) THEN                                             ! D  pressure from D2 energy density
+          CALL LoadTriangleData(2,1,6,1,tdata,'default') 
+          fact = ECH * 0.667 ! * 7.502
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * fact
-            IF (.FALSE..AND.
-     .          ver(tri(i1)%ver(1),1).LT. 0.65D0.AND.
-     .          ver(tri(i1)%ver(1),2).LT.-0.62D0) THEN
-              WRITE(0,*) 'PRESSURE:',
-     .          ver(tri(i1)%ver(1),1),ver(tri(i1)%ver(1),2),tdata(i1)
-            ENDIF
-c            IF (tri(i1)%type.EQ.MAGNETIC_GRID) tdata(i1) = 0.0
           ENDDO
         ENDIF
-        IF (iopt.EQ.9 ) CALL LoadTriangleData(3,1,7,0,tdata,'default')  ! D2 average energy
-        IF (iopt.EQ.9) THEN
+        IF (iopt.EQ.8 ) THEN                                             ! D2 pressure from D2 energy density
+          CALL LoadTriangleData(3,1,6,1,tdata,'default') 
+          fact = ECH * 0.667 ! * 7.502
+          DO i1 = 1, ntri 
+            tdata(i1) = tdata(i1) * fact
+          ENDDO
+        ENDIF
+        IF (iopt.EQ.9 ) THEN
+          CALL LoadTriangleData(3,1,7,0,tdata,'default')  ! D2 average energy
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * 0.667
-            IF (.FALSE..AND.
-     .          ver(tri(i1)%ver(1),1).LT. 0.65D0.AND.
-     .          ver(tri(i1)%ver(1),2).LT.-0.62D0) THEN
-              WRITE(0,*) 'AVG ENG:',
-     .          ver(tri(i1)%ver(1),1),ver(tri(i1)%ver(1),2),tdata(i1)
-            ENDIF
           ENDDO
         ENDIF
 
@@ -1215,28 +1656,73 @@ c            IF (tri(i1)%type.EQ.MAGNETIC_GRID) tdata(i1) = 0.0
         IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata,'default')  ! He(2|1)
         IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata,'default')  ! He(2|3)
 
-        ALLOCATE(nv(ntri))
-        ALLOCATE(rv(3,ntri))
-        ALLOCATE(zv(3,ntri))
-        ALLOCATE(cq(ntri))
-
 c...    Load up data:
-        nc = 0
-        nv = 0
-        DO i1 = 1, ntri
-          IF ((iopt.EQ.5.OR.iopt.EQ.6).AND.
-     .        (tri(i1)%type.NE.MAGNETIC_GRID.OR.
-     .         tri(i1)%type.EQ.MAGNETIC_GRID.AND.
-     .         tri(i1)%index(2).LT.irsep)) CYCLE
-          nc = nc + 1
-          DO v1 = 1, 3
-            nv(nc) = nv(nc) + 1
-            rv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),1))
-            zv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),2))
+        IF (tetrahedrons) THEN 
+
+c...      Decide if tetrahedrons are being plotted:      
+          ngauge = 0
+20        READ(5,'(A512)') cdum1
+          IF   (cdum1(8:12).EQ.'Gauge'.OR.cdum1(8:12).EQ.'gauge'.OR.
+     .          cdum1(8:12).EQ.'GAUGE') THEN
+            ngauge = ngauge + 1
+            READ(cdum1,*) cdum2,gauge(1:5,ngauge),gauge_tag(ngauge)  ! 1=opt, 2-4=r,z,phi, 5=radius of gauge (sphere) volume (opt=1)
+            GOTO 20
+          ELSE
+            BACKSPACE 5
+          ENDIF
+          IF (ngauge.GT.0) THEN
+            CALL ExtractQuantity(ngauge,gauge(1:5,1:ngauge),
+     .                           gauge_tag(1:ngauge),tdata,iopt)
+          ENDIF
+
+          ntet = 1
+          ALLOCATE(itet(  ntri))
+          ALLOCATE(nv  (  ntet))
+          ALLOCATE(rv  (4,ntet))
+          ALLOCATE(zv  (4,ntet))
+          CALL SpliceTetrahedrons(ntet,tet_axis,tet_value,
+     .                            itet,nv,rv,zv)
+          DEALLOCATE(nv  )
+          DEALLOCATE(rv  )
+          DEALLOCATE(zv  )
+          ALLOCATE(nv  (  ntet))
+          ALLOCATE(rv  (4,ntet))
+          ALLOCATE(zv  (4,ntet))
+          ALLOCATE(cq  (  ntet))
+          CALL SpliceTetrahedrons(ntet,tet_axis,tet_value,
+     .                            itet,nv,rv,zv)
+
+          DO i1 = 1, ntet
+            cq(i1) = tdata(itet(i1))
           ENDDO
-          cq(nc) = tdata(i1)
-        ENDDO
+          nc = ntet
+        ELSE
+          ALLOCATE(nv(  ntri))
+          ALLOCATE(rv(3,ntri))
+          ALLOCATE(zv(3,ntri))
+          ALLOCATE(cq(  ntri))
+          nc = 0
+          nv = 0
+          DO i1 = 1, ntri
+            IF ((iopt.EQ.5.OR.iopt.EQ.6).AND.
+     .          (tri(i1)%type.NE.MAGNETIC_GRID.OR.
+     .           tri(i1)%type.EQ.MAGNETIC_GRID.AND.
+     .           tri(i1)%index(2).LT.irsep)) CYCLE
+            nc = nc + 1
+            DO v1 = 1, 3
+              nv(nc) = nv(nc) + 1
+              rv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),1))
+              zv(v1,nc) = SNGL(ver(tri(i1)%ver(v1),2))
+            ENDDO
+            cq(nc) = tdata(i1)
+          ENDDO
+        ENDIF
+c     ==================================================================
       ENDIF
+c     ==================================================================
+
+
+
 
 c...  Scale the data:
       IF (ALLOCATED(cq)) THEN
@@ -1314,14 +1800,16 @@ c...      Process tags:
 
 c...  Draw Vessel and grid outline:
 
+c     ==================================================================
       IF (iopt.GE.500) THEN
+c     ==================================================================
 c...    Magnetic grid:
         nline = 0
         ALLOCATE(lines2(4*MAXNKS*MAXNRS,2))
         ALLOCATE(lcolour(4*MAXNKS*MAXNRS))
 
         nver = 0
-        CALL ALLOC_VERTEX(20*MAXNKS) ! Borrowed from mod_triangle
+        CALL ALLOC_VERTEX(10*MAXNKS) ! Borrowed from mod_triangle
 
         DO ir = 1, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -1407,11 +1895,10 @@ c...    Wall:
           lines2(nline,2) = nver 
           lcolour(nline) = 1
         ENDDO
-
-      ELSEIF (iopt.LT.500) THEN
-c      IF (iopt.EQ.99) THEN
-
-        ALLOCATE(lines2(3*ntri,2))
+c     ==================================================================
+      ELSEIF (iopt.LT.500.AND..NOT.tetrahedrons) THEN
+c     ==================================================================
+        ALLOCATE(lines2 (3*ntri,2))
         ALLOCATE(lcolour(3*ntri))
         nline = 0
         DO i1 = 1, ntri
@@ -1443,9 +1930,6 @@ c             All triangles:
               lcolour(nline) = ncols + 1
               lines2(nline,1)=tri(i1)%ver(v1)
               lines2(nline,2)=tri(i1)%ver(v2)
-
-c              WRITE(0,*) 'VER:',i1,v1,tri(i1)%ver(v1),v2,tri(i1)%ver(v2)
-
             ELSEIF (iopt.EQ.97) THEN
               IF (i1.EQ.6268.OR.i1.EQ.6416) THEN
                 nline = nline + 1
@@ -1455,33 +1939,27 @@ c              WRITE(0,*) 'VER:',i1,v1,tri(i1)%ver(v1),v2,tri(i1)%ver(v2)
               ENDIF
 
             ELSEIF (iopt.EQ.98) THEN
-
 c              IF (i1.NE.1.AND.i1.NE.380.AND.
 c     .            i1.NE.423.AND.i1.NE.448.AND.i1.NE.450) CYCLE
 c              IF (tri(i1)%type.EQ.VACUUM_GRID) WRITE(0,*) ' *** VAC!'
-
               IF (tri(i1)%type.EQ.VACUUM_GRID) THEN
                 nline = nline + 1
                 lcolour(nline) = ncols + 3
                 lines2(nline,1)=tri(i1)%ver(v1)
                 lines2(nline,2)=tri(i1)%ver(v2)
               ENDIF
-
               IF (tri(i1)%type.EQ.MAGNETIC_GRID) THEN
                 nline = nline + 1
                 lcolour(nline) = ncols + 3
                 lines2(nline,1)=tri(i1)%ver(v1)
                 lines2(nline,2)=tri(i1)%ver(v2)
               ENDIF
-
             ELSEIF (iopt.EQ.99) THEN
 c...          Magnetic grid triangles + wall surfaces:
               IF (tri(i1)%type.EQ.VACUUM_GRID.AND.
 c     .            (tri(i1)%sur(v1).EQ.4.OR.
 c     .             tri(i1)%sur(v1).GT.10)) THEN
      .             tri(i1)%sur(v1).NE.0) THEN
-
-
                 nline = nline + 1
                 lcolour(nline) = 1
                 lines2(nline,1)=tri(i1)%ver(v1)
@@ -1497,7 +1975,6 @@ c     .             tri(i1)%sur(v1).GT.10)) THEN
               ENDIF
 
             ELSE
-
               IF (tri(i1)%type.EQ.VACUUM_GRID.AND.
 c     .            (tri(i1)%sur(v1).EQ.4.OR.
 c     .             tri(i1)%sur(v1).GT.10)) THEN
@@ -1579,8 +2056,9 @@ c            WRITE(0,*) 'DELETING:',i1
             nline = nline - 1
           ENDIF
         ENDDO
+c     ==================================================================
       ENDIF
-
+c     ==================================================================
 
 
 
@@ -1590,31 +2068,28 @@ c            WRITE(0,*) 'DELETING:',i1
 c...    Plot polygons:
         CALL PSPACE (map1x,map2x,map1y,map2y)      
         CALL MAP    (cxmin,cxmax,cymin,cymax)
-        lastcolour = -1
-        DO i1 = 1, nline
-          IF (lastcolour.NE.lcolour(i1)) THEN
-            CALL LINCOL(lcolour(i1)) 
-            lastcolour = lcolour(i1)
-          ENDIF
+        IF (.NOT.tetrahedrons) THEN
+          lastcolour = -1
+          DO i1 = 1, nline
+            IF (lastcolour.NE.lcolour(i1)) THEN
+              CALL LINCOL(lcolour(i1)) 
+              lastcolour = lcolour(i1)
+            ENDIF
 
-c          IF (lines2(i1,1).LE.0.OR.lines2(i1,2).LE.0.OR.
-c     .        lines2(i2,1).LE.0.OR.lines2(i2,2).LE.0) CYCLE
-c          IF (lines2(i1,1).GT.288.OR.lines2(i1,2).GT.288.OR. 
-c     .        lines2(i2,1).GT.288.OR.lines2(i2,2).GT.288) CYCLE
+c            IF (lines2(i1,1).LE.0.OR.lines2(i1,2).LE.0.OR.
+c     .          lines2(i2,1).LE.0.OR.lines2(i2,2).LE.0) CYCLE
+c            IF (lines2(i1,1).GT.288.OR.lines2(i1,2).GT.288.OR. 
+c     .          lines2(i2,1).GT.288.OR.lines2(i2,2).GT.288) CYCLE
 
-          CALL POSITN(SNGL(ver(lines2(i1,1),1)),
-     .                SNGL(ver(lines2(i1,1),2)))
-          CALL JOIN  (SNGL(ver(lines2(i1,2),1)),
-     .                SNGL(ver(lines2(i1,2),2)))
-        ENDDO
-
+            CALL POSITN(SNGL(ver(lines2(i1,1),1)),
+     .                  SNGL(ver(lines2(i1,1),2)))
+            CALL JOIN  (SNGL(ver(lines2(i1,2),1)),
+     .                  SNGL(ver(lines2(i1,2),2)))
+          ENDDO
+        ENDIF
 c...    Frame:
         CALL DrawFrame
       ENDIF
-
-
-
-
 
 c...     Draw the views on the LOS plot:
 c         CALL PSPACE (map1x,map2x,map1y,map2y)
@@ -1625,9 +2100,6 @@ c         DO i2 = 1, nline
 c           CALL POSITN (lines2(i2),0.0)
 c           CALL JOIN   (lines2(i2),1.0)        
 c         ENDDO
-
-
-
 
 c...  Add a caption to the plot:
       READ(5,'(A256)') cdum1
@@ -1643,13 +2115,14 @@ c...  Add a caption to the plot:
       ENDIF
 
 c...  Clear arrays:
+c      CALL DEALLOC_ALL  
       CALL DEALLOC_VERTEX  
       CALL DEALLOC_SURFACE   
       CALL DEALLOC_TRIANGLE
 
-      IF (ALLOCATED(gdata1)) DEALLOCATE(gdata1)
-
-      IF (ALLOCATED(lines2))   DEALLOCATE(lines2)
+      IF (ALLOCATED(itet   )) DEALLOCATE(itet   )
+      IF (ALLOCATED(gdata1 )) DEALLOCATE(gdata1 )
+      IF (ALLOCATED(lines2 )) DEALLOCATE(lines2 )
       IF (ALLOCATED(lcolour)) DEALLOCATE(lcolour)
 
       RETURN

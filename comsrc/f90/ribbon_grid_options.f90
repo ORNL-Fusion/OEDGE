@@ -27,10 +27,6 @@ module ribbon_grid_options
   integer :: cell_spacing_option
   real :: cell_spacing_factor
 
-  ! Option defining the input data file format
-  integer :: ribbon_input_format_opt
-
-
   character*256 :: rg_castem_data
 
 end module ribbon_grid_options

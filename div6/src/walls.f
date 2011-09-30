@@ -1277,14 +1277,14 @@ c
 c
       do ir = nrs,irtrap,-1
 c
-        isepdist = isepdist - dds(idds(ir,1)) /2.0
-        osepdist = osepdist - dds(idds(ir,2)) /2.0
+        isepdist = isepdist + dds(idds(ir,1)) /2.0
+        osepdist = osepdist + dds(idds(ir,2)) /2.0
 
         sepdist2(idds(ir,1)) = isepdist
         sepdist2(idds(ir,2)) = osepdist
 
-        isepdist = isepdist - dds(idds(ir,1)) /2.0
-        osepdist = osepdist - dds(idds(ir,2)) /2.0
+        isepdist = isepdist + dds(idds(ir,1)) /2.0
+        osepdist = osepdist + dds(idds(ir,2)) /2.0
 
 
         if (cprint.eq.3.or.cprint.eq.9) then
@@ -3121,7 +3121,12 @@ c        end do
 c slmod end
         IONTI2 = IND-1
 c
-        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod begin
+        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
+     .      cgridopt.eq.LINEAR_GRID) then
+c
+c        if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
            endid = nds-1
         elseif (cgridopt.eq.2) then
            endid = ndsin2-1

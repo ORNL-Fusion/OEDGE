@@ -1,0 +1,26 @@
+      subroutine broad_pedist (xtim)
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMPRT, ONLY: IUNOUT
+      USE CPES
+
+      IMPLICIT NONE
+
+      INCLUDE 'mpif.h'
+
+      real(dp), intent(in) :: xtim(0:nstra)
+      INTEGER :: IER
+
+      CALL MPI_BARRIER(MPI_COMM_WORLD,ier)
+      
+      CALL MPI_BCAST (NPESTR,NSTRA+1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+      CALL MPI_BCAST (NPESTA,NSTRA+1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+      CALL MPI_BCAST (NSTRPE,NRPES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+      CALL MPI_BCAST (NSTEFF,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+      CALL MPI_BCAST (XTIM,NSTRA+1,MPI_REAL8,0,MPI_COMM_WORLD,ier)
+
+      CALL MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+      RETURN
+      END SUBROUTINE broad_pedist

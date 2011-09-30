@@ -1934,6 +1934,8 @@ c ======================================================================
 c
 c function: CalcPoint
 c
+c Calculate the perpendicular distance from a point to a line.
+c
       INTEGER FUNCTION CalcPoint(ar,az,br,bz,cr,cz,t)
 
       IMPLICIT none
@@ -1961,14 +1963,6 @@ c     Output:
 
         r = ar + t * deltar
         z = az + t * deltaz
-
-        IF (ar.EQ.2.80421400) THEN
-          WRITE(50,*) '           --->',t
-          WRITE(50,*) '           --->',
-     .                DSQRT((ar-cr)**2+(az-cz)**2)
-          WRITE(50,*) '           --->',
-     .                DSQRT((br-cr)**2+(bz-cz)**2)
-        ENDIF
 
 c...NEW
         IF     (DSQRT((ar-cr)**2+(az-cz)**2).LT.TOL) THEN
@@ -2000,7 +1994,7 @@ c           WRITE(50,*) '  R,Z  = ',r,z
         ENDIF
       ELSE
 c
-c       If the points are all identical, then return a positive result,
+c       If the points are all identicle, then return a positive result,
 c       otherwise indicate that the problem was ill-posed:
 c
         IF (ABS(ar-cr).LT.TOL.AND.ABS(az-cz).LT.TOL) THEN
@@ -2812,17 +2806,14 @@ c      REAL    brat,mn
 
       IF (region.EQ.IKLO) THEN
         id = idds(ir,2)
-c        brat = 1.0 / kbfst(ir,2)
         brat = 1.0 / kbfs(1,ir)
-
+c        brat = 1.0 / kbfst(ir,2)
 c        brat = bratio (1,ir)
 c        mn   = cmachno(ir,2)
       ELSEIF (region.EQ.IKHI) THEN
         id = idds(ir,1)
-
-c        brat = 1.0 / kbfst(ir,1)
         brat = 1.0 / kbfs(nks(ir),ir)
-
+c        brat = 1.0 / kbfst(ir,1)
 c        brat = bratio (nks(ir),ir)
 c        mn   = cmachno(ir,1)
       ELSE
@@ -2845,6 +2836,93 @@ c     .          brat * 2.0 * PI * rp(id) * costet(id)
 
       IF (supflx(region,ir).EQ.1) GetFlux = GetFlux * 1.0E-15
 
+
+      RETURN
+99    WRITE(0,*) '  RING  =',ir
+      WRITE(0,*) '  REGION=',region
+      STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION GetGamma(region,ring)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'slcom'
+
+      INTEGER region,ring
+      INTEGER id,ir
+      REAL    brat,isat,t_ratio,delta_e,m_ratio
+
+      ir = ring
+
+      IF (region.EQ.IKLO) THEN
+        id = idds(ir,2)
+      ELSEIF (region.EQ.IKHI) THEN
+        id = idds(ir,1)
+      ELSE
+        CALL ER('GetGamma','Invalid region',*99)
+      ENDIF
+
+      IF (ir.LT.irsep.OR.idring(ir).EQ.BOUNDARY) THEN 
+        GetGamma = 0.0
+      ELSE
+c...    Taken from Stangeby 1st edition, equation 25.46, pg 649.  Note that many effects
+c       are missing, i.e. realistic secondary electron emission (0.0 here), e-i recombination
+c       energy, atom-atom recombination energy, low collisionality effects, space charge
+c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
+        t_ratio = ktids(id) / kteds(id)
+        delta_e = 0.0
+        m_ratio = 9.11E-31 / (crmb * 1.67E-27)
+        GetGamma = 2.5 * t_ratio + 2.0 / (1.0 - delta_e) - 
+     .             0.5 * LOG( (2.0 * PI * m_ratio) * (1 + t_ratio) * 
+     .                        (1 - delta_e)**-2 )
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION GetHeatFlux(region,ring)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'slcom'
+
+      REAL GetFlux,GetGamma
+
+      INTEGER region,ring
+      INTEGER id,ir
+      REAL    brat,isat,gamma
+
+      ir = ring
+
+      IF (region.EQ.IKLO) THEN
+        id = idds(ir,2)
+      ELSEIF (region.EQ.IKHI) THEN
+        id = idds(ir,1)
+      ELSE
+        CALL ER('GetHeatFlux','Invalid region',*99)
+      ENDIF
+
+      IF (ir.LT.irsep.OR.idring(ir).EQ.BOUNDARY) THEN 
+        GetHeatFlux = 0.0
+      ELSE
+        isat  = GetFlux(region ,ring)
+        gamma = GetGamma(region,ring) 
+        GetHeatFlux = gamma * ABS(isat) * ECH * kteds(id)
+      ENDIF
 
       RETURN
 99    STOP
@@ -3981,21 +4059,17 @@ c
       INTEGER i
       CHARACTER comment*72
 
-      integer erout1
-
-      erout1 = 0
-
       READ (line,*,ERR=98,END=98) comment,cval
 
       WRITE(SLOUT,'(A)')        line
       WRITE(SLOUT,'(5X,2A,A)') tag,' = ',cval
 
       RETURN
-98    WRITE(EROUT1,*) 'Problem reading unstructured input'
-99    WRITE(EROUT1,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(EROUT1,'(5X,2A)')    'TAG  = ''',tag,''''
-      WRITE(EROUT1,'(5X,2A)')    'CVAL = ''',cval,''''
-      STOP 'READC'
+98    WRITE(EROUT,*) 'Problem reading unstructured input'
+99    WRITE(EROUT,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(EROUT,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(EROUT,'(5X,2A)')    'CVAL = ''',cval,''''
+      STOP
       END
 c
 c ======================================================================
@@ -4454,14 +4528,10 @@ c
       fp = PINOUT
 
       CALL RSet(sgn,MAXNRS,1.0)
-c
-c     jdemod - sepdist2 is now adjusted to be negative in PFZ so the
-c              sgn array should no longer be needed
-c
-c      DO ir = irtrap, nrs
-c        sgn(ir) = -1.0
-c      ENDDO
-c
+      DO ir = irtrap, nrs
+        sgn(ir) = -1.0
+      ENDDO
+ 
       CALL RZero(sddat,MAXINS)
       CALL RZero(tedat,MAXINS)
       CALL RZero(tidat,MAXINS)

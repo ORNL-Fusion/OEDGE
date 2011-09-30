@@ -1,0 +1,150 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$
+'954   012 00 Grid                            '   0 1
+'000   Zoom'  0.000 0.000 1.85 1.85 
+'954   012 00 Grid                            '   1
+'000   Zoom'  0.100 +0.280 0.130 0.300
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.100 +0.280 0.130 0.300
+'954   012 00 Grid                            '   0 20
+'000   Zoom'  0.100 +0.280 0.130 0.300
+$
+$
+'987   XXX XX D density                       '   0  1  600
+'000   Zoom'  0.100 +0.280 0.130 0.300
+'000   Scale' 2 1  1.0  -99.0 -99.0  'n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D2 density                      '   0  2  601
+'000   Zoom'  0.100 +0.280 0.130 0.300
+'000   Scale' 2 1  1.0  -99.0 -99.0  'n_D2 (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D2 pressure                     '   0  8  601
+'000   Zoom'  0.100 +0.280 0.130 0.300
+'000   Scale' 2 1  1.0  -99.0 -99.0  'p_D2 (Pa)'
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  0.100 +0.280 0.130 0.300
+$
+$
+$
+'999   GENERATE OSM IDL DATA FILES'  12
+'999   MIDPLANE PROFILE ANALYSIS  '   0  7
+'999   DUMPING DATA TO IDL        '   0 10
+'999   DUMP EIRENE DATA TO IDL    '  15
+'999   DUMP DIVIMP DATA TO IDL    '  14
+$
+$
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 01  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   2
+'000   Data' 8 03 +0.00   2 6 11
+$
+'955   END-----------------------------------'    0
+$
+$
+$
+'999   Output tetrahedron data'  16
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'fluid grid       ( 1)'  0  4  100  0  0 1.0
+     'triangle grid    ( 2)'  0  2  100  0  0 1.0  -1  -1
+     'triangle grid    ( 2)'  0  6  100  0  0 1.0  -1  -1
+     'line segments    ( 5)'  0  1  100  0  0 1.0  -1  -1  'vessel/pfc_lower_declined_target.dat'
+     'line segments    ( 5)'  0  3  000  0  0 1.0  -1  -1  'main_wall_CC_displaced.dat'
+     'custom: 3D wall  (-1)'  0 -9  000  0  0 1.0  -1  -1
+     'custom: test box (-1)'  0 10  000  0  0 1.0  -1  -1   
+     'custom: TD   box (-1)'  0 11  000  0  0 1.0  -1  -1   
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+  {PLOTS}  1
+     'plot   wireframe   (001)'  1
+        'zoom' 0.000  0.275  0.40 0.40
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   3D solid    (002)'  2
+        'zoom                          '  0.00  0.240 0.30 0.30
+        'axis   roll/tilt/swing        '  +00.0   30.0   00.0
+        'item   geometry elements (001)'   0  0  000
+        'item   2D separatrix     (002)'   0  1  000
+        'item   field line        (002)'   0  4  000  0.00001000 0.0 0.0   SEPARATRIX (RING 22)
+        'item   3D flux-tube      (003)'   0  0  000  0.00055000
+        'item   tetrahedrons      (021)'  21  2  000  'tetrahedrons.raw'
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  0 
+     'line-of-sight   (1)'  0  000  01 002 00 0                 1 'B_ALPHA'
+     'line-of-sight   (1)'  0  000  01 002 00 0                 1 'B_GAMMA'
+     'line-of-sight   (1)'  0  000  01 002 00 0                 1 'C0_DENSITY'
+     'line-of-sight   (1)'  0  000  01 002 00 0                 1 'D+_DENSITY'
+     'line-of-sight   (1)'  1  000  04 009 -1 0                 3 'PRAD'
+     'line shape      (2)'  0  000  01 002 00 0  00011 0.0 0.5  1 'B_ALPHA'
+     'line shape      (2)'  0  000  06 012 02 0  00011 0.0 0.2  2 '*' 96 'pju' 30 80 130 0
+     'avg Te=2        (3)'  0  000  06 012 02 0  2              1 'B_ALPHA'
+     'avg vb=4        (3)'  0  000  06 012 02 0  4              1 'B_ALPHA'
+     'avg Tb=5        (3)'  0  000  06 012 02 0  5              1 'B_ALPHA'
+     'avg vi=7        (3)'  0  000  06 012 02 0  7              1 'B_ALPHA'
+     'avg Ti=8        (3)'  0  000  06 012 02 0  8              1 'B_ALPHA'
+  {DETECTOR}  0
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,z position     '   0.99000D+00   0.00001D+00    0.00000D+00  
+     'roll,tilt,swing    '   0.00000D+00   0.00000D+00  270.00000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    ' 130.0D+00   130.00D+00                       
+     'pixel array        '  200     200 
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'default'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+$ ======================================================================
+'999   STOP' 3
+$ ======================================================================
+$
+$
+$
+

@@ -1,0 +1,33 @@
+#!/bin/tcsh
+#
+# ======================================================================
+# Launch FUSE applications / scripts
+# ======================================================================
+#
+set DIR_SCRIPT = $FUSEHOME/scripts
+
+switch ( $1 )
+  case "-osm":
+    shift
+    source $DIR_SCRIPT/fuse_osm $1 $2 $3 $4 $5 $6 $7 $8 $9 $10
+    breaksw
+  case "-cortex":
+    source $DIR_SCRIPT/fuse_osm $1 $2 $3 $4 $5 $6 $7 $8 $9 $10
+    breaksw
+  case "-ray":
+    shift
+    source $DIR_SCRIPT/fuse_ray $1 $2 $3 $4 $5 $6 $7 $8 $9 $10
+    breaksw
+  case "-make":
+    shift
+    source $DIR_SCRIPT/fuse_make $1 $2 
+    breaksw
+  case "-setup":
+    shift
+    source $DIR_SCRIPT/fuse_setup $1
+    breaksw
+  default:
+#   Eventually, launch the IDL FUSE GUI...
+    echo ERROR fuse script: Not sure what to do with $1
+    breaksw
+endsw

@@ -29,11 +29,13 @@ c      WRITE(0,*) 'NPLASM:',nplasma
 
       SELECTCASE (obj(iobj)%subtype)
 
-        CASE (OP_FLUID_GRID)
+        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
 c...      Fluid grid:
           ik = obj(iobj)%ik
           ir = obj(iobj)%ir
 
+          plasma(ipla)%nD = pinatom(ik,ir)
+          plasma(ipla)%nD2= pinmol (ik,ir)
           plasma(ipla)%ne = knes (ik,ir)
           plasma(ipla)%te = ktebs(ik,ir)   ! Don't keep assigning this over and over...
           plasma(ipla)%nb = knbs (ik,ir)
@@ -80,7 +82,6 @@ c          IF (ir.EQ.irsep) THEN
 c            WRITE(0,*) 'BFIELD:',plasma(ipla)%bfield(1:3)
 c          ENDIF
 
-
           za = opt%int_z(iint) * 1000 + opt%int_a(iint)
 
           SELECTCASE (za)
@@ -102,23 +103,21 @@ c             available:
               av = opt%int_a(iint) 
               iz = opt%int_charge(iint)
 
-
-              IF     (iz.GE.1.AND.iz.LE.nizs) THEN
-                IF (.NOT.debugv) 
-     .            CALL ER('AssignPlasmaQuantities','Impurity velocity'//
-     .                    ' data not present',*99)
-                plasma(ipla)%ni(iint) = sdlims(ik,ir,iz)
-                plasma(ipla)%vi(iint) = sdvs  (ik,ir,iz) 
+              IF     (iz.GE.0.AND.iz.LE.nizs) THEN
+c                IF (.NOT.debugv)  ! *** PROFILE HACK ***
+c     .            CALL ER('AssignPlasmaQuantities','Impurity velocity'//
+c     .                    ' data not present',*99)
+                plasma(ipla)%ni(iint) = sdlims(ik,ir,iz) * absfac
+c                plasma(ipla)%vi(iint) = sdvs  (ik,ir,iz)  ! *** PROFILE HACK ***
                 plasma(ipla)%ti(iint) = sdts  (ik,ir,iz)
 
-                IF (ir.EQ.irsep)
-     .                WRITE(0,*) sdvs(ik,ir,iz),velavg(ik,ir,iz)
 
+c                IF (ir.EQ.irsep)
+c     .                WRITE(0,*) sdvs(ik,ir,iz),velavg(ik,ir,iz)
 
 c                IF (ir.EQ.irsep) THEN
 c                  WRITE(0,*) 'VEL:',iz,ik,ir,sdvs(ik,ir,iz)
 c                ENDIF
-
               ELSEIF (iz.EQ.0.AND..FALSE.) THEN
               ELSE
                 CALL ER('AssignPlasmaQuantities','Impurity data '//
@@ -127,9 +126,9 @@ c                ENDIF
 
           ENDSELECT
 
-        CASE (OP_EIRENE_GRID)
-c...      Eirene grid:
-          STOP 'NOT READY: OP_EIRENE_GRID'
+c        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
+cc...      Eirene grid:
+c          STOP 'NOT READY: OP_EIRENE_GRID'
         CASE (OP_INVERSION_GRID)
 c...      Inversion mesh:
           STOP 'NOT READY: OP_INVERSION_GRID'
@@ -153,8 +152,11 @@ c
       USE mod_out985_variables
       IMPLICIT none
 
-      INTEGER iint,ik,ir
+      INTEGER, INTENT(IN) :: iint,ik,ir
+      LOGICAL display_warning 
       REAL    osm(ik,ir),wlngth2
+
+      DATA display_warning /.TRUE./
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
@@ -164,13 +166,13 @@ c
       INCLUDE 'outcom'
 
 
-      INTEGER za,iz
+      INTEGER za,iz,ik1,ir1
       REAL    plrpad(MAXNKS,MAXNRS)
 
       za = opt%int_z(iint) * 1000 + opt%int_a(iint)
 
       SELECT CASE (opt%int_database(iint))
-
+c       ----------------------------------------------------------------
         CASE (1)
 c...      PIN: 
           IF (opt%int_line(iint).EQ.'UNITY') THEN
@@ -182,6 +184,33 @@ c...      PIN:
 
                 IF     (opt%int_line(iint).EQ.'B_ALPHA') THEN
                   osm(1:ik,1:ir) = pinline(1:ik,1:ir,6,H_BALPHA)
+c                 *** TEMP *** get rid of bad D2+ data at high temperatures
+                  DO ir1 = 1, nrs
+                    DO ik1 = 1, nks(ir1)
+                      IF (ktebs(ik,ir).GT.1.0E+3.AND.
+     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
+                        pinline(ik1,ir1,4,H_BALPHA) = 0.0
+                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+                        IF (display_warning) THEN
+                          display_warning = .FALSE.
+                          WRITE(0,*)
+                          WRITE(0,*) '===================='
+                          WRITE(0,*) '  CLIPPING D_ALPHA  '
+                          WRITE(0,*) '===================='
+                          WRITE(0,*)
+                        ENDIF
+                      ENDIF
+                    ENDDO
+                  ENDDO
+                  IF (.NOT.display_warning) THEN
+                    DO ir1 = 1, nrs
+                      DO ik1 = 1, nks(ir)
+                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                      ENDDO
+                    ENDDO
+                  ENDIF
+
                   wlngth2 = 656.3  ! Air
 
                 ELSEIF (opt%int_line(iint).EQ.'B_GAMMA') THEN
@@ -204,7 +233,7 @@ c...            ???:
 
             ENDSELECT
           ENDIF      
-   
+c       ----------------------------------------------------------------   
         CASE (2)
 c...      ADAS: 
 
@@ -218,10 +247,10 @@ c     >                   plrpad,wlngth2,IRCODE)
 
               iz = opt%int_charge(iint)
 
-              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
+c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
 
-              IF (iz.GE.1.AND.iz.LE.nizs) THEN   ! Add some checks to make sure the impurity requested matches what's available...
-                CALL LDADAS(opt%int_z(iint),iz,
+              IF (iz.GE.0.AND.iz.LE.nizs) THEN     ! Add some checks to make sure the impurity 
+                CALL LDADAS(opt%int_z(iint),iz,    ! requested matches what's available...
      .                      opt%int_adasid(iint),
      .                      opt%int_adasyr(iint),
      .                      opt%int_adasex(iint),
@@ -239,11 +268,11 @@ c     >                   plrpad,wlngth2,IRCODE)
           IF (ircode.NE.0) 
      .      CALL ER('GetFluidGridEmission','IRCODE.NE.0',*99)
 
-          osm(1:ik,1:ir) = plrpad(1:ik,1:ik)  
+          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * absfac 
           WRITE(0,*) 'WLNGTH:',wlngth2
-
+c       ----------------------------------------------------------------
         CASE (3) 
-c...      DIVIMP precalculated quantities (should mode DALHPA and DGAMMA here):
+c...      DIVIMP precalculated quantities (should move DALHPA and DGAMMA here):
           IF     (TRIM(opt%int_line(iint)).EQ.'PRAD') THEN
             SELECTCASE (opt%int_charge(iint))
               CASE (-1)  ! Sum over all charge states 
@@ -264,9 +293,10 @@ c                  WRITE(0,*) 'IZ!',iz
           ELSE
             CALL ER('GetFluidGridEmission','Unknown DIVIMP tag',*99)
           ENDIF
-
+c       ----------------------------------------------------------------
         CASE DEFAULT
           STOP 'UNRECOGNIZED DATABASE'
+c       ----------------------------------------------------------------
       ENDSELECT
 
       RETURN
@@ -349,6 +379,7 @@ c...    Core:
           ylist(2,nlist) = zvp(4,id)
         ENDDO
 c...    Everywhere else, radially:
+         
         WRITE(0,*)
         WRITE(0,*) '  ================================== '
         WRITE(0,*) '  GRID CLIPPING HACK: RING 32 FORCED '
@@ -356,6 +387,7 @@ c...    Everywhere else, radially:
         WRITE(0,*)
         DO ir = 3, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
+           STOP 'OLD HACK'
           IF (ir.EQ.36) CYCLE                      ! *** HACK ***
           DO ik = 1, nks(ir)-1
             IF     (irins(ik,ir).EQ.irwall.OR.
@@ -630,9 +662,9 @@ c
      .                   'Q AND PARTIAL'// 
      .      ' DERIVATIVES QX AND QY RELATIVE TO MACHINE PRECISION EPS'//  
      .      t12, 'FUNCTION   MAX ERROR   MAX ERROR/EPS'/)
-5100        FORMAT (t15, 'Q       ', e9.3, '       ', f4.2)
-5200        FORMAT (t15, 'QX      ', e9.3)
-5300        FORMAT (t15, 'QY      ', e9.3)
+5100        FORMAT (t15, 'Q       ', e10.3, '       ', f5.2)
+5200        FORMAT (t15, 'QX      ', e10.3)
+5300        FORMAT (t15, 'QY      ', e10.3)
 5400        FORMAT (///' *** ERROR IN QSHEP2 -- IER =', i2, ' ***')
 5500        FORMAT (///' *** ERROR IN QS2GRD -- IER =', i2, ' ***')
 5600        FORMAT (///' *** ERROR -- INTERPOLATED VALUES ',  
@@ -764,21 +796,21 @@ c
 c
 c ======================================================================
 c
-      SUBROUTINE GetNextTet(newobj,nsurface,ielement,status)
+      SUBROUTINE GetNextTet(newobj,nsurface,ielement,option,status)
       USE mod_out985
       USE mod_geometry
       USE mod_eirene06_locals
       IMPLICIT none
 
       TYPE(type_3D_object) :: newobj
-      INTEGER, INTENT(IN)  :: nsurface,ielement
+      INTEGER, INTENT(IN)  :: nsurface,ielement,option
       INTEGER, INTENT(OUT) :: status
-      REAL, ALLOCATABLE :: tdata(:)
+c      REAL, ALLOCATABLE :: tdata(:)
 
       INTEGER GetSurfaceIndex
       REAL    GetTetCentre
 
-      INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj,iside,isrf
+      INTEGER ivolume,i1,i2,count,isrc,ivtx,iobj,iside,isrf,origin
       REAL, ALLOCATABLE :: ycen(:)
 
       SAVE
@@ -803,15 +835,16 @@ c        CALL LoadTriangleData(6,1,7 ,1,tdata)  ! Dalpha
           ycen(i1) = GetTetCentre(i1)
         ENDDO
         iobj = 0
-      ENDIF
-
-      iobj = iobj + 1
-      IF (iobj.GT.nobj) THEN
-        IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
-        IF (ALLOCATED(ycen )) DEALLOCATE(ycen )
-        status = -1
         RETURN
       ENDIF
+
+c      iobj = iobj + 1
+c      IF (iobj.GT.nobj) THEN
+c        IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
+c        IF (ALLOCATED(ycen )) DEALLOCATE(ycen )
+c        status = -1
+c        RETURN
+c      ENDIF
 
 c      DO WHILE ((grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID).OR.
 c     .          (ycen(iobj).LT.-0.90))
@@ -821,14 +854,29 @@ c     .          (tdata(iobj).LT.0.5E+23))
 c     DO WHILE (obj(iobj)%segment(1).EQ.0)  ! *** HACK ***
 
 c      DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID)
-      DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID)
+cc      DO WHILE (grp(obj(iobj)%group)%origin.NE.GRP_MAGNETIC_GRID)
+c        iobj = iobj + 1
+c        IF (iobj.GT.nobj) THEN
+c          IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
+c          IF (ALLOCATED(ycen )) DEALLOCATE(ycen )
+c          status = -1
+c          RETURN
+c        ENDIF
+c      ENDDO
+
+c...  Select next valid tetrahedron:
+      DO WHILE (.TRUE.) 
         iobj = iobj + 1
         IF (iobj.GT.nobj) THEN
-          IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
+c          IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
           IF (ALLOCATED(ycen )) DEALLOCATE(ycen )
           status = -1
           RETURN
         ENDIF
+        origin = grp(obj(iobj)%group)%origin
+        IF (option.EQ.0.AND.origin.EQ.GRP_MAGNETIC_GRID) EXIT
+        IF (option.EQ.1.AND.origin.EQ.GRP_VACUUM_GRID  ) EXIT
+        IF (option.EQ.2                                ) EXIT
       ENDDO
 
       ivolume = ivolume + 1
@@ -925,7 +973,7 @@ c...  Input:
 
 c...  For connection map:
       INTEGER nlist,i2,i3,i4,i5,i6,c,iobj,isid,isrf,isrf1,isrf2,
-     .        iside,iside1,iobj1,ntet,nmatch
+     .        iside,iside1,iobj1,ntet,nmatch,option
       INTEGER, ALLOCATABLE :: vsum(:,:),ilist(:), itet(:)
       REAL, ALLOCATABLE :: yobj(:)
       REAL    minphi,maxphi,phi,dphi,y,dy,miny,maxy,GetTetCentre
@@ -946,10 +994,11 @@ c.... Load all the vertices:
       ENDDO
 
 c...  Load all fluid grid tetrahedrons:
+      option = opt%obj_option(ielement)
       status = 0
-      CALL GetNextTet(newobj,-1,-1,status)
+      CALL GetNextTet(newobj,-1,-1,-1,status)
       DO WHILE (status.EQ.0) 
-        CALL GetNextTet(newobj,nsrf,ielement,status)
+        CALL GetNextTet(newobj,nsrf,ielement,option,status)
         IF (status.EQ.0) THEN
           DO i1 = 1, newobj%nside
             newsrf%type = SP_PLANAR_POLYGON
@@ -960,8 +1009,8 @@ c...  Load all fluid grid tetrahedrons:
             idum1 = AddSurface(newsrf)
           ENDDO
           IF (nobj+1.GT.MAX3D) 
-     .      CALL ER('LoadVesselStructures','Insufficient array '//
-     .              'bounds for all objects A',*99)    
+     .      CALL ER('ProcessTetrahedronGrid','Insufficient array '//
+     .              'bounds for all objects (A)',*99)    
           nobj = nobj + 1
           obj(nobj) = newobj
         ENDIF
@@ -1323,7 +1372,8 @@ c...      Vertices:
           obj(nobj)%v(3,4) =  1.0D0
         ENDIF
 c     ------------------------------------------------------------------
-      ELSEIF (opt%obj_option(ielement).EQ.2) THEN
+      ELSEIF (opt%obj_option(ielement).EQ.2.OR.
+     .        opt%obj_option(ielement).EQ.9) THEN
         ivol = 0
         DO itri = 1, ntri
           IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
@@ -1355,13 +1405,19 @@ c     ------------------------------------------------------------------
 c...    
           DO v1 = 1, 3
             p1(1,v1  ) = DBLE(ver(tri(itri)%ver(v1),1))   ! *** NEED TO CHANGE VER(*,1:3) to VER(1:3,*) ***
-            p1(2,v1  ) = DBLE(ver(tri(itri)%ver(v1),2))   ! *** NEED TO CHANGE VER(*,1:3) to VER(1:3,*) ***
+            p1(2,v1  ) = DBLE(ver(tri(itri)%ver(v1),2))   
             p1(3,v1  ) = 0.0D0
-            p1(1,v1+3) = DBLE(ver(tri(itri)%ver(v1),1))  
-            p1(2,v1+3) = DBLE(ver(tri(itri)%ver(v1),2))  
-            p1(3,v1+3) = 0.0D0
+c            p1(1,v1+3) = DBLE(ver(tri(itri)%ver(v1),1))  
+c            p1(2,v1+3) = DBLE(ver(tri(itri)%ver(v1),2))  
+c            p1(3,v1+3) = 0.0D0
           ENDDO
 c...      Assign vertices to object:
+c          IF (obj(nobj)%ik.EQ.66.AND.obj(nobj)%ir.EQ.56) THEN
+c            WRITE(0,*) 'P1:',p1(1,1:3)
+c            WRITE(0,*) '  :',p1(2,1:3)
+c            STOP 'fsdf'
+c          ENDIF
+
           DO v1 = 1, obj(nobj)%nver
             obj(nobj)%v(1:3,v1) = p1(1:3,v1)
           ENDDO
@@ -1371,19 +1427,33 @@ c...
             IF (tri(itri)%sur(v1).NE.0) THEN        
 c...          Triangle surface is on a surface (magnetic or vessel wall):
               imap = tri(itri)%map(v1)
-              IF (tri(itri)%map  (v1).EQ.0    .AND.
+              IF (opt%obj_option(ielement).EQ.2.AND.
+     .            tri(itri)%map  (v1).EQ.0    .AND.
      .            tri(itri)%index(2 ).GE.irsep) THEN
+c            .AND.               ! Need surface type identifier...
+c     .             tri(itri)%type   .NE.MAGNETIC_GRID).OR.
+c     .            (tri(itri)%map(v1)        .EQ.0            .AND.
+c     .             tri(itri)%type           .EQ.MAGNETIC_GRID.AND.
+c     .             tri(itri)%sideindex(2,v1).NE.0).OR.                   ! Target check
+c     .            (imap.NE.0.AND.                                       
+c     .             tri(itri       )%type.NE.MAGNETIC_GRID.AND.
+c     .             tri(MAX(1,imap))%type.NE.MAGNETIC_GRID)) THEN
 c...            Vessel wall surface:
                 obj(nobj)%tsur(v1) = SP_VESSEL_WALL  
+c                IF (ielement.NE.0) THEN
                 obj(nobj)%reflec(v1) = opt%obj_reflec(ielement)
+c                ELSE
+c                  obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
+c                ENDIF
+c                obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
                 obj(nobj)%nmap(v1) = 1
                 obj(nobj)%imap(1,v1) = nobj
-                obj(nobj)%isur(1,v1) = 2  ! *** should this really be a 2 for some reason? ***
+                obj(nobj)%isur(1,v1) = v1 ! 2  ! *** should this really be a 2 for some reason? ***
                 obj(nobj)%rsur(3,v1) = tri(itri)%sideindex(3,v1)   ! xVESM wall index
                 obj(nobj)%rsur(4,v1) = tri(itri)%sideindex(4,v1)   ! Additional surface index
               ELSE
 c...            Magnetic surface (grid boundary):
-                obj(nobj)%tsur(v1) = SP_GRID_BOUNDARY 
+                obj(nobj)%tsur(v1) = SP_GRID_BOUNDARY  ! *** TRUE? ***
                 obj(nobj)%reflec(v1) = 0
                 obj(nobj)%nmap(v1) = 1
                 obj(nobj)%imap(1,v1) = nobj
@@ -1412,6 +1482,19 @@ c...          Triangle mesh boundary surface only:
               obj(nobj)%ipts(2,v1) = 1
             ENDIF
           ENDDO
+
+
+c          IF (obj(nobj)%ik.EQ.66.AND.obj(nobj)%ir.EQ.56) THEN
+c            WRITE(0,*) 'P:',p1(1,1:3)
+c            WRITE(0,*) ' :',p1(2,1:3)
+c            DO v1 = 1, 3
+c              WRITE(0,*) obj(nobj)%v(1,obj(nobj)%ipts(1,v1))
+c              WRITE(0,*) obj(nobj)%v(1,obj(nobj)%ipts(2,v1))
+c              WRITE(0,*) obj(nobj)%v(2,obj(nobj)%ipts(1,v1))
+c              WRITE(0,*) obj(nobj)%v(2,obj(nobj)%ipts(2,v1))
+c            ENDDO
+c          ENDIF
+
         ENDDO
 c     ------------------------------------------------------------------
       ELSE
@@ -2038,8 +2121,8 @@ c                ENDIF
               ELSE
                 obj(nobj)%tsur(2) = SP_GRID_SURFACE
                 obj(nobj)%reflec(2) = 0
-                obj(nobj)%nmap(2) = -noutmap(ik,ir)
-                DO i1 = 1, noutmap(ik,ir)
+                obj(nobj)%nmap(2) = -MIN(20,noutmap(ik,ir))
+                DO i1 = 1, MIN(20,noutmap(ik,ir))
                   obj(nobj)%imap(i1,2) = ikoutmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,2) = iroutmap(ik,ir,i1)
                 ENDDO
@@ -2090,8 +2173,8 @@ c                    obj(nobj)%reflec(3) = opt%ob_stdgrd_reflec
               ELSE
                 obj(nobj)%tsur(4) = SP_GRID_SURFACE
                 obj(nobj)%reflec(4) = 0
-                obj(nobj)%nmap(4) = -ninmap(ik,ir)
-                DO i1 = 1, ninmap(ik,ir)
+                obj(nobj)%nmap(4) = -MIN(20,ninmap(ik,ir))
+                DO i1 = 1, MIN(20,ninmap(ik,ir))
                   obj(nobj)%imap(i1,4) = ikinmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,4) = irinmap(ik,ir,i1)
                 ENDDO
@@ -2181,8 +2264,8 @@ c              obj(nobj)%ipts(4,2) = 2
               ELSE
                 obj(nobj)%tsur(3) = SP_GRID_SURFACE
                 obj(nobj)%reflec(3) = 0
-                obj(nobj)%nmap(3) = -noutmap(ik,ir)
-                DO i1 = 1, noutmap(ik,ir)
+                obj(nobj)%nmap(3) = -MIN(20,noutmap(ik,ir))
+                DO i1 = 1, MIN(20,noutmap(ik,ir))
                   obj(nobj)%imap(i1,3) = ikoutmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,3) = iroutmap(ik,ir,i1)
                 ENDDO
@@ -2242,8 +2325,8 @@ c              obj(nobj)%ipts(4,4) = 4
               ELSE
                 obj(nobj)%tsur(5) = SP_GRID_SURFACE
                 obj(nobj)%reflec(5) = 0
-                obj(nobj)%nmap(5) = -ninmap(ik,ir)
-                DO i1 = 1, ninmap(ik,ir)
+                obj(nobj)%nmap(5) = -MIN(20,ninmap(ik,ir))
+                DO i1 = 1, MIN(20,ninmap(ik,ir))
                   obj(nobj)%imap(i1,5) = ikinmap(ik,ir,i1) 
                   obj(nobj)%isur(i1,5) = irinmap(ik,ir,i1)
                 ENDDO

@@ -1944,7 +1944,7 @@ C  FOLLOW NEUTRAL PARTICLE
           IF (ITYP.EQ.0.OR.ITYP.EQ.1.OR.ITYP.EQ.2) THEN
 c slmod begin - debug
             IF (IPANU.NE.LAST_IPANU) THEN
-              IF (MOD(IPANU,1000).EQ.0) WRITE(0,*) 'IPANU:',ipanu
+              IF (MOD(IPANU,10000).EQ.0) WRITE(0,*) 'IPANU:',ipanu
               LAST_IPANU = IPANU
             ENDIF
 c            IF (ipanu.EQ.4933) nltrc = .TRUE.
@@ -2299,7 +2299,11 @@ c slmode end
         IESTR=ISTRA
         ISTRAA=ISTRA
         ISTRAE=ISTRA
-        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod begin
+        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER,IPANU)
+c
+c        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+c slmod end
         NEW_ITER=1
       ENDIF
 C
@@ -3704,7 +3708,19 @@ C
 
 C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
       FLXFAC(ISTR)=0.
-      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod begin
+      WRITE(6,*) 'SCALV=',istr,scalv(istr)
+      WRITE(0,*) 'SCALV=',istr,scalv(istr)
+
+      IF (SCALV(ISTR).LT.0.D0) THEN
+c...    Set the flux to a particular value:
+        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE',ISTR
+        FLUXT(ISTR)=-SCALV(ISTR)
+        IF (WTT.NE.0.D0) FLXFAC(ISTR)=FLUXT(ISTR)/WTT
+      ELSEIF (SCALV(ISTR).NE.0.D0) THEN
+c
+c      IF (SCALV(ISTR).NE.0.D0) THEN
+c slmod end
 C  NON DEFAULT SCALING OPTION
         IS=ISCLS(ISTR)
         IT=ISCLT(ISTR)

@@ -55,8 +55,8 @@ c slmod begin
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
 
-      INTEGER i1,i2,i3,ik
-      REAL    slver
+      INTEGER      i1,i2,i3,ik,i
+      REAL         slver
 c slmod end
 C
 c
@@ -101,7 +101,15 @@ c
       CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
       CALL RINOUT ('W FACTB  ',factb ,maxizs+2)
       CALL RINOUT ('W DWELTS ',dwelts,maxizs+2)
-      CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+c slmod begin
+      IF (IMODE.EQ.1) THEN
+        CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+      ELSE
+        CALL RINOUT ('W DWELFS ',dwelfs,1     )
+      ENDIF
+c
+c      CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+c slmod end
       CALL RINOUT ('W KALPHS ',kalphs,maxizs)
       CALL RINOUT ('W KBETAS ',kbetas,maxizs)
 c     
@@ -677,6 +685,8 @@ c...  6.41:
 
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
+
+
 
 c slmod end
 c

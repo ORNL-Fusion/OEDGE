@@ -1,0 +1,35 @@
+* First ever CORTEX input file
+*
+
+{STRING} list_vertical     i-fwp-xxxxb i-fwp-xxxxd i-fwp-xxxxi i-fwp-xxxxe i-fwp-xxxxg i-fwp-xxxxf i-fwp-xxxxh
+{STRING} list_horizontal_b i-fwp-xxx0b i-fwp-xxx1b i-fwp-xxx2b i-fwp-xxx3b i-fwp-xxx4b i-fwp-xxx5b i-fwp-xxx6b i-fwp-xxx7b i-fwp-xxx8b i-fwp-xxx9b
+{STRING} list_horizontal_d i-fwp-xxx0d i-fwp-xxx1d i-fwp-xxx2d i-fwp-xxx3d i-fwp-xxx4d i-fwp-xxx5d i-fwp-xxx6d i-fwp-xxx7d i-fwp-xxx8d i-fwp-xxx9d
+{STRING} list_horizontal_i i-fwp-xxx0i i-fwp-xxx1i i-fwp-xxx2i i-fwp-xxx3i i-fwp-xxx4i i-fwp-xxx5i i-fwp-xxx6i i-fwp-xxx7i i-fwp-xxx8i i-fwp-xxx9i
+{STRING} list_horizontal_e i-fwp-xxx0e i-fwp-xxx1e i-fwp-xxx2e i-fwp-xxx3e i-fwp-xxx4e i-fwp-xxx5e i-fwp-xxx6e i-fwp-xxx7e i-fwp-xxx8e i-fwp-xxx9e
+{STRING} list_horizontal_g i-fwp-xxx0g i-fwp-xxx1g i-fwp-xxx2g i-fwp-xxx3g i-fwp-xxx4g i-fwp-xxx5g i-fwp-xxx6g i-fwp-xxx7g i-fwp-xxx8g i-fwp-xxx9g
+{STRING} list_horizontal_f i-fwp-xxx0f i-fwp-xxx1f i-fwp-xxx2f i-fwp-xxx3f i-fwp-xxx4f i-fwp-xxx5f i-fwp-xxx6f i-fwp-xxx7f i-fwp-xxx8f i-fwp-xxx9f
+{STRING} list_horizontal_h i-fwp-xxx0h i-fwp-xxx1h i-fwp-xxx2h i-fwp-xxx3h i-fwp-xxx4h i-fwp-xxx5h i-fwp-xxx6h i-fwp-xxx7h i-fwp-xxx8h i-fwp-xxx9h
+
+{STRING} upper_scale_factor    0.14
+{STRING} midplane_scale_factor 0.28
+{STRING} value_yrange                1.0E-06 1.0E-00
+{STRING} value_limit                 0.03
+
+{STRING} material   IRON
+{STRING} SOL_flow   M = 0.0 in SOL
+{STRING} disclaimer No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+
+$ ======================================================================
+$ UPPER PORT, MCR  - series 10
+$ ======================================================================
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    material, UPPER PORT, SOL_flow, MCR: SCALE FACTOR upper_scale_factor
+  {NOTES}    disclaimer
+  {XLABELS}  023xb : 023xd : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   value_yrange
+  {YLIMIT}   limit
+  {SCALE FACTOR} upper_scale_factor
+  {SET} Dperp = 1.0 m2 s-1   3b {CASE} i-fwp-0223b >d list_horizontal_b sub xxx 421
+  {SET} Dperp = 0.1 m2 s-1   4b {CASE} i-fwp-0224b >d list_horizontal_b sub xxx 431
+  {SET} Dperp =10.0 m2 s-1   5b {CASE} i-fwp-0225b >d list_horizontal_b sub xxx 441

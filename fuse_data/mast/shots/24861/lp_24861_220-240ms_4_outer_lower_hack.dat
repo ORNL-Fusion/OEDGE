@@ -1,0 +1,13 @@
+{NUMBER OF COLUMNS}       4
+*
+* SHOTS  =   24861
+* TIMES  =     0.230053 to     0.249813 s
+* SMOOTH =      11
+* SAMPLE =       5
+*
+*       PSIn        jsat        jsol          Te
+*                (A m-2)       (A ?)        (eV)
+{DATA LIST}
+    0.500000         0.0         0.0        5.00
+    1.500000         0.0         0.0        5.00
+{END}

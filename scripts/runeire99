@@ -107,27 +107,15 @@ export GRSOFT_DEVICE
 #
 ln -s upgrade.geom fort.30
 ln -s $DIVRUNDIR/$CASENAME/fort.17 fort.31
-
+ln -s $EIREXE99DIR/TRIM/trim.dat fort.21
 # slmod begin
 #
-# jdemod - link in Eirene04 database since it looks like Eirene99 was modified to expect it ...
 #
-#ln -s $EIREXE99DIR/TRIM/trim.dat fort.21
 #
-# 
-
-ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
-ln -sf $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
-ln -sf $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
-ln -sf $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
-ln -sf $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
-ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/TRIM
-
-
-#  ln -s $EIREXE99DIR/a+m/HYDHEL HYDHEL
-#  ln -s $EIREXE99DIR/a+m/SPUTER SPUTER
-#  ln -s $EIREXE99DIR/a+m/AMJUEL.TEX AMJUEL
-#  ln -s $EIREXE99DIR/a+m/METHANE METHANE
+  ln -s $EIREXE99DIR/a+m/HYDHEL HYDHEL
+  ln -s $EIREXE99DIR/a+m/SPUTER SPUTER
+  ln -s $EIREXE99DIR/a+m/AMJUEL.TEX AMJUEL
+  ln -s $EIREXE99DIR/a+m/METHANE METHANE
 #
 #ln -s $EIREXE99DIR/a+m/AMJUEL AMJUEL
 #ln -s $EIREXE99DIR/a+m/HYDHEL HYDHEL

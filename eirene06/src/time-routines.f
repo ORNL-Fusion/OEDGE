@@ -2719,7 +2719,7 @@ C  ON NON DEFAULT SURFACE (ADD. OR STD.) ISTS=INMTI(IPOLGN,NRCELL)
       ELSE
         GOTO 9999
       ENDIF
-      IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+      IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN A',
      .                         NRCELL,MRSURF,PT,NINCX,IPOLGN
 
       RETURN
@@ -2789,7 +2789,7 @@ C PARTICLE OUTSIDE STANDARD MESH IN CELL NACELL, NRCELL=0
         MRSURF = ITRINO(ISTS_CELL)
         IPOLGN = ISIDNO(ISTS_CELL)
         NINCX = ITRINO(ISTS_CELL)
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN B',
      .                                NRCELL,MRSURF,PT,NINCX,IPOLGN
       END IF
 
@@ -2837,6 +2837,22 @@ C
             I1=ABS(IRICH(1,J))
             SIG2=SIGN(1,IRICH(2,J))
             I2=ABS(IRICH(2,J))
+c slmod begin - debug
+            IF (izell.EQ.0) THEN 
+              WRITE(6,*) 'NPANU =',npanu
+              WRITE(6,*) 'IZELL =',izell
+              WRITE(6,*) 'J     =',j
+              WRITE(6,*) 'I1    =',i1
+              WRITE(6,*) 'NRCELL=',nrcell
+              WRITE(6,*) 'IPOLG =',ipolg
+              WRITE(6,*) 'IPOLGO=',ipolgo
+              PT=1.D30
+              NINCX=0
+              WRITE(iunout,*) 'ERROR (TIMER): Killing trajectory'
+              RETURN
+c              STOP 'HALTING THE CODE DUE TO TROUBLE'
+            ENDIF
+c slmod end
             PNORMI=RINCRC(J,IZELL)
             A(1:3,1) = (/ VTETX(I1,IZELL), VTETY(I1,IZELL),
      .                    VTETZ(I1,IZELL)/) * SIG1 * PNORMI
@@ -2936,6 +2952,16 @@ C  DURCHSUCHE NACHBARDREIECK
         IF (NLSRFX) THEN
           IZELL=NTBAR(IPOLG,NRCELL)
           IPOLGO=NTSEITE(IPOLG,NRCELL)
+c slmod begin
+c          IF (IZELL.EQ.0) THEN
+c            WRITE(6,*) 'IPOLG =',ipolg
+c            WRITE(6,*) 'NRCELL=',nrcell
+c            WRITE(6,*) 'IZELL =',izell
+c            WRITE(6,*) 'IPOLGO=',ipolgo
+c            WRITE (iunout,*) ' IZELL = 0 IN TIMER '
+c            CALL EXIT_OWN(1)
+c          END IF
+c slmod end
           NRCELL=IZELL
           NLSRFX=.FALSE.
           GOTO 11020
@@ -2966,7 +2992,7 @@ C  ON NON DEFAULT SURFACE (ADD. OR STD.) ISTS=INMTI(IPOLGN,NRCELL)
         ELSE
           GOTO 9999
         ENDIF
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN C',
      .                           NRCELL,MRSURF,PT,NINCX,IPOLGN
 
         RETURN
@@ -3100,7 +3126,7 @@ C  SEITENNUMMER DES NEUEN DREIECKS
         MRSURF=NTMZ
         IPOLGN=NTMS
         NINCX=NTMZ-NRCELL
-        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN ',
+        IF (NLTRC) WRITE (iunout,*) ' NRCELL,MRSURF,PT,NINCX,IPOLGN D',
      .                           NRCELL,MRSURF,PT,NINCX,IPOLGN
       END IF
       RETURN

@@ -1,0 +1,86 @@
+#!/bin/tcsh
+
+  if ( $CASENAME == "" ) then
+    echo 'ERROR fuse_osm_eirene: No Case name specified - exiting'
+    exit 1
+  endif
+
+  set XEIDIR = $FUSEHOME_DATA/cases/$CASENAME.eirene
+  set EXEDIR = $FUSEHOME_DATA/cases/$CASENAME
+  set LEIDIR = $FUSEHOME/src/eirene07
+
+# EIRENE plots
+  setenv GLI_HOME .
+  setenv GRSOFT_DEVICE 62
+
+# Establish execution directories
+  if ( -e $XEIDIR ) then
+    rm -rf $XEIDIR
+  endif
+  mkdir $XEIDIR
+  cd    $XEIDIR
+
+# Copy EIRENE input file
+  if ( -e $EXEDIR/eirene.input ) then
+    cp $EXEDIR/eirene.input fort.1
+  else
+    echo ERROR fuse_osm_eirene: Eirene input file not found
+    exit 1
+  endif
+
+# Link to OSM data transfer files
+  ln -s $EXEDIR/objects.npco_char cmod.npco_char
+  ln -s $EXEDIR/objects.elemente  cmod.elemente
+  ln -s $EXEDIR/objects.neighbors cmod.neighbors
+  ln -s $EXEDIR/objects.plasma    cmod.plasma
+
+  if (-e $EXEDIR/eirene.13) cp $EXEDIR/eirene.13 fort.13
+  if (-e $EXEDIR/eirene.15) cp $EXEDIR/eirene.15 fort.15
+
+# Copy (local) collision rate data 
+  ln -s $EXEDIR/HYDHEL        .
+  ln -s $EXEDIR/SPUTER        .
+  ln -s $EXEDIR/AMJUEL        .
+  ln -s $EXEDIR/METHANE       .
+  ln -s $EXEDIR/H2VIBR        .
+  ln -s $EXEDIR/TRIM          .
+  ln -s $EXEDIR/TRIM/trim.dat fort.21
+
+  ln -s $LEIDIR/case/PHOTON           .
+  ln -s $LEIDIR/case/POLARI           .
+  ln -s $LEIDIR/case/graphite_ext.dat .
+  ln -s $LEIDIR/case/mo_ext.dat       .
+
+  ln -s $EXEDIR/gksfont.dat .
+
+# Execute EIRENE
+  ln -s $EXEDIR/eirene07 ./eirene
+
+# Xpgdbg ./eirene > asdex.out
+  eirene > eirene.out
+#/usr/totalview/bin/totalview ./eirene > eirene.out
+
+# Process results
+  mvc eirene.transfer $EXEDIR
+  mvc eirene.out      $EXEDIR/$CASENAME.eirprn
+  mvc gli.eps         $EXEDIR/$CASENAME.eps
+  mvc fort.1          $EXEDIR/$CASENAME.eirdat
+  mvc fort.13         $EXEDIR/eirene.13
+  mvc fort.15         $EXEDIR/eirene.15
+  cpc fort.90         $EXEDIR/eirtrac.dat
+  cpc fort.88         $EXEDIR/eirene_log.dat
+
+# Clean
+  rm -r -f $XEIDIR
+  cd $EXEDIR
+
+  exit 0
+
+
+
+
+
+
+
+
+

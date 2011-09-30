@@ -1,0 +1,274 @@
+* 
+* CORTEX example file for c-new series of cases
+* =============================================
+*
+* Copy ~/slisgo/fuse to $HOME/fuse.
+*
+* You need to add $FUSEHOME/idl and $FUSEHOME/idl/utils to your IDL path.  See ~slisgo/idl_startup.pro,
+* if necessary.
+* 
+* > cd $FUSEHOME/idl
+* > idl
+* IDL> @cortex_make
+* IDL> cortex_main,['c-new-0017b','c-new.ctx']
+*
+* The output is in $RESULTS/c-new/$CASEHAME.idl.ps.  Note that the page is formatted for A4 paper --
+* not sure how to adjust this at the moment, but have a look in $FUSEHOME/idl/utils/psopen.pro (or 
+* whatever it's called).
+*
+* See if that works...
+
+
+* Transfer the tetrahedron grid data that's stored in $DIVHOME/results/c-new/$CASENAME.idl.tet_centroid
+* to IDL save set $FUSEHOME/idl/tetrahedron_test.sav.  This is the file I supplied to Micheal, i.e. he
+* has some code to play around with this and produce some line-of-sight integrations, 3D plots, etc.
+
+{PLOT 3D TEST}  1
+
+* Just a plot of the grid
+
+{PLOT 2D FLUID GRID}  1  
+
+
+{EXIT}
+
+
+* ------------------ below here is junk ------------------ 
+
+
+{PLOT 1D PARALLEL PROFILE}  1  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; 
+
+{EXIT}
+
+
+
+
+{PLOT 1D LOS INTEGRAL}  1  {YLOG}  {CASE} >c >d >e ${YRANGE}  18 23  
+                           {DATA FILE}    idl.midplane_dalpha_1d_los_01
+  {TITLE} D_alpha: toroidal view of inner wall midplane, see Bruce's memo from 2/2/10 views 18-26 (1-9 here), 
+          squares are the measurements, line is the gas puff model
+${EXIT}
+
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_001    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #1, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_001     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #1, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_001  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #1, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_002    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #2, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_002     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #2, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_002  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #2, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_003    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #3, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_003     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #3, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_003  {XRANGE}  0.85 1.02  {YRANGE}  0.0 100.0  {CASE} >c >d >e  {TITLE}  View #3, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_004    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #4, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_004     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #4, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_004  {XRANGE}  0.85 1.02  {YRANGE}  0.0 200.0  {CASE} >c >d >e  {TITLE}  View #4, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_005    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #5, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_005     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #5, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_005  {XRANGE}  0.85 1.02  {YRANGE}  0.0 400.0  {CASE} >c >d >e  {TITLE}  View #5, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_006    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #6, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_006     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #6, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_006  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #6, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_007    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #7, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_007     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #7, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_007  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #7, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_008    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #8, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_008     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #8, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_008  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #8, average atom energy / eV
+
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_dalpha_1d_009    {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #9, D_alpha / photons m-3 s-1
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_den_1d_009     {XRANGE}  0.85 1.02                       {CASE} >c >d >e  {TITLE}  View #9, atom density / m-3
+{PLOT 1D LOS INTEGRAL}  2  {ID}  midplane_d_avgeng_1d_009  {XRANGE}  0.85 1.02  {YRANGE}  0.0 800.0  {CASE} >c >d >e  {TITLE}  View #9, average atom energy / eV
+
+{EXIT}
+
+
+${DATA PATH}  ~/divimp/results
+
+{PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0009b {CASE} >c >d >e
+                           {DATA FILE}    idl.midplane_dalpha_los_01
+
+
+
+${PLOT 1D LOS INTEGRAL}  1  {CASE DEFAULT} c-new-0000h {CASE} c-new-0001a >d c-new-0008a c-new-0009a
+$                           {DATA FILE}    idl.midplane_dalpha_los_01
+
+
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}   1  {NO FRAME}  {NODES}
+{PLOT 2D CONTOUR}    200  {LOG}  
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  {NO WALL}
+  {ANNOTATE} 1    Blue /home/ITER/lisgos/divimp/shots/iter/i1514/wlly_full_vessel.dat
+$  {SHOW}  36   Red
+ {SHOW}  40   Red
+ {SHOW}  84   Red
+ {SHOW}  109  Red
+
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {NO WALL} 
+  {NO WALL} 
+  {ANNOTATE} 1    Blue /home/ITER/lisgos/divimp/shots/iter/i1514/wlly_full_vessel.dat
+$  {SHOW}  36   Red
+  {SHOW}  40   Red
+  {SHOW}  84   Red
+  {SHOW}  109  Red
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  {NO FRAME}  
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  
+                         {EQU PARAMS}  25  0.1  1.1
+                         {ZOOM}        4.0  2.5   7.0  6.0
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; upper midplane FWP
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  117 118 119 127 128 129 130                       ; lower midplane FWP
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  103 104 105 106 107 108 109 112 113 114 115 116   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  38  39  40  41  81  82  83  84  99  100 101 102   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  26  27  28  29  30  31  32  33  34  35  36  37    ; rings farther in...
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; upper midplane FWP
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  117 118 119 127 128 129 130                       ; lower midplane FWP
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  103 104 105 106 107 108 109 112 113 114 115 116   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  38  39  40  41  81  82  83  84  99  100 101 102   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  26  27  28  29  30  31  32  33  34  35  36  37    ; rings farther in...
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  100 101 102 103 104 105 106 107 108 109 110 111 
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  35  36  37  38  39  40  41  81  82  83  84  99
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  23  24  25  26  27  28  29  30  31  32  33  34
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  100 101 102 103 104 105 106 107 108 109 110 111 
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  35  36  37  38  39  40  41  81  82  83  84  99
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  23  24  25  26  27  28  29  30  31  32  33  34
+
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  28 29 30 31 32 33 34 35 36  
+
+{PLOT 2D CONTOUR}  300  {LOG}  {ZOOM} 4.0 2.0  8.5 5.5  {NO FRAME}
+{PLOT 2D CONTOUR}  400  {LOG}  {ZOOM} 4.0 2.0  8.5 5.5
+
+{PLOT 2D CONTOUR}  300  {LOG}  {NO FRAME} 
+{PLOT 2D CONTOUR}  400  {LOG}
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1            {NO GRID} {NO FRAME} 
+{PLOT 2D FLUID GRID}  1  {INDICES} {NO GRID}                    
+
+{EXIT}
+
+
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1 {EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES} {FOCUS}  5  {XRANGE}  0.0 0.5
+{EXIT}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{PLOT 2D CONTOUR}  200  {LOG}  
+  
+{EXIT}
+
+
+{PLOT 1D TARGET PROFILE}  1    
+$  {CASE} i-fwp-0111a
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {SHOW}  5  Red
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {ZOOM}  0.19 -0.50    0.40  0.50
+  {ASPECT RATIO}  1.0
+  {SHOW}  5  Red
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {ZOOM}  0.19 -0.30    0.21  0.30
+  {ASPECT RATIO}  1.0
+  {SHOW}  5  Red
+
+{EXIT} 
+
+
+
+
+
+
+
+${PLOT 1D RADIAL PROFILE}  2
+$  {CASE} i-fwp-0111a
+$  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+${EXIT}
+
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE} i-fwp-0111a
+  {CASE} i-fwp-0114c
+  {XRANGE}  0.00  0.15
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 2
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 2
+  {XRANGE}  0.0  0.15
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 6
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 6
+  {XRANGE}  0.0  0.15
+
+${PLOT 1D PEDESTAL MODEL}  1    
+$  {FOCUS} 3
+
+{PLOT 1D TARGET PROFILE}  1    
+  {CASE} i-fwp-0111a
+
+
+{EXIT}
+

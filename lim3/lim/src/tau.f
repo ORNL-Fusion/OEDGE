@@ -222,14 +222,6 @@ C
       WRITE (0,'('' TAU: CALLING SOL    OPTION'',I3)') CIOPTF                   
       CALL SOL (QYS,CEYS,CVHYS,NQYS,CTBIN,CTIBIN,CRMB,CL,CIZB,                 
      >          CEYOUT,CVHOUT,CYSTAG,CRMI,CSOLEF,CIOPTF)                        
-c
-c     jdemod: Scale the outboard flow velocity outside the limiters
-c             (only used in 3D) 
-c             (QX(IQX) scaling is done in line when the new location
-c              is calculated in lim3.f)
-c
-      vpflow_3d = vpflow_3d * qtim
-
 C                                                                               
 C-----------------------------------------------------------------------        
 C              SET UP CYSCLS, CFEXZS, CFVHXS                                    

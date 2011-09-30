@@ -1,0 +1,12 @@
+C
+C*DK MASR4
+      SUBROUTINE MASR4 (A,B,C,D,E)
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      CHARACTER(32), INTENT(IN) :: A
+      REAL(DP), INTENT(IN) :: B, C, D, E
+      WRITE (iunout,60) A,B,C,D,E
+60    FORMAT (1X,A32/1X,4(1PE12.4,3X))
+      RETURN
+      END

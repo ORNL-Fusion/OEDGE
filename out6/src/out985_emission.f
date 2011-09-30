@@ -37,6 +37,8 @@ c...  Check for the presence of standard (OSM) and triangle (EIRENE) grid elemen
         ENDSELECT
       ENDDO
 
+      WRITE(0,*) 'max_ik,ir=',max_ik,max_ir,'go'
+
 
 c...  Allocate memory for spectrum and plasma data storage:
       nplasma = 0
@@ -59,6 +61,26 @@ c...  Allocate memory for spectrum and plasma data storage:
 c        WRITE(0,*) 'CON<NPLA:',count,nplasma,count*nplasma
       ENDIF
 
+      DO iobj = 1, nobj   ! *** PROFILE HACK ***
+        IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) 
+     .    nplasma = nplasma + 1
+      ENDDO
+      ALLOCATE(plasma(nplasma))
+      DO i1 = 1, nplasma
+        plasma(i1)%nD  = 0.0
+        plasma(i1)%nD2 = 0.0
+        plasma(i1)%ne  = 0.0
+        plasma(i1)%te  = 0.0
+        plasma(i1)%nb  = 0.0
+        plasma(i1)%vb  = 0.0
+        plasma(i1)%tb  = 0.0
+        plasma(i1)%si  = 0.0  
+        plasma(i1)%ni  = 0.0
+        plasma(i1)%vi  = 0.0
+        plasma(i1)%ti  = 0.0
+        plasma(i1)%bfield = 0.0
+      ENDDO
+
       nplasma = 0
       nspectrum = 0
       DO iint = 1, opt%int_num
@@ -68,10 +90,11 @@ c...    Assign/calculate quantity of interest:
         SELECTCASE (opt%int_database(iint))
 c         --------------------------------------------------------------
           CASE(1:3)
-c          IF (max_ik.GT.0.AND.max_ir.GT.0) THEN
 c...        Fluid grid quantity:
             IF (.NOT.ALLOCATED(osm)) ALLOCATE(osm(max_ik,max_ir))
+            WRITE(0,*) 'max_ik,ir=',max_ik,max_ir
             CALL GetFluidGridEmission(iint,max_ik,max_ir,osm,wlngth)
+            WRITE(0,*) 'max_ik,ir=',max_ik,max_ir
 c         --------------------------------------------------------------
           CASE(4)
 c           IF (.FALSE..AND.max_in.GT.0) THEN
@@ -105,6 +128,8 @@ c                  WRITE(0,*) opt%obj_fname(iobject)(i1:i1),i1,i2,i3
             IF (opt%int_line(iint).EQ.'B_GAMMA')    p = [6,2,6 ,1]  ! Dgamma
             IF (opt%int_line(iint).EQ.'C0_DENSITY') p = [2,2,1 ,1]  ! C atom density
             IF (opt%int_line(iint).EQ.'D+_DENSITY') p = [1,1,10,0]  ! D+ density
+            IF (opt%int_line(iint).EQ.'D_DENSITY')  p = [2,1,1 ,1]  ! D density [m-3]
+            IF (opt%int_line(iint).EQ.'D_AVGENG')   p = [2,1,7 ,0]  ! D average energy [eV}
             WRITE(0,*) 'EIRENE DATA PARAMETERS=',p
             IF (p(1).EQ.0) CALL ER('AssignEmissionData','Bad '//
      .                             'EIRENE data tag',*99)
@@ -136,7 +161,6 @@ c...          Eirene grid:
               ENDIF
             CASE (OP_INVERSION_GRID)
 c...          Inversion mesh:
-
             CASE DEFAULT
               CALL ER('AssignEmissionData','Unknown integration '//
      .                'sub-type',*99)
@@ -167,11 +191,10 @@ c...      Map SPECTRUM array to PIXEL array:
 
         ENDIF
           
-
 c...    Additional information for generating line shapes and weighted
 c       averages (velocities, temperatures, B-field, ...):
-        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
-
+        IF (.TRUE.) THEN  ! *** PROFILE HACK ***
+c        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
           DO iobj = 1, nobj
             IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
             IF (obj(iobj)%index_pla.EQ.0) THEN
@@ -186,12 +209,13 @@ c       averages (velocities, temperatures, B-field, ...):
 
         ENDIF
 
+        IF (ALLOCATED(osm   )) DEALLOCATE(osm)
+        IF (ALLOCATED(tdata )) DEALLOCATE(tdata)
+c        IF (ALLOCATED(plasma)) DEALLOCATE(plasma)     
 
-      ENDDO
+      ENDDO  ! iint
 
    
-      IF (ALLOCATED(osm  )) DEALLOCATE(osm  )
-      IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
 
 
       RETURN

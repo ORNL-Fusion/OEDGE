@@ -1,18 +1,9 @@
 #!/bin/tcsh
-#
-# Load local configuration which defines $localdir
-#
-source $scriptdir/local_config_testcases
-#
-# Common initialization
-#
-
-set divmain    = $HOME/$localdir
+set divmain    = $HOME/divimp
 set scriptdir  = $divmain/scripts
 set resultdir  = $divmain/results
 set testsubdir = testcases
 set testdir    = $resultdir/$testsubdir
-set testlist   = '[123456789]'
-set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09'
+set testlist   = '[12345678]'
+set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08'
 set extlist = '.dat .lim .eirprn .out .bgp'
-

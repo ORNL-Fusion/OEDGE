@@ -1,0 +1,17 @@
+
+
+C*DK MASAJ1
+      SUBROUTINE MASAJ1 (A,M,N)
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      CHARACTER(13), INTENT(IN) :: A
+      INTEGER, INTENT(IN) :: N, M(N)
+      INTEGER :: J
+      WRITE (iunout,60) A
+60    FORMAT (1X,A13)
+      DO 62 J=1,N
+62    WRITE (iunout,61) J,M(J)
+61    FORMAT(1X,I2,1X,I6)
+      RETURN
+      END
