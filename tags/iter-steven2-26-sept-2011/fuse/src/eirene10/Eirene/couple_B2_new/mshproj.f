@@ -1,0 +1,59 @@
+C
+C
+      SUBROUTINE MSHPROJ(X1,Y1,X2,Y2,X3,Y3,X4,Y4,PUX,PUY,PVX,PVY,
+     .                   NDXA,NR1ST,IY)
+
+      USE PRECISION
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: X1(*), Y1(*), X2(*), Y2(*),
+     .                      X3(*), Y3(*), X4(*), Y4(*)
+      REAL(DP), INTENT(OUT) :: PUX(*), PUY(*), PVX(*), PVY(*)
+      INTEGER, INTENT(IN) :: NDXA, NR1ST, IY
+      REAL(DP) :: D12, D34, D13, D24, EPS60, PUPV, PVPV, DVX, DVY,
+     .          DUX, DUY
+      INTEGER :: IX, IN
+
+      EPS60 = 1.E-60_DP
+C
+C
+      DO 1 IX=1,NDXA
+C
+C  CALCULATE THE NORM OF THE VECTORS (POINT2-POINT1),....
+C
+        D12 = SQRT((X2(IX)-X1(IX))*(X2(IX)-X1(IX))+(Y2(IX)-Y1(IX))*
+     .        (Y2(IX)-Y1(IX)))+EPS60
+        D34 = SQRT((X4(IX)-X3(IX))*(X4(IX)-X3(IX))+(Y4(IX)-Y3(IX))*
+     .        (Y4(IX)-Y3(IX)))+EPS60
+        D13 = SQRT((X3(IX)-X1(IX))*(X3(IX)-X1(IX))+(Y3(IX)-Y1(IX))*
+     .        (Y3(IX)-Y1(IX)))+EPS60
+        D24 = SQRT((X4(IX)-X2(IX))*(X4(IX)-X2(IX))+(Y4(IX)-Y2(IX))*
+     .        (Y4(IX)-Y2(IX)))+EPS60
+C
+C  CALCULATE THE BISSECTING VECTORS, BUT NOT NORMALISED YET
+C
+        DUX = (X2(IX)-X1(IX))/D12 + (X4(IX)-X3(IX))/D34
+        DUY = (Y2(IX)-Y1(IX))/D12 + (Y4(IX)-Y3(IX))/D34
+        DVX = (X3(IX)-X1(IX))/D13 + (X4(IX)-X2(IX))/D24
+        DVY = (Y3(IX)-Y1(IX))/D13 + (Y4(IX)-Y2(IX))/D24
+C
+C  CALCULATE THE COMPONENTS OF THE TWO UNIT VECTOR (= PROJECTION RATE)
+C
+        IN=IY+(IX-1)*NR1ST
+        PUX(IN) = DUX/(SQRT(DUX*DUX+DUY*DUY)+EPS60)
+        PUY(IN) = DUY/(SQRT(DUX*DUX+DUY*DUY)+EPS60)
+        PVX(IN) = DVX/(SQRT(DVX*DVX+DVY*DVY)+EPS60)
+        PVY(IN) = DVY/(SQRT(DVX*DVX+DVY*DVY)+EPS60)
+C
+C  ORTHOGONORMALIZE, CONSERVE ORIENTATION (E.SCHMIDT)
+C
+        PUPV=PUX(IN)*PVX(IN)+PUY(IN)*PVY(IN)
+        PVX(IN)=PVX(IN)-PUPV*PUX(IN)
+        PVY(IN)=PVY(IN)-PUPV*PUY(IN)
+        PVPV=SQRT(PVX(IN)*PVX(IN)+PVY(IN)*PVY(IN))+EPS60
+        PVX(IN)=PVX(IN)/PVPV
+        PVY(IN)=PVY(IN)/PVPV
+C
+1     CONTINUE
+      RETURN
+      END

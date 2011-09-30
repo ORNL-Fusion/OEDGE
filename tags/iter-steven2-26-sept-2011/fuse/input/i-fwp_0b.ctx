@@ -1,0 +1,150 @@
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (0223)  {CASE} i-fwp-0223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0224)  {CASE} i-fwp-0224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0225)  {CASE} i-fwp-0225b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, UPPER PORT PLUG, UPPER PORT GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (0203)  {CASE} i-fwp-0203b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0204)  {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0205)  {CASE} i-fwp-0205b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, UPPER PORT PLUG, PANEL 12 PUFF, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (0213)  {CASE} i-fwp-0213b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0214)  {CASE} i-fwp-0214b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0215)  {CASE} i-fwp-0215b >d >i >e >g >f >h
+*
+* ----------------------------------------------------------------------
+* MIDPLANE PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, MIDPLANE PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (0293)  {CASE} i-fwp-0293b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0294)  {CASE} i-fwp-0294b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0295)  {CASE} i-fwp-0295b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, MIDPLANE PORT PLUG, MIDPLANE GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (0253)  {CASE} i-fwp-0253b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0254)  {CASE} i-fwp-0254b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0255)  {CASE} i-fwp-0255b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, MIDPLANE PORT PLUG, PANEL 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (0263)  {CASE} i-fwp-0263b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0264)  {CASE} i-fwp-0264b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0265)  {CASE} i-fwp-0265b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, MIDPLANE PORT PLUG, BAFFLE ELM PACING PELLET, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (0273)  {CASE} i-fwp-0273b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0274)  {CASE} i-fwp-0274b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0275)  {CASE} i-fwp-0275b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON, MIDPLANE PORT PLUG, MIDPLANE ELM PACING PELLET, CX SPUTTERING ONLY, NO SOL FLOW, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-06 1.0
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (0283)  {CASE} i-fwp-0283b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (0284)  {CASE} i-fwp-0284b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (0285)  {CASE} i-fwp-0285b >d >i >e >g >f >h
+
+{EXIT}
+

@@ -1,0 +1,15 @@
+c     -*-Fortran-*-
+c                                                                       
+c     This block contains the DIVIMP declarations of IKXYS ...          
+c     The definitions between OUT and DIVIMP were allowed to            
+c     diverge so that the memory overhead that these variables          
+c     incur (which can be substantial for high-resolution arrays)       
+c     will not impact both programs. It is important to ensure          
+c     that MAXGXS and MAXGYS are greater than or equal to               
+c     the corresponding MAXNXS and MAXNYS.                              
+c                                                                       
+      common /divxy/ ikxys,irxys,ifxys                                  
+      save /divxy/
+c                                                                       
+      integer ikxys(maxnxs,maxnys),irxys(maxnxs,maxnys),                
+     >        ifxys(maxnxs,maxnys)                                      

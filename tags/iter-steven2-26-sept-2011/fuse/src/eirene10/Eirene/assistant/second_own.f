@@ -1,0 +1,22 @@
+
+c
+      FUNCTION SECOND_OWN()
+      USE PRECISION
+      implicit none
+!pb      real(dp) x05baf,start,reset_second,second_own,time
+      real(dp) :: x05baf,reset_second,second_own
+      real(sp) :: start,time
+      save start
+      data start /0.0/
+c x05baf is a NAG routine
+!pb      time=x05baf()
+      call cpu_time(time)
+      second_own=time-start
+      RETURN
+C
+      ENTRY RESET_SECOND()
+!pb      start=x05baf()
+      call cpu_time(start)
+      reset_second=start
+      return
+      END

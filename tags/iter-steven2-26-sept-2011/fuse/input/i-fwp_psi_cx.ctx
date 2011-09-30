@@ -1,0 +1,828 @@
+* First ever CORTEX input file
+*
+
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.00 0.01 
+  {CASE DEFAULT} i-fwp-0240d {CASE} >i >e >g >f >h
+  {CHARSIZE} 1.5 {THICK} 5.0
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.01 0.02  
+  {CASE DEFAULT} i-fwp-0240d {CASE} >i >e >g >f >h
+  {CHARSIZE} 1.5 {THICK} 5.0
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.02 0.10
+  {CASE DEFAULT} i-fwp-0240d {CASE} >i >e >g >f >h
+  {CHARSIZE} 1.5 {THICK} 5.0
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.15 0.20
+  {CASE DEFAULT} i-fwp-0240d {CASE} >i >e >g >f >h
+  {CHARSIZE} 1.5 {THICK} 5.0
+
+{EXIT} 
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.00 0.002  
+  {CASE DEFAULT} i-fwp-0240a {CASE} >c >b >d >i >e >g >f >h
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.01 0.02  
+  {CASE DEFAULT} i-fwp-0240a {CASE} >c >b >d >i >e >g >f >h
+  {SMOOTH} 10
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.02 0.03  
+  {CASE DEFAULT} i-fwp-0240a {CASE} >c >b >d >i >e >g >f >h
+  {SMOOTH} 10
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.10 0.11  
+  {CASE DEFAULT} i-fwp-0240a {CASE} >c >b >d >i >e >g >f >h
+  {SMOOTH} 10
+
+{PLOT 1D EIRENE ENERGY SPECTRUM}  1  {XRANGE}  0.0 0.02  
+  {CASE DEFAULT} i-fwp-0241b {CASE} >d >i >e >g >f >h
+
+{EXIT}
+
+
+*
+* ----------------------------------------------------------------------
+* DAN THOMAS PLOTS!
+* ----------------------------------------------------------------------
+*
+{PLOT 2D FLUID GRID}      1  {INDICES} 5 237 {NO GRID}  {NO FRAME}
+{PLOT 1D WALL PROFILE}    1  {XRANGE}  5 237 {PEAK} {CASE} >i i-fwp-0223b >i
+  {TITLE} PLOTS OF CX ATOM FLUXES TO THE WALL
+  {NOTES} I sure hope Dan likes this 'cause I'm tired today
+
+{PLOT 2D FLUID GRID}      1  {INDICES} 5 237 {NO GRID}  {NO FRAME}
+{PLOT 1D WALL PROFILE}    1  {XRANGE}  5 237 {PEAK} only {CASE} >i i-fwp-0223b >i
+  {TITLE} PLOTS OF CX ATOM FLUXES TO THE WALL
+  {NOTES} Just the punchline
+
+{EXIT} 
+
+
+{STRING} list_4200 i-fwp-4200a i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a 
+                   i-fwp-4205a i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+
+${STRING} list_4210 i-fwp-4210a i-fwp-4211a i-fwp-4212a i-fwp-4213a i-fwp-4214a 
+$                  i-fwp-4215a i-fwp-4216a i-fwp-4217a i-fwp-4218a i-fwp-4219a
+
+
+{STRING} list_425x i-fwp-4250a i-fwp-4251a i-fwp-4252a i-fwp-4253a i-fwp-4254a 
+                   i-fwp-4255a i-fwp-4256a i-fwp-4257a i-fwp-4258a i-fwp-4259a
+                    
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0293b : 0293d : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} b {CASE} i-fwp-0293b >d list_425x sub a b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0293b : 0293d : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} d {CASE} i-fwp-0293b >d list_425x sub a d
+
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b  {FOCUS}  5 
+  
+{EXIT}
+  
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE} i-fwp-4201b i-fwp-4202b i-fwp-4203b i-fwp-4204b i-fwp-4205b 
+                                    i-fwp-4206b i-fwp-4207b i-fwp-4208b i-fwp-4209b
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+         i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{EXIT}
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{EXIT}
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, MCR - SCALE FACTOR 0.14
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0223b : 0223y : 0223z : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+$  {XLABELS}  0223b : 0223y : 0223z : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} 0213 {CASE} i-fwp-0223b i-fwp-0223y i-fwp-0223z 
+                    i-fwp-4210b i-fwp-4211b i-fwp-4212b i-fwp-4213b 
+                    i-fwp-4214b i-fwp-4215b i-fwp-4216b 
+                    i-fwp-4217b i-fwp-4218b i-fwp-4219b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, BELOW PORT PUFF - SCALE FACTOR 0.14
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} 0213 {CASE} i-fwp-4220b i-fwp-4221b i-fwp-4222b i-fwp-4223b 
+                    i-fwp-4224b i-fwp-4225b i-fwp-4226b 
+                    i-fwp-4227b i-fwp-4228b i-fwp-4229b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, PUFF AT CROWN - SCALE FACTOR 0.14
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} 0213 {CASE} i-fwp-4230b i-fwp-4231b i-fwp-4232b i-fwp-4233b 
+                    i-fwp-4234b i-fwp-4235b i-fwp-4236b 
+                    i-fwp-4237b i-fwp-4238b i-fwp-4239b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - UPPER PORT, PUFF AT PORT - SCALE FACTOR 0.14
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.14
+  {SET} 0213 {CASE} i-fwp-4240b i-fwp-4241b i-fwp-4242b i-fwp-4243b 
+                    i-fwp-4244b i-fwp-4245b i-fwp-4246b 
+                    i-fwp-4247b i-fwp-4248b i-fwp-4249b
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, MCR - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0293b : 0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} 0213 {CASE} i-fwp-0293b i-fwp-4240b i-fwp-4241b i-fwp-4252b i-fwp-4253b 
+                    i-fwp-4244b i-fwp-4255b i-fwp-4256b 
+                    i-fwp-4247b i-fwp-4258b i-fwp-4259b
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    COMPARING SOLPS RUNS - MIDPLANE PORT, PUFF ABOVE PORT - SCALE FACTOR 0.28
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  0 : 1 : 2 : 3 : 4 : 5 : 6 : 7 : 8 : 9 
+  {YRANGE}   1.0E-06 1.0E-00
+  {YLIMIT}   0.03
+  {SCALE FACTOR} 0.28
+  {SET} 0213 {CASE} i-fwp-4260b i-fwp-4261b i-fwp-4262b i-fwp-4263b 
+                    i-fwp-4264b i-fwp-4265b i-fwp-4266b 
+                    i-fwp-4267b i-fwp-4268b i-fwp-4269b
+
+
+{EXIT}
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a i-fwp-4205a 
+                                    i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 2
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS} 6  {XRANGE} -0.01 0.10
+  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+
+{EXIT}
+
+
+
+{EXIT}
+
+
+
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4200a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4201a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4202a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4203a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4204a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4205a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4206a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4207a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4208a {CASE} >c
+{PLOT 1D TARGET PROFILE}  2  {CASE DEFAULT} i-fwp-4209a {CASE} >c
+
+{EXIT}
+
+
+
+
+*
+* ----------------------------------------------------------------------
+* BAFFLES
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, SECTOR 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} 0213  {CASE} i-fwp-0213a >b >c >d >i >e >g >f >h
+$  {SET} 0217  {CASE} i-fwp-0217a >b >c >d >i >e >g >f >h
+  {SET} 0214  {CASE} i-fwp-0214a >b >c >d >i >e >g >f >h
+$  {SET} 0218  {CASE} i-fwp-0218a >b >c >d >i >e >g >f >h
+  {SET} 0215  {CASE} i-fwp-0215a >b >c >d >i >e >g >f >h
+$  {SET} 0219  {CASE} i-fwp-0219a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, SECTOR 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+$  {SET} 0213  {CASE} i-fwp-0213a >b >c >d >i >e >g >f >h
+  {SET} 0217  {CASE} i-fwp-0217a >b >c >d >i >e >g >f >h
+$  {SET} 0214  {CASE} i-fwp-0214a >b >c >d >i >e >g >f >h
+  {SET} 0218  {CASE} i-fwp-0218a >b >c >d >i >e >g >f >h
+$  {SET} 0215  {CASE} i-fwp-0215a >b >c >d >i >e >g >f >h
+  {SET} 0219  {CASE} i-fwp-0219a >b >c >d >i >e >g >f >h
+
+{EXIT}
+*
+* ----------------------------------------------------------------------
+* BAFFLES
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  0  {WARNINGS}
+  {TITLE}    W BAFFLES, MCR, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0      (1233)  {CASE} i-fwp-1233b >d          >  >  >  >f          >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.5      (3233)  {CASE} >           i-fwp-3233d >  >e >  >f          >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0, PR  (1236)  {CASE} i-fwp-1236b >           >  >  >  >h          >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.5, PR  (3236)  {CASE} >           >           >  >  >  i-fwp-3236f >h
+${EXIT}
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, SECTOR 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0  (1213)  {CASE} i-fwp-1213a >b >c          >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2, M_SOL = 0.0  (1214)  {CASE} >           >  i-fwp-1214c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.0  (1215)  {CASE} i-fwp-1215a >b >           >d >i >  >g >f >h
+{EXIT}
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    IRON UPPER PORT PLUG, SECTOR 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0  (0213)  {CASE} i-fwp-0213a >b >c >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2, M_SOL = 0.0  (0214)  {CASE} i-fwp-0214a >b >c >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.0  (0215)  {CASE} i-fwp-0215a >b >c >d >i >e >g >f >h
+{EXIT}
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    W UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  a : b : c : d : i : e : g : f : h
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0  (1203)  {CASE} i-fwp-1203a >b >c          >d >i >e          >g >f >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.5  (3203)  {CASE} >           >  i-fwp-3203c >d >i >e          >g >f >h
+  {SET} Dperp =  0.1 m s-2, M_SOL = 0.0  (1204)  {CASE} >           >  >           >  >  i-fwp-1204e >g >f >h
+  {SET} Dperp =  0.1 m s-2, M_SOL = 0.5  (3204)  {CASE} >           >  i-fwp-3204c >d >i >           >g >  >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.0  (1205)  {CASE} i-fwp-1205a >b >c          >d >i >e          >g >f >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.5  (3205)  {CASE} >           >  i-fwp-3205c >d >i >           >g >f >h
+{EXIT}
+
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    W MIDPLANE PORT PLUG, MCR, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-06 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0  (1293)  {CASE} i-fwp-1293b >d          >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.5  (3293)  {CASE} >           i-fwp-3293d >i >e >g >f >h
+$  {SET} Dperp = 10.0 m s-2, M_SOL = 0.0  (1295)  {CASE} i-fwp-1295b >d          >i >e >g >f >h
+$  {SET} Dperp = 10.0 m s-2, M_SOL = 0.5  (3225)  {CASE} >           i-fwp-3225d >i >e >g >f >h
+{EXIT}
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    W UPPER PORT PLUG, MCR, CX SPUTTERING ONLY, M_SOL=0.5 
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-09 1.0E-03
+  {YLIMIT}   8.0E-4
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.0  (1223)  {CASE} i-fwp-1223b >d          >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2, M_SOL = 0.5  (3223)  {CASE} >           i-fwp-3223d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.0  (1225)  {CASE} i-fwp-1225b >d          >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2, M_SOL = 0.5  (3225)  {CASE} >           i-fwp-3225d >i >e >g >f >h
+{EXIT}
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, PORT PUFF (i1514), CX SPUTTERING ONLY, M_SOL=0.5 
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  c : d : i : e : g : f : h
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (0203)  {CASE} i-fwp-0203c >d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2  (2203)  {CASE} i-fwp-2203c >d >i >e >g >f >h
+{EXIT}
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (0203)  {CASE} i-fwp-0203d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2  (8203)  {CASE} i-fwp-8203d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, MCR, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (0223)  {CASE} i-fwp-0223d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2  (8223)  {CASE} i-fwp-8223d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT PLUG, OUTER MIDPLANE PUFF (i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (0253)  {CASE} i-fwp-0253d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2  (8253)  {CASE} i-fwp-8253d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT PLUG, MCR, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (0293)  {CASE} i-fwp-0293d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2  (8293)  {CASE} i-fwp-8293d >i >e >g >f >h
+
+
+
+{EXIT}
+*
+* ----------------------------------------------------------------------
+* ANALYSIS OF CORE PROFILES -- RADIATION AND SUCH
+* ----------------------------------------------------------------------
+*
+${PLOT 1D PEDESTAL MODEL}  0  {CASE DEFAULT}  i-fwp-8200z
+$  {FOCUS} 3
+$  {EXIT}
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}   i-fwp-0200g i-fwp-8200g
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2
+  {CASE}   i-fwp-0200g i-fwp-8200d >e >f >g >h >i
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  6
+  {CASE}   i-fwp-0200g i-fwp-8200d >e >f >g >h >i
+
+{EXIT}
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}   i-fwp-0200a >b >c >d >e >f >g >h
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2 
+  {CASE}   i-fwp-0200a >b >c >d >e >f >g >h
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2  
+  {CASE}   i-fwp-0200a >b >c >d >e >f >g >h
+  {XRANGE} 0.05  0.20
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  6  
+  {CASE}   i-fwp-0200a >b >c >d >e >f >g >h
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  6
+  {CASE}   i-fwp-0200a >b >c >d >e >f >g >h
+  {XRANGE} 0.05  0.20
+
+{EXIT}
+
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (203)  {CASE} i-fwp-0203b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (204)  {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (205)  {CASE} i-fwp-0205b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (223)  {CASE} i-fwp-0223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (224)  {CASE} i-fwp-0224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (225)  {CASE} i-fwp-0225b >d >i >e >g >f >h
+
+{EXIT}
+
+
+{PLOT 2D CONTOUR}  200  {LOG} {COLOR TABLE}  2  {NO WALL}  {CASE DEFAULT} i-fwp-0293b {NO FRAME}
+  {PLOT TITLE} Main chamber recycling
+{PLOT 2D CONTOUR}  200  {LOG} {COLOR TABLE}  2  {NO WALL}  {CASE DEFAULT} i-fwp-0273b {NO FRAME}
+  {PLOT TITLE} Outer baffle ELM pellet
+{EXIT}
+{PLOT 2D CONTOUR}  200  {LOG} {COLOR TABLE}  2  {NO WALL}  {CASE DEFAULT} i-fwp-0283b {NO FRAME}
+  {PLOT TITLE} Outer midplane ELM pellet
+{PLOT 2D CONTOUR}  200  {LOG} {COLOR TABLE}  2  {NO WALL}  {CASE DEFAULT} i-fwp-0253b
+  {PLOT TITLE} Outer midplane gas puff
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}        Fe MIDPLANE PORT, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY - SCALE FACTOR OF 0.17 (3/18) APPLIED 
+  {NOTES}        No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}      SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}       1.0E-07 1.0E-01
+  {YLIMIT}       0.03
+  {SCALE FACTOR} 0.17
+  {SET} Dperp =  1.0 m s-2  (293)  {CASE} i-fwp-0293b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (294)  {CASE} i-fwp-0294b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (295)  {CASE} i-fwp-0295b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, LOWER OUTER BAFFLE ELM MITIGATION PELLET, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-11 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (273)  {CASE} i-fwp-0273b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (274)  {CASE} i-fwp-0274b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (275)  {CASE} i-fwp-0275b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, OUTER MIDPLANE ELM MITIGATION PELLET, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-05 1.0E+01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (283)  {CASE} i-fwp-0283b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (284)  {CASE} i-fwp-0284b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (285)  {CASE} i-fwp-0285b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, MIDPLANE GAS PUFF (i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (253)  {CASE} i-fwp-0253b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (254)  {CASE} i-fwp-0254b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (255)  {CASE} i-fwp-0255b >d >i >e >g >f >h
+
+{EXIT}
+
+
+
+{PLOT 1D SUMMARY}  0
+  {TITLE}   COMPARING NEW AND OLD VERSIONS OF DIVIMP-ITER-STEVEN
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry, ...
+  {XLABELS} a : b : c : d : i : e : g : f : h
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 0203 {CASE} i-fwp-0203a >b >c >d >i >e >g >f >h
+  {SET} 9203 {CASE} i-fwp-9203a >b >c >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING NEW AND OLD VERSIONS OF DIVIMP-ITER-STEVEN
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry, ...
+  {XLABELS} b : d : i : e : g : f : h
+$  {XLABELS} a : b : c : d : i : e : g : h
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 0204 {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} 9204 {CASE} i-fwp-9204b >d >i >e >g >h
+$  {SET} 0204 {CASE} i-fwp-0204a >b >c >d >i >e >g >h
+$  {SET} 9204 {CASE} i-fwp-9204a >b >c >d >i >e >g >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  b : d : i : e : g : f : h
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (203)  {CASE} i-fwp-0203b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (204)  {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (205)  {CASE} i-fwp-0205b >d >i >e >g >f >h
+
+{EXIT}
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING NEW AND OLD VERSIONS OF DIVIMP-ITER-STEVEN
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry, ...
+  {XLABELS} b : d : i : e : g : f : h
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 0223 {CASE} i-fwp-0253b >d >i >e >g >f >h
+  {SET} 9223 {CASE} i-fwp-9253b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING NEW AND OLD VERSIONS OF DIVIMP-ITER-STEVEN
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry, ...
+  {XLABELS} a : b : c : d : i : e : g : f : h
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 0253 {CASE} i-fwp-0253a >b >c >d >i >e >g >f >h
+  {SET} 9253 {CASE} i-fwp-9253a >b >c >d >i >e >g >f >h
+
+{EXIT} 
+
+
+
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE DEFAULT} i-fwp-0248a {CASE} >b >c >d >e >f >g >h >i
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2
+  {CASE DEFAULT} i-fwp-0248a {CASE} >b >c >d >e >f >g >h >i
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  2
+  {CASE DEFAULT} i-fwp-0248a {CASE} >b >c >d >e >f >g >h >i
+  {XRANGE}   0.03  0.17   
+
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  6
+  {CASE DEFAULT} i-fwp-0248a {CASE} >b >c >d >e >f >g >h >i
+{PLOT 1D RADIAL PROFILE}  1  {FOCUS}  6
+  {CASE DEFAULT} i-fwp-0248a {CASE} >b >c >d >e >f >g >h >i
+  {XRANGE}   0.03  0.17   
+
+
+{PLOT 1D RADIAL PROFILE}  1  
+  {CASE DEFAULT} i-fwp-0200a {CASE} >b >c >d >e >f >g >h >i
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (203)  {CASE} i-fwp-0203b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (204)  {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (205)  {CASE} i-fwp-0205b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (223)  {CASE} i-fwp-0223b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (224)  {CASE} i-fwp-0224b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (225)  {CASE} i-fwp-0225b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (293)  {CASE} i-fwp-0293b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (294)  {CASE} i-fwp-0294b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (295)  {CASE} i-fwp-0295b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, MIDPLANE GAS PUFF (i1514), CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (253)  {CASE} i-fwp-0253b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (254)  {CASE} i-fwp-0254b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (255)  {CASE} i-fwp-0255b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, LOWER OUTER BAFFLE ELM MITIGATION PELLET, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-11 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (273)  {CASE} i-fwp-0273b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (274)  {CASE} i-fwp-0274b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (275)  {CASE} i-fwp-0275b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe MIDPLANE PORT, OUTER MIDPLANE ELM MITIGATION PELLET, CX SPUTTERING ONLY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-05 1.0E+01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2  (283)  {CASE} i-fwp-0283b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (284)  {CASE} i-fwp-0284b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (285)  {CASE} i-fwp-0285b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY, FACTOR 10 HIGHER LAUNCH ENERGY 
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  1.0 m s-2, CTEM1 =  6.5 eV  (203)  {CASE} i-fwp-0203b >d >i >e >g >f >h
+  {SET} Dperp =  1.0 m s-2, CTEM1 = 60.4 eV  (207)  {CASE} i-fwp-0207b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY, FACTOR 10 HIGHER LAUNCH ENERGY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  0.1 m s-2, CTEM1 =  6.5 eV  (204)  {CASE} i-fwp-0204b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2, CTEM1 = 60.4 eV  (208)  {CASE} i-fwp-0208b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, FUELING PUFF FROM UPPER PORT (SOLPS i1514), CX SPUTTERING ONLY, FACTOR 10 HIGHER LAUNCH ENERGY
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp = 10.0 m s-2, CTEM1 =  6.5 eV  (205)  {CASE} i-fwp-0205b >d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2, CTEM1 = 60.4 eV  (209)  {CASE} i-fwp-0209b >d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    Fe UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, REPEAT OF CASE TO CHECK POOR STATISTICS
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS + OSM : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-07 1.0E-01
+  {YLIMIT}   0.03
+  {SET} Dperp =  0.1 m s-2  (224)  {CASE} i-fwp-0224b >d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (229)  {CASE} i-fwp-0229b >d >i >e >g >f >h
+
+{EXIT}
+ 
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING 203 and 206, OR CTEM1 = 6.5 eV VS 60.5 eV
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry, ...
+  {XLABELS} STANDARD GRID, SOLPS i1514 : EXTENDED GRID SOLPS i1514, OSM IN FAR SOL : STANDARD GRID, OSM FIT TO i5114 : EXTENDED GRID, OSM FIT TO i1514 : LOW DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, L-MODE :  LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 203 {CASE} i-fwp-0203a >b >c >d >e >f >g >h
+  {SET} 206 {CASE} i-fwp-0206a >b >c >d >e >f >g >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING 203 and 223, OR GAS PUFF VS MAIN CHAMBER RECYCLING
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry
+  {XLABELS} SOLPS i1514, OSM IN FAR SOL : OSM FIT TO SOLPS i1514 (VERY LOW DENSITY FAR-SOL) : LOW DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, L-MODE :  LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 203 {CASE} i-fwp-0203b >d >e >f >g >h
+  {SET} 223 {CASE} i-fwp-0223b >d >e >f >g >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}   COMPARING 203 and 249, OR 1.0E-07 VS 1.0E-06 FSRATE
+  {NOTES}   No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry
+  {XLABELS} STANDARD GRID, SOLPS i1514 : EXTENDED GRID SOLPS i1514, OSM IN FAR SOL : STANDARD GRID, OSM FIT TO i5114 : EXTENDED GRID, OSM FIT TO i1514 : LOW DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, L-MODE :  LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}  1.0E-07 1.0E-01
+  {YLIMIT}  0.03
+  {SET} 203 {CASE} i-fwp-0203a >b >c >d >e >f >g >h
+  {SET} 249 {CASE} i-fwp-0249a >b >c >d >e >f >g >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}    SPUTTERING FROM Fe MIDPLANE PORT, ELM MITIGATION PELLETS, CX SPUTTERING, Dperp = 1.0 m s-2
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry
+  {XLABELS}  i1514 : VERY LOW DENSITY FAR SOL, L-MODE (SOLPS i1514) : VERY LOW DENSITY FAR SOL, H-MODE :  LOW DENSITY FAR SOL, L-MODE : LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-10 1.0E-01
+  {YLIMIT}   0.03 
+  {SET} Midplane puff           (253) {CASE} i-fwp-0253b >d > >e >g >f >h
+  {SET} Baffle   pellet         (273) {CASE} i-fwp-0273b >d > >e >g >f >h
+  {SET} Midplane pellet         (283) {CASE} i-fwp-0283b >d > >e >g >f >h
+  {SET} Main chamber recycling  (293) {CASE} i-fwp-0293b >d > >e >g >f >h
+
+
+
+{EXIT}
+
+
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}    SPUTTERING FROM Fe MIDPLANE PORT, MAIN CHAMBER RECYCLING, CX SPUTTERING
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry
+  {XLABELS}  SOLPS i1514, OSM IN FAR SOL : LOW DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, L-MODE :  LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-06 1.0E-01
+  {YLIMIT}   0.03 
+  {SET} Dperp =  1.0 m s-2  (283) {CASE} i-fwp-0283d >  >f >g >h
+
+{PLOT 1D SUMMARY}  1
+  {TITLE}    FULL Fe MAIN CHAMBER WALL, MAIN CHAMBER RECYCLING, CX SPUTTERING
+  {NOTES}    No inward pinch in the core, no parallel flow in the near SOL, toroidal symmetry
+  {XLABELS}  SOLPS i1514, OSM IN FAR SOL : LOW DENSITY FAR SOL, L-MODE : HIGH DENSITY FAR SOL, L-MODE :  LOW DENSITY FAR SOL, H-MODE : HIGH DENSITY FAR SOL, H-MODE 
+  {YRANGE}   1.0E-04 1.0E-01
+  {YLIMIT}   0.03 
+  {SET} Dperp =  1.0 m s-2  (301) {CASE} i-fwp-0301d >e >f >g >h
+  {SET} Dperp =  0.1 m s-2  (302) {CASE} i-fwp-0302d >e >f >g >h
+  {SET} Dperp = 10.0 m s-2  (303) {CASE} i-fwp-0303d >e >f >g >h
+
+{EXIT}
+
+
+
+
+{PLOT 1D RADIAL PROFILE}  3
+{PLOT 1D RADIAL PROFILE}  3
+  {CASE}  >b  >c  >d  >e  >f  >g  >h
+{PLOT 1D RADIAL PROFILE}  3
+  {CASE DEFAULT} i-fwp-0252h
+{PLOT 1D RADIAL PROFILE}  3
+  {CASE DEFAULT} i-fwp-0252h
+  {FOCUS}        6
+{EXIT}
+
+
+${PLOT 2D FLUID GRID}   1   * Standard mesh plot... 
+
+${PLOT 2D FLUID GRID}   1   * Standard mesh plot... 
+$  {TITLE}        Eat my shorts  
+
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0200a
+  {FOCUS} 6
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0200b
+  {CASE}  i-fwp-0200c
+  {CASE}  i-fwp-0200d
+  {CASE}  i-fwp-0200e
+  {CASE}  i-fwp-0200f
+  {CASE}  i-fwp-0200g
+  {CASE}  i-fwp-0200h
+  {FOCUS} 6
+$  {XRANGE}  0.0  0.15
+
+${PLOT 1D PEDESTAL MODEL}  1    
+$  {FOCUS} 3
+
+{PLOT 1D TARGET PROFILE}  1    
+  {CASE} i-fwp-0200a
+
+
+
+
+{EXIT}
+
+
+
+{PLOT 1D RADIAL PROFILE}  2
+$  {CASE}           i-fwp-0114z
+  {CASE}           i-fwp-0120k
+  {CASE}           i-fwp-0120m
+$  {LINE SEGMENT}   5.500  3.000   6.000  4.500
+$  {LINE SEGMENT}   6.000  1.500   8.000  4.000
+  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+  {XRANGE}  1.025 99.0
+$  {FOCUS}          6
+
+
+
+${EXIT}
+
+{PLOT 1D RADIAL PROFILE}  2
+$  {CASE}           i-fwp-0114z
+  {CASE}           i-fwp-0120k
+  {CASE}           i-fwp-0120m
+$  {LINE SEGMENT}   5.500  3.000   6.000  4.500
+$  {LINE SEGMENT}   6.000  2.000   8.000  4.000
+  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+$ {XRANGE}  1.000 99.0
+$  {FOCUS}          6
+
+{EXIT}
+

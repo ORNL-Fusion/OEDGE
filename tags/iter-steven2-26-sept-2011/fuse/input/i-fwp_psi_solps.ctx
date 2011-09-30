@@ -1,0 +1,59 @@
+* First ever CORTEX input file
+*
+
+${STRING} case_list_4200 i-fwp-4200a i-fwp-4201a i-fwp-4202a i-fwp-4203a i-fwp-4204a 
+$                        i-fwp-4205a i-fwp-4206a i-fwp-4207a i-fwp-4208a i-fwp-4209a               
+
+{STRING} case_list_4200_short_solps i-fwp-4200a i-fwp-4204a i-fwp-4209a  
+{STRING} case_list_4200_short_osm   i-fwp-4200a i-fwp-4204a i-fwp-4209a  i-fwp-4204c i-fwp-6204c
+                                       
+
+{STRING} list_425x i-fwp-4250a i-fwp-4251a i-fwp-4252a i-fwp-4253a i-fwp-4254a 
+                   i-fwp-4255a i-fwp-4256a i-fwp-4257a i-fwp-4258a i-fwp-4259a
+
+
+{PLOT 1D TARGET PROFILE}  2  {CASE} case_list_4200_short_solps
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_solps
+  {LINE SEGMENT}   5.000  0.500   4.000  0.500     $ INNER MIDPLANE
+$  {LINE SEGMENT}   6.000  2.000   8.000  4.000    $ SECTOR 12 OR SO
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_solps
+  {LINE SEGMENT}   5.500  3.000   6.000  4.500    $ UPPER PORT PUFF
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_solps
+  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_osm
+  {LINE SEGMENT}   5.000  0.500   4.000  0.500     $ INNER MIDPLANE
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_osm
+  {LINE SEGMENT}   5.500  3.000   6.000  4.500    $ UPPER PORT PUFF
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{PLOT 1D RADIAL PROFILE}  2
+  {CASE}          case_list_4200_short_osm
+  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+  {CHARSIZE} 1.1 {THICK} 5.0
+
+{EXIT}
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE} case_list_4200 
+
+${PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b  {FOCUS}  5 
+${PLOT 1D RADIAL PROFILE}  1  {CASE}  i-fwp-0200a >b >c >d >e >f >i >g > h
+  
+
+
+
+

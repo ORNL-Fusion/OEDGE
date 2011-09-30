@@ -1,0 +1,152 @@
+*
+* ----------------------------------------------------------------------
+* UPPER PORT PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN UPPER PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (3223)  {CASE} i-fwp-1223b i-fwp-3223d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3224)  {CASE} i-fwp-1224b i-fwp-3224d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3225)  {CASE} i-fwp-1225b i-fwp-3225d >i >e >g >f >h
+
+{EXIT}
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, UPPER PORT GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (3203)  {CASE} i-fwp-1203b i-fwp-3203d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3204)  {CASE} i-fwp-1204b i-fwp-3204d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3205)  {CASE} i-fwp-1205b i-fwp-3205d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, UPPER PORT PLUG, PANEL 12 PUFF, CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.14 (10/18 x 0.25)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.14
+  {SET} Dperp =  1.0 m s-2  (3213)  {CASE} i-fwp-1213b i-fwp-3213d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3214)  {CASE} i-fwp-1214b i-fwp-3214d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3215)  {CASE} i-fwp-1215b i-fwp-3215d >i >e >g >f >h
+*
+* ----------------------------------------------------------------------
+* MIDPLANE PLUG PLOTS
+* ----------------------------------------------------------------------
+*
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MAIN CHAMBER RECYCLING, CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (3293)  {CASE} i-fwp-1293b i-fwp-3293d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3294)  {CASE} i-fwp-1294b i-fwp-3294d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3295)  {CASE} i-fwp-1295b i-fwp-3295d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE GAS PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (3253)  {CASE} i-fwp-1253b i-fwp-3253d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3254)  {CASE} i-fwp-1254b i-fwp-3254d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3255)  {CASE} i-fwp-1255b i-fwp-3255d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, PANEL 12 PUFF (SOLPS i1514), CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (3263)  {CASE} i-fwp-1263b i-fwp-3263d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3264)  {CASE} i-fwp-1264b i-fwp-3264d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3265)  {CASE} i-fwp-1265b i-fwp-3265d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, BAFFLE ELM PACING PELLET, CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (3273)  {CASE} i-fwp-1273b i-fwp-3273d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3274)  {CASE} i-fwp-1274b i-fwp-3274d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3275)  {CASE} i-fwp-1275b i-fwp-3275d >i >e >g >f >h
+
+{PLOT 1D SUMMARY}  1  {WARNINGS}
+  {TITLE}    TUNGSTEN, MIDPLANE PORT PLUG, MIDPLANE ELM PACING PELLET, CX SPUTTERING ONLY, SOL MACH NO. = 0.5, SCALING FACTOR = 0.28 (10/18 x 0.5)
+  {NOTES}    No inward pinch in the core, no ELMs (enhanced wall source or pedestal flushing), no secondary sputtering, toroidal symmetry
+  {XLABELS}  SOLPS (i1514) + OSM : 
+             VERY LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             VERY LOW DENSITY FAR SOL, H-MODE PEDESTAL :  
+             LOW DENSITY FAR SOL, L-MODE PEDESTAL : 
+             LOW DENSITY FAR SOL, H-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, L-MODE PEDESTAL : 
+             HIGH DENSITY FAR SOL, H-MODE PEDESTAL 
+  {YRANGE}   1.0E-08 1.0E-02
+  {YLIMIT}   8.0E-4
+  {SCALE FACTOR} 0.28
+  {SET} Dperp =  1.0 m s-2  (3283)  {CASE} i-fwp-1283b i-fwp-3283d >i >e >g >f >h
+  {SET} Dperp =  0.1 m s-2  (3284)  {CASE} i-fwp-1284b i-fwp-3284d >i >e >g >f >h
+  {SET} Dperp = 10.0 m s-2  (3285)  {CASE} i-fwp-1285b i-fwp-3285d >i >e >g >f >h
+
+{EXIT}
+

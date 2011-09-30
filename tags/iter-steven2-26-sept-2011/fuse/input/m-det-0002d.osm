@@ -1,0 +1,212 @@
+${TITLE}   'working the inner divertor, setting second density constraint near the inner target, calling EIRENE'
+${COMMENT} 'based on m-det-0001m.d6i, grid from 24860 at 240 ms'
+$
+$ I/O:
+$ ======================================================================
+$
+'{F LOG} General purpose log file  0-nominal 1-               '   2  
+$'{F OSM_LOAD}   Load reference solution                       '  'i-fwp-0200a.raw.osm.gz'  
+$'{F OSM_DIR}    Directory                                     '  '~/divimp/results/'
+$
+$ Control:
+$ ======================================================================
+$
+'{C KIN}      Number of fluid-kinetic iterations              '    2   $ (1)
+$'{}          Number of OSM internal iterations               '    0   $ (0)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    2   $ (0)
+$'{}            number of internal iterations                 '    0   $ (0)  OPT_EIR%NITER
+'{C EIR_TIME}   runtime (s)                                   '  120   $ (30) OPT_EIR%TIME
+$'{}          Execute DIVIMP                                  '    0   $ (0)
+$
+$ Geometry:
+$ ======================================================================
+$
+'{GRID LOAD METHOD} 1-load DIVIMP geomtery files 2-use OSM    '   1                     $OPT%F_GRID_LOAD_METHOD
+'{GRID FILE}        File name of the fluid grid to be loaded  '  'carre.24860_240'      $ OPT%F_GRID_FILE
+$'{GRID STRIP CELLS} Remove boundary cells from SONNET grid    '   1                     $ OPT%F_GRID_STRIP
+$'{GRID FORMAT}      1-SONNET                                  '   1                     $ OPT%F_GRID_FORMAT
+$'{GRID DEL TUBES}   Delete these tubes after loading grid     '  16                     $ OPT%GRD_TDEL
+$
+'{WALL 2D SEGMENTS} 1.0'
+$ Type   Class   Group   Mat   Temp(K)   Range1,2   Format  File
+$ -------------------------------------------------------------
+  1.0    1       1       'C'   300       -1 -1      1       'main_wall.dat'    $ LINE SEGMENTS IN A FILE
+$  1.0    2       1       'Be'  300       -1 -1      1       'main_wall.dat'   
+$  1.0    1       2       'W'   300       -1 -1      1       'baffles.dat'
+$  1.0    1       3       'C'   300       -1 -1      1       'targets.dat'
+$  1.0    2       4       'W'   300       -1 -1      1       'dome.dat'         
+$
+'{FILE MATERIALS DATA} Data file for table of material properties'  1  'materials.dat'
+$
+$ Plasma solver options:
+$ ======================================================================
+$
+'{SOLPS LOAD SOLUTION}'  0
+$ File             Format  Column  Type   Tag      Z   A   Charge
+  'i1514_ne.txt'   1	   1       1      'n_e'    0   0   -1
+  'i1514_ni.txt'   1	   1       1      'n_D+'   1   2    1
+  'i1514_up.txt'   1	   1       2      'v_D+'   1   2    1
+  'i1514_te.txt'   1	   1       4      'Te_D+'  0   0   -1
+  'i1514_ti.txt'   1	   1       4      'Ti_D+'  1   2    1
+$
+'{SOL APPLICATION}'
+$  Tube1,2     Solver
+   1 999       28 
+$
+$ Particles:         
+$ ----------------------------------------------------------------------
+'{S P_ION}      Ionisation  1-ref 2-pin 3-prescribed           '    2    $ (3)
+'{S P_ION_FRAC}    Scale ionisation to particle sink           ' 100.0   $ (100.0)
+'{S P_REC}      Volume recombination  0-none 2-PIN 3-ADAS      '    2    $ (0)
+'{S P_ANO}      Cross-field conservation  2-half 3-full 4-flow '    6    $ (2)
+$'{} ExB  0-none                                               '    0    $ (0)
+$'{} Diamagnetic  0-none                                       '    0    $ (0)
+$
+$ Momentum:         
+$ ----------------------------------------------------------------------
+'{S M_ANO}      Cross-field conservation  1-ref 2-full         '    2    $ (2)  
+'{S M_ANO_DIST}   parallel distribution  1-power 2-exp 3-mid   '    1    $ (1)
+'{S M_ANO_EXP}    exponent for distribution                    '   0.0   $ (0.0)
+$
+$ Energy:         
+$ ----------------------------------------------------------------------
+'{S TE_ION}       Volume source: neutrals  1-ref 2-PIN         '    0    $ (0)
+'{S TE_ANO}       Anomalous cross-field electron energy flux   '    3    $ (0)
+'{S TE_ANO_PSOL}    magnitude of anomalous flux                '    1    $ (0)
+'{T TE_FLUXLIMIT} Electron conduction energy flux limiter      '    0    $ (0)
+'{T TE_KAPPA}     Kappa value for Te conduction calculation    ' 2000.0  $ (2000.0) approximate! -1.0=calculate... default?
+'{T TE_CONV}      Te convection                                '    0    $ (0)
+'{T TI}           Ti option  0-fixed ratio                     '    0    $ (0)
+'{S TI_ANO}       Anomalous cross-field ion energy flux        '    0    $ (0)
+'{T TI_RATIO}     Ti,Te ratio                                  '   1.00  $ (1.0)   0.01
+'{T TI_KAPPA}     Kappa value for Ti conduction calculation    '  60.0   $ (60.0)    approximate!  -1.0 = calculate
+'{T TI_CONV}      Ti convection                                '    0    $ (0)
+'{T TI_EQUIL}     Ti,Te equilibration                          '    1    $ (0)
+$
+$' {S E_QE}    PIN electron energy source term                  '    0   $ (0)
+$' {S E_QI}    PIN ion energy source term                       '    0   $ (0)
+$
+$ Boundary conditions:  
+$ ----------------------------------------------------------------------
+'{T BC}    Boundary conditions  1-target 2-upstream            '    1    $ (1)
+'{T SUPER} Supersonic flow near targets  0-no 1-yes            '    0    $ (0)
+$' { } Electric field calculation  0-none 1-simple              '    0    $ (0)
+$
+$
+$ Boundary conditions:
+$ ---------------------------------------------------------------------- 
+'{089} 1.0 Inner target surface data:'  
+$   R(m)    Te    Ti  Jsat/Ne
+    -1.0   1.0  99.0      0.0  
+ -2.0000   0.9   0.9  1.0E-01  
+  1.0670   0.9   0.9  1.0E-01  
+  1.0671   1.0   1.0  1.0E-01  
+  2.0000   1.0   1.0  1.0E-01  
+$
+'{088} 1.0 Outer target surface data:'     
+$   R(m)    Te    Ti  Jsat/Ne
+    -1.0   1.0  99.0      0.0  
+ -2.0000  10.0  10.0  1.0E-01  
+  2.0000  10.0  10.0  1.0E-01  
+$
+$ Plasma interpolation data:
+$ ---------------------------------------------------------------------- 
+'{S74} 4.1 Target and upstream interpolation data:'
+$               ----------radial-----------   ---parallel---   -------------------plasma-------------------
+$ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M      pe        Te     Ti    V  
+$                                                              (m-3)    (m s-1)  (eV m-3)  (eV)   (eV)  (V)  
+$ inner divertor target
+  3.0   2  2    4    5   1.0                  0     0.0  0                                                
+  'lp_24861_220-240ms_2_inner_lower.dat'      1     0.005      1.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
+
+$ denisty point at 0.293 m 
+  1.0   11 20   2    1   0.60                 3     0.0  0                                                
+  0.0                     0.29291   -1.42044                   2.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.29291   -1.3250                    3.0E+19  0.0      0.0       0.0    0.0   0.0 
+
+$ denisty point at 0.336 m 
+  1.0   11 20   2    1   0.60                 3     0.0  0                                                
+  0.0                     0.33632   -1.39374                   1.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.33632   -1.3210                    4.0E+19  0.0      0.0       0.0    0.0   0.0 
+
+
+$ CII cutoff - 1 eV
+  1.0   11 20   1    1   0.0                  3     0.0  0                                                
+  0.0                     0.433332  -1.332545                  0.0      0.0      0.0       1.0    1.0   0.0  
+  0.0                     0.429598  -1.2000                    0.0      0.0      0.0       1.0    1.0   0.0 
+$ CIII cutoff - 3 eV
+  1.0   11 20   1    1   0.0                  1     2.0  0                                                
+  0.0                     0.558466  -1.251205                  0.0      0.0    -88.0       3.0    3.0   0.0  
+  0.0                     0.4650    -1.0050                    0.0      0.0    -88.0       3.0    3.0   0.0 
+$ CIII cutoff - 10 eV
+$  1.0   11 16   1    1   0.0                  3     0.0  0                                                
+$  0.0                     0.673424  -1.175227                  0.0      0.0    -88.0      10.0   10.0   0.0  
+$  0.0                     0.5200    -1.0400                    0.0      0.0    -88.0      10.0   10.0   0.0 
+
+$ inner midplane - near-SOL
+  2.0   1  20   4    5   1.0                  3     0.0  0                                                
+  'ts_25028_298-324ms_inner_midplane.dat'     1     0.0200     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
+  0.0                          0.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
+  0.0                          0.1500 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
+
+$ inner midplane - far-SOL
+  2.0   21 99   4    5   1.0                  1     1.0  1                                                
+  'ts_25028_298-324ms_inner_midplane.dat'     1     0.0200     1.0      0.0      0.0       1.0    1.0   0.0  $ 0.0530 shift, Ti=2Te, Te=15.0 eV at sep., 0.7 MW to targets
+  0.0                          0.7000 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0  $ 0.0396 shift, Ti= Te, Te=23.6 eV at sep., 0.7 MW to targets
+  0.0                          0.1500 0.0000                   4.0      0.0      0.0       5.0    5.0   0.0 
+
+$ outer divertor target
+  3.0   4  4    4    5   1.0                  0     0.0  0                                               
+  'lp_24861_220-240ms_4_outer_lower_seg6.dat' 1     0.032      1.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0
+  0.0                          0.0    0.0                      2.0      0.0      0.0       0.0    0.0   0.0 
+
+
+$ denisty point at 0.293 m 
+  1.0   38 40   2    1   0.30                 3     0.0  0                                                
+  0.0                     0.29291   -1.42044                   2.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.29291   -1.5150                    1.0E+18  0.0      0.0       0.0    0.0   0.0 
+$ denisty point at 0.336 m 
+  1.0   38 40   2    1   0.30                 3     0.0  0                                                
+  0.0                     0.33632   -1.39374                   1.0E+20  0.0      0.0       0.0    0.0   0.0  
+  0.0                     0.33632   -1.5150                    1.0E+18  0.0      0.0       0.0    0.0   0.0 
+$ PFZ upstream - CII cutoff - 1 eV
+  1.0   38 40   1    1   0.0                  3     0.0  1                                                
+  0.0                     0.433332  -1.332545                  0.0      0.0    -88.0       1.0    1.0   0.0  
+  0.0                     0.433332  -1.4300                    0.0      0.0    -88.0       1.0    1.0   0.0 
+$ PFZ upstream - CII cutoff - 3 eV
+  1.0   39 40   1    1   0.0                  1     2.0  0                                                
+  0.0                     0.5900    -1.2300                    0.0      0.0    -88.0       3.0    3.0   0.0  
+  0.0                     0.5900    -1.3300                    0.0      0.0    -88.0       3.0    3.0   0.0 
+$ PFZ upstream
+  2.0   31 40   3    6   0.01                 3     0.0  0                                                
+  0.0                          0.750 -1.260                    0.0      0.0    -99.0     -99.0 -99.0    0.0
+  0.0                          0.620 -1.470                    0.0      0.0      1.0      11.0  11.0    0.0
+
+$
+$ EIRENE options:
+$ ======================================================================
+$
+'{E NEUTRAL SOURCES} 1.0 Recycling, gas puffing and neutral beam injection:' 
+$Type  NPTS   Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1   2                            Note
+$-----------------------------------------------------------------------------------------------
+ 1.0  -90000  1.0      1.0   4    1    0.0     1                                            'inner target'
+ 1.0  -90000  1.0      1.0   4    1    0.0     2                                            'outer target'
+ 2.0  -90000  1.0      1.0   4    1    0.0                                                  'volume recombination'
+$                                              COS MAX   POSX   Y     Z    VECX  Y     Z         
+$                                              -------------------------------------------      
+ 3.0  -90000  1.39E+3  1.0   2    1    0.038   1.0  30.0 0.30  -1.23  0.0 -1.0  -0.50  0.0  'lower i/b puff'
+$
+$'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
+$ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
+$-------------------------------------------------------------------------
+$ -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
+$
+$
+$
+'{EXIT}'
+$
+$
+$										  

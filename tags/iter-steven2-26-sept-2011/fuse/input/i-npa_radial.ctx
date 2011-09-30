@@ -1,0 +1,14 @@
+* cortex_main,['i-npa-0101b','i-npa_radial.ctx']
+
+{STRING} list_vertical case_b case_d case_e case_f case_g case_h case_i 
+
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  i-npa-0101b >h >i
+  
+{EXIT}
+
+
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b
+{PLOT 1D RADIAL PROFILE}  1  {CASE}  list_4200 sub a b  {FOCUS}  5 
+
+

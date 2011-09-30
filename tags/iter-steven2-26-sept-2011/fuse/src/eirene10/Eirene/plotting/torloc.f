@@ -1,0 +1,25 @@
+C
+C
+      SUBROUTINE TORLOC(W3,RM,X1,Z1)
+C
+C TRANSFORM FROM TORUS- TO LOCAL SYSTEM AT PHI=W3
+C
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: W3, RM
+      REAL(DP), INTENT(INOUT) :: X1, Z1
+      REAL(DP), SAVE :: WO=0.D0, S=0.D0, C=1.D0
+      REAL(DP) :: XS
+
+      IF (WO.EQ.W3) GOTO 1
+      S=SIN(W3)
+      C=COS(W3)
+      WO=W3
+1     CONTINUE
+C
+      XS=X1
+      X1=C*XS+S*Z1
+      Z1=-S*XS+C*Z1
+      X1=X1-RM
+      RETURN
+      END

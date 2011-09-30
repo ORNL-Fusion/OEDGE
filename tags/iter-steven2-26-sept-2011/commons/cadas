@@ -1,0 +1,15 @@
+C     -*-Fortran-*-                                                                        
+c
+      COMMON /CADAS/  YEAR,YEARDF,ICLASS,cdatopt,PTESA,PNESA,PNBS,      
+     >                PNHS,PNZSA,PCOEF,iyearh,iyearz,
+     >                useridh,useridz,tmpuserid,
+     >                adas_iz_rate_mult,adas_rec_rate_mult
+C                                                                       
+      save /cadas/
+c
+      INTEGER ICLASS,cdatopt,iyearh,iyearz                       
+      REAL PTESA(MAXNKS),PNESA(MAXNKS),PNBS(MAXNKS),PNHS(MAXNKS)        
+      REAL PNZSA(MAXNKS,0:MAXIZS),PCOEF(MAXNKS,MAXIZS)                  
+      real adas_iz_rate_mult,adas_rec_rate_mult
+      CHARACTER YEAR*2,YEARDF*2,useridh*80,useridz*80,tmpuserid*80
+

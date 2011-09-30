@@ -1,0 +1,40 @@
+#!/bin/tcsh
+
+if ( $#argv != "1" ) then
+  echo ERROR results_resdir: Need to specify case name
+  exit
+endif
+
+set CASE = $1
+
+set FAMILY1 = `echo $CASE | awk -F- '{print $1"\n"}'`
+set FAMILY2 = `echo $CASE | awk -F- '{print $2"\n"}'`
+set FAMILY = "$FAMILY1"-"$FAMILY2"
+
+set RESDIR = $DIVHOME/results/$FAMILY
+
+if ( -e $RESDIR/$CASE) then
+#  echo Case found
+else
+#  echo Case not found
+
+  cd $RESDIR
+ 
+  set COUNT = `ls | wc -l`
+
+# Search for subdirectories if there aren't many files in the directory:
+  if ( $COUNT <= 20 ) then 
+    echo Searching subdirectories
+    foreach SUB (`ls`)
+#      echo $SUB
+      echo $CASE | grep $SUB && set STATUS=1 || set STATUS=0
+      if ( $STATUS == 1 ) set RESDIR = $DIVHOME/results/$FAMILY/$SUB
+    end
+  endif
+
+endif
+
+setenv RESDIR $RESDIR
+
+exit
+

@@ -1,0 +1,62 @@
+C
+C
+      FUNCTION RTSAF(X1,X2,XACC,ER,B,IFLAG,P)
+
+C  TAKEN FROM: NUMERICAL RECIPES, W.H.PRESS ET AL.,
+C              CAMBRIDGE UNIV. PRESS, 1989, P258
+C  MODIFIED, TO FIND LARGEST ROOT, IN CASE MORE THAN ONE ROOTS
+C  AND TO SPEED UP
+
+      USE PRECISION
+      USE COMPRT, ONLY: IUNOUT
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: X1, X2, XACC, ER, B, P(*)
+      INTEGER, INTENT(IN) :: IFLAG
+      INTEGER, PARAMETER :: MAXIT=100
+      REAL(DP) :: DF, XDIST, F, FI, TEMP, DX, DXOLD, XH, RTSAF, XL
+      INTEGER :: J
+
+      XL=X1
+      XH=X2
+C
+      F=FI(XH,ER,B,IFLAG,P,DF)
+      XDIST=(XH-XL)
+      DX=MIN(XDIST,F/DF)
+      DXOLD=DX
+      RTSAF=XH-DX
+C
+      F=FI(RTSAF,ER,B,IFLAG,P,DF)
+
+      IF(F.LT.0.D0) THEN
+        XL=RTSAF
+      ELSE
+        XH=RTSAF
+      ENDIF
+C
+      DO 11 J=1,MAXIT
+        IF(((RTSAF-XH)*DF-F)*((RTSAF-XL)*DF-F).GT.0.
+     *      .OR. ABS(F+F).GT.ABS(DXOLD*DF) ) THEN
+          DXOLD=DX
+          DX=0.5*(XH-XL)
+          RTSAF=XL+DX
+        ELSE
+          DXOLD=DX
+          DX=F/DF
+          TEMP=RTSAF
+          RTSAF=RTSAF-DX
+        ENDIF
+C
+        IF(ABS(DX).LT.XACC) RETURN
+C
+        F=FI(RTSAF,ER,B,IFLAG,P,DF)
+        IF(F.LT.0.D0) THEN
+          XL=RTSAF
+        ELSE
+          XH=RTSAF
+        ENDIF
+11    CONTINUE
+      WRITE (iunout,*) 'RTSAF EXCEEDING MAXIMUM ITERATIONS'
+      RETURN
+      END

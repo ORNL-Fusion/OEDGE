@@ -1,0 +1,27 @@
+number of heading lines in this data file : 15
+
+BM 3D coordinates extracted from CASTEM
+"Post-proc in Matlab : only reading CASTEM raw data (for checking) and write concatenate ascii files - no modifications of X,Y,Z coordinates"
+Date CASTEM calculations : 15/03/2011
+Date Matlab post-processing data : 15/03/2011
+Files can be found in : C:\CASTEM_FW.BM coordinates for Steve. march. 2011 (bis) -  whole column - def
+Modif compared to latest version : - 
+
+FIRST WALL GEOMETRY:
+Reference design November 2009 - slightly adjusted in January 2010 (CATIA skeleton post-Blanket CDR)
+higher spatial resolution than the one used for previous DIVIMP grid (2010)
+
+DATA
+nºBM  nbr elem  
+7    1916
+8    1916
+9    1916
+10    1916
+11    936
+12    992
+13    1048
+14    936
+15    936
+16    1048
+17    992
+18    936
