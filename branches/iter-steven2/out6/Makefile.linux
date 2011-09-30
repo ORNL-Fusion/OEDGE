@@ -82,7 +82,7 @@ OPTC= -O $(EMU)
 # Removed -Mdclchk since version 3.2-4 of the PGI compiler treats undeclared 
 # variables as severe errors instead of warnings.
 #
-OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo
+OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo -Mbounds -traceback
 #OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
 OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTGS= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
@@ -101,6 +101,9 @@ OPT_ABSOFT_OPT = -O
 #
 OPT_INTEL = -g -check all -debug all
 OPT_INTEL_OPT = -O1 -g -traceback -debug all
+#
+OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
+OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared#
 #
 # SET options
 #
@@ -251,6 +254,12 @@ intel-iter:
 
 intelopt-iter:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
+
+intel-iter-big:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_BIG)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
+
+intelopt-iter-big:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT_BIG)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"

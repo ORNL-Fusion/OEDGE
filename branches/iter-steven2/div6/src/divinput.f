@@ -63,8 +63,9 @@ c slmod end
       CALL RDC (desc, 'DESCRIPTION OF RUN', IERR)
       call rdc (equil,'equilibrium file name',ierr)
 c slmod begin
-c...  Added cgridopt=6 for linear device grids:
+c...        Added cgridopt=6 for linear device grids:
 c...  jde - added cgridopt=7 for generalized grids
+c...  jde - added cgridopt=8 for ribbon grids
       call rdi (cgridopt,.true.,0,.true.,9,'GRID OPTION          ',ierr)
 c
 c      call rdi (cgridopt,.true.,0,.true.,3,'GRID OPTION          ',ierr)

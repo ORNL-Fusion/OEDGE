@@ -134,12 +134,6 @@ c          CALL THICK2(4)
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >     YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NRS)
 
-
-c        IF (iopt.EQ.2.OR.iopt.EQ.4.OR.iopt.EQ.5.OR.iopt.EQ.6.OR.
-c     .      iopt.EQ.7.OR.iopt.EQ.8) 
-c     .    CALL DrawAdditionalSurfaces(iopt)
-
-
         IF     (iopt.EQ.20) THEN
           CALL SUPIMP ('TRIANGLES')
         ELSEIF (iopt.EQ.3.OR.iopt.EQ.4.OR.iopt.EQ.6.OR.iopt.EQ.8) THEN
@@ -147,7 +141,6 @@ c     .    CALL DrawAdditionalSurfaces(iopt)
         ELSE
           CALL SUPIMP ('FULL')
         ENDIF
-
 
         IF (iopt.EQ.2.OR.iopt.EQ.4.OR.iopt.EQ.5.OR.iopt.EQ.6.OR.
      .      iopt.EQ.7.OR.iopt.EQ.8) 

@@ -228,6 +228,37 @@ c        jdemod - cgridopt=7 (GEN_GRID)
 c
 c         call readgeneralisedgrid
 c
+c
+c     jdemod - add new ribbon grid for ITER - cgridopt=8
+c
+      elseif (cgridopt.eq.RIBBON_GRID) then 
+c
+c     
+c
+         call BuildRibbonGrid
+c slmod begin - ribbon dev
+         WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
+         nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
+
+         !write(0,*) 'NRS=',nrs
+         call InsertRing(1  ,BEFORE,PERMANENT)
+         call InsertRing(nrs,AFTER ,PERMANENT)
+         irwall = nrs
+         irtrap = nrs
+         idring(1)   = BOUNDARY
+         idring(nrs) = BOUNDARY
+         ik = nks(irsep) / 2              
+         r0 = rs(ik,irsep)                ! Seems reasonably
+         z0 = zs(ik,irsep)
+         rxp = rvertp(1,korpg(ik,irsep))  ! This is over-written in SetupGrid with a different convention
+         zxp = zvertp(1,korpg(ik,irsep))  ! but I'm afraid to change it just yet...
+c         call OutputData(85,'JUST FINISHED BUILDING RIBBON GRID')
+c         CALL DumpGrid('IN TAU, BEFORE TAILORGRID')
+         call TailorGrid
+c         call OutputData(85,'JUST CALLED TAILORGRID')
+c         CALL DumpGrid('IN TAU, AFTER TAILORGRID')
+         call AddPoloidalBoundaryCells
+c slmod end
       endif
 c
 c     Check for a valid grid - a grid with no rings is not valid
@@ -325,6 +356,14 @@ c     plasma regions up one space in the array and reduces by two the
 c     number of elements on the ring - thus effectively elimintaing the
 c     virtual points at each end of the SOL/PP rings.
 c
+c     bypass for ribbon grid
+c
+c slmod begin - ribbon dev
+c      if (.TRUE.) then 
+c      
+c      if (cgridopt.ne.RIBBON_GRID) then 
+c slmod end     
+
       if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
      >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then
 
@@ -677,7 +716,6 @@ c
          endif
 c
       endif
-c
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -690,8 +728,47 @@ c     CALCULATE OTHER GEOMETRY INFORMATION
 C-----------------------------------------------------------------------
 c
 c slmod begin - new
+c     
+c     jdemod - most of setupgrid is not compatible with ribbon grids
+c              also setupgrid would appear to need an already built
+c              connection map which may mean this call is out of order 
+c              since buildmap comes next
+c
       CALL SetupGrid
 c slmod end
+
+c
+c     - endif for ribbon code bypass
+c
+c      else
+c
+c     copy some code from setupgrid for ribbon grids
+c     setup grid distinguishes between SOL and PFZ rings which may
+c     not be useful on a ribbon grid
+c
+c     Also ribbon grids may not have boundary rings since there would
+c     be so many ... this can be altered in grid generation but it 
+c     might be easiest to leave them out
+c
+c     what is "virloc" and virtag in setupgrid?
+c
+c     All code related to Xpoints is meaningless for ribbon grids
+c
+c
+c         CALL SetBounds
+c
+c         DO ir = irsep, nrs
+c            osm_model(IKLO,ir) = GetModel(IKLO,ir)
+c            osm_model(IKHI,ir) = GetModel(IKHI,ir)
+c
+c            WRITE(PINOUT,*) 'MODEL : ',osm_model(IKLO,ir),
+c     >                                 osm_model(IKHI,ir)
+c         ENDDO
+c
+c      endif
+c
+
+
 C
 C-----------------------------------------------------------------------
 C     CALCULATE "NEAREST NEIGHBOURS" FOR EACH POINT
@@ -702,7 +779,7 @@ c     JET and SONNET GRIDS
 c
 c slmod begin
       if (nbr.gt.0.or.eirgrid.eq.1.or.
-     .    cgridopt.EQ.LINEAR_GRID) then
+     .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c...    Generalized grid:
         CALL BuildMap
 
@@ -1183,6 +1260,11 @@ c
 
       ENDDO
 c
+
+
+
+
+c
       if (cprint.eq.3.or.cprint.eq.9) then
          WRITE(6,'(//1X,''COS ALPHA:'')')
          DO IR = 1, NRS
@@ -1629,10 +1711,12 @@ c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
+         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
       ENDIF
+
 c...  This assigns the xVESM arrays from the WALLPT array.  It also
 c     adds the wall segments that are specified in the DIVIMP
 c     input file (if any, see unstructured input tag 077).  It may
@@ -1641,7 +1725,8 @@ c     is overwritten after a call to EIRENE in some circumstances (not
 c     sure on this at the moment).  This routine is called for all grids
 c     except JET grids: (NOW called for JET grids if Eirene is run)
       IF (pincode.EQ.1.OR.pincode.EQ.2.OR.pincode.EQ.3.OR.
-     .    pincode.EQ.4.OR.pincode.EQ.5) 
+     .    pincode.EQ.4.OR.pincode.EQ.5.OR.
+     .    cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) 
      .  CALL AssignNIMBUSWall
 
 c...  Build vacuum grid:
@@ -1682,6 +1767,8 @@ c     angle for each cell and the difference from orthogonality for the
 c     target segments.
 c
       call calcorth
+
+
 c
 C
 C-----------------------------------------------------------------------
@@ -1787,6 +1874,8 @@ C
         ENDIF
 C
   320 CONTINUE
+
+
 c
 c     Calculate the KSS2 and KPS2 arrays - based on the complete
 c     grid - using the mid-points of the sides to define the S limits
@@ -1796,7 +1885,7 @@ c
 c     JET and SONNET grids
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
 c        Only possible for grids with polygon information
 c
@@ -2048,6 +2137,8 @@ c
 
 C
   322 CONTINUE
+
+
 c
 c     Assign the KSS2 and KPS2 values to KSS and KPS if the PDOPT=1 has
 c     been specified.
@@ -2087,6 +2178,8 @@ c
       if (s_reflect_opt.ne.0) then 
          call calc_s_reflect
       endif 
+
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2103,7 +2196,7 @@ c
 c     For grids with polygon information
 c
       if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >    cgridopt.EQ.LINEAR_GRID) then
+     >    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c
          do ir = 1,nrs
             do ik = 1,nks(ir)
@@ -2144,6 +2237,7 @@ c
          end do
 c
       endif
+
 c
 c     Calculate required values for perpendicular step options 1 and 2
 c
@@ -2418,12 +2512,14 @@ c     Calculate the R,Z values of the inner and outer mid-planes
 C-----------------------------------------------------------------------
 c
       call find_midplane
+
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
 C-----------------------------------------------------------------------
 C
       CALL TAUVOL
+
 c
 C-----------------------------------------------------------------------
 c     Write out the grid - formatted and including vertices.
@@ -2431,9 +2527,10 @@ C-----------------------------------------------------------------------
 c
       if ((cprint.eq.6.or.cprint.eq.9)
      >    .and.(cgridopt.eq.0.or.cgridopt.eq.3.or.
-     >          cgridopt.eq.LINEAR_GRID)) then
+     >          cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID))then
          call writegrd(cgridopt)
       endif
+
 C
 C-----------------------------------------------------------------------
 C     INITIALIZE 3D B FIELD VECTORS IN THE bfield module
@@ -2598,10 +2695,20 @@ c     combining various different SOL and plasma options.
 c
 C-----------------------------------------------------------------------
 c
+
       call bgplasma(title,equil)
 c slmod begin - temp
       CALL DB('DONE CALCULATING BACKGROUND PLASMA')
 c slmod end
+c
+c
+C-----------------------------------------------------------------------
+c
+c     Write the grid cell and polygon information including magnetic 
+c     field vectors in a DIVIMP specific format. This is stored in the
+c     file divimp_grid.out
+c
+      call wrtdivgrid
 C
 C-----------------------------------------------------------------------
 c
@@ -2620,7 +2727,7 @@ c     time
 c
 c      if (cprint.eq.10) then
 c
-         call wrtdivbg
+       call wrtdivbg
 c
 c      endif
 c
@@ -2718,6 +2825,7 @@ c
       if (uedge_bg.eq.1) then
          call check_fluxes
       endif
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2766,6 +2874,7 @@ C-----------------------------------------------------------------------
 C     TEMPERATURE GRADIENT FORCES IN THE SOL
 C-----------------------------------------------------------------------
 C
+
       DO 660 IZ = 1, NIZS
         IF     (CIOPTM.EQ.0) THEN
           KALPHS(IZ) = 0.0
@@ -2851,6 +2960,7 @@ c
 c
   680 CONTINUE
 c
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2889,6 +2999,7 @@ c     temperature gradient forces.
 c
 C-----------------------------------------------------------------------
 c
+
       call calcapp_fgradmod
 c
 c psmod
@@ -2909,6 +3020,7 @@ c
 c-----------------------------------------------------------------------
 c
       CALL COEFF(NIZS)
+
 c
 c-----------------------------------------------------------------------
 c
@@ -3280,6 +3392,7 @@ c
 C-----------------------------------------------------------------------
 c
       call assign_wall_plasma 
+
 c
 C
 C-----------------------------------------------------------------------
@@ -3598,6 +3711,7 @@ c...Add print option:
       IF (sloutput) WRITE(0,*) 'END OF TAUIN1'
 c slmod end
 c
+
       RETURN
 C
 C
@@ -3611,10 +3725,10 @@ c     >  /5X,'NO OF POINTS NP     =',I6,5X,'MAX NO. ROWS MKS    =',I6,
 c     >  /5X,'SEPARATRIX   IRSEP  =',I6,5X,'WALL         IRWALL =',I6,
 c     >  /5X,'FIRST TRAP   IRTRAP =',I6,5X,'NO OF RINGS  NRS    =',I6,
 c     >  /5X,'K SPLIT PT   IKT    =',I6,5X,'K REF POINT  IKREF  =',I6)
- 9002 FORMAT(/1X,' IK IR    R           Z          BPH',
+ 9002 FORMAT(/1X,'  IK  IR    R           Z          BPH',
      >  'I     TEB     TIB     NB      E1      VB          S      ',
      >  'BTOT/BTHETA    FEG1    FIG1',/1X,131('-'))
- 9003 FORMAT(1X,2I3,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
+ 9003 FORMAT(1X,2I4,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
 c 9006 FORMAT(/1X,'TAUIN1: AREA OF SOL+TRAP =',F9.6,',  MAIN P =',F9.6,/
 c 9011 FORMAT(/1X,'EDGE PLASMA DATA FOR SHOT',I6,',  TIME',F8.3,' :-',
 c     >  /5X,'RUN                 =',A,
@@ -3622,16 +3736,16 @@ c     >  /5X,'PLASMA       HMASS  =',I6,5X,'IMPURITY     ZMASS  =',I6,
 c     >  /5X,'FIRST RING   IRCENT =',I6,5X,'LOST INN RGS NINOMP =',I6,
 c     >  /5X,'LOST OUT RGS NINOWA =',I6)
 c 9012 FORMAT(1P,6E12.4)
- 9022 FORMAT(/1X,' IK IR    R      Z   IKIN IRIN IKOUT',
+ 9022 FORMAT(/1X,'  IK  IR    R      Z   IKIN IRIN IKOUT',
      >  ' IROUT  INDIST OUTDIST BACDIST FORDIST VOLUME  INPROB',
      >  '  POLDIST',/1X,131('-'))
- 9023 FORMAT(1X,2I3,2F7.3,I5,I3,I8,I3,2X,4F8.3,F8.5,F8.4,F8.3)
- 9032 FORMAT(/1X,' IK IR    R      Z       NH0      NE      TE   ',
+ 9023 FORMAT(1X,2I4,2F7.3,I5,I3,I8,I3,2X,4F8.3,F8.5,F8.4,F8.3)
+ 9032 FORMAT(/1X,'  IK  IR    R      Z       NH0      NE      TE   ',
      >    ' TAUIZ0  CHPROB0',
      >    ' MTCPROB ',
      >  2('TAUIZ',I1,'  TAUEI',I1,'  TAURC',I1,'  CHPROB',I1,
      >  ' RCFRAC',I1,' '),/1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,2X,1P,6E8.1,2(1P,4E8.1,0P,F8.4))
+ 9033 FORMAT(1X,2I4,2F7.3,2X,1P,6E8.1,2(1P,4E8.1,0P,F8.4))
 c 9040 FORMAT(
 c     >   5X,'NO OF R PTS       NXS   =  ',I5,',   DELTAR =',F9.5,
 c     >  /5X,'NO OF Z PTS       NYS   =  ',I5,',   DELTAZ =',F9.5,
@@ -3921,6 +4035,8 @@ c slmod end
       KTOTV2(IR) = 0.0
       RNGCHK     = 0.0
       WRITE (9,9005)
+
+
       DO 900 IK = 1, NKS(IR)
 C
 C---- SET UP 5 BY 5 MATRIX OF (IK,IR) VALUES SURROUNDING POINT, USING
@@ -3931,7 +4047,7 @@ c slmod begin
 c...  Sorry for the spagetti, but the (legacy) code between here and
 c     205 is completely broken for linear device grids.  I have set
 c     KAREAS to be assigned from KAREAS2 below:
-      IF (cgridopt.EQ.LINEAR_GRID) GOTO 205
+      IF (cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) GOTO 205
 c slmod end
       JK(1,3) = IK - 1
       IF (IK.EQ.1.AND.IR.LT.IRSEP) JK(1,3) = NKS(IR) - 1
@@ -4023,6 +4139,8 @@ C
 C---- CALCULATE THE FOUR AREAS (SOME MAY BE 0) AND SUM THEM.
 C---- AREA OF 4-SIDED IRREGULAR FIGURE IS THAT OF TWO TRIANGLES.
 C
+
+
       KAREAS(IK,IR) = 0.0
       DO 200 I = 2, 3
        DO 200 J = 2, 3
@@ -4079,8 +4197,10 @@ C---- FOR CALCULATING THE AREA OF A POLYGON FROM THE POSITION OF
 C---- ITS VERTICES ASSUMES THAT THE VERTICES ARE ORDERED CLOCKWISE
 C---- AROUND THE PERIMETER.
 C
+
 c slmod begin
  205  CONTINUE
+
       AREA_SUM = 0.0D0
 c slmod end
       KP = KORPG(IK,IR)
@@ -4134,8 +4254,10 @@ c     +                            DBLE(RVERTP(L  ,KP) * ZVERTP(LP1,KP))
 c slmod end
       ENDIF
 c slmod begin
-      IF (cgridopt.EQ.LINEAR_GRID) THEN
-        kareas = karea2
+      IF (cgridopt.EQ.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) THEN
+c       jdemod - added indices instead of assigning entire arrays on
+c                each loop iteration
+        kareas(ik,ir) = karea2(ik,ir)
       ENDIF
 c slmod end
 C
@@ -4146,11 +4268,21 @@ c     subroutine.
 c
 c     For ASDEX UPGRADE calculate the values here as for JET.
 c
-      if (cgridopt.eq.0.or.cgridopt.eq.3.or.
-     .    cgridopt.eq.LINEAR_GRID) then
-         KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
+      if (cgridopt.eq.RIBBON_GRID) then 
+         ! KVOLS doesn't have much meaning for a ribbon grid - set equal to kareas to start
+         ! if not one might use 2 PI R * karea * (sin(pitch_angle))  to get cell 
+         ! area projected onto the poloidal plane. 
+         kvols(ik,ir) = kareas(ik,ir)
+         kvol2(ik,ir) = karea2(ik,ir)
+      else
+
+         if (cgridopt.eq.0.or.cgridopt.eq.3.or.
+     >       cgridopt.EQ.LINEAR_GRID) then
+            KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
+         endif
+         KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
       endif
-      KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
+
 
 c slmod begin
 c...  Scale KVOLS and KVOL2 if only a fraction of the torus is 
@@ -4186,6 +4318,7 @@ c
          kareas(ik,ir) = karea2(ik,ir)
          kvols(ik,ir) = kvol2(ik,ir)
       endif
+
 C
       WRITE (9,9006) IK,IR,RS(IK,IR),ZS(IK,IR),KAREAS(IK,IR),
      >  KVOLS(IK,IR),KAREA2(IK,IR),KVOL2(IK,IR),ACHK,CVMF(IK,IR),
@@ -4212,6 +4345,8 @@ C
       TOTV2  = TOTV2  + KTOTV2(IR)
       TOTCHK = TOTCHK + RNGCHK
   910 CONTINUE
+
+
       WRITE (9,9008) TOTA,TOTV,TOTA2,TOTV2,TOTCHK
 c
 c     Calculate some characteristics of Areas
@@ -4223,14 +4358,30 @@ c
       do ir = 1,nrs
         do ik = 1,nks(ir)
            if (ik.eq.1) then
-             apol = karea2(ik,ir) / ksb(ik,ir)
+              if (ksb(ik,ir).ne.0.0) then 
+                apol = karea2(ik,ir) / ksb(ik,ir)
+              else
+                apol = 0.0
+              endif
            else
-             apol = karea2(ik,ir) / (ksb(ik,ir)-ksb(ik-1,ir))
+              if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0.0) then
+                 apol = karea2(ik,ir) / (ksb(ik,ir)-ksb(ik-1,ir))
+              else
+                 apol = 0.0
+              endif
            endif
 c
-           apara = apol / kbfs(ik,ir)
+           if (kbfs(ik,ir).ne.0.0) then 
+              apara = apol / kbfs(ik,ir)
+           else
+              apara = 0.0
+           endif
 c
-           afact = apara / rs(ik,ir)
+           if (rs(ik,ir).ne.0.0) then 
+              afact = apara / rs(ik,ir)
+           else
+              afact = 0.0
+           endif
 c
            write (6,'(''Areas:'',2i4,5(2x,e15.6))') ir,ik,
      >                karea2(ik,ir),kbfs(ik,ir),
@@ -4238,12 +4389,15 @@ c
 c
         end do
       end do
+
+
 c
       endif
 c
 c     Loop through and check for zero volume cells.
 c     Print an informational message.
 c
+
       cnt = 0
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -5669,6 +5823,7 @@ c
 c     
 c     
       subroutine raug
+      use error_handling
       implicit none
       include 'params'
       include 'cgeom'
@@ -6265,7 +6420,7 @@ c
 c     
          npolyp = in
 c     
-         stop
+         stop 'Incomplete grid'
 c     
       endif
 c     
@@ -6424,11 +6579,11 @@ c     In the case of sonnet_grid_sub_type=2 - boundary rings have been added
 c     and these will not have corresponding psi values - set psi values to 0.0 as default
 c     Adding one to ir should account for the indexing. 
 c
-            if (sonnet_grid_sub_type.eq.2) then
-               ir = ir +1 
-               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
-     >                        cutring,ik,psi
-            endif
+c            if (sonnet_grid_sub_type.eq.2) then
+c               ir = ir +1 
+c               write(6,'(a,4i8,g12.5)') 'PSITARG:',ir,indexiradj,
+c     >                        cutring,ik,psi
+c            endif
 c     
             if (ir.le.cutring) ir = ir + maxrings 
 c     
@@ -6460,13 +6615,15 @@ c
       if ((cneur.eq.4.or.ctrap.eq.4.or.cneur.eq.5.or.ctrap.eq.5)
      >     .and.nves.eq.0) then
 c     
-         write (6,*) 'Error reading SONNET geometry file!'
-         write (6,*) 'The Neutral Wall data was not appended'
-         write (6,*) '(but is requored for specified options.)'
+         write(error_message_data,'(a)')
+     >       'ERROR reading grid file. Neutral wall data not found.'
+         call errmsg(error_message_data)
+
          call prc('Error reading SONNET geometry file!')
          call prc('The Neutral Wall data was not appended')
          call prc('(but is requored for specified wall options)')
-         stop
+
+         stop 'Neutral wall data not found.'
 c     
       end if
 c     
@@ -6487,6 +6644,10 @@ c
             write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
          end do
       end do
+c
+c     jdemod - Set all cells to default to non-orthogonal
+c
+      tagdv = 1.0
 c     
 c     
 c     Set total number of rings and total number of polygons
@@ -8735,7 +8896,7 @@ c     vertices - cell centre information as well as magnetic field.
 c
 c     This information is only printed if the expanded print option
 c     has been selected. It is printed in a format compatible with
-c     the SONET grid generator output.
+c     the SONNET grid generator output.
 c
 c     David Elder, March 8, 1995
 c
@@ -8911,7 +9072,12 @@ c
 c
 c           Print magnetic field and center coordinates
 c
-            write(iounit,6003) 1.0/kbfs(ik,ir),rs(ik,ir),zs(ik,ir)
+            if (kbfs(ik,ir).ne.0.0) then 
+               write(iounit,6003) 1.0/kbfs(ik,ir),rs(ik,ir),zs(ik,ir)
+            else
+               ! Write a 0.0 if the magnetic field is undefined
+               write(iounit,6003) 0.0,rs(ik,ir),zs(ik,ir)
+            endif
 c
 c           Print second two vertices
 c
@@ -10330,6 +10496,8 @@ c
       real pincoreizt,pinsolizt,pinppizt ,allizt,totrect
       real totrece,totrecte,eircor,pincortmp
       integer saveunit
+c
+      integer outer_in
 C
 C---- Calculate the Particle Fluxes into the Divertor
 C
@@ -10899,13 +11067,19 @@ c
 c
       if (pinprint.eq.1) then
 c
+         if (xpoint_up) then 
+            outer_in = 2
+         else
+            outer_in = 1
+         endif
+
          call prb
 c
          call prc('RING SUMMARY OF PIN IONIZATION AND'//
      >         ' NEUTRAL CONTENT:')
 c
          call prc('  RING   IONIZATION     IZ DENS.    NEUTRALS'//
-     >            '    NEUT DENS.')
+     >            '    NEUT DENS.   OMP-DIST')
          do ir = 1,nrs
 c
             if (ir.eq.irsep) then
@@ -10914,8 +11088,9 @@ c
                call prc('    ------ Private Plasma ----------')
             endif
 c
-            write(comment,'(2x,i4,1p,4(1x,g12.4))') ir,
-     >                       (piniz_info(ir,id),id=1,4)
+            write(comment,'(2x,i4,1p,5(1x,g12.4))') ir,
+     >                       (piniz_info(ir,id),id=1,4),
+     >                       middist(ir,outer_in)
             call prc(comment)
 c
          enddo
@@ -10927,7 +11102,7 @@ c
          do ir = 1,irsep-1
 c
             ringizdist = ringizdist + piniz_info(ir,1) *
-     >                                abs(middist(ir,2))
+     >                               abs(middist(ir,outer_in))
             ringiz     = ringiz      + piniz_info(ir,1)
 c
             do ik = 1,nks(ir)-1
@@ -10935,6 +11110,12 @@ c
                ringizsepdist = ringizsepdist +
      >                         pinion(ik,ir)*karea2(ik,ir)
      >                         *separatrix_dist(ik,ir)
+
+               if (ir.eq.irsep-1) then 
+                  write(6,'(a,2i8,5(1x,g18.8))') 'RINGIZ:',
+     >                 ik,ir,separatrix_dist(ik,ir),middist(ir,outer_in)
+               endif
+
 
             end do
 c
@@ -11031,7 +11212,7 @@ C
       INTEGER IK,IR,IKMID,OUEND,INEND,
      >     ID,LOOP
 C     
-      REAL FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
+      REAL*8 FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
      >     TOTFLX,OTOTFLX,ITOTFLX,
      >     totflx_save,ototflx_save,itotflx_save,
      >     netflx_save,onetflx_save,inetflx_save,
@@ -11055,59 +11236,71 @@ c
      >     tionis,itionis,otionis,
      >     surf(maxnks),delqe(maxnks),delqi(maxnks),deldp(maxnks),
      >     qetoto,qetoti,qitoto,qitoti,dptoto,dptoti
-      real qetot,qitot
+      real*8 qetot,qitot
 c     
 c     Power Loss terms
 c     
 c     integer dpploss
 c     parameter (dpploss=1)
 c     
-      real ionploss(maxnrs),iionploss(maxnrs),oionploss(maxnrs)
-      real elecploss(maxnrs),ielecploss(maxnrs),oelecploss(maxnrs)
-      real tiploss, teploss,peifact
+      real*8 ionploss(maxnrs),iionploss(maxnrs),oionploss(maxnrs)
+      real*8 elecploss(maxnrs),ielecploss(maxnrs),oelecploss(maxnrs)
+      real*8 tiploss, teploss,peifact
 c     
-      real qecond(maxnks,maxnrs),
+      real*8 qecond(maxnks,maxnrs),
      >     qicond(maxnks,maxnrs),dpflux(maxnks,maxnrs),
      >     qeconv(maxnks,maxnrs),qiconv(maxnks,maxnrs),
      >     surfa(maxnks,maxnrs),
      >     dgradn(maxnks,maxnrs)
-      real cfgam(maxnrs),icfgam(maxnrs),ocfgam(maxnrs)
-      real cfqe(maxnrs),ocfqe(maxnrs),icfqe(maxnrs)
-      real cfqi(maxnrs),ocfqi(maxnrs),icfqi(maxnrs)
-      real delouti,delouto,qeconvi,qeconvo,qiconvi,qiconvo
-      real qeouto,qeouti,qiouto,qiouti,qeoutconvi,qeoutconvo,
+      real*8 cfgam(maxnrs),icfgam(maxnrs),ocfgam(maxnrs)
+      real*8 cfqe(maxnrs),ocfqe(maxnrs),icfqe(maxnrs)
+      real*8 cfqi(maxnrs),ocfqi(maxnrs),icfqi(maxnrs)
+      real*8 delouti,delouto,qeconvi,qeconvo,qiconvi,qiconvo
+      real*8 qeouto,qeouti,qiouto,qiouti,qeoutconvi,qeoutconvo,
      >     qioutconvi,qioutconvo
 c     
-      real dgradt,dperpt,aperp,apdg
+      real*8 dgradt,dperpt,aperp,apdg
 c     
       integer avmod
 c     
       integer ikin,irin,ikout,irout,ikstart,ikend,ird
       integer irskip,irtmp,in1,in2,in
-      real    totgradn,totgradte,totgradti
-      real    totcfflux,totcffluxe2d, gradnsep,totrec
-      real    ototcfflux,itotcfflux
+      real*8    totgradn,totgradte,totgradti
+      real*8    totcfflux,totcffluxe2d, gradnsep,totrec
+      real*8    ototcfflux,itotcfflux
       logical i
-      real    flxval(maxnrs,13,3)
+      real*8    flxval(maxnrs,13,3)
       logical usedpav,usexpav
-      real    dpav,xpavi,xpavio,xpavii,xpave,xpaveo,xpavei,dptmp,
+      real*8    dpav,xpavi,xpavio,xpavii,xpave,xpaveo,xpavei,dptmp,
      >     dpavi,dpavo,fact,xpavt,xpavti,xpavto,
      >     tmpnflx,tmpion,tmpflx
 c     
 c     For calculation of volumetric quantities.
 c     
-      real srcs(maxnks,maxnrs,8)
-      real srcsint(maxnrs,12)
-      real srcstot(12)
+      real*8 srcs(maxnks,maxnrs,8)
+      real*8 srcsint(maxnrs,12)
+      real*8 srcstot(12)
+      real*8 srcsregtot(maxnrs,2,4)
 c     
       real Quant2Grad
       external quant2grad
-      real grad2n(maxnks,maxnrs)
-      real grad2ti(maxnks,maxnrs)
-      real grad2te(maxnks,maxnrs)
-      real totgrad2n(maxnrs)
-      real totgrad2ti(maxnrs)
-      real totgrad2te(maxnrs)
+      real*8 grad2n(maxnks,maxnrs)
+      real*8 grad2ti(maxnks,maxnrs)
+      real*8 grad2te(maxnks,maxnrs)
+      real*8 totgrad2n(maxnrs)
+      real*8 totgrad2ti(maxnrs)
+      real*8 totgrad2te(maxnrs)
+c
+c     Add Vperp arrays and density gradient storage arrays
+c
+      real*8 vperp(maxnrs,3)   ! 1 = outer, 2 = inner, 3 = total
+      real*8 lambdan(maxnrs,3) ! 3 for inner/outer/total  at midplane
+      real*8 lambdate(maxnrs,3) ! 3 for inner/outer/total  at midplane
+c
+c     Unit number for output
+c
+      integer extract_unit
+
 c     
 c     real pei(maxnks,maxnrs)
 c     
@@ -11118,14 +11311,14 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-         WRITE(0,*)
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*)
-         RETURN
-      ENDIF
+c      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+c         WRITE(0,*)
+c         WRITE(0,*)'-------------------------------------------------'
+c         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+c         WRITE(0,*)'-------------------------------------------------'
+c         WRITE(0,*)
+c         RETURN
+c      ENDIF
 c     slmod end
 c     
 C     >     QLOSS(MAXNRS)
@@ -11155,7 +11348,11 @@ c
 c     Set Gamma values - these should be set to match the SOL option
 c     and eventually may be set automatically
 c     
-      gai = 3.5
+c     jdemod - set gai to match assumptions used in assigning input data
+c      gai = 3.5
+c
+      gai = 2.5
+
       gae = 5.0
 c     
 c     
@@ -11299,6 +11496,7 @@ c
             OUHEATE(IR) =  GAE * ECH * ( KTEDS (ID) ) * OUFLUX (IR)
          ENDIF
 c     
+
 C     
 c     
  200  CONTINUE
@@ -11323,6 +11521,7 @@ c
       call rzero(srcs,maxnks*maxnrs*8)
       call rzero(srcsint,maxnrs*12)
       call rzero(srcstot,12)
+      call rzero(srcsregtot,maxnrs*2*4)
 c     
       do ir = irsep,nrs
 c     
@@ -11349,13 +11548,19 @@ c
      >              / sqrt(knbs(ik,ir)))  / 15.0
 
 
-               srcs(ik,ir,1) = - 1.14e-32 * knbs(ik,ir)**2 *
+               srcs(ik,ir,1) = -1.14e-32 * knbs(ik,ir)**2 *
      >              (ktebs(ik,ir)-ktibs(ik,ir)) /
      >              (crmb * ktebs(ik,ir)**1.5)
      >              * peifact
      >              * fact
 
-
+               write(6,'(a,2i6,12(1x,g12.5))') 'DBG:Pei:',ik,ir,peifact,
+     >              srcs(ik,ir,1),fact,dppei,
+     >              log(1.5e13 * ktebs(ik,ir)**1.5/ sqrt(knbs(ik,ir))),
+     >              (crmb * ktebs(ik,ir)**1.5),
+     >              -1.14e-32 * knbs(ik,ir)**2 *
+     >              (ktebs(ik,ir)-ktibs(ik,ir)) /
+     >              (crmb * ktebs(ik,ir)**1.5)
 c     
 c     Phelpi
 c     
@@ -11404,12 +11609,16 @@ c
                srcsint(ir,2) = srcsint(ir,2)+srcs(ik,ir,2)*karea2(ik,ir)
                srcsint(ir,3) = srcsint(ir,3)+srcs(ik,ir,3)*karea2(ik,ir)
                srcsint(ir,4) = srcsint(ir,4)+srcs(ik,ir,4)*karea2(ik,ir)
+
                srcsint(ir,5) = srcsint(ir,5)
      >              +dprec*pinion(ik,ir)*karea2(ik,ir)
+
                srcsint(ir,6) = srcsint(ir,6)
      >              +dprec*pinqi(ik,ir)*karea2(ik,ir)
+
                srcsint(ir,7) = srcsint(ir,7)
      >              +dprec*pinqe(ik,ir)*karea2(ik,ir)*dp_pinqe_mult
+
                srcsint(ir,8) = srcsint(ir,8)+abs(srcs(ik,ir,4))
      >              *karea2(ik,ir)
 c     
@@ -11417,7 +11626,7 @@ c
                srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
                srcsint(ir,11)= srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
                srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
-c     
+c
             end do
 c     
 c     Add up sources over grid
@@ -11431,6 +11640,58 @@ c
          end if
 c     
       end do
+c
+c     Sum up total power loss on each ring up to midplane
+c
+c     oumid = outer midplane
+c     inmid = inner midplane
+c      
+      do ir = irsep,nrs
+c
+c        inner
+c
+         do ik = inmid,nks(ir)
+
+            in =5 ! PINQI
+            srcsregtot(ir,1,1) = srcsregtot(ir,1,1) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in =6 ! PINQE
+            srcsregtot(ir,1,2) = srcsregtot(ir,1,2) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in = 8 ! PINION
+            srcsregtot(ir,1,4) = srcsregtot(ir,1,4) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+         end do
+
+c        total power loss
+         srcsregtot(ir,1,3) = srcsregtot(ir,1,1) + srcsregtot(ir,1,2)
+c
+c        outer
+c
+         do ik = 1,oumid
+
+            in =5 ! PINQI
+            srcsregtot(ir,2,1) = srcsregtot(ir,2,1) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in =6 ! PINQE
+            srcsregtot(ir,2,2) = srcsregtot(ir,2,2) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+            in = 8 ! PINION
+            srcsregtot(ir,2,4) = srcsregtot(ir,2,4) + 
+     >                         srcs(ik,ir,in) * karea2(ik,ir)
+
+         end do
+
+c        total power loss
+         srcsregtot(ir,2,3) = srcsregtot(ir,2,1) + srcsregtot(ir,2,2)
+
+      end do
+
 c     
 c     Print out the tallies of information - cell by cell and ring by ring
 c     
@@ -11863,6 +12124,81 @@ c
 c     This is total plasma area adjacent to the main plasma.
 c     
 c     
+c
+c     Calculate midplane density gradients
+c
+      do ir = irsep,irwall-1
+
+         if (ir.eq.irsep) then
+
+            OSEP = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >           (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+            ISEP = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >           (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+c
+            ODELN  = (KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEP     
+            IDELN  = (KNBS(inMID,IR)-KNBS(inMID,IR+1))/ISEP
+c
+            ODELTE = (KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEP
+            IDELTE = (KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEP
+
+
+         elseif (ir.eq.irwall-1) then
+
+            OSEP = SQRT((ABS(RS(OUMID,IR-1)-RS(OUMID,IR)))**2 +
+     >           (ABS(ZS(OUMID,IR-1)-ZS(OUMID,IR)))**2)
+            ISEP = SQRT((ABS(RS(INMID,IR-1)-RS(INMID,IR)))**2 +
+     >           (ABS(ZS(INMID,IR-1)-ZS(INMID,IR)))**2)
+c
+            ODELN  = (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEP     
+            IDELN  = (KNBS(inMID,IR-1)-KNBS(inMID,IR))/ISEP
+c
+            ODELTE = (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEP
+            IDELTE = (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEP
+
+
+         else
+
+            OSEPF = SQRT((RS(OUMID,IR)-RS(OUMID,IR+1))**2 +
+     >           (ZS(OUMID,IR)-ZS(OUMID,IR+1))**2 )
+            ISEPF = SQRT((RS(INMID,IR)-RS(INMID,IR+1))**2 +
+     >           (ZS(INMID,IR)-ZS(INMID,IR+1))**2 )
+
+            OSEPB = SQRT((RS(OUMID,IR-1)-RS(OUMID,IR))**2 +
+     >           (ZS(OUMID,IR-1)-ZS(OUMID,IR))**2 )
+            ISEPB = SQRT((RS(INMID,IR-1)-RS(INMID,IR))**2 +
+     >           (ZS(INMID,IR-1)-ZS(INMID,IR))**2 )
+
+c
+            ODELN  = ((KNBS(OUMID,IR)-KNBS(OUMID,IR+1))/OSEPF+
+     >           (KNBS(OUMID,IR-1)-KNBS(OUMID,IR))/OSEPB)/2.0
+            IDELN  = ( (KNBS(inMID,IR)-KNBS(inMID,IR+1)) /ISEPF+
+     >           (KNBS(inMID,IR-1)-KNBS(inMID,IR)) /ISEPB )/2.0
+
+c     
+            ODELTE = ((KTEBS(OUMID,IR)-KTEBS(OUMID,IR+1))/OSEPF+
+     >           (KTEBS(OUMID,IR-1)-KTEBS(OUMID,IR))/OSEPB)/2.0
+            IDELTE = ((KTEBS(inMID,IR)-KTEBS(inMID,IR+1))/ISEPF+
+     >           (KTEBS(inMID,IR-1)-KTEBS(inMID,IR))/ISEPB)/2.0
+
+
+         endif
+c
+         DELN   = (ODELN  + IDELN)/2.0
+         DELTE  = (ODELTE + IDELTE)/2.0
+c
+         lambdan(ir,1) = knbs(inmid,ir)/ideln
+         lambdan(ir,2) = knbs(oumid,ir)/odeln
+         lambdan(ir,3) =(knbs(oumid,ir)+knbs(inmid,ir))/(2.0 * deln)
+
+         lambdate(ir,1) = ktebs(inmid,ir)/idelte
+         lambdate(ir,2) = ktebs(oumid,ir)/odelte
+         lambdate(ir,3) =(ktebs(oumid,ir)+ktibs(inmid,ir))/(2.0*delte)
+
+      end do
+
+
+
 
 
       if (dpmethod.eq.0.or.dpmethod.eq.1) then
@@ -13910,6 +14246,22 @@ c
             write(coment,300) ir,idperp(ir),odperp(ir),dperp(ir)
             call prc(coment)
          end do
+c
+         call prb
+         call prc('  Table of Vperp values extracted from OSM')
+         call prc('  -using midplane density gradients for'//
+     >            ' conversion from Dperp')
+         call prc('  Ring         '//Inner//'          '//Outer//
+     >        '          Total')
+         do ir = irsep , irwall-2
+c
+            vperp(ir,1) = idperp(ir)/lambdan(ir,1)
+            vperp(ir,2) = odperp(ir)/lambdan(ir,2)
+            vperp(ir,3) = dperp(ir)/lambdan(ir,3)
+c
+            write(coment,300) ir,vperp(ir,1),vperp(ir,2),vperp(ir,3)
+            call prc(coment)
+         end do
 c     
          call prc(' Table of Xperp ION values extracted from OSM')
          call prc('  Ring         '//Inner//'           '//Outer//
@@ -13937,6 +14289,163 @@ c
      >           xperpt(ir)
             call prc(coment)
          end do
+c
+c        Add a print out to an extractor output file for easy import into Excel
+c
+         call find_free_unit_number(extract_unit)
+
+         open(extract_unit,file='tc_extractor.output',form='formatted')
+c
+c        Write out a summary of extracted transport coefficient data
+c         
+         write(extract_unit,'(a)') 'EXTRACTED TRANSPORT COEFFICIENTS'
+         write(extract_unit,'(20x,a,5x,a,5x,a)')  inner, outer,'TOTAL'
+
+         write(extract_unit,'(a)') ' IR  '//
+     >     ' SEP_DIST_'//inner//' SEP_DIST_'//outer//  
+     >     ' MID_DIST_'//inner//' MID_DIST_'//outer//  
+     >     ' DP_'//inner//' XPE_'//inner//
+     >     ' XPI_'//inner//' XPT_'//inner//
+     >     ' DP_'//outer//' XPE_'//outer//
+     >     ' XPI_'//outer//' XPT_'//outer//
+     >     ' DP_TOT  XPE_TOT  XPI_TOT  XPT_TOT'
+
+         do ir = irsep,irwall-1
+            write(extract_unit,'(i6,4(1x,g12.6),12(1x,g12.6))')
+     >        ir,sepdist(idds(ir,1)),sepdist(idds(ir,2)),
+     >        middist(ir,1),middist(ir,2),
+     >        idperp(ir),ichiperpe(ir),ichiperpi(ir),ixperpt(ir),
+     >        odperp(ir),ochiperpe(ir),ochiperpi(ir),oxperpt(ir),
+     >        dperp(ir),chiperpe(ir),chiperpi(ir),xperpt(ir)
+
+         end do
+
+         close (extract_unit)
+
+
+
+c
+c        Add a print out to an extractor output file for easy import into Excel
+c
+         call find_free_unit_number(extract_unit)
+
+         open(extract_unit,file='tc_extractor2.output',form='formatted')
+c
+c        Write out a summary of extracted transport coefficient data
+c         
+c        Get index for actual outer data
+c
+         if (outer.eq.'OUTER') then 
+            in = 2
+         else
+            in = 1
+         endif
+c
+         if (in.eq.1) then 
+            write(extract_unit,'(a)') 'DATA FROM EXTRACTOR'//
+     >                  ' ANALYSIS FOR '//INNER//' SOL'
+         elseif (in.eq.2) then 
+            write(extract_unit,'(a)') 'DATA FROM EXTRACTOR'//
+     >                  ' ANALYSIS FOR '//OUTER//' SOL'
+         endif
+
+         write(extract_unit,'(a)') ' IR '//
+     >     ' Sep_dist_targ '//' Sep_dist_omp '//
+     >     '  ne_targ '//
+     >     ' te_targ '//' ti_targ '//' Q_e_para_targ[W/m2] '//
+     >     ' Q_i_para_targ[W/m2] '//' Q_t_para_targ[W/m2] '//
+     >     ' G_para_targ[part/m2] '//' S_ioniz_omp '//
+     >     ' ne_omp  '//' te_omp '//' ti_omp '// 
+     >     ' Qi_omp[W] '//' Qe_omp[W] '//' Qt_omp[W] '//
+     >     ' S_omp '//' P_omp '//' Lam_n_omp '// 
+     >     ' Lam_Te_omp '//' Dperp_outer '//
+     >     ' Vperp_outer '//
+     >     ' Xperp_tot_outer '//
+     >     ' Xperp_e_outer '//' Xperp_i_outer '
+
+C
+C        printing outer data only
+C
+         do ir = irsep,irwall-1
+
+         if (in.eq.2) then
+c
+c           Use "O" prefix
+c
+            write(extract_unit,'(i6,25(1x,g13.6))')
+     >        ir,
+     >        sepdist(idds(ir,in)),
+     >        middist(ir,in),
+     >        knds(idds(ir,in)),kteds(idds(ir,in)),
+     >        ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in))+
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+c     >        ouheate(ir)*kbfst(ir,in)
+c     >                 /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        ouheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        ouheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in))+
+c     >        ouheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in))),
+     >        srcsregtot(ir,in,4), 
+     >        knbs(oumid,ir),ktebs(oumid,ir),ktibs(oumid,ir),
+     >        srcsregtot(ir,in,1),srcsregtot(ir,in,2),
+     >        srcsregtot(ir,in,3),
+     >        kss(oumid,ir),kps(oumid,ir),
+     >        lambdan(ir,in),lambdate(ir,in),
+     >        odperp(ir),odperp(ir)/lambdan(ir,in),
+     >        oxperpt(ir),ochiperpe(ir),ochiperpi(ir)
+
+         elseif (in.eq.1) then 
+c
+c             Use "I" prefix
+c
+            write(extract_unit,'(i6,25(1x,g13.6))')
+     >        ir,
+     >        sepdist(idds(ir,in)),
+     >        middist(ir,in),
+     >        knds(idds(ir,in)),kteds(idds(ir,in)),
+     >        ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gai * ech * ktids(idds(ir,in))+
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in)))*
+     >        gae * ech * kteds(idds(ir,in)),
+c     >        inheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        inheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+c     >        inheate(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in))+
+c     >        inheati(ir)*kbfst(ir,in)
+c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
+     >        knds(idds(ir,in))*abs(kvds(idds(ir,in))),
+     >        srcsregtot(ir,in,4), 
+     >        knbs(inmid,ir),ktebs(inmid,ir),ktibs(inmid,ir),
+     >        srcsregtot(ir,in,1),srcsregtot(ir,in,2),
+     >        srcsregtot(ir,in,3),
+     >        ksmaxs(ir)-kss(inmid,ir),kpmaxs(ir)-kps(inmid,ir),
+     >        lambdan(ir,in),lambdate(ir,in),
+     >        idperp(ir),idperp(ir)/lambdan(ir,in),
+     >        ixperpt(ir),ichiperpe(ir),ichiperpi(ir)
+
+            endif
+
+         end do
+
+         close (extract_unit)
+
 c     
 c     Detailed Ring summaries
 c     
@@ -15836,6 +16345,159 @@ c
  500  format(6e18.10)
 c
       end
+
+c
+c
+c
+      subroutine wrtdivgrid
+      use bfield
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+c
+c     WRTDIVGRID: The purpose of this routine is to write out the
+c                 simulation grid in a DIVIMP specific
+c                 format. This is an expediency for reading and
+c                 writing just the information needed for transferring
+c                 data between codes.
+c
+c     Instead of using a unit number - assign a file name. 
+c
+c
+      integer of,ierr
+      integer ik,ir,id,in
+      integer nvert
+c
+      nvert = maxval(nvertp)
+c
+      call find_free_unit_number(of)
+c
+c     Local file name assigned for output is divimp_plasma.out
+c
+      OPEN(UNIT=of,FILE='divimp_grid.out',STATUS='NEW',
+     >     ERR=2000,iostat=ierr)
+
+c
+c      nrs,nds,npolyp,irsep
+c
+c      nks(ir)
+c
+c      iking(ik,ir)
+c      ikoutg(ik,ir)
+c
+c      rs(ik,ir),zs(ik,ir)
+c      rbnd(ik,ir),zbnd(ik,ir)
+c
+c      korpg(ik,ir)
+c
+c      nvertp(in)
+c
+c      rvertp(in,1..4),zvertp(in,1..4)
+c
+c      bts
+c      br, bz, bt
+c      
+c
+c
+c     Write Title line - header information - NRS, IRSEP, NDS, NPOLYP, NVERT, NKS
+c 
+      write (of,10) 'DIVIMP GRID DATA:'
+      write (of,200) nrs,irsep,nds,npolyp,nvert
+      write (0,'(a,5i8)') 'GRID NUMBERS:', nrs,irsep,nds,npolyp,nvert
+      write (of,10) 'KNOTS:'
+      write (of,400)  (nks(ir),ir=1,nrs)
+c
+c     Spatial coordinates of cell center points and parallel mid-point boundaries - RS, ZS, KRB, KZB
+c      
+      write (of,10) 'RS:'
+      write (of,500) ((rs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'ZS:'
+      write (of,500) ((zs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'RBND:'
+      write (of,500) ((krb(ik,ir),ik=0,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'ZBND:'
+      write (of,500) ((kzb(ik,ir),ik=0,nks(ir)),ir=1,nrs)
+c
+c     Cell connection map information - IKINS, IRINS, IKOUTS, IROUTS
+c
+      write (of,10) 'IRINS:'
+      write (of,400) ((irins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IKINS:'
+      write (of,400) ((ikins(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IROUTS:'
+      write (of,400) ((irouts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IKOUTS:'
+      write (of,400) ((ikouts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+      write (of,10) 'IDDS:'
+      write (of,400) ((idds(ir,in),ir=1,nrs),in=1,2)
+c
+c     Pointer from grid cell to polygon index - KORPG
+c
+      write (of,10) 'KORPG:'
+      write (of,400) ((korpg(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+c
+c     Polygon information - NVERP, RVERTP,ZVERTP
+c
+      write (of,10) 'NVERTP:'
+      write (of,400) (nvertp(in),in=1,npolyp)
+
+      write (of,10) 'RVERTP:'
+      write (of,500) ((rvertp(ik,in),ik=1,nvert),in=1,npolyp)
+
+      write (of,10) 'ZVERTP:'
+      write (of,500) ((zvertp(ik,in),ik=1,nvert),in=1,npolyp)
+
+c
+c     Magnetic field - BTOT, BR,BZ,BT
+c
+      write (of,10) 'BTOT:'
+      write (of,500) ((bts(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
+c     write the BR,BZ and BT vector components from inside the b-field module
+c
+      call write_bvectors(of,nrs,nks)
+c 
+c     Blank line at end
+c
+      write(of,'(/)')
+c
+      close(of)
+c
+      return
+c
+ 2000 continue
+c
+      close(of)
+
+
+      write (6,*) 'ERROR WRITING DIVIMP GRID:'
+     >       //' FILE EXISTS',ierr
+      call pri('ERROR WRITING DIVIMP GRID FILE:'
+     >          //' ERR NO = ',ierr)
+c
+      return
+c
+c     Formatting
+c
+  10  format(a)
+ 100  format(a40)
+ 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)
+ 400  format(12i6)
+ 500  format(6e18.10)
+c
+      end
+
+
+
 c
 c
 c
@@ -18284,7 +18946,7 @@ c
      >                                ik,ir,ik+1,ir,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18325,7 +18987,7 @@ c
      >                                ik,ir,ik-1,ir,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18371,7 +19033,7 @@ c
      >                                ik,ir,ikn,irn,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
@@ -18416,7 +19078,7 @@ c
      >                                ik,ir,ikn,irn,
      >                                in,testin
                             
-                            call errmsg('ERROR:TAU MODULE:'//
+                            call dbgmsg('ERROR:TAU MODULE:'//
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 c
@@ -18441,6 +19103,16 @@ c         endif
 c
       end do
 c
+      if (err.ne.0) then 
+
+          write(error_comment,'(a,6i5)') 
+     >          'GEOMETRY ERRORS:MISMATCHED POLYGON SIDES:'//
+     >                   'FOUND ON GRID: COUNT=',err
+          call errmsg('TAU MODULE: ROUTINE GRID_CHECK',
+     >                  error_comment)
+
+      endif
+
       write (6,*) 'POLYGON GEOMETRY ERRORS:', err, ' OF ', cnt
 c
       return
@@ -19824,6 +20496,15 @@ c
 c      Initialization 
 c
        call rzero(wallprad,(maxpts+6)*3)
+
+c
+c      jdemod - do not perform this calculation for ribbon grids at the present time
+c             - too much computation and may not be useful depending on the 
+c               wall intersections calculated.   
+c             - code may also implicitly assume a mostly open geometry 
+c
+       if (cgridopt.eq.RIBBON_GRID) return
+
 c
 c      For every cell on the grid - this code must loop through every element of 
 c      the wall.  
@@ -20515,13 +21196,39 @@ c
 c
 c     Code default rings for fp geometry and possible plasma reference
 c
+c     jdemod - fp_virt_rings associates the nearest virtual or boundary ring with 
+c              each peripheral region. In this way, values which have been applied to the 
+c              virtual/boundary ring may be selectively applied to the periphery region.
+c              At least initially it is thought that this might be useful for imposing additional flows. 
+c
       fp_irmain = irwall-1
       fp_irpfz   = irtrap+1
       
+      fp_virt_rings(fp_main) = irwall
       fp_rings(fp_main) = fp_irmain
       fp_cells(fp_main) = nks(fp_irmain)
-      fp_rings(fp_pfz)  = fp_irpfz
-      fp_cells(fp_pfz)  = nks(fp_irpfz)
+
+c slmod begin - ribbon dev
+c...  A bit awkard since NUM_FP_REGIONS is a parameter set in FPERIF_COM, but 
+c     for the ribbon grid there's no PFR, so just duplicating the main SOL
+c     data here for now so that the code runs through with everything 
+c     initialised -- OR -- just turned off the FP option in the input file, which
+c     was, like, so easy, but leaving this comment here in case of interest. -SL 30/09/2010
+      if (nopriv) then
+        WRITE(0,*) '*** HACK FP SETUP ASSIGNMENT FOR THE PFZ ***'
+        fp_virt_rings(fp_pfz) = irwall
+        fp_rings(fp_pfz) = fp_irmain
+        fp_cells(fp_pfz) = nks(fp_irmain)
+      else
+        fp_virt_rings(fp_pfz)= irtrap
+        fp_rings(fp_pfz)  = fp_irpfz
+        fp_cells(fp_pfz)  = nks(fp_irpfz)
+      endif
+c
+c      fp_virt_rings(fp_pfz)= irtrap
+c      fp_rings(fp_pfz)  = fp_irpfz
+c      fp_cells(fp_pfz)  = nks(fp_irpfz)
+c slmod end
 c
 c     Loop over fp regions and set them up
 c
@@ -21087,6 +21794,14 @@ c
             fp_plasma(ik,in,4) = kvhs(ik,ir)
             fp_plasma(ik,in,5) = kes(ik,ir)
 c
+         elseif (fp_plasma_opt.eq.3) then 
+c
+            fp_plasma(ik,in,1) = fp_ne
+            fp_plasma(ik,in,2) = fp_te
+            fp_plasma(ik,in,3) = fp_te
+            fp_plasma(ik,in,4) = 0.0
+            fp_plasma(ik,in,5) = 0.0
+c
          endif
 c
 c        Assign fp_plasma to associated outermost grid rings as well
@@ -21294,7 +22009,7 @@ c
       real bt(maxnks,maxnrs)
 c
 c     This routine calculates the direction of the magnetic field vector
-c     for each cell on the grid - assuming a cylindi=rical geometry. 
+c     for each cell on the grid - assuming a cylindrical geometry. 
 c
 c     This code does not calculate the absolute magnitude of the B field only the 
 c     normalized direction vector.

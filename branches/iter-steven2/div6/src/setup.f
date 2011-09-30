@@ -1455,6 +1455,18 @@ c...            Interpolation scheme:
                 IF (tarinter(i1,4,region).EQ.1.0) THEN              
 c...              Versus PSIn, exponential decay:
                   method = 2
+c
+c               jdemod - added new methods to interpolate vs. R-Rsep or R instead of just PSIn
+c
+                elseIF (tarinter(i1,4,region).EQ.2.0) THEN              
+                   ! Interpolate R-Rsep
+                   method = 3
+                elseIF (tarinter(i1,4,region).EQ.3.0) THEN              
+                   ! Interpolate R
+                   method = 4
+c
+c                  jdemod end
+c                
                 ELSE
 c...              Standard:
                   method = 1
@@ -1491,15 +1503,37 @@ c...        Data was not found for this ring:
      .                      ir,region
             CYCLE
           ENDIF
-
-          IF     (method.EQ.1) THEN
+c
+c         jdemod - added interpolation for R-Rsep and R
+c
+          IF     (method.EQ.1.or.method.eq.3.or.method.eq.4) THEN
 c...        Linearly interpolate target data from TARINTER arrays:
             IF (region.EQ.IKLO) THEN
-              dum1 = psitarg(ir,2)
+               if (method.eq.1) then 
+               ! PSIn 
+                  dum1 = psitarg(ir,2)
+               elseif (method.eq.3) then 
+               ! R-Rsep
+                  dum1 = sepdist2(idds(ir,2))
+               elseif (method.eq.4) then 
+               ! R
+                  dum1 = rp(idds(ir,2))
+               endif
              ELSE
-              dum1 = psitarg(ir,1)
+               if (method.eq.1) then 
+               ! PSIn
+                  dum1 = psitarg(ir,1)
+               elseif (method.eq.3) then 
+               ! R-Rsep
+                  dum1 = sepdist2(idds(ir,1))
+               elseif (method.eq.4) then 
+               ! R
+                  dum1 = rp(idds(ir,1))
+               endif
             ENDIF
-
+c
+c         jdemod end
+c
 c...        Make a list:            
             i3 = 0
             DO i2 = ind1, ind2

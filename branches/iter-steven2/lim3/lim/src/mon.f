@@ -312,7 +312,7 @@ C     INCLUDE   (PARAMS)
       INTEGER   NIZS                                                            
       REAL      QTIM,FACT,VFLUID,STOTS(20)                                      
       REAL      RIONS(MAXIZS),CTBIN,CRMI,SDTZS(MAXIZS),SDYZS(MAXIZS)            
-      DOUBLE PRECISION DOUTS(MAXIZS)                                            
+      DOUBLE PRECISION DOUTS(MAXIZS,10)                                            
 C                                                                               
 C***********************************************************************        
 C                                                                               
@@ -334,11 +334,15 @@ C     INCLUDE   (COMMV)
       INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
 C                                                                               
-      INTEGER   IZ,IM                                                           
+      INTEGER   IZ,IM, IN
       REAL      RCR,RCAB,RSAB,TEXT                                              
       REAL      RTR, RTAB, RTAV, RAVA, RMACH, RAVMCH, RENEGY                    
       REAL      RAVEGY, RZ0, RZ1, RZ2, DRZ, ZMACH, ZRZ, ZENEGY, RTBS            
       REAL      VEXIT,ZEXIT,MTSO,CICOUT                                         
+c
+c     jdemod - adding some force diagnostics
+c
+      real force
 C                                                                               
 C-----------------------------------------------------------------------        
 C          INITIALISATION                                                       
@@ -366,7 +370,10 @@ C
       CICOUT = 0.0                                                              
       WRITE (6,'(A,(8G11.4))') ' MONPRI: SDTZS ',(SDTZS (IZ),IZ=1,NIZS)         
       WRITE (6,'(A,(8G11.4))') ' MONPRI: SDYZS ',(SDYZS (IZ),IZ=1,NIZS)         
-      WRITE (6,'(A,(8G11.4))') ' MONPRI: DOUTS ',(DOUTS (IZ),IZ=1,NIZS)         
+      do iz = 1,nizs
+          WRITE (6,'(A,i4,A,(8G11.4))') ' MONPRI: DOUTS:',iz,':',
+     >                       (DOUTS (IZ,IN),In=1,10)         
+      end do
       WRITE (6,'(A,(8G11.4))') ' MONPRI: RIONS ',(RIONS (IZ),IZ=1,NIZS)         
       WRITE (6,'(A,(8G11.4))') ' MONPRI: STOTS ',(STOTS (IM),IM=1,20)           
 C                                                                               
@@ -375,11 +382,11 @@ C
 C------- CALCULATE MEAN TIME SPENT OUTBOARD IN EACH CHARGE STATE.               
 C                                                                               
          IF (RIONS(IZ).GT.0.0) THEN                                             
-           MTSO = QTIM * SNGL(DOUTS(IZ)) / RIONS(IZ)                            
+           MTSO = QTIM * SNGL(DOUTS(IZ,10)) / RIONS(IZ)                            
          ELSE                                                                   
            MTSO = 0.0                                                           
          ENDIF                                                                  
-         CICOUT = CICOUT + QTIM * SNGL(DOUTS(IZ)) * FACT                        
+         CICOUT = CICOUT + QTIM * SNGL(DOUTS(IZ,10)) * FACT                        
 C                                                                               
 C-----------------------------------------------------------------------        
 C        PRINT FIRST LOT OF DETAILS                                             
@@ -637,6 +644,48 @@ C
 C                                                                               
       CALL PRC ('AVERAGE DELTA Y STEPS OUTBOARD (AS USED) (M)')                 
       WRITE (7,'((2X,6(I2,1P,E8.1)))') (IZ,SDYZS(IZ),IZ=1,NIZS)                 
+
+
+
+      call prb
+      CALL PRC ('Summary of diffusion and forces')
+      call prb
+
+
+      FORCE = CRMI * 1.67E-27 / (QTIM*QTIM)
+
+      DO IZ = 1, MAXIZS
+        IF (DOUTS(IZ,1).GT.0.0) THEN
+          DOUTS(IZ,2) = 2.0 * QTIM * DOUTS(IZ,2) / DOUTS(IZ,1)
+          DOUTS(IZ,3) = QTIM * DOUTS(IZ,3) / DOUTS(IZ,1)
+          DOUTS(IZ,4) = FORCE * DOUTS(IZ,4) / DOUTS(IZ,1)
+          DOUTS(IZ,5) = FORCE * DOUTS(IZ,5) / DOUTS(IZ,1)
+          DOUTS(IZ,6) = FORCE * DOUTS(IZ,6) / DOUTS(IZ,1)
+          DOUTS(IZ,7) = FORCE * DOUTS(IZ,7) / DOUTS(IZ,1)
+          DOUTS(IZ,8) = DOUTS(IZ,8) / DOUTS(IZ,1) / QTIM
+          DOUTS(IZ,9) = DOUTS(IZ,9) / DOUTS(IZ,1) / QTIM
+        ENDIF
+      end do 
+
+      CALL PRC ('AVERAGE TAU PARALLEL IN SOL+TRAP                    ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,2),IZ=1,NIZS)
+      CALL PRC ('AVERAGE TAU STOPPING IN SOL+TRAP                    ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,3),IZ=1,NIZS)
+      CALL PRC ('AVERAGE FRICTION FORCE IN SOL+TRAP   FF             ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,4),IZ=1,NIZS)
+      CALL PRC ('AVERAGE ELECTRIC FORCE IN SOL+TRAP   FE             ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,5),IZ=1,NIZS)
+      CALL PRC ('AVERAGE GRADIENT FORCE IN SOL+TRAP   FEG            ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,6),IZ=1,NIZS)
+      CALL PRC ('AVERAGE GRADIENT FORCE IN SOL+TRAP   FIG            ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,7),IZ=1,NIZS)
+      CALL PRC ('AVERAGE ION VELOCITY IN SOL+TRAP     VIMP           ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,8),IZ=1,NIZS)
+      CALL PRC ('AVERAGE BACKGROUND VEL IN SOL+TRAP   VB             ')
+      WRITE(7,9011) (IZ,DOUTS(IZ,9),IZ=1,NIZS)
+
+ 9011 format (2x,12(i3,1p,d8.1))     
+
 
       RETURN                                                                    
       END                                                                       

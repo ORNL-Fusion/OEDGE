@@ -1,5 +1,6 @@
 #!/bin/tcsh
-set divmain    = $HOME/divimp
+set progdir    = iter-steven2
+set divmain    = $HOME/$progdir
 set scriptdir  = $divmain/scripts
 set resultdir  = $divmain/results
 set testsubdir = testcases
