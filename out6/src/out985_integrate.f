@@ -665,6 +665,7 @@ c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
           WRITE(fp,*) vwinter(1:nvwinter)%sur 
           WRITE(fp,*) obj(vwinter(1:nvwinter)%obj)%nsur
         ENDIF
+
         IF ((refcnt.EQ.0.AND.nvwinter.LT.vwindex).OR.
      .      (refcnt.GT.0.AND.nvwinter.LT.1)) THEN
           WRITE(0,*) 'CHORD DOES NOT PASS CORRECTLY THROUGH VESSEL'
@@ -1040,13 +1041,16 @@ c...            Line-of-sight integral:
 
 
 
+
                 DO iint = 1, MAX(1,opt%int_num)
                   val = chord%weight * obinter(1)%dist * 
      .                  DBLE(obj(iobj)%quantity(iint))
+
                   chord%integral(iint) = chord%integral(iint) + val
 c     .                                 chord%weight * 
 c     .                                 obinter(1)%dist * 
 c     .                                 DBLE(obj(iobj)%quantity(iint))
+
 
                 IF (ref_debug)
      .             write(6,'(A,2I6,F10.4,3F10.4,1P,E10.2,0P,
@@ -1139,6 +1143,7 @@ c...            Update inversion map based on track length in object volume:
                 chord%track(ivol) = chord%track(ivol) + 
      .                              chord%weight * 
      .                              obinter(1)%dist
+
 c...            Keep track of sampling weight for object:
 c                obj(ivol)%sample = obj(ivol)%sample + obinter(1)%dist  ! Done with %path... 
                 IF (nchord.EQ.-1) WRITE(0,*) '  DIST:',obinter(1)%dist

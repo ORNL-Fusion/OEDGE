@@ -357,7 +357,7 @@ c       strata are not specifically assigned:
           surface(nsurface)%subtype  = STRATUM
           surface(nsurface)%surtxt   = '* default target (DIVIMP)'
           nboundary = nboundary - 1
-          IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN
+          IF (cgridopt.EQ.LINEAR_GRID) THEN
             surface(nsurface)%index(1) = irsep               ! Ring index start location of surface
             surface(nsurface)%index(2) = nrs-1               ! Ring index end
             surface(nsurface)%index(3) = i1                  ! Target (IKLO=inner, IKHI=outer)
@@ -470,8 +470,7 @@ c        IF (ik.EQ.nks(irwall)-1.AND.ik2.EQ.0) ik2 = nks(irwall)
       ENDDO
 
 c...  PFZ radial boundary:  
-      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs.OR.
-     .    cgridopt.EQ.RIBBON_GRID) THEN
+      IF (cgridopt.EQ.LINEAR_GRID.OR.irtrap.GT.nrs) THEN
       ELSE
         nboundary = nboundary + 1
         nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
@@ -1290,7 +1289,7 @@ c      ENDDO
       assign_HI     = .FALSE.
       assign_volrec = .FALSE.
 
-c      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
+      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 
 c...  Low IK target:
       IF (assign_LO) THEN

@@ -56,7 +56,7 @@ RM=rm -f
 #
 FCOMP_ABSOFT=f95
 FCOMP_INTEL =ifort
-FCOMP_PGI=pgf95
+FCOMP_pgi=pgf95
 #
 # Optimization and debugging flags
 #
@@ -105,14 +105,6 @@ OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=
 #
-# LINUX - PGI
-#
-OPT_PGI= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
-OPT_PGI_OPT= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
-#
-OPT_PGI_BIG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
-OPT_PGI_OPT_BIG= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
-#
 # LINUX - ABSOFT
 #
 OPT_ABSOFT = -g 
@@ -122,9 +114,6 @@ OPT_ABSOFT_OPT = -O
 #
 OPT_INTEL = -g -check all -debug all
 OPT_INTEL_OPT = -O1 -g -traceback -debug all
-#
-OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
-OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
 #
 OPT = $(OPTG)
 #
@@ -311,25 +300,6 @@ intel-iter:
 
 intelopt-iter:
 	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
-
-intel-iter-big:
-	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_BIG)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
-
-intelopt-iter-big:
-	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT_BIG)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
-
-pgi:
-	$(MAKE) "FCOMP=$(FCOMP_PGI)" "OPT=$(OPT_PGI)" "VER=$(VER_PGI)"  
-
-pgiopt:
-	$(MAKE) "FCOMP=$(FCOMP_PGI)" "OPT=$(OPT_PGI_OPT)" "VER=$(VER_PGI)" 
-
-pgi-big:
-	$(MAKE) "FCOMP=$(FCOMP_PGI)" "OPT=$(OPT_PGI_BIG)" "VER=$(VER_PGI)" 
-
-pgiopt-big:
-	$(MAKE) "FCOMP=$(FCOMP_PGI)" "OPT=$(OPT_PGI_OPT_BIG)" "VER=$(VER_PGI)" 
-
 
 alt:
 	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"

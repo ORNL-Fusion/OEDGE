@@ -2801,7 +2801,7 @@ c
       CALL CalcCentroid(map_iobj,2,p)
       a1 = p(1)
       a2 = p(2)
-      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))   ! Use GetVertex...
+      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
       b2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2))) 
 
       maxtab = 1.0D+20
@@ -2826,16 +2826,6 @@ c
             map_icell = icell
             map_itube = itube
           ENDIF
-c          IF (itube.EQ.1) THEN
-c            WRITE(88,*) 'DYNAMIC:'
-c            WRITE(88,*) '  : ',map_iobj-
-c     .        tube(GetTube(map_iobj,IND_OBJECT))%cell_index(LO)+1,
-c     .                         GetTube(map_iobj,IND_OBJECT)
-c            WRITE(88,*) '  : ',icell
-c            WRITE(88,*) '  : ',tab,maxtab
-c            WRITE(88,*) '  : ',tcd
-c            WRITE(88,*) '  : ',map_icell,map_itube
-c          ENDIF
         ENDDO
       ENDDO
 
@@ -2864,7 +2854,7 @@ c
       INTEGER GetTube       
  
       INTEGER, PARAMETER :: MAXNLIST = 1000
-      REAL*8 , PARAMETER :: DTOL     = 1.0D-07
+      REAL*8 , PARAMETER :: DTOL = 1.0D-07
 
       INTEGER fp,iobj,itube,nlist,ilist(MAXNLIST,2),clist(MAXNLIST,2),
      .        tube_set,i1,i2,i3,swall(nwall),iwall,mlist(MAXNLIST)
@@ -2873,7 +2863,7 @@ c
      .        xlist(MAXNLIST,2),ylist(MAXNLIST,2),store_x2,store_y2
 
       fp = 88
-      debug = .TRUE.
+      debug = .FALSE.
 
       CALL DumpData_OSM('output.clipping','Trying to clip grid')
 
@@ -2940,12 +2930,6 @@ c...  Collect the cuts:
 c         Increase the length of the line segment in case there's
 c         a nominal mismatch between the wall and target 
 c         specifications or if the line segment is very short:
-
-          ! jdemod
-          if (debug) then 
-             write(fp,*) 'DEBUG XY1:',x1,y1,x2,y2
-          endif
-
           store_x2 = x2
           store_y2 = y2
           length = DSQRT((x1-x2)**2 + (y1-y2)**2)
@@ -2954,18 +2938,12 @@ c         specifications or if the line segment is very short:
  1        x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)
           y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
 
-          ! jdemod
-          if (debug) then 
-             write(fp,*) 'DEBUG XY2:',x1,y1,x2,y2
-          endif
-
           IF (debug) THEN
-            WRITE(fp,*) ' --------------------',i1,i2,iobj
+            WRITE(fp,*) ' --------------------',i2
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2
           ENDIF
-
 c         Search the wall for intersections:
           s12max = 1.0D+10
           DO iwall = 1, nwall
@@ -2976,10 +2954,7 @@ c         Search the wall for intersections:
             CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
             IF (debug) THEN
               WRITE(fp,*) '  CALCINTER :-',i1,i2,iwall
-              WRITE(fp,*) '    S12,34,M:',s12,s34,s12max
-              ! jdemod - added X1,Y1 and X2,Y2 to output
-              WRITE(fp,*) '    X1,Y1   :',x1,y1
-              WRITE(fp,*) '    X2,Y2   :',x2,y2
+              WRITE(fp,*) '    S12,34  :',s12,s34
               WRITE(fp,*) '    X3,Y3   :',x3,y3
               WRITE(fp,*) '    X4,Y4   :',x4,y4
             ENDIF
@@ -3023,9 +2998,7 @@ c...  Check if a line segment is cut more than once at either end:
           ELSE
             CALL ER('ClipWallToGrid','Wall segment cut at the same '//
      .              'end more than once',*99)
-            ! jdemod
-            write(fp,*) 'CLIST DEBUG:',i1,i2,swall(clist(i1,i2))
-         ENDIF
+          ENDIF
         ENDDO
       ENDDO
 

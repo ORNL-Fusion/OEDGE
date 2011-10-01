@@ -1277,14 +1277,14 @@ c
 c
       do ir = nrs,irtrap,-1
 c
-        isepdist = isepdist - dds(idds(ir,1)) /2.0
-        osepdist = osepdist - dds(idds(ir,2)) /2.0
+        isepdist = isepdist + dds(idds(ir,1)) /2.0
+        osepdist = osepdist + dds(idds(ir,2)) /2.0
 
         sepdist2(idds(ir,1)) = isepdist
         sepdist2(idds(ir,2)) = osepdist
 
-        isepdist = isepdist - dds(idds(ir,1)) /2.0
-        osepdist = osepdist - dds(idds(ir,2)) /2.0
+        isepdist = isepdist + dds(idds(ir,1)) /2.0
+        osepdist = osepdist + dds(idds(ir,2)) /2.0
 
 
         if (cprint.eq.3.or.cprint.eq.9) then

@@ -1994,7 +1994,7 @@ c           WRITE(50,*) '  R,Z  = ',r,z
         ENDIF
       ELSE
 c
-c       If the points are all identical, then return a positive result,
+c       If the points are all identicle, then return a positive result,
 c       otherwise indicate that the problem was ill-posed:
 c
         IF (ABS(ar-cr).LT.TOL.AND.ABS(az-cz).LT.TOL) THEN
@@ -4059,21 +4059,17 @@ c
       INTEGER i
       CHARACTER comment*72
 
-      integer erout1
-
-      erout1 = 0
-
       READ (line,*,ERR=98,END=98) comment,cval
 
       WRITE(SLOUT,'(A)')        line
       WRITE(SLOUT,'(5X,2A,A)') tag,' = ',cval
 
       RETURN
-98    WRITE(EROUT1,*) 'Problem reading unstructured input'
-99    WRITE(EROUT1,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(EROUT1,'(5X,2A)')    'TAG  = ''',tag,''''
-      WRITE(EROUT1,'(5X,2A)')    'CVAL = ''',cval,''''
-      STOP 'READC'
+98    WRITE(EROUT,*) 'Problem reading unstructured input'
+99    WRITE(EROUT,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(EROUT,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(EROUT,'(5X,2A)')    'CVAL = ''',cval,''''
+      STOP
       END
 c
 c ======================================================================
@@ -4532,14 +4528,10 @@ c
       fp = PINOUT
 
       CALL RSet(sgn,MAXNRS,1.0)
-c
-c     jdemod - sepdist2 is now adjusted to be negative in PFZ so the
-c              sgn array should no longer be needed
-c
-c      DO ir = irtrap, nrs
-c        sgn(ir) = -1.0
-c      ENDDO
-c
+      DO ir = irtrap, nrs
+        sgn(ir) = -1.0
+      ENDDO
+ 
       CALL RZero(sddat,MAXINS)
       CALL RZero(tedat,MAXINS)
       CALL RZero(tidat,MAXINS)

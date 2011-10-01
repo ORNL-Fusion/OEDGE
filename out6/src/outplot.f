@@ -1434,7 +1434,6 @@ c slmod begin
 c
 c        DO ir = 1, nrs
 c slmod end
-
            IF (ir.EQ.irwall) CYCLE
            IF (idring(ir).LT.0) CYCLE
 c
@@ -7761,17 +7760,8 @@ c              35 = Subgrid CH emission
 c
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
 c
-c              36 = PIN Data 
-c                   1 = PINION = PIN ionization    
-c                   2 = PINATOM = PIN Atom density 
-c                   3 = PINMOL = PIN Molecular density
-c                   4 = PINIONZ = Impurity ionization
-c                   5 = PINZ0 = Impurity neutral density  
-c                   6 = PINQI = Ion heating term
-c                   7 = PINQE = Electron heating term
-c
       integer max_iselect
-      parameter (max_iselect=36)
+      parameter (max_iselect=35)
 c
 c
 c     ADAS variables
@@ -8695,118 +8685,6 @@ c
 c
          end do   
 
-      elseif (iselect.eq.36) then 
-c
-c        Quantities returned from the PIN run and loaded into DIVIMP arrays
-c           1 = PINION = PIN ionization    
-c           2 = PINATOM = PIN Atom density 
-c           3 = PINMOL = PIN Molecular density
-c           4 = PINIONZ = Impurity ionization
-c           5 = PINZ0 = Impurity neutral density  
-c           6 = PINQI = Ion heating term
-c           7 = PINQE = Electron heating term
-c
-         if (istate.eq.1) then 
-c
-c           PINION
-c      
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinion(ik,ir)
-c
-               end do
-c
-            end do   
-c
-
-         elseif (istate.eq.2) then 
-c
-c           PINATOM
-c      
-
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinatom(ik,ir)
-c
-               end do
-c
-            end do   
-
-         elseif (istate.eq.3) then 
-c
-c           PINMOL
-c      
-c
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinmol(ik,ir)
-c
-               end do
-c
-            end do   
-         elseif (istate.eq.4) then 
-c
-c           PINIONZ
-c      
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinionz(ik,ir)
-c
-               end do
-c
-            end do   
-         elseif (istate.eq.5) then 
-c
-c           PINZ0
-c      
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinz0(ik,ir)
-c
-               end do
-c
-            end do   
-         elseif (istate.eq.6) then 
-c
-c           PINQI
-c      
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinqi(ik,ir)
-c
-               end do
-c
-            end do   
-         elseif (istate.eq.7) then 
-c
-c           PINQE
-c      
-            do ir = 1,nrs
-c
-               do ik = 1, nks(ir)
-c
-                  tmpplot(ik,ir) = pinqe(ik,ir)
-c
-               end do
-c
-            end do   
-
-
-         endif
-
-
       endif
 
 
@@ -9537,41 +9415,6 @@ c
 
          write(YLAB,'(''IMP IONIZATION: STATE='',i4,
      >                ''(M^-3)'')') istate
- 
-      elseif (iselect.eq.36) then   
-c
-c                   1 = PINION = PIN ionization    
-c                   2 = PINATOM = PIN Atom density 
-c                   3 = PINMOL = PIN Molecular density
-c                   4 = PINIONZ = Impurity ionization
-c                   5 = PINZ0 = Impurity neutral density  
-c                   6 = PINQI = Ion heating term
-c                   7 = PINQE = Electron heating term
-
-         if (istate.eq.1) then 
-            YLAB = 'PIN IZ   ('
-         elseif (istate.eq.2) then 
-            YLAB = 'PIN ATOM ('
-         elseif (istate.eq.3) then 
-            YLAB = 'PIN MOL  ('
-         elseif (istate.eq.4) then 
-            YLAB = 'PIN ZIZ  ('
-         elseif (istate.eq.5) then 
-            YLAB = 'PIN ZDEN ('
-         elseif (istate.eq.6) then 
-            YLAB = 'PIN QI   ('
-         elseif (istate.eq.7) then 
-            YLAB = 'PIN QE   ('
-         endif
-c
-         len = lenstr(ylab)
-c
-         if (itype.eq.0) then 
-            ylab = ylab(1:len) // '/M^3)'
-         elseif (itype.eq.1) then 
-            ylab = ylab(1:len) // '/M^2)'
-         endif
-
       endif
 
 c
@@ -9982,41 +9825,6 @@ c
 
          write(BLAB,'(''IMP IONIZATION: STATE='',i4,
      >                ''(M^-3)'')') istate
-
-      elseif (iselect.eq.36) then   
-c
-c                   1 = PINION = PIN ionization    
-c                   2 = PINATOM = PIN Atom density 
-c                   3 = PINMOL = PIN Molecular density
-c                   4 = PINIONZ = Impurity ionization
-c                   5 = PINZ0 = Impurity neutral density  
-c                   6 = PINQI = Ion heating term
-c                   7 = PINQE = Electron heating term
-
-         if (istate.eq.1) then 
-            BLAB = 'PIN IZ   ('
-         elseif (istate.eq.2) then 
-            BLAB = 'PIN ATOM ('
-         elseif (istate.eq.3) then 
-            BLAB = 'PIN MOL  ('
-         elseif (istate.eq.4) then 
-            BLAB = 'PIN ZIZ  ('
-         elseif (istate.eq.5) then 
-            BLAB = 'PIN ZDEN ('
-         elseif (istate.eq.6) then 
-            BLAB = 'PIN QI   ('
-         elseif (istate.eq.7) then 
-            BLAB = 'PIN QE   ('
-         endif
-c
-         len = lenstr(blab)
-c
-c         if (itype.eq.0) then 
-            blab = blab(1:len) // '/M^3)'
-c         elseif (itype.eq.1) then 
-c            blab = blab(1:len) // '/M^2)'
-c         endif
-
       endif
 c
 c

@@ -863,7 +863,7 @@ c f90
       WRITE(fp,'(A10,I10)') ' nds      ',nds
       WRITE(fp,*)
 
-      WRITE(fp,'(A4,2X,2A5,2X,2A9,2X,2A10,2X,3A12,6X,A12,2A4)')
+      WRITE(fp,'(A4,2X,2A5,2X,2A8,2X,2A10,2X,4A12,2A4)')
      .  'in','ikds','irds','rp','zp','dds','dds2',
      .  'thetas','thetas2','costet','thetat','WI','NI'
 
@@ -876,11 +876,10 @@ c      DO in = nds, 1, -1
           note = ' '
         ENDIF
 
-        WRITE(fp,'(I4,2X,2I5,2X,2F9.4,2X,1P,2E10.2,0P,2X,3F12.6,
-     .             F6.1,F12.6,2I4,1X,2A)')
+        WRITE(fp,'(I4,2X,2I5,2X,2F8.4,2X,1P,2E10.2,0P,2X,4F12.6,2I4,
+     .             1X,2A)')
      .    in,ikds(in),irds(in),rp(in),zp(in),dds(in),dds2(in),
-     .    thetas(in)*180.0/PI,thetas2(in)*180.0/PI,
-     .    costet(in),ACOS(costet(in))*180.0/PI,
+     .    thetas(in)*180.0/PI,thetas2(in)*180.0/PI,costet(in),
      .    thetat(in),wallindex(in),nimindex(in),
      .    irtag(irds(in)),note(1:LEN_TRIM(note))
 
@@ -1108,7 +1107,7 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,2))
-          WRITE(fp,'(91X,F10.5,I4)') thetat(id),idds(ir,2)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,2)
         ENDIF
 
         DO ik = 1, nks(ir)
@@ -1121,7 +1120,7 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.5,A)')
+          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.6,A)')
      .      ik,ir,virtag(ik,ir),
      .      ikins(ik,ir),irins (ik,ir),ikouts(ik,ir),irouts(ik,ir),
      .      kinds(ik,ir),koutds(ik,ir),finds (ik,ir),foutds(ik,ir),
@@ -1132,7 +1131,7 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,1))
-          WRITE(fp,'(91X,F10.5,I4)') thetat(id),idds(ir,1)
+          WRITE(fp,'(91X,F10.6,I4)') thetat(id),idds(ir,1)
         ENDIF
       ENDDO
 
@@ -1252,14 +1251,8 @@ c...temp: korpg=0
             WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
-c
-c             jde comment - not sure why this repeats the same data 
-c                           twice in the output file but I will leave 
-c                           it in during merge in case something depends
-c                           on it. 
-c
-     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5)
-c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO
         ENDDO

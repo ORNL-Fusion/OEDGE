@@ -864,12 +864,15 @@ c                IF (d(i4).GT.1.0D-10) THEN
                   ninter = ninter + 1        
                   dinter(ninter) = d(i4)
                   vinter(1:3,ninter) = v(1:3,i4)
+
                   ointer(ninter) = iobj    ! Reform naming here...
                   sinter(ninter) = iside
                   srfinter(ninter) = isrf
+
                   IF (nchord.EQ.dchord) THEN
                     WRITE(fp,*) '    HIT:',iobj,iside,isrf
                   ENDIF
+
                 ENDIF
               ELSE
                 CALL ER('FindSurfaceIntersections','Zounds!',*99)
