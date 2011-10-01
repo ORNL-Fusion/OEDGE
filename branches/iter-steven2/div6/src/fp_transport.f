@@ -115,7 +115,6 @@ c
      >                      iz,istate,fp_reg,particle_mass,fp_smax,
      >                      fp_flow_velocity(fp_reg),
      >                      sdrft_start(fp_ir),sdrft_end(fp_ir))
-c     >                      fp_sdrft_start(fp_reg),fp_sdrft_end(fp_reg))
 
 
       call fp_follow_particle(rc,imp,cist,cistfp,cstmax,

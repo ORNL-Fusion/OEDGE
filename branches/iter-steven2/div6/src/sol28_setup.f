@@ -1257,7 +1257,6 @@ c           reference tubes with a higher index through side 2-3.
             IF (debug) THEN
               WRITE(logfp,*) ' MAP   ',iobj,iside,ic1,nobj,ncell
               WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
-              WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
               WRITE(logfp,*) ' MAP   ',it
               WRITE(logfp,*) ' MAP   ',icell
               WRITE(logfp,*) ' MAP O ',

@@ -1937,23 +1937,10 @@ c
      >            ' SONNET BASE')
       ELSEIF (CGRIDOPT.EQ.RIBBON_GRID) then
         CALL PRC ('  GRID OPTION 8:  ITER RIBBON GRID BUILT '//
-     >            ' FROM WALL INTERSECTION DATA')
+     >            ' FROM CASTEM WALL INTERSECTION DATA')
         call prc ('                  GRID INPUT PARAMETERS:')
-        if (ribbon_input_format_opt.eq.0) then 
-        call prc ('                  (G54) DATA FORMAT'//
-     >            ' OPTION = 0 : CASTEM')
         call prc ('                  (G47) CASTEM DATA SET = '//
      >                                trim(rg_castem_data))
-
-        elseif (ribbon_input_format_opt.eq.1) then 
-
-        call prc ('                  (G54) DATA FORMAT'//
-     >            ' OPTION = 1 : RAY')
-        call prc ('                  (G47) RAY DATA SET = '//
-     >                                trim(rg_castem_data))
-
-        endif   
-
         call pri ('                  (G42) RIBBON GRID'//
      >         ' GENERATION OPTION =',rg_grid_opt)
         call prc ('                  0=unstructured,1=structured')
@@ -1988,6 +1975,7 @@ c
      >                  ' gives linear spacing of cell boundaries')  
         call   prr('                   (G53) Cell spacing factor = ',
      >                         cell_spacing_factor)
+
 
       ENDIF
 c

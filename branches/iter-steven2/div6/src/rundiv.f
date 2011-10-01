@@ -506,8 +506,7 @@ c
 
       CALL divClean
 
-      STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'
-
+      STOP 'END OF DIVIMP'
 C                                                                      
  1002 CALL PRC ('MAIN: ERROR OCCURED DURING DATA INPUT - RUN ABORTED')      
       STOP 'ERROR OCCURED DURING DATA INPUT - RUN ABORTED'                                                            

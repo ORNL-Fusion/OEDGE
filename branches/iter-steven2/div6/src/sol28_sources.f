@@ -48,7 +48,6 @@ c              Calculated...: *** NOT READY ***
             CASEDEFAULT
               CALL User_VolumeParRecSource(target,source)
           ENDSELECT         
-c          WRITE(0,*) 'IC1,2,ICMAX=',ic1,ic2,icmax
           parrec(ic1:ic2,ion) = source(ic1:ic2)
 
 c...      Ionisation:
@@ -208,14 +207,16 @@ c               add a bit, otherwise the source rescaling fails:
 
               diff = (integral(2) - net(target)) / net(target)
 
-              IF     (frac.LT.0.0D0) THEN
-                scale = -frac * net(target) / integral(2)
-              ELSEIF ((diff.GT. 1.0D0 * frac).OR.
-     .                (diff.LT.-1.0D0 * frac)) THEN
-                scale = (net(target) * (1.0D0 - frac)) / integral(2)
-              ENDIF
+              IF ((diff.GT. 1.0D0 * frac).OR.
+     .            (diff.LT.-1.0D0 * frac)) 
+     .          scale = (net(target) * (1.0D0 - frac)) / integral(2)
 
               parion(ic1:ic2,ion) = parion(ic1:ic2,ion) * scale
+c...TEMP: for testing...
+              IF (.FALSE..AND.opt%p_ano(target).EQ.3) THEN
+                parion(ic1:ic2,ion) = parion(ic1:ic2,ion) * 0.9
+                WRITE(0,*) 'WARNING: SCALING PARION SOURCE FOR TESTING'
+              ENDIF
 
             CASEDEFAULT
               CALL ER('ConserveParticles','Unknown P_ION option',*99)

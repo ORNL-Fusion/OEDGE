@@ -1,10 +1,8 @@
 #!/bin/tcsh
 #
-set progdir=iter-steven2
-
 echo 'SETTING UP Testcases'
 #
-set scriptdir = $HOME/$progdir/scripts
+set scriptdir = $HOME/divimp/scripts
 
 source $scriptdir/init_testcases
 
