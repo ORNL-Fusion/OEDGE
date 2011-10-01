@@ -1,0 +1,15 @@
+C
+C***********************************************************************
+C
+C    PARAMETERS THAT DEFINE NIMBUS SIZE
+C
+C    TYPICALLY  LBIG = 0 => JET
+C                    = 1 => ITER
+C***********************************************************************
+C
+      INTEGER      LBIG,MRGX,MBSX,NWCOMX,MCCX
+      PARAMETER   ( LBIG   = 1 )
+      PARAMETER   ( MRGX   = 2499 + 500*LBIG
+     &             ,MBSX   = 160*(LBIG+1)
+     &             ,NWCOMX = 99999*(LBIG+1)
+     &             ,MCCX   = 99 + 100*LBIG )

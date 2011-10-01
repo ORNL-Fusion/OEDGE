@@ -1,0 +1,453 @@
+      MODULE COMUSR
+
+      USE PRECISION
+      USE PARMMOD
+
+      IMPLICIT NONE
+
+      PRIVATE
+
+      PUBLIC :: ALLOC_COMUSR, DEALLOC_COMUSR, INIT_COMUSR
+
+      INTEGER, PUBLIC, SAVE ::
+     P NPLPR1, NPLPRM, NSFPRM, NPLPR2,
+     P NUSR,   MUSR,   LUSR
+
+      REAL(DP), ALLOCATABLE, PUBLIC, SAVE ::
+C  NPLPRM, REAL. THE FIRST NPLPR1 DATA ARE SET IN SUBROUTINE PLASMA
+     R        TEIN(:),   TIIN(:,:),   DEIN(:),   DIIN(:,:),
+     R        VXIN(:,:), VYIN(:,:),   VZIN(:,:),
+     R        BXIN(:),   BYIN(:),     BZIN(:),   BFIN(:),
+     R        ADIN(:,:), EDRIFT(:,:), VOL(:),    WGHT(:,:),
+     R        BXPERP(:), BYPERP(:),
+C  NSFPRM
+     R        FLXOUT(:), SAREA(:),
+C  NPLPR2, REAL
+     R        TEINL(:),  TIINL(:,:),  DEINL(:),  DIINL(:,:), BVIN(:,:),
+     R        PARMOM(:,:),
+     R        RMASSI(:), RMASSA(:),   RMASSM(:), RMASSP(:),
+     R        DIOD(:),   DATD(:),     DMLD(:),   DPLD(:),    DPHD(:),
+     R        DION(:),   DATM(:),     DMOL(:),   DPLS(:),    DPHOT(:)
+
+      REAL(DP), PUBLIC, SAVE :: TVAC, DVAC, VVAC, ALLOC
+
+      REAL, PUBLIC, ALLOCATABLE, SAVE ::
+     R TEDTEDX(:), TEDTEDY(:), TEDTEDZ(:)
+
+      CHARACTER(8), ALLOCATABLE, PUBLIC, SAVE :: TEXTS(:)
+
+C  MUSR, INTEGER
+      INTEGER, PUBLIC, SAVE ::
+     I         NSPH  , NPHOTI, NPHOTIM,
+     I         NSPA  , NATMI,  NATMIM,
+     I         NSPAM , NMOLI,  NMOLIM,
+     I         NSPAMI, NIONI,  NIONIM,
+     I         NSPTOT, NPLSI,  NPLSIM,
+     I         NSNVI,  NCPVI,  NADVI,   NBGVI,
+     I         NALVI,  NCLVI,  NADSI,   NALSI, NAINI, NBITS
+      INTEGER, ALLOCATABLE, PUBLIC, SAVE ::
+     I         NMASSA(:), NCHARA(:), NFOLA(:),  NGENA(:),
+     I         NMASSM(:), NCHARM(:), NFOLM(:),  NGENM(:),
+     I         NMASSI(:), NCHARI(:), NCHRGI(:), NFOLI(:), NGENI(:),
+     I         NMASSP(:), NCHARP(:), NCHRGP(:),
+     I         NFOLPH(:), NGENPH(:),
+     I         NPRT(:),   ISPEZ(:,:,:,:,:,:),     ISPEZI(:,:),
+     I         MPLSTI(:), MPLSV(:)
+      INTEGER, ALLOCATABLE, PUBLIC, SAVE ::
+     I         ISPZ_BACK(:,:)
+
+C  LUSR, LOGICAL
+      LOGICAL, ALLOCATABLE, PUBLIC, SAVE ::
+     L         LGVAC(:,:), LGDFT(:)
+
+C FROM HERE ON: NO EQUIVALENCE
+      INTEGER, ALLOCATABLE, PUBLIC, SAVE ::
+     I         IADVE(:),  IADVS(:), IADVT(:),  IADRC(:),
+     I         ICLVE(:),  ICLVS(:), ICLVT(:),  ICLRC(:),
+     I         ISNVE(:),  ISNVS(:), ISNVT(:),  ISNRC(:),
+     I         ICPVE(:),  ICPVS(:), ICPVT(:),  ICPRC(:),
+     I         IBGVE(:),  IBGVS(:), IBGVT(:),  IBGRC(:),
+     I         IADSE(:),  IADSS(:), IADST(:),  IADSC(:),
+     I         NFRSTP(:), NADDP(:), NSPAN(:),  NSPEN(:)
+
+      INTEGER, PUBLIC, SAVE ::
+     I         NMACH, NMODE,  NTCPU,
+     I         NFILE, NFILEN, NFILEM, NFILEL, NFILEK, NFILEJ,
+     I         NITER, IITER,  NTIME,  ITIMV
+
+      TYPE(SPECT_ARRAY), PUBLIC, ALLOCATABLE, SAVE :: BACK_SPEC(:)
+      LOGICAL, PUBLIC, ALLOCATABLE, SAVE :: LSPCCLL(:)
+
+
+      CONTAINS
+
+
+      SUBROUTINE ALLOC_COMUSR (ICAL)
+
+      INTEGER, INTENT(IN) :: ICAL
+
+      IF (ICAL == 1) THEN
+
+        IF (ALLOCATED(TEIN)) RETURN
+
+        NSFPRM=2*NLMPGS
+        NPLPR1=(8+1*NPLS+NPLSTI+3*NPLSV)*NRAD
+        NPLPRM=NPLPR1+(1+1*NPLS+NSPZMC)*NRAD
+        NPLPR2=(2+3*NPLS+NPLSTI)*NRAD+
+     .          3*(NATM+NMOL+NION+NPLS)+4+NSPZ+2*NPHOT
+        NUSR=NPLPRM+NPLPR2+NSFPRM
+        MUSR=4*NATM+4*NMOL+5*NION+3*NPLS+25+NSPZ+
+     .       6*(1+NPHOTP)*(1+NATMP)*(1+NMOLP)*(1+NIONP)*(1+NPLSP)+NSPZ*6
+     .       +2*NPLSI+NSPZ*NPLS
+        LUSR=NRAD*(NPLS+2)+NRAD
+C
+        ALLOCATE (TEIN(NRAD))
+        ALLOCATE (TIIN(NPLSTI,NRAD))
+        ALLOCATE (DEIN(NRAD))
+        ALLOCATE (DIIN(NPLS,NRAD))
+        ALLOCATE (VXIN(NPLSV,NRAD))
+        ALLOCATE (VYIN(NPLSV,NRAD))
+        ALLOCATE (VZIN(NPLSV,NRAD))
+        ALLOCATE (BXIN(NRAD))
+        ALLOCATE (BYIN(NRAD))
+        ALLOCATE (BZIN(NRAD))
+        ALLOCATE (BFIN(NRAD))
+        ALLOCATE (VOL(NRAD))
+        ALLOCATE (WGHT(NSPZMC,NRAD))
+        ALLOCATE (BXPERP(NRAD))
+        ALLOCATE (BYPERP(NRAD))
+        ALLOCATE (FLXOUT(NLMPGS))
+        ALLOCATE (SAREA(NLMPGS))
+        ALLOCATE (TEINL(NRAD))
+        ALLOCATE (TIINL(NPLSTI,NRAD))
+        ALLOCATE (BVIN(NPLSV,NRAD))
+        ALLOCATE (PARMOM(NPLS,NRAD))
+        ALLOCATE (EDRIFT(NPLS,NRAD))
+        ALLOCATE (DEINL(NRAD))
+        ALLOCATE (DIINL(NPLS,NRAD))
+        ALLOCATE (RMASSI(NION))
+        ALLOCATE (RMASSA(NATM))
+        ALLOCATE (RMASSM(NMOL))
+        ALLOCATE (RMASSP(NPLS))
+        ALLOCATE (DIOD(NION))
+        ALLOCATE (DATD(NATM))
+        ALLOCATE (DMLD(NMOL))
+        ALLOCATE (DPLD(NPLS))
+        ALLOCATE (DPHD(NPHOT))
+        ALLOCATE (DION(NION))
+        ALLOCATE (DATM(NATM))
+        ALLOCATE (DMOL(NMOL))
+        ALLOCATE (DPLS(NPLS))
+        ALLOCATE (DPHOT(NPHOT))
+
+        ALLOCATE (TEDTEDX(NRTAL))
+        ALLOCATE (TEDTEDY(NRTAL))
+        ALLOCATE (TEDTEDZ(NRTAL))
+
+        ALLOCATE (TEXTS(NSPZ))
+        ALLOCATE (NMASSA(NATM))
+        ALLOCATE (NCHARA(NATM))
+        ALLOCATE (NFOLA(NATM))
+        ALLOCATE (NGENA(NATM))
+        ALLOCATE (NMASSM(NMOL))
+        ALLOCATE (NCHARM(NMOL))
+        ALLOCATE (NFOLM(NMOL))
+        ALLOCATE (NGENM(NMOL))
+        ALLOCATE (NMASSP(NPLS))
+        ALLOCATE (NCHARP(NPLS))
+        ALLOCATE (NCHRGP(NPLS))
+        ALLOCATE (NMASSI(NION))
+        ALLOCATE (NCHARI(NION))
+        ALLOCATE (NCHRGI(NION))
+        ALLOCATE (NFOLI(NION))
+        ALLOCATE (NGENI(NION))
+        ALLOCATE (NFOLPH(NPHOT))
+        ALLOCATE (NGENPH(NPHOT))
+        ALLOCATE (NPRT(NSPZ))
+        ALLOCATE (ISPEZ(-1:4,0:NPHOTP,0:NATMP,0:NMOLP,0:NIONP,0:NPLSP))
+        ALLOCATE (ISPEZI(NSPZ,-1:4))
+        ALLOCATE (MPLSTI(NPLS))
+        ALLOCATE (MPLSV(NPLS))
+        ALLOCATE (ISPZ_BACK(NSPZ,NPLS))
+        ALLOCATE (IADVE(NADV))
+        ALLOCATE (IADVS(NADV))
+        ALLOCATE (IADVT(NADV))
+        ALLOCATE (IADRC(NADV))
+        ALLOCATE (ICLVE(NCLV))
+        ALLOCATE (ICLVS(NCLV))
+        ALLOCATE (ICLVT(NCLV))
+        ALLOCATE (ICLRC(NCLV))
+        ALLOCATE (ISNVE(NSNV))
+        ALLOCATE (ISNVS(NSNV))
+        ALLOCATE (ISNVT(NSNV))
+        ALLOCATE (ISNRC(NSNV))
+        ALLOCATE (IADSE(NADS))
+        ALLOCATE (IADSS(NADS))
+        ALLOCATE (IADST(NADS))
+        ALLOCATE (IADSC(NADS))
+        ALLOCATE (NFRSTP(NTALI))
+        ALLOCATE (NADDP(NTALI))
+        ALLOCATE (NSPAN(NTALV))
+        ALLOCATE (NSPEN(NTALV))
+        ALLOCATE (LGVAC(NRAD,0:NPLS+1))
+        ALLOCATE (LGDFT(NRAD))
+        ALLOCATE (LSPCCLL(NRAD))
+
+        WRITE (55,'(A,T25,I15)')
+     .        ' COMUSR(1) ',NUSR*8 + MUSR*4 + LUSR*4 + 3*NRTAL*8
+
+      ELSE IF (ICAL == 2) THEN
+
+        IF (ALLOCATED(ADIN)) RETURN
+
+        NPLPR1=(8+1*NPLS+NPLSTI+3*NPLSV)*NRAD
+        NPLPRM=NPLPR1+(1+1*NPLS+NSPZMC+NAIN)*NRAD
+        ALLOCATE (ADIN(NAIN,NRAD))
+        ALLOCATE (ICPVE(NCPV))
+        ALLOCATE (ICPVS(NCPV))
+        ALLOCATE (ICPVT(NCPV))
+        ALLOCATE (ICPRC(NCPV))
+        ALLOCATE (IBGVE(NBGV))
+        ALLOCATE (IBGVS(NBGV))
+        ALLOCATE (IBGVT(NBGV))
+        ALLOCATE (IBGRC(NBGV))
+
+        WRITE (55,'(A,T25,I15)')
+     .         ' COMUSR(2) ',NAIN*NRAD*8 + 4*(NCPV+NBGV)*4
+
+      END IF
+
+      CALL INIT_COMUSR(ICAL)
+
+      RETURN
+      END SUBROUTINE ALLOC_COMUSR
+
+
+      SUBROUTINE DEALLOC_COMUSR
+C
+      IF (.NOT.ALLOCATED(TEIN)) RETURN
+
+      DEALLOCATE (TEIN)
+      DEALLOCATE (TIIN)
+      DEALLOCATE (DEIN)
+      DEALLOCATE (DIIN)
+      DEALLOCATE (VXIN)
+      DEALLOCATE (VYIN)
+      DEALLOCATE (VZIN)
+      DEALLOCATE (BXIN)
+      DEALLOCATE (BYIN)
+      DEALLOCATE (BZIN)
+      DEALLOCATE (BFIN)
+      DEALLOCATE (ADIN)
+      DEALLOCATE (VOL)
+      DEALLOCATE (WGHT)
+      DEALLOCATE (BXPERP)
+      DEALLOCATE (BYPERP)
+      DEALLOCATE (FLXOUT)
+      DEALLOCATE (SAREA)
+      DEALLOCATE (TEINL)
+      DEALLOCATE (TIINL)
+      DEALLOCATE (BVIN)
+      DEALLOCATE (PARMOM)
+      DEALLOCATE (EDRIFT)
+      DEALLOCATE (DEINL)
+      DEALLOCATE (DIINL)
+      DEALLOCATE (RMASSI)
+      DEALLOCATE (RMASSA)
+      DEALLOCATE (RMASSM)
+      DEALLOCATE (RMASSP)
+      DEALLOCATE (DIOD)
+      DEALLOCATE (DATD)
+      DEALLOCATE (DMLD)
+      DEALLOCATE (DPLD)
+      DEALLOCATE (DPHD)
+      DEALLOCATE (DION)
+      DEALLOCATE (DATM)
+      DEALLOCATE (DMOL)
+      DEALLOCATE (DPLS)
+      DEALLOCATE (DPHOT)
+
+      DEALLOCATE (TEDTEDX)
+      DEALLOCATE (TEDTEDY)
+      DEALLOCATE (TEDTEDZ)
+
+      DEALLOCATE (TEXTS)
+      DEALLOCATE (NMASSA)
+      DEALLOCATE (NCHARA)
+      DEALLOCATE (NFOLA)
+      DEALLOCATE (NGENA)
+      DEALLOCATE (NMASSM)
+      DEALLOCATE (NCHARM)
+      DEALLOCATE (NFOLM)
+      DEALLOCATE (NGENM)
+      DEALLOCATE (NMASSP)
+      DEALLOCATE (NCHARP)
+      DEALLOCATE (NCHRGP)
+      DEALLOCATE (NMASSI)
+      DEALLOCATE (NCHARI)
+      DEALLOCATE (NCHRGI)
+      DEALLOCATE (NFOLI)
+      DEALLOCATE (NGENI)
+      DEALLOCATE (NFOLPH)
+      DEALLOCATE (NGENPH)
+      DEALLOCATE (NPRT)
+      DEALLOCATE (ISPEZ)
+      DEALLOCATE (ISPEZI)
+      DEALLOCATE (MPLSTI)
+      DEALLOCATE (MPLSV)
+      DEALLOCATE (ISPZ_BACK)
+      DEALLOCATE (IADVE)
+      DEALLOCATE (IADVS)
+      DEALLOCATE (IADVT)
+      DEALLOCATE (IADRC)
+      DEALLOCATE (ICLVE)
+      DEALLOCATE (ICLVS)
+      DEALLOCATE (ICLVT)
+      DEALLOCATE (ICLRC)
+      DEALLOCATE (ISNVE)
+      DEALLOCATE (ISNVS)
+      DEALLOCATE (ISNVT)
+      DEALLOCATE (ISNRC)
+      DEALLOCATE (ICPVE)
+      DEALLOCATE (ICPVS)
+      DEALLOCATE (ICPVT)
+      DEALLOCATE (ICPRC)
+      DEALLOCATE (IBGVE)
+      DEALLOCATE (IBGVS)
+      DEALLOCATE (IBGVT)
+      DEALLOCATE (IBGRC)
+      DEALLOCATE (IADSE)
+      DEALLOCATE (IADSS)
+      DEALLOCATE (IADST)
+      DEALLOCATE (IADSC)
+      DEALLOCATE (NFRSTP)
+      DEALLOCATE (NADDP)
+      DEALLOCATE (NSPAN)
+      DEALLOCATE (NSPEN)
+      DEALLOCATE (LGVAC)
+      DEALLOCATE (LGDFT)
+      DEALLOCATE (LSPCCLL)
+
+!pb      IF (NBACK_SPEC > 0) DEALLOCATE (BACK_SPEC)
+      IF (ALLOCATED(BACK_SPEC)) DEALLOCATE (BACK_SPEC)
+
+      RETURN
+      END SUBROUTINE DEALLOC_COMUSR
+
+
+      SUBROUTINE INIT_COMUSR(ICAL)
+
+      INTEGER, INTENT(IN) :: ICAL
+
+      IF (ICAL == 1) THEN
+
+        TEIN   = 0._DP
+        TIIN   = 0._DP
+        DEIN   = 0._DP
+        DIIN   = 0._DP
+        VXIN   = 0._DP
+        VYIN   = 0._DP
+        VZIN   = 0._DP
+        BXIN   = 0._DP
+        BYIN   = 0._DP
+        BZIN   = 0._DP
+        BFIN   = 0._DP
+        VOL    = 0._DP
+        WGHT   = 1._DP
+        BXPERP = 0._DP
+        BYPERP = 0._DP
+        FLXOUT = 0._DP
+        SAREA  = 666._DP
+        TEINL  = 0._DP
+        TIINL  = 0._DP
+        BVIN   = 0._DP
+        PARMOM = 0._DP
+        EDRIFT = 0._DP
+        DEINL  = 0._DP
+        DIINL  = 0._DP
+        RMASSI = 0._DP
+        RMASSA = 0._DP
+        RMASSM = 0._DP
+        RMASSP = 0._DP
+        DIOD   = 0._DP
+        DATD   = 0._DP
+        DMLD   = 0._DP
+        DPLD   = 0._DP
+        DPHD   = 0._DP
+        DION   = 0._DP
+        DATM   = 0._DP
+        DMOL   = 0._DP
+        DPLS   = 0._DP
+        DPHOT  = 0._DP
+
+        TEDTEDX = 0._DP
+        TEDTEDY = 0._DP
+        TEDTEDZ = 0._DP
+
+        TEXTS  = ' '
+        NMASSA = 0
+        NCHARA = 0
+        NFOLA  = 0
+        NGENA  = 0
+        NMASSM = 0
+        NCHARM = 0
+        NFOLM  = 0
+        NGENM  = 0
+        NMASSP = 0
+        NCHARP = 0
+        NCHRGP = 0
+        NMASSI = 0
+        NCHARI = 0
+        NCHRGI = 0
+        NFOLI  = 0
+        NGENI  = 0
+        NFOLPH = 0
+        NGENPH = 0
+        NPRT   = 0
+        ISPEZ  = 0
+        ISPEZI = 0
+        MPLSTI = 0
+        MPLSV  = 0
+        ISPZ_BACK = 0
+        IADVE  = 0
+        IADVS  = 0
+        IADVT  = 0
+        IADRC  = 0
+        ICLVE  = 0
+        ICLVS  = 0
+        ICLVT  = 0
+        ICLRC  = 0
+        ISNVE  = 0
+        ISNVS  = 0
+        ISNVT  = 0
+        ISNRC  = 0
+        IADSE  = 0
+        IADSS  = 0
+        IADST  = 0
+        IADSC  = 0
+        NFRSTP = 0
+        NADDP  = 0
+        NSPAN  = 0
+        NSPEN  = 0
+        LGVAC  = .FALSE.
+        LGDFT  = .FALSE.
+        LSPCCLL = .FALSE.
+
+      ELSE IF (ICAL == 2) THEN
+
+        ADIN   = 0._DP
+        ICPVE  = 0
+        ICPVS  = 0
+        ICPVT  = 0
+        ICPRC  = 0
+        IBGVE  = 0
+        IBGVS  = 0
+        IBGVT  = 0
+        IBGRC  = 0
+
+      END IF
+
+      RETURN
+      END SUBROUTINE INIT_COMUSR
+
+      END MODULE COMUSR
