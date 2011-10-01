@@ -1430,22 +1430,9 @@ c...          Triangle surface is on a surface (magnetic or vessel wall):
               IF (opt%obj_option(ielement).EQ.2.AND.
      .            tri(itri)%map  (v1).EQ.0    .AND.
      .            tri(itri)%index(2 ).GE.irsep) THEN
-c            .AND.               ! Need surface type identifier...
-c     .             tri(itri)%type   .NE.MAGNETIC_GRID).OR.
-c     .            (tri(itri)%map(v1)        .EQ.0            .AND.
-c     .             tri(itri)%type           .EQ.MAGNETIC_GRID.AND.
-c     .             tri(itri)%sideindex(2,v1).NE.0).OR.                   ! Target check
-c     .            (imap.NE.0.AND.                                       
-c     .             tri(itri       )%type.NE.MAGNETIC_GRID.AND.
-c     .             tri(MAX(1,imap))%type.NE.MAGNETIC_GRID)) THEN
 c...            Vessel wall surface:
                 obj(nobj)%tsur(v1) = SP_VESSEL_WALL  
-c                IF (ielement.NE.0) THEN
                 obj(nobj)%reflec(v1) = opt%obj_reflec(ielement)
-c                ELSE
-c                  obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
-c                ENDIF
-c                obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
                 obj(nobj)%nmap(v1) = 1
                 obj(nobj)%imap(1,v1) = nobj
                 obj(nobj)%isur(1,v1) = v1 ! 2  ! *** should this really be a 2 for some reason? ***
@@ -1453,7 +1440,7 @@ c                obj(nobj)%reflec(v1) = opt%ob_trigrd_reflec
                 obj(nobj)%rsur(4,v1) = tri(itri)%sideindex(4,v1)   ! Additional surface index
               ELSE
 c...            Magnetic surface (grid boundary):
-                obj(nobj)%tsur(v1) = SP_GRID_BOUNDARY  ! *** TRUE? ***
+                obj(nobj)%tsur(v1) = SP_GRID_BOUNDARY 
                 obj(nobj)%reflec(v1) = 0
                 obj(nobj)%nmap(v1) = 1
                 obj(nobj)%imap(1,v1) = nobj

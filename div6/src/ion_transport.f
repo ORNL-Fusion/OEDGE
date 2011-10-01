@@ -672,7 +672,7 @@ c     Variables for periphery option 5
 c
       integer istate,id_out,is_out
       real rsect,zsect
-
+      real energy
 
 C
 C-------- CHECK IF REACHED WALLS
@@ -741,6 +741,9 @@ c
               RWALL      = RWALL + SPUTY
               WALLS(IK,IR,IZ) = WALLS(IK,IR,IZ) + SPUTY
 c
+              ENERGY = 
+     >           5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+c
 c             Add ion weight to wall element closest to grid 
 c             departure.
 c
@@ -748,7 +751,8 @@ c
 c              write(6,*) 'update_walldep: '//
 c     >                   'check_reached_grid_edge - hard walls'
 
-              call update_walldep(ik,ir,iz,0,0,iwstart,idtype,sputy)
+              call update_walldep(ik,ir,iz,0,0,iwstart,idtype,sputy,
+     >                            energy)
 c
               IFATE = 1
 
@@ -1122,6 +1126,9 @@ c
                 RWALL      = RWALL + SPUTY
                 WALLS(IK,IR,IZ) = WALLS(IK,IR,IZ) + SPUTY
 c
+                ENERGY = 3.0 * real(IZ) * wallpt(id_out,29) +
+     >           5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+c
 c               Add ion weight to wall element closest to grid 
 c               departure.
 c     
@@ -1133,7 +1140,7 @@ c                write(6,*) 'update_walldep: '//
 c     >                   'check_reached_grid_edge - FP res=3'
 
                 call update_walldep(ik,ir,iz,0,id_out,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
                 IFATE = 1
 
@@ -1199,12 +1206,6 @@ c               Add ion weight to wall element closest to grid
 c               departure.
 c
 
-c                write(6,*) 'update_walldep: '//
-c     >                   'check_reached_grid_edge - FP Recycle'
-
-                call update_walldep(ik,ir,iz,0,id_out,
-     >                              iwstart,idtype,sputy)
-
 c
 c NOTE:!!! This code needs adjustments to support relaunch of fp particles from the walls
 c          if fp recycle is turned on.This code is also set up to calculate a self-sputtering
@@ -1265,6 +1266,14 @@ c
 c
                 ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
      >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+c
+c
+c                write(6,*) 'update_walldep: '//
+c     >                   'check_reached_grid_edge - FP Recycle'
+
+                call update_walldep(ik,ir,iz,0,id_out,
+     >                              iwstart,idtype,sputy,energy)
+c
 c
                 if (kmfss(id).ge.0.0) then  
                    RYIELD = YIELD (6, MATTAR, ENERGY,
@@ -1385,8 +1394,12 @@ c
 c                write(6,*) 'update_walldep: '//
 c     >             'check_reached_grid_edge - FP res=4 '
 c
+                ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+
+c
                 call update_walldep(ik,ir,iz,id, 0,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
                 IFATE = 9
                 return
@@ -1474,12 +1487,15 @@ c               Add ion weight to wall element closest to grid
 c               departure.
 c
 
+                ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+
 
 c                write(6,*) 'update_walldep: '//
 c     >             'check_reached_grid_edge - FP res=4 Recycle'
 
                 call update_walldep(ik,ir,iz,id, 0,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
 C
 C            WRITE(6,*) 'SPUTTERED:',IK,IR,ID,R,Z,IKDS(ID),IRDS(ID)

@@ -220,8 +220,6 @@ c
 c
 c              Check if ouside plasma region.
 c
-c               write(6,*) 'before ga15b:',ionwpts,iwindw(2,1)
-c
                CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
 c
@@ -241,6 +239,7 @@ c
 c              Check if in core
 c
                else
+c
                   CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >              icINDW,MAXPTS,RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
 c
@@ -286,8 +285,6 @@ c              Check if ouside plasma region.
 c
                CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
-c
-c               write(6,*) 'gp:ga15b2:',ionwpts,result,r,z
 c
 c              If < 0 particle is outside last ring.
 c
@@ -569,6 +566,7 @@ c     >               ' PARTICLE OFF GRID (10):',ikorg,irorg,r,z
                endif
 c
             elseif (lastin.eq.1) then
+c
                CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >              icINDW,MAXPTS,RcW,ZcW,icTDUM,icXDUM,icYDUM,6)
 c
@@ -616,6 +614,7 @@ c
 c           Check if ouside plasma region.
 c
 c            WRITE(50,*) 'GRIDPOS: CHECK IF OUTSIDE PLASMA REGION'
+
             CALL GA15B(R,Z,RESULT,IONWPTS,1,iwWORK,4*MAXPTS,
      >              iwINDW,MAXPTS,RIW,ZIW,iwTDUM,iwXDUM,iwYDUM,6)
 c
@@ -668,6 +667,7 @@ c              Check if actually in core
 c
                CALL GA15B(R,Z,RESULT,IONcPTS,1,icWORK,4*MAXPTS,
      >               icINDW,MAXPTS,RcW,ZcW,icTDUM,icXDUM,icYDUM,6)
+c
 c               WRITE(50,*) 'GRIDPOS: IN CORE?',result
 c
 c               write(6,*) 'gp:ga15b8:',ioncpts,result,r,z
@@ -1193,7 +1193,7 @@ c
       real dist_frac,direction_factor
 c     IPP/08 Krieger - additional variables for iteration of
 c     out-of-cell particles
-      real rstep,zstep,rorig,zorig
+      real rstep,zstep,rorig,zorig,rstart,zstart
 c
       logical test_result,incell
       external incell
@@ -1205,6 +1205,9 @@ c
       iw = wallindex(id)  
       ik = ikds(id)
       ir = irds(id)  
+
+      rstart = r
+      zstart = z
 c
 c     CROSS is positive when moving "INWARD" and negative when
 c     moving "OUTWARD". However, all target and wall elements are
@@ -1324,21 +1327,29 @@ c
 c        Point inside cell was not found
 c     
          if (.not.test_result) then 
-            write(6,'(a,i10,2i6,4g18.8)') 
+            write(6,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
-            write(0,'(a,i10,2i6,4g18.8)') 
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
+            write(0,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
          else
-            write(6,'(a,i10,2i6,4g18.8)') 
+            write(6,'(a,i10,4i6,10g18.8)') 
      >       'POSITION_ON_TARGET:'//
      >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
 
          endif
+      endif
+
+      if (.not.test_result) then 
+         r = rstart
+         z = zstart
       endif
 
 c
@@ -4253,26 +4264,54 @@ c     each segment.
 c
       do ik = 1,wallpts
 c
+c        jdemod
+c
+c        Ribbon grid - more general solution desirable
+c                      only assigns wall or target start region
+c
+         if (cgridopt.eq.RIBBON_GRID) then 
+
+c         
+c           Starting on wall
+c
+            if (wallpt(ik,18).eq.0.0) then 
+
+               start_region = 1  
+c	 
+c           Starting on target (use target 1)
+c	 
+            else
+c
+               start_region = 3
+c	 
+            endif
+
+         else
+
+c
 c        Starting on main wall 
 c
-         if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
-            start_region = 1  
+           if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
+              start_region = 1  
 c	 
 c        Starting on PFZ wall
-c	 
-         elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
-            start_region = 2
+c	  
+           elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
+              start_region = 2
 c	 
 c        Starting on target 1 
 c	 
-         elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
-            start_region = 3
+           elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
+              start_region = 3
 c	 
 c        Starting on target 2
 c	 
-         elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
-            start_region = 4
+           elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
+              start_region = 4
+           endif
+
          endif
+
 c
 c        Total erosion (ion+neutral) 
 c
@@ -4284,6 +4323,32 @@ c
 c        Loop over wall summing up end regions 
 c
          do in = 1,wallpts 
+
+            if (cgridopt.eq.RIBBON_GRID) then 
+
+c
+c           Ending on wall 
+c
+            if (wallpt(in,18).eq.0.0) then 
+               walldep(start_region,1) = walldep(start_region,1) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,1) = walldep_i(start_region,1) 
+     >                                 + wtdep(ik,in,1) 
+c
+c           Ending on target 
+c
+            else
+               walldep(start_region,3) = walldep(start_region,3) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,3) = walldep_i(start_region,3) 
+     >                                 + wtdep(ik,in,1) 
+            endif
+
+
+            else
+c
+c           Other grids
+c
 c
 c           Ending on main wall 
 c
@@ -4316,6 +4381,8 @@ c
      >                                 + wtdep(ik,in,3) 
                walldep_i(start_region,4) = walldep_i(start_region,4) 
      >                                 + wtdep(ik,in,1) 
+            endif
+c
             endif
 c
          end do
@@ -4895,10 +4962,13 @@ c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 
 c
+      
       CALL GA15A(PCNT,1,WORK,4*MAXPTS,INDWORK,MAXPTS,
      >             RW,ZW,TDUM,XDUM,YDUM,6)
+
       CALL GA15B(Ra,Za,RESULTa,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
       CALL GA15B(Rb,Zb,RESULTb,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
 
@@ -5479,7 +5549,7 @@ c
       logical unit_open
 
       test_unit = 10
-      unit_open = .false.
+      unit_open = .true.
 
       ! Check for unit number assignment.  
       Do While (Unit_open)
@@ -5498,6 +5568,7 @@ c
       subroutine calc_wall_length_coordinate(opt)
       implicit none
       integer opt
+
 c
 c     Use the data in the wallpt array to calculate the 
 c     distance along the walls from the Inside mid-plane
@@ -5513,6 +5584,10 @@ c
 c     OPT is available to allow for different calculation schemes later
 c
 c
+c     jdemod -  The start point of this code is not applicable to ribbon grids
+c               since the 'mid-plane' is not defined. 
+
+c
       include 'params'
       include 'walls_com'
 c
@@ -5525,6 +5600,10 @@ c     Find the element of wall stradling the inside mid-plane.
 c      
       minr = hi
 c
+c     Standard grid cases
+c
+      if (opt.eq.1) then
+
       do in = 1,wallpts
          if ((wallpt(in,21)*wallpt(in,23)).le.0.0) then 
             rminw = min(wallpt(in,20),wallpt(in,22))
@@ -5534,6 +5613,13 @@ c
             endif
          endif
       enddo
+c
+c     Ribbon grid
+c
+      elseif (opt.eq.2) then 
+         ! just start at beginning of wall for now. 
+         startin = 1
+      endif
 c
 c     Now have the starting index - need to go counter clockwise
 c     around the wall from this location recording the 
