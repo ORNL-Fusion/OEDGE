@@ -327,8 +327,7 @@ c
       yabsorb1a = 0.0
       yabsorb1_frame = 0
       yabsorb2a = 0.0
-       yabsorb2_frame = 0
-
+      yabsorb2_frame = 0
 c
 c -----------------------------------------------------------------------
 c
@@ -351,7 +350,14 @@ c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
 c
       ss_nymfs = 0
       ss_cymfs = 1.0
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L28: Background plasma flow beyond limiter edge.
+c              This is mono-directional in the entire simulation - does
+c              not change sign. 
+c
+      vpflow_3D = 0.0
 c
 c -----------------------------------------------------------------------
 c
@@ -788,7 +794,16 @@ c
      >       ' BE ENTERED IN ASCENDING ORDER IN X')
             stop
          endif
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG L28: Background plasma flow beyond limiter edge.
+c              This is mono-directional in the entire simulation - does
+c              not change sign. 
+c
+      elseif (tag(1:3).EQ.'L28') THEN
+        CALL ReadR(line,vpflow_3d,-HI,HI,
+     >            'SOL flow outside 3D limiter region')
 c
 c -----------------------------------------------------------------------
 c

@@ -2,8 +2,11 @@
 #
 #
 echo 'RUNNING and COMPARING Testcases'
+
 #
-set scriptdir = $HOME/divimp/scripts
+set progdir = iter-steven2
+#
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 

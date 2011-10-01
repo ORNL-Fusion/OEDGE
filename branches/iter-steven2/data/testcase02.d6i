@@ -39,7 +39,7 @@ $ EIRENE options:
 '*026 PIN selection  0-NIMBUS 1-EIRENE97 2-EIRENE99  '     2     PINCODE     (1)
 '*010 Geometry data  0-standard 1-from DIVIMP        '     1     EIRGEOM
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       ' 30000     EIRTIME
+'*020   Run time (CPU seconds)                       '   300     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     1     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be          '     2     EIRMAT1
 '*024             wall                               '     2     EIRMAT2

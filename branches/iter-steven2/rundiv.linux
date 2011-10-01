@@ -463,6 +463,10 @@ mvc fort.41 $CASENAME.tran
 #  Diagnostic information from THETA module (among others)
 mvc fort.50 $CASENAME.theta
 
+# Summary of transport coefficient extractor numbers for import to excel
+mvc tc_extractor.output $CASENAME.extout
+mvc tc_extractor2.output $CASENAME.extout2
+
 #  Print out for Kevin Erents
 mvc fort.56 $CASENAME.probe
 
@@ -474,6 +478,9 @@ mvc fort.73 $CASENAME.exl23
 
 #  CFD solution file
 mvc fort.75 $CASENAME.cfd
+
+#  DIVIMP format grid file - if writing one has been requested. 
+mvc divimp_grid.out $CASENAME.grd
 
 #  DIVIMP format background plasma file - if writing one has been requested. 
 mvc divimp_plasma.out $CASENAME.bgp
@@ -543,6 +550,11 @@ mvc fort.26 $CASENAME.grp
 
 #  Special printed listing of some plot information.
 mvc fort.49 $CASENAME.plt
+
+#
+# Target geometry data
+#
+mvc target_geometry.dat $CASENAME.targ-geom
 
 #
 # Save HC output files 
@@ -734,6 +746,7 @@ mvc celldata.dat        $CASENAME.celldata
 
 mvc eirene.transfer     $CASENAME.eir2
 mvc eirene.input        $CASENAME.eirdat2
+mvc eirene.output       $CASENAME.eirout
 
 # apparently an eirene output file
 mvc eirene04.txt $CASENAME.eir04txt
