@@ -310,6 +310,7 @@ c
 c     Launch first groups 
 c
       IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- FIRST LANUCH'
+      IF (sloutput) WRITE(0,*)    nproda,nprod,cneutb
       if (nproda.gt.0.or.nprod.gt.0) then  
 c
          if (cneutb.eq.0.or.cneutb.eq.3) then 
@@ -657,6 +658,7 @@ c
 c     Launch second batches of neutrals if there are any
 c
       IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- SECOND LANUCH'
+      IF (sloutput) WRITE(0,*)    nprod2a,nprod2
       if (nprod2a.gt.0.or.nprod2.gt.0) then 
 c
          if (cneuth.eq.0.or.cneuth.eq.3) then 
@@ -1152,6 +1154,7 @@ C
       use velocity_dist
 c slmod begin
       use mod_interface
+      use mod_divimp
 c slmod end
       IMPLICIT NONE
 c
@@ -1334,6 +1337,9 @@ c
       real fp_lamiz,fp_sigmav,fp_vin
       integer fp_ik,fp_ir,fp_in
       real fp_rc,fp_zc
+c slmod begin
+      integer i
+c slmod ned
 c
 c     HC related variables
 c
@@ -1348,6 +1354,14 @@ c
 
 c slmod begin
       target_loss = 0
+
+      IF (ALLOCATED(wall_flx)) wall_nlaunch = wall_nlaunch + 1  ! tmp -- cleaner if wall_imp inintialization moved from this routine...
+
+      IF (sloutput) THEN
+        WRITE(0,*)
+        WRITE(0,*) '***** HERE IN LAUNCH ! *****',cneutb
+        WRITE(0,*)
+      ENDIF
 c slmod end
       STATIM = ZA02AS (1)
 c
@@ -1497,20 +1511,24 @@ c
         R     = XPRODS(IPROD+LPROD-1)
         Z     = YPRODS(IPROD+LPROD-1)
 
-        IF (sloutput.AND.GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN        ! sltmp
-         IF (stopopt.LE.0) stopopt = 1
-c        IF (STOPOPT.LT.MAXNWS) THEN
-c          WRITE(0 ,*) 'DEBUG: WALKS',iprod,STOPOPT
-c          WRITE(50,*) 'DEBUG: WALKS',iprod,STOPOPT
-          WALKS(STOPOPT,1) = HI ! 100.0 * RMAX
-          WALKS(STOPOPT,2) = HI ! 100.0 * ZMAX
-          STOPOPT = STOPOPT + 1
-          WALKS(STOPOPT,1) = R
-          WALKS(STOPOPT,2) = Z
-          WALKS(STOPOPT+1,1) = HI
-          WALKS(STOPOPT+1,2) = HI
-          STOPOPT = STOPOPT + 1
+c slmod begin - tmp
+        IF (sloutput) THEN
+          IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN        ! sltmp
+            IF (stopopt.LE.0) stopopt = 1
+c           IF (STOPOPT.LT.MAXNWS) THEN
+c            WRITE(0 ,*) 'DEBUG: WALKS',iprod,STOPOPT
+c             WRITE(50,*) 'DEBUG: WALKS',iprod,STOPOPT
+            WALKS(STOPOPT,1) = HI ! 100.0 * RMAX
+            WALKS(STOPOPT,2) = HI ! 100.0 * ZMAX
+            STOPOPT = STOPOPT + 1
+            WALKS(STOPOPT,1) = R
+            WALKS(STOPOPT,2) = Z
+            WALKS(STOPOPT+1,1) = HI
+            WALKS(STOPOPT+1,2) = HI
+            STOPOPT = STOPOPT + 1
+          ENDIF
         ENDIF
+c slmod end   
 c
         orgr = r 
         orgz = z
@@ -1542,9 +1560,25 @@ c
 c
 c         Add to wall erosion
 c
+c          WRITE(0,*) 'what',id,wallindex(id)
+ 
           if (wallindex(id).ne.0.0) then  
              wallse(wallindex(id)) = wallse(wallindex(id)) 
      >                             +sputys(iprod+lprod-1)
+c slmod begin
+             if (.not.allocated(wall_flx)) then
+               wall_n       = wallpts
+               wall_nlaunch = 1
+               allocate(wall_flx(wall_n))
+               do i = 1, wall_n
+                 wall_flx(i)%launch = 0.0
+               enddo
+             endif
+             i = wallindex(id)
+             wall_flx(i)%launch(wall_nlaunch) = 
+     .         wall_flx(i)%launch(wall_nlaunch) + sputys(iprod+lprod-1)
+c             WRITE(0,*) i,wall_nlaunch
+c slmod end
           else 
              write(6,'(a,5i5,3(1x,g12.5))') 'Wallse:Target?:',
      >              id,ik,ir,
@@ -1559,7 +1593,7 @@ c
           griderr = .false.
 c
 c          write (6,*) 'cneut:',iprod,r,z,id,ik,ir
-C
+Cw
        elseif (cneutb.eq.1.or.cneutb.eq.5.or.
      >         cneutb.eq.6.or.cneutb.eq.7) then
 c
@@ -1601,6 +1635,20 @@ c
              wallse(maxpts+1) = wallse(maxpts+1)+sputys(iprod+lprod-1)
           else
              wallse(id) = wallse(id) + sputys(iprod+lprod-1)
+c slmod begin
+             if (.not.allocated(wall_flx)) then
+               wall_n       = wallpts
+               wall_nlaunch = 1
+               allocate(wall_flx(wall_n))
+               do i = 1, wall_n
+                 wall_flx(i)%launch = 0.0
+               enddo
+             endif
+             i = id
+             wall_flx(i)%launch(wall_nlaunch) = 
+     .         wall_flx(i)%launch(wall_nlaunch) + sputys(iprod+lprod-1)
+c             WRITE(0,*) i,wall_nlaunch
+c slmod end
           endif
 
 c
@@ -2628,16 +2676,19 @@ c
            Z    = Z + YVELF
            cist = cist + 1.0
 
-          IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN       ! sltmp
-c          IF (STOPOPT.LT.MAXNWS) THEN
-            IF (sloutput) WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
-            IF (STOPOPT.EQ.0) STOPOPT = 1
-            WALKS(STOPOPT,1) = R
-            WALKS(STOPOPT,2) = Z
-            WALKS(STOPOPT+1,1) = HI
-            WALKS(STOPOPT+1,2) = HI
-            STOPOPT = STOPOPT + 1
+c slmod begin - tmp
+          IF (sloutput) THEN
+            IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN       ! sltmp
+c            IF (STOPOPT.LT.MAXNWS) THEN
+              WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
+              WALKS(STOPOPT,1) = R
+              WALKS(STOPOPT,2) = Z
+              WALKS(STOPOPT+1,1) = HI
+              WALKS(STOPOPT+1,2) = HI
+              STOPOPT = STOPOPT + 1
+            ENDIF
           ENDIF
+c slmod end
 c
 c
 c          Check again if initial position is inside wall 
@@ -2740,13 +2791,14 @@ C
         R    = R + XVELF
         Z    = Z + YVELF
 c slmod begin - tmp
-        IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
-          IF (STOPOPT.EQ.0) STOPOPT=1
-          WALKS(STOPOPT,1) = R
-          WALKS(STOPOPT,2) = Z
-          WALKS(STOPOPT+1,1) = HI
-          WALKS(STOPOPT+1,2) = HI
-          STOPOPT = STOPOPT + 1
+        IF (sloutput) THEN
+          IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
+            WALKS(STOPOPT,1) = R
+            WALKS(STOPOPT,2) = Z
+            WALKS(STOPOPT+1,1) = HI
+            WALKS(STOPOPT+1,2) = HI
+            STOPOPT = STOPOPT + 1
+          ENDIF
         ENDIF
 c slmod end
 ! ammod begin.
@@ -3095,14 +3147,16 @@ C
  250       continue          
 
 c slmod begin - tmp
-           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
-c             WRITE(0 ,*) 'IK,IR:',ik,ir
-c             WRITE(50,*) 'IK,IR:',ik,ir
-             WALKS(STOPOPT,1) = R
-             WALKS(STOPOPT,2) = Z
-             WALKS(STOPOPT+1,1) = HI
-             WALKS(STOPOPT+1,2) = HI
-             STOPOPT = STOPOPT + 1
+           IF (sloutput) THEN
+             IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
+c               WRITE(0 ,*) 'IK,IR:',ik,ir
+c               WRITE(50,*) 'IK,IR:',ik,ir
+               WALKS(STOPOPT,1) = R
+               WALKS(STOPOPT,2) = Z
+               WALKS(STOPOPT+1,1) = HI
+               WALKS(STOPOPT+1,2) = HI
+               STOPOPT = STOPOPT + 1
+             ENDIF
            ENDIF
 c slmod end
 
@@ -3900,12 +3954,14 @@ c
               r = rtmp 
               z = ztmp
 c slmod begin - tmp
-              IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
-                WALKS(STOPOPT,1) = R
-                WALKS(STOPOPT,2) = Z
-                WALKS(STOPOPT+1,1) = HI
-                WALKS(STOPOPT+1,2) = HI
-                STOPOPT = STOPOPT + 1
+              IF (sloutput) THEN
+                IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
+                  WALKS(STOPOPT,1) = R
+                  WALKS(STOPOPT,2) = Z
+                  WALKS(STOPOPT+1,1) = HI
+                  WALKS(STOPOPT+1,2) = HI
+                  STOPOPT = STOPOPT + 1
+                ENDIF
               ENDIF
 c slmod end
 
@@ -4448,6 +4504,9 @@ c
 c
       subroutine tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
+c slmod begin
+      USE mod_divimp
+c slmod ned
       implicit none
       include 'params'
 c
@@ -4515,7 +4574,8 @@ c
 c
 c     Select work to be done based on pinsw 
 c
-      if (pinsw.eq.0.or.pinsw.eq.1.or.pinsw.eq.4) then  
+      if (pinsw.eq.0.or.pinsw.eq.1.or.
+     .    (pinsw.eq.4.and.yieldsw.eq.1)) then  
 c
 c     -------------------------------------------------------
 C     
@@ -4710,23 +4770,27 @@ c that's coming from ions striking the target -- need to compare with what
 c DIVIMP is calculating.  Need to remove the pinsw.eq.4 references that occur
 c in this subroutine, see above.
 c
-c      elseif (pinsw.eq.4.and.yieldsw.EQ.0) then 
-c        STOP 'MADNESS...'
-cc        WRITE(0,*) 'WHA-WHO! 2'
-cc       FYDATA(ID,1)  = Flux
-cc                 2   = Energy
-cc                 3   = Heat
-cc                 4   = Yield
-cc                 5   = Flux * Yield
-c        do in = 1, wallpts
-c          id =  NINT(wallpt(in,17))
-c          fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
-c          fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
-c          fydata(in,3) = 1.0 
-c          fydata(in,4) = flxhw3(id) / (flxhw2(in) + 1.0E-10)
-c          fydata(in,5) = flxhw3(id)  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
-c          fydata(in,:) = fydata(in,:) * kmfps(in)
-c        enddo
+      elseif (pinsw.eq.4.and.yieldsw.EQ.0) then 
+        IF (sloutput) WRITE(0,*) 'WHA-WHO! 2'
+          IF (.NOT.ALLOCATED(wall_flx)) 
+     .      CALL ER('TFY','WALL_FLX not allocated and PINSW=4')
+c       FYDATA(ID,1)  = Flux
+c                 2   = Energy
+c                 3   = Heat
+c                 4   = Yield
+c                 5   = Flux * Yield
+        DO id = 1, nds
+          in = nimindex(id)
+          IF (in.EQ.0) CYCLE  ! virtual rings 
+          fydata(id,1) = wall_flx(in)%in_par_blk(1,0)  ! flxhw2(in)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+          fydata(id,2) = wall_flx(in)%in_ene_blk(1,0)  ! flxhw5(in)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+          fydata(id,3) = 1.0 
+          IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
+     .      fydata(id,4) = wall_flx(in)%em_par_atm(2,1) / 
+     .                     wall_flx(in)%in_par_blk(1,0)  ! flxhw3(in) / (flxhw2(in) + 1.0E-10)
+          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)  ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
+          fydata(id,:) = fydata(id,:) * kmfps(id)
+        enddo
 c slmod end
       endif 
 C     
@@ -4833,6 +4897,9 @@ c
 c
       subroutine wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
+c slmod begin
+      use mod_divimp
+c slmod end
       implicit none
       include 'params'
 c
@@ -4892,7 +4959,7 @@ c
 c
 c     Initialize 
 c
-      write (6,*) 'WFY:',matt
+      write (6,*) 'WFY:',matt,pinsw,wallpts
 c
 c     Zero FLUX and YIELD array
 c
@@ -5136,19 +5203,30 @@ c
 c slmod begin
          elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
            IF (sloutput) WRITE(0,*) 'WHA-WHO! 1'
+           IF (.NOT.ALLOCATED(wall_flx)) 
+     .       CALL ER('WFY','WALL_FLX not allocated and PINSW=4')
 c          FYDATA(ID,1)  = Flux
 c                    2   = Energy
 c                    3   = Heat
 c                    4   = Yield
 c                    5   = Flux * Yield
            do in = 1, wallpts
-             id =  NINT(wallpt(in,17))
+             id = NINT(wallpt(in,17))
              fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
              fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
              fydata(in,3) = 1.0 
-             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))
-             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
+             IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
+     .         fydata(in,4) = wall_flx(id)%em_par_atm(2,2) /
+     .                        wall_flx(in)%in_par_atm(1,0)
+             fydata(in,5) = wall_flx(id)%em_par_atm(2,2)  !  Atoms (species=2) sputtering by test atoms
+c             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))  ! bug, FLXHW2(IN) should have been FLXHW6(ID) 
+c             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
              fydata(id,:) = fydata(id,:) * kmfpws(id)
+c             IF (kmfpws(id).NE.0.0) THEN
+c               WRITE(0,*) '  DEGUB: fydata4,5=',fydata(in,4:5),
+c     .                     MAX(0.0,flxhw3(id) / (flxhw6(id) + 1.0E-10)),
+c     .                     MAX(0.0,flxhw3(id))
+c             ENDIF
            enddo
 c slmod end
          endif 
@@ -5221,6 +5299,8 @@ c
 c     End of PINSW IF statement
 c
       endif
+
+      IF (sloutput) WRITE(0,*) 'CALL WFY: total yield =',totfydata(3,5)
 
 c
 c     Print out data for debugging
@@ -5376,11 +5456,15 @@ C
          DO ID = 1, WALLPTS
             KRMAXW(ID) = 1.0
             IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5) THEN
-
+c slmod begin
+c...          Moved this up here and added the check for manual specification
+c             of the neutral wall sputtering, as in WFY, so that the code 
+c             doesn't complain if PIN was run but manual settings were
+c             specified:  -SL, 09/09/20
 c
-c              PIN data not available or absolute wall launch probabilities have over-ridden the PIN launch data
+c              PIN data not available 
 c
-               if (pinsw.eq.0.or.(nwlprob.gt.0.and.wlpabs.eq.1)) then          
+               if (pinsw.eq.0.or.nwlprob.gt.0) then 
                   if (northopt.eq.0.or.northopt.eq.2) then
                      EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
                   elseif (northopt.eq.1.or.northopt.eq.3) then
@@ -5411,6 +5495,23 @@ c
                      endif
                   ENDIF
                endif
+c
+cc
+cc              PIN data not available 
+cc
+c               elseif (pinsw.eq.0) then          
+c                  if (northopt.eq.0.or.northopt.eq.2) then
+c                     EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+c                  elseif (northopt.eq.1.or.northopt.eq.3) then
+c                     if (matt.le.ntars) then 
+c                        EMAX = CEMAXF * CEBD * 
+c     >                         (CEIMP / CETH(MATP,MATT) - 1.0)
+c                     else
+c                        EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
+c                     endif
+c                  endif
+c               endif
+c slmod end
 
                IF (EMAX.GT.0.0) THEN
                   KRMAXW(ID) = 1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))

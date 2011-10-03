@@ -3,13 +3,12 @@ c
 c ======================================================================
 c
       LOGICAL FUNCTION osmGetLine(fp,buffer,mode)
+      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
 
       INTEGER  , INTENT(IN)  :: fp,mode
       CHARACTER, INTENT(OUT) :: buffer*(*)
-
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2, ALL_LINES = 3
 
       INTEGER i,n
 
@@ -120,12 +119,12 @@ c ======================================================================
 c
       SUBROUTINE LoadOptions
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       IMPLICIT none
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   fp,i
       CHARACTER buffer*1024
@@ -157,6 +156,7 @@ c...    Isolate tag string:
       CLOSE(fp)
 
       CALL ProcessIterationBlocks
+
 
       RETURN
  98   CALL ER('LoadOptions','Error reading file',*99)
@@ -191,6 +191,8 @@ c     miscellaneous:
 c      SELECTCASE (buffer(3:4))
         CASE ('C','CO','CON')
           CALL LoadControlOption(fp,buffer,itag)
+        CASE ('D','DIV')
+          CALL LoadDivimpOption(fp,buffer,itag)
         CASE ('E','EI','EIR')
           CALL LoadEireneOption(fp,buffer,itag)
         CASE ('FI')
@@ -273,6 +275,7 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadControlOption(fp,buffer,itag)
+      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
 
@@ -280,7 +283,6 @@ c
       CHARACTER, INTENT(IN) :: buffer*(*)
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2, ALL_LINES = 3
 
       INTEGER   i
       LOGICAL   finished
@@ -335,14 +337,15 @@ c
       SUBROUTINE SplitBuffer(buffer,buffer_array)
       IMPLICIT none
 
-      CHARACTER, INTENT(IN)  :: buffer*(*)
-      CHARACTER, INTENT(OUT) :: buffer_array*256(*)
+      CHARACTER    , INTENT(IN)  :: buffer*(*)
+      CHARACTER*256, INTENT(OUT) :: buffer_array(*)
+c      CHARACTER, INTENT(OUT) :: buffer_array*256(*)  ! gfortran
 
       INTEGER i,j,k,n,m
 
       buffer_array(1) = ' '
 
-      n = LEN_TRIM(buffer)
+      n = LEN_TRIM(buffer) + 1
       m = 0
 
       j = 0
@@ -356,11 +359,88 @@ c          WRITE(0,*) '>>>',j,i
           buffer_array(m) = buffer(j:i-1)
 c          WRITE(0,*) m,buffer(j:i-1)            
           j = 0
+        ELSE
+          IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
+          IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
+          IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
         ENDIF
-        IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
-        IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
-        IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
       ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE LoadDivimpOption(fp,buffer,itag)
+      USE mod_sol28_io
+      USE mod_divimp
+      IMPLICIT none
+
+      INTEGER  , INTENT(IN)  :: fp,itag
+      CHARACTER  :: buffer*(*)
+
+      LOGICAL   osmGetLine
+
+      INTEGER       i1,idum(5)
+      LOGICAL       first_pass
+      CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
+      CHARACTER*256 buffer_array(100)
+      REAL          version
+
+      first_pass = .TRUE.
+
+      DO i1 = 1, 100
+        WRITE(buffer_array(i1),'(256X)')
+      ENDDO
+
+      SELECTCASE (buffer(3:itag-1))
+c       ----------------------------------------------------------------
+        CASE('DIV RIBBON GRID')
+          READ(buffer(itag+2:itag+4),*) version
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+            opt_div%rib_n = 1
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array(1),*) opt_div%rib_type
+            SELECTCASE (opt_div%rib_type)
+              CASE(1)
+                READ(buffer_array( 2),*) opt_div%rib_format
+                opt_div%rib_file = TRIM(buffer_array(3))
+              CASE(2)
+                READ(buffer_array(2),*) opt_div%rib_rad_opt
+                READ(buffer_array(3),*) opt_div%rib_rad_a
+                READ(buffer_array(4),*) opt_div%rib_rad_d
+                READ(buffer_array(5),*) opt_div%rib_rad_b
+                READ(buffer_array(6),*) opt_div%rib_rad_c
+              CASE(3)
+                READ(buffer_array(2),*) opt_div%rib_pol_opt
+                READ(buffer_array(3),*) opt_div%rib_pol_n
+                READ(buffer_array(4),*) opt_div%rib_pol_a
+                READ(buffer_array(5),*) opt_div%rib_pol_b
+                READ(buffer_array(6),*) opt_div%rib_pol_c
+                READ(buffer_array(7),*) opt_div%rib_pol_d
+              CASE(4)
+                READ(buffer_array(2),*) opt_div%rib_region
+                READ(buffer_array(3),*) opt_div%rib_r1
+                READ(buffer_array(4),*) opt_div%rib_r2
+                READ(buffer_array(5),*) opt_div%rib_z1
+                READ(buffer_array(6),*) opt_div%rib_z2
+              CASE(5)  ! defaults
+                READ(buffer_array(2),*) opt_div%rib_pol_n_def
+                READ(buffer_array(3),*) opt_div%rib_pol_a_def
+                READ(buffer_array(4),*) opt_div%rib_pol_b_def
+                READ(buffer_array(5),*) opt_div%rib_pol_c_def
+                READ(buffer_array(6),*) opt_div%rib_pol_d_def
+              CASE DEFAULT
+                CALL ER('LoadDivimpOption','Unknown ribbon grid '//
+     .                  'option',*99)
+            ENDSELECT
+          ENDDO
+c       ----------------------------------------------------------------
+       CASE DEFAULT
+          CALL User_LoadOptions(fp,itag,buffer)
+      ENDSELECT 
 
       RETURN
  99   STOP
@@ -370,6 +450,7 @@ c ======================================================================
 c
       SUBROUTINE LoadEireneOption(fp,buffer,itag)
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       USE mod_eirene06
@@ -379,11 +460,11 @@ c
       CHARACTER  :: buffer*(*)
 
       LOGICAL   osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1,idum(5)
       LOGICAL   first_pass
-      CHARACTER cdum*1024,buffer_array*256(100)
+      CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
+      CHARACTER*256 buffer_array(100)
       REAL      stratum_type,version,rdum(7)
 
       first_pass = .TRUE.
@@ -400,29 +481,87 @@ c       ----------------------------------------------------------------
         CASE('EIR TET DUMP')
           CALL ReadOptionI(buffer,1,opt_eir%tet_iliin) 
 c       ----------------------------------------------------------------
+        CASE('EIR WHIPE')
+          CALL ReadOptionI(buffer,1,opt_eir%whipe) 
+c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
+          READ(buffer(itag+2:itag+4),*) opt_eir%void_version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
             opt_eir%nvoid = opt_eir%nvoid + 1
-c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
-            READ(buffer,*) idum(1)
-            IF (idum(1).EQ.-2) THEN
-              READ(buffer,*) 
-     .          opt_eir%void_zone(    opt_eir%nvoid),
-     .          opt_eir%void_grid(1:2,opt_eir%nvoid)
+            IF     (opt_eir%void_version.EQ.1.0) THEN 
+              READ(buffer,*) idum(1)
+              IF (idum(1).EQ.-2) THEN
+                READ(buffer,*) 
+     .            opt_eir%void_zone(    opt_eir%nvoid),
+     .            opt_eir%void_grid(1:2,opt_eir%nvoid)
+              ELSE
+                READ(buffer,*) 
+     .            opt_eir%void_zone(    opt_eir%nvoid),
+     .            opt_eir%void_grid(1:2,opt_eir%nvoid),
+     .            opt_eir%void_wall(1:2,opt_eir%nvoid),
+     .            opt_eir%void_add (1:2,opt_eir%nvoid),
+     .            opt_eir%void_res (    opt_eir%nvoid),
+     .            opt_eir%void_hole(1:2,opt_eir%nvoid),
+     .            opt_eir%void_code(    opt_eir%nvoid),
+     .            opt_eir%void_ne  (    opt_eir%nvoid),
+     .            opt_eir%void_te  (    opt_eir%nvoid),
+     .            opt_eir%void_ti  (    opt_eir%nvoid)
+              ENDIF
+            ELSEIF (opt_eir%void_version.EQ.2.0) THEN 
+              CALL SplitBuffer(buffer,buffer_array) 
+              i1 = opt_eir%nvoid
+              READ(buffer_array(1),*) opt_eir%void_zone(i1)
+              opt_eir%void2_grid(i1) = TRIM(buffer_array(2))
+              opt_eir%void2_wall(i1) = TRIM(buffer_array(3))
+              opt_eir%void2_add (i1) = TRIM(buffer_array(4))
+              READ(buffer_array(5),*) opt_eir%void_res (i1)
+              IF (LEN_TRIM(buffer_array(6)).GT.0) THEN
+                READ(buffer_array(6),*) opt_eir%void_code(i1)
+                READ(buffer_array(7),*) opt_eir%void_ne  (i1)
+                READ(buffer_array(8),*) opt_eir%void_te  (i1)
+                READ(buffer_array(9),*) opt_eir%void_ti  (i1)
+              ENDIF
             ELSE
-              READ(buffer,*) 
-     .          opt_eir%void_zone(    opt_eir%nvoid),
-     .          opt_eir%void_grid(1:2,opt_eir%nvoid),
-     .          opt_eir%void_wall(1:2,opt_eir%nvoid),
-     .          opt_eir%void_add (1:2,opt_eir%nvoid),
-     .          opt_eir%void_res (    opt_eir%nvoid),
-     .          opt_eir%void_hole(1:2,opt_eir%nvoid),
-     .          opt_eir%void_code(    opt_eir%nvoid),
-     .          opt_eir%void_ne  (    opt_eir%nvoid),
-     .          opt_eir%void_te  (    opt_eir%nvoid),
-     .          opt_eir%void_ti  (    opt_eir%nvoid)
-            ENDIF
+              CALL ER('LoadEireneOption','Unrecognised void '//
+     .                'block version',*99)
+            ENDIF            
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR ADDITIONAL SURFACES')
+          opt_eir%nadd = 0
+          READ(buffer(itag+2:itag+4),*) opt_eir%add_version
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+            opt_eir%nadd = opt_eir%nadd + 1
+            IF     (opt_eir%add_version.EQ.1.0) THEN 
+              CALL SplitBuffer(buffer,buffer_array) 
+c              write(0,*) '>'//TRIM(buffer_array(1))//'<'
+c              write(0,*) '>'//TRIM(buffer_array(2))//'<'
+c              write(0,*) '>'//TRIM(buffer_array(3))//'<'
+c              write(0,*) '>'//TRIM(buffer_array(4))//'<'
+c              write(0,*) '>'//TRIM(buffer_array(5))//'<'
+              i1 = opt_eir%nadd
+              READ(buffer_array(1),*) opt_eir%add_type (i1)
+              READ(buffer_array(2),*) opt_eir%add_index(i1)
+              SELECTCASE (opt_eir%add_type(i1))
+                CASE(1)
+                  opt_eir%add_file    (i1) = TRIM(buffer_array(3))
+                  opt_eir%add_file_tag(i1) = TRIM(buffer_array(4))
+                  opt_eir%add_tag     (i1) = TRIM(buffer_array(5))
+                CASE(2)
+                  READ(buffer_array( 3),*) opt_eir%add_holex(i1)
+                  READ(buffer_array( 4),*) opt_eir%add_holey(i1)
+                  opt_eir%add_tag     (i1) = TRIM(buffer_array(5))
+                CASE DEFAULT
+                  CALL ER('LoadEireneOption','Unknown additional '//
+     .                    'surface type',*99)
+              ENDSELECT
+            ELSE
+              CALL ER('LoadEireneOption','Unrecognised add '//
+     .                'block version',*99)
+            ENDIF            
           ENDDO
 c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
@@ -456,7 +595,8 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
               READ(buffer,*) rdum(1:7),
      .          opt_eir%txtsou(opt_eir%nstrata)
             ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.3.0.OR.
-     .              opt_eir%type(opt_eir%nstrata).EQ.3.1) THEN  ! Point source injection (gas puff, beams)
+     .              opt_eir%type(opt_eir%nstrata).EQ.3.1.OR.    ! Point source injection (gas puff, beams)
+     .              opt_eir%type(opt_eir%nstrata).EQ.4.0) THEN  ! Surface
               READ(buffer,*) rdum(1:7),
      .          opt_eir%sorcos   (opt_eir%nstrata),
      .          opt_eir%sormax   (opt_eir%nstrata),
@@ -498,15 +638,50 @@ c       ----------------------------------------------------------------
           opt_eir%tet_n = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
             opt_eir%tet_n = opt_eir%tet_n + 1
+            i1 = opt_eir%tet_n
             CALL SplitBuffer(buffer,buffer_array) 
             SELECTCASE (TRIM(buffer_array(1)))
-              CASE('1.0')
+              CASE ('1.0')
                 READ(buffer,*) 
-     .            opt_eir%tet_type(opt_eir%tet_n),  !                
-     .            opt_eir%tet_x1  (opt_eir%tet_n),  ! 
-     .            opt_eir%tet_y1  (opt_eir%tet_n),  ! 
-     .            opt_eir%tet_x2  (opt_eir%tet_n),  ! 
-     .            opt_eir%tet_y2  (opt_eir%tet_n)   ! 
+     .            opt_eir%tet_type(i1),  !                
+     .            opt_eir%tet_x1  (i1),  ! 
+     .            opt_eir%tet_y1  (i1),  ! 
+     .            opt_eir%tet_x2  (i1),  ! 
+     .            opt_eir%tet_y2  (i1)   ! 
+              CASE ('2.0')
+                READ(buffer_array(1),*) opt_eir%tet_type    (i1)  !         
+                READ(buffer_array(2),*) opt_eir%tet_index   (i1)  !         
+                READ(buffer_array(3),*) opt_eir%tet_mode    (i1)  !         
+                READ(buffer_array(4),*) opt_eir%tet_param1  (i1)  !         
+                READ(buffer_array(5),*) opt_eir%tet_param2  (i1)  !         
+                opt_eir%tet_del_hole(i1) = TRIM(buffer_array(6))  !         
+                opt_eir%tet_del_zone(i1) = TRIM(buffer_array(7))  !         
+              CASE ('3.0')
+                READ(buffer_array(1),*) opt_eir%tet_type    (i1)  !         
+                READ(buffer_array(2),*) opt_eir%tet_index   (i1)  !         
+                opt_eir%tet_sec_list(i1) = TRIM(buffer_array(3))  !         
+              CASE ('4.0')
+                READ(buffer_array(1),*) opt_eir%tet_type     (i1)  !         
+                opt_eir%tet_composite(i1) = TRIM(buffer_array(2))  !         
+                READ(buffer_array(3),*) opt_eir%tet_offset   (i1)  !         
+              CASE ('5.0')  ! Grid refinement
+                READ(buffer_array(1),*) opt_eir%tet_type(i1)  !         
+                READ(buffer_array(2),*) opt_eir%tet_mode(i1)  !         
+                SELECTCASE (opt_eir%tet_mode(i1))
+                  CASE (4)
+                    READ(buffer_array(3 ),*) opt_eir%tet_param1(i1)  !         
+                    READ(buffer_array(4 ),*) opt_eir%tet_param2(i1)  !         
+                    READ(buffer_array(5 ),*) opt_eir%tet_param3(i1)  !         
+                    READ(buffer_array(6 ),*) opt_eir%tet_x1    (i1)  !         
+                    READ(buffer_array(7 ),*) opt_eir%tet_y1    (i1)  !         
+                    READ(buffer_array(8 ),*) opt_eir%tet_z1    (i1)  !         
+                    READ(buffer_array(9 ),*) opt_eir%tet_x2    (i1)  !         
+                    READ(buffer_array(10),*) opt_eir%tet_y2    (i1)  !         
+                    READ(buffer_array(11),*) opt_eir%tet_z2    (i1)  !         
+                  CASE DEFAULT
+                    CALL ER('LoadEireneOption','Madness, no idea '//
+     .                      'what''s going on',*99)
+                ENDSELECT
               CASE DEFAULT
                 CALL ER('LoadEireneOption','Unknown tetrahedron grid '//
      .                  'TYPE found',*99)
@@ -516,6 +691,7 @@ c       ----------------------------------------------------------------
         CASE('EIR SURFACE PROPERTIES')
           opt_eir%sur_n  = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)
             opt_eir%sur_n = opt_eir%sur_n + 1
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)
@@ -547,6 +723,7 @@ c ======================================================================
 c
       SUBROUTINE LoadFilamentOption(fp,buffer,itag)
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_options
       USE mod_legacy
       USE mod_eirene06
@@ -556,7 +733,6 @@ c
       CHARACTER  :: buffer*(*)
 
       LOGICAL   osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1
       REAL      stratum_type,version,rdum(7),length(2)
@@ -567,7 +743,7 @@ c
         CASE('FIL TARGET FLUX')
           CALL ReadOptionI(buffer,1,opt_fil%target_flux)
         CASE('FIL LENGTH')
-          WRITE(0,*) 'BUFFER:',TRIM(buffer)
+c          WRITE(0,*) 'BUFFER:',TRIM(buffer)
           CALL ReadOptionR(buffer,2,length)
           opt_fil%length1 = length(1)
           opt_fil%length2 = length(2)
@@ -705,6 +881,7 @@ c ======================================================================
 c
       SUBROUTINE LoadSolverOption(fp,buffer,itag)
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
 
@@ -712,9 +889,11 @@ c
       CHARACTER, INTENT(IN) :: buffer*(*)
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
+
+      CHARACTER*256 buffer_array(100)  ! gfortran
 
       SELECTCASE (buffer(3:itag-1))
+c       ----------------------------------------------------------------
         CASE('SOL APPLICATION')
           opt%sol_n = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -722,8 +901,22 @@ c
             READ(buffer,*) opt%sol_tube  (1:2,opt%sol_n),
      .                     opt%sol_option(    opt%sol_n)
           ENDDO
-      CASE DEFAULT
+c       ----------------------------------------------------------------
+        CASE('SOL RADIAL VELOCITY')
+          CALL SplitBuffer(buffer,buffer_array) 
+          READ(buffer_array(2),*) opt%radvel
+          SELECTCASE (opt%radvel)
+            CASE (0) 
+            CASE (1) 
+              READ(buffer_array(3),*) opt%radvel_param(1)
+            CASE DEFAULT
+              CALL ER('LoadSolverOption','Invalid radial velocity, '//
+     .                'option',*99)
+          ENDSELECT
+c       ----------------------------------------------------------------
+        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
+c       ----------------------------------------------------------------
       ENDSELECT 
 
       RETURN
@@ -733,6 +926,7 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadSOLPSOption(fp,buffer,itag)
+      USE mod_sol28_io
       USE mod_solps_params
       USE mod_solps
       IMPLICIT none
@@ -743,7 +937,6 @@ c
       CHARACTER cdum1*1024
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       SELECTCASE (buffer(3:itag-1))
         CASE('SOLPS LOAD SOLUTION')
@@ -819,6 +1012,7 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadWallOption(fp,buffer,itag)
+      USE mod_sol28_io
       USE mod_sol28_wall
       IMPLICIT none
 
@@ -828,7 +1022,6 @@ c
       CHARACTER cdum1*1024
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       SELECTCASE (buffer(3:itag-1))
         CASE('WALL 2D SEGMENTS')
@@ -857,6 +1050,7 @@ c ======================================================================
 c
       SUBROUTINE LoadMiscOption(fp,buffer,itag,status)
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       IMPLICIT none
@@ -867,7 +1061,6 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
       LOGICAL  , INTENT(OUT) :: status
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   i1
       LOGICAL   node_fit,node_data,ldum1
@@ -1025,6 +1218,7 @@ c
       USE mod_eirene_history
       USE mod_legacy
       USE mod_solps
+      USE mod_divimp
       IMPLICIT none
 
       CALL InitializeLegacyVariables
@@ -1107,6 +1301,8 @@ c...  OSM options:
       opt%bc    = 1
       opt%super = 0
 
+      opt%radvel = 0
+
       ref_nion   = 0
       ref_nfluid = 1
 
@@ -1126,6 +1322,7 @@ c...  Eirene options:
 
 c      opt_eir%nvoid = 0
       opt_eir%nvoid = 1
+      opt_eir%void_version   =  1.0
       opt_eir%void_zone(  1) =   -1
       opt_eir%void_grid(1,1) =    2
       opt_eir%void_grid(2,1) =  999
@@ -1137,6 +1334,9 @@ c      opt_eir%nvoid = 0
       opt_eir%void_ne  (  1) =  0.0
       opt_eir%void_te  (  1) =  0.0
       opt_eir%void_ti  (  1) =  0.0
+      opt_eir%void_tag (  1) =  'default'
+
+      opt_eir%nadd = 0
 
       opt_eir%nstrata = 3
       opt_eir%type         (1) = 1.0
@@ -1204,6 +1404,8 @@ c      opt_eir%nvoid = 0
       opt_eir%tet_n   = 0  ! Tetrahedron mesh definition
       opt_eir%nadspc  = 0  ! Energy spectra definitions
 
+      opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
+
       eirfp = 88     
       geofp = 88
 
@@ -1216,6 +1418,24 @@ c...  SOLPS related variables:
       IF (ALLOCATED(map_osm   )) DEALLOCATE(map_osm   )
 
       nhistory = 0
+
+c...  Divimp options:
+      opt_div%rib_n = 0
+      opt_div%rib_format = -1
+      opt_div%rib_r1 = -1.0E+6
+      opt_div%rib_r2 =  1.0E+6
+      opt_div%rib_z1 = -1.0E+6
+      opt_div%rib_z2 =  1.0E+6
+      opt_div%rib_rad_opt = 0
+      opt_div%rib_pol_opt = 0
+
+      opt_div%rib_pol_n_def = 11 
+      opt_div%rib_pol_a_def = 0.3
+      opt_div%rib_pol_b_def = 0.1
+      opt_div%rib_pol_c_def = 1.0
+      opt_div%rib_pol_d_def = 0.1
+
+c     left off need to add inputs for the above...
 
 c...  User:
       CALL User_InitializeOptions

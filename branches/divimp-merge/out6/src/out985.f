@@ -43,7 +43,7 @@ c      CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
 c      opt%load = 1
 c      grd_ntorseg = eirntorseg
 
-      CALL Main985(iopt)
+      CALL Main985(iopt,title)
 c      CALL Main985(iopt,opt,MAXPIXEL,npixel,pixel,MAX3D,nobj,obj,image)
 
 

@@ -25,7 +25,7 @@
       PUBLIC
 
       INTEGER, PARAMETER ::   
-     .  s28_MAXNKS   = 200, 
+     .  s28_MAXNKS   = 500, 
      .  s28_MAXNION  =  10, 
      .  s28_MAXPTS   =   4, 
      .  s28_MAXSIDE  =   6, 
@@ -44,6 +44,7 @@
      .  GRD_BOUNDARY =  -1,
      .  EIR_MAXNSTRATA = 100,
      .  EIR_MAXNVOID   = 100,
+     .  EIR_MAXNADD    = 500,
      .  EIR_MAXNSPECTRA= 100,
      .  EIR_MAXNSUR    = 100,
      .  EIR_MAXNTET    = 100,
@@ -69,6 +70,17 @@
 
 
       END MODULE mod_sol28_params
+
+!
+! ======================================================================
+!
+      MODULE mod_sol28_io
+      IMPLICIT none
+      PUBLIC
+
+      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2, ALL_LINES = 3
+
+      END MODULE mod_sol28_io
 c
 c ======================================================================
 c
@@ -144,6 +156,10 @@ c
          INTEGER   :: ti_rec(2)        ! Energy source from neutral code associated with volume recombination
          INTEGER   :: super(2)         ! Allow for supersonic flows near targets
          REAL      :: s28mode          ! Node assignment routine
+
+         INTEGER   :: radvel           ! Option for specifying the radial velocity with MODE=7 in S74 (far-SOL)
+         REAL      :: radvel_param(2)  ! Parmeters used to specify the radial velocty and distribution
+
 !...     Materials data to load:
          INTEGER   :: mat_opt
          CHARACTER :: mat_file*512
@@ -189,15 +205,32 @@ c
          INTEGER   :: ntime           ! Number of time steps
          INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
          INTEGER   :: ilspt           ! Sputering option
+         INTEGER   :: whipe           ! Reduce the plasma density to very low values (testing mode)
 !...     3D:
          INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
-!          tetrahedral mesh generation        
-         INTEGER   :: tet_n
-         REAL      :: tet_type  (EIR_MAXNTET)
-         REAL      :: tet_x1    (EIR_MAXNTET)
-         REAL      :: tet_y1    (EIR_MAXNTET)
-         REAL      :: tet_x2    (EIR_MAXNTET)
-         REAL      :: tet_y2    (EIR_MAXNTET)
+!        Tetrahedral mesh generation:
+         INTEGER       :: tet_n
+         REAL          :: tet_type     (EIR_MAXNTET)
+         REAL          :: tet_x1       (EIR_MAXNTET)  ! Crop boundary for the grid, if necessary (tet_type = 1.0)
+         REAL          :: tet_y1       (EIR_MAXNTET)  !   lower inner point = (x1,y1)  (and for refinement)
+         REAL          :: tet_z1       (EIR_MAXNTET)  !     (for refinement only)
+         REAL          :: tet_x2       (EIR_MAXNTET)  !   upper outer point = (x2,y2)
+         REAL          :: tet_y2       (EIR_MAXNTET)
+         REAL          :: tet_z2       (EIR_MAXNTET)  
+         INTEGER       :: tet_index    (EIR_MAXNTET)  ! Index of slice (tet_type=2.0 and 3.0)
+                                                      ! Tet_type = 2.0, slices:
+         INTEGER       :: tet_mode     (EIR_MAXNTET)  !   method for deciding the angular width of the slice
+         REAL*8        :: tet_param1   (EIR_MAXNTET)  !   1st parameter used to specify the angular width
+         REAL*8        :: tet_param2   (EIR_MAXNTET)  !   2nd parameter
+         REAL*8        :: tet_param3   (EIR_MAXNTET)  !   3rd general purpose parameter
+         CHARACTER*128 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
+         CHARACTER*128 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
+                                                      ! Tet_type = 3.0, sectors:
+         CHARACTER*128 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
+                                                      ! Tet_type = 4.0, full grid composite:
+         CHARACTER*128 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
+         REAL          :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
+
 !...     Surface properties in EIRENE:
          INTEGER       :: sur_n       
          REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
@@ -206,9 +239,9 @@ c
          INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
          INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
          INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
-         INTEGER       :: sur_tr1     (EIR_MAXNSUR)  ! ?
-         INTEGER       :: sur_tr2     (EIR_MAXNSUR)  ! ?
-         INTEGER       :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
+         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
          INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
          INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
          CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.
@@ -258,7 +291,8 @@ c...    Strata:
         INTEGER   :: npts           (EIR_MAXNSTRATA)
         REAL      :: flux           (EIR_MAXNSTRATA)
         REAL      :: flux_fraction  (EIR_MAXNSTRATA)
-        CHARACTER :: species_tag*128(EIR_MAXNSTRATA)
+        CHARACTER*128 :: species_tag(EIR_MAXNSTRATA)
+!         CHARACTER*128 :: species_tag*128(EIR_MAXNSTRATA)  ! gfortranH
         INTEGER   :: species        (EIR_MAXNSTRATA)
         INTEGER   :: species_index  (EIR_MAXNSTRATA)
         REAL      :: energy         (EIR_MAXNSTRATA)
@@ -269,7 +303,8 @@ c...    Strata:
 !        REAL      :: cos_max     
 !        CHARACTER :: note*512    
 !        INTEGER   :: indsrc  ! ...
-        CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)
+        CHARACTER*512 :: txtsou  (EIR_MAXNSTRATA)
+!         CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)  ! gfortran
 !        INTEGER   :: ninitl       
 !        INTEGER   :: nemods       
 !        CHARACTER :: species_tag*4
@@ -299,19 +334,35 @@ c...    Strata:
          REAL      :: ctargt          ! Target surface temperature
          REAL      :: cwallt          ! Wall surface temperature
 
+         REAL          :: add_version
+         INTEGER       :: nadd
+         INTEGER       :: add_type    (EIR_MAXNADD)
+         INTEGER       :: add_index   (EIR_MAXNADD)
+         CHARACTER*128 :: add_file    (EIR_MAXNADD)
+         CHARACTER*128 :: add_file_tag(EIR_MAXNADD)
+         CHARACTER*128 :: add_tag     (EIR_MAXNADD)
+         REAL          :: add_holex   (EIR_MAXNADD)
+         REAL          :: add_holey   (EIR_MAXNADD)
 
 !...     Voids between the fluid grid and the wall:
-         INTEGER   :: nvoid 
-         INTEGER   :: void_zone(  EIR_MAXNVOID)
-         INTEGER   :: void_grid(2,EIR_MAXNVOID)
-         INTEGER   :: void_wall(2,EIR_MAXNVOID)
-         INTEGER   :: void_add (2,EIR_MAXNVOID)
-         REAL      :: void_res (  EIR_MAXNVOID)
-         REAL      :: void_hole(2,EIR_MAXNVOID)
-         INTEGER   :: void_code(  EIR_MAXNVOID)
-         REAL      :: void_ne  (  EIR_MAXNVOID)
-         REAL      :: void_te  (  EIR_MAXNVOID)
-         REAL      :: void_ti  (  EIR_MAXNVOID)
+         REAL          :: void_version
+         INTEGER       :: nvoid 
+         INTEGER       :: void_zone(  EIR_MAXNVOID)
+         INTEGER       :: void_grid(2,EIR_MAXNVOID)
+         INTEGER       :: void_wall(2,EIR_MAXNVOID)
+         INTEGER       :: void_add (2,EIR_MAXNVOID)
+         REAL          :: void_res (  EIR_MAXNVOID)
+         REAL          :: void_hole(2,EIR_MAXNVOID)
+         INTEGER       :: void_code(  EIR_MAXNVOID)
+         REAL          :: void_ne  (  EIR_MAXNVOID)
+         REAL          :: void_te  (  EIR_MAXNVOID)
+         REAL          :: void_ti  (  EIR_MAXNVOID)
+         CHARACTER*128 :: void_tag (EIR_MAXNVOID)         
+
+         CHARACTER*128 :: void2_grid(EIR_MAXNVOID)
+         CHARACTER*128 :: void2_wall(EIR_MAXNVOID)
+         CHARACTER*128 :: void2_add (EIR_MAXNVOID)
+         CHARACTER*128 :: void2_hole(EIR_MAXNVOID)
 
       ENDTYPE type_options_eirene
 !
@@ -717,6 +768,8 @@ c...    Strata:
       USE mod_sol28      
       IMPLICIT none
 
+      SAVE
+
       TYPE(type_options_eirene  ) :: opt_eir   ! EIRENE options
       TYPE(type_options_filament) :: opt_fil   ! Filament options
 
@@ -771,10 +824,10 @@ c...    Strata:
 
 
 !...
-      TYPE(type_options_osm     ) :: opt
+      TYPE(type_options_osm), SAVE :: opt
       INTEGER, PARAMETER :: MAX_NOPT = 10
       INTEGER nopt
-      TYPE(type_options_osm     ) :: opt_iteration(1:MAX_NOPT)
+      TYPE(type_options_osm), SAVE :: opt_iteration(1:MAX_NOPT)
       INTEGER logop, logfp
 
 !...  Nasty...
@@ -785,8 +838,8 @@ c...    Strata:
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
 
-      INTEGER store_sopt(500),store_mnode(500),store_nnode(500)
-      TYPE(type_node) store_node(20,500)
+      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000)
+      TYPE(type_node) store_node(20,1000)
 !...  
       INTEGER, PARAMETER :: MAXNTUBE = 100
       TYPE(type_grid), SAVE :: grid
@@ -796,6 +849,7 @@ c...    Strata:
       INTEGER*4, SAVE, ALLOCATABLE :: tube_state(:)  ! move into the TUBE array eventually, but only local use for now...
 !       _state BIT 0 - 1-default symmetry point applied
 !              BIT 1 - 1-solution for ring has been successfully calculated
+!              BIT 2 - 1-node linked to an invalid ring (solution hadn't been calculated yet)
 
       INTEGER, PARAMETER :: MAXNCELL = MAXNTUBE * 100
       INTEGER, SAVE :: nion,ncell,nfield,npin,nphoton,nfluid,nkinetic,

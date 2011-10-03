@@ -672,7 +672,7 @@ c       a filament flux-tube:
               len2 = MAX(0.0D0,DBLE(opt_fil%length2))
               chop = 5
             ENDIF
-            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,0.0D0,
      .                                 n,v,10000)  ! *** HACK *** (the 10000)
             filament(ifilament)%lcell(1,icell) = len1
             filament(ifilament)%lcell(2,icell) = len2
@@ -777,6 +777,76 @@ c       otherwise indicate that the problem was ill-posed:
           CalcPerp =  0.0D0
         ELSE
           CalcPerp = -1.0D0
+        ENDIF
+      ENDIF
+
+      RETURN
+      END
+c ======================================================================
+c
+c function: CalcPerp2
+c
+c Calculate the perpendicular distance from a point to a line, but never
+c mind the check if the intersection point is between the end points (combine
+c with CalcPerp in the future to avoid code repetition).
+c
+      REAL*8 FUNCTION CalcPerp2(a,b,c,t) 
+
+      IMPLICIT none
+
+      REAL*8, INTENT(IN)  :: a(3),b(3),c(3)
+      REAL*8, INTENT(OUT) :: t
+
+      REAL*8 p(3),delta(3),dist
+
+      REAL*8     DTOL
+      PARAMETER (DTOL = 1.0D-7)
+
+
+      CalcPerp2 = -1.0D0
+
+      delta = b - a
+
+      IF (DABS(delta(1)).GT.DTOL.OR.DABS(delta(2)).GT.DTOL.OR.
+     .    DABS(delta(3)).GT.DTOL) THEN
+
+        t = ((c(1) - a(1)) * delta(1) + (c(2) - a(2)) * delta(2) + 
+     .       (c(3) - a(3)) * delta(3)) /
+     .      (delta(1)**2 + delta(2)**2 + delta(3)**2)
+
+        p(1:3) = a(1:3) + t * delta(1:3)
+
+        IF (.TRUE.) THEN
+c       IF ((t+DTOL).GE.0.0D0.AND.(t-DTOL).LE.1.0D0) THEN
+
+          dist = DSQRT((p(1) - c(1))**2 + (p(2) - c(2))**2 +
+     .                 (p(3) - c(3))**2)
+
+c          WRITE(0,*) 'A=',a
+c          WRITE(0,*) 'B=',b
+c          WRITE(0,*) 'C=',c
+c          WRITE(0,*) 'P=',p
+c          WRITE(0,*) 'DELTA=',delta
+
+          IF (dist.LT.DTOL*10.0D0) THEN
+c           Point C is on the line AB:
+            CalcPerp2 = 0.0D0
+          ELSE
+c           Point of perpendicular intersection is displaced from
+c           the point C:
+            CalcPerp2 = dist
+          ENDIF
+        ELSE
+          CalcPerp2 = -1.0D0
+        ENDIF
+      ELSE
+c       If the points are all identicle, then return a positive result,
+c       otherwise indicate that the problem was ill-posed:
+        IF (DABS(a(1) - c(1)).LT.DTOL.AND.DABS(a(2) - c(2)).LT.DTOL.AND.
+     .      DABS(a(3) - c(3)).LT.DTOL) THEN
+          CalcPerp2 =  0.0D0
+        ELSE
+          CalcPerp2 = -1.0D0
         ENDIF
       ENDIF
 
@@ -1491,8 +1561,7 @@ c     .              (iobj.EQ.2))
 c     .              (iobj.EQ.2.AND.iside.NE.1).OR.
 c     .              (i1.NE.1)) 
 c     .            subdivide = .FALSE.  ! *** DEBUG ***
-c                 subdivide = .FALSE. 
-
+                subdivide = .FALSE.   ! *** TURNED THIS OFF while building C-Mod gas puff grids!  -SL, 24/05/2011
 
                 IF (subdivide) THEN
                   IF (output) THEN
@@ -1506,14 +1575,13 @@ c                 subdivide = .FALSE.
 
                 DO WHILE (.NOT.finished.AND.subdivide)  ! *** THIS IS WRONG... *** 
 
+c                 --------------------------------------------------------
                   IF     (omap1.EQ.0) THEN
 c                   Hit a wall, need to reverse direction.  If stuck between two 
 c                   wall surfaces then just let things bounce back and forth:                    
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'corresponding side',*99)
@@ -1526,21 +1594,18 @@ c                   wall surfaces then just let things bounce back and forth:
 
                     change = change + 1
                     IF (change.EQ.2) finished = .TRUE.
-
+c                 --------------------------------------------------------
                   ELSEIF (obj(omap1)%segment(1).NE.0) THEN   ! *** HACK: NEED TO DECOUPLE THIS FROM THE DELETE FLAG... ***
 c                  ELSEIF (obj(omap1)%segment(1).EQ.1) THEN   
 c                   Identify common line segment between the current side
 c                   and the neighbour:
                     iobj1  = omap1
                     iside1 = smap1
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
 c...                Need this line because...
                     IF (omap1.EQ.0) iside1 = iside2
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'neighbouring object',*99)
@@ -1551,6 +1616,7 @@ c...                Need this line because...
                       WRITE(fp,*) '  NEXT TETRA:',iobj1,iside1
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
+c                 --------------------------------------------------------
                   ELSE
                     IF (output) THEN
                       WRITE(fp,*) '  SORRY...  :',iobj1,iside1,
@@ -1558,6 +1624,7 @@ c...                Need this line because...
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
                     subdivide = .FALSE.
+c                 --------------------------------------------------------
                   ENDIF
                   count = count + 1
 
@@ -1799,7 +1866,12 @@ c
           obj_volume = 0.0D0
           DO iobj = 1, nobj
             IF (grp(obj(iobj)%group)%type.NE.GRP_TETRAHEDRON) CYCLE
-            CALL gmCalcTetrahedronVolume(iobj)
+            WRITE(0,*) 'STOPPING, SOMETHING MESS UP HERE, CHECK CODE'
+            STOP
+c...        Not sure what's up here, since I was calling a function as if it's a 
+c           subroutine.  Need to debug when the runtime error appears, from above.
+c           Trying to compile with gfortran caught this.
+c            CALL gmCalcTetrahedronVolume(iobj)
           ENDDO
 
         CASE (MODE_OBJ_TUBE)
