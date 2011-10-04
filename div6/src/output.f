@@ -585,7 +585,7 @@ c
       INTEGER ik,ir,in,ii,i1,i2,id
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
-      CHARACTER*7   irtag(0:MAXNRS)
+      CHARACTER*7   irtag(0:MAXNRS),fname
       CHARACTER*128 note
 
       write(6,*) 'OutputGrid2:',trim(comment)
@@ -613,7 +613,8 @@ c----------------------------------
         ENDDO
       ENDDO
 
-      OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp
+      OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       CALL SetBounds
 
@@ -691,9 +692,7 @@ c
 c
         DO ik = 1, nks(ir)
           in = korpg(ik,ir)
-
-
-cc...temp: korpg=0
+c...temp: korpg=0
           IF (in.EQ.0) in = MAXNKS*MAXNRS
 c
           note = ' '
@@ -716,9 +715,6 @@ c
         ENDDO
       ENDDO
 c
-
-
-600   CONTINUE
 
       CLOSE(fp)
 c-----------------------------------
@@ -749,7 +745,7 @@ c
       INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
-      CHARACTER*7   irtag(0:MAXNRS)
+      CHARACTER*7   irtag(0:MAXNRS),fname
       CHARACTER*128 note
       CHARACTER     ring_tag(4)*4
 
@@ -787,7 +783,8 @@ c f90 strange
         ENDDO
       ENDDO
 
-      OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp
+      OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       CALL SetBounds
 
@@ -1146,10 +1143,10 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A4,2A10,2A20,A20,A12,A8,1X,A7)')
+        WRITE(fp,'(2A4,2A10,2A20,A20,A12,2A8,1X,A7)')
      .    'ik','ir',
      .    'rs','zs','kss (/ max)','ksb (% max)',
-     .    'kps (/ max)','kpb','d_kpb',
+     .    'kps (/ max)','kpb','d_kpb','psi_n',
      .    irtag(ir)
 
         IF (ir.LT.irsep) THEN
@@ -1173,7 +1170,8 @@ c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
 c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
-          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,F8.4,A)')
+          WRITE(fp,'(2I4,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,
+     .               2F8.4,A)')
      .      ik,ir,
      .      rs (ik,ir),zs (ik,ir),
      .      kss(ik,ir),kss(ik,ir)/(ksmaxs(ir)+1.0E-10),
@@ -1181,6 +1179,7 @@ c          WRITE(fp,'(2I3,2F10.6,2(F12.6,F8.4),F12.6,F8.4,F12.6,A,F9.2)')
      .                  100.0,
      .      kps(ik,ir),kps(ik,ir)/(kpmaxs(ir)+1.0E-10),
      .      kpb(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
+     .      psifl(ik,ir),
      .      note(1:LEN_TRIM(note))
 c     .      kss2(ik,ir)
 
@@ -1253,15 +1252,50 @@ c...temp: korpg=0
             WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
-     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
-c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
-c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5),
+c
+c             jde comment - not sure why this repeats the same data 
+c                           twice in the output file but I will leave 
+c                           it in during merge in case something depends
+c                           on it. 
+c
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5)
+c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO
         ENDDO
       ENDIF
 
-600   CONTINUE  ! ???
+      WRITE(fp,*)
+      WRITE(fp,*) 'DALPHA DATA:'
+c
+      DO ir = 1, nrs
+        WRITE(fp,*)
+        WRITE(fp,'(2A3,7A12,1X,A)')
+     .    'ik','ir',
+     .    'pinalpha','pinline6','pinline1','pinline2',
+     .    'pinline3','pinline4','pinline5',irtag(ir)
+c
+        DO ik = 1, nks(ir)
+          note = ' '
+          IF (ik.EQ.ikto2 (ir)) note = note(1:LEN_TRIM(note))//' IKTO2'
+          IF (ik.EQ.ikti2 (ir)) note = note(1:LEN_TRIM(note))//' IKTI2'
+          IF (ik.EQ.ikmids(ir)) note = note(1:LEN_TRIM(note))//' IKMIDS'
+          IF (ik.EQ.ikbound(ir,IKLO))
+     .      note = note(1:LEN_TRIM(note))//' IK1'
+          IF (ik.EQ.ikbound(ir,IKHI))
+     .      note = note(1:LEN_TRIM(note))//' IK2'
+          if (in.eq. MAXNKS*MAXNRS)      
+     >      note = trim(note)//' INVALID CELL'
+
+          WRITE(fp,'(2I3,1P,7E12.4,0P,A)')
+     .      ik,ir,
+     .      pinalpha(ik,ir),
+     .      pinline (ik,ir,6  ,H_BALPHA),
+     .      pinline (ik,ir,1:5,H_BALPHA),
+c     .      pinline (ik,ir,7  ,H_BALPHA),
+     .      note(1:LEN_TRIM(note))
+        ENDDO
+      ENDDO
 
       CLOSE(fp)
 
@@ -1295,7 +1329,7 @@ c
       CHARACTER*(*) note
       INTEGER      ik,ir,in
       CHARACTER*20 tag
-
+      CHARACTER*7  fname
       CHARACTER*64 machine2
 
       CALL GetEnv('DIVNAME',machine2)
@@ -1336,8 +1370,9 @@ c
 c     Unit 67 is the PIN output before each SOL 22 iteration, so the file
 c     needs to remain open:
 c
+      WRITE(fname,'(A,I2)') 'fort.',fp
       IF (fp.NE.67.AND.fp.NE.SLOUT.AND.fp.NE.PINOUT)
-     .  OPEN(UNIT=fp,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+     .  OPEN(UNIT=fp,FILE=fname,ACCESS='SEQUENTIAL',STATUS='REPLACE')
 
       WRITE(fp,*) 'EIRENE data '//note(1:LEN_TRIM(note))//':'
 

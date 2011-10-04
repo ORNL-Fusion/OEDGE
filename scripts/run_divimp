@@ -1,4 +1,4 @@
-#!/bin/tcsh -x
+#!/bin/tcsh 
 #
   alias ls ls
 #
@@ -7,28 +7,6 @@
 # ======================================================================
 #
 source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15
-#
-# ----------------------------------------------------------------------
-# Case parameter summary to the screen:
-#
-                              echo 
-                              echo  "  DIVIMP case         : $CASENAME"
-                              echo  "  OUT input file      : $OUTNAME"
-                              echo  "  Geometry file       : $GRIDNAME"
-  if ( $SAVENAME != "")       echo  "  Saved plasma case   : $SAVENAME"
-  if ( $DEVICE  != "unknown") echo  "  Device name         : $DEVICE "
-  if ( $DEVICE  != "unknown") echo  "  Data directory      : $DEVDIR "
-  if ( $OUTONLY == "no")      echo  "  EIRENE version      : $EIRTEMP"
-  if ( $OUTONLY == "no")      echo  "         template     : $EIRFILE"
-  if ( $EIRRAW  == "yes")     echo  "         fort.13      : $EIRRAW "
-  if ( $EIR15 != ""    )      echo  "         fort.15      : $EIR15  "
-  if ( $EIRPHOTONS == "yes") then
-                              echo  "    Following photons..."
-  endif
-  if ( $OUTONLY == "yes")     echo  "  OUT execution only  : yes"
-  if ( $X86_64 )              echo  "  64-bit operation    : yes     "
-
-                              echo 
 #
 #
 # ======================================================================
@@ -39,19 +17,21 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #  setenv DIVHOME ~/divimp
 
   setenv ADASCENT $DIVHOME/adas/
-  setenv RESDIR   $DIVHOME/results
   setenv EIRDIR   $DIVHOME/$EIRTEMP
+  source $DIVHOME/scripts/results_resdir $CASENAME
 
 # Location of graphics library used by EIRENE:
   setenv GLI_HOME $DIVHOME/libsrc
 
 # Set local directories:
-  set RUNDIR = $DIVHOME
-  set BATDIR = $DIVHOME/scripts
-  set EXEDIR = $DIVHOME/cases/$CASENAME
-  set EQUDIR = $DIVHOME/shots
-  set DATDIR = $DIVHOME/data
-  set OUTDIR = $DIVHOME/out6
+  set    RUNDIR = $DIVHOME
+  set    BATDIR = $DIVHOME/scripts
+  setenv EXEDIR $DIVHOME/cases/$CASENAME.$$
+  set    EQUDIR = $DIVHOME/shots
+  set    DATDIR = $DIVHOME/data
+  set    OUTDIR = $DIVHOME/out6
+
+  setenv DIVDATDIR $DATDIR  # for ribbon grid code
 
   setenv DIVDATDIR $DATDIR
 
@@ -70,10 +50,36 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Create and enter execution directory:
 #
-  cd $DIVHOME/cases
-  if ( -e $CASENAME ) rm -rf $CASENAME
-  mkdir $CASENAME
-  cd    $CASENAME
+#  cd $DIVHOME/cases
+#  if ( -e $CASENAME ) rm -rf $CASENAME
+#  mkdir $CASENAME
+#  cd    $CASENAME
+  if ( -e $EXEDIR ) rm -rf $EXEDIR
+  mkdir $EXEDIR
+  cd    $EXEDIR
+#
+# ----------------------------------------------------------------------
+# Case parameter summary to the screen:
+#
+                              echo 
+                              echo  "  DIVIMP case         : $CASENAME"
+                              echo  "  Run directory       : $EXEDIR"
+                              echo  "  OUT input file      : $OUTNAME"
+                              echo  "  Geometry file       : $GRIDNAME"
+  if ( $SAVENAME != "")       echo  "  Saved plasma case   : $SAVENAME"
+  if ( $DEVICE  != "unknown") echo  "  Device name         : $DEVICE "
+  if ( $DEVICE  != "unknown") echo  "  Data directory      : $DEVDIR "
+  if ( $OUTONLY == "no")      echo  "  EIRENE version      : $EIRTEMP"
+  if ( $OUTONLY == "no")      echo  "         template     : $EIRFILE"
+  if ( $EIRRAW  == "yes")     echo  "         fort.13      : $EIRRAW "
+  if ( $EIR15 != ""    )      echo  "         fort.15      : $EIR15  "
+  if ( $EIRPHOTONS == "yes") then
+                              echo  "    Following photons..."
+  endif
+  if ( $OUTONLY == "yes")     echo  "  OUT execution only  : yes"
+  if ( $X86_64 )              echo  "  64-bit operation    : yes     "
+
+                              echo 
 #
 # ======================================================================
 # COPY SETUP FILES
@@ -93,6 +99,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
+#      $DIVEXE < fort.5 > divout1
       nice +10 $DIVEXE < fort.5 > divout1
 #    Xpgdbg $DIVEXE < fort.5 > divout1
 
@@ -202,7 +209,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc triangles.dat       $CASENAME.triangles
     mvc triangles.npco_char $CASENAME.triangles.npco_char
     mvc triangles.elemente  $CASENAME.triangles.elemente
-    mvc triangles.neighbors $CASENAME.triangles.neighbor
+    mvc triangles.neighbors $CASENAME.triangles.neighbors
     mvc triangles.plasma    $CASENAME.triangles.plasma
     mvc triangles.efield    $CASENAME.triangles.efield
 
@@ -213,17 +220,17 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc objects.dat       $CASENAME.triangles
     mvc objects.npco_char $CASENAME.objects.npco_char
     mvc objects.elemente  $CASENAME.objects.elemente
-    mvc objects.neighbors $CASENAME.objects.neighbor
+    mvc objects.neighbors $CASENAME.objects.neighbors
     mvc objects.plasma    $CASENAME.objects.plasma
     mvc objects.centre    $CASENAME.objects.centre
     mvc objects.efield    $CASENAME.objects.efield
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME     osm.idl.*
-  rename output  $CASENAME.out output.*
-  rename idl     $CASENAME.idl idl.*
-
+  rename osm     $CASENAME         osm.idl.*
+  rename output  $CASENAME.out     output.*
+  rename idl     $CASENAME.idl     idl.*
+  rename profile $CASENAME.profile profile.*      # line-of-sight profiles from RAY
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
@@ -232,7 +239,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   rename ".output"   ".eirprn"   -- eirene*.output
   rename "eirene"    "$CASENAME" -- eirene*.eir*
 #  mvc eirene.transfer     $CASENAME.eir
-#  mvc eirene.input        $CASENAME.eirdat
+
+  mvc eirene.spectra $CASENAME.eir.spectra
 
   cpc core_analysis.dat $CASENAME.dat.midplane
 #  mvc core_analysis.dat ~/idl/lc/$CASENAME.dat
@@ -253,9 +261,36 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-#  foreach FILENAME (`ls div.*`)
-#    mv $FILENAME $CASENAME.$FILENAME
-#  end
+  foreach FILENAME (`ls div.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+#
+# ----------------------------------------------------------------------
+# MatLab files:
+#
+  foreach FILENAME (`ls mlb.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+#
+# ----------------------------------------------------------------------
+# Marie-Helene data files for reflection modelling:
+#
+  foreach FILENAME (`ls mhf.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+#
+# ----------------------------------------------------------------------
+# Martin O'Mullane files:
+#
+  mv mom $CASENAME.mom
+#
+# ----------------------------------------------------------------------
+# Field line traces for ribbon grid:
+#
+  rm -f *.trace.*
+  foreach FILENAME (`ls trace.*`)
+    mv -f $FILENAME $CASENAME.$FILENAME
+  end
 #
   mv *image*.jpg $RESDIR
 #
@@ -314,20 +349,24 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #
 # ----------------------------------------------------------------------
 #
-# Move all files to results directory, over-writing any previous results:
+# Move all files to results directory, replacing any previous results:
 #
   rm *.A
 #  zipc *.A
   rm *.map
 
+  if ($OUTONLY == "no") rm $RESDIR/$CASENAME*
+
   mv -f $CASENAME.* $RESDIR
+  chmod u+r $RESDIR/$CASENAME.*
 #
 # ----------------------------------------------------------------------
 # Clean:
 #
   if ( $CLEAN == "yes" ) then
-    cd $DIVHOME/cases
-    rm -r -f $CASENAME
+#    cd $DIVHOME/cases
+#    rm -r -f $CASENAME
+    rm -r -f $EXEDIR
   else
     echo "  Not cleaning execution directory"
   endif

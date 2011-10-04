@@ -3,7 +3,9 @@
 #
 echo 'RUNNING Testcases'
 #
-set scriptdir = $PWD/scripts
+set progdir = divimp-update
+
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 #
@@ -19,6 +21,8 @@ cd $divmain
 ./rundiv testcase07 testcase07-prob g48283.jul1999 none none testcase06 >>& $resultdir/testcases_out.txt
 ./rundiv testcase08 testcase08-bg g53140a.feb2001 >>& $resultdir/testcases_out.txt
 ./rundiv testcase09 testcase09-c13-dep carre_135487_3865_SL >>& $resultdir/testcases_out.txt
+./rundiv testcase10 testcase10-grid carre_145672_3000 >>& $resultdir/testcases_out.txt
 #
+
 
 

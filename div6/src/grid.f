@@ -16,7 +16,6 @@ c ======================================================================
 c
 c
 c
-c
 c ======================================================================
 c
 c subroutine: ProcessTriangles
@@ -1064,7 +1063,7 @@ c...  Sort indecies:
       ENDDO
 
       ntreg = grdntreg(IKLO) + grdntreg(IKHI)
-      WRITE(0,*)
+c      WRITE(0,*)
       DO i1 = 1, ntreg
         treg(i1) = index(i1)
 c        WRITE(0,*) 'ANGLES:',angle(i1),index(i1)
@@ -1149,18 +1148,31 @@ c
       REAL       TOL
       PARAMETER (TOL=5.0E-07)
 
-      REAL ATAN2C
+      REAL   ATAN2C 
+      REAL*8 SideLength
 
       INTEGER in,ik,ir,i1,i2,i3,id,id1,id2,wdat(0:8,6),ndat,
      .        imin,walln,ii,iv,istart,iend,irstart,ir1,ir2,
-     .        wallc(2*MAXPTS),wallt(2*MAXPTS),holdc,holdt,ikn,irn,
+     .        wallc(MAXPTS),wallt(MAXPTS),holdc,holdt,ikn,irn,
      .        ik1,ik2,cnt
+c
+c=======
+c     .        wallc(2*MAXPTS),wallt(2*MAXPTS),holdc,holdt,ikn,irn,
+c     .        ik1,ik2,cnt
+c>>>>>>> .merge-right.r477
+c
       LOGICAL terminate
       REAL    holdr1,holdz1,holdr2,holdz2,rstart,zstart,
-     .        wallr1(2*MAXPTS+1,2),wallz1(2*MAXPTS+1,2),
-     .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t
-      REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
-
+     .        wallr1(MAXPTS+1,2),wallz1(MAXPTS+1,2),
+     .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t,rvector,zvector
+      REAL*8  d_wallr1(MAXPTS+1,2),d_wallz1(MAXPTS+1,2)
+c
+c=======
+c     .        wallr1(2*MAXPTS+1,2),wallz1(2*MAXPTS+1,2),
+c     .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t
+c      REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
+c>>>>>>> .merge-right.r477
+c
       terminate = .FALSE.
 
       IF (stopopt.EQ.14) RETURN
@@ -1387,8 +1399,15 @@ c                 the fluid cell poloidal boundaries:
 c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.99.0) THEN
 c...      Delete specified segment index from neutral wall specification:
-          DO i2 = NINT(eirasdat(i1,2)), 
-     .            NINT(MAX(eirasdat(i1,3),eirasdat(i1,5)))  ! Added option to use 3rd entry -SL, 30/09/2010
+c          WRITE(0,*) 'TRYING TO DELETE:',NINT(eirasdat(i1,2)),
+c     .                                   NINT(eirasdat(i1,5))
+          DO i2 = NINT(eirasdat(i1,2)), MIN(walln,NINT(eirasdat(i1,5)))
+c
+c=======
+c          DO i2 = NINT(eirasdat(i1,2)), 
+c     .            NINT(MAX(eirasdat(i1,3),eirasdat(i1,5)))  ! Added option to use 3rd entry -SL, 30/09/2010
+c>>>>>>> .merge-right.r477
+c
             wallr1(i2,1) = r0
             wallz1(i2,1) = z0
             wallr1(i2,2) = r0
@@ -1412,20 +1431,24 @@ c       ----------------------------------------------------------------
         ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
+          CALL DumpData_OSM('output.trouble1','trouble1')
 c...      Automated clipping:
-c          DO i2 = 1, walln
-c            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
-c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-c          ENDDO
+          DO i2 = 1, walln
+            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+          ENDDO
+c
           d_wallr1 = DBLE(wallr1)
           d_wallz1 = DBLE(wallz1)
-          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,2*MAXPTS+1,.TRUE.)
+c          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,2*MAXPTS+1,.TRUE.)
+          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,MAXPTS+1,.TRUE.)
           wallr1 = SNGL(d_wallr1)
           wallz1 = SNGL(d_wallz1)           
-c          DO i2 = 1, walln
-c            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
-c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-c          ENDDO
+c
+          DO i2 = 1, walln
+            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
+     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+          ENDDO
 c...      Wipe the geometry arrays:
           CALL geoClean
           CALL osmClean
@@ -2401,6 +2424,85 @@ c         and before it is processed by OEDGE:
       ELSE 
         CALL ER('DupeRing','Core ring duplication requires work',*99)
       ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: ExpandGrid
+c
+      SUBROUTINE ExpandGrid(ndupe,size_frac,ir_reference) 
+      USE mod_grid_divimp
+      IMPLICIT none
+  
+      INTEGER, INTENT(IN) :: ndupe,ir_reference
+      REAL   , INTENT(IN) :: size_frac
+
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      INTEGER ik,id,idupe,irset,irref
+      REAL*8  frac
+
+      IF (idring(ir_reference).EQ.BOUNDARY) 
+     .  CALL ER('ExpandGrid','Trying to expand grid with a boundary '//
+     .          'ring',*99)
+
+      IF (.NOT.ALLOCATED(d_rvertp)) 
+     .  CALL ER('ExpandGrid','Expecting double precision vertex '//
+     .          'arrays to be allocated',*99)
+
+      IF (size_frac.LE.0.0) 
+     .  CALL ER('ExpandGrid','Scaing fraction .LE. 0.0',*99)
+
+
+      irref = ir_reference
+      frac  = DBLE(size_frac + 1.0)
+
+
+      WRITE(0,*) 'FRAC:',frac
+
+      DO idupe = 1, ndupe
+
+        CALL DupeRing(irref)
+
+        IF (irref.LT.irwall) THEN 
+          irset = irwall - 1  ! The convention in DupeRing
+          DO ik = 1, nks(irset) 
+            id = korpg(ik,irset)
+          
+            d_rvertp(2,id) =         d_rvertp(1,id) + 
+     .                       frac * (d_rvertp(2,id) - d_rvertp(1,id))
+            d_zvertp(2,id) =         d_zvertp(1,id) + 
+     .                       frac * (d_zvertp(2,id) - d_zvertp(1,id))
+          
+            d_rvertp(3,id) =         d_rvertp(4,id) + 
+     .                       frac * (d_rvertp(3,id) - d_rvertp(4,id))
+            d_zvertp(3,id) =         d_zvertp(4,id) + 
+     .                       frac * (d_zvertp(3,id) - d_zvertp(4,id))
+          
+            d_rvertp(1,id) = d_rvertp(2,korpg(ik,irref))
+            d_zvertp(1,id) = d_zvertp(2,korpg(ik,irref))
+            d_rvertp(4,id) = d_rvertp(3,korpg(ik,irref))
+            d_zvertp(4,id) = d_zvertp(3,korpg(ik,irref))
+
+            rvertp(1:4,id) = SNGL(d_rvertp(1:4,id))
+            zvertp(1:4,id) = SNGL(d_zvertp(1:4,id))
+          ENDDO
+        ELSE
+          STOP 'PFZ GRID EXTENSION NEEDS WORK'
+        ENDIF
+
+        idring(irset) = idring(irref)
+
+        irref = irset
+
+      ENDDO 
 
       RETURN
 99    STOP
@@ -3929,6 +4031,13 @@ c...  Adjust WALLTH based on x-point location:
      .    WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
      .      ncell,rcen,zcen,xpth
         
+        write(88,*) 'what the fuck',rxp,rcen
+        write(88,*) '             ',zxp,zcen
+        write(88,*) '             ',xpth
+        DO ii = 1, ncell
+          write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
+        ENDDO
+c
         DO in = 1, ncell
           IF (wallth(in).GT.xpth) wallth(in) = wallth(in) - 360.0
         ENDDO
@@ -3947,7 +4056,14 @@ c...  Adjust WALLTH based on x-point location:
         ENDIF
       ENDIF
 
+      write(88,*) '             '
+      DO ii = 1, ncell
+        write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
+      ENDDO
+
+
 c...  Sort wall segments:
+
 10    status = 0
       DO ii = 1, ncell-1
         IF (wallth(ii).LT.wallth(ii+1)) THEN
@@ -6172,7 +6288,9 @@ c...  Clear header:
           ENDDO
  10       CONTINUE
         CASE (2)
+          WRITE(0,*) 'MAKE SURE THE .SUP FILE HAS A VERSION NUMBER'
           WRITE(buffer,'(1024X)')
+          READ(fp,*) 
           buffer(1:1) = '*'
           DO WHILE(buffer(1:1).EQ.'*')
             READ(fp,'(A1024)') buffer
@@ -6419,6 +6537,7 @@ c     position 0.0:
       END
 c     
 c ========================================================================
+c ========================================================================
 c
 c subroutine: PoloidalRefinement
 c
@@ -6496,7 +6615,7 @@ c            STOP 'sdfsd'
           ENDDO    
  
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF ((mode.GE.4.AND.mode.LE.9).OR.mode.EQ.11) THEN
 c...    Refine the divertor region:
 
@@ -6536,10 +6655,10 @@ c...    Triggers for resetting grid parameters:
         ELSEIF (mode.EQ.8) THEN
 c...      Near target refinement in the inner divertor (outer on JET):
           iks = 1
-          ike = NINT(param)
+          ike = MIN(nks(ir)/2,NINT(param))
         ELSEIF (mode.EQ.9) THEN
 c...      Near target refinement in the outer divertor (inner on JET):
-          iks = nks(ir) - NINT(param) + 1
+          iks = MAX(nks(ir)/2,nks(ir) - NINT(param) + 1)
           ike = nks(ir)
 c        ELSEIF (mode.EQ.11) THEN
 cc...      The whole ring:
@@ -6561,7 +6680,7 @@ c            WRITE(0,*) '  POLOIDAL:',ik,ir,status
      .                *99)
           ENDIF
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF (mode.EQ.10) THEN
 c...    Refine the x-point:
 
@@ -6612,7 +6731,7 @@ c...      PFZ:
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO
         ENDDO
-
+c     -------------------------------------------------------------------
       ELSEIF (mode.EQ.12) THEN
 c...    Double the number of cells on the ring (split each cell in half):
         DO i1 = 1, NINT(param)
@@ -6623,14 +6742,30 @@ c...    Double the number of cells on the ring (split each cell in half):
      .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
           ENDDO    
         ENDDO
-
+c     -------------------------------------------------------------------
+      ELSEIF (mode.EQ.14) THEN
+c...    Inner midplane:
+        DO ik = nks(ir), 1, -1
+          IF (rs(ik,ir).LT.r0.AND.ABS(zs(ik,ir)-z0).LT.param) THEN
+            CALL SplitCell(ik,ir,0.5D0,status)
+            IF (status.EQ.-1)
+     .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
+          ENDIF
+        ENDDO
+c     -------------------------------------------------------------------
+      ELSEIF (mode.EQ.15) THEN
+c...    Outer midplane:
+        DO ik = nks(ir), 1, -1
+          IF (rs(ik,ir).GT.r0.AND.ABS(zs(ik,ir)-z0).LT.param) THEN
+            CALL SplitCell(ik,ir,0.5D0,status)
+            IF (status.EQ.-1)
+     .        CALL ER('PoloidalRefinement','Unable to refine grid',*99)
+          ENDIF
+        ENDDO
+c     -------------------------------------------------------------------
       ELSE
         CALL ER('PoloidalRefinement','Invalid MODE',*99)
       ENDIF
-
-
-
-
 
 
       RETURN
@@ -7141,24 +7276,22 @@ c...          Side 23:
                 y(3) = d_zvertp(v3,id1)
               ENDIF
 
-              ! jdemod - came up during processing a ribbon grid - removed since it would appear to
-              !          be a very grid specific debug condition
-              !IF (ik.EQ.30.AND.ir.EQ.119.AND.iside.EQ.1) THEN
-                !STOP 'REMOVE THIS EXCEPTION HANDLE'
-                !IF (.NOT.PointOnLine(x,y,s,t,3,.TRUE.)) CYCLE
-              !ELSE
+c              IF (ik.EQ.30.AND.ir.EQ.119.AND.iside.EQ.1) THEN
+c                STOP 'REMOVE THIS EXCEPTION HANDLE'
+c                IF (.NOT.PointOnLine(x,y,s,t,3,.TRUE.)) CYCLE
+c              ELSE
                 IF (.NOT.PointOnLine(x,y,s,t,3,.FALSE.)) CYCLE
-              !ENDIF
+c              ENDIF
 
               IF (DABS(s-t).GT.1.0D-8.AND.DABS(s-t).LT.1.0D0) THEN
-                IF (sloutput) THEN
-                  WRITE(0,*) '************************************'
-                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
-                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
-                  WRITE(0,*) '  DOING NOTHING...'
-                  WRITE(0,*) '************************************'
-                  CYCLE
-                ENDIF
+c                IF (sloutput) THEN
+c                  WRITE(0,*) '************************************'
+c                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',ik,ir,iside
+c                  WRITE(0,*) '  PROBLEM: IK,IR,ISIDE=',s,t
+c                  WRITE(0,*) '  DOING NOTHING...'
+c                  WRITE(0,*) '************************************'
+c                  CYCLE
+c                ENDIF
 
                 IF (ik1.EQ.nks(ir1)+1) THEN
                   d_rvertp(v4,id1) = x(1) + s * (x(2) - x(1))
@@ -7236,6 +7369,10 @@ c     .        a1,a2,b1,b2,c1,c2,t1
       IF (sloutput) WRITE(fp,*) 'HERE IN TAILORGRID'
 
 
+      IF (ALLOCATED(d_rvertp)) THEN
+        DEALLOCATE(d_rvertp)
+        DEALLOCATE(d_zvertp)
+      ENDIF
       ALLOCATE(d_rvertp(5,MAXNKS*MAXNRS))
       ALLOCATE(d_zvertp(5,MAXNKS*MAXNRS))
       d_rvertp = DBLE(rvertp)
@@ -7297,6 +7434,11 @@ c...      Squish 2 rings together:
             CALL MergeRings(ir) 
           ENDDO
 c          CALL MergeRings(NINT(grdmod(i1,4))) 
+
+        ELSEIF (grdmod(i1,1).EQ.11.0) THEN
+c...      Create a new ring by expanding a ring out radially:
+          CALL ExpandGrid(NINT(grdmod(i1,2)),grdmod(i1,3),
+     .                    NINT(grdmod(i1,4)))
 
         ELSEIF (grdmod(i1,1).EQ.700.0) THEN
 c...      Morph grid:
@@ -7364,54 +7506,7 @@ c...  Assign IRBREAK:
       i1 = 1
 
 
-c... dicy...
-      irbreak = MAXNRS
-c...  ...
-      DO i1 = 2, grdntseg(1,IKLO)
-        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
-          irbreak = grdtseg(i1-1,1,IKLO) + 1
-          EXIT
-        ENDIF
-      ENDDO
-c...  Search though the target regions and select the first one that
-c     does not end on a virtual ring (which is always IRWALL here):
-      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
-     .    grdntreg(IKLO).GT.2) THEN
-        DO i1 = 2, grdntreg(IKLO) 
-          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKLO)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-c...  ...
-      DO i1 = 2, grdntseg(1,IKHI)
-        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
-     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
-          irbreak = grdtseg(i1-1,1,IKHI) + 1
-          EXIT
-        ENDIF
-      ENDDO
-      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
-     .    grdntreg(IKHI).GT.2) THEN
-        DO i1 = 2, grdntreg(IKHI) 
-c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
-          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
-            irbreak = grdtseg(1,i1,IKHI)
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
-      IF (irbreak.EQ.MAXNRS) irbreak = 0
-
-c...  Assign NBR:
-      IF     (irbreak.EQ.0) THEN
-        nbr = 0
-      ELSEIF (irbreak.LT.irwall) THEN
-        nbr = irwall - irbreak
-      ELSE
-        nbr = nrs - irbreak + 1
-      ENDIF
+      CALL FindGridBreak
 
 
       IF (sloutput) WRITE(fp,*) 'IRBREAK,NBR=',irbreak,nbr
@@ -7457,8 +7552,8 @@ c...        Poloidal refinement:
 
             CALL SetupGrid
 
-            irs  = NINT(grdmod(i1,4))
-            ire  = NINT(grdmod(i1,5))
+            irs = NINT(grdmod(i1,4))
+            ire = NINT(grdmod(i1,5))
             IF (irs.EQ.-99) irs = irsep
             IF (ire.EQ.-99) ire = nrs
             DO ir = irs, ire
@@ -10145,6 +10240,497 @@ c...  All done:
 99    STOP
       END
 
+c
+c ======================================================================
+c
+c
+c
+c
+c
+c
+c
+      SUBROUTINE BuildLinearGrid
+      IMPLICIT none
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+
+      INTEGER id,ik,ir,i1,grid_option,nrings_inner,nrings_outer
+      REAL*8  r,delr,L,r1,r2,z1,z2,frac1,frac2,
+     .        vessel_radius,brat,frac,r_inner,r_outer,delta
+
+      grid_option = 3  ! 7  ! 6
+
+      brat = 1.0
+
+      r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
+c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
+
+      SELECTCASE (grid_option)
+        CASE (1)  ! Full vessel, mirrored
+          vessel_radius = 0.02D0
+          L = 3.6D0                   ! Total length of mirrored plasma column (m)
+          r = 0.015D0                 ! Plasma radius (m)
+          z0 = L / 2.0D0              ! Height of the centre of the plasma (m)
+          delr = (vessel_radius - r)  ! Distance from plasma to outer wall (m)
+          maxrings = 10               ! Number of flux tubes (if changed, also need to change triangle grid in input file)
+          nks(1:maxrings) = 100       ! Number of cells on each tube
+        CASE (2)  ! Full vessel
+          vessel_radius = 0.02D0
+          L = 1.8D0
+          r = 0.015D0          
+          z0 = L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 10      
+          nks(1:maxrings) = 100         
+        CASE (3) ! Target chamber
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.02D0 ! 0.05D0 ! 0.02D0
+          L = 0.55D0  ! 0.56D0
+          r = 0.015D0 ! 0.03D0  ! 0.015D0
+          z0 = L / 2.0D0 ! 0.0 ! L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 10      
+          nks(1:maxrings) = 20  ! 50  ! 175
+        CASE (4) ! Target chamber: fancy
+          vessel_radius = 0.16D0 
+          L = 0.55D0
+          r = 0.08D0          
+          z0 = L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 50      
+          nks(1:maxrings) = 150
+        CASE (5) ! Target chamber: fancy #2, full vessel and small volume 
+          vessel_radius = 0.16D0 
+          L = 0.55D0
+          r = 0.03D0          
+          z0 = L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 50      
+          nks(1:maxrings) = 150
+        CASE (6) ! Target chamber: fancy #3, small volume 
+          vessel_radius = 0.05D0 
+          L = 0.55D0
+          r = 0.03D0          
+          z0 = L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 50      
+          nks(1:maxrings) = 150
+        CASE (7) ! Grid with 2 radial regions
+          vessel_radius = 0.05D0 
+          L = 0.55D0
+          z0 = L / 2.0D0              
+          nrings_inner = 30
+          nrings_outer = 20
+          maxrings = nrings_inner + nrings_outer
+          r_inner = 0.01D0
+          r_outer = 0.03D0     
+          delr = (vessel_radius - r_outer)  
+          nks(1:maxrings) = 150
+      ENDSELECT
+
+      id = 0
+
+      DO ir = 1, maxrings
+        IF (.TRUE.) THEN
+          IF     (grid_option.EQ.4) THEN
+            frac1 = (DBLE(ir-1) / DBLE(maxrings))**0.7
+            frac2 = (DBLE(ir  ) / DBLE(maxrings))**0.7
+            r1 = frac1 * r
+            r2 = frac2 * r
+          ELSEIF (grid_option.EQ.7) THEN
+            IF (ir.LE.nrings_inner) THEN
+              frac  = DBLE(ir-1) / DBLE(nrings_inner)
+              delta = r_inner / DBLE(nrings_inner)
+              r1 = frac * r_inner
+              r2 = r1 + delta
+            ELSE
+              frac  = DBLE(ir-nrings_inner-1) / DBLE(nrings_outer)
+              delta = (r_outer - r_inner) / DBLE(nrings_outer)
+              r1 = r_inner + frac * (r_outer - r_inner)
+              r2 = r1 + delta
+            ENDIF
+          ELSE
+            frac  = DBLE(ir-1) / DBLE(maxrings)
+            delta = r / DBLE(maxrings)
+            r1 = frac * r 
+            r2 = r1 + delta
+          ENDIF
+          IF (ir.EQ.1) r1 = r1 + r0
+        ENDIF
+
+C       Krieger IPP/07 - SUN compiler does not know SNGL, replaced by REAL  -strange since SNGL is used elsewhere... -SL
+C       psitarg(ir,1) = ABS(0.5*(SNGL(r1+r2)))
+C       psitarg(ir,2) = ABS(0.5*(SNGL(r1+r2)))
+        psitarg(ir,1) = ABS(0.5*(REAL(r1+r2)))
+        psitarg(ir,2) = ABS(0.5*(REAL(r1+r2)))
+        idring(ir) = TARTOTAR
+
+c        WRITE(0,*) 'IR:',ir,psitarg(ir,1)
+
+c       nks(ir) = 100
+
+        DO ik = 1, nks(ir)
+
+          SELECTCASE (grid_option)
+            CASE (1)  ! Full vessel, mirrored
+              IF (.TRUE.) THEN
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
+                z1 = (0.5 - frac) * L
+                z2 = z1 - delta
+              ENDIF
+            CASE (2)  ! Full vessel
+              IF (.TRUE.) THEN
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
+                z1 = (1.0 - frac) * L
+                z2 = z1 - delta       
+              ENDIF
+            CASE (3)  ! Target chamber
+              IF (.TRUE.) THEN
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
+                z1 = (0.5 - frac) * L + z0
+c                z1 = (1.0 - frac) * L 
+                z2 = z1 - delta       
+              ENDIF
+            CASE (4:7) ! Target chamber: fancy
+              frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
+              frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
+              frac1 = SIGN(.5D0,frac1-.5D0)*(ABS(frac1-.5)/0.5)**1.0+0.5
+              frac2 = SIGN(.5D0,frac2-.5D0)*(ABS(frac2-.5)/0.5)**1.0+0.5
+              z1 = (1.0 - frac1) * L
+              z2 = (1.0 - frac2) * L     
+          ENDSELECT
+
+c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05
+c          IF (ir.EQ.2) WRITE(0,*) frac
+c          bratio(ik,ir) = SNGL(brat * frac)
+          bratio(ik,ir) = SNGL(brat)
+          kbfs  (ik,ir) = 1.0 / brat
+          bts   (ik,ir) = cbphi 
+
+          id = id + 1
+
+          korpg(ik,ir) = id
+
+          nvertp(id) = 4
+
+!          frac = 1.0D0 + 1.0D0 * DBLE(ik-1) / DBLE(nks(ir) - 1)
+          frac = 1.0D0
+
+          IF (ik.EQ.1) THEN
+            rvertp(1,id) = SNGL(r1)
+            rvertp(2,id) = SNGL(r2)
+            zvertp(1,id) = SNGL(z1)
+            zvertp(2,id) = SNGL(z1)
+          ELSE
+            rvertp(1,id) = rvertp(4,id-1)
+            rvertp(2,id) = rvertp(3,id-1)
+            zvertp(1,id) = zvertp(4,id-1)
+            zvertp(2,id) = zvertp(3,id-1)
+          ENDIF
+
+          rvertp(3,id) = SNGL(r2 * frac)
+          rvertp(4,id) = SNGL(r1 * frac)
+          zvertp(3,id) = SNGL(z2)
+          zvertp(4,id) = SNGL(z2)
+
+          rs(ik,ir) = 0.0
+          zs(ik,ir) = 0.0
+          DO i1 = 1, nvertp(id)
+            rs(ik,ir) = rs(ik,ir) + rvertp(1,id)
+            zs(ik,ir) = zs(ik,ir) + zvertp(1,id)
+          ENDDO
+          rs(ik,ir) = rs(ik,ir) / REAL(nvertp(id))
+          zs(ik,ir) = zs(ik,ir) / REAL(nvertp(id))
+
+        ENDDO
+
+      ENDDO
+
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+      ikto = 2
+      ikti = 3
+
+      rves = 0
+      rvesm = 0
+
+      irsep  = 1
+      irwall = maxrings 
+      irtrap = irwall
+      nrs    = irwall
+      nbr    = 0
+
+c      WRITE(0,*) 'NVERT:',nvertp(5)
+
+      CALL InsertRing(1         ,BEFORE,PERMANENT)
+      CALL InsertRing(maxrings+1,AFTER ,PERMANENT)
+
+c      WRITE(0,*) 'NVERT:',nvertp(5)
+
+c...  Necessary..? 
+      cutring = 1
+      cutpt1 = ikto
+      cutpt2 = ikti
+
+      idring(1) = -1
+      idring(nrs) = -1
+
+c...  Modify the grid based on entries in the GRDMOD array assigned 
+c     from the input file:
+c      IF (grdnmod.NE.0) CALL TailorGrid
+
+      rmin = HI
+      rmax = LO
+      zmin = HI
+      zmax = LO
+      DO ir = 1, nrs
+        DO ik = 1, nks(ir)
+          rmin = MIN(rmin,rs(ik,ir))
+          rmax = MAX(rmax,rs(ik,ir))
+          zmin = MIN(zmin,zs(ik,ir))
+          zmax = MAX(zmax,zs(ik,ir))
+        ENDDO
+      ENDDO
+
+      rxp =  0.0 
+      zxp =  0.25 * zmin + 0.75 * zmax
+c      zxp = -0.25 * L
+
+c...  Neutral wall
+      IF (cneur.EQ.4) THEN
+
+         SELECTCASE (grid_option)
+           CASE (1)  ! Full vessel, mirrored
+             nves = 20
+             ir = irwall-1
+             r1 = DBLE(rvertp(2,korpg(1      ,ir)))
+             r2 = r1 + delr
+             z1 = DBLE(zvertp(2,korpg(1      ,ir)))
+             z2 = DBLE(zvertp(3,korpg(nks(ir),ir)))
+  
+             rves(1)  =  SNGL(r1)
+             zves(1)  =  SNGL(z1)
+             rves(2)  =  SNGL(r2)
+             zves(2)  =  SNGL(z1)
+  
+             rves(3)  =  SNGL(r2)
+             zves(3)  =  SNGL(L) / 2.0 - 0.56
+             rves(4)  =  SNGL(r1) + 0.0101 
+             zves(4)  =  SNGL(L) / 2.0 - 0.56
+             rves(5)  =  SNGL(r1) + 0.0001
+             zves(5)  =  SNGL(L) / 2.0 - 0.57
+             rves(6)  =  SNGL(r2)
+             zves(6)  =  SNGL(L) / 2.0 - 0.57
+  
+             rves(7)  =  SNGL(r2)
+             zves(7)  =  0.03
+             rves(8)  =  SNGL(r1) + 0.0001
+             zves(8)  =  0.03
+             rves(9)  =  SNGL(r1) + 0.0001
+             zves(9)  =  0.02
+             rves(10) =  SNGL(r2)
+             zves(10) =  0.02
+  
+             rves(11) =  r2
+             zves(11) = -0.02
+             rves(12) =  r1 + 0.0001
+             zves(12) = -0.02
+             rves(13) =  r1 + 0.0001
+             zves(13) = -0.03
+             rves(14) =  r2
+             zves(14) = -0.03
+  
+             rves(15) =  r2
+             zves(15) = -L / 2.0 + 0.56
+             rves(16) =  r1 + 0.0001
+             zves(16) = -L / 2.0 + 0.56
+             rves(17) =  r1 + 0.0101
+             zves(17) = -L / 2.0 + 0.57
+             rves(18) =  r2
+             zves(18) = -L / 2.0 + 0.57
+  
+             rves(19) =  r2
+             zves(19) =  z2
+             rves(20) =  r1
+             zves(20) =  z2
+           CASE (2)  ! Full vessel
+             nves = 12
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir))
+             r2 = r1 + delr
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir))
+  
+             rves(1)  =  r1
+             zves(1)  =  z1
+             rves(2)  =  r2
+             zves(2)  =  z1
+  
+             rves(3)  =  r2
+             zves(3)  =  L - 0.56
+             rves(4)  =  r1 + 0.0101 
+             zves(4)  =  L - 0.56
+             rves(5)  =  r1 + 0.0001 
+             zves(5)  =  L - 0.57
+             rves(6)  =  r2
+             zves(6)  =  L - 0.57
+  
+             rves(7)  =  r2
+             zves(7)  =  0.03
+             rves(8)  =  r1 + 0.0001
+             zves(8)  =  0.03
+             rves(9)  =  r1 + 0.0001
+             zves(9)  =  0.02
+             rves(10) =  r2
+             zves(10) =  0.02
+  
+             rves(11) =  r2
+             zves(11) =  z2
+             rves(12) =  r1
+             zves(12) =  z2
+           CASE (3)  ! Target chamber
+             nves = 7
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
+             r2 = r1 + delr
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir)) 
+  
+             rves(1) =  r1
+             zves(1) =  z1
+             rves(2) =  r2
+             zves(2) =  z1
+
+             rves(3) =  r2
+             zves(3) =  0.55 * z1 + 0.45 * z2
+             rves(4) =  r2
+             zves(4) =  0.50 * z1 + 0.50 * z2
+             rves(5) =  r2
+             zves(5) =  0.45 * z1 + 0.55 * z2
+  
+             rves(6) =  r2
+             zves(6) =  z2 
+             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.0001 ! r1
+             zves(7) =  z2
+           CASE (4:5)  ! Target chamber: fancy
+             nves = 10
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir))
+             r2 = r1 + delr
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir))
+  
+             rves(1) =  r1
+             zves(1) =  z1
+             rves(2) =  r2
+             zves(2) =  z1
+
+             rves(3) =  r2
+             zves(3) =  0.11
+
+             rves(4) =  0.21
+             zves(4) =  0.11
+
+             rves(5) =  0.21
+             zves(5) =  0.06
+
+             rves(6) =  0.212
+             zves(6) =  0.06
+
+             rves(7) =  0.212
+             zves(7) =  0.05
+
+             rves(8) =  0.21
+             zves(8) =  0.05
+
+             rves(9) =  0.21
+             zves(9) =  z2
+  
+             rves(10) =  r1
+             zves(10) =  z2
+           CASE (6:7)  ! Target chamber: fancy #3, small volume
+             nves = 10
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir))
+             r2 = r1 + delr
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir))
+  
+             rves(1) =  r1
+             zves(1) =  z1
+             rves(2) =  r2
+             zves(2) =  z1
+
+             rves(3) =  r2
+             zves(3) =  0.11
+
+             rves(4) =  r2 + 0.01
+             zves(4) =  0.11
+
+             rves(5) =  r2 + 0.01
+             zves(5) =  0.06
+
+             rves(6) =  r2 + 0.015
+             zves(6) =  0.06
+
+             rves(7) =  r2 + 0.015
+             zves(7) =  0.05
+
+             rves(8) =  r2 + 0.01
+             zves(8) =  0.05
+
+             rves(9) =  r2 + 0.01
+             zves(9) =  z2
+  
+             rves(10) =  r1
+             zves(10) =  z2
+        ENDSELECT
+      ENDIF
+
+
+      IF (.TRUE.) THEN
+        nvesm = nves - 1
+        DO i1 = 1, nves-1
+          rvesm(i1,1) = rves(i1)
+          zvesm(i1,1) = zves(i1)
+          rvesm(i1,2) = rves(i1+1)
+          zvesm(i1,2) = zves(i1+1)
+        ENDDO
+      ENDIF
+ 
+c      CALL DumpGrid('BUILDING LINEAR GRID')
+
+      IF (grdnmod.GT.0) CALL TailorGrid
+
+
+      CALL OutputData(85,'Linear')
+
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .    CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .   CALL AddPoloidalBoundaryCells
+
+c      STOP 'WHA-WHO!'
+
+      RETURN
+ 99   STOP
+      END
+
+
+c
+c ======================================================================
+c
 c     
 c     
 c     -------------------------------------------------------------------
@@ -10158,7 +10744,6 @@ c
       use ribbon_grid_options
       use error_handling
       use castem_field_line_data
-
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'comtor'
@@ -10395,504 +10980,6 @@ c     .     CALL AddPoloidalBoundaryCells
 
 
       RETURN
-      END
-c
-c ======================================================================
-c
-c
-c
-c
-c
-c
-c
-      SUBROUTINE BuildLinearGrid
-      IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-
-
-      INTEGER id,ik,ir,i1,grid_option,nrings_inner,nrings_outer
-      REAL*8  r,delr,L,r1,r2,z1,z2,frac1,frac2,
-     .        vessel_radius,brat,frac,r_inner,r_outer,delta
-
-      grid_option = 3 ! 8 (wide test grid) ! 7  ! 6
-
-      brat = 1.0
-
-      r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
-c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
-
-      SELECTCASE (grid_option)
-        CASE (1)  ! Full vessel, mirrored
-          vessel_radius = 0.02D0
-          L = 3.6D0                   ! Total length of mirrored plasma column (m)
-          r = 0.015D0                 ! Plasma radius (m)
-          z0 = L / 2.0D0              ! Height of the centre of the plasma (m)
-          delr = (vessel_radius - r)  ! Distance from plasma to outer wall (m)
-          maxrings = 10               ! Number of flux tubes (if changed, also need to change triangle grid in input file)
-          nks(1:maxrings) = 100       ! Number of cells on each tube
-        CASE (2)  ! Full vessel
-          vessel_radius = 0.02D0
-          L = 1.8D0
-          r = 0.015D0          
-          z0 = L / 2.0D0              
-          delr = (vessel_radius - r)  
-          maxrings = 10      
-          nks(1:maxrings) = 100         
-        CASE (3) ! Target chamber
-          brat = 0.05 ! 0.985 ! 0.5
-  
-          vessel_radius = 0.02D0 ! 0.05D0 ! 0.02D0
-          L = 0.55D0  ! 0.56D0
-          r = 0.015D0 ! 0.03D0  ! 0.015D0
-          z0 = L / 2.0D0 ! 0.0 ! L / 2.0D0              
-          delr = (vessel_radius - r)  
-          maxrings = 10      
-          nks(1:maxrings) = 20  ! 50  ! 175
-        CASE (4) ! Target chamber: fancy
-          vessel_radius = 0.16D0 
-          L = 0.55D0
-          r = 0.08D0          
-          z0 = L / 2.0D0              
-          delr = (vessel_radius - r)  
-          maxrings = 50      
-          nks(1:maxrings) = 150
-        CASE (5) ! Target chamber: fancy #2, full vessel and small volume 
-          vessel_radius = 0.16D0 
-          L = 0.55D0
-          r = 0.03D0          
-          z0 = L / 2.0D0              
-          delr = (vessel_radius - r)  
-          maxrings = 50      
-          nks(1:maxrings) = 150
-        CASE (6) ! Target chamber: fancy #3, small volume 
-          vessel_radius = 0.05D0 
-          L = 0.55D0
-          r = 0.03D0          
-          z0 = L / 2.0D0              
-          delr = (vessel_radius - r)  
-          maxrings = 50      
-          nks(1:maxrings) = 150
-        CASE (7) ! Grid with 2 radial regions
-          vessel_radius = 0.05D0 
-          L = 0.55D0
-          z0 = L / 2.0D0              
-          nrings_inner = 30
-          nrings_outer = 20
-          maxrings = nrings_inner + nrings_outer
-          r_inner = 0.01D0
-          r_outer = 0.03D0     
-          delr = (vessel_radius - r_outer)  
-          nks(1:maxrings) = 150
-        CASE (8) ! Wide cylinder
-          brat = 0.05 ! 0.985 ! 0.5
-  
-          vessel_radius = 0.2D0
-          L = 0.55D0
-          r = 0.15D0
-          z0 = L / 2.0D0 
-          delr = (vessel_radius - r)  
-          maxrings = 10      
-          nks(1:maxrings) = 20  
-      ENDSELECT
-
-      id = 0
-
-      DO ir = 1, maxrings
-        IF (.TRUE.) THEN
-          IF     (grid_option.EQ.4) THEN
-            frac1 = (DBLE(ir-1) / DBLE(maxrings))**0.7
-            frac2 = (DBLE(ir  ) / DBLE(maxrings))**0.7
-            r1 = frac1 * r
-            r2 = frac2 * r
-          ELSEIF (grid_option.EQ.7) THEN
-            IF (ir.LE.nrings_inner) THEN
-              frac  = DBLE(ir-1) / DBLE(nrings_inner)
-              delta = r_inner / DBLE(nrings_inner)
-              r1 = frac * r_inner
-              r2 = r1 + delta
-            ELSE
-              frac  = DBLE(ir-nrings_inner-1) / DBLE(nrings_outer)
-              delta = (r_outer - r_inner) / DBLE(nrings_outer)
-              r1 = r_inner + frac * (r_outer - r_inner)
-              r2 = r1 + delta
-            ENDIF
-          ELSE
-            frac  = DBLE(ir-1) / DBLE(maxrings)
-            delta = r / DBLE(maxrings)
-            r1 = frac * r 
-            r2 = r1 + delta
-          ENDIF
-          IF (ir.EQ.1) r1 = r1 + r0
-        ENDIF
-
-C       Krieger IPP/07 - SUN compiler does not know SNGL, replaced by REAL  -strange since SNGL is used elsewhere... -SL
-C       psitarg(ir,1) = ABS(0.5*(SNGL(r1+r2)))
-C       psitarg(ir,2) = ABS(0.5*(SNGL(r1+r2)))
-        psitarg(ir,1) = ABS(0.5*(REAL(r1+r2)))
-        psitarg(ir,2) = ABS(0.5*(REAL(r1+r2)))
-        idring(ir) = TARTOTAR
-
-c        WRITE(0,*) 'IR:',ir,psitarg(ir,1)
-
-c       nks(ir) = 100
-
-        DO ik = 1, nks(ir)
-
-          SELECTCASE (grid_option)
-            CASE (1)  ! Full vessel, mirrored
-              IF (.TRUE.) THEN
-                frac = DBLE(ik-1) / DBLE(nks(ir)) 
-                delta = L / DBLE(nks(ir)) 
-                z1 = (0.5 - frac) * L
-                z2 = z1 - delta
-              ENDIF
-            CASE (2)  ! Full vessel
-              IF (.TRUE.) THEN
-                frac = DBLE(ik-1) / DBLE(nks(ir)) 
-                delta = L / DBLE(nks(ir)) 
-                z1 = (1.0 - frac) * L
-                z2 = z1 - delta       
-              ENDIF
-            CASE (3,8)  ! Target chamber
-              IF (.TRUE.) THEN
-                frac = DBLE(ik-1) / DBLE(nks(ir)) 
-                delta = L / DBLE(nks(ir)) 
-                z1 = (0.5 - frac) * L + z0
-c                z1 = (1.0 - frac) * L 
-                z2 = z1 - delta       
-              ENDIF
-            CASE (4:7) ! Target chamber: fancy
-              frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
-              frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
-              frac1 = SIGN(0.5d0,frac1-0.5d0)*
-     >                  (ABS(frac1-0.5d0)/0.5d0)**1.00+0.5
-              frac2 = SIGN(0.5d0,frac2-0.5d0)*
-     >                  (ABS(frac2-0.5d0)/0.5d0)**1.00+0.5
-              z1 = (1.0 - frac1) * L
-              z2 = (1.0 - frac2) * L     
-          ENDSELECT
-
-c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05
-c          IF (ir.EQ.2) WRITE(0,*) frac
-c          bratio(ik,ir) = SNGL(brat * frac)
-          bratio(ik,ir) = SNGL(brat)
-          kbfs  (ik,ir) = 1.0 / brat
-          bts   (ik,ir) = cbphi 
-
-          id = id + 1
-
-          korpg(ik,ir) = id
-
-          nvertp(id) = 4
-
-!          frac = 1.0D0 + 1.0D0 * DBLE(ik-1) / DBLE(nks(ir) - 1)
-          frac = 1.0D0
-
-          IF (ik.EQ.1) THEN
-            rvertp(1,id) = SNGL(r1)
-            rvertp(2,id) = SNGL(r2)
-            zvertp(1,id) = SNGL(z1)
-            zvertp(2,id) = SNGL(z1)
-          ELSE
-            rvertp(1,id) = rvertp(4,id-1)
-            rvertp(2,id) = rvertp(3,id-1)
-            zvertp(1,id) = zvertp(4,id-1)
-            zvertp(2,id) = zvertp(3,id-1)
-          ENDIF
-
-          rvertp(3,id) = SNGL(r2 * frac)
-          rvertp(4,id) = SNGL(r1 * frac)
-          zvertp(3,id) = SNGL(z2)
-          zvertp(4,id) = SNGL(z2)
-
-          rs(ik,ir) = 0.0
-          zs(ik,ir) = 0.0
-          DO i1 = 1, nvertp(id)
-            rs(ik,ir) = rs(ik,ir) + rvertp(1,id)
-            zs(ik,ir) = zs(ik,ir) + zvertp(1,id)
-          ENDDO
-          rs(ik,ir) = rs(ik,ir) / REAL(nvertp(id))
-          zs(ik,ir) = zs(ik,ir) / REAL(nvertp(id))
-
-        ENDDO
-
-      ENDDO
-
-      npolyp  = id
-      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
-      vpolyp  = vpolmin
-
-      ikto = 2
-      ikti = 3
-
-      rves = 0
-      rvesm = 0
-
-      irsep  = 1
-      irwall = maxrings 
-      irtrap = irwall
-      nrs    = irwall
-      nbr    = 0
-
-c      WRITE(0,*) 'NVERT:',nvertp(5)
-
-      CALL InsertRing(1         ,BEFORE,PERMANENT)
-      CALL InsertRing(maxrings+1,AFTER ,PERMANENT)
-
-c      WRITE(0,*) 'NVERT:',nvertp(5)
-
-c...  Necessary..? 
-      cutring = 1
-      cutpt1 = ikto
-      cutpt2 = ikti
-
-      idring(1) = -1
-      idring(nrs) = -1
-
-c...  Modify the grid based on entries in the GRDMOD array assigned 
-c     from the input file:
-c      IF (grdnmod.NE.0) CALL TailorGrid
-
-      rmin = HI
-      rmax = LO
-      zmin = HI
-      zmax = LO
-      DO ir = 1, nrs
-        DO ik = 1, nks(ir)
-          rmin = MIN(rmin,rs(ik,ir))
-          rmax = MAX(rmax,rs(ik,ir))
-          zmin = MIN(zmin,zs(ik,ir))
-          zmax = MAX(zmax,zs(ik,ir))
-        ENDDO
-      ENDDO
-
-      rxp =  0.0 
-      zxp =  0.25 * zmin + 0.75 * zmax
-c      zxp = -0.25 * L
-
-c...  Neutral wall
-      IF (cneur.EQ.4) THEN
-
-         SELECTCASE (grid_option)
-           CASE (1)  ! Full vessel, mirrored
-             nves = 20
-             ir = irwall-1
-             r1 = DBLE(rvertp(2,korpg(1      ,ir)))
-             r2 = r1 + delr
-             z1 = DBLE(zvertp(2,korpg(1      ,ir)))
-             z2 = DBLE(zvertp(3,korpg(nks(ir),ir)))
-  
-             rves(1)  =  SNGL(r1)
-             zves(1)  =  SNGL(z1)
-             rves(2)  =  SNGL(r2)
-             zves(2)  =  SNGL(z1)
-  
-             rves(3)  =  SNGL(r2)
-             zves(3)  =  SNGL(L) / 2.0 - 0.56
-             rves(4)  =  SNGL(r1) + 0.0101 
-             zves(4)  =  SNGL(L) / 2.0 - 0.56
-             rves(5)  =  SNGL(r1) + 0.0001
-             zves(5)  =  SNGL(L) / 2.0 - 0.57
-             rves(6)  =  SNGL(r2)
-             zves(6)  =  SNGL(L) / 2.0 - 0.57
-  
-             rves(7)  =  SNGL(r2)
-             zves(7)  =  0.03
-             rves(8)  =  SNGL(r1) + 0.0001
-             zves(8)  =  0.03
-             rves(9)  =  SNGL(r1) + 0.0001
-             zves(9)  =  0.02
-             rves(10) =  SNGL(r2)
-             zves(10) =  0.02
-  
-             rves(11) =  r2
-             zves(11) = -0.02
-             rves(12) =  r1 + 0.0001
-             zves(12) = -0.02
-             rves(13) =  r1 + 0.0001
-             zves(13) = -0.03
-             rves(14) =  r2
-             zves(14) = -0.03
-  
-             rves(15) =  r2
-             zves(15) = -L / 2.0 + 0.56
-             rves(16) =  r1 + 0.0001
-             zves(16) = -L / 2.0 + 0.56
-             rves(17) =  r1 + 0.0101
-             zves(17) = -L / 2.0 + 0.57
-             rves(18) =  r2
-             zves(18) = -L / 2.0 + 0.57
-  
-             rves(19) =  r2
-             zves(19) =  z2
-             rves(20) =  r1
-             zves(20) =  z2
-           CASE (2)  ! Full vessel
-             nves = 12
-             ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
-             r2 = r1 + delr
-             z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
-  
-             rves(1)  =  r1
-             zves(1)  =  z1
-             rves(2)  =  r2
-             zves(2)  =  z1
-  
-             rves(3)  =  r2
-             zves(3)  =  L - 0.56
-             rves(4)  =  r1 + 0.0101 
-             zves(4)  =  L - 0.56
-             rves(5)  =  r1 + 0.0001 
-             zves(5)  =  L - 0.57
-             rves(6)  =  r2
-             zves(6)  =  L - 0.57
-  
-             rves(7)  =  r2
-             zves(7)  =  0.03
-             rves(8)  =  r1 + 0.0001
-             zves(8)  =  0.03
-             rves(9)  =  r1 + 0.0001
-             zves(9)  =  0.02
-             rves(10) =  r2
-             zves(10) =  0.02
-  
-             rves(11) =  r2
-             zves(11) =  z2
-             rves(12) =  r1
-             zves(12) =  z2
-           CASE (3,8)  ! Target chamber
-             nves = 7
-             ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
-             r2 = r1 + delr
-             z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir)) 
-  
-             rves(1) =  r1
-             zves(1) =  z1
-             rves(2) =  r2
-             zves(2) =  z1
-
-             rves(3) =  r2
-             zves(3) =  0.55 * z1 + 0.45 * z2
-             rves(4) =  r2
-             zves(4) =  0.50 * z1 + 0.50 * z2
-             rves(5) =  r2
-             zves(5) =  0.45 * z1 + 0.55 * z2
-  
-             rves(6) =  r2
-             zves(6) =  z2 
-             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.0001 ! r1
-             zves(7) =  z2
-           CASE (4:5)  ! Target chamber: fancy
-             nves = 10
-             ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
-             r2 = r1 + delr
-             z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
-  
-             rves(1) =  r1
-             zves(1) =  z1
-             rves(2) =  r2
-             zves(2) =  z1
-
-             rves(3) =  r2
-             zves(3) =  0.11
-
-             rves(4) =  0.21
-             zves(4) =  0.11
-
-             rves(5) =  0.21
-             zves(5) =  0.06
-
-             rves(6) =  0.212
-             zves(6) =  0.06
-
-             rves(7) =  0.212
-             zves(7) =  0.05
-
-             rves(8) =  0.21
-             zves(8) =  0.05
-
-             rves(9) =  0.21
-             zves(9) =  z2
-  
-             rves(10) =  r1
-             zves(10) =  z2
-           CASE (6:7)  ! Target chamber: fancy #3, small volume
-             nves = 10
-             ir = irwall-1
-             r1 = rvertp(2,korpg(1      ,ir))
-             r2 = r1 + delr
-             z1 = zvertp(2,korpg(1      ,ir))
-             z2 = zvertp(3,korpg(nks(ir),ir))
-  
-             rves(1) =  r1
-             zves(1) =  z1
-             rves(2) =  r2
-             zves(2) =  z1
-
-             rves(3) =  r2
-             zves(3) =  0.11
-
-             rves(4) =  r2 + 0.01
-             zves(4) =  0.11
-
-             rves(5) =  r2 + 0.01
-             zves(5) =  0.06
-
-             rves(6) =  r2 + 0.015
-             zves(6) =  0.06
-
-             rves(7) =  r2 + 0.015
-             zves(7) =  0.05
-
-             rves(8) =  r2 + 0.01
-             zves(8) =  0.05
-
-             rves(9) =  r2 + 0.01
-             zves(9) =  z2
-  
-             rves(10) =  r1
-             zves(10) =  z2
-        ENDSELECT
-      ENDIF
-
-
-      IF (.TRUE.) THEN
-        nvesm = nves - 1
-        DO i1 = 1, nves-1
-          rvesm(i1,1) = rves(i1)
-          zvesm(i1,1) = zves(i1)
-          rvesm(i1,2) = rves(i1+1)
-          zvesm(i1,2) = zves(i1+1)
-        ENDDO
-      ENDIF
- 
-c      CALL DumpGrid('BUILDING LINEAR GRID')
-
-      IF (grdnmod.GT.0) CALL TailorGrid
-
-
-      CALL OutputData(85,'Linear')
-
-
-c...  Add virtual boundary cells, which will be stripped off later:
-      IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
-     .    CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
-     .   CALL AddPoloidalBoundaryCells
-
-c      STOP 'WHA-WHO!'
-
-      RETURN
- 99   STOP
       END
 c
 c ======================================================================

@@ -30,7 +30,6 @@ module ribbon_grid_options
   ! Option defining the input data file format
   integer :: ribbon_input_format_opt
 
-
   character*256 :: rg_castem_data
 
 end module ribbon_grid_options

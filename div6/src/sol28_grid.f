@@ -95,6 +95,8 @@ c
       INTEGER it,cind1,cind2,ic,iobj,isrf,ivtx(2)
       REAL*8  c1,c2,d1,d2,tab,tcd
 
+      CatchTube = .FALSE.
+
       it = itube
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -108,7 +110,6 @@ c
         ivtx(1:2) = srf(isrf)%ivtx(1:2)
         d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
         d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-
         CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
         IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
      .      tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
@@ -338,8 +339,8 @@ c
 
       INTEGER iobj,isrf,it,it1,it2,ic,ic1,ic2,cind1,cind2,cind3,cind4,
      .        ivtx,ivtx1,ivtx2,in,itsep,itsep2,region,i,nxpt,ixpt(2,2),
-     .        region_tube(0:100,4),
-     .        region_list(0:100,6)
+     .        region_tube(0:1000,4),
+     .        region_list(0:1000,6)
       LOGICAL match,debug
       REAL*8  a1,a2,b1,b2,c1,c2,tab,tcd,rxpt(2),zxpt(2),r0,z0,
      .        volsrc(6)
@@ -352,6 +353,8 @@ c...  Calculate the magnetic axis, approximately:
       it = 1
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
+      r0 = 0.0D0
+      z0 = 0.0D0
       DO ic = cind1, cind2
         iobj = cell2obj(ic)
         isrf = obj(iobj)%iside(1)
@@ -1389,6 +1392,7 @@ c              ENDIF
               field(ncell)%bratio = knot(id)%bratio
 
               newobj%group         = ngrp
+              newobj%index         = 0
               newobj%index(IND_IK) = ik
               newobj%index(IND_IR) = ir
               newobj%index(IND_IS) = 0
@@ -1882,8 +1886,9 @@ c...  Read the knot data:
       grd_format   = opt%f_grid_format      ! 1
       grd_filename = TRIM(opt%f_grid_file)  ! 'iterm.carre.105'  ! 'sonnet_13018_250.sm'   
       grdfp = 99
+      write(0,*) 'debug: filename=',TRIM(grd_filename)
       OPEN(UNIT=grdfp,FILE=TRIM(grd_filename),ACCESS='SEQUENTIAL',
-     .     ERR=98)     
+     .     ERR=96)     
 
       IF (debug) WRITE(0,*) 'grid file name =',TRIM(grd_filename)
 
@@ -1969,8 +1974,10 @@ c       --------------------------------------------------------------
         CASE (GRD_FORMAT_SONNET)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
+          write(0,*) 'debug:  trying'
           DOWHILE (buffer(4:8).NE.'=====')
             READ(grdfp,'(A1000)',END=98) buffer
+            write(0,*) 'debug: buffer=',TRIM(buffer)
             IF (LEN_TRIM(buffer).GT.0) THEN
               DO i = 1, LEN_TRIM(buffer)-4
                IF (buffer(i:i+3).EQ.'b_sc') READ(buffer(i+7:),*) b_scale  ! Scale the field ratio 

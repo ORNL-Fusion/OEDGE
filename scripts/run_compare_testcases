@@ -2,8 +2,11 @@
 #
 #
 echo 'RUNNING and COMPARING Testcases'
+
 #
-set scriptdir = $PWD/scripts
+set progdir = divimp-merge
+#
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 

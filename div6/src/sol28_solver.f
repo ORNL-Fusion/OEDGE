@@ -12,6 +12,8 @@ c
 
       ion = 1
 
+      cs = -999.0  ! -CU compiler flag
+
       IF (nion.NE.1)
      .  CALL ER('SolveFluidEquations','One fluid ion only please',*99)
 

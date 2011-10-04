@@ -625,7 +625,7 @@ c
       INTEGER          mode
       REAL             material(4)
       DOUBLE PRECISION wallr(MAXPTS,2),wallz(MAXPTS,2)
-      CHARACTER        buffer*200
+      CHARACTER        buffer*200,fname*7
 
       DATA material / 9642., 1206., 18474., 904./
 
@@ -688,8 +688,10 @@ c
       fp1 = EIRIN
       fp2 = EIROUT
 
-      OPEN(UNIT=fp1,FORM='FORMATTED',ERR=95,STATUS='OLD')
-      OPEN(UNIT=fp2,FORM='FORMATTED',ERR=95,STATUS='REPLACE')
+      WRITE(fname,'(A,I2)') 'fort.',fp1
+      OPEN(UNIT=fp1,FILE=fname,FORM='FORMATTED',ERR=95,STATUS='OLD')
+      WRITE(fname,'(A,I2)') 'fort.',fp2
+      OPEN(UNIT=fp2,FILE=fname,FORM='FORMATTED',ERR=95,STATUS='REPLACE')
 
       nvesm = wallpts
 
@@ -1130,7 +1132,7 @@ c
       nxcut1 = ikto
       nxcut2 = ikti
 
-      OPEN(UNIT=52,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+      OPEN(UNIT=52,FILE='fort.52',ACCESS='SEQUENTIAL',STATUS='REPLACE')
 c
 c     Write the header to the geometry file:
 c

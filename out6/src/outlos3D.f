@@ -732,9 +732,11 @@ c     Check that up and right are NOT the same
 c
       if (upaxis.eq.rightaxis) then 
          ierr   = 1
-         write (0,'(a,6(1x,g12.5))')
-     >          'RIGHT and UP axis the same:',
-     >          ((upvec(in),rightvec(in)),in=1,3)  
+         WRITE(0,*) ' STOP: GFORTRAN IS NOT HAPPY'   ! gfortran
+         STOP
+c         write (0,'(a,6(1x,g12.5))')
+c     >          'RIGHT and UP axis the same:',
+c     >          ((upvec(in),rightvec(in)),in=1,3)  
          return 
       endif
 c

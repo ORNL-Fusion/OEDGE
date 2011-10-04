@@ -1,4 +1,4 @@
-C EIRENE04 COMPILATION
+C     EIRENE04 COMPILATION
 C ===== SOURCE: broad_usr.f
 
 
@@ -779,8 +779,8 @@ C ===== SOURCE: outusr.f
      .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
      .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
      .             ISTRAA,ISTRAE,NEW_ITER, JFEXMN, JFEXMX,MSURFG
-      INTEGER   :: PROB1,PROB2
-      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI),SAVE_IPANU(100),IPANU
+      INTEGER   :: PROB1,PROB2,IPANU,SAVE_IPANU(100)
+      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
       REAL*8    :: DDUM(20),RECPAR,RECMOM,RECENG,RECELE,RECADD,EEADD,
      .             SIGNUM,RH2PH2(0:8,0:8),DEF,TEF,RATIO,DEJ,TEI,  
      .             FPRM(6),RCMIN, RCMAX, CONV
@@ -798,7 +798,9 @@ c...  Iteration data:
       INTEGER IT,IG,NGAUGE
       REAL*8 XGAUGE(3),YGAUGE(3),RGAUGE(3),DIST,X1,X2,X3,Y1,Y2,Y3,FACT
       REAL*8, ALLOCATABLE :: XCEN(:),YCEN(:),ZCEN(:),T_VOL(:),
+     .                       T_PDENA(:,:,:),T_EDENA(:,:,:),
      .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
+c     .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
 
       INTEGER :: logfp = 6
 
@@ -955,7 +957,7 @@ c...      Plasma quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I14))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -986,11 +988,11 @@ c...        Output:
           ENDDO
         ENDDO
       ENDDO
- 80   FORMAT(A,20(I6))
- 81   FORMAT(20(I6))
- 82   FORMAT(I6,1P,20(E14.6))
+ 80   FORMAT(A,20(I8))
+ 81   FORMAT(20(I8))
+ 82   FORMAT(I8,1P,20(E14.6))
  83   FORMAT(6X,1P,20(I14))
- 84   FORMAT(2I6,1P,20(E14.6))
+ 84   FORMAT(2I8,1P,20(E14.6))
  85   FORMAT(12X,1P,20(I14))
 
       WRITE(logfp,*) 'SUMION:',sumion,sumion*ELCHA  ! *TEMP*
@@ -1018,7 +1020,7 @@ c...    Volume averaged tallies:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1078,10 +1080,41 @@ c...  Test molecules:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+        ENDDO
+c...    Surfaces fluxes:
+        ICOUNT=39
+        ITALLY=8
+        WRITE(FP,80) '* TEST MOLECULES - SURFACE FLUXES',IMOL
+        WRITE(FP,81) ITALLY
+        WRITE(FP,81) NSUR
+        WRITE(FP,85) (I1,I1=1,ITALLY)
+        CONV = 1.602176D-19
+        DO IR=1,NTRII 
+          DO IS=1,NSIDE
+            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            DDUM=0.0D0
+c...        Output:
+            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            DDUM(1)=DBLE(IS)                   ! Side index of the triangle
+            DDUM(2)=POTML  (IMOL,MSURFG)/CONV  ! Incident molecule particle flux (s-1)
+            DDUM(3)=EOTML  (IMOL,MSURFG)/CONV  ! Incident molecule energy   flux (eV s-1)
+            DDUM(4)=PRFAML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident atoms     (s-1)
+            DDUM(5)=PRFMML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident mols.     (s-1)
+            DDUM(6)=PRFIML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident test ions (s-1)
+c            DDUM(7)=PRFPHML(IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident photons   (s-1)
+            DDUM(7)=PRFPML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident bulk ions (s-1)
+            DDUM(8)=ERFAML (IMOL,MSURFG)/CONV  ! ???
+            ICOUNT=ICOUNT+14
+            IF (ICOUNT.EQ.40) THEN
+              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              ICOUNT=0
+            ENDIF
+            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          ENDDO
         ENDDO
       ENDDO
 c
@@ -1177,7 +1210,7 @@ c...      Done determining n_H2+, load remaining quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1234,7 +1267,7 @@ c          DDUM(7)=EDENPH(IPHOT,IR)/(PDENPH(IPHOT,IR)+EPS10)  ! Energy per parti
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
@@ -1266,7 +1299,7 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
@@ -1298,7 +1331,7 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
@@ -1340,13 +1373,13 @@ c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
           WRITE(FP,90) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
       ENDIF
- 90   FORMAT(I6,3F12.0,1P,20(E12.4))
+ 90   FORMAT(I8,3F12.0,1P,20(E12.4))
 c
 c     ----------------------------------------------------------------------
 c...  Particle source:
@@ -1355,7 +1388,7 @@ c...  Particle source:
       WRITE(FP,80) '* PARTICLE SOURCES'
       WRITE (FP,'(I6)') NSTRAI
       DO IS=1,NSTRAI
-        WRITE (FP,'(I6,I8,1P,3E14.6,0P)') 
+        WRITE (FP,'(I6,I10,1P,3E14.6,0P)') 
      .    IS,SAVE_IPANU(IS),FLUXT(IS),PTRASH(IS),ETRASH(IS)
       ENDDO
 c
@@ -1384,14 +1417,15 @@ c...  End of volume/surface data for sum over strata marker:
 c
 c ----------------------------------------------------------------------
 c...  Insert iteration data, if any:
-      ICOUNT=39
-      ITALLY=4
-      FACT=ELCHA*0.667D0*7.502D0*1.0D+06
+      ITALLY=7
+      FACT=ELCHA*0.66667D0*7.502D0*1.0D+06
       WRITE(logfp,80) '* ITERATION DATA'
       WRITE(logfp,*) 'ITERNO?',iterno
       DO IT=1,ITERNO-1
         WRITE(FP,80) '* ITERATION DATA',IT
+        WRITE(FP,81) NGAUGE
         DO IG=1,NGAUGE
+          ICOUNT=39
           WRITE(FP,80) '*   PRESSURE GAUGE',IG
           WRITE(FP,81) ITALLY
           WRITE(FP,81) NSTRAI+1
@@ -1400,25 +1434,72 @@ c...  Insert iteration data, if any:
             DDUM=0.0D0
             IF (IS.EQ.NSTRAI+1) THEN
               DDUM(1)=T_VOL(IG)
-              DDUM(2)=SUM(T_EDENM(1:NSTRAI,IG,IT))*FACT       ! mTorr?
-              DDUM(3)=SUM(T_PDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total particles 
-              DDUM(4)=SUM(T_EDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total energy
+c             Atoms:
+              DDUM(2)=SUM(T_EDENA(1:NSTRAI,IG,IT))*FACT     ! mTorr
+              DDUM(3)=SUM(T_PDENA(1:NSTRAI,IG,IT))*1.0E+06  ! particles m-3
+              DDUM(4)=SUM(T_EDENA(1:NSTRAI,IG,IT))*1.0E+06  ! eV m-3
+c             Molecules:
+              DDUM(5)=SUM(T_EDENM(1:NSTRAI,IG,IT))*FACT     
+              DDUM(6)=SUM(T_PDENM(1:NSTRAI,IG,IT))*1.0E+06  
+              DDUM(7)=SUM(T_EDENM(1:NSTRAI,IG,IT))*1.0E+06  
             ELSE
               DDUM(1)=T_VOL(IG)
-              DDUM(2)=T_EDENM(IS,IG,IT)*FACT
-              DDUM(3)=T_PDENM(IS,IG,IT)*T_VOL(IG)
-              DDUM(4)=T_EDENM(IS,IG,IT)*T_VOL(IG)
+c             Atoms:
+              DDUM(2)=T_EDENA(IS,IG,IT)*FACT
+              DDUM(3)=T_PDENA(IS,IG,IT)*1.0E+06
+              DDUM(4)=T_EDENA(IS,IG,IT)*1.0E+06
+c             Molecules:
+              DDUM(5)=T_EDENM(IS,IG,IT)*FACT
+              DDUM(6)=T_PDENM(IS,IG,IT)*1.0E+06
+              DDUM(7)=T_EDENM(IS,IG,IT)*1.0E+06
             ENDIF
 c...        Output:
             ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+              WRITE(FP,'(A,5X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
             WRITE(FP,82) IS,(DDUM(I1),I1=1,ITALLY)
           ENDDO
         ENDDO
       ENDDO
+cc ----------------------------------------------------------------------
+cc...  Insert iteration data, if any:
+c      ICOUNT=39
+c      ITALLY=4
+c      FACT=ELCHA*0.667D0*7.502D0*1.0D+06
+c      WRITE(logfp,80) '* ITERATION DATA'
+c      WRITE(logfp,*) 'ITERNO?',iterno
+c      DO IT=1,ITERNO-1
+c        WRITE(FP,80) '* ITERATION DATA',IT
+c        DO IG=1,NGAUGE
+c          WRITE(FP,80) '*   PRESSURE GAUGE',IG
+c          WRITE(FP,81) ITALLY
+c          WRITE(FP,81) NSTRAI+1
+c          WRITE(FP,83) (I1,I1=1,ITALLY)
+c          DO IS=1,NSTRAI+1
+c            DDUM=0.0D0
+c            IF (IS.EQ.NSTRAI+1) THEN
+c              DDUM(1)=T_VOL(IG)
+c              DDUM(2)=SUM(T_EDENM(1:NSTRAI,IG,IT))*FACT       ! mTorr
+c              DDUM(3)=SUM(T_PDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total particles 
+c              DDUM(4)=SUM(T_EDENM(1:NSTRAI,IG,IT))*T_VOL(IG)  ! Total energy
+c            ELSE
+c              DDUM(1)=T_VOL(IG)
+c              DDUM(2)=T_EDENM(IS,IG,IT)*FACT
+c              DDUM(3)=T_PDENM(IS,IG,IT)*T_VOL(IG)
+c              DDUM(4)=T_EDENM(IS,IG,IT)*T_VOL(IG)
+c            ENDIF
+cc...        Output:
+c            ICOUNT=ICOUNT+1
+c            IF (ICOUNT.EQ.40) THEN
+c              WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+c              ICOUNT=0
+c            ENDIF
+c            WRITE(FP,82) IS,(DDUM(I1),I1=1,ITALLY)
+c          ENDDO
+c        ENDDO
+c      ENDDO
 c
 c ----------------------------------------------------------------------
 c...  EOF marker:
@@ -1426,6 +1507,8 @@ c...  EOF marker:
 
 c...  Clear arrays:
       IF (ALLOCATED(T_VOL  )) DEALLOCATE(T_VOL  )
+      IF (ALLOCATED(T_PDENA)) DEALLOCATE(T_PDENA)
+      IF (ALLOCATED(T_EDENA)) DEALLOCATE(T_EDENA)
       IF (ALLOCATED(T_PDENM)) DEALLOCATE(T_PDENM)
       IF (ALLOCATED(T_EDENM)) DEALLOCATE(T_EDENM)
 
@@ -1441,6 +1524,7 @@ c...
 c     ------------------------------------------------------------------
 c
 c      ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER)
+
       ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER,IPANU)
 
       WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTRII
@@ -1470,15 +1554,15 @@ C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
 c...  Check for triangle centers that are inside the "pressure
 c     gauge" region:
       NGAUGE = 3
-      XGAUGE(1) =   65.0D0
-      YGAUGE(1) =  -66.0D0
-      RGAUGE(1) =    2.0D0
-      XGAUGE(2) =  190.0D0
-      YGAUGE(2) =    0.0D0
-      RGAUGE(2) =   10.0D0
-      XGAUGE(3) =  475.0D0  ! ITER divertor, below dome
-      YGAUGE(3) = -420.0D0
-      RGAUGE(3) =   30.0D0
+      XGAUGE(1) =  845.0D0  ! ITER midplane
+      YGAUGE(1) =   62.0D0
+      RGAUGE(1) =    8.0D0
+      XGAUGE(2) =  475.0D0  ! ITER divertor, below dome
+      YGAUGE(2) = -420.0D0
+      RGAUGE(2) =   20.0D0
+      XGAUGE(3) =    4.0D0
+      YGAUGE(3) =   17.5D0
+      RGAUGE(3) =    2.0D0
 
       IS=ISTRAA
       IT=ITERNO
@@ -1487,11 +1571,16 @@ c     gauge" region:
 
       IF (.NOT.ALLOCATED(T_VOL)) THEN
         ALLOCATE(T_VOL(NGAUGE))
+        ALLOCATE(T_PDENA(NSTRAI,NGAUGE,NITER+1))
+        ALLOCATE(T_EDENA(NSTRAI,NGAUGE,NITER+1))
         ALLOCATE(T_PDENM(NSTRAI,NGAUGE,NITER+1))
         ALLOCATE(T_EDENM(NSTRAI,NGAUGE,NITER+1))
       ENDIF
 
-      T_VOL=0.0D0       
+      T_VOL=EPS60       
+      T_PDENA(IS,1:NGAUGE,IT)=0.0D0
+      T_EDENA(IS,1:NGAUGE,IT)=0.0D0
+      T_PDENM(IS,1:NGAUGE,IT)=0.0D0
       T_EDENM(IS,1:NGAUGE,IT)=0.0D0
       IMOL=1  ! Not reliable...
       DO IG=1,NGAUGE
@@ -1500,13 +1589,18 @@ c     gauge" region:
      .                  (YCEN(IR)-YGAUGE(IG))**2)
           IF (DIST.LE.RGAUGE(IG)) THEN
             T_VOL  (   IG   )=T_VOL  (   IG   )+               VOL(IR)
+            T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)+PDENA(IMOL,IR)*VOL(IR)
+            T_EDENA(IS,IG,IT)=T_EDENA(IS,IG,IT)+EDENA(IMOL,IR)*VOL(IR)
             T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)+PDENM(IMOL,IR)*VOL(IR)
             T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)+EDENM(IMOL,IR)*VOL(IR)
           ENDIF
         ENDDO
+        T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)/T_VOL(IG)
+        T_EDENA(IS,IG,IT)=T_EDENA(IS,IG,IT)/T_VOL(IG)
         T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)/T_VOL(IG)
         T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)/T_VOL(IG)
-        WRITE(logfp,*) 'GAUGE:',IS,IT,IG,T_EDENM(IS,IG,IT)
+        WRITE(logfp,*) 'GAUGE:',IS,IT,IG,
+     .                 T_EDENA(IS,IG,IT),T_EDENM(IS,IG,IT)
       ENDDO
 
 c...  Clear arrays:
@@ -1516,6 +1610,81 @@ c...  Clear arrays:
 
       IF (IS.EQ.NSTRAI) ITERNO=ITERNO+1
 
+c      ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER,IPANU)
+c
+c      WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTRII
+c      WRITE(logfp,*) 'OUTUS1:',fluxt(istraa)
+c
+c      SAVE_IPANU(ISTRAA) = IPANU
+c           
+cc...  Calculate the center (or so) of each triangle:
+c      ALLOCATE(XCEN(NTRII))
+c      ALLOCATE(YCEN(NTRII))
+c      ALLOCATE(ZCEN(NTRII))
+c      XCEN = 0.0D0
+c      YCEN = 0.0D0
+c      DO IR=1,NTRII 
+c        X1=XTRIAN(NECKE(1,IR))
+c        Y1=YTRIAN(NECKE(1,IR))
+c        X2=XTRIAN(NECKE(2,IR))
+c        Y2=YTRIAN(NECKE(2,IR))
+c        X3=XTRIAN(NECKE(3,IR))
+c        Y3=YTRIAN(NECKE(3,IR))
+cC       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
+c        XCEN(IR)=(X1+X2+X3)/3._DP
+c        YCEN(IR)=(Y1+Y2+Y3)/3._DP         
+c        ZCEN(IR)=0.0D0
+c      ENDDO
+c
+cc...  Check for triangle centers that are inside the "pressure
+cc     gauge" region:
+c      NGAUGE = 3
+c      XGAUGE(1) =   65.0D0
+c      YGAUGE(1) =  -66.0D0
+c      RGAUGE(1) =    2.0D0
+c      XGAUGE(2) =  190.0D0
+c      YGAUGE(2) =    0.0D0
+c      RGAUGE(2) =   10.0D0
+c      XGAUGE(3) =  475.0D0  ! ITER divertor, below dome
+c      YGAUGE(3) = -420.0D0
+c      RGAUGE(3) =   30.0D0
+c
+c      IS=ISTRAA
+c      IT=ITERNO
+c
+c      WRITE(logfp,*) '  CHECKING PRESSURE GAUGES',IS,IT
+c
+c      IF (.NOT.ALLOCATED(T_VOL)) THEN
+c        ALLOCATE(T_VOL(NGAUGE))
+c        ALLOCATE(T_PDENM(NSTRAI,NGAUGE,NITER+1))
+c        ALLOCATE(T_EDENM(NSTRAI,NGAUGE,NITER+1))
+c      ENDIF
+c
+c      T_VOL=0.0D0       
+c      T_EDENM(IS,1:NGAUGE,IT)=0.0D0
+c      IMOL=1  ! Not reliable...
+c      DO IG=1,NGAUGE
+c        DO IR=1,NTRII
+c          DIST = DSQRT( (XCEN(IR)-XGAUGE(IG))**2 + 
+c     .                  (YCEN(IR)-YGAUGE(IG))**2)
+c          IF (DIST.LE.RGAUGE(IG)) THEN
+c            T_VOL  (   IG   )=T_VOL  (   IG   )+               VOL(IR)
+c            T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)+PDENM(IMOL,IR)*VOL(IR)
+c            T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)+EDENM(IMOL,IR)*VOL(IR)
+c          ENDIF
+c        ENDDO
+c        T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)/T_VOL(IG)
+c        T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)/T_VOL(IG)
+c        WRITE(logfp,*) 'GAUGE:',IS,IT,IG,T_EDENM(IS,IG,IT)
+c      ENDDO
+c
+cc...  Clear arrays:
+c      IF (ALLOCATED(XCEN)) DEALLOCATE(XCEN)
+c      IF (ALLOCATED(YCEN)) DEALLOCATE(YCEN)
+c      IF (ALLOCATED(ZCEN)) DEALLOCATE(ZCEN)
+c
+c      IF (IS.EQ.NSTRAI) ITERNO=ITERNO+1
+c
       WRITE(logfp,*) '  DONE'
 
 

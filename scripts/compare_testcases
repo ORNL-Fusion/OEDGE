@@ -3,7 +3,9 @@
 #
 echo 'COMPARING Testcases'
 #
-set scriptdir = $PWD/scripts
+set progdir = divimp-update
+
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 
