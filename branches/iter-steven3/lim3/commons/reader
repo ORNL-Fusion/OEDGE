@@ -1,0 +1,6 @@
+C                                                                       
+      COMMON /READR1/ BUFFER,BUFFER1                                    
+      COMMON /READR2/ IBUF                                              
+      CHARACTER*512 BUFFER                                               
+      CHARACTER*80 BUFFER1                                              
+      INTEGER IBUF                                                      
