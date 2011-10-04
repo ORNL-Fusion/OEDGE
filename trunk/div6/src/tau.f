@@ -213,11 +213,10 @@ c
          call raug
 c slmod begin
       elseif (cgridopt.eq.LINEAR_GRID) then
-c       cgridopt=6, see params common block for LINEAR_GRID definition
-c
-c        GENERATE LINEAR DEVICE GRID
-c
-         call buildlineargrid
+         call BuildLinearGrid
+      elseif (cgridopt.eq.OSM_GRID) then
+         call ImportOSMGrid
+         cgridopt = 3  ! switch to SONNET grid specifier
 c slmod end
 c
 c     jdemod - support for new grid option to be added
@@ -779,9 +778,6 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
-c      CALL OutputData(85,'POLOIDAL GRID TEST')
-c      STOP 'sdfgsdfsd'
-
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c...    Generalized grid:
@@ -1712,7 +1708,7 @@ c
          ctrap = 4
       endif
 c
-c slmod begin - new
+c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
          write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
@@ -1721,7 +1717,6 @@ c...    Generalized grid:
         CALL DOWALL
       ENDIF
 
-
 c...  This assigns the xVESM arrays from the WALLPT array.  It also
 c     adds the wall segments that are specified in the DIVIMP
 c     input file (if any, see unstructured input tag 077).  It may
@@ -1729,7 +1724,6 @@ c     be better to put this elsewhere, especially if the NIMBUS wall
 c     is overwritten after a call to EIRENE in some circumstances (not 
 c     sure on this at the moment).  This routine is called for all grids
 c     except JET grids: (NOW called for JET grids if Eirene is run)
-
       IF (pincode.EQ.1.OR.pincode.EQ.2.OR.pincode.EQ.3.OR.
      .    pincode.EQ.4.OR.pincode.EQ.5.OR.
      .    cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) 
@@ -4024,6 +4018,7 @@ c slmod begin
 c slmod end
       real    apara,apol,afact
 C
+      ACHK   = 0.0
       TOTA   = 0.0
       TOTV   = 0.0
       TOTA2  = 0.0
@@ -4286,7 +4281,6 @@ c
             KVOLS(IK,IR) = 2.0*PI*RS(IK,IR)*KAREAS(IK,IR)
          endif
          KVOL2(IK,IR) = 2.0*PI*RS(IK,IR)*KAREA2(IK,IR)
-
       endif
 
 
@@ -5110,6 +5104,13 @@ c slmod begin
       vpolmin = (MAXNKS*MAXNRS - in) / 2 + in
       vpolyp  = vpolmin
 
+c...  Assign PSIn values for the targets:
+      psitarg = 0.0
+      DO ir = 1, nrs
+        psitarg(ir,2) = psifl(1      ,ir)       
+        psitarg(ir,1) = psifl(nks(ir),ir)       
+      ENDDO      
+
       CALL OutputData(85,'End of RJET')
 
 c      z0  = -z0
@@ -5925,6 +5926,9 @@ c
 c     jdemod - Add factors to scale grid if desired
 c
       real rscale_grid,zscale_grid
+c slmod begin
+      real b_scale
+c slmod end
 c     
 c     double precision rvert(4),zvert(4)
 c     double precision rcent,zcent
@@ -5978,24 +5982,29 @@ c
 c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
-      WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
+         IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
          GOTO 300
       ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
+         WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
         GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
+        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
         GOTO 300
       ELSE
+         IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
 c     slmod end
@@ -6083,6 +6092,14 @@ c
          read (buffer(7:),*) rscale_grid,zscale_grid
 c     
       endif
+c slmod begin
+c...  Some grids required rescaling of the magnetic field ratio:
+      if (buffer(1:8).eq.'B-SCALE:'.or.
+     >    buffer(1:8).eq.'B-Scale:'.or.
+     >    buffer(1:8).eq.'B-scale:') then
+         read (buffer(7:),*) b_scale 
+      endif   
+c slmod end
 c     
       if (buffer(4:8).ne.'=====') goto 100
 c     
@@ -6376,7 +6393,7 @@ c
  300  continue
 c     slmod begin
 
-      CALL OutputData(86,'300 of RAUG')    
+c      CALL OutputData(86,'300 of RAUG')    
 c         STOP 'RAUG MID'
 
       CALL DB('RAUG: Done reading grid')
@@ -6610,6 +6627,9 @@ c
 c     
       end if
 c     
+c slmod begin - CU flag
+      in = -1
+c slmod end
       write (6,'(a,9(1x,i6))') 'Index:',
      >     indexcnt,indexnadj,indexiradj,indexikadj,
      >     ik,ir,in,maxrings,
@@ -6998,7 +7018,6 @@ c
  40      continue
          write(diagunit,'(a)')
  30   continue
-
 c     
 c     jdemod - Output the grid before modifications are made
 c     
@@ -7007,9 +7026,8 @@ c
 c     slmod begin 
       IF (quasidn) CALL PrepQuasiDoubleNull
 
+c...  Tailor/cut grid to wall:
       IF (grdnmod.GT.0) THEN
-c...    New, more sophisticated (yeah, baby) grid cutting method:
-
 c...    Get rid of poloidal boundary cells (to be added again below
 c       after grid manipulations are complete):
         DO ir = irsep, nrs
@@ -7077,33 +7095,6 @@ c     do ik = 1,nks(ir)
 c     korpg(ik,ir) = 0
 c     end do
 c     
-c     slmod begin
-      IF (.FALSE.) THEN
-         nvesm = nves
-         DO i1 = 1, nves-1
-            rvesm(i1,1) = rves(i1)
-            zvesm(i1,1) = zves(i1)
-            rvesm(i1,2) = rves(i1+1)
-            zvesm(i1,2) = zves(i1+1)
-         ENDDO
-         rvesm(i1,1) = rves(i1)
-         zvesm(i1,1) = zves(i1)
-         rvesm(i1,2) = rves(1)
-         zvesm(i1,2) = zves(1)
-         CALL OutputData(86,'Working on it - still')
-         CALL SaveSolution
-         STOP 'WORKING ON IT - STILL'
-      ENDIF
-
-      CALL OutputData(85,'End of RAUG')
-
-c     DO ir = 1, nrs
-c     DO ik = 1, nks(ir)
-c     bratio(ik,ir) = 0.5
-c     kbfs  (ik,ir) = 2.0
-c     ENDDO
-c     ENDDO
-c     slmod end
       return
 c     
 c     Error exit conditions
@@ -8462,8 +8453,10 @@ c     not performed when the data is read in because the KSS values
 c     of the grid points have not yet been calculated at that
 c     time.
 c
-      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit
-      INTEGER ik,ir
+      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2
+      INTEGER ik,ir,irlimit
+c      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit  ! gfortran
+c      INTEGER ik,ir
 C
 C       CALCULATE ELECTRIC FIELD
 C
@@ -10450,6 +10443,7 @@ c
       subroutine TARGFLUX
 c slmod begin
       USE mod_eirene06
+      USE mod_eirene_history
 c slmod end 
       IMPLICIT NONE
 C
@@ -10481,7 +10475,7 @@ c
 c slmod begin - new
       INCLUDE 'slcom'
 
-      INTEGER fp,i1,i2,i
+      INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
 c slmod end
 
@@ -10978,6 +10972,48 @@ c       and reported here -- fix:
      .        strata(i1)%fluxt,
      .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
           ENDDO
+
+          CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
+          CALL PRB
+          i4 = history(1)%ngauge
+          WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .      'ITER',(i2,i2=1,i4),(i2,i2=1,i4)
+          DO i1 = 1, nhistory
+            i3 = history(i1)%gauge_nstrata
+            IF (i1.GT.1) 
+     .        WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .          '    ',(i2,i2=1,i4),(i2,i2=1,i4)
+            WRITE(fp,'(3X,5X,4X,20(A))') 
+     .        '(E19 m-3)',('        ',i2=1,i4-1),'    (eV)'
+            WRITE(fp,92) i1,' atm ',
+     .                   history(i1)%gauge_parden_atm(i3,1:i4) / 1.E19,
+     .                   history(i1)%gauge_egyden_atm(i3,1:i4) /
+     .                  (history(i1)%gauge_parden_atm(i3,1:i4) +
+     .                   1.0E-10)
+            WRITE(fp,92) i1,' mol ',
+     .                   history(i1)%gauge_parden_mol(i3,1:i4) / 1.E19,
+     .                   history(i1)%gauge_egyden_mol(i3,1:i4) /
+     .                  (history(i1)%gauge_parden_mol(i3,1:i4) + 
+     .                   1.0E-10)
+ 92         FORMAT(3X,I5,A,20(1X,F7.3))
+c
+            WRITE(fp,'(3X,5X,5X,20(A))') 
+     .        ' (mTorr)',('        ',i2=1,i4-1),'    (Pa)'
+            WRITE(fp,93) i1,' atm ',
+     .                   history(i1)%gauge_p_atm(i3,1:i4),
+     .                   history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
+            WRITE(fp,93) i1,' mol ',
+     .                   history(i1)%gauge_p_mol(i3,1:i4),
+     .                   history(i1)%gauge_p_mol(i3,1:i4) / 7.502  
+            WRITE(fp,93) i1,' tot ',
+     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                   history(i1)%gauge_p_mol(i3,1:i4)),
+     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                   history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
+ 93         FORMAT(3X,I5,A,20(1X,F7.3))
+c
+          ENDDO
+
         ELSE
           CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
           CALL PRB
@@ -18915,12 +18951,12 @@ c
      >                         error_comment(1:len_trim(error_comment)))
 
 c
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),   ! gfortran didn't like these outputs, and for not good reason it seems to me
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 c
                         endif
 c
@@ -18955,12 +18991,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 
 c
                         endif
@@ -19001,12 +19037,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 
-                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                           zvertp(id,in)),
-     >                           id = 1,4)
-                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
-     >                           zvertp(id,testin)),
-     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                           zvertp(id,in)),
+c     >                           id = 1,4)
+c                  write(6,'(i6,8(1x,g12.5))')testin,((rvertp(id,testin),
+c     >                           zvertp(id,testin)),
+c     >                           id = 1,4)
 c
                         endif
 c
@@ -19046,12 +19082,12 @@ c
      >                                  'ROUTINE GRID_CHECK',
      >                         error_comment(1:len_trim(error_comment)))
 c
-              write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),
-     >                         zvertp(id,in)),
-     >                         id = 1,4)
-              write(6,'(i6,8(1x,g12.5))') testin,((rvertp(id,testin),
-     >                         zvertp(id,testin)),
-     >                         id = 1,4)
+c              write(6,'(i6,8(1x,g12.5))') in,((rvertp(id,in),  ! gfortran
+c     >                         zvertp(id,in)),
+c     >                         id = 1,4)
+c              write(6,'(i6,8(1x,g12.5))') testin,((rvertp(id,testin),
+c     >                         zvertp(id,testin)),
+c     >                         id = 1,4)
 c
                         endif
 c

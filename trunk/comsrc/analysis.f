@@ -28,14 +28,15 @@ c
 
       INTEGER GetModel,SymmetryPoint
       LOGICAL ChkInt
-      REAL    CalcPressure,GetJsat,GetFlux,GetCs,ATan2C
+      REAL    CalcPressure,GetJsat,GetFlux,GetCs,ATan2C,GetHeatFlux,
+     .        GetGamma
 
       INTEGER ik,ik1,ik2,ir,i1,i2,model1(MAXNRS),model2(MAXNRS),
-     .        id,maxik1,maxik2,fp,ikm,model
+     .        id,maxik1,maxik2,fp,ikm,model,ring,target
       REAL    parflx,eleflx,ionflx,p,p1,p2,jsat,area,
      .        partot,eletot,iontot,maxs,rdum(20),mach,beta,alpha,
      .        radpow(MAXNKS,MAXNRS),fact,cost,flux(2),deltar,deltaz,
-     .        fluxmax(2),isat
+     .        fluxmax(2),isat,qpara,gamma,sum_target,sum_total
       REAL*8  intg(20),ddum1,ddum2,a1,a2,b1,b2,c1,c2,d1,d2,e1,e2,
      .        f1,f2,tab,tcd
       CHARACTER*7 irtag(0:MAXNRS)
@@ -101,29 +102,88 @@ c      WRITE(fp,*)
 c      WRITE(fp,*) 'Target conditions:'
       DO i1 = 2, 1, -1
         WRITE(fp,*)
-        WRITE(fp,'(1X,A4,A5,2A9,1X,2A10,2A12,1X,A10,A6,A12)')
-     .    'ir','sol','psin','rho','Te','Ti','Ne','Jsat','v','M','p'
-        DO ir = irsep, nrs
+        WRITE(fp,'(1X,A4,A5,2A9,1X,2A12,2A10,1X,A10,A6,A12)')
+     .    'ir','sol','psin','rho','jsat','ne','Te','Ti','v','M','p'
+c        WRITE(fp,'(1X,A4,A5,2A9,1X,2A10,2A12,1X,A10,A6,A12)')
+c     .    'ir','sol','psin','rho','Te','Ti','Ne','Jsat','v','M','p'
+c        DO ir = irsep, nrs
+        DO ring = 1, nrs-irsep+1
+          IF (ring.LT.nrs-irtrap+1) THEN
+            ir = irtrap + ring
+          ELSE
+            ir = ring - (nrs - irtrap + 1) + irsep 
+          ENDIF
           IF (idring(ir).EQ.-1) CYCLE
-
           IF (i1.EQ.1) THEN
             model = model2(ir)
           ELSE
             model = model1(ir)
           ENDIF
-
           id   = idds(ir,i1)
           p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
           jsat = GetJsat     (kteds(id),ktids(id),knds(id),kvds(id))
           mach = kvds(id) / GetCs(kteds(id),ktids(id))
-
-          WRITE(fp,'(1X,I4,I5,2F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
-     .             ' ,F6.2,1P,E12.4,0P,1X,A,2F10.5)')
+          WRITE(fp,'(1X,I4,I5,2F9.5,1X,1P,2E12.4,0P,2F10.4,1X,1P,'//
+     .             'E10.2,0P,F6.2,1P,E12.4,0P,1X,A,2F10.5,2X)')
      .      ir,model,psitarg(ir,1),rho(ir,CELL1),
-     .      kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
+     .      jsat,knds(id),kteds(id),ktids(id),kvds(id),mach,p,
      .      irtag(ir),rp(id),zp(id)
+c          WRITE(fp,'(1X,I4,I5,2F9.5,1X,2F10.4,1P,2E12.4,1X,E10.2,0P'//
+c     .             ' ,F6.2,1P,E12.4,0P,1X,A,2F10.5)')
+c     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
+c     .      kteds(id),ktids(id),knds(id),jsat,kvds(id),mach,p,
+c     .      irtag(ir),rp(id),zp(id)
         ENDDO
       ENDDO
+c
+c
+c
+      CALL HD(fp,'Target heat flux','SOLANAL-TARGETS-HEAT',5,67)
+      sum_total = 0.0
+      DO i1 = 2, 1, -1
+        IF (i1.EQ.2) target = IKLO
+        IF (i1.EQ.1) target = IKHI
+        WRITE(fp,*)
+        WRITE(fp,'(1X,A4,A5,2A9,2X,1A10,2A7,2X,A7,2A10)')
+     .    'ir','sol','psin','rho','jsat','Te','Ti','gamma',
+     .    'P Flux','H Flux'
+        sum_target = 0.0
+        DO ring = 1, nrs-irsep+1
+          IF (ring.LT.nrs-irtrap+1) THEN
+            ir = irtrap + ring
+          ELSE
+            ir = ring - (nrs - irtrap + 1) + irsep 
+          ENDIF
+          IF (idring(ir).EQ.-1) CYCLE
+          IF (i1.EQ.1) THEN
+            model = model2(ir)
+          ELSE
+            model = model1(ir)
+          ENDIF
+          id = idds(ir,i1)
+          jsat  = ABS(GetJsat(kteds(id),ktids(id),knds(id),kvds(id)))
+          isat  = ABS(GetFlux(target,ir))
+          gamma = GetGamma   (target,ir)
+          qpara = GetHeatFlux(target,ir)
+          WRITE(fp,'(1X,I4,I5,2F9.5,2X,1P,E10.2,0P,2F7.2,2X,'//
+     .             'F7.2,1P,2E10.2,0P,F7.2,2X,F10.5,2X,3F6.2,2X,A)')
+     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
+     .      jsat,kteds(id),ktids(id),gamma,isat,qpara,
+     .      qpara/(2.0*PI*rp(id)*dds2(id)*1.0E+6),dds2(id),
+     .      dds2(id)             /(rho(ir,OUT23)-rho(ir,IN14)),
+     .      (dds2(id)*costet(id))/(rho(ir,OUT23)-rho(ir,IN14)),
+     .      1.0/costet(id),
+     .      irtag(ir)
+
+
+          sum_target = sum_target + qpara
+        ENDDO
+        sum_total = sum_total + sum_target
+        WRITE(fp,*) 
+        WRITE(fp,*) 'TARGET TOTAL = ',sum_target/1.0E+6,' MW'
+      ENDDO
+      WRITE(fp,*) 
+      WRITE(fp,*) 'TOTAL = ',sum_total/1.0E+6,' MW'
 c
 c     High index "symmetry" point parameters:
 c

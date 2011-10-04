@@ -195,7 +195,7 @@ c
       ELSEIF (TAG(1:3).EQ.'019') THEN
         CALL ReadI(line,eirdebug,-100,10000,'EIRENE debugging option')
       ELSEIF (TAG(1:3).EQ.'020') THEN
-        CALL ReadI(line,eirtime,0,100000,'EIRENE execution time')
+        CALL ReadI(line,eirtime,0,200000,'EIRENE execution time')
 
         CALL GetEnv('DIVNAME',machine2)
 c        WRITE(0,*) 'MARK: MACHINE2= '//machine2(1:LEN_TRIM(machine2))
@@ -618,7 +618,7 @@ c       transparent:
           CALL ER('ReadUnstructuredInput','Invalid E36 version',*99)
         ENDIF   
       ELSEIF (TAG(1:3).EQ.'E37') THEN
-        CALL ReadI(line,eirntorseg,0,100,'Num sections in EIRENE appro')
+        CALL ReadI(line,eirntorseg,0,500,'Num sections in EIRENE appro')
       ELSEIF (TAG(1:3).EQ.'E38') THEN
         CALL ReadR(line,eirdtimv,0.0,100.0,'Time dependent mode int.')
       ELSEIF (TAG(1:3).EQ.'E39') THEN

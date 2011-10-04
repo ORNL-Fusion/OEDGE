@@ -2149,8 +2149,11 @@ c          STOP 'sdfsdf'
 
         ENDDO
 
-        IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1)
-     .    CALL WN('SetupGrid','Cannot find cut points in PFZ')
+        IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1) THEN
+          CALL WN('SetupGrid','Cannot find cut points in PFZ')
+          ikto2(ir) = nks(ir) / 2
+          ikti2(ir) = ikto2(ir) + 1
+        ENDIF
 c     .    CALL ER('SetupGrid','Cannot find cut points in PFZ',*99)
       ENDDO
 c
@@ -2759,6 +2762,7 @@ c... Should really be 1?
       eirnsdtor  = 1
       CALL RZero(eirsdtor,MAXTOR)
 
+
 c...  Time-dependent mode parameters:
       eirdtimv = 0.0
 
@@ -3009,8 +3013,8 @@ c...temp1
         ENDDO
       ENDDO
 
-      CALL RZero(lpdati2  ,MAXINS*9)
-      CALL RZero(lpdato2  ,MAXINS*9)
+      CALL RZero(lpdati2,MAXINS*9)
+      CALL RZero(lpdato2,MAXINS*9)
 
       DO i1 = 1, MAXINS
         lpdati2(i1,8) = 1.0

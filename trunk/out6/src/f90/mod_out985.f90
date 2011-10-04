@@ -1,4 +1,6 @@
 !     -*-Mode:f90-*-
+
+
 MODULE MOD_OUT985
 
   IMPLICIT NONE
@@ -123,6 +125,7 @@ MODULE MOD_OUT985
      REAL*8  :: average (MAXNINT)
      REAL*8  :: scale
      REAL*8  :: weight
+     REAL*8  :: weight_save   ! For tertiary+ reflections
      REAL*8  :: v1(3)
      REAL*8  :: v2(3)
      REAL*8  :: xwidth        ! Don't store these here, use OPT... 
@@ -138,7 +141,9 @@ MODULE MOD_OUT985
      INTEGER :: otrack
      INTEGER :: ntrack
      INTEGER, POINTER :: tlist(:)    ! INTERGER*2?
-     REAL*8,  POINTER :: track(:)    ! REAL*4? 
+     REAL*8 , POINTER :: track(:)    ! REAL*4? 
+     INTEGER :: nprofile
+     REAL*8 , POINTER :: profile(:,:)  ! REAL*4?   Storing the profile of the sampled emission along the viewing chord
   ENDTYPE type_view
 
   INTEGER, PUBLIC, PARAMETER :: IT_VWINTER = 1,  &
@@ -152,8 +157,10 @@ MODULE MOD_OUT985
 
   INTEGER, PUBLIC, PARAMETER :: MAXIONSTATE = 20  ! Should match the number of possible lines to be integrated
 
-  TYPE, PUBLIC :: type_plasma
-     REAL    :: ne
+  TYPE, PUBLIC :: type_plasma   
+     REAL    :: nD
+     REAL    :: nD2
+     REAL    :: ne           ! *** IF ADDING THINGS HERE, ALSO UPDATE THE INITIALIZATION IN out985_emission.f ***
      REAL    :: te
      REAL    :: nb
      REAL    :: vb
@@ -174,7 +181,8 @@ MODULE MOD_OUT985
 
 
   INTEGER, PARAMETER, PUBLIC :: MAX_OPT_MASK      = 20,  &
-  &                             MAX_OPT_MASK_NVTX = 10
+  &                             MAX_OPT_MASK_NVTX = 10,  &
+  &                             MAX_OPT_RIB       = 50
 
 
   TYPE, PUBLIC :: type_options985
@@ -189,11 +197,12 @@ MODULE MOD_OUT985
      INTEGER   :: nybin                      ! nbin(2) !xbin,ybin
      CHARACTER :: fmap*1024
      INTEGER   :: ndet
-     INTEGER   :: det_nxbin(MAXNDET)
-     INTEGER   :: det_nybin(MAXNDET)             ! nbin(2) !xbin,ybin
+     INTEGER   :: det_ccd   (MAXNDET)
+     INTEGER   :: det_nxbin (MAXNDET)
+     INTEGER   :: det_nybin (MAXNDET)             ! nbin(2) !xbin,ybin
      INTEGER   :: det_istart(MAXNDET)
-     INTEGER   :: det_iend(MAXNDET)
-     CHARACTER :: det_fname(MAXNDET)*1024
+     INTEGER   :: det_iend  (MAXNDET)
+     CHARACTER :: det_fname (MAXNDET)*1024
      INTEGER   :: n
      INTEGER   :: m
      REAL*8    :: roll
@@ -209,21 +218,22 @@ MODULE MOD_OUT985
      REAL      :: obj_angle_end
      REAL      :: obj_yrotation
      INTEGER   :: obj_num         ! New object descriptors
-     INTEGER   :: obj_type(20)
-     INTEGER   :: obj_option(20)
-     INTEGER   :: obj_colour(20)
-     INTEGER   :: obj_reflec(20)
-     INTEGER   :: obj_fudge (20)
-     REAL      :: obj_factor(20)
-     INTEGER   :: obj_material(20)
-     INTEGER   :: obj_orientation(20)
-     INTEGER   :: obj_n(20,2)
-     REAL      :: obj_r(20,2)
-     REAL      :: obj_z(20,2)
-     REAL      :: obj_psi(20,2)
-     REAL*8    :: obj_scale(20)
-     REAL      :: obj_yangle(20)
-     CHARACTER :: obj_fname(20)*256
+     INTEGER   :: obj_type  (40)
+     INTEGER   :: obj_option(40)
+     INTEGER   :: obj_colour(40)
+     INTEGER   :: obj_reflec(40)
+     INTEGER   :: obj_fudge (40)
+     REAL      :: obj_factor(40)
+     INTEGER   :: obj_material(40)
+     INTEGER   :: obj_orientation(40)
+     INTEGER   :: obj_n(40,2)
+     REAL      :: obj_r(40,2)
+     REAL      :: obj_z(40,2)
+     REAL      :: obj_psi(40,2)
+     REAL*8    :: obj_scale(40)
+     REAL      :: obj_yangle(40)
+     INTEGER   :: obj_sym(40)
+     CHARACTER :: obj_fname(40)*256
      INTEGER       :: int_num
      INTEGER       :: int_type(MAXNINT)    ! Put these in a structure?
      INTEGER       :: int_colour(MAXNINT)
@@ -298,6 +308,7 @@ MODULE MOD_OUT985
      INTEGER   :: img_nxratio
      INTEGER   :: img_nyratio
      ! Reflection models:
+     INTEGER   :: ref_opt
      INTEGER   :: ref_num
      INTEGER   :: ref_model(10)
      INTEGER   :: ref_wlgth(10)
@@ -323,19 +334,39 @@ MODULE MOD_OUT985
      ! Plots
      INTEGER        :: nplots
      CHARACTER(512) :: plots(MAXNPLOT)
-  ENDTYPE type_options985
+     ! Ribbon grid:
+     INTEGER        :: rib_n
+     INTEGER        :: rib_option(  MAX_OPT_RIB)
+     INTEGER        :: rib_nrad  (  MAX_OPT_RIB)  ! Number of steps between (r1,z1) and (r2,z2)
+     REAL           :: rib_r     (2,MAX_OPT_RIB)  ! Line segment defining the origin of the ribbon grid
+     REAL           :: rib_z     (2,MAX_OPT_RIB)
+     INTEGER        :: rib_nphi  (  MAX_OPT_RIB)
+     REAL           :: rib_phi   (2,MAX_OPT_RIB)
+     REAL           :: rib_scale (  MAX_OPT_RIB)
+     INTEGER        :: rib_trace (  MAX_OPT_RIB)  ! Which field line tracing program to call
+     REAL           :: rib_dphi  (  MAX_OPT_RIB)  ! Resolution of the field line tracing step, i.e. how far to go when adjusting the pitch of the trace
+     CHARACTER(128) :: rib_tfile (  MAX_OPT_RIB)  ! File name for field line trace data (from CASTEM at the moment)
+     INTEGER        :: rib_limit (  MAX_OPT_RIB)  ! Limit the extent of the field line generation
+     INTEGER        :: rib_param (4,MAX_OPT_RIB)  
+     CHARACTER(128) :: rib_tag   (  MAX_OPT_RIB)
 
+     REAL           :: rib_r1    (  MAX_OPT_RIB)  ! region of interest (OPTION=2)
+     REAL           :: rib_r2    (  MAX_OPT_RIB)
+     REAL           :: rib_s1    (  MAX_OPT_RIB)
+     REAL           :: rib_s2    (  MAX_OPT_RIB)
+
+     INTEGER        :: rib_wipe  (  MAX_OPT_RIB)
+
+  ENDTYPE type_options985
 
 
 !  TYPE(type_3D_object), PUBLIC, ALLOCATABLE, SAVE :: obj(:)
 !  TYPE(type_view)     , PUBLIC, ALLOCATABLE, SAVE :: pixel(:)
-  TYPE(type_view)     , PUBLIC, ALLOCATABLE, SAVE :: s_chord(:)  ! Just for plotting chords... 
-
-
+  TYPE(type_view)     , PUBLIC, ALLOCATABLE, SAVE :: s_chord(:),p_chord(:)  ! Just for plotting chords... 
 
 
 !  INTEGER, PUBLIC, SAVE :: NOBJ, NPIXEL, NCHORD
-  INTEGER, PUBLIC, SAVE :: nchord
+  INTEGER, PUBLIC, SAVE :: nchord,n_pchord
 
 ! Object properties:  
   INTEGER,PUBLIC :: OP_INTEGRATION_VOLUME  , OP_EMPTY
@@ -367,7 +398,7 @@ MODULE MOD_OUT985
   !...  Utility, wall lists:
   INTEGER, PUBLIC :: nvwlist,ngblist,noblist
   INTEGER, PUBLIC, TARGET, ALLOCATABLE :: vwlist(:,:),gblist(:,:)
-  INTEGER, PUBLIC, TARGET :: oblist(20,2)
+  INTEGER, PUBLIC, TARGET :: oblist(40,2)
 
   INTEGER, PUBLIC :: nvwinter,ngbinter,nobinter
   ! jdemod - these need to be declared allocatable
@@ -410,16 +441,17 @@ CONTAINS
 !    RETURN
 !  END SUBROUTINE DEALLOC_PIXEL
 
+
   SUBROUTINE ALLOC_CHORD(NCHORD)
     INTEGER, INTENT(IN) :: NCHORD
-    IF (ALLOCATED(s_CHORD)) RETURN
-    ALLOCATE (s_CHORD(NCHORD))
+    IF (.NOT.ALLOCATED(s_chord)) ALLOCATE (s_CHORD(NCHORD))
+    IF (.NOT.ALLOCATED(p_chord)) ALLOCATE (p_CHORD(NCHORD))
     RETURN
   END SUBROUTINE ALLOC_CHORD
 
   SUBROUTINE DEALLOC_CHORD  ! *REMOVE/REPLACE*
-    IF (.NOT.ALLOCATED(s_CHORD)) RETURN
-    DEALLOCATE (s_CHORD)
+    IF (ALLOCATED(s_chord)) DEALLOCATE (s_CHORD)
+    IF (ALLOCATED(p_chord)) DEALLOCATE (p_CHORD)
     RETURN
   END SUBROUTINE DEALLOC_CHORD
 
@@ -474,6 +506,7 @@ CONTAINS
     ENDIF
     RETURN
   END SUBROUTINE ALLOC_SURFACE
+
 
   SUBROUTINE Alloc_Vertex(memsize,mode)
     INTEGER :: memsize,mode
@@ -560,11 +593,127 @@ MODULE MOD_OUT985_VARIABLES
 
 
 END MODULE MOD_OUT985_VARIABLES
-
-
-
+!
+! ======================================================================
+!
 MODULE MOD_OUT985_PLOTS
 
   REAL, PUBLIC :: map1x,map2x,map1y,map2y
 
 END MODULE MOD_OUT985_PLOTS
+!
+! ======================================================================
+!
+MODULE mod_out985_ribbon
+  USE mod_out985
+
+  PUBLIC
+
+  INTEGER :: trace_n  ,  &
+             maxntrace,  &
+             ntrace   ,  &
+             wipe_n   ,  &
+             wipe_list(100)
+
+  INTEGER, ALLOCATABLE :: trace_i(:,:)
+  REAL*8 , ALLOCATABLE :: trace  (:,:)
+
+  REAL*8 crop_r1,crop_r2,crop_s1,crop_s2  ! active region of interest
+
+  CONTAINS
+! ----------------------------------------------------------------------
+  SUBROUTINE AllocTrace(memsize,mode)
+    IMPLICIT none
+
+    INTEGER, INTENT(IN) :: memsize,mode
+
+    INTEGER, PARAMETER :: TRACE_SIZESTEP = 100000
+
+    REAL*8, ALLOCATABLE :: tmptrace(:,:)
+    INTEGER :: istat,i1
+
+    SELECTCASE (mode)
+      ! ----------------------------------------------------------------
+      CASE (MP_INITIALIZE) 
+        IF (ALLOCATED(trace)) THEN
+          WRITE(0,*) 'ERROR AllocTrace: TRACE array already allocated'
+          STOP
+        ENDIF
+        ntrace = 0
+        maxntrace = memsize       
+        IF (maxntrace.EQ.-1) maxntrace = TRACE_SIZESTEP
+        ALLOCATE(trace(5,maxntrace),STAT=istat)
+        IF (istat.NE.0) THEN
+          WRITE(0,*) 'ERROR AllocTrace: Problem allocating array'
+          STOP      
+        ENDIF
+        trace = 0.0D0
+      ! ----------------------------------------------------------------
+      CASE (MP_INCREASE_SIZE)
+        IF (.NOT.ALLOCATED(trace)) THEN
+          WRITE(0,*) 'ERROR AllocTrace: Cannot resize, array not allocated'
+          STOP
+        ENDIF
+        ALLOCATE(tmptrace(5,ntrace),STAT=istat)     
+        IF (istat.NE.0) THEN
+          WRITE(0,*) 'ERROR AllocTrace: Cannot allocate TMPTRACE'
+          STOP      
+        ENDIF
+        tmptrace = 0.0D0
+        DO i1 = 1, 5
+          tmptrace(i1,1:ntrace) = trace(i1,1:ntrace)
+        ENDDO
+        DEALLOCATE(trace)
+        IF (memsize.EQ.-1) THEN
+          maxntrace = maxntrace + TRACE_SIZESTEP
+        ELSE
+          maxntrace = maxntrace + memsize
+        ENDIF
+        ALLOCATE(trace(5,maxntrace))
+        IF (istat.NE.0) THEN
+          WRITE(0,*) 'ERROR AllocTrace: Cannot reallocate TRACE'
+          STOP      
+        ENDIF
+        DO i1 = 1, 5
+          trace(i1,1:ntrace) = tmptrace(i1,1:ntrace)
+        ENDDO
+        DEALLOCATE(tmptrace)
+      ! ----------------------------------------------------------------
+      CASE DEFAULT
+        WRITE(0,*) 'ERROR AllocTrace: Unrecognised mode'
+        STOP      
+      ! ----------------------------------------------------------------
+    ENDSELECT
+    RETURN
+  END SUBROUTINE AllocTrace
+!
+! ----------------------------------------------------------------------
+!
+END MODULE mod_out985_ribbon
+!
+! ======================================================================
+!
+MODULE MOD_OUT985_CLEAN
+
+  PUBLIC :: ALLOC_RESET
+
+  CONTAINS
+
+  SUBROUTINE DEALLOC_ALL
+    USE mod_out985
+    USE mod_out985_variables
+    USE mod_out985_ribbon
+    nobj = 0
+    nsrf = 0
+    nvtx = 0
+    ntrace = 0
+    IF (ALLOCATED(obj  )) DEALLOCATE (obj  )
+    IF (ALLOCATED(srf  )) DEALLOCATE (srf  )
+    IF (ALLOCATED(vtx  )) DEALLOCATE (vtx  )
+    IF (ALLOCATED(trace)) DEALLOCATE (trace)
+    RETURN
+  END SUBROUTINE DEALLOC_ALL
+
+END MODULE MOD_OUT985_CLEAN
+
+

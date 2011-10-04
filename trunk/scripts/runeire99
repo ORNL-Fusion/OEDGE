@@ -112,7 +112,7 @@ ln -s $DIVRUNDIR/$CASENAME/fort.17 fort.31
 #
 # jdemod - link in Eirene04 database since it looks like Eirene99 was modified to expect it ...
 #
-#ln -s $EIREXE99DIR/TRIM/trim.dat fort.21
+ln -s $EIREXE99DIR/TRIM/trim.dat fort.21
 #
 # 
 

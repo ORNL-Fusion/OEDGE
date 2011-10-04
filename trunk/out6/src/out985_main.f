@@ -494,7 +494,7 @@ c      WRITE(0,*) 'A: done 4'
 c
 c ====================================================================== 
 c
-      SUBROUTINE ProcessPixels(npixel,pixel)
+      SUBROUTINE ProcessPixels(npixel,pixel,title)
       USE mod_out985
       USE mod_out985_variables
       USE mod_interface
@@ -502,19 +502,22 @@ c
 c...  Input:
       INTEGER npixel
       TYPE(type_view) :: pixel(npixel)
+      CHARACTER, INTENT(IN) :: title*(*)
 
       REAL Clock2
 
+      REAL, PARAMETER :: PI = 3.141593
+
       INTEGER   i1,i2,i3,i4,status,fp,fp2,m,n,codec,iobj,ierr,volcnt,
-     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet
+     .          pixcnt,ndum1,npts,vcount,ipixel,nybin,nxbin,idet,npro
       LOGICAL   ascii,message
-      REAL      rtime,ttime
+      REAL      rtime,ttime,fact
       REAL*8    int_sum,solid_total,solid_angle
-      CHARACTER file*1024
+      CHARACTER file*1024,tag*9,dummy*256
 
       INTEGER, ALLOCATABLE :: idum1(:)
 
-      REAL*8, ALLOCATABLE, TARGET :: ddum1(:)
+      REAL*8, ALLOCATABLE, TARGET :: ddum1(:),ddum2(:,:)
       REAL*4, ALLOCATABLE, TARGET :: mapchk(:)
       REAL*4, ALLOCATABLE, TARGET :: rdum1(:)
 
@@ -610,7 +613,10 @@ c...  Assemble a list of wall surfaces to speed things up:  (30% faster for curr
         DO i2 = 1, MAX(obj(i1)%nsur,obj(i1)%nside)
 c...      Check if surface is part of the vessel wall:
           IF (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL  ) nvwlist = nvwlist+1
-          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) ngblist = ngblist+1
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME))
+     .      ngblist = ngblist+1
         ENDDO
       ENDDO
       ALLOCATE (vwlist(nvwlist,2))
@@ -624,7 +630,10 @@ c...      Check if surface is part of the vessel wall:
             i3 = i3 + 1
             vwlist(i3,1) = i1
             vwlist(i3,2) = i2
-          ELSEIF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY) THEN
+          ENDIF
+          IF (obj(i1)%tsur(i2).EQ.SP_GRID_BOUNDARY.OR.
+     .        (obj(i1)%tsur(i2).EQ.SP_VESSEL_WALL       .AND.
+     .         obj(i1)%type    .EQ.OP_INTEGRATION_VOLUME)) THEN
             i4 = i4 + 1
             gblist(i4,1) = i1
             gblist(i4,2) = i2
@@ -638,8 +647,9 @@ c...      Check if surface is part of the vessel wall:
       WRITE(0,*) '  DONE',nvwlist,ngblist
 
 
-      ALLOCATE(ddum1(n))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(rdum1(100))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum1(n                          ))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(rdum1(100                        ))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
       pixcnt = m
@@ -648,14 +658,33 @@ c...      Check if surface is part of the vessel wall:
 
 c...  MPI!  (for MPI to work the various lists -- vw,gb,ob -- need to be passed like the objects are passed, I think)
 
-
+c...  Collect data, time and case information:
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
 
       vcount = 0
 
 c...  Loop over pixels:
 c      DO i1 = 200000, npixel
 c      DO i1 = 4325, 4325
+
+      idet = 1
+      opt%ccd = opt%det_ccd(idet)
+      WRITE(0,*) '================= IDET=',idet,'================='
+
       DO i1 = 1, npixel
+
+c...    Keep track of which detector the current pixel belongs to:
+        IF (i1.GT.opt%det_iend(idet)) THEN
+          idet = idet + 1
+          opt%ccd = opt%det_ccd(idet)
+          WRITE(0,*) '================= IDET=',idet,'================='
+        ENDIF
 
         IF (MOD(i1,MAX(1,npixel/10)).EQ.0) 
 c        IF (MOD(i1,1).EQ.0) 
@@ -665,7 +694,10 @@ c        IF (MOD(i1,1000).EQ.0)
         status = 0
 
         ddum1 = 0.0D0
-        pixel(i1)%track => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        ddum2 = 0.0D0
+        pixel(i1)%track   => ddum1  ! Dont' make part of view derived type definition, just send on its own?
+        pixel(i1)%nprofile = 0
+        pixel(i1)%profile => ddum2  ! Dont' make part of view derived type definition, just send on its own?
 
         rdum1 = 0.0
 c        pixel(i1)%spectrum => rdum1  ! also a problem...
@@ -740,6 +772,141 @@ c...        Add some brains:
         ELSE
         ENDIF
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
+
+
+        IF (.FALSE..AND.   ! *** PROFILE HACK ***
+     .      (i1.EQ.opt%det_istart(idet).OR.
+     .       i1.EQ.opt%det_iend  (idet).OR.
+     .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
+     .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
+          WRITE(file,'(A,I0.3,256X)')          
+     .      'idl.profile_'//TRIM(opt%det_fname(idet))//'_',
+     .      i1-opt%det_istart(idet)+1
+c          WRITE(0,*) ' FILE:'//TRIM(file)
+          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          npro=pixel(i1)%nprofile
+          CALL inPutData(pixel(i1)%profile(1:npro,-5),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-4),'DELTA' ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-3),'WEIGHT','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-2),'NE'    ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-1),'TE'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro, 0),'TI'    ,'eV' )
+c          write(0,*) 'opt%int_num=',opt%int_num
+          DO i2 = 1, MAX(1,opt%int_num)
+            WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
+            CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'N/A')
+          ENDDO
+          CALL inCloseInterface
+c...      Dump to a more accessible ASCII file:
+          WRITE(file,'(A,I0.3,256X)')          
+     .      'profile.'//TRIM(opt%det_fname(idet))//'_',
+     .      i1-opt%det_istart(idet)+1
+          fp = 99
+
+          OPEN(fp,FILE=file(1:LEN_TRIM(file)),
+     .         FORM='FORMATTED',STATUS='REPLACE',ERR=97)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '* CASE            '//TRIM(dummy(21:))
+          WRITE(fp,'(A)') '* TITLE           '//TRIM(title)
+          WRITE(fp,'(A)') '* DATE AND TIME   '//dummy(1:18)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{DATA FILE VERSION}'
+          WRITE(fp,'(A)') '     1.0'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{VIEW IDENTIFIER AND CHORD INDEX}'
+          WRITE(fp,*) '  '//TRIM(opt%det_fname(idet)),
+     .                i1-opt%det_istart(idet)+1
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{R,Z START AND END POINTS OF THE CHORD (m)}'
+          WRITE(fp,'(3F10.4)') pixel(i1)%global_v1(1:2)
+          WRITE(fp,'(3F10.4)') pixel(i1)%global_v2(1:2)
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{EMISSION SIGNALS}'   
+          WRITE(fp,*) opt%int_num
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* Z          - atomic number of particle'
+          WRITE(fp,'(A)') '* A          - atomic weight'
+          WRITE(fp,'(A)') '* CHARGE     - electric charge'
+          WRITE(fp,'(A)') '* WAVELENGTH - of the line'
+          WRITE(fp,'(A)') '* INTEGRAL   - signal strength integrated '//
+     .      'along the chord, in units of [photons ster-1 '//
+     .      'm-2 s-1]'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A2,A6,3A8,2A12)') 
+     .      '* ','SIGNAL','Z'   ,'A'   ,'CHARGE','WAVELENGTH','INTEGRAL'
+          WRITE(fp,'(A2,A6,3A8,2A12)')
+     .      '* ','     ','    ','     ','      ','(nm)'      ,'        '
+          fact = 4.0 * PI
+          DO i2 = 1, opt%int_num
+            WRITE(fp,'(2X,I6,3I8,F12.2,1P,E12.2,0P)') i2,
+     .        opt%int_z         (i2)     ,
+     .        opt%int_a         (i2)     ,
+     .        opt%int_charge    (i2)     ,
+     .        opt%int_wlngth    (i2)     ,
+     .        pixel(i1)%integral(i2)/fact
+          ENDDO
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* ---------------------------------------'//
+     .                      '-------------------------------'//
+     .                      '-------------------------------'
+          WRITE(fp,'(A)') '{INTEGRATION VOLUMES}'
+          WRITE(fp,*) npro
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* DIST   - distance along the chord '//
+     .      '(line-of-sight)'
+          WRITE(fp,'(A)') '* DELTA  - length of the path through the '//
+     .      'current integation volume (triangular "cell")'
+          WRITE(fp,'(A)') '* WEIGHT - set to unity for now, but will '//
+     .      'be used when reflections are included in the analysis'
+          WRITE(fp,'(A)') '* n_e    - electron density'
+          WRITE(fp,'(A)') '* T_e    - electron temperature'
+          WRITE(fp,'(A)') '* T_i    - background hydrogenic ion '//
+     .      'temperature'
+          WRITE(fp,'(A)') '* n_D    - deuterium atom density'
+          WRITE(fp,'(A)') '* n_D2   - deuterium molecule density'
+          WRITE(fp,'(A)') '* n_i+X  - density of impurity with charge X'
+          WRITE(fp,'(A)') '* SIGNAL - local emission in units of '//
+     .      '[photons ster-1 m-3 s-1]'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A2,A6,4A10,2A8,6A10,10(A9,I1))') 
+     .      '* ','INDEX','DIST','DELTA','WEIGHT','n_e'  ,'T_e' ,'T_i',
+     .      'n_D','n_D2',
+     .      'n_i+0','n_i+1','n_i+2','n_i+3',
+     .      ('SIGNAL_',i2,i2=1,opt%int_num)
+          WRITE(fp,'(A2,A6,4A10,2A8,6A10)') 
+     .      '* ',' '    ,'(m)' ,'(m)'  ,' '     ,'(m-3)','(eV)','(eV)',
+     .      ('(m-3)',i2=1,6)
+50 	  FORMAT(50X,10I10)
+51 	  FORMAT(50X,1P,10F10.2,0P)
+          DO i2 = 1, npro
+            WRITE(fp,'(2X,I6,1P,4E10.2,0P,2F8.1,1P,16E10.2,0P)') i2,
+     .        pixel(i1)%profile(i2,-5),  ! path
+     .        pixel(i1)%profile(i2,-4),  ! delta
+     .        pixel(i1)%profile(i2,-3),  ! weight
+     .        pixel(i1)%profile(i2,-2),  ! ne
+     .        pixel(i1)%profile(i2,-1),  ! te
+     .        pixel(i1)%profile(i2, 0),  ! ti
+     .        pixel(i1)%profile(i2,-7),  ! nD
+     .        pixel(i1)%profile(i2,-6),  ! nD2
+     .        pixel(i1)%profile(i2,-11:-8),  !  4 lowest impurity charge states
+     .       (pixel(i1)%profile(i2,i3)/fact,i3=1,opt%int_num)
+          ENDDO
+          CLOSE(fp)
+        ENDIF
       ENDDO  ! Pixel loop
 
 c...  Confirm that all volumes on the inversion mesh were sampled by the
@@ -879,6 +1046,7 @@ c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
 c...  Clear arrays:
       DEALLOCATE(idum1)
       DEALLOCATE(ddum1)
+      DEALLOCATE(ddum2)
       DEALLOCATE(rdum1)
       DEALLOCATE(vwlist)
       DEALLOCATE(gblist)
@@ -1424,6 +1592,8 @@ c
               CALL ProcessTetrahedronGrid (ielement)
             CASE (7)
               CALL LoadImageReconstruction(ielement)
+            CASE (8)
+              CALL rayLoadITERFWP         (ielement)
             CASE DEFAULT
               CALL User_CustomObjects     (ielement)
           ENDSELECT
@@ -1531,12 +1701,14 @@ c ======================================================================
 c
 c subroutine: Main985
 c
-      SUBROUTINE Main985(iopt)
+      SUBROUTINE Main985(iopt,title)
       USE mod_out985
       USE mod_out985_variables
+      USE mod_out985_clean
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: iopt
+      INTEGER  , INTENT(IN) :: iopt
+      CHARACTER, INTENT(IN) :: title*(*)
 
       REAL*8, PARAMETER :: PI = 3.141592654
 
@@ -1559,8 +1731,13 @@ c      MAX3D = MAX3D985
 
       WRITE(0,*) 'HERE IN 985'
 
+c     Just in case there are previous allocations from OUT987 tetrahedron plots:
+      CALL Wrapper_ClearObjects  
+      CALL DEALLOC_ALL
+
       WRITE(0,*) '  ALLOCATING OBJECTS'
       MAX3D = 500000 
+c      MAX3D = 1500000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
@@ -1571,7 +1748,7 @@ c      MAX3D = 4000000
       ALLOCATE(pixel(MAXNPIXEL))
 
 c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
-      CALL ALLOC_CHORD(10000)  ! Just for viewing! (make smaller!)
+      CALL ALLOC_CHORD(22500)  ! Just for viewing! (make smaller!)
 
       opt%load = 1
 
@@ -1583,17 +1760,22 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
 
       npixel = 0
       nchord = 0
+      n_pchord = 0
+
+      opt%ref_opt = 0
 
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
-      opt%nplots = -1
+      opt%nplots  = -1
 
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
         opt%int_num = 0
         opt%ref_num = 0
-        opt%ndet = 0
+        opt%ndet    = 0
+        opt%rib_n   = 0
+
         CALL LoadOptions985_New(opt,ALL_OPTIONS,status)
       ENDIF
 
@@ -1609,6 +1791,7 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
             IF (save_opt_ccd.EQ.0) save_opt_ccd = opt%ccd
 
             opt%ndet = opt%ndet + 1
+            opt%det_ccd  (opt%ndet) = opt%ccd  
             opt%det_nxbin(opt%ndet) = opt%nxbin
             opt%det_nybin(opt%ndet) = opt%nybin
             opt%det_fname(opt%ndet) = opt%fmap
@@ -1658,42 +1841,36 @@ c      STOP 'DONE MAN'  ! LEFT OFF
 c      opt%ob_nsector = -1
 c      opt%ob_invgrd  =  0
 
-c      IF (opt%ob_model.GT.0) THEN
-        WRITE(0,*) '  BUILDING 3D OBJECTS'
-c        WRITE(0,*) '    toroidal extent ',
-c     .    opt%ob_nsector,opt%ob_angle_start,
-c     .    opt%ob_angle_end,opt%ob_yrotation
-c        WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
-c        WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
-c        WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
-c        WRITE(0,*) '    vessel wall     ',opt%ob_wall
-c        WRITE(0,*) '    targets         ',opt%ob_targ
-c        WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
-c        WRITE(0,*) '    field line(s)   ',opt%ob_line
-c        WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
+
+      WRITE(0,*) '  BUILDING 3D OBJECTS'
+c      WRITE(0,*) '    toroidal extent ',
+c     .  opt%ob_nsector,opt%ob_angle_start,
+c     .  opt%ob_angle_end,opt%ob_yrotation
+c      WRITE(0,*) '    standard  grid  ',opt%ob_stdgrd
+c      WRITE(0,*) '    triangle  grid  ',opt%ob_trigrd
+c      WRITE(0,*) '    inversion grid  ',opt%ob_invgrd
+c      WRITE(0,*) '    vessel wall     ',opt%ob_wall
+c      WRITE(0,*) '    targets         ',opt%ob_targ
+c      WRITE(0,*) '    flux tube(s)    ',opt%ob_tube
+c      WRITE(0,*) '    field line(s)   ',opt%ob_line
+c      WRITE(0,*) '    user defined    ',opt%ob_user(1:10)
  
-        CALL BuildObjects
+      CALL BuildObjects
 
-        opt%obj_angle_start = 0.0
-        opt%obj_angle_end = 360.0
-        opt%obj_yrotation = 0.0
-        opt%obj_nsector = -1
+      opt%obj_angle_start = 0.0
+      opt%obj_angle_end   = 360.0
+      opt%obj_yrotation   = 0.0
+      opt%obj_nsector     = -1
+c...  Rotate all object vertices about the y-axis, to simulate when
+c     the camera is located somewhere other than straight in along
+c     the X or Z axes: 
+      CALL Calc_Transform2(mat,0.0D0,1,0)
+      CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
+      DO ivtx = 1, nvtx
+        CALL Transform_Vect(mat,vtx(1,ivtx))
+      ENDDO
 
-c...    Rotate all object vertices about the y-axis, to simulate when
-c       the camera is located somewhere other than straight in along
-c       the X or Z axes: 
-        CALL Calc_Transform2(mat,0.0D0,1,0)
-        CALL Calc_Transform2(mat,DBLE(opt%obj_yrotation*PI/180.0),2,1)
-        DO ivtx = 1, nvtx
-          CALL Transform_Vect(mat,vtx(1,ivtx))
-        ENDDO
-
-        WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
-c      ENDIF
-
-
-      IF (opt%int_num.GT.0) 
-     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
+      WRITE(0,*) '  DONE BUILDING 3D OBJECTS'
 
 
       WRITE(0,*) '  NCHORD',nchord
@@ -1702,15 +1879,23 @@ c      ENDIF
       WRITE(0,*) '  NSRF  ',nsrf
       WRITE(0,*) '  NVTX  ',nvtx
 
+c...
+      IF (opt%int_num.GT.0) 
+     .  CALL AssignEmissionData(MAXNPIXEL,npixel,pixel)
+
+c...
       IF (opt%ndet.GT.0) THEN
-
         WRITE(0,*) '  PROCESSING PIXELS'
-        CALL ProcessPixels(npixel,pixel)
-c        CALL ProcessPixels(opt,npixel,pixel,nobj,obj)
-c        CALL ProcessPixels
+        CALL ProcessPixels(npixel,pixel,title)
         WRITE(0,*) '  DONE PROCESSING PIXELS'
-
         CALL DumpImage(npixel,pixel)
+      ENDIF
+
+c...
+      IF (opt%rib_n.GT.0) THEN
+        WRITE(0,*) '  PROCESSING RIBBON'
+        CALL rayGenerateRibbonGrid
+        WRITE(0,*) '  DONE PROCESSING RIBBON'
       ENDIF
 
 
@@ -1743,6 +1928,7 @@ c      nobj985 = nobj
       IF (ALLOCATED(plasma)) DEALLOCATE(plasma)
 
 c...  Put into a subroutine:
+      nobj = 0
       IF (ALLOCATED(obj))   DEALLOCATE(obj)
       IF (ALLOCATED(pixel)) DEALLOCATE(pixel)
       CALL DEALLOC_CHORD

@@ -66,7 +66,7 @@ c slmod begin
 c...        Added cgridopt=6 for linear device grids:
 c...  jde - added cgridopt=7 for generalized grids
 c...  jde - added cgridopt=8 for ribbon grids
-      call rdi (cgridopt,.true.,0,.true.,8,'GRID OPTION          ',ierr)
+      call rdi (cgridopt,.true.,0,.true.,9,'GRID OPTION          ',ierr)
 c
 c      call rdi (cgridopt,.true.,0,.true.,3,'GRID OPTION          ',ierr)
 c slmod end
@@ -102,7 +102,16 @@ c
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 3,'HEATING OPT          ',IERR)
       CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
       CALL RDI (CIOPTF,.TRUE.,-1,.TRUE.,99,'SOL OPT              ',IERR)
-      call rdi (ccoreopt,.true.,-1,.true.,6,'Core Option         ',ierr)
+c slmod begin
+      call rdi (ccoreopt,.true.,-1,.true.,28,'Core Option        ',ierr)
+      if (ccoreopt.gt.6.and.ccoreopt.ne.28) then
+        write(0,*) 'ERROR READIN: INVALID CORE OPTION'
+        ierr=1
+        return
+      endif
+c
+c      call rdi (ccoreopt,.true.,-1,.true.,6,'Core Option         ',ierr)
+c slmod end
       CALL RDI (CIOPTG,.TRUE., 0,.TRUE.,99,'PLASMA DECAY OPT     ',IERR)
 c slmod begin
 c...  Need to store these because they are overwritten in BGPLASMA but 

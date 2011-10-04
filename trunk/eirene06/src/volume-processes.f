@@ -4760,12 +4760,12 @@ C
 c     ***********************************************************
 c     *                                                         *
 c     *Programm zur Berechnung der Streuwinkel bei vorgegebener *
-c     *Energie und Zufallszahl (Monte-Carlo-Simulation) für eine*
+c     *Energie und Zufallszahl (Monte-Carlo-Simulation) fÃ¼r eine*
 c     *atomare Reaktion.                                        *
 c     *Die verschiedenen Reaktionen werden mittels der Daten von*
 c     *P.S. Krstic und D.R. Schultz (Atomic and Plasma-Material *
 c     *Interaction Data for Fusion), Differentielle Querschnitte*
-c     *mit zugehörigen Winkeln, berechnet.                      *
+c     *mit zugehÃ¶rigen Winkeln, berechnet.                      *
 c     *Das Programm berechnet Reaktionen zwischen Energien von  *
 c     *0.1 eV und 100 eV (CM). Dabei sind 31 Energiewerte aus   *
 c     *den o.g.Daten vorgegeben.                                *
@@ -4775,11 +4775,11 @@ c     *          Zufallszahl/Flag    : RAN                      *
 c     *Output:   Verwendete Energie: energy                     *
 c     *          Streuwinkel: eltheta (elastisch)               *
 c     *                       cttheta (ladungsaustausch)        *
-c     *Totale Streuquerschnitte + Momente für alle Energien:    *
+c     *Totale Streuquerschnitte + Momente fÃ¼r alle Energien:    *
 c     *  sigma(i), gamma(i), moment(i), viscos(i)               *
 c     *mit dem Feldindex i der Energie (zugeh. Vorgabe i=m).    *
 c     *                                                         *
-c     *Mögliche Energien: Feld energy(i)                        *
+c     *MÃ¶gliche Energien: Feld energy(i)                        *
 c     *Winkel der diff.Querschnitte abh.von Energie: theta(k,i) *
 c     *mit k=1..768                                             *
 c     *                                                         *
@@ -5029,6 +5029,8 @@ C
       INTEGER :: I, IRPI, IRDS
 
 !pb      tpb1 = second_own()
+
+      WRITE(0,*) 'DEBUG: SETAMD, ical=',ical 
 
       IF (ICAL == 0) THEN
         NRCX=0
@@ -8812,6 +8814,12 @@ C
       IPLTI=MPLSTI(IPL)
 C
 C  1ST SECONDARY INDEX
+c slmod begin - debug
+      WRITE(0,*) 'debugging',-1
+      WRITE(0,*) 'ircx =',ircx  
+      WRITE(0,*) 'n1stx=',n1stx(ircx,1)
+      WRITE(0,*) 'iscd1=',iscd1
+c slmod end
       N1STX(IRCX,1)=IDEZ(ISCD1,1,3)
       N1STX(IRCX,2)=IDEZ(ISCD1,3,3)
       N1STX(IRCX,3)=0

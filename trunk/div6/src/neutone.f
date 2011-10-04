@@ -99,6 +99,11 @@ c
 c     IPP/08 Krieger - initialized variable IT to avoid runtime error
 c     in write statment further down
       it = 0
+c slmod begin
+c...  Needs initialization:
+      totrf = 0
+      maxrf = 0
+c slmod end
 c
 c     Set other initialization values - use iprod for local ion index 
 c
@@ -1089,8 +1094,23 @@ c
                    SSTRUK = SSTRUK + SPUTY
 c
 	           ! Add to deposition.
-                   NEROS (INT (wallpt (INDI,18)),1) = 
-     >                        NEROS (INT (wallpt (INDI,18)),1) + SPUTY
+c slmod begin
+c... This is causing problems on the extended ITER grid because WALLPT(INDI,18) is
+c    zero: -SL, 01/07/2011
+c    
+                   IF (WALLPT(INDI,18).EQ.0) THEN
+                     WRITE(0,*) 'ERROR: WALLPT(INDI,18).EQ.0 in '//
+     >                          'NEUTONE.f when dropping trapped neuts'
+                     WRITE(6,*) 'ERROR: WALLPT(INDI,18).EQ.0 in '//
+     >                          'NEUTONE.f when dropping trapped neuts'
+                   ELSE
+                     NEROS (INT (wallpt (INDI,18)),1) = 
+     >                          NEROS (INT (wallpt (INDI,18)),1) + SPUTY
+                   ENDIF
+c
+c                   NEROS (INT (wallpt (INDI,18)),1) = 
+c     >                        NEROS (INT (wallpt (INDI,18)),1) + SPUTY
+c slmod end
 c
                    if (mtccnt.gt.0) then 
                       MTCSTRUK = MTCSTRUK + SPUTY
