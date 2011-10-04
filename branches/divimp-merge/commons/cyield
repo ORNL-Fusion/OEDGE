@@ -1,7 +1,0 @@
-c     -*-Fortran-*-
-C                                                                       
-      COMMON /CYIELD/ CETH,CETF,CQ,CIDATA,NTARS                               
-      save /CYIELD/
-      REAL            CETH(7,12),CETF(7,12),CQ(7,12)                    
-      integer         ntars
-      LOGICAL         CIDATA(7,12)                                      

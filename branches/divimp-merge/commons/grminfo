@@ -1,9 +1,0 @@
-c     -*-Fortran-*-
-c
-c     Common block information for GRM plots 
-c
-      common /grminfo/ pageplots,textsize,axistextsize
-      save /grminfo/
-c
-      integer pageplots,textsize,axistextsize
-c
