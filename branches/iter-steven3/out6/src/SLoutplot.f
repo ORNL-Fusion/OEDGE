@@ -4549,7 +4549,6 @@ c
       INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2
       REAL      array(MAXNKS,MAXNRS),crmi2,absfac2
       CHARACTER title*(*)
-      CHARACTER title*(*)
 
       IF     (iopt.EQ.2) THEN
         RETURN

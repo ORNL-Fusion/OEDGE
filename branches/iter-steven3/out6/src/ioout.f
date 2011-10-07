@@ -2447,7 +2447,16 @@ c
          if (line_profile_opt.ne.0) then 
              read(8) lp_wave,lp_instrument_width,
      >             lp_bin_width,lp_robs,lp_zobs,lp_theta,lp_dtheta
-             CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
+c slmod begin
+c            See not in the corresponding call in DIVSTORE.F. -SL, 07/10/2011
+             IF (version_code.GE.6*maxrev+42) THEN
+               CALL R8INOUT ('R LP    ',line_profile,max_lp_bins*2+1)
+             ELSE
+               CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
+             ENDIF
+c
+c             CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
+c slmod end
              CALL R8INOUT ('R MOD_LP',mod_line_profile,max_lp_bins*2+1)
          endif     
 c

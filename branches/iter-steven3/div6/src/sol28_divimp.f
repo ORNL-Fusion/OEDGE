@@ -527,6 +527,7 @@ c...  Count number of cells:
         IF (ir.LT.irsep) ike = ike - 1
         ncell = ncell + ike 
       ENDDO
+
 c...  Declare global arrays:
       nfield    = ncell
       npin      = ncell
@@ -535,9 +536,7 @@ c...  Declare global arrays:
       nkinetic  = 1     
       nfluid    = ncell
       nimpurity = 1
-      ALLOCATE(tube      (ntube))
-      ALLOCATE(tube_state(ntube))
-      tube_state = 0
+      ALLOCATE(tube    (ntube ))
       ALLOCATE(tube_state(ntube))
       tube_state = 0
       ALLOCATE(cell    (ncell ))
@@ -560,7 +559,6 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
-      ! jdemod - note - dangle set to 0.0 and is used in division later but not assigned a real value
       dangle = 0.0
 c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
@@ -663,7 +661,6 @@ c
 c         end jdemod
 c
         ENDDO
-
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN
@@ -3490,6 +3487,7 @@ c ========================================================================
 c
       SUBROUTINE ReadGeneralisedGrid_OSM(gridunit,ik,ir,
      .                                   rshift,zshift,indexiradj)
+      USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
       IMPLICIT none
@@ -3520,6 +3518,17 @@ c
       irtrap     = grid_load%irtrap
       nrs        = grid_load%nrs
       nks(1:nrs) = grid_load%nks(1:nrs)
+
+
+      IF (irsep2.EQ.-1) irsep2 = irsep  ! *** is this OK? ***
+
+
+      write(0,*) 'irsep1 ',irsep
+      write(0,*) 'irsep2 ',irsep2
+      write(0,*) 'irwall1',irwall
+      write(0,*) 'irtrap1',irtrap
+      write(0,*) 'nrs1   ',nrs
+
 
       id = 0
       CALL ALLOC_GRID(MAXNKS,MAXNRS)
@@ -3553,6 +3562,9 @@ c...  Find IKTO,IKTI:
       IF (ikto.EQ.-1.OR.ikti.EQ.-1)
      .  CALL ER('Readgeneralisedgrid','IKTI and/or IKTO not found',*99)
 
+      CALL OutputData(85,'JUST FINISHED LOADING OSM GRID')
+
+
 c...  Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
 c      CALL InsertRing(1          ,BEFORE,PERMANENT)
 c      CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
@@ -3564,16 +3576,40 @@ c     MAXKPTS
 c     MAXRINGS
 c     CUTRING
 c
-      IF (ikto.EQ.0) THEN
-        nopriv = .TRUE.
-        CALL InsertRing(1  ,BEFORE,PERMANENT)
-        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      IF (opt%f_grid_format.EQ.2) THEN
+
+        IF (ikto.EQ.0) THEN
+          STOP 'NOT READY YET, HERE!'
+          nopriv = .TRUE.
+          CALL InsertRing(1  ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs,AFTER ,PERMANENT)
+        ELSE
+          nopriv = .FALSE.
+c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+          CALL InsertRing(1       ,BEFORE,PERMANENT)
+          CALL InsertRing(irwall+0,AFTER ,PERMANENT)
+          CALL InsertRing(irwall+1,BEFORE,PERMANENT)
+        ENDIF
+
+        WRITE(0,*) '-------------'
+        WRITE(0,*) '--GRID HACK--'
+        WRITE(0,*) '-------------'
+c        irwall = irwall + 1
+c        irtrap = irwall + 1
       ELSE
-        nopriv = .FALSE.
-c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
-        CALL InsertRing(1          ,BEFORE,PERMANENT)
-        CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
-        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+c...    This is fine for SONNET grids, where the number of core and PFZ
+c       rings are the same:
+        IF (ikto.EQ.0) THEN
+          nopriv = .TRUE.
+          CALL InsertRing(1  ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs,AFTER ,PERMANENT)
+        ELSE
+          nopriv = .FALSE.
+c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+          CALL InsertRing(1          ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+          CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+        ENDIF
       ENDIF
 
       cutpt1     = ikto
@@ -3582,6 +3618,8 @@ c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxkpts    = nks(irsep)
       maxrings   = irwall
       indexiradj = 1
+
+      write(0,*) 'cut,max',cutring,maxrings
 
       IF (.TRUE.) THEN
 c        id = 0
@@ -3747,6 +3785,3 @@ c...  Assign NBR:
       RETURN
  99   STOP
       END
-c
-c ========================================================================
-c

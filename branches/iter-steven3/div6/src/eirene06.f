@@ -3299,7 +3299,7 @@ c...      Identify which surface this triangle side is associated with, if any:
 
           IF (tri(i1)%map(v1).EQ.-1) THEN 
 c...        If this shows up again, it may be related to DTOL in PointOnLine:
-            WRITE(eirfp,*) 'PROBLEMS WITH MAP',i1
+            WRITE(eirfp,*) 'PROBLEMS WITH MAP (1)',i1  ! NEW EDIT !
             CALL WriteEireneTriangles
             CALL SaveTriangles_06
             CALL DumpGrid('PROBLEM #2 WITH TRIANGLE MAP')
@@ -3365,7 +3365,7 @@ c            IF (tri(i1)%map(v1).EQ.-1) THEN
 c...          If this shows up again, it may be related to DTOL in PointOnLine:
 c             Indeed, it showed up again, with the ITER grid iterm.carre.105, see above note
 c             related to malformed cells. -SL, 23.07.09
-              WRITE(eirfp,*) 'PROBLEMS WITH MAP',i1,v1
+              WRITE(eirfp,*) 'PROBLEMS WITH MAP (2)',i1,v1  ! NEW EDIT !
               WRITE(eirfp,*) ' >',tri(i1)%sur(1:3)
               WRITE(eirfp,*) ' >',surface(MAX(1,tri(i1)%sur(1:3)))%iliin
               WRITE(eirfp,*) ' >',tri(i1)%map(1:3)
@@ -3770,6 +3770,9 @@ c       list of triangles for sides that match up with these surfaces:
               IF (isrf.EQ.0) CYCLE
 
               index = surface(isrf)%index(6)  
+
+              WRITE(0,*) 'range ',range
+              WRITE(0,*) 'index ',index
 
               IF (surface(isrf)%type    .EQ.NON_DEFAULT_STANDARD  .AND.
      .            (surface(isrf)%subtype.EQ.MAGNETIC_GRID_BOUNDARY.OR.
