@@ -682,7 +682,7 @@ c     of the wall segment list:
       DO i1 = 1, nwall
         IF (wall(i1)%class.EQ.1) nwall_1 = i1
       ENDDO
-c      WRITE(0,*) 'nwall,_1:',nwall,nwall_1
+      WRITE(0,*) 'nwall,_1:',nwall,nwall_1
 
 c...  Re-index the wall so that it starts at the outer edge of
 c     the first low index target segment, as in DIVIMP:
@@ -752,6 +752,13 @@ c...  Final test:
 
       RETURN
  99   WRITE(0,*) ' MODE = ',mode
+      WRITE(0,*) 'WALL1 = ',wall(i1)%v2(1),wall(i1)%v2(2)
+      WRITE(0,*) 'WALL2 = ',wall(i2)%v1(1),wall(i2)%v1(2)
+      WRITE(88,*) 'I1=',i1
+      DO i1 = 1, nwall
+        WRITE(88,'(A,I6,4F12.6)') 
+     .    'wall:',i1,wall(i1)%v1(1:2),wall(i1)%v2(1:2)
+      ENDDO
       STOP
       END
 c
@@ -917,10 +924,11 @@ c...  Sequence the wall so that each line segment in the list follows
 c     the once it's geometrically connected to:
 c      WRITE(0,*) 'SEQUENCE WALL ONCE'
       CALL SequenceWall(1)
-      
+
+
 
 c      CALL GenerateOutputFiles
-c      STOP 'sdfsdfsd'
+
 
 c...  Store the pre-clipped wall so that it can be used to determine
 c     the properties of the target segments:
@@ -955,6 +963,7 @@ c...  Delete marked segments:
           nwall = nwall - 1
         ENDIF
       ENDDO
+
 
 c...  Add target segments:
       DO itube = 1, ntube
@@ -1002,7 +1011,8 @@ c     segments should be:
       DEALLOCATE(tmp_wall)   
 
 c...  Sequence the standard wall once again:
-c      WRITE(0,*) 'SEQUENCE WALL TWICE'
+      CALL SaveWallGeometry
+      WRITE(0,*) 'SEQUENCE WALL TWICE'
       CALL SequenceWall(2)
 
 c...  Resize the wall array so memory isn't wasted (assuming this procedure
@@ -1071,7 +1081,7 @@ c
       REAL      rdum1,rdum2
       REAL*8    a1,a2,b1,b2
 
-      debug = .FALSE.
+      debug = .TRUE.
 
       IF (logop.GT.0) THEN
         WRITE(logfp,*)
@@ -1112,11 +1122,14 @@ c       Output the OSM geometry data file that's read in by IDL:
           ENDDO
         ENDDO
         CLOSE(fp)
+        IF (debug) WRITE(0,*) 'Data file written, calling IDL'
 c       Call IDL:
-        CALL CIssue('idl grid_run.pro -quiet -args suppliment '//
+        CALL CIssue('idl grid_run.pro -args suppliment '//
+c        CALL CIssue('idl grid_run.pro -quiet -args suppliment '//
      .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
 c       Copy the data to <gridname>.sup for storage in the equilibrium 
 c       directory (the file is moved by the OSM run script):
+        IF (debug) WRITE(0,*) 'Copying IDL output file'
         CALL CIssue('cp grid.sup.out '//TRIM(opt%f_grid_file)//
      .              '.sup',ierr)
 c       Now try to open the supplimental data file:
@@ -1136,6 +1149,15 @@ c...  Load the supplimental data from the IDL file:
         SELECTCASE (version)
           CASE (1)
             READ(buffer,*,ERR=98) ipos,itube,rdum1,rdum2
+            IF (itube.GT.ntube) THEN 
+              WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
+     .                   'file not compatible with current grid, '//
+     .                   'rebuilding the file (itube)'
+              CLOSE(fp)
+              CALL CIssue('rm -f grid.sup',ierr)
+              CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
+              GOTO 10
+            ENDIF
             maxitube = MAX(maxitube,itube)
             IF (maxitube.GT.ntube) EXIT
             maxipos(itube) = ipos
@@ -1145,6 +1167,17 @@ c...  Load the supplimental data from the IDL file:
               icell = tube(itube)%cell_index(LO) - 1
             ENDIF
             icell = icell + 1
+            IF (icell.GT.tube(itube)%cell_index(HI)) THEN 
+              WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
+     .                   'file not compatible with current grid, '//
+     .                   'rebuilding the file (icell)'
+              WRITE(0,*) '  ITUBE=',itube
+              WRITE(0,*) '  ICELL=',icell,tube(itube)%cell_index(LO:HI)
+              CLOSE(fp)
+              CALL CIssue('rm -f grid.sup',ierr)
+              CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
+              GOTO 10
+            ENDIF
             field(icell)%bratio = rdum2
           CASE DEFAULT
             CALL ER('ProcessGrid','Unrecognised version number for '//
@@ -1279,13 +1312,17 @@ c      USE mod_grid_divimp
       TYPE(type_srf   ) newsrf
       TYPE(type_object) newobj
 
+       integer iobj_irsep
+      integer gettube
+
       INTEGER, PARAMETER :: GRD_LOAD_NEW = 2, GRD_LOAD_OLD = 1
 
-      debug = .FALSE.
+      debug = .TRUE.
 
 c      opt%f_grid_load_method = 2 ! 1
 
       SELECTCASE (opt%f_grid_load_method)
+c       ------------------------------------------------------------------
         CASE (GRD_LOAD_NEW)
           CALL LoadGeneralisedGrid
 c...      Assign geometry structures:
@@ -1307,7 +1344,19 @@ c...      Assign geometry structures:
             WRITE(0,*) ikti       
             WRITE(0,*) ikto       
             WRITE(0,*) nks(1:nrs)
+c           stop 'damn'
           ENDIF
+
+                DO ir = irsep,irsep
+                  DO ik = 1, nks(ir)
+                    id = imap(ik,ir) 
+
+                    WRITE(88,'(A,I6,2F10.6)') 'test:',id,
+     .                              knot(id)%rv(4),knot(id)%zv(4)
+                  ENDDO
+                ENDDO
+
+
 c...      Define arrays:
           ntube     = nrs
           ncell     = nknot
@@ -1319,6 +1368,8 @@ c...      Define arrays:
           nkinetic  = 1     
           nfluid    = ncell
           nimpurity = 1
+          ALLOCATE(tube_state(ntube))
+          tube_state = 0
           ALLOCATE(tube    (ntube ))
           ALLOCATE(cell    (ncell ))
           ALLOCATE(field   (nfield))
@@ -1374,6 +1425,10 @@ c...
 c...
             cell(ncell+1)%pbnd = 0.0
             cell(ncell+1)%sbnd = 0.0
+
+            if (irsep.eq.ir) iobj_irsep = nobj
+
+
             DO ik = 1, nks(ir)
               id = imap(ik,ir)
               ncell = ncell + 1
@@ -1404,6 +1459,11 @@ c              ENDIF
               newobj%segment(1) = 0
               newobj%phi        = 0.0
               newobj%nside      = 4
+ 
+c              IF (ir.EQ.irsep) 
+c     .              WRITE(88,'(A,I6,2F10.6)') 'what:',id,
+c     .                              knot(id)%rv(4),knot(id)%zv(4)
+
               DO iside = 1, 4
                 newsrf%type = SPR_LINE_SEGMENT
                 newsrf%obj  = ncell
@@ -1416,11 +1476,24 @@ c              ENDIF
                 a(2) = knot(id)%zv(i1)
                 a(3) = 0.0D0
                 newsrf%ivtx(1) = AddVertex(a) 
+              IF (ir.EQ.irsep) 
+     .          WRITE(88,*) newsrf%ivtx(1),
+     .                      vtx(1:2,newsrf%ivtx(1))
                 b(1) = knot(id)%rv(i2)
                 b(2) = knot(id)%zv(i2)
                 b(3) = 0.0D0
                 newsrf%ivtx(2) = AddVertex(b) 
                 newobj%iside(iside) = AddSurface(newsrf)
+
+              IF (ir.EQ.irsep) 
+     .          WRITE(88,*) newsrf%ivtx(2),
+     .                      vtx(1:2,newsrf%ivtx(2))
+
+              IF (ir.EQ.irsep) 
+     .              WRITE(88,'(A,4I6,4F10.6)') 'what:',id,iside,i1,i2,
+     .                 knot(id)%rv(i1),knot(id)%zv(i1),
+     .                 knot(id)%rv(i2),knot(id)%zv(i2)
+
                 IF (iside.EQ.1) THEN
                   c(1,:) = a(:)
                   c(2,:) = b(:)
@@ -1434,26 +1507,6 @@ c              ENDIF
           
               e(:) = 0.5D0 * (c(1,:) + c(2,:))
               f(:) = 0.5D0 * (d(1,:) + d(2,:))
-
-c Moved to osm_DeriveGridQuantities...
-c              deltap = SNGL(DSQRT((e(1)-f(1))**2 + (e(2)-f(2))**2))
-c              deltas = deltap / (field(ncell)%bratio + EPS10)
-c              IF (ik.GT.1) THEN
-c                cell(ncell)%pbnd(1) = cell(ncell-1)%pbnd(2)
-c                cell(ncell)%sbnd(1) = cell(ncell-1)%sbnd(2)
-c              ENDIF
-c              cell(ncell)%p  = cell(ncell)%pbnd(1) + 0.5 * deltap
-c              cell(ncell)%s  = cell(ncell)%sbnd(1) + 0.5 * deltas
-c              cell(ncell)%ds = deltas
-c              cell(ncell)%pbnd(2) = cell(ncell)%pbnd(1) + deltap
-c              cell(ncell)%sbnd(2) = cell(ncell)%sbnd(1) + deltas
-cc...          Calculate cell area and volume:
-c              DO i = 1, obj(nobj)%nside
-c                CALL GetVertex(nobj,i,x(i),y(i))
-c              ENDDO
-c              area   = SNGL(CalcPolygonArea(x,y,obj(nobj)%nside))
-c              volume = 2.0 * V_PI * cell(ncell)%cencar(1) * area
-c              cell(ncell)%vol = SNGL(volume)
 
 c...          Calculate target quantities:
               target = 0
@@ -1510,6 +1563,46 @@ c                ENDIF
               ENDIF
             ENDDO ! End of IK loop
 
+            IF (irsep.EQ.ir) THEN 
+
+
+        DO iobj = iobj_irsep+1, iobj_irsep+5
+          write(0,*) ' iobj',iobj
+
+
+          DO i = 1, obj(iobj)%nside
+            CALL GetVertex(iobj,i,x(i),y(i))         
+          ENDDO
+          WRITE(88,'(A,I6,I8,2I6,4(2X,2F10.6))') 
+     .     'fuck',
+     .      iobj,
+     .      -1,
+     .      -1,
+     .      -1,
+     .      (x(i),y(i),i=1,obj(iobj)%nside)
+
+
+          WRITE(88,'(A,I6,I8,2I6,4(2X,2I10))') 
+     .     'fuck',
+     .      iobj,
+     .      -1,
+     .      -1,
+     .      -1,
+     .      (srf(obj(iobj)%iside(i))%ivtx(1:2),i=1,obj(iobj)%nside)
+
+          WRITE(88,'(A,I6,I8,2I6,2(2X,2I20,2X))') 
+     .     'fuck',
+     .      iobj,
+     .      -1,
+     .      -1,
+     .      -1,
+     .      (obj(iobj)%iside(i),i=1,obj(iobj)%nside)
+        ENDDO
+
+
+            ENDIF
+
+
             tube(ir)%pmax = cell(ncell)%pbnd(2)
             tube(ir)%smax = cell(ncell)%sbnd(2)
           ENDDO
@@ -1520,6 +1613,8 @@ c...      Store global geometry data:   *** NOT ACCURATE, GET FROM EQUILIBRIUM! 
           grid%z0 = DBLE(SUM(cell(i1:i2)%cencar(2)) / REAL(i2-i1+1))
           IF (debug) WRITE(0,*) 'REMINDER: CHECK GRID CENTROID '//
      .                          'CALCULATION!'
+
+          CALL DumpData_OSM('output.grid_fresh','Done assigning grid')
 c...        
           CALL BuildConnectionMap(1,nobj)
 c...      Mark the radial boundary of the grid - it is assumed that these
@@ -1533,25 +1628,29 @@ c         been tailored:
 
           DEALLOCATE(knot)
           DEALLOCATE(imap)
-c          STOP 'whoa'
 
           CALL osm_DeriveGridQuantities
 
           CALL DumpData_OSM('output.grid_load','Done loading grid')
 c...
+          IF (debug) WRITE(0,*) 'Load supplimental data'
           CALL LoadSupplimentalGridData
           CALL DumpData_OSM('output.grid_sup','Done loading sup data')
 
+          IF (debug) WRITE(0,*) 'Generating tube groups'
           CALL GenerateTubeGroups
           CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
 
+          IF (debug) WRITE(0,*) 'Generating target groups'
           CALL GenerateTargetGroups
           CALL DumpData_OSM('output.grid_targets','Done targets')
 
+          IF (debug) WRITE(0,*) 'Saving fluid geometry'
           CALL SaveFluidGridGeometry
 
+          IF (debug) WRITE(0,*) 'Processing wall'
           CALL ProcessWall
-
+c       ------------------------------------------------------------------
         CASE (GRD_LOAD_OLD)
           CALL LoadObjects('osm_geometry.raw',status)  ! Change to LoadGeometryObjects...
           IF (status.EQ.-1) 
@@ -1579,9 +1678,10 @@ c...
           CALL SaveFluidGridGeometry
 
           CALL ProcessWall
-
+c       ------------------------------------------------------------------
         CASE DEFAULT
           CALL ER('ProcessGrid','Unrecognized grid source option',*99)
+c       ------------------------------------------------------------------
       ENDSELECT
 
 
@@ -1855,6 +1955,7 @@ c
       USE mod_interface
       USE mod_grid
       USE mod_sol28_global
+      USE mod_sol28_io
       IMPLICIT none
 
 c...  Input:
@@ -1863,6 +1964,8 @@ c...  Input:
 c...  Output:
       INTEGER :: irsep,irsep2,irwall,irtrap,nrs,ikti,ikto,nks(1000)
       LOGICAL connected
+
+      LOGICAL osmGetLine
       
       INTEGER, PARAMETER :: NUMZONE = 5
       REAL*8,  PARAMETER :: HI   = 1.0E+20
@@ -1871,8 +1974,8 @@ c...  Output:
       INTEGER   i,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
      .          i4,izone(NUMZONE+1,NUMZONE),newi1,icore(0:2,2),id,
      .          tmpnks,istart,fp,maxik,maxir,outfp,count,
-     .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot
-      LOGICAL   cont,deleteknot,debug,swap,cell_deletion
+     .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot,idum(10)
+      LOGICAL   cont,deleteknot,debug,swap,cell_deletion,ldum1
       REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area,b_scale
       REAL*8    rvdp(4),zvdp(4),areadp
       CHARACTER buffer*1000,cdum*1000
@@ -1893,7 +1996,7 @@ c...  Read the knot data:
       IF (debug) WRITE(0,*) 'grid file name =',TRIM(grd_filename)
 
       SELECTCASE (grd_format)
-c       --------------------------------------------------------------
+c       ----------------------------------------------------------------
         CASE (-2:-1)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
@@ -1969,8 +2072,7 @@ c...        Dividing line in grid file:
             BACKSPACE(grdfp)
           ENDDO
  19       CONTINUE  ! EOF
-
-c       --------------------------------------------------------------
+c       ----------------------------------------------------------------
         CASE (GRD_FORMAT_SONNET)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
@@ -2011,9 +2113,6 @@ c...      Load grid:
              READ(grdfp,'(A10)',END=98) buffer
           ENDDO
           DO WHILE(nknot.EQ.0.OR.buffer(4:10).EQ.'Element')
-c            READ(grdfp,'(A50)',END=10) buffer
-c            WRITE(0,*) 'BUFFER:',buffer(1:50)
-c            BACKSPACE(grdfp)
             nknot = nknot + 1
             READ(grdfp,80,END=97) knot(nknot)%index,
      .                            knot(nknot)%ik   ,knot(nknot)%ir, 
@@ -2034,7 +2133,99 @@ c...        Dividing line in grid file:
  81       FORMAT(18X,E17.10,14x,E17.10,1x,E17.10)
  82       FORMAT(30X,E17.10,1X,E17.10,8x,E17.10,1X,E17.10)
  20       CONTINUE  ! EOF
-c       --------------------------------------------------------------
+c       ----------------------------------------------------------------
+        CASE (GRD_FORMAT_GRID)
+c...      
+          DO WHILE (osmGetLine(grdfp,buffer,WITH_TAG))
+            DO i = 2, LEN_TRIM(buffer)
+              IF (buffer(i:i).EQ.'}') EXIT
+            ENDDO
+            SELECTCASE (buffer(2:i-1))
+c             ----------------------------------------------------------
+              CASE('NUMBER OF TUBES')
+                READ(buffer(i+2:1000),*) nrs
+c             ----------------------------------------------------------
+              CASE('TUBE DATA')
+                maxik = 0
+                irsep2 = -1
+                DO ir = 1, nrs
+                  ldum1 = osmGetLine(grdfp,buffer,NO_TAG)
+                  READ(buffer,*) idum(1),nks(ir),idum(2:4)
+                  IF (idum(3).EQ.1                 ) irsep  = ir
+                  IF (idum(3).EQ.3.AND.irsep2.EQ.-1) irsep2 = ir - 1
+                  IF (idum(2).NE.5)                  irwall = ir
+                  maxik = MAX(maxik,nks(ir))
+                ENDDO
+                irtrap = irwall + 1
+c             ----------------------------------------------------------
+              CASE('CELL DATA')
+                ALLOCATE(knot(0:SUM(nks(1:nrs))))
+                ALLOCATE(imap(maxik,0:nrs))
+                imap = -1
+                id = 0
+                DO ir = 1, nrs
+                  DO ik = 1, nks(ir)
+                    id = id + 1
+                    imap(ik,ir) = id
+                    ldum1 = osmGetLine(grdfp,buffer,NO_TAG)
+              IF (ir.EQ.4) WRITE(88,'(A)') 'buf: '//TRIM(buffer)
+                    READ(buffer,*) idum(1:2),knot(id)%bratio,
+     .                             knot(id)%rv(3),knot(id)%zv(3),
+     .                             knot(id)%rv(4),knot(id)%zv(4)
+                    ldum1 = osmGetLine(grdfp,buffer,NO_TAG)
+              IF (ir.EQ.4) WRITE(88,'(A)') 'buf: '//TRIM(buffer)
+                    READ(buffer,*) knot(id)%rv(2),knot(id)%zv(2),
+     .                             knot(id)%rv(1),knot(id)%zv(1)
+                    knot(id)%index = id
+                    knot(id)%nv    = 4
+                    knot(id)%rcen  = 0.25D0* SUM(knot(id)%rv(1:4)) 
+                    knot(id)%zcen  = 0.25D0* SUM(knot(id)%zv(1:4)) 
+                  ENDDO
+                ENDDO
+                nknot = id
+c             ----------------------------------------------------------
+              CASE('END')
+c             ----------------------------------------------------------
+              CASE DEFAULT
+            ENDSELECT
+          ENDDO 
+c...      Find IKTO and IKTI:
+          DO ikto = 1, nks(irsep)-2
+            DO ikti = ikto+2, nks(irsep)
+              IF (knot(imap(ikto,irsep))%rv(4).EQ.
+     .            knot(imap(ikti,irsep))%rv(1).AND.
+     .            knot(imap(ikto,irsep))%zv(4).EQ.
+     .            knot(imap(ikti,irsep))%zv(1)) GOTO 30
+            ENDDO
+          ENDDO
+30        CONTINUE
+
+            WRITE(0,*) nrs        
+            WRITE(0,*) nknot
+            WRITE(0,*) irsep      
+            WRITE(0,*) irsep2     
+            WRITE(0,*) irwall     
+            WRITE(0,*) irtrap     
+            WRITE(0,*) ikto       
+            WRITE(0,*) ikti       
+            WRITE(0,*) nks(1:nrs)
+
+
+
+
+c...      Assign data to the global arrays:
+          grid_load%irsep      = irsep      
+          grid_load%irsep2     = irsep2     
+          grid_load%irwall     = irwall     
+          grid_load%irtrap     = irtrap     
+          grid_load%nrs        = nrs        
+          grid_load%ikti       = ikti       
+          grid_load%ikto       = ikto       
+          grid_load%nks(1:nrs) = nks(1:nrs)
+c...      Grid is already assembled properly, so no need to figure out
+c         the structure of the grid (remaining code in this routine):
+          RETURN
+c       ----------------------------------------------------------------
         CASE DEFAULT
           CALL ER('LoadGeneralisedGrid','Unknown grid type',*99)
       ENDSELECT
@@ -2734,8 +2925,6 @@ c     geometry processing has been done yet):
       ENDDO
 
 
-
-
 c...  Assign data to the global arrays:
       grid_load%irsep      = irsep      
       grid_load%irsep2     = irsep2     
@@ -2769,6 +2958,7 @@ c...  Assign data to the global arrays:
  97   CALL ER('LoadGeneralisedgrid','Unexpected end-of-file',*99)
  98   CALL ER('LoadGeneralisedgrid','Problem accessing grid file',*99)
  99   WRITE(0,*) 'GRID: ',TRIM(grd_filename)
+      WRITE(0,*) 'TYPE: ',grd_format
       WRITE(0,*) 'IXPT: ',ixpt(1,1),ixpt(2,1)
       WRITE(0,*) 'IR  : ',ir
       STOP  
@@ -2801,7 +2991,7 @@ c
       CALL CalcCentroid(map_iobj,2,p)
       a1 = p(1)
       a2 = p(2)
-      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))   ! Use GetVertex...
+      b1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
       b2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2))) 
 
       maxtab = 1.0D+20
@@ -2826,16 +3016,6 @@ c
             map_icell = icell
             map_itube = itube
           ENDIF
-c          IF (itube.EQ.1) THEN
-c            WRITE(88,*) 'DYNAMIC:'
-c            WRITE(88,*) '  : ',map_iobj-
-c     .        tube(GetTube(map_iobj,IND_OBJECT))%cell_index(LO)+1,
-c     .                         GetTube(map_iobj,IND_OBJECT)
-c            WRITE(88,*) '  : ',icell
-c            WRITE(88,*) '  : ',tab,maxtab
-c            WRITE(88,*) '  : ',tcd
-c            WRITE(88,*) '  : ',map_icell,map_itube
-c          ENDIF
         ENDDO
       ENDDO
 
@@ -2864,7 +3044,7 @@ c
       INTEGER GetTube       
  
       INTEGER, PARAMETER :: MAXNLIST = 1000
-      REAL*8 , PARAMETER :: DTOL     = 1.0D-07
+      REAL*8 , PARAMETER :: DTOL = 1.0D-07
 
       INTEGER fp,iobj,itube,nlist,ilist(MAXNLIST,2),clist(MAXNLIST,2),
      .        tube_set,i1,i2,i3,swall(nwall),iwall,mlist(MAXNLIST)
@@ -2908,6 +3088,15 @@ c     cuts, as appropriate:
         ENDDO
       ENDIF
 
+c     See the 26/09/2011 note in the loop below.
+      WRITE(0,*) 
+      WRITE(0,*) '--------------------------------------------------'
+      WRITE(0,*) ' NOT, WALL CLIPPING CODE MODIFIED ON 26/09/2011'
+      WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
+      WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
+      WRITE(0,*) '--------------------------------------------------'
+      WRITE(0,*) 
+
 c...  Collect the cuts:
       clist = 0
       mlist = 0
@@ -2940,32 +3129,20 @@ c...  Collect the cuts:
 c         Increase the length of the line segment in case there's
 c         a nominal mismatch between the wall and target 
 c         specifications or if the line segment is very short:
-
-          ! jdemod
-          if (debug) then 
-             write(fp,*) 'DEBUG XY1:',x1,y1,x2,y2
-          endif
-
           store_x2 = x2
           store_y2 = y2
           length = DSQRT((x1-x2)**2 + (y1-y2)**2)
           x2 = x1 + MAX(2.0D0,0.1D0 / length) * (x2 - x1)
           y2 = y1 + MAX(2.0D0,0.1D0 / length) * (y2 - y1)
- 1        x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)
-          y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)
-
-          ! jdemod
-          if (debug) then 
-             write(fp,*) 'DEBUG XY2:',x1,y1,x2,y2
-          endif
+c          x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)  - removed SL, 26/09/2011
+c          y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)    see message to screen above this loop
 
           IF (debug) THEN
-            WRITE(fp,*) ' --------------------',i1,i2,iobj
+            WRITE(fp,*) ' --------------------',i2
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
             WRITE(fp,*) ' X,Y1   =',x1,y1
             WRITE(fp,*) ' X,Y2   =',x2,y2
           ENDIF
-
 c         Search the wall for intersections:
           s12max = 1.0D+10
           DO iwall = 1, nwall
@@ -2976,10 +3153,7 @@ c         Search the wall for intersections:
             CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
             IF (debug) THEN
               WRITE(fp,*) '  CALCINTER :-',i1,i2,iwall
-              WRITE(fp,*) '    S12,34,M:',s12,s34,s12max
-              ! jdemod - added X1,Y1 and X2,Y2 to output
-              WRITE(fp,*) '    X1,Y1   :',x1,y1
-              WRITE(fp,*) '    X2,Y2   :',x2,y2
+              WRITE(fp,*) '    S12,34  :',s12,s34
               WRITE(fp,*) '    X3,Y3   :',x3,y3
               WRITE(fp,*) '    X4,Y4   :',x4,y4
             ENDIF
@@ -3014,6 +3188,14 @@ c           list (have to complete the wall by hand at the moment):
         ENDDO
       ENDIF
 
+      IF (debug) THEN
+        DO iwall = 1, nwall
+          WRITE(fp,'(A,I6,2F14.7,2X,2F14.7)') 
+     .      'WALL start:',iwall,rwall(iwall,1),zwall(iwall,1),
+     .                          rwall(iwall,2),zwall(iwall,2)
+        ENDDO
+      ENDIF
+
 c...  Check if a line segment is cut more than once at either end:
       DO i2 = 1, 2       
         swall = 0
@@ -3023,9 +3205,7 @@ c...  Check if a line segment is cut more than once at either end:
           ELSE
             CALL ER('ClipWallToGrid','Wall segment cut at the same '//
      .              'end more than once',*99)
-            ! jdemod
-            write(fp,*) 'CLIST DEBUG:',i1,i2,swall(clist(i1,i2))
-         ENDIF
+          ENDIF
         ENDDO
       ENDDO
 
@@ -3084,10 +3264,11 @@ c...      Register that the segment should be deleted but don't remove it:
       
 
       IF (debug) THEN
+        WRITE(0,*) 
         DO iwall = 1, nwall
-          WRITE(fp,'(A,2F14.7,2X,2F14.7)') 
-     .      'WALL:',rwall(iwall,1),zwall(iwall,1),
-     .              rwall(iwall,2),zwall(iwall,2)
+          WRITE(fp,'(A,I6,2F14.7,2X,2F14.7)') 
+     .      'WALL end  :',iwall,rwall(iwall,1),zwall(iwall,1),
+     .                          rwall(iwall,2),zwall(iwall,2)
         ENDDO
       ENDIF
 
@@ -3097,6 +3278,8 @@ c...      Register that the segment should be deleted but don't remove it:
       WRITE(fp,*) 'I2   =',i2
       WRITE(fp,*) 'S12  =',s12
       WRITE(fp,*) 'IWALL=',iwall
+      WRITE(fp,*) 'X,Y1=',xlist(i1,1),ylist(i1,1)
+      WRITE(fp,*) 'X,Y2=',xlist(i1,2),ylist(i1,2)
       STOP
       END
 c

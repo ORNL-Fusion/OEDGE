@@ -5824,6 +5824,9 @@ c
 c     
       subroutine raug
       use error_handling
+c slmod begin
+      use mod_sol28_global
+c slmod end
       implicit none
       include 'params'
       include 'cgeom'
@@ -5993,7 +5996,8 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
         GOTO 300
-      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
+     .        opt%f_grid_format.GT.0) THEN
         IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
@@ -6654,14 +6658,31 @@ c     Set total number of rings and total number of polygons
 c     
       refct = 0
 c     
-      if (nopriv) then
-         nrs = maxrings
-      else
-         nrs = maxrings + cutring
-      endif
+c slmod begin
+c...  These are set properly in ReadGeneralisedGrid_OSM, and the following
+c     are not longer valid because GRID grids are less structured, i.e. the
+c     number of core and PFZ rings can be different, which throws off these
+c     assignments. SL, 07/10/2011
+      IF (opt%f_grid_format.EQ.0) THEN
+        if (nopriv) then
+           nrs = maxrings
+        else
+           nrs = maxrings + cutring
+        endif
 c     
-      irsep = cutring +1
-      irwall = maxrings
+        irsep = cutring +1
+        irwall = maxrings
+      ENDIF
+c
+c      if (nopriv) then
+c         nrs = maxrings
+c      else
+c         nrs = maxrings + cutring
+c      endif
+c     
+c      irsep = cutring +1
+c      irwall = maxrings
+c slmod end
 c     
 c     These may need adjusting for meshes without a private plasma
 c     
@@ -11311,14 +11332,14 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-c      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-c         WRITE(0,*)
-c         WRITE(0,*)'-------------------------------------------------'
-c         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-c         WRITE(0,*)'-------------------------------------------------'
-c         WRITE(0,*)
-c         RETURN
-c      ENDIF
+      IF (sloutput.AND.grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+         WRITE(0,*)
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*)
+         RETURN
+      ENDIF
 c     slmod end
 c     
 C     >     QLOSS(MAXNRS)

@@ -605,8 +605,8 @@ c
       ic1 = 0
       dist1 = 0.0
 
-      DO it = osmnode(ind1)%tube_range(1), 
-     .        osmnode(ind1)%tube_range(2)
+      DO it =     osmnode(ind1)%tube_range(1), 
+     .        MIN(osmnode(ind1)%tube_range(2),ntube)
         IF (tube(it)%type.EQ.GRD_BOUNDARY) CYCLE
 c        WRITE(0,*) 'FC: IT=',it
         DO i1 = ind0+1, ind1
@@ -641,8 +641,8 @@ c...  Sort intesections:
       iccell = 0
       itcell = 0
       clcell = 0.0
-      DO it = osmnode(ind1)%tube_range(1), 
-     .        osmnode(ind1)%tube_range(2)
+      DO it =     osmnode(ind1)%tube_range(1), 
+     .        MIN(osmnode(ind1)%tube_range(2),ntube)
         IF (tube(it)%type.EQ.GRD_BOUNDARY.OR.ic1(it).EQ.0) CYCLE
 c        WRITE(0,*) 'PICKENS:',ir,ik1(ir),dist1(ir)
         IF     (it.EQ.itgive) THEN
@@ -949,7 +949,8 @@ c       having everything on the same line...
 
 c...    Check that rings from different grid regions are not in the same group
 c       of rings:
-        DO i2 = osmnode(i1)%tube_range(1), osmnode(i1)%tube_range(2)-1
+        DO i2 =     osmnode(i1)%tube_range(1), 
+     .          MIN(osmnode(i1)%tube_range(2),ntube)-1
           IF (i2.GT.ntube-1) EXIT          
           IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
             IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
@@ -1257,7 +1258,6 @@ c           reference tubes with a higher index through side 2-3.
             IF (debug) THEN
               WRITE(logfp,*) ' MAP   ',iobj,iside,ic1,nobj,ncell
               WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
-              WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
               WRITE(logfp,*) ' MAP   ',it
               WRITE(logfp,*) ' MAP   ',icell
               WRITE(logfp,*) ' MAP O ',
@@ -1341,7 +1341,7 @@ c...        Linear along the line segment, nice and simple:
             val1 = 1.0
             val = SNGL(tab)
           ELSEIF (coord.EQ.4) THEN
-            val = tube(it)%rho
+            val = ABS(tube(it)%rho)
             IF (val.EQ.0.0) 
      .        WRITE(0,*) 'WARNING AssignNodeValues: RHO=0.0 for '//
      .                   'tube',it
@@ -1457,8 +1457,8 @@ c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE 
      .                'tube index range, check input file',*99)
 
 c...        Need range of PSIn over the segment:
-            DO it1 = osmnode(i2)%tube_range(1), 
-     .               osmnode(i2)%tube_range(2)
+            DO it1 =     osmnode(i2)%tube_range(1), 
+     .               MIN(osmnode(i2)%tube_range(2),ntube)
               IF (it1.GT.ntube) EXIT
               DO ic1 = tube(it1)%cell_index(LO), 
      .                 tube(it1)%cell_index(HI)

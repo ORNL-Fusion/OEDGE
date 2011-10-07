@@ -502,7 +502,13 @@ c
       if (line_profile_opt.ne.0) then 
           write(8) lp_wave,lp_instrument_width,
      >             lp_bin_width,lp_robs,lp_zobs,lp_theta,lp_dtheta
-          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
+c slmod begin
+c         Descriptor needs to be 8 characters long or generates
+c         a runtime error in R8INOUT. -SL, 07/10/2011
+          CALL R8INOUT ('W LP    ',line_profile,max_lp_bins*2+1)
+c
+c          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
+c slmod end
           CALL R8INOUT ('W MOD_LP',mod_line_profile,max_lp_bins*2+1)
       endif     
 c
