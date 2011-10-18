@@ -892,6 +892,7 @@ c        WRITE(0,*) TRIM(opt_wall(iopt)%file_name)
               IF (buffer(1:1).EQ.'*'.OR.LEN_TRIM(buffer).LT.5) CYCLE  ! A bit arbitrary on the length test...
               nwall = nwall + 1
               wall(nwall) = opt_wall(iopt)
+c              WRITE(0,*) 'BUFFER: '//buffer(1:50)
               READ(buffer,*) wall(nwall)%v1(1:2),wall(nwall)%v2(1:2)
 c...          Defaults:
               wall(nwall)%index(WAL_INDEX ) = 0
@@ -1103,7 +1104,9 @@ c     call the requisite IDL routines to generate the data:
      .    CALL ER('ProcessGrid','Trouble generating '//
      .            'the supplimental grid data',*99)
 c       Output the OSM geometry data file that's read in by IDL:
-        OPEN (UNIT=fp,FILE='grid.sup',ACCESS='SEQUENTIAL',STATUS='NEW')      
+        CLOSE(fp)
+        OPEN (UNIT=fp,FILE='grid.sup',ACCESS='SEQUENTIAL',
+     .        STATUS='REPLACE')      
         WRITE(fp,'(A)') '* Grid geometry file from OSM'
         WRITE(fp,'(A,1X,2A6,6A12)') 
      .    '*','IP','IT','Rcen (m)','Zcen (m)','Rmid1 (m)',
@@ -1563,45 +1566,35 @@ c                ENDIF
               ENDIF
             ENDDO ! End of IK loop
 
-            IF (irsep.EQ.ir) THEN 
-
-
-        DO iobj = iobj_irsep+1, iobj_irsep+5
-          write(0,*) ' iobj',iobj
-
-
-          DO i = 1, obj(iobj)%nside
-            CALL GetVertex(iobj,i,x(i),y(i))         
-          ENDDO
-          WRITE(88,'(A,I6,I8,2I6,4(2X,2F10.6))') 
-     .     'fuck',
-     .      iobj,
-     .      -1,
-     .      -1,
-     .      -1,
-     .      (x(i),y(i),i=1,obj(iobj)%nside)
-
-
-          WRITE(88,'(A,I6,I8,2I6,4(2X,2I10))') 
-     .     'fuck',
-     .      iobj,
-     .      -1,
-     .      -1,
-     .      -1,
-     .      (srf(obj(iobj)%iside(i))%ivtx(1:2),i=1,obj(iobj)%nside)
-
-          WRITE(88,'(A,I6,I8,2I6,2(2X,2I20,2X))') 
-     .     'fuck',
-     .      iobj,
-     .      -1,
-     .      -1,
-     .      -1,
-     .      (obj(iobj)%iside(i),i=1,obj(iobj)%nside)
-        ENDDO
-
-
-            ENDIF
-
+c            IF (irsep.EQ.ir) THEN 
+c             DO iobj = iobj_irsep+1, iobj_irsep+5
+c               write(0,*) ' iobj',iobj
+c               DO i = 1, obj(iobj)%nside
+c                 CALL GetVertex(iobj,i,x(i),y(i))         
+c               ENDDO
+c               WRITE(88,'(A,I6,I8,2I6,4(2X,2F10.6))') 
+c     .          'fuck',
+c     .           iobj,
+c     .           -1,
+c     .           -1,
+c     .           -1,
+c     .           (x(i),y(i),i=1,obj(iobj)%nside)
+c                WRITE(88,'(A,I6,I8,2I6,4(2X,2I10))') 
+c     .          'fuck',
+c     .           iobj,
+c     .           -1,
+c     .           -1,
+c     .           -1,
+c     .           (srf(obj(iobj)%iside(i))%ivtx(1:2),i=1,obj(iobj)%nside)
+c               WRITE(88,'(A,I6,I8,2I6,2(2X,2I20,2X))') 
+c     .          'fuck',
+c     .           iobj,
+c     .           -1,
+c     .           -1,
+c     .           -1,
+c     .           (obj(iobj)%iside(i),i=1,obj(iobj)%nside)
+c             ENDDO
+c            ENDIF
 
             tube(ir)%pmax = cell(ncell)%pbnd(2)
             tube(ir)%smax = cell(ncell)%sbnd(2)
@@ -1976,6 +1969,7 @@ c...  Output:
      .          tmpnks,istart,fp,maxik,maxir,outfp,count,
      .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot,idum(10)
       LOGICAL   cont,deleteknot,debug,swap,cell_deletion,ldum1
+      REAL      rdum(10),psin(2,1000)
       REAL*8    vrmin,vzmin,vrmax,vzmax,rspan,zspan,area,b_scale
       REAL*8    rvdp(4),zvdp(4),areadp
       CHARACTER buffer*1000,cdum*1000
@@ -2150,7 +2144,8 @@ c             ----------------------------------------------------------
                 irsep2 = -1
                 DO ir = 1, nrs
                   ldum1 = osmGetLine(grdfp,buffer,NO_TAG)
-                  READ(buffer,*) idum(1),nks(ir),idum(2:4)
+                  READ(buffer,*) idum(1),nks(ir),idum(2:4),rdum(1:2),
+     .                           psin(1:2,ir)
                   IF (idum(3).EQ.1                 ) irsep  = ir
                   IF (idum(3).EQ.3.AND.irsep2.EQ.-1) irsep2 = ir - 1
                   IF (idum(2).NE.5)                  irwall = ir
@@ -2210,9 +2205,6 @@ c...      Find IKTO and IKTI:
             WRITE(0,*) ikti       
             WRITE(0,*) nks(1:nrs)
 
-
-
-
 c...      Assign data to the global arrays:
           grid_load%irsep      = irsep      
           grid_load%irsep2     = irsep2     
@@ -2221,7 +2213,9 @@ c...      Assign data to the global arrays:
           grid_load%nrs        = nrs        
           grid_load%ikti       = ikti       
           grid_load%ikto       = ikto       
-          grid_load%nks(1:nrs) = nks(1:nrs)
+          grid_load%nks (1:nrs) = nks (1:nrs)
+          grid_load%psin(1:nrs) = 0.5*(psin(1,1:nrs)+psin(2,1:nrs))
+          
 c...      Grid is already assembled properly, so no need to figure out
 c         the structure of the grid (remaining code in this routine):
           RETURN
