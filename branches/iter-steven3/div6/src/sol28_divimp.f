@@ -3518,7 +3518,8 @@ c
       irtrap     = grid_load%irtrap
       nrs        = grid_load%nrs
       nks(1:nrs) = grid_load%nks(1:nrs)
-
+      psitarg(1:nrs,1) = grid_load%psin(1:nrs)
+      psitarg(1:nrs,2) = psitarg(1:nrs,1)
 
       IF (irsep2.EQ.-1) irsep2 = irsep  ! *** is this OK? ***
 

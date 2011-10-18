@@ -5716,7 +5716,6 @@ c...  Dump triangles (for OUT, not EIRENE):
       ENDDO
       CLOSE(fp)      
 
-
 c...  Dump vertices:
       OPEN(UNIT=fp,FILE='objects.npco_char',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
@@ -6503,6 +6502,7 @@ c
 c  subroutine: SaveTriangles
 c
       subroutine SaveTriangles_06
+      USE mod_interface
       USE mod_eirene06
       IMPLICIT none
 
@@ -6533,6 +6533,23 @@ c...    Dump grid data to an external file:
      .      SNGL(cen(1)),SNGL(cen(2))
         ENDDO
         CLOSE(fp)
+      ENDIF
+
+      IF (.TRUE.) THEN
+c...    Dump grid data to an external CORTEX data file:
+        CALL inOpenInterface('eirene.idl.triangles',ITF_WRITE)
+        CALL inPutData(tri(1:ntri)%ver(1),'VERTEX_1','N/A')
+        CALL inPutData(tri(1:ntri)%ver(2),'VERTEX_2','N/A')
+        CALL inPutData(tri(1:ntri)%ver(3),'VERTEX_3','N/A')
+        CALL inPutData(tri(1:ntri)%map(1),'MAP_1','N/A')
+        CALL inPutData(tri(1:ntri)%map(2),'MAP_2','N/A')
+        CALL inPutData(tri(1:ntri)%map(3),'MAP_3','N/A')
+        CALL inPutData(tri(1:ntri)%sur(1),'SURFACE_1','N/A')
+        CALL inPutData(tri(1:ntri)%sur(2),'SURFACE_2','N/A')
+        CALL inPutData(tri(1:ntri)%sur(3),'SURFACE_3','N/A')
+        CALL inPutData(ver(1:nver,1),'VERTEX_X','m')
+        CALL inPutData(ver(1:nver,2),'VERTEX_Y','m')
+        CALL inCloseInterface
       ENDIF
       
       RETURN
