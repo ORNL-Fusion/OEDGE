@@ -1397,44 +1397,80 @@ c...            Assuming a 1:1 mapping between grid and data:
             ELSE
               f1 = cell(ic)%cencar(1)  ! Centre of the focus cell on the current tube
               f2 = cell(ic)%cencar(2)  
-c...          Scan along the link tube and find the shortest perpendicular 
-c             distance to the focus cell:
-              DO ic1 = tube(it1)%cell_index(LO),
-     .                 tube(it1)%cell_index(HI)
-                iobj = ic1 
-c               Get the centreline of the cell:
-                CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
-                CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
-                c1 = 0.5D0 * (pts(1,1) + pts(1,2))
-                c2 = 0.5D0 * (pts(2,1) + pts(2,2))
-                CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
-                CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
-                d1 = 0.5D0 * (pts(1,1) + pts(1,2))
-                d2 = 0.5D0 * (pts(2,1) + pts(2,2))
-                check = CalcPoint(c1,c2,d1,d2,f1,f2,tcd)
-                IF (debug) THEN
-                  WRITE(logfp,*) '  check ',check,tcd
-                  WRITE(logfp,*) '        ',c1,c2
-                  WRITE(logfp,*) '        ',d1,d2
-                  WRITE(logfp,*) '        ',f1,f2
-                ENDIF          
-                IF (check.EQ.2) THEN
-                  e1 = c1 + tcd * (d1 - c1)  
-                  e2 = c2 + tcd * (d2 - c2)  
-                  dist = SNGL(DSQRT( (e1-f1)**2 + (e2-f2)**2 ))
-                  WRITE(logfp,*) '  val check ',val,dist
-                  WRITE(logfp,*) '            ',e1,e2
+              IF (.TRUE.) THEN 
+                DO ic1 = tube(it1)%cell_index(LO),
+     .                   tube(it1)%cell_index(HI)
+                  iobj = ic1 
+c                 Get the centreline of the cell:
+                  CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
+                  c1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  c2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
+                  d1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  d2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  c1 = 0.5D0 * (c1 + d1)
+                  c2 = 0.5D0 * (c2 + d2)
+                  dist = SNGL(DSQRT( (f1-c1)**2 + (f2-c2)**2 ))
+                  IF (debug) THEN
+                    WRITE(logfp,*) '  check ',check,tcd
+                    WRITE(logfp,*) '        ',c1,c2
+                    WRITE(logfp,*) '        ',f1,f2
+                    WRITE(logfp,*) '        ',dist
+                  ENDIF          
                   IF (dist.LT.val) THEN
                     IF (debug) THEN
                       WRITE(logfp,*) '  val update',dist
                     ENDIF
                     val = dist
                   ENDIF
-                ENDIF
-              ENDDO
-c              WRITE(0,*) 'itube,it1=',itube,it1
-c              STOP 'sdfdsf'
+                ENDDO               
+              ELSE
+c               ORIGINAL METHOD, BUT NOT FOOLPROOF
+c...            Scan along the link tube and find the shortest perpendicular 
+c               distance to the focus cell:
+                DO ic1 = tube(it1)%cell_index(LO),
+     .                   tube(it1)%cell_index(HI)
+                  iobj = ic1 
+c                 Get the centreline of the cell:
+                  CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
+                  c1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  c2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
+                  d1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  d2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  check = CalcPoint(c1,c2,d1,d2,f1,f2,tcd)
+                  IF (debug) THEN
+                    WRITE(logfp,*) '  check ',check,tcd
+                    WRITE(logfp,*) '        ',c1,c2
+                    WRITE(logfp,*) '        ',d1,d2
+                    WRITE(logfp,*) '        ',f1,f2
+                  ENDIF          
+                  IF (check.EQ.2) THEN
+                    e1 = c1 + tcd * (d1 - c1)  
+                    e2 = c2 + tcd * (d2 - c2)  
+                    dist = SNGL(DSQRT( (e1-f1)**2 + (e2-f2)**2 ))
+                    WRITE(logfp,*) '  val check ',val,dist
+                    WRITE(logfp,*) '            ',e1,e2
+                    IF (dist.LT.val) THEN
+                      IF (debug) THEN
+                        WRITE(logfp,*) '  val update',dist
+                      ENDIF
+                      val = dist
+                    ENDIF
+                  ENDIF
+                ENDDO
+c                WRITE(0,*) 'itube,it1=',itube,it1
+c                STOP 'sdfdsf'
+              ENDIF
             ENDIF
+            IF (val.EQ.1.0E+6) 
+     .        CALL ER('AssignNodeValues_New','Linear link '//
+     .                'reference not found',*99)
+
             IF (val.EQ.1.0E+6) 
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)

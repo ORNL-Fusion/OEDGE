@@ -813,11 +813,11 @@ c     Increase the length of the line segment forward and backward
 c     in case there's a nominal mismatch between the wall and target 
 c     specifications or if the line segment is very short:
       length = DSQRT((x1-x2)**2 + (y1-y2)**2)
-      x2 = x1 + MAX(2.0D0,0.1D0 / length) * (x2 - x1)
-      y2 = y1 + MAX(2.0D0,0.1D0 / length) * (y2 - y1)
+      x2 = x1 + MAX(2.0D0,0.5D0 / length) * (x2 - x1)
+      y2 = y1 + MAX(2.0D0,0.5D0 / length) * (y2 - y1)
       length = DSQRT((x1-x2)**2 + (y1-y2)**2)
-      x1 = x2 + MAX(2.0D0, 0.2D0 / length) * (x1 - x2)
-      y1 = y2 + MAX(2.0D0, 0.2D0 / length) * (y1 - y2)
+      x1 = x2 + MAX(2.0D0, 1.0D0 / length) * (x1 - x2)
+      y1 = y2 + MAX(2.0D0, 1.0D0 / length) * (y1 - y2)
 
 c     Search the wall for intersections:
       s12max = 1.0D+10
@@ -829,7 +829,7 @@ c     Search the wall for intersections:
         CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
         IF (debug) THEN
           WRITE(fp,*) ' --------------------'
-          WRITE(fp,*) ' X,Y1=',x1,y1
+          WRITE(fp,*) ' X,Y1=',x1,y1,length
           WRITE(fp,*) ' X,Y2=',x2,y2
           WRITE(fp,*) '  IWALL    :',iwall
           WRITE(fp,*) '  S12,S34  :',s12,s34
@@ -2218,6 +2218,20 @@ c...      Assign data to the global arrays:
           
 c...      Grid is already assembled properly, so no need to figure out
 c         the structure of the grid (remaining code in this routine):
+
+          CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
+          DO i1 = 1, nknot
+            CALL inPutData(knot(i1)%ik,'IK','none')
+            CALL inPutData(knot(i1)%ir,'IR','none')
+            CALL inPutData(4          ,'NV','none')
+            DO i2 = 1, 4
+              WRITE(buffer,'(A,I1,500X)') 'RV_',i2
+              CALL inPutData(knot(i1)%rv(i2),TRIM(buffer),'m')
+              WRITE(buffer,'(A,I1,500X)') 'ZV_',i2
+              CALL inPutData(knot(i1)%zv(i2),TRIM(buffer),'m')
+            ENDDO
+          ENDDO
+          CALL inCloseInterface
           RETURN
 c       ----------------------------------------------------------------
         CASE DEFAULT
@@ -2250,7 +2264,7 @@ c...  Scale the magnetic field ratio:
         ENDDO
       ENDDO
       CALL inCloseInterface
- 
+
 c...  Delete zero volume cells:
 c     
       IF (debug) WRITE(outfp,*) 'REMOVING ZERO VOLUME CELLS'
