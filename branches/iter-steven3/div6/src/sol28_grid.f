@@ -1974,6 +1974,9 @@ c...  Output:
       REAL*8    rvdp(4),zvdp(4),areadp
       CHARACTER buffer*1000,cdum*1000
 
+      ! jdemod
+      integer :: ierr
+
       debug = .FALSE.
       outfp  = 0
       b_scale = 1.0D0
@@ -1982,10 +1985,29 @@ c...  Read the knot data:
 
       grd_format   = opt%f_grid_format      ! 1
       grd_filename = TRIM(opt%f_grid_file)  ! 'iterm.carre.105'  ! 'sonnet_13018_250.sm'   
-      grdfp = 99
+
+
+      ! jdemod - there are issues using a filename = fort.<unit number> and assigning it a different unit number
+      !          at least for some fortran versions - the file may implicitly or explicitly already be assigned to 
+      !          another unit
+      !        - also assigning a fixed unit number may not work since 99 may already be in use
+      !grdfp = 99
+      call find_free_unit_number(grdfp)
+
       write(0,*) 'debug: filename=',TRIM(grd_filename)
-      OPEN(UNIT=grdfp,FILE=TRIM(grd_filename),ACCESS='SEQUENTIAL',
-     .     ERR=96)     
+
+      ! check to see if file name is an implicit fortran file ... then assign the unit number from the file name
+      ! and do not issue the open statement - also rewind the file
+
+      if (grd_filename(1:5).eq.'fort.') then 
+         read(grd_filename(6:),*) grdfp
+         rewind(grdfp)
+      else
+
+         OPEN(UNIT=grdfp,FILE=TRIM(grd_filename),ACCESS='SEQUENTIAL',
+     .        iostat=ierr,ERR=96)     
+
+      endif
 
       IF (debug) WRITE(0,*) 'grid file name =',TRIM(grd_filename)
 
