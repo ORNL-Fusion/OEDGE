@@ -862,7 +862,8 @@ c
      .        itarget,hold_ic,i5,check
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
-     .        first_pass,two_timer,default_message,node_valid
+     .        first_pass,two_timer,default_message,node_valid,
+     .        suppress_screen,rho_warning
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,
@@ -878,6 +879,8 @@ c
       DATA default_message / .TRUE. /
       SAVE     
 
+      suppress_screen = .FALSE.
+      rho_warning     = .TRUE.
 
       debug = .TRUE. 
 
@@ -997,6 +1000,7 @@ c     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
 c     .    density = .FALSE.
 
         IF (mode.EQ.7.AND..NOT.two_timer) THEN
+          suppress_screen = .TRUE.
           a1 = 0.0
           a2 = 0.0
           b1 = 0.0
@@ -1341,10 +1345,25 @@ c...        Linear along the line segment, nice and simple:
             val1 = 1.0
             val = SNGL(tab)
           ELSEIF (coord.EQ.4) THEN
-            val = ABS(tube(it)%rho)
+c...        Well, some funny business here since I can't imagine why I took the absolute value 
+c           of RHO, which is causing a discrepancy between i-ref-0001d and i-ref-0007d, where the
+c           latter is a re-run of the former with iter_steven_3 (and the former was iter_steven_2).
+c           This change is also in iter_steven_2 however, in contrast to when i-ref-0001d was run,
+c           which had VAL<0 in the core, as did i-ref-0009d, so this must be a relatively recent
+c           change.  Very odd.
+            val = tube(it)%rho
+c            val = ABS(tube(it)%rho)
             IF (val.EQ.0.0) 
      .        WRITE(0,*) 'WARNING AssignNodeValues: RHO=0.0 for '//
      .                   'tube',it
+            IF (rho_warning) THEN 
+              rho_warning = .FALSE.
+              WRITE(0,*) 
+              WRITE(0,*) '--------------------------------------------'
+              WRITE(0,*) '    ABS() REMOVED FROM RHO ASSIGNMENT!      '
+              WRITE(0,*) '--------------------------------------------'
+              WRITE(0,*) 
+            ENDIF
           ELSEIF (coord.EQ.5) THEN
 c...        Just give me PSIn:
             psin0 = tube(it)%psin
@@ -1888,6 +1907,7 @@ c...    Store node values:
         ENDIF
 
       ENDDO  ! END OF OSMNMONE LOOP
+c     ------------------------------------------------------------------
 
 c...  Check for target data:
       DO i1 = 1, node_n
@@ -2022,7 +2042,7 @@ c...    Assign cell index:
             WRITE(0,*) 'WARNING AssignNodes: Default values applied'
             default_message = .FALSE.
           ENDIF
-        ELSE
+        ELSEIF (.NOT.suppress_screen) THEN
           CALL WN('AssignNodeValues_New',TRIM(dummy))
         ENDIF
       ELSEIF (i2.GT.1) THEN

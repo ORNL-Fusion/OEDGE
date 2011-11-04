@@ -2193,6 +2193,8 @@ c             ----------------------------------------------------------
               IF (ir.EQ.4) WRITE(88,'(A)') 'buf: '//TRIM(buffer)
                     READ(buffer,*) knot(id)%rv(2),knot(id)%zv(2),
      .                             knot(id)%rv(1),knot(id)%zv(1)
+                    knot(id)%ik    = ik
+                    knot(id)%ir    = ir
                     knot(id)%index = id
                     knot(id)%nv    = 4
                     knot(id)%rcen  = 0.25D0* SUM(knot(id)%rv(1:4)) 
