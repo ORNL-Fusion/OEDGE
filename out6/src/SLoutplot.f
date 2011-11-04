@@ -39,7 +39,8 @@ c
       fp = 99
       OPEN (UNIT=fp,FILE='mhf.h_alpha',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
-      WRITE(fp,'(A)') '# Data file for Marie-Helene: D_alpha [W m-3]'
+      WRITE(fp,'(A)') '# Data file for Marie-Helene and Kajita-san: '//
+     .                'D_alpha [W m-3]'
       WRITE(fp,'(A)') '#    (based on SOLPS format from A. Kukushkin)'
       WRITE(fp,'(A)') '#'
       WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
@@ -47,7 +48,7 @@ c
       WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
       WRITE(fp,'(A)') '# Version     : 1.0'
       WRITE(fp,'(A)') '#'
-      WRITE(fp,'(2A5,3A12)') '#  ix','iy','x','y','z01'
+      WRITE(fp,'(2A5,3A12)') '#  ix','iy','x [m]','y [m]','Dalpha'
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
