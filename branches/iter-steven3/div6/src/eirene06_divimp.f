@@ -1243,6 +1243,8 @@ c...  Specify target plasma quantities:
           tardat(it,11) = GetMach(kvds(in),kteds(in),ktids(in))           ! Mach no.
           tardat(it,12) = GetJsat(kteds(in),ktids(in),knds(in),kvds(in))  ! jsat 
           tardat(it,13) = costet(in)                                      ! *** HACK *** COSTET, for calculating tetrahedron cell particle flux...
+
+c          WRITE(88,*) 'targ flux',ik,ir,region,GetFlux(region,ir),fact
         ENDDO
       ENDDO      
       ntardat = it

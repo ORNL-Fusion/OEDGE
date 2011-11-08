@@ -10463,6 +10463,7 @@ c
 c
       subroutine TARGFLUX
 c slmod begin
+      USE mod_sol28_global
       USE mod_eirene06
       USE mod_eirene_history
 c slmod end 
@@ -10498,6 +10499,7 @@ c slmod begin - new
 
       INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
+      CHARACTER buffer*1024
 c slmod end
 
 C
@@ -10987,11 +10989,13 @@ c       and reported here -- fix:
           WRITE(fp,'(4X,A8,A6,3A12)') 
      .      'STRATUM','TYPE','NO. TRACKS','FLUXT','PTRASH(%)'
           DO i1 = 1, nstrata
-            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4)') i1,
+            buffer = TRIM(opt_eir%txtsou(i1))  ! necessary due to a compiler bug, i.e. can't put TXTSOU directly into the following WRITE statement
+            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4,2X,A)') i1,
      .        strata(i1)%type,
      .        strata(i1)%ipanu,
      .        strata(i1)%fluxt,
-     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
+     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0,
+     .        buffer
           ENDDO
 
           CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
