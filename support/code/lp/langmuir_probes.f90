@@ -243,8 +243,11 @@ contains
 
                 if (.not.remove_outlier.or.&
                      &(remove_outlier.and.&
-                     &((lp_data(in,2).lt.outlier_mult*pre_average(ibin,1)).and.&
-                     &(lp_data(in,3).lt.outlier_mult*pre_average(ibin,2))))) then 
+                     &(((lp_data(in,2).lt.outlier_mult*pre_average(ibin,1)).and.&
+                     & (lp_data(in,3).lt.outlier_mult*pre_average(ibin,2)))&
+                     !&.and.((lp_data(in,2).gt.pre_average(ibin,1)/outlier_mult).and.&
+                     !& (lp_data(in,3).gt.pre_average(ibin,2)/outlier_mult))&
+                     &  ))) then 
 
 
 
@@ -328,7 +331,7 @@ contains
     ! at the present time this data is  LP_AXIS   LP_PROC_DATA(,1) = Jsat   LP_PROC_DATA(,2) = Te
 
     write(ounit,'(a,a)') 'ID : ',trim(ident)
-    write(ounit,'(a)')   'R-Rsep      PSIN            Jsat(A/cm2)          Te(eV)         Count  '//&
+    write(ounit,'(a)')   '       R-Rsep        PSIN            Jsat(A/cm2)          Te(eV)         Count  '//&
                               '       PSI(ELM)        Jsat(ELM)            Te(ELM)        Count(ELM)  '//&
                               '       PSI(NOE)        Jsat(NOE)            Te(NOE)        Count(NOE)'
 

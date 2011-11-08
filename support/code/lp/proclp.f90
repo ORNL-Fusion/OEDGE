@@ -26,9 +26,10 @@ program proclp
   character*5 :: tmins,tmaxs
   character*4 :: iform
   character*5 :: chisq
-  integer :: exp_tmin,exp_tmax
+  integer :: exp_tmin,exp_tmax,nargs
   character*512 :: arg
-  
+
+  integer,external :: iargc
 
   logical :: elm_filt,remove_outlier
 
@@ -46,6 +47,14 @@ program proclp
   !
   ! Command line is:  'file name'   tmin    tmax   chi_lim -e 'elm file name'
   !
+  nargs = iargc()
+
+  if (nargs.lt.3) then 
+     write(0,'(a)') 'proclp command usage: proclp <infilename> tmin  tmax  chi_lim -e  <elmtimefilename>'
+     write(0,'(a)') 'The -e argument is optional'
+     STOP 'Insufficient command line arguments'
+  endif
+
   call getarg(1,arg)
   infilename = trim(arg)
 
@@ -155,7 +164,8 @@ program proclp
   close(ounit)
 
 
-  ofilename = 'lp_rev_'//trim(infilename)
+  ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//'_'//trim(infilename)
+
   open(ounit,file=ofilename,iostat=ierr)
 
   call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident,tmin,tmax,chisq_lim)
