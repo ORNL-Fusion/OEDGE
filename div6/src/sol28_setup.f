@@ -866,7 +866,7 @@ c
      .        suppress_screen,rho_warning
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
-     .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,
+     .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,rho0,
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
      .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v,node_ne
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
@@ -1188,9 +1188,11 @@ c       decay data to neighbouring ring:
         IF (tube(it)%type.EQ.GRD_PFZ) THEN
           psin0 = -RHI
           psin1 =  RHI
+          rho0  =  RHI
         ELSE
           psin0 =  RHI
           psin1 =  RHI
+          rho0  =  RHI
         ENDIF
 
         IF (index.LT.1.OR.index.GT.3) 
@@ -1310,11 +1312,13 @@ c...        Base second radial interpolation value on the first value:
             IF (osmnode(i3)%ti(1).LT.  0.0) ti1= -osmnode(i3)%ti(1)* ti0
 
             IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
+            IF (coord.EQ.8)               rho0  = tube(it1)%rho  
 
             IF (debug) THEN
               WRITE(logfp,*) 'NODE LINK:',ic1,it1
               WRITE(logfp,*) '    IK,IR:',cell(ic1)%ik,cell(ic1)%ir
-              WRITE(logfp,*) '     psin:',psin0
+              WRITE(logfp,*) '    psin0:',psin0
+              WRITE(logfp,*) '     rho0:',rho0
               WRITE(logfp,*) '       ne:',n0  
               WRITE(logfp,*) '       pe:',p0  
               WRITE(logfp,*) '      Te0:',te0  
@@ -1377,6 +1381,7 @@ c...        Linear along the line segment, starting at the link:
             val0 = 0.0
             val1 = 1.0
             val  = 1.0E+6
+            IF (debug) WRITE(logfp,*) '  intersection',intersection
             IF (intersection) THEN
               f1 = c1 + tcd * (d1 - c1)  ! Point where the current focus tube intersects
               f2 = c2 + tcd * (d2 - c2)  ! the interpolation line segment
@@ -1499,69 +1504,74 @@ c                STOP 'sdfdsf'
             val1 = 0.0  
             val  = ABS(tube(it)%psin - psin0)
             WRITE(logfp,*) ' psin 7:',psin0,tube(it)%psin,val
+          ELSEIF (coord.EQ.8) THEN
+            val0 = 0.0  ! Necessary?
+            val1 = 0.0  
+            val  = ABS(tube(it)%rho - rho0)
+            WRITE(logfp,*) ' rho 8:',rho0,tube(it)%rho,val
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             STOP 'ASSIGNNODEVALUES: CODE IS OBSOLETE'
-            IF ((osmnode(i2)%tube_range(1).NE.
-     .           osmnode(i3)%tube_range(1)).OR.
-     .          (osmnode(i2)%tube_range(2).NE.
-     .           osmnode(i3)%tube_range(2)).OR.
-     .          (osmnode(i2)%tube_range(1).GT.
-     .           osmnode(i2)%tube_range(2)))
-     .        CALL ER('AssignNodeValues_2','Invalid '//
-     .                'tube index range, check input file',*99)
-
-c...        Need range of PSIn over the segment:
-            DO it1 =     osmnode(i2)%tube_range(1), 
-     .               MIN(osmnode(i2)%tube_range(2),ntube)
-              IF (it1.GT.ntube) EXIT
-              DO ic1 = tube(it1)%cell_index(LO), 
-     .                 tube(it1)%cell_index(HI)
-                iobj = ic1
-                isrf = ABS(obj(iobj)%iside(1))
-                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-                isrf = ABS(obj(iobj)%iside(3))
-                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
-                  IF     (tube(it)%type.EQ.GRD_SOL) THEN
-                    IF (psin0.EQ.RHI) psin0 = tube(it1)%psin
-                    IF (psin0.NE.RHI) psin1 = tube(it1)%psin
-                    IF (debug) WRITE(0,*) 'SOL:',psin0,psin1,it,it1
-                  ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
-                    psin0 = MAX(psin0,tube(it1)%psin)
-                    psin1 = MIN(psin1,tube(it1)%psin)
-                    IF (debug) WRITE(0,*) 'PFZ:',psin0,psin1,it,it1
-                  ELSE
-                    CALL ER('AssignNodeValues_2','Invalid '//
-     .                      'RINGTYPE',*99)
-                  ENDIF
-               ENDIF
-              ENDDO
-            ENDDO
-c            WRITE(0,*) 'PSIN:',psin0,psin1,coord
-            IF     (coord.EQ.2) THEN
-c...          Spatial along the IR-range of applicability:
-              WRITE(0,*) 'TAB,HOLDTAB:',tab,hold_tab
- 
-              STOP 'NOT READY 2'
-            ELSEIF (coord.EQ.3) THEN
-c...          PSIn:
-              val0 = 0.0
-              val1 = ABS(psin1         - psin0)
-              val  = ABS(tube(it)%psin - psin0)
-              WRITE(logfp,*) ' psin:',psin0,psin1,tube(it)%psin
-            ELSEIF (coord.EQ.4) THEN
-c...          RHO:
-              STOP 'NOT READY 4'
-            ELSE
-              CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
-            ENDIF
+c            IF ((osmnode(i2)%tube_range(1).NE.
+c     .           osmnode(i3)%tube_range(1)).OR.
+c     .          (osmnode(i2)%tube_range(2).NE.
+c     .           osmnode(i3)%tube_range(2)).OR.
+c     .          (osmnode(i2)%tube_range(1).GT.
+c     .           osmnode(i2)%tube_range(2)))
+c     .        CALL ER('AssignNodeValues_2','Invalid '//
+c     .                'tube index range, check input file',*99)
+c
+cc...        Need range of PSIn over the segment:
+c            DO it1 =     osmnode(i2)%tube_range(1), 
+c     .               MIN(osmnode(i2)%tube_range(2),ntube)
+c              IF (it1.GT.ntube) EXIT
+c              DO ic1 = tube(it1)%cell_index(LO), 
+c     .                 tube(it1)%cell_index(HI)
+c                iobj = ic1
+c                isrf = ABS(obj(iobj)%iside(1))
+c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+c                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+c                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c                isrf = ABS(obj(iobj)%iside(3))
+c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+c                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+c                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+c                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+c     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+c                  IF     (tube(it)%type.EQ.GRD_SOL) THEN
+c                    IF (psin0.EQ.RHI) psin0 = tube(it1)%psin
+c                    IF (psin0.NE.RHI) psin1 = tube(it1)%psin
+c                    IF (debug) WRITE(0,*) 'SOL:',psin0,psin1,it,it1
+c                  ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
+c                    psin0 = MAX(psin0,tube(it1)%psin)
+c                    psin1 = MIN(psin1,tube(it1)%psin)
+c                    IF (debug) WRITE(0,*) 'PFZ:',psin0,psin1,it,it1
+c                  ELSE
+c                    CALL ER('AssignNodeValues_2','Invalid '//
+c     .                      'RINGTYPE',*99)
+c                  ENDIF
+c               ENDIF
+c              ENDDO
+c            ENDDO
+cc            WRITE(0,*) 'PSIN:',psin0,psin1,coord
+c            IF     (coord.EQ.2) THEN
+cc...          Spatial along the IR-range of applicability:
+c              WRITE(0,*) 'TAB,HOLDTAB:',tab,hold_tab
+c 
+c              STOP 'NOT READY 2'
+c            ELSEIF (coord.EQ.3) THEN
+cc...          PSIn:
+c              val0 = 0.0
+c              val1 = ABS(psin1         - psin0)
+c              val  = ABS(tube(it)%psin - psin0)
+c              WRITE(logfp,*) ' psin:',psin0,psin1,tube(it)%psin
+c            ELSEIF (coord.EQ.4) THEN
+cc...          RHO:
+c              STOP 'NOT READY 4'
+c            ELSE
+c              CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
+c            ENDIF
           ENDIF
         ELSEIF (mode.EQ.4) THEN
 c...      Load probe data, dummy values here:
