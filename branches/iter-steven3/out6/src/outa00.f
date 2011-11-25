@@ -960,50 +960,22 @@ c     Print out wall erosion and deposition data.
 c
       call pr_calc_walldep
 c
-c     Print out table of Eirene calcualted Hydrogenic values
 c
-      write(6,*)
-      write(6,'(a)') 'EIRENE Calculated Hydrogenic Quantities'
-      write(6,*)
-      write(6,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
-      write(6,'(a,i6)') 'PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
 c
-      do ir = 1,nrs
+      call pr_eirene_analysis
 
-         write(6,*) 
-         write(6,'(a,2x,a,i6)') 'START TARGET:'//OUTER,' RING = ',ir
-         write(6,'(2(2x,a,2x),3x,a,3x,3(4x,a,3x),3x,a,3x,2(6x,a,6x))') 
-     >   'IK','IR','PINATOM','PINENA','PINMOL','PINENM',
-     >   'DELTA-P','R','Z'
 
-         tmpsum2 = 0.0
 
-         do ik = 1,nks(ir)
 
-            write(6,'(2(1x,i5),1p,7(1x,g12.5))') ik,ir,
-     >           pinatom(ik,ir),pinena(ik,ir),
-     >           pinmol(ik,ir),pinenm(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
-     >           rs(ik,ir),zs(ik,ir)
-c
-c            tmpsum = 
-c     >           sqrt((krb(ik,ir)-krb(ik-1,ir))**2+
-c     >                (kzb(ik,ir)-kzb(ik-1,ir))**2)
-c
-c            tmpsum2= tmpsum2 + tmpsum
-c
-c
-c            write(6,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
-c     >           krb(ik,ir),kzb(ik,ir),
-c     >           krb(ik-1,ir),kzb(ik-1,ir),rs(ik,ir),zs(ik,ir),
-c     >           kpb(ik,ir)-kpb(ik-1,ir),tmpsum,
-c     >           kpb(ik,ir), tmpsum2,ksb(ik,ir),ksb(ik-1,ir)
-c
 
-         end do  
-         write(6,'(a)') 'END TARGET:'//INNER
 
-      end do
-c
+
+
+
+
+
+
+
       return 
 
 c
@@ -2380,4 +2352,210 @@ c
 c
       return
       end
+c
+c
+c
+      subroutine pr_eirene_analysis
+      implicit none
+      include 'params'
+      include 'outcom'
+c
+      include 'cgeom'
+      include 'comtor'
+c      include 'cneut2'
+      include 'dynam2'
+      include 'dynam3'
+c      include 'dynam4'
+      include 'pindata'
+c      include 'cadas'
+c      include 'grbound'
+c      include 'outxy'
+      include 'cedge2d'
+c      include 'transcoef'
+c      include 'cioniz'
+c      include 'reiser' 
+      include 'printopt' 
+c
+c     Local variables
+c
+c
+      real*8 :: totsrc,totcore,totcore_poloidal(maxnks,2),
+     >           totcore_radial(maxnrs,3)
+      real*8 :: totcore_poloidal_area(maxnks,2)
+      real*8 :: totcore_radial_area(maxnrs,3)
+
+
+c      integer prnizs
+c      real    bgcontent,totbgcontent
+c      real    impcontent(0:maxizs+1),totimpcontent(0:maxizs+1)
+c      REAL    ZSUM(max(MAXPLRP,maxizs))
+      real tmpsum,tmpsum2
+c      real tote,toti,totn
+c      real r,z
+      integer ik,ir,iz
+c      integer id,in 
+      
+
+
+c
+c     Print out table of Eirene calcualted Hydrogenic values
+c
+      write(6,*)
+      write(6,'(a)') 'EIRENE Calculated Hydrogenic Quantities'
+      write(6,*)
+      write(6,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
+      write(6,'(a,i6)') 'PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
+c
+      do ir = 1,nrs
+
+         write(6,*) 
+         write(6,'(a,2x,a,i6)') 'START TARGET:'//OUTER,' RING = ',ir
+         write(6,'(2(2x,a,2x),3x,a,3x,3(4x,a,3x),3x,a,3x,2(6x,a,6x))') 
+     >   'IK','IR','PINATOM','PINENA','PINMOL','PINENM',
+     >   'DELTA-P','R','Z'
+
+         tmpsum2 = 0.0
+
+         do ik = 1,nks(ir)
+
+            write(6,'(2(1x,i5),1p,7(1x,g12.5))') ik,ir,
+     >           pinatom(ik,ir),pinena(ik,ir),
+     >           pinmol(ik,ir),pinenm(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
+     >           rs(ik,ir),zs(ik,ir)
+c
+c            tmpsum = 
+c     >           sqrt((krb(ik,ir)-krb(ik-1,ir))**2+
+c     >                (kzb(ik,ir)-kzb(ik-1,ir))**2)
+c
+c            tmpsum2= tmpsum2 + tmpsum
+c
+c
+c            write(6,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
+c     >           krb(ik,ir),kzb(ik,ir),
+c     >           krb(ik-1,ir),kzb(ik-1,ir),rs(ik,ir),zs(ik,ir),
+c     >           kpb(ik,ir)-kpb(ik-1,ir),tmpsum,
+c     >           kpb(ik,ir), tmpsum2,ksb(ik,ir),ksb(ik-1,ir)
+c
+
+         end do  
+         write(6,'(a)') 'END TARGET:'//INNER
+
+      end do
+c
+c     Core and pedestal analysis 
+c
+      write(6,*)
+      write(6,'(a)') 'EIRENE Calculated Core Fueling'
+      write(6,*)
+      write(6,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
+      write(6,'(a,4(1x,g18.8))') 'GEOMETRY:',r0,z0,rxp,zxp
+
+      
+      ! integrate along the ring and print out the total ionization and scaled ionization
+
+      ! First - sum total ionization source on grid and total in confined plasma 
+
+
+      totsrc = 0.0
+      totcore = 0.0
+      totcore_poloidal = 0.0
+      totcore_radial = 0.0
+      totcore_poloidal_area = 0.0
+      totcore_radial_area = 0.0
+
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            totsrc = totsrc + pinion(ik,ir) * karea2(ik,ir)
+            if (ir.lt.irsep.and.ik.ne.nks(ir)) then 
+               totcore = totcore + pinion(ik,ir) * karea2(ik,ir)
+            endif
+         end do 
+      end do
+
+      do ir = 2,irsep-1
+         do ik = 1,nks(ir)-1
+            totcore_poloidal(ik,1) = totcore_poloidal(ik,1) + 
+     >                 pinion(ik,ir) * karea2(ik,ir)
+            totcore_radial(ir,1) = totcore_radial(ir,1) + 
+     >                 pinion(ik,ir) * karea2(ik,ir)
+            totcore_poloidal_area(ik,1) = totcore_poloidal_area(ik,1) + 
+     >                  karea2(ik,ir)
+            totcore_radial_area(ir,1) = totcore_radial_area(ir,1) + 
+     >                  karea2(ik,ir)
+
+            ! look for subset regions - within 5 rings of separatrix for poloidal
+            if (ir.ge.int(irsep*3/4)) then
+                totcore_poloidal(ik,2) = totcore_poloidal(ik,2) + 
+     >                 pinion(ik,ir) * karea2(ik,ir)
+                totcore_poloidal_area(ik,2)=totcore_poloidal_area(ik,2)+ 
+     >                  karea2(ik,ir)
+            endif
+            ! Near outer midplane for radial
+            if (abs(zs(ik,ir)-z0).lt.0.1.and.rs(ik,ir).gt.r0) then 
+               totcore_radial(ir,2) = totcore_radial(ir,2) + 
+     >                 pinion(ik,ir) * karea2(ik,ir)
+               totcore_radial_area(ir,2) = totcore_radial_area(ir,2) + 
+     >                  karea2(ik,ir)
+            endif
+            ! Near Xpoint for radial
+            if (abs(rs(ik,ir)-rxp).lt.0.1.and.
+     >          abs(zs(ik,ir)-zxp).lt.abs(z0-zxp)
+     >          ) then 
+               totcore_radial(ir,3) = totcore_radial(ir,3) + 
+     >                 pinion(ik,ir) * karea2(ik,ir)
+               totcore_radial_area(ir,3) = totcore_radial_area(ir,3) + 
+     >                  karea2(ik,ir)
+            endif
+         end do
+      end do
+
+      write(6,'(a,g18.8)') ' Total Ionization     :',totsrc
+      write(6,'(a,g18.8)') ' Total Core_Ionization:',totcore
+      if (totsrc.ne.0.) then 
+         write(6,'(a,g18.8)') ' Fraction Core_IZ  :',totcore/totsrc
+      endif
+
+      write(6,*)
+
+      write(6,'(a)') 'Core poloidal'//
+     >               ' ionization distributions'
+      write(6,*)
+
+      write(6,'(a)') ' IK       KSS    KPS R Z  Total  Area-tot'//
+     >               '    Near-SEP   Area-near-sep'   
+      ir = irsep-1
+      do ik = 1,nks(irsep-1)-1
+         write(6,'(i8,1x,f13.6,10(1x,g18.8))') ik,kss(ik,ir),
+     >         kps(ik,ir),rs(ik,ir),zs(ik,ir),
+     >         totcore_poloidal(ik,1),totcore_poloidal_area(ik,1),
+     >         totcore_poloidal(ik,2),totcore_poloidal_area(ik,2)
+      end do
+         
+      write(6,*)
+
+      write(6,'(a)') 'Core radial'//
+     >               ' ionization distributions'
+      write(6,*)
+
+      write(6,'(a)') ' IR       PSIN1      PSIN2 '//
+     >           '     Total    Area-tot '//
+     >  '    Outer_Midplane   Area-OMP     Xpoint    Area-XPT'   
+      do ir = 2,irsep-1
+         write(6,'(i8,2(1x,f13.6),10(1x,g18.8))') ir,
+     >          psitarg(ir,1),psitarg(ir,2),
+     >         totcore_radial(ir,1),totcore_radial_area(ir,1),
+     >         totcore_radial(ir,2),totcore_radial_area(ir,2),
+     >         totcore_radial(ir,3),totcore_radial_area(ir,3)
+      end do
+
+
+
+      ! end of pr_eirene_analysis
+      return 
+      end
+
+
+
+
+
 
