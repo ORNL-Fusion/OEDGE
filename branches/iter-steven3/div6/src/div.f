@@ -278,7 +278,9 @@ C
       IF (DEBUGL) CALL TEST
 
       TAUTIM = ZA02AS (1)
-
+c slmod begin
+      NYMFS_GLOBAL = NYMFS  ! lame, but don't want to pass NYMFS is local and I don't want to pass it around -SL, 21/11/2011
+c slmod end
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
       TAUTIM = ZA02AS (1) - TAUTIM
       WRITE(6,*) 'TIME USED IN SETUP: TAU SUBROUTINE :',TAUTIM,' S'
@@ -2216,7 +2218,11 @@ C
 c        CICUTS(IZ) = CICUTS(IZ) + SPUTY
 c        CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
 c        TCUT = TCUT + SPUTY
-c        IFATE = 3
+c slmod begin
+        IF (sloutput) IFATE = 3
+c
+cc        IFATE = 3
+c slmod end
 C      (GOTO 790)
 C
 C-----------------------------------------------------------------------
@@ -2224,7 +2230,6 @@ C       CURRENT ION OR SUB-ION FINISHED WITH ... END OF DO-LOOP
 C-----------------------------------------------------------------------
 C
   790   CONTINUE
-
         if (ifate.eq.3) then
            CICUTS(IZ) = CICUTS(IZ) + SPUTY
            CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
@@ -4440,6 +4445,8 @@ c
 c     SSEF is only non-zero if self-sputtering occurs - so the following code
 c     can be generalized by just including SSEF.
 c
+      write(0,*) 'nabsfac=',nabsfac
+
       if (nabsfac.gt.0.0) then
          absfac = (nabsfac + SSEF*nabsfac) + neut2d_fytot
          absfac_neut = absfac

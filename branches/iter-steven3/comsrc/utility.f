@@ -4958,6 +4958,9 @@ c
       min_dist=HI
       min_index=0
       sect_index=0
+c slmod begin
+      min_rintd = 1.0D+6
+c slmode end
 c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 

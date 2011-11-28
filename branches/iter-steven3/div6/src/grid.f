@@ -1631,7 +1631,7 @@ c       last wall points - the specification given here leaves out the
 c       core boundary on ribbon grids. 
 c     - I'm not sure if linear grids need the same fix
 c
-      if (cgridopt.eq.RIBBON_GRID) then 
+      if (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.eq.RIBBON_GRID) then 
          walln = walln+1
          wallr1(walln,1) = wallr1(walln-1,2)
          wallz1(walln,1) = wallz1(walln-1,2)
@@ -2577,7 +2577,8 @@ c
       INTEGER irref,mode,type
       INTEGER ik,ir,nshift,irend,ir1,ik1
 
-      nshift = 1
+      nshift =  1
+      ir     = -1
 c
 c     Checks:
 c

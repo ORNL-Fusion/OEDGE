@@ -1727,6 +1727,9 @@ c
       SUBROUTINE GET (TITLE,NIZS,JOB,equil,
      >                FACTA,FACTB,ITER,NITERS)
       use subgrid
+c slmod begin
+      use mod_divimp
+c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include 'params'
@@ -1804,7 +1807,7 @@ c slmod begin
       INCLUDE 'slout'
 
       INTEGER i1,i2,i3,i4,idum1,idum2,idum3,idum4,idum5
-      REAL    slver
+      REAL    slver,rdum1
 
 c...  Crap, but needed for backward compatability:
       INTEGER s1,v1,maxasc3
@@ -2913,6 +2916,18 @@ c *TEMP*
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
         IF (debugv) CALL RINOUT ('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+      ENDIF
+
+      IF (slver.GE.3.6) THEN 
+        READ (8) idum1
+        IF (idum1.EQ.1) THEN 
+          write(0,*) 'reading wall flux!'
+          READ (8) wall_n,rdum1
+          IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+          ALLOCATE(wall_flx(wall_n))
+          READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...
+          READ (8) wall_flx
+        ENDIF
       ENDIF
 
       IF (version_code.GE.(6*maxrev+14)) THEN

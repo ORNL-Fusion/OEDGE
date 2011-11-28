@@ -89,6 +89,9 @@ c     IPP/08 Krieger - RTBS was not initialized
       RZ2  = 0.0
       DRZ  = 0.0
       CICOUT = 0.0
+c slmod begin
+      neutc_divedge_density = 0.0
+c slmod end
 c
 c
 C-----------------------------------------------------------------------

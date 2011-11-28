@@ -3,6 +3,9 @@ C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
       use subgrid
+c slmod begin
+      use mod_divimp
+c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -556,7 +559,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.5
+      slver = 3.6
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -687,7 +690,16 @@ c...  slver = 3.5: *TEMP*
 c...  6.41:
       WRITE(8) debugv,cstepv
       IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
-        
+
+c...  slver 3.6:      
+      IF (ALLOCATED(wall_flx)) THEN 
+        WRITE(8) 1
+        WRITE(8) wall_n,1.0  ! this 1.0 is a version number
+        WRITE(8) MAXNBLK,MAXNATM,MAXNMOL,MAXNSRC,MAXNLAUNCH
+        WRITE(8) wall_flx
+      ELSE
+        WRITE(8) 0
+      ENDIF
 
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
