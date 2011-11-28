@@ -385,7 +385,7 @@ c
       INTEGER       i1,idum(5)
       LOGICAL       first_pass
       CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
-      CHARACTER*256 buffer_array(100)
+      CHARACTER*256 buffer_array(100),buffer_list(100)
       REAL          version
 
       first_pass = .TRUE.
@@ -438,7 +438,46 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
             ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
-       CASE DEFAULT
+        CASE('DIV SPUTTER COMPILE')
+          READ(buffer(itag+2:itag+4),*) version
+          sputter_ndata = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+            sputter_ndata = sputter_ndata + 1
+            buffer_list(sputter_ndata) = TRIM(buffer)
+          ENDDO
+
+          IF (ALLOCATED(sputter_data)) DEALLOCATE(sputter_data)
+          ALLOCATE(sputter_data(sputter_ndata))
+
+          DO i1 = 1, sputter_ndata
+            buffer = TRIM(buffer_list(i1))
+           write(0,*) 'buffer: '//TRIM(buffer)
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array(1),*) sputter_data(i1)%data_type
+            SELECTCASE (sputter_data(i1)%data_type)
+              CASE(1)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                READ(buffer_array(4),*) sputter_data(i1)%fraction
+              CASE(2)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+              CASE(3)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+              CASE(4) ! sputtering specices is a constant fraction of the hydrogenic flux
+                READ(buffer_array(2),*) sputter_data(i1)%atomic_number
+                READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
+                READ(buffer_array(4),*) sputter_data(i1)%charge
+                READ(buffer_array(5),*) sputter_data(i1)%fraction
+              CASE DEFAULT
+                CALL ER('LoadDivimpOption','Unknown sputter data '//
+     .                  'type',*99)
+            ENDSELECT
+          ENDDO          
+c       ----------------------------------------------------------------
+        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
       ENDSELECT 
 
@@ -1434,8 +1473,6 @@ c...  Divimp options:
       opt_div%rib_pol_b_def = 0.1
       opt_div%rib_pol_c_def = 1.0
       opt_div%rib_pol_d_def = 0.1
-
-c     left off need to add inputs for the above...
 
 c...  User:
       CALL User_InitializeOptions

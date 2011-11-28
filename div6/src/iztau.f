@@ -2,7 +2,11 @@ c     -*-Fortran-*-
 C@PROCESS OPT(1),VECTOR(LEV(0))
 C
 C
-      SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint)
+c slmod begin
+      SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint,nizs)
+c
+c      SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint)
+c slmod end
       IMPLICIT  none
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -19,10 +23,12 @@ c     Temporary includes
 c
       include 'cedge2d'
       include 'temp' 
-
       integer   printiz
 
       INTEGER   CION,CIOPTA,cprint
+c slmod begin
+      INTEGER   NIZS
+c slmod end
       REAL      CRMI,RIZB,crmb
 C
 C***********************************************************************
@@ -448,6 +454,13 @@ c
 c     ADAS package specified
 c
       elseif (cdatopt.eq.1) then
+c slmod begin
+        WRITE(0,*) 
+        WRITE(0,*) '---------------------------------------------------'
+        WRITE(0,*) 'WARNING IZTAU: CION -> NIZS in places -SL, 23/11/11'
+        WRITE(0,*) '---------------------------------------------------'
+        WRITE(0,*) 
+c slmod end
 c
 C
 C---- DO ONE RING AT A TIME
@@ -467,7 +480,11 @@ c      YEAR = '89'
 c      YEARDF = '89'
       ICLASS = 2
 C
-      DO 730 IZ = 0, CION-1
+c slmod begin
+      DO 730 IZ = 0, NIZS-1
+c
+c      DO 730 IZ = 0, CION-1
+c slmod end
         CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NKS(IR),PTESA,PNESA,   
      >              PCOEF(1,IZ+1))                                      
 c
@@ -487,7 +504,11 @@ C
       IF (CIOPTA.EQ.3 .OR. CIOPTA.EQ.5) THEN
         ICLASS = 1
 C
-        DO 735 IZ = 1, CION
+c slmod begin
+        DO 735 IZ = 1, NIZS
+c
+c        DO 735 IZ = 1, CION
+c slmod end
           CALL ADASRD(YEAR,CION,IZ,ICLASS,NKS(IR),PTESA,PNESA,   
      >                PCOEF(1,IZ))                                      
 c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NKS(IR),PTESA,PNESA,
@@ -667,7 +688,11 @@ C         FINISHED: VALIDATE IONISATION DATA BEFORE LEAVING
 C-----------------------------------------------------------------------
 C
   999 CONTINUE
-      DO 650 IZ = 0, CION
+c slmod begin
+      DO 650 IZ = 0, NIZS
+c
+c      DO 650 IZ = 0, CION
+c slmod end
        DO 640 IR = 1, NRS
         DO 640 IK = 1, NKS(IR)
           IF (KFIZS(IK,IR,IZ).LT.0.0 .OR. KFIZS(IK,IR,IZ).GT.HI)

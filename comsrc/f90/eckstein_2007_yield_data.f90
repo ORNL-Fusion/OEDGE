@@ -346,16 +346,61 @@ module eckstein_2007_yield_data
   CHARACTER*6  :: PLAMAT(7) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/)
 
 
-
+! slmod begin
+!  public :: yield_2007,init_eckstein_2007,print_eck2007_yields,eckstein2007_data_available,  &
+!            get_target_index,get_plasma_index
+!
   public :: yield_2007,init_eckstein_2007,print_eck2007_yields,eckstein2007_data_available
+! slmod end
 
   save
 
 
 
 contains
-
-
+! slmod begin
+!
+!  integer function get_target_index(z)
+!
+!    integer, intent(in) :: z
+!
+!    get_target_index = -1
+!
+!    if (z.eq.4 ) get_target_index = 2  ! targ_be  MATT=2  Beryllium
+!    if (z.eq.6 ) get_target_index = 4  ! targ_c   MATT=4  Carbon/Graphite
+!    if (z.eq.42) get_target_index = 8  ! targ_mo  MATT=8  Molybdenum
+!    if (z.eq.74) get_target_index = 9  ! targ_w   MATT=9  Tungsten
+!
+!    return 
+!
+!  end function get_target_index
+!
+!  integer function get_plasma_index(z,a)
+!
+!    integer, intent(in) :: z,a
+!
+!    get_plasma_index = -1
+!
+!    if (z.eq.1 .and.a.EQ.1) get_plasma_index =  1  !  ion_h     MATP=1    H
+!    if (z.eq.1 .and.a.EQ.2) get_plasma_index =  2  !  ion_d     MATP=2    D
+!    if (z.eq.1 .and.a.EQ.3) get_plasma_index =  3  !  ion_t     MATP=3    T
+!    if (z.eq.2 .and.a.EQ.3) get_plasma_index = -1  !  ion_he3  
+!    if (z.eq.2 .and.a.EQ.4) get_plasma_index =  4  !  ion_he4   MATP=4    HE4
+!    if (z.eq.6            ) get_plasma_index =  5  !  ion_c     MATP=5
+!    if (z.eq.7            ) get_plasma_index = -1  !  ion_n    
+!    if (z.eq.8            ) get_plasma_index =  7  !  ion_o     MATP=7
+!    if (z.eq.10           ) get_plasma_index = -1  !  ion_ne   
+!    if (z.eq.18           ) get_plasma_index = -1  !  ion_ar   
+!    if (z.eq.36           ) get_plasma_index = -1  !  ion_kr   
+!    if (z.eq.54           ) get_plasma_index = -1  !  ion_xe   
+!
+!    if (z.EQ.-1           ) get_plasma_index =  6  !  ion_self  MATP=6    SELF
+!
+!    return 
+!     
+!  end function get_plasma_index
+!
+! slmod end
 
   subroutine init_eckstein_2007(matt,matp)
 

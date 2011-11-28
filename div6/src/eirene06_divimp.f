@@ -1788,9 +1788,9 @@ c      pinion = 0.0   ! TEMP...
 c      pinrec = 0.0
 
       pinalpha = 0.0
-      pinline = 0.0
-      pinatom = 0.0
-      pinmol = 0.0
+      pinline  = 0.0
+      pinatom  = 0.0
+      pinmol   = 0.0
 
       hescpd = 0.0
       hescal = 0.0
@@ -2150,6 +2150,13 @@ c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
 
           IF (ilspt.GT.0) eirdat(ik,ir,:) = eirdat(ik,ir,:) * norm
+
+
+c          IF (ir.EQ.2.OR.ir.EQ.irsep) 
+c     .      WRITE(88,*) 'pinatom hell',ik,ir,pinatom(ik,ir),
+c     .                                 1.0 / kvols(ik,ir)
+
+
 
           sumion = sumion + pinion(ik,ir) * kvols(ik,ir) * eirtorfrac
         ENDDO

@@ -1339,3 +1339,35 @@ c
 c
 c ======================================================================
 c
+      SUBROUTINE UnzipFile(fname)
+      IMPLICIT none
+
+      CHARACTER fname*(*)
+
+      INTEGER   status,n
+      CHARACTER command*1024
+
+      n = LEN_TRIM(fname)
+
+      IF     (fname(n-2:n).EQ.'zip') THEN
+        command = 'unzip -o '//TRIM(fname)
+        fname(n-3:n) = ' '
+      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
+        command = 'gunzip -f '//TRIM(fname)
+        fname(n-2:n) = ' '
+      ELSE
+        RETURN
+      ENDIF
+
+      CALL CIssue(TRIM(command),status)        
+      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
+
+      RETURN
+ 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      WRITE(0,*) '  COMMAND   = ',TRIM(command)
+      WRITE(0,*) '  ERROR     = ',status
+      END
+c
+c ======================================================================
+c
+

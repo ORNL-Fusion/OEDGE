@@ -71,37 +71,6 @@ c      WRITE(0,*) 'REF:',ref_fluid(1:100,1)%ne
 c
 c ======================================================================
 c
-      SUBROUTINE UnzipFile(fname)
-      IMPLICIT none
-
-      CHARACTER fname*(*)
-
-      INTEGER   status,n
-      CHARACTER command*1024
-
-      n = LEN_TRIM(fname)
-
-      IF     (fname(n-2:n).EQ.'zip') THEN
-        command = 'unzip -o '//TRIM(fname)
-        fname(n-3:n) = ' '
-      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
-        command = 'gunzip -f '//TRIM(fname)
-        fname(n-2:n) = ' '
-      ELSE
-        RETURN
-      ENDIF
-
-      CALL CIssue(TRIM(command),status)        
-      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
-
-      RETURN
- 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
-      WRITE(0,*) '  COMMAND   = ',TRIM(command)
-      WRITE(0,*) '  ERROR     = ',status
-      END
-c
-c ======================================================================
-c
       SUBROUTINE LoadReferenceSolution(mode)
       USE mod_sol28_params
       USE mod_sol28
@@ -876,11 +845,11 @@ c
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
 
-      DATA default_message / .TRUE. /
+      DATA default_message, rho_warning / .TRUE., .TRUE./
       SAVE     
 
       suppress_screen = .FALSE.
-      rho_warning     = .TRUE.
+
 
       debug = .TRUE. 
 
@@ -1181,7 +1150,8 @@ c...    An intersection between the line segment and the ring has been found:
         tab = hold_tab
         tcd = hold_tcd
 
-        IF (debug) WRITE(logfp,*) 'INTERSECTION:',i0,i1,itube,ic
+        IF (debug) WRITE(logfp,*) 'INTERSECTION:',intersection,
+     .                            i0,i1,itube,ic
 
 c...    These are here in case psin0 gets picked up when linking exponential
 c       decay data to neighbouring ring:
@@ -1863,10 +1833,10 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
             ENDSELECT
 
             IF (ABS(expon).LT.2.0E-7) expon = 1.0
-            C = tube(it)%smax * radvel / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 10.0 / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 30.0 / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
+            C = tube(it)%smax * radvel / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 10.0 / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 30.0 / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) ! * expon
             A = n0
             B = 0.0
             IF (nc) THEN

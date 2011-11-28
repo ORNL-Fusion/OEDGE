@@ -2,6 +2,531 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+c subroutine: divYield_Be_W
+c
+c      From an email from Sophie (16/11/2011), forwarded from Andreas Mutzke [mailto:Andreas.Mutzke@ipp.mpg.de] (16/11/2011)
+c     
+c       Be -> W 1 keV   e=  
+c                2           1  ncp ncp_proj
+c      SDTrimSP: VERSION 5.01    15.11.2011
+c      Particles(NH*NR):        10000000 elements: Be   W      
+c      CPT A-Z  A-MASS        DNS0         RHO    E_CUTOFF     E_DISPL     E_BULKB     E_SURFB       INEL0        ISBV    IINT
+c       1   4   9.0122     0.12347     1.84770     2.00000    15.00000     0.00000     3.31000          3          1       2 
+c       2  74 183.8400     0.06306    19.25000     2.00000    38.00000     0.00000     8.79000          3          1       2
+c      !
+c      !
+c               20  number energy
+c                1  number alpha
+c                1  number mean depth
+c                1  number refl.coeff  / energ.coeff
+c                2  number sputt.coeff / energ.coeff
+c            energy        alpha   mean depth    refl.coef  energ.coeff  sputt.coeff  energ.coeff  sputt.coeff  energ.coeff
+c                                                    Be           Be           Be           Be           W            W    
+c              1.00         0.00     0.753677     0.007354     0.000962     0.000000     0.000000     0.000000     0.000000
+c              2.00         0.00     0.978780     0.133563     0.048357     0.000000     0.000000     0.000000     0.000000
+c              3.00         0.00     1.248317     0.299761     0.131835     0.000000     0.000000     0.000000     0.000000
+c              5.00         0.00     1.927753     0.544548     0.281648     0.000000     0.000000     0.000000     0.000000
+c              7.00         0.00     2.684676     0.657730     0.370540     0.000000     0.000000     0.000000     0.000000
+c             10.00         0.00     3.645109     0.709874     0.429249     0.000000     0.000000     0.000000     0.000000
+c             20.00         0.00     5.587461     0.703014     0.450005     0.000000     0.000000     0.000000     0.000000
+c             30.00         0.00     6.959517     0.676663     0.432105     0.000000     0.000000     0.000000     0.000000
+c             50.00         0.00     9.133810     0.639375     0.399921     0.000000     0.000000     0.000000     0.000000
+c             70.00         0.00    10.937870     0.615286     0.377816     0.000000     0.000000     0.000316     0.000004
+c            100.00         0.00    13.249392     0.591254     0.355606     0.000000     0.000000     0.005947     0.000166
+c            200.00         0.00    19.347540     0.551074     0.318757     0.000000     0.000000     0.045688     0.001636
+c            300.00         0.00    24.276594     0.530139     0.300258     0.000000     0.000000     0.083110     0.002790
+c            500.00         0.00    32.476271     0.505771     0.279909     0.000000     0.000000     0.135549     0.003844
+c            700.00         0.00    39.537266     0.490152     0.267559     0.000000     0.000000     0.170108     0.004175
+c           1000.00         0.00    48.928215     0.474044     0.254973     0.000000     0.000000     0.206025     0.004233
+c           2000.00         0.00    75.322349     0.440764     0.230529     0.000000     0.000000     0.268974     0.003730
+c           3000.00         0.00    98.145896     0.418819     0.215232     0.000000     0.000000     0.297168     0.003217
+c           5000.00         0.00   139.313794     0.387903     0.194778     0.000000     0.000000     0.319288     0.002495
+c           7000.00         0.00   177.686492     0.365954     0.181153     0.000000     0.000000     0.324028     0.002032
+c
+c
+      REAL FUNCTION divYield_Be_W(e0)
+      IMPLICIT none
+
+      REAL, INTENT(IN) :: e0
+
+      REAL yield(2,20),result
+ 
+      DATA yield /
+     .         1.00,  0.000000,
+     .         2.00,  0.000000,
+     .         3.00,  0.000000,
+     .         5.00,  0.000000,
+     .         7.00,  0.000000,
+     .        10.00,  0.000000,
+     .        20.00,  0.000000,
+     .        30.00,  0.000000,
+     .        50.00,  0.000000,
+     .        70.00,  0.000316,
+     .       100.00,  0.005947,
+     .       200.00,  0.045688,
+     .       300.00,  0.083110,
+     .       500.00,  0.135549,
+     .       700.00,  0.170108,
+     .      1000.00,  0.206025,
+     .      2000.00,  0.268974,
+     .      3000.00,  0.297168,
+     .      5000.00,  0.319288,
+     .      7000.00,  0.324028  /
+
+      divYield_Be_W = 0.0
+
+      CALL Fitter(20,yield(1,1:20),yield(2,1:20),1,e0,result,'LINEAR')
+
+      divYield_Be_W = result
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: divCompileSputteringYields
+c
+      SUBROUTINE divCompileSputteringYields
+      USE eckstein_2007_yield_data
+      USE mod_divimp
+      IMPLICIT none
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'cneut2'
+c      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+
+      REAL divYield_Be_W
+
+      INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
+     .              ncore,in,nsputter,ierr,nymfs,nds2
+      REAL          yield,rdum1,ratio,frac
+      CHARACTER*512 fname,command,resdir
+
+      nymfs = nymfs_global ! so lame, but need NYMFS and it's not in a common block
+ 
+      nsputter = sputter_ndata
+
+c
+c     Set defaults for walls
+c
+      DO ID = 1, wallpts
+        if (nymfs.gt.0.and.cymfs(1,1).eq.0) then
+           if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
+              KMFPWS(ID) = CYMFS(1,3)
+           else
+              KMFPWS(ID) = CYMFS(1,6)
+           endif
+        else
+           KMFPWS(ID) = 1.0
+        endif
+      end do
+      do in=1,nymfs
+         do id = NINT(cymfs(in,1)),NINT(cymfs(in,2))
+            if (id.ge.1.and.id.le.wallpts) then
+               if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
+                  KMFPWS(ID) = CYMFS(in,3)
+               else
+                  KMFPWS(ID) = CYMFS(in,6)
+               endif
+            endif
+         enddo
+      enddo
+
+c
+c     ------------------------------------------------------------------
+c     LOAD PARTICLE FLUX DATA
+c
+
+      CALL GetEnv('RESDIRTOP',resdir)
+
+
+      DO i = 1, nsputter
+
+        IF (sputter_data(i)%data_type.EQ.4) THEN
+
+          nds2 = 0
+          DO id = 1, nds
+            ir = irds(id)
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            nds2 = nds2 + 1
+          ENDDO
+
+          nseg = nds2
+          mion = sputter_data(i)%atomic_number
+
+          ALLOCATE(sputter_data(i)%ik   (nseg))
+          ALLOCATE(sputter_data(i)%ir   (nseg))
+          ALLOCATE(sputter_data(i)%id   (nseg))
+          ALLOCATE(sputter_data(i)%r    (nseg))
+          ALLOCATE(sputter_data(i)%z    (nseg))
+          ALLOCATE(sputter_data(i)%dds  (nseg))
+          ALLOCATE(sputter_data(i)%te   (nseg))
+          ALLOCATE(sputter_data(i)%ti   (nseg))
+          ALLOCATE(sputter_data(i)%flux (nseg,mion))
+          ALLOCATE(sputter_data(i)%e0   (nseg,mion))
+          ALLOCATE(sputter_data(i)%yield(nseg,mion))
+
+          sputter_data(i)%type       = sputter_data(i)%data_type
+          sputter_data(i)%nsegments  = nseg
+          sputter_data(i)%charge_max = sputter_data(i)%atomic_number
+	  sputter_data(i)%absfac     = 1.0
+	  sputter_data(i)%flux       = 0.0
+
+          k = 0
+          DO j = 1, nds
+            ik = ikds(j)
+            ir = irds(j)
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+
+            k = k + 1
+            sputter_data(i)%ik (k) = ik
+	    sputter_data(i)%ir (k) = ir
+	    sputter_data(i)%id (k) = wallindex(j)
+	    sputter_data(i)%r  (k) = rp(j)
+	    sputter_data(i)%z  (k) = zp(j)
+	    sputter_data(i)%dds(k) = dds2(j)
+	    sputter_data(i)%te (k) = kteds(j)
+	    sputter_data(i)%ti (k) = ktids(j)
+
+            iz = sputter_data(i)%charge
+	    sputter_data(i)%flux(k,iz) = 
+     .        knds(j) * ABS(kvds(j)) / kbfs(ik,ir) * costet(j) *   ! same as in NEUT.f
+     .        (sputter_data(i)%fraction / 100.0)
+
+            DO iz = 1, sputter_data(i)%atomic_number
+    	      sputter_data(i)%e0(k,iz) = 
+     .          3.0 * kteds(j) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
+     .          2.0 * ktids(j) 
+            ENDDO
+          ENDDO      
+
+        ELSE
+
+          fname = TRIM(resdir)//'/'//
+     .            TRIM(sputter_data(i)%case_name)//'.'//
+     .            TRIM(sputter_data(i)%extension)
+c...      Copy file to run directory:
+          command = 'cp -p '//TRIM(fname)//' .'
+          WRITE(0,*) 'command: ',TRIM(fname)
+          CALL CIssue(TRIM(command),status)
+          IF (status.NE.0) 
+     .      CALL ER('divCompileSputteringYields','Unable to copy '//
+     .              'data file',*99)
+	  
+          fname = TRIM(sputter_data(i)%case_name)
+          j = 1
+          DO k = 1, LEN_TRIM(fname)
+            IF (fname(k:k).EQ.'/') j = k
+          ENDDO
+          fname = fname(j+1:LEN_TRIM(fname))
+          fname = TRIM(fname)//'.'//TRIM(sputter_data(i)%extension)
+          WRITE(0,*) 'fname: '//TRIM(fname)
+	  
+c...      Unzip file if necessary:
+          IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip'.OR.
+     .        fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz') 
+     .      CALL UnzipFile(fname)
+	  
+          CALL find_free_unit_number(fp)
+          OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .         FORM='UNFORMATTED',STATUS='OLD',IOSTAT=ierr,ERR=97)            
+	  
+          READ(fp) sputter_data(i)%version,
+     .             sputter_data(i)%format, 
+     .             sputter_data(i)%type
+	  
+          IF (sputter_data(i)%version.EQ.1.0) THEN
+	  
+            READ(fp) sputter_data(i)%absfac,         ! ABSFAC
+     .               sputter_data(i)%atomic_number,  ! CION REAL()
+     .               sputter_data(i)%atomic_mass,    ! CRMI
+     .               sputter_data(i)%charge_min,     ! CIZSC
+     .               sputter_data(i)%charge_max,     ! NIZS
+     .               sputter_data(i)%nsegments,      ! NDS
+     .               sputter_data(i)%ncore           ! number of radial core data points
+	    
+            SELECTCASE (sputter_data(i)%format)
+              CASE (1)
+                nseg = sputter_data(i)%nsegments
+                mion = MIN(sputter_data(i)%atomic_number,
+     .                     sputter_data(i)%charge_max    )
+                ALLOCATE(sputter_data(i)%ik   (nseg))        ! this is stupid ... just make these a fixed size and avoid this pointless dynamic allocation
+                ALLOCATE(sputter_data(i)%ir   (nseg))
+                ALLOCATE(sputter_data(i)%id   (nseg))
+                ALLOCATE(sputter_data(i)%r    (nseg))
+                ALLOCATE(sputter_data(i)%z    (nseg))
+                ALLOCATE(sputter_data(i)%dds  (nseg))
+                ALLOCATE(sputter_data(i)%te   (nseg))
+                ALLOCATE(sputter_data(i)%ti   (nseg))
+                ALLOCATE(sputter_data(i)%flux (nseg,mion))
+                ALLOCATE(sputter_data(i)%e0   (nseg,mion))
+                ALLOCATE(sputter_data(i)%yield(nseg,mion))
+                ncore = sputter_data(i)%ncore
+                ALLOCATE(sputter_data(i)%core_rho (ncore))
+                ALLOCATE(sputter_data(i)%core_psin(ncore))
+                ALLOCATE(sputter_data(i)%core_ne  (ncore))
+                ALLOCATE(sputter_data(i)%core_te  (ncore))
+                ALLOCATE(sputter_data(i)%core_ti  (ncore))
+                ALLOCATE(sputter_data(i)%core_percent_nfrac(ncore))
+                ALLOCATE(sputter_data(i)%core_percent_efrac(ncore))
+	  
+                WRITE(0,*) 'ncore',ncore,nseg,mion
+	  
+                DO id = 1, nseg
+                  READ(fp,END=10) 
+     .              sputter_data(i)%ik (id),
+     .              sputter_data(i)%ir (id),
+     .              sputter_data(i)%id (id),
+     .              sputter_data(i)%r  (id),
+     .              sputter_data(i)%z  (id),
+     .              sputter_data(i)%dds(id),
+     .              sputter_data(i)%te (id),
+     .              sputter_data(i)%ti (id)
+                  DO iz = 1, mion
+                    READ(fp) 
+     .                sputter_data(i)%flux (id,iz),
+     .                sputter_data(i)%e0   (id,iz),
+     .                sputter_data(i)%yield(id,iz)
+                  ENDDO
+                ENDDO
+c               Data on the impurity distribution in the core, for rescaling the 
+c               wall flux later, if desired:
+                ncore = sputter_data(i)%ncore
+                IF (ncore.GT.0) THEN 
+                  READ(fp) 
+     .              sputter_data(i)%core_rho (1:ncore),
+     .              sputter_data(i)%core_psin(1:ncore),
+     .              sputter_data(i)%core_ne  (1:ncore),	  
+     .              sputter_data(i)%core_te  (1:ncore), 
+     .              sputter_data(i)%core_ti  (1:ncore), 
+     .              sputter_data(i)%core_percent_nfrac(1:ncore),
+     .              sputter_data(i)%core_percent_efrac(1:ncore)
+                ENDIF
+              CASEDEFAULT
+                CALL ER('divCompileSputteringYields','Unrecognized '//
+     .                  'file TYPE',*99)
+            ENDSELECT
+          ELSE
+            CALL ER('divCompileSputteringYields','Unrecognized '//
+     .              'file VERSION number',*99)
+          ENDIF
+	  
+10        CONTINUE
+          IF (id.NE.nseg+1) sputter_data(i)%nsegments = id - 1
+          CLOSE(fp)
+
+        ENDIF
+
+      ENDDO
+
+c
+c     ------------------------------------------------------------------
+c     DERIVE YIELDS
+c
+
+
+      DO i = 1, nsputter
+        nseg = sputter_data(i)%nsegments
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+
+
+        IF (sputter_data(i)%type.EQ.3) CYCLE   ! yield is already calculated
+
+
+        sputter_data(i)%target_number = cion
+ 
+c        matt = get_target_index(cion)
+c        matp = get_plasma_index(    sputter_data(i)%atomic_number ,
+c     .                          INT(sputter_data(i)%atomic_mass  ))
+
+        CALL SYLD96(matt,matp,cneutd,-1,-1,cion,
+     .              sputter_data(i)%atomic_number,
+     .              sputter_data(i)%atomic_mass  ,rdum1)
+
+        WRITE(0,*) 'yield 1',i,matt,matp,cizb,
+     .              sputter_data(i)%atomic_number
+
+        IF (matt.EQ.-1) 
+     .    CALL ER('divCompileSputteringYields','Target material not '//
+     .            'identified',*99)
+        IF (matp.EQ.-1) 
+     .    CALL ER('divCompileSputteringYields','Plasma material not '//
+     .            'identified',*99)
+
+c       Standard setup if not Be (cizb=4) incident on W (MATT=9) 
+c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
+        IF (sputter_data(i)%atomic_number.NE.4.OR.matt.NE.9) 
+     .    CALL init_eckstein_2007(matt,matp)
+
+        WRITE(0,*) 'yield 2',i,matt,matp
+
+        DO j = 1, nseg
+          DO iz = 1, mion
+            IF (sputter_data(i)%atomic_number.EQ.4.AND.matt.EQ.9) THEN
+              sputter_data(i)%yield(j,iz) = 
+     .          divYield_Be_W(sputter_data(i)%e0(j,iz))
+            ELSE
+              sputter_data(i)%yield(j,iz) = 
+     .          yield_2007(matp,matt,sputter_data(i)%e0(j,iz))
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+
+c
+c     ------------------------------------------------------------------
+c     SET absfac FOR SPECIFIED IMPURITY FRACTIONS
+c
+      DO i = 1, nsputter
+        IF (sputter_data(i)%type    .NE. 1  .OR.
+     .      sputter_data(i)%absfac  .NE. 1.0.OR.
+     .      sputter_data(i)%fraction.EQ.-1.0) CYCLE
+        ncore = sputter_data(i)%ncore
+        j = 0
+c        DO j = 1, ncore
+c          ratio = sputter_data(i)%core_rho(j    ) / 
+c     .            sputter_data(i)%core_rho(ncore)
+c          IF (ratio.LE.0.95.AND.ratio.GT.0.95) EXIT
+c        ENDDO
+c        IF (j.EQ.ncore+1) 
+c     .    CALL ER('divCompileSputteringData','q95 not found',*99)  ! not really q95?
+
+        frac = sputter_data(i)%fraction / 
+     .         sputter_data(i)%core_percent_nfrac(ncore-3) 
+
+        write(0,'(A,3I6,1P,4E10.2,0P)') 
+     .    'process',i,j,ncore,frac,sputter_data(i)%fraction,
+     .    sputter_data(i)%core_percent_nfrac(ncore-3),
+     .    sputter_data(i)%fraction /
+     .    sputter_data(i)%core_percent_nfrac(ncore-3) 
+
+        sputter_data(i)%absfac = frac
+
+      ENDDO
+c
+c     ------------------------------------------------------------------
+c     ASSIGN wlprob
+c
+
+      WRITE(0 ,*) 'sputter data',nsputter
+      WRITE(88,*) 'sputter data',nsputter
+      DO i = 1, nsputter
+        WRITE(88,'(F5.1,I4,1P,E10.2,0P,I4,F6.2,3I4,2I6)') 
+     .    sputter_data(i)%version,
+     .    sputter_data(i)%format   ,
+     .    sputter_data(i)%absfac ,
+     .    sputter_data(i)%atomic_number,
+     .    sputter_data(i)%atomic_mass,
+     .    sputter_data(i)%target_number,
+     .    sputter_data(i)%charge_min,   
+     .    sputter_data(i)%charge_max,   
+     .    sputter_data(i)%nsegments,
+     .    sputter_data(i)%type 
+          nseg = sputter_data(i)%nsegments
+          mion = MIN(sputter_data(i)%atomic_number,
+     .               sputter_data(i)%charge_max    )
+        DO id = 1, nseg
+          WRITE(88,'(5X,F5.2,3I6,2F7.3,1P,E10.2,0P,2F8.2,
+     .              20(2X,1P,E10.2,0P,F8.2,1P,E10.2,0P))')
+     .      kmfpws(sputter_data(i)%id(id)),
+     .      sputter_data(i)%ik (id),
+     .      sputter_data(i)%ir (id),
+     .      sputter_data(i)%id (id),
+     .      sputter_data(i)%r  (id),
+     .      sputter_data(i)%z  (id),
+     .      sputter_data(i)%dds(id),
+     .      sputter_data(i)%te (id),
+     .      sputter_data(i)%ti (id),
+     .      (sputter_data(i)%flux (id,iz),
+     .       sputter_data(i)%e0   (id,iz),
+     .       sputter_data(i)%yield(id,iz),iz=1,mion)
+        ENDDO
+        ncore = sputter_data(i)%ncore
+        IF (ncore.GT.0) THEN 
+          WRITE(0,*) 'doing the ncore dance, again'
+          DO id = 1, ncore
+            WRITE(88,'(2F10.3,1P,E10.2,0P,2F9.2,2F15.7)')
+     .        sputter_data(i)%core_rho (id),
+     .        sputter_data(i)%core_psin(id),
+     .        sputter_data(i)%core_ne  (id),	  
+     .        sputter_data(i)%core_te  (id), 
+     .        sputter_data(i)%core_ti  (id), 
+     .        sputter_data(i)%core_percent_nfrac(id),
+     .        sputter_data(i)%core_percent_efrac(id)
+          ENDDO
+        ENDIF
+      ENDDO
+
+
+      wlprob  = 0.0
+      nwlprob = wallpts
+      DO id = 1, nwlprob
+        wlprob(id,1) = id
+        wlprob(id,2) = id
+      ENDDO
+
+      DO i = 1, nsputter
+        nseg = sputter_data(i)%nsegments
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+
+        DO j = 1, nseg
+          id = sputter_data(i)%id(j)
+          DO iz = 1, mion
+            wlprob(id,3) = wlprob(id,3) +
+     .        sputter_data(i)%absfac      *    
+     .        sputter_data(i)%flux (j,iz) *    
+     .        sputter_data(i)%yield(j,iz) *
+     .        sputter_data(i)%dds  (j   ) *
+     .        kmfpws(id)
+          ENDDO
+        ENDDO
+
+        sputter_data(i)%absfac_net = 0.0
+        DO j = 1, nwlprob
+          sputter_data(i)%absfac_net = sputter_data(i)%absfac_net + 
+     .                                 wlprob(j,3)
+        ENDDO
+
+      ENDDO
+
+      DO i = nsputter, 2, -1
+        sputter_data(i)%absfac_net = 
+     .    sputter_data(i  )%absfac_net - 
+     .    sputter_data(i-1)%absfac_net
+      ENDDO
+
+      DO i = 1, nsputter
+        WRITE(0,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
+      ENDDO
+
+      nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
+c      DO i = 1, nwlprob
+c        nabsfac = nabsfac + wlprob(i,3)
+c      ENDDO
+      wlprob(:,3) = wlprob(:,3) / nabsfac
+
+      wallpt(:,13) = 0.0
+
+      WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
+
+c      stop 'here in the shit'
+
+      RETURN
+97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
+      STOP 'shiiiit'
+99    WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      STOP
+      END
+
+c
+c ======================================================================
+c
       SUBROUTINE ImportOSMGrid
       USE mod_geometry
       USE mod_sol28_global
@@ -104,11 +629,28 @@ c      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
 
 c      WRITE(0,*) 'whoa=',r0,z0,rxp,zxp
 c      stop 'dsdfsf'
-c left off
+
+      CALL OutputData(85,'Linear 1')
+       
+      IF (irwall.EQ.nrs) THEN 
+        cgridopt = LINEAR_GRID
+        DO ir = 2, nrs
+          IF (nks(ir).NE.nks(1)) THEN 
+            cgridopt = RIBBON_GRID
+            EXIT
+          ENDIF
+        ENDDO
+      ELSE
+        cgridopt = 3
+      ENDIF
+      WRITE(0,*) 'cgridopt=',cgridopt
 
       CALL InsertRing(1     ,BEFORE,PERMANENT)
-      CALL InsertRing(irwall,AFTER ,PERMANENT)
-      CALL InsertRing(irtrap,BEFORE,PERMANENT)
+      CALL InsertRing(irwall,AFTER,PERMANENT)
+      IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN 
+      ELSE
+        CALL InsertRing(irtrap,BEFORE,PERMANENT)
+      ENDIF
       idring(1     ) = BOUNDARY
       idring(irtrap) = BOUNDARY
       idring(irwall) = BOUNDARY
@@ -116,16 +658,16 @@ c left off
       psitarg(irtrap,:) = 0.0
       psitarg(irwall,:) = 0.0
 
-      cutpt1     = ikto
-      cutpt2     = ikti             ! These are semi-bogus for a connected double-null...?
-      cutring    = irsep - 1
-      maxkpts    = nks(irsep)
-      maxrings   = irwall
+      CALL OutputData(86,'Linear 2')
+
+      cutpt1   = ikto
+      cutpt2   = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring  = irsep - 1
+      maxkpts  = nks(irsep)
+      maxrings = irwall
 
 c...  Here to avoid the need to call TailorGrid:
-
 c      IF (grdnmod.GT.0) CALL TailorGrid
- 
 
       CALL SetupGrid
       CALL SequenceGrid

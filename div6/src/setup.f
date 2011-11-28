@@ -2556,6 +2556,7 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeVariables
+      USE mod_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -3203,6 +3204,7 @@ c     values need to well documented.
 c
       call InitializeUnstructuredInput
 
+      CALL divInitializeOptions
       CALL osm_InitializeOptions
 c
       return

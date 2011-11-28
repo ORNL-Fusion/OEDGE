@@ -215,8 +215,9 @@ c slmod begin
       elseif (cgridopt.eq.LINEAR_GRID) then
          call BuildLinearGrid
       elseif (cgridopt.eq.OSM_GRID) then
+c        Note that cgridopt is changed to 3 (SONNET), LINEAR_GRID, or RIBOBN_GRID in
+c        this routine:     
          call ImportOSMGrid
-         cgridopt = 3  ! switch to SONNET grid specifier
 c slmod end
 c
 c     jdemod - support for new grid option to be added
@@ -235,7 +236,8 @@ c
 c
 c     
 c
-         call BuildRibbonGrid
+         CALL divLoadRibbonData
+c         call BuildRibbonGrid
 c slmod begin - ribbon dev
          WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
          nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
@@ -3194,7 +3196,11 @@ C
 C
 C---- SET IONISATION / E-I RECOMBINATION TIME INTERVALS    CFIZS,CFRCS
 C
-      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
+c slmod begin
+      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint,nizs)
+c
+c      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
+c slmod end
 C
 C---- SET C-X TIMES         KFCXS
 C

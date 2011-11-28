@@ -652,6 +652,7 @@ c
 c ======================================================================
 c
       SUBROUTINE SequenceWall(mode)
+      USE mod_interface
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_sol28_wall
@@ -717,6 +718,13 @@ c         Swap the first segment with the idenfied one:
         CASE DEFAULT
          CALL ER('SequenceWall','Unknown MODE',*99)
       ENDSELECT
+
+      CALL inOpenInterface('osm.idl.fluid_wall_debug',ITF_WRITE)
+      CALL inPutData(wall(1:nwall)%v1(1),'x1','m')
+      CALL inPutData(wall(1:nwall)%v1(2),'y1','m')
+      CALL inPutData(wall(1:nwall)%v2(1),'x2','m')
+      CALL inPutData(wall(1:nwall)%v2(2),'y2','m')
+      CALL inCloseInterface
 
 c...  Clockwise order the segments that make up the standard
 c     continuous wall:
