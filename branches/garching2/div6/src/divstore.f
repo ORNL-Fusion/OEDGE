@@ -507,14 +507,16 @@ c
       if (line_profile_opt.ne.0) then 
           write(8) lp_wave,lp_instrument_width,
      >             lp_bin_width,lp_robs,lp_zobs,lp_theta,lp_dtheta
-          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
+c         IPP/11 - first arg must be 8 chars string
+          CALL R8INOUT ('W LP    ',line_profile,max_lp_bins*2+1)
           CALL R8INOUT ('W MOD_LP',mod_line_profile,max_lp_bins*2+1)
       endif     
 c
 c     Store the pressure - from SOL option 22
 c
       call rinout ('W KPRESS',kpress,maxnks*maxnrs*2)
-      call rinout ('W KPRAD',kprad,maxnks*maxnrs)
+c     IPP/11 - first arg must be 8 chars string
+      call rinout ('W KPRAD ',kprad,maxnks*maxnrs)
 c
 c     Write out the global HC activation option
 c
