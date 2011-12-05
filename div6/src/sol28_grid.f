@@ -95,6 +95,9 @@ c
       INTEGER it,cind1,cind2,ic,iobj,isrf,ivtx(2)
       REAL*8  c1,c2,d1,d2,tab,tcd
 
+c     IPP/11 - Explicitely initialize CatchTube
+      CatchTube = .FALSE.
+
       it = itube
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -345,6 +348,10 @@ c
      .        volsrc(6)
 
       debug = .TRUE.
+
+c     IPP/11 - initialize variables before 1st use
+      r0 = 0
+      z0 = 0
 
       CALL SetupCell2Obj(ncell,IND_CELL)  ! *** GET RID OF THIS! ***
 
