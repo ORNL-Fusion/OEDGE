@@ -415,6 +415,7 @@ c...    Strata:
          REAL      :: fit_shift
          REAL      :: fit_quantity
          REAL      :: fit_p(10)
+         INTEGER   :: fit_width
       ENDTYPE type_node
 !
 !     Grid:

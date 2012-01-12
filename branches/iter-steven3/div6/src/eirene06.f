@@ -6937,7 +6937,9 @@ c
       ntime = 0
       ntime0 = 0
 
-      nfile = 111
+      nfile = 110  ! changed because blades were running out of space when writing fort.10 - SL, 01/12/11
+                   ! note: might be a problem with BGK iterations
+c      nfile = 111
       IF (photons.EQ.2) nfile = 311
       IF (tetrahedrons) nfile = 0
       IF (opt_eir%ntime.NE.0) THEN

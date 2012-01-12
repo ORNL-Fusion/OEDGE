@@ -5476,10 +5476,6 @@ c
                      if (matt.le.ntars) then 
                         EMAX = CEMAXF * CEBD * 
      >                         (CEIMP / CETH(MATP,MATT) - 1.0)
-
-                  write(0,*) 'testing:',id,emax,cemaxf,cebd  ! *** LEFT OFF **8
-                  write(0,*) '       :',ceimp,matp,matt,ceth(MATP,MATT)
- 
                      else
                         EMAX = CEMAXF * (CEIMP * GAMBL - CEBD)
                      endif

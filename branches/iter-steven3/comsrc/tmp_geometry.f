@@ -1727,9 +1727,10 @@ c
 c
       SUBROUTINE BuildConnectionMap_New
       USE mod_eirene06_locals
+      USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER fp,iobj,iobj1,iside,iside1,isrf
+      INTEGER fp,iobj,iobj1,iside,iside1,isrf,icell
       INTEGER i1,i2
 
       INTEGER                 nlist,ilist
@@ -1835,6 +1836,8 @@ c              STOP 'BAD SRF_SIDE'
       RETURN
  99   WRITE(fp,*) '  IOBJ ,ISIDE =',iobj ,iside
       WRITE(fp,*) '  IOBJ1,ISIDE1=',iobj1,iside1
+      icell = obj(iobj)%index(IND_CELL)
+      WRITE(fp,*) '  X,YCEN      =',cell(icell)%cencar(1:2)
       STOP
       END
 c

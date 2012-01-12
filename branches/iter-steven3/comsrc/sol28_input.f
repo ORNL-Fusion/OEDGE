@@ -1101,7 +1101,7 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
 
       LOGICAL osmGetLine
 
-      INTEGER   i1
+      INTEGER   i1,sub_option
       LOGICAL   node_fit,node_data,ldum1
       REAL      node_type,rdum1,rdum2
       CHARACTER cdum1
@@ -1195,8 +1195,28 @@ c...              Load data for radial fits to pedestal prescription:
                     CASE ( 1)  ! Linear in core, TANH in pedestal, exponential in SOL
                       READ(buffer,*) rdum1,
      .                  osmnode(osmnnode)%fit_type,
-     .                  osmnode(osmnnode)%fit_quantity,
-     .                  osmnode(osmnnode)%fit_p(1:9)
+     .                  osmnode(osmnnode)%fit_quantity
+
+                      sub_option = NINT(10 * 
+     .                  MOD(          osmnode(osmnnode)%fit_quantity,
+     .                      REAL(NINT(osmnode(osmnnode)%fit_quantity))))
+                      write(0,*) 'sub_option',sub_option
+                      SELECTCASE (sub_option)
+                        CASE (1)  ! Adding adjustmend of Ti:Te ratio cross-over location
+                          osmnode(osmnnode)%fit_width = 2
+                          READ(buffer,*) rdum1,rdum1,rdum1,
+     .                      osmnode(osmnnode)%fit_p(1:10)
+                        CASE DEFAULT
+                          osmnode(osmnnode)%fit_width = 1
+                          READ(buffer,*) rdum1,rdum1,rdum1,
+     .                      osmnode(osmnnode)%fit_p(1:9)
+                          osmnode(osmnnode)%fit_p(10) = 3.0  ! default, for backward compatibility
+                      ENDSELECT
+c                      READ(buffer,*) rdum1,
+c     .                  osmnode(osmnnode)%fit_type,
+c     .                  osmnode(osmnnode)%fit_quantity,
+c     .                  osmnode(osmnnode)%fit_p(1:9)
+
                     CASE ( 2)  ! Linear in the core, exponential in SOL
                       READ(buffer,*) rdum1,
      .                  osmnode(osmnnode)%fit_type,

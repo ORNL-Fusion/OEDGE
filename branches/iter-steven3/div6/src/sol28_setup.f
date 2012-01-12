@@ -1788,6 +1788,8 @@ c           parameters:
                   CASE (4)  
                     te(inode) = result(2)
                     ti(inode) = result(3)
+                  CASE (5)  
+                    ti(inode) = result(3)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown data '//
      .                      'assignment for MODE=6',*99)
