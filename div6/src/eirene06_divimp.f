@@ -2051,7 +2051,7 @@ c             the standard DIVIMP neutral wall, ignore for now...
                 pinline(ik,ir,1:6,H_BGAMMA)=pinline(ik,ir,1:6,H_BGAMMA)+ 
      .                                      rdum(1:6)
               ELSEIF (ilin.EQ.3) THEN
-                pinline(ik,ir,1:6,H_BGAMMA)=pinline(ik,ir,1:6,H_BBETA) + 
+                pinline(ik,ir,1:6,H_BBETA )=pinline(ik,ir,1:6,H_BBETA) + 
      .                                      rdum(1:6)
               ENDIF  
             ENDIF
