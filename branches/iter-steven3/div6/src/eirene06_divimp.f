@@ -966,6 +966,8 @@ c         not found, or separate surface represenation forced, so add a surface:
               surface(nsurface)%surtxt = '* wall surface (DIVIMP)'      
             CASE (2)                
               surface(nsurface)%surtxt = '* pumping surface (DIVIMP)'      
+            CASE (3)                
+              surface(nsurface)%surtxt = '* specular reflection (DIV)'      
             CASE DEFAULT
               CALL ER('DefineEireneSurfaces','Invalid ILIIN',*99)
           ENDSELECT
@@ -1294,6 +1296,7 @@ c      ENDDO
 
 c      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
 
+
 c...  Low IK target:
       IF (assign_LO) THEN
         srcsrf  = srcsrf + 1 
@@ -1457,6 +1460,7 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%sorcos  = 1.0
             strata(nstrata)%sormax  = 90.0
           CASE (3)
+
             IF (opt_eir%type(is).EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
               insor = 2 ! 1
@@ -1495,7 +1499,7 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
 c            WRITE(0,*) strata(nstrata)%sorad(1:3)
 c            STOP 'sdgsdgd'
             strata(nstrata)%sorene  = opt_eir%sorene(is)
-            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%soreni  = opt_eir%sorene(is)  ! bug - seems the puff energy is set from SORENI, not SORENE, so all puff had E=0 before this? -SL, 19/01/12
             strata(nstrata)%sorcos  = opt_eir%sorcos(is)
             strata(nstrata)%sormax  = opt_eir%sormax(is)
           CASE (4)  ! Puff wall surface (not working...)
@@ -1529,7 +1533,9 @@ c            STOP 'sdgsdgd'
             strata(nstrata)%sorad(1:6) =opt_eir%sorad(1:6,is) *  ! Convert to cm
      .                                  100.0  
             strata(nstrata)%sorene  = opt_eir%sorene(is)
-            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%soreni  = opt_eir%sorene(is) 
+
+            write(0,*) 'puff eni',opt_eir%sorene(is)
             strata(nstrata)%sorcos  = opt_eir%sorcos(is)
             strata(nstrata)%sormax  = opt_eir%sormax(is)
 c            WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
@@ -2036,13 +2042,16 @@ c             the standard DIVIMP neutral wall, ignore for now...
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
                
-              IF (ilin.EQ.1) THEN
+              IF     (ilin.EQ.1) THEN
                 pinline(ik,ir,1:5,H_BALPHA)=pinline(ik,ir,1:5,H_BALPHA)+ 
      .                                      rdum(1:5)
                 pinline(ik,ir,6  ,H_BALPHA)=pinline(ik,ir,6  ,H_BALPHA)+ 
      .                                      rdum(7)
               ELSEIF (ilin.EQ.2) THEN
                 pinline(ik,ir,1:6,H_BGAMMA)=pinline(ik,ir,1:6,H_BGAMMA)+ 
+     .                                      rdum(1:6)
+              ELSEIF (ilin.EQ.3) THEN
+                pinline(ik,ir,1:6,H_BGAMMA)=pinline(ik,ir,1:6,H_BBETA) + 
      .                                      rdum(1:6)
               ENDIF  
             ENDIF
@@ -2145,6 +2154,8 @@ c...      Not relaxed, volume normalize:
           pinline(ik,ir,1:6,H_BALPHA) = pinline(ik,ir,1:6,H_BALPHA) * !/
      .                                  norm  
           pinline(ik,ir,1:6,H_BGAMMA) = pinline(ik,ir,1:6,H_BGAMMA) * !/
+     .                                  norm  
+          pinline(ik,ir,1:6,H_BBETA)  = pinline(ik,ir,1:6,H_BBETA)  * !/
      .                                  norm  
 c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
