@@ -19,6 +19,7 @@ MODULE MOD_OUT985
 
 
   INTEGER, PUBLIC, PARAMETER :: MAXNDET = 10,  &
+  &                             MAXNCHORD = 1000, &
   &                             MAXNINT = 10,  &
   &                             ALL_OPTIONS = 1,  &
   &                             DETECTOR_ONLY = 2
@@ -116,6 +117,7 @@ MODULE MOD_OUT985
      INTEGER :: xindex
      INTEGER :: yindex
      INTEGER :: type
+     INTEGER :: ccd
      INTEGER :: status
      INTEGER :: nxbin         ! Don't store these here, use OPT... clean this up...
      INTEGER :: nybin
@@ -195,6 +197,10 @@ MODULE MOD_OUT985
      REAL*8    :: angle(2)                   ! xangle,yangle
      INTEGER   :: nxbin
      INTEGER   :: nybin                      ! nbin(2) !xbin,ybin
+     INTEGER   :: chord_n
+     INTEGER   :: chord_opt (  MAXNCHORD)
+     REAL*8    :: chord_v1  (3,MAXNCHORD)
+     REAL*8    :: chord_v2  (3,MAXNCHORD)
      CHARACTER :: fmap*1024
      INTEGER   :: ndet
      INTEGER   :: det_ccd   (MAXNDET)

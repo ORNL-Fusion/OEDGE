@@ -707,20 +707,39 @@ c
 c         Find location of wall intersection - use of indi for intersection index is 
 c         for compatibility with existing code 
 c
-          write(6,'(a,i10,2i6,5g18.10)')  
-     >          'NEUTONE:FIND_WALL_INTERSESCTION-BEFORE:',
-     >          iter_cnt,ik,ir,r,z,rold,zold,result
+c slmod begin          
+          if (cprint.ge.1) 
+     >      write(6,'(a,i10,2i6,5g18.10)')  
+     >            'NEUTONE:FIND_WALL_INTERSESCTION-BEFORE:',
+     >            iter_cnt,ik,ir,r,z,rold,zold,result
+c
+c          write(6,'(a,i10,2i6,5g18.10)')  
+c     >          'NEUTONE:FIND_WALL_INTERSESCTION-BEFORE:',
+c     >          iter_cnt,ik,ir,r,z,rold,zold,result
+c slmod end
 
 c
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
-     >                                sect)
+c slmod begin
+     >                                sect,cprint)
 c
-          write(6,'(a,i10,2i6,9g18.10,i10,l6)')  
-     >          'NEUTONE:FIND_WALL_INTERSESCTION-AFTER:',
-     >          iter_cnt,ik,ir,r,z,rold,zold,result,rnew,znew,
-     >          tnew*raddeg,tnorm*raddeg,intersect_result,sect
+c     >                                sect)
+c slmod end
+c
+c slmod begin          
+          if (cprint.ge.1) 
+     >      write(6,'(a,i10,2i6,9g18.10,i10,l6)')  
+     >            'NEUTONE:FIND_WALL_INTERSESCTION-AFTER:',
+     >            iter_cnt,ik,ir,r,z,rold,zold,result,rnew,znew,
+     >            tnew*raddeg,tnorm*raddeg,intersect_result,sect
+c
+c          write(6,'(a,i10,2i6,9g18.10,i10,l6)')  
+c     >          'NEUTONE:FIND_WALL_INTERSESCTION-AFTER:',
+c     >          iter_cnt,ik,ir,r,z,rold,zold,result,rnew,znew,
+c     >          tnew*raddeg,tnorm*raddeg,intersect_result,sect
+c slmod end
 c
 c         Dealing with possible reflections
 c
@@ -1192,8 +1211,14 @@ c      IF (DEBUGN.OR.(IFATE.EQ.6))
 c     >   WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
 c     >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
 c
-       WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
+c slmod begin
+       IF (CPRINT.GT.1)      
+     >  WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
      >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
+c
+c       WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
+c     >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
+c slmod end
 c
 c     Set return code to ifate
 c

@@ -1294,6 +1294,7 @@ C
           UW = IW
         ENDDO
  6505   CONTINUE
+        write(0,*) '650:', iw,maxnws,uw
         WRITE (REF,'(''NEUTRAL TRACK'',I3,''  ('',I5,'' PTS)'')')
      >      IG,UW-LW+1
         IF (LW.LT.MAXNWS.AND.UW.GT.LW.AND.IG.LE.IOPT) THEN
@@ -1307,7 +1308,12 @@ C
           IG = IG + 1
         ENDIF
         LW = UW + 2
-        IF (LW.LT.MAXNWS) GOTO 6500
+c slmod begin
+c Added teh UW check to avoid an infinite loop when EIRENE not run. -SL, 20/01/12
+        IF (UW.GT.0.AND.LW.LT.MAXNWS) GOTO 6500
+c
+c        IF (LW.LT.MAXNWS) GOTO 6500
+c slmod end
       ENDIF
 C
 C-----------------------------------------------------------------------

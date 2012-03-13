@@ -504,7 +504,7 @@ c
       LOGICAL   first_pass
       CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
       CHARACTER*256 buffer_array(100)
-      REAL      stratum_type,version,rdum(7)
+      REAL      stratum_type,version,rdum(7),vec(3)
 
       first_pass = .TRUE.
 
@@ -641,6 +641,12 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
      .          opt_eir%sormax   (opt_eir%nstrata),
      .          opt_eir%sorad(1:6,opt_eir%nstrata),
      .          opt_eir%txtsou   (opt_eir%nstrata)
+
+              IF (opt_eir%sorad(4,opt_eir%nstrata).EQ.0.0.AND.  ! Make sure that the launch vector is not purely
+     .            opt_eir%sorad(5,opt_eir%nstrata).NE.0.0.AND.  ! vertical, since the 202 launch distribution
+     .            opt_eir%sorad(6,opt_eir%nstrata).EQ.0.0)      ! is hardwired in SetupEireneStrata
+     .          opt_eir%sorad(4,opt_eir%nstrata) = 1.0E-06 
+
             ELSE
               CALL ER('LoadEireneOption','Unknown stratum type',*99)
             ENDIF
@@ -656,7 +662,7 @@ c       ----------------------------------------------------------------
             opt_eir%nadspc = opt_eir%nadspc + 1
             READ(buffer,*) 
      .        opt_eir%isrfcll   (opt_eir%nadspc),  ! Type of spectrum, 0=surface flux, 1=cell average                    
-     .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface index, <0=non-default standard, >0=additional surfaces          
+     .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface/cell index, <0=non-default standard, >0=additional surfaces          
      .        opt_eir%ispsrf_ref(opt_eir%nadspc),  ! Which code does the surface index refer to?                             
      .        opt_eir%iptyp     (opt_eir%nadspc),  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?                  
      .        opt_eir%ipsp      (opt_eir%nadspc),  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.   
@@ -665,12 +671,34 @@ c       ----------------------------------------------------------------
      .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
      .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
      .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
-            IF (opt_eir%idirec(opt_eir%nadspc).NE.0) 
-     .        READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
-     .                       rdum(1:2),idum(1),
-     .          opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
-     .          opt_eir%spcvy(opt_eir%nadspc),
-     .          opt_eir%spcvz(opt_eir%nadspc)
+
+
+            SELECTCASE (opt_eir%idirec(opt_eir%nadspc)) ! 1=vector for projecting onto, 2=collect cells along a LOS, 3=same, but project onto vector as well
+              CASE (0)
+              CASE (1)
+                READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
+     .                         rdum(1:2),idum(1),
+     .            opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
+     .            opt_eir%spcvy(opt_eir%nadspc),
+     .            opt_eir%spcvz(opt_eir%nadspc)
+              CASE (2:3)                             
+                READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
+     .                         rdum(1:2),idum(1),
+     .            opt_eir%spc_p1(opt_eir%nadspc,1:3),  ! Vector along which volume (cell) energy distributions are requested
+     .            opt_eir%spc_p2(opt_eir%nadspc,1:3)
+
+                IF (opt_eir%idirec(opt_eir%nadspc).EQ.3) THEN
+                  vec(1:3) = opt_eir%spc_p2(opt_eir%nadspc,1:3) -
+     .                       opt_eir%spc_p1(opt_eir%nadspc,1:3)
+                  vec = vec / SQRT(vec(1)**2+vec(2)**2+vec(3)**2)
+                  opt_eir%spcvx(opt_eir%nadspc) = vec(1) 
+                  opt_eir%spcvy(opt_eir%nadspc) = vec(2)
+                  opt_eir%spcvz(opt_eir%nadspc) = vec(3)
+                ENDIF
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown spectrum '//
+     .                  'direction',*99)
+            ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
         CASE('EIR TETRAHEDRON GRID')
@@ -1462,6 +1490,12 @@ c      opt_eir%nvoid = 0
       opt_eir%sur_n   = 0  ! Surface properties 
       opt_eir%tet_n   = 0  ! Tetrahedron mesh definition
       opt_eir%nadspc  = 0  ! Energy spectra definitions
+
+      opt_eir%spcvx = 0.0  
+      opt_eir%spcvy = 0.0
+      opt_eir%spcvz = 0.0
+      opt_eir%spc_p1 = -999.0
+      opt_eir%spc_p2 = -999.0
 
       opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
 

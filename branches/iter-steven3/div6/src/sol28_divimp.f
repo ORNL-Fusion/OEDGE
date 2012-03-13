@@ -646,7 +646,7 @@ c      stop 'dsdfsf'
       WRITE(0,*) 'cgridopt=',cgridopt
 
       CALL InsertRing(1     ,BEFORE,PERMANENT)
-      CALL InsertRing(irwall,AFTER,PERMANENT)
+      CALL InsertRing(irwall,AFTER ,PERMANENT)
       IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN 
       ELSE
         CALL InsertRing(irtrap,BEFORE,PERMANENT)
@@ -1184,21 +1184,21 @@ c
 c         jdemod - add if statement to test if dangle=0.0 
 c                - divide by zero error otherwise
 c
-          if (dangle.ne.0.0) then 
-            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
-     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
-     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
-     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
-     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
-     .                               (360.0/dangle) 
-          else
-            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
-     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
-     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
-     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
-     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
-c     .                               * (360.0/dangle) 
-          endif
+c          if (dangle.ne.0.0) then 
+c            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+c     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+c     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+c     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
+c     .                               (360.0/dangle) 
+c          else
+c            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+c     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+c     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+c     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
+cc     .                               * (360.0/dangle) 
+c          endif
 c
 c         end jdemod
 c
@@ -4066,11 +4066,11 @@ c
       IF (irsep2.EQ.-1) irsep2 = irsep  ! *** is this OK? ***
 
 
-      write(0,*) 'irsep1 ',irsep
-      write(0,*) 'irsep2 ',irsep2
-      write(0,*) 'irwall1',irwall
-      write(0,*) 'irtrap1',irtrap
-      write(0,*) 'nrs1   ',nrs
+c      write(0,*) 'irsep1 ',irsep
+c      write(0,*) 'irsep2 ',irsep2
+c      write(0,*) 'irwall1',irwall
+c      write(0,*) 'irtrap1',irtrap
+c      write(0,*) 'nrs1   ',nrs
 
 
       id = 0
@@ -4162,7 +4162,7 @@ c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxrings   = irwall
       indexiradj = 1
 
-      write(0,*) 'cut,max',cutring,maxrings
+c      write(0,*) 'cut,max',cutring,maxrings
 
       IF (.TRUE.) THEN
 c        id = 0

@@ -869,6 +869,8 @@ c
         node_s(i1)%ti  (0:S28_MAXNION) = 0.0
       ENDDO
 
+
+
       frac = GetRelaxationFraction()
 
 c...  Flag if ITUBE has been processed once already and was assigned a 
@@ -878,6 +880,9 @@ c     default symmetry point, since no proper point was found:
 c...  Better/cleaner to pass the tube to this routine, and not need to
 c     use mod_sol28_locals...?
       it = itube
+
+      write(logfp,*) '---> here in assignnodevalues',tube(it)%n
+
 
       DO i1 = 2, osmnnode
         i0 = i1 - 1
@@ -1973,13 +1978,13 @@ c      DO i1 = 2, node_n-1
       IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
-          WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
+          WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2,5X,I6)') 
      .      'NODE TARGETS:',i1,node_i(i1),
      .      node_s(i1)%icell,node_s(i1)%s,
      .      node_s(i1)%ne,
      .      node_s(i1)%v,
      .      node_s(i1)%pe,
-     .      node_s(i1)%te,node_s(i1)%ti(1)
+     .      node_s(i1)%te,node_s(i1)%ti(1), tube(it)%n
         ENDDO
       ENDIF
 
