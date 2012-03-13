@@ -616,6 +616,8 @@ c...  Decide if the detector is inside or outside the vessel wall:
         vwindex = 2
       ENDIF
 
+      WRITE(0,*) '------vwindex----',vwindex
+
       iobj_hack  = -1
       iobj_hack2 = -1
 
@@ -1055,7 +1057,7 @@ c     .                                 DBLE(obj(iobj)%quantity(iint))
      .              obinter(1)%v(1:3),chord%integral(iint)/(4*3.14),
      .              iobj,obj(iobj)%quantity(iint)
 
-                  IF (.FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
+                  IF (.NOT..FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
@@ -1402,7 +1404,7 @@ c      TYPE(type_3D_object)  :: obj(nobj)
 c      INTEGER nobj,status                   
 
 
-      INTEGER i1,ix,iy,nxbin,nybin,n,iobj,iint,nview
+      INTEGER i1,ix,iy,nxbin,nybin,n,iobj,iint,nview,save_ccd
       REAL*8  xangle,yangle,dxangle,dyangle,fact,mat(3,3),angle
 c      TYPE(type_view) :: pixel2,chord
       TYPE(type_view) :: chord
@@ -1511,19 +1513,26 @@ c...        Perhaps add a small shift eventually? ...no, shouldn't bother
 
 c          WRITE(0,*) 'CHORD:',nchord,chord%xangle,chord%yangle     
 
-          chord%v2(1) = DSIN(chord%xangle * D_DEGRAD) * 
-     .                  DCOS(chord%yangle * D_DEGRAD) * 
-     .                  50.0D0 + chord%v1(1)
-          chord%v2(2) = DCOS(chord%xangle * D_DEGRAD) * 
-     .                  DSIN(chord%yangle * D_DEGRAD) * 
-     .                  50.0D0 + chord%v1(2)
-          chord%v2(3) = DCOS(chord%xangle * D_DEGRAD) * 
-     .                  DCOS(chord%yangle * D_DEGRAD) * 
-     .                  50.0D0 + chord%v1(3)
-c          chord%v2(3) = -chord%v2(3)
+          IF (pixel%type.EQ.2) THEN
+            save_ccd = opt%ccd
+            opt%ccd  = pixel%ccd
+            chord%v2 = pixel%v2
+            WRITE(0,*) '---- chord%v1 ---->',SNGL(chord%v1)
+            WRITE(0,*) '---- chord%v2 ---->',SNGL(chord%v2)
+          ELSE
+            chord%v2(1) = DSIN(chord%xangle * D_DEGRAD) * 
+     .                    DCOS(chord%yangle * D_DEGRAD) * 
+     .                    50.0D0 + chord%v1(1)
+            chord%v2(2) = DCOS(chord%xangle * D_DEGRAD) * 
+     .                    DSIN(chord%yangle * D_DEGRAD) * 
+     .                    50.0D0 + chord%v1(2)
+            chord%v2(3) = DCOS(chord%xangle * D_DEGRAD) * 
+     .                    DCOS(chord%yangle * D_DEGRAD) * 
+     .                    50.0D0 + chord%v1(3)
+c            chord%v2(3) = -chord%v2(3)
+	   
+c...        Rotate and translate chords according to the detector specifications:
 
-c...      Rotate and translate chords according to the detector specifications:
-          IF (.TRUE.) THEN
 c...        Rotate about z-axis (roll):
             CALL Calc_Transform2(mat,0.0D0,1,0)
             angle = chord%rot(3)
@@ -1554,8 +1563,7 @@ c...        PHI rotoation:
             CALL Calc_Transform2(mat,angle,2,1)
             CALL Transform_Vect(mat,chord%v1)
             CALL Transform_Vect(mat,chord%v2)
-          ENDIF 
-
+          ENDIF
 
           IF (.FALSE.) THEN
 c...        Toroidal rotation of camera, while preserving the view orientation with 
@@ -1572,6 +1580,10 @@ c...        Rotate about y-axis (swing):
           ENDIF
 c... 
           CALL IntegrateChord(chord,status)   ! new name
+
+          IF (pixel%type.EQ.2) THEN
+            opt%ccd  = save_ccd
+          ENDIF
 
           IF (status.GE.0) THEN
 c          IF (status.NE.-1) THEN

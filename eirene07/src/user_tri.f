@@ -1339,7 +1339,30 @@ c      ENDDO
 c        DO IADV=1,6
 c          DDUM(IADV+7)=ADDV2(IADV,IR)*VOL(IR)  ! Dgamma [photons s-1]
 c        ENDDO
-        DDUM(1:6)=ADDV(1:6,IR)*VOL(IR)  ! Dalpha [photons s-1]
+        DDUM(1:6)=ADDV(1:6,IR)*VOL(IR)  ! Dgamma [photons s-1]
+c...    Output:
+        ICOUNT=ICOUNT+1
+        IF (ICOUNT.EQ.40) THEN
+          WRITE(FP,'(A,5X,20(I12))') '*',(I1,I1=1,ITALLY)
+          ICOUNT=0
+        ENDIF
+        DO I1=1,ITALLY
+          IF (DDUM(I1).LT.1.0D-30) DDUM(I1)=1.0D-30
+          IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D+30
+        ENDDO
+        WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+      ENDDO
+c...  Hbeta:
+      ICOUNT=39
+      ADDV=0.0D0
+      CALL HBETA(0,1,2,3,4,5,6)
+      WRITE(FP,80) '* LINE EMISSION: HBETA'
+      WRITE(FP,81) ITALLY
+      WRITE(FP,81) NTRII
+      WRITE(FP,83) (I1,I1=1,ITALLY)
+      DO IR=1,NTRII 
+        DDUM=0.0D0
+        DDUM(1:6)=ADDV(1:6,IR)*VOL(IR)  ! Dbeta [photons s-1]
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN

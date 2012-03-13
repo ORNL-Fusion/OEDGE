@@ -3,6 +3,98 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE DumpAlexKukushkin(title9)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+
+      INTEGER ik,ir,fp,ike,ierr,count
+      REAL    fact
+      CHARACTER dummy*1024
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      count = 0
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        count = count + ike
+      ENDDO
+
+      fact = 1.0 / (4.0 * 3.141593)
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='akf.h_alpha',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* Data file for Alex. Kukushkin: D_alpha'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{DATA FILE VERSION}'
+      WRITE(fp,*    ) '        1.0'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{DATA LIST}'
+      WRITE(fp,*    ) count
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* cell - cell index along each ring of the '//
+     .                'computational grid'
+      WRITE(fp,'(A)') '* ring    - ring index'
+      WRITE(fp,'(A)') '* x       - radial coordinate'
+      WRITE(fp,'(A)') '* y       - veritcal coordinate (along '//
+     .                'the toroidal axis)'
+      WRITE(fp,'(A)') '* area    - the area of the fluid code cell '//
+     .                'in the poloidal plane'
+      WRITE(fp,'(A)') '* vol     - the toroidal volume of the cell, '//
+     .                'i.e. area*2*PI*x'
+      WRITE(fp,'(A)') '* B_ratio - B_poloidal / B_total'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(2A6,2A10,2A12,A10,A12,2A10,A19)') 
+     .  '* cell','ring','x','y','area','vol','B_ratio',
+     .  'ne','Te','Ti','Dalpha'
+      WRITE(fp,'(A,11X,2A10,2A12,A10,A12,2A10,A19)') 
+     .  '*','[m]','[m]','[m-2]','[m-3]',' ','[m-3]','[eV]','[eV]',
+     .  '[ph st-1 m-3 s-1]'
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+          WRITE(fp,'(2I6,2F10.5,1P,2E12.4,0P,F10.6,1P,E12.4,0P,
+     .               2F10.2,1P,E19.4,0P)') 
+     .      ik,ir,rs(ik,ir),zs(ik,ir),kareas(ik,ir),kvols(ik,ir),
+     .      bratio(ik,ir),
+     .      knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir),
+     .      pinalpha(ik,ir)*fact
+        ENDDO
+      ENDDO
+      CLOSE(fp)
+ 
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpMarieHelene(title9)
       IMPLICIT none
 
@@ -39,23 +131,30 @@ c
       fp = 99
       OPEN (UNIT=fp,FILE='mhf.h_alpha',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
-      WRITE(fp,'(A)') '# Data file for Marie-Helene and Kajita-san: '//
-     .                'D_alpha [W m-3]'
+      WRITE(fp,'(A)') '# Data file for Marie-Helene, Kajita-san, and '//
+     .                'Alex. Kukushkin: D_alpha [W m-3]'
       WRITE(fp,'(A)') '#    (based on SOLPS format from A. Kukushkin)'
       WRITE(fp,'(A)') '#'
       WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
       WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
       WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
-      WRITE(fp,'(A)') '# Version     : 1.0'
+      WRITE(fp,'(A)') '# Version     : 1.1 - added area and volume data'
       WRITE(fp,'(A)') '#'
-      WRITE(fp,'(2A5,3A12)') '#  ix','iy','x [m]','y [m]','Dalpha'
+      WRITE(fp,'(A)') '# area - the area of the fluid code cell '//
+     .                'in the poloidal plane'
+      WRITE(fp,'(A)') '# vol  - the toroidal volume of the cell, '//
+     .                'i.e. area*2*PI*x'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(2A5,5A12)') '#  ix','iy','x [m]','y [m]','area [m-2]',
+     .                       'vol [m-3]','Dalpha'
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         DO ik = 1, ike        
-          WRITE(fp,'(2I5,1P,3E12.4,0P)') 
-     .      ik,ir,rs(ik,ir),zs(ik,ir),pinalpha(ik,ir)*fact
+          WRITE(fp,'(2I5,1P,5E12.4,0P)') 
+     .      ik,ir,rs(ik,ir),zs(ik,ir),kareas(ik,ir),kvols(ik,ir),
+     .      pinalpha(ik,ir)*fact
         ENDDO
       ENDDO
       CLOSE(fp)
@@ -384,7 +483,6 @@ c              2.0 * CRTABS(IZ) / CICABS(IZ)
 
 c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
 c     which I'm leaving off for now...
-
 
       CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
      .                              npro,tvolp,avolpro)
@@ -2132,7 +2230,7 @@ c
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
-      REAL   , INTENT(IN) :: crmi,absfac
+      REAL   , INTENT(INOUT) :: crmi,absfac
 
       REAL CalcPressure, GetCs
 
@@ -2327,6 +2425,15 @@ c...  Volume averaged radial profiles in the core:
         rho1  (npro) = rho    (ir,CELL1) 
         psin  (npro) = psitarg(ir,2)
       ENDDO
+
+c      For proper testing % concentration and Zeff code -- which appear to work - SL, 13/01/12
+c      absfac = 1.0
+c      sdlims = 0.0
+c      DO ir = 1, nrs
+c        DO ik = 1, nks(ir)
+c          sdlims(ik,ir,2) = knbs(ik,ir)
+c        ENDDO
+c      ENDDO
 
       CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
      .                              npro,tvolp,avolpro)
@@ -4898,6 +5005,7 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
         RETURN
       ELSEIF (iopt.EQ.20) THEN
         CALL DumpMarieHelene(title)
+        CALL DumpAlexKukushkin(title)
         RETURN
       ENDIF
 

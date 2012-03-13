@@ -3443,8 +3443,11 @@ c
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
-     >                                sect)
-
+c slmod begin
+     >                                sect,cprint)
+c
+c     >                                sect)
+c slmod end
 c
 c         Verify RNEW,ZNEW 
 c

@@ -98,6 +98,13 @@ C ===== SOURCE: calc_spectrum.f
             ESTIML(ISPC)%PSPC%ESP_MIN= MIN(ESTIML(ISPC)%PSPC%ESP_MIN,EB)
             ESTIML(ISPC)%PSPC%ESP_MAX= MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
             ESTIML(ISPC)%PSPC%IMETSP = 1
+
+c           write(0,'(A,3I6,1P,E10.2,0P,2F10.3)') 
+c     .                'debug: fuck!',
+c     .                ESTIML(ISPC)%PSPC%ISPCTYP,i,ispc,
+c     .                SNGL(ESTIML(ISPC)%PSPC%SPC(I)),
+c     .                SNGL(e0),SNGL(wt)
+
           END IF
         END DO
 
@@ -129,8 +136,12 @@ C ===== SOURCE: calc_spectrum.f
               CASE DEFAULT
                 ADD = 0._DP
               END SELECT
-
-              EB = E0
+c slmod begin
+c... Want velocity spectrum, not energy:
+              EB = VEL
+c
+c              EB = E0
+c slmod end
               IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
                 SPCVX = ESTIML(ISPC)%PSPC%SPCVX
                 SPCVY = ESTIML(ISPC)%PSPC%SPCVY
@@ -152,6 +163,14 @@ C ===== SOURCE: calc_spectrum.f
               ESTIML(ISPC)%PSPC%ESP_MAX = 
      .               MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
               ESTIML(ISPC)%PSPC%IMETSP = 1
+
+c           write(0,'(A,3I6,1P,E10.2,0P,F10.3,P,7E10.2,0P)') 
+c     .                'debug: fuck!',
+c     .                ESTIML(ISPC)%PSPC%ISPCTYP,i,ispc,
+c     .                SNGL(ESTIML(ISPC)%PSPC%SPC(I)),
+c     .                weight,
+c     .                vel,wv,DIST,wtr,add,e0,eb
+
             END IF
           END DO
         

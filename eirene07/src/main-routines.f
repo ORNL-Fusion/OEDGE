@@ -1992,6 +1992,7 @@ c            count = count + 1
 c            IF (count.EQ.100) STOP 'HALTING EIRENE'
 c            trcgrd = .TRUE.
 c          ENDIF
+c          WRITE(0,*) 'track',ipanu,e0
 c slmod end           
           IF (ITYP.EQ.0.OR.ITYP.EQ.1.OR.ITYP.EQ.2) THEN
             CALL FOLNEUT
@@ -2377,8 +2378,10 @@ C
         end do
         SMESTS = SMESTS + ESTIMS
         DO ISPC=1,NADSPC
+c          write(0,*) 'debug: fuck...',ESTIML(ISPC)%PSPC%SPC
           SMESTL(ISPC)%PSPC%SPC = SMESTL(ISPC)%PSPC%SPC +
      .                            ESTIML(ISPC)%PSPC%SPC
+c          write(0,*) 'debug:        ',SMESTL(ISPC)%PSPC%SPC
           SMESTL(ISPC)%PSPC%SPCINT = SMESTL(ISPC)%PSPC%SPCINT +
      .                               ESTIML(ISPC)%PSPC%SPCINT
         END DO
@@ -2450,7 +2453,9 @@ C
         ESTIMV(1:NIDV,1:NRTAL) = SMESTV(1:NIDV,1:NRTAL)
         ESTIMS = SMESTS
         DO ISPC=1,NADSPC
+c          write(0,*) 'debug: damn...',ESTIML(ISPC)%PSPC%SPC
           ESTIML(ISPC)%PSPC%SPC = SMESTL(ISPC)%PSPC%SPC
+c          write(0,*) 'debug:        ',ESTIML(ISPC)%PSPC%SPC
           ESTIML(ISPC)%PSPC%SPCINT = SMESTL(ISPC)%PSPC%SPCINT
           IF (NSIGI_SPC > 0) THEN
             ESTIML(ISPC)%PSPC%SGM = SMESTL(ISPC)%PSPC%SGM

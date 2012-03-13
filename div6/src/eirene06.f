@@ -105,9 +105,6 @@ c...  Quick check to see if 'infinite range' has been set:
         ENDIF
       ENDDO
 
-      IF (debug) WRITE(0,*) 'list:',list(1:nlist)
-
-
 
       RETURN
  99   STOP
@@ -2256,11 +2253,6 @@ c     .           tryvtx(2,trysrf(ABS(isrf))%ivtx(1))
      .    ang1/D_DEGRAD,ang2/D_DEGRAD
      .    
 
-c left off
-c check the stratum labels in .eirdat and figure out why they don't match whatś in the in put files
-c compare a case with a transparent target and one without
-c ...there was something else but i cant remember what...
-
         CALL BuildBricks(islice,opt_eir%tet_index(islice_index),
      .                   ang1,ang2,trycycle)
 
@@ -2864,9 +2856,9 @@ c...  Eliminate duplicate verticies:    ! SPEED:? SORT VERTICIES INTO REGIONS AN
           IF (ver(i1,1).NE.-999.0D0.AND.
      .        DABS(ver(i1,1)-ver(i2,1)).LT.DTOL.AND.
      .        DABS(ver(i1,2)-ver(i2,2)).LT.DTOL) THEN
-c            WRITE(eirfp,*) '---BYE---'
-c            WRITE(eirfp,*) i1,i2,ver(i1,1),ver(i1,2)
-c            WRITE(eirfp,*) i1,i2,ver(i2,1),ver(i2,2)
+            WRITE(eirfp,*) '---BYE - DELETING DUPLICATE VERTEX ---'
+            WRITE(eirfp,*) i1,i2,ver(i1,1),ver(i1,2)
+            WRITE(eirfp,*) i1,i2,ver(i2,1),ver(i2,2)
             ver(i2,1) = -999.0D0
             ver(i2,2) = -999.0D0
 c          IF (ver(i1,1).NE.-999.0.AND.
@@ -2910,14 +2902,51 @@ c...  Check if there are any malformed triangles (again):
           IF (tri(i1)%ver(v1).EQ.tri(i1)%ver(v2)) THEN
             WRITE(eirfp,*) 'MALFORMED TRIANGLE DETECTED',i1
             WRITE(eirfp,*) 'IK,IR=',tri(i1)%index(1:2)
+            WRITE(eirfp,*) 'MAGNETIC = ',tri(i1)%type.EQ.MAGNETIC_GRID
+            WRITE(eirfp,*) 'VACUUM   = ',tri(i1)%type.EQ.VACUUM_GRID
+
+            IF (tri(i1)%type.EQ.VACUUM_GRID) THEN
+              tri(i1)%index(10) = -999
+            ELSE
+              tri(i1)%index(10) = -998
+            ENDIF
+
             malformed = .TRUE.
           ENDIF
         ENDDO
       ENDDO
+
       IF (malformed) THEN
-        CALL WriteEireneTriangles
-        CALL SaveTriangles_06
-        CALL DumpGrid('MALFORMED FLUID GRID TRIANGLES FOUND #2')
+c...    See if any VACUUM_GRID triangles were bad, and if yes, delete them:
+        DO i1 = ntri, 1, -1
+          IF (tri(i1)%index(10).EQ.-999) THEN
+            WRITE(0    ,*) 
+            WRITE(0    ,*) '-------------------------------------------'
+            WRITE(0    ,*) '  DELETING PROBLEM TRIANGLE!  ',i1
+            WRITE(0    ,*) '-------------------------------------------'
+            WRITE(0    ,*) 
+            WRITE(eirfp,*) 
+            WRITE(eirfp,*) '-------------------------------------------'
+            WRITE(eirfp,*) '  DELETING PROBLEM TRIANGLE!  ',i1
+            WRITE(eirfp,*) '-------------------------------------------'
+            WRITE(eirfp,*) 
+            DO i2 = i1, ntri-1
+              tri(i2) = tri(i2+1)
+            ENDDO
+            ntri = ntri - 1
+          ENDIF
+        ENDDO 
+c...    Check if an MAGNETIC_GRID triangles were bad:
+        malformed = .FALSE.
+        DO i1 = 1, ntri
+          IF (tri(i1)%index(10).EQ.-998) malformed = .TRUE.
+        ENDDO 
+c...    Dump triangle list and stop the code:
+        IF (malformed) THEN
+          CALL WriteEireneTriangles
+          CALL SaveTriangles_06
+          CALL DumpGrid('MALFORMED FLUID GRID TRIANGLES FOUND #2')
+        ENDIF
       ENDIF
 
 cc...  Check if 2 close lying points got merged by accident, and if 
@@ -7391,23 +7420,150 @@ c        WRITE(fp06,91) 0
 c
 c ======================================================================
 c
-c subroutine: WriteBlock11_06
+      SUBROUTINE eirIntersectonList(p1,p2,nlist,ilist,dlist,llist)
+      USE mod_eirene06_parameters
+      USE mod_eirene06
+      IMPLICIT none
+
+      REAL   , INTENT(IN ) :: p1(3),p2(3)
+      INTEGER, INTENT(OUT) :: ilist(*),nlist
+      REAL   , INTENT(OUT) :: dlist(*),llist(*)
+
+      INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart
+      LOGICAL cont
+      REAL    hold_dlist,hold_llist,hold_s12(10),length
+      REAL*8  x1,y1,x2,y2,x3,y3,x4,y4,s12,s34
+
+      IF (tetrahedrons) CALL ER('eirIntersectonList','3D not ready',*99)
+        
+      x1 = DBLE(p1(1))
+      y1 = DBLE(p1(2))
+      x2 = DBLE(p2(1))
+      y2 = DBLE(p2(2))
+
+      length = SNGL(DSQRT((x1-x2)**2+(y1-y2)**2))
+
+      ilast  = 0
+      istart = nlist + 1
+
+      DO itri = 1, ntri
+        IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
+        icount = 0
+        DO i1 = 1, 3
+          i2 = i1 + 1
+          IF (i2.EQ.4) i2 = 1
+          x3 = ver(tri(itri)%ver(i1),1)
+          y3 = ver(tri(itri)%ver(i1),2)
+          x4 = ver(tri(itri)%ver(i2),1)
+          y4 = ver(tri(itri)%ver(i2),2)
+          CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
+          IF (s12.GT.0.0D0.AND.s12.LT.1.0D0.AND.
+     .        s34.GT.0.0D0.AND.s34.LT.1.0D0) THEN
+            icount = icount + 1
+            hold_s12(icount) = SNGL(s12)
+            WRITE(88,'(4X,A,I6,2F16.9,I4,2F12.5)')
+     .          '  list     :',i1,s12,s34,icount,x1,y1
+          ENDIF
+        ENDDO
+
+        IF     (icount.EQ.0) THEN
+        ELSEIF (icount.EQ.1.AND.ilast.EQ.0) THEN
+          ilast = 1
+        ELSEIF (icount.EQ.2) THEN
+          IF (ilast.NE.0) 
+     .      CALL ER('eirIntersectonList','Invalid last cell',*99)
+          nlist = nlist + 1
+          ilist(nlist) = itri
+          dlist(nlist) = 0.5 * (hold_s12(1) + hold_s12(2)) * length
+          llist(nlist) =    ABS(hold_s12(2) - hold_s12(1)) * length
+        ELSE
+          CALL ER('eirIntersectonList','Invalid intersection count',*99)
+        ENDIF 
+      ENDDO  
+
+c...  Sort:
+      cont = .TRUE.
+      DO WHILE (cont)
+        cont = .FALSE.
+        DO i1 = istart, nlist-1
+          IF (dlist(i1+1).LT.dlist(i1)) THEN
+            hold_ilist  = ilist(i1)
+            hold_dlist  = dlist(i1)
+            hold_llist  = llist(i1)
+            ilist(i1)   = ilist(i1+1)
+            dlist(i1)   = dlist(i1+1)
+            llist(i1)   = llist(i1+1)
+            ilist(i1+1) = hold_ilist
+            dlist(i1+1) = hold_dlist
+            llist(i1+1) = hold_llist
+            cont = .TRUE.
+          ENDIF
+        ENDDO
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: WriteBlock10_06
 c
 c
 c
 c
       SUBROUTINE WriteBlock10_06
+      USE mod_interface
       USE mod_eirene06
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER i
-
+      INTEGER i,j,nlist,icount,ibnd(100,2),nbnd
+      INTEGER, ALLOCATABLE :: ilist(:)
+      REAL   , ALLOCATABLE :: dlist(:),llist(:)
+      
       WRITE(fp06,90) '*** 10. DATA FOR ADDITIONAL VOLUME AND SURFACE '//
      .                       'AVERAGED TALLIES - OSM'
 
       IF (.TRUE.) THEN
-        WRITE(fp06,91) 7,0,0,0,0,opt_eir%nadspc
+
+        CALL inOpenInterface('idl.eirene_spectra',ITF_WRITE)
+
+        icount = 0
+        nlist  = 0
+        nbnd   = 0
+        ibnd   = 0
+        DO i = 1, opt_eir%nadspc
+          IF (opt_eir%ispsrf_ref(i)(1:6).NE.'eirene') CYCLE
+
+          write(0,*) 'chord',i
+
+
+          IF     (opt_eir%idirec(i).EQ.0.OR.opt_eir%idirec(i).EQ.1) THEN
+            icount = icount + 1
+          ELSEIF (opt_eir%idirec(i).EQ.2.OR.opt_eir%idirec(i).EQ.3) THEN
+            IF (.NOT.ALLOCATED(ilist)) THEN
+              IF (tetrahedrons) THEN
+              ELSE
+                ALLOCATE(ilist(ntri))
+                ALLOCATE(dlist(ntri))
+                ALLOCATE(llist(ntri))
+              ENDIF
+            ENDIF
+            nbnd = nbnd + 1
+            ibnd(nbnd,1) = nlist + 1
+            CALL eirIntersectonList(opt_eir%spc_p1(i,:),
+     .                              opt_eir%spc_p2(i,:),
+     .                              nlist,ilist,dlist,llist)
+            ibnd(nbnd,2) = nlist
+          ELSE
+            CALL ER('WriteBlock10_06','Invalid code reference',*99)
+          ENDIF
+        ENDDO
+        icount = icount + nlist
+
+        WRITE(fp06,91) 7,0,0,0,0,icount
+c        WRITE(fp06,91) 7,0,0,0,0,opt_eir%nadspc
         WRITE(fp06,90) '** 10A. ADDITIONAL VOLUME AVERAGED '//
      .                         'TRACKLENGTH TALLIES'
         DO i = 1, 7
@@ -7421,25 +7577,99 @@ c
         WRITE(fp06,90) '** 10D.'
         WRITE(fp06,90) '** 10E.'
         WRITE(fp06,90) '** 10F. SPECTRA'
+        nbnd   = 0
         DO i = 1, opt_eir%nadspc
-          IF (opt_eir%ispsrf_ref(i)(1:6).EQ.'eirene') THEN
-            WRITE(fp06,91) opt_eir%ispsrf (i), 
-     .                     opt_eir%iptyp  (i), 
-     .                     opt_eir%ipsp   (i), 
-     .                     opt_eir%isptyp (i), 
-     .                     opt_eir%nsps   (i),
-     .                     opt_eir%isrfcll(i), 
-     .                     opt_eir%idirec (i)
-            WRITE(fp06,93) opt_eir%spcmn  (i),
-     .                     opt_eir%spcmx  (i)
-            IF (opt_eir%idirec(i).NE.0) 
-     .        WRITE(fp06,93) opt_eir%spcvx,
-     .                       opt_eir%spcvy,
-     .                       opt_eir%spcvz
+          IF (opt_eir%ispsrf_ref(i)(1:6).NE.'eirene') CYCLE
+
+
+          IF     (opt_eir%idirec(i).EQ.0.OR.opt_eir%idirec(i).EQ.1) THEN
+c
+c           ------------------------------------------------------------
+c           SURFACE ENERGY/VELOCITY DISTRIBUTION (SPECTRUM) RECORDING
+c
+            WRITE(fp06,91) opt_eir%ispsrf(i),opt_eir%iptyp  (i),
+     .                     opt_eir%ipsp  (i),opt_eir%isptyp (i), 
+     .                     opt_eir%nsps  (i),opt_eir%isrfcll(i),
+     .                     opt_eir%idirec(i)
+            WRITE(fp06,93) opt_eir%spcmn (i),opt_eir%spcmx  (i)
+            IF (opt_eir%idirec(i).EQ.1) 
+     .        WRITE(fp06,93) opt_eir%spcvx(i),opt_eir%spcvy(i),
+     .                       opt_eir%spcvz(i)
+c           Record the distribution parameters in a file so that the data files 
+c           output from EIRENE can be matched up with the specifications in the 
+c           fluid code input file:
+            CALL inPutData(i                 ,'INDEX','N/A')
+            CALL inPutData(opt_eir%isrfcll(i),'TYPE','N/A')
+            CALL inPutData(opt_eir%ispsrf (i),'CELL','N/A')
+            CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','N/A')
+            CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','N/A')
+            CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','N/A')
+            CALL inPutData(opt_eir%idirec (i),'VECTOR','N/A')
+            CALL inPutData(opt_eir%spcvx  (i),'VX','m')
+            CALL inPutData(opt_eir%spcvy  (i),'VY','m')
+            CALL inPutData(opt_eir%spcvz  (i),'VZ','m')
+            CALL inPutData(-999.0,'PATH','m')
+            CALL inPutData(-999.0,'DELTA','m')
+            CALL inPutData(-999.0,'X1','m')
+            CALL inPutData(-999.0,'Y1','m')
+            CALL inPutData(-999.0,'Z1','m')
+            CALL inPutData(-999.0,'X2','m')
+            CALL inPutData(-999.0,'Y2','m')
+            CALL inPutData(-999.0,'Z2','m')
+
+          ELSEIF (opt_eir%idirec(i).EQ.2.OR.opt_eir%idirec(i).EQ.3) THEN
+c
+c           ---------------------------------------------------------------
+c           VOLUME (CELL) ENERGY/VELOCITY DISTRIBUTION (SPECTRUM) RECORDING
+c
+            nbnd = nbnd + 1
+            DO j = ibnd(nbnd,1), ibnd(nbnd,2)
+c              WRITE(0,*) 'list',j,ilist(j),dlist(j),llist(j)
+
+              WRITE(fp06,91) ilist(j)         ,opt_eir%iptyp  (i),
+     .                       opt_eir%ipsp  (i),opt_eir%isptyp (i), 
+     .                       opt_eir%nsps  (i),opt_eir%isrfcll(i),
+     .                       opt_eir%idirec(i)-2
+              WRITE(fp06,93) opt_eir%spcmn (i),opt_eir%spcmx  (i)
+     .                     
+              IF (opt_eir%idirec(i)-2.EQ.1) 
+     .          WRITE(fp06,93) opt_eir%spcvx(i),opt_eir%spcvy(i),
+     .                         opt_eir%spcvz(i)
+
+              CALL inPutData(i                 ,'INDEX','N/A')
+              CALL inPutData(opt_eir%isrfcll(i),'TYPE','N/A')
+              CALL inPutData(ilist(j)          ,'CELL','N/A')
+              CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','N/A')
+              CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','N/A')
+              CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','N/A')
+              CALL inPutData(opt_eir%idirec (i),'VECTOR','N/A')
+              CALL inPutData(opt_eir%spcvx  (i),'VX','m')
+              CALL inPutData(opt_eir%spcvy  (i),'VY','m')
+              CALL inPutData(opt_eir%spcvz  (i),'VZ','m')
+              CALL inPutData(dlist(j),'PATH','m')
+              CALL inPutData(llist(j),'DELTA','m')
+              CALL inPutData(opt_eir%spc_p1(i,1),'X1','m')
+              CALL inPutData(opt_eir%spc_p1(i,2),'Y1','m')
+              CALL inPutData(opt_eir%spc_p1(i,3),'Z1','m')
+              CALL inPutData(opt_eir%spc_p2(i,1),'X2','m')
+              CALL inPutData(opt_eir%spc_p2(i,2),'Y2','m')
+              CALL inPutData(opt_eir%spc_p2(i,3),'Z2','m')
+
+            ENDDO
+
           ELSE
             CALL ER('WriteBlock10_06','Invalid code referenc',*99)
           ENDIF
         ENDDO
+
+        IF (ALLOCATED(ilist)) THEN
+          DEALLOCATE(ilist)
+          DEALLOCATE(dlist)
+          DEALLOCATE(llist)
+        ENDIF
+
+        CALL inCloseInterface
+
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)
       ENDIF
@@ -7937,9 +8167,14 @@ c
         WRITE(fp06,92) strata(i1)%sorene,strata(i1)%soreni,
      .                 0.0,0.0,0.0,0.0
         WRITE(fp06,92) strata(i1)%sorcos,strata(i1)%sormax
+
+      WRITE(0    ,*) 'STRATA:',strata(i1)%indim,strata(i1)%insor,
+     .              strata(i1)%soreni
+
       ENDDO
 
-c      WRITE(eirfp,*) 'STRATA:',strata(3)%indim,strata(3)%insor
+c      WRITE(eirfp,*) 'STRATA:',strata(3)%indim,strata(3)%insor,
+c     .              strata(i1)%soreni
 
 
       RETURN

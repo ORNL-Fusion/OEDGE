@@ -6819,7 +6819,6 @@ c slmod end
       CHARACTER(10) :: TEXTYP(0:4)
 c slmod begin
       INTEGER,INTENT(IN) :: ISTRA
-      INTEGER            :: ISURFACE
       CHARACTER FILE*128,TAG*3,UNITS*32
 c slmod end
 
@@ -6948,15 +6947,15 @@ C  SPECTRA
      .    WRITE (IOUT,'(A,ES12.4)') ' STANDARD DEVIATION  ',
      .                   ESTIML(ISPC)%PSPC%SGMS
 c slmod begin
-         WRITE(0,*) 'ISTRA=',istra
+c         WRITE(0,*) 'ISTRA=',istra
         IF (istra.EQ.0) THEN
           tag = 'sum'
         ELSE
           WRITE(tag,'(I3.3)') istra 
         ENDIF
-          WRITE(file,'(A,I2.2,A,I6.6,A)') 
+          WRITE(file,'(A,I4.4,A,I7.7,A)') 
      .      'idl.eirene_spectrum_',ispc,'_',i,'_'//tag
-        WRITE(0,*) TRIM(file)
+c        WRITE(0,*) TRIM(file)
         UNITS='?'
         IF (IT == 1) UNITS='Amps/BIN(eV)'
         IF (IT == 2) UNITS='Watt/BIN(eV)'
@@ -6983,10 +6982,12 @@ c     .        WRITE(0,*) 'debug: spec',ie,ispc,ESTIML(ISPC)%PSPC%SPC(IE)    ! *
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCINT,'INTEGRAL','?')      
         CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','N/A')
         CALL inPutData(it,'SPECTRUM_TYPE','N/A')
-        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'INDEX','N/A')
-        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','N/A')
-        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_ENERGY','eV')
-        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_ENERGY','eV')
+c        write(0,*) 'index check',i,nlim
+        CALL inPutData(I,'INDEX','N/A')
+c        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'INDEX','N/A')
+c        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','N/A')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_VALUE','eV')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_VALUE','eV')
         CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')
         CALL inCloseInterface
 c slmod end

@@ -300,10 +300,18 @@ c
             ENDIF
             CVVXP  = CVVXP + XTRIPP * SPUTY
             CVVXS  = CVVXS + XTRIPS * SPUTY
-            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
-     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
-     >            100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
-     >         ZA02AS (1) - STATIM
+c slmod begin 
+            IF (CPRINT.GT.1)
+     >        WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
+     >              100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
+     >              100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
+     >           ZA02AS (1) - STATIM
+c
+c            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
+c     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
+c     >            100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
+c     >         ZA02AS (1) - STATIM
+c slmod end
            ENDIF
 c
 c          ENDIF
