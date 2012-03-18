@@ -25,8 +25,8 @@
          REAL*4 :: length
          REAL*4 :: area
 
-         REAL*4 :: in_par_blk(MAXNBLK,0:MAXNSRC)
-         REAL*4 :: in_ene_blk(MAXNBLK,0:MAXNSRC)
+         REAL*4 :: in_par_blk(MAXNBLK,0:MAXNSRC)   ! *** NOTE *** if anything is changed here then the code in 
+         REAL*4 :: in_ene_blk(MAXNBLK,0:MAXNSRC)   ! DIVSTORE and IOOUT needs to be update (slver=3.6)
          REAL*4 :: in_par_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: in_ene_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: in_par_mol(MAXNMOL,0:MAXNSRC)
@@ -78,9 +78,59 @@
          REAL          :: rib_pol_b_def
          REAL          :: rib_pol_c_def
          REAL          :: rib_pol_d_def
+!...     Sputter data from other runs:
+!         INTEGER       :: nsputter
       ENDTYPE type_options_divimp
  
       TYPE(type_options_divimp) :: opt_div
+!
+!     ==================================================================
+!
+      TYPE :: type_sputter_data
+         REAL                :: version
+         INTEGER             :: format
+         INTEGER             :: data_type
+         CHARACTER*256       :: case_name
+         CHARACTER*256       :: extension
+         REAL                :: fraction
+         REAL                :: absfac
+         REAL                :: absfac_net
+         INTEGER             :: atomic_number
+         REAL                :: atomic_mass
+         INTEGER             :: target_number
+         INTEGER             :: charge
+         INTEGER             :: charge_min
+         INTEGER             :: charge_max
+         INTEGER             :: nsegments
+         INTEGER             :: type
+         INTEGER,ALLOCATABLE :: ik(:)
+         INTEGER,ALLOCATABLE :: ir(:)
+         INTEGER,ALLOCATABLE :: id(:)
+         REAL,ALLOCATABLE    :: r    (:)
+         REAL,ALLOCATABLE    :: z    (:)
+         REAL,ALLOCATABLE    :: dds  (:)
+         REAL,ALLOCATABLE    :: te   (:)
+         REAL,ALLOCATABLE    :: ti   (:)
+         REAL,ALLOCATABLE    :: flux (:,:)
+         REAL,ALLOCATABLE    :: e0   (:,:)
+         REAL,ALLOCATABLE    :: yield(:,:)
+         REAL,ALLOCATABLE    :: modifier(:)
+         INTEGER             :: ncore
+         REAL,ALLOCATABLE    :: core_rho (:)
+         REAL,ALLOCATABLE    :: core_psin(:)
+         REAL,ALLOCATABLE    :: core_ne  (:)
+         REAL,ALLOCATABLE    :: core_te  (:)
+         REAL,ALLOCATABLE    :: core_ti  (:)
+         REAL,ALLOCATABLE    :: core_percent_nfrac(:)
+         REAL,ALLOCATABLE    :: core_percent_efrac(:)
+      ENDTYPE type_sputter_data
+
+      TYPE(type_sputter_data), ALLOCATABLE :: sputter_data(:)
+      INTEGER                              :: sputter_ndata
+!
+!     ------------------------------------------------------------------
+! 
+      INTEGER :: nymfs_global
 !
 !     ==================================================================
 !
@@ -90,7 +140,38 @@
         IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
       END SUBROUTINE divClean
 
+
+      SUBROUTINE     divInitializeOptions
+!        opt_div%nsputter = 0
+        sputter_ndata = 0
+        nymfs_global = 0
+      END SUBROUTINE divInitializeOptions
+
       END MODULE mod_divimp
+!
+! ======================================================================
+! ======================================================================
+!
+      MODULE mod_divimp_cneut
+      IMPLICIT none
+      SAVE
+      PUBLIC
+!
+!     ------------------------------------------------------------------
+! 
+      INTEGER :: cneut_test
+!
+!     ==================================================================
+!
+!      CONTAINS
+
+!      SUBROUTINE     divClean
+!        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+!      END SUBROUTINE divClean
+
+
+
+      END MODULE mod_divimp_cneut
 !
 ! ======================================================================
 ! ======================================================================

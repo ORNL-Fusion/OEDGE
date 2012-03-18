@@ -1153,25 +1153,13 @@ c
 
       INTEGER in,ik,ir,i1,i2,i3,id,id1,id2,wdat(0:8,6),ndat,
      .        imin,walln,ii,iv,istart,iend,irstart,ir1,ir2,
-     .        wallc(MAXPTS),wallt(MAXPTS),holdc,holdt,ikn,irn,
-     .        ik1,ik2,cnt
-c
-c=======
-c     .        wallc(2*MAXPTS),wallt(2*MAXPTS),holdc,holdt,ikn,irn,
-c     .        ik1,ik2,cnt
-c>>>>>>> .merge-right.r477
-c
+     .        wallc(2*MAXPTS+1),wallt(MAXPTS),holdc,holdt,ikn,irn,
+     .        ik1,ik2,cnt,walln_2
       LOGICAL terminate
       REAL    holdr1,holdz1,holdr2,holdz2,rstart,zstart,
      .        wallr1(MAXPTS+1,2),wallz1(MAXPTS+1,2),
      .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t,rvector,zvector
-      REAL*8  d_wallr1(MAXPTS+1,2),d_wallz1(MAXPTS+1,2)
-c
-c=======
-c     .        wallr1(2*MAXPTS+1,2),wallz1(2*MAXPTS+1,2),
-c     .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t
-c      REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
-c>>>>>>> .merge-right.r477
+      REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
 c
       terminate = .FALSE.
 
@@ -1438,12 +1426,19 @@ c...      Automated clipping:
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
           ENDDO
 c
-          d_wallr1 = DBLE(wallr1)
-          d_wallz1 = DBLE(wallz1)
-c          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,2*MAXPTS+1,.TRUE.)
-          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,MAXPTS+1,.TRUE.)
-          wallr1 = SNGL(d_wallr1)
-          wallz1 = SNGL(d_wallz1)           
+c          d_wallr1 = DBLE(wallr1)
+c          d_wallz1 = DBLE(wallz1)
+c          CALL ClipWallToGrid(walln,d_wallr1,d_wallz1,MAXPTS+1,.TRUE.)
+c          wallr1 = SNGL(d_wallr1)
+c          wallz1 = SNGL(d_wallz1)           
+          d_wallr1(1:walln,:) = DBLE(wallr1(1:walln,:))
+          d_wallz1(1:walln,:) = DBLE(wallz1(1:walln,:))
+          walln_2 = walln
+          CALL osmClipWallToGrid
+     .           (walln_2,wallc,d_wallr1,d_wallz1,2*MAXPTS+1)
+          walln = walln_2
+          wallr1(1:walln,:) = SNGL(d_wallr1(1:walln,:))
+          wallz1(1:walln,:) = SNGL(d_wallz1(1:walln,:))           
 c
           DO i2 = 1, walln
             WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
@@ -1496,16 +1491,16 @@ c     a positive integer value corresponding to the ring number:
         wallz1(walln,1) = zvertp(1,korpg(1,ir))
         wallr1(walln,2) = rvertp(2,korpg(1,ir))
         wallz1(walln,2) = zvertp(2,korpg(1,ir))
-        wallc(walln) = ir
-        wallt(walln) = 1
+        wallc (walln  ) = ir
+        wallt (walln  ) = 1
 
         walln = walln + 1
         wallr1(walln,1) = rvertp(3,korpg(nks(ir),ir))
         wallz1(walln,1) = zvertp(3,korpg(nks(ir),ir))
         wallr1(walln,2) = rvertp(4,korpg(nks(ir),ir))
         wallz1(walln,2) = zvertp(4,korpg(nks(ir),ir))
-        wallc(walln) = ir
-        wallt(walln) = 4
+        wallc (walln  ) = ir
+        wallt (walln  ) = 4
       ENDDO
 
 c...  Sequence neutral wall segments (clockwise), starting
@@ -1575,53 +1570,60 @@ c       R=0.0:
      .                                 wallz1(MAX(1,i1-1),2)
         ENDIF
 
-        DO i2 = i1, walln
-c          IF (i1.EQ.1) THEN
-c            WRITE(pinout,*) '    MATCH:',i2,rstart,zstart
-c            WRITE(pinout,*) '         :',i2,wallr1(i2,1),wallz1(i2,1)
-c          ENDIF
-          IF ((i1.EQ.1.AND.
-     .         ABS(rstart-wallr1(i2,1)).LT.TOL.AND. 
-     .         ABS(zstart-wallz1(i2,1)).LT.TOL).OR.
-c     .         wallr1(i2,1).EQ.rstart.AND.
-c     .         wallz1(i2,1).EQ.zstart).OR.
-     .        (i1.GT.1.AND.
-     .         ABS(wallr1(i2,1)-wallr1(MAX(1,i1-1),2)).LT.TOL.AND.
-     .         ABS(wallz1(i2,1)-wallz1(MAX(1,i1-1),2)).LT.TOL)) THEN
-c     .         wallr1(i2,1).EQ.wallr1(MAX(1,i1-1),2).AND.
-c     .         wallz1(i2,1).EQ.wallz1(MAX(1,i1-1),2))) THEN
+        DO i2 = 1, 2
+          DO i3 = i1, walln
+            IF ((i2.EQ.1.AND.wallc(i3).LE.0).OR.       ! check target segments on first pass
+     .          (i2.EQ.2.AND.wallc(i3).GT.0)) CYCLE
 
-            WRITE(pinout,*) '    MATCH:',i2  ,wallr1(i2,1),wallz1(i2,1)
-            WRITE(pinout,*) '         :',i2  ,wallr1(i2,2),wallz1(i2,2)
-
-            holdr1 = wallr1(i1,1) 
-            holdz1 = wallz1(i1,1) 
-            holdr2 = wallr1(i1,2) 
-            holdz2 = wallz1(i1,2) 
-            holdc  = wallc(i1)
-            holdt  = wallt(i1)
-
-            wallr1(i1,1) = wallr1(i2,1)
-            wallz1(i1,1) = wallz1(i2,1)
-            wallr1(i1,2) = wallr1(i2,2)
-            wallz1(i1,2) = wallz1(i2,2)
-            wallc(i1)    = wallc(i2)
-            wallt(i1)    = wallt(i2)
-
-            wallr1(i2,1) =  holdr1
-	    wallz1(i2,1) =  holdz1
-	    wallr1(i2,2) =  holdr2
-	    wallz1(i2,2) =  holdz2
-            wallc(i2)    =  holdc
-	    wallt(i2)    =  holdt
- 
-            EXIT
-          ENDIF
+            IF ((i1.EQ.1.AND.
+     .           ABS(wallr1(i3,1)-rstart               ).LT.TOL.AND. 
+     .           ABS(wallz1(i3,1)-zstart               ).LT.TOL).OR.
+     .          (i1.GT.1.AND.
+     .           ABS(wallr1(i3,1)-wallr1(MAX(1,i1-1),2)).LT.TOL.AND.
+     .           ABS(wallz1(i3,1)-wallz1(MAX(1,i1-1),2)).LT.TOL)) THEN
+	  
+              WRITE(pinout,*) '    MATCH:',i3,wallr1(i3,1),wallz1(i3,1)
+              WRITE(pinout,*) '         :',i3,wallr1(i3,2),wallz1(i3,2)
+	  
+              holdr1 = wallr1(i1,1) 
+              holdz1 = wallz1(i1,1) 
+              holdr2 = wallr1(i1,2) 
+              holdz2 = wallz1(i1,2) 
+              holdc  = wallc (i1)
+              holdt  = wallt (i1)
+	  
+              wallr1(i1,1) = wallr1(i3,1)
+              wallz1(i1,1) = wallz1(i3,1)
+              wallr1(i1,2) = wallr1(i3,2)
+              wallz1(i1,2) = wallz1(i3,2)
+              wallc (i1)   = wallc (i3)
+              wallt (i1)   = wallt (i3)
+	  
+              wallr1(i3,1) =  holdr1
+	      wallz1(i3,1) =  holdz1
+	      wallr1(i3,2) =  holdr2
+	      wallz1(i3,2) =  holdz2
+              wallc (i3)   =  holdc
+	      wallt (i3)   =  holdt
+ 	  
+              EXIT
+            ENDIF
+	  
+          ENDDO
+          IF (i3.LT.walln+1) EXIT
 
         ENDDO
-c...    The next wall segment could not be found:
-        IF (i2.EQ.walln+1) 
-     .    CALL ER('BuildNeutralWall','Unable to sequence wall',*99)
+
+        IF     (i2.EQ.3) THEN
+c...      The next wall segment could not be found:
+          CALL ER('BuildNeutralWall','Unable to sequence wall',*99)
+        ELSEIF (wallr1(1,1).EQ.wallr1(i1,2).AND.
+     .          wallz1(1,1).EQ.wallz1(i1,2)) THEN
+c...      Wall is closed:
+          walln = i1
+          EXIT
+        ENDIF
+
       ENDDO
 
 c
@@ -1631,7 +1633,7 @@ c       last wall points - the specification given here leaves out the
 c       core boundary on ribbon grids. 
 c     - I'm not sure if linear grids need the same fix
 c
-      if (cgridopt.eq.RIBBON_GRID) then 
+      if (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.eq.RIBBON_GRID) then 
          walln = walln+1
          wallr1(walln,1) = wallr1(walln-1,2)
          wallz1(walln,1) = wallz1(walln-1,2)
@@ -2577,7 +2579,8 @@ c
       INTEGER irref,mode,type
       INTEGER ik,ir,nshift,irend,ir1,ik1
 
-      nshift = 1
+      nshift =  1
+      ir     = -1
 c
 c     Checks:
 c
@@ -2653,6 +2656,8 @@ c...    Assign a KORPG index:
         ENDIF
 
         nvertp(korpg(ik,ir)) = 0
+        rvertp(:,korpg(ik,ir)) = 0.0  ! BUG Need the assignment of getting random values, which caused problem
+        zvertp(:,korpg(ik,ir)) = 0.0  ! for grid grid_iter_10d -SL, 22/02/2012
 c
 c       jdemod - assigning arbitrary values of -1.0 to the cell centers 
 c                causes problems with various pieces of code elsewhere

@@ -2258,9 +2258,9 @@ c            IF (obj(iobj)%flag(isid).NE.-1.AND.
 c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
+            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 

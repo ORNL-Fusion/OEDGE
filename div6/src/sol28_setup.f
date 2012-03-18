@@ -71,37 +71,6 @@ c      WRITE(0,*) 'REF:',ref_fluid(1:100,1)%ne
 c
 c ======================================================================
 c
-      SUBROUTINE UnzipFile(fname)
-      IMPLICIT none
-
-      CHARACTER fname*(*)
-
-      INTEGER   status,n
-      CHARACTER command*1024
-
-      n = LEN_TRIM(fname)
-
-      IF     (fname(n-2:n).EQ.'zip') THEN
-        command = 'unzip -o '//TRIM(fname)
-        fname(n-3:n) = ' '
-      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
-        command = 'gunzip -f '//TRIM(fname)
-        fname(n-2:n) = ' '
-      ELSE
-        RETURN
-      ENDIF
-
-      CALL CIssue(TRIM(command),status)        
-      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
-
-      RETURN
- 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
-      WRITE(0,*) '  COMMAND   = ',TRIM(command)
-      WRITE(0,*) '  ERROR     = ',status
-      END
-c
-c ======================================================================
-c
       SUBROUTINE LoadReferenceSolution(mode)
       USE mod_sol28_params
       USE mod_sol28
@@ -605,8 +574,8 @@ c
       ic1 = 0
       dist1 = 0.0
 
-      DO it = osmnode(ind1)%tube_range(1), 
-     .        osmnode(ind1)%tube_range(2)
+      DO it =     osmnode(ind1)%tube_range(1), 
+     .        MIN(osmnode(ind1)%tube_range(2),ntube)
         IF (tube(it)%type.EQ.GRD_BOUNDARY) CYCLE
 c        WRITE(0,*) 'FC: IT=',it
         DO i1 = ind0+1, ind1
@@ -641,8 +610,8 @@ c...  Sort intesections:
       iccell = 0
       itcell = 0
       clcell = 0.0
-      DO it = osmnode(ind1)%tube_range(1), 
-     .        osmnode(ind1)%tube_range(2)
+      DO it =     osmnode(ind1)%tube_range(1), 
+     .        MIN(osmnode(ind1)%tube_range(2),ntube)
         IF (tube(it)%type.EQ.GRD_BOUNDARY.OR.ic1(it).EQ.0) CYCLE
 c        WRITE(0,*) 'PICKENS:',ir,ik1(ir),dist1(ir)
         IF     (it.EQ.itgive) THEN
@@ -862,10 +831,11 @@ c
      .        itarget,hold_ic,i5,check
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
-     .        first_pass,two_timer,default_message,node_valid
+     .        first_pass,two_timer,default_message,node_valid,
+     .        suppress_screen,rho_warning
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
-     .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,
+     .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,rho0,
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
      .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v,node_ne
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
@@ -875,8 +845,10 @@ c
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
 
-      DATA default_message / .TRUE. /
+      DATA default_message, rho_warning / .TRUE., .TRUE./
       SAVE     
+
+      suppress_screen = .FALSE.
 
 
       debug = .TRUE. 
@@ -897,6 +869,8 @@ c
         node_s(i1)%ti  (0:S28_MAXNION) = 0.0
       ENDDO
 
+
+
       frac = GetRelaxationFraction()
 
 c...  Flag if ITUBE has been processed once already and was assigned a 
@@ -906,6 +880,9 @@ c     default symmetry point, since no proper point was found:
 c...  Better/cleaner to pass the tube to this routine, and not need to
 c     use mod_sol28_locals...?
       it = itube
+
+      write(logfp,*) '---> here in assignnodevalues',tube(it)%n
+
 
       DO i1 = 2, osmnnode
         i0 = i1 - 1
@@ -949,7 +926,8 @@ c       having everything on the same line...
 
 c...    Check that rings from different grid regions are not in the same group
 c       of rings:
-        DO i2 = osmnode(i1)%tube_range(1), osmnode(i1)%tube_range(2)-1
+        DO i2 =     osmnode(i1)%tube_range(1), 
+     .          MIN(osmnode(i1)%tube_range(2),ntube)-1
           IF (i2.GT.ntube-1) EXIT          
           IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
             IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
@@ -996,6 +974,7 @@ c     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
 c     .    density = .FALSE.
 
         IF (mode.EQ.7.AND..NOT.two_timer) THEN
+          suppress_screen = .TRUE.
           a1 = 0.0
           a2 = 0.0
           b1 = 0.0
@@ -1176,16 +1155,19 @@ c...    An intersection between the line segment and the ring has been found:
         tab = hold_tab
         tcd = hold_tcd
 
-        IF (debug) WRITE(logfp,*) 'INTERSECTION:',i0,i1,itube,ic
+        IF (debug) WRITE(logfp,*) 'INTERSECTION:',intersection,
+     .                            i0,i1,itube,ic
 
 c...    These are here in case psin0 gets picked up when linking exponential
 c       decay data to neighbouring ring:
         IF (tube(it)%type.EQ.GRD_PFZ) THEN
           psin0 = -RHI
           psin1 =  RHI
+          rho0  =  RHI
         ELSE
           psin0 =  RHI
           psin1 =  RHI
+          rho0  =  RHI
         ENDIF
 
         IF (index.LT.1.OR.index.GT.3) 
@@ -1257,7 +1239,6 @@ c           reference tubes with a higher index through side 2-3.
             IF (debug) THEN
               WRITE(logfp,*) ' MAP   ',iobj,iside,ic1,nobj,ncell
               WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
-              WRITE(logfp,*) ' MAP   ',tube(itube)%cell_index(LO:HI)
               WRITE(logfp,*) ' MAP   ',it
               WRITE(logfp,*) ' MAP   ',icell
               WRITE(logfp,*) ' MAP O ',
@@ -1306,11 +1287,13 @@ c...        Base second radial interpolation value on the first value:
             IF (osmnode(i3)%ti(1).LT.  0.0) ti1= -osmnode(i3)%ti(1)* ti0
 
             IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
+            IF (coord.EQ.8)               rho0  = tube(it1)%rho  
 
             IF (debug) THEN
               WRITE(logfp,*) 'NODE LINK:',ic1,it1
               WRITE(logfp,*) '    IK,IR:',cell(ic1)%ik,cell(ic1)%ir
-              WRITE(logfp,*) '     psin:',psin0
+              WRITE(logfp,*) '    psin0:',psin0
+              WRITE(logfp,*) '     rho0:',rho0
               WRITE(logfp,*) '       ne:',n0  
               WRITE(logfp,*) '       pe:',p0  
               WRITE(logfp,*) '      Te0:',te0  
@@ -1341,10 +1324,25 @@ c...        Linear along the line segment, nice and simple:
             val1 = 1.0
             val = SNGL(tab)
           ELSEIF (coord.EQ.4) THEN
+c...        Well, some funny business here since I can't imagine why I took the absolute value 
+c           of RHO, which is causing a discrepancy between i-ref-0001d and i-ref-0007d, where the
+c           latter is a re-run of the former with iter_steven_3 (and the former was iter_steven_2).
+c           This change is also in iter_steven_2 however, in contrast to when i-ref-0001d was run,
+c           which had VAL<0 in the core, as did i-ref-0009d, so this must be a relatively recent
+c           change.  Very odd.
             val = tube(it)%rho
+c            val = ABS(tube(it)%rho)
             IF (val.EQ.0.0) 
      .        WRITE(0,*) 'WARNING AssignNodeValues: RHO=0.0 for '//
      .                   'tube',it
+            IF (rho_warning) THEN 
+              rho_warning = .FALSE.
+              WRITE(0,*) 
+              WRITE(0,*) '--------------------------------------------'
+              WRITE(0,*) '    ABS() REMOVED FROM RHO ASSIGNMENT!      '
+              WRITE(0,*) '--------------------------------------------'
+              WRITE(0,*) 
+            ENDIF
           ELSEIF (coord.EQ.5) THEN
 c...        Just give me PSIn:
             psin0 = tube(it)%psin
@@ -1358,6 +1356,7 @@ c...        Linear along the line segment, starting at the link:
             val0 = 0.0
             val1 = 1.0
             val  = 1.0E+6
+            IF (debug) WRITE(logfp,*) '  intersection',intersection
             IF (intersection) THEN
               f1 = c1 + tcd * (d1 - c1)  ! Point where the current focus tube intersects
               f2 = c2 + tcd * (d2 - c2)  ! the interpolation line segment
@@ -1397,44 +1396,80 @@ c...            Assuming a 1:1 mapping between grid and data:
             ELSE
               f1 = cell(ic)%cencar(1)  ! Centre of the focus cell on the current tube
               f2 = cell(ic)%cencar(2)  
-c...          Scan along the link tube and find the shortest perpendicular 
-c             distance to the focus cell:
-              DO ic1 = tube(it1)%cell_index(LO),
-     .                 tube(it1)%cell_index(HI)
-                iobj = ic1 
-c               Get the centreline of the cell:
-                CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
-                CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
-                c1 = 0.5D0 * (pts(1,1) + pts(1,2))
-                c2 = 0.5D0 * (pts(2,1) + pts(2,2))
-                CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
-                CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
-                d1 = 0.5D0 * (pts(1,1) + pts(1,2))
-                d2 = 0.5D0 * (pts(2,1) + pts(2,2))
-                check = CalcPoint(c1,c2,d1,d2,f1,f2,tcd)
-                IF (debug) THEN
-                  WRITE(logfp,*) '  check ',check,tcd
-                  WRITE(logfp,*) '        ',c1,c2
-                  WRITE(logfp,*) '        ',d1,d2
-                  WRITE(logfp,*) '        ',f1,f2
-                ENDIF          
-                IF (check.EQ.2) THEN
-                  e1 = c1 + tcd * (d1 - c1)  
-                  e2 = c2 + tcd * (d2 - c2)  
-                  dist = SNGL(DSQRT( (e1-f1)**2 + (e2-f2)**2 ))
-                  WRITE(logfp,*) '  val check ',val,dist
-                  WRITE(logfp,*) '            ',e1,e2
+              IF (.TRUE.) THEN 
+                DO ic1 = tube(it1)%cell_index(LO),
+     .                   tube(it1)%cell_index(HI)
+                  iobj = ic1 
+c                 Get the centreline of the cell:
+                  CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
+                  c1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  c2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
+                  d1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  d2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  c1 = 0.5D0 * (c1 + d1)
+                  c2 = 0.5D0 * (c2 + d2)
+                  dist = SNGL(DSQRT( (f1-c1)**2 + (f2-c2)**2 ))
+                  IF (debug) THEN
+                    WRITE(logfp,*) '  check ',check,tcd
+                    WRITE(logfp,*) '        ',c1,c2
+                    WRITE(logfp,*) '        ',f1,f2
+                    WRITE(logfp,*) '        ',dist
+                  ENDIF          
                   IF (dist.LT.val) THEN
                     IF (debug) THEN
                       WRITE(logfp,*) '  val update',dist
                     ENDIF
                     val = dist
                   ENDIF
-                ENDIF
-              ENDDO
-c              WRITE(0,*) 'itube,it1=',itube,it1
-c              STOP 'sdfdsf'
+                ENDDO               
+              ELSE
+c               ORIGINAL METHOD, BUT NOT FOOLPROOF
+c...            Scan along the link tube and find the shortest perpendicular 
+c               distance to the focus cell:
+                DO ic1 = tube(it1)%cell_index(LO),
+     .                   tube(it1)%cell_index(HI)
+                  iobj = ic1 
+c                 Get the centreline of the cell:
+                  CALL GetVertex(iobj,1,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,2,pts(1,2),pts(2,2))
+                  c1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  c2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  CALL GetVertex(iobj,3,pts(1,1),pts(2,1))
+                  CALL GetVertex(iobj,4,pts(1,2),pts(2,2))
+                  d1 = 0.5D0 * (pts(1,1) + pts(1,2))
+                  d2 = 0.5D0 * (pts(2,1) + pts(2,2))
+                  check = CalcPoint(c1,c2,d1,d2,f1,f2,tcd)
+                  IF (debug) THEN
+                    WRITE(logfp,*) '  check ',check,tcd
+                    WRITE(logfp,*) '        ',c1,c2
+                    WRITE(logfp,*) '        ',d1,d2
+                    WRITE(logfp,*) '        ',f1,f2
+                  ENDIF          
+                  IF (check.EQ.2) THEN
+                    e1 = c1 + tcd * (d1 - c1)  
+                    e2 = c2 + tcd * (d2 - c2)  
+                    dist = SNGL(DSQRT( (e1-f1)**2 + (e2-f2)**2 ))
+                    WRITE(logfp,*) '  val check ',val,dist
+                    WRITE(logfp,*) '            ',e1,e2
+                    IF (dist.LT.val) THEN
+                      IF (debug) THEN
+                        WRITE(logfp,*) '  val update',dist
+                      ENDIF
+                      val = dist
+                    ENDIF
+                  ENDIF
+                ENDDO
+c                WRITE(0,*) 'itube,it1=',itube,it1
+c                STOP 'sdfdsf'
+              ENDIF
             ENDIF
+            IF (val.EQ.1.0E+6) 
+     .        CALL ER('AssignNodeValues_New','Linear link '//
+     .                'reference not found',*99)
+
             IF (val.EQ.1.0E+6) 
      .        CALL ER('AssignNodeValues_New','Linear link '//
      .                'reference not found',*99)
@@ -1444,69 +1479,74 @@ c              STOP 'sdfdsf'
             val1 = 0.0  
             val  = ABS(tube(it)%psin - psin0)
             WRITE(logfp,*) ' psin 7:',psin0,tube(it)%psin,val
+          ELSEIF (coord.EQ.8) THEN
+            val0 = 0.0  ! Necessary?
+            val1 = 0.0  
+            val  = ABS(tube(it)%rho - rho0)
+            WRITE(logfp,*) ' rho 8:',rho0,tube(it)%rho,val
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             STOP 'ASSIGNNODEVALUES: CODE IS OBSOLETE'
-            IF ((osmnode(i2)%tube_range(1).NE.
-     .           osmnode(i3)%tube_range(1)).OR.
-     .          (osmnode(i2)%tube_range(2).NE.
-     .           osmnode(i3)%tube_range(2)).OR.
-     .          (osmnode(i2)%tube_range(1).GT.
-     .           osmnode(i2)%tube_range(2)))
-     .        CALL ER('AssignNodeValues_2','Invalid '//
-     .                'tube index range, check input file',*99)
-
-c...        Need range of PSIn over the segment:
-            DO it1 = osmnode(i2)%tube_range(1), 
-     .               osmnode(i2)%tube_range(2)
-              IF (it1.GT.ntube) EXIT
-              DO ic1 = tube(it1)%cell_index(LO), 
-     .                 tube(it1)%cell_index(HI)
-                iobj = ic1
-                isrf = ABS(obj(iobj)%iside(1))
-                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-                isrf = ABS(obj(iobj)%iside(3))
-                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
-                  IF     (tube(it)%type.EQ.GRD_SOL) THEN
-                    IF (psin0.EQ.RHI) psin0 = tube(it1)%psin
-                    IF (psin0.NE.RHI) psin1 = tube(it1)%psin
-                    IF (debug) WRITE(0,*) 'SOL:',psin0,psin1,it,it1
-                  ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
-                    psin0 = MAX(psin0,tube(it1)%psin)
-                    psin1 = MIN(psin1,tube(it1)%psin)
-                    IF (debug) WRITE(0,*) 'PFZ:',psin0,psin1,it,it1
-                  ELSE
-                    CALL ER('AssignNodeValues_2','Invalid '//
-     .                      'RINGTYPE',*99)
-                  ENDIF
-               ENDIF
-              ENDDO
-            ENDDO
-c            WRITE(0,*) 'PSIN:',psin0,psin1,coord
-            IF     (coord.EQ.2) THEN
-c...          Spatial along the IR-range of applicability:
-              WRITE(0,*) 'TAB,HOLDTAB:',tab,hold_tab
- 
-              STOP 'NOT READY 2'
-            ELSEIF (coord.EQ.3) THEN
-c...          PSIn:
-              val0 = 0.0
-              val1 = ABS(psin1         - psin0)
-              val  = ABS(tube(it)%psin - psin0)
-              WRITE(logfp,*) ' psin:',psin0,psin1,tube(it)%psin
-            ELSEIF (coord.EQ.4) THEN
-c...          RHO:
-              STOP 'NOT READY 4'
-            ELSE
-              CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
-            ENDIF
+c            IF ((osmnode(i2)%tube_range(1).NE.
+c     .           osmnode(i3)%tube_range(1)).OR.
+c     .          (osmnode(i2)%tube_range(2).NE.
+c     .           osmnode(i3)%tube_range(2)).OR.
+c     .          (osmnode(i2)%tube_range(1).GT.
+c     .           osmnode(i2)%tube_range(2)))
+c     .        CALL ER('AssignNodeValues_2','Invalid '//
+c     .                'tube index range, check input file',*99)
+c
+cc...        Need range of PSIn over the segment:
+c            DO it1 =     osmnode(i2)%tube_range(1), 
+c     .               MIN(osmnode(i2)%tube_range(2),ntube)
+c              IF (it1.GT.ntube) EXIT
+c              DO ic1 = tube(it1)%cell_index(LO), 
+c     .                 tube(it1)%cell_index(HI)
+c                iobj = ic1
+c                isrf = ABS(obj(iobj)%iside(1))
+c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+c                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+c                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c                isrf = ABS(obj(iobj)%iside(3))
+c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
+c                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+c                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+c                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+c                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+c     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+c                  IF     (tube(it)%type.EQ.GRD_SOL) THEN
+c                    IF (psin0.EQ.RHI) psin0 = tube(it1)%psin
+c                    IF (psin0.NE.RHI) psin1 = tube(it1)%psin
+c                    IF (debug) WRITE(0,*) 'SOL:',psin0,psin1,it,it1
+c                  ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
+c                    psin0 = MAX(psin0,tube(it1)%psin)
+c                    psin1 = MIN(psin1,tube(it1)%psin)
+c                    IF (debug) WRITE(0,*) 'PFZ:',psin0,psin1,it,it1
+c                  ELSE
+c                    CALL ER('AssignNodeValues_2','Invalid '//
+c     .                      'RINGTYPE',*99)
+c                  ENDIF
+c               ENDIF
+c              ENDDO
+c            ENDDO
+cc            WRITE(0,*) 'PSIN:',psin0,psin1,coord
+c            IF     (coord.EQ.2) THEN
+cc...          Spatial along the IR-range of applicability:
+c              WRITE(0,*) 'TAB,HOLDTAB:',tab,hold_tab
+c 
+c              STOP 'NOT READY 2'
+c            ELSEIF (coord.EQ.3) THEN
+cc...          PSIn:
+c              val0 = 0.0
+c              val1 = ABS(psin1         - psin0)
+c              val  = ABS(tube(it)%psin - psin0)
+c              WRITE(logfp,*) ' psin:',psin0,psin1,tube(it)%psin
+c            ELSEIF (coord.EQ.4) THEN
+cc...          RHO:
+c              STOP 'NOT READY 4'
+c            ELSE
+c              CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
+c            ENDIF
           ENDIF
         ELSEIF (mode.EQ.4) THEN
 c...      Load probe data, dummy values here:
@@ -1753,6 +1793,8 @@ c           parameters:
                   CASE (4)  
                     te(inode) = result(2)
                     ti(inode) = result(3)
+                  CASE (5)  
+                    ti(inode) = result(3)
                   CASEDEFAULT
                     CALL ER('AssignNodeValues_2','Unknown data '//
      .                      'assignment for MODE=6',*99)
@@ -1798,10 +1840,10 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
             ENDSELECT
 
             IF (ABS(expon).LT.2.0E-7) expon = 1.0
-            C = tube(it)%smax * radvel / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 10.0 / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 30.0 / GetCs2(te_cs,ti_cs) * expon
-c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) * expon
+            C = tube(it)%smax * radvel / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 10.0 / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 30.0 / GetCs2(te_cs,ti_cs) ! * expon
+c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) ! * expon
             A = n0
             B = 0.0
             IF (nc) THEN
@@ -1852,6 +1894,7 @@ c...    Store node values:
         ENDIF
 
       ENDDO  ! END OF OSMNMONE LOOP
+c     ------------------------------------------------------------------
 
 c...  Check for target data:
       DO i1 = 1, node_n
@@ -1935,13 +1978,13 @@ c      DO i1 = 2, node_n-1
       IF (logop.GT.0) THEN
         WRITE(logfp,*) 
         DO i1 = 1, node_n
-          WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2)') 
+          WRITE(logfp,'(A,3I6,F10.2,3E10.2,2F10.2,5X,I6)') 
      .      'NODE TARGETS:',i1,node_i(i1),
      .      node_s(i1)%icell,node_s(i1)%s,
      .      node_s(i1)%ne,
      .      node_s(i1)%v,
      .      node_s(i1)%pe,
-     .      node_s(i1)%te,node_s(i1)%ti(1)
+     .      node_s(i1)%te,node_s(i1)%ti(1), tube(it)%n
         ENDDO
       ENDIF
 
@@ -1986,7 +2029,7 @@ c...    Assign cell index:
             WRITE(0,*) 'WARNING AssignNodes: Default values applied'
             default_message = .FALSE.
           ENDIF
-        ELSE
+        ELSEIF (.NOT.suppress_screen) THEN
           CALL WN('AssignNodeValues_New',TRIM(dummy))
         ENDIF
       ELSEIF (i2.GT.1) THEN

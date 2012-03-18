@@ -62,9 +62,11 @@
         INTEGER :: ikti
         INTEGER :: ikto
         INTEGER :: nks(1000)
+        REAL    :: psin(1000)
       ENDTYPE type_grid_body
 
       INTEGER, PARAMETER :: GRD_FORMAT_SONNET = 1,  
+     .                      GRD_FORMAT_GRID   = 2, 
      .                      XPT_SEARCH = 1,         
      .                      R_INWARD   = 2,         
      .                      P_FORWARD  = 3,         

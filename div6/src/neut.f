@@ -3443,8 +3443,11 @@ c
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
-     >                                sect)
-
+c slmod begin
+     >                                sect,cprint)
+c
+c     >                                sect)
+c slmod end
 c
 c         Verify RNEW,ZNEW 
 c
@@ -4782,13 +4785,13 @@ c                 5   = Flux * Yield
         DO id = 1, nds
           in = nimindex(id)
           IF (in.EQ.0) CYCLE  ! virtual rings 
-          fydata(id,1) = wall_flx(in)%in_par_blk(1,0)  ! flxhw2(in)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
-          fydata(id,2) = wall_flx(in)%in_ene_blk(1,0)  ! flxhw5(in)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+          fydata(id,1) = wall_flx(in)%in_par_blk(1,0)    ! flxhw2(in)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+          fydata(id,2) = wall_flx(in)%in_ene_blk(1,0)    ! flxhw5(in)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
           fydata(id,3) = 1.0 
           IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
      .      fydata(id,4) = wall_flx(in)%em_par_atm(2,1) / 
      .                     wall_flx(in)%in_par_blk(1,0)  ! flxhw3(in) / (flxhw2(in) + 1.0E-10)
-          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)  ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
+          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)    ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
           fydata(id,:) = fydata(id,:) * kmfps(id)
         enddo
 c slmod end
@@ -4993,6 +4996,11 @@ c
          do id = 1,nwlind
             fymap(id) = wlind(id)            
             fyprob(id)= fwlprob(id) 
+c slmod begin
+            if (wallpt(wlind(id),7).gt.0.0) 
+     .        fydata(wlind(id),5) = fwlprob(id) * nabsfac / 
+     .                              wallpt(wlind(id),7)
+c slmod end
          end do 
 c
 c     Do proper calculations if PIN/NIMBUS data is available
@@ -5215,7 +5223,7 @@ c                    5   = Flux * Yield
              fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
              fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
              fydata(in,3) = 1.0 
-             IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
+             IF (wall_flx(in)%in_par_atm(1,0).NE.0.0)
      .         fydata(in,4) = wall_flx(id)%em_par_atm(2,2) /
      .                        wall_flx(in)%in_par_atm(1,0)
              fydata(in,5) = wall_flx(id)%em_par_atm(2,2)  !  Atoms (species=2) sputtering by test atoms

@@ -966,6 +966,8 @@ c         not found, or separate surface represenation forced, so add a surface:
               surface(nsurface)%surtxt = '* wall surface (DIVIMP)'      
             CASE (2)                
               surface(nsurface)%surtxt = '* pumping surface (DIVIMP)'      
+            CASE (3)                
+              surface(nsurface)%surtxt = '* specular reflection (DIV)'      
             CASE DEFAULT
               CALL ER('DefineEireneSurfaces','Invalid ILIIN',*99)
           ENDSELECT
@@ -1243,6 +1245,8 @@ c...  Specify target plasma quantities:
           tardat(it,11) = GetMach(kvds(in),kteds(in),ktids(in))           ! Mach no.
           tardat(it,12) = GetJsat(kteds(in),ktids(in),knds(in),kvds(in))  ! jsat 
           tardat(it,13) = costet(in)                                      ! *** HACK *** COSTET, for calculating tetrahedron cell particle flux...
+
+c          WRITE(88,*) 'targ flux',ik,ir,region,GetFlux(region,ir),fact
         ENDDO
       ENDDO      
       ntardat = it
@@ -1291,6 +1295,7 @@ c      ENDDO
       assign_volrec = .FALSE.
 
 c      WRITE(0,*) 'STRATA:',assign_LO,assign_HI,assign_volrec
+
 
 c...  Low IK target:
       IF (assign_LO) THEN
@@ -1455,6 +1460,7 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%sorcos  = 1.0
             strata(nstrata)%sormax  = 90.0
           CASE (3)
+
             IF (opt_eir%type(is).EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
               insor = 2 ! 1
@@ -1493,7 +1499,7 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
 c            WRITE(0,*) strata(nstrata)%sorad(1:3)
 c            STOP 'sdgsdgd'
             strata(nstrata)%sorene  = opt_eir%sorene(is)
-            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%soreni  = opt_eir%sorene(is)  ! bug - seems the puff energy is set from SORENI, not SORENE, so all puff had E=0 before this? -SL, 19/01/12
             strata(nstrata)%sorcos  = opt_eir%sorcos(is)
             strata(nstrata)%sormax  = opt_eir%sormax(is)
           CASE (4)  ! Puff wall surface (not working...)
@@ -1527,7 +1533,9 @@ c            STOP 'sdgsdgd'
             strata(nstrata)%sorad(1:6) =opt_eir%sorad(1:6,is) *  ! Convert to cm
      .                                  100.0  
             strata(nstrata)%sorene  = opt_eir%sorene(is)
-            strata(nstrata)%soreni  = 0.0
+            strata(nstrata)%soreni  = opt_eir%sorene(is) 
+
+            write(0,*) 'puff eni',opt_eir%sorene(is)
             strata(nstrata)%sorcos  = opt_eir%sorcos(is)
             strata(nstrata)%sormax  = opt_eir%sormax(is)
 c            WRITE(0,*) 'WALL SURFACE NEUTRAL INJECTION NOT WORKING'
@@ -1785,10 +1793,29 @@ c            ENDIF
 c      pinion = 0.0   ! TEMP... 
 c      pinrec = 0.0
 
+c     - Impurity momentum source [(kg x m)/(cell x sec^2)]
+c     - H neutral density        [particles/cell]             PINATOM
+c     - Impurity neutral density [particles/cell]             PINZ0
+c     - H2 density               [molecules/cell]             PINMOL
+c...Changed on Dec 10, 1999 - SL
+c     - H2+ density              [molecules/cell]             PINMOI
+c OLD     - H2+ density              [molecules/cell]            +PINMOL
+c     - Avg. neutr. H energy     [eV]                         PINENA
+c     - Avg. neutr. imp. energy  [ev]                         PINENZ
+c     - Avg. H2 energy           [eV]                         PINENM
+c     - Avg. H2+ energy          [eV]  !!! (not yet added to DIVIMP) !!!
+c     - Halpha emissivity        [photons/(cell x sec)]       PINALPHA
+c       (5 blocks for different generation mechanisms)
+c     - H rec. source            [particles/(cell x sec)]     PINREC
+c     - H+ (+imp.) energy source [Watt/cell]                  PINQI
+c     - Electron energy source   [Watt/cell]                  PINQE
+
       pinalpha = 0.0
-      pinline = 0.0
-      pinatom = 0.0
-      pinmol = 0.0
+      pinline  = 0.0
+      pinatom  = 0.0
+      pinena   = 0.0
+      pinmol   = 0.0
+      pinenm   = 0.0
 
       hescpd = 0.0
       hescal = 0.0
@@ -1823,6 +1850,7 @@ c...  Read through the file:
       cvesm = 0
       DO WHILE (.TRUE.)
         READ(fp,'(A256)',END=10) buffer
+c       ----------------------------------------------------------------
         IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
           IF (debug) WRITE(0,*) '===BULK PARTICLES: VOLUME TALLIES==='
           iblk = iblk + 1
@@ -1879,6 +1907,7 @@ c...          Ignore D and D2 BGK data:
 c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - VOL') THEN
           iatm = iatm + 1
           IF (debug) WRITE(0,*) '===TEST ATOMS: VOLUME TALLIES===',iatm
@@ -1893,12 +1922,14 @@ c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
               ir = fluid_ir(icount)
               IF     (iatm.EQ.1) THEN                        ! Only for D, presumably the 1st atom species, need check...
                 pinatom(ik,ir) = pinatom(ik,ir) + rdum(1) 
+                pinena (ik,ir) = pinena (ik,ir) + rdum(6) 
               ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN                     
                 eirdat(ik,ir,2) = eirdat(ik,ir,2) + rdum(1)  ! Impurity atom (probably) density
               ENDIF
             ENDIF
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - SUR') THEN
           IF (debug) WRITE(0,*) '===TEST ATOMS: SURFACE FLUXES===',iatm
           READ(fp,*,ERR=97) ntally
@@ -1949,6 +1980,7 @@ c       ----------------------------------------------------------------
               ir = fluid_ir(icount)
               IF (imol.EQ.1) THEN                            ! Need check...
                 pinmol(ik,ir) = pinmol(ik,ir) + rdum(1)
+                pinenm(ik,ir) = pinenm(ik,ir) + rdum(6)
               ELSE
                 CALL ER('LoadEireneData_06','IMOL out of bounds, '//
      .                  'unexpected this is...',*99)
@@ -2018,7 +2050,9 @@ c             the standard DIVIMP neutral wall, ignore for now...
             ENDIF
           ENDDO
           IF (debug) WRITE(0,*) '===DONE (NO DATA STORED)==='
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:20).EQ.'* TEST PHOTONS - VOL') THEN
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
           IF (debug) WRITE(0,*) '===LINE EMISSION==='
           ilin = ilin + 1   
@@ -2034,7 +2068,7 @@ c             the standard DIVIMP neutral wall, ignore for now...
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
                
-              IF (ilin.EQ.1) THEN
+              IF     (ilin.EQ.1) THEN
                 pinline(ik,ir,1:5,H_BALPHA)=pinline(ik,ir,1:5,H_BALPHA)+ 
      .                                      rdum(1:5)
                 pinline(ik,ir,6  ,H_BALPHA)=pinline(ik,ir,6  ,H_BALPHA)+ 
@@ -2042,12 +2076,17 @@ c             the standard DIVIMP neutral wall, ignore for now...
               ELSEIF (ilin.EQ.2) THEN
                 pinline(ik,ir,1:6,H_BGAMMA)=pinline(ik,ir,1:6,H_BGAMMA)+ 
      .                                      rdum(1:6)
+              ELSEIF (ilin.EQ.3) THEN
+                pinline(ik,ir,1:6,H_BBETA )=pinline(ik,ir,1:6,H_BBETA) + 
+     .                                      rdum(1:6)
               ENDIF  
             ENDIF
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:6 ).EQ.'* MISC') THEN
 c...      Check volumes:
+c       ----------------------------------------------------------------
         ELSEIF (buffer(1:18).EQ.'* PARTICLE SOURCES') THEN
           IF (debug) WRITE(0,*) '===PARTICLE SORUCES==='
           READ(fp,*) i1
@@ -2112,6 +2151,7 @@ c            WRITE(0,*) 'i2,3',i2,i3
           ENDDO
 c       ----------------------------------------------------------------
         ELSEIF (buffer(1:1 ).EQ.'*') THEN
+c       ----------------------------------------------------------------
         ELSE
         ENDIF
 
@@ -2139,15 +2179,30 @@ c...      Linear relaxation:
           pinqe (ik,ir) = (1.0-frac)*pinqe (ik,ir) + frac*tdata(ik,ir,5)
 c...      Not relaxed, volume normalize:
           pinatom(ik,ir) = pinatom(ik,ir) * norm  
+          pinena (ik,ir) = pinena (ik,ir) * norm  
           pinmol (ik,ir) = pinmol (ik,ir) * norm  
+          pinenm (ik,ir) = pinenm (ik,ir) * norm  
           pinline(ik,ir,1:6,H_BALPHA) = pinline(ik,ir,1:6,H_BALPHA) * !/
      .                                  norm  
           pinline(ik,ir,1:6,H_BGAMMA) = pinline(ik,ir,1:6,H_BGAMMA) * !/
      .                                  norm  
+          pinline(ik,ir,1:6,H_BBETA)  = pinline(ik,ir,1:6,H_BBETA)  * !/
+     .                                  norm  
 c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
-
+c...  
           IF (ilspt.GT.0) eirdat(ik,ir,:) = eirdat(ik,ir,:) * norm
+c...      
+          IF (pinatom(ik,ir).GT.1.0E-10) THEN
+            pinena(ik,ir) = pinena(ik,ir) / pinatom(ik,ir)
+          ELSE
+            pinena(ik,ir) = 0.0
+          ENDIF
+          IF (pinmol (ik,ir).GT.1.0E-10) THEN
+            pinenm(ik,ir) = pinenm(ik,ir) / pinmol (ik,ir)
+          ELSE
+            pinenm(ik,ir) = 0.0
+          ENDIF     
 
           sumion = sumion + pinion(ik,ir) * kvols(ik,ir) * eirtorfrac
         ENDDO

@@ -1435,9 +1435,10 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
         ENDDO
 
         WRITE(fp,*) ' '
-        WRITE(fp,'(2A4,7A12)')
+        WRITE(fp,'(2A4,8A12)')
      +    'ik','ir',
-     +    'pinena','osmcfe','osmcfi','pinmp','osmmp','osmmp2','pinqe2'
+     +    'pinena','pinenm','osmcfe','osmcfi','pinmp','osmmp','osmmp2',
+     +    'pinqe2'
 
 
         DO ik = 1, nks(ir)
@@ -1445,10 +1446,10 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
           IF (ik.EQ.ikbound(ir,IKLO)) tag = tag(1:LEN_TRIM(tag))//'IK1'
           IF (ik.EQ.ikbound(ir,IKHI)) tag = tag(1:LEN_TRIM(tag))//'IK2'
 
-          WRITE(fp,'(2I4,1P,7E12.4,0P,1X,A)')
+          WRITE(fp,'(2I4,1P,8E12.4,0P,1X,A)')
      +      ik,ir,
-     .      pinena(ik,ir),osmcfe(ik,ir),osmcfi(ik,ir),pinmp (ik,ir),
-     .      osmmp (ik,ir),osmmp2(ik,ir),pinqe2(ik,ir),
+     .      pinena(ik,ir),pinenm(ik,ir),osmcfe(ik,ir),osmcfi(ik,ir),
+     .      pinmp (ik,ir),osmmp (ik,ir),osmmp2(ik,ir),pinqe2(ik,ir),
      .      tag(1:LEN_TRIM(tag))
         ENDDO
 

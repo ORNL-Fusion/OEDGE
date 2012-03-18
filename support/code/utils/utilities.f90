@@ -402,56 +402,5 @@ contains
     end subroutine find_parallel_intersection
 
 
-!
-!  *********************************************************************
-!  *                                                                   *
-!  *  IPOS   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.      *
-!  *           RS ARRAY MUST BE IN ASCENDING ORDER                     *
-!  *                                                                   *
-!  *  CHRIS FAR RELL    FEBRUARY 1989
-!  *                                                                   *
-!  *********************************************************************
-!
-      INTEGER FUNCTION IPOS (R, RS, NRS)
-      implicit none
-      INTEGER NRS,ILOW,IMID
-      REAL    R,RS(NRS)
-      integer :: in
-
-!
-!     NRS = 0 is an error condition - however, it appears that LIM
-!     sometimes does this when calculating time points in cases where
-!     the case being run is not time dependent so NTS=0. In any case, 
-!     IPOS should return some value in error cases - so IPOS will be 
-!     set to 1 initially. A fix has been added to LIM setting NTS to 1. 
-!
-      if (nrs.eq.0) then 
-         ipos = 1 
-         WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//&
-                 ' NUMBER OF ELEMENTS IS ZERO',&
-                       nrs,r,rs(1),rs(nrs)
-         return
-      elseif (RS(1).GT.RS(NRS)) then 
-         WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR: DESCENDING ORDER',&
-                       nrs,r,rs(1),rs(nrs)
-      endif
-!
-      ILOW = 0
-      IPOS = NRS
-      IF (NRS.EQ.1) RETURN
-100   CONTINUE
-      IMID = (IPOS + ILOW) / 2
-      IF (R.GT.RS(IMID)) THEN
-        ILOW = IMID
-      ELSE
-        IPOS = IMID
-      ENDIF
-      IF (IPOS-ILOW.GT.1) GOTO 100
-!
-      RETURN
-    END FUNCTION IPOS
-
-
-
 
 end module utilities

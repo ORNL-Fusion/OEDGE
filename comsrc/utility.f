@@ -1338,12 +1338,20 @@ c
      >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
      >        rorig,zorig,rstep,zstep,rstart,zstart
          else
-            write(6,'(a,i10,4i6,10g18.8)') 
-     >       'POSITION_ON_TARGET:'//
-     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+c slmod begin
+            if (cprint.ge.1) 
+     >        write(6,'(a,i10,4i6,10g18.8)') 
+     >        'POSITION_ON_TARGET:'//
+     >        ' POINT FOUND IN CELL AFTER N ITERATIONS:',
      >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
      >        rorig,zorig,rstep,zstep,rstart,zstart
-
+c
+c            write(6,'(a,i10,4i6,10g18.8)') 
+c     >       'POSITION_ON_TARGET:'//
+c     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+c     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+c     >        rorig,zorig,rstep,zstep,rstart,zstart
+c slmod end
          endif
       endif
 
@@ -4893,11 +4901,20 @@ c
      >                        reflection_angle,intersect_normal,
      >                        reflection_option,
      >                        intersect_index,intersect_result,
-     >                        intersect_logical)
+c slmod begin
+     >                        intersect_logical,cprint)
+c
+c     >                        intersect_logical)
+c slmod end
       implicit none
 c
       real ra,za,rb,zb,rint,zint,reflection_angle,intersect_normal
-      integer reflection_option,intersect_result,intersect_index
+c slmod begin
+      integer reflection_option,intersect_result,intersect_index,
+     >        cprint
+c
+c      integer reflection_option,intersect_result,intersect_index     
+c slmod end
       logical intersect_logical
 c
       include 'params'
@@ -4958,6 +4975,9 @@ c
       min_dist=HI
       min_index=0
       sect_index=0
+c slmod begin
+      min_rintd = 1.0D+6
+c slmode end
 c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 
@@ -5185,9 +5205,16 @@ c
 c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
-         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
-     >        reflection_option,sect_index,
-     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod begin          
+          if (cprint.ge.1) 
+     >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+     >          'REFANG:',reflection_option,sect_index,
+     >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c
+c         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
+c     >        reflection_option,sect_index,
+c     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod end
 c
 c        Copy outputs to input variables
 c

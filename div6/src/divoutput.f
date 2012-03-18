@@ -1387,6 +1387,9 @@ c
 c
 c
       SUBROUTINE PR_SIM(NIZS,NIMPS,NIMPS2,nymfs)
+c slmod begin
+      USE mod_divimp
+c slmod end
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -1413,6 +1416,8 @@ c      include    'adpak_com'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
+
+      integer i1
 c slmod end
       integer in 
 c
@@ -1480,6 +1485,15 @@ C-----------------------------------------------------------------------
 c
       if (nabsfac.gt.0.0.and.cioptf.ne.21) then
       CALL PRR ('* ABSOLUTE FACTOR EXTERNALLY IMPOSED',nabsfac)
+c slmod begin
+      if (sputter_ndata.gt.0) then 
+        write(7,*)
+        do i1 = 1, sputter_ndata
+          write(7,*) sputter_data(i1)%type,sputter_data(i1)%absfac_net
+        enddo
+        write(7,*)
+      endif
+c slmod end
       elseif (nabsfac.gt.0.0.and.cioptf.eq.21) then
       CALL PRR ('  SPECIFIED PLATE POWER FLUX        ',nabsfac)
       endif

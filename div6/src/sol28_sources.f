@@ -497,10 +497,10 @@ c       ----------------------------------------------------------------
             target = HI
           ENDIF
 
-          ic1 = MAX(node(node1)%icell,1)      ! icbnd1(target)
+          ic1 = MAX(node(node1)%icell,1    )  ! icbnd1(target)
           ic2 = MIN(node(node2)%icell,icmax)  ! icbnd2(target)
 
-c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
+c          WRITE(0,*) 'NODES A:',node1,node2,ic1,ic2,target
 
           DO inode = node1+1, node2-1
             IF (node(inode)%ne.EQ.-1.0.OR.
@@ -510,7 +510,7 @@ c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
               IF (inode.GE.mnode) ic2 = node(inode)%icell
             ENDIF
           ENDDO
-          IF (node1.GT.1) ic1 = ic1 + 1  ! Avoids double counting of common node
+          IF (node1.GT.1) ic1 = MIN(icmax,ic1+1)  ! Avoids double counting of common node
 
           source = 0.0D0
           SELECTCASE (opt%m_ano(target))

@@ -656,8 +656,16 @@ c        test = test.AND.DABS(x(0)-x(2)).LT.DTOL  ! BUG
         test = test.AND.s.GT.0.0D0-DTOL.AND.s.LT.1.0D0+DTOL
       ENDIF
 
-      IF (output) WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
-     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
+      IF (output) then 
+c
+c        jdemod - dtol is a real so it can't be written using an L2 format code which is for
+c                 logical - I am guessing 'test' was the desired output
+c
+         WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
+     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,test
+c         WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
+c     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
+      endif
 
       IF (test) THEN
         IF (DABS(y(0)-y(1)).LT.DABS(DTOL)) THEN
@@ -1331,3 +1339,35 @@ c
 c
 c ======================================================================
 c
+      SUBROUTINE UnzipFile(fname)
+      IMPLICIT none
+
+      CHARACTER fname*(*)
+
+      INTEGER   status,n
+      CHARACTER command*1024
+
+      n = LEN_TRIM(fname)
+
+      IF     (fname(n-2:n).EQ.'zip') THEN
+        command = 'unzip -o '//TRIM(fname)
+        fname(n-3:n) = ' '
+      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
+        command = 'gunzip -f '//TRIM(fname)
+        fname(n-2:n) = ' '
+      ELSE
+        RETURN
+      ENDIF
+
+      CALL CIssue(TRIM(command),status)        
+      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
+
+      RETURN
+ 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      WRITE(0,*) '  COMMAND   = ',TRIM(command)
+      WRITE(0,*) '  ERROR     = ',status
+      END
+c
+c ======================================================================
+c
+

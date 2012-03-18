@@ -215,8 +215,9 @@ c slmod begin
       elseif (cgridopt.eq.LINEAR_GRID) then
          call BuildLinearGrid
       elseif (cgridopt.eq.OSM_GRID) then
+c        Note that cgridopt is changed to 3 (SONNET), LINEAR_GRID, or RIBOBN_GRID in
+c        this routine:     
          call ImportOSMGrid
-         cgridopt = 3  ! switch to SONNET grid specifier
 c slmod end
 c
 c     jdemod - support for new grid option to be added
@@ -235,7 +236,8 @@ c
 c
 c     
 c
-         call BuildRibbonGrid
+         CALL divLoadRibbonData
+c         call BuildRibbonGrid
 c slmod begin - ribbon dev
          WRITE(0,*) 'RETURNED TO THE TAU OF POOH'
          nopriv = .TRUE.                        ! Probably want to move this to the end of BuildRibbonGrid
@@ -3194,7 +3196,11 @@ C
 C
 C---- SET IONISATION / E-I RECOMBINATION TIME INTERVALS    CFIZS,CFRCS
 C
-      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
+c slmod begin
+      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint,nizs)
+c
+c      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
+c slmod end
 C
 C---- SET C-X TIMES         KFCXS
 C
@@ -5824,6 +5830,9 @@ c
 c     
       subroutine raug
       use error_handling
+c slmod begin
+      use mod_sol28_global
+c slmod end
       implicit none
       include 'params'
       include 'cgeom'
@@ -5993,7 +6002,8 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
         GOTO 300
-      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM') THEN
+      ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
+     .        opt%f_grid_format.GT.0) THEN
         IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
@@ -6654,14 +6664,31 @@ c     Set total number of rings and total number of polygons
 c     
       refct = 0
 c     
-      if (nopriv) then
-         nrs = maxrings
-      else
-         nrs = maxrings + cutring
-      endif
+c slmod begin
+c...  These are set properly in ReadGeneralisedGrid_OSM, and the following
+c     are not longer valid because GRID grids are less structured, i.e. the
+c     number of core and PFZ rings can be different, which throws off these
+c     assignments. SL, 07/10/2011
+      IF (opt%f_grid_format.EQ.0) THEN
+        if (nopriv) then
+           nrs = maxrings
+        else
+           nrs = maxrings + cutring
+        endif
 c     
-      irsep = cutring +1
-      irwall = maxrings
+        irsep = cutring +1
+        irwall = maxrings
+      ENDIF
+c
+c      if (nopriv) then
+c         nrs = maxrings
+c      else
+c         nrs = maxrings + cutring
+c      endif
+c     
+c      irsep = cutring +1
+c      irwall = maxrings
+c slmod end
 c     
 c     These may need adjusting for meshes without a private plasma
 c     
@@ -10442,6 +10469,7 @@ c
 c
       subroutine TARGFLUX
 c slmod begin
+      USE mod_sol28_global
       USE mod_eirene06
       USE mod_eirene_history
 c slmod end 
@@ -10477,6 +10505,7 @@ c slmod begin - new
 
       INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
+      CHARACTER buffer*1024
 c slmod end
 
 C
@@ -10966,11 +10995,13 @@ c       and reported here -- fix:
           WRITE(fp,'(4X,A8,A6,3A12)') 
      .      'STRATUM','TYPE','NO. TRACKS','FLUXT','PTRASH(%)'
           DO i1 = 1, nstrata
-            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4)') i1,
+            buffer = TRIM(opt_eir%txtsou(i1))  ! necessary due to a compiler bug, i.e. can't put TXTSOU directly into the following WRITE statement
+            WRITE(fp,'(4X,I8,F6.1,I12,1P,E12.4,0P,F12.4,2X,A)') i1,
      .        strata(i1)%type,
      .        strata(i1)%ipanu,
      .        strata(i1)%fluxt,
-     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0
+     .        strata(i1)%ptrash / strata(i1)%fluxt * 100.0,
+     .        buffer
           ENDDO
 
           CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
@@ -11311,14 +11342,14 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-c      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-c         WRITE(0,*)
-c         WRITE(0,*)'-------------------------------------------------'
-c         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-c         WRITE(0,*)'-------------------------------------------------'
-c         WRITE(0,*)
-c         RETURN
-c      ENDIF
+      IF (sloutput.AND.grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+         WRITE(0,*)
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+         WRITE(0,*)'-------------------------------------------------'
+         WRITE(0,*)
+         RETURN
+      ENDIF
 c     slmod end
 c     
 C     >     QLOSS(MAXNRS)
