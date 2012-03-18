@@ -1,0 +1,28 @@
+#!/bin/tcsh
+#
+#
+echo 'RUNNING Testcases'
+#
+set progdir = divimp-update
+
+set scriptdir = $HOME/$progdir/scripts
+
+source $scriptdir/init_testcases
+#
+#  Change to main directory and run testcases 
+#
+cd $divmain
+./rundiv testcase01 testcase01-bg sonnet_PSb01.105500 >& $resultdir/testcases_out.txt
+./rundiv testcase02 testcase02-bg sonnet.oskn_c08  >>& $resultdir/testcases_out.txt
+./rundiv testcase03 testcase03-105500-rcpall-av sonnet_PSb01.105500 >>& $resultdir/testcases_out.txt
+./rundiv testcase04 testcase04-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
+./rundiv testcase05 testcase05-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
+./rundiv testcase06 testcase06-prob g48283.jul1999 >>& $resultdir/testcases_out.txt
+./rundiv testcase07 testcase07-prob g48283.jul1999 none none testcase06 >>& $resultdir/testcases_out.txt
+./rundiv testcase08 testcase08-bg g53140a.feb2001 >>& $resultdir/testcases_out.txt
+./rundiv testcase09 testcase09-c13-dep carre_135487_3865_SL >>& $resultdir/testcases_out.txt
+./rundiv testcase10 testcase10-grid carre_145672_3000 >>& $resultdir/testcases_out.txt
+#
+
+
+

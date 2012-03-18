@@ -1,0 +1,58 @@
+#!/bin/ksh
+
+if [ $# -lt 1 ]
+then 
+   echo usage: 'go [2d,3d,3ds] [all](optional)'
+   exit 1
+fi
+
+if [ $# -eq 2 ]
+then
+  if [ $2 = "all" ]
+  then
+    rm *.o
+  fi
+fi
+  
+rm *.f
+
+if [ $1 = "2d" ]
+then  
+
+  echo
+  echo Standard OUT version
+  echo  
+
+  make -f make2d
+  exit 1
+fi
+
+if [ $1 = "3d" ]
+then  
+
+  echo
+  echo Building 3D OUT version
+  echo  
+
+  make -f make3d
+  exit 1
+fi
+
+if [ $1 = "3ds" ]
+then  
+
+  echo
+  echo Building 3D OUT version with only a few X cells
+  echo
+
+  make -f make3ds
+  exit 1
+fi  
+
+echo
+echo Error - unrecognized option: $1
+echo
+
+exit 1
+
+

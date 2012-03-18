@@ -1,0 +1,16 @@
+c     -*-Fortran-*-
+
+      INTEGER    NREAC
+      PARAMETER (NREAC=50)
+
+      DOUBLE PRECISION EPS60
+      PARAMETER       (EPS60=1.0D-60)
+
+
+      COMMON /AMJUEL/
+     .                 ISWR,MODCLF,CREAC,FPARM,RCMX,IFEXMX,RCMN,IFEXMN
+      save /AMJUEL/
+      INTEGER          ISWR(NREAC),MODCLF(NREAC),
+     .                 IFEXMX(NREAC,2),IFEXMN(NREAC,2)
+      DOUBLE PRECISION CREAC(9,0:9,-10:NREAC),FPARM(NREAC,6,2),
+     .                 RCMX(NREAC,2),RCMN(NREAC,2)

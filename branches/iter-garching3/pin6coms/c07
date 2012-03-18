@@ -1,0 +1,4 @@
+C     ORIGINAL = 'JETRRI.EDGE2D94.COMMONS(C07APR21)'
+C
+      COMMON/CADAS/ IHYEAR , IZYEAR(MZS) , IDYEAR , USERID  
+      CHARACTER USERID*80                                  

@@ -1,0 +1,8 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /CNOCO/  PTES,PNES,PDVOLS,PNZS,PRADIS,PRATES               
+      save /cnoco/
+c
+      REAL PTES(MAXNKS),PNES(MAXNKS),PDVOLS(MAXNKS)                     
+      REAL PNZS(29,3,MAXNKS),PRADIS(14,29,3,MAXNKS)                     
+      REAL PRATES(4,28,3,MAXNKS)                                        
