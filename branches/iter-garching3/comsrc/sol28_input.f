@@ -1228,7 +1228,7 @@ c...              Load data for radial fits to pedestal prescription:
                       sub_option = NINT(10 * 
      .                  MOD(          osmnode(osmnnode)%fit_quantity,
      .                      REAL(NINT(osmnode(osmnnode)%fit_quantity))))
-                      write(0,*) 'sub_option',sub_option
+c                      write(0,*) 'sub_option',sub_option
                       SELECTCASE (sub_option)
                         CASE (1)  ! Adding adjustmend of Ti:Te ratio cross-over location
                           osmnode(osmnnode)%fit_width = 2

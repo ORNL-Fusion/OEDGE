@@ -1731,7 +1731,7 @@ c     wallpt (ind,31) = Plasma density at wall segment
 
       wallpts = walln
 
-      write(0,*) 'BUILDNEUTRALWALL:WALLN:',walln
+c      write(0,*) 'BUILDNEUTRALWALL:WALLN:',walln
       write(6,*) 'BUILDNEUTRALWALL:WALLN:',walln
 
       do in = 1,walln
@@ -2079,7 +2079,7 @@ c...  Add IRTRAP boundary ring segments:
         ENDDO
       ENDIF
 
-      WRITE(0,*) 'WALLN=',walln
+c      WRITE(0,*) 'WALLN=',walln
       WRITE(6,*) 'WALLN=',walln
 
       DO i1 = 2, walln-1
@@ -2110,7 +2110,7 @@ c...  Assign:
       ziw(ionwpts) = ziw(1)
 
 
-      write(0,*) 'BGP:IONWPTS:',ionwpts
+c      write(0,*) 'BGP:IONWPTS:',ionwpts
       write(6,*) 'BGP:IONWPTS:',ionwpts
 
       do i1 = 1,ionwpts
@@ -2158,7 +2158,7 @@ c...  Core boundary polygon:
       zcw(ioncpts) = zcw(1)
 
 
-      write(0,*) 'BGP:IONCPTS:',ioncpts
+c      write(0,*) 'BGP:IONCPTS:',ioncpts
       write(6,*) 'BGP:IONCPTS:',ioncpts
 
       do i1 = 1,ioncpts
@@ -4019,7 +4019,7 @@ c Check this...
         ENDDO
       ENDDO
       
-      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+c      WRITE(0,*) 'GenWallRing: NCELL=',ncell
       IF (ncell+1.GT.MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
@@ -9232,8 +9232,11 @@ c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
             zvertp(i2,id) = knot(i1)%zv(i2)
           ENDDO
 c...      Store these in case B2 data from Rhozansky is being loaded:
-          divimp_ik(ik,ir) = knot(i1)%ik 
-          divimp_ir(ik,ir) = knot(i1)%ir
+C         IPP/11 - Karl: put in check for divimp_ik allocated
+          IF (ALLOCATED(divimp_ik)) THEN
+            divimp_ik(ik,ir) = knot(i1)%ik 
+            divimp_ir(ik,ir) = knot(i1)%ir
+          ENDIF
         ENDDO
       ENDDO
 

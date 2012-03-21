@@ -370,7 +370,7 @@ c...  Check 1st and last points:
        
       ENDDO
 
-      IF (count.GT.0) THEN
+      IF (sloutput.AND.count.GT.0) THEN
         CALL WN('RepairMetric','Metric repairs attempted')
         WRITE(SLOUT,*) '  COUNT = ',count
         WRITE(SLOUT,*)

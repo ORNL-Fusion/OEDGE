@@ -1130,11 +1130,19 @@ c        IYMAX = MIN (NYS, INT((YYMAX-ZMIN)/DZ)+1)
         YYMAX = ZMAX+0.1
       ELSE
         XPOINT= ' '
-        ASPECT= 0.5 * (ZMAXp-ZMINp)
-        XXMIN = 0.5 * (RMAX+RMIN) - ASPECT
-        XXMAX = 0.5 * (RMAX+RMIN) + ASPECT
-        YYMIN = ZMINp
-        YYMAX = ZMAXp
+c       IPP/10 - added option to define coordinates in full plots
+        if (zmode.eq.1) then
+          xxmin = xcen - xnear2
+          xxmax = xcen + xnear2
+          yymin = ycen - ynear2
+          yymax = ycen + ynear2
+        else
+          ASPECT= 0.5 * (ZMAXp-ZMINp)
+          XXMIN = 0.5 * (RMAX+RMIN) - ASPECT
+          XXMAX = 0.5 * (RMAX+RMIN) + ASPECT
+          YYMIN = ZMINp
+          YYMAX = ZMAXp
+        endif
 c        IXMIN = 1
 c        IXMAX = NXS
 c        IYMIN = 1
