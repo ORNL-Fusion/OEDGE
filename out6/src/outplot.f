@@ -1396,7 +1396,7 @@ c slmod begin
 
       INTEGER   rind,rcol,rmode
       CHARACTER dummy*24,cdum1*1024,cdum2*32
-      LOGICAL   reset_colour,tindex
+      LOGICAL   reset_colour,tindex,barebones
       REAL      xcen,ycen
 c slmod end
 c
@@ -1815,8 +1815,10 @@ c slmod end
 c slmod begin
 c...    Changes made to accommodate broken grids (look
 c       out, here they come): 
-        IF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
-     .                  CGRIDOPT.EQ.RIBBON_GRID) THEN
+        barebones = .TRUE.
+        IF     (barebones) THEN
+        ELSEIF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
+     .                      CGRIDOPT.EQ.RIBBON_GRID) THEN
           DEFCOL = NCOLS + 1
 	  IR = IRWALL
           DO IK = 1, NKS(IR)
@@ -1851,7 +1853,7 @@ c       out, here they come):
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 
-        IF (IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
+        IF (.NOT.barebones.AND.IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
           IR = IROUTS(1,IRSEP2)
           DO IK = 1, NKS(IR)
             K = KORPG(IK,IR)
@@ -1885,26 +1887,31 @@ c        KVALS(NKS(IR)+1,2) = ZVERTP(3,K)
 c        CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
 c slmod end
 C
-        IR = 2
-        DO IK = 1, NKS(IR)
-          K = KORPG(IK,IR)
-          KVALS(IK,1) = RVERTP(4,K)
-          KVALS(IK,2) = ZVERTP(4,K)
-        ENDDO
-        CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
+        IF (.NOT.barebones) THEN
+          IR = 2
+          DO IK = 1, NKS(IR)
+            K = KORPG(IK,IR)
+            KVALS(IK,1) = RVERTP(4,K)
+            KVALS(IK,2) = ZVERTP(4,K)
+          ENDDO
+          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
+        ENDIF
 C
         IF (CGRIDOPT.NE.LINEAR_GRID.AND..NOT.NOPRIV.AND.
      .      CGRIDOPT.NE.RIBBON_GRID) THEN
-          IR = IRTRAP + 1
-          DO IK = 1, NKS(IR)
-            K = KORPG(IK,IR)
-            KVALS(IK,1) = RVERTP(1,K)
-            KVALS(IK,2) = ZVERTP(1,K)
-          ENDDO
-          K = KORPG(NKS(IR),IR)
-          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
-          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
-          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+
+          IF (.NOT.barebones) THEN 
+            IR = IRTRAP + 1
+            DO IK = 1, NKS(IR)
+              K = KORPG(IK,IR)
+              KVALS(IK,1) = RVERTP(1,K)
+              KVALS(IK,2) = ZVERTP(1,K)
+            ENDDO
+            K = KORPG(NKS(IR),IR)
+            KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+            KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+          ENDIF
 C
           IR = IRSEP
           DEFCOL = NCOLS + 3
@@ -1921,7 +1928,8 @@ C
         ENDIF
 C
 c slmod begin
-        IF (NBR.GT.0) THEN
+        IF     (barebones) THEN
+        ELSEIF (NBR.GT.0) THEN
 c...      Draw targets:
           DEFCOL = NCOLS + 2
           DO IR = IRSEP, NRS
@@ -2019,7 +2027,12 @@ c slmod end
 c
 c also plot the nimbus wall and pump (if any)
 c
-        if (nvesm.ne.0) then
+c slmod begin
+        if     (barebones) then
+        elseif (nvesm.ne.0) then
+c
+c        if (nvesm.ne.0) then
+c slmod end
 c
           do i = 1,nvesm
 c

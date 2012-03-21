@@ -4134,9 +4134,9 @@ c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
           CALL InsertRing(irwall+1,BEFORE,PERMANENT)
         ENDIF
 
-        WRITE(0,*) '-------------'
-        WRITE(0,*) '--GRID HACK--'
-        WRITE(0,*) '-------------'
+c        WRITE(0,*) '-------------'
+c        WRITE(0,*) '--GRID HACK--'
+c        WRITE(0,*) '-------------'
 c        irwall = irwall + 1
 c        irtrap = irwall + 1
       ELSE
@@ -4264,7 +4264,7 @@ c subroutine: FindGridBreak
 c
 c Note - there are no virtual rings at this point -- should add them first?
 c
-cc
+c
       SUBROUTINE FindGridBreak
       USE mod_grid_divimp
       IMPLICIT none

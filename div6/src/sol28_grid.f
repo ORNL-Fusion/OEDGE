@@ -95,6 +95,7 @@ c
       INTEGER it,cind1,cind2,ic,iobj,isrf,ivtx(2)
       REAL*8  c1,c2,d1,d2,tab,tcd
 
+c     IPP/11 - Explicitely initialize CatchTube
       CatchTube = .FALSE.
 
       it = itube
@@ -3215,7 +3216,6 @@ c     See the 26/09/2011 note in the loop below.
       WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
       WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
       WRITE(0,*) '--------------------------------------------------'
-      WRITE(0,*) 
 
 c...  Collect the cuts:
       clist = 0
@@ -3598,7 +3598,6 @@ c     See the 26/09/2011 note in the loop below.
       WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
       WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
       WRITE(0,*) '--------------------------------------------------'
-      WRITE(0,*) 
 
 c...  Collect the cuts:
       list(:)%w = 0

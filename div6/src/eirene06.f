@@ -7536,9 +7536,6 @@ c
         DO i = 1, opt_eir%nadspc
           IF (opt_eir%ispsrf_ref(i)(1:6).NE.'eirene') CYCLE
 
-          write(0,*) 'chord',i
-
-
           IF     (opt_eir%idirec(i).EQ.0.OR.opt_eir%idirec(i).EQ.1) THEN
             icount = icount + 1
           ELSEIF (opt_eir%idirec(i).EQ.2.OR.opt_eir%idirec(i).EQ.3) THEN
@@ -7792,7 +7789,7 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
         ENDIF
 
         IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2.AND.
-     .      i1.NE.3) THEN  ! Need to fix this...
+     .                                surface(i1)%ilcol.EQ.3) THEN
           warning_reported = .TRUE.
           WRITE(0,*)
           WRITE(0,*) '--------------------------------------------'
@@ -8168,8 +8165,8 @@ c
      .                 0.0,0.0,0.0,0.0
         WRITE(fp06,92) strata(i1)%sorcos,strata(i1)%sormax
 
-      WRITE(0    ,*) 'STRATA:',strata(i1)%indim,strata(i1)%insor,
-     .              strata(i1)%soreni
+c       WRITE(0    ,*) 'STRATA:',strata(i1)%indim,strata(i1)%insor,
+c     .                strata(i1)%soreni
 
       ENDDO
 
