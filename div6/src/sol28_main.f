@@ -226,6 +226,7 @@ c
      .        val1(5,1000),val2(5,1000),val3(5,1000),val4(5,1000),
      .        val5(5,2),val6(5,2),
      .        mi,ne,ni,vi,te,ti,cs,pe,pi
+      CHARACTER buffer*1024
 
       REAL, ALLOCATABLE :: ref_pfr(:) 
 
@@ -271,6 +272,14 @@ c...    Between the outermost core ring and the separatrix:
      .        it1.NE.-1.AND.it2.EQ.-1) THEN
 c...    In the PFZ but between the outermost core/PFZ tube and the separatrix:
         it2 = it1 
+      ELSEIF (tube(itube)%type.EQ.GRD_PFZ.AND.
+     .        it1.EQ.-1.AND.it2.NE.-1) THEN
+c...    In the PFZ but beyond the innermost (farthest from separatrix) core/PFZ 
+c       tube, so just take this tube as a reference ("flat" extrapolation):
+        WRITE(buffer,'(A,I5)') 
+     .    'Assigning plasma beyond PFZ boundary for TUBE=',itube
+        CALL WN('InterpolateReferencePlasma',TRIM(buffer))
+        it1 = it2
       ELSE
         CALL ER('InterpolateReferencePlasma','Interpolation of the '//
      .          'reference plasma failed for OSM solver option 2',*99)
@@ -440,6 +449,7 @@ c      STOP 'Here....'
  99   WRITE(0,*) 'ITUBE = ',itube
       WRITE(0,*) 'RHO   = ',tube(itube)%rho
       WRITE(0,*) 'TYPE  = ',tube(itube)%type
+      WRITE(0,*) 'IT1,2 = ',it1,it2
       STOP
       END
 c
@@ -1613,6 +1623,8 @@ c
      .        sol_option,isol
       LOGICAL cont
 
+      LOGICAL CheckIndex
+
       INTEGER ion,i1,itarget,opt_iopt
 c      REAL    totsrc
  
@@ -1666,10 +1678,16 @@ c              WRITE(0,*) 'CHECK:',opt%cflukin,
 c     .                   opt_iteration(iopt)%iteration(1:2)
 c              WRITE(0,*) '     :',itube,
 c     .                   opt_iteration(iopt)%tube    (1:2)
+
+c              write(0,*) 'checking --- ',itube,
+c     .             CheckIndex(itube,opt_iteration(iopt)%tube),
+c     .             opt_iteration(iopt)%tube
+
               IF (opt%cflukin.GE.opt_iteration(iopt)%iteration(1).AND.
      .            opt%cflukin.LE.opt_iteration(iopt)%iteration(2).AND.
-     .            itube      .GE.opt_iteration(iopt)%tube(1)     .AND.
-     .            itube      .LE.opt_iteration(iopt)%tube(2)) THEN
+     .            CheckIndex(itube,opt_iteration(iopt)%tube)) THEN
+c     .            itube      .GE.opt_iteration(iopt)%tube(1)     .AND.
+c     .            itube      .LE.opt_iteration(iopt)%tube(2)) THEN
                 opt_tube = opt_iteration(iopt)
                 opt_iopt = iopt
 c                WRITE(0,*) 'SELECTING OPTION SET   :',itube,opt%cflukin,

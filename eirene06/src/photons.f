@@ -1,1 +1,0 @@
-../../eirene07/src/photons.f

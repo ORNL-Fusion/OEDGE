@@ -2827,6 +2827,12 @@ c...fix? dds to dds2?  kbfst, above
         GetFlux = knds(id) * kvds(id) * dds2(id) * brat *
      .            2.0 * PI * rp(id) * costet(id) * eirsrcmul * 
      .            eirtorfrac
+
+c         write(88,'(A,1P,2I6,9E10.2,0P)')  'calculating',
+c     .     ikds(id),irds(id),knds(id),kvds(id),dds2(id),brat,
+c     .     rp(id),costet(id),eirsrcmul,
+c     .     eirtorfrac,GetFlux
+
       ENDIF
 
 c      GetFlux = knds(id) * GetCs(kteds(id),ktids(id),) * 

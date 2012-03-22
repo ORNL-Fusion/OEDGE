@@ -98,7 +98,8 @@ c
 
 !...     Applicability:
          INTEGER   :: iteration(2)
-         INTEGER   :: tube(2)
+         CHARACTER :: tube*128
+!         INTEGER   :: tube(2)
 
 !...     I/O:
          INTEGER   :: log          ! Log file option
@@ -268,6 +269,9 @@ c
          REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
          REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
          REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
+         REAL         :: spc_p1     (EIR_MAXNSPECTRA,3)  ! staring point of LOS (for getting spectra for all cells that intersect the LOS)
+         REAL         :: spc_p2     (EIR_MAXNSPECTRA,3)  ! ending point
+         REAL         :: spc_dist   (EIR_MAXNSPECTRA)    ! location / distance of the cell along the LOS
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
 !         REAL      :: puff_type   (EIR_MAXNPUFF)
@@ -415,6 +419,7 @@ c...    Strata:
          REAL      :: fit_shift
          REAL      :: fit_quantity
          REAL      :: fit_p(10)
+         INTEGER   :: fit_width
       ENDTYPE type_node
 !
 !     Grid:

@@ -385,7 +385,7 @@ c
       INTEGER       i1,idum(5)
       LOGICAL       first_pass
       CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
-      CHARACTER*256 buffer_array(100)
+      CHARACTER*256 buffer_array(100),buffer_list(100)
       REAL          version
 
       first_pass = .TRUE.
@@ -438,7 +438,46 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
             ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
-       CASE DEFAULT
+        CASE('DIV SPUTTER COMPILE')
+          READ(buffer(itag+2:itag+4),*) version
+          sputter_ndata = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
+            sputter_ndata = sputter_ndata + 1
+            buffer_list(sputter_ndata) = TRIM(buffer)
+          ENDDO
+
+          IF (ALLOCATED(sputter_data)) DEALLOCATE(sputter_data)
+          ALLOCATE(sputter_data(sputter_ndata))
+
+          DO i1 = 1, sputter_ndata
+            buffer = TRIM(buffer_list(i1))
+           write(0,*) 'buffer: '//TRIM(buffer)
+            CALL SplitBuffer(buffer,buffer_array) 
+            READ(buffer_array(1),*) sputter_data(i1)%data_type
+            SELECTCASE (sputter_data(i1)%data_type)
+              CASE(1)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                READ(buffer_array(4),*) sputter_data(i1)%fraction
+              CASE(2)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+              CASE(3)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+              CASE(4) ! sputtering specices is a constant fraction of the hydrogenic flux
+                READ(buffer_array(2),*) sputter_data(i1)%atomic_number
+                READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
+                READ(buffer_array(4),*) sputter_data(i1)%charge
+                READ(buffer_array(5),*) sputter_data(i1)%fraction
+              CASE DEFAULT
+                CALL ER('LoadDivimpOption','Unknown sputter data '//
+     .                  'type',*99)
+            ENDSELECT
+          ENDDO          
+c       ----------------------------------------------------------------
+        CASE DEFAULT
           CALL User_LoadOptions(fp,itag,buffer)
       ENDSELECT 
 
@@ -465,7 +504,7 @@ c
       LOGICAL   first_pass
       CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
       CHARACTER*256 buffer_array(100)
-      REAL      stratum_type,version,rdum(7)
+      REAL      stratum_type,version,rdum(7),vec(3)
 
       first_pass = .TRUE.
 
@@ -602,6 +641,12 @@ c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
      .          opt_eir%sormax   (opt_eir%nstrata),
      .          opt_eir%sorad(1:6,opt_eir%nstrata),
      .          opt_eir%txtsou   (opt_eir%nstrata)
+
+              IF (opt_eir%sorad(4,opt_eir%nstrata).EQ.0.0.AND.  ! Make sure that the launch vector is not purely
+     .            opt_eir%sorad(5,opt_eir%nstrata).NE.0.0.AND.  ! vertical, since the 202 launch distribution
+     .            opt_eir%sorad(6,opt_eir%nstrata).EQ.0.0)      ! is hardwired in SetupEireneStrata
+     .          opt_eir%sorad(4,opt_eir%nstrata) = 1.0E-06 
+
             ELSE
               CALL ER('LoadEireneOption','Unknown stratum type',*99)
             ENDIF
@@ -617,7 +662,7 @@ c       ----------------------------------------------------------------
             opt_eir%nadspc = opt_eir%nadspc + 1
             READ(buffer,*) 
      .        opt_eir%isrfcll   (opt_eir%nadspc),  ! Type of spectrum, 0=surface flux, 1=cell average                    
-     .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface index, <0=non-default standard, >0=additional surfaces          
+     .        opt_eir%ispsrf    (opt_eir%nadspc),  ! Surface/cell index, <0=non-default standard, >0=additional surfaces          
      .        opt_eir%ispsrf_ref(opt_eir%nadspc),  ! Which code does the surface index refer to?                             
      .        opt_eir%iptyp     (opt_eir%nadspc),  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?                  
      .        opt_eir%ipsp      (opt_eir%nadspc),  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.   
@@ -626,12 +671,34 @@ c       ----------------------------------------------------------------
      .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
      .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
      .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
-            IF (opt_eir%idirec(opt_eir%nadspc).NE.0) 
-     .        READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
-     .                       rdum(1:2),idum(1),
-     .          opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
-     .          opt_eir%spcvy(opt_eir%nadspc),
-     .          opt_eir%spcvz(opt_eir%nadspc)
+
+
+            SELECTCASE (opt_eir%idirec(opt_eir%nadspc)) ! 1=vector for projecting onto, 2=collect cells along a LOS, 3=same, but project onto vector as well
+              CASE (0)
+              CASE (1)
+                READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
+     .                         rdum(1:2),idum(1),
+     .            opt_eir%spcvx(opt_eir%nadspc),     ! Don't know really, but it was in the example that AK sent, originally from VK
+     .            opt_eir%spcvy(opt_eir%nadspc),
+     .            opt_eir%spcvz(opt_eir%nadspc)
+              CASE (2:3)                             
+                READ(buffer,*) idum(1:2),cdum   ,idum(1:4),
+     .                         rdum(1:2),idum(1),
+     .            opt_eir%spc_p1(opt_eir%nadspc,1:3),  ! Vector along which volume (cell) energy distributions are requested
+     .            opt_eir%spc_p2(opt_eir%nadspc,1:3)
+
+                IF (opt_eir%idirec(opt_eir%nadspc).EQ.3) THEN
+                  vec(1:3) = opt_eir%spc_p2(opt_eir%nadspc,1:3) -
+     .                       opt_eir%spc_p1(opt_eir%nadspc,1:3)
+                  vec = vec / SQRT(vec(1)**2+vec(2)**2+vec(3)**2)
+                  opt_eir%spcvx(opt_eir%nadspc) = vec(1) 
+                  opt_eir%spcvy(opt_eir%nadspc) = vec(2)
+                  opt_eir%spcvz(opt_eir%nadspc) = vec(3)
+                ENDIF
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown spectrum '//
+     .                  'direction',*99)
+            ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
         CASE('EIR TETRAHEDRON GRID')
@@ -1062,7 +1129,7 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
 
       LOGICAL osmGetLine
 
-      INTEGER   i1
+      INTEGER   i1,sub_option
       LOGICAL   node_fit,node_data,ldum1
       REAL      node_type,rdum1,rdum2
       CHARACTER cdum1
@@ -1156,8 +1223,28 @@ c...              Load data for radial fits to pedestal prescription:
                     CASE ( 1)  ! Linear in core, TANH in pedestal, exponential in SOL
                       READ(buffer,*) rdum1,
      .                  osmnode(osmnnode)%fit_type,
-     .                  osmnode(osmnnode)%fit_quantity,
-     .                  osmnode(osmnnode)%fit_p(1:9)
+     .                  osmnode(osmnnode)%fit_quantity
+
+                      sub_option = NINT(10 * 
+     .                  MOD(          osmnode(osmnnode)%fit_quantity,
+     .                      REAL(NINT(osmnode(osmnnode)%fit_quantity))))
+c                      write(0,*) 'sub_option',sub_option
+                      SELECTCASE (sub_option)
+                        CASE (1)  ! Adding adjustmend of Ti:Te ratio cross-over location
+                          osmnode(osmnnode)%fit_width = 2
+                          READ(buffer,*) rdum1,rdum1,rdum1,
+     .                      osmnode(osmnnode)%fit_p(1:10)
+                        CASE DEFAULT
+                          osmnode(osmnnode)%fit_width = 1
+                          READ(buffer,*) rdum1,rdum1,rdum1,
+     .                      osmnode(osmnnode)%fit_p(1:9)
+                          osmnode(osmnnode)%fit_p(10) = 3.0  ! default, for backward compatibility
+                      ENDSELECT
+c                      READ(buffer,*) rdum1,
+c     .                  osmnode(osmnnode)%fit_type,
+c     .                  osmnode(osmnnode)%fit_quantity,
+c     .                  osmnode(osmnnode)%fit_p(1:9)
+
                     CASE ( 2)  ! Linear in the core, exponential in SOL
                       READ(buffer,*) rdum1,
      .                  osmnode(osmnnode)%fit_type,
@@ -1404,6 +1491,12 @@ c      opt_eir%nvoid = 0
       opt_eir%tet_n   = 0  ! Tetrahedron mesh definition
       opt_eir%nadspc  = 0  ! Energy spectra definitions
 
+      opt_eir%spcvx = 0.0  
+      opt_eir%spcvy = 0.0
+      opt_eir%spcvz = 0.0
+      opt_eir%spc_p1 = -999.0
+      opt_eir%spc_p2 = -999.0
+
       opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
 
       eirfp = 88     
@@ -1434,8 +1527,6 @@ c...  Divimp options:
       opt_div%rib_pol_b_def = 0.1
       opt_div%rib_pol_c_def = 1.0
       opt_div%rib_pol_d_def = 0.1
-
-c     left off need to add inputs for the above...
 
 c...  User:
       CALL User_InitializeOptions
