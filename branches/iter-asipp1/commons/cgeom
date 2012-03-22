@@ -1,0 +1,118 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /CGEOM/ NKS,NRS,IRSEP,IRWALL,RMIN,RMAX,ZMIN,ZMAX,IRCENT,DR,
+     >  NXS,NYS,DZ,NDS,NDSIN,ISHOT,IRTRAP,IKT,TSLICE,R0,Z0,RXP,ZXP,     
+     >  IKREF,CVMF,KBFST,IKTO,IKTI,                                     
+     >  RS,ZS,KAREAS,KTOTAS,KTOTVS,KPMAXS,KFEGS,KFIGS,KALPHS,KBETAS,    
+     >  KSMAXS,KSS,KBFS,KES,KVHS,KKS,KPS,KCURVS,KINDS,KOUTDS,KNORMS,    
+     >  KTIBS,KTEBS,KNBS,KVOLS,KINS,IKINS,IRINS,IKOUTS,IROUTS,KPERPS,   
+     >  KBACDS,KFORDS,IKDS,IRDS,DDS,BTS,THETAS,sepdist,sepdist2,
+     >  rspdist,zspdist,
+c slmod begin - new
+c...    Had to reorder the target plasma arrays in order to use them in
+c       an EQUIVALENCE statement in the CalcDist routine:
+     >  KNDS,KTEDS,KTIDS,kvds,
+     >  CRUN,PNCNT,PSHIFT,ACTNDS,KDMAP,RP,ZP,IDDS,kfeds,kfids,    
+     >  TAGDV,IKING,IKOUTG,keds,kti3ls,kpredbar,ktinj, 
+c
+c     >  CRUN,PNCNT,PSHIFT,ACTNDS,KDMAP,RP,ZP,IDDS,KTEDS,kfeds,kfids,    
+c     >  KTIDS, KNDS,TAGDV,IKING,IKOUTG,kvds,keds,kti3ls,kpredbar,ktinj, 
+c slmod end
+     >  KAREA2,KVOL2,KTOTA2,KTOTV2,DDS2,THETAS2,THETAG,THETAT,DTHETG,   
+     >  KORY,NPOLYP,KORPG,NVERTP,RVERTP,ZVERTP,REFCT,ksmaxs2,kpmaxs2,
+     >  irsep2,irwall2,irtrap2,nrs2,ndsin2,ndsin3,ikt1,ikt2,            
+     >  COSALI,COSALO,COSTET,bratio,RHOG,HRO,HTETA,ksb,kss2,kps2,krb,
+     >  OKTEBS,OKTIBS,OKNBS,OKVHS,OKES,nves,rves,zves,areap,kpb,kzb,
+     >  ALPH,finds,foutds,ikrefsol,ikrefcore,ikrefpp,tempds,nfla,
+     >  distin,distout,tdistin,tdistout,ikmids,rcouter,rcinner,
+     >  zcouter,zcinner,middist,separatrix_dist,
+     >  target_orth_angle,psifl,knes,kpinchs,kpinchs_para,psitarg,
+     >  ikmidout_sep,ikmidin_sep,asep,asep_eff,
+     >  asep_tor,asep_tor_eff,targfluxdata,wallfluxdata,wallprad,nopriv
+      save /cgeom/
+
+c
+      common /sreflect/  s_reflect_opt,s_reflect
+      save /sreflect/
+
+      common /geo_flags/ inner_targid,outer_targid,xpoint_up,
+     >                   add_virtual_cells_to_grid
+      save /geo_flags/
+c
+      integer inner_targid, outer_targid, s_reflect_opt,
+     >        add_virtual_cells_to_grid
+      real s_reflect(maxnrs,2) 
+c
+      common /sheath/ nsheath_vali,sheath_vali,nsheath_valo,sheath_valo
+      save /sheath/
+c
+      integer nsheath_vali,nsheath_valo    
+      real sheath_vali(maxnrs,2),sheath_valo(maxnrs,2)
+c
+      INTEGER NKS(MAXNRS),NRS,IRSEP,IRWALL,ISHOT,IRTRAP,IKT,IRCENT,NDS, 
+     >  NDSIN,IKINS(MAXNKS,MAXNRS),IRINS(MAXNKS,MAXNRS),IKDS(MAXNDS),   
+     >  IKOUTS(MAXNKS,MAXNRS),IROUTS(MAXNKS,MAXNRS),IRDS(MAXNDS),NXS,   
+     >  NYS,IKREF,PNCNT,PSHIFT,KDMAP(MAXNDS),ACTNDS,IDDS(MAXNRS,2),     
+     >  KORY(MAXNRS,MAXNKS),NPOLYP,NVERTP(MAXNKS*MAXNRS),               
+     >  KORPG(MAXNKS,MAXNRS),REFCT,TAGDV(MAXNKS,MAXNRS),                
+     >  IKING(MAXNKS,MAXNRS),IKOUTG(MAXNKS,MAXNRS),IKTI,IKTO,           
+     >  irsep2,irwall2,irtrap2,nrs2,ndsin2,ikrefsol,ikrefcore,ikrefpp,
+     >  ndsin3,ikt1,ikt2,nves,nfla,ikmids(maxnrs),ikmidout_sep,
+     >  ikmidin_sep
+c                                                
+      REAL, TARGET :: 
+     >  RMIN,RMAX,ZMIN,ZMAX,R0,Z0,RXP,ZXP,TSLICE,DR,DZ,DTHETG,       
+     >  RS(MAXNKS,MAXNRS),ZS(MAXNKS,MAXNRS),rves(mves),zves(mves),
+     >  BTS(MAXNKS,MAXNRS),KNBS(MAXNKS,MAXNRS),KBFST(MAXNRS,2),         
+     >  KTEBS(MAXNKS,MAXNRS),KTIBS(MAXNKS,MAXNRS),KSMAXS(MAXNRS),       
+     >  KSS(MAXNKS,MAXNRS),KKS(MAXNRS),KPMAXS(MAXNRS),DDS(MAXNDS),      
+     >  KBFS(MAXNKS,MAXNRS),KES(MAXNKS,MAXNRS),KVHS(MAXNKS,MAXNRS),     
+     >  KVOLS(MAXNKS,MAXNRS),KINS(MAXNKS,MAXNRS),KCURVS(MAXNKS,MAXNRS), 
+     >  KINDS(MAXNKS,MAXNRS),KOUTDS(MAXNKS,MAXNRS),THETAS(MAXNDS),      
+     >  KNORMS(MAXNKS,MAXNRS),KPERPS(MAXNKS,MAXNRS),KTOTAS(MAXNRS),     
+     >  KBACDS(MAXNKS,MAXNRS),KFORDS(MAXNKS,MAXNRS),KTOTVS(MAXNRS),     
+     >  KAREAS(MAXNKS,MAXNRS),KPS(MAXNKS,MAXNRS),KALPHS(MAXIZS),        
+     >  KFEGS(MAXNKS,MAXNRS),KFIGS(MAXNKS,MAXNRS),KBETAS(MAXIZS),       
+     >  CVMF(MAXNKS,MAXNRS),KTOTA2(MAXNRS),KTOTV2(MAXNRS),              
+     >  KAREA2(MAXNKS,MAXNRS),KVOL2(MAXNKS,MAXNRS),
+     >  RP(MAXNDS),ZP(MAXNDS),KTEDS(MAXNDS),KTIDS(MAXNDS),KNDS(MAXNDS), 
+     >  kvds(maxnds),keds(maxnds),kti3ls(maxnds),kpredbar(maxnds,3,2),  
+     >  kfeds(maxnds),kfids(maxnds),ktinj(maxnds),sepdist(maxnds),
+     >  sepdist2(maxnds),rspdist(maxnds),zspdist(maxnds),
+     >  DDS2(MAXNDS),THETAS2(MAXNDS),bratio(maxnks,maxnrs),             
+     >  RVERTP(5,MAXNKS*MAXNRS),ZVERTP(5,MAXNKS*MAXNRS),                
+     >  COSALI(MAXNKS,MAXNRS),COSALO(MAXNKS,MAXNRS),COSTET(MAXNDS),
+     >  distin(maxnks,maxnrs),distout(maxnks,maxnrs),
+     >  tdistin(maxnks,maxnrs),tdistout(maxnks,maxnrs),
+     >  target_orth_angle(maxnds),psifl(maxnks,maxnrs),
+     >  knes(maxnks,maxnrs),kpinchs(maxnks,maxnrs),
+     >  kpinchs_para(maxnks,maxnrs), psitarg(maxnrs,2)
+      real 
+     >  THETAG(MAXNKS,MAXNRS),THETAT(MAXNDS),ksb(0:maxnks,maxnrs),
+     >  RHOG(MAXNKS,MAXNRS),HRO(MAXNKS,MAXNRS),HTETA(MAXNKS,MAXNRS),    
+     >  OKTEBS(MAXNKS,MAXNRS),OKTIBS(MAXNKS,MAXNRS),                    
+     >  OKNBS(MAXNKS,MAXNRS),OKVHS(MAXNKS,MAXNRS),OKES(MAXNKS,MAXNRS),
+     >  kss2(maxnks,maxnrs),kps2(maxnks,maxnrs),kpmaxs2(maxnrs),
+     >  ksmaxs2(maxnrs),krb(0:maxnks,maxnrs),areap(maxnks*maxnrs),
+     >  finds(maxnks,maxnrs),foutds(maxnks,maxnrs),
+     >  kpb(0:maxnks,maxnrs),kzb(0:maxnks,maxnrs),tempds(maxnds),
+     >  rcouter(maxnrs),rcinner(maxnrs),zcouter(maxnrs),
+     >  zcinner(maxnrs),middist(maxnrs,2),
+     >  separatrix_dist(maxnks,maxnrs),asep,asep_eff,
+     >  asep_tor,asep_tor_eff,targfluxdata(maxnds+3,4,4),
+     >  wallfluxdata(maxpts+5,4,4),wallprad(maxpts+6,3)
+c
+      logical xpoint_up,nopriv
+c
+c sl begin
+c
+c slnote - Not all of these arrays are necessary - remove ASAP
+c
+      REAL    ALPH   (MAXNKS,MAXNRS)
+c sl end
+      CHARACTER CRUN*40
+                                                 
+                                                                        
+                                                                        
+                                                                        
+                                                                        

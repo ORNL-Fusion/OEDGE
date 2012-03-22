@@ -1,0 +1,220 @@
+c     -*-Fortran-*-
+c
+c     SOL23 - Interface variables
+c
+c     The following common block contains the information that is
+c     passed to SOL option 23 for calculating a CFD solution
+c     for the background plasma on a ring by ring basis.
+c
+c
+c     Variable List and Descriptions:
+c     - all arrays are declared to be of length:  maxpts - see params block
+c     - L = logical    (.true. or .false.)
+c     - I = Integer
+c     - R = real
+c     - A = array
+c
+c     Name          Type  Purpose
+c
+c General:
+c
+c     seedplasma    I     0 = use passed sources, 1+=generate seed sources
+c     solve_half    I     0 = solve first half, 1=solve second half
+c                         2 = solve entire ring (not supported yet)
+c     intopt        I     Integration option (method of calculating integrals)
+c                         0 = stepwise   1 = linearly interpolated
+c     bndcond_opt   I     Boundary Condition Option
+c                         0 = default
+c     s23_adaptgrid I     Switch on and off adaptive grid methods
+c                         0 = off
+c                         1 = on
+c
+c Seed Plasma:
+c
+c     S23_izlen     R*8   Seed ionization length (m)
+c     S23_izlam     R*8   Seed ionization lambda - decay length (m)
+c     S23_izoffset  R*8   Seed ionization source offset distance (m)
+c     S23_momlen    R*8   Seed momentum length (m)
+c
+c Sources:
+c
+c     part_src      R*8 A Particle source density for each cell (m-3)
+c     ionpow_src    R*8 A Ion energy source for each cell (W/m-3)
+c     elecpow_src   R*8 A Electron energy source for each cell (W/m-3)
+c     mom_src       R*8 A Momentum source for each cell (not used at present)
+c
+c     h_neut        R*8 A Hydrogen neutral density in each cell (m-3)
+c     h2_neut       R*8 A Neutral hydrogen molecule density (m-3)
+c     th_neut       R*8 A Temperature of atomic hydrogen (eV)
+c
+c Boundary Conditions:
+c
+c     mach_0        R*8   Mach number at S=0 target
+c     isat_0        R*8   Saturation Current at S=0 (assuming M=1) (m-2s-1)
+c     ne_0          R*8   Density at S=0 Target (m-3)
+c     te_0          R*8   Electron Temperature at S=0 target (eV)
+c     ti_0          R*8   Ion temperature at S=0 target (eV)
+c
+c     mach_smax     R*8   Mach number at S=smax target
+c     isat_smax     R*8   Saturation Current at S=smax (assuming M=1) (m-2s-1)
+c     ne_smax       R*8   Density at S=smax target  (m-3)
+c     te_smax       R*8   Electron Temperature at S=smax target (eV)
+c     ti_smax       R*8   Ion Temperature at S=smax target (eV)
+c
+c     gae_const     R*8   Electron sheath power transmission (default=5.0)
+c     gai_const     R*8   Ion Sheath power transmission (default=2.5)
+c
+c     gtarg         R*8 A Target particle fluxes (1->0,2->smax,3->total)
+c     ionptarg      R*8 A Ion power fluxes       (1->0,2->smax,3->total)
+c     elecptarg     R*8 A Electron power fluxes  (1->0,2->smax,3->total)
+c
+c     curpow        R*8   Limit for total power losses on ring
+c
+c Geometric:
+c
+c     smax          R*8   Total length of ring (m)
+c     npts          I     Number of points on the ring
+c     spts          R*8 A Cell centre point array - in terms of S (m)
+c     sbnds         R*8 A Cell boundaries - in terms of S (m)
+c     ring_type     I     0 = SOL ring,   1 = PP ring
+c
+c Background Plasma: (Output and Input for subsequent iterations)
+c
+c     mb            R*8   Mass of background ions  (AMU)
+c     cb            R*8   Charge of background ions (Z-ion)
+c
+c     ne            R*8 A Background density (m-3)
+c     te            R*8 A Electron Tempertaure (eV)
+c     ti            R*8 A Background Ion Temperature (eV)
+c     vb            R*8 A Background flow velocity (m/s)
+c
+      common /sol23/ divimp_call,seedplasma,solve_half,bndcond_opt,
+     >  S23_izlen,S23_izlam,S23_izoffset,S23_momlen,
+     >  s23_sm_s, s23_sm_r, s23_relax, s23_maxtol,
+     >  s23_rmstol, s23_maxpow_0, s23_maxpow_N,
+     >  s23_powlim, s23_momlim, s23_zhi0,
+     >  s23_masslim, s23_maxmom, s23_maxmass,
+     >  s23_par_ptipte,
+     >  s23_par_adaptnr , s23_par_debugflag, s23_par_debugnr,
+     >  s23_par_refresh , s23_par_artvisc2 , s23_par_artvisc4,
+     >  s23_par_dtf     , s23_par_dtg      , s23_par_grid0  ,
+     >  s23_par_gridexp , s23_par_itermax  , s23_par_updtqpit, 
+     >  s23_par_ga1    ,
+     >  s23_par_ga2     , s23_par_ga3      , s23_par_ga4    ,
+     >  s23_par_updtqp2  , s23_par_updtqp3,
+     >  s23_par_updtqpte, s23_par_garelax  , s23_par_gaiter ,
+     >  s23_par_limitte , s23_par_celldte  , s23_par_updtbcte,
+     >  s23_par_updtdel0, s23_par_updtdel1 , s23_par_updtdelm,
+     >  s23_par_qbrelax , s23_par_gridg    , s23_par_grid_dx0,
+     >  s23_par_gae     , s23_par_gai      , s23_par_tectrl ,
+     >  s23_par_drflag  , s23_par_dsflag   , s23_par_dpdrflag, 
+     >  s23_par_limrel1 ,
+     >  s23_par_limrel2 , s23_par_limrel3  , s23_par_limrel4,
+     >  s23_par_tulimit , s23_par_g0relax  , s23_par_p0relax,
+     >  s23_par_dpdrtemin, s23_par_dpdrstep,
+     >  s23_par_nulimit , s23_par_nuflag   , s23_par_pinmom,
+     >  s23_par_vnmult  , s23_par_emolec   , s23_par_rec_heat,
+     >  s23_par_pinqimult,s23_par_pinqiflag, s23_par_prring0,
+     >  s23_par_prring1 , s23_par_qperp34  , s23_par_qeiflag,
+     >  s23_par_chie    , s23_par_joule    , s23_par_fluxexp ,
+     >  s23_par_qrec    , s23_par_dvmrel   , s23_par_fzrad,
+     >  perp_src,part_src,ionpow_src,elecpow_src,mom_src,h_neut,
+     >  h2_neut,th_neut,magn_field,part_in_0, part_in_N,
+     >  mom_in_0, mom_in_N, mom_tg_0, mom_tg_N,
+     >  pow_in_i0, pow_in_iN, pow_in_e0, pow_in_eN,
+     >  pow_in_0,  pow_in_N,
+     >  pow_tg_i0, pow_tg_iN, pow_tg_e0, pow_tg_eN,
+     >  pow_tg_0,  pow_tg_N,  power_ei,
+     >  power_flux, del_power_flux,
+     >  mom_flux, del_mom_flux, part_flux, del_part_flux,
+     >  isat_0, isat_smax, mach_0, mach_smax,
+     >  ne_0,te_0,ti_0,ne_smax,te_smax,ti_smax,
+     >  gae_const,gai_const,
+     >  gtarg,momtarg,ionptarg,elecptarg,
+     >  power_targ, power_Lang,
+     >  poweri_targ, powere_targ, mom_targ, gamma_targ,
+     >  poweri_Lang, powere_Lang, mom_Lang, gamma_Lang,
+     >  Te_ctrl, Te_Lang, smax,spts,sbnds,
+     >  mb, cb, ne,te,ti,vb,xc_cfd,xf_cfd,U_cfd,Q_cfd,
+     >  fract_cfd, s23_fract2, s23_fract3, s23_fract1,
+     >  s23_fract4, s23_fract4_0, s23_fract4_N,
+     >  s23_fract2_0, s23_fract3_0, s23_fract1_0,
+     >  s23_fract2_N, s23_fract3_N, s23_fract1_N,
+     >  s23_pinqe,
+     >  intopt,ring_type,npts,ikmax_cfd,ir_cfd,targ_cfd,
+     >  pin_iter_no, s23_perp, s23_cfdfile, s23_symm,
+     >  s23_2T, finished, npts_mid,
+     >  s23_adaptgrid
+      save /sol23/
+c
+      real*8  S23_izlen,S23_izlam,S23_izoffset,S23_momlen,
+     >     s23_sm_s, s23_sm_r, s23_relax, s23_maxtol,
+     >     s23_rmstol, s23_minpow, s23_maxpow_0, s23_maxpow_N,
+     >     s23_powlim(maxpts,3), s23_momlim(maxpts,3), s23_zhi0,
+     >     s23_masslim(maxpts,3), s23_maxmom, s23_maxmass,
+     >     s23_par_ptipte,
+     >     s23_par_artvisc2 , s23_par_artvisc4,
+     >     s23_par_dtf     , s23_par_dtg  , s23_par_grid0,
+     >     s23_par_gridexp , s23_par_ga1  ,
+     >     s23_par_ga2     , s23_par_ga3  , s23_par_ga4,
+     >     s23_par_updtqp2  , s23_par_updtqp3,
+     >     s23_par_updtqpte, s23_par_garelax  ,
+     >     s23_par_celldte  , s23_par_updtbcte,
+     >     s23_par_updtdel0, s23_par_updtdel1 , s23_par_updtdelm,
+     >     s23_par_qbrelax , s23_par_gridg    , s23_par_grid_dx0,
+     >     s23_par_gae     , s23_par_gai      , s23_par_limrel1,
+     >     s23_par_limrel2 , s23_par_limrel3  , s23_par_limrel4,
+     >     s23_par_tulimit , s23_par_g0relax  , s23_par_p0relax,
+     >     s23_par_dpdrtemin, s23_par_dpdrstep,
+     >     s23_par_nulimit , s23_par_vnmult ,
+     >     s23_par_emolec , s23_par_rec_heat, s23_par_pinqimult,
+     >     s23_par_fzrad,
+     >     perp_src(maxpts), part_src(maxpts),
+     >     ionpow_src(maxpts),elecpow_src(maxpts),
+     >     mom_src(maxpts),h_neut(maxpts),h2_neut(maxpts),
+     >     th_neut(maxpts),magn_field(maxpts),
+     >     part_in_0, part_in_N,
+     >     mom_in_0, mom_in_N, mom_tg_0, mom_tg_N,
+     >     pow_in_i0, pow_in_iN, pow_in_e0, pow_in_eN,
+     >     pow_in_0,  pow_in_N,
+     >     pow_tg_i0, pow_tg_iN, pow_tg_e0, pow_tg_eN,
+     >     pow_tg_0,  pow_tg_N, power_ei(maxpts),
+     >     power_flux(maxpts,3), del_power_flux(maxpts,3),
+     >     mom_flux(maxpts,3),   del_mom_flux(maxpts,3),
+     >     part_flux(maxpts,3),  del_part_flux(maxpts,3),
+     >     isat_0,isat_smax,mach_0,mach_smax,
+     >     ne_0,te_0,ti_0,ne_smax,te_smax,ti_smax,
+     >     gae_const,gai_const,
+     >     gtarg(3),momtarg(3),ionptarg(3),elecptarg(3),
+     >     power_targ(maxpts,3), power_Lang(maxpts,3),
+     >     poweri_targ(maxpts,3), powere_targ(maxpts,3),
+     >     mom_targ(maxpts,3), gamma_targ(maxpts,3),
+     >     poweri_Lang(maxpts,3), powere_Lang(maxpts,3),
+     >     mom_Lang(maxpts,3), gamma_Lang(maxpts,3),
+     >     Te_ctrl(maxpts,3), Te_Lang(maxpts,3),
+     >     smax,spts(maxpts),sbnds(0:maxpts),
+     >     ne(maxpts),te(maxpts),ti(maxpts),vb(maxpts),
+     >     xc_cfd(maxpts,3,0:maxpts),  xf_cfd(maxpts,3,0:maxpts),
+     >     U_cfd(maxpts,3,4,0:maxpts), Q_cfd(maxpts,3,4,0:maxpts),
+     >     fract_cfd(maxpts,2,4), mb,cb
+c
+      real    s23_fract2, s23_fract3, s23_fract1,
+     >     s23_fract2_0, s23_fract3_0, s23_fract1_0,
+     >     s23_fract2_N, s23_fract3_N, s23_fract1_N, s23_pinqe,
+     >     s23_fract4, s23_fract4_0, s23_fract4_N
+c
+      integer seedplasma,solve_half,ring_type,npts,intopt,
+     >        divimp_call,bndcond_opt,ikmax_cfd(maxpts,3),
+     >        ir_cfd, targ_cfd, pin_iter_no, s23_perp,
+     >        s23_cfdfile, s23_symm, s23_2T,
+     >        finished(maxpts), npts_mid,s23_adaptgrid,
+     >   s23_par_adaptnr , s23_par_debugflag, s23_par_debugnr,
+     >   s23_par_refresh , s23_par_itermax,   s23_par_updtqpit,
+     >   s23_par_gaiter ,  s23_par_limitte,   s23_par_tectrl ,
+     >   s23_par_drflag  , s23_par_dsflag ,   s23_par_dpdrflag,
+     >   s23_par_nuflag  , s23_par_pinmom ,   s23_par_pinqiflag,
+     >   s23_par_prring0,  s23_par_prring1 ,  s23_par_qperp34  ,
+     >   s23_par_qeiflag,  s23_par_chie    , s23_par_joule    ,
+     >   s23_par_fluxexp , s23_par_qrec, s23_par_dvmrel
+c
+c
