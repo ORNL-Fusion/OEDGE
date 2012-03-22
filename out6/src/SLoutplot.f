@@ -4950,6 +4950,8 @@ c      INCLUDE 'ppplas'
         CALL Wrapper_ClearObjects  
         IF (ALLOCATED(obj)) DEALLOCATE(obj)
         CALL GREND
+c       IPP/10 if code stops normally, exit code should be zero
+        call exit(0)
         STOP
       ELSEIF (iopt.EQ.4) THEN
         CALL CheckImaginaryDensity

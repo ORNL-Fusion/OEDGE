@@ -63,12 +63,12 @@ c       interpolation region:
         p2(1) = r0 + 100.0D0
         p2(2) = z0
         itube = grid%isep-1
-        WRITE(0,*) 'ITUBE 1=',itube
+c        WRITE(0,*) 'ITUBE 1=',itube
         CALL LineCutTube(p1,p2,itube,p)
         a_sep = p(1) - p1(1)  
 
         itube = osmnode(index)%tube_range(2) 
-        WRITE(0,*) 'ITUBE 2=',itube,index
+c        WRITE(0,*) 'ITUBE 2=',itube,index
         CALL LineCutTube(p1,p2,itube,p)
         a_end = p(1) - p1(1)
         

@@ -98,7 +98,8 @@ c
 
 !...     Applicability:
          INTEGER   :: iteration(2)
-         INTEGER   :: tube(2)
+         CHARACTER :: tube*128
+!         INTEGER   :: tube(2)
 
 !...     I/O:
          INTEGER   :: log          ! Log file option

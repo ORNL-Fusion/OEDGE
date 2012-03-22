@@ -2497,9 +2497,9 @@ c...  Output results of confidence checks:
      .                           'eirene.transfer file',*99)
       IF (wall_ignored) THEN
         WRITE(0,*) 
-        WRITE(0,*) '**********************************************'
-        WRITE(0,*) '* FLUXES TO NON-STANDARD DIVIMP WALL IGNORED *'
-        WRITE(0,*) '**********************************************'
+        WRITE(0,*) '----------------------------------------------'
+        WRITE(0,*) '  FLUXES TO NON-STANDARD DIVIMP WALL IGNORED  '
+        WRITE(0,*) '----------------------------------------------'
         WRITE(0,*) 
       ENDIF
 

@@ -53,8 +53,9 @@ c
       REAL    TAUS,SLVALS(MAXNRS,2)
       integer midnks
 
-
-
+c slmod begin
+      integer count
+c slmod end
 
 c
         if ((iref.lt.669.or.iref.gt.680).and.iopt.eq.0) then 
@@ -1288,7 +1289,9 @@ C
         IG     = 1
         NAME = '     TRACK'
 C
+        count = 0
  6500   CONTINUE
+        count = count + 1
         DO IW = LW, MAXNWS
           IF (HWALKS(IW,1).GE.10.0*RMAX) GOTO 6505
           UW = IW
@@ -1302,15 +1305,18 @@ C
           WRITE (IPLOT,9012) NPLOTS,REF
           CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >      YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-          CALL SUPIMP ('SELECT')
+          IF (count.eq.1) CALL SUPIMP ('SELECT')
+c          IF (count.eq.1) CALL SUPIMP ('SELECT')
           CALL GRTRAC (HWALKS(LW,1),HWALKS(LW,2),UW-LW+1,NAME,'LINE',0)
-          CALL FRAME
+c          CALL FRAME
           IG = IG + 1
         ENDIF
         LW = UW + 2
 c slmod begin
-c Added teh UW check to avoid an infinite loop when EIRENE not run. -SL, 20/01/12
-        IF (UW.GT.0.AND.LW.LT.MAXNWS) GOTO 6500
+c Added the UW check to avoid an infinite loop when EIRENE not run. -SL, 20/01/12
+        IF (UW.GT.0.AND.LW.LT.MAXNWS.AND.count.LT.1e+6) GOTO 6500
+c        IF (UW.GT.0.AND.LW.LT.MAXNWS) GOTO 6500
+        CALL FRAME
 c
 c        IF (LW.LT.MAXNWS) GOTO 6500
 c slmod end

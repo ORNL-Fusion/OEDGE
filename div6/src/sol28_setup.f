@@ -1337,11 +1337,11 @@ c            val = ABS(tube(it)%rho)
      .                   'tube',it
             IF (rho_warning) THEN 
               rho_warning = .FALSE.
-              WRITE(0,*) 
-              WRITE(0,*) '--------------------------------------------'
-              WRITE(0,*) '    ABS() REMOVED FROM RHO ASSIGNMENT!      '
-              WRITE(0,*) '--------------------------------------------'
-              WRITE(0,*) 
+              WRITE(logfp,*) 
+              WRITE(logfp,*) '-----------------------------------------'
+              WRITE(logfp,*) '   ABS() REMOVED FROM RHO ASSIGNMENT!    '
+              WRITE(logfp,*) '-----------------------------------------'
+              WRITE(logfp,*) 
             ENDIF
           ELSEIF (coord.EQ.5) THEN
 c...        Just give me PSIn:
@@ -2174,7 +2174,7 @@ c...  Assign values to nodes:
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE A -:',nnode,mnode
         DO i1 = 1, node_n
-          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.2,
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
      .                  1P,E10.2,0P,2F10.2)') 
      .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
      .      node(i1)%icell,node_s(i1)%s,
@@ -2331,7 +2331,7 @@ c...  Sort velocities from Mach numbers:
         WRITE(logfp,*) 
         WRITE(logfp,'(A,2I6)') 'NODE B -:',nnode,mnode
         DO i1 = 1, node_n
-          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.2,
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
      .                  1P,E10.2,0P,2F10.2)') 
      .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
      .      node(i1)%icell,node_s(i1)%s,

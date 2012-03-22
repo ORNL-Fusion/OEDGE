@@ -164,11 +164,13 @@ c       being used:
           IITERSOL = 2
           IITERPIN = 1
         elseif (citersol.eq.2) then
-          WRITE(0,*) 
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*) 
+          IF (sloutput) THEN
+            WRITE(0,*) 
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*) 
+          ENDIF
           IITERSOL = 1
           IITERPIN = 1
         ENDIF
