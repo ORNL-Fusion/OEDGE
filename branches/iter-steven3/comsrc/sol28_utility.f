@@ -1103,12 +1103,13 @@ c
       LOGICAL osmGetLine
 
       INTEGER   fp,i,idum1(1:5)
-      CHARACTER buffer*1024,cdum1*512
+      CHARACTER buffer*1024,cdum1*128
 
       LOGICAL :: status = .TRUE., new_block = .FALSE., load_data
 
-      opt%tube(1)      = 1
-      opt%tube(2)      = 1E+8
+      opt%tube         = 'all'
+c      opt%tube(1)      = 'all'
+c      opt%tube(2)      = 1E+8
       opt%iteration(1) = 1
       opt%iteration(2) = 1E+8
       nopt = 1
@@ -1131,8 +1132,11 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               status = .TRUE.
               opt_iteration(nopt) = opt
               nopt = nopt + 1
-              READ(buffer,*) cdum1,idum1(1:5)
-              SELECTCASE (idum1(1))
+              write(0,*) TRIM(buffer)
+              READ(buffer,*) cdum1,idum1(1:3),cdum1
+              cdum1 = TRIM(buffer(INDEX(buffer,TRIM(cdum1)):))  ! This hokem was necessary to catch ranges that included commas, i.e. '1-4,12-14',
+c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 was only assigned 1-4 otherwise.  This hasn't happened before for 
+              SELECTCASE (idum1(1))                             ! similar situation.  Strange.  -SL, 15/03/2012
                 CASE (0) ! Not active
                   nopt = nopt - 1              
                 CASE (1) ! Iteration block always based on the initial block (master block)
@@ -1145,7 +1149,8 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               IF (idum1(1).NE.0) THEN
                 load_data = .TRUE.
                 opt%iteration(1:2) = idum1(2:3)
-                opt%tube     (1:2) = idum1(4:5)
+                opt%tube           = TRIM(cdum1)
+              write(0,*) 'trim c ',TRIM(cdum1)
               ELSE
                 load_data = .FALSE.
               ENDIF

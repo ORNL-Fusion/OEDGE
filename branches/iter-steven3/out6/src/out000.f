@@ -293,6 +293,8 @@ c
      >     YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NRS)
         CALL SUPIMPOLD ('FULL')
         CALL FRAME
+c       IPP/10 - Krieger - reset colors required
+        call setup_col(n_cols,col_opt) 
       ENDIF
 c
 c     Contour Plot with wall segments numbered.
@@ -308,6 +310,8 @@ c
         CALL SUPIMP ('FULL')
         call label_wall
         CALL FRAME
+c       IPP/10 - Krieger - reset colors required
+        call setup_col(n_cols,col_opt) 
       ENDIF
 C
 C-----------------------------------------------------------------------

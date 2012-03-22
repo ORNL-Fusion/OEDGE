@@ -1713,7 +1713,7 @@ c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
-         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
+c         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
@@ -5965,6 +5965,9 @@ c
       indexnadj = 0
       indexiradj = 0
       indexikadj = 0
+c     IPP/11 - Karl: initialized in to prevent runtime error by overzealous
+c     INTEL system
+      in=0
 c
       nves = 0 
       npsi = 0
@@ -15087,7 +15090,7 @@ c
 c slmod begin
       IF (grdnmod.NE.0) THEN
 c...    Skip this, as it is done in AssignNimbusWall (I think):
-        WRITE(0,*) 'SKIPPING CALL TO NIMIND - TROUBLE?'
+        IF (sloutput) WRITE(0,*) 'SKIPPING CALL TO NIMIND - TROUBLE?'
         RETURN
       ENDIF
 c slmod end
@@ -16435,7 +16438,8 @@ c     Write Title line - header information - NRS, IRSEP, NDS, NPOLYP, NVERT, NK
 c 
       write (of,10) 'DIVIMP GRID DATA:'
       write (of,200) nrs,irsep,nds,npolyp,nvert
-      write (0,'(a,5i8)') 'GRID NUMBERS:', nrs,irsep,nds,npolyp,nvert
+c      write (0,'(a,5i8)') 'GRID NUMBERS:', nrs,irsep,nds,npolyp,nvert
+      write (of,'(a,5i8)') 'GRID NUMBERS:', nrs,irsep,nds,npolyp,nvert
       write (of,10) 'KNOTS:'
       write (of,400)  (nks(ir),ir=1,nrs)
 c

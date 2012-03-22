@@ -518,7 +518,8 @@ c
 c     Store the pressure - from SOL option 22
 c
       call rinout ('W KPRESS',kpress,maxnks*maxnrs*2)
-      call rinout ('W KPRAD',kprad,maxnks*maxnrs)
+c     IPP/11 - first arg must be 8 chars string
+      call rinout ('W KPRAD ',kprad,maxnks*maxnrs)
 c
 c     Write out the global HC activation option
 c
