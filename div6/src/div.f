@@ -1894,7 +1894,14 @@ c
                promptdeps(id,5) = promptdeps(id,5) + sputy * energy
 c slmod begin
                if (allocated(wall_flx)) then
-                 in = nimindex(id)
+c                 in = nimindex(id)   ! Changed from NIMINDEX to WALLINDEX since the former is only assigned if running PIN. -SL, 26/03/2012
+                 if (nimindex(id).ne.0) then
+                   if (nimindex(id).ne.wallindex(id)) then
+                     stop 'error: nimindex and wallindex are '//  ! temporary check
+     .                    'not the same, investigate'
+                   endif
+                 endif
+                 in = wallindex(id)   
                  wall_flx(in)%prompt = wall_flx(in)%prompt + sputy
                endif
 c slmod end
