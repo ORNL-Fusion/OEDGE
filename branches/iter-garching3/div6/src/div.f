@@ -1897,8 +1897,9 @@ c slmod begin
 c                 in = nimindex(id)   ! Changed from NIMINDEX to WALLINDEX since the former is only assigned if running PIN. -SL, 26/03/2012
                  if (nimindex(id).ne.0) then
                    if (nimindex(id).ne.wallindex(id)) then
-                     stop 'error: nimindex and wallindex are '//  ! temporary check
-     .                    'not the same, investigate'
+                     write(0,*) 'error: nimindex and wallindex are '//  ! temporary check
+     .                          'not the same, investigate'
+                     stop
                    endif
                  endif
                  in = wallindex(id)   
