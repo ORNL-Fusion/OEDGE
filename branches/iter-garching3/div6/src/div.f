@@ -1417,6 +1417,7 @@ c
 c       SET Initial S and CROSS postion for particles.
 c
 C
+
         if (init_pos_opt.eq.0) then
 c
            CROSS  = 0.0
@@ -1767,6 +1768,7 @@ c
                 ikorg = ik
                 irorg = ir
 c
+                write(6,*) ' debug: launch_one from div',id
                 call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >                   rc,ctem1,cist,sputy,
      >                   refSTRUK,mtcrefstruk,refMAIN,refEXIT,
@@ -2214,7 +2216,7 @@ c
 c
 c         Continue following particle
 c
-        if (debug0) write(0,*) 'Before LB',cist,cstmax
+          if (debug0) write(0,*) 'Before LB',cist,cstmax
 
           GOTO 500
 
@@ -2288,6 +2290,9 @@ C
 c nonorth
         IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,R,Z,S,K,
      >    THETA,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
+c slmod begin
+        IF (DEBUGL) WRITE(6,*) '  ITERATION LIMIT',cstmax
+c slmod end
 c nonorth
 c        IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,
 c     >    R,Z,S,K,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
@@ -4453,7 +4458,7 @@ c
 c     SSEF is only non-zero if self-sputtering occurs - so the following code
 c     can be generalized by just including SSEF.
 c
-      write(0,*) 'nabsfac=',nabsfac
+      IF (sloutput) write(0,*) 'nabsfac=',nabsfac
 
       if (nabsfac.gt.0.0) then
          absfac = (nabsfac + SSEF*nabsfac) + neut2d_fytot
@@ -5015,7 +5020,7 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+ 9003 FORMAT(1X,I8,1x,F12.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
      >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
      >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
      >       1xI3,:,1X,A,:,1x,F8.5)
@@ -5026,10 +5031,15 @@ c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
      >  ' TIMESTEPS  (DELTA T =',1P,G10.3,' SECONDS).',//)
 c
 c nonorth
- 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
-     >  '----R--------Z-------S------K---THETA--SMAX---',
-     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+ 9005 FORMAT(1X,' ------ION- ----TIME-  -IK- -IR- IZ  ',
+     >  '---------R- ----------Z- -------S- ----K-  -----THETA- ',
+     >  '---SMAX- ------DRIFTVEL-  ',
+     >  '----TEMI- -PARADIFF- ----CROSS- -FRAC- -IT ',
      >  14('-'))
+c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
+c     >  '----R--------Z-------S------K---THETA--SMAX---',
+c     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+c     >  14('-'))
 c nonorth
 c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
 c     >  '----R--------Z-------S------K----SMAX---',

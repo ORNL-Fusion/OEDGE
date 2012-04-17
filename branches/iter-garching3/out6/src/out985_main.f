@@ -768,7 +768,7 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.NOT..FALSE..AND.   ! *** PROFILE HACK ***
+        IF (.FALSE..AND.   ! *** PROFILE HACK ***
      .      (i1.EQ.opt%det_istart(idet).OR.
      .       i1.EQ.opt%det_iend  (idet).OR.
      .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.

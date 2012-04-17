@@ -240,8 +240,8 @@ c
          INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
          INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
          INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
-         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! ?
-         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! Surface transparency 1
+         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! Surface transparency 2
          REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
          INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
          INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature

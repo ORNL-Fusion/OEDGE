@@ -486,7 +486,7 @@ c              IPP/08 Krieger - ensure index of nvertp is not zero
 c
                   if (cprint.eq.3.or.cprint.eq.9)
      >               write(6,'(a,4i5,2g13.6)') 
-     >                 'platco:'//outer//':',in,2,ir,nplat,
+     >                 'platco: '//outer//':',in,2,ir,nplat,
      >                     platco(nplat,4),platco(nplat,5)
 c
                else
@@ -2697,7 +2697,6 @@ c     combining various different SOL and plasma options.
 c
 C-----------------------------------------------------------------------
 c
-
       call bgplasma(title,equil)
 c slmod begin - temp
       CALL DB('DONE CALCULATING BACKGROUND PLASMA')
@@ -6657,10 +6656,12 @@ c
             write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
          end do
       end do
+c slmod begin - IPP bug chase 03/04/2012
 c
 c     jdemod - Set all cells to default to non-orthogonal
 c
       tagdv = 1.0
+c slmod end
 c     
 c     
 c     Set total number of rings and total number of polygons
