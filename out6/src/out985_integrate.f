@@ -616,7 +616,7 @@ c...  Decide if the detector is inside or outside the vessel wall:
         vwindex = 2
       ENDIF
 
-      WRITE(0,*) '------vwindex----',vwindex
+c      WRITE(0,*) '------vwindex----',vwindex
 
       iobj_hack  = -1
       iobj_hack2 = -1
@@ -1057,7 +1057,7 @@ c     .                                 DBLE(obj(iobj)%quantity(iint))
      .              obinter(1)%v(1:3),chord%integral(iint)/(4*3.14),
      .              iobj,obj(iobj)%quantity(iint)
 
-                  IF (.NOT..FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
+                  IF (.FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 

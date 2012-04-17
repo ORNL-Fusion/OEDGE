@@ -1048,6 +1048,7 @@ c
          ikorg = ik
          irorg = ir
 c     
+c         write(6,*) ' debug: launch_one from ion_parallel_transport',id
          call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >        rc,ctem1,cist,sputy,
      >        refSTRUK,mtcrefstruk,refMAIN,refEXIT,

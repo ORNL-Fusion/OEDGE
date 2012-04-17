@@ -319,7 +319,8 @@ c
      .        tmp_ilspt,fp
       LOGICAL assigned(2),first_message,active
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
-     .        mater,recycf,recyct,ilspt,isrs,recycs,recycc
+     .        mater,recycf,recyct,ilspt,isrs,recycs,recycc,
+     .        transp1,transp2
       CHARACTER buffer*1024,fname*512,ftag*128
 
       first_message = .TRUE.
@@ -776,6 +777,9 @@ c...        Set local temperature:
             IF (opt_eir%sur_temp(i2).GT.0) 
      .        surface(i1)%ewall = -opt_eir%sur_temp(i2) * 1.38E-23 / ECH
 
+            surface(i1)%transp1 = opt_eir%sur_tr1(i2)  ! Surface transparency (default = 0.0, i.e. fully reflecting)
+            surface(i1)%transp2 = opt_eir%sur_tr2(i2)
+
 c...        Setup forced remapping of conformal surfaces, i.e. when the poloidal
 c           boundary of a ring is coincident with the vessel wall specification, as
 c           can happen with extended grids:
@@ -890,17 +894,19 @@ c     EIRENE surface, creating new non-default surfaces as required:
       DO i1 = 1, ntmp
         IF (surface(i1)%type.NE.VESSEL_WALL) CYCLE
 c...    Surface matching criteria:
-        iliin  = surface(i1)%iliin
-        ilside = surface(i1)%ilside
-        ilswch = surface(i1)%ilswch
-        ilspt  = surface(i1)%ilspt
-        mater  = surface(i1)%material
-        ewall  = surface(i1)%ewall
-        recycf = surface(i1)%recycf
-        recyct = surface(i1)%recyct
-        isrs   = surface(i1)%isrs 
-        recycs = surface(i1)%recycs
-        recycc = surface(i1)%recycc
+        iliin   = surface(i1)%iliin
+        ilside  = surface(i1)%ilside
+        ilswch  = surface(i1)%ilswch
+        ilspt   = surface(i1)%ilspt
+        mater   = surface(i1)%material
+        ewall   = surface(i1)%ewall
+        transp1 = surface(i1)%transp1
+        transp2 = surface(i1)%transp2
+        recycf  = surface(i1)%recycf
+        recyct  = surface(i1)%recyct
+        isrs    = surface(i1)%isrs 
+        recycs  = surface(i1)%recycs
+        recycc  = surface(i1)%recycc
 c...    Check if a non-default standard surface has already been defined
 c       that matches the above citeria:
         sur3 = 0
@@ -924,17 +930,19 @@ c     .     surface(i2)%recycc  .EQ.recycc
 c         WRITE(0,*) 
 c     .     surface(i2)%ewall,ewall 
 
-          IF (surface(i2)%iliin   .EQ.iliin .AND.
-     .        surface(i2)%ilside  .EQ.ilside.AND.
-     .        surface(i2)%ilswch  .EQ.ilswch.AND.
-     .        surface(i2)%ilspt   .EQ.ilspt .AND.
-     .        surface(i2)%material.EQ.mater .AND.
-     .        surface(i2)%ewall   .EQ.ewall .AND.
-     .        surface(i2)%recycf  .EQ.recycf.AND.
-     .        surface(i2)%recyct  .EQ.recyct.AND.
-     .        surface(i2)%isrs    .EQ.isrs  .AND.
-     .        surface(i2)%recycs  .EQ.recycs.AND.
-     .        surface(i2)%recycc  .EQ.recycc.AND.
+          IF (surface(i2)%iliin   .EQ.iliin  .AND.
+     .        surface(i2)%ilside  .EQ.ilside .AND.
+     .        surface(i2)%ilswch  .EQ.ilswch .AND.
+     .        surface(i2)%ilspt   .EQ.ilspt  .AND.
+     .        surface(i2)%material.EQ.mater  .AND.
+     .        surface(i2)%ewall   .EQ.ewall  .AND.
+     .        surface(i2)%transp1 .EQ.transp1.AND.
+     .        surface(i2)%transp2 .EQ.transp2.AND.
+     .        surface(i2)%recycf  .EQ.recycf .AND.
+     .        surface(i2)%recyct  .EQ.recyct .AND.
+     .        surface(i2)%isrs    .EQ.isrs   .AND.
+     .        surface(i2)%recycs  .EQ.recycs .AND.
+     .        surface(i2)%recycc  .EQ.recycc .AND.
      .        surface(i2)%hard    .EQ.0) sur3 = i2
         ENDDO                    
         IF (sur3.EQ.0.OR.surface(i1)%hard.NE.0) THEN
@@ -951,6 +959,8 @@ c         not found, or separate surface represenation forced, so add a surface:
           surface(nsurface)%reflect  = LOCAL
           surface(nsurface)%material = surface(i1)%material
           surface(nsurface)%ewall    = surface(i1)%ewall
+          surface(nsurface)%transp1  = surface(i1)%transp1
+          surface(nsurface)%transp2  = surface(i1)%transp2
           surface(nsurface)%recyct   = surface(i1)%recyct
           surface(nsurface)%recycf   = surface(i1)%recycf
           surface(nsurface)%isrs     = surface(i1)%isrs  

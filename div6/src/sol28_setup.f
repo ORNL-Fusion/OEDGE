@@ -685,7 +685,7 @@ c        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
         SELECTCASE (buffer(2:i-1))
           CASE ('NUMBER OF COLUMNS')
             READ(buffer(i+1:n),*) ncolumns
-          CASE ('DATA LIST')
+          CASE ('DATA','DATA LIST')
             j = 0
 c              WRITE(0,*) 'NCOLUMNS:',ncolumns
             DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -2245,6 +2245,8 @@ c...  Set electron pressure from a reference node:
 
 c...  Setup target nodes:
       DO itarget = LO, HI
+c...    Identify the target node and the nearest upstream node where dependence
+c       of the target values on the upstream node has been identified:
         IF (itarget.EQ.LO) THEN
           i1 = 1
           DO i2 = 2, mnode
@@ -2258,6 +2260,7 @@ c...  Setup target nodes:
           ENDDO
           IF (i2.EQ.mnode-1) i2 = nnode - 1
         ENDIF
+c...    Assign target values in TUBE(IT) based on the corresponding target node:
         SELECTCASE(node(i1)%par_set)
           CASE (0) 
           CASE (2) 
@@ -2285,17 +2288,19 @@ c...  Setup target nodes:
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET for target node',*99) 
         ENDSELECT
-c           WRITE(0,*) 'GO!',node_s(i1)%par_set,itube
-c           WRITE(0,*) 'GO!',node_s(i2)%par_set
-c           IF (itube.EQ.81) STOP 'dfsd'
+c...    Assign the target values in TUBE(IT) based on an upstream node:
         SELECTCASE(node(i2)%par_set)
           CASE (0) 
           CASE (1) 
             tube(it)%te(itarget)     = node(i2)%te
             tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
-          CASE (2) 
-            tube(it)%te(itarget)     = node(i2)%te
-            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+          CASE (2:3) 
+            IF ((node(i2)%par_set.EQ.2                            ).OR.
+     .          (node(i2)%par_set.EQ.3.AND.node(i1)%te     .EQ.0.0))
+     .        tube(it)%te(itarget)     = node(i2)%te
+            IF ((node(i2)%par_set.EQ.2                            ).OR.
+     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ti(ion).EQ.0.0))
+     .        tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
             IF     (node(i2)%ne.NE.0.0) THEN
               node_ne = 0.5 * node(i2)%ne
             ELSEIF (node(i2)%pe.NE.0.0) THEN         
@@ -2305,11 +2310,15 @@ c           IF (itube.EQ.81) STOP 'dfsd'
      .                'pressure for sheath limited particle flux '//
      .                'calculation',*99)
             ENDIF
-            tube(it)%jsat(itarget,ion) = 
-     .        GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
+            IF ((node(i2)%par_set.EQ.2                            ).OR.
+     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
+     .                                     node(i1)%pe.EQ.0.0     ))
+     .        tube(it)%jsat(itarget,ion) = 
+     .          GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET',*99) 
         ENDSELECT
+c...    Assign target node values:
         node(i1)%jsat(ion) = tube(it)%jsat(itarget,ion)
         node(i1)%ne        = 0.0
         node(i1)%pe        = 0.0
