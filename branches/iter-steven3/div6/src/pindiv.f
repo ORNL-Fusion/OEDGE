@@ -455,6 +455,12 @@ C
 C             MODIFIED 10/10/95 TO CONFORM TO THE DEFINITION OF THE 
 C             TARGET FLUX IN TARGFLUX (IN TAU) - LDH
 C
+c
+c     jdemod - 2012 - in the code kareas and karea2 are set to be the same 
+c                     values which are calculated from the grid polygon areas
+c                   - as a result - the code is being modified to output the 
+c                     second set of data based on kvols rather than karea2
+c
  
       INTEGER IR,IK,IN,IKMID,ID,IKTOP
       REAL TVR(MAXNRS,3),TVR2(MAXNRS,3),TIZR(MAXNRS,3),TIZR2(MAXNRS,3),
@@ -543,7 +549,10 @@ C
 C
 C         IONIZATION USING TRUE AREAS (AS USED IN NIMBUS)
 C
-          CELVOL2 = KAREA2(IK,IR)
+c         jdemod - change output to use kvols 
+c          CELVOL2 = KAREA2(IK,IR)
+c
+          CELVOL2 = KVOLS(IK,IR)
           TIZR2(IR,IN) = TIZR2(IR,IN) + PINION(IK,IR)*CELVOL2
           TIZ2(IN)     = TIZ2(IN)     + PINION(IK,IR)*CELVOL2
           TVR2(IR,IN)  = TVR2(IR,IN)  + CELVOL2
@@ -621,7 +630,10 @@ C
 C
 C         IONIZATION USING TRUE VOLUMES (AS USED IN NIMBUS)
 C
-          CELVOL2 = KAREA2(IK,IR)
+c         jdemod - 
+c          CELVOL2 = KAREA2(IK,IR)
+          CELVOL2 = KVOLS(IK,IR)
+c
           TIZR2(IR,IN) = TIZR2(IR,IN) + PINION(IK,IR)*CELVOL2
           TIZ2(IN)     = TIZ2(IN)     + PINION(IK,IR)*CELVOL2
           TVR2(IR,IN)  = TVR2(IR,IN)  + CELVOL2
@@ -766,10 +778,10 @@ C
       WRITE(6,*) ' '
       WRITE(6,9000)
       WRITE(6,*) ' '
-      WRITE(6,9005)
+      WRITE(6,9005) INNER,OUTER
       WRITE(6,9010)
       DO 50 IR = 1,NRS
-        WRITE(6,9015) IR,
+        WRITE(6,9015) IR,psitarg(ir,1),psitarg(ir,2),
      >    TVR(IR,1),TIZR(IR,1),TVR2(IR,1),TIZR2(IR,1),
      >    TVR(IR,2),TIZR(IR,2),TVR2(IR,2),TIZR2(IR,2),
      >    TVR(IR,3),TIZR(IR,3),TVR2(IR,3),TIZR2(IR,3)
@@ -817,7 +829,8 @@ C
       WRITE(6,9005) INNER,OUTER
       WRITE(6,9011)
       DO 70 IR = 1,NRS
-        WRITE(6,9015) IR,
+c        WRITE(6,9015) IR,
+        WRITE(6,9015) IR,psitarg(ir,1),psitarg(ir,2),
      >    TVR(IR,1),TRCR(IR,1),TVR2(IR,1),TRCR2(IR,1),
      >    TVR(IR,2),TRCR(IR,2),TVR2(IR,2),TRCR2(IR,2),
      >    TVR(IR,3),TRCR(IR,3),TVR2(IR,3),TRCR2(IR,3)
@@ -847,31 +860,31 @@ C
 C
 9000  FORMAT(' IONIZATION DATA ANALYSIS SUMMARY:'/
      >       '     AREAS, DISTANCES, AND INTEGRALS LABELED ''2'' ARE CAL
-     >CULATED FROM THE GRID2D POLYGON VERTICES')
+     >CULATED FROM THE CELL VOLUME')
 9001  FORMAT(' RECOMBINATION DATA ANALYSIS SUMMARY:'/
      >       '     AREAS, DISTANCES, AND INTEGRALS LABELED ''2'' ARE CAL
-     >CULATED FROM THE GRID2D POLYGON VERTICES')
+     >CULATED FROM THE CELL VOLUME')
 c9005  FORMAT('                        INNER
 c     >      OUTER                                   TOTAL')
 9005  FORMAT('                        ',a5,'
      >      ',a5,'                                   TOTAL')
-9010  FORMAT('  RING   AREA     IONIZ      AREA2    IONIZ2     AREA
-     >IONIZ      AREA2    IONIZ2     AREA     IONIZ      AREA2    IONIZ2
-     > ')
-9011  FORMAT('  RING   AREA     RECOM      AREA2    RECOM2     AREA
-     >RECOM      AREA2    RECOM2     AREA     RECOM      AREA2    RECOM2
-     > ')
-9015  FORMAT(I6,1P,12E10.3)
+9010  FORMAT('  RING   PSI1     PSI2     AREA     IONIZ      VOL      IO
+     >NIZ2     AREA     IONIZ      VOL      IONIZ2     AREA     IONIZ   
+     >   VOL      IONIZ2')
+9011  FORMAT('  RING   PSI1     PSI2     AREA     RECOM      VOL      RE
+     >COM2     AREA      RECOM      VOL      RECOM2     AREA     RECOM  
+     >   VOL      RECOM2')
+9015  FORMAT(I6,1P,14E10.3)
 9020  FORMAT(A6,1P,12E10.3)
 9025  FORMAT(' SOL IONIZATION:')
 9026  FORMAT(' SOL RECOMBINATION:')
 9030  FORMAT('                        < ZXP
      >      > ZXP                                   TOTAL')
-9035  FORMAT('         AREA     IONIZ      AREA2    IONIZ2     AREA
-     >IONIZ      AREA2    IONIZ2     AREA     IONIZ      AREA2    IONIZ2
+9035  FORMAT('         AREA     IONIZ      VOL      IONIZ2     AREA
+     >IONIZ      VOL      IONIZ2     AREA     IONIZ      VOL      IONIZ2
      > ')
-9036  FORMAT('         AREA     RECOM      AREA2    RECOM2     AREA
-     >RECOM      AREA2    RECOM2     AREA     RECOM      AREA2    RECOM2
+9036  FORMAT('         AREA     RECOM      VOL      RECOM2     AREA
+     >RECOM      VOL      RECOM2     AREA     RECOM      VOL      RECOM2
      > ')
 9040  FORMAT(6X,1P,12E10.3)
 9045  FORMAT(' SOURCE DATA ANALYSIS SUMMARY:')
