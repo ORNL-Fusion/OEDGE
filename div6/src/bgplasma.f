@@ -25,7 +25,9 @@ c
 c slmod begin - new
       include 'slcom'
 
-      LOGICAL callsol28
+      LOGICAL callsol28,message_reverse
+
+      DATA message_reverse /.TRUE./
 c slmod end
 c
       character*(*) title,equil
@@ -447,6 +449,7 @@ c
          num  = in
          ir1   = bgplasopt(num,1)
          ir2   = bgplasopt(num,2)
+c         write(0,*) '  debug: bg range',ir1,ir2
 c
          if (ir1.ge.irsep.and.ir1.le.nrs.and.
      >       ir2.ge.irsep.and.ir2.le.nrs) then
@@ -457,9 +460,34 @@ c
 c
 c           Calculate the BG for this plasma entry
 c
-            CALL INITPLASMA(ir1,ir2,ikopt)
-            CALL SOL_PLASMA(ir1,ir2,ikopt)
-            CALL SOL(ir1,ir2,ikopt)
+c slmod begin
+            if (ir1.le.ir2) then 
+              CALL INITPLASMA(ir1,ir2,ikopt)
+              CALL SOL_PLASMA(ir1,ir2,ikopt)
+              CALL SOL(ir1,ir2,ikopt)
+            else
+c              Process the rings individually, in reverse order.  This is required
+c              for SOL28 for PFZ rings that reference the neighbouring ring that
+c              is closer to the separatrix.  In order for the neighbouring ring to
+c              be defined (have a plasma solution already), eventhough it has a 
+c              higher ring index, it needs to be send to the solver first, hence 
+c              the need to call the rings in reverse order. -SL, 04/04/2012
+               if (message_reverse) then
+                 CALL WN('bgplasma','Solving some rings in '//
+     .                   'reverse order')
+                 message_reverse = .FALSE.
+               endif
+               do ir = ir1, ir2, -1
+                  CALL INITPLASMA(ir,ir,ikopt)
+                  CALL SOL_PLASMA(ir,ir,ikopt)
+                  CALL SOL(ir,ir,ikopt)
+               enddo
+            endif
+c
+c            CALL INITPLASMA(ir1,ir2,ikopt)
+c            CALL SOL_PLASMA(ir1,ir2,ikopt)
+c            CALL SOL(ir1,ir2,ikopt)
+c slmod end
 c
          endif
 c
@@ -1207,6 +1235,11 @@ c...TEMP:
      .  CALL SaveSolution
 
       IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
+
+c...  This is needed, i.e. KNDS is NANQ for some cases.
+      knds(idds(irwall,1:2)) = 0.0
+      knds(idds(irtrap,1:2)) = 0.0
+
 c      CALL SaveSolution
 c slmod end
       return

@@ -1,4 +1,4 @@
-#!/bin/tcsh 
+#!/bin/tcsh
 #
 # ======================================================================
 # STOP THE PRESSES, AND RELAUNCH ON THE CLUSTER AS qsub PROCESS
@@ -8,6 +8,18 @@
     shift
     set QSUB_ID = $1
     shift
+    set QUEUE = batch
+    if ( "$1" == "-queue" ) then
+      shift
+      set QUEUE = $1
+      shift
+    endif
+    set NODES = empty
+    if ( "$1" == "-nodes" ) then
+      shift
+      set NODES = $1
+      shift
+    endif
     set SLEEP_TIME = 0
     if ( "$1" == "-sleep" ) then
       shift
@@ -15,12 +27,16 @@
       shift
     endif
     cd $DIVHOME/cases
-    echo $DIVHOME/scripts/run -sleep $SLEEP_TIME $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 > run_qsub_2
+    echo $DIVHOME/scripts/run -sleep $SLEEP_TIME -qsub_id $QSUB_ID $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 > run_qsub_2
     set SCRIPT_NAME = $QSUB_ID
     cat $DIVHOME/scripts/run_qsub run_qsub_2 > $SCRIPT_NAME
     chmod u+x $SCRIPT_NAME
     rm run_qsub_2
-    qsub -N $SCRIPT_NAME $SCRIPT_NAME
+    if ( $NODES == "empty" ) then
+      qsub -q $QUEUE -k oe -N $SCRIPT_NAME $SCRIPT_NAME
+    else
+      qsub -q $QUEUE -l nodes=$NODES -k oe -N $SCRIPT_NAME $SCRIPT_NAME
+    endif
     exit
   endif
 #
@@ -46,7 +62,14 @@
       shift
     endif
 
-    source $DIR_SCRIPT/run_divimp $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
+    set QSUB_ID = none
+    if ( "$1" == "-qsub_id" ) then
+      shift
+      set QSUB_ID = $1
+      shift
+    endif
+
+    source $DIR_SCRIPT/run_divimp $QSUB_ID $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
   endif
 
 #

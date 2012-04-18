@@ -187,7 +187,7 @@ c...      PIN:
 c                 *** TEMP *** get rid of bad D2+ data at high temperatures
                   DO ir1 = 1, nrs
                     DO ik1 = 1, nks(ir1)
-                      IF (ktebs(ik,ir).GT.1.0E+3.AND.
+                      IF (ktebs(ik1,ir1).GT.1.0E+3.AND.
      .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
                         pinline(ik1,ir1,4,H_BALPHA) = 0.0
                         osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 

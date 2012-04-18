@@ -725,8 +725,8 @@ c
       LOGICAL debug
       REAL*8  x1,x2,x3,x4,y1,y2,y3,y4,s12,s34
 
-      fp = 88
-      debug = .FALSE.
+      fp = 6 ! 88
+      debug = .TRUE.
 
       PointInPolygon = .FALSE.
 
@@ -745,7 +745,7 @@ c
         CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
         IF (s12.GT.DTOL.AND.s34.GT.0.0D0.AND.s34.LT.1.0D0) 
      .    ninter = ninter + 1
-        IF (debug) WRITE(fp,'(4X,A,2F14.7,I4,2F12.5)')
+        IF (debug) WRITE(fp,'(4X,A,2E18.7,I4,2F12.5)')
      .      '           :',s12,s34,ninter,x1,y1
       ENDDO  
 
@@ -920,6 +920,19 @@ c        WRITE(88,*) '   C = D'
         tab = HI
         tcd = HI
         RETURN
+      ENDIF
+
+c      write(6,*) ' fuuny!' ,DABS(a2-b2).LT.DTOL,
+c     .  DABS(a2-c2).LT.DTOL,DABS(a2-d2).LT.DTOL
+
+c      write(6,*) '    a: ',a1,a2
+c      write(6,*) '    b: ',b1,b2
+c      write(6,*) '    c: ',c1,c2
+c      write(6,*) '    d: ',d1,d2
+
+      IF (DABS(a2-b2).LT.DTOL.AND.DABS(a2-c2).LT.DTOL.AND.
+     .    DABS(a2-d2).LT.DTOL) THEN
+         STOP 'DAMNED 1'
       ENDIF
 c
 c

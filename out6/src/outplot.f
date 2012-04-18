@@ -1815,7 +1815,7 @@ c slmod end
 c slmod begin
 c...    Changes made to accommodate broken grids (look
 c       out, here they come): 
-        barebones = .TRUE.
+        barebones = .FALSE.
         IF     (barebones) THEN
         ELSEIF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
      .                      CGRIDOPT.EQ.RIBBON_GRID) THEN

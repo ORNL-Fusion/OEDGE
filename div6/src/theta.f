@@ -512,7 +512,7 @@ c       primary separatrix ring:
      .        thetag(ik+1,ir) - (kps(ik+1,ir) - kps(ik  ,ir)) * 100.0
           ENDIF
         ENDDO
-        write(0,*) 'IR1,2=',ir1,ir2
+c        write(0,*) 'IR1,2=',ir1,ir2
 
         DO ir = ir1+1, irwall-1
           IF (ir.EQ.ir2.OR.ringtype(ir).EQ.PFZ) CYCLE
