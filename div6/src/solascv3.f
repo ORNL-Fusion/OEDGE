@@ -6915,8 +6915,8 @@ c
       integer i,in,bot,top,mid
 c
       if (.not.pinavail) then
-        write(6,*) 'th = ?, PIN not avial'
-        stop
+        write(6,*) 'th = ?, PIN not avail'
+        stop 'function ths_s'
       endif
 c
       if (pinavail) then
@@ -7258,8 +7258,8 @@ c
          SIGCX = RRATE / vn
       else
          SIGCX = 0.0
-         write (6,*) 'ERROR: SOLASCV - Momentum Option 9 :'//
-     >               ' Vn =< 0.0 ',vn,sigcx
+c         write (6,*) 'ERROR: SOLASCV - Momentum Option 9 :'//
+c     >               ' Vn =< 0.0 ',vn,sigcx
       endif
 c
       GOTO 90

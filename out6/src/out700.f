@@ -1564,7 +1564,7 @@ c
           write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',1,ir,0.0,
      >                  knds(id),kteds(id),
      >                  kvds(id)*knds(id), 
-     >                  kvds(id)
+     >                  kvds(id), mVALS(1,ip,1)
      >                  
 c
           DO IK = 1, NKS(IR)
@@ -1596,7 +1596,7 @@ c
             write(6,'(a,2i4,9(1x,g12.5))')  'DATA:',ik,ir,kss(ik,ir),
      >                  knbs(ik,ir),ktebs(ik,ir),
      >                  kvhs(ik,ir)/qtim*knbs(ik,ir), 
-     >                  kvhs(ik,ir)/qtim
+     >                  kvhs(ik,ir)/qtim,MVALS(ik+in,ip,1)
      >                  
 c
 c
@@ -1605,7 +1605,7 @@ c
           write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',nks(ir),ir,ksmaxs(ir),
      >                  knds(id),kteds(id),
      >                  kvds(id)*knds(id), 
-     >                  kvds(id)
+     >                  kvds(id),mVALS(nks(ir)+2,ip,1)
      >                  
           
 
