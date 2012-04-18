@@ -1880,7 +1880,7 @@ c
 
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
      .        ikto3,ikti3,ik1,ik2,ik3,ir3,count,ndat
-      LOGICAL recalculate,cheat1,status
+      LOGICAL recalculate,cheat1,status,message_cutpoint
       REAL rhozero,ikintersec(MAXNRS,2),ldat(MAXNLDAT,2),frac
 
       REAL*8 a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
@@ -1895,7 +1895,7 @@ c
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
 
-      DATA cheat1 /.TRUE./
+      DATA cheat1, message_cutpoint /.TRUE., .TRUE./
       SAVE
 
 
@@ -2152,7 +2152,10 @@ c          STOP 'sdfsdf'
         ENDDO
 
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1) THEN
-          CALL WN('SetupGrid','Cannot find cut points in PFZ')
+          IF (message_cutpoint) THEN
+            CALL WN('SetupGrid','Cannot find cut points in PFZ')
+            message_cutpoint = .FALSE.
+          ENDIF
           ikto2(ir) = nks(ir) / 2
           ikti2(ir) = ikto2(ir) + 1
         ENDIF

@@ -755,6 +755,7 @@ c
 
 c...  Need to reload geometry data in case Eirene has been called (hopefully
 c     this won't be required in the future...):
+ 
       CALL LoadObjects('osm_geometry.raw',status)
       IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
      .                         'geometry data',*99)
@@ -773,12 +774,14 @@ c      CALL SetTargetConditions
         IF (tube(itube)%ir.EQ.irend  ) itube2 = itube
       ENDDO
       IF (itube2.EQ.0.AND.irend.EQ.ntube+2) itube2 = ntube
+      IF (itube1.EQ.0.OR.itube2.EQ.0) 
+     .  CALL ER('ExecuteSOL28','Tube index error',*99)
 
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
 
 c...  Generate output files:
-      CALL GenerateOutputFiles
+c      CALL GenerateOutputFiles  ! this is now done at the end of bgplasma
 
 c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
@@ -793,15 +796,26 @@ c
 c ======================================================================
 c
       SUBROUTINE CloseSOL28
+      USE mod_geometry
+      USE mod_sol28_global
       IMPLICIT none
 
 c      RETURN
+      INTEGER status
+
+      CALL LoadObjects('osm_geometry.raw',status)
+      IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
+     .                         'geometry data',*99)
+
+c...  Generate output files:
+      CALL GenerateOutputFiles
 
 c...  Save solution:
-      CALL SaveGrid('osm.raw')
+c      CALL SaveGrid('osm.raw')
 
 c...  Clear memory:
       CALL osmClean
+      CALL geoClean
 
       RETURN
  99   STOP

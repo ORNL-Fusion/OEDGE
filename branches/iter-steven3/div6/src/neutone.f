@@ -52,6 +52,13 @@ c
       include    'commv' 
 c slmod begin
       include    'slcom'
+
+      INTEGER in,min_in,count_relaunch
+      REAL    dist,min_dist
+
+      LOGICAL first_step,first_track,first_message,limit_message,
+     .        result_zero,aggressive
+      REAL    scale,last_vin
 c slmod end
 C
       CHARACTER FATE(6)*14
@@ -100,9 +107,17 @@ c     IPP/08 Krieger - initialized variable IT to avoid runtime error
 c     in write statment further down
       it = 0
 c slmod begin
-c...  Needs initialization:
+c...  Initialization:
+      aggressive = .TRUE.
       totrf = 0
       maxrf = 0
+      first_step    = .TRUE.
+      first_track   = .TRUE.
+      IF (idstart.LE.0) first_track = .FALSE.  ! Only want the FIRST_TRACK code executing if the particle launched from a surface
+      first_message = .TRUE.
+      limit_message = .TRUE.
+      scale = 1.0
+      count_relaunch = 0
 c slmod end
 c
 c     Set other initialization values - use iprod for local ion index 
@@ -171,8 +186,8 @@ c
 c
          call errmsg('NEUTONE:LAUNCH_ONE:',
      >               'INITIAL NEUTRAL PARTICLE POSITION IS OFF GRID')
-         WRITE(6,*) 'LAUNCH_ONE ERROR: R,Z,IK,IR<NEUTTYPE:',
-     >            R,Z,IK,IR,neuttype
+c         WRITE(6,*) 'LAUNCH_ONE ERROR: R,Z,IK,IR<NEUTTYPE:',
+c     >            R,Z,IK,IR,neuttype
 c
          IFATE = 6
 c
@@ -237,6 +252,8 @@ C
       elseif (cneutvel.eq.1.or.cneutvel.eq.2) then 
          VIN = 1.38E4 * SQRT (ktibs(ik,ir)/CRMI) * cvrmult
       endif 
+
+c      write(6,*) 'debug: vin 1 ',vin,cneutvel
 c     
 c     Assign neutral temperature
 c     
@@ -252,10 +269,25 @@ c
 c     
 c        Adjust velocity for projection to 2-D poloidal plane
 c
+c slmod begin
+c...
+         do while (cos(ranang).lt.0.1) 
+            nrand = nrand + 1
+            CALL SURAND2 (SEED, 1, RAN)
+            ranang = PI * ran - PI/2.0
+            if (limit_message) then
+               CALL WN('LAUNCH_ONE','Limiting 3D velocity correction')
+               limit_message = .FALSE.
+            endif
+         enddo
+c slmod end
+
          vin = vin * cos(ranang)
 c
       endif
 c
+c      write(6,*) 'debug: vin 3 ',vin,neuttype
+
       vrec = vin
 C     
 C-----CALCULATE X,Y COMPONENTS OF VELOCITY, PROB OF IONISATION, ETC
@@ -267,6 +299,8 @@ c
          WRITE (6,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
      >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,'RECOMBINED LAUNCH'
       ENDIF
+c      WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
+c     >  VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,'RECOMBINED LAUNCH debug:'
 C
 C     SET UP THE WALL DEFINITION IN THE ROUTINE THAT
 C     DETERMINES WHETHER A POINT IS INSIDE OR OUTSIDE THE
@@ -287,7 +321,6 @@ C
         irlast = ir
 c
   200   CONTINUE
-
 c
 c       Increment iteration count
 c        
@@ -300,6 +333,9 @@ c
           IFATE = 3
           GOTO 899
         ENDIF
+c slmod begin
+        last_vin = vin
+c slmod end
 c
 c       Adjust impurity velocity for change of cell if option is set. 
 c
@@ -336,19 +372,151 @@ C------ UPDATE (X,Y) COORDINATES AND ARRAY INDICES
 C
         ROLD = R
         ZOLD = Z
-        R    = R + XVELF
-        Z    = Z + YVELF
+c slmod begin
+        R    = R + XVELF * SCALE
+        Z    = Z + YVELF * SCALE
+c        R    = R + XVELF
+c        Z    = Z + YVELF
+c slmod end
 c
         call gridpos(ik,ir,r,z,.false.,griderr)
 C
         CALL GA15B(R,Z,RESULT,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
+c slmod begin
+c        write(6,*) '  debug: result',result,first_track
+
+        IF (first_step.AND.result.LT.0.0) THEN
+c...      The neutral particle has taken one step and is already outside the computational 
+c         domain.  Try again, but with a reduced velocity and maybe (if this is a target
+c         launch) also move the launch point closer to the centre of the target.  This is 
+c         not a perfect solution since the particle accounting assumes a particular
+c         time-step, which is no longer the case with this "fix", but so far it is a robust
+c         way of preserving the neutral:
+
+          IF (first_message) THEN
+            CALL WN('LAUNCH_ONE','Neutral re-launch required')
+            first_message = .FALSE.
+          ENDIF
+
+c          write(6,*) '  first_track,result:',first_track,result,scale
+
+          IF (DEBUGN) 
+     >       WRITE (6,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
+     >        VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,'RE-LAUNCHING'
+c          WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
+c     >      VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,'RE-LAUNCHING debug:'
+
+          ik = iklast  ! perhaps not required
+          ir = irlast
+
+          IF (first_track) THEN 
+c           Move the launch point closer to the center of the target segment, and also
+c           reduce the velocity (see the application of SCALE above):
+            scale = scale * 0.9
+            r = rst + (1.0 - scale) * (rp(idstart) - rst)
+            z = zst + (1.0 - scale) * (zp(idstart) - zst)
+          ELSE
+c           Reduce the velocity, and therefore the distance traveled over the first
+c           step, and reset the position to R,ZOLD from the same point:       
+            scale = scale * 0.1
+            r = rold
+            z = zold
+          ENDIF
+            
+c         Record an error and lose the particle of the above remedies are not working:
+          IF ((     (first_track).AND.scale.LT.0.1    ).OR.
+     >        (.NOT.(first_track).AND.scale.LT.0.00001)) THEN 
+              write(0,'(a)') 'NEUTONE: ERROR: UNABLE TO '//
+     >                       ' GENERATE A VALID LAUNCH'
+              write(6,'(a)') 'NEUTONE: ERROR: UNABLE TO '//
+     >                       ' GENERATE A VALID LAUNCH'
+              write(6,'(a,3i6,4g12.5)') 
+     >          'DATA:',ik,ir,indi,rnew,znew,xvelf,yvelf    
+              write(6,'(a,5i6)') 
+     >          'DATA:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
+              write(6,*) 
+     >          'DATA:',(id,':',wallpt(indi,id),',',id=1,13)
+
+              if (aggressive) then
+
+c               Find segment closest to current position and re-launch from   *** PUT IN A SEPARATE ROUTINE ***
+c               the centre of the segment:                
+
+                count_relaunch = count_relaunch + 1
+                IF (count_relaunch.EQ.50) THEN
+                  write(0,*) '  in the shit again 3'
+                  stop
+                ENDIF 
+
+                min_dist = HI
+                DO in = 1, wallpts
+                  dist = (wallpt(in,1) - r)**2 + (wallpt(in,2) - z)**2
+                  IF (dist.LT.min_dist) THEN
+                    min_dist = dist
+                    min_in   = in
+                  ENDIF
+                ENDDO               
+                r     = wallpt(min_in,1)
+                z     = wallpt(min_in,2)
+                angle = wallpt(min_in,9) - 1.57  ! subtracting 90 degrees from the CW launch angle is required 
+                vin   = last_vin
+                xvelf = vin * COS(angle) * fsrate
+                yvelf = vin * SIN(angle) * fsrate
+                first_step = .TRUE.
+                scale = 1.0
+                CALL WN('LAUNCH_ONE','Attempting forced re-launch 3')
+                WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
+     .                     r,z,xvelf,yvelf
+                WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
+     .                     r,z,xvelf,yvelf
+                WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
+     >            VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
+     >            'FORCED RE-LAUNCH 3 debug:'
+
+
+
+                GOTO 200
+
+              endif
+
+              SSTRUK = SSTRUK + SPUTY
+	      ! Add to deposition.
+              IF (WALLPT(INDI,18).EQ.0) THEN
+                WRITE(0,*) 'ERROR: WALLPT(INDI,18).EQ.0 in '//
+     >                     'NEUTONE.f when dropping trapped neuts'
+                WRITE(6,*) 'ERROR: WALLPT(INDI,18).EQ.0 in '//
+     >                     'NEUTONE.f when dropping trapped neuts'
+              ELSE
+                NEROS (INT (wallpt (INDI,18)),1) = 
+     >                     NEROS (INT (wallpt (INDI,18)),1) + SPUTY
+              ENDIF
+              if (mtccnt.gt.0) then 
+                 MTCSTRUK = MTCSTRUK + SPUTY
+              endif
+              IFATE = 4
+              STOP 'shit balls'
+              GOTO 899            
+           ENDIF
+
+           GOTO 200  ! ...want some sauce with that spagetti?
+        ENDIF
+c...    Clear the flags and modifier once the particle is safely back inside the 
+c       computational domain:
+        first_step  = .FALSE.
+        first_track = .FALSE.
+        scale       = 1.0
+c slmod end
 c
 c       If particle is within the defined outer wall
 c
 c
         IF (RESULT.GE.0.0) THEN
- 
+c slmod begin
+          result_zero = .FALSE.
+          IF (RESULT.EQ.0.0) result_zero = .TRUE.
+c slmod end
           CIST = CIST + 1.0
           K    = KKS(IR)
           S    = KSS(IK,IR)
@@ -638,6 +806,22 @@ C
 C       Particle has stepped outside the wall boundary 
 C
         ELSEIF (RESULT.LT.0.0) THEN
+c slmod begin
+          first_step = .TRUE.
+
+c...      This check handles the (very) rare case that RESULT was exactly equal to 
+c         0.0 on the previous cycle, in which case the wall intersection code
+c         in find_wall_intersection (called below) will fail.  To account for this,
+c         slide R,ZOLD back a little (0.1% of step length), to improve the chances 
+c         that the intersection is well defined: 
+          IF (result_zero) THEN
+            CALL WN('LAUNCH_ONE','R,ZOLD slide in effect')
+c            write(6,*) '  debug: sliding...'
+            rold = r + 1.001 * (rold - r)
+            zold = z + 1.001 * (zold - z)
+            result_zero = .FALSE.
+          ENDIF
+c slmod end
 c
 c       WALL COLLISION AND BOUNDARY CODE 
 c
@@ -756,6 +940,7 @@ c
 c            Check for valid wall segment with non-zero reflection
 c            probability
 c
+c             write(6,*) '  debug: index check',indi,wallpt(indi,25)
              if (indi.ge.1.and.indi.le.wallpts.and.
      >           abs(wallpt(indi,25)).gt.0.0) then 
 c
@@ -766,7 +951,9 @@ c
 c
 c                Draw random number and check for reflection
 c
+c                 write(6,*) '  debug: reflect_neut',ran,refprob
                  if (ran.le.refprob) reflect_neut = .true.
+c                 write(6,*) '  debug: reflect_neut',reflect_neut
 c
              endif                
 c
@@ -782,6 +969,16 @@ c
               WRITE(0,'(a,i10,2g12.5)') 'NEUTONE: ERROR: NEUTRAL'//
      >                              ' AT WALL BUT NO INTERSECTION'//
      >                              ' POINT FOUND',iter_cnt,R,Z
+c slmod begin
+c...          I don't quite understand this, since there's an error message
+c             but the particle recording appears to be standard, i.e. a 
+c             collision is registered eventhough no intersection is found:
+              IF (aggressive) THEN
+
+                stop 'aggressive 2'
+
+              ENDIF
+c slmod end
             ENDIF
 c
 c           If the neutral has struck the target
@@ -931,6 +1128,7 @@ c
 c           No intersection point found - record error and stop following 
 c           particle
 c
+c            write(6,*) '  debug: reflect_neut happening'
             IF (.NOT.SECT) THEN
 c
               WRITE(6,'(a,i10,2g12.5)') 'NEUTONE: ERROR: NEUTRAL'//
@@ -939,6 +1137,43 @@ c
               WRITE(0,'(a,i10,2g12.5)') 'NEUTONE: ERROR: NEUTRAL'//
      >                              ' AT WALL BUT NO INTERSECTION'//
      >                              ' POINT FOUND',iter_cnt,R,Z
+c slmod begin
+              IF (aggressive) THEN
+c               Find segment closest to current position and re-launch from   *** PUT IN A SEPARATE ROUTINE ***
+c               the centre of the segment:                
+
+                count_relaunch = count_relaunch + 1
+                IF (count_relaunch.EQ.50) THEN
+                  write(0,*) '  in the shit again'
+                  stop
+                ENDIF 
+
+                min_dist = HI
+                DO in = 1, wallpts
+                  dist = (wallpt(in,1) - r)**2 + (wallpt(in,2) - z)**2
+                  IF (dist.LT.min_dist) THEN
+                    min_dist = dist
+                    min_in   = in
+                  ENDIF
+                ENDDO               
+                r     = wallpt(min_in,1)
+                z     = wallpt(min_in,2)
+                angle = wallpt(min_in,9) - 1.57  ! subtracting 90 degrees from the CW launch angle is required 
+                vin   = last_vin
+                xvelf = vin * COS(angle) * fsrate
+                yvelf = vin * SIN(angle) * fsrate
+                first_step = .TRUE.
+                CALL WN('LAUNCH_ONE','Attempting forced re-launch')
+                WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
+     .                     r,z,xvelf,yvelf
+                WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
+     .                     r,z,xvelf,yvelf
+                WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
+     >            VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
+     >            'FORCED RE-LAUNCH debug:'
+                GOTO 200
+              ENDIF
+c slmod end
 c
 c             jdemod - change to wallpt(indi,18)
 c 
@@ -1067,6 +1302,10 @@ c              zold = z
 c
 c             Recalculate the particle trajectory  
 c              
+c slmod begin
+c              WRITE(6,'(A,1P,8E14.6,0P)') 
+c     .          'NRF 1:',RNEW,ZNEW,tnew,R,Z,XVELF,YVELF,fsrate
+c slmod end
               XVELF  = VIN * COS(TNEW) * FSRATE
               YVELF  = VIN * SIN(TNEW) * FSRATE
 c
@@ -1081,9 +1320,51 @@ c
               TOTRF  = TOTRF +1
               MAXRF = MAX0(NRFCNT,MAXRF)
 C
+c slmod begin
+c              WRITE(6,'(A,1P,7E14.6,0P)') 
+c     .          'NRF 2:',RNEW,ZNEW,tnew,R,Z,XVELF,YVELF
+c              WRITE(6,*) 
 c              WRITE(6,*) 'NRF:',RNEW,ZNEW,tnew,R,Z,XVELF,YVELF
+c slmod end
 C
               IF (NRFCNT.GT.maxnrfcnt) THEN
+c slmod begin
+                IF (aggressive) THEN
+c                 Find segment closest to current position and re-launch from
+c                 the centre of the segment:                
+	       
+                  count_relaunch = count_relaunch + 1
+                  IF (count_relaunch.EQ.50) THEN
+                    write(0,*) '  in the shit again 2'
+                    stop
+                  ENDIF 
+	       
+                  min_dist = HI
+                  DO in = 1, wallpts
+                    dist = (wallpt(in,1) - r)**2 + (wallpt(in,2) - z)**2
+                    IF (dist.LT.min_dist) THEN
+                      min_dist = dist
+                      min_in   = in
+                    ENDIF
+                  ENDDO               
+                  r     = wallpt(min_in,1)
+                  z     = wallpt(min_in,2)
+                  angle = wallpt(min_in,9) - 1.57  ! subtracting 90 degrees from the CW launch angle is required 
+                  vin   = last_vin
+                  xvelf = vin * COS(angle) * fsrate
+                  yvelf = vin * SIN(angle) * fsrate
+                  first_step = .TRUE.
+                  CALL WN('LAUNCH_ONE','Attempting forced re-launch 2')
+c                  WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
+c     .                       r,z,xvelf,yvelf
+                  WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
+     .                       r,z,xvelf,yvelf
+                  WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
+     >              VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
+     >              'FORCED RE-LAUNCH 2 debug:'
+                  GOTO 200
+                ENDIF
+c slmod end
 c
                 recloss = recloss + sputy
 c
@@ -1212,9 +1493,10 @@ c     >   WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
 c     >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
 c
 c slmod begin
-       IF (CPRINT.GT.1)      
-     >  WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
+       IF (CPRINT.GT.1) THEN 
+        WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
      >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
+       ENDIF
 c
 c       WRITE (6,9003) iprod,CIST,IK,IR,0,0,R,Z,K,
 c     >     VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,FATE(IFATE)
@@ -1244,11 +1526,11 @@ c
       RETURN
 c
  9003 FORMAT('L-ONE:',1X,I5,F9.1,4I4,
-     >  2F9.5,F9.4,F8.1,F7.2,F5.2,F8.3,I3,:,1X,A)
+     >  2F11.7,F9.4,F8.1,F7.2,F5.2,F8.3,I3,:,1X,A)
  9004 FORMAT(//1X,'NEUT DEBUG: DIAGNOSTICS TO BE PRINTED EVERY',I6,
      >  ' TIMESTEPS  (DELTA T =',1P,G10.3,' SECONDS).',//)
- 9005 FORMAT(5X,'-NEUT-----TIME--IK--IR--IX--IY',
-     >  '-----R--------Z--------K------VIN----TEMN--FRAC--ANGLE--IT',
+ 9005 FORMAT(7X,'-NEUT-----TIME--IK--IR--IX--IY',
+     >  '-------R----------Z--------K------VIN----TEMN--FRAC--ANGLE--IT',
      >  18('-'))
       END
 
