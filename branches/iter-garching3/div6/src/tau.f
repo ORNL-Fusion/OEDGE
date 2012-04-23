@@ -6656,12 +6656,10 @@ c
             write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
          end do
       end do
-c slmod begin - IPP bug chase 03/04/2012
 c
 c     jdemod - Set all cells to default to non-orthogonal
 c
       tagdv = 1.0
-c slmod end
 c     
 c     
 c     Set total number of rings and total number of polygons

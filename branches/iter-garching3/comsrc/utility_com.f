@@ -2112,7 +2112,10 @@ c
          ipos = 1 
          WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
      >            ' NUMBER OF ELEMENTS IS ZERO',
-     >                  nrs,r,rs(1),rs(nrs)
+c slmod begin
+     >                  nrs,r,rs(1)
+c     >                  nrs,r,rs(1),rs(nrs)
+c slmod end
          return
       elseif (RS(1).GT.RS(NRS)) then 
          WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR: DESCENDING ORDER',

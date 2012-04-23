@@ -785,7 +785,7 @@ c            WRITE(0,*) 'FDSDF:',ic,frac,val(ic)
 
         CASE (3)
 c...      Power centered at the middle of range:
-          IF (ic2-ic1.LE.2) THEN
+          IF (ic2-ic1.LE.2.OR.exponent.EQ.0.0D0) THEN
             val(ic1:ic2) = 1.0D0
           ELSE
             DO ic = ic1, ic2

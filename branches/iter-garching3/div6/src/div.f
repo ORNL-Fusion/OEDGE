@@ -5508,7 +5508,11 @@ c
                            z = kzb(ik-1,ir) + factc *
      >                        (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5536,7 +5540,12 @@ c
                            z  = kzb(ik-1,ir) + factc *
      >                         (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5577,7 +5586,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5604,7 +5618,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5719,7 +5738,12 @@ c
                            r = krb(ik-1,ir) + factc *
      >                        (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5747,7 +5771,12 @@ c
                            r  = krb(ik-1,ir) + factc *
      >                         (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5786,7 +5815,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5813,7 +5847,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5921,7 +5960,12 @@ c
                         z  = zs(ik,ir) + d1/d3 *
      >                      (zs(ik+1,ir)-zs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c
@@ -6025,7 +6069,12 @@ c
                         r  = rs(ik,ir) + d1/d3 *
      >                      (rs(ik+1,ir)-rs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c

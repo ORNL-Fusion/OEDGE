@@ -643,7 +643,7 @@ c      stop 'dsdfsf'
       ELSE
         cgridopt = 3
       ENDIF
-      WRITE(0,*) 'cgridopt=',cgridopt
+c      WRITE(0,*) 'cgridopt=',cgridopt
 
       CALL InsertRing(1     ,BEFORE,PERMANENT)
       CALL InsertRing(irwall,AFTER ,PERMANENT)
@@ -1093,8 +1093,12 @@ c...  Declare global arrays:
       nfluid    = ncell
       nimpurity = 1
       ALLOCATE(tube    (ntube ))
-      ALLOCATE(tube_state(ntube))
-      tube_state = 0
+      ALLOCATE(tube2   (ntube ))
+      tube2(:)%state        = 0
+      tube2(:)%target_pe(1) = 0
+      tube2(:)%target_pe(2) = 0
+c      ALLOCATE(tube_state(ntube))
+c      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))

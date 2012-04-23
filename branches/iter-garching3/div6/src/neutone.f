@@ -447,7 +447,8 @@ c               the centre of the segment:
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
                   write(0,*) '  in the shit again 3'
-                  stop
+                  write(6,*) '  in the shit again 3'
+c                  stop
                 ENDIF 
 
                 min_dist = HI
@@ -496,7 +497,7 @@ c               the centre of the segment:
                  MTCSTRUK = MTCSTRUK + SPUTY
               endif
               IFATE = 4
-              STOP 'shit balls'
+c              STOP 'shit balls'
               GOTO 899            
            ENDIF
 
@@ -973,11 +974,9 @@ c slmod begin
 c...          I don't quite understand this, since there's an error message
 c             but the particle recording appears to be standard, i.e. a 
 c             collision is registered eventhough no intersection is found:
-              IF (aggressive) THEN
-
-                stop 'aggressive 2'
-
-              ENDIF
+c              IF (aggressive) THEN
+c                stop 'aggressive 2'
+c              ENDIF
 c slmod end
             ENDIF
 c
@@ -1145,7 +1144,8 @@ c               the centre of the segment:
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
                   write(0,*) '  in the shit again'
-                  stop
+                  write(6,*) '  in the shit again'
+c                  stop
                 ENDIF 
 
                 min_dist = HI
@@ -1336,7 +1336,8 @@ c                 the centre of the segment:
                   count_relaunch = count_relaunch + 1
                   IF (count_relaunch.EQ.50) THEN
                     write(0,*) '  in the shit again 2'
-                    stop
+                    write(6,*) '  in the shit again 2'
+c                    stop
                   ENDIF 
 	       
                   min_dist = HI

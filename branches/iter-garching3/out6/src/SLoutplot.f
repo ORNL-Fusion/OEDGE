@@ -3,6 +3,121 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE DumpMatthiasReinelt(title9)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+
+      INTEGER id,in,ik,ir,fp,ike,ierr,count
+      CHARACTER dummy*1024
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='mrt.wall_flux',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* Data file for M. Reinelt: Wall particle fluxes'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{VERSION}'
+      WRITE(fp,*    ) '        1.0'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{DATA}'
+      WRITE(fp,*    ) wallpts
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* index   - wall segment index in DIVIMP'
+      WRITE(fp,'(A)') '* r1,z1   - starting point of segment in '//
+     .                            'the R,Z plane'
+      WRITE(fp,'(A)') '* r2,z2   - end point'
+      WRITE(fp,'(A)') '* flux_D+ - background ion flux density on '//
+     .                            'wall (multiply by 2*PI*R*delta to'
+      WRITE(fp,'(A)') '            get the total flux to the vessel, '//
+     .                            'where ''delta'' is the length of the'
+      WRITE(fp,'(A)') '            wall segment)'
+      WRITE(fp,'(A)') '* T_e     - electron temperature'
+      WRITE(fp,'(A)') '* T_i     - ion temperature'
+      WRITE(fp,'(A)') '* flux_D  - atom flux density from CX and the '//
+     .                            'dissociation of D2 (as calculated'
+      WRITE(fp,'(A)') '            by EIRENE)'
+      WRITE(fp,'(A)') '* T_D     - average energy of atom flux'
+      WRITE(fp,'(A)') '* E_dist  - atom energy distribution -- NOT '//
+     .                            'AVAIALBLE YET! (but one day...)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A7,1X,2(2A9,1X),A10,2A8,A10,A11,2X,A)')
+     .  '* index','r1','z1','r2','z2','flux_D+',
+     .  'T_e','T_i','flux_D','T_D','E_dist'
+      WRITE(fp,'(A,6X,1X,2(2A9,1X),A10,2A8,A11,A10)')
+     .  '*','(m)','(m)','(m)','(m)','(m-2 s-1)','(eV)','(eV)',
+     .  '(m-2 s-1)','(eV)'
+
+c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c     FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c     FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)  --- *HACK* AVERAGE IMPURITY LAUNCH ENERGY
+c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+
+      DO id = 1, wallpts
+        in = NINT(wallpt(id,18))
+        ik = ikds(MAX(1,in))
+        ir = irds(MAX(1,in))
+        IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+          IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+          WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
+     .               F10.2,2X,A,10X,3I4)')
+     .      id,
+     .      wallpt(id,20:23),
+     .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir),
+     .      kteds (in),
+     .      ktids (in),
+     .      flxhw6(id),
+     .      flxhw5(id),
+     .      'energy_distribution.dat',
+     .      in,ik,ir
+        ELSE
+          WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
+     .               F10.2,2X,A)')
+     .      id,
+     .      wallpt(id,20:23),
+     .      0.0,
+     .      0.0,
+     .      0.0,
+     .      flxhw6(id),
+     .      flxhw5(id),
+     .      'energy_distribution.dat'
+        ENDIF
+      ENDDO
+
+      CLOSE(fp)
+ 
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpAlexKukushkin(title9)
       IMPLICIT none
 
@@ -23,7 +138,7 @@ c
       CHARACTER dummy*1024
       
       CALL ZA09AS(dummy(1:8))
-      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
       dummy(1:2 ) = dummy(4:5)
       dummy(4:5 ) = dummy(9:10)
       dummy(9:10) = '  '
@@ -115,7 +230,7 @@ c
       CHARACTER dummy*1024
       
       CALL ZA09AS(dummy(1:8))
-      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
       dummy(1:2 ) = dummy(4:5)
       dummy(4:5 ) = dummy(9:10)
       dummy(9:10) = '  '
@@ -389,7 +504,7 @@ c...  Dump impurity data:
 
 c HERE?
       CALL ZA09AS(dummy(1:8))
-      dummy(9:10) = dummy(1:2)  ! Switch to EU formay
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
       dummy(1:2 ) = dummy(4:5)
       dummy(4:5 ) = dummy(9:10)
       dummy(9:10) = '  '
@@ -2228,12 +2343,16 @@ c
          tvolp(npro,nizs+1)=tvolp(npro,nizs+1)+kvols(ik,ir)*knbs (ik,ir)  ! ne
          tvolp(npro,nizs+2)=tvolp(npro,nizs+2)+kvols(ik,ir)*ktebs(ik,ir)  ! Te
          tvolp(npro,nizs+3)=tvolp(npro,nizs+3)+kvols(ik,ir)*ktibs(ik,ir)  ! D+ temperature
+         tvolp(npro,nizs+10)=tvolp(npro,nizs+10)+
+     .                       kvols(ik,ir)*pinion(ik,ir)                   ! Ionisation
         ENDDO
         DO iz = 1, nizs
           tvolp(npro,nizs+4)=tvolp(npro,nizs+4)+tvolp(npro,iz)            ! Total amount of impurity on ring
           tvolp(npro,nizs+5)=tvolp(npro,nizs+5)+tvolp(npro,iz)*REAL(iz)   ! Total amount * charge on ring
         ENDDO
-        avolpro(npro,1:nizs+5) = tvolp(npro,1:nizs+5) / tvolp(npro,0)     ! Divide by the total volume on the ring to get average values
+        avolpro(npro,1:nizs+5 ) = tvolp(npro,1:nizs+5 ) / tvolp(npro,0)   ! Divide by the total volume on the ring to get average values
+        avolpro(npro,  nizs+11) = tvolp(npro,  nizs+10) / tvolp(npro,0)   
+
       ENDDO
       avolpro(:,1     :nizs  )=avolpro(:,1     :nizs  )*absfac
       avolpro(:,nizs+4:nizs+5)=avolpro(:,nizs+4:nizs+5)*absfac
@@ -2530,6 +2649,8 @@ c      ENDDO
         CALL inPutData(pressure                     ,'MID_P' ,'Pa')
         CALL inPutData(ktebs(ikmid1(i1),ring(i1))   ,'MID_TE','eV')
         CALL inPutData(ktibs(ikmid1(i1),ring(i1))   ,'MID_TI','eV')
+       CALL inPutData(avolpro(       i1 ,nizs+11 ),'AVG_SION','m-3 s-1')
+       CALL inPutData(pinion (ikmid1(i1),ring(i1)),'MID_SION','m-3 s-1')
       ENDDO
 
       CALL inCloseInterface
@@ -5058,6 +5179,7 @@ c        CALL DTSanalysis(MAXGXS,MAXNGS)
       ELSEIF (iopt.EQ.20) THEN
         CALL DumpMarieHelene(title)
         CALL DumpAlexKukushkin(title)
+        CALL DumpMatthiasReinelt(title)
         RETURN
       ENDIF
 
