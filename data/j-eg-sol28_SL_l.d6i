@@ -442,7 +442,7 @@ $
 '+G16 ' 'Set of Plate coordinates                        '
 '    Ring #, Outer R,Z   , Inner R,Z :               '     0
 '+G17 ' 'Wall coordinates                                '
-'    R,Z coordinates starting at outer plate         '    72
+'    R,Z coordinates starting at outer plate         '    72  CHANGE
 	3.2900	-1.1520  
 	3.1990	-1.2090	 
 	3.1940	-1.2140	 
