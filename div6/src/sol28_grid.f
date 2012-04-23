@@ -1460,8 +1460,12 @@ c...      Define arrays:
           nkinetic  = 1     
           nfluid    = ncell
           nimpurity = 1
-          ALLOCATE(tube_state(ntube))
-          tube_state = 0
+          ALLOCATE(tube2   (ntube ))
+          tube2(:)%state     = 0
+          tube2(:)%target_pe(1) = 0
+          tube2(:)%target_pe(2) = 0
+c          ALLOCATE(tube_state(ntube))
+c          tube_state = 0
           ALLOCATE(tube    (ntube ))
           ALLOCATE(cell    (ncell ))
           ALLOCATE(field   (nfield))

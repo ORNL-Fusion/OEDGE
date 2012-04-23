@@ -635,6 +635,7 @@ c
       TYPE(type_node)     :: node(nnode)
 
       INTEGER ion,ic1,ic2
+      REAL    node_ne
 
       IF (nnode.NE.3.OR.mnode.NE.2) 
      .  CALL ER('AssignCorePlasma','Non-standard core node setup '//
@@ -645,13 +646,25 @@ c
       ic1 = tube(itube)%cell_index(LO)
       ic2 = tube(itube)%cell_index(HI)
 
-      fluid(ic1:ic2,ion)%ne = node(mnode)%ne
+      IF (node(mnode)%ne.EQ.0.0) THEN
+        IF (node(mnode)%pe.NE.0.0) THEN        
+          node_ne = node(mnode)%pe / node(mnode)%te  ! *** flow not taken into account! ***
+        ELSE
+          CALL ER('AssignCorePlasma','Neither the density nor the '//
+     .            'pressure are defined',*99)
+        ENDIF
+      ELSE
+        node_ne = node(mnode)%ne
+      ENDIF
+
+      fluid(ic1:ic2,ion)%ne = node_ne
       fluid(ic1:ic2,ion)%te = node(mnode)%te
       fluid(ic1:ic2,ion)%ni = node(mnode)%ne
       fluid(ic1:ic2,ion)%ti = node(mnode)%ti(ion)
 
       RETURN
- 99   WRITE(0,*) ' NNODE,MNODE=',nnode,mnode
+ 99   WRITE(0,*) ' ITUBE       =',itube
+      WRITE(0,*) ' NNODE,MNODE =',nnode,mnode
       STOP
       END
 c
@@ -939,6 +952,15 @@ c...      Turn things off:
           cnt_momentum  = .TRUE.
         ENDIF
 
+c...    The target jsat is being set based on the upstream pressure, and need to keep 
+c       updating the particle sources if super-sonic targets are active: 
+        IF ((node(1    )%jsat(ion).LT.0.0.OR.
+     .       node(nnode)%jsat(ion).LT.0.0).AND.
+     .      (cnt_super(LO).OR.cnt_super(HI))) THEN
+          cnt_particles = .TRUE.
+        ENDIF
+
+
         IF (development.AND.count.EQ.4) THEN   ! For debugging energy profile with flow calculated
           cnt_energy       = .TRUE.
           cnt_prescription = .TRUE.
@@ -971,6 +993,8 @@ c...  Output:
         WRITE(logfp,'(A,2I10)')   'P_ION_SCALE = ',opt_p_ion_scale
         WRITE(logfp,'(A,2F10.2)') 'P_ION_FRAC  = ',opt%p_ion_frac
         WRITE(logfp,'(A,2I10)')   'P_ANO       = ',opt%p_ano
+        WRITE(logfp,'(A,2I10)')   'P_ANO_DIST  = ',opt%p_ano_dist
+        WRITE(logfp,'(A,2F10.2)') 'P_ANO_EXP   = ',opt%p_ano_exp
         WRITE(logfp,'(A,2I10)')   'M_MOM       = ',opt%m_mom
         WRITE(logfp,'(A,2I10)')   'M_FIT       = ',opt%m_fit
         WRITE(logfp,'(A,2I10)')   'M_ANO       = ',opt%m_ano
@@ -1009,9 +1033,11 @@ c
 
       INTEGER, INTENT(IN) :: count
 
-      INTEGER ion,target,ic1,ic2,ic,in
+      REAL*8 GetNodePressure
+
+      INTEGER ion,target,ic1,ic2,ic,in,inode
       REAL*8  net(3),integral(10),cs,source(icmax),
-     .        srcint(0:icmax),fact
+     .        srcint(0:icmax),fact,p,vb
 
       LOGICAL, SAVE :: firstcall = .TRUE.  ! TEMP
 
@@ -1044,8 +1070,27 @@ c             *** use linear interpolation to the symmetry point instead! ***
               ENDIF
 
               IF     (node(in)%jsat(ion).NE.0.0) THEN
-                fact = area(ic) / ECH
-                isat(ic,ion) = -DBLE(node(in)%jsat(ion)) * fact
+
+                IF (node(in)%jsat(ion).LT.0.0) THEN
+
+                  cs = DSQRT( (te(ic) + ti(ic,ion)) * ECH / mi(ion) )  ! Needs improvement... CalcCs
+                  vb = cs * machno(ic,ion)
+ 
+                  inode = INT(-node(in)%jsat(ion))
+                  p     = GetNodePressure(inode,ion) / ECH
+ 
+                  isat(ic,ion) = -(p * ECH) * vb / 
+     .                 ( (te(ic) + ti(ic,ion)) * ECH + mi(ion) * vb**2 )
+
+                  write(88,*) 'pres',inode,p
+                  write(88,*) 'isat',isat(ic,ion)
+
+c                 STOP 'well, made it here'
+
+                ELSE
+                  fact = area(ic) / ECH
+                  isat(ic,ion) = -DBLE(node(in)%jsat(ion)) * fact
+                ENDIF
 
 c        WRITE(logfp,*) 'ISAT0:',isat(ic,ion),node(in)%jsat(ion),fact
 c                isat(ic,ion) = -DBLE(ABS(node(in)%jsat(ion))) * fact
@@ -1060,6 +1105,7 @@ c                isat(ic,ion) = -DBLE(ABS(node(in)%jsat(ion))) * fact
               ENDIF
 
               cs = DSQRT( (te(ic) + ti(ic,ion)) * ECH / mi(ion) )  ! Needs improvement... CalcCs
+              vi(ic,ion) = cs * machno(ic,ion) * tsign(target)
 
 c             IPP/08 Krieger - SUN compiler insists on parentheses around -1
               vi(ic,ion) = cs * machno(ic,ion) * tsign(target) *
@@ -1169,6 +1215,8 @@ c      DATA delta, adjust /0.5D0, 0.5D0, 0.0D0, 0.0D0/
         IF (target.EQ.LO) s => sfor
         IF (target.EQ.HI) s => sbak
 
+c        WRITE(logfp,*) 'debug: adjust start:',target,adjust(target)
+
 c...    Check for near-target sonic transition:
         SELECTCASE (opt%super(target))
           CASE(0)
@@ -1180,29 +1228,35 @@ c...          Reset ADJUST for next flux-tube:
               adjust = 0.0D0
               RETURN
             ELSEIF (anl_imaginary(target)) THEN
-              IF     (adjust(target).EQ.0.0D0) THEN
-                IF (s(anl_ic_super(target)).GT.0.67D0*s(icmid)) THEN
+              cnt_super(target) = .TRUE. 
+              IF     (count.EQ.1.OR.adjust(target).EQ.0.0D0) THEN
+                IF ((s(anl_ic_super(target)).GT.0.90D0*s(icmid)).AND.
+     .           ((target.EQ.LO.AND.node(1    )%jsat(ion).GE.0.0).OR.      ! Be less aggressive in turning off the super-sonic target
+     .            (target.EQ.HI.AND.node(nnode)%jsat(ion).GE.0.0))) THEN   ! when jsat is based on the upstream pressure.
+c                IF (s(anl_ic_super(target)).GT.0.67D0*s(icmid)) THEN
 c                 Sonic transition is too close to the symmetry point,
 c                 so turn off super sonic target search on the half-ring:
                   cnt_super(target) = .FALSE.                   
                   opt%super(target) = 0
+                  adjust(target) =  -999.0D0
+                  delta (target) =  -999.0D0
                   WRITE(logfp,*) 'TURNING OFF SUPER SONIC TARGET'
                 ELSE
 c                 Initialise:
                   adjust(target) =  0.5D0 ! 0.1D0
                   delta (target) =  0.1D0
                   initial_run(target) = .TRUE.
+                  WRITE(logfp,*) 'INITIALIZING MACH SEARCH'
                 ENDIF
-             ELSEIF (adjust(target).LT.0.0D0) THEN
+              ELSEIF (adjust(target).LT.0.0D0) THEN
                 adjust(target) = -0.5D0 * adjust(target)
-             ELSEIF (adjust(target).GT.0.0D0.AND.
+              ELSEIF (adjust(target).GT.0.0D0.AND.
      .               initial_run(target).AND.
      .               MOD(count,4).EQ.0) THEN
 c               Give things a kick:
                 delta(target) = delta(target) * 2.0D0
                 WRITE(logfp,*) 'KICK!'
               ENDIF
-              cnt_super(target) = .TRUE. 
             ELSE
               initial_run(target) = .FALSE.
               IF (DABS(adjust(target)).LT.1.0D-2.OR.
@@ -1233,10 +1287,11 @@ c              ENDIF
             ENDIF
 
             IF (logfp.GT.0)     
-     .        WRITE(logfp,'(A,I4,L2,I4,3F12.6,L2)') 'SUPER: ',
+     .        WRITE(logfp,'(A,I4,L2,2I4,3F12.6,L2,I5)') 'SUPER: ',
      .          target,anl_imaginary(target),
-     .          anl_ic_super(target),delta(target),adjust(target),
-     .          machno(ictarget(target),ion),cnt_super(target)
+     .          anl_ic_super(target),icmid,delta(target),adjust(target),
+     .          machno(ictarget(target),ion),cnt_super(target),
+     .          count
 
           CASEDEFAULT
             STOP 'NO USER ROUTINES YET'
@@ -1307,15 +1362,15 @@ c
 
       INTEGER, INTENT(IN) :: sol_option1,icmax1,nnode1,mnode1,nion1,
      .                       ref_nion1,ref_icmax1
-      TYPE(type_tube   ) :: tube1
-      TYPE(type_cell   ) :: cell1     (icmax1)
-      TYPE(type_neutral) :: pin1      (icmax1,nion1)
-      TYPE(type_fluid  ) :: fluid1    (icmax1,nion1)
-      TYPE(type_field  ) :: field1    (icmax1)
-      TYPE(type_tube   ) :: ref_tube1
-      TYPE(type_fluid  ) :: ref_fluid1(ref_icmax1,ref_nion1)
-      TYPE(type_node   ) :: node1     (nnode1)
-      TYPE(type_options_osm ), INTENT(IN) :: opt_global
+      TYPE(type_tube       ) :: tube1
+      TYPE(type_cell       ) :: cell1     (icmax1)
+      TYPE(type_neutral    ) :: pin1      (icmax1,nion1)
+      TYPE(type_fluid      ) :: fluid1    (icmax1,nion1)
+      TYPE(type_field      ) :: field1    (icmax1)
+      TYPE(type_tube       ) :: ref_tube1
+      TYPE(type_fluid      ) :: ref_fluid1(ref_icmax1,ref_nion1)
+      TYPE(type_node       ) :: node1     (nnode1)
+      TYPE(type_options_osm), INTENT(IN) :: opt_global
 
       INTEGER count,ion,ic
       LOGICAL cont
@@ -1511,6 +1566,10 @@ c...      Near-target sonic transition being processed:
 c          WRITE(logfp,*) 'SORRY, GIVING UP... NO CONVERGENCE'
           IF (count.GT.MAX_ITERATIONS.AND.logop.GT.1) 
      .      WRITE(logfp,*) 'MAXIMUM ITERATIONS REACHED'
+
+          IF (logop.GE.1) 
+     .      WRITE(logfp,*) 'SOLVER EXIT: COUNT.GE.7'
+
           cont = .FALSE.
         ELSEIF (.FALSE.) THEN
 c...      Source/flux adjustment required: 
@@ -1525,11 +1584,17 @@ c         conditions:
 c        ELSEIF (count.EQ.1) THEN   
 c          cont = .TRUE.
         ELSE
+
+          IF (logop.GE.1) 
+     .      WRITE(logfp,*) 'SOLVER EXIT: DEFAULT'
+
           cont = .FALSE.
         ENDIF
 
       ENDDO ! End of main loop
 
+      IF (logop.GE.1) 
+     .  WRITE(logfp,*) 'SOLVER COUNT:',count
 
 c...  Assign plasma quantities to tube arrays:
       ion = 1
@@ -1648,7 +1713,7 @@ c      REAL    totsrc
 
       IF (.TRUE.) CALL ListTargetData(logfp,'Before calling solver')
 
-      tube_state(it1:it2) = ibclr(tube_state(it1:it2),1)  ! Flag that solution has not been calculated yet
+      tube2(it1:it2)%state = ibclr(tube2(it1:it2)%state,1)  ! Flag that solution has not been calculated yet
 
       opt%cosm = 0
 
@@ -1665,8 +1730,8 @@ c        CALL CalculateDrifts
 
         DO itube = it1, it2
 
-          IF (ibits(tube_state(itube),0,1).EQ.0.AND.     ! Default symmetry point was not applied
-     .        ibits(tube_state(itube),1,1).EQ.1) CYCLE   ! Solution has been calculated already
+          IF (ibits(tube2(itube)%state,0,1).EQ.0.AND.     ! Default symmetry point was not applied
+     .        ibits(tube2(itube)%state,1,1).EQ.1) CYCLE   ! Solution has been calculated already
 
 c...      Setup solver options:
 c         CALL SetupLocalOptions(itube,opt)
@@ -1752,12 +1817,12 @@ c             ----------------------------------------------------------
               CASE(2)
 c...            Assign SOLPS solution:
                 CALL AssignSOLPSPlasma(itube)
-                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
+                tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE(3)
 c...            Interpolate reference solution:
                 CALL InterpolateReferencePlasma(itube)
-                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
+                tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE(28:30)
 c...            SOL28 - SimpleAsPie analytic particle and momentum solver (SL)
@@ -1773,9 +1838,9 @@ c...            Assign solution parameter nodes:
                   store_nnode(itube) = nnode  ! *** TEMP ***
                   store_mnode(itube) = mnode
                   store_node (1:nnode,itube) = node(1:nnode)
-c                  WRITE(0,*) '_state:',tube_state(itube),
-c     .                 ibits(tube_state(itube),0,1),
-c     .                 ibits(tube_state(itube),1,1)
+c                  WRITE(0,*) '_state:',tube2(itube)%state,
+c     .                 ibits(tube2(itube)%state,0,1),
+c     .                 ibits(tube2(itube)%state,1,1)
 
                 ELSE
                   STOP 'LEGACY NODES NO LONGER SUPPORTED'
@@ -1795,7 +1860,7 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
                 ENDIF
-                tube_state(itube) = ibset(tube_state(itube),1)            ! Flag that solution for ITUBE has been calculated
+                tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE DEFAULT
                 CALL ER('MainLoop','Solver option not identified',*99)
@@ -1805,18 +1870,18 @@ c             ----------------------------------------------------------
         ENDDO  ! Tube loop
 
 c        WRITE(0,*) '_count',
-c     .             COUNT(ibits(tube_state(it1:it2),0,1).EQ.0)
-c        WRITE(0,*) ibits(tube_state(it1:it2),0,1)
+c     .             COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.0)
+c        WRITE(0,*) ibits(tube2(it1:it2)%state,0,1)
         IF    (cnt.GE.3) THEN
 
         ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
-     .          COUNT(ibits(tube_state(it1:it2),0,1).EQ.1  ).GT.0) THEN
+     .          COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.1  ).GT.0) THEN
 c...      Check if semi-automated symmetry point specification:
           cont = .TRUE.
-        ELSEIF (COUNT(ibits(tube_state(it1:it2),2,1).EQ.1  ).GT.0) THEN  
+        ELSEIF (COUNT(ibits(tube2(it1:it2)%state,2,1).EQ.1  ).GT.0) THEN  
 c...      Check if any invalid links were present:
           IF (cnt.EQ.2) STOP 'Problemo man'
-          tube_state(it1:it2) = IBCLR(tube_state(it1:it2),2)
+          tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)
           cont = .TRUE.
         ENDIF
 

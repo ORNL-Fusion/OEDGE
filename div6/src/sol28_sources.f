@@ -121,7 +121,12 @@ c...          Full ring:
      .                  'anomalous cross-field flux '//           ! This will be moved to the ConserveParticles
      .                  'specification requires conditions at '// ! routine and operate as node interpolation
      .                  'both targets to be specified',*99)       ! for momentum?  But this doesn't seem right... (pain)
-              CALL SpecifyDistribution(FULL,0,0,1,0.0D0,source)   ! Need to add P_ANO_DIST, etc. as for M_ANO does
+              CALL SpecifyDistribution(FULL,0,0,                  ! Need to add P_ANO_DIST, etc. as for M_ANO does
+     .                                   opt%p_ano_dist(target),
+     .                              DBLE(opt%p_ano_exp (target)),source)
+
+
+c              CALL SpecifyDistribution(FULL,0,0,1,0.0D0,source)   !  changed 23/04/2012
             CASE (4)
 c             Anomalous term assigned in ConserveParticles, based on
 c             prescribed flow values:
@@ -339,9 +344,12 @@ c            WRITE(0,*) '     :',parusr(ic1:ic2,ion)
 
                 source = 0.0D0
 
-                CALL SpecifyDistribution(target,ic1,ic2,
-     .                                   opt%m_ano_dist(target),
-     .                              DBLE(opt%m_ano_exp (target)),source)
+                CALL SpecifyDistribution(target,ic1,ic2,                 ! changed 23/04/2012 (added P_ANO_DIST option)
+     .                                   opt%p_ano_dist(target),
+     .                              DBLE(opt%p_ano_exp (target)),source)
+c                CALL SpecifyDistribution(target,ic1,ic2,
+c     .                                   opt%m_ano_dist(target),
+c     .                              DBLE(opt%m_ano_exp (target)),source)
 
 c                IF     (inode1.EQ.1.AND.inode2.EQ.nnode) THEN
 c                  srcint(0) = -1.0D0 * (flx1 + flx2 + srcint(TOTAL))

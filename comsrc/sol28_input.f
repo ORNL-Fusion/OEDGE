@@ -912,6 +912,10 @@ c
           CALL ReadOptionI(buffer,2,opt%p_rec)
         CASE('S P_ANO')
           CALL ReadOptionI(buffer,2,opt%p_ano)
+        CASE('S P_ANO_DIST')
+          CALL ReadOptionI(buffer,2,opt%p_ano_dist)
+        CASE('S P_ANO_EXP')
+          CALL ReadOptionR(buffer,2,opt%p_ano_exp)
         CASE('S M_PIN')
           CALL ReadOptionI(buffer,2,opt%m_mom)
         CASE('S M_FIT')
@@ -1361,6 +1365,8 @@ c...  OSM options:
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
       opt%p_ano      = 2
+      opt%p_ano_dist = 3   ! new on 23/04/2012
+      opt%p_ano_exp  = 0.0 ! new on 23/04/2012
       opt%m_mom      = 0
       opt%m_fit      = 2
       opt%m_ano      = 2
