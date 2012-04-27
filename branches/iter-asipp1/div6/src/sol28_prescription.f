@@ -518,7 +518,8 @@ c
       INTEGER, INTENT(IN) :: mode
 
       INTEGER i1,ic,inode1,inode2,in1,in2,target,ion
-      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,A,B,C,t(0:S28_MAXNKS+1)
+      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,y,A,B,C,D,E,F,
+     .        t(0:S28_MAXNKS+1)
       REAL*8, POINTER :: s(:)
 
       ion = 1
@@ -627,14 +628,33 @@ c...        Pure conduction (no dependence on power distribution):
 c              frac = (s(ic) - s1) / deltas   ...old, flawed method...
 c              te(ic) = deltav * frac**x + v1
             ENDDO
-c          CASE (4)
+          CASE (4)
+c...        Modified conduction:
+            x = 2.0D0 / 7.0D0
+            A = v1**(1/x)
+            B = v2
+            C = (B**(1/x) - A) / deltas
+
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
+            D = v1**(1/y)
+            E = v2
+            F = (E**(1/y) - D) / deltas
+
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = (1.0D0 - frac) * (A + C * (s(ic) - s1))**x +  ! conduction profile, applied at the end of the flux-tube segment
+     .                         frac  * (D + F * (s(ic) - s1))**y    ! user specified exponent, applied at the beginning
+            ENDDO
           CASE (5)
 c...        Pleasant:
             x = 2.0D0 / 7.0D0
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
-              t(ic) = (1.0D0 - frac) * (deltav * frac**x      + v1) + 
-     .                         frac  * (deltav * frac**0.05D0 + v1)         
+              t(ic) = (1.0D0 - frac) * (deltav * frac**x + v1) +   ! conduction profile
+     .                         frac  * (deltav * frac**y + v1)     ! user specified power law
             ENDDO
           CASE (6)
 c...        Te evolution:
@@ -643,6 +663,15 @@ c...        Te evolution:
             IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
      .                             'not ready',*99)
 c            CALL EvolveTeProfile(in1,in2,s,target)
+
+          CASE (7)
+c...        Linear -- to be overwritten by the reference plasma:
+            x = 1.0D0
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = deltav * frac**x + v1
+            ENDDO
+
           CASE DEFAULT
 c            WRITE(0,*) 'DAT:',in2,node_par_mode(in2)
             WRITE(0,*) 'DAT:',in2,node(in2)%par_mode
@@ -785,7 +814,7 @@ c            WRITE(0,*) 'FDSDF:',ic,frac,val(ic)
 
         CASE (3)
 c...      Power centered at the middle of range:
-          IF (ic2-ic1.LE.2) THEN
+          IF (ic2-ic1.LE.2.OR.exponent.EQ.0.0D0) THEN
             val(ic1:ic2) = 1.0D0
           ELSE
             DO ic = ic1, ic2

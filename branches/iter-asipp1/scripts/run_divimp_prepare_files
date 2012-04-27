@@ -28,6 +28,7 @@
   cp $DATDIR/$CASENAME.$DIVEXT fort.5
   ln -s fort.5 osm.input
   cpc $DATDIR/$OUTNAME.d6o outinput.dat
+  cpc $OUTDIR/$OUTEXE $EXEDIR
 #
 # ----------------------------------------------------------------------
 # Copy data files from a previous case, if requested:
@@ -59,6 +60,7 @@
 #   Decide which DIVIMP format background plasma file to copy:
     if      ( -e $EQUDIR/$SAVENAME.bgp ) then 
       cp $EQUDIR/$SAVENAME.bgp divimp_plasma.dat
+      ln -s divimp_plasma.dat fort.11
     else if ( -e $RESDIR/$SAVENAME.bgp ) then 
       cp $RESDIR/$SAVENAME.bgp divimp_plasma.dat
     else if ( -e $EQUDIR/$GRIDNAME.$SAVENAME ) then 

@@ -1488,8 +1488,19 @@ c
 c slmod begin
       if (sputter_ndata.gt.0) then 
         write(7,*)
+        write(7,*) '      Particle flux data loaded from previous '//
+     .                   'DIVIMP runs:'
+        write(7,*)
+        write(7,'(5X,A6,A10,A4,A6,A8)')
+     .    'Type','ABSFAC','Z','A','Param'
         do i1 = 1, sputter_ndata
-          write(7,*) sputter_data(i1)%type,sputter_data(i1)%absfac_net
+          write(7,'(3X,I2,I6,1P,E10.2,0P,I4,F6.1,F8.3,2X,A)') i1,
+     .      sputter_data(i1)%type,
+     .      sputter_data(i1)%absfac_net,
+     .      sputter_data(i1)%atomic_number,
+     .      sputter_data(i1)%atomic_mass,
+     .      sputter_data(i1)%fraction,
+     .      TRIM(sputter_data(i1)%tag)
         enddo
         write(7,*)
       endif

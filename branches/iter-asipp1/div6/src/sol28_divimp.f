@@ -88,6 +88,7 @@ c
 c subroutine: divCompileSputteringYields
 c
       SUBROUTINE divCompileSputteringYields
+      USE mod_interface
       USE eckstein_2007_yield_data
       USE mod_divimp
       IMPLICIT none
@@ -102,9 +103,10 @@ c      INCLUDE 'pindata'
       REAL divYield_Be_W
 
       INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
-     .              ncore,in,nsputter,ierr,nymfs,nds2
+     .              ncore,in,nsputter,ierr,nymfs,nds2,n
       REAL          yield,rdum1,ratio,frac
       CHARACTER*512 fname,command,resdir
+      CHARACTER     t1*3,t2*6
 
       nymfs = nymfs_global ! so lame, but need NYMFS and it's not in a common block
  
@@ -250,6 +252,7 @@ c...      Unzip file if necessary:
      .               sputter_data(i)%ncore           ! number of radial core data points
 	    
             SELECTCASE (sputter_data(i)%format)
+c             ----------------------------------------------------------
               CASE (1)
                 nseg = sputter_data(i)%nsegments
                 mion = MIN(sputter_data(i)%atomic_number,
@@ -306,13 +309,16 @@ c               wall flux later, if desired:
      .              sputter_data(i)%core_percent_nfrac(1:ncore),
      .              sputter_data(i)%core_percent_efrac(1:ncore)
                 ENDIF
+c             ----------------------------------------------------------
               CASEDEFAULT
                 CALL ER('divCompileSputteringYields','Unrecognized '//
      .                  'file TYPE',*99)
+c             ----------------------------------------------------------
             ENDSELECT
           ELSE
             CALL ER('divCompileSputteringYields','Unrecognized '//
      .              'file VERSION number',*99)
+
           ENDIF
 	  
 10        CONTINUE
@@ -322,21 +328,16 @@ c               wall flux later, if desired:
         ENDIF
 
       ENDDO
-
 c
 c     ------------------------------------------------------------------
 c     DERIVE YIELDS
 c
-
-
       DO i = 1, nsputter
         nseg = sputter_data(i)%nsegments
         mion = MIN(sputter_data(i)%atomic_number,
      .             sputter_data(i)%charge_max    )
 
-
         IF (sputter_data(i)%type.EQ.3) CYCLE   ! yield is already calculated
-
 
         sputter_data(i)%target_number = cion
  
@@ -377,7 +378,6 @@ c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
           ENDDO
         ENDDO
       ENDDO
-
 c
 c     ------------------------------------------------------------------
 c     SET absfac FOR SPECIFIED IMPURITY FRACTIONS
@@ -412,7 +412,6 @@ c
 c     ------------------------------------------------------------------
 c     ASSIGN wlprob
 c
-
       WRITE(0 ,*) 'sputter data',nsputter
       WRITE(88,*) 'sputter data',nsputter
       DO i = 1, nsputter
@@ -512,6 +511,60 @@ c      ENDDO
       wlprob(:,3) = wlprob(:,3) / nabsfac
 
       wallpt(:,13) = 0.0
+c
+c     ------------------------------------------------------------------     
+c     Send data to IDL:
+
+      CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
+      i = nsputter
+      CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
+      CALL inPutData(sputter_data(1:i)%absfac_net   ,'ABSFAC'  ,'s-1')	  
+      CALL inPutData(sputter_data(1:i)%atomic_number,'BOMB_Z'  ,'NA')
+      CALL inPutData(sputter_data(1:i)%atomic_mass  ,'BOMB_A'  ,'NA')	  
+      CALL inPutData(sputter_data(1:i)%target_number,'TARGET_Z','NA') 
+      CALL inPutData(sputter_data(1:i)%charge_min   ,'C_MIN'   ,'NA')   
+      CALL inPutData(sputter_data(1:i)%charge_max   ,'C_MAX'   ,'NA')  
+      CALL inPutData(sputter_data(1:i)%type         ,'TYPE'    ,'NA')   
+c     Assume the data all comes from the same geometry and plasma:
+      n = sputter_data(1)%nsegments
+      CALL inPutData(kmfpws(sputter_data(1)%id(1:n)  ),'FACT','NA')
+      CALL inPutData(wlprob(sputter_data(1)%id(1:n),3),'PROB','NA')
+      CALL inPutData(sputter_data(1)%id (1:n),'ID'    ,'NA')	   
+      CALL inPutData(sputter_data(1)%r  (1:n),'POS_R' ,'m' ) 
+      CALL inPutData(sputter_data(1)%z  (1:n),'POS_Z' ,'m' )   
+      CALL inPutData(sputter_data(1)%dds(1:n),'LENGTH','m' )  
+c     Take IK,IR and Te,i for the first data set from standard DIVIMP 
+c     sputtering (rather than EIRENE calculated yields), otherwise 
+c     just take what's in the first data set, which is probably zero:
+      DO i = 1, nsputter
+        IF (sputter_data(i)%type.EQ.1) THEN
+          write(0,*) 'debug: dumping Te,i from',i
+          CALL inPutData(sputter_data(i)%ik(1:n),'IK','eV')   
+          CALL inPutData(sputter_data(i)%ir(1:n),'IR','eV')	  
+          CALL inPutData(sputter_data(i)%te(1:n),'TE','eV')   
+          CALL inPutData(sputter_data(i)%ti(1:n),'TI','eV')	  
+          EXIT
+        ENDIF
+      ENDDO
+      IF (i.EQ.nsputter+1) THEN
+        CALL inPutData(sputter_data(1)%ik(1:n),'IK','eV')   
+        CALL inPutData(sputter_data(1)%ir(1:n),'IR','eV')	  
+        CALL inPutData(sputter_data(1)%te(1:n),'TE','eV')   
+        CALL inPutData(sputter_data(1)%ti(1:n),'TI','eV')	  
+      ENDIF
+      DO i = 1, nsputter
+        WRITE(t1,'(A,I0.2)') '_',i
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+        CALL inPutData(mion,'MAX_CHARGE'//t1,'NA')	  
+        DO iz = 1, mion
+          WRITE(t2,'(2A,I0.2)') t1,'_',iz
+          CALL inPutData(sputter_data(i)%flux (1:n,iz),'FLUX'//t2,'s-1')
+          CALL inPutData(sputter_data(i)%e0   (1:n,iz),'E0'//t2   ,'eV')	  
+          CALL inPutData(sputter_data(i)%yield(1:n,iz),'YIELD'//t2,'NA')	  
+        ENDDO
+      ENDDO
+      CALL inCloseInterface
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
@@ -643,7 +696,7 @@ c      stop 'dsdfsf'
       ELSE
         cgridopt = 3
       ENDIF
-      WRITE(0,*) 'cgridopt=',cgridopt
+c      WRITE(0,*) 'cgridopt=',cgridopt
 
       CALL InsertRing(1     ,BEFORE,PERMANENT)
       CALL InsertRing(irwall,AFTER ,PERMANENT)
@@ -755,6 +808,7 @@ c
 
 c...  Need to reload geometry data in case Eirene has been called (hopefully
 c     this won't be required in the future...):
+ 
       CALL LoadObjects('osm_geometry.raw',status)
       IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
      .                         'geometry data',*99)
@@ -773,12 +827,14 @@ c      CALL SetTargetConditions
         IF (tube(itube)%ir.EQ.irend  ) itube2 = itube
       ENDDO
       IF (itube2.EQ.0.AND.irend.EQ.ntube+2) itube2 = ntube
+      IF (itube1.EQ.0.OR.itube2.EQ.0) 
+     .  CALL ER('ExecuteSOL28','Tube index error',*99)
 
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
 
 c...  Generate output files:
-      CALL GenerateOutputFiles
+c      CALL GenerateOutputFiles  ! this is now done at the end of bgplasma
 
 c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
@@ -793,15 +849,26 @@ c
 c ======================================================================
 c
       SUBROUTINE CloseSOL28
+      USE mod_geometry
+      USE mod_sol28_global
       IMPLICIT none
 
 c      RETURN
+      INTEGER status
+
+      CALL LoadObjects('osm_geometry.raw',status)
+      IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
+     .                         'geometry data',*99)
+
+c...  Generate output files:
+      CALL GenerateOutputFiles
 
 c...  Save solution:
-      CALL SaveGrid('osm.raw')
+c      CALL SaveGrid('osm.raw')
 
 c...  Clear memory:
       CALL osmClean
+      CALL geoClean
 
       RETURN
  99   STOP
@@ -1079,8 +1146,12 @@ c...  Declare global arrays:
       nfluid    = ncell
       nimpurity = 1
       ALLOCATE(tube    (ntube ))
-      ALLOCATE(tube_state(ntube))
-      tube_state = 0
+      ALLOCATE(tube2   (ntube ))
+      tube2(:)%state        = 0
+      tube2(:)%target_pe(1) = 0
+      tube2(:)%target_pe(2) = 0
+c      ALLOCATE(tube_state(ntube))
+c      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))
@@ -1113,6 +1184,7 @@ c      CALL CalcTubeDimensions(tube_3D_data,dangle)
         cind2 = ncell + ike
 
         ntube = ntube + 1
+        tube(ntube)%index  = ntube
         tube(ntube)%ir     = ir
         tube(ntube)%type   = ringtype(ir)
         tube(ntube)%ikti   = ikti2(ir)

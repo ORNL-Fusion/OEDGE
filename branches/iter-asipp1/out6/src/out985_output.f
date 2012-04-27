@@ -2707,12 +2707,6 @@ c              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
-              CALL inPutData(pixel(ipixel)%global_v1(1),'x1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(2),'y1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
-              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
             ENDDO
 c            CALL inCloseInterface
           ENDIF
