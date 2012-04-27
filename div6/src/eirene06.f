@@ -3555,7 +3555,7 @@ c
 
       TYPE(type_options_eirene), INTENT(INOUT) :: opt
 
-      INTEGER fp,ivoid,isrf,i1,i2,idefault
+      INTEGER fp,ivoid,isrf,i1,i2,cvoid,idefault
       LOGICAL void_specified
 
       TYPE(type_options_eirene) :: opt_tmp
@@ -3579,7 +3579,9 @@ c...  Assign defaults, if necessary:
       ENDDO
       IF (void_specified.AND.idefault.NE.0) 
      .  CALL ER('SetupVoidProcessing','Cannot specify default void '//
-     .          'setup and also set specific void parameters',*99)
+     .          'setup and also set a specific void index - use '//
+     .          'ZONE=-3 in the input file',*99)
+
       IF (idefault.NE.0) THEN
         i1 = idefault
         opt_tmp = opt
@@ -3644,16 +3646,19 @@ c...  Delete tagged void regions:
       DO i1 = opt%nvoid, 1, -1
         IF (opt%void_zone(i1).NE.-999) CYCLE
         DO i2 = i1, opt%nvoid-1
-          opt%void_zone(  i2) = opt%void_zone(  i2+1)-1
-          opt%void_grid(:,i2) = opt%void_grid(:,i2+1)
-          opt%void_wall(:,i2) = opt%void_wall(:,i2+1)
-          opt%void_add (:,i2) = opt%void_add (:,i2+1)
-          opt%void_res (  i2) = opt%void_res (  i2+1)
-          opt%void_hole(:,i2) = opt%void_hole(:,i2+1)
-          opt%void_code(  i2) = opt%void_code(  i2+1)
-          opt%void_ne  (  i2) = opt%void_ne  (  i2+1)
-          opt%void_te  (  i2) = opt%void_te  (  i2+1)
-          opt%void_ti  (  i2) = opt%void_ti  (  i2+1)
+          opt%void_zone (  i2) = opt%void_zone (  i2+1)-1
+          opt%void_grid (:,i2) = opt%void_grid (:,i2+1)
+          opt%void_wall (:,i2) = opt%void_wall (:,i2+1)
+          opt%void_add  (:,i2) = opt%void_add  (:,i2+1)
+          opt%void2_grid(  i2) = opt%void2_grid(  i2+1)
+          opt%void2_wall(  i2) = opt%void2_wall(  i2+1)
+          opt%void2_add (  i2) = opt%void2_add (  i2+1)
+          opt%void_res  (  i2) = opt%void_res  (  i2+1)
+          opt%void_hole (:,i2) = opt%void_hole (:,i2+1)
+          opt%void_code (  i2) = opt%void_code (  i2+1)
+          opt%void_ne   (  i2) = opt%void_ne   (  i2+1)
+          opt%void_te   (  i2) = opt%void_te   (  i2+1)
+          opt%void_ti   (  i2) = opt%void_ti   (  i2+1)
         ENDDO
         opt%nvoid = opt%nvoid - 1
       ENDDO
@@ -3661,6 +3666,41 @@ c...  Delete tagged void regions:
 c...  Output:
       CALL OutputVoidSpecification(eirfp,opt)
 
+c...  Add "-3" void regions (no specific void index) to the end of the
+c     current list:
+      i2 = opt%nvoid
+      cvoid = 0
+      DO i1 = 1, i2
+        IF (opt%void_zone(i1).GE.1) cvoid = cvoid + 1
+      ENDDO
+      DO i1 = 1, i2
+        IF (opt%void_zone(i1).EQ.-3) THEN
+          cvoid = cvoid + 1
+          opt%nvoid = opt%nvoid + 1
+          opt%void_zone(  opt%nvoid) = cvoid           
+          IF (opt%void_version.EQ.1.0) THEN 
+            opt%void_grid (:,opt%nvoid) = opt%void_grid (:,i1)
+            opt%void_wall (:,opt%nvoid) = opt%void_wall (:,i1)
+            opt%void_add  (:,opt%nvoid) = opt%void_add  (:,i1)
+          ELSE
+            opt%void2_grid(  opt%nvoid) = opt%void2_grid(  i1)
+            opt%void2_wall(  opt%nvoid) = opt%void2_wall(  i1)
+            opt%void2_add (  opt%nvoid) = opt%void2_add (  i1)
+          ENDIF
+          opt%void_grid(:,opt%nvoid) = opt%void_grid(:,i1)
+          opt%void_wall(:,opt%nvoid) = opt%void_wall(:,i1)
+          opt%void_add (:,opt%nvoid) = opt%void_add (:,i1)
+          opt%void_res (  opt%nvoid) = opt%void_res (  i1)
+          opt%void_hole(:,opt%nvoid) = opt%void_hole(:,i1)
+          opt%void_code(  opt%nvoid) = opt%void_code(  i1)
+          opt%void_ne  (  opt%nvoid) = opt%void_ne  (  i1)
+          opt%void_te  (  opt%nvoid) = opt%void_te  (  i1)
+          opt%void_ti  (  opt%nvoid) = opt%void_ti  (  i1)
+        ENDIF
+      ENDDO
+
+c...  Output:
+      CALL OutputVoidSpecification(eirfp,opt)
 
       RETURN
  99   STOP
@@ -3800,8 +3840,8 @@ c       list of triangles for sides that match up with these surfaces:
 
               index = surface(isrf)%index(6)  
 
-              WRITE(0,*) 'range ',range
-              WRITE(0,*) 'index ',index
+c              WRITE(0,*) 'range ',range
+c              WRITE(0,*) 'index ',index
 
               IF (surface(isrf)%type    .EQ.NON_DEFAULT_STANDARD  .AND.
      .            (surface(isrf)%subtype.EQ.MAGNETIC_GRID_BOUNDARY.OR.
@@ -5214,8 +5254,10 @@ c...  Assign defaults to surface properties:
 
       IF     (type.EQ.VESSEL_WALL) THEN
         surface(nsurface)%surtxt   = '* vessel wall (default)'
-        surface(nsurface)%reflect = LOCAL
-        surface(nsurface)%ewall = -wtemp * 1.38E-23 / ECH
+        surface(nsurface)%reflect  = LOCAL
+        surface(nsurface)%ewall    = -wtemp * 1.38E-23 / ECH
+        surface(nsurface)%transp1  = 0.0
+        surface(nsurface)%transp2  = 0.0
         surface(nsurface)%material = wmater
 c...    Assume a 2-point line segment:
         surface(nsurface)%nsur = 1
@@ -5224,9 +5266,11 @@ c...    Assume a 2-point line segment:
         surface(nsurface)%ipts(2,1) = 2
         surface(nsurface)%nver = 2
       ELSEIF (type.EQ.NON_DEFAULT_STANDARD) THEN
-        surface(nsurface)%surtxt  = '* non-default standard (default)'
-        surface(nsurface)%reflect = GLOBAL
+        surface(nsurface)%surtxt   = '* non-default standard (default)'
+        surface(nsurface)%reflect  = GLOBAL
         surface(nsurface)%ewall    = 0.0
+        surface(nsurface)%transp1  = 0.0
+        surface(nsurface)%transp2  = 0.0
         surface(nsurface)%material = 0.0
         surface(nsurface)%nsur = 0
         surface(nsurface)%nver = 0
@@ -7803,7 +7847,8 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
           WRITE(fp06,91) 1,surface(i1)%ilspt,surface(i1)%isrs
 c          WRITE(fp06,91) 1,0
           WRITE(fp06,92) surface(i1)%material,surface(i1)%ewall,
-     .                   0.0,0.0,0.0,2.5
+c     .                   0.0,0.0,0.0,2.5
+     .                   0.0,surface(i1)%transp1,surface(i1)%transp2,2.5  ! added surface transparency control - SL, 05/04/2012
 c          WRITE(fp06,92) 0.0,surface(i1)%recyct,
           WRITE(fp06,92) surface(i1)%recycf,surface(i1)%recyct,
      .                   0.0,1.0,0.5,1.0

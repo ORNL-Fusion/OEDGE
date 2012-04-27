@@ -685,7 +685,7 @@ c        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
         SELECTCASE (buffer(2:i-1))
           CASE ('NUMBER OF COLUMNS')
             READ(buffer(i+1:n),*) ncolumns
-          CASE ('DATA LIST')
+          CASE ('DATA','DATA LIST')
             j = 0
 c              WRITE(0,*) 'NCOLUMNS:',ncolumns
             DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -737,12 +737,13 @@ c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
      .              1,xval,yval,'LINEAR')
 
         WRITE(88,*) '   :',xval,yval
+        WRITE(88,*) '   : unshifted xval',xval + shift
 
       ENDIF
 
-c      WRITE(0,*) 'XCOL,YCOL:',xcol,ycol
-c      WRITE(0,*) 'SHIFT:',shift
-c      WRITE(0,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
+c      WRITE(88,*) 'XCOL,YCOL:',xcol,ycol
+c      WRITE(88,*) 'SHIFT:',shift
+c      WRITE(88,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
 
       RETURN
  98   WRITE(0,*) 'ERROR LoadUpstreamData: Data file not found'
@@ -837,13 +838,18 @@ c
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,rho0,
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
-     .        hold_tab,hold_tcd,ne_LO,ne_HI,node_pe,node_v,node_ne
+     .        hold_tab,hold_tcd,ne_LO,ne_HI,cs,
+     .        node_pe,node_v,node_ne,node_te,node_ti,smax,L,
+     .        nustar 
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
      .        hold_c1,hold_c2,hold_d1,hold_d2,pts(3,4)
 
 
       INTEGER node_n,node_i(0:MAXNNODES)
       TYPE(type_node) :: node_s(0:MAXNNODES)
+
+      TYPE(type_tube )              :: tube_tmp
+      TYPE(type_fluid), ALLOCATABLE :: fluid_tmp(:,:)
 
       DATA default_message, rho_warning / .TRUE., .TRUE./
       SAVE     
@@ -875,7 +881,7 @@ c
 
 c...  Flag if ITUBE has been processed once already and was assigned a 
 c     default symmetry point, since no proper point was found:
-      two_timer = ibits(tube_state(itube),0,1).EQ.1  
+      two_timer = ibits(tube2(itube)%state,0,1).EQ.1  
 
 c...  Better/cleaner to pass the tube to this routine, and not need to
 c     use mod_sol28_locals...?
@@ -1262,7 +1268,7 @@ c     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
             IF (it1.EQ.-1.OR.it1.EQ.ntube+1) 
      .        CALL ER('AssignNodeValues_New','Tube not identified',*99)
 
-            IF (two_timer.AND.ibits(tube_state(it1),0,1).EQ.1) THEN
+            IF (two_timer.AND.ibits(tube2(it1)%state,0,1).EQ.1) THEN
               STOP 'TRYING TO REFERENCE A DEFAULT TUBE'
             ENDIF            
 
@@ -1280,11 +1286,15 @@ c     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
             IF (osmnode(i2)%ti(1).EQ.-99.0) ti0 = fluid(ic1,1)%ti
 
 c...        Base second radial interpolation value on the first value:
-            IF (osmnode(i3)%ne   .LT.  0.0) n1 = -osmnode(i3)%ne   * n0
+            IF (osmnode(i3)%ne   .LT.  0.0.AND.
+     .          osmnode(i3)%ne   .NE.-77.0) n1 = -osmnode(i3)%ne   * n0
             IF (osmnode(i3)%pe   .LT.  0.0.AND.
+     .          osmnode(i3)%pe   .NE.-77.0.AND.
      .          osmnode(i3)%pe   .NE.-88.0) p1 = -osmnode(i3)%pe   * p0
-            IF (osmnode(i3)%te   .LT.  0.0) te1= -osmnode(i3)%te   * te0
-            IF (osmnode(i3)%ti(1).LT.  0.0) ti1= -osmnode(i3)%ti(1)* ti0
+            IF (osmnode(i3)%te   .LT.  0.0.AND.
+     .          osmnode(i3)%te   .NE.-77.0) te1= -osmnode(i3)%te   * te0
+            IF (osmnode(i3)%ti(1).LT.  0.0.AND.
+     .          osmnode(i3)%ti(1).NE.-77.0) ti1= -osmnode(i3)%ti(1)* ti0
 
             IF (coord.EQ.3.OR.coord.EQ.7) psin0 = tube(it1)%psin
             IF (coord.EQ.8)               rho0  = tube(it1)%rho  
@@ -1302,10 +1312,10 @@ c...        Base second radial interpolation value on the first value:
 
 c...        Check if the tube being linked to has already been processed  -- MOD moved this here from just below the IF block ---
 c           this iteration:                                                  SL, 26/01/2011
-            IF (ibits(tube_state(it1),1,1).EQ.0) THEN  
+            IF (ibits(tube2(it1)%state,1,1).EQ.0) THEN  
               write(0    ,*) 'linking a tube that is not defined, bad'
               write(logfp,*) 'linking a tube that is not defined, bad'
-              tube_state(itube) = ibset(tube_state(itube),2)
+              tube2(itube)%state = ibset(tube2(itube)%state,2)
               node_valid = .FALSE.
             ENDIF
 
@@ -1668,6 +1678,14 @@ c...        Load probe data from ASCII file:
               vb(inode) = tmp1 * osmnode(i1)%file_scale_M
               WRITE(logfp,*) 'VB  B:',vb(inode)
             ENDIF
+            IF (pc) THEN
+              CALL LoadUpstreamData(osmnode(i1)%file_name,
+     .               osmnode(i1)%file_format,
+     .               itube,coord,osmnode(i1)%file_shift,
+     .               expon,osmnode(i2)%pe,tmp1) 
+              pe(inode) = tmp1 * osmnode(i1)%file_scale_pe
+              WRITE(logfp,*) 'PE  B:',pe(inode)
+            ENDIF
             IF (tec) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
@@ -1989,7 +2007,7 @@ c      DO i1 = 2, node_n-1
       ENDIF
 
 c...  Check symmetry node is specified:
-      tube_state(itube) = ibclr(tube_state(itube),0)
+      tube2(itube)%state = ibclr(tube2(itube)%state,0)
       i2 = 0
       DO i1 = 1, node_n
         IF (node_i(i1).EQ.2) i2 = i2 + 1
@@ -2019,7 +2037,7 @@ c...    Assign cell index:
           node_s(node_n)%te    = 10.0
           node_s(node_n)%ti(1) = 20.0
         ENDIF
-        tube_state(itube) = ibset(tube_state(itube),0)
+        tube2(itube)%state = ibset(tube2(itube)%state,0)
         WRITE(logfp,*) 'default symmetry point applied'
         WRITE(dummy,'(A,I6,A)') 'Symmetry node not identified for '//
      .                          'ITUBE = ',it,', applying default'
@@ -2243,8 +2261,58 @@ c...  Set electron pressure from a reference node:
         node(i1)%pe = node_pe
       ENDDO
 
+
+c...  Set electron pressure from a reference node:
+      DO i1 = 1, nnode
+       IF ((node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9).OR.
+     .     (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9).OR.
+     .     (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9).OR.
+     .     (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9).OR.
+     .     (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9))
+     .    THEN
+
+          IF (ref_ntube.EQ.0.OR.ref_ntube.EQ.1) 
+     .     CALL ER('AssignNodeValues_New','-77.0 found but reference'//
+     .             'solution not available',*99)     
+
+          ic1 = tube(itube)%cell_index(LO)
+          ic2 = tube(itube)%cell_index(HI)     
+          ALLOCATE(fluid_tmp(ic2-ic1+1,nion))
+          tube_tmp = tube(itube)
+          CALL InterpolateReferencePlasma(tube_tmp,nion,
+     .           fluid_tmp(1:ic2-ic1+1,1:nion),cell(ic1:ic2))         
+          EXIT
+        ENDIF
+      ENDDO
+      IF (ALLOCATED(fluid_tmp)) THEN 
+        DO i1 = 1, nnode
+          IF (node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9)
+     .     node(i1)%ne       = fluid_tmp(node(i1)%icell,ion)%ne
+          IF (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9) 
+     .      THEN
+            cs = GetCs2(fluid_tmp(node(i1)%icell,ion)%te,
+     .                  fluid_tmp(node(i1)%icell,ion)%ti)
+            node(i1)%machno  = fluid_tmp(node(i1)%icell,ion)%vi / cs 
+            node(i1)%machno  = MIN(0.5,MAX(-0.5,node(i1)%machno))   ! *** TEMPORARY UNTIL THE SOLVER IS STABILIZED FOR HIGHER M ***
+            node(i1)%v       = 0.0D0
+          ENDIF
+          IF (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9) 
+     .      node(i1)%pe      = fluid_tmp(node(i1)%icell,ion)%ne *
+     .                         fluid_tmp(node(i1)%icell,ion)%te  
+          IF (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9)
+     .      node(i1)%te      = fluid_tmp(node(i1)%icell,ion)%te
+          IF (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9)
+     .      node(i1)%ti(ion) = fluid_tmp(node(i1)%icell,ion)%ti
+        ENDDO
+        DEALLOCATE(fluid_tmp)
+      ENDIF
+
+
+
 c...  Setup target nodes:
       DO itarget = LO, HI
+c...    Identify the target node and the nearest upstream node where dependence
+c       of the target values on the upstream node has been identified:
         IF (itarget.EQ.LO) THEN
           i1 = 1
           DO i2 = 2, mnode
@@ -2258,8 +2326,11 @@ c...  Setup target nodes:
           ENDDO
           IF (i2.EQ.mnode-1) i2 = nnode - 1
         ENDIF
+c...    Assign target values in TUBE(IT) based on the corresponding target node:
         SELECTCASE(node(i1)%par_set)
+c         --------------------------------------------------------------
           CASE (0) 
+c         --------------------------------------------------------------
           CASE (2) 
             IF (node(i1)%ne.NE.0.0) THEN
               IF (node(i1)%ne.LT.1.0E+10) THEN
@@ -2282,39 +2353,127 @@ c...  Setup target nodes:
      .        tube(it)%te(itarget    ) = node(i1)%te
             IF (node(i1)%ti(ion).NE.0.0) 
      .        tube(it)%ti(itarget,ion) = node(i1)%ti(ion)
+c         --------------------------------------------------------------
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET for target node',*99) 
+c         --------------------------------------------------------------
         ENDSELECT
-c           WRITE(0,*) 'GO!',node_s(i1)%par_set,itube
-c           WRITE(0,*) 'GO!',node_s(i2)%par_set
-c           IF (itube.EQ.81) STOP 'dfsd'
+c...    Assign the target values in TUBE(IT) based on an upstream node:
         SELECTCASE(node(i2)%par_set)
+c         --------------------------------------------------------------
           CASE (0) 
+c         --------------------------------------------------------------
           CASE (1) 
             tube(it)%te(itarget)     = node(i2)%te
             tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
-          CASE (2) 
-            tube(it)%te(itarget)     = node(i2)%te
-            tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+c         --------------------------------------------------------------
+          CASE (2:4) 
+c            IF ((node(i2)%par_set.EQ.2                            ).OR.
+c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%te     .EQ.0.0)) THEN
+c     .        tube(it)%te(itarget)     = node(i2)%te
+            IF (node(i2)%par_set.EQ.2.AND.node(i1)%te.NE.0.0) 
+     .        CALL ER('AssignNodeValues_New','PAR_SET=2 but target'//
+     .         'data already assigned',*99)
+
+            IF (node(i1)%te.EQ.0.0) THEN
+              SELECTCASE (node(i2)%par_set)
+                CASE (2:3) 
+                  node_te = node(i2)%te 
+                CASE (4)  
+
+                  write(0,*) 'tube  = ',it
+                  write(0,*) 'node  = ',i2,node_i(i2)
+
+                  IF (node_i(i2).NE.2)
+     .              CALL ER('_New','Symmetry node required',*99) 
+	          
+                  write(0,*) 'sdat  = ',node(i2)%s,tube(it)%smax
+                  write(0,*) 'n  = ',node(i2)%ne
+                  write(0,*) 'te = ',node(i2)%te
+
+                  IF (itarget.EQ.LO) THEN 
+                    L = node(i2)%s
+                  ELSE	          
+                    L = tube(it)%smax - node(i2)%s
+                  ENDIF
+
+                  write(0,*) 'L  = ',L
+
+                  nustar = (1.0E-16 * node(i2)%ne) / L / node(i2)%te**2     
+	          
+                  write(0,*) 'nustar =',nustar
+	          
+                  frac = (nustar - 10.0) / (50.0 - 10.0)        ! parameter
+                  write(0,*) 'frac    =',frac
+                  frac = MIN(MAX(0.0,frac),1.0)
+	          
+                  node_te = node(i2)%te
+                  node_te = (1.0-frac) *     node_te + 
+     .                           frac  * MIN(node_te,5.0)                  ! parameter
+
+                  write(0,*) 'frac    =',frac
+                  write(0,*) 'node_te =',node_te
+
+                  stop 'fukcked'
+
+              ENDSELECT
+              tube(it)%te(itarget) = node_te
+            ENDIF
+
+            IF ((node(i2)%par_set.EQ.2                            ).OR.
+     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ti(ion).EQ.0.0))
+     .        tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
+
+
+
             IF     (node(i2)%ne.NE.0.0) THEN
               node_ne = 0.5 * node(i2)%ne
             ELSEIF (node(i2)%pe.NE.0.0) THEN         
-              node_ne = 0.5 * node(i2)%pe / node(i2)%te
+              node_ne = 0.5 * node(i2)%pe / tube(it)%te(itarget)
+
+c             write(88,*) 'pe calc',node(i2)%pe,tube(it)%te(itarget),
+c     .            node_ne
+c             write(88,*) '       ',tube(it)%te(itarget),
+c     .                             tube(it)%ti(itarget,ion)
+c             write(88,*) '       ',node(i1)%ne.EQ.0.0,
+c     .                             node(i1)%pe.EQ.0.0
+c              node_ne = 0.5 * node(i2)%pe / node(i2)%te
             ELSE
               CALL ER('AssignNodeValues_New','Need density or '//
      .                'pressure for sheath limited particle flux '//
      .                'calculation',*99)
             ENDIF
-            tube(it)%jsat(itarget,ion) = 
-     .        GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
+
+c            IF ((node(i2)%par_set.EQ.2                            ).OR.
+c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
+c     .                                     node(i1)%pe.EQ.0.0     ))
+c     .        tube(it)%jsat(itarget,ion) = REAL(-i2)
+            IF (node(i2)%par_set.EQ.2.AND.
+     .          (node(i1)%ne.NE.0.0.OR.node(i1)%pe.NE.0.0))
+     .        CALL ER('AssignNodeValues_New','PAR_SET=2 but node '//
+     .         'ne and/or pe already assigned',*99)
+ 
+            IF (node(i1)%ne.EQ.0.0.AND.node(i1)%pe.EQ.0.0)
+     .        tube(it)%jsat(itarget,ion) = REAL(-i2)
+
+c            IF ((node(i2)%par_set.EQ.2                            ).OR.
+c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
+c     .                                     node(i1)%pe.EQ.0.0     ))
+c     .        tube(it)%jsat(itarget,ion) = 
+c     .          GetJsat2(tube(it)%te(itarget),tube(it)%ti(itarget,ion),
+c     .                   node_ne,1.0)
+cc     .          GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
+c         --------------------------------------------------------------
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET',*99) 
+c         --------------------------------------------------------------
         ENDSELECT
+c...    Assign target node values:
         node(i1)%jsat(ion) = tube(it)%jsat(itarget,ion)
         node(i1)%ne        = 0.0
         node(i1)%pe        = 0.0
-        node(i1)%te        = tube(it)%te  (itarget)
-        node(i1)%ti(ion)   = tube(it)%ti  (itarget,ion)
+        node(i1)%te        = tube(it)%te(itarget)
+        node(i1)%ti(ion)   = tube(it)%ti(itarget,ion)
       ENDDO
 
 c...  Sort velocities from Mach numbers:
@@ -2345,6 +2504,8 @@ c...  Sort velocities from Mach numbers:
 
       ENDIF
 
+
+c      IF (ALLOCATED(fluid_tmp)) STOP 'dfsdfsd'
 
 
       RETURN

@@ -63,13 +63,13 @@ c
 c
 c           jdemod - changed halflen to halfringlen
 c
-            WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
+            WRITE(0,'(A,I3,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
      .        'SOL22: Low  ',ir,' (',deltat,' s)  E: ',err1,
      .        errstr(INT(errcode)),
      .        simag1 / (halfringlen - soffset) * 100.0,' - ',
      .        simag2 / (halfringlen - soffset) * 100.0,'%'
           ELSE
-            WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A)')
+            WRITE(0,'(A,I3,A,F5.1,A,I3,1X,A)')
      .        'SOL22: Low  ',ir,
      .        ' (',deltat,' s)  E: ',err1,errstr(INT(errcode))
           ENDIF
@@ -138,13 +138,13 @@ c
 c
 c           jdemod - changed halflen to halfringlen
 c
-            WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
+            WRITE(0,'(A,I3,A,F5.1,A,I3,1X,A,1X,F6.2,A,F6.2,A)')
      .        'SOL22: High ',ir,' (',deltat,' s)  E: ',err2,
      .        errstr(INT(errcode)),
      .        simag1 / (halfringlen - soffset) * 100.0,' - ',
      .        simag2 / (halfringlen - soffset) * 100.0,'%'
           ELSE
-            WRITE(0,'(A,I2,A,F5.1,A,I3,1X,A)')
+            WRITE(0,'(A,I3,A,F5.1,A,I3,1X,A)')
      .        'SOL22: High ',ir,' (',deltat,' s)  E: ',err2,
      .        errstr(INT(errcode))
           ENDIF

@@ -1397,19 +1397,59 @@ c     data listed in the DIVIMP/OEDGE input file:
 
           IF (idring(ir).EQ.BOUNDARY) THEN
 c...        Assign default values to the virtual rings:
-            lpdati(ii,1) = REAL(ir)
-            lpdati(ii,2) = 1.0
-            lpdati(ii,3) = 1.0
+c
+c            lpdati(ii,1) = REAL(ir)
+c            lpdati(ii,2) = 1.0
+c            lpdati(ii,3) = 1.0
+c            lpdato(ii,1) = REAL(ir)
+c            lpdato(ii,2) = 1.0
+c            lpdato(ii,3) = 1.0
+c            IF (lpdatsw.EQ.0) THEN
+c              lpdati(ii,4) = 1.0E+12
+c              lpdato(ii,4) = 1.0E+12
+c            ELSE
+c              lpdati(ii,4) = 1.0E+00
+c              lpdato(ii,4) = 1.0E+00
+c            ENDIF
+c
+c
+c         jdemod - code here assumed that the ii index is identical for both 
+c                  inner and outer - it should be since any sol ring should
+c                  have 2 ends! ... however, the code also did not update nlpdato,i
+c                  which might be a problem if there boundary rings are at the end 
+c                  of the list
+c                  I have copied the assignment code from the end of the routine
+c                  to here and set the default boundary ring values.   
+c
+c...      Assign LPDATx arrays (target data used to assign target data
+c         KxDS arrays):
+          IF (region.EQ.IKLO) THEN
+            nlpdato = MAX(nlpdato,ii)
             lpdato(ii,1) = REAL(ir)
             lpdato(ii,2) = 1.0
             lpdato(ii,3) = 1.0
             IF (lpdatsw.EQ.0) THEN
-              lpdati(ii,4) = 1.0E+12
               lpdato(ii,4) = 1.0E+12
             ELSE
-              lpdati(ii,4) = 1.0E+00
               lpdato(ii,4) = 1.0E+00
             ENDIF
+c            write(6,'(a,2i8,6(1x,g12.5))') 'LPDATO1:',ii,ir,
+c     >            lpdato(ii,1),lpdato(ii,2),lpdato(ii,3),lpdato(ii,4)
+          ELSE
+            nlpdati = MAX(nlpdati,ii)
+            lpdati(ii,1) = REAL(ir)
+            lpdati(ii,2) = 1.0
+            lpdati(ii,3) = 1.0
+            IF (lpdatsw.EQ.0) THEN
+              lpdati(ii,4) = 1.0E+12
+            ELSE
+              lpdati(ii,4) = 1.0E+00
+            ENDIF
+c            write(6,'(a,2i8,6(1x,g12.5))') 'LPDATI1:',ii,ir,
+c     >            lpdati(ii,1),lpdati(ii,2),lpdati(ii,3),lpdati(ii,4)
+         endif
+
+
             CYCLE
           ENDIF
 
@@ -1500,6 +1540,9 @@ c           the entire TARINTER array as target data to be interpolated:
 c...        Data was not found for this ring:
             IF (no_data_warning.EQ.0) no_data_warning = 1
             WRITE(PINOUT,*) 'WARNING: TARGET DATA NOT FOUND FOR',
+     .                      ir,region
+            WRITE(6,*) 'WARNING:INTERPOLATE TARGET DATA:'//
+     >                  ' DATA NOT FOUND FOR',
      .                      ir,region
             CYCLE
           ENDIF
@@ -1669,12 +1712,16 @@ c         KxDS arrays):
             lpdato(ii,2) = dum2 * te_mult_o
             lpdato(ii,3) = dum3 * ti_mult_o
             lpdato(ii,4) = dum4 *  n_mult_o
+c            write(6,'(a,3i8,6(1x,g12.5))') 'LPDATO2:',ii,nlpdato,ir,
+c     >            lpdato(ii,1),lpdato(ii,2),lpdato(ii,3),lpdato(ii,4)
           ELSE
             nlpdati = MAX(nlpdati,ii)
             lpdati(ii,1) = REAL(ir)
             lpdati(ii,2) = dum2 * te_mult_i
             lpdati(ii,3) = dum3 * ti_mult_i
             lpdati(ii,4) = dum4 *  n_mult_i
+c            write(6,'(a,3i8,6(1x,g12.5))') 'LPDATI2:',ii,nlpdati,ir,
+c     >            lpdati(ii,1),lpdati(ii,2),lpdati(ii,3),lpdati(ii,4)
           ENDIF
 c...      End of IR loop:
         ENDDO
@@ -1686,6 +1733,7 @@ c...    Need to do this twice:
         repeat = .FALSE.
         GOTO 10
       ENDIF
+
 
 c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
@@ -1880,7 +1928,7 @@ c
 
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
      .        ikto3,ikti3,ik1,ik2,ik3,ir3,count,ndat
-      LOGICAL recalculate,cheat1,status
+      LOGICAL recalculate,cheat1,status,message_cutpoint
       REAL rhozero,ikintersec(MAXNRS,2),ldat(MAXNLDAT,2),frac
 
       REAL*8 a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
@@ -1895,7 +1943,7 @@ c
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
 
-      DATA cheat1 /.TRUE./
+      DATA cheat1, message_cutpoint /.TRUE., .TRUE./
       SAVE
 
 
@@ -2152,7 +2200,10 @@ c          STOP 'sdfsdf'
         ENDDO
 
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1) THEN
-          CALL WN('SetupGrid','Cannot find cut points in PFZ')
+          IF (message_cutpoint) THEN
+            CALL WN('SetupGrid','Cannot find cut points in PFZ')
+            message_cutpoint = .FALSE.
+          ENDIF
           ikto2(ir) = nks(ir) / 2
           ikti2(ir) = ikto2(ir) + 1
         ENDIF

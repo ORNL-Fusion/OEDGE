@@ -3816,6 +3816,7 @@ c
         IF (outmode.GE.1) THEN
           WRITE(0     ,'(4A)') ' WARNING ',routine,': ',message
           WRITE(PINOUT,'(4A)') ' WARNING ',routine,': ',message
+          WRITE(6     ,'(4A)') ' WARNING ',routine,': ',message
         ENDIF
 
         WRITE(SLOUT,'(4A)') 'WARNING ',routine,': ',message

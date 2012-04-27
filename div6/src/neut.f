@@ -1488,6 +1488,9 @@ C
       KK    = 1000 * ISECT
       KKLIM = KK - 10
 C
+c slmod begin
+      if (sloutput) write(0,*) 'debug: NPROD-LPROD+1 = ',NPROD-LPROD+1
+c slmod end
       DO 900 IPROD = 1, NPROD-LPROD+1
 c
 c     jdemod - temp debug
@@ -3017,8 +3020,8 @@ c                WRITE (6,9003) IPROD,CIST,IK,IR,IX,IY,R,Z,K,
 c
 c               jdemod - tmp debug
 c
-                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
-     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
+c                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
+c     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
               ENDIF
             ENDIF
 C
@@ -4793,6 +4796,8 @@ c                 5   = Flux * Yield
      .                     wall_flx(in)%in_par_blk(1,0)  ! flxhw3(in) / (flxhw2(in) + 1.0E-10)
           fydata(id,5) = wall_flx(in)%em_par_atm(2,1)    ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
           fydata(id,:) = fydata(id,:) * kmfps(id)
+
+c          write(0,*) '  debug 1: fydata5',id,fydata(id,5),kmfps(id)
         enddo
 c slmod end
       endif 
@@ -5230,6 +5235,8 @@ c                    5   = Flux * Yield
 c             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))  ! bug, FLXHW2(IN) should have been FLXHW6(ID) 
 c             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
              fydata(id,:) = fydata(id,:) * kmfpws(id)
+
+c          write(0,*) '  debug 2: fydata5',in,fydata(in,5)
 c             IF (kmfpws(id).NE.0.0) THEN
 c               WRITE(0,*) '  DEGUB: fydata4,5=',fydata(in,4:5),
 c     .                     MAX(0.0,flxhw3(id) / (flxhw6(id) + 1.0E-10)),

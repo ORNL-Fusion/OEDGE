@@ -452,26 +452,26 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
 
           DO i1 = 1, sputter_ndata
             buffer = TRIM(buffer_list(i1))
-           write(0,*) 'buffer: '//TRIM(buffer)
+c           write(0,*) 'buffer: '//TRIM(buffer)
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
-              CASE(1)
+c             ----------------------------------------------------------
+              CASE(1:3)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
-              CASE(2)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
-              CASE(3)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                sputter_data(i1)%tag       = TRIM(buffer_array(5))
+c             ----------------------------------------------------------
               CASE(4) ! sputtering specices is a constant fraction of the hydrogenic flux
                 READ(buffer_array(2),*) sputter_data(i1)%atomic_number
                 READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
                 READ(buffer_array(4),*) sputter_data(i1)%charge
                 READ(buffer_array(5),*) sputter_data(i1)%fraction
+                sputter_data(i1)%tag = TRIM(buffer_array(5))
+c             ----------------------------------------------------------
               CASE DEFAULT
+c             ----------------------------------------------------------
                 CALL ER('LoadDivimpOption','Unknown sputter data '//
      .                  'type',*99)
             ENDSELECT
@@ -912,6 +912,10 @@ c
           CALL ReadOptionI(buffer,2,opt%p_rec)
         CASE('S P_ANO')
           CALL ReadOptionI(buffer,2,opt%p_ano)
+        CASE('S P_ANO_DIST')
+          CALL ReadOptionI(buffer,2,opt%p_ano_dist)
+        CASE('S P_ANO_EXP')
+          CALL ReadOptionR(buffer,2,opt%p_ano_exp)
         CASE('S M_PIN')
           CALL ReadOptionI(buffer,2,opt%m_mom)
         CASE('S M_FIT')
@@ -1361,6 +1365,8 @@ c...  OSM options:
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
       opt%p_ano      = 2
+      opt%p_ano_dist = 3   ! new on 23/04/2012
+      opt%p_ano_exp  = 0.0 ! new on 23/04/2012
       opt%m_mom      = 0
       opt%m_fit      = 2
       opt%m_ano      = 2

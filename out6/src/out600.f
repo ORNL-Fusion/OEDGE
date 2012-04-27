@@ -1305,10 +1305,10 @@ C
           WRITE (IPLOT,9012) NPLOTS,REF
           CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >      YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-          IF (count.eq.1) CALL SUPIMP ('SELECT')
+          CALL SUPIMP ('SELECT')
 c          IF (count.eq.1) CALL SUPIMP ('SELECT')
           CALL GRTRAC (HWALKS(LW,1),HWALKS(LW,2),UW-LW+1,NAME,'LINE',0)
-c          CALL FRAME
+          CALL FRAME
           IG = IG + 1
         ENDIF
         LW = UW + 2

@@ -1324,7 +1324,7 @@ c              grm_shade(IKHI,ip) = kss(ikbound(ir,IKHI),ir)
           ENDIF
 
           IF     (ytype.EQ.1.OR.ytype.EQ.9.OR.ytype.EQ.11) THEN
-            WRITE(pltlabs(ip),'(I2)') ir
+            WRITE(pltlabs(ip),'(I3)') ir
           ELSEIF (ytype.NE.2) THEN
             pltlabs(ip) = ' '
           ENDIF
