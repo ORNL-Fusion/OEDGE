@@ -369,7 +369,9 @@ c        ti_node = te_node
         ELSEIF (node(inode)%pe.GT.0.0) THEN
           SELECTCASE (0)
             CASE (0)
-              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+              pressure = node(inode)%pe * SNGL(ECH)  ! changed 28.04.12
+c              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+
             CASEDEFAULT 
           ENDSELECT
         ELSE
@@ -1146,7 +1148,7 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               status = .TRUE.
               opt_iteration(nopt) = opt
               nopt = nopt + 1
-              write(0,*) TRIM(buffer)
+c              write(0,*) TRIM(buffer)
               READ(buffer,*) cdum1,idum1(1:3),cdum1
               cdum1 = TRIM(buffer(INDEX(buffer,TRIM(cdum1)):))  ! This hokem was necessary to catch ranges that included commas, i.e. '1-4,12-14',
 c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 was only assigned 1-4 otherwise.  This hasn't happened before for 
@@ -1164,7 +1166,7 @@ c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 wa
                 load_data = .TRUE.
                 opt%iteration(1:2) = idum1(2:3)
                 opt%tube           = TRIM(cdum1)
-              write(0,*) 'trim c ',TRIM(cdum1)
+c              write(0,*) 'trim c ',TRIM(cdum1)
               ELSE
                 load_data = .FALSE.
               ENDIF
