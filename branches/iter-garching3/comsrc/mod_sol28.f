@@ -813,8 +813,27 @@ c...    Strata:
 !
 ! ----------------------------------------------------------------------
 !
+      MODULE mod_sol28_reference
+      USE mod_sol28      
+      USE mod_geometry
+      USE mod_options
+      IMPLICIT none
+
+      PUBLIC
+
+!...  Reference plasma:
+      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
+      TYPE(type_tube ), ALLOCATABLE       :: ref_tube (:)
+      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
+      TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
+
+      END MODULE mod_sol28_reference
+!
+! ----------------------------------------------------------------------
+!
       MODULE mod_sol28_global
       USE mod_sol28      
+      USE mod_sol28_reference
       USE mod_geometry
       USE mod_options
       IMPLICIT none
@@ -877,11 +896,6 @@ c...    Strata:
       TYPE(type_impurity), ALLOCATABLE, SAVE :: impurity(:,:) 
       TYPE(type_drift   ), ALLOCATABLE, SAVE :: drift   (:,:) 
 
-!...  Reference plasma:
-      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
-      TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
-      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
-      TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
 
 !...  Plasma species that are being tracked in the simulation:
       INTEGER, SAVE :: nspecies

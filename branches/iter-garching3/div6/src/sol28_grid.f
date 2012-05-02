@@ -1501,6 +1501,7 @@ c...      Assign TUBE and CELL quanitites:
           nvtx = 0
           ncell = 0
           DO ir = 1, nrs
+            tube(ir)%index  = ir
             tube(ir)%bratio = 0.0
             tube(ir)%dds    = 0.0
             tube(ir)%rp     = 0.0

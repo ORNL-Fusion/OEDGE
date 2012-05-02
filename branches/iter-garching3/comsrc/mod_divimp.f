@@ -93,6 +93,7 @@
          CHARACTER*256       :: case_name
          CHARACTER*256       :: extension
          REAL                :: fraction
+         CHARACTER*256       :: tag
          REAL                :: absfac
          REAL                :: absfac_net
          INTEGER             :: atomic_number

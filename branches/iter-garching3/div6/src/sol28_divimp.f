@@ -88,6 +88,7 @@ c
 c subroutine: divCompileSputteringYields
 c
       SUBROUTINE divCompileSputteringYields
+      USE mod_interface
       USE eckstein_2007_yield_data
       USE mod_divimp
       IMPLICIT none
@@ -102,9 +103,10 @@ c      INCLUDE 'pindata'
       REAL divYield_Be_W
 
       INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
-     .              ncore,in,nsputter,ierr,nymfs,nds2
+     .              ncore,in,nsputter,ierr,nymfs,nds2,n
       REAL          yield,rdum1,ratio,frac
       CHARACTER*512 fname,command,resdir
+      CHARACTER     t1*3,t2*6
 
       nymfs = nymfs_global ! so lame, but need NYMFS and it's not in a common block
  
@@ -250,6 +252,7 @@ c...      Unzip file if necessary:
      .               sputter_data(i)%ncore           ! number of radial core data points
 	    
             SELECTCASE (sputter_data(i)%format)
+c             ----------------------------------------------------------
               CASE (1)
                 nseg = sputter_data(i)%nsegments
                 mion = MIN(sputter_data(i)%atomic_number,
@@ -306,13 +309,16 @@ c               wall flux later, if desired:
      .              sputter_data(i)%core_percent_nfrac(1:ncore),
      .              sputter_data(i)%core_percent_efrac(1:ncore)
                 ENDIF
+c             ----------------------------------------------------------
               CASEDEFAULT
                 CALL ER('divCompileSputteringYields','Unrecognized '//
      .                  'file TYPE',*99)
+c             ----------------------------------------------------------
             ENDSELECT
           ELSE
             CALL ER('divCompileSputteringYields','Unrecognized '//
      .              'file VERSION number',*99)
+
           ENDIF
 	  
 10        CONTINUE
@@ -322,21 +328,16 @@ c               wall flux later, if desired:
         ENDIF
 
       ENDDO
-
 c
 c     ------------------------------------------------------------------
 c     DERIVE YIELDS
 c
-
-
       DO i = 1, nsputter
         nseg = sputter_data(i)%nsegments
         mion = MIN(sputter_data(i)%atomic_number,
      .             sputter_data(i)%charge_max    )
 
-
         IF (sputter_data(i)%type.EQ.3) CYCLE   ! yield is already calculated
-
 
         sputter_data(i)%target_number = cion
  
@@ -377,17 +378,18 @@ c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
           ENDDO
         ENDDO
       ENDDO
-
 c
 c     ------------------------------------------------------------------
 c     SET absfac FOR SPECIFIED IMPURITY FRACTIONS
 c
       DO i = 1, nsputter
+
         IF (sputter_data(i)%type    .NE. 1  .OR.
      .      sputter_data(i)%absfac  .NE. 1.0.OR.
      .      sputter_data(i)%fraction.EQ.-1.0) CYCLE
         ncore = sputter_data(i)%ncore
         j = 0
+
 c        DO j = 1, ncore
 c          ratio = sputter_data(i)%core_rho(j    ) / 
 c     .            sputter_data(i)%core_rho(ncore)
@@ -412,7 +414,6 @@ c
 c     ------------------------------------------------------------------
 c     ASSIGN wlprob
 c
-
       WRITE(0 ,*) 'sputter data',nsputter
       WRITE(88,*) 'sputter data',nsputter
       DO i = 1, nsputter
@@ -475,6 +476,7 @@ c
         mion = MIN(sputter_data(i)%atomic_number,
      .             sputter_data(i)%charge_max    )
 
+c       Calcualte the particle influx from each wall segment in [s-1 m-1 toroidally]:
         DO j = 1, nseg
           id = sputter_data(i)%id(j)
           DO iz = 1, mion
@@ -487,6 +489,9 @@ c
           ENDDO
         ENDDO
 
+c       Add up all the segments to get ABSFAC value for all of the 
+c       sputtering species processed so far in this loop (because
+c       WLPROB is an integral over all sputtering species):
         sputter_data(i)%absfac_net = 0.0
         DO j = 1, nwlprob
           sputter_data(i)%absfac_net = sputter_data(i)%absfac_net + 
@@ -495,23 +500,79 @@ c
 
       ENDDO
 
+c     Isolate the net influx for each individual species:
       DO i = nsputter, 2, -1
-        sputter_data(i)%absfac_net = 
-     .    sputter_data(i  )%absfac_net - 
-     .    sputter_data(i-1)%absfac_net
+        sputter_data(i)%absfac_net = sputter_data(i  )%absfac_net - 
+     .                               sputter_data(i-1)%absfac_net
       ENDDO
 
       DO i = 1, nsputter
-        WRITE(0,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
+        WRITE(0 ,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
+        WRITE(88,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
       ENDDO
 
+c     Add up the influxes for the individual sputtering species and 
+c     assign the total influx over-ride value for DIVIMP:
       nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
-c      DO i = 1, nwlprob
-c        nabsfac = nabsfac + wlprob(i,3)
-c      ENDDO
+
+c     Normalize the wall launch probabilities:
       wlprob(:,3) = wlprob(:,3) / nabsfac
 
       wallpt(:,13) = 0.0
+c
+c     ------------------------------------------------------------------     
+c     Send data to IDL:
+
+      CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
+      i = nsputter
+      CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
+      CALL inPutData(sputter_data(1:i)%absfac_net   ,'ABSFAC'  ,'s-1')	  
+      CALL inPutData(sputter_data(1:i)%atomic_number,'BOMB_Z'  ,'NA')
+      CALL inPutData(sputter_data(1:i)%atomic_mass  ,'BOMB_A'  ,'NA')	  
+      CALL inPutData(sputter_data(1:i)%target_number,'TARGET_Z','NA') 
+      CALL inPutData(sputter_data(1:i)%charge_min   ,'C_MIN'   ,'NA')   
+      CALL inPutData(sputter_data(1:i)%charge_max   ,'C_MAX'   ,'NA')  
+      CALL inPutData(sputter_data(1:i)%type         ,'TYPE'    ,'NA')   
+c     Assume the data all comes from the same geometry and plasma:
+      n = sputter_data(1)%nsegments
+      CALL inPutData(kmfpws(sputter_data(1)%id(1:n)  ),'FACT','NA')
+      CALL inPutData(wlprob(sputter_data(1)%id(1:n),3),'PROB','NA')
+      CALL inPutData(sputter_data(1)%id (1:n),'ID'    ,'NA')	   
+      CALL inPutData(sputter_data(1)%r  (1:n),'POS_R' ,'m' ) 
+      CALL inPutData(sputter_data(1)%z  (1:n),'POS_Z' ,'m' )   
+      CALL inPutData(sputter_data(1)%dds(1:n),'LENGTH','m' )  
+c     Take IK,IR and Te,i for the first data set from standard DIVIMP 
+c     sputtering (rather than EIRENE calculated yields), otherwise 
+c     just take what's in the first data set, which is probably zero:
+      DO i = 1, nsputter
+        IF (sputter_data(i)%type.EQ.1) THEN
+          write(0,*) 'debug: dumping Te,i from',i
+          CALL inPutData(sputter_data(i)%ik(1:n),'IK','eV')   
+          CALL inPutData(sputter_data(i)%ir(1:n),'IR','eV')	  
+          CALL inPutData(sputter_data(i)%te(1:n),'TE','eV')   
+          CALL inPutData(sputter_data(i)%ti(1:n),'TI','eV')	  
+          EXIT
+        ENDIF
+      ENDDO
+      IF (i.EQ.nsputter+1) THEN
+        CALL inPutData(sputter_data(1)%ik(1:n),'IK','eV')   
+        CALL inPutData(sputter_data(1)%ir(1:n),'IR','eV')	  
+        CALL inPutData(sputter_data(1)%te(1:n),'TE','eV')   
+        CALL inPutData(sputter_data(1)%ti(1:n),'TI','eV')	  
+      ENDIF
+      DO i = 1, nsputter
+        WRITE(t1,'(A,I0.2)') '_',i
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+        CALL inPutData(mion,'MAX_CHARGE'//t1,'NA')	  
+        DO iz = 1, mion
+          WRITE(t2,'(2A,I0.2)') t1,'_',iz
+          CALL inPutData(sputter_data(i)%flux (1:n,iz),'FLUX'//t2,'s-1')
+          CALL inPutData(sputter_data(i)%e0   (1:n,iz),'E0'//t2   ,'eV')	  
+          CALL inPutData(sputter_data(i)%yield(1:n,iz),'YIELD'//t2,'NA')	  
+        ENDDO
+      ENDDO
+      CALL inCloseInterface
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
@@ -1131,6 +1192,7 @@ c      CALL CalcTubeDimensions(tube_3D_data,dangle)
         cind2 = ncell + ike
 
         ntube = ntube + 1
+        tube(ntube)%index  = ntube
         tube(ntube)%ir     = ir
         tube(ntube)%type   = ringtype(ir)
         tube(ntube)%ikti   = ikti2(ir)

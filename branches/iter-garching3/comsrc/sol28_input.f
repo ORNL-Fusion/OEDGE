@@ -452,26 +452,26 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
 
           DO i1 = 1, sputter_ndata
             buffer = TRIM(buffer_list(i1))
-           write(0,*) 'buffer: '//TRIM(buffer)
+c           write(0,*) 'buffer: '//TRIM(buffer)
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
-              CASE(1)
+c             ----------------------------------------------------------
+              CASE(1:3)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
-              CASE(2)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
-              CASE(3)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                sputter_data(i1)%tag       = TRIM(buffer_array(5))
+c             ----------------------------------------------------------
               CASE(4) ! sputtering specices is a constant fraction of the hydrogenic flux
                 READ(buffer_array(2),*) sputter_data(i1)%atomic_number
                 READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
                 READ(buffer_array(4),*) sputter_data(i1)%charge
                 READ(buffer_array(5),*) sputter_data(i1)%fraction
+                sputter_data(i1)%tag = TRIM(buffer_array(5))
+c             ----------------------------------------------------------
               CASE DEFAULT
+c             ----------------------------------------------------------
                 CALL ER('LoadDivimpOption','Unknown sputter data '//
      .                  'type',*99)
             ENDSELECT
@@ -866,7 +866,7 @@ c
         CASE('F EIRENE_15')
           opt_eir%f_eirene_load = 1
           READ(buffer,*) cdum1,opt_eir%f_eirene_15
-          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
+c          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
         CASE('GRID FORMAT')
           CALL ReadOptionI(buffer,1,opt%f_grid_format)
         CASE('GRID LOAD METHOD')
