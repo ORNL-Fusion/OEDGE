@@ -1,0 +1,51 @@
+$ CORTEX plot file for Karl
+
+{STRING}  disclaimer  Wall reflections not included, 1 integration chord per view, (j-eg_los.d6o and j-eg_los.ctx)
+
+$ ======================================================================
+$ Load and store/save the fluid grid geometry (takes some time...)
+$ ======================================================================
+
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {SAVE}
+
+$ ======================================================================
+$ Plots
+$ ======================================================================
+
+$ ----------------------------------------------------------------------
+$ H-alpha
+
+{PLOT 2D FLUID GRID}  1  {LOAD}  {NO FRAME}  
+  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  1  {CASE}  j-eg-sol28_SL_l
+  {DATA FILE}  idl.KSRc_C28  {NOTES}  disclaimer  {YLOG}  
+
+{PLOT 2D CONTOUR}  220 {LOG}  {NO FRAME}  {NO WALL}  {NO TITLE}  {NO FRAME}
+  {XRANGE}    12 22                                                             $ range on the 2D contour plot
+  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  1  {CASE}  j-eg-sol28_SL_l
+  {DATA FILE}  idl.KSRx_C28  {NOTES}  disclaimer  {YLOG}  
+
+$ ----------------------------------------------------------------------
+$ Be
+
+${PLOT 2D FLUID GRID}  1  {LOAD}  {NO FRAME}  
+$  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+${PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  2  {CASE}  j-eg-sol28_SL_l
+$  {DATA FILE}  idl.KSRc_C28  {NOTES}  disclaimer  {YLOG}  
+
+${PLOT 2D CONTOUR}  400 {STATE}  0  {LOG}  {NO FRAME}  {NO WALL}  {NO TITLE}  {NO FRAME}
+$  {XRANGE}    12 16                                                             $ range on the 2D contour plot
+$  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+${PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  2  {CASE}  j-eg-sol28_SL_l
+$  {DATA FILE}  idl.KSRx_C28  {NOTES}  disclaimer  {YLOG}  
+
+
+
+{EXIT}
+
+
+
+
+
+
