@@ -396,6 +396,10 @@ c         --------------------------------------------------------------
                 DO i1 = 1, opt%chord_n                                 
                   READ(fp,*) opt%chord_opt(i1),opt%chord_v1(1:3,i1),
      .                                         opt%chord_v2(1:3,i1)
+
+c...              Extend length by 10%:
+                  opt%chord_v2(1:3,i1) =    opt%chord_v1(1:3,i1) + 1.1 * 
+     .              (opt%chord_v2(1:3,i1) - opt%chord_v1(1:3,i1))
                 ENDDO
                 READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
      .                           opt%sa_par1 ,opt%sa_par2

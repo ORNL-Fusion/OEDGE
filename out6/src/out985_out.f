@@ -272,14 +272,14 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
           WRITE(0,*) 'WLNGTH:',wlngth2
 c       ----------------------------------------------------------------
         CASE (3) 
-c...      DIVIMP precalculated quantities (should move DALHPA and DGAMMA here):
+c...      DIVIMP pre-calculated quantities (should move DALHPA and DGAMMA here):
           IF     (TRIM(opt%int_line(iint)).EQ.'PRAD') THEN
             SELECTCASE (opt%int_charge(iint))
               CASE (-1)  ! Sum over all charge states 
                 osm = 0.0
                 DO iz = 0, MIN(cion,nizs)
 c                  WRITE(0,*) 'IZ!',iz,absfac
-                  osm(1:ik,1:ir) = osm(1:ik,1:ir) +  powls(1:ik,1:ir,iz)
+                  osm(1:ik,1:ir) = osm(1:ik,1:ir) + powls(1:ik,1:ir,iz)
                 ENDDO
                 IF (absfac.GT.0.0) osm = osm * absfac
                 DO iz = 0, 1
