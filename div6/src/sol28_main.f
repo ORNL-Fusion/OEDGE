@@ -2134,6 +2134,7 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
                 tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE DEFAULT
+                WRITE(0,*) 'SOL_OPTION',sol_option
                 CALL ER('MainLoop','Solver option not identified',*99)
             ENDSELECT
 

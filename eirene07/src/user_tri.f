@@ -1423,7 +1423,7 @@ c...  Particle source:
       WRITE(FP,80) '* PARTICLE SOURCES'
       WRITE (FP,'(I6)') NSTRAI
       DO IS=1,NSTRAI
-        WRITE (FP,'(I6,I8,1P,3E14.6,0P)') 
+        WRITE (FP,'(I6,I10,1P,3E14.6,0P)') 
      .    IS,SAVE_IPANU(IS),FLUXT(IS),PTRASH(IS),ETRASH(IS)
       ENDDO
 c

@@ -4471,7 +4471,25 @@ c
          write(6,'(a,10(1x,g12.5))') 'NABSFAC CALCULATION:',nabsfac,
      >            ssef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+c slmod begin
+        if (nabsfac.eq.1.0) then
+          write(6,*) 
+          write(6,*) '-------------------------------------------------'
+          write(6,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(6,*) '-------------------------------------------------'
+          write(6,*) 
 
+          write(0,*) 
+          write(0,*) '-------------------------------------------------'
+          write(0,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(0,*) '-------------------------------------------------'
+          write(0,*) 
+
+          absfac      = nabsfac
+          absfac_ion  = absfac
+          absfac_neut = absfac
+        endif
+c slmod end
       elseif (lpinz0) then
          absfac = zioniz*(tatiz/nimps) + neut2d_fytot
          absfac_neut = absfac
