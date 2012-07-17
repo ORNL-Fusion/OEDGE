@@ -149,15 +149,9 @@ c
       DO i = 1, nsputter
 
         IF (sputter_data(i)%data_type.EQ.4) THEN
+c       ----------------------------------------------------------------
 
-          nds2 = 0
-          DO id = 1, nds
-            ir = irds(id)
-            IF (idring(ir).EQ.BOUNDARY) CYCLE
-            nds2 = nds2 + 1
-          ENDDO
-
-          nseg = nds2
+          nseg = wallpts
           mion = sputter_data(i)%atomic_number
 
           ALLOCATE(sputter_data(i)%ik   (nseg))
@@ -173,39 +167,53 @@ c
           ALLOCATE(sputter_data(i)%yield(nseg,mion))
 
           sputter_data(i)%type       = sputter_data(i)%data_type
+          sputter_data(i)%version    = 1.0
           sputter_data(i)%nsegments  = nseg
           sputter_data(i)%charge_max = sputter_data(i)%atomic_number
 	  sputter_data(i)%absfac     = 1.0
-	  sputter_data(i)%flux       = 0.0
 
-          k = 0
-          DO j = 1, nds
-            ik = ikds(j)
-            ir = irds(j)
-            IF (idring(ir).EQ.BOUNDARY) CYCLE
+          DO j = 1, nseg
 
-            k = k + 1
-            sputter_data(i)%ik (k) = ik
-	    sputter_data(i)%ir (k) = ir
-	    sputter_data(i)%id (k) = wallindex(j)
-	    sputter_data(i)%r  (k) = rp(j)
-	    sputter_data(i)%z  (k) = zp(j)
-	    sputter_data(i)%dds(k) = dds2(j)
-	    sputter_data(i)%te (k) = kteds(j)
-	    sputter_data(i)%ti (k) = ktids(j)
+            k = NINT(wallpt(j,18))
+            IF (k.NE.0) THEN
+              ik = ikds(k)
+              ir = irds(k)
+            ENDIF
 
-            iz = sputter_data(i)%charge
-	    sputter_data(i)%flux(k,iz) = 
-     .        knds(j) * ABS(kvds(j)) / kbfs(ik,ir) * costet(j) *   ! same as in NEUT.f
-     .        (sputter_data(i)%fraction / 100.0)
-
-            DO iz = 1, sputter_data(i)%atomic_number
-    	      sputter_data(i)%e0(k,iz) = 
-     .          3.0 * kteds(j) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
-     .          2.0 * ktids(j) 
-            ENDDO
+            IF (k.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+              sputter_data(i)%ik (j) = ik
+	      sputter_data(i)%ir (j) = ir
+	      sputter_data(i)%id (j) = j  ! wallindex(j)
+	      sputter_data(i)%r  (j) = rp(k)
+	      sputter_data(i)%z  (j) = zp(k)
+	      sputter_data(i)%dds(j) = dds2(k)
+	      sputter_data(i)%te (j) = kteds(k)
+	      sputter_data(i)%ti (j) = ktids(k)
+	  
+              iz = sputter_data(i)%charge
+	      sputter_data(i)%flux(j,iz) = 
+     .          knds(k) * ABS(kvds(k)) / kbfs(ik,ir) * costet(k) *   ! same as in NEUT.f
+     .          (sputter_data(i)%fraction / 100.0)
+	  
+              DO iz = 1, sputter_data(i)%atomic_number
+    	        sputter_data(i)%e0(j,iz) = 
+     .            3.0 * kteds(k) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
+     .            2.0 * ktids(k) 
+              ENDDO
+            ELSE
+              sputter_data(i)%ik  (j  ) = 0
+	      sputter_data(i)%ir  (j  ) = 0
+	      sputter_data(i)%id  (j  ) = j
+	      sputter_data(i)%r   (j  ) = 0.0
+	      sputter_data(i)%z   (j  ) = 0.0
+	      sputter_data(i)%dds (j  ) = 0.0
+	      sputter_data(i)%te  (j  ) = 0.0
+	      sputter_data(i)%ti  (j  ) = 0.0
+	      sputter_data(i)%flux(j,:) = 0.0
+              sputter_data(i)%e0  (j,:) = 0.0
+            ENDIF
           ENDDO      
-
+c       ----------------------------------------------------------------
         ELSE
 
           fname = TRIM(resdir)//'/'//
@@ -325,6 +333,7 @@ c             ----------------------------------------------------------
           IF (id.NE.nseg+1) sputter_data(i)%nsegments = id - 1
           CLOSE(fp)
 
+c       ----------------------------------------------------------------
         ENDIF
 
       ENDDO
@@ -359,6 +368,17 @@ c     .                          INT(sputter_data(i)%atomic_mass  ))
      .    CALL ER('divCompileSputteringYields','Plasma material not '//
      .            'identified',*99)
 
+
+        IF (matp.EQ.6.AND.sputter_data(i)%atomic_number.EQ.10) THEN
+          WRITE(7,*) '      APPLYING NEON OVER-RIDE (MATP=8)'
+          matp = 8
+        ENDIF
+
+        IF (sputter_data(i)%atomic_number.EQ.4.AND.matt.EQ.9) THEN
+          WRITE(7,*) '      APPLYING SPECIAL Be->W DATA'
+        ENDIF
+
+
 c       Standard setup if not Be (cizb=4) incident on W (MATT=9) 
 c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
         IF (sputter_data(i)%atomic_number.NE.4.OR.matt.NE.9) 
@@ -387,6 +407,7 @@ c
         IF (sputter_data(i)%type    .NE. 1  .OR.
      .      sputter_data(i)%absfac  .NE. 1.0.OR.
      .      sputter_data(i)%fraction.EQ.-1.0) CYCLE
+
         ncore = sputter_data(i)%ncore
         j = 0
 
@@ -417,7 +438,8 @@ c
       WRITE(0 ,*) 'sputter data',nsputter
       WRITE(88,*) 'sputter data',nsputter
       DO i = 1, nsputter
-        WRITE(88,'(F5.1,I4,1P,E10.2,0P,I4,F6.2,3I4,2I6)') 
+        WRITE(88,'(I4,F5.1,I4,1P,E10.2,0P,I4,F6.2,3I4,2I6)') 
+     .    i,
      .    sputter_data(i)%version,
      .    sputter_data(i)%format   ,
      .    sputter_data(i)%absfac ,
@@ -431,6 +453,11 @@ c
           nseg = sputter_data(i)%nsegments
           mion = MIN(sputter_data(i)%atomic_number,
      .               sputter_data(i)%charge_max    )
+        DO id = 1, nseg
+          WRITE(88,'(5X,2I6)')
+     .      id,sputter_data(i)%id(id)
+        ENDDO
+
         DO id = 1, nseg
           WRITE(88,'(5X,F5.2,3I6,2F7.3,1P,E10.2,0P,2F8.2,
      .              20(2X,1P,E10.2,0P,F8.2,1P,E10.2,0P))')
@@ -471,7 +498,12 @@ c
         wlprob(id,2) = id
       ENDDO
 
+      write(88,*) 'wlprob:'
+
       DO i = 1, nsputter
+
+        write(88,*) ' '
+
         nseg = sputter_data(i)%nsegments
         mion = MIN(sputter_data(i)%atomic_number,
      .             sputter_data(i)%charge_max    )
@@ -480,7 +512,7 @@ c       Calcualte the particle influx from each wall segment in [s-1 m-1 toroida
         DO j = 1, nseg
           id = sputter_data(i)%id(j)
           DO iz = 1, mion
-            wlprob(id,3) = wlprob(id,3) +
+            wlprob(id,3) = wlprob(id,3) +  
      .        sputter_data(i)%absfac      *    
      .        sputter_data(i)%flux (j,iz) *    
      .        sputter_data(i)%yield(j,iz) *
@@ -496,6 +528,13 @@ c       WLPROB is an integral over all sputtering species):
         DO j = 1, nwlprob
           sputter_data(i)%absfac_net = sputter_data(i)%absfac_net + 
      .                                 wlprob(j,3)
+        ENDDO
+
+        DO j = 1, nseg
+          id = sputter_data(i)%id(j)
+          IF (kmfpws(id).NE.0.0) THEN
+            write(88,*) i,j,id,wlprob(id,3)
+          ENDIF
         ENDDO
 
       ENDDO
@@ -526,7 +565,8 @@ c     Send data to IDL:
       CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
       i = nsputter
       CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
-      CALL inPutData(sputter_data(1:i)%absfac_net   ,'ABSFAC'  ,'s-1')	  
+      CALL inPutData(sputter_data(1:i)%absfac_net   ,'ABSFAC'   ,'s-1')	  
+      CALL inPutData(sputter_data(1:i)%absfac       ,'ABSFAC_IN','s-1')	  
       CALL inPutData(sputter_data(1:i)%atomic_number,'BOMB_Z'  ,'NA')
       CALL inPutData(sputter_data(1:i)%atomic_mass  ,'BOMB_A'  ,'NA')	  
       CALL inPutData(sputter_data(1:i)%target_number,'TARGET_Z','NA') 
@@ -672,6 +712,7 @@ c...  Add virtual rings:
 c      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
 
       irsep  = grid%isep
+      irsep2 = grid%isep2
       irwall = grid%ipfz - 1
       irtrap = grid%ipfz
       nrs    = ntube

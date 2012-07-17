@@ -3282,14 +3282,14 @@ c         Search the wall for intersections:
               WRITE(fp,*) '    X3,Y3   :',x3,y3
               WRITE(fp,*) '    X4,Y4   :',x4,y4
             ENDIF
-            IF (s12.GT.0.0D0.AND.s12.LT.1.0D0.AND.
-     .          s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
+            IF (s12.GT.0.0D+0.AND.s12.LT.1.0D0.AND.
+     .          s34.GT.0.0D+0.AND.s34.LT.1.0D0.AND. 
      .          s12.LT.s12max) THEN
               s12max = s12
               clist(i1,i2) = iwall
               xlist(i1,i2) = store_x2
               ylist(i1,i2) = store_y2
-              IF (debug) WRITE(fp,*) '  *** CUT ***',i1,i2,s12,iwall
+              IF (debug) WRITE(fp,*) '  *** CUT A ***',i1,i2,s12,iwall
             ENDIF
           ENDDO
           IF (clist(i1,i2).EQ.0) THEN
@@ -3661,15 +3661,16 @@ c       Search the wall for intersections:
             WRITE(fp,*) '    X3,Y3   :',x3,y3
             WRITE(fp,*) '    X4,Y4   :',x4,y4
           ENDIF
-          IF (s12.GT.0.0D0.AND.s12.LT.1.0D0.AND.
-     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
+          IF (s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
+     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
+c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
      .        s12.LT.s12max) THEN
             s12max = s12
             list(i1)%w = iw
             list(i1)%s = s34
             list(i1)%x = store_x2
             list(i1)%y = store_y2
-            IF (debug) WRITE(fp,*) '  *** CUT ***',i1,s12,iw
+            IF (debug) WRITE(fp,*) '  *** CUT B ***',i1,s12,iw
           ENDIF
         ENDDO
         IF (list(i1)%w.EQ.0) THEN

@@ -833,7 +833,8 @@ c
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
      .        first_pass,two_timer,default_message,node_valid,
-     .        suppress_screen,rho_warning
+     .        suppress_screen,rho_warning,
+     .        ne_warning,te_warning,ti_warning
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,rho0,
@@ -851,7 +852,10 @@ c
       TYPE(type_tube )              :: tube_tmp
       TYPE(type_fluid), ALLOCATABLE :: fluid_tmp(:,:)
 
-      DATA default_message, rho_warning / .TRUE., .TRUE./
+      DATA default_message, rho_warning, ne_warning, te_warning, 
+     .                                   ti_warning
+     .     / .TRUE.       , .TRUE.     , .TRUE.    , .TRUE.    , 
+     .                                   .TRUE.   /
       SAVE     
 
       suppress_screen = .FALSE.
@@ -2379,62 +2383,109 @@ c         --------------------------------------------------------------
             tube(it)%te(itarget)     = node(i2)%te
             tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
 c         --------------------------------------------------------------
-          CASE (2:5) 
+          CASE (2:4) 
 c            IF ((node(i2)%par_set.EQ.2                            ).OR.
 c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%te     .EQ.0.0)) THEN
 c     .        tube(it)%te(itarget)     = node(i2)%te
-            IF (node(i2)%par_set.EQ.2.AND.node(i1)%te.NE.0.0) 
-     .        CALL ER('AssignNodeValues_New','PAR_SET=2 but target'//
-     .         'data already assigned',*99)
+
+            IF (node(i2)%par_set.EQ.2.AND.node(i1)%te.NE.0.0) THEN 
+              IF (te_warning) THEN
+                WRITE(0,*) 'WARNING: PAR_SET=2 but target '//
+     .           'Te data already assigned, overwriting'
+                te_warning = .FALSE.
+              ENDIF
+              node(i1)%te = 0.0
+            ENDIF
 
             IF (node(i1)%te.EQ.0.0) THEN
               SELECTCASE (node(i2)%par_set)
                 CASE (2:3) 
                   node_te = node(i2)%te 
                 CASE (4)  
-
-                  write(0,*) 'tube  = ',it
-                  write(0,*) 'node  = ',i2,node_i(i2)
-
                   IF (node_i(i2).NE.2)
      .              CALL ER('_New','Symmetry node required',*99) 
-	          
-                  write(0,*) 'sdat  = ',node(i2)%s,tube(it)%smax
-                  write(0,*) 'n  = ',node(i2)%ne
-                  write(0,*) 'te = ',node(i2)%te
-
+	    
                   IF (itarget.EQ.LO) THEN 
                     L = node(i2)%s
                   ELSE	          
                     L = tube(it)%smax - node(i2)%s
                   ENDIF
-
-                  write(0,*) 'L  = ',L
-
-                  nustar = (1.0E-16 * node(i2)%ne) / L / node(i2)%te**2     
-	          
-                  write(0,*) 'nustar =',nustar
-	          
-                  frac = (nustar - 10.0) / (50.0 - 10.0)        ! parameter
-                  write(0,*) 'frac    =',frac
+	    
+                  nustar = (1.0E-16*node(i2)%ne) * L / node(i2)%te**2     
+	    
+                  frac = (nustar - 1.0) / (50.0 - 1.0)        ! parameter  *** THE  1.0 DOESN'T DO ANYTHING HERE! ***
+c                  frac = (nustar - 10.0) / (50.0 - 10.0)        ! parameter
+                  write(logfp,*) 'frac    =',frac
                   frac = MIN(MAX(0.0,frac),1.0)
 	          
                   node_te = node(i2)%te
                   node_te = (1.0-frac) *     node_te + 
      .                           frac  * MIN(node_te,5.0)                  ! parameter
-
-                  write(0,*) 'frac    =',frac
-                  write(0,*) 'node_te =',node_te
-
-                  stop 'fukcked'
+	    
+                  IF (debug) THEN
+                    write(logfp,*) 'tube  = ',it
+                    write(logfp,*) 'node  = ',i2,node_i(i2)	          
+                    write(logfp,*) 'sdat  = ',node(i2)%s,tube(it)%smax
+                    write(logfp,*) 'n     = ',node(i2)%ne
+                    write(logfp,*) 'te    = ',node(i2)%te
+                    write(logfp,*) 'L     = ',L
+                    write(logfp,*) 'nustar  =',nustar
+                    write(logfp,*) 'frac    =',frac
+                    write(logfp,*) 'node_te =',node_te,'  <---'
+                  ENDIF
+	    
               ENDSELECT
               tube(it)%te(itarget) = node_te
             ENDIF
+	     
+c            IF ((node(i2)%par_set.EQ.2                            ).OR.
+c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ti(ion).EQ.0.0))
+c     .        tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
 
-            IF ((node(i2)%par_set.EQ.2                            ).OR.
-     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ti(ion).EQ.0.0))
-     .        tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
 
+            IF (node(i2)%par_set.EQ.2.AND.node(i1)%ti(ion).NE.0.0) THEN
+              IF (ti_warning) THEN
+                WRITE(0,*) 'WARNING: PAR_SET=2 but target '//
+     .           'Ti data already assigned, overwriting'
+                ti_warning = .FALSE.
+              ENDIF
+              node(i1)%ti(ion) = 0.0
+            ENDIF
+
+            IF (node(i1)%ti(ion).EQ.0.0) THEN
+              SELECTCASE (node(i2)%par_set)
+                CASE (2:3) 
+                  node_ti = node(i2)%ti(ion)
+                CASE (4)  
+                  IF (node_i(i2).NE.2)
+     .              CALL ER('_New','Symmetry node required',*99) 
+	    
+                  IF (itarget.EQ.LO) THEN 
+                    L = node(i2)%s
+                  ELSE	          
+                    L = tube(it)%smax - node(i2)%s
+                  ENDIF
+	    
+                  nustar = (1.0E-16 * node(i2)%ne) * L / 
+     .                     node(i2)%ti(ion)**2     
+	          
+                  frac = (nustar - 0.1) / (50.0 - 0.1)        ! parameter  *** THE  0.1 DOESN'T DO ANYTHING HERE! ***
+                  frac = MIN(MAX(0.0,frac),1.0)
+	          
+                  node_ti = node(i2)%ti(ion)
+                  node_ti = (1.0-frac) *     node_ti + 
+     .                           frac  * MIN(node_ti,5.0)                  ! parameter
+	    
+                  IF (debug) THEN
+                    write(logfp,*) 'ti      = ',node(i2)%ti(ion)
+                    write(logfp,*) 'nustar  =',nustar
+                    write(logfp,*) 'frac    =',frac
+                    write(logfp,*) 'node_ti =',node_ti,'  <---'
+                  ENDIF
+	    
+              ENDSELECT
+              tube(it)%ti(itarget,ion) = node_ti
+            ENDIF
 
 
 c            IF     (node(i2)%ne.NE.0.0) THEN
@@ -2459,11 +2510,18 @@ c            IF ((node(i2)%par_set.EQ.2                            ).OR.
 c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
 c     .                                     node(i1)%pe.EQ.0.0     ))
 c     .        tube(it)%jsat(itarget,ion) = REAL(-i2)
+
             IF (node(i2)%par_set.EQ.2.AND.
-     .          (node(i1)%ne.NE.0.0.OR.node(i1)%pe.NE.0.0))
-     .        CALL ER('AssignNodeValues_New','PAR_SET=2 but node '//
-     .         'ne and/or pe already assigned',*99)
- 
+     .          (node(i1)%ne.NE.0.0.OR.node(i1)%pe.NE.0.0)) THEN
+              IF (ne_warning) THEN 
+                WRITE(0,*) 'WARNING AssignNodeValues_New: ne and/or '//
+     .                     'pe already assigned, overwriting'
+                ne_warning = .FALSE.
+              ENDIF
+              node(i1)%ne = 0.0
+              node(i1)%pe = 0.0
+            ENDIF
+
             IF (node(i1)%ne.EQ.0.0.AND.node(i1)%pe.EQ.0.0)
      .        tube(it)%jsat(itarget,ion) = REAL(-i2)
 

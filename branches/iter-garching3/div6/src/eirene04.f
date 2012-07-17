@@ -2834,14 +2834,26 @@ c
       REAL      rdum(*)   
       CHARACTER buffer*256
 
+      REAL*8    ddum(ntally)
+
       DO WHILE (.TRUE.) 
         READ(fp,'(A256)',END=98) buffer               
         IF (buffer(1:1).EQ.'*') CYCLE 
-        READ(buffer,*,ERR=97) icount,(rdum(i1),i1=1,ntally)          
+        READ(buffer,*,ERR=97) icount,(ddum(i1),i1=1,ntally)          
+        DO i1 = 1, ntally
+          IF (ddum(i1).GT.1.0D+30) THEN
+            WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
+     .                 'single precision size limit, setting to zero'
+            rdum(i1) = 0.0
+          ELSE
+            rdum(i1) = SNGL(ddum(i1))
+          ENDIF
+        ENDDO
         RETURN
       ENDDO
       
- 97   CALL ER('NextLine','Data format error',*99)
+ 97   WRITE(0,*) 'buffer >'//TRIM(buffer)//'<'
+      CALL ER('NextLine','Data format error',*99)
  98   CALL ER('NextLine','Unexpected end-of-file',*99)
  99   STOP
       END

@@ -468,7 +468,9 @@ c             ----------------------------------------------------------
                 READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
                 READ(buffer_array(4),*) sputter_data(i1)%charge
                 READ(buffer_array(5),*) sputter_data(i1)%fraction
-                sputter_data(i1)%tag = TRIM(buffer_array(5))
+                sputter_data(i1)%tag = TRIM(buffer_array(6))
+                IF (sputter_data(i1)%fraction.EQ.-1.0) 
+     .            sputter_data(i1)%fraction = 100.0
 c             ----------------------------------------------------------
               CASE DEFAULT
 c             ----------------------------------------------------------
