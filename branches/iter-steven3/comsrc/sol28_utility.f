@@ -164,8 +164,9 @@ c...  Solution arrays:
       nkinetic  = 0
       nfluid    = 0
       nimpurity = 0
-      IF (ALLOCATED(tube      )) DEALLOCATE(tube      )
-      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
+      IF (ALLOCATED(tube    )) DEALLOCATE(tube    )
+      IF (ALLOCATED(tube2   )) DEALLOCATE(tube2   )
+c      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
       
       IF (ALLOCATED(cell    )) DEALLOCATE(cell    )
       IF (ALLOCATED(field   )) DEALLOCATE(field   )
@@ -368,7 +369,9 @@ c        ti_node = te_node
         ELSEIF (node(inode)%pe.GT.0.0) THEN
           SELECTCASE (0)
             CASE (0)
-              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+              pressure = node(inode)%pe * SNGL(ECH)  ! changed 28.04.12
+c              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+
             CASEDEFAULT 
           ENDSELECT
         ELSE
@@ -726,7 +729,7 @@ c
       REAL*8  x1,x2,x3,x4,y1,y2,y3,y4,s12,s34
 
       fp = 6 ! 88
-      debug = .TRUE.
+      debug = .FALSE.
 
       PointInPolygon = .FALSE.
 
@@ -746,7 +749,7 @@ c
         IF (s12.GT.DTOL.AND.s34.GT.0.0D0.AND.s34.LT.1.0D0) 
      .    ninter = ninter + 1
         IF (debug) WRITE(fp,'(4X,A,2E18.7,I4,2F12.5)')
-     .      '           :',s12,s34,ninter,x1,y1
+     .      '    pointinpolygon :',s12,s34,ninter,x1,y1
       ENDDO  
 
       IF (ninter.GT.0.AND.MOD(ninter+1,2).EQ.0) PointInPolygon = .TRUE.
@@ -1145,7 +1148,7 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               status = .TRUE.
               opt_iteration(nopt) = opt
               nopt = nopt + 1
-              write(0,*) TRIM(buffer)
+c              write(0,*) TRIM(buffer)
               READ(buffer,*) cdum1,idum1(1:3),cdum1
               cdum1 = TRIM(buffer(INDEX(buffer,TRIM(cdum1)):))  ! This hokem was necessary to catch ranges that included commas, i.e. '1-4,12-14',
 c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 was only assigned 1-4 otherwise.  This hasn't happened before for 
@@ -1163,7 +1166,7 @@ c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 wa
                 load_data = .TRUE.
                 opt%iteration(1:2) = idum1(2:3)
                 opt%tube           = TRIM(cdum1)
-              write(0,*) 'trim c ',TRIM(cdum1)
+c              write(0,*) 'trim c ',TRIM(cdum1)
               ELSE
                 load_data = .FALSE.
               ENDIF

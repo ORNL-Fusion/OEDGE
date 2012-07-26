@@ -83,7 +83,7 @@ C ===== SOURCE: calc_spectrum.f
             CASE DEFAULT
               ADD = 0._DP
             END SELECT
-            
+
             EB = E0
 
             IF (EB < ESTIML(ISPC)%PSPC%SPCMIN) THEN
@@ -129,8 +129,12 @@ C ===== SOURCE: calc_spectrum.f
               CASE DEFAULT
                 ADD = 0._DP
               END SELECT
-
-              EB = E0
+c slmod begin
+c... Want velocity spectrum, not energy:
+              EB = VEL
+c
+c              EB = E0
+c slmod end            
               IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
                 SPCVX = ESTIML(ISPC)%PSPC%SPCVX
                 SPCVY = ESTIML(ISPC)%PSPC%SPCVY

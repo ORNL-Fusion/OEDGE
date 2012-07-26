@@ -78,16 +78,31 @@ C     IBM  : HARWELL LIBRARY FUNCTION TO EXTRACT CPU TIME USED SO FAR.
 C     HOT  : FOR HOTSPOT ANALYSIS, DUMMY OUT BY SETTING ZA02AS = 0.0
 C     CRAY : REPLACE WITH SYSTEM FUNCTION SECOND.
 C
+c slmod begin 
       REAL FUNCTION ZA02AS (IFLAG)
       INTEGER I,MCLOCK,IFLAG
-c slmod begin 
-c...   -SL 10/06/2011
-      real test
-      
-      CALL cpu_time(test)
-      ZA02AS = test
+
+      INTEGER clock_rate,t1
+      REAL    t2
+
+      IF     (iflag.EQ.1) THEN
+        CALL CPU_TIME(t2)
+        ZA02AS = t2
+c        za02as = REAL(mclock()) / 100.0
+c        rdum1  = etime(val)
+c        za02as = val(1) 
+      ELSEIF (iflag.EQ.2) THEN
+        CALL SYSTEM_CLOCK(t1,clock_rate)
+        za02as = REAL(t1) / REAL(clock_rate)
+      ELSE
+        CALL ER('ZA02AS','Unknown IFLAG value',*99)
+      ENDIF
+
 c make this an option with a default set to MCLOCK()
 c      write(0,*) 'TIME TEST:',za02as
+c
+c      REAL FUNCTION ZA02AS (IFLAG)
+c      INTEGER I,MCLOCK,IFLAG
 c
 c      real test
 c      I = MCLOCK()
@@ -97,6 +112,9 @@ c slmod end
 CHOT  ZA02AS = 0.0
 C      ZA02AS = SECOND ()
       RETURN
+c slmod begin
+99    STOP
+c slmod end
       END
 c
 c
@@ -143,7 +161,13 @@ c     Assign the return code to zero for now
 c
       retcode = 0
 c
-      NIMTIM = ZA02AS(1)
+c slmod begin
+c...  Added optional to ZA02AS that allows a measurement
+c     of real time rather than CPU time:
+      NIMTIM = ZA02AS(2)
+c
+c      NIMTIM = ZA02AS(1)
+c slmod end
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
 C
@@ -170,7 +194,9 @@ C
 C      CALL PINPGX
 C
 C
-      NIMTIM = ZA02AS(1) - NIMTIM
+c slmod begin
+      NIMTIM = ZA02AS(2) - NIMTIM
+c slmod end
       WRITE(6,*) 'TIME USED IN HYDROGEN NEUTRAL CODE:',NIMTIM,' (S)'
       write(6,*) '- PIN RETURN CODE = ',retcode
 C

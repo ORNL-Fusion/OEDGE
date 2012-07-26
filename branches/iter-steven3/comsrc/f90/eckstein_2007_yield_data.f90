@@ -323,16 +323,28 @@ module eckstein_2007_yield_data
        -1  &         !  MATT=19   "Nitrogen"
        /)
 
-  integer,parameter :: ion_mats(7) = (/ &
+! slmod begin
+  integer,parameter :: ion_mats(8) = (/ &
        ion_h, &    !  MATP=1    H
        ion_d, &    !  MATP=2    D
        ion_t, &    !  MATP=3    T
        ion_he4, &  !  MATP=4    HE4
        -1, &       !  MATP=5    C
        ion_self, & !  MATP=6    SELF
-       ion_o  &    !  MATP=7    O
+       ion_o,  &   !  MATP=7    O
+       ion_ne &    !  MATP=8    Ne   ! Addition noted in SPUTTER.F as well. -SL, 10/05/2012 
        /) 
-
+!
+!  integer,parameter :: ion_mats(7) = (/ &
+!       ion_h, &    !  MATP=1    H
+!       ion_d, &    !  MATP=2    D
+!       ion_t, &    !  MATP=3    T
+!       ion_he4, &  !  MATP=4    HE4
+!       -1, &       !  MATP=5    C
+!       ion_self, & !  MATP=6    SELF
+!       ion_o  &    !  MATP=7    O
+!       /) 
+! slmod end
 
   CHARACTER*18 :: TARMAT(19)= (/&
        ' ALUMINIUM       ',' BERYLLIUM       ',' COPPER          ',&
@@ -343,8 +355,11 @@ module eckstein_2007_yield_data
        ' "ARGON"         ',' "OXYGEN"        ',' "CHLORINE"      ',&
        ' "NITROGEN"      ' /)                                     
 
-  CHARACTER*6  :: PLAMAT(7) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/)
-
+! slmod begin
+  CHARACTER*6  :: PLAMAT(8) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',' Ne   '  /)
+!
+!  CHARACTER*6  :: PLAMAT(7) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',/)
+! slmod end
 
 ! slmod begin
 !  public :: yield_2007,init_eckstein_2007,print_eck2007_yields,eckstein2007_data_available,  &
@@ -481,6 +496,39 @@ contains
   end function yield_f
 
 
+! slmod begin
+  real function yield_2002_W_SS_60(e0) 
+    real,intent(in) :: e0
+
+    REAL :: result
+    REAL :: yield(2,20) = (/  &
+           15.00 ,  2.98E-6 ,  &
+           20.00 ,  3.29E-5 ,  &
+           25.00 ,  1.36E-4 ,  &
+           30.00 ,  3.11E-4 ,  &
+           40.00 ,  1.15E-3 ,  &
+           50.00 ,  3.64E-3 ,  &
+           60.00 ,  8.48E-3 ,  &
+           70.00 ,  1.70E-2 ,  &
+           80.00 ,  2.83E-2 ,  &
+          100.00 ,  6.03E-2 ,  &
+          120.00 ,  1.00E-1 ,  &
+          140.00 ,  1.43E-1 ,  &
+          200.00 ,  2.80E-1 ,  &
+          300.00 ,  5.01E-1 ,  &
+          350.00 ,  5.98E-1 ,  &
+          500.00 ,  8.85E-1 ,  &
+          800.00 ,  1.35E+0 ,  &
+         1000.00 ,  1.62E+0 ,  &
+         2000.00 ,  2.59E+0 ,  &
+         2500.00 ,  2.98E+0  /)
+
+      CALL Fitter(20,yield(1,1:20),yield(2,1:20),1,e0,result,'LINEAR')
+
+      yield_2002_W_SS_60 = result
+
+  end function yield_2002_W_SS_60
+! slmod end
 
   real function yield_2007(matp,matt,e0) 
     integer, intent(in) :: matp,matt
@@ -492,7 +540,7 @@ contains
     !
     !
 
-    real :: lambda,q,mu,eth,epsilon
+    real :: lambda,q,mu,eth,epsilon,yield2
     integer :: targ_mat, ion_mat
 
     targ_mat = targ_mats(matt)
@@ -507,7 +555,18 @@ contains
     epsilon = yield_parameters(epsilon_val,ion_mat,targ_mat)
 
     yield_2007 = yield_f(lambda,q,mu,eth,epsilon,e0)
+! slmod begin
 
+!    write(0,*) '  2007',matt,ion_mat,matp,targ_mat
+
+    if (.false..and.ion_mat.eq.12.and.targ_mat.eq.4) then
+
+      yield2 = yield_2002_W_SS_60(e0)
+!      write(0,*) 'ss',e0,yield_2007,yield2
+      yield_2007 = yield2
+    endif
+
+! slmod wend
   end function yield_2007
 
 

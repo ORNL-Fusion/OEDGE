@@ -18,6 +18,7 @@ c
 c slmod begin
       use mod_interface
       use mod_divimp
+      use mod_divimp_tdep
 c slmod end
 c
       implicit none
@@ -83,7 +84,7 @@ c
 c slmod begin - temp
       include 'slcom'
 
-      integer i
+      integer i,fp
 c slmod end
 
 c
@@ -1051,6 +1052,8 @@ C
 c sltmp
       IF (grdnmod.NE.0) iw = MAX(1,stopopt)
 
+      tdep_save_n = 0
+
       DO 800  IMP = 1, NATIZ
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
@@ -1316,6 +1319,36 @@ c
 c
 c
             SPUTY = 1.0
+c slmod begin - t-dep
+          ELSEIF (CIOPTE.EQ.11) THEN
+c...        Ion injection from both the current source and the source stored
+c           from a previous run:
+            IF (.FALSE.) THEN
+              R     = CXSC
+              Z     = CYSC
+              PORM  = -1.0 * PORM
+              VEL   = 9.79E3 * SQRT(CTEM1 / CRMI) * PORM * QTIM
+              SPUTY = 1.0
+            ELSE
+              NRAND = NRAND + 1
+              CALL SURAND2 (SEED, 1, RAN)
+              I = MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
+
+c... left off: need to sort out setting the charge state, and also the strange initialization of 
+c maxciz from cizsc :
+c          DO 792 JZ = CIZSC, MAXCIZ
+c why would this be done?
+c a bug?
+              R = TDEP_LOAD(I)%R
+              Z = TDEP_LOAD(I)%Z
+              PORM  = -1.0 * PORM
+              VEL  = TDEP_LOAD(I)%VEL
+c should be adjusting sputy, abs
+              SPUTY = TDEP_LOAD(I)%SPUTY
+            ENDIF
+
+
+c slmod end
           ENDIF
 c
 c         Set initial ion temperature.
@@ -1439,7 +1472,9 @@ c
            else
               call getscross_approx(r,z,s,cross,ik,ir)
            endif
+c slmod begin - t-dep
 
+c slmod end
         endif
 c
 c       Record approximate starting S-distance from nearest target.
@@ -1576,7 +1611,7 @@ c       which specifies no diffusion the RCONST value
 c       would be large enough to prevent it from occurring
 c       Even if instantaneous diffusion was specified.
 c
-         IF (CIOPTB.NE.1)  RCONST = 0.0
+        IF (CIOPTB.NE.1)  RCONST = 0.0
 C
 C          RCONST = 0.0
 c
@@ -2245,6 +2280,25 @@ C
            CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
            TCUT = TCUT + SPUTY
 c          IFATE = 3
+c slmod begin - t-dep
+c...       Store the state of the ion so that it can be re-launched in a 
+c          subsequent run:                     
+           IF (OPT_DIV%PSTATE.EQ.1) THEN
+             IF (.NOT.ALLOCATED(TDEP_SAVE)) ALLOCATE(TDEP_SAVE(NATIZ))
+
+             tdep_save_n = tdep_save_n + 1
+             tdep_save(tdep_save_n)%r      = r
+             tdep_save(tdep_save_n)%z	   = z
+             tdep_save(tdep_save_n)%phi    = 0.0
+             tdep_save(tdep_save_n)%s	   = s
+             tdep_save(tdep_save_n)%cross  = cross
+             tdep_save(tdep_save_n)%diag   = 0.0
+             tdep_save(tdep_save_n)%temp   = temi
+             tdep_save(tdep_save_n)%vel    = vel
+             tdep_save(tdep_save_n)%charge = riz
+             tdep_save(tdep_save_n)%weight = sputy
+           ENDIF
+c slmod end
         endif
 
 c
@@ -2355,6 +2409,7 @@ C
 C     M A I N   L O O P   E N D
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C 
 C
 C---- CALCULATE AVERAGE TB, NB VALUES
 C
@@ -4471,7 +4526,25 @@ c
          write(6,'(a,10(1x,g12.5))') 'NABSFAC CALCULATION:',nabsfac,
      >            ssef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+c slmod begin
+        if (nabsfac.eq.1.0) then
+          write(6,*) 
+          write(6,*) '-------------------------------------------------'
+          write(6,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(6,*) '-------------------------------------------------'
+          write(6,*) 
 
+          write(0,*) 
+          write(0,*) '-------------------------------------------------'
+          write(0,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(0,*) '-------------------------------------------------'
+          write(0,*) 
+
+          absfac      = nabsfac
+          absfac_ion  = absfac
+          absfac_neut = absfac
+        endif
+c slmod end
       elseif (lpinz0) then
          absfac = zioniz*(tatiz/nimps) + neut2d_fytot
          absfac_neut = absfac
@@ -4502,7 +4575,7 @@ c
             absfac_neut = absfac
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes sense for 
+c           Note: the calculated absolute factor only makes senfse for 
 c                 neutral launch cases - the various quantities are 
 c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
@@ -4533,6 +4606,43 @@ c
       WRITE(6,*) 'ABSFAC: ',ABSFAC,' PARTS: WSSF ',WSSF,' FTOT ',
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',
      >   TNEUT,'NBASFAC:',nabsfac,'NEUT2D_FYTOT:',neut2d_fytot
+C slmod begin - t-dep
+c...  Dump the particle distribution to a file:
+      IF (opt_div%pstate.EQ.1) THEN
+        CALL find_free_unit_number(fp)
+        OPEN (UNIT=fp,FILE='raw.divimp_tdep_dist',ACCESS='SEQUENTIAL',
+     .        STATUS='REPLACE')
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{VERSION}'
+        WRITE(fp,*    ) 1.0
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA RUN}'
+        WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
+        WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
+        WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA PARTICLE}'
+        WRITE(fp,*    ) tdep_save_n
+        WRITE(fp,'(A)') '*'
+        DO i = 1, tdep_save_n
+          WRITE(fp,'(I9,7F13.7,1P,E15.7,0P,F5.1,1P,E15.7,0P)') i,
+     .      tdep_save(i)%r      ,
+     .      tdep_save(i)%z      ,	  
+     .      tdep_save(i)%phi    ,     
+     .      tdep_save(i)%s      ,  
+     .      tdep_save(i)%cross  ,
+     .      tdep_save(i)%diag   ,
+     .      tdep_save(i)%temp   ,
+     .      tdep_save(i)%vel    ,
+     .      tdep_save(i)%charge ,
+     .      tdep_save(i)%weight
+        ENDDO
+        CLOSE(fp)
+c...    Clear memory:
+        DEALLOCATE(tdep_save)
+        IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
+      ENDIF
+C slmod end
 C
       DO 1020 IR = 1, NRS
         DO 1010 IK = 1, NKS(IR)

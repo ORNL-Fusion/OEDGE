@@ -80,6 +80,8 @@
          REAL          :: rib_pol_d_def
 !...     Sputter data from other runs:
 !         INTEGER       :: nsputter
+!...     Store particle state data:
+         INTEGER       :: pstate
       ENDTYPE type_options_divimp
  
       TYPE(type_options_divimp) :: opt_div
@@ -93,6 +95,7 @@
          CHARACTER*256       :: case_name
          CHARACTER*256       :: extension
          REAL                :: fraction
+         CHARACTER*256       :: tag
          REAL                :: absfac
          REAL                :: absfac_net
          INTEGER             :: atomic_number
@@ -172,6 +175,46 @@
 
 
       END MODULE mod_divimp_cneut
+!
+! ======================================================================
+! ======================================================================
+!
+      MODULE mod_divimp_tdep
+      IMPLICIT none
+      SAVE
+      PUBLIC
+!
+!     ------------------------------------------------------------------
+! 
+      TYPE, PUBLIC :: type_tdep_data
+         REAL      :: r
+         REAL      :: z
+         REAL      :: phi
+         REAL      :: s
+         REAL      :: cross
+         REAL      :: diag
+         REAL      :: temp
+         REAL      :: vel
+         REAL      :: charge
+         REAL      :: weight
+      ENDTYPE type_tdep_data
+!
+!     ------------------------------------------------------------------
+! 
+      INTEGER :: dummy
+
+      TYPE(type_tdep_data), ALLOCATABLE :: tdep_save(:)
+      INTEGER :: tdep_save_n
+
+      TYPE(type_tdep_data), ALLOCATABLE :: tdep_load(:)
+      REAL    :: tdep_load_version
+      INTEGER :: tdep_load_n
+      REAL    :: tdep_load_absfac
+      REAL    :: tdep_load_deltat
+      REAL    :: tdep_load_qtim
+      REAL    :: tdep_load_frac
+
+      END MODULE mod_divimp_tdep
 !
 ! ======================================================================
 ! ======================================================================

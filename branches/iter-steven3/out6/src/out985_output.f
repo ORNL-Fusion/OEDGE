@@ -2116,7 +2116,7 @@ c
 
       INTEGER dat1,dat2
       REAL, ALLOCATABLE :: xdat(:),ydat(:)
-      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512,tag*7
 
 
 c *TEMP*
@@ -2576,7 +2576,9 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
+          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
             CALL inPutData(pixel(ipixel)%yindex,'J','n/a')
             CALL inPutData(pixel(ipixel)%global_v1(1),'X1','m')
@@ -2596,8 +2598,15 @@ c10        FORMAT(A,I0.2,A)
       ENDIF
 
 
+      IF (.TRUE.) THEN
+        write(0,*) 'dumping'
+        CALL DumpLineData
+      ENDIF
+
       IF (npixel.GT.1) THEN
 c...    Image:
+
+
 
         DO idet = 1, opt%ndet
 
