@@ -1743,7 +1743,7 @@ c
       REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:),eirdat(:,:,:)
 
       wall_ignored = .FALSE.
-      debug        = .FALSE.
+      debug        = .TRUE.
       icount = 0
       iside  = 0
 

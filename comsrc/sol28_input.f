@@ -396,6 +396,9 @@ c
 
       SELECTCASE (buffer(3:itag-1))
 c       ----------------------------------------------------------------
+        CASE('DIV PARTICLE STATE')
+          CALL ReadOptionI(buffer,1,opt_div%pstate)
+c       ----------------------------------------------------------------
         CASE('DIV RIBBON GRID')
           READ(buffer(itag+2:itag+4),*) version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -452,26 +455,28 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)//'<'
 
           DO i1 = 1, sputter_ndata
             buffer = TRIM(buffer_list(i1))
-           write(0,*) 'buffer: '//TRIM(buffer)
+c           write(0,*) 'buffer: '//TRIM(buffer)
             CALL SplitBuffer(buffer,buffer_array) 
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
-              CASE(1)
+c             ----------------------------------------------------------
+              CASE(1:3,5)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
-              CASE(2)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
-              CASE(3)
-                sputter_data(i1)%case_name = TRIM(buffer_array(2))
-                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                sputter_data(i1)%tag       = TRIM(buffer_array(5))
+c             ----------------------------------------------------------
               CASE(4) ! sputtering specices is a constant fraction of the hydrogenic flux
                 READ(buffer_array(2),*) sputter_data(i1)%atomic_number
                 READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
                 READ(buffer_array(4),*) sputter_data(i1)%charge
                 READ(buffer_array(5),*) sputter_data(i1)%fraction
+                sputter_data(i1)%tag = TRIM(buffer_array(6))
+                IF (sputter_data(i1)%fraction.EQ.-1.0) 
+     .            sputter_data(i1)%fraction = 100.0
+c             ----------------------------------------------------------
               CASE DEFAULT
+c             ----------------------------------------------------------
                 CALL ER('LoadDivimpOption','Unknown sputter data '//
      .                  'type',*99)
             ENDSELECT
@@ -866,7 +871,7 @@ c
         CASE('F EIRENE_15')
           opt_eir%f_eirene_load = 1
           READ(buffer,*) cdum1,opt_eir%f_eirene_15
-          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
+c          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
         CASE('GRID FORMAT')
           CALL ReadOptionI(buffer,1,opt%f_grid_format)
         CASE('GRID LOAD METHOD')
@@ -912,6 +917,10 @@ c
           CALL ReadOptionI(buffer,2,opt%p_rec)
         CASE('S P_ANO')
           CALL ReadOptionI(buffer,2,opt%p_ano)
+        CASE('S P_ANO_DIST')
+          CALL ReadOptionI(buffer,2,opt%p_ano_dist)
+        CASE('S P_ANO_EXP')
+          CALL ReadOptionR(buffer,2,opt%p_ano_exp)
         CASE('S M_PIN')
           CALL ReadOptionI(buffer,2,opt%m_mom)
         CASE('S M_FIT')
@@ -1361,6 +1370,8 @@ c...  OSM options:
       opt%p_ion_frac = 100.0
       opt%p_rec      = 0 
       opt%p_ano      = 2
+      opt%p_ano_dist = 3   ! new on 23/04/2012
+      opt%p_ano_exp  = 0.0 ! new on 23/04/2012
       opt%m_mom      = 0
       opt%m_fit      = 2
       opt%m_ano      = 2

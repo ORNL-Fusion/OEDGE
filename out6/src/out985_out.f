@@ -2,6 +2,56 @@ c     -*-Fortran-*-
 c
 c ====================================================================== 
 c
+      SUBROUTINE DumpLineData
+      USE mod_interface
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'pindata'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'outcom'
+      INCLUDE 'diagvel'
+      INCLUDE 'reiser_com'
+
+      INTEGER   iint,iobj,ik,ir
+      CHARACTER tag*7
+
+      write(0,*) 'nobj',nobj
+
+      CALL inOpenInterface('idl.line_dump',ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
+      DO iint = 1, MAX(1,opt%int_num)
+        CALL inPutData(opt%int_wlngth(iint),'WLNGTH','nm')
+        WRITE(tag,'(A,I0.2)') 'LINE_',iint
+        DO iobj = 1, nobj
+c          write(0,*) 'test 1',obj(iobj)%type   .NE.OP_INTEGRATION_VOLUME
+c          write(0,*) 'test 2',obj(iobj)%gsur(1).NE.GT_TC
+          IF (obj(iobj)%type   .NE.OP_INTEGRATION_VOLUME) CYCLE
+          IF (obj(iobj)%gsur(1).NE.GT_TC                ) CYCLE
+          IF (iint.EQ.1) THEN
+            ik = obj(iobj)%ik            
+            ir = obj(iobj)%ir
+            CALL inPutData(obj(iobj)%ik ,'IK' ,'none')            
+            CALL inPutData(obj(iobj)%ir ,'IR' ,'none')            
+            CALL inPutData(kss(ik,ir)   ,'KSS','m')            
+            CALL inPutData(kps(ik,ir)   ,'KPS','m')            
+          ENDIF
+          CALL inPutData(obj(iobj)%quantity(iint),TRIM(tag),
+     .                   'ph m-3 s-1')            
+        ENDDO
+      ENDDO     
+      CALL inCloseInterface
+
+      RETURN
+99    STOP
+      END
+c
+c ====================================================================== 
+c
       SUBROUTINE AssignPlasmaQuantities(ipla,iint,iobj)
       USE mod_out985
       USE mod_out985_variables
@@ -185,13 +235,13 @@ c...      PIN:
                 IF     (opt%int_line(iint).EQ.'B_ALPHA') THEN
                   osm(1:ik,1:ir) = pinline(1:ik,1:ir,6,H_BALPHA)
 c                 *** TEMP *** get rid of bad D2+ data at high temperatures
-                  DO ir1 = 1, nrs
+                  DO ir1 = 1, ir ! nrs
                     DO ik1 = 1, nks(ir1)
                       IF (ktebs(ik1,ir1).GT.1.0E+3.AND.
      .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
                         pinline(ik1,ir1,4,H_BALPHA) = 0.0
-                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
-     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+c                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                         IF (display_warning) THEN
                           display_warning = .FALSE.
                           WRITE(0,*)
@@ -203,13 +253,14 @@ c                 *** TEMP *** get rid of bad D2+ data at high temperatures
                       ENDIF
                     ENDDO
                   ENDDO
-                  IF (.NOT.display_warning) THEN
-                    DO ir1 = 1, nrs
-                      DO ik1 = 1, nks(ir)
-                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
-                      ENDDO
+c                  IF (.NOT.display_warning) THEN
+                  DO ir1 = 1, ir ! nrs
+                    DO ik1 = 1, nks(ir)
+c                     write(0,*) 'debug',ik1,ir1,nrs
+                     osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
                     ENDDO
-                  ENDIF
+                  ENDDO
+c                  ENDIF
 
                   wlngth2 = 656.3  ! Air
 
@@ -272,14 +323,14 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
           WRITE(0,*) 'WLNGTH:',wlngth2
 c       ----------------------------------------------------------------
         CASE (3) 
-c...      DIVIMP precalculated quantities (should move DALHPA and DGAMMA here):
+c...      DIVIMP pre-calculated quantities (should move DALHPA and DGAMMA here):
           IF     (TRIM(opt%int_line(iint)).EQ.'PRAD') THEN
             SELECTCASE (opt%int_charge(iint))
               CASE (-1)  ! Sum over all charge states 
                 osm = 0.0
                 DO iz = 0, MIN(cion,nizs)
 c                  WRITE(0,*) 'IZ!',iz,absfac
-                  osm(1:ik,1:ir) = osm(1:ik,1:ir) +  powls(1:ik,1:ir,iz)
+                  osm(1:ik,1:ir) = osm(1:ik,1:ir) + powls(1:ik,1:ir,iz)
                 ENDDO
                 IF (absfac.GT.0.0) osm = osm * absfac
                 DO iz = 0, 1
@@ -890,7 +941,7 @@ c          IF (ALLOCATED(tdata)) DEALLOCATE(tdata)
       newobj%phi          = obj(iobj)%phi
       newobj%wedge1       = 0
       newobj%wedge2       = 0
-      newobj%colour       = 1
+      newobj%colour       = 3
       newobj%orientation  = 1      ! CW
       newobj%ik           = obj(iobj)%index(IND_IK)
       newobj%ir           = obj(iobj)%index(IND_IR)

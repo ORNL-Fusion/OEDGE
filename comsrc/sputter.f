@@ -722,7 +722,9 @@ C
  
       DATA PLAMAT/
      &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/
- 
+c slmod begin
+c      PLAMAT(8) is reserved for Ne in eckstein_2007_yield_data.f90. -SL, 10/05/12
+c slmod end
       DATA  ETH/
      &     23.87, 14.86, 12.91, 12.51, 16.32, 24.02, 18.55,
 c     &     12.99, 13.09, 14.69, 16.40, 28.08, 24.17, 32.71,

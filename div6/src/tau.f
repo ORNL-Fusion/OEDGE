@@ -6405,7 +6405,7 @@ c
  300  continue
 c     slmod begin
 
-c      CALL OutputData(86,'300 of RAUG')    
+      CALL OutputData(86,'300 of RAUG')    
 c         STOP 'RAUG MID'
 
       CALL DB('RAUG: Done reading grid')
@@ -7124,6 +7124,7 @@ c     do ik = 1,nks(ir)
 c     korpg(ik,ir) = 0
 c     end do
 c     
+
       return
 c     
 c     Error exit conditions

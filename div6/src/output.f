@@ -1234,9 +1234,9 @@ c...temp: korpg=0
         WRITE(fp,*) 'DIVIMP IMPURITY DATA:'
         DO ir = 1, nrs
           WRITE(fp,*)
-          WRITE(fp,'(2A4,2A10,9A10,1X,A7)')
+          WRITE(fp,'(2A4,2A10,10A10,1X,A7)')
      .      'ik','ir','r','z',
-     .      '1','2','3','4','5','10','15','20','25',
+     .      '0','1','2','3','4','5','10','15','20','25',
      .      irtag(ir)
           ike = nks(ir) 
           IF (ir.LT.irsep) ike = nks(ir) - 1
@@ -1249,7 +1249,7 @@ c...temp: korpg=0
      .        note = note(1:LEN_TRIM(note))//' IK1'
             IF (ik.EQ.ikbound(ir,IKHI))
      .        note = note(1:LEN_TRIM(note))//' IK2'
-            WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
+            WRITE(fp,'(2I4,2F10.6,1P,10E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
 c
@@ -1258,7 +1258,7 @@ c                           twice in the output file but I will leave
 c                           it in during merge in case something depends
 c                           on it. 
 c
-     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5)
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO

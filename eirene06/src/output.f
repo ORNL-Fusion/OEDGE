@@ -2280,8 +2280,12 @@ C  SPECTRA IN SELECTED CELLS
      .           ESTIML(ISPC)%PSPC%SGMS
         END IF
       END DO
-      
-      IF (NSPCPR > 0) CALL OUTSPEC
+
+c slmod begin      
+      IF (NSPCPR > 0) CALL OUTSPEC(ISTRA)
+c
+c      IF (NSPCPR > 0) CALL OUTSPEC
+c slmod end
 C
 C   OUTPUT OF VOLUME AVERAGED TALLIES FINISHED
 C
@@ -6348,10 +6352,17 @@ C
 C
       RETURN
       END
+c slmod begin
+
+
 C ===== SOURCE: outspec.f
 !pb  25.10.06:  format specifications corrected
 
-      SUBROUTINE OUTSPEC
+
+      SUBROUTINE OUTSPEC(ISTRA)
+c
+c      SUBROUTINE OUTSPEC
+c slmod end
 
       USE PRECISION
       USE PARMMOD
@@ -6362,12 +6373,18 @@ C ===== SOURCE: outspec.f
       USE CTRCEI
       USE CTEXT
       USE CSDVI
-
+c slmod begin
+      USE MOD_INTERFACE
+c slmod end
       IMPLICIT NONE
       INTEGER :: IADTYP(0:4)
       INTEGER :: IOUT, ISPC, I, IT, IE
       REAL(DP) :: EN
       CHARACTER(10) :: TEXTYP(0:4)
+c slmod begin
+      INTEGER,INTENT(IN) :: ISTRA
+      CHARACTER FILE*128,TAG*3,UNITS*32
+c slmod end
 
 C  SPECTRA
 
@@ -6493,7 +6510,201 @@ C  SPECTRA
         IF (NSIGI_SPC > 0)
      .    WRITE (IOUT,'(A,ES12.4)') ' STANDARD DEVIATION  ',
      .                   ESTIML(ISPC)%PSPC%SGMS
+c slmod begin
+c         WRITE(0,*) 'ISTRA=',istra
+        IF (istra.EQ.0) THEN
+          tag = 'sum'
+        ELSE
+          WRITE(tag,'(I3.3)') istra 
+        ENDIF
+          WRITE(file,'(A,I4.4,A,I7.7,A)') 
+     .      'idl.eirene_spectrum_',ispc,'_',i,'_'//tag
+c        WRITE(0,*) TRIM(file)
+        UNITS='?'
+        IF (IT == 1) UNITS='Amps/BIN(eV)'
+        IF (IT == 2) UNITS='Watt/BIN(eV)'
+        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        IF (NSIGI_SPC == 0) THEN
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+            EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+            CALL inPutData(EN                       ,'BIN' ,'eV')
+c            IF (ispc.eq.5) 
+c     .        WRITE(0,*) 'debug: spec',ie,ispc,ESTIML(ISPC)%PSPC%SPC(IE)    ! *** LEFT OFF ***
+            CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))  
+            CALL inPutData(-1.0D0                   ,'STDE','N/A')
+          END DO
+        ELSE
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+            EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+            CALL inPutData(EN                       ,'BIN' ,'eV')
+            CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))
+            CALL inPutData(ESTIML(ISPC)%PSPC%SDV(IE),'STDE','N/A')
+          END DO
+        END IF
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCINT,'INTEGRAL','?')      
+        CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','N/A')
+        CALL inPutData(it,'SPECTRUM_TYPE','N/A')
+c        write(0,*) 'index check',i,nlim
+        CALL inPutData(I,'INDEX','N/A')
+c        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'INDEX','N/A')
+c        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','N/A')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_VALUE','eV')
+        CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_VALUE','eV')
+        CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')
+        CALL inCloseInterface
+c slmod end
       END DO
 
       RETURN
       END SUBROUTINE OUTSPEC
+
+c
+c      SUBROUTINE OUTSPEC
+c
+c      USE PRECISION
+c      USE PARMMOD
+c      USE COMPRT, ONLY: IUNOUT
+c      USE COMUSR
+c      USE CESTIM
+c      USE CCONA
+c      USE CTRCEI
+c      USE CTEXT
+c      USE CSDVI
+c
+c      IMPLICIT NONE
+c      INTEGER :: IADTYP(0:4)
+c      INTEGER :: IOUT, ISPC, I, IT, IE
+c      REAL(DP) :: EN
+c      CHARACTER(10) :: TEXTYP(0:4)
+c
+cC  SPECTRA
+c
+c      IOUT = 20
+c      OPEN (UNIT=IOUT,FILE='spectra.out')
+c
+c      TEXTYP(0) = 'PHOTONS   '
+c      TEXTYP(1) = 'ATOMS     '
+c      TEXTYP(2) = 'MOLECULES '
+c      TEXTYP(3) = 'TEST IONS '
+c      TEXTYP(4) = 'BULK IONS '
+c      IADTYP(0:4) = (/ 0, NSPH, NSPA, NSPAM, NSPAMI /)
+c
+c      DO ISPC=1,NADSPC
+c        I = ESTIML(ISPC)%PSPC%ISPCSRF
+c        IT = ESTIML(ISPC)%PSPC%ISPCTYP
+c
+c        WRITE (IOUT,*)
+c        WRITE (IOUT,*)
+c        WRITE (IOUT,*)
+c
+c        IF (ESTIML(ISPC)%PSPC%ISRFCLL == 0)  THEN
+c          IF (I > NLIM) THEN
+c            WRITE (IOUT,'(A,A,I6)') ' SPECTRUM CALCULATED FOR',
+c     .                     ' NONDEFAULT STANDARD SURFACE ',I-NLIM
+c          ELSE
+c            WRITE (IOUT,'(A,A,I6)') ' SPECTRUM CALCULATED FOR',
+c     .                     ' ADDITIONAL SURFACE ',I
+c          END IF        
+c          IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
+c            WRITE (iunout,'(A,3(ES12.4,A1))') 
+c     .      ' IN DIRECTION (',ESTIML(ISPC)%PSPC%SPCVX,',',
+c     .      ESTIML(ISPC)%PSPC%SPCVY,',',ESTIML(ISPC)%PSPC%SPCVZ,')'
+c          END IF
+c          IF (IT == 1) THEN
+c            WRITE (IOUT,'(A,A)') ' TYPE OF SPECTRUM : ',
+c     .                'INCIDENT PARTICLE FLUX IN AMP/BIN(EV)   '
+c          ELSE IF (IT == 2) THEN
+c            WRITE (IOUT,'(A,A)') ' TYPE OF SPECTRUM : ',
+c     .                'INCIDENT ENERGY FLUX IN WATT/BIN(EV)    '
+c          END IF
+c
+c        ELSE IF (ESTIML(ISPC)%PSPC%ISRFCLL == 1)  THEN
+c          WRITE (IOUT,'(A,A,I6)') ' SPECTRUM CALCULATED FOR',
+c     .                   ' SCORING CELL ',I
+c          IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
+c            WRITE (iunout,'(A,3(ES12.4,A1))') 
+c     .      ' IN DIRECTION (',ESTIML(ISPC)%PSPC%SPCVX,',',
+c     .      ESTIML(ISPC)%PSPC%SPCVY,',',ESTIML(ISPC)%PSPC%SPCVZ,')'
+c          END IF
+c          IF (IT == 1) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL PARTICLE DENSITY IN #/CM**3/BIN(EV)   '
+c          ELSEIF (IT == 2) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL ENERGY DENSITY IN EV/CM**3/BIN(EV)    '
+c          ELSEIF (IT == 3) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL MOMENTUM DENSITY IN (G*CM/S)/CM**3/BIN(EV)    '
+c          END IF
+c
+c        ELSE IF (ESTIML(ISPC)%PSPC%ISRFCLL == 2)  THEN
+c          WRITE (IOUT,'(A,A)') ' SPECTRUM CALCULATED FOR',
+c     .                   ' GEOMETRICAL CELL ',I
+c          IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
+c            WRITE (iunout,'(A,3(ES12.4,A1))') 
+c     .      ' IN DIRECTION (',ESTIML(ISPC)%PSPC%SPCVX,',',
+c     .      ESTIML(ISPC)%PSPC%SPCVY,',',ESTIML(ISPC)%PSPC%SPCVZ,')'
+c          END IF
+c          IF (IT == 1) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL PARTICLE DENSITY IN #/CM**3/BIN(EV)   '
+c          ELSEIF (IT == 2) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL ENERGY DENSITY IN EV/CM**3/BIN(EV)    '
+c          ELSEIF (IT == 3) THEN
+c            WRITE (iunout,'(A20,A)') ' TYPE OF SPECTRUM : ',
+c     .        'SPECTRAL MOMENTUM DENSITY IN (G*CM/S)/CM**3/BIN(EV)    '
+c          END IF
+c        END IF
+c
+c        WRITE (IOUT,'(A20,A9)') ' TYPE OF PARTICLE : ',
+c     .         TEXTYP(ESTIML(ISPC)%PSPC%IPRTYP)
+c        IF (ESTIML(ISPC)%PSPC%IPRSP == 0) THEN
+c          WRITE (IOUT,'(A10,10X,A16)') ' SPECIES :',
+c     .                'SUM OVER SPECIES'
+c        ELSE
+c          WRITE (IOUT,'(A10,10X,A8)') ' SPECIES :',
+c     .          TEXTS(IADTYP(ESTIML(ISPC)%PSPC%IPRTYP)+
+c     .          ESTIML(ISPC)%PSPC%IPRSP)
+c        END IF
+c
+c        WRITE (IOUT,'(A15,5X,ES12.4)') ' MINIMAL ENERGY ',
+c     .         ESTIML(ISPC)%PSPC%SPCMIN
+c        WRITE (IOUT,'(A15,5X,ES12.4)') ' MAXIMAL ENERGY ',
+c     .         ESTIML(ISPC)%PSPC%SPCMAX
+c        WRITE (IOUT,'(A16,4x,I6)') ' NUMBER OF BINS ',
+c     .         ESTIML(ISPC)%PSPC%NSPC
+c        WRITE (IOUT,*)
+c        IF (ESTIML(ISPC)%PSPC%SPCINT > EPS60) THEN
+c          IF (NSIGI_SPC == 0) THEN
+c            DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+c              EN = ESTIML(ISPC)%PSPC%SPCMIN +
+c     .             (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+c              WRITE (IOUT,'(I6,2ES12.4)') IE,EN,
+c     .               ESTIML(ISPC)%PSPC%SPC(IE)
+c            END DO
+c          ELSE
+c            DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+c              EN = ESTIML(ISPC)%PSPC%SPCMIN +
+c     .             (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+c              WRITE (IOUT,'(I6,3ES12.4)') IE,EN,
+c     .               ESTIML(ISPC)%PSPC%SPC(IE),
+c     .               ESTIML(ISPC)%PSPC%SDV(IE)
+c            END DO
+c          END IF
+c        ELSE
+c          WRITE (IOUT,'(A)') ' SPECTRUM IDENTICAL 0 '
+c        END IF
+c        WRITE (IOUT,*)
+c        WRITE (IOUT,'(A,ES12.4)') ' INTEGRAL OF SPECTRUM ',
+c     .         ESTIML(ISPC)%PSPC%SPCINT
+c        IF (NSIGI_SPC > 0)
+c     .    WRITE (IOUT,'(A,ES12.4)') ' STANDARD DEVIATION  ',
+c     .                   ESTIML(ISPC)%PSPC%SGMS
+c      END DO
+c
+c      RETURN
+c      END SUBROUTINE OUTSPEC
+c slmod end

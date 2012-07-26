@@ -1345,6 +1345,116 @@ c..       Defunct:
           obj(nobj)%nsur        = 0
           obj(nobj)%ipts(2,1)   = 0
           obj(nobj)%nmap(1)     = 0
+c       -----------------------------------------------------------------      
+        CASE (-11)
+c...      Bounding box #2 for linear test geometry -- for ... nevermind... :
+
+          newvtx(1,1) =   1.1E-05
+          newvtx(2,1) =  -0.010D0
+          newvtx(1,2) =   1.1E-05  ! Just outside the current viewin radius (hardcoded)
+          newvtx(2,2) =   0.560D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
+          newvtx(1,3) =   0.030D0
+          newvtx(2,3) =   0.560D0
+          newvtx(1,4) =   0.030D0
+          newvtx(2,4) =   0.000D0
+
+          DO i1 = 4, 2, -1
+            newsrf%type = SP_LINE_SEGMENT
+            newsrf%nvtx = 2
+            newsrf%ivtx(1) = AddVertex(newvtx(1,i1  ))
+            newsrf%ivtx(2) = AddVertex(newvtx(1,i1-1))
+            idum1 = AddSurface(newsrf)
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TC
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+c       -----------------------------------------------------------------      
+        CASE (-12)
+c...      Dump plate for D/T views:
+
+          newvtx(1,1) =   8.700D0
+          newvtx(2,1) =  -2.000D0
+          newvtx(1,2) =   8.70005  ! Just outside the current viewin radius (hardcoded)
+          newvtx(2,2) =  -1.000D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
+          newvtx(1,3) =   8.700D0
+          newvtx(2,3) =   1.000D0
+          newvtx(1,4) =   8.700D0
+          newvtx(2,4) =   2.000D0
+
+          DO i1 = 4, 2, -1
+            newsrf%type = SP_LINE_SEGMENT
+            newsrf%nvtx = 2
+            newsrf%ivtx(1) = AddVertex(newvtx(1,i1  ))
+            newsrf%ivtx(2) = AddVertex(newvtx(1,i1-1))
+            idum1 = AddSurface(newsrf)
+          ENDDO
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TC
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
 c       ----------------------------------------------------------------      
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',opt%obj_type(ielement)

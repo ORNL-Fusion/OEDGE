@@ -3952,7 +3952,7 @@ c     Local variables:
 c
 c Initialize variables:
 c
-      debug = .FALSE.
+      debug = .TRUE.
       STATUS = 0
       i = 0
 c
@@ -3990,11 +3990,14 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
+c            write(0,*) '      ncell',ncell,2*MAXNKS
+
             IF (ncell+1.EQ.2*MAXNKS)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1
-     
+c            write(0,*) 'ik,ir,ncell',ik,ir,ncell
+             
             wallik(ncell) = ik
             wallir(ncell) = ir
 
@@ -4019,8 +4022,8 @@ c Check this...
         ENDDO
       ENDDO
       
-c      WRITE(0,*) 'GenWallRing: NCELL=',ncell
-      IF (ncell+1.GT.MAXNKS)
+      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
 
@@ -4188,6 +4191,10 @@ c        ENDDO
           WRITE(50,*) 'IRCELLS:',wallik(ii),wallir(ii),wallth(ii)
         ENDDO
       ENDIF
+
+
+c      CALL DumpGrid('BUMMER MAN')
+
 
 c...  Assign cell quantities for IR=IRWALL:
       ir = irwall
