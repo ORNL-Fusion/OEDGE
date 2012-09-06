@@ -1900,6 +1900,9 @@ c        WRITE(0,*) 'f:',f
       IF (opt%nplots.GT.0)
      .  CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
 
+      IF (.TRUE.)
+     .  CALL DumpShinKajita(title)
+
 c      nobj985 = nobj
 
       IF (ALLOCATED(spectrum)) DEALLOCATE(spectrum)  ! temp?

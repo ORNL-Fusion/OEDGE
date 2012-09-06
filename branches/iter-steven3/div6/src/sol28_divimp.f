@@ -106,7 +106,8 @@ c      INCLUDE 'pindata'
  
 
       INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
-     .              ncore,in,nsputter,ierr,nymfs,nds2,n,nsputter_last
+     .              ncore,in,nsputter,ierr,nymfs,nds2,n,nsputter_last,
+     .              idum
       LOGICAL       tdep_data,ldum
       REAL          yield,rdum1,ratio,frac
       CHARACTER*512 fname,command,resdir,buffer
@@ -195,17 +196,17 @@ c         Copy file to run directory:
                 ALLOCATE(tdep_load(tdep_load_n))
                 DO j = 1, tdep_load_n
                   ldum = osmGetLine(fp,buffer,NO_TAG)
-                  READ(buffer,*)  
-     .              tdep_load(i)%r      ,
-     .              tdep_load(i)%z      ,	  
-     .              tdep_load(i)%phi    ,     
-     .              tdep_load(i)%s      ,  
-     .              tdep_load(i)%cross  ,
-     .              tdep_load(i)%diag   ,
-     .              tdep_load(i)%temp   ,
-     .              tdep_load(i)%vel    ,
-     .              tdep_load(i)%charge ,
-     .              tdep_load(i)%weight
+                  READ(buffer,*) idum,
+     .              tdep_load(j)%r      ,
+     .              tdep_load(j)%z      ,	  
+     .              tdep_load(j)%phi    ,     
+     .              tdep_load(j)%s      ,  
+     .              tdep_load(j)%cross  ,
+     .              tdep_load(j)%diag   ,
+     .              tdep_load(j)%temp   ,
+     .              tdep_load(j)%vel    ,
+     .              tdep_load(j)%charge ,
+     .              tdep_load(j)%weight
                 ENDDO
               CASE DEFAULT
                 WRITE(0,*) 'TAG = ',TRIM(buffer)
@@ -646,10 +647,16 @@ c     assign the total influx over-ride value for DIVIMP:
         write(0,*) '_absfac',tdep_load_absfac, nabsfac
         write(0,*) '_n     ',tdep_load_n     
 
-        tdep_load_frac = frac
-        nabsfac =        frac  * tdep_load_absfac + 
-     .            (1.0 - frac) * nabsfac 
+        write(0,*) 'nabsfac',nabsfac,tdep_load_absfac
 
+        tdep_load_frac = frac
+
+c        nabsfac =        frac  * tdep_load_absfac + 
+c     .            (1.0 - frac) * nabsfac 
+        nabsfac =                tdep_load_absfac + 
+     .                           nabsfac 
+
+c        nabsfac = 2.0
         write(0,*) 'nabsfac',nabsfac
 
       ELSE
@@ -719,7 +726,7 @@ c       just take what's in the first data set, which is probably zero:
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
-c      stop 'here in the shit'
+      stop 'here in the shit'
 
       RETURN
 97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
