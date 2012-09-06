@@ -84,7 +84,7 @@ c
 c slmod begin - temp
       include 'slcom'
 
-      integer i,fp
+      integer i,fp,load_i
 c slmod end
 
 c
@@ -280,6 +280,7 @@ C
 
       TAUTIM = ZA02AS (1)
 c slmod begin
+      LOAD_I = -1
       NYMFS_GLOBAL = NYMFS  ! lame, but don't want to pass NYMFS is local and I don't want to pass it around -SL, 21/11/2011
 c slmod end
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
@@ -1323,7 +1324,12 @@ c slmod begin - t-dep
           ELSEIF (CIOPTE.EQ.11) THEN
 c...        Ion injection from both the current source and the source stored
 c           from a previous run:
-            IF (.FALSE.) THEN
+            LOAD_I = -1
+            NRAND = NRAND + 1
+            CALL SURAND2(SEED, 1, RAN)
+            write(0,*) 'branch',ran,tdep_load_frac
+            IF (RAN.GT.TDEP_LOAD_FRAC) THEN
+              write(0,*) 'standard'
               R     = CXSC
               Z     = CYSC
               PORM  = -1.0 * PORM
@@ -1332,29 +1338,35 @@ c           from a previous run:
             ELSE
               NRAND = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
-              I = MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
-
+              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
 c... left off: need to sort out setting the charge state, and also the strange initialization of 
 c maxciz from cizsc :
 c          DO 792 JZ = CIZSC, MAXCIZ
 c why would this be done?
 c a bug?
-              R = TDEP_LOAD(I)%R
-              Z = TDEP_LOAD(I)%Z
+              R = TDEP_LOAD(LOAD_I)%R
+              Z = TDEP_LOAD(LOAD_I)%Z
               PORM  = -1.0 * PORM
-              VEL  = TDEP_LOAD(I)%VEL
+              VEL  = TDEP_LOAD(LOAD_I)%VEL
 c should be adjusting sputy, abs
-              SPUTY = TDEP_LOAD(I)%SPUTY
+              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT
+
+              write(0,*) '_load',load_i,r,z,vel,sputy
+
             ENDIF
-
-
 c slmod end
           ENDIF
 c
 c         Set initial ion temperature.
 c
 c Geier IPP/01 added  .or.ciopte.eq.8
-          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod begin
+          if (load_i.ne.-1) then
+            temi = tdep_load(load_i)%temp
+          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c
+c          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod end
              TEMI = pinenz(ik,ir)
           else
              TEMI = CTEM1
@@ -1396,10 +1408,22 @@ c       ion injection vs. neutral launch
 c
 c        TEMI   = CTEM1
 c
-        IZ     = CIZSC
+c slmod begin
+        IF (LOAD_I.NE.-1) THEN
+          IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
+          MAXCIZ = CIZSC         ! not sure about this...
+        ELSE
+          IZ     = CIZSC
+          MAXCIZ = CIZSC
+        ENDIF
         RIZ    = REAL(IZ)
-        MAXCIZ = CIZSC
-        DSPUTY = DBLE (SPUTY)
+        DSPUTY = DBLE(SPUTY)
+c
+c        IZ     = CIZSC
+c        RIZ    = REAL(IZ)
+c        MAXCIZ = CIZSC
+c        DSPUTY = DBLE (SPUTY) 
+c slmod end
 c
 c       Move setting of initial value of cist so that time spent as
 c       neutrals can be included.
@@ -1450,8 +1474,16 @@ c
 c       SET Initial S and CROSS postion for particles.
 c
 C
-
-        if (init_pos_opt.eq.0) then
+c slmod begin - t-dep
+        if (load_i.ne.-1) then
+          cross = tdep_load(load_i)%cross
+          k     = kks(ir)
+          s     = tdep_load(load_i)%s
+        elseif (init_pos_opt.eq.0) then
+c
+c
+c        if (init_pos_opt.eq.0) then
+c slmod end
 c
            CROSS  = 0.0
            K      = KKS(IR)
@@ -1472,9 +1504,6 @@ c
            else
               call getscross_approx(r,z,s,cross,ik,ir)
            endif
-c slmod begin - t-dep
-
-c slmod end
         endif
 c
 c       Record approximate starting S-distance from nearest target.

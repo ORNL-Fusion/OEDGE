@@ -3,6 +3,206 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE DumpMarkusAirila(title9,qtim)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+      REAL     , INTENT(IN) :: qtim
+
+      REAL GetCs
+
+      INTEGER   id,in,ik,ir,fp,ike,ierr,count
+      REAL      machno
+      CHARACTER dummy*1024
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='ero.divimp_data',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '* ERO interface file: '//
+     .                'plasma and geometry data'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{VERSION}'
+      WRITE(fp,*    ) '        1.0'
+
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{PLASMA}'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  cell   - index of the cell along a ring'
+      WRITE(fp,'(A)') '*  ring   - index of the ring on the grid'
+      WRITE(fp,'(A)') '*  R      - radial position of the centre of '//
+     .                'the cell'
+      WRITE(fp,'(A)') '*  Z      - vertical position'
+      WRITE(fp,'(A)') '*  ne     - electron density'
+      WRITE(fp,'(A)') '*  vb     - plasma velocity parallel to the '//
+     .                'magnetic field'
+      WRITE(fp,'(A)') '*  machno - Mach number of the plasma flow '//
+     .                'parallel to the magnetic field'
+      WRITE(fp,'(A)') '*  Te     - electron temperature'
+      WRITE(fp,'(A)') '*  Ti     - temperature of the hydrogenic ions'
+      WRITE(fp,'(A)') '*  E      - electric field parallel to the '//
+     .                'magnetic field (very approximate)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(2A6,2X,2A10,2A12,3A10,A12)')
+     .  '* cell','ring','R','Z','ne','vb','machno','Te','Ti','E'
+      WRITE(fp,'(A,13X,2A10,2A12,10X,2A10,A12)')
+     .  '*','[m]','[m]','[m-3]','[m s-1]','[eV]','[eV]',
+     .  '[V m-1]'
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+          machno = ABS(kvhs(ik,ir) / qtim / 
+     .                 GetCs(ktebs(ik,ir),ktibs(ik,ir)))
+          WRITE(fp,'(2I6,2X,2F10.6,1P,2E12.3,0P,F10.4,2F10.2,
+     .               1P,E12.3,0P)') 
+     .      ik,ir,rs(ik,ir),zs(ik,ir),
+     .      knbs(ik,ir),kvhs(ik,ir)/qtim,machno,ktebs(ik,ir),
+     .      ktibs(ik,ir),
+     .      kes(ik,ir)
+        ENDDO
+      ENDDO
+
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{TARGETS}'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  index - target segment index'
+      WRITE(fp,'(A)') '*  cell  - index of the cell along the ring '//
+     .                'that the target segment is associated with'
+      WRITE(fp,'(A)') '*  ring  - index of the ring on the grid'
+      WRITE(fp,'(A)') '*  wall  - index of the corresponding '//
+     .                'wall segment in the {WALL GEOMETRY} data section'
+      WRITE(fp,'(A)') '*  R     - radial position of the centre of '//
+     .                'the target segment'
+      WRITE(fp,'(A)') '*  Z     - vertical position'
+      WRITE(fp,'(A)') '*  pdist - poloidal distance along the ring, '//
+     .                'starting at the target'
+      WRITE(fp,'(A)') '*  sdist - distance along the ring parallel '//
+     .                'to the magnetic field'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A7,3A6,2X,2A10,2A12,3A10,2A12)') 
+     .  '* index','cell','ring','wall','R','Z','ne','vb','M','Te','Ti',
+     .  'pdist','sdist'
+      WRITE(fp,'(A,26X,2A10,2A12,10X,2A10,2A12)')
+     .  '*','[m]','[m]','[m-3]','[m s-1]','[eV]','[eV]','[m]','[m]'
+
+      DO in = 1, nds
+        ir = irds(in)
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ik = ikds(in)
+        ike = ik
+        IF (ik.EQ.1) ike = 0
+        id = wallindex(in)
+        machno = ABS(kvds(in) / GetCs(kteds(in),ktids(in)))
+        WRITE(fp,'(I7,3I6,2X,2F10.6,1P,2E12.3,0P,F10.4,2F10.2,2F12.6)')
+     .    in,ik,ir,id,rp(in),zp(in),
+     .    knds(in),kvds(in),machno,kteds(in),ktids(in),
+     .    kpb(ike,ir),ksb(ike,ir)
+      ENDDO
+
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{WALL GEOMETRY}'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  index  - wall segment index'
+      WRITE(fp,'(A)') '*  target - index of the corresponding '//
+     .                'target segment'
+      WRITE(fp,'(A)') '*  R1     - radial position of the start of '//
+     .                'the wall segment (proceeding clockwise)'
+      WRITE(fp,'(A)') '*  Z1     - vertical position'
+      WRITE(fp,'(A)') '*  R2     - radial position of the end of '//
+     .                'the wall segment'
+      WRITE(fp,'(A)') '*  Z2     - vertical position'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A7,A8,2(2X,2A10))')
+     .  '* index','target','R1','Z1','R2','Z2'
+      WRITE(fp,'(A,14X,2(2X,2A10))')
+     .  '*','[m]','[m]','[m]','[m]'
+      DO id = 1, wallpts
+        in = NINT(wallpt(id,18))
+        WRITE(fp,'(I7,I8,2(2X,2F10.6))')
+     .    id,in,wallpt(id,20:23)
+      ENDDO
+
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{GRID GEOMETRY}'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  Rx - radial position of cell vertex'
+      WRITE(fp,'(A)') '*  Zx - vertical position'
+      WRITE(fp,'(A)') '*' 
+      WRITE(fp,'(A)') '*            ik+1,ir'
+      WRITE(fp,'(A)') '*' 
+      WRITE(fp,'(A)') '*       R3,Z3-------R4,Z4'
+      WRITE(fp,'(A)') '*         |           |'
+      WRITE(fp,'(A)') '*         |           |'
+      WRITE(fp,'(A)') '*         |   ik,ir   |'
+      WRITE(fp,'(A)') '*         |           |'
+      WRITE(fp,'(A)') '*         |           |'
+      WRITE(fp,'(A)') '*       R2,Z2-------R1,Z1'
+      WRITE(fp,'(A)') '*' 
+      WRITE(fp,'(A)') '*            ik-1,ir'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  area   - area of the cell in the '//
+     .                'poloidal plane'
+      WRITE(fp,'(A)') '*  volume - toroidal volume of the cell'
+      WRITE(fp,'(A)') '*  bratio - magnetic field ratio (Bpol/Btot)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(2A6,4(2X,2A10),2X,5A12)')
+     .  '*   ik','ir','R1','Z1','R2','Z2','R3','Z3','R4','Z4',
+     .  'area','volume',
+     .  'bratio','pdist','sdist'
+      WRITE(fp,'(A,11X,4(2X,2A10),2X,5A12)')
+     .  '*','[m]','[m]','[m]','[m]','[m]','[m]','[m]','[m]',
+     .      '[m2]','[m3]','[m]','[m]','[m]'
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+          id = korpg(ik,ir)
+          WRITE(fp,'(2I6,4(2X,2F10.6),2X,1P,2E12.4,0P,3F12.6)')
+     .      ik,ir,
+     .      (rvertp(in,id),zvertp(in,id),in=1,4),
+     .      kareas(ik,ir),kvols(ik,ir),
+     .      bratio(ik,ir),kps(ik,ir),kss(ik,ir)
+        ENDDO
+      ENDDO
+
+      CLOSE(fp)
+
+
+
+
+
+ 
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpMatthiasReinelt(title9)
       IMPLICIT none
 
@@ -226,7 +426,7 @@ c
       CHARACTER, INTENT(IN) :: title9*(*)
 
       INTEGER ik,ir,fp,ike,ierr
-      REAL    fact
+      REAL    fact,rdum
       CHARACTER dummy*1024
       
       CALL ZA09AS(dummy(1:8))
@@ -248,7 +448,7 @@ c
      .      STATUS='REPLACE')
       WRITE(fp,'(A)') '# Data file for Marie-Helene, Kajita-san, '//
      .                'and S. Woodruff: D_alpha [W m-3]'
-      WRITE(fp,'(A)') '#    (based on SOLPS format from A. Kukushkin)'
+      WRITE(fp,'(A)') '#    (based on a SOLPS format from A. Kukushkin)'
       WRITE(fp,'(A)') '#'
       WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
       WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
@@ -269,10 +469,24 @@ c
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
+
         DO ik = 1, ike        
+
+          IF (ktebs(ik,ir).GT.1.0E+3.AND.
+     .      pinline(ik,ir,4,H_BALPHA).GT.1.0E+20) THEN
+            rdum = SUM(pinline(ik,ir,1:3,H_BALPHA)) + 
+     .                 pinline(ik,ir,5  ,H_BALPHA)
+c            write(0,*) 'hell',ik,ir,pinline(ik,ir,1:5,H_BALPHA),
+c     .   pinalpha(ik,ir)
+          ELSE
+            rdum = SUM(pinline(ik,ir,1:4,H_BALPHA)) + 
+     .                 pinline(ik,ir,5  ,H_BALPHA)
+          ENDIF
+c          write(6,*) 'check',ik,ir,pinalpha(ik,ir),rdum
+
           WRITE(fp,'(2I5,1P,5E14.4,0P)') 
      .      ik,ir,rs(ik,ir),zs(ik,ir),kareas(ik,ir),kvols(ik,ir),
-     .      pinalpha(ik,ir)*fact
+     .      rdum*fact
         ENDDO
       ENDDO
       CLOSE(fp)
@@ -416,7 +630,7 @@ c ======================================================================
 c
 c
       SUBROUTINE GenerateDIVIMPDataFiles(nizs,cizsc,crmi,cion,absfac,
-     .                                   crmb,cizb,title9)
+     .                                   crmb,cizb,title9,qtim)
       USE mod_interface
       USE mod_divimp
       IMPLICIT none
@@ -434,7 +648,7 @@ c
       INCLUDE 'div2'
 
       INTEGER  , INTENT(IN) :: nizs,cizsc,cion,crmb,cizb
-      REAL     , INTENT(IN) :: crmi,absfac
+      REAL     , INTENT(IN) :: crmi,absfac,qtim
       CHARACTER, INTENT(IN) :: title9*(*)
 
       REAL GetFlux
@@ -1362,7 +1576,7 @@ c...  ASCII data file for Sophie and MatLab:
           WRITE(fp,'(2I6,2F10.5,1P,2E10.2,0P,2F10.2)')
      .      ik,ir,
      .      rs(ik,ir),zs(ik,ir),
-     .      knbs(ik,ir),kvhs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+     .      knbs(ik,ir),kvhs(ik,ir)/qtim,ktebs(ik,ir),ktibs(ik,ir)
         ENDDO
       ENDDO
 
@@ -5239,7 +5453,7 @@ c        CALL CoreProfileAnalysis(nizs2,cizsc2,crmi2,cion2,1.0)
       ELSEIF (iopt.EQ.14) THEN
         CALL GenerateDIVIMPDataFiles
 c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
-     .         (nizs2,cizsc2,crmi2,cion2,absfac2,crmb,cizb,title)
+     .         (nizs2,cizsc2,crmi2,cion2,absfac2,crmb,cizb,title,qtim)
         RETURN
       ELSEIF (iopt.EQ.15) THEN
         CALL GenerateEIRENEDataFiles
@@ -5260,6 +5474,7 @@ c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
         CALL DumpMarieHelene(title)
         CALL DumpAlexKukushkin(title)
         CALL DumpMatthiasReinelt(title)
+        CALL DumpMarkusAirila(title,qtim)
         RETURN
       ENDIF
 
