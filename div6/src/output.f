@@ -2109,14 +2109,22 @@ c...  Fluxes to surfaces:
       CALL HD(fp,'  NEUTRAL HYDROGEN FLUX DATA','EIRNEUTFLUX-HD',5,67)
       WRITE(fp,*)
 
-      WRITE(fp,40) 'Ind',' r ',' z ',' D_parflx',' D_avgeng',
+c
+c    jdemod - added segment length to output
+c
+      WRITE(fp,40) 'Ind',' r ',' z ',' len ',
+     .                               ' D_parflx',' D_avgeng',
      .                               'D2_parflx','D2_avgeng',
      .                               'Im_parflx','Im_avgeng',
      .                               'D+_parflx','D+_avgeng'
-      WRITE(fp,40) '   ','(m)','(m)','(m-2 s-1)','   (eV)  ',   
-     .                               '(m-2 s-1)','   (eV)  ',
-     .                               '(m-2 s-1)','   (eV)  ',
-     .                               '(m-2 s-1)','   (eV)  '
+c
+c     jdemod - adjusted output formatting so that it is easier to read into a spreadsheet
+c
+      WRITE(fp,40) '   ','(m)','(m)',' (m) ',
+     .                               ' (m-2s-1)','   (eV)  ',   
+     .                               ' (m-2s-1)','   (eV)  ',
+     .                               ' (m-2s-1)','   (eV)  ',
+     .                               ' (m-2s-1)','   (eV)  '
 c...  Loop over NWALL for now, to avoid BGK grid:
       DO i1 = 1, nvesm+nvesp
 c
@@ -2125,6 +2133,8 @@ c
 c        IF (0.5*(zvesm(i1,1)+zvesm(i1,2)).LT.zxp) THEN
           WRITE(fp,41) i1,       
      .      0.5*(rvesm(i1,1)+rvesm(i1,2)),0.5*(zvesm(i1,1)+zvesm(i1,2)),
+     .      sqrt((rvesm(i1,1)-rvesm(i1,2))**2
+     .          +(zvesm(i1,1)-zvesm(i1,2))**2), 
      .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1),
      .      flxhw3(i1),flxhw4(i1),flxhw8(i1)           ,-1.0
 c
@@ -2132,8 +2142,8 @@ c        ENDIF
 c
 
       ENDDO
-40    FORMAT(5X,A3,2A7     ,8A11)
-41    FORMAT(5X,I3,2F7.3,4(1P,E11.2,0P,F11.3))      
+40    FORMAT(5X,A3,2A7,a12  ,8A11)
+41    FORMAT(5X,I3,2F7.3,g12.5,4(1P,E11.2,0P,F11.3))      
 
 
 
