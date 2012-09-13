@@ -501,7 +501,10 @@ contains
     real,intent(in) :: e0
 
     REAL :: result
-    REAL :: yield(2,20) = (/  &
+    ! jdemod - the PGI compiler wasn't happy with a linear array being mapped to 
+    !          a 2D array - so use the reshape function - apparently this is the 'official' way
+    !          to do this so should be more portable ... hope it works for intel
+    REAL :: yield(2,20) = reshape((/    &
            15.00 ,  2.98E-6 ,  &
            20.00 ,  3.29E-5 ,  &
            25.00 ,  1.36E-4 ,  &
@@ -521,7 +524,8 @@ contains
           800.00 ,  1.35E+0 ,  &
          1000.00 ,  1.62E+0 ,  &
          2000.00 ,  2.59E+0 ,  &
-         2500.00 ,  2.98E+0  /)
+         2500.00 ,  2.98E+0 /),(/2,20/))  
+
 
       CALL Fitter(20,yield(1,1:20),yield(2,1:20),1,e0,result,'LINEAR')
 
