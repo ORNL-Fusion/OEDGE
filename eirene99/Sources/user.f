@@ -205,9 +205,10 @@ c     perpendicular to the z-axis:
 
         numtry = numtry + 1
 
+c     Krieger IPP 2012 - fixed INTEL name conflict: ranf->ranf_eirene
 c...    Sample SORADx to get lanuch point (X0,Y0,Z0):
-        x0 = sorad1 + RANF() * (sorad2 - sorad1)
-        y0 = sorad3 + RANF() * (sorad4 - sorad3)
+        x0 = sorad1 + RANF_EIRENE() * (sorad2 - sorad1)
+        y0 = sorad3 + RANF_EIRENE() * (sorad4 - sorad3)
         z0 = sorad5
 
 c...    Decide if the launch point is inside the polygon or not:

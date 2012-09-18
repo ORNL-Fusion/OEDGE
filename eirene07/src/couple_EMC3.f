@@ -1635,7 +1635,8 @@ C---------------------------------------------------------------------
       INTEGER :: JBEGIN,JEND,JTRY 
       REAL*8  :: WTMONT, RANF
 
-      WTMONT = RANF()*GEWICH(NSSTOR)
+c     Krieger IPP 2012 - I assume RANF should actually be RANF_EIRENE
+      WTMONT = RANF_EIRENE()*GEWICH(NSSTOR)
       IF(WTMONT.LE.GEWICH(1)) THEN
          NSRACT_DET = 1
       ELSE 
@@ -1681,8 +1682,8 @@ C---------------------------------------------------------------------
       ID0 = ISD_N0(NSR)
 
       DO IRUN=1,N_RUN
-       RJ0    = 2.*RANF() - 1.
-       PJ0    = 2.*RANF() - 1.
+       RJ0    = 2.*RANF_EIRENE() - 1.
+       PJ0    = 2.*RANF_EIRENE() - 1.
        CALL LOAD_PARTICLE(NZ0,JR0,JP0,JT0,ID0,RJ0,PJ0,NELEM,X,Y,Z)
        IF( NELEM /=0) EXIT
       ENDDO
@@ -3259,10 +3260,10 @@ c             write(99,'(3f12.6)')xfin,yfin,zfin
       USE NEUTRAL_TRANSPORT
 
       DO I=1,100000
-      NZ0 = 2.*RANF()
-      JR0 = RANF()*ZON_RADI(NZ0)
-      JP0 = RANF()*ZON_POLO(NZ0)
-      JT0 = RANF()*ZON_TORO(NZ0)
+      NZ0 = 2.*RANF_EIRENE()
+      JR0 = RANF_EIRENE()*ZON_RADI(NZ0)
+      JP0 = RANF_EIRENE()*ZON_POLO(NZ0)
+      JT0 = RANF_EIRENE()*ZON_TORO(NZ0)
 
       RJ0 = 0.
       PJ0 = 0.

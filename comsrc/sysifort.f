@@ -79,23 +79,12 @@ C     HOT  : FOR HOTSPOT ANALYSIS, DUMMY OUT BY SETTING ZA02AS = 0.0
 C     CRAY : REPLACE WITH SYSTEM FUNCTION SECOND.
 C
       REAL FUNCTION ZA02AS (IFLAG)
-      INTEGER I,MCLOCK,IFLAG
-c slmod begin 
-c...   -SL 10/06/2011
-      real test
-      
-      CALL cpu_time(test)
-      ZA02AS = test
-c make this an option with a default set to MCLOCK()
-c      write(0,*) 'TIME TEST:',za02as
-c
-c      real test
-c      I = MCLOCK()
-c      ZA02AS = I/100.0
-c slmod end
+      INTEGER I,MCLOCK
 
-CHOT  ZA02AS = 0.0
-C      ZA02AS = SECOND ()
+      real test
+      I = MCLOCK()
+      ZA02AS = I/1000.0
+
       RETURN
       END
 c
@@ -508,19 +497,11 @@ c      exeline(len+1:len+2) = '\0'
       REAL FUNCTION Clock2()
       IMPLICIT none
 
-      REAL etime,test
+      REAL etime
 
       REAL val(2)
 
-c      STOP 'call to CLOCK2, check the code'
-
       Clock2 = etime(val)
-
-      CALL cpu_time(test)
-
-c      write(0,*) 'TIME TEST:',Clock2,test
-
-      Clock2 = test
 
 c      Clock = val(1) + val(2)
 

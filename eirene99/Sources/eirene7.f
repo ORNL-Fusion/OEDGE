@@ -1,3 +1,4 @@
+c     Krieger IPP 2012 - fixed INTEL name conflict: ranf->ranf_eirene
 C
 C
 C        **************
@@ -643,11 +644,11 @@ C
       DO 1 JJ=1,IRNDVC
 C   1. COMPUTE THE SINE AND COSINE OF 2*PI*RAN(1)
 C
-        ZZ=PI2*RANF( )
+        ZZ=PI2*RANF_EIRENE( )
         ZSIN=SIN(ZZ)
         ZCOS=COS(ZZ)
 C
-        AR=LOG(RANF( ))
+        AR=LOG(RANF_EIRENE( ))
         ZT=SQRT(-(AR+AR))
         FG1(JJ)=ZT*ZSIN
         FG2(JJ)=ZT*ZCOS
@@ -655,11 +656,11 @@ C
 C
       DO 2 JJ=1,IRNDVH
 C
-        ZZ=PI2*RANF( )
+        ZZ=PI2*RANF_EIRENE( )
         ZSIN=SIN(ZZ)
         ZCOS=COS(ZZ)
 C
-        AR=LOG(RANF( ))
+        AR=LOG(RANF_EIRENE( ))
         ZT=SQRT(-(AR+AR))
         FG3(JJ)=ZT*ZSIN
         FG3(JJ+IRNDVH)=ZT*ZCOS
@@ -692,11 +693,11 @@ C
       DO 1 JJ=1,IRNDVC
 C   1. COMPUTE THE SINE AND COSINE OF 2*PI*RAN(1)
 C
-        ZZ=PI2*RANF( )
+        ZZ=PI2*RANF_EIRENE( )
         ZSIN=SIN(ZZ)
         ZCOS=COS(ZZ)
 C
-        AR=LOG(RANF( ))
+        AR=LOG(RANF_EIRENE( ))
         ZT=SQRT(-(AR+AR))
         FM2(JJ)=ZT*ZSIN
         FM3(JJ)=ZT*ZCOS
@@ -705,7 +706,7 @@ C
 C  SAMPLE FROM MAXWELLIAN FLUX BY INVERSION RULE
 C
       DO 2 JJ=1,IRNDVC
-        AR=LOG(RANF( ))
+        AR=LOG(RANF_EIRENE( ))
         FM1(JJ)=SQRT(-(AR+AR))
 2     CONTINUE
       INIV1=IRNDVC
@@ -724,10 +725,10 @@ C
       DATA PI2/6.283185/
 C
       DO 100 J=1,IRNDVC
-        ZTHET=PI2*RANF( )
+        ZTHET=PI2*RANF_EIRENE( )
         ZSTHET=SIN(ZTHET)
         ZCTHET=COS(ZTHET)
-        A=RANF( )
+        A=RANF_EIRENE( )
         ZCPHI=SQRT(A)
         ZSPHI=SQRT(1.-A)
         FC1(J)=-ZCPHI
@@ -750,8 +751,8 @@ C
       DATA PI2/6.283185/
 C
       DO 100 J=1,IRNDVC
-        ZEP1=RANF( )
-        ZEP2=RANF( )
+        ZEP1=RANF_EIRENE( )
+        ZEP2=RANF_EIRENE( )
 C  THETA
         ZTHETA=PI2*ZEP2
         ZCTHET=COS(ZTHETA)
@@ -778,7 +779,7 @@ C
       EMU=1./(EMAX/UB+1.)
       BETAD2=1./(EMU*EMU-EMU-EMU+1.)
 C
-      A=RANF()
+      A=RANF_EIRENE()
       ARG=A/BETAD2
       E=UB/(1.-SQRT(ARG))-UB
       THOMP=E
@@ -1337,20 +1338,21 @@ C   DELTA DISTRIBUTION AT CENTER OF INTERVALL
           GOTO 1000
 C   UNIFORM DISTRIBUTION IN THIS CO-ORDINATE
 20      CONTINUE
-          ZZ(J)=RANF( )*(BRGHT(J,NLSF)-ALEFT(J,NLSF))+ALEFT(J,NLSF)
+          ZZ(J)=RANF_EIRENE( )*(BRGHT(J,NLSF)-ALEFT(J,NLSF))+
+     .          ALEFT(J,NLSF)
           GOTO 1000
 C   EXPONENTIAL DECAY WITH LENGTH XLAMDA, FOR ONE CO-ORDINATE ONLY
 30      CONTINUE
           DELTA=BRGHT(J,NLSF)-ALEFT(J,NLSF)
           XLAMDA=SOREXP(NLSF,ISTRA)
           ZM=DELTA/XLAMDA
-          ZH=MOD(-LOG(RANF( )),ZM)
+          ZH=MOD(-LOG(RANF_EIRENE( )),ZM)
           ZZ(J)=XLAMDA*ZH+ALEFT(J,NLSF)
           GOTO 1000
 C   STEPFUNCTION NO. ISTEP, FOR ONE CO-ORDINATE ONLY
 40      CONTINUE
           ISTEP=SORIND(NLSF,ISTRA)
-          RNF=XI(J,NLSF)+RANF( )*(XE(J,NLSF)-XI(J,NLSF))
+          RNF=XI(J,NLSF)+RANF_EIRENE( )*(XE(J,NLSF)-XI(J,NLSF))
           ZZ(J)=STEP1(IINDEX,ISTEP,RNF,NSPEZ(ISTRA))
           GOTO 1000
 1000  CONTINUE
@@ -1926,12 +1928,12 @@ c TRY A NEW Z0 VALUE -- THE SEARCH ROUTINE SHOULD REALLY BE IMPROVED
               IF (NLTOR) THEN
               ELSE
 c...            Move the launch point slightly:
-                PHI=PHI+0.001D0*DSIGN(1.0D0,RANF()-0.5D0)
+                PHI=PHI+0.001D0*DSIGN(1.0D0,RANF_EIRENE()-0.5D0)
                 PHI=DMAX1(-0.49D0*PHISEG,DMIN1(0.49D0*PHISEG,PHI))
                 Z0=X0*DTAN(PHI)
               ENDIF
             ELSE
-              Z0=ZAA*RANF() 
+              Z0=ZAA*RANF_EIRENE() 
             ENDIF
             ILOSS=ILOSS+1
             IF (ILOSS.EQ.10) THEN
@@ -2007,7 +2009,8 @@ c...          Special case for (almost) full toroidal grid:
               PHI1=0.0D0
               PHI2=2.0D0*PIA
             ENDIF
-            PHI=PHI1+DMAX1(0.001D0,DMIN1(0.999D0,RANF()))*(PHI2-PHI1)
+            PHI=PHI1+DMAX1(0.001D0,DMIN1(0.999D0,RANF_EIRENE()))*
+     .               (PHI2-PHI1)
             NTRSEG=INT((PHI+0.5D0*PHISEG)/PHISEG)+
      .             MAX(0,NINT(DSIGN(1.0D0,PHI+0.5D0*PHISEG)))
 c...        Special case for (almost) full toroidal grid:
@@ -2048,7 +2051,7 @@ c...          This IF condition is specific to grid SL2:
                   IF (NLTRZ) THEN
 c...                Find a new Z value randomly along the toroidal length:
 c                    WRITE(0,*) 'MOVING LAUNCH',NRCELL,IND,Z0
-                    Z0=ZAA*RANF() 
+                    Z0=ZAA*RANF_EIRENE() 
                   ELSEIF (NLTRA) THEN
 c...                Launch the particle beside the gap in the target, to reflect
 c                   the bevel geometry:
@@ -2828,7 +2831,7 @@ C
       IC1=ICMX(NVLM-1,ISTRA)
       IC2=ICMX(NVLM,ISTRA)
       ZEP1=VSOURC(ISTRA,IC1)+
-     .     RANF()*(VSOURC(ISTRA,IC2)-VSOURC(ISTRA,IC1))
+     .     RANF_EIRENE()*(VSOURC(ISTRA,IC2)-VSOURC(ISTRA,IC1))
       DO 135 ICELL=IC1+1,IC2
         IF (ZEP1.LE.VSOURC(ISTRA,ICELL)) GOTO 136
 135   CONTINUE
@@ -2853,7 +2856,7 @@ c... The recombination source always assigned Z0=0.0, but this
 c    is not consistent with the 3D box wth reflecting Z end surfaces,
 c    which has a problem with particles intersecting a surface at Z=0.0 (and
 c    so the Z value of the bounding surface is 1 mm instead of 0.0):
-          Z0=SORAD5(NVLM,ISTRA)+RANF()*(SORAD6(NVLM,ISTRA)-
+          Z0=SORAD5(NVLM,ISTRA)+RANF_EIRENE()*(SORAD6(NVLM,ISTRA)-
      .                                  SORAD5(NVLM,ISTRA))
 
           IF (NBSOR(NVLM,ISTRA).EQ.999.AND.NLMLT) THEN
@@ -2895,7 +2898,8 @@ c...          Special case for (almost) full toroidal grid:
               PHI1=0.0D0
               PHI2=2.0D0*PIA
             ENDIF
-            PHI=PHI1+DMAX1(0.001D0,DMIN1(0.999D0,RANF()))*(PHI2-PHI1)
+            PHI=PHI1+DMAX1(0.001D0,DMIN1(0.999D0,RANF_EIRENE()))*
+     .               (PHI2-PHI1)
             NTRSEG=INT((PHI+0.5D0*PHISEG)/PHISEG)+
      .             MAX(0,NINT(DSIGN(1.0D0,PHI+0.5D0*PHISEG)))
 c...        Special case for (almost) full toroidal grid:
@@ -2921,13 +2925,13 @@ c...BUG (NOT NECESSARILY A REAL ONE): THIS NEEDS TO BE DEFINED?
           ELSE
 C  TACTICALLY ASSUME: PARTICLE STARTS IN LOCAL TOR. BASIS CELL NO.1
             ZRM1=0.
-            PHI=ZRM1+RANF()*ZFULL
+            PHI=ZRM1+RANF_EIRENE()*ZFULL
 C           Z0=??, TO BE FOUND FROM X01,PHI LATER
           ENDIF
 c
 cC  TACTICALLY ASSUME: PARTICLE STARTS IN LOCAL TOR. BASIS CELL NO.1
 c          ZRM1=0.
-c          PHI=ZRM1+RANF()*ZFULL
+c          PHI=ZRM1+RANF_EIRENE()*ZFULL
 cC         Z0=??, TO BE FOUND FROM X01,PHI LATER
 c slmod end
         ELSEIF (NLTRT) THEN
@@ -2936,13 +2940,14 @@ c slmod end
       ELSEIF (NLTOR) THEN
 C  SAMPLE IN CELL NTCELL
         IF (NLTRZ) THEN
-          Z0=ZSURF(NTCELL)+RANF()*(ZSURF(NTCELL+1)-ZSURF(NTCELL))
+          Z0=ZSURF(NTCELL)+RANF_EIRENE()*(ZSURF(NTCELL+1)-ZSURF(NTCELL))
         ELSEIF (NLTRT) THEN
-          PHI=ZSURF(NTCELL)+RANF()*(ZSURF(NTCELL+1)-ZSURF(NTCELL))
+          PHI=ZSURF(NTCELL)+RANF_EIRENE()*
+     .                      (ZSURF(NTCELL+1)-ZSURF(NTCELL))
 C         Z0=??, TO BE FOUND FROM X01,PHI LATER
         ELSEIF (NLTRA) THEN
           ZRM1=ZFULL*(NTCELL-1)
-          PHI=ZRM1+RANF()*ZFULL
+          PHI=ZRM1+RANF_EIRENE()*ZFULL
 C         Z0=??, TO BE FOUND FROM X01,PHI LATER
         ENDIF
       ENDIF
@@ -2955,12 +2960,12 @@ C
         IF (NLCRC) THEN
 C  POLOIDAL CO-ORDINATE
           IF (NLPOL) THEN
-            WINK=PSURF(NPCELL)+RANF( )*PS21(NPCELL)
+            WINK=PSURF(NPCELL)+RANF_EIRENE( )*PS21(NPCELL)
           ELSEIF (.NOT.NLPOL) THEN
-            WINK=RANF( )*PI2A
+            WINK=RANF_EIRENE( )*PI2A
           ENDIF
 C  RADIAL CO-ORDINATE
-          RR=SQRT(RQ(NRCELL)+RANF( )*RQ21(NRCELL))
+          RR=SQRT(RQ(NRCELL)+RANF_EIRENE( )*RQ21(NRCELL))
 C
           X0=RR*COS(WINK)
           Y0=RR*SIN(WINK)
@@ -2970,12 +2975,12 @@ CDR            MARGINAL AND CONDITIONAL DISTRIBUTION F1(R) AND
 CDR            F2(PHI, GIVEN R)
 C  POLOIDAL CO-ORDINATE
           IF (NLPOL) THEN
-            WINK=PSURF(NPCELL)+RANF( )*PS21(NPCELL)
+            WINK=PSURF(NPCELL)+RANF_EIRENE( )*PS21(NPCELL)
           ELSEIF (.NOT.NLPOL) THEN
-            WINK=RANF( )*PI2A
+            WINK=RANF_EIRENE( )*PI2A
           ENDIF
 C  RADIAL CO-ORDINATE
-          RR=SQRT(RQ(NRCELL)+RANF( )*RQ21(NRCELL))
+          RR=SQRT(RQ(NRCELL)+RANF_EIRENE( )*RQ21(NRCELL))
 C
           RRI=RSURF(NRCELL)
           RRD=RSURF(NRCELL+1)-RRI
@@ -2993,7 +2998,7 @@ C
           IF (.NOT.NLPOL) THEN
             GOTO 999
           ENDIF
-          ZEP1=AREAP(NRCELL,NPCELL)*RANF()
+          ZEP1=AREAP(NRCELL,NPCELL)*RANF_EIRENE()
           IF (ZEP1.LE.ASIMP(1,NCELL)) THEN
 C   PUNKT IN DREIECK 1
 c slmod begin - grid - tr
@@ -3059,8 +3064,8 @@ c slmod end
 C   CONVEX POLYTOP SAMPLING
 C   L.DEVROYE, "NON UNIFORM RANDOM VARIATE GENERATION", SPRINGER
 C   1986, P 568
-        R1=RANF()
-        R2=RANF()
+        R1=RANF_EIRENE()
+        R2=RANF_EIRENE()
         RMA=MAX(R1,R2)
         RMI=MIN(R1,R2)
         D(1)=RMI
@@ -3414,7 +3419,7 @@ C
       ISPZ1=NSPZ1
 C
 C  INVERT FUNCTION VF(ISPZ1,X)=Y. NO. ISTEP, E.G.
-C  SAMPLE FROM VF WITH Y=RANF,  RRSTEP(ISTEP,1)<=X<=RRSTEP(ISTEP,NS1)
+C  SAMPLE FROM VF WITH Y=RANF_EIRENE,  RRSTEP(ISTEP,1)<=X<=RRSTEP(ISTEP,NS1)
 C  RETURN THE VALUE X AS STEP1, AND THE INTERVAL NUMBER IINDEX OF
 C  THE INTERVAL CONTAINING THIS X.
 C

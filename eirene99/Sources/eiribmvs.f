@@ -1,7 +1,8 @@
-      function ranf ()
+c     Krieger IPP 2012 - fixed INTEL name conflict: ranf->ranf_eirene
+      function ranf_eirene ()
       implicit double precision (a-h,o-z)
       ra=h1rn(dummy)
-      ranf=ra
+      ranf_eirene=ra
       return
       end
 c
@@ -21,7 +22,7 @@ c
         large=ilarg(2)
         ifirst=1
       endif
-      ran=ranf()
+      ran=ranf_eirene()
       iseed=ran*large
       return
       end
