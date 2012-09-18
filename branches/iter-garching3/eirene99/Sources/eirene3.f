@@ -1,3 +1,4 @@
+c     Krieger IPP 2012 - fixed INTEL name conflict: ranf->ranf_eirene
 C
       SUBROUTINE PLASMA_DERIV
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
@@ -1339,7 +1340,7 @@ c slmod begin - temp - not tr
             STOP 'ERROR: ATTEMPTING TO CORRELATE PARTICLES'
 c slmod end
             CALL RANSET(ISEED)
-            DUMMY=RANF( )
+            DUMMY=RANF_EIRENE( )
             CALL RANGET(ISEED)
             ISEED=INTMAX-ISEED
             INIV1=0
@@ -4440,7 +4441,7 @@ c This binary search seems to suck.  Why is it done this way?  Why not just
 c assign an integer from the range of A?      
 c
 c slmod end 
-        A=RANF()*RPARTW(IPRNL)
+        A=RANF_EIRENE()*RPARTW(IPRNL)
         I1=0
         I2=IPRNL
 9       IM=(I1+I2)/2
@@ -4518,7 +4519,7 @@ C
 C   FIRSTLY FIND POINT NUMBER IPOINT
         IPOINT=1
         IF (NLIMSQ.GT.1) THEN
-          ZV=RANF( )
+          ZV=RANF_EIRENE( )
           DO 21 IPOINT=1,NLIMSQ
             IF (ZV.LT.WMM(IPOINT)) GOTO 22
 21        CONTINUE
@@ -4567,7 +4568,7 @@ C
 C   FIRST FIND SOURCE-SURFACE NUMBER ISURF
         ISURF=1
         IF (NLIMSQ.GT.1) THEN
-          ZV=RANF( )
+          ZV=RANF_EIRENE( )
           DO 51 ISURF=1,NLIMSQ
             IF (ZV.LT.WMM(ISURF)) GOTO 52
 51        CONTINUE
@@ -4654,7 +4655,7 @@ C
 C  SUBSTRATA OF VOLUME SOURCE: IVOLM
         IVOLM=1
         IF (NLIMSQ.GT.1) THEN
-          ZV=RANF( )
+          ZV=RANF_EIRENE( )
           DO 71 IVOLM=1,NLIMSQ
             IF (ZV.LT.WMM(IVOLM)) GOTO 72
 71        CONTINUE
@@ -4681,7 +4682,7 @@ C
         INDTEC=IDEZ(ISOR,4,4)
         IF (INDTEC.EQ.0) INDTEC=2
         IF (INDTEC.LE.1) TIME=TIME0
-        IF (INDTEC.EQ.2) TIME=TIME0+RANF()*DTIMV
+        IF (INDTEC.EQ.2) TIME=TIME0+RANF_EIRENE()*DTIMV
       ENDIF
 C
 C  INITIAL POSITION OF PARTICLE IS DEFINED NOW, FURTHERMORE:
@@ -4716,7 +4717,7 @@ C  FIXED SPECIES INDEX
         IATM=NSPEZ(ISTRA)
         IF (IATM.LT.0.OR.IATM.GT.NATMI) THEN
 C  SPECIES SAMPLING FROM DATM
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           DO 102 I=1,NATMIM
             IATM=I
             IF (FR.LE.DATM(IATM)) GOTO 101
@@ -4731,7 +4732,7 @@ C  WEIGHT CORRECTION
           ENDIF
         ELSEIF (IATM.EQ.0) THEN
 C  ANALOG SPECIES SAMPLING FROM WEISPZ
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           SUM=0.
           DO 112 I=1,NATMIM
             IATM=I
@@ -4757,7 +4758,7 @@ C  FIXED SPECIES INDEX
         IMOL=NSPEZ(ISTRA)
         IF (IMOL.LT.0.OR.IMOL.GT.NMOLI) THEN
 C  NONANALOG SPECIES SAMPLING
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           DO 104 I=1,NMOLIM
             IMOL=I
             IF (FR.LE.DMOL(IMOL)) GOTO 103
@@ -4772,7 +4773,7 @@ C  WEIGHT CORRECTION
           ENDIF
         ELSEIF (IMOL.EQ.0) THEN
 C  ANALOG SPECIES SAMPLING
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           SUM=0.
           DO 114 I=1,NMOLIM
             IMOL=I
@@ -4798,7 +4799,7 @@ C  FIXED SPECIES INDEX
         IION=NSPEZ(ISTRA)
         IF (IION.LT.0.OR.IION.GT.NIONI) THEN
 C  NONANALOG SPECIES SAMPLING
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           DO 106 I=1,NIONIM
             IION=I
             IF (FR.LE.DION(IION)) GOTO 105
@@ -4813,7 +4814,7 @@ C  WEIGHT CORRECTION
           ENDIF
         ELSEIF (IION.EQ.0) THEN
 C  ANALOG SPECIES SAMPLING
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           SUM=0.
           DO 116 I=1,NIONIM
             IION=I
@@ -4844,7 +4845,7 @@ C  NONANALOG SPECIES SAMPLING
           IF (output)
      .    WRITE(6,*) 'MARK: LOCATE: NONANALOGUE SAMPLING  WEIGHT= ',
      .               WEIGHT
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           IF (output)
      .    WRITE(6,*) 'MARK: LOCATE: NPLSIM= ',NPLSIM
           DO 108 I=1,NPLSIM
@@ -4870,7 +4871,7 @@ C  WEIGHT CORRECTION
           ENDIF
         ELSEIF (IPLS.EQ.0) THEN
 C  ANALOG SPECIES SAMPLING
-          FR=RANF( )
+          FR=RANF_EIRENE( )
           SUM=0.
           DO 118 I=1,NPLSIM
             IPLS=I

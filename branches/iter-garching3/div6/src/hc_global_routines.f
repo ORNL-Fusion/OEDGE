@@ -633,9 +633,10 @@ c
       if (hc_reflection_angle_model==-1) then 
          if (nrfopt.eq.0) then 
             hc_reflection_angle_model = 2
-            write(0,*) 'H48 WARNING: HC neutral reflection model'//
-     >                 ' set to 2 (cosine) since DIVIMP neutral'//
-     >                 ' reflection is OFF'
+c           Krieger IPP 2012
+*           write(0,*) 'H48 WARNING: HC neutral reflection model'//
+*    >                 ' set to 2 (cosine) since DIVIMP neutral'//
+*    >                 ' reflection is OFF'
             write(6,*) 'H48 WARNING: HC neutral reflection model'//
      >                 ' set to 2 (cosine) since DIVIMP neutral'//
      >                 ' reflection is OFF'
@@ -655,9 +656,10 @@ c
       if(hc_sputtering_angle_model==-1) then 
          if (nrfopt.eq.0) then 
             hc_sputtering_angle_model = 2
-            write(0,*) 'H57 WARNING: HC sputtering angle model'//
-     >                 ' set to 2 (cosine) since DIVIMP neutral'//
-     >                 ' reflection is OFF'
+c           Krieger IPP 2012
+*           write(0,*) 'H57 WARNING: HC sputtering angle model'//
+*    >                 ' set to 2 (cosine) since DIVIMP neutral'//
+*    >                 ' reflection is OFF'
             write(6,*) 'H57 WARNING: HC sputtering angle model'//
      >                 ' set to 2 (cosine) since DIVIMP neutral'//
      >                 ' reflection is OFF'

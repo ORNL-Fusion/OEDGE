@@ -163,6 +163,6 @@ c slmod begin - temporary
       integer, parameter :: RIBBON_GRID = 8
 
 c...  Some global options of convenience:
-      LOGICAL, PARAMETER :: sloutput  = .TRUE.,   ! Selects SL screen output 
+      LOGICAL, PARAMETER :: sloutput  = .FALSE.,  ! Selects SL screen output 
      .                      ippchange = .TRUE.    ! Selects recent IPP Garching updates
 c slmod end
