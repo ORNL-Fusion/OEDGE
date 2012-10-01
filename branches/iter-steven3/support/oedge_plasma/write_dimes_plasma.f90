@@ -111,7 +111,7 @@ program write_dimes_plasma
   !
   ! These offsets should put the DIMES center at 0,0 for this simulation 
 
-  r_offset = 1.49187
+  r_offset = 1.495835
   z_offset = -1.25
   
 

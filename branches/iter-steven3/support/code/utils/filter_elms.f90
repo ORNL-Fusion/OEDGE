@@ -3,6 +3,12 @@ module filter_elms
   use utilities
   implicit none
 
+  ! turn get_elm_time into an interface so I can add functionality without breaking existing code
+  interface get_elm_time
+
+     module procedure get_elm_time_ext,get_elm_time_base
+
+  end interface
 
   save
   private
@@ -109,11 +115,43 @@ contains
 
   end subroutine set_elm_criteria
 
+  subroutine get_elm_time_ext(time,elm_time_offset,elmref,inelm,elmdata,iflag)
+    implicit none
 
-  subroutine get_elm_time(time,elm_time_offset,elmref,inelm)
+    real :: time,elm_time_offset
+    integer :: elmref,iflag
+    logical :: inelm
+    real :: elmdata
+
+    call get_elm_time_data(time,elm_time_offset,elmref,inelm,elmdata,iflag)
+    
+
+  end subroutine get_elm_time_ext
+
+
+  subroutine get_elm_time_base(time,elm_time_offset,elmref,inelm)
     implicit none
     real :: time,elm_time_offset
     integer :: elmref
+    logical :: inelm
+
+    ! local
+
+    real :: elmdata
+    integer :: iflag
+    iflag = 0
+
+    call get_elm_time_data(time,elm_time_offset,elmref,inelm,elmdata,iflag)
+
+  end subroutine get_elm_time_base
+
+
+  subroutine get_elm_time_data(time,elm_time_offset,elmref,inelm,elmdata,iflag)
+
+    implicit none
+
+    real :: time,elm_time_offset,elmdata
+    integer :: elmref,iflag
     logical :: inelm
 
     integer :: tpos
@@ -126,42 +164,63 @@ contains
     !    is in band (2) it may be affected by the ELM and so data may be excluded. elmref and time offset are still set
     !    but inelm is set to .false. 
     ! 3) Not associated with an ELM ... outside of the given time windows around an ELM ... inelm is false. 
-
-
+    ! 
+    ! the input value iflag controls the nature of the information that will be loaded into elmdata
+    ! iflag = 0 ... stores fraction of time between consecutive ELMs
+    !
 
     elm_time_offset = 0.0
     elmref = 0
+    elmdata = 0.0
 
     ! special cases for boundary regions
     if (time.lt.(elm_data(1,2)+elm_effect_start)) then 
        inelm = .false.
        elm_time_offset = time - elm_data(1,2)
        elmref = 0
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     elseif (time.lt.(elm_data(1,2)+elm_start)) then 
        inelm = .false.
        elm_time_offset = time - elm_data(1,2)
        elmref = 1
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     elseif (time.le.elm_data(1,2)) then 
        inelm = .true.
        elm_time_offset = time - elm_data(1,2)
        elmref = 1
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     elseif (time.gt.elm_data(elm_cnt,2)+elm_effect_end) then 
        inelm = .false.
        elm_time_offset = time - elm_data(elm_cnt,2)
        elmref = 0
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     elseif (time.gt.elm_data(elm_cnt,2)+elm_end) then 
        inelm = .false.
        elm_time_offset = time - elm_data(elm_cnt,2)
        elmref = elm_cnt
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     elseif (time.ge.elm_data(elm_cnt,2)) then 
        inelm = .true.
        elm_time_offset = time - elm_data(elm_cnt,2)
        elmref = elm_cnt
+       if (iflag.eq.0) then 
+          elmdata = -1.0
+       endif
        return
     endif
 
@@ -173,6 +232,11 @@ contains
 
     deltat1 = time - elm_data(tpos-1,2)
     deltat2 = time - elm_data(tpos,2)
+
+    if (iflag.eq.0) then 
+       ! fraction of time since last ELM
+       elmdata = deltat1/(deltat1+abs(deltat2))
+    endif
 
     !write(6,'(a,i10,10(1x,g18.8))') 'Data:',tpos,time,elm_data(tpos-1,1),elm_data(tpos-1,2),elm_data(tpos,2),deltat1,deltat2
 
@@ -211,7 +275,11 @@ contains
        return
     endif
 
-  end subroutine get_elm_time
+
+
+  end subroutine get_elm_time_data
+
+
 
 
 
