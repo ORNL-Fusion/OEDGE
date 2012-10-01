@@ -548,7 +548,8 @@ c
 c
       write(coment,'(1x,'' ID '','' IK '','' IR '',6x,''R'',3x,'//
      >            '6x,''Z'',3x,5x,''PSI'',2x,3x,''LENGTH'','//
-     >            '6x,''Bth/B'',3x,''SEP DIST'',3x,''MID DIST'')')
+     >            '6x,''Bth/B'',4x,''COSTET'',2x,'//
+     >            '2x''SEP DIST'',3x,''MID DIST'')')
 c
       call prc(coment)
 c
@@ -569,9 +570,10 @@ c
          endif
 c
          write(coment,
-     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,2(1x,g12.5))')
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')
      >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
-     >       dds(id),tmp_bratio,sepdist2(id),middist(irds(id),in)
+     >       dds(id),tmp_bratio,costet(id),
+     >       sepdist2(id),middist(irds(id),in)
 c
          call prc(coment)
 c
@@ -1387,6 +1389,9 @@ c
 c
 c
       SUBROUTINE PR_SIM(NIZS,NIMPS,NIMPS2,nymfs)
+c slmod begin
+      USE mod_divimp
+c slmod end
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -1413,6 +1418,8 @@ c      include    'adpak_com'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
+
+      integer i1
 c slmod end
       integer in 
 c
@@ -1480,6 +1487,26 @@ C-----------------------------------------------------------------------
 c
       if (nabsfac.gt.0.0.and.cioptf.ne.21) then
       CALL PRR ('* ABSOLUTE FACTOR EXTERNALLY IMPOSED',nabsfac)
+c slmod begin
+      if (sputter_ndata.gt.0) then 
+        write(7,*)
+        write(7,*) '      Particle flux data loaded from previous '//
+     .                   'DIVIMP runs:'
+        write(7,*)
+        write(7,'(5X,A6,A10,A4,A6,A8)')
+     .    'Type','ABSFAC','Z','A','Param'
+        do i1 = 1, sputter_ndata
+          write(7,'(3X,I2,I6,1P,E10.2,0P,I4,F6.1,F8.3,2X,A)') i1,
+     .      sputter_data(i1)%type,
+     .      sputter_data(i1)%absfac_net,
+     .      sputter_data(i1)%atomic_number,
+     .      sputter_data(i1)%atomic_mass,
+     .      sputter_data(i1)%fraction,
+     .      TRIM(sputter_data(i1)%tag)
+        enddo
+        write(7,*)
+      endif
+c slmod end
       elseif (nabsfac.gt.0.0.and.cioptf.eq.21) then
       CALL PRR ('  SPECIFIED PLATE POWER FLUX        ',nabsfac)
       endif
@@ -3403,6 +3430,14 @@ c jdemod begin
        WRITE(DATUNIT,'(7X,A,2F10.3)') 'END POINT A (R,Z)=',CXSCA,CYSCA
        WRITE(DATUNIT,'(7X,A,2F10.3)') 'END POINT B (R,Z)=',CXSCB,CYSCB
 c jdemod end
+c slmod begin - t-dep
+      ELSEIF (CIOPTE.EQ.11) THEN
+       CALL PRR ('  INJECTION OPT   11 : INJECT AT GIVEN (R,Z), V0=',
+     >   CTEM1)
+       CALL PRC ('                       UNLESS SAMPLED FROM A PRE-'//
+     >           'EXISTING ')
+       CALL PRC ('                       TIME SURFACE SNAPSHOT')
+c slmod ned
       ENDIF
 
 C-----------------------------------------------------------------------

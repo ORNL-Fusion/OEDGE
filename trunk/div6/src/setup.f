@@ -1,4 +1,4 @@
-c     -*-Fortran-*- 
+c    -*-Fortran-*- 
 c
 c ======================================================================
 c
@@ -1397,19 +1397,59 @@ c     data listed in the DIVIMP/OEDGE input file:
 
           IF (idring(ir).EQ.BOUNDARY) THEN
 c...        Assign default values to the virtual rings:
-            lpdati(ii,1) = REAL(ir)
-            lpdati(ii,2) = 1.0
-            lpdati(ii,3) = 1.0
+c
+c            lpdati(ii,1) = REAL(ir)
+c            lpdati(ii,2) = 1.0
+c            lpdati(ii,3) = 1.0
+c            lpdato(ii,1) = REAL(ir)
+c            lpdato(ii,2) = 1.0
+c            lpdato(ii,3) = 1.0
+c            IF (lpdatsw.EQ.0) THEN
+c              lpdati(ii,4) = 1.0E+12
+c              lpdato(ii,4) = 1.0E+12
+c            ELSE
+c              lpdati(ii,4) = 1.0E+00
+c              lpdato(ii,4) = 1.0E+00
+c            ENDIF
+c
+c
+c         jdemod - code here assumed that the ii index is identical for both 
+c                  inner and outer - it should be since any sol ring should
+c                  have 2 ends! ... however, the code also did not update nlpdato,i
+c                  which might be a problem if there boundary rings are at the end 
+c                  of the list
+c                  I have copied the assignment code from the end of the routine
+c                  to here and set the default boundary ring values.   
+c
+c...      Assign LPDATx arrays (target data used to assign target data
+c         KxDS arrays):
+          IF (region.EQ.IKLO) THEN
+            nlpdato = MAX(nlpdato,ii)
             lpdato(ii,1) = REAL(ir)
             lpdato(ii,2) = 1.0
             lpdato(ii,3) = 1.0
             IF (lpdatsw.EQ.0) THEN
-              lpdati(ii,4) = 1.0E+12
               lpdato(ii,4) = 1.0E+12
             ELSE
-              lpdati(ii,4) = 1.0E+00
               lpdato(ii,4) = 1.0E+00
             ENDIF
+c            write(6,'(a,2i8,6(1x,g12.5))') 'LPDATO1:',ii,ir,
+c     >            lpdato(ii,1),lpdato(ii,2),lpdato(ii,3),lpdato(ii,4)
+          ELSE
+            nlpdati = MAX(nlpdati,ii)
+            lpdati(ii,1) = REAL(ir)
+            lpdati(ii,2) = 1.0
+            lpdati(ii,3) = 1.0
+            IF (lpdatsw.EQ.0) THEN
+              lpdati(ii,4) = 1.0E+12
+            ELSE
+              lpdati(ii,4) = 1.0E+00
+            ENDIF
+c            write(6,'(a,2i8,6(1x,g12.5))') 'LPDATI1:',ii,ir,
+c     >            lpdati(ii,1),lpdati(ii,2),lpdati(ii,3),lpdati(ii,4)
+         endif
+
+
             CYCLE
           ENDIF
 
@@ -1500,6 +1540,9 @@ c           the entire TARINTER array as target data to be interpolated:
 c...        Data was not found for this ring:
             IF (no_data_warning.EQ.0) no_data_warning = 1
             WRITE(PINOUT,*) 'WARNING: TARGET DATA NOT FOUND FOR',
+     .                      ir,region
+            WRITE(6,*) 'WARNING:INTERPOLATE TARGET DATA:'//
+     >                  ' DATA NOT FOUND FOR',
      .                      ir,region
             CYCLE
           ENDIF
@@ -1669,12 +1712,16 @@ c         KxDS arrays):
             lpdato(ii,2) = dum2 * te_mult_o
             lpdato(ii,3) = dum3 * ti_mult_o
             lpdato(ii,4) = dum4 *  n_mult_o
+c            write(6,'(a,3i8,6(1x,g12.5))') 'LPDATO2:',ii,nlpdato,ir,
+c     >            lpdato(ii,1),lpdato(ii,2),lpdato(ii,3),lpdato(ii,4)
           ELSE
             nlpdati = MAX(nlpdati,ii)
             lpdati(ii,1) = REAL(ir)
             lpdati(ii,2) = dum2 * te_mult_i
             lpdati(ii,3) = dum3 * ti_mult_i
             lpdati(ii,4) = dum4 *  n_mult_i
+c            write(6,'(a,3i8,6(1x,g12.5))') 'LPDATI2:',ii,nlpdati,ir,
+c     >            lpdati(ii,1),lpdati(ii,2),lpdati(ii,3),lpdati(ii,4)
           ENDIF
 c...      End of IR loop:
         ENDDO
@@ -1686,6 +1733,7 @@ c...    Need to do this twice:
         repeat = .FALSE.
         GOTO 10
       ENDIF
+
 
 c      CALL Outputdata(85,'sdfds')
 c      STOP 'sdgsdg'
@@ -1876,10 +1924,12 @@ c
       INTEGER GetModel
       LOGICAL OutsideBreak
 
+      INTEGER, PARAMETER :: MAXNLDAT = 5000
+
       INTEGER ik,ir,ir1,ir2,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
-     .        ikto3,ikti3,ik1,ik2,ik3,ir3,count
-      LOGICAL recalculate,cheat1,status
-      REAL rhozero,ikintersec(MAXNRS,2)
+     .        ikto3,ikti3,ik1,ik2,ik3,ir3,count,ndat
+      LOGICAL recalculate,cheat1,status,message_cutpoint
+      REAL rhozero,ikintersec(MAXNRS,2),ldat(MAXNLDAT,2),frac
 
       REAL*8 a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
 c 
@@ -1893,7 +1943,7 @@ c
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
 
-      DATA cheat1 /.TRUE./
+      DATA cheat1, message_cutpoint /.TRUE., .TRUE./
       SAVE
 
 
@@ -1909,7 +1959,6 @@ c...should be elsewhere
 
         WRITE(PINOUT,*) 'MODEL : ',osm_model(IKLO,ir),osm_model(IKHI,ir)
       ENDDO
-
 
 
 c
@@ -1937,10 +1986,12 @@ c     PFZ ring:
       IF (cgridopt.NE.LINEAR_GRID.AND.ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
         DO ir = irsep, irwall-1
           status = .TRUE.
+
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
             count = 0
+
             DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
@@ -2150,7 +2201,10 @@ c          STOP 'sdfsdf'
         ENDDO
 
         IF (ikti2(ir).EQ.-1.OR.ikto2(ir).EQ.-1) THEN
-          CALL WN('SetupGrid','Cannot find cut points in PFZ')
+          IF (message_cutpoint) THEN
+            CALL WN('SetupGrid','Cannot find cut points in PFZ')
+            message_cutpoint = .FALSE.
+          ENDIF
           ikto2(ir) = nks(ir) / 2
           ikti2(ir) = ikto2(ir) + 1
         ENDIF
@@ -2294,9 +2348,9 @@ c          b2 = 0.0D0
         ENDDO
       ENDDO
 c
-c     RHO:
+c     ------------------------------------------------------------------    
+c     ESIMATE RHO USING THE GRID: 
 c
-c      NEEDS REWORKING!  BIG TIME!
       rho = 0.0
       WRITE(SLOUT,*) 'CALCULATING RHO', r0,z0
 
@@ -2310,13 +2364,14 @@ c      NEEDS REWORKING!  BIG TIME!
           psitarg(ir,2) = psitarg(ir,1)
         ENDDO
       ELSE
+c
+c       ----------------------------------------------------------------    
+c       FOR MAGNETIC GRIDS, ESTIMATE RHO AT THE OUTER MIDPLANE
+c
         a1 = r0
-        a2 = z0   ! This was not a good idea... removed - SL, 19/10/2009  yes it was... 10/12/2009
-c        a2 = 0.0D0           
+        a2 = z0 
         b1 = r0 + 100.0D0
         b2 = z0
-c        b2 = 0.0D0
-        
         DO ir = 2, irwall-1
           DO ik = 1, nks(ir)
             id = korpg(ik,ir)
@@ -2338,7 +2393,6 @@ c        b2 = 0.0D0
             IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
      .          tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
      .        rho(ir,CELL1) = r0 + SNGL(tab) * 100.0
-        
             c1 = rvertp(2,id)
             c2 = zvertp(2,id)
             d1 = rvertp(3,id)
@@ -2356,62 +2410,97 @@ c        b2 = 0.0D0
         ENDIF
         DO ir = 2, irwall-1
           IF (rho(ir,CELL1).NE.0.0) THEN
-            rho(ir,IN14 ) = rho(ir,IN14)  - rhozero
-            rho(ir,CELL1) = rho(ir,CELL1)  - rhozero
+            rho(ir,IN14 ) = rho(ir,IN14 ) - rhozero
+            rho(ir,CELL1) = rho(ir,CELL1) - rhozero
             rho(ir,OUT23) = rho(ir,OUT23) - rhozero
           ENDIF
         ENDDO
         
-c This sucks... it is good to get rho from grid.. what if not a CMOD
-c grid being used...?
-        rho(nrs,IN14 ) = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
-        rho(nrs,OUT23) = rho(irsep,IN14)
-        rho(nrs,CELL1) = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
-        
-        DO ir = nrs-1, irtrap+1, -1
-          rho(ir,OUT23) = rho(ir+1,IN14)
-          rho(ir,IN14 ) = rho(ir+1,IN14) - 
-     .                    (rho(ir+1,OUT23) - rho(ir+1,IN14))
-c          rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
-          rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
+c        rho(nrs,IN14 ) = 2 * rho(irsep,IN14) - rho(irsep,OUT23)
+c        rho(nrs,OUT23) = rho(irsep,IN14)
+c        rho(nrs,CELL1) = 0.5 * (rho(nrs,IN14) + rho(nrs,OUT23))
+c        
+c        DO ir = nrs-1, irtrap+1, -1
+c          rho(ir,OUT23) = rho(ir+1,IN14)
+c          rho(ir,IN14 ) = rho(ir+1,IN14) - 
+c     .                    (rho(ir+1,OUT23) - rho(ir+1,IN14))
+cc          rho(ir,IN14)  = 2 * rho(ir+1,IN14) - rho(ir,OUT23)
+c          rho(ir,CELL1)  = 0.5 * (rho(ir,IN14) + rho(ir,OUT23))
+c        ENDDO
+cc...    Find inner midplane "rho", for rings that do not intesect
+cc       the outer midplane:
+c        a1 = DBLE(r0)
+c        b1 = DBLE(r0) - 100.0D0
+c        a2 = 0.0D0
+c        b2 = 0.0D0
+cc...    Find RHOZERO:
+c        IF (connected) THEN 
+c          ir = irsep2
+c        ELSE
+c          ir = irsep
+c        ENDIF
+c        rhozero = 0.0
+c        DO ik = 1, nks(ir)
+c          id = korpg(ik,ir)
+c          c1 = DBLE(rvertp(1,id))
+c          c2 = DBLE(zvertp(1,id))
+c          d1 = DBLE(rvertp(4,id))
+c          d2 = DBLE(zvertp(4,id))
+c          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+c          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
+c     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
+c     .      rhozero = r0 - SNGL(tab) * 100.0 
+c        ENDDO
+c        
+c        DO ir = irsep, irwall-1      
+c          IF (ikmidplane(ir,IKLO).NE.0.AND.
+c     .        ikmidplane(ir,IKHI).EQ.0) 
+c     .      rho(ir,CELL1) = -(ikintersec(ir,IKLO) - rhozero)
+c        ENDDO
+
+c...    Added 03/11/2011, replacing and extending the above code, SL
+c
+c       ----------------------------------------------------------------    
+c       FOR ALL RINGS THAT DON'T PASS THE OUTER MIDPLANE, MAP TO RHO
+c       USING PSIn
+c
+        ndat = 1
+        DO ir = 2, irwall-1
+          IF (rho(ir,CELL1).EQ.0.0) CYCLE
+          ndat = ndat + 1
+          IF (ndat.GT.MAXNLDAT+1) 
+     .      CALL ER('SetupGrid','Increase MAXNLDAT',*99)
+          ldat(ndat,1) = rho    (ir,CELL1)
+          ldat(ndat,2) = psitarg(ir,1    )
         ENDDO
-c...    Find inner midplane "rho", for rings that do not intesect
-c       the outer midplane:
-        a1 = DBLE(r0)
-        b1 = DBLE(r0) - 100.0D0
-        a2 = 0.0D0
-        b2 = 0.0D0
-c...    Find RHOZERO:
-        IF (connected) THEN 
-          ir = irsep2
-        ELSE
-          ir = irsep
-        ENDIF
-        rhozero = 0.0
-        DO ik = 1, nks(ir)
-          id = korpg(ik,ir)
-          c1 = DBLE(rvertp(1,id))
-          c2 = DBLE(zvertp(1,id))
-          d1 = DBLE(rvertp(4,id))
-          d2 = DBLE(zvertp(4,id))
-          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-          IF (tab.GE.0.0D0.AND.tab.LE.1.0D0.AND.
-     .        tcd.GE.0.0D0.AND.tcd.LE.1.0D0)
-     .      rhozero = r0 - SNGL(tab) * 100.0 
+c       Extrapolate end points out to RHO=-1.0 and 1.0:
+        ldat(1,1) = -1.0
+        frac = (ldat(1,1) - ldat(3,1)) / (ldat(2,1) - ldat(3,1))
+        ldat(1,2) = ldat(3,2) + frac * (ldat(2,2) - ldat(3,2))
+        ndat = ndat + 1
+        ldat(ndat,1) = 1.0
+        frac = (ldat(ndat  ,1) - ldat(ndat-2,1)) /  
+     .         (ldat(ndat-1,1) - ldat(ndat-2,1))
+        ldat(ndat,2) =         ldat(ndat-2,2) + 
+     .                 frac * (ldat(ndat-1,2) - ldat(ndat-2,2))
+c        DO ir = 1, ndat
+c          WRITE(0,*) 'here',ir,ldat(ir,1:2)
+c        ENDDO
+c...    Now assign RHO for all rings that do not intersect the outer
+c       midplane:
+        DO ir = 2, nrs
+          IF (idring(ir).EQ.BOUNDARY.OR.rho(ir,CELL1).NE.0.0) CYCLE
+          CALL Fitter(ndat,ldat(1:ndat,2),ldat(1:ndat,1),
+     .                1,psitarg(ir,1),rho(ir,CELL1),'LINEAR')
+c          WRITE(0,*) 'new',ir,psitarg(ir,1),rho(ir,CELL1)
         ENDDO
-        
-        DO ir = irsep, irwall-1      
-          IF (ikmidplane(ir,IKLO).NE.0.AND.
-     .        ikmidplane(ir,IKHI).EQ.0) 
-     .      rho(ir,CELL1) = -(ikintersec(ir,IKLO) - rhozero)
-        ENDDO
+c        STOP 'FUNNY!'
       ENDIF
 
-
-      DO ir = 1, nrs
-        WRITE(SLOUT,'(A,I4,1P,3E15.7)')
-     .    'IR RHO = ',ir,(rho(ir,in),in=1,3)
-      ENDDO
+c     DO ir = 1, nrs
+c       WRITE(SLOUT,'(A,I4,1P,3E15.7)')
+c    .    'IR RHO = ',ir,(rho(ir,in),in=1,3)
+c     ENDDO
 c
 c
 c
@@ -2519,6 +2608,7 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeVariables
+      USE mod_divimp
       IMPLICIT none
 
       INCLUDE 'params'
@@ -3166,6 +3256,7 @@ c     values need to well documented.
 c
       call InitializeUnstructuredInput
 
+      CALL divInitializeOptions
       CALL osm_InitializeOptions
 c
       return

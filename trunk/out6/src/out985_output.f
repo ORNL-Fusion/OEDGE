@@ -2116,7 +2116,7 @@ c
 
       INTEGER dat1,dat2
       REAL, ALLOCATABLE :: xdat(:),ydat(:)
-      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512,tag*7
 
 
 c *TEMP*
@@ -2258,9 +2258,9 @@ c            IF (obj(iobj)%flag(isid).NE.-1.AND.
 c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
+            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 
@@ -2576,7 +2576,9 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
+          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
             CALL inPutData(pixel(ipixel)%yindex,'J','n/a')
             CALL inPutData(pixel(ipixel)%global_v1(1),'X1','m')
@@ -2596,8 +2598,15 @@ c10        FORMAT(A,I0.2,A)
       ENDIF
 
 
+      IF (.TRUE.) THEN
+        write(0,*) 'dumping'
+        CALL DumpLineData
+      ENDIF
+
       IF (npixel.GT.1) THEN
 c...    Image:
+
+
 
         DO idet = 1, opt%ndet
 
@@ -2707,12 +2716,6 @@ c              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
 c              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
-              CALL inPutData(pixel(ipixel)%global_v1(1),'x1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(2),'y1','m')
-              CALL inPutData(pixel(ipixel)%global_v1(3),'z1','m')
-              CALL inPutData(pixel(ipixel)%global_v2(1),'x2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(2),'y2','m')
-              CALL inPutData(pixel(ipixel)%global_v2(3),'z2','m')
             ENDDO
 c            CALL inCloseInterface
           ENDIF

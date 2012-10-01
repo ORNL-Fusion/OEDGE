@@ -100,7 +100,11 @@ c      Also - coulomb_log and linearpeak
 c
       CALL RDI (CIOPTC,.TRUE., 0,.TRUE., 4,'FRICTION OPT         ',IERR)
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 3,'HEATING OPT          ',IERR)
-      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
+c slmod begin
+      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,11,'INJECTION OPT        ',IERR)
+c
+c      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
+c slmod end
       CALL RDI (CIOPTF,.TRUE.,-1,.TRUE.,99,'SOL OPT              ',IERR)
 c slmod begin
       call rdi (ccoreopt,.true.,-1,.true.,28,'Core Option        ',ierr)

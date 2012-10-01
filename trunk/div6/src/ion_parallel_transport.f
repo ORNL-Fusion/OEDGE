@@ -968,6 +968,9 @@ c
       include    'comtor'
       include    'cgeom'
       include    'cneut2'
+c slmod begin
+      include    'dynam3'
+c slmod end
 c     
       include 'div1'
       include 'div2'
@@ -981,7 +984,10 @@ c
 c     Output velocity along the field line from Launch_one (m/s)
 c
       real vout
-
+c slmod begin
+      logical code_warning
+      data    code_warning / .true. /
+c slmod end
 c     
 c     ---       SPECIAL REFLECTION AS NEUTRAL PARTICLE  ----
 c     
@@ -1017,18 +1023,34 @@ c
 c     Test for reflection
 c     
       if (reflect_ion) then  
-
 c     
 c     Call Launch_one to launch a single reflected neutral -
 c     then branch to the appropriate location depending 
 c     on the result.    
 c     
+c slmod begin
+        if (code_warning) then 
+           write(0,*) 
+           write(0,*) 'WARNING ion_neutral_reflection: updating DEPS '//
+     .                'for target reflection, which is non-standard'
+           write(0,*) 
+           code_warning = .false.
+        endif
+        if (id.lt.1.or.id.gt.nds) then    
+           write (6,*) 'DEPS Error (ion_neutral_reflection):',id,iz,
+     .                 sputy
+        else 
+           tneut = tneut + 1
+           deps(id,iz) = deps(id,iz) + sputy
+        endif
+c slmod end
 c     
 c     Follow reflected impurities
 c     
          ikorg = ik
          irorg = ir
 c     
+c         write(6,*) ' debug: launch_one from ion_parallel_transport',id
          call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >        rc,ctem1,cist,sputy,
      >        refSTRUK,mtcrefstruk,refMAIN,refEXIT,
@@ -1044,9 +1066,11 @@ c        line vout value returned by launch_one
 c
          vel = vout * qtim
 c
-         write (6,'(a,2i8,6g12.5)') 'REFLECT IMP:',imp,rc,
-     >        r,z,rizpos,zizpos,
-     >        temi,cist
+c slmod begin
+c         write (6,'(a,2i8,6g12.5)') 'REFLECT IMP:',imp,rc,
+c     >        r,z,rizpos,zizpos,
+c     >        temi,cist
+c slmod end
 c     
 c     For all results other than reionization to state 1 - the code
 c     will stop following the particle at this point and exit

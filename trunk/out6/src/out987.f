@@ -62,7 +62,7 @@ c...    Check which tetrahedrons are within the gauge volume:
      .                (p(3)-SNGL(obj_centroid(3,iobj)))**2)
           IF (dist.LT.gauge(5,igauge)) THEN
             count = count + 1
-            WRITE(0,*) '    ---> go!',count,iobj,nobj
+c            WRITE(0,*) '    ---> go!',count,iobj,nobj
             val  = val + tdata(iobj)
           ENDIF   
         ENDDO

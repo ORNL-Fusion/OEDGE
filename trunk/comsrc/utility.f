@@ -1338,12 +1338,20 @@ c
      >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
      >        rorig,zorig,rstep,zstep,rstart,zstart
          else
-            write(6,'(a,i10,4i6,10g18.8)') 
-     >       'POSITION_ON_TARGET:'//
-     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+c slmod begin
+            if (cprint.ge.1) 
+     >        write(6,'(a,i10,4i6,10g18.8)') 
+     >        'POSITION_ON_TARGET:'//
+     >        ' POINT FOUND IN CELL AFTER N ITERATIONS:',
      >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
      >        rorig,zorig,rstep,zstep,rstart,zstart
-
+c
+c            write(6,'(a,i10,4i6,10g18.8)') 
+c     >       'POSITION_ON_TARGET:'//
+c     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+c     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+c     >        rorig,zorig,rstep,zstep,rstart,zstart
+c slmod end
          endif
       endif
 
@@ -2007,12 +2015,12 @@ c
 
 
 c
-      if (ierr.ne.0) then 
-         write(6,'(a,2i5,l4,10(1x,g12.5))') 'GETSC:',ik,ir,
-     >             incell(ik,ir,r,z),r,z,s,
-     >             kss(ik,ir),distin(ik,ir),cross,
-     >             distout(ik,ir),s_frac,cross_frac
-      endif
+c      if (.true..or.ierr.ne.0) then 
+c         write(6,'(a,2i5,l4,10(1x,g12.5))') 'GETSC:',ik,ir,
+c     >             incell(ik,ir,r,z),r,z,s,
+c     >             kss(ik,ir),distin(ik,ir),cross,
+c     >             distout(ik,ir),s_frac,cross_frac
+c      endif
 c
       return 
       end
@@ -4893,11 +4901,20 @@ c
      >                        reflection_angle,intersect_normal,
      >                        reflection_option,
      >                        intersect_index,intersect_result,
-     >                        intersect_logical)
+c slmod begin
+     >                        intersect_logical,cprint)
+c
+c     >                        intersect_logical)
+c slmod end
       implicit none
 c
       real ra,za,rb,zb,rint,zint,reflection_angle,intersect_normal
-      integer reflection_option,intersect_result,intersect_index
+c slmod begin
+      integer reflection_option,intersect_result,intersect_index,
+     >        cprint
+c
+c      integer reflection_option,intersect_result,intersect_index     
+c slmod end
       logical intersect_logical
 c
       include 'params'
@@ -4958,6 +4975,9 @@ c
       min_dist=HI
       min_index=0
       sect_index=0
+c slmod begin
+      min_rintd = 1.0D+6
+c slmode end
 c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 
@@ -5053,6 +5073,7 @@ c
       endif
 c
       if (intersect_result.ne.1) then     
+c         write(6,*) '  debug: looking around the rest of the wall'
 c
 c        Loop around the rest of the wall looking for an intersection point
 c
@@ -5135,6 +5156,7 @@ c
 c     Code has not found a proper intersection
 c
       if (intersect_result.ne.1) then     
+c         write(6,*) '  debug: intersection not found'
 c
 c        Check for a close intersection  
 c        Min_index is non-zero if at least some intersections have been found
@@ -5168,6 +5190,7 @@ c
 c     For intersect=1 - find the reflection angle
 c
       if (intersect_result.eq.1) then 
+c         write(6,*) '  debug: finding the reflection angle'
 c
 c        Angle of particle trajectory 
 c
@@ -5185,9 +5208,16 @@ c
 c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
-         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
-     >        reflection_option,sect_index,
-     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod begin          
+          if (cprint.ge.1) 
+     >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+     >          'REFANG:',reflection_option,sect_index,
+     >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c
+c         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
+c     >        reflection_option,sect_index,
+c     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod end
 c
 c        Copy outputs to input variables
 c
@@ -5203,6 +5233,7 @@ c
 c     ERROR condition
 c
       else
+c         write(6,*) '  debug: error condition'
 c
 c        Return the center point of the wall segment closest to the initial
 c        position of the particle trajectory.
@@ -5259,9 +5290,12 @@ c        replacing recursive iteration with explicit iteration
          
          rstep = step_dist * cos(reflection_angle)
          zstep = step_dist * sin(reflection_angle)
-
-         do while (resulta.lt.0.0.and.loop_cnt.lt.max_loop_cnt) 
-
+c slmod begin
+c...
+         do while (resulta.le.0.0.and.loop_cnt.lt.max_loop_cnt) 
+c
+c         do while (resulta.lt.0.0.and.loop_cnt.lt.max_loop_cnt) 
+c slmod end
             loop_cnt = loop_cnt + 1.0
 
             rtest = rint + loop_cnt * rstep
@@ -5269,6 +5303,8 @@ c        replacing recursive iteration with explicit iteration
 
             CALL GA15B(Rtest,Ztest,RESULTa,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
+c            write(6,*) '   debug: result',resulta,loop_cnt
 
          end do
 c

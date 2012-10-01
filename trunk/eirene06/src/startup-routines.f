@@ -4710,8 +4710,13 @@ C
             READ (IUNIN,'(A72)') ZEILE
             IF (ZEILE(1:1) .NE. '*') EXIT
           END DO
-          READ (ZEILE,'(12I6)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
+c slmod begin
+          READ (ZEILE,'(12I8)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
      .                          ISRFCLL, IDIREC
+c
+c          READ (ZEILE,'(12I6)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
+c     .                          ISRFCLL, IDIREC
+c slmod end
           READ (IUNIN,'(6E12.4)') SPCMN, SPCMX, SPC_SHIFT,
      .                             SPCPLT_X,SPCPLT_Y,SPCPLT_SAME
           SPCVX = 0._DP

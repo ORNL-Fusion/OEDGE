@@ -2662,6 +2662,9 @@ C
 C
 C
       SUBROUTINE CALCWP
+c slmod begin
+      USE mod_divimp
+c slmod end
       implicit none
 C     INCLUDE "PARAMS"
       include 'params'
@@ -2724,6 +2727,12 @@ C     IF WLPABS HAS BEEN SPECIFED AS 1 THEN THE INPUT WALL LAUNCH
 C     PROBABILITIES ARE TAKEN AS ABSOLUTE VALUES AND OVERRIDE
 C     THE WALL SEGMENT LENGTH MULTIPLICATION.
 C
+c slmod begin
+C-----------------------------------------------------------------------
+C     CALCULATE SPUTTERING YIELDS BASED ON PARTICLE FLUXES CALCULATED
+C     IN OTHER DIVIMP RUNS
+      IF (SPUTTER_NDATA.GT.0) CALL divCompileSputteringYields
+c slmod end
 C-----------------------------------------------------------------------
 C
 C     THE PROCESSING FOR THE WLPABS OPTIONS 2 AND 3 IS DONE

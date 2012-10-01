@@ -144,11 +144,18 @@ c...        Imaginary, approximate density:
             ni(ic,ion) = -b1 / (2.0D0 * a1)
 c...        Record extent of super-sonic regions:
             IF     (ic.LE.icmid) THEN
-              anl_ic_super (LO) = ic
-              anl_imaginary(LO) = .TRUE.
+c             Only acknowledge the super-sonic flow if it is towards the 
+c             appropriate target:
+              IF (ic.EQ.1.OR.
+     .            (c1.GE.2.AND.vi(MAX(1,ic-1),ion).LT.0.0D0)) THEN
+                anl_ic_super (LO) = ic
+                anl_imaginary(LO) = .TRUE.
+              ENDIF
             ELSEIF (ic.GT.icmid.AND..NOT.anl_imaginary(HI)) THEN
-              anl_ic_super (HI) = ic
-              anl_imaginary(HI) = .TRUE.
+              IF (vi(ic-1,ion).GT.0.0D0) THEN 
+                anl_ic_super (HI) = ic
+                anl_imaginary(HI) = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
 

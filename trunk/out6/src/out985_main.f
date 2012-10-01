@@ -590,21 +590,17 @@ c          CALL inPutData(n,'n','none')
         m = npixel
         n = nobj
       ENDIF
-
 c...
       ALLOCATE(mapchk(n))
       ALLOCATE(idum1(n))
-
       mapchk = 0.0
-
 c...  Initialize arrays used to store view intersection data:  *** SHOULD BE MOVED TO INSIDE MPI LOOP? ***
       nvwinter = 0
       ngbinter = 0
       nobinter = 0
-      ALLOCATE (vwinter(MAXINTER))
-      ALLOCATE (gbinter(MAXINTER))
-      ALLOCATE (obinter(MAXINTER))
-
+      ALLOCATE(vwinter(MAXINTER))
+      ALLOCATE(gbinter(MAXINTER))
+      ALLOCATE(obinter(MAXINTER))
 c...  Assemble a list of wall surfaces to speed things up:  (30% faster for current setup...)
       WRITE(0,*) '  BUILDING WALL SURFACE LISTS'  
       nvwlist = 0
@@ -619,8 +615,8 @@ c...      Check if surface is part of the vessel wall:
      .      ngblist = ngblist+1
         ENDDO
       ENDDO
-      ALLOCATE (vwlist(nvwlist,2))
-      ALLOCATE (gblist(ngblist,2))
+      ALLOCATE(vwlist(nvwlist,2))
+      ALLOCATE(gblist(ngblist,2))
       i3 = 0
       i4 = 0
       DO i1 = 1, nobj
@@ -648,13 +644,11 @@ c...      Check if surface is part of the vessel wall:
 
 
       ALLOCATE(ddum1(n                          ))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-12:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
       ALLOCATE(rdum1(100                        ))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
       pixcnt = m
-
-
 
 c...  MPI!  (for MPI to work the various lists -- vw,gb,ob -- need to be passed like the objects are passed, I think)
 
@@ -774,7 +768,7 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.FALSE..AND.   ! *** PROFILE HACK ***
+        IF (.NOT..FALSE..AND.   ! *** PROFILE HACK ***
      .      (i1.EQ.opt%det_istart(idet).OR.
      .       i1.EQ.opt%det_iend  (idet).OR.
      .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
@@ -785,17 +779,27 @@ c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 c          WRITE(0,*) ' FILE:'//TRIM(file)
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           npro=pixel(i1)%nprofile
-          CALL inPutData(pixel(i1)%profile(1:npro,-5),'PATH'  ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,-4),'DELTA' ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,-3),'WEIGHT','N/A')
-          CALL inPutData(pixel(i1)%profile(1:npro,-2),'NE'    ,'m-3')
-          CALL inPutData(pixel(i1)%profile(1:npro,-1),'TE'    ,'eV' )
-          CALL inPutData(pixel(i1)%profile(1:npro, 0),'TI'    ,'eV' )
+         CALL inPutData(INT(pixel(i1)%profile(1:npro,-12)),'CELL','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-5 ),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-4 ),'DELTA' ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-3 ),'WEIGHT','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-2 ),'NE'    ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-1 ),'TE'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro, 0 ),'TI'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro,-7 ),'N_D'   ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-6 ),'N_D2'  ,'m-3')
 c          write(0,*) 'opt%int_num=',opt%int_num
           DO i2 = 1, MAX(1,opt%int_num)
             WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
             CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'N/A')
           ENDDO
+          CALL inPutData(opt%int_z(1:opt%int_num),'Z','N/A' )
+          CALL inPutData(opt%int_a(1:opt%int_num),'A','N/A' )
+          CALL inPutData(opt%int_charge(1:opt%int_num),'CHARGE','N/A')
+          CALL inPutData(opt%int_wlngth(1:opt%int_num),'WLNGTH','nm')
+          CALL inPutData(pixel(i1)%integral(1:opt%int_num),'INT','N/A')
+          CALL inPutData(pixel(i1)%global_v1,'V1','m')
+          CALL inPutData(pixel(i1)%global_v2,'V2','m')
           CALL inCloseInterface
 c...      Dump to a more accessible ASCII file:
           WRITE(file,'(A,I0.3,256X)')          
@@ -931,7 +935,6 @@ c...  MPI!
       WRITE(0,'(A,F10.1,A)') 'TIME FOR 1E6 PIXELS    :',
      .                       ttime/REAL(npixel)*1E+06/3600.0,' h'
 
-
       IF (fp2.NE.0) THEN
         CLOSE(fp2)
 c        CALL inCloseInterface
@@ -951,7 +954,8 @@ c       the end of .map file:
         DO iobj = 1, n
           obj(iobj)%path = mapchk(iobj)
           npts = 0
-          IF (obj(iobj)%nsur.EQ.4) npts = 4  ! Toroidally continuous   ! ***LAME/WEAK***
+          IF (obj(iobj)%nsur.EQ.3) npts = 3  ! Toroidally continuous, triangle
+          IF (obj(iobj)%nsur.EQ.4) npts = 4  ! Toroidally continuous, quadrangle ***WEAK***
           IF (obj(iobj)%nsur.EQ.5) npts = 3  ! Triangle             
           IF (obj(iobj)%nsur.EQ.6) npts = 4  ! Quadrelateral           
           IF (npts.EQ.0) THEN
@@ -959,6 +963,8 @@ c       the end of .map file:
               WRITE(0,*)
               WRITE(0,*) '----------------------------------------'
               WRITE(0,*) '     IMPROPER INVERSION CELL FOUND'
+              WRITE(0,*) '        i,nobj= ',iobj,n
+              WRITE(0,*) '        nsur  = ',obj(iobj)%nsur
               WRITE(0,*) '----------------------------------------'
               WRITE(0,*)
               message = .FALSE.
@@ -1099,240 +1105,234 @@ c...    Point:
 
 c....   Rectangle (can then be tilted vertically and horizontally, and rolled):
 c...    Allow view distortions: 
-      IF (.TRUE.) THEN
 
-c...    Detector parameters:
-        debug = .FALSE.
+c...  Detector parameters:
+      debug = .FALSE.
 
-        IF (debug) THEN
-c...      Debug:
-          xcen = 2.5D0
-          ycen = 0.0D0
-          zcen = 0.0D0
-          xwidth = 0.20D-07
-          ywidth = 0.20D-07
-          xangle = -13.90099009900990D0
-          yangle = -25.66336633663366D0
+      IF (debug) THEN
+c...    Debug:
+        xcen = 2.5D0
+        ycen = 0.0D0
+        zcen = 0.0D0
+        xwidth = 0.20D-07
+        ywidth = 0.20D-07
+        xangle = -13.90099009900990D0
+        yangle = -25.66336633663366D0
 
-c...      Number of rows and columns of pixels:
-          nxbin =  1
-          nybin =  1
-        ELSEIF (.NOT..TRUE.) THEN
-          xcen = 2.5D0
-          ycen = 0.0D0
-          zcen = 0.0D0
-c          xwidth = 0.20D-07
-c          ywidth = 0.20D-07
-          xwidth = 1.80D0
-          ywidth = 1.80D0
-c          xwidth = 0.20D0
-c          ywidth = 0.20D0
-c          xangle = 22.5D0
-c          yangle = 22.5D0
-c          xangle = 65.0D0
-c          yangle = 65.0D0
-          xangle = 0.0D0
-          yangle = 0.0D0
-c          xangle = 54.0D0
-c          yangle = 54.0D0
+c...    Number of rows and columns of pixels:
+        nxbin =  1
+        nybin =  1
+      ELSEIF (.NOT..TRUE.) THEN
+        xcen = 2.5D0
+        ycen = 0.0D0
+        zcen = 0.0D0
+c        xwidth = 0.20D-07
+c        ywidth = 0.20D-07
+        xwidth = 1.80D0
+        ywidth = 1.80D0
+c        xwidth = 0.20D0
+c        ywidth = 0.20D0
+c        xangle = 22.5D0
+c        yangle = 22.5D0
+c        xangle = 65.0D0
+c        yangle = 65.0D0
+        xangle = 0.0D0
+        yangle = 0.0D0
+c        xangle = 54.0D0
+c        yangle = 54.0D0
 
-c...      Number of rows and columns of pixels:
-          nxbin =  1
-          nybin =  1
-        ELSEIF (.NOT..TRUE.) THEN
-          xcen = 2.15D0
-          ycen = 1.42D0
-          zcen = 0.0D0
-          xwidth = 0.20D-07
-          ywidth = 0.20D-07
-c          xwidth = 0.20D0
-c          ywidth = 0.20D0
-c          xangle = 22.5D0
-c          yangle = 22.5D0
-c          xangle = 54.0D0
-c          yangle = 54.0D0
-          xangle = 65.0D0
-          yangle = 65.0D0
+c...    Number of rows and columns of pixels:
+        nxbin =  1
+        nybin =  1
+      ELSEIF (.NOT..TRUE.) THEN
+        xcen = 2.15D0
+        ycen = 1.42D0
+        zcen = 0.0D0
+        xwidth = 0.20D-07
+        ywidth = 0.20D-07
+c        xwidth = 0.20D0
+c        ywidth = 0.20D0
+c        xangle = 22.5D0
+c        yangle = 22.5D0
+c        xangle = 54.0D0
+c        yangle = 54.0D0
+        xangle = 65.0D0
+        yangle = 65.0D0
 
-c...      Number of rows and columns of pixels:
-          nxbin =  11
-          nybin =  11
-        ELSE
-          xcen = opt%cen(1)
-          ycen = opt%cen(2)
-          zcen = opt%cen(3)
-          xwidth = opt%width(1)
-          ywidth = opt%width(2)
-          xangle = opt%angle(1)
-          yangle = opt%angle(2)
-c...      Number of rows and columns of pixels:
-          nxbin = opt%nxbin
-          nybin = opt%nybin
-        ENDIF
+c...    Number of rows and columns of pixels:
+        nxbin =  11
+        nybin =  11
+      ELSE
+        xcen = opt%cen(1)
+        ycen = opt%cen(2)
+        zcen = opt%cen(3)
+        xwidth = opt%width(1)
+        ywidth = opt%width(2)
+        xangle = opt%angle(1)
+        yangle = opt%angle(2)
+c...    Number of rows and columns of pixels:
+        nxbin = opt%nxbin
+        nybin = opt%nybin
+      ENDIF
 
-        WRITE(0,'(A,3F10.3)') 'DATA:',xcen,ycen,zcen
-        WRITE(0,'(A,3F10.3)') '    :',opt%roll,opt%tilt,
-     .                                opt%swing
-        WRITE(0,'(A,2F10.3)') '    :',xwidth,ywidth
-        WRITE(0,'(A,2F10.3)') '    :',xangle,yangle
-        WRITE(0,'(A,2I10  )') '    :',nxbin,nybin
-        WRITE(0,'(A,2I10  )') '    :',opt%sa_nxbin,opt%sa_nybin
-        WRITE(0,'(A,2F10.3)') '    :',opt%focallength,opt%distortion
-
-
-        IF (opt%distortion.NE.0.0D0.OR.opt%focallength.NE.0.0D0) THEN
-
-          dist = opt%distortion
-          f    = opt%focallength
-
-          thetax = 0.5D0 * xangle * PI / 180.0D0
-          thetay = 0.5D0 * yangle * PI / 180.0D0
-
-          x = 0.0D0
-          deltax = 0.01D0
-          count = 0
-          DO WHILE(.TRUE.) 
-            count = count + 1
-c            v = DATAN( MAX(0.5D0, 0.0D0 * x**2 + 1.0D0) * x / f )
-c            v = DATAN( MAX(0.5D0, dist * x**2 + 1.0D0) * x / f )
-            v = DATAN( x / MAX(0.5D0, dist * x**2 + 1.0D0) / f )
-            IF     (DABS(v-thetax).LT.1.0D-08.OR.
-     .              count.EQ.1000) THEN
-c              WRITE(0,*) 'WORKS X!',x,thetax*180.0D0/PI
-              boundx = x
-              EXIT
-            ELSEIF ((v.GT.thetax.AND.deltax.GT.0.0D0).OR.
-     .              (v.LT.thetax.AND.deltax.LT.0.0D0)) THEN
-              deltax = -0.3D0 * deltax
-            ENDIF
-            x = x + deltax
-c           WRITE(0,*) 'V:',v,thetax
-c           WRITE(0,*) 'X:',x,deltax
-c           WRITE(0,*) 
-          ENDDO
-
-          y = 0.0D0
-          deltay = 0.01D0
-          count = 0
-          DO WHILE(.TRUE.) 
-            count = count + 1
-c            v = DATAN( MAX(0.5D0, 0.0D0 * y**2 + 1.0D0) * y / f )
-            v = DATAN( y / MAX(0.5D0, dist * y**2 + 1.0D0) / f )
-c            v = DATAN( MAX(0.5D0, dist * y**2 + 1.0D0) * y / f )
-            IF     (DABS(v-thetay).LT.1.0D-08.OR.
-     .              count.EQ.1000) THEN
-c              WRITE(0,*) 'WORKS Y!',y
-              boundy = y
-              EXIT
-            ELSEIF ((v.GT.thetay.AND.deltay.GT.0.0D0).OR.
-     .              (v.LT.thetay.AND.deltay.LT.0.0D0)) THEN
-              deltay = -0.3D0 * deltay
-            ENDIF
-            y = y + deltay
-c           WRITE(0,*) 'V:',v,thetay
-c           WRITE(0,*) 'Y:',y,deltay
-c           WRITE(0,*) 
-          ENDDO
-
-        ENDIF
+      WRITE(0,'(A,3F10.3)') 'DATA:',xcen,ycen,zcen
+      WRITE(0,'(A,3F10.3)') '    :',opt%roll,opt%tilt,
+     .                              opt%swing
+      WRITE(0,'(A,2F10.3)') '    :',xwidth,ywidth
+      WRITE(0,'(A,2F10.3)') '    :',xangle,yangle
+      WRITE(0,'(A,2I10  )') '    :',nxbin,nybin
+      WRITE(0,'(A,2I10  )') '    :',opt%sa_nxbin,opt%sa_nybin
+      WRITE(0,'(A,2F10.3)') '    :',opt%focallength,opt%distortion
 
 
-c...    Store index locations of first pixel for this detector:
-        opt%det_istart(opt%ndet) = npixel + 1
-c        IF (ndetector.GT.1) THEN 
-c          xstart = pixel(npixel)%xindex 
-c          ystart = pixel(npixel)%yindex 
-c        ENDIF     
+      IF (opt%distortion.NE.0.0D0.OR.opt%focallength.NE.0.0D0) THEN
+        dist = opt%distortion
+        f    = opt%focallength
+        thetax = 0.5D0 * xangle * PI / 180.0D0
+        thetay = 0.5D0 * yangle * PI / 180.0D0
+        x = 0.0D0
+        deltax = 0.01D0
+        count = 0
+        DO WHILE(.TRUE.) 
+          count = count + 1
+c          v = DATAN( MAX(0.5D0, 0.0D0 * x**2 + 1.0D0) * x / f )
+c          v = DATAN( MAX(0.5D0, dist * x**2 + 1.0D0) * x / f )
+          v = DATAN( x / MAX(0.5D0, dist * x**2 + 1.0D0) / f )
+          IF     (DABS(v-thetax).LT.1.0D-08.OR.count.EQ.1000) THEN
+c            WRITE(0,*) 'WORKS X!',x,thetax*180.0D0/PI
+            boundx = x
+            EXIT
+          ELSEIF ((v.GT.thetax.AND.deltax.GT.0.0D0).OR.
+     .            (v.LT.thetax.AND.deltax.LT.0.0D0)) THEN
+            deltax = -0.3D0 * deltax
+          ENDIF
+          x = x + deltax
+        ENDDO
+
+        y = 0.0D0
+        deltay = 0.01D0
+        count = 0
+        DO WHILE(.TRUE.) 
+          count = count + 1
+c          v = DATAN( MAX(0.5D0, 0.0D0 * y**2 + 1.0D0) * y / f )
+c          v = DATAN( MAX(0.5D0, dist * y**2 + 1.0D0) * y / f )
+          v = DATAN( y / MAX(0.5D0, dist * y**2 + 1.0D0) / f )
+          IF (DABS(v-thetay).LT.1.0D-08.OR.count.EQ.1000) THEN
+c            WRITE(0,*) 'WORKS Y!',y
+            boundy = y
+            EXIT
+          ELSEIF ((v.GT.thetay.AND.deltay.GT.0.0D0).OR.
+     .            (v.LT.thetay.AND.deltay.LT.0.0D0)) THEN
+            deltay = -0.3D0 * deltay
+          ENDIF
+          y = y + deltay
+        ENDDO
+      ENDIF
+
+c...  Store index locations of first pixel for this detector:
+      opt%det_istart(opt%ndet) = npixel + 1
+
+      IF (opt%chord_n.GT.0) THEN 
+
+        DO i1 = 1, opt%chord_n 
+          npixel = npixel + 1
+          pixel(npixel)%valid    = .TRUE.
+          pixel(npixel)%weight   = 1.0D0
+          pixel(npixel)%integral = 0.0D0
+          pixel(npixel)%index    = opt%ndet
+          pixel(npixel)%type     = 2
+          pixel(npixel)%ccd      = opt%chord_opt(i1)
+          pixel(npixel)%tmp      = npixel    !*** TEMPORARY ***
+          pixel(npixel)%xindex   = i1
+          pixel(npixel)%yindex   = 1
+          pixel(npixel)%nxbin    = 1 ! opt%sa_nxbin
+          pixel(npixel)%nybin    = 1 ! opt%sa_nybin
+          pixel(npixel)%v1(1:3)  = opt%chord_v1(1:3,i1)
+          pixel(npixel)%v2(1:3)  = opt%chord_v2(1:3,i1)
 
 
-
+          pixel(npixel)%xwidth   = 0.0D0
+          pixel(npixel)%ywidth   = 0.0D0
+          pixel(npixel)%xangle   = 0.0D0 
+          pixel(npixel)%yangle   = 0.0D0
+          SELECTCASE (opt%sa_opt)
+           CASE (1) 
+            pixel(npixel)%dxangle=xangle/DBLE(nxbin)*DBLE(opt%sa_par1)     ! View width 
+            pixel(npixel)%dyangle=yangle/DBLE(nybin)*DBLE(opt%sa_par2)         
+           CASE DEFAULT
+            CALL ER('BuildPixels','Unknown solid angle option (1)',*99)
+          ENDSELECT
+          pixel(npixel)%rot      = 0.0D0
+          pixel(npixel)%trans    = 0.0D0
+        ENDDO
+      ELSE
         DO iy = 1, nybin
           DO ix = 1, nxbin
             npixel = npixel + 1
-
-            pixel(npixel)%valid = .TRUE.
-
-            pixel(npixel)%weight = 1.0D0
-
+        
+            pixel(npixel)%valid    = .TRUE.
+            pixel(npixel)%weight   = 1.0D0
             pixel(npixel)%integral = 0.0D0
-
-            pixel(npixel)%index  = opt%ndet
-            pixel(npixel)%tmp    = npixel    !*** TEMPORARY ***
-            pixel(npixel)%xindex = ix
-            pixel(npixel)%yindex = iy
-
-            pixel(npixel)%nxbin = opt%sa_nxbin
-            pixel(npixel)%nybin = opt%sa_nybin
-
+            pixel(npixel)%index    = opt%ndet
+            pixel(npixel)%type     = 1
+            pixel(npixel)%tmp      = npixel    !*** TEMPORARY ***
+            pixel(npixel)%xindex   = ix
+            pixel(npixel)%yindex   = iy
+            pixel(npixel)%nxbin    = opt%sa_nxbin
+            pixel(npixel)%nybin    = opt%sa_nybin
+        
             factx = -1.0D0 * (0.5D0 * (1.0D0 / DBLE(nxbin) - 1.0D0) +
      .                        DBLE(ix - 1) / DBLE(nxbin))
-
             facty = -1.0D0 * (0.5D0 * (1.0D0 / DBLE(nybin) - 1.0D0) +
      .                        DBLE(iy - 1) / DBLE(nybin))
-
-            pixel(npixel)%v1(1) = factx * xwidth            ! Spatial horizontal location 
-            pixel(npixel)%v1(2) = facty * ywidth 
-            pixel(npixel)%v1(3) = 0.0D0
-
-            pixel(npixel)%xwidth  = xwidth / DBLE(nxbin)      ! Spatial horizontal width
-            pixel(npixel)%ywidth  = ywidth / DBLE(nybin)            
-
+        
+            pixel(npixel)%v1(1)  = factx * xwidth            ! Spatial horizontal location 
+            pixel(npixel)%v1(2)  = facty * ywidth 
+            pixel(npixel)%v1(3)  = 0.0D0
+            pixel(npixel)%xwidth = xwidth / DBLE(nxbin)      ! Spatial horizontal width
+            pixel(npixel)%ywidth = ywidth / DBLE(nybin)            
+        
             IF (opt%distortion.EQ.0.0D0) THEN
               pixel(npixel)%xangle  = factx * xangle            ! View angle
               pixel(npixel)%yangle  = facty * yangle
             ELSE
-
               x = 2.0D0 * factx * boundx
               y = 2.0D0 * facty * boundy
-
               r = DSQRT(x**2 + y**2)
-
               x = x / MAX(0.5D0, dist * r**2 + 1.0D0)
               y = y / MAX(0.5D0, dist * r**2 + 1.0D0)
-
 c              x = MAX(0.5D0, dist * r**2 + 1.0D0) * x
 c              y = MAX(0.5D0, dist * r**2 + 1.0D0) * y
-
               pixel(npixel)%xangle = DATAN( x / f ) * 180.0D0 / PI
               pixel(npixel)%yangle = DATAN( y / f ) * 180.0D0 / PI
-
 c             WRITE(0,*) 'XANGLE,YANGLE:',npixel,pixel(npixel)%xangle
 c             WRITE(0,*) '             :',npixel,pixel(npixel)%yangle
-
-             
 c              WRITE(0,'(A,I6,8F10.4)') 
 c     .          'DATA:',ix,factx,MAX(0.5D0, dist * r**2 + 1.0D0),
 c     .          r,v,boundx,x,
 c     .          pixel(npixel)%xangle,
 c     .          factx * xangle
-
 c              STOP 'sdfsd'
-
 c              pixel(npixel)%xangle  = factx * xangle            ! View angle
 c              pixel(npixel)%yangle  = facty * yangle              
-
             ENDIF
-
-
+        
+        
             SELECTCASE (opt%sa_opt)
-              CASE (1) 
+             CASE (1) 
               pixel(npixel)%dxangle=xangle/DBLE(nxbin)*DBLE(opt%sa_par1)     ! View width 
               pixel(npixel)%dyangle=yangle/DBLE(nybin)*DBLE(opt%sa_par2)         
 c              pixel(npixel)%dxangle=xangle/DBLE(nxbin)*DBLE(opt%sa_par1)     ! View width 
 c              pixel(npixel)%dyangle=yangle/DBLE(nybin)*DBLE(opt%sa_par2)         
-
-              CASE DEFAULT
-                CALL ER('BuildPixels','Unknown solid angle '//
-     .                  'option',*99)
+             CASE DEFAULT
+              CALL ER('BuildPixels','Unknown solid angle option (2',*99)
             ENDSELECT
-
-
+        
             IF (debug) THEN
               pixel(npixel)%xangle = xangle            ! View angle            
               pixel(npixel)%yangle = yangle            ! View angle
             ENDIF
-
-
+        
 c...        These are only needed for plotting, not actually used during LOS integration:
             pixel(npixel)%v2(1) = DSIN(pixel(npixel)%xangle *D_DEGRAD) *    ! Correct?
      .                            DCOS(pixel(npixel)%yangle *D_DEGRAD) * 
@@ -1344,28 +1344,20 @@ c...        These are only needed for plotting, not actually used during LOS int
      .                            DCOS(pixel(npixel)%yangle *D_DEGRAD) * 
      .                            50.0D0 + pixel(npixel)%v1(3)
 c            pixel(npixel)%v2(3) = -pixel(npixel)%v2(3)
-
-
-
+        
 c           *** better to store these in a detector array, rather than taking up space with each pixel, or are the savings nominal...
 c           *** use opt%det_ array...
             pixel(npixel)%rot(1) = DBLE(opt%tilt *PI/180.0D0) ! x-axis (tilt) 
             pixel(npixel)%rot(2) = DBLE(opt%swing*PI/180.0D0) ! y-axis (swing)
             pixel(npixel)%rot(3) = DBLE(opt%roll *PI/180.0D0) ! z-axis (roll) ! Set detector orientation
-
+        
             pixel(npixel)%trans(1) = xcen
             pixel(npixel)%trans(2) = ycen
             pixel(npixel)%trans(3) = zcen
-
-
-
-
 c            WRITE(0,*) 'X!;',npixel,pixel(npixel)%x2
           ENDDO
         ENDDO
-
       ENDIF
-
 
 c...  Mask pixels:
       DO i1 = 1, opt%mask_num
@@ -1396,7 +1388,6 @@ c...        Invert mask:
             DO ipixel = opt%det_istart(opt%ndet), npixel
               pixel(ipixel)%valid = .NOT.pixel(ipixel)%valid
             ENDDO
-            
 c ...        Circular:        
 c            DO ipixel = opt%det_istart(opt%ndet), npixel
 c              ix = (pixel(ipixel)%xindex - opt%nxbin / 2)
@@ -1404,7 +1395,6 @@ c              iy = (pixel(ipixel)%yindex - opt%nxbin / 2)
 c              rpixel = NINT(SQRT(REAL(ix**2) + REAL(iy**2)))
 c              IF (rpixel.GT.opt%nxbin/2) pixel(ipixel)%valid = .FALSE.
 c            ENDDO
-
           CASE (3)
 c...      
             DO ipixel = opt%det_istart(opt%ndet), npixel
@@ -1422,47 +1412,34 @@ c             IF (iy.LT.175) THEN
                 pixel(ipixel)%valid = .FALSE.
               ENDIF
             ENDDO
-
           CASE (4)  ! Along a line...
-
             ALLOCATE(imap(opt%nxbin,opt%nybin))
-
             DO ipixel = opt%det_istart(opt%ndet), npixel
               imap(pixel(ipixel)%xindex,pixel(ipixel)%yindex) = ipixel
             ENDDO
-
             ix1 = MAX(1,opt%mask_vtx(i1,1) / opt%img_nxratio)
             iy1 = MAX(1,opt%mask_vtx(i1,2) / opt%img_nyratio)
             ix2 = MAX(1,opt%mask_vtx(i1,3) / opt%img_nxratio)
             iy2 = MAX(1,opt%mask_vtx(i1,4) / opt%img_nyratio)
-
             tlast = -1.0
             DO t = 0.0, 1.0, 0.0005
               IF (t.EQ.tlast) CYCLE
               tlast = t
-
               ix = MAX(1,NINT((1.0 - t) * REAL(ix1) + t * REAL(ix2)))
               iy = MAX(1,NINT((1.0 - t) * REAL(iy1) + t * REAL(iy2)))
-
 c              WRITE(0,*) 'I:',t,ix,iy,imap(ix,iy)
               pixel(imap(ix,iy))%valid = .FALSE.
 c              if (t.EQ.0.1) STOP
             ENDDO
-
             WRITE(0,*) 'I:',ix1,iy1,ix2,iy2
-
-
             DEALLOCATE(imap)
             WRITE(0,*) 'RATIOS:',opt%img_nxratio,opt%img_nyratio
 c            STOP 'HERE'
-
           CASE DEFAULT
             WRITE(0,*) 'MASK TYPE:',i1,opt%mask_opt(i1)      
             CALL ER('BuildPixels','Unknown mask type',*99)
         ENDSELECT
-
       ENDDO
-
 
 c.... Add index offset(s) for multiple detectors:
 c      IF (ndetector.GT.1) THEN
@@ -1472,7 +1449,6 @@ c        ENDDO
 c      ENDIF
       opt%det_iend(opt%ndet) = npixel
 
-
 c...  Fill out pixel view as necessary, including focus options (need to think) -- add subroutine for creating the views:
 c...  Rotate and translate the views :  
 c...  Do ray trace and add reflection views to list:
@@ -1480,9 +1456,7 @@ c...  Do all this for one pixel at a time which is farmed out:
 c...  As each pixel is returned, increment pixel value, which isn't necessarily the calling pixel if the 
 c     focus is off, then clear the memory for the views associated with that pixel (or plot first, or store in file): 
 
-
 c...  Allocate space for line shape storage for unmasked pixels:
-
 
       RETURN
  99   STOP
@@ -1736,7 +1710,8 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       CALL DEALLOC_ALL
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 500000 
+      MAX3D = 2000000 
+c      MAX3D = 500000 
 c      MAX3D = 1500000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
@@ -1767,7 +1742,9 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       opt%img_nxratio = 1
       opt%img_nyratio = 1
 
+
       opt%nplots  = -1
+      opt%chord_n =  0
 
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
@@ -1784,7 +1761,9 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
         save_opt_ccd = 0         ! focal length, distortion, etc. are only recorded for 
         DO WHILE(status.EQ.0)    ! the last active detector.  Need to define TYPE_DETECTOR
           opt%ccd = 0  ! Hack    ! and use in in TYPE_OPTION985...
-          opt%mask_num = 0
+          opt%distortion  = 0.0      
+          opt%focallength = 0.0
+          opt%mask_num    = 0
           CALL LoadOptions985_New(opt,DETECTOR_ONLY,status)
           IF (opt%ccd.GT.0) THEN
 
@@ -1920,6 +1899,9 @@ c        WRITE(0,*) 'f:',f
 
       IF (opt%nplots.GT.0)
      .  CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
+
+      IF (.TRUE.)
+     .  CALL DumpShinKajita(title)
 
 c      nobj985 = nobj
 

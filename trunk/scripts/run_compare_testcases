@@ -2,11 +2,8 @@
 #
 #
 echo 'RUNNING and COMPARING Testcases'
-
 #
-set progdir = divimp-merge
-#
-set scriptdir = $HOME/$progdir/scripts
+set scriptdir = $HOME/divimp/scripts
 
 source $scriptdir/init_testcases
 

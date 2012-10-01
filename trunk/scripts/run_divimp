@@ -1,4 +1,4 @@
-#!/bin/tcsh 
+#!/bin/tcsh
 #
   alias ls ls
 #
@@ -18,6 +18,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
   setenv ADASCENT $DIVHOME/adas/
   setenv EIRDIR   $DIVHOME/$EIRTEMP
+  setenv RESDIRTOP $DIVHOME/results
   source $DIVHOME/scripts/results_resdir $CASENAME
 
 # Location of graphics library used by EIRENE:
@@ -32,10 +33,6 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   set    OUTDIR = $DIVHOME/out6
 
   setenv DIVDATDIR $DATDIR  # for ribbon grid code
-
-  setenv DIVDATDIR $DATDIR
-
-  echo $DIVDATDIR
 #
 # ----------------------------------------------------------------------
 # Set DIVIMP/OUT executables:
@@ -57,6 +54,11 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   if ( -e $EXEDIR ) rm -rf $EXEDIR
   mkdir $EXEDIR
   cd    $EXEDIR
+#  echo $QSUB_ID > qsub_id.txt
+#  if ( $QSUB_ID != "none" ) then
+#    ll ../* > ../test.dump
+#    rm ../$QSUB_ID*
+#  endif
 #
 # ----------------------------------------------------------------------
 # Case parameter summary to the screen:
@@ -100,7 +102,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
 #      $DIVEXE < fort.5 > divout1
-      nice +10 $DIVEXE < fort.5 > divout1
+      nice +2 $DIVEXE < fort.5 > divout1
 #    Xpgdbg $DIVEXE < fort.5 > divout1
 
 #     Process this output now, since these file units conflict with OUT:
@@ -129,7 +131,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
         echo "  Executing OUT version 6 :" $MYEXT
         echo 
 #      Xpgdbg $RUNDIR/out6/$OUTEXE < fort.99 > outout1
-        nice +10 $OUTDIR/$OUTEXE < fort.99 > outout1
+#        nice +2 $OUTDIR/$OUTEXE < fort.99 > outout1
+        nice +2 $OUTEXE < outinput.dat > outout1
       endif
     endif
   endif
@@ -227,10 +230,11 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME         osm.idl.*
-  rename output  $CASENAME.out     output.*
-  rename idl     $CASENAME.idl     idl.*
-  rename profile $CASENAME.profile profile.*      # line-of-sight profiles from RAY
+  rename osm     $CASENAME         -- osm.idl.*
+  rename divimp  $CASENAME         -- divimp.* 
+  rename output  $CASENAME.out     -- output.*
+  rename idl     $CASENAME.idl     -- idl.*
+  rename profile $CASENAME.profile -- profile.*      # line-of-sight profiles from RAY
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
@@ -278,6 +282,9 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   foreach FILENAME (`ls mhf.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
+  foreach FILENAME (`ls akf.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
 #
 # ----------------------------------------------------------------------
 # Martin O'Mullane files:
@@ -310,7 +317,6 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   mvc fort.71 $CASENAME.sol23
   mvc fort.73 $CASENAME.exl23
   mvc fort.75 $CASENAME.cfd
-
 #
 # ----------------------------------------------------------------------
 # Compress large files:
@@ -355,10 +361,22 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #  zipc *.A
   rm *.map
 
-  if ($OUTONLY == "no") rm $RESDIR/$CASENAME*
+  if ($OUTONLY == "no") rm $RESDIR/$CASENAME.*
 
   mv -f $CASENAME.* $RESDIR
   chmod u+r $RESDIR/$CASENAME.*
+#
+# ----------------------------------------------------------------------
+# Try to collect QSUB log files
+#
+#  if ( $QSUB_ID != "none" ) then
+#echo here! trying! > ../message.1
+#    echo QSUM_ID is:
+#    echo $QSUB_ID
+#    $DIVHOME/scripts/qsub_report $EXEDIR $QSUB_ID $RESDIR $CASENAME &
+#    echo "$DIVHOME/scripts/qsub_report $EXEDIR $QSUB_ID $RESDIR $CASENAME" > ../message.2
+#    sleep 10
+#  endif 
 #
 # ----------------------------------------------------------------------
 # Clean:
