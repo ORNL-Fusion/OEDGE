@@ -108,7 +108,7 @@ contains
 
           ! Accumulate total
           ! Determine psibin
-          psibin = max((min(filedata(in,1),psi_max) - psi_min),0.0) / delta_psi + 1
+          psibin = min(max((min(filedata(in,1),psi_max) - psi_min),0.0) / delta_psi + 1,npsi_bins)
 
 
           ! ne

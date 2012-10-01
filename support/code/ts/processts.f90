@@ -65,8 +65,8 @@ program processts
      write(0,*) 'ELM=',trim(elm_filename)
   endif
 
-  psi_min = 0.6
-  psi_max = 1.15
+  psi_min = 0.2
+  psi_max = 1.3
   npsi_bins = int((psi_max-psi_min)/0.005)
 
 

@@ -22,7 +22,7 @@ contains
     logical :: unit_open
 
     test_unit = 10
-    unit_open = .false.
+    unit_open = .true.
 
     ! Check for unit number assignment.  
     Do While (Unit_open.or.test_unit.gt.98)
