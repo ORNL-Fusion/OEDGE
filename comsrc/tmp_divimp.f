@@ -1,4 +1,7 @@
 c
+c
+c ======================================================================
+c ======================================================================
 c ======================================================================
 c
 c subroutine: LoadRibbonData
@@ -351,9 +354,10 @@ c     .                trace(i)%bump(i2)
 c...            Candidate identified:
                 count = count + 1
                 depth  = trace(i)%rho - trace(itrace)%rho
-                length = trace(itrace)%s(trace(itrace)%n) - 
-     .                   trace(itrace)%s(1)
-                factor = (depth  /   100.0) /   ! vperp = 100 m/s
+                length = trace(i)%s(i2) - trace(i)%s(i1)
+c                length = trace(itrace)%s(trace(itrace)%n) - 
+c     .                   trace(itrace)%s(1)
+                factor = (depth  /  1000.0) /   ! vperp = 1000 m/s, for margin
      .                   (length / 30000.0)     ! vparallel for ~10 eV
 
 c                IF (debug) WRITE(0,*) '          good!',depth,factor

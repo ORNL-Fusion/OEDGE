@@ -34,7 +34,8 @@ c
      .  CALL ER('LineCutTube','Intersection not found',*99)
 
       RETURN
- 99   STOP
+ 99   WRITE(0,*) '  ITUBE = ',itube
+      STOP
       END
 c
 c ====================================================================

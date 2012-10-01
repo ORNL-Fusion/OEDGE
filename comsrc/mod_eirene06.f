@@ -54,6 +54,7 @@
         INTEGER :: type,subtype,num,index(10),orientation,zone
         INTEGER :: iliin,ilside,ilswch,ilcol,ilcell,iltor,reflect
         REAL    :: ewall,material,recyct,recycf
+        REAL    :: transp1,transp2
         INTEGER :: ilspt,isrs
         REAL    :: recycs,recycc
         INTEGER :: hard           ! Force this surface to be separate from other surfaces (i.e. not automatically grouped with other surfaces with the same properties), for flux reporting from EIRENE

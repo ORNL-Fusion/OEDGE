@@ -1488,6 +1488,9 @@ C
       KK    = 1000 * ISECT
       KKLIM = KK - 10
 C
+c slmod begin
+      if (sloutput) write(0,*) 'debug: NPROD-LPROD+1 = ',NPROD-LPROD+1
+c slmod end
       DO 900 IPROD = 1, NPROD-LPROD+1
 c
 c     jdemod - temp debug
@@ -3017,8 +3020,8 @@ c                WRITE (6,9003) IPROD,CIST,IK,IR,IX,IY,R,Z,K,
 c
 c               jdemod - tmp debug
 c
-                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
-     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
+c                WRITE (0,9003) IPROD,CIST,IK,IR,0,0,R,Z,K,
+c     >            VIN,TEMN,SPUTY,(ANGLE+TANGNT)*RADDEG,IT
               ENDIF
             ENDIF
 C
@@ -3443,8 +3446,11 @@ c
           call find_wall_intersection(r,z,rold,zold,rnew,znew,tnew,
      >                                tnorm,
      >                                nrfopt,indi,intersect_result,
-     >                                sect)
-
+c slmod begin
+     >                                sect,cprint)
+c
+c     >                                sect)
+c slmod end
 c
 c         Verify RNEW,ZNEW 
 c
@@ -4762,9 +4768,6 @@ c
 c
 c slmod begin
 c
-c ADD A NEW OPTION SOMEWHERE HERE WHERE fydata IS APPLIED DIRECTLY FROM PRE-CALCULATED
-c VALUES, as BELOW (clearer in FYW routine below...)
-c
 c Put this back in when I start processing the impurity production in EIRENE
 c that's coming from ions striking the target -- need to compare with what 
 c DIVIMP is calculating.  Need to remove the pinsw.eq.4 references that occur
@@ -4782,14 +4785,16 @@ c                 5   = Flux * Yield
         DO id = 1, nds
           in = nimindex(id)
           IF (in.EQ.0) CYCLE  ! virtual rings 
-          fydata(id,1) = wall_flx(in)%in_par_blk(1,0)  ! flxhw2(in)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
-          fydata(id,2) = wall_flx(in)%in_ene_blk(1,0)  ! flxhw5(in)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+          fydata(id,1) = wall_flx(in)%in_par_blk(1,0)    ! flxhw2(in)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+          fydata(id,2) = wall_flx(in)%in_ene_blk(1,0)    ! flxhw5(in)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
           fydata(id,3) = 1.0 
           IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
      .      fydata(id,4) = wall_flx(in)%em_par_atm(2,1) / 
      .                     wall_flx(in)%in_par_blk(1,0)  ! flxhw3(in) / (flxhw2(in) + 1.0E-10)
-          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)  ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
+          fydata(id,5) = wall_flx(in)%em_par_atm(2,1)    ! flxhw3(in)  ! Atoms (species=2) sputtering by bulk ions
           fydata(id,:) = fydata(id,:) * kmfps(id)
+
+c          write(0,*) '  debug 1: fydata5',id,fydata(id,5),kmfps(id)
         enddo
 c slmod end
       endif 
@@ -4914,8 +4919,8 @@ c
       include 'cneut2'
       include 'slcom' 
 c slmod begin - tmp
-      LOGICAL warning
-      DATA    warning /.FALSE./
+      LOGICAL warning, bug_message
+      DATA    warning, bug_message /.FALSE., .TRUE./
       SAVE
 c slmod end 
 c
@@ -4993,6 +4998,48 @@ c
          do id = 1,nwlind
             fymap(id) = wlind(id)            
             fyprob(id)= fwlprob(id) 
+c slmod begin
+            if (wallpt(wlind(id),7).eq.0.0) cycle
+
+            if (id.eq.1.and.bug_message) then
+ 
+              write(0,*) 
+              write(0,*) '---------------------------------------------'
+              write(0,*) '  WARNING! Bug correction related to assign'//
+     .                   'ed wall launch probabilities, see neut.f'
+              write(0,*) '---------------------------------------------'
+              write(0,*) 
+
+              write(0,*) 
+              write(0,*) '---------------------------------------------'
+              write(0,*) '  WARNING! Bug correction related to assign'//
+     .                   'ed wall launch probabilities, see neut.f'
+              write(0,*) '---------------------------------------------'
+              write(0,*) 
+
+              bug_message = .FALSE.
+            endif
+
+c...        The direct assignment of FWLPROB to FYDATA(,5) is not correct
+c           since FWLPROB is an additive measure of wall launch probability,
+c           with the last entry approaching 1.0, while FYDATA(,5) should contain
+c           individual wall launch probabilities for each wall segment that are
+c           independent of the lauch probabilities for the preceeding segments
+c           in the list. - SL, 09/05/12
+
+            if (id.eq.1) then
+              fydata(wlind(id),5) = fwlprob(id) 
+            else
+              fydata(wlind(id),5) = fwlprob(id) - fwlprob(id-1)
+            endif
+
+            fydata(wlind(id),5) = fydata(wlind(id),5) * nabsfac / 
+     .                            wallpt(wlind(id),7)
+
+c
+c     .        fydata(wlind(id),5) = fwlprob(id) * nabsfac / 
+c     .                              wallpt(wlind(id),7)
+c slmod end
          end do 
 c
 c     Do proper calculations if PIN/NIMBUS data is available
@@ -5215,13 +5262,15 @@ c                    5   = Flux * Yield
              fydata(in,1) = flxhw2(id)  ! FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
              fydata(in,2) = flxhw5(id)  ! AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
              fydata(in,3) = 1.0 
-             IF (wall_flx(in)%in_par_blk(1,0).NE.0.0)
+             IF (wall_flx(in)%in_par_atm(1,0).NE.0.0)
      .         fydata(in,4) = wall_flx(id)%em_par_atm(2,2) /
      .                        wall_flx(in)%in_par_atm(1,0)
              fydata(in,5) = wall_flx(id)%em_par_atm(2,2)  !  Atoms (species=2) sputtering by test atoms
 c             fydata(in,4) = MAX(0.0,flxhw3(id) / (flxhw2(in) + 1.0E-10))  ! bug, FLXHW2(IN) should have been FLXHW6(ID) 
 c             fydata(in,5) = MAX(0.0,flxhw3(id))  ! FLUX OF IMPURITIES SPUTTERED FROM THE WALL 
              fydata(id,:) = fydata(id,:) * kmfpws(id)
+
+c          write(0,*) '  debug 2: fydata5',in,fydata(in,5)
 c             IF (kmfpws(id).NE.0.0) THEN
 c               WRITE(0,*) '  DEGUB: fydata4,5=',fydata(in,4:5),
 c     .                     MAX(0.0,flxhw3(id) / (flxhw6(id) + 1.0E-10)),

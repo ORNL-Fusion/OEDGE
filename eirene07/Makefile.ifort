@@ -4,7 +4,8 @@
 F77=ifort
 
 #FFLAGS= -c -O
-FFLAGS= -c -CB -traceback -O2
+FFLAGS= -c -traceback -O2
+#FFLAGS= -c -CB -traceback -O2
 #FFLAGS= -c -CB -traceback -O0 -g
 #FFLAGS= -c -g -O0 -traceback -fpe:0 -check all -mcmodel=medium -i8
 #FFLAGS= -c -O2
@@ -14,7 +15,8 @@ OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
-LIBS=  -L../libsrc -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS=  -L../libsrc -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 
+#LIBS=  -L../libsrc -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
 
 IDIR=
 

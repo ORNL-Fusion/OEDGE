@@ -140,7 +140,6 @@ c
       SAVE
 
 
-
       CALL DumpData_OSM('output.end','Simulation complete')
 
 c...  Save solution:
@@ -599,6 +598,7 @@ c
      .      it,
      .      tube_tag(tube(it)%type),
      .      tube(it)%cell_index(HI)-tube(it)%cell_index(LO)+1,
+c     .      tube(it)%n,
      .      tube(it)%cell_index(LO:HI),
      .      tube(it)%psin,
      .      tube(it)%rho,

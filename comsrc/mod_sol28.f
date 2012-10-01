@@ -98,7 +98,8 @@ c
 
 !...     Applicability:
          INTEGER   :: iteration(2)
-         INTEGER   :: tube(2)
+         CHARACTER :: tube*128
+!         INTEGER   :: tube(2)
 
 !...     I/O:
          INTEGER   :: log          ! Log file option
@@ -133,6 +134,8 @@ c
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
          INTEGER   :: p_rec(2)         ! Volume recombination 
          INTEGER   :: p_ano(2)         ! Anomalous
+         INTEGER   :: p_ano_dist(2)    ! Distribution along field line of anomalous particle flux
+         REAL      :: p_ano_exp(2)     ! Distribution exponent
          INTEGER   :: m_mom(2)         ! ... needs new name...
          INTEGER   :: m_fit(2)         !
          INTEGER   :: m_ano(2)         !
@@ -239,8 +242,8 @@ c
          INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
          INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
          INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
-         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! ?
-         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! ?
+         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! Surface transparency 1
+         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! Surface transparency 2
          REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
          INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
          INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
@@ -268,6 +271,9 @@ c
          REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
          REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
          REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
+         REAL         :: spc_p1     (EIR_MAXNSPECTRA,3)  ! staring point of LOS (for getting spectra for all cells that intersect the LOS)
+         REAL         :: spc_p2     (EIR_MAXNSPECTRA,3)  ! ending point
+         REAL         :: spc_dist   (EIR_MAXNSPECTRA)    ! location / distance of the cell along the LOS
 !...     Particle sources:
          REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
 !         REAL      :: puff_type   (EIR_MAXNPUFF)
@@ -415,6 +421,7 @@ c...    Strata:
          REAL      :: fit_shift
          REAL      :: fit_quantity
          REAL      :: fit_p(10)
+         INTEGER   :: fit_width
       ENDTYPE type_node
 !
 !     Grid:
@@ -518,6 +525,14 @@ c...    Strata:
         REAL*8 :: te_kappa(2)
         REAL*8 :: ti_kappa(2,S28_MAXNION)
       ENDTYPE type_tube
+
+      TYPE, PUBLIC :: type_tube2    ! *** NEW TUBE VARIABLES THAT DON'T NEED TO BE SAVED, SO NOT UPDATING MAIN tube SPECIFICATION AT THE MOMENT ***
+        INTEGER*4 :: state         ! General info on the "solver state" of the tube, or anything else for that matter
+!                           BIT 0 - 1-default symmetry point applied
+!                           BIT 1 - 1-solution for ring has been successfully calculated
+!                           BIT 2 - 1-node linked to an invalid ring (solution hadn't been calculated yet)
+        INTEGER*2 :: target_pe(2)  ! Dynamically specify the target jsat based on the upstream electron pressure
+      ENDTYPE type_tube2
 !
 !     Cells:
 !     ------------------------------------------------------------------
@@ -798,8 +813,27 @@ c...    Strata:
 !
 ! ----------------------------------------------------------------------
 !
+      MODULE mod_sol28_reference
+      USE mod_sol28      
+      USE mod_geometry
+      USE mod_options
+      IMPLICIT none
+
+      PUBLIC
+
+!...  Reference plasma:
+      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
+      TYPE(type_tube ), ALLOCATABLE       :: ref_tube (:)
+      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
+      TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
+
+      END MODULE mod_sol28_reference
+!
+! ----------------------------------------------------------------------
+!
       MODULE mod_sol28_global
       USE mod_sol28      
+      USE mod_sol28_reference
       USE mod_geometry
       USE mod_options
       IMPLICIT none
@@ -841,17 +875,16 @@ c...    Strata:
       INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000)
       TYPE(type_node) store_node(20,1000)
 !...  
-      INTEGER, PARAMETER :: MAXNTUBE = 100
       TYPE(type_grid), SAVE :: grid
       INTEGER, SAVE :: ntube
-      TYPE(type_tube), ALLOCATABLE, SAVE :: tube(:) 
+      TYPE(type_tube ), ALLOCATABLE, SAVE :: tube (:) 
+      TYPE(type_tube2), ALLOCATABLE, SAVE :: tube2(:) 
 
-      INTEGER*4, SAVE, ALLOCATABLE :: tube_state(:)  ! move into the TUBE array eventually, but only local use for now...
+!      INTEGER*4, SAVE, ALLOCATABLE :: tube_state(:),  ! move into the TUBE array eventually, but only local use for now...
 !       _state BIT 0 - 1-default symmetry point applied
 !              BIT 1 - 1-solution for ring has been successfully calculated
 !              BIT 2 - 1-node linked to an invalid ring (solution hadn't been calculated yet)
 
-      INTEGER, PARAMETER :: MAXNCELL = MAXNTUBE * 100
       INTEGER, SAVE :: nion,ncell,nfield,npin,nphoton,nfluid,nkinetic,
      .                 nimpurity,ndrift
       TYPE(type_cell    ), ALLOCATABLE, SAVE :: cell    (:) 
@@ -863,11 +896,6 @@ c...    Strata:
       TYPE(type_impurity), ALLOCATABLE, SAVE :: impurity(:,:) 
       TYPE(type_drift   ), ALLOCATABLE, SAVE :: drift   (:,:) 
 
-!...  Reference plasma:
-      INTEGER, SAVE :: ref_ntube,ref_nion,ref_ncell,ref_nfluid
-      TYPE(type_tube), ALLOCATABLE :: ref_tube(:)
-      TYPE(type_cell ), ALLOCATABLE, SAVE :: ref_cell (:) 
-      TYPE(type_fluid), ALLOCATABLE, SAVE :: ref_fluid(:,:) 
 
 !...  Plasma species that are being tracked in the simulation:
       INTEGER, SAVE :: nspecies

@@ -1234,9 +1234,9 @@ c...temp: korpg=0
         WRITE(fp,*) 'DIVIMP IMPURITY DATA:'
         DO ir = 1, nrs
           WRITE(fp,*)
-          WRITE(fp,'(2A4,2A10,9A10,1X,A7)')
+          WRITE(fp,'(2A4,2A10,10A10,1X,A7)')
      .      'ik','ir','r','z',
-     .      '1','2','3','4','5','10','15','20','25',
+     .      '0','1','2','3','4','5','10','15','20','25',
      .      irtag(ir)
           ike = nks(ir) 
           IF (ir.LT.irsep) ike = nks(ir) - 1
@@ -1249,7 +1249,7 @@ c...temp: korpg=0
      .        note = note(1:LEN_TRIM(note))//' IK1'
             IF (ik.EQ.ikbound(ir,IKHI))
      .        note = note(1:LEN_TRIM(note))//' IK2'
-            WRITE(fp,'(2I4,2F10.6,1P,9E10.2,0P)')
+            WRITE(fp,'(2I4,2F10.6,1P,10E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
 c
@@ -1258,7 +1258,7 @@ c                           twice in the output file but I will leave
 c                           it in during merge in case something depends
 c                           on it. 
 c
-     .        (SNGL(ddlims(ik,ir,iz)),iz=1,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5)
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO
@@ -1435,9 +1435,10 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
         ENDDO
 
         WRITE(fp,*) ' '
-        WRITE(fp,'(2A4,7A12)')
+        WRITE(fp,'(2A4,8A12)')
      +    'ik','ir',
-     +    'pinena','osmcfe','osmcfi','pinmp','osmmp','osmmp2','pinqe2'
+     +    'pinena','pinenm','osmcfe','osmcfi','pinmp','osmmp','osmmp2',
+     +    'pinqe2'
 
 
         DO ik = 1, nks(ir)
@@ -1445,10 +1446,10 @@ c     .      pinatom(ik,ir),pinion(ik,ir)*rs(ik,ir)/rxp*1.6E-19*1.0E-06,
           IF (ik.EQ.ikbound(ir,IKLO)) tag = tag(1:LEN_TRIM(tag))//'IK1'
           IF (ik.EQ.ikbound(ir,IKHI)) tag = tag(1:LEN_TRIM(tag))//'IK2'
 
-          WRITE(fp,'(2I4,1P,7E12.4,0P,1X,A)')
+          WRITE(fp,'(2I4,1P,8E12.4,0P,1X,A)')
      +      ik,ir,
-     .      pinena(ik,ir),osmcfe(ik,ir),osmcfi(ik,ir),pinmp (ik,ir),
-     .      osmmp (ik,ir),osmmp2(ik,ir),pinqe2(ik,ir),
+     .      pinena(ik,ir),pinenm(ik,ir),osmcfe(ik,ir),osmcfi(ik,ir),
+     .      pinmp (ik,ir),osmmp (ik,ir),osmmp2(ik,ir),pinqe2(ik,ir),
      .      tag(1:LEN_TRIM(tag))
         ENDDO
 
@@ -2108,14 +2109,22 @@ c...  Fluxes to surfaces:
       CALL HD(fp,'  NEUTRAL HYDROGEN FLUX DATA','EIRNEUTFLUX-HD',5,67)
       WRITE(fp,*)
 
-      WRITE(fp,40) 'Ind',' r ',' z ',' D_parflx',' D_avgeng',
+c
+c    jdemod - added segment length to output
+c
+      WRITE(fp,40) 'Ind',' r ',' z ',' len ',
+     .                               ' D_parflx',' D_avgeng',
      .                               'D2_parflx','D2_avgeng',
      .                               'Im_parflx','Im_avgeng',
      .                               'D+_parflx','D+_avgeng'
-      WRITE(fp,40) '   ','(m)','(m)','(m-2 s-1)','   (eV)  ',   
-     .                               '(m-2 s-1)','   (eV)  ',
-     .                               '(m-2 s-1)','   (eV)  ',
-     .                               '(m-2 s-1)','   (eV)  '
+c
+c     jdemod - adjusted output formatting so that it is easier to read into a spreadsheet
+c
+      WRITE(fp,40) '   ','(m)','(m)',' (m) ',
+     .                               ' (m-2s-1)','   (eV)  ',   
+     .                               ' (m-2s-1)','   (eV)  ',
+     .                               ' (m-2s-1)','   (eV)  ',
+     .                               ' (m-2s-1)','   (eV)  '
 c...  Loop over NWALL for now, to avoid BGK grid:
       DO i1 = 1, nvesm+nvesp
 c
@@ -2124,6 +2133,8 @@ c
 c        IF (0.5*(zvesm(i1,1)+zvesm(i1,2)).LT.zxp) THEN
           WRITE(fp,41) i1,       
      .      0.5*(rvesm(i1,1)+rvesm(i1,2)),0.5*(zvesm(i1,1)+zvesm(i1,2)),
+     .      sqrt((rvesm(i1,1)-rvesm(i1,2))**2
+     .          +(zvesm(i1,1)-zvesm(i1,2))**2), 
      .      flxhw6(i1),flxhw5(i1),fluxhw(i1)-flxhw6(i1),flxhw7(i1),
      .      flxhw3(i1),flxhw4(i1),flxhw8(i1)           ,-1.0
 c
@@ -2131,8 +2142,8 @@ c        ENDIF
 c
 
       ENDDO
-40    FORMAT(5X,A3,2A7     ,8A11)
-41    FORMAT(5X,I3,2F7.3,4(1P,E11.2,0P,F11.3))      
+40    FORMAT(5X,A3,2A7,a12  ,8A11)
+41    FORMAT(5X,I3,2F7.3,g12.5,4(1P,E11.2,0P,F11.3))      
 
 
 

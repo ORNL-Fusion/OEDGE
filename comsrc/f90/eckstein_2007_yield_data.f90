@@ -323,16 +323,28 @@ module eckstein_2007_yield_data
        -1  &         !  MATT=19   "Nitrogen"
        /)
 
-  integer,parameter :: ion_mats(7) = (/ &
+! slmod begin
+  integer,parameter :: ion_mats(8) = (/ &
        ion_h, &    !  MATP=1    H
        ion_d, &    !  MATP=2    D
        ion_t, &    !  MATP=3    T
        ion_he4, &  !  MATP=4    HE4
        -1, &       !  MATP=5    C
        ion_self, & !  MATP=6    SELF
-       ion_o  &    !  MATP=7    O
+       ion_o,  &   !  MATP=7    O
+       ion_ne &    !  MATP=8    Ne   ! Addition noted in SPUTTER.F as well. -SL, 10/05/2012 
        /) 
-
+!
+!  integer,parameter :: ion_mats(7) = (/ &
+!       ion_h, &    !  MATP=1    H
+!       ion_d, &    !  MATP=2    D
+!       ion_t, &    !  MATP=3    T
+!       ion_he4, &  !  MATP=4    HE4
+!       -1, &       !  MATP=5    C
+!       ion_self, & !  MATP=6    SELF
+!       ion_o  &    !  MATP=7    O
+!       /) 
+! slmod end
 
   CHARACTER*18 :: TARMAT(19)= (/&
        ' ALUMINIUM       ',' BERYLLIUM       ',' COPPER          ',&
@@ -343,19 +355,67 @@ module eckstein_2007_yield_data
        ' "ARGON"         ',' "OXYGEN"        ',' "CHLORINE"      ',&
        ' "NITROGEN"      ' /)                                     
 
-  CHARACTER*6  :: PLAMAT(7) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/)
+! slmod begin
+  CHARACTER*6  :: PLAMAT(8) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',' Ne   '  /)
+!
+!  CHARACTER*6  :: PLAMAT(7) = (/ ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',/)
+! slmod end
 
-
-
+! slmod begin
+!  public :: yield_2007,init_eckstein_2007,print_eck2007_yields,eckstein2007_data_available,  &
+!            get_target_index,get_plasma_index
+!
   public :: yield_2007,init_eckstein_2007,print_eck2007_yields,eckstein2007_data_available
+! slmod end
 
   save
 
 
 
 contains
-
-
+! slmod begin
+!
+!  integer function get_target_index(z)
+!
+!    integer, intent(in) :: z
+!
+!    get_target_index = -1
+!
+!    if (z.eq.4 ) get_target_index = 2  ! targ_be  MATT=2  Beryllium
+!    if (z.eq.6 ) get_target_index = 4  ! targ_c   MATT=4  Carbon/Graphite
+!    if (z.eq.42) get_target_index = 8  ! targ_mo  MATT=8  Molybdenum
+!    if (z.eq.74) get_target_index = 9  ! targ_w   MATT=9  Tungsten
+!
+!    return 
+!
+!  end function get_target_index
+!
+!  integer function get_plasma_index(z,a)
+!
+!    integer, intent(in) :: z,a
+!
+!    get_plasma_index = -1
+!
+!    if (z.eq.1 .and.a.EQ.1) get_plasma_index =  1  !  ion_h     MATP=1    H
+!    if (z.eq.1 .and.a.EQ.2) get_plasma_index =  2  !  ion_d     MATP=2    D
+!    if (z.eq.1 .and.a.EQ.3) get_plasma_index =  3  !  ion_t     MATP=3    T
+!    if (z.eq.2 .and.a.EQ.3) get_plasma_index = -1  !  ion_he3  
+!    if (z.eq.2 .and.a.EQ.4) get_plasma_index =  4  !  ion_he4   MATP=4    HE4
+!    if (z.eq.6            ) get_plasma_index =  5  !  ion_c     MATP=5
+!    if (z.eq.7            ) get_plasma_index = -1  !  ion_n    
+!    if (z.eq.8            ) get_plasma_index =  7  !  ion_o     MATP=7
+!    if (z.eq.10           ) get_plasma_index = -1  !  ion_ne   
+!    if (z.eq.18           ) get_plasma_index = -1  !  ion_ar   
+!    if (z.eq.36           ) get_plasma_index = -1  !  ion_kr   
+!    if (z.eq.54           ) get_plasma_index = -1  !  ion_xe   
+!
+!    if (z.EQ.-1           ) get_plasma_index =  6  !  ion_self  MATP=6    SELF
+!
+!    return 
+!     
+!  end function get_plasma_index
+!
+! slmod end
 
   subroutine init_eckstein_2007(matt,matp)
 
@@ -436,6 +496,43 @@ contains
   end function yield_f
 
 
+! slmod begin
+  real function yield_2002_W_SS_60(e0) 
+    real,intent(in) :: e0
+
+    REAL :: result
+    ! jdemod - the PGI compiler wasn't happy with a linear array being mapped to 
+    !          a 2D array - so use the reshape function - apparently this is the 'official' way
+    !          to do this so should be more portable ... hope it works for intel
+    REAL :: yield(2,20) = reshape((/    &
+           15.00 ,  2.98E-6 ,  &
+           20.00 ,  3.29E-5 ,  &
+           25.00 ,  1.36E-4 ,  &
+           30.00 ,  3.11E-4 ,  &
+           40.00 ,  1.15E-3 ,  &
+           50.00 ,  3.64E-3 ,  &
+           60.00 ,  8.48E-3 ,  &
+           70.00 ,  1.70E-2 ,  &
+           80.00 ,  2.83E-2 ,  &
+          100.00 ,  6.03E-2 ,  &
+          120.00 ,  1.00E-1 ,  &
+          140.00 ,  1.43E-1 ,  &
+          200.00 ,  2.80E-1 ,  &
+          300.00 ,  5.01E-1 ,  &
+          350.00 ,  5.98E-1 ,  &
+          500.00 ,  8.85E-1 ,  &
+          800.00 ,  1.35E+0 ,  &
+         1000.00 ,  1.62E+0 ,  &
+         2000.00 ,  2.59E+0 ,  &
+         2500.00 ,  2.98E+0 /),(/2,20/))  
+
+
+      CALL Fitter(20,yield(1,1:20),yield(2,1:20),1,e0,result,'LINEAR')
+
+      yield_2002_W_SS_60 = result
+
+  end function yield_2002_W_SS_60
+! slmod end
 
   real function yield_2007(matp,matt,e0) 
     integer, intent(in) :: matp,matt
@@ -447,7 +544,7 @@ contains
     !
     !
 
-    real :: lambda,q,mu,eth,epsilon
+    real :: lambda,q,mu,eth,epsilon,yield2
     integer :: targ_mat, ion_mat
 
     targ_mat = targ_mats(matt)
@@ -462,7 +559,18 @@ contains
     epsilon = yield_parameters(epsilon_val,ion_mat,targ_mat)
 
     yield_2007 = yield_f(lambda,q,mu,eth,epsilon,e0)
+! slmod begin
 
+!    write(0,*) '  2007',matt,ion_mat,matp,targ_mat
+
+    if (.false..and.ion_mat.eq.12.and.targ_mat.eq.4) then
+
+      yield2 = yield_2002_W_SS_60(e0)
+!      write(0,*) 'ss',e0,yield_2007,yield2
+      yield_2007 = yield2
+    endif
+
+! slmod wend
   end function yield_2007
 
 

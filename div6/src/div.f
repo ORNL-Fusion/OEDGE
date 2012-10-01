@@ -18,6 +18,7 @@ c
 c slmod begin
       use mod_interface
       use mod_divimp
+      use mod_divimp_tdep
 c slmod end
 c
       implicit none
@@ -83,7 +84,7 @@ c
 c slmod begin - temp
       include 'slcom'
 
-      integer i
+      integer i,fp,load_i
 c slmod end
 
 c
@@ -278,7 +279,10 @@ C
       IF (DEBUGL) CALL TEST
 
       TAUTIM = ZA02AS (1)
-
+c slmod begin
+      LOAD_I = -1
+      NYMFS_GLOBAL = NYMFS  ! lame, but don't want to pass NYMFS is local and I don't want to pass it around -SL, 21/11/2011
+c slmod end
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
       TAUTIM = ZA02AS (1) - TAUTIM
       WRITE(6,*) 'TIME USED IN SETUP: TAU SUBROUTINE :',TAUTIM,' S'
@@ -1049,6 +1053,8 @@ C
 c sltmp
       IF (grdnmod.NE.0) iw = MAX(1,stopopt)
 
+      tdep_save_n = 0
+
       DO 800  IMP = 1, NATIZ
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
@@ -1314,12 +1320,53 @@ c
 c
 c
             SPUTY = 1.0
+c slmod begin - t-dep
+          ELSEIF (CIOPTE.EQ.11) THEN
+c...        Ion injection from both the current source and the source stored
+c           from a previous run:
+            LOAD_I = -1
+            NRAND = NRAND + 1
+            CALL SURAND2(SEED, 1, RAN)
+            write(0,*) 'branch',ran,tdep_load_frac
+            IF (RAN.GT.TDEP_LOAD_FRAC) THEN
+              write(0,*) 'standard'
+              R     = CXSC
+              Z     = CYSC
+              PORM  = -1.0 * PORM
+              VEL   = 9.79E3 * SQRT(CTEM1 / CRMI) * PORM * QTIM
+              SPUTY = 1.0
+            ELSE
+              NRAND = NRAND + 1
+              CALL SURAND2 (SEED, 1, RAN)
+              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
+c... left off: need to sort out setting the charge state, and also the strange initialization of 
+c maxciz from cizsc :
+c          DO 792 JZ = CIZSC, MAXCIZ
+c why would this be done?
+c a bug?
+              R = TDEP_LOAD(LOAD_I)%R
+              Z = TDEP_LOAD(LOAD_I)%Z
+              PORM  = -1.0 * PORM
+              VEL  = TDEP_LOAD(LOAD_I)%VEL
+c should be adjusting sputy, abs
+              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT
+
+              write(0,*) '_load',load_i,r,z,vel,sputy
+
+            ENDIF
+c slmod end
           ENDIF
 c
 c         Set initial ion temperature.
 c
 c Geier IPP/01 added  .or.ciopte.eq.8
-          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod begin
+          if (load_i.ne.-1) then
+            temi = tdep_load(load_i)%temp
+          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c
+c          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod end
              TEMI = pinenz(ik,ir)
           else
              TEMI = CTEM1
@@ -1361,10 +1408,22 @@ c       ion injection vs. neutral launch
 c
 c        TEMI   = CTEM1
 c
-        IZ     = CIZSC
+c slmod begin
+        IF (LOAD_I.NE.-1) THEN
+          IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
+          MAXCIZ = CIZSC         ! not sure about this...
+        ELSE
+          IZ     = CIZSC
+          MAXCIZ = CIZSC
+        ENDIF
         RIZ    = REAL(IZ)
-        MAXCIZ = CIZSC
-        DSPUTY = DBLE (SPUTY)
+        DSPUTY = DBLE(SPUTY)
+c
+c        IZ     = CIZSC
+c        RIZ    = REAL(IZ)
+c        MAXCIZ = CIZSC
+c        DSPUTY = DBLE (SPUTY) 
+c slmod end
 c
 c       Move setting of initial value of cist so that time spent as
 c       neutrals can be included.
@@ -1415,7 +1474,16 @@ c
 c       SET Initial S and CROSS postion for particles.
 c
 C
-        if (init_pos_opt.eq.0) then
+c slmod begin - t-dep
+        if (load_i.ne.-1) then
+          cross = tdep_load(load_i)%cross
+          k     = kks(ir)
+          s     = tdep_load(load_i)%s
+        elseif (init_pos_opt.eq.0) then
+c
+c
+c        if (init_pos_opt.eq.0) then
+c slmod end
 c
            CROSS  = 0.0
            K      = KKS(IR)
@@ -1436,7 +1504,6 @@ c
            else
               call getscross_approx(r,z,s,cross,ik,ir)
            endif
-
         endif
 c
 c       Record approximate starting S-distance from nearest target.
@@ -1573,7 +1640,7 @@ c       which specifies no diffusion the RCONST value
 c       would be large enough to prevent it from occurring
 c       Even if instantaneous diffusion was specified.
 c
-         IF (CIOPTB.NE.1)  RCONST = 0.0
+        IF (CIOPTB.NE.1)  RCONST = 0.0
 C
 C          RCONST = 0.0
 c
@@ -1765,6 +1832,7 @@ c
                 ikorg = ik
                 irorg = ir
 c
+                write(6,*) ' debug: launch_one from div',id
                 call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >                   rc,ctem1,cist,sputy,
      >                   refSTRUK,mtcrefstruk,refMAIN,refEXIT,
@@ -1892,7 +1960,15 @@ c
                promptdeps(id,5) = promptdeps(id,5) + sputy * energy
 c slmod begin
                if (allocated(wall_flx)) then
-                 in = nimindex(id)
+c                 in = nimindex(id)   ! Changed from NIMINDEX to WALLINDEX since the former is only assigned if running PIN. -SL, 26/03/2012
+                 if (nimindex(id).ne.0) then
+                   if (nimindex(id).ne.wallindex(id)) then
+                     write(0,*) 'error: nimindex and wallindex are '//  ! temporary check
+     .                          'not the same, investigate'
+                     stop
+                   endif
+                 endif
+                 in = wallindex(id)   
                  wall_flx(in)%prompt = wall_flx(in)%prompt + sputy
                endif
 c slmod end
@@ -2204,7 +2280,7 @@ c
 c
 c         Continue following particle
 c
-        if (debug0) write(0,*) 'Before LB',cist,cstmax
+          if (debug0) write(0,*) 'Before LB',cist,cstmax
 
           GOTO 500
 
@@ -2216,7 +2292,11 @@ C
 c        CICUTS(IZ) = CICUTS(IZ) + SPUTY
 c        CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
 c        TCUT = TCUT + SPUTY
-c        IFATE = 3
+c slmod begin
+        IF (sloutput) IFATE = 3
+c
+cc        IFATE = 3
+c slmod end
 C      (GOTO 790)
 C
 C-----------------------------------------------------------------------
@@ -2224,12 +2304,30 @@ C       CURRENT ION OR SUB-ION FINISHED WITH ... END OF DO-LOOP
 C-----------------------------------------------------------------------
 C
   790   CONTINUE
-
         if (ifate.eq.3) then
            CICUTS(IZ) = CICUTS(IZ) + SPUTY
            CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
            TCUT = TCUT + SPUTY
 c          IFATE = 3
+c slmod begin - t-dep
+c...       Store the state of the ion so that it can be re-launched in a 
+c          subsequent run:                     
+           IF (OPT_DIV%PSTATE.EQ.1) THEN
+             IF (.NOT.ALLOCATED(TDEP_SAVE)) ALLOCATE(TDEP_SAVE(NATIZ))
+
+             tdep_save_n = tdep_save_n + 1
+             tdep_save(tdep_save_n)%r      = r
+             tdep_save(tdep_save_n)%z	   = z
+             tdep_save(tdep_save_n)%phi    = 0.0
+             tdep_save(tdep_save_n)%s	   = s
+             tdep_save(tdep_save_n)%cross  = cross
+             tdep_save(tdep_save_n)%diag   = 0.0
+             tdep_save(tdep_save_n)%temp   = temi
+             tdep_save(tdep_save_n)%vel    = vel
+             tdep_save(tdep_save_n)%charge = riz
+             tdep_save(tdep_save_n)%weight = sputy
+           ENDIF
+c slmod end
         endif
 
 c
@@ -2275,6 +2373,9 @@ C
 c nonorth
         IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,R,Z,S,K,
      >    THETA,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
+c slmod begin
+        IF (DEBUGL) WRITE(6,*) '  ITERATION LIMIT',cstmax
+c slmod end
 c nonorth
 c        IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,
 c     >    R,Z,S,K,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
@@ -2337,6 +2438,7 @@ C
 C     M A I N   L O O P   E N D
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C 
 C
 C---- CALCULATE AVERAGE TB, NB VALUES
 C
@@ -4440,6 +4542,8 @@ c
 c     SSEF is only non-zero if self-sputtering occurs - so the following code
 c     can be generalized by just including SSEF.
 c
+      IF (sloutput) write(0,*) 'nabsfac=',nabsfac
+
       if (nabsfac.gt.0.0) then
          absfac = (nabsfac + SSEF*nabsfac) + neut2d_fytot
          absfac_neut = absfac
@@ -4451,7 +4555,25 @@ c
          write(6,'(a,10(1x,g12.5))') 'NABSFAC CALCULATION:',nabsfac,
      >            ssef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+c slmod begin
+        if (nabsfac.eq.1.0) then
+          write(6,*) 
+          write(6,*) '-------------------------------------------------'
+          write(6,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(6,*) '-------------------------------------------------'
+          write(6,*) 
 
+          write(0,*) 
+          write(0,*) '-------------------------------------------------'
+          write(0,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(0,*) '-------------------------------------------------'
+          write(0,*) 
+
+          absfac      = nabsfac
+          absfac_ion  = absfac
+          absfac_neut = absfac
+        endif
+c slmod end
       elseif (lpinz0) then
          absfac = zioniz*(tatiz/nimps) + neut2d_fytot
          absfac_neut = absfac
@@ -4482,7 +4604,7 @@ c
             absfac_neut = absfac
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes sense for 
+c           Note: the calculated absolute factor only makes senfse for 
 c                 neutral launch cases - the various quantities are 
 c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
@@ -4513,6 +4635,43 @@ c
       WRITE(6,*) 'ABSFAC: ',ABSFAC,' PARTS: WSSF ',WSSF,' FTOT ',
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',
      >   TNEUT,'NBASFAC:',nabsfac,'NEUT2D_FYTOT:',neut2d_fytot
+C slmod begin - t-dep
+c...  Dump the particle distribution to a file:
+      IF (opt_div%pstate.EQ.1) THEN
+        CALL find_free_unit_number(fp)
+        OPEN (UNIT=fp,FILE='raw.divimp_tdep_dist',ACCESS='SEQUENTIAL',
+     .        STATUS='REPLACE')
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{VERSION}'
+        WRITE(fp,*    ) 1.0
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA RUN}'
+        WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
+        WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
+        WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA PARTICLE}'
+        WRITE(fp,*    ) tdep_save_n
+        WRITE(fp,'(A)') '*'
+        DO i = 1, tdep_save_n
+          WRITE(fp,'(I9,7F13.7,1P,E15.7,0P,F5.1,1P,E15.7,0P)') i,
+     .      tdep_save(i)%r      ,
+     .      tdep_save(i)%z      ,	  
+     .      tdep_save(i)%phi    ,     
+     .      tdep_save(i)%s      ,  
+     .      tdep_save(i)%cross  ,
+     .      tdep_save(i)%diag   ,
+     .      tdep_save(i)%temp   ,
+     .      tdep_save(i)%vel    ,
+     .      tdep_save(i)%charge ,
+     .      tdep_save(i)%weight
+        ENDDO
+        CLOSE(fp)
+c...    Clear memory:
+        DEALLOCATE(tdep_save)
+        IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
+      ENDIF
+C slmod end
 C
       DO 1020 IR = 1, NRS
         DO 1010 IK = 1, NKS(IR)
@@ -5000,7 +5159,7 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+ 9003 FORMAT(1X,I8,1x,F12.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
      >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
      >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
      >       1xI3,:,1X,A,:,1x,F8.5)
@@ -5011,10 +5170,15 @@ c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
      >  ' TIMESTEPS  (DELTA T =',1P,G10.3,' SECONDS).',//)
 c
 c nonorth
- 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
-     >  '----R--------Z-------S------K---THETA--SMAX---',
-     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+ 9005 FORMAT(1X,' ------ION- ----TIME-  -IK- -IR- IZ  ',
+     >  '---------R- ----------Z- -------S- ----K-  -----THETA- ',
+     >  '---SMAX- ------DRIFTVEL-  ',
+     >  '----TEMI- -PARADIFF- ----CROSS- -FRAC- -IT ',
      >  14('-'))
+c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
+c     >  '----R--------Z-------S------K---THETA--SMAX---',
+c     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+c     >  14('-'))
 c nonorth
 c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
 c     >  '----R--------Z-------S------K----SMAX---',
@@ -5483,7 +5647,11 @@ c
                            z = kzb(ik-1,ir) + factc *
      >                        (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5511,7 +5679,12 @@ c
                            z  = kzb(ik-1,ir) + factc *
      >                         (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5552,7 +5725,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5579,7 +5757,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5694,7 +5877,12 @@ c
                            r = krb(ik-1,ir) + factc *
      >                        (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5722,7 +5910,12 @@ c
                            r  = krb(ik-1,ir) + factc *
      >                         (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5761,7 +5954,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5788,7 +5986,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5896,7 +6099,12 @@ c
                         z  = zs(ik,ir) + d1/d3 *
      >                      (zs(ik+1,ir)-zs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c
@@ -6000,7 +6208,12 @@ c
                         r  = rs(ik,ir) + d1/d3 *
      >                      (rs(ik+1,ir)-rs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c
