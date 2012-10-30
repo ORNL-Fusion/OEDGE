@@ -22,6 +22,10 @@ c
 
       debug = .TRUE. 
 
+
+
+      IF (debug) WRITE(0,*) 'range = ',TRIM(range)
+
       l = LEN_TRIM(range)
 
       nlist = 0
@@ -52,6 +56,10 @@ c...  Quick check to see if 'infinite range' has been set:
           IF (i.EQ.l.AND.range(i:i).NE.')') k = l
 
           o = SCAN(range(j:k),"Rr")
+
+          IF (debug) WRITE(0,*) ' o = ',o,' istart = ',istart,
+     .                          ' iend = ',iend
+
           IF (o.NE.0) THEN
             IF (istart.EQ.0.OR.iend.EQ.0) 
      .        CALL ER('GetList','Brackets not set properly',*99)            
@@ -2146,6 +2154,7 @@ c        adelta = dang(nslice,2) - dang(1,1)
 c        dang = dang - 0.5D0 * adelta      
       ENDIF
 
+c...  Set the toroidal offset:
       ashift = 0.0D0
       DO islice = 1, nslice
         WRITE(0,'(A,I6,2F12.6)') 
@@ -2154,15 +2163,21 @@ c        dang = dang - 0.5D0 * adelta
      .    'ANGLES:',islice,dang(islice,1:2)
         ashift = ashift + dang(islice,2)
       ENDDO
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).EQ.4.0) THEN
+          IF (opt_eir%tet_offset(itet).EQ.-999.0) THEN
+            ashift = -0.5D0 * ashift
+          ELSE
+            ashift = DBLE(opt_eir%tet_offset(itet))
+          ENDIF
+          write(0,*) 'ashift = ',ashift
+        ENDIF
+      ENDDO      
 
-
-
+      ashift = ashift * D_DEGRAD
       dang = dang * D_DEGRAD
       adelta = adelta * D_DEGRAD
 
-
-c...  
-      ashift = 0.0D0
       trycycle_last = -1
       DO islice = 1, nslice
 
@@ -2255,7 +2270,11 @@ c     .           tryvtx(2,trysrf(ABS(isrf))%ivtx(1))
 
         WRITE(eirfp,'(A,I6,2F12.6)') '   TOROIDALIZING:',islice,
      .    ang1/D_DEGRAD,ang2/D_DEGRAD
-     .    
+
+        WRITE(0,*) '   TOROIDALIZING:',islice,
+     .    ang1/D_DEGRAD,ang2/D_DEGRAD
+
+
 
         CALL BuildBricks(islice,opt_eir%tet_index(islice_index),
      .                   ang1,ang2,trycycle)
@@ -2570,7 +2589,6 @@ c     .                              obj(iobj)%index(IND_ISI)
       WRITE(eirfp,*) '  NSRF:',nsrf
       WRITE(eirfp,*) '  NVTX:',nvtx
       WRITE(eirfp,*) 'DONE'
-
 
 
       RETURN
@@ -7541,8 +7559,8 @@ c            write(0,*) 'blah',status,s12
               icount = icount + 1
               hold_s12(icount) = SNGL(s12)
 
-              WRITE(0 ,'(4X,A,2I6,F16.9,I4,2F12.5)')
-     .            '  list     :',itri,i1,s12,icount,x1,y1
+c              WRITE(0 ,'(4X,A,2I6,F16.9,I4,2F12.5)')
+c     .            '  list     :',itri,i1,s12,icount,x1,y1
 c              WRITE(0 ,*)
 c     .            '  vtx      :',v1(1:3)
 c              WRITE(0 ,*)

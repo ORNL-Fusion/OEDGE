@@ -928,14 +928,18 @@ c        WRITE(88,*) '   C = D'
 c      write(6,*) ' fuuny!' ,DABS(a2-b2).LT.DTOL,
 c     .  DABS(a2-c2).LT.DTOL,DABS(a2-d2).LT.DTOL
 
-c      write(6,*) '    a: ',a1,a2
-c      write(6,*) '    b: ',b1,b2
-c      write(6,*) '    c: ',c1,c2
-c      write(6,*) '    d: ',d1,d2
+      write(6,*) '    a: ',a1,a2
+      write(6,*) '    b: ',b1,b2
+      write(6,*) '    c: ',c1,c2
+      write(6,*) '    d: ',d1,d2
 
       IF (DABS(a2-b2).LT.DTOL.AND.DABS(a2-c2).LT.DTOL.AND.
      .    DABS(a2-d2).LT.DTOL) THEN
-         STOP 'DAMNED 1'
+        tab = HI
+        tcd = HI
+        write(0,*) 'WARNING CalcInter: Lines are collinear'
+        RETURN
+c        STOP 'DAMNED 1'
       ENDIF
 c
 c

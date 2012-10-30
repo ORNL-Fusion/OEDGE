@@ -377,6 +377,12 @@ c...  Find x-points:
       itsep  = 1
       itsep2 = 0
 
+      IF (grid%isep.EQ.1) THEN 
+        WRITE(0,*) 'STOP GenerateTubeGroups: grid%isep=1, linear '//
+     .             'grid OK with this routine?'
+        STOP
+      ENDIF
+
       it = grid%isep
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -446,6 +452,30 @@ c                WRITE(0,*) 'in     =',in
         ENDDO
       ENDDO
  20   CONTINUE
+
+      IF (itsep.EQ.1.AND.grid%isep.GT.1) THEN
+c...    Limiter grid:
+        IF (nxpt.NE.0.OR.itsep2.NE.0) THEN
+          WRITE(0,*) 'ERROR GenerateTubeGroups: unusual x-point conf'//
+     .               'iguration detected -- development required'
+          STOP
+        ENDIF
+
+        itsep = grid%isep 
+        nxpt = nxpt + 1
+
+        cind1 = tube(itsep)%cell_index(LO)
+        cind2 = tube(itsep)%cell_index(HI)
+
+        iobj  = GetObject(cind1,IND_CELL)
+        isrf  = obj(iobj)%iside(1)
+        ivtx1 = srf(ABS(isrf))%ivtx(1)
+
+        rxpt(nxpt) = vtx(1,ivtx1)   
+        zxpt(nxpt) = vtx(2,ivtx1)   
+        ixpt(nxpt,1) = GetObject(cind1,IND_CELL)
+        ixpt(nxpt,2) = GetObject(cind2,IND_CELL)
+      ENDIF
 
       IF (debug) THEN
         WRITE(logfp,*) 'R,Z0:',r0,z0
@@ -925,7 +955,7 @@ c...  Build the list of line segments that make up the wall:
       DO iopt = 1, nopt_wall
 c        WRITE(0,*) 'NOPT_WALL:',iopt,nopt_wall,
 c     .             opt_wall(iopt)%file_format
-c        WRITE(0,*) TRIM(opt_wall(iopt)%file_name)
+        WRITE(0,*) TRIM(opt_wall(iopt)%file_name)
         SELECTCASE(opt_wall(iopt)%file_format)
           CASE(1)
             fp = 99
@@ -2145,9 +2175,9 @@ c...      Load grid:
              READ(grdfp,'(A10)',END=98) buffer
           ENDDO
           DO WHILE(nknot.EQ.0.OR.buffer(1:7 ).EQ.'Element')
-c            READ(grdfp,'(A50)',END=19) buffer
+            READ(grdfp,'(A50)',END=19) buffer
 c            WRITE(0,*) 'BUFFER:',buffer(1:50)
-c            BACKSPACE(grdfp)
+            BACKSPACE(grdfp)
             nknot = nknot + 1
             READ(grdfp,70,END=97) knot(nknot)%index,
      .                            knot(nknot)%ik   ,knot(nknot)%ir, 
@@ -2159,11 +2189,15 @@ c            BACKSPACE(grdfp)
      .                            knot(nknot)%rv(4),knot(nknot)%zv(4)
             knot(nknot)%bratio = 1.0
           
- 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E17.10,4X,E17.10,7X,E17.10,
-     .             4X,E17.10)
- 71         FORMAT(13X,E17.10,36X,E17.10,4X,E17.10)
+ 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E16.10,3X,E18.10,7X,E16.10,
+     .             3X,E18.10)
+c 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E17.10,4X,E17.10,7X,E17.10,
+c     .             4X,E17.10)
+ 71         FORMAT(13X,E17.10,36X,E16.10,3X,E18.10)
+c 71         FORMAT(13X,E17.10,36X,E17.10,4X,E17.10)
 c 71         FORMAT(18X,I1,35X,E17.10,4X,E17.10)
- 72         FORMAT(37X,E17.10,4X,E17.10,7X,E17.10,4X,E17.10)
+ 72         FORMAT(37X,E16.10,3X,E18.10,7X,E16.10,3X,E18.10)
+c 72         FORMAT(37X,E17.10,4X,E17.10,7X,E17.10,4X,E17.10)
           
 c            WRITE(0,*) knot(nknot)%index
 c            WRITE(0,*) knot(nknot)%ik,knot(nknot)%ir
@@ -3662,7 +3696,8 @@ c       Search the wall for intersections:
             WRITE(fp,*) '    X4,Y4   :',x4,y4
           ENDIF
           IF (s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
-     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
+     .        s34.GT.-1.0D-5.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/10/2012
+c     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
 c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
      .        s12.LT.s12max) THEN
             s12max = s12

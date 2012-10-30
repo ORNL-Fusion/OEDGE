@@ -726,7 +726,6 @@ c       just take what's in the first data set, which is probably zero:
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
-      stop 'here in the shit'
 
       RETURN
 97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
@@ -914,6 +913,7 @@ c
 c      RETURN
 
       CALL MapRingstoTubes
+
       CALL AssignOSMWall
 
       CALL SaveGeometryData('osm_geometry.raw')
@@ -921,6 +921,7 @@ c      RETURN
       CALL LoadLegacyData('osm_legacy.raw')
 
       CALL GenerateTubeGroups
+
       CALL DumpData_OSM('output.grid_tubes','Done analysing tubes')
 
       CALL GenerateTargetGroups
@@ -932,6 +933,7 @@ c      CALL SetTargetConditions(itube)
 
 c...  Clear geometry arrays:
       CALL geoClean
+
 
       RETURN
  99   STOP
@@ -990,6 +992,7 @@ c      CALL SetTargetConditions
      .  CALL ER('ExecuteSOL28','Tube index error',*99)
 
 c...  Call SOL28 plasma solver:
+
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
 
 c...  Generate output files:

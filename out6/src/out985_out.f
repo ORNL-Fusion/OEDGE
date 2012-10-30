@@ -317,7 +317,7 @@ c
 
       INTEGER, INTENT(IN) :: iint,ik,ir
       LOGICAL display_warning 
-      REAL    osm(ik,ir),wlngth2
+      REAL    osm(ik,ir),wlngth2,scale
 
       DATA display_warning /.TRUE./
 
@@ -351,10 +351,12 @@ c                 *** TEMP *** get rid of bad D2+ data at high temperatures
                   DO ir1 = 1, ir ! nrs
                     DO ik1 = 1, nks(ir1)
                       IF (ktebs(ik1,ir1).GT.1.0E+3.AND.
-     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
+     .                  pinline(ik1,ir1,4,H_BALPHA).GT.
+     .                  pinline(ik1,ir1,1,H_BALPHA)*10.0) THEN
+c     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
                         pinline(ik1,ir1,4,H_BALPHA) = 0.0
-c                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
-c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                         IF (display_warning) THEN
                           display_warning = .FALSE.
                           WRITE(0,*)
@@ -366,14 +368,14 @@ c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                       ENDIF
                     ENDDO
                   ENDDO
-c                  IF (.NOT.display_warning) THEN
-                  DO ir1 = 1, ir ! nrs
-                    DO ik1 = 1, nks(ir)
-c                     write(0,*) 'debug',ik1,ir1,nrs
-                     osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                  IF (.NOT.display_warning) THEN
+                    DO ir1 = 1, ir ! nrs
+                      DO ik1 = 1, nks(ir)
+c                       write(0,*) 'debug',ik1,ir1,nrs
+                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                      ENDDO
                     ENDDO
-                  ENDDO
-c                  ENDIF
+                  ENDIF
 
                   wlngth2 = 656.3  ! Air
 
@@ -403,7 +405,17 @@ c...      ADAS:
 
           SELECTCASE (za)
             CASE (01002) ! Deuterium
-              STOP 'D ADAS NOT READY'
+              CALL LDADAS(opt%int_z(iint),iz,    ! requested matches what's available...
+     .                    opt%int_adasid(iint),
+     .                    opt%int_adasyr(iint),
+     .                    opt%int_adasex(iint),
+     .                    opt%int_isele (iint),
+     .                    opt%int_iselr (iint),
+     .                    opt%int_iselx (iint),
+     .                    plrpad,wlngth2,ircode) 
+
+                scale = 1.0
+c              STOP 'D ADAS NOT READY'
             CASE DEFAULT
 c...          Check for impurity data:
 c             CALL LDADAS(1,IZMIN,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
@@ -422,7 +434,8 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
      .                      opt%int_iselr (iint),
      .                      opt%int_iselx (iint),
      .                      plrpad,wlngth2,ircode) 
-                wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+                scale = absfac
               ELSE
                 CALL ER('GetFluidGridEmission','Specified charge '//
      .                  'state invalid',*99)
@@ -432,7 +445,9 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
           IF (ircode.NE.0) 
      .      CALL ER('GetFluidGridEmission','IRCODE.NE.0',*99)
 
-          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * absfac 
+          wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * scale
           WRITE(0,*) 'WLNGTH:',wlngth2
 c       ----------------------------------------------------------------
         CASE (3) 
