@@ -1404,16 +1404,26 @@ c       -----------------------------------------------------------------
         CASE (-12)
 c...      Dump plate for D/T views:
 
-          newvtx(1,1) =   8.700D0
-          newvtx(2,1) =  -2.000D0
-          newvtx(1,2) =   8.70005  ! Just outside the current viewin radius (hardcoded)
-          newvtx(2,2) =  -1.000D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
-          newvtx(1,3) =   8.700D0
-          newvtx(2,3) =   1.000D0
-          newvtx(1,4) =   8.700D0
-          newvtx(2,4) =   2.000D0
+          newvtx(1,1) =  4.000D0
+          newvtx(2,1) =  0.000D0
+          newvtx(1,2) =  4.000D0
+          newvtx(2,2) = -5.000D0
 
-          DO i1 = 4, 2, -1
+          newvtx(1,3) =  8.700D0
+          newvtx(2,3) = -5.000D0
+          newvtx(1,4) =  8.70005  ! Just outside the current viewin radius (hardcoded)
+          newvtx(2,4) = -1.000D0  !   ...was 8.370D0, or just inside.  -SL, 24/05/2011
+          newvtx(1,5) =  8.700D0
+          newvtx(2,5) =  1.000D0
+          newvtx(1,6) =  8.700D0
+          newvtx(2,6) =  5.000D0
+
+          newvtx(1,7) =  4.000D0
+          newvtx(2,7) =  5.000D0
+          newvtx(1,8) =  4.000D0
+          newvtx(2,8) =  0.000D0
+
+          DO i1 = 8, 2, -1
             newsrf%type = SP_LINE_SEGMENT
             newsrf%nvtx = 2
             newsrf%ivtx(1) = AddVertex(newvtx(1,i1  ))

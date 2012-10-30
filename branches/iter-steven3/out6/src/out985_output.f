@@ -2561,12 +2561,17 @@ c          DO ipixel = 1, npixel
           CALL inCloseInterface
         ENDDO
 
+
+
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
           WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
 c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
 10        FORMAT(A)
 c10        FORMAT(A,I0.2,A)
+
+        wRITE(0,*) 'dumping signal '//TRIM(file)
+
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
           DO i = 1, opt%int_num
@@ -2576,7 +2581,7 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
-          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
+c          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
 c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
