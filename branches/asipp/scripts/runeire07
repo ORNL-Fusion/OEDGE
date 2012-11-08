@@ -1,6 +1,4 @@
-#!/bin/tcsh 
-
-  echo "RUNNING runeire07 script in:" $DIVHOME
+#!/bin/tcsh
 
   set ITERATION=$1
 
@@ -103,6 +101,10 @@
   mvc fort.13         $EXEDIR/eirene.13
   mvc fort.15         $EXEDIR/eirene.15
   cpc fort.90         $EXEDIR/eirtrac.dat
+  mvc spectra.out     $EXEDIR/eirene.spectra
+
+  mv idl.* $EXEDIR >& \dev\null
+# 
 
 #  mvc eirene.transfer $EXEDIR
 #  mvc eirene.out      $EXEDIR/$CASENAME.eirprn
@@ -111,6 +113,8 @@
 #  mvc fort.13         $EXEDIR/eirene.13
 #  mvc fort.15         $EXEDIR/eirene.15
 #  cpc fort.90         $EXEDIR/eirtrac.dat
+
+exit
 
 # Clean
   cd $DIVHOME/cases

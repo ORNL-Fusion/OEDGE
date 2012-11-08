@@ -18,66 +18,160 @@ program proclp
 
   integer :: iunit, ounit,ierr
 
-  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:)
+  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:),lp_axis_psi(:,:),lp_axis_r(:,:),elm_fractions(:,:)
 
-  integer :: nlines,npts,ndata,ncols,nextra
+
+  integer :: nlines,npts,ndata,ncols,nextra,n_elm_fractions,n_avs
 
   real :: tmin,tmax,deltar,chisq_lim
   character*5 :: tmins,tmaxs
   character*4 :: iform
   character*5 :: chisq
-  integer :: exp_tmin,exp_tmax
+  integer :: exp_tmin,exp_tmax,nargs
   character*512 :: arg
 
+  integer,external :: iargc
 
-  logical :: elm_filt
+  integer :: arg_cnt
+  logical :: elm_filt,remove_outlier
+  real :: outlier_mult
+  real :: elm_start_input,elm_end_input, elm_effect_start_input, elm_effect_end_input
+  character*3 :: or_ext
 
+
+  ! Set base number of average intervals to 1
+  n_avs =1 
+  n_elm_fractions = 0
   !
   elm_filt = .false.
+  remove_outlier = .false.
+  or_ext = ''
+
+  ! default outlier detection condition > 3 x pre-average
+  outlier_mult = 3.0
 
 
   ! Initialization for current LP data file format
-  ! Add two columns for including ELM information
+  ! Add three columns for including additional ELM information
   ncols  = 9 
-  nextra = 2
+  nextra = 3
   !
   ! Read and assign command line arguments
   !
   ! Command line is:  'file name'   tmin    tmax   chi_lim -e 'elm file name'
   !
-  call getarg(1,arg)
-  infilename = trim(arg)
+  nargs = iargc()
 
-  call getarg(2,arg)
-  read(arg,*) tmin
-  write(0,*) 'TMIN=',tmin
+  if (nargs.lt.3) then 
+     write(0,'(a)') 'proclp command usage: proclp <infilename> tmin  tmax  chi_lim -e  <elmtimefilename>'
+     write(0,'(a)') 'The -e argument is optional'
+     STOP 'Insufficient command line arguments'
+  endif
 
-  call getarg(3,arg)
-  read(arg,*) tmax
-  write(0,*) 'TMAX=',tmax
+  arg_cnt = 1
 
-  call getarg(4,arg)
-  read(arg,*) chisq_lim
-  write(chisq,'(f5.3)') chisq_lim
-  write(0,*) 'Chisq:',trim(chisq),':'
+  do while (arg_cnt.le.nargs) 
 
-  call getarg(5,arg)
-  if (arg.eq.'-e') then 
-     elm_filt = .true.
-     call getarg(6,arg)
-     elm_filename = trim(arg)
-     write(0,*) 'ELM=',trim(elm_filename)
-  endif   
+     ! Arguments are either in order or preceded by a flag
+     ! First 4 arguments are in order : file tmin tmax chi_limit
+     call getarg(arg_cnt,arg)
+     arg_cnt = arg_cnt + 1
+
+     write(0,'(a,i6,a,a,a)') 'ARG:',arg_cnt,':',trim(arg),':'
+
+     ! arg index increased by 1 since arg_cnt is incremented after read
+     if (arg_cnt.eq.2) then 
+        infilename = trim(arg)
+
+     elseif (arg_cnt.eq.3) then 
+        read(arg,*) tmin
+        write(0,*) 'TMIN=',tmin
+
+     elseif (arg_cnt.eq.4) then 
+        read(arg,*) tmax
+        write(0,*) 'TMAX=',tmax
+
+     elseif (arg_cnt.eq.5) then 
+        read(arg,*) chisq_lim
+        write(chisq,'(f5.3)') chisq_lim
+        write(0,*) 'Chisq:',trim(chisq),':'
+
+     elseif (arg.eq.'-e') then 
+
+        elm_filt = .true.
+        call getarg(arg_cnt,arg)
+        arg_cnt = arg_cnt + 1
+
+        elm_filename = trim(arg)
+        write(0,*) 'ELM=',trim(elm_filename)
+        ! If ELM filtering is on - several more averaging intervals are calculated
+        ! a) ELM vs. no-ELM  +2
+        n_avs = n_avs + 2
+        ! b) inter ELM fraction times  +n  (precoded as 5 for now)
+        ! add bin averaging for fractions of ELM cycle
+        n_elm_fractions = 5
+        n_avs = n_avs+n_elm_fractions
+
+        if (allocated(elm_fractions)) deallocate(elm_fractions)
+        allocate(elm_fractions(n_elm_fractions,2),stat=ierr)
+        if (ierr.ne.0) then 
+           call errmsg('PROCLP','ERROR ALLOCATING ELM_FRACTIONS')
+           stop
+        endif
+
+        ! Set array of ELM cycle averages
+        ! These are manually set to allow for any fractions to be specified
+        ! bin 1
+        elm_fractions(1,1) = 0.1
+        elm_fractions(1,2) = 0.3
+        ! bin 2
+        elm_fractions(2,1) = 0.2
+        elm_fractions(2,2) = 0.4
+        ! bin 3
+        elm_fractions(3,1) = 0.4
+        elm_fractions(3,2) = 0.6
+        ! bin 4
+        elm_fractions(4,1) = 0.6
+        elm_fractions(4,2) = 0.8
+        ! bin 
+        elm_fractions(5,1) = 0.8
+        elm_fractions(5,2) = 0.99
+
+     elseif (arg.eq.'-or') then 
+
+        remove_outlier = .true. 
+        or_ext='_or'
+
+     elseif (arg.eq.'-om') then 
+
+        ! note -om implies -or so both are not needed
+        remove_outlier = .true. 
+        or_ext='_or'
+
+        call getarg(arg_cnt,arg)
+        arg_cnt = arg_cnt + 1
+        read(arg,*) outlier_mult
+        write(0,'(a,f6.2)') 'OULIER MULTIPLIER = ', outlier_mult
+
+     endif
 
 
+  end do
 
-  !infilename = '134083_tab.dat'
-  !tmin = 2300.0
-  !tmax = 4200.0
-  !chisq_lim = 0.1
 
+  ! Specify deltr for bin averaging 
   deltar = 0.005
-  
+
+
+  ! Set ELM time window characteristics
+  ! ELM start and ELM end are used to try to pin down the ELM peak window
+  ! ELM_effect start and end are used to remove data from the analysis that may be influenced by nearby ELMs
+  ! try elm time window of -2 to +4
+  elm_start_input =  0.5
+  elm_end_input   =  1.5
+  elm_effect_start_input = -1.0
+  elm_effect_end_input   =  5.0
+
 
 
   call find_free_unit_number(iunit)
@@ -85,17 +179,16 @@ program proclp
   open(iunit,file=trim(infilename),iostat=ierr)
   write(0,*) 'Opening file:',trim(infilename),' Status = ',ierr
 
-
   call read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
 
   ! Add ELM information to the tabulated LP data
   if (elm_filt) then 
-     call filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra)
+     call filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
   endif
 
   ! analyse and bin the lp_data
 
-  call bin_lp_data_r(lp_axis,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt)
+  call bin_lp_data_r(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
 
 
   ! OUTPUT
@@ -129,17 +222,20 @@ program proclp
 
   ofilename = ' '
 
-  ofilename = 'bin_lp_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)
-
+  if (remove_outlier) then 
+     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)
+  else
+     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)
+  endif
   !ofilename = 'bin_lp_'//tmins(1:exp_tmin)
   !ofilename = trim(ofilename)//'-'
   !ofilename = trim(ofilename)//tmaxs(1:exp_tmax)
   !ofilename = trim(ofilename)//'_'//trim(infilename)
 
   write(0,*) 'Out file name:',trim(ofilename),':',ounit
-  
+
   !ofilename = 'bin_lp_3000_3500_134083_tab.dat'
-  
+
   open(ounit,file=ofilename,iostat=ierr)
 
   write(0,*) 'Out file name:',trim(ofilename),':',ierr
@@ -148,13 +244,18 @@ program proclp
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
-  call print_lp_bin_data(ounit,lp_axis,lp_proc_data,npts,ndata,ident)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions)
 
   close(iunit)
   close(ounit)
 
 
-  ofilename = 'lp_rev_'//trim(infilename)
+  if (remove_outlier) then 
+     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)//'_'//trim(infilename)
+  else
+     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//'_'//trim(infilename)
+  endif
+
   open(ounit,file=ofilename,iostat=ierr)
 
   call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident,tmin,tmax,chisq_lim)

@@ -164,8 +164,9 @@ c...  Solution arrays:
       nkinetic  = 0
       nfluid    = 0
       nimpurity = 0
-      IF (ALLOCATED(tube      )) DEALLOCATE(tube      )
-      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
+      IF (ALLOCATED(tube    )) DEALLOCATE(tube    )
+      IF (ALLOCATED(tube2   )) DEALLOCATE(tube2   )
+c      IF (ALLOCATED(tube_state)) DEALLOCATE(tube_state)
       
       IF (ALLOCATED(cell    )) DEALLOCATE(cell    )
       IF (ALLOCATED(field   )) DEALLOCATE(field   )
@@ -368,7 +369,9 @@ c        ti_node = te_node
         ELSEIF (node(inode)%pe.GT.0.0) THEN
           SELECTCASE (0)
             CASE (0)
-              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+              pressure = node(inode)%pe * SNGL(ECH)  ! changed 28.04.12
+c              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
+
             CASEDEFAULT 
           ENDSELECT
         ELSE
@@ -656,8 +659,16 @@ c        test = test.AND.DABS(x(0)-x(2)).LT.DTOL  ! BUG
         test = test.AND.s.GT.0.0D0-DTOL.AND.s.LT.1.0D0+DTOL
       ENDIF
 
-      IF (output) WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
-     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
+      IF (output) then 
+c
+c        jdemod - dtol is a real so it can't be written using an L2 format code which is for
+c                 logical - I am guessing 'test' was the desired output
+c
+         WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
+     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,test
+c         WRITE(fp,'(A,2F12.6,1P,E14.7,L2)') 
+c     .  'S TEST:',s,0.0D0-DTOL,1.0D0+DTOL,DTOL
+      endif
 
       IF (test) THEN
         IF (DABS(y(0)-y(1)).LT.DABS(DTOL)) THEN
@@ -717,7 +728,7 @@ c
       LOGICAL debug
       REAL*8  x1,x2,x3,x4,y1,y2,y3,y4,s12,s34
 
-      fp = 88
+      fp = 6 ! 88
       debug = .FALSE.
 
       PointInPolygon = .FALSE.
@@ -737,8 +748,8 @@ c
         CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
         IF (s12.GT.DTOL.AND.s34.GT.0.0D0.AND.s34.LT.1.0D0) 
      .    ninter = ninter + 1
-        IF (debug) WRITE(fp,'(4X,A,2F14.7,I4,2F12.5)')
-     .      '           :',s12,s34,ninter,x1,y1
+        IF (debug) WRITE(fp,'(4X,A,2E18.7,I4,2F12.5)')
+     .      '    pointinpolygon :',s12,s34,ninter,x1,y1
       ENDDO  
 
       IF (ninter.GT.0.AND.MOD(ninter+1,2).EQ.0) PointInPolygon = .TRUE.
@@ -912,6 +923,19 @@ c        WRITE(88,*) '   C = D'
         tab = HI
         tcd = HI
         RETURN
+      ENDIF
+
+c      write(6,*) ' fuuny!' ,DABS(a2-b2).LT.DTOL,
+c     .  DABS(a2-c2).LT.DTOL,DABS(a2-d2).LT.DTOL
+
+c      write(6,*) '    a: ',a1,a2
+c      write(6,*) '    b: ',b1,b2
+c      write(6,*) '    c: ',c1,c2
+c      write(6,*) '    d: ',d1,d2
+
+      IF (DABS(a2-b2).LT.DTOL.AND.DABS(a2-c2).LT.DTOL.AND.
+     .    DABS(a2-d2).LT.DTOL) THEN
+         STOP 'DAMNED 1'
       ENDIF
 c
 c
@@ -1087,20 +1111,21 @@ c Moved here for compatilibity with OUT.
 c 
       SUBROUTINE ProcessIterationBlocks
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
       IMPLICIT none
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER   fp,i,idum1(1:5)
-      CHARACTER buffer*1024,cdum1*512
+      CHARACTER buffer*1024,cdum1*128
 
       LOGICAL :: status = .TRUE., new_block = .FALSE., load_data
 
-      opt%tube(1)      = 1
-      opt%tube(2)      = 1E+8
+      opt%tube         = 'all'
+c      opt%tube(1)      = 'all'
+c      opt%tube(2)      = 1E+8
       opt%iteration(1) = 1
       opt%iteration(2) = 1E+8
       nopt = 1
@@ -1123,8 +1148,11 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               status = .TRUE.
               opt_iteration(nopt) = opt
               nopt = nopt + 1
-              READ(buffer,*) cdum1,idum1(1:5)
-              SELECTCASE (idum1(1))
+c              write(0,*) TRIM(buffer)
+              READ(buffer,*) cdum1,idum1(1:3),cdum1
+              cdum1 = TRIM(buffer(INDEX(buffer,TRIM(cdum1)):))  ! This hokem was necessary to catch ranges that included commas, i.e. '1-4,12-14',
+c              READ(buffer,*) cdum1,idum1(1:5)                  ! since CDUM1 was only assigned 1-4 otherwise.  This hasn't happened before for 
+              SELECTCASE (idum1(1))                             ! similar situation.  Strange.  -SL, 15/03/2012
                 CASE (0) ! Not active
                   nopt = nopt - 1              
                 CASE (1) ! Iteration block always based on the initial block (master block)
@@ -1137,7 +1165,8 @@ c          WRITE(0,*) 'buffer >'//TRIM(buffer(2:i))//'<'
               IF (idum1(1).NE.0) THEN
                 load_data = .TRUE.
                 opt%iteration(1:2) = idum1(2:3)
-                opt%tube     (1:2) = idum1(4:5)
+                opt%tube           = TRIM(cdum1)
+c              write(0,*) 'trim c ',TRIM(cdum1)
               ELSE
                 load_data = .FALSE.
               ENDIF
@@ -1249,18 +1278,17 @@ c       are missing, i.e. realistic secondary electron emission (0.0 here), e-i 
 c       energy, atom-atom recombination energy, low collisionality effects, space charge
 c       effects, etc. see the discussion by Stangeby pp 646-654. -SL, 29.03.2010
         mi = 2.0   ! *** MASS HARDCODED! ***
-c
-        ! jdemod - fix a division by zero issue - only happens if te set to zero somewhere
-        if (tube(itube)%te(itarget).ne.0.0) then 
-         t_ratio = tube(itube)%ti(itarget,ion) / tube(itube)%te(itarget)
-        else
-           t_ratio = 1.0
-        endif
-c
+        IF (tube(itube)%te(itarget).NE.0.0) THEN
+          t_ratio = tube(itube)%ti(itarget,ion) / 
+     .              tube(itube)%te(itarget)
+        ELSE
+          t_ratio = 1.0
+        ENDIF
+
         delta_e = 0.0
         m_ratio = 9.11E-31 / (mi * AMU)
         log_arguement = 2.0 * PI * m_ratio * (1.0 + t_ratio) * 
-     .                 (1.0 - delta_e)**-2 
+     .                 (1.0 - delta_e)**(-2)
         osm_GetGamma = 2.5 * t_ratio + 2.0 / (1.0 - delta_e) - 
      .                 0.5 * LOG( log_arguement )
       ENDIF
@@ -1304,3 +1332,63 @@ c
       RETURN
 99    STOP
       END
+c
+c ======================================================================
+c
+      LOGICAL FUNCTION osmCheckTag(buffer,tag)
+      IMPLICIT none
+    
+      CHARACTER :: buffer*(*), tag*(*)
+
+      INTEGER n1,n2,i1
+
+      osmCheckTag = .FALSE.
+
+      n1 = LEN_TRIM(buffer)       
+      n2 = LEN_TRIM(tag   )       
+
+      DO i1 = 1, n1-n2
+        IF (buffer(i1:i1+n2-1).EQ.tag(1:n2)) THEN
+          osmCheckTag = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE UnzipFile(fname)
+      IMPLICIT none
+
+      CHARACTER fname*(*)
+
+      INTEGER   status,n
+      CHARACTER command*1024
+
+      n = LEN_TRIM(fname)
+
+      IF     (fname(n-2:n).EQ.'zip') THEN
+        command = 'unzip -o '//TRIM(fname)
+        fname(n-3:n) = ' '
+      ELSEIF (fname(n-1:n).EQ.'gz' ) THEN
+        command = 'gunzip -f '//TRIM(fname)
+        fname(n-2:n) = ' '
+      ELSE
+        RETURN
+      ENDIF
+
+      CALL CIssue(TRIM(command),status)        
+      IF (status.NE.0) CALL ER('UnzipFiles','Dismal failure',*99)
+
+      RETURN
+ 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      WRITE(0,*) '  COMMAND   = ',TRIM(command)
+      WRITE(0,*) '  ERROR     = ',status
+      END
+c
+c ======================================================================
+c
+

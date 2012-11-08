@@ -494,10 +494,13 @@ C
         WRITE (iunout,*) 'OVERWRITTEN. ISTEP= ',ISTEP
       ENDIF
       ISTUF(ISTEP)=1
-      IF (TRCSOU) THEN
-        WRITE (iunout,*) 'STEPFUNCTION NO. ISTEP= ',ISTEP,' INITIALISED'
-        CALL LEER(1)
-      ENDIF
+c slmod begin - debug
+c      IF (TRCSOU) THEN
+c        WRITE(0,*) 'DEBUG: STEP a, istep='
+c        WRITE (iunout,*) 'STEPFUNCTION NO. ISTEP= ',ISTEP,' INITIALISED'
+c        CALL LEER(1)
+c      ENDIF
+c slmod end
       RETURN
 C
       ENTRY STEP0(NSPZ1,ISTEP,X)

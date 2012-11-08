@@ -195,7 +195,7 @@ c
       ELSEIF (TAG(1:3).EQ.'019') THEN
         CALL ReadI(line,eirdebug,-100,10000,'EIRENE debugging option')
       ELSEIF (TAG(1:3).EQ.'020') THEN
-        CALL ReadI(line,eirtime,0,100000,'EIRENE execution time')
+        CALL ReadI(line,eirtime,0,300000,'EIRENE execution time')
 
         CALL GetEnv('DIVNAME',machine2)
 c        WRITE(0,*) 'MARK: MACHINE2= '//machine2(1:LEN_TRIM(machine2))
@@ -618,7 +618,7 @@ c       transparent:
           CALL ER('ReadUnstructuredInput','Invalid E36 version',*99)
         ENDIF   
       ELSEIF (TAG(1:3).EQ.'E37') THEN
-        CALL ReadI(line,eirntorseg,0,100,'Num sections in EIRENE appro')
+        CALL ReadI(line,eirntorseg,0,500,'Num sections in EIRENE appro')
       ELSEIF (TAG(1:3).EQ.'E38') THEN
         CALL ReadR(line,eirdtimv,0.0,100.0,'Time dependent mode int.')
       ELSEIF (TAG(1:3).EQ.'E39') THEN
@@ -2113,7 +2113,7 @@ c     G47: Castem data set identifier
 c
       ElseIf (tag(1:3).eq.'G47') Then
         CALL ReadC(line,rg_castem_data,'CASTEM DATA SET IDENTIFIER')
-
+        write(0,*) 'RG_CASTEM_DATA:',trim(rg_castem_data),':'
 c
 c     G48 - min and max S for selecting intersection subset  2 x <r4>
 c
@@ -2140,7 +2140,32 @@ c
       ELSEIF (tag(1:3).EQ.'G51') THEN
         CALL ReadR(line,lcutoff,-HI,HI,
      >             'RING CUTOFF LENGTH FACTOR')
+c
+c     G52 - Cell spacing option ... option to calculate the cell
+c           boundary spacing along a ring. Only option 0 is currently
+c           available which uses an exponential factor given in G53. 
+c           A cell_spacing_factor of 1 gives a linear spacing
+c
+      ELSEIF (tag(1:3).EQ.'G52') THEN
+        CALL ReadI(line,cell_spacing_option,0,0,'CELL SPACING OPTION')
 
+c
+c     G53 - cell spacing factor
+c           Used to determine cell boundary spacing along the rings
+c
+      ELSEIF (tag(1:3).EQ.'G53') THEN
+       CALL ReadR(line,cell_spacing_factor,-HI,HI,
+     >             'CELL SPACING FACTOR')
+c
+c     G54 - Cell spacing option ... option to calculate the cell
+c           boundary spacing along a ring. Only option 0 is currently
+c           available which uses an exponential factor given in G53. 
+c           A cell_spacing_factor of 1 gives a linear spacing
+c
+      ELSEIF (tag(1:3).EQ.'G54') THEN
+        CALL ReadI(line,ribbon_input_format_opt,0,1,
+     >     'INTERSECTION DATA INPUT DATA FORMAT OPTION: 0=CASTEM 1=RAY')
+c
 c
 c -----------------------------------------------------------------------
       ELSE

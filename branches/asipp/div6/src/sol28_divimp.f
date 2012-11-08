@@ -2,6 +2,908 @@ c     -*-Fortran-*-
 c
 c ======================================================================
 c
+c subroutine: divYield_Be_W
+c
+c      From an email from Sophie (16/11/2011), forwarded from Andreas Mutzke [mailto:Andreas.Mutzke@ipp.mpg.de] (16/11/2011)
+c     
+c       Be -> W 1 keV   e=  
+c                2           1  ncp ncp_proj
+c      SDTrimSP: VERSION 5.01    15.11.2011
+c      Particles(NH*NR):        10000000 elements: Be   W      
+c      CPT A-Z  A-MASS        DNS0         RHO    E_CUTOFF     E_DISPL     E_BULKB     E_SURFB       INEL0        ISBV    IINT
+c       1   4   9.0122     0.12347     1.84770     2.00000    15.00000     0.00000     3.31000          3          1       2 
+c       2  74 183.8400     0.06306    19.25000     2.00000    38.00000     0.00000     8.79000          3          1       2
+c      !
+c      !
+c               20  number energy
+c                1  number alpha
+c                1  number mean depth
+c                1  number refl.coeff  / energ.coeff
+c                2  number sputt.coeff / energ.coeff
+c            energy        alpha   mean depth    refl.coef  energ.coeff  sputt.coeff  energ.coeff  sputt.coeff  energ.coeff
+c                                                    Be           Be           Be           Be           W            W    
+c              1.00         0.00     0.753677     0.007354     0.000962     0.000000     0.000000     0.000000     0.000000
+c              2.00         0.00     0.978780     0.133563     0.048357     0.000000     0.000000     0.000000     0.000000
+c              3.00         0.00     1.248317     0.299761     0.131835     0.000000     0.000000     0.000000     0.000000
+c              5.00         0.00     1.927753     0.544548     0.281648     0.000000     0.000000     0.000000     0.000000
+c              7.00         0.00     2.684676     0.657730     0.370540     0.000000     0.000000     0.000000     0.000000
+c             10.00         0.00     3.645109     0.709874     0.429249     0.000000     0.000000     0.000000     0.000000
+c             20.00         0.00     5.587461     0.703014     0.450005     0.000000     0.000000     0.000000     0.000000
+c             30.00         0.00     6.959517     0.676663     0.432105     0.000000     0.000000     0.000000     0.000000
+c             50.00         0.00     9.133810     0.639375     0.399921     0.000000     0.000000     0.000000     0.000000
+c             70.00         0.00    10.937870     0.615286     0.377816     0.000000     0.000000     0.000316     0.000004
+c            100.00         0.00    13.249392     0.591254     0.355606     0.000000     0.000000     0.005947     0.000166
+c            200.00         0.00    19.347540     0.551074     0.318757     0.000000     0.000000     0.045688     0.001636
+c            300.00         0.00    24.276594     0.530139     0.300258     0.000000     0.000000     0.083110     0.002790
+c            500.00         0.00    32.476271     0.505771     0.279909     0.000000     0.000000     0.135549     0.003844
+c            700.00         0.00    39.537266     0.490152     0.267559     0.000000     0.000000     0.170108     0.004175
+c           1000.00         0.00    48.928215     0.474044     0.254973     0.000000     0.000000     0.206025     0.004233
+c           2000.00         0.00    75.322349     0.440764     0.230529     0.000000     0.000000     0.268974     0.003730
+c           3000.00         0.00    98.145896     0.418819     0.215232     0.000000     0.000000     0.297168     0.003217
+c           5000.00         0.00   139.313794     0.387903     0.194778     0.000000     0.000000     0.319288     0.002495
+c           7000.00         0.00   177.686492     0.365954     0.181153     0.000000     0.000000     0.324028     0.002032
+c
+c
+      REAL FUNCTION divYield_Be_W(e0)
+      IMPLICIT none
+
+      REAL, INTENT(IN) :: e0
+
+      REAL yield(2,20),result
+ 
+      DATA yield /
+     .         1.00,  0.000000,
+     .         2.00,  0.000000,
+     .         3.00,  0.000000,
+     .         5.00,  0.000000,
+     .         7.00,  0.000000,
+     .        10.00,  0.000000,
+     .        20.00,  0.000000,
+     .        30.00,  0.000000,
+     .        50.00,  0.000000,
+     .        70.00,  0.000316,
+     .       100.00,  0.005947,
+     .       200.00,  0.045688,
+     .       300.00,  0.083110,
+     .       500.00,  0.135549,
+     .       700.00,  0.170108,
+     .      1000.00,  0.206025,
+     .      2000.00,  0.268974,
+     .      3000.00,  0.297168,
+     .      5000.00,  0.319288,
+     .      7000.00,  0.324028  /
+
+      divYield_Be_W = 0.0
+
+      CALL Fitter(20,yield(1,1:20),yield(2,1:20),1,e0,result,'LINEAR')
+
+      divYield_Be_W = result
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: divCompileSputteringYields
+c
+      SUBROUTINE divCompileSputteringYields
+      USE mod_interface
+      USE eckstein_2007_yield_data
+      USE mod_sol28_io
+      USE mod_divimp
+      USE mod_divimp_tdep
+      IMPLICIT none
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'cneut2'
+c      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      LOGICAL osmGetLine
+      REAL    divYield_Be_W
+ 
+
+      INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
+     .              ncore,in,nsputter,ierr,nymfs,nds2,n,nsputter_last,
+     .              idum
+      LOGICAL       tdep_data,ldum
+      REAL          yield,rdum1,ratio,frac
+      CHARACTER*512 fname,command,resdir,buffer
+      CHARACTER     t1*3,t2*6
+
+      nymfs = nymfs_global ! so lame, but need NYMFS and it's not in a common block
+ 
+      nsputter = sputter_ndata
+
+      tdep_data = .FALSE.
+
+c
+c     Set defaults for walls
+c
+      DO ID = 1, wallpts
+        if (nymfs.gt.0.and.cymfs(1,1).eq.0) then
+           if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
+              KMFPWS(ID) = CYMFS(1,3)
+           else
+              KMFPWS(ID) = CYMFS(1,6)
+           endif
+        else
+           KMFPWS(ID) = 1.0
+        endif
+      end do
+      do in=1,nymfs
+         do id = NINT(cymfs(in,1)),NINT(cymfs(in,2))
+            if (id.ge.1.and.id.le.wallpts) then
+               if (wallpt(id,16).eq.1.or.wallpt(id,16).eq.4) then
+                  KMFPWS(ID) = CYMFS(in,3)
+               else
+                  KMFPWS(ID) = CYMFS(in,6)
+               endif
+            endif
+         enddo
+      enddo
+c
+c     ------------------------------------------------------------------
+c     LOAD PARTICLE FLUX DATA
+c
+      CALL GetEnv('RESDIRTOP',resdir)
+
+      nsputter_last = 0
+ 
+      DO i = 1, nsputter
+
+        IF (tdep_data.AND.sputter_data(i)%data_type.NE.5)
+     .    CALL ER('divCompileSputteringYields','Impurity launch/injec'//
+     .            'tion snapshot data must appear after all surface '//
+     .            'sputtering data in the input list',*99)
+
+        IF     (sputter_data(i)%data_type.EQ.5) THEN
+c       ----------------------------------------------------------------
+          IF (tdep_data) 
+     .      CALL ER('divCompileSputteringYields','Only one particle'//
+     .            'distribution can be loaded at present',*99)
+
+          tdep_data = .TRUE.
+c...
+          fname = TRIM(resdir)//'/'//
+     .            TRIM(sputter_data(i)%case_name)//'.'//
+     .            TRIM(sputter_data(i)%extension)
+c         Copy file to run directory:
+          command = 'cp -p '//TRIM(fname)//' .'
+          WRITE(0,*) 'command: ',TRIM(fname)
+          CALL CIssue(TRIM(command),status)
+          IF (status.NE.0) 
+     .      CALL ER('divCompileSputteringYields','Unable to copy '//
+     .              'data file',*99)
+
+          CALL find_free_unit_number(fp)
+          OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .         STATUS='OLD',IOSTAT=ierr,ERR=97)            
+
+          DO WHILE(osmGetLine(fp,buffer,WITH_TAG))
+            SELECTCASE (TRIM(buffer))
+              CASE("{VERSION}")
+                READ(fp,*) tdep_load_version
+              CASE("{DATA RUN}")
+                READ(fp,*) tdep_load_qtim
+                READ(fp,*) tdep_load_deltat
+                READ(fp,*) tdep_load_absfac
+                tdep_load_deltat = tdep_load_deltat * tdep_load_qtim 
+              CASE("{DATA PARTICLE}")
+                READ(fp,*) tdep_load_n
+                ALLOCATE(tdep_load(tdep_load_n))
+                DO j = 1, tdep_load_n
+                  ldum = osmGetLine(fp,buffer,NO_TAG)
+                  READ(buffer,*) idum,
+     .              tdep_load(j)%r      ,
+     .              tdep_load(j)%z      ,	  
+     .              tdep_load(j)%phi    ,     
+     .              tdep_load(j)%s      ,  
+     .              tdep_load(j)%cross  ,
+     .              tdep_load(j)%diag   ,
+     .              tdep_load(j)%temp   ,
+     .              tdep_load(j)%vel    ,
+     .              tdep_load(j)%charge ,
+     .              tdep_load(j)%weight
+                ENDDO
+              CASE DEFAULT
+                WRITE(0,*) 'TAG = ',TRIM(buffer)
+                CALL ER('divCompileSputteringYields','Unrecognized'//
+     .                  'tag found',*99)
+            ENDSELECT
+          ENDDO
+          CLOSE(fp)
+
+          sputter_data(i)%type       = sputter_data(i)%data_type
+          sputter_data(i)%version    = 1.0
+          sputter_data(i)%nsegments  = 0
+          sputter_data(i)%charge_max = 0
+	  sputter_data(i)%absfac     = tdep_load_absfac
+
+        ELSEIF (sputter_data(i)%data_type.EQ.4) THEN
+c       ----------------------------------------------------------------
+          nsputter_last = i
+          nseg = wallpts
+          mion = sputter_data(i)%atomic_number
+
+          ALLOCATE(sputter_data(i)%ik   (nseg))
+          ALLOCATE(sputter_data(i)%ir   (nseg))
+          ALLOCATE(sputter_data(i)%id   (nseg))
+          ALLOCATE(sputter_data(i)%r    (nseg))
+          ALLOCATE(sputter_data(i)%z    (nseg))
+          ALLOCATE(sputter_data(i)%dds  (nseg))
+          ALLOCATE(sputter_data(i)%te   (nseg))
+          ALLOCATE(sputter_data(i)%ti   (nseg))
+          ALLOCATE(sputter_data(i)%flux (nseg,mion))
+          ALLOCATE(sputter_data(i)%e0   (nseg,mion))
+          ALLOCATE(sputter_data(i)%yield(nseg,mion))
+
+          sputter_data(i)%type       = sputter_data(i)%data_type
+          sputter_data(i)%version    = 1.0
+          sputter_data(i)%nsegments  = nseg
+          sputter_data(i)%charge_max = sputter_data(i)%atomic_number
+	  sputter_data(i)%absfac     = 1.0
+
+          DO j = 1, nseg
+
+            k = NINT(wallpt(j,18))
+            IF (k.NE.0) THEN
+              ik = ikds(k)
+              ir = irds(k)
+            ENDIF
+
+            IF (k.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+              sputter_data(i)%ik (j) = ik
+	      sputter_data(i)%ir (j) = ir
+	      sputter_data(i)%id (j) = j  ! wallindex(j)
+	      sputter_data(i)%r  (j) = rp(k)
+	      sputter_data(i)%z  (j) = zp(k)
+	      sputter_data(i)%dds(j) = dds2(k)
+	      sputter_data(i)%te (j) = kteds(k)
+	      sputter_data(i)%ti (j) = ktids(k)
+	  
+              iz = sputter_data(i)%charge
+	      sputter_data(i)%flux(j,iz) = 
+     .          knds(k) * ABS(kvds(k)) / kbfs(ik,ir) * costet(k) *   ! same as in NEUT.f
+     .          (sputter_data(i)%fraction / 100.0)
+	  
+              DO iz = 1, sputter_data(i)%atomic_number
+    	        sputter_data(i)%e0(j,iz) = 
+     .            3.0 * kteds(k) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
+     .            2.0 * ktids(k) 
+              ENDDO
+            ELSE
+              sputter_data(i)%ik  (j  ) = 0
+	      sputter_data(i)%ir  (j  ) = 0
+	      sputter_data(i)%id  (j  ) = j
+	      sputter_data(i)%r   (j  ) = 0.0
+	      sputter_data(i)%z   (j  ) = 0.0
+	      sputter_data(i)%dds (j  ) = 0.0
+	      sputter_data(i)%te  (j  ) = 0.0
+	      sputter_data(i)%ti  (j  ) = 0.0
+	      sputter_data(i)%flux(j,:) = 0.0
+              sputter_data(i)%e0  (j,:) = 0.0
+            ENDIF
+          ENDDO      
+c       ----------------------------------------------------------------
+        ELSE
+          nsputter_last = i
+c...
+          fname = TRIM(resdir)//'/'//
+     .            TRIM(sputter_data(i)%case_name)//'.'//
+     .            TRIM(sputter_data(i)%extension)
+c         Copy file to run directory:
+          command = 'cp -p '//TRIM(fname)//' .'
+          WRITE(0,*) 'command: ',TRIM(fname)
+          CALL CIssue(TRIM(command),status)
+          IF (status.NE.0) 
+     .      CALL ER('divCompileSputteringYields','Unable to copy '//
+     .              'data file (2)',*99)
+c...	  
+          fname = TRIM(sputter_data(i)%case_name)
+          j = 1
+          DO k = 1, LEN_TRIM(fname)
+            IF (fname(k:k).EQ.'/') j = k
+          ENDDO
+          fname = fname(j+1:LEN_TRIM(fname))
+          fname = TRIM(fname)//'.'//TRIM(sputter_data(i)%extension)
+          WRITE(0,*) 'fname: '//TRIM(fname)
+c...      Unzip file if necessary:
+          IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip'.OR.
+     .        fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz') 
+     .      CALL UnzipFile(fname)
+	  
+          CALL find_free_unit_number(fp)
+          OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .         FORM='UNFORMATTED',STATUS='OLD',IOSTAT=ierr,ERR=97)            
+	  
+          READ(fp) sputter_data(i)%version,
+     .             sputter_data(i)%format, 
+     .             sputter_data(i)%type
+	  
+          IF (sputter_data(i)%version.EQ.1.0) THEN
+	  
+            READ(fp) sputter_data(i)%absfac,         ! ABSFAC
+     .               sputter_data(i)%atomic_number,  ! CION REAL()
+     .               sputter_data(i)%atomic_mass,    ! CRMI
+     .               sputter_data(i)%charge_min,     ! CIZSC
+     .               sputter_data(i)%charge_max,     ! NIZS
+     .               sputter_data(i)%nsegments,      ! NDS
+     .               sputter_data(i)%ncore           ! number of radial core data points
+	    
+
+
+
+            SELECTCASE (sputter_data(i)%format)
+c             ----------------------------------------------------------
+              CASE (1)
+                nseg = sputter_data(i)%nsegments
+                mion = MIN(sputter_data(i)%atomic_number,
+     .                     sputter_data(i)%charge_max    )
+                ALLOCATE(sputter_data(i)%ik   (nseg))        ! this is stupid ... just make these a fixed size and avoid this pointless dynamic allocation
+                ALLOCATE(sputter_data(i)%ir   (nseg))
+                ALLOCATE(sputter_data(i)%id   (nseg))
+                ALLOCATE(sputter_data(i)%r    (nseg))
+                ALLOCATE(sputter_data(i)%z    (nseg))
+                ALLOCATE(sputter_data(i)%dds  (nseg))
+                ALLOCATE(sputter_data(i)%te   (nseg))
+                ALLOCATE(sputter_data(i)%ti   (nseg))
+                ALLOCATE(sputter_data(i)%flux (nseg,mion))
+                ALLOCATE(sputter_data(i)%e0   (nseg,mion))
+                ALLOCATE(sputter_data(i)%yield(nseg,mion))
+                ncore = sputter_data(i)%ncore
+                ALLOCATE(sputter_data(i)%core_rho (ncore))
+                ALLOCATE(sputter_data(i)%core_psin(ncore))
+                ALLOCATE(sputter_data(i)%core_ne  (ncore))
+                ALLOCATE(sputter_data(i)%core_te  (ncore))
+                ALLOCATE(sputter_data(i)%core_ti  (ncore))
+                ALLOCATE(sputter_data(i)%core_percent_nfrac(ncore))
+                ALLOCATE(sputter_data(i)%core_percent_efrac(ncore))
+                WRITE(0,*) 'ncore',ncore,nseg,mion
+                DO id = 1, nseg
+                  READ(fp,END=10) 
+     .              sputter_data(i)%ik (id),
+     .              sputter_data(i)%ir (id),
+     .              sputter_data(i)%id (id),
+     .              sputter_data(i)%r  (id),
+     .              sputter_data(i)%z  (id),
+     .              sputter_data(i)%dds(id),
+     .              sputter_data(i)%te (id),
+     .              sputter_data(i)%ti (id)
+                  DO iz = 1, mion
+                    READ(fp) 
+     .                sputter_data(i)%flux (id,iz),
+     .                sputter_data(i)%e0   (id,iz),
+     .                sputter_data(i)%yield(id,iz)
+                  ENDDO
+                ENDDO
+c               Data on the impurity distribution in the core, for rescaling the 
+c               wall flux later, if desired:
+                ncore = sputter_data(i)%ncore
+                IF (ncore.GT.0) THEN 
+                  READ(fp) 
+     .              sputter_data(i)%core_rho (1:ncore),
+     .              sputter_data(i)%core_psin(1:ncore),
+     .              sputter_data(i)%core_ne  (1:ncore),	  
+     .              sputter_data(i)%core_te  (1:ncore), 
+     .              sputter_data(i)%core_ti  (1:ncore), 
+     .              sputter_data(i)%core_percent_nfrac(1:ncore),
+     .              sputter_data(i)%core_percent_efrac(1:ncore)
+                ENDIF
+c             ----------------------------------------------------------
+              CASEDEFAULT
+                CALL ER('divCompileSputteringYields','Unrecognized '//
+     .                  'file TYPE',*99)
+c             ----------------------------------------------------------
+            ENDSELECT
+          ELSE
+            CALL ER('divCompileSputteringYields','Unrecognized '//
+     .              'file VERSION number',*99)
+
+          ENDIF
+10        CONTINUE
+          IF (id.NE.nseg+1) sputter_data(i)%nsegments = id - 1
+          CLOSE(fp)
+c       ----------------------------------------------------------------
+        ENDIF
+      ENDDO
+c
+c     ------------------------------------------------------------------
+c     DERIVE YIELDS
+c
+      DO i = 1, nsputter
+
+        IF (sputter_data(i)%type.EQ.3.OR.     ! yield is already calculated
+     .      sputter_data(i)%type.EQ.5) CYCLE  ! loading impurity launch/injection distribution from a previous run
+
+        nseg = sputter_data(i)%nsegments
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+
+        sputter_data(i)%target_number = cion
+ 
+c        matt = get_target_index(cion)
+c        matp = get_plasma_index(    sputter_data(i)%atomic_number ,
+c     .                          INT(sputter_data(i)%atomic_mass  ))
+
+        CALL SYLD96(matt,matp,cneutd,-1,-1,cion,
+     .              sputter_data(i)%atomic_number,
+     .              sputter_data(i)%atomic_mass  ,rdum1)
+
+        WRITE(0,*) 'yield 1',i,matt,matp,cizb,
+     .              sputter_data(i)%atomic_number
+
+        IF (matt.EQ.-1) 
+     .    CALL ER('divCompileSputteringYields','Target material not '//
+     .            'identified',*99)
+        IF (matp.EQ.-1) 
+     .    CALL ER('divCompileSputteringYields','Plasma material not '//
+     .            'identified',*99)
+
+        IF (matp.EQ.6.AND.sputter_data(i)%atomic_number.EQ.10) THEN
+          WRITE(7,*) '      APPLYING NEON OVER-RIDE (MATP=8)'
+          matp = 8
+        ENDIF
+
+        IF (sputter_data(i)%atomic_number.EQ.4.AND.matt.EQ.9) THEN
+          WRITE(7,*) '      APPLYING SPECIAL Be->W DATA'
+        ENDIF
+
+c       Standard setup if not Be (cizb=4) incident on W (MATT=9) 
+c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
+        IF (sputter_data(i)%atomic_number.NE.4.OR.matt.NE.9) 
+     .    CALL init_eckstein_2007(matt,matp)
+
+        WRITE(0,*) 'yield 2',i,matt,matp
+
+        DO j = 1, nseg
+          DO iz = 1, mion
+            IF (sputter_data(i)%atomic_number.EQ.4.AND.matt.EQ.9) THEN
+              sputter_data(i)%yield(j,iz) = 
+     .          divYield_Be_W(sputter_data(i)%e0(j,iz))
+            ELSE
+              sputter_data(i)%yield(j,iz) = 
+     .          yield_2007(matp,matt,sputter_data(i)%e0(j,iz))
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+c
+c     ------------------------------------------------------------------
+c     SET absfac FOR SPECIFIED IMPURITY FRACTIONS
+c
+      DO i = 1, nsputter
+
+        IF (sputter_data(i)%type    .NE. 1  .OR.
+     .      sputter_data(i)%absfac  .NE. 1.0.OR.
+     .      sputter_data(i)%fraction.EQ.-1.0) CYCLE
+
+        ncore = sputter_data(i)%ncore
+        j = 0
+
+c        DO j = 1, ncore
+c          ratio = sputter_data(i)%core_rho(j    ) / 
+c     .            sputter_data(i)%core_rho(ncore)
+c          IF (ratio.LE.0.95.AND.ratio.GT.0.95) EXIT
+c        ENDDO
+c        IF (j.EQ.ncore+1) 
+c     .    CALL ER('divCompileSputteringData','q95 not found',*99)  ! not really q95?
+
+        frac = sputter_data(i)%fraction / 
+     .         sputter_data(i)%core_percent_nfrac(ncore-3) 
+
+        write(0,'(A,3I6,1P,4E10.2,0P)') 
+     .    'process',i,j,ncore,frac,sputter_data(i)%fraction,
+     .    sputter_data(i)%core_percent_nfrac(ncore-3),
+     .    sputter_data(i)%fraction /
+     .    sputter_data(i)%core_percent_nfrac(ncore-3) 
+
+        sputter_data(i)%absfac = frac
+
+      ENDDO
+c
+c     ------------------------------------------------------------------
+c     ASSIGN wlprob
+c
+      WRITE(0 ,*) 'sputter data',nsputter
+      WRITE(88,*) 'sputter data',nsputter
+      DO i = 1, nsputter
+
+        IF (sputter_data(i)%type.EQ.5) CYCLE
+
+        WRITE(88,'(I4,F5.1,I4,1P,E10.2,0P,I4,F6.2,3I4,2I6)') 
+     .    i,
+     .    sputter_data(i)%version,
+     .    sputter_data(i)%format   ,
+     .    sputter_data(i)%absfac ,
+     .    sputter_data(i)%atomic_number,
+     .    sputter_data(i)%atomic_mass,
+     .    sputter_data(i)%target_number,
+     .    sputter_data(i)%charge_min,   
+     .    sputter_data(i)%charge_max,   
+     .    sputter_data(i)%nsegments,
+     .    sputter_data(i)%type 
+          nseg = sputter_data(i)%nsegments
+          mion = MIN(sputter_data(i)%atomic_number,
+     .               sputter_data(i)%charge_max    )
+        DO id = 1, nseg
+          WRITE(88,'(5X,2I6)')
+     .      id,sputter_data(i)%id(id)
+        ENDDO
+
+        DO id = 1, nseg
+          WRITE(88,'(5X,F5.2,3I6,2F7.3,1P,E10.2,0P,2F8.2,
+     .              20(2X,1P,E10.2,0P,F8.2,1P,E10.2,0P))')
+     .      kmfpws(sputter_data(i)%id(id)),
+     .      sputter_data(i)%ik (id),
+     .      sputter_data(i)%ir (id),
+     .      sputter_data(i)%id (id),
+     .      sputter_data(i)%r  (id),
+     .      sputter_data(i)%z  (id),
+     .      sputter_data(i)%dds(id),
+     .      sputter_data(i)%te (id),
+     .      sputter_data(i)%ti (id),
+     .      (sputter_data(i)%flux (id,iz),
+     .       sputter_data(i)%e0   (id,iz),
+     .       sputter_data(i)%yield(id,iz),iz=1,mion)
+        ENDDO
+        ncore = sputter_data(i)%ncore
+        IF (ncore.GT.0) THEN 
+          WRITE(0,*) 'doing the ncore dance, again'
+          DO id = 1, ncore
+            WRITE(88,'(2F10.3,1P,E10.2,0P,2F9.2,2F15.7)')
+     .        sputter_data(i)%core_rho (id),
+     .        sputter_data(i)%core_psin(id),
+     .        sputter_data(i)%core_ne  (id),	  
+     .        sputter_data(i)%core_te  (id), 
+     .        sputter_data(i)%core_ti  (id), 
+     .        sputter_data(i)%core_percent_nfrac(id),
+     .        sputter_data(i)%core_percent_efrac(id)
+          ENDDO
+        ENDIF
+      ENDDO
+
+      wlprob  = 0.0
+      nwlprob = wallpts
+      DO id = 1, nwlprob
+        wlprob(id,1) = id
+        wlprob(id,2) = id
+      ENDDO
+
+      write(88,*) 'wlprob:'
+
+      DO i = 1, nsputter
+
+        IF (sputter_data(i)%type.EQ.5) CYCLE
+
+        write(88,*) ' '
+
+        nseg = sputter_data(i)%nsegments
+        mion = MIN(sputter_data(i)%atomic_number,
+     .             sputter_data(i)%charge_max    )
+
+c       Calcualte the particle influx from each wall segment in [s-1 m-1 toroidally]:
+        DO j = 1, nseg
+          id = sputter_data(i)%id(j)
+          DO iz = 1, mion
+            wlprob(id,3) = wlprob(id,3) +  
+     .        sputter_data(i)%absfac      *    
+     .        sputter_data(i)%flux (j,iz) *    
+     .        sputter_data(i)%yield(j,iz) *
+     .        sputter_data(i)%dds  (j   ) *
+     .        kmfpws(id)
+          ENDDO
+        ENDDO
+
+c       Add up all the segments to get ABSFAC value for all of the 
+c       sputtering species processed so far in this loop (because
+c       WLPROB is an integral over all sputtering species):
+        sputter_data(i)%absfac_net = 0.0
+        DO j = 1, nwlprob
+          sputter_data(i)%absfac_net = sputter_data(i)%absfac_net + 
+     .                                 wlprob(j,3)
+        ENDDO
+
+        DO j = 1, nseg
+          id = sputter_data(i)%id(j)
+          IF (kmfpws(id).NE.0.0) THEN
+            write(88,*) i,j,id,wlprob(id,3)
+          ENDIF
+        ENDDO
+
+      ENDDO
+
+c     Isolate the net influx for each individual species:
+      DO i = nsputter, 2, -1
+        IF (sputter_data(i)%type.EQ.5) CYCLE
+
+        sputter_data(i)%absfac_net = sputter_data(i  )%absfac_net - 
+     .                               sputter_data(i-1)%absfac_net
+      ENDDO
+
+      DO i = 1, nsputter
+        IF (sputter_data(i)%type.EQ.5) CYCLE
+
+        WRITE(0 ,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
+        WRITE(88,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
+      ENDDO
+
+c...  Add up the influxes for the individual sputtering species and 
+c     assign the total influx over-ride value for DIVIMP:
+      IF (tdep_data) THEN
+
+        IF (nsputter_last.GT.0) 
+     .    nabsfac = SUM(sputter_data(1:nsputter_last)%absfac_net)
+
+        frac =  tdep_load_absfac * tdep_load_deltat / 
+     .        ( tdep_load_absfac * tdep_load_deltat +
+     .          nabsfac          * ctimmax          )
+
+        write(0,*) 'frac   ',frac
+        write(0,*) '_qtim  ',tdep_load_qtim  , qtim
+        write(0,*) '_deltat',tdep_load_deltat, ctimmax
+        write(0,*) '_absfac',tdep_load_absfac, nabsfac
+        write(0,*) '_n     ',tdep_load_n     
+
+        write(0,*) 'nabsfac',nabsfac,tdep_load_absfac
+
+        tdep_load_frac = frac
+
+c        nabsfac =        frac  * tdep_load_absfac + 
+c     .            (1.0 - frac) * nabsfac 
+        nabsfac =                tdep_load_absfac + 
+     .                           nabsfac 
+
+c        nabsfac = 2.0
+        write(0,*) 'nabsfac',nabsfac
+
+      ELSE
+        nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
+c       Normalize the wall launch probabilities:
+        wlprob(:,3) = wlprob(:,3) / nabsfac
+      ENDIF
+c...
+      wallpt(:,13) = 0.0
+c
+c     ------------------------------------------------------------------     
+c     Send data to IDL:
+c
+      IF (nsputter_last.GT.0) THEN
+        CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
+        i = nsputter_last
+        CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
+        CALL inPutData(sputter_data(1:i)%absfac_net  ,'ABSFAC'   ,'s-1')	  
+        CALL inPutData(sputter_data(1:i)%absfac      ,'ABSFAC_IN','s-1')	  
+        CALL inPutData(sputter_data(1:i)%atomic_number,'BOMB_Z'  ,'NA')
+        CALL inPutData(sputter_data(1:i)%atomic_mass  ,'BOMB_A'  ,'NA')	  
+        CALL inPutData(sputter_data(1:i)%target_number,'TARGET_Z','NA') 
+        CALL inPutData(sputter_data(1:i)%charge_min   ,'C_MIN'   ,'NA')   
+        CALL inPutData(sputter_data(1:i)%charge_max   ,'C_MAX'   ,'NA')  
+        CALL inPutData(sputter_data(1:i)%type         ,'TYPE'    ,'NA')   
+c       Assume the data all comes from the same geometry and plasma:
+        n = sputter_data(1)%nsegments
+        CALL inPutData(kmfpws(sputter_data(1)%id(1:n)  ),'FACT','NA')
+        CALL inPutData(wlprob(sputter_data(1)%id(1:n),3),'PROB','NA')
+        CALL inPutData(sputter_data(1)%id (1:n),'ID'    ,'NA')	   
+        CALL inPutData(sputter_data(1)%r  (1:n),'POS_R' ,'m' ) 
+        CALL inPutData(sputter_data(1)%z  (1:n),'POS_Z' ,'m' )   
+        CALL inPutData(sputter_data(1)%dds(1:n),'LENGTH','m' )  
+c       Take IK,IR and Te,i for the first data set from standard DIVIMP 
+c       sputtering (rather than EIRENE calculated yields), otherwise 
+c       just take what's in the first data set, which is probably zero:
+        DO i = 1, nsputter
+          IF (sputter_data(i)%type.EQ.1) THEN
+            write(0,*) 'debug: dumping Te,i from',i
+            CALL inPutData(sputter_data(i)%ik(1:n),'IK','eV')   
+            CALL inPutData(sputter_data(i)%ir(1:n),'IR','eV')	  
+            CALL inPutData(sputter_data(i)%te(1:n),'TE','eV')   
+            CALL inPutData(sputter_data(i)%ti(1:n),'TI','eV')	  
+            EXIT
+          ENDIF
+        ENDDO
+        IF (i.EQ.nsputter+1) THEN
+          CALL inPutData(sputter_data(1)%ik(1:n),'IK','eV')   
+          CALL inPutData(sputter_data(1)%ir(1:n),'IR','eV')	  
+          CALL inPutData(sputter_data(1)%te(1:n),'TE','eV')   
+          CALL inPutData(sputter_data(1)%ti(1:n),'TI','eV')	  
+        ENDIF
+        DO i = 1, nsputter
+          WRITE(t1,'(A,I0.2)') '_',i
+          mion = MIN(sputter_data(i)%atomic_number,
+     .               sputter_data(i)%charge_max    )
+          CALL inPutData(mion,'MAX_CHARGE'//t1,'NA')	  
+          DO iz = 1, mion
+            WRITE(t2,'(2A,I0.2)') t1,'_',iz
+          CALL inPutData(sputter_data(i)%flux (1:n,iz),'FLUX'//t2,'s-1')
+          CALL inPutData(sputter_data(i)%e0   (1:n,iz),'E0'//t2   ,'eV')	  
+          CALL inPutData(sputter_data(i)%yield(1:n,iz),'YIELD'//t2,'NA')	  
+          ENDDO
+        ENDDO
+        CALL inCloseInterface
+      ENDIF
+
+      WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
+
+      stop 'here in the shit'
+
+      RETURN
+97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
+      STOP 'shiiiit'
+99    WRITE(0,*) '  FILE NAME = ',TRIM(fname)
+      STOP
+      END
+
+c
+c ======================================================================
+c
+      SUBROUTINE ImportOSMGrid
+      USE mod_geometry
+      USE mod_sol28_global
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+      INCLUDE 'pindata'
+
+      INTEGER GetObject
+
+      INTEGER        status,n,ic,it,iobj,ik,ir,id,in
+      REAL*8         rv(4),zv(4)
+      CHARACTER*1024 fname,command
+
+c...  Load reference OSM data file (binary form):
+      fname = TRIM(opt%f_osm_load)
+      n = LEN_TRIM(fname)
+      command = 'cp '//TRIM(opt%f_osm_dir)//TRIM(fname)//' .'
+      CALL CIssue(TRIM(command),status)
+      CALL UnzipFile(fname)
+      CALL LoadGrid (fname)
+
+c...  Load the OSM geometry file:
+      fname = TRIM(opt%f_osm_load)
+      n = LEN_TRIM(fname)
+      IF (fname(n-2:n).EQ.'zip') fname(n-6:n) = 'ogd.zip'
+      IF (fname(n-1:n).EQ.'gz' ) fname(n-5:n) = 'ogd.gz'
+      IF (fname(n-2:n).EQ.'osm') fname(n-2:n) = 'ogd'
+c      WRITE(0,*) 'fname>'//TRIM(fname)//'<'
+      command = 'cp '//TRIM(opt%f_osm_dir)//TRIM(fname)//' .'
+      CALL CIssue(TRIM(command),status)
+      CALL UnzipFile  (fname)
+      CALL LoadObjects(fname,status)
+      IF (status.LT.0) CALL ER('ImportOSMGrid','Halting DIVIMP',*99)
+
+c...
+      ALLOCATE(d_rvertp(5,MAXNKS*MAXNRS))
+      ALLOCATE(d_zvertp(5,MAXNKS*MAXNRS))
+      id = 0
+      DO it = 1, ntube
+        ir = it
+        ik = 0
+        DO ic = tube(it)%cell_index(1), tube(it)%cell_index(2) 
+          id = id + 1
+          ik = ik + 1          
+          iobj = GetObject(ic,IND_CELL)
+          DO in = 1, 4
+            CALL GetVertex(iobj,in,rv(in),zv(in))
+          ENDDO
+          nvertp(id) = 4
+          d_rvertp(1:4,id) = rv
+          d_zvertp(1:4,id) = zv
+          korpg(ik,ir) = id
+          rs(ik,ir) = cell(ic)%cencar(1)
+          zs(ik,ir) = cell(ic)%cencar(2)
+          bratio(ik,ir) = field(ic)%bratio 
+          kbfs  (ik,ir) = 1.0 / bratio(ik,ir)
+        ENDDO
+        IF (it.LT.grid%isep) THEN
+          ik = ik + 1          
+          id = id + 1
+          nvertp(id) = 4
+          d_rvertp(1:4,id) = d_rvertp(1:4,korpg(1,ir))
+          d_zvertp(1:4,id) = d_zvertp(1:4,korpg(1,ir))
+          korpg(ik,ir) = id
+          rs(ik,ir) = rs(1,ir)
+          zs(ik,ir) = zs(1,ir)
+          bratio(ik,ir) = bratio(1,ir)
+          kbfs  (ik,ir) = kbfs  (1,ir)
+        ENDIF
+        nks(ir) = ik
+        psitarg(ir,:) = tube(it)%psin
+      ENDDO
+      rvertp = SNGL(d_rvertp)
+      zvertp = SNGL(d_zvertp)
+
+c...  Add virtual rings:
+c      WRITE(0,*) 'GRID%IPFZ=',grid%ipfz
+
+      irsep  = grid%isep
+      irsep2 = grid%isep2
+      irwall = grid%ipfz - 1
+      irtrap = grid%ipfz
+      nrs    = ntube
+
+      ikto = grid%ikto
+      ikti = grid%ikti
+
+      npolyp  = id
+      vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+      vpolyp  = vpolmin
+
+      r0  = SNGL(grid%r0)
+      z0  = SNGL(grid%z0)
+      rxp = rvertp(4,korpg(ikto,irsep))
+      zxp = zvertp(4,korpg(ikto,irsep))
+
+c      WRITE(0,*) 'whoa=',r0,z0,rxp,zxp
+c      stop 'dsdfsf'
+
+      CALL OutputData(85,'Linear 1')
+       
+      IF (irwall.EQ.nrs) THEN 
+        cgridopt = LINEAR_GRID
+        DO ir = 2, nrs
+          IF (nks(ir).NE.nks(1)) THEN 
+            cgridopt = RIBBON_GRID
+            EXIT
+          ENDIF
+        ENDDO
+      ELSE
+        cgridopt = 3
+      ENDIF
+c      WRITE(0,*) 'cgridopt=',cgridopt
+
+      CALL InsertRing(1     ,BEFORE,PERMANENT)
+      CALL InsertRing(irwall,AFTER ,PERMANENT)
+      IF (cgridopt.EQ.LINEAR_GRID.OR.cgridopt.EQ.RIBBON_GRID) THEN 
+      ELSE
+        CALL InsertRing(irtrap,BEFORE,PERMANENT)
+      ENDIF
+      idring(1     ) = BOUNDARY
+      idring(irtrap) = BOUNDARY
+      idring(irwall) = BOUNDARY
+      psitarg(1     ,:) = 0.0
+      psitarg(irtrap,:) = 0.0
+      psitarg(irwall,:) = 0.0
+
+      CALL OutputData(86,'Linear 2')
+
+      cutpt1   = ikto
+      cutpt2   = ikti             ! These are semi-bogus for a connected double-null...?
+      cutring  = irsep - 1
+      maxkpts  = nks(irsep)
+      maxrings = irwall
+
+c...  Here to avoid the need to call TailorGrid:
+c      IF (grdnmod.GT.0) CALL TailorGrid
+
+      CALL SetupGrid
+      CALL SequenceGrid
+      CALL FindGridBreak
+      CALL SetupGrid
+
+c      CALL OutputData(85,'JUST FINISHED LOADING OSM GRID')
+c      CALL DumpGrid  ('LOADING OSM GRID')
+
+c...  Add virtual boundary cells, which will be stripped off later:
+      IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .    CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .   CALL AddPoloidalBoundaryCells
+
+c...  Clear arrays:
+      CALL geoClean
+      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
       SUBROUTINE SetupSOL28
       USE mod_sol28
       USE mod_sol28_global
@@ -30,12 +932,6 @@ c      CALL SetTargetConditions(itube)
 
 c...  Clear geometry arrays:
       CALL geoClean
-c      nobj = 0
-c      nsrf = 0
-c      nvtx = 0
-c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
 
       RETURN
  99   STOP
@@ -71,6 +967,7 @@ c
 
 c...  Need to reload geometry data in case Eirene has been called (hopefully
 c     this won't be required in the future...):
+ 
       CALL LoadObjects('osm_geometry.raw',status)
       IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
      .                         'geometry data',*99)
@@ -89,26 +986,20 @@ c      CALL SetTargetConditions
         IF (tube(itube)%ir.EQ.irend  ) itube2 = itube
       ENDDO
       IF (itube2.EQ.0.AND.irend.EQ.ntube+2) itube2 = ntube
+      IF (itube1.EQ.0.OR.itube2.EQ.0) 
+     .  CALL ER('ExecuteSOL28','Tube index error',*99)
 
 c...  Call SOL28 plasma solver:
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
 
 c...  Generate output files:
-      CALL GenerateOutputFiles
+c      CALL GenerateOutputFiles  ! this is now done at the end of bgplasma
 
 c...  Fill DIVIMP arrays:
       CALL MapTubestoRings(irstart,irend)
 
 c...  Clear geometry arrays:
       CALL geoClean
-c      nobj = 0
-c      nsrf = 0
-c      nvtx = 0
-c      IF (ALLOCATED(obj)) DEALLOCATE(obj) 
-c      IF (ALLOCATED(srf)) DEALLOCATE(srf) 
-c      IF (ALLOCATED(vtx)) DEALLOCATE(vtx)
-
-c      CALL CleanUp
 
       RETURN
  99   STOP
@@ -117,15 +1008,26 @@ c
 c ======================================================================
 c
       SUBROUTINE CloseSOL28
+      USE mod_geometry
+      USE mod_sol28_global
       IMPLICIT none
 
 c      RETURN
+      INTEGER status
+
+      CALL LoadObjects('osm_geometry.raw',status)
+      IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
+     .                         'geometry data',*99)
+
+c...  Generate output files:
+      CALL GenerateOutputFiles
 
 c...  Save solution:
-      CALL SaveGrid('osm.raw')
+c      CALL SaveGrid('osm.raw')
 
 c...  Clear memory:
       CALL osmClean
+      CALL geoClean
 
       RETURN
  99   STOP
@@ -298,6 +1200,7 @@ c ======================================================================
 c
       SUBROUTINE MapRingstoTubes
       USE mod_sol28_global
+      USE mod_grid_divimp
       USE mod_geometry
       IMPLICIT none
 
@@ -346,9 +1249,9 @@ c *CRUDE* Should be elsewhere... can IDRING take the place of RINGTYPE for EIREN
           ringtype(ir) = BOUNDARY
           CYCLE
         ENDIF
-        IF (ir.LT.irsep) ringtype(ir) = CORE
-        IF (ir.GE.irsep.AND.ir.LT.irwall) ringtype(ir) = SOL1
-        IF (ir.GT.irtrap.AND.ir.LE.nrs) ringtype(ir) = PFZ
+        IF (ir.LT.irsep                  ) ringtype(ir) = CORE
+        IF (ir.GE.irsep .AND.ir.LT.irwall) ringtype(ir) = SOL1
+        IF (ir.GT.irtrap.AND.ir.LE.nrs   ) ringtype(ir) = PFZ
       ENDDO
 c...  Special for secondary PFZ in generalized grids:
       IF (grdnmod.NE.0) THEN
@@ -392,6 +1295,7 @@ c...  Count number of cells:
         IF (ir.LT.irsep) ike = ike - 1
         ncell = ncell + ike 
       ENDDO
+
 c...  Declare global arrays:
       nfield    = ncell
       npin      = ncell
@@ -400,9 +1304,13 @@ c...  Declare global arrays:
       nkinetic  = 1     
       nfluid    = ncell
       nimpurity = 1
-      ALLOCATE(tube      (ntube))
-      ALLOCATE(tube_state(ntube))
-      tube_state = 0
+      ALLOCATE(tube    (ntube ))
+      ALLOCATE(tube2   (ntube ))
+      tube2(:)%state        = 0
+      tube2(:)%target_pe(1) = 0
+      tube2(:)%target_pe(2) = 0
+c      ALLOCATE(tube_state(ntube))
+c      tube_state = 0
       ALLOCATE(cell    (ncell ))
       ALLOCATE(field   (nfield))
       ALLOCATE(pin     (npin     ,nion))
@@ -423,7 +1331,6 @@ c...  Copy DIVIMP grid:
       ncell = 0
 
       tube_3D_data = 0.0
-      ! jdemod - note - dangle set to 0.0 and is used in division later but not assigned a real value
       dangle = 0.0
 c      CALL CalcTubeDimensions(tube_3D_data,dangle)
 
@@ -436,6 +1343,7 @@ c      CALL CalcTubeDimensions(tube_3D_data,dangle)
         cind2 = ncell + ike
 
         ntube = ntube + 1
+        tube(ntube)%index  = ntube
         tube(ntube)%ir     = ir
         tube(ntube)%type   = ringtype(ir)
         tube(ntube)%ikti   = ikti2(ir)
@@ -507,26 +1415,25 @@ c
 c         jdemod - add if statement to test if dangle=0.0 
 c                - divide by zero error otherwise
 c
-          if (dangle.ne.0.0) then 
-            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
-     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
-     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
-     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
-     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
-     .                               (360.0/dangle) 
-          else
-            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
-     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
-     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
-     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
-     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
-c     .                               * (360.0/dangle) 
-          endif
+c          if (dangle.ne.0.0) then 
+c            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+c     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+c     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+c     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D *
+c     .                               (360.0/dangle) 
+c          else
+c            WRITE(6,'(A,2I6,4(2F12.6,2X))') 'CHECK 3D:',ik,ir,
+c     .      cell(cind1+ik-1)%s      ,cell(cind1+ik-1)%s_3D      ,
+c     .      cell(cind1+ik-1)%sbnd(1),cell(cind1+ik-1)%sbnd_3D(1),
+c     .      cell(cind1+ik-1)%sbnd(2),cell(cind1+ik-1)%sbnd_3D(2),
+c     .      cell(cind1+ik-1)%vol    ,cell(cind1+ik-1)%volume_3D 
+cc     .                               * (360.0/dangle) 
+c          endif
 c
 c         end jdemod
 c
         ENDDO
-
 
         field(cind1:cind2)%bratio = bratio(1:ike,ir)
         IF (load_bfield_data) THEN
@@ -574,6 +1481,7 @@ c...
         DO ik = 1, ike
           id = korpg(ik,ir)         
           newobj%group         = ngrp
+          newobj%index         = 0
           newobj%index(IND_IK) = ik
           newobj%index(IND_IR) = ir
           newobj%index(IND_IS) = 0
@@ -593,12 +1501,22 @@ c...
             i1 = iside
             i2 = iside + 1
             IF (i2.EQ.5) i2 = 1
-            a(1) = DBLE(rvertp(i1,id))
-            a(2) = DBLE(zvertp(i1,id))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a(1) = d_rvertp(i1,id)
+              a(2) = d_zvertp(i1,id)
+            ELSE
+              a(1) = DBLE(rvertp(i1,id))
+              a(2) = DBLE(zvertp(i1,id))
+            ENDIF
             a(3) = 0.0D0
             newsrf%ivtx(1) = AddVertex(a) 
-            a(1) = DBLE(rvertp(i2,id))
-            a(2) = DBLE(zvertp(i2,id))
+            IF (ALLOCATED(d_rvertp)) THEN
+              a(1) = d_rvertp(i2,id)
+              a(2) = d_zvertp(i2,id)
+            ELSE
+              a(1) = DBLE(rvertp(i2,id))
+              a(2) = DBLE(zvertp(i2,id))
+            ENDIF
             a(3) = 0.0D0
             newsrf%ivtx(2) = AddVertex(a) 
             newobj%iside(iside) = AddSurface(newsrf)
@@ -1550,8 +2468,8 @@ c                z1 = (1.0 - frac) * L
             CASE (4:7) ! Target chamber: fancy
               frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
               frac2 = DBLE(ik  ) / DBLE(nks(ir)) 
-              frac1 = SIGN(0.5,frac1-0.5)*(ABS(frac1-0.5)/0.5)**1.00+0.5
-              frac2 = SIGN(0.5,frac2-0.5)*(ABS(frac2-0.5)/0.5)**1.00+0.5
+              frac1=SIGN(.5D0,frac1-.5D0)*(ABS(frac1-0.5)/0.5)**1.00+0.5
+              frac2=SIGN(.5D0,frac2-.5D0)*(ABS(frac2-0.5)/0.5)**1.00+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
           ENDSELECT
@@ -3342,6 +4260,7 @@ c ========================================================================
 c
       SUBROUTINE ReadGeneralisedGrid_OSM(gridunit,ik,ir,
      .                                   rshift,zshift,indexiradj)
+      USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
       IMPLICIT none
@@ -3372,6 +4291,18 @@ c
       irtrap     = grid_load%irtrap
       nrs        = grid_load%nrs
       nks(1:nrs) = grid_load%nks(1:nrs)
+      psitarg(1:nrs,1) = grid_load%psin(1:nrs)
+      psitarg(1:nrs,2) = psitarg(1:nrs,1)
+
+      IF (irsep2.EQ.-1) irsep2 = irsep  ! *** is this OK? ***
+
+
+      write(0,*) 'irsep1 ',irsep
+      write(0,*) 'irsep2 ',irsep2
+      write(0,*) 'irwall1',irwall
+      write(0,*) 'irtrap1',irtrap
+      write(0,*) 'nrs1   ',nrs
+
 
       id = 0
       CALL ALLOC_GRID(MAXNKS,MAXNRS)
@@ -3405,6 +4336,9 @@ c...  Find IKTO,IKTI:
       IF (ikto.EQ.-1.OR.ikti.EQ.-1)
      .  CALL ER('Readgeneralisedgrid','IKTI and/or IKTO not found',*99)
 
+      CALL OutputData(85,'JUST FINISHED LOADING OSM GRID')
+
+
 c...  Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
 c      CALL InsertRing(1          ,BEFORE,PERMANENT)
 c      CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
@@ -3416,16 +4350,40 @@ c     MAXKPTS
 c     MAXRINGS
 c     CUTRING
 c
-      IF (ikto.EQ.0) THEN
-        nopriv = .TRUE.
-        CALL InsertRing(1  ,BEFORE,PERMANENT)
-        CALL InsertRing(nrs,AFTER ,PERMANENT)
+      IF (opt%f_grid_format.EQ.2) THEN
+
+        IF (ikto.EQ.0) THEN
+          STOP 'NOT READY YET, HERE!'
+          nopriv = .TRUE.
+          CALL InsertRing(1  ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs,AFTER ,PERMANENT)
+        ELSE
+          nopriv = .FALSE.
+c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+          CALL InsertRing(1       ,BEFORE,PERMANENT)
+          CALL InsertRing(irwall+0,AFTER ,PERMANENT)
+          CALL InsertRing(irwall+1,BEFORE,PERMANENT)
+        ENDIF
+
+c        WRITE(0,*) '-------------'
+c        WRITE(0,*) '--GRID HACK--'
+c        WRITE(0,*) '-------------'
+c        irwall = irwall + 1
+c        irtrap = irwall + 1
       ELSE
-        nopriv = .FALSE.
-c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
-        CALL InsertRing(1          ,BEFORE,PERMANENT)
-        CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
-        CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+c...    This is fine for SONNET grids, where the number of core and PFZ
+c       rings are the same:
+        IF (ikto.EQ.0) THEN
+          nopriv = .TRUE.
+          CALL InsertRing(1  ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs,AFTER ,PERMANENT)
+        ELSE
+          nopriv = .FALSE.
+c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
+          CALL InsertRing(1          ,BEFORE,PERMANENT)
+          CALL InsertRing(nrs-irsep+2,AFTER ,PERMANENT)
+          CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
+        ENDIF
       ENDIF
 
       cutpt1     = ikto
@@ -3434,6 +4392,8 @@ c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxkpts    = nks(irsep)
       maxrings   = irwall
       indexiradj = 1
+
+      write(0,*) 'cut,max',cutring,maxrings
 
       IF (.TRUE.) THEN
 c        id = 0
@@ -3523,7 +4483,6 @@ c...  For consistency with original SONNET code in tau.d6a:
       DEALLOCATE(imap)
 
 
-
       RETURN
  97   CALL ER('ReadGeneralisedGrid_OSM','Unexpected end of file',*99)
  99   STOP
@@ -3531,3 +4490,71 @@ c...  For consistency with original SONNET code in tau.d6a:
 c
 c ======================================================================
 c
+c subroutine: FindGridBreak
+c
+c Note - there are no virtual rings at this point -- should add them first?
+c
+c
+      SUBROUTINE FindGridBreak
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+
+      INTEGER i1
+
+c... dicy...
+      irbreak = MAXNRS
+c...  ...
+      DO i1 = 2, grdntseg(1,IKLO)
+        IF (grdtseg(i1,1,IKLO).NE.grdtseg(i1-1,1,IKLO)+1) THEN
+          irbreak = grdtseg(i1-1,1,IKLO) + 1
+          EXIT
+        ENDIF
+      ENDDO
+c...  Search though the target regions and select the first one that
+c     does not end on a virtual ring (which is always IRWALL here):
+      IF (grdtseg(grdntseg(1,IKLO),1,IKLO)+1.LT.irbreak.AND.  ! * NOT TESTED*
+     .    grdntreg(IKLO).GT.2) THEN
+        DO i1 = 2, grdntreg(IKLO) 
+          IF (grdtseg(1,i1,IKLO).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKLO)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+c...  ...
+      DO i1 = 2, grdntseg(1,IKHI)
+        IF (grdtseg(i1,1,IKHI).NE.grdtseg(i1-1,1,IKHI)+1.AND. 
+     .      grdtseg(i1-1,1,IKHI)+1.LT.irbreak) THEN
+          irbreak = grdtseg(i1-1,1,IKHI) + 1
+          EXIT
+        ENDIF
+      ENDDO
+      IF (grdtseg(grdntseg(1,IKHI),1,IKHI)+1.LT.irbreak.AND.
+     .    grdntreg(IKHI).GT.2) THEN
+        DO i1 = 2, grdntreg(IKHI) 
+c          WRITE(fp,*) '???',i1,grdtseg(1,i1,IKHI),irtrap
+          IF (grdtseg(1,i1,IKHI).NE.irtrap) THEN 
+            irbreak = grdtseg(1,i1,IKHI)
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (irbreak.EQ.MAXNRS) irbreak = 0
+
+c...  Assign NBR:
+      IF     (irbreak.EQ.0) THEN
+        nbr = 0
+      ELSEIF (irbreak.LT.irwall) THEN
+        nbr = irwall - irbreak
+      ELSE
+        nbr = nrs - irbreak + 1
+      ENDIF
+
+      RETURN
+ 99   STOP
+      END

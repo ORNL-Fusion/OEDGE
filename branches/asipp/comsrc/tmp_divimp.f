@@ -1,4 +1,752 @@
+c
+c
+c ======================================================================
+c ======================================================================
+c ======================================================================
+c
+c subroutine: LoadRibbonData
+c
+      SUBROUTINE divLoadRibbonData
+      USE mod_sol28_io
+      USE mod_divimp
+      IMPLICIT none
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
 
+
+      LOGICAL osmGetLine
+
+      INTEGER       fp,i,j,n,ntrace,idum1,i1,i2,iring,itrace,count,cnt,
+     .              next_ring,bump1,bump2,store_i,store_i1,store_i2
+      LOGICAL       status,cont,debug
+      REAL          s1,s2,width,limit,location,diff,mindiff,a,b,c,d,
+     .              depth,r1,r2,z1,z2,factor
+      CHARACTER     file*256,buffer*1024,tag*1024
+      CHARACTER*256 buffer_array(100)
+
+      INTEGER ik,ir,id,k
+      REAL    brat,dist(0:MAXNKS),s3,s4,frac,length
+
+      INTEGER, PARAMETER :: MAX_NTRACE = 1000, MAX_NPOINTS = 100
+
+      TYPE :: type_ribbon
+         REAL*4    :: version
+         INTEGER*4 :: ntrace
+         REAL*4    :: rho     (MAX_NTRACE)
+         INTEGER*4 :: ntangent(MAX_NTRACE)
+      ENDTYPE type_ribbon
+
+      TYPE(type_ribbon) :: ribbon
+
+      TYPE :: type_trace
+         INTEGER*4 :: n
+         INTEGER*4 :: ntangent
+         INTEGER*4 :: code  (MAX_NPOINTS)
+         INTEGER*4 :: bump  (MAX_NPOINTS)
+         REAL*4    :: rho   
+         REAL*4    :: s     (MAX_NPOINTS)
+         REAL*4    :: impact(MAX_NPOINTS)
+      ENDTYPE type_trace
+
+      TYPE(type_trace), ALLOCATABLE :: trace(:)
+
+
+      TYPE :: type_ring
+         INTEGER*4 :: itrace(2)
+         INTEGER*4 :: bump  (2)
+         INTEGER*4 :: link    
+         INTEGER*4 :: bottom
+         INTEGER*4 :: scan
+         REAL*4    :: srange(2)
+         REAL*4    :: target_r(4)
+         REAL*4    :: target_z(4)
+         REAL*4    :: pol     (100)
+      ENDTYPE type_ring
+
+      INTEGER nring
+      TYPE(type_ring) :: ring(MAXNRS)
+
+
+      debug = .FALSE.
+
+
+c...  Load the ribbon data:
+c     ==================================================================
+
+      fp   = 99
+      file = TRIM(opt_div%rib_file) ! 'i-rib-9000a.trace.test_000'
+      OPEN(UNIT=fp,FILE=file,ACCESS='SEQUENTIAL',STATUS='OLD',ERR=98)
+
+      SELECTCASE (opt_div%rib_format)
+c       ----------------------------------------------------------------       
+        CASE (1)
+          DO WHILE(osmGetLine(fp,buffer,WITH_TAG))
+            DO i = 2, LEN_TRIM(buffer)
+              IF (buffer(i:i).EQ.'}') EXIT
+            ENDDO
+            tag = buffer(2:i-1)
+            IF (debug) WRITE(0,*) 'TAG:',TRIM(tag)
+            SELECTCASE (TRIM(tag))
+c             ----------------------------------------------------------
+              CASE ('VERSION')
+                 status = osmGetLine(fp,buffer,NO_TAG)
+                 READ(buffer,*) ribbon%version
+c             ----------------------------------------------------------
+              CASE ('TRACE SUMMARY')
+                 status = osmGetLine(fp,buffer,NO_TAG)
+                 READ(buffer,*) ribbon%ntrace
+                 DO i = 1, ribbon%ntrace
+                   status = osmGetLine(fp,buffer,NO_TAG)
+                   CALL SplitBuffer(buffer,buffer_array) 
+                   READ(buffer_array(2),*) ribbon%rho(i)
+                   READ(buffer_array(9),*) ribbon%ntangent(i)
+                 ENDDO
+c             ----------------------------------------------------------
+              CASE ('TRACE DATA')
+                 ALLOCATE(trace(ribbon%ntrace))
+                 DO i = 1, ribbon%ntrace
+                   trace(i)%rho      = ribbon%rho     (i)
+                   trace(i)%ntangent = ribbon%ntangent(i)
+                   status = osmGetLine(fp,buffer,NO_TAG)
+                   READ(buffer,*) idum1,trace(i)%n
+                   DO j = 1, trace(i)%n
+                     status = osmGetLine(fp,buffer,NO_TAG)
+                     CALL SplitBuffer(buffer,buffer_array) 
+                     READ(buffer_array(2),*) trace(i)%code  (j)
+                     READ(buffer_array(3),*) trace(i)%bump  (j)
+                     READ(buffer_array(4),*) trace(i)%s     (j)
+                     READ(buffer_array(8),*) trace(i)%impact(j)
+                   ENDDO
+                 ENDDO
+c             ----------------------------------------------------------
+              CASE DEFAULT
+                CALL ER('divLoadRibbonGrid','Unknown tag',*99)
+c             ----------------------------------------------------------
+            ENDSELECT
+          ENDDO
+c       ----------------------------------------------------------------       
+        CASE DEFAULT
+          CALL ER('divLoadRibbonData','Unrecognized format',*99)
+      ENDSELECT
+      CLOSE(fp)
+
+
+c...  Build a grid:
+c     ==================================================================
+
+c...        
+      ring(:)%itrace(1) = -1
+      ring(:)%itrace(2) = -1
+      ring(:)%link      = -1
+      ring(:)%bottom    = -1
+      ring(:)%scan      = -1
+
+      nring = 1
+      ring(nring)%itrace(1) = 1
+      ring(nring)%bump  (1) = trace(1)%bump(1)
+      ring(nring)%bump  (2) = trace(1)%bump(trace(1)%n)
+      ring(nring)%target_r(4) = trace(1)%rho
+      ring(nring)%target_z(4) = trace(1)%s(1)
+      ring(nring)%target_r(1) = trace(1)%rho
+      ring(nring)%target_z(1) = trace(1)%s(trace(1)%n)
+
+      ntrace = ribbon%ntrace
+ 
+      iring = 1
+
+c...  Build up (potentially partial) rungs 
+      cnt = 0
+
+      cont = .TRUE.
+      DO WHILE (cont)
+        cont = .FALSE.
+
+        cnt = cnt + 1
+c        IF (cnt.EQ.10) STOP 'cnt stop'
+
+        ring(iring)%scan = 1
+
+c...    Scan inward to find the next tangency point:
+        itrace = ring(iring)%itrace(1)
+
+        s1 = ring(iring)%target_z(4)
+        s2 = ring(iring)%target_z(1)
+
+        IF (debug) WRITE(0,*) '====================================='
+        IF (debug) WRITE(0,*) 'iring,itrace,s1,s2=',iring,itrace,s1,s2
+
+        DO i = itrace+1, ntrace
+          n = trace(i)%n
+c...      Find a tangency point in the S-range of interest:
+          DO j = 1, n
+c            WRITE(0,*) 'scan: ',j,trace(i)%code(j),trace(i)%s(j)
+c            IF (trace(i)%code(j).EQ.0.AND.
+c     .          trace(i)%s(j).GE.s1.AND.trace(i)%s(j).LE.s2) EXIT
+            IF (trace(i)%code(j).EQ.0.AND.
+     .          trace(i)%s(j).GE.s1.AND.trace(i)%s(j).LE.s2) THEN
+c             Scan to either side of the tangency point to see if the
+c             bump value is the same as for the origin trace:
+              status = .TRUE.
+              DO k = j-1, 1
+                IF (trace(i)%code(k).EQ.0.OR.
+     .              trace(i)%code(k).EQ.1.OR.
+     .              trace(i)%code(k).EQ.2.OR.
+     .              trace(i)%code(k).EQ.5) THEN
+                  IF (trace(i)%bump(k).NE.ring(iring)%bump(1))
+     .              status = .FALSE.
+                  EXIT
+                ENDIF
+              ENDDO               
+              DO k = j+1, n
+                IF (trace(i)%code(k).EQ.0.OR.
+     .              trace(i)%code(k).EQ.1.OR.
+     .              trace(i)%code(k).EQ.2.OR.
+     .              trace(i)%code(k).EQ.5) THEN
+                  IF (trace(i)%bump(k).NE.ring(iring)%bump(2))
+     .              status = .FALSE.
+                  EXIT
+                ENDIF
+              ENDDO               
+              IF (debug) WRITE(0,*) 'tangency points found, status=',
+     .                              status
+              IF (status) EXIT
+            ENDIF
+          ENDDO
+
+          IF (j.LE.n) THEN
+c...        Suitable tangency point(s) found:
+            DO i1 = j, 1, -1
+              IF (trace(i)%code(i1).EQ.1.OR.trace(i)%code(i1).EQ.2.OR.
+     .            trace(i)%code(i1).EQ.5) EXIT
+            ENDDO
+            IF (i1.EQ.0  ) CALL ER('divRibbon...','No link 1',*99)
+            DO i2 = j, n
+              IF (trace(i)%code(i2).EQ.1.OR.trace(i)%code(i2).EQ.2.OR.
+     .            trace(i)%code(i2).EQ.5) EXIT
+            ENDDO
+            IF (i2.EQ.n+1) CALL ER('divRibbon...','No link 2',*99)
+
+            IF (debug) WRITE(0,*) '  tangency point detected, trace=',i
+            IF (debug) WRITE(0,*) '  i1,2=',i1,j,i2
+c...        Complete the ring:
+            ring(iring)%itrace  (2) = i
+            ring(iring)%target_r(3) = trace(i)%rho
+            ring(iring)%target_z(3) = trace(i)%s(i1)
+            ring(iring)%target_r(2) = trace(i)%rho
+            ring(iring)%target_z(2) = trace(i)%s(i2)
+            IF (debug) WRITE(0,*) '          == ring completed =='
+            EXIT
+          ENDIF
+        ENDDO  ! i loop
+
+c...    Find a ring that has not been completed yet:
+        DO iring = 1, nring
+          IF (ring(iring)%scan.EQ.-1) THEN
+            cont = .TRUE.
+            EXIT
+          ENDIF
+        ENDDO
+c...    No rings found, so try to make a new one:
+        IF (iring.EQ.nring+1) THEN
+          IF (debug) WRITE(0,*) 'trying to make a new ring.......'
+          DO iring = 1, nring
+            itrace = ring(iring)%itrace(2)
+            IF (ring(iring)%link.EQ.1.OR.itrace.EQ.-1) CYCLE
+            s1 = ring(iring)%target_z(3)
+            s2 = ring(iring)%target_z(2)
+            IF (debug) WRITE(0,*) '  iring,itrace      =',iring,itrace
+            IF (debug) WRITE(0,*) '  s1,s2             =',s1,s2
+            count = 0
+            n = trace(itrace)%n
+            DO i = 1, n
+              IF (trace(itrace)%code(i).NE.0 .OR.   ! looking for tangency points only
+     .            trace(itrace)%s   (i).LT.s1.OR.
+     .            trace(itrace)%s   (i).GT.s2) CYCLE
+              count = count + 1
+              ring(iring)%link = 1
+              IF (count.EQ.1) THEN
+                i2 = i
+                DO i1 = i-1, 1, -1
+                  IF (trace(itrace)%code(i1).EQ.0.OR.
+     .                trace(itrace)%code(i1).EQ.1.OR.
+     .                trace(itrace)%code(i1).EQ.2.OR.
+     .                trace(itrace)%code(i1).EQ.5) EXIT
+                ENDDO
+                IF (i1.EQ.0) CALL ER('divRibbon...','No link 3',*99)
+                nring = nring + 1
+                ring(nring)%itrace(1) = itrace
+                ring(nring)%bump  (1) = trace(itrace)%bump(i1)
+                ring(nring)%bump  (2) = trace(itrace)%bump(i2)
+                ring(nring)%target_r(4) = trace(itrace)%rho
+                ring(nring)%target_z(4) = trace(itrace)%s(i1)
+                ring(nring)%target_r(1) = trace(itrace)%rho
+                ring(nring)%target_z(1) = trace(itrace)%s(i2)
+                next_ring = nring
+              ENDIF
+              i1 = i
+              DO i2 = i+1, n
+                IF (trace(itrace)%code(i2).EQ.0.OR.
+     .              trace(itrace)%code(i2).EQ.1.OR.
+     .              trace(itrace)%code(i2).EQ.2.OR.
+     .              trace(itrace)%code(i2).EQ.5) EXIT
+              ENDDO
+              IF (i2.EQ.n+1) CALL ER('divRibbon...','No link 2',*99)
+              nring = nring + 1
+              ring(nring)%itrace(1) = itrace
+              ring(nring)%bump  (1) = trace(itrace)%bump(i1)
+              ring(nring)%bump  (2) = trace(itrace)%bump(i2)
+              ring(nring)%target_r(4) = trace(itrace)%rho
+              ring(nring)%target_z(4) = trace(itrace)%s(i1)
+              ring(nring)%target_r(1) = trace(itrace)%rho
+              ring(nring)%target_z(1) = trace(itrace)%s(i2)
+            ENDDO  ! i loop
+            IF (debug) WRITE(0,*) '  done  nring       =',nring
+            EXIT
+          ENDDO  ! iring loop
+          IF (iring.LE.nring) THEN
+            iring = next_ring
+            cont = .TRUE.
+          ENDIF
+        ENDIF
+      ENDDO
+
+c      stop 'dsfdfdd'
+
+c...  Now close all rings that weren't closed on tangency points:
+      IF (debug) WRITE(0,*)
+      DO iring = 1, nring
+        IF (ring(iring)%itrace(2).NE.-1) CYCLE
+        itrace = ring(iring)%itrace(1)
+        IF (debug) WRITE(0,*) 'here we go',iring,itrace
+        IF (debug) WRITE(0,*) '     bumps',ring(iring)%bump(1:2)
+        width = trace(itrace)%s(trace(itrace)%n) -
+     .          trace(itrace)%s(1)
+        bump1 = ring(iring)%bump(1)
+        bump2 = ring(iring)%bump(2)
+        count = 0       
+        store_i = -1
+        DO i = itrace+1, ntrace
+          status = .FALSE.
+          i1 = -1
+          i2 = -1
+          DO j = 1, trace(i)%n
+            IF     (i1.EQ.-1.AND.
+     .              (trace(i)%code(j).EQ.0.OR.
+     .               trace(i)%code(j).EQ.2.OR.
+     .               trace(i)%code(j).EQ.5)) THEN
+              i1 = j
+            ELSEIF (i1.NE.-1.AND.
+     .              (trace(i)%code(j).EQ.0.OR.
+     .               trace(i)%code(j).EQ.1.OR.
+     .               trace(i)%code(j).EQ.5)) THEN
+              i2 = j
+c              IF (debug) WRITE(0,*) '      ....checking',i,i1,i2,count
+c              IF (debug) WRITE(0,*) '                  ',
+c     .                trace(i)%bump(i1),
+c     .                trace(i)%bump(i2)
+              IF (trace(i)%bump(i1).NE.bump1.OR.
+     .            trace(i)%bump(i2).NE.bump2) THEN
+                i1 = -1
+              ELSE
+c...            Candidate identified:
+                count = count + 1
+                depth  = trace(i)%rho - trace(itrace)%rho
+                length = trace(i)%s(i2) - trace(i)%s(i1)
+c                length = trace(itrace)%s(trace(itrace)%n) - 
+c     .                   trace(itrace)%s(1)
+                factor = (depth  /  1000.0) /   ! vperp = 1000 m/s, for margin
+     .                   (length / 30000.0)     ! vparallel for ~10 eV
+
+c                IF (debug) WRITE(0,*) '          good!',depth,factor
+
+                IF (i.EQ.ntrace.OR.factor.GT.1.0) THEN
+c...              Complete the ring:
+                  ring(iring)%bottom      = 1  ! At the bottom of a PFR
+                  ring(iring)%itrace  (2) = i
+                  ring(iring)%target_r(3) = trace(i)%rho
+                  ring(iring)%target_z(3) = trace(i)%s(i1)
+                  ring(iring)%target_r(2) = trace(i)%rho
+                  ring(iring)%target_z(2) = trace(i)%s(i2)
+                  IF (debug) WRITE(0,*) '          == ring completed =='
+                  IF (debug.AND.i.EQ.ntrace) 
+     .              WRITE(0,*) '              end of line     '
+                  status = .TRUE.
+                ENDIF
+                store_i  = i
+                store_i1 = i1
+                store_i2 = i2
+                i1 = -1
+                EXIT
+              ENDIF
+            ENDIF
+          ENDDO  ! J loop (along trace)
+          IF (j.EQ.trace(i)%n+1) THEN
+c...        No valid segment was found on current trace because the 
+c           search has gone too far (past the end of the points that
+c           define the local PFR), so just use the last valid trace:
+            IF (store_i.EQ.-1) THEN
+              CALL ER('divLoadRibbonData','No valid outer ring '//
+     .                'boundary found',*99)
+            ELSE
+              ring(iring)%bottom      = 1  ! At the bottom of a PFR
+              ring(iring)%itrace  (2) = store_i
+              ring(iring)%target_r(3) = trace(store_i)%rho
+              ring(iring)%target_z(3) = trace(store_i)%s(store_i1)
+              ring(iring)%target_r(2) = trace(store_i)%rho
+              ring(iring)%target_z(2) = trace(store_i)%s(store_i2)
+              status = .TRUE.
+              IF (debug) WRITE(0,*) '          == ring saved =='
+            ENDIF
+          ENDIF
+          IF (status) EXIT
+        ENDDO  ! I loop (over traces)
+      ENDDO  ! IRING loop
+
+c      stop
+
+c...  Region of interest:
+      r1 = opt_div%rib_r1
+      z1 = opt_div%rib_z1
+      r2 = opt_div%rib_r2
+      z2 = opt_div%rib_z2
+
+c      debug = .TRUE.
+
+c...  Decide if rings are too wide, and if yes, split them:
+c     ------------------------------------------------------------------
+      IF (opt_div%rib_rad_opt.NE.0) THEN
+c        r1 =  0.20
+c        z1 = -5.00
+c        r2 =  0.35
+c        z2 =  5.00
+c        b = 0.30      ! location of minimum
+c        c = 0.10      ! spatial scale
+c        d = 0.01      ! minimum width
+c        a = 0.05 - d  ! maximum width
+
+c...    Width distribution follows a shifted Gaussian:
+c         width_limit = a * exp(-((x-b)^2)/(2.0*c^2)) + d
+        b  = opt_div%rib_rad_b      ! location of minimum
+        c  = opt_div%rib_rad_c      ! spatial scale
+        d  = opt_div%rib_rad_d      ! minimum width
+        a  = opt_div%rib_rad_a - d  ! maximum width
+
+        cont = .TRUE.
+        DO WHILE (cont)
+          cont = .FALSE.
+          DO iring = 1, nring
+c            if (iring.EQ.1) debug = .TRUE.
+c            if (iring.GT.1) debug = .false.
+            i1 = ring(iring)%itrace(1)
+            i2 = ring(iring)%itrace(2)
+            IF (debug) write(0,*) '-->',iring,i1,i2
+            IF (i2.EQ.i1+1) CYCLE
+            width    = trace(i2)%rho - trace(i1)%rho
+            location = 0.5 * (trace(i1)%rho + trace(i2)%rho)
+            s1 = ring(iring)%target_z(1)
+            s2 = ring(iring)%target_z(4)
+            IF (location.GE.r1.AND.location.LE.r2.AND.
+     .          ((s1.GE.z1.AND.s1.LE.z2).OR.
+     .           (s2.GE.z1.AND.s2.LE.z2))) THEN
+              limit = EXP(-((location - b)**2) / (2.0 * c**2))
+              limit = a * (1.0 - limit) + d
+              IF (debug) WRITE(0,*) '---- rio ---',width,limit
+            ELSE
+              limit = a + d
+            ENDIF
+            IF (debug) WRITE(0,*) 'refining....',
+     .                             iring,width,limit,location
+            IF (width.GT.limit) THEN
+c...          Make space:
+              DO i = nring, iring+1, -1
+                ring(i+1) = ring(i)
+              ENDDO
+              nring = nring + 1
+c...          Find trace that's in the middle of the current ring:
+              mindiff = 1.0E+6
+              DO j = i1+1, i2-1 
+                diff = ABS(trace(j)%rho - location)
+                IF (diff.LT.mindiff) THEN
+                  mindiff = diff
+                  i = j
+                ENDIF
+              ENDDO
+              IF (debug) WRITE(0,*) '    split attempt',i1,i,i2
+c...          Find sub-region of the trace:
+              bump1 = ring(iring)%bump(1)
+              bump2 = ring(iring)%bump(2)
+              i1 = -1
+              i2 = -1
+              DO j = 1, trace(i)%n
+                IF     (i1.EQ.-1.AND.
+     .                  (trace(i)%code(j).EQ.0.OR.
+     .                   trace(i)%code(j).EQ.2.OR.
+     .                   trace(i)%code(j).EQ.5)) THEN
+                  i1 = j
+                ELSEIF (i1.NE.-1.AND.
+     .                  (trace(i)%code(j).EQ.0.OR.
+     .                   trace(i)%code(j).EQ.1.OR.
+     .                   trace(i)%code(j).EQ.5)) THEN
+                  i2 = j
+                  IF (trace(i)%bump(i1).NE.bump1.OR.
+     .                trace(i)%bump(i2).NE.bump2) THEN
+                    i1 = -1
+                  ELSE
+                    IF (debug) WRITE(0,*) '          applied',i,i1,i2
+c...                Make new ring:
+                    ring(iring+1) = ring(iring)
+                    ring(iring+1)%itrace  (1) = i
+                    ring(iring+1)%target_r(4) = trace(i)%rho
+                    ring(iring+1)%target_z(4) = trace(i)%s(i1)
+                    ring(iring+1)%target_r(1) = trace(i)%rho
+                    ring(iring+1)%target_z(1) = trace(i)%s(i2)
+c...                Adjust old ring:
+                    ring(iring  )%bottom      = -2
+                    ring(iring  )%itrace  (2) = i
+                    ring(iring  )%target_r(3) = trace(i)%rho
+                    ring(iring  )%target_z(3) = trace(i)%s(i1)
+                    ring(iring  )%target_r(2) = trace(i)%rho
+                    ring(iring  )%target_z(2) = trace(i)%s(i2)
+                    cont = .TRUE.
+                    EXIT
+                  ENDIF
+                ENDIF
+              ENDDO  ! J loop (along trace)
+            ENDIF
+            IF (cont) EXIT
+          ENDDO  ! IRING loop
+        ENDDO  ! CONT loop
+      ENDIF
+
+c      write(0,*) 's,z=',r1,r2,z1,z2
+c      debug = .FALSE.
+
+c
+c...  Make the DIVIMP grid:
+c     ==================================================================
+      IF (.TRUE.) THEN
+        brat      = 1.0
+        maxrings  = nring
+
+        id = 0
+
+        DO ir = 1, maxrings
+          iring = ir
+
+          i1 = ring(iring)%itrace(1)
+          i2 = ring(iring)%itrace(2)
+          location = 0.5 * (trace(i1)%rho + trace(i2)%rho)
+          s1 = ring(iring)%target_z(1)
+          s2 = ring(iring)%target_z(4)
+
+
+c...      Setup the poloidal cell boundaries:
+c         --------------------------------------------------------------
+          IF (opt_div%rib_pol_opt.NE.0.AND.ring(ir)%bottom.NE.1.AND.
+     .        location.GE.r1.AND.location.LE.r2.AND.
+     .        ((s1.GE.z1.AND.s1.LE.z2).OR.
+     .         (s2.GE.z1.AND.s2.LE.z2))) THEN
+c need to process each end of the ring separately!
+            n = opt_div%rib_pol_n  ! minimum number of cells on each ring
+            a = opt_div%rib_pol_a  ! exponent for log distribution from target to midpoint
+            b = opt_div%rib_pol_b  ! required spatial scale at the target, i.e. poloidal size of the cell
+            c = opt_div%rib_pol_c  ! maximum cell size - absolute
+            d = opt_div%rib_pol_d  ! maximum cell size - relative
+          ELSE
+            n = opt_div%rib_pol_n_def
+            a = opt_div%rib_pol_a_def
+            b = opt_div%rib_pol_b_def
+            c = opt_div%rib_pol_c_def
+            d = opt_div%rib_pol_d_def
+          ENDIF
+ 
+c...      Iterate until the near-target spatial requirement is met:
+          length = ABS(ring(iring)%target_z(1) - 
+     .                 ring(iring)%target_z(4))
+
+          cont = .TRUE.
+          DO WHILE (cont)
+            cont = .FALSE.
+            DO i = 0, n
+              dist(i) = REAL(i) / REAL(n)
+            ENDDO
+            dist(0:n) = dist(0:n) - 0.5
+            dist(0:n) = (ABS(dist(0:n))**a) * SIGN(1.0,dist(0:n)) 
+            dist(0:n) = (dist(0:n) / dist(n)) * 0.5 + 0.5
+            j = NINT( (dist(1) * length) / b)
+            IF (j.GT.1) THEN
+              IF (n.LT.NINT(0.5*REAL(MAXNKS))) THEN
+                n = MIN(j * n, NINT(0.5*REAL(MAXNKS)))
+                cont = .TRUE.
+              ELSEIF (a.GT.0.01) THEN
+                a = MAX(0.01,a*0.3)
+                cont = .TRUE.
+c              ELSEIF (n.LT.MAXNKS-10) THEN
+c                n = MIN(j * n, MAXNKS - 10)
+c                cont = .TRUE.
+              ENDIF
+            ENDIF        
+          ENDDO
+c...      Check that the maximum cell size constraint is satisified:
+c          write(0,*) 'max cell size=',c,d
+          cont = .TRUE.
+          DO WHILE (cont)
+            cont = .FALSE.
+            DO i = 1, n
+c              IF (((dist(i)-dist(i-1))*length.GT.c)) THEN
+              IF (((dist(i)-dist(i-1))*length.GT.c).OR.
+     .            ((dist(i)-dist(i-1))       .GT.d)) THEN
+c                IF ((dist(i)-dist(i-1)).GT.d) THEN
+c                  write(0,*) 'relativeness'
+c                ENDIF
+                DO j = n+1, i+1, -1
+                  dist(j) = dist(j-1)
+                ENDDO
+                dist(i) = 0.5 * (dist(i-1) + dist(i+1))
+                n = n + 1
+                cont = .TRUE.
+c                IF (debug) WRITE(0,*) 'ref',dist(0:n) 
+              ENDIF
+              IF (n.GT.MAXNKS-5) THEN
+                write(0,*) 'stopping early'
+                cont = .FALSE.
+                EXIT
+              ENDIF
+            ENDDO
+          ENDDO
+c          write(0,*) 'dist',dist(0:n) * length
+          nks(ir) = n
+c
+c...      Add poloidal cuts at tangency points:
+c         --------------------------------------------------------------
+          IF (ring(iring)%link.EQ.1) THEN
+            s1 = ring(iring)%target_z(2)
+            s2 = ring(iring)%target_z(3)
+            itrace = ring(iring)%itrace(2)
+c            IF (debug) WRITE(0,'(A,15F7.3)') '  dist',s2,s1
+            DO i = 1, trace(itrace)%n
+              IF (trace(itrace)%code(i).NE.0.OR.
+     .            trace(itrace)%s   (i).LT.s2.OR.
+     .            trace(itrace)%s   (i).GT.s1) CYCLE   
+               frac = (trace(itrace)%s(i) - s1) / (s2 - s1)
+c              IF (debug) WRITE(0,'(A,15F7.3)') '  frac',frac
+c...          Insert the point:
+              DO j = 0, nks(ir)-1
+                IF (frac.GT.dist(j).AND.frac.LT.dist(j+1)) THEN
+                  DO k = nks(ir), j+1, -1
+                    dist(k+1) = dist(k)
+                  ENDDO
+                  dist(j+1) = frac
+                  nks(ir) = nks(ir) + 1
+                  EXIT
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDIF
+c          IF (debug) WRITE(0,'(A,15F7.3)') '  dist',dist(1:nks(ir)) 
+
+          i1 = ring(iring)%itrace(1)
+          i2 = ring(iring)%itrace(2)
+
+c          IF (debug) WRITE(0,*) 'go...',ir,i1,i2
+
+          psitarg(ir,1) = 0.5 * (trace(i1)%rho + trace(i2)%rho)
+          psitarg(ir,2) = psitarg(ir,1)
+
+          idring(ir) = TARTOTAR
+
+          DO ik = 1, nks(ir)
+            id = id + 1
+
+            bratio(ik,ir) = brat
+            kbfs  (ik,ir) = 1.0 / brat
+            bts   (ik,ir) = cbphi 
+
+            korpg (ik,ir) = id
+            nvertp(id   ) = 4
+
+            s1 = ring(iring)%target_z(1)
+            s2 = ring(iring)%target_z(2)
+            s3 = ring(iring)%target_z(3)
+            s4 = ring(iring)%target_z(4)
+ 
+            IF (ik.EQ.1) THEN
+              rvertp(1,id) = trace(i1)%rho
+              rvertp(2,id) = trace(i2)%rho
+              zvertp(1,id) = s1
+              zvertp(2,id) = s2
+            ELSE
+              rvertp(1,id) = rvertp(4,id-1)
+              rvertp(2,id) = rvertp(3,id-1)
+              zvertp(1,id) = zvertp(4,id-1)
+              zvertp(2,id) = zvertp(3,id-1)
+            ENDIF 
+
+            rvertp(3,id) = rvertp(2,id)
+            rvertp(4,id) = rvertp(1,id)
+            zvertp(3,id) = (1.0 - dist(ik)) * s2 + dist(ik) * s3
+            zvertp(4,id) = (1.0 - dist(ik)) * s1 + dist(ik) * s4
+
+            rs(ik,ir) = 0.0
+            zs(ik,ir) = 0.0
+            DO i1 = 1, nvertp(id)
+              rs(ik,ir) = rs(ik,ir) + rvertp(1,id)
+              zs(ik,ir) = zs(ik,ir) + zvertp(1,id)
+            ENDDO
+            rs(ik,ir) = rs(ik,ir) / REAL(nvertp(id))
+            zs(ik,ir) = zs(ik,ir) / REAL(nvertp(id))
+
+          ENDDO  ! IK
+        ENDDO  ! IR
+
+        npolyp  = id
+        vpolmin = (MAXNKS*MAXNRS - npolyp) / 2 + npolyp
+        vpolyp  = vpolmin
+       
+        ikto = 2
+        ikti = 3
+       
+        rves  = 0
+        rvesm = 0
+       
+        irsep  = 1
+        irwall = maxrings 
+        irtrap = irwall
+        nrs    = irwall
+        nbr    = 0
+       
+c...    Necessary..? 
+        cutring = 1
+        cutpt1 = ikto
+        cutpt2 = ikti
+       
+
+        CALL OutputData(87,'Ribbon factory')
+
+
+      ENDIF
+
+
+
+
+
+
+
+      IF (ALLOCATED(trace)) DEALLOCATE(trace)
+
+
+      WRITE(0,*) 'VERSION!',ribbon%version
+      WRITE(0,*) ' FILE= ',TRIM(file)
+
+      RETURN
+ 98   CALL ER('divLoadRibbonGrid','Data file not found',*99)
+ 99   WRITE(0,*) ' FILE= ',TRIM(file)
+      WRITE(0,*) ' TAG = ',TRIM(tag)
+      STOP
+      END
 c
 c ======================================================================
 c
@@ -217,7 +965,7 @@ c      x1 = x1 - dradius
         y1 = 0.0
         z1 = 0.0
 
-        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                             index,fraction,ring,10000)
         IF (ring.NE.val_ring) 
      .    CALL ER('ProcessFluxTube','Invalid ring A',*99)
@@ -236,7 +984,7 @@ c        x1 = x1 + dradius
 c        x1 = x1 - dradius
         IF (mode.EQ.1) THEN
           x1 = rseparatrix + rvalue(1)
-          CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+          CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                               index,fraction,ring,10000)
           IF (ring.NE.val_ring) 
      .      CALL ER('ProcessFluxTube','Invalid ring B',*99)
@@ -265,7 +1013,7 @@ c...      Rotate these points toroidally:
 
 c        x1 = x1 + 2.0 * dradius
         x1 = rseparatrix + rvalue(3)
-        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,n,v,
+        CALL TraceFieldLine_DIVIMP(x1,y1,z1,2,1,len1,len2,0.0D0,n,v,
      .                             index,fraction,ring,10000)
         IF (ring.NE.val_ring) 
      .    CALL ER('ProcessFluxTube','Invalid ring C',*99)
@@ -698,7 +1446,7 @@ c
 c subroutine: TraceFieldLine_DIVIMP
 c
       SUBROUTINE TraceFieldLine_DIVIMP(xin,yin,zin,mode,chop,
-     .                                 length1,length2,
+     .                                 length1,length2,rlimit,
      .                                 n,v,index,fraction,ring,MAXN)
       IMPLICIT none
 
@@ -708,27 +1456,25 @@ c
       INCLUDE 'slout'
       INCLUDE 'slcom'
 
-      INTEGER FindMidplaneCell
-      REAL    FindSeparatrixRadius
-
       INTEGER, INTENT(IN) :: mode,MAXN,chop
       REAL   , INTENT(IN) :: xin,yin,zin
-      REAL*8              :: length1,length2
-c      INTEGER, INTENT(IN) :: region,mode,MAXN
-c      REAL   , INTENT(IN) :: rad_coord,in_phi
+      REAL*8              :: length1,length2,rlimit
       INTEGER, INTENT(OUT) :: n,index(MAXN),ring
       REAL   , INTENT(OUT) :: fraction(MAXN)
       REAL*8 , INTENT(OUT) :: v(3,MAXN)
 
+      INTEGER FindMidplaneCell,CalcPoint
+      LOGICAL InCell
+      REAL    FindSeparatrixRadius, ATAN2C
 
-      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike
+      INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,ik1,ir1,ike,status
       LOGICAL finished,debug
-      REAL    rsep
+      REAL    rsep,rin
       REAL*8  r(2),z(2),deltar,deltaz,deltac,deltap,phi,dphi,rval,pval,
      .        frac1,frac2,angle1,angle2,brat,rfrac,r12frac,z12frac,
      .        rhoin,phiin,frac,rpos,rvalmin,zvalmin,zvalmax,
-     .        len1,len2,lenmax1,lenmax2,
-     .        dpol,dtor,alpha
+     .        len1,len2,lenmax1,lenmax2,p1(2),p2(2),t,ar,az,br,bz,
+     .        dpol,dtor,alpha,origin(3),d1,d2
 
       REAL       TOL
       PARAMETER (TOL=1.0D-06)
@@ -739,29 +1485,28 @@ c      REAL   , INTENT(IN) :: rad_coord,in_phi
 
       dphi = 0.5 !  1.0 ! 5.0 ! 10.0  ! Make this an adjustable parameter...
 
-      IF (yin.NE.0.0) 
-     .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
+c      IF (yin.NE.0.0) 
+c     .  CALL ER('TraceFieldLine_DIVIMP','Sorry, midplane only',*99)
 
 c...  Convert from Cartesean coordinates to RHO and PHI:
       rsep = FindSeparatrixRadius(1)
       rhoin = DBLE(SQRT(xin**2 + zin**2) - rsep)
-      IF (ABS(xin).LT.1.0E-06) THEN
-        IF (zin.GT.0.0) THEN
-          phiin = 90.0
-        ELSE
-          phiin = 270.0
-        ENDIF
-      ELSE
-        phiin = DBLE(ATAN(ABS(zin / xin)) * 180.0 / PI)
-        IF (xin.LT.0.0.and.zin.GT.0.0) phiin = 180.0 - phiin
-        IF (xin.LT.0.0.and.zin.LT.0.0) phiin = 180.0 + phiin
-        IF (xin.GT.0.0.and.zin.LT.0.0) phiin = 360.0 - phiin
-      ENDIF
-c      rhoin = xin  ! *** TEMP ***
-c      phiin = zin  ! *** TEMP ***
-c      WRITE(0,*) '==INPUT:',rhoin,phiin
-c      WRITE(0,*) '       :',xin,zin,rsep
-c      STOP 'sdfsdf'
+      phiin = DBLE(ATAN2C(zin,xin) * 180.0 / PI)
+      IF (phiin.LT.0.0D0) phiin = phiin + 360.0D0
+
+c      IF (ABS(xin).LT.1.0E-06) THEN
+c        IF (zin.GT.0.0) THEN
+c          phiin = 90.0
+c        ELSE
+c          phiin = 270.0
+c        ENDIF
+c      ELSE
+c        phiin = DBLE(ATAN(ABS(zin / xin)) * 180.0 / PI)
+c        IF (xin.LT.0.0.and.zin.GT.0.0) phiin = 180.0 - phiin
+c        IF (xin.LT.0.0.and.zin.LT.0.0) phiin = 180.0 + phiin
+c        IF (xin.GT.0.0.and.zin.LT.0.0) phiin = 360.0 - phiin
+c      ENDIF
+
 
       IF (debug) THEN
         WRITE(0,*) 'TRACE  MODE,CHOP : ',mode,chop
@@ -814,72 +1559,161 @@ c          WRITE(0,*) 'ZVALs:',zvalmin,zvalmax
           zvalmax =  1.0D+20
           lenmax1 =  length1
           lenmax2 =  length2
+        CASE(7)  ! No trace below or above vertical boundaries, or inside RLIMIT
+          rvalmin =  rlimit
+          zvalmin =  length1
+          zvalmax =  length2
+          lenmax1 =  1.0D+20
+          lenmax2 =  1.0D+20
         CASE DEFAULT
           CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
       ENDSELECT
 c      WRITE(0,*) 'CHOP:',chop,rvalmin,zvalmin,zvalmax
 
 c...  Find where we are on the outer midplane:
-      DO ir = 2, irwall
+      IF (.TRUE.) THEN
+        rin = SQRT(xin**2 + zin**2)
+        DO ir = 2, irwall
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          DO ik = 1, nks(ir)
+            IF (InCell(ik,ir,rin,yin)) EXIT
+          ENDDO
+          IF (ik.NE.nks(ir)+1) EXIT
+        ENDDO
+        IF (ir.EQ.irwall+1) 
+     .    CALL ER('TraceFieldLine_DIVIMP','Cell indices not found',*99)
 
-c...    For now, ignore the inner SOL for a CDN grid (CONNECTED
-c       currently assigned/hacked in FindSeparatrixRadius, which
-c       has to be called before this check is made, nasty):
-        IF (connected.AND.ir.GE.irsep.AND.ir.LT.irsep2) CYCLE
+c       Find the distance from the point in question to each of the cell sides:
+        id = korpg(ik,ir)
+        ar = DBLE(rvertp(1,id))
+        az = DBLE(zvertp(1,id))
+        br = DBLE(rvertp(4,id))
+        bz = DBLE(zvertp(4,id))
+        status = CalcPoint(ar,az,br,bz,DBLE(rin),DBLE(yin),t)
+        p1(1) = ar + t * (br - ar)
+        p1(2) = az + t * (bz - az)
 
-        IF (rho(ir,CELL1).EQ.0.0) CYCLE
+c        WRITE(0,*) ':',t,status
 
-        IF (debug) WRITE(0,*) 'TRACE IR SCAN : ',
-     .    ir,SNGL(rhoin),rho(ir,SIDE14),rho(ir,SIDE23)
+c        WRITE(0,*) 'IK,IR  :',ik,ir
+c        WRITE(0,*) 'AR,AZ  :',ar,az
+c        WRITE(0,*) 'BR,BZ  :',br,bz
+c        WRITE(0,*) 'P1     :',p1(1:2)
 
-        IF (rhoin.GE.DBLE(rho(ir,SIDE14)).AND.
-     .      rhoin.LT.DBLE(rho(ir,SIDE23))) THEN
-c...      Find midplane cell:   ! *** NEED TO DO THIS SO THAT PHI IS REFERENCED PROPERLY TO PHI=0 AT THE OUTER MIDPLANE ***
-          ikm = -1              !     NEED A BETTER WAY...          
-          ikm = FindMidplaneCell(ir)
-          IF (ikm.EQ.-1) CALL ER('TraceFieldLine_DIVIMP','No '//
-     .                           'midplane cell found',*99)
+        ar = DBLE(rvertp(2,id))
+        az = DBLE(zvertp(2,id))
+        br = DBLE(rvertp(3,id))
+        bz = DBLE(zvertp(3,id))
+        status = CalcPoint(ar,az,br,bz,DBLE(rin),DBLE(yin),t)
+        p2(1) = ar + t * (br - ar)
+        p2(2) = az + t * (bz - az)
 
-          IF (debug) WRITE(0,*) 'TRACE RING,IKM : ',ir,ikm
+c        WRITE(0,*) ':',t,status
+
+c        WRITE(0,*) 'AR,AZ  :',ar,az
+c        WRITE(0,*) 'BR,BZ  :',br,bz
+c        WRITE(0,*) 'P2     :',p2(1:2)
+c        WRITE(0,*) 'RIN,YIN:',rin,yin
+
+        d1 = DSQRT( (DBLE(rin)-p1(1))**2 + (DBLE(yin)-p1(2))**2 ) 
+        d2 = DSQRT( (DBLE(rin)-p2(1))**2 + (DBLE(yin)-p2(2))**2 ) 
+
+        frac = d1 / (d1 + d2)
+
+c        WRITE(0,*) 'D1,2:',d1,d2
+c        WRITE(0,*) 'FRAC:',frac
+
+        rhoin = (1.0D0 - frac) * DBLE(rho(ir,SIDE14)) + 
+     .                   frac  * DBLE(rho(ir,SIDE23))
+
+c       Assign the symmetry cell for the field-line trace:
+        ikm = ik
+        IF (t.GT.0.5D0) ikm = ikm + 1  ! Advance a bit along the ring if the point is closer to the far boundary
+ 
+c...    Decide how to assign the magnetic field line pitch angle information:
+        SELECTCASE (mode)
+          CASE (1)
+c...        Just take the pitch angle at the center of the cell all the time:
+            ir1 = 0
+            r12frac = frac
+            z12frac = frac ! 0.5D0
+            rfrac = 0.0D0
+          CASE (2)
+c...        Interpolate the field line pitch angle, gives a continuous b-field:
+            r12frac = frac
+            z12frac = frac
+            IF (rhoin.LT.rho(ir,CELL1)) THEN
+              ir1 = irins(ik,ir)
+              rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                 DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+            ELSE
+              ir1 = irouts(ik,ir)
+              rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                 DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+            ENDIF
+          CASE DEFAULT
+            CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
+        ENDSELECT
+
+      ELSE
+
+        STOP 'OLD METHOD'
+
+        DO ir = 2, irwall
+c...      For now, ignore the inner SOL for a CDN grid (CONNECTED
+c         currently assigned/hacked in FindSeparatrixRadius, which
+c         has to be called before this check is made, nasty):
+          IF (connected.AND.ir.GE.irsep.AND.ir.LT.irsep2) CYCLE
           
-c...      Decide how to assign the magnetic field line pitch angle information:
-          SELECTCASE (mode)
-            CASE (1)
-c...          Just the pitch angle at the center of the cell all the time:
-              ir1 = 0
-              frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
-     .               DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
-c              frac = 0.5D0
-              r12frac = frac
-              z12frac = frac ! 0.5D0
-              rfrac = 0.0D0
-            CASE (2)
-c...          Interpolate the field line pitch angle, gives a continuous :
-              frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
-     .               DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
-              r12frac = frac
-              z12frac = frac
-              IF (rhoin.LT.rho(ir,CELL1)) THEN
-                ir1 = irins(ikm,ir)
+          IF (rho(ir,CELL1).EQ.0.0) CYCLE
+          
+          IF (debug) WRITE(0,*) 'TRACE IR SCAN : ',
+     .      ir,SNGL(rhoin),rho(ir,SIDE14),rho(ir,SIDE23)
+          
+          IF (rhoin.GE.DBLE(rho(ir,SIDE14)).AND.
+     .        rhoin.LT.DBLE(rho(ir,SIDE23))) THEN
+c...        Find midplane cell:   ! *** NEED TO DO THIS SO THAT PHI IS REFERENCED PROPERLY TO PHI=0 AT THE OUTER MIDPLANE ***
+            ikm = -1              !     NEED A BETTER WAY...          
+            ikm = FindMidplaneCell(ir)
+            IF (ikm.EQ.-1) CALL ER('TraceFieldLine_DIVIMP','No '//
+     .                             'midplane cell found',*99)
+          
+            IF (debug) WRITE(0,*) 'TRACE RING,IKM : ',ir,ikm
+            
+c...        Decide how to assign the magnetic field line pitch angle information:
+            SELECTCASE (mode)
+              CASE (1)
+c...            Just take the pitch angle at the center of the cell all the time:
+                ir1 = 0
+                frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
+     .                 DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
+                r12frac = frac
+                z12frac = frac ! 0.5D0
+                rfrac = 0.0D0
+              CASE (2)
+c...            Interpolate the field line pitch angle, gives a continuous b-field:
+                frac = DBLE(rhoin          - rho(ir,SIDE14)) / 
+     .                 DBLE(rho(ir,SIDE23) - rho(ir,SIDE14))
+                r12frac = frac
+                z12frac = frac
+                IF (rhoin.LT.rho(ir,CELL1)) THEN
+                  ir1 = irins(ikm,ir)
+                  rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                     DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+                ELSE
+                  ir1 = irouts(ikm,ir)
+                  rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
+     .                     DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
+                ENDIF
+              CASE DEFAULT
+                CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
+            ENDSELECT
+            EXIT
+          ENDIF
+        ENDDO
+  
+      ENDIF
 
-                WRITE(0,*) 'IRs:',ir,ir1
-                rfrac =     -(rhoin          - DBLE(rho(ir,CELL1))) / 
-     .                   DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
-              ELSE
-                ir1 = irouts(ikm,ir)
-                rfrac =      (rhoin          - DBLE(rho(ir,CELL1))) / 
-     .                   DBLE(rho(ir1,CELL1) -      rho(ir,CELL1) )
-c                WRITE(fp,*) rhoin,rho(ir,CELL1),rho(ir1,CELL1)
-              ENDIF
-            CASE DEFAULT
-              CALL ER('TraceFieldLine_DIVIMP','Unrecognised MODE',*99)
-          ENDSELECT
-
-          WRITE(fp,'(A,2I6,3F10.4)') 
-     .      ' ==MIDPLANE:',ikm,ir,REAL(frac),REAL(rfrac),REAL(rhoin)
-          EXIT
-        ENDIF
-      ENDDO
       IF (ir.EQ.irwall+1) 
      .  CALL ER('TraceFieldLine_DIVIMP','Ring not identified',*99)
 
@@ -915,17 +1749,22 @@ c        WRITE(0,'(A,5F10.5)')
 c     .    'BRAT:',REAL(brat),REAL(r(1:2)),REAL(z(1:2))
         deltar = r(2) - r(1)
         deltaz = z(2) - z(1)
-        dpol = DSQRT(deltar**2 + deltaz**2)
-        alpha = DASIN(brat)
-        dtor = dpol / DTAN(alpha)
+        dpol   = DSQRT(deltar**2 + deltaz**2)
+        alpha  = DASIN(brat)
+        dtor   = dpol / DTAN(alpha)
         deltac = dtor
 c        deltac = ABS(deltaz) / brat
         deltap = -1.0D0 * deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
         finished = .FALSE.
         DO WHILE (angle1.GT.deltap)
-          angle2 = MAX(angle1-dphi,deltap) 
-          frac1 = angle1 / deltap
+c          IF (ik.EQ.ikm) THEN                         ! *** MAKE THIS AN OPTION *** 
+c            angle2 = MAX(angle1-0.1D0*dphi,deltap) 
+c          ELSE
+            angle2 = MAX(angle1-      dphi,deltap) 
+c          ENDIF
+c          angle2 = MAX(angle1-dphi,deltap) 
+c          frac1 = angle1 / deltap
           frac2 = angle2 / deltap
           IF (angle1.EQ.0.0D0.AND.ik.EQ.ikm) THEN
             n = n + 1
@@ -981,6 +1820,8 @@ c     .        (zxp.GT.0.0.AND.v(2,n).GE.zvalmax).OR.
         phi = phi + deltap
       ENDDO
 
+      origin(1:3) = v(1:3,1)
+
 c...  Swap order of these points, so that they start at the low IK target
 c     and proceed to the midplane:
       DO i1 = 1, n/2
@@ -1004,7 +1845,6 @@ c...    Don't follow the field line at all if length restriction set to zero:
         IF ((chop.EQ.4.OR.chop.EQ.5.OR.chop.EQ.6).AND.
      .      lenmax2.EQ.0.0D0) EXIT
         id = korpg(ik,ir)
-c        frac = 0.5D0 * (1.0D0 + rfrac)
         r(1) =          r12frac  * DBLE(rvertp(2,id)) + 
      .         (1.0D0 - r12frac) * DBLE(rvertp(1,id))
         z(1) =          z12frac  * DBLE(zvertp(2,id)) + 
@@ -1025,20 +1865,23 @@ c        frac = 0.5D0 * (1.0D0 + rfrac)
           brat = (1.0D0 - rfrac) * DBLE(bratio(ik,ir  )) + 
      .                    rfrac  * DBLE(bratio(ik1,ir1))
         ENDIF
-c        brat = DBLE(bratio(ik,ir))
         deltar = r(2) - r(1)
         deltaz = z(2) - z(1)
         dpol = DSQRT(deltar**2 + deltaz**2)
         alpha = DASIN(brat)
         dtor = dpol / DTAN(alpha)
         deltac = dtor
-c        deltac = ABS(deltaz) / brat
         deltap = deltac / rpos * 180.0D0 / DBLE(PI)
         angle1 = 0.0D0
         finished = .FALSE.
         DO WHILE (angle1.LT.deltap)
-          angle2 = MIN(angle1+dphi,deltap) 
-          frac1 = angle1 / deltap
+c          IF (ik.EQ.ikm+1) THEN
+c            angle2 = MIN(angle1+0.1D0*dphi,deltap) 
+c          ELSE
+            angle2 = MIN(angle1+      dphi,deltap) 
+c          ENDIF
+c          angle2 = MIN(angle1+dphi,deltap) 
+c          frac1 = angle1 / deltap
           frac2 = angle2 / deltap
           n = n + 1
           IF (n.GT.MAXN) CALL ER('TraceFieldLine_DIVIMP','N bust',*99)
@@ -1088,7 +1931,7 @@ c      ENDDO
 
 c      WRITE(0,*) 'n:',n
 
-      WRITE(0,*) 'LENGTH:',len1,len2,len1+len2
+c      WRITE(0,*) 'LENGTH:',len1,len2,len1+len2
 
       SELECTCASE (chop)
         CASE(1)
@@ -1103,9 +1946,16 @@ c      WRITE(0,*) 'n:',n
           length1 = len1
           length2 = len2
         CASE(6)
+        CASE(7)
         CASE DEFAULT
           CALL ER('TraceFieldLine_DIVIMP','Unrecognised CHOP',*99)
       ENDSELECT
+
+c...  Add the origin:
+      v(1:3,n+1) = origin(1:3)
+
+c      WRITE(0,* ) '============ORIGIN1',v(1:3,n+1)
+
 
       RETURN
  99   WRITE(0,*) ' CHOP= ',chop

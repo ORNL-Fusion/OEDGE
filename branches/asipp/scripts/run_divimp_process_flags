@@ -9,6 +9,9 @@
 # Select non-default DIVIMP/OUT executable:
 # ----------------------------------------------------------------------
 #
+  setenv QSUB_ID $1
+  shift
+
   setenv X86_64 0
   if ( "$1" == "-64") then
     shift

@@ -158,7 +158,7 @@ C
        INTEGER   L1, MCLASS                                                     
 C                                                                       
        PARAMETER ( L1    =  1 )                                         
-c slmod begin - new
+c slmod begin
        integer iread,lck
        PARAMETER ( IREAD = 12 , LCK = 500 )  ! incerased from 250 - SL, 27/01/2010
 c
@@ -278,9 +278,10 @@ C------PE BRIDEN - MODIFICATION 27/04/92 - INCLUSION OF DEFAULT YEAR -
 C                                                                       
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C                                                                       
-       write(6,'(a,a)') 'ADAS:',dsname 
+       write(6,'(a,a)') 'ADAS:',trim(dsname) 
 c
        INQUIRE(FILE=DSNAME,EXIST=LEXIST)                                
+
 C                                                                       
        IF ( (.NOT.LEXIST) .AND. (YEARSV.NE.YEARDF) ) THEN              
           WRITE(I4UNIT(-1),1060) DSNAME , YEARDF                      
@@ -289,7 +290,7 @@ C
           GOTO 10                                            
        ENDIF                                                         
 C                                                                       
-       IF( .NOT.LEXIST ) GOTO 9999                                      
+       IF( .NOT.LEXIST ) GOTO 9999
 C                                                                       
        TITLF=BLANKS                                                     
        WRITE(TITLF,1000) DSNAME                                         
@@ -2115,6 +2116,15 @@ C IF NEW EMITTING ION ENTERED OR SOURCE DATA USERID HAS CHANGED:
 C - OPEN THE REQUESTED DATA SET & READ IN COMPLETE SET OF RATE DATA.
 C-----------------------------------------------------------------------
 C
+c slmod begin
+               IF ( (IZLAST.NE.IZIN)  .OR.
+     &              (IZ0LST.NE.IZ0IN) .OR.
+     &              (UIDLST.NE.UIDIN) .OR.
+     &              (GRPLST.NE.GRPIN) .OR.
+     &              (TYPLST.NE.TYPIN) .OR.
+     &              (EXTLST.NE.EXTIN)      )  
+     .           WRITE(0,*) 'adas debug fresh: izin=',izin,izlast
+c slmod end
                IF ( (IZLAST.NE.IZIN)  .OR.
      &              (IZ0LST.NE.IZ0IN) .OR.
      &              (UIDLST.NE.UIDIN) .OR.

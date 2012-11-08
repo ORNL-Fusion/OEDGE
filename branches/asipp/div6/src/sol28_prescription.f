@@ -20,11 +20,11 @@ c
       REAL*8 , PARAMETER :: PI  = 3.14159265358979323846D0,
      .                      ECH = 1.602D-19 
 
-      INTEGER fp,i,j,k,itube,icell,iobj,n,ic1,ic2,count,npro,cross(2),
+      INTEGER fp,i,j,k,itube,icell,iobj,n,ic1,ic2,count,npro,cross(3),
      .        i_end
       LOGICAL cont
       REAL*8  r0,z0,p1(2),p2(2),p(2),
-     .        a_sep,a_end,xdata(NSTEP,2),ydata(0:NSTEP,3),volume,step,
+     .        a_sep,a_end,xdata(NSTEP,3),ydata(0:NSTEP,3),volume,step,
      .        total,x_end,param1,param2,a_ped1,a_ped2,
      .        r,mtanh,a_knee,a_slope,a_etb,a_delta,a_SOL,t_SOL,b_SOL,
      .        adjust,target,metric,diff,param,frac,pro1,val1,
@@ -63,12 +63,12 @@ c       interpolation region:
         p2(1) = r0 + 100.0D0
         p2(2) = z0
         itube = grid%isep-1
-        WRITE(0,*) 'ITUBE 1=',itube
+c        WRITE(0,*) 'ITUBE 1=',itube
         CALL LineCutTube(p1,p2,itube,p)
         a_sep = p(1) - p1(1)  
 
         itube = osmnode(index)%tube_range(2) 
-        WRITE(0,*) 'ITUBE 2=',itube,index
+c        WRITE(0,*) 'ITUBE 2=',itube,index
         CALL LineCutTube(p1,p2,itube,p)
         a_end = p(1) - p1(1)
         
@@ -149,8 +149,10 @@ c         Recale so the total length covered is 2a:
           j = IND_NE
         CASE (4)
           j = IND_TE
+        CASE (5)
+          j = IND_TI
         CASE DEFAULT
-          CALL ER('osm_UpstreamProfile','Unknown quantity',*99)
+          CALL ER('osm_UpstreamProfile','Unknown quantity (1)',*99)
       ENDSELECT
 
       IF (ydata(0,j).EQ.0.0D0) THEN
@@ -167,8 +169,13 @@ c         Recale so the total length covered is 2a:
             b_SOL   = DBLE(osmnode(index)%fit_p(7))
             param1  = DBLE(osmnode(index)%fit_p(8))
             param2  = DBLE(osmnode(index)%fit_p(9))
-            a_ped1 = a_etb - 2.0D0 * a_delta
-            a_ped2 = a_etb + 2.0D0 * a_delta
+            IF (osmnode(index)%fit_width.EQ.1) THEN 
+              a_ped1 = a_etb - 2.0D0 * a_delta
+              a_ped2 = a_etb + 2.0D0 * a_delta
+            ELSE
+              a_ped1 = a_etb - 10.0D0 * a_delta
+              a_ped2 = a_etb + 10.0D0 * a_delta
+            ENDIF
           CASE (2)
             target  = DBLE(osmnode(index)%fit_p(1))
             a_etb   = DBLE(osmnode(index)%fit_p(2)) + a_sep
@@ -217,31 +224,54 @@ c                WRITE(88,*) 'PRO:',i,ydata(i,j),diff
 c...      Calculate the metric for adjusting the slope of the core profile
 c         to match the specified line averaged density or stored energy:
           SELECTCASE (j)
+c           ------------------------------------------------------------
             CASE (IND_NE)  ! Line averaged density:   **** IS THIS RIGHT? ***
               metric = 0.0D0
               DO i = 1, NSTEP
                 metric = metric + ydata(i,IND_NE) * xdata(i,IND_VOL)
               ENDDO
+c           ------------------------------------------------------------
             CASE (IND_TE)  ! Stored energy 
-              DO i = 1, NSTEP
-                IF     (xdata(i,IND_R).LT.a_ped1) THEN
-                  param = param1
-                ELSEIF (xdata(i,IND_R).LT.a_ped2) THEN
-                  frac = (xdata(i,IND_R) - a_ped1) / (a_ped2 - a_ped1)
-                  frac = frac**3.0
-                  param = (1.0D0 - frac) * param1 + frac * param2
-                ELSE
-                  param = param2
-                ENDIF
-                ydata(i,IND_TI) = ydata(i,IND_TE) * param
-              ENDDO
+              IF (osmnode(index)%fit_width.EQ.1) THEN 
+                ! Original method
+                DO i = 1, NSTEP
+                  IF     (xdata(i,IND_R).LT.a_ped1) THEN
+                    param = param1
+                  ELSEIF (xdata(i,IND_R).LT.a_ped2) THEN
+                    frac = (xdata(i,IND_R) - a_ped1) / (a_ped2 - a_ped1)
+                    frac = frac**osmnode(index)%fit_p(10)
+                    param = (1.0D0 - frac) * param1 + frac * param2
+                  ELSE
+                    param = param2
+                  ENDIF
+                  ydata(i,IND_TI) = ydata(i,IND_TE) * param
+                ENDDO
+                metric = 0.0D0
+                DO i = 1, NSTEP
+                  metric = metric + 1.0D-06 * 1.5D0 *
+     .                     xdata(i,IND_VOL) * volume * ydata(i,IND_NE) * 
+     .                     (ydata(i,IND_TE) + ydata(i,IND_TI)) * ECH
+                ENDDO
+              ELSE
+                metric = 0.0D0
+                DO i = 1, NSTEP
+                  metric = metric + 1.0D-06 * 1.5D0 *
+     .                     xdata(i,IND_VOL) * volume * ydata(i,IND_NE) * 
+     .                     (2.0D0*ydata(i,IND_TE)) * ECH
+                ENDDO
+              ENDIF
+c           ------------------------------------------------------------
+            CASE (IND_TI)  ! Stored energy 
               metric = 0.0D0
               DO i = 1, NSTEP
                 metric = metric + 1.0D-06 * 1.5D0 *
      .                   xdata(i,IND_VOL) * volume * ydata(i,IND_NE) * 
-     .                   (ydata(i,IND_TE) + ydata(i,IND_TI)) * ECH
+     .                   (2.0D0*ydata(i,IND_TI)) * ECH
               ENDDO
+c           ------------------------------------------------------------
           ENDSELECT
+
+
 c...      Evaluate the proximity of the metric to the requested value (TARGET) and
 c         adjust the slope of the core profile accordingly:
           diff = (metric - target) / target
@@ -349,19 +379,18 @@ c...    Set Ti from Te:
               param = param1
             ELSEIF (xdata(i,IND_R).LT.a_ped2) THEN
               frac = (xdata(i,IND_R) - a_ped1) / (a_ped2 - a_ped1)
-              frac = frac**3.0
+              frac = frac**osmnode(index)%fit_p(10)
               param = (1.0D0 - frac) * param1 + frac * param2
             ELSE
               param = param2
             ENDIF
             ydata(i,IND_TI) = ydata(i,IND_TE) * param
-c            WRITE(0,*) 'PARAM B:',i,param
+c            WRITE(0,*) 'PARAM B:',i,param,ydata(i,IND_TI)
           ENDDO
         ENDIF
 
 
-
-
+        WRITE(fp,*) 'temp _10',osmnode(index)%fit_p(10)
         WRITE(fp,*) 'A     :',a_sep
         WRITE(fp,*) 'X_END :',x_end
         WRITE(fp,*) 'SUM   :',SUM(xdata(:,j))
@@ -437,8 +466,10 @@ c...  Sample the appropriate profile:
             CASE (4) ! Te and Ti
               result(2)=SNGL((1.0D0-frac)*ydata(i,2)+frac*ydata(i+1,2))
               result(3)=SNGL((1.0D0-frac)*ydata(i,3)+frac*ydata(i+1,3))
+            CASE (5) ! Te and Ti
+              result(3)=SNGL((1.0D0-frac)*ydata(i,3)+frac*ydata(i+1,3))
             CASEDEFAULT
-              CALL ER('osm_UpstreamProfile','Unknown quantity',*99)
+              CALL ER('osm_UpstreamProfile','Unknown quantity (2)',*99)
           ENDSELECT
 
           WRITE(fp,10) 'val1:',i,a_sep,val1,frac,result
@@ -487,7 +518,8 @@ c
       INTEGER, INTENT(IN) :: mode
 
       INTEGER i1,ic,inode1,inode2,in1,in2,target,ion
-      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,A,B,C,t(0:S28_MAXNKS+1)
+      REAL*8  s1,s2,v1,v2,deltas,deltav,frac,x,y,A,B,C,D,E,F,
+     .        t(0:S28_MAXNKS+1)
       REAL*8, POINTER :: s(:)
 
       ion = 1
@@ -596,14 +628,33 @@ c...        Pure conduction (no dependence on power distribution):
 c              frac = (s(ic) - s1) / deltas   ...old, flawed method...
 c              te(ic) = deltav * frac**x + v1
             ENDDO
-c          CASE (4)
+          CASE (4)
+c...        Modified conduction:
+            x = 2.0D0 / 7.0D0
+            A = v1**(1/x)
+            B = v2
+            C = (B**(1/x) - A) / deltas
+
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
+            D = v1**(1/y)
+            E = v2
+            F = (E**(1/y) - D) / deltas
+
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = (1.0D0 - frac) * (A + C * (s(ic) - s1))**x +  ! conduction profile, applied at the end of the flux-tube segment
+     .                         frac  * (D + F * (s(ic) - s1))**y    ! user specified exponent, applied at the beginning
+            ENDDO
           CASE (5)
 c...        Pleasant:
             x = 2.0D0 / 7.0D0
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
-              t(ic) = (1.0D0 - frac) * (deltav * frac**x      + v1) + 
-     .                         frac  * (deltav * frac**0.05D0 + v1)         
+              t(ic) = (1.0D0 - frac) * (deltav * frac**x + v1) +   ! conduction profile
+     .                         frac  * (deltav * frac**y + v1)     ! user specified power law
             ENDDO
           CASE (6)
 c...        Te evolution:
@@ -612,6 +663,34 @@ c...        Te evolution:
             IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
      .                             'not ready',*99)
 c            CALL EvolveTeProfile(in1,in2,s,target)
+
+          CASE (7)
+c...        Linear -- to be overwritten by the reference plasma:
+            x = 1.0D0
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = deltav * frac**x + v1
+            ENDDO
+
+          CASE (8)
+c...        Lame convection prescription:
+            x = 2.0D0 / 7.0D0
+            A = v1**(1/x)
+            B = v2
+            C = (B**(1/x) - A) / deltas
+
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
+            D = v1**(1/y)
+            E = v2
+            F = (E**(1/y) - D) / deltas
+
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = (1.0D0 - frac) * (A + C * (s(ic) - s1))**x +  ! conduction profile, applied at the end of the flux-tube segment
+     .                         frac  * (D + F * (s(ic) - s1))**y    ! user specified exponent, applied at the beginning
+            ENDDO
+
           CASE DEFAULT
 c            WRITE(0,*) 'DAT:',in2,node_par_mode(in2)
             WRITE(0,*) 'DAT:',in2,node(in2)%par_mode
@@ -642,13 +721,14 @@ c
 c ======================================================================
 c
       SUBROUTINE SpecifyDistribution(target,inpic1,inpic2,mode,exponent,
-     .                               val)
+     .                               val,end_opt)
       USE mod_sol28_params
       USE mod_sol28_solver
       IMPLICIT none
  
-      INTEGER target,inpic1,inpic2,mode
-      REAL*8 :: exponent,val(*)
+      INTEGER, INTENT(IN ) :: target,inpic1,inpic2,mode,end_opt
+      REAL*8 , INTENT(IN ) :: exponent
+      REAL*8 , INTENT(OUT) :: val(*)
 
       INTEGER ic,ic1,ic2,region
       REAL*8  deltas,starts,frac,sumval,A,B,C
@@ -754,7 +834,7 @@ c            WRITE(0,*) 'FDSDF:',ic,frac,val(ic)
 
         CASE (3)
 c...      Power centered at the middle of range:
-          IF (ic2-ic1.LE.2) THEN
+          IF (ic2-ic1.LE.2.OR.exponent.EQ.0.0D0) THEN
             val(ic1:ic2) = 1.0D0
           ELSE
             DO ic = ic1, ic2
@@ -768,6 +848,13 @@ c              WRITE(0,*) 'FRAC:',target,frac,ic1,ic2,val(ic)
           STOP 'YOU NAUGHTY BOY'
       ENDSELECT         
 
+c...  Set distribution to zero at the end points, which can be necessary
+c     if two tube regions share a common point and both are trying to 
+c     scale a given quantity to different constraints:
+      IF (end_opt.EQ.1) THEN
+        val(ic1) = 0.0D0
+        val(ic2) = 0.0D0
+      ENDIF
 
 c...  Cell volume normalization:    ! Do I need an area based normalization as well..?
       sumval = 0.0D0

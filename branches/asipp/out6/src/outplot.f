@@ -1396,7 +1396,7 @@ c slmod begin
 
       INTEGER   rind,rcol,rmode
       CHARACTER dummy*24,cdum1*1024,cdum2*32
-      LOGICAL   reset_colour,tindex
+      LOGICAL   reset_colour,tindex,barebones
       REAL      xcen,ycen
 c slmod end
 c
@@ -1429,7 +1429,11 @@ c slmod begin
           BACKSPACE 5
         ENDIF          
 
-        DO ir = 1, nrs
+c slmod begin
+        DO ir = 2, nrs
+c
+c        DO ir = 1, nrs
+c slmod end
 
            IF (ir.EQ.irwall) CYCLE
            IF (idring(ir).LT.0) CYCLE
@@ -1811,8 +1815,10 @@ c slmod end
 c slmod begin
 c...    Changes made to accommodate broken grids (look
 c       out, here they come): 
-        IF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
-     .                  CGRIDOPT.EQ.RIBBON_GRID) THEN
+        barebones = .FALSE.
+        IF     (barebones) THEN
+        ELSEIF (NBR.GT.0.OR.CGRIDOPT.EQ.LINEAR_GRID.OR.
+     .                      CGRIDOPT.EQ.RIBBON_GRID) THEN
           DEFCOL = NCOLS + 1
 	  IR = IRWALL
           DO IK = 1, NKS(IR)
@@ -1847,7 +1853,7 @@ c       out, here they come):
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 
-        IF (IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
+        IF (.NOT.barebones.AND.IRSEP.NE.IRSEP2.AND.IRSEP2.GT.0) THEN
           IR = IROUTS(1,IRSEP2)
           DO IK = 1, NKS(IR)
             K = KORPG(IK,IR)
@@ -1881,26 +1887,31 @@ c        KVALS(NKS(IR)+1,2) = ZVERTP(3,K)
 c        CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
 c slmod end
 C
-        IR = 2
-        DO IK = 1, NKS(IR)
-          K = KORPG(IK,IR)
-          KVALS(IK,1) = RVERTP(4,K)
-          KVALS(IK,2) = ZVERTP(4,K)
-        ENDDO
-        CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
+        IF (.NOT.barebones) THEN
+          IR = 2
+          DO IK = 1, NKS(IR)
+            K = KORPG(IK,IR)
+            KVALS(IK,1) = RVERTP(4,K)
+            KVALS(IK,2) = ZVERTP(4,K)
+          ENDDO
+          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
+        ENDIF
 C
         IF (CGRIDOPT.NE.LINEAR_GRID.AND..NOT.NOPRIV.AND.
      .      CGRIDOPT.NE.RIBBON_GRID) THEN
-          IR = IRTRAP + 1
-          DO IK = 1, NKS(IR)
-            K = KORPG(IK,IR)
-            KVALS(IK,1) = RVERTP(1,K)
-            KVALS(IK,2) = ZVERTP(1,K)
-          ENDDO
-          K = KORPG(NKS(IR),IR)
-          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
-          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
-          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+
+          IF (.NOT.barebones) THEN 
+            IR = IRTRAP + 1
+            DO IK = 1, NKS(IR)
+              K = KORPG(IK,IR)
+              KVALS(IK,1) = RVERTP(1,K)
+              KVALS(IK,2) = ZVERTP(1,K)
+            ENDDO
+            K = KORPG(NKS(IR),IR)
+            KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+            KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+          ENDIF
 C
           IR = IRSEP
           DEFCOL = NCOLS + 3
@@ -1917,7 +1928,8 @@ C
         ENDIF
 C
 c slmod begin
-        IF (NBR.GT.0) THEN
+        IF     (barebones) THEN
+        ELSEIF (NBR.GT.0) THEN
 c...      Draw targets:
           DEFCOL = NCOLS + 2
           DO IR = IRSEP, NRS
@@ -2015,7 +2027,12 @@ c slmod end
 c
 c also plot the nimbus wall and pump (if any)
 c
-        if (nvesm.ne.0) then
+c slmod begin
+        if     (barebones) then
+        elseif (nvesm.ne.0) then
+c
+c        if (nvesm.ne.0) then
+c slmod end
 c
           do i = 1,nvesm
 c
@@ -7277,9 +7294,13 @@ c
 c
       write(6,*) 'GRIDPOS:',ik,ir,r,z,griderr,korpg(ik,ir),
      >                      nvertp(korpg(ik,ir))
-      write(6,'(8(1x,g12.5))') ((rvertp(in,korpg(ik,ir)),
-     >                         zvertp(in,korpg(ik,ir))),
-     >                         in = 1,4)
+c slmod begin
+      WRITE(0,*) ' STOP: GFORTRAN COMPLAINING, CHECK CODE' 
+      STOP
+c      write(6,'(8(1x,g12.5))') ((rvertp(in,korpg(ik,ir)),
+c     >                         zvertp(in,korpg(ik,ir))),
+c     >                         in = 1,4)
+c slmod end
 c
 
 
@@ -7753,8 +7774,17 @@ c              35 = Subgrid CH emission
 c
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
 c
+c              36 = PIN Data 
+c                   1 = PINION = PIN ionization    
+c                   2 = PINATOM = PIN Atom density 
+c                   3 = PINMOL = PIN Molecular density
+c                   4 = PINIONZ = Impurity ionization
+c                   5 = PINZ0 = Impurity neutral density  
+c                   6 = PINQI = Ion heating term
+c                   7 = PINQE = Electron heating term
+c
       integer max_iselect
-      parameter (max_iselect=35)
+      parameter (max_iselect=36)
 c
 c
 c     ADAS variables
@@ -8678,6 +8708,118 @@ c
 c
          end do   
 
+      elseif (iselect.eq.36) then 
+c
+c        Quantities returned from the PIN run and loaded into DIVIMP arrays
+c           1 = PINION = PIN ionization    
+c           2 = PINATOM = PIN Atom density 
+c           3 = PINMOL = PIN Molecular density
+c           4 = PINIONZ = Impurity ionization
+c           5 = PINZ0 = Impurity neutral density  
+c           6 = PINQI = Ion heating term
+c           7 = PINQE = Electron heating term
+c
+         if (istate.eq.1) then 
+c
+c           PINION
+c      
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinion(ik,ir)
+c
+               end do
+c
+            end do   
+c
+
+         elseif (istate.eq.2) then 
+c
+c           PINATOM
+c      
+
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinatom(ik,ir)
+c
+               end do
+c
+            end do   
+
+         elseif (istate.eq.3) then 
+c
+c           PINMOL
+c      
+c
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinmol(ik,ir)
+c
+               end do
+c
+            end do   
+         elseif (istate.eq.4) then 
+c
+c           PINIONZ
+c      
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinionz(ik,ir)
+c
+               end do
+c
+            end do   
+         elseif (istate.eq.5) then 
+c
+c           PINZ0
+c      
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinz0(ik,ir)
+c
+               end do
+c
+            end do   
+         elseif (istate.eq.6) then 
+c
+c           PINQI
+c      
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinqi(ik,ir)
+c
+               end do
+c
+            end do   
+         elseif (istate.eq.7) then 
+c
+c           PINQE
+c      
+            do ir = 1,nrs
+c
+               do ik = 1, nks(ir)
+c
+                  tmpplot(ik,ir) = pinqe(ik,ir)
+c
+               end do
+c
+            end do   
+
+
+         endif
+
+
       endif
 
 
@@ -9408,6 +9550,41 @@ c
 
          write(YLAB,'(''IMP IONIZATION: STATE='',i4,
      >                ''(M^-3)'')') istate
+ 
+      elseif (iselect.eq.36) then   
+c
+c                   1 = PINION = PIN ionization    
+c                   2 = PINATOM = PIN Atom density 
+c                   3 = PINMOL = PIN Molecular density
+c                   4 = PINIONZ = Impurity ionization
+c                   5 = PINZ0 = Impurity neutral density  
+c                   6 = PINQI = Ion heating term
+c                   7 = PINQE = Electron heating term
+
+         if (istate.eq.1) then 
+            YLAB = 'PIN IZ   ('
+         elseif (istate.eq.2) then 
+            YLAB = 'PIN ATOM ('
+         elseif (istate.eq.3) then 
+            YLAB = 'PIN MOL  ('
+         elseif (istate.eq.4) then 
+            YLAB = 'PIN ZIZ  ('
+         elseif (istate.eq.5) then 
+            YLAB = 'PIN ZDEN ('
+         elseif (istate.eq.6) then 
+            YLAB = 'PIN QI   ('
+         elseif (istate.eq.7) then 
+            YLAB = 'PIN QE   ('
+         endif
+c
+         len = lenstr(ylab)
+c
+         if (itype.eq.0) then 
+            ylab = ylab(1:len) // '/M^3)'
+         elseif (itype.eq.1) then 
+            ylab = ylab(1:len) // '/M^2)'
+         endif
+
       endif
 
 c
@@ -9818,6 +9995,41 @@ c
 
          write(BLAB,'(''IMP IONIZATION: STATE='',i4,
      >                ''(M^-3)'')') istate
+
+      elseif (iselect.eq.36) then   
+c
+c                   1 = PINION = PIN ionization    
+c                   2 = PINATOM = PIN Atom density 
+c                   3 = PINMOL = PIN Molecular density
+c                   4 = PINIONZ = Impurity ionization
+c                   5 = PINZ0 = Impurity neutral density  
+c                   6 = PINQI = Ion heating term
+c                   7 = PINQE = Electron heating term
+
+         if (istate.eq.1) then 
+            BLAB = 'PIN IZ   ('
+         elseif (istate.eq.2) then 
+            BLAB = 'PIN ATOM ('
+         elseif (istate.eq.3) then 
+            BLAB = 'PIN MOL  ('
+         elseif (istate.eq.4) then 
+            BLAB = 'PIN ZIZ  ('
+         elseif (istate.eq.5) then 
+            BLAB = 'PIN ZDEN ('
+         elseif (istate.eq.6) then 
+            BLAB = 'PIN QI   ('
+         elseif (istate.eq.7) then 
+            BLAB = 'PIN QE   ('
+         endif
+c
+         len = lenstr(blab)
+c
+c         if (itype.eq.0) then 
+            blab = blab(1:len) // '/M^3)'
+c         elseif (itype.eq.1) then 
+c            blab = blab(1:len) // '/M^2)'
+c         endif
+
       endif
 c
 c

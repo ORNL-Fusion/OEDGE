@@ -15,12 +15,15 @@ c
       REAL      rdum1
       CHARACTER cdum1*256
 
+      write(0,*) opt%int_database(opt%int_num)
+
       SELECTCASE (opt%int_database(opt%int_num))
         CASE (1,3,4)
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_line(opt%int_num)
         CASE (2)
+          write(0,*) '>'//TRIM(dummy)//'<'
           READ(dummy,*) cdum1,(idum1,i1=1,ni),
      .                        (rdum1,i1=1,nr),idum1,
      .                  opt%int_adasid(opt%int_num),
@@ -48,7 +51,7 @@ c
 
       INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
-      INTEGER i,n
+      INTEGER i,j,n
 
       GetLine = .TRUE. 
 
@@ -65,7 +68,9 @@ c...    Remove leading spaces:
 c...    Remove portion of line after comment charcter:
         n = LEN_TRIM(buffer)
         DO i = 1, n
-          IF (buffer(i:i).EQ.'$'.OR.buffer(i:i).EQ.'*') EXIT
+          j = MAX(1,i-1)
+          IF ( buffer(i:i).EQ.'$'.OR.
+     .        (buffer(i:i).EQ.'*'.AND.buffer(j:j).NE.'''')) EXIT
         ENDDO 
         buffer(i:n) = ' '
 
@@ -110,9 +115,10 @@ c
 
       LOGICAL GetLine
 
-      INTEGER i1,i2,fp,idum1,idum2,i,n
-      LOGICAL load_detector
-      CHARACTER cdum1*128,dummy*1024,buffer*1024
+      INTEGER       i1,i2,fp,idum1,idum2,i,n,inext
+      LOGICAL       load_detector
+      CHARACTER     cdum1*128,dummy*1024,buffer*1024
+      CHARACTER*256 buffer_array(100)
 
       TYPE(type_header) :: header
       REAL*8 :: image(1000,1000)
@@ -153,9 +159,9 @@ c...    Isolate tag string:
         ENDDO
 
         SELECTCASE (buffer(2:i-1))
-
+c         --------------------------------------------------------------
           CASE('RAY TRACE') 
-
+c         --------------------------------------------------------------
           CASE('GEOMETRY')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
@@ -248,17 +254,30 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
      .                opt%obj_n     (opt%obj_num,1),
      .                opt%obj_n     (opt%obj_num,2),
      .                opt%obj_fname (opt%obj_num)
+                  CASE (8)  ! ITER first wall panel
+                    READ(buffer,*) cdum1,
+     .                opt%obj_type  (opt%obj_num),
+     .                opt%obj_option(opt%obj_num),
+     .                opt%obj_colour(opt%obj_num),
+     .                opt%obj_reflec(opt%obj_num),
+     .                opt%obj_fudge (opt%obj_num),
+     .                opt%obj_factor(opt%obj_num),
+     .                opt%obj_n     (opt%obj_num,1),
+     .                opt%obj_n     (opt%obj_num,2),
+     .                opt%obj_sym   (opt%obj_num),
+     .                opt%obj_fname (opt%obj_num)
                   CASE DEFAULT
                     CALL User_LoadVesselGeometry(opt,idum1,buffer)
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('REFLECTIONS')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
             WRITE(0,*) 'LOADING REFLECTIONS:',idum1
             IF (idum1.NE.0) THEN
+              opt%ref_opt = idum1
               DO WHILE(GetLine(fp,buffer,NO_TAG))
                 READ(buffer,*) cdum1,idum1
                 IF (idum1.EQ.0) CYCLE
@@ -291,7 +310,7 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('INTEGRATION')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             READ(buffer(i+1:n),*) idum1
@@ -301,39 +320,41 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
                 IF (idum1.EQ.0) CYCLE
                 WRITE(0,*) 'LOADING INTEGRATION:',idum1
                 opt%int_num = opt%int_num + 1
+                i1 = opt%int_num
+                opt%int_wlngth(i1) = -1.0
                 SELECTCASE (idum1)
                   CASE (1)  ! Straight-up line integral:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,6,0)
                   CASE (2)  ! Line shape integral:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_shape   (opt%int_num),
-     .                                   opt%int_instr   (opt%int_num),
-     .                                   opt%int_width   (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_shape   (i1),
+     .                                   opt%int_instr   (i1),
+     .                                   opt%int_width   (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,7,2)
                   CASE (3)  ! Line-of-sight weighted average:
-                    READ(buffer,*) cdum1,opt%int_type    (opt%int_num),                
-     .                                   opt%int_colour  (opt%int_num),
-     .                                   opt%int_z       (opt%int_num),
-     .                                   opt%int_a       (opt%int_num),
-     .                                   opt%int_charge  (opt%int_num),
-     .                                   opt%int_index   (opt%int_num),
-     .                                   opt%int_average (opt%int_num),
-     .                                   opt%int_database(opt%int_num)
+                    READ(buffer,*) cdum1,opt%int_type    (i1),                
+     .                                   opt%int_colour  (i1),
+     .                                   opt%int_z       (i1),
+     .                                   opt%int_a       (i1),
+     .                                   opt%int_charge  (i1),
+     .                                   opt%int_index   (i1),
+     .                                   opt%int_average (i1),
+     .                                   opt%int_database(i1)
 c...                Data source:
                     CALL LoadEmissionDatabase(buffer,7,0)
                   CASE DEFAULT
@@ -342,7 +363,7 @@ c...                Data source:
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('DETECTOR')
             IF (mode.NE.DETECTOR_ONLY.OR..NOT.load_detector) THEN
               BACKSPACE(fp)
@@ -368,11 +389,31 @@ c...                Data source:
               CASE(3:4)
                 load_detector = .FALSE.
                 opt%ccd = idum1 - 2
-                 
+              CASE(5)
+                load_detector = .FALSE.
+                opt%ccd = idum1
+                READ(fp,*) cdum1,opt%chord_n
+                DO i1 = 1, opt%chord_n                                 
+                  READ(fp,*) opt%chord_opt(i1),opt%chord_v1(1:3,i1),
+     .                                         opt%chord_v2(1:3,i1)
+
+c...              Extend length by 10%:
+                  opt%chord_v2(1:3,i1) =    opt%chord_v1(1:3,i1) + 1.1 * 
+     .              (opt%chord_v2(1:3,i1) - opt%chord_v1(1:3,i1))
+                ENDDO
+                READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,
+     .                           opt%sa_par1 ,opt%sa_par2
+                READ(fp,*) cdum1,opt%fmap
+
+                opt%nxbin = opt%chord_n
+                opt%nybin = 1
+
+                WRITE(0,*) 'opt%chord_n (1) = ',opt%chord_n 
               CASE DEFAULT
                 CALL ER('LoadOptions985_New','Unknown DETECTOR '//
      .                  'option',*99)          
             ENDSELECT
+c         --------------------------------------------------------------
           CASE('DETECTOR MASK')
             IF (mode.NE.DETECTOR_ONLY.OR.load_detector) CYCLE            
             READ(buffer(i+1:n),*) idum1
@@ -418,7 +459,75 @@ c...                Load image and look for pure/artificial black (pixel value=0
                 ENDSELECT
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
+          CASE('RIBBON')
+            READ(buffer(i+1:n),*) idum1
+            WRITE(0,*) 'LOADING RIBBON:',idum1
+            IF (idum1.LE.0) CYCLE
+            DO WHILE(GetLine(fp,buffer,NO_TAG))
+              READ(buffer,*) cdum1,idum1
+              IF (idum1.EQ.0) CYCLE
+              CALL SplitBuffer(buffer,buffer_array) 
+              opt%rib_n = opt%rib_n + 1
+              i1 = opt%rib_n
+              SELECTCASE (idum1)
+                CASE (1)  ! 
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_nrad (  i1)
+                  READ(buffer_array(4),*) opt%rib_nphi (  i1)
+                  READ(buffer_array(5),*) opt%rib_phi  (1,i1)
+                  READ(buffer_array(6),*) opt%rib_phi  (2,i1)
+                  READ(buffer_array(7),*) opt%rib_scale(  i1)
+                  READ(buffer_array(8),*) opt%rib_trace(  i1)
+                  SELECTCASE (opt%rib_trace(i1))
+                    CASE (1) 
+                      READ(buffer_array(9 ),*) opt%rib_dphi(i1)
+                      READ(buffer_array(10),*) opt%rib_r   (1,i1)
+                      READ(buffer_array(11),*) opt%rib_z   (1,i1)
+                      READ(buffer_array(12),*) opt%rib_r   (2,i1)
+                      READ(buffer_array(13),*) opt%rib_z   (2,i1)
+                      inext = 14
+                    CASE (2) 
+                      opt%rib_tfile(i1) = TRIM(buffer_array(9))
+                      inext = 10
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'trace option',*99)
+                  ENDSELECT
+                  READ(buffer_array(inext),*) opt%rib_limit(i1)
+                  SELECTCASE (opt%rib_limit(i1))
+                    CASE (0) 
+                      opt%rib_tag(i1) = TRIM(buffer_array(inext+1))
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'ribbon limit',*99)
+                  ENDSELECT
+                CASE (2)  ! crop to region of interest
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_r1(i1)
+                  READ(buffer_array(4),*) opt%rib_r2(i1)
+                  READ(buffer_array(5),*) opt%rib_s1(i1)
+                  READ(buffer_array(6),*) opt%rib_s2(i1)
+                CASE (3)  ! whipe zone, where all points of intersection within the zone are deleted
+                  opt%rib_option(i1) = idum1
+                  READ(buffer_array(3),*) opt%rib_wipe(i1)
+                  SELECTCASE(opt%rib_wipe(i1))
+                    CASE(-1)
+                    CASE( 1)  ! box
+                      READ(buffer_array(4),*) opt%rib_r1(i1)
+                      READ(buffer_array(5),*) opt%rib_r2(i1)
+                      READ(buffer_array(6),*) opt%rib_s1(i1)
+                      READ(buffer_array(7),*) opt%rib_s2(i1)
+                    CASE DEFAULT
+                      CALL ER('LoadOptions985_New','Unrecognized '//
+     .                        'wipe option',*99)
+                  ENDSELECT
+                CASE DEFAULT
+                  CALL ER('LoadOptions985_New','Unrecognized '//
+     .                    'ribbon grid option',*99)
+              ENDSELECT
+            ENDDO
+c         --------------------------------------------------------------
           CASE('PLOTS')
             IF (mode.NE.ALL_OPTIONS) CYCLE
             IF (opt%nplots.EQ.-1) opt%nplots = 0
@@ -430,11 +539,11 @@ c...                Load image and look for pure/artificial black (pixel value=0
 c                WRITE(0,*) opt%nplots,buffer(1:LEN_TRIM(buffer))
               ENDDO
             ENDIF
-
+c         --------------------------------------------------------------
           CASE('END')
             status = -1
             EXIT
-
+c         --------------------------------------------------------------
           CASE DEFAULT
             CALL ER('LoadOptions985_New','Unrecognized tag',*99)
         ENDSELECT

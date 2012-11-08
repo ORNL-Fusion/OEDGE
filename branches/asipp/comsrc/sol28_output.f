@@ -140,7 +140,6 @@ c
       SAVE
 
 
-
       CALL DumpData_OSM('output.end','Simulation complete')
 
 c...  Save solution:
@@ -304,7 +303,7 @@ c
          ENDDO
          IF (itar.EQ.ntarget+1.AND.i1.EQ.target(ntarget)%nlist+1) THEN
            IF (first_call) THEN
-             CALL WN('GenerateOutputFiles','Some target group '//
+             CALL WN('User_GenerateOutputFiles','Some target group '//
      .               'identifiers not found')
              first_call = .FALSE.
            ENDIF
@@ -485,9 +484,10 @@ c...    Build the map:
      .        grp(obj(iobj)%group)%type  .NE.GRP_QUADRANGLE) CYCLE
           DO i1 = 1, idim2
             imap = obj(iobj)%index(i1)
+c            WRITE(fp,*) 'GETOBJECT: ',i1,iobj,imap,idim2
             IF (imap.EQ.0) CYCLE
             IF (i1.EQ.IND_IK.OR.i1.EQ.IND_IR.OR.i1.EQ.IND_IS) CYCLE
-c            WRITE(fp,*) 'GETOBJECT: ',iobj,i1,imap,obj_index_map(imap,i1)
+c            WRITE(fp,*) '         : ',iobj,i1,imap,obj_index_map(imap,i1)
             IF (obj_index_map(imap,i1).EQ.0) THEN
               obj_index_map(obj(iobj)%index(i1),i1) = iobj
             ELSE
@@ -598,6 +598,7 @@ c
      .      it,
      .      tube_tag(tube(it)%type),
      .      tube(it)%cell_index(HI)-tube(it)%cell_index(LO)+1,
+c     .      tube(it)%n,
      .      tube(it)%cell_index(LO:HI),
      .      tube(it)%psin,
      .      tube(it)%rho,
@@ -740,7 +741,6 @@ c
      .          fluid(ic,ion)%ne,
      .          fluid(ic,ion)%ni,
      .          fluid(ic,ion)%vi,
-                ! jdemod - added eps10 to avoid divide by zero
      .          fluid(ic,ion)%vi/(cs+eps10),
      .          fluid(ic,ion)%te,
      .          fluid(ic,ion)%ti
@@ -897,8 +897,9 @@ c      DO igrp = 1, ngrp
 c        CALL inPutData(grp(igrp)%origin,'GRP_ORIGIN','none')
 c        CALL inPutData(grp(igrp)%type  ,'GRP_TYPE'  ,'none')
 c      ENDDO
- 
+c      write(0,*) 'isep' ,grid%isep 
       CALL inPutData(grid%isep,'GRD_ISEP' ,'none')
+c      write(0,*) 'ipfz' ,grid%ipfz
       CALL inPutData(grid%ipfz,'GRD_IPFZ' ,'none')
 
       CALL inPutData(ntube             ,'TUBE_N'   ,'none')

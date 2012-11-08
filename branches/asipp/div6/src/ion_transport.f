@@ -300,10 +300,18 @@ c
             ENDIF
             CVVXP  = CVVXP + XTRIPP * SPUTY
             CVVXS  = CVVXS + XTRIPS * SPUTY
-            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
-     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
-     >            100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
-     >         ZA02AS (1) - STATIM
+c slmod begin 
+            IF (CPRINT.GT.1)
+     >        WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
+     >              100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
+     >              100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
+     >           ZA02AS (1) - STATIM
+c
+c            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
+c     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
+c     >            100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
+c     >         ZA02AS (1) - STATIM
+c slmod end
            ENDIF
 c
 c          ENDIF
@@ -672,8 +680,8 @@ c     Variables for periphery option 5
 c
       integer istate,id_out,is_out
       real rsect,zsect
-
-
+c      real energy
+c
 C
 C-------- CHECK IF REACHED WALLS
 C
@@ -718,10 +726,31 @@ c
               CRAVAV(IZ) = CRAVAV(IZ) + ABS(VEL) * SPUTY
               CTBS  (IZ) = CTBS  (IZ) + KTEBS(IK,IR) * SPUTY
               IM         = MIN (INT(TEMI/(0.2*CTEB0))+1, 10)
+c slmod begin
+c...          This problem has appeared on at least one occasion, but not very
+c             often:
+c TEMI is the problem
+c it is being assigned properly in div.f after the neutral launch, so it's being
+c reassigned in a nasty way somewhere along between there and here...
+              IF (IM.LT.1) THEN
+                CALL WN('check_reached_grid_edge','Array bounds '//
+     .                  'violation, setting IM=1')
+                 WRITE(0,*) 'TEMI  =',TEMI
+                 WRITE(0,*) 'CTEB0 =',CTEB0
+                 WRITE(0,*) 'RESULT=',INT(TEMI/(0.2*CTEB0))+1
+                 WRITE(6,*) 'TEMI  =',TEMI
+                 WRITE(6,*) 'CTEB0 =',CTEB0
+                 WRITE(6,*) 'RESULT=',INT(TEMI/(0.2*CTEB0))+1
+                 IM = 1
+              ENDIF
+c slmod end
               CTEXS(IM)  = CTEXS(IM) + TEMI * SPUTY
 c
               RWALL      = RWALL + SPUTY
               WALLS(IK,IR,IZ) = WALLS(IK,IR,IZ) + SPUTY
+c
+              ENERGY = 
+     >           5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
 c
 c             Add ion weight to wall element closest to grid 
 c             departure.
@@ -730,7 +759,8 @@ c
 c              write(6,*) 'update_walldep: '//
 c     >                   'check_reached_grid_edge - hard walls'
 
-              call update_walldep(ik,ir,iz,0,0,iwstart,idtype,sputy)
+              call update_walldep(ik,ir,iz,0,0,iwstart,idtype,sputy,
+     >                            energy)
 c
               IFATE = 1
 
@@ -1104,6 +1134,9 @@ c
                 RWALL      = RWALL + SPUTY
                 WALLS(IK,IR,IZ) = WALLS(IK,IR,IZ) + SPUTY
 c
+                ENERGY = 3.0 * real(IZ) * wallpt(id_out,29) +
+     >           5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+c
 c               Add ion weight to wall element closest to grid 
 c               departure.
 c     
@@ -1115,7 +1148,7 @@ c                write(6,*) 'update_walldep: '//
 c     >                   'check_reached_grid_edge - FP res=3'
 
                 call update_walldep(ik,ir,iz,0,id_out,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
                 IFATE = 1
 
@@ -1181,12 +1214,6 @@ c               Add ion weight to wall element closest to grid
 c               departure.
 c
 
-c                write(6,*) 'update_walldep: '//
-c     >                   'check_reached_grid_edge - FP Recycle'
-
-                call update_walldep(ik,ir,iz,0,id_out,
-     >                              iwstart,idtype,sputy)
-
 c
 c NOTE:!!! This code needs adjustments to support relaunch of fp particles from the walls
 c          if fp recycle is turned on.This code is also set up to calculate a self-sputtering
@@ -1247,6 +1274,14 @@ c
 c
                 ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
      >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+c
+c
+c                write(6,*) 'update_walldep: '//
+c     >                   'check_reached_grid_edge - FP Recycle'
+
+                call update_walldep(ik,ir,iz,0,id_out,
+     >                              iwstart,idtype,sputy,energy)
+c
 c
                 if (kmfss(id).ge.0.0) then  
                    RYIELD = YIELD (6, MATTAR, ENERGY,
@@ -1367,8 +1402,12 @@ c
 c                write(6,*) 'update_walldep: '//
 c     >             'check_reached_grid_edge - FP res=4 '
 c
+                ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+
+c
                 call update_walldep(ik,ir,iz,id, 0,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
                 IFATE = 9
                 return
@@ -1456,12 +1495,15 @@ c               Add ion weight to wall element closest to grid
 c               departure.
 c
 
+                ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+
 
 c                write(6,*) 'update_walldep: '//
 c     >             'check_reached_grid_edge - FP res=4 Recycle'
 
                 call update_walldep(ik,ir,iz,id, 0,
-     >                              iwstart,idtype,sputy)
+     >                              iwstart,idtype,sputy,energy)
 c
 C
 C            WRITE(6,*) 'SPUTTERED:',IK,IR,ID,R,Z,IKDS(ID),IRDS(ID)

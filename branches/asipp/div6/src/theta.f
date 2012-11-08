@@ -278,6 +278,10 @@ c
                 theta3 = thetag(ik3,ir)
               ENDIF
             ENDDO
+            IF (theta3.EQ.0.0) THEN 
+              ik3 = ik + 1
+              theta3 = thetag(ik3,ir)
+            ENDIF
           ELSE
             ik3 = ik + 1
             theta3 = thetag(ik3,ir)
@@ -301,7 +305,8 @@ c     .                 theta1,theta2,theta3
             ik = 1
             count = count + 1
 
-          ELSEIF (theta2.GE.theta3.AND.ik.EQ.nks(ir)-1) THEN
+          ELSEIF ((theta2.GE.theta3.AND.ik    .EQ.nks(ir)-1).OR.
+     .            (theta1.LT.theta2.AND.theta2.GE.theta3   )) THEN
             frac = (kps(ik3,ir) - kps(ik-1,ir)) /
      .             (kps(ik ,ir) - kps(ik-1,ir))
 
@@ -365,7 +370,7 @@ c...  Check 1st and last points:
        
       ENDDO
 
-      IF (count.GT.0) THEN
+      IF (sloutput.AND.count.GT.0) THEN
         CALL WN('RepairMetric','Metric repairs attempted')
         WRITE(SLOUT,*) '  COUNT = ',count
         WRITE(SLOUT,*)
@@ -507,7 +512,7 @@ c       primary separatrix ring:
      .        thetag(ik+1,ir) - (kps(ik+1,ir) - kps(ik  ,ir)) * 100.0
           ENDIF
         ENDDO
-        write(0,*) 'IR1,2=',ir1,ir2
+c        write(0,*) 'IR1,2=',ir1,ir2
 
         DO ir = ir1+1, irwall-1
           IF (ir.EQ.ir2.OR.ringtype(ir).EQ.PFZ) CYCLE

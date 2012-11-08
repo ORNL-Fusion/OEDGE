@@ -1193,7 +1193,7 @@ c
       real dist_frac,direction_factor
 c     IPP/08 Krieger - additional variables for iteration of
 c     out-of-cell particles
-      real rstep,zstep,rorig,zorig
+      real rstep,zstep,rorig,zorig,rstart,zstart
 c
       logical test_result,incell
       external incell
@@ -1205,6 +1205,9 @@ c
       iw = wallindex(id)  
       ik = ikds(id)
       ir = irds(id)  
+
+      rstart = r
+      zstart = z
 c
 c     CROSS is positive when moving "INWARD" and negative when
 c     moving "OUTWARD". However, all target and wall elements are
@@ -1324,21 +1327,37 @@ c
 c        Point inside cell was not found
 c     
          if (.not.test_result) then 
-            write(6,'(a,i10,2i6,4g18.8)') 
+            write(6,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
-            write(0,'(a,i10,2i6,4g18.8)') 
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
+            write(0,'(a,i10,4i6,10g18.8)') 
      >       'ERROR:POSITION_ON_TARGET:'//
      >       ' POINT NOT FOUND IN CELL AFTER MAXIMUM ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
          else
-            write(6,'(a,i10,2i6,4g18.8)') 
-     >       'POSITION_ON_TARGET:'//
-     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
-     >        loop_cnt,ik,ir,r,z,rs(ik,ir),zs(ik,ir)
-
+c slmod begin
+            if (cprint.ge.1) 
+     >        write(6,'(a,i10,4i6,10g18.8)') 
+     >        'POSITION_ON_TARGET:'//
+     >        ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+     >        rorig,zorig,rstep,zstep,rstart,zstart
+c
+c            write(6,'(a,i10,4i6,10g18.8)') 
+c     >       'POSITION_ON_TARGET:'//
+c     >       ' POINT FOUND IN CELL AFTER N ITERATIONS:',
+c     >        loop_cnt,id,iw,ik,ir,r,z,rs(ik,ir),zs(ik,ir),
+c     >        rorig,zorig,rstep,zstep,rstart,zstart
+c slmod end
          endif
+      endif
+
+      if (.not.test_result) then 
+         r = rstart
+         z = zstart
       endif
 
 c
@@ -1996,12 +2015,12 @@ c
 
 
 c
-      if (ierr.ne.0) then 
-         write(6,'(a,2i5,l4,10(1x,g12.5))') 'GETSC:',ik,ir,
-     >             incell(ik,ir,r,z),r,z,s,
-     >             kss(ik,ir),distin(ik,ir),cross,
-     >             distout(ik,ir),s_frac,cross_frac
-      endif
+c      if (.true..or.ierr.ne.0) then 
+c         write(6,'(a,2i5,l4,10(1x,g12.5))') 'GETSC:',ik,ir,
+c     >             incell(ik,ir,r,z),r,z,s,
+c     >             kss(ik,ir),distin(ik,ir),cross,
+c     >             distout(ik,ir),s_frac,cross_frac
+c      endif
 c
       return 
       end
@@ -2206,7 +2225,8 @@ c
      >             'ERROR in "position_in_poly": point not'//
      >             ' found in cell: ITER=',iter
          write(6,'(a,8(1x,g12.5))') 'Last poly:',
-     >                          ((rv(iv),zv(iv)),iv=1,4)
+     >                          (rv(iv),zv(iv),iv=1,4)
+c     >                          ((rv(iv),zv(iv)),iv=1,4)  ! gfortran
          write(6,'(a,8(1x,g12.5))') 'Point R,Z,S,C:',r,z,
      >                              s_frac,cross_frac
 c
@@ -3731,7 +3751,10 @@ c
        real*8 seed
        real :: n(2),ri(2),rr(2)
        real, external :: atan2c
-
+c slmod begin
+       logical first_warning
+       data    first_warning /.true./
+c slmod end
 c
 c       real*8 tnorm_tmp,timp_tmp,dthe,tref_tmp
 c
@@ -3740,9 +3763,14 @@ c       jdemod - Set the maximum reflection angle to 89 degrees
 c                from normal for the random angle cases  
 c
        if (nrfopt.eq.0.or.nrfopt.eq.1) then
-
-c          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
-c          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
+c slmod begin        
+         if (.true.) then 
+           if (first_warning) then
+             call wn('REFANGDP','Using old TREF calculation')
+             first_warning = .false.
+           endif
+           TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+         else
 c
 c          jdemod - formula only works under specific circumstances
 c                 - replace with general vector formulation
@@ -3757,7 +3785,25 @@ c
 c          Calculate reflection angle from reflection vector
 c
            tref = atan2c(rr(2),rr(1))
-
+         endif
+c
+cc          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+cc          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
+cc
+cc          jdemod - formula only works under specific circumstances
+cc                 - replace with general vector formulation
+c
+c           n(1) = cos(tnorm)
+c           n(2) = sin(tnorm)
+c           ri(1) = -cos(timp)
+c           ri(2) = -sin(timp)
+c
+c           rr = ri - 2.0 * n * dot_product(ri,n)
+cc
+cc          Calculate reflection angle from reflection vector
+cc
+c           tref = atan2c(rr(2),rr(1))
+c slmod end
        elseif (nrfopt.eq.2) then
 c
           CALL SURAND2 (SEED, 1, RAN1)
@@ -4226,26 +4272,54 @@ c     each segment.
 c
       do ik = 1,wallpts
 c
+c        jdemod
+c
+c        Ribbon grid - more general solution desirable
+c                      only assigns wall or target start region
+c
+         if (cgridopt.eq.RIBBON_GRID) then 
+
+c         
+c           Starting on wall
+c
+            if (wallpt(ik,18).eq.0.0) then 
+
+               start_region = 1  
+c	 
+c           Starting on target (use target 1)
+c	 
+            else
+c
+               start_region = 3
+c	 
+            endif
+
+         else
+
+c
 c        Starting on main wall 
 c
-         if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
-            start_region = 1  
+           if (ik.ge.wlwall1.and.ik.le.wlwall2) then 
+              start_region = 1  
 c	 
 c        Starting on PFZ wall
-c	 
-         elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
-            start_region = 2
+c	  
+           elseif (ik.ge.wltrap1.and.ik.le.wltrap2) then 
+              start_region = 2
 c	 
 c        Starting on target 1 
 c	 
-         elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
-            start_region = 3
+           elseif (ik.ge.(wlwall2+1).and.ik.le.(wltrap1-1)) then 
+              start_region = 3
 c	 
 c        Starting on target 2
 c	 
-         elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
-            start_region = 4
+           elseif (ik.ge.(wltrap2+1).and.ik.le.wallpts) then 
+              start_region = 4
+           endif
+
          endif
+
 c
 c        Total erosion (ion+neutral) 
 c
@@ -4257,6 +4331,32 @@ c
 c        Loop over wall summing up end regions 
 c
          do in = 1,wallpts 
+
+            if (cgridopt.eq.RIBBON_GRID) then 
+
+c
+c           Ending on wall 
+c
+            if (wallpt(in,18).eq.0.0) then 
+               walldep(start_region,1) = walldep(start_region,1) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,1) = walldep_i(start_region,1) 
+     >                                 + wtdep(ik,in,1) 
+c
+c           Ending on target 
+c
+            else
+               walldep(start_region,3) = walldep(start_region,3) 
+     >                                 + wtdep(ik,in,3) 
+               walldep_i(start_region,3) = walldep_i(start_region,3) 
+     >                                 + wtdep(ik,in,1) 
+            endif
+
+
+            else
+c
+c           Other grids
+c
 c
 c           Ending on main wall 
 c
@@ -4289,6 +4389,8 @@ c
      >                                 + wtdep(ik,in,3) 
                walldep_i(start_region,4) = walldep_i(start_region,4) 
      >                                 + wtdep(ik,in,1) 
+            endif
+c
             endif
 c
          end do
@@ -4799,11 +4901,20 @@ c
      >                        reflection_angle,intersect_normal,
      >                        reflection_option,
      >                        intersect_index,intersect_result,
-     >                        intersect_logical)
+c slmod begin
+     >                        intersect_logical,cprint)
+c
+c     >                        intersect_logical)
+c slmod end
       implicit none
 c
       real ra,za,rb,zb,rint,zint,reflection_angle,intersect_normal
-      integer reflection_option,intersect_result,intersect_index
+c slmod begin
+      integer reflection_option,intersect_result,intersect_index,
+     >        cprint
+c
+c      integer reflection_option,intersect_result,intersect_index     
+c slmod end
       logical intersect_logical
 c
       include 'params'
@@ -4864,6 +4975,9 @@ c
       min_dist=HI
       min_index=0
       sect_index=0
+c slmod begin
+      min_rintd = 1.0D+6
+c slmode end
 c
 c     For initial debugging - verify that the point is outside
 c     the defined wall. 
@@ -4959,6 +5073,7 @@ c
       endif
 c
       if (intersect_result.ne.1) then     
+c         write(6,*) '  debug: looking around the rest of the wall'
 c
 c        Loop around the rest of the wall looking for an intersection point
 c
@@ -5041,6 +5156,7 @@ c
 c     Code has not found a proper intersection
 c
       if (intersect_result.ne.1) then     
+c         write(6,*) '  debug: intersection not found'
 c
 c        Check for a close intersection  
 c        Min_index is non-zero if at least some intersections have been found
@@ -5074,6 +5190,7 @@ c
 c     For intersect=1 - find the reflection angle
 c
       if (intersect_result.eq.1) then 
+c         write(6,*) '  debug: finding the reflection angle'
 c
 c        Angle of particle trajectory 
 c
@@ -5091,9 +5208,16 @@ c
 c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
-         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
-     >        reflection_option,sect_index,
-     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod begin          
+          if (cprint.ge.1) 
+     >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+     >          'REFANG:',reflection_option,sect_index,
+     >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c
+c         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
+c     >        reflection_option,sect_index,
+c     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+c slmod end
 c
 c        Copy outputs to input variables
 c
@@ -5109,6 +5233,7 @@ c
 c     ERROR condition
 c
       else
+c         write(6,*) '  debug: error condition'
 c
 c        Return the center point of the wall segment closest to the initial
 c        position of the particle trajectory.
@@ -5165,9 +5290,12 @@ c        replacing recursive iteration with explicit iteration
          
          rstep = step_dist * cos(reflection_angle)
          zstep = step_dist * sin(reflection_angle)
-
-         do while (resulta.lt.0.0.and.loop_cnt.lt.max_loop_cnt) 
-
+c slmod begin
+c...
+         do while (resulta.le.0.0.and.loop_cnt.lt.max_loop_cnt) 
+c
+c         do while (resulta.lt.0.0.and.loop_cnt.lt.max_loop_cnt) 
+c slmod end
             loop_cnt = loop_cnt + 1.0
 
             rtest = rint + loop_cnt * rstep
@@ -5175,6 +5303,8 @@ c        replacing recursive iteration with explicit iteration
 
             CALL GA15B(Rtest,Ztest,RESULTa,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
+c            write(6,*) '   debug: result',resulta,loop_cnt
 
          end do
 c
@@ -5455,7 +5585,7 @@ c
       logical unit_open
 
       test_unit = 10
-      unit_open = .false.
+      unit_open = .true.
 
       ! Check for unit number assignment.  
       Do While (Unit_open)
@@ -5474,6 +5604,7 @@ c
       subroutine calc_wall_length_coordinate(opt)
       implicit none
       integer opt
+
 c
 c     Use the data in the wallpt array to calculate the 
 c     distance along the walls from the Inside mid-plane
@@ -5489,6 +5620,10 @@ c
 c     OPT is available to allow for different calculation schemes later
 c
 c
+c     jdemod -  The start point of this code is not applicable to ribbon grids
+c               since the 'mid-plane' is not defined. 
+
+c
       include 'params'
       include 'walls_com'
 c
@@ -5501,6 +5636,10 @@ c     Find the element of wall stradling the inside mid-plane.
 c      
       minr = hi
 c
+c     Standard grid cases
+c
+      if (opt.eq.1) then
+
       do in = 1,wallpts
          if ((wallpt(in,21)*wallpt(in,23)).le.0.0) then 
             rminw = min(wallpt(in,20),wallpt(in,22))
@@ -5510,6 +5649,13 @@ c
             endif
          endif
       enddo
+c
+c     Ribbon grid
+c
+      elseif (opt.eq.2) then 
+         ! just start at beginning of wall for now. 
+         startin = 1
+      endif
 c
 c     Now have the starting index - need to go counter clockwise
 c     around the wall from this location recording the 

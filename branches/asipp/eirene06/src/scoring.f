@@ -83,7 +83,7 @@ C ===== SOURCE: calc_spectrum.f
             CASE DEFAULT
               ADD = 0._DP
             END SELECT
-            
+
             EB = E0
 
             IF (EB < ESTIML(ISPC)%PSPC%SPCMIN) THEN
@@ -129,8 +129,12 @@ C ===== SOURCE: calc_spectrum.f
               CASE DEFAULT
                 ADD = 0._DP
               END SELECT
-
-              EB = E0
+c slmod begin
+c... Want velocity spectrum, not energy:
+              EB = VEL
+c
+c              EB = E0
+c slmod end            
               IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
                 SPCVX = ESTIML(ISPC)%PSPC%SPCVX
                 SPCVY = ESTIML(ISPC)%PSPC%SPCVY
@@ -2078,18 +2082,32 @@ C
 C  ESTIMATORS FOR MOLECULES
 C
       ENTRY UPDMOL (XSTOR2,XSTORV2,IFLAG)
+c      WRITE(0,*) 'DEBUG: UPDMOL 1.00'
 C
       WV=WEIGHT/VEL
       NPBGK=NPBGKM(IMOL)
 C
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',NADVI,NCPVI,NPBGK,LBGKV
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',
+c     .  SIZE(xstor2,1),SIZE(xstor2,2),SIZE(xstor2,3)
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',
+c     .  mstor1,mstor2,n2nd+n3rd
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',
+c     .  SIZE(xstorv2,1),SIZE(xstorv2,2)
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',
+c     .  nstorv,n2nd+n3rd
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',wv
+c      WRITE(0,*) 'DEBUG: UPDMOL 2.00',iflag
       IF (NADVI.GT.0) CALL UPTUSR(XSTOR2,XSTORV2,WV,IFLAG)
       IF (NCPVI.GT.0) CALL UPTCOP(XSTOR2,XSTORV2,WV,IFLAG)
       IF ((NPBGK.GT.0).AND.LBGKV)
      .   CALL UPTBGK(XSTOR2,XSTORV2,WV,NPBGK,IFLAG)
 
+c      WRITE(0,*) 'DEBUG: UPDMOL 3.00',IUPDTE
       IF (IUPDTE == 2) RETURN
 
       IF (.NOT.ALLOCATED(CNDYNM)) THEN
+c        WRITE(0,*) 'DEBUG: UPDMOL 4.00'
         ALLOCATE (CNDYNM(NMOL))
         DO IML=1,NMOLI
           CNDYNM(IML)=AMUA*RMASSM(IML)
@@ -2098,6 +2116,7 @@ C
 C
       VELQ=VEL*VEL
 C
+c      WRITE(0,*) 'DEBUG: UPDMOL 5.00'
       DO 71 I=1,NCOU
         DIST=CLPD(I)
         WTR=WV*DIST
@@ -2499,6 +2518,7 @@ C
         END IF
 
 71    CONTINUE
+c      WRITE(0,*) 'DEBUG: UPDMOL 99.00'
       RETURN
 C
 C

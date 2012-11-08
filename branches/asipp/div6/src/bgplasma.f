@@ -25,7 +25,9 @@ c
 c slmod begin - new
       include 'slcom'
 
-      LOGICAL callsol28
+      LOGICAL callsol28,message_reverse
+
+      DATA message_reverse /.TRUE./
 c slmod end
 c
       character*(*) title,equil
@@ -107,7 +109,34 @@ c...  Determine if SOL28 is going to be called:
      .      callsol28 = .TRUE.
         enddo
       endif
-      if (callsol28.AND.s28mode.GE.4.0) CALL SetupSOL28
+      if (callsol28.AND.s28mode.GE.4.0) THEN
+        CALL SetupSOL28
+c...    If these are set to zero, on account of SOL28 and the fact that it
+c       doesn't use the standard target data arrays, then initialize:
+        IF (ncoredat.EQ.0) THEN
+          coredat = 0.0
+          DO ir = 2, irsep
+            ncoredat = ncoredat + 1
+            coredat(ncoredat,1) = REAL(ir)
+          ENDDO
+        ENDIF
+        IF (nlpdato.EQ.0) THEN
+          lpdato = 0.0
+          DO ir = irsep, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            nlpdato = nlpdato + 1
+            lpdato(nlpdato,1) = REAL(ir)
+          ENDDO
+        ENDIF
+        IF (nlpdati.EQ.0) THEN
+          lpdati = 0.0
+          DO ir = irsep, nrs
+            IF (idring(ir).EQ.BOUNDARY) CYCLE
+            nlpdati = nlpdati + 1
+            lpdati(nlpdati,1) = REAL(ir)
+          ENDDO
+        ENDIF
+      ENDIF
 c slmod end
 c
 c     Piece-meal SOL options
@@ -137,11 +166,13 @@ c       being used:
           IITERSOL = 2
           IITERPIN = 1
         elseif (citersol.eq.2) then
-          WRITE(0,*) 
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*) 
+          IF (sloutput) THEN
+            WRITE(0,*) 
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*) 
+          ENDIF
           IITERSOL = 1
           IITERPIN = 1
         ENDIF
@@ -428,9 +459,34 @@ c
 c
 c           Calculate the BG for this plasma entry
 c
-            CALL INITPLASMA(ir1,ir2,ikopt)
-            CALL SOL_PLASMA(ir1,ir2,ikopt)
-            CALL SOL(ir1,ir2,ikopt)
+c slmod begin
+            if (ir1.le.ir2) then 
+              CALL INITPLASMA(ir1,ir2,ikopt)
+              CALL SOL_PLASMA(ir1,ir2,ikopt)
+              CALL SOL(ir1,ir2,ikopt)
+            else
+c              Process the rings individually, in reverse order.  This is required
+c              for SOL28 for PFZ rings that reference the neighbouring ring that
+c              is closer to the separatrix.  In order for the neighbouring ring to
+c              be defined (have a plasma solution already), eventhough it has a 
+c              higher ring index, it needs to be sent to the solver first, hence 
+c              the need to call the rings in reverse order. -SL, 04/04/2012
+               if (message_reverse) then
+                 CALL WN('bgplasma','Solving some rings in '//
+     .                   'reverse order')
+                 message_reverse = .FALSE.
+               endif
+               do ir = ir1, ir2, -1
+                  CALL INITPLASMA(ir,ir,ikopt)
+                  CALL SOL_PLASMA(ir,ir,ikopt)
+                  CALL SOL(ir,ir,ikopt)
+               enddo
+            endif
+c
+c            CALL INITPLASMA(ir1,ir2,ikopt)
+c            CALL SOL_PLASMA(ir1,ir2,ikopt)
+c            CALL SOL(ir1,ir2,ikopt)
+c slmod end
 c
          endif
 c
@@ -1178,6 +1234,12 @@ c...TEMP:
      .  CALL SaveSolution
 
       IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
+
+c...  This is needed, i.e. KNDS is NANQ for some cases:
+      IF (cgridopt.NE.LINEAR_GRID.AND.cgridopt.NE.RIBBON_GRID) THEN
+        knds(idds(irwall,1:2)) = 0.0
+        knds(idds(irtrap,1:2)) = 0.0
+      ENDIF
 c      CALL SaveSolution
 c slmod end
       return
