@@ -298,6 +298,9 @@ C
       INTEGER :: NS1, ISPZ1, ISPZ, LEARCA, I, IS, JJ, JJM, NSM, J, IND,
      .           ISPZTI, ISPZV
       LOGICAL :: NLINV
+c slmod begin
+      INTEGER idum
+c slmod end
       SAVE
 C
       IF (NSPZE.GT.NSPZ) GOTO 991

@@ -89,6 +89,9 @@ c     IPP/08 Krieger - RTBS was not initialized
       RZ2  = 0.0
       DRZ  = 0.0
       CICOUT = 0.0
+c slmod begin
+      neutc_divedge_density = 0.0
+c slmod end
 c
 c
 C-----------------------------------------------------------------------
@@ -281,6 +284,13 @@ C
      >                                    RMACH)
            CALL PRR  ('  IMPACT ENERGY AT ABSORPTION (EV)           ',
      >                                    RENEGY)
+c slmod begin
+c DUMP WALL IMPURITY FLUX DATA HERE...     
+c CICABS - total ion flux to target
+c CRAVAV - absolute velocity as the ion is lost
+c CRTBS  - average background ele temperature at loss
+c CRTABS - average background ion temperature at loss
+c slmod end
          ENDIF
 C
 C-----------------------------------------------------------------------
@@ -1382,7 +1392,6 @@ c
 c     Write out temporary case specific data 
 c
       call write_tmp_data
-
 c
 c     Formats for the above write statements  
 c

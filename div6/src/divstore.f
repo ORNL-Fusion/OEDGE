@@ -3,6 +3,9 @@ C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
       use subgrid
+c slmod begin
+      use mod_divimp
+c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -55,8 +58,8 @@ c slmod begin
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
 
-      INTEGER i1,i2,i3,ik
-      REAL    slver
+      INTEGER      i1,i2,i3,ik,i
+      REAL         slver
 c slmod end
 C
 c
@@ -101,7 +104,15 @@ c
       CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
       CALL RINOUT ('W FACTB  ',factb ,maxizs+2)
       CALL RINOUT ('W DWELTS ',dwelts,maxizs+2)
-      CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+c slmod begin
+      IF (IMODE.EQ.1) THEN
+        CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+      ELSE
+        CALL RINOUT ('W DWELFS ',dwelfs,1     )
+      ENDIF
+c
+c      CALL RINOUT ('W DWELFS ',dwelfs,maxnts)
+c slmod end
       CALL RINOUT ('W KALPHS ',kalphs,maxizs)
       CALL RINOUT ('W KBETAS ',kbetas,maxizs)
 c     
@@ -494,14 +505,21 @@ c
       if (line_profile_opt.ne.0) then 
           write(8) lp_wave,lp_instrument_width,
      >             lp_bin_width,lp_robs,lp_zobs,lp_theta,lp_dtheta
-          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
+c slmod begin
+c         Descriptor needs to be 8 characters long or generates
+c         a runtime error in R8INOUT. -SL, 07/10/2011
+          CALL R8INOUT ('W LP    ',line_profile,max_lp_bins*2+1)
+c
+c          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
+c slmod end
           CALL R8INOUT ('W MOD_LP',mod_line_profile,max_lp_bins*2+1)
       endif     
 c
 c     Store the pressure - from SOL option 22
 c
       call rinout ('W KPRESS',kpress,maxnks*maxnrs*2)
-      call rinout ('W KPRAD',kprad,maxnks*maxnrs)
+c     IPP/11 - first arg must be 8 chars string
+      call rinout ('W KPRAD ',kprad,maxnks*maxnrs)
 c
 c     Write out the global HC activation option
 c
@@ -542,7 +560,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.5
+      slver = 3.6
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -673,10 +691,21 @@ c...  slver = 3.5: *TEMP*
 c...  6.41:
       WRITE(8) debugv,cstepv
       IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
-        
+
+c...  slver 3.6:      
+      IF (ALLOCATED(wall_flx)) THEN 
+        WRITE(8) 1
+        WRITE(8) wall_n,1.0  ! this 1.0 is a version number
+        WRITE(8) MAXNBLK,MAXNATM,MAXNMOL,MAXNSRC,MAXNLAUNCH
+        WRITE(8) wall_flx
+      ELSE
+        WRITE(8) 0
+      ENDIF
 
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
+
+
 
 c slmod end
 c

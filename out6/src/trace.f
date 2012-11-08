@@ -1770,7 +1770,9 @@ c     If there are more than 20 contours - allow for two columns
 c     in the symbol table. 
 c
       if (iplots.gt.20) then
-        xoffset=0.24
+c       IPP/10 decreased offset to avoid spillover of text in next line
+        xoffset=0.15
+c        xoffset=0.24
         yoffset=20
       else
         xoffset=0.0

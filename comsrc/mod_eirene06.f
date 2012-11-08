@@ -54,6 +54,7 @@
         INTEGER :: type,subtype,num,index(10),orientation,zone
         INTEGER :: iliin,ilside,ilswch,ilcol,ilcell,iltor,reflect
         REAL    :: ewall,material,recyct,recycf
+        REAL    :: transp1,transp2
         INTEGER :: ilspt,isrs
         REAL    :: recycs,recycc
         INTEGER :: hard           ! Force this surface to be separate from other surfaces (i.e. not automatically grouped with other surfaces with the same properties), for flux reporting from EIRENE
@@ -188,11 +189,13 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
       REAL, PUBLIC, SAVE :: wtemp,ttemp,wmater,tmater,torus1,torus2
     
 !...  Block  4 variables:
-      INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam  ! Do I need these "SAVE's"?
+      INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam,   ! Do I need these "SAVE's"?
+     .                         whipe  
       REAL   , PUBLIC, SAVE :: torfrac
     
 !...  Block  6 variables:
       INTEGER, PUBLIC, SAVE :: trim_data
+      REAL   , PUBLIC, SAVE :: ermin
     
 !...  Block 13 variables:
       REAL, PUBLIC, SAVE :: dtimv,time0
@@ -298,7 +301,9 @@ c
      .                      IND_IS     = 3,  
      .                      IND_ZONE   = 4,  
      .                      IND_PLASMA = 5,  
-     .                      IND_BFIELD = 6   ! Vaccum zone outside standard grid, from external call to TRIANGLE
+     .                      IND_BFIELD = 6,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
+     .                      IND_ISI    = 7   ! Index of the slice specification in the tetrahedron grid specification array
+
 
       INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
@@ -335,6 +340,7 @@ c
         INTEGER :: iiter
         INTEGER :: ngauge
         INTEGER :: gauge_nstrata    
+        REAL    :: gauge_vol        (           MAXNGAUGE)  ! [m-3]
         REAL    :: gauge_p_atm      (MAXNSTRATA,MAXNGAUGE)  ! [mTorr]
         REAL    :: gauge_p_mol      (MAXNSTRATA,MAXNGAUGE)
         REAL    :: gauge_parden_atm (MAXNSTRATA,MAXNGAUGE)

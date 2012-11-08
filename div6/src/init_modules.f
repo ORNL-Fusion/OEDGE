@@ -44,7 +44,7 @@ c     nizs = max ionization state on the regular grid
 c     4 = max HC state number to be recorded on the hc subgrid
 c
       max_hc_state = 4
-      write(0,*) 'Init modules:',global_hc_follow_option,
+      write(6,*) 'Init modules:',global_hc_follow_option,
      >              nizs,max_hc_state
 
       call init_subgrid(global_hc_follow_option,nizs,max_hc_state)

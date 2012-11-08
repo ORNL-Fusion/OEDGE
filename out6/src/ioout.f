@@ -769,8 +769,11 @@ C
       MESAGE = 'EXPECTING 1 CHARACTER STRING, 2 INTEGERS AND'//
      >         ' NEXPT INTEGER PAIRS'
 c
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,plotid,nexpt,
-     >       ((expt_ds(in),expt_col(in)),in=1,min(nexpt,maxexpt))
+      WRITE(0,*) ' STOP: GFORTRAN DOES NOT LIKE THESE LINES FOR SOME'   ! gfortran
+      WRITE(0,*) ' REASON. CHECK THE CODE TO SEE WHAT A FIX MIGHT BE.' 
+      STOP
+c      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,plotid,nexpt, 
+c     >           ((expt_ds(in),expt_col(in)),in=1,min(nexpt,maxexpt))
 
       nexpt = min(nexpt,maxexpt)  
 c
@@ -1724,6 +1727,9 @@ c
       SUBROUTINE GET (TITLE,NIZS,JOB,equil,
      >                FACTA,FACTB,ITER,NITERS)
       use subgrid
+c slmod begin
+      use mod_divimp
+c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include 'params'
@@ -1801,7 +1807,7 @@ c slmod begin
       INCLUDE 'slout'
 
       INTEGER i1,i2,i3,i4,idum1,idum2,idum3,idum4,idum5
-      REAL    slver
+      REAL    slver,rdum1
 
 c...  Crap, but needed for backward compatability:
       INTEGER s1,v1,maxasc3
@@ -1936,7 +1942,15 @@ c
          CALL RINOUT ('R FACTA  ',facta ,maxizs+2)
          CALL RINOUT ('R FACTB  ',factb ,maxizs+2)
          CALL RINOUT ('R DWELTS ',dwelts,maxizs+2)
-         CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+c slmod begin
+         IF (IMODE.EQ.1) THEN
+           CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+         ELSE
+           CALL RINOUT ('R DWELFS ',dwelfs,1     )       
+         ENDIF
+c
+c         CALL RINOUT ('R DWELFS ',dwelfs,maxnts)
+c slmod end
          CALL RINOUT ('R KALPHS ',kalphs,maxizs)
          CALL RINOUT ('R KBETAS ',kbetas,maxizs)
 c
@@ -2436,7 +2450,16 @@ c
          if (line_profile_opt.ne.0) then 
              read(8) lp_wave,lp_instrument_width,
      >             lp_bin_width,lp_robs,lp_zobs,lp_theta,lp_dtheta
-             CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
+c slmod begin
+c            See not in the corresponding call in DIVSTORE.F. -SL, 07/10/2011
+             IF (version_code.GE.6*maxrev+42) THEN
+               CALL R8INOUT ('R LP    ',line_profile,max_lp_bins*2+1)
+             ELSE
+               CALL R8INOUT ('R LP    ',line_profile,max_lp_bins*2+1)
+             ENDIF
+c
+c             CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
+c slmod end
              CALL R8INOUT ('R MOD_LP',mod_line_profile,max_lp_bins*2+1)
          endif     
 c
@@ -2893,6 +2916,18 @@ c *TEMP*
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
         IF (debugv) CALL RINOUT ('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+      ENDIF
+
+      IF (slver.GE.3.6) THEN 
+        READ (8) idum1
+        IF (idum1.EQ.1) THEN 
+          write(0,*) 'reading wall flux!'
+          READ (8) wall_n,rdum1
+          IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+          ALLOCATE(wall_flx(wall_n))
+          READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...
+          READ (8) wall_flx
+        ENDIF
       ENDIF
 
       IF (version_code.GE.(6*maxrev+14)) THEN

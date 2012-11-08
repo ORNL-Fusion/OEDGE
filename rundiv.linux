@@ -479,6 +479,9 @@ mvc fort.73 $CASENAME.exl23
 #  CFD solution file
 mvc fort.75 $CASENAME.cfd
 
+#  DIVIMP format grid file - if writing one has been requested. 
+mvc divimp_grid.out $CASENAME.grd
+
 #  DIVIMP format background plasma file - if writing one has been requested. 
 mvc divimp_plasma.out $CASENAME.bgp
 

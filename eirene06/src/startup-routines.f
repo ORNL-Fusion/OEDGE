@@ -1141,9 +1141,11 @@ C
 C
 6664  FORMAT (6E12.4)
 6665  FORMAT (12(5L1,1X))
-6666  FORMAT (12I6)
 c slmod begin
+6666  FORMAT (20I6)
 6667  FORMAT (12I8)
+c
+c6666  FORMAT (12I6)
 c slmod end
 
       END
@@ -4708,8 +4710,13 @@ C
             READ (IUNIN,'(A72)') ZEILE
             IF (ZEILE(1:1) .NE. '*') EXIT
           END DO
-          READ (ZEILE,'(12I6)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
+c slmod begin
+          READ (ZEILE,'(12I8)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
      .                          ISRFCLL, IDIREC
+c
+c          READ (ZEILE,'(12I6)') ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
+c     .                          ISRFCLL, IDIREC
+c slmod end
           READ (IUNIN,'(6E12.4)') SPCMN, SPCMX, SPC_SHIFT,
      .                             SPCPLT_X,SPCPLT_Y,SPCPLT_SAME
           SPCVX = 0._DP
@@ -4839,6 +4846,7 @@ c
 c  search for input block 11a
 1110  READ (IUNIN,'(A72)') ZEILE
       IF (ZEILE(1:1) .EQ. '*') GOTO 1110
+      write(0,*) 'debug:',TRIM(zeile)
       READ (ZEILE,6665) TRCPLT,TRCHST,TRCNAL,TRCMOD,TRCSIG,
      .                  TRCGRD,TRCSUR,TRCREF,TRCFLE,TRCAMD,
      .                  TRCINT,TRCLST,TRCSOU,TRCREC,TRCTIM,
@@ -5298,9 +5306,11 @@ C
 6662  FORMAT (L1,1X,A24,1X,I1,1X,4(2I3,1X))
 6664  FORMAT (6E12.4)
 6665  FORMAT (12(5L1,1X))
-6666  FORMAT (12I6)
 c slmod begin
+6666  FORMAT (20I6)
 6667  FORMAT (12I8)
+c
+c6666  FORMAT (12I6)
 c slmod end
 66661 FORMAT (I3,1X,A6,1X,A4,A9,A3,2I3,3E12.4)
 66662 FORMAT (2E12.4,10I6)
@@ -6084,11 +6094,22 @@ C  SET CELL DIAMETER
 C
         IF (LEVGEO == 5) THEN
 !  Tetrahedra
+c slmod begin - debug
+c          WRITE(0,*) 'DEBUG: size celdia=',SIZE(celdia)
+c          DO J = 1, NRAD
+c            IF (VOL(J).GT.EPS10) THEN
+c              CELDIA(J) = VOL(J)**(1._DP/3._DP)
+c            ELSE
+c              CELDIA(J) = 0._DP
+c            ENDIF
+c          ENDDO
+c
           WHERE (VOL > EPS10)
             CELDIA = VOL**(1._DP/3._DP)
           ELSEWHERE
             CELDIA = 0._DP
           END WHERE
+c slmod end
         ELSE
 !  CYLINDRICAL OR TOROIDAL MESH
           WHERE (AREA > EPS10)
@@ -11734,7 +11755,14 @@ C
 
       INTEGER, INTENT(IN) :: IND
       REAL(DP), ALLOCATABLE, SAVE :: AREAP(:,:)
+c slmod begin - debug
+c...  /intel/Compiler/11.0/083/lib/intel64 under Linux distribution 
+c     CentOS release 5.5 (Final) when running very large tetrahedron
+c     grids of about 4 million objects:
+c      REAL(DP), ALLOCATABLE :: AREA1(:)
+c
       REAL(DP) :: AREA1(0:N1ST)
+c slmod end
       REAL(DP) :: PC1(3), PC2(3), PC3(3), PC4(3)
       REAL(DP) :: AREAR, VOLSR, CAL_VOL, TWOTHIRD, VSAVE, FAC2, FAC3,
      .          PI2AT, AELL, DONE, DNULL, SY, X1, X2, Y1, XNULL, SX,
@@ -11753,7 +11781,10 @@ C
 C
 100   CONTINUE
 C
-      ALLOCATE (AREAP(N1STS,N2NDPLG))
+      IF (.NOT.ALLOCATED(AREAP)) ALLOCATE (AREAP(N1STS,N2NDPLG))
+c slmod begin - debug
+c      IF (.NOT.ALLOCATED(AREA1)) ALLOCATE (AREA1(0:N1ST))
+c slmod end
 
       DO 101 IRAD=1,NRAD
         VOL(IRAD)=0.
@@ -12178,6 +12209,9 @@ C
       ENDIF
 
       DEALLOCATE (AREAP)
+c slmod begin - debug
+c      DEALLOCATE (AREA1)
+c slmod end
 C
       RETURN
 C

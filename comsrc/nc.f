@@ -4307,7 +4307,7 @@ C     INTERVAL FOR TEMPERATURE INTERPOLATION
              ITE = MAX (ITE,2)
              ITE = MIN (ITE,NTE)
              ITE1= ITE-1
-             write(0,*) 'RRATES:TELOG:',ite,ite1
+c             write(0,*) 'RRATES:TELOG:',ite,ite1
              ZINT= (TELOG(ITE)-ZTELOG)/(TELOG(ITE)-TELOG(ITE1))
 C
 C     INTERVAL FOR DENSITY INTERPOLATION

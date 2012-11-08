@@ -1036,6 +1036,12 @@ c               INPUT: THET - viewing angle
 c               OUTPUT: PSIN - Psi value of target intersection
 c               OUTPUT: TARG - LOS intersection flag
 c
+c     jdemod - this routine has an issue with extended grids that have target elements
+c              all around the vessel. It may not find the desired psin intersection point. 
+c              As a quick workaround ... the code has been modified to select the 
+c              intersection farthest from the observation location. 
+c
+c
 c     Local variables
 c
       integer id,iw,ierr
@@ -1049,8 +1055,17 @@ c
       logical check_intsect
       external check_intsect,targ_psival
 c
+      integer nints,in_maxdist
+      integer,parameter :: maxints = 10
+      real maxdist
+      real int_dist(maxints)
+      integer int_targ(maxints)
+      real int_psin(maxints)
+
+c
 c     Initialization
 c      
+      nints = 0
       targ =   0
       psin = -100.0
 c
@@ -1133,6 +1148,8 @@ c
 c
 c        The code assumes that a given LOS will only ever strike one target. 
 c        NOTE: May not be a good general assumption - ok for now. 
+c     
+c        jdemod - need quick fix for this assumption. 
 c        
 c        Count from outside edges of target to try to minimize problems with this 
 c        
@@ -1150,10 +1167,17 @@ c
      >                           wallpt(iw,20),wallpt(iw,21),
      >                           wallpt(iw,22),wallpt(iw,23), 
      >                           rsect,zsect)) then 
-                  targ = 1
-                  psin = targ_psival(id,rsect,zsect)
-                  return
-         
+                  nints = nints+1
+                  
+                  if (nints.le.maxints) then 
+                     int_targ(nints) = 1
+                     int_dist(nints) = (rsect-r)**2 + (zsect-z)**2
+                     int_psin(nints) = targ_psival(id,rsect,zsect)
+                  endif
+c                  write(6,'(a,2i8,10(1x,g12.5))') 'PSI:',nints,
+c     >                            int_targ(nints),
+c     >                            thet,int_psin(nints),
+c     >                            rsect,zsect
                endif
 c        
             endif  
@@ -1174,20 +1198,47 @@ c
      >                           wallpt(iw,20),wallpt(iw,21),
      >                           wallpt(iw,22),wallpt(iw,23), 
      >                           rsect,zsect)) then 
-                  targ = 2
-                  psin = targ_psival(id,rsect,zsect)
-                  return
-         
+                  nints = nints+1
+                  if (nints.le.maxints) then 
+                     int_targ(nints) = 2
+                     int_dist(nints) = (rsect-r)**2 + (zsect-z)**2
+                     int_psin(nints) = targ_psival(id,rsect,zsect)
+c                  write(6,'(a,2i8,10(1x,g12.5))') 'PSI:',nints,
+c     >                            int_targ(nints),
+c     >                            thet,int_psin(nints),
+c     >                            rsect,zsect
+c
+                  endif
                endif
 c        
             endif  
          
          end do 
 c
+c        Figure out which intersection point to return 
+c
+         if (nints.gt.0) then
+
+            in_maxdist = 0
+            maxdist = 0
+
+            do id = 1,nints
+               if (int_dist(id).gt.maxdist) then 
+                  maxdist = int_dist(id)
+                  in_maxdist = id
+               endif
+            end do
+            
+            targ = int_targ(in_maxdist)
+            psin = int_psin(in_maxdist)
+
+         endif
+c
       endif
 
 c
-c      write(6,'(a,6(1x,g12.5))') 'CALCPSIN:',r,z,rend,zend,thet,psin
+c      write(6,'(a,i8,6(1x,g12.5))') 'CALCPSIN:',
+c     >             targ,r,z,rend,zend,thet,psin
 c
       return
       end

@@ -78,7 +78,7 @@ c              WRITE(logfp,*) '--> IONSRC ',target
 c                CALL SpecifyDistribution(target,-2,0,2,DBLE(opt%p_ion_frac(target)),source) 
 c              ELSE
               decay = DBLE(opt%p_ion_exp(target))
-              CALL SpecifyDistribution(target,-2,0,2,decay,source)
+              CALL SpecifyDistribution(target,-2,0,2,decay,source,0)
 c              ENDIF
 c              WRITE(logfp,*) '--> DONE'
             CASEDEFAULT                                            
@@ -113,7 +113,7 @@ c             Reference plasma:
               source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%parano)
             CASE (2)
 c...          Half ring:
-              CALL SpecifyDistribution(target,0,0,1,0.0D0,source)
+              CALL SpecifyDistribution(target,0,0,1,0.0D0,source,0)
             CASE (3)
 c...          Full ring:
               IF (opt%bc(LO).NE.1) 
@@ -121,14 +121,19 @@ c...          Full ring:
      .                  'anomalous cross-field flux '//           ! This will be moved to the ConserveParticles
      .                  'specification requires conditions at '// ! routine and operate as node interpolation
      .                  'both targets to be specified',*99)       ! for momentum?  But this doesn't seem right... (pain)
-              CALL SpecifyDistribution(FULL,0,0,1,0.0D0,source)   ! Need to add P_ANO_DIST, etc. as for M_ANO does
+              CALL SpecifyDistribution(FULL,0,0,                  ! Need to add P_ANO_DIST, etc. as for M_ANO does
+     .                                opt%p_ano_dist(target),
+     .                           DBLE(opt%p_ano_exp (target)),source,0)
+
+
+c              CALL SpecifyDistribution(FULL,0,0,1,0.0D0,source)   !  changed 23/04/2012
             CASE (4)
 c             Anomalous term assigned in ConserveParticles, based on
 c             prescribed flow values:
             CASE (6)
 c...          Outer half ring only:
               IF (target.EQ.HI)
-     .          CALL SpecifyDistribution(target,0,0,1,0.0D0,source)
+     .          CALL SpecifyDistribution(target,0,0,1,0.0D0,source,0)
             CASEDEFAULT                                            
               STOP 'USER ROUTINE NOT READY: P_ANO'                
               CALL User_VolumeParAnoSource(target,source)         
@@ -306,45 +311,35 @@ c       ----------------------------------------------------------------
             ic1 = MAX(node(inode1)%icell,1    ) 
             ic2 = MIN(node(inode2)%icell,icmax) 
 
-            IF (inode1.GT.1) ic1 = ic1 + 1  ! Avoids double counting of common node
+c            IF (inode1.GT.1) ic1 = ic1 + 1  ! Avoids double counting of common node
 
             SELECTCASE (opt%p_ano(target))
 c             ----------------------------------------------------------
               CASE (4)
 c...            Get particle flux at the respective nodes:
-
-
-
                 CALL IntegrateArray(FULL,parrec(1,ion),1,srcint)
-c            WRITE(0,*) '  TOT   :',srcint
-                CALL IntegrateArray(FULL,parion(1,ion),2,srcint)
-c            WRITE(0,*) '  TOT   :',srcint
+                CALL IntegrateArray(FULL,parion(1,ion),2,srcint)  ! The "2" makes the integrals in SRCINT additive
                 CALL IntegrateArray(FULL,parusr(1,ion),2,srcint)
-c            WRITE(0,*) '  TOT   :',srcint
                 CALL IntegrateArray(FULL,parano(1,ion),2,srcint)
-c            WRITE(0,*) '  TOT   :',srcint
 
                 IF (debug) THEN
-                  WRITE(logfp,*) 'NODES:',inode1,inode2,ic1,ic2,target
-                  WRITE(logfp,*) '     :',flx1,flx2
-                  WRITE(logfp,*) '     :',srcint(ic2)
-                  WRITE(logfp,*) '     :',srcint(ic2)-srcint(ic1)
-                  WRITE(logfp,*) '     :',srcint(TOTAL)
+                  WRITE(logfp,*) 'NODES flow:',
+     .                           inode1,inode2,ic1,ic2,target
+                  WRITE(logfp,*) '          :',flx1,flx2
+                  WRITE(logfp,*) 'flx diff  :',flx2-flx1
+                  WRITE(logfp,*) 'src integ :',srcint(ic2)-srcint(ic1)
                 ENDIF
-c            WRITE(0,*) '     :',srcint
-c            WRITE(0,*) '     :',parano(1:icmax,ion)
-c            WRITE(0,*) '     :',parrec(ic1:ic2,ion)
-c            WRITE(0,*) '     :',parion(ic1:ic2,ion)
-c            WRITE(0,*) '     :',parusr(ic1:ic2,ion)
 
                 source = 0.0D0
 
-                CALL SpecifyDistribution(target,ic1,ic2,
-     .                                   opt%m_ano_dist(target),
-     .                              DBLE(opt%m_ano_exp (target)),source)
+                CALL SpecifyDistribution(target,ic1,ic2,                 ! changed 23/04/2012 (added P_ANO_DIST option)
+     .                                 opt%p_ano_dist(target),
+     .                            DBLE(opt%p_ano_exp (target)),source,1)
+c                CALL SpecifyDistribution(target,ic1,ic2,
+c     .                                   opt%m_ano_dist(target),
+c     .                              DBLE(opt%m_ano_exp (target)),source)
 
-c                IF     (inode1.EQ.1.AND.inode2.EQ.nnode) THEN
-c                  srcint(0) = -1.0D0 * (flx1 + flx2 + srcint(TOTAL))
+
                 IF (inode2.EQ.nnode) THEN
                   flx1 = GetNodeParticleFlux(1,ion)                
                   srcint(0) = -1.0D0 * (flx1 + flx2 + srcint(TOTAL))
@@ -374,6 +369,15 @@ c                STOP 'NO USER ANO PAR READY'
         ENDIF
 
       ENDDO  ! End of ION loop
+
+                CALL IntegrateArray(FULL,parrec(1,ion),1,srcint)
+            WRITE(logfp,*) '  TOT1   :',srcint(TOTAL)
+                CALL IntegrateArray(FULL,parion(1,ion),1,srcint)
+            WRITE(logfp,*) '  TOT2   :',srcint(TOTAL)
+                CALL IntegrateArray(FULL,parusr(1,ion),1,srcint)
+            WRITE(logfp,*) '  TOT3   :',srcint(TOTAL)
+                CALL IntegrateArray(FULL,parano(1,ion),1,srcint)
+            WRITE(logfp,*) '  TOT4   :',srcint(TOTAL)
 
       RETURN
  99   STOP
@@ -497,10 +501,10 @@ c       ----------------------------------------------------------------
             target = HI
           ENDIF
 
-          ic1 = MAX(node(node1)%icell,1)      ! icbnd1(target)
+          ic1 = MAX(node(node1)%icell,1    )  ! icbnd1(target)
           ic2 = MIN(node(node2)%icell,icmax)  ! icbnd2(target)
 
-c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
+c          WRITE(0,*) 'NODES A:',node1,node2,ic1,ic2,target
 
           DO inode = node1+1, node2-1
             IF (node(inode)%ne.EQ.-1.0.OR.
@@ -510,7 +514,7 @@ c          WRITE(0,*) 'NODES:',node1,node2,ic1,ic2,target
               IF (inode.GE.mnode) ic2 = node(inode)%icell
             ENDIF
           ENDDO
-          IF (node1.GT.1) ic1 = ic1 + 1  ! Avoids double counting of common node
+          IF (node1.GT.1) ic1 = MIN(icmax,ic1+1)  ! Avoids double counting of common node
 
           source = 0.0D0
           SELECTCASE (opt%m_ano(target))
@@ -537,7 +541,7 @@ c...          Check for node density/pressure specifications:
 
               CALL SpecifyDistribution(target,ic1,ic2,
      .                                 opt%m_ano_dist(target),
-     .                            DBLE(opt%m_ano_exp (target)),source)
+     .                            DBLE(opt%m_ano_exp (target)),source,0)
 
               CALL IntegrateArray(FULL,momvol(1,ion),1,srcint1)   ! Not debugged as yet...
               CALL IntegrateArray(FULL,momusr(1,ion),1,srcint2)   
@@ -628,7 +632,7 @@ c             PIN:
               source(ic1:ic2) = DBLE(pin(ic1:ic2,ion)%qe) 
             CASE (3)
 c             Prescribed:
-              CALL SpecifyDistribution(target,-2,0,2,0.1D0,source) 
+              CALL SpecifyDistribution(target,-2,0,2,0.1D0,source,0) 
               source = -1.0D+04 * source 
 c              source = -2.25D+07 * source 
             CASEDEFAULT                                            

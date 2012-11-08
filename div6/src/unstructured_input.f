@@ -462,6 +462,9 @@ c     G48 - min and max S for selecting intersection subset  2 x <r4>
 c     G49 - min and max R for intersection subset grid generation 2 x <r4>
 c     G50 - min and max S for intersection subset grid generation 2 x <r4>
 c     G51 - length cutoff factor for ring generation <r4> default = 0.0
+c     G52 - Cell spacing option
+c     G53 - cell spacing factor
+c     G54 - Input file option - RAY or CASTEM 
 c
 c------------------------------------------------------------------------
 c
@@ -510,11 +513,31 @@ c
       rg_mins=0.0
       rg_maxs=0.0
 c
-c     G51 - length cutoff to eliminate short rings far from the separatrix from c           ring generation ... some testing of this will be necessary
+c     G51 - length cutoff to eliminate short rings far from the separatrix from 
+c           ring generation ... some testing of this will be necessary
 c           to obtain an optimal grid. default value is 0.0 which 
 c           effectively turns this feature off.
 c
       lcutoff = 0.0
+c
+c     G52 - Cell spacing option - default value is exponential with the exponent
+c           specified by G53. A value of 1.0 for the cell spacing factor gives
+c           a linear spacing. This option works better with structured grids at
+c           the moment. 
+c
+      cell_spacing_option = 0
+
+c     G53 - Cell spacing factor for determining the distribution of cells
+c           between fixed points on rings. 
+c           default = 1.0 which gives a linear spacing
+c      
+      cell_spacing_factor = 1.0
+c
+c     G54 - Intersection data input file format option 
+c           0 = CASTEM
+c           1 = RAY
+c
+      ribbon_input_format_opt = 1
 c
 c
 c -----------------------------------------------------------------------

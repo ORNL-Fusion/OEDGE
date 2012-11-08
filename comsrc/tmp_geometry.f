@@ -1,6 +1,183 @@
 c
 c
 c ======================================================================
+c
+c int check_same_clock_dir(fpoint pt1, fpoint pt2, fpoint pt3, fpoint norm)
+      LOGICAL FUNCTION geoSameClockness(v1,v2,v3,norm)
+      IMPLICIT none
+
+      REAL*8, INTENT(IN) :: v1(3),v2(3),v3(3),norm(3)
+
+      REAL*8 testi,testj,testk,dotprod
+
+      geoSameClockness = .FALSE.
+
+c   testi = (((pt2.y - pt1.y)*(pt3.z - pt1.z)) - ((pt3.y - pt1.y)*(pt2.z - pt1.z)));
+      testi = ( ( ( v2(2) - v1(2) ) * ( v3(3) - v1(3) ) ) - 
+     .          ( ( v3(2) - v1(2) ) * ( v2(3) - v1(3) ) ) )
+
+c   testj = (((pt2.z - pt1.z)*(pt3.x - pt1.x)) - ((pt3.z - pt1.z)*(pt2.x - pt1.x)));
+      testj = ( ( ( v2(3) - v1(3) ) * ( v3(1) - v1(1) ) ) - 
+     .          ( ( v3(3) - v1(3) ) * ( v2(1) - v1(1) ) ) )
+
+c   testk = (((pt2.x - pt1.x)*(pt3.y - pt1.y)) - ((pt3.x - pt1.x)*(pt2.y - pt1.y)));
+      testk = ( ( ( v2(1) - v1(1) ) * ( v3(2) - v1(2) ) ) - 
+     .          ( ( v3(1) - v1(1) ) * ( v2(2) - v1(2) ) ) )
+
+c   // Dot product with triangle normal
+c   dotprod = testi*norm.x + testj*norm.y + testk.norm.z;
+      dotprod = testi * norm(1) + testj * norm(2) + testk * norm(3)
+
+c   //answer
+c   if(dotprod < 0) return DIFF_CLOCKNESS;
+c   else return SAME_CLOCKNESS;
+
+      IF (dotprod.GE.0.0D0) geoSameClockness = .TRUE.
+   
+      RETURN
+99    STOP
+      END
+c
+c
+c ======================================================================
+c
+cint check_intersect_tri(fpoint pt1, fpoint pt2, fpoint pt3, fpoint linept, fpoint vect,
+c                        fpoitnt* pt_int)
+      LOGICAL FUNCTION geoLineThroughTriangle(p1,p2,v1,v2,v3,t)
+      IMPLICIT none
+
+      REAL*8 , INTENT(IN)  :: p1(3),p2(3),v1(3),v2(3),v3(3)
+      REAL*8 , INTENT(OUT) :: t
+
+      LOGICAL geoSameClockness
+
+      INTEGER count
+      REAL*8  norm(3),dotprod,vect(3),norm_v1(3),norm_v2(3),pt_int(3)
+
+      DATA count / 0 /  
+      SAVE
+
+
+      geoLineThroughTriangle = .FALSE.
+      t = -1.0D0
+   
+
+      vect(1:3) = p2(1:3) - p1(1:3)
+
+c #define SAME_CLOCKNESS = 1;
+c #define DIFF_CLOCKNESS = 0;
+
+c typedef struct fpoint_tag
+c {
+c    float x;
+c    float y;
+c    float z;
+c } fpoint;
+
+c fpoint pt1 = {0.0, 0.0, 0.0};
+c fpoint pt2 = {0.0, 3.0, 3.0};
+c fpoint pt3 = {2.0, 0.0, 0.0};
+c fpoint linept = {0.0, 0.0, 6.0};
+c fpoint vect = {0.0, 2.0, -4.0};
+c fpoint pt_int = {0.0, 0.0, 0.0};
+c
+c {
+c    float V1x, V1y, V1z;
+c    float V2x, V2y, V2z;
+c    fpoint norm;
+c    float dotprod;
+c    float t;
+
+c   // vector form triangle pt1 to pt2
+c   V1x = pt2.x - pt1.x;
+c   V1y = pt2.y - pt1.y;
+c   V1z = pt2.z - pt1.z;
+
+      norm_v1(1:3) = v2(1:3) - v1(1:3)
+
+c   // vector form triangle pt2 to pt3
+c   V2x = pt3.x - pt2.x;
+c   V2y = pt3.y - pt2.y;
+c   V2z = pt3.z - pt2.z;
+
+      norm_v2(1:3) = v3(1:3) - v2(1:3)
+
+c   // vector normal of triangle
+c   norm.x = V1y*V2z-V1z*V2y;
+c   norm.y = V1z*V2x-V1x*V2z;
+c   norm.z = V1x*V2y-V1y*V2x;
+
+      norm(1) = norm_v1(2) * norm_v2(3) - norm_v1(3) * norm_v2(2)
+      norm(2) = norm_v1(3) * norm_v2(1) - norm_v1(1) * norm_v2(3)
+      norm(3) = norm_v1(1) * norm_v2(2) - norm_v1(2) * norm_v2(1)
+
+c   // dot product of normal and line's vector if zero line is parallel to triangle
+c   dotprod = norm.x*vect.x + norm.y*vect.y + norm.z*vect.z;
+
+      dotprod = norm(1)*vect(1) + norm(2)*vect(2) + norm(3)*vect(3) 
+
+c   if(dotprod < 0)
+c   {
+        count = count + 1
+       
+c        write(0,*) 'funny',dotprod,count
+c        write(0,*) '     ',norm
+c        write(0,*) '     ',vect
+
+c        if (count.EQ.10) stop 'sfdsdf'
+
+      IF (dotprod.NE.0.0D0) THEN       
+c      IF (dotprod.LT.0.0D0) THEN       
+
+c      //Find point of intersect to triangle plane.
+c      //find t to intersect point
+c      t = -(norm.x*(linept.x-pt1.x)+norm.y*(linept.y-pt1.y)+norm.z*(linept.z-pt1.z))/
+c             (norm.x*vect.x+norm.y*vect.y+norm.z*vect.z);
+
+        t = -(norm(1) * (p1(1) - v1(1)) + norm(2) * (p1(2) - v1(2)) + 
+     .        norm(3) * (p1(3) - v1(3))) /
+     .       (norm(1) * vect(1) + norm(2) * vect(2) + 
+     .        norm(3) * vect(3))
+
+
+
+c      // if ds is neg line started past triangle so can't hit triangle.
+c      if(t < 0) return 0
+
+c      pt_int->x = linept.x + vect.x*t;
+c      pt_int->y = linept.y + vect.y*t;
+c      pt_int->z = linept.z + vect.z*t;
+
+        pt_int(1:3) = p1(1:3) + vect(1:3) * t   
+c        pt_int(1) = p1(1) + vect(1) * t   
+c        pt_int(2) = p1(2) + vect(2) * t   
+c        pt_int(3) = p1(3) + vect(3) * t   
+
+c      if(check_same_clock_dir(pt1, pt2, pt_int, norm) == SAME_CLOCKNESS)
+c         if(check_same_clock_dir(pt2, pt3, pt_int, norm) == SAME_CLOCKNESS)
+c            if(check_same_clock_dir(pt3, pt1, pt_int, norm) == SAME_CLOCKNESS)
+c               // answer in pt_int is insde triangle
+c               return 1;
+
+c        write(0,*) '  clock',geoSameClockness(v1,v2,pt_int,norm)
+c        write(0,*) '       ',geoSameClockness(v2,v3,pt_int,norm)
+c        write(0,*) '       ',geoSameClockness(v3,v1,pt_int,norm)
+
+        IF (geoSameClockness(v1,v2,pt_int,norm)) THEN
+          IF (geoSameClockness(v2,v3,pt_int,norm)) THEN
+            IF (geoSameClockness(v3,v1,pt_int,norm))       
+     .        geoLineThroughTriangle = .TRUE.
+          ENDIF
+        ENDIF
+
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c
+c ======================================================================
 c for transfer to mod_filament.f 
 c
       SUBROUTINE LoadFilamentData(fname,status)
@@ -672,7 +849,7 @@ c       a filament flux-tube:
               len2 = MAX(0.0D0,DBLE(opt_fil%length2))
               chop = 5
             ENDIF
-            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,
+            CALL TraceFieldLine_DIVIMP(x,y,z,2,chop,len1,len2,0.0D0,
      .                                 n,v,10000)  ! *** HACK *** (the 10000)
             filament(ifilament)%lcell(1,icell) = len1
             filament(ifilament)%lcell(2,icell) = len2
@@ -777,6 +954,76 @@ c       otherwise indicate that the problem was ill-posed:
           CalcPerp =  0.0D0
         ELSE
           CalcPerp = -1.0D0
+        ENDIF
+      ENDIF
+
+      RETURN
+      END
+c ======================================================================
+c
+c function: CalcPerp2
+c
+c Calculate the perpendicular distance from a point to a line, but never
+c mind the check if the intersection point is between the end points (combine
+c with CalcPerp in the future to avoid code repetition).
+c
+      REAL*8 FUNCTION CalcPerp2(a,b,c,t) 
+
+      IMPLICIT none
+
+      REAL*8, INTENT(IN)  :: a(3),b(3),c(3)
+      REAL*8, INTENT(OUT) :: t
+
+      REAL*8 p(3),delta(3),dist
+
+      REAL*8     DTOL
+      PARAMETER (DTOL = 1.0D-7)
+
+
+      CalcPerp2 = -1.0D0
+
+      delta = b - a
+
+      IF (DABS(delta(1)).GT.DTOL.OR.DABS(delta(2)).GT.DTOL.OR.
+     .    DABS(delta(3)).GT.DTOL) THEN
+
+        t = ((c(1) - a(1)) * delta(1) + (c(2) - a(2)) * delta(2) + 
+     .       (c(3) - a(3)) * delta(3)) /
+     .      (delta(1)**2 + delta(2)**2 + delta(3)**2)
+
+        p(1:3) = a(1:3) + t * delta(1:3)
+
+        IF (.TRUE.) THEN
+c       IF ((t+DTOL).GE.0.0D0.AND.(t-DTOL).LE.1.0D0) THEN
+
+          dist = DSQRT((p(1) - c(1))**2 + (p(2) - c(2))**2 +
+     .                 (p(3) - c(3))**2)
+
+c          WRITE(0,*) 'A=',a
+c          WRITE(0,*) 'B=',b
+c          WRITE(0,*) 'C=',c
+c          WRITE(0,*) 'P=',p
+c          WRITE(0,*) 'DELTA=',delta
+
+          IF (dist.LT.DTOL*10.0D0) THEN
+c           Point C is on the line AB:
+            CalcPerp2 = 0.0D0
+          ELSE
+c           Point of perpendicular intersection is displaced from
+c           the point C:
+            CalcPerp2 = dist
+          ENDIF
+        ELSE
+          CalcPerp2 = -1.0D0
+        ENDIF
+      ELSE
+c       If the points are all identicle, then return a positive result,
+c       otherwise indicate that the problem was ill-posed:
+        IF (DABS(a(1) - c(1)).LT.DTOL.AND.DABS(a(2) - c(2)).LT.DTOL.AND.
+     .      DABS(a(3) - c(3)).LT.DTOL) THEN
+          CalcPerp2 =  0.0D0
+        ELSE
+          CalcPerp2 = -1.0D0
         ENDIF
       ENDIF
 
@@ -1491,8 +1738,7 @@ c     .              (iobj.EQ.2))
 c     .              (iobj.EQ.2.AND.iside.NE.1).OR.
 c     .              (i1.NE.1)) 
 c     .            subdivide = .FALSE.  ! *** DEBUG ***
-c                 subdivide = .FALSE. 
-
+                subdivide = .FALSE.   ! *** TURNED THIS OFF while building C-Mod gas puff grids!  -SL, 24/05/2011
 
                 IF (subdivide) THEN
                   IF (output) THEN
@@ -1506,14 +1752,13 @@ c                 subdivide = .FALSE.
 
                 DO WHILE (.NOT.finished.AND.subdivide)  ! *** THIS IS WRONG... *** 
 
+c                 --------------------------------------------------------
                   IF     (omap1.EQ.0) THEN
 c                   Hit a wall, need to reverse direction.  If stuck between two 
 c                   wall surfaces then just let things bounce back and forth:                    
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'corresponding side',*99)
@@ -1526,21 +1771,18 @@ c                   wall surfaces then just let things bounce back and forth:
 
                     change = change + 1
                     IF (change.EQ.2) finished = .TRUE.
-
+c                 --------------------------------------------------------
                   ELSEIF (obj(omap1)%segment(1).NE.0) THEN   ! *** HACK: NEED TO DECOUPLE THIS FROM THE DELETE FLAG... ***
 c                  ELSEIF (obj(omap1)%segment(1).EQ.1) THEN   
 c                   Identify common line segment between the current side
 c                   and the neighbour:
                     iobj1  = omap1
                     iside1 = smap1
-
                     CALL FindConnectedTetrahedron
      .                     (found,omap1,smap1,iside2,
      .                      iobj1,iside1,ivtx1,ivtx2)
-
 c...                Need this line because...
                     IF (omap1.EQ.0) iside1 = iside2
-
                     IF (.NOT.found) 
      .                CALL ER('DivideTetrahedron','Unable to find '//
      .                        'neighbouring object',*99)
@@ -1551,6 +1793,7 @@ c...                Need this line because...
                       WRITE(fp,*) '  NEXT TETRA:',iobj1,iside1
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
+c                 --------------------------------------------------------
                   ELSE
                     IF (output) THEN
                       WRITE(fp,*) '  SORRY...  :',iobj1,iside1,
@@ -1558,6 +1801,7 @@ c...                Need this line because...
                       WRITE(fp,*) '            :',omap1,smap1
                     ENDIF
                     subdivide = .FALSE.
+c                 --------------------------------------------------------
                   ENDIF
                   count = count + 1
 
@@ -1660,9 +1904,10 @@ c
 c
       SUBROUTINE BuildConnectionMap_New
       USE mod_eirene06_locals
+      USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER fp,iobj,iobj1,iside,iside1,isrf
+      INTEGER fp,iobj,iobj1,iside,iside1,isrf,icell
       INTEGER i1,i2
 
       INTEGER                 nlist,ilist
@@ -1768,6 +2013,8 @@ c              STOP 'BAD SRF_SIDE'
       RETURN
  99   WRITE(fp,*) '  IOBJ ,ISIDE =',iobj ,iside
       WRITE(fp,*) '  IOBJ1,ISIDE1=',iobj1,iside1
+      icell = obj(iobj)%index(IND_CELL)
+      WRITE(fp,*) '  X,YCEN      =',cell(icell)%cencar(1:2)
       STOP
       END
 c
@@ -1799,7 +2046,12 @@ c
           obj_volume = 0.0D0
           DO iobj = 1, nobj
             IF (grp(obj(iobj)%group)%type.NE.GRP_TETRAHEDRON) CYCLE
-            CALL gmCalcTetrahedronVolume(iobj)
+            WRITE(0,*) 'STOPPING, SOMETHING MESS UP HERE, CHECK CODE'
+            STOP
+c...        Not sure what's up here, since I was calling a function as if it's a 
+c           subroutine.  Need to debug when the runtime error appears, from above.
+c           Trying to compile with gfortran caught this.
+c            CALL gmCalcTetrahedronVolume(iobj)
           ENDDO
 
         CASE (MODE_OBJ_TUBE)

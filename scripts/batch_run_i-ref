@@ -1,0 +1,74 @@
+#!/bin/tcsh
+
+set PAUSE = 14400
+
+set DELAY = 0
+set DEVICE = i
+set FAMILY = ref
+set OUT_FILE = i-ref
+
+
+set SERIES = 100
+
+foreach CASE (b d e f g h i)
+
+  if ( $CASE == "e" ) sleep $PAUSE
+  if ( $CASE == "g" ) sleep $PAUSE
+
+  foreach B ( 0 1 2 3 4 5 6 7 8 9 )
+
+    if ($B == "0") set SOLPS = 1537
+    if ($B == "1") set SOLPS = 1512
+    if ($B == "2") set SOLPS = 1513
+    if ($B == "3") set SOLPS = 1511
+    if ($B == "4") set SOLPS = 1514
+    if ($B == "5") set SOLPS = 1540
+    if ($B == "6") set SOLPS = 1542
+    if ($B == "7") set SOLPS = 1515
+    if ($B == "8") set SOLPS = 1525
+    if ($B == "9") set SOLPS = 1538
+
+    if ( $CASE == 'a' || $CASE == 'c' ) then 
+      set GRID = iterm.carre.105
+    else
+      set GRID = iterm_slo.carre.002_fix_2
+    endif
+
+    run -qsub "$FAMILY"-"$SERIES$B$CASE" -sleep $DELAY -d iter $SOLPS "$DEVICE"-"$FAMILY"-"$SERIES$B$CASE" $OUT_FILE $GRID
+
+    @ DELAY = $DELAY + 15
+
+  end
+
+end
+
+
+# ======================================================================
+exit
+# ======================================================================
+
+
+foreach SERIES = (1000 1001 1002 1003 1004 1005 1006 1007 1008 1009)
+
+  foreach CASE (a) # b d e f g h i)  # b) # d e f g h i j k l m n o )
+
+    if ( $CASE == 'a' || $CASE == 'c' ) then 
+      set GRID = iterm.carre.105
+    else
+      set GRID = iterm_slo.carre.002_fix_2
+    endif
+
+    run -qsub "$FAMILY"-"$SERIES$CASE" -sleep $DELAY -d iter 1514 "$DEVICE"-"$FAMILY"-"$SERIES$CASE" i-ref $GRID
+    # run "$DEVICE"-"$FAMILY"-"$SERIES$CASE" i-upp $GRID
+    # run -o "$DEVICE"-"$FAMILY"-"$SERIES$CASE" i-ref_3D_EPP1_hal
+
+    @ DELAY = $DELAY + 15
+
+  end
+
+end
+
+# ======================================================================
+exit
+# ======================================================================
+

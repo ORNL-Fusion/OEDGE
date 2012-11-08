@@ -15,6 +15,11 @@ c
       use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
+c slmod begin
+      use mod_interface
+      use mod_divimp
+      use mod_divimp_tdep
+c slmod end
 c
       implicit none
 c
@@ -78,7 +83,14 @@ c
       include    'hc_global_opts'
 c slmod begin - temp
       include 'slcom'
+
+      integer i,fp,load_i
 c slmod end
+
+c
+c     Controls code debugging output
+c
+      logical :: debug_code
 
 
 c
@@ -156,6 +168,12 @@ C psmod
 c
       debug0 = .false.
       debug_all=.false.
+
+c
+c     jdemod - added a debug code flag that will activate write(0,*) markers
+c              for tracking crashes that do not report the exact location
+c
+      debug_code = .false.
 c
       Ftotal = 0.0
       COPTION = 0
@@ -205,6 +223,8 @@ c
       refCENT     = 0.0
       refTMAX     = 0.0
       refFAIL     = 0.0
+c
+      if (debug_code) write(0,*) '1:'
 c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
@@ -259,7 +279,10 @@ C
       IF (DEBUGL) CALL TEST
 
       TAUTIM = ZA02AS (1)
-
+c slmod begin
+      LOAD_I = -1
+      NYMFS_GLOBAL = NYMFS  ! lame, but don't want to pass NYMFS is local and I don't want to pass it around -SL, 21/11/2011
+c slmod end
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
       TAUTIM = ZA02AS (1) - TAUTIM
       WRITE(6,*) 'TIME USED IN SETUP: TAU SUBROUTINE :',TAUTIM,' S'
@@ -346,8 +369,8 @@ c
       CALL RZERO (wallse, maxpts+1)
       CALL RZERO (wallse_i, maxpts+1)
       CALL RZERO (wallsi, maxpts+1)
-      write(6,*) 'RESETTING WALLSIZ'
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
+      call rzero (wallseiz,(maxpts+1) * MAXIZS)
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -526,6 +549,7 @@ C-----------------------------------------------------------------------
 C
       IF (ITER.EQ.1) CALL PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
 
+      if (debug_code) write(0,*) '2:'
 
 
 c
@@ -789,6 +813,9 @@ C
         call init_eckstein_2007(mattar,matp)
       ENDIF
 c
+      if (debug_code) write(0,*) '3:'
+
+
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
 C     FOR BOTH NEUTRAL AND ION INJECTION CASES.
@@ -969,6 +996,9 @@ C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
 C
 
+      if (debug_code) write(0,*) '4:'
+
+
   200 CONTINUE
       IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
       NPROD  = 0
@@ -1010,6 +1040,9 @@ C
       IMPLIM = 4
 c
       num_entered_core = 0.0
+
+      if (debug_code) write(0,*) '5:'
+
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
@@ -1020,11 +1053,17 @@ C
 c sltmp
       IF (grdnmod.NE.0) iw = MAX(1,stopopt)
 
+      tdep_save_n = 0
+
       DO 800  IMP = 1, NATIZ
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-        IF (sloutput.AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-     .    WRITE(0,*) 'debug imp:',imp,natiz
+        IF (sloutput) THEN 
+          IF ((natiz.GT.10.AND.
+     .         grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0).OR.
+     .        (natiz.LE.10)) 
+     .      WRITE(0,*) 'debug imp:',imp,natiz
+        ENDIF
 c slmod end
 c
 c       Particle initialization
@@ -1281,12 +1320,53 @@ c
 c
 c
             SPUTY = 1.0
+c slmod begin - t-dep
+          ELSEIF (CIOPTE.EQ.11) THEN
+c...        Ion injection from both the current source and the source stored
+c           from a previous run:
+            LOAD_I = -1
+            NRAND = NRAND + 1
+            CALL SURAND2(SEED, 1, RAN)
+            write(0,*) 'branch',ran,tdep_load_frac
+            IF (RAN.GT.TDEP_LOAD_FRAC) THEN
+              write(0,*) 'standard'
+              R     = CXSC
+              Z     = CYSC
+              PORM  = -1.0 * PORM
+              VEL   = 9.79E3 * SQRT(CTEM1 / CRMI) * PORM * QTIM
+              SPUTY = 1.0
+            ELSE
+              NRAND = NRAND + 1
+              CALL SURAND2 (SEED, 1, RAN)
+              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
+c... left off: need to sort out setting the charge state, and also the strange initialization of 
+c maxciz from cizsc :
+c          DO 792 JZ = CIZSC, MAXCIZ
+c why would this be done?
+c a bug?
+              R = TDEP_LOAD(LOAD_I)%R
+              Z = TDEP_LOAD(LOAD_I)%Z
+              PORM  = -1.0 * PORM
+              VEL  = TDEP_LOAD(LOAD_I)%VEL
+c should be adjusting sputy, abs
+              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT
+
+              write(0,*) '_load',load_i,r,z,vel,sputy
+
+            ENDIF
+c slmod end
           ENDIF
 c
 c         Set initial ion temperature.
 c
 c Geier IPP/01 added  .or.ciopte.eq.8
-          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod begin
+          if (load_i.ne.-1) then
+            temi = tdep_load(load_i)%temp
+          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c
+c          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+c slmod end
              TEMI = pinenz(ik,ir)
           else
              TEMI = CTEM1
@@ -1328,10 +1408,22 @@ c       ion injection vs. neutral launch
 c
 c        TEMI   = CTEM1
 c
-        IZ     = CIZSC
+c slmod begin
+        IF (LOAD_I.NE.-1) THEN
+          IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
+          MAXCIZ = CIZSC         ! not sure about this...
+        ELSE
+          IZ     = CIZSC
+          MAXCIZ = CIZSC
+        ENDIF
         RIZ    = REAL(IZ)
-        MAXCIZ = CIZSC
-        DSPUTY = DBLE (SPUTY)
+        DSPUTY = DBLE(SPUTY)
+c
+c        IZ     = CIZSC
+c        RIZ    = REAL(IZ)
+c        MAXCIZ = CIZSC
+c        DSPUTY = DBLE (SPUTY) 
+c slmod end
 c
 c       Move setting of initial value of cist so that time spent as
 c       neutrals can be included.
@@ -1382,7 +1474,16 @@ c
 c       SET Initial S and CROSS postion for particles.
 c
 C
-        if (init_pos_opt.eq.0) then
+c slmod begin - t-dep
+        if (load_i.ne.-1) then
+          cross = tdep_load(load_i)%cross
+          k     = kks(ir)
+          s     = tdep_load(load_i)%s
+        elseif (init_pos_opt.eq.0) then
+c
+c
+c        if (init_pos_opt.eq.0) then
+c slmod end
 c
            CROSS  = 0.0
            K      = KKS(IR)
@@ -1403,7 +1504,6 @@ c
            else
               call getscross_approx(r,z,s,cross,ik,ir)
            endif
-
         endif
 c
 c       Record approximate starting S-distance from nearest target.
@@ -1540,7 +1640,7 @@ c       which specifies no diffusion the RCONST value
 c       would be large enough to prevent it from occurring
 c       Even if instantaneous diffusion was specified.
 c
-         IF (CIOPTB.NE.1)  RCONST = 0.0
+        IF (CIOPTB.NE.1)  RCONST = 0.0
 C
 C          RCONST = 0.0
 c
@@ -1732,6 +1832,7 @@ c
                 ikorg = ik
                 irorg = ir
 c
+                write(6,*) ' debug: launch_one from div',id
                 call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >                   rc,ctem1,cist,sputy,
      >                   refSTRUK,mtcrefstruk,refMAIN,refEXIT,
@@ -1857,6 +1958,20 @@ c
 c              Record average energy
 c
                promptdeps(id,5) = promptdeps(id,5) + sputy * energy
+c slmod begin
+               if (allocated(wall_flx)) then
+c                 in = nimindex(id)   ! Changed from NIMINDEX to WALLINDEX since the former is only assigned if running PIN. -SL, 26/03/2012
+                 if (nimindex(id).ne.0) then
+                   if (nimindex(id).ne.wallindex(id)) then
+                     write(0,*) 'error: nimindex and wallindex are '//  ! temporary check
+     .                          'not the same, investigate'
+                     stop
+                   endif
+                 endif
+                 in = wallindex(id)   
+                 wall_flx(in)%prompt = wall_flx(in)%prompt + sputy
+               endif
+c slmod end
 c
                if (kmfss(id).ge.0.0) then
                   RYIELD = YIELD (6, MATTAR, ENERGY,
@@ -1937,7 +2052,8 @@ c              jdemod - added update of wall deposition in the case of prompt de
 c
 c              Update wall deposition
 c
-               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy)
+               call update_walldep(ik,ir,iz,id,0,iwstart,idtype,sputy,
+     >                             energy)
 
 c
 c              Exit due to prompt deposition
@@ -2164,7 +2280,7 @@ c
 c
 c         Continue following particle
 c
-        if (debug0) write(0,*) 'Before LB',cist,cstmax
+          if (debug0) write(0,*) 'Before LB',cist,cstmax
 
           GOTO 500
 
@@ -2176,7 +2292,11 @@ C
 c        CICUTS(IZ) = CICUTS(IZ) + SPUTY
 c        CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
 c        TCUT = TCUT + SPUTY
-c        IFATE = 3
+c slmod begin
+        IF (sloutput) IFATE = 3
+c
+cc        IFATE = 3
+c slmod end
 C      (GOTO 790)
 C
 C-----------------------------------------------------------------------
@@ -2184,12 +2304,30 @@ C       CURRENT ION OR SUB-ION FINISHED WITH ... END OF DO-LOOP
 C-----------------------------------------------------------------------
 C
   790   CONTINUE
-
         if (ifate.eq.3) then
            CICUTS(IZ) = CICUTS(IZ) + SPUTY
            CRTRCS(IZ) = CRTRCS(IZ) + TEMI * SPUTY
            TCUT = TCUT + SPUTY
 c          IFATE = 3
+c slmod begin - t-dep
+c...       Store the state of the ion so that it can be re-launched in a 
+c          subsequent run:                     
+           IF (OPT_DIV%PSTATE.EQ.1) THEN
+             IF (.NOT.ALLOCATED(TDEP_SAVE)) ALLOCATE(TDEP_SAVE(NATIZ))
+
+             tdep_save_n = tdep_save_n + 1
+             tdep_save(tdep_save_n)%r      = r
+             tdep_save(tdep_save_n)%z	   = z
+             tdep_save(tdep_save_n)%phi    = 0.0
+             tdep_save(tdep_save_n)%s	   = s
+             tdep_save(tdep_save_n)%cross  = cross
+             tdep_save(tdep_save_n)%diag   = 0.0
+             tdep_save(tdep_save_n)%temp   = temi
+             tdep_save(tdep_save_n)%vel    = vel
+             tdep_save(tdep_save_n)%charge = riz
+             tdep_save(tdep_save_n)%weight = sputy
+           ENDIF
+c slmod end
         endif
 
 c
@@ -2235,6 +2373,9 @@ C
 c nonorth
         IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,R,Z,S,K,
      >    THETA,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
+c slmod begin
+        IF (DEBUGL) WRITE(6,*) '  ITERATION LIMIT',cstmax
+c slmod end
 c nonorth
 c        IF (DEBUGL) WRITE (6,9003) IMP,CIST,IK,IR,IZ,
 c     >    R,Z,S,K,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,FATE(IFATE)
@@ -2288,6 +2429,7 @@ C
 C
   805 CONTINUE
 
+      if (debug_code) write(0,*) '6:'
 
 C
 C
@@ -2296,6 +2438,7 @@ C
 C     M A I N   L O O P   E N D
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+C 
 C
 C---- CALCULATE AVERAGE TB, NB VALUES
 C
@@ -2437,6 +2580,9 @@ C-----------------------------------------------------------------------
 C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '7:'
+
+
       goto 8701
 
 c
@@ -2681,9 +2827,24 @@ c
          wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
          wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
          wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         
+         do iz= 1,nizs
+            if (wallsiz(in,iz).gt.0.0) then 
+               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
+            endif
+         enddo
 
-         write(6,'(a,i7,5(1x,f9.2))') 'Walls Data:',in,
-     >      wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         if (iz.lt.80) then 
+            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+     >          'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs)
+         else
+            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+         endif
 
 3005  continue
 c
@@ -2720,6 +2881,9 @@ C     >       wallsiz(in, 1:NIZS)
 c
 c     jdemod end
 c
+
+      if (debug_code) write(0,*) '8:'
+
 C
 C
 C     CALCULATE TOTALS
@@ -2771,6 +2935,7 @@ c
       endif
 
 
+      if (debug_code) write(0,*) '9:'
 
 
 C
@@ -3119,6 +3284,9 @@ c
          call prc('  coordinates prior to the grid being reflected')
          call prc('  in the R-axis.')
       endif
+
+      if (debug_code) write(0,*) '10:'
+
 c
 C-----------------------------------------------------------------------
 c
@@ -3440,6 +3608,7 @@ c
  9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
+      if (debug_code) write(0,*) '11:'
 
 
 C
@@ -3647,6 +3816,9 @@ c
          CALL RZERO (e2dPOWLS, MAXNKS*MAXNRS*MAXe2dizs)
          CALL RZERO (e2dLINES, MAXNKS*MAXNRS*maxe2dizs)
       endif
+
+      if (debug_code) write(0,*) '12:'
+
 c
 c     Choose Nocorona or ADAS
 c
@@ -3941,6 +4113,9 @@ c     End of selection for nocorona/ADAS
 c
       endif
 c
+
+      if (debug_code) write(0,*) '13:'
+
 C
 C================ GLOBAL TOTALS OVER ENTIRE PLASMA =====================
 C
@@ -4284,6 +4459,9 @@ c
         dtots(30) = dtots(8) + dtots(39)
       endif
 
+
+      if (debug_code) write(0,*) '14:'
+
 c
 C
 C======================== Z EFFECTIVES, ETC ============================
@@ -4364,6 +4542,8 @@ c
 c     SSEF is only non-zero if self-sputtering occurs - so the following code
 c     can be generalized by just including SSEF.
 c
+      IF (sloutput) write(0,*) 'nabsfac=',nabsfac
+
       if (nabsfac.gt.0.0) then
          absfac = (nabsfac + SSEF*nabsfac) + neut2d_fytot
          absfac_neut = absfac
@@ -4375,7 +4555,25 @@ c
          write(6,'(a,10(1x,g12.5))') 'NABSFAC CALCULATION:',nabsfac,
      >            ssef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+c slmod begin
+        if (nabsfac.eq.1.0) then
+          write(6,*) 
+          write(6,*) '-------------------------------------------------'
+          write(6,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(6,*) '-------------------------------------------------'
+          write(6,*) 
 
+          write(0,*) 
+          write(0,*) '-------------------------------------------------'
+          write(0,*) ' WARNING: ABSFACV_neut & _ion forced = 1.0'
+          write(0,*) '-------------------------------------------------'
+          write(0,*) 
+
+          absfac      = nabsfac
+          absfac_ion  = absfac
+          absfac_neut = absfac
+        endif
+c slmod end
       elseif (lpinz0) then
          absfac = zioniz*(tatiz/nimps) + neut2d_fytot
          absfac_neut = absfac
@@ -4406,7 +4604,7 @@ c
             absfac_neut = absfac
             absfac_ion = absfac
 c
-c           Note: the calculated absolute factor only makes sense for 
+c           Note: the calculated absolute factor only makes senfse for 
 c                 neutral launch cases - the various quantities are 
 c                 not defined for ion injection cases - so the ABSFAC 
 c                 should then be set to 1.0
@@ -4437,6 +4635,43 @@ c
       WRITE(6,*) 'ABSFAC: ',ABSFAC,' PARTS: WSSF ',WSSF,' FTOT ',
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',
      >   TNEUT,'NBASFAC:',nabsfac,'NEUT2D_FYTOT:',neut2d_fytot
+C slmod begin - t-dep
+c...  Dump the particle distribution to a file:
+      IF (opt_div%pstate.EQ.1) THEN
+        CALL find_free_unit_number(fp)
+        OPEN (UNIT=fp,FILE='raw.divimp_tdep_dist',ACCESS='SEQUENTIAL',
+     .        STATUS='REPLACE')
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{VERSION}'
+        WRITE(fp,*    ) 1.0
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA RUN}'
+        WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
+        WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
+        WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{DATA PARTICLE}'
+        WRITE(fp,*    ) tdep_save_n
+        WRITE(fp,'(A)') '*'
+        DO i = 1, tdep_save_n
+          WRITE(fp,'(I9,7F13.7,1P,E15.7,0P,F5.1,1P,E15.7,0P)') i,
+     .      tdep_save(i)%r      ,
+     .      tdep_save(i)%z      ,	  
+     .      tdep_save(i)%phi    ,     
+     .      tdep_save(i)%s      ,  
+     .      tdep_save(i)%cross  ,
+     .      tdep_save(i)%diag   ,
+     .      tdep_save(i)%temp   ,
+     .      tdep_save(i)%vel    ,
+     .      tdep_save(i)%charge ,
+     .      tdep_save(i)%weight
+        ENDDO
+        CLOSE(fp)
+c...    Clear memory:
+        DEALLOCATE(tdep_save)
+        IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
+      ENDIF
+C slmod end
 C
       DO 1020 IR = 1, NRS
         DO 1010 IK = 1, NKS(IR)
@@ -4689,6 +4924,9 @@ c
       end do
 c
 c
+      if (debug_code) write(0,*) '16:'
+
+
 c
       IF (DTOTS(9).NE.0.0D0) THEN
         DTOTS(10) = DTOTS(10) / DTOTS(9)
@@ -4715,10 +4953,15 @@ c
 c
       do in = 1,2
         do 4096 iz = 1,nizs
-            sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           if (ditots(maxizs+2,in).ne.0.0) then 
+              sitots(iz,in) = ditots(iz,in) / ditots(maxizs+2,in)
+           endif  
+
 4096    continue
 c
-        sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        if (ditots(maxizs+2,in).ne.0.0) then 
+          sitots(maxizs+1,in) = ditots(maxizs+1,in)/ditots(maxizs+2,in)
+        endif
 c
       end do
 c
@@ -4758,20 +5001,29 @@ c
 c
          call prr('NEUTRAL DEPOSITION ON '//inner//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+            call prr('APPROXIMATE '//inner//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
          tmpdep = wallsn(wallindex(nds-1)) + wallsn(wallindex(nds-2))
 c
          call prr('NEUTRAL DEPOSITION ON '//outer//' "LOUVER"  : ',
      >             tmpdep)
-         call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
+
+         if (tmpsrc.ne.0.0) then 
+           call prr('APPROXIMATE '//outer//' C DEPOSITION RATE   : ',
      >             tmpdep/tmpsrc*tmpmult)
+         endif
 c
       endif
 c
       call prb
 c
+      if (debug_code) write(0,*) '17:'
+
+
 c     Calculate and summarize region deposition probabilities.
 c
 c     Based on contents of wallse wallse_i and wtdep array.
@@ -4816,7 +5068,7 @@ c
 c     Write imp. number density, Velavg, Fcell, Ffi, Fthi, and Fvbg from
 c     SOL region to .lim file to process 3D plots via Excel.
 c
-      if (cioptr.gt.0.and.cprint.eq.8.or.cprint.eq.9) then
+      if (cioptr.gt.0.and.(cprint.eq.8.or.cprint.eq.9)) then
          WRITE(6,*)'Writing impurity force data to .lim file'
          CALL DATA3DII(1)
       endif
@@ -4833,6 +5085,9 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
+      if (debug_code) write(0,*) '18:'
+
+
       IF (NIZS.GT.0)
      >     CALL MONPRI (FACTA(1),VFLUID,NIZS,SDTZS ,sdtzs2,
      >           STOTS,DOUTS,RIONS,TDEP,TWALL,DPARAS,DCROSS,
@@ -4864,8 +5119,28 @@ c
      >       in * d_pinch_vel, d_pinch_v(in)
       end do
 c slmod begin
+      CALL inOpenInterface('idl.divimp_summary',ITF_WRITE)
+      i = nimps
+      IF (cneuth.NE.-1) i = i + nimps2  ! Check for a supplementary launch
+      CALL inPutData(i               ,'IONS_REQUESTED'       ,'N/A')
+      CALL inPutData(tneut           ,'NEUTRALS_LAUNCHED'    ,'N/A')
+      CALL inPutData(tfail           ,'NEUTRALS_FAILED'      ,'N/A')
+      CALL inPutData(tatiz           ,'IONS_CREATED'         ,'N/A')
+      CALL inPutData(num_entered_core,'IONS_REACHING_CORE'   ,'N/A')
+      CALL inPutData(twall           ,'IONS_LOST_WALL'       ,'N/A')
+      CALL inPutData(tdep            ,'IONS_LOST_TARGET'     ,'N/A')
+      CALL inPutData(tbyond          ,'IONS_LOST_STATE_LIMIT','N/A')
+      CALL inPutData(tbelow          ,'IONS_LOST_RECOMBINED' ,'N/A')
+      CALL inPutData(cion            ,'ION_ATOMIC_NUMBER'    ,'N/A')
+      CALL inPutData(nizs            ,'MAX_CHARGE_STATE'     ,'N/A')
+      CALL inCloseInterface
+
       CALL OutputData(87,'END OF DIV')
 c slmod end
+
+      if (debug_code) write(0,*) '19:'
+
+
 c
 c      if (cisterrcnt.ne.0) then
 c         call prb
@@ -4884,7 +5159,7 @@ C
 C---- FORMATS ...
 C
 c nonorth
- 9003 FORMAT(1X,I8,1x,F10.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
+ 9003 FORMAT(1X,I8,1x,F12.1,1x,2(1x,I4),1x,I2,2(1x,F12.5),1x,
      >       F9.3,1x,F6.2,1x,F12.5,1x,F8.3,1P,1x,E15.8,
      >       0P,1x,1x,F9.3,1P,1x,E10.3,0P,1x,F10.5,1x,F6.2,
      >       1xI3,:,1X,A,:,1x,F8.5)
@@ -4895,10 +5170,15 @@ c     >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
      >  ' TIMESTEPS  (DELTA T =',1P,G10.3,' SECONDS).',//)
 c
 c nonorth
- 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
-     >  '----R--------Z-------S------K---THETA--SMAX---',
-     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+ 9005 FORMAT(1X,' ------ION- ----TIME-  -IK- -IR- IZ  ',
+     >  '---------R- ----------Z- -------S- ----K-  -----THETA- ',
+     >  '---SMAX- ------DRIFTVEL-  ',
+     >  '----TEMI- -PARADIFF- ----CROSS- -FRAC- -IT ',
      >  14('-'))
+c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
+c     >  '----R--------Z-------S------K---THETA--SMAX---',
+c     >  '---DRIFTVEL------TEMI-PARADIFF-CROSS--FRAC-IT',
+c     >  14('-'))
 c nonorth
 c 9005 FORMAT(1X,'--ION-----TIME-IK-IR-IZ',
 c     >  '----R--------Z-------S------K----SMAX---',
@@ -5367,7 +5647,11 @@ c
                            z = kzb(ik-1,ir) + factc *
      >                        (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5395,7 +5679,12 @@ c
                            z  = kzb(ik-1,ir) + factc *
      >                         (zs(ik,ir)-kzb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5436,7 +5725,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5463,7 +5757,12 @@ c
                            z  = zs(ik,ir) + factc *
      >                         (kzb(ik,ir)-zs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5578,7 +5877,12 @@ c
                            r = krb(ik-1,ir) + factc *
      >                        (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5606,7 +5910,12 @@ c
                            r  = krb(ik-1,ir) + factc *
      >                         (rs(ik,ir)-krb(ik-1,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5645,7 +5954,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
                            found = .true.
@@ -5672,7 +5986,12 @@ c
                            r  = rs(ik,ir) + factc *
      >                         (krb(ik,ir)-rs(ik,ir))
 c
-                           isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                           isat = ech*ne*
      >                            9.79e3*SQRT(0.5*(te+ti)
      >                            *(1.0+RIZB)/CRMB)
 c
@@ -5780,7 +6099,12 @@ c
                         z  = zs(ik,ir) + d1/d3 *
      >                      (zs(ik+1,ir)-zs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c
@@ -5884,7 +6208,12 @@ c
                         r  = rs(ik,ir) + d1/d3 *
      >                      (rs(ik+1,ir)-rs(ik,ir))
 c
-                        isat = 0.5 * ech*ne*
+c
+c                          jdemod - removed factor of 0.5 - bug
+c     
+c                           isat = 0.5 * ech*ne*
+c
+                        isat = ech*ne*
      >                         9.79e3*SQRT(0.5*(te+ti)
      >                         *(1.0+RIZB)/CRMB)
 c
@@ -7053,6 +7382,9 @@ c
       real    targ_dist,dist_to_point
       external dist_to_point
       external larmor
+c slmod begin - tmp
+      LOGICAL getrz_error
+c slmod end
 c
 c     First check the particle grid position
 c
@@ -7074,6 +7406,21 @@ c
 c     Define target index
 c
       id = idds(ir_local,it)
+c slmod begin
+      getrz_error = .FALSE.
+      IF (id.EQ.0) THEN
+        getrz_error = .TRUE.
+        WRITE(0,*) 'WARNING promptdep: getrz_confusion, prompt '//
+     .             'redeposition check lost'
+c        WRITE(0,*) 'WHOA! PROBLEM!'
+c        WRITE(0,*) griderr
+c        WRITE(0,*) r,z
+c        WRITE(0,*) ik_local,ir_local
+c        WRITE(0,*) ik,ir
+c        WRITE(0,*) it
+        id = idds(irsep,2)
+      ENDIF
+c slmod end
 c
 c     Calculate Larmor radius - use toroidal field for now.
 c
@@ -7085,6 +7432,9 @@ c     Find distance to target from ionization position to linear
 c     extension of target element.
 c
       targ_dist = dist_to_point(r,z,rp(id),zp(id),thetas(id))
+c slmod begin
+      IF (getrz_error) targ_dist = 1.0E+20
+c slmod end
 c
 c     Does Prompt depostion occur?
 c
@@ -7190,12 +7540,13 @@ c
 c
 c
 c
-      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy)
+      subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
+     >                          eimp)
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
       integer,intent(in) ::  idt,idw
-      real sputy
+      real sputy,eimp
 c
       include 'params'
       include 'cgeom'
@@ -7225,8 +7576,15 @@ c
 c     If neither a target nor wall segment has been specified find the wall segment centre
 c     closest to the cell centre of the particle exit.
 c
-      write(6,'(a,7i6,4g12.5)') 'Update_walldep:',ik,ir,iz,idt,idw,
-     >         iwstart,idtype,sputy
+      if (cprint.eq.9) then 
+
+         write(6,'(a,7i6,5(1x,g12.5))') 'Update_walldep:',ik,ir,iz,
+     >         idt,idw,
+     >         iwstart,idtype,sputy,eimp
+
+      endif
+c
+c     Left grid through periphery ... add Teb factor to energy when element is known
 c
       if (idt.eq.0.and.idw.eq.0) then
 c
@@ -7249,10 +7607,16 @@ c     >              'DSQ:',ind,WALLPTS,DSQ,R,Z,ROLD,ZOLD
 C
 
           if (ind.lt.1.or.ind.gt.wallpts) then
-
-             write(6,*) 'Wallsi: No wall found:',idt,ind,ik,ir
+c
+             if (cprint.eq.9) then 
+                write(6,'(a,4i10)') 'Wallsi: No wall found:',
+     >                             idt,ind,ik,ir
+             endif
+c
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c
+             wallsiz(maxpts+1,iz) = wallsiz(maxpts+1,iz) + sputy
+             wallseiz(maxpts+1,iz)= wallseiz(maxpts+1,iz) + eimp * sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7263,9 +7627,18 @@ c
           else
 
              wallsi(ind) = wallsi(ind) + sputy
-             wallsiz(ind, iz) = wallsiz(ind, iz) + sputy
+             wallsiz(ind,iz)  = wallsiz(ind,iz) + sputy
 
-             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
+c            Add plasma temperature at deposition element to impact energy
+c
+             eimp = eimp + 3.0 * iz * wallpt(ind,29) 
+
+             wallseiz(ind,iz) = wallseiz(ind,iz) + eimp * sputy
+
+c
+c             write(6,*) 'ind case ind:',ind,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7285,9 +7658,13 @@ c
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
              wallsiz(wallindex(idt), iz) =
      >            wallsiz(wallindex(idt), iz) + sputy
-             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
-     >          ' sputy: ', sputy,
-     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
+             wallseiz(wallindex(idt), iz) =
+     >            wallseiz(wallindex(idt), iz) + eimp * sputy
+
+
+c             write(6,*) 'idt case ind:',wallindex(idt),' iz: ',iz,
+c     >          ' sputy: ', sputy,
+c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7297,9 +7674,9 @@ c
 
           else
 
-             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
-             wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
-             wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
+c                   wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+c                   wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
 c
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7315,7 +7692,11 @@ c
 c
              wallsi(idw) = wallsi(idw)+ sputy
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
-         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+             wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
+
+c
+c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
+c
 
              if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
@@ -7325,9 +7706,11 @@ c
 
        else
 
-          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
+
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
           wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
+          wallseiz(maxpts+1, iz) = wallseiz(maxpts+1, iz) + eimp * sputy
 c
           if (iwstart.ge.1.and.iwstart.le.wallpts) then
 
