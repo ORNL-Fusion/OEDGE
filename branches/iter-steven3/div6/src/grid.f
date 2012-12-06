@@ -4192,9 +4192,12 @@ c        ENDDO
         ENDDO
       ENDIF
 
-
-c      CALL DumpGrid('BUMMER MAN')
-
+      IF (ncell.GT.MAXNKS) THEN
+        WRITE(0,*) 'ERROR GenWallRing: IK index out of bounds'
+        WRITE(0,*) 'NCELL =',ncell
+        WRITE(0,*) 'MAXNKS=',maxnks
+        CALL DumpGrid('IK index out of bounds')
+      ENDIF
 
 c...  Assign cell quantities for IR=IRWALL:
       ir = irwall

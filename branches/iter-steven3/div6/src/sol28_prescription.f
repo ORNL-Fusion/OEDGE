@@ -659,12 +659,11 @@ c...        Pleasant:
             ENDDO
           CASE (6)
 c...        Te evolution:
-            CALL CalculateTeProfile(in1,in2,s,target)
-            t = te
+            CALL CalculateTeProfile(in1,in2,s,target)     
+            t = te                                        
             IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
      .                             'not ready',*99)
 c            CALL EvolveTeProfile(in1,in2,s,target)
-
           CASE (7)
 c...        Linear -- to be overwritten by the reference plasma:
             x = 1.0D0

@@ -377,12 +377,6 @@ c...  Find x-points:
       itsep  = 1
       itsep2 = 0
 
-      IF (grid%isep.EQ.1) THEN 
-        WRITE(0,*) 'STOP GenerateTubeGroups: grid%isep=1, linear '//
-     .             'grid OK with this routine?'
-        STOP
-      ENDIF
-
       it = grid%isep
       cind1 = tube(it)%cell_index(LO)
       cind2 = tube(it)%cell_index(HI)
@@ -475,7 +469,26 @@ c...    Limiter grid:
         zxpt(nxpt) = vtx(2,ivtx1)   
         ixpt(nxpt,1) = GetObject(cind1,IND_CELL)
         ixpt(nxpt,2) = GetObject(cind2,IND_CELL)
+
+      ELSEIF (itsep.EQ.1.AND.grid%isep.EQ.1) THEN
+c...    Linear grid:
+
+        nxpt = nxpt + 1
+
+        cind1 = tube(itsep)%cell_index(LO)
+        cind2 = tube(itsep)%cell_index(HI)
+
+        iobj  = GetObject(cind1,IND_CELL)
+        isrf  = obj(iobj)%iside(1)
+        ivtx1 = srf(ABS(isrf))%ivtx(1)
+
+        rxpt(nxpt) = vtx(1,ivtx1)   
+        zxpt(nxpt) = vtx(2,ivtx1)   
+        ixpt(nxpt,1) = GetObject(cind1,IND_CELL)
+        ixpt(nxpt,2) = GetObject(cind2,IND_CELL)
+
       ENDIF
+
 
       IF (debug) THEN
         WRITE(logfp,*) 'R,Z0:',r0,z0
