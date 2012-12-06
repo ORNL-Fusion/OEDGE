@@ -676,8 +676,6 @@ c       ----------------------------------------------------------------
      .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
      .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
      .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
-
-
             SELECTCASE (opt_eir%idirec(opt_eir%nadspc)) ! 1=vector for projecting onto, 2=collect cells along a LOS, 3=same, but project onto vector as well
               CASE (0)
               CASE (1)

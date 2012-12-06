@@ -1424,9 +1424,9 @@ c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
-              IF (sub_option.NE.2.AND.
-     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
-c              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+c              IF (sub_option.NE.2.AND.
+c     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               CALL TestTetrahedrons(sub_option,fname,nsur,npts,vsur,
      .                              hsur,MAXSURFACE,MAXPOINTS,status)
               WRITE(0,*) 'NSUR=',nsur
@@ -2259,8 +2259,8 @@ c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 

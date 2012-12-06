@@ -98,7 +98,9 @@ C ===== SOURCE: calc_spectrum.f
             ESTIML(ISPC)%PSPC%ESP_MIN= MIN(ESTIML(ISPC)%PSPC%ESP_MIN,EB)
             ESTIML(ISPC)%PSPC%ESP_MAX= MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
             ESTIML(ISPC)%PSPC%IMETSP = 1
+c slmod begin
 
+c slmod end
 c           write(0,'(A,3I6,1P,E10.2,0P,2F10.3)') 
 c     .                'debug: fuck!',
 c     .                ESTIML(ISPC)%PSPC%ISPCTYP,i,ispc,
