@@ -186,7 +186,7 @@
 # ----------------------------------------------------------------------
 # Copy magnetic grid files:
 #
-  cp  $EQUDIR/$GRIDNAME fort.4
+  cp  $EQUDIR/$GRIDNAME            fort.4
   cpc $EQUDIR/$GRIDNAME.experiment fort.13
   cpc $EQUDIR/$GRIDNAME.hsp        grid.hsp
 

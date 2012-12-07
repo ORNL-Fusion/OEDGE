@@ -1,4 +1,4 @@
-c     -*-Fortran-*- 
+c    -*-Fortran-*- 
 c
 c ======================================================================
 c
@@ -1961,7 +1961,6 @@ c...should be elsewhere
       ENDDO
 
 
-
 c
 c     Initialization:
 c
@@ -1987,10 +1986,12 @@ c     PFZ ring:
       IF (cgridopt.NE.LINEAR_GRID.AND.ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
         DO ir = irsep, irwall-1
           status = .TRUE.
+
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
             count = 0
+
             DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)

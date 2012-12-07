@@ -256,9 +256,9 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Rename image inversion related files:
 #
-  foreach FILENAME (`ls *.ray.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+#  foreach FILENAME (`ls *.ray.*`)   # handled when processing output. files
+#    mv $FILENAME $CASENAME.$FILENAME
+#  end
 #  foreach FILENAME (`ls *.idl.*`)
 #    mv $FILENAME $CASENAME.$FILENAME
 #  end
@@ -278,15 +278,21 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   end
 #
 # ----------------------------------------------------------------------
-# Marie-Helene data files for reflection modelling:
+# Data export files:
 #
   foreach FILENAME (`ls mhf.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls skf.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls akf.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls mrt.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls ero.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
 #
@@ -345,6 +351,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     zipc $CASENAME.raw.osm
     zipc $CASENAME.raw.ogd
     zipc $CASENAME.raw.old
+    mv raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
   endif
 #  zipc $CASENAME.eir
 #  zipc $CASENAME.pin

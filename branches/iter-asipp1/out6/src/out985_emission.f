@@ -193,7 +193,7 @@ c...      Map SPECTRUM array to PIXEL array:
           
 c...    Additional information for generating line shapes and weighted
 c       averages (velocities, temperatures, B-field, ...):
-        IF (.TRUE.) THEN  ! *** PROFILE HACK ***
+        IF (.FALSE.) THEN  ! *** PROFILE HACK ***
 c        IF (opt%int_type(iint).EQ.2.OR.opt%int_type(iint).EQ.3) THEN
           DO iobj = 1, nobj
             IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE

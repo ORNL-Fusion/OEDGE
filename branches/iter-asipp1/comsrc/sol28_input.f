@@ -396,6 +396,9 @@ c
 
       SELECTCASE (buffer(3:itag-1))
 c       ----------------------------------------------------------------
+        CASE('DIV PARTICLE STATE')
+          CALL ReadOptionI(buffer,1,opt_div%pstate)
+c       ----------------------------------------------------------------
         CASE('DIV RIBBON GRID')
           READ(buffer(itag+2:itag+4),*) version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -457,7 +460,7 @@ c           write(0,*) 'buffer: '//TRIM(buffer)
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
 c             ----------------------------------------------------------
-              CASE(1:3)
+              CASE(1:3,5)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
@@ -468,7 +471,9 @@ c             ----------------------------------------------------------
                 READ(buffer_array(3),*) sputter_data(i1)%atomic_mass
                 READ(buffer_array(4),*) sputter_data(i1)%charge
                 READ(buffer_array(5),*) sputter_data(i1)%fraction
-                sputter_data(i1)%tag = TRIM(buffer_array(5))
+                sputter_data(i1)%tag = TRIM(buffer_array(6))
+                IF (sputter_data(i1)%fraction.EQ.-1.0) 
+     .            sputter_data(i1)%fraction = 100.0
 c             ----------------------------------------------------------
               CASE DEFAULT
 c             ----------------------------------------------------------
@@ -671,8 +676,6 @@ c       ----------------------------------------------------------------
      .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
      .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
      .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
-
-
             SELECTCASE (opt_eir%idirec(opt_eir%nadspc)) ! 1=vector for projecting onto, 2=collect cells along a LOS, 3=same, but project onto vector as well
               CASE (0)
               CASE (1)
@@ -866,7 +869,7 @@ c
         CASE('F EIRENE_15')
           opt_eir%f_eirene_load = 1
           READ(buffer,*) cdum1,opt_eir%f_eirene_15
-          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
+c          WRITE(0,*) 'opt%f_eirene_15:',TRIM(opt_eir%f_eirene_15)
         CASE('GRID FORMAT')
           CALL ReadOptionI(buffer,1,opt%f_grid_format)
         CASE('GRID LOAD METHOD')

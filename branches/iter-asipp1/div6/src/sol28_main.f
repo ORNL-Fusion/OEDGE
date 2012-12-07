@@ -968,7 +968,7 @@ c        WRITE(logfp,*) 'DEBUG: Calling InterpolateTeProfile'
         CALL InterpolateProfile(1)
 
 c...    Ti:
-        IF (.TRUE.) THEN
+        IF (.FALSE.) THEN
           CALL InterpolateProfile(2)
         ELSE
           ion = 1
@@ -1980,6 +1980,9 @@ c      REAL    totsrc
 
       tube2(it1:it2)%state = ibclr(tube2(it1:it2)%state,1)  ! Flag that solution has not been calculated yet
 
+c      write(0,*) 'state',it1,it2
+c      write(0,*) tube2(1:it2)%state
+
       opt%cosm = 0
 
       cnt = 0
@@ -2103,9 +2106,6 @@ c...            Assign solution parameter nodes:
                   CALL AssignNodeValues_New(itube,nnode,mnode,node,
      .                                      opt_tube)
                   
-                  store_nnode(itube) = nnode  ! *** TEMP ***
-                  store_mnode(itube) = mnode
-                  store_node (1:nnode,itube) = node(1:nnode)
 c                  WRITE(0,*) '_state:',tube2(itube)%state,
 c     .                 ibits(tube2(itube)%state,0,1),
 c     .                 ibits(tube2(itube)%state,1,1)
@@ -2127,10 +2127,26 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          ref_nion,ref_cind2-ref_cind1+1,
      .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
+     .                          
+
+                  store_nnode(itube) = nnode  ! *** TEMP ***
+                  store_mnode(itube) = mnode
+                  store_node (1:nnode,itube) = node(1:nnode)
+                  IF (store_node(1    ,itube)%jsat(ion).NE.  ! Need to save the correct jsat in case a code/flag for dynamic 
+     .                tube(itube)%jsat(LO,ion))              ! assignment was used
+     .                store_node(1    ,itube)%jsat(ion) =
+     .                tube(itube)%jsat(LO,ion)
+                  IF (store_node(nnode,itube)%jsat(ion).NE.
+     .                tube(itube)%jsat(HI,ion)) 
+     .                store_node(nnode,itube)%jsat(ion) =
+     .                tube(itube)%jsat(HI,ion)
+
+
                 ENDIF
                 tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
               CASE DEFAULT
+                WRITE(0,*) 'SOL_OPTION',sol_option
                 CALL ER('MainLoop','Solver option not identified',*99)
             ENDSELECT
 
@@ -2155,12 +2171,12 @@ c           by the reference plasma solution:
             ENDDO
 
             IF (ALLOCATED(fluid_tmp)) THEN
-              write(0,*) 'going for it!'
+c              write(0,*) 'going for it!'
 
               DO i = 2, mnode
                 IF (node(i)%par_mode.NE.7) CYCLE
 
-              write(0,*) 'going for it 1!',i,mnode
+c              write(0,*) 'going for it 1!',i,mnode
 
  
  
@@ -2169,7 +2185,7 @@ c           by the reference plasma solution:
                 i2 = node(i  )%icell - 1
 
 
-                write(0,*) 'numbers',ic1,ic2,i1,i2
+c                write(0,*) 'numbers',ic1,ic2,i1,i2
 
                 fluid(ic1+i1-1:ic1-1+i2,ion)%ne=fluid_tmp(i1:i2,ion)%ne
                 fluid(ic1+i1-1:ic1-1+i2,ion)%vi=fluid_tmp(i1:i2,ion)%vi
@@ -2179,12 +2195,12 @@ c           by the reference plasma solution:
               DO i = mnode, nnode-1
                 IF (node(i)%par_mode.NE.7) CYCLE
 
-              write(0,*) 'going for it 2!',i,mnode
+c              write(0,*) 'going for it 2!',i,mnode
 
                 i1 = node(i  )%icell + 1 
                 i2 = node(i+1)%icell - 1
 
-                write(0,*) 'numbers',ic1,ic2,i1,i2
+c                write(0,*) 'numbers',ic1,ic2,i1,i2
 
                 fluid(ic1+i1-1:ic1+i2-1,ion)%ne=fluid_tmp(i1:i2,ion)%ne
                 fluid(ic1+i1-1:ic1+i2-1,ion)%vi=fluid_tmp(i1:i2,ion)%vi
@@ -2201,21 +2217,32 @@ c           by the reference plasma solution:
 c        WRITE(0,*) '_count',
 c     .             COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.0)
 c        WRITE(0,*) ibits(tube2(it1:it2)%state,0,1)
+
+c          write(0,*) 'tube,cnt,2.1',it1,it2,cnt,
+c     .                COUNT(osmnode(2:osmnnode)%type.EQ.2.1)
+c          DO  i1 = it1, it2
+c            write(0,*) '   state',i1,ibits(tube2(i1)%state,2,1),
+c     .                               ibits(tube2(i1)%state,0,1)  
+c          ENDDO
+
+
         IF    (cnt.GE.3) THEN
 
-        ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
+        ELSEIF (COUNT(osmnode(2:osmnnode)%type       .EQ.2.1).GT.0.AND.
      .          COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.1  ).GT.0) THEN
-c...      Check if semi-automated symmetry point specification:
+c...      Check if default symmetry point was specified:
           cont = .TRUE.
         ELSEIF (COUNT(ibits(tube2(it1:it2)%state,2,1).EQ.1  ).GT.0) THEN  
 c...      Check if any invalid links were present:
           IF (cnt.EQ.2) STOP 'Problemo man'
-          tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)
+c          tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)
           cont = .TRUE.
         ENDIF
 
 c...    Modify conditions for iteration:
         CALL User_MainLoop(cont,cnt)
+
+        tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)  ! Clear registered links to undefined tubes
 
       ENDDO ! Iteration loop
 

@@ -1,6 +1,183 @@
 c
 c
 c ======================================================================
+c
+c int check_same_clock_dir(fpoint pt1, fpoint pt2, fpoint pt3, fpoint norm)
+      LOGICAL FUNCTION geoSameClockness(v1,v2,v3,norm)
+      IMPLICIT none
+
+      REAL*8, INTENT(IN) :: v1(3),v2(3),v3(3),norm(3)
+
+      REAL*8 testi,testj,testk,dotprod
+
+      geoSameClockness = .FALSE.
+
+c   testi = (((pt2.y - pt1.y)*(pt3.z - pt1.z)) - ((pt3.y - pt1.y)*(pt2.z - pt1.z)));
+      testi = ( ( ( v2(2) - v1(2) ) * ( v3(3) - v1(3) ) ) - 
+     .          ( ( v3(2) - v1(2) ) * ( v2(3) - v1(3) ) ) )
+
+c   testj = (((pt2.z - pt1.z)*(pt3.x - pt1.x)) - ((pt3.z - pt1.z)*(pt2.x - pt1.x)));
+      testj = ( ( ( v2(3) - v1(3) ) * ( v3(1) - v1(1) ) ) - 
+     .          ( ( v3(3) - v1(3) ) * ( v2(1) - v1(1) ) ) )
+
+c   testk = (((pt2.x - pt1.x)*(pt3.y - pt1.y)) - ((pt3.x - pt1.x)*(pt2.y - pt1.y)));
+      testk = ( ( ( v2(1) - v1(1) ) * ( v3(2) - v1(2) ) ) - 
+     .          ( ( v3(1) - v1(1) ) * ( v2(2) - v1(2) ) ) )
+
+c   // Dot product with triangle normal
+c   dotprod = testi*norm.x + testj*norm.y + testk.norm.z;
+      dotprod = testi * norm(1) + testj * norm(2) + testk * norm(3)
+
+c   //answer
+c   if(dotprod < 0) return DIFF_CLOCKNESS;
+c   else return SAME_CLOCKNESS;
+
+      IF (dotprod.GE.0.0D0) geoSameClockness = .TRUE.
+   
+      RETURN
+99    STOP
+      END
+c
+c
+c ======================================================================
+c
+cint check_intersect_tri(fpoint pt1, fpoint pt2, fpoint pt3, fpoint linept, fpoint vect,
+c                        fpoitnt* pt_int)
+      LOGICAL FUNCTION geoLineThroughTriangle(p1,p2,v1,v2,v3,t)
+      IMPLICIT none
+
+      REAL*8 , INTENT(IN)  :: p1(3),p2(3),v1(3),v2(3),v3(3)
+      REAL*8 , INTENT(OUT) :: t
+
+      LOGICAL geoSameClockness
+
+      INTEGER count
+      REAL*8  norm(3),dotprod,vect(3),norm_v1(3),norm_v2(3),pt_int(3)
+
+      DATA count / 0 /  
+      SAVE
+
+
+      geoLineThroughTriangle = .FALSE.
+      t = -1.0D0
+   
+
+      vect(1:3) = p2(1:3) - p1(1:3)
+
+c #define SAME_CLOCKNESS = 1;
+c #define DIFF_CLOCKNESS = 0;
+
+c typedef struct fpoint_tag
+c {
+c    float x;
+c    float y;
+c    float z;
+c } fpoint;
+
+c fpoint pt1 = {0.0, 0.0, 0.0};
+c fpoint pt2 = {0.0, 3.0, 3.0};
+c fpoint pt3 = {2.0, 0.0, 0.0};
+c fpoint linept = {0.0, 0.0, 6.0};
+c fpoint vect = {0.0, 2.0, -4.0};
+c fpoint pt_int = {0.0, 0.0, 0.0};
+c
+c {
+c    float V1x, V1y, V1z;
+c    float V2x, V2y, V2z;
+c    fpoint norm;
+c    float dotprod;
+c    float t;
+
+c   // vector form triangle pt1 to pt2
+c   V1x = pt2.x - pt1.x;
+c   V1y = pt2.y - pt1.y;
+c   V1z = pt2.z - pt1.z;
+
+      norm_v1(1:3) = v2(1:3) - v1(1:3)
+
+c   // vector form triangle pt2 to pt3
+c   V2x = pt3.x - pt2.x;
+c   V2y = pt3.y - pt2.y;
+c   V2z = pt3.z - pt2.z;
+
+      norm_v2(1:3) = v3(1:3) - v2(1:3)
+
+c   // vector normal of triangle
+c   norm.x = V1y*V2z-V1z*V2y;
+c   norm.y = V1z*V2x-V1x*V2z;
+c   norm.z = V1x*V2y-V1y*V2x;
+
+      norm(1) = norm_v1(2) * norm_v2(3) - norm_v1(3) * norm_v2(2)
+      norm(2) = norm_v1(3) * norm_v2(1) - norm_v1(1) * norm_v2(3)
+      norm(3) = norm_v1(1) * norm_v2(2) - norm_v1(2) * norm_v2(1)
+
+c   // dot product of normal and line's vector if zero line is parallel to triangle
+c   dotprod = norm.x*vect.x + norm.y*vect.y + norm.z*vect.z;
+
+      dotprod = norm(1)*vect(1) + norm(2)*vect(2) + norm(3)*vect(3) 
+
+c   if(dotprod < 0)
+c   {
+        count = count + 1
+       
+c        write(0,*) 'funny',dotprod,count
+c        write(0,*) '     ',norm
+c        write(0,*) '     ',vect
+
+c        if (count.EQ.10) stop 'sfdsdf'
+
+      IF (dotprod.NE.0.0D0) THEN       
+c      IF (dotprod.LT.0.0D0) THEN       
+
+c      //Find point of intersect to triangle plane.
+c      //find t to intersect point
+c      t = -(norm.x*(linept.x-pt1.x)+norm.y*(linept.y-pt1.y)+norm.z*(linept.z-pt1.z))/
+c             (norm.x*vect.x+norm.y*vect.y+norm.z*vect.z);
+
+        t = -(norm(1) * (p1(1) - v1(1)) + norm(2) * (p1(2) - v1(2)) + 
+     .        norm(3) * (p1(3) - v1(3))) /
+     .       (norm(1) * vect(1) + norm(2) * vect(2) + 
+     .        norm(3) * vect(3))
+
+
+
+c      // if ds is neg line started past triangle so can't hit triangle.
+c      if(t < 0) return 0
+
+c      pt_int->x = linept.x + vect.x*t;
+c      pt_int->y = linept.y + vect.y*t;
+c      pt_int->z = linept.z + vect.z*t;
+
+        pt_int(1:3) = p1(1:3) + vect(1:3) * t   
+c        pt_int(1) = p1(1) + vect(1) * t   
+c        pt_int(2) = p1(2) + vect(2) * t   
+c        pt_int(3) = p1(3) + vect(3) * t   
+
+c      if(check_same_clock_dir(pt1, pt2, pt_int, norm) == SAME_CLOCKNESS)
+c         if(check_same_clock_dir(pt2, pt3, pt_int, norm) == SAME_CLOCKNESS)
+c            if(check_same_clock_dir(pt3, pt1, pt_int, norm) == SAME_CLOCKNESS)
+c               // answer in pt_int is insde triangle
+c               return 1;
+
+c        write(0,*) '  clock',geoSameClockness(v1,v2,pt_int,norm)
+c        write(0,*) '       ',geoSameClockness(v2,v3,pt_int,norm)
+c        write(0,*) '       ',geoSameClockness(v3,v1,pt_int,norm)
+
+        IF (geoSameClockness(v1,v2,pt_int,norm)) THEN
+          IF (geoSameClockness(v2,v3,pt_int,norm)) THEN
+            IF (geoSameClockness(v3,v1,pt_int,norm))       
+     .        geoLineThroughTriangle = .TRUE.
+          ENDIF
+        ENDIF
+
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c
+c ======================================================================
 c for transfer to mod_filament.f 
 c
       SUBROUTINE LoadFilamentData(fname,status)
