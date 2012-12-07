@@ -644,7 +644,7 @@ c...      Check if surface is part of the vessel wall:
 
 
       ALLOCATE(ddum1(n                          ))  ! MPI problem?  nobj=m, should be # integration volumes
-      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-12:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
       ALLOCATE(rdum1(100                        ))  ! MPI problem?  nobj=m, should be # integration volumes
 
       rtime = 0.0
@@ -779,14 +779,15 @@ c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 c          WRITE(0,*) ' FILE:'//TRIM(file)
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           npro=pixel(i1)%nprofile
-          CALL inPutData(pixel(i1)%profile(1:npro,-5),'PATH'  ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,-4),'DELTA' ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,-3),'WEIGHT','N/A')
-          CALL inPutData(pixel(i1)%profile(1:npro,-2),'NE'    ,'m-3')
-          CALL inPutData(pixel(i1)%profile(1:npro,-1),'TE'    ,'eV' )
-          CALL inPutData(pixel(i1)%profile(1:npro, 0),'TI'    ,'eV' )
-          CALL inPutData(pixel(i1)%profile(1:npro,-7),'N_D'   ,'m-3')
-          CALL inPutData(pixel(i1)%profile(1:npro,-6),'N_D2'  ,'m-3')
+         CALL inPutData(INT(pixel(i1)%profile(1:npro,-12)),'CELL','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-5 ),'PATH'  ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-4 ),'DELTA' ,'m'  )
+          CALL inPutData(pixel(i1)%profile(1:npro,-3 ),'WEIGHT','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-2 ),'NE'    ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-1 ),'TE'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro, 0 ),'TI'    ,'eV' )
+          CALL inPutData(pixel(i1)%profile(1:npro,-7 ),'N_D'   ,'m-3')
+          CALL inPutData(pixel(i1)%profile(1:npro,-6 ),'N_D2'  ,'m-3')
 c          write(0,*) 'opt%int_num=',opt%int_num
           DO i2 = 1, MAX(1,opt%int_num)
             WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
@@ -1709,7 +1710,8 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       CALL DEALLOC_ALL
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 500000 
+      MAX3D = 4000000 
+c      MAX3D = 500000 
 c      MAX3D = 1500000 
 c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
@@ -1897,6 +1899,9 @@ c        WRITE(0,*) 'f:',f
 
       IF (opt%nplots.GT.0)
      .  CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
+
+      IF (.TRUE.)
+     .  CALL DumpShinKajita(title)
 
 c      nobj985 = nobj
 

@@ -587,7 +587,7 @@ c      DATA problem_ignored /0/
       problem_ignored = 0
 
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
-      fp = 6
+      fp = 0
 
       reford  = opt%ref_opt
       reflvl  = 1
@@ -1059,7 +1059,6 @@ c     .                                 DBLE(obj(iobj)%quantity(iint))
 
                   IF (.FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
-
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
 c     .    chord_primary%v1(1:3),
 c     .    obinter(1)%v(1:3),
@@ -1088,6 +1087,8 @@ c                    IF (iint.EQ.1) THEN !.AND.obj(iobj)%quantity(1).GT.0.0) THE
 
                       chord%profile(ipro,-7) = plasma(ipla)%nD
                       chord%profile(ipro,-6) = plasma(ipla)%nD2
+
+                      chord%profile(ipro,-12) = DBLE(REAL(obj(iobj)%in))
                     ENDIF
 
                     IF (opt%int_charge(iint).GT.3) 
@@ -1455,7 +1456,7 @@ c      nybin = pixel2%nybin
       n = opt%n
 
       ALLOCATE(ddum1(n                          ))
-      ALLOCATE(ddum2(nobj,-11:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
+      ALLOCATE(ddum2(nobj,-12:MAX(1,opt%int_num)))  ! MPI problem?  nobj=m, should be # integration volumes
       ALLOCATE(rdum1(100                        ))
 
       status = 0
@@ -1595,7 +1596,7 @@ c...        Add integral result to pixel value:
 c...
             pixel%track(1:n) = pixel%track(1:n) + chord%track(1:n)
             pixel%nprofile = MAX(pixel%nprofile,chord%nprofile)
-            DO i1 = -11, MAX(1,opt%int_num)
+            DO i1 = -12, MAX(1,opt%int_num)
              pixel%profile(:,i1)=pixel%profile(:,i1)+chord%profile(:,i1)
             ENDDO
 

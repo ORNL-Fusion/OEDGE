@@ -63,12 +63,13 @@ c       interpolation region:
         p2(1) = r0 + 100.0D0
         p2(2) = z0
         itube = grid%isep-1
-c        WRITE(0,*) 'ITUBE 1=',itube
+        write(0,*) 'isep b',grid%isep
+        WRITE(0,*) 'ITUBE 1=',itube
         CALL LineCutTube(p1,p2,itube,p)
         a_sep = p(1) - p1(1)  
 
         itube = osmnode(index)%tube_range(2) 
-c        WRITE(0,*) 'ITUBE 2=',itube,index
+        WRITE(0,*) 'ITUBE 2=',itube,index
         CALL LineCutTube(p1,p2,itube,p)
         a_end = p(1) - p1(1)
         
@@ -658,18 +659,36 @@ c...        Pleasant:
             ENDDO
           CASE (6)
 c...        Te evolution:
-            CALL CalculateTeProfile(in1,in2,s,target)
-            t = te
+            CALL CalculateTeProfile(in1,in2,s,target)     
+            t = te                                        
             IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
      .                             'not ready',*99)
 c            CALL EvolveTeProfile(in1,in2,s,target)
-
           CASE (7)
 c...        Linear -- to be overwritten by the reference plasma:
             x = 1.0D0
             DO ic = node(inode1)%icell, node(inode2)%icell
               frac = (s(ic) - s1) / deltas
               t(ic) = deltav * frac**x + v1
+            ENDDO
+
+          CASE (8)
+c...        Lame convection prescription:
+            x = 2.0D0 / 7.0D0
+            A = v1**(1/x)
+            B = v2
+            C = (B**(1/x) - A) / deltas
+
+            y = 0.05D0
+            IF (node(in2)%par_exp.NE.0.0) y = DBLE(node(in2)%par_exp)
+            D = v1**(1/y)
+            E = v2
+            F = (E**(1/y) - D) / deltas
+
+            DO ic = node(inode1)%icell, node(inode2)%icell
+              frac = (s(ic) - s1) / deltas
+              t(ic) = (1.0D0 - frac) * (A + C * (s(ic) - s1))**x +  ! conduction profile, applied at the end of the flux-tube segment
+     .                         frac  * (D + F * (s(ic) - s1))**y    ! user specified exponent, applied at the beginning
             ENDDO
 
           CASE DEFAULT
@@ -702,13 +721,14 @@ c
 c ======================================================================
 c
       SUBROUTINE SpecifyDistribution(target,inpic1,inpic2,mode,exponent,
-     .                               val)
+     .                               val,end_opt)
       USE mod_sol28_params
       USE mod_sol28_solver
       IMPLICIT none
  
-      INTEGER target,inpic1,inpic2,mode
-      REAL*8 :: exponent,val(*)
+      INTEGER, INTENT(IN ) :: target,inpic1,inpic2,mode,end_opt
+      REAL*8 , INTENT(IN ) :: exponent
+      REAL*8 , INTENT(OUT) :: val(*)
 
       INTEGER ic,ic1,ic2,region
       REAL*8  deltas,starts,frac,sumval,A,B,C
@@ -828,6 +848,13 @@ c              WRITE(0,*) 'FRAC:',target,frac,ic1,ic2,val(ic)
           STOP 'YOU NAUGHTY BOY'
       ENDSELECT         
 
+c...  Set distribution to zero at the end points, which can be necessary
+c     if two tube regions share a common point and both are trying to 
+c     scale a given quantity to different constraints:
+      IF (end_opt.EQ.1) THEN
+        val(ic1) = 0.0D0
+        val(ic2) = 0.0D0
+      ENDIF
 
 c...  Cell volume normalization:    ! Do I need an area based normalization as well..?
       sumval = 0.0D0

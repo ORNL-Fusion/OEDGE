@@ -1424,9 +1424,9 @@ c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
-              IF (sub_option.NE.2.AND.
-     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
-c              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+c              IF (sub_option.NE.2.AND.
+c     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               CALL TestTetrahedrons(sub_option,fname,nsur,npts,vsur,
      .                              hsur,MAXSURFACE,MAXPOINTS,status)
               WRITE(0,*) 'NSUR=',nsur
@@ -2116,7 +2116,7 @@ c
 
       INTEGER dat1,dat2
       REAL, ALLOCATABLE :: xdat(:),ydat(:)
-      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512
+      CHARACTER xlabel*256,ylabel*256,tag_x*2,tag_y*2,file*512,tag*7
 
 
 c *TEMP*
@@ -2259,8 +2259,8 @@ c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 
@@ -2561,12 +2561,17 @@ c          DO ipixel = 1, npixel
           CALL inCloseInterface
         ENDDO
 
+
+
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
           WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
 c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
 10        FORMAT(A)
 c10        FORMAT(A,I0.2,A)
+
+        wRITE(0,*) 'dumping signal '//TRIM(file)
+
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
           DO i = 1, opt%int_num
@@ -2576,7 +2581,9 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
+c          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
+c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
             CALL inPutData(pixel(ipixel)%yindex,'J','n/a')
             CALL inPutData(pixel(ipixel)%global_v1(1),'X1','m')
@@ -2596,8 +2603,15 @@ c10        FORMAT(A,I0.2,A)
       ENDIF
 
 
+      IF (.TRUE.) THEN
+        write(0,*) 'dumping'
+        CALL DumpLineData
+      ENDIF
+
       IF (npixel.GT.1) THEN
 c...    Image:
+
+
 
         DO idet = 1, opt%ndet
 

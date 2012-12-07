@@ -4768,9 +4768,6 @@ c
 c
 c slmod begin
 c
-c ADD A NEW OPTION SOMEWHERE HERE WHERE fydata IS APPLIED DIRECTLY FROM PRE-CALCULATED
-c VALUES, as BELOW (clearer in FYW routine below...)
-c
 c Put this back in when I start processing the impurity production in EIRENE
 c that's coming from ions striking the target -- need to compare with what 
 c DIVIMP is calculating.  Need to remove the pinsw.eq.4 references that occur
@@ -4922,8 +4919,8 @@ c
       include 'cneut2'
       include 'slcom' 
 c slmod begin - tmp
-      LOGICAL warning
-      DATA    warning /.FALSE./
+      LOGICAL warning, bug_message
+      DATA    warning, bug_message /.FALSE., .TRUE./
       SAVE
 c slmod end 
 c
@@ -5002,9 +4999,46 @@ c
             fymap(id) = wlind(id)            
             fyprob(id)= fwlprob(id) 
 c slmod begin
-            if (wallpt(wlind(id),7).gt.0.0) 
-     .        fydata(wlind(id),5) = fwlprob(id) * nabsfac / 
-     .                              wallpt(wlind(id),7)
+            if (wallpt(wlind(id),7).eq.0.0) cycle
+
+            if (id.eq.1.and.bug_message) then
+ 
+              write(0,*) 
+              write(0,*) '---------------------------------------------'
+              write(0,*) '  WARNING! Bug correction related to assign'//
+     .                   'ed wall launch probabilities, see neut.f'
+              write(0,*) '---------------------------------------------'
+              write(0,*) 
+
+              write(0,*) 
+              write(0,*) '---------------------------------------------'
+              write(0,*) '  WARNING! Bug correction related to assign'//
+     .                   'ed wall launch probabilities, see neut.f'
+              write(0,*) '---------------------------------------------'
+              write(0,*) 
+
+              bug_message = .FALSE.
+            endif
+
+c...        The direct assignment of FWLPROB to FYDATA(,5) is not correct
+c           since FWLPROB is an additive measure of wall launch probability,
+c           with the last entry approaching 1.0, while FYDATA(,5) should contain
+c           individual wall launch probabilities for each wall segment that are
+c           independent of the lauch probabilities for the preceeding segments
+c           in the list. - SL, 09/05/12
+
+            if (id.eq.1) then
+              fydata(wlind(id),5) = fwlprob(id) 
+            else
+              fydata(wlind(id),5) = fwlprob(id) - fwlprob(id-1)
+            endif
+
+            fydata(wlind(id),5) = fydata(wlind(id),5) * nabsfac / 
+     .                            wallpt(wlind(id),7)
+
+c
+c     .        fydata(wlind(id),5) = fwlprob(id) * nabsfac / 
+c     .                              wallpt(wlind(id),7)
 c slmod end
          end do 
 c

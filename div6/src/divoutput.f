@@ -548,7 +548,8 @@ c
 c
       write(coment,'(1x,'' ID '','' IK '','' IR '',6x,''R'',3x,'//
      >            '6x,''Z'',3x,5x,''PSI'',2x,3x,''LENGTH'','//
-     >            '6x,''Bth/B'',3x,''SEP DIST'',3x,''MID DIST'')')
+     >            '6x,''Bth/B'',4x,''COSTET'',2x,'//
+     >            '2x''SEP DIST'',3x,''MID DIST'')')
 c
       call prc(coment)
 c
@@ -569,9 +570,10 @@ c
          endif
 c
          write(coment,
-     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,2(1x,g12.5))')
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')
      >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
-     >       dds(id),tmp_bratio,sepdist2(id),middist(irds(id),in)
+     >       dds(id),tmp_bratio,costet(id),
+     >       sepdist2(id),middist(irds(id),in)
 c
          call prc(coment)
 c
@@ -3428,6 +3430,14 @@ c jdemod begin
        WRITE(DATUNIT,'(7X,A,2F10.3)') 'END POINT A (R,Z)=',CXSCA,CYSCA
        WRITE(DATUNIT,'(7X,A,2F10.3)') 'END POINT B (R,Z)=',CXSCB,CYSCB
 c jdemod end
+c slmod begin - t-dep
+      ELSEIF (CIOPTE.EQ.11) THEN
+       CALL PRR ('  INJECTION OPT   11 : INJECT AT GIVEN (R,Z), V0=',
+     >   CTEM1)
+       CALL PRC ('                       UNLESS SAMPLED FROM A PRE-'//
+     >           'EXISTING ')
+       CALL PRC ('                       TIME SURFACE SNAPSHOT')
+c slmod ned
       ENDIF
 
 C-----------------------------------------------------------------------

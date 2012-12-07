@@ -278,7 +278,7 @@ C------PE BRIDEN - MODIFICATION 27/04/92 - INCLUSION OF DEFAULT YEAR -
 C                                                                       
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C                                                                       
-       write(6,'(a,a)') 'ADAS:',dsname 
+       write(6,'(a,a)') 'ADAS:',trim(dsname) 
 c
        INQUIRE(FILE=DSNAME,EXIST=LEXIST)                                
 

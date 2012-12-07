@@ -1029,18 +1029,20 @@ c     then branch to the appropriate location depending
 c     on the result.    
 c     
 c slmod begin
-      if (code_warning) then 
-         write(0,*) 
-         write(0,*) 'WARNING ion_neutral_reflection: updating DEPS '//
-     .              'for target reflection, which is non-standard'
-         write(0,*) 
-         code_warning = .false.
-      endif
-      if (id.lt.1.or.id.gt.nds) then    
-         write (6,*) 'DEPS Error (ion_neutral_reflection):',id,iz,sputy
-      else 
-         deps(id,iz) = deps(id,iz) + sputy
-      endif
+        if (code_warning) then 
+           write(0,*) 
+           write(0,*) 'WARNING ion_neutral_reflection: updating DEPS '//
+     .                'for target reflection, which is non-standard'
+           write(0,*) 
+           code_warning = .false.
+        endif
+        if (id.lt.1.or.id.gt.nds) then    
+           write (6,*) 'DEPS Error (ion_neutral_reflection):',id,iz,
+     .                 sputy
+        else 
+           tneut = tneut + 1
+           deps(id,iz) = deps(id,iz) + sputy
+        endif
 c slmod end
 c     
 c     Follow reflected impurities

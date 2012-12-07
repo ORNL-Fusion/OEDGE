@@ -22,6 +22,10 @@ c
 
       debug = .TRUE. 
 
+
+
+      IF (debug) WRITE(0,*) 'range = ',TRIM(range)
+
       l = LEN_TRIM(range)
 
       nlist = 0
@@ -52,6 +56,10 @@ c...  Quick check to see if 'infinite range' has been set:
           IF (i.EQ.l.AND.range(i:i).NE.')') k = l
 
           o = SCAN(range(j:k),"Rr")
+
+          IF (debug) WRITE(0,*) ' o = ',o,' istart = ',istart,
+     .                          ' iend = ',iend
+
           IF (o.NE.0) THEN
             IF (istart.EQ.0.OR.iend.EQ.0) 
      .        CALL ER('GetList','Brackets not set properly',*99)            
@@ -1214,7 +1222,7 @@ c...    Plasma data:
         try(itri)%index(IND_BFIELD) = itri
         plasma(1 :20,itri) = tri(itri)%plasma(1:20)
         plasma(17:19,itri) = tri(itri)%plasma(1:3)   ! *** HACK *** target flux scaling for tetrahedrons...
-        bfield(1:4 ,itri) = tri(itri)%bfield(1:4)
+        bfield(1:4  ,itri) = tri(itri)%bfield(1:4)
 c...    Create surfaces:
         try(itri)%nside = 3
 
@@ -1412,6 +1420,10 @@ c        dang(12,2) = 180.0D0   !  180.0D0
 
       adelta = dang(nseg,2) - dang(1,1)
       dang = dang - 0.5D0 * adelta      
+
+
+c     *** HACK ***  
+      dang = dang + 60.0
 
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
@@ -2142,6 +2154,7 @@ c        adelta = dang(nslice,2) - dang(1,1)
 c        dang = dang - 0.5D0 * adelta      
       ENDIF
 
+c...  Set the toroidal offset:
       ashift = 0.0D0
       DO islice = 1, nslice
         WRITE(0,'(A,I6,2F12.6)') 
@@ -2150,15 +2163,21 @@ c        dang = dang - 0.5D0 * adelta
      .    'ANGLES:',islice,dang(islice,1:2)
         ashift = ashift + dang(islice,2)
       ENDDO
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).EQ.4.0) THEN
+          IF (opt_eir%tet_offset(itet).EQ.-999.0) THEN
+            ashift = -0.5D0 * ashift
+          ELSE
+            ashift = DBLE(opt_eir%tet_offset(itet))
+          ENDIF
+          write(0,*) 'ashift = ',ashift
+        ENDIF
+      ENDDO      
 
-
-
+      ashift = ashift * D_DEGRAD
       dang = dang * D_DEGRAD
       adelta = adelta * D_DEGRAD
 
-
-c...  
-      ashift = 0.0D0
       trycycle_last = -1
       DO islice = 1, nslice
 
@@ -2251,7 +2270,11 @@ c     .           tryvtx(2,trysrf(ABS(isrf))%ivtx(1))
 
         WRITE(eirfp,'(A,I6,2F12.6)') '   TOROIDALIZING:',islice,
      .    ang1/D_DEGRAD,ang2/D_DEGRAD
-     .    
+
+        WRITE(0,*) '   TOROIDALIZING:',islice,
+     .    ang1/D_DEGRAD,ang2/D_DEGRAD
+
+
 
         CALL BuildBricks(islice,opt_eir%tet_index(islice_index),
      .                   ang1,ang2,trycycle)
@@ -2566,7 +2589,6 @@ c     .                              obj(iobj)%index(IND_ISI)
       WRITE(eirfp,*) '  NSRF:',nsrf
       WRITE(eirfp,*) '  NVTX:',nvtx
       WRITE(eirfp,*) 'DONE'
-
 
 
       RETURN
@@ -3950,7 +3972,7 @@ c             looking at the next segment:
                     WRITE(fp,*) 'X1,Y1:',x1,y1
                     WRITE(fp,*) 'X2,Y2:',x2,y2
                     WRITE(fp,*) 'RES  :',res                  
-                    STOP 'NOT READY FOR THE RES...'
+                    STOP 'NOT READY FOR THE RESa...'
                   ENDIF
 
                   len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4024,7 +4046,7 @@ c                    STOP 'dfsdfsd'
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (2)'
+              STOP 'NOT READY FOR THE RESa... (2)'
             ENDIF
 
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4111,7 +4133,7 @@ c        ENDDO
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (3)'
+              STOP 'NOT READY FOR THE RESa... (3)'
             ENDIF
             
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4655,7 +4677,7 @@ c             looking at the next segment:
                     WRITE(fp,*) 'X1,Y1:',x1,y1
                     WRITE(fp,*) 'X2,Y2:',x2,y2
                     WRITE(fp,*) 'RES  :',res                  
-                    STOP 'NOT READY FOR THE RES...'
+                    STOP 'NOT READY FOR THE RESb...'
                   ENDIF
 
                   len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4724,7 +4746,7 @@ c         Select the wall segments based on the index values in I1 and I2:
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (2)'
+              STOP 'NOT READY FOR THE RESb... (2)'
             ENDIF
 
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4801,7 +4823,7 @@ c        ENDDO
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (3)'
+              STOP 'NOT READY FOR THE RESb... (3)'
             ENDIF
             
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -6207,6 +6229,7 @@ c      REAL*8, ALLOCATABLE :: xvertex(:),yvertex(:)
 
       WRITE(eirfp,*) 'BUILDING SUPER TRIANGLES'
 
+
       CALL OutputData(85,'Building super triangles')
 
       problem_triangle = -10  ! 14983 
@@ -6274,6 +6297,7 @@ c             only points on side 23 of neighbouring cells need to be checked:
                 x(3) = cell(i3)%r(1)
                 y(3) = cell(i3)%z(1)
               ENDIF
+
               IF (PointOnLine(x,y,s,t,7,output)) THEN
 c              IF (PointOnLine(x,y,s,t,2,output)) THEN
                 IF (output) WRITE(eirfp,*) 'MORE CELLS FOUND:',i2,i3
@@ -6283,6 +6307,8 @@ c              IF (PointOnLine(x,y,s,t,2,output)) THEN
                 slist(nlist(i2),i2) = s
               ENDIF
               IF (output) WRITE(eirfp,*) 'CHECK 1',i3,s,t
+
+
             ENDIF
 c...        Check ...:
             IF (i2.EQ.1) THEN
@@ -6392,6 +6418,8 @@ c     .              cell(i1)%index(2).EQ.39) THEN
             ENDDO
           ENDDO
         ENDDO           
+
+
 
 
 c...    Build triangles:
@@ -6557,6 +6585,8 @@ c                 is malformed, so go back to the original division scheme:
         ENDDO
 
       ENDDO
+
+
 
 c      CALL WriteEireneTriangles
 c      CALL DumpGrid('PROBLEM WITH TRIANGLE MAP')
@@ -7467,59 +7497,119 @@ c
       SUBROUTINE eirIntersectonList(p1,p2,nlist,ilist,dlist,llist)
       USE mod_eirene06_parameters
       USE mod_eirene06
+      USE mod_eirene06_locals
       IMPLICIT none
 
       REAL   , INTENT(IN ) :: p1(3),p2(3)
       INTEGER, INTENT(OUT) :: ilist(*),nlist
       REAL   , INTENT(OUT) :: dlist(*),llist(*)
 
-      INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart
-      LOGICAL cont
-      REAL    hold_dlist,hold_llist,hold_s12(10),length
-      REAL*8  x1,y1,x2,y2,x3,y3,x4,y4,s12,s34
+      LOGICAL geoLineThroughTriangle
 
-      IF (tetrahedrons) CALL ER('eirIntersectonList','3D not ready',*99)
-        
+      INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart,nloop,npts,isrf
+      LOGICAL cont,status
+      REAL    hold_dlist,hold_llist,hold_s12(10),length
+      REAL*8  x1,y1,z1,x2,y2,z2,x3,y3,x4,y4,s12,s34,v1(3),v2(3),v3(3)
+
       x1 = DBLE(p1(1))
       y1 = DBLE(p1(2))
+      z1 = DBLE(p1(3))
       x2 = DBLE(p2(1))
       y2 = DBLE(p2(2))
+      z2 = DBLE(p2(3))
 
-      length = SNGL(DSQRT((x1-x2)**2+(y1-y2)**2))
+      length = SNGL(DSQRT((x1-x2)**2+(y1-y2)**2+(z1-z2)**2))
 
       ilast  = 0
       istart = nlist + 1
 
-      DO itri = 1, ntri
-        IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
+      IF (tetrahedrons) THEN
+        nloop = nobj
+        npts  = 4
+      ELSE
+        nloop = ntri
+        npts  = 3
+      ENDIF
+
+      DO itri = 1, nloop
+        IF (tetrahedrons) THEN
+          IF (grp(obj(itri)%group)%origin.NE.GRP_MAGNETIC_GRID) CYCLE
+        ELSE
+          IF (tri(itri)%type.NE.MAGNETIC_GRID) CYCLE
+        ENDIF
         icount = 0
-        DO i1 = 1, 3
+
+        DO i1 = 1, npts
           i2 = i1 + 1
-          IF (i2.EQ.4) i2 = 1
-          x3 = ver(tri(itri)%ver(i1),1)
-          y3 = ver(tri(itri)%ver(i1),2)
-          x4 = ver(tri(itri)%ver(i2),1)
-          y4 = ver(tri(itri)%ver(i2),2)
-          CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
-          IF (s12.GT.0.0D0.AND.s12.LT.1.0D0.AND.
-     .        s34.GT.0.0D0.AND.s34.LT.1.0D0) THEN
-            icount = icount + 1
-            hold_s12(icount) = SNGL(s12)
-            WRITE(88,'(4X,A,I6,2F16.9,I4,2F12.5)')
-     .          '  list     :',i1,s12,s34,icount,x1,y1
+          IF (i2.EQ.npts+1) i2 = 1
+ 
+          IF (tetrahedrons) THEN
+            isrf = ABS(obj(itri)%iside(i1))
+            v1 = vtx(1:3,srf(isrf)%ivtx(1))
+            v2 = vtx(1:3,srf(isrf)%ivtx(2))
+            v3 = vtx(1:3,srf(isrf)%ivtx(3))
+
+            status = geoLineThroughTriangle
+     .                 (DBLE(p1),DBLE(p2),v1,v2,v3,s12)
+
+c            write(0,*) 'blah',status,s12
+
+            IF (status.AND.s12.GT.0.0D0.AND.s12.LT.1.0D0) THEN
+          
+              icount = icount + 1
+              hold_s12(icount) = SNGL(s12)
+
+c              WRITE(0 ,'(4X,A,2I6,F16.9,I4,2F12.5)')
+c     .            '  list     :',itri,i1,s12,icount,x1,y1
+c              WRITE(0 ,*)
+c     .            '  vtx      :',v1(1:3)
+c              WRITE(0 ,*)
+c     .            '           :',v2(1:3)
+c              WRITE(0 ,*)
+c     .            '           :',v3(1:3)
+
+c              stop 'dfdfsfds'
+
+            ENDIF
+
+          ELSE
+            x3 = ver(tri(itri)%ver(i1),1)
+            y3 = ver(tri(itri)%ver(i1),2)
+            x4 = ver(tri(itri)%ver(i2),1)
+            y4 = ver(tri(itri)%ver(i2),2)
+            CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
+            IF (s12.GT.0.0D0.AND.s12.LT.1.0D0.AND.
+     .          s34.GT.0.0D0.AND.s34.LT.1.0D0) THEN
+              icount = icount + 1
+              hold_s12(icount) = SNGL(s12)
+              WRITE(88,'(4X,A,I6,2F16.9,I4,2F12.5)')
+     .            '  list     :',i1,s12,s34,icount,x1,y1
+            ENDIF
           ENDIF
         ENDDO
 
-        IF     (icount.EQ.0) THEN
+        IF     (icount.EQ.0               ) THEN
         ELSEIF (icount.EQ.1.AND.ilast.EQ.0) THEN
-          ilast = 1
-        ELSEIF (icount.EQ.2) THEN
+          IF (tetrahedrons) THEN
+            WRITE(0,*) 'WARNING eirIntersectonList: Dropping missed '//
+     .                 'interesection cell'
+          ELSE
+            ilast = 1
+          ENDIF
+        ELSEIF (icount.EQ.2               ) THEN
           IF (ilast.NE.0) 
      .      CALL ER('eirIntersectonList','Invalid last cell',*99)
           nlist = nlist + 1
           ilist(nlist) = itri
           dlist(nlist) = 0.5 * (hold_s12(1) + hold_s12(2)) * length
           llist(nlist) =    ABS(hold_s12(2) - hold_s12(1)) * length
+        ELSEIF (icount.GE.3) THEN
+          IF (tetrahedrons) THEN
+            WRITE(0,*) 'WARNING eirIntersectonList: Dropping missed '//
+     .                 'interesection cell'
+          ELSE
+            CALL ER('eirIntersectonList','Impossible Jeeves',*99)            
+          ENDIF
         ELSE
           CALL ER('eirIntersectonList','Invalid intersection count',*99)
         ENDIF 
@@ -7562,7 +7652,7 @@ c
       USE mod_sol28_global
       IMPLICIT none
 
-      INTEGER i,j,nlist,icount,ibnd(100,2),nbnd
+      INTEGER i,j,nlist,icount,ibnd(100,2),nbnd,nlistmax
       INTEGER, ALLOCATABLE :: ilist(:)
       REAL   , ALLOCATABLE :: dlist(:),llist(:)
       
@@ -7570,9 +7660,7 @@ c
      .                       'AVERAGED TALLIES - OSM'
 
       IF (.TRUE.) THEN
-
         CALL inOpenInterface('idl.eirene_spectra',ITF_WRITE)
-
         icount = 0
         nlist  = 0
         nbnd   = 0
@@ -7585,11 +7673,13 @@ c
           ELSEIF (opt_eir%idirec(i).EQ.2.OR.opt_eir%idirec(i).EQ.3) THEN
             IF (.NOT.ALLOCATED(ilist)) THEN
               IF (tetrahedrons) THEN
+                nlistmax = nobj
               ELSE
-                ALLOCATE(ilist(ntri))
-                ALLOCATE(dlist(ntri))
-                ALLOCATE(llist(ntri))
+                nlistmax = ntri
               ENDIF
+              ALLOCATE(ilist(nlistmax))
+              ALLOCATE(dlist(nlistmax))
+              ALLOCATE(llist(nlistmax))
             ENDIF
             nbnd = nbnd + 1
             ibnd(nbnd,1) = nlist + 1
@@ -7622,13 +7712,12 @@ c        WRITE(fp06,91) 7,0,0,0,0,opt_eir%nadspc
         DO i = 1, opt_eir%nadspc
           IF (opt_eir%ispsrf_ref(i)(1:6).NE.'eirene') CYCLE
 
-
           IF     (opt_eir%idirec(i).EQ.0.OR.opt_eir%idirec(i).EQ.1) THEN
 c
 c           ------------------------------------------------------------
 c           SURFACE ENERGY/VELOCITY DISTRIBUTION (SPECTRUM) RECORDING
 c
-            WRITE(fp06,91) opt_eir%ispsrf(i),opt_eir%iptyp  (i),
+            WRITE(fp06,94) opt_eir%ispsrf(i),opt_eir%iptyp  (i),
      .                     opt_eir%ipsp  (i),opt_eir%isptyp (i), 
      .                     opt_eir%nsps  (i),opt_eir%isrfcll(i),
      .                     opt_eir%idirec(i)
@@ -7657,7 +7746,6 @@ c           fluid code input file:
             CALL inPutData(-999.0,'X2','m')
             CALL inPutData(-999.0,'Y2','m')
             CALL inPutData(-999.0,'Z2','m')
-
           ELSEIF (opt_eir%idirec(i).EQ.2.OR.opt_eir%idirec(i).EQ.3) THEN
 c
 c           ---------------------------------------------------------------
@@ -7667,7 +7755,7 @@ c
             DO j = ibnd(nbnd,1), ibnd(nbnd,2)
 c              WRITE(0,*) 'list',j,ilist(j),dlist(j),llist(j)
 
-              WRITE(fp06,91) ilist(j)         ,opt_eir%iptyp  (i),
+              WRITE(fp06,94) ilist(j)         ,opt_eir%iptyp  (i),
      .                       opt_eir%ipsp  (i),opt_eir%isptyp (i), 
      .                       opt_eir%nsps  (i),opt_eir%isrfcll(i),
      .                       opt_eir%idirec(i)-2
@@ -7695,9 +7783,7 @@ c              WRITE(0,*) 'list',j,ilist(j),dlist(j),llist(j)
               CALL inPutData(opt_eir%spc_p2(i,1),'X2','m')
               CALL inPutData(opt_eir%spc_p2(i,2),'Y2','m')
               CALL inPutData(opt_eir%spc_p2(i,3),'Z2','m')
-
             ENDDO
-
           ELSE
             CALL ER('WriteBlock10_06','Invalid code referenc',*99)
           ENDIF
@@ -7720,6 +7806,7 @@ c              WRITE(0,*) 'list',j,ilist(j),dlist(j),llist(j)
 91    FORMAT(20(I6:))
 92    FORMAT(1P,20(E12.4:))
 93    FORMAT(1P,20(E12.5:))
+94    FORMAT(20(I8:))
 99    STOP
       END
 c

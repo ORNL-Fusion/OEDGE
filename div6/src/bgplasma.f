@@ -449,7 +449,6 @@ c
          num  = in
          ir1   = bgplasopt(num,1)
          ir2   = bgplasopt(num,2)
-c         write(0,*) '  debug: bg range',ir1,ir2
 c
          if (ir1.ge.irsep.and.ir1.le.nrs.and.
      >       ir2.ge.irsep.and.ir2.le.nrs) then
@@ -470,7 +469,7 @@ c              Process the rings individually, in reverse order.  This is requir
 c              for SOL28 for PFZ rings that reference the neighbouring ring that
 c              is closer to the separatrix.  In order for the neighbouring ring to
 c              be defined (have a plasma solution already), eventhough it has a 
-c              higher ring index, it needs to be send to the solver first, hence 
+c              higher ring index, it needs to be sent to the solver first, hence 
 c              the need to call the rings in reverse order. -SL, 04/04/2012
                if (message_reverse) then
                  CALL WN('bgplasma','Solving some rings in '//
