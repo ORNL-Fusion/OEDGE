@@ -99,6 +99,10 @@ program write_dimes_plasma
   ! The ACTUAL strike point is at R=1.48043,Z=-1.250  (averaged over all exposure shots from 2500 to 4500ms
   ! The ACTUAL location of the DIMES center is at R=1.4859, Z=-1.25
   !
+  ! The ACTUAL strike point for the Mo exposure on May 1st,2012 is R=1.47977m
+  ! May 1, 2012 - Mo exposure - DIMES offset from strike point = 0.00613m
+  ! Roffset = 1.4864 + 0.00613 = 1.49253 
+  ! Difference in offset 0.00016
   !
   ! In order to match simulation and experiment .. the grid strike point of R=1.4864 is matched to the actual average strike point of R=1.48043 
   ! The difference is 5.97e-3m

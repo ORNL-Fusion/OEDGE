@@ -15,7 +15,7 @@ module analyse_ts
   !integer,parameter :: psibins=40
   !integer,parameter :: timebins=2
 
-  integer,parameter :: ndata=2 
+  integer,parameter :: ndata=3
   integer,parameter :: nelm=3
 
   real :: start_time, end_time,psi_min,psi_max,npsi_bins
@@ -114,7 +114,10 @@ contains
           ! ne
           profiles(psibin,1,1) = profiles(psibin,1,1) + filedata(in,5)
           ! Te
-          profiles(psibin,2,1) = profiles(psibin,2,1) + filedata(in,6)
+          profiles(psibin,2,1) = profiles(psibin,2,1) + filedata(in,6) 
+          ! Rsep
+          profiles(psibin,3,1) = profiles(psibin,3,1) + filedata(in,11)
+
           counts(psibin,1) = counts(psibin,1) + 1.0
 
           !write(0,*) filedata(in,8),it,psibin
@@ -128,6 +131,8 @@ contains
                 profiles(psibin,1,2) = profiles(psibin,1,2) + filedata(in,5)
                 ! Te
                 profiles(psibin,2,2) = profiles(psibin,2,2) + filedata(in,6)
+                ! Rsep
+                profiles(psibin,3,2) = profiles(psibin,3,2) + filedata(in,11)
 
                 counts(psibin,2) = counts(psibin,2) + 1.0
              endif
@@ -141,6 +146,9 @@ contains
 
              ! Te
              profiles(psibin,2,3) = profiles(psibin,2,3) + filedata(in,6)
+
+             ! Rsep
+             profiles(psibin,3,3) = profiles(psibin,3,3) + filedata(in,11)
 
              counts(psibin,3) = counts(psibin,3) + 1.0
 
@@ -209,7 +217,7 @@ contains
 
     open(unit=ounit,file=trim(ofile1),access='sequential',iostat=ierr)
 
-    write(ounit,'(1x,13(2x,a,2x))') 'Psin','Lpol(m)','DeltaR','DeltaZ','Ne','Te','Ne*Te(torr)','Time(ms)','R(m)','Z(m)','N_lpol','Elm_offset(ms)','N_Elm'
+    write(ounit,'(1x,13(2x,a,2x))') 'Psin','Lpol(m)','DeltaR','DeltaZ','Ne','Te','Ne*Te(torr)','Time(ms)','R(m)','Z(m)','Rsep(m)','Elm_offset(ms)','N_Elm'
 
     do in = 1,nlines_filedata
        write(ounit,'(1x,13(1x,g13.6))') (filedata(in,is),is=1,ncols_filedata)
@@ -264,40 +272,40 @@ contains
     if (res1.ne.res2) call errmsg('PRINT TS:','CAUTION: Second output file name is not correct')
 
 
-    write(ounit2,'(a)') ' Divertor Thomson Average Analysis'
+    write(ounit2,'(a)') ' Thomson Average Analysis'
     write(ounit2,'(a,f12.3,a,f12.3,a)') ' Time range = ', start_time ,':',end_time,' ms'
     write(ounit2,'(a)') ' All Data binned:'
-    write(ounit2,'(a)') '    PSIN           ne        Te     Counts'
+    write(ounit2,'(a)') '    PSIN    Rsep       ne        Te     Counts'
 
 
     do in = 1,npsi_bins
 
        if (counts(in,1).gt.0) then 
-          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,1,1),profiles(in,2,1),counts(in,1)
+          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,1),profiles(in,1,1),profiles(in,2,1),counts(in,1)
        endif
 
     end do
 
     write(ounit2,*)
     write(ounit2,'(a)') ' ELM Data binned +/-1ms:'
-    write(ounit2,'(a)') '    PSIN           ne        Te     Counts'
+    write(ounit2,'(a)') '    PSIN     Rsep       ne        Te     Counts'
 
     do in = 1,npsi_bins
 
        if (counts(in,2).gt.0) then 
-          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,1,2),profiles(in,2,2),counts(in,2)
+          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,2),profiles(in,1,2),profiles(in,2,2),counts(in,2)
        endif
 
     end do
 
     write(ounit2,*)
     write(ounit2,'(a)') ' Non-ELM Data binned >5ms:'
-    write(ounit2,'(a)') '    PSIN           ne        Te     Counts'
+    write(ounit2,'(a)') '    PSIN     Rsep      ne        Te     Counts'
 
     do in = 1,npsi_bins
 
        if (counts(in,3).gt.0) then 
-          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,1,3),profiles(in,2,3),counts(in,3)
+          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,3),profiles(in,1,3),profiles(in,2,3),counts(in,3)
        endif
 
     end do
@@ -370,7 +378,7 @@ contains
     nlines_filedata = line_cnt
 
     ! 10 data items/line
-    ! Psin	Lpol(m)	DeltaR	DeltaZ	Ne()	Te()	Ne*Te(torr)	Time_ms	R(m)	Z(m)	N_lpol
+    ! Psin	Lpol(m)	DeltaR	DeltaZ	Ne()	Te()	Ne*Te(torr)	Time_ms	R(m)	Z(m)	N_lpol/Rsep(m)
     !  1          2        3       4     5       6         7               8     9       10       11
     ncols = 11
     nextra = 2
@@ -439,7 +447,7 @@ contains
     logical :: inelm
 
     !sd8
-    ! Load ELM time data from file and then add ELM information to the LP data 
+    ! Load ELM time data from file and then add ELM information to the TS data 
     !
 
     real :: elm_start_input,elm_end_input, elm_effect_start_input, elm_effect_end_input

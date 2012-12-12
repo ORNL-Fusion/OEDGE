@@ -1231,6 +1231,17 @@ c
          CALL RDQARN(extffric,n_extffric,MXSPTS,-MACHHI,MACHHI,.FALSE.,
      >          -machhi,MACHHI,2,'SET OF MOM-LOSS COEF BY RING',IERR)
 c
+c     jdemod
+c     TAG 283 - SOL option 22 - reads the value for switch(swppress) 
+c             - this is the pfz target pressure redistribution option. 
+c     
+      elseif (tag(1:3).eq.'283') then  
+c
+        CALL ReadR(line,switch(swppress),0.0,2.0,
+     >                                 'SOL22 PFZ PRESSURE LOSS OPT')
+c
+c        write(0,*) '*283 - Read switch',swppress,switch(swppress)
+c
 c -----------------------------------------------------------------------
 c
 c     TAG A05: 

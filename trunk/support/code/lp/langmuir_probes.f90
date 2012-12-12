@@ -207,6 +207,10 @@ contains
           ! te
           pre_average(ibin,2,n_av) = pre_average(ibin,2,n_av) + lp_data(in,3)
 
+          if (ibin.eq.2) then 
+             write(6,'(a,3i8,10(1x,g12.5))') 'PRE_AV:',ibin,n_av,ndata,lp_data(in,psibin),lp_data(in,2),lp_data(in,3), pre_average(ibin,1,n_av),pre_average(ibin,2,n_av),pre_average(ibin,ndata+1,n_av)
+          endif
+
           ! bin over ELM filtered categories
           if (elm_filt) then 
              ! 2,3 ... ELM vs. no-ELM
@@ -269,28 +273,28 @@ contains
     end do
 
 
-    !write(6,'(a)') 'Pre-averages:'
+    write(6,'(a)') 'Pre-averages:'
 
-    !do if = 1,n_avs
-    !   write(6,'(a)')
-    !   if (if.eq.1) then
-    !      write(6,'(a)') ' OVERALL-AVERAGE'
-    !   elseif (if.eq.2) then 
-    !      write(6,'(a)') ' ELM-PEAK-AVERAGE'
-    !   elseif (if.eq.3) then 
-    !      write(6,'(a)') ' OUT-OF-ELM-AVERAGE'
-    !   else
-    !      n_av = if - 3
-    !      write(6,'(a,f8.3,a,f8.3)') ' ELM-FRACTION-AVERAGE:',elm_fractions(n_av,1),' TO',elm_fractions(n_av,2)
-    !   endif
-    !   write(6,'(a)')   '       R-Rsep(Bin)     R-Rsep(Av)         PSIN            Jsat(A/cm2)          Te(eV)         Count  '
-    !   do in = 1,nrbins
-    !      if (pre_average(in,ndata+1,if).gt.0.0) then 
-    !         write(6,'(20(1x,g18.8))') lp_axis(in),lp_axis_r(in,if),lp_axis_psi(in,if),&
-    !              pre_average(in,1,if),pre_average(in,2,if),pre_average(in,ndata+1,if)
-    !      endif
-    !   end do
-    !end do
+    do if = 1,n_avs
+       write(6,'(a)')
+       if (if.eq.1) then
+          write(6,'(a)') ' OVERALL-AVERAGE'
+       elseif (if.eq.2) then 
+          write(6,'(a)') ' ELM-PEAK-AVERAGE'
+       elseif (if.eq.3) then 
+          write(6,'(a)') ' OUT-OF-ELM-AVERAGE'
+       else
+          n_av = if - 3
+          write(6,'(a,f8.3,a,f8.3)') ' ELM-FRACTION-AVERAGE:',elm_fractions(n_av,1),' TO',elm_fractions(n_av,2)
+       endif
+       write(6,'(a)')   ' IBIN      R-Rsep(Bin)     R-Rsep(Av)         PSIN            Jsat(A/cm2)          Te(eV)         Count  '
+       do in = 1,nrbins
+          if (pre_average(in,ndata+1,if).gt.0.0) then 
+             write(6,'(i8,20(1x,g18.8))') in,lp_axis(in),lp_axis_r(in,if),lp_axis_psi(in,if),&
+                  pre_average(in,1,if),pre_average(in,2,if),pre_average(in,ndata+1,if)
+          endif
+       end do
+    end do
 
 
 
@@ -325,6 +329,13 @@ contains
              ! Average of axis values psi and r
              lp_axis_psi(ibin,n_av) = lp_axis_psi(ibin,n_av) + lp_data(in,psibin)
              lp_axis_r(ibin,n_av)   = lp_axis_r(ibin,n_av)   + lp_data(in,rbin)
+
+          if (ibin.eq.2) then 
+             write(6,'(a,3i8,10(1x,g12.5))') 'AVER :',ibin,n_av,ndata,lp_data(in,psibin),lp_data(in,2),lp_data(in,3),lp_proc_data(ibin,1,n_av), lp_proc_data(ibin,2,n_av),lp_proc_data(ibin,ndata+1,n_av),&
+                     &   pre_average(ibin,1,n_av),pre_average(ibin,2,n_av),pre_average(ibin,ndata+1,n_av)
+          endif
+
+
 
           else
              write(6,'(a,3i8,15(1x,g18.8))') 'OUTLIER removed:',in,ibin,n_av,lp_data(in,1),lp_data(in,2),lp_data(in,3),pre_average(ibin,1,n_av),pre_average(ibin,2,n_av),lp_data(in,12)

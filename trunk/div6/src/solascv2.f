@@ -409,7 +409,7 @@ c         write (6,*) 'Smomtmp1:',scxtmp,ptmp
 c
       endif
 c
-c     The actual values of the argumenst (except soffset) are
+c     The actual values of the arguments (except soffset) are
 c     irrelevant. These lines simply garantee the initialization
 c     of the integration routines for this 1/2 ring.
 c
@@ -2065,7 +2065,61 @@ c     End of routine
 c
       return
       end
-
+c
+c     Distribute the PP target pressure loss over the ring
+c
+      real*8 function estppress(s)
+      implicit none
+      real*8 s
+      include 'solparams'
+      include 'solswitch'
+      include 'solcommon'
+c
+c     ESTPPRESS: This routine calculates the amount of pressure transferred
+c                to the private plasma and then distributes this 
+c                as a function of S from the
+c                current main SOL ring.
+c
+c                Since everything is analytic at this point and does not
+c                depend on the changing plasma conditions for any of
+c                it's options - it does not have an update method as the
+c                other options may require.
+c
+c
+      estppress = 0.0
+c
+c     Option is OFF
+c
+      if (actswppress.eq.0.0) then
+c
+         estppress = 0.0
+c
+c     Power added below X-point
+c
+      elseif (actswppress.eq.1.0) then
+c
+         if (s.lt.sxp) then
+            estppress  = s/sxp * pp_press
+         else
+            estppress  = pp_press
+         endif
+c
+c     Power added to specified distance along field line
+c
+      elseif (actswppress.eq.2.0) then
+c
+         if (s.lt.pp_pow_dist*ringlen) then
+            estppress  = s/(pp_pow_dist*ringlen) * pp_press
+         else
+            estppress  = pp_press
+         endif
+c
+      endif
+c
+c     End of routine
+c
+      return
+      end
 c
 c
 c
@@ -2267,27 +2321,34 @@ c     This function returns the value of the pressure at a position
 c     s along the field line, at the moment the only contribution
 c     other than the Pinf is the Momentum loss to neutrals term.
 c
-      real*8 pmomloss,estpint,rpos,majrpos,pmomloss_tmp
-      external pmomloss,estpint,majrpos
+      real*8 pmomloss,estpint,rpos,majrpos,pmomloss_tmp,estppress
+      external pmomloss,estpint,majrpos,estppress
 c
       pmomloss_tmp = pmomloss(s,0,1.0d0,tecur,ticur)
 c
-      if (actswnmom.eq.0.0) then
+c
+c     jdemod - pmomloss returns 0.0 if the option is off so this 
+c              extra check code is not required. 
+c
+c      if (actswnmom.eq.0.0) then
+c         if (actswmajr.eq.4.0) then
+c            rpos = majrpos(s)
+c            press = (pinf + estpint(s)+ padd)/rpos
+c         else
+c            press = pinf + padd
+c         endif
+c      else
+c
          if (actswmajr.eq.4.0) then
             rpos = majrpos(s)
-            press = (pinf + estpint(s)+ padd)/rpos
-         else
-            press = pinf + padd
-         endif
-      else
-         if (actswmajr.eq.4.0) then
-            rpos = majrpos(s)
-            press = (pinf + estpint(s) + pmomloss_tmp + padd)
+            press = (pinf + estpint(s) + pmomloss_tmp + padd 
+     >               + estppress(s))
      >              /rpos
          else
-            press = pinf + pmomloss_tmp + padd
+            press = pinf + pmomloss_tmp + padd +estppress(s)
          endif
-      endif
+c
+c      endif
 c
       return
       end
@@ -2607,7 +2668,7 @@ c
 c
 c
 c
-      real*8 function cond (s,t)
+      real*8 function cond(s,t)
       implicit none
 c
 c     Returns the first convective energy component

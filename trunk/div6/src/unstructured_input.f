@@ -138,7 +138,7 @@ c      INCLUDE 'pindata'
       INCLUDE 'cedge2d'  
 
       INCLUDE 'solparams'
-c      INCLUDE 'solswitch'
+      INCLUDE 'solswitch'
       INCLUDE 'solcommon'
 
       include 'reiser_com'  
@@ -160,13 +160,19 @@ c     David's options
 c
 c -----------------------------------------------------------------------
 c
-c     TAG 282:
+c     TAG 282: SOL22
 c
 c     Initialization of Array input for tag 282 specifying ffric 
 c     values on a ring by ring basis for both targets. 
 c
       n_extffric = 0
       call qzero(extffric,maxnrs*3) 
+c     
+c     TAG 283: SOL22 - private plasma pressure loss option
+c
+c     Set the default for this value to OFF = 0
+c
+      switch(swppress) = 0.0
 c
 c -----------------------------------------------------------------------
 c
