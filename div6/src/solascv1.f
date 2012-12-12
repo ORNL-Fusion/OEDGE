@@ -802,7 +802,7 @@ c
 c     Calculate the target particle and power outfluxes.
 c
       call calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
-     >                 gamcor,gamecor,ike2d_start)
+     >                presstarg,gamcor,gamecor,ike2d_start)
 c
 c     If pin is available
 c     Call routine to calculate GPERP CORection factors
@@ -1308,6 +1308,36 @@ c
                ppionpow = -ionptarg(ircor,2)
 c
             endif
+c
+         endif
+c
+c        PP pressure loss term
+c
+         if (actswppress.eq.0.0.or.pplasma.eq.1) then
+
+            pp_press = 0.0
+
+         elseif (actswppress.eq.1.0.or.actswppress.eq.2.0) then
+c
+c           Determine corresponding PP ring to current ring.
+c
+            ircor = nrs - (ir-irsep)
+c
+c
+            if (ircor.le.irtrap) then
+c
+c              Turn option off and set power to zero
+c
+               actswppress = 0.0
+               pp_press   = 0.0
+c
+            else
+c
+               pp_press = presstarg(ircor,2)
+c
+            endif
+c
+            write(0,*) 'Press2:',actswppress,ir,ircor,pp_press
 c
          endif
 
@@ -2154,6 +2184,36 @@ c
                ppionpow = -ionptarg(ircor,1)
 c
             endif
+c
+         endif
+c
+c        PP pressure loss term
+c
+         if (actswppress.eq.0.0.or.pplasma.eq.1) then
+
+            pp_press = 0.0
+
+         elseif (actswppress.eq.1.0.or.actswppress.eq.2.0) then
+c
+c           Determine corresponding PP ring to current ring.
+c
+            ircor = nrs - (ir-irsep)
+c
+            if (ircor.le.irtrap) then
+c
+c              Turn option off and set power to zero
+c
+               actswppress = 0.0
+               pp_press   = 0.0
+c
+            else
+c
+               pp_press = presstarg(ircor,1)
+c
+            endif
+
+            write(0,*) 'Press3:',actswppress,ir,ircor,pp_press
+
 c
          endif
 c
