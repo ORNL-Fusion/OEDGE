@@ -5605,9 +5605,18 @@ c
          write(0,'(a)') '- CHECK SELECTION OF VELOCITY/ANGLE FLAG'//
      >                  ' AND CORRESPONDING SPUTTER ENERGIES'
 c sltmp
-c         write(0,*) 'CNEUTB=',cneutb
-c         write(0,*) 'PINSW =',pinsw
-c         write(0,*) 'CEBD  =',cebd
+         write(0,*) 'CNEUTB=',cneutb
+         write(0,*) 'CNEUTC=',cneutC
+         write(0,*) 'PINSW =',pinsw
+         write(0,*) 'northopt =',northopt
+         write(0,*) 'matt =',matt
+         write(0,*) 'ntars =',ntars		 
+         write(0,*) 'CEBD  =',cebd
+         write(0,*) 'CETH(MATP,MATT)  =',CETH(MATP,MATT)	
+         write(0,*) 'CEIMP  =',CEIMP		 
+         write(0,*) 'GAMBL  =',GAMBL		 	 
+         write(0,*) 'EMAX=',EMAX
+         write(0,*) 'fydata(id,2) =',fydata(id,2)     
 
          stop 1
 c
