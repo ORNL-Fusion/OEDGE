@@ -18,7 +18,9 @@ c
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
+      REAL defval, cs, GetCs
       INTEGER id,in,ik,ir,fp,ike,ierr,count
+      INTEGER nearik, nearir
       CHARACTER dummy*1024
       
       CALL ZA09AS(dummy(1:8))
@@ -29,6 +31,7 @@ c
       CALL ZA08AS(dummy(11:18))
       CALL CASENAME(dummy(21:),ierr)
 
+      defval = -42.0
       fp = 99
       OPEN (UNIT=fp,FILE='mrt.wall_flux',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
@@ -62,9 +65,12 @@ c
       WRITE(fp,'(A)') '* E_dist  - atom energy distribution -- NOT '//
      .                            'AVAIALBLE YET! (but one day...)'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A7,1X,2(2A9,1X),A10,2A8,A10,A11,2X,A)')
+      WRITE(fp,'(A7,1X,2(2A9,1X),A10,2A8,A10,A11,2X,A,
+     .             29X,5A8,A8,A8,A8,A8)')
      .  '* index','r1','z1','r2','z2','flux_D+',
-     .  'T_e','T_i','flux_D','T_D','E_dist'
+     .  'T_e','T_i','flux_D','T_D','E_dist',
+     .  'in','ik','ir','nearik',
+     .  'nearir','Ne','Vel','Cos','Brat'
       WRITE(fp,'(A,6X,1X,2(2A9,1X),A10,2A8,A11,A10)')
      .  '*','(m)','(m)','(m)','(m)','(m-2 s-1)','(eV)','(eV)',
      .  '(m-2 s-1)','(eV)'
@@ -77,15 +83,19 @@ c     FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
 c     FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
 c     FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
 c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
-
+c     K. Schmid Sep. 2012 also dump nearest cell indices
+c     also calculate fluxes and temperatures based on nearest 
+c     cell values for non target elements
       DO id = 1, wallpts
         in = NINT(wallpt(id,18))
+        nearik = NINT(wallpt(id,26))
+        nearir = NINT(wallpt(id,27))
         ik = ikds(MAX(1,in))
         ir = irds(MAX(1,in))
         IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
           IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
           WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
-     .               F10.2,2X,A,10X,3I4)')
+     .               F10.2,2X,A,10X,5I8,4(E10.2,2X))')
      .      id,
      .      wallpt(id,20:23),
      .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir),
@@ -94,18 +104,24 @@ c     FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL
      .      flxhw6(id),
      .      flxhw5(id),
      .      'energy_distribution.dat',
-     .      in,ik,ir
+     .      in,ik,ir,nearik,nearir,
+     .      knds(in), kvds(in), costet(in), bratio(ik,ir)
         ELSE
+          ik = -1
+          ir = -1
+          cs = GetCs(KTEBS(nearik,nearir),KTIBS(nearik,nearir))
           WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
-     .               F10.2,2X,A)')
+     .               F10.2,2X,A,10X,5I8,4(E10.2,2X))')
      .      id,
      .      wallpt(id,20:23),
-     .      0.0,
-     .      0.0,
-     .      0.0,
+     .      KNBS(nearik,nearir) * ABS(cs) * bratio(nearik,nearir),
+     .      KTEBS(nearik,nearir),
+     .      KTIBS(nearik,nearir),
      .      flxhw6(id),
      .      flxhw5(id),
-     .      'energy_distribution.dat'
+     .      'energy_distribution.dat',
+     .      in,ik,ir,nearik,nearir,
+     .      KNBS(nearik,nearir), cs, defval, bratio(nearik,nearir)
         ENDIF
       ENDDO
 
