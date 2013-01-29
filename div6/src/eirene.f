@@ -5497,7 +5497,11 @@ c...  Specifying surface properties:
         ttar2(1) = -1
         DO ir = 1, irwall-1
 
-          IF (ntar2.GT.0.AND.ir.LE.etar2(ntar2)) CYCLE
+          ! jdemod - fix up array bounds issue for intel compiler 
+          ! - ntar2 is 0 coming through initially and it has an out of bounds issue with the latter half of the if statement
+          IF (ntar2.GT.0) then 
+             if (ir.LE.etar2(ntar2)) CYCLE
+          endif
 
           itar = 0
           DO i1 = 1, eirnspdat

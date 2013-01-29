@@ -113,6 +113,10 @@ Contains
     Integer :: IProd
     Integer :: Loop_Counter
     Integer :: HC_Species
+
+    ! jdemod - integer for local percentage calculation
+    integer :: perc
+
     Real :: IonTime
     Real :: HC_Porm ! PORM
     Real :: Starting_Time ! STATIM
@@ -213,7 +217,12 @@ Contains
     ! Loop for each hydrocarbon fragment to be launched in this group.
     Do IProd = 1, NProd - LProd + 1, 1
 
-       if (iprod/100.0.eq.real(int(iprod/100))) write(0,*) 'Following Particle:',iprod,nprod,lprod
+       ! jdemod - changed to print progress only every 10%
+       !if (iprod/100.0.eq.real(int(iprod/100))) write(0,*) 'Following Particle:',iprod,nprod,lprod
+       if (mod(iprod,(nprod-lprod+1)/10).eq.0) then 
+            perc = int((iprod*10)/((nprod-lprod+1)/10))
+            write(0,'(a,i3,a,i8)')   'HC Following: ',perc,' % complete. Particle # =',iprod
+       endif
 
 
        !Do IProd = 1, 1000000, 1
