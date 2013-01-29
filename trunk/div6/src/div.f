@@ -93,6 +93,7 @@ c
       logical :: debug_code
 
 
+      integer :: perc
 c
 c     Output velocity along the field line from launch_one
 c
@@ -1056,14 +1057,25 @@ c sltmp
       tdep_save_n = 0
 
       DO 800  IMP = 1, NATIZ
+c
+c     jdemod - Commented out this debug line - only useful for reporting 
+c              that essentially every 10% of ions are complete. 
+c            - not sure why it would have a dependence on grdnmod either
+c
+         if (mod(imp,natiz/10).eq.0) then 
+            perc = int((imp*10)/(natiz/10))
+            write(0,'(a,i3,a,i8)') 
+     >         'Following Ions: ',perc,' % complete. Particle # =',imp
+         endif
+c
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
-        IF (sloutput) THEN 
-          IF ((natiz.GT.10.AND.
-     .         grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0).OR.
-     .        (natiz.LE.10)) 
-     .      WRITE(0,*) 'debug imp:',imp,natiz
-        ENDIF
+c        IF (sloutput) THEN 
+c          IF ((natiz.GT.10.AND.
+c     .         grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0).OR.
+c    .        (natiz.LE.10)) 
+c     .      WRITE(0,*) 'debug imp:',imp,natiz
+c        ENDIF
 c slmod end
 c
 c       Particle initialization

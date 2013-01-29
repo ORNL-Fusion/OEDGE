@@ -1702,7 +1702,8 @@ c                   wrong orientation:
                         IF (output) 
      .                    WRITE(fp,*) '   ISRF,SUM:',i4,srf(i4)%svtx
                       ENDDO
-                      CALL ER('SHIT','DOUBLE SHIT',*99)
+c                     jdemod - some language "clean" up  
+                      CALL ER('OOPS','DOUBLE OOPS',*99)
                     ENDIF
 c                    surface(i2) = obj(object(iside+1))%iside(i1+1)
                   ELSE
@@ -2461,7 +2462,8 @@ c...          Need to move the tetrahedron side so that it matches up
 c             with the proper base triangle side, and also update
 c             the connection map:
 
-              IF (checking) WRITE(eirfp,*) '* SWAPPING SHIT!:',
+c             jdemod - some language "clean" up  
+              IF (checking) WRITE(eirfp,*) '* SWAPPING STUF!:',
      .                                     i1+1,imap(i1)
 
               obj(iobj)%iside(i1+1) = tmpobj%iside(imap(i1))

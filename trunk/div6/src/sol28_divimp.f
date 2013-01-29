@@ -726,7 +726,8 @@ c       just take what's in the first data set, which is probably zero:
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
-      stop 'here in the shit'
+c     jdemod - some code "clean" up
+      stop 'here in something smelly'
 
       RETURN
 97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
