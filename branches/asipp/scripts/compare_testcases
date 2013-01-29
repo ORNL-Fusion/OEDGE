@@ -3,7 +3,7 @@
 #
 echo 'COMPARING Testcases'
 #
-set progdir = divimp-update
+set progdir = divimp
 
 set scriptdir = $HOME/$progdir/scripts
 

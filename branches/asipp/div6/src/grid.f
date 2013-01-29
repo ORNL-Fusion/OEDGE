@@ -1462,7 +1462,7 @@ c      write(6,'(a,i8)') 'Delete zero length elements:',walln
 c
 c     jdemod
 c
-          WRITE(6,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
+          WRITE(pinout,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
      >         wallr1(i1,1),wallr1(i1,2),wallz1(i1,1),wallz1(i1,2)
 c
           DO i2 = i1, walln-1
@@ -1559,6 +1559,16 @@ c       R=0.0:
         rstart = rvertp(2,korpg(1,irstart))
         zstart = zvertp(2,korpg(1,irstart))
       ENDIF
+
+      ! jdemod 
+      write(pinout,'(a)') 'WALL BEFORE SEQUENCING:'
+      do i1 = 1,walln
+         write(pinout,'(i6,4(1x,g12.5))') i1,wallr1(i1,1),wallz1(i1,1),
+     >                                 wallr1(i1,2),wallz1(i1,2)
+      end do
+
+
+      write(pinout,*) 'Rstart,zstart:',rstart,zstart
 
       i2 = 0
       DO i1 = 1, walln-1
