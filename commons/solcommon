@@ -24,7 +24,7 @@ c
      >                   rateperp0,areasum,pstatic0,
      >                   intarea,pinpute,pinputi,gtarg,e2dgtarg,
      >                   vpg,n1center,n1final,simag,ionptarg,
-     >                   elecptarg,pae_end,pai_end,pae_start,
+     >                   elecptarg,presstarg,pae_end,pai_end,pae_start,
      >                   pai_start,fnorm2
       save /solcommon/
 
@@ -43,6 +43,7 @@ c
      >                   sgperpbeg,sgperpend,gperpfrac,gperpbegf,
      >                   gperpendf,gperprat,smom_mult,qesrc_mult,
      >                   radsrc_mult,pp_pow_dist,ppelecpow,ppionpow,
+     >                   pp_press,
      >                   radsrc,intrad,pradsum,
 c slmod begin - new
      >                   halflen,croplen,
@@ -87,6 +88,7 @@ c
      >       intarea(mxspts),pinpute,pinputi,vpg,
      >       gtarg(mxspts,3),areasum(mxspts),n1center,n1final,
      >       simag,ionptarg(mxspts,3),elecptarg(mxspts,3),
+     >       presstarg(mxspts,3),
      >       pae_end,pai_end,fnorm2,intioniz(mxspts),
      >       intqi(mxspts),intqe(mxspts),qesrc(mxspts),
      >       qisrc(mxspts),qesum,qisum,e2dm0,lensst,peicf
@@ -110,6 +112,7 @@ c
 c     >       gperprat(mxspts),pae_start,pai_start,smom_mult,
 c slmod end
      >       radsrc_mult,pp_pow_dist,ppelecpow,ppionpow,
+     >       pp_press,
      >       qesrc_mult,gextra_src_start,gextra_src_stop,
      >       gextra_sink_start,gextra_sink_stop,start_gextra_src,
      >       stop_gextra_src,start_gextra_sink,stop_gextra_sink,

@@ -155,6 +155,14 @@ c
      >                                               'pp elec sw',ierr)
       call rdr(switch(swppion),.true.,0.0,.false.,0.0,'pp ion sw',ierr)
 c
+c
+c     jdemod - 
+c     switch(swppress) is read in using tag 283 of unstructured input 
+c     default value is 0 or OFF
+c
+c      call rdr(switch(swppress),.true.,0.0,.false.,0.0,'pp power sw',ierr)
+c
+c
       call rdr(switch(swvisc1),.true.,0.0,.true.,0.0,'visc1 sw',ierr)
       call rdr(switch(swnmom),.true.,0.0,.false.,0.0, 'N mom sw',ierr)
       call rdr(switch(swmach),.true.,0.0,.false.,0.0, 'mach sw',ierr)
@@ -1290,6 +1298,33 @@ c
          call prc(sp//'TARGET IS REMOVED FROM MAIN SOL RINGS IN')
          call prc(sp//'THE CORRESPONDING POSITION RELATIVE TO THE')
          CALL PRC(SP//'SEPARATRIX. THIS POWER LOSS')
+         call prq(sp//'IS DISTRTIBUTED EVENLY OVER SMAX *',pp_pow_dist)
+         call prc(sp//'FROM EACH TARGET ON THE MAIN SOL RINGS.')
+      ENDIF
+c
+c     Private plasma PRESSURE LOSS compensation term
+c
+      call prb
+c
+      if (switch(swppress).eq.0.0) then
+         CALL PRC(S1//'PP PRESSURE OPTION 0 : PP PRESSURE'//
+     >                ' LOSS COMPENSATION TERM IS OFF')
+      elseif (switch(swppress).eq.1.0) then
+         CALL PRC(S1//'PP PRESSURE OPTION 1 : PP PRESSURE'//
+     >                ' LOSS COMPENSATION TERM IS ON')
+         call prc(sp//'PRESSURE LOST TO EACH ELEMENT OF PP')
+         call prc(sp//'TARGET IS ADDED TO MAIN SOL RINGS IN')
+         call prc(sp//'THE CORRESPONDING POSITION RELATIVE TO THE')
+         CALL PRC(SP//'SEPARATRIX. THIS PRESSURE')
+         call prc(sp//'IS DISTRTIBUTED EVENLY TO THE XPOINT ON')
+         call prc(sp//'THE MAIN SOL RINGS')
+      elseif (switch(swppress).eq.2.0) then
+         CALL PRC(S1//'PP PRESSURE OPTION 2 : PP PRESSURE'//
+     >                ' LOSS COMPENSATION TERM IS ON')
+         call prc(sp//'PRESSURE LOST TO EACH ELEMENT OF PP')
+         call prc(sp//'TARGET IS ADDED TO MAIN SOL RINGS IN')
+         call prc(sp//'THE CORRESPONDING POSITION RELATIVE TO THE')
+         CALL PRC(SP//'SEPARATRIX. THIS PRESSURE')
          call prq(sp//'IS DISTRTIBUTED EVENLY OVER SMAX *',pp_pow_dist)
          call prc(sp//'FROM EACH TARGET ON THE MAIN SOL RINGS.')
       ENDIF
@@ -2551,6 +2586,14 @@ c
          call prs(' PPion           term  is ON to Xpoint')
       elseif (switch(swppion).eq.2.0) then
          call pqs(' PPion           term  is ON to SMAX *',pp_pow_dist)
+      endif
+c
+      if (switch(swppress).eq.0.0) then
+         call prs(' PP Press        term  is OFF        ')
+      elseif (switch(swppress).eq.1.0) then
+         call prs(' PP Press        term  is ON to Xpoint')
+      elseif (switch(swppress).eq.2.0) then
+         call pqs(' PP Press        term  is ON to SMAX *',pp_pow_dist)
       endif
 c
 c
@@ -3998,7 +4041,7 @@ c
 c
 c
       subroutine calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
-     >                      gamcor,gamecor,ike2d_start)
+     >                      presstarg,gamcor,gamecor,ike2d_start)
       implicit none
       include 'params'
       include 'solparams'
@@ -4013,6 +4056,7 @@ c
       real*8 e2dgtarg(mxspts,3)
       real*8 ionptarg(mxspts,3)
       real*8 elecptarg(mxspts,3)
+      real*8 presstarg(mxspts,3)
       real*8 gamcor,gamecor
       integer ike2d_start
 c
@@ -4100,6 +4144,12 @@ c
 
            endif
 
+           ! calculate target pressrure
+           presstarg(ir,2) = knds(idds(ir,2)) * 
+     >                   (kteds(idds(ir,2))+ktids(idds(ir,2))) 
+     >                   * (1.0 + mach0o**2) * econv
+
+
 c
 c          Inner
 c
@@ -4121,12 +4171,19 @@ c
               ionptarg(ir,1)=gaii*ktids(idds(ir,1))*econv*gtarg(ir,1)
 c
            endif
+
+           ! calculate target pressrure
+           presstarg(ir,1) = knds(idds(ir,1)) * 
+     >                   (kteds(idds(ir,1))+ktids(idds(ir,1))) 
+     >                   * (1.0 + mach0i**2) * econv
+
 c
-c          Total
+c          Totals
 c
            gtarg(ir,3) = gtarg(ir,1) + gtarg(ir,2)
            elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
            ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+           presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
            write (6,'(a,i4,3g18.7)') 'DIVIMP  FLUXES:',ir,
      >                              gtarg(ir,1),
@@ -4139,6 +4196,9 @@ c
            write (6,'(a,i4,3g18.7)') 'DIVIMP  ION  P:',ir,
      >                              ionptarg(ir,1),
      >                              ionptarg(ir,2),ionptarg(ir,3)
+           write (6,'(a,i4,3g18.7)') 'DIVIMP  PRESS :',ir,
+     >                              presstarg(ir,1),
+     >                              presstarg(ir,2),presstarg(ir,3)
 c
            if (fluxpts.gt.0.0) then
 c
@@ -4215,6 +4275,8 @@ c
             gtarg(ir,2)= n1 * vpe2d * rmeano
             elecptarg(ir,2)=gae*te1*econv*gtarg(ir,2)
             ionptarg(ir,2)=gaio*ti1*econv*gtarg(ir,2)
+            presstarg(ir,2) = n1 * (te1+ti1) * econv 
+     >                        + n1 * vpe2d**2 *crmb * mconv
 c
             n1 = cellvals(ir,1,1)
             te0= kteds(idds(ir,1))
@@ -4226,10 +4288,13 @@ c
             gtarg(ir,1)= n1 * vpe2d * rmeani
             elecptarg(ir,1)=gae*te1*econv*gtarg(ir,1)
             ionptarg(ir,1) =gaii*ti1*econv*gtarg(ir,1)
+            presstarg(ir,1) = n1 * (te1+ti1) * econv 
+     >                        + n1 * vpe2d**2 *crmb * mconv
 c
             gtarg(ir,3) = gtarg(ir,2) + gtarg(ir,1)
             elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
             ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+            presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
          elseif (switch(swe2d).eq.2.0.or.switch(swe2d).eq.4.0) then
 c
@@ -4251,6 +4316,8 @@ c
             gtarg(ir,2)= n1 * v1e2d * rmeano
             elecptarg(ir,2)=gae*te1*econv*gtarg(ir,2)
             ionptarg(ir,2)=gaio*ti1*econv*gtarg(ir,2)
+            presstarg(ir,2) = n1 * (te1+ti1) * econv 
+     >                        + n1 * v1e2d**2 *crmb * mconv
 c
             n1 = cellvals(ir,1,1)
             te0= kteds(idds(ir,1))
@@ -4262,10 +4329,13 @@ c
             gtarg(ir,1)= n1 * v1e2d * rmeani
             elecptarg(ir,1)=gae*te1*econv*gtarg(ir,1)
             ionptarg(ir,1) =gaii*ti1*econv*gtarg(ir,1)
+            presstarg(ir,1) = n1 * (te1+ti1) * econv 
+     >                        + n1 * v1e2d**2 *crmb * mconv
 c
             gtarg(ir,3) = gtarg(ir,2) + gtarg(ir,1)
             elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
             ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+            presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
          elseif (switch(swe2d).eq.3.0.or.switch(swe2d).eq.7.0) then
 c
@@ -4288,6 +4358,8 @@ c
      >                   + abs(e2dflux(2,ir))) * rmeano
             elecptarg(ir,2)=gae*te1*econv*gtarg(ir,2)
             ionptarg(ir,2)=gaio*ti1*econv*gtarg(ir,2)
+            presstarg(ir,2) = n1 * (te1+ti1) * econv 
+     >                        + n1 * v1e2d**2 *crmb * mconv
 c
 c            write (6,*) 'E2d1:',ir,nks(ir),e2dflux(1,ir),
 c     >                            e2dflux(2,ir),
@@ -4306,6 +4378,8 @@ c
      >                         * rmeani
             elecptarg(ir,1)=gae*te1*econv*gtarg(ir,1)
             ionptarg(ir,1) =gaii*ti1*econv*gtarg(ir,1)
+            presstarg(ir,1) = n1 * (te1+ti1) * econv 
+     >                        + n1 * v1e2d**2 *crmb * mconv
 c
 c            write (6,*) 'E2d1:',ir,nks(ir),e2dflux(nks(ir),ir),
 c     >                            e2dflux(nks(ir)+1,ir),
@@ -4316,6 +4390,7 @@ c
             gtarg(ir,3) = gtarg(ir,2) + gtarg(ir,1)
             elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
             ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+            presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
          elseif (switch(swe2d).eq.8.0) then
 c
@@ -4367,6 +4442,11 @@ c
             gtarg(ir,3) = gtarg(ir,2) + gtarg(ir,1)
             elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
             ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+
+            ! jdemod - turn off target pressure compensation for these options
+            presstarg(ir,1) = 0.0
+            presstarg(ir,2) = 0.0
+            presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
          elseif (switch(swe2d).eq.9.0) then
 c
@@ -4399,9 +4479,20 @@ c
             gtarg(ir,3) = gtarg(ir,2) + gtarg(ir,1)
             elecptarg(ir,3) = elecptarg(ir,1) + elecptarg(ir,2)
             ionptarg(ir,3) = ionptarg(ir,1) + ionptarg(ir,2)
+
+            ! jdemod - turn off target pressure compensation for these options
+            presstarg(ir,1) = 0.0
+            presstarg(ir,2) = 0.0
+            presstarg(ir,3) = presstarg(ir,1)+presstarg(ir,2) 
 c
          endif
 c
+         write(6,'(a,i8,10(1x,g12.5))') 'Calcfluxes:',ir,
+     >      presstarg(ir,1),presstarg(ir,2),presstarg(ir,3),
+     >      elecptarg(ir,1),elecptarg(ir,2),elecptarg(ir,3),
+     >      ionptarg(ir,1),ionptarg(ir,2),ionptarg(ir,3)
+
+
       end do
 c
       return
@@ -6441,7 +6532,7 @@ c
             actswpcx  = switch(swpcx)
             actswppelec = switch(swppelec)
             actswppion  = switch(swppion)
-
+            actswppress = switch(swppress)
 c
 c           PCX - DIVIMP PINQI - sub-option switches
 c
@@ -6491,9 +6582,11 @@ c           power distribution methods.
 c
             actswppelec = 0.0
             actswppion  = 0.0
+            actswppress = 0.0
 c
 c            actswppelec  = switch(swppelec)
 c            actswppion   = switch(swppion)
+c            actswppress = switch(swppress)
 c
 c           PCX - DIVIMP PINQI - sub-option switches
 c
@@ -6560,6 +6653,12 @@ c
          actswqidmliz = 0.0
          actswqidcx = 0.0
          actswqidrec= 0.0
+c
+c        Private plasma loss compensation options are OFF
+c
+         actswppelec = 0.0
+         actswppion = 0.0
+         actswppress = 0.0
 c
 c        Viscosity is OFF
 c

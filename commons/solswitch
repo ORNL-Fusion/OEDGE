@@ -9,7 +9,7 @@ c
      >        swvisc1,swnmom,swion,swe2d,swpow,swgperp,swmajr,
      >        swcore,swsmooth,swioni,swerror,swrecom,swionp,swpowp,
      >        swqidatiz,swqidmliz,swqidcx,swqidrec,swdetach,
-     >        swgperpp,swextra,swppion,swppelec
+     >        swgperpp,swextra,swppion,swppelec,swppress
 c
       parameter (swcond=1,swconv=2,swprad=3,swphelp=4,swpei=5,
      >           swpcx=6,swmach=7,swvisc1=8,swnmom=9,swion=10,
@@ -18,7 +18,7 @@ c
      >           swrecom=19,swionp=20,swpowp=21,
      >           swqidatiz=22,swqidmliz=23,swqidcx=24,swqidrec=25,
      >           swdetach=26,swgperpp=27,swextra=28,
-     >           swppion=29,swppelec=30) 
+     >           swppion=29,swppelec=30,swppress=31) 
 c
       common /solswitch/ switch,deflist,ndef
       save /solswitch/
@@ -30,7 +30,7 @@ c
      >        actswcore,actswsmooth,actswioni,actswerror,
      >        actswrecom,
      >        actswqidatiz,actswqidmliz,actswqidcx,actswqidrec,
-     >        actswdetach,actswppion,actswppelec
+     >        actswdetach,actswppion,actswppelec,actswppress
       save /activesw/
 c
       real switch(maxopts),deflist(mxspts,3)     
@@ -42,7 +42,7 @@ c
      >     actswcore,actswsmooth,actswioni,actswerror,
      >     actswrecom,
      >     actswqidatiz,actswqidmliz,actswqidcx,actswqidrec,
-     >     actswdetach,actswppion,actswppelec
+     >     actswdetach,actswppion,actswppelec,actswppress
 c   
       integer ndef
 
