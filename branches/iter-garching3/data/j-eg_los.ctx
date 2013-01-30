@@ -1,0 +1,85 @@
+$ CORTEX plot file for Karl
+
+{STRING}  disclaimer  Wall reflections not included, (j-eg_los.d6o and j-eg_los.ctx)
+
+$ ======================================================================
+$ Load and store/save the fluid grid geometry (takes some time...)
+$ ======================================================================
+
+${PLOT 2D FLUID GRID}  1 
+${EXIT}
+${PLOT 2D FLUID GRID}  1  {NO GRID}  {SAVE}
+
+$ ======================================================================
+$ Plots
+$ ======================================================================
+$
+$ The LOS integration data loaded by CORTEX is stored in:
+$
+$   results/j-eg/<CASENAME>.idl.<OUTPUT LABEL>_signals
+$
+$ You can load it into your own IDL session with:
+$
+$   cortex_LoadIntegrals, file, /direct
+$ 
+$ where <file> is the complete path name, and the code is in:
+$   
+$   fuse/idl/cortex_load_results.pro 
+$
+$ You'll need fuse/idl/interface.pro compiled as well.
+$
+
+$ ----------------------------------------------------------------------
+$ H-alpha
+
+${PLOT 2D FLUID GRID}  1  {LOAD}  {NO FRAME}  
+$  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+${PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  1  {CASE}  j-eg-sol28_SL_l
+$  {DATA FILE}  idl.KSRc_C28  {NOTES}  disclaimer  {YLOG}  
+
+$
+$ {PLOT 2D CONTOUR} <option>
+$
+$ 1   - background plasma densiyt
+$ 2   - background plasma parallel velocity
+$ 3   - background plasma parallel Mach number
+$ 4   - electron pressure
+$ 5   - background plasma ion pressure
+$ 6   - background plasma total pressure
+$ 200 - hydrogen atom density from EIRENE
+$ 201 - hydrogen molecule density from EIRENE
+$ 220 - D_alpha from EIRENE
+$ 221 - D_gamma from EIRENE
+$ 300 - impurity density from EIRENE
+$ 400 - impurity density from DIVIMP, where {STATE} sets the charge state
+$ 500 - impurity line emission from DIVIMP, but N/A at the moment, i.e. I haven't written the required code
+$
+
+{PLOT 2D CONTOUR}  220  {LOG}  {NO FRAME}  {NO TITLE}  {NO FRAME} 
+  {CASE}  j-eg-sol28_SL_l
+  {XRANGE}    12 22                                                             $ range on the 2D contour plot
+  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  1  {CASE}  j-eg-sol28_SL_l  $ j-eg-sol28_SL_l >u >v
+  {DATA FILE}  idl.KSRx_C28  {NOTES}  disclaimer  ${YLOG}  
+
+$ ----------------------------------------------------------------------
+$ Be
+$
+{PLOT 2D CONTOUR}  400  {STATE}  0  {LOG}  {NO FRAME}  {NO TITLE}  {NO FRAME}
+  {XRANGE}    12 16                                                                       $ range on the 2D contour plot
+  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  4  {CASE}  j-eg-sol28_SL2_a
+  {DATA FILE}  idl.KSRx_C28  {NOTES}  disclaimer  $ {YLOG}  
+
+${PLOT 2D FLUID GRID}  1  {LOAD}  {NO FRAME}  
+$  {ANNOTATE}  2  Gray  idl.KSRx_C28_views  1  
+${PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  2  {CASE}  j-eg-sol28_SL_l
+$  {DATA FILE}  idl.KSRc_C28  {NOTES}  disclaimer  {YLOG}  
+
+{EXIT}
+
+
+
+
+
+
