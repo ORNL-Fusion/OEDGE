@@ -1,5 +1,118 @@
 c     -*-Fortran-*-
 c
+c ======================================================================
+c
+c
+      SUBROUTINE DumpShinKajita(title9)
+      USE mod_out985
+      USE mod_out985_variables
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+
+      INTEGER   ik,ir,fp,ike,ierr,iint,iobj,ik_last,ir_last
+      REAL      fact(100),rdum
+      CHARACTER dummy*1024
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+c     E = h v; v = c / l; E = h c / l 
+c      
+
+      DO iint = 1, MAX(1,opt%int_num)
+        write(0,*) 'wlngth',iint,opt%int_wlngth(iint)
+           !  m2 kg / s  m / s    m
+        fact(iint) = 6.63E-34 * 3.0E+8 / (opt%int_wlngth(iint) * 1.0E-9)
+      ENDDO
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='skf.impurity_lines',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '# Data file for Kajita-san: line emission '//
+     .                'in [W m-3]'
+      WRITE(fp,'(A)') '#    (based on a SOLPS format from A. Kukushkin)'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '# Version     : 1.0'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# area - the area of the fluid code cell '//
+     .                'in the poloidal plane'
+      WRITE(fp,'(A)') '# vol  - the toroidal volume of the cell, '//
+     .                'i.e. area*2*PI*x'
+      WRITE(fp,'(A)') '#'
+
+
+      WRITE(fp,'(A)') '# atomic number'
+      WRITE(fp,'(10X,56X,25I14)') 
+     .  (opt%int_z     (iint),iint=1,MAX(1,opt%int_num))
+
+      WRITE(fp,'(A)') '# (approximate) atomic mass [amu]'
+      WRITE(fp,'(10X,56X,25I14)') 
+     .  (opt%int_a     (iint),iint=1,MAX(1,opt%int_num))
+
+      WRITE(fp,'(A)') '# charge state'
+      WRITE(fp,'(10X,56X,25I14)') 
+     .  (opt%int_charge(iint),iint=1,MAX(1,opt%int_num))
+
+      WRITE(fp,'(A)') '# wavelength [nm]'
+      WRITE(fp,'(10X,56X,25F14.1)') 
+     .  (opt%int_wlngth(iint),iint=1,MAX(1,opt%int_num))
+
+      WRITE(fp,'(2A5,25A14)') '#  ix','iy','x','y','area','vol',
+     .                       ('signal',iint=1,MAX(1,opt%int_num))
+      WRITE(fp,'(2A5,25A14)') ' ',' ','[m]','[m]','[m-2]','[m-3]',
+     .                       ('[W m-3]',iint=1,MAX(1,opt%int_num))
+
+      ik_last = -1
+      ir_last = -1
+
+      DO iobj = 1, nobj
+        IF (obj(iobj)%type   .NE.OP_INTEGRATION_VOLUME) CYCLE
+        IF (obj(iobj)%gsur(1).NE.GT_TC                ) CYCLE
+
+        ik = obj(iobj)%ik            
+        ir = obj(iobj)%ir
+
+        IF (ik.EQ.ik_last.AND.ir.EQ.ir_last) CYCLE
+
+        ik_last = ik
+        ir_last = ir         
+
+        WRITE(fp,'(2I5,1P,25E14.4,0P)') 
+     .    ik,ir,rs(ik,ir),zs(ik,ir),kareas(ik,ir),kvols(ik,ir),
+     .    (obj(iobj)%quantity(iint)*fact(iint),
+     .     iint=1,MAX(1,opt%int_num))
+
+c        DO iint = 1, MAX(1,opt%int_num)
+c        CALL inPutData(obj(iobj)%quantity(iint),TRIM(tag),
+c     .                 'ph m-3 s-1')            
+      ENDDO
+
+ 
+      CLOSE(fp)
+ 
+      RETURN
+99    STOP
+      END
+c
 c ====================================================================== 
 c
       SUBROUTINE DumpLineData
@@ -204,7 +317,7 @@ c
 
       INTEGER, INTENT(IN) :: iint,ik,ir
       LOGICAL display_warning 
-      REAL    osm(ik,ir),wlngth2
+      REAL    osm(ik,ir),wlngth2,scale
 
       DATA display_warning /.TRUE./
 
@@ -238,10 +351,12 @@ c                 *** TEMP *** get rid of bad D2+ data at high temperatures
                   DO ir1 = 1, ir ! nrs
                     DO ik1 = 1, nks(ir1)
                       IF (ktebs(ik1,ir1).GT.1.0E+3.AND.
-     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
+     .                  pinline(ik1,ir1,4,H_BALPHA).GT.
+     .                  pinline(ik1,ir1,1,H_BALPHA)*10.0) THEN
+c     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
                         pinline(ik1,ir1,4,H_BALPHA) = 0.0
-c                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
-c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                         IF (display_warning) THEN
                           display_warning = .FALSE.
                           WRITE(0,*)
@@ -253,14 +368,14 @@ c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                       ENDIF
                     ENDDO
                   ENDDO
-c                  IF (.NOT.display_warning) THEN
-                  DO ir1 = 1, ir ! nrs
-                    DO ik1 = 1, nks(ir)
-c                     write(0,*) 'debug',ik1,ir1,nrs
-                     osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                  IF (.NOT.display_warning) THEN
+                    DO ir1 = 1, ir ! nrs
+                      DO ik1 = 1, nks(ir)
+c                       write(0,*) 'debug',ik1,ir1,nrs
+                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                      ENDDO
                     ENDDO
-                  ENDDO
-c                  ENDIF
+                  ENDIF
 
                   wlngth2 = 656.3  ! Air
 
@@ -290,7 +405,17 @@ c...      ADAS:
 
           SELECTCASE (za)
             CASE (01002) ! Deuterium
-              STOP 'D ADAS NOT READY'
+              CALL LDADAS(opt%int_z(iint),iz,    ! requested matches what's available...
+     .                    opt%int_adasid(iint),
+     .                    opt%int_adasyr(iint),
+     .                    opt%int_adasex(iint),
+     .                    opt%int_isele (iint),
+     .                    opt%int_iselr (iint),
+     .                    opt%int_iselx (iint),
+     .                    plrpad,wlngth2,ircode) 
+
+                scale = 1.0
+c              STOP 'D ADAS NOT READY'
             CASE DEFAULT
 c...          Check for impurity data:
 c             CALL LDADAS(1,IZMIN,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
@@ -309,7 +434,8 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
      .                      opt%int_iselr (iint),
      .                      opt%int_iselx (iint),
      .                      plrpad,wlngth2,ircode) 
-                wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+                scale = absfac
               ELSE
                 CALL ER('GetFluidGridEmission','Specified charge '//
      .                  'state invalid',*99)
@@ -319,7 +445,9 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
           IF (ircode.NE.0) 
      .      CALL ER('GetFluidGridEmission','IRCODE.NE.0',*99)
 
-          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * absfac 
+          wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * scale
           WRITE(0,*) 'WLNGTH:',wlngth2
 c       ----------------------------------------------------------------
         CASE (3) 
