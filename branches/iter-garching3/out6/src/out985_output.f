@@ -887,9 +887,9 @@ c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 301 ! -2 ! 301
+     .            hsur(nsur) = 201 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 301 ! -3 ! 301
+     .            hsur(nsur) = 201 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
@@ -1424,9 +1424,9 @@ c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
-              IF (sub_option.NE.2.AND.
-     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
-c              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+c              IF (sub_option.NE.2.AND.
+c     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               CALL TestTetrahedrons(sub_option,fname,nsur,npts,vsur,
      .                              hsur,MAXSURFACE,MAXPOINTS,status)
               WRITE(0,*) 'NSUR=',nsur
@@ -2259,8 +2259,8 @@ c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 
@@ -2358,7 +2358,7 @@ c...              Rotate vertices:
               IF (obj(iobj)%nside.NE.0) THEN
 c...            Filter:
                 count = 0.0
-                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 c                WRITE(0,*) 'GO MAN',iobj,isid
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
@@ -2561,12 +2561,17 @@ c          DO ipixel = 1, npixel
           CALL inCloseInterface
         ENDDO
 
+
+
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
           WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
 c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
 10        FORMAT(A)
 c10        FORMAT(A,I0.2,A)
+
+        wRITE(0,*) 'dumping signal '//TRIM(file)
+
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
           DO i = 1, opt%int_num
@@ -2576,7 +2581,7 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
-          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
+c          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
 c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')

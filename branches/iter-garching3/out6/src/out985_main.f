@@ -768,7 +768,7 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.NOT..FALSE..AND.   ! *** PROFILE HACK ***
+        IF (.FALSE..AND.   ! *** PROFILE HACK ***
      .      (i1.EQ.opt%det_istart(idet).OR.
      .       i1.EQ.opt%det_iend  (idet).OR.
      .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
@@ -1710,7 +1710,7 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       CALL DEALLOC_ALL
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 2000000 
+      MAX3D = 4000000 
 c      MAX3D = 500000 
 c      MAX3D = 1500000 
 c      MAX3D = 4000000 
@@ -1899,6 +1899,9 @@ c        WRITE(0,*) 'f:',f
 
       IF (opt%nplots.GT.0)
      .  CALL Output985(iopt,MAXNPIXEL,npixel,pixel,image)
+
+      IF (.TRUE.)
+     .  CALL DumpShinKajita(title)
 
 c      nobj985 = nobj
 
