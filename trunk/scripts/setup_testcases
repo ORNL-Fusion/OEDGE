@@ -1,6 +1,6 @@
 #!/bin/tcsh
 #
-set progdir=divimp-update
+set progdir=divimp
 
 echo 'SETTING UP Testcases'
 #
