@@ -215,8 +215,9 @@ Contains
 
        ! jdemod - this routine handles the wall intersection calculations - since it was common to three different modules I pulled it out to a
        !          separate routine
+       ! jdemod - add hc_cprint to the call to find_wall_intersection - this was modified in main code but not updated in the hc modules
        call find_wall_intersection(current_r,current_z,last_r,last_z,rnew,znew,reflection_angle,segment_normal_angle,&
-                               &local_neutral_reflection_opt,wall_index,intersect_result,intersect)
+                               &local_neutral_reflection_opt,wall_index,intersect_result,intersect,hc_cprint)
 
 
        !   write(6,'(a,i10,2i6,8g18.10,i10,l6)')  &
