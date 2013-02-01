@@ -699,6 +699,11 @@ c
          input_HC_H_mass = crmb
       endif
 c
+c     jdemod - assign the value of cprint to hc_cprint for use inside the HC routines
+c
+      hc_cprint = cprint
+c
+
 
       return
       end

@@ -146,6 +146,10 @@
 	Integer        HC_Coord_Print_Option	! Prints r,z position data and hydrocarbon species at each timestep: 0=off, 1=on (H50).
 	Integer        HC_Evolve_Print_Option	! Prints r,z position data and hydrocarbon transition when they occur: 0=off, 1=on (H51).
 
+        ! jdemod - add equivalent to cprint option in DIVIMP - should have the same value loaded in global_hc_assign_inputs
+        integer :: hc_cprint ! General level of diagnostic printing matching the cprint value in the main code
+
+
         ! Temporary variables for debugging the sheath E-field
         integer, parameter :: nsheath_bins = 100
         real, parameter :: sheath_extent = 0.00005
