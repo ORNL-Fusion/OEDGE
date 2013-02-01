@@ -1670,7 +1670,7 @@ C
       SUBROUTINE DINOUTU (OPT,DARRAY,N,IONUM)
       implicit none
       INTEGER I,J,N,IBLOCK,IONUM,ierr
-      CHARACTER OPT*8
+      CHARACTER OPT*(*)
       REAL*8 DARRAY(N)
       DATA IBLOCK /750/
 C
@@ -1688,12 +1688,12 @@ C
 
       return
 
-  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 C      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:8),REAL(4*N)
 C 9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
@@ -1708,7 +1708,7 @@ C
       SUBROUTINE DINOUT (OPT,DARRAY,N)
       implicit none
       INTEGER I,J,N,IBLOCK,ierr
-      CHARACTER OPT*8
+      CHARACTER OPT*(*)
       DOUBLE PRECISION DARRAY(N)
       DATA IBLOCK /1500/
 C
@@ -1721,16 +1721,16 @@ C
      >          (SNGL(DARRAY(J)),J=I,MIN(N,I+IBLOCK-1))
   200   CONTINUE
       ENDIF
-      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:8),REAL(4*N)
+      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
 
       return
 
-  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 
 
@@ -1745,7 +1745,7 @@ C
       SUBROUTINE R8INOUT (OPT,DARRAY,N)
       implicit none
       INTEGER I,J,N,IBLOCK,ierr
-      CHARACTER OPT*8
+      CHARACTER OPT*(*)
       real*8 DARRAY(N)
       DATA IBLOCK /1500/
 C
@@ -1760,16 +1760,16 @@ C
      >          (DARRAY(J),J=I,MIN(N,I+IBLOCK-1))
   200   CONTINUE
       ENDIF
-      IF (8*N.GT.10000) WRITE (6,9001) OPT(3:8),REAL(8*N)
+      IF (8*N.GT.10000) WRITE (6,9001) OPT(3:len_trim(opt)),REAL(8*N)
 
       return
 
-  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 
 
@@ -1784,7 +1784,7 @@ C
       SUBROUTINE IINOUT (OPT,IARRAY,N)
       implicit none
       INTEGER I,J,N,IBLOCK,IARRAY(N),ierr
-      CHARACTER OPT*8
+      CHARACTER OPT*(*)
       DATA IBLOCK /1500/
 C
       IF     (OPT(1:1).EQ.'R') THEN
@@ -1798,15 +1798,15 @@ C
      >          (IARRAY(J),J=I,MIN(N,I+IBLOCK-1))
   200   CONTINUE
       ENDIF
-      WRITE (6,9001) OPT(3:8),REAL(4*N)
+      WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
-  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 
  9001 FORMAT(1X,'IINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
@@ -1821,7 +1821,7 @@ C  *********************************************************************
 C
       SUBROUTINE IINOUT2 (OPT,IARRAY,M,N,L,U)
       implicit none
-      CHARACTER OPT*8
+      CHARACTER OPT*(*)
       INTEGER M,N,l,u,ierr
       integer IARRAY(L,U)
 c
@@ -1877,15 +1877,15 @@ c
 c
  200    CONTINUE
       ENDIF
-      WRITE (6,9001) OPT(3:8),REAL(4*N)
+      WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
-  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
-      write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
  9001 FORMAT(1X,'IINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
       RETURN
