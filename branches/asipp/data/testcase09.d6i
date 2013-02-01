@@ -107,7 +107,7 @@ $
  0.0   0.0    0.0         0.0     0.0
 $
 $ Relaxation options:						
-'*030 Relaxation option  0-OFF 1-N/A 2-BC 3-N/A      '     1           REL_OPT
+'*030 Relaxation option  0-OFF 1-N/A 2-BC 3-N/A      '     0           REL_OPT
 '*031 PIN source relaxation fraction                 '    1.0          REL_FRAC   *PS*
 '*034 Number of steps for BC relaxation              '     1           REL_NSTEP   10
 '*035 Number of iterations at each step              '     3           REL_NITER    5
