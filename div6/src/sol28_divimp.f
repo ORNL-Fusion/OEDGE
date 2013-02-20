@@ -668,7 +668,7 @@ c...
       wallpt(:,13) = 0.0
 c
 c     ------------------------------------------------------------------     
-c     Send data to IDL:
+c     SEND DATA TO IDL
 c
       IF (nsputter_last.GT.0) THEN
         CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
@@ -1154,6 +1154,9 @@ c...  Copy PIN data:
         pin(cind1:cind2,ion)%ion = pinion(1:ike,ir)
         pin(cind1:cind2,ion)%rec = pinrec(1:ike,ir)
         pin(cind1:cind2,ion)%mom = pinmp (1:ike,ir)
+
+        pin(cind1:cind2,ion)%qe  = pinqe (1:ike,ir)
+        pin(cind1:cind2,ion)%qi  = pinqi (1:ike,ir)
 
         ncell1 = cind2
       ENDDO

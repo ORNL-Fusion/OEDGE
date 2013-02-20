@@ -1036,6 +1036,8 @@ c
      .                     solps_data(nsolps_data)%a,
      .                     solps_data(nsolps_data)%charge
           ENDDO
+        CASE('SOLPS LOAD INDEXING')
+          CALL ReadOptionI(buffer,1,solps_indexing)
       CASE DEFAULT
         CALL User_LoadOptions(fp,itag,buffer)
       ENDSELECT 
@@ -1514,6 +1516,7 @@ c      opt_eir%nvoid = 0
 c...  SOLPS related variables:
       solps_opt = 0
       nsolps_data = 0
+      solps_indexing = 0
       IF (ALLOCATED(solps_data)) DEALLOCATE(solps_data)
       IF (ALLOCATED(map_divimp)) DEALLOCATE(map_divimp)
       IF (ALLOCATED(solps_cen )) DEALLOCATE(solps_cen )

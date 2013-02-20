@@ -3,6 +3,53 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE TetrahedronsForMartin(fname)
+      USE mod_interface
+      USE mod_geometry
+      USE mod_eirene06_locals
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      CHARACTER, INTENT(IN) :: fname*(*)
+
+      INTEGER GetNumberOfObjects
+
+      INTEGER status,ndat,ik,ir,iobj,ion
+      REAL*8  p(3),dist
+      REAL, ALLOCATABLE :: tdata(:,:)
+
+      ion = 1
+
+      CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
+      IF (status.EQ.-1) THEN
+        WRITE(0,*) 'MESSAGE TetrahedronsForMartin: File not found'
+        RETURN
+      ENDIF
+
+c      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+c     .     FORM='UNFORMATTED',STATUS='REPLACE',ERR=97)                
+
+
+
+
+
+c      CLOSE(fp)
+
+      CALL geoClean
+c      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpMarkusAirila(title9,qtim)
       IMPLICIT none
 
@@ -1188,6 +1235,7 @@ c        ENDIF
 c        id = wallindex(in2)
       DO in2= 1, wallpts
         id = ivesm(in2)
+         
         IF (id.EQ.0) CYCLE
         in = NINT(wallpt(id,18))
 c        in2= NINT(wallpt(id,17))
@@ -1195,6 +1243,8 @@ c        in2= NINT(wallpt(id,17))
         ir = irds(MAX(1,in))
         pos2 = pos1 + wallpt(id,7)
         fact2 = nparticles * (pos2 - pos1)
+c        write(0,*) 'check',ik,ir,in,id
+
         IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
           IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
           r1 = rp(in)
@@ -1225,6 +1275,8 @@ c          write(0,*) 'ddsg:',dds2(in),pos2-pos1,wallpt(id,7)
           CALL inPutData(neros(in,4)*absfac,'TOT_NET','s-1 m-2')          
           angle = 90.0-ACOS(costet(in))*180.0/PI
           CALL inPutData(angle,'IMPACT_ANGLE','degrees')          
+c          flux = knds(in) * ABS(kvds(in)) 
+c          CALL inPutData(flux      ,'PARALLEL_ION_FLUX','D+ s-1 m-2')          
           flux = knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir)
           CALL inPutData(flux      ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
           CALL inPutData(flxhw3(in2),'ATM_ERO','s-1 m-2')          
@@ -1262,6 +1314,7 @@ c     .        ,'TOT_DEP2','(s-1 m-2)')
           CALL inPutData(0.0        ,'ATM_DEP','s-1 m-2')          
           CALL inPutData(flxhw3(in2),'ATM_NET','s-1 m-2')          
           CALL inPutData(-1.0       ,'IMPACT_ANGLE'    ,'degrees')          
+c          CALL inPutData(0.0        ,'PARALLEL_ION_FLUX','D+ s-1 m-2')          
           CALL inPutData(0.0        ,'SURFACE_ION_FLUX','D+ s-1 m-2')          
           CALL inPutData(flxhw6(in2),'SURFACE_ATM_FLUX','D  s-1 m-2')          
         ENDIF
@@ -1476,6 +1529,7 @@ c     wallpt (ind,31) = Plasma density at wall segment
         CALL inPutData(wallpt(id,23)  ,'Z_VERTEX2'   ,'m')                     
         CALL inPutData(wallpt(id,7)   ,'LENGTH'      ,'m')                     
         CALL inPutData(wallpt(id,19)  ,'TEMPERATURE' ,'K')                     
+
         in = wallpt(id,17)
         IF (in.EQ.0) THEN
           CALL inPutData(-1  ,'INDEX_PIN'      ,'N/A')                     
@@ -1490,44 +1544,46 @@ c     wallpt (ind,31) = Plasma density at wall segment
           CALL inPutData(fluxhw(in)-flxhw6(in),
      .                              'MOL_PAR_FLUX','m-2 s-1')                     
           CALL inPutData(flxhw7(in),'MOL_AVG_ENERGY' ,'eV')                     
-
-          IF (in1.NE.0) THEN
-            ik = ikds(in1)
-            ir = irds(in1)
-c            write(0,*) 'index',id,in1,ik,ir
-            itube = ir - 1
-            IF (ir.GE.irtrap) itube = itube - 2
-            jsat      = knds(in1)*ABS(kvds(in1)) * ECH
-c            jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
-            CALL inPutData(ik           ,'INDEX_CELL','N/A')                     
-            CALL inPutData(ir           ,'INDEX_RING','N/A')                     
-            CALL inPutData(itube        ,'INDEX_TUBE','N/A')                     
-            CALL inPutData(psitarg(ir,2),'PSIN'      ,'N/A')                   
-            CALL inPutData(rho(ir,CELL1),'RHO'       ,'m'  )                   
-            CALL inPutData(jsat         ,'JSAT'      ,'N/A')                   
-            CALL inPutData(bratio(ik,ir),'BRATIO'    ,'N/A')
-            CALL inPutData(costet(in1)  ,'COSTET'    ,'N/A')
-            CALL inPutData(knds (in1)   ,'NE'        ,'m-3')                    
-            CALL inPutData(kvds (in1)   ,'VB'        ,'m s-1')                    
-            CALL inPutData(kteds(in1)   ,'TE'        ,'eV')                     
-            CALL inPutData(ktids(in1)   ,'TI'        ,'eV')                     
-          ELSE
-            CALL inPutData(-999     ,'INDEX_CELL','N/A')                     
-            CALL inPutData(-999     ,'INDEX_RING','N/A')                     
-            CALL inPutData(-999     ,'INDEX_TUBE','N/A')                     
-            CALL inPutData(-999.0   ,'PSIN'      ,'N/A')                   
-            CALL inPutData(-999.0   ,'RHO'       ,'m'  )                   
-            CALL inPutData(-999.0   ,'JSAT'      ,'Amps')                   
-            CALL inPutData(-999.0   ,'BRATIO'    ,'N/A')
-            CALL inPutData(-999.0   ,'COSTET'    ,'N/A')
-            CALL inPutData(-999.0   ,'JSAT_PERP' ,'Amps')                   
-            CALL inPutData(-999.0   ,'NE'        ,'m-3')                     
-            CALL inPutData(-999.0   ,'VB'        ,'m s-1')                    
-            CALL inPutData(-999.0   ,'TE'        ,'eV')                     
-            CALL inPutData(-999.0   ,'TI'        ,'eV')                     
-          ENDIF
-
         ENDIF
+
+        IF (in1.NE.0) THEN
+          ik = ikds(in1)
+          ir = irds(in1)
+c          write(0,*) 'index',id,in1,ik,ir
+          itube = ir - 1
+          IF (ir.GE.irtrap) itube = itube - 2
+          jsat      = knds(in1)*ABS(kvds(in1)) * ECH
+c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
+          CALL inPutData(ik           ,'INDEX_CELL','N/A')                     
+          CALL inPutData(ir           ,'INDEX_RING','N/A')                     
+          CALL inPutData(itube        ,'INDEX_TUBE','N/A')                     
+          CALL inPutData(psitarg(ir,2),'PSIN'      ,'N/A')                   
+          CALL inPutData(rho(ir,CELL1),'RHO'       ,'m'  )                   
+          CALL inPutData(ksmaxs(ir)   ,'L'         ,'m'  )                    
+          CALL inPutData(jsat         ,'JSAT'      ,'N/A')                   
+          CALL inPutData(bratio(ik,ir),'BRATIO'    ,'N/A')
+          CALL inPutData(costet(in1)  ,'COSTET'    ,'N/A')
+          CALL inPutData(knds (in1)   ,'NE'        ,'m-3')                    
+          CALL inPutData(kvds (in1)   ,'VB'        ,'m s-1')                    
+          CALL inPutData(kteds(in1)   ,'TE'        ,'eV')                     
+          CALL inPutData(ktids(in1)   ,'TI'        ,'eV')                     
+        ELSE
+          CALL inPutData(-999     ,'INDEX_CELL','N/A')                     
+          CALL inPutData(-999     ,'INDEX_RING','N/A')                     
+          CALL inPutData(-999     ,'INDEX_TUBE','N/A')                     
+          CALL inPutData(-999.0   ,'PSIN'      ,'N/A')                   
+          CALL inPutData(-999.0   ,'RHO'       ,'m'  )                   
+          CALL inPutData(-999.0   ,'L'         ,'m'  )                    
+          CALL inPutData(-999.0   ,'JSAT'      ,'Amps')                   
+          CALL inPutData(-999.0   ,'BRATIO'    ,'N/A')
+          CALL inPutData(-999.0   ,'COSTET'    ,'N/A')
+          CALL inPutData(-999.0   ,'JSAT_PERP' ,'Amps')                   
+          CALL inPutData(-999.0   ,'NE'        ,'m-3')                     
+          CALL inPutData(-999.0   ,'VB'        ,'m s-1')                    
+          CALL inPutData(-999.0   ,'TE'        ,'eV')                     
+          CALL inPutData(-999.0   ,'TI'        ,'eV')                     
+        ENDIF
+
 c        CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
 c        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'D m-2 s-1')                     
 c        CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
@@ -1859,8 +1915,8 @@ c
           p  = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
           jsat = GetJsat(kteds(id),ktids(id),knds(id),kvds(id))
           mach = kvds(id) / GetCs(kteds(id),ktids(id))
-         CALL inPutData(-1         ,tag//'TARGET_INDEX','none')     
-         CALL inPutData(-1         ,tag//'LOCATION'    ,'none')                    
+          CALL inPutData(-1        ,tag//'TARGET_INDEX','none')     
+          CALL inPutData(-1        ,tag//'LOCATION'    ,'none')                    
           CALL inPutData(jsat      ,tag//'JSAT'  ,'Amps')                    
           CALL inPutData(knds(id)  ,tag//'NE'    ,'m-3')                    
           CALL inPutData(kvds(id)  ,tag//'V'     ,'m s-1')                    

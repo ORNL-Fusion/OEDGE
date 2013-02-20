@@ -5024,7 +5024,7 @@ c...        The direct assignment of FWLPROB to FYDATA(,5) is not correct
 c           since FWLPROB is an additive measure of wall launch probability,
 c           with the last entry approaching 1.0, while FYDATA(,5) should contain
 c           individual wall launch probabilities for each wall segment that are
-c           independent of the lauch probabilities for the preceeding segments
+c           independent of the lauch probabilities for the preceding segments
 c           in the list. - SL, 09/05/12
 
             if (id.eq.1) then

@@ -140,9 +140,9 @@ c     .                SNGL(e0),SNGL(wt)
               END SELECT
 c slmod begin
 c... Want velocity spectrum, not energy:
-              EB = VEL
+c              EB = VEL
 c
-c              EB = E0
+              EB = E0
 c slmod end
               IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
                 SPCVX = ESTIML(ISPC)%PSPC%SPCVX
