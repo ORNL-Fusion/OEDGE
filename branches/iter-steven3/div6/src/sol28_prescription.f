@@ -734,7 +734,6 @@ c
       REAL*8  deltas,starts,frac,sumval,A,B,C
       REAL*8, POINTER :: s(:)
 
-
       IF (inpic1.LE.0) THEN
         region = inpic1
       ELSE
