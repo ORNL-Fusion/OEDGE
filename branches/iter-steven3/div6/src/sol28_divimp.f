@@ -633,6 +633,38 @@ c     Isolate the net influx for each individual species:
 c...  Add up the influxes for the individual sputtering species and 
 c     assign the total influx over-ride value for DIVIMP:
       IF (tdep_data) THEN
+c
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c MARTIN - BEGIN
+c
+c So, here we are, in a tiny corner of DIVIMP.  It is scary in here, but
+c in time you will get used to it.  Remember, the only thing to fear is
+c fear itself.  And Richard when he's having a bad day. 
+c
+c Variables:
+c 
+c sputter_data			- Data structure that contains pre-calculated impurity particle source from sputtering -- normally
+c				  this is calcualted during the current DIVIMP run, but here we get the numbers ahead of time. 
+c				  This is possible because the calculation is based on fluxs store during a previous DIVIMP run
+c                                 and loaded at the beginning of this one, jus above.
+c nsputter_last			- Number of bombarding particle types/species in the previous DIVIMP run(s) that are being referenced
+c                                 during this run.
+c sputter_data(:)%absfac_net	- The total impurity influx as a result of each bombarding species.  This is a scaling factor applied
+c       			  at the end of a DIVIMP run, i.e. the impurity distributions during a run are all scaled to one
+c   				  particle entering the torus per second, per toroidal-meter.  Then at the end eveything can be scaled
+c                                 by absfac to get the actual impurity influx (but still per second, per meter).
+c nabsfac			- The impurity influx scaling factor for this run.
+c ctimmax 			- The "time limit" for this run, i.e. each particle will be followed until ctimmax seconds have elapsed.
+c tdep_load_absfac		- The impurity scaling factor from a previous run (not necessarily the same run(s) where sputter_data
+c				  came from) where the impurity trajectories were stopped after ctimmax for that run (which is not 
+c 				  necessarily the same as for the current run) and stored, and then loaded into this run so that the 
+c                                 trajectories can be restarted and followed for ctimmax (for this run).  Whew!
+c tdep_load_deltat		- The value of ctimmax for the run where the impurity trajectories were stored.
+c
+c 
+c Objective: Decide how nabsfac for this run should be set based on the values of ctimmax for this run and the previous one, and 
+c the value of nabsfac for the previous run.  I'm not even sure this can be done with the information provide here!  Bon chance!
+c
 
         IF (nsputter_last.GT.0) 
      .    nabsfac = SUM(sputter_data(1:nsputter_last)%absfac_net)
@@ -658,7 +690,10 @@ c     .            (1.0 - frac) * nabsfac
 
 c        nabsfac = 2.0
         write(0,*) 'nabsfac',nabsfac
-
+c
+c MARTIN - END
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c 
       ELSE
         nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
 c       Normalize the wall launch probabilities:
