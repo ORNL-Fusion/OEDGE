@@ -635,7 +635,7 @@ c     assign the total influx over-ride value for DIVIMP:
       IF (tdep_data) THEN
 c
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-c MARTIN - BEGIN
+c mc - begin
 c
 c So, here we are, in a tiny corner of DIVIMP.  It is scary in here, but
 c in time you will get used to it.  Remember, the only thing to fear is
@@ -691,7 +691,7 @@ c     .            (1.0 - frac) * nabsfac
 c        nabsfac = 2.0
         write(0,*) 'nabsfac',nabsfac
 c
-c MARTIN - END
+c mc - end
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c 
       ELSE
