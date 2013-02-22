@@ -303,7 +303,7 @@ c
          ENDDO
          IF (itar.EQ.ntarget+1.AND.i1.EQ.target(ntarget)%nlist+1) THEN
            IF (first_call) THEN
-             CALL WN('User_GenerateOutputFiles','Some target group '//
+             CALL WN('GenerateOutputFiles','Some target group '//
      .               'identifiers not found')
              first_call = .FALSE.
            ENDIF

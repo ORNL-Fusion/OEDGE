@@ -732,7 +732,8 @@ c
       REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
      .                   AMU = 1.67E-27
 
-      INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic
+      INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic,
+     .        shift
       REAL    mi,ne,ni,vi,te,ti,cs,pe,pi
      
       INTEGER, ALLOCATABLE :: map_solps(:)
@@ -840,16 +841,33 @@ c...  Copy SOLPS data to the OSM fluid solution arrays:
 
 c...  Calculate the boundary conditions at the target for open 
 c     field lines (SOL and PFR's):
+
+      shift = 0
+      IF (solps_indexing.EQ.1) shift = 1
+
       IF (tube(itube)%type.NE.GRD_CORE) THEN
         DO itarget = LO, HI
-          ic = tube(itube)%cell_index(itarget)
+          icell = tube(itube)%cell_index(itarget)
 
+          imap = map_osm(icell)
+
+          IF (itarget.EQ.LO) THEN
+            imap = imap - shift
+          ELSE
+            imap = imap + shift
+          ENDIF
           mi = 2.0 * AMU  ! *** hardcoded: not good ***
-          ne = fluid(ic,ion)%ne
-          ni = fluid(ic,ion)%ni
-          vi = fluid(ic,ion)%vi
-          te = fluid(ic,ion)%te
-          ti = fluid(ic,ion)%ti
+          ne = solps_data(solps_index(1))%data(imap)
+          ni = solps_data(solps_index(2))%data(imap)
+          vi = solps_data(solps_index(3))%data(imap)
+          te = solps_data(solps_index(4))%data(imap)
+          ti = solps_data(solps_index(5))%data(imap)
+
+c          ne = fluid(icell,ion)%ne
+c          ni = fluid(icell,ion)%ni
+c          vi = fluid(icell,ion)%vi
+c          te = fluid(icell,ion)%te
+c          ti = fluid(icell,ion)%ti
 
           cs = SQRT((te + ti) * ECH / mi)    ! Needs improvement... dediated function
           pe = ne * te * ECH                 ! Same...
@@ -968,7 +986,7 @@ c        WRITE(logfp,*) 'DEBUG: Calling InterpolateTeProfile'
         CALL InterpolateProfile(1)
 
 c...    Ti:
-        IF (.FALSE.) THEN
+        IF (.TRUE.) THEN
           CALL InterpolateProfile(2)
         ELSE
           ion = 1
@@ -1915,6 +1933,9 @@ c     added to the list at the end of AssignSOLPSPlasma:
         fluid(1:icmax,ion)%eneano = SNGL(eneano(1:icmax))  ! Some inconsistency in the use of "ene"...
         fluid(1:icmax,ion)%enesrc = SNGL(enesrc(1:icmax,ion))
 
+        fluid(1:icmax,ion)%eniion = SNGL(eniion(1:icmax,ion))
+        fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
+        fluid(1:icmax,ion)%eniano = SNGL(eniano(1:icmax,ion))  
         fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
 
 c        WRITE(0,*) 'ENEION:',eneion(1:icmax,ion)
