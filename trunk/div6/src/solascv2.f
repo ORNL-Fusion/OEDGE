@@ -7,6 +7,7 @@ c
      >                    te,ti,ne,vb,exp_press,act_press,
      >                    prad,ir,irsep,
      >                    int_powrat,cprint)
+      !use sol22_input
       use sol22_debug
       implicit none
       include 'solparams'
@@ -451,7 +452,7 @@ c
             v1 = vb(i-1)
          endif
 
-         if (debug_sol22.and.debug_sol22_on) then 
+         if (debug_sol22_on) then 
             call save_s22_data(dble(i),sinit,n,t1e,t1i,v1,gamma(sinit),
      >                         srci(sinit),srcf(sinit))
          endif
@@ -951,6 +952,7 @@ c
 c
       subroutine solvstep(sinit,send,t1e,t1i,n,exitcond,imflag,
      >                    negerrflag,vcount)
+      !use sol22_input
       use sol22_debug
       implicit none
       real*8 sinit,send,t1i,t1e,n
@@ -1548,7 +1550,7 @@ c
 c
 c     If debugging is on - record the data for the current step
 c
-      if (debug_sol22.and.debug_sol22_on.and.srtn.eq.slast) then 
+      if (debug_sol22_on.and.srtn.eq.slast) then 
          call save_s22_data(h,s,n,t1e,t1i,lastvel,
      >                      gamma(s),srci(s),srcf(s))
       endif
@@ -2316,7 +2318,7 @@ c
 c
 c        Debug
 c
-           if (debug_sol22.and.ringnum.eq.45.and.pinavail) then
+           if (debug_sol22_on.and.pinavail) then
              write (6,'(a,10(1x,g14.6))') 'Newn:I',s,imag,rest,
      >            tmpgam,te,ti, rest**2,
      >            - 4.0*((tmpgam * mconv) / econv)*(mb * tmpgam)/(te+ti)
