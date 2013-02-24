@@ -7,6 +7,7 @@ c
      >                    te,ti,ne,vb,exp_press,act_press,
      >                    prad,ir,irsep,
      >                    int_powrat,cprint)
+      use sol22_debug
       implicit none
       include 'solparams'
       include 'solswitch'
@@ -65,6 +66,8 @@ c
       external   vgradval,pintupdt,pmomloss,press,pradupdt
       external   scx_s,scxupdt
       external  estppion,estppelec
+      real*8,external :: srci,srcf
+
       real*8    ga(mxspts),vb2(mxspts)
       real*8    ne2(mxspts),vsupers(mxspts),vsubs(mxspts)
       real*8    vsound(mxspts),scxv(mxspts)
@@ -124,7 +127,9 @@ c      simag2 = halflen
       CALL DZero(condi ,MXSPTS)
       CALL DZero(pmloss,MXSPTS)
 c slmod end
-      debug_s22 = .false.   
+c
+c     jdemod - supplemented by sol22_debug module functionality
+      debug_s22 = .false.
 
 c
 c     Set up the value of startn for this ring ...
@@ -445,12 +450,22 @@ c
             n = ne(i-1)
             v1 = vb(i-1)
          endif
+
+         if (debug_sol22.and.debug_sol22_on) then 
+            call save_s22_data(dble(i),sinit,n,t1e,t1i,v1,gamma(sinit),
+     >                         srci(sinit),srcf(sinit))
+         endif
 c
 c        Inner loop for the steps between each S-value.
 c
          timax = max(timax,t1i)
          temax = max(temax,t1e)
 c
+         if (debug_s22)
+     >      write(6,'(a,10(1x,g12.5))') 'S1:',sinit,send,
+     >            t1e,t1i,n
+
+
          call solvstep(sinit,send,t1e,t1i,n,exitcond,imflag,
      >                 negerrflag,vcount)
 c slmod begin - new
@@ -636,7 +651,7 @@ c
 c
 c
          if (cprint.eq.3.or.cprint.eq.9) then
-            write(6,'(a,i3,9(1x,g9.3),2i2)') 'Step:',
+            write(6,'(a,i3,9(1x,g12.5),2i2)') 'Step:',
      >              i,m0,send,te(i),ti(i),
      >              ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,
      >              negerrflag
@@ -936,6 +951,7 @@ c
 c
       subroutine solvstep(sinit,send,t1e,t1i,n,exitcond,imflag,
      >                    negerrflag,vcount)
+      use sol22_debug
       implicit none
       real*8 sinit,send,t1i,t1e,n
       integer exitcond,imflag,vcount,negerrflag
@@ -958,6 +974,8 @@ c
       real*8 pmomloss,fval,pradupdt,scxupdt
       external newn,pcxupdt,peiupdt,phelpiupdt,gamma
       external pintupdt,pmomloss,pradupdt,scxupdt
+      real*8,external :: srci,srcf
+
       real*8 ptmp
       real*8 tmpgam1,tmpgam2,vsep,vtmp
       real*8 v1,v2,vsub,vsup
@@ -967,6 +985,7 @@ c
       real*8 hneg
 c
       real*8 ntmp,tmpnimag,fegrad,figrad,gtmp
+      real*8 srtn
       integer tmpflag,iter
       external fegrad,figrad
 c
@@ -1021,6 +1040,10 @@ c
       call rkstep(s,t1e,t1i,newt1e,newt1i,errte,errti,h,m0,
      >            ierr)
 c
+c     Save new S value returned by rkstep - used to decide 
+c     whether to save debug information. 
+c     
+      srtn = s + h
 c
 c      write(6,*) 'RKSTEP:',s,newt1i,newt1e,h,m0,ierr
 c
@@ -1521,6 +1544,14 @@ c
       endif
 c
       h = hnew
+
+c
+c     If debugging is on - record the data for the current step
+c
+      if (debug_sol22.and.debug_sol22_on.and.srtn.eq.slast) then 
+         call save_s22_data(h,s,n,t1e,t1i,lastvel,
+     >                      gamma(s),srci(s),srcf(s))
+      endif
 c
       goto 2000
 c
@@ -2169,6 +2200,7 @@ c
 c
 c
       real*8 function newn(s,te,ti,nimag,flag)
+      use sol22_debug
       implicit none
 c
 c     Calculates the density value from the given parameters by solving
@@ -2282,6 +2314,13 @@ c
 c
             endif
 c
+c        Debug
+c
+           if (debug_sol22.and.ringnum.eq.45.and.pinavail) then
+             write (6,'(a,10(1x,g14.6))') 'Newn:I',s,imag,rest,
+     >            tmpgam,te,ti, rest**2,
+     >            - 4.0*((tmpgam * mconv) / econv)*(mb * tmpgam)/(te+ti)
+           endif
          else
 c
             newn = (rest - sqrt(imag))/2.0
@@ -4173,6 +4212,12 @@ c
       else
          gamma0 = n0 * v0 * targfact
       endif
+c
+c     Initial conditions at target
+c
+      write (6,'(a,12g12.4)') 'Init Targ (Bound) Conditions:', 
+     >                     te0,ti0,n0,v0,pinf0,initm0,n0*v0
+
 c
 c     Recombination source setup - pre-calculate the integral.
 c
