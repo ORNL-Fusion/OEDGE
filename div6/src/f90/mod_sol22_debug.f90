@@ -5,13 +5,15 @@ module sol22_debug
   private
 
 
-  logical,public :: debug_sol22 = .false.
-  logical,public :: debug_sol22_on = .false.
+  !integer,public :: debug_sol22 = .false.
+  !integer,public :: debug_sol22_ir, debug_sol22_ikopt
 
+
+
+  logical,public :: debug_sol22_on = .false.
+  integer :: debug_ir,debug_ikopt
 
   real*8, allocatable :: sol22_hr_data(:,:)
-
-  integer :: debug_ir,debug_ikopt
 
   integer :: init_size = 1000
   integer :: current_size

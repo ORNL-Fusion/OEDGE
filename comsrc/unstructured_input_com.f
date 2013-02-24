@@ -25,6 +25,7 @@ c
 c
       SUBROUTINE ReadUnstructuredInput(line2)
       USE mod_osm_input
+      use sol22_input
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -1241,6 +1242,29 @@ c
      >                                 'SOL22 PFZ PRESSURE LOSS OPT')
 c
 c        write(0,*) '*283 - Read switch',swppress,switch(swppress)
+c
+c     jdemod
+c     TAG 284 - SOL option 22 - SOL22 debugging switch
+c     
+      elseif (tag(1:3).eq.'284') then  
+c
+        CALL ReadI(line,debug_sol22,0,1,'SOL22 DEBUG SWITCH')
+c
+c     jdemod
+c     TAG 285 - SOL option 22 - SOL22 debug IR for detailed profile
+c     
+      elseif (tag(1:3).eq.'285') then  
+c
+        CALL ReadI(line,debug_sol22_ir,1,maxnrs,'SOL22 DEBUG RING')
+c
+c
+c     jdemod
+c     TAG 286 - SOL option 22 - SOL22 debug IKOPT for detailed profile
+c     
+      elseif (tag(1:3).eq.'286') then  
+c
+        CALL ReadI(line,debug_sol22_ir,1,2,'SOL22 DEBUG IKOPT-RING END')
+c
 c
 c -----------------------------------------------------------------------
 c

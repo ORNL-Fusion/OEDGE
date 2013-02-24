@@ -126,6 +126,7 @@ c
       subroutine InitializeUnstructuredInput
       use subgrid_options
       use ribbon_grid_options
+      use sol22_input
       implicit none
       
       INCLUDE 'params'
@@ -173,6 +174,25 @@ c
 c     Set the default for this value to OFF = 0
 c
       switch(swppress) = 0.0
+
+c     
+c     TAG 284: SOL22 - debug SOL22 
+c
+c     Set the default for this value to OFF = 0
+c
+      debug_sol22 = 0
+c     
+c     TAG 284: SOL22 - debug SOL22 
+c
+c     Set the default for this value to OFF = 0
+c
+      debug_sol22_ir = 1
+c     
+c     TAG 284: SOL22 - debug SOL22 
+c
+c     Set the default for this value to OFF = 0
+c
+      debug_sol22_ikopt = 1
 c
 c -----------------------------------------------------------------------
 c

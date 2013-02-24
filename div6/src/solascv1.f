@@ -234,6 +234,7 @@ c
 c
       subroutine calcsol_interface (irlim1,irlim2,ikopt)
       use error_handling
+      use sol22_input
       use sol22_debug
       implicit none
       integer irlim1, irlim2,ikopt
@@ -340,11 +341,11 @@ c
 c
 c     Make a call to initialize debugging if it is on
 c
-      if (debug_sol22) then 
+      if (debug_sol22.ne.0) then 
          ! debug_sol22 is manually set in the sol22_debug module
          ! parameters to the call are the ring number and ikopt for the half ring for which high res
          ! debugging data is required. 
-         call init_sol22_debug(45,2) 
+         call init_sol22_debug(debug_sol22_ir,debug_sol22_ikopt) 
       endif
 
 c
@@ -1002,7 +1003,7 @@ c
 c        Check for sol22 debug start
 c
 c           The parameters are current ring snd local IKOPT
-            if (debug_sol22) call check_init_record_data(ir,1)
+            if (debug_sol22.ne.0) call check_init_record_data(ir,1)
 
 c
 c        Set the values for a call - do 1/2 of the ring at a time.
@@ -1867,7 +1868,7 @@ c
 c           Check to print debugging data
 c           The parameters are current ring snd local IKOPT
 c           data will be printed if it has been collected
-            if (debug_sol22) call check_print_data(ir,1)
+            if (debug_sol22.ne.0) call check_print_data(ir,1)
 
          endif
 c
@@ -1886,7 +1887,7 @@ c
 c        Check for sol22 debug start
 c
 c           The parameters are current ring snd local IKOPT
-            if (debug_sol22) call check_init_record_data(ir,2)
+            if (debug_sol22.ne.0) call check_init_record_data(ir,2)
 c
 c        Set the values for a call - do 1/2 of the ring at a time.
 c
@@ -2767,7 +2768,7 @@ c
 
 c           The parameters are current ring snd local IKOPT
 c           data will be printed if it has been collected
-            if (debug_sol22) call check_print_data(ir,2)
+            if (debug_sol22.ne.0) call check_print_data(ir,2)
 
 
          endif
