@@ -8,8 +8,6 @@ module sol22_debug
   !integer,public :: debug_sol22 = .false.
   !integer,public :: debug_sol22_ir, debug_sol22_ikopt
 
-
-
   logical,public :: debug_sol22_on = .false.
   integer :: debug_ir,debug_ikopt
 
