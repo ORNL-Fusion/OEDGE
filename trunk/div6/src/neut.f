@@ -4971,7 +4971,7 @@ c
       call rzero(fydata,maxpts*5)
       call rzero(totfydata,3*5)
 c
-      call outputdata(6,'DEBUGGING NEUT WALL SPUTTERING')
+      call outputdata(89,'DEBUGGING NEUT WALL SPUTTERING')
 
 c
       nfy = wallpts

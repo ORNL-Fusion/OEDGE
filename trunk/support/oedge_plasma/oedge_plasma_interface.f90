@@ -5,7 +5,7 @@ module oedge_plasma_interface
 
   private
 
-  logical :: debug_code = .true.
+  logical :: debug_code = .false.
   integer :: interpolate_opt
   real*8  :: r_offset,z_offset
 

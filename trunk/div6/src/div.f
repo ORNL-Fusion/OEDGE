@@ -816,6 +816,12 @@ C
 c
       if (debug_code) write(0,*) '3:'
 
+c
+c     jdemod - print out sputtering yield data for current case
+c
+      if (cprint.eq.9) then 
+         call print_sputtering_yields(mattar,matp,crmb)
+      endif
 
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
@@ -8748,3 +8754,80 @@ c
       end
 
 
+      subroutine print_sputtering_yields(matt,matp,mb)
+      implicit none
+c
+c     jdemod - this routine prints out physical and chemical sputtering 
+c              yields used in the simulation as a function of impact energy
+c              and temperature
+c
+      real :: mb
+      integer :: matt,matp
+c
+      real e0,temp
+      integer, parameter :: itmax = 8
+      integer, parameter :: inmax = 40
+      integer in,it
+      real e0min,e0max
+      real tmin,tmax
+      real tmpflux 
+      real,external :: yield, yldchem
+
+      real temps(itmax),e0vals(inmax)
+      real yieldc(inmax,itmax)
+      real yieldp(inmax)
+      real yields(inmax)
+
+      ! print out physical chemical and self sputtering yields 
+
+      e0min = 5.0
+      e0max = 200.0
+      tmin = 300.0
+      tmax = 1000.0
+
+      ! use constant flux for now ... higher fluxes reduce effective temperature
+      ! for chemical sputtering
+
+      tmpflux = 1.0e19
+
+      
+      do it = 1,itmax
+         temps(it) = tmin + (it-1) * (tmax-tmin)/(itmax-1)
+      end do
+
+      do in = 1,inmax
+         e0vals(in) =  e0min + (in-1) * (e0max-e0min)/(inmax-1)
+      end do
+         
+      do in = 1,inmax
+         ! last two parameters should be Te,Ti - used only for W yields
+         ! physical sputtering
+         yieldp(in) = yield(matp,matt,e0vals(in),10.0,10.0)
+         ! self-sputtering
+         yields(in) = yield(6,matt,e0vals(in),10.0,10.0)
+
+         do it = 1,itmax
+
+            ! chemical sputtering
+            yieldc(in,it)= yldchem(e0vals(in),tmpflux,
+     >                             matp,matt,temps(it))
+           
+         end do 
+
+
+      end do
+
+      ! print results
+
+
+      write(6,*) 'SUMMARY OF SPUTTERING YIELDS:'
+      write(6,'(a5,3(5x,a3,5x),20(1x,g12.5))') 'Temps:','E0','YP','YS',
+     >               (temps(it),it=1,itmax)
+      do in = 1,inmax
+         write(6,'(a5,23(1x,g12.5))') 'Yield:',e0vals(in),yieldp(in),
+     >          yields(in),(yieldc(in,it),it=1,itmax)
+
+      end do
+
+
+      end
