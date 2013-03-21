@@ -153,14 +153,14 @@ program write_dimes_plasma
 
   write(0,'(a)') 'Writing plasma to file:'//trim(outfilename)
 
-  nr = 10
-  nz = 5
+  nr = 100
+  nz = 50
 
-  rmin = -0.005
-  rmax = 0.005
+  rmin = -0.05
+  rmax = 0.05
 
   zmin = 0.0
-  zmax = 0.005
+  zmax = 0.05
 
   dr = (rmax-rmin)/nr
   dz = (zmax-zmin)/nz
