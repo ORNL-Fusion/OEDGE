@@ -16,7 +16,7 @@ $ Grid:
 $ ======================================================================
 $
 '{GRID FORMAT}  1-SONNET 2-GRID                                '    2                      $ OPT%F_GRID_FORMAT
-'{GRID FILE}    File name of the fluid grid to be loaded       ' 'grid_east_41587@006060'  $ OPT%F_GRID_FILE     *CHANGED*
+'{GRID FILE}    File name of the fluid grid to be loaded       ' 'grid_east_41587_006060'  $ OPT%F_GRID_FILE     *CHANGED*
 $                                                                 
 $ Control:
 $ ======================================================================
