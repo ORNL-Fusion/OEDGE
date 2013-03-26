@@ -2980,8 +2980,10 @@ c...    Assumes that connection map is built:
           virtag(ik,ir) = virtag(ik,irref)
         ENDDO
         IF (ir.GT.irsep) THEN
-          thetat(idds(ir,1)) = thetat(idds(irref,1))
-          thetat(idds(ir,2)) = thetat(idds(irref,2))
+          IF (idds(ir,1).GT.0.AND.idds(irref,1).GT.0) THEN 
+            thetat(idds(ir,1)) = thetat(idds(irref,1))
+            thetat(idds(ir,2)) = thetat(idds(irref,2))
+          ENDIF
         ENDIF
       ENDIF
 

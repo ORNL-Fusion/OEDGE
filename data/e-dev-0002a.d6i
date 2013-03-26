@@ -10,7 +10,7 @@ $ Grid:
 $ ======================================================================
 $
 '{GRID FORMAT}  1-SONNET 2-GRID                                '    2                      $ OPT%F_GRID_FORMAT
-'{GRID FILE}    File name of the fluid grid to be loaded       ' 'grid_east_41587@006060'  $ OPT%F_GRID_FILE     *CHANGED*
+'{GRID FILE}    File name of the fluid grid to be loaded       ' 'grid_east_41587_006060'  $ OPT%F_GRID_FILE     *CHANGED*
 $                                                                 
 $ Control:
 $ ======================================================================
@@ -46,13 +46,13 @@ $                                                              (m-3)    (m s-1) 
 
 $ Inner upper target
   3.0   1  1    4    4   1.0                  0     0.0  0                                                
-  'lp_inner_upper_41587@5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
+  'lp_inner_upper_41587_5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0 
 
 $ Inner lower target
   3.0   2  2    4    4   1.0                  0     0.0  0                                                
-  'lp_inner_lower_41587@5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
+  'lp_inner_lower_41587_5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0 
 
@@ -64,13 +64,13 @@ $ Outer midplane
 
 $ Outer lower target
   3.0   4  4    4    4   1.0                  0     0.0  0                                                
-  'lp_outer_lower_41587@5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
+  'lp_outer_lower_41587_5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0 
 
 $ Outer upper target
   3.0   3  3    4    4   1.0                  0     0.0  0                                                
-  'lp_outer_upper_41587@5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
+  'lp_outer_upper_41587_5.95.dat'  1    0.0                    1.0      0.0      0.0       1.0    1.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0
   0.0                          0.0    0.0                      2.0      0.0      0.0       3.0    3.0   0.0 
 
