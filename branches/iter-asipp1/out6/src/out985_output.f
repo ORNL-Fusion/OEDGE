@@ -887,9 +887,9 @@ c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 301 ! -2 ! 301
+     .            hsur(nsur) = 201 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 301 ! -3 ! 301
+     .            hsur(nsur) = 201 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
@@ -2598,7 +2598,9 @@ c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             ENDDO
           ENDDO
           CALL inCloseInterface
+
         ENDDO
+
 
       ENDIF
 

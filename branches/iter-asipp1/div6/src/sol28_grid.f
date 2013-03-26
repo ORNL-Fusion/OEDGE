@@ -3254,6 +3254,7 @@ c     cuts, as appropriate:
      .      GetTube(iobj,IND_OBJECT).LT.grid%isep) CYCLE
 
         IF (obj(iobj)%omap(2).EQ.-1.OR.obj(iobj)%omap(4).EQ.-1) THEN
+
           itube = GetTube(iobj,IND_OBJECT)
           IF     (tube_set.NE.itube) THEN
             tube_set = itube         ! There's an assumption here that 
@@ -3366,7 +3367,8 @@ c           list (have to complete the wall by hand at the moment):
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,4F14.7)') 
-     .      'CLIP LIST:',ilist(i1,:),clist(i1,:),xlist(i1,:),ylist(i1,:)
+     .      'CLIP LIST A:',ilist(i1,:),clist(i1,:),
+     .                     xlist(i1,:),ylist(i1,:)
         ENDDO
       ENDIF
 
@@ -3488,21 +3490,25 @@ c
 
 
       DO itube2 = grid%isep, ntube
-        IF (itube.EQ.itube2) CYCLE 
+c        IF (itube.EQ.itube2) CYCLE 
 
-        iobj = GetObject(tube(itube2)%cell_index(1),IND_CELL)            
-        DO i1 = 1, 2
-          CALL GetVertex(iobj,i1,x2,y2)        
-          IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
-        ENDDO
-        IF (i1.NE.3) EXIT
+        IF (itube.NE.itube2.OR.(ivertex.EQ.3.OR.ivertex.EQ.4)) THEN
+          iobj = GetObject(tube(itube2)%cell_index(1),IND_CELL)            
+          DO i1 = 1, 2
+            CALL GetVertex(iobj,i1,x2,y2)        
+            IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
+          ENDDO
+          IF (i1.NE.3) EXIT
+        ENDIF
 
-        iobj = GetObject(tube(itube2)%cell_index(2),IND_CELL)            
-        DO i1 = 3, 4
-          CALL GetVertex(iobj,i1,x2,y2)        
-          IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
-        ENDDO
-        IF (i1.NE.5) EXIT
+        IF (itube.NE.itube2.OR.(ivertex.EQ.1.OR.ivertex.EQ.2)) THEN
+          iobj = GetObject(tube(itube2)%cell_index(2),IND_CELL)            
+          DO i1 = 3, 4
+            CALL GetVertex(iobj,i1,x2,y2)        
+            IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
+          ENDDO
+          IF (i1.NE.5) EXIT
+        ENDIF
 
       ENDDO
 
@@ -3602,6 +3608,14 @@ c        write(0,*) '-->',iobj,itube,ic,nc
 
       ENDDO
 
+      IF (debug) THEN
+        DO i1 = 1, nlist
+          WRITE(fp,'(A,4I6)') 
+     .      'CLIP LIST B1:',list(i1)%i,list(i1)%t,
+     .                      list(i1)%c,list(i1)%m
+        ENDDO
+      ENDIF
+
 
 c...  Look for tangency points that are not bounded on each side by a target
 c     segment:
@@ -3611,8 +3625,11 @@ c       Check low index target:
         cind1 = tube(itube)%cell_index(1)
         cind2 = tube(itube)%cell_index(2)
 
+c        write(88,*) 'itube,cind1=',itube,cind1
+        
         m = 0
         iobj = GetObject(cind1,IND_CELL)
+        ic = 1
         m2 = obj(iobj)%omap(2)
         m4 = obj(iobj)%omap(4)
         IF (m4.NE.-1.AND..NOT.osmMatchVertex(itube,cind1,1,.TRUE.)) m=3
@@ -3627,8 +3644,11 @@ c       Check low index target:
           list(nlist)%m = m
         ENDIF
 
+c        write(88,*) 'itube,cind2=',itube,cind2
+
         m = 0
         iobj = GetObject(cind2,IND_CELL)
+        ic = cind2 - cind1 + 1
         m2 = obj(iobj)%omap(2)
         m4 = obj(iobj)%omap(4)
         IF (m2.NE.-1.AND..NOT.osmMatchVertex(itube,cind2,3,.TRUE.)) m=2
@@ -3648,8 +3668,8 @@ c       Check low index target:
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,
-     .                   list(i1)%c,list(i1)%m
+     .      'CLIP LIST B2:',list(i1)%i,list(i1)%t,
+     .                      list(i1)%c,list(i1)%m
         ENDDO
       ENDIF
 
@@ -3748,8 +3768,8 @@ c         list (have to complete the wall by hand at the moment):
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,2F14.7)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,list(i1)%c,
-     .                   list(i1)%w,list(i1)%x,list(i1)%y
+     .      'CLIP LIST C:',list(i1)%i,list(i1)%t,list(i1)%c,
+     .                     list(i1)%w,list(i1)%x,list(i1)%y
         ENDDO
       ENDIF
 

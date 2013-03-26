@@ -1327,9 +1327,9 @@ c           from a previous run:
             LOAD_I = -1
             NRAND = NRAND + 1
             CALL SURAND2(SEED, 1, RAN)
-            write(0,*) 'branch',ran,tdep_load_frac
+c            write(0,*) 'branch',ran,tdep_load_frac
             IF (RAN.GT.TDEP_LOAD_FRAC) THEN
-              write(0,*) 'standard'
+c              write(0,*) 'standard'
               R     = CXSC
               Z     = CYSC
               PORM  = -1.0 * PORM
@@ -1339,20 +1339,15 @@ c           from a previous run:
               NRAND = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
               LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
-c... left off: need to sort out setting the charge state, and also the strange initialization of 
-c maxciz from cizsc :
-c          DO 792 JZ = CIZSC, MAXCIZ
-c why would this be done?
-c a bug?
-              R = TDEP_LOAD(LOAD_I)%R
-              Z = TDEP_LOAD(LOAD_I)%Z
+c...          left off: need to sort out setting the charge state, and also the strange initialization of 
+c             maxciz from cizsc ...
+c             DO 792 JZ = CIZSC, MAXCIZ  ! why would this be done? a bug?
+              R     = TDEP_LOAD(LOAD_I)%R
+              Z     = TDEP_LOAD(LOAD_I)%Z
               PORM  = -1.0 * PORM
-              VEL  = TDEP_LOAD(LOAD_I)%VEL
-c should be adjusting sputy, abs
-              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT
-
-              write(0,*) '_load',load_i,r,z,vel,sputy
-
+              VEL   = TDEP_LOAD(LOAD_I)%VEL
+              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
+c              write(0,*) '_load',load_i,r,z,vel,sputy
             ENDIF
 c slmod end
           ENDIF

@@ -301,6 +301,7 @@ c
 c subroutine: DefineEireneSurfaces
 c
       SUBROUTINE DefineEireneSurfaces_06
+      USE mod_interface
       USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_sol28_io
@@ -316,7 +317,7 @@ c
 
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
      .        type,index1,index2,ilside,ilswch,region,code,is,nboundary,
-     .        tmp_ilspt,fp
+     .        tmp_ilspt,fp,n
       LOGICAL assigned(2),first_message,active
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc,
@@ -384,8 +385,16 @@ c       strata are not specifically assigned:
         ENDDO
 c...    Loop over the user specified strata and assemble the 
 c       corresponding target surfaces:
+        n = opt_eir%nstrata
+        CALL inOpenInterface('idl.eirene_strata',ITF_WRITE)
+        CALL inPutData(opt_eir%type      (  1:n),'TYPE'  ,'N/A')
+        CALL inPutData(opt_eir%target    (  1:n),'TARGET','N/A')
+        CALL inPutData(opt_eir%range_tube(1,1:n),'RANGE1','N/A')
+        CALL inPutData(opt_eir%range_tube(2,1:n),'RANGE2','N/A')
+        CALL inCloseInterface
         DO is = 1, opt_eir%nstrata 
           IF (NINT(opt_eir%type(is)).NE.1) CYCLE
+
           nboundary = nboundary - 1
           nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
           surface(nsurface)%subtype  = STRATUM
@@ -405,7 +414,6 @@ c          surface(nsurface)%index(2) = nrs                    ! Ring index end
           surface(nsurface)%material = tmater                ! Set surface material
           surface(nsurface)%ewall = -ttemp * 1.38E-23 / ECH  ! Set temperature
           surface(nsurface)%ilspt = 0 ! opt_eir%ilspt(is)
-
         ENDDO
       ELSE
         STOP 'OBSOLETE STRATUM SETUP CODE'
