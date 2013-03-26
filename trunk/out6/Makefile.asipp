@@ -1,0 +1,159 @@
+#
+# Definintions
+#
+#
+# Remove implicit .f and .f90 and .mod creation rules
+#
+#%.o : %.f
+#%.o : %.f90
+#%.o : %.mod
+#
+#
+# Source filename extensions
+#
+OUTEXT=.f
+OUTF90EXT=.f90
+#COMEXT=.u6a
+#COMF90EXT=.u6b
+CEXT=.c
+#
+# VERSION to build
+#
+# VER=aix
+#
+VER=int
+#
+# Source file locations
+#
+OUTMAIN=$(HOME)/divimp
+COMMONS=$(OUTMAIN)/commons
+#
+LOCAL_FILES =$(OUTMAIN)/out6/local
+OUTSRC =$(OUTMAIN)/out6/src
+OUTF90SRC=$(OUTSRC)/f90
+COMSRC =$(OUTMAIN)/comsrc
+COMF90SRC=$(COMSRC)/f90
+#
+#
+#VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
+VPATH=$(LOCAL_FILES):$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
+#
+# Suffixes
+#
+.SUFFIXES: .o $(OUTEXT) $(OUTF90EXT)
+
+#
+# Compiler
+#
+FCOMP=ifort
+RM=rm -f
+#
+
+#
+# Optimization and debugging flags
+#
+# LINUX - IFORT
+#
+OPT_IFORT = -g -CB -traceback -O2
+#OPT_IFORT = -g -CB -traceback -O0
+OPT_IFORT_OPT = -O3 
+#
+OPT = $(OPT_IFORT)
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT) 
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+#
+# C-compiler1
+#
+CC= gcc
+#
+# C-flags
+#
+OPTC= -fbounds-check -O3
+
+CFLAGS= $(OPTC)
+
+#
+# Libraries
+#
+# LINUX
+#
+LIBS= -L/usr/local/lib -lc -lm -L../libsrc/ifort64 -ljpeg -lghost -lpostsc
+#LIBS= -L/usr/local/lib -lc -lm -lg2c -L../libs -lghost -lpostsc 
+#LIBS= -L/usr/local/lib -lc -L../libs -lghost -lpostsc
+#
+#
+# Name of target to build
+#
+TARG=out6
+TARGALT=out6aO$(VER)
+
+#
+# Objects to compile
+#
+
+# Problem with write_jpeg_file could be because the library was built elsewhere... -SL 
+
+include OBJECT_LIST
+
+#
+# Rules
+#
+
+$(OUTEXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+$(OUTF90EXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+#
+# Target
+#
+
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+opt:
+	$(MAKE)  "OPT=$(OPTO)"
+
+opt2:
+	$(MAKE)  "OPT=$(OPTO2)"
+
+debug:
+	$(MAKE)  "OPT=$(OPTGS)" "TARG=out6dbg$(VER)"
+
+ifort:
+	$(MAKE) "FCOMP=$(FCOMP_IFORT)" "OPT=$(OPT_IFORT)" "VER=$(VER_IFORT)" 
+
+ifortopt:
+	$(MAKE) "FCOMP=$(FCOMP_IFORT)" "OPT=$(OPT_IFORT_OPT)" "VER=$(VER_IFORT)" 
+
+alt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
+
+altopt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTO)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.mod
+
+
+
+
+
+
+
