@@ -5219,6 +5219,7 @@ c
       real      lold, lnew, labpos
       character lab(8)*2
       data lab/'OT','OC','OD','IT','IC','ID','MS','PV'/
+
 c
 c slmod begin
 c...  True space:
@@ -5237,7 +5238,9 @@ c slmod end
           call positn(lnew,pltmax)
           call join(lnew,pltmin)
           labpos = pltmin + (pltmax-pltmin)*(1.025+0.025*j)
-          call pcscen(0.5*(lold+lnew),labpos,lab(flag(i-1)))
+          if (flag(i-1).gt.0.and.flag(i-1).le.8) then
+             call pcscen(0.5*(lold+lnew),labpos,lab(flag(i-1)))
+          endif
           lold = lnew
           j = 1-j
         endif
@@ -5246,7 +5249,9 @@ c slmod end
       call positn(lnew,pltmax)
       call join(lnew,pltmin)
       labpos = pltmin + (pltmax-pltmin)*(1.025+0.025*j)
-      call pcscen(0.5*(lold+lnew),labpos,lab(flag(n)))
+      if (flag(n).gt.0.and.flag(n).le.8) then
+         call pcscen(0.5*(lold+lnew),labpos,lab(flag(n)))
+      endif
       call full
 c
       return

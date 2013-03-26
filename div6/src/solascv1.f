@@ -234,6 +234,8 @@ c
 c
       subroutine calcsol_interface (irlim1,irlim2,ikopt)
       use error_handling
+      use sol22_input
+      use sol22_debug
       implicit none
       integer irlim1, irlim2,ikopt
 c
@@ -335,6 +337,17 @@ c
 c     Locals for smoothing
 c
       real temid,timid,nmid,smax,asmexp,tmp
+
+c
+c     Make a call to initialize debugging if it is on
+c
+      if (debug_sol22.ne.0) then 
+         ! debug_sol22 is manually set in the sol22_debug module
+         ! parameters to the call are the ring number and ikopt for the half ring for which high res
+         ! debugging data is required. 
+         call init_sol22_debug(debug_sol22_ir,debug_sol22_ikopt) 
+      endif
+
 c
 c     Set a flag internal to the SOLASCV code that indicates that
 c     PIN data is available if the ionization option for it has been
@@ -987,6 +1000,11 @@ c        Only execute for the selected half-rings - ikopt
 c
          if (ikopt.eq.1.or.ikopt.eq.3) then
 c
+c        Check for sol22 debug start
+c
+c           The parameters are current ring snd local IKOPT
+            if (debug_sol22.ne.0) call check_init_record_data(ir,1)
+
 c
 c        Set the values for a call - do 1/2 of the ring at a time.
 c
@@ -1846,6 +1864,12 @@ c
 c
 c        End of 1/2 ring selection
 c
+
+c           Check to print debugging data
+c           The parameters are current ring snd local IKOPT
+c           data will be printed if it has been collected
+            if (debug_sol22.ne.0) call check_print_data(ir,1)
+
          endif
 c
 c
@@ -1859,6 +1883,11 @@ c
 
          if (ikopt.eq.2.or.ikopt.eq.3) then
 c
+c
+c        Check for sol22 debug start
+c
+c           The parameters are current ring snd local IKOPT
+            if (debug_sol22.ne.0) call check_init_record_data(ir,2)
 c
 c        Set the values for a call - do 1/2 of the ring at a time.
 c
@@ -2684,6 +2713,9 @@ c
             endif
 c
          endif
+
+
+
 c
 c        Assign Background
 c
@@ -2733,6 +2765,12 @@ c
 c
 c        End of 1/2 ring selection
 c
+
+c           The parameters are current ring snd local IKOPT
+c           data will be printed if it has been collected
+            if (debug_sol22.ne.0) call check_print_data(ir,2)
+
+
          endif
 
 

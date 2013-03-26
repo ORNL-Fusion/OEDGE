@@ -1432,7 +1432,7 @@ C
       IF (ABS(R1).LT.0.1.OR.ABS(R1).GE.1000.0.OR.
      >    ABS(R2).LT.0.1.OR.ABS(R2).GE.1000.0) THEN
         WRITE (datunit,'(1X,A,1P,G11.3,1x,g11.3)') NAME,R1,R2
-      ELSEIF (ABS(R1).LT.1.0.AND.ABS(R2).LT.1.0) THEN
+      ELSEIF (ABS(R1).LT.10.0.AND.ABS(R2).LT.10.0) THEN
         WRITE (datunit,'(1X,A,F8.4,3X,F8.4)') NAME,R1,R2
       ELSE
         WRITE (datunit,'(1X,A,F8.3,3X,F8.3)') NAME,R1,R2

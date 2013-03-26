@@ -1895,7 +1895,7 @@ c
 c
         if (cprint.eq.3.or.cprint.eq.9)
      >     write (6,'(a,i6)') 'Values of KSS2 KPS2'//
-     >                        ' KSS KSB for ring - ',ir
+     >                        ' KSB KPB for ring - ',ir
 c
 c       Calculate beginning of ring.
 c
@@ -1967,8 +1967,8 @@ c
            ik =1
 c
            if (cprint.eq.3.or.cprint.eq.9)
-     >        write(6,'(2(i4),4(2x,f12.4))') ir,ik,kss2(ik,ir),
-     >                   kps2(ik,ir),ksb(ik,ir),kss(ik,ir)
+     >        write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
+     >                   kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
 c
 c          -------------------------------------
 c
@@ -2001,8 +2001,8 @@ c
               kzb(ik,ir) = zf
 c
            if (cprint.eq.3.or.cprint.eq.9)
-     >         write(6,'(2(i4),4(2x,f12.4))') ir,ik,kss2(ik,ir),
-     >                        kps2(ik,ir),kss(ik,ir),ksb(ik,ir)
+     >         write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
+     >                       kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
 c
   324      CONTINUE
 C
@@ -2070,11 +2070,11 @@ c
 c
            if (cprint.eq.3.or.cprint.eq.9) then
 c
-              write(6,'(2(i4),4(2x,f12.4))') ir,ik,kss2(ik,ir),
-     >                 kps2(ik,ir),kss(ik,ir),ksb(ik,ir)
+              write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
+     >                 kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
 c
-              write(6,'(a,i4,4(2x,f12.4))') 'Total:',ir,
-     >           ksmaxs2(ir),kpmaxs2(ir),ksmaxs(ir),kpmaxs(ir)
+              write(6,'(a4,i4,10(2x,f14.6))') 'End:',ir,
+     >           ksmaxs2(ir),kpmaxs2(ir),ksb(ik,ir),kpb(ik,ir)
 c
            endif
 c
@@ -2123,8 +2123,8 @@ c
 c             Print
 c
            if (cprint.eq.3.or.cprint.eq.9)
-     >        write(6,'(2(i4),4(2x,f12.4))') ir,ik,kss2(ik,ir),
-     >                    kps2(ik,ir),kss(ik,ir),ksb(ik,ir)
+     >        write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
+     >                    kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
            end do
 c
            ksmaxs2(ir) = ksmaxs(ir)
@@ -2132,8 +2132,8 @@ c
 
 c
            if (cprint.eq.3.or.cprint.eq.9)
-     >         write(6,'(a,i4,4(2x,f12.4))') 'Total:',ir,ksmaxs2(ir),
-     >                           kpmaxs2(ir),ksmaxs(ir),kpmaxs(ir)
+     >         write(6,'(a4,i4,10(2x,f14.6))') 'Tot:',ir,ksmaxs2(ir),
+     >                      kpmaxs2(ir),ksb(nks(ir),ir),kpb(nks(ir),ir)
 c
         endif
 

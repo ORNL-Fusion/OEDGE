@@ -4971,6 +4971,9 @@ c
       call rzero(fydata,maxpts*5)
       call rzero(totfydata,3*5)
 c
+      call outputdata(89,'DEBUGGING NEUT WALL SPUTTERING')
+
+c
       nfy = wallpts
 c
 c     Record Launch Type in unsed space - for use in print routine

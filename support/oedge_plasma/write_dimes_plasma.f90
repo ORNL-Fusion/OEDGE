@@ -104,6 +104,8 @@ program write_dimes_plasma
   ! Roffset = 1.4864 + 0.00613 = 1.49253 
   ! Difference in offset 0.00016
   !
+  !  r_offset = 1.495835
+  !  z_offset = -1.25
   ! In order to match simulation and experiment .. the grid strike point of R=1.4864 is matched to the actual average strike point of R=1.48043 
   ! The difference is 5.97e-3m
   ! The difference from the actual strike point to actual DIMES center is : 5.47e-3m
@@ -113,10 +115,23 @@ program write_dimes_plasma
   ! r_offset = 0.0
   ! z_offset = 0.0
   !
+  ! DIMES W Experiment
+  !
+  ! For this experiment 75% of the exposure was at one position and 25% at another ... so two sets of offsets are required.
+  !
+  ! Set the Offsets so that the DIMES center is at 0.0, 0.0 in the OEDGE coordinate frame for grid 148679 at 3000ms
   ! These offsets should put the DIMES center at 0,0 for this simulation 
-
-  r_offset = 1.495835
+  ! 75%   R_offset = 1.48943  Z_offset = 1.25000
+  !
+  r_offset =  1.48943
   z_offset = -1.25
+
+  ! 25%   R_offset = 1.50483  Z_offset = 1.25000
+  !
+  !r_offset =  1.50483
+  !z_offset = -1.25
+
+  write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
   
 
   call init_oedge_plasma(case_name,r_offset,z_offset,interpolate_option,errmsg_unit,ierr)

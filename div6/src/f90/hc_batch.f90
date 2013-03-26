@@ -829,14 +829,14 @@ Contains
 
        ! Check that the sum of all sums is the same as the total for particles launched.
        If (SHC .ne. REAL (NProd - LProd + 1)) Then
-          Write (Output_Unit_HC_Alert,*) "Warning in HC_Batch: Total particle sums launched from HC_Transport not consistant: ",&
+          Write (Output_Unit_HC_Alert,*) "Warning 1 in HC_Batch: Total particle sums launched from HC_Transport not consistent: ",&
                &REAL (NProd - LProd + 1),SHC
        End If
 
        ! Check that the sum of particles returned is the same as the total for particles lauched
        Launch_Sum = SWallHC + MTCWallHC + SCent + STMax + SStruk + MTCStruk + SFail + SatIZ + SMain + SExit + SFP
        If (Launch_Sum .ne. REAL (NProd - LProd + 1)) Then
-          Write (Output_Unit_HC_Alert,*) "Warning in HC_Batch: Total particle sums returned from HC_Transport not consistant: ",&
+          Write (Output_Unit_HC_Alert,*) "Warning 2 in HC_Batch: Total particle sums returned from HC_Transport not consistent: ",&
                &REAL (NProd - LProd + 1),Launch_Sum
        End If
     End If
