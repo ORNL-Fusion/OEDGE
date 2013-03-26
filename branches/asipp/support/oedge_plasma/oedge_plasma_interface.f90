@@ -5,6 +5,7 @@ module oedge_plasma_interface
 
   private
 
+  logical :: debug_code = .false.
   integer :: interpolate_opt
   real*8  :: r_offset,z_offset
 
@@ -251,6 +252,11 @@ contains
        bzo = bz(ik,ir)
        bto = bt(ik,ir)
 
+       if (debug_code) then 
+          call write_cell_data(ik,ir)
+       endif
+
+
     elseif (interpolate_opt.eq.1) then
        ! interpolate using Jeff's algorithm
        ! Note: ne,te,ti,vb,ef have target values that are used for interpolation in the first half cell
@@ -283,6 +289,10 @@ contains
           bro = br(ik,ir)
           bzo = bz(ik,ir)
           bto = bt(ik,ir)
+
+          if (debug_code) then 
+             call write_cell_data(ik,ir)
+          endif
 
        else
 
@@ -511,6 +521,11 @@ contains
 
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,knbs,ne)
+
+       if (debug_code) then 
+          call debug_interpolate('KNBS',irs,iks,e1,e2,f1,f2,knbs,ne)
+       endif
+
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktebs,te)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktibs,ti)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kvhs,vb)
@@ -539,7 +554,6 @@ contains
        stop 'Assign_interpolate'
     endif
 
-
     v12 = array(iks(1),irs(1)) * e2 + array(iks(2),irs(2)) * e1
     v34 = array(iks(4),irs(4)) * e2 + array(iks(3),irs(3)) * e1
 
@@ -548,6 +562,37 @@ contains
 
 
   end subroutine assign_interpolate
+
+
+  subroutine debug_interpolate(desc,irs,iks,e1,e2,f1,f2,array,val)
+    implicit none
+    character*(*) :: desc
+    integer :: irs(4),iks(4)
+    real*8 :: e1,e2,f1,f2
+    real*8,allocatable :: array(:,:)
+    real*8 :: val,v12,v34
+
+    ! Array should always be allocated when this routine is called
+    if (.not.allocated(array)) then 
+       call errmsg('DEBUG_INTERPOLATE:','CRITICAL ERROR: Array not allocated')
+       stop 'Assign_interpolate'
+    endif
+
+    v12 = array(iks(1),irs(1)) * e2 + array(iks(2),irs(2)) * e1
+    v34 = array(iks(4),irs(4)) * e2 + array(iks(3),irs(3)) * e1
+
+    !val = v12 * f1 + v34 * f2
+
+    call write_cell_data(iks(1),irs(1))
+    call write_cell_data(iks(2),irs(2))
+    call write_cell_data(iks(3),irs(3))
+    call write_cell_data(iks(4),irs(4))
+
+    write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),array(iks(1),irs(1)),array(iks(2),irs(2)),array(iks(4),irs(4)),array(iks(3),irs(3))
+    write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),array(iks(1),irs(1))*e2,array(iks(2),irs(2)) * e1,array(iks(4),irs(4))*e2,array(iks(3),irs(3)) * e1
+    write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),e1,e2,f1,f2,v12,v34, v12 * f1 + v34 * f2,val
+
+  end subroutine debug_interpolate
 
 
 
@@ -1698,5 +1743,14 @@ contains
     return
   end subroutine fomega
 
+
+  subroutine write_cell_data(ik,ir)
+    implicit none
+    integer :: ik,ir
+    ! write out the data for the specific cell for debugging purposes
+
+    write(0,'(a,2i8,10(1x,g14.6))') 'DEBUG:',ik,ir,rs(ik,ir),zs(ik,ir),knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir),kvhs(ik,ir)
+
+  end subroutine write_cell_data
 
 end module oedge_plasma_interface
