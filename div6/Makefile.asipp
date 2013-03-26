@@ -117,7 +117,7 @@ LIBS= -L/usr/local/lib64 -lc -L../libsrc/ifort64 -lghost -lpostcl
 #
 # Name of target to build
 #
-TARG=divimp
+TARG=div6O$(VER)
 TARGALT=div6aO$(VER)
 
 #
