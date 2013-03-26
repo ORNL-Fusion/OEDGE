@@ -1,0 +1,16 @@
+# Test job file for running DIVIMP
+# The -V option is supposed to export the path
+#PBS -N oedge_run
+#PBS -M your@email.here
+#PBS -m abe
+#PBS -S /bin/bash
+#PBS -q q2
+#PBS -j oe
+#PBS -o /home/rding/divimp/job-out.log
+#PBS -V
+# change to run directory
+cd /home/elder/divimp
+# save run environment to see if paths need to be modified
+#env
+./rundiv testcase09 testcase09-c13-dep carre_135487_3865
+
