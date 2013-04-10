@@ -146,7 +146,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
       echo "CORTEX not executed - input file $OUTNAME.ctx not found"
     else
-      fuse -cortex subdir $CASENAME $OUTNAME
+      fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
 
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
