@@ -4,6 +4,7 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpShinKajita(title9)
+      USE mod_interface
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -20,9 +21,9 @@ c
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
-      INTEGER   ik,ir,fp,ike,ierr,iint,iobj,ik_last,ir_last
+      INTEGER   ik,ir,fp,ike,ierr,iint,iobj,ik_last,ir_last,i
       REAL      fact(100),rdum
-      CHARACTER dummy*1024
+      CHARACTER dummy*1024,file*1024,tag*64
       
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
@@ -108,6 +109,42 @@ c     .                 'ph m-3 s-1')
 
  
       CLOSE(fp)
+
+
+      IF (.TRUE.) THEN 
+c
+c       2D emission data: 
+c       
+        WRITE(file,'(A)') 'idl.divimp_imp_emission'
+        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
+        DO i = 1, opt%int_num
+          CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','n/a')
+          CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','n/a')
+          CALL inPutData(opt%int_charge  (i),'CHARGE','n/a')
+          CALL inPutData(opt%int_database(i),'DATABASE','n/a')
+          CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
+        ENDDO
+
+        DO iobj = 1, nobj
+          IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
+
+          ik = obj(iobj)%ik 
+          ir = obj(iobj)%ir
+          IF (ir.LT.irsep ) ik = ik - 1
+          ir = ir - 1                    ! TUBE is set to the OSM fluid grid system, where
+          IF (ir.GT.irwall) ir = ir - 2  ! the boundary rings are not present
+
+          CALL inPutData(ik,'POS' ,'n/a')
+          CALL inPutData(ir,'TUBE','n/a')
+          DO i = 1, opt%int_num
+            WRITE(tag,'(A,I0.2)') 'SIGNAL_',i
+            CALL inPutData(obj(iobj)%quantity(i),tag,'ph m-3 s-1')
+          ENDDO
+        ENDDO
+        CALL inCloseInterface
+
+      ENDIF
  
       RETURN
 99    STOP

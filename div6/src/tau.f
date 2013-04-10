@@ -4113,8 +4113,20 @@ c
      >     ctargopt.eq.3.or.ctargopt.eq.5.or.
      >     ctargopt.eq.6)
      >    ) then
-         rrs(2,1) = rp(idds(irins(ik,ir),2))
-         zzs(2,1) = zp(idds(irins(ik,ir),2))
+c slmod begin
+c...     Not sure if this is really correct, but at least it fills
+c        the arrays with a vertex that is in the IRINS direction:
+         if (nopriv.and.ir.eq.irsep) then
+           rrs(2,1) = rvertp(1,korpg(ik,ir))
+           zzs(2,1) = zvertp(1,korpg(ik,ir))
+         else
+           rrs(2,1) = rp(idds(irins(ik,ir),2))
+           zzs(2,1) = zp(idds(irins(ik,ir),2))
+         endif
+c
+c         rrs(2,1) = rp(idds(irins(ik,ir),2))
+c         zzs(2,1) = zp(idds(irins(ik,ir),2))
+c slmod end
          rrs(2,3) = rp(idds(ir,2))
          zzs(2,3) = zp(idds(ir,2))
          rrs(2,5) = rp(idds(irouts(ik,ir),2))
@@ -4126,8 +4138,18 @@ c
      >     ctargopt.eq.3.or.ctargopt.eq.5.or.
      >     ctargopt.eq.6)
      >    ) then
-         rrs(4,1) = rp(idds(irins(ik,ir),1))
-         zzs(4,1) = zp(idds(irins(ik,ir),1))
+c slmod begin
+         if (nopriv.and.ir.eq.irsep) then
+           rrs(4,1) = rvertp(4,korpg(ik,ir))
+           zzs(4,1) = zvertp(4,korpg(ik,ir))
+         else
+           rrs(4,1) = rp(idds(irins(ik,ir),1))
+           zzs(4,1) = zp(idds(irins(ik,ir),1))
+         endif
+c
+c         rrs(4,1) = rp(idds(irins(ik,ir),1))
+c         zzs(4,1) = zp(idds(irins(ik,ir),1))
+c slmod end
          rrs(4,3) = rp(idds(ir,1))
          zzs(4,3) = zp(idds(ir,1))
          rrs(4,5) = rp(idds(irouts(ik,ir),1))
@@ -4144,8 +4166,6 @@ C
 C---- CALCULATE THE FOUR AREAS (SOME MAY BE 0) AND SUM THEM.
 C---- AREA OF 4-SIDED IRREGULAR FIGURE IS THAT OF TWO TRIANGLES.
 C
-
-
       KAREAS(IK,IR) = 0.0
       DO 200 I = 2, 3
        DO 200 J = 2, 3
