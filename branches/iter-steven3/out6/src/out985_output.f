@@ -2598,7 +2598,9 @@ c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             ENDDO
           ENDDO
           CALL inCloseInterface
+
         ENDDO
+
 
       ENDIF
 

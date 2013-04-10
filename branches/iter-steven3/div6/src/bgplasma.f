@@ -1236,7 +1236,8 @@ c...TEMP:
       IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
 
 c...  This is needed, i.e. KNDS is NANQ for some cases:
-      IF (cgridopt.NE.LINEAR_GRID.AND.cgridopt.NE.RIBBON_GRID) THEN
+      IF (.NOT.nopriv.AND.cgridopt.NE.LINEAR_GRID.AND.
+     .                    cgridopt.NE.RIBBON_GRID) THEN
         knds(idds(irwall,1:2)) = 0.0
         knds(idds(irtrap,1:2)) = 0.0
       ENDIF
