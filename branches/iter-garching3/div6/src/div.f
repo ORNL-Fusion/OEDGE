@@ -2794,6 +2794,24 @@ C     >       wallsiz(in, 1:NIZS)
          call errmsg('ERROR PRINTING CHARGE'//
      >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
       endif
+ 
+c	  K. Schmid 2013 output charge state resolved impact energies
+c		the idea is to include the flow velocity contribution to the impact energies 
+c		DIVIMP stores the energy of the particels based on 3 * q * Te + 0.5 * (Mass * VFlow^2) + 2 Ti
+c		in wallseiz(wallidx, iz) for each charge state
+        write (6, *) 'CHARGE RESOLVED WALL IMPACT ENERGY START: ', NIZS,
+     >               wallpts
+3007  Format(i5,' ',100(' ',g12.5))
+      if (nizs.le.100) then 
+         do in = 1,wallpts
+             write (6,3007) in,wallseiz(in, 1:NIZS)
+         end do
+         write (6,3007) -1, wallseiz(maxpts+1, 1:NIZS)
+         write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT ENERGY'
+      else
+         call errmsg('ERROR PRINTING CHARGE'//
+     >               ' RESOLVED WALL IMPACT ENERGY: NIZS > 100')
+      endif
 c
 c     jdemod end
 c
