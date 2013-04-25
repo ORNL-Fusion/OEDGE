@@ -2921,7 +2921,7 @@ c *TEMP*
       IF (slver.GE.3.6) THEN 
         READ (8) idum1
         IF (idum1.EQ.1) THEN 
-          write(0,*) 'reading wall flux!'
+*         write(0,*) 'reading wall flux!'         ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))

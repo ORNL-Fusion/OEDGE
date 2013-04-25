@@ -514,14 +514,20 @@ C
       real    tmpconts(maxpts)
       CHARACTER*36 NAME
 c
-      real logtable(21)
-      data logtable /0.0e+0, 0.5e-6, 1.0e-6,
-     >               0.2e-5, 0.5e-5, 1.0e-5,
-     >               0.2e-4, 0.5e-4, 1.0e-4,
-     >               0.2e-3, 0.5e-3, 1.0e-3,
+c     reduce log table to 10 steps - Krieger/2013
+      real logtable(11)
+      data logtable /0.0e+0,         1.0e-3,
      >               0.2e-2, 0.5e-2, 1.0e-2,
      >               0.2e-1, 0.5e-1, 1.0e-1,
      >               0.2e+0, 0.5e+0, 1.0e+0/
+*     real logtable(21)
+*     data logtable /0.0e+0, 0.5e-6, 1.0e-6,
+*    >               0.2e-5, 0.5e-5, 1.0e-5,
+*    >               0.2e-4, 0.5e-4, 1.0e-4,
+*    >               0.2e-3, 0.5e-3, 1.0e-3,
+*    >               0.2e-2, 0.5e-2, 1.0e-2,
+*    >               0.2e-1, 0.5e-1, 1.0e-1,
+*    >               0.2e+0, 0.5e+0, 1.0e+0/
 C
       IF (ICNTR.EQ.0) THEN
         CALL RVALXY(CVALXY,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
@@ -609,17 +615,34 @@ c
          vmax=max(abs(vmin),abs(vmax))
          vmin=-vmax
 c
-         nneg=20
-         npos=20
+c        change from 20 to 10 steps - Krieger IPP/2013
+         nneg=10
+         npos=10
 c
+c        add slots for supersonic - Krieger IPP/2013
          do ig=1,nneg
-           tmpconts(ig)=vmin*logtable(22-ig)
+           tmpconts(ig+1)=vmin*(nneg-(ig-1))/nneg
+*log       tmpconts(ig+1)=vmin*logtable(12-ig)
          enddo
          do ig=1,npos+1
-           tmpconts(nneg+ig)=vmax*logtable(ig)
+           tmpconts(nneg+ig+1)=vmax*(ig-1)/npos
+*log       tmpconts(nneg+ig+1)=vmax*logtable(ig)
          enddo
+         vmin=10.*vmin
+         vmax=10.*vmax
+         tmpconts(1)=vmin
+         tmpconts(nneg+npos+3)=vmax
 c
-         tmpngs=nneg+npos
+         tmpngs=nneg+npos+2
+
+*        do ig=1,nneg
+*          tmpconts(ig)=vmin*logtable(22-ig)
+*        enddo
+*        do ig=1,npos+1
+*          tmpconts(nneg+ig)=vmax*logtable(ig)
+*        enddo
+c
+*        tmpngs=nneg+npos
 c
 c
 c     10% levels - including 0.0

@@ -3841,15 +3841,15 @@ c        strong colours
          call colset(1.00, 0.00, 0.00, 13)
          call colset(1.00, 0.40, 0.00, 12)
          call colset(1.00, 0.69, 0.00, 11)
-         call colset(1.00, 0.97, 0.00, 10)
+         call colset(1.00, 0.86, 0.00, 10)
          call colset(0.72, 1.00, 0.28,  9)
          call colset(0.44, 1.00, 0.56,  8)
          call colset(0.15, 1.00, 0.84,  7)
          call colset(0.00, 0.89, 1.00,  6)
-         call colset(0.00, 0.61, 1.00,  5)
-         call colset(0.00, 0.33, 1.00,  4)
+         call colset(0.00, 0.75, 1.00,  5)
+         call colset(0.00, 0.59, 1.00,  4)
          call colset(0.00, 0.00, 1.00,  3)
-         call colset(0.33, 0.00, 0.84,  2)
+         call colset(0.00, 0.00, 0.72,  2)
 c
       elseif (opt.eq.4) then
 c
@@ -3857,21 +3857,38 @@ C        B2/EIRENE velocity-color set  Krieger IPP/97
 c
          call rgb
 c
-         ncols=41
+c        reduce to 20 steps plus 2(yellow) for supersonic - Krieger/2013
+         ncols=23
+*        ncols=41
 c
          do in=2,ncols
             colour(in) = in  
          end do
 c
-         do in=1,ncols/2
-            call colset( 1.-(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0, 0.0,1+in)
+         do in=1,(ncols-2)/2
+            call colset( 1.-(1.-0.3)*real(in-1)/real((ncols-2)/2-1),
+     >                  0.0, 0.0,2+in)
          end do 
 c
-         do in=1,ncols/2
-            call colset(0.0,0.0+(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0,1+in+ncols/2)
+         do in=1,(ncols-2)/2
+            call colset(0.0,0.3+(1.-0.3)*real(in-1)/real((ncols-2)/2-1),
+     >                  0.0,2+in+(ncols-2)/2)
          end do 
+
+         call colset(1.00, 1.00, 0.00,  2)
+         call colset(1.00, 1.00, 0.00,  ncols)
+         call colset(0.00, 0.00, 0.00,  2+(ncols-2)/2)
+         call colset(0.00, 0.00, 0.00,  2+(ncols-2)/2+1)
+
+*        do in=1,ncols/2
+*           call colset( 1.-(1.-.00)*real(in-1)/real(ncols/2-1),
+*    >                  0.0, 0.0,1+in)
+*        end do 
+c
+*        do in=1,ncols/2
+*           call colset(0.0,0.0+(1.-.00)*real(in-1)/real(ncols/2-1),
+*    >                  0.0,1+in+ncols/2)
+*        end do 
 c
       elseif (opt.eq.5) then 
 c
