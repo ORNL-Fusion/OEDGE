@@ -297,7 +297,7 @@ c
 c
 c
 c
-         elseif ((matt.eq.2..or.matt.eq.4).and.
+         elseif ((matt.eq.2.or.matt.eq.4).and.
      >           (matp.eq.2.or.matp.eq.6)) then 
 c
 c           Add special option for Beryllium or Carbon sputtering here 
