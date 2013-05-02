@@ -240,7 +240,15 @@ $
 '000 Data'  11   0    0  0.0
 '000 Data'  1.5  0.0  1.4 1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 $
+'321 W-I Density'      1    0
+'000 Data'  11   0    0  0.0
+'000 Data'  1.5  0.0  1.4 1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
 '321 C-II Density'     0    1
+'000 Data'  11   1    0  0.0
+'000 Data'  1.5  0.0  1.4 1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 W-II Density'     1    0
 '000 Data'  11   1    0  0.0
 '000 Data'  1.5  0.0  1.4 1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 $
@@ -300,17 +308,17 @@ $
 '000   Zoom'  1.600  0.000 0.70 1.30 
 '000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
 '000   Noframe'
-'987   XXX XX Impurity ionisation        FULL ' 0   800
+'987   XXX XX Impurity ionisation        FULL ' 800    0
 '000   Zoom'  1.600  0.000 0.70 1.30 
 '000   Scale' 2 1 -1.0      -1.0  -99.0  '<charge state> LOG S_iz_I+ (m!SP!-3!NO!)'
 '000   Ion'
 '000   Noframe'
-'987   XXX XX Impurity ioniation         FULL ' 0    801
+'987   XXX XX Impurity ioniation         FULL ' 801   0
 '000   Zoom'  1.600  0.000 0.70 1.30 
 '000   Scale' 2 1 -1.0      -1.0  -99.0  '<charge state> LOG S_iz_I+ (m!SP!-3!NO!)'
 '000   Ion'
 $
-'987   XXX XX Impurity density           FULL ' 0    801
+'987   XXX XX Impurity density           FULL ' 801  0
 '000   Zoom'  1.600  0.000 0.70 1.30 
 '000   Scale' 2 1 -1.0      -6.0   -2.0  '<charge state> LOG n_I+ (m!SP!-3!NO!)'
 '000   Noframe'
