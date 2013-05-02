@@ -1,5 +1,5 @@
-'+A01 Ref DIV Title' 'EAST TESTCASE 41595  A3'
-'+A02 Run comment    ' 'EAST TESTCASE - setup for new grid - SOL22 - (RING 43 has a problem with SOL22 - piece wise plasma used) - add in Tungsten imourity '
+'+A01 Ref DIV Title' 'EAST TESTCASE 41595  A4'
+'+A02 Run comment    ' 'EAST TESTCASE - setup for new grid - SOL22 - (RING 43 has a problem with SOL22 - piece wise plasma used) - add in Carbon impurity '
 '+A03 Equil File Name' 'grid_east_41595'
 $
 $
@@ -360,7 +360,7 @@ $
 '+D02    USERID for ADAS H data (*=use central database) '   '*'
 '+D03    Year for ADAS H data                            '    96
 '+D04    USERID for ADAS Z data (*=use central database) '   '*'
-'+D05    Year for ADAS Z data                            '    97
+'+D05    Year for ADAS Z data                            '    96
 '+D06 B2FRATES name:' '/home/david/divimp/adpak/C_rates.strahl'
 '+T01    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     3
 '+T02    Collision opt  0std 1inf 2zeff 3tpara           '    13
@@ -560,8 +560,8 @@ $
 '+T14    Cross Field Diffusion factor       Dperp (m*m/s)'    0.3
 '+T15    Trap Cross Field Diffusion factor  Dperpt(m*m/s)'   -1.0
 '+T16    Perpendicular Pinch Velocity        Vpinch (m/s)'    0.0
-'+S04    Mass of impurity ions              Mi           '   183.84
-'+S05    Atomic number of impurity ions     Zi           '     74
+'+S04    Mass of impurity ions              Mi           '   12.0
+'+S05    Atomic number of impurity ions     Zi           '      6
 '+D11    Characteristic energy Ebd          Ebd   (eV)   '    0.0
 '+I11    Z effective (self)                 Zeff         '      1
 '+S06    Initial temperature                Tem1  (eV)   '    0.026
@@ -602,7 +602,7 @@ $
 '+P17    SOL6&7 Vb Length factor 2 (* SMAX)         VbL2 '    0.5
 '+P18    SOL6&7 Vb multiplication factor 2          VbM2 '    0.0
 '+S10    Operation Mode  1 Time-Dependent  2 Steady-State'      2
-'+I15    Maximum ionization state                        '     74
+'+I15    Maximum ionization state                        '      6
 '+S11    Number of impurity ions to be followed          '   2000
 '+S12 TN487 Number of Supplementary Neutrals to Launch   '      0
 '+S13    Quantum iteration time for atoms   fsrate (s)   '    1.0E-8
@@ -616,8 +616,10 @@ $
 '+D22 ' 'Set of Yield Modifiers for Primary, Secondary neutrals'
 '      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  3
           0.0    0.0    0.0     0.0    0.0    0.0    0.0     1.0       default - turn off all sputtering
-         74.0   96.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 74 to 96 - upper inner  
-        105.0  138.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 105 to 138 - upper outer
+         16.0   31.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 74 to 96 - lower outer
+         43.0   48.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 105 to 138 - lower inner
+$         74.0   96.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 74 to 96 - upper inner  
+$        105.0  138.0    1.0     1.0    1.0    1.0    1.0     1.0       turn on sputtering - elements 105 to 138 - upper outer
 '+D23 TN? Fixed Yield Value for Sputter Data Option 4     '     0.001
 '+D24 TN1209 Target Temperature (K) for Chem. Sputt. Opt. '   450.0
 '+D25       Main Wall Temperature (K) for Chem. Sputt.   '    350.0

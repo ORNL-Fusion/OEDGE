@@ -126,14 +126,14 @@ c
           ncntr = 10
           call setup_col(ncntr+1,2)
       elseif (icntr.eq.3.or.icntr.eq.4) then
-          ncntr = ncntr
+          !ncntr = ncntr
 c         IPP/09 - Krieger - this should be 3 instead of 2?
           call setup_col(ncntr+1,3)
       elseif (icntr.eq.5) then
           ncntr = 41
           call setup_col(ncntr+1,4)
       elseif (icntr.eq.6) then 
-          ncntr = ncntr
+          !ncntr = ncntr
           call setup_col(ncntr+1,6)
           icntr = 3
       endif
