@@ -2409,9 +2409,13 @@ c      real tote,toti,totn
 c      real r,z
       integer ik,ir,iz
 c      integer id,in 
-      
-
-
+c      
+c     Calculate density profiles - first is outer midplane
+c
+      integer :: profcnt
+      real*8 :: zprof,deltaz
+      real*8 :: h_profiles(maxnrs,5)
+      real*8 :: tmp_profiles(maxnrs,6)
 c
 c     Print out table of Eirene calcualted Hydrogenic values
 c
@@ -2677,6 +2681,91 @@ c
      >         totcore_radial_area(ir)
       end do
 
+
+
+      ! Calculate outer midplane profiles
+      ! 
+      ! 
+
+      deltaz = 0.05
+      zprof = z0
+      h_profiles = 0.0
+      tmp_profiles = 0.0
+
+
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            if (rs(ik,ir).gt.r0.and.
+     >         (zs(ik,ir).ge.zprof-deltaz).and.
+     >         (zs(ik,ir).le.zprof+deltaz)) then
+
+               if (pinatom(ik,ir).gt.0.0) then 
+                  tmp_profiles(ir,1) = tmp_profiles(ir,1)+
+     >                kvol2(ik,ir)
+                  tmp_profiles(ir,2) = tmp_profiles(ir,2)+
+     >                pinatom(ik,ir)*kvol2(ik,ir)
+               endif
+
+               if (pinmol(ik,ir).gt.0.0) then 
+                  tmp_profiles(ir,3) = tmp_profiles(ir,3)+
+     >                kvol2(ik,ir)
+                  tmp_profiles(ir,4) = tmp_profiles(ir,4)+
+     >                pinmol(ik,ir)*kvol2(ik,ir)
+               endif
+
+
+               if (pinion(ik,ir).gt.0.0) then 
+                  tmp_profiles(ir,5) = tmp_profiles(ir,5)+
+     >                kvol2(ik,ir)
+                  tmp_profiles(ir,6) = tmp_profiles(ir,6)+
+     >                pinion(ik,ir)*kvol2(ik,ir)
+               endif
+
+            endif
+         end do
+      end do
+
+      ! Calculate average density
+      profcnt = 0
+
+      do ir = 1,nrs
+         if (tmp_profiles(ir,1).gt.0.0) then 
+            profcnt = profcnt + 1
+            h_profiles(profcnt,1)=ir
+            h_profiles(profcnt,2)=psitarg(ir,1)
+            
+            if (tmp_profiles(ir,1).gt.0.0) then 
+               h_profiles(profcnt,3)=tmp_profiles(ir,2)
+     >                              /tmp_profiles(ir,1)
+            endif
+
+            if (tmp_profiles(ir,3).gt.0.0) then 
+               h_profiles(profcnt,4)=tmp_profiles(ir,4)
+     >                              /tmp_profiles(ir,3)
+            endif
+
+            if (tmp_profiles(ir,5).gt.0.0) then 
+               h_profiles(profcnt,5)=tmp_profiles(ir,6)
+     >                              /tmp_profiles(ir,5)            
+            endif
+         endif
+      end do
+
+      ! write out the outer midplane density profiles
+
+      write(6,'(a,f12.5,a,f12.5,a,f12.5)') 
+     >                'OUTER MID-PLANE DENSITY PROFILES: R > ',
+     >                 r0,' : Z = ',z0,' +/- ',deltaz
+      write(6,'(a)') ' CNT        IR       PSIN1   '//
+     >           '     D_Density       D2_Density '//
+     >           '     Dioniz_Density   '
+
+      do in = 1,profcnt
+         write(6,'(i8,12(1x,g18.8))') in,
+     >         h_profiles(in,1),h_profiles(in,2),
+     >         h_profiles(in,3),h_profiles(in,4),
+     >         h_profiles(in,5)
+      end do
 
 
       ! end of pr_eirene_analysis

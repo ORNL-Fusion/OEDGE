@@ -3780,7 +3780,8 @@ c
 c
          end do
 c
-      elseif ((opt.eq.0.or.opt.eq.1.or.opt.eq.2).and.n_cols.eq.16) then 
+      elseif ((opt.eq.0.or.opt.eq.1.or.opt.eq.2.or.opt.eq.3)
+     >         .and.n_cols.eq.16) then 
 c
 C        B2/EIRENE 15-color set  Krieger IPP/97
 c

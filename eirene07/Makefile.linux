@@ -10,7 +10,7 @@ F77=pgf90
 #
 # jdemod - pgf compiler
 #
-FFLAGS= -g -c 
+FFLAGS= -g -c -traceback
 
 #FFLAGS= -c -O2
 

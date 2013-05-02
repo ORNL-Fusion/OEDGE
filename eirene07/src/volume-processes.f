@@ -5233,21 +5233,38 @@ C
       IPPLPI = 0
       DO IRPI=1,NRPI
         ipatpi(IRPI,0)=COUNT(PATPI(IRPI,1:) > 0)
-        IF (ipatpi(IRPI,0).GT.0)              ! inserted by Derek Harting 26.03.
-     &       IPATPI(IRPI,1:ipatpi(IRPI,0))=PACK( (/ (i,i=1,natm) /),
+
+        !
+        ! jdemod start - for some reason the PGI compiler has issues with the PACK statement
+        !          as part of an arithmetic IF ... changing code to IF THEN ... ENDIF as above
+        !
+        IF (ipatpi(IRPI,0).GT.0) then             ! inserted by Derek Harting 26.03.
+            IPATPI(IRPI,1:ipatpi(IRPI,0))=PACK( (/ (i,i=1,natm) /),
      .                                     PATPI(IRPI,1:) > 0)
+        endif
+
         ipmlpi(IRPI,0)=COUNT(PMLPI(IRPI,1:) > 0)
-        IF (ipmlpi(IRPI,0).GT.0)              ! inserted by Derek Harting 26.03.
-     &       IPMLPI(IRPI,1:ipmlpi(IRPI,0))=PACK( (/ (i,i=1,nmol) /),
+
+        IF (ipmlpi(IRPI,0).GT.0) then             ! inserted by Derek Harting 26.03.
+            IPMLPI(IRPI,1:ipmlpi(IRPI,0))=PACK( (/ (i,i=1,nmol) /),
      .                                     PMLPI(IRPI,1:) > 0)
+        endif
+
         ipiopi(IRPI,0)=COUNT(PIOPI(IRPI,1:) > 0)
-        IF (ipiopi(IRPI,0).GT.0)              ! inserted by Derek Harting 26.03.
-     &       IPIOPI(IRPI,1:ipiopi(IRPI,0))=PACK( (/ (i,i=1,nion) /),
+        IF (ipiopi(IRPI,0).GT.0) then             ! inserted by Derek Harting 26.03.
+            IPIOPI(IRPI,1:ipiopi(IRPI,0))=PACK( (/ (i,i=1,nion) /),
      .                                     PIOPI(IRPI,1:) > 0)
+        endif
+
         ipplpi(IRPI,0)=COUNT(PPLPI(IRPI,1:) > 0)
-        IF (ipplpi(IRPI,0).GT.0)              ! inserted by Derek Harting 26.03.
-     &       IPPLPI(IRPI,1:ipplpi(IRPI,0))=PACK( (/ (i,i=1,npls) /),
+        IF (ipplpi(IRPI,0).GT.0) then             ! inserted by Derek Harting 26.03.
+            IPPLPI(IRPI,1:ipplpi(IRPI,0))=PACK( (/ (i,i=1,npls) /),
      .                                     PPLPI(IRPI,1:) > 0)
+        endif
+        !
+        ! jdemod end
+        ! 
+
       END DO
 
 !pb        tpb2 = second_own()

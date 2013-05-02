@@ -9567,28 +9567,28 @@ c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
 
          if (istate.eq.1) then 
-            YLAB = 'PIN IZ   ('
+            YLAB = 'PIN IZ   (/M^3/S)'
          elseif (istate.eq.2) then 
-            YLAB = 'PIN ATOM ('
+            YLAB = 'PIN ATOM (/M^3)'
          elseif (istate.eq.3) then 
-            YLAB = 'PIN MOL  ('
+            YLAB = 'PIN MOL  (/M^3)'
          elseif (istate.eq.4) then 
-            YLAB = 'PIN ZIZ  ('
+            YLAB = 'PIN ZIZ  (/M^3/S)'
          elseif (istate.eq.5) then 
-            YLAB = 'PIN ZDEN ('
+            YLAB = 'PIN ZDEN (/M^3)'
          elseif (istate.eq.6) then 
-            YLAB = 'PIN QI   ('
+            YLAB = 'PIN QI   (W/M^3)'
          elseif (istate.eq.7) then 
-            YLAB = 'PIN QE   ('
+            YLAB = 'PIN QE   (W/M^3)'
          endif
 c
          len = lenstr(ylab)
 c
-         if (itype.eq.0) then 
-            ylab = ylab(1:len) // '/M^3)'
-         elseif (itype.eq.1) then 
-            ylab = ylab(1:len) // '/M^2)'
-         endif
+c         if (itype.eq.0) then 
+c            ylab = ylab(1:len) // '/M^3)'
+c         elseif (itype.eq.1) then 
+c            ylab = ylab(1:len) // '/M^2)'
+c         endif
 
       endif
 
@@ -10012,25 +10012,25 @@ c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
 
          if (istate.eq.1) then 
-            BLAB = 'PIN IZ   ('
+            BLAB = 'PIN IZ   (/M^3/S)'
          elseif (istate.eq.2) then 
-            BLAB = 'PIN ATOM ('
+            BLAB = 'PIN ATOM (/M^3)'
          elseif (istate.eq.3) then 
-            BLAB = 'PIN MOL  ('
+            BLAB = 'PIN MOL  (/M^3)'
          elseif (istate.eq.4) then 
-            BLAB = 'PIN ZIZ  ('
+            BLAB = 'PIN ZIZ  (/M^3/S)'
          elseif (istate.eq.5) then 
-            BLAB = 'PIN ZDEN ('
+            BLAB = 'PIN ZDEN (/M^3)'
          elseif (istate.eq.6) then 
-            BLAB = 'PIN QI   ('
+            BLAB = 'PIN QI   (W/M^3)'
          elseif (istate.eq.7) then 
-            BLAB = 'PIN QE   ('
+            BLAB = 'PIN QE   (W/M^3)'
          endif
 c
          len = lenstr(blab)
 c
 c         if (itype.eq.0) then 
-            blab = blab(1:len) // '/M^3)'
+c            blab = blab(1:len) // '/M^3)'
 c         elseif (itype.eq.1) then 
 c            blab = blab(1:len) // '/M^2)'
 c         endif
