@@ -12,6 +12,7 @@ c
 !      Use HC_Utilities ! Sheath E-field calc by Brooks.
 c
       use error_handling
+      use debug_options
       use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
@@ -87,11 +88,6 @@ c slmod begin - temp
       integer i,fp,load_i
 c slmod end
 
-c
-c     Controls code debugging output
-c
-      logical :: debug_code
-
 
       integer :: perc
 c
@@ -164,17 +160,13 @@ C-----------------------------------------------------------------------
 C                   INITIALISATION
 C-----------------------------------------------------------------------
 C
+      call pr_trace('DIV','BEGIN DIV')
 c
 C psmod
 c
       debug0 = .false.
       debug_all=.false.
-
 c
-c     jdemod - added a debug code flag that will activate write(0,*) markers
-c              for tracking crashes that do not report the exact location
-c
-      debug_code = .false.
 c
       Ftotal = 0.0
       COPTION = 0
@@ -225,7 +217,7 @@ c
       refTMAX     = 0.0
       refFAIL     = 0.0
 c
-      if (debug_code) write(0,*) '1:'
+      call pr_trace('DIV','1:')
 c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
@@ -284,9 +276,16 @@ c slmod begin
       LOAD_I = -1
       NYMFS_GLOBAL = NYMFS  ! lame, but don't want to pass NYMFS is local and I don't want to pass it around -SL, 21/11/2011
 c slmod end
+
+      call pr_trace('DIV','BEFORE TAU')
+
+
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
       TAUTIM = ZA02AS (1) - TAUTIM
       WRITE(6,*) 'TIME USED IN SETUP: TAU SUBROUTINE :',TAUTIM,' S'
+
+      call pr_trace('DIV','AFTER TAU')
+
 C
 C---- ZERO ARRAYS ETC
 C
@@ -541,6 +540,7 @@ c
       End If
 ! ammod end.
 
+      call pr_trace('DIV','AFTER INIT')
 
 
 C
@@ -550,8 +550,7 @@ C-----------------------------------------------------------------------
 C
       IF (ITER.EQ.1) CALL PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
 
-      if (debug_code) write(0,*) '2:'
-
+      call pr_trace('DIV','AFTER PRDATA')
 
 c
 c     Assign NIMPS and NIMPS2 to local copies in div5 common block
@@ -814,14 +813,12 @@ C
         call init_eckstein_2007(mattar,matp)
       ENDIF
 c
-      if (debug_code) write(0,*) '3:'
-
-c
 c     jdemod - print out sputtering yield data for current case
 c
       if (cprint.eq.9) then 
          call print_sputtering_yields(mattar,matp,crmb)
       endif
+
 
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
@@ -938,6 +935,7 @@ c     >          kteds(in),ktids(in),knds(in),kvds(in)
 c      enddo
 c
 
+      call pr_trace('DIV','AFTER SPUTTERING YIELDS')
 
 
 ! ammod begin.
@@ -961,6 +959,8 @@ c
 c
 c     Launch neutrals
 c
+      call pr_trace('DIV','LAUNCH NEUTRALS')
+
       IF (CNEUTA.EQ.0) THEN
         STATUS = 1
         WRITE (6,9012) '***  LAUNCHING ',WHAT(STATUS),' NEUTRALS  ***'
@@ -1003,8 +1003,7 @@ C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
 C
 
-      if (debug_code) write(0,*) '4:'
-
+      call pr_trace('DIV','SELF-SPUTTER LOOP START')
 
   200 CONTINUE
       IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
@@ -1048,7 +1047,7 @@ C
 c
       num_entered_core = 0.0
 
-      if (debug_code) write(0,*) '5:'
+      call pr_trace('DIV','MAIN LOOP START')
 
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2447,7 +2446,7 @@ C
 C
   805 CONTINUE
 
-      if (debug_code) write(0,*) '6:'
+      call pr_trace('DIV','MAIN LOOP END')
 
 C
 C
@@ -2598,8 +2597,7 @@ C-----------------------------------------------------------------------
 C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
-      if (debug_code) write(0,*) '7:'
-
+      call pr_trace('DIV','PRINT SUMMARY START')
 
       goto 8701
 
@@ -2900,7 +2898,7 @@ c
 c     jdemod end
 c
 
-      if (debug_code) write(0,*) '8:'
+      call pr_trace('DIV','CALCULATE TOTALS')
 
 C
 C
@@ -2953,7 +2951,7 @@ c
       endif
 
 
-      if (debug_code) write(0,*) '9:'
+      call pr_trace('DIV','PRINT TOTALS')
 
 
 C
@@ -3303,8 +3301,8 @@ c
          call prc('  in the R-axis.')
       endif
 
-      if (debug_code) write(0,*) '10:'
 
+      call pr_trace('DIV','PRINT ADDITIONAL SUMMARIES')
 c
 C-----------------------------------------------------------------------
 c
@@ -3626,8 +3624,8 @@ c
  9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
-      if (debug_code) write(0,*) '11:'
 
+      call pr_trace('DIV','FORCES')
 
 C
 C====================== FORCES ===================================
@@ -3835,7 +3833,7 @@ c
          CALL RZERO (e2dLINES, MAXNKS*MAXNRS*maxe2dizs)
       endif
 
-      if (debug_code) write(0,*) '12:'
+      call pr_trace('DIV','RADIATED POWER CALC')
 
 c
 c     Choose Nocorona or ADAS
@@ -4132,8 +4130,7 @@ c
       endif
 c
 
-      if (debug_code) write(0,*) '13:'
-
+      call pr_trace('DIV','GLOBAL TOTALS')
 C
 C================ GLOBAL TOTALS OVER ENTIRE PLASMA =====================
 C
@@ -4478,7 +4475,7 @@ c
       endif
 
 
-      if (debug_code) write(0,*) '14:'
+      call pr_trace('DIV','ZEFFS')
 
 c
 C
@@ -4942,7 +4939,7 @@ c
       end do
 c
 c
-      if (debug_code) write(0,*) '16:'
+      call pr_trace('DIV','DTOTS')
 
 
 c
@@ -5039,7 +5036,7 @@ c
 c
       call prb
 c
-      if (debug_code) write(0,*) '17:'
+      call pr_trace('DIV','DEPS')
 
 
 c     Calculate and summarize region deposition probabilities.
@@ -5103,7 +5100,7 @@ C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
-      if (debug_code) write(0,*) '18:'
+      call pr_trace('DIV','CLOSING MESSAGES')
 
 
       IF (NIZS.GT.0)
@@ -5156,8 +5153,7 @@ c slmod begin
       CALL OutputData(87,'END OF DIV')
 c slmod end
 
-      if (debug_code) write(0,*) '19:'
-
+      call pr_trace('DIV','END OF DIV')
 
 c
 c      if (cisterrcnt.ne.0) then
