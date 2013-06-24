@@ -60,7 +60,7 @@ c
 c
 c     Set hard-coded global trace debugging options
 c
-      call init_trace(0,.true.)
+      !call init_trace(0,.true.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
 c
 c     Initialize the main .dat file output unit number
