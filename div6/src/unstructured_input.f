@@ -127,6 +127,7 @@ c
       use subgrid_options
       use ribbon_grid_options
       use sol22_input
+      use allocatable_input_data
       implicit none
       
       INCLUDE 'params'
@@ -715,6 +716,18 @@ c     - Two parameters - IR TE - for OUTER JET/INNER SONNET
 c
       nsheath_valo = 0
       call rzero(sheath_valo,maxnrs*2) 
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG Q44 - Core plasma profiles as a function of PSIN  
+c
+c     - Five parameters - PSIN TE TI NE VB
+c
+c     Data array is allocatable and does not need initialization
+c     (note: use allocatable_data module
+c
+      ncoreprofile = 0
 
 c
 c -----------------------------------------------------------------------

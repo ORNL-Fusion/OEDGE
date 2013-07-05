@@ -3,6 +3,7 @@ c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
 c slmod begin
+      use debug_options
       USE mod_grid_divimp
       USE mod_solps
       use mtc
@@ -143,6 +144,10 @@ c      sources or the PIN data if available.
 c
       LOGICAL PINCHECK,litersol
 c
+c
+c
+      call pr_trace('TAU','TAU START')
+c
       PINCHECK = .TRUE.
       PINITER  = .FALSE.
 c
@@ -274,6 +279,9 @@ c
          write (0,*) ' Check that a valid grid file name was specifed'
          stop
       endif
+
+      call pr_trace('TAU','COMPLETED GRID LOAD')
+
 c
 C-----------------------------------------------------------------------
 c
@@ -728,6 +736,9 @@ C
 C-----------------------------------------------------------------------
 c     CALCULATE OTHER GEOMETRY INFORMATION
 C-----------------------------------------------------------------------
+
+      call pr_trace('TAU','BEFORE SETUP GRID')
+
 c
 c slmod begin - new
 c     
@@ -739,6 +750,7 @@ c
       CALL SetupGrid
 c slmod end
 
+      call pr_trace('TAU','AFTER SETUP GRID')
 c
 c     - endif for ribbon code bypass
 c
@@ -1680,6 +1692,8 @@ C
         idds(ir,2) = MAX(MIN(idds(ir,2),999),-999)
       ENDDO
 c
+      call pr_trace('TAU','BEFORE DOTARG')
+
       CALL DOTARG
 
 c      CALL BuildTargets
@@ -1709,6 +1723,9 @@ c
       if (ctrap.eq.5) then
          ctrap = 4
       endif
+
+      call pr_trace('TAU','BEFORE BUILDNEUTRALWALL')
+
 c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
@@ -2508,6 +2525,7 @@ c     >                          kss(ikmids(ir)-1,ir)
 c
       end do
 
+      call pr_trace('TAU','BEFORE FIND_MIDPLANE')
 c
 C-----------------------------------------------------------------------
 c     Calculate the R,Z values of the inner and outer mid-planes
@@ -2538,20 +2556,28 @@ C-----------------------------------------------------------------------
 C     INITIALIZE 3D B FIELD VECTORS IN THE bfield module
 C-----------------------------------------------------------------------
 c
+      call pr_trace('TAU','BEFORE SETUP_BVECTORS')
+
       call setup_bvectors
 c
-C-----------------------------------------------------------------------
+C-----------------------------------------------------------------------g
 c     Calculate the separatrix area and effective area
 C-----------------------------------------------------------------------
 c
+      call pr_trace('TAU','BEFORE CALC_ASEP_EFF')
+
       call calc_asep_eff
 c
+      call pr_trace('TAU','BEFORE PRINT_AVERAGE_SEPDIST')
+
       call print_average_sepdist 
 c
 C-----------------------------------------------------------------------
 c     Calculate the flux based EDGE2D target conditions if the
 c     information is available to do so ...
 C-----------------------------------------------------------------------
+
+      call pr_trace('TAU','BEFORE EDGE2D FLUXES')
 c
 c     Calculate the flux based target density IF flux data available.
 c
@@ -2642,6 +2668,10 @@ c
             end do
 c
       endif
+
+      call pr_trace('TAU','BEFORE CALCMETRIC')
+
+
 c slmod begin
       if (northopt.eq.3) then
          IF (stopopt2.EQ.900) THEN
@@ -2685,6 +2715,19 @@ c     the moment):
 
 c slmod end
 c
+c
+c-----------------------------------------------------------------------
+c     INTERPLOATE PSIN CORE PROFILE FROM INPUT FILE (IF PRESENT) 
+c     TO COREDAT ARRAY
+c
+      write(0,*) 'process core profiles:'
+
+      call pr_trace('TAU','BEFORE PROCESS_CORE_PROFILES')
+
+
+      call process_core_profiles
+
+c
 C-----------------------------------------------------------------------
 c     CALCULATE BACKGROUND PLASMA
 C-----------------------------------------------------------------------
@@ -2697,11 +2740,17 @@ c     combining various different SOL and plasma options.
 c
 C-----------------------------------------------------------------------
 c
+      call pr_trace('TAU','BEFORE BGPLASMA')
+
+
       call bgplasma(title,equil)
 c slmod begin - temp
       CALL DB('DONE CALCULATING BACKGROUND PLASMA')
 c slmod end
 c
+
+      call pr_trace('TAU','AFTER BGPLASMA')
+
 c
 C-----------------------------------------------------------------------
 c
@@ -3358,6 +3407,8 @@ C-----------------------------------------------------------------------
 c
       call calc_mps
 c
+c
+      call pr_trace('TAU','BEFORE CALC-FLUXES')
 C-----------------------------------------------------------------------
 c
 c     CALC_TARGFLUXDATA 
@@ -22024,8 +22075,14 @@ c
 c
          end do
 c
-         write(6,'(a,3x,i6,3x,g12.5)') ' AVERAGE SEPDIST IR:',ir,
-     >         totdist/totlen
+         if (totlen.ne.0.0) then 
+            write(6,'(a,3x,i6,4(3x,g12.5))') ' AVERAGE SEPDIST IR:',ir,
+     >         totdist/totlen,totdist,totlen,len
+         else
+            write(6,'(a,3x,i6,4(3x,g12.5))') ' AVERAGE SEPDIST IR:',ir,
+     >         0.0,totdist,totlen,len
+         endif
+
 c
       end do
 c
@@ -22300,7 +22357,9 @@ c      enddo
 c
       return
       end
-
+c
+c
+c
       real function acos_test(xcos,flag)
       use error_handling
       implicit none
@@ -22352,3 +22411,87 @@ c
 
       return
       end
+C
+C
+C
+      subroutine process_core_profiles
+      use allocatable_input_data
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+      integer ir,in
+
+      ! This routine must be run after the grid is loaded and before the background plasma is assigned
+
+
+      !
+      ! If unstructured input data for the core data vs. PSIN has been 
+      ! specified then over write the core data array with data mapped from 
+      ! the PSIN profile. This will leave the rest of the code unaffected
+      ! but allow for core profile specification by PSIN. Interpolation on PSIN
+      ! is linear and is only possible if values for core PSIN are available in 
+      ! the psitarg(ir,1:2) array. 
+      !
+
+      !write(0,*) 'Process_core_profiles:',ncoreprofile
+      !if (allocated(coreprofile)) then 
+      !   do in = 1,ncoreprofile
+      !      write(0,'(a,10(1x,g12.5))')
+      !>           'INPUT:',(coreprofile(in,ir),ir=1,5)
+      !   end do
+      !endif
+
+      if (ncoreprofile.gt.0) then 
+         ! fit a core profile entered based on PSIN to the grid ... store in the expected place
+         ! and deallocate array. Fill the coredat array with ncoredat = irsep-1 data values         
+         ! coredat(ir,2) = 
+         if (allocated(coreprofile)) then 
+
+            ncoredat = irsep-1
+
+            do ir = 1, irsep-1
+               coredat(ir,1) = ir
+               !write(0,*) 'ir:',ir,psitarg(ir,1),psitarg(ir,2)
+
+               call fitter(ncoreprofile,
+     >                 coreprofile(:,1),coreprofile(:,2),
+     >                 1,psitarg(ir,1),coredat(ir,2),'LINEAR')
+               call fitter(ncoreprofile,
+     >                 coreprofile(:,1),coreprofile(:,3),
+     >                 1,psitarg(ir,1),coredat(ir,3),'LINEAR')
+               call fitter(ncoreprofile,
+     >                 coreprofile(:,1),coreprofile(:,4),
+     >                 1,psitarg(ir,1),coredat(ir,4),'LINEAR')
+               call fitter(ncoreprofile,
+     >                 coreprofile(:,1),coreprofile(:,5),
+     >                 1,psitarg(ir,1),coredat(ir,5),'LINEAR')
+
+            end do
+            
+            write(6,'(a)') 'MAPPING OF INPUT CORE DATA:'//
+     >                     ' COREDAT ASSIGNED DATA:'
+
+            do ir = 1,irsep-1
+               write(6,'(i8,1x,f9.4,10(1x,g13.5))')
+     >             ir,psitarg(ir,1),(coredat(ir,in),in=1,5)
+
+            end do
+
+         endif
+
+      endif
+
+      ! If data array was allocated for input then deallocate it at this point
+      ! This can be removed if there is need for this data in a later 
+      ! implementation.
+
+      if (allocated(coreprofile)) deallocate(coreprofile)
+
+
+
+
+      return
+      end
+
+

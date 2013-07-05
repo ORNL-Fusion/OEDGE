@@ -924,6 +924,11 @@ c     One example is the mtc module implementing momentum transfer collisions.
 c
       call init_modules(nizs)
 c
+c     The following routine processes some of the input data 
+c
+c      call process_input_data
+c
+c
 c
 c
       RETURN
@@ -935,6 +940,3 @@ C
       IERR = 1
       RETURN
       END
-C
-C
-C
