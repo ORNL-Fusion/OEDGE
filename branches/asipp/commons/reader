@@ -1,10 +1,10 @@
-c     -*-Fortran-*-
-C                                                                       
+      !     -*-Fortran-*-
+      !                                                                       
       COMMON /READR1/ BUFFER,BUFFER1                                    
       save /READR1/
       COMMON /READR2/ IBUF                                              
       save /READR2/
-c
+
       CHARACTER*512 BUFFER                                               
       CHARACTER*80 BUFFER1                                              
       INTEGER IBUF                                                      

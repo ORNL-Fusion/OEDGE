@@ -25,6 +25,7 @@ c
 c
       SUBROUTINE ReadUnstructuredInput(line2)
       USE mod_osm_input
+      use allocatable_input_data
       use sol22_input
       IMPLICIT none
 
@@ -1498,6 +1499,28 @@ c
         CALL RDRARN(sheath_valo,nsheath_valo,MAXNRS,
      >          -MACHHI,MACHHI,.FALSE.,
      >          -machhi,MACHHI,1,'OUTER/INNER SHEATH POTENTIAL',
+     >          IERR)
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG Q44 : CORE PLASMA PROFILES AS A FUNCTION OF PSIN
+c
+      ELSEIF (tag(1:3).EQ.'Q44') THEN
+c
+c     Note: the tag line precedes a standard DIVIMP array input of
+c           three lines.  
+c
+c     - specifies the core plasma data as a function of PSIN 
+c       input line should be:  PSIN   Te    Ti    Ne    Vb 
+c       which will be linearly interpolated and overwrite data in Q37 if any
+c      
+c     INPUT IS:  PSIN TE TI NE VB
+c
+
+        CALL RDRARN_ALLOC(coreprofile,ncoreprofile,
+     >          -MACHHI,MACHHI,.FALSE.,
+     >          -machhi,MACHHI,4,'CORE PLASMA PROFILES BY PSIN',
      >          IERR)
 
 c

@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       PROGRAM RUNDIV                                                    
+      use debug_options
       use rand_data
 c slmod begin
       use mod_divimp
@@ -57,7 +58,12 @@ c
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH', 
      >  '17TH','18TH','19TH','20TH'/                                    
 c
-c     Initialize the main .dat file output unit number
+c     Set hard-coded global trace debugging options
+c
+      call init_trace(0,.false.)
+      call pr_trace('RUNDIV','BEGIN EXECUTION')
+c
+c     Iniialize the main .dat file output unit number
 c
       datunit = 7
 c
@@ -112,6 +118,8 @@ C
       IERR = 0                                                          
       CALL READIN (TITLE,desc,equil,NIZS,NIMPS,NIMPS2,CPULIM,IERR,
      >             NYMFS,NITERS)    
+c
+      call pr_trace('RUNDIV','AFTER READIN')
 c
 c      IF (IERR.NE.0) GOTO 1002                                          
 c
@@ -409,6 +417,7 @@ c
 c 9100 FORMAT(//1X,'ELEMENT WITH MASS ',G11.4,' IS NOT INCLUDED',        
 c     >    ' IN THE NOCORONA PACKAGE.',/)                                
 c
+      call pr_trace('RUNDIV','BEFORE DIV')
 C                                                                       
 C-----------------------------------------------------------------------
 C  CALL DIV TO CALCULATE IMPURITY LEVELS                                
@@ -421,6 +430,7 @@ C
      >          SEED,NYMFS,FACTA,FACTB,ITER,NRAND)                           
 
 
+      call pr_trace('RUNDIV','AFTER DIV')
 c
 C-----------------------------------------------------------------------
 C   DUMP RESULTS IN THE JET TRAN FILE                                    
@@ -440,6 +450,8 @@ C   DUMP RESULTS IN AN EXTERNAL FILE
 C-----------------------------------------------------------------------
 C                                                                       
       CALL STORE (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+
+      call pr_trace('RUNDIV','AFTER STORE')
 C                                                                       
 C-----------------------------------------------------------------------
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA              
