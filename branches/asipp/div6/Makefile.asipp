@@ -27,7 +27,7 @@ VER_INTEL=ifort
 # Source file locations
 #
 #DIVMAIN=/scratch/$(USER)/divimp
-DIVMAIN=$HOME/divimp
+DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
 #
 DIVSRC =$(DIVMAIN)/div6/src

@@ -26,7 +26,7 @@ VER=ifort
 # Source file locations
 #
 #OUTMAIN=/scratch/$(USER)/divimp
-OUTMAIN=$HOME/divimp
+OUTMAIN=$(HOME)/divimp
 COMMONS=$(OUTMAIN)/commons
 #
 LOCAL_FILES =$(OUTMAIN)/out6/local
