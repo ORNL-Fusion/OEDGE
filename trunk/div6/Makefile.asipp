@@ -54,7 +54,7 @@ FCOMP_ABSOFT=f95
 FCOMP_INTEL =ifort
 FCOMP_PGI=pgf95
 #
-FCOMP=$(FCOMP_IFORT)
+FCOMP=$(FCOMP_INTEL)
 #
 # Optimization and debugging flags
 #
@@ -93,8 +93,8 @@ OPT_INTEL_OPT = -O1 -g -traceback -debug all
 OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
 OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
 #
-OPT =$(OPT_IFORT)
-OPTO=$(OPT_IFORT_OPT)
+OPT =$(OPT_INTEL)
+OPTO=$(OPT_INTEL_OPT)
 #
 # Fortran compiler options
 #
