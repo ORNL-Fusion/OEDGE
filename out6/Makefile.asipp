@@ -19,9 +19,12 @@ CEXT=.c
 #
 # VERSION to build
 #
-# VER=aix
+VER_AIX=aix
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
 #
-VER=ifort
+VER=$(VER_INTEL)
 #
 # Source file locations
 #
@@ -49,22 +52,61 @@ VPATH=$(LOCAL_FILES):$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
 FCOMP=ifort
 RM=rm -f
 #
-
+#
+# Compiler
+#
+RM=rm -f
+#
+FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_PGI=pgf95
+#
+FCOMP=$(FCOMP_IFORT)
 #
 # Optimization and debugging flags
 #
-# LINUX - IFORT
+# ARCH=-qarch=com
+# OPTC= -O
+# OPTG= -g -bloadmap:load1 -qextchk -qsource
+# OPTO= -O -bloadmap:load1 -qmaxmem=16384 -qsource
 #
-#OPT_IFORT = -g -CB -traceback -O2
-OPT_IFORT = -g -CB -traceback -O0
-OPT_IFORT_OPT = -g -CB -traceback -O2
+# OPTS= -NQ60000 -NT70000 -ND10000 -NA16384
 #
-OPT = $(OPT_IFORT)
-OPTO= $(OPT_IFORT_OPT)
+# LINUX - PGI
+#
+ARCH=
+# add -m32 C flag to produce 32 bit C-code - needs to be adjusted depending on 
+# the version of the fortran compiler used
+OPTC= -O $(EMU)
+#
+# LINUX - PGI
+#
+OPT_PGI= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+OPT_PGI_OPT= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
+#
+OPT_PGI_BIG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
+OPT_PGI_OPT_BIG= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
+#
+# LINUX - ABSOFT
+#
+OPT_ABSOFT = -g 
+OPT_ABSOFT_OPT = -O
+#
+# LINUX - INTEL
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1 -g -traceback -debug all
+#
+OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
+OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
+#
+OPT =$(OPT_IFORT)
+OPTO=$(OPT_IFORT_OPT)
 #
 # Fortran compiler options
 #
-FFLAGS= $(OPT) 
+FFLAGS= $(OPT)
+
 #
 # Common block directory
 #
