@@ -19,10 +19,12 @@ CEXT=.c
 #
 # VERSION to build
 #
-# VER=aix
-#
-VER=ifort
+VER_AIX=aix
+VER_ABSOFT=abs
+VER_PGI=pgi
 VER_INTEL=ifort
+#
+VER=$(VER_INTEL)
 #
 # Source file locations
 #
@@ -46,16 +48,15 @@ VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
 #
 # Compiler
 #
-#FCOMP=ifort
-FCOMP=ifort
 RM=rm -f
 #
-FCOMP_INTEL=f95
-
+FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_PGI=pgf95
+#
+FCOMP=$(FCOMP_IFORT)
 #
 # Optimization and debugging flags
-#
-# AIX - XLF
 #
 # ARCH=-qarch=com
 # OPTC= -O
@@ -67,24 +68,38 @@ FCOMP_INTEL=f95
 # LINUX - PGI
 #
 ARCH=
-OPTC= -O
-OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mfptrap -Minfo
-OPTGS= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
-OPTF90= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
-OPTO= -O -Mbyteswapio -Mlist
-OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
-OPTS=
+# add -m32 C flag to produce 32 bit C-code - needs to be adjusted depending on 
+# the version of the fortran compiler used
+OPTC= -O $(EMU)
+#
+# LINUX - PGI
+#
+OPT_PGI= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+OPT_PGI_OPT= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
+#
+OPT_PGI_BIG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
+OPT_PGI_OPT_BIG= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk -mcmodel=medium
+#
+# LINUX - ABSOFT
+#
+OPT_ABSOFT = -g 
+OPT_ABSOFT_OPT = -O
 #
 # LINUX - INTEL
 #
-#OPT_INTEL = -CB 
-OPT_INTEL = -g -CB -traceback -O0
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1 -g -traceback -debug all
 #
-OPT = $(OPT_INTEL)
+OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
+OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
+#
+OPT =$(OPT_IFORT)
+OPTO=$(OPT_IFORT_OPT)
 #
 # Fortran compiler options
 #
-FFLAGS= $(OPT) 
+FFLAGS= $(OPT)
+
 #
 # Common block directory
 #
