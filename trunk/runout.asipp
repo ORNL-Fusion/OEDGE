@@ -21,8 +21,8 @@ export XLFRTEOPTS=namelist=old
 # run on the front end and to /project/ADAS/adas to run on the cluster using
 # the job submission system. 
 #
-#export ADASCENT=/project/ADAS/adas
-export ADASCENT=/public/project/ADAS/adas
+export ADASCENT=/project/ADAS/adas
+#export ADASCENT=/public/project/ADAS/adas
 #
 VER=ifort
 #
