@@ -21,6 +21,7 @@ export XLFRTEOPTS=namelist=old
 # run on the front end and to /project/ADAS/adas to run on the cluster using
 # the job submission system. 
 #
+#export ADASCENT=$HOME/adas/adas
 export ADASCENT=/project/ADAS/adas
 #export ADASCENT=/public/project/ADAS/adas
 #
@@ -39,11 +40,15 @@ DIVWRITEDIR=/scratch/$USER
 #
 PROGDIR=divimp
 #
-EXEROOT=$DIVINSTALLDIR/$PROGDIR
-DATAROOT=$DIVINSTALLDIR/$PROGDIR
+export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
-RUNROOT=$DIVWRITEDIR/$PROGDIR
-RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+export RUNROOT=$DIVWRITEDIR/$PROGDIR
+export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+#
+#RUNROOT=$HOME/$PROGDIR
+#EXEROOT=$HOME/$PROGDIR
+#DATAROOT=$HOME/$PROGDIR
 #
 #  Loctions of the various DIVIMP files 
 #
@@ -104,7 +109,7 @@ export EIRDIR=$EXEROOT/eirene07
 export DIVHOME=$RUNROOT
 
 # Location of graphics library used by EIRENE:
-export GLI_HOME=$DIVHOME/libsrc
+export GLI_HOME=$EXEROOT/libsrc
 
 # Set local directories:
 export RUNDIR=$RUNROOT
