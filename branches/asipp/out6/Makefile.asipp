@@ -176,11 +176,11 @@ $(TARG): $(OBJECTS)
 opt:
 	$(MAKE)  "OPT=$(OPTO)"
 
-opt2:
-	$(MAKE)  "OPT=$(OPTO2)"
-
 debug:
-	$(MAKE)  "OPT=$(OPTGS)" "TARG=out6dbg$(VER)"
+	$(MAKE)  "OPT=$(OPT_INTEL_DEBUG)"
+
+debug-alt:
+	$(MAKE)  "OPT=$(OPT_INTEL_DEBUG)" "TARG=out6dbg$(VER)"
 
 ifort:
 	$(MAKE) "FCOMP=$(FCOMP_IFORT)" "OPT=$(OPT_IFORT)" "VER=$(VER_IFORT)" 
