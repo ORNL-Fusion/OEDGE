@@ -419,6 +419,9 @@ Contains
           Current_S = gksmaxs (Current_Ring)
        ElseIf (Launch_Reg .eq. 2) Then
           Current_S = 0.0
+       else
+          ! jdemod - assign an initial value for all cases - proper value assigned later in neutral transport
+          current_s = 0.0
        End If
        Current_Theta = 0.0
        Current_Cross = 0.0
