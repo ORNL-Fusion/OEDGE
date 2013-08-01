@@ -2980,8 +2980,10 @@ c...    Assumes that connection map is built:
           virtag(ik,ir) = virtag(ik,irref)
         ENDDO
         IF (ir.GT.irsep) THEN
-          thetat(idds(ir,1)) = thetat(idds(irref,1))
-          thetat(idds(ir,2)) = thetat(idds(irref,2))
+          IF (idds(ir,1).GT.0.AND.idds(irref,1).GT.0) THEN 
+            thetat(idds(ir,1)) = thetat(idds(irref,1))
+            thetat(idds(ir,2)) = thetat(idds(irref,2))
+          ENDIF
         ENDIF
       ENDIF
 
@@ -3952,7 +3954,7 @@ c     Local variables:
 c
 c Initialize variables:
 c
-      debug = .FALSE.
+      debug = .TRUE.
       STATUS = 0
       i = 0
 c
@@ -3990,11 +3992,14 @@ c          IF (irouts(ik,ir).EQ.ir.AND.virtag(ik,ir).EQ.0) THEN
      
             in = korpg(ik,ir)
      
+c            write(0,*) '      ncell',ncell,2*MAXNKS
+
             IF (ncell+1.EQ.2*MAXNKS)
      .        CALL ER('GenWallRing','Array bound violation',*99)
      
             ncell = ncell + 1
-     
+c            write(0,*) 'ik,ir,ncell',ik,ir,ncell
+             
             wallik(ncell) = ik
             wallir(ncell) = ir
 
@@ -4019,8 +4024,8 @@ c Check this...
         ENDDO
       ENDDO
       
-c      WRITE(0,*) 'GenWallRing: NCELL=',ncell
-      IF (ncell+1.GT.MAXNKS)
+      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
 
@@ -4187,6 +4192,13 @@ c        ENDDO
         DO ii = 1, ncell
           WRITE(50,*) 'IRCELLS:',wallik(ii),wallir(ii),wallth(ii)
         ENDDO
+      ENDIF
+
+      IF (ncell.GT.MAXNKS) THEN
+        WRITE(0,*) 'ERROR GenWallRing: IK index out of bounds'
+        WRITE(0,*) 'NCELL =',ncell
+        WRITE(0,*) 'MAXNKS=',maxnks
+        CALL DumpGrid('IK index out of bounds')
       ENDIF
 
 c...  Assign cell quantities for IR=IRWALL:
