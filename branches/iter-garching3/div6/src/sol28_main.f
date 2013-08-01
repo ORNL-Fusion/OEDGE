@@ -296,6 +296,8 @@ c       tube, so just take this tube as a reference ("flat" extrapolation):
       ic2 = tube%cell_index(HI)
       n = ic2 - ic1 + 1
 
+      IF (output) WRITE(0,*) 'IC1,IC2',ic1,ic2,n
+
       ALLOCATE(ref_pfr(ref_ncell))
 
       DO i1 = 1, 2
@@ -307,6 +309,8 @@ c...    Interpolate along each reference ring:
         ref_ic2 = ref_tube(it)%cell_index(HI)
         ref_pfr(ref_ic1:ref_ic2) = ref_cell(ref_ic1:ref_ic2)%p / 
      .                             ref_tube(it)%pmax
+
+        IF (output) WRITE(0,*) 'REF_ICx',ref_ic1,ref_ic2
         i = 0
         DO ic = ic1, ic2
           i = i + 1
@@ -318,10 +322,13 @@ c...      Identify the interpolation point on the reference ring:
             IF (pfr.LT.ref_pfr(ref_ic)) EXIT              
           ENDDO
           IF (ref_ic.EQ.ref_ic2+1) int_ic1 = ref_ic2
+
+          IF (output) WRITE(0,*) 'INT_ICx',int_ic1,int_ic2
 c...      Volume fluid quantities:
-          IF (int_ic2.EQ.1) THEN
+          IF (int_ic2.EQ.ref_ic1) THEN
+c          IF (int_ic2.EQ.1) THEN  ! bug, -SL, 04/06/2013
             itarget = LO
-            fr = pfr / ref_pfr(1)
+            fr = pfr / ref_pfr(int_ic2)
             val1(1,i) = ref_tube(it)%ne(itarget)  
             val1(2,i) = ref_tube(it)%ni(itarget,ion)  
             val1(3,i) = ref_tube(it)%vi(itarget,ion)  
@@ -355,10 +362,15 @@ c...      Volume fluid quantities:
           IF (i1.EQ.1) val3(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
           IF (i1.EQ.2) val4(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
  
+c          IF (output.AND.ic.LT.ic1+5)
+c     .      WRITE(0,'(A,I6,2(I6,F10.4),1P,4E10.2,0P)') 
+c     .        'INT:',i1,i,pfr,int_ic1-ref_ic1+1,fr,
+c     .        val1(1,i),val2(1,i),val3(1,i),val4(1,i)
+
           IF (output.AND.ic.LT.ic1+5)
-     .      WRITE(0,'(A,I6,2(I6,F10.4),1P,4E10.2,0P)') 
+     .      WRITE(0,'(A,I6,2(I6,F10.4),4F10.2)') 
      .        'INT:',i1,i,pfr,int_ic1-ref_ic1+1,fr,
-     .        val1(1,i),val2(1,i),val3(1,i),val4(1,i)
+     .        val1(5,i),val2(5,i),val3(5,i),val4(5,i)
         ENDDO
 c...    Target data:
         IF (tube%type.NE.GRD_CORE) THEN
@@ -387,8 +399,8 @@ c     either side of the focus tube:
       IF (it1.EQ.it2) THEN
         fr = 0.0
       ELSE
-        fr = (    tube%rho        - ref_tube(it1)%rho) / 
-     .       (ref_tube(it2  )%rho - ref_tube(it1)%rho)
+        fr = (    tube%rho      - ref_tube(it1)%rho) / 
+     .       (ref_tube(it2)%rho - ref_tube(it1)%rho)
       ENDIF
 
       IF (output) THEN
@@ -403,6 +415,12 @@ c...  Assign volume plasma data:
       fluid(1:n,ion)%vi = (1.0-fr) * val3(3,1:n) + fr * val4(3,1:n)
       fluid(1:n,ion)%te = (1.0-fr) * val3(4,1:n) + fr * val4(4,1:n) 
       fluid(1:n,ion)%ti = (1.0-fr) * val3(5,1:n) + fr * val4(5,1:n)
+      IF (output) THEN
+        DO i = 1, 10
+          WRITE(0,*) 'INTER:',i,fluid(i,ion)%ne,fluid(i,ion)%te,
+     .                          fluid(i,ion)%ti
+        ENDDO
+      ENDIF
 c...  Assign target data:
       IF (tube%type.NE.GRD_CORE) THEN
         DO it = LO, HI
@@ -448,8 +466,6 @@ c         of SOL28_V4:
 
       DEALLOCATE(ref_pfr)      
 
-c      STOP 'Here....'
-
       RETURN
  99   WRITE(0,*) 'ITUBE = ',tube%index
       WRITE(0,*) 'RHO   = ',tube%rho
@@ -493,6 +509,8 @@ c
       ion = 1
 
       output = .FALSE.
+
+      STOP 'SHOULD NOT BE HERE AT ALL'
 
 c...  Check that the reference plasma has been assigned:
       IF (ref_ntube.EQ.0) 
@@ -732,7 +750,8 @@ c
       REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
      .                   AMU = 1.67E-27
 
-      INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic
+      INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic,
+     .        shift
       REAL    mi,ne,ni,vi,te,ti,cs,pe,pi
      
       INTEGER, ALLOCATABLE :: map_solps(:)
@@ -840,16 +859,33 @@ c...  Copy SOLPS data to the OSM fluid solution arrays:
 
 c...  Calculate the boundary conditions at the target for open 
 c     field lines (SOL and PFR's):
+
+      shift = 0
+      IF (solps_indexing.EQ.1) shift = 1
+
       IF (tube(itube)%type.NE.GRD_CORE) THEN
         DO itarget = LO, HI
-          ic = tube(itube)%cell_index(itarget)
+          icell = tube(itube)%cell_index(itarget)
 
+          imap = map_osm(icell)
+
+          IF (itarget.EQ.LO) THEN
+            imap = imap - shift
+          ELSE
+            imap = imap + shift
+          ENDIF
           mi = 2.0 * AMU  ! *** hardcoded: not good ***
-          ne = fluid(ic,ion)%ne
-          ni = fluid(ic,ion)%ni
-          vi = fluid(ic,ion)%vi
-          te = fluid(ic,ion)%te
-          ti = fluid(ic,ion)%ti
+          ne = solps_data(solps_index(1))%data(imap)
+          ni = solps_data(solps_index(2))%data(imap)
+          vi = solps_data(solps_index(3))%data(imap)
+          te = solps_data(solps_index(4))%data(imap)
+          ti = solps_data(solps_index(5))%data(imap)
+
+c          ne = fluid(icell,ion)%ne
+c          ni = fluid(icell,ion)%ni
+c          vi = fluid(icell,ion)%vi
+c          te = fluid(icell,ion)%te
+c          ti = fluid(icell,ion)%ti
 
           cs = SQRT((te + ti) * ECH / mi)    ! Needs improvement... dediated function
           pe = ne * te * ECH                 ! Same...
@@ -1915,6 +1951,9 @@ c     added to the list at the end of AssignSOLPSPlasma:
         fluid(1:icmax,ion)%eneano = SNGL(eneano(1:icmax))  ! Some inconsistency in the use of "ene"...
         fluid(1:icmax,ion)%enesrc = SNGL(enesrc(1:icmax,ion))
 
+        fluid(1:icmax,ion)%eniion = SNGL(eniion(1:icmax,ion))
+        fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
+        fluid(1:icmax,ion)%eniano = SNGL(eniano(1:icmax,ion))  
         fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
 
 c        WRITE(0,*) 'ENEION:',eneion(1:icmax,ion)
@@ -1945,14 +1984,16 @@ c
       INTEGER it1,it2,ikopt,cnt
 
       INTEGER itube,cind1,cind2,ref_cind1,ref_cind2,ref_itube,iopt,
-     .        sol_option,isol
+     .        sol_option,isol,ipass,iloop
       LOGICAL cont
 
       LOGICAL CheckIndex
 
       INTEGER ion,i1,i2,i,ic1,ic2,itarget,opt_iopt
 c      REAL    totsrc
- 
+      INTEGER                 nlist
+      INTEGER, ALLOCATABLE :: ilist(:)
+
       TYPE(type_tube )              :: tube_tmp
       TYPE(type_fluid), ALLOCATABLE :: fluid_tmp(:,:)
 
@@ -1969,9 +2010,32 @@ c      REAL    totsrc
       IF (logop.GT.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'RANGE:',it1,it2,grid%isep
-        WRITE(logfp,*) 'TE   :',tube(it1)%te(LO),
-     .                          tube(it1)%te(HI)
+        WRITE(logfp,*) 'TE   :',tube(it1)%te(LO),tube(it1)%te(HI)
       ENDIF
+
+
+c...  Build list of tubes, and put the PFZ tubes at the end, and in reverse order.  This
+c     helps a lot when tubes in the PFZ reference tubes that are closer to the separatrix
+c     but have a higher tube index:
+      ALLOCATE(ilist(it2-it1+1))
+      nlist = 0
+      DO ipass = 1, 2
+        IF (ipass.EQ.1) THEN 
+          DO itube = it1, it2
+            IF (tube(itube)%type.NE.GRD_PFZ) THEN
+              nlist = nlist + 1
+              ilist(nlist) = itube
+            ENDIF  
+          ENDDO
+        ELSE
+          DO itube = it2, it1, -1
+            IF (tube(itube)%type.EQ.GRD_PFZ) THEN
+              nlist = nlist + 1
+              ilist(nlist) = itube
+            ENDIF  
+          ENDDO
+        ENDIF
+      ENDDO
 
 
       ion = 1
@@ -1996,7 +2060,10 @@ c        CALL CalculateEfield
 c        CALL CalculateGradients
 c        CALL CalculateDrifts
 
-        DO itube = it1, it2
+c        DO itube = it1, it2
+        DO iloop = 1, it2-it1+1
+
+          itube = ilist(iloop)
 
           IF (ibits(tube2(itube)%state,0,1).EQ.0.AND.     ! Default symmetry point was not applied
      .        ibits(tube2(itube)%state,1,1).EQ.1) CYCLE   ! Solution has been calculated already
@@ -2106,9 +2173,6 @@ c...            Assign solution parameter nodes:
                   CALL AssignNodeValues_New(itube,nnode,mnode,node,
      .                                      opt_tube)
                   
-                  store_nnode(itube) = nnode  ! *** TEMP ***
-                  store_mnode(itube) = mnode
-                  store_node (1:nnode,itube) = node(1:nnode)
 c                  WRITE(0,*) '_state:',tube2(itube)%state,
 c     .                 ibits(tube2(itube)%state,0,1),
 c     .                 ibits(tube2(itube)%state,1,1)
@@ -2130,6 +2194,21 @@ c                  CALL AssignNodeValues_Legacy(itube,nnode,mnode,node)
      .                          ref_nion,ref_cind2-ref_cind1+1,
      .                          ref_fluid(ref_cind1:ref_cind2,ref_nion),  ! Clumsy...
      .                          nnode,mnode,node,nion,opt_tube)           ! Also: pass local options
+     .                          
+
+                  store_nnode(itube) = nnode  ! *** TEMP ***
+                  store_mnode(itube) = mnode
+                  store_node (1:nnode,itube) = node(1:nnode)
+                  IF (store_node(1    ,itube)%jsat(ion).NE.  ! Need to save the correct jsat in case a code/flag for dynamic 
+     .                tube(itube)%jsat(LO,ion))              ! assignment was used
+     .                store_node(1    ,itube)%jsat(ion) =
+     .                tube(itube)%jsat(LO,ion)
+                  IF (store_node(nnode,itube)%jsat(ion).NE.
+     .                tube(itube)%jsat(HI,ion)) 
+     .                store_node(nnode,itube)%jsat(ion) =
+     .                tube(itube)%jsat(HI,ion)
+
+
                 ENDIF
                 tube2(itube)%state = ibset(tube2(itube)%state,1)            ! Flag that solution for ITUBE has been calculated
 c             ----------------------------------------------------------
@@ -2205,21 +2284,32 @@ c                write(0,*) 'numbers',ic1,ic2,i1,i2
 c        WRITE(0,*) '_count',
 c     .             COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.0)
 c        WRITE(0,*) ibits(tube2(it1:it2)%state,0,1)
+
+c          write(0,*) 'tube,cnt,2.1',it1,it2,cnt,
+c     .                COUNT(osmnode(2:osmnnode)%type.EQ.2.1)
+c          DO  i1 = it1, it2
+c            write(0,*) '   state',i1,ibits(tube2(i1)%state,2,1),
+c     .                               ibits(tube2(i1)%state,0,1)  
+c          ENDDO
+
+
         IF    (cnt.GE.3) THEN
 
-        ELSEIF (COUNT(osmnode(2:osmnnode)%type      .EQ.2.1).GT.0.AND.
+        ELSEIF (COUNT(osmnode(2:osmnnode)%type       .EQ.2.1).GT.0.AND.
      .          COUNT(ibits(tube2(it1:it2)%state,0,1).EQ.1  ).GT.0) THEN
-c...      Check if semi-automated symmetry point specification:
+c...      Check if default symmetry point was specified:
           cont = .TRUE.
         ELSEIF (COUNT(ibits(tube2(it1:it2)%state,2,1).EQ.1  ).GT.0) THEN  
 c...      Check if any invalid links were present:
           IF (cnt.EQ.2) STOP 'Problemo man'
-          tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)
+c          tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)
           cont = .TRUE.
         ENDIF
 
 c...    Modify conditions for iteration:
         CALL User_MainLoop(cont,cnt)
+
+        tube2(it1:it2)%state = IBCLR(tube2(it1:it2)%state,2)  ! Clear registered links to undefined tubes
 
       ENDDO ! Iteration loop
 
@@ -2243,6 +2333,8 @@ c      WRITE(logfp,*)
       CALL DumpData_OSM('output.solver','Done calling fluid solver')
 
 c      CALL OutputData(logfp,'FLUID SOLUTION COMPLETE')
+
+      DEALLOCATE(ilist)
 
       RETURN
  99   WRITE(0,*) '  ITUBE=',itube

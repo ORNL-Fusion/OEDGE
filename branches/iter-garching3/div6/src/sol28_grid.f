@@ -33,8 +33,8 @@ c     .    WRITE(0,*) 'CHECK:',ic,ip,cell(ic)%vol,
 c     .               fluid(ip,ion)%parion,fluid(ip,ion)%parrec
       ENDDO
 
-      IF (itube.EQ.4) 
-     .  WRITE(0,*) 'FLUX:',itube,sumion
+c      IF (itube.EQ.4) 
+c     .  WRITE(0,*) 'FLUX:',itube,sumion
 
       sumrec = 0.0
       DO ic = cind1, cind2
@@ -48,8 +48,8 @@ c     .    WRITE(0,*) 'CHECK:',ic,ip,cell(ic)%vol,
 c     .               fluid(ip,ion)%parion,fluid(ip,ion)%parrec
       ENDDO
 
-      IF (itube.EQ.4) 
-     .  WRITE(0,*) 'FLUX:',itube,sumrec
+c      IF (itube.EQ.4) 
+c     .  WRITE(0,*) 'FLUX:',itube,sumrec
 
       sumano = 0.0
       DO ic = cind1, cind2
@@ -57,8 +57,8 @@ c     .               fluid(ip,ion)%parion,fluid(ip,ion)%parrec
         sumano = sumano + cell(ic)%vol * 
      .           fluid(ip,ion)%parano
       ENDDO
-      IF (itube.EQ.4) 
-     .  WRITE(0,*) 'FLUX:',itube,sumano
+c      IF (itube.EQ.4) 
+c     .  WRITE(0,*) 'FLUX:',itube,sumano
 
 
 
@@ -66,11 +66,11 @@ c     .               fluid(ip,ion)%parion,fluid(ip,ion)%parrec
      .         ABS(CalcFlux(HI,itube)) 
 
 
-      IF (itube.EQ.4) 
-     .  WRITE(0,*) 'FLUX:',itube,sumflx
+c      IF (itube.EQ.4) 
+c     .  WRITE(0,*) 'FLUX:',itube,sumflx
 
-      IF (itube.EQ.4) 
-     .  WRITE(0,*) 'FLUX:',itube,sumion-sumrec-sumflx
+c      IF (itube.EQ.4) 
+c     .  WRITE(0,*) 'FLUX:',itube,sumion-sumrec-sumflx
 
 
 c     .                           ABS(CalcFlux(HI,itube))
@@ -447,6 +447,49 @@ c                WRITE(0,*) 'in     =',in
       ENDDO
  20   CONTINUE
 
+      IF (itsep.EQ.1.AND.grid%isep.GT.1) THEN
+c...    Limiter grid:
+        IF (nxpt.NE.0.OR.itsep2.NE.0) THEN
+          WRITE(0,*) 'ERROR GenerateTubeGroups: unusual x-point conf'//
+     .               'iguration detected -- development required'
+          STOP
+        ENDIF
+
+        itsep = grid%isep 
+        nxpt = nxpt + 1
+
+        cind1 = tube(itsep)%cell_index(LO)
+        cind2 = tube(itsep)%cell_index(HI)
+
+        iobj  = GetObject(cind1,IND_CELL)
+        isrf  = obj(iobj)%iside(1)
+        ivtx1 = srf(ABS(isrf))%ivtx(1)
+
+        rxpt(nxpt) = vtx(1,ivtx1)   
+        zxpt(nxpt) = vtx(2,ivtx1)   
+        ixpt(nxpt,1) = GetObject(cind1,IND_CELL)
+        ixpt(nxpt,2) = GetObject(cind2,IND_CELL)
+
+      ELSEIF (itsep.EQ.1.AND.grid%isep.EQ.1) THEN
+c...    Linear grid:
+
+        nxpt = nxpt + 1
+
+        cind1 = tube(itsep)%cell_index(LO)
+        cind2 = tube(itsep)%cell_index(HI)
+
+        iobj  = GetObject(cind1,IND_CELL)
+        isrf  = obj(iobj)%iside(1)
+        ivtx1 = srf(ABS(isrf))%ivtx(1)
+
+        rxpt(nxpt) = vtx(1,ivtx1)   
+        zxpt(nxpt) = vtx(2,ivtx1)   
+        ixpt(nxpt,1) = GetObject(cind1,IND_CELL)
+        ixpt(nxpt,2) = GetObject(cind2,IND_CELL)
+
+      ENDIF
+
+
       IF (debug) THEN
         WRITE(logfp,*) 'R,Z0:',r0,z0
         WRITE(logfp,*) 'IXPT1 :',ixpt(1:nxpt,1)
@@ -694,7 +737,7 @@ c      ENDDO
       DO i1 = 1, nwall
         IF (wall(i1)%class.EQ.1) nwall_1 = i1
       ENDDO
-      WRITE(0,*) 'nwall,_1:',nwall,nwall_1
+c      WRITE(0,*) 'nwall,_1:',nwall,nwall_1
 
       DO i1 = 1, nwall
         WRITE(88,'(A,I6,4F12.6,2I6)') 
@@ -783,7 +826,7 @@ c     .  CALL ER('SequenceWall','The standard wall does not close '//
 c     .          'on itself',*99)
 c      wall(nwall_1)%v2 = wall(1)%v1
 
-      WRITE(0,*) 'i1,nwall_1',i1,nwall_1,nwall
+c      WRITE(0,*) 'i1,nwall_1',i1,nwall_1,nwall
 
 c...  Delete the segments that were not used to make the wall:    
       DO i2 = nwall_1+1, nwall
@@ -791,7 +834,7 @@ c...  Delete the segments that were not used to make the wall:
       ENDDO
       nwall = nwall - (nwall_1 - i1 - 1)
       
-      WRITE(0,*) 'nwall     ',nwall
+c      WRITE(0,*) 'nwall     ',nwall
 
       RETURN
  99   WRITE(0,*) ' MODE = ',mode,i2,nwall_1
@@ -1020,7 +1063,7 @@ c...    Delete the original list:
           wall(iw) = wall(iw+nwall_1)
         ENDDO
         nwall = nwall_2
-        WRITE(0,*) 'walln dude:',nwall
+c        WRITE(0,*) 'walln dude:',nwall
       ELSE
         wall(1:nwall_1)%v1(1) = rwall(1:nwall_1,1)
         wall(1:nwall_1)%v1(2) = zwall(1:nwall_1,1)
@@ -1164,14 +1207,14 @@ c
 
       INTEGER GetObject
 
-      INTEGER   fp,ipos,itube,version,ierr,icell,iobj,maxitube,
+      INTEGER   fp,ipos,itube,ierr,icell,iobj,maxitube,
      .          maxipos(ntube),hold_itube
-      LOGICAL   first_try,debug
+      LOGICAL   first_try,debug,generate_file
       CHARACTER buffer*1024
-      REAL      rdum1,rdum2
+      REAL      rdum(4),version
       REAL*8    a1,a2,b1,b2
 
-      debug = .TRUE.
+      debug = .FALSE.
 
       IF (logop.GT.0) THEN
         WRITE(logfp,*)
@@ -1186,9 +1229,17 @@ c...  Look for <gridname>.sup:
      .     ACCESS='SEQUENTIAL',STATUS='OLD',IOSTAT=ierr)     
       IF (debug) WRITE(0,*) 'IERR=',ierr
 
+      generate_file = .FALSE.
+      IF (ierr.NE.0) THEN
+        generate_file = .TRUE.
+      ELSE
+        READ(fp,*) version  ! First line 
+        IF (version.NE.1.1) generate_file = .TRUE.
+      ENDIF
+
 c...  Check if the supplimental data file is not around, and if not,
 c     call the requisite IDL routines to generate the data:
-      IF (ierr.NE.0) THEN
+      IF (generate_file) THEN
         IF (.NOT.first_try) 
      .    CALL ER('ProcessGrid','Trouble generating '//
      .            'the supplimental grid data',*99)
@@ -1216,9 +1267,14 @@ c       Output the OSM geometry data file that's read in by IDL:
         CLOSE(fp)
         IF (debug) WRITE(0,*) 'Data file written, calling IDL'
 c       Call IDL:
-        CALL CIssue('idl grid_run.pro -args suppliment '//
+c        CALL CIssue('idl grid_run.pro -args suppliment '//
 c        CALL CIssue('idl grid_run.pro -quiet -args suppliment '//
-     .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
+c     .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
+
+        CALL CIssue('$FUSEHOME/scripts/fuse_suppliment '//
+     .              'grid_run_sup.pro -args suppliment grid.sup '//
+     .              TRIM(opt%f_grid_file)//'.equ',ierr)
+
 c       Copy the data to <gridname>.sup for storage in the equilibrium 
 c       directory (the file is moved by the OSM run script):
         IF (debug) WRITE(0,*) 'Copying IDL output file'
@@ -1234,47 +1290,41 @@ c...  Load the supplimental data from the IDL file:
       hold_itube = -1
       maxitube = 0
       maxipos  = 0
-      READ(fp,*) version  ! First line 
       DO WHILE (.TRUE.) 
         READ(fp,'(A)',END=20) buffer 
         IF (buffer(1:1).EQ.'*'.OR.buffer(1:1).EQ.'$') CYCLE  ! Comment line indicators
-        SELECTCASE (version)
-          CASE (1)
-            READ(buffer,*,ERR=98) ipos,itube,rdum1,rdum2
-            IF (itube.GT.ntube) THEN 
-              WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
-     .                   'file not compatible with current grid, '//
-     .                   'rebuilding the file (itube)'
-              CLOSE(fp)
-              CALL CIssue('rm -f grid.sup',ierr)
-              CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
-              GOTO 10
-            ENDIF
-            maxitube = MAX(maxitube,itube)
-            IF (maxitube.GT.ntube) EXIT
-            maxipos(itube) = ipos
-            tube(itube)%psin = tube(itube)%psin + rdum1  ! Take an average PSIn value for the tube
-            IF (itube.NE.hold_itube) THEN
-              hold_itube = itube
-              icell = tube(itube)%cell_index(LO) - 1
-            ENDIF
-            icell = icell + 1
-            IF (icell.GT.tube(itube)%cell_index(HI)) THEN 
-              WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
-     .                   'file not compatible with current grid, '//
-     .                   'rebuilding the file (icell)'
-              WRITE(0,*) '  ITUBE=',itube
-              WRITE(0,*) '  ICELL=',icell,tube(itube)%cell_index(LO:HI)
-              CLOSE(fp)
-              CALL CIssue('rm -f grid.sup',ierr)
-              CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
-              GOTO 10
-            ENDIF
-            field(icell)%bratio = rdum2
-          CASE DEFAULT
-            CALL ER('ProcessGrid','Unrecognised version number for '//
-     .              'the supplimental grid data file',*99)
-        ENDSELECT
+        READ(buffer,*,ERR=98) ipos,itube,rdum(1:4)
+        IF (itube.GT.ntube) THEN 
+          WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
+     .               'file not compatible with current grid, '//
+     .               'rebuilding the file (itube)'
+          CLOSE(fp)
+          CALL CIssue('rm -f grid.sup',ierr)
+          CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
+          GOTO 10
+        ENDIF
+        maxitube = MAX(maxitube,itube)
+        IF (maxitube.GT.ntube) EXIT
+        maxipos(itube) = ipos
+        tube(itube)%psin = tube(itube)%psin + rdum(1)  ! Take an average PSIn value for the tube
+        IF (itube.NE.hold_itube) THEN
+          hold_itube = itube
+          icell = tube(itube)%cell_index(LO) - 1
+        ENDIF
+        icell = icell + 1
+        IF (icell.GT.tube(itube)%cell_index(HI)) THEN 
+          WRITE(0,*) 'MESSAGE LoadSupplimentalGridData: Data '//
+     .               'file not compatible with current grid, '//
+     .               'rebuilding the file (icell)'
+          WRITE(0,*) '  ITUBE=',itube
+          WRITE(0,*) '  ICELL=',icell,tube(itube)%cell_index(LO:HI)
+          CLOSE(fp)
+          CALL CIssue('rm -f grid.sup',ierr)
+          CALL CIssue('rm -f '//TRIM(opt%f_grid_file)//'.sup',ierr)
+          GOTO 10
+        ENDIF
+        field(icell)%bratio = rdum(2)
+        field(icell)%b      = rdum(4)
       ENDDO
  20   CLOSE(fp)
       DO itube = 1, ntube
@@ -1409,7 +1459,7 @@ c      USE mod_grid_divimp
 
       INTEGER, PARAMETER :: GRD_LOAD_NEW = 2, GRD_LOAD_OLD = 1
 
-      debug = .TRUE.
+      debug = .FALSE.
 
 c      opt%f_grid_load_method = 2 ! 1
 
@@ -2109,7 +2159,7 @@ c      write(0,*) 'debug: filename=',TRIM(grd_filename)
 c       ----------------------------------------------------------------
         CASE (-2:-1)
 c...      Find the start of the cell/knot information in the grid file:
-          WRITE(buffer,'(1000X)')
+           WRITE(buffer,'(1000X)')
           DO WHILE (buffer(4:8).NE.'=====')
              READ(grdfp,'(A10)',END=98) buffer
           ENDDO
@@ -2117,7 +2167,10 @@ c...      Scan the file to see how many cells are in the grid:
           nknot = 0
           maxik = 0
           maxir = 0
+          count = 0
           DO WHILE(nknot.EQ.0.OR.buffer(1:7 ).EQ.'Element')
+            count = count + 1
+            WRITE(0,*) count
             READ(grdfp,70,END=97) iknot,ik,ir
             READ(grdfp,* ,END=97) 
             READ(grdfp,* ,END=97) 
@@ -2145,9 +2198,9 @@ c...      Load grid:
              READ(grdfp,'(A10)',END=98) buffer
           ENDDO
           DO WHILE(nknot.EQ.0.OR.buffer(1:7 ).EQ.'Element')
-c            READ(grdfp,'(A50)',END=19) buffer
+            READ(grdfp,'(A50)',END=19) buffer
 c            WRITE(0,*) 'BUFFER:',buffer(1:50)
-c            BACKSPACE(grdfp)
+            BACKSPACE(grdfp)
             nknot = nknot + 1
             READ(grdfp,70,END=97) knot(nknot)%index,
      .                            knot(nknot)%ik   ,knot(nknot)%ir, 
@@ -2159,11 +2212,19 @@ c            BACKSPACE(grdfp)
      .                            knot(nknot)%rv(4),knot(nknot)%zv(4)
             knot(nknot)%bratio = 1.0
           
- 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E17.10,4X,E17.10,7X,E17.10,
-     .             4X,E17.10)
- 71         FORMAT(13X,E17.10,36X,E17.10,4X,E17.10)
+ 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,F12.10,8X,F13.10,11X,F12.10,
+     .             8X,F13.10)
+c 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E16.10,3X,E18.10,7X,E16.10,
+c     .             3X,E18.10)
+c 70         FORMAT(10X,I5,4X,I6,2x,I6,4x,E17.10,4X,E17.10,7X,E17.10,
+c     .             4X,E17.10)
+ 71         FORMAT(14X,F12.10,40X,F12.10,8X,F13.10)
+c 71         FORMAT(13X,E17.10,36X,E16.10,3X,E18.10)
+c 71         FORMAT(13X,E17.10,36X,E17.10,4X,E17.10)
 c 71         FORMAT(18X,I1,35X,E17.10,4X,E17.10)
- 72         FORMAT(37X,E17.10,4X,E17.10,7X,E17.10,4X,E17.10)
+ 72         FORMAT(37x,F12.10,8X,F13.10,11X,F12.10,8X,F13.10)
+c 72         FORMAT(37X,E16.10,3X,E18.10,7X,E16.10,3X,E18.10)
+c 72         FORMAT(37X,E17.10,4X,E17.10,7X,E17.10,4X,E17.10)
           
 c            WRITE(0,*) knot(nknot)%index
 c            WRITE(0,*) knot(nknot)%ik,knot(nknot)%ir
@@ -2186,10 +2247,10 @@ c       ----------------------------------------------------------------
         CASE (GRD_FORMAT_SONNET)
 c...      Find the start of the cell/knot information in the grid file:
           WRITE(buffer,'(1000X)')
-          write(0,*) 'debug:  trying'
+c          write(0,*) 'debug:  trying'
           DOWHILE (buffer(4:8).NE.'=====')
             READ(grdfp,'(A1000)',END=98) buffer
-            write(0,*) 'debug: buffer=',TRIM(buffer)
+c            write(0,*) 'debug: buffer=',TRIM(buffer)
             IF (LEN_TRIM(buffer).GT.0) THEN
               DO i = 1, LEN_TRIM(buffer)-4
                IF (buffer(i:i+3).EQ.'b_sc') READ(buffer(i+7:),*) b_scale  ! Scale the field ratio 
@@ -2233,6 +2294,7 @@ c...      Load grid:
             READ(grdfp,82,END=97) knot(nknot)%rv(1),knot(nknot)%zv(1),
      .                            knot(nknot)%rv(4),knot(nknot)%zv(4)
             knot(nknot)%nv = 4
+            knot(nknot)%bratio = ABS(knot(nknot)%bratio)
 c...        Dividing line in grid file:       
             READ(grdfp,*)
             READ(grdfp,'(A10)',END=20) buffer
@@ -3197,6 +3259,7 @@ c     cuts, as appropriate:
      .      GetTube(iobj,IND_OBJECT).LT.grid%isep) CYCLE
 
         IF (obj(iobj)%omap(2).EQ.-1.OR.obj(iobj)%omap(4).EQ.-1) THEN
+
           itube = GetTube(iobj,IND_OBJECT)
           IF     (tube_set.NE.itube) THEN
             tube_set = itube         ! There's an assumption here that 
@@ -3309,7 +3372,8 @@ c           list (have to complete the wall by hand at the moment):
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,4F14.7)') 
-     .      'CLIP LIST:',ilist(i1,:),clist(i1,:),xlist(i1,:),ylist(i1,:)
+     .      'CLIP LIST A:',ilist(i1,:),clist(i1,:),
+     .                     xlist(i1,:),ylist(i1,:)
         ENDDO
       ENDIF
 
@@ -3431,21 +3495,25 @@ c
 
 
       DO itube2 = grid%isep, ntube
-        IF (itube.EQ.itube2) CYCLE 
+c        IF (itube.EQ.itube2) CYCLE 
 
-        iobj = GetObject(tube(itube2)%cell_index(1),IND_CELL)            
-        DO i1 = 1, 2
-          CALL GetVertex(iobj,i1,x2,y2)        
-          IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
-        ENDDO
-        IF (i1.NE.3) EXIT
+        IF (itube.NE.itube2.OR.(ivertex.EQ.3.OR.ivertex.EQ.4)) THEN
+          iobj = GetObject(tube(itube2)%cell_index(1),IND_CELL)            
+          DO i1 = 1, 2
+            CALL GetVertex(iobj,i1,x2,y2)        
+            IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
+          ENDDO
+          IF (i1.NE.3) EXIT
+        ENDIF
 
-        iobj = GetObject(tube(itube2)%cell_index(2),IND_CELL)            
-        DO i1 = 3, 4
-          CALL GetVertex(iobj,i1,x2,y2)        
-          IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
-        ENDDO
-        IF (i1.NE.5) EXIT
+        IF (itube.NE.itube2.OR.(ivertex.EQ.1.OR.ivertex.EQ.2)) THEN
+          iobj = GetObject(tube(itube2)%cell_index(2),IND_CELL)            
+          DO i1 = 3, 4
+            CALL GetVertex(iobj,i1,x2,y2)        
+            IF (x1.EQ.x2.AND.y1.EQ.y2) EXIT
+          ENDDO
+          IF (i1.NE.5) EXIT
+        ENDIF
 
       ENDDO
 
@@ -3545,6 +3613,14 @@ c        write(0,*) '-->',iobj,itube,ic,nc
 
       ENDDO
 
+      IF (debug) THEN
+        DO i1 = 1, nlist
+          WRITE(fp,'(A,4I6)') 
+     .      'CLIP LIST B1:',list(i1)%i,list(i1)%t,
+     .                      list(i1)%c,list(i1)%m
+        ENDDO
+      ENDIF
+
 
 c...  Look for tangency points that are not bounded on each side by a target
 c     segment:
@@ -3554,8 +3630,11 @@ c       Check low index target:
         cind1 = tube(itube)%cell_index(1)
         cind2 = tube(itube)%cell_index(2)
 
+c        write(88,*) 'itube,cind1=',itube,cind1
+        
         m = 0
         iobj = GetObject(cind1,IND_CELL)
+        ic = 1
         m2 = obj(iobj)%omap(2)
         m4 = obj(iobj)%omap(4)
         IF (m4.NE.-1.AND..NOT.osmMatchVertex(itube,cind1,1,.TRUE.)) m=3
@@ -3570,8 +3649,11 @@ c       Check low index target:
           list(nlist)%m = m
         ENDIF
 
+c        write(88,*) 'itube,cind2=',itube,cind2
+
         m = 0
         iobj = GetObject(cind2,IND_CELL)
+        ic = cind2 - cind1 + 1
         m2 = obj(iobj)%omap(2)
         m4 = obj(iobj)%omap(4)
         IF (m2.NE.-1.AND..NOT.osmMatchVertex(itube,cind2,3,.TRUE.)) m=2
@@ -3591,8 +3673,8 @@ c       Check low index target:
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,
-     .                   list(i1)%c,list(i1)%m
+     .      'CLIP LIST B2:',list(i1)%i,list(i1)%t,
+     .                      list(i1)%c,list(i1)%m
         ENDDO
       ENDIF
 
@@ -3662,7 +3744,8 @@ c       Search the wall for intersections:
             WRITE(fp,*) '    X4,Y4   :',x4,y4
           ENDIF
           IF (s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
-     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
+     .        s34.GT.-1.0D-5.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/10/2012
+c     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
 c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
      .        s12.LT.s12max) THEN
             s12max = s12
@@ -3690,8 +3773,8 @@ c         list (have to complete the wall by hand at the moment):
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,2F14.7)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,list(i1)%c,
-     .                   list(i1)%w,list(i1)%x,list(i1)%y
+     .      'CLIP LIST C:',list(i1)%i,list(i1)%t,list(i1)%c,
+     .                     list(i1)%w,list(i1)%x,list(i1)%y
         ENDDO
       ENDIF
 

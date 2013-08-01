@@ -729,7 +729,7 @@ c
       REAL*8  x1,x2,x3,x4,y1,y2,y3,y4,s12,s34
 
       fp = 6 ! 88
-      debug = .TRUE.
+      debug = .FALSE.
 
       PointInPolygon = .FALSE.
 
@@ -749,7 +749,7 @@ c
         IF (s12.GT.DTOL.AND.s34.GT.0.0D0.AND.s34.LT.1.0D0) 
      .    ninter = ninter + 1
         IF (debug) WRITE(fp,'(4X,A,2E18.7,I4,2F12.5)')
-     .      '           :',s12,s34,ninter,x1,y1
+     .      '    pointinpolygon :',s12,s34,ninter,x1,y1
       ENDDO  
 
       IF (ninter.GT.0.AND.MOD(ninter+1,2).EQ.0) PointInPolygon = .TRUE.
@@ -935,7 +935,11 @@ c      write(6,*) '    d: ',d1,d2
 
       IF (DABS(a2-b2).LT.DTOL.AND.DABS(a2-c2).LT.DTOL.AND.
      .    DABS(a2-d2).LT.DTOL) THEN
-         STOP 'DAMNED 1'
+        tab = HI
+        tcd = HI
+        write(0,*) 'WARNING CalcInter: Lines are collinear'
+        RETURN
+c        STOP 'DAMNED 1'
       ENDIF
 c
 c

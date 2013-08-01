@@ -63,12 +63,13 @@ c       interpolation region:
         p2(1) = r0 + 100.0D0
         p2(2) = z0
         itube = grid%isep-1
-c        WRITE(0,*) 'ITUBE 1=',itube
+        write(0,*) 'isep b',grid%isep
+        WRITE(0,*) 'ITUBE 1=',itube
         CALL LineCutTube(p1,p2,itube,p)
         a_sep = p(1) - p1(1)  
 
         itube = osmnode(index)%tube_range(2) 
-c        WRITE(0,*) 'ITUBE 2=',itube,index
+        WRITE(0,*) 'ITUBE 2=',itube,index
         CALL LineCutTube(p1,p2,itube,p)
         a_end = p(1) - p1(1)
         
@@ -657,13 +658,19 @@ c...        Pleasant:
      .                         frac  * (deltav * frac**y + v1)     ! user specified power law
             ENDDO
           CASE (6)
-c...        Te evolution:
-            CALL CalculateTeProfile(in1,in2,s,target)
-            t = te
-            IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
-     .                             'not ready',*99)
+            IF (mode.EQ.1) THEN 
+c...          Te evolution:
+              CALL CalculateTemperatureProfile(in1,in2,s,target,t)     
+c              t = te                                        
+              IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
+     .                               'not ready',*99)
+            ELSE
+c...          Ti evolution:
+c              CALL CalculateTeProfile(in1,in2,s,target)     
+c              t = ti
+              STOP 'cry please'
+            ENDIF
 c            CALL EvolveTeProfile(in1,in2,s,target)
-
           CASE (7)
 c...        Linear -- to be overwritten by the reference plasma:
             x = 1.0D0
@@ -733,7 +740,6 @@ c
       INTEGER ic,ic1,ic2,region
       REAL*8  deltas,starts,frac,sumval,A,B,C
       REAL*8, POINTER :: s(:)
-
 
       IF (inpic1.LE.0) THEN
         region = inpic1

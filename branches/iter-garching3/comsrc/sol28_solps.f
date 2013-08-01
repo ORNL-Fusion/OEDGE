@@ -12,7 +12,7 @@ c
 
       INTEGER, INTENT(IN) :: idata
  
-      INTEGER   fp,outfp,column,idum(2),maxik,maxir,count,i
+      INTEGER   fp,outfp,column,idum(2),maxik,maxir,count,i,shift
       LOGICAL   output,first_call
       CHARACTER filename*1024,buffer*1024
       REAL      rdum(10)
@@ -71,6 +71,9 @@ c...  Load the data:
       column = solps_data(idata)%column
       count = 0
  
+      shift = 0
+      IF (solps_indexing.EQ.1) shift = -1
+
       SELECTCASE (solps_data(idata)%format)
         CASE (1) 
           READ(fp,*)
@@ -85,8 +88,8 @@ c...  Load the data:
             solps_data(idata)%data(count) = rdum(column+2)
             IF (first_call) THEN
               solps_n              = count
-              solps_ik (count)     = idum(1)
-              solps_ir (count)     = idum(2)
+              solps_ik (count)     = idum(1) + shift
+              solps_ir (count)     = idum(2) + shift
               solps_cen(count,1:2) = rdum(1:2) ! * 1.0D-03 Rescaling removed on 18/08/2010 after noticing that AK modified 
             ENDIF                              !           the 2dvi script for extracting SOLPS data. -SL
           ENDDO
@@ -171,7 +174,7 @@ c...  Map the DIVIMP array structure to the SOLPS data array structure:
             IF (divimp_ik(ik,ir).EQ.0) CYCLE
             DO i = 1, solps_maxik*solps_maxir
 c...          SONNETIK,IR, which map the DIVIMP grid cells to the SONNET
-c             grid indeces, were assigned when the grid was read in: 
+c             grid indices, were assigned when the grid was read in: 
               IF (solps_ik(i).EQ.divimp_ik(ik,ir).AND.  
      .            solps_ir(i).EQ.divimp_ir(ik,ir)) THEN
                 IF (map_divimp(ik,ir).NE.0)

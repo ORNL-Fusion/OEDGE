@@ -22,6 +22,10 @@ c
 
       debug = .TRUE. 
 
+
+
+      IF (debug) WRITE(0,*) 'range = ',TRIM(range)
+
       l = LEN_TRIM(range)
 
       nlist = 0
@@ -52,6 +56,10 @@ c...  Quick check to see if 'infinite range' has been set:
           IF (i.EQ.l.AND.range(i:i).NE.')') k = l
 
           o = SCAN(range(j:k),"Rr")
+
+          IF (debug) WRITE(0,*) ' o = ',o,' istart = ',istart,
+     .                          ' iend = ',iend
+
           IF (o.NE.0) THEN
             IF (istart.EQ.0.OR.iend.EQ.0) 
      .        CALL ER('GetList','Brackets not set properly',*99)            
@@ -435,8 +443,8 @@ c          isrf1(4) = 8
 c        ENDIF
 c        WRITE(fp,'(I9,4X,4(I9,F14.3,I4,4X),2I6,2X,2I4)') iobj-istart+1,
         WRITE(fp,'(I9,4X,4(I9,I4,I4,4X),2I6,4X,2I4)') iobj-istart+1,
-     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4),  
-     .    obj(iobj)%index(IND_IK),
+     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4),
+     .    obj(iobj)%index(IND_IK),  
      .    obj(iobj)%index(IND_IR),
      .    0,0
 c        WRITE(fp,'(13I10)') iobj-istart+1,
@@ -2049,10 +2057,6 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
-
-
-
-
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -2146,6 +2150,7 @@ c        adelta = dang(nslice,2) - dang(1,1)
 c        dang = dang - 0.5D0 * adelta      
       ENDIF
 
+c...  Set the toroidal offset:
       ashift = 0.0D0
       DO islice = 1, nslice
         WRITE(0,'(A,I6,2F12.6)') 
@@ -2154,15 +2159,21 @@ c        dang = dang - 0.5D0 * adelta
      .    'ANGLES:',islice,dang(islice,1:2)
         ashift = ashift + dang(islice,2)
       ENDDO
+      DO itet = 1, opt_eir%tet_n
+        IF (opt_eir%tet_type(itet).EQ.4.0) THEN
+          IF (opt_eir%tet_offset(itet).EQ.-999.0) THEN
+            ashift = -0.5D0 * ashift
+          ELSE
+            ashift = DBLE(opt_eir%tet_offset(itet))
+          ENDIF
+          write(0,*) 'ashift = ',ashift
+        ENDIF
+      ENDDO      
 
-
-
+      ashift = ashift * D_DEGRAD
       dang = dang * D_DEGRAD
       adelta = adelta * D_DEGRAD
 
-
-c...  
-      ashift = 0.0D0
       trycycle_last = -1
       DO islice = 1, nslice
 
@@ -2255,7 +2266,11 @@ c     .           tryvtx(2,trysrf(ABS(isrf))%ivtx(1))
 
         WRITE(eirfp,'(A,I6,2F12.6)') '   TOROIDALIZING:',islice,
      .    ang1/D_DEGRAD,ang2/D_DEGRAD
-     .    
+
+        WRITE(0,*) '   TOROIDALIZING:',islice,
+     .    ang1/D_DEGRAD,ang2/D_DEGRAD
+
+
 
         CALL BuildBricks(islice,opt_eir%tet_index(islice_index),
      .                   ang1,ang2,trycycle)
@@ -2572,7 +2587,6 @@ c     .                              obj(iobj)%index(IND_ISI)
       WRITE(eirfp,*) 'DONE'
 
 
-
       RETURN
  99   STOP
       END
@@ -2687,8 +2701,8 @@ c          newobj%phi = SNGL(0.5D0*(dang(1,1) + dang(1,2)) / D_DEGRAD)
           newobj%nside = 4
           newobj%index(IND_IS ) = islice ! isector ! 1
           newobj%index(IND_ISI) = islice_index
-          newobj%index(IND_IK) = try(itry)%index(IND_IK)
-          newobj%index(IND_IR) = try(itry)%index(IND_IR)
+          newobj%index(IND_IK ) = try(itry)%index(IND_IK)
+          newobj%index(IND_IR ) = try(itry)%index(IND_IR)
 
           ishift = 0
           IF (itet.GE.2.AND.itet.LE.7) THEN
@@ -3954,7 +3968,7 @@ c             looking at the next segment:
                     WRITE(fp,*) 'X1,Y1:',x1,y1
                     WRITE(fp,*) 'X2,Y2:',x2,y2
                     WRITE(fp,*) 'RES  :',res                  
-                    STOP 'NOT READY FOR THE RES...'
+                    STOP 'NOT READY FOR THE RESa...'
                   ENDIF
 
                   len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4028,7 +4042,7 @@ c                    STOP 'dfsdfsd'
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (2)'
+              STOP 'NOT READY FOR THE RESa... (2)'
             ENDIF
 
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4115,7 +4129,7 @@ c        ENDDO
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (3)'
+              STOP 'NOT READY FOR THE RESa... (3)'
             ENDIF
             
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4659,7 +4673,7 @@ c             looking at the next segment:
                     WRITE(fp,*) 'X1,Y1:',x1,y1
                     WRITE(fp,*) 'X2,Y2:',x2,y2
                     WRITE(fp,*) 'RES  :',res                  
-                    STOP 'NOT READY FOR THE RES...'
+                    STOP 'NOT READY FOR THE RESb...'
                   ENDIF
 
                   len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4728,7 +4742,7 @@ c         Select the wall segments based on the index values in I1 and I2:
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (2)'
+              STOP 'NOT READY FOR THE RESb... (2)'
             ENDIF
 
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -4805,7 +4819,7 @@ c        ENDDO
               WRITE(fp,*) 'X1,Y1:',x1,y1
               WRITE(fp,*) 'X2,Y2:',x2,y2
               WRITE(fp,*) 'RES  :',res                  
-              STOP 'NOT READY FOR THE RES... (3)'
+              STOP 'NOT READY FOR THE RESb... (3)'
             ENDIF
             
             len = DSQRT((x1 - x2)**2 + (y1 - y2)**2)
@@ -5825,7 +5839,7 @@ c...  Dump connection map:
         WRITE(fp,'(I6,4X,3(3I6,4X),4X,2I6,2X,2I4,2X,3I4)') i1,
      .    (tri(i1)%map(v1),tri(i1)%sid(v1),tri(i1)%sur(v1),v1=1,3),
      .    tri(i1)%index(1),tri(i1)%index(2),
-     .    tri(i1)%type,tri(i1)%zone,
+     .    tri(i1)%type,tri(i1)%zone,  
      .    tri(i1)%sideindex(5,1:3)
       ENDDO
       CLOSE(fp)      
@@ -6211,6 +6225,7 @@ c      REAL*8, ALLOCATABLE :: xvertex(:),yvertex(:)
 
       WRITE(eirfp,*) 'BUILDING SUPER TRIANGLES'
 
+
       CALL OutputData(85,'Building super triangles')
 
       problem_triangle = -10  ! 14983 
@@ -6278,6 +6293,7 @@ c             only points on side 23 of neighbouring cells need to be checked:
                 x(3) = cell(i3)%r(1)
                 y(3) = cell(i3)%z(1)
               ENDIF
+
               IF (PointOnLine(x,y,s,t,7,output)) THEN
 c              IF (PointOnLine(x,y,s,t,2,output)) THEN
                 IF (output) WRITE(eirfp,*) 'MORE CELLS FOUND:',i2,i3
@@ -6287,6 +6303,8 @@ c              IF (PointOnLine(x,y,s,t,2,output)) THEN
                 slist(nlist(i2),i2) = s
               ENDIF
               IF (output) WRITE(eirfp,*) 'CHECK 1',i3,s,t
+
+
             ENDIF
 c...        Check ...:
             IF (i2.EQ.1) THEN
@@ -6396,6 +6414,8 @@ c     .              cell(i1)%index(2).EQ.39) THEN
             ENDDO
           ENDDO
         ENDDO           
+
+
 
 
 c...    Build triangles:
@@ -6561,6 +6581,8 @@ c                 is malformed, so go back to the original division scheme:
         ENDDO
 
       ENDDO
+
+
 
 c      CALL WriteEireneTriangles
 c      CALL DumpGrid('PROBLEM WITH TRIANGLE MAP')
@@ -7533,8 +7555,8 @@ c            write(0,*) 'blah',status,s12
               icount = icount + 1
               hold_s12(icount) = SNGL(s12)
 
-              WRITE(0 ,'(4X,A,2I6,F16.9,I4,2F12.5)')
-     .            '  list     :',itri,i1,s12,icount,x1,y1
+c              WRITE(0 ,'(4X,A,2I6,F16.9,I4,2F12.5)')
+c     .            '  list     :',itri,i1,s12,icount,x1,y1
 c              WRITE(0 ,*)
 c     .            '  vtx      :',v1(1:3)
 c              WRITE(0 ,*)
