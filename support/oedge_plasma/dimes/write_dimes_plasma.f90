@@ -4,7 +4,7 @@ program write_dimes_plasma
   implicit none
 
   character*512 :: arg
-  character*256 :: case_name
+  character*256 :: case_name,gridfilename,plasmafilename
   integer :: interpolate_option,errmsg_unit
   integer :: ierr
   integer :: ir,iz,nr,nz
@@ -133,8 +133,13 @@ program write_dimes_plasma
 
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
   
+  gridfilename = trim(case_name)//'.grd'
+  plasmafilename = trim(case_name)//'.bgp'
 
-  call init_oedge_plasma(case_name,r_offset,z_offset,interpolate_option,errmsg_unit,ierr)
+
+  call set_oedge_plasma_opts(r_offset,z_offset,interpolate_option,-1,errmsg_unit)
+
+  call load_oedge_plasma(gridfilename,plasmafilename,ierr)
 
   if (ierr.ne.0) then 
      call errmsg('Problem loading oedge plasma',ierr)

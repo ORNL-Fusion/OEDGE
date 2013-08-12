@@ -6,7 +6,7 @@ module oedge_plasma_interface
   private
 
   logical :: debug_code = .false.
-  integer :: interpolate_opt
+  integer :: interpolate_opt,extrapolate_opt
   real*8  :: r_offset,z_offset
 
   integer :: nrs,mks,irsep,nds,npolyp,nvert
@@ -74,23 +74,26 @@ module oedge_plasma_interface
   real*8,allocatable :: knds(:),kteds(:),ktids(:),kvds(:),keds(:)
   real*8,allocatable :: btotd(:),brd(:),bzd(:),btd(:)
 
+  ! data on boundary cells - identifier and boundary list for finding nearest plasma conditions
+  ! boundary_index contains the ik,ir and cell polygon index if the cell is a boundary and zero otherwise
+  integer :: nboundary
+  integer,allocatable :: boundary_index(:,:)
+  
+
   ! The meaning of these will depend on whether cell polygon data or cell center data is being used
   integer :: ik_last,ir_last,iq_last
 
 
-  public :: get_oedge_plasma,init_oedge_plasma,close_oedge_plasma,find_free_unit_number
+  public :: get_oedge_plasma,load_oedge_plasma,close_oedge_plasma,find_free_unit_number,set_oedge_plasma_opts
 
 
 
 contains
 
-
-  subroutine init_oedge_plasma(filename,r_shift,z_shift,interpolate_option,errmsg_unit,ierr)
+  subroutine set_oedge_plasma_opts(r_shift,z_shift,interpolate_option,extrapolate_option,errmsg_unit)
     implicit none
-    character*(*) :: filename
-    integer :: interpolate_option,errmsg_unit
-    character*256 :: gridfilename,plasmafilename
-    integer :: igridfile,iplasmafile,ierr,ios
+    integer :: interpolate_option,errmsg_unit,extrapolate_option
+    integer :: igridfile,iplasmafile
     real*8 :: r_shift, z_shift
 
     ! Set error message unit numbers to standard error only for this application instead of the default standard error and 
@@ -119,6 +122,19 @@ contains
     ! 1 - nearest neighbours interpolation
 
     interpolate_opt = interpolate_option
+    extrapolate_opt = extrapolate_option
+
+
+  end subroutine set_oedge_plasma_opts
+
+
+
+
+  subroutine load_oedge_plasma(gridfilename,plasmafilename,ierr)
+    implicit none
+    character*(*) :: gridfilename,plasmafilename
+    integer :: igridfile,iplasmafile,ierr,ios
+
 
     ! open input files 
     ! read array sizes from the geometry file
@@ -126,7 +142,7 @@ contains
     !...  Open geometry file:
 
     call find_free_unit_number(igridfile)
-    gridfilename = trim(filename)//'.grd'
+    !gridfilename = trim(filename)//'.grd'
 
     OPEN(UNIT=igridfile,FILE=trim(gridfilename),STATUS='OLD',IOSTAT=ios)
 
@@ -145,7 +161,7 @@ contains
     !...  Open plasma file:
 
     call find_free_unit_number(iplasmafile)
-    plasmafilename = trim(filename)//'.bgp'
+    !plasmafilename = trim(filename)//'.bgp'
 
     OPEN(UNIT=iplasmafile,FILE=trim(plasmafilename),STATUS='OLD',IOSTAT=ios)
 
@@ -173,6 +189,13 @@ contains
 
     call combine_target_data
 
+    !
+    ! Identify boundary cells and create a list of them. 
+    !
+
+    call find_boundary_cells
+
+
     ! Initialize start cell to offgrid values
     ik_last = -1
     ir_last = -1
@@ -180,6 +203,92 @@ contains
 
 
   end subroutine init_oedge_plasma
+
+  subroutine find_boundary_cells
+    use allocate_arrays
+    implicit none
+    integer,allocatable :: tmp_data(:,:)
+    integer :: in
+
+    ! boundary cells on the grid are those with indices of ik=0 or nks+1 and those cells for which ikins or ikouts points back to themselves. 
+    
+    max_tmp_data = 6 * mks + 2 * nrs
+
+    call allocate_array(tmp_data,max_tmp_data,3,'TMP_DATA',ierr)
+
+    nboundary = 0
+
+    do ir = 1,nrs
+       do ik = 0,nks(ir)+1
+          if (ik,eq.0.or.ik.eq.nks(ir)+1) then 
+             ! boundaries at targets (ring ends)
+             nboundary = nboundary + 1
+             if (nboundary.gt.max_tmp_data) call grow_iarray(tmp_data,max_tmp_data,3)
+             tmp_data(nboundary,1) = ik
+             tmp_data(nboundary,2) = ir
+
+             if (ik.eq.0) then 
+                tmp_data(nboundary,3) korpg(1,ir)
+             elseif (ik.eq.nks(ir)+1) then 
+                tmp_data(nboundary,3) korpg(nks(ir),ir)
+             endif
+
+          elseif (irouts(ik,ir).eq.ir.or.irins(ik,ir).eq.ir) then 
+             ! inner or outer boundary
+             nboundary = nboundary + 1
+             if (nboundary.gt.max_tmp_data) call grow_iarray(tmp_data,max_tmp_data,3)
+             tmp_data(nboundary,1) = ik
+             tmp_data(nboundary,2) = ir
+             tmp_data(nboundary,3) korpg(ik,ir)
+          endif
+       end do
+    end do
+
+    call allocate_array(boundary_index,nboundary,3,'BNDDAT',ierr)
+
+    boundary_index = 0
+
+    ! copy temp data
+    
+    do in = 1,nboundary
+       boundary_index(in,*) = tmp_data(in,*) 
+    end do
+
+    deallocate(tmp_data)
+
+  end subroutine find_boundary_cells
+
+
+  subroutine grow_iarray(tmp_array,tmp_bnd1,tmp_bnd2)
+    implicit none
+    integer :: tmp_bnd1,tmp_bnd2
+    integer, allocatable :: tmp_array(:,:)
+    integer, allocatable :: transfer_array(:,:)
+    integer :: in
+
+    if (allocated(tmp_array)) then 
+
+       allocate(transfer_array(tmp_bnd1,tmp_bnd2))
+       
+       transfer_array = tmp_array
+
+       deallocate(tmp_array)
+
+       allocate(tmp_array(2*tmp_bnd1,tmp_bnd2))
+
+       do in = 1, tmp_bnd1
+          tmp_array(in,*) = transfer_array(in,*)
+       end do
+
+       tmp_bnd1 = tmp_bnd1 * 2
+
+       deallocate(transfer_array)
+
+    endif
+
+    return
+  end subroutine grow_iarray
+
 
 
   subroutine close_oedge_plasma
@@ -206,7 +315,7 @@ contains
 
     ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
     ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
-    
+
     r = rin + r_offset
     z = zin + z_offset 
 
@@ -224,6 +333,31 @@ contains
     ! If the R,Z location is not found on grid then exit with non-zero return code
     ! The plasma data returned is undefined (it will contain whatever was passed in)
     if (ierr.ne.0) then 
+
+       if (extrapolate_opt.ge.0) then 
+          ! if extrapolation is on then return the data for the nearest r,z grid point
+          ! Note it will only check the boundary rings of the grid
+          ! 
+          call find_nearest_boundary(r,z,ik,ir)
+
+          if (extrapolate_opt.eq.0) then 
+
+             ! assign values from nearest boundary
+             ne = knbs(ik,ir)
+             te = ktebs(ik,ir)
+             ti = ktibs(ik,ir)
+             vb = kvhs(ik,ir)
+             ef = kes(ik,ir)
+             btoto = btot(ik,ir)
+             bro = br(ik,ir)
+             bzo = bz(ik,ir)
+             bto = bt(ik,ir)
+
+             ierr = 2
+
+          endif
+
+       endif
        return
     endif
 
@@ -305,6 +439,44 @@ contains
     endif
 
   end subroutine get_oedge_plasma
+
+
+
+subroutine find_nearest_boundary(r,z,ik,ir)
+implicit none
+real*8 :: r,z
+integer :: ik,ir
+
+real*8 :: dist, mindist
+integer :: ikmin,irmin,in
+
+mindist = 1e25
+ikmin = 0
+irmin = 0
+
+
+do in = 1,nboundary
+   ik = boundary_index(in,1)
+   ir = boundary_index(in,2)
+
+   dist = (r-rs(ik,ir))**2 + (z-zs(ik,ir))**2
+
+   if (dist.lt.mindist) then
+      mindist = dist
+      ikmin = ik
+      irmin = ir
+   endif
+end do 
+
+ik = ikmin
+ir = irmin
+
+return
+
+end subroutine find_nearest_boundary
+
+
+
 
 
   subroutine interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,btoto,bro,bzo,bto)
