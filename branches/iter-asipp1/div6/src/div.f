@@ -1321,6 +1321,23 @@ c
 c
             SPUTY = 1.0
 c slmod begin - t-dep
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c mk begin
+c
+c This bit of code launches impurity ions.  For CIOPTE = 11 we have a
+c source that's a combination of the standard ion injection code and
+c the new code that launches particles by continuing trajectories that
+c were stored during a previous DIVIMP run.
+c
+c Variables:
+c 
+c load_i         - Index of a continued trajectory in the array of continued trajectories.  Search the 
+c                  code for LOAD_I.NE.-1 to find modifications related to the new time-dependent method
+c                  for operating DIVIMP.
+c tdep_load_frac - Very important! This determines the weighting between the source of new particles that 
+c		   appear in this DIVIMP run and the particles that come from continuing trajectories
+c                  stored during a previsous run.
+c
           ELSEIF (CIOPTE.EQ.11) THEN
 c...        Ion injection from both the current source and the source stored
 c           from a previous run:
@@ -1338,7 +1355,7 @@ c              write(0,*) 'standard'
             ELSE
               NRAND = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
-              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
+              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)  ! Randomly choose the index of a stored trajectory
 c...          left off: need to sort out setting the charge state, and also the strange initialization of 
 c             maxciz from cizsc ...
 c             DO 792 JZ = CIZSC, MAXCIZ  ! why would this be done? a bug?
@@ -1349,6 +1366,8 @@ c             DO 792 JZ = CIZSC, MAXCIZ  ! why would this be done? a bug?
               SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
 c              write(0,*) '_load',load_i,r,z,vel,sputy
             ENDIF
+c mk end
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c slmod end
           ENDIF
 c

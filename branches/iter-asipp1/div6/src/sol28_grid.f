@@ -1267,9 +1267,14 @@ c       Output the OSM geometry data file that's read in by IDL:
         CLOSE(fp)
         IF (debug) WRITE(0,*) 'Data file written, calling IDL'
 c       Call IDL:
-        CALL CIssue('idl grid_run.pro -args suppliment '//
+c        CALL CIssue('idl grid_run.pro -args suppliment '//
 c        CALL CIssue('idl grid_run.pro -quiet -args suppliment '//
-     .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
+c     .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
+
+        CALL CIssue('$FUSEHOME/scripts/fuse_suppliment '//
+     .              'grid_run_sup.pro -args suppliment grid.sup '//
+     .              TRIM(opt%f_grid_file)//'.equ',ierr)
+
 c       Copy the data to <gridname>.sup for storage in the equilibrium 
 c       directory (the file is moved by the OSM run script):
         IF (debug) WRITE(0,*) 'Copying IDL output file'

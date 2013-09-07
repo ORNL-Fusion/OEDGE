@@ -3,8 +3,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE TetrahedronsForMartin(fname)
-      USE mod_interface
+      SUBROUTINE DumpTetrahedronsForMartin(fname)
+c      USE mod_interface
       USE mod_geometry
       USE mod_eirene06_locals
       IMPLICIT none
@@ -19,7 +19,7 @@ c
 
       INTEGER GetNumberOfObjects
 
-      INTEGER status,ndat,ik,ir,iobj,ion
+      INTEGER status,ndat,ik,ir,iobj,iside,omap,isrf,ivtx,ion,fp,i,j
       REAL*8  p(3),dist
       REAL, ALLOCATABLE :: tdata(:,:)
 
@@ -27,18 +27,58 @@ c
 
       CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
       IF (status.EQ.-1) THEN
-        WRITE(0,*) 'MESSAGE TetrahedronsForMartin: File not found'
+        WRITE(0,*) 'MESSAGE DumpTetrahedronsForMartin: Tetrahedron '//
+     .             'file not found'
         RETURN
       ENDIF
 
-c      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-c     .     FORM='UNFORMATTED',STATUS='REPLACE',ERR=97)                
+      OPEN (UNIT=fp,FILE='tet.surface_triangles',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
 
+      WRITE(0,'(A)') '* The ultimate triangle data file'
+      WRITE(0,'(A)') '*'
+      WRITE(0,'(A)') '* ITET ISIDE IMAP ISRF GROUP'
+      WRITE(0,'(A)') '* IVTX VX VY VZ'
+      WRITE(0,'(A)') '*'
+      WRITE(0,'(A)') '* ITET  - index in tetrahedron list'
+      WRITE(0,'(A)') '* ISIDE - tetrahedron side number'
+      WRITE(0,'(A)') '* IMAP  - index of neightoubring tetrahedron'
+      WRITE(0,'(A)') '* ISRF  - index of side in surface list'
+      WRITE(0,'(A)') '* GROUP - 20=fluid grid, 21=void grid'
+      WRITE(0,'(A)') '* IVTX  - index in vertex list'
+      WRITE(0,'(A)') '* V?    - vertex in machine coordinates'
+      WRITE(0,'(A)') '*'
 
+      DO iobj = 1, nobj
+ 
+        IF (obj(iobj)%index(IND_IR).NE.0    .AND.
+     .      obj(iobj)%index(IND_IR).LT.irsep) CYCLE
 
+        DO iside = 1, obj(iobj)%nside
 
+          omap = obj(iobj)%omap(iside)
 
-c      CLOSE(fp)
+          IF (omap.NE.0) CYCLE
+
+          isrf = obj(iobj)%iside(iside)
+
+          WRITE(fp,'(6I8)') 
+     .      iobj,iside,omap,isrf,grp(obj(iobj)%group)%origin,
+     .      obj(iobj)%index(IND_IR)
+
+          DO i = 1, srf(isrf)%nvtx
+
+            ivtx = srf(isrf)%ivtx(i)
+
+            WRITE(fp,'(I6,3F15.8)') ivtx,vtx(1:3,ivtx)
+
+          ENDDO
+
+        ENDDO
+
+      ENDDO
+
+      CLOSE(fp)				
 
       CALL geoClean
 c      CALL osmClean
@@ -5531,6 +5571,9 @@ c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
         CALL DumpAlexKukushkin(title)
         CALL DumpMatthiasReinelt(title)
         CALL DumpMarkusAirila(title,qtim)
+        RETURN
+      ELSEIF (iopt.EQ.21) THEN
+        CALL DumpTetrahedronsForMartin('tetrahedrons.raw')
         RETURN
       ENDIF
 
