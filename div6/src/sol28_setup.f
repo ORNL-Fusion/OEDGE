@@ -738,7 +738,6 @@ c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
 
         WRITE(88,*) '   :',xval,yval
         WRITE(88,*) '   : unshifted xval',xval + shift
-
       ENDIF
 
 c      WRITE(88,*) 'XCOL,YCOL:',xcol,ycol
@@ -1678,6 +1677,9 @@ c...        Exponential decay toward some value:
 c         ----------------------------------------------------------
           CASE (4)
 c...        Load probe data from ASCII file:
+            WRITE(logfp,*) 'DATA FILE '//TRIM(osmnode(i1)%file_name)
+            WRITE(logfp,*) 'COORD     ',coord
+
             IF (nc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,

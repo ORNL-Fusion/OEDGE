@@ -443,8 +443,8 @@ c          isrf1(4) = 8
 c        ENDIF
 c        WRITE(fp,'(I9,4X,4(I9,F14.3,I4,4X),2I6,2X,2I4)') iobj-istart+1,
         WRITE(fp,'(I9,4X,4(I9,I4,I4,4X),2I6,4X,2I4)') iobj-istart+1,
-     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4),  
-     .    obj(iobj)%index(IND_IK),
+     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4),
+     .    obj(iobj)%index(IND_IK),  
      .    obj(iobj)%index(IND_IR),
      .    0,0
 c        WRITE(fp,'(13I10)') iobj-istart+1,
@@ -2057,10 +2057,6 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
-
-
-
-
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -2385,9 +2381,6 @@ c...  Impose filament structures:
         CALL FixTetrahedrons(istart,iend)
       ENDIF
 
-
-
-
 c...  Manual refinement:
       DO itet = 1, opt_eir%tet_n
         IF (opt_eir%tet_type(itet).NE.5.0) CYCLE
@@ -2705,8 +2698,8 @@ c          newobj%phi = SNGL(0.5D0*(dang(1,1) + dang(1,2)) / D_DEGRAD)
           newobj%nside = 4
           newobj%index(IND_IS ) = islice ! isector ! 1
           newobj%index(IND_ISI) = islice_index
-          newobj%index(IND_IK) = try(itry)%index(IND_IK)
-          newobj%index(IND_IR) = try(itry)%index(IND_IR)
+          newobj%index(IND_IK ) = try(itry)%index(IND_IK)
+          newobj%index(IND_IR ) = try(itry)%index(IND_IR)
 
           ishift = 0
           IF (itet.GE.2.AND.itet.LE.7) THEN
@@ -5843,7 +5836,7 @@ c...  Dump connection map:
         WRITE(fp,'(I6,4X,3(3I6,4X),4X,2I6,2X,2I4,2X,3I4)') i1,
      .    (tri(i1)%map(v1),tri(i1)%sid(v1),tri(i1)%sur(v1),v1=1,3),
      .    tri(i1)%index(1),tri(i1)%index(2),
-     .    tri(i1)%type,tri(i1)%zone,
+     .    tri(i1)%type,tri(i1)%zone,  
      .    tri(i1)%sideindex(5,1:3)
       ENDDO
       CLOSE(fp)      
