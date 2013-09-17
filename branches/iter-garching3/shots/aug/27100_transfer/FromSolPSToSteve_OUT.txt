@@ -1,0 +1,11 @@
+FromSolPSToSteve.py->Processing: fort.31 = 'fort.31' with 16 fluids, sonnet = 'grid.dat'
+SonnetGrid.__parse_cells()->Successfully red 20 tubes with 50 poloidal sections
+	Grid contains 50 rings anf 20 pol. div.
+Successfully (probably) parsed the unstructured SolPS fort.31 output file... 
+['radergflx', 'polergflx', 'radflxi_12', 'ti', 'vri_1', 'te', 'radflxi_14', 'radflxi_13', 'vri_0', 'radflxi_8', 'radflxi_9', 'radflxi_2', 'radflxi_3', 'radflxi_0', 'radflxi_1', 'radflxi_6', 'radflxi_7', 'radflxi_4', 'radflxi_5', 'btot', 'vri_9', 'vri_8', 'ni_14', 'ni_15', 'vpoli_12', 'vpoli_13', 'ni_10', 'ni_11', 'ni_12', 'ni_13', 'vpoli_14', 'vpoli_15', 'vcell', 'vpari_10', 'vpari_11', 'vpari_12', 'vpari_13', 'vpari_14', 'vpari_15', 'vri_11', 'vri_10', 'vri_13', 'vri_12', 'vri_15', 'vri_14', 'polefldflx', 'brat', 'vri_7', 'radefldflx', 'polflxi_14', 'polflxi_15', 'polflxi_10', 'polflxi_11', 'polflxi_12', 'polflxi_13', 'pp', 'vpoli_10', 'vpoli_11', 'vri_3', 'vri_2', 'vri_5', 'vri_4', 'ni_6', 'ni_7', 'ni_4', 'ni_5', 'ni_2', 'ni_3', 'ni_0', 'ni_1', 'vri_6', 'ni_8', 'ni_9', 'polflxi_8', 'polflxi_9', 'vpari_6', 'vpari_7', 'vpari_4', 'vpari_5', 'vpari_2', 'vpari_3', 'vpari_0', 'vpari_1', 'vpari_8', 'vpari_9', 'vpoli_6', 'vpoli_7', 'vpoli_4', 'vpoli_5', 'vpoli_2', 'vpoli_3', 'vpoli_0', 'vpoli_1', 'polflxi_2', 'polflxi_3', 'polflxi_0', 'polflxi_1', 'polflxi_6', 'polflxi_7', 'vpoli_8', 'vpoli_9', 'radflxi_15', 'radflxi_10', 'radflxi_11', 'polflxi_4', 'polflxi_5']
+Generating AUG16Fluids_ne
+Generating AUG16Fluids_te
+Generating AUG16Fluids_ti
+Generating AUG16Fluids_ni
+Generating AUG16Fluids_up
+Script finished successfully
