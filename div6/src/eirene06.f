@@ -2057,10 +2057,6 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
-
-
-
-
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -2385,9 +2381,6 @@ c...  Impose filament structures:
         CALL FixTetrahedrons(istart,iend)
       ENDIF
 
-
-
-
 c...  Manual refinement:
       DO itet = 1, opt_eir%tet_n
         IF (opt_eir%tet_type(itet).NE.5.0) CYCLE
@@ -2705,8 +2698,8 @@ c          newobj%phi = SNGL(0.5D0*(dang(1,1) + dang(1,2)) / D_DEGRAD)
           newobj%nside = 4
           newobj%index(IND_IS ) = islice ! isector ! 1
           newobj%index(IND_ISI) = islice_index
-          newobj%index(IND_IK) = try(itry)%index(IND_IK)
-          newobj%index(IND_IR) = try(itry)%index(IND_IR)
+          newobj%index(IND_IK ) = try(itry)%index(IND_IK)
+          newobj%index(IND_IR ) = try(itry)%index(IND_IR)
 
           ishift = 0
           IF (itet.GE.2.AND.itet.LE.7) THEN

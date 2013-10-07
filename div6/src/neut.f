@@ -5024,7 +5024,7 @@ c...        The direct assignment of FWLPROB to FYDATA(,5) is not correct
 c           since FWLPROB is an additive measure of wall launch probability,
 c           with the last entry approaching 1.0, while FYDATA(,5) should contain
 c           individual wall launch probabilities for each wall segment that are
-c           independent of the lauch probabilities for the preceding segments
+c           independent of the lauch probabilities for the preceeding segments
 c           in the list. - SL, 09/05/12
 
             if (id.eq.1) then
@@ -5605,9 +5605,18 @@ c
          write(0,'(a)') '- CHECK SELECTION OF VELOCITY/ANGLE FLAG'//
      >                  ' AND CORRESPONDING SPUTTER ENERGIES'
 c sltmp
-c         write(0,*) 'CNEUTB=',cneutb
-c         write(0,*) 'PINSW =',pinsw
-c         write(0,*) 'CEBD  =',cebd
+         write(0,*) 'CNEUTB=',cneutb
+         write(0,*) 'CNEUTC=',cneutC
+         write(0,*) 'PINSW =',pinsw
+         write(0,*) 'northopt =',northopt
+         write(0,*) 'matt =',matt
+         write(0,*) 'ntars =',ntars		 
+         write(0,*) 'CEBD  =',cebd
+         write(0,*) 'CETH(MATP,MATT)  =',CETH(MATP,MATT)	
+         write(0,*) 'CEIMP  =',CEIMP		 
+         write(0,*) 'GAMBL  =',GAMBL		 	 
+         write(0,*) 'EMAX=',EMAX
+         write(0,*) 'fydata(id,2) =',fydata(id,2)     
 
          stop 1
 c

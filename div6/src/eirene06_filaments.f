@@ -301,7 +301,7 @@ c       ----------------------------------------------------------------
 c       ----------------------------------------------------------------
         CASE (2)
           CALL TraceFieldLine_DIVIMP(0.0,0.0,0.0,1,1,1.0E+20,1.0E+20,
-     .                           0.0D0,n,v,index,fraction,ring,10000)
+     .                              0.0D0,n,v,index,fraction,ring,10000)
           CALL SelectTetrahedrons(n,v(1:3,1:n))
           tmp_nobj = nobj
           DO iobj = 1, tmp_nobj
