@@ -1322,7 +1322,7 @@ c
             SPUTY = 1.0
 c slmod begin - t-dep
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-c mc begin
+c mk begin
 c
 c This bit of code launches impurity ions.  For CIOPTE = 11 we have a
 c source that's a combination of the standard ion injection code and
@@ -1366,7 +1366,7 @@ c             DO 792 JZ = CIZSC, MAXCIZ  ! why would this be done? a bug?
               SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
 c              write(0,*) '_load',load_i,r,z,vel,sputy
             ENDIF
-c mc end
+c mk end
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c slmod end
           ENDIF

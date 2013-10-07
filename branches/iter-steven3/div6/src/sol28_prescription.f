@@ -658,11 +658,18 @@ c...        Pleasant:
      .                         frac  * (deltav * frac**y + v1)     ! user specified power law
             ENDDO
           CASE (6)
-c...        Te evolution:
-            CALL CalculateTeProfile(in1,in2,s,target)     
-            t = te                                        
-            IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
-     .                             'not ready',*99)
+            IF (mode.EQ.1) THEN 
+c...          Te evolution:
+              CALL CalculateTemperatureProfile(in1,in2,s,target,t)     
+c              t = te                                        
+              IF (mode.EQ.2) CALL ER('InterpolateProfile','MODE=2 '// 
+     .                               'not ready',*99)
+            ELSE
+c...          Ti evolution:
+c              CALL CalculateTeProfile(in1,in2,s,target)     
+c              t = ti
+              STOP 'cry please'
+            ENDIF
 c            CALL EvolveTeProfile(in1,in2,s,target)
           CASE (7)
 c...        Linear -- to be overwritten by the reference plasma:

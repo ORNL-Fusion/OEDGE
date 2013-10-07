@@ -1021,7 +1021,6 @@ c
       TYPE(type_3D_object) :: newobj
       INTEGER, INTENT(IN)  :: nsurface,ielement,option
       INTEGER, INTENT(OUT) :: status
-c      REAL, ALLOCATABLE :: tdata(:)
 
       INTEGER GetSurfaceIndex
       REAL    GetTetCentre
@@ -1149,6 +1148,15 @@ c
       CHARACTER fname*(*)
 
       CALL LoadObjects(TRIM(fname),status)
+
+
+c...  Dump tetrahedron data to an ASCII file:
+
+
+
+
+
+
 
       RETURN
  99   STOP

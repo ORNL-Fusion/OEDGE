@@ -874,7 +874,7 @@ c       ----------------------------------------------------------------
         CASE (2)  ! Vessel wall
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=2'
           DO iobj = 1, nobj
-c           IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) CYCLE     
+            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
@@ -1088,7 +1088,6 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
       INTEGER FindMidplaneCell
       REAL    FindSeparatrixRadius
 
-
       INTEGER nsur,iobj,isur,isrf,i1,i2,i3,n1,ipts,ipts1,ipts2,pass,
      .        nx,ny,iadd,
      .        ix,iy,iver,count,fp,ntmp,nlight,isrf1,isrf2,status,
@@ -1106,10 +1105,8 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
      .        mindsur,maxdsur,frac1,frac2,limit1,limit2,len1,len2
       CHARACTER fname*512,buffer*2048,cdum1*512
 
-
       INTEGER, ALLOCATABLE :: npts(:),hsur(:),dlist(:),ilist(:)
       REAL*8,  ALLOCATABLE :: csur(:,:),vsur(:,:,:),bsur(:,:),dsur(:)
-
 
       CALL setup_col(16,5)
    
@@ -2250,7 +2247,7 @@ c          IF (iobj.NE.471.AND.iobj.NE.472.AND.iobj.NE.458) CYCLE  ! *TEMP*
 
           DO isid = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
 
-c             IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c            IF (isid.NE.2) CYCLE
 
@@ -2273,11 +2270,10 @@ c            IF (obj(iobj)%ik.NE.16) CYCLE
             IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
               count = count + 
      .                1.0 / REAL(MAX(obj(iobj)%nsur,obj(iobj)%nside))
+
 c              IF (count.GT.100.0) CYCLE
 c              IF (count.GT.15000.0) CYCLE
             ENDIF
-
-c *** NEED TO STORE LINE SEGMENTS AND DELETE DUPLICATES... 
 
             IF (obj(iobj)%nside.NE.0) THEN
               isrf1 = obj(iobj)%iside(isid,1)
@@ -2359,6 +2355,7 @@ c...              Rotate vertices:
 c...            Filter:
                 count = 0.0
 c                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c                IF (obj(iobj)%imap(1,isid).NE.iobj) CYCLE
 c                WRITE(0,*) 'GO MAN',iobj,isid
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
