@@ -1757,7 +1757,7 @@ c
       iside  = 0
 
       ALLOCATE(tdata(MAXNKS,MAXNRS,5 ))
-      ALLOCATE(tflux(MAXSEG       ,10))
+      ALLOCATE(tflux(MAXSEG       ,12))
       tdata = 0.0
       tflux = 0.0
 
@@ -1973,10 +1973,13 @@ c             the standard DIVIMP neutral wall, ignore for now...
             ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN
 c...          Sputtering turned on in EIRENE, assume (for now) this data 
 c             is for the impurity species (loose...):
-              tflux(in,5 ) = tflux(in,5 ) + rdum(4) - rdum(2)  ! Emitted atom particle flux from incident D atoms (s-1)
-              tflux(in,6 ) = tflux(in,6 ) + rdum(8)            ! Emitted atom energy   flux          "            (eV s-1)
-              tflux(in,9 ) = tflux(in,9 ) + rdum(7)            ! Emitted atom particle flux from indicent bulk ions (s-1)
+              tflux(in,5 ) = tflux(in,5 ) + rdum(4) - rdum(2)  ! Emitted atom particle flux from incident D atoms   (   s-1)
+              tflux(in,6 ) = tflux(in,6 ) + rdum(8)            ! Emitted atom energy   flux          "              (eV s-1)
+              tflux(in,9 ) = tflux(in,9 ) + rdum(7)            ! Emitted atom particle flux from indicent bulk ions (   s-1)
               tflux(in,10) = tflux(in,10) + rdum(9)            ! Emitted atom energy   flux           "             (eV s-1)
+
+              tflux(in,11) = tflux(in,11) + rdum(2)            ! Incident (impurity) atom particle flux (   s-1)
+              tflux(in,12) = tflux(in,12) + rdum(3)            ! Incident (impurity) atom energy   flux (eV s-1)
             ELSE
               CALL ER('LoadEireneData_06','IATM out of bounds, '//
      .                'unexpected this is...',*99)
@@ -2330,6 +2333,10 @@ c        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)  ! *** BUG ***  FLUXHW is not t
 
         wall_flx(i)%in_ene_atm(1,0) = flxhw5(i)
         wall_flx(i)%in_ene_mol(1,0) = flxhw7(i)
+
+        wall_flx(i)%in_par_atm(2,0) = tflux(i,11) ! / area         ! Total impurity atom flux to the surface
+        IF (tflux(i,11).NE.0.0) 
+     .  wall_flx(i)%in_ene_atm(2,0) = tflux(i,12) ! / tflux(i,11)  ! Average energy of the impurity atoms hitting the surface
 
         wall_flx(i)%em_par_atm(2,1) = tflux(i,9) / area                  ! Impurity atom influx from bulk ions
         wall_flx(i)%em_par_atm(2,2) = tflux(i,5) / area                  ! Impurity atom influx from test atoms
