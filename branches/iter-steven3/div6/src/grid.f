@@ -3977,7 +3977,7 @@ c     Find cells without a neighbour in the 'outward' (increasing
 c     IR) direction:
 c    
       CALL OutputGrid(87,'Before generating wall ring')
-     
+
       ncell = 0
 
       DO ir = irsep, nrs

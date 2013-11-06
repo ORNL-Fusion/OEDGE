@@ -46,7 +46,7 @@ c...      Comment or blank line, so continue:
           IF (mode.EQ.WITH_TAG) THEN
 c...        Tag line: 
             EXIT
-          ELSE
+          ELSEIF (mode.NE.DATA_ONLY) THEN
 c...        Tag line was not requested so backup the file position:
             osmGetLine = .FALSE.
             IF (fp.EQ.-1) THEN
@@ -57,7 +57,7 @@ c...        Tag line was not requested so backup the file position:
             EXIT
           ENDIF
         ELSE
-          IF (mode.EQ.NO_TAG) THEN
+          IF (mode.EQ.NO_TAG.OR.mode.EQ.DATA_ONLY) THEN
 c...        Data line found, as requested:
             EXIT
           ELSE
@@ -350,19 +350,19 @@ c      CHARACTER, INTENT(OUT) :: buffer_array*256(*)  ! gfortran
 
       j = 0
       DO i = 1, n
-        IF (buffer(i:i).EQ.' ' .AND.j.GT.0.OR.
-     .      buffer(i:i).EQ.'"' .AND.j.LT.0.OR. 
-     .      buffer(i:i).EQ.''''.AND.j.LT.0) THEN
+        IF (      buffer(i:i) .EQ.' ' .AND.j.GT.0.OR.
+     .      ICHAR(buffer(i:i)).EQ.9   .AND.j.GT.0.OR.          ! 9 is TAB, hopefully... should add a check when the code starts up, if one can be imagined...
+     .            buffer(i:i) .EQ.'"' .AND.j.LT.0.OR. 
+     .            buffer(i:i) .EQ.''''.AND.j.LT.0) THEN
           m = m + 1
-c          WRITE(0,*) '>>>',j,i
           IF (j.LT.0) j = -j + 1
           buffer_array(m) = buffer(j:i-1)
-c          WRITE(0,*) m,buffer(j:i-1)            
           j = 0
         ELSE
-          IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
-          IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
-          IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
+          IF (      buffer(i:i) .EQ.''''.AND.j.EQ.0) j = -i
+          IF (      buffer(i:i) .EQ.'"' .AND.j.EQ.0) j = -i
+          IF (      buffer(i:i) .NE.' ' .AND.
+     .        ICHAR(buffer(i:i)).NE.9   .AND.j.EQ.0) j =  i    ! 9 is TAB, hopefully...  
         ENDIF
       ENDDO
 

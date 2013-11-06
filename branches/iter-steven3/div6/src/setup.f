@@ -1995,7 +1995,7 @@ c     PFZ ring:
             DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
-              WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik,ir,ik2,ir2,
+              WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik1,ir1,ik2,ir2,
      .                               nks(ir),irsep,status
               IF (ir1.LE.irsep) THEN               ! Changed 02/09/2010
 c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
@@ -2227,8 +2227,9 @@ c     ------------------------------------------------------------------
           IF (irins(ik1,ir1).NE.irsep2) EXIT
         ENDDO
         IF (ik1.EQ.nks(ir1)+1) THEN
+          WRITE(0,*) 'IK1,IR1  =',ik1,ir1
+          WRITE(0,*) 'NKS(IR1) =',nks(ir1) 
           CALL DumpGrid('Identify problems')
-          STOP 'DAMNA'
         ELSE
 c...      Outer SOL - IKTO:
           ik = ikouts(ikto2(irsep2),irsep2)
