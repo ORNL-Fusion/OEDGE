@@ -3954,7 +3954,8 @@ c     Local variables:
 c
 c Initialize variables:
 c
-      debug = .TRUE.
+      debug = .FALSE.
+      IF (sloutput) debug = .TRUE.
       STATUS = 0
       i = 0
 c
@@ -4024,7 +4025,7 @@ c Check this...
         ENDDO
       ENDDO
       
-      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (sloutput) WRITE(0,*) 'GenWallRing: NCELL=',ncell
       IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
