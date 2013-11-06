@@ -70,7 +70,6 @@
 
 
       END MODULE mod_sol28_params
-
 !
 ! ======================================================================
 !
@@ -78,12 +77,13 @@
       IMPLICIT none
       PUBLIC
 
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2, ALL_LINES = 3
+      INTEGER, PARAMETER :: WITH_TAG  = 1, NO_TAG = 2, ALL_LINES = 3,  
+     .                      DATA_ONLY = 4
 
       END MODULE mod_sol28_io
-c
-c ======================================================================
-c
+!
+! ======================================================================
+!
       MODULE mod_sol28
       USE mod_sol28_params
       IMPLICIT none
@@ -102,18 +102,18 @@ c
 !         INTEGER   :: tube(2)
 
 !...     I/O:
-         INTEGER   :: log          ! Log file option
-         INTEGER   :: logfp        ! File pointer for log file
+         INTEGER   :: log    ! Log file option
+         INTEGER   :: logfp  ! File pointer for log file
          INTEGER   :: debug
 
-         INTEGER   :: osm_load         ! Load status
-         CHARACTER :: f_osm_dir*512    ! 
-         CHARACTER :: f_osm_load*512   ! Name of file to be loaded
+         INTEGER   :: osm_load        ! Load status
+         CHARACTER :: f_osm_dir*512   ! 
+         CHARACTER :: f_osm_load*512  ! Name of file to be loaded
 !...     Grid:
-         INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
-         INTEGER   :: f_grid_load_method       ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
-         CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
-         INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
+         INTEGER   :: f_grid_format           ! Format of equilibrium grid to be loaded
+         INTEGER   :: f_grid_load_method      ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
+         CHARACTER :: f_grid_file*512         ! Name of equilibrium grid to be loaded
+         INTEGER   :: f_grid_strip            ! Remove boundary cells (1=first and last cells, first and last rings)
          INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
          INTEGER   :: grd_tdel(S28_MAXNTDEL)  ! List of tubes to delete
 !...     Flow control:
@@ -128,7 +128,7 @@ c
          INTEGER   :: sol_n
          INTEGER   :: sol_tube  (2,100)
          INTEGER   :: sol_option(  100)
-         INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
+         INTEGER   :: bc(2)            ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
          INTEGER   :: p_ion(2)         ! Ionisation 
          REAL      :: p_ion_exp(2)     ! Exponent for exponential decay of the ionisation source for P_ION = 3
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)

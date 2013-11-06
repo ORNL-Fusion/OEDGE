@@ -645,6 +645,7 @@ c
       SUBROUTINE LoadUpstreamData(fname,fformat,itube,coord,shift,
      .                            xcolumn,ycolumn,yval)
       USE mod_sol28_params
+      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
 
@@ -654,14 +655,14 @@ c
       REAL     , INTENT(OUT) :: yval
 
       LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER    MAXTDAT     ,MAXCOLS
       PARAMETER (MAXTDAT=1000,MAXCOLS=20)
 
-      INTEGER   ndata,fp,i,j,n,ncolumns,xcol,ycol
+      INTEGER   ndata,fp,i,j,n,ncolumns,xcol,ycol,n_hold
       REAL      vdata(MAXTDAT,MAXCOLS),xval
-      CHARACTER buffer*1024
+      CHARACTER     buffer*1024
+      CHARACTER*256 buffer_array(100)
 
 c      WRITE(0,*) 'UPSTREAM: COORD2=',coord
 c      WRITE(0,*) 'UPSTREAM: FILE='//TRIM(fname)//'<'
@@ -670,38 +671,61 @@ c...  Access data file:
       fp = 99
       OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
-      DO WHILE (osmGetLine(fp,buffer,WITH_TAG))
-c        WRITE(0,*) 'BUFFER:',TRIM(buffer)
 
-c...    Isolate tag string:
-        DO i = 2, LEN_TRIM(buffer)
-          IF (buffer(i:i).EQ.'}') EXIT
+      n_hold = -1
+      ndata  =  0
+
+c     THE CODE TO READ IN THE DATA COLUMNS WAS GENERALIZED - SL, 06/11/2013
+
+      DO WHILE (osmGetLine(fp,buffer,DATA_ONLY))
+        buffer_array = ''
+        CALL SplitBuffer(buffer,buffer_array)
+c       Count the number of data columns:
+        DO i = 1, 100
+          IF (LEN_TRIM(buffer_array(i)).EQ.0) EXIT
         ENDDO
-
-        n = LEN_TRIM(buffer)
-
-c        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
-
-        SELECTCASE (buffer(2:i-1))
-          CASE ('NUMBER OF COLUMNS')
-            READ(buffer(i+1:n),*) ncolumns
-          CASE ('DATA','DATA LIST')
-            j = 0
-c              WRITE(0,*) 'NCOLUMNS:',ncolumns
-            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-              IF (buffer(1:1).EQ.'{') EXIT
-              j = j + 1
-c              WRITE(0,*) 'BUFFER -:',TRIM(buffer)
-              READ(buffer,*) vdata(j,1:ncolumns)
-            ENDDO
-            ndata = j
-          CASE ('END')
-            EXIT
-          CASE DEFAULT
-            CALL ER('LoadUpstreamData','Unknown tag',*99)
-        ENDSELECT
-
+        IF (i.EQ.101)
+     .    CALL ER('LoadUpstreamData','Data not loaded correctly, '//
+     .            'check the data file',*99)
+        n = i - 1
+        IF (n_hold.EQ.-1) n_hold = n
+        IF (n_hold.NE. n)
+     .    CALL ER('LoadUpstreamData','The number of data columns '//
+     .            'changed unexpectedly, check the data file',*99)
+        ndata = ndata + 1 
+        DO i = 1, n
+          READ(buffer_array(i),*) vdata(ndata,i)
+        ENDDO
       ENDDO
+
+c      DO WHILE (osmGetLine(fp,buffer,WITH_TAG))
+cc        WRITE(0,*) 'BUFFER:',TRIM(buffer)
+cc...    Isolate tag string:
+c        DO i = 2, LEN_TRIM(buffer)
+c          IF (buffer(i:i).EQ.'}') EXIT
+c        ENDDO
+c        n = LEN_TRIM(buffer)
+cc        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
+c        SELECTCASE (buffer(2:i-1))
+c          CASE ('NUMBER OF COLUMNS')
+c            READ(buffer(i+1:n),*) ncolumns
+c          CASE ('DATA','DATA LIST')
+c            j = 0
+cc              WRITE(0,*) 'NCOLUMNS:',ncolumns
+c            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+c              IF (buffer(1:1).EQ.'{') EXIT
+c              j = j + 1
+cc              WRITE(0,*) 'BUFFER -:',TRIM(buffer)
+c              READ(buffer,*) vdata(j,1:ncolumns)
+c            ENDDO
+c            ndata = j
+c          CASE ('END')
+c            EXIT
+c          CASE DEFAULT
+c            CALL ER('LoadUpstreamData','Unknown tag',*99)
+c        ENDSELECT
+c      ENDDO
+
       CLOSE(fp)
 
 c... 
@@ -715,16 +739,18 @@ c...
       ENDSELECT
 
       xcol = NINT(xcolumn)
-      ycol = NINT(ycolumn)
+      ycol = NINT(ycolumn) 
 
-      IF (xcol.LT.1.OR.xcol.GT.ncolumns) 
+      IF (xcol.LT.1.OR.xcol.GT.n) 
+c      IF (xcol.LT.1.OR.xcol.GT.ncolumns) 
      .  CALL ER('LoadUpstreamData','x-data column ID invalid',*99)
-      IF (ycol.LT.1.OR.ycol.GT.ncolumns.OR.xcol.EQ.ycol) 
+      IF (ycol.LT.1.OR.ycol.GT.n.OR.xcol.EQ.ycol) 
+c      IF (ycol.LT.1.OR.ycol.GT.ncolumns.OR.xcol.EQ.ycol) 
      .  CALL ER('LoadUpstreamData','y-data column ID invalid',*99)
 
       IF     (xval.LT.vdata(1    ,xcol)) THEN
 c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
-        yval = vdata(1,ycol)
+        yval = vdata(1    ,ycol)
       ELSEIF (xval.GT.vdata(ndata,xcol)) THEN
 c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
         yval = vdata(ndata,ycol)
@@ -746,10 +772,11 @@ c      WRITE(88,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
 
       RETURN
  98   WRITE(0,*) 'ERROR LoadUpstreamData: Data file not found'
-      WRITE(0,*) '  FILE = ',TRIM(fname)
- 99   WRITE(0,*) '  XCOL = ',xcol
-      WRITE(0,*) '  YCOL = ',ycol
-      WRITE(0,*) '  NCOL = ',ncolumns
+ 99   WRITE(0,*) '  FILE   = ',TRIM(fname)
+      WRITE(0,*) '  XCOL   = ',xcol
+      WRITE(0,*) '  YCOL   = ',ycol
+      WRITE(0,*) '  N      = ',n
+      WRITE(0,*) '  N_HOLD = ',n_hold
       STOP
       END
 c     
@@ -877,8 +904,6 @@ c
         node_s(i1)%jsat(1:S28_MAXNION) = 0.0
         node_s(i1)%ti  (0:S28_MAXNION) = 0.0
       ENDDO
-
-
 
       frac = GetRelaxationFraction()
 
@@ -1043,9 +1068,7 @@ c             Only select tubes identified as being part of this target data blo
           ENDIF
 c       ----------------------------------------------------------------  
         ELSEIF (osmnode(i1)%type.EQ.2.1.AND.             ! Semi-automated symmetry point specification
-c     .          osmnode(i1)%tube_range(1).LE.itube.AND.  
-c     .          osmnode(i1)%tube_range(2).GE.itube.AND.  
-     .          two_timer) THEN                      
+     .          two_timer) THEN                          ! WHAT IS THIS!? -SL, 17/10/2013                    
           intersection = .FALSE.
           hold_c1  = 0.0D0
           hold_c2  = 0.0D0
@@ -1104,8 +1127,6 @@ c...      No interesection found, so take the middle of the tube (in s):
           ENDIF
 c       ----------------------------------------------------------------  
         ELSE
-c          WRITE(0,*) 'a1,2,b1,2:',a1,a2,b1,b2
-
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
 c...        Assumed 1:1 mapping between grid and data:
             iobj = ic
@@ -1164,8 +1185,8 @@ c...    An intersection between the line segment and the ring has been found:
         tab = hold_tab
         tcd = hold_tcd
 
-        IF (debug) WRITE(logfp,*) 'INTERSECTION:',intersection,
-     .                            i0,i1,itube,ic
+        IF (debug) WRITE(logfp,*) 
+     .    'INTERSECTION:',intersection,i0,i1,itube,ic
 
 c...    These are here in case psin0 gets picked up when linking exponential
 c       decay data to neighbouring ring:
@@ -1183,7 +1204,7 @@ c       decay data to neighbouring ring:
      .    CALL ER('AssignNodeValues_2','Invalid parameter '//
      .            'index',*99)
 
-        inode = 1 !inode + 1
+        inode = 1 
 
         IF (intersection) THEN
           s(inode) = cell(ic)%sbnd(1) + SNGL(tcd) * cell(ic)%ds
@@ -1366,7 +1387,7 @@ c            val = ABS(tube(it)%rho)
               WRITE(logfp,*) 
             ENDIF
           ELSEIF (coord.EQ.5) THEN
-c...        Just give me PSIn:
+c...        Just PSIn:
             psin0 = tube(it)%psin
             val   = psin0
             WRITE(logfp,*) ' psin 5:',psin0
@@ -1509,66 +1530,7 @@ c                STOP 'sdfdsf'
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             STOP 'ASSIGNNODEVALUES: CODE IS OBSOLETE'
-c            IF ((osmnode(i2)%tube_range(1).NE.
-c     .           osmnode(i3)%tube_range(1)).OR.
-c     .          (osmnode(i2)%tube_range(2).NE.
-c     .           osmnode(i3)%tube_range(2)).OR.
-c     .          (osmnode(i2)%tube_range(1).GT.
-c     .           osmnode(i2)%tube_range(2)))
-c     .        CALL ER('AssignNodeValues_2','Invalid '//
-c     .                'tube index range, check input file',*99)
-c
-cc...        Need range of PSIn over the segment:
-c            DO it1 =     osmnode(i2)%tube_range(1), 
-c     .               MIN(osmnode(i2)%tube_range(2),ntube)
-c              IF (it1.GT.ntube) EXIT
-c              DO ic1 = tube(it1)%cell_index(LO), 
-c     .                 tube(it1)%cell_index(HI)
-c                iobj = ic1
-c                isrf = ABS(obj(iobj)%iside(1))
-c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-c                c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-c                c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-c                isrf = ABS(obj(iobj)%iside(3))
-c                ivtx(1:2) = srf(isrf)%ivtx(1:2)
-c                d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-c                d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-c                CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-c                IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-c     .              tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
-c                  IF     (tube(it)%type.EQ.GRD_SOL) THEN
-c                    IF (psin0.EQ.RHI) psin0 = tube(it1)%psin
-c                    IF (psin0.NE.RHI) psin1 = tube(it1)%psin
-c                    IF (debug) WRITE(0,*) 'SOL:',psin0,psin1,it,it1
-c                  ELSEIF (tube(it)%type.EQ.GRD_PFZ) THEN
-c                    psin0 = MAX(psin0,tube(it1)%psin)
-c                    psin1 = MIN(psin1,tube(it1)%psin)
-c                    IF (debug) WRITE(0,*) 'PFZ:',psin0,psin1,it,it1
-c                  ELSE
-c                    CALL ER('AssignNodeValues_2','Invalid '//
-c     .                      'RINGTYPE',*99)
-c                  ENDIF
-c               ENDIF
-c              ENDDO
-c            ENDDO
-cc            WRITE(0,*) 'PSIN:',psin0,psin1,coord
-c            IF     (coord.EQ.2) THEN
-cc...          Spatial along the IR-range of applicability:
-c              WRITE(0,*) 'TAB,HOLDTAB:',tab,hold_tab
-c 
-c              STOP 'NOT READY 2'
-c            ELSEIF (coord.EQ.3) THEN
-cc...          PSIn:
-c              val0 = 0.0
-c              val1 = ABS(psin1         - psin0)
-c              val  = ABS(tube(it)%psin - psin0)
-c              WRITE(logfp,*) ' psin:',psin0,psin1,tube(it)%psin
-c            ELSEIF (coord.EQ.4) THEN
-cc...          RHO:
-c              STOP 'NOT READY 4'
-c            ELSE
-c              CALL ER('AssignNodeValues_2','Invalid COORD A',*99)
-c            ENDIF
+c           * big snip * -SL, 17/10/2013
           ENDIF
         ELSEIF (mode.EQ.4) THEN
 c...      Load probe data, dummy values here:
@@ -1786,12 +1748,11 @@ c                WRITE(logfp,*) 'PSIN1,2:',psin1,psin2
                   CASE (4)  
                     te(inode) = val 
                   CASEDEFAULT
-                    CALL ER('AssignNodeValues_2',
-     .                      'Unknown data type',*99)
+                    CALL ER('AssignNodeValues','Unknown data type',*99)
                 ENDSELECT
               ENDIF
             ENDDO
-c         ----------------------------------------------------------
+c         --------------------------------------------------------------
           CASE (6)
 c...        Core and pedestal fits based on shape and engineering
 c           parameters:
@@ -2259,7 +2220,7 @@ c...  Set electron pressure from a reference node:
         ENDDO
         IF (node_pe.EQ.-1.0) 
      .    CALL ER('AssignNodeValues_New','Pressure reference '//
-     .            'requested but none found',*99) 
+     .            'requested but none found (LO)',*99) 
         node(i1)%pe = node_pe
       ENDDO
       DO i1 = mnode+1, nnode
@@ -2275,7 +2236,7 @@ c            node_pe = node(i2)%ne * node(i2)%te
         ENDDO
         IF (node_pe.EQ.-1.0) 
      .    CALL ER('AssignNodeValues_New','Pressure reference '//
-     .            'requested but none found',*99) 
+     .            'requested but none found (HI)',*99) 
         node(i1)%pe = node_pe
       ENDDO
 
@@ -2386,9 +2347,6 @@ c         --------------------------------------------------------------
             tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
 c         --------------------------------------------------------------
           CASE (2:4) 
-c            IF ((node(i2)%par_set.EQ.2                            ).OR.
-c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%te     .EQ.0.0)) THEN
-c     .        tube(it)%te(itarget)     = node(i2)%te
 
             IF (node(i2)%par_set.EQ.2.AND.node(i1)%te.NE.0.0) THEN 
               IF (te_warning) THEN
@@ -2490,29 +2448,6 @@ c     .        tube(it)%ti(itarget,ion) = node(i2)%ti(ion)
             ENDIF
 
 
-c            IF     (node(i2)%ne.NE.0.0) THEN
-c              node_ne = 0.5 * node(i2)%ne
-c            ELSEIF (node(i2)%pe.NE.0.0) THEN         
-c              node_ne = 0.5 * node(i2)%pe / tube(it)%te(itarget)
-c
-cc             write(88,*) 'pe calc',node(i2)%pe,tube(it)%te(itarget),
-cc     .            node_ne
-cc             write(88,*) '       ',tube(it)%te(itarget),
-cc     .                             tube(it)%ti(itarget,ion)
-cc             write(88,*) '       ',node(i1)%ne.EQ.0.0,
-cc     .                             node(i1)%pe.EQ.0.0
-cc              node_ne = 0.5 * node(i2)%pe / node(i2)%te
-c            ELSE
-c              CALL ER('AssignNodeValues_New','Need density or '//
-c     .                'pressure for sheath limited particle flux '//
-c     .                'calculation',*99)
-c            ENDIF
-
-c            IF ((node(i2)%par_set.EQ.2                            ).OR.
-c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
-c     .                                     node(i1)%pe.EQ.0.0     ))
-c     .        tube(it)%jsat(itarget,ion) = REAL(-i2)
-
             IF (node(i2)%par_set.EQ.2.AND.
      .          (node(i1)%ne.NE.0.0.OR.node(i1)%pe.NE.0.0)) THEN
               IF (ne_warning) THEN 
@@ -2527,13 +2462,6 @@ c     .        tube(it)%jsat(itarget,ion) = REAL(-i2)
             IF (node(i1)%ne.EQ.0.0.AND.node(i1)%pe.EQ.0.0)
      .        tube(it)%jsat(itarget,ion) = REAL(-i2)
 
-c            IF ((node(i2)%par_set.EQ.2                            ).OR.
-c     .          (node(i2)%par_set.EQ.3.AND.node(i1)%ne.EQ.0.0.AND.
-c     .                                     node(i1)%pe.EQ.0.0     ))
-c     .        tube(it)%jsat(itarget,ion) = 
-c     .          GetJsat2(tube(it)%te(itarget),tube(it)%ti(itarget,ion),
-c     .                   node_ne,1.0)
-cc     .          GetJsat2(node(i2)%te,node(i2)%ti(ion),node_ne,1.0)
 c         --------------------------------------------------------------
           CASE DEFAULT
             CALL ER('_New','Unknown PAR_SET',*99) 

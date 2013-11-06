@@ -963,6 +963,8 @@ c
       IF (ALLOCATED(wall)) DEALLOCATE(wall)
       ALLOCATE(wall(MAXNWALL))
 
+      stop 'whe!'
+
 c...  Build the list of line segments that make up the wall:   
       nwall = 0
       DO iopt = 1, nopt_wall
@@ -1180,7 +1182,6 @@ c...  Assign wall to the appropriate entry in the list of defined materials:
           ENDIF
         ENDDO
       ENDDO
-
 
       CALL SaveWallGeometry
 
@@ -2087,7 +2088,6 @@ c     be better just to avoid storing the cells as the grid file is read in --  
 c     but it is general, which is the goal here, and makes minimal assumptions 
 c     about the structure of the grid file):
 c     
-
       SUBROUTINE LoadGeneralisedGrid
       USE mod_interface
       USE mod_grid
@@ -2121,15 +2121,14 @@ c...  Output:
       ! jdemod
       integer :: ierr
 
-      debug = .FALSE.
-      outfp  = 0
+      debug   = .FALSE.
+      outfp   = 0
       b_scale = 1.0D0
 
 c...  Read the knot data:
 
       grd_format   = opt%f_grid_format      ! 1
       grd_filename = TRIM(opt%f_grid_file)  ! 'iterm.carre.105'  ! 'sonnet_13018_250.sm'   
-
 
       ! jdemod - there are issues using a filename = fort.<unit number> and assigning it a different unit number
       !          at least for some fortran versions - the file may implicitly or explicitly already be assigned to 
@@ -2374,6 +2373,19 @@ c...      Find IKTO and IKTI:
             ENDDO
           ENDDO
 30        CONTINUE
+          IF (ikto.EQ.nks(irsep)-1) THEN
+            IF (knot(imap(1         ,irsep))%rv(1).EQ.
+     .          knot(imap(nks(irsep),irsep))%rv(4).AND.
+     .          knot(imap(1         ,irsep))%zv(1).EQ.
+     .          knot(imap(nks(irsep),irsep))%zv(4)) THEN
+              ikto = 0
+              ikti = 0
+            ELSE
+              CALL ER('LoadGeneralisedGrid','IKTO and IKTI not '//
+     .                'identified for GRID grid',*99)
+            ENDIF
+          ENDIF
+
 
 c            WRITE(0,*) nrs        
 c            WRITE(0,*) nknot
@@ -3240,6 +3252,8 @@ c
       REAL*8  x1,x2,y1,y2,x3,x4,y3,y4,s12,s34,s12max,length,
      .        xlist(MAXNLIST,2),ylist(MAXNLIST,2),store_x2,store_y2
 
+      stop 'obsolete: ClipWallToGrid'
+
       fp = 88
       debug = .TRUE.
 
@@ -3278,12 +3292,12 @@ c     cuts, as appropriate:
       ENDIF
 
 c     See the 26/09/2011 note in the loop below.
-      WRITE(0,*) 
-      WRITE(0,*) '--------------------------------------------------'
-      WRITE(0,*) ' NOTE, WALL CLIPPING CODE MODIFIED ON 26/09/2011'
-      WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
-      WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
-      WRITE(0,*) '--------------------------------------------------'
+c      WRITE(0,*) 
+c      WRITE(0,*) '--------------------------------------------------'
+c      WRITE(0,*) ' NOTE, WALL CLIPPING CODE MODIFIED ON 26/09/2011'
+c      WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
+c      WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
+c      WRITE(0,*) '--------------------------------------------------'
 
 c...  Collect the cuts:
       clist = 0
@@ -3679,12 +3693,12 @@ c        write(88,*) 'itube,cind2=',itube,cind2
       ENDIF
 
 c     See the 26/09/2011 note in the loop below.
-      WRITE(0,*) 
-      WRITE(0,*) '--------------------------------------------------'
-      WRITE(0,*) ' NOTE, WALL CLIPPING CODE MODIFIED ON 26/09/2011'
-      WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
-      WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
-      WRITE(0,*) '--------------------------------------------------'
+c      WRITE(0,*) 
+c      WRITE(0,*) '--------------------------------------------------'
+c      WRITE(0,*) ' NOTE, WALL CLIPPING CODE MODIFIED ON 26/09/2011'
+c      WRITE(0,*) ' WITH THE BACKWARD LOOK FOR THE END CELLS REMOVED'
+c      WRITE(0,*) ' (CHECK HERE IF HAVING TROUBLE)'
+c      WRITE(0,*) '--------------------------------------------------'
 
 c...  Collect the cuts:
       list(:)%w = 0
@@ -3743,7 +3757,8 @@ c       Search the wall for intersections:
             WRITE(fp,*) '    X3,Y3   :',x3,y3
             WRITE(fp,*) '    X4,Y4   :',x4,y4
           ENDIF
-          IF (s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
+          IF (s12.GT.-1.0D-5.AND.s12.LT.1.0D0.AND.  ! *** added this tolerance -SL, 21/10/2013
+c              s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
      .        s34.GT.-1.0D-5.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/10/2012
 c     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
 c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.

@@ -2101,9 +2101,6 @@ c...
                     ELSEIF (expon.EQ.3.0) THEN
                     ENDIF
                   ENDIF
-
-c                  WRITE(0,*) 'PROBIN:',prb1,te(index),ne(index),tc,nc
-
                 ELSE
                   CALL ER('S28params_v3','Invalid MODE',*99)   
                 ENDIF
@@ -4339,13 +4336,11 @@ c
 
       IF (irsep2.EQ.-1) irsep2 = irsep  ! *** is this OK? ***
 
-
-      write(0,*) 'irsep1 ',irsep
-      write(0,*) 'irsep2 ',irsep2
-      write(0,*) 'irwall1',irwall
-      write(0,*) 'irtrap1',irtrap
-      write(0,*) 'nrs1   ',nrs
-
+      write(PINOUT,*) 'irsep1 ',irsep
+      write(PINOUT,*) 'irsep2 ',irsep2
+      write(PINOUT,*) 'irwall1',irwall
+      write(PINOUT,*) 'irtrap1',irtrap
+      write(PINOUT,*) 'nrs1   ',nrs
 
       id = 0
       CALL ALLOC_GRID(MAXNKS,MAXNRS)
@@ -4394,9 +4389,7 @@ c     MAXRINGS
 c     CUTRING
 c
       IF (opt%f_grid_format.EQ.2) THEN
-
         IF (ikto.EQ.0) THEN
-          STOP 'NOT READY YET, HERE!'
           nopriv = .TRUE.
           CALL InsertRing(1  ,BEFORE,PERMANENT)
           CALL InsertRing(nrs,AFTER ,PERMANENT)
@@ -4436,7 +4429,7 @@ c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
       maxrings   = irwall
       indexiradj = 1
 
-      write(0,*) 'cut,max',cutring,maxrings
+c      write(0,*) 'cut,max',cutring,maxrings
 
       IF (.TRUE.) THEN
 c        id = 0

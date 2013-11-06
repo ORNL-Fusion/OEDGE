@@ -7918,12 +7918,12 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
         IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2.AND.
      .                                surface(i1)%ilcol.EQ.3) THEN
           warning_reported = .TRUE.
-          WRITE(0,*)
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
-          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) ' 
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
+c          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) ' 
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*)
         ENDIF
 
         IF (surface(i1)%reflect.EQ.LOCAL) THEN
