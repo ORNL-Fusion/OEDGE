@@ -1115,6 +1115,13 @@ c          ENDIF
                 opt%te_ion(target) = 1
               ENDIF
             ENDIF
+            IF (opt%ti_ion(target).EQ.2) THEN
+              IF (opt%osm_load.EQ.0) THEN
+                opt%ti_ion(target) = 3
+              ELSE
+                opt%ti_ion(target) = 1
+              ENDIF
+            ENDIF
 c...        Sheath limited regime hack (see end of AssignNodeValues):
             IF (opt%p_ion(target).EQ.999) opt%p_ion(target) = 0
             IF (opt%m_mom(target).EQ.2  ) opt%m_mom(target) = 0
@@ -1416,6 +1423,13 @@ c     .                     -1.0D0 * DSIGN(1.0D0,isat(ic,ion))
               pi(ic,ion) = ni(ic,ion) * 
      .                     (ti(ic,ion) * ECH + mi(ion) * vi(ic,ion)**2)
 
+              gamma(1)   = 5.0D0
+              gamma(2)   = 3.5D0
+              qe(ic    ) = gamma(1) * isat(ic,ion)*ECH * te(ic    ) 
+              qi(ic,ion) = gamma(2) * isat(ic,ion)*ECH * ti(ic,ion) 
+
+c              write(0,*) 'qe,qi=',qe(ic),qi(ic,ion)
+
             CASE (2)
 c...          Target particle and momentum from upstream cross-field 
 c             and volume sources:
@@ -1466,6 +1480,8 @@ c             *** NO CHECK AS YET ON WHETHER THE REFERENCE SOLUTION IS DEFINED! 
 
 c      WRITE(logfp,*) 'ISAT1:',ion,isat(ictarg(LO),1),
 c     .                            isat(ictarg(HI),1)
+
+
 
       RETURN
  99   WRITE(0,*) '  TARGET=',target
@@ -1749,6 +1765,10 @@ c      WRITE(0,*) 'ICBND:',icbnd2
       sdelta(1:icmax) =DBLE(cell(1:icmax)%sbnd(2)-cell(1:icmax)%sbnd(1))
       area(0:icmax+1) = 1.0D0
       vol (1:icmax  ) = DBLE(cell(1:icmax)%ds)
+      
+      ! jrh mod begin
+      bfield(1:icmax) = field1(1:icmax)%b
+      ! jrh mod end
 
       ai(1) = 2.0D0
       mi(1) = ai(1) * AMU
@@ -1838,6 +1858,9 @@ c          CALL UpdateTemperatureProfiles
 c        ENDIF
 
         IF (cnt_prescription) CALL PrescribeTemperatureProfiles  ! This goes in the solve fluid equations routine I think...
+
+c              write(0,*) 'qe,qi B=',qe(0      ),qi(0      ,1)
+c              write(0,*) 'qe,qi B=',qe(icmax+1),qi(icmax+1,1)
 
 c...    Solve fluid equations:
 c       ----------------------------------------------------------------
@@ -1954,7 +1977,7 @@ c     added to the list at the end of AssignSOLPSPlasma:
         fluid(1:icmax,ion)%eniion = SNGL(eniion(1:icmax,ion))
         fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
         fluid(1:icmax,ion)%eniano = SNGL(eniano(1:icmax,ion))  
-        fluid(1:icmax,ion)%eniusr = SNGL(eniusr(1:icmax,ion))
+        fluid(1:icmax,ion)%enisrc = SNGL(enisrc(1:icmax,ion))
 
 c        WRITE(0,*) 'ENEION:',eneion(1:icmax,ion)
 
@@ -2013,7 +2036,6 @@ c      REAL    totsrc
         WRITE(logfp,*) 'TE   :',tube(it1)%te(LO),tube(it1)%te(HI)
       ENDIF
 
-
 c...  Build list of tubes, and put the PFZ tubes at the end, and in reverse order.  This
 c     helps a lot when tubes in the PFZ reference tubes that are closer to the separatrix
 c     but have a higher tube index:
@@ -2036,7 +2058,6 @@ c     but have a higher tube index:
           ENDDO
         ENDIF
       ENDDO
-
 
       ion = 1
 
@@ -2169,7 +2190,9 @@ c                  30 - the time-dependent solver (JRH)
                 CALL SetTargetConditions(itube)
 
 c...            Assign solution parameter nodes:
-                IF (opt%s28mode.EQ.4.1) THEN 
+                IF     (opt%s28mode.EQ.5.0) THEN 
+                  CALL osmSetNodeValues(itube,nnode,mnode,node,opt_tube)
+                ELSEIF (opt%s28mode.EQ.4.1) THEN 
                   CALL AssignNodeValues_New(itube,nnode,mnode,node,
      .                                      opt_tube)
                   

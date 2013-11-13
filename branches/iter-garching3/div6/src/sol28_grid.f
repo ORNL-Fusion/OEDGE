@@ -963,8 +963,6 @@ c
       IF (ALLOCATED(wall)) DEALLOCATE(wall)
       ALLOCATE(wall(MAXNWALL))
 
-      stop 'whe!'
-
 c...  Build the list of line segments that make up the wall:   
       nwall = 0
       DO iopt = 1, nopt_wall

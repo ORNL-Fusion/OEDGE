@@ -2057,6 +2057,10 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
+
+
+
+
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -2701,8 +2705,8 @@ c          newobj%phi = SNGL(0.5D0*(dang(1,1) + dang(1,2)) / D_DEGRAD)
           newobj%nside = 4
           newobj%index(IND_IS ) = islice ! isector ! 1
           newobj%index(IND_ISI) = islice_index
-          newobj%index(IND_IK ) = try(itry)%index(IND_IK)
-          newobj%index(IND_IR ) = try(itry)%index(IND_IR)
+          newobj%index(IND_IK) = try(itry)%index(IND_IK)
+          newobj%index(IND_IR) = try(itry)%index(IND_IR)
 
           ishift = 0
           IF (itet.GE.2.AND.itet.LE.7) THEN
@@ -7846,7 +7850,7 @@ c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,92)  95.0, 95.0,800.0,0.0,   0.0,750.0
         WRITE(fp06,92)  45.0, 20.0
 c        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
-        WRITE(fp06,91) 1,20,1,2,3,4,5,6,9,0,1
+        WRITE(fp06,91) i1trc,i2trc,1,2,3,4,5,6,9,0,1
         WRITE(fp06,91) 0
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)

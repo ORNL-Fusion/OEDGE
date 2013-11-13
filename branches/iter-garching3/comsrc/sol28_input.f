@@ -608,6 +608,14 @@ c              write(0,*) '>'//TRIM(buffer_array(5))//'<'
             ENDIF            
           ENDDO
 c       ----------------------------------------------------------------
+        CASE('EIR SEED')
+          CALL ReadOptionI(buffer,1,opt_eir%ninitl) 
+c       ----------------------------------------------------------------
+        CASE('EIR TRACKS')
+          CALL ReadOptionI(buffer,2,idum) 
+          opt_eir%i1trc = idum(1)
+          opt_eir%i2trc = idum(2)
+c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
             IF (first_pass) THEN
@@ -1138,10 +1146,11 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
 
       LOGICAL osmGetLine
 
-      INTEGER   i1,sub_option
+      INTEGER   i1,sub_option,n,whats_next
       LOGICAL   node_fit,node_data,ldum1
       REAL      node_type,rdum1,rdum2
       CHARACTER cdum1
+      CHARACTER*256 buffer_array(100)  ! gfortran
       TYPE(type_node) :: node_tmp
 
       status = .TRUE.
@@ -1166,12 +1175,14 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
         CASE('S74')
           node_data = .FALSE.
           READ(buffer(itag+2:itag+4),*) opt%s28mode  
+c         --------------------------------------------------------------
           IF    (opt%s28mode.EQ.4.0) THEN
             osmns28 = 0            
             DO WHILE(osmGetLine(fp,buffer,NO_TAG))
               osmns28 = osmns28 + 1
               READ(buffer,*) osms28(osmns28,1:12)
             ENDDO
+c         --------------------------------------------------------------
           ELSEIF (opt%s28mode.EQ.4.1) THEN
             node_fit = .FALSE.
             osmnnode = 0            
@@ -1278,8 +1289,78 @@ c...            Spacer, ignore:
                 CALL ER('LoadMiscOption','Unrecognized node type',*99)
               ENDIF
             ENDDO            
+c         --------------------------------------------------------------
+          ELSEIF (opt%s28mode.EQ.5.0) THEN
+            whats_next = 0
+            n          = 0            
+            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+
+              CALL SplitBuffer(buffer,buffer_array) 
+
+              IF (buffer_array(1).EQ.'sym') THEN
+
+                node_tmp%s_type       = TRIM(buffer_array(1))
+                node_tmp%s_tube_range = TRIM(buffer_array(2))
+                node_tmp%s_rad_mode   = TRIM(buffer_array(3))
+                node_tmp%s_rad_coord  = TRIM(buffer_array(4))
+                node_tmp%s_rad_exp    = TRIM(buffer_array(5))
+
+                node_tmp%s_par_mode   = TRIM(buffer_array(6))
+                READ(buffer_array(7),*) node_tmp%par_exp
+                READ(buffer_array(8),*) node_tmp%par_set
+
+c               Store individual radial profile exponets if specified:
+                IF (node_tmp%s_rad_exp.EQ.'ind') THEN
+                  READ(buffer_array( 9),*) node_tmp%rad_exp_ne
+                  READ(buffer_array(10),*) node_tmp%rad_exp_v	
+                  READ(buffer_array(11),*) node_tmp%rad_exp_pe
+                  READ(buffer_array(12),*) node_tmp%rad_exp_te
+                  READ(buffer_array(13),*) node_tmp%rad_exp_ti
+                  READ(buffer_array(14),*) node_tmp%rad_exp_epot
+                ENDIF
+
+c               Set a flag so that the subsequent line(s) in the input file
+c               are processed properly:
+
+                IF (node_tmp%s_rad_mode.EQ.'file') THEN
+                  whats_next = 2   
+                ELSE
+                  whats_next = 1
+                ENDIF
+
+              ELSE
+
+                SELECTCASE (whats_next)
+c                 ------------------------------------------------------  
+                  CASE (0) 
+c                 ------------------------------------------------------  
+                  CASE (1)  ! Standard interpolation data     
+                    n = n + 1
+                    osmnode(n) = node_tmp
+                    READ(buffer_array(1),*) osmnode(n)%rad_x
+                    READ(buffer_array(2),*) osmnode(n)%rad_y
+                    READ(buffer_array(3),*) osmnode(n)%ne
+                    READ(buffer_array(4),*) osmnode(n)%v
+                    READ(buffer_array(5),*) osmnode(n)%pe
+                    READ(buffer_array(6),*) osmnode(n)%te
+                    READ(buffer_array(7),*) osmnode(n)%ti(1)
+                    READ(buffer_array(8),*) osmnode(n)%epot
+c                 ------------------------------------------------------  
+                  CASE (2)  ! File 
+                    STOP 'NOT READY YET KDSJGLDSG'
+c                 ------------------------------------------------------  
+                ENDSELECT 
+
+              ENDIF
+
+            ENDDO            
+
+            osmnnode = n
+
+c         --------------------------------------------------------------
           ELSE
             CALL ER('LoadMiscOption','Unrecognized S28MODE value',*99)
+c         --------------------------------------------------------------
           ENDIF
 
 
@@ -1507,6 +1588,10 @@ c      opt_eir%nvoid = 0
       opt_eir%spcvz = 0.0
       opt_eir%spc_p1 = -999.0
       opt_eir%spc_p2 = -999.0
+
+       opt_eir%ninitl = -1
+       opt_eir%i1trc  =  0
+       opt_eir%i2trc  =  0
 
       opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
 
