@@ -224,6 +224,9 @@ c....   Cells centres:
         CALL inPutData(fluid(ic1:ic2,ion)%eneano,'ENE_FIT','?')
         CALL inPutData(fluid(ic1:ic2,ion)%eneusr,'ENE_USR','?')
         CALL inPutData(fluid(ic1:ic2,ion)%enisrc,'ENI_NET','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniion,'ENI_ION','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniano,'ENI_FIT','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniusr,'ENI_USR','?')
       ENDDO
       CALL inCloseInterface 
 

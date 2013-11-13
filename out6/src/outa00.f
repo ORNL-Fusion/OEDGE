@@ -2391,10 +2391,14 @@ c
      >           totcore_radial(maxnrs,5)
       real*8 :: totcore_poloidal_vol(maxnks,3)
       real*8 :: totcore_radial_vol(maxnrs,5)
+      real*8 :: totcore_poloidal_area(maxnks),
+     >          totcore_radial_area(maxnrs)
       real*8 :: omp_reg,xpt_reg
       real*8 :: psi1_reg,psi2_reg
       integer :: in
 
+      integer :: nr
+      real*8 :: plen, rc
 
 c      integer prnizs
 c      real    bgcontent,totbgcontent
@@ -2476,6 +2480,9 @@ c
       totcore_radial = 0.0
       totcore_poloidal_vol = 0.0
       totcore_radial_vol = 0.0
+      totcore_poloidal_area =0.0
+      totcore_radial_area = 0.0
+
       omp_reg = 0.05
       xpt_reg = 0.05
       psi1_reg = 0.9
@@ -2566,6 +2573,31 @@ c
 
             endif
 
+
+            ! find the cell and take the length of the outer side
+            ! which is between vertices 2 and 3
+
+            nr = korpg(ik,ir)
+
+            if (nr.ne.0) then 
+c                 
+               plen = sqrt((rvertp(2,nr)-rvertp(3,nr))**2+
+     >                      (zvertp(2,nr)-zvertp(3,nr))**2)
+c
+               rc = (rvertp(2,nr)+rvertp(3,nr))/2.0
+c
+               ! calculate poloidal area at edge of confined plasma
+               if (ir.eq.irsep-1) then 
+                  totcore_poloidal_area(ik) = 2.0 * PI * rc * plen
+
+               endif
+
+               ! Calculate surface area of confined plasma at each radial location
+               totcore_radial_area(ir) = totcore_radial_area(ir) 
+     >                + 2.0 * PI * rc * plen
+           endif
+
+
          end do
       end do
 
@@ -2607,7 +2639,7 @@ c
 
       write(6,'(a)') ' IK       KSS    KPS R Z  Total_Den  Total_vol'//
      >               '    NearSEP1_Den   NearSEP1_vol  '//
-     >               '    NearSEP2_Den   NearSEP2_vol  '
+     >               '    NearSEP2_Den   NearSEP2_vol   Separatrix_area'
                     
       ir = irsep-1
       do ik = 1,nks(irsep-1)-1
@@ -2615,7 +2647,8 @@ c
      >         kps(ik,ir),rs(ik,ir),zs(ik,ir),
      >         totcore_poloidal(ik,1),totcore_poloidal_vol(ik,1),
      >         totcore_poloidal(ik,2),totcore_poloidal_vol(ik,2),
-     >         totcore_poloidal(ik,3),totcore_poloidal_vol(ik,3)
+     >         totcore_poloidal(ik,3),totcore_poloidal_vol(ik,3),
+     >         totcore_poloidal_area(ik)
       end do
          
       write(6,*)
@@ -2629,7 +2662,8 @@ c
      >           '     OMP_Density      OMP-vol '//
      >           '     XPT_Density      XPT-vol '//
      >           '    '//OUTER//'_Density '//OUTER//'-vol '//
-     >           '    '//INNER//'_Density '//INNER//'-vol '
+     >           '    '//INNER//'_Density '//INNER//'-vol '//
+     >           '    '//'Surface_area'
 
 
       do ir = 2,irsep-1
@@ -2639,7 +2673,8 @@ c
      >         totcore_radial(ir,2),totcore_radial_vol(ir,2),
      >         totcore_radial(ir,3),totcore_radial_vol(ir,3),
      >         totcore_radial(ir,4),totcore_radial_vol(ir,4),
-     >         totcore_radial(ir,5),totcore_radial_vol(ir,5)
+     >         totcore_radial(ir,5),totcore_radial_vol(ir,5),
+     >         totcore_radial_area(ir)
       end do
 
 
