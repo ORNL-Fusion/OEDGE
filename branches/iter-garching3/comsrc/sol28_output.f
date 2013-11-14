@@ -905,6 +905,12 @@ c      write(0,*) 'isep' ,grid%isep
 c      write(0,*) 'ipfz' ,grid%ipfz
       CALL inPutData(grid%ipfz,'GRD_IPFZ' ,'none')
 
+      CALL inPutData(grid%r0,'GRD_R0','m')
+      CALL inPutData(grid%z0,'GRD_Z0','m')
+
+      CALL inPutData(grid%rxpt,'GRD_RXPT','m')
+      CALL inPutData(grid%zxpt,'GRD_ZXPT','m')
+
       CALL inPutData(ntube             ,'TUBE_N'   ,'none')
       CALL inPutData(tube(1:ntube)%psin,'TUBE_PSIN','none')
       CALL inPutData(tube(1:ntube)%rho ,'TUBE_RHO' ,'(m)')
