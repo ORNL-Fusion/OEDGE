@@ -4315,7 +4315,7 @@ c
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
-      INTEGER   id,i1,i2,ir1,
+      INTEGER   id,i1,i2,i3,ir1,
      .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
       CHARACTER buffer*1024
       REAL      valpsi(MAXNRS)
@@ -4347,15 +4347,15 @@ c
       DO ir = 1, nrs
         DO ik = 1, nks(ir)        
           i1 = imap(ik,ir)
-          rs(ik,ir) = knot(i1)%rcen
-          zs(ik,ir) = knot(i1)%zcen
-          bratio(ik,ir) = knot(i1)%bratio
+          rs(ik,ir) = SNGL(knot(i1)%rcen)
+          zs(ik,ir) = SNGL(knot(i1)%zcen)
+          bratio(ik,ir) = SNGL(knot(i1)%bratio)
           id = id + 1
           korpg(ik,ir) = id
           nvertp(id) = knot(i1)%nv
           DO i2 = 1, nvertp(id)
-            rvertp(i2,id) = knot(i1)%rv(i2)
-            zvertp(i2,id) = knot(i1)%zv(i2)
+            rvertp(i2,id) = SNGL(knot(i1)%rv(i2))
+            zvertp(i2,id) = SNGL(knot(i1)%zv(i2))
           ENDDO
 c...      Store these in case B2 data from Rhozansky is being loaded:
           divimp_ik(ik,ir) = knot(i1)%ik 
@@ -4518,6 +4518,37 @@ c...  For consistency with original SONNET code in tau.d6a:
       DEALLOCATE(knot)
       DEALLOCATE(imap)
 
+c...  
+      IF (cneur.EQ.4) THEN
+
+        IF (n_grid_wall.EQ.0) 
+     .    CALL ER('ReadGeneralisedGrid','Neutral wall data missing',*99)
+
+        nves = 0
+        DO i2 = 1, n_grid_wall
+          i1 = i2 - 1
+          i3 = i2 + 1
+          IF (i2.EQ.1          ) i1 = n_grid_wall
+          IF (i2.EQ.n_grid_wall) i3 = 1
+          IF (grid_wall(i2)%ptc.EQ.-1.OR.
+     .       (grid_wall(i1)%ptc.EQ.-1.AND.grid_wall(i2)%ptc.NE.-1).OR.
+     .       (grid_wall(i1)%ptc.EQ. 1.AND.grid_wall(i2)%ptc.EQ. 2).OR.
+     .       (grid_wall(i1)%ptc.EQ. 2.AND.grid_wall(i2)%ptc.EQ. 1).OR.
+     .       (grid_wall(i3)%ptc.EQ.-1.AND.grid_wall(i2)%ptc.NE.-1).OR.
+     .       (grid_wall(i3)%ptc.EQ. 1.AND.grid_wall(i2)%ptc.EQ. 2).OR.
+     .       (grid_wall(i3)%ptc.EQ. 2.AND.grid_wall(i2)%ptc.EQ. 1)) THEN
+            nves = nves + 1
+            rves(nves) = SNGL(grid_wall(i2)%pt1(1))
+            zves(nves) = SNGL(grid_wall(i2)%pt1(2))
+          ENDIF
+        ENDDO
+
+c       Close the wall:
+        nves = nves + 1
+        rves(nves) = rves(1)
+        zves(nves) = zves(1)
+
+      ENDIF
 
       RETURN
  97   CALL ER('ReadGeneralisedGrid_OSM','Unexpected end of file',*99)

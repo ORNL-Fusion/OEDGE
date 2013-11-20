@@ -65,6 +65,13 @@
         REAL    :: psin(1000)
       ENDTYPE type_grid_body
 
+      TYPE type_grid_wall
+        INTEGER :: ptt
+        INTEGER :: ptc
+        REAL*8  :: pt1(2)
+        REAL*8  :: pt2(2)
+      ENDTYPE type_grid_wall
+
       INTEGER, PARAMETER :: GRD_FORMAT_SONNET = 1,  
      .                      GRD_FORMAT_GRID   = 2, 
      .                      XPT_SEARCH = 1,         
@@ -79,6 +86,9 @@
       INTEGER :: nknot
       TYPE(type_grid_cell),ALLOCATABLE :: knot(:)
       TYPE(type_grid_body) :: grid_load
+
+      INTEGER :: n_grid_wall
+      TYPE(type_grid_wall) :: grid_wall(1000) 
 
       INTEGER   :: grd_format
       CHARACTER :: grd_filename*1024

@@ -2122,6 +2122,7 @@ c...  Output:
       debug   = .FALSE.
       outfp   = 0
       b_scale = 1.0D0
+      n_grid_wall = 0
 
 c...  Read the knot data:
 
@@ -2355,6 +2356,15 @@ c             ----------------------------------------------------------
                   ENDDO
                 ENDDO
                 nknot = id
+c             ----------------------------------------------------------
+              CASE('WALL DATA')
+                READ(grdfp,*) n_grid_wall
+                DO i1 = 1, n_grid_wall
+                  READ(grdfp,*) idum1,grid_wall(i1)%ptt,
+     .                                grid_wall(i1)%ptc,
+     .                                grid_wall(i1)%pt1(1:2),
+     .                                grid_wall(i1)%pt2(1:2)
+                ENDDO
 c             ----------------------------------------------------------
               CASE('END')
 c             ----------------------------------------------------------
