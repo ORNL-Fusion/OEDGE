@@ -684,6 +684,7 @@ c       Count the number of data columns:
         DO i = 1, 100
           IF (LEN_TRIM(buffer_array(i)).EQ.0) EXIT
         ENDDO
+        IF (i.EQ.1) CYCLE  ! blank line
         IF (i.EQ.101)
      .    CALL ER('LoadUpstreamData','Data not loaded correctly, '//
      .            'check the data file',*99)

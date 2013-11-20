@@ -2880,13 +2880,29 @@ c
 c3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
 c
       if (nizs.le.100) then 
-         do in = 1,wallpts
-C        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
-C     >       wallsiz(in, 1:NIZS)
-             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
-         end do
-         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
-     >      wallsiz(maxpts+1, 1:NIZS)
+c slmod begin
+c       Adding wall impurity atom flux from EIRENE, if available:
+        if (allocated(wall_flx)) then
+          do in = 1,wallpts
+           write(6,3006) in,wallsn(in),wallsi(in),wallsiz(in,1:NIZS),
+     .                   wall_flx(in)%in_par_atm(2,0)
+          enddo
+        else
+          do in = 1,wallpts
+           write(6,3006) in,wallsn(in),wallsi(in),wallsiz(in,1:NIZS),-1.
+          enddo
+        endif
+        write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+     >                 wallsiz(maxpts+1, 1:NIZS),-1.0
+c
+c         do in = 1,wallpts
+cC        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
+cC     >       wallsiz(in, 1:NIZS)
+c             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
+c         end do
+c         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+c     >      wallsiz(maxpts+1, 1:NIZS)
+c slmod end
          write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
       else
          call errmsg('ERROR PRINTING CHARGE'//

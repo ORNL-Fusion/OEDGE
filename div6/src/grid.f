@@ -1136,6 +1136,7 @@ c target segments.  These kinds of modifications are made via the ...
 c array:
 c
       SUBROUTINE BuildNeutralWall
+      USE mod_grid
       USE mod_geometry
       IMPLICIT none
 
@@ -1416,7 +1417,9 @@ c...      Debug: Save data and avoid attempted wall sequencing:
 c...      Leave the loop:
           EXIT
 c       ----------------------------------------------------------------
-        ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
+        ELSEIF (eirasdat(i1,1).EQ.998.0.AND.
+     .          .NOT.(eirnasdat.EQ.1.AND.n_grid_wall.NE.0.AND.cneur.EQ.4  ! Avoid default behaviour if data loaded from the GRID grid file
+     .          )) THEN   
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
           CALL DumpData_OSM('output.trouble1','trouble1')

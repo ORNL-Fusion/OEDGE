@@ -2334,9 +2334,9 @@ c        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)  ! *** BUG ***  FLUXHW is not t
         wall_flx(i)%in_ene_atm(1,0) = flxhw5(i)
         wall_flx(i)%in_ene_mol(1,0) = flxhw7(i)
 
-        wall_flx(i)%in_par_atm(2,0) = tflux(i,11) ! / area         ! Total impurity atom flux to the surface
+        wall_flx(i)%in_par_atm(2,0) = tflux(i,11) / area         ! Total impurity atom flux to the surface
         IF (tflux(i,11).NE.0.0) 
-     .  wall_flx(i)%in_ene_atm(2,0) = tflux(i,12) ! / tflux(i,11)  ! Average energy of the impurity atoms hitting the surface
+     .  wall_flx(i)%in_ene_atm(2,0) = tflux(i,12) / tflux(i,11)  ! Average energy of the impurity atoms hitting the surface
 
         wall_flx(i)%em_par_atm(2,1) = tflux(i,9) / area                  ! Impurity atom influx from bulk ions
         wall_flx(i)%em_par_atm(2,2) = tflux(i,5) / area                  ! Impurity atom influx from test atoms
