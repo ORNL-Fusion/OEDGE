@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 C@PROCESS OPT(1),VECTOR(LEV(0))
 C
 C

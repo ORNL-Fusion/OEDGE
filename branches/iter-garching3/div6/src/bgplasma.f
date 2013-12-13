@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       subroutine bgplasma(title,equil)
 c slmod begin

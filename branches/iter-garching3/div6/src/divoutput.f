@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c     @PROCESS NOOPT
       SUBROUTINE PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
       IMPLICIT none

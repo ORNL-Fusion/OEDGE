@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       subroutine fp_transport(imp,ik,ir,iz,istate,s,theta,
      >                        cross,vel,temi,

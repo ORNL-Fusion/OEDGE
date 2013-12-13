@@ -1329,7 +1329,7 @@ c              grm_shade(IKHI,ip) = kss(ikbound(ir,IKHI),ir)
             pltlabs(ip) = ' '
           ENDIF
 
-          IF     (btype.EQ.2) THEN
+          IF     (btype.EQ.2.OR.ir.LT.irsep) THEN
 c...        Boundary data is at cell centers, not the target locations:
             in  = 0
             inc = 0
@@ -1785,7 +1785,8 @@ c                fact = ECH
 
                 IF (.TRUE.) THEN
                   CALL CalcIntegral3(osmmp,ik-1,ik,ir,rdum1,9)
-                  mvals(i1+in,ip,5) = mvals(i1+in-1,ip,5)+rdum1/ECH*fact
+                  mvals(i1+in,ip,5) = mvals(MAX(1,i1+in-1),ip,5) + 
+     .                                rdum1/ECH*fact
 c                  IF (i1.EQ.1) THEN
 c                    WRITE(0,*) 'I!=1:',i1+in,mvals(i1+in,ip,5),
 c     .                   mvals(i1+in-1,ip,5),rdum1

@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)

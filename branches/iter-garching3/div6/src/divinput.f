@@ -1,4 +1,4 @@
-c     -*-Fortran-*- 
+c     -*Former Mode Specification*- 
 c     @PROCESS NOOPT
       SUBROUTINE READIN (TITLE,desc,equil,NIZS,NIMPS,NIMPS2,CPULIM,
      >                   IERR,NYMFS,NITERS)
