@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
      >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)

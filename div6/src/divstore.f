@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
@@ -252,6 +252,13 @@ C
 C
       CALL CHECK_DDLIM(nizs,3)
 c
+
+      write(6,*) 'ddilims 4'
+      write(6,*) ddlims(1:MAXNKS,1:MAXNRS,4)
+
+      write(6,*) 'ddilims 5'
+      write(6,*) ddlims(1:MAXNKS,1:MAXNRS,5)
+
       CALL DINOUT ('W DDLIMS',DDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL DINOUT ('W DDTS  ',DDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('W ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))

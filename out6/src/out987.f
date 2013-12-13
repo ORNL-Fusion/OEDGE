@@ -1520,6 +1520,10 @@ c     .                WRITE(0,*) sdlims(1:nks(109),109,iz)
                 DO ir = 2, nrs
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
                   gdata1(1:nks(ir),ir) = sdlims(1:nks(ir),ir,iz)
+c                  write(6,*) 'iz madness',iz
+c                  do ik = 1, nks(ir)
+c                    write(6,*) 'sdlims',sdlims(ik,ir,iz)
+c                  enddo
                 ENDDO
               ENDIF
               gdata => gdata1
