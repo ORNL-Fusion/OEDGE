@@ -641,7 +641,6 @@ c         where else to put it:
         ENDIF
       ENDDO
 
-
 c...  Additional user specified wall surfaces, new specification:
       DO i1 = 1, opt_eir%nadd
         SELECTCASE (opt_eir%add_type(i1))
@@ -703,6 +702,8 @@ c     ------------------------------------------------------------------
         DO i1 = 1, nsurface
           DO i2 = 1, opt_eir%sur_n
 
+            write(0,*) i1,i2
+
             type = NINT(opt_eir%sur_type(i2))
 
 c...        Identify which surface index to use for selecting surface
@@ -718,6 +719,11 @@ c           property specification:
             ELSEIF (surface(i1)%type.EQ.VESSEL_WALL.AND.
      .              opt_eir%sur_type(i2).EQ.2.0) THEN
               index1 = surface(i1)%index(1)
+
+            ELSEIF (opt_eir%sur_type(i2).EQ.2.1) THEN
+
+              READ(opt_eir%sur_index(i2),*) index1
+
             ELSEIF (surface(i1)%type.EQ.VESSEL_WALL.AND.
      .              opt_eir%sur_type(i2).EQ.3.0) THEN
               index1 = surface(i1)%index(2)
@@ -726,6 +732,23 @@ c           property specification:
             ENDIF
 
             IF (.NOT.CheckIndex(index1,opt_eir%sur_index(i2))) CYCLE
+
+
+            write(0,*) 'SUR_TYPE',i2,opt_eir%sur_type(i2),index1,
+     .                   wallpt(index1,18)
+
+
+            IF (opt_eir%sur_type(i2).EQ.2.0) THEN 
+     
+              IF (wallpt(index1,18).NE.0.0) THEN 
+
+
+                STOP 'shit!'
+
+              ENDIF
+
+            ENDIF
+
            
 c            WRITE(0,*) 'THROUGH:',i1,i2,index1
 
