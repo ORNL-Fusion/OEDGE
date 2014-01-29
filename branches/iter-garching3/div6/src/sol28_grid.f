@@ -3765,7 +3765,7 @@ c       Search the wall for intersections:
             WRITE(fp,*) '    X3,Y3   :',x3,y3
             WRITE(fp,*) '    X4,Y4   :',x4,y4
           ENDIF
-          IF (s12.GT.-1.0D-5.AND.s12.LT.1.0D0.AND.  ! *** added this tolerance -SL, 21/10/2013
+          IF (s12.GT.-1.0D-3.AND.s12.LT.1.0D0.AND.  ! *** added this tolerance -SL, 21/10/2013
 c              s12.GT. 0.0D+0.AND.s12.LT.1.0D0.AND.
      .        s34.GT.-1.0D-5.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/10/2012
 c     .        s34.GT.-1.0D-7.AND.s34.LT.1.0D0.AND.   ! *** added this tolerance 11/06/2012
@@ -3783,7 +3783,10 @@ c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
 c...      Problem with this cut pair, so delete them from the 
 c         list (have to complete the wall by hand at the moment):            
           IF (debug) WRITE(fp,*) ' CUT NOT FOUND, DELETING CUT',i1
-          stop 'shit man shit'
+          
+          CALL ER('osmClipWalltoGrid','Problem when generating cut '//
+     .            'pair, code development required',*99)  
+
           DO i3 = i1, nlist-1
             list(i3) = list(i3+1)
           ENDDO

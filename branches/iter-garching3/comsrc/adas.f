@@ -278,7 +278,7 @@ C------PE BRIDEN - MODIFICATION 27/04/92 - INCLUSION OF DEFAULT YEAR -
 C                                                                       
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C                                                                       
-       write(6,'(a,a)') 'ADAS:',dsname 
+       write(6,'(a,a)') 'ADAS:',trim(dsname) 
 c
        INQUIRE(FILE=DSNAME,EXIST=LEXIST)                                
 
@@ -2123,7 +2123,7 @@ c slmod begin
      &              (GRPLST.NE.GRPIN) .OR.
      &              (TYPLST.NE.TYPIN) .OR.
      &              (EXTLST.NE.EXTIN)      )  
-     .           WRITE(0,*) 'New ADAS data set read: izin=',izin,izlast
+     .           WRITE(0,*) 'adas debug fresh: izin=',izin,izlast
 c slmod end
                IF ( (IZLAST.NE.IZIN)  .OR.
      &              (IZ0LST.NE.IZ0IN) .OR.
