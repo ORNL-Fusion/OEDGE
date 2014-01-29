@@ -642,91 +642,144 @@ c      STOP 'sdfsd'
 c
 c ======================================================================
 c
-      SUBROUTINE LoadUpstreamData(fname,fformat,itube,coord,shift,
-     .                            xcolumn,ycolumn,yval)
+      SUBROUTINE LoadUpstreamData(fname,fformat,mode,itube,coord,shift,
+     .                            xcolumn,ycolumn,yval,s)
       USE mod_sol28_params
-      USE mod_sol28_io
       USE mod_sol28_global
       IMPLICIT none
 
       CHARACTER, INTENT(IN)  :: fname*(*)
-      INTEGER  , INTENT(IN)  :: fformat,itube,coord
-      REAL     , INTENT(IN)  :: shift,xcolumn,ycolumn
+      INTEGER  , INTENT(IN)  :: fformat,itube,coord,mode
+      REAL     , INTENT(IN)  :: shift,xcolumn,ycolumn,s
       REAL     , INTENT(OUT) :: yval
 
+      INTEGER cind1,cind2
       LOGICAL osmGetLine
+      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
 
       INTEGER    MAXTDAT     ,MAXCOLS
       PARAMETER (MAXTDAT=1000,MAXCOLS=20)
 
-      INTEGER   ndata,fp,i,j,n,ncolumns,xcol,ycol,n_hold
-      REAL      vdata(MAXTDAT,MAXCOLS),xval
-      CHARACTER     buffer*1024
-      CHARACTER*256 buffer_array(100)
+      INTEGER   ndata,fp,i,j,n,ncolumns,xcol,ycol,ion
+      REAL      vdata(MAXTDAT,MAXCOLS),xval,frac
+      CHARACTER buffer*1024
+
+      TYPE(type_tube )              :: ass_tube
+      TYPE(type_fluid), ALLOCATABLE :: ass_fluid(:,:)
+
+
 
 c      WRITE(0,*) 'UPSTREAM: COORD2=',coord
-c      WRITE(0,*) 'UPSTREAM: FILE='//TRIM(fname)//'<'
+
+c      WRITE(0,*) 'UPSTREAM: FILE='//TRIM(fname)//'<',mode
+
+ 
+      IF (TRIM(fname).EQ.'reference_solution') THEN 
+        ass_tube = tube(itube)
+
+        cind1 = tube(itube)%cell_index(LO)
+        cind2 = tube(itube)%cell_index(HI)          
+
+        ALLOCATE(ass_fluid(cind2-cind1+1,nion))
+
+        CALL InterpolateReferencePlasma
+     .         (ass_tube,nion,ass_fluid,cell(cind1:cind2))
+
+        ycol = NINT(ycolumn)
+
+        ion = 1
+
+        IF (mode.EQ.-1.OR.mode.EQ.-2) THEN 
+
+          SELECTCASE (ycol)
+            CASE (1)
+              yval = ass_tube%jsat(-mode,ion) 
+            CASE (4)
+              yval = ass_tube%te  (-mode) 
+            CASE (5)
+              yval = ass_tube%ti  (-mode,ion) 
+            CASE DEFAULT
+              CALL ER('LoadUpstreamData','Unknown YCOLUMN',*99)
+          ENDSELECT
+
+        ELSE
+c         Interpolate from the reference solution based on the distance
+c         along the flux-tube, s:
+
+          DO i = cind1, cind2-1
+            IF (cell(i)%s.LT.s.AND.cell(i+1)%s.GT.s) EXIT
+          ENDDO
+          IF (i.EQ.cind2) 
+     .      CALL ER('LoadUpstreamData','S not found',*99)
+
+          j = i - cind1 + 1
+
+          frac = (s - cell(i)%s) / (cell(i+1)%s - cell(i)%s)
+
+          write(88,*) 'data dumper:',i,j,frac
+          write(88,*) 'data dumper:',cind1,cind2
+          write(88,*) '           :',s
+
+
+          SELECTCASE (ycol)
+            CASE (1)
+              yval = (1.0 - frac) * ass_fluid(j  ,ion)%ne + 
+     .                      frac  * ass_fluid(j+1,ion)%ne
+            CASE (2)
+              yval = (1.0 - frac) * ass_fluid(j  ,ion)%vi + 
+     .                      frac  * ass_fluid(j+1,ion)%vi
+            CASE (4)
+              yval = (1.0 - frac) * ass_fluid(j  ,ion)%te + 
+     .                      frac  * ass_fluid(j+1,ion)%te
+            CASE (5)
+              yval = (1.0 - frac) * ass_fluid(j  ,ion)%ti + 
+     .                      frac  * ass_fluid(j+1,ion)%ti
+            CASE DEFAULT
+              CALL ER('LoadUpstreamData','Unknown YCOLUMN',*99)
+          ENDSELECT
+
+        ENDIF
+
+        DEALLOCATE(ass_fluid)
+        RETURN
+      ENDIF
 
 c...  Access data file:
       fp = 99
       OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
+      DO WHILE (osmGetLine(fp,buffer,WITH_TAG))
+c        WRITE(0,*) 'BUFFER:',TRIM(buffer)
 
-      n_hold = -1
-      ndata  =  0
-
-c     THE CODE TO READ IN THE DATA COLUMNS WAS GENERALIZED - SL, 06/11/2013
-
-      DO WHILE (osmGetLine(fp,buffer,DATA_ONLY))
-        buffer_array = ''
-        CALL SplitBuffer(buffer,buffer_array)
-c       Count the number of data columns:
-        DO i = 1, 100
-          IF (LEN_TRIM(buffer_array(i)).EQ.0) EXIT
+c...    Isolate tag string:
+        DO i = 2, LEN_TRIM(buffer)
+          IF (buffer(i:i).EQ.'}') EXIT
         ENDDO
-        IF (i.EQ.1) CYCLE  ! blank line
-        IF (i.EQ.101)
-     .    CALL ER('LoadUpstreamData','Data not loaded correctly, '//
-     .            'check the data file',*99)
-        n = i - 1
-        IF (n_hold.EQ.-1) n_hold = n
-        IF (n_hold.NE. n)
-     .    CALL ER('LoadUpstreamData','The number of data columns '//
-     .            'changed unexpectedly, check the data file',*99)
-        ndata = ndata + 1 
-        DO i = 1, n
-          READ(buffer_array(i),*) vdata(ndata,i)
-        ENDDO
+
+        n = LEN_TRIM(buffer)
+
+c        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
+
+        SELECTCASE (buffer(2:i-1))
+          CASE ('NUMBER OF COLUMNS')
+            READ(buffer(i+1:n),*) ncolumns
+          CASE ('DATA','DATA LIST')
+            j = 0
+c              WRITE(0,*) 'NCOLUMNS:',ncolumns
+            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+              IF (buffer(1:1).EQ.'{') EXIT
+              j = j + 1
+c              WRITE(0,*) 'BUFFER -:',TRIM(buffer)
+              READ(buffer,*) vdata(j,1:ncolumns)
+            ENDDO
+            ndata = j
+          CASE ('END')
+            EXIT
+          CASE DEFAULT
+            CALL ER('LoadUpstreamData','Unknown tag',*99)
+        ENDSELECT
+
       ENDDO
-
-c      DO WHILE (osmGetLine(fp,buffer,WITH_TAG))
-cc        WRITE(0,*) 'BUFFER:',TRIM(buffer)
-cc...    Isolate tag string:
-c        DO i = 2, LEN_TRIM(buffer)
-c          IF (buffer(i:i).EQ.'}') EXIT
-c        ENDDO
-c        n = LEN_TRIM(buffer)
-cc        WRITE(0,*) 'BUFFER >'//buffer(2:i-1)//'<'
-c        SELECTCASE (buffer(2:i-1))
-c          CASE ('NUMBER OF COLUMNS')
-c            READ(buffer(i+1:n),*) ncolumns
-c          CASE ('DATA','DATA LIST')
-c            j = 0
-cc              WRITE(0,*) 'NCOLUMNS:',ncolumns
-c            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-c              IF (buffer(1:1).EQ.'{') EXIT
-c              j = j + 1
-cc              WRITE(0,*) 'BUFFER -:',TRIM(buffer)
-c              READ(buffer,*) vdata(j,1:ncolumns)
-c            ENDDO
-c            ndata = j
-c          CASE ('END')
-c            EXIT
-c          CASE DEFAULT
-c            CALL ER('LoadUpstreamData','Unknown tag',*99)
-c        ENDSELECT
-c      ENDDO
-
       CLOSE(fp)
 
 c... 
@@ -740,18 +793,16 @@ c...
       ENDSELECT
 
       xcol = NINT(xcolumn)
-      ycol = NINT(ycolumn) 
+      ycol = NINT(ycolumn)
 
-      IF (xcol.LT.1.OR.xcol.GT.n) 
-c      IF (xcol.LT.1.OR.xcol.GT.ncolumns) 
+      IF (xcol.LT.1.OR.xcol.GT.ncolumns) 
      .  CALL ER('LoadUpstreamData','x-data column ID invalid',*99)
-      IF (ycol.LT.1.OR.ycol.GT.n.OR.xcol.EQ.ycol) 
-c      IF (ycol.LT.1.OR.ycol.GT.ncolumns.OR.xcol.EQ.ycol) 
+      IF (ycol.LT.1.OR.ycol.GT.ncolumns.OR.xcol.EQ.ycol) 
      .  CALL ER('LoadUpstreamData','y-data column ID invalid',*99)
 
       IF     (xval.LT.vdata(1    ,xcol)) THEN
 c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
-        yval = vdata(1    ,ycol)
+        yval = vdata(1,ycol)
       ELSEIF (xval.GT.vdata(ndata,xcol)) THEN
 c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
         yval = vdata(ndata,ycol)
@@ -773,11 +824,10 @@ c      WRITE(88,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
 
       RETURN
  98   WRITE(0,*) 'ERROR LoadUpstreamData: Data file not found'
- 99   WRITE(0,*) '  FILE   = ',TRIM(fname)
-      WRITE(0,*) '  XCOL   = ',xcol
-      WRITE(0,*) '  YCOL   = ',ycol
-      WRITE(0,*) '  N      = ',n
-      WRITE(0,*) '  N_HOLD = ',n_hold
+      WRITE(0,*) '  FILE = ',TRIM(fname)
+ 99   WRITE(0,*) '  XCOL = ',xcol
+      WRITE(0,*) '  YCOL = ',ycol
+      WRITE(0,*) '  NCOL = ',ncolumns
       STOP
       END
 c     
@@ -998,8 +1048,11 @@ c         = 7 - psin, from tube link to infinity
         coord = osmnode(i1)%rad_coord
         expon = osmnode(i1)%rad_exp
 
-        IF (debug) WRITE(logfp,*) 'NODE PARAMS:',i1,index,mode,coord,
-     .                             expon
+        IF (debug) THEN
+          WRITE(logfp,'(6A)') '  I1',' INDEX','  MODE',' COORD',' EXPON'
+          WRITE(logfp,'(6A)') '  --',' -----','  ----',' -----',' -----'
+          WRITE(logfp,'(I4,4I6)') i1,index,mode,coord,expon
+        ENDIF
 
 c...    Decide if specified upstream data is density or pressure:
         density = .TRUE.   ! *** I DON'T LIKE THIS SOLUTION ***
@@ -1234,7 +1287,7 @@ c         *CRAP!*
           ti1 = osmnode(i3)%ti(1)
 
           IF (debug) THEN
-            WRITE(logfp,*) 's,smax:',s,tube(it)%smax
+            WRITE(logfp,*) 's,smax:',s(inode),tube(it)%smax
             WRITE(logfp,*) 'N0,1  :',n0,n1
             WRITE(logfp,*) 'V0,1  :',v0,v1
             WRITE(logfp,*) 'P0,1  :',p0,p1
@@ -1646,38 +1699,43 @@ c...        Load probe data from ASCII file:
             IF (nc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
+     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%ne,tmp1) 
+     .               expon,osmnode(i2)%ne,tmp1,s(inode))
               ne(inode) = tmp1 * osmnode(i1)%file_scale_ne
             ENDIF
             IF (vc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
+     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%v ,tmp1) 
+     .               expon,osmnode(i2)%v ,tmp1,s(inode)) 
               vb(inode) = tmp1 * osmnode(i1)%file_scale_M
               WRITE(logfp,*) 'VB  B:',vb(inode)
             ENDIF
             IF (pc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
+     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%pe,tmp1) 
+     .               expon,osmnode(i2)%pe,tmp1,s(inode)) 
               pe(inode) = tmp1 * osmnode(i1)%file_scale_pe
               WRITE(logfp,*) 'PE  B:',pe(inode)
             ENDIF
             IF (tec) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
+     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%te,tmp1) 
+     .               expon,osmnode(i2)%te,tmp1,s(inode)) 
               te(inode) = tmp1 * osmnode(i1)%file_scale_te
             ENDIF
             IF (tic) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,   ! Necessary to call LoadUpstreamData so many times?
      .               osmnode(i1)%file_format,
+     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%ti(1),tmp1) 
+     .               expon,osmnode(i2)%ti(1),tmp1,s(inode)) 
               ti(inode) = tmp1 * osmnode(i1)%file_scale_ti
               WRITE(logfp,*) 'TI B:',ti(inode)
             ENDIF
