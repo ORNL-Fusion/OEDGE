@@ -1246,6 +1246,160 @@ c     >  'RDC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
 
       RETURN
       END
+C
+C
+C
+      SUBROUTINE RDBUFFER(STRING, NAME, IERR)
+      use error_handling
+      implicit none
+      CHARACTER STRING*(*), NAME*(*)
+      INTEGER   IERR
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDBUFFER:  THIS ROUTINE READS IN AND RETURNS THE ENTIRE INPUT    *
+C  *             BUFFER SO IT CAN BE PROCESSED BY THE CALLING ROUTINE  *
+C  *    IF IT IS INVALID OR AN ERROR OCCURS THEN AN ERROR FLAG         *
+C  *    IS SET AND AN ERROR MESSAGE IS OUTPUT.                         *
+C  *                                                                   *
+C  *      PARAMETERS -                                                 *
+C  *  STRING : CHARACTER STRING                                        *
+C  *  NAME   : NAME OF CHARACTER STRING                                *
+C  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+C  *                                                                   *
+C  *     CHRIS FARRELL    JAN 1988                                     *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+      include 'reader'
+      CHARACTER COMENT*72,MESAGE*72
+C
+      STRING = ' '
+      MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
+
+c     Feb/2008 - jde - changed all buffer reads to A256 from A72
+c                    - this one left at 512 for reading title - other
+c                      entries could be increased to 512 if needed
+c                      buffer is 512 - * specifier can not be used
+c                      since the input text contains quoted character
+c                      strings
+  100 IF (IBUF.EQ.0) READ (5,'(A512)',ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFER'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c slmod begin
+      IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
+        CALL ReadUnstructuredInput(BUFFER)
+        GOTO 100
+      ENDIF
+c slmod end
+C
+      MESAGE = 'RETURNS BUFFER'
+      IBUF = 0
+      string = trim(buffer)
+c      READ (BUFFER,*,ERR=9999,END=9999) COMENT,STRING
+      RETURN
+C
+ 9999 continue
+
+      if (ierr.eq.0) then 
+
+         IERR = 1
+
+         call errmsg('RDBUFFER-READ ERROR',name//mesage)
+         call errmsg('RDBUFFER-LAST LINE ',buffer)
+
+      else
+         call dbgmsg('RDBUFFER-READ ERROR',name//mesage)
+         call dbgmsg('RDBUFFER-LAST LINE ',buffer)
+      endif
+
+c      WRITE (7,'(1X,2A,3(/1X,A))')
+c     >  'RDC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
+
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE RDBUFFERX(STRING, NAME, IERR)
+      use error_handling
+      implicit none
+      CHARACTER STRING*(*), NAME*(*)
+      INTEGER   IERR
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDBUFFERX:  THIS ROUTINE READS IN AND RETURNS THE ENTIRE INPUT   *
+C  *             BUFFER SO IT CAN BE PROCESSED BY THE CALLING ROUTINE  *
+C  *    IF IT IS INVALID OR AN ERROR OCCURS THEN AN ERROR FLAG         *
+C  *    IS SET AND AN ERROR MESSAGE IS OUTPUT.                         *
+C  *    THIS ROUTINE REQUIRES THE FIRST CHARACTER IN THE BUFFER TO BE  *
+C  *    "X" OR IT ISSUES AN ERROE MESSAGE AND SETS THE ERROR FLAG      *
+C  *                                                                   *
+C  *      PARAMETERS -                                                 *
+C  *  STRING : CHARACTER STRING                                        *
+C  *  NAME   : NAME OF CHARACTER STRING                                *
+C  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+C  *                                                                   *
+C  *     CHRIS FARRELL    JAN 1988                                     *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+      include 'reader'
+      CHARACTER COMENT*72,MESAGE*72
+C
+      STRING = ' '
+      MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
+
+c     Feb/2008 - jde - changed all buffer reads to A256 from A72
+c                    - this one left at 512 for reading title - other
+c                      entries could be increased to 512 if needed
+c                      buffer is 512 - * specifier can not be used
+c                      since the input text contains quoted character
+c                      strings
+  100 IF (IBUF.EQ.0) READ (5,'(A512)',ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFERX'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c slmod begin
+      IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
+        CALL ReadUnstructuredInput(BUFFER)
+        GOTO 100
+      ENDIF
+c slmod end
+C
+      IF (BUFFER(2:2).ne.'X'.and.buffer(2:2).ne.'x') then 
+         MESAGE = 'FIRST CHARACTER IN BUFFER IS NOT "X"'
+         string = trim(buffer)
+         goto 9999
+      endif
+
+      MESAGE = 'RETURNS BUFFER'
+      IBUF = 0
+      string = trim(buffer)
+c      READ (BUFFER,*,ERR=9999,END=9999) COMENT,STRING
+      RETURN
+C
+ 9999 continue
+
+      if (ierr.eq.0) then 
+
+         IERR = 1
+
+         call errmsg('RDBUFFERX-READ ERROR',name//mesage)
+         call errmsg('RDBUFFERX-LAST LINE ',buffer)
+
+      else
+         call dbgmsg('RDBUFFERX-READ ERROR',name//mesage)
+         call dbgmsg('RDBUFFERX-LAST LINE ',buffer)
+      endif
+
+c      WRITE (7,'(1X,2A,3(/1X,A))')
+c     >  'RDC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
+
+      RETURN
+      END
 c
 C  *********************************************************************
 C  *  RDCAR:  READS A SERIES OF CHARACTER STRINGS                      *

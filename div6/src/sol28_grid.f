@@ -3678,6 +3678,8 @@ c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
 c...      Problem with this cut pair, so delete them from the 
 c         list (have to complete the wall by hand at the moment):            
           IF (debug) WRITE(fp,*) ' CUT NOT FOUND, DELETING CUT',i1
+          write(0,'(a,a)') 'ERROR: OSMCLIPWALLTOGRID:',
+     >                     ' CAN NOT FIND INTERSECTION: GRID BROKEN'
 c          stop '!@#$ man !@#$'
 c         
 c         jdemod

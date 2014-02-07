@@ -23,6 +23,7 @@ module ero_plasma
   real*8 :: vert(4,2)
   real*8 :: roffset,zoffset
   integer :: interp_opt,extrap_opt
+  integer :: remap_bfield
   character*(line_length) :: erobg_out_name
   !
   ! Grid resolution can be specified by either nx,ny or delx,dely - number of points is rounded off when delx.dely is specified. 
@@ -34,7 +35,7 @@ module ero_plasma
 
   ! ero background plasma storage
 
-  real*8,allocatable :: ero_plamsma_out(:,:,:)
+  real*8,allocatable :: ero_plasma_out(:,:,:)
 
 
   public read_ero_plasma_headers, read_ero_plasma_block, calc_ero_plasma,output_ero_plasma
@@ -77,34 +78,46 @@ contains
           stop 'Unexpected error reading '//trim(erospec_name)
        endif
 
-       if (buffer(1:9).eq.'#EROBLOCK') then
+       write(0,'(a,a,a,a)') 'buffer:',trim(buffer),':'
+
+       if (buffer(1:15).eq.'#EROBLOCK') then
           done=.true. 
        elseif (buffer(1:10).eq.'#NUMBLOCKS') then 
           read(buffer(11:),*) n_ero_blocks
+          write(0,'(a,i10)') 'nblocks:',n_ero_blocks
        elseif (buffer(1:14).eq.'#DIVPLASMAFILE') then 
-          read(specunit,line_form,iostat=ios) buffer
-          if (ios.eq.0) then 
-             div_plasma_file = trim(buffer)
-             read_plasma_file = .true.
-          else
-             call errmsg('ERROR read_ero_spec_headers: read plasma file name: code = ',ios)
-             stop 'Unexpected error reading '//trim(erospec_name)
-          endif
+          !read(specunit,line_form,iostat=ios) buffer
+          
+          read(buffer(15:),*) div_plasma_file
+          read_plasma_file = .true.
+          write(0,'(a,a,a,a)') 'bgp:',trim(div_plasma_file),':'
+          
+          !if (ios.eq.0) then 
+          !   div_plasma_file = trim(buffer)
+          !else
+          !   call errmsg('ERROR read_ero_spec_headers: read plasma file name: code = ',ios)
+          !   stop 'Unexpected error reading '//trim(erospec_name)
+          !endif
 
        elseif (buffer(1:11).eq.'#DIVGEOFILE') then 
-          read(specunit,line_form,iostat=ios) buffer
-          if (ios.eq.0) then 
-             div_geo_file = trim(buffer)
-             read_geo_file = .true.
-          else
-             call errmsg('ERROR read_ero_spec_headers: read geo file name: code = ',ios)
-             stop 'Unexpected error reading '//trim(erospec_name)
-          endif
+          read(buffer(12:),*) div_geo_file
+          read_geo_file = .true.
+          write(0,'(a,a,a,a)') 'grd:',trim(div_geo_file),':'
+
+          !read(specunit,line_form,iostat=ios) buffer
+
+          !if (ios.eq.0) then 
+          !   div_geo_file = trim(buffer)
+          !else
+          !   call errmsg('ERROR read_ero_spec_headers: read geo file name: code = ',ios)
+          !   stop 'Unexpected error reading '//trim(erospec_name)
+          !endif
 
        endif
 
     end do
 
+    write(0,*) read_geo_file, read_plasma_file
 
     if ((.not.read_geo_file)) then
        call errmsg('ERROR read_ero_spec_headers','geometry file name not loaded')
@@ -130,7 +143,7 @@ contains
     implicit none
 
     logical :: done
-    integer :: i
+    integer :: i,ios
 
     logical :: rv_read,zv_read,erobg_name_read
 
@@ -147,7 +160,7 @@ contains
     dely = 0.0
     nx = 100
     ny = 100
-
+    remap_bfield = 1
 
     do while (.not.done)  
 
@@ -165,37 +178,63 @@ contains
        elseif (buffer(1:8).eq.'#OFFSETS') then 
           ! read R,Z coordinate offset 
           read(buffer(9:),*) roffset,zoffset
-          offsets_read = .true.
+          write(0,'(a,10(1x,g12.5))') 'offset:',roffset,zoffset
+
        elseif (buffer(1:10).eq.'#RVERTICES') then 
           ! read R vertices
           read(buffer(11:),*) (vert(i,1),i=1,4)
           rv_read = .true.
+          write(0,'(a,10(1x,g12.5))') 'rvert:',(vert(i,1),i=1,4)
+
        elseif (buffer(1:10).eq.'#ZVERTICES') then 
           ! read Z vertices
           read(buffer(11:),*) (vert(i,2),i=1,4)
           zv_read = .true.
+          write(0,'(a,10(1x,g12.5))') 'zvert:',(vert(i,2),i=1,4)
+
        elseif (buffer(1:5).eq.'#NXNY') then 
           ! read nx ny
           read(buffer(6:),*) nx,ny
+
+          write(0,'(a,2i10,10(1x,g12.5))') 'nxny:',nx,ny
+
        elseif (buffer(1:8).eq.'#DELTAXY') then 
           ! read delx dely
           read(buffer(9:),*) delx,dely
+          write(0,'(a,10(1x,g12.5))') 'dxdy:',delx,dely
+
        elseif (buffer(1:12).eq.'#INTERPOLATE') then 
           ! read interpolation option
           read(buffer(13:),*) interp_opt
+          write(0,'(a,2i10,10(1x,g12.5))') 'interp:',interp_opt
+
        elseif (buffer(1:12).eq.'#EXTRAPOLATE') then 
           ! read interpolation option
           read(buffer(13:),*) extrap_opt
-       elseif (buffer(1:12).eq.'#EROBGFILE') then 
+          write(0,'(a,2i10,10(1x,g12.5))') 'extrap:',extrap_opt
+
+
+       elseif (buffer(1:13).eq.'#REMAP_BFIELD') then 
+          ! read interpolation option
+          read(buffer(14:),*) remap_bfield
+
+          write(0,'(a,2i10,10(1x,g12.5))') 'remap:',remap_bfield
+
+       elseif (buffer(1:10).eq.'#EROBGFILE') then 
           ! read ERO background plasma output file name
-          read(specunit,line_form,iostat=ios) buffer
-          if (ios.eq.0) then 
-             erobg_out_name = trim(buffer)
-             erobg_name_read = .true.
-          else
-             call errmsg('ERROR read_ero_plasma_block: read erobg output file name: code = ',ios)
-             stop 'Unexpected error reading erobg_out_name'
-          endif
+          read(buffer(11:),*) erobg_out_name
+          !read(specunit,line_form,iostat=ios) buffer
+          erobg_name_read = .true.
+
+          write(0,'(a,a,a,a)') 'erobg:',trim(erobg_out_name),':'
+
+          !if (ios.eq.0) then 
+          !   erobg_out_name = trim(buffer)
+          !else
+          !   call errmsg('ERROR read_ero_plasma_block: read erobg output file name: code = ',ios)
+          !   stop 'Unexpected error reading erobg_out_name'
+          !endif
+
        endif
 
     end do
@@ -225,22 +264,30 @@ contains
 
 
 
-  subroutine calc_ero_plasma
+  subroutine calc_ero_plasma(errmsg_unit)
     implicit none
 
     integer :: ierr
-    integer :: errmsg_unit = 0
+    integer :: errmsg_unit 
 
-    real*8 :: xvec(2),yvec(2),xhat(2),yhat(2)
+    ! algorithm can easily be extended to 3D if required
+    real*8 :: xvec(2),yvec(2),xhat(2),yhat(2),bfield(2),xrange,yrange
     real*8 :: rt,zt,xt,yt
     real*8 :: rxstep,zxstep,rystep,zystep
+
+    real*8 :: tmp_offset(2),xyoffset(2)
+
+    real*8 :: ne,te,ti,vb,ef,btot,br,bz,bt,psin
+    real*8 :: bx,by
+    
+    integer :: ix,iy
 
     !
     ! Check to see if DIVIMP plasma data has been loaded (if not then load it)
     !
 
     if (.not.divimpbg_loaded) then 
-       call load_oedge_plasma(div_geo_file,div_plasma_file,ierr)
+       call load_oedge_data(div_geo_file,div_plasma_file,ierr)
 
        if (ierr.ne.0) then 
           call errmsg('Calc_ero_plasma: Error loading divimp files:',ierr)
@@ -253,7 +300,11 @@ contains
 
     ! initialize the oedge plasma loading code
 
-    call set_oedge_plasma_opts(roffset,zoffset,interp_opt,extrap_opt,errmsg_unit)
+
+    ! Handle offsets in the local code - not when getting the plasma data from divimp
+    call set_oedge_plasma_opts(0.0d0,0.0d0,interp_opt,extrap_opt,errmsg_unit)
+
+    !call set_oedge_plasma_opts(roffset,zoffset,interp_opt,extrap_opt,errmsg_unit)
 
     !
     !  Figure out how large the ero plasma array needs to be
@@ -279,8 +330,8 @@ contains
     ! clockwise or counter-clockwise. 
     !  
 
-    xvec = vert(2,*)-vert(1,*)
-    yvec = vert(4,*)-vert(1,*)
+    xvec = vert(2,:)-vert(1,:)
+    yvec = vert(4,:)-vert(1,:)
 
     xrange =  sqrt(xvec(1)**2 + xvec(2)**2)
     yrange =  sqrt(yvec(1)**2 + yvec(2)**2)
@@ -288,11 +339,14 @@ contains
     xhat = xvec / xrange
     yhat = yvec / yrange
 
-    offset(1) = roffset - vert(1,1)
-    offset(2) = zoffset - vert(1,2)
+    tmp_offset(1) = -roffset + vert(1,1)
+    tmp_offset(2) = -zoffset + vert(1,2)
 
-    xyoffset(1) = dot_product(offset,xhat)
-    xyoffset(2) = dot_product(offset,yhat)
+    xyoffset(1) = dot_product(tmp_offset,xhat)
+    xyoffset(2) = dot_product(tmp_offset,yhat)
+
+    write(0,'(a,10(1x,g12.5))') 'xvec :',xvec(1),xvec(2)
+    write(0,'(a,10(1x,g12.5))') 'yvec :',yvec(1),yvec(2)
 
 
     if (delx.gt.0.0.and.dely.gt.0.0) then 
@@ -318,10 +372,15 @@ contains
     rystep = dely * yhat(1)
     zystep = dely * yhat(2)
 
+    write(0,'(a,10(1x,g12.5))') 'Steps :',rxstep,zxstep,rystep,zystep
+    write(0,'(a,10(1x,g12.5))') 'Offset:', xyoffset(1),xyoffset(2)
+    write(0,'(a,10(1x,g12.5))') 'Deltas:', delx,dely
+    write(0,'(a,10(1x,g12.5))') 'Vert  :', vert(1,1),vert(1,2)
+
 
     ! Allocate storage to hold the ERO output
 
-    call allocate_array(eroplasma,nx,ny,14,'ERO_PLASMA',ierr)
+    call allocate_array(ero_plasma_out,0,nx,0,ny,1,14,'ERO_PLASMA',ierr)
 
     if (ierr.ne.0) then 
        call errmsg('CALC_ERO_PLASMA: Error allocating ero_plasma_out',ierr)
@@ -341,7 +400,9 @@ contains
           rt = ix * rxstep + iy * rystep + vert(1,1)
           zt = ix * zxstep + iy * zystep + vert(1,2)
 
-          call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt,ierr)
+          !write(0,'(a,10(1x,g12.5))') 'Point:',xt,yt,rt,zt
+
+          call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ierr)
 
           ero_plasma_out(ix,iy,1) = xt
           ero_plasma_out(ix,iy,2) = yt
@@ -355,10 +416,31 @@ contains
           ero_plasma_out(ix,iy,8) = vb
           ero_plasma_out(ix,iy,9) = ef
 
+
+          ! Note: Magnetic field vectors probably should be projected onto the 
+          !       xhat and yhat coordinate vectors of the mapped ero simulation volume (?)
+          !       As long as x->R and y->Z there is no problem but if the coordinates are 
+          !       organized otherwise then I am not sure how the magnetic field vectors 
+          !       would be interpreted inside ERO.
+          !       Btot and Btoroidal would be unchanged but the others may need to be remapped
+          !
           ero_plasma_out(ix,iy,10) = btot
-          ero_plasma_out(ix,iy,11) = br
-          ero_plasma_out(ix,iy,12) = bz
+
           ero_plasma_out(ix,iy,13) = bt
+
+          if (remap_bfield.eq.1) then 
+             bfield(1) = br
+             bfield(2) = bz
+
+             ! calculate projections of poloidal b-field onto X and Y coordinate vectors
+             bx = dot_product(bfield,xhat)
+             by = dot_product(bfield,yhat)
+             ero_plasma_out(ix,iy,11) = bx
+             ero_plasma_out(ix,iy,12) = by
+          else
+             ero_plasma_out(ix,iy,11) = br
+             ero_plasma_out(ix,iy,12) = bz
+          endif
 
           ero_plasma_out(ix,iy,14) = ierr
 
@@ -378,7 +460,7 @@ contains
     ! data is listed along each x row first
 
     integer :: outunit,ierr
-    integer :: ix,iy
+    integer :: ix,iy,in
 
     call find_free_unit_number(outunit)
 
@@ -395,7 +477,7 @@ contains
 
     do ix = 0,nx
        do iy = 0,ny
-           write(ounit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,14)
+           write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,14)
        end do 
     end do 
 

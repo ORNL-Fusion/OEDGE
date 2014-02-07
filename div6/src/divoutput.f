@@ -4162,6 +4162,19 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       CASE ARE CALCULATED FROM THE UE
      >DGE RECOMBINATION')
        CALL PRC ('                       SOURCE IN EACH CELL.')
+      ELSEIF(NEUT2D_OPT.EQ.2) THEN
+       CALL PRC ('  2D PARTICLE SOURCE 2: THE 2D PARTICLE SOURCE OPTION 
+     >IS ON')
+       CALL PRC ('                       PARTICLES ARE LAUNCHED PROPORTI
+     >ONAL TO')
+       CALL PRC ('                       TO A GIVEN 2D DISTRIBUTION FROM
+     > ERO.')
+       CALL PRC ('                       BOTH IONS AND NEUTRALS CAN BE L
+     >AUNCHED')
+       CALL PRC ('                       THIS OPTION REQUIRES EXTERNAL S
+     >OURCE')
+       CALL PRC ('                       DATA TO BE LOADED FROM ERO.')
+
       ENDIF
 C
 C     PRINT OUT CORRESPONDING V/A FLAG
@@ -4302,6 +4315,8 @@ C
      >PHI)**2|)')
        call prc ('                       BETA = 2PI$, $ in [0,1]')
        call prc ('                       PHI  = 2PI$ - PI, $ in [0,1]')
+      ELSEIF (NEUT2D_VAOPT.EQ.20) THEN
+       CALL PRC ('  2D NEUTRAL V/A  20 : DATA TRANSFERRED FROM ERO')
       ENDIF
 C
       ENDIF

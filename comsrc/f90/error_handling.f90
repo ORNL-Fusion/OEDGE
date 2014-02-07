@@ -4,7 +4,7 @@ module error_handling
 
   interface errmsg
 
-     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg
+     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
 
   end interface
 
@@ -123,6 +123,30 @@ contains
     endif
 
   end subroutine r8errmsg
+
+  subroutine r8x2errmsg(msg,a,b,unit)
+    implicit none
+    character*(*) msg
+    real(kind=R8) ::  a,b
+    integer,optional :: unit
+
+    integer len1,len2
+
+    len1 = len_trim(msg)
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+    else
+
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+
+    endif
+
+  end subroutine r8x2errmsg
+
+
 
   subroutine ierrmsg(msg,a,unit)
     implicit none

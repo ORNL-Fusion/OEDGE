@@ -5,6 +5,7 @@ c
       use rand_data
 c slmod begin
       use mod_divimp
+      use ero_interface
 c slmod end
       IMPLICIT NONE
 C                                                                       
@@ -517,6 +518,13 @@ c
       CALL OutputEIRENE(65,'END OF DIVIMP')
 
       CALL divClean
+
+      ! Clean up ERO related data and make sure ERO related output is written
+      if (ero_opt.ne.0) then 
+         CALL ero_cleanup
+      endif
+
+
 
       STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'
 

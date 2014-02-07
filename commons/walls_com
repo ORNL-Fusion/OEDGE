@@ -4,6 +4,8 @@ c     This common block contains data related to the wall
 c     - including geometry and plasma conditions if any
 c
 c
+      integer, parameter :: nwall_data = 32
+
       common /wall_data/ wall_plasma_opt,wall_plasma_fact,
      >    WLPROB,NWLPROB,wlpabs,
      >    WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,
@@ -24,7 +26,7 @@ c
      >    pcnt
 c
       real wall_plasma_fact,
-     >    WALLPT(MAXPTS,32),
+     >    WALLPT(MAXPTS,nwall_data),
      >    FWLPROB(MAXPTS),TOTWL,
      >    WLPROB(MAXPTS,3),
      >    wallsrc(5,3),wallleak(5,3),

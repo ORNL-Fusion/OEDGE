@@ -27,6 +27,7 @@ c
       USE mod_osm_input
       use allocatable_input_data
       use sol22_input
+      use ero_interface
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -156,6 +157,15 @@ c Series I
 c
       ELSEIF (tag(1:1).EQ.'I') THEN
         CALL ReadTagSeries_I(line,tag,fp)
+
+c
+c Series K
+c     - this tag series is assigned to ERO interface related 
+c       quantities
+c
+c
+      ELSEIF (tag(1:1).EQ.'K') THEN
+        CALL read_ero_unstructured_input(line,tag,fp)
 
 c
 c

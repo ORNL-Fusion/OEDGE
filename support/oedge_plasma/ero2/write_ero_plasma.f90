@@ -73,12 +73,13 @@ program write_ero_plasma
 
   call read_ero_plasma_headers(erospec_name,nblocks)
 
-
   do in = 1,nblocks
 
      call read_ero_plasma_block
      call calc_ero_plasma(errmsg_unit)
      call output_ero_plasma 
+     call calc_ero_surface
+     call output_ero_surface
 
   end do
 

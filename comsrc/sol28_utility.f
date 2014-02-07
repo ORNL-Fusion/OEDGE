@@ -49,9 +49,15 @@ c
       REAL    vgrid  ! Version number
       CHARACTER*(*) fname
 
-      fp = 99
+      ! jdemod - switch to using dynamic unit number since 99 could 
+      !          conflict with other unit numbers in the rest of the code
+
+      !fp = 99
+      call find_free_unit_number(fp)
+
       OPEN(UNIT=fp,FILE=fname(1:LEN_TRIM(fname)),ACCESS='SEQUENTIAL',
      .     FORM='UNFORMATTED',STATUS='OLD',ERR=97)            
+      write(0,'(a)') 'LOADGRID: Loading:'//trim(fname)
       READ (fp,ERR=98) vgrid
       READ (fp,ERR=98) grid
 c...  Check version numbers:

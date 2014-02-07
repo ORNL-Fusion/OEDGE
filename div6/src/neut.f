@@ -7,6 +7,8 @@ c
      >                 RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,
      >                 NRAND,
      >                 NEUTIM,RFAIL,NYMFS,STATUS)
+      use error_handling
+      use ero_interface
       implicit none
       DOUBLE PRECISION SEED
       INTEGER   NRAND,NATIZ,MATT,MATP,NPROD,NYMFS,STATUS,NPROD2
@@ -259,6 +261,10 @@ c
 c 
          call prep_neut2d
 c
+      elseif (neut2d_opt.eq.2) then 
+
+         call get_ero_src(neut2d_src,neut2d_num)
+
       endif
 c
 c
@@ -986,7 +992,7 @@ c
 c
 c     NOW - launch any THIRD launch 2D neutrals that are called for ...
 c
-      if (neut2d_opt.eq.1) then 
+      if (neut2d_opt.eq.1.or.neut2d_opt.eq.2) then 
 c
 c        2D Free space point launch  
 c	 
@@ -1156,6 +1162,7 @@ c slmod begin
       use mod_interface
       use mod_divimp
 c slmod end
+      use ero_interface
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -1337,6 +1344,17 @@ c
       real fp_lamiz,fp_sigmav,fp_vin
       integer fp_ik,fp_ir,fp_in
       real fp_rc,fp_zc
+c
+      real,external :: atan2c
+c
+c     ERO related variables
+c
+      real ero_vr,ero_vz,ero_vt,ero_temp,ero_charge
+      real ero_vtot,ero_vmult
+      
+      logical ero_record_data
+
+
 c slmod begin
       integer i
 c slmod ned
@@ -1599,6 +1617,12 @@ c          write (6,*) 'cneut:',iprod,r,z,id,ik,ir
 Cw
        elseif (cneutb.eq.1.or.cneutb.eq.5.or.
      >         cneutb.eq.6.or.cneutb.eq.7) then
+
+c
+c         Cneutb=5 is used for ERO particle launches
+c         ID is the index into the ERO data containing
+c         additional particle information.
+c
 c
 c         Since this is a launch in free space ... ik,ir are the
 c         indices of the closest bin centre ... id contains the
@@ -1775,15 +1799,6 @@ c
 c
         endif
 c
-        RANMAX= RMAXS(IPROD+LPROD-1)
-        SPUTY = SPUTYS(IPROD+LPROD-1)
-        DSPUTY= DBLE (SPUTY)
-        RPROD = RPROD + SPUTY
-        CIST  = 0.0
-        MTCCIST = 0.0
-c        IT    = IPOS (CIST, CTIMES(1,0), NTS+1)
-        IT    = IPOS (real(CIST), CTIMES(1,0), NTS+1)
-
 c
 c Added recording of erosion in NEROS array for all launch options (?)
 c
@@ -1803,11 +1818,25 @@ c
 	End If
 ! ammod end.
 
+
+        RANMAX= RMAXS(IPROD+LPROD-1)
+        SPUTY = SPUTYS(IPROD+LPROD-1)
+        DSPUTY= DBLE (SPUTY)
+
+        RPROD = RPROD + SPUTY
+        CIST  = 0.0
+        MTCCIST = 0.0
+c        IT    = IPOS (CIST, CTIMES(1,0), NTS+1)
+        IT    = IPOS (real(CIST), CTIMES(1,0), NTS+1)
+
+
+c
         CFLRIN= .TRUE.
         CFLREX= .TRUE.
         K     = KKS(IR)
         S     = KSS(IK,IR)
         SMAX  = KSMAXS(IR)
+
 
 
 C
@@ -1855,12 +1884,74 @@ c
           BETA   = PI * RANVA(IPROD) - PI/2.0 
           PSI    = 2.0 * PI * RANVB(IPROD)
           ANGLAN = ATAN (TAN (BETA) * COS (PSI))
+        elseif (cneutc.eq.20) then 
+           ! ERO based velocity angle-flag 
+           ! data taken from ERO input
+
+
+           call get_ero_part_data(id,ero_vr,ero_vz,ero_vt,
+     >                            ero_temp,ero_charge)
+
+           
+           ! load charge value - if charge.ne.0 - then load ionization arrays and cycle
+           ! don't want to affect neutral particle launch statistics with ions from ERO - except for 
+           ! total particles produced. 
+           
+           ! should be safe to exit at this point
+           ! ERO neutrals will be followed as normal from here using ERO V/A flag 20 (or other if preferred). 
+
+           if (ero_charge.gt.0) then 
+              ! ion data read from ERO - save it as if it was 
+              ! created from transport and cycle to next neutral
+
+              NATIZ = NATIZ + 1
+              XATIZS(LATIZ+NATIZ-1) = R
+              YATIZS(LATIZ+NATIZ-1) = Z
+              KATIZS(LATIZ+NATIZ-1) = K
+              SATIZS(LATIZ+NATIZ-1) = MIN (S, SMAX-S)
+              TEMTIZS(LATIZ+NATIZ-1) = ero_temp
+              snews(latiz+natiz-1)  = sputys(iprod+nprod-1)
+              cistizs(latiz+natiz-1)  = 0.0
+c
+c             Record starting wall or target element for neutral/ion.
+c
+              IDATIZS(LATIZ+NATIZ-1,1) = idstart
+              IDATIZS(LATIZ+NATIZ-1,2) = neuttype
+c
+              launchdat(LATIZ+NATIZ-1,3) = nrfcnt
+              launchdat(LATIZ+NATIZ-1,2) = launchdat(iprod+lprod-1,2)
+c
+c             Record charge of ionized particle (charge from ERO)
+c                 
+              launchdat(LATIZ+NATIZ-1,4) = ero_charge
+              launchdat(latiz+natiz-1,5) = 0       ! starts outside ERO launch region
+c
+              VINS(LATIZ+NATIZ-1) = ero_vtot
+c
+
+              cycle
+           else
+              ! load data required to follow ERO neutral
+              ero_vtot = sqrt(ero_vr**2+ero_vz**2+ero_vt**2)
+              ero_vmult = sqrt(ero_vr**2+ero_vz**2)/ero_vtot
+           
+              ! Use ERO particle temperature to set EPRODS to determine VIN
+
+              beta = 0.0
+              psi = 0.0
+              anglan = atan2c(ero_vz,ero_vr)
+           endif
+
         ENDIF
+
 C
         IF (CNEUTC.EQ.1.OR.CNEUTC.EQ.4.OR.CNEUTC.EQ.12.OR.
      >      CNEUTC.EQ.13.or.cneutc.eq.14.or.cneutc.eq.16.or.
      >      cneutc.eq.19) THEN
           VMULT = SQRT (ABS(COS(BETA)**2+(SIN(BETA)**2*COS(PSI)**2)))
+        elseif (cneutc.eq.20) then 
+           ! ERO V/A flag
+           vmult = ero_vmult
         ELSE
           VMULT = 1.0
         ENDIF
@@ -1910,11 +2001,13 @@ C
         ANGLE  = ANGLAN
         TANGNT = TANLAN
 C
+
+
+
+c
         XTOT (M) = XTOT(M) + R * SPUTY
         YTOT (M) = YTOT(M) + Z * SPUTY
         ATOT (M) = ATOT(M) + (ANGLAN+TANLAN) * SPUTY
-
-
         RNEUT(M) = RNEUT(M) + SPUTY
 
 c
@@ -1929,9 +2022,9 @@ C-----------------------------------------------------------------------
 C
 c       Set energy of sputtered particle based on input value 
 c
-        if (eprods(iprod).gt.0.0) then 
+        if (eprods(iprod+lprod-1).gt.0.0) then 
 
-            VIN = 1.38E4 * SQRT (eprods(iprod)/CRMI)
+            VIN = 1.38E4 * SQRT (eprods(iprod+lprod-1)/CRMI)
 
         else
 c
@@ -2024,6 +2117,9 @@ C
             VIN = find_thompson_velocity(neuttype,idstart,seed,nrand,
      >             1)
      >             * VMULT * CVAMULT
+          elseif (cneutc.eq.20) then 
+             ! ERO V/A flag - initial velocity loaded from ERO data
+             vin = ero_vtot * vmult
           ENDIF
 c
         endif 
@@ -2039,7 +2135,11 @@ C------ CALCULATE X,Y COMPONENTS OF VELOCITY, PROB OF IONISATION, ETC
 C
         XVELF  = VIN * COS(ANGLE+TANGNT) * FSRATE
         YVELF  = VIN * SIN(ANGLE+TANGNT) * FSRATE
-        TEMN   = CRMI * (VIN/1.38E4) * (VIN/1.38E4)
+c
+c       jdemod - adjust initial neutral temperature to include vmult
+c              - this keeps TEMN correct for 3D projection
+c
+        TEMN   = CRMI * (VIN/VMULT/1.38E4) * (VIN/VMULT/1.38E4)
         ETOT(M)= ETOT(M) + TEMN * SPUTY
 c
 c       Record detailed velocity debugging information if the 
@@ -2052,6 +2152,16 @@ c       made in neutbatch so that it can support either regular or
 c       hc launches.
 c
         call record_vdist(vin,beta,psi,tanlan,anglan,sputy)
+
+c
+c     Initialize ERO particle track recording
+c
+
+      if (ero_part_output_opt.eq.0) then 
+         ero_record_data = .false.
+      elseif (ero_part_output_opt.eq.1) then 
+         call ero_init_part_track(r,z,ero_record_data)
+      endif
 
 c
 c
@@ -2317,6 +2427,11 @@ c
 c
                  launchdat(LATIZ+NATIZ-1,3) = nrfcnt
                  launchdat(LATIZ+NATIZ-1,2) = launchdat(iprod,2)
+c
+c                Record charge of ionized particle (usually 1 for now)
+c                 
+                 launchdat(LATIZ+NATIZ-1,4) = 1.0
+c
 c
                  IF (CNEUTG.EQ.0) THEN
                     VINS(LATIZ+NATIZ-1) = 0.0
@@ -2793,6 +2908,19 @@ C
         ZOLD = Z
         R    = R + XVELF
         Z    = Z + YVELF
+
+c
+c     Monitor particle for entering ERO simulation volune - after update to R,Z
+c
+c     Variable are called: R,Z, SPUTY, IZ, VEL, TEMI - 
+c     
+      if (ero_record_data) then 
+         call ero_check_part_track_neut(ik,ir,0,r,z,temn,
+     >                   sputy,xvelf,yvelf,fsrate,crmi,ero_record_data)
+      endif
+
+c
+
 c slmod begin - tmp
         IF (sloutput) THEN
           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
@@ -3187,6 +3315,10 @@ c
 c
            launchdat(LATIZ+NATIZ-1,3) = nrfcnt
            launchdat(LATIZ+NATIZ-1,2) = launchdat(iprod,2)
+c
+c                Record charge of ionized particle (usually 1 for now)
+c                 
+           launchdat(LATIZ+NATIZ-1,4) = 1.0
 c
            IF (CNEUTG.EQ.0) THEN
              VINS(LATIZ+NATIZ-1) = 0.0
@@ -4673,7 +4805,7 @@ c
         elseif (northopt.eq.1.or.northopt.eq.2
      >          .or.northopt.eq.3) then
 c     
-          fydata(ID,1)   = KNDS(ID) * CS/KBFS(IK,IR) * COSTET(ID)  ! *** Assumption here that M=1 I think... ***
+          fydata(ID,1)   = KNDS(ID) * CS/KBFS(IK,IR) * COSTET(ID)  ! *** Assumption here that M=1 I think... *** No ... cs=kvds and it is possible for target velocity to not be M=1 depending on solver options
 c     
         endif
 c     
@@ -5396,6 +5528,7 @@ c
      >                     SEED,NRAND,NEUTIM,STATUS,MATP,MATT,
      >                     fymap,fyprob,nfymap,fydata)
       use velocity_dist
+      use ero_interface
       implicit none 
 c
       include    'params'
@@ -5764,15 +5897,29 @@ c
 C
          elseif (cneutb.eq.5) then 
 c
-            ID = IPOS (RAN, neut2d_prob, neut2d_num)
-            IK = neut2d_index(id,1)
-            IR = neut2d_index(id,2)
+c           Launch option 5 is used for 2D distributed particle launches 
 c
-            X0 = RS(ik,ir)
-            Y0 = ZS(ik,ir)
+            if (neut2d_opt.eq.1) then 
+               ID = IPOS (RAN, neut2d_prob, neut2d_num)
+               IK = neut2d_index(id,1)
+               IR = neut2d_index(id,2)
 c
-            RMAXS (IPROD+nneut1) = 1.0
-            ID = IK
+               X0 = RS(ik,ir)
+               Y0 = ZS(ik,ir)
+c
+               RMAXS (IPROD+nneut1) = 1.0
+               ID = IK
+
+            elseif (neut2d_opt.eq.2) then 
+               ! select a specific ERO particle launch - based on probability
+               ! IK,IR mean nothing for this launch at this point
+               
+               call select_ero_particle(x0,y0,id,ran)
+
+               IK = 0
+               IR = 0
+               RMAXS (IPROD+nneut1) = 1.0
+            endif
 c
 c        Line 
 c
@@ -6244,6 +6391,7 @@ c
 c
 c
       subroutine print_neut2d
+      use ero_interface
       implicit none
 c
       include    'params'
@@ -6261,21 +6409,34 @@ c
       parameter (prob_limit=1.0e-5)
       integer in,prcount
       character*80 comment
+      real r,z,charge,prob,temp
 c
       call prb  
-      call prc('SUMMARY OF 2D NEUTRAL SOURCE LAUNCH PROBABILITY')
-      call prr('- LISTING INCLUDES ALL CELLS WITH A PROBABILITY > ',
+      
+      if (neut2d_opt.eq.1) then 
+        call prc('SUMMARY OF 2D NEUTRAL SOURCE LAUNCH PROBABILITY')
+        call prr('- LISTING INCLUDES ALL CELLS WITH A PROBABILITY > ',
      >           prob_limit)
+        call prc('- LISTING IS SETS OF (IK,IR) PAIRS FOLLOWED'//
+     >         ' BY PROBABILITY')
+      elseif (neut2d_opt.eq.2) then 
+        call prc('SUMMARY OF 2D ERO SOURCE LAUNCH PROBABILITY')
+        call prc('- LISTING IS SETS OF R,Z,CHARGE,PROBABILITY')
+        call prr('- LISTING INCLUDES ALL CELLS WITH A PROBABILITY > ',
+     >           prob_limit)
+      endif
+c
       call pri('- NUMBER OF CELLS WITH NON-ZERO LAUNCH PROBABILITY = ',
      >          neut2d_num)
-      call prc('- LISTING IS SETS OF (IK,IR) PAIRS FOLLOWED'//
-     >         ' BY PROBABILITY')
 c
       call prb
       call prr('TOTAL STRENGTH OF 2D SOURCE #/m-tor/s = ',neut2d_src)  
       call prb
 c
+
       prcount = 0    
+
+      if (neut2d_opt.eq.1) then 
 C
       do in = 1,neut2d_num
 c
@@ -6310,10 +6471,49 @@ c
       end do
 c
       call prb
+
+      elseif (neut2d_opt.eq.2) then 
+
+
+      do in = 1,neut2d_num
+c
+
+         call get_ero_part_data2(in,r,z,temp,charge,cell_prob)
+
+c
+         if (cell_prob.gt.prob_limit) then 
+c
+c           Increment print count
+c
+            prcount = prcount + 1
+c
+c           write items to line
+c
+            write (comment((prcount-1)*20+1:prcount*20),200) 
+     >           r,z,charge,cell_prob
+c
+c           Print 2 entries / line
+c
+            if (prcount.eq.2) then 
+c
+               call prc(comment)
+               prcount = 0
+c
+            endif
+c
+         endif 
+c
+      end do
+c
+      call prb
+
+
+      endif
+
 c
 
  100  format('(',i3,',',i3,')=',1p,g9.2,1x)
- 
+ 200  format('(',g8.3,',',g8.3,')=',1p,g9.2,1x,'(',i3,')',2x)
 c
       return
       end 
@@ -6609,7 +6809,7 @@ c
 c  
          w3 = 0.0
 c
-      elseif (neut2d_opt.eq.1) then 
+      elseif (neut2d_opt.eq.1.or.neut2d_opt.eq.2) then 
 c
          w3 = neut2d_src
 c

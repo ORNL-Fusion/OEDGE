@@ -37,11 +37,18 @@ VER=pgi
 #
 #
 DIVINSTALLDIR=$HOME
+DIVWRITEDIR=$HOME
 PROGDIR=divimp
 #
-RUNROOT=$DIVINSTALLDIR/$PROGDIR
-EXEROOT=$DIVINSTALLDIR/$PROGDIR
-DATAROOT=$DIVINSTALLDIR/$PROGDIR
+export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$DIVINSTALLDIR/$PROGDIR
+#
+export RUNROOT=$DIVWRITEDIR/$PROGDIR
+export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+#
+#export RUNROOT=$DIVINSTALLDIR/$PROGDIR
+#export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+#export DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
 #  Loctions of the various DIVIMP files 
 #
@@ -63,8 +70,12 @@ DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #  EIREXE    - EIRENE executable
 #
 export DIVRUNDIR=$RUNROOT/cases
-export DIVDATDIR=$RUNROOT/data
-export DIVRESDIR=$RUNROOT/results
+export DIVDATDIR=$DATAROOT/data
+export DIVRESDIR=$RESULTSROOT/results
+#
+#export DIVRUNDIR=$RUNROOT/cases
+#export DIVDATDIR=$RUNROOT/data
+#export DIVRESDIR=$RUNROOT/results
 #
 export DIVMAINDIR=$EXEROOT
 export DIVEXEDIR=$EXEROOT/div6
@@ -100,10 +111,11 @@ export EIRDIR=$EXEROOT/eirene07
 #   a common meaning between these scripts and Steve's versions
 # - code has been modified to use DIVMAINDIR if available then DIVHOME
 #
-export DIVHOME=$RUNROOT
+# export DIVHOME=$RUNROOT
 
 # Location of graphics library used by EIRENE:
-export GLI_HOME=$DIVHOME/libsrc
+# export GLI_HOME=$DIVHOME/libsrc
+export GLI_HOME=$EXEROOT/libsrc
 
 # Set local directories:
 export RUNDIR=$RUNROOT

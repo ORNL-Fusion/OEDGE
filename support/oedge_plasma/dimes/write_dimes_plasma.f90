@@ -15,7 +15,7 @@ program write_dimes_plasma
 
   real*8 :: rmin,rmax,zmin,zmax 
   real*8 :: dr,dz
-  real*8 :: rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt
+  real*8 :: rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt,psin
 
   integer :: test_cnt,in
   real*8 :: test_r(18)
@@ -123,13 +123,20 @@ program write_dimes_plasma
   ! These offsets should put the DIMES center at 0,0 for this simulation 
   ! 75%   R_offset = 1.48943  Z_offset = 1.25000
   !
-  r_offset =  1.48943
-  z_offset = -1.25
+  !r_offset =  1.48943
+  !z_offset = -1.25
 
   ! 25%   R_offset = 1.50483  Z_offset = 1.25000
   !
   !r_offset =  1.50483
   !z_offset = -1.25
+
+  !
+  ! 153046
+  !
+  r_offset =  1.485973
+  z_offset = -1.25
+
 
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
   
@@ -139,7 +146,7 @@ program write_dimes_plasma
 
   call set_oedge_plasma_opts(r_offset,z_offset,interpolate_option,-1,errmsg_unit)
 
-  call load_oedge_plasma(gridfilename,plasmafilename,ierr)
+  call load_oedge_data(gridfilename,plasmafilename,ierr)
 
   if (ierr.ne.0) then 
      call errmsg('Problem loading oedge plasma',ierr)
@@ -187,7 +194,7 @@ program write_dimes_plasma
         !write(0,'(a,2i8,10(1x,g18.8))') 'S:',ir,iz,dr,dz,rt,zt,rmin,rmax,zmin,zmax
         !write(6,'(a,2i8,10(1x,g18.8))') 'S:',ir,iz,dr,dz,rt,zt,rmin,rmax,zmin,zmax
 
-        call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt,ierr)
+        call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ierr)
 
         if (ierr.eq.0) then 
            write(ounit,'(2i8,20(1x,g18.8))') ir,iz,rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt

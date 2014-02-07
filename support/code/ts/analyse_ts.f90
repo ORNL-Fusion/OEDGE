@@ -89,10 +89,11 @@ contains
 
   end subroutine setup_ts_bins
 
-  subroutine accumulate_ts_data(nlines)
+  subroutine accumulate_ts_data(nlines,elm_filt)
     implicit none
 
     integer :: nlines
+    logical :: elm_filt
 
     integer :: in,it
     integer :: psibin
@@ -123,6 +124,8 @@ contains
           !write(0,*) filedata(in,8),it,psibin
 
           ! Accumulate INELM - select small subset close to ELM to see if there is a difference
+          if (elm_filt) then 
+
           if (filedata(in,13).ne.0.0) then 
 
              ! look at +/- 1ms time window
@@ -154,6 +157,7 @@ contains
 
           endif
 
+          endif 
 
        end if
     end do
@@ -165,9 +169,11 @@ contains
   end subroutine accumulate_ts_data
 
 
-  subroutine analyse_print_ts_data(ofilename)
+  subroutine analyse_print_ts_data(ofilename,elm_filt)
     implicit none
     character*(*) :: ofilename
+    logical :: elm_filt
+
     integer :: in,it,is
     integer :: ounit,ounit2
 
@@ -176,9 +182,9 @@ contains
     integer :: ierr
     logical :: res1,res2
 
-!  integer :: exp_tmin,exp_tmax
+    !  integer :: exp_tmin,exp_tmax
 
-!  character*5 :: tmins,tmaxs
+    !  character*5 :: tmins,tmaxs
 
 
     ! calculate the average profiles
@@ -208,53 +214,49 @@ contains
 
     ! first output file
 
-    tmp_file = trim(ofilename)
-    ofile1 = trim(tmp_file)//'.elm'
+    if (elm_filt) then 
+       ! print modified TS file with elm filter data added
 
-    call find_free_unit_number(ounit) 
+       tmp_file = trim(ofilename)
+       ofile1 = trim(tmp_file)//'.elm'
 
-    write(0,*) 'First output:'//trim(ofile1),':',ounit,':'
+       call find_free_unit_number(ounit) 
 
-    open(unit=ounit,file=trim(ofile1),access='sequential',iostat=ierr)
+       write(0,*) 'First output:'//trim(ofile1),':',ounit,':'
 
-    write(ounit,'(1x,13(2x,a,2x))') 'Psin','Lpol(m)','DeltaR','DeltaZ','Ne','Te','Ne*Te(torr)','Time(ms)','R(m)','Z(m)','Rsep(m)','Elm_offset(ms)','N_Elm'
+       open(unit=ounit,file=trim(ofile1),access='sequential',iostat=ierr)
 
-    do in = 1,nlines_filedata
-       write(ounit,'(1x,13(1x,g13.6))') (filedata(in,is),is=1,ncols_filedata)
-    end do
+       write(ounit,'(1x,13(2x,a,2x))') 'Psin','Lpol(m)','DeltaR','DeltaZ','Ne','Te','Ne*Te(torr)','Time(ms)','R(m)','Z(m)','Rsep(m)','Elm_offset(ms)','N_Elm'
 
-    close(ounit)
+       do in = 1,nlines_filedata
+          write(ounit,'(1x,13(1x,g13.6))') (filedata(in,is),is=1,ncols_filedata)
+       end do
 
-    write(0,*) 'First output complete:'
+       close(ounit)
 
+       write(0,*) 'First output complete:'
 
-
-
-
-
-
-
-!  exp_tmin = int(log10(start_time))+1
-
-!  if (exp_tmin.eq.3) then 
-!     write(tmins(1:3),'(i3)') int(start_time)
-!  elseif (exp_tmin.eq.4) then
-!     write(tmins(1:4),'(i4)') int(start_time)
-!  endif
+    endif
 
 
-!  exp_tmax = int(log10(end_time))+1
+    !  exp_tmin = int(log10(start_time))+1
 
-!  if (exp_tmax.eq.3) then 
-!     write(tmaxs(1:3),'(i3)') int(end_time)
-!  elseif (exp_tmax.eq.4) then
-!     write(tmaxs(1:4),'(i4)') int(end_time)
-!  endif
-
-!  write(0,*) 'Times:',trim(tmins),':',trim(tmaxs),':'
+    !  if (exp_tmin.eq.3) then 
+    !     write(tmins(1:3),'(i3)') int(start_time)
+    !  elseif (exp_tmin.eq.4) then
+    !     write(tmins(1:4),'(i4)') int(start_time)
+    !  endif
 
 
+    !  exp_tmax = int(log10(end_time))+1
 
+    !  if (exp_tmax.eq.3) then 
+    !     write(tmaxs(1:3),'(i3)') int(end_time)
+    !  elseif (exp_tmax.eq.4) then
+    !     write(tmaxs(1:4),'(i4)') int(end_time)
+    !  endif
+
+    !  write(0,*) 'Times:',trim(tmins),':',trim(tmaxs),':'
 
 
     ! second output file
@@ -286,32 +288,38 @@ contains
 
     end do
 
-    write(ounit2,*)
-    write(ounit2,'(a)') ' ELM Data binned +/-1ms:'
-    write(ounit2,'(a)') '    PSIN     Rsep       ne        Te     Counts'
+    if (elm_filt) then 
+       ! print out averaged data related to ELMs if elm filtering performed
 
-    do in = 1,npsi_bins
+       write(ounit2,*)
+       write(ounit2,'(a)') ' ELM Data binned +/-1ms:'
+       write(ounit2,'(a)') '    PSIN     Rsep       ne        Te     Counts'
 
-       if (counts(in,2).gt.0) then 
-          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,2),profiles(in,1,2),profiles(in,2,2),counts(in,2)
-       endif
+       do in = 1,npsi_bins
 
-    end do
+          if (counts(in,2).gt.0) then 
+             write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,2),profiles(in,1,2),profiles(in,2,2),counts(in,2)
+          endif
 
-    write(ounit2,*)
-    write(ounit2,'(a)') ' Non-ELM Data binned >5ms:'
-    write(ounit2,'(a)') '    PSIN     Rsep      ne        Te     Counts'
+       end do
 
-    do in = 1,npsi_bins
+       write(ounit2,*)
+       write(ounit2,'(a)') ' Non-ELM Data binned >5ms:'
+       write(ounit2,'(a)') '    PSIN     Rsep      ne        Te     Counts'
 
-       if (counts(in,3).gt.0) then 
-          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,3),profiles(in,1,3),profiles(in,2,3),counts(in,3)
-       endif
+       do in = 1,npsi_bins
 
-    end do
+          if (counts(in,3).gt.0) then 
+             write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,3,3),profiles(in,1,3),profiles(in,2,3),counts(in,3)
+          endif
+
+       end do
+
+
+    endif
+
 
     close(ounit2)
-
     write(0,*) 'Second output complete:'
 
 
@@ -349,6 +357,7 @@ contains
 
     if (ios.ne.0) then 
        write(0,*) 'FILE not found:',ios
+       stop 'STOP: Data file not found:'//trim(filename)
     endif
 
     ! Assume standard format
@@ -388,6 +397,9 @@ contains
     !allocate(filedata(line_cnt,11),stat=ierr)
     allocate(filedata(line_cnt,ncols_filedata),stat=ierr)
 
+    ! initialize
+    filedata = 0.0
+
     ! read in the data file
 
     rewind(fileunit)
@@ -407,7 +419,6 @@ contains
 
        end if
 
-
     end do
 
     ! exit after file has been read in
@@ -419,7 +430,6 @@ contains
     
 
     if (elm_filt) then 
-
        write(0,*) 'READ_TS: Filtering ELMs:'
        call filter_ts_data(elm_filename,filedata,nlines,ncols,nextra)
     endif

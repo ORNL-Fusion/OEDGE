@@ -16,6 +16,7 @@ c
       use eckstein_2007_yield_data
       use subgrid_options
       use subgrid
+      use ero_interface
 c slmod begin
       use mod_interface
       use mod_divimp
@@ -116,6 +117,8 @@ c
 
       character*77 comment
 
+      logical :: ero_record_data
+
       !
       ! Spara is now local to the transport routines - it is not
       ! available for printing in the remaining debug statements at
@@ -185,6 +188,34 @@ c
 c     Initialize extra source total particle influx  [#/m/s]
 c
       neut2d_fytot = 0.0
+c
+c     If the ERO option is ON and neut2d_opt=2 calling for an ERO launch of particles 
+c
+      if (neut2d_opt.eq.2) then 
+
+         if (ero_opt.gt.0) then 
+            ! load and analyse the ero launch data in preparation for 
+            ! particle launch in NEUT
+            call load_analyse_ero_launch_data
+
+         else
+            
+            call errmsg('ERROR: ERO OPTIONS:',
+     >         'NEUT2D_OPT=2 but ERO option is OFF: Turning off NEUT2D')
+            neut2d_opt = 0
+
+         endif
+      endif
+
+c
+c     ERO interface initialization - default particle not recorded
+c      
+      if (ero_part_output_opt.eq.0) then 
+         ero_record_data = .false.
+      elseif (ero_part_output_opt.eq.1) then 
+         ero_record_data = .true.
+      endif
+
 c
 c     Initialize recombination, reflection, and MTC variables
 c
@@ -412,6 +443,13 @@ c     - launchdat(imp,1) is now used to specify a specific launch option
 c       to be used in LAUNCH for each particle - this will allow for a
 c       mixture of target and wall recycled particles to be launched in
 c       the same group.
+c
+c     - launchdat(imp,4) - specifies the starting charge state for the ion
+c                          on return from neut - this allows for ions and
+c                          neutrals to be injected from a common source in
+c                          neut but leave the ion tracking to div 
+c
+c     - launchdat(imp,5) - ERO related - did particle already enter ERO sample volume
 c
 c
 
@@ -1358,6 +1396,7 @@ c           from a previous run:
               LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
 c... left off: need to sort out setting the charge state, and also the strange initialization of 
 c maxciz from cizsc :
+c jdemod - maxciz is the maximum charge state reached by THIS particle ... so it starts at initial value and gets incremented later
 c          DO 792 JZ = CIZSC, MAXCIZ
 c why would this be done?
 c a bug?
@@ -1415,6 +1454,23 @@ C
             IW = IW + 1
           ENDIF
         ENDIF
+
+
+c
+c     ERO record particle data flags
+c     
+
+      if (ero_part_output_opt.eq.0) then 
+         ero_record_data = .false.
+      elseif (ero_part_output_opt.eq.1) then 
+         if (launchdat(imp,5).eq.1) then 
+            ero_record_data = .false.   ! already recorded as a neutral
+         else
+            call ero_init_part_track(r,z,ero_record_data)
+         endif
+      endif
+
+
 C
 C------ SET ARRAY INDICES ETC
 C
@@ -1428,11 +1484,25 @@ c
 c slmod begin
         IF (LOAD_I.NE.-1) THEN
           IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
-          MAXCIZ = CIZSC         ! not sure about this...
+          MAXCIZ = IZ         ! not sure about this...
+c
+c         jdemod - maxciz is the maximum charge state reached by this particle and it is incremented 
+c                  as IZ changes ... so should start at IZ. 
+c
+c          MAXCIZ = CIZSC         ! not sure about this...
+c
+c       jdemod - add code for particles launched using ERO distribution 
+c              - can have any initial charge state - neutrals have been handled in neut
+c       
+        elseif (ero_opt.eq.1.and.neut2d_opt.eq.2) then 
+           iz = nint(launchdat(imp,4))
+           maxciz = iz
         ELSE
           IZ     = CIZSC
           MAXCIZ = CIZSC
         ENDIF
+
+
         RIZ    = REAL(IZ)
         DSPUTY = DBLE(SPUTY)
 c
@@ -2119,7 +2189,7 @@ c
 c
         if (debug0) write(0,*) 'Before EX',ifate,ik,ir,iz,s,r,z
 c
-        call execute_transport_step(seed,nrand,neutim)
+        call execute_transport_step(seed,nrand,neutim,ero_record_data)
 c
         if (debug_all)
      >     write(6,*) 'DEBUG B:',s,smax,slast,theta,cross

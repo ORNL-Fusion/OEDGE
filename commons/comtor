@@ -137,7 +137,7 @@ c
      > terat,nrat,qrat,l1rat,l2rat,lvrat,nabsfac,cstgrad,ctargt,
      > tiupstream(maxnrs,2),teupstream(maxnrs,2),cwallt,cwallp,
      > cleakpos(maximp,2),kprat(maxnrs,2),kpsiz(maxnks,maxnrs),
-     > kprat2(maxnks,maxnrs,2),launchdat(maximp,4),totpintim,
+     > kprat2(maxnks,maxnrs,2),launchdat(maximp,5),totpintim,
      > ionizdat(2,2,2,2,5),cellvals(maxnrs,4,2),cserr(maxnrs,2),
      > cteboup,ctiboup,cnboup,fluxes(maxnks,maxnrs,16),
      > cosalph(maxnks,maxnrs),sinalph(maxnks,maxnrs),dppei,dprec,

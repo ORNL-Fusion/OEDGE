@@ -1,11 +1,14 @@
 c     -*-Fortran-*-
 c
-      subroutine execute_transport_step(seed,nrand,neutim)
+      subroutine execute_transport_step(seed,nrand,neutim,
+     >                                  ero_record_data)
+      use ero_interface
       implicit none
 c
       real*8  seed
       real    neutim
       integer nrand
+      logical ero_recorded
 c
       include    'params'
       include    'comtor'
@@ -20,6 +23,7 @@ c
       include    'particle_specs'
       include    'driftvel'
 c
+      logical ero_record_data
       real spara,dspara,vpara,dvpara
 c
 c     Record current cell and position 
@@ -104,6 +108,16 @@ c
          write(0,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
      >         ksmaxs(ir)
       endif
+c
+c     Monitor particle for entering ERO simulation volune - after update to R,Z
+c
+c     Variable are called: R,Z, SPUTY, IZ, VEL, TEMI - 
+c     
+      if (ero_record_data) then 
+         call ero_check_part_track_ion(ik,ir,iz,r,z,vel,temi,
+     >                             sputy,ero_record_data)
+      endif
+
 
 c        
       return

@@ -1245,7 +1245,7 @@ c
           
 c      WRITE(0,*) 'FAILURE FOR FLOATING WALL SURFACES'
 
-c      write(0,*) 'Eirnasdat:',eirnasdat
+      write(6,*) 'Eirnasdat:',eirnasdat
       
      
       DO i1 = 1, eirnasdat
