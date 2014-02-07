@@ -14,16 +14,17 @@ program proclp
   ! C) Binned by Jsat magnitude and R-Rsep
   !
 
-  character*512 :: infilename,ident,time,ofilename,elm_filename
+  character*512 :: infilename,ident,time,ofilename,elm_filename,in_ofilename,out_ofilename
 
   integer :: iunit, ounit,ierr
 
-  real,allocatable :: lp_data(:,:) ,lp_axis(:),lp_proc_data(:,:,:),lp_axis_psi(:,:),lp_axis_r(:,:),elm_fractions(:,:)
+  real,allocatable :: lp_data(:,:) ,lp_axis(:,:),lp_proc_data(:,:,:,:),lp_axis_psi(:,:,:),lp_axis_r(:,:,:),elm_fractions(:,:)
 
 
   integer :: nlines,npts,ndata,ncols,nextra,n_elm_fractions,n_avs
 
-  real :: tmin,tmax,deltar,chisq_lim
+  real :: tmin,tmax,deltabin,chisq_lim
+  integer :: binopt
   character*5 :: tmins,tmaxs
   character*4 :: iform
   character*5 :: chisq
@@ -54,7 +55,15 @@ program proclp
   ! Initialization for current LP data file format
   ! Add three columns for including additional ELM information
   ncols  = 9 
-  nextra = 3
+  ! nextra - extra colums added to lp_data - 3 for ELM data - 1 for inner/outer identifier - 1 for flagging as outlier removed
+  nextra = 5
+
+
+  ! Set default binning
+  ! Specify deltr for bin averaging 
+  deltabin = 0.005
+  binopt=PSIBINOPT
+
   !
   ! Read and assign command line arguments
   !
@@ -63,8 +72,11 @@ program proclp
   nargs = iargc()
 
   if (nargs.lt.3) then 
-     write(0,'(a)') 'proclp command usage: proclp <infilename> tmin  tmax  chi_lim -e  <elmtimefilename>'
-     write(0,'(a)') 'The -e argument is optional'
+     write(0,'(a)') 'proclp command usage: proclp <infilename> tmin  tmax  chi_lim -e  <elmtimefilename> -or -om <num>'
+     write(0,'(a)') 'The -e,-or and -om arguments are optional. -or and -om remove outliers.'
+     write(0,'(a)') '-om <num> specifies the outlier cutoff <num>*bin_average or both <num>*bin_average and 1/<num>*bin_average for <num> < 0'
+     write(0,'(a)') '-r <num> bin in R-Rsep with bin size specifed by <num>'
+     write(0,'(a)') '-p <num> bin in PSIN with bin size specifed by <num>'
      STOP 'Insufficient command line arguments'
   endif
 
@@ -153,14 +165,32 @@ program proclp
         read(arg,*) outlier_mult
         write(0,'(a,f6.2)') 'OULIER MULTIPLIER = ', outlier_mult
 
+     elseif (arg.eq.'-r') then 
+
+        ! note -om implies -or so both are not needed
+        binopt = RBINOPT
+
+        call getarg(arg_cnt,arg)
+        arg_cnt = arg_cnt + 1
+        read(arg,*) deltabin
+        write(0,'(a,f6.2)') 'BINNING IN R, NEW BIN SIZE = ', deltabin
+
+     elseif (arg.eq.'-p') then 
+
+        ! note -om implies -or so both are not needed
+        binopt = PSIBINOPT
+
+        call getarg(arg_cnt,arg)
+        arg_cnt = arg_cnt + 1
+        read(arg,*) deltabin
+        write(0,'(a,f6.2)') 'BINNING IN PSI, NEW BIN SIZE = ', deltabin
+
      endif
 
 
   end do
 
 
-  ! Specify deltr for bin averaging 
-  deltar = 0.005
 
 
   ! Set ELM time window characteristics
@@ -181,6 +211,10 @@ program proclp
 
   call read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
 
+  ! Identify Inner/outer association of LP data ... based on R-Rsep and PSI
+
+  call flag_lp_data(lp_data,nlines,ncols,nextra)
+
   ! Add ELM information to the tabulated LP data
   if (elm_filt) then 
      call filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
@@ -188,7 +222,7 @@ program proclp
 
   ! analyse and bin the lp_data
 
-  call bin_lp_data_r(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,deltar,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
+  call bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
 
 
   ! OUTPUT
@@ -227,10 +261,14 @@ program proclp
   else
      ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)
   endif
+
   !ofilename = 'bin_lp_'//tmins(1:exp_tmin)
   !ofilename = trim(ofilename)//'-'
   !ofilename = trim(ofilename)//tmaxs(1:exp_tmax)
   !ofilename = trim(ofilename)//'_'//trim(infilename)
+
+
+  ! write combined target data
 
   write(0,*) 'Out file name:',trim(ofilename),':',ounit
 
@@ -238,17 +276,53 @@ program proclp
 
   open(ounit,file=ofilename,iostat=ierr)
 
-  write(0,*) 'Out file name:',trim(ofilename),':',ierr
+  write(0,*) 'Combined file name:',trim(ofilename),':',ierr
 
   write(time,'(1x,f10.2,a,f10.2)') tmin, ' TO ', tmax
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
-  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,0)
 
   close(iunit)
   close(ounit)
 
+  ! write inner target data
+
+  in_ofilename = trim(ofilename)//'.inner'
+
+  open(ounit,file=in_ofilename,iostat=ierr)
+
+  write(0,*) 'Inner file name:',trim(in_ofilename),':',ierr
+
+  ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)//' INNER'
+
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,inner)
+
+  close(ounit)
+
+
+  ! write outer target data
+
+  out_ofilename = trim(ofilename)//'.outer'
+
+  open(ounit,file=out_ofilename,iostat=ierr)
+
+  write(0,*) 'Outer file name:',trim(out_ofilename),':',ierr
+
+  ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)//' OUTER'
+
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,outer)
+
+  close(ounit)
+
+  !-----------------------------
+  !
+  ! Write out revised raw data
+  !
+  !-----------------------------
+
+  ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
   if (remove_outlier) then 
      ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)//'_'//trim(infilename)

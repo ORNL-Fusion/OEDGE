@@ -77,9 +77,9 @@ program processts
 
   call read_ts(infilename,nlines,elm_filt,elm_filename)
 
-  call accumulate_ts_data(nlines)
+  call accumulate_ts_data(nlines,elm_filt)
 
-  call analyse_print_ts_data(infilename)
+  call analyse_print_ts_data(infilename,elm_filt)
 
   call deallocate_ts_data
 

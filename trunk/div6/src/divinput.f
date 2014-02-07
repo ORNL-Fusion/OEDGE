@@ -191,9 +191,9 @@ c     A proportion of teh total particles to be launched in the
 c     case will be diverted to this source proportional to
 c     strength of this source mechansim.
 c
-      CALL RDI (neut2d_opt,.TRUE.,0,.TRUE., 1,
+      CALL RDI (neut2d_opt,.TRUE.,0,.TRUE., 2,
      >                                    'EXTRA 2D LAUNCH OPTION',IERR)
-      CALL RDI (neut2d_vaopt,.TRUE.,-1,.TRUE.,19,
+      CALL RDI (neut2d_vaopt,.TRUE.,-1,.TRUE.,20,
      >                                         'EXTRA 2D V/A FLAG',IERR)
 c
       CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 6,'SPUTTER SOURCE OPT ',IERR)

@@ -127,6 +127,7 @@ c
       use subgrid_options
       use ribbon_grid_options
       use sol22_input
+      use ero_interface
       use allocatable_input_data
       implicit none
       
@@ -664,6 +665,16 @@ c
 c     Far periphery variable to hold velocity input 
 c
       fp_flow_velocity_input = 0.0
+c
+c------------------------------------------------------------------------
+c
+c     TAG K??
+c
+c     Series K unstructured input tags are assigned to the ERO-DIVIMP
+c     interface code. These tags are both initialized and read by routines
+c     contained in the ero_interface module
+c
+      call init_ero_unstructured_input
 c
 c
 c -----------------------------------------------------------------------

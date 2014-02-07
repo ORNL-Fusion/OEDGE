@@ -2303,8 +2303,8 @@ c       Normalize for LOS integral averaging.
 c
         if (maxswitch.eq.0) then
 c
-           write(6,'(a,i5,3(1x,g12.5))') 'LOS:',i,tvals(i),total_weight,
-     >                              tvals(i)/total_weight
+c           write(6,'(a,i5,3(1x,g12.5))') 'LOS:',i,tvals(i),total_weight,
+c     >                              tvals(i)/total_weight
 c
            TVALS(I) = TVALS(I) / total_weight
 c

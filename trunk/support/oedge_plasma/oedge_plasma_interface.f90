@@ -1,5 +1,6 @@
 module oedge_plasma_interface
   use error_handling
+  !use utilities
 
   implicit none
 
@@ -41,6 +42,10 @@ module oedge_plasma_interface
   integer,allocatable :: nvertp(:)
   real*8,allocatable :: rvertp(:,:),zvertp(:,:)
 
+
+  ! psi data for each cell on the grid
+  real*8,allocatable :: psifl(:,:)
+
   ! Magnetic field data
   ! btot - magntitude of magnetic field in each cell 
   ! br,bz,bt - unit vector components of the magnetic field direction in each cell
@@ -62,6 +67,10 @@ module oedge_plasma_interface
   !                                - need to check REDEP sign convention
   ! kes - parallel electric field (V/m)
   !
+  ! tegs - parallel electron temperature gradient
+  ! tigs - parallel ion temperature gradient
+  ! negs - parallel density gradient
+  !
   ! - target quantities
   ! knds  - plasma density (m-3)
   ! kteds - electron temperature (eV)
@@ -71,6 +80,7 @@ module oedge_plasma_interface
   !
 
   real*8,allocatable :: knbs(:,:),ktebs(:,:),ktibs(:,:),kvhs(:,:),kes(:,:)
+  real*8,allocatable :: negs(:,:),tegs(:,:),tigs(:,:)
   real*8,allocatable :: knds(:),kteds(:),ktids(:),kvds(:),keds(:)
   real*8,allocatable :: btotd(:),brd(:),bzd(:),btd(:)
 
@@ -78,13 +88,29 @@ module oedge_plasma_interface
   ! boundary_index contains the ik,ir and cell polygon index if the cell is a boundary and zero otherwise
   integer :: nboundary
   integer,allocatable :: boundary_index(:,:)
+
+!
+! Wall data
+!
+  integer :: nwall,nwall_data
+  real*8, allocatable :: walls(:,:)
   
 
   ! The meaning of these will depend on whether cell polygon data or cell center data is being used
   integer :: ik_last,ir_last,iq_last
 
 
-  public :: get_oedge_plasma,load_oedge_plasma,close_oedge_plasma,find_free_unit_number,set_oedge_plasma_opts
+  interface get_oedge_plasma 
+
+     module procedure get_oedge_plasma_base, get_oedge_plasma_grad
+
+
+  end interface
+
+
+
+
+  public :: get_oedge_plasma,load_oedge_data,close_oedge_plasma,set_oedge_plasma_opts,get_wall_data
 
 
 
@@ -104,9 +130,6 @@ contains
     ! errmsg_unit = N error messages go to specified unit number
 
     call set_errmsg_units(errmsg_unit,-1,-1)
-
-    ! Initialize error return value to 0
-    ierr = 0
 
     ! Assign r_shift, z_shift to r_offset,z_offset internally
     ! This feature allows the coordinate systems between the oedge_plasma_interface code
@@ -130,7 +153,7 @@ contains
 
 
 
-  subroutine load_oedge_plasma(gridfilename,plasmafilename,ierr)
+  subroutine load_oedge_data(gridfilename,plasmafilename,ierr)
     implicit none
     character*(*) :: gridfilename,plasmafilename
     integer :: igridfile,iplasmafile,ierr,ios
@@ -202,25 +225,30 @@ contains
     iq_last = -1
 
 
-  end subroutine init_oedge_plasma
+  end subroutine load_oedge_data
 
   subroutine find_boundary_cells
     use allocate_arrays
     implicit none
     integer,allocatable :: tmp_data(:,:)
-    integer :: in
+    integer :: in,ik,ir,ierr
+    integer :: max_tmp_data
 
     ! boundary cells on the grid are those with indices of ik=0 or nks+1 and those cells for which ikins or ikouts points back to themselves. 
     
     max_tmp_data = 6 * mks + 2 * nrs
 
     call allocate_array(tmp_data,max_tmp_data,3,'TMP_DATA',ierr)
+    if (ierr.ne.0) then 
+       call errmsg('FIND_BOUNDARY_CELLS: Failed to allocate tmp_data',ierr)
+       stop 'Find_boundary_cells'
+    endif
 
     nboundary = 0
 
     do ir = 1,nrs
        do ik = 0,nks(ir)+1
-          if (ik,eq.0.or.ik.eq.nks(ir)+1) then 
+          if (ik.eq.0.or.ik.eq.nks(ir)+1) then 
              ! boundaries at targets (ring ends)
              nboundary = nboundary + 1
              if (nboundary.gt.max_tmp_data) call grow_iarray(tmp_data,max_tmp_data,3)
@@ -228,9 +256,9 @@ contains
              tmp_data(nboundary,2) = ir
 
              if (ik.eq.0) then 
-                tmp_data(nboundary,3) korpg(1,ir)
+                tmp_data(nboundary,3) = korpg(1,ir)
              elseif (ik.eq.nks(ir)+1) then 
-                tmp_data(nboundary,3) korpg(nks(ir),ir)
+                tmp_data(nboundary,3) = korpg(nks(ir),ir)
              endif
 
           elseif (irouts(ik,ir).eq.ir.or.irins(ik,ir).eq.ir) then 
@@ -239,7 +267,7 @@ contains
              if (nboundary.gt.max_tmp_data) call grow_iarray(tmp_data,max_tmp_data,3)
              tmp_data(nboundary,1) = ik
              tmp_data(nboundary,2) = ir
-             tmp_data(nboundary,3) korpg(ik,ir)
+             tmp_data(nboundary,3) = korpg(ik,ir)
           endif
        end do
     end do
@@ -251,7 +279,7 @@ contains
     ! copy temp data
     
     do in = 1,nboundary
-       boundary_index(in,*) = tmp_data(in,*) 
+       boundary_index(in,:) = tmp_data(in,:) 
     end do
 
     deallocate(tmp_data)
@@ -277,7 +305,7 @@ contains
        allocate(tmp_array(2*tmp_bnd1,tmp_bnd2))
 
        do in = 1, tmp_bnd1
-          tmp_array(in,*) = transfer_array(in,*)
+          tmp_array(in,:) = transfer_array(in,:)
        end do
 
        tmp_bnd1 = tmp_bnd1 * 2
@@ -302,16 +330,21 @@ contains
   end subroutine close_oedge_plasma
 
 
-  subroutine get_oedge_plasma(rin,zin,ne,te,ti,vb,ef,btoto,bro,bzo,bto,ierr)
+  subroutine get_oedge_plasma_base(rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ierr)
     implicit none
 
-    real*8 :: rin,zin,ne,te,ti,vb,ef,btoto,bro,bzo,bto
+    real*8 :: rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto
 
     real*8 :: r,z
 
     integer :: ierr
 
     integer :: ik,ir,iq
+   
+    ! temporary local variables
+
+    real*8, ngrad,tegrad,tigrad
+
 
     ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
     ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
@@ -334,13 +367,13 @@ contains
     ! The plasma data returned is undefined (it will contain whatever was passed in)
     if (ierr.ne.0) then 
 
-       if (extrapolate_opt.ge.0) then 
+       if (extrapolate_opt.gt.0) then 
           ! if extrapolation is on then return the data for the nearest r,z grid point
           ! Note it will only check the boundary rings of the grid
           ! 
           call find_nearest_boundary(r,z,ik,ir)
 
-          if (extrapolate_opt.eq.0) then 
+          !if (extrapolate_opt.ge.0) then 
 
              ! assign values from nearest boundary
              ne = knbs(ik,ir)
@@ -348,6 +381,7 @@ contains
              ti = ktibs(ik,ir)
              vb = kvhs(ik,ir)
              ef = kes(ik,ir)
+             psin = psifl(ik,ir)
              btoto = btot(ik,ir)
              bro = br(ik,ir)
              bzo = bz(ik,ir)
@@ -355,7 +389,7 @@ contains
 
              ierr = 2
 
-          endif
+          !endif
 
        endif
        return
@@ -381,6 +415,7 @@ contains
        ti = ktibs(ik,ir)
        vb = kvhs(ik,ir)
        ef = kes(ik,ir)
+       psin = psifl(ik,ir)
        btoto = btot(ik,ir)
        bro = br(ik,ir)
        bzo = bz(ik,ir)
@@ -419,6 +454,7 @@ contains
           ti = ktibs(ik,ir)
           vb = kvhs(ik,ir)
           ef = kes(ik,ir)
+          psin = psifl(ik,ir)
           btoto = btot(ik,ir)
           bro = br(ik,ir)
           bzo = bz(ik,ir)
@@ -432,13 +468,171 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,btoto,bro,bzo,bto)
+          call interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        endif
 
     endif
 
-  end subroutine get_oedge_plasma
+  end subroutine get_oedge_plasma_base
+
+
+
+  subroutine get_oedge_plasma_grad(rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,ierr)
+    implicit none
+
+    real*8 :: rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto
+    real*8 :: ngrad, tegrad,tigrad
+
+    real*8 :: r,z
+
+    integer :: ierr
+
+    integer :: ik,ir,iq
+
+    ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
+    ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
+
+    r = rin + r_offset
+    z = zin + z_offset 
+
+    !write(0,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
+    !write(6,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
+
+    ! Get the OEDGE plasma conditions at the specified R,Z location
+    ! Two options - value in cell and interpolated - value in cell is quicker - interpolated is smoother
+
+
+    ! Get cell 
+    call find_poly(r,z,ik,ir,ik_last,ir_last,ierr)
+
+
+    ! If the R,Z location is not found on grid then exit with non-zero return code
+    ! The plasma data returned is undefined (it will contain whatever was passed in)
+    if (ierr.ne.0) then 
+
+       if (extrapolate_opt.gt.0) then 
+          ! if extrapolation is on then return the data for the nearest r,z grid point
+          ! Note it will only check the boundary rings of the grid
+          ! 
+          call find_nearest_boundary(r,z,ik,ir)
+
+          !if (extrapolate_opt.ge.0) then 
+
+             ! assign values from nearest boundary
+             ne = knbs(ik,ir)
+             te = ktebs(ik,ir)
+             ti = ktibs(ik,ir)
+             vb = kvhs(ik,ir)
+             ef = kes(ik,ir)
+             psin = psifl(ik,ir)
+             btoto = btot(ik,ir)
+             bro = br(ik,ir)
+             bzo = bz(ik,ir)
+             bto = bt(ik,ir)
+
+             ngrad=negs(ik,ir)
+             tegrad=tegs(ik,ir)
+             tigrad=tigs(ik,ir)
+
+             ierr = 2
+
+          !endif
+
+       endif
+       return
+    endif
+
+    !
+    ! If on grid assign last location variables
+    !
+
+    ik_last = ik
+    ir_last = ir
+
+
+    ! Interpolate result if required
+
+
+    if (interpolate_opt.eq.0) then 
+
+
+       ! no interpolation
+       ne = knbs(ik,ir)
+       te = ktebs(ik,ir)
+       ti = ktibs(ik,ir)
+       vb = kvhs(ik,ir)
+       ef = kes(ik,ir)
+       psin = psifl(ik,ir)
+       btoto = btot(ik,ir)
+       bro = br(ik,ir)
+       bzo = bz(ik,ir)
+       bto = bt(ik,ir)
+
+             ngrad=negs(ik,ir)
+             tegrad=tegs(ik,ir)
+             tigrad=tigs(ik,ir)
+
+       if (debug_code) then 
+          call write_cell_data(ik,ir)
+       endif
+
+
+    elseif (interpolate_opt.eq.1) then
+       ! interpolate using Jeff's algorithm
+       ! Note: ne,te,ti,vb,ef have target values that are used for interpolation in the first half cell
+       !       btot,br,bz,bt do not have target data .. as a result the target values are the same as the first cell center
+       ! Note: Target R,Z coordinates are needed for this algorithm.
+       !
+       ! Jeff's algorithm is based on cell centers and the values at the cell centers. It does not require
+       ! the polygon information since it checks to see where the particle is relative to the values at the cell 
+       ! centers and then interpolates from there using the perpendicular distance from the point to the lines joining the 
+       ! cell centers as the weight factors. 
+       ! This makes sense since no matter what the polygon shapes on the actual grid the plasma values are defined and 
+       ! essentially calculated for the cell center (this may cause some issues for fluid code quantities like the 
+       ! flow velocity that are cell edge based - but does not affect the OEDGE results since everything is cell center 
+       ! calculated except at material surfaces)
+
+       ! Find quadrant in cell for interpolation algorithm
+       ! This should NOT throw an error - but check just in case
+       call find_quadrant(r,z,ik,ir,iq,iq_last,ierr)
+
+
+       ! If an error is found return uninterpolated results
+       if (ierr.ne.0) then 
+          ! no interpolation
+          ne = knbs(ik,ir)
+          te = ktebs(ik,ir)
+          ti = ktibs(ik,ir)
+          vb = kvhs(ik,ir)
+          ef = kes(ik,ir)
+          psin = psifl(ik,ir)
+          btoto = btot(ik,ir)
+          bro = br(ik,ir)
+          bzo = bz(ik,ir)
+          bto = bt(ik,ir)
+
+             ngrad=negs(ik,ir)
+             tegrad=tegs(ik,ir)
+             tigrad=tigs(ik,ir)
+
+
+          if (debug_code) then 
+             call write_cell_data(ik,ir)
+          endif
+
+       else
+
+          iq_last = iq
+
+          call interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+
+       endif
+
+    endif
+
+  end subroutine get_oedge_plasma_grad
+
 
 
 
@@ -477,11 +671,10 @@ end subroutine find_nearest_boundary
 
 
 
+  subroutine interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
-
-  subroutine interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,btoto,bro,bzo,bto)
-
-    real*8 :: r,z,ne,te,ti,vb,ef,btoto,bro,bzo,bto
+    real*8 :: r,z,ne,te,ti,vb,ef,btoto,psin,bro,bzo,bto
+    real*8 :: ngrad,tegrad,tigrad
     integer :: ik,ir,iq,in
     integer :: iks(4),irs(4)
 
@@ -649,13 +842,18 @@ end subroutine find_nearest_boundary
        ti = ktibs(ik,ir)
        vb = kvhs(ik,ir)
        ef = kes(ik,ir)
+       psin = psifl(ik,ir)
        btoto = btot(ik,ir)
        bro = br(ik,ir)
        bzo = bz(ik,ir)
        bto = bt(ik,ir)
 
-       write(6,'(a,2l10,2i10,20(1x,g18.8))') 'X or B:',xpt,boundary,ik,ir,r,z,ne,te,ti
-       write(6,'(a,20i8,20(1x,g18.8))') 'X or B:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
+             ngrad=negs(ik,ir)
+             tegrad=tegs(ik,ir)
+             tigrad=tigs(ik,ir)
+
+       write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
+       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
 
 
     else
@@ -702,10 +900,16 @@ end subroutine find_nearest_boundary
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktibs,ti)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kvhs,vb)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kes,ef)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,psifl,psin)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,btot,btoto)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,br,bro)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,bz,bzo)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,bt,bto)
+
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,negs,ngrad)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,tegs,tegrad)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,tigs,tigrad)
+
 
     endif
 
@@ -829,7 +1033,7 @@ end subroutine find_nearest_boundary
     if (.not.found) then 
        ! Set error condition - position not found on grid
 
-       call errmsg('FIND_POLY:','Position not found on grid')
+       call errmsg('FIND_POLY: Position not found on grid',r,z)
        ierr = 1
 
     endif
@@ -1007,7 +1211,7 @@ end subroutine find_nearest_boundary
     implicit none
     integer :: infile,ierr
 
-    integer :: ik,ir,in
+    integer :: ik,ir,in,iw
     logical :: done
 
     character*512 :: buffer
@@ -1151,6 +1355,12 @@ end subroutine find_nearest_boundary
              !
              read (infile,500) ((zvertp(ik,in),ik=1,nvert),in=1,npolyp)
 
+          elseif (buffer(1:6).eq.'PSIFL:') then
+             !
+             !       PSIn values for each cell on the grid
+             !
+             read (infile,500) ((psifl(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
           elseif (buffer(1:5).eq.'BTOT:') then
              !
              !       B-field magnitude in cell
@@ -1174,6 +1384,23 @@ end subroutine find_nearest_boundary
              !       T part of B-field unit vector
              !
              read (infile,500) ((bt(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+          
+
+          elseif(buffer(1:6).eq.'WALLS:') then 
+             !
+             ! Read in vessel wall coordinates
+             !
+             read(buffer(7:),*) nwall,nwall_data
+             if (allocated(walls)) deallocate(walls)
+             allocate(walls(nwall,nwall_data),stat=ierr)
+             if (ierr.ne.0) then 
+                call errmsg('ERROR Allocating WALLS array:',ierr)
+                stop 'Error allocating WALLS array'
+             endif
+
+             do iw = 1,nwall
+                read(infile,500) (walls(iw,in),in=1,nwall_data)
+             end do
 
           endif
 
@@ -1225,6 +1452,111 @@ end subroutine find_nearest_boundary
 
   end subroutine load_oedge_grid
 
+
+  subroutine get_wall_data(nw,r,z)
+    implicit none
+    integer :: nw
+    real*8, allocatable :: r(:),z(:)
+
+    integer :: ierr,in
+
+!     WALLPT (IND,1) = R
+!     WALLPT (IND,2) = Z
+!     WALLPT (IND,3) = WEIGHT FACTOR FOR ANTI-CLOCKWISE
+!     WALLPT (IND,4) = WEIGHT FACTOR FOR CLOCKWISE
+!     WALLPT (IND,5) = LENGTH OF 1/2 SEGMENT ANTI-CLOCKWISE
+!     WALLPT (IND,6) = LENGTH OF 1/2 SEGMENT CLOCKWISE
+!     WALLPT (IND,7) = TOTAL LENGTH OF LAUNCH SEGMENT
+!     WALLPT (IND,8) = ANGLE FOR ANTI-CLOCKWISE LAUNCH
+!     WALLPT (IND,9) = ANGLE FOR CLOCKWISE LAUNCH
+!     WALLPT (IND,10) = NET PROBABILITY ANTI-CLOCKWISE
+!     WALLPT (IND,11) = NET PROBABILITY CLOCKWISE
+!     WALLPT (IND,12) = NET PROBABILITY FOR ENTIRE SEGMENT
+!     WALLPT (IND,13) = FINAL PROBABILITY FOR SEGMENT
+!
+!     wallpt (ind,16) = TYPE OF WALL SEGMENT
+!                       1 = Outer Target (JET) - inner for Xpt down
+!                       4 = Inner Target (JET) - outer      "
+!                       7 = Main Wall
+!                       8 = Private Plasma Wall
+!
+!                       9 = Baffle Segment
+!
+!                       These are similar to the quantity in the JVESM
+!                       array associated with the NIMBUS wall
+!                       specification. The difference is that the
+!                       Main Wall is split into Inner and Outer Divertor
+!                       Wall as well as the Main (SOL) Wall - this
+!                      is not done here.
+!
+!     WALLPT (ind,17) = INDEX into the NIMBUS flux data returned
+!                       for each wall segment - ONLY if the NIMBUS
+!                       wall option has been specified. NOTE: if
+!                       the NIMBUS wall has been specified - it is
+!                       still combined with the DIVIMP target polygon
+!                       corners because rounding errors may result in
+!                       small discrepancies between the coordinates.
+!
+!     WALLPT (IND,18) = Index of corresponding target segment if the wall
+!                       segment is also a target segment.
+!
+!     WALLPT (IND,19) = Temperature of wall segment in Kelvin (K)
+!
+!     WALLPT (IND,20) = RSTART
+!     WALLPT (IND,21) = ZSTART
+!     WALLPT (IND,22) = REND
+!     WALLPT (IND,23) = ZEND
+!
+!     wallpt (ind,24) = Used for additional indexing information - used
+!                       as IK knot number for wall and trap wall option 7
+!
+!     wallpt (ind,25) = Value of reflection coefficient - if reflection
+!                       for this segment is turned off the value here
+!                       will be zero. If a positive value is specified
+!                       then regular reflection occurs. If it is negative
+!                       then a PTR (prompt thermal re-emission) type
+!                       reflection is used. The value for this is
+!                       set with the individual YMF's and is read from
+!                      the CYMFS array.
+!
+!     wallpt (ind,26) = IK value of nearest plasma cell to wall segment
+!     wallpt (ind,27) = IR value of nearest plasma cell to wall segment
+!     wallpt (ind,28) = Minimum distance to outermost ring
+!     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
+!     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
+!     wallpt (ind,31) = Plasma density at wall segment
+!     wallpt (ind,32) = Distance along the wall
+
+
+
+
+    write(0,*)'Walls',nw
+
+    nw = nwall
+
+    if (allocated(r)) deallocate(r)
+    if (allocated(z)) deallocate(z)
+
+    allocate(r(nw),stat=ierr)
+    allocate(z(nw),stat=ierr)
+
+    if (ierr.ne.0) then 
+
+       call errmsg('ERROR Allocating R,Z argument arrays (GET_WALL_DATA):',ierr)
+       stop 'Allocation error in GET_WALL_DATA'
+    endif
+
+    do in = 1,nwall
+       r(in) = walls(in,20) 
+       z(in) = walls(in,21)
+    end do
+
+    return
+
+  end subroutine get_wall_data
+
+
+
   subroutine allocate_storage
     use allocate_arrays
     implicit none
@@ -1253,6 +1585,9 @@ end subroutine find_nearest_boundary
     call allocate_array(rvertp,nvert,npolyp,'RVERTP',ierr)
     call allocate_array(zvertp,nvert,npolyp,'ZVERTP',ierr)
 
+    ! Allocate PSIFL data array
+    call allocate_array(psifl,0,mks,1,nrs,'PSIFL',ierr)
+
     ! Allocate magnetic field arrays
     call allocate_array(btot,0,mks,1,nrs,'BTOT',ierr)
     call allocate_array(br,0,mks,1,nrs,'BR',ierr)
@@ -1266,6 +1601,10 @@ end subroutine find_nearest_boundary
     call allocate_array(ktibs,0,mks,1,nrs,'KTIBS',ierr)
     call allocate_array(kvhs,0,mks,1,nrs,'KVHS',ierr)
     call allocate_array(kes,0,mks,1,nrs,'KES',ierr)
+
+    call allocate_array(negs,0,mks,1,nrs,'NEGS',ierr)
+    call allocate_array(tegs,0,mks,1,nrs,'TEGS',ierr)
+    call allocate_array(tigs,0,mks,1,nrs,'TIGS',ierr)
 
     ! Target plasma background
     call allocate_array(knds,nds,'KNDS',ierr)
@@ -1308,6 +1647,8 @@ end subroutine find_nearest_boundary
     if (allocated(rvertp)) deallocate(rvertp)
     if (allocated(zvertp)) deallocate(zvertp)
 
+    if (allocated(psifl)) deallocate(psifl)
+
     if (allocated(btot)) deallocate(btot)
     if (allocated(br)) deallocate(br)
     if (allocated(bz)) deallocate(bz)
@@ -1324,6 +1665,13 @@ end subroutine find_nearest_boundary
     if (allocated(ktids)) deallocate(ktids)
     if (allocated(kvds)) deallocate(kvds)
     if (allocated(keds)) deallocate(keds)
+
+    if (allocated(negs)) deallocate(negs)
+    if (allocated(tegs)) deallocate(tegs)
+    if (allocated(tigs)) deallocate(tigs)
+
+    if (allocated(walls)) deallocate(walls)
+
 
   end subroutine deallocate_storage
 
@@ -1470,6 +1818,19 @@ end subroutine find_nearest_boundary
              !        Electric Field - target
              !
              read (infile,500) (keds(id),id=1,nds)
+
+
+          elseif (buffer(1:4).eq.'TEGS:') then
+             !
+             !        parallel electron temperature gradient 
+             !
+             read (infile,500) ((tegs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+          elseif (buffer(1:4).eq.'TIGS:') then
+             !
+             !        parallel ion temperature gradient
+             !
+             read (infile,500) ((tigs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
           endif
 
