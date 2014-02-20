@@ -51,7 +51,7 @@ $
 '999   DUMPING DATA TO IDL        '  10
 '999   DUMP EIRENE DATA TO IDL    '  15
 '999   DUMP DIVIMP DATA TO IDL    '  14
-'999   OUTPUT WALL FLUX DATA FILE '   0 20
+'999   OUTPUT WALL FLUX DATA FILE '  20
 $
 $ 1D plasma plots
 $ ----------------------------------------------------------------------
