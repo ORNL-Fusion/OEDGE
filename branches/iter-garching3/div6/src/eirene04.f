@@ -2836,14 +2836,23 @@ c
 
       REAL*8    ddum(ntally)
 
+      LOGICAL   message_status
+      DATA      message_status /.TRUE./
+
+      SAVE
+
       DO WHILE (.TRUE.) 
         READ(fp,'(A256)',END=98) buffer               
         IF (buffer(1:1).EQ.'*') CYCLE 
         READ(buffer,*,ERR=97) icount,(ddum(i1),i1=1,ntally)          
         DO i1 = 1, ntally
           IF (ddum(i1).GT.1.0D+30) THEN
-            WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
-     .                 'single precision size limit, setting to zero'
+            IF (message_status) THEN 
+              message_status = .FALSE.
+              WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
+     .                   'single precision size limit, setting to '//
+     .                   'zero, may indicate unreasonable plasma'
+            ENDIF
             rdum(i1) = 0.0
           ELSE
             rdum(i1) = SNGL(ddum(i1))

@@ -305,8 +305,8 @@ c
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
-      REAL    defval, cs, GetCs  ! ks
-      INTEGER nearik, nearir     ! ks
+      REAL    defval, cs, GetCs  
+      INTEGER nearik, nearir     
       INTEGER id,in,ik,ir,fp,ike,ierr,count
       CHARACTER dummy*1024
       
@@ -328,7 +328,7 @@ c
       WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
       WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '{VERSION}'
+      WRITE(fp,'(A)') '{DATA FILE VERSION}'
       WRITE(fp,*    ) '        1.0'
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{DATA}'
@@ -338,6 +338,7 @@ c
       WRITE(fp,'(A)') '* r1,z1   - starting point of segment in '//
      .                            'the R,Z plane'
       WRITE(fp,'(A)') '* r2,z2   - end point'
+      WRITE(fp,'(A)') '* T_surf  - surface temperature'
       WRITE(fp,'(A)') '* flux_D+ - background ion flux density on '//
      .                'wall (multiply by 2*PI*R*delta to get the total'
       WRITE(fp,'(A)') '*           flux to the vessel, where R is '//
@@ -351,11 +352,11 @@ c
       WRITE(fp,'(A)') '* E_dist  - atom energy distribution -- NOT '//
      .                            'AVAIALBLE YET! (but one day...)'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A7,1X,2(2A9,1X),A10,2A8,A10,A11,2X,A)')
-     .  '* index','r1','z1','r2','z2','flux_D+',
+      WRITE(fp,'(A7,1X,2(2A9,1X),A7,A10,2A8,A10,A11,2X,A)')
+     .  '* index','r1','z1','r2','z2','T_surf','flux_D+',
      .  'T_e','T_i','flux_D','T_D','E_dist'
-      WRITE(fp,'(A,6X,1X,2(2A9,1X),A10,2A8,A11,A10)')
-     .  '*','(m)','(m)','(m)','(m)','(m-2 s-1)','(eV)','(eV)',
+      WRITE(fp,'(A,6X,1X,2(2A9,1X),A7,A10,2A8,A11,A10)')
+     .  '*','(m)','(m)','(m)','(m)','(K)','(m-2 s-1)','(eV)','(eV)',
      .  '(m-2 s-1)','(eV)'
 
 c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
@@ -377,11 +378,12 @@ c     cell values for non target elements
         ir = irds(MAX(1,in))
         IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
           IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
-          WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
-     .               F10.2,2X,A,10X,5I8,4(E10.2,2X))')       ! ks
+          WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,1P,
+     .               E11.2,0P,F10.2,2X,A,10X,5I8,4(E10.2,2X))')       ! ks
 c     .               F10.2,2X,A,10X,3I4)')  
      .      id,
      .      wallpt(id,20:23),
+     .      400.0,
      .      knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir),
      .      kteds (in),
      .      ktids (in),
@@ -392,11 +394,12 @@ c     .               F10.2,2X,A,10X,3I4)')
      .      knds(in), kvds(in), costet(in), bratio(ik,ir)    ! ks
 c     .      in,ik,ir
         ELSE
-          WRITE(fp,'(I7,1X,2(2F9.5,1X),1P,E10.2,0P,2F8.2,1P,E11.2,0P,
-     .               F10.2,2X,A,10X,5I8,4(E10.2,2X))')  !ks
+          WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,1P,
+     .               E11.2,0P,F10.2,2X,A,10X,5I8,4(E10.2,2X))')  !ks
 c     .               F10.2,2X,A)')
      .      id,
      .      wallpt(id,20:23),
+     .      400.0,
      .      KNBS(nearik,nearir) * ABS(cs) * bratio(nearik,nearir),  ! ks
      .      KTEBS(nearik,nearir),                                   ! ks
      .      KTIBS(nearik,nearir),                                   ! ks
