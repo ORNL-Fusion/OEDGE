@@ -11,12 +11,19 @@ module ero_plasma
   character*(line_length) :: buffer
 
 
+  ! options
+  integer :: shift_opt=0,override_offsets=0
+
+
   !
   ! Base specifications of divimp plasma and number of ERO blocks in file
   !
   character*(line_length) :: div_plasma_file, div_geo_file
   integer :: n_ero_blocks
 
+
+  !
+  real*8 :: xhat(2),yhat(2) ! vector coordinate transformation used both in the plasma and geometry code - calculated in plasma code
 
   !
   ! ERO block data
@@ -27,7 +34,14 @@ module ero_plasma
   real*8 :: tor_extent
   integer :: interp_opt,extrap_opt,eroshape_opt
   integer :: remap_bfield
-  character*(line_length) :: erobg_out_name,eroshape_out_name
+
+  integer :: divpart_opt   ! 0 off 1 on
+  integer :: erodiv_tor_part_mult
+
+  character*(line_length) :: erobg_out_name,eroshape_out_name,divpart_in_name,eropart_out_name
+
+  real*8 :: xmin,xmax,ymin,ymax,zmin,zmax
+
   !
   ! Grid resolution can be specified by either nx,ny or delx,dely - number of points is rounded off when delx.dely is specified. 
   !
@@ -47,12 +61,21 @@ module ero_plasma
   real*8 :: x0,y0,z0, alp0, rtor, rz0
   real*8,allocatable :: tpx(:,:),tpy(:,:),tpz(:,:)
 
+  real*8,parameter :: dist_conversion = 1000.0  ! convert m to mm for scale in geometry
 
-
-
-  public read_ero_plasma_headers, read_ero_plasma_block, calc_ero_plasma,output_ero_plasma,calc_ero_surface,output_ero_surface
+  public read_ero_plasma_headers, read_ero_plasma_block, calc_ero_plasma,output_ero_plasma,output_ero_plasma_m,calc_ero_surface,output_ero_surface_m,output_ero_surface,init_ero_options
 
 contains
+
+  subroutine init_ero_options(shiftoption,offset_override)
+    implicit none
+    integer :: shiftoption,offset_override
+
+    ! option to move the corner points out a bit in the ERO simulation so that particle losses at the edge of hte simulation volume are less of an issue
+    shift_opt = shiftoption
+    override_offsets = offset_override
+
+  end subroutine init_ero_options
 
 
 
@@ -179,6 +202,8 @@ contains
 
        read(specunit,line_form,iostat=ios) buffer
 
+       write(0,'(a,a,a,a)') 'buffer:eb:',trim(buffer),':'
+
        if (ios.ne.0) then 
           ! need to exit loop if eof reached - not an error since could be last block
           done = .true. 
@@ -272,6 +297,32 @@ contains
           read(buffer(13:),*) eroshape_opt
           write(0,'(a,2i10,10(1x,g12.5))') 'eroshape_opt:',eroshape_opt
 
+       elseif (buffer(1:11).eq.'#DIVPARTOPT') then 
+          ! read interpolation option
+          read(buffer(12:),*) divpart_opt
+          write(0,'(a,2i10,10(1x,g12.5))') 'divpart_opt:',divpart_opt
+
+       elseif (buffer(1:12).eq.'#DIVPARTFILE') then 
+          ! read DIVIMP particle output file name
+          read(buffer(13:),*) divpart_in_name
+          !read(specunit,line_form,iostat=ios) buffer
+          !eroshape_name_read = .true.
+
+          write(0,'(a,a,a,a)') 'divpart_fn:',trim(divpart_in_name),':'
+
+       elseif (buffer(1:12).eq.'#EROPARTFILE') then 
+          ! read name for ERO particle input file name
+          read(buffer(13:),*) eropart_out_name
+          !read(specunit,line_form,iostat=ios) buffer
+          !eroshape_name_read = .true.
+
+          write(0,'(a,a,a,a)') 'eropart_fn:',trim(eropart_out_name),':'
+
+       elseif (buffer(1:15).eq.'#ERODIVPARTMULT') then 
+          ! read interpolation option
+          read(buffer(16:),*) erodiv_tor_part_mult
+          write(0,'(a,2i10,10(1x,g12.5))') 'erodiv_tor_part_mult:',erodiv_tor_part_mult
+
        endif
 
     end do
@@ -308,7 +359,8 @@ contains
     integer :: errmsg_unit 
 
     ! algorithm can easily be extended to 3D if required
-    real*8 :: xvec(2),yvec(2),xhat(2),yhat(2),bfield(2),xrange,yrange
+    real*8 :: xvec(2),yvec(2),bfield(2),xrange,yrange
+    real*8 :: xshift(2),yshift(2)
     real*8 :: rt,zt,xt,yt
     real*8 :: rxstep,zxstep,rystep,zystep
 
@@ -377,6 +429,63 @@ contains
     xhat = xvec / xrange
     yhat = yvec / yrange
 
+    ! need to move the vertices out slightly along the coordinate vector axes
+    ! this is to try to reduce the significance of gyro-orbit losses in ERO for particles injected close to the simulation boundaries
+    ! it should not affect the toroidal direction significantly 
+    write(0,*) 'shift_opt:',shift_opt
+
+    if (shift_opt.eq.0) then 
+       ! so not shift the corner vertices
+       xshift = 0.0
+       yshift = 0.0
+    elseif (shift_opt.eq.1) then 
+       ! fixed shift of 1cm for each corner
+       xshift = 0.01 * xhat
+       yshift = 0.01 * yhat
+       write(0,*) 'xhat:',xhat
+       write(0,*) '0.01*xhat:',0.01*xhat
+       write(0,*) 'xshift:',0.01*xshift
+
+    elseif (shift_opt.eq.2) then 
+       ! fixed shift of 5% for each corner
+       xshift = 0.05 * xvec
+       yshift = 0.05 * yvec
+    endif
+
+    ! shift the vertices as follows
+    ! 1 moves -x and -y
+    ! 2 moves +x and -y
+    ! 3 moves +x and +y
+    ! 4 moves -x and +y
+
+    vert(1,:) = vert(1,:) - xshift - yshift
+    vert(2,:) = vert(2,:) + xshift - yshift
+    vert(3,:) = vert(3,:) + xshift + yshift
+    vert(4,:) = vert(4,:) - xshift + yshift
+
+    ! After shifting vertices it is now necessary to recalculate xrange and yrange (which requires revising xvec,yvec
+    ! The normalized vectors xhat and yhat remain the same 
+
+    xvec = vert(2,:)-vert(1,:)
+    yvec = vert(4,:)-vert(1,:)
+
+    xrange =  sqrt(xvec(1)**2 + xvec(2)**2)
+    yrange =  sqrt(yvec(1)**2 + yvec(2)**2)
+
+
+    write(0,*) 'offset override:',override_offsets,roffset,zoffset
+    if (override_offsets.eq.1) then 
+       ! calculate the offset automatically as the point midway between vertex 1 and vertex 4.
+       ! The ERO geometry should start with 0.0 at the minimum R value with the Z axis centered on this side
+      
+       roffset = (vert(1,1)+vert(4,1))/2.0
+       zoffset = (vert(1,2)+vert(4,2))/2.0
+       write(0,*) 'offsets revised:',override_offsets,roffset,zoffset
+
+    endif
+
+
+
     tmp_offset(1) = -roffset + vert(1,1)
     tmp_offset(2) = -zoffset + vert(1,2)
 
@@ -385,6 +494,16 @@ contains
 
     write(0,'(a,10(1x,g12.5))') 'xvec :',xvec(1),xvec(2)
     write(0,'(a,10(1x,g12.5))') 'yvec :',yvec(1),yvec(2)
+    write(0,'(a,10(1x,g12.5))') 'xhat :',xhat(1),xhat(2)
+    write(0,'(a,10(1x,g12.5))') 'yhat :',yhat(1),yhat(2)
+    write(0,'(a,10(1x,g12.5))') 'xshif:',xshift(1),xshift(2)
+    write(0,'(a,10(1x,g12.5))') 'yshif:',yshift(1),yshift(2)
+    write(0,'(a,10(1x,g12.5))') 'vert1:',vert(1,1),vert(1,2)
+    write(0,'(a,10(1x,g12.5))') 'vert2:',vert(2,1),vert(2,2)
+    write(0,'(a,10(1x,g12.5))') 'vert3:',vert(3,1),vert(3,2)
+    write(0,'(a,10(1x,g12.5))') 'vert4:',vert(4,1),vert(4,2)
+    write(0,'(a,10(1x,g12.5))') 'tmpof:',tmp_offset(1),tmp_offset(2)
+    write(0,'(a,10(1x,g12.5))') 'xyoff:',xyoffset(1),xyoffset(2)
 
 
     if (delx.gt.0.0.and.dely.gt.0.0) then 
@@ -496,6 +615,9 @@ contains
     end do
 
 
+    call output_coordinate_transform('coordinate_transform_data.txt')
+
+
   end subroutine calc_ero_plasma
 
 
@@ -507,6 +629,7 @@ contains
     integer :: nw
     real*8, allocatable :: rw(:),zw(:)
     real*8, allocatable :: surf_flag(:)
+    real*8, allocatable :: tmp_array(:)
 
     integer :: ierr,in_count
     integer :: end_count, surf_ind(2)
@@ -519,6 +642,7 @@ contains
     real*8 :: rint, zint
     real*8 :: r_int(2),z_int(2)
     real*8 :: r0,thet,thet_extent
+
 
     integer :: in,in1,in2,iv,iv2,in_next
 
@@ -575,8 +699,7 @@ contains
        surf_flag = 0
 
        do in = 1,nw
-
-          write(0,'(a,l4,2i8,10(1x,g12.5))') 'VERT:',inpoly(rw(in),zw(in),nvert,vert(:,1),vert(:,2)),in,nvert,rw(in),zw(in),vert(:,1),vert(:,2)
+          !write(0,'(a,l4,2i8,20(1x,g12.5))') 'VERT:',inpoly(rw(in),zw(in),nvert,vert(:,1),vert(:,2)),in,nvert,rw(in),zw(in),vert(:,1),vert(:,2)
           if (inpoly(rw(in),zw(in),nvert,vert(:,1),vert(:,2))) then
              surf_flag(in) = 1
              in_count = in_count+1
@@ -744,6 +867,28 @@ contains
        tpz(0,cnt) = z_int(2)
        tpx(0,cnt) = 0.0
 
+       ! ERO requires that the toroidal (tpx) and poloidal (tpz) arrays be in ascending order 
+       ! X happens automatically below ... need to check Z and reverse if needed
+
+       if (tpz(0,1) .gt. tpz(0,n_pol)) then 
+          ! reorder arrays
+
+          allocate(tmp_array(n_pol),stat=ierr)
+
+          do in = n_pol,1,-1
+             tmp_array(n_pol-in+1) = tpz(0,in)
+          end do
+          tpz(0,:) = tmp_array(:)
+
+          do in = n_pol,1,-1
+             tmp_array(n_pol-in+1) = tpy(0,in)
+          end do
+          tpy(0,:) = tmp_array(:)
+
+          deallocate(tmp_array)
+
+       endif
+
 
        ! depending on the shape option - calculate the toroidal projections 
 
@@ -782,25 +927,24 @@ contains
        end do 
     end do
 
+    ! Remap the offset limiter coordinates into the same coordinate space as the plasma by using the new coordinate basis vectors xhat,yhat
+    ! Note that TPx which is the TOROIDAL coordinate is not affected since the coordinate transformation should always be in the poloidal plane
+
+    do in = -tor_points,tor_points
+       do cnt = 1,n_pol
+          tpy(in,cnt) = tpy(in,cnt)*xhat(1)+tpz(in,cnt)*xhat(2)
+          tpz(in,cnt) = tpy(in,cnt)*yhat(1)+tpz(in,cnt)*yhat(2)
+       end do 
+    end do
+    
+
+
+
     !
     ! Set extra parameters
     !
     ! Note: ERO only appears to use Z0 and RTor
     !
-
-    x0 = tpy(0,n_pol/2)
-    y0 = tpx(0,n_pol/2)
-    z0 = 0.0
-    
-    rz0 = x0
-    
-    alp0 = 0.1  ! not sure what this is
-
-    if (eroshape_opt.eq.1) then !cylindrical
-       rtor = 0.0
-    elseif (eroshape_opt.eq.2) then ! toroidal
-       rtor = x0
-    endif
 
 
 
@@ -814,11 +958,63 @@ contains
 
     write(0,*) 'Deallocated locals:'
 
+
+    ! calculate max and min of the surface arrays
+    xmin = minval(tpx)
+    xmax = maxval(tpx)
+    ymin = minval(tpy)
+    ymax = maxval(tpy)
+    zmin = minval(tpz)
+    zmax = maxval(tpz)
+
+
+    ! offsets
+    x0 = 0.0
+    y0 = 0.0
+    z0 = 0.0
+
+
+    !
+    ! Actual midpoint of limiter
+    !
+    !x0 = (xmax+xmin)/2.0
+    !y0 = (ymax+ymin)/2.0
+    !z0 = (zmax+zmin)/2.0
+
+
+    ! midpoint of limiter on its surface
+    ! 
+    !x0 = tpx(0,npol/2) 
+    !y0 = tpy(0,npol/2) 
+    !z0 = tpz(0,npol/2) 
+    !
+    
+    rz0 = y0
+    
+    alp0 = 0.1  ! not sure what this is
+
+    if (eroshape_opt.eq.1) then !cylindrical
+       rtor = 1.0e12
+    elseif (eroshape_opt.eq.2) then ! toroidal
+       rtor = r0
+       !rtor = (xmax+xmin)/2.0
+       !rtor = x0
+    elseif (eroshape_opt.eq.3) then ! toroidal - with Rtor changing sign depending on orientation
+       ! this is a test .. may not work .. will only work for coordinate transforms that keep the 1:1 Z,Y->R,Z mapping with the only 
+       ! change being the orientation of the "Z" axis relative to R. This will basically set rtor positive for an inner target vertical 
+       ! case and negative for an outer target vertical case. Horizontal cases will need more work since the field curvature is across 
+       ! the surface - cylindrical approximation might be best for these cases for now. 
+       rtor = r0 * xhat(1)
+       !rtor = (xmax+xmin)/2.0
+       !rtor = x0
+    endif
+
+
     return
 
   end subroutine calc_ero_surface
 
-  subroutine output_ero_surface
+  subroutine output_ero_surface_m
     implicit none
 
     integer :: outunit,it,ip,ierr
@@ -871,19 +1067,19 @@ contains
 
 
         ! X0
-        write(outunit,'(a,g14.6,a)') 'X0 = ',x0,';'
+        write(outunit,'(a,g14.6,a)') 'X0 = ',x0*dist_conversion,';'
 
 
         ! Y0
-        write(outunit,'(a,g14.6,a)') 'Y0 = ',y0,';'
+        write(outunit,'(a,g14.6,a)') 'Y0 = ',y0*dist_conversion,';'
 
 
         ! Z0
-        write(outunit,'(a,g14.6,a)') 'Z0 = ',z0,';'
+        write(outunit,'(a,g14.6,a)') 'Z0 = ',z0*dist_conversion,';'
 
 
         ! RZ0
-        write(outunit,'(a,g14.6,a)') 'RZ0 = ',rz0,';'
+        write(outunit,'(a,g14.6,a)') 'RZ0 = ',rz0*dist_conversion,';'
 
 
         ! Alp0
@@ -891,7 +1087,7 @@ contains
 
 
         !RTor
-        write(outunit,'(a,g14.6,a)') 'RTor = ',rtor,';'
+        write(outunit,'(a,g14.6,a)') 'RTor = ',rtor*dist_conversion,';'
 
 
         !RegInCood(X0, Y0, Z0, RZ0, Alp0, RTor);
@@ -906,7 +1102,7 @@ contains
         !TPx
         write(outunit,'(a)') 'TPx = ['
         do ip = 1,n_pol
-           write(outunit,'(200(1x,g15.6))')  (tpx(it,ip), it = -tor_points,tor_points)
+           write(outunit,'(200(1x,g15.6))')  (tpx(it,ip)*dist_conversion, it = -tor_points,tor_points)
         end do
         write(outunit,'(a)') ' ];'
 
@@ -914,7 +1110,7 @@ contains
 
         write(outunit,'(a)') 'TPy = ['
         do ip = 1,n_pol
-           write(outunit,'(200(1x,g15.6))')  (tpy(it,ip), it = -tor_points,tor_points)
+           write(outunit,'(200(1x,g15.6))')  (tpy(it,ip)*dist_conversion, it = -tor_points,tor_points)
         end do
         write(outunit,'(a)') ' ];'
 
@@ -923,7 +1119,7 @@ contains
 
         write(outunit,'(a)') 'TPz = ['
         do ip = 1,n_pol
-           write(outunit,'(200(1x,g15.6))')  (tpz(it,ip), it = -tor_points,tor_points)
+           write(outunit,'(200(1x,g15.6))')  (tpz(it,ip)*dist_conversion, it = -tor_points,tor_points)
         end do
         write(outunit,'(a)') ' ];'
 
@@ -945,7 +1141,134 @@ contains
 
     write(0,*) 'Surface out: after cleanup'
 
+  end subroutine output_ero_surface_m
+
+
+
+  subroutine output_ero_surface
+    implicit none
+
+    integer :: outunit,it,ip,ierr
+
+    !
+    ! File name and geometry options are read from the erobg input file.
+    !
+    ! This code writes out a matlab file containing the limiter shape for use in ERO
+    !
+    ! File name is a parameter but the default is erodiv_shape.m
+    ! Coodrdinates in the R,Z plane should match the plasma ... toroidal coordinates can either be flat or curved
+    ! based on the toroidal curvature (assumed to have a center at R=0). 
+    ! 
+
+    ! sample region is defined by vert(4,2) ... the wall is loaded from the grid file ... intersection points are calculated 
+    ! the section of wall within the sample volume is used to define the surface. All turning points are included. Additional 
+    ! points may be included if needed. 
+
+
+    write(0,*) 'eroshape_opt:',eroshape_opt
+
+    if (eroshape_opt.gt.0) then 
+       
+
+       ! write out the ERO limiter shape into a matlab formatted file
+       ! Parameters
+       !
+       ! X0, Y0, Z0, RZ0 (RC0 in ERO), Alp0, RTor
+       ! RTor is a toroidal radius quantity - set to 0.0 for cylindrical I think
+       !
+       ! Format is each profile row on one line for TPx, TPy, TPz .. case matters
+       ! Also ... create some additional parameters and catenate them to a parameter template - use jetlim as the template
+       !
+
+    call find_free_unit_number(outunit)
+
+    open(outunit,file=trim(eroshape_out_name),form='formatted',iostat=ierr)
+
+    if (ierr.ne.0) then 
+       call errmsg('WRITE_ERO_SHAPE: Problem opening output file:'//trim(eroshape_out_name),ierr)
+       stop 'write_ero_plasma: could not open output file'
+    endif
+
+
+    write(outunit,'(a)') '# Data written in MATLAB Compatible format with identifier tags from ERO'
+    write(outunit,'(a,2(1x,i8))') '#EROSHAPE:',n_tor,n_pol
+    write(outunit,'(a,2i8)') '#  X0 Y0 Z0 RZ0  Alp0  RTor     TPx   TPy    TPz'
+    write(outunit,'(a,2i8)') '#  Array data is written out one poloidal profile at a time'
+        write(outunit,'(a,2i8)') '#  ERODIV Limiter Shape - dimensions converted to mm from m'
+
+
+        ! X0
+        write(outunit,'(a,g14.6,a)') '#X0 ',x0*dist_conversion
+
+
+        ! Y0
+        write(outunit,'(a,g14.6,a)') '#Y0 ',y0*dist_conversion
+
+
+        ! Z0
+        write(outunit,'(a,g14.6,a)') '#Z0 ',z0*dist_conversion
+
+
+        ! RZ0
+        write(outunit,'(a,g14.6,a)') '#RZ0 ',rz0*dist_conversion
+
+
+        ! Alp0
+        write(outunit,'(a,g14.6,a)') '#Alp0 ',alp0
+
+
+        !RTor
+        write(outunit,'(a,g14.6,a)') '#RTor ',rtor*dist_conversion
+
+
+        !RegInCood(X0, Y0, Z0, RZ0, Alp0, RTor);
+        !write(outunit,'(a)') 'RegInCood(X0, Y0, Z0, RZ0, Alp0, RTor);'
+
+        if (n_tor.gt.200) then 
+           call errmsg('ERROR: Output_ero_surface : Number of toroidal slices exceeds format statement (200)',n_tor)
+           stop 'output_ero_surface: too many toroidal slices'
+        endif
+
+        
+        !TPx
+        write(outunit,'(a,i8)') '#TPx ',n_pol
+        do ip = 1,n_pol
+           write(outunit,'(200(1x,g15.6))')  (tpx(it,ip)*dist_conversion, it = -tor_points,tor_points)
+        end do
+
+        !Tpy
+        write(outunit,'(a,i8)') '#TPy ',n_pol
+        do ip = 1,n_pol
+           write(outunit,'(200(1x,g15.6))')  (tpy(it,ip)*dist_conversion, it = -tor_points,tor_points)
+        end do
+
+        !Tpz
+
+        write(outunit,'(a,i8)') '#TPz ',n_pol
+        do ip = 1,n_pol
+           write(outunit,'(200(1x,g15.6))')  (tpz(it,ip)*dist_conversion, it = -tor_points,tor_points)
+        end do
+
+        !RegTorPrf(TPx, TPz, TPy);
+        !write(outunit,'(a)') 'RegTorPrf(TPx, TPz, TPy);'
+
+        
+        ! close 
+
+        close(outunit)
+
+    endif
+
+
+    write(0,*) 'Surface out: before cleanup'
+
+
+    call ero_surface_cleanup
+
+    write(0,*) 'Surface out: after cleanup'
+
   end subroutine output_ero_surface
+
 
 
 
@@ -969,11 +1292,11 @@ contains
         write(outunit,'(a)') 'erodiv_bm_tor_prf'
         write(outunit,'(i8)') n_tor
         write(outunit,'(a)') 'erodiv_ranges'
-        write(outunit,'(6(1x,g12.5))')) xmin,xmax,ymin,ymax,zmin,zmax
+        write(outunit,'(6(1x,g12.5))') xmin*dist_conversion,xmax*dist_conversion,ymin*dist_conversion,ymax*dist_conversion,zmin*dist_conversion,zmax*dist_conversion
         write(outunit,'(a)') 'erodiv_pl_dy'
-        write(outunit,'(6(1x,g12.5))') dx
+        write(outunit,'(6(1x,g12.5))') delx
         write(outunit,'(a)') 'erodiv_pl_dz'
-        write(outunit,'(6(1x,g12.5))') dy
+        write(outunit,'(6(1x,g12.5))') dely
         write(outunit,'(a)') 'erodiv_pl_fn'
         write(outunit,'(a)') trim(erobg_out_name)
         write(outunit,'(a)') 'erodiv_surface_fn'
@@ -995,7 +1318,7 @@ contains
 
 
 
-  subroutine output_ero_plasma
+  subroutine output_ero_plasma_m
     implicit none
 
     ! file name to be saved as is part of the ero input block
@@ -1004,7 +1327,16 @@ contains
     integer :: outunit,ierr
     integer :: ix,iy,in
 
+    real*8 :: conv_factor
+
     real*8,allocatable :: grad_xy(:,:)
+
+    character*100 :: data_out_format
+
+    integer, parameter :: write_rz = 1
+
+    data_out_format='(1000(1x,e12.5))'
+
 
     call find_free_unit_number(outunit)
 
@@ -1020,11 +1352,11 @@ contains
     write(outunit,'(a,2i8)') '%EROBG',nx+1,ny+1
     write(outunit,'(a)') '% Data written in MATLAB Compatible format with identifier tags from ERO'
 
-    do ix = 0,nx
-       do iy = 0,ny
-           write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,17)
-       end do 
-    end do 
+    !do ix = 0,nx
+    !   do iy = 0,ny
+    !       write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,17)
+    !   end do 
+    !end do 
 
     ! ERO plasma files from JET contain the following data ... each line contains space separated floats
     ! Also - the data assume a rectilinear grid ... not sure how to do the coordinate mapping yet
@@ -1040,159 +1372,371 @@ contains
     ! RC = [ ]
     ! Assume constant axes - write out X data for now
     write(outunit,'(a)') 'RC = ['
-    write(outunit,'(1000e12.3)') (ero_plasma_out(ix,0,1),ix=0,nx)
+    write(outunit,trim(data_out_format)) (ero_plasma_out(ix,0,1)*dist_conversion,ix=0,nx)
     write(outunit,'(a)') '];'
 
     ! ZC = [ ]
     ! Assume constant axes - write out Y data for now
     write(outunit,'(a)') 'ZC = ['
-    write(outunit,'(1000e12.3)') (ero_plasma_out(0,iy,2),iy=0,ny)
+    write(outunit,trim(data_out_format)) (ero_plasma_out(0,iy,2)*dist_conversion,iy=0,ny)
     write(outunit,'(a)') '];'
 
-    ! ne = [ ]
-    ! 
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
 
-    write(outunit,'(a)') 'ne = ['
+
+    if (write_rz.eq.0) then 
+       ! write out the arrays indexed as R then Z
+       write(0,*) 'Writing arrays R down the column and Z across the row'
+
+       ! ne = [ ] convert to cm-3
+       ! 
+       conv_factor = 1.0d-6
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'ne = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,5)*conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! te = [ ]  - ok as eV
+       !  
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'te = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,6),iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te = [ ]   - convert to eV/mm
+       conv_factor = dist_conversion
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,15)/conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te_RC = [ ] (?)
+
+       allocate(grad_xy(0:nx,0:ny)) 
+
+       grad_xy = 0.0
+       ! grad Te on X - convert to eV/mm
+       conv_factor = dist_conversion
+
+       call calc_grad(grad_xy,1,6)
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te_RC = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (grad_xy(ix,iy)/conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te_ZC = [ ] (?)
+
+       grad_xy = 0.0
+       ! grad Te on Y - convert to eV/mm  
+       conv_factor = dist_conversion
+
+       call calc_grad(grad_xy,2,6)
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te_ZC = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (grad_xy(ix,iy)/conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       if (allocated(grad_xy)) deallocate(grad_xy)
+
+       ! ti = [  - ok as eV
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'ti = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,7),iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! vpar = [   - convert to cm/s  (?) - numbers in sample file seem too small 
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       conv_factor = 100.0
+
+       write(outunit,'(a)') 'vpar = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,8)*conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Epar = [  - convert to V/mm (?) 
+       conv_factor = dist_conversion
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Epar = ['   
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,9)*conv_factor,iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_Tor = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_tor = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,13)),iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_RC = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_RC = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,11)),iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_ZC = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_ZC = ['
+       do ix = 0,nx
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,12)),iy=0,ny)
+       end do
+       write(outunit,'(a)') '];'
+
+    elseif (write_rz.eq.1) then 
+       ! write out the arrays indexed by Z then R
+
+       write(0,*) 'Writing arrays Z down the column and R across the row'
+
+       ! ne = [ ] convert to cm-3
+       ! 
+       conv_factor = 1.0d-6
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'ne = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,5)*conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! te = [ ]  - ok as eV
+       !  
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'te = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,6),ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te = [ ]   - convert to eV/mm
+       conv_factor = dist_conversion
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,15)/conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te_RC = [ ] (?)
+
+       allocate(grad_xy(0:nx,0:ny)) 
+
+       grad_xy = 0.0
+       ! grad Te on X - convert to eV/mm
+       conv_factor = dist_conversion
+
+       call calc_grad(grad_xy,1,6)
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te_RC = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (grad_xy(ix,iy)/conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Grad_te_ZC = [ ] (?)
+
+       grad_xy = 0.0
+       ! grad Te on Y - convert to eV/mm  
+       conv_factor = dist_conversion
+
+       call calc_grad(grad_xy,2,6)
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Grad_te_ZC = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (grad_xy(ix,iy)/conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       if (allocated(grad_xy)) deallocate(grad_xy)
+
+       ! ti = [  - ok as eV
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'ti = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,7),ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! vpar = [   - convert to cm/s  (?) - numbers in sample file seem too small 
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       conv_factor = 100.0
+
+       write(outunit,'(a)') 'vpar = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,8)*conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! Epar = [  - convert to V/mm (?) 
+       conv_factor = dist_conversion
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'Epar = ['   
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) (ero_plasma_out(ix,iy,9)*conv_factor,ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_Tor = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_Tor = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,13)),ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_RC = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_RC = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,11)),ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+       ! BFld_ZC = [ - tesla should be ok
+
+       write(outunit,'(a)') '%'
+       write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
+       write(outunit,'(a)') '%'
+
+       write(outunit,'(a)') 'BFld_ZC = ['
+       do iy = 0,ny
+          write(outunit,trim(data_out_format)) ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,12)),ix=0,nx)
+       end do
+       write(outunit,'(a)') '];'
+
+
+    endif
+
+    call ero_plasma_cleanup
+
+
+  end subroutine output_ero_plasma_m
+
+
+
+  subroutine output_ero_plasma
+    implicit none
+
+    ! file name to be saved as is part of the ero input block
+    ! data is listed along each x row first
+
+    integer :: outunit,ierr
+    integer :: ix,iy,in
+
+    call find_free_unit_number(outunit)
+
+    open(outunit,file=trim(erobg_out_name),form='formatted',iostat=ierr)
+
+    if (ierr.ne.0) then 
+       call errmsg('WRITE_ERO_PLASMA: Problem opening output file:'//trim(erobg_out_name),ierr)
+       stop 'write_ero_plasma: could not open output file'
+    endif
+
+
+    write(outunit,'(a,2i8)') '#BG DOC  ix iy x y r z ne te ti vpara epara btot br bz btor ierr->(on or off grid)'
+    write(outunit,'(a,2i8)') '#EROBG',nx+1,ny+1
+
     do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,5),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! te = [ ]
-    ! 
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'te = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,6),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! Grad_te = [ ]
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'Grad_te = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,15),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! Grad_te_RC = [ ] (?)
-
-    allocate(grad_xy(0:nx,0:ny)) 
-
-    grad_xy = 0.0
-    ! grad Te on X
-    call calc_grad(grad_xy,1,6)
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'Grad_te_RC = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (grad_xy(ix,iy),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! Grad_te_ZC = [ ] (?)
-
-    grad_xy = 0.0
-    ! grad Te on Y
-    call calc_grad(grad_xy,2,6)
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'Grad_te_ZC = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (grad_xy(ix,iy),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    if (allocated(grad_xy)) deallocate(grad_xy)
-
-    ! ti = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'ti = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,7),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-    
-    ! vpar = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'vpar = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,8),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! Epar = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'Epar = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') (ero_plasma_out(ix,iy,9),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! BFld_Tor = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'BFld_tor = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,13)),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! BFld_RC = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'BFld_RC = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,11)),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
-    ! BFld_ZC = [
-
-    write(outunit,'(a)') '%'
-    write(outunit,'(a)') '% ---------------------------------------------------------------------------------------- '
-    write(outunit,'(a)') '%'
-
-    write(outunit,'(a)') 'BFld_ZC = ['
-    do ix = 0,nx
-       write(outunit,'(1000e12.3)') ((ero_plasma_out(ix,iy,10)*ero_plasma_out(ix,iy,12)),iy=0,ny)
-    end do
-    write(outunit,'(a)') '];'
-
+       do iy = 0,ny
+           write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,17)
+       end do 
+    end do 
 
     call ero_plasma_cleanup
 
@@ -1281,6 +1825,180 @@ contains
 
   end subroutine ero_surface_cleanup
 
+
+  subroutine output_coordinate_transform(coordinate_filename)
+    implicit none
+    character*(*) :: coordinate_filename
+    integer :: outunit,i,ios
+
+
+    ! this routine writes out the coordinate transformation data so that 
+    ! the particle processing routing can run it in reverse to obtain the 
+    ! DIVIMP coordinates from the ERO particle coordinates. 
+
+    call find_free_unit_number(outunit)
+
+    open(outunit,file=trim(coordinate_filename),form='formatted',iostat=ios)
+    
+
+    ! Need to write out 
+    ! 1) The vertices
+    ! 2) The transform vectors
+    ! 3) The inverse transform vectors 
+    ! 4) The offsets
+
+    write(outunit,'(a,2(1x,g18.8))') '#OFFSETS',roffset,zoffset
+    write(outunit,'(a,4(1x,g18.8))') '#RVERTICES',(vert(i,1),i=1,4)
+    write(outunit,'(a,4(1x,g18.8))') '#ZVERTICES',(vert(i,2),i=1,4)
+    write(outunit,'(a,1(1x,g18.8))') '#TOR_EXTENT',tor_extent
+    write(outunit,'(a,4(1x,g18.8))') '#XHAT',(xhat(i),i=1,2)
+    write(outunit,'(a,4(1x,g18.8))') '#YHAT',(yhat(i),i=1,2)
+    write(outunit,'(a,4(1x,g18.8))') '#XINV',(yhat(i),i=2,1,-1)
+    write(outunit,'(a,4(1x,g18.8))') '#YINV',(xhat(i),i=2,1,-1)
+    write(outunit,'(a,a)') '#EROPARTFN','erodiv_ero_part_lost.dat'
+    write(outunit,'(a,a)') '#ERODIVPARTFN','ero_particle_data.dat'
+
+    close(outunit)
+
+
+  end subroutine output_coordinate_transform
+
+  subroutine process_divimp_part_file
+    implicit none
+    ! this routine reads in the DIVIMP particle track file and makes it compatible with ERO
+    ! Note that the toroidal coordinate is set to zero by default to start with. 
+    ! Toroidal -> X   Vertical/poloidal -> Y and Radial -> Z
+
+    ! Open the input and output files
+    ! Transform coordinates (and units if required) 
+    ! Write to output file
+
+    integer :: partin,partout,ios,in
+    logical :: done
+    integer :: part_count
+    real*8 :: absfac, nparticles, scale_fact
+    real*8 :: r,z,t,vr,vz,vt,vpara,temp,weight
+    integer :: charge
+
+    real*8 :: rprime, zprime, vrprime, vzprime
+    real*8 :: tprime,atoms
+
+    real :: rand
+
+    ! Check to see if particle tracking option was on
+    if (divpart_opt.eq.0) return
+
+
+    ! Initialize the random number generator so I can create 
+    ! random locations in +/- tor_extent for the particles
+    call init_random_seed
+
+    ! open files
+
+
+    call find_free_unit_number(partin)
+
+    open(partin,file=trim(divpart_in_name),status='old',form='formatted',iostat=ios)
+
+    if (ios.ne.0) then 
+       call errmsg('ERROR opening DIVIMP particle input file: Case = ',trim(divpart_in_name))
+       return
+    endif
+
+    call find_free_unit_number(partout)
+
+    open(partout,file=trim(eropart_out_name),form='formatted',iostat=ios)
+
+    if (ios.ne.0) then 
+       call errmsg('ERROR opening DIVIMP-> particle transfer file: Case = ',trim(eropart_out_name))
+       return
+    endif
+
+
+    done = .false.
+
+    !
+    ! First scan the file and count particles and extract absfac information
+    !
+
+    do while (.not.done)
+
+       read(partin,line_form,iostat=ios) buffer
+
+       if (ios.ne.0) then 
+          ! need to exit loop if eof reached 
+          done = .true. 
+          cycle
+       endif
+
+       if (buffer(1:1).ne.'#'.and.buffer(1:1).ne.'%') then 
+          part_count = part_count+1
+       elseif (buffer(1:7).eq.'#ABSFAC') then
+          read(buffer(8:),*) absfac,nparticles,scale_fact
+          write(0,'(a,3(1x,g18.8))') 'Scaling: ABSFAC NPART SCALE:',absfac,nparticles,scale_fact
+       endif
+    end do
+
+    ! Now process the file
+
+    rewind(partin)
+
+    !write(partout,'(a,1x,i12)') '#NPARTICLES',part_count*erodiv_tor_part_mult
+    write(partout,'(a,1x,i12)') '#NPARTICLES',part_count*erodiv_tor_part_mult
+    write(partout,'(i12)')  part_count*erodiv_tor_part_mult
+
+    done =.false.
+    part_count = 0
+
+    do while (.not.done)
+
+       read(partin,line_form,iostat=ios) buffer
+
+       !write(0,'(a,i5,a,a)') 'Re-reading file:',ios,trim(buffer),':'
+
+       if (ios.ne.0) then 
+          ! need to exit loop if eof reached 
+          done = .true. 
+          exit
+       endif
+
+       if (buffer(1:1).ne.'#'.and.buffer(1:1).ne.'%') then 
+
+          !# R   Z     CHARGE     VR    VZ     VT    VPARA    TEMP   WEIGHT
+          read(buffer,*) r,z,charge,vr,vz,vt,vpara,temp,weight
+
+          ! apply offset and then basis vector transformation
+          rprime = r-roffset
+          zprime = z-zoffset
+
+          rprime = (rprime * xhat(1) + zprime * xhat(2)) 
+          zprime = (rprime * yhat(1) + zprime * yhat(2)) 
+
+          !write(0,'(a,10(1x,g12.5))') 'Transform:',r,z,rprime,zprime,xhat,yhat,roffset,zoffset
+
+          vrprime = vr * xhat(1) + vz * xhat(2)
+          vzprime = vr * yhat(1) + vz * yhat(2)
+
+          atoms = weight * scale_fact / real(erodiv_tor_part_mult)
+
+          do in = 1,erodiv_tor_part_mult
+             part_count = part_count + 1
+             call random_number(rand)
+             tprime = (0.5-rand) * tor_extent
+             ! T->X  Z -> Y  R-> Z
+             write(partout,'(i8,i8,10(1x,e18.8))') part_count,charge,tprime*1000.0,zprime*1000.0,rprime*1000.0, &
+                  & vt*100.0,vzprime*100.0,vrprime*100.0,vpara*100.0,temp,atoms
+          end do
+
+       endif
+
+    end do
+
+    ! close files
+    close(partin)
+    close(partout)
+
+  end subroutine process_divimp_part_file
 
 
 end module ero_plasma

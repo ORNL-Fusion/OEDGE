@@ -704,6 +704,25 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG P62
+c
+c     ofield_targ - option for setting the target electric field value
+c                   in the case of over-ride E-field calculations
+c
+c     option 1 : target E-field = 0 
+c                first cell data calculated as gradient to second cell only
+c     option 2 : target E-field = first cell E-field
+c                first cell data calculated as gradient to second cell only
+c     option 3 : target E-field calculated from gradients to first cell center
+c                first cell data calculated from gradients to target and to 
+c                second cell
+c
+c     default is option 2        
+c
+      ofield_targ = 2
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q42
 c
 c     Tags Q43 and Q43 specify a temperature on a ring by ring 

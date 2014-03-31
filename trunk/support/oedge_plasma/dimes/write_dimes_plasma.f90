@@ -1,5 +1,6 @@
 program write_dimes_plasma
   use error_handling
+  use utilities
   use oedge_plasma_interface
   implicit none
 
@@ -135,7 +136,7 @@ program write_dimes_plasma
   ! 153046
   !
   r_offset =  1.485973
-  z_offset = -1.25
+  z_offset = -1.250043035
 
 
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
@@ -143,8 +144,9 @@ program write_dimes_plasma
   gridfilename = trim(case_name)//'.grd'
   plasmafilename = trim(case_name)//'.bgp'
 
+  
 
-  call set_oedge_plasma_opts(r_offset,z_offset,interpolate_option,-1,errmsg_unit)
+  call set_oedge_plasma_opts(r_offset,z_offset,interpolate_option,1,errmsg_unit)
 
   call load_oedge_data(gridfilename,plasmafilename,ierr)
 
@@ -166,17 +168,30 @@ program write_dimes_plasma
   write(0,'(a)') 'Writing plasma to file:'//trim(outfilename)
 
   nr = 100
+  !nz = 0
   nz = 50
 
   rmin = -0.05
   rmax = 0.05
 
+  !zmin = 0.0
+  !zmax = 0.0
   zmin = 0.0
   zmax = 0.05
 
-  dr = (rmax-rmin)/nr
-  dz = (zmax-zmin)/nz
+  if ((rmax.eq.rmin).or.nr.eq.0) then 
+     dr=0.0
+  else
+     dr = (rmax-rmin)/nr
+  endif
+  
+  if ((zmax.eq.zmin).or.nz.eq.0) then 
+     dz = 0.0
+  else
+     dz = (zmax-zmin)/nz
+  endif
 
+  !call set_debug_code(.true.)
 
   write(ounit,*) 
   write(ounit,'(2(1x,a7),20(7x,a10,2x))') 'R_INDEX','Z_INDEX','R(m)','Z(m)','ne(m-3)','Te(eV)','Ti(eV)','Vpara(m/s)','Epara(V/m))','Btot(T)','B_R','B_Z','B_T'
@@ -199,6 +214,7 @@ program write_dimes_plasma
         if (ierr.eq.0) then 
            write(ounit,'(2i8,20(1x,g18.8))') ir,iz,rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt
         else
+           write(ounit,'(2i8,20(1x,g18.8))') ir,iz,rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt
            write(error_message_data,'(a,3i8,20(1x,g18.8))') 'ERROR GETTING PLASMA:',ierr,ir,iz,rt,zt,ne,te,ti,vb,ef,btot,br,bz,bt
            call errmsg('PLASMA TEST',error_message_data)
            !write(6,'(a)') error_message_data

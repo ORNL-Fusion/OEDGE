@@ -193,15 +193,16 @@ c     If the ERO option is ON and neut2d_opt=2 calling for an ERO launch of part
 c
       if (neut2d_opt.eq.2) then 
 
-         if (ero_opt.gt.0) then 
+         if (ero_particle_launch_opt.gt.0) then 
             ! load and analyse the ero launch data in preparation for 
             ! particle launch in NEUT
-            call load_analyse_ero_launch_data
+            call load_ero_launch_data
 
          else
             
             call errmsg('ERROR: ERO OPTIONS:',
-     >         'NEUT2D_OPT=2 but ERO option is OFF: Turning off NEUT2D')
+     >         'NEUT2D_OPT=2 but ERO particle launch option is OFF'//
+     >         ': Turning off NEUT2D')
             neut2d_opt = 0
 
          endif
@@ -214,6 +215,7 @@ c
          ero_record_data = .false.
       elseif (ero_part_output_opt.eq.1) then 
          ero_record_data = .true.
+         call init_ero_part_output
       endif
 
 c
@@ -958,6 +960,19 @@ c
 c
       enddo
 c
+c     ERODIV - if the option is set to turn off sources inside the ERO volume then loop through 
+c              the wall/target locations and zero the yields for sections "substantially"
+c              inside the ERO sample volume
+c
+c
+      if (ero_remove_src_opt.gt.0) then 
+         call ero_remove_src(wallpts,wallpt,kmfps,kmfcs,kmfss,
+     >             kmfpws,kmfcws,maxpts,nwall_data,maxnds)
+
+      endif
+
+
+
 c     Print out some wall chatracteristics
 c
 c      write (6,*) 'Some wall values:'
@@ -1494,7 +1509,7 @@ c
 c       jdemod - add code for particles launched using ERO distribution 
 c              - can have any initial charge state - neutrals have been handled in neut
 c       
-        elseif (ero_opt.eq.1.and.neut2d_opt.eq.2) then 
+        elseif (ero_particle_launch_opt.eq.1.and.neut2d_opt.eq.2) then 
            iz = nint(launchdat(imp,4))
            maxciz = iz
         ELSE
@@ -4716,6 +4731,14 @@ c            endif
 c         endif
 c
       endif
+
+c
+c     jdemod - absolute factor calculated - write to ERO particle track file if needed
+c
+      if (ero_part_output_opt.eq.1) then 
+         call close_ero_part_output(absfac,tneut)
+      endif
+
 c
       WRITE(6,*) 'ABSFAC: ',ABSFAC,' PARTS: WSSF ',WSSF,' FTOT ',
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',

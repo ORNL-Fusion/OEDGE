@@ -11,6 +11,9 @@ program write_ero_plasma
   integer :: narg
   integer,external :: iargc
   integer :: errmsg_unit
+  integer :: ero_shift_option,offset_override_option
+
+  integer,parameter :: out_file_format = 1  ! 0=tag delimited text  1=matlab
 
   ! turn off error messaging
   errmsg_unit=-1
@@ -70,16 +73,36 @@ program write_ero_plasma
   ! read data from the file
   ! DIVIMP plasma and geometry file names
   ! Number of ERO data blocks
+  ! Note: current code is not compatible with multiple ERO blocks - it is just a framework for now
 
+  ero_shift_option = 1
+  offset_override_option = 1
+
+  call init_ero_options(ero_shift_option,offset_override_option)
   call read_ero_plasma_headers(erospec_name,nblocks)
 
   do in = 1,nblocks
 
      call read_ero_plasma_block
      call calc_ero_plasma(errmsg_unit)
-     call output_ero_plasma 
+
+     ! Plasma for ero
+     if (out_file_format.eq.0) then 
+        call output_ero_plasma 
+     elseif (out_file_format .eq.1) then 
+        call output_ero_plasma_m
+     endif
+
+     ! surface for Ero
      call calc_ero_surface
-     call output_ero_surface
+
+     if (out_file_format.eq.0) then 
+        call output_ero_surface
+     elseif (out_file_format.eq.1) then 
+        call output_ero_surface_m
+     endif
+
+     call process_divimp_part_file
 
   end do
 

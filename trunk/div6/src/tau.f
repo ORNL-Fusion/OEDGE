@@ -8647,16 +8647,51 @@ c
         DP1 = (KNBS(2,IR)*KTEBS(2,IR)-KNBS(1,IR)*KTEBS(1,IR))
         DT1 = (KTEBS(2,IR)-KTEBS(1,IR))
         NB1 = 0.5*(KNBS(2,IR)+KNBS(1,IR))
-C
-        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
-           KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c
+c     jdemod - include data to target to calculate first cell gradient and then
+C              assign keds at target
+c
+        DS2 = KSS(1,IR) - KSb(0,IR)
+        DP2 = (KNBS(1,IR)*KTEBS(1,IR)
+     >        -KNdS(idds(IR,2))*KTEdS(idds(IR,2)))
+        DT2 = (KTEBS(1,IR)-KTEdS(idds(ir,2)))
+        NB2 = 0.5*(KNBS(1,IR)+KNdS(idds(ir,2)))
+c
+
+        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
+     >      (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
+
+           if (ofield_targ.eq.1) then 
+              KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+              keds(idds(ir,2)) =  0.0
+           elseif (ofield_targ.eq.2) then 
+              KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+              keds(idds(ir,2)) =  kes(1,ir)
+           elseif (ofield_targ.eq.3) then 
+              KES(1,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+     >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+              keds(idds(ir,2)) =  (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
+           endif
+
+
         else
+C
            kes(1,ir) = 0.0
+           keds(idds(ir,2)) = 0.0
            write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              1,ir,ds1,nb1
         endif
-
+c
+c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
+c           KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c        else
+c           kes(1,ir) = 0.0
+c           write(6,'(a,2i8,4(1x,g12.5))') 
+c     >             'KES CALCULATION: IK,IR,DS1,NB1:',
+c     >              1,ir,ds1,nb1
+c        endif
+c
 C
         DS1 = KSS(NKS(IR),IR) - KSS(NKS(IR)-1,IR)
         DP1 = (KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR)
@@ -8664,17 +8699,53 @@ C
         DT1 = (KTEBS(NKS(IR),IR)-KTEBS(NKS(IR)-1,IR))
         NB1 = 0.5*(KNBS(NKS(IR),IR)+KNBS(NKS(IR)-1,IR))
 C
-c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
-        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
-           KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c     jdemod - include data to target to calculate first cell gradient and then
+C              assign keds at target
+c
+        DS2 = KSb(NKS(IR),IR) - KSS(NKS(IR),IR)
+        DP2 = (KNdS(idds(ir,1))*KTEdS(idds(ir,1))
+     >         -KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR))
+        DT2 = (KTEdS(idds(ir,1))-KTEBS(NKS(IR),IR))
+        NB2 = 0.5*(KNdS(idds(ir,1))+KNBS(NKS(IR),IR))
+
+        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
+     >      (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
+
+           if (ofield_targ.eq.1) then 
+              KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+              keds(idds(ir,1))= 0.0
+           elseif (ofield_targ.eq.1) then 
+              KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+              keds(idds(ir,1)) =  kes(nks(ir),ir)
+           elseif (ofield_targ.eq.1) then 
+              KES(nks(ir),IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+     >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+              keds(idds(ir,1)) =  (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
+           endif
+
         else
-           kes(1,ir) = 0.0
+C
+           kes(nks(ir),ir) = 0.0
+           keds(idds(ir,1)) = 0.0
            write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              nks(ir),ir,ds1,nb1
         endif
+c
+c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
+c           KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+c        else
+c           kes(1,ir) = 0.0
+c           write(6,'(a,2i8,4(1x,g12.5))') 
+c     >             'KES CALCULATION: IK,IR,DS1,NB1:',
+c     >              nks(ir),ir,ds1,nb1
+c        endif
 C
-C        WRITE(6,*) 'KES:IR:',KES(1,IR),KES(NKS(IR),IR)
+c        WRITE(6,'(a,3i8,10(1x,g12.5))') 'KES:IR:',ir,
+c     >                idds(ir,1),idds(ir,2),
+c     >                KES(1,IR),KES(NKS(IR),IR),
+c     >                keds(idds(ir,2)),keds(idds(ir,1))
 C
         DO 500 IK = 2,NKS(IR)-1
 

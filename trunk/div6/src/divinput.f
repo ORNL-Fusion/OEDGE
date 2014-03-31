@@ -5,6 +5,7 @@ c     @PROCESS NOOPT
 c      SUBROUTINE READIN (TITLE,NIZS,NIMPS,NIMPS2,CPULIM,
 c     >                   IERR,NYMFS,NITERS)
       use error_handling
+      use ero_interface
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -145,7 +146,7 @@ c slmod end
 c      call rdi (ppforceopt,.TRUE.,0,.TRUE.,1,'TRAP FORCE SWITCH ',IERR)
       CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 1,'CONTROL SWITCH       ',IERR)
       CALL RDI (CNEUTB,.TRUE., 0,.TRUE., 7,'LAUNCH OPTION        ',IERR)
-      CALL RDI (CNEUTC,.TRUE., 0,.TRUE.,19,'VEL/ANGLE FLAG       ',IERR)
+      CALL RDI (CNEUTC,.TRUE., 0,.TRUE.,20,'VEL/ANGLE FLAG       ',IERR)
 C
 C     IF CNEUTH OR CNEUTI ARE -1 THEY NEED TO BE SET TO THE VALUES
 C     READ IN FOR CNEUTB AND CNEUTC.
@@ -905,6 +906,25 @@ C
 c      CSTMAX is set in the rundiv main program
 c
 c      CSTMAX = 10.0 / QTIM
+c
+c
+c
+       if (neut2d_opt.eq.2.and.ero_particle_launch_opt.eq.0) then 
+         call prc('ERROR: Incompatible Input.')
+         call prc('       Neut2d option = 2 specified without')
+         call prc('       ERO particle launch being selected')
+         call prc('       K40 - ERO particle launch option')
+         call prc('       must be set and ERO particle data')
+         call prc('       file must be available')
+         neut2d_opt = 0
+
+         write(0,'(a)') 'WARNINGL: NEUT2D option set to ERO'//
+     >     ' but ERO particle launch option (K40) turned'//
+     >     ' off. NEUT2D OPT set to 0'
+
+       endif
+
+
 c
 c-------------  INITIALIZATION ROUTINES --------------------
 c

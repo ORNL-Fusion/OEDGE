@@ -110,7 +110,7 @@ module oedge_plasma_interface
 
 
 
-  public :: get_oedge_plasma,load_oedge_data,close_oedge_plasma,set_oedge_plasma_opts,get_wall_data
+  public :: get_oedge_plasma,load_oedge_data,close_oedge_plasma,set_oedge_plasma_opts,get_wall_data,set_debug_code
 
 
 
@@ -889,17 +889,33 @@ end subroutine find_nearest_boundary
        f2=flow/fsum
 
 
+       if (debug_code) then 
+          call write_cell_data(iks(1),irs(1))
+          call write_cell_data(iks(2),irs(2))
+          call write_cell_data(iks(3),irs(3))
+          call write_cell_data(iks(4),irs(4))
+       endif
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,knbs,ne)
 
        if (debug_code) then 
-          call debug_interpolate('KNBS',irs,iks,e1,e2,f1,f2,knbs,ne)
+          call debug_interpolate('KNBS:',r,z,irs,iks,e1,e2,f1,f2,knbs,ne)
        endif
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktebs,te)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktibs,ti)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kvhs,vb)
+
+       if (debug_code) then 
+          call debug_interpolate('KVHS:',r,z,irs,iks,e1,e2,f1,f2,kvhs,vb)
+       endif
+
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kes,ef)
+
+       if (debug_code) then 
+          call debug_interpolate('KES :',r,z,irs,iks,e1,e2,f1,f2,kes,ef)
+       endif
+
        call assign_interpolate(irs,iks,e1,e2,f1,f2,psifl,psin)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,btot,btoto)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,br,bro)
@@ -940,10 +956,11 @@ end subroutine find_nearest_boundary
   end subroutine assign_interpolate
 
 
-  subroutine debug_interpolate(desc,irs,iks,e1,e2,f1,f2,array,val)
+  subroutine debug_interpolate(desc,r,z,irs,iks,e1,e2,f1,f2,array,val)
     implicit none
     character*(*) :: desc
     integer :: irs(4),iks(4)
+    real*8 :: r,z
     real*8 :: e1,e2,f1,f2
     real*8,allocatable :: array(:,:)
     real*8 :: val,v12,v34
@@ -959,14 +976,14 @@ end subroutine find_nearest_boundary
 
     !val = v12 * f1 + v34 * f2
 
-    call write_cell_data(iks(1),irs(1))
-    call write_cell_data(iks(2),irs(2))
-    call write_cell_data(iks(3),irs(3))
-    call write_cell_data(iks(4),irs(4))
+    !call write_cell_data(iks(1),irs(1))
+    !call write_cell_data(iks(2),irs(2))
+    !call write_cell_data(iks(3),irs(3))
+    !call write_cell_data(iks(4),irs(4))
 
     write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),array(iks(1),irs(1)),array(iks(2),irs(2)),array(iks(4),irs(4)),array(iks(3),irs(3))
     write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),array(iks(1),irs(1))*e2,array(iks(2),irs(2)) * e1,array(iks(4),irs(4))*e2,array(iks(3),irs(3)) * e1
-    write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),e1,e2,f1,f2,v12,v34, v12 * f1 + v34 * f2,val
+    write(0,'(a,12(1x,g14.6))') 'DEBUG:'//trim(desc),r,z,e1,e2,f1,f2,v12,v34, v12 * f1 + v34 * f2,val
 
   end subroutine debug_interpolate
 
@@ -2244,17 +2261,54 @@ end subroutine find_nearest_boundary
     implicit none
     real*8 :: xstar,zstar,xalpha,zalpha,xbeta,zbeta,f
     real*8 :: m,x8,z8      
+
+    real*8 :: nd,nx,nz,apx,apz,dn,dx,dz,dist
+
     !  to compute perp. distance from grid point (xstar,zstar) to line connecting
     !  points (xalpha,zalpha) and (xbeta,zbeta)
 
     m=(zbeta-zalpha)/(xbeta-xalpha) +1.e-12   ! slope of line between alpha,beta points
+    !m=(zbeta-zalpha)/(xbeta-xalpha +1.e-12)   ! slope of line between alpha,beta points
     x8=(zstar +xstar/m  -zalpha +m*xalpha)/( m +1/m )
     z8=zstar +(x8-xstar)/m
     f=sqrt( (xstar-x8)**2 +(zstar-z8)**2 )
 
-    !      print 10,xstar,zstar,xalpha,zalpha,xbeta,zbeta
-    !      print 10,m,x8,z8,f
-10  format( 'm,x8,z8,f', 6g15.5 )
+
+    !
+    ! The following code is based on the vector solution to this problem rather than using slopes
+    ! The issue with slopes is that they can be zero or infinity at two extremes which can cause issues
+    ! in the interpolation code above. 
+    ! The vector code produces exactly the same values as the above for non-edge cases but does produce
+    ! better values in some of the edge cases where the 1e-12 comes into play. 
+    !
+    ! A = Alpha Point, P = Test Point)
+    ! N = unit vector from Alpha to Beta
+    ! Vector formulations dist = norm ( [A-P] - ([A-P]dot N) N ) 
+    ! 
+
+    
+    nd = sqrt((xbeta-xalpha)**2+(zbeta-zalpha)**2)
+    nx = (xbeta-xalpha)/nd
+    nz = (zbeta-zalpha)/nd
+
+    apx = xalpha-xstar
+    apz = zalpha-zstar
+
+    dn = apx*nx + apz*nz
+
+    dx = apx - dn * nx
+    dz = apz - dn * nz
+
+    dist = sqrt (dx**2 + dz**2) 
+
+    if (debug_code) then 
+       write(0,'(a,20(1x,g18.10))') 'DIST1:',xstar,zstar,xalpha,zalpha,xbeta,zbeta,m,x8,z8,f
+       write(0,'(a,20(1x,g18.10))') 'DIST2:',nd,nx,nz,apx,apz,dn,dx,dz,f,dist
+    endif
+
+    ! over-write f with the value in dist
+    f = dist
+
 
     return
   end subroutine distance
@@ -2282,8 +2336,16 @@ end subroutine find_nearest_boundary
     integer :: ik,ir
     ! write out the data for the specific cell for debugging purposes
 
-    write(0,'(a,2i8,10(1x,g14.6))') 'DEBUG:',ik,ir,rs(ik,ir),zs(ik,ir),knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir),kvhs(ik,ir)
+    write(0,'(a,2i8,10(1x,g18.10))') 'DEBUG: CELL DATA:',ik,ir,rs(ik,ir),zs(ik,ir),knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir),kvhs(ik,ir),kes(ik,ir)
 
   end subroutine write_cell_data
+
+  subroutine set_debug_code(value)
+    implicit none
+    ! subroutine to toggle debug on and off
+    logical :: value
+    debug_code = value
+  end subroutine set_debug_code
+
 
 end module oedge_plasma_interface
