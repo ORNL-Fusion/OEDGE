@@ -256,8 +256,14 @@ c
 c
 c     Check for 2D NEUT options and prepare data
 c
-      if (neut2d_opt.eq.1.or.(cneutb.eq.5.and.nprod.gt.0)
-     >                   .or.(cneuth.eq.5.and.nprod2.gt.0)) then  
+c     jdemod - with the addition of other neut2d sources
+c              the neut2d option has to be used to select them
+c              and they can not just default to cneutb
+c
+c      if (neut2d_opt.eq.1.or.(cneutb.eq.5.and.nprod.gt.0)
+c     >                   .or.(cneuth.eq.5.and.nprod2.gt.0)) then  
+c
+      if (neut2d_opt.eq.1) then  
 c 
          call prep_neut2d
 c
@@ -265,6 +271,7 @@ c
 
          call get_ero_src(neut2d_src,neut2d_num)
 
+         write(0,'(a,i12,g18.8)') 'neut2d_src:',neut2d_num,neut2d_src
       endif
 c
 c
@@ -992,7 +999,8 @@ c
 c
 c     NOW - launch any THIRD launch 2D neutrals that are called for ...
 c
-      if (neut2d_opt.eq.1.or.neut2d_opt.eq.2) then 
+      if (nprod_neut2d.gt.0.and.
+     >   (neut2d_opt.eq.1.or.neut2d_opt.eq.2)) then 
 c
 c        2D Free space point launch  
 c	 
@@ -5721,7 +5729,10 @@ c
 c
       if (.not.nonzero_krmax.and.(cneutb.ne.1.and.
 c slmod begin
-     >         cneutb.ne.6.and.cneutb.ne.7).and.
+c
+c     jdemod - add cneutb =5 to list for distributed 2D sources
+c
+     >         cneutb.ne.5.and.cneutb.ne.6.and.cneutb.ne.7).and.
      >         .not.((cneutb.eq.2.or.cneutb.eq.4).and.pinsw.eq.4)) then 
 c
 c     >         cneutb.ne.6.and.cneutb.ne.7)) then 
@@ -6408,7 +6419,7 @@ c
       real prob_limit,cell_prob
       parameter (prob_limit=1.0e-5)
       integer in,prcount
-      character*80 comment
+      character*100 comment
       real r,z,charge,prob,temp
 c
       call prb  
@@ -6489,8 +6500,8 @@ c
 c
 c           write items to line
 c
-            write (comment((prcount-1)*20+1:prcount*20),200) 
-     >           r,z,charge,cell_prob
+            write (comment((prcount-1)*40+1:prcount*40),200) 
+     >           r,z,cell_prob,int(charge)
 c
 c           Print 2 entries / line
 c
@@ -6676,6 +6687,8 @@ c
             w1a = 0.0
             w1  = neut2d_src
 c
+            write(0,*)'redistribute nprod:',w1
+c
 c
          endif
 c
@@ -6804,12 +6817,14 @@ c
       endif
 c
 c     Calculate the total FY for additional 2D launch option. 
+c     Only set w3 if the 2D source is supplemental and not primary
 c
       if (neut2d_opt.eq.0) then 
 c  
          w3 = 0.0
 c
-      elseif (neut2d_opt.eq.1.or.neut2d_opt.eq.2) then 
+      elseif (cneutb.ne.5.and.cneuth.ne.5.and.
+     >        (neut2d_opt.eq.1.or.neut2d_opt.eq.2)) then 
 c
          w3 = neut2d_src
 c
@@ -6819,6 +6834,9 @@ c     FY weights for all allowed mechanisms have been assigned.
 c     Now redistribute the number of particles.       
 c
 c     Deal with the FY scalable sources first
+c
+      write(0,'(a,6(1x,g18.8))') 'Redistribute nprod: weights:',
+     >       w1,w1a,w2,w2a,w3
 c
       if (w1.ne.-1.0.and.w2.ne.-1.0) then  
 c
@@ -6923,6 +6941,10 @@ c
 c
 c     Print information
 c
+      write (0,'(a,6i8)') 'Redistribute nprod: parts:',nproda,
+     >                     nprod,nprod2a,
+     >                     nprod2,nprod_neut2d,nint(ntot)
+
       write (6,'(a,6i8)') 'Nprods:',nproda,nprod,nprod2a,
      >                     nprod2,nprod_neut2d,nint(ntot)
       write (6,'(a,6g12.5)') 'Weights:',w1a,w1,w2a,w2,w3

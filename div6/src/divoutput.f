@@ -3902,6 +3902,10 @@ C-----------------------------------------------------------------------
 
        call prc ('                       BETA = 2PI$, $ in [0,1]')
        call prc ('                       PHI  = 2PI$ - PI, $ in [0,1]')
+
+      ELSEIF (CNEUTC.EQ.20) THEN
+       CALL PRC ('  VEL/ANGLE FLAG  19 : DATA FROM ERO FOR 2D PARTICLE')
+       call prc ('                       SOURCE')
       ENDIF
 C-----------------------------------------------------------------------
 C
@@ -4142,6 +4146,9 @@ c
      >PHI)**2|)')
        call prc ('                       BETA = 2PI$, $ in [0,1]')
        call prc ('                       PHI  = 2PI$ - PI, $ in [0,1]')
+      ELSEIF (CNEUTI.EQ.20) THEN
+       CALL PRC ('  SUP V/A FLAG    20 : DATA FROM ERO FOR 2D PARTICLE')
+       call prc ('                       SOURCE')
       ENDIF
 C-----------------------------------------------------------------------
       if (neut2d_opt.eq.0) then
@@ -7650,7 +7657,7 @@ c
      >EN')
        call prc ('                       IN THE PRIVATE PLASMA')
 
-         elseif (ciopto.eq.1) then
+         elseif (ciopto.eq.1.or.ciopto.eq.5) then
 
        CALL PRC ('                       ELECTRIC FIELD OPTION ALSO APPL
      >IES')
@@ -7659,6 +7666,35 @@ c
          endif
 
       endif
+
+      if (ofield.ne.0) then 
+c
+c        jdemod - ofield target E-field calculation option
+c         
+         if (ofield_targ.eq.1) then 
+
+       CALL PRC (' E-FIELD TARGET OPT 1: TARGET E-FIELD = 0.0')
+       CALL PRC ('                       FIRST CELL E-FIELD CALCULATED F
+     >ROM GRADIENT TO SECOND CELL')
+
+         elseif (ofield_targ.eq.2) then 
+
+       CALL PRC (' E-FIELD TARGET OPT 2: TARGET E-FIELD = FIRST CELL')
+       CALL PRC ('                       FIRST CELL E-FIELD CALCULATED F
+     >ROM GRADIENT TO SECOND CELL')
+
+         elseif (ofield_targ.eq.3) then 
+
+       CALL PRC (' E-FIELD TARGET OPT 2: TARGET E-FIELD = CALCULATED FRO
+     >M NEAR-TARGET GRADIENTS')
+       CALL PRC ('                       FIRST CELL E-FIELD CALCULATED F
+     >ROM GRADIENT TO TARGET AND SECOND CELL')
+
+         endif
+
+      endif
+
+
 
 C-----------------------------------------------------------------------
       if (ccoreopt.eq.-1) then

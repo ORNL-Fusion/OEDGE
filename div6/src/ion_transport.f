@@ -114,7 +114,7 @@ c
 c     Variable are called: R,Z, SPUTY, IZ, VEL, TEMI - 
 c     
       if (ero_record_data) then 
-         call ero_check_part_track_ion(ik,ir,iz,r,z,vel,temi,
+         call ero_check_part_track_ion(ik,ir,iz,r,z,vel,qtim,temi,
      >                             sputy,ero_record_data)
       endif
 

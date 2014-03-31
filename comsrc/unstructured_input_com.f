@@ -1474,6 +1474,14 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG P62 : Over-ride Efield target E-field calculation
+c
+      ELSEIF (tag(1:3).EQ.'P62') THEN
+        CALL ReadI(line,ofield_targ,1,3,
+     >                           'Override E-field target')
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q42 : SHEATH TEMPERATURE - INNER JET/OUTER SONNET
 c
       ELSEIF (tag(1:3).EQ.'Q42') THEN

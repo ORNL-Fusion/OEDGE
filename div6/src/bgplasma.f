@@ -1245,197 +1245,276 @@ c slmod end
       return
 
       end
-c
-c
-c
+c     
+c     
+c     
       subroutine calcef4(lpinavail)
       implicit none
       logical lpinavail
       include 'params'
       include 'cgeom'
       include 'comtor'
-c
+c     
 c     CALCEF4:
-c
+c     
 c     This subroutine uses a simple prescription to estimate
 c     the electric field from the background density and
 c     temperature and the distances between grid points.
-c
+c     
 c     This routine is modelled on the calcefb2 routine and
 c     implements (OFIELD option = 4) where the collisionality of
 c     the ring is checked before applying different E-field
 c     models.
-c
-c
-c
+c     
+c     
+c     
       real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit
       real ef1,efnks,dist1,distnks,tav,smax
       integer ik,ir
-C
-C       CALCULATE ELECTRIC FIELD
-C
-C       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
-C       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
-C
+C     
+C     CALCULATE ELECTRIC FIELD
+C     
+C     IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
+C     SAME FACTOR USED IN CONVERTING T IN EV TO KT.
+C     
       call rzero(kes,maxnks*maxnrs)
-c
+c     
 c     Calculate for Private Plasma only if the entire SOL is being
 c     calculatd and not specified for the PP.
-c
+c     
       if (ciopto.eq.0.or.ciopto.eq.2.or.
-     >    ciopto.eq.3.or.ciopto.eq.4) then
+     >     ciopto.eq.3.or.ciopto.eq.4) then
          irlimit = irwall
       elseif (ciopto.eq.1) then
          irlimit = nrs
       endif
-c
+c     
 c     Loop through rings
-c
+c     
       do 600 ir = irsep,irlimit
-c
-        smax = ksmaxs(ir)
+c     
+         smax = ksmaxs(ir)
 
-c
-c       The DIST1 and DISTNKS contain the length of the source region
-c       if the half ring is found to be non-collisional. This region
-c       is the distance over which the electric field will be non-zero.
-c       dist1 is for the first half of the ring with IK =1 (usually the
-c       OUTER half on JET grids) and distnks is for the IK =NKS(IR) end
-c       of the ring. DIST = -1.0 is used to identify a collisional ring
-c       for which the other formula should be used.
-c
-c       The E-field is -ve for toward the target at the IK=1 end
-c       and +ve for toward the target at the IK=NKS(IR) end.
-c
-c
-c       IK = 1
-c
-c        write (6,*) 'Debug E-field option 4:',ir,lpinavail
-c
-        if (teupstream(ir,2).lt.ceffact*kteds(idds(ir,2))) then
-           tav = 0.5 * (teupstream(ir,2) +kteds(idds(ir,2)))
-c
-           if (lpinavail.and.cleq(ir,2).ne.0.0) then
-              dist1 = cleq(ir,2)
-              ef1 = - tav / (2.0*dist1)
-           elseif (ceflen.ne.0.0) then
-              dist1 =  ceflen * smax
-              ef1 = -tav / (2.0 * dist1)
-           else
-              dist1 = 0.0
-              ef1 = 0.0
-           endif
-c
-        else
-           dist1 = -1.0
-           ef1 =   0.0
-        endif
-c
-c        write (6,'(a,6(g13.5,2x))') 'IK=1  ',
+c     
+c     The DIST1 and DISTNKS contain the length of the source region
+c     if the half ring is found to be non-collisional. This region
+c     is the distance over which the electric field will be non-zero.
+c     dist1 is for the first half of the ring with IK =1 (usually the
+c     OUTER half on JET grids) and distnks is for the IK =NKS(IR) end
+c     of the ring. DIST = -1.0 is used to identify a collisional ring
+c     for which the other formula should be used.
+c     
+c     The E-field is -ve for toward the target at the IK=1 end
+c     and +ve for toward the target at the IK=NKS(IR) end.
+c     
+c     
+c     IK = 1
+c     
+c     write (6,*) 'Debug E-field option 4:',ir,lpinavail
+c     
+         if (teupstream(ir,2).lt.ceffact*kteds(idds(ir,2))) then
+            tav = 0.5 * (teupstream(ir,2) +kteds(idds(ir,2)))
+c     
+            if (lpinavail.and.cleq(ir,2).ne.0.0) then
+               dist1 = cleq(ir,2)
+               ef1 = - tav / (2.0*dist1)
+            elseif (ceflen.ne.0.0) then
+               dist1 =  ceflen * smax
+               ef1 = -tav / (2.0 * dist1)
+            else
+               dist1 = 0.0
+               ef1 = 0.0
+            endif
+c     
+         else
+            dist1 = -1.0
+            ef1 =   0.0
+         endif
+c     
+c     write (6,'(a,6(g13.5,2x))') 'IK=1  ',
 c     >           teupstream(ir,2),kteds(idds(ir,2)),cleq(ir,2),
 c     >           tav,ef1,dist1
-c
-c       IK = NKS(IR)
-c
-        if (teupstream(ir,1).lt.ceffact*kteds(idds(ir,1))) then
-           tav = 0.5 * (teupstream(ir,1) +kteds(idds(ir,1)))
-c
-           if (lpinavail.and.cleq(ir,1).ne.0.0) then
-              distnks = cleq(ir,1)
-              efnks =   tav / (2.0*distnks)
-           elseif (ceflen.ne.0.0) then
-              distnks =  ceflen * smax
-              efnks =  tav / (2.0 * distnks)
-           else
-              distnks = 0.0
-              efnks = 0.0
-           endif
-c
-        else
-           distnks = -1.0
-           efnks = 0.0
-        endif
-c
-c        write (6,'(a,6(g13.5,2x))') 'IK=NKS',
+c     
+c     IK = NKS(IR)
+c     
+         if (teupstream(ir,1).lt.ceffact*kteds(idds(ir,1))) then
+            tav = 0.5 * (teupstream(ir,1) +kteds(idds(ir,1)))
+c     
+            if (lpinavail.and.cleq(ir,1).ne.0.0) then
+               distnks = cleq(ir,1)
+               efnks =   tav / (2.0*distnks)
+            elseif (ceflen.ne.0.0) then
+               distnks =  ceflen * smax
+               efnks =  tav / (2.0 * distnks)
+            else
+               distnks = 0.0
+               efnks = 0.0
+            endif
+c     
+         else
+            distnks = -1.0
+            efnks = 0.0
+         endif
+c     
+c     write (6,'(a,6(g13.5,2x))') 'IK=NKS',
 c     >     teupstream(ir,1),kteds(idds(ir,1)),cleq(ir,1),
 c     >     tav,efnks,distnks
-c
-c
-c       Use the values calculated above in the evaluation for each point
-c
-c       Start with end-points and then loop through the ring.
-c
-        if (dist1.ge.0.0) then
-           if (kss(1,ir).le.dist1) then
-              kes(1,ir) = ef1
-           else
-              kes(1,ir) = 0.0
-           endif
-        else
-           DS1 = KSS(2,IR) - KSS(1,IR)
-           DP1 = (KNBS(2,IR)*KTEBS(2,IR)-KNBS(1,IR)*KTEBS(1,IR))
-           DT1 = (KTEBS(2,IR)-KTEBS(1,IR))
-           NB1 = 0.5*(KNBS(2,IR)+KNBS(1,IR))
-           KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
-        endif
-C
-        if (distnks.ge.0.0) then
-           if ((smax-kss(nks(ir),ir)).le.distnks) then
-              kes(nks(ir),ir) = efnks
-           else
-              kes(nks(ir),ir) = 0.0
-           endif
-        else
-           DS1 = KSS(NKS(IR),IR) - KSS(NKS(IR)-1,IR)
-           DP1 = (KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR)
-     >         -KNBS(NKS(IR)-1,IR)*KTEBS(NKS(IR)-1,IR))
-           DT1 = (KTEBS(NKS(IR),IR)-KTEBS(NKS(IR)-1,IR))
-           NB1 = 0.5*(KNBS(NKS(IR),IR)+KNBS(NKS(IR)-1,IR))
-           KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
-        endif
-c
-c       Loop through all the other knots
-c
-        DO 500 IK = 2,NKS(IR)-1
-c
-           if (dist1.ge.0.0.and.
-     >          kss(ik,ir).le.smax/2.0) then
-c
-              if (kss(ik,ir).le.dist1) then
-                 kes(ik,ir) = ef1
-              else
-                 kes(ik,ir) = 0.0
-              endif
-c
-           elseif (distnks.ge.0.0.and.
-     >          kss(ik,ir).gt.smax/2.0) then
-c
-              if ((smax-kss(ik,ir)).le.distnks) then
-                 kes(ik,ir) = efnks
-              else
-                 kes(ik,ir) = 0.0
-              endif
-c
-           else
+c     
+c     
+c     Use the values calculated above in the evaluation for each point
+c     
+c     Start with end-points and then loop through the ring.
+c     
+         if (dist1.ge.0.0) then
+            if (kss(1,ir).le.dist1) then
+               kes(1,ir) = ef1
+            else
+               kes(1,ir) = 0.0
+            endif
+         else
+            DS1 = KSS(2,IR) - KSS(1,IR)
+            DP1 = (KNBS(2,IR)*KTEBS(2,IR)-KNBS(1,IR)*KTEBS(1,IR))
+            DT1 = (KTEBS(2,IR)-KTEBS(1,IR))
+            NB1 = 0.5*(KNBS(2,IR)+KNBS(1,IR))
+c     
+c     jdemod - modified to include and set target data
+c     
+c     KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
 
-              DS1 = KSS(IK,IR) - KSS(IK-1,IR)
-              DP1 = KNBS(IK,IR)*KTEBS(IK,IR)
-     >              -KNBS(IK-1,IR)*KTEBS(IK-1,IR)
-              DT1 = (KTEBS(IK,IR)-KTEBS(IK-1,IR))
-              NB1 = 0.5*(KNBS(IK,IR)+KNBS(IK-1,IR))
-              DS2 = KSS(IK+1,IR) - KSS(IK,IR)
-              DP2 = KNBS(IK+1,IR)*KTEBS(IK+1,IR)
-     >              -KNBS(IK,IR)*KTEBS(IK,IR)
-              DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
-              NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
-              KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1-0.71*DT1/DS1)
+            DS2 = KSS(1,IR) - KSb(0,IR)
+            DP2 = (KNBS(1,IR)*KTEBS(1,IR)
+     >            -  KNdS(idds(IR,2))*KTEdS(idds(IR,2)))
+            DT2 = (KTEBS(1,IR)-KTEdS(idds(ir,2)))
+            NB2 = 0.5*(KNBS(1,IR)+KNdS(idds(ir,2)))
+c     
+
+            if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
+     >           (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
+
+               if (ofield_targ.eq.1) then 
+                  KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+                  keds(idds(ir,2)) =  0.0
+               elseif (ofield_targ.eq.2) then 
+                  KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+                  keds(idds(ir,2)) =  kes(1,ir)
+               elseif (ofield_targ.eq.3) then 
+                  KES(1,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+     >                        + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+                  keds(idds(ir,2)) = (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
+               endif
+
+
+            else
+C     
+               kes(1,ir) = 0.0
+               keds(idds(ir,2)) = 0.0
+               write(6,'(a,2i8,4(1x,g12.5))') 
+     >              'KES CALCULATION: IK,IR,DS1,NB1:',
+     >              1,ir,ds1,nb1
+            endif
+
+
+         endif
+C     
+         if (distnks.ge.0.0) then
+            if ((smax-kss(nks(ir),ir)).le.distnks) then
+               kes(nks(ir),ir) = efnks
+            else
+               kes(nks(ir),ir) = 0.0
+            endif
+         else
+            DS1 = KSS(NKS(IR),IR) - KSS(NKS(IR)-1,IR)
+            DP1 = (KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR)
+     >           -KNBS(NKS(IR)-1,IR)*KTEBS(NKS(IR)-1,IR))
+            DT1 = (KTEBS(NKS(IR),IR)-KTEBS(NKS(IR)-1,IR))
+            NB1 = 0.5*(KNBS(NKS(IR),IR)+KNBS(NKS(IR)-1,IR))
+
+c     
+c     jdemod - modified to include and set target data
+c     
+c     KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+
+
+            DS2 = KSb(NKS(IR),IR) - KSS(NKS(IR),IR)
+            DP2 = (KNdS(idds(ir,1))*KTEdS(idds(ir,1))
+     >           -KNBS(NKS(IR),IR)*KTEBS(NKS(IR),IR))
+            DT2 = (KTEdS(idds(ir,1))-KTEBS(NKS(IR),IR))
+            NB2 = 0.5*(KNdS(idds(ir,1))+KNBS(NKS(IR),IR))
+
+            if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
+     >           (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
+
+               if (ofield_targ.eq.1) then 
+                  KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+                  keds(idds(ir,1))= 0.0
+               elseif (ofield_targ.eq.1) then 
+                  KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+                  keds(idds(ir,1)) =  kes(nks(ir),ir)
+               elseif (ofield_targ.eq.1) then 
+                  KES(nks(ir),IR)=0.5*((-(1/NB1)*DP1/DS1-0.71*DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
-          endif
+                  keds(idds(ir,1)) = (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
+               endif
 
- 500    CONTINUE
-c
-600   CONTINUE
-c
+c               KES(nks(ir),IR) =0.5*((-(1/NB1)*DP1/DS1 -0.71 * DT1/DS1)
+c     >                             + (-(1/NB2)*DP2/DS2 -0.71 * DT2/DS2))
+c               keds(idds(ir,1)) =  (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
+
+            else
+C     
+               kes(nks(ir),ir) = 0.0
+               keds(idds(ir,1)) = 0.0
+               write(6,'(a,2i8,4(1x,g12.5))') 
+     >              'KES CALCULATION: IK,IR,DS1,NB1:',
+     >              nks(ir),ir,ds1,nb1
+            endif
+
+
+
+         endif
+c     
+c     Loop through all the other knots
+c     
+         DO 500 IK = 2,NKS(IR)-1
+c     
+            if (dist1.ge.0.0.and.
+     >           kss(ik,ir).le.smax/2.0) then
+c     
+               if (kss(ik,ir).le.dist1) then
+                  kes(ik,ir) = ef1
+               else
+                  kes(ik,ir) = 0.0
+               endif
+c     
+            elseif (distnks.ge.0.0.and.
+     >              kss(ik,ir).gt.smax/2.0) then
+c     
+               if ((smax-kss(ik,ir)).le.distnks) then
+                  kes(ik,ir) = efnks
+               else
+                  kes(ik,ir) = 0.0
+               endif
+c     
+            else
+
+               DS1 = KSS(IK,IR) - KSS(IK-1,IR)
+               DP1 = KNBS(IK,IR)*KTEBS(IK,IR)
+     >              -KNBS(IK-1,IR)*KTEBS(IK-1,IR)
+               DT1 = (KTEBS(IK,IR)-KTEBS(IK-1,IR))
+               NB1 = 0.5*(KNBS(IK,IR)+KNBS(IK-1,IR))
+               DS2 = KSS(IK+1,IR) - KSS(IK,IR)
+               DP2 = KNBS(IK+1,IR)*KTEBS(IK+1,IR)
+     >              -KNBS(IK,IR)*KTEBS(IK,IR)
+               DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
+               NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
+               KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1-0.71*DT1/DS1)
+     >              + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+            endif
+
+ 500     CONTINUE
+c     
+ 600  CONTINUE
+c     
       return
       end
 c
