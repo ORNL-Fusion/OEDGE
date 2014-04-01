@@ -1864,9 +1864,9 @@ contains
     write(outunit,'(a,4(1x,g18.8))') '#YHAT',(yhat(i),i=1,2)
     write(outunit,'(a,4(1x,g18.8))') '#XINV',(yhat(i),i=2,1,-1)
     write(outunit,'(a,4(1x,g18.8))') '#YINV',(xhat(i),i=2,1,-1)
-    write(outunit,'(a,a)') '#EROPARTFN','erodiv_ero_part_lost.dat'
+    write(outunit,'(a,a)') '#EROPARTFN',' erodiv_ero_part_lost.dat'
     ! Note: DIVIMP reads the file as ero_particle_data.dat ... however, when iterating this will already exist so a different name is needed
-    write(outunit,'(a,a)') '#ERODIVPARTFN','ero_particle_data.out'
+    write(outunit,'(a,a)') '#ERODIVPARTFN',' ero_particle_data.out'
 
     close(outunit)
 

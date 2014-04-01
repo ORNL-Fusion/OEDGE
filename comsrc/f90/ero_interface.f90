@@ -74,7 +74,7 @@ module ero_interface
   integer :: n_ero_part
   real*8 :: ero_totsrc,ero_totsrc_raw,ero_totsrc_mtor,ero_src_tor_extent
   real*8, allocatable :: ero_part_data(:,:)
-  real*8, allocatable :: ero_launch_prob(:)
+  real, allocatable :: ero_launch_prob(:)
 
   public write_ero_bg,run_ero_bg,ero_cleanup,read_ero_unstructured_input,init_ero_unstructured_input,load_ero_launch_data,&
        & select_ero_particle,get_ero_part_data,get_ero_part_data2,get_ero_src,init_ero_part_output,close_ero_part_output,ero_init_part_track, &
@@ -772,6 +772,11 @@ contains
 
     end do
 
+    !write(6,*) 'ERO prob dist:',n_ero_part
+    !do in = 1,n_ero_part
+    !   write(6,'(a,i6,4(1x,g18.8))') 'ERO_PROB:',in,ero_part_data(in,3),ero_part_data(in,4),ero_part_data(in,12),ero_launch_prob(in)
+    !end do
+
   end subroutine load_ero_launch_data
 
 
@@ -787,12 +792,16 @@ contains
     ! transfer 13 data values : in, charge, r, z, t, vr, vz, vt, v0, energy, atoms, probabilty, cumulative probability
 
     in = ipos(rand,ero_launch_prob,n_ero_part)
+
     
     !pnum= int(ero_part_data(in,1))
     !charge  = int(ero_part_data(in,2))
 
     r = ero_part_data(in,3)
     z = ero_part_data(in,4)
+
+    !write(0,'(a,2g18.8,i7,g18.8)') 'Select particle:',r,z,in,rand
+
 
     !t = ero_part_data(in,5)
     !vr = ero_part_data(in,6)
@@ -810,10 +819,10 @@ contains
 
   end subroutine select_ero_particle
 
-  subroutine get_ero_part_data(in,vr,vz,vt,temp,charge)
+  subroutine get_ero_part_data(in,vr,vz,vt,vtotal,temp,charge)
     implicit none
     ! load ERO particle data based on index
-    real :: vr,vz,vt,temp
+    real :: vr,vz,vt,temp,vtotal
     !real :: r,z,t,vr,vz,vt,temp,charge
     real :: charge
     integer :: in
@@ -828,7 +837,7 @@ contains
     vr = ero_part_data(in,6)
     vz = ero_part_data(in,7)
     vt = ero_part_data(in,8)
-    !vtotal = ero_part_data(in,9)
+    vtotal = ero_part_data(in,9)
     temp = ero_part_data(in,10)
     !atoms = ero_part_data(in,11)
     !prob = ero_part_data(in,12)
@@ -990,10 +999,8 @@ contains
           !write(0,'(a,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',r,z,iz,vel*b(1),vel*b(2),vel*b(3),vel,temi,sputy
           write(ero_part_output_unit,'(2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') r,z,iz,vel*b(1)/qtim,vel*b(2)/qtim,vel*b(3)/qtim,vel/qtim,temi,sputy
 
-          write(0,'(a,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',r,z,iz,vel,b(1),b(2),b(3),sqrt(b(1)**2+b(2)**2+b(3)**2)
+          write(0,'(a,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',r,z,iz,vel/qtim,b(1),b(2),b(3),sqrt(b(1)**2+b(2)**2+b(3)**2)
           
-          
-
           ero_record_data = .false. 
 
        endif

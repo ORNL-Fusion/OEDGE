@@ -163,7 +163,7 @@ C-----------------------------------------------------------------------
 C                   INITIALISATION
 C-----------------------------------------------------------------------
 C
-      call toggle_trace
+      !call toggle_trace
 
       call pr_trace('DIV','BEGIN DIV')
 c
@@ -1546,8 +1546,9 @@ C
 C------ FIND NEAREST POINT IN (R,Z) CONTOUR MAP
 C
         if (debugl)
-     >   write (6,'(a,3i7,3(1x,f12.5))') 'ION:',
+     >   write (6,'(a,3i7,6(1x,f12.5))') 'ION:',
      >           imp,ik,ir,rstart,zstart,sstart
+
 c
         call gridpos(ik,ir,r,z,.true.,griderr)
 c
@@ -1573,6 +1574,11 @@ c
 c           STOP
 c
         endif
+
+c        write (0,'(a,4i7,5(1x,f12.5))') 'ION:',
+c     >           imp,ik,ir,iz,rstart,zstart,sstart,sputy
+
+
 
 c
 c       SET Initial S and CROSS postion for particles.
@@ -1689,7 +1695,7 @@ c
         AVXPOS(M) = AVXPOS(M) + R * SPUTY
         AVYPOS(M) = AVYPOS(M) + Z * SPUTY
         AVATIZ(M) = AVATIZ(M) + SPUTY
-c        write(0,'(a,5i6,5(1x,g12.5)') 'AVATIZ:',imp,ik,ir,iz,m,sputy,
+c        write(0,'(a,5i6,5(1x,g12.5))') 'AVATIZ:',imp,ik,ir,iz,m,sputy,
 c     >              avatiz(m),ratiz
         AVKPOS = AVKPOS + K * SPUTY
         AVSPOS = AVSPOS + MIN (S, SMAX-S) * SPUTY
@@ -5193,7 +5199,15 @@ c
 c     Calculate the wall distribution of any hydrogenic or impurity
 c     radiation in POWLS and HPOWLS.
 c
-      call calc_wallprad(nizs)
+c     jdemod - this is quite computationally intensive so only calculate
+c              it if the full printing options are on
+c
+      if (cprint.eq.9.or.cprint.eq.10) then 
+         call calc_wallprad(nizs)
+      endif
+
+      call pr_trace('FINISHED CALC_WALLPRAD')
+
 C
 C-----------------------------------------------------------------------
 C                     PRINT CLOSING MESSAGES
