@@ -111,8 +111,14 @@ contains
 
     do in = 1,n_ero_regs
 
-       write(ero_bg_output_fn,'(a,i0.2,a)') trim(ero_bg_output_fn_base),in,'.m'
-       write(ero_shape_output_fn,'(a,i0.2,a)') trim(ero_shape_output_fn_base),in,'.m'
+       ! IF there is just one ERO region then use the base names as the only name
+       if (n_ero_regs.eq.1) then
+          ero_bg_output_fn =trim(ero_bg_output_fn_base)//'.m'
+          ero_shape_output_fn = trim(ero_shape_output_fn_base)//'.m'
+       else
+          write(ero_bg_output_fn,'(a,i0.2,a)') trim(ero_bg_output_fn_base),in,'.m'
+          write(ero_shape_output_fn,'(a,i0.2,a)') trim(ero_shape_output_fn_base),in,'.m'
+       endif
 
        write(fnum,'(a)') '#EROBLOCK'
        write(fnum,'(a,1x,2(1x,g18.8))') '#OFFSETS',ero_offsets(1,in),ero_offsets(2,in)
@@ -572,7 +578,7 @@ contains
     !
     ! _n.dat
     !
-    ero_bg_output_fn_base = 'ero_bg_'
+    ero_bg_output_fn_base = 'erodiv_plasma'
 
     !
     ! K07 - ERO region specifications
@@ -588,7 +594,7 @@ contains
     !
     ! _n.dat
     !
-    ero_shape_output_fn_base = 'ero_shape_'
+    ero_shape_output_fn_base = 'erodiv_geometry'
 
 
     ! K09 - ERO shape geometry output option

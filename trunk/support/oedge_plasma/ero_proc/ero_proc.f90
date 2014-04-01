@@ -3,6 +3,8 @@ use ero_part_process
 implicit none
 
 
+write(0,'(a)') 'Running ero_proc ERO->DIVIMP interface'
+
 ! read transformation data including file names
 call read_transform_data
 

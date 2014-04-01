@@ -10,6 +10,12 @@ module ero_plasma
   character*6, parameter :: line_form='(a512)'
   character*(line_length) :: buffer
 
+  !
+  ! Default plasma and geometry file names
+  !
+  character*50 ::  erodiv_plasma_fn ='erodiv_plasma.m'
+  character*50 ::  erodiv_geometry_fn ='erodiv_geometry.m'
+
 
   ! options
   integer :: shift_opt=0,override_offsets=0
@@ -113,19 +119,21 @@ contains
           stop 'Unexpected error reading '//trim(erospec_name)
        endif
 
-       write(0,'(a,a,a,a)') 'buffer:',trim(buffer),':'
+       !write(0,'(a,a,a,a)') 'buffer:',trim(buffer),':'
 
        if (buffer(1:15).eq.'#EROBLOCK') then
           done=.true. 
        elseif (buffer(1:10).eq.'#NUMBLOCKS') then 
           read(buffer(11:),*) n_ero_blocks
-          write(0,'(a,i10)') 'nblocks:',n_ero_blocks
+
+          !write(0,'(a,i10)') 'nblocks:',n_ero_blocks
        elseif (buffer(1:14).eq.'#DIVPLASMAFILE') then 
           !read(specunit,line_form,iostat=ios) buffer
           
           read(buffer(15:),*) div_plasma_file
           read_plasma_file = .true.
-          write(0,'(a,a,a,a)') 'bgp:',trim(div_plasma_file),':'
+
+          !write(0,'(a,a,a,a)') 'bgp:',trim(div_plasma_file),':'
           
           !if (ios.eq.0) then 
           !   div_plasma_file = trim(buffer)
@@ -137,7 +145,8 @@ contains
        elseif (buffer(1:11).eq.'#DIVGEOFILE') then 
           read(buffer(12:),*) div_geo_file
           read_geo_file = .true.
-          write(0,'(a,a,a,a)') 'grd:',trim(div_geo_file),':'
+
+          !write(0,'(a,a,a,a)') 'grd:',trim(div_geo_file),':'
 
           !read(specunit,line_form,iostat=ios) buffer
 
@@ -152,7 +161,7 @@ contains
 
     end do
 
-    write(0,*) read_geo_file, read_plasma_file
+    !write(0,*) read_geo_file, read_plasma_file
 
     if ((.not.read_geo_file)) then
        call errmsg('ERROR read_ero_spec_headers','geometry file name not loaded')
@@ -202,7 +211,7 @@ contains
 
        read(specunit,line_form,iostat=ios) buffer
 
-       write(0,'(a,a,a,a)') 'buffer:eb:',trim(buffer),':'
+       !write(0,'(a,a,a,a)') 'buffer:eb:',trim(buffer),':'
 
        if (ios.ne.0) then 
           ! need to exit loop if eof reached - not an error since could be last block
@@ -216,52 +225,52 @@ contains
        elseif (buffer(1:8).eq.'#OFFSETS') then 
           ! read R,Z coordinate offset 
           read(buffer(9:),*) roffset,zoffset
-          write(0,'(a,10(1x,g12.5))') 'offset:',roffset,zoffset
+          !write(0,'(a,10(1x,g12.5))') 'offset:',roffset,zoffset
 
        elseif (buffer(1:10).eq.'#RVERTICES') then 
           ! read R vertices
           read(buffer(11:),*) (vert(i,1),i=1,4)
           rv_read = .true.
-          write(0,'(a,10(1x,g12.5))') 'rvert:',(vert(i,1),i=1,4)
+          !write(0,'(a,10(1x,g12.5))') 'rvert:',(vert(i,1),i=1,4)
 
        elseif (buffer(1:10).eq.'#ZVERTICES') then 
           ! read Z vertices
           read(buffer(11:),*) (vert(i,2),i=1,4)
           zv_read = .true.
-          write(0,'(a,10(1x,g12.5))') 'zvert:',(vert(i,2),i=1,4)
+          !write(0,'(a,10(1x,g12.5))') 'zvert:',(vert(i,2),i=1,4)
 
        elseif (buffer(1:11).eq.'#TOR_EXTENT') then 
           ! read toroidal extent
           read(buffer(12:),*) tor_extent
-          write(0,'(a,10(1x,g12.5))') 'tor_extent:',tor_extent
+          !write(0,'(a,10(1x,g12.5))') 'tor_extent:',tor_extent
 
        elseif (buffer(1:5).eq.'#NXNY') then 
           ! read nx ny
           read(buffer(6:),*) nx,ny
 
-          write(0,'(a,2i10,10(1x,g12.5))') 'nxny:',nx,ny
+          !write(0,'(a,2i10,10(1x,g12.5))') 'nxny:',nx,ny
 
        elseif (buffer(1:8).eq.'#DELTAXY') then 
           ! read delx dely
           read(buffer(9:),*) delx,dely
-          write(0,'(a,10(1x,g12.5))') 'dxdy:',delx,dely
+          !write(0,'(a,10(1x,g12.5))') 'dxdy:',delx,dely
 
        elseif (buffer(1:12).eq.'#INTERPOLATE') then 
           ! read interpolation option
           read(buffer(13:),*) interp_opt
-          write(0,'(a,2i10,10(1x,g12.5))') 'interp:',interp_opt
+          !write(0,'(a,2i10,10(1x,g12.5))') 'interp:',interp_opt
 
        elseif (buffer(1:12).eq.'#EXTRAPOLATE') then 
           ! read interpolation option
           read(buffer(13:),*) extrap_opt
-          write(0,'(a,2i10,10(1x,g12.5))') 'extrap:',extrap_opt
+          !write(0,'(a,2i10,10(1x,g12.5))') 'extrap:',extrap_opt
 
 
        elseif (buffer(1:13).eq.'#REMAP_BFIELD') then 
           ! read interpolation option
           read(buffer(14:),*) remap_bfield
 
-          write(0,'(a,2i10,10(1x,g12.5))') 'remap:',remap_bfield
+          !write(0,'(a,2i10,10(1x,g12.5))') 'remap:',remap_bfield
 
        elseif (buffer(1:10).eq.'#EROBGFILE') then 
           ! read ERO background plasma output file name
@@ -269,7 +278,7 @@ contains
           !read(specunit,line_form,iostat=ios) buffer
           erobg_name_read = .true.
 
-          write(0,'(a,a,a,a)') 'erobg:',trim(erobg_out_name),':'
+          !write(0,'(a,a,a,a)') 'erobg:',trim(erobg_out_name),':'
 
           !if (ios.eq.0) then 
           !   erobg_out_name = trim(buffer)
@@ -284,7 +293,7 @@ contains
           !read(specunit,line_form,iostat=ios) buffer
           !eroshape_name_read = .true.
 
-          write(0,'(a,a,a,a)') 'eroshape_fn:',trim(eroshape_out_name),':'
+          !write(0,'(a,a,a,a)') 'eroshape_fn:',trim(eroshape_out_name),':'
 
           !if (ios.eq.0) then 
           !   erobg_out_name = trim(buffer)
@@ -295,7 +304,7 @@ contains
        elseif (buffer(1:12).eq.'#EROSHAPEOPT') then 
           ! read interpolation option
           read(buffer(13:),*) eroshape_opt
-          write(0,'(a,2i10,10(1x,g12.5))') 'eroshape_opt:',eroshape_opt
+          !write(0,'(a,2i10,10(1x,g12.5))') 'eroshape_opt:',eroshape_opt
 
        elseif (buffer(1:11).eq.'#DIVPARTOPT') then 
           ! read interpolation option
@@ -308,7 +317,7 @@ contains
           !read(specunit,line_form,iostat=ios) buffer
           !eroshape_name_read = .true.
 
-          write(0,'(a,a,a,a)') 'divpart_fn:',trim(divpart_in_name),':'
+          !write(0,'(a,a,a,a)') 'divpart_fn:',trim(divpart_in_name),':'
 
        elseif (buffer(1:12).eq.'#EROPARTFILE') then 
           ! read name for ERO particle input file name
@@ -316,12 +325,12 @@ contains
           !read(specunit,line_form,iostat=ios) buffer
           !eroshape_name_read = .true.
 
-          write(0,'(a,a,a,a)') 'eropart_fn:',trim(eropart_out_name),':'
+          !write(0,'(a,a,a,a)') 'eropart_fn:',trim(eropart_out_name),':'
 
        elseif (buffer(1:15).eq.'#ERODIVPARTMULT') then 
           ! read interpolation option
           read(buffer(16:),*) erodiv_tor_part_mult
-          write(0,'(a,2i10,10(1x,g12.5))') 'erodiv_tor_part_mult:',erodiv_tor_part_mult
+          !write(0,'(a,2i10,10(1x,g12.5))') 'erodiv_tor_part_mult:',erodiv_tor_part_mult
 
        endif
 
@@ -432,7 +441,7 @@ contains
     ! need to move the vertices out slightly along the coordinate vector axes
     ! this is to try to reduce the significance of gyro-orbit losses in ERO for particles injected close to the simulation boundaries
     ! it should not affect the toroidal direction significantly 
-    write(0,*) 'shift_opt:',shift_opt
+    !write(0,*) 'shift_opt:',shift_opt
 
     if (shift_opt.eq.0) then 
        ! so not shift the corner vertices
@@ -442,9 +451,9 @@ contains
        ! fixed shift of 1cm for each corner
        xshift = 0.01 * xhat
        yshift = 0.01 * yhat
-       write(0,*) 'xhat:',xhat
-       write(0,*) '0.01*xhat:',0.01*xhat
-       write(0,*) 'xshift:',0.01*xshift
+       !write(0,*) 'xhat:',xhat
+       !write(0,*) '0.01*xhat:',0.01*xhat
+       !write(0,*) 'xshift:',0.01*xshift
 
     elseif (shift_opt.eq.2) then 
        ! fixed shift of 5% for each corner
@@ -473,14 +482,14 @@ contains
     yrange =  sqrt(yvec(1)**2 + yvec(2)**2)
 
 
-    write(0,*) 'offset override:',override_offsets,roffset,zoffset
+    !write(0,*) 'offset override:',override_offsets,roffset,zoffset
     if (override_offsets.eq.1) then 
        ! calculate the offset automatically as the point midway between vertex 1 and vertex 4.
        ! The ERO geometry should start with 0.0 at the minimum R value with the Z axis centered on this side
       
        roffset = (vert(1,1)+vert(4,1))/2.0
        zoffset = (vert(1,2)+vert(4,2))/2.0
-       write(0,*) 'offsets revised:',override_offsets,roffset,zoffset
+       !write(0,*) 'offsets revised:',override_offsets,roffset,zoffset
 
     endif
 
@@ -686,7 +695,7 @@ contains
        if (nw.le.0.or.(.not.allocated(rw)).or.(.not.allocated(zw))) then 
           call errmsg('ERROR: CALC_ERO_SURFACE:',' WALL DATA NOT LOADED FROM OEDGE')
           stop 'CALC_ERO_SURFACE: Wall data not loaded'
-          write(0,*) 'Wall:',nw,allocated(rw),allocated(zw)
+          !write(0,*) 'Wall:',nw,allocated(rw),allocated(zw)
        endif
        
        !do in = 1,nw
@@ -742,7 +751,7 @@ contains
 
        end do
 
-       WRITE(0,*) 'surf_ind:',surf_ind(1),surf_ind(2)
+       !WRITE(0,*) 'surf_ind:',surf_ind(1),surf_ind(2)
 
 
        if (end_count.ne.2) then 
@@ -788,7 +797,7 @@ contains
                 iv2=iv+1
              endif
 
-             write(0,*) 'in1,in2,iv,iv2:',in1,in2,iv,iv2
+             !write(0,*) 'in1,in2,iv,iv2:',in1,in2,iv,iv2
              call intsect2dp(vert(iv,1),vert(iv,2),vert(iv2,1),vert(iv2,2),rw(in1),zw(in1),rw(in2),zw(in2),rint,zint,sect)
 
              if (sect.eq.1) then 
@@ -811,14 +820,14 @@ contains
        end do
 
 
-       write(0,*) 'Ints:',r_int,z_int
+       !write(0,*) 'Ints:',r_int,z_int
 
        ! now we can start calculating the ERO surface - start with only using intersection points and element corners
 
        n_pol = in_count + 2
        n_tor = 2*tor_points + 1
 
-       write(0,*) 'n_pol,tor:', n_pol,n_tor
+       !write(0,*) 'n_pol,tor:', n_pol,n_tor
 
        if (allocated(tpx)) deallocate(tpx)
        if (allocated(tpx)) deallocate(tpy)
@@ -950,13 +959,13 @@ contains
 
     ! clean up
 
-    write(0,*) 'Deallocating:'
+    !write(0,*) 'Deallocating:'
 
     if (allocated(rw)) deallocate(rw)
     if (allocated(zw)) deallocate(zw)
     if (allocated(surf_flag)) deallocate(surf_flag)
 
-    write(0,*) 'Deallocated locals:'
+    !write(0,*) 'Deallocated locals:'
 
 
     ! calculate max and min of the surface arrays
@@ -1034,7 +1043,7 @@ contains
     ! points may be included if needed. 
 
 
-    write(0,*) 'eroshape_opt:',eroshape_opt
+    !write(0,*) 'eroshape_opt:',eroshape_opt
 
     if (eroshape_opt.gt.0) then 
        
@@ -1165,7 +1174,7 @@ contains
     ! points may be included if needed. 
 
 
-    write(0,*) 'eroshape_opt:',eroshape_opt
+    !write(0,*) 'eroshape_opt:',eroshape_opt
 
     if (eroshape_opt.gt.0) then 
        
@@ -1260,12 +1269,12 @@ contains
     endif
 
 
-    write(0,*) 'Surface out: before cleanup'
+    !write(0,*) 'Surface out: before cleanup'
 
 
     call ero_surface_cleanup
 
-    write(0,*) 'Surface out: after cleanup'
+    !write(0,*) 'Surface out: after cleanup'
 
   end subroutine output_ero_surface
 
@@ -1856,7 +1865,8 @@ contains
     write(outunit,'(a,4(1x,g18.8))') '#XINV',(yhat(i),i=2,1,-1)
     write(outunit,'(a,4(1x,g18.8))') '#YINV',(xhat(i),i=2,1,-1)
     write(outunit,'(a,a)') '#EROPARTFN','erodiv_ero_part_lost.dat'
-    write(outunit,'(a,a)') '#ERODIVPARTFN','ero_particle_data.dat'
+    ! Note: DIVIMP reads the file as ero_particle_data.dat ... however, when iterating this will already exist so a different name is needed
+    write(outunit,'(a,a)') '#ERODIVPARTFN','ero_particle_data.out'
 
     close(outunit)
 
@@ -1935,7 +1945,7 @@ contains
           part_count = part_count+1
        elseif (buffer(1:7).eq.'#ABSFAC') then
           read(buffer(8:),*) absfac,nparticles,scale_fact
-          write(0,'(a,3(1x,g18.8))') 'Scaling: ABSFAC NPART SCALE:',absfac,nparticles,scale_fact
+          !write(0,'(a,3(1x,g18.8))') 'Scaling: ABSFAC NPART SCALE:',absfac,nparticles,scale_fact
        endif
     end do
 

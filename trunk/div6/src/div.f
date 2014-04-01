@@ -163,6 +163,8 @@ C-----------------------------------------------------------------------
 C                   INITIALISATION
 C-----------------------------------------------------------------------
 C
+      call toggle_trace
+
       call pr_trace('DIV','BEGIN DIV')
 c
 C psmod
@@ -5159,12 +5161,16 @@ c
          end do
 c
       end do
+
+      
 c
 c     Print and calculate wall deposition
 c
       call pr_calc_walldep
 c
       call prb
+
+      call pr_trace('FINISHED CALC_WALLDEP')
 C
 C-----------------------------------------------------------------------
 C                     PRINT REISER INFORMATION TO .LIM FILE
