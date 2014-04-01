@@ -403,9 +403,9 @@ fi
 # if a previous case is being linked and it has generated an ero_particle_data.dat file
 # then this is linked to the execution directory as well
 #
-if [[ -f  $DIVRESDIR/$6.ero_particle_data.dat ]] then 
-  echo "Linking ..." $DIVRESDIR/$6.ero_particle_data.dat
-  ln -s $DIVRESDIR/$6.ero_particle_data.dat $DIVRUNDIR/$CASENAME/ero_particle_data.dat
+if [[ -f  $DIVRESDIR/$6.ero_particle_data.out ]] then 
+  echo "Linking ..." $DIVRESDIR/$6.ero_particle_data.out to ero_particle_data.dat
+  ln -s $DIVRESDIR/$6.ero_particle_data.out $DIVRUNDIR/$CASENAME/ero_particle_data.dat
 fi  
 #
 # ERO executable

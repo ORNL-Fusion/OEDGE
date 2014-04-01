@@ -1897,10 +1897,9 @@ c
            ! data taken from ERO input
 
 
-           call get_ero_part_data(id,ero_vr,ero_vz,ero_vt,
+           call get_ero_part_data(id,ero_vr,ero_vz,ero_vt,ero_vtot,
      >                            ero_temp,ero_charge)
 
-           
            ! load charge value - if charge.ne.0 - then load ionization arrays and cycle
            ! don't want to affect neutral particle launch statistics with ions from ERO - except for 
            ! total particles produced. 
@@ -1918,7 +1917,13 @@ c
               KATIZS(LATIZ+NATIZ-1) = K
               SATIZS(LATIZ+NATIZ-1) = MIN (S, SMAX-S)
               TEMTIZS(LATIZ+NATIZ-1) = ero_temp
-              snews(latiz+natiz-1)  = sputys(iprod+nprod-1)
+
+c              write(6,'(a,2i6,3g18.8)') 
+c     >              'ERO Sputy:',iprod,nprod,r,z,sputys(iprod+lprod-1)
+c              write(0,'(a,2i6,3g18.8)') 
+c     >              'ERO Sputy:',iprod,nprod,r,z,sputys(iprod+lprod-1)
+
+              snews(latiz+natiz-1)  = sputys(iprod+lprod-1)
               cistizs(latiz+natiz-1)  = 0.0
 c
 c             Record starting wall or target element for neutral/ion.
@@ -1936,11 +1941,70 @@ c
 c
               VINS(LATIZ+NATIZ-1) = ero_vtot
 c
+c             more statistics 
+c
 
-              cycle
+              IF (IR.GE.IRSEP) THEN
+                SFRAC (M) = SFRAC (M) + SPUTY
+                KSATIZ(M) = KSATIZ(M) + SPUTY * K
+                XSATIZ(M) = XSATIZ(M) + SPUTY * R
+                YSATIZ(M) = YSATIZ(M) + SPUTY * Z
+                SSATIZ(M) = SSATIZ(M) + SPUTY * MIN (S, SMAX-S)
+              ELSE
+                MFRAC (M) = MFRAC (M) + SPUTY
+                KMATIZ(M) = KMATIZ(M) + SPUTY * K
+              ENDIF
+c
+              KATIZ(M) = KATIZ(M) + K * SPUTY
+              TATIZ(M) = TATIZ(M) + CIST * FSRATE * SPUTY
+              XATIZ(M) = XATIZ(M) + R * SPUTY
+              YATIZ(M) = YATIZ(M) + Z * SPUTY
+
+c
+c slmod begin - ribbon grid
+           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3.or.
+     >         cgridopt.eq.LINEAR_GRID.or.cgridopt.EQ.RIBBON_GRID) then
+c
+c           if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
+c slmod end
+             if (ik.gt.nks(ir)/2) then
+               xatiz2(1) = xatiz2(1) + R * sputy
+               yatiz2(1) = yatiz2(1) + Z * sputy
+               ratiz2(1) = ratiz2(1) +  sputy
+             else
+               xatiz2(2) = xatiz2(2) + R * sputy
+               yatiz2(2) = yatiz2(2) + Z * sputy
+               ratiz2(2) = ratiz2(2) +  sputy
+             endif
+           elseif (cgridopt.eq.2) then
+             if ((ir.ge.irsep2.and.ir.le.irwall).or.
+     >          (((ir.ge.irtrap2.and.ir.le.nrs2).or.
+     >            (ir.ge.irtrap.and.ir.le.nrs).or.
+     >             ir.lt.irsep).and.
+     >            ik.gt.nks(ir)/2)) then
+               xatiz2(2) = xatiz2(2) + R * sputy
+               yatiz2(2) = yatiz2(2) + Z * sputy
+               ratiz2(2) = ratiz2(2) +  sputy
+             else
+               xatiz2(1) = xatiz2(1) + R * sputy
+               yatiz2(1) = yatiz2(1) + Z * sputy
+               ratiz2(1) = ratiz2(1) +  sputy
+             endif
+           endif
+
+
+              AATIZ(M) = AATIZ(M) + (ANGLAN+TANLAN) * SPUTY
+              VATIZ(M) = VATIZ(M) + VIN * SPUTY
+              EATIZ(M) = EATIZ(M) + TEMN * SPUTY
+              VATIZM(M)= MAX (VATIZM(M), VIN)
+              RATIZ(M) = RATIZ(M) + SPUTY
+  
+              ! treat particle as if ionization has occurred
+              ifate=5
+              goto 899
+              !cycle
            else
               ! load data required to follow ERO neutral
-              ero_vtot = sqrt(ero_vr**2+ero_vz**2+ero_vt**2)
               ero_vmult = sqrt(ero_vr**2+ero_vz**2)/ero_vtot
            
               ! Use ERO particle temperature to set EPRODS to determine VIN
@@ -5911,6 +5975,7 @@ c
 c           Launch option 5 is used for 2D distributed particle launches 
 c
             if (neut2d_opt.eq.1) then 
+               CALL SURAND2 (SEED, 1, RAN)
                ID = IPOS (RAN, neut2d_prob, neut2d_num)
                IK = neut2d_index(id,1)
                IR = neut2d_index(id,2)
@@ -5925,6 +5990,7 @@ c
                ! select a specific ERO particle launch - based on probability
                ! IK,IR mean nothing for this launch at this point
                
+               CALL SURAND2 (SEED, 1, RAN)
                call select_ero_particle(x0,y0,id,ran)
 
                IK = 0
@@ -5975,7 +6041,8 @@ C
 
 c         write(6,'(a,2i8,10(1x,g18.8))') 'Launch data:',iprod,nneut1,
 c     >         iprod+nneut1,xprods(IPROD+Nneut1),yprods(IPROD+Nneut1),
-c     >         eprods(iprod+nneut1),idprods(iprod+nneut1)
+c     >         eprods(iprod+nneut1),idprods(iprod+nneut1),
+c     >         sputys(iprod+nneut1)
 
 
       end do
