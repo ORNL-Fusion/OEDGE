@@ -28,9 +28,6 @@ contains
 
     coordinate_filename ='coordinate_transform_data.txt'
 
-
-
-
     ! this routine writes out the coordinate transformation data so that 
     ! the particle processing routing can run it in reverse to obtain the 
     ! DIVIMP coordinates from the ERO particle coordinates. 
@@ -51,7 +48,7 @@ contains
 
        read(inunit,line_form,iostat=ios) buffer
 
-       write(0,'(a,a,a,i5)') 'Buff:',trim(buffer),':',ios
+       !write(0,'(a,a,a,i5)') 'Buff:',trim(buffer),':',ios
 
        if (ios.ne.0) then 
           ! need to exit loop if eof reached - not an error since could be last block
@@ -62,52 +59,52 @@ contains
        if (buffer(1:8).eq.'#OFFSETS') then 
           ! read R,Z coordinate offset 
           read(buffer(9:),*) roffset,zoffset
-          write(0,'(a,10(1x,g12.5))') 'offset:',roffset,zoffset
+          !write(0,'(a,10(1x,g12.5))') 'offset:',roffset,zoffset
 
        elseif (buffer(1:10).eq.'#RVERTICES') then 
           ! read R vertices
           read(buffer(11:),*) (vert(i,1),i=1,4)
-          write(0,'(a,10(1x,g12.5))') 'rvert:',(vert(i,1),i=1,4)
+          !write(0,'(a,10(1x,g12.5))') 'rvert:',(vert(i,1),i=1,4)
 
        elseif (buffer(1:10).eq.'#ZVERTICES') then 
           ! read Z vertices
           read(buffer(11:),*) (vert(i,2),i=1,4)
-          write(0,'(a,10(1x,g12.5))') 'zvert:',(vert(i,2),i=1,4)
+          !write(0,'(a,10(1x,g12.5))') 'zvert:',(vert(i,2),i=1,4)
 
        elseif (buffer(1:11).eq.'#TOR_EXTENT') then 
           ! read toroidal extent
           read(buffer(12:),*) tor_extent
-          write(0,'(a,10(1x,g12.5))') 'tor_extent:',tor_extent
+          !write(0,'(a,10(1x,g12.5))') 'tor_extent:',tor_extent
 
        elseif (buffer(1:5).eq.'#XHAT') then 
 
           read(buffer(6:),*) (xhat(i),i=1,2)
-          write(0,'(a,10(1x,g12.5))') 'xhat:',(xhat(i),i=1,2)
+          !write(0,'(a,10(1x,g12.5))') 'xhat:',(xhat(i),i=1,2)
 
        elseif (buffer(1:5).eq.'#YHAT') then 
 
           read(buffer(6:),*) (yhat(i),i=1,2)
-          write(0,'(a,10(1x,g12.5))') 'yhat:',(yhat(i),i=1,2)
+          !write(0,'(a,10(1x,g12.5))') 'yhat:',(yhat(i),i=1,2)
 
        elseif (buffer(1:5).eq.'#XINV') then 
 
           read(buffer(6:),*) (xhatinv(i),i=1,2)
-          write(0,'(a,10(1x,g12.5))') 'xhatinv:',(xhatinv(i),i=1,2)
+          !write(0,'(a,10(1x,g12.5))') 'xhatinv:',(xhatinv(i),i=1,2)
 
        elseif (buffer(1:5).eq.'#YINV') then 
 
           read(buffer(6:),*) (yhatinv(i),i=1,2)
-          write(0,'(a,10(1x,g12.5))') 'yhatinv:',(yhatinv(i),i=1,2)
+          !write(0,'(a,10(1x,g12.5))') 'yhatinv:',(yhatinv(i),i=1,2)
 
        elseif (buffer(1:10).eq.'#EROPARTFN') then 
 
           read(buffer(11:),*) ero_part_data_fn
-          write(0,'(a,a,a,a)') 'ero part output:',trim(ero_part_data_fn),':'
+          !write(0,'(a,a,a,a)') 'ero part output:',trim(ero_part_data_fn),':'
 
        elseif (buffer(1:13).eq.'#ERODIVPARTFN') then 
 
           read(buffer(14:),*) erodiv_part_data_fn
-          write(0,'(a,a,a,a)') 'ero->div part input:',trim(erodiv_part_data_fn),':'
+          !write(0,'(a,a,a,a)') 'ero->div part input:',trim(erodiv_part_data_fn),':'
 
        endif
 
