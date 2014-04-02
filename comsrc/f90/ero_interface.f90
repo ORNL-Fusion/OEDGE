@@ -59,7 +59,7 @@ module ero_interface
 
   character*256 :: ero_particle_output_fn,ero_particle_transfer_fn
   integer :: ero_part_output_opt
-  integer :: ero_part_output_unit
+  integer,parameter :: ero_part_output_unit =59
   logical :: ero_in_vol,ero_last_in_vol
 
   !
@@ -898,13 +898,14 @@ contains
     ! open the output file 
     integer :: ierr
 
-    call find_free_unit_number(ero_part_output_unit)
+    !call find_free_unit_number(ero_part_output_unit)
 
-    open(unit=ero_part_output_unit,file=trim(ero_particle_output_fn),iostat=ierr)
+    open(ero_part_output_unit,file=trim(ero_particle_output_fn),iostat=ierr)
 
     write(ero_part_output_unit,'(a)') '# DIVIMP particles entering ERO simulation volume:'
     write(ero_part_output_unit,'(a)') '# R   Z     CHARGE     VR    VZ     VT    VPARA    TEMP   WEIGHT '
 
+    write(0,'(a,1x,i8,1x,a)') 'Initializing DIVIMP->ERO particle output:',ero_part_output_unit,trim(ero_particle_output_fn)
 
   end subroutine init_ero_part_output
 
@@ -938,6 +939,9 @@ contains
 
     !elseif (ero_shape_opt.eq.2) then ! toroidal
     !   write(ero_part_output_unit,'(a,3(1x,18.8))')  '#ABSFAC:',absfac,real(nparticles),absfac/real(nparticles)*(2,0*tor_extent)
+
+    write(0,*) 'Closing DIVIMP->ERO particle output:',ero_part_output_unit
+
 
     close(ero_part_output_unit)
     
@@ -997,10 +1001,12 @@ contains
           call get_bvector(ik,ir,b)
           
           !write(0,'(a,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',r,z,iz,vel*b(1),vel*b(2),vel*b(3),vel,temi,sputy
+
+          !write(ero_part_output_unit,'(a)') 'TEST!'
+
           write(ero_part_output_unit,'(2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') r,z,iz,vel*b(1)/qtim,vel*b(2)/qtim,vel*b(3)/qtim,vel/qtim,temi,sputy
 
-          write(0,'(a,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',r,z,iz,vel/qtim,b(1),b(2),b(3),sqrt(b(1)**2+b(2)**2+b(3)**2)
-          
+          write(0,'(a,i6,2(1x,g18.8),1x,i8,1x,6(1x,g18.8))') 'ERO PART ION:',ero_part_output_unit,r,z,iz,vel/qtim,b(1),b(2),b(3),sqrt(b(1)**2+b(2)**2+b(3)**2)
           ero_record_data = .false. 
 
        endif

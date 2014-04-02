@@ -372,7 +372,7 @@ perpendicular_diffusion
 # The following input will switch on or off the erosion/reflection/sputtering
 # processes (0=on, 1=off)   handbook: page 41 
 physical_erosion
-1
+0
 PhErosMod
 521
 #0
@@ -441,7 +441,7 @@ SourceTempr
 # number of particles launched from each surface cell when sputtering 
 # distribution is build
 intervall_energy
-3
+7
 #7
 # polar angle distribution: 0 = fixed angle; 1 = uniform in [0,90[
 #                           2 = cosine;      3 = through cylindrical tube
