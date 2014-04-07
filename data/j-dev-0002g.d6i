@@ -1,4 +1,4 @@
-'+A01 Ref DIV Title' 'Be migration, JET 80295, L-mode, limiter phase, sputtering in DIVIMP, semi-realistic plasma, new grid'
+'+A01 Ref DIV Title' 'Be migration, JET 80295, L-mode, limiter phase, sputtering in DIVIMP, semi-realistic plasma, flow included, Ti = 2 Te, faster T decay in SOL'
 '+A02 DIV Desc:' ' 'based on j-80161-SLc'
 '+A03 Equil File Name' 'grid_jet_80295_46'
 $										 
