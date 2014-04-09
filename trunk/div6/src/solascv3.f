@@ -4059,6 +4059,11 @@ c
       real*8 presstarg(mxspts,3)
       real*8 gamcor,gamecor
       integer ike2d_start
+
+      ! record total actual flux to sol and pfz target regions - inner and outer
+      real*8 :: solpfz_fluxes(2,2,4) ! note: this code only works properly for single null/non-extended geometries
+
+
 c
 c     This subroutine calculates the target partcle and
 c     power fluxes based on the target data and the
@@ -4073,6 +4078,11 @@ c
       real n1,te1,ti1,vpe2d,v1e2d,te0
       real mach0o,mach0i,rmeano,rmeani
       real gae,gaio,gaii
+
+c
+c     Initialization
+c
+      solpfz_fluxes = 0.0
 c
       do ir = irsep,nrs
 c
@@ -4493,7 +4503,79 @@ c
      >      ionptarg(ir,1),ionptarg(ir,2),ionptarg(ir,3)
 
 
+
       end do
+
+      !
+      ! Accumulate data for main SOL and PFZ
+      !
+
+
+      do id = 1,2
+
+          do ir = irsep,nrs
+
+            if (ir.le.irsep) then 
+               in=1
+            else
+               in=2
+            endif
+
+            solpfz_fluxes(in,id,1)=solpfz_fluxes(in,id,1) 
+     >              + gtarg(ir,id) * dds(idds(ir,id))
+            solpfz_fluxes(in,id,2) = solpfz_fluxes(in,id,2) 
+     >              + elecptarg(ir,id)  * dds(idds(ir,id))
+            solpfz_fluxes(in,id,3) = solpfz_fluxes(in,id,3) 
+     >              +ionptarg(ir,id)   * dds(idds(ir,id))
+            solpfz_fluxes(in,id,4) = solpfz_fluxes(in,id,4) 
+     >              +presstarg(ir,id)  * dds(idds(ir,id))
+
+         end do
+
+c        do id = 1,2
+             write(6,'(a,2i8,6(1x,g12.5))') 'SOL-PFZ FLUX:',in,id,
+     >           solpfz_fluxes(in,id,1),solpfz_fluxes(in,id,2),
+     >           solpfz_fluxes(in,id,3),solpfz_fluxes(in,id,4)
+c        end do
+
+
+      end do
+
+
+         !
+         ! Calculate assignment of pfz fluxes to rings
+         ! - use some decay profile ... linear or exponential? or something else
+         !
+         ! May not use them all but need to be calculated where the target
+         ! geometry information is still available
+         ! 
+         ! sepdist2 contains the distance along the target to the target element 
+         !
+         
+         
+!      lambda = 0.01
+!      dist_opt = 1
+
+
+      ! Calculate distribution factors
+
+      !do ir = irsep,irwall
+
+       !  if (dist_opt.eq.1) then     ! flat
+
+!         elseif (dist_opt.eq.2) then   ! linear decay
+
+ !    elseif (dist_opt.eq.3) then ! exponential decay
+
+  !       endif
+
+         ! normalize the distribution
+
+
+   !      dist_fact(ir,1) 
+
+
+
 c
       return
       end
