@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       subroutine DIVTRN(nizs,iter,niters,facta,factb,
      >                  title,job,equil,DESC,jfcb)

@@ -1,4 +1,4 @@
-c    -*-Fortran-*- 
+c     -*Former Mode Specification*- 
 c
 c ======================================================================
 c
@@ -1276,23 +1276,18 @@ c...Hack job here: Blanking PIN sources at the start of each step! - OPTION FIXE
       ENDIF
       WRITE(PINOUT,*)
 
-
 c...  This call copies the plasma arrays into OLDx2 arrays 
 c     in the OLDPLASMA common block associated with the SOL24 
 c     code.  There has been some duplication of arrays (OLDx in the 
 c     PIN_CFD common block) because the code segments
 c     were developed in parallel, and this should be 
 c     sorted out at some point:
-
       CALL MirrorOldPlasma(ktebs,ktibs,knbs,kvhs)
-
 
 
       IF (rel_opt.NE.2.AND.rel_opt.NE.3.AND.    
      .    (tarshift(IKLO).NE.0.0.OR.tarshift(IKHI).NE.0.0)) 
      .  CALL ShiftTargetData
-
-
 
       RETURN
 99    STOP
@@ -1961,6 +1956,7 @@ c...should be elsewhere
       ENDDO
 
 
+
 c
 c     Initialization:
 c
@@ -1968,7 +1964,6 @@ c
       CALL IZero(ikto2,MAXNRS)
       CALL IZero(ikti2,MAXNRS)
       CALL IZero(virloc,MAXNRS*2)
-
 
 c...  RINGTYPE:
       DO ir = 2, irsep-1
@@ -1986,16 +1981,14 @@ c     PFZ ring:
       IF (cgridopt.NE.LINEAR_GRID.AND.ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
         DO ir = irsep, irwall-1
           status = .TRUE.
-
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
             count = 0
-
             DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
-              WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik1,ir1,ik2,ir2,
+              WRITE(88,'(A,6I6,L2)') ' PFZ-:',ik,ir,ik2,ir2,
      .                               nks(ir),irsep,status
               IF (ir1.LE.irsep) THEN               ! Changed 02/09/2010
 c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
@@ -2011,6 +2004,7 @@ c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
               CALL WN('SetupGrid','Problem with connection '//
      .                'map when searching for private flux regions')
               WRITE(0,*) '  IK,IR= ',ik,ir
+
               EXIT
             ENDIF
             IF (.NOT.status) EXIT
@@ -2227,9 +2221,8 @@ c     ------------------------------------------------------------------
           IF (irins(ik1,ir1).NE.irsep2) EXIT
         ENDDO
         IF (ik1.EQ.nks(ir1)+1) THEN
-          WRITE(0,*) 'IK1,IR1  =',ik1,ir1
-          WRITE(0,*) 'NKS(IR1) =',nks(ir1) 
           CALL DumpGrid('Identify problems')
+          STOP 'DAMNA'
         ELSE
 c...      Outer SOL - IKTO:
           ik = ikouts(ikto2(irsep2),irsep2)

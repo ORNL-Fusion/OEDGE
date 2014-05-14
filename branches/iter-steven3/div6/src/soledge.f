@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE SOLEDGE(irlim1,irlim2,ikopt)
       IMPLICIT  NONE

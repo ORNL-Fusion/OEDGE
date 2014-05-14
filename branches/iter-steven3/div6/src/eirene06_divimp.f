@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
 c ======================================================================
 c
@@ -695,6 +695,17 @@ c         --------------------------------------------------------------
       ENDDO
 
 
+      WRITE(eirfp,*) 'EIRENE SURFACE DEFINITION DATA - A:'
+      DO i1 = 1, nsurface
+        WRITE(eirfp,'(4I6,2X,A)')
+     .    i1,
+     .    surface(i1)%subtype,
+     .    surface(i1)%index(6),
+     .    surface(i1)%iliin,                  
+     .    TRIM(surface(i1)%surtxt)
+      ENDDO
+
+
 c     ------------------------------------------------------------------
 c...  Over-ride default surface properties:
 c     ------------------------------------------------------------------
@@ -1028,7 +1039,7 @@ c...  Assign block 3a surface index to non-default standard surfaces:
 
 
 c...  Output:
-      WRITE(eirfp,*) 'EIRENE SURFACE DEFINITION DATA:'
+      WRITE(eirfp,*) 'EIRENE SURFACE DEFINITION DATA - FINAL:'
       DO i1 = 1, nsurface
         WRITE(eirfp,'(4I6,2X,A)')
      .    i1,
@@ -2334,9 +2345,9 @@ c        wall_flx(i)%in_par_mol(1,0) = fluxhw(i)  ! *** BUG ***  FLUXHW is not t
         wall_flx(i)%in_ene_atm(1,0) = flxhw5(i)
         wall_flx(i)%in_ene_mol(1,0) = flxhw7(i)
 
-        wall_flx(i)%in_par_atm(2,0) = tflux(i,11) ! / area         ! Total impurity atom flux to the surface
+        wall_flx(i)%in_par_atm(2,0) = tflux(i,11) / area         ! Total impurity atom flux to the surface
         IF (tflux(i,11).NE.0.0) 
-     .  wall_flx(i)%in_ene_atm(2,0) = tflux(i,12) ! / tflux(i,11)  ! Average energy of the impurity atoms hitting the surface
+     .  wall_flx(i)%in_ene_atm(2,0) = tflux(i,12) / tflux(i,11)  ! Average energy of the impurity atoms hitting the surface
 
         wall_flx(i)%em_par_atm(2,1) = tflux(i,9) / area                  ! Impurity atom influx from bulk ions
         wall_flx(i)%em_par_atm(2,2) = tflux(i,5) / area                  ! Impurity atom influx from test atoms

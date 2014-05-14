@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE NEUT (NATIZ,MATP,
      >                 MATT,NPROD,NPROD2,FTOT,FYTOT,neut2d_fytot,

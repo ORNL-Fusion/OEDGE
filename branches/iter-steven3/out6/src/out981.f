@@ -20,7 +20,7 @@ c
       INTEGER   IFLAG,IDRAW,NBBS
 c slmod begin - new
 c...  Allow for longer y-axis labels:
-      CHARACTER YLABEL*(*),XLABEL*(*),TABLE*36
+      CHARACTER YLABEL*(*),XLABEL*36,TABLE*36
 c
 c      CHARACTER YLABEL*36,XLABEL*36,TABLE*36
 

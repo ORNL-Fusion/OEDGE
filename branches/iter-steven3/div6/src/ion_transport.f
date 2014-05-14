@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       subroutine execute_transport_step(seed,nrand,neutim)
       implicit none

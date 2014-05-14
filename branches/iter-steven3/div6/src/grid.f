@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c ======================================================================
 c ======================================================================
 c
@@ -1136,6 +1136,7 @@ c target segments.  These kinds of modifications are made via the ...
 c array:
 c
       SUBROUTINE BuildNeutralWall
+      USE mod_grid
       USE mod_geometry
       IMPLICIT none
 
@@ -1416,7 +1417,9 @@ c...      Debug: Save data and avoid attempted wall sequencing:
 c...      Leave the loop:
           EXIT
 c       ----------------------------------------------------------------
-        ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
+        ELSEIF (eirasdat(i1,1).EQ.998.0.AND.
+     .          .NOT.(eirnasdat.EQ.1.AND.n_grid_wall.NE.0.AND.cneur.EQ.4  ! Avoid default behaviour if data loaded from the GRID grid file
+     .          )) THEN   
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
           CALL DumpData_OSM('output.trouble1','trouble1')
@@ -3954,10 +3957,12 @@ c     Local variables:
 c
 c Initialize variables:
 c
-      debug = .TRUE.
+      debug = .FALSE.
+      IF (sloutput) debug = .TRUE.
       STATUS = 0
       i = 0
-c
+
+
 c Find center of main plasma... check if this is done elsewhere...
 c make sure it is done for all grids...
 c
@@ -3977,7 +3982,7 @@ c     Find cells without a neighbour in the 'outward' (increasing
 c     IR) direction:
 c    
       CALL OutputGrid(87,'Before generating wall ring')
-
+     
       ncell = 0
 
       DO ir = irsep, nrs
@@ -4024,7 +4029,7 @@ c Check this...
         ENDDO
       ENDDO
       
-      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+      IF (sloutput) WRITE(0,*) 'GenWallRing: NCELL=',ncell
       IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)

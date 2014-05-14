@@ -151,8 +151,7 @@ c...    Quantities returned by EIRENE:
 
 !...  Code identifier:
       CHARACTER, PUBLIC :: fluid_code*256
-      
-      
+            
       TYPE(type_surface), PUBLIC, ALLOCATABLE, SAVE :: surface(:)
       
 !...  Fluid code magnetic grid cells:
@@ -197,6 +196,9 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
       INTEGER, PUBLIC, SAVE :: trim_data
       REAL   , PUBLIC, SAVE :: ermin
     
+!...  Block 11 variables:
+      INTEGER, PUBLIC, SAVE :: i1trc,i2trc
+
 !...  Block 13 variables:
       REAL, PUBLIC, SAVE :: dtimv,time0
     
@@ -309,22 +311,20 @@ c
      .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
      .                      IND_SURFACE = 3   ! Surface (block 2A non-default surface in Eirene input file)
 
+
 !     Triangle objects:
       INTEGER, SAVE :: ntry,ntrysrf,ntryvtx
-      TYPE(type_object) , ALLOCATABLE, SAVE :: try(:)
-      TYPE(type_srf)    , ALLOCATABLE, SAVE :: trysrf(:)
-      REAL*8            , ALLOCATABLE, SAVE :: tryvtx(:,:)
-
+      TYPE(type_object), ALLOCATABLE, SAVE :: try(:)
+      TYPE(type_srf)   , ALLOCATABLE, SAVE :: trysrf(:)
+      REAL*8           , ALLOCATABLE, SAVE :: tryvtx(:,:)
 
 !     Surface quantities:
       REAL, ALLOCATABLE, SAVE :: flux(:,:)
-
 
 !     Volume quantities:      
       REAL, ALLOCATABLE, SAVE :: bfield(:,:)
       REAL, ALLOCATABLE, SAVE :: efield(:,:)
       REAL, ALLOCATABLE, SAVE :: plasma(:,:)
-
 
       END MODULE mod_eirene06_locals
 !
@@ -348,7 +348,6 @@ c
         REAL    :: gauge_egyden_atm (MAXNSTRATA,MAXNGAUGE)
         REAL    :: gauge_egyden_mol (MAXNSTRATA,MAXNGAUGE)
       ENDTYPE type_eirene_history
-
 
       INTEGER :: nhistory
       TYPE(type_eirene_history), SAVE :: history(MAXNHISTORY)

@@ -1,924 +1,11 @@
-c     -*Former Mode Specification*-
 c
 c ======================================================================
 c
-      SUBROUTINE SetTargetConditions(itube)
-      USE mod_sol28_params
-      USE mod_sol28_global
-      IMPLICIT none
-
-      INTEGER,INTENT(IN) :: itube
-
-      INTEGER i
-      LOGICAL first_call
-      DATA    first_call /.TRUE./
-
-      tube(itube)%jsat(2,1:S28_MAXNION) = 0.0
-
-      IF (first_call) THEN
-        first_call = .FALSE.
-c...    This is nasty, but it's necessary to initialize all of the targets,
-c       otherwise any regions linked to other regions, where it's assumed the 
-c       linked-to region has already been defined, will fail.  This is a backwards
-c       compatibilty issue at the moment and only affects the legacy LPDATI,O 
-c       assignment for SOL28, i.e. if doesn't bother DIVIMP or the newer SOL28
-c       target data assignments:
-        DO i = grid%isep, ntube
-          CALL SetTargetConditions_Legacy(i)        
-        ENDDO
-      ENDIF
-
-      CALL SetTargetConditions_Legacy(itube)
-
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
-      SUBROUTINE AssignReferenceSolution
-      USE mod_sol28
-      USE mod_sol28_global
-      IMPLICIT none
-
-      INTEGER ion
-
-c...  Copy data to REF_xxx variables:
-      ref_ntube  = ntube
-      ref_nion   = nion
-      ref_ncell  = ncell  
-      ref_nfluid = nfluid
-      IF (ncell.NE.nfluid) 
-     .  CALL ER('AssignReferenceSolution','NCELL.NE.NFLUID',*99)
-      IF (ALLOCATED(ref_tube )) DEALLOCATE(ref_tube )
-      IF (ALLOCATED(ref_cell )) DEALLOCATE(ref_cell ) 
-      IF (ALLOCATED(ref_fluid)) DEALLOCATE(ref_fluid)
-      ALLOCATE(ref_tube (ntube))
-      ALLOCATE(ref_cell (ncell))
-      ALLOCATE(ref_fluid(nfluid,nion))
-      ref_tube(1:ntube) = tube(1:ntube)
-      DO ion = 1, nion  
-        ref_cell (1:ncell)      = cell (1:ncell)
-        ref_fluid(1:nfluid,ion) = fluid(1:nfluid,ion)
-      ENDDO
-
-c      WRITE(0,*) 'REF:',fluid(1:100,1)%ne
-c      WRITE(0,*) 'REF:',ref_fluid(1:100,1)%ne
-
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
-      SUBROUTINE LoadReferenceSolution(mode)
-      USE mod_sol28_params
-      USE mod_sol28
-      USE mod_sol28_global
-      IMPLICIT none
-
-      INTEGER, INTENT(IN) :: mode
-
-      INTEGER        ion,status
-      CHARACTER*1024 fname,command
-
-      IF (opt%osm_load.EQ.0) THEN
-        ref_ntube  = 1
-        ref_nion   = 1
-        ref_nfluid = 1
-        ALLOCATE(ref_tube (ref_ntube))
-        ALLOCATE(ref_fluid(ref_nfluid,ref_nion))
-        RETURN
-      ENDIF
-
-c...  Store current OSM plasma:
-      CALL SaveGrid('osm.tmp')
-
-c...  Load reference OSM plasma (binary form):
-      fname = TRIM(opt%f_osm_load)
-
-c...  Copy file to run directory:
-      command = 'cp '//TRIM(opt%f_osm_dir)//TRIM(fname)//' .'
-      CALL CIssue(TRIM(command),status)
-      IF (status.NE.0) 
-     .  CALL ER('LoadReferencePlasma','Unable to copy plasma file',*99)
-
-c...  Unzip file if necessary:
-      IF (fname(LEN_TRIM(fname)-2:LEN_TRIM(fname)).EQ.'zip'.OR.
-     .    fname(LEN_TRIM(fname)-1:LEN_TRIM(fname)).EQ.'gz') 
-     .  CALL UnzipFile(fname)
-
-      SELECTCASE (mode)
-        CASE (1) 
-c...      Load reference solution:
-          WRITE(0,*) 'LOADING REFERENCE PLASMA:'      
-          WRITE(0,*) '  FILE NAME = ',TRIM(fname)
-          CALL LoadGrid(TRIM(fname))
-          CALL AssignReferenceSolution
-        CASE DEFAULT
-          CALL ER('LoadReferenceSolution','Unknown MODE',*99)
-      ENDSELECT
-
-c...  Need to add a better clean-up of the reference solution somewhere,
-c     since it probably isn't needed all the time and might take up
-c     a lot of space... currently it is deallocated in CLEANUP...
-
-c...  Restore current OSM grid:
-      CALL LoadGrid('osm.tmp')
-
-      RETURN
- 99   WRITE(0,*) '  FILE NAME = ',TRIM(fname)
-      WRITE(0,*) '  COMMAND   = ',TRIM(command)
-      WRITE(0,*) '  ERROR     = ',status
-      STOP
-      END
-c
-c ======================================================================
-c (from InterpolateTargetdata in div6/src/setup.f -SL, 09.01.07)
-c
-c
-      SUBROUTINE SetTargetConditions_Legacy(itube)
-      USE mod_legacy
-      USE mod_sol28_params
-      USE mod_sol28_global
-      IMPLICIT none
-
-      INTEGER,INTENT(IN) :: itube
-
-c.... OSM:
-      INTEGER ishift
-
-
-c...  Local:
-      REAL GetRelaxationFraction
-
-      INTEGER iitersol
-
-      INTEGER ii,ind1,ind2,i1,i2,i3,region,method,ring,target,idat,
-     .        no_data_warning,ir
-      LOGICAL specific,apply,cycle_loop,initialise
-      REAL    dum1,dum2,dum3,dum4,exp2,exp3,exp4,dpsin,psin0,frac,
-     .        tedat(MAXNRS),tidat(MAXNRS),nedat(MAXNRS)
-
-      DATA no_data_warning, initialise / 0, .TRUE. / 
-      SAVE
-
-
-      IF (itube.LT.grid%isep) RETURN
-
-
-      CALL AssignLegacyVariables
-
-      IF (logop.GT.0) WRITE(logfp,*) 'SETTING TARGET CONDITIONS'
-      
-      IF (tarninter(LO).EQ.0.OR.tarninter(HI).EQ.0) THEN
-c        CALL ER('InterpolateTargetData','No data to '//
-c     .          'interpolate?',*99)
-c        CALL WN('InterpolateTargetData','No data to '//
-c     .          'interpolate?')
-        WRITE(logfp,*) 'WARNING InterpolateTargetData: No data '//
-     .                 'to interpolate'
-        RETURN
-      ENDIF
-
-      IF (connected) THEN
-        WRITE(0,*) 'CHEATING ON PSITARG'
-c        DO ir = irsep, nrs
-          psitarg(ir,1) = REAL(ir-irsep)/100.0 + 1.0
-          psitarg(ir,2) = REAL(ir-irsep)/100.0 + 1.0
-c        ENDDO
-      ENDIF
-
-      WRITE(SLOUT,*)
-      WRITE(SLOUT,*) 'INTERPOLATING TARGET DATA'
-
-c...  Need to check that PSITARG is assigned:
-      IF (psitarg(irsep,2).EQ.0.0)
-     .  CALL WN('InterpolateTargetData','PSITARG does not appear to '//
-     .                                  'be assigned')
-
-c      repeat = .TRUE.
-
-      frac = GetRelaxationFraction()
-
-      IF (initialise) THEN
-        WRITE(logfp,*) 'INITIALISING SetTargetConditions_Legacy'
-        WRITE(logfp,*) '  IRSEP= ',irsep
-        WRITE(logfp,*) '  NRS  = ',nrs
-        ii = 0
-        DO ir = irsep, nrs
-          ii = ii + 1
-          lpdati(ii,1) = REAL(ir)
-          lpdati(ii,2) = 1.0
-          lpdati(ii,3) = 1.0
-          lpdato(ii,1) = REAL(ir)
-          lpdato(ii,2) = 1.0
-          lpdato(ii,3) = 1.0
-          IF (lpdatsw.EQ.0) THEN
-            lpdati(ii,4) = 1.0E+12
-            lpdato(ii,4) = 1.0E+12
-          ELSE
-            lpdati(ii,4) = 1.0E+00
-            lpdato(ii,4) = 1.0E+00
-          ENDIF
-        ENDDO
-        nlpdato = ii
-        nlpdati = ii
-        initialise = .FALSE.
-      ENDIF
-
-
-c...  Assign target data (LPDATO, LPDATI) from the TARINTER
-c     data listed in the DIVIMP/OEDGE input file:
-      ir = tube(itube)%ir
-
- 10   DO region = IKLO, IKHI
-        IF (tarninter(region).EQ.0) CYCLE
-        DO ii = 1, nlpdato
-          IF (NINT(lpdato(ii,1)).EQ.tube(itube)%ir) EXIT
-        ENDDO
-        IF (ii.EQ.nlpdato+1) CALL ER('SetTargetConditions_Legacy',
-     .                               'Ring not identified',*99)
-
-c...    Check if target data has been assigned specifically for this ring: 
-        specific = .FALSE.
-        method = 1
-        ind1 = 0
-        ind2 = 0
-
-        DO i1 = 1, tarninter(region)
-          apply = .FALSE.
-          IF (tarinter(i1,1,region).EQ.-1.0) THEN
-            specific = .TRUE.
-
-            IF     (ir.GE.NINT(tarinter(i1,2,region)).AND.
-     .              ir.LE.NINT(tarinter(i1,3,region))) THEN
-c...          Apply target data to ring:
-              apply = .TRUE.
-            ELSEIF (tarinter(i1,2,region).LT.0.0.AND.
-     .              tarinter(i1,3,region).LT.0.0) THEN
-c...          Make sure that ring group exists:
-              IF (-NINT(tarinter(i1,3,region)).GT.grdntreg(region)) THEN
-                CALL WN('InterpolateTargetData','Specified '//
-     .                  'region index is not valid')
-                RETURN
-              ENDIF
-c     .          CALL ER('InterpolateTargetData','Specified '//
-c     .                  'region index is not valid',*99)
-c...          Check if ring IR is a member of the specified group(s)
-c             of rings:
-              DO i2 = -NINT(tarinter(i1,2,region)), 
-     .                -NINT(tarinter(i1,3,region))
-                DO i3 = 1, grdntseg(i2,region)
-                  IF (ir.EQ.grdtseg(i3,i2,region)) apply = .TRUE. 
-                ENDDO
-              ENDDO                           
-            ENDIF
-            IF (apply) THEN
-c...          Interpolation scheme:
-              IF (tarinter(i1,4,region).EQ.1.0) THEN              
-c...            Versus PSIn, exponential decay:
-                method = 2
-              ELSE
-c...            Standard:
-                method = 1
-              ENDIF
-              ind1 = 0
-              ind2 = tarninter(region)
-              DO i2 = i1+1, tarninter(region)-1
-                IF (ind1.EQ.0.AND.
-     .              tarinter(i2  ,1,region).NE.-1.0) ind1 = i2
-                IF (ind1.NE.0.AND.
-     .              tarinter(i2+1,1,region).EQ.-1.0) THEN
-                  ind2 = i2 
-                  EXIT
-                ENDIF
-              ENDDO
-              WRITE(PINOUT,*) 'APPLYING:',ir,ind1,ind2,region
-              IF (ind2-ind1+1.LT.2) 
-     .          CALL ER('InterpolateTargetData','Insufficient '//
-     .                  'target data for interpolation',*99)
-            ENDIF
-          ELSEIF (tarinter(i1,1,region).EQ.-2.0.AND.
-     .            ((NINT(tarinter(i1,5,region)).EQ.ir.AND.
-     .              NINT(tarinter(i1,6,region)).EQ.0).OR.
-     .             (NINT(tarinter(i1,5,region)).LE.ir.AND.
-     .              NINT(tarinter(i1,6,region)).GE.ir))) THEN
-c...        Assign data directly to the ring, without interpolation:
-            method = 3
-            apply = .TRUE.
-            idat = i1
-          ENDIF
-        ENDDO
-
-        IF (.NOT.specific) THEN  
-c...      Target data was not specified for specific rings, so treat
-c         the entire TARINTER array as target data to be interpolated:
-          ind1 = 1
-          ind2 = tarninter(region)
-        ELSEIF (ind1.EQ.0.OR.ind2.EQ.0) THEN
-c...      Data was not found for this ring:
-          IF (no_data_warning.EQ.0) no_data_warning = 1
-          WRITE(88,*) 'WARNING: TARGET DATA NOT FOUND FOR',ir,region
-          CYCLE
-        ENDIF
-
-        IF     (method.EQ.1) THEN
-c...      Linearly interpolate target data from TARINTER arrays:
-          IF (region.EQ.IKLO) THEN
-            dum1 = psitarg(ir,2)
-           ELSE
-            dum1 = psitarg(ir,1)
-          ENDIF
-
-c...      Make a list:            
-          i3 = 0
-          DO i2 = ind1, ind2
-            i3 = i3 + 1
-            tedat(i3) = (1.0 - frac) * tarinter(i2,2,region) + 
-     .                         frac  * tarinter(i2,5,region)
-            tidat(i3) = (1.0 - frac) * tarinter(i2,3,region) + 
-     .                         frac  * tarinter(i2,6,region)
-            nedat(i3) = (1.0 - frac) * tarinter(i2,4,region) + 
-     .                         frac  * tarinter(i2,7,region)
-          ENDDO
-          CALL Fitter(ind2-ind1+1,tarinter(ind1,1,region),tedat,
-     .                1,dum1,dum2,'LINEAR')
-          CALL Fitter(ind2-ind1+1,tarinter(ind1,1,region),tidat,
-     .                1,dum1,dum3,'LINEAR')
-          CALL Fitter(ind2-ind1+1,tarinter(ind1,1,region),nedat,
-     .                1,dum1,dum4,'LINEAR')
-        ELSEIF (method.EQ.2) THEN
-c...      Exponential decay along the target versus PSIn:
-          target = 0
-          IF (tarinter(ind1,1,region).LT.0.0) THEN
-c...        Decay is scaled by the values for a specified target segement:
-            ring   = -NINT(tarinter(ind1,1,region))
-            target =  NINT(tarinter(ind1,2,region))
-            IF     (target.EQ.1) THEN
-              DO i2 = 1, nlpdato
-                IF (NINT(lpdato(i2,1)).EQ.ring) THEN
-                  tarinter(ind1,2,region) = lpdato(i2,2) / te_mult_o
-                  tarinter(ind1,3,region) = lpdato(i2,3) / ti_mult_o
-                  tarinter(ind1,4,region) = lpdato(i2,4) /  n_mult_o
-                  tarinter(ind1,5,region) = tarinter(ind1,2,region)
-                  tarinter(ind1,6,region) = tarinter(ind1,3,region)
-                  tarinter(ind1,7,region) = tarinter(ind1,4,region)
-                ENDIF
-              ENDDO
-              psin0 = psitarg(ring,2)
-            ELSEIF (target.EQ.2) THEN
-              DO i2 = 1, nlpdati
-                IF (NINT(lpdati(i2,1)).EQ.ring) THEN
-                  tarinter(ind1,2,region) = lpdati(i2,2) / te_mult_i
-                  tarinter(ind1,3,region) = lpdati(i2,3) / ti_mult_i
-                  tarinter(ind1,4,region) = lpdati(i2,4) /  n_mult_i
-                  tarinter(ind1,5,region) = tarinter(ind1,2,region)
-                  tarinter(ind1,6,region) = tarinter(ind1,3,region)
-                  tarinter(ind1,7,region) = tarinter(ind1,4,region)
-                ENDIF
-              ENDDO
-              psin0 = psitarg(ring,1)
-            ELSE
-              CALL ER('InterpolateTargetData','Invalid target',*99)
-            ENDIF
-          ELSE
-            psin0 = tarinter(ind1,1,region)
-          ENDIF
-          IF (region.EQ.IKLO) THEN
-            dpsin = ABS(psin0 - psitarg(ir,2))
-          ELSE
-            dpsin = ABS(psin0 - psitarg(ir,1))
-          ENDIF
-c...      Interpolate target profile parameters (in case target boundary
-c         relaxation is being used):
-          DO i2 = 1, 3
-            tedat(i2) = (1.0 - frac) * tarinter(ind1+i2-1,2,region) +
-     .                         frac  * tarinter(ind1+i2-1,5,region)
-            tidat(i2) = (1.0 - frac) * tarinter(ind1+i2-1,3,region) +
-     .                         frac  * tarinter(ind1+i2-1,6,region)
-            nedat(i2) = (1.0 - frac) * tarinter(ind1+i2-1,4,region) +
-     .                         frac  * tarinter(ind1+i2-1,7,region)
-          ENDDO
-c...      Allow over-ride (RELMODE=8) of profile parameters at each step,
-c         when boundary condition relaxation is being used, REL_OPT=2,3: 
-          IF (tedat(1).EQ.-1.0) THEN
-            IF (relmode.EQ.8.AND.relexpdat(region,1,ir).NE.0.0) THEN
-              tedat(1) = relexpdat(region,1,ir)
-            ELSEIF (rel_step.EQ.0) THEN
-c...          The 0th EIRENE iteration is (currently) being avoided when target relaxation
-c             is being used, so just assign some arbitrary nedat(1)!=-1.0.  The value from 
-c             RELEXPDAT will be assigned on a subsequent call to this routine before the 
-c             plasma is calculated (when REL_STEP=1, see in BgPlasma routine):
-              tedat(1) = 1.0E+01
-            ELSE
-              CALL ER('InterpolateTargetData','Bad Te over-ride',*99)
-            ENDIF
-          ENDIF
-          IF (tidat(1).EQ.-1.0) THEN
-            IF (relmode.EQ.8.AND.relexpdat(region,2,ir).NE.0.0) THEN
-              tidat(1) = relexpdat(region,2,ir)
-            ELSEIF (rel_step.EQ.0) THEN
-              tidat(1) = 1.0E+01
-            ELSE
-              CALL ER('InterpolateTargetData','Bad Ti over-ride',*99)
-            ENDIF
-          ENDIF
-          IF (nedat(1).EQ.-1.0) THEN
-            IF (relmode.EQ.8.AND.relexpdat(region,3,ir).NE.0.0) THEN
-              nedat(1) = relexpdat(region,3,ir)
-            ELSEIF (rel_step.EQ.0) THEN
-              nedat(1) = 1.0E+01
-            ELSE
-              CALL ER('InterpolateTargetData','Bad ne over-ride',*99)
-            ENDIF
-          ENDIF
-
-c...      Set exponents:
-          exp2 = EXP(-dpsin / tedat(3))
-          exp3 = EXP(-dpsin / tidat(3))
-          exp4 = EXP(-dpsin / nedat(3))
-c...      Calculate target boundary conditions:
-          dum2 = (tedat(1) - tedat(2)) * exp2 + tedat(2)
-          dum3 = (tidat(1) - tidat(2)) * exp3 + tidat(2)
-          dum4 = (nedat(1) - nedat(2)) * exp4 + nedat(2)
-c...      (Need to replace the target data specifier which was overwritten 
-c          above, nasty):
-          IF (target.NE.0) tarinter(ind1,2,region) = REAL(target)
-        ELSEIF (method.EQ.3) THEN
-c...      Direct application of target values:
-          dum2 = tarinter(idat,2,region) 
-          dum3 = tarinter(idat,3,region) 
-          dum4 = tarinter(idat,4,region) 
-        ENDIF
-c...    Assign LPDATx arrays (target data used to assign target data
-c       KxDS arrays):
-        IF (region.EQ.IKLO) THEN
-          nlpdato = MAX(nlpdato,ii)
-          lpdato(ii,1) = REAL(ir)
-          lpdato(ii,2) = dum2 * te_mult_o
-          lpdato(ii,3) = dum3 * ti_mult_o
-          lpdato(ii,4) = dum4 *  n_mult_o
-        ELSE
-          nlpdati = MAX(nlpdati,ii)
-          lpdati(ii,1) = REAL(ir)
-          lpdati(ii,2) = dum2 * te_mult_i
-          lpdati(ii,3) = dum3 * ti_mult_i
-          lpdati(ii,4) = dum4 *  n_mult_i
-        ENDIF
-c...    End of REGION loop:
-      ENDDO
-
-c      IF (repeat) THEN
-c...    Need to do this twice:
-c        repeat = .FALSE.
-c        GOTO 10
-c      ENDIF
-
-c      CALL Outputdata(85,'sdfds')
-c      STOP 'sdgsdg'
-	
-c...  Copy data to OSM arrays:
-c      DO itube = 1, ntube
-c        IF (itube.LT.grid%isep) CYCLE
-
-        cycle_loop = .TRUE.
-        DO i1 = 1, opt%sol_n
-          IF (itube.GE.opt%sol_tube(1,i1).AND.
-     .        itube.LE.opt%sol_tube(2,i1)) cycle_loop = .FALSE.
-        ENDDO
-c        IF (cycle_loop) CYCLE
-
-c        WRITE(0,*) 'WHAT?',itube,opt%sol_n
-c        WRITE(0,*) 'WHAT?',i1,opt%sol_tube(1:2,1)
-c        WRITE(0,*) 'WHAT?',i1,opt_iteration(1)%sol_tube(1:2,1)
-
-        IF (.NOT.cycle_loop) THEN
-
-c          DO ii = 1, nlpdato
-c            ishift = 1
-c            IF (itube.GE.grid%ipfz) ishift = 2
-c             WRITE(0,*) 'LPDATI:',itube,tube(itube)%ir
-c            IF (NINT(lpdato(ii,1)).EQ.tube(itube)%ir) THEN
-c              WRITE(0,*) '      :',ii,lpdato(ii,2)
-              tube(itube)%te  (LO)   = lpdato(ii,2)
-              tube(itube)%ti  (LO,1) = lpdato(ii,3)
-              tube(itube)%jsat(LO,1) = lpdato(ii,4)
-              WRITE(logfp,*) 'JSAT8:',itube,tube(itube)%ir,lpdato(ii,4)
-c            ENDIF
-c          ENDDO
-
-c          DO ii = 1, nlpdati
-c            ishift = 1
-c            IF (itube.GE.grid%ipfz) ishift = 2
-c            IF (NINT(lpdati(ii,1)).EQ.tube(itube)%ir) THEN
-c            IF (NINT(lpdati(ii,1)).EQ.itube+ishift) THEN
-              tube(itube)%te  (HI)   = lpdati(ii,2)
-              tube(itube)%ti  (HI,1) = lpdati(ii,3)
-              tube(itube)%jsat(HI,1) = lpdati(ii,4)
-              WRITE(logfp,*) 'JSAT7:',itube,tube(itube)%ir,lpdati(ii,4)
-c            ENDIF
-c          ENDDO
-
-       ENDIF
-
-c      ENDDO
-
-c      STOP 'fgdfsg'
-
-      IF (no_data_warning.EQ.1) THEN
-        WRITE(0,*)
-        WRITE(0,*) '****************************************'
-        WRITE(0,*) '* TARGET DATA NOT FOUND FOR SOME TUBES *'
-        WRITE(0,*) '****************************************'
-        WRITE(0,*)
-        no_data_warning = 2
-      ENDIF
-
-      RETURN
- 99   WRITE(0,*) '  I1,REGION   =',i1,region
-      WRITE(0,*) '  ITUBE       =',itube
-      WRITE(0,*) '  IR          =',ir
-      DO i1 = 1, nlpdato
-        WRITE(0,*) 'NLPDATO:',i1,lpdato(i1,1)
-      ENDDO
-      DO i1 = 1, nlpdati
-        WRITE(0,*) 'NLPDATO:',i1,lpdati(i1,1)
-      ENDDO
- 
-c      WRITE(0,*) ' -NINT(TARINTER)  =',-NINT(tarinter(i1,3,region))
-c      WRITE(0,*) '  GRDNTREG(REGION)=',grdntreg(region)
-      STOP
-      END
-c
-c ======================================================================
-c 
-c subroutine: FindCell_New
-c
-c Identifies the first, last and current cell that the node line segment
-c intersects (I think) -- sampling from the stated range of tubes for
-c the interpolation node, and not outside this range.
-c
-      SUBROUTINE FindCell_New(ind0,ind1,itgive,iccell)
-      USE mod_sol28_params
-      USE mod_sol28_global
-      USE mod_geometry
-      IMPLICIT none
-
-      INTEGER ind0,ind1,itgive,iccell(3)
-
-      INTEGER ic,it,i1,ic1(ntube),iobj,isrf,ivtx(2),itcell(3)
-      REAL    dist,dist1(ntube),clcell(3)
-      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
-
-      ic1 = 0
-      dist1 = 0.0
-
-      DO it =     osmnode(ind1)%tube_range(1), 
-     .        MIN(osmnode(ind1)%tube_range(2),ntube)
-        IF (tube(it)%type.EQ.GRD_BOUNDARY) CYCLE
-c        WRITE(0,*) 'FC: IT=',it
-        DO i1 = ind0+1, ind1
-c          WRITE(0,*) 'FC: I1=',i1
-          a1 = DBLE(osmnode(i1-1)%rad_x)  ! Collect line segment end points from the node setup data
-          a2 = DBLE(osmnode(i1-1)%rad_y)
-          b1 = DBLE(osmnode(i1  )%rad_x)
-          b2 = DBLE(osmnode(i1  )%rad_y)
-          dist = REAL(DSQRT((a1 - b1)**2 + (a2 - b2)**2))
-          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-c...        Assumed 1:1 mapping between grid and data:
-            iobj = ic
-            isrf = ABS(obj(iobj)%iside(1))
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))  ! *** Clean up with GetVertex calls ***
-            c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            isrf = ABS(obj(iobj)%iside(3))
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-            d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-            IF (tab.GE.0.0.AND.tab.LT.1.0.AND.
-     .          tcd.GE.0.0.AND.tcd.LT.1.0) THEN
-              ic1(it) = ic
-              dist1(it) = dist1(it) + REAL(tab) * dist
-             ENDIF
-          ENDDO
-          IF (ic1(it).EQ.0) dist1(it) = dist1(it) + dist
-        ENDDO
-      ENDDO
-c...  Sort intesections:
-      iccell = 0
-      itcell = 0
-      clcell = 0.0
-      DO it =     osmnode(ind1)%tube_range(1), 
-     .        MIN(osmnode(ind1)%tube_range(2),ntube)
-        IF (tube(it)%type.EQ.GRD_BOUNDARY.OR.ic1(it).EQ.0) CYCLE
-c        WRITE(0,*) 'PICKENS:',ir,ik1(ir),dist1(ir)
-        IF     (it.EQ.itgive) THEN
-          iccell(1) = ic1(it)   ! Current cell
-          itcell(1) = it
-        ENDIF
-        IF (clcell(2).EQ.0.0.OR.dist1(it).LT.clcell(2)) THEN
-          iccell(2) = ic1(it)
-          itcell(2) = it
-          clcell(2) = dist1(it) ! Cell farthest 'in'
-        ENDIF
-        IF (clcell(3).EQ.0.0.OR.dist1(it).GT.clcell(3)) THEN
-          iccell(3) = ic1(it)
-          itcell(3) = it
-          clcell(3) = dist1(it) ! Cell farthest 'out'
-        ENDIF
-      ENDDO
-
-c      WRITE(0,*) 'ICDATA:',iccell(1),iccell(2),iccell(3)
-c      WRITE(0,*) '      :',itcell(1),itcell(2),itcell(3)
-c      WRITE(0,*) '      :',cell(iccell(1))%ik,itcell(1)
-c      WRITE(0,*) '      :',ind0,ind1
-c      STOP 'sdfsd'
-         
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
-      SUBROUTINE LoadUpstreamData(fname,fformat,mode,itube,coord,shift,
-     .                            xcolumn,ycolumn,yval,s)
-      USE mod_sol28_params
-      USE mod_sol28_global
-      IMPLICIT none
-
-      CHARACTER, INTENT(IN)  :: fname*(*)
-      INTEGER  , INTENT(IN)  :: fformat,itube,coord,mode
-      REAL     , INTENT(IN)  :: shift,xcolumn,ycolumn,s
-      REAL     , INTENT(OUT) :: yval
-
-      INTEGER cind1,cind2
-      LOGICAL osmGetLine
-      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2
-
-      INTEGER    MAXTDAT     ,MAXCOLS   ,MAXNBUFFER_ARRAY    
-      PARAMETER (MAXTDAT=1000,MAXCOLS=20,MAXNBUFFER_ARRAY=100)
-
-      INTEGER   ndata,fp,i,j,n,ncolumns,xcol,ycol,ion,idum
-      REAL      vdata(MAXTDAT,MAXCOLS),xval,frac
-      CHARACTER     buffer*1024
-      CHARACTER*256 buffer_array(MAXNBUFFER_ARRAY),buffer_temp
-
-      TYPE(type_tube )              :: ass_tube
-      TYPE(type_fluid), ALLOCATABLE :: ass_fluid(:,:)
-
-
-
-c      WRITE(0,*) 'UPSTREAM: COORD2=',coord
-
-c      WRITE(0,*) 'UPSTREAM: FILE='//TRIM(fname)//'<',mode
-
- 
-      IF (TRIM(fname).EQ.'reference_solution') THEN 
-        ass_tube = tube(itube)
-
-        cind1 = tube(itube)%cell_index(LO)
-        cind2 = tube(itube)%cell_index(HI)          
-
-        ALLOCATE(ass_fluid(cind2-cind1+1,nion))
-
-        CALL InterpolateReferencePlasma
-     .         (ass_tube,nion,ass_fluid,cell(cind1:cind2))
-
-        ycol = NINT(ycolumn)
-
-        ion = 1
-
-        IF (mode.EQ.-1.OR.mode.EQ.-2) THEN 
-
-          SELECTCASE (ycol)
-            CASE (1)
-              yval = ass_tube%jsat(-mode,ion) 
-            CASE (4)
-              yval = ass_tube%te  (-mode) 
-            CASE (5)
-              yval = ass_tube%ti  (-mode,ion) 
-            CASE DEFAULT
-              CALL ER('LoadUpstreamData','Unknown YCOLUMN',*99)
-          ENDSELECT
-
-        ELSE
-c         Interpolate from the reference solution based on the distance
-c         along the flux-tube, s:
-
-          DO i = cind1, cind2-1
-            IF (cell(i)%s.LT.s.AND.cell(i+1)%s.GT.s) EXIT
-          ENDDO
-          IF (i.EQ.cind2) 
-     .      CALL ER('LoadUpstreamData','S not found',*99)
-
-          j = i - cind1 + 1
-
-          frac = (s - cell(i)%s) / (cell(i+1)%s - cell(i)%s)
-
-          write(88,*) 'data dumper:',i,j,frac
-          write(88,*) 'data dumper:',cind1,cind2
-          write(88,*) '           :',s
-
-
-          SELECTCASE (ycol)
-            CASE (1)
-              yval = (1.0 - frac) * ass_fluid(j  ,ion)%ne + 
-     .                      frac  * ass_fluid(j+1,ion)%ne
-            CASE (2)
-              yval = (1.0 - frac) * ass_fluid(j  ,ion)%vi + 
-     .                      frac  * ass_fluid(j+1,ion)%vi
-            CASE (4)
-              yval = (1.0 - frac) * ass_fluid(j  ,ion)%te + 
-     .                      frac  * ass_fluid(j+1,ion)%te
-            CASE (5)
-              yval = (1.0 - frac) * ass_fluid(j  ,ion)%ti + 
-     .                      frac  * ass_fluid(j+1,ion)%ti
-            CASE DEFAULT
-              CALL ER('LoadUpstreamData','Unknown YCOLUMN',*99)
-          ENDSELECT
-
-        ENDIF
-
-        DEALLOCATE(ass_fluid)
-        RETURN
-      ENDIF
-
-c...  Access data file:
-      fp = 99
-      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-     .     STATUS='OLD',ERR=98)
-
-      READ(fp,*) buffer
-      REWIND (fp)
-
-      IF (buffer(1:1).EQ.'{') THEN 
-        DO WHILE (osmGetLine(fp,buffer,WITH_TAG))
-c          WRITE(0,*) 'BUFFER:',TRIM(buffer)
-c...      Isolate tag string:
-          DO i = 2, LEN_TRIM(buffer)
-            IF (buffer(i:i).EQ.'}') EXIT
-          ENDDO
-          n = LEN_TRIM(buffer)
-          SELECTCASE (buffer(2:i-1))
-            CASE ('NUMBER OF COLUMNS')
-              READ(buffer(i+1:n),*) ncolumns
-            CASE ('DATA','DATA LIST')
-              j = 0
-              DO WHILE(osmGetLine(fp,buffer,NO_TAG))
-                IF (buffer(1:1).EQ.'{') EXIT
-                j = j + 1
-                READ(buffer,*) vdata(j,1:ncolumns)
-              ENDDO
-              ndata = j
-            CASE ('END')
-              EXIT
-            CASE DEFAULT
-              CALL ER('LoadUpstreamData','Unknown tag',*99)
-          ENDSELECT
-
-        ENDDO
-      ELSE
-
-        ncolumns = -1
-        ndata    =  0
-        DO WHILE (.TRUE.)
-          READ(fp,'(A1024)',END=10) buffer
-c          write(0,*) 'buffer >'//buffer(1:20)//' <'
-          IF (buffer(1:1).EQ.'*') CYCLE
-          DO i = 1, MAXNBUFFER_ARRAY
-            WRITE(buffer_array(i),'(256X)')
-          ENDDO
-          CALL SplitBuffer(buffer,buffer_array)
-          idum = 0
-          DO i = 1, MAXNBUFFER_ARRAY
-            buffer_temp = buffer_array(i)
-            IF (buffer_temp(1:1).NE.' ') idum = idum + 1
-          ENDDO
-c          WRITE(0,*) 'idum',idum
-          IF (idum.EQ.0) CYCLE
-          IF (ncolumns.EQ.-1) ncolumns = idum
-          IF (idum.NE.ncolumns) THEN
-            CALL ER('LoadUpstreamData','Number of columns in data '//
-     .              'file changed',*99)
-          ELSE
-            ndata = ndata + 1
-            DO i = 1, ncolumns
-              READ(buffer_array(i),*) vdata(ndata,i)
-            ENDDO
-          ENDIF
-        ENDDO
- 
-      ENDIF
-10    CONTINUE
-      CLOSE(fp)
-
-c... 
-      SELECTCASE (coord)
-        CASE (3,5)
-          xval = tube(itube)%psin - shift 
-        CASE (4)
-          xval = tube(itube)%rho - shift
-        CASE DEFAULT
-          CALL ER('LoadUpstreamData','Unknown COORD value',*99)
-      ENDSELECT
-
-      xcol = NINT(xcolumn)
-      ycol = NINT(ycolumn)
-
-      IF (xcol.LT.1.OR.xcol.GT.ncolumns) 
-     .  CALL ER('LoadUpstreamData','x-data column ID invalid',*99)
-      IF (ycol.LT.1.OR.ycol.GT.ncolumns.OR.xcol.EQ.ycol) 
-     .  CALL ER('LoadUpstreamData','y-data column ID invalid',*99)
-
-      IF     (xval.LT.vdata(1    ,xcol)) THEN
-c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
-        yval = vdata(1,ycol)
-      ELSEIF (xval.GT.vdata(ndata,xcol)) THEN
-c        WRITE(0,*) 'WARNING:  INTERPOLATION FAILED, X-DATA BEYOND RANGE'
-        yval = vdata(ndata,ycol)
-      ELSE
-        WRITE(88,*) 'FIT:',ndata
-        WRITE(88,*) '   :',vdata(1:ndata,xcol)
-        WRITE(88,*) '   :',vdata(1:ndata,ycol)
-
-        CALL Fitter(ndata,vdata(1,xcol),vdata(1,ycol),
-     .              1,xval,yval,'LINEAR')
-
-        WRITE(88,*) '   :',xval,yval
-        WRITE(88,*) '   : unshifted xval',xval + shift
-      ENDIF
-
-c      WRITE(88,*) 'XCOL,YCOL:',xcol,ycol
-c      WRITE(88,*) 'SHIFT:',shift
-c      WRITE(88,*) 'ITUBE,XVAL,YVAL:',itube,xval,yval
-
-      RETURN
- 98   WRITE(0,*) 'ERROR LoadUpstreamData: Data file not found'
- 99   WRITE(0,*) '  FILE = ',TRIM(fname)
-      WRITE(0,*) '  XCOL = ',xcol
-      WRITE(0,*) '  YCOL = ',ycol
-      WRITE(0,*) '  NCOL = ',ncolumns
-      STOP
-      END
-c     
-c ======================================================================
-c
-c Code from http://coding.derkeiler.com/Archive/Fortran/comp.lang.fortran/2005-01/0953.html
-c
-c
-c      SUBROUTINE SetBit(word,position,value)
-c      IMPLICIT none
-c      INTEGER, INTENT(OUT) :: word
-c      INTEGER, INTENT(IN)  :: position,value
-c     
-c      INTEGER :: bits(0:31)
-c      
-c      IF (value.NE.0.AND.value.NE.1) 
-c     .  CALL ER('SetBit','Invalid VALUE for bit',*99)
-c      IF (position.LT.0.OR.position.GT.31) 
-c     .  CALL ER('SetBit','Invalid POSITION for bit',*99)
-c
-c      bits = IAND(ISHFT(word,[-31:0]),1)  ! unpack WORD
-c
-c      bits(position) = value
-c
-c      word = SUM(ISHFT(bits,[31:0],-1]))   ! pack bits into WORD
-c
-c      RETURN
-c 99   WRITE(0,*) ' VALUE   =',value
-c      WRITE(0,*) ' POSITION=',position
-c      STOP
-c      END
-c     
-c ======================================================================
-c
-c      LOGICAL FUNCTION GetBit(word,position)
-c      IMPLICIT none
-c      INTEGER, INTENT(IN) :: word,position
-c     
-c      INTEGER :: bits(0:31)
-c      
-c      IF (position.LT.0.OR.position.GT.31) 
-c     .  CALL ER('GetBit','Invalid POSITION for bit',*99)
-c
-c      bits = IAND(ISHFT(word,[-31:0]),1)  ! unpack WORD
-c
-c      IF (bits(position).EQ.1) THEN
-c        GetBit = .TRUE.
-c      ELSE
-c        GetBit = .FALSE.
-c      ENDIF
-c
-c      RETURN
-c 99   WRITE(0,*) ' POSITION=',position
-c      STOP
-c      END
-c
-c ======================================================================
-c
-      SUBROUTINE AssignNodeValues_New(itube,nnode,mnode,node,opt_tube)
+      SUBROUTINE osmSelectTube(it,i0,i1,status,first_pass,
+     .                         two_timer,mode,intersection,density,
+     .                         suppress_screen,
+     .                         hold_ic,
+     .                         a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_sol28_targets
@@ -926,8 +13,281 @@ c
       USE mod_legacy
       IMPLICIT none
 
-      INTEGER, INTENT(IN)  :: itube
-      INTEGER, INTENT(OUT) :: nnode,mnode       
+      INTEGER, INTENT(IN ) :: it,i0,i1,mode
+      INTEGER, INTENT(OUT) :: hold_ic
+      LOGICAL, INTENT(IN ) :: two_timer
+      LOGICAL, INTENT(OUT) :: status,first_pass,intersection,density,
+     .                        suppress_screen
+      REAL*8 , INTENT(OUT) :: a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd
+
+      INTEGER i2,i4,i5,ic,iobj,isrf,ivtx(2)
+      LOGICAL debug
+      REAL*8  hold_c1,hold_c2,hold_d1,hold_d2,hold_tab,hold_tcd
+
+
+      debug = .FALSE.
+
+
+      status = .FALSE.
+
+
+      IF (osmnode(i0)%type.NE.osmnode(i1)%type.OR.
+     .    osmnode(i1)%type.EQ.0.0.OR.
+     .    osmnode(i1)%type.EQ.0.0) THEN
+        status = .TRUE.
+        RETURN
+      ENDIF
+
+
+c      IF (osmnode(i0)%type.NE.osmnode(i1)%type.OR.
+c     .    osmnode(i1)%type.EQ.0.0.OR.
+c     .    osmnode(i1)%type.EQ.0.0) THEN
+c        status = .TRUE.
+c        RETURN
+c      ENDIF
+
+
+c      ne = 0.0  ! Necessary, also appears below...
+c      vb = 0.0
+c      pe = 0.0
+c      te = 0.0
+c      ti = 0.0
+
+c...  
+      IF (debug) THEN
+        WRITE(logfp,*) 'INTER GO:',it,osmnode(i1)%tube_range(1:2)
+      ENDIF
+
+c...  Do not apply data if IT is outside specified range:
+      IF ((it.LT.osmnode(i1)%tube_range(1).OR.
+     .     it.GT.osmnode(i1)%tube_range(2)).AND.
+     .    osmnode(i1)%type.NE.3.0) THEN
+        status = .TRUE.
+        RETURN
+      ENDIF
+
+c...  Need to keep track of iteration currently being assigned, so
+c     that scans in upstream with step can be done serially, rather than
+c     having everything on the same line...
+
+c...  Check that rings from different grid regions are not in the same group
+c     of rings:
+      DO i2 =     osmnode(i1)%tube_range(1), 
+     .        MIN(osmnode(i1)%tube_range(2),ntube)-1
+        IF (i2.GT.ntube-1) EXIT          
+        IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
+          IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
+            WRITE(logfp,*)
+            WRITE(logfp,*) '-------------------------------------'
+            WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
+            WRITE(logfp,*) '--------------------------- ---------'
+            WRITE(logfp,*)
+          ENDIF          
+        ENDIF      
+      ENDDO
+
+      IF (debug) WRITE(logfp,*) 'NODE PARAMS:',i1,mode
+
+c...  Decide if specified upstream data is density or pressure:
+      density = .TRUE.   ! *** I DON'T LIKE THIS SOLUTION ***
+c      IF (index.EQ.3.AND.
+c          (tube(it)%type.EQ.GRD_SOL.AND..FALSE..OR.
+c           tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
+c        density = .FALSE.
+
+      IF (mode.EQ.7.AND..NOT.two_timer) THEN
+        suppress_screen = .TRUE.
+        a1 = 0.0
+        a2 = 0.0
+        b1 = 0.0
+        b2 = 0.0
+      ELSE
+        a1 = DBLE(osmnode(i1-1)%rad_x)
+        a2 = DBLE(osmnode(i1-1)%rad_y)
+        b1 = DBLE(osmnode(i1  )%rad_x)
+        b2 = DBLE(osmnode(i1  )%rad_y)
+      ENDIF
+
+      intersection = .FALSE.
+
+      IF (osmnode(i1)%type.EQ.3.0) THEN
+c...    Target nodes:
+        IF (osmnode(i1)%tube_range(1).NE.osmnode(i1)%tube_range(2))
+     .    CALL ER('AssignNode_New','Single target position must '//
+     .            'be specified',*99)
+        DO i4 = 1, ntarget
+          IF (target(i4)%location.EQ.ABS(osmnode(i1)%tube_range(1))) 
+     .      EXIT
+        ENDDO
+        IF (i4.LT.ntarget+1) THEN         
+          IF (osmnode(i1)%tube_range(1).LT.0) THEN
+c           All tubes on grid assigned:
+            i5 = 0  
+          ELSE
+c           Only select tubes identified as being part of this target data block:
+            DO i5 = 1, target(i4)%nlist
+              IF (target(i4)%ilist(i5).EQ.it) EXIT
+            ENDDO
+          ENDIF
+          IF (i5.LT.target(i4)%nlist+1) THEN
+            intersection = .TRUE.  
+            hold_c1  = 0.0D0
+            hold_c2  = 0.0D0
+            hold_d1  = 0.0D0
+            hold_d2  = 0.0D0
+            hold_tab = 0.0D0
+            IF (debug) THEN
+              WRITE(logfp,*) 'Target assignment identified:',i4
+              WRITE(logfp,*) ' SPEC L=',osmnode(i1)%tube_range(1:2),i1
+              WRITE(logfp,*) ' LOC   =',target(i4)%location
+              WRITE(logfp,*) ' TAG   =',TRIM(target(i4)%tag)
+              WRITE(logfp,*) ' POS   =',target(i4)%position
+            ENDIF
+            IF (target(i4)%position.EQ.LO) THEN
+              hold_ic  = tube(it)%cell_index(LO)
+              hold_tcd = 0.0D0
+              osmnode(i0:i1)%par_mode = -1
+            ELSE
+              hold_ic  = tube(it)%cell_index(HI)
+              hold_tcd = 1.0D0
+              osmnode(i0:i1)%par_mode = -2
+            ENDIF
+          ENDIF
+        ENDIF
+c     ----------------------------------------------------------------  
+      ELSEIF (osmnode(i1)%type.EQ.2.1.AND.             ! Semi-automated symmetry point specification
+     .        two_timer) THEN                          ! WHAT IS THIS!? -SL, 17/10/2013                    
+        intersection = .FALSE.
+        hold_c1  = 0.0D0
+        hold_c2  = 0.0D0
+        hold_d1  = 0.0D0
+        hold_d2  = 0.0D0
+        hold_tab = 0.0D0
+c...    Check if there's an interesection (optional):
+        hold_ic = -1
+        DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+          iobj = ic
+          isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+          isrf = ABS(obj(iobj)%iside(3))
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+          IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .        tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
+            intersection = .TRUE.
+            hold_ic  = ic 
+            IF (debug) THEN
+              WRITE(logfp,*) '  intersection'
+              WRITE(logfp,*) '  tcd ',tcd
+              WRITE(logfp,*) '  c1,2',c1,c2
+              WRITE(logfp,*) '  d1,2',d1,d2
+            ENDIF
+            hold_c1  = c1 
+            hold_c2  = c2
+            hold_d1  = d1
+            hold_d2  = d2
+            hold_tab = tab
+            hold_tcd = tcd
+            EXIT
+          ENDIF
+        ENDDO
+c...    No interesection found, so take the middle of the tube (in s):
+        IF (hold_ic.EQ.-1) THEN           
+          IF (debug)
+     .      write(logfp,*) 'debug: trying to find...'
+          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)            
+            IF (cell(ic)%sbnd(1).LE.0.5*tube(it)%smax.AND.
+     .          cell(ic)%sbnd(2).GE.0.5*tube(it)%smax) THEN
+              IF (debug)
+     .          write(logfp,*) 'debug: made up interesecton',ic,
+     .                         tube(it)%cell_index(LO:HI)
+              hold_ic = ic
+              EXIT
+            ENDIF
+          ENDDO
+          IF (ic.EQ.tube(it)%cell_index(HI)+1)
+     .      CALL ER('AssignNodeValues_New','Two-timing symmetry '//
+     .              'node cell not identified',*99)
+        ENDIF
+c     ----------------------------------------------------------------  
+      ELSE
+        DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
+c...      Assumed 1:1 mapping between grid and data:
+          iobj = ic
+          isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+          isrf = ABS(obj(iobj)%iside(3))
+          ivtx(1:2) = srf(isrf)%ivtx(1:2)
+          d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
+          d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
+          CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+          IF ((tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
+     .         tcd.GE.0.0D0.AND.tcd.LT.1.0D0).OR.
+     .        (ic.EQ.tube(it)%cell_index(LO).AND.
+     .         (osmnode(i0)%par_mode.EQ.-1.OR.
+     .          osmnode(i0)%par_mode.EQ.-2))) THEN
+            intersection = .TRUE.
+            hold_ic  = ic
+            hold_c1  = c1  ! why not just trigger an exit here and avoid the whole "hold_" business?
+            hold_c2  = c2  ! (also find this above for compatibility, but with an EXIT)
+            hold_d1  = d1
+            hold_d2  = d2
+            hold_tab = tab
+            hold_tcd = tcd
+          ENDIF
+        ENDDO
+      ENDIF
+
+      IF (.NOT.intersection.AND.
+     .    .NOT.(osmnode(i1)%type.EQ.2.1.AND.two_timer)) THEN
+        status = .TRUE. 
+        RETURN
+      ENDIF
+
+c...  An intersection between the line segment and the ring has been found:
+
+      IF (.NOT.first_pass) THEN
+        WRITE(0,*) 'ERROR: interpolation node block intersects '//
+     .             'the flux-tube more than once, are you mad?'
+        WRITE(0,*) '  ITUBE = ',it
+        WRITE(0,*) '  I0,1  = ',i0,i1
+        STOP
+      ENDIF
+
+
+      first_pass = .FALSE.
+
+      ic  = hold_ic 
+      c1  = hold_c1
+      c2  = hold_c2
+      d1  = hold_d1
+      d2  = hold_d2
+      tab = hold_tab
+      tcd = hold_tcd
+
+
+      RETURN 
+99    STOP
+      END
+c
+c ======================================================================
+c
+      SUBROUTINE osmSetNodeValues(itube,nnode,mnode,node,opt_tube)
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_sol28_targets
+      USE mod_geometry
+      USE mod_legacy
+      IMPLICIT none
+
+      INTEGER        , INTENT(IN ) :: itube
+      INTEGER        , INTENT(OUT) :: nnode,mnode       
       TYPE(type_node), INTENT(OUT) :: node(*)
       TYPE(type_options_osm) :: opt_tube
 
@@ -941,18 +301,18 @@ c
      .        itarget,hold_ic,i5,check
       CHARACTER dummy*1024
       LOGICAL nc,vc,pc,tec,tic,density,tetarget,debug,link,intersection,
-     .        first_pass,two_timer,default_message,node_valid,
+     .        first_pass,two_timer,default_message,node_valid,status,
      .        suppress_screen,rho_warning,
      .        ne_warning,te_warning,ti_warning
       REAL    te(0:6),ne(0:6),s(0:6),pe(0:6),ti(0:6),vb(0:6),
      .        frac,te0,te1,ti0,ti1,n0,n1,A,B,C,expon,te_cs,ti_cs,
      .        psin0,psin1,psin2,p0,p1,result(3),dist,radvel,rho0,
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
-     .        hold_tab,hold_tcd,ne_LO,ne_HI,cs,
+     .        ne_LO,ne_HI,cs,
      .        node_pe,node_v,node_ne,node_te,node_ti,smax,L,
      .        nustar 
-      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
-     .        hold_c1,hold_c2,hold_d1,hold_d2,pts(3,4)
+      REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,pts(3,4)
+
 
 
       INTEGER node_n,node_i(0:MAXNNODES)
@@ -966,6 +326,26 @@ c
      .     / .TRUE.       , .TRUE.     , .TRUE.    , .TRUE.    , 
      .                                   .TRUE.   /
       SAVE     
+
+
+c MODE                          P1           P2
+c   1 - power law               coordinate   index
+c   2 - exponential v0-v2       coordinate   index
+c   3 - exponential to infinity
+c   4 - from probe data         coordinate   probe number
+c   5 - parameter fits
+c   6 - core + pedestal + SOL automated fits
+c   7 - exponential decay for velocity, temperature, decay based on v_perp and L for density
+c
+
+c   coord = 1 - linear on line segment
+c         = 2 - RHO over the range of applicability
+c         = 3 - PSIn over range of applicability (like coord=2) 
+c         = 4 - RHO
+c         = 5 - PSIn (raw)
+c         = 6 - linear on line segment, but from tube link to infinity
+c         = 7 - psin, from tube link to infinity
+
 
       suppress_screen = .FALSE.
 
@@ -1000,6 +380,9 @@ c     use mod_sol28_locals...?
 
       write(logfp,*) '---> here in assignnodevalues',tube(it)%n
 
+ 
+      first_pass = .TRUE.
+
 
       DO i1 = 2, osmnnode
         i0 = i1 - 1
@@ -1008,268 +391,35 @@ c     use mod_sol28_locals...?
 
         IF (debug) THEN
           WRITE(logfp,*) 'INTER:',i0,i1,osmnode(i0)%type,
-     .                            osmnode(i1)%type
+     .                                  osmnode(i1)%type
           WRITE(logfp,*) 'PAR_MODE:',osmnode(i0:i1)%par_mode
         ENDIF
 
-        IF (osmnode(i0)%type.NE.osmnode(i1)%type.OR.
-     .      osmnode(i1)%type.EQ.0.0.OR.
-     .      osmnode(i1)%type.EQ.0.0) THEN
-          first_pass = .TRUE.
-          CYCLE
-        ENDIF
-
-        index = 0
-
-        ne = 0.0  ! Necessary, also appears below...
-        vb = 0.0
-        pe = 0.0
-        te = 0.0
-        ti = 0.0
-c...    
-
-        IF (debug) THEN
-          WRITE(logfp,*) 'INTER GO:',it,osmnode(i1)%tube_range(1:2)
-        ENDIF
-
-c...    Do not apply data if IT is outside specified range:
-        IF ((it.LT.osmnode(i1)%tube_range(1).OR.
-     .       it.GT.osmnode(i1)%tube_range(2)).AND.
-     .      osmnode(i1)%type.NE.3.0) CYCLE
-
-c...    Need to keep track of iteration currently being assigned, so
-c       that scans in upstream with step can be done serially, rather than
-c       having everything on the same line...
-
-c...    Check that rings from different grid regions are not in the same group
-c       of rings:
-        DO i2 =     osmnode(i1)%tube_range(1), 
-     .          MIN(osmnode(i1)%tube_range(2),ntube)-1
-          IF (i2.GT.ntube-1) EXIT          
-          IF (tube(i2)%type.NE.tube(i2+1)%type) THEN
-            IF (logop.GT.0.AND.tube(i2)%type.NE.GRD_CORE) THEN
-              WRITE(logfp,*)
-              WRITE(logfp,*) '-------------------------------------'
-              WRITE(logfp,*) ' THAT FUNNY THING ABOUT MIXED REG.!? '
-              WRITE(logfp,*) '--------------------------- ---------'
-              WRITE(logfp,*)
-            ENDIF          
-          ENDIF      
-        ENDDO
-
-c MODE                          P1           P2
-c   1 - power law               coordinate   index
-c   2 - exponential v0-v2       coordinate   index
-c   3 - exponential to infinity
-c   4 - from probe data         coordinate   probe number
-c   5 - parameter fits
-c   6 - core + pedestal + SOL automated fits
-c   7 - exponential decay for velocity, temperature, decay based on v_perp and L for density
-c
-
-c   coord = 1 - linear on line segment
-c         = 2 - RHO over the range of applicability
-c         = 3 - PSIn over range of applicability (like coord=2) 
-c         = 4 - RHO
-c         = 5 - PSIn (raw)
-c         = 6 - linear on line segment, but from tube link to infinity
-c         = 7 - psin, from tube link to infinity
 
         index = NINT(osmnode(i1)%type)
+
         mode  = osmnode(i1)%rad_mode
         coord = osmnode(i1)%rad_coord
         expon = osmnode(i1)%rad_exp
 
-        IF (debug) THEN
-          WRITE(logfp,'(6A)') '  I1',' INDEX','  MODE',' COORD',' EXPON'
-          WRITE(logfp,'(6A)') '  --',' -----','  ----',' -----',' -----'
-          WRITE(logfp,'(I4,4I6)') i1,index,mode,coord,expon
-        ENDIF
 
-c...    Decide if specified upstream data is density or pressure:
-        density = .TRUE.   ! *** I DON'T LIKE THIS SOLUTION ***
-c        IF (index.EQ.3.AND.
-c     .      (tube(it)%type.EQ.GRD_SOL.AND..FALSE..OR.
-c     .       tube(it)%type.EQ.GRD_PFZ.AND..FALSE.))
-c     .    density = .FALSE.
+        CALL osmSelectTube(it,i0,i1,status,first_pass,two_timer,mode,
+     .                     intersection,density,suppress_screen,
+     .                     hold_ic,
+     .                     a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
 
-        IF (mode.EQ.7.AND..NOT.two_timer) THEN
-          suppress_screen = .TRUE.
-          a1 = 0.0
-          a2 = 0.0
-          b1 = 0.0
-          b2 = 0.0
-        ELSE
-          a1 = DBLE(osmnode(i1-1)%rad_x)
-          a2 = DBLE(osmnode(i1-1)%rad_y)
-          b1 = DBLE(osmnode(i1  )%rad_x)
-          b2 = DBLE(osmnode(i1  )%rad_y)
-        ENDIF
 
-        intersection = .FALSE.
 
-        IF (osmnode(i1)%type.EQ.3.0) THEN
-c...      Target nodes:
-          IF (osmnode(i1)%tube_range(1).NE.osmnode(i1)%tube_range(2))
-     .      CALL ER('AssignNode_New','Single target position must '//
-     .              'be specified',*99)
-          DO i4 = 1, ntarget
-            IF (target(i4)%location.EQ.ABS(osmnode(i1)%tube_range(1))) 
-     .        EXIT
-          ENDDO
-          IF (i4.LT.ntarget+1) THEN         
-            IF (osmnode(i1)%tube_range(1).LT.0) THEN
-c             All tubes on grid assigned:
-              i5 = 0  
-            ELSE
-c             Only select tubes identified as being part of this target data block:
-              DO i5 = 1, target(i4)%nlist
-                IF (target(i4)%ilist(i5).EQ.it) EXIT
-              ENDDO
-            ENDIF
-            IF (i5.LT.target(i4)%nlist+1) THEN
-              intersection = .TRUE.  
-              hold_c1  = 0.0D0
-              hold_c2  = 0.0D0
-              hold_d1  = 0.0D0
-              hold_d2  = 0.0D0
-              hold_tab = 0.0D0
-              IF (debug) THEN
-                WRITE(logfp,*) 'Target assignment identified:',i4
-                WRITE(logfp,*) ' SPEC L=',osmnode(i1)%tube_range(1:2),i1
-                WRITE(logfp,*) ' LOC   =',target(i4)%location
-                WRITE(logfp,*) ' TAG   =',TRIM(target(i4)%tag)
-                WRITE(logfp,*) ' POS   =',target(i4)%position
-              ENDIF
-              IF (target(i4)%position.EQ.LO) THEN
-                hold_ic  = tube(it)%cell_index(LO)
-                hold_tcd = 0.0D0
-                osmnode(i0:i1)%par_mode = -1
-              ELSE
-                hold_ic  = tube(it)%cell_index(HI)
-                hold_tcd = 1.0D0
-                osmnode(i0:i1)%par_mode = -2
-              ENDIF
-            ENDIF
-          ENDIF
-c       ----------------------------------------------------------------  
-        ELSEIF (osmnode(i1)%type.EQ.2.1.AND.             ! Semi-automated symmetry point specification
-     .          two_timer) THEN                          ! WHAT IS THIS!? -SL, 17/10/2013                    
-          intersection = .FALSE.
-          hold_c1  = 0.0D0
-          hold_c2  = 0.0D0
-          hold_d1  = 0.0D0
-          hold_d2  = 0.0D0
-          hold_tab = 0.0D0
-c...      Check if there's an interesection (optional):
-          hold_ic = -1
-          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-            iobj = ic
-            isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-            c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            isrf = ABS(obj(iobj)%iside(3))
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-            d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-            IF (tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .          tcd.GE.0.0D0.AND.tcd.LT.1.0D0) THEN
-              intersection = .TRUE.
-              hold_ic  = ic 
-              IF (debug) THEN
-                WRITE(logfp,*) '  intersection'
-                WRITE(logfp,*) '  tcd ',tcd
-                WRITE(logfp,*) '  c1,2',c1,c2
-                WRITE(logfp,*) '  d1,2',d1,d2
-              ENDIF
-              hold_c1  = c1 
-              hold_c2  = c2
-              hold_d1  = d1
-              hold_d2  = d2
-              hold_tab = tab
-              hold_tcd = tcd
-              EXIT
-            ENDIF
-          ENDDO
-c...      No interesection found, so take the middle of the tube (in s):
-          IF (hold_ic.EQ.-1) THEN           
-            IF (debug)
-     .        write(logfp,*) 'debug: trying to find...'
-            DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)            
-              IF (cell(ic)%sbnd(1).LE.0.5*tube(it)%smax.AND.
-     .            cell(ic)%sbnd(2).GE.0.5*tube(it)%smax) THEN
-                IF (debug)
-     .            write(logfp,*) 'debug: made up interesecton',ic,
-     .                           tube(it)%cell_index(LO:HI)
-                hold_ic = ic
-                EXIT
-              ENDIF
-            ENDDO
-            IF (ic.EQ.tube(it)%cell_index(HI)+1)
-     .        CALL ER('AssignNodeValues_New','Two-timing symmetry '//
-     .                'node cell not identified',*99)
-          ENDIF
-c       ----------------------------------------------------------------  
-        ELSE
-          DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
-c...        Assumed 1:1 mapping between grid and data:
-            iobj = ic
-            isrf = ABS(obj(iobj)%iside(1))          ! *** Use GetVertex *** 
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            c1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-            c2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            isrf = ABS(obj(iobj)%iside(3))
-            ivtx(1:2) = srf(isrf)%ivtx(1:2)
-            d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
-            d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
-            CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
-            IF ((tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
-     .           tcd.GE.0.0D0.AND.tcd.LT.1.0D0).OR.
-     .          (ic.EQ.tube(it)%cell_index(LO).AND.
-     .           (osmnode(i0)%par_mode.EQ.-1.OR.
-     .            osmnode(i0)%par_mode.EQ.-2))) THEN
-              intersection = .TRUE.
-              hold_ic  = ic
-              hold_c1  = c1  ! why not just trigger an exit here and avoid the whole "hold_" business?
-              hold_c2  = c2  ! (also find this above for compatibility, but with an EXIT)
-              hold_d1  = d1
-              hold_d2  = d2
-              hold_tab = tab
-              hold_tcd = tcd
-            ENDIF
-          ENDDO
-        ENDIF
+        IF (status) CYCLE
 
-        IF (.NOT.intersection.AND.
-     .      .NOT.(osmnode(i1)%type.EQ.2.1.AND.two_timer)) CYCLE
 
-c...    An intersection between the line segment and the ring has been found:
-
-        IF (.NOT.first_pass) THEN
-          WRITE(0,*) 'ERROR: interpolation node block intersects '//
-     .               'the flux-tube more than once, are you mad'
-          WRITE(0,*) '  ITUBE = ',itube
-          WRITE(0,*) '  I0,1  = ',i0,i1
-          STOP
-        ENDIF
-
-        s  = 0.0
-        ne = 0.0
-        vb = 0.0
-        pe = 0.0
-        te = 0.0
-        ti = 0.0
+        s    = 0.0
+        ne   = 0.0
+        vb   = 0.0
+        pe   = 0.0
+        te   = 0.0
+        ti   = 0.0
         link = .FALSE.
-
-        ic  = hold_ic 
-        c1  = hold_c1
-        c2  = hold_c2
-        d1  = hold_d1
-        d2  = hold_d2
-        tab = hold_tab
-        tcd = hold_tcd
 
         IF (debug) WRITE(logfp,*) 
      .    'INTERSECTION:',intersection,i0,i1,itube,ic
@@ -1319,7 +469,7 @@ c         *CRAP!*
           ti1 = osmnode(i3)%ti(1)
 
           IF (debug) THEN
-            WRITE(logfp,*) 's,smax:',s(inode),tube(it)%smax
+            WRITE(logfp,*) 's,smax:',s,tube(it)%smax
             WRITE(logfp,*) 'N0,1  :',n0,n1
             WRITE(logfp,*) 'V0,1  :',v0,v1
             WRITE(logfp,*) 'P0,1  :',p0,p1
@@ -1731,43 +881,38 @@ c...        Load probe data from ASCII file:
             IF (nc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
-     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%ne,tmp1,s(inode))
+     .               expon,osmnode(i2)%ne,tmp1) 
               ne(inode) = tmp1 * osmnode(i1)%file_scale_ne
             ENDIF
             IF (vc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
-     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%v ,tmp1,s(inode)) 
+     .               expon,osmnode(i2)%v ,tmp1) 
               vb(inode) = tmp1 * osmnode(i1)%file_scale_M
               WRITE(logfp,*) 'VB  B:',vb(inode)
             ENDIF
             IF (pc) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
-     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%pe,tmp1,s(inode)) 
+     .               expon,osmnode(i2)%pe,tmp1) 
               pe(inode) = tmp1 * osmnode(i1)%file_scale_pe
               WRITE(logfp,*) 'PE  B:',pe(inode)
             ENDIF
             IF (tec) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,
      .               osmnode(i1)%file_format,
-     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%te,tmp1,s(inode)) 
+     .               expon,osmnode(i2)%te,tmp1) 
               te(inode) = tmp1 * osmnode(i1)%file_scale_te
             ENDIF
             IF (tic) THEN
               CALL LoadUpstreamData(osmnode(i1)%file_name,   ! Necessary to call LoadUpstreamData so many times?
      .               osmnode(i1)%file_format,
-     .               osmnode(i1)%par_mode,
      .               itube,coord,osmnode(i1)%file_shift,
-     .               expon,osmnode(i2)%ti(1),tmp1,s(inode)) 
+     .               expon,osmnode(i2)%ti(1),tmp1) 
               ti(inode) = tmp1 * osmnode(i1)%file_scale_ti
               WRITE(logfp,*) 'TI B:',ti(inode)
             ENDIF
