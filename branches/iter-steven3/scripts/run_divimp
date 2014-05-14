@@ -102,6 +102,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
+
 #      $DIVEXE < fort.5 > divout1
       nice +2 $DIVEXE < fort.5 > divout1
 #    Xpgdbg $DIVEXE < fort.5 > divout1
@@ -145,6 +146,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo "CORTEX not executed - by request"
     else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
       echo "CORTEX not executed - input file $OUTNAME.ctx not found"
+    else if ( $OUTONLY == "yes" ) then
+
     else
       fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
 
@@ -193,10 +196,10 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc osm_geometry.raw $CASENAME.raw.ogd
     mvc osm_legacy.raw   $CASENAME.raw.old
 #   Process tetrahedron files:
-    rename ".raw" ".raw.tet" -- tetrahedrons*.raw
-    rename ".raw" ".raw.fil" -- filaments*.raw
-    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet
-    rename "filaments"    "$CASENAME" -- filaments*.raw.fil
+    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
+    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
+    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
+    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null
   endif
 
   mvc fort.90 $CASENAME.osm.log
@@ -244,19 +247,19 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME         -- osm.idl.*
-  rename eirene  $CASENAME         -- eirene.idl.*
-  rename divimp  $CASENAME         -- divimp.* 
-  rename output  $CASENAME.out     -- output.*
-  rename idl     $CASENAME.idl     -- idl.*
-  rename profile $CASENAME.profile -- profile.*      # line-of-sight profiles from RAY
+  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
+  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
+  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
+  rename output  $CASENAME.out     -- output.*      >& /dev/null
+  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
+  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
-  rename ".transfer" ".eir"      -- eirene*.transfer
-  rename ".input"    ".eirdat"   -- eirene*.input
-  rename ".output"   ".eirprn"   -- eirene*.output
-  rename "eirene"    "$CASENAME" -- eirene*.eir*
+  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
+  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
+  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
+  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
 #  mvc eirene.transfer     $CASENAME.eir
 
   mvc eirene.spectra $CASENAME.eir.spectra
@@ -280,9 +283,12 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-  foreach FILENAME (`ls div.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+#  if ( ls div.* >& /dev/null ) then 
+    foreach FILENAME (`ls div.* >& /dev/null`)
+      mv $FILENAME $CASENAME.$FILENAME
+    end
+#  endif
+#exit
 #
 # ----------------------------------------------------------------------
 # MatLab files:
@@ -304,26 +310,30 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls mrt.*`)
+#  foreach FILENAME (`ls mrt.* >& /dev/null`)
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls ero.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls tet.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
 #
 # ----------------------------------------------------------------------
 # Martin O'Mullane files:
 #
-  mv mom $CASENAME.mom
+  mv mom $CASENAME.mom >& /dev/null
 #
 # ----------------------------------------------------------------------
 # Field line traces for ribbon grid:
 #
-  rm -f *.trace.*
+  rm -f *.trace.* >& /dev/null
   foreach FILENAME (`ls trace.*`)
     mv -f $FILENAME $CASENAME.$FILENAME
   end
 #
-  mv *image*.jpg $RESDIR
+  mv *image*.jpg $RESDIR  >& /dev/null
 #
 # ----------------------------------------------------------------------
 # Rename some EIRENE files:
@@ -365,7 +375,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     zipc $CASENAME.raw.osm
     zipc $CASENAME.raw.ogd
     zipc $CASENAME.raw.old
-    mv raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
+    mvc raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
   endif
 #  zipc $CASENAME.eir
 #  zipc $CASENAME.pin
@@ -382,13 +392,13 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #
 # Move all files to results directory, replacing any previous results:
 #
-  rm *.A
+  rm *.A  >& /dev/null
 #  zipc *.A
-  rm *.map
+  rm *.map  >& /dev/null
 
   if ($OUTONLY == "no" && $CORTEX_ONLY == "no") rm $RESDIR/$CASENAME.*
 
-  mv -f $CASENAME.* $RESDIR
+  mv -f $CASENAME.* $RESDIR  >& /dev/null
   chmod u+r $RESDIR/$CASENAME.*
 #
 # ----------------------------------------------------------------------
