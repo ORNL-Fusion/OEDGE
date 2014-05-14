@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE WRTPIN (title,equil,IOUNIT)
       IMPLICIT none

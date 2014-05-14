@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c     @PROCESS NOOPT
       SUBROUTINE PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
       IMPLICIT none
@@ -570,7 +570,8 @@ c
          endif
 c
          write(coment,
-     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g10.5))')
+c     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')  ! overflow, i.e. comment is *100, but 101 characters are specified - SL, 07/01/14
      >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
      >       dds(id),tmp_bratio,costet(id),
      >       sepdist2(id),middist(irds(id),in)

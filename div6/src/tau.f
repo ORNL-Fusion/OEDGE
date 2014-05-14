@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
@@ -4245,7 +4245,7 @@ c slmod begin
         IF     (KAREA2(IK,IR).LT.-1.0E-10) THEN 
           CALL ER('TAUVOL','Malformed cell detected, stopping',*99)       
         ELSEIF (KAREA2(IK,IR).LT.1.0E-06) THEN 
-          IF (WARNING_MESSAGE) THEN
+          IF (SLOUTPUT.AND.WARNING_MESSAGE) THEN
             WRITE(0,*) 'WARNING: Small area cell detected, using '//
      +                 'double precision calculation in TAUVOL'
             WARNING_MESSAGE = .FALSE.
@@ -11365,13 +11365,15 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-      IF (sloutput.AND.grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-         WRITE(0,*)
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*)
-         RETURN
+      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+        IF (sloutput) THEN
+          WRITE(0,*)
+          WRITE(0,*)'-------------------------------------------------'
+          WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+          WRITE(0,*)'-------------------------------------------------'
+          WRITE(0,*)
+        ENDIF
+        RETURN
       ENDIF
 c     slmod end
 c     

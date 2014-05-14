@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
       SUBROUTINE MONPRI (FACT,VFLUID,NIZS,SDTZS,sdtzs2,
      >            STOTS,DOUTS,RIONS,TDEP,TWALL,DPARAS,DCROSS,

@@ -1,4 +1,4 @@
-!     -*-Fortran-*-
+!     -*-set-auto-*-
 !
 ! Prefix:
 !
@@ -70,6 +70,7 @@
 
 
       END MODULE mod_sol28_params
+
 !
 ! ======================================================================
 !
@@ -77,13 +78,14 @@
       IMPLICIT none
       PUBLIC
 
-      INTEGER, PARAMETER :: WITH_TAG  = 1, NO_TAG = 2, ALL_LINES = 3,  
+      INTEGER, PARAMETER :: WITH_TAG = 1, NO_TAG = 2, ALL_LINES = 3,
      .                      DATA_ONLY = 4
 
+
       END MODULE mod_sol28_io
-!
-! ======================================================================
-!
+c
+c ======================================================================
+c
       MODULE mod_sol28
       USE mod_sol28_params
       IMPLICIT none
@@ -102,18 +104,18 @@
 !         INTEGER   :: tube(2)
 
 !...     I/O:
-         INTEGER   :: log    ! Log file option
-         INTEGER   :: logfp  ! File pointer for log file
+         INTEGER   :: log          ! Log file option
+         INTEGER   :: logfp        ! File pointer for log file
          INTEGER   :: debug
 
-         INTEGER   :: osm_load        ! Load status
-         CHARACTER :: f_osm_dir*512   ! 
-         CHARACTER :: f_osm_load*512  ! Name of file to be loaded
+         INTEGER   :: osm_load         ! Load status
+         CHARACTER :: f_osm_dir*512    ! 
+         CHARACTER :: f_osm_load*512   ! Name of file to be loaded
 !...     Grid:
-         INTEGER   :: f_grid_format           ! Format of equilibrium grid to be loaded
-         INTEGER   :: f_grid_load_method      ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
-         CHARACTER :: f_grid_file*512         ! Name of equilibrium grid to be loaded
-         INTEGER   :: f_grid_strip            ! Remove boundary cells (1=first and last cells, first and last rings)
+         INTEGER   :: f_grid_format            ! Format of equilibrium grid to be loaded
+         INTEGER   :: f_grid_load_method       ! Geometry load scheme 1-DIVIMP files, 2-OSM geometry setup
+         CHARACTER :: f_grid_file*512          ! Name of equilibrium grid to be loaded
+         INTEGER   :: f_grid_strip             ! Remove boundary cells (1=first and last cells, first and last rings)
          INTEGER   :: grd_ntdel               ! Number of tubes to delete after loading the grid
          INTEGER   :: grd_tdel(S28_MAXNTDEL)  ! List of tubes to delete
 !...     Flow control:
@@ -128,7 +130,7 @@
          INTEGER   :: sol_n
          INTEGER   :: sol_tube  (2,100)
          INTEGER   :: sol_option(  100)
-         INTEGER   :: bc(2)            ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
+         INTEGER   :: bc(2)         ! Boundary conditions: 1=targets, 2=upstream  ... targets can be different?
          INTEGER   :: p_ion(2)         ! Ionisation 
          REAL      :: p_ion_exp(2)     ! Exponent for exponential decay of the ionisation source for P_ION = 3
          REAL      :: p_ion_frac(2)    ! Imposed ionisation bound relative to half-ring ion sink (fluxes + vol. rec.)
@@ -187,109 +189,110 @@
 !     EIRENE options:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_eirene
-         REAL*4    :: version = 1.0
+        REAL*4    :: version = 1.0
 
-!...     i/o:
-         INTEGER   :: f_eirene_load     ! Load status of reference files
-         CHARACTER :: f_eirene_dir*512  ! Directory where EIRENE data files are located 
-         CHARACTER :: f_eirene_13*512   ! eirene.13
-         CHARACTER :: f_eirene_15*512   ! eirene.15 for time dependent runs
+!...    i/o:
+        INTEGER   :: f_eirene_load     ! Load status of reference files
+        CHARACTER :: f_eirene_dir*512  ! Directory where EIRENE data files are located 
+        CHARACTER :: f_eirene_13*512   ! eirene.13
+        CHARACTER :: f_eirene_15*512   ! eirene.15 for time dependent runs
 
-!...     Options:    
-         INTEGER   :: geom            ! geometry  2-triangles 3-tetrahedrons (toroidal)
-         INTEGER   :: time            ! Execution time (CPU time in seconds)
-         REAL      :: dtimv           ! ?
-         REAL      :: time0           ! ?
-         INTEGER   :: opacity         ! Lyman alpha photon opacity option
-         INTEGER   :: photons         ! Photon transport option
-         INTEGER   :: trim            ! Fast ion surface collision database
-         INTEGER   :: bgk             ! Neutral viscosity
-         INTEGER   :: niter           ! Number of Eirene self-iterations
-         INTEGER   :: ntime           ! Number of time steps
-         INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
-         INTEGER   :: ilspt           ! Sputering option
-         INTEGER   :: whipe           ! Reduce the plasma density to very low values (testing mode)
-!...     3D:
-         INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
-!        Tetrahedral mesh generation:
-         INTEGER       :: tet_n
-         REAL          :: tet_type     (EIR_MAXNTET)
-         REAL          :: tet_x1       (EIR_MAXNTET)  ! Crop boundary for the grid, if necessary (tet_type = 1.0)
-         REAL          :: tet_y1       (EIR_MAXNTET)  !   lower inner point = (x1,y1)  (and for refinement)
-         REAL          :: tet_z1       (EIR_MAXNTET)  !     (for refinement only)
-         REAL          :: tet_x2       (EIR_MAXNTET)  !   upper outer point = (x2,y2)
-         REAL          :: tet_y2       (EIR_MAXNTET)
-         REAL          :: tet_z2       (EIR_MAXNTET)  
-         INTEGER       :: tet_index    (EIR_MAXNTET)  ! Index of slice (tet_type=2.0 and 3.0)
-                                                      ! Tet_type = 2.0, slices:
-         INTEGER       :: tet_mode     (EIR_MAXNTET)  !   method for deciding the angular width of the slice
-         REAL*8        :: tet_param1   (EIR_MAXNTET)  !   1st parameter used to specify the angular width
-         REAL*8        :: tet_param2   (EIR_MAXNTET)  !   2nd parameter
-         REAL*8        :: tet_param3   (EIR_MAXNTET)  !   3rd general purpose parameter
-         CHARACTER*128 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
-         CHARACTER*128 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
-                                                      ! Tet_type = 3.0, sectors:
-         CHARACTER*128 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
-                                                      ! Tet_type = 4.0, full grid composite:
-         CHARACTER*128 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
-         REAL          :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
-
-!...     Surface properties in EIRENE:
-         INTEGER       :: sur_n       
-         REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
-         CHARACTER*128 :: sur_index   (EIR_MAXNSUR)  ! Poloidal index 
-         CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector 
-         INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
-         INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
-         INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
-         REAL          :: sur_tr1     (EIR_MAXNSUR)  ! Surface transparency 1
-         REAL          :: sur_tr2     (EIR_MAXNSUR)  ! Surface transparency 2
-         REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
-         INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
-         INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
-         CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.
-         REAL          :: sur_coverage(EIR_MAXNSUR)  ! defunct...
-         INTEGER       :: sur_hard    (EIR_MAXNSUR)  ! Make sure the specified surface properties are isolated to this surface only
-         INTEGER       :: sur_remap   (EIR_MAXNSUR)  ! For the evil remapping scheme, currently used to deal with perfectly conformal surfaces
-         CHARACTER*256 :: sur_tag     (EIR_MAXNSUR)
-!...     Particle energy spectra:
-         INTEGER      :: nadspc
-         INTEGER      :: ispsrf     (EIR_MAXNSPECTRA)  ! Surface index, <0=non-default standard, >0=additional surfaces
-         CHARACTER*32 :: ispsrf_ref (EIR_MAXNSPECTRA)  ! Which code does the surface index refer to?
-         INTEGER      :: iptyp      (EIR_MAXNSPECTRA)  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?
-         INTEGER      :: ipsp       (EIR_MAXNSPECTRA)  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.
-         INTEGER      :: isptyp     (EIR_MAXNSPECTRA)  ! Spectrum type wrt units, 1=1/eV/s, 2=1/s
-         INTEGER      :: nsps       (EIR_MAXNSPECTRA)  ! Number of bins
-         INTEGER      :: isrfcll    (EIR_MAXNSPECTRA)  ! Kind of spectrum, 0=surface flux
-         INTEGER      :: idirec     (EIR_MAXNSPECTRA)  ! If >0 then a projection on a direction is used in the statistics (??)
-         REAL         :: spcmn      (EIR_MAXNSPECTRA)  ! Lower bound of energy range for spectrum
-         REAL         :: spcmx      (EIR_MAXNSPECTRA)  ! Upper bound
-         REAL         :: spc_shift  (EIR_MAXNSPECTRA)  ! ??? for future use perhaps
-         REAL         :: spcplt_x   (EIR_MAXNSPECTRA)  ! ???
-         REAL         :: spcplt_y   (EIR_MAXNSPECTRA)  ! ???
-         REAL         :: spcplt_same(EIR_MAXNSPECTRA)  ! ???
-         REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
-         REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
-         REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
-         REAL         :: spc_p1     (EIR_MAXNSPECTRA,3)  ! staring point of LOS (for getting spectra for all cells that intersect the LOS)
-         REAL         :: spc_p2     (EIR_MAXNSPECTRA,3)  ! ending point
-         REAL         :: spc_dist   (EIR_MAXNSPECTRA)    ! location / distance of the cell along the LOS
-!...     Particle sources:
-         REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
-!         REAL      :: puff_type   (EIR_MAXNPUFF)
-!         INTEGER   :: puff_npts   (EIR_MAXNPUFF)        ! *** IN USE? ***
-!         REAL      :: puff_flux   (EIR_MAXNPUFF)
-!         REAL      :: puff_frac   (EIR_MAXNPUFF)
-!         INTEGER   :: puff_species(EIR_MAXNPUFF)
-!         INTEGER   :: puff_index  (EIR_MAXNPUFF)
-!         INTEGER   :: puff_energy (EIR_MAXNPUFF)
-!         INTEGER   :: puff_cosine_ind(EIR_MAXNPUFF)
-!         INTEGER   :: puff_cosine_max(EIR_MAXNPUFF)
-!         INTEGER   :: puff_pos (3,EIR_MAXNPUFF)
-!         INTEGER   :: puff_vec (3,EIR_MAXNPUFF)
-!         CHARACTER :: puff_note(  EIR_MAXNPUFF)*1024
-
+!...    Options:    
+        INTEGER   :: geom            ! geometry  2-triangles 3-tetrahedrons (toroidal)
+        INTEGER   :: time            ! Execution time (CPU time in seconds)
+        REAL      :: dtimv           ! ?
+        REAL      :: time0           ! ?
+        INTEGER   :: opacity         ! Lyman alpha photon opacity option
+        INTEGER   :: photons         ! Photon transport option
+        INTEGER   :: trim            ! Fast ion surface collision database
+        INTEGER   :: bgk             ! Neutral viscosity
+        INTEGER   :: niter           ! Number of Eirene self-iterations
+        INTEGER   :: ntime           ! Number of time steps
+        INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
+        INTEGER   :: ilspt           ! Sputering option
+        INTEGER   :: whipe           ! Reduce the plasma density to very low values (testing mode)
+!...    3D:
+        INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
+!       Tetrahedral mesh generation:
+        INTEGER       :: tet_n
+        REAL          :: tet_type     (EIR_MAXNTET)
+        REAL          :: tet_x1       (EIR_MAXNTET)  ! Crop boundary for the grid, if necessary (tet_type = 1.0)
+        REAL          :: tet_y1       (EIR_MAXNTET)  !   lower inner point = (x1,y1)  (and for refinement)
+        REAL          :: tet_z1       (EIR_MAXNTET)  !     (for refinement only)
+        REAL          :: tet_x2       (EIR_MAXNTET)  !   upper outer point = (x2,y2)
+        REAL          :: tet_y2       (EIR_MAXNTET)
+        REAL          :: tet_z2       (EIR_MAXNTET)  
+        INTEGER       :: tet_index    (EIR_MAXNTET)  ! Index of slice (tet_type=2.0 and 3.0)
+                                                     ! Tet_type = 2.0, slices:
+        INTEGER       :: tet_mode     (EIR_MAXNTET)  !   method for deciding the angular width of the slice
+        REAL*8        :: tet_param1   (EIR_MAXNTET)  !   1st parameter used to specify the angular width
+        REAL*8        :: tet_param2   (EIR_MAXNTET)  !   2nd parameter
+        REAL*8        :: tet_param3   (EIR_MAXNTET)  !   3rd general purpose parameter
+        CHARACTER*128 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
+        CHARACTER*128 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
+                                                     ! Tet_type = 3.0, sectors:
+        CHARACTER*128 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
+                                                     ! Tet_type = 4.0, full grid composite:
+        CHARACTER*128 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
+        REAL          :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
+!...    Surface properties in EIRENE:
+        INTEGER       :: sur_n       
+        REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
+        CHARACTER*128 :: sur_index   (EIR_MAXNSUR)  ! Poloidal index 
+        CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector 
+        INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
+        INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
+        INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
+        REAL          :: sur_tr1     (EIR_MAXNSUR)  ! Surface transparency 1
+        REAL          :: sur_tr2     (EIR_MAXNSUR)  ! Surface transparency 2
+        REAL          :: sur_recyct  (EIR_MAXNSUR)  ! Recycling fraction
+        INTEGER       :: sur_ilspt   (EIR_MAXNSUR)  ! Sputtering option
+        INTEGER       :: sur_temp    (EIR_MAXNSUR)  ! Over-ride of globally applied surface temperature
+        CHARACTER*64  :: sur_mat     (EIR_MAXNSUR)  ! Material, i.e. C, Be, W, etc.
+        REAL          :: sur_coverage(EIR_MAXNSUR)  ! defunct...
+        INTEGER       :: sur_hard    (EIR_MAXNSUR)  ! Make sure the specified surface properties are isolated to this surface only
+        INTEGER       :: sur_remap   (EIR_MAXNSUR)  ! For the evil remapping scheme, currently used to deal with perfectly conformal surfaces
+        CHARACTER*256 :: sur_tag     (EIR_MAXNSUR)
+!...    Particle energy spectra:
+        INTEGER      :: nadspc
+        INTEGER      :: ispsrf     (EIR_MAXNSPECTRA)  ! Surface index, <0=non-default standard, >0=additional surfaces
+        CHARACTER*32 :: ispsrf_ref (EIR_MAXNSPECTRA)  ! Which code does the surface index refer to?
+        INTEGER      :: iptyp      (EIR_MAXNSPECTRA)  ! Species type eg 1=atoms, 2=molecules, 3=test ions, 4=?
+        INTEGER      :: ipsp       (EIR_MAXNSPECTRA)  ! Species sub-index eg, 1=first atom species, 2=second atom species, etc.
+        INTEGER      :: isptyp     (EIR_MAXNSPECTRA)  ! Spectrum type wrt units, 1=1/eV/s, 2=1/s
+        INTEGER      :: nsps       (EIR_MAXNSPECTRA)  ! Number of bins
+        INTEGER      :: isrfcll    (EIR_MAXNSPECTRA)  ! Kind of spectrum, 0=surface flux
+        INTEGER      :: idirec     (EIR_MAXNSPECTRA)  ! If >0 then a projection on a direction is used in the statistics (??)
+        REAL         :: spcmn      (EIR_MAXNSPECTRA)  ! Lower bound of energy range for spectrum
+        REAL         :: spcmx      (EIR_MAXNSPECTRA)  ! Upper bound
+        REAL         :: spc_shift  (EIR_MAXNSPECTRA)  ! ??? for future use perhaps
+        REAL         :: spcplt_x   (EIR_MAXNSPECTRA)  ! ???
+        REAL         :: spcplt_y   (EIR_MAXNSPECTRA)  ! ???
+        REAL         :: spcplt_same(EIR_MAXNSPECTRA)  ! ???
+        REAL         :: spcvx      (EIR_MAXNSPECTRA)  ! x-direction for IDIREC >0
+        REAL         :: spcvy      (EIR_MAXNSPECTRA)  ! y-direction
+        REAL         :: spcvz      (EIR_MAXNSPECTRA)  ! z-direction
+        REAL         :: spc_p1     (EIR_MAXNSPECTRA,3)  ! staring point of LOS (for getting spectra for all cells that intersect the LOS)
+        REAL         :: spc_p2     (EIR_MAXNSPECTRA,3)  ! ending point
+        REAL         :: spc_dist   (EIR_MAXNSPECTRA)    ! location / distance of the cell along the LOS
+!...    Particle sources:
+        REAL      :: alloc           ! Flux / npts weighting (0.0 = npts only, 1.0 = flux only)
+!        REAL      :: puff_type      (  EIR_MAXNPUFF)
+!        INTEGER   :: puff_npts      (  EIR_MAXNPUFF)        ! *** IN USE? ***
+!        REAL      :: puff_flux      (  EIR_MAXNPUFF)
+!        REAL      :: puff_frac      (  EIR_MAXNPUFF)
+!        INTEGER   :: puff_species   (  EIR_MAXNPUFF)
+!        INTEGER   :: puff_index     (  EIR_MAXNPUFF)
+!        INTEGER   :: puff_energy    (  EIR_MAXNPUFF)
+!        INTEGER   :: puff_cosine_ind(  EIR_MAXNPUFF)
+!        INTEGER   :: puff_cosine_max(  EIR_MAXNPUFF)
+!        INTEGER   :: puff_pos       (3,EIR_MAXNPUFF)
+!        INTEGER   :: puff_vec       (3,EIR_MAXNPUFF)
+!        CHARACTER :: puff_note      (  EIR_MAXNPUFF)*1024
 c...    Strata:
+        INTEGER   :: ninitl                                    ! Random number seed for all strata (see www.eirene.de/manuals/eirene)
+        INTEGER   :: i1trc                                     ! Index range of particle tracks to be recorded (.eir.trc data file)
+        INTEGER   :: i2trc
         INTEGER   :: nstrata 
         REAL      :: type           (EIR_MAXNSTRATA)
         INTEGER   :: Z              (EIR_MAXNSTRATA)           ! atomic number
@@ -329,54 +332,51 @@ c...    Strata:
 !        REAL      :: soreni   
         REAL      :: sorcos       (EIR_MAXNSTRATA)
         REAL      :: sormax       (EIR_MAXNSTRATA)
-
 !...     Geometry / structure:
-         INTEGER   :: ntorseg         ! Number of toroidal segments for regular toroidal descretization
-         REAL      :: torfrac         ! Fraction of torus included in the simulation 
-         INTEGER   :: ntri            ! Number of triangle mesh information lines
-         REAL      :: tri             ! Triangle mesh specification
-         INTEGER   :: mat1            ! Target material?
-         INTEGER   :: mat2            ! Wall material?            
-         REAL      :: ctargt          ! Target surface temperature
-         REAL      :: cwallt          ! Wall surface temperature
-
-         REAL          :: add_version
-         INTEGER       :: nadd
-         INTEGER       :: add_type    (EIR_MAXNADD)
-         INTEGER       :: add_index   (EIR_MAXNADD)
-         CHARACTER*128 :: add_file    (EIR_MAXNADD)
-         CHARACTER*128 :: add_file_tag(EIR_MAXNADD)
-         CHARACTER*128 :: add_tag     (EIR_MAXNADD)
-         REAL          :: add_holex   (EIR_MAXNADD)
-         REAL          :: add_holey   (EIR_MAXNADD)
-
-!...     Voids between the fluid grid and the wall:
-         REAL          :: void_version
-         INTEGER       :: nvoid 
-         INTEGER       :: void_zone(  EIR_MAXNVOID)
-         INTEGER       :: void_grid(2,EIR_MAXNVOID)
-         INTEGER       :: void_wall(2,EIR_MAXNVOID)
-         INTEGER       :: void_add (2,EIR_MAXNVOID)
-         REAL          :: void_res (  EIR_MAXNVOID)
-         REAL          :: void_hole(2,EIR_MAXNVOID)
-         INTEGER       :: void_code(  EIR_MAXNVOID)
-         REAL          :: void_ne  (  EIR_MAXNVOID)
-         REAL          :: void_te  (  EIR_MAXNVOID)
-         REAL          :: void_ti  (  EIR_MAXNVOID)
-         CHARACTER*128 :: void_tag (EIR_MAXNVOID)         
-
-         CHARACTER*128 :: void2_grid(EIR_MAXNVOID)
-         CHARACTER*128 :: void2_wall(EIR_MAXNVOID)
-         CHARACTER*128 :: void2_add (EIR_MAXNVOID)
-         CHARACTER*128 :: void2_hole(EIR_MAXNVOID)
+        INTEGER   :: ntorseg         ! Number of toroidal segments for regular toroidal descretization
+        REAL      :: torfrac         ! Fraction of torus included in the simulation 
+        INTEGER   :: ntri            ! Number of triangle mesh information lines
+        REAL      :: tri             ! Triangle mesh specification
+        INTEGER   :: mat1            ! Target material?
+        INTEGER   :: mat2            ! Wall material?            
+        REAL      :: ctargt          ! Target surface temperature
+        REAL      :: cwallt          ! Wall surface temperature
+!...    Additional surfaces:
+        REAL          :: add_version
+        INTEGER       :: nadd
+        INTEGER       :: add_type    (EIR_MAXNADD)
+        INTEGER       :: add_index   (EIR_MAXNADD)
+        CHARACTER*128 :: add_file    (EIR_MAXNADD)
+        CHARACTER*128 :: add_file_tag(EIR_MAXNADD)
+        CHARACTER*128 :: add_tag     (EIR_MAXNADD)
+        REAL          :: add_holex   (EIR_MAXNADD)
+        REAL          :: add_holey   (EIR_MAXNADD)
+!...    Voids between the fluid grid and the wall:
+        REAL          :: void_version
+        INTEGER       :: nvoid 
+        INTEGER       :: void_zone (  EIR_MAXNVOID)
+        INTEGER       :: void_grid (2,EIR_MAXNVOID)
+        INTEGER       :: void_wall (2,EIR_MAXNVOID)
+        INTEGER       :: void_add  (2,EIR_MAXNVOID)
+        REAL          :: void_res  (  EIR_MAXNVOID)
+        REAL          :: void_hole (2,EIR_MAXNVOID)
+        INTEGER       :: void_code (  EIR_MAXNVOID)
+        REAL          :: void_ne   (  EIR_MAXNVOID)
+        REAL          :: void_te   (  EIR_MAXNVOID)
+        REAL          :: void_ti   (  EIR_MAXNVOID)
+        CHARACTER*128 :: void_tag  (  EIR_MAXNVOID)         
+        CHARACTER*128 :: void2_grid(  EIR_MAXNVOID)
+        CHARACTER*128 :: void2_wall(  EIR_MAXNVOID)
+        CHARACTER*128 :: void2_add (  EIR_MAXNVOID)
+        CHARACTER*128 :: void2_hole(  EIR_MAXNVOID)
 
       ENDTYPE type_options_eirene
-!
 !
 !     Interpolation nodes:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_node
-         REAL    :: type
+         REAL      :: type
+         CHARACTER :: s_type*32
          ! Geometry:
          INTEGER :: icell
          REAL    :: s
@@ -386,7 +386,6 @@ c...    Strata:
          REAL    :: v
          REAL    :: pe
          REAL    :: te
-         REAL    :: te_exp
          REAL    :: ni(0:S28_MAXNION)
          REAL    :: pi(0:S28_MAXNION)
          REAL    :: ti(0:S28_MAXNION)
@@ -394,13 +393,26 @@ c...    Strata:
          REAL    :: machno
          REAL    :: epot
          REAL    :: efield
+
+         REAL    :: rad_exp_ne
+         REAL    :: rad_exp_v
+         REAL    :: rad_exp_pe
+         REAL    :: rad_exp_te
+         REAL    :: rad_exp_ti
+         REAL    :: rad_exp_epot
+
          ! Interpolation parameters:
+         CHARACTER :: s_tube_range*128
+         CHARACTER :: s_rad_mode*32
+         CHARACTER :: s_rad_coord*32
+         CHARACTER :: s_rad_exp*32
          INTEGER   :: tube_range(2)
          INTEGER   :: rad_mode
          REAL      :: rad_coord
          REAL      :: rad_exp
          REAL      :: rad_x
          REAL      :: rad_y
+         CHARACTER :: s_par_mode*32
          INTEGER   :: par_mode
          REAL      :: par_exp
          INTEGER   :: par_set
@@ -1060,6 +1072,10 @@ c     .  opt_ti_kappa(2)
      .  qconv (0:S28_MAXNKS+1),
      .  efield(0:S28_MAXNKS+1),                ! Electric field strength
      .  epot  (0:S28_MAXNKS+1),                ! Electrostatic potential
+!       jrh mod begin
+!...    Magnetic field
+     .  bfield(0:S28_MAXNKS+1),
+!       jrh mod end
 !...
      .  machno(0:S28_MAXNKS+1,0:S28_MAXNION),  
 !...    ...:

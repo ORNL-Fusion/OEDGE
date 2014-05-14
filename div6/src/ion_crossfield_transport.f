@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
 c
       subroutine do_crossfield_step(ik,ir,ikold,irold,kk,s,theta,cross,

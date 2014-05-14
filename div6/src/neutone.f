@@ -1,4 +1,4 @@
-c     -*-Fortran-*-  
+c     -*Former Mode Specification*-  
 c
       SUBROUTINE LAUNCH_ONE (IMP,RST,ZST,RIZ,ZIZ,idstart,iwstart,
      >                   rc,temi,

@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c
 c ======================================================================
 c
@@ -452,7 +452,6 @@ c     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4)
       ENDDO
       CLOSE(fp)      
 
-
       WRITE(eirfp,*) ' *** VFIELD AND BFIELD NEED CORRECTING ***'
 
 c...  Plasma data:
@@ -466,17 +465,17 @@ c...  Header:
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '* BULK PLASMA DATA'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A9,2A8,2X,A10,2X,3A10,2X,3A12)') 
+      WRITE(fp,'(A9,2A10,2X,A10,2X,3A10,2X,3A12)') 
      .  '*   Index','Te','Ti','ne','vx',
      .  'vy','vz','Bx','By','Bz'
-      WRITE(fp,'(A9,2A8,2X,A10,2X,3A10,2X,3A12)') 
+      WRITE(fp,'(A9,2A10,2X,A10,2X,3A10,2X,3A12)') 
      .  '*        ','(eV)','(eV)','(cm-3)','(cm s-1)',
      .  '(cm s-1)','(cm s-1)','(Tesla)','(Tesla)','(Tesla)'
       WRITE(fp,*) nobj
       DO iobj = istart, iend
         iplasma = obj(iobj)%index(IND_PLASMA)
         ibfield = obj(iobj)%index(IND_BFIELD)
-        WRITE(fp,'(I9,2F8.2,2X,1P,E10.2,2X,3E10.2,2X,
+        WRITE(fp,'(I9,2F10.2,2X,1P,E10.2,2X,3E10.2,2X,
      .             3E12.4,2X,E12.4,0P,6X,3I4,I6)') iobj-istart+1,
      .    plasma(1,iplasma),          ! Te (eV)
      .    plasma(2,iplasma),          ! Ti (eV)
@@ -2057,6 +2056,10 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
+
+
+
+
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -2381,6 +2384,9 @@ c...  Impose filament structures:
         CALL FixTetrahedrons(istart,iend)
       ENDIF
 
+
+
+
 c...  Manual refinement:
       DO itet = 1, opt_eir%tet_n
         IF (opt_eir%tet_type(itet).NE.5.0) CYCLE
@@ -2698,8 +2704,8 @@ c          newobj%phi = SNGL(0.5D0*(dang(1,1) + dang(1,2)) / D_DEGRAD)
           newobj%nside = 4
           newobj%index(IND_IS ) = islice ! isector ! 1
           newobj%index(IND_ISI) = islice_index
-          newobj%index(IND_IK ) = try(itry)%index(IND_IK)
-          newobj%index(IND_IR ) = try(itry)%index(IND_IR)
+          newobj%index(IND_IK) = try(itry)%index(IND_IK)
+          newobj%index(IND_IR) = try(itry)%index(IND_IR)
 
           ishift = 0
           IF (itet.GE.2.AND.itet.LE.7) THEN
@@ -7843,7 +7849,7 @@ c        WRITE(fp06,90) 'Ftttt ttttt tttt'
         WRITE(fp06,92)  95.0, 95.0,800.0,0.0,   0.0,750.0
         WRITE(fp06,92)  45.0, 20.0
 c        WRITE(fp06,91) 0,0,1,2,3,4,5,6,9,0,1
-        WRITE(fp06,91) 1,20,1,2,3,4,5,6,9,0,1
+        WRITE(fp06,91) i1trc,i2trc,1,2,3,4,5,6,9,0,1
         WRITE(fp06,91) 0
       ELSE
         CALL ER('WriteBlock11_06','Trouble',*99)
@@ -7915,12 +7921,12 @@ c        WRITE(eirfp,*) 'NSTSI=',nstsi
         IF (.NOT.warning_reported.AND.surface(i1)%iliin.EQ.2.AND.
      .                                surface(i1)%ilcol.EQ.3) THEN
           warning_reported = .TRUE.
-          WRITE(0,*)
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
-          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) ' 
-          WRITE(0,*) '--------------------------------------------'
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*) '  NOTE: ILIIN=2 FOUND - SURFACE FLUXES NOT  ' 
+c          WRITE(0,*) '        REPORTED TO OSM (BUT ARE TO DIVIMP) ' 
+c          WRITE(0,*) '--------------------------------------------'
+c          WRITE(0,*)
         ENDIF
 
         IF (surface(i1)%reflect.EQ.LOCAL) THEN

@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Former Mode Specification*-
 c     
       subroutine do_parallel_step(seed,nrand,neutim,
      >                            spara,dspara,vpara,dvpara)
