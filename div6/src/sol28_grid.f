@@ -2103,7 +2103,7 @@ c...  Output:
       LOGICAL osmGetLine
       
       INTEGER, PARAMETER :: NUMZONE = 5
-      REAL*8,  PARAMETER :: HI   = 1.0E+20
+      REAL*8,  PARAMETER :: HI   = 1.0D+20
       REAL*8,  PARAMETER :: DTOL = 1.0D-07
 
       INTEGER   i,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,

@@ -46,8 +46,6 @@
 
       TYPE(type_wall_flux), ALLOCATABLE :: wall_flx(:)
 
-
-
 !     DIVIMP input options:
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_options_divimp
@@ -82,9 +80,12 @@
 !         INTEGER       :: nsputter
 !...     Store particle state data:
          INTEGER       :: pstate
+!...     Store particle state data:
+         INTEGER       :: niter               ! number of DIVIMP iterations
       ENDTYPE type_options_divimp
  
       TYPE(type_options_divimp) :: opt_div
+      INTEGER                   :: div_iter
 !
 !     ==================================================================
 !
@@ -187,21 +188,23 @@
 !     ------------------------------------------------------------------
 ! 
       TYPE, PUBLIC :: type_tdep_data
-         REAL      :: r
-         REAL      :: z
-         REAL      :: phi
-         REAL      :: s
-         REAL      :: cross
-         REAL      :: diag
-         REAL      :: temp
-         REAL      :: vel
-         REAL      :: charge
-         REAL      :: weight
+         REAL :: r
+         REAL :: z
+         REAL :: phi
+         REAL :: s
+         REAL :: cross
+         REAL :: diag
+         REAL :: temp
+         REAL :: vel
+         REAL :: charge
+         REAL :: weight
       ENDTYPE type_tdep_data
 !
 !     ------------------------------------------------------------------
 ! 
       INTEGER :: dummy
+
+      LOGICAL :: tdep_data_exists
 
       TYPE(type_tdep_data), ALLOCATABLE :: tdep_save(:)
       INTEGER :: tdep_save_n
@@ -213,9 +216,12 @@
       REAL    :: tdep_load_deltat
       REAL    :: tdep_load_qtim
       REAL    :: tdep_load_frac
+      REAL    :: tdep_load_ions_injected
+      REAL    :: tdep_load_ions_to_target
 
       END MODULE mod_divimp_tdep
 !
 ! ======================================================================
 ! ======================================================================
 !
+

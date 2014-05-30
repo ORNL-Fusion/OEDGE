@@ -399,6 +399,9 @@ c       ----------------------------------------------------------------
         CASE('DIV PARTICLE STATE')
           CALL ReadOptionI(buffer,1,opt_div%pstate)
 c       ----------------------------------------------------------------
+        CASE('DIV ITERATIONS')
+          CALL ReadOptionI(buffer,1,opt_div%niter)
+c       ----------------------------------------------------------------
         CASE('DIV RIBBON GRID')
           READ(buffer(itag+2:itag+4),*) version
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -1396,6 +1399,7 @@ c
       USE mod_legacy
       USE mod_solps
       USE mod_divimp
+      USE mod_divimp_tdep
       IMPLICIT none
 
       CALL InitializeLegacyVariables
@@ -1624,6 +1628,12 @@ c...  Divimp options:
       opt_div%rib_pol_b_def = 0.1
       opt_div%rib_pol_c_def = 1.0
       opt_div%rib_pol_d_def = 0.1
+
+      opt_div%niter = 0
+
+      tdep_data_exists = .FALSE.
+
+      div_iter = 0
 
 c...  User:
       CALL User_InitializeOptions

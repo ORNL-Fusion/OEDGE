@@ -84,7 +84,10 @@ c
 c slmod begin - temp
       include 'slcom'
 
+      integer divGetTdepIndex
+
       integer i,fp,load_i
+      real    tdep_rescale(maxizs),tdep_loss
 c slmod end
 
 c
@@ -1345,7 +1348,7 @@ c           from a previous run:
             NRAND = NRAND + 1
             CALL SURAND2(SEED, 1, RAN)
 c            write(0,*) 'branch',ran,tdep_load_frac
-            IF (RAN.GT.TDEP_LOAD_FRAC) THEN
+            IF (.NOT.TDEP_DATA_EXISTS.OR.(RAN.GT.TDEP_LOAD_FRAC)) THEN
 c              write(0,*) 'standard'
               R     = CXSC
               Z     = CYSC
@@ -1353,17 +1356,15 @@ c              write(0,*) 'standard'
               VEL   = 9.79E3 * SQRT(CTEM1 / CRMI) * PORM * QTIM
               SPUTY = 1.0
             ELSE
-              NRAND = NRAND + 1
+              NRAND  = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
-              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)  ! Randomly choose the index of a stored trajectory
-c...          left off: need to sort out setting the charge state, and also the strange initialization of 
-c             maxciz from cizsc ...
-c             DO 792 JZ = CIZSC, MAXCIZ  ! why would this be done? a bug?
-              R     = TDEP_LOAD(LOAD_I)%R
-              Z     = TDEP_LOAD(LOAD_I)%Z
-              PORM  = -1.0 * PORM
-              VEL   = TDEP_LOAD(LOAD_I)%VEL
-              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
+c              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)  ! Randomly choose the index of a stored trajectory
+              LOAD_I = divGetTdepIndex(RAN)
+              R      = TDEP_LOAD(LOAD_I)%R
+              Z      = TDEP_LOAD(LOAD_I)%Z
+              PORM   = -1.0 * PORM
+              VEL    = TDEP_LOAD(LOAD_I)%VEL
+              SPUTY  = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
 c              write(0,*) '_load',load_i,r,z,vel,sputy
             ENDIF
 c mk end
@@ -1422,14 +1423,14 @@ c       ion injection vs. neutral launch
 c
 c        TEMI   = CTEM1
 c
-c slmod begin
+c slmod begin - t-dep
         IF (LOAD_I.NE.-1) THEN
-          IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
-          MAXCIZ = CIZSC         ! not sure about this...
+          IZ = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
         ELSE
-          IZ     = CIZSC
-          MAXCIZ = CIZSC
+          IZ = CIZSC
         ENDIF
+        MINCIZ = IZ
+        MAXCIZ = IZ
         RIZ    = REAL(IZ)
         DSPUTY = DBLE(SPUTY)
 c
@@ -2360,7 +2361,11 @@ c       Reset time in ionization state IZ
 c
         cistiz = 1.0
 c
-        DO 792 JZ = CIZSC, MAXCIZ
+c slmod begin - t-dep
+        DO 792 JZ = MINCIZ, MAXCIZ
+c
+c        DO 792 JZ = CIZSC, MAXCIZ
+c slmod end
           RIONS(JZ) = RIONS(JZ) + SPUTY
           CXXX (JZ) = CXXX (JZ) + XXX(JZ) * SPUTY
           CSSS (JZ) = CSSS (JZ) + SSS(JZ) * SPUTY
@@ -4697,6 +4702,27 @@ c...  Dump the particle distribution to a file:
         WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
         WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
         WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(   F15.2,   A)') avatiz(1)+avatiz(2), 
+     .                              '  ions injected'
+        WRITE(fp,'(   F15.2   ,A)') tdep, '  ions to target'
+        WRITE(fp,'(2I6,A)') cizsc,nizs, '     ion balance'
+        DO i = cizsc, nizs
+          tdep_loss = cicabs(i) +  ciclos(i)
+          IF (rions(i).GT.0.0) THEN
+            tdep_rescale(i) = (rions(i) - tdep_loss) / rions(i) 
+          ELSE
+            tdep_rescale(i) = 1.0
+          ENDIF            
+          WRITE(fp,'(I6,5F12.2,F15.7,A)') 
+     .      i, 
+     .      rions (i),    ! number of ions reaching this charge state
+     .      cicabs(i),    ! number of ions absorbed on targets and wall
+     .      cicuts(i),    ! number of ions remaning at time cut-off
+     .      ciclos(i),    ! number of ions "lost"
+     .      rions(i)-cicabs(i)-ciclos(i)-cicuts(i),
+     .      tdep_rescale(i)
+        ENDDO
+
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{DATA PARTICLE}'
         WRITE(fp,*    ) tdep_save_n
@@ -4713,11 +4739,13 @@ c...  Dump the particle distribution to a file:
      .      tdep_save(i)%vel    ,
      .      tdep_save(i)%charge ,
      .      tdep_save(i)%weight
+c     .      tdep_save(i)%weight*tdep_rescale(NINT(tdep_save(i)%charge))
         ENDDO
         CLOSE(fp)
 c...    Clear memory:
         DEALLOCATE(tdep_save)
         IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
+        load_i = divGetTdepIndex(-1.0)
       ENDIF
 C slmod end
 C
@@ -8124,7 +8152,12 @@ c
 c              GOTO 790
 c
             ENDIF
+c slmod begin - t-dep
+            MINCIZ = MIN (MINCIZ, IZ)
             MAXCIZ = MAX (MAXCIZ, IZ)
+c
+c            MAXCIZ = MAX (MAXCIZ, IZ)
+c slmod end
           ENDIF
         ENDIF
 
