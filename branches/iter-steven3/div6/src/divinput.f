@@ -914,6 +914,11 @@ c          after the input file has been completely read in
       CALL ValidateUnstructuredInput
 
       CALL InitializeRelaxation
+
+c...  Updates a (small) data file that counts the number of DIVIMP
+c     iterations when there are multiple executions via the run script,
+c     and sets DIV_ITER:
+      CALL divUpdateIterationCounter
 c slmod end
 c
 c     jdemod

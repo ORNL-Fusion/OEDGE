@@ -1,6 +1,107 @@
 c
 c
 c ======================================================================
+c
+c subroutine: divGetTdepIndex
+c
+      INTEGER FUNCTION divGetTdepIndex(random_number)
+      USE mod_divimp_tdep
+
+      REAL, INTENT(IN) :: random_number
+
+      INTEGER              :: list_n
+      INTEGER, ALLOCATABLE :: list_index(:)
+
+      INTEGER :: i
+
+      SAVE
+
+      IF (random_number.EQ.-1.0) THEN
+        IF (ALLOCATED(list_index)) DEALLOCATE(list_index)
+        divGetTdepIndex = -1
+      ELSE
+
+        IF (.NOT.ALLOCATED(list_index)) THEN
+          ALLOCATE(list_index(tdep_load_n))
+          list_n = 0
+        ENDIF
+
+        IF (list_n.EQ.0) THEN
+          list_n = tdep_load_n
+          DO i = 1, list_n
+            list_index(i) = i
+          ENDDO
+        ENDIF
+
+        i = MIN(MAX(1,INT(REAL(list_n)*random_number)),list_n)
+
+        divGetTdepIndex = list_index(i)
+
+c        write(50,*) 'index getter',i,list_index(i),list_n
+
+        list_index(i) = list_index(list_n)
+
+        list_n = list_n - 1
+
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c subroutine: divUpdateIterationCounter
+c
+      SUBROUTINE divUpdateIterationCounter
+      USE mod_divimp
+      INCLUDE 'params'
+
+
+      INTEGER   fp
+      LOGICAL   exist
+      CHARACTER file*256
+
+
+      file = 'divimp_counter'
+
+      fp = 99
+
+      INQUIRE(FILE=file,EXIST=exist)
+
+      IF (exist) THEN
+        OPEN(fp,FILE=file,ACCESS='SEQUENTIAL',STATUS='OLD'    ,ERR=99)
+        READ(fp,*) div_iter
+        div_iter = div_iter + 1
+        CLOSE(fp)
+        OPEN(fp,FILE=file,ACCESS='SEQUENTIAL',STATUS='REPLACE',ERR=99)
+      ELSE
+        OPEN(fp,FILE=file,ACCESS='SEQUENTIAL',STATUS='NEW'    ,ERR=99)
+        div_iter = 1
+      ENDIF
+
+      WRITE(fp,*) div_iter
+
+      IF (div_iter.LT.opt_div%niter) THEN       
+        CLOSE(fp)
+      ELSE
+        CLOSE(fp,STATUS='delete')
+      ENDIF
+
+      IF (sloutput) THEN 
+        WRITE(0,*) 
+        WRITE(0,*) 
+        WRITE(0,*) ' ------ GOING AGAIN ------',div_iter,opt_div%niter
+        WRITE(0,*) 
+        WRITE(0,*) 
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c
+c ======================================================================
 c ======================================================================
 c ======================================================================
 c

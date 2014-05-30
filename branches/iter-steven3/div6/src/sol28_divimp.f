@@ -108,8 +108,8 @@ c      INCLUDE 'pindata'
       INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
      .              ncore,in,nsputter,ierr,nymfs,nds2,n,nsputter_last,
      .              idum
-      LOGICAL       tdep_data,ldum
-      REAL          yield,rdum1,ratio,frac
+      LOGICAL       ldum,tdep_data_try
+      REAL          yield,rdum1,ratio,frac,frac1
       CHARACTER*512 fname,command,resdir,buffer
       CHARACTER     t1*3,t2*6
 
@@ -117,7 +117,7 @@ c      INCLUDE 'pindata'
  
       nsputter = sputter_ndata
 
-      tdep_data = .FALSE.
+      tdep_data_try = .FALSE.
 
 c
 c     Set defaults for walls
@@ -154,18 +154,24 @@ c
  
       DO i = 1, nsputter
 
-        IF (tdep_data.AND.sputter_data(i)%data_type.NE.5)
+        IF (tdep_data_exists.AND.sputter_data(i)%data_type.NE.5)
      .    CALL ER('divCompileSputteringYields','Impurity launch/injec'//
      .            'tion snapshot data must appear after all surface '//
      .            'sputtering data in the input list',*99)
 
         IF     (sputter_data(i)%data_type.EQ.5) THEN
 c       ----------------------------------------------------------------
-          IF (tdep_data) 
+          IF (tdep_data_exists) 
      .      CALL ER('divCompileSputteringYields','Only one particle'//
      .            'distribution can be loaded at present',*99)
 
-          tdep_data = .TRUE.
+          tdep_data_exists = .TRUE.
+          tdep_data_try    = .TRUE.
+
+          sputter_data(i)%type       = sputter_data(i)%data_type
+          sputter_data(i)%version    = 1.0
+          sputter_data(i)%nsegments  = 0
+          sputter_data(i)%charge_max = 0
 c...
           fname = TRIM(resdir)//'/'//
      .            TRIM(sputter_data(i)%case_name)//'.'//
@@ -174,54 +180,57 @@ c         Copy file to run directory:
           command = 'cp -p '//TRIM(fname)//' .'
           WRITE(0,*) 'command: ',TRIM(fname)
           CALL CIssue(TRIM(command),status)
-          IF (status.NE.0) 
-     .      CALL ER('divCompileSputteringYields','Unable to copy '//
-     .              'data file',*99)
-
-          CALL find_free_unit_number(fp)
-          OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-     .         STATUS='OLD',IOSTAT=ierr,ERR=97)            
-
-          DO WHILE(osmGetLine(fp,buffer,WITH_TAG))
-            SELECTCASE (TRIM(buffer))
-              CASE("{VERSION}")
-                READ(fp,*) tdep_load_version
-              CASE("{DATA RUN}")
-                READ(fp,*) tdep_load_qtim
-                READ(fp,*) tdep_load_deltat
-                READ(fp,*) tdep_load_absfac
-                tdep_load_deltat = tdep_load_deltat * tdep_load_qtim 
-              CASE("{DATA PARTICLE}")
-                READ(fp,*) tdep_load_n
-                ALLOCATE(tdep_load(tdep_load_n))
-                DO j = 1, tdep_load_n
-                  ldum = osmGetLine(fp,buffer,NO_TAG)
-                  READ(buffer,*) idum,
-     .              tdep_load(j)%r      ,
-     .              tdep_load(j)%z      ,	  
-     .              tdep_load(j)%phi    ,     
-     .              tdep_load(j)%s      ,  
-     .              tdep_load(j)%cross  ,
-     .              tdep_load(j)%diag   ,
-     .              tdep_load(j)%temp   ,
-     .              tdep_load(j)%vel    ,
-     .              tdep_load(j)%charge ,
-     .              tdep_load(j)%weight
-                ENDDO
-              CASE DEFAULT
-                WRITE(0,*) 'TAG = ',TRIM(buffer)
-                CALL ER('divCompileSputteringYields','Unrecognized'//
-     .                  'tag found',*99)
-            ENDSELECT
-          ENDDO
-          CLOSE(fp)
-
-          sputter_data(i)%type       = sputter_data(i)%data_type
-          sputter_data(i)%version    = 1.0
-          sputter_data(i)%nsegments  = 0
-          sputter_data(i)%charge_max = 0
-	  sputter_data(i)%absfac     = tdep_load_absfac
-
+          IF (status.NE.0) THEN
+            IF (opt_div%pstate.EQ.1.AND.div_iter.EQ.1) THEN
+c             Necessary when DIVIMP is called multiple times in succession, 
+c             since the data file doesn't exist on the first iteration:
+              WRITE(0,*) '...ignoring on first iteration...'
+              tdep_data_exists = .FALSE.
+            ELSE
+              CALL ER('divCompileSputteringYields','Unable to copy '//
+     .                'data file',*99)
+            ENDIF
+          ELSE
+            CALL find_free_unit_number(fp)
+            OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .           STATUS='OLD',IOSTAT=ierr,ERR=97)            
+            DO WHILE(osmGetLine(fp,buffer,WITH_TAG))
+              SELECTCASE (TRIM(buffer))
+                CASE("{VERSION}")
+                  READ(fp,*) tdep_load_version
+                CASE("{DATA RUN}")
+                  READ(fp,*) tdep_load_qtim
+                  READ(fp,*) tdep_load_deltat
+                  READ(fp,*) tdep_load_absfac
+                  READ(fp,*) tdep_load_ions_injected
+                  READ(fp,*) tdep_load_ions_to_target
+                  tdep_load_deltat = tdep_load_deltat * tdep_load_qtim 
+                CASE("{DATA PARTICLE}")
+                  READ(fp,*) tdep_load_n
+                  ALLOCATE(tdep_load(tdep_load_n))
+                  DO j = 1, tdep_load_n
+                    ldum = osmGetLine(fp,buffer,NO_TAG)
+                    READ(buffer,*) idum,
+     .                tdep_load(j)%r      ,
+     .                tdep_load(j)%z      ,	  
+     .                tdep_load(j)%phi    ,     
+     .                tdep_load(j)%s      ,  
+     .                tdep_load(j)%cross  ,
+     .                tdep_load(j)%diag   ,
+     .                tdep_load(j)%temp   ,
+     .                tdep_load(j)%vel    ,
+     .                tdep_load(j)%charge ,
+     .                tdep_load(j)%weight
+                  ENDDO
+                CASE DEFAULT
+                  WRITE(0,*) 'TAG = ',TRIM(buffer)
+                  CALL ER('divCompileSputteringYields','Unrecognized'//
+     .                    'tag found',*99)
+              ENDSELECT
+            ENDDO
+            CLOSE(fp)
+	    sputter_data(i)%absfac = tdep_load_absfac
+          ENDIF
         ELSEIF (sputter_data(i)%data_type.EQ.4) THEN
 c       ----------------------------------------------------------------
           nsputter_last = i
@@ -632,7 +641,7 @@ c     Isolate the net influx for each individual species:
 
 c...  Add up the influxes for the individual sputtering species and 
 c     assign the total influx over-ride value for DIVIMP:
-      IF (tdep_data) THEN
+      IF (tdep_data_exists) THEN
 c
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c mk begin
@@ -667,28 +676,41 @@ c
 c Objective: Decide how nabsfac for this run should be set based on the values of ctimmax for this run and the previous one, and 
 c the value of nabsfac for the previous run.  I'm not even sure this can be done with the information provide here!  Bon chance!
 c
-
         IF (nsputter_last.GT.0) 
      .    nabsfac = SUM(sputter_data(1:nsputter_last)%absfac_net)
 
-        frac =  tdep_load_absfac * tdep_load_deltat / 
-     .        ( tdep_load_absfac * tdep_load_deltat +
-     .          nabsfac          * ctimmax          )
+c        frac =  tdep_load_absfac * tdep_load_deltat / 
+c     .        ( tdep_load_absfac * tdep_load_deltat +
+c     .          nabsfac          * ctimmax          )
 
-        write(0,*) 'frac   ',frac
-        write(0,*) '_qtim  ',tdep_load_qtim  , qtim
-        write(0,*) '_deltat',tdep_load_deltat, ctimmax
-        write(0,*) '_absfac',tdep_load_absfac, nabsfac
+
+c        frac =  tdep_load_absfac / 
+c     .        ( tdep_load_absfac + nabsfac )
+
+        frac1 = (tdep_load_ions_injected - tdep_load_ions_to_target) / 
+     .           tdep_load_ions_injected
+        frac =  tdep_load_absfac * frac1 / 
+     .        ( tdep_load_absfac * frac1 + nabsfac )
+
+        write(0,*) '_frac,1',frac,frac1
+        write(0,*) '_qtim  ',tdep_load_qtim  ,qtim
+        write(0,*) '_deltat',tdep_load_deltat,ctimmax
+        write(0,*) '_absfac',tdep_load_absfac,nabsfac
         write(0,*) '_n     ',tdep_load_n     
-
-        write(0,*) 'nabsfac',nabsfac,tdep_load_absfac
 
         tdep_load_frac = frac
 
 c        nabsfac =        frac  * tdep_load_absfac + 
 c     .            (1.0 - frac) * nabsfac 
-        nabsfac =                tdep_load_absfac + 
-     .                           nabsfac 
+c        nabsfac =                tdep_load_absfac + 
+c     .                           nabsfac 
+
+c...    From Martin, see email 18/07/2013:
+c        nabsfac = (tdep_load_deltat * tdep_load_absfac + 
+c     .             nabsfac * ctimmax) /
+c     .            (nabsfac * ctimmax)
+
+        nabsfac = tdep_load_absfac * frac1 + nabsfac
 
 c        nabsfac = 2.0
         write(0,*) 'nabsfac',nabsfac
@@ -696,7 +718,7 @@ c
 c mk end
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c 
-      ELSE
+      ELSEIF (.NOT.tdep_data_try) THEN
         nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
 c       Normalize the wall launch probabilities:
         wlprob(:,3) = wlprob(:,3) / nabsfac

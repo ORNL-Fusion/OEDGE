@@ -752,10 +752,12 @@ c
 
       INTEGER ion,ic1,ic2,icell,imap,solps_index(5),is,i,itarget,ic,
      .        shift
+      LOGICAL mismatch_warning
       REAL    mi,ne,ni,vi,te,ti,cs,pe,pi
      
       INTEGER, ALLOCATABLE :: map_solps(:)
 
+      DATA mismatch_warning /.FALSE./
       SAVE
 
       ion = 1
@@ -841,8 +843,16 @@ c...  Copy SOLPS data to the OSM fluid solution arrays:
       DO icell = ic1, ic2
         imap = map_osm(icell)
         IF (ABS(cell(icell)%cencar(1)-solps_cen(imap,1)).GT.TOL.OR.
-     .      ABS(cell(icell)%cencar(2)-solps_cen(imap,2)).GT.TOL) 
-     .    CALL ER('AssignSOLPSPlasma','Cell positions do not match',*99)
+     .      ABS(cell(icell)%cencar(2)-solps_cen(imap,2)).GT.TOL) THEN
+          IF (ALLOCATED(map_divimp)) THEN
+            IF (.NOT.mismatch_warning) THEN
+              mismatch_warning = .TRUE.
+              CALL WN('AssignSOLPSPlasma','Cell position mismatch')              
+            ENDIF
+          ELSE
+            CALL ER('AssignSOLPSPlasma','Cell position mismatch',*99)
+          ENDIF
+        ENDIF
         fluid(icell,ion)%ne = solps_data(solps_index(1))%data(imap)  
         fluid(icell,ion)%ni = solps_data(solps_index(2))%data(imap)  
         fluid(icell,ion)%vi = solps_data(solps_index(3))%data(imap)

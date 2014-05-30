@@ -524,7 +524,17 @@ c      exeline(len+1:len+2) = '\0'
 
       code = SYSTEM(exeline(1:len+1))
 
-      IF (code.NE.0) CALL ER('CIssue','Invalid command',*99)
+c slmod begin
+      IF (code.NE.0) THEN
+        WRITE(0,*) 
+        WRITE(0,*) '---------------------------------------------------'
+        WRITE(0,*) ' NO LONGER STOPPING THE CODE ON FAILED SYSTEM CALL'
+        WRITE(0,*) '---------------------------------------------------'
+        WRITE(0,*) 
+      ENDIF
+c
+c      IF (code.NE.0) CALL ER('CIssue','Invalid command',*99)
+c slmod end
 
       RETURN
 99    STOP
