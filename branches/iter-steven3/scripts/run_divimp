@@ -103,9 +103,17 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
 
-#      $DIVEXE < fort.5 > divout1
-      nice +2 $DIVEXE < fort.5 > divout1
-#    Xpgdbg $DIVEXE < fort.5 > divout1
+
+      divimp_loop:
+
+#        $DIVEXE < fort.5 > divout1
+        nice +2 $DIVEXE < fort.5 > divout1
+#        Xpgdbg $DIVEXE < fort.5 > divout1
+
+      if ( -e divimp_counter ) then
+        mvc raw.divimp_tdep_dist $RESDIR/$CASENAME.raw.divimp_tdep_dist
+        goto divimp_loop
+      endif
 
 #     Process this output now, since these file units conflict with OUT:
       mvc POSTSCPT.LIS old.LIS
@@ -147,10 +155,9 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
       echo "CORTEX not executed - input file $OUTNAME.ctx not found"
     else if ( $OUTONLY == "yes" ) then
-
     else
       fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
-
+      
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
 #
