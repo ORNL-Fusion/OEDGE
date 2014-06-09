@@ -463,7 +463,7 @@ c           write(0,*) 'buffer: '//TRIM(buffer)
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
 c             ----------------------------------------------------------
-              CASE(1:3,5)
+              CASE(1:3)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
@@ -477,6 +477,11 @@ c             ----------------------------------------------------------
                 sputter_data(i1)%tag = TRIM(buffer_array(6))
                 IF (sputter_data(i1)%fraction.EQ.-1.0) 
      .            sputter_data(i1)%fraction = 100.0
+c             ----------------------------------------------------------
+              CASE(5)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                sputter_data(i1)%tag       = TRIM(buffer_array(5))
 c             ----------------------------------------------------------
               CASE DEFAULT
 c             ----------------------------------------------------------

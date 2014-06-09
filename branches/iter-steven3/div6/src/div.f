@@ -4699,12 +4699,12 @@ c...  Dump the particle distribution to a file:
         WRITE(fp,*    ) 1.0
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{DATA RUN}'
-        WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
-        WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
-        WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(1P,E15.7,0P,A)') qtim       ,'  qtim'
+        WRITE(fp,'(1P,E15.7,0P,A)') cstmax*qtim,'  cstmax'
+        WRITE(fp,'(1P,E15.7,0P,A)') absfac     ,'  absfac'
         WRITE(fp,'(   F15.2,   A)') avatiz(1)+avatiz(2), 
      .                              '  ions injected'
-        WRITE(fp,'(   F15.2   ,A)') tdep, '  ions to target'
+        WRITE(fp,'(   F15.2   ,A)') tdep       ,'  ions to target'
         WRITE(fp,'(2I6,A)') cizsc,nizs, '     ion balance'
         DO i = cizsc, nizs
           tdep_loss = cicabs(i) +  ciclos(i)

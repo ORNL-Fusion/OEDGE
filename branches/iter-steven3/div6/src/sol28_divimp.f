@@ -110,7 +110,7 @@ c      INCLUDE 'pindata'
      .              idum
       LOGICAL       ldum,tdep_data_try
       REAL          yield,rdum1,ratio,frac,frac1
-      CHARACTER*512 fname,command,resdir,buffer
+      CHARACTER*512 fname,command,resdirtop,resdir,buffer,casename
       CHARACTER     t1*3,t2*6
 
       nymfs = nymfs_global ! so lame, but need NYMFS and it's not in a common block
@@ -148,7 +148,9 @@ c
 c     ------------------------------------------------------------------
 c     LOAD PARTICLE FLUX DATA
 c
-      CALL GetEnv('RESDIRTOP',resdir)
+      CALL GetEnv('RESDIRTOP',resdirtop)  ! These have to be present in the run script
+      CALL GetEnv('RESDIR'   ,resdir)
+      CALL GetEnv('CASENAME' ,casename)
 
       nsputter_last = 0
  
@@ -161,36 +163,44 @@ c
 
         IF     (sputter_data(i)%data_type.EQ.5) THEN
 c       ----------------------------------------------------------------
+c         LOAD IMPURITY STATE DISTRIBUTION RECORDERD DURING A PREVIOUS
+c         RUN, TO BE SAMPLED DURING THE CURRENT RUN
+c
           IF (tdep_data_exists) 
      .      CALL ER('divCompileSputteringYields','Only one particle'//
-     .            'distribution can be loaded at present',*99)
+     .              'distribution can be loaded at present',*99)
 
-          tdep_data_exists = .TRUE.
-          tdep_data_try    = .TRUE.
+          tdep_data_try = .TRUE.
 
           sputter_data(i)%type       = sputter_data(i)%data_type
           sputter_data(i)%version    = 1.0
           sputter_data(i)%nsegments  = 0
           sputter_data(i)%charge_max = 0
 c...
-          fname = TRIM(resdir)//'/'//
-     .            TRIM(sputter_data(i)%case_name)//'.'//
-     .            TRIM(sputter_data(i)%extension)
-c         Copy file to run directory:
-          command = 'cp -p '//TRIM(fname)//' .'
-          WRITE(0,*) 'command: ',TRIM(fname)
-          CALL CIssue(TRIM(command),status)
-          IF (status.NE.0) THEN
-            IF (opt_div%pstate.EQ.1.AND.div_iter.EQ.1) THEN
-c             Necessary when DIVIMP is called multiple times in succession, 
-c             since the data file doesn't exist on the first iteration:
-              WRITE(0,*) '...ignoring on first iteration...'
-              tdep_data_exists = .FALSE.
-            ELSE
-              CALL ER('divCompileSputteringYields','Unable to copy '//
-     .                'data file',*99)
-            ENDIF
+          IF (div_iter.EQ.1.AND.
+     .        sputter_data(i)%case_name(1:4).EQ.'none') THEN 
+            tdep_data_exists = .FALSE.
+	    sputter_data(i)%absfac = 0.0
           ELSE
+            tdep_data_exists = .TRUE.
+
+            IF (div_iter.EQ.1) THEN 
+c             On the first iteration, load the specified source data:
+              fname = TRIM(resdirtop)//'/'//
+     .                TRIM(sputter_data(i)%case_name)//'.'//
+     .                TRIM(sputter_data(i)%extension)
+            ELSE
+c             On subsequent iterations, load the data from the previous iteration:
+              fname = TRIM(resdir)//'/'//TRIM(casename)//'.'//
+     .                TRIM(sputter_data(i)%extension)
+            ENDIF
+c           Copy file to the execution directory:
+            command = 'cp -p '//TRIM(fname)//' .'
+            WRITE(0,*) 'command: ',TRIM(fname)
+            CALL CIssue(TRIM(command),status)
+            IF (status.NE.0) 
+     .        CALL ER('divCompileSputteringYields','Unable to copy '//
+     .                'data file',*99)
             CALL find_free_unit_number(fp)
             OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .           STATUS='OLD',IOSTAT=ierr,ERR=97)            
@@ -211,15 +221,15 @@ c             since the data file doesn't exist on the first iteration:
                   DO j = 1, tdep_load_n
                     ldum = osmGetLine(fp,buffer,NO_TAG)
                     READ(buffer,*) idum,
-     .                tdep_load(j)%r      ,
-     .                tdep_load(j)%z      ,	  
-     .                tdep_load(j)%phi    ,     
-     .                tdep_load(j)%s      ,  
-     .                tdep_load(j)%cross  ,
-     .                tdep_load(j)%diag   ,
-     .                tdep_load(j)%temp   ,
-     .                tdep_load(j)%vel    ,
-     .                tdep_load(j)%charge ,
+     .                tdep_load(j)%r     ,
+     .                tdep_load(j)%z     ,	  
+     .                tdep_load(j)%phi   ,     
+     .                tdep_load(j)%s     ,  
+     .                tdep_load(j)%cross ,
+     .                tdep_load(j)%diag  ,
+     .                tdep_load(j)%temp  ,
+     .                tdep_load(j)%vel   ,
+     .                tdep_load(j)%charge,
      .                tdep_load(j)%weight
                   ENDDO
                 CASE DEFAULT
@@ -300,14 +310,14 @@ c       ----------------------------------------------------------------
         ELSE
           nsputter_last = i
 c...
-          fname = TRIM(resdir)//'/'//
+          fname = TRIM(resdirtop)//'/'//
      .            TRIM(sputter_data(i)%case_name)//'.'//
      .            TRIM(sputter_data(i)%extension)
 c         Copy file to run directory:
           command = 'cp -p '//TRIM(fname)//' .'
           WRITE(0,*) 'command: ',TRIM(fname)
           CALL CIssue(TRIM(command),status)
-          IF (status.NE.0) 
+          IF (status.NE.0)      
      .      CALL ER('divCompileSputteringYields','Unable to copy '//
      .              'data file (2)',*99)
 c...	  
@@ -341,9 +351,6 @@ c...      Unzip file if necessary:
      .               sputter_data(i)%charge_max,     ! NIZS
      .               sputter_data(i)%nsegments,      ! NDS
      .               sputter_data(i)%ncore           ! number of radial core data points
-	    
-
-
 
             SELECTCASE (sputter_data(i)%format)
 c             ----------------------------------------------------------
@@ -410,7 +417,6 @@ c             ----------------------------------------------------------
           ELSE
             CALL ER('divCompileSputteringYields','Unrecognized '//
      .              'file VERSION number',*99)
-
           ENDIF
 10        CONTINUE
           IF (id.NE.nseg+1) sputter_data(i)%nsegments = id - 1
@@ -433,10 +439,6 @@ c
 
         sputter_data(i)%target_number = cion
  
-c        matt = get_target_index(cion)
-c        matp = get_plasma_index(    sputter_data(i)%atomic_number ,
-c     .                          INT(sputter_data(i)%atomic_mass  ))
-
         CALL SYLD96(matt,matp,cneutd,-1,-1,cion,
      .              sputter_data(i)%atomic_number,
      .              sputter_data(i)%atomic_mass  ,rdum1)
@@ -510,7 +512,6 @@ c     .    CALL ER('divCompileSputteringData','q95 not found',*99)  ! not really
      .    sputter_data(i)%core_percent_nfrac(ncore-3) 
 
         sputter_data(i)%absfac = frac
-
       ENDDO
 c
 c     ------------------------------------------------------------------
@@ -682,15 +683,13 @@ c
 c        frac =  tdep_load_absfac * tdep_load_deltat / 
 c     .        ( tdep_load_absfac * tdep_load_deltat +
 c     .          nabsfac          * ctimmax          )
-
-
 c        frac =  tdep_load_absfac / 
 c     .        ( tdep_load_absfac + nabsfac )
 
         frac1 = (tdep_load_ions_injected - tdep_load_ions_to_target) / 
      .           tdep_load_ions_injected
-        frac =  tdep_load_absfac * frac1 / 
-     .        ( tdep_load_absfac * frac1 + nabsfac )
+        frac  =  tdep_load_absfac * frac1 / 
+     .         ( tdep_load_absfac * frac1 + nabsfac )
 
         write(0,*) '_frac,1',frac,frac1
         write(0,*) '_qtim  ',tdep_load_qtim  ,qtim
@@ -785,14 +784,12 @@ c       just take what's in the first data set, which is probably zero:
 
       WRITE(0,*) 'nabsfac total=',nabsfac,nwlprob
 
-
       RETURN
 97    WRITE(0,*) 'OPEN error, IOSTAT=',ierr
       STOP 'shiiiit'
 99    WRITE(0,*) '  FILE NAME = ',TRIM(fname)
       STOP
       END
-
 c
 c ======================================================================
 c

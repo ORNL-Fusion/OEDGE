@@ -8,7 +8,6 @@
 #
 source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15
 #
-#
 # ======================================================================
 # SET SHELL VARIABLES
 # ======================================================================
@@ -47,18 +46,9 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Create and enter execution directory:
 #
-#  cd $DIVHOME/cases
-#  if ( -e $CASENAME ) rm -rf $CASENAME
-#  mkdir $CASENAME
-#  cd    $CASENAME
   if ( -e $EXEDIR ) rm -rf $EXEDIR
   mkdir $EXEDIR
   cd    $EXEDIR
-#  echo $QSUB_ID > qsub_id.txt
-#  if ( $QSUB_ID != "none" ) then
-#    ll ../* > ../test.dump
-#    rm ../$QSUB_ID*
-#  endif
 #
 # ----------------------------------------------------------------------
 # Case parameter summary to the screen:
@@ -126,7 +116,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #   ----------------------------------------------------------------------
 #   Execute OUT:
 #
-    if       ( $OUTNAME == "none" ) then
+    if       ( $CORTEX_ONLY == "yes" ) then
+    else if  ( $OUTNAME == "none" ) then
       echo "OUT not executed - by request"
     else if !( -e $DATDIR/$OUTNAME.d6o ) then
       echo "OUT not executed - input file $OUTNAME.d6o not found"
@@ -156,8 +147,12 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo "CORTEX not executed - input file $OUTNAME.ctx not found"
     else if ( $OUTONLY == "yes" ) then
     else
+      if ( -e $RESDIR/$CASENAME.idl.ps ) rm $RESDIR/$CASENAME.idl.ps
+
       fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
-      
+
+      if ( -e $RESDIR/$CASENAME.idl.ps && $CORTEX_ONLY == "no" ) mv $RESDIR/$CASENAME.idl.ps .
+
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
 #
@@ -274,7 +269,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   cpc core_analysis.dat $CASENAME.dat.midplane
 #  mvc core_analysis.dat ~/idl/lc/$CASENAME.dat
   
-
+#
 # Inversions:
 #
 # ----------------------------------------------------------------------
@@ -290,8 +285,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-#  if ( ls div.* >& /dev/null ) then 
-    foreach FILENAME (`ls div.* >& /dev/null`)
+#  if ( ls div.* ) then 
+    foreach FILENAME (`ls div.*`)
       mv $FILENAME $CASENAME.$FILENAME
     end
 #  endif
@@ -317,7 +312,6 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls mrt.*`)
-#  foreach FILENAME (`ls mrt.* >& /dev/null`)
     mv $FILENAME $CASENAME.$FILENAME
   end
   foreach FILENAME (`ls ero.*`)

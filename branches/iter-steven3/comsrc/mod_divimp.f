@@ -173,8 +173,6 @@
 !        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
 !      END SUBROUTINE divClean
 
-
-
       END MODULE mod_divimp_cneut
 !
 ! ======================================================================
@@ -220,6 +218,29 @@
       REAL    :: tdep_load_ions_to_target
 
       END MODULE mod_divimp_tdep
+!
+! ======================================================================
+! ======================================================================
+!
+      MODULE mod_divimp_3d
+      IMPLICIT none
+      SAVE
+      PUBLIC
+!
+!     ------------------------------------------------------------------
+! 
+      INTEGER :: cneut_test
+
+!
+!     ==================================================================
+!
+!      CONTAINS
+!
+!      SUBROUTINE     divClean
+!        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+!      END SUBROUTINE divClean
+!
+      END MODULE mod_divimp_3d
 !
 ! ======================================================================
 ! ======================================================================
