@@ -9,40 +9,29 @@ c
 
       REAL, INTENT(IN) :: random_number
 
-      INTEGER              :: list_n
-      INTEGER, ALLOCATABLE :: list_index(:)
-
-      INTEGER :: i
-
+      INTEGER              :: list_n,i
+      INTEGER, ALLOCATABLE :: list_i(:)
       SAVE
 
       IF (random_number.EQ.-1.0) THEN
-        IF (ALLOCATED(list_index)) DEALLOCATE(list_index)
+        IF (ALLOCATED(list_i)) DEALLOCATE(list_i)
         divGetTdepIndex = -1
       ELSE
-
-        IF (.NOT.ALLOCATED(list_index)) THEN
-          ALLOCATE(list_index(tdep_load_n))
+        IF (.NOT.ALLOCATED(list_i)) THEN
+          ALLOCATE(list_i(tdep_load_n))
           list_n = 0
         ENDIF
-
         IF (list_n.EQ.0) THEN
           list_n = tdep_load_n
           DO i = 1, list_n
-            list_index(i) = i
+            list_i(i) = i
           ENDDO
         ENDIF
-
         i = MIN(MAX(1,INT(REAL(list_n)*random_number)),list_n)
-
-        divGetTdepIndex = list_index(i)
-
-c        write(50,*) 'index getter',i,list_index(i),list_n
-
-        list_index(i) = list_index(list_n)
-
+        divGetTdepIndex = list_i(i)
+c        write(50,*) 'index getter',i,list_i(i),list_n
+        list_i(i) = list_i(list_n)
         list_n = list_n - 1
-
       ENDIF
 
       RETURN
@@ -57,18 +46,13 @@ c
       USE mod_divimp
       INCLUDE 'params'
 
-
       INTEGER   fp
       LOGICAL   exist
       CHARACTER file*256
 
-
       file = 'divimp_counter'
-
       fp = 99
-
       INQUIRE(FILE=file,EXIST=exist)
-
       IF (exist) THEN
         OPEN(fp,FILE=file,ACCESS='SEQUENTIAL',STATUS='OLD'    ,ERR=99)
         READ(fp,*) div_iter
