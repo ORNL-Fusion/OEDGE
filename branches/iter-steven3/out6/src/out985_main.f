@@ -1043,9 +1043,9 @@ c     .                   DCOS(pixel(i2)%xangle * 3.1415D0 / 180.0D0) *
 c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
  
           ENDDO
-          WRITE(0,*)
-          WRITE(0,*) 'INTEGRAL SUMMATION:',i1,int_sum
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) 'INTEGRAL SUMMATION:',i1,int_sum
+c          WRITE(0,*)
         ENDDO
       ENDIF
 

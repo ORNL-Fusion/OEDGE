@@ -168,7 +168,7 @@ c
       INCLUDE 'diagvel'
       INCLUDE 'reiser_com'
 
-      INTEGER   iint,iobj,ik,ir
+      INTEGER   iint,iobj,ik,ir,ishift
       CHARACTER tag*7
 
       write(0,*) 'nobj',nobj
@@ -185,8 +185,10 @@ c          write(0,*) 'test 2',obj(iobj)%gsur(1).NE.GT_TC
           IF (iint.EQ.1) THEN
             ik = obj(iobj)%ik            
             ir = obj(iobj)%ir
-            CALL inPutData(obj(iobj)%ik ,'IK' ,'none')            
-            CALL inPutData(obj(iobj)%ir ,'IR' ,'none')            
+            ishift = 1
+            IF (ir.GT.irtrap) ishift = ishift + 2
+            CALL inPutData(ik           ,'CELL','none')            
+            CALL inPutData(ir-ishift    ,'TUBE','none')            
             CALL inPutData(kss(ik,ir)   ,'KSS','m')            
             CALL inPutData(kps(ik,ir)   ,'KPS','m')            
           ENDIF
