@@ -179,6 +179,56 @@ $
 $
 $
 $
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'fluid grid       ( 1)'  1  4  100  0  0 1.0
+  {PLOTS}  1
+     'plot   wireframe   (001)'  1
+        'zoom' 0.00  0.00 3.00 3.00
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1
+     'line-of-sight   (1)'  1  000  01 002 00 0                 1 'B_ALPHA'
+     'line-of-sight   (1)'  1  000  06 012 01 0                 2 '*' 96 'vsu' 12 62 112 0  $ CII  @ 5143.30 A
+     'line-of-sight   (1)'  1  000  06 012 02 0                 2 '*' 96 'vsu'  2 52 102 0  $ CIII @ 4650.10 A
+     'line-of-sight   (1)'  0  000  02 004 00 0                 2 '*' 96 'pju'  9 24 0   0  $ HeI  @ 5877.50 A
+     'line-of-sight   (1)'  0  000  02 004 01 0                 2 '*' 96 'pju'  8 17 0   0  $ HeII @ 4686.40 A 
+     'line-of-sight   (1)'  0  000  04 009 00 0                 2 '*' 96 'pju' 18 41 0   0  $ BeI  @ 4409.17 A
+     'line-of-sight   (1)'  0  000  04 009 00 0                 2 '*' 96 'pju'  8 31 0   0  $ BeI  @ 4573.94 A
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju'  9 30 0   0  $ BeII @ 4362.24 A (JET uses 4360.9)
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju'  6 27 0   0  $ BeII @ 4674.64 A 
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju' 11 32 0   0  $ BeII @ 5272.32 A
+     'line-of-sight   (1)'  0  000  10 020 00 0                 2 '*' 96 'pju' 18 41 0   0  $ NeI  @ 4409.17 A
+     'line-of-sight   (1)'  0  000  10 020 01 0                 2 '*' 96 'pju'  6 27 0   0  $ NeII @ 4674.64 A 
+  {DETECTOR}  1  $ vertical chord for D/T measurements
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,z position     '   1.80000D+00   0.00001D+00    0.00001D+00     
+     'roll,tilt,swing    '   0.00000D+00   0.00000D+00    90.0000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    '  70.0D+00    70.00D+00                       
+     'pixel array        '    1       1
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'dummy_view'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
 '954   182 00 Ion particle tracks             '  99
 '000   Zoom'  0.650 0.000 2.20 2.20 
 $
