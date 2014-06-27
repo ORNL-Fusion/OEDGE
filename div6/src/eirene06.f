@@ -406,9 +406,9 @@ c...    Collect connection map information:
             isrf1(1) = surface(nsurface)%num
             IF (warning) THEN
               WRITE(0,*) 
-              WRITE(0,*) '----------------------------------'
-              WRITE(0,*) '   CLEANING TETRADRON MAP, BAD!'
-              WRITE(0,*) '----------------------------------'
+              WRITE(0,*) '--------------------------------------'
+              WRITE(0,*) '   TETRAHEDRON MAP CLEAN-UP = BAD!'
+              WRITE(0,*) '--------------------------------------'
               WRITE(0,*) 
               warning = .FALSE.
             ENDIF
@@ -458,7 +458,7 @@ c...  Plasma data:
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
-      WRITE(fp,'(A,F4.2,A)') 
+      WRITE(fp,'(A,F6.2,A)') 
      .  '* VERSION ',version,' OF '//
      .  fluid_code(1:LEN_TRIM(fluid_code))//
      .  ' PLASMA FILE FOR TETRAHEDRON GRID'
@@ -1422,7 +1422,7 @@ c        dang(12,2) = 180.0D0   !  180.0D0
 
 
 c     *** HACK ***  
-      dang = dang + 60.0
+c      dang = dang + 60.0
 
       DO isector = 1, nseg
         WRITE(0,'(A,I6,2F12.6)') 
@@ -2822,7 +2822,7 @@ c      PARAMETER (TOL=1.0E-05,DTOL=1.0D-07)
       INTEGER i1,i2,i3,i4,v1,v2,v3,v4,knot,ring,side,target,
      .        xupdate(10),yupdate(10),ix,iy,iscan,problem_triangle
       LOGICAL test,output,malformed,dummy_test, ! surface_assigned,
-     .        wall_assignment,grid_assignment,warning_given
+     .        wall_assignment,grid_assignment,warning_given,something
       REAL    xmin,xmax,ymin,ymax,xval,yval
       REAL*8  x(0:2),y(0:2),s,t,dist1,dist2,dist3,dist4
 
@@ -3280,9 +3280,32 @@ c...          Side vertex 1:
               ENDIF
 c...          Side vertex 2:
               IF (test) THEN
+
+                something = .FALSE.
+                IF (surface(i2)%index(2).EQ.1014) THEN
+                  something = .TRUE.
+                  write(eirfp,*) 'something  ',
+     .               surface(i2)%index(2),i1,v1
+                  write(eirfp,*) '           ',
+     .               s,t
+                  write(eirfp,*) '           ',
+     .               x(2),y(2)
+                ENDIF
+
                 x(2) = ver(tri(i1)%ver(v2),1)
                 y(2) = ver(tri(i1)%ver(v2),2)
                 test = test.AND.PointOnLine(x,y,s,t,6,output)
+
+                IF (something) THEN
+                  write(eirfp,*) '           ',
+     .               test
+                  write(eirfp,*) '           ',
+     .               s,t
+                  write(eirfp,*) '           ',
+     .               x(2),y(2)
+                ENDIF
+ 
+
                 IF (i1.EQ.problem_triangle) THEN
                   WRITE(eirfp,*) '=2>',x(0),y(0)
                   WRITE(eirfp,*) '   ',x(1),y(1)
@@ -3298,10 +3321,10 @@ c...            Assign surface index, as appropriate:
                     CALL WN('ProcessTriangles_06','More than one '//
      .                      'surface assignment identified C')
                     WRITE(eirfp,*) 'multi-assignment',i1,v1
-                    WRITE(eirfp,*) 'current  ',surface(i2)%index(3)
-                    WRITE(eirfp,*) '         ',tri(i1)%sideindex(1:3,v1)
-                    WRITE(eirfp,*) 'new      ',tri(i1)%sur(v1)
-                    WRITE(eirfp,*) '         ',surface(i2)%index(1:2)
+                    WRITE(eirfp,'(A,3I8)') 'current  ',
+     .                surface(i2)%index(3),tri(i1)%sideindex(3:4,v1)
+                    WRITE(eirfp,'(A,3I8)') 'new      ',
+     .                 tri(i1)%sur(v1),surface(i2)%index(1:2)
                     CYCLE
                   ENDIF
 c     .              CALL ER('ProcessTriangles_06','More than one '//
@@ -3313,6 +3336,13 @@ c     .                      'surface assignment identified C',*98)
                   ENDIF
 c...              Need to identify which non-default standard surface
 c                 should be defined: ... 
+
+                  IF (something) THEN
+                    write(eirfp,*) 'trying',
+     .                surface(i2)%index(3),v1,
+     .                tri(i1)%sideindex(4,v1),surface(i2)%index(2)
+                  ENDIF
+
                   IF (surface(i2)%index(3).NE.0) THEN
                     tri(i1)%sur(v1) = surface(i2)%index(3)
                     tri(i1)%sideindex(3,v1) = surface(i2)%index(1)  ! Store xVESM index of surface
@@ -3488,11 +3518,11 @@ c
       WRITE(fp,'(A,F10.2)') 'EIRENE TRIANGLE GRID SETTINGS:',
      .  opt%void_version
       IF (opt%void_version.EQ.1.0) THEN 
-        WRITE(fp,'(A4,3(2X,A8),A10,2X,A18,2X,A4,2X,3A10)') 
+        WRITE(fp,'(A4,3(2X,A20),A10,2X,A18,2X,A4,2X,3A10)') 
      .    'zone','grid1,2','wall1,2','add1,2','res','hole','code',
      .    'ne','Te','Ti'
         DO ivoid = 1, opt%nvoid
-          WRITE(fp,'(I4,3(2X,2I4),F10.4,2X,2F9.4,2X,I4,2X,1P,
+          WRITE(fp,'(I4,3(2X,2I10),F10.4,2X,2F9.4,2X,I4,2X,1P,
      .               3E10.2,0P)') 
      .      opt%void_zone(    ivoid),
      .      opt%void_grid(1:2,ivoid),
@@ -3510,7 +3540,7 @@ c
      .    'zone','grid','wall','add','res','code',
      .    'ne','Te','Ti'
         DO ivoid = 1, opt%nvoid
-          WRITE(fp,'(I4,3(2X,A10),2X,F10.4,2X,I10,1P,3(2X,E10.2),0P)') 
+          WRITE(fp,'(I4,3(2X,A20),2X,F10.4,2X,I10,1P,3(2X,E10.2),0P)') 
      .      opt%void_zone (ivoid),
      .      TRIM(opt%void2_grid(ivoid)),
      .      TRIM(opt%void2_wall(ivoid)),
@@ -5142,7 +5172,7 @@ c        WRITE(fp,'(I6,2F12.7)') i2,pts(i2,1),pts(i2,2)
 c...  Call triangle:
       IF (area.EQ.0.0) area = 0.01
       WRITE(command,10) 'triangle -p -q -a',area,' -Y triangle.poly>tmp'
- 10   FORMAT(A,F10.8,A)
+ 10   FORMAT(A,F11.8,A)
       WRITE(eirfp,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
       WRITE(0    ,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
       CALL CIssue(command(1:LEN_TRIM(command)),code)
@@ -5867,7 +5897,7 @@ c     grids for Detlev:
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
-      WRITE(fp,'(A,F4.2,A)') 
+      WRITE(fp,'(A,F6.2,A)') 
      .  '* VERSION ',version,' OF '//
      .  fluid_code(1:LEN_TRIM(fluid_code))//
      .  ' PLASMA FILE FOR TRIANGULAR GRID'

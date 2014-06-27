@@ -322,7 +322,7 @@ c
       LOGICAL assigned(2),first_message,active
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc,
-     .        transp1,transp2
+     .        transp1,transp2,file_version
       CHARACTER buffer*1024,fname*512,ftag*128
 
       first_message = .TRUE.
@@ -652,6 +652,14 @@ c         --------------------------------------------------------------
             ftag =TRIM(opt_eir%add_file_tag(i1))
             OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .           STATUS='OLD',ERR=97)
+            DO WHILE (.TRUE.)
+              READ(fp,*) buffer
+              IF (buffer(1:1).NE.'*') THEN
+                READ(buffer,*) file_version                
+                WRITE(0,*) 'FILE VERSION!  ',file_version
+                EXIT
+              ENDIF
+            ENDDO
             active = .FALSE.
             x2 = -999.0
             z1 = -1.0D+18
@@ -661,21 +669,43 @@ c              WRITE(0,*) 'BUFFER ',LEN_TRIM(buffer),'>'//
 c     .                   TRIM(buffer)//'<'
               IF (buffer(1:1).EQ.'{'.AND.active) EXIT
               IF (active) THEN 
-                READ(buffer,*,END=10) x1,y1
-                IF (x2.NE.-999.0) THEN 
-c                  WRITE(0,*) 'processing...'
-                  nsurface = NewEireneSurface_06(VESSEL_WALL)
-                  surface(nsurface)%index(2) = opt_eir%add_index(i1)
-                  surface(nsurface)%v(1,1) = DBLE(x1)
-                  surface(nsurface)%v(2,1) = DBLE(y1)
-                  surface(nsurface)%v(3,1) = DBLE(z1)
-                  surface(nsurface)%v(1,2) = DBLE(x2)
-                  surface(nsurface)%v(2,2) = DBLE(y2)
-                  surface(nsurface)%v(3,2) = DBLE(z2)
-                ENDIF
-                x2 = x1
-                y2 = y1
- 10             CONTINUE
+                SELECTCASE (NINT(file_version))
+c                 --------------------------------------------------------
+                  CASE (1)
+                    READ(buffer,*,END=10) x1,y1
+                    IF (x2.NE.-999.0) THEN 
+c                      WRITE(0,*) 'processing...'
+                      nsurface = NewEireneSurface_06(VESSEL_WALL)
+                      surface(nsurface)%index(2) = opt_eir%add_index(i1)
+                      surface(nsurface)%v(1,1) = DBLE(x1)
+                      surface(nsurface)%v(2,1) = DBLE(y1)
+                      surface(nsurface)%v(3,1) = DBLE(z1)
+                      surface(nsurface)%v(1,2) = DBLE(x2)
+                      surface(nsurface)%v(2,2) = DBLE(y2)
+                      surface(nsurface)%v(3,2) = DBLE(z2)
+                    ENDIF
+                    x2 = x1
+                    y2 = y1
+ 10                 CONTINUE
+c                 --------------------------------------------------------
+                  CASE (2)
+                    READ(buffer,*,END=20) x1,y1,x2,y2
+                    nsurface = NewEireneSurface_06(VESSEL_WALL)
+                    write(0,*) 'buff',nsurface,buffer(1:20)
+                    surface(nsurface)%index(2) = opt_eir%add_index(i1)
+                    surface(nsurface)%v(1,1) = DBLE(x1)
+                    surface(nsurface)%v(2,1) = DBLE(y1)
+                    surface(nsurface)%v(3,1) = DBLE(z1)
+                    surface(nsurface)%v(1,2) = DBLE(x2)
+                    surface(nsurface)%v(2,2) = DBLE(y2)
+                    surface(nsurface)%v(3,2) = DBLE(z2)
+ 20                 CONTINUE
+c                 ------------------------------------------------------
+                  CASE DEFAULT
+                    CALL ER('LoadEireneOption','Unknown additional '//
+     .                      'line segment file version',*99)
+c                 ------------------------------------------------------
+                ENDSELECT
               ENDIF
               IF (buffer(1:1).EQ.'{'.AND..NOT.active.AND.
      .            osmCheckTag(buffer,ftag)) active = .TRUE.
