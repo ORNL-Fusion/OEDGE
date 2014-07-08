@@ -1273,6 +1273,14 @@ c
          CALL PRC(SP//'SEPARATRIX. THIS POWER LOSS')
          call prq(sp//'IS DISTRTIBUTED EVENLY OVER SMAX *',pp_pow_dist)
          call prc(sp//'FROM EACH TARGET ON THE MAIN SOL RINGS.')
+      elseif (switch(swppelec).eq.3.0) then
+         CALL PRC(S1//'PP ELEC POW OPTION 3: PP ELECTRON POWER'//
+     >                ' LOSS COMPENSATION TERM IS ON')
+         call prc(sp//'ION POWER LOST TO LOCAL PFZ TARGET')
+         call prc(sp//'IS DISTRIBUTED TO MAIN SOL RINGS USING')
+         call prc(sp//'ONE OF 5 POSSIBLE RING DISTRIBUTION OPTIONS')
+         call prc(sp//'IT IS DISTRTIBUTED EVENLY TO THE XPOINT ON')
+         call prc(sp//'THE MAIN SOL RINGS')
       ENDIF
 c
 c     Private plasma ION TARGET power LOSS compensation term
@@ -1300,6 +1308,14 @@ c
          CALL PRC(SP//'SEPARATRIX. THIS POWER LOSS')
          call prq(sp//'IS DISTRTIBUTED EVENLY OVER SMAX *',pp_pow_dist)
          call prc(sp//'FROM EACH TARGET ON THE MAIN SOL RINGS.')
+      elseif (switch(swppion).eq.3.0) then
+         CALL PRC(S1//'PP ION POW OPTION 3 : PP ION POWER'//
+     >                ' LOSS COMPENSATION TERM IS ON')
+         call prc(sp//'ION POWER LOST TO LOCAL PFZ TARGET')
+         call prc(sp//'IS DISTRIBUTED TO MAIN SOL RINGS USING')
+         call prc(sp//'ONE OF 5 POSSIBLE RING DISTRIBUTION OPTIONS')
+         call prc(sp//'IT IS DISTRTIBUTED EVENLY TO THE XPOINT ON')
+         call prc(sp//'THE MAIN SOL RINGS')
       ENDIF
 c
 c     Private plasma PRESSURE LOSS compensation term
@@ -1327,6 +1343,14 @@ c
          CALL PRC(SP//'SEPARATRIX. THIS PRESSURE')
          call prq(sp//'IS DISTRTIBUTED EVENLY OVER SMAX *',pp_pow_dist)
          call prc(sp//'FROM EACH TARGET ON THE MAIN SOL RINGS.')
+      elseif (switch(swppress).eq.3.0) then
+         CALL PRC(S1//'PP PRESSURE OPTION 3 : PP PRESSURE'//
+     >                ' LOSS COMPENSATION TERM IS ON')
+         call prc(sp//'PRESSURE LOST TO LOCAL PFZ TARGET')
+         call prc(sp//'IS DISTRIBUTED TO MAIN SOL RINGS USING')
+         call prc(sp//'ONE OF 5 POSSIBLE RING DISTRIBUTION OPTIONS')
+         call prc(sp//'IS DISTRTIBUTED EVENLY TO THE XPOINT ON')
+         call prc(sp//'THE MAIN SOL RINGS')
       ENDIF
 c
 c     Viscosity term
@@ -4041,7 +4065,8 @@ c
 c
 c
       subroutine calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
-     >                      presstarg,gamcor,gamecor,ike2d_start)
+     >                      presstarg,gamcor,gamecor,ike2d_start,
+     >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol)
       implicit none
       include 'params'
       include 'solparams'
@@ -4062,7 +4087,16 @@ c
 
       ! record total actual flux to sol and pfz target regions - inner and outer
       real*8 :: solpfz_fluxes(2,2,4) ! note: this code only works properly for single null/non-extended geometries
+      ! distribute extra sources to sol from pfz
+      real*8 :: g_pfzsol(maxpts,3)
+      real*8 :: pe_pfzsol(maxpts,3)
+      real*8 :: pi_pfzsol(maxpts,3)
+      real*8 :: pr_pfzsol(maxpts,3)
+      integer :: dist_opt
+      real*8 :: dist_param
 
+
+      
 
 c
 c     This subroutine calculates the target partcle and
@@ -4072,6 +4106,11 @@ c
 c
 c     Local Variables
 c
+
+      real*8 :: dist_fact(maxpts,2)
+      real*8 :: maxpress(2)
+      integer :: maxpress_ir(2)
+
       integer ik,ir,in,id,ierr,ringno
       external ringno
       real rfact,v0
@@ -4515,7 +4554,9 @@ c
 
           do ir = irsep,nrs
 
-            if (ir.le.irsep) then 
+            if (ir.eq.irwall.or.ir.eq.irtrap) cycle
+
+            if (ir.le.irwall) then 
                in=1
             else
                in=2
@@ -4532,11 +4573,15 @@ c
 
          end do
 
-c        do id = 1,2
-             write(6,'(a,2i8,6(1x,g12.5))') 'SOL-PFZ FLUX:',in,id,
+         in = 1
+             write(6,'(a,2i8,6(1x,g12.5))') 'SOL FLUX:',in,id,
      >           solpfz_fluxes(in,id,1),solpfz_fluxes(in,id,2),
      >           solpfz_fluxes(in,id,3),solpfz_fluxes(in,id,4)
-c        end do
+
+          in = 2
+             write(6,'(a,2i8,6(1x,g12.5))') 'PFZ FLUX:',in,id,
+     >           solpfz_fluxes(in,id,1),solpfz_fluxes(in,id,2),
+     >           solpfz_fluxes(in,id,3),solpfz_fluxes(in,id,4)
 
 
       end do
@@ -4552,6 +4597,133 @@ c        end do
          ! sepdist2 contains the distance along the target to the target element 
          !
          
+
+      ! find maximum pressure inner and outer
+      maxpress=0.0
+      maxpress_ir = 0
+
+      do ir = irsep,nrs
+         do id = 1,2
+            if (presstarg(ir,id).gt.maxpress(id)) then 
+               maxpress(id) = presstarg(ir,id)
+               maxpress_ir(id) = ir
+            endif
+         end do
+      end do
+
+      dist_fact = 0
+
+      ! flat distribution over distance dist_param
+      if (dist_opt.eq.1) then 
+
+         do ir = irsep,irwall
+            do id = 1,2
+              if (sepdist2(idds(ir,id)).lt.dist_param) then 
+                 dist_fact (ir,id) = dds(idds(ir,id))
+                 dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
+     >                           + dist_fact(ir,id)
+              endif
+           end do
+        end do
+
+      ! linear decay distribution over distance dist_param (largest at separatrix)a
+      elseif (dist_opt.eq.2) then
+      
+
+         do ir = irsep,irwall
+            do id = 1,2
+              if (sepdist2(idds(ir,id)).lt.dist_param) then 
+                 dist_fact (ir,id) = dds(idds(ir,id)) * 
+     >                   (dist_param-sepdist2(idds(ir,id)))/dist_param
+                 dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
+     >                           + dist_fact(ir,id)
+              endif
+           end do
+        end do
+
+
+
+      ! exponential decay distribution with lambda = dist_param (largest at separatrix)a
+      elseif (dist_opt.eq.3) then
+
+         do ir = irsep,irwall
+            do id = 1,2
+                 dist_fact (ir,id) = dds(idds(ir,id)) 
+     >                        * exp(-sepdist2(idds(ir,id))/dist_param)
+                 dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
+     >                           + dist_fact(ir,id)
+           end do
+        end do
+
+
+         
+      ! linear decay to peak of pressure profile on target
+      elseif (dist_opt.eq.4) then
+
+         do ir = irsep,irwall
+            do id = 1,2
+              if (ir.le.maxpress_ir(id)) then 
+                 dist_fact (ir,id) = dds(idds(ir,id)) * 
+     >                   (dist_param-sepdist2(idds(ir,id)))/dist_param
+                 dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
+     >                           + dist_fact(ir,id)
+              endif
+           end do
+        end do
+
+
+      ! exponential decay to peak of pressure profile on target
+      elseif (dist_opt.eq.5) then
+
+         do ir = irsep,irwall
+            do id = 1,2
+              if (ir.le.maxpress_ir(id)) then 
+                 dist_fact (ir,id) = dds(idds(ir,id)) 
+     >                        * exp(-sepdist2(idds(ir,id))/dist_param)
+                 dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
+     >                           + dist_fact(ir,id)
+              endif
+           end do
+        end do
+
+
+      endif
+
+      ! normalize distribution 
+      do ir = irsep,irwall
+         do id = 1,2
+            dist_fact(ir,id) = dist_fact(ir,id)/dist_fact(irwall+1,id)
+         end do 
+      end do 
+
+
+      ! distribute pfz fluxes
+      do ir = irsep,irwall
+
+         do id = 1,2
+
+         g_pfzsol(ir,id) = solpfz_fluxes(2,id,1)
+     >                  *dist_fact(ir,id)/dds(idds(ir,id))
+         pe_pfzsol(ir,id) = solpfz_fluxes(2,id,2)
+     >                  *dist_fact(ir,id)/dds(idds(ir,id))
+         pi_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
+     >                  *dist_fact(ir,id)/dds(idds(ir,id))
+         pr_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
+     >                  *dist_fact(ir,id)/dds(idds(ir,id))
+
+       write(6,'(a,2i8,6(1x,g12.5))') 'ADDITIONAL FLUX:',ir,id,
+     >     g_pfzsol(ir,id),pe_pfzsol(ir,id), 
+     >     pi_pfzsol(ir,id),pr_pfzsol(ir,id) 
+
+         end do 
+         
+         
+
+       end do
+
+
+
+
          
 !      lambda = 0.01
 !      dist_opt = 1
