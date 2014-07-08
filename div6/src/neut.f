@@ -4815,7 +4815,7 @@ c
            sheath_ti = ktids(id)
         else
 c sltmp
-          IF (sloutput) STOP 'STOP: SHOULD NOT USE SHEATH VALUES'  
+c          IF (sloutput) STOP 'STOP: SHOULD NOT USE SHEATH VALUES'  
 c
 c          The code assumes for now that Te=Ti when the
 c          sheath potential is directly specified. 

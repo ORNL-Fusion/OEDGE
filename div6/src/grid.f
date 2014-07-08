@@ -1084,7 +1084,7 @@ c...      Process low IK index target:
             irds(in) = ir
             id = FindNum(platco,nplat,ir)
             IF (id.EQ.0) 
-     .        CALL ER('BuildTargets','Unable to find high IK '//
+     .        CALL ER('BuildTargets','Unable to find low IK '//
      .                'index target coordinates',*99)
             rp(in) = platco(id,4)
             zp(in) = platco(id,5)

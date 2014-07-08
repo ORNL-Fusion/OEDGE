@@ -25,7 +25,8 @@ c
      >                   intarea,pinpute,pinputi,gtarg,e2dgtarg,
      >                   vpg,n1center,n1final,simag,ionptarg,
      >                   elecptarg,presstarg,pae_end,pai_end,pae_start,
-     >                   pai_start,fnorm2
+     >                   pai_start,fnorm2,
+     >                   g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol
       save /solcommon/
 
       common /solcommon2/ ionsrc,intioniz,
@@ -89,6 +90,8 @@ c
      >       gtarg(mxspts,3),areasum(mxspts),n1center,n1final,
      >       simag,ionptarg(mxspts,3),elecptarg(mxspts,3),
      >       presstarg(mxspts,3),
+     >       g_pfzsol(mxspts,3),pe_pfzsol(mxspts,3),
+     >       pi_pfzsol(mxspts,3),pr_pfzsol(mxspts,3),
      >       pae_end,pai_end,fnorm2,intioniz(mxspts),
      >       intqi(mxspts),intqe(mxspts),qesrc(mxspts),
      >       qisrc(mxspts),qesum,qisum,e2dm0,lensst,peicf

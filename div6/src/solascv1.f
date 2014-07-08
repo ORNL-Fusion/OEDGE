@@ -815,7 +815,8 @@ c
 c     Calculate the target particle and power outfluxes.
 c
       call calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
-     >                presstarg,gamcor,gamecor,ike2d_start)
+     >                presstarg,gamcor,gamecor,ike2d_start,
+     >                g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol)
 c
 c     If pin is available
 c     Call routine to calculate GPERP CORection factors
@@ -1299,6 +1300,12 @@ c
                ppelecpow = -elecptarg(ircor,2)
 c
             endif
+
+         elseif (actswppelec.eq.3.0) then
+c
+c           see comment above regarding "-" sign
+c
+            ppelecpow = -pe_pfzsol(ir,2)
 c
          endif
 c
@@ -1326,6 +1333,12 @@ c
                ppionpow = -ionptarg(ircor,2)
 c
             endif
+c
+         elseif (actswppelec.eq.3.0) then
+c
+c           see comment above regarding "-" sign
+c
+            ppionpow = -pi_pfzsol(ir,2)
 c
          endif
 c
@@ -1356,6 +1369,12 @@ c
             endif
 c
             write(0,*) 'Press2:',actswppress,ir,ircor,pp_press
+c
+         elseif (actswppress.eq.3.0) then
+c
+c           see comment above regarding "-" sign
+c
+            pp_press = pr_pfzsol(ir,2)
 c
          endif
 
