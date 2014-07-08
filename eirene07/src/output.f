@@ -1797,7 +1797,12 @@ C  AND PUT THEM FROM CREAC(..,..,IR) ONTO DA,DP,DM,DI, AND DN ARRAY
 C
         IR=NREACI+1
         IF (IR.GT.NREAC) THEN
-          WRITE (iunout,*) 'FROM SUBROUTINE HGAMMA: '
+c
+c     jdemod - change to HBETA
+c
+c          WRITE (iunout,*) 'FROM SUBROUTINE HGAMMA: '
+          WRITE (iunout,*) 'FROM SUBROUTINE HBETA: '
+c
           CALL MASPRM('NREAC',5,NREAC,'IR',2,IR,IERROR)
           CALL EXIT_OWN(1)
         ENDIF
@@ -1806,8 +1811,15 @@ C
         H123='H.12'
         CRC='OT '
 C
-C  H(n=5)/H(n=1)
-        REAC='2.1.5d   '
+c jdemod - change reaction to match '99
+c
+C  H(n=4)/H(n=1)
+C  X H(n=5)/H(n=1)
+c
+c        REAC='2.1.5d   '
+        REAC='2.1.5c   '
+c jdemod
+c
         REACDAT(NREACI+1)%LOTH = .FALSE.
         CALL SLREAC(NREACI+1,FILNAM,H123,REAC,CRC,
      .              RCMIN, RCMAX, FP, JFEXMN, JFEXMX,'  ',0)
@@ -1816,8 +1828,16 @@ C  H(n=5)/H(n=1)
             DA51(J-1,I-1)=REACDAT(NREACI+1)%OTH%POLY%DBLPOL(J,I)
           ENDDO
         ENDDO
-C  H(n=5)/H+
-        REAC='2.1.8d   '
+C
+c jdemod - change reaction to match '99
+c
+C  H(n=4)/H+
+C  X H(n=5)/H+
+c
+c        REAC='2.1.8d   '
+        REAC='2.1.8c   '
+c jdemod
+c
         REACDAT(NREACI+1)%LOTH = .FALSE.
         CALL SLREAC(NREACI+1,FILNAM,H123,REAC,CRC,
      .              RCMIN, RCMAX, FP, JFEXMN, JFEXMX,'  ',0)
@@ -1826,8 +1846,16 @@ C  H(n=5)/H+
             DP51(J-1,I-1)=REACDAT(NREACI+1)%OTH%POLY%DBLPOL(J,I)
           ENDDO
         ENDDO
-C  H(n=5)/H2(g)
-        REAC='2.2.5d   '
+C
+c jdemod - change reaction to match '99
+c
+C  H(n=4)/H2(g)
+C  X H(n=5)/H2(g)
+c
+c        REAC='2.2.5d   '
+        REAC='2.2.5c   '
+c jdemod
+c
         REACDAT(NREACI+1)%LOTH = .FALSE.
         CALL SLREAC(NREACI+1,FILNAM,H123,REAC,CRC,
      .              RCMIN, RCMAX, FP, JFEXMN, JFEXMX,'  ',0)
@@ -1836,8 +1864,16 @@ C  H(n=5)/H2(g)
             DM51(J-1,I-1)=REACDAT(NREACI+1)%OTH%POLY%DBLPOL(J,I)
           ENDDO
         ENDDO
-C  H(n=5)/H2+(g)
-        REAC='2.2.14d  '
+C
+c jdemod - change reaction to match '99
+c
+C  H(n=4)/H2+(g)
+C  X H(n=5)/H2+(g)
+c
+c        REAC='2.2.14d  '
+        REAC='2.2.14c  '
+c jdemod
+c
         REACDAT(NREACI+1)%LOTH = .FALSE.
         CALL SLREAC(NREACI+1,FILNAM,H123,REAC,CRC,
      .              RCMIN, RCMAX, FP, JFEXMN, JFEXMX,'  ',0)
@@ -1846,8 +1882,16 @@ C  H(n=5)/H2+(g)
             DI51(J-1,I-1)=REACDAT(NREACI+1)%OTH%POLY%DBLPOL(J,I)
           ENDDO
         ENDDO
-C  H(n=5)/H-
-        REAC='7.2d     '
+C
+c jdemod - change reaction to match '99
+c
+C  H(n=4)/H-
+C  X H(n=5)/H-
+c
+c        REAC='7.2d     '
+        REAC='7.2c     '
+c jdemod
+c
         REACDAT(NREACI+1)%LOTH = .FALSE.
         CALL SLREAC(NREACI+1,FILNAM,H123,REAC,CRC,
      .              RCMIN, RCMAX, FP, JFEXMN, JFEXMX,'  ',0)
@@ -1920,8 +1964,14 @@ C  NOTHING TO BE DONE
      .             NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,
      .             NSIGI_SPC,TRCFLE)
       ELSE
-        WRITE (iunout,*) 'ERROR IN HGAMMA: DATA FOR STRATUM ISTRA= ',IST
-        WRITE (iunout,*) 'ARE NOT AVAILABLE. H-GAMMA ABANDONNED'
+c
+c     jdemod - change to reference HBETA
+c
+c        WRITE (iunout,*) 'ERROR IN HGAMMA: DATA FOR STRATUM ISTRA= ',IST
+c        WRITE (iunout,*) 'ARE NOT AVAILABLE. H-GAMMA ABANDONNED'
+        WRITE (iunout,*) 'ERROR IN HBETA: DATA FOR STRATUM ISTRA= ',IST
+        WRITE (iunout,*) 'ARE NOT AVAILABLE. H-BETA ABANDONNED'
+c
         RETURN
       ENDIF
 C
@@ -2013,8 +2063,12 @@ C  RATIO OF DENSITIES: H2+ TO H2, EXCL. ION CONVERSION
         RATIO2=EXP(RATIO2)
 
 C
+c
+c   jdemod - change comment to HBETA
+c
 C  CHANNEL 1
-C  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  H BETA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  X  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
 C  LINEAR IN PDENA (IONIZATION)
 C
         DO 200 IATM=1,NATMI
@@ -2025,8 +2079,12 @@ C  SIGADD: PHOTONS/SEC/CM**3
           SIGADD1=SIGADD1+DA*FAC42
 200     CONTINUE
 C
+c
+c   jdemod - change comment to HBETA
+c
 C  CHANNEL 2
-C  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  H BETA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  X  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
 C  LINEAR IN DIIN (RECOMBINATION)
 C
         DO 205 IPLS=1,NPLSI
@@ -2037,8 +2095,12 @@ C  SIGADD: PHOTONS/SEC/CM**3
           SIGADD2=SIGADD2+DPP*FAC42
 205     CONTINUE
 C
+c
+c   jdemod - change comment to HBETA
+c
 C  CHANNEL 3
 C  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  X  H BETA SOURCE RATE:  PHOTONS/SEC/CM**3
 C  LINEAR IN PDENM (DISSOCIATION OF H2)
 C
         DO 210 IMOL=1,NMOLI
@@ -2049,8 +2111,12 @@ C  SIGADD: PHOTONS/SEC/CM**3
           SIGADD3=SIGADD3+DM*FAC42
 210     CONTINUE
 C
+c
+c   jdemod - change comment to HBETA
+c
 C  CHANNEL 4
-C  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  H BETA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  X  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
 C  LINEAR IN PDENI: (DISSOCIATION OF H2+)
 C
 C  REVISED: USE (PDENM * DENSITY RATIO H2+/H2) NOW, INSTEAD OF PDENI
@@ -2070,8 +2136,12 @@ C  SIGADD: PHOTONS/SEC/CM**3
           SIGADD4=SIGADD4+DI*FAC42
 215     CONTINUE
 C
+c
+c   jdemod - change comment to HBETA
+c
 C  CHANNEL 5
-C  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  H BETA SOURCE RATE:  PHOTONS/SEC/CM**3
+C  X  H GAMMA SOURCE RATE:  PHOTONS/SEC/CM**3
 C  LINEAR IN H- DENSITY (CHARGE EXCHANGE RECOMBINATION)
 C
 C  REVISED: USE (PDENM * DENSITY RATIO H-/H2) NOW, INSTEAD OF PDENI
