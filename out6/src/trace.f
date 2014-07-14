@@ -1079,7 +1079,7 @@ c slmod end
 c
 c     init 
 c
-      debug_grtrac = .true.
+      debug_grtrac = .false.
 
 C
 c      INTEGER COLOUR(8)
