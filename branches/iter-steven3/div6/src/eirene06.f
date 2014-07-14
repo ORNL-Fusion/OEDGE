@@ -5172,7 +5172,7 @@ c        WRITE(fp,'(I6,2F12.7)') i2,pts(i2,1),pts(i2,2)
 c...  Call triangle:
       IF (area.EQ.0.0) area = 0.01
       WRITE(command,10) 'triangle -p -q -a',area,' -Y triangle.poly>tmp'
- 10   FORMAT(A,F11.8,A)
+ 10   FORMAT(A,F10.8,A)
       WRITE(eirfp,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
       WRITE(0    ,*) 'COMMAND: >'//command(1:LEN_TRIM(command))//'<'
       CALL CIssue(command(1:LEN_TRIM(command)),code)
