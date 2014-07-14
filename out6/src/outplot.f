@@ -1811,6 +1811,11 @@ c
         endif
 c slmod end
       ELSE
+c
+c        jdemod - debug
+c
+         write(6,*) 'SUPIMP2 - SELECT?'
+
         IR = IRWALL - 1
 c slmod begin
 c...    Changes made to accommodate broken grids (look
@@ -1837,6 +1842,7 @@ c       out, here they come):
               WRITE(0,*) 'ERROR: PROBLEM WITH CONNECTION MAP IN SUPIMP2'
               STOP
             ENDIF
+            write(6,*) '1:'
             CALL GRTRAC(KVALS(1,1),KVALS(1,2),2,NAME,'LINE',-1)
           ENDDO
           DEFCOL = 0
@@ -1850,6 +1856,7 @@ c       out, here they come):
           K = KORPG(NKS(IR),IR)
           KVALS(NKS(IR)+1,1) = RVERTP(3,K)
           KVALS(NKS(IR)+1,2) = ZVERTP(3,K)
+            write(6,*) '2:'
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 
@@ -1863,6 +1870,8 @@ c       out, here they come):
           K = KORPG(NKS(IR),IR)
           KVALS(NKS(IR)+1,1) = RVERTP(4,K)
           KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            write(6,*) '3:'
+
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
           IR = IROUTS(NKS(IRSEP2),IRSEP2)
           DO IK = 1, NKS(IR)
@@ -1873,6 +1882,7 @@ c       out, here they come):
           K = KORPG(NKS(IR),IR)
           KVALS(NKS(IR)+1,1) = RVERTP(4,K)
           KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            write(6,*) '4:'
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
         ENDIF
 c
@@ -1894,6 +1904,7 @@ C
             KVALS(IK,1) = RVERTP(4,K)
             KVALS(IK,2) = ZVERTP(4,K)
           ENDDO
+            write(6,*) '5:'
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR),NAME,'LINE',-1)
         ENDIF
 C
@@ -1910,6 +1921,7 @@ C
             K = KORPG(NKS(IR),IR)
             KVALS(NKS(IR)+1,1) = RVERTP(4,K)
             KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            write(6,*) '6:'
             CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
           ENDIF
 C
@@ -1923,14 +1935,23 @@ C
           K = KORPG(NKS(IR),IR)
           KVALS(NKS(IR)+1,1) = RVERTP(4,K)
           KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+            write(6,*) '7:'
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
           DEFCOL = NCOLS + 1
         ENDIF
 C
 c slmod begin
         IF     (barebones) THEN
-        ELSEIF (NBR.GT.0) THEN
+C
+C       jdemod - the following code should work for all grids both broken and not ... so might as well use it since it
+c                will work for unbroken double null grids (which have issues with the base code below.)
+C
+        ELSEIF (.true.) THEN
+c
+c        ELSEIF (NBR.GT.0) THEN
 c...      Draw targets:
+c        
+c
           DEFCOL = NCOLS + 2
           DO IR = IRSEP, NRS
             IF (IDRING(IR).EQ.-1) CYCLE
@@ -1939,48 +1960,53 @@ c...      Draw targets:
             RVALS(1,2) = ZVERTP(1,K)
             RVALS(2,1) = RVERTP(2,K)
             RVALS(2,2) = ZVERTP(2,K)
+            write(6,*) '8:'
             CALL GRTRAC(RVALS(1,1),RVALS(1,2),2,NAME,'LINE',-1)
             K = KORPG(NKS(IR),IR)
             RVALS(1,1) = RVERTP(3,K)
             RVALS(1,2) = ZVERTP(3,K)
             RVALS(2,1) = RVERTP(4,K)
             RVALS(2,2) = ZVERTP(4,K)
+            write(6,*) '9:'
             CALL GRTRAC(RVALS(1,1),RVALS(1,2),2,NAME,'LINE',-1)
           ENDDO
 c...      Restore black ink:
           DEFCOL = 1
         ELSE
-          ID = 0
-          DO IR = IRTRAP+1,NRS
+
+            ID = 0
+            DO IR = IRTRAP+1,NRS
+              ID = ID + 1
+              K = KORPG(1,IR)
+              RVALS(ID,1) = RVERTP(1,K)
+              RVALS(ID,2) = ZVERTP(1,K)
+            ENDDO
+            DO IR = IRSEP,IRWALL-1
+              ID = ID + 1
+              K = KORPG(1,IR)
+              RVALS(ID,1) = RVERTP(1,K)
+              RVALS(ID,2) = ZVERTP(1,K)
+            ENDDO
             ID = ID + 1
-            K = KORPG(1,IR)
-            RVALS(ID,1) = RVERTP(1,K)
-            RVALS(ID,2) = ZVERTP(1,K)
-          ENDDO
-          DO IR = IRSEP,IRWALL-1
-            ID = ID + 1
-            K = KORPG(1,IR)
-            RVALS(ID,1) = RVERTP(1,K)
-            RVALS(ID,2) = ZVERTP(1,K)
-          ENDDO
-          ID = ID + 1
-          K = KORPG(1,IRWALL-1)
-          RVALS(ID,1) = RVERTP(2,K)
-          RVALS(ID,2) = ZVERTP(2,K)
-          CALL GRTRAC(RVALS(1,1),RVALS(1,2),ID,NAME,'LINE',-1)
+            K = KORPG(1,IRWALL-1)
+            RVALS(ID,1) = RVERTP(2,K)
+            RVALS(ID,2) = ZVERTP(2,K)
+            write(6,*) '10:'
+            CALL GRTRAC(RVALS(1,1),RVALS(1,2),ID,NAME,'LINE',-1)
 C
-          ID = 0
-          DO IR = IRSEP,IRWALL-1
+            ID = 0
+            DO IR = IRSEP,IRWALL-1
+              ID = ID + 1
+              K = KORPG(NKS(IR),IR)
+              RVALS(ID,1) = RVERTP(4,K)
+              RVALS(ID,2) = ZVERTP(4,K)
+            ENDDO
             ID = ID + 1
-            K = KORPG(NKS(IR),IR)
-            RVALS(ID,1) = RVERTP(4,K)
-            RVALS(ID,2) = ZVERTP(4,K)
-          ENDDO
-          ID = ID + 1
-          K = KORPG(NKS(IRWALL-1),IRWALL-1)
-          RVALS(ID,1) = RVERTP(3,K)
-          RVALS(ID,2) = ZVERTP(3,K)
-          CALL GRTRAC(RVALS(1,1),RVALS(1,2),ID,NAME,'LINE',-1)
+            K = KORPG(NKS(IRWALL-1),IRWALL-1)
+            RVALS(ID,1) = RVERTP(3,K)
+            RVALS(ID,2) = ZVERTP(3,K)
+              write(6,*) '11:'
+            CALL GRTRAC(RVALS(1,1),RVALS(1,2),ID,NAME,'LINE',-1)
 
         ENDIF
 
@@ -2042,6 +2068,7 @@ c             if (nbr.GT.0.AND.jvesm(i).NE.0) CYCLE
                 wvals(1,2) = zvesm(i,1)
                 wvals(2,1) = rvesm(i,2)
                 wvals(2,2) = zvesm(i,2)
+            write(6,*) '12:'
                 call grtrac (wvals(1,1),wvals(1,2),2,
      >                       name,'LINE',-1)
              endif
@@ -2062,6 +2089,7 @@ c
             wvals(1,2) = zvesm(nvesm+i,1)
             wvals(2,1) = rvesm(nvesm+i,2)
             wvals(2,2) = zvesm(nvesm+i,2)
+            write(6,*) '13:'
             call grtrac (wvals(1,1),wvals(1,2),2,name,'LINE',-1)
           enddo
 c
@@ -2075,6 +2103,7 @@ c
           enddo
           wvals(nves+1,1) = rves(1)
           wvals(nves+1,2) = zves(1)
+            write(6,*) '14:'
           call grtrac (wvals(1,1),wvals(1,2),nves+1,name,'LINE',-1)
         endif
       ENDIF
