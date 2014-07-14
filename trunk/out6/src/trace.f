@@ -1070,10 +1070,17 @@ c slmod begin
 c
       integer nsymbols,nsym
       character*4 symbols
+      logical :: debug_grtrac
+      real,allocatable :: seg_length(:)
 c
 c      real spot
 c slmod end
       integer i,j,ibrok
+c
+c     init 
+c
+      debug_grtrac = .true.
+
 C
 c      INTEGER COLOUR(8)
 c
@@ -1085,8 +1092,29 @@ c      CALL RGB
 c      CALL COLSET(0.7,1.0,0.,8)
 c      CALL COLSET(1.0,0.7,0.,9)
 C
-C     WRITE (6,'('' GRTRAC: X ='',/,(1X,8F9.5))')    (X(I),I=1,NPTS)
-C     WRITE (6,'(''     AND Y ='',/,1P,(1X,8E9.2))') (Y(I),I=1,NPTS)
+      if (debug_grtrac) then
+         if (allocated(seg_length)) deallocate(seg_length)
+
+         allocate(seg_length(npts))
+         seg_length = 0.0
+
+         do i = 1,npts-1
+            seg_length(i) = sqrt((x(i+1)-x(i))**2 + (y(i+1)-y(i))**2)
+            if (seg_length(i).gt.0.1) then 
+               write(6,'(a,i,5(1x,g12.5))') 'LONG:',i,x(i),y(i),
+     >                    x(i+1),y(i+1),
+     >                    seg_length(i)
+            endif
+         end do   
+
+         WRITE (6,'('' GRTRAC: X ='',/,(1X,8F9.5))')    (X(I),I=1,NPTS)
+         WRITE (6,'(''         Y ='',/,1P,(1X,8E9.2))') (Y(I),I=1,NPTS)
+         WRITE (6,'(''       LEN ='',/,1P,(1X,8E9.2))') 
+     >                                         (seg_length(I),I=1,NPTS)
+
+         if (allocated(seg_length)) deallocate(seg_length)
+
+      endif
 C
 C---- INCREMENT COUNTS, SET COLOUR AND LINE PATTERN
 C---- ARGUMENTS TO "BROKEN" GIVE SIZES OF  (DASH1, GAP1, DASH2, GAP2)
