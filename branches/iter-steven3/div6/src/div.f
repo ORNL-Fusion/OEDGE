@@ -2858,7 +2858,7 @@ c
      >          'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
      >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs)
+     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs)
          else
             write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),

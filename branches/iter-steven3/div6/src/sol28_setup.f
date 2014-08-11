@@ -1083,7 +1083,7 @@ c         = 7 - psin, from tube link to infinity
         IF (debug) THEN
           WRITE(logfp,'(6A)') '  I1',' INDEX','  MODE',' COORD',' EXPON'
           WRITE(logfp,'(6A)') '  --',' -----','  ----',' -----',' -----'
-          WRITE(logfp,'(I4,4I6)') i1,index,mode,coord,expon
+          WRITE(logfp,'(I4,3I6,F6.1)') i1,index,mode,coord,expon
         ENDIF
 
 c...    Decide if specified upstream data is density or pressure:

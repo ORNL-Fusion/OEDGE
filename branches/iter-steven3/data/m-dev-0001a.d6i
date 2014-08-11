@@ -97,7 +97,7 @@ $ Relaxation options:
 '*045 Region for boundary values                     '  0.0 0.0        REL_BOUND1,2
 '*086 Reset PIN sources at the beginning of each step'     0           RELRESET      (0)
 '*044 Index of stored solution to be loaded          '    -1           OSM_STORE
-'*041       Rings to monitor                         '   8 19          OSM_WATCH1,2
+'*041       Rings to monitor                         '   1 10          OSM_WATCH1,2
 $
 '*S93 1.0 SOL28 parameter over-rides:'
 ' ' '     (dummy line) '
@@ -335,7 +335,7 @@ $
 '    SOL6&7 Vb multiplication factor 2          VbM2 '    0.0
 '    Operation Mode  1 Time-Dependent  2 Steady-State'      2
 '    Maximum ionization state                        '      3     CHECK
-'    Number of impurity ions to be followed          ' 500 15000             CHECK
+'    Number of impurity ions to be followed          ' 10 500 15000             CHECK
 'TN487 Number of Supplementary Neutrals to Launch    '      0
 '    Quantum iteration time for atoms   fsrate (s)   '    1.0E-8 1.0E-8   CHECK
 '    Quantum iteration time for ions    qtim   (s)   '    1.0E-7          CHECK 
@@ -493,63 +493,14 @@ $         0.0   0.0    1.0     1.0    1.0    1.0    1.0     1.0
 'TN988    LV/SMAX ratio                    O/I '  0.2    0.2  
 'TN       Velocity multiplier at L1        O/I '  1.0    1.0  
 '+R11 ' 'TN    DETACHED Plasma Specifications on a by ring basis'
-'TN    INNER - IR TER TIR NR NEXP QR L1R L2R LVR VBM - N= '    30
-   14.0  20.0  20.0   0.4  0.5  5.0  0.1   0.2   0.2  1.0
-   15.0  20.0  20.0   0.2  0.5  5.0  0.1   0.2   0.2  1.0  
-   16.0  20.0  20.0   0.2  0.5  5.0  0.1   0.2   0.2  1.0
-   17.0  15.0  15.0   0.2  0.5  5.0  0.1   0.2   0.2  1.0
-   18.0  15.0  15.0   0.3  0.5  5.0  0.1   0.2   0.2  1.0
-   19.0  15.0  15.0   0.3  0.5  5.0  0.1   0.2   0.2  1.0
-   20.0  10.0  10.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   21.0  10.0  10.0   0.8  0.5  5.0  0.1   0.2   0.2  1.0
-   22.0   8.0   8.0   0.8  0.5  5.0  0.1   0.2   0.2  1.0
-   23.0   8.0   8.0   0.8  0.5  5.0  0.1   0.2   0.2  1.0
-   24.0   8.0   8.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   25.0   8.0   8.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   26.0   5.0   5.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   27.0   5.0   5.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   28.0   5.0   5.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   29.0   5.0   5.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   30.0   5.0   5.0   0.5  0.5  5.0  0.1   0.2   0.2  1.0
-   31.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   32.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0  
-   33.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   34.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   35.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   36.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   37.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0  
-   38.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   39.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   40.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   41.0   2.0   2.0   1.0  1.0  0.0  0.51  0.5   0.2  1.0
-   42.0   4.0   4.0   0.6  1.0  0.0  0.51  0.5   0.2  1.0
-   43.0   8.0   8.0   0.6  1.0  0.0  0.51  0.5   0.2  1.0
+'TN    INNER - IR TER TIR NR NEXP QR L1R L2R LVR VBM - N= '     0
 '+R12 ' 'TN    DETACHED Plasma Specifications on a by ring basis'
 'TN    OUTER - IR TER TIR NR NEXP QR L1R L2R LVR VBM - N= '   0
 '*R13 ' 'EXTRA SOL 21 Parameter data:             '
 ' ' ' R13 - ADDITIONAL SOL OPTION 21 DATA         '
-'   IR    L1A  L1B   N1A  N1B  TE1A TE1B TI1A TI1B'   19
-   14.0   0.01  0.02   3.0   0.6  1.0  3.0  1.0   3.0 
-   15.0   0.01  0.02   3.0   0.6  1.0  3.0  1.0   3.0 
-   16.0   0.01  0.02   2.5   0.6  1.0  3.0  1.0   3.0 
-   17.0   0.01  0.02   2.5   0.6  1.0  2.75 1.0   2.75
-   18.0   0.01  0.02   2.5   0.6  1.0  2.75 1.0   2.75
-   19.0   0.01  0.02   3.0   0.6  1.0  2.75 1.0   2.75
-   20.0   0.01  0.02   4.0   0.6  1.0  1.75 1.0   1.75
-   21.0   0.01  0.02   3.5   0.9  1.0  1.75 1.0   1.75
-   22.0   0.01  0.02   3.0   1.1  1.0  1.5  1.0   1.5 
-   23.0   0.01  0.02   3.0   1.0  1.0  1.5  1.0   1.5 
-   24.0   0.01  0.02   2.0   0.8  1.0  1.5  1.0   1.5 
-   25.0   0.01  0.02   2.0   0.8  1.0  1.5  1.0   1.5 
-   26.0   0.01  0.02   2.0   0.8  1.0  1.15 1.0   1.15
-   27.0   0.01  0.02   2.0   0.8  1.0  1.15 1.0   1.15
-   28.0   0.01  0.02   2.0   0.8  1.0  1.15 1.0   1.15
-   29.0   0.01  0.02   2.0   0.8  1.0  1.15 1.0   1.15
-   30.0   0.01  0.02   2.0   0.8  1.0  1.15 1.0   1.15
-   42.0   0.01  0.02   2.0   0.6  1.0  2.0  1.0   2.0
-   43.0   0.01  0.02   3.0   0.6  1.0  4.0  1.0   4.0
+'   IR    L1A  L1B   N1A  N1B  TE1A TE1B TI1A TI1B'    0
 'TN1007 ABSFAC or Power - Specified - Use if > 0.0   '   0.0
-'ASDEX U - GRID CHARACTERISTICS:  Number of Rings    '    26
+'ASDEX U - GRID CHARACTERISTICS:  Number of Rings    '    10
 '                                 Number of Knots    '    34
 '                                 Cut ring           '     7
 '                                 Cut point 1        '     1

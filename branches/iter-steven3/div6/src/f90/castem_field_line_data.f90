@@ -807,7 +807,8 @@ contains
                 !       this should be consolidated for use here to an internal typing system
                 !       Additional intersection data from RAY will be assigned later. 
 
-                call assign_intsect_data(line_id,field_line(line_id),sect_cnt,xint,yint,zint,s,itype,bump_id,metric,angle_to_surf,ierr)
+                call assign_intsect_data(line_id,field_line(line_id),sect_cnt,xint,yint,zint,s,itype,bump_id,metric,angle_to_surf, &
+                                         ierr)
 
                 select case (itype)
                 case(RAY_TAN) ! tangency
@@ -1858,7 +1859,8 @@ contains
           av_tan_r(in+1) = av_tan_r(in)
           av_r(int(av_tan_ind(in+1))) = av_r(int(av_tan_ind(in)))
 
-          write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt.  &
+            min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
           !write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
        endif
 
@@ -1970,7 +1972,8 @@ contains
        endif
        tmp_max_r(num+1) = tmp_r(num+1)
        tmp_min_r(num+1) = tmp_r(num+1)
-       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single wall point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',tmp_s(num),tmp_s(num+1),tmp_s(num+2)
+       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single wall point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',  &
+         tmp_s(num),tmp_s(num+1),tmp_s(num+2)
 
     elseif (last_face.eq.2) then 
        ! last limiter facing was heading toward tip ... therefore move new R inward slightly
@@ -1984,7 +1987,8 @@ contains
        endif
        tmp_max_r(num+1) = tmp_r(num+1)
        tmp_min_r(num+1) = tmp_r(num+1)
-       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single tan point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',tmp_s(num),tmp_s(num+1),tmp_s(num+2)
+       write(outunit,'(a,3(1x,g18.8),a,3(1x,g18.8))') 'Inserting single tan point:',tmp_r(num),tmp_r(num+1),tmp_r(num+2),':',  &
+         tmp_s(num),tmp_s(num+1),tmp_s(num+2)
     else
        call errmsg('INSERT_LIMITER_POINT:Invalid value of last_face =',last_face)
     endif
@@ -2661,7 +2665,8 @@ contains
              !av_tan_r(tmp_tan_cnt) = av_r(in)
              !av_tan_s(tmp_tan_cnt) = av_s(in)
              !av_tan_ind(tmp_tan_cnt) = in
-             write(outunit,'(a,i6,10(1x,g18.8))') 'TAN :',tmp_tan_cnt,in,av_r(in),av_s(in),av_tan_r(tmp_tan_cnt),av_tan_s(tmp_tan_cnt)
+             write(outunit,'(a,i6,10(1x,g18.8))') 'TAN :',tmp_tan_cnt,in,av_r(in),av_s(in),av_tan_r(tmp_tan_cnt),  &
+               av_tan_s(tmp_tan_cnt)
              if (in.ne.av_group_cnt) then 
                 if(av_type(in+1).eq.TANGENCY) then 
                    double_tan = double_tan+1
@@ -2773,7 +2778,8 @@ contains
        if ((av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep) then 
           ! move tangency point in to match
 
-          write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
+          write(outunit,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. &
+             min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
           !write(0,'(a,2i10,l8,15(1x,g18.8))') 'Reduce tan:',in,in+1,(av_tan_r(in+1)-av_tan_r(in)) .lt. min_tan_sep,av_tan_r(in+1),av_tan_r(in),av_tan_r(in+1)-av_tan_r(in),min_tan_sep,av_tan_s(in),av_tan_s(in+1)
 
           av_tan_r(in+1) = av_tan_r(in)
@@ -3026,7 +3032,8 @@ contains
        do while (.not.done)
           icnt = icnt + 1
 
-          if (field_line(fl)%int_data(icnt)%bump.eq.bump.and.field_line(fl)%int_data(icnt)%int_type.eq.required_intsect) then 
+          if (field_line(fl)%int_data(icnt)%bump.eq.bump.and.  &
+              field_line(fl)%int_data(icnt)%int_type.eq.required_intsect) then 
              if (.not.filter_intersections.or.&
                   (filter_intersections.and. &
                   (field_line(fl)%int_data(icnt)%lc.ge.rg_int_win_mins).and.&
@@ -3086,7 +3093,8 @@ contains
              if (bump_inf(bump_id,1).eq.0) then 
                 bump_inf(bump_id,1) = in
                 if (field_line(in)%int_data(is)%int_type.ne.RAY_TAN) then
-                   write(0,'(a,4i10,10(1x,g18.8))') 'BUMP START NOT TANGENCY:',bump_id,in,is,field_line(in)%int_data(is)%int_type
+                   write(0,'(a,4i10,10(1x,g18.8))') 'BUMP START NOT TANGENCY:',bump_id,in,is,  &
+                      field_line(in)%int_data(is)%int_type
 
                 endif
              endif
@@ -3219,14 +3227,16 @@ contains
              rbnd_cnt = rbnd_cnt + 1
              if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
              r_bnds(rbnd_cnt) = av_tan_r(in1)
-             write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in),r_bnds(rbnd_cnt-1)
+             write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),  &
+               av_tan_r(in1),av_tan_s(in1),av_tan_s(in),r_bnds(rbnd_cnt-1)
 
           endif
        else
           rbnd_cnt = rbnd_cnt + 1
           if (rbnd_cnt.gt.size(r_bnds)) call grow_array(r_bnds,rbnd_cnt-1,rbnd_cnt+10)
           r_bnds(rbnd_cnt) = av_tan_r(in1)
-          write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
+          write(outunit,'(a,3i8,10(1x,g18.8))') 'Calc R_bnd:',in,in1,rbnd_cnt,r_bnds(rbnd_cnt),  &
+            av_tan_r(in1),av_tan_s(in1),av_tan_s(in)
        endif
 
        !       sbnd_cnt = sbnd_cnt + 1
@@ -3380,7 +3390,7 @@ contains
     do in = 1,rbnd_cnt
        write(outunit,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
        !write(0,'(a,i8,10(1x,g18.8))')    'INTS  :',in,int_cnt(in)
-       do it = 1,int_cnt(in)
+       do it = 1,int(int_cnt(in))
           write(outunit,'(a,2i8,10(1x,g18.8))') '  DATA:', in,it,int_type(in,it),ints(in,it),r_bnds(in)
        end do
     end do
@@ -3586,7 +3596,7 @@ contains
        r2 = r_bnds(in+1)
 
        if (grid_option.eq.0.or.in.eq.1) then 
-          do it = 1,int_cnt(in)
+          do it = 1,int(int_cnt(in))
              vert_rec1(it) = ints(in,it)
              vert_type1(it) = int_type(in,it)
              if (in.eq.1) then 
@@ -3597,7 +3607,8 @@ contains
 
                 do is = 1,vert_cnt2
                    if (vert_rec1(it).eq.vert_rec2(is)) then 
-                      write(6,'(a,2i10,10(1x,g18.8))') 'Assign vert_used1:',it,is,vert_used2(is),vert_rec1(it),vert_rec2(is)
+                      write(6,'(a,2i10,10(1x,g18.8))') 'Assign vert_used1:',it,is,vert_used2(is),vert_rec1(it),  &
+                        vert_rec2(is)
                       vert_used1(it) = vert_used2(is)
                    endif
                 end do
@@ -3612,7 +3623,7 @@ contains
        end if
 
 
-       do it = 1,int_cnt(in+1)
+       do it = 1,int(int_cnt(in+1))
           vert_rec2(it) = ints(in+1,it)
           vert_type2(it) = int_type(in+1,it)
           vert_used2(it) = 0.0
@@ -3753,7 +3764,8 @@ contains
              rings_processed = rings_processed + 1
 
 
-             write(outunit,'(a,7i8,10(1x,g18.8))') 'VERTB:',rings_processed,in,it,vert_cnt1,vert_cnt2,npts1a,npts1b,s_start,s_end
+             write(outunit,'(a,7i8,10(1x,g18.8))') 'VERTB:',rings_processed,in,it,vert_cnt1,vert_cnt2,npts1a,  &
+               npts1b,s_start,s_end
 
              ! loop through vert_rec2
 
@@ -3806,7 +3818,8 @@ contains
              end do
 
 
-             write(outunit,'(a,4i10,10(1x,g18.8))') 'NPTS2AB:',is,vert_cnt2,npts2a,npts2b,vert_rec1(npts1a),vert_rec2(npts2a),vert_rec1(npts1b),vert_rec2(npts2b)
+             write(outunit,'(a,4i10,10(1x,g18.8))') 'NPTS2AB:',is,vert_cnt2,npts2a,npts2b,vert_rec1(npts1a),  &
+               vert_rec2(npts2a),vert_rec1(npts1b),vert_rec2(npts2b)
 
              ! Are the values for npts2a and npts2b valid? The intersection data points found need to be reasonably close to the existing values 
              ! from npts1a and npts1b
@@ -3824,11 +3837,14 @@ contains
                 margin2 = abs((vert_rec1(npts1b+1)+vert_rec1(npts1b))/2 - vert_rec1(npts1b))
              endif
              
-             write(6,'(a,2i8,10(1x,g18.8))') 'MARGIN :',npts2a,npts2b,margin1,margin2,vert_rec2(npts2a),vert_rec1(npts1a),vert_rec2(npts2b),vert_rec1(npts1b),vert_used1(npts1a),vert_used1(npts1b)
+             write(6,'(a,2i8,10(1x,g18.8))') 'MARGIN :',npts2a,npts2b,margin1,margin2,vert_rec2(npts2a),  &
+               vert_rec1(npts1a),vert_rec2(npts2b),vert_rec1(npts1b),vert_used1(npts1a),vert_used1(npts1b)
 
-             if (.not.(vert_rec2(npts2a).le.vert_rec1(npts1a)+margin1.and.vert_rec2(npts2b).ge.vert_rec1(npts1b)-margin2)) then 
+             if (.not.(vert_rec2(npts2a).le.vert_rec1(npts1a)+margin1.and.  &
+                 vert_rec2(npts2b).ge.vert_rec1(npts1b)-margin2)) then 
                 ! No valid intersections found
-                write(6,'(a,2i8,10(1x,g18.8))') 'NO REC2:',npts2a,npts2b,margin1,margin2,vert_rec2(npts2a),vert_rec1(npts1a),vert_rec2(npts2b),vert_rec1(npts1b)
+                write(6,'(a,2i8,10(1x,g18.8))') 'NO REC2:',npts2a,npts2b,margin1,margin2,vert_rec2(npts2a),  &
+                  vert_rec1(npts1a),vert_rec2(npts2b),vert_rec1(npts1b)
                 npts2a = 0
                 npts2b = 0
              endif
@@ -3841,7 +3857,8 @@ contains
 
 
              ! Vertices in previous row must have been used for grid generation
-             if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.ge.lcutoff).and.(vert_used1(npts1a).gt.0.0.and.vert_used1(npts1b).gt.0.0)) then 
+             if (npts2a.ne.0.and.npts2b.ne.0.and.(lfactor.ge.lcutoff).and.(vert_used1(npts1a).gt.0.0.and.  &
+                 vert_used1(npts1b).gt.0.0)) then 
 
                 ! record wall segments at each end of ring
                 call add_wall_segment(r1,r2,vert_rec1(npts1a),vert_rec2(npts2a),1)
@@ -3855,7 +3872,8 @@ contains
                 ! set end points as used for grid generation
                 !vert_used2(npts2a) = 1.0
                 vert_used2(npts2a:npts2b) = 1.0
-                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE+:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),vert_rec2(npts2b),vert_used2(npts2b)
+                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE+:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),  &
+                  vert_rec2(npts2b),vert_used2(npts2b)
 
                 ! IF the outermost boundary of this ring IS the last R boundary then we also have to add the connecting wall segment on r2 since we won't be back to add it later. 
                 if (in.eq.rbnd_cnt-1) then 
@@ -3865,8 +3883,10 @@ contains
                 endif
 
                 
-                write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end
-                call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,vert_used2,max_nknots,max_s_sep,min_cells)
+                write(outunit,'(a,6i8,10(1x,g18.8))') 'GEN_RING: CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,  &
+                  r1,r2,s_start,s_end
+                call gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,  &
+                              vert_rec2,vert_type2,vert_used2,max_nknots,max_s_sep,min_cells)
 
 
 
@@ -3882,12 +3902,14 @@ contains
                    if (npts2a.gt.0.and.npts2b.gt.0) then 
                       !vert_used2(npts2a) = 0.0
                       vert_used2(npts2a:npts2b) = 0.0
-                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE-:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),vert_rec2(npts2b),vert_used2(npts2b)
+                write(6,'(a,2i8,10(1x,g18.8))') 'VUSE-:',npts2a,npts2b,vert_rec2(npts2a),vert_used2(npts2a),  &
+                                                vert_rec2(npts2b),vert_used2(npts2b)
                    endif
 
                 endif
                 
-                write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
+                write(outunit,'(a,6i8,15(1x,g18.8))') 'GEN_RING: NO CALL: ', in,it,npts1a,npts1b,npts2a,npts2b,  &
+                  r1,r2,s_start,s_end,line_length,rfactor,lfactor,lcutoff
 
              endif
              
@@ -4028,7 +4050,8 @@ contains
 
     write(6,'(a,i8,2(1x,g18.8))') 'WALL_SEGMENTS:',n_wall_segments,wall_start_r,wall_start_s
     do in = 1,n_wall_segments
-       write(6,'(a,i8,10(1x,g18.8))') 'WS:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),wall_segments(in,4),wall_segments(in,5),wall_segments(in,6)
+       write(6,'(a,i8,10(1x,g18.8))') 'WS:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),  &
+         wall_segments(in,4),wall_segments(in,5),wall_segments(in,6)
     end do
 
     done = .false. 
@@ -4122,7 +4145,8 @@ contains
 
     do in = 1,n_wall_segments
        if (wall_segments(in,5).eq.0.and.wall_segments(in,6).ne.3) then 
-          write(6,'(a,i8,10(1x,g18.8))') 'WS EXC:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),wall_segments(in,4),wall_segments(in,5),wall_segments(in,6)
+          write(6,'(a,i8,10(1x,g18.8))') 'WS EXC:',in,wall_segments(in,1),wall_segments(in,2),wall_segments(in,3),  &
+            wall_segments(in,4),wall_segments(in,5),wall_segments(in,6)
           ierr = ierr + 1
        endif 
     end do
@@ -4168,7 +4192,8 @@ contains
 
 
 
-  subroutine gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,vert_type2,vert_used2,maxpts,max_slen,min_cells)
+  subroutine gen_ring(npts1a,npts1b,ntot1,r1,vert_rec1,vert_type1,npts2a,npts2b,ntot2,r2,vert_rec2,  &
+                      vert_type2,vert_used2,maxpts,max_slen,min_cells)
     implicit none
     integer :: npts1a,npts1b,npts2a,npts2b,min_cells,ntot1,ntot2,maxpts
     real*8 :: vert_rec1(maxpts),vert_type1(maxpts),vert_rec2(maxpts),vert_type2(maxpts),vert_used2(maxpts)
@@ -4332,7 +4357,7 @@ contains
           slen2a = s2(in+1)-s2(in)
           call gen_cell_spacing(int(cell_dist(in)),ssep2a)
           !ssep2 = (s2(in+1)-s2(in))/(cell_dist(in))
-          do it = 1,cell_dist(in)-1
+          do it = 1,int(cell_dist(in))-1
              cells_added = cells_added + 1
              !s2(npts2+cells_added) = s2(in) + ssep2 * it
              s2(npts2+cells_added) = s2(in) + ssep2a(it) * slen2a
@@ -4386,7 +4411,8 @@ contains
              if (s1(in).eq.s2(it)) then 
                 do is = last_tan + 1,in-1
                    cells_added = cells_added + 1
-                   s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(in)-s1(last_tan)) * (s2(it)-s2(it-1)) + s2(it-1)
+                   s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(in)-s1(last_tan)) *  &
+                                           (s2(it)-s2(it-1)) + s2(it-1)
                    s2_type(npts2+cells_added) = NEW_VERTEX
                    !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                 end do
@@ -4396,7 +4422,8 @@ contains
 
                    do is = in+1,npts1-1
                       cells_added = cells_added + 1
-                      s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(npts1)-s1(last_tan)) * (s2(npts2)-s2(it)) + s2(it)
+                      s2(npts2+cells_added) = abs(s1(is)-s1(last_tan))/abs(s1(npts1)-s1(last_tan)) *  &
+                                              (s2(npts2)-s2(it)) + s2(it)
                       s2_type(npts2+cells_added) = NEW_VERTEX
                       !write(outunit,'(a,4i8,10(1x,g18.8))') 'NEW S2:',in,it,is,last_tan,cells_added,s1(is),s1(in),s1(last_tan),s2(it),s2(it-1),s2(npts2+cells_added)
                    end do
@@ -4447,7 +4474,8 @@ contains
           poly_ref(in,nrings) = npoly
           rcen(in,nrings) = sum(rvp(1:nvp(npoly),npoly))/nvp(npoly)
           zcen(in,nrings) = sum(zvp(1:nvp(npoly),npoly))/nvp(npoly)
-          write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY:',in,npoly,poly_ref(in,nrings),(rvp(it,npoly),zvp(it,npoly),it=1,nvp(npoly)),rcen(in,nrings),zcen(in,nrings)
+          write(outunit,'(a,3i8,10(1x,g18.8))') 'POLY:',in,npoly,poly_ref(in,nrings),(rvp(it,npoly),  &
+            zvp(it,npoly),it=1,nvp(npoly)),rcen(in,nrings),zcen(in,nrings)
 
        end do
 
@@ -4509,7 +4537,8 @@ contains
 
        do ik = 1,nknots(ir)
 
-          write (iunit,'(a,3i8,12(1x,g18.8))') 'Polys:',ik,ir,poly_ref(ik,ir),(rvp(in,poly_ref(ik,ir)),zvp(in,poly_ref(ik,ir)),in=1,nvp(poly_ref(ik,ir))),rcen(ik,ir),zcen(ik,ir)
+          write (iunit,'(a,3i8,12(1x,g18.8))') 'Polys:',ik,ir,poly_ref(ik,ir),(rvp(in,poly_ref(ik,ir)),  &
+            zvp(in,poly_ref(ik,ir)),in=1,nvp(poly_ref(ik,ir))),rcen(ik,ir),zcen(ik,ir)
        end do
 
     enddo
@@ -4609,7 +4638,8 @@ contains
 
              intersects(int(int_cnt)) = s_int
 
-             write(outunit,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
+             write(outunit,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,  &
+               r_start,s_start,r_end,s_end,r_int,s_int
              !write(0,'(a,2i8,12(1x,g18.8))') 'Int    :',in,sect_type,int_cnt,r_int,s_int,int_type_base,r_start,s_start,r_end,s_end,r_int,s_int
 
           endif
@@ -4648,17 +4678,17 @@ contains
 
 
     write(outunit,'(a,10(1x,g18.8))') 'prelim surface intersections output:', int_cnt, r_line
-    do in = 1,int_cnt
+    do in = 1, int(int_cnt)
        write(outunit,'(a,i8,10(1x,g18.8))') 'PINT sect:', in,int_type(in),intersects(in)
     end do
 
 
     deleted = 0
 
-    do in = 1,int_cnt-1
+    do in = 1,int(int_cnt)-1
 
        if (int_type(in).ne.DELETE_POINT) then
-          do it = in+1,int_cnt
+          do it = in+1,int(int_cnt)
              if (int_type(it).ne.DELETE_POINT) then 
 
                 if (abs(intersects(it)-intersects(in)).lt.eps) then
@@ -4667,22 +4697,29 @@ contains
                    if (int_type(it).eq.TANGENCY.and.int_type(in).ne.TANGENCY) then 
                       int_type(in) = DELETE_POINT
                       deleted = deleted + 1.0
-                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1a:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1a:',in,it,  &
+                        (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),  &
+                        eps,int_type(in),int_type(it)
                    elseif (int_type(in).eq.TANGENCY.and.int_type(it).ne.TANGENCY) then 
                       int_type(it) = DELETE_POINT
                       deleted = deleted + 1.0
-                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1b:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1b:',in,it,  &
+                        (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),  &
+                        eps,int_type(in),int_type(it)
                    elseif (int_type(in).eq.int_type(it)) then 
                       ! if the intersection type of the two points is the same .. only delete one of the points
                       int_type(it) = DELETE_POINT
                       deleted = deleted + 1.0
-                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1c:',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete1c:',in,it,  &
+                        (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),  &
+                        eps,int_type(in),int_type(it)
                    elseif (int_type(in).ne.int_type(it)) then 
                       ! two points overlapping - should be wall turning point since int_types are different at this stage and tangency dealt with above - delete both
                       int_type(in) = DELETE_POINT
                       int_type(it) = DELETE_POINT
                       deleted = deleted + 2.0
-                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete2 :',in,it, (abs(intersects(it)-intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
+                      write(outunit,'(a,2i8,l4,10(1x,g18.8))') 'Delete2 :',in,it, (abs(intersects(it)-  &
+                        intersects(in)).lt.eps),intersects(it),intersects(in),eps,int_type(in),int_type(it)
                    endif
 
                    if (int_type(in).eq.DELETE_POINT) exit
@@ -4707,7 +4744,7 @@ contains
 
     int_type(1) = SURFACE_START
     last_surface = SURFACE_START
-    do in = 2,int_cnt
+    do in = 2,int(int_cnt)
        if (int_type(in).ne.TANGENCY) then 
           if (last_surface.eq.SURFACE_START) then 
              int_type(in) = SURFACE_END
@@ -4720,7 +4757,7 @@ contains
 
     if (last_surface.ne.SURFACE_END) then 
        write(outunit,'(a,10(1x,g18.8))') 'surface intersections error:', int_cnt, r_line
-       do in = 1,int_cnt
+       do in = 1,int(int_cnt)
           write(outunit,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
        end do
 
@@ -4733,7 +4770,7 @@ contains
     else   
 
        write(outunit,'(a,10(1x,g18.8))') 'surface intersections output:', int_cnt, r_line
-       do in = 1,int_cnt
+       do in = 1,int(int_cnt)
           write(outunit,'(a,i8,10(1x,g18.8))') ' INT sect:', in,int_type(in),intersects(in)
        end do
 

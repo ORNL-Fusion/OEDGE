@@ -1697,9 +1697,17 @@ c      PRINT*,'<<<<<<<<<<<<<<<<<<<<<<<<<'
 
       !output.dat
       OPEN(UNIT=11,FILE='output.dat',STATUS='REPLACE',ACTION='WRITE')
-      WRITE(11,fmt="(1I)") n
+c slmod begin - gfortran
+      WRITE(11,fmt="(1I10)") n
+c
+c      WRITE(11,fmt="(1I)") n
+c slmod end
       DO i=1,n+1
-        WRITE(11,fmt="(16E)") x_n(i),f_n(i),s_v(i),f_Te(i),f_Ti(i),
+c slmod begin - gfortran
+        WRITE(11,fmt="(16E12.6)") x_n(i),f_n(i),s_v(i),f_Te(i),f_Ti(i),
+c
+c        WRITE(11,fmt="(16E)") x_n(i),f_n(i),s_v(i),f_Te(i),f_Ti(i),
+c slmod end
      .                        f_n0(i),s_v0(i),Bsol(i),Sext_n(i),
      .                        Sext_v(i),Sext_Te(i),Sext_Ti(i),Seir_n(i),
      .                        Seir_v(i),Seir_Te(i),Seir_Ti(i)

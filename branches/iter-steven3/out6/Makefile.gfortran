@@ -21,8 +21,8 @@ CEXT=.c
 #
 # VER=aix
 #
-VER=gfortran44
-VER_INTEL=gfortran44
+VER=gfortran
+VER_INTEL=gfortran
 #
 # Source file locations
 #
@@ -45,7 +45,7 @@ VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
 #
 # Compiler
 #
-FCOMP=gfortran44
+FCOMP=gfortran
 RM=rm -f
 #
 FCOMP_INTEL=f95
