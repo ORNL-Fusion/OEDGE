@@ -1743,8 +1743,7 @@ c
       CALL LoadGrid('osm.raw')
       CALL LoadObjects('osm_geometry.raw',status)
 
-      CALL GenerateOutputFiles
-
+      CALL GenerateOutputFiles(-999)
 
       CALL SaveFluidGridGeometry       
 

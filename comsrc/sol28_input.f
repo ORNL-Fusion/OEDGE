@@ -171,8 +171,8 @@ c
       USE mod_legacy
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: fp,itag
-      LOGICAL   status
+      INTEGER, INTENT(IN ) :: fp,itag
+      LOGICAL, INTENT(OUT) :: status
       CHARACTER buffer*(*)
 
       INTEGER i

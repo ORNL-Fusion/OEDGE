@@ -57,9 +57,9 @@ c...    Check which tetrahedrons are within the gauge volume:
         val   = 0.0
         DO iobj = 1, nobj
           IF (obj(iobj)%nside.NE.4) CYCLE
-          dist = SQRT((p(1)-SNGL(obj_centroid(1,iobj)))**2 + 
-     .                (p(2)-SNGL(obj_centroid(2,iobj)))**2 + 
-     .                (p(3)-SNGL(obj_centroid(3,iobj)))**2)
+          dist = SQRT((p(1)-obj_centroid(1,iobj))**2 + 
+     .                (p(2)-obj_centroid(2,iobj))**2 + 
+     .                (p(3)-obj_centroid(3,iobj))**2)
           IF (dist.LT.gauge(5,igauge)) THEN
             count = count + 1
 c            WRITE(0,*) '    ---> go!',count,iobj,nobj
