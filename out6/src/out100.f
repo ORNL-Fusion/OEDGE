@@ -1253,12 +1253,12 @@ c        write (6,*) '172a:',ikref,irsep,irwall,
 c     >                   zs(ikref,irsep),zs(ikref,irwall),
 c     >                   rs(ikref,irsep),rs(ikref,irwall)
 c
-        if (zs(ikref,irsep).lt.zs(ikref,irwall)) then
+        if (zs(ikref,irsep).lt.zs(ikref,irwall-1)) then
            startin = 2
-           endin   = irwall
+           endin   = irwall-1
            stepin  = 1
         else
-           startin = irwall
+           startin = irwall-1
            endin   = 2
            stepin  = -1
         endif
@@ -1299,9 +1299,9 @@ c
  1724     CONTINUE
 
 c
-          write(6,'(a,4(1x,i6),4(1x,g14.7))') '172:',ir,jk,
+          write(6,'(a,4(1x,i6),30(1x,g12.5))') '172:',ir,jk,
      >                 nks(ir)/2+1,jr,routs(jr),
-     >              rwids(jr),zs(jk,ir),rvals(jr,4)
+     >            rwids(jr),zs(jk,ir),(rvals(jr,in),in=1,nizs+4)
 c
 
  1726   CONTINUE
@@ -1642,6 +1642,16 @@ c
         XLAB   = 'DIST (M) FROM OUTER'
         YLAB   = 'DENSITY'
 
+        read (graph(38:44),'(i4)') cz
+
+        if (cz.lt.0.or.cz.gt.nizs) then 
+           startin = 1
+           endin =nizs
+        else
+           startin = cz
+           endin = cz
+        endif
+
         CALL RZERO (RVALS, MAXNRS*MAXNGS)
 c
         ir = irwall
@@ -1667,7 +1677,7 @@ c
 c
            valtot = 0.0
 c
-           DO JZ = 1, NIZS
+           DO JZ = startin, endin
               VALTOT = VALTOT + SDLIMS(JK,JR,JZ)
            ENDDO
 c
@@ -1688,7 +1698,9 @@ c
         write(REF,'(''1D DENSITY FOR IK (WALL) ='',i4)') iopt
         write(NVIEW,'(''OVER RINGS: '',i4,'' TO '',i4)') irwall-1,ir
 c
-        ELABS(1) = 'I    Ion Density (Total)'
+        write (elabs(1),'(a,i4,a,i4)') 'I   Ion Density IZ= ',startin,
+     >             ' TO ', endin
+c        ELABS(1) = 'I    Ion Density (Total)'
 c
 c        WRITE (IPLOT,9012) NPLOTS,REF
 c
@@ -1750,26 +1762,26 @@ c
 c
          if (iref.eq.176) then
 
-            TADAS(1) = 1.0
-            TADAS(2) = 2.0
-            TADAS(3) = 3.0
-            TADAS(4) = 4.0
-            TADAS(5) = 5.0
-            TADAS(6) = 7.5
-            TADAS(7) = 10.0
-            TADAS(8) = 20.0
-            TADAS(9) = 30.0
-            TADAS(10) = 40.0
-            TADAS(11) = 50.0
-            TADAS(12) = 60.0
-            TADAS(13) = 70.0
-            TADAS(14) = 80.0
-            TADAS(15) = 90.0
-            TADAS(16) = 100.0
-            TADAS(17) = 125.0
-            TADAS(18) = 150.0
-            TADAS(19) = 175.0
-            TADAS(20) = 200.0
+            TADAS(1) = 0.25
+            TADAS(2) = 0.5
+            TADAS(3) = 0.6
+            TADAS(4) = 0.7
+            TADAS(5) = 0.8
+            TADAS(6) = 0.9
+            TADAS(7) = 1.0
+            TADAS(8) = 1.1
+            TADAS(9) = 1.2
+            TADAS(10) = 1.3
+            TADAS(11) = 1.4
+            TADAS(12) = 1.5
+            TADAS(13) = 1.75
+            TADAS(14) = 2.0
+            TADAS(15) = 2.5
+            TADAS(16) = 3.0
+            TADAS(17) = 3.5
+            TADAS(18) = 4.0
+            TADAS(19) = 4.5
+            TADAS(20) = 5.0
 
          elseif (iref.eq.177) then
 

@@ -468,7 +468,7 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        endif
 
@@ -578,7 +578,7 @@ contains
        endif
 
 
-    elseif (interpolate_opt.eq.1) then
+    elseif (interpolate_opt.eq.1.or.interpolate_opt.eq.2) then
        ! interpolate using Jeff's algorithm
        ! Note: ne,te,ti,vb,ef have target values that are used for interpolation in the first half cell
        !       btot,br,bz,bt do not have target data .. as a result the target values are the same as the first cell center
@@ -621,13 +621,24 @@ contains
              call write_cell_data(ik,ir)
           endif
 
-       else
+       elseif (interpolate_opt.eq.1) then 
 
           iq_last = iq
 
-          call interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+
+       elseif (interpolate_opt.eq.2) then 
+
+
+       ! This routine uses the proportional location of the test point within the cell relative to the sides of 
+       ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
+
+          iq_last = iq
+
+          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        endif
+
 
     endif
 
@@ -671,7 +682,7 @@ end subroutine find_nearest_boundary
 
 
 
-  subroutine interpolate_plasma(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+  subroutine interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
     real*8 :: r,z,ne,te,ti,vb,ef,btoto,psin,bro,bzo,bto
     real*8 :: ngrad,tegrad,tigrad
@@ -930,7 +941,444 @@ end subroutine find_nearest_boundary
     endif
 
 
-  end subroutine interpolate_plasma
+  end subroutine interpolate_plasma_jeff
+
+
+
+  subroutine interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+    implicit none
+    ! This routine interpolates the plasma along the field lines. 
+    ! It forms a polygon using the cell centers where the data values are recorded - it then 
+    ! finds the proportional location of the R,Z point within the cell such that a line drawn between 
+    ! the two perpendicular to the field line ends of the cell pass through the test point with 
+    ! the same proportions on either side of the end cell side intersections.
+    ! These proportions are used to calculate the value to be interpolated at each end of this line
+    ! The location of the point along the line is then used to interpolate between the two end values. 
+
+
+    real*8 :: r,z,ne,te,ti,vb,ef,btoto,psin,bro,bzo,bto
+    real*8 :: ngrad,tegrad,tigrad
+    integer :: ik,ir,iq,in
+    integer :: iks(4),irs(4)
+
+
+    ! Interpolation is based on cell centers - this causes some issues near X-points for certain quadrants.
+
+
+    ! Based on the value of iq - the four adjacent cell centers may be identified except at X-points - the problematic conditions can 
+    ! be checked by looking for 
+    ! 1) irins or irouts of the up or down cells depending on quadrant are not the same
+    ! 2) boundary rings can be detected by irins = ir or irouts = ir - these need special treatment as well 
+
+    logical :: xpt, boundary
+    integer :: nvert
+    real*8 :: rvert(4),zvert(4)
+    real*8 :: neint(4),teint(4),tiint(4),vbint(4),efint(4),psinint(4),btotoint(4),broint(4),bzoint(4),btoint(4),ngradint(4),tegradint(4),tigradint(4)
+
+    integer :: iter, maxiter,ierr,is
+    real*8 :: maxerr
+
+    maxerr = 1.0d-6
+    maxiter = 10
+    iter = 0
+
+
+    xpt = .false.
+    boundary = .false.
+
+
+    ! Get the R,Z coordinates of the 4 corners
+    ! Always start at the UP,OUT corner and work around 
+    ! Sides between vertices (1,2) and (3,4) are always going across the field lines
+    ! Sides between (2,3) and (4,1) are always "parallel" to the field lines
+    !
+    ! NOTE: IRINS, IROUTS, IKINS, IKOUTS are not set for ik=0 or ik=nks(ir)+1 since these
+    !       are the rows next to the target and do not represent actual cells on the grid. 
+    !       Special care is taken below when these conditions are encountered. 
+
+    ! IN and DOWN
+    if (iq.eq.1) then 
+
+       irs(1) = ir
+       iks(1) = ik
+
+       irs(2) = irins(ik,ir)
+       iks(2) = ikins(ik,ir)
+
+       if (ik.eq.1) then 
+          irs(3) = irins(ik,ir)
+          iks(3) = ikins(ik,ir)-1
+       else
+          irs(3) = irins(ik-1,ir)
+          iks(3) = ikins(ik-1,ir)
+       endif
+
+       irs(4) = ir
+       iks(4) = ik -1 
+
+       ! Check error conditions
+       ! Xpoint
+       if (irs(2).ne.irs(3)) then 
+          xpt = .true.
+       endif
+
+       ! boundary ring 
+       if (irs(1).eq.irs(2)) then 
+          boundary = .true.
+       endif
+
+       ! OUT and DOWN
+    elseif (iq.eq.2) then
+
+       irs(1) = irouts(ik,ir)
+       iks(1) = ikouts(ik,ir)
+
+       irs(2) = ir
+       iks(2) = ik
+
+       irs(3) = ir
+       iks(3) = ik-1
+
+       if (ik.eq.1) then 
+          irs(4) = irouts(ik,ir)
+          iks(4) = ikouts(ik,ir)-1
+       else
+          irs(4) = irouts(ik-1,ir)
+          iks(4) = ikouts(ik-1,ir)
+       endif
+
+       ! Check error conditions
+       ! Xpoint
+       if (irs(1).ne.irs(4)) then 
+          xpt = .true.
+
+       endif
+
+       ! boundary ring 
+       if (irs(1).eq.irs(2)) then 
+          boundary = .true.
+
+       endif
+
+       ! OUT and UP
+    elseif (iq.eq.3) then
+
+       if (ik.eq.nks(ir)) then 
+          irs(1) = irouts(ik,ir)
+          iks(1) = ikouts(ik,ir)+1
+       else
+          irs(1) = irouts(ik+1,ir)
+          iks(1) = ikouts(ik+1,ir)
+       endif
+
+       irs(2) = ir
+       iks(2) = ik +1 
+
+       irs(3) = ir
+       iks(3) = ik
+
+       irs(4) = irouts(ik,ir)
+       iks(4) = ikouts(ik,ir)
+
+       ! Check error conditions
+       ! Xpoint
+       if (irs(1).ne.irs(4)) then 
+          xpt = .true.
+       endif
+
+       ! boundary ring 
+       if (irs(3).eq.irs(4)) then 
+          boundary = .true.
+       endif
+
+       ! IN and UP
+    elseif (iq.eq.4) then 
+
+       irs(1) = ir
+       iks(1) = ik+1
+
+       if (ik.eq.nks(ir)) then 
+          irs(2) = irins(ik,ir)
+          iks(2) = ikins(ik,ir)+1
+       else
+          irs(2) = irins(ik+1,ir)
+          iks(2) = ikins(ik+1,ir)
+       endif
+
+       irs(3) = irins(ik,ir)
+       iks(3) = ikins(ik,ir)
+
+       irs(4) = ir
+       iks(4) = ik
+
+       ! Check error conditions
+       ! Xpoint
+       if (irs(2).ne.irs(3)) then 
+          xpt = .true.
+       endif
+
+       ! boundary ring 
+       if (irs(3).eq.irs(4)) then 
+          boundary = .true.
+       endif
+
+    endif
+
+
+    ! If in quadrant adjacent to Xpoint or boundary no interpolation takes place (can be upgraded later) - just return the values in the cell. 
+
+    if (xpt.or.boundary) then 
+
+       ! no interpolation
+       ne = knbs(ik,ir)
+       te = ktebs(ik,ir)
+       ti = ktibs(ik,ir)
+       vb = kvhs(ik,ir)
+       ef = kes(ik,ir)
+       psin = psifl(ik,ir)
+       btoto = btot(ik,ir)
+       bro = br(ik,ir)
+       bzo = bz(ik,ir)
+       bto = bt(ik,ir)
+
+       ngrad=negs(ik,ir)
+       tegrad=tegs(ik,ir)
+       tigrad=tigs(ik,ir)
+
+       write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
+       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
+
+
+    else
+
+       !
+       ! Need to set up the coordinate and data sets that need to be interpolated. 
+       ! 
+       ! 
+       ! 
+       nvert = 4
+       do is = 1,4
+          rvert(is) = rs(iks(is),irs(is))
+          zvert(is) = zs(iks(is),irs(is))
+          neint(is) = knbs(iks(is),irs(is))
+          teint(is) = ktebs(iks(is),irs(is))
+          tiint(is) = ktibs(iks(is),irs(is))
+          vbint(is) = kvhs(iks(is),irs(is))
+          efint(is) = kes(iks(is),irs(is))
+          psinint(is) = psifl(iks(is),irs(is))
+          btotoint(is) = btot(iks(is),irs(is))
+          broint(is) = br(iks(is),irs(is))
+          bzoint(is) = bz(iks(is),irs(is))
+          btoint(is) = bt(iks(is),irs(is))
+          ngradint(is) = negs(iks(is),irs(is))
+          tegradint(is) = tegs(iks(is),irs(is))
+          tigradint(is) = tigs(iks(is),irs(is))
+       enddo
+
+       call interpolate_proportional(r,z,nvert,rvert,zvert,neint,teint,tiint,vbint,efint,psinint,btotoint,broint,bzoint,btoint,ngradint,tegradint,tigradint,iter,maxiter,maxerr,ierr)
+
+       !
+       !      Assign scalar interpolated values
+       !
+       ne = sum(neint)/4.0
+       te = sum(teint)/4.0
+       ti = sum(tiint)/4.0
+       vb = sum(vbint)/4.0
+       ef = sum(efint)/4.0
+       psin = sum(psinint)/4.0
+       btoto = sum(btotoint)/4.0
+       bro = sum(broint)/4.0
+       bzo = sum(bzoint)/4.0
+       bto = sum(btoint)/4.0
+       ngrad = sum(ngradint)/4.0
+       tegrad = sum(tegradint)/4.0
+       tigrad = sum(tigradint)/4.0
+
+       if (ierr.ne.0) then
+
+
+       endif
+
+    endif
+
+
+  end subroutine interpolate_plasma_proportional
+
+
+
+
+  recursive subroutine interpolate_proportional(r,z,nv,rvert,zvert,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,iter,maxiter,maxerr,ierr)
+
+    implicit none
+    integer nv,iter,maxiter,ierr
+
+    real*8 :: r,z,rvert(nv),zvert(nv),maxerr
+    real*8 :: ne(nv),te(nv),ti(nv),vb(nv),ef(nv),psin(nv),btot(nv),br(nv),bz(nv),bt(nv),ng(nv),teg(nv),tig(nv)
+    !
+    !
+    !     INTERPOLATE PROPORTIONAL: This routine is invoked recursively - the 
+    !                       intention is to determine roughly at what fraction
+    !                       of the way across the two axes of the cell the
+    !                       input point R,Z lies. This location is used to interpolate
+    !                       the plasma quantities. It does this by recursively 
+    !                       dividing the cell into quarters and iterating 
+    !                       a specified number of times or to a precision limit.
+    !                       The point R,Z is always
+    !                       within the polygon that is passed on to the 
+    !                       routine when it invokes itself. 
+    !                       This routine can be iterated as long as desired to 
+    !                       obtain any desired level of accuracy.
+    !
+    !
+    !    Local variables 
+    !
+    !
+    !
+    integer iv,ivf,ivnext,ivlast,in
+
+    integer :: nvmax
+    parameter(nvmax=4)
+    real*8 rv(nvmax),zv(nvmax),rs(nvmax),zs(nvmax),rcp,zcp
+
+    logical found,inpoly
+    !external inpoly  
+    !
+    !     Code is designed to work for 4-sided polygons only.
+    !  
+    if (nv.ne.4) return
+    !
+    !     Split the polygon into 4 pieces and determine which part of the
+    !     cell the point R,Z lies in - adjust 
+    !
+    do iv = 1,nv
+       !
+       ivnext = iv+1
+       if (iv.eq.nv) ivnext = 1 
+       !
+       rs(iv) = (rvert(iv)+rvert(ivnext))/2.0
+       zs(iv) = (zvert(iv)+zvert(ivnext))/2.0
+       !
+    end do
+    !
+    rcp = (rs(1) + rs(3))/2.0
+    zcp = (zs(1) + zs(3))/2.0
+
+    write(0,*) 'Test cp:',rcp,zcp,(rs(2) + rs(4))/2.0,(zs(2) + zs(4))/2.0
+    !
+    ivf= 0
+    iv = 1
+    found = .false. 
+    !
+    do while(iv.le.4.and.(.not.found)) 
+       ivlast = iv-1
+       if (iv.eq.1) ivlast = 4 
+       !
+       !        Determine corners of polygon to check 
+       !
+       rv(mod(iv-1,4)+1)   = rvert(iv) 
+       rv(mod(1+iv-1,4)+1) = rs(iv)
+       rv(mod(2+iv-1,4)+1) = rcp
+       rv(mod(3+iv-1,4)+1) = rs(ivlast)
+       !
+       zv(mod(iv-1,4)+1)   = zvert(iv) 
+       zv(mod(1+iv-1,4)+1) = zs(iv)
+       zv(mod(2+iv-1,4)+1) = zcp
+       zv(mod(3+iv-1,4)+1) = zs(ivlast)
+       !
+       found = inpoly(r,z,nv,rv,zv) 
+       !
+       if (found) ivf = iv
+       !
+       iv = iv+1
+       !
+    end do
+    !
+    !
+    !     Check to make sure location found
+    !
+    if (ivf.ne.0) then 
+       !
+       !
+       !         Based on the value of ivf - interpolate the plasma quantities to the new vertices. 
+       !
+
+       call remap_interpolate(nv,ne,ivf)
+       call remap_interpolate(nv,te,ivf)
+       call remap_interpolate(nv,ti,ivf)
+       call remap_interpolate(nv,vb,ivf)
+       call remap_interpolate(nv,ef,ivf)
+       call remap_interpolate(nv,psin,ivf)
+       call remap_interpolate(nv,btot,ivf)
+       call remap_interpolate(nv,br,ivf)
+       call remap_interpolate(nv,bz,ivf)
+       call remap_interpolate(nv,bt,ivf)
+       call remap_interpolate(nv,ng,ivf)
+       call remap_interpolate(nv,teg,ivf)
+       call remap_interpolate(nv,tig,ivf)
+
+       !
+       if (iter.ge.maxiter.or.(abs(maxval(rv)-minval(rv)).le.maxerr.and.abs(maxval(zv)-minval(zv)).le.maxerr)) then 
+          return
+          !
+       else
+          !
+          !           Increment iteration
+          !
+          iter = iter + 1
+          !         
+          call interpolate_proportional(r,z,nv,rv,zv,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,iter,maxiter,maxerr,ierr)
+          !
+       endif
+       !
+    else
+       !
+       !        Error    
+       ! 
+       ierr = 1
+       !
+       write(6,'(a,8(1x,g12.5))') 'ERROR in "interpolate_proportional": point not found in cell: ITER=',iter
+       write(6,'(a,8(1x,g12.5))') 'Last poly:',(rv(iv),zv(iv),iv=1,4)
+       write(6,'(a,8(1x,g12.5))') 'Point R,Z:',r,z
+
+    endif
+
+    return 
+  end subroutine interpolate_proportional
+
+
+
+    subroutine remap_interpolate(nv,quant,ivf)
+      implicit none  
+
+      integer :: nv,ivf
+      real*8  :: quant(nv)
+      integer :: ivlast,ivnext
+      real*8  :: tmpquant(4)
+
+      ivlast = ivf-1
+      if (ivlast.lt.1) ivlast = 4 
+      ivnext = ivf+1
+      if (ivnext.gt.4) ivnext = 1
+
+      tmpquant(mod(ivf-1,4)+1)   = quant(ivf) 
+      tmpquant(mod(1+ivf-1,4)+1) = (quant(ivf) + quant(ivnext))/2.0
+      tmpquant(mod(2+ivf-1,4)+1) = sum(quant) / 4.0 
+      tmpquant(mod(3+ivf-1,4)+1) = (quant(ivf) + quant(ivlast))/2.0
+
+      quant = tmpquant
+
+      return
+    end subroutine remap_interpolate
+
+
+
+
+
+
+
+
+
+
 
 
   subroutine assign_interpolate(irs,iks,e1,e2,f1,f2,array,val)
