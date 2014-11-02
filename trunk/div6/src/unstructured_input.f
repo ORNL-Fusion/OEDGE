@@ -798,6 +798,15 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG R15
+c
+c     R15 - aux velocity factor
+c
+c
+      aux_vel21 = 1.0
+c
+c -----------------------------------------------------------------------
+c
 c     TAG S22
 c
 c     S22 - Option to turn on neutral V/A flag debugging

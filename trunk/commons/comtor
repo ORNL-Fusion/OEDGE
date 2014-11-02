@@ -60,6 +60,7 @@ C
      >  dpxpratio,tirat,tirati,ctegcut,ctigcut,czploc,
      >  rlocnum,zlocnum,nalph,nalphi,crdivbg,ns21i,s21parmi,ns21o,
      >  s21parmo,aux_ns21i,aux_s21parmi,aux_ns21o,aux_s21parmo,
+     >  aux_vel21,
      >  tmachine_opt,write_tran,
 c
 c     >  sol23_izlen,sol23_izlam,sol23_izoffset,sol23_momlen,
@@ -94,7 +95,7 @@ c     >  CDRFTV,CEIMP,FLUXINFO(MAXINS,4),platco(maxnrs,5),
      >  sdperpref,sdperppp,
 c     >  walltemp(maxpts,3),cdrftv_start,cdrftv_end,s21parmi(maxnrs,10),
      >  walltemp(maxpts,3),s21parmi(maxnrs,10),
-     >  s21parmo(maxnrs,10),aux_s21parmi(maxnrs,9),
+     >  s21parmo(maxnrs,10),aux_s21parmi(maxnrs,9),aux_vel21,
      >  aux_s21parmo(maxnrs,9),
 c
 c     >  sol23_izlen,sol23_izlam,sol23_izoffset,

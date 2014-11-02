@@ -374,9 +374,9 @@ c
      >                              sl1,sl2,slv,smax,lppa,lprad
            write (6,'(a,6(1x,g12.5))') 'SOL21i:',
      >                           sl1i,sl2i,slvi,smax,lppai,lpradi
-           write (6,'(a,11(1x,g9.3))') 'SOL21b:',
+           write (6,'(a,14(1x,g9.3))') 'SOL21b:',
      >                         t1,t1i,n1,n1i,t2,t2i,v1,v1i,v0,v0i,
-     >                 crmb
+     >                         vbm,vbmi,crmb
         endif
  
 C
@@ -1450,7 +1450,7 @@ c
 c
               knbs(ik,ir)  = nbp + (nbp*nr1a-nbp) * (s/sl1a)**n_exp
 c
-              kvhs(ik,ir)  = (nbp * v0)/ knbs(ik,ir)
+              kvhs(ik,ir)  = (nbp * v0)/ knbs(ik,ir) *aux_vel21
 c
             elseif (s.lt.sl1b) then 
 c
@@ -1463,7 +1463,7 @@ c
      >                     + (nbp*nr1b-nbp*nr1a) 
      >                       * ((s-sl1a)/(sl1b-sl1a))**n_exp
 c
-              kvhs(ik,ir)  = (nbp * v0)/ knbs(ik,ir)
+              kvhs(ik,ir)  = (nbp * v0)/ knbs(ik,ir) * aux_vel21
 c
             elseif (s.le.sl1) then
 c
@@ -2502,7 +2502,7 @@ c
               knbs(ik,ir)  = nbpi + (nbpi*nr1ai-nbpi) 
      >                               * (s/sl1ai)**n_expi
 c
-              kvhs(ik,ir)  = - (nbpi * v0i)/ knbs(ik,ir)
+              kvhs(ik,ir)  = - (nbpi * v0i)/ knbs(ik,ir) * aux_vel21
 c
             elseif (s.lt.sl1bi) then
 c
@@ -2517,7 +2517,7 @@ c
      >                     + (nbpi*nr1bi-nbpi*nr1ai) 
      >                       * ((s-sl1ai)/(sl1bi-sl1ai))**n_expi
 c
-              kvhs(ik,ir)  = - (nbpi * v0i)/ knbs(ik,ir)
+              kvhs(ik,ir)  = - (nbpi * v0i)/ knbs(ik,ir) * aux_vel21
 c
             elseif (s.le.sl1i) then
 c

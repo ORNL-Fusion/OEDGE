@@ -7672,7 +7672,7 @@ c
 c
 c
       subroutine load_divdata_array(tmpplot,iselect,istate,itype,
-     >                           ylab,blab,ref,nizs,ierr)
+     >     ylab,blab,ref,nizs,ierr)
       use error_handling
       implicit none
       include 'params' 
@@ -7681,129 +7681,135 @@ c
       include 'dynam3'
       include 'comtor'
       include 'pindata'
-c
+c     
       include 'reiser_com'
-c 
+c     
       include 'slcom'
       include 'cedge2d'
       include 'adas_data_spec'
-c
+c     
       real tmpplot(maxnks,maxnrs)
       integer iselect,istate,nizs,ierr,itype      
       character*(*) ylab,blab,ref 
-c
+c     
 c     LOAD_DIVDATA_ARRAY
-c
+c     
 c     This routine loads a 2D DIVIMP array of size MAXNKS,MAXNRS with
 c     a quantity specified by the values of iselect and istate. 
 c     The allowed values of ISELECT are:
-c
+c     
 c     ITYPE specifies the type of plot - 0 = contour, 1 = integrated
 c     ITYPE may also be used to indicate plot specific options 
-c 
+c     
 c     ISELECT = 1 = TOTAL H POWER LOSS  (W)
-c               2 = TOTAL IMPURITY POWER LOSS  (W)
-c               3 = TOTAL POWER LOSS   (W)
-c               4 = SPECIFIED IMPURITY SPECTROSCOPIC LINE 
-c                   - NEED TO READ ADAS DATA
-c               5 = SPECIFIED HYDROGENIC SPECTROSCOPIC LINE 
-c                   - NEED TO READ ADAS DATA
-c               6 = PIN Halpha from PINALPHA array
-c               7 = PIN HALPHA - By Component from Eirene - 6 for total
-c                   - state specifies component
-c                     1 - H ionisation
-c                     2 - H+ recombination
-c                     3 - H2 dissociation
-c                     4 - H2+ dissociation
-c                     5 - CX of H and H+
-c                     6 - TOTAL 
-c               8 = PIN HGAMMA - By component from Eirene - 6 for total
-c                   - as above 
-c               9 = Hydrogen Neutral Density 
-c              10 = Background Plasma Properties
-c                   1 = density
-c                   2 = electron temperature
-c                   3 = ion temperature
-c                   4 = velocity
-c                   5 = electric field
-c              11 = Impurity Species Density - specified by charge state
-c              12 = Impurity Species Temperature - specified by charge state
-c              13 = Impurity Species Velocity - specified by charge state
-c              14 = TOTAL H POWER LOSS (W/m3)
-c              15 = TOTAL IMPURITY POWER LOSS (W/m3)
-c              16 = TOTAL POWER LOSS (W/m3)
-c              17 = Load PLRP (Particular Line Radiation Profile - see PLRP 
-c                   module for istate values.
-c              18 = Fluid code Background Plasma Properties
-c                   1 = density
-c                   2 = electron temperature
-c                   3 = ion temperature
-c                   4 = velocity
-c                   5 = electric field
-c              19 = Fluid code Impurity Species Density - specified by charge state
-c              20 = Fluid code Impurity Species Temperature - specified by charge state
-c              21 = Fluid code Impurity Species Velocity - specified by charge state
-c              22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
-c                   - MAY NEED TO READ ADAS DATA
-c              23 = Impurity Density to Background Ne Ratio
-c                   Istate = IZ
-c              24 = Impurity Temperature to Background Te Ratio
-c                   Istate = IZ
-c              25 = Impurity Velocity to Background Vb Ratio
-c                   Istate = IZ
-c              26 = PIN HBETA - By Component from Eirene - 6 for total
-c                   - state specifies component
-c                     1 - H ionisation
-c                     2 - H+ recombination
-c                     3 - H2 dissociation
-c                     4 - H2+ dissociation
-c                     5 - CX of H and H+
-c                     6 - TOTAL 
-c              27 = BRATIO - magnetic field ratios or angles 
-c                   1 - Ratio of Bpol/Btor 
-c                   2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
-c              28 = HC - Calculation of CD EMISSION (D/XB)
-c                   istate = specific value 
-c                   1 - CD Efficiency (D/XB)
-c                   2 - CD Emissivity (photons/m3)
-c              29 = HC - HC State density
-c                   istate = specific HC species 
-c                          = sum over states for greater than maxstate   
-c                        1 = C+ (from HC module)
-c                        2 = C  (from HC module)
-c                        3 = CH+(from HC module)
-c                        4 = CH (from HC module)
-c              30 = HC - HC State Ionization
-c                   istate = specific HC species (ONLY CH So far)
-c              31 = Impurity Ionizations - specified by source charge state
-c
+c     2 = TOTAL IMPURITY POWER LOSS  (W)
+c     3 = TOTAL POWER LOSS   (W)
+c     4 = SPECIFIED IMPURITY SPECTROSCOPIC LINE 
+c     - NEED TO READ ADAS DATA
+c     5 = SPECIFIED HYDROGENIC SPECTROSCOPIC LINE 
+c     - NEED TO READ ADAS DATA
+c     6 = PIN Halpha from PINALPHA array
+c     7 = PIN HALPHA - By Component from Eirene - 6 for total
+c     - state specifies component
+c     1 - H ionisation
+c     2 - H+ recombination
+c     3 - H2 dissociation
+c     4 - H2+ dissociation
+c     5 - CX of H and H+
+c     6 - TOTAL 
+c     8 = PIN HGAMMA - By component from Eirene - 6 for total
+c     - as above 
+c     9 = Hydrogen Neutral Density 
+c     10 = Background Plasma Properties
+c     1 = density
+c     2 = electron temperature
+c     3 = ion temperature
+c     4 = velocity
+c     5 = electric field
+c     11 = Impurity Species Density - specified by charge state
+c     12 = Impurity Species Temperature - specified by charge state
+c     13 = Impurity Species Velocity - specified by charge state
+c     14 = TOTAL H POWER LOSS (W/m3)
+c     15 = TOTAL IMPURITY POWER LOSS (W/m3)
+c     16 = TOTAL POWER LOSS (W/m3)
+c     17 = Load PLRP (Particular Line Radiation Profile - see PLRP 
+c     module for istate values.
+c     18 = Fluid code Background Plasma Properties
+c     1 = density
+c     2 = electron temperature
+c     3 = ion temperature
+c     4 = velocity
+c     5 = electric field
+c     19 = Fluid code Impurity Species Density - specified by charge state
+c     20 = Fluid code Impurity Species Temperature - specified by charge state
+c     21 = Fluid code Impurity Species Velocity - specified by charge state
+c     22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
+c     - MAY NEED TO READ ADAS DATA
+c     23 = Impurity Density to Background Ne Ratio
+c     Istate = IZ
+c     24 = Impurity Temperature to Background Te Ratio
+c     Istate = IZ
+c     25 = Impurity Velocity to Background Vb Ratio
+c     Istate = IZ
+c     26 = PIN HBETA - By Component from Eirene - 6 for total
+c     - state specifies component
+c     1 - H ionisation
+c     2 - H+ recombination
+c     3 - H2 dissociation
+c     4 - H2+ dissociation
+c     5 - CX of H and H+
+c     6 - TOTAL 
+c     27 = BRATIO - magnetic field ratios or angles 
+c     1 - Ratio of Bpol/Btor 
+c     2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+c     28 = HC - Calculation of CD EMISSION (D/XB)
+c     istate = specific value 
+c     1 - CD Efficiency (D/XB)
+c     2 - CD Emissivity (photons/m3)
+c     29 = HC - HC State density
+c     istate = specific HC species 
+c     = sum over states for greater than maxstate   
+c     1 = C+ (from HC module)
+c     2 = C  (from HC module)
+c     3 = CH+(from HC module)
+c     4 = CH (from HC module)
+c     30 = HC - HC State Ionization
+c     istate = specific HC species (ONLY CH So far)
+c     31 = Impurity Ionizations - specified by source charge state
+c     
 c     NOTE: Subgrid Iselect values are loaded by the load_subgrid_array routine found in the
-c           subgrid_plots module - these are only listed here for completeness - local code in 
-c           the plotting routines has to invoke the appropriate load routine since they require
-c           different types of storage.
-c
-c              32 = Subgrid impurity density - STATE = IZ
-c              33 = Subgrid HC density - STATE = HC STATE INDEX
-c              34 = Subgrid impurity ADAS based emissions - additional data read 
-c              35 = Subgrid CH emission
-c
+c     subgrid_plots module - these are only listed here for completeness - local code in 
+c     the plotting routines has to invoke the appropriate load routine since they require
+c     different types of storage.
+c     
+c     32 = Subgrid impurity density - STATE = IZ
+c     33 = Subgrid HC density - STATE = HC STATE INDEX
+c     34 = Subgrid impurity ADAS based emissions - additional data read 
+c     35 = Subgrid CH emission
+c     
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
-c
-c              36 = PIN Data 
-c                   1 = PINION = PIN ionization    
-c                   2 = PINATOM = PIN Atom density 
-c                   3 = PINMOL = PIN Molecular density
-c                   4 = PINIONZ = Impurity ionization
-c                   5 = PINZ0 = Impurity neutral density  
-c                   6 = PINQI = Ion heating term
-c                   7 = PINQE = Electron heating term
-c
+c     
+c     36 = PIN Data 
+c     1 = PINION = PIN ionization    
+c     2 = PINATOM = PIN Atom density 
+c     3 = PINMOL = PIN Molecular density
+c     4 = PINIONZ = Impurity ionization
+c     5 = PINZ0 = Impurity neutral density  
+c     6 = PINQI = Ion heating term
+c     7 = PINQE = Electron heating term
+c     
+c     37 = POWER LOSS (EXCITATION)
+c     38 = POWER LOSS (RECOMBINATION/BREM)
+c     39 = POWER LOSS (TOTAL) 
+c     
+c     
+c     
       integer max_iselect
-      parameter (max_iselect=36)
-c
-c
+      parameter (max_iselect=39)
+c     
+c     
 c     ADAS variables
-c
+c     
       CHARACTER ADASID*80,graph3*80
       CHARACTER XFESYM*2
       character adasex*3
@@ -7811,232 +7817,241 @@ c
       INTEGER ISELE,ISELR,ISELX,iseld,ircode
       integer line 
       REAL WLNGTH
-c
+c     
 c     Local variables
-c
+c     
       real pltmax, pltmin
       integer ik1,ir1 
-c
+c     
       real zero_fact
-c
+c     
       real mfact
       integer ik,ir,iz,len,lenstr
       external lenstr
-c
+
+c     
+c     Calculating radiative power
+c     
+      real :: ptesa(maxnks),pnesa(maxnks)
+      real :: pcoef4(maxnks),pcoef5(maxnks),pnhs(maxnks)
+      real :: pnbs(maxnks)
+      character*2 :: year
+      integer :: iclass
+c     
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
-c
+c     
       if (iselect.eq.32.or.iselect.eq.33.or.iselect.eq.34.or.
-     >    iselect.eq.35) then
+     >     iselect.eq.35) then
          call errmsg('LOAD_DIVDATA_ARRAY:'//
-     >         'SUBGRID ISELECT VALUES SPECIFIED AS INPUT',iselect)
+     >        'SUBGRID ISELECT VALUES SPECIFIED AS INPUT',iselect)
          ierr = 1
          return
       endif
 
-c
+c     
 c     Check for valid ISELECT as input
-c
+c     
       if (iselect.lt.1.or.iselect.gt.max_iselect) then 
          call errmsg('LOAD_DIVDATA:DATA SELECTOR IN'//
-     >               ' PLOT FILE IS OUT OF RANGE:',iselect)
+     >        ' PLOT FILE IS OUT OF RANGE:',iselect)
          ierr = 1
          return
       endif
 
-c
+c     
 c     Echo input
-c
+c     
       write(6,'(a,3i5)') 'Loading DIVDATA:',iselect,istate,ierr
       ierr = 0
 
-c
+c     
 c     Set the YLAB value
-c
+c     
       call set_ylab(iselect,istate,itype,nizs,ylab) 
-c
+c     
 c     Set the BLAB value
-c
+c     
       call set_blab(iselect,istate,itype,nizs,blab) 
-c
+c     
 c     Initialize scaling factor
-c
+c     
       mfact = 1.0
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Hydrogenic power loss - DIVIMP
-c
+c     
 c----------------------------------------------------------
-c       
+c     
       if (iselect.eq.1) then
-c
-c        Individual states
-c
-c         BLAB = 'BOLO H POWER LOSS (BOLO)'
-c
+c     
+c     Individual states
+c     
+c     BLAB = 'BOLO H POWER LOSS (BOLO)'
+c     
          if (istate.eq.0.or.istate.eq.1) then 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + hpowls(ik,ir,istate)
-     >                              * kareas(ik,ir)
-c
+     >                 + hpowls(ik,ir,istate)
+     >                 * kareas(ik,ir)
+c     
                end do
-c
+c     
             end do   
-c
-c        Total Hydrogenic 
-c
+c     
+c     Total Hydrogenic 
+c     
          else
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   do iz = 0,1
-c
+c     
                      tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + hpowls(ik,ir,iz)
-     >                              * kareas(ik,ir)
-c
+     >                    + hpowls(ik,ir,iz)
+     >                    * kareas(ik,ir)
+c     
                   end do
-c  
+c     
                end do
-c
+c     
             end do   
 
          endif
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Impurity power loss - DIVIMP
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.2) then
-c
-c        Individual charge state 
-c
-c
-c        Scale by MFACT if required
-c
+c     
+c     Individual charge state 
+c     
+c     
+c     Scale by MFACT if required
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
-c         BLAB = 'BOLO IMP POW LOSS'
-c
+c     
+c     BLAB = 'BOLO IMP POW LOSS'
+c     
          if (istate.ge.0.and.istate.le.nizs) then 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + powls(ik,ir,istate)*mfact
-     >                              * kareas(ik,ir)
-c
+     >                 + powls(ik,ir,istate)*mfact
+     >                 * kareas(ik,ir)
+c     
                end do
-c
+c     
             end do   
-c
-c        Total Impurity
-c
+c     
+c     Total Impurity
+c     
          else 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   do iz = 0,nizs
-c
+c     
                      tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + powls(ik,ir,iz)*mfact
-     >                              * kareas(ik,ir)
-c
+     >                    + powls(ik,ir,iz)*mfact
+     >                    * kareas(ik,ir)
+c     
                   end do
-c  
+c     
                end do
-c
+c     
             end do   
 
 
          endif
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Total power loss - Hydrogenic + Impurity - DIVIMP 
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.3) then
-c
-c         BLAB = 'BOLO TOTAL POW LOSS'
-c
-c        Scale by MFACT if required
-c
+c     
+c     BLAB = 'BOLO TOTAL POW LOSS'
+c     
+c     Scale by MFACT if required
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c        
-c        Hydrogenic
-c	 
-c	 
+c     
+c     Hydrogenic
+c     
+c     
          do ir = 1,nrs
-c	 
+c     
             do ik = 1, nks(ir)
-c	 
+c     
                do iz = 0,1
-c	 
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                           + hpowls(ik,ir,iz)
-     >                           * kareas(ik,ir)
-c	 
+     >                 + hpowls(ik,ir,iz)
+     >                 * kareas(ik,ir)
+c     
                end do
-c  	 
+c     
             end do
-c	 
+c     
          end do   
-c	 
-c        Impurity 
-c	 
+c     
+c     Impurity 
+c     
          do ir = 1,nrs
-c	 
+c     
             do ik = 1, nks(ir)
-c	 
+c     
                do iz = 0,nizs
-c	 
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                           + powls(ik,ir,iz)*mfact
-     >                           * kareas(ik,ir)
-c	 
+     >                 + powls(ik,ir,iz)*mfact
+     >                 * kareas(ik,ir)
+c     
                end do
-c  	 
+c     
             end do
-c	 
+c     
          end do   
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     ADAS based - Impurity spectral line
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.4.or.iselect.eq.22) then
-c
-c         BLAB = 'CODE ADAS IMP PLRP'
-c
-c        Need to read in ADAS data spec to calculate radiation
-c
+c     
+c     BLAB = 'CODE ADAS IMP PLRP'
+c     
+c     Need to read in ADAS data spec to calculate radiation
+c     
 
          if (cadas_switch.eq.0) then  
-        
+            
             CALL RDG1 (GRAPH3,ADASID,adasyr,adasex,
-     >              ISELE,ISELR,ISELX,ISELD,IERR)
-c
-c           Save the ADAS data read in into the common block for 
-c           possible re-use. Do not set the cadas_switch.
-c
+     >           ISELE,ISELR,ISELX,ISELD,IERR)
+c     
+c     Save the ADAS data read in into the common block for 
+c     possible re-use. Do not set the cadas_switch.
+c     
             cadasid = adasid
             cadasyr = adasyr
             cadasex = adasex
@@ -8044,11 +8059,11 @@ c
             ciselr  = iselr
             ciselx  = iselx
             ciseld  = iseld
-c
-c        Use ADAS data in common instead of reading from input 
-c
+c     
+c     Use ADAS data in common instead of reading from input 
+c     
          elseif (cadas_switch.eq.1) then 
-c            
+c     
             adasid = cadasid
             adasyr = cadasyr
             adasex = cadasex
@@ -8056,33 +8071,33 @@ c
             iselr  = ciselr
             iselx  = ciselx
             iseld  = ciseld
-c
+c     
          endif
-c
+c     
          write(6,'(a,i5,a,i5,a,5i5)') 'LOAD_DIVDATA: ADAS:',
-     >               cadas_switch,trim(adasid),adasyr,
-     >               trim(adasex),isele,iselr,iselx,iseld
+     >        cadas_switch,trim(adasid),adasyr,
+     >        trim(adasex),isele,iselr,iselx,iseld
 
-c
+c     
          if (ierr.ne.0) return 
-c
+c     
          IF (ISTATE.GE.0.AND.ISTATE.LE.NIZS.AND.ISTATE.LT.CION)THEN
-c
+c     
             call LDADAS(CION,ISTATE,ADASID,ADASYR,ADASEX,
-     >                  ISELE,ISELR,ISELX,
-     >                  tmpplot,Wlngth,IRCODE)
-c
+     >           ISELE,ISELR,ISELX,
+     >           tmpplot,Wlngth,IRCODE)
+c     
             IF (IRCODE.NE.0) THEN
                WRITE(6,*) 'SPEC ERROR, IRCODE = ',IRCODE
                return   
             ENDIF
-c
+c     
             if (iselect.eq.4) then   
                REF = 'ADAS PLRP XX XXXXX ('
             elseif (iselect.eq.22) then 
                REF = 'ADAS TEMP XX XXXXX ('
             endif             
-c
+c     
             WRITE(REF(11:12),'(I2)') ISTATE
             WRITE(REF(14:18),'(I5)') NINT(WLNGTH)
             LEN = LENSTR(REF)
@@ -8094,56 +8109,56 @@ c
             LEN = LENSTR(REF)
             REF = REF(1:LEN) // ') '
             LEN = LENSTR(REF)
-c
+c     
          endif 
-c
-c        Scale by MFACT
-c
-c         write(6,*) 'LOAD:',mfact,absfac
-c
+c     
+c     Scale by MFACT
+c     
+c     write(6,*) 'LOAD:',mfact,absfac
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
+c     
          do ir = 1,nrs
             do ik = 1,nks(ir)
                tmpplot(ik,ir) = tmpplot(ik,ir) * mfact
             end do 
          end do
-c
-c        Scale by the impurity temperature for 
-c        iselect option 22
-c
+c     
+c     Scale by the impurity temperature for 
+c     iselect option 22
+c     
          if (iselect.eq.22) then 
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                           * sdts(ik,ir,istate)
-c
+     >                 * sdts(ik,ir,istate)
+c     
                end do 
             end do
          endif
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     ADAS based - Hydrogenic spectral lines
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.5) then
-c
-c         BLAB = 'CODE ADAS H PLRP'
-c
-c        Need to read in ADAS data spec to calculate radiation
-c
-c
+c     
+c     BLAB = 'CODE ADAS H PLRP'
+c     
+c     Need to read in ADAS data spec to calculate radiation
+c     
+c     
          if (cadas_switch.eq.0) then  
-        
+            
             CALL RDG1 (GRAPH3,ADASID,adasyr,adasex,
-     >              ISELE,ISELR,ISELX,ISELD,IERR)
-c
-c        Use ADAS data in common instead of reading from input 
-c
+     >           ISELE,ISELR,ISELX,ISELD,IERR)
+c     
+c     Use ADAS data in common instead of reading from input 
+c     
          elseif (cadas_switch.eq.1) then 
-c            
+c     
             adasid = cadasid
             adasyr = cadasyr
             adasex = cadasex
@@ -8151,22 +8166,22 @@ c
             iselr  = ciselr
             iselx  = ciselx
             iseld  = ciseld
-c
+c     
          endif
-c
+c     
          if (ierr.ne.0) return 
-c
+c     
          IF (ISTATE.GE.0 .AND. ISTATE.LE.1) THEN
-c
+c     
             call LDADAS(1,ISTATE,ADASID,ADASYR,ADASEX,
-     >                  ISELE,ISELR,ISELX,
-     >                  tmpplot,Wlngth,IRCODE)
-c
+     >           ISELE,ISELR,ISELX,
+     >           tmpplot,Wlngth,IRCODE)
+c     
             IF (IRCODE.NE.0) THEN
                WRITE(6,*) 'SPEC ERROR, IRCODE = ',IRCODE
                return   
             ENDIF
-c
+c     
             REF = 'ADAS H PLRP XX XXXXX ('
             WRITE(REF(13:14),'(I2)') IZ
             WRITE(REF(16:20),'(I5)') NINT(WLNGTH)
@@ -8179,113 +8194,120 @@ c
             LEN = LENSTR(REF)
             REF = REF(1:LEN) // ') '
             LEN = LENSTR(REF)
-c
+c     
          endif 
-c
-c        Scale by MFACT
-c
-c         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
+c     
+c     Scale by MFACT
+c     
+c     IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
          do ir = 1,nrs
             do ik = 1,nks(ir)
                tmpplot(ik,ir) = tmpplot(ik,ir) * mfact
+
+               write(6,'(a,2i6,15(1x,g12.5))') 'HADAS:',ik,ir,mfact,
+     >           tmpplot(ik,ir),ktebs(ik,ir),knbs(ik,ir),pinatom(ik,ir)
             end do 
          end do
-c
+
+
+
+
+c     
 c----------------------------------------------------------
-c
+c     
 c     PIN Halpha and Hgamma
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.6) then
-c
-c        PIN Halpha - Total only 
-c
-c         BLAB = 'CODE CODE HALPHA'
-c
-c        Loop through array
-c
+c     
+c     PIN Halpha - Total only 
+c     
+c     BLAB = 'CODE CODE HALPHA'
+c     
+c     Loop through array
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = pinalpha(ik,ir)
-c
+c     
             end do
-c
+c     
          end do   
-c
-c
+c     
+c     
 c----------------------------------------------------------
-c
+c     
 c     PIN Halpha and Hgamma - By component from Eirene 
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.7.or.iselect.eq.8.or.iselect.eq.26) then
-c
-c        PIN Halpha  
-c
+c     
+c     PIN Halpha  
+c     
          if (iselect.eq.7) then 
-c
-c            BLAB = 'CODE CODE HALPHA'
+c     
+c     BLAB = 'CODE CODE HALPHA'
             line = H_BALPHA
-c
+c     
          elseif (iselect.eq.8) then 
-c
-c            BLAB = 'CODE CODE HGAMMA'
+c     
+c     BLAB = 'CODE CODE HGAMMA'
             line = H_BGAMMA
-c
+c     
          elseif (iselect.eq.26) then 
-c
-c            BLAB = 'CODE CODE HBETA'
+c     
+c     BLAB = 'CODE CODE HBETA'
             line = H_BBETA
-c
+c     
          endif
-c
-c        Loop through array
-c
+c     
+c     Loop through array
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = pinline(ik,ir,istate,line)
-c
+c     
             end do
-c
+c     
          end do   
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     PIN Hneutral Density - from Eirene
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.9) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = pinatom(ik,ir)
-c
+c     
             end do
-c
+c     
          end do   
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     DIVIMP Background Plasma Properties - Ne, Te, Ti, Vb, E
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.10) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                if (istate.eq.1) then 
                   tmpplot(ik,ir) = knbs(ik,ir)
                elseif (istate.eq.2) then 
@@ -8297,45 +8319,45 @@ c
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = kes(ik,ir)
                endif
-c
+c     
             end do
-c
+c     
          end do   
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     DIVIMP Impurity Species Densities
 c     AND Density Ratio to Background Plasma
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.11.or.iselect.eq.23) then  
-c
-c        Scaling factor 
-c
+c     
+c     Scaling factor 
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                if (istate.eq.nizs+1) then 
 
                   do iz = 0,nizs
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
-     >                               sdlims(ik,ir,iz) * mfact
+     >                    sdlims(ik,ir,iz) * mfact
                   end do
                else
                   tmpplot(ik,ir) = sdlims(ik,ir,istate)*mfact
                endif
-c
+c     
                if (iselect.eq.23) then 
-c
+c     
                   if (knbs(ik,ir).ne.0.0) then 
 
                      tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                                / knbs(ik,ir) 
+     >                    / knbs(ik,ir) 
 
                   else
 
@@ -8345,34 +8367,34 @@ c
 
                endif  
 
-c
+c     
             end do
-c
+c     
          end do   
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     DIVIMP Impurity Species Temperatures
 c     AND Temperature Ratio to Background Plasma
-c
+c     
 c----------------------------------------------------------
-c
+c     
 
       elseif (iselect.eq.12.or.iselect.eq.24) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = sdts(ik,ir,istate)
-c
+c     
                if (iselect.eq.24) then 
 
                   if (ktebs(ik,ir).ne.0.0) then 
 
                      tmpplot(ik,ir) = tmpplot(ik,ir)
-     >                                / ktebs(ik,ir) 
+     >                    / ktebs(ik,ir) 
 
                   else
 
@@ -8381,226 +8403,226 @@ c
                   endif 
 
                endif 
-c
+c     
             end do
-c
+c     
          end do   
-c
-c
+c     
+c     
 c----------------------------------------------------------
-c
+c     
 c     DIVIMP Impurity Species Velocities
 c     AND Velocity Ratio to Background Plasma
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.13.or.iselect.eq.25) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = velavg(ik,ir,istate)
-c
+c     
                if (iselect.eq.25) then 
-c
+c     
                   if (kvhs(ik,ir).ne.0.0) then 
-  
+                     
                      tmpplot(ik,ir) = tmpplot(ik,ir)
-     >                                /(kvhs(ik,ir)/qtim)
+     >                    /(kvhs(ik,ir)/qtim)
 
                   else
- 
+                     
                      tmpplot(ik,ir) = 0.0
 
                   endif   
 
                endif 
-c
+c     
             end do
-c
+c     
          end do   
 
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Hydrogenic power loss - DIVIMP (W/m3)
-c
+c     
 c----------------------------------------------------------
-c       
+c     
       elseif (iselect.eq.14) then
-c
-c        Individual states
-c
+c     
+c     Individual states
+c     
          if (istate.eq.0.or.istate.eq.1) then 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + hpowls(ik,ir,istate)
-c
+     >                 + hpowls(ik,ir,istate)
+c     
                end do
-c
+c     
             end do   
-c
-c        Total Hydrogenic 
-c
+c     
+c     Total Hydrogenic 
+c     
          else
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   do iz = 0,1
-c
+c     
                      tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + hpowls(ik,ir,iz)
-c
+     >                    + hpowls(ik,ir,iz)
+c     
                   end do
-c  
+c     
                end do
-c
+c     
             end do   
 
          endif
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Impurity power loss - DIVIMP (W/m3)
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.15) then
-c
-c        Individual charge state 
-c
-c
-c        Scale by MFACT if required
-c
+c     
+c     Individual charge state 
+c     
+c     
+c     Scale by MFACT if required
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
-c         BLAB = 'BOLO IMP POW LOSS'
-c
+c     
+c     BLAB = 'BOLO IMP POW LOSS'
+c     
          if (istate.ge.0.and.istate.le.nizs) then 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + powls(ik,ir,istate)*mfact
-c
+     >                 + powls(ik,ir,istate)*mfact
+c     
                end do
-c
+c     
             end do   
-c
-c        Total Impurity
-c
+c     
+c     Total Impurity
+c     
          else 
-c
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   do iz = 0,nizs
-c
+c     
                      tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                              + powls(ik,ir,iz)*mfact
-c
+     >                    + powls(ik,ir,iz)*mfact
+c     
                   end do
-c  
+c     
                end do
-c
+c     
             end do   
 
 
          endif
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     Total power loss - Hydrogenic + Impurity - DIVIMP 
-c           (W/m3) 
-c
+c     (W/m3) 
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.16) then
-c
-c         BLAB = 'BOLO TOTAL POW LOSS'
-c
-c        Scale by MFACT if required
-c
+c     
+c     BLAB = 'BOLO TOTAL POW LOSS'
+c     
+c     Scale by MFACT if required
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c        
-c        Hydrogenic
-c	 
-c	 
+c     
+c     Hydrogenic
+c     
+c     
          do ir = 1,nrs
-c	 
+c     
             do ik = 1, nks(ir)
-c	 
+c     
                do iz = 0,1
-c	 
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                           + hpowls(ik,ir,iz)
-c	 
+     >                 + hpowls(ik,ir,iz)
+c     
                end do
-c  	 
+c     
             end do
-c	 
+c     
          end do   
-c	 
-c        Impurity 
-c	 
+c     
+c     Impurity 
+c     
          do ir = 1,nrs
-c	 
+c     
             do ik = 1, nks(ir)
-c	 
+c     
                do iz = 0,nizs
-c	 
+c     
                   tmpplot(ik,ir) = tmpplot(ik,ir) 
-     >                           + powls(ik,ir,iz)*mfact
-c	 
+     >                 + powls(ik,ir,iz)*mfact
+c     
                end do
-c  	 
+c     
             end do
-c	 
+c     
          end do   
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     PLRP Calculated by the PLRP.o6a module
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.17) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = plrps(ik,ir,istate)
-c
+c     
             end do
-c
+c     
          end do   
-c
-c
+c     
+c     
 c----------------------------------------------------------
-c
-c    FLUID CODE Solution Background Plasma Properties - Ne, Te, Ti, Vb, E
-c
+c     
+c     FLUID CODE Solution Background Plasma Properties - Ne, Te, Ti, Vb, E
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.18) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                if (istate.eq.1) then 
                   tmpplot(ik,ir) = e2dnbs(ik,ir)
                elseif (istate.eq.2) then 
@@ -8612,227 +8634,329 @@ c
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = e2des(ik,ir)
                endif
-c
+c     
             end do
-c
+c     
          end do   
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     FLUID CODE Impurity Species Densities
-c
+c     
 c----------------------------------------------------------
-c
+c     
 
 
       elseif (iselect.eq.19) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = e2dnzs(ik,ir,istate)
-c
+c     
             end do
-c
+c     
          end do   
 
-c
+c     
 c----------------------------------------------------------
-c
+c     
 c     FLUID CODE Impurity Species Temperatures
-c
+c     
 c----------------------------------------------------------
-c
+c     
 
       elseif (iselect.eq.20) then  
-c
-c        Note: This assumes that impurity temperature is 
-c              equal to the ion temperature for a fluid 
-c              code. 
-c
+c     
+c     Note: This assumes that impurity temperature is 
+c     equal to the ion temperature for a fluid 
+c     code. 
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = e2dtebs(ik,ir)
-c
+c     
             end do
-c
+c     
          end do   
-c
-c
+c     
+c     
 c----------------------------------------------------------
-c
+c     
 c     FLUID CODE Impurity Species Velocities
-c
+c     
 c----------------------------------------------------------
-c
+c     
 
 
       elseif (iselect.eq.21) then  
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                tmpplot(ik,ir) = e2dvzs(ik,ir,istate)
-c
+c     
             end do
-c
+c     
          end do   
-c
-c
-c
+c     
+c     
+c     
 c----------------------------------------------------------
-c
+c     
 c     Load HC data related quantities
-c
+c     
 c----------------------------------------------------------
-c
+c     
       elseif (iselect.eq.28.or.iselect.eq.29.or.iselect.eq.30) then 
 
-c
+c     
          call load_hc_data_array(tmpplot,iselect,istate,itype,
-     >                           ref,nizs,mfact,absfac,ierr)
-c
+     >        ref,nizs,mfact,absfac,ierr)
+c     
 c     Ionization data TIZS
-c
+c     
       elseif (iselect.eq.31) then 
-c
-c        Scaling factor 
-c
+c     
+c     Scaling factor 
+c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
-c
+c     
          do ir = 1,nrs
-c
+c     
             do ik = 1, nks(ir)
-c
+c     
                if (istate.eq.nizs+1) then 
 
                   do iz = 0,nizs
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
-     >                               tizs(ik,ir,iz) * mfact
+     >                    tizs(ik,ir,iz) * mfact
                   end do
                else
                   tmpplot(ik,ir) = tizs(ik,ir,istate)*mfact
                endif
-c
+c     
             end do
-c
+c     
          end do   
 
       elseif (iselect.eq.36) then 
-c
-c        Quantities returned from the PIN run and loaded into DIVIMP arrays
-c           1 = PINION = PIN ionization    
-c           2 = PINATOM = PIN Atom density 
-c           3 = PINMOL = PIN Molecular density
-c           4 = PINIONZ = Impurity ionization
-c           5 = PINZ0 = Impurity neutral density  
-c           6 = PINQI = Ion heating term
-c           7 = PINQE = Electron heating term
-c
+c     
+c     Quantities returned from the PIN run and loaded into DIVIMP arrays
+c     1 = PINION = PIN ionization    
+c     2 = PINATOM = PIN Atom density 
+c     3 = PINMOL = PIN Molecular density
+c     4 = PINIONZ = Impurity ionization
+c     5 = PINZ0 = Impurity neutral density  
+c     6 = PINQI = Ion heating term
+c     7 = PINQE = Electron heating term
+c     
          if (istate.eq.1) then 
-c
-c           PINION
-c      
+c     
+c     PINION
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinion(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
-c
+c     
 
          elseif (istate.eq.2) then 
-c
-c           PINATOM
-c      
+c     
+c     PINATOM
+c     
 
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinatom(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
 
          elseif (istate.eq.3) then 
-c
-c           PINMOL
-c      
-c
+c     
+c     PINMOL
+c     
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinmol(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
          elseif (istate.eq.4) then 
-c
-c           PINIONZ
-c      
+c     
+c     PINIONZ
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinionz(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
          elseif (istate.eq.5) then 
-c
-c           PINZ0
-c      
+c     
+c     PINZ0
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinz0(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
          elseif (istate.eq.6) then 
-c
-c           PINQI
-c      
+c     
+c     PINQI
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinqi(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
          elseif (istate.eq.7) then 
-c
-c           PINQE
-c      
+c     
+c     PINQE
+c     
             do ir = 1,nrs
-c
+c     
                do ik = 1, nks(ir)
-c
+c     
                   tmpplot(ik,ir) = pinqe(ik,ir)
-c
+c     
                end do
-c
+c     
             end do   
 
 
          endif
+
+
+      elseif (iselect.eq.37) then 
+c     
+c     Radiated power from hydrogen ... excitation ... recombination/brem or total
+c     
+
+
+         if (cadas_switch.eq.0) then  
+            
+            CALL RDG1 (GRAPH3,ADASID,adasyr,adasex,
+     >           ISELE,ISELR,ISELX,ISELD,IERR)
+c     
+c     Save the ADAS data read in into the common block for 
+c     possible re-use. Do not set the cadas_switch.
+c     
+            cadasid = adasid
+            cadasyr = adasyr
+            cadasex = adasex
+            cisele  = isele
+            ciselr  = iselr
+            ciselx  = iselx
+            ciseld  = iseld
+c     
+c     Use ADAS data in common instead of reading from input 
+c     
+         elseif (cadas_switch.eq.1) then 
+c     
+            adasid = cadasid
+            adasyr = cadasyr
+            adasex = cadasex
+            isele  = cisele
+            iselr  = ciselr
+            iselx  = ciselx
+            iseld  = ciseld
+c     
+         endif
+c     
+         write(6,'(a,i5,a,i5,a,5i5)') 'LOAD_DIVDATA: ADAS:',
+     >        cadas_switch,trim(adasid),adasyr,
+     >        trim(adasex),isele,iselr,iselx,iseld
+
+         write(year,'(i2.2)') adasyr
+
+         call xxuid(adasid)
+
+         tmpplot = 0.0
+
+         do ir = 1,nrs
+
+            pcoef5 = 0.0
+            pcoef4 = 0.0
+            
+            do ik = 1,nks(ir)
+               PTESA(IK) = KTEBS(IK,IR)
+               PNESA(IK) = KNBS(IK,IR) * RIZB
+               PNBS(IK)  = KNBS(IK,IR)
+               PNHS(IK)  = PINATOM(IK,IR)
+            end do
+
+!     iclass = 5 is plt
+            ICLASS = 5
+            CALL ADASRD(YEAR,1,1,ICLASS,NKS(IR),PTESA,PNESA,PCOEF5)
+
+
+!     iclass = 4 is prb 
+            ICLASS = 4
+            CALL ADASRD(YEAR,1,1,ICLASS,NKS(IR),PTESA,PNESA,PCOEF4)
+
+
+            if (istate.eq.0.or.istate.lt.0) then 
+
+               DO IK = 1, NKS(IR)
+
+                  tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                 PCOEF5(IK)*PNESA(IK)*PNHS(IK)
+                  
+               end do 
+
+            endif
+
+
+            if (istate.eq.1.or.istate.lt.0) then 
+
+               DO IK = 1, NKS(IR)
+                  tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                 PCOEF4(IK)*PNESA(IK)*PNBS(IK)
+
+               end do   
+
+            endif
+
+
+            do ik = 1,nks(ir)
+            write(6,'(a,2i6,15(1x,g12.5))') 'BOLO:',ik,ir,
+     >           tmpplot(ik,ir),pcoef4(ik),pnesa(ik),pnbs(ik),
+     >           pcoef4(ik)*pnesa(ik)*pnbs(ik),
+     >           pcoef5(ik),pnesa(ik),pnhs(ik),
+     >           pcoef5(ik)*pnesa(ik)*pnhs(ik)
+            end do
+
+         end do 
 
 
       endif
@@ -8840,64 +8964,64 @@ c
 
 
 
-c
+c     
 c     For cells which are exceptionally small compared
 c     to the rest of the grid - zero out their contents. 
-c
+c     
 c     Define exceptionally small as less than 1.0e-5 of 
 c     the adjacent cells on the grid. 
-c
+c     
       zero_fact = 1.0e-5 
-c
+c     
       do ir = 1,nrs
          do ik = 1,nks(ir)
 
             if (ik.eq.1) then 
                if (kareas(ik,ir).lt.
-     >             (zero_fact*kareas(ik+1,ir))) then 
-c                 
+     >              (zero_fact*kareas(ik+1,ir))) then 
+c     
                   tmpplot(ik,ir) = 0.0
                   write(6,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >               kareas(ik,ir),kareas(ik+1,ir) 
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik,ir),kareas(ik+1,ir) 
                   write(0,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >               kareas(ik,ir),kareas(ik+1,ir) 
-c       
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik,ir),kareas(ik+1,ir) 
+c     
                endif
             elseif (ik.eq.nks(ir)) then 
                if (kareas(ik,ir).lt.
-     >             (zero_fact*kareas(ik-1,ir))) then 
-c                 
+     >              (zero_fact*kareas(ik-1,ir))) then 
+c     
                   tmpplot(ik,ir) = 0.0
                   write(6,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >               kareas(ik,ir),kareas(ik-1,ir) 
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik,ir),kareas(ik-1,ir) 
                   write(0,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >               kareas(ik,ir),kareas(ik-1,ir) 
-c       
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik,ir),kareas(ik-1,ir) 
+c     
                endif
             else
                if (kareas(ik,ir).lt.
-     >             (zero_fact*kareas(ik+1,ir)).and.
-     >             kareas(ik,ir).lt.
-     >             (zero_fact*kareas(ik-1,ir))) then
-c
+     >              (zero_fact*kareas(ik+1,ir)).and.
+     >              kareas(ik,ir).lt.
+     >              (zero_fact*kareas(ik-1,ir))) then
+c     
                   tmpplot(ik,ir) = 0.0
                   write(6,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >             kareas(ik+1,ir), kareas(ik,ir),kareas(ik-1,ir) 
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik+1,ir), kareas(ik,ir),kareas(ik-1,ir) 
                   write(0,'(a,2i6,1p,4(1x,g15.8))')
-     >               'WARNING: DIVDATA:'//
-     >               ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
-     >             kareas(ik+1,ir), kareas(ik,ir),kareas(ik-1,ir) 
-c
+     >                 'WARNING: DIVDATA:'//
+     >                 ' VALUE ZEROED DUE TO GRID SIZE:',ik,ir,
+     >                 kareas(ik+1,ir), kareas(ik,ir),kareas(ik-1,ir) 
+c     
                endif            
 
             endif
@@ -8906,56 +9030,56 @@ c
 
       end do
 
-c
+c     
 c     DEBUG: 
-c
-c      write(6,'(a,i6,a,i6)') 'DIVDATA: ISELECT = ', iselect, 
+c     
+c     write(6,'(a,i6,a,i6)') 'DIVDATA: ISELECT = ', iselect, 
 c     >                       ' ISTATE = ', istate
-c      pltmax = -HI
-c      pltmin =  HI 
-c
-c      do ir = 1,nrs
-c
-c         do ik = 1, nks(ir)
-c
-c            write(6,'(a,2i6,1p,g15.8)') 'DATA:', ik, ir,
+c     pltmax = -HI
+c     pltmin =  HI 
+c     
+c     do ir = 1,nrs
+c     
+c     do ik = 1, nks(ir)
+c     
+c     write(6,'(a,2i6,1p,g15.8)') 'DATA:', ik, ir,
 c     >            tmpplot(ik,ir)
-c            pltmax = max(tmpplot(ik,ir),pltmax)          
-c            pltmin = min(tmpplot(ik,ir),pltmin)          
-c
-c
-c         end do
-c
-c      end do   
-c      write(6,'(a,1p,2(1x,g15.8))') 'DIVDATA: MAX/MIN = ',
+c     pltmax = max(tmpplot(ik,ir),pltmax)          
+c     pltmin = min(tmpplot(ik,ir),pltmin)          
+c     
+c     
+c     end do
+c     
+c     end do   
+c     write(6,'(a,1p,2(1x,g15.8))') 'DIVDATA: MAX/MIN = ',
 c     >           pltmax,pltmin
-c
-c
+c     
+c     
 c     As a post-processing function - copy the values from adjacent rings
 c     into the virtual/boundary rings of the grid
-c
+c     
 c     The boundary rings are IR=1, IR=IRWALL and IR=IRTRAP
-c       
+c     
 c     Look outward for the first ring
-c
+c     
       ir =1 
       do ik = 1,nks(ir)
          ik1 = ikouts(ik,ir)
          ir1 = irouts(ik,ir)
          tmpplot(ik,ir) = tmpplot(ik1,ir1)
       end do
-c
+c     
 c     Look inward from irwall
-c
+c     
       ir = irwall
       do ik = 1,nks(ir)
          ik1 = ikins(ik,ir)
          ir1 = irins(ik,ir)
          tmpplot(ik,ir) = tmpplot(ik1,ir1)
       end do
-c
+c     
 c     Look outward from irtrap if irtrap is not equal to or greater than nrs
-c
+c     
       if (irtrap.lt.nrs) then 
          ir = irtrap
          do ik = 1,nks(ir)
@@ -8964,7 +9088,7 @@ c
             tmpplot(ik,ir) = tmpplot(ik1,ir1)
          end do
       endif
-c
+c     
       return
       end
 c
@@ -9364,7 +9488,7 @@ c----------------------------------------------------------
 c     Hydrogen power loss  (W/m3)
 c----------------------------------------------------------
 c       
-      elseif (iselect.eq.14) then
+      elseif (iselect.eq.14.or.iselect.eq.37) then
 c
          if (istate.eq.0) then
             YLAB = 'H-NEUTRAL POW LOSS (BOLO)'
@@ -9825,7 +9949,7 @@ c----------------------------------------------------------
 c     Hydrogen power loss (W/m3)
 c----------------------------------------------------------
 c       
-      elseif (iselect.eq.14) then
+      elseif (iselect.eq.14.or.iselect.eq.37) then
 c
          if (itype.eq.0) then           
             BLAB = 'H POW LOSS (BOLO)'

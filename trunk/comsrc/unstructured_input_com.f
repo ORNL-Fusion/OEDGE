@@ -1583,6 +1583,16 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG R15 : SOL21 extra velocity factor ... used to reduce flow
+c               velocity near target. 
+c              
+c
+      ELSEIF (tag(1:3).EQ.'R15') THEN
+        CALL ReadR(line,aux_vel21,0.0,HI,
+     >             'Modify near target velocity in SOL21')
+c
+c -----------------------------------------------------------------------
+c
 c     TAG S22 : Option to turn on V/A flag debugging in NEUT
 c               OFF =0 = default
 c               ON  >0
