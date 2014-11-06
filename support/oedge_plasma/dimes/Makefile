@@ -33,6 +33,9 @@ TEST_TARG= test_op
 DIMES_OBJECTS= write_dimes_plasma.o
 DIMES_TARG= wr_dimes
 
+DIMES_OBJECTS_TEST= write_dimes_plasma_test.o
+DIMES_TARG_TEST= wr_dimes_test
+
 ERO_OBJECTS= ero_plasma.o write_ero_plasma.o
 ERO_TARG = ero_plasma
 
@@ -42,6 +45,9 @@ ERO_TARG = ero_plasma
 
 dimes: $(MODULES) $(DIMES_OBJECTS)
 	$(F90) $(MODULES) $(DIMES_OBJECTS) $(OPT) $(LIBS) -o $(DIMES_TARG)
+
+dimes-test: $(MODULES) $(DIMES_OBJECTS_TEST)
+	$(F90) $(MODULES) $(DIMES_OBJECTS_TEST) $(OPT) $(LIBS) -o $(DIMES_TARG_TEST)
 
 ero: $(MODULES) $(ERO_OBJECTS)
 	$(F90) $(MODULES) $(ERO_OBJECTS) $(OPT) $(LIBS) -o $(ERO_TARG)

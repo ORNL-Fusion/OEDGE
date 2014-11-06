@@ -426,7 +426,7 @@ contains
        endif
 
 
-    elseif (interpolate_opt.eq.1) then
+    elseif (interpolate_opt.eq.1.or.interpolate_opt.eq.2) then
        ! interpolate using Jeff's algorithm
        ! Note: ne,te,ti,vb,ef have target values that are used for interpolation in the first half cell
        !       btot,br,bz,bt do not have target data .. as a result the target values are the same as the first cell center
@@ -464,11 +464,22 @@ contains
              call write_cell_data(ik,ir)
           endif
 
-       else
+       elseif (interpolate_opt.eq.1) then 
 
           iq_last = iq
 
           call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+
+       elseif (interpolate_opt.eq.2) then 
+
+
+       ! This routine uses the proportional location of the test point within the cell relative to the sides of 
+       ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
+
+          iq_last = iq
+
+          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+
 
        endif
 
@@ -964,7 +975,7 @@ end subroutine find_nearest_boundary
 
     ! Interpolation is based on cell centers - this causes some issues near X-points for certain quadrants.
 
-
+    
     ! Based on the value of iq - the four adjacent cell centers may be identified except at X-points - the problematic conditions can 
     ! be checked by looking for 
     ! 1) irins or irouts of the up or down cells depending on quadrant are not the same
@@ -1243,6 +1254,12 @@ end subroutine find_nearest_boundary
     logical found,inpoly
     !external inpoly  
     !
+
+    write(6,'(a,i8,30(1x,g18.8))') 'IP:',iter,r,z,(rvert(in),zvert(in),te(in),in=1,4)
+    !write(6,'(a,2i8,30(1x,g18.8))') 'IP:',iter,r,z,(rvert(in),zvert(in),ne(in),te(in),in=1,4)
+
+
+
     !     Code is designed to work for 4-sided polygons only.
     !  
     if (nv.ne.4) return
@@ -1263,7 +1280,7 @@ end subroutine find_nearest_boundary
     rcp = (rs(1) + rs(3))/2.0
     zcp = (zs(1) + zs(3))/2.0
 
-    write(0,*) 'Test cp:',rcp,zcp,(rs(2) + rs(4))/2.0,(zs(2) + zs(4))/2.0
+    !write(6,'(a,4(1x,g12.5))') 'Test cp:',rcp,zcp,(rs(2) + rs(4))/2.0,(zs(2) + zs(4))/2.0
     !
     ivf= 0
     iv = 1
@@ -1448,7 +1465,7 @@ end subroutine find_nearest_boundary
     found = .false.
 
     if (ir_last.ge.1.and.ir_last.le.nrs) then 
-       if (ik_last.ge.0.and.ik_last.le.nks(ir)+1) then 
+       if (ik_last.ge.0.and.ik_last.le.nks(ir_last)+1) then 
           ! Start search in previous cell then surrounding cells
           ik = ik_last
           ir = ir_last
@@ -2639,7 +2656,7 @@ end subroutine find_nearest_boundary
     !             This solution avoids the need for square roots
     !             or trigonometric calculations.
     !
-    integer v,nextv
+    integer v,nextv,is
     real*8 cp,lastcp
 
     lastcp = 0.0 
@@ -2684,20 +2701,31 @@ end subroutine find_nearest_boundary
        !         product values generated when sampling 50,000 points 
        !         calculated on a polygon with a scale size of 1.0m. 
        !         The maximum error cross product in this case was 6e-8.
+
+       !
+       !         When trying to isolate a location using scales smaller than the
+       !         typical cell size the value of this constant needs to be made even smaller. 
+       !
        !
        !         D. Elder, Dec 13, 2006
        !
-       if (abs(cp).lt.1.0e-7) cp = 0.0 
+       if (abs(cp).lt.1.0d-15) cp = 0.0 
 
        if (v.eq.1.and.cp.ne.0.0) lastcp = cp
        !
        !         Look for change in sign of cp  
        !
-       if ((lastcp * cp).lt.0.0) return 
+       if ((lastcp * cp).lt.0.0) then 
+          !write(6,'(a,20(1x,g18.8))') 'NOT INPOLY:',r,z,(rvert(is),zvert(is),is=1,4),lastcp,cp
+          return 
+       endif 
        !
        if (cp.ne.0.0) lastcp = cp  
        !
     end do
+
+    !write(6,'(a,20(1x,g18.8))') '    INPOLY:',r,z,(rvert(is),zvert(is),is=1,4),lastcp,cp
+
     
     inpoly = .true.
     return
