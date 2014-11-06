@@ -1,0 +1,26 @@
+#---------------------------Start program.job------------------------
+#!/bin/bash
+# The name of the job, can be whatever makes sense to you
+#$ -N testcases
+# The job should be placed into the queue 'all.q'.
+#$ -q all.q
+# Redirect output stream to this file.
+#$ -o sge_output.dat
+# Redirect error stream to this file.
+#$ -e sge_error.dat
+# The batchsystem should use the current directory as working directory.
+# Both files (output.dat and error.dat) will be placed in the current
+# directory. The batchsystem assumes to find the executable in this directory.
+#$ -cwd
+# Make sure there is 2GB of free memory on the node before submitting.
+#$ -l mem_free=2G,h_vmem=4G
+# This is my email address for notifications. I want to have all notifications
+# at the master node of this cluster.
+#$ -M david@starfire.utias.utoronto.ca
+# Send me an email when the job is finished.
+#$ -m e
+# This is the file to be executed.
+export PATH=$PATH:/u/elder/bin
+echo $PATH
+time scripts/run_compare_testcases  > ./sge.out
+#---------------------------End program .sge----------------------

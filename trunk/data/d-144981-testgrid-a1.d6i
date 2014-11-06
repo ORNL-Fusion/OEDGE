@@ -256,7 +256,7 @@ $ EIRENE options:
 '*010 Geometry data  2-full triangles 3-tetrahedrons '     2     EIRGEOM
 $'*E37 Segments in toroidal geometry approximation    '     5     EIRNTORSEC  (0)
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '   300     EIRTIME
+'*020   Run time (CPU seconds)                       '    30     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be 5-Fe     '     2     EIRMAT1
 '*024             wall                               '     2     EIRMAT2
