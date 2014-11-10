@@ -145,8 +145,9 @@ c     Add NULL termination required for 'C' strings
 c
 c      exeline(len+1:len+2) = '\0'
 c
+      retcode=system('pwd')
 
-c      WRITE(0,*) 'INVOKEPIN: "'//exeline(1:len+1)//'"'
+      WRITE(0,*) 'INVOKEPIN: "'//exeline(1:len+1)//'"'
 c
 c      retcode = SYSTEM(exeline(1:len+1))
 c
@@ -444,19 +445,41 @@ c
 c
 c
       subroutine initkill
+      use debug_options
+      implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent
 c     to the DIVIMP process. (Workstation only)
 c
+c     D. Elder Nov 7, 2014
+c
+c     PGI definition of the signal function appears to have
+c     changed. It now has 3 parameters .. the third is an integer
+c     that specifies whether or not to use the signal handler 
+c     specified in the second argument. 
+c
+c     call signal(sig, proc, flag)
+c
+c     A flag value less than zero uses proc as the signal handler
+c     which is the desired behaviour in this case. Not sure why this
+c     doesn't break on other systems using PGI. 
+c
+
       integer SIGUSR1
       parameter (SIGUSR1=30)
       external killdiv
+      integer :: flag = -1
 c
 C     SIGUSR1 - comment out for mainframe - or move to routine in the
 c               system module.
 C
-      call signal(SIGUSR1,killdiv)
+      call pr_trace('INITKILL','BEFORE SET USER SIGNAL')
+
+      call signal(SIGUSR1,killdiv,flag)
+
+      call pr_trace('INITKILL','BEFORE SET USER SIGNAL')
+
       return
       end
 

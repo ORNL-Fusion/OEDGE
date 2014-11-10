@@ -16,6 +16,7 @@ fi
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=/c/ADAS/adas
+#export ADASCENT=$HOME/adas
 #
 VER=pgi
 #
@@ -36,11 +37,19 @@ VER=pgi
 #            ...
 #
 #
+DIVINSTALLDIR=$HOME
+DIVWRITEDIR=$HOME
 PROGDIR=divimp
 #
-RUNROOT=$HOME/$PROGDIR
-EXEROOT=$HOME/$PROGDIR
-DATAROOT=$HOME/$PROGDIR
+export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$DIVINSTALLDIR/$PROGDIR
+#
+export RUNROOT=$DIVWRITEDIR/$PROGDIR
+export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+#
+#export RUNROOT=$DIVINSTALLDIR/$PROGDIR
+#export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+#export DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
 #  Loctions of the various DIVIMP files 
 #
@@ -62,8 +71,12 @@ DATAROOT=$HOME/$PROGDIR
 #  EIREXE    - EIRENE executable
 #
 export DIVRUNDIR=$RUNROOT/cases
-export DIVDATDIR=$RUNROOT/data
-export DIVRESDIR=$RUNROOT/results
+export DIVDATDIR=$DATAROOT/data
+export DIVRESDIR=$RESULTSROOT/results
+#
+#export DIVRUNDIR=$RUNROOT/cases
+#export DIVDATDIR=$RUNROOT/data
+#export DIVRESDIR=$RUNROOT/results
 #
 export DIVMAINDIR=$EXEROOT
 export DIVEXEDIR=$EXEROOT/div6
@@ -99,10 +112,11 @@ export EIRDIR=$EXEROOT/eirene07
 #   a common meaning between these scripts and Steve's versions
 # - code has been modified to use DIVMAINDIR if available then DIVHOME
 #
-export DIVHOME=$RUNROOT
+# export DIVHOME=$RUNROOT
 
 # Location of graphics library used by EIRENE:
-export GLI_HOME=$DIVHOME/libsrc
+# export GLI_HOME=$DIVHOME/libsrc
+export GLI_HOME=$EXEROOT/libsrc
 
 # Set local directories:
 export RUNDIR=$RUNROOT
@@ -159,15 +173,6 @@ cp $EIRDIR/eirene $EXEDIR/eirene07
 # Copy scripts to the execution directory from the scripts directory. 
 # CPC is a copy script with a couple of checks added - found in the scripts
 # directory
-#
-# jdemod
-#
-# DIII-D: There is an issue on Venus finding the copy scripts from the execution
-# system ... so O will manually copy them to the execution directory for now.
-#
-#cp $BATDIR/cpc .
-#cp $BATDIR/mvc .
-#cp $BATDIR/lnc .
 #
 # jdemod - I moved the runeire99 and runpin scripts into the scripts directory to 
 #          be consistent. Note: many of these scripts do not actually exist - the 
@@ -432,8 +437,6 @@ fi
 #  Run DIVIMP - Use optimized version.
 #
 echo Starting DIVIMP ...  
-pwd 
-ls -al
 #
 $DIVEXE < fort.5 > divout1
 #

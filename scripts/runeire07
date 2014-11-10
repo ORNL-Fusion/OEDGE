@@ -7,11 +7,27 @@
     exit
   endif
 
+
+    setenv PATH =$PATH:.
+
+
+    set OFILE = /u/elder/divimp/inf1
+
+pwd > $OFILE
+ls -l >> $OFILE
+
+echo $PATH >> $OFILE
+
   set RUNDIR = $RUNROOT
   set XEIDIR = $RUNROOT/cases/$CASENAME.eirene
   set EXEDIR = $RUNROOT/cases/$CASENAME
   set LEIDIR = $EXEROOT/eirene07
   set DATDIR = $DATAROOT/data
+
+
+echo "RUNDIR = " $RUNDIR >> $OFILE
+echo "EXEDIR = " $EXEDIR >> $OFILE
+
 # EIRENE plots
 #  setenv GLI_HOME /usr/local/lib
   setenv GLI_HOME .
@@ -24,6 +40,10 @@
   endif
   mkdir $XEIDIR
   cd    $XEIDIR
+
+pwd >> $OFILE
+ls -l >> $OFILE
+
 
 # Find EIRENE input file
   if      ( -e $DATDIR/$CASENAME.eirdat ) then
@@ -81,10 +101,13 @@
 # Execute EIRENE
   cp $EXEDIR/eirene07 ./eirene
 
+ls -l >> $OFILE
+
+
 #exit
  
 # Xpgdbg ./eirene > asdex.out
-  eirene > eirene.out
+  ./eirene > eirene.out
 #/usr/totalview/bin/totalview ./eirene > eirene.out
 
 # Process results

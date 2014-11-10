@@ -61,6 +61,7 @@ c
 c
 c     Set hard-coded global trace debugging options
 c
+c      call init_trace(0,.true.)
       call init_trace(0,.false.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
 c
@@ -87,6 +88,8 @@ c
 c
       write (6,*) 'DIVIMP VERSION = ', vernum, ' REVISION = ',revnum
 c
+      call pr_trace('RUNDIV','VERSION ASSIGNED')
+c
 C                                                                       
 C-----------------------------------------------------------------------
 C     READ IN DATA - MAKE TEMP COPIES OF SOME INPUT FLAGS OVERWRITTEN   
@@ -104,6 +107,9 @@ c     This call initializes the trapping of the signal USR1 - on
 c     a UNIX workstation.                                               
 c                                                                       
       call initkill                                                     
+c
+      call pr_trace('RUDNIV','INITKILL RUN')
+
 C                                                                       
 c     REPLACED BY NEUTRAL WALL OPTION
 c
