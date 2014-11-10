@@ -1,0 +1,711 @@
+<!DOCTYPE HTML PUBLIC "-//SoftQuad//DTD HoTMetaL PRO 4.0::19971010::extensions to HTML 4.0//EN"
+ "hmpro4.dtd">
+
+<HTML>
+  
+  <HEAD>
+    <TITLE>DIVIMP Source Code Overview</TITLE>
+    <LINK REL="STYLESHEET" TYPE="text/css" HREF="divdocs.css" TITLE="Style">
+  </HEAD>
+  
+  <BODY>
+    
+    <H1 ALIGN="CENTER">DIVIMP Source Code Overview</H1>
+    
+    <P ALIGN="CENTER">Version 6.02</P>
+    
+    <P ALIGN="CENTER">J.D. Elder</P>
+    
+    <P ALIGN="CENTER">University of Toronto</P>
+    
+    <P ALIGN="CENTER">Institute for Aerospace Studies</P>
+    
+    <P ALIGN="CENTER">4925 Dufferin St.,</P>
+    
+    <P ALIGN="CENTER">Downsview, Ontario</P>
+    
+    <P ALIGN="CENTER">CANADA</P>
+    
+    <P ALIGN="CENTER">M3H 5T6</P>
+    
+    <P ALIGN="CENTER">December , 1998</P>
+    
+    <P ALIGN="CENTER"></P>
+    
+    <P ALIGN="CENTER"></P>
+    
+    <P ALIGN="CENTER"></P>
+    
+    <P ALIGN="CENTER"></P>
+    
+    <H2><U>Table of Contents</U></H2>
+    
+    <H3>DIVIMP and OUT Source Code Summary</H3>
+    
+    <H3>Source Code Descriptions</H3>
+    
+    <H3>DIVIMP source files</H3>
+    
+    <H3>OUT source files</H3>
+    
+    <H3>Source files common to DIVIMP and OUT</H3>
+    
+    <H3>Common block declarations</H3>
+    
+    <H3>Building DIVIMP and OUT</H3>
+    
+    <H3>Appendix A: Listings of Makefiles</H3>
+    
+    <UL>
+      <LI>The DIVIMP Makefile</LI>
+      <LI>The OUT Makefile</LI>
+    </UL>
+    
+    <P></P>
+    
+    <P></P>
+    
+    <H2><A NAME="summary">DIVIMP and OUT Source Code Summary</A></H2>
+    
+    <P>This document describes the contents of the various source files that
+      compose the DIVIMP and OUT programs. It gives a general idea of where
+      various functional segments of code may be found and gives an outline of
+      how the source code is structured. In addition, the second section
+      describes how DIVIMP and OUT are built using simple Makefiles. These
+      Makefiles are included in the Appendix.</P>
+    
+    <H3><A NAME="descriptions">Source Code Descriptions</A></H3>
+    
+    <P>The source code descriptions are organized with a listing of the file
+      from the UNIX directory taken on the date that this file was last edited,
+      followed by a brief description of the routines that may be found in that
+      source code module. The descriptions are further structured by listing
+      DIVIMP specific files first, OUT specific files next, common source code
+      modules, and finally the common blocks. </P>
+    
+    <P>One important point to note is that these source files do not follow the
+      standard naming convention for FORTRAN files. Instead of having a file
+      name extension of &#147;.f&#148;, source code files are split into three
+      categories - &#147;.d5a&#148; - is DIVIMP version 5 source code - &#147;.o5a&#148;
+      - is OUT version 5 source code and &#147;.u5a&#148; - is common or utility
+      source code for version 5. The reason for this naming convention was to
+      make the code easily divisible into components even if they occupied the
+      same source tree. In addition, this naming convention identifies both the
+      relevant version and program component in a concise fashion. </P>
+    
+    <P></P>
+    
+    <H3><A NAME="divimp-source">DIVIMP Source Files</A></H3>
+    
+    <PRE>1)   44 -rw-r--r--   1 david    staff      41353 Nov 02 13:24 bgplasma.d6a</PRE>
+    
+    <P>First module called in calculating the background plasma. This routine
+      is called from the tau module and invokes a other modules in turn. Among
+      these other modules are plasma.d5a which sets up the initial plasma
+      conditions and solascv.d5a or cfd_osm.d5a which invoke other plasma
+      solvers.</P>
+    
+    <Pre>2) 192 -rwxr-xr-x   1 david    staff     192865 Feb 25 15:24 cfd_osm.d6a</Pre>
+    
+    <P>This module contains the code for the computational fluid dynamics onion
+      skin model solution to the background plasma. It is invoked from the
+      sol23.d5a module. </P>
+    
+    <Pre>3) 40 -rw-r--r--   1 david    staff      39886 Sep 24 10:30 cfield.d6a</Pre>
+    
+    <P>This module contains the code that calculates the ion cross-field
+      transport at each timestep. It is called from the div.d5a module. </P>
+    
+    <Pre>4) 28 -rwxr-xr-x   1 david    staff      25862 Oct 30 17:12 cxrec.d6a</Pre>
+    
+    <P>Code implementing charge exchange recombination models.</P>
+    
+    <Pre>5) 256 -rwxr-xr-x   1 david    staff     259477 Mar 09 12:40 div.d6a</Pre>
+    
+    <P>This is the main DIVIMP driver routine. The ions are followed within the
+      central loop of this module, including all of the events that can occur to
+      the ion. (e.g. ionization, recombination, collision with targets, etc.)
+      All of the set up of relevant arrays is generally done in other routines
+      those the routines are usually called from this module. </P>
+    
+    <Pre>6) 40 -rw-r--r--   1 david    staff      39850 Oct 15 16:08 eirediv.d6a</Pre>
+    
+    <P>This module implements all the routines necessary for interfacing DIVIMP
+      with EIRENE. The transfer files between the codes are read and written in
+      this module. In addition, any conversions to the correct units are also
+      done here. DIVIMP is strictly in MKS units - with the exception of eV
+      being used for the electron and ion temperatures. EIRENE appears to employ
+      a mixture of units. </P>
+    
+    <Pre>7) 28 -rw-r--r--   1 david    staff      28332 Mar 09 11:26 grad.d6a</Pre>
+    
+    <P>Grad.d5a contains a number of routines related to calculating gradients
+      on the plasma grid of the various background plasma quantities. These are
+      used in a variety of places including some of the background plasma
+      solvers and the Dperp extractor.</P>
+    
+    <Pre>8) 292 -rw-r--r--   1 david    staff     298051 Mar 08 10:33 iodiv.d6a</Pre>
+    
+    <P>This module contains the primary DIVIMP specific I/O functions which
+      read in the input data file (READIN) and which write the raw data file
+      (STORE). In addition, it includes the routine PRDATA which prints the case
+      summary data file.</P>
+    
+    <Pre>9) 36 -rwxr-xr-x   1 david    staff      35694 Mar 01 16:15 iztau.d6a</Pre>
+    
+    <P>This module contains the code that calculates or calls various other
+      routines from either NOCORONA or ADAS to determine the ionization
+      probabilities.</P>
+    
+    <Pre>10) 48 -rwxr-xr-x   1 david    staff      47289 Mar 04 07:32 mon.d6a</Pre>
+    
+    <P>This module contains various routines that print out monitoring
+      variables, or quantities that have been calculated from the DIVIMP
+      results. These results are printed to the data file for the case. </P>
+    
+    <Pre>11) 200 -rw-r--r--   1 david    staff     203026 Mar 09 12:53 neut.d6a</Pre>
+    
+    <P>This routine deals with the launch and tracking of impurity neutrals,
+      either from a given set of positions or by calculating a distribution
+      across the target based on the hydrogenic plasma flux.</P>
+    
+    <Pre>12) 28 -rw-r--r--   1 david    staff      26038 Mar 09 12:53 neutone.d6a</Pre>
+    
+    <P>This routine is almost identical to the primary neut.d5a module except
+      that it has been modified to deal with tracking only one neutral at a time
+      and then immediately return to the ion tracking code when that particle is
+      ionized. If the neutral is lost by another mechanism, this information is
+      passed back to the main div.d5a particle tracking routine and appropriate
+      action taken. The module was added to deal with following impurity ions
+      that recombine to form neutrals. </P>
+    
+    <Pre>13) 84 -rwxr-xr-x   1 david    staff      85293 Feb 19 15:39 pindiv.d6a</Pre>
+    
+    <P>This module contains the interfacing code to the PIN/NIMBUS hydrogenic
+      neutral code. This includes the routines that read and write the transfer
+      files to and from the NIMBUS run and any necessary unit conversions in the
+      transferred quantities, the majority of DIVIMP uses the MKS unit system,
+      while NIMBUS tends to use cgs. </P>
+    
+    <Pre>14) 44 -rwxr-xr-x   1 david    staff      42152 Nov 02 13:20 plasma.d6a</Pre>
+    
+    <P>This routine calculates the initial background plasma conditions from
+      the given input parameters, at least for the simpler plasma
+      specifications. It also calls some of the more complex background plasma
+      calculation routines based on the input options. The routines in this
+      module are typically invoked from the bgplasma.d5a module. </P>
+    
+    <Pre>15) 20 -rw-r--r--   1 david    staff      16737 Feb 25 15:15 redefves.d6a<pre>
+    
+    <P> Redefves is responsible for redefining the vessel wall that is used inside 
+    DIVIMP in order to include any baffles that may be specified in the grid file. This
+    routine will be automatically invoked if the NIMBUS wall options are in use. Otherwise,
+    the Vessel Redefinition option in the input file must be selected in order for the 
+    baffles to be incorporated. 
+    
+    <Pre>16) 28 -rwxr-xr-x   1 david    staff      25236 Apr 30 1998  rundiv.d6a</Pre>
+    
+    <P>Primary DIVIMP driver routine containing the program entry point and
+      some initialization code.</P>
+    
+    <Pre>17) 28 -rw-r--r--   1 david    staff      27309 Oct 23 15:11 sltmp.d6a</Pre>
+    
+    <P>This module contains support code for some of the features added to
+      DIVIMP by Steven Lisgo. </P>
+    
+    <Pre>18) 16 -rwxr-xr-x   1 david    staff      15226 Mar 20 1998  sol.d6a</Pre>
+    
+    <P>This routine sets the background plasma electric field and flow velocity
+      for the simple SOL options. The original SOL options were used to set only
+      the background velocity and electric field while the temperature gradient
+      options defined the temperature. </P>
+    
+    <Pre>19) 108 -rw-r--r--   1 david    staff     110414 Feb 25 15:23 sol23.d6a</Pre>
+    
+    <P>This module is the main entry point to the CFD onion skin model
+      background solver. The routines in the cfd_osm.d5a module are invoked from
+      here.</P>
+    
+    <Pre>20) 536 -rw-r--r--   1 david    staff     548127 Mar 08 10:32 solascv.d6a</Pre>
+    
+    <P>This module contains all the code that implements SOL option 22. This
+      option uses a Runge-Kutta method to solve for the temperature, density and
+      velocity at all points along the field line. The code in this module is
+      initially called from the plasma subroutine in the plasma.d5a module. The
+      structure of common blocks and reliance on switches used in this module
+      makes the routines that implement SOL option 22 almost independent of
+      DIVIMP. Originally, SOL 22 was developed as an independent stand-alone
+      code and retains some of the independent characteristics in case it needs
+      to be extracted in the future. </P>
+    
+    <Pre>21) 116 -rwxr-xr-x   1 david    staff     116092 Mar 04 07:08 soledge.d6a</Pre>
+    
+    <P>This routine deals with the more complicated SOL options that calculate
+      both the background temperatures and density as well as the electric field
+      and velocity. Examples would be SOL options 12, 13, 14, and 21.</P>
+    
+    <Pre>22) 452 -rw-r--r--   1 david    staff     461379 Mar 05 08:58 tau.d6a</Pre>
+    
+    <P>The code to read the grids is included here. (This includes code for JET
+      and Sonnet style grids as well as two specific examples of an ITER
+      double-null grid and an Asdex grid (not Asdex Upgrade - Asdex Upgrade uses
+      Sonnet style grids as do CMOD, DIIID and TdV)). Code in the tau module
+      also calculates the characteristic times that are used in the various
+      collision, heating and friction options. Finally, it also includes much of
+      the setup and initialization code and calls to the bgplasma.d5a module
+      where the background plasma conditions are loaded or calculated, depending
+      on the selected input options.</P>
+    
+    <Pre>23) 28 -rw-r--r--   1 david    staff      25285 Jun 10 1998  theta.d6a</Pre>
+    
+    <P>This module contains the various routines that calculate the grid
+      non-orthogonality and also calculate the auxiliary orthogonal coordinate
+      that is used to enforce orthogonal cross-field transport. This code is
+      particularly important for Sonnet grids where the equilibrium file does
+      not contain a pre-calculated orthogonal coordinate as is the case with JET
+      grids. </P>
+    
+    <Pre>24) 100 -rw-r--r--   1 david    staff     100767 Mar 04 05:23 walls.d6a</Pre>
+    
+    <P>This routine implements the walls and targets. Most of the code that
+      sets up where the material interactions will occur is found in this
+      module.</P>
+    
+    <H3><A NAME="out-source">OUT Source Files</A></H3>
+    
+    <Pre>1) 44 -rw-r--r--   1 david    staff      41746 Apr 01 1998  contin.o6a</Pre>
+    
+    <P>Contains routines that calculate the contributions to Bremsstrahlung
+      radiation.</P>
+    
+    <Pre>2) 28 -rw-r--r--   1 david    staff      28543 Mar 15 10:05 ioout.o6a</Pre>
+    
+    <P>OUT program I/O routines. Similar to the DIVIMP iodiv module. The code
+      that reads in the raw data file in the GET subroutine MUST match exactly
+      the code in the iodiv.d5a(STORE) routine. If this is not the case then
+      data will be improperly transferred between DIVIMP and OUT. </P>
+    
+    <Pre>3) 508 -rw-r--r--   1 david    staff     519448 Mar 15 17:38 out.o6a</Pre>
+    
+    <P>Main OUT routine that sets up the arrays of data that will be plotted
+      depending on selected options. It consists primarily of a large &quot;IF&quot;
+      block, which, based on the index number of the selected plot type in the
+      input data file, will call the appropriate routines to generate the
+      desired plot of the data.</P>
+    
+    <Pre>4) 116 -rw-r--r--   1 david    staff     116165 Mar 04 08:02 outplot.o6a</Pre>
+    
+    <P>The routines in this module were part of the out.o4a module in previous
+      releases. However, there are so many IF statements in the out module that
+      most compiler optimization routines have trouble with the code. As a
+      result, all of the routines that support the calculations of the values to
+      be plotted were removed to a separate module that could be optimized
+      separately. This module also contains code that finds the cell for a given
+      R,Z position. The routines that setup the generalized contour plots -
+      before calling the actual drawing functions in the trace module and the
+      supporting code for a variety of different plots. </P>
+    
+    <Pre>5) 64 -rwxr-xr-x   1 david    staff      64663 Jun 10 1998  plrp.o6a</Pre>
+    
+    <P>Particular line radiation profiles. Contains the data for calculating
+      the radiative patterns of certain specific lines of various elements. This
+      module was moved from being part of DIVIMP in previous releases. It seems
+      more reasonable to include the radiation calculation post-processing code
+      in the OUT program rather than in the DIVIMP program. </P>
+    
+    <Pre>6) 8 -rw-r--r--   1 david    staff       5736 Oct 08 15:02 slmod.o6a</Pre>
+    
+    <P>This module contains some supporting code for plot options added by
+      Steven Lisgo.</P>
+    
+    <Pre>7) 84 -rw-r--r--   1 david    staff      84413 Mar 15 17:39 trace.o6a</Pre>
+    
+    <P>This contains the interface to the Ghost graphics library that actually
+      draws the graphs.</P>
+    
+    <P><B><A NAME="common-source">Source files common to DIVIMP and OUT</A></B></P>
+    
+    <Pre>1) 140 -rw-r--r--   1 david    staff     141222 May 07 1997  adas.u6a</Pre>
+    
+    <P>ADAS package subroutines for accessing the atomic physics data and
+      calculating results based on that data and the temperatures and densities
+      from the DIVIMP run. ADAS requires a large external database made up of
+      data files containing all of the information for the specific atomic
+      physics process being examined.</P>
+    
+    <Pre>2) 16 -rw-r--r--   1 david    staff      16384 Jun 17 1997  adpak.u6a</Pre>
+    
+    <P>Access routines for atomic physics data stored in the ADPAK and INEL
+      formats. </P>
+    
+    <Pre>3) 68 -rw-r--r--   1 david    staff      67778 Apr 25 1997  harw.u6a</Pre>
+    
+    <P>Harwell spline fitting and interpolation routines as well as the Harwell
+      GA15 routines for calculating whether a given point is inside an arbitrary
+      N-sided polygon.</P>
+    
+    <Pre>4) 184 -rw-r--r--   1 david    staff     187456 Apr 25 1997  nc.u6a</Pre>
+    
+    <P>NOCORONA package for ionization and radiation rates including both data
+      and access subroutines. This data is equivalent to the 1989 Abels Van
+      Maanen data from ADAS. </P>
+    
+    <Pre>5) 4 -rw-r--r--   1 david    staff       1792 Nov 05 13:38 slcom.u6a</Pre>
+    
+    <P>Common source code for features added by Steven Lisgo.</P>
+    
+    <Pre>6) 24 -rwxr-xr-x   1 david    staff      20941 Apr 25 1997  sysibm.u6a</Pre>
+    
+    <P>System dependent subroutines. This contains most of the subroutine stubs
+      to system dependent routines. This system module is set up for an IBM 3090
+      running MVS. This module has not been used in a long time and would no
+      longer be considered reliable. A few examples of typical system dependent
+      routines would be date, time and random number functions.</P>
+    
+    <Pre>7) 16 -rw-r--r--   1 david    staff      12496 Jul 30 1997  sysrs6k.u6a</Pre>
+    
+    <P>System dependent subroutines. This contains most of the subroutine stubs
+      to system dependent routines. This system module is set up for an IBM
+      RS6000 running AIX. A few examples of typical system dependent routines
+      would be date, time and random number functions.</P>
+    
+    <Pre>8) 20 -rw-r--r--   1 david    staff      16625 Jul 30 1997  syssun.u6a</Pre>
+    
+    <P>System dependent subroutines. This contains most of the subroutine stubs
+      to system dependent routines. This system module is set up for a SUN
+      machine. It will likely work with few changes on a SunOS or Solaris
+      machine. A few examples of typical system dependent routines would be
+      date, time and random number functions.</P>
+    
+    <Pre>9) 16 -rw-r--r--   1 david    staff      13176 Dec 08 11:48 sysvax.u6a</Pre>
+    
+    <P>System dependent subroutines. This contains most of the subroutine stubs
+      to system dependent routines. This system module is set up for a VAX/VMS
+      or DEC Alpha machine. A few examples of typical system dependent routines
+      would be date, time and random number functions.</P>
+    
+    <Pre>10) 112 -rw-r--r--   1 david    staff     112434 Mar 05 04:55 utility.u6a</Pre>
+    
+    <P>This module contains the common utility subroutines used by both DIVIMP
+      and OUT. Many of these are simple I/O routines for writing a string
+      constant and some number of arguments (real or integer) to a standard
+      output file (usually unit 7). It also includes the low level routines for
+      reading and writing arrays to and from the raw data file. Finally, there
+      are some subroutines for finding the position of a value in an ordered
+      array of values and other simple functions. </P>
+    
+    <Pre>11) 4 -rwxr-xr-x 1 david system 770 Jul 30 1997 datetime.c</Pre>
+    
+    <P>The routines in datetime.c and datetime.c.sun are function stubs used to
+      call the date, time and random number routines from the C-libraries on the
+      respective systems. This was found to be necessary because the random
+      number generator that was included with FORTRAN was found to be woefully
+      inadequate in terms of spectrum and number distribution. (It was based on
+      short integers and so gave only a limited number of possible results
+      (including 0.0) and resolving probabilities to only one part in 105. The
+      stub routines in these modules are called from the respective sysrs6k and
+      syssun modules. </P>
+    
+    <P><B><A NAME="common-blocks">Common block declarations</A></B></P>
+    
+    <Pre>1) 4 -rw-r--r-- 1 david system 1949 Jun 16 1997 adpak</Pre>
+    
+    <P>Common blocks for storing the ADPAK/INEL atomic physics data.</P>
+    
+    <pre>2) 4 -rw-r--r--   1 david    staff        761 Feb 19 15:59 baffles<pre>
+    
+    <P>This common block stores information used in processing any baffles that may 
+    be specified in the grid file if the vessel wall redefinition option has been invoked.</P>
+    
+    <Pre>3) 4 -rwxr-xr-x   1 david    staff        601 Jun 15 1998  cadas</Pre>
+    <Pre>   4 -rwxr-xr-x   1 david    staff        730 Apr 25 1997  cadas2</Pre>
+    
+    <P>Adas common blocks.</P>
+    
+    <Pre>4) 4 -rw-r--r--   1 david    staff       1561 Jan 20 15:15 cedge2d</Pre>
+    
+    <P>Contains the Edge2D background plasma data that has been read in from
+      the Egde2D GHOST file if the Edge2D data has been read in for reference.
+    </P>
+    
+    <Pre>5) 8 -rw-r--r--   1 david    staff       5931 Feb 25 15:25 cfd_osm_com</Pre>
+    
+    <P>Contains common blocks for the CFD OSM solver.</P>
+    
+    <Pre>6) 8 -rwxr-xr-x   1 david    staff       4761 Feb 19 16:15 cgeom</Pre>
+    
+    <P>Geometry declarations. (Arrays to hold grids and other geometry related
+      quantities - including such things as the distance along the field lines,
+      the targets coordinates and characteristics, and the magnetic field
+      values, among others.)</P>
+    
+    <Pre>7) 4 -rwxr-xr-x   1 david    staff        806 Jan 20 1998  cioniz</Pre>
+    
+    <P>Arrays containing the ionization and recombination times and
+      state-change probabilities for the impurity species being followed. The
+      data used to calculate these values is taken from a variety of sources.
+    </P>
+    
+    <Pre>8) 4 -rwxr-xr-x   1 david    staff        365 Apr 25 1997  clocal</Pre>
+    
+    <P>Declarations of variables that are used as local copies of more global
+      quantities within the div and tau subroutines. Some of these variables may
+      also be used in routines other than those mentioned. </P>
+    
+    <Pre>9) 4 -rwxr-xr-x   1 david    staff        942 Feb 25 10:58 cneut</Pre>
+    <Pre>   4 -rwxr-xr-x   1 david    staff        682 Jan 27 1998  cneut2</Pre>
+    
+    <P>Arrays for holding information about DIVIMP neutrals.</P>
+    
+    <Pre>10) 4 -rwxr-xr-x   1 david    staff        365 Apr 25 1997  cnoco</Pre>
+    
+    <P>Arrays to support the NOCORONA package.</P>
+    
+    <Pre>11) 4 -rw-r--r--   1 david    staff        229 Mar 15 11:25 colours</Pre>
+    
+    <P>Contains the arrays to hold the colour definitions for plots in the OUT
+      program.</P>
+    
+    <pre>12) 4 -rw-r--r--   1 david    staff        200 Mar 15 10:44 comgra</pre>
+    
+    <p> This routine contains the common block which is used in the trace module to keep 
+    track of information when producing multiple plots in the same frame. This used to 
+    be entirely internal to the trace.o6a module but was converted to an include file for
+    ease of maintenance.</p>
+    
+    <Pre>13) 4 -rwxr-xr-x   1 david    staff        584 Apr 25 1997  comhr</Pre>
+    
+    <P>Declarations of arrays to hold the hi-resolution background plasma data
+      that is saved for certain SOL options.</P>
+    
+    <Pre>14) 4 -rwxr-xr-x   1 david    staff       2092 May 20 1997  commv</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff       1606 Apr 25 1997  comsol</Pre>
+    
+    <P>Arrays for holding various quantities associated with calculating the
+      scrape off layer characteristics.</P>
+    
+    <Pre>15) 12 -rwxr-xr-x   1 david    staff       9210 Mar 08 10:06 comtor</Pre>
+    
+    <P>General purpose common blocks (comtor, comtor2). These contain many
+      variables performing many different functions. This usually occurs because
+      of the need for only one or two global variables for a specific option and
+      a desire to avoid creating too many distinct common blocks. Comtor has
+      become the bloc into which variables of this type are usually put. </P>
+    
+    <Pre>16) 4 -rwxr-xr-x   1 david    staff        146 Apr 25 1997  crand</Pre>
+    
+    <P>Array declarations to contain random numbers, to make calling the random
+      number generator more efficient.</P>
+    
+    <Pre>17) 4 -rwxr-xr-x   1 david    staff        326 Apr 25 1997  cyield</Pre>
+    
+    <P>Yield data.</P>
+    
+    <Pre>18) 4 -rwxr-xr-x   1 david    staff       2086 Apr 25 1997  diagvel</Pre>
+    
+    <P>Velocity diagnostic declarations.</P>
+    
+    <Pre>19) 4 -rwxr-xr-x   1 david    staff       1151 Apr 25 1997  divbra</Pre>
+    
+    <P>Declarations of global variables to be used in a DIVIMP/B2 interface.</P>
+    
+    <Pre>20) 4 -rwxr-xr-x   1 david    staff        949 Apr 25 1997  divxy</Pre>
+    
+    <P>XY grid declarations - if the XY grid option is to be turned on in
+      DIVIMP, the quantities in this common block must be edited.</P>
+    
+    <Pre>21) 4 -rwxr-xr-x   1 david    staff        235 Apr 25 1997  dynam1</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff        302 Apr 25 1997  dynam2</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff        950 Nov 05 11:50 dynam3</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff        511 Apr 25 1997  dynam4</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff        438 Apr 25 1997  dynam5</Pre>
+    
+    <P>Density declarations and other important arrays. The arrays declared in
+      this series of common blocks contains the majority of the raw results from
+      the DIVIMP run. These include the impurity densities and temperatures,
+      line radiation and total power for every cell and ionization state over
+      the entire grid. Note that dyman1 and dyman2 contain the same variables
+      declared as double precision and real. DIVIMP uses the double precision
+      arrays for accounting purposes. These are then saved as real quantities in
+      the raw data file and then read into OUT using the real instead of double
+      precision sized variables.</P>
+    
+    <Pre>22) 4 -rwxr-xr-x   1 david    staff       1781 Apr 25 1997  grbound</Pre>
+    
+    <P>OUT graphics limits.</P>
+    
+    <Pre>23) 4 -rw-r--r--   1 david    staff        424 Apr 25 1997  grmdata</Pre>
+    
+    <Pre>    4 -rw-r--r--   1 david    staff        111 Apr 25 1997  grminfo</Pre>
+    
+    <P>These common blocks contain the details required for the multiple
+      graph/page plots. Series 700. These are used only by the OUT program.</P>
+    
+    <Pre>24) 4 -rw-r--r--   1 david    staff        617 Jun 17 1997  inel</Pre>
+    
+    <P>Contains arrays to store INEL atomic physics data.</P>
+    
+    <pre>25) 4 -rw-r--r--   1 david    staff        249 Feb 14 22:33 local_baffles</pre>
+    
+    <P> This common block is used within the redefves.d6a module to contain working data used
+    while calculating the redefined wall which properly includes any baffles specified in the 
+    grid file.</p>
+    
+    <Pre>26) 4 -rw-r--r--   1 david    staff        134 Apr 22 1998  outbuffer</Pre>
+    
+    <P>Contains a character array for use in buffering output.</P>
+    
+    <Pre>27) 4 -rwxr-xr-x   1 david    staff       1168 Apr 25 1997  outxy</Pre>
+    
+    <P>XY grid declarations for OUT - if DIVIMP is generating the XY grids then
+      these declarations need to be made identical to the declarations in the
+      DIVXY common block.</P>
+    
+    <Pre>28) 4 -rwxr-xr-x   1 david    staff       2437 Mar 08 10:35 params</Pre>
+    
+    <P>Parameters specifying sizes of all DIVIMP arrays. This common block is
+      crucial and key to almost all of the DIVIMP declarations. The basic sizes
+      of virtually all the arrays as well as the limitations of the code, in
+      terms of maximum ionization states allowable (MAXIZS), maximum number of
+      particles (MAXIMP), and maximum sizes of the grids are all defined here.</P>
+    
+    <pre>29) 4 -rw-r--r--   1 david    staff       3778 Feb 25 15:27 pin_cfd</pre>
+    
+    <p> This common block is used within SOL option 23 to contain the NIMBUS/EIRENE 
+    hydrogenic data that is required for calculating the background plasma.</p>
+
+    <Pre>30) 4 -rwxr-xr-x   1 david    staff       3004 Feb 22 11:08 pindata</Pre>
+    
+    <P>Declarations for arrays for passing to and from PIN.</P>
+    
+    <Pre>31) 4 -rw-r--r--   1 david    staff        322 Feb 05 1998  promptdep</Pre>
+    
+    <P>Arrays for storing information about prompt deposition when this option
+      is activated. </P>
+    
+    <Pre>32) 4 -rwxr-xr-x   1 david    staff        439 Apr 22 1998  reader</Pre>
+    
+    <P>Declaration of the input buffer for some I/O routines.</P>
+    
+    <Pre>33) 4 -rw-r--r--   1 david    staff       2929 Oct 26 15:55 slcom</Pre>
+    
+    <Pre>    4 -rw-r--r--   1 david    staff        334 Oct 08 14:12 sldraw</Pre>
+    
+    <P>Common declarations for code options added by Steven Lisgo. Sldraw is
+      related to additions in the OUT program.</P>
+    
+    <Pre>34) 4 -rw-r--r--   1 david    staff         86 Apr 25 1997  sol22pcx</Pre>
+    <Pre>    4 -rw-r--r--   1 david    staff         70 Apr 25 1997  sol22pei</Pre>
+    <Pre>    4 -rw-r--r--   1 david    staff         93 Apr 25 1997  sol22phelpi</Pre>
+    
+    <P>These three common blocks are all used internally in the module
+      solascv.d5a which implements SOL option 22. They were extracted and placed
+      in the common directory in with the above names in order to be compatible
+      with compilation on a SUN workstation that seemed to have difficulty with
+      the syntax of the named common declaration when it was coded in-line. </P>
+    
+    <Pre>35) 8 -rw-r--r--   1 david    staff       8090 Feb 25 15:25 sol23</Pre>
+    
+    <P>Common block variables for the CFD OSM solver. </P>
+    
+    <pre>36) 4 -rw-r--r--   1 david    staff        903 Feb 25 15:25 sol23_input</pre>
+    
+    <P>SOL 23 common block used for passing input values from the iodiv.d6a module.</p>
+    
+    <Pre>37) 8 -rwxr-xr-x   1 david    staff       4545 May 13 1998  solcommon</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff        249 Apr 25 1997  solparams</Pre>
+    <Pre>    4 -rw-r--r--   1 david    staff        111 Apr 25 1997  solrk</Pre>
+    <Pre>    4 -rwxr-xr-x   1 david    staff       1664 Nov 28 1997  solswitch</Pre>
+    
+    <P>All of these common blocks contain data used by SOL option 22 in the
+      module solascv.d5a. Solparams contains the parameters that specify the
+      sizes of various arrays in the solver. Solcommon contains most of the
+      variables used throughout the solver that need a global scope. Solswitch
+      contains the set of activated switches or options that have been specified
+      for this iteration of the solver. Finally, Solrk contains the declaration
+      of the arrays that contain the Runge-Kutta coefficients for the method
+      used in the solver. This structure of common blocks and reliance on
+      switches makes routines that implement SOL option 22 almost independent of
+      DIVIMP. Originally, SOL 22 was developed as an independent stand-alone
+      code. Once so far, the solascv.d5a module has been extracted and
+      implemented as a stand-alone module to test alternate solution methods
+      without impacting other DIVIMP development efforts or causing instability
+      in the existing code. Code still exists in solascv.d5a to simplify moving
+      it back to a stand-alone code if that is ever desired again. </P>
+    
+    <Pre>38) 4 -rw-r--r--   1 david    staff        938 Apr 22 1998  transcoef</Pre>
+    
+    <P>This common block contains the results and some of the intermediate
+      values from the Dperp/Xperp extractor. </P>
+    
+    <P><B><A NAME="building">Building DIVIMP and OUT</A></B></P>
+    
+    <P>DIVIMP and OUT executables may be built differently depending on the
+      hardware and software environments in which the codes exist. There are
+      several possible methods, however, for UNIX based environments it would be
+      best to use the Makefiles that are shipped with the DIVIMP code. These
+      will likely require some local customization but should otherwise suffice
+      to build the executables. These Makefiles are setup assuming a standard
+      DIVIMP source tree distribution as is described in the DIVIMP USER MANUAL.</P>
+    
+    <P>One important point to be aware of, almost all of the DIVIMP and OUT
+      source files contain the statement or compiler directive &quot;INCLUDE&quot;.
+      This feature instructs the compiler to include another source file of the
+      given name at that point in the code. This feature is supported in all of
+      the environments where DIVIMP currently runs, including UNIX Workstations,
+      IBM 3090 and various Cray systems. </P>
+    
+    <P>The following paragraphs will outline some of the methods that may be
+      used to compile the code:</P>
+    
+    <P>One of the simplest ways of building the executables is to concatenate
+      all of the relevant source code modules together and submit this file to
+      the compiler. This works but is very inefficient and very difficult for
+      the compiler to optimize. </P>
+    
+    <P>Another alternative is to compile each of the source code modules by
+      hand using an appropriate compiler invocation command and then to invoke
+      the compile/link stage by hand. passing it all of the object modules that
+      have been created by the various compilation processes. This is an onerous
+      task and it is the task which Makefiles were designed to replace.</P>
+    
+    <P>The recommended method is to use the UNIX Make utility and the Makefiles
+      that accompany DIVIMP and OUT. These Makefiles are not very complex. They
+      do allow for recursive invocation to allow the specification of different
+      options for different make targets - this may not work on all versions of
+      Make. Makefiles are more efficient than many other methods since Make will
+      automatically check file creation dates against the last time the target
+      was built and then only recompile those elements that need recompiling.
+      This is usually quite efficient. In addition, different compiler options
+      and build objectives can be placed in the Makefile to facilitate building
+      specific versions of DIVIMP (e.g. building a version with debugging
+      options turned on). Finally, it is possible to build in dependency
+      checking so that if one source code module is changed, and the changes
+      would affect another module, then both would be recompiled. This is
+      particularly apropos for changes made to common block declarations where
+      the majority of source code modules will need to be recompiled, despite
+      there being no direct changes to any of them. This type of dependency
+      checking has not been implemented in the current generation of DIVIMP and
+      OUT Makefiles. The current policy is to recompile all of the source code
+      if a change is made to a common block that is included in multiple source
+      code modules. The make is accomplished by changing to the DIVIMP or OUT
+      directories and typing the command &quot;make&quot;. The make utility will
+      automatically use any file named &quot;Makefile&quot; or &quot;makefile&quot;
+      is the present directory and build the default target. If an option is
+      passed on the command line to make (e.g. make opt), make will look in the
+      Makefile for instructions to build the target &quot;opt&quot;. If no
+      instructions are found, make will return an error. </P>
+    
+    <H2><A NAME="appendix-A">Appendix A: Listings of Makefiles</A></H2>
+    
+    <P></P>
+    
+    <H3><A HREF="examples/divmake.html">The DIVIMP Makefile:</A></H3>
+    
+    <P></P>
+    
+    <H3><A HREF="examples/outmake.html">The OUT Makefile:</A></H3>
+    
+    <P></P>
+  </BODY>
+</HTML>

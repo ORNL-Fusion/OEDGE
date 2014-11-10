@@ -1,0 +1,19 @@
+c -*-Fortran-*-
+C                                                                               
+      COMMON /COMTAU/ CTEMI,  CX,     CVABS,  CTBIQX, C215A,  C215B,            
+     >                CMIZS,  CIZ,    CIST,   CIAB,                             
+     >                CIOPTA, CIOPTB, CIOPTC, CIOPTD, CIOPTE,                   
+c
+c jdemod - moved cioptj to comtor since it is really a transport option   
+c    >                CIOPTF, CIOPTG, CIOPTH, CIOPTI, CIOPTJ,                  
+     >                CIOPTF, CIOPTG, CIOPTH, CIOPTI,
+     >                CIOPTK, CIOPTL, CIOPTM, CIOPTN,
+     >                CNEUTA, CNEUTB, CNEUTC, CNEUTD, CNEUTE, CNEUTF,
+     >                CEXNEUT,NRFOPT,NVAOPT
+      REAL            CTEMI,CX,CVABS,CTBIQX,CIST,C215A,C215B                    
+      INTEGER         CIOPTA,CIOPTB,CIOPTC,CIOPTD,CIOPTE,CIOPTF                 
+      INTEGER         CIOPTG,CIOPTH,CIOPTI,CNEUTA,CNEUTB,CNEUTC                 
+c      INTEGER         CMIZS,CIZ,CIAB,CNEUTD,CNEUTE,CNEUTF,CIOPTJ               
+      INTEGER         CMIZS,CIZ,CIAB,CNEUTD,CNEUTE,CNEUTF
+      INTEGER         CIOPTK,CIOPTL,CIOPTM,CIOPTN
+      INTEGER         CEXNEUT,NRFOPT,NVAOPT

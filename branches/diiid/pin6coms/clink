@@ -1,0 +1,205 @@
+C
+C+ .....................................................................
+C
+C VERSION   : V1.R1.M0
+C
+C COMMON    : COMMON BLOCK FOR LINKPG
+C             -                ----
+C PURPOSE   : SET UP LINKPG COMMON BLOCK /CLINK/
+C
+C VARIABLES : (I*4) MCORN(1,1)  = UPPER-MOST RHS HORIZONTAL POLYGON
+C                        (1,2)  = LOWER-MOST RHS NON-HORIZONTAL POLYGON
+C                        (2,1)  = UPPER-MOST LHS HORIZONTAL POLYGON
+C                        (2,2)  = LOWER-MOST LHS NON-HORIZONTAL POLYGON
+C             (I*4) MHZWA(1)    = RHS TARGET POLYGON TOUCHING SOL
+C                        (2)    = LHS TARGET POLYGON TOUCHING SOL
+C             (I*4) MHZVO(1)    = SOL VOID POLYGON TOUCHING MHZWA(1)
+C                        (2)    = SOL VOID POLYGON TOUCHING MHZWA(2)
+C             (I*4) IVHZWA(1,)  = VERTICES OF MHZWA(1) TO BE USED AS
+C                                 VESSEL SEGMENTS
+C                         (2,)  = VERTICES OF MHZWA(2) TO BE USED AS
+C                                 VESSEL SEGMENTS
+C             (I*4) IHORIZ(M)   = 1 --- WETTED TARGET WALL OR PRIVATE
+C                                       REGION COVER  POLYGONS HAVE
+C                                       BEEN FORCEABLY HORIZONTALIZED
+C             (I*4) IHWAL()     = 1 --- POINT ON VESSEL/PRIVATE REGION
+C                                       VOID INTERFACE LINE WHICH
+C                                       IS HORIZONTAL (IESCF=1 ONLY)
+C             (I*4) ITAGRM(M)   =  1 --- MAIN CORE
+C                               =  2 --- MAIN SOL
+C                               =  3 --- RHS DIV SOL
+C                               =  4 --- LHS DIV SOL
+C                               =  5 --- RHS DIV PRIV.
+C                               =  6 --- LHS DIV PRIV.
+C                               =  7 --- INNER ESCAPE FIGURE.
+C                               =  8 --- SOL VOID.
+C                               =  9 --- SOL WALL.
+C                               = 10 --- RHS DIV WALL.
+C                               = 11 --- PRIV. DIV WALL.
+C                               = 12 --- LHS DIV WALL.
+C                               = 13 --- PRIV. VOID BUFFLE.
+C                               = 14 --- PRIV. DIV VOID.
+C                               = 15 --- PUMP VOID REGION.
+C                               = 16 --- REST OF PUMP.
+C                               = 17 --- OUTER RHS DIV VOID.
+C                               = 18 --- OUTER LHS DIV VOID.
+C                               = 19 --- OUTER RHS DIV WALL.
+C                               = 20 --- OUTER LHS DIV WALL.
+C                               = 21 --- RHS DIV WALL CORNER.
+C                               = 22 --- LHS DIV WALL CORNER.
+C             (I*4) ITAGES(M)   = 0 --- NOT AN OUTER ESCAPE FIGURE
+C                               = 1 --- ESCAPE FIGURE IS VOID
+C                               = 2 --- ESCAPE FIGURE IS WALL
+C                               = 3 --- NOT USED
+C                               > 3 --- ESCAPE FIGURE IS ALBEDO
+C                               =-1 --- ESCAPE FIGURE IS WALL BUT LIES
+C                                       IN THE RHS PUMP STRUCTURE
+C                                       (I.E OUTER WALL)
+C                               =-2 --- ESCAPE FIGURE IS WALL BUT LIES
+C                                       IN THE TARGET PUMP STRUCTURE
+C                                       (I.E TARGETS, CORNER,
+C                                        ALBEDO COVER WALL)
+C                               =-3 --- ESCAPE FIGURE IS WALL BUT LIES
+C                                       IN THE LHS PUMP STRUCTURE
+C                                       (I.E INNER WALL)
+C             (I*4) NPOLYC(1)   = LHS CORNER POLYGON
+C                         (2)   = RHS CORNER POLYGON
+C                         (3)   = NIMBUS POLYGON STARTING THE BAFFLES
+C                         (4)   = N/A
+C                         (5)   = NIMBUS POLYGON STARTING   PUMP
+C                                 STRUCTURE
+C                         (6)   = NIMBUS POLYGON COMPLETING PUMP
+C                                 STRUCTURE
+C                         (7)   = 1ST  POLYGON CONTAINING A GAP POINT
+C                         (8)   = LAST POLYGON CONTAINING A GAP POINT
+C             (I*4) ISEGK(1)    = LAST SEGMENT BEFORE 1ST LIMITER
+C                        (2)    = LAST SEGMENT BEFORE 2ND LIMITER
+C                        (3)    = LAST SEGMENT BEFORE 1ST PART OF
+C                                 PRIVATE REGION
+C                        (4)    = LAST SEGMENT BEFORE 2ND PART OF
+C                                 PRIVATE REGION
+C                       (5)     = LAST SEGMENT OF     LHS DIVERTOR WALL
+C                       (6)     = LAST SEGMENT BEFORE RHS DIVERTOR WALL
+C                       (7)     = LAST SEGMENT BEFORE PRIVATE VOID
+C             (I*4) INDEX( )    = ALLOWED WALL IMPURITY ATOMIC NUMBERS
+C             (I*4) IVWAL()     = VESSEL VERTEX ASSOCIATED WITH RWAL()
+C
+C             (I*4) NINF        = NO. OF POINTS FORMING INFINITY LINE
+C             (I*4) NWAL        = NO. OF POINTS FORMING VESSEL/PRIVATE
+C                                 REGION VOID INTERFACE LINE
+C             (I*4) NWALR       = NO. OF NON-HORIZONTAL POINTS FORMING
+C                                 VESSEL/PRIVATE REGION VOID INTERFACE
+C                                 LINE (IESCF=1 ONLY)
+C             (I*4) IZINDW      = INDEX OF WALL ELEMENT
+C             (I*4) NIMREG(1)   = TOTAL NO. OF NIMBUS REGIONS
+C                                 INCL PUMP & DUMMY
+C                         (2)   = LAST NIMBUS REGION BEFORE PUMP & DUMMY
+C             (I*4) MPMPG       = REGION OF ACTUAL PUMP
+C
+C             (R*8) RVINT(S)    = R-COORD OF VESSEL INTERSECTION WITH
+C                                 SOL/TARGET BOUNDARY ON RHS
+C             (R*8) ZVINT(S)    = Z-COORD ASSOCIATED WITH RVINT()
+C
+C             (R*8) RCORN(S,1)  = R-COORD OF HORIZ-SIDE PLASMA VERTEX
+C                        (S,2)  = R-COORD OF VESS INTERSECTION ON
+C                                 RCORN(S,1) / RCORN(S,3) LINE (IF ANY)
+C                        (S,3)  = R-COORD OF HORIZ-SIDE EXTRAP VERTEX
+C                        (S,4)  = R-COORD OF A NON-HORIZ-SIDE EXTRAP
+C                                 VERTEX
+C                        (S,5)  = R-COORD OF A NON-HORIZ-SIDE PLASMA
+C                                 VERTEX
+C             (R*8) ZCORN(,)    = Z-COORD ASSOCIATED WITH RCORN(,)
+C
+C             (R*8) RINF()      = R-COORD OF INFINITY LINE
+C             (R*8) ZINF()      = Z-COORD ASSOCIATED WITH RINF()
+C             (R*8) RWAL()      = R-COORD OF VESSEL/PRIVATE VOID
+C             (R*8) ZWAL()      = Z-COORD ASSOCIATED WITH RWAL()
+C             (R*8) RWALR()     = R-COORD OF NON-HORIZ VESSEL/PRIVATE
+C                                 REGION VOID
+C             (R*8) ZWALR()     = Z-COORD ASSOCIATED WITH RWALR()
+C
+C             (R*8) TEVWL       = VESSEL          WALL ELE. TEMP (EV)
+C             (R*8) TIVWL       = VESSEL          WALL ION  TEMP (EV)
+C             (R*8) TEVTA       = DIVERTOR TARGET WALL ELE. TEMP (EV)
+C             (R*8) TIVTA       = DIVERTOR TARGET WALL ION  TEMP (EV)
+C             (R*8) TEVDV       = DIVERTOR        WALL ELE. TEMP (EV)
+C             (R*8) TIVDV       = DIVERTOR        WALL ION  TEMP (EV)
+C             (R*8) TEVPR       = PRIVATE REGION  WALL ELE. TEMP (EV)
+C             (R*8) TIVPR       = PRIVATE REGION  WALL ION  TEMP (EV)
+C             (R*8) TEVSD       = SUB-DIVERTOR    WALL ELE. TEMP (EV)
+C             (R*8) TIVSD       = SUB-DIVERTOR    WALL ION  TEMP (EV)
+C
+C             (C*1) COMM(M)     = ' ' --- VOID
+C                               = '.' --- PLASMA
+C                               = 'W' --- WALL
+C                               = 'A' --- ALBEDO
+C                               = '-' --- CIR
+C                               = '*' --- REC
+C                               = 'D' --- DIVERTOR WALL SECTION OF PUMP
+C                               = '/' --- PUMP/VESSEL GAPS
+C                               = '%' --- PUMP/VESSEL GAPS (ALMOST WALL)
+C                               = 'P' --- PUMP
+C                               = 'G' --- PUMP PRESSURE GAUGE
+C                               = 'K' --- SOL  PRESSURE GAUGE
+C                               = 'X' --- PUMP CHEVERON
+C                               = '1' -> '9' --- LEAKS
+C             (C*4) SYMBOL()    = ALLOWED WALL IMPURITY ATOMIC SYMBOLS
+C
+C NOTES     : IN THE ABOVE, THE S INDEX MEANS,
+C                 S       = 1 --- RHS (I.E. OUTER WALL)
+C                         = 2 --- LHS (I.E. INNER WALL)
+C
+C AUTHOR    : JAMES SPENCE  (K1/0/80)  EXT. 4865
+C             JET
+C
+C (C)       : JET JOINT UNDERTAKING (1998)
+C
+C HISTORY   : V1.R1.M0 --- 27/11/98 --- CREATION
+C             V2.R1.M0 --- 07/12/98 --- PARAMETERS PUT IN FILE p09
+C
+C- .....................................................................
+C
+C
+C............................ DIMENSION ................................
+C
+      INTEGER*4 MCORN(2,2)  , MHZWA(2)    , MHZVO(2)    , IVHZWA(2,2)
+     &        , IHORIZ(MPG) , IHWAL(MWAL)
+     &        , ITAGRM(MPG) , ITAGES(MPG) , NPOLYC(10)
+     &        , ISEGK(7)    , INDEX(MSYM) , IVWAL(MWAL)
+     &        , NINF        , NWAL        , NWALR
+     &        , IZINDW      , NIMREG(2)   , MPMPG
+C
+      REAL*8    RVINT(2)    , ZVINT(2)
+     &        , RCORN(2,5)  , ZCORN(2,5)
+     &        , RINF(MWAL)  , ZINF(MWAL)
+     &        , RWAL(MWAL)  , ZWAL(MWAL)
+     &        , RWALR(MWAL) , ZWALR(MWAL)
+     &        , TEVWL       , TIVWL
+     &        , TEVTA       , TIVTA
+     &        , TEVDV       , TIVDV
+     &        , TEVPR       , TIVPR
+     &        , TEVSD       , TIVSD
+C
+      CHARACTER*1 COMM(MPG)
+      CHARACTER*4 SYMBOL(0:MSYM)
+C
+C............................. COMMONS .................................
+C
+      COMMON/CLINK/ RVINT   , ZVINT
+     &            , RCORN   , ZCORN
+     &            , RINF    , ZINF
+     &            , RWAL    , ZWAL
+     &            , RWALR   , ZWALR
+     &            , TEVWL   , TIVWL
+     &            , TEVTA   , TIVTA
+     &            , TEVDV   , TIVDV
+     &            , TEVPR   , TIVPR
+     &            , TEVSD   , TIVSD
+     &            , MCORN   , MHZWA  , MHZVO  , IVHZWA , IHORIZ , IHWAL
+     &            , ITAGRM  , ITAGES , NPOLYC , ISEGK  , INDEX  , IVWAL
+     &            , NINF    , NWAL   , NWALR
+     &            , IZINDW  , NIMREG , MPMPG
+     &            , COMM    , SYMBOL
+C
+C.......................................................................
+C

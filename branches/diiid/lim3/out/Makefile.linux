@@ -1,0 +1,268 @@
+#
+# Definintions
+#
+# Remove implicit .f creation rule
+#
+%.o : %.f
+%.o : %.f90
+#
+# Source filename extensions
+#
+OUTEXT=.f
+F90EXT=.f90
+
+#LIMCOMEXT=.u3i
+#COMEXT=.u6a
+CEXT=.c
+#
+# VERSION to build
+#
+# VER=aix
+#
+VER=pgi
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=pgi
+#
+# Source file locations
+#
+DIVMAIN=$(HOME)/divimp
+LIMMAIN=$(DIVMAIN)/lim3
+COMMONS=$(LIMMAIN)/commons
+#
+OUTSRC =$(LIMMAIN)/out/src
+OUTF90SRC=$(OUTSRC)/f90
+COMSRC =$(LIMMAIN)/comsrc
+LIMF90COMSRC=$(COMSRC)/f90
+#
+DIVCOMSRC=$(DIVMAIN)/comsrc
+DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
+#
+#
+VPATH=$(OUTSRC):$(OUTF90SRC):$(COMSRC):$(LIMF90COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+
+#
+# Suffixes
+#
+.SUFFIXES: .o $(OUTEXT)
+
+#
+# Compiler
+#
+# FCOMP=xlfnb
+#
+FCOMP=pgf90
+RM=rm -f
+#
+FCOMP_ABSOFT=f95
+FCOMP_INTEL =ifort
+FCOMP_pgi=pgf95
+#
+#
+# Optimization and debugging flags
+#
+# AIX - XLF
+#
+# ARCH=-qarch=com
+# OPTC= -O
+# OPTG= -g -bloadmap:load1 -qextchk -qsource
+# OPTO= -O -bloadmap:load1 -qmaxmem=16384 -qsource
+#
+# OPTS= -NQ60000 -NT70000 -ND10000 -NA16384
+#
+# LINUX - PGI
+#
+ARCH=
+OPTC= -O $(EMU)
+#OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTO= -O -Mbyteswapio -Mlist
+OPTS=
+#
+# LINUX - ABSOFT
+#
+OPT_ABSOFT = -g 
+OPT_ABSOFT_OPT = -O
+#
+# LINUX - INTEL
+#
+# IN LIM: Must use -O1 optimization since there seems to be an Intel compiler
+# bug with loop vectorization at -O2 and above that causes a seg fault. 
+# - adding a write statement to an example affected loop stopped the seg fault.
+#
+#
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1
+#
+OPT = $(OPTG)
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT) 
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+#
+# C-compiler
+#
+CC= cc
+#
+# C-flags
+#
+CFLAGS= $(OPTC)
+
+#
+# Libraries
+#
+#
+# AIX
+#
+# LIBS= -L/u/local/lib -lxlf -lc -lghost -lpostsc
+#
+# LIBS= -L/usr/local/lib -lc -lghost -lpostsc -L/usr/pgi/linux86/lib -lpgftnrtl
+#
+#
+# LINUX
+#
+LIB_VER=
+LOCAL_LIB=/usr/local/lib
+#LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
+LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+#
+#
+# Name of target to build
+#
+TARG=out3O$(VER)
+TARGALT=out3aO$(VER)
+
+#
+# Objects to compile
+#
+
+include OBJECT_LIST
+
+#OBJECTS=  adas.o harw.o nc.o sys.o unstructured_input.o utility.o utility_com.o datetime$(VER).o integ.o ioout.o out3.o outlos.o outplot.o rtutils.o SLtrace.o trace.o trace_div.o
+
+#
+# Rules
+#
+
+#$(LIMEXT).o:
+#	cp $(LIMSRC)$*$(LIMEXT) $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	rm $*.f
+
+$(OUTEXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+
+$(F90EXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+#
+# Basic creation rules - apparently the file extensions can't be aliased as a variable
+#
+
+%.o: %.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+%.o: %.f90
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+
+
+#$(LIMCOMEXT).o:
+#	$(RM) $*.f
+#	cp $? $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(RM) $*.f
+
+#$(COMEXT).o:
+#	rm -f $*.f
+#	cp $? $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(RM) $*.f
+
+#
+# Target
+#
+
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+opt:
+	$(MAKE)  "OPT=$(OPTO)"
+
+2dopt:
+	$(MAKE)  "OPT=$(OPTO)" "IDIR=$(COMMONS)"
+
+32bit:
+	$(MAKE)  "OPT=$(OPTO)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
+
+3dopt:
+	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3d/SLCOM
+	$(MAKE)  "OPT=$(OPTO)" "IDIR=$(COMMONS)/sl_limcom3d"
+
+3dsopt:
+	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3ds/SLCOM
+	$(MAKE)  "OPT=$(OPTO)" "IDIR=$(COMMONS)/sl_limcom3ds"
+
+2d:
+	$(MAKE)  "OPT=$(OPTG)" "IDIR=$(COMMONS)"
+
+3d:
+	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3d/SLCOM
+	$(MAKE)  "OPT=$(OPTG)" "IDIR=$(COMMONS)/sl_limcom3d"
+
+3ds:
+	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3ds/SLCOM
+	$(MAKE)  "OPT=$(OPTG)" "IDIR=$(COMMONS)/sl_limcom3ds"
+
+abs:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT)" "VER=$(VER_ABSOFT)" 
+
+absopt:
+	$(MAKE) "FCOMP=$(FCOMP_ABSOFT)" "OPT=$(OPT_ABSOFT_OPT)" "VER=$(VER_ABSOFT)" 
+
+intel:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" 
+
+intelopt:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" 
+
+intellib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+inteloptlib:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "LIB_VER=ifort"
+
+intel-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL)" "VER=$(VER_INTEL)"  "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib"
+
+intelopt-iter:
+	$(MAKE) "FCOMP=$(FCOMP_INTEL)" "OPT=$(OPT_INTEL_OPT)" "VER=$(VER_INTEL)" "DIVMAIN=/work/projects/divimp/divimp" "LOCAL_LIB=/work/projects/divimp/lib" 
+
+alt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
+
+altopt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTO)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.mod
+
+
+
+
+
+
+
