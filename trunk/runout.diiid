@@ -13,7 +13,8 @@ fi
 #
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=$HOME/adas/adas
+export ADASCENT=/c/ADAS/adas
+#export ADASCENT=$HOME/adas
 #
 VER=pgi
 #
@@ -25,11 +26,21 @@ VER=pgi
 #
 #PROGDIR=`basename \`pwd\``
 #
+DIVINSTALLDIR=$HOME
+DIVWRITEDIR=$HOME
+#
 PROGDIR=divimp
 #
-RUNROOT=$HOME/$PROGDIR
-EXEROOT=$HOME/$PROGDIR
-DATAROOT=$HOME/$PROGDIR
+#
+export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$DIVINSTALLDIR/$PROGDIR
+#
+export RUNROOT=$DIVWRITEDIR/$PROGDIR
+export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+#
+#RUNROOT=$DIVINSTALLDIR/$PROGDIR
+#EXEROOT=$DIVINSTALLDIR/$PROGDIR
+#DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
 #  Loctions of the various DIVIMP files 
 #
@@ -51,8 +62,12 @@ DATAROOT=$HOME/$PROGDIR
 #  EIREXE    - EIRENE executable
 #
 export DIVRUNDIR=$RUNROOT/cases
-export DIVDATDIR=$RUNROOT/data
-export DIVRESDIR=$RUNROOT/results
+export DIVDATDIR=$DATAROOT/data
+export DIVRESDIR=$RESULTSROOT/results
+#
+#export DIVRUNDIR=$RUNROOT/cases
+#export DIVDATDIR=$RUNROOT/data
+#export DIVRESDIR=$RUNROOT/results
 #
 export DIVMAINDIR=$EXEROOT
 export DIVEXEDIR=$EXEROOT/div6
@@ -90,7 +105,9 @@ export EIRDIR=$EXEROOT/eirene07
 export DIVHOME=$RUNROOT
 
 # Location of graphics library used by EIRENE:
-export GLI_HOME=$DIVHOME/libsrc
+# export GLI_HOME=$DIVHOME/libsrc
+export GLI_HOME=$EXEROOT/libsrc
+
 
 # Set local directories:
 export RUNDIR=$RUNROOT
