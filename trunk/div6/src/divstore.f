@@ -77,7 +77,11 @@ c     - this is the first step in parameterizing the read statements in
 c       OUT and removing the dependency on having identical parameter 
 c       values in both the DIVIMP and OUT compiles
 c
-
+      write(8) MAXNKS,MAXNRS,MAXNDS,MAXNGS,MAXIZS,MAXINS,                
+     >  MAXIMP,ISECT,MAXNTS,MAXNOC,MAXNWS,MAXNXS,MAXNYS,MAXVMF,         
+     >  MAXTHE,MAXSN,MAXPTS,MAXPLRP,MSOLPT,MAXADS,      
+     >  MAXGXS,MAXGYS,MAXCH3,MAXIXS,MAXIYS,MAXSEG,maxplts,MAXNFLA,
+     >  maxpiniter,mbufle,mbufx,mves,maxe2dizs
 
 c     
 c     Simulation values
