@@ -1913,6 +1913,20 @@ c                            for now - can propagate later if req'd
             READ  (8) tmpTITLE2,JOB,EQUIL,ISHOT,TSLICE
          endif
 c
+
+
+c
+c     Read in the global parameters used to write the file
+c     - this is the first step in parameterizing the read statements in 
+c       OUT and removing the dependency on having identical parameter 
+c       values in both the DIVIMP and OUT compiles
+c     - use this for checking the raw file for now
+c
+      if (version_code.ge.6*maxrev+43) then 
+
+         call check_raw_compatibility
+
+      endif
 c
 c        Simulation values
 c
@@ -2998,6 +3012,193 @@ c slmod begin - new
  9004 STOP
 c slmod end
       END
+c
+c------------------------------------------------------------
+c
+c     check_raw_compatibility
+c
+c------------------------------------------------------------
+c
+      subroutine check_raw_compatibility
+      implicit none
+      include 'params'
+
+      integer MAXNKS_R,MAXNRS_R,MAXNDS_R,MAXNGS_R,MAXIZS_R,MAXINS_R,                
+     >  MAXIMP_R,ISECT_R,MAXNTS_R,MAXNOC_R,MAXNWS_R,MAXNXS_R,MAXNYS_R,
+     >  MAXVMF_R,         
+     >  MAXTHE_R,MAXSN_R,MAXPTS_R,MAXPLRP_R,MSOLPT_R,MAXADS_R,      
+     >  MAXGXS_R,MAXGYS_R,MAXCH3_R,MAXIXS_R,MAXIYS_R,MAXSEG_R,maxplts_R,
+     >  MAXNFLA_R,
+     >  maxpiniter_R,mbufle_R,mbufx_R,mves_R,maxe2dizs_R
+      
+
+      read(8) MAXNKS_R,MAXNRS_R,MAXNDS_R,MAXNGS_R,MAXIZS_R,MAXINS_R,                
+     >  MAXIMP_R,ISECT_R,MAXNTS_R,MAXNOC_R,MAXNWS_R,MAXNXS_R,MAXNYS_R,
+     >  MAXVMF_R,         
+     >  MAXTHE_R,MAXSN_R,MAXPTS_R,MAXPLRP_R,MSOLPT_R,MAXADS_R,      
+     >  MAXGXS_R,MAXGYS_R,MAXCH3_R,MAXIXS_R,MAXIYS_R,MAXSEG_R,maxplts_R,
+     >  MAXNFLA_R,
+     >  maxpiniter_R,mbufle_R,mbufx_R,mves_R,maxe2dizs_R
+
+c
+c     Check for compatible parameter values and report inconsistencies
+c
+
+      if (maxnks_r.ne.maxnks) then 
+         call report_raw_incompatible("MAXNKS",maxnks,maxnks_r)
+      endif
+
+      if (maxnrs_r.ne.maxnrs) then 
+         call report_raw_incompatible("MAXNRS",maxnrs,maxnrs_r)
+      endif
+
+      if (maxnds_r.ne.maxnds) then 
+         call report_raw_incompatible("MAXNDS",maxnds,maxnds_r)
+      endif
+
+      if (maxngs_r.ne.maxngs) then 
+         call report_raw_incompatible("MAXNGS",maxngs,maxngs_r)
+      endif
+
+      if (maxizs_r.ne.maxizs) then 
+         call report_raw_incompatible("MAXIZS",maxizs,maxizs_r)
+      endif
+
+      if (maxins_r.ne.maxins) then 
+         call report_raw_incompatible("MAXINS",maxins,maxins_r)
+      endif
+
+      if (maximp_r.ne.maximp) then 
+         call report_raw_incompatible("MAXIMP",maximp,maximp_r)
+      endif
+
+      if (isect_r.ne.isect) then 
+         call report_raw_incompatible("ISECT",isect,isect_r)
+      endif
+
+      if (maxnts_r.ne.maxnts) then 
+         call report_raw_incompatible("MAXNTS",maxnts,maxnts_r)
+      endif
+
+      if (maxnoc_r.ne.maxnoc) then 
+         call report_raw_incompatible("MAXNOC",maxnoc,maxnoc_r)
+      endif
+
+      if (maxnws_r.ne.maxnws) then 
+         call report_raw_incompatible("MAXNWS",maxnws,maxnws_r)
+      endif
+
+      if (maxnxs_r.ne.maxnxs) then 
+         call report_raw_incompatible("MAXNXS",maxnxs,maxnxs_r)
+      endif
+
+      if (maxnys_r.ne.maxnys) then 
+         call report_raw_incompatible("MAXNYS",maxnys,maxnys_r)
+      endif
+
+      if (maxvmf_r.ne.maxvmf) then 
+         call report_raw_incompatible("MAXVMF",maxvmf,maxvmf_r)
+      endif
+
+      if (maxthe_r.ne.maxthe) then 
+         call report_raw_incompatible("MAXTHE",maxthe,maxthe_r)
+      endif
+
+      if (maxsn_r.ne.maxsn) then 
+         call report_raw_incompatible("MAXSN",maxsn,maxsn_r)
+      endif
+
+      if (maxpts_r.ne.maxpts) then 
+         call report_raw_incompatible("MAXPTS",maxpts,maxpts_r)
+      endif
+
+      if (maxplrp_r.ne.maxplrp) then 
+         call report_raw_incompatible("MAXPLRP",maxplrp,maxplrp_r)
+      endif
+
+      if (msolpt_r.ne.msolpt) then 
+         call report_raw_incompatible("MSOLPT",msolpt,msolpt_r)
+      endif
+
+      if (maxads_r.ne.maxads) then 
+         call report_raw_incompatible("MAXADS",maxads,maxads_r)
+      endif
+
+      if (maxgxs_r.ne.maxgxs) then 
+         call report_raw_incompatible("MAXGXS",maxgxs,maxgxs_r)
+      endif
+
+      if (maxgys_r.ne.maxgys) then 
+         call report_raw_incompatible("MAXGYS",maxgys,maxgys_r)
+      endif
+
+      if (maxch3_r.ne.maxch3) then 
+         call report_raw_incompatible("MAXCH3",maxch3,maxch3_r)
+      endif
+
+      if (maxixs_r.ne.maxixs) then 
+         call report_raw_incompatible("MAXIXS",maxixs,maxixs_r)
+      endif
+
+      if (maxiys_r.ne.maxiys) then 
+         call report_raw_incompatible("MAXIYS",maxiys,maxiys_r)
+      endif
+
+      if (maxseg_r.ne.maxseg) then 
+         call report_raw_incompatible("MAXSEG",maxseg,maxseg_r)
+      endif
+
+      if (maxplts_r.ne.maxplts) then 
+         call report_raw_incompatible("MAXPLTS",maxplts,maxplts_r)
+      endif
+
+      if (maxnfla_r.ne.maxnfla) then 
+         call report_raw_incompatible("MAXNFLA",maxnfla,maxnfla_r)
+      endif
+
+      if (maxpiniter_r.ne.maxpiniter) then 
+         call report_raw_incompatible("MAXPINITER",maxpiniter,
+     >        maxpiniter_r)
+      endif
+
+      if (mbufle_r.ne.mbufle) then 
+         call report_raw_incompatible("MBUFLE",mbufle,mbufle_r)
+      endif
+
+
+      if (mbufx_r.ne.mbufx) then 
+         call report_raw_incompatible("MBUFX",mbufx,mbufx_r)
+      endif
+
+
+      if (mves_r.ne.mves) then 
+         call report_raw_incompatible("MVES",mves,mves_r)
+      endif
+
+
+      if (maxe2dizs_r.ne.maxe2dizs) then 
+         call report_raw_incompatible("MAXE2DIZS",maxe2dizs,maxe2dizs_r)
+      endif
+
+
+      return
+      end
+c
+c
+c
+      subroutine report_raw_incompatible(var,param,rawval)
+      implicit none
+      character*(*) :: var
+      integer :: param, rawval
+
+      write(0,'(a,i8,a,i8)') 
+     >   'POSSIBLE INCOMPATIBILITY IN RAW FILE PARAMETER : '//trim(var)
+     >   //' = ',rawval,' WHILE COMPILED PARAMETER = ',param
+
+      return
+      end
+
+
 C
 C  *********************************************************************
 C  *  PRDMAT:  PRINT A PLASMA PROFILE                                  *

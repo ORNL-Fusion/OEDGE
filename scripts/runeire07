@@ -8,15 +8,14 @@
   endif
 
 
-    setenv PATH =$PATH:.
+# setenv PATH ${PATH}:.
 
+# set OFILE = /home/david/divimp/inf1
 
-    set OFILE = /u/elder/divimp/inf1
+# pwd > $OFILE
+# ls -l >> $OFILE
 
-pwd > $OFILE
-ls -l >> $OFILE
-
-echo $PATH >> $OFILE
+# echo $PATH >> $OFILE
 
   set RUNDIR = $RUNROOT
   set XEIDIR = $RUNROOT/cases/$CASENAME.eirene
@@ -25,8 +24,8 @@ echo $PATH >> $OFILE
   set DATDIR = $DATAROOT/data
 
 
-echo "RUNDIR = " $RUNDIR >> $OFILE
-echo "EXEDIR = " $EXEDIR >> $OFILE
+#echo "RUNDIR = " $RUNDIR >> $OFILE
+#echo "EXEDIR = " $EXEDIR >> $OFILE
 
 # EIRENE plots
 #  setenv GLI_HOME /usr/local/lib
@@ -41,8 +40,8 @@ echo "EXEDIR = " $EXEDIR >> $OFILE
   mkdir $XEIDIR
   cd    $XEIDIR
 
-pwd >> $OFILE
-ls -l >> $OFILE
+#pwd >> $OFILE
+#ls -l >> $OFILE
 
 
 # Find EIRENE input file
@@ -99,9 +98,9 @@ ls -l >> $OFILE
   cp $EXEDIR/gksfont.dat .
 
 # Execute EIRENE
-  cp $EXEDIR/eirene07 ./eirene
+  cp $EXEDIR/eirene07 eirene
 
-ls -l >> $OFILE
+#ls -l >> $OFILE
 
 
 #exit
