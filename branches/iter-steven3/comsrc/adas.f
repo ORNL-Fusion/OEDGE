@@ -217,8 +217,6 @@ c      Local variables:
 c
        integer ifail, iz0, iz1, iclass,ievcut,itmaxd,idmaxd,iz1min
        integer izmax,iz1max,id,it,iz,indxz1,izmaxd
-
-
 C
 C------DIMENSION CHECK--------------------------------------------------
 C

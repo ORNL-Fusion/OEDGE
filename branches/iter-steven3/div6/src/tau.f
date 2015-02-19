@@ -18006,11 +18006,12 @@ c
 c
          if (cprint.eq.3.or.cprint.eq.9) then
 c
-            write(6,'(a,i5,8(1x,g12.5))') 'MPS:',id,b_field,
+            write(6,'(a,i5,9(1x,g12.5))') 'MPS:',id,b_field,
      >                   mps_thickness(ir,it),mps_energy(ir,it),
      >                   thetas(id),target_orth_angle(id),
      >                   kbfst(ir,it),thetas(id)-target_orth_angle(id),
-     >                   cos(thetas(id)-target_orth_angle(id))
+     >                   cos(thetas(id)-target_orth_angle(id)),
+     >                   bts(ik,ir)
 c
          endif
 c
@@ -20560,6 +20561,12 @@ c             - too much computation and may not be useful depending on the
 c               wall intersections calculated.   
 c             - code may also implicitly assume a mostly open geometry 
 c
+c slmod begin
+       WRITE(0,*) '==============================='
+       WRITE(0,*) '=  NOT CALCULATING WALL_PRAD  ='
+       WRITE(0,*) '==============================='
+       RETURN
+c slmod end
        if (cgridopt.eq.RIBBON_GRID) return
 
 c

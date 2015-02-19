@@ -2056,10 +2056,6 @@ c...  Cropping the tetrahedral grid in the poloidal plane:
         DEALLOCATE(tryycen)
       ENDIF
 
-
-
-
-
 c...  Toroidal distribution:
 
 c work from the outside in:
@@ -3398,9 +3394,9 @@ c           mapped to the target surface, so make the correction here:
 
             IF (tri(i3)%sur(i4).EQ.0) THEN
                         
-              WRITE(0,*) 'GO:',tri(i1)%map(v1),tri(i1)%sur(v1),
-     .                         tri(i1)%index(1:2),
-     .                         tri(i1)%type.EQ.MAGNETIC_GRID
+c              WRITE(0,*) 'GO:',tri(i1)%map(v1),tri(i1)%sur(v1),
+c     .                         tri(i1)%index(1:2),
+c     .                         tri(i1)%type.EQ.MAGNETIC_GRID
 
               tri(i3)%sur(i4) =  tri(i1)%sur(v1)
 

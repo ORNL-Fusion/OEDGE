@@ -1716,21 +1716,21 @@ c               DO i = 1, obj(iobj)%nside
 c                 CALL GetVertex(iobj,i,x(i),y(i))         
 c               ENDDO
 c               WRITE(88,'(A,I6,I8,2I6,4(2X,2F10.6))') 
-c     .          'fuck',
+c     .          'darn',
 c     .           iobj,
 c     .           -1,
 c     .           -1,
 c     .           -1,
 c     .           (x(i),y(i),i=1,obj(iobj)%nside)
 c                WRITE(88,'(A,I6,I8,2I6,4(2X,2I10))') 
-c     .          'fuck',
+c     .          'darn',
 c     .           iobj,
 c     .           -1,
 c     .           -1,
 c     .           -1,
 c     .           (srf(obj(iobj)%iside(i))%ivtx(1:2),i=1,obj(iobj)%nside)
 c               WRITE(88,'(A,I6,I8,2I6,2(2X,2I20,2X))') 
-c     .          'fuck',
+c     .          'darn',
 c     .           iobj,
 c     .           -1,
 c     .           -1,

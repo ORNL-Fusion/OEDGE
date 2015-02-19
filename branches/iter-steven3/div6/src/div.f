@@ -289,6 +289,23 @@ c slmod end
       IF (ITER.EQ.1) CALL TAUIN1 (title,equil,NIZS,VFLUID)
       TAUTIM = ZA02AS (1) - TAUTIM
       WRITE(6,*) 'TIME USED IN SETUP: TAU SUBROUTINE :',TAUTIM,' S'
+c slmod begin
+c...  Sputtering yields were calcualted in divCompileSputteringYields and 
+c     no impurities were producted (i.e. all yields = 0), so short-circuit
+c     the impurity calculation -- can't eliminate it because a subsequent
+c     run in a time-dependent series will need some data to work with, even
+c     if it's not sampled in practice:  -SL, 2014/10/17
+      IF (sputter_ilast.GT.0.AND.nabsfac.EQ.0.999) THEN 
+        nizs  = 1
+        nimps = 10
+        IF (nimps2.NE.0) nimps2 = 10
+        IF (opt_div%pstate.EQ.1) cstmax = 1.0E-7
+
+
+c        WRITE(0,*) '************  what the heck A! **************'
+
+      ENDIF
+c slmod end
 C
 C---- ZERO ARRAYS ETC
 C
@@ -987,7 +1004,10 @@ c
         REXIT  = 0.0
 c
       ENDIF
-
+c slmod begin
+      IF (OPT_DIV%PSTATE.EQ.1.AND..NOT.ALLOCATED(TDEP_SAVE)) 
+     .  ALLOCATE(TDEP_SAVE(NATIZ))
+c slmod end
 c
       RNEUT1 = RNEUT
       CLLL(-1) = REXIT
@@ -1100,6 +1120,7 @@ C------ SET LOCAL COPIES OF CHARACTERISTIC TIMES DATA, THESE MAY BE
 C------ CHANGED WHEN TEMI CHANGES IF OPTIONS OTHER THAN 0 ARE USED.
 C
         DO 777 IZ = 1, NIZS
+c          write(0,*) 'debug: xxx 1',iz
           XXX(IZ) = ZMAX
           SSS(IZ) = 0.0
           SSSS(IZ)= 0.0
@@ -1145,8 +1166,44 @@ c
           endif
 c
           cist  = cistizs(imp)
-c
 
+c
+c slmod begin - t-dep
+          LOAD_I = -1
+          IF (TDEP_DATA_EXISTS) THEN
+
+
+            NRAND = NRAND + 1
+            CALL SURAND2(SEED, 1, RAN)
+
+c            write(0,*) 'checkin',RAN,TDEP_LOAD_FRAC
+
+            IF (RAN.LT.TDEP_LOAD_FRAC) THEN
+
+c              WRITE(0,*) 'Taking a new particle, not an old one...'
+
+              NRAND  = NRAND + 1
+              CALL SURAND2 (SEED, 1, RAN)
+
+              LOAD_I = divGetTdepIndex(RAN)
+              R      = TDEP_LOAD(LOAD_I)%R       ! check
+              Z      = TDEP_LOAD(LOAD_I)%Z       ! check
+              VEL    = TDEP_LOAD(LOAD_I)%VEL     ! check
+              SPUTY  = TDEP_LOAD(LOAD_I)%WEIGHT  ! check
+              TEMI   = TDEP_LOAD(LOAD_I)%TEMP    ! check
+
+              idstart = idatizs(imp,1)     ! not sure
+              idtype  = idatizs(imp,2)     ! not sure
+              iwstart = -1                 ! not sure
+
+c        WRITE(0,*) '************  what the heck B! **************'
+
+            ELSE
+
+
+            ENDIF
+          ENDIF
+c slmod end
 C
 C------ SELECT INJECTION POINTS FROM INPUT OPTIONS
 C
@@ -1358,7 +1415,6 @@ c              write(0,*) 'standard'
             ELSE
               NRAND  = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
-c              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)  ! Randomly choose the index of a stored trajectory
               LOAD_I = divGetTdepIndex(RAN)
               R      = TDEP_LOAD(LOAD_I)%R
               Z      = TDEP_LOAD(LOAD_I)%Z
@@ -1425,7 +1481,12 @@ c        TEMI   = CTEM1
 c
 c slmod begin - t-dep
         IF (LOAD_I.NE.-1) THEN
-          IZ = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
+c         The ionisation is done because t-dep mode doesn't follow
+c         neutrals at the moment -- something for another day...  -SL, 14/10/2014
+          IF (TDEP_LOAD(LOAD_I)%CHARGE.EQ.0.0) 
+     .      WRITE(0,*) 'WARNING: ARTIFICIAL IONISATION OF A '//
+     .                 'NEUTRAL INHERITED FROM A PREVIOUS RUN'
+          IZ = MAX(1,NINT(TDEP_LOAD(LOAD_I)%CHARGE))  
         ELSE
           IZ = CIZSC
         ENDIF
@@ -1606,6 +1667,7 @@ c     >              avatiz(m),ratiz
         AVSPOS = AVSPOS + MIN (S, SMAX-S) * SPUTY
         AVSMAX = AVSMAX + SMAX * SPUTY
         AVVPOS = AVVPOS + ABS(VEL)/QTIM * SPUTY
+c        write(0,*) 'debug: xxx 2',iz
         XXX(IZ)= Z
         SSS(IZ)= MIN (S, SMAX-S)
         KKK    = K
@@ -1797,7 +1859,13 @@ c
 c
 c       Check for PROMPT REDEPOSITION of the ORIGINAL ION
 c
-        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
+c slmod begin - t-dep
+        if (load_i.eq.-1.and.
+     .      (prompt_depopt.eq.1.or.prompt_depopt.eq.20)) then
+                              
+c
+c        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
+c slmod end
 c
 c          Check for prompt deposition
 c
@@ -2191,6 +2259,7 @@ c
 c
 c
 c
+c        write(0,*) 'debug: xxx 3',iz
         XXX(IZ) = MIN (XXX(IZ), Z)
         SSS(IZ) = MAX (SSS(IZ), MIN (S,SMAX-S))
         KKK     = KKK + K
@@ -2328,8 +2397,6 @@ c slmod begin - t-dep
 c...       Store the state of the ion so that it can be re-launched in a 
 c          subsequent run:                     
            IF (OPT_DIV%PSTATE.EQ.1) THEN
-             IF (.NOT.ALLOCATED(TDEP_SAVE)) ALLOCATE(TDEP_SAVE(NATIZ))
-
              tdep_save_n = tdep_save_n + 1
              tdep_save(tdep_save_n)%r      = r
              tdep_save(tdep_save_n)%z	   = z
@@ -2625,7 +2692,6 @@ c
 c     Continue with wrap up execution.
 c
  8701 continue
-
 
 
 
@@ -3984,7 +4050,6 @@ c     ADAS - use ADAS data when ADPAK is not available
 c
       elseif (cdatopt.eq.1.or.cdatopt.eq.2.or.cdatopt.eq.3) then
 c
-C
       DO 1190 IR = 1, NRS
 C
 C---- LOAD POWER DATA ONE RING AT A TIME.
@@ -4670,6 +4735,11 @@ c
             write(6,'(a,10(1x,g12.5))') 'ABSFAC CALCULATION:',
      >               wssf,ftot,yeff,csef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+
+            write(0,'(a,10(1x,g12.5))') 'ABSFAC CALCULATION:',
+     >               wssf,ftot,yeff,csef,
+     >            neut2d_fytot,absfac_ion,absfac_neut
+
 c
 c         else
 c
@@ -4691,12 +4761,18 @@ c
 C slmod begin - t-dep
 c...  Dump the particle distribution to a file:
       IF (opt_div%pstate.EQ.1) THEN
+
+        write(0,*) 'debug: absfac = ',absfac
+
         CALL find_free_unit_number(fp)
         OPEN (UNIT=fp,FILE='raw.divimp_tdep_dist',ACCESS='SEQUENTIAL',
      .        STATUS='REPLACE')
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{VERSION}'
         WRITE(fp,*    ) 1.0
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A,1P,E15.7)') '* sputter_nabsfac=',sputter_nabsfac
+        WRITE(fp,'(A,F15.7   )') '* cpu time       =',timusd
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{DATA RUN}'
         WRITE(fp,'(1P,E15.7,0P,A)') qtim       ,'  qtim'
@@ -4747,6 +4823,7 @@ c...    Clear memory:
         IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
         load_i = divGetTdepIndex(-1.0)
       ENDIF
+      IF (ALLOCATED(tdep_save)) ALLOCATE(tdep_save(natiz))
 C slmod end
 C
       DO 1020 IR = 1, NRS
@@ -5162,7 +5239,6 @@ C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
       if (debug_code) write(0,*) '18:'
-
 
       IF (NIZS.GT.0)
      >     CALL MONPRI (FACTA(1),VFLUID,NIZS,SDTZS ,sdtzs2,
@@ -7488,12 +7564,13 @@ c slmod begin
         getrz_error = .TRUE.
         WRITE(0,*) 'WARNING promptdep: getrz_confusion, prompt '//
      .             'redeposition check lost'
-c        WRITE(0,*) 'WHOA! PROBLEM!'
-c        WRITE(0,*) griderr
-c        WRITE(0,*) r,z
-c        WRITE(0,*) ik_local,ir_local
-c        WRITE(0,*) ik,ir
-c        WRITE(0,*) it
+c        WRITE(6,*) 'WARNING promptdep: getrz_confusion, prompt '//
+c     .             'redeposition check lost'
+c        WRITE(6,*) griderr
+c        WRITE(6,*) r,z
+c        WRITE(6,*) ik_local,ir_local
+c        WRITE(6,*) ik,ir
+c        WRITE(6,*) it
         id = idds(irsep,2)
       ENDIF
 c slmod end
@@ -7523,7 +7600,7 @@ c        at full energy.
 c
 c
 c      write(6,*) 'DEBUG PD:',ik,ir,targ_dist,
-c     >           mps_thickness(ir_local,it),larmor_radius,bfield
+c     >           mps_thickness(ir_local,it),larmor_radius,b_field
 c
 c
       if (targ_dist.le.mps_thickness(ir_local,it)) then

@@ -3,6 +3,290 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE DumpSvetlanaRatynskaya(title9)
+      USE mod_geometry
+      USE mod_eirene06_locals
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+      INCLUDE 'slout'
+
+      CHARACTER, INTENT(IN) :: title9*(*)
+
+      INTEGER GetNumberOfObjects
+
+      INTEGER status,ndat,ik,ir,iobj,iside,omap,isrf,ivtx,ion,fp,i,j,
+     .        ierr,ike
+
+      CHARACTER dummy*1024
+
+      INTEGER n,nx,ny,n1,ix,iy
+      REAL*8  xmin,xmax,ymin,ymax,sx,sy
+      REAL*8, ALLOCATABLE :: x(:),y(:),v(:),x1(:),y1(:),v1(:)
+
+      INTEGER id
+      REAL*4  Bscale,Escale,Vscale,pot(MAXNKS)
+      REAL*8  px(2),py(2),deltax,deltay,alpha,beta,Bx,By,Bz,Bpol,
+     .        ex,ey,ez,Blen
+
+
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      OPEN(UNIT=fp,FILE='migraine.code_plasma',ACCESS='SEQUENTIAL',
+     .     STATUS='REPLACE')
+
+      WRITE(fp,'(A)') '* Data file for DIVIMP-MIGRAINE sequential '//
+     .                'coupling in honour of Svetlana and Ladislas'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{VERSION}'
+      WRITE(fp,*    ) '        1.0'
+      WRITE(fp,'(A)') '*'
+
+
+      Vscale = 1.0 / qtim
+      Bscale = 1.0
+      Escale = 1.0 / (qtim * qtim * emi / crmi)
+
+      DO ir = 2, nrs
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+
+c...    Calcualte the electric potential:
+        pot(1) = 0.0
+        DO ik = 2, ike
+         pot(ik) =pot(ik-1) - 0.5 * (kes(ik,ir)+kes(ik-1,ir)) * Escale *
+     .                              (kss(ik,ir)-kss(ik-1,ir))
+        ENDDO
+        pot = pot - MAXVAL(pot)
+
+
+	DO ik = 1, ike
+c...      B-field components (approximate):         
+          id = korpg(ik,ir)
+          px(1) = DBLE(0.5 * (rvertp(1,id) + rvertp(2,id)))  ! x midpoint of the poloidal cell surface 1
+          py(1) = DBLE(0.5 * (zvertp(1,id) + zvertp(2,id)))  ! y midpoint
+          px(2) = DBLE(0.5 * (rvertp(3,id) + rvertp(4,id)))  ! x midpoint of the poloidal cell surface 3
+          py(2) = DBLE(0.5 * (zvertp(3,id) + zvertp(4,id)))  ! y midpoint
+          deltax = (px(2) - px(1))
+          deltay = (py(2) - py(1))
+          alpha = DBLE(bratio(ik,ir))        ! B_poloidal / B_total
+          IF (DABS(deltax).LT.1.0D-10) THEN
+            beta = 0.0D0
+          ELSE
+            beta = DABS(deltay / deltax)       
+          ENDIF 
+          Bz = -5.3D0 * DBLE(r0 / rs(ik,ir))
+          Bpol = Bz * alpha / DSQRT(1.0D0 - alpha**2)
+          IF (beta.EQ.0.0D0) THEN
+            Bx = 0.0D0
+            By = Bpol
+          ELSE
+            Bx = Bpol      / DSQRT(1.0D0 + beta**2) * DSIGN(1.D0,deltax) 
+            By = Bpol*beta / DSQRT(1.0D0 + beta**2) * DSIGN(1.D0,deltay)  
+          ENDIF
+          Blen = DSQRT(Bx**2 + By**2 + Bz**2)
+          ex = Bx / Blen
+          ey = By / Blen
+          ez = Bz / Blen
+          WRITE(fp,'(2I6,2X,2F10.6,1P,E12.2,2X,3E12.2,0P,2X,2F10.2,2X,
+     .               3F10.5,2X,3F12.5,5X,3F10.5,4(2X,F10.5))')
+     .      ik,ir,
+     .      rs(ik,ir),
+     .      zs(ik,ir),
+     .      knbs (ik,ir),           ! ni (m-3)
+     .      -SNGL(ex) * kvhs(ik,ir) * Vscale, ! vx (m-1 s-1)
+     .      -SNGL(ey) * kvhs(ik,ir) * Vscale, ! vy
+     .      -SNGL(ez) * kvhs(ik,ir) * Vscale, ! vz
+     .      ktebs(ik,ir),           ! Te (eV)
+     .      ktibs(ik,ir),           ! Ti (eV)
+     .      SNGL(Bx) * Bscale,      ! Bx (Tesla) 
+     .      SNGL(By) * Bscale,      ! By 
+     .      SNGL(Bz) * Bscale,      ! Bz 
+     .      -SNGL(ex) * kes(ik,ir) * Escale, ! Ex
+     .      -SNGL(ey) * kes(ik,ir) * Escale, ! Ey
+     .      -SNGL(ez) * kes(ik,ir) * Escale, ! Ez
+     .      SNGL(ex),               ! 
+     .      SNGL(ey),               ! 
+     .      SNGL(ez),               ! 
+     .      pot(ik),
+     .      bratio(ik,ir),
+     .      SNGL(DSQRT(Bx**2+By**2)) / SNGL(DSQRT(Bx**2+By**2+Bz**2)),
+     .      Bscale
+        ENDDO
+      ENDDO
+   
+
+      CLOSE(fp)				
+
+
+      RETURN
+
+
+
+c...  Setup regular grid:
+c
+      
+c     Count the number of nodes on the fluid grid:
+      n = 0
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        n = n + nks(ir)
+        IF (ir.LT.irsep) n = n - 1
+      ENDDO
+
+      nx = 10
+      ny = 10
+      n1 = nx * ny
+
+      ALLOCATE(x (n ))
+      ALLOCATE(y (n ))
+      ALLOCATE(v (n ))
+      ALLOCATE(x1(n1))
+      ALLOCATE(y1(n1))
+      ALLOCATE(v1(n1))
+
+c...  Set fluid grid variable:
+      n = 1
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        x(n:n+ike-1) = DBLE(rs(1:ike,ir))
+        y(n:n+ike-1) = DBLE(zs(1:ike,ir))
+        n  = n + ike  
+      ENDDO
+      n = n - 1
+      xmin = MINVAL(x)*1.05D0
+      xmax = MAXVAL(x)*0.95D0
+      ymin = MINVAL(y)*0.95D0
+      ymax = MAXVAL(y)*0.95D0
+
+c...
+      DO iy = 1, ny
+        DO ix = 1, nx
+          sx = (DBLE(REAL(ix)) - 1.0D0) / (DBLE(REAL(nx)) - 1.0D0)
+          sy = (DBLE(REAL(iy)) - 1.0D0) / (DBLE(REAL(ny)) - 1.0D0)
+          x1(ix+(iy-1)*ny) = (xmax - xmin) * sx + xmin
+          y1(ix+(iy-1)*ny) = (ymax - ymin) * sy + ymin
+        ENDDO
+      ENDDO
+
+      n = 1
+      DO ir = 2, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        v(n:n+ike-1) = DBLE(knbs(1:ike,ir))
+c        write(0,*) 'n:',n,n+ike-1,ike
+        n  = n + ike  
+      ENDDO
+      n = n - 1
+
+c      WRITE(0,*) x(1:n)
+c      WRITE(0,*) y(1:n)
+c      WRITE(0,*) v(1:n)
+
+      CALL Interpolate(n,x,y,v,n1,x1,y1,v1,0)
+
+c      DO i1 = 1, 10
+c        DO i2 = 1, 10
+c          x(i2+(i1-1)*10) = REAL(i2)
+c          y(i2+(i1-1)*10) = SQRT(REAL(i1))
+c          v(i2+(i1-1)*10) = REAL(i2)
+c        ENDDO
+c        x9(i1) = REAL(i1)+0.5
+c        y9(i1) = 5.0
+c      ENDDO
+c      WRITE(0,*) 'x:',x(1:10)
+c      WRITE(0,*) 'y:',y(1:10)
+c      WRITE(0,*) 'v:',v(1:10)
+c      CALL Interpolate(100,x,y,v,9,x9,y9,v9,0)
+c      WRITE(0,*) 'x1:',x9
+c      WRITE(0,*) 'y1:',y9
+c      WRITE(0,*) 'v1:',v9     
+      
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      OPEN(UNIT=fp,FILE='migraine.plasma',ACCESS='SEQUENTIAL',
+     .     STATUS='REPLACE')
+
+      WRITE(fp,'(A)') '* Data file for DIVIMP-MIGRAINE sequential '//
+     .                'coupling in honour of Svetlana and Ladislas'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '{VERSION}'
+      WRITE(fp,*    ) '        1.0'
+      WRITE(fp,'(A)') '*'
+
+
+      DO ix = 1, n1
+
+        WRITE(fp,'(I6,2X,2F10.6,1P,E10.2,0P)')
+     .    ix,x1(ix),y1(ix),v1(ix)
+
+      ENDDO
+   
+
+
+c      DO iobj = 1, nobj
+c        IF (obj(iobj)%index(IND_IR).NE.0    .AND.
+c     .      obj(iobj)%index(IND_IR).LT.irsep) CYCLE
+c        DO iside = 1, obj(iobj)%nside
+c          omap = obj(iobj)%omap(iside)
+c          IF (omap.NE.0) CYCLE
+c          isrf = obj(iobj)%iside(iside)
+c          WRITE(fp,'(6I8)') 
+c     .      iobj,iside,omap,isrf,grp(obj(iobj)%group)%origin,
+c     .      obj(iobj)%index(IND_IR)
+c          DO i = 1, srf(isrf)%nvtx
+c            ivtx = srf(isrf)%ivtx(i)
+c            WRITE(fp,'(I6,3F15.8)') ivtx,vtx(1:3,ivtx)
+c          ENDDO
+c        ENDDO
+c      ENDDO
+
+      CLOSE(fp)				
+
+      DEALLOCATE(x )
+      DEALLOCATE(y )
+      DEALLOCATE(v )
+      DEALLOCATE(x1)
+      DEALLOCATE(y1)
+      DEALLOCATE(v1)
+
+c      CALL geoClean
+c      CALL osmClean
+
+      RETURN
+ 99   STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpTetrahedronsForMartin(fname)
 c      USE mod_interface
       USE mod_geometry
@@ -804,7 +1088,7 @@ c...  Dump impurity data:
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
         CALL inPutData(index(1:ike)   ,'INDEX' ,'N/A')                     
         CALL inPutData(pos  (1:ike)   ,'POS'   ,'N/A')                     
-        CALL inPutData(tube (1:ike)   ,'TUBE'  ,'N/A')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE'  ,'N/A')      !  this should be "CELL"...                  
         CALL inPutData(kss  (1:ike,ir),'S'     ,'m')                     
         CALL inPutData(kps  (1:ike,ir),'P'     ,'m')
         CALL inPutData(kvols(1:ike,ir),'VOLUME','m-3')
@@ -5587,10 +5871,13 @@ c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
         CALL DumpMarieHelene(title)
         CALL DumpAlexKukushkin(title)
         CALL DumpMatthiasReinelt(title)
-        CALL DumpMarkusAirila(title,qtim)
+c        CALL DumpMarkusAirila(title,qtim)
         RETURN
       ELSEIF (iopt.EQ.21) THEN
         CALL DumpTetrahedronsForMartin('tetrahedrons.raw')
+        RETURN
+      ELSEIF (iopt.EQ.22) THEN
+        CALL DumpSvetlanaRatynskaya(title)
         RETURN
       ENDIF
 

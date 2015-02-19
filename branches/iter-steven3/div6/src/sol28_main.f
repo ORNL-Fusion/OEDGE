@@ -11,7 +11,6 @@ c
       REAL*8  net,integral(10),p1,p2,source(icmax),pmatch,
      .        srcint(0:icmax),delta_p,isat_total,
      .        alpha(2),beta(2),delta,A,B,C,D,a1,b1,c1,radical,cs
-
  
       IF (logop.GT.1) WRITE(logfp,*) 'FLOATING TARGETS: BEGIN'
 
@@ -21,6 +20,7 @@ c
 c...    Assign target particle flux is required (can't do this before
 c       now since the upstream sources have to be assigned for DELTA_P):
 c       --------------------------------------------------------------
+
         DO target = LO, HI
           ict = ictarg(target)
 
@@ -923,6 +923,7 @@ c         of SOL28_V4:
  99   WRITE(0,*) ' SOLPS_INDEX=',solps_index
       WRITE(0,*) ' ICELL      =',icell
       WRITE(0,*) ' IMAP       =',imap
+      WRITE(0,*) ' IK,IR      =',cell(icell)%ik,cell(icell)%ir
       IF (icell.GT.0.AND.imap.GT.0) THEN
         WRITE(0,*) ' CELL%CENCAR=',cell(icell)%cencar(1:2)
         WRITE(0,*) ' SOLPS_CEN  =',solps_cen(imap,1:2)

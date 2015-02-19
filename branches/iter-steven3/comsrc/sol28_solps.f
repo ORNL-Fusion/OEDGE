@@ -320,6 +320,8 @@ c...  Map the DIVIMP array structure to the SOLPS data array structure:
 
             IF (solps_maxir.EQ.1) THEN 
 
+              stop 'what?'
+
               write(88,*) 'processing next cell -- ik,ir',ik,ir
 
               CALL solps_AssignDIVIMPIndex(ik,ir,map_divimp(ik,ir))

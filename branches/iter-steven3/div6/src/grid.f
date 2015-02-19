@@ -3010,7 +3010,7 @@ c have to get rid of the ikto/ikti restrictions - in DeleteCell also
 c
 c fix npolyp problem - adding real cells after adding virtual cells
 c will screw things up if npolyp is not incremented with each
-c virtual cell - be that is shitty for multiple calls to EIRENE
+c virtual cell - be that is poor for multiple calls to EIRENE
 c where the korpg index could overflow - need to set aside a bank for
 c for virtual cells that can be reset, and allow enough room for all
 c the real cells that are going to be added
@@ -3169,6 +3169,7 @@ c Should all of these quantities be assigned in this way...?
         bratio(ik,ir) = bratio(ikinf,ir)        
       ENDIF
       kbfs  (ik,ir) = kbfs  (ikinf,ir)
+      bts   (ik,ir) = bts   (ikinf,ir)
       kvhs  (ik,ir) = kvhs  (ikinf,ir)
       knbs  (ik,ir) = knbs  (ikinf,ir)
       knes  (ik,ir) = knes  (ikinf,ir)
@@ -3760,7 +3761,6 @@ c
 
       INTEGER ik1,ik2,ir1,ir2,i1,i2
 
-
       IF (ik1.LT.1.OR.ik1.GT.nks(ir1)+1.OR.
      .    ik2.LT.1.OR.ik2.GT.nks(ir2)+1)
      .  CALL ER('MoveCell','Index out of bounds',*99)
@@ -3770,6 +3770,7 @@ c
       zs    (ik1,ir1) = zs    (ik2,ir2)
       bratio(ik1,ir1) = bratio(ik2,ir2)
       kbfs  (ik1,ir1) = kbfs  (ik2,ir2)
+      bts   (ik1,ir1) = bts   (ik2,ir2)
       kvhs  (ik1,ir1) = kvhs  (ik2,ir2)
       knbs  (ik1,ir1) = knbs  (ik2,ir2)
       knes  (ik1,ir1) = knes  (ik2,ir2)
@@ -3958,7 +3959,7 @@ c
 c Initialize variables:
 c
       debug = .FALSE.
-      IF (sloutput) debug = .TRUE.
+c      IF (sloutput) debug = .TRUE.
       STATUS = 0
       i = 0
 
@@ -4029,7 +4030,7 @@ c Check this...
         ENDDO
       ENDDO
       
-      IF (sloutput) WRITE(0,*) 'GenWallRing: NCELL=',ncell
+c      IF (sloutput) WRITE(0,*) 'GenWallRing: NCELL=',ncell
       IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
@@ -4046,9 +4047,9 @@ c...  Adjust WALLTH based on x-point location:
      .    WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
      .      ncell,rcen,zcen,xpth
         
-        write(88,*) 'what the fuck',rxp,rcen
-        write(88,*) '             ',zxp,zcen
-        write(88,*) '             ',xpth
+        write(88,*) 'what is happening?',rxp,rcen
+        write(88,*) '                  ',zxp,zcen
+        write(88,*) '                  ',xpth
         DO ii = 1, ncell
           write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
         ENDDO
@@ -9988,6 +9989,7 @@ c
           zs    (ik,ir) = zs    (ik-1,ir)
           bratio(ik,ir) = bratio(ik-1,ir)
           kbfs  (ik,ir) = kbfs  (ik-1,ir)
+          bts   (ik,ir) = bts   (ik-1,ir)
           korpg (ik,ir) = korpg (ik-1,ir)
           IF (ALLOCATED(divimp_ik)) THEN
             divimp_ik(ik,ir) = divimp_ik(ik-1,ir)

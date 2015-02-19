@@ -656,7 +656,7 @@ c         --------------------------------------------------------------
               READ(fp,*) buffer
               IF (buffer(1:1).NE.'*') THEN
                 READ(buffer,*) file_version                
-                WRITE(0,*) 'FILE VERSION!  ',file_version
+c                WRITE(0,*) 'FILE VERSION!  ',file_version
                 EXIT
               ENDIF
             ENDDO
@@ -691,7 +691,7 @@ c                 --------------------------------------------------------
                   CASE (2)
                     READ(buffer,*,END=20) x1,y1,x2,y2
                     nsurface = NewEireneSurface_06(VESSEL_WALL)
-                    write(0,*) 'buff',nsurface,buffer(1:20)
+c                    write(0,*) 'buff',nsurface,buffer(1:20)
                     surface(nsurface)%index(2) = opt_eir%add_index(i1)
                     surface(nsurface)%v(1,1) = DBLE(x1)
                     surface(nsurface)%v(2,1) = DBLE(y1)
