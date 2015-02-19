@@ -130,7 +130,8 @@
       ENDTYPE type_sputter_data
 
       TYPE(type_sputter_data), ALLOCATABLE :: sputter_data(:)
-      INTEGER                              :: sputter_ndata
+      INTEGER :: sputter_ndata,sputter_ilast
+      REAL    :: sputter_nabsfac              ! temporary storage of nabsfac from divCompileSputteringYields
 !
 !     ------------------------------------------------------------------
 ! 
@@ -148,6 +149,8 @@
       SUBROUTINE     divInitializeOptions
 !        opt_div%nsputter = 0
         sputter_ndata = 0
+        sputter_ilast = 0
+        sputter_nabsfac = 0.0
         nymfs_global = 0
       END SUBROUTINE divInitializeOptions
 

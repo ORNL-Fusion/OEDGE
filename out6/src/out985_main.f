@@ -309,6 +309,8 @@ c      INTEGER, PARAMETER  :: lout = 6, n = 36, nq = 13, nr = 3, nw = 19
 
       warning = .FALSE.
 
+      f1 = -999.0D0
+
       nr = INT(SQRT(REAL(n)/3.0))
 
       ALLOCATE(lcell(nr,nr))  ! Do this every call...?
@@ -327,7 +329,6 @@ c      WRITE(0,*) 'f:',f
       ELSE
 ! COMPUTE THE MACHINE PRECISION EPS.
         eps = EPSILON(1.0)
-
 ! COMPUTE INTERPOLATION ERRORS AND TEST FOR AGREEMENT IN THE
 !   Q VALUES RETURNED BY QS2VAL AND QS2GRD.
         DO  i = 1, n1
@@ -339,7 +340,7 @@ c      WRITE(0,*) 'f:',f
      .                dx,dy,rmax,rsq,a,q,qx,qy,ier)
           IF     (ier.NE.0) THEN
             IF (ier.EQ.2) THEN
-              WRITE(0,*) 'px,y:',px,py
+c              WRITE(0,*) 'px,y:',px,py
               IF (.NOT.warning) THEN
                 WRITE(0,*) 'WARNING Interpolate: Point(s) outside grid'
                 warning = .TRUE.

@@ -73,10 +73,7 @@ c
       ENDIF
 
       IF (sloutput) THEN 
-        WRITE(0,*) 
-        WRITE(0,*) 
         WRITE(0,*) ' ------ GOING AGAIN ------',div_iter,opt_div%niter
-        WRITE(0,*) 
         WRITE(0,*) 
       ENDIF
 

@@ -309,8 +309,6 @@ c-----------------------------------------------------------------------
 c
 c     Launch first groups 
 c
-      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- FIRST LANUCH'
-      IF (sloutput) WRITE(0,*)    nproda,nprod,cneutb
       if (nproda.gt.0.or.nprod.gt.0) then  
 c
          if (cneutb.eq.0.or.cneutb.eq.3) then 
@@ -657,8 +655,6 @@ c-----------------------------------------------------------------------
 c
 c     Launch second batches of neutrals if there are any
 c
-      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- SECOND LANUCH'
-      IF (sloutput) WRITE(0,*)    nprod2a,nprod2
       if (nprod2a.gt.0.or.nprod2.gt.0) then 
 c
          if (cneuth.eq.0.or.cneuth.eq.3) then 
@@ -1357,7 +1353,7 @@ c slmod begin
 
       IF (ALLOCATED(wall_flx)) wall_nlaunch = wall_nlaunch + 1  ! tmp -- cleaner if wall_imp inintialization moved from this routine...
 
-      IF (sloutput) THEN
+      IF (.FALSE..AND.sloutput) THEN
         WRITE(0,*)
         WRITE(0,*) '***** HERE IN LAUNCH ! *****',cneutb
         WRITE(0,*)
@@ -1464,6 +1460,9 @@ c
         RATIZ2(M) = LO
 c
    50 CONTINUE
+c slmod begin - t-dep
+c fsrate = neutral time step
+c slmod end
 C
 C---- SET  RSTMAX: MAX NUMBER OF ITERATIONS UP TO TIME = TMAX (0.1S)
 C---- (DIFFERS FROM CSTMAX WHICH APPLIES TO IONS,  BY FSRATE/QTIM AND
@@ -4125,7 +4124,9 @@ c
 c slmod end
 C
   899  CONTINUE
-
+c slmod begin - t-dep
+c need to store the state of the neutral particles
+c slmod end
 c
 c     jdemod - temp debug
 c
@@ -5002,21 +5003,10 @@ c slmod begin
             if (wallpt(wlind(id),7).eq.0.0) cycle
 
             if (id.eq.1.and.bug_message) then
- 
-              write(0,*) 
               write(0,*) '---------------------------------------------'
-              write(0,*) '  WARNING! Bug correction related to assign'//
-     .                   'ed wall launch probabilities, see neut.f'
+              write(0,*) '  WARNING! Bug correction related to '//
+     .                   'wall launch probabilities in neut.f'
               write(0,*) '---------------------------------------------'
-              write(0,*) 
-
-              write(0,*) 
-              write(0,*) '---------------------------------------------'
-              write(0,*) '  WARNING! Bug correction related to assign'//
-     .                   'ed wall launch probabilities, see neut.f'
-              write(0,*) '---------------------------------------------'
-              write(0,*) 
-
               bug_message = .FALSE.
             endif
 
@@ -5506,10 +5496,10 @@ C
             KRMAXW(ID) = 1.0
             IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5) THEN
 c slmod begin
-c...          Moved this up here and added the check for manual specification
-c             of the neutral wall sputtering, as in WFY, so that the code 
-c             doesn't complain if PIN was run but manual settings were
-c             specified:  -SL, 09/09/20
+c...           Moved this up here and added the check for manual specification
+c              of the neutral wall sputtering, as in WFY, so that the code 
+c              doesn't complain if PIN was run but manual settings were
+c              specified:  -SL, 09/09/20
 c
 c              PIN data not available 
 c
@@ -5637,7 +5627,6 @@ c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
 c         write(0,'(a,i8,10(1x,g18.8))')
 c     >      'ranv:',iprod,ranva(iprod),ranvb(iprod)
 c      end do
-
 
 C     
       DO IPROD = 1,nneut2
@@ -6366,8 +6355,6 @@ c
       w2  = 0.0
       w3  = 0.0
       wtot= 0.0 
-      IF (sloutput) WRITE(0,*) 'REDIST:',nprod,nprod2 
-      IF (sloutput) WRITE(0,*) 'FIRST:',cneutb,cneutd
 c
 c     Calculate total and partial FY for first launch 
 c
@@ -6492,7 +6479,6 @@ c
 c
 c     Calculate total and partial FY for second launch 
 c
-      IF (sloutput) WRITE(0,*) 'SECND:',cneuth,cneutd2
       if (nprod2.gt.0) then  
 c
          if (cneuth.eq.0.or.cneuth.eq.3) then 

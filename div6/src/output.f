@@ -1101,10 +1101,10 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
 
       DO ir = 1, nrs
         WRITE(fp,*)
-        WRITE(fp,'(2A4,5A4,4A10,3A11,1X,A7)')
+        WRITE(fp,'(2A4,5A4,4A10,4A11,1X,A7)')
      .    'ik','ir','vt','iki','iri','iko','iro',
      .    'kinds','koutds',
-     .    'finds','foutds','kvols','kareas','thetag',irtag(ir)
+     .    'finds','foutds','kvols','kareas','thetag','bts',irtag(ir)
 
         IF (ir.GE.irsep) THEN
           id = MAX(1,idds(ir,2))
@@ -1121,12 +1121,13 @@ c     .      kvhs(ik,ir)/cs,ktibs(ik,ir),ktebs (ik,ir),
           IF (ik.EQ.ikbound(ir,IKHI))
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
-          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,F11.5,A)')
+          WRITE(fp,'(2I4,5I4,4F10.6,1P,2E11.3,0P,2F11.5,A)')
      .      ik,ir,virtag(ik,ir),
      .      ikins(ik,ir),irins (ik,ir),ikouts(ik,ir),irouts(ik,ir),
      .      kinds(ik,ir),koutds(ik,ir),finds (ik,ir),foutds(ik,ir),
      .      kvols(ik,ir),kareas(ik,ir),thetag(ik,ir),
 c     .      kvols(ik,ir)*rxp/rs(ik,ir),kareas(ik,ir),thetag(ik,ir),
+     .      bts(ik,ir),
      .      note(1:LEN_TRIM(note))
         ENDDO
 

@@ -446,8 +446,8 @@ c               the centre of the segment:
 
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
-                  write(0,*) '  in the shit again 3'
-                  write(6,*) '  in the shit again 3'
+                  write(0,*) '  in trouble again 3'
+                  write(6,*) '  in trouble again 3'
 c                  stop
                 ENDIF 
 
@@ -497,7 +497,7 @@ c                  stop
                  MTCSTRUK = MTCSTRUK + SPUTY
               endif
               IFATE = 4
-c              STOP 'shit balls'
+c              STOP 'darn it'
               GOTO 899            
            ENDIF
 
@@ -1143,8 +1143,8 @@ c               the centre of the segment:
 
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
-                  write(0,*) '  in the shit again'
-                  write(6,*) '  in the shit again'
+                  write(0,*) '  in trouble again'
+                  write(6,*) '  in trouble again'
 c                  stop
                 ENDIF 
 
@@ -1335,8 +1335,8 @@ c                 the centre of the segment:
 	       
                   count_relaunch = count_relaunch + 1
                   IF (count_relaunch.EQ.50) THEN
-                    write(0,*) '  in the shit again 2'
-                    write(6,*) '  in the shit again 2'
+                    write(0,*) '  in trouble again 2'
+                    write(6,*) '  in trouble again 2'
 c                    stop
                   ENDIF 
 	       

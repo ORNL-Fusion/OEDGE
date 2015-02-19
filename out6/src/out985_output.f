@@ -837,8 +837,9 @@ c
       REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE)
       CHARACTER fname*(*)
 
-      INTEGER iobj,iside,isrf,i1,iobj1
-      REAL*8  phi,phi_max
+      INTEGER   iobj,iside,isrf,i1,iobj1,fp,ierr,isur
+      REAL*8    phi,phi_max
+      CHARACTER dummy*1024
 
       CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
 c      CALL LoadObjects('tetrahedrons.001.raw',status)
@@ -873,8 +874,9 @@ c       ----------------------------------------------------------------
 c       ----------------------------------------------------------------   
         CASE (2)  ! Vessel wall
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=2'
+
           DO iobj = 1, nobj
-            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
+c            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
@@ -897,9 +899,52 @@ c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
                 ENDDO
                 isrf = srf(isrf)%link
                 IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
+
+
               ENDDO
             ENDDO
           ENDDO
+
+          CALL ZA09AS(dummy(1:8))
+          dummy(9:10) = dummy(1:2)  ! Switch to EU format
+          dummy(1:2 ) = dummy(4:5)
+          dummy(4:5 ) = dummy(9:10)
+          dummy(9:10) = '  '
+          CALL ZA08AS(dummy(11:18))
+          CALL CASENAME(dummy(21:),ierr)
+
+          fp = 99
+          OPEN (UNIT=fp,FILE='tri.triangle_wall',ACCESS='SEQUENTIAL',
+     .          STATUS='REPLACE')
+          WRITE(fp,'(A)') '* ITER triangle wall for Svetlana and '//
+     .                    'Ladislas (from OUT)'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+          WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+          WRITE(fp,'(A)') '* Version     : 1.0'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* axes: x = R, z = Z, y according to the'//
+     .                    ' right-hand rule'
+          WRITE(fp,'(A)') '*'
+
+          WRITE(fp,'(A)') '* everything is in metres'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A8,2X,3(3A12,2X),A4)') '*    Ind',
+     .      'P1x','P1y','P1z',
+     .      'P2x','P2y','P2z',
+     .      'P3x','P3y','P3z','Mat'
+          WRITE(fp,*) nsur
+          DO isur = 1, nsur
+            WRITE(fp,'(I8,2X,3(3F12.7,2X),I4)') 
+     .        isur,
+     .        vsur(1,1,isur),-vsur(3,1,isur),vsur(2,1,isur),
+     .        vsur(1,2,isur),-vsur(3,2,isur),vsur(2,2,isur),
+     .        vsur(1,3,isur),-vsur(3,3,isur),vsur(2,3,isur),
+     .        0
+          ENDDO
+
+
+          CLOSE(fp)
 c       ----------------------------------------------------------------   
         CASE (3)
 c...      Search for tetrahedrons that are close to a particular trajectory:

@@ -638,6 +638,10 @@ c
 c
 c
       SUBROUTINE PR_BG  (NIZS,NIMPS,NIMPS2,nymfs)
+c slmod begin
+      USE mod_sol28
+      USE mod_sol28_global
+c slmod end
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -694,6 +698,16 @@ c
       call pr_bg_options(NIZS,NIMPS,NIMPS2,nymfs)
 c
 C-----------------------------------------------------------------------
+c
+c slmod begin
+c...  Load reference OSM plasma (binary form):
+      IF (opt%osm_load.NE.0) THEN
+        CALL PRB
+        WRITE(datunit,*) 'LOADING OSM FORMAT BACKGROUND PLASMA:'
+        WRITE(datunit,*) '    '//TRIM(opt%f_osm_load)
+        CALL PRB
+      ENDIF
+c slmod end
 c
 c     Print PIN Options
 c

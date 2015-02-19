@@ -98,6 +98,8 @@ c
       INCLUDE 'cgeom'
       INCLUDE 'comtor'
       INCLUDE 'cneut2'
+c      INCLUDE 'div5'
+c      INCLUDE 'ppplas'
 c      INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -106,7 +108,7 @@ c      INCLUDE 'pindata'
  
 
       INTEGER       i,j,k,nseg,mion,fp,status,id,iz,ik,ir,matt,matp,
-     .              ncore,in,nsputter,ierr,nymfs,nds2,n,nsputter_last,
+     .              ncore,in,nsputter,ierr,nymfs,nds2,n,
      .              idum
       LOGICAL       ldum,tdep_data_try
       REAL          yield,rdum1,ratio,frac,frac1
@@ -152,7 +154,7 @@ c
       CALL GetEnv('RESDIR'   ,resdir)
       CALL GetEnv('CASENAME' ,casename)
 
-      nsputter_last = 0
+      sputter_ilast = 0
  
       DO i = 1, nsputter
 
@@ -243,7 +245,7 @@ c           Copy file to the execution directory:
           ENDIF
         ELSEIF (sputter_data(i)%data_type.EQ.4) THEN
 c       ----------------------------------------------------------------
-          nsputter_last = i
+          sputter_ilast = i
           nseg = wallpts
           mion = sputter_data(i)%atomic_number
 
@@ -308,7 +310,7 @@ c       ----------------------------------------------------------------
           ENDDO      
 c       ----------------------------------------------------------------
         ELSE
-          nsputter_last = i
+          sputter_ilast = i
 c...
           fname = TRIM(resdirtop)//'/'//
      .            TRIM(sputter_data(i)%case_name)//'.'//
@@ -443,8 +445,8 @@ c
      .              sputter_data(i)%atomic_number,
      .              sputter_data(i)%atomic_mass  ,rdum1)
 
-        WRITE(0,*) 'yield 1',i,matt,matp,cizb,
-     .              sputter_data(i)%atomic_number
+c        WRITE(0,*) 'yield 1',i,matt,matp,cizb,
+c     .              sputter_data(i)%atomic_number
 
         IF (matt.EQ.-1) 
      .    CALL ER('divCompileSputteringYields','Target material not '//
@@ -467,7 +469,7 @@ c         (MATP = -1 for Be, i.e. it's not in the standard setup at the moment)
         IF (sputter_data(i)%atomic_number.NE.4.OR.matt.NE.9) 
      .    CALL init_eckstein_2007(matt,matp)
 
-        WRITE(0,*) 'yield 2',i,matt,matp
+c        WRITE(0,*) 'yield 2',i,matt,matp
 
         DO j = 1, nseg
           DO iz = 1, mion
@@ -517,7 +519,7 @@ c
 c     ------------------------------------------------------------------
 c     ASSIGN wlprob
 c
-      WRITE(0 ,*) 'sputter data',nsputter
+c      WRITE(0 ,*) 'sputter data',nsputter
       WRITE(88,*) 'sputter data',nsputter
       DO i = 1, nsputter
 
@@ -585,7 +587,6 @@ c
       write(88,*) 'wlprob:'
 
       DO i = 1, nsputter
-
         IF (sputter_data(i)%type.EQ.5) CYCLE
 
         write(88,*) ' '
@@ -607,6 +608,8 @@ c       Calcualte the particle influx from each wall segment in [s-1 m-1 toroida
           ENDDO
         ENDDO
 
+
+
 c       Add up all the segments to get ABSFAC value for all of the 
 c       sputtering species processed so far in this loop (because
 c       WLPROB is an integral over all sputtering species):
@@ -620,6 +623,7 @@ c       WLPROB is an integral over all sputtering species):
           id = sputter_data(i)%id(j)
           IF (kmfpws(id).NE.0.0) THEN
             write(88,*) i,j,id,wlprob(id,3)
+c            write(0 ,*) i,j,id,wlprob(id,3)
           ENDIF
         ENDDO
 
@@ -628,17 +632,35 @@ c       WLPROB is an integral over all sputtering species):
 c     Isolate the net influx for each individual species:
       DO i = nsputter, 2, -1
         IF (sputter_data(i)%type.EQ.5) CYCLE
-
         sputter_data(i)%absfac_net = sputter_data(i  )%absfac_net - 
      .                               sputter_data(i-1)%absfac_net
       ENDDO
 
       DO i = 1, nsputter
         IF (sputter_data(i)%type.EQ.5) CYCLE
-
         WRITE(0 ,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
         WRITE(88,*) 'nabsfac=',i,sputter_data(i)%absfac_net,nwlprob
       ENDDO
+
+c...  Normalize the sputtering probability array:
+      IF (sputter_ilast.GT.0.AND.nabsfac.EQ.0.0) THEN
+        nabsfac = SUM(sputter_data(1:sputter_ilast)%absfac_net)
+        IF (nabsfac.GT.0.0) THEN
+          wlprob(:,3) = wlprob(:,3) / nabsfac
+        ELSE
+          CALL WN('divCompileSputteringYields','No sputtering so '//
+     .            'assigning nominal values to impurity tracking')
+          nabsfac = 0.999
+c         Set a wall segment from which to launch a small number of 
+c         neutrals, so the code doesn't crash, see div.f under the first
+c         "t-dep" block:
+c          wlprob(idds(irsep,2),3) = 1.0
+          write(0,*) 'wlprob index',nimindex(idds(irsep,1))
+          wlprob(nimindex(idds(irsep,1)),3) = 1.0
+        ENDIF
+      ENDIF
+
+      sputter_nabsfac = nabsfac
 
 c...  Add up the influxes for the individual sputtering species and 
 c     assign the total influx over-ride value for DIVIMP:
@@ -657,7 +679,7 @@ c sputter_data			- Data structure that contains pre-calculated impurity particle
 c				  this is calcualted during the current DIVIMP run, but here we get the numbers ahead of time. 
 c				  This is possible because the calculation is based on fluxs store during a previous DIVIMP run
 c                                 and loaded at the beginning of this one, jus above.
-c nsputter_last			- Number of bombarding particle types/species in the previous DIVIMP run(s) that are being referenced
+c sputter_ilast			- Number of bombarding particle types/species in the previous DIVIMP run(s) that are being referenced
 c                                 during this run.
 c sputter_data(:)%absfac_net	- The total impurity influx as a result of each bombarding species.  This is a scaling factor applied
 c       			  at the end of a DIVIMP run, i.e. the impurity distributions during a run are all scaled to one
@@ -677,8 +699,6 @@ c
 c Objective: Decide how nabsfac for this run should be set based on the values of ctimmax for this run and the previous one, and 
 c the value of nabsfac for the previous run.  I'm not even sure this can be done with the information provide here!  Bon chance!
 c
-        IF (nsputter_last.GT.0) 
-     .    nabsfac = SUM(sputter_data(1:nsputter_last)%absfac_net)
 
 c        frac =  tdep_load_absfac * tdep_load_deltat / 
 c     .        ( tdep_load_absfac * tdep_load_deltat +
@@ -711,26 +731,33 @@ c     .            (nabsfac * ctimmax)
 
         nabsfac = tdep_load_absfac * frac1 + nabsfac
 
+
+
+        IF (ABS(nabsfac-1.998000).LT.1.0E-6) nabsfac = 0.999
+
+
 c        nabsfac = 2.0
-        write(0,*) 'nabsfac',nabsfac
+c        write(0,*) 'nabsfac',nabsfac
 c
 c mk end
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c 
-      ELSEIF (.NOT.tdep_data_try) THEN
-        nabsfac = SUM(sputter_data(1:nsputter)%absfac_net)
-c       Normalize the wall launch probabilities:
-        wlprob(:,3) = wlprob(:,3) / nabsfac
+
       ENDIF
+
+      write(0,*) '_absfac',nabsfac
+
+
+
 c...
       wallpt(:,13) = 0.0
 c
 c     ------------------------------------------------------------------     
 c     SEND DATA TO IDL
 c
-      IF (nsputter_last.GT.0) THEN
+      IF (sputter_ilast.GT.0) THEN
         CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
-        i = nsputter_last
+        i = sputter_ilast
         CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
         CALL inPutData(sputter_data(1:i)%absfac_net  ,'ABSFAC'   ,'s-1')	  
         CALL inPutData(sputter_data(1:i)%absfac      ,'ABSFAC_IN','s-1')	  
@@ -811,6 +838,9 @@ c
       REAL*8         rv(4),zv(4)
       CHARACTER*1024 fname,command
 
+      WRITE(0,*)
+      WRITE(0,*) 'IMPORTING OSM GRID -- BTS NEEDS TO BE INCLUDED'
+
 c...  Load reference OSM data file (binary form):
       fname = TRIM(opt%f_osm_load)
       n = LEN_TRIM(fname)
@@ -854,6 +884,7 @@ c...
           zs(ik,ir) = cell(ic)%cencar(2)
           bratio(ik,ir) = field(ic)%bratio 
           kbfs  (ik,ir) = 1.0 / bratio(ik,ir)
+          bts   (ik,ir) = cbphi                 ! forgot to include this in the grid data file. Not varying with R since it breaks for linear grids.  -SL, 15/10/2014
         ENDDO
         IF (it.LT.grid%isep) THEN
           ik = ik + 1          
@@ -866,6 +897,7 @@ c...
           zs(ik,ir) = zs(1,ir)
           bratio(ik,ir) = bratio(1,ir)
           kbfs  (ik,ir) = kbfs  (1,ir)
+          bts   (ik,ir) = cbphi 
         ENDIF
         nks(ir) = ik
         psitarg(ir,:) = tube(it)%psin
