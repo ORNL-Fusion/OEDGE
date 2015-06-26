@@ -1339,7 +1339,7 @@ c
      >        rorig,zorig,rstep,zstep,rstart,zstart
          else
 c slmod begin
-            if (cprint.ge.1) 
+            if (cprint.eq.10) 
      >        write(6,'(a,i10,4i6,10g18.8)') 
      >        'POSITION_ON_TARGET:'//
      >        ' POINT FOUND IN CELL AFTER N ITERATIONS:',

@@ -654,6 +654,12 @@ C
 C  1ST SECONDARY IS ATOM
             IATM=N1STX(IRCX,2)
             E0=CVRSSA(IATM)*VELQ
+c
+c     jdemod - CX atom created - need to set flag so that statistics at surface impact
+c              can be collected separately for CX vs regular neutral atoms.
+c
+
+
 C
 C  GENERATION LIMIT
             IF (NGENA(IATM).GT.0) THEN
@@ -1616,6 +1622,11 @@ C  1ST SECONDARY IS ATOM
             IATM=N1STX(IRCX,2)
             E0=CVRSSA(IATM)*VELQ
             XGENER=0.D0
+c
+c      jdemod - also atomic CX? 
+c
+
+
 C
 C  NEXT LINES: COLLISION ESTIMATOR FOR CHARGE EXCHANGE NO. IRCX
 C  CONSERVE CHARGE IN EACH COLLISION, NOT ONLY ON AVERAGE

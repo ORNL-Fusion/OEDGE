@@ -102,18 +102,26 @@ program write_dimes_plasma
   !
   ! 145672
   !
-  r_offset = 1.49187
+  !r_offset = 1.49187
   !z_offset = -1.25
-  z_offset = -1.250043035
+  !z_offset = -1.250043035
   !
   !
   ! The ACTUAL strike point for the Mo exposure on May 1st,2012 is R=1.47977m
   ! May 1, 2012 - Mo exposure - DIMES offset from strike point = 0.00613m
-  ! Roffset = 1.4864 + 0.00613 = 1.49253 
+  ! The strike point on the grid for the 1-may-2012 experiment is at 1.48189
+  ! Roffset = 1.48189 + 0.00613 = 1.48802
   ! Difference in offset 0.00016
   !
-  !  r_offset = 1.495835
-  !  z_offset = -1.25
+  ! 148502
+  !
+  !r_offset = 1.48802
+  !z_offset = -1.25
+
+  !
+  ! ???  r_offset = 1.495835
+  ! ???  z_offset = -1.25
+
   ! In order to match simulation and experiment .. the grid strike point of R=1.4864 is matched to the actual average strike point of R=1.48043 
   ! The difference is 5.97e-3m
   ! The difference from the actual strike point to actual DIMES center is : 5.47e-3m
@@ -144,6 +152,20 @@ program write_dimes_plasma
   !
   !r_offset =  1.485973
   !z_offset = -1.250043035
+
+  !
+  ! 156836 - running on the grid for 14867X since the geometry is very similar
+  !
+  !
+  ! The actual strike point average for shots 156836,37,38 were:
+  ! OEDGE GRID SP = 1.4821
+  ! EXPERIMENTAL SP = 1.467589 1.467165 1.46441 = 1.466388 (average)
+  ! SP OFFSET = 0.0154612  DIMES CP = 1.4859   DIMES OFFSET FROM SP = 1.4859-1.466388 = 0.019512
+  ! CP OF DIMES ON OEDGE GRID = 1.4821 + 0.019512 = 1.501612
+  !
+  ! 
+  r_offset = 1.501612
+  z_offset = -1.25
 
 
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset

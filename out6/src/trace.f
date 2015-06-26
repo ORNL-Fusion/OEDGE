@@ -598,17 +598,34 @@ c...  Print comments:
       CALL CSPACE (0.0, 1.35, 0.0,1.0)
       CALL MAP    (0.0, 1.35, 0.0,1.0)
       CALL CTRMAG (12)
+c
+c     jdemod - move these comment blocks down so that they continue to work with line labeling
+c            - hopefully this won't break another plot
+c
       DO i = 1, 10
-        IF (char(i).NE.' ') CALL PLOTST(1.00,0.590+(i-1)*0.02,char(i))
+        IF (char(i).NE.' ') CALL PLOTST(1.00,0.530+(i-1)*0.02,char(i))
       ENDDO
       DO i = 20, 30
         j = i - 19
         IF (char(i).NE.' ') CALL PLOTST (1.04,0.250-(j-1)*0.02,char(i))
       ENDDO
+c     jdemod - is this a bug? It seems to plot comments from 20 to 30 twice (?) ... what about 11 to 19?
       DO i = 20, 30
         j = i - 19
-        IF (char(i).NE.' ') CALL PLOTST(1.00,0.550-(j-1)*0.02,char(i))
+        IF (char(i).NE.' ') CALL PLOTST(1.00,0.490-(j-1)*0.02,char(i))
       ENDDO
+c
+c      DO i = 1, 10
+c        IF (char(i).NE.' ') CALL PLOTST(1.00,0.590+(i-1)*0.02,char(i))
+c      ENDDO
+c      DO i = 20, 30
+c        j = i - 19
+c        IF (char(i).NE.' ') CALL PLOTST (1.04,0.250-(j-1)*0.02,char(i))
+c      ENDDO
+c      DO i = 20, 30
+c        j = i - 19
+c        IF (char(i).NE.' ') CALL PLOTST(1.00,0.550-(j-1)*0.02,char(i))
+c      ENDDO
 c slmod end
 
 c
@@ -1298,8 +1315,9 @@ c...      Original line plotting code:
           DO 20 J = I+1, NPTS
             IF (Y(J).NE.LO) THEN
               CALL JOIN (X(J),Y(J))
-              IF (J.EQ.I+3.OR.J.EQ.NPTS-5) CALL PLOTST(X(J),Y(J),
-     .                                                 NAME(1:4))
+              IF (J.EQ.I+3.OR.J.EQ.NPTS-5) then
+                       CALL PLOTST(X(J),Y(J),NAME(1:4))
+              endif
             ELSE
 c              CALL POSITN (X(MIN(J+1,NPTS)), Y(MIN(J+1,NPTS)))
             ENDIF
@@ -1329,6 +1347,7 @@ C
 C---- WRITE ENTRY IN SYMBOL TABLE
 C
 c
+
 c slmod begin
       IF (iopt_ghost.EQ.1.OR.iopt_ghost.EQ.2) THEN
         call lincol(defcol)
@@ -1421,6 +1440,7 @@ c
 c
 c slmod begin - new
       CALL PLOTST (1.05 ,SPOT, NAME(5:LEN_TRIM(NAME)))
+
 c
 c       CALL PLOTST (1.05 ,SPOT, NAME(5:36))
 c slmod end

@@ -1384,6 +1384,23 @@ c
         CALL ReadR(line,extra_sputter_angle,-10.0,90.0,
      >             'Extra Sputter Angle Opt')
 c
+c -----------------------------------------------------------------------
+c
+c     TAG D40 : Flux fraction for alternate bombarding ion sputter 
+c               calculations. Goes with CBOMBF and CBOMBZ to allow for 
+c               specification of trace impurity sputtering in cases
+c               where hydrogenic sputtering is expected to be negligible.
+c
+c               Ideally this should be expanded to allow for 
+c               hydrogen+a specifiable distribution of impurity charge states                              
+c 
+      elseif (tag(1:3).EQ.'D40') THEN
+c
+c     Bombarding ion flux fraction
+c
+        CALL ReadR(line,cbomb_frac,0.0,1.0,
+     >             'Bombarding ion flux fraction')
+c
 c
 c -----------------------------------------------------------------------
 c 

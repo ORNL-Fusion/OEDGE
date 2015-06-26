@@ -1,8 +1,8 @@
       SUBROUTINE SYIELD (MATT,MATP,CNEUTD,
-     >                   CBOMBF,CBOMBZ,CION,CIZB,CRMB,cebd)
+     >                   CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,cebd)
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
-      REAL    CRMB,cebd
+      REAL    CRMB,cebd,cbomb_frac
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -196,13 +196,24 @@ C
       IF (NINT(CRMB).LE.4) MATP = NINT (CRMB)
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
-      IF (CNEUTD.EQ.1) MATP = CBOMBF
+
+      IF (CNEUTD.EQ.1) then
+         MATP = CBOMBF
+         flux_frac = cbomb_frac
+      else
+         flux_frac = 1.0
+      endif
+
 c
       call prb
       call prc('TARGET MATERIAL IS     '//TARMAT(MATT))
       call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
 c
-      IF (CNEUTD.EQ.1) CALL PRI ('         WITH ZIMP', CBOMBZ)
+      IF (CNEUTD.EQ.1) then
+         CALL PRI ('         WITH ZIMP', CBOMBZ)
+         CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
+      endif
+
       RETURN
       END
 C
@@ -274,13 +285,13 @@ c
       external yld93,yld96,yldtung,yld_be_2002,yld_c_2002
 C
       if (csputopt.eq.2) then 
-         yield = yld93(MATP,MATT,ENERGY)   
+         yield = yld93(MATP,MATT,ENERGY) * flux_frac
          return
       elseif (csputopt.eq.3) then 
-         yield = yld96(MATP,MATT,ENERGY)   
+         yield = yld96(MATP,MATT,ENERGY) * flux_frac
          return
       elseif (csputopt.eq.4) then 
-         yield = const_yield
+         yield = const_yield * flux_frac
          return
       elseif (csputopt.eq.5) then
 c
@@ -293,7 +304,7 @@ c
 c         if (matp.eq.5.and.matt.eq.9.and.csputopt.eq.4) then
 c
          if (matt.eq.9.and.matp.ne.6.and.ti.gt.0.0) then
-           yield = yldtung(Te,Ti)
+           yield = yldtung(Te,Ti) * flux_frac
 c
 c
 c
@@ -317,12 +328,13 @@ c
 c           It specifies the incident angle : a value of -1 is used to load
 c           averaged data. 
 c
-            yield = yld2002(energy,matp,matt,extra_sputter_angle)
+            yield = yld2002(energy,matp,matt,extra_sputter_angle) 
+     >              * flux_frac
 c
 c
 c
          else
-           yield = yld96(MATP,MATT,ENERGY)   
+           yield = yld96(MATP,MATT,ENERGY) * flux_frac   
          endif
          return
 c
@@ -349,22 +361,23 @@ c        unsupported combination is specified then the data defaults to '96
 c
          if (eckstein2007_data_available) then 
 
-            yield = yield_2007(matp,matt,energy) 
+            yield = yield_2007(matp,matt,energy) * flux_frac
 
          else
 
-            yield = yld96(MATP,MATT,ENERGY)   
+            yield = yld96(MATP,MATT,ENERGY)  * flux_frac 
 
          endif
 c
          return
+
 c        
       endif
 c
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15
      >      .OR.MATT.EQ.16.OR.MATT.EQ.17.or.matt.eq.18
      >      .or.matt.eq.19) THEN
-        YIELD = 1.0
+        YIELD = 1.0 * flux_frac
         RETURN
       ENDIF
 C
@@ -377,7 +390,7 @@ C
 c
          YIELD=CQ(MATP,MATT)*(3.441*X12*LOG(X1+2.718))/(1.0+6.355*
      1          X12+X1*(6.882*X12-1.708))*(1-X2)*(1-X2)*(1.0-X2**
-     2          (2.0/3.0))
+     2          (2.0/3.0)) * flux_frac
 c
 c     The 1984 Bohdansky paper has a typo - either equation 6.13
 c     or equation 6.16 is wrong. If eq 6.16 was correct then the 
@@ -413,10 +426,10 @@ C
 C
 C
       SUBROUTINE SYLD93(MATT,MATP,CNEUTD,
-     >                  CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+     >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
-      REAL    CRMB,CEBD
+      REAL    CRMB,CEBD,cbomb_frac
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -602,10 +615,22 @@ C
       IF (NINT(CRMB).LE.4) MATP = NINT (CRMB)
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
-      IF (CNEUTD.EQ.1) MATP = CBOMBF
+
+      IF (CNEUTD.EQ.1) then
+         MATP = CBOMBF
+         flux_frac = cbomb_frac
+      else
+         flux_frac = 1.0
+      endif
+
       WRITE (7,*) 'TARGET MATERIAL IS     ' , TARMAT(MATT)
       WRITE (7,*) 'BOMBARDING IONS ARE    ' , PLAMAT(MATP)
-      IF (CNEUTD.EQ.1) CALL PRI ('         WITH ZIMP', CBOMBZ)
+
+      IF (CNEUTD.EQ.1) then
+         CALL PRI ('         WITH ZIMP', CBOMBZ)
+         CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
+      endif
+
       RETURN
       END
 C
@@ -658,10 +683,10 @@ c
 c
 c
       SUBROUTINE SYLD96(MATT,MATP,CNEUTD,
-     >                  CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+     >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       IMPLICIT none
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
-      REAL    CRMB,CEBD
+      REAL    CRMB,CEBD,cbomb_frac
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -876,10 +901,23 @@ C
       IF (NINT(CRMB).LE.4) MATP = NINT (CRMB)
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
-      IF (CNEUTD.EQ.1) MATP = CBOMBF
+
+      IF (CNEUTD.EQ.1) then
+         MATP = CBOMBF
+         flux_frac = cbomb_frac
+      else
+         flux_frac = 1.0
+      endif
+
       WRITE (7,*) 'TARGET MATERIAL IS     ' , TARMAT(MATT)
       WRITE (7,*) 'BOMBARDING IONS ARE    ' , PLAMAT(MATP)
-      IF (CNEUTD.EQ.1) CALL PRI ('         WITH ZIMP', CBOMBZ)
+      
+
+      IF (CNEUTD.EQ.1) then
+         CALL PRI ('         WITH ZIMP', CBOMBZ)
+         CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
+      endif
+
       RETURN
       END
 C

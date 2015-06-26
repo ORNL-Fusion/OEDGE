@@ -4066,7 +4066,8 @@ c
 c
       subroutine calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
      >                      presstarg,gamcor,gamecor,ike2d_start,
-     >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol)
+     >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
+     >                      pfz_dist_opt,pfz_dist_param)
       implicit none
       include 'params'
       include 'solparams'
@@ -4092,8 +4093,8 @@ c
       real*8 :: pe_pfzsol(maxpts,3)
       real*8 :: pi_pfzsol(maxpts,3)
       real*8 :: pr_pfzsol(maxpts,3)
-      integer :: dist_opt
-      real*8 :: dist_param
+      integer :: pfz_dist_opt
+      real*8 :: pfz_dist_param(2)
 
 
       
@@ -4541,8 +4542,6 @@ c
      >      elecptarg(ir,1),elecptarg(ir,2),elecptarg(ir,3),
      >      ionptarg(ir,1),ionptarg(ir,2),ionptarg(ir,3)
 
-
-
       end do
 
       !
@@ -4586,7 +4585,6 @@ c
 
       end do
 
-
          !
          ! Calculate assignment of pfz fluxes to rings
          ! - use some decay profile ... linear or exponential? or something else
@@ -4613,12 +4611,12 @@ c
 
       dist_fact = 0
 
-      ! flat distribution over distance dist_param
-      if (dist_opt.eq.1) then 
+      ! flat distribution over distance pfz_dist_param
+      if (pfz_dist_opt.eq.1) then 
 
          do ir = irsep,irwall
             do id = 1,2
-              if (sepdist2(idds(ir,id)).lt.dist_param) then 
+              if (sepdist2(idds(ir,id)).le.pfz_dist_param(id)) then 
                  dist_fact (ir,id) = dds(idds(ir,id))
                  dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
      >                           + dist_fact(ir,id)
@@ -4626,15 +4624,16 @@ c
            end do
         end do
 
-      ! linear decay distribution over distance dist_param (largest at separatrix)a
-      elseif (dist_opt.eq.2) then
+      ! linear decay distribution over distance pfz_dist_param (largest at separatrix)
+      elseif (pfz_dist_opt.eq.2) then
       
 
          do ir = irsep,irwall
             do id = 1,2
-              if (sepdist2(idds(ir,id)).lt.dist_param) then 
+              if (sepdist2(idds(ir,id)).le.pfz_dist_param(id)) then 
                  dist_fact (ir,id) = dds(idds(ir,id)) * 
-     >                   (dist_param-sepdist2(idds(ir,id)))/dist_param
+     >             (pfz_dist_param(id)-sepdist2(idds(ir,id)))
+     >                           /pfz_dist_param(id)
                  dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
      >                           + dist_fact(ir,id)
               endif
@@ -4643,13 +4642,13 @@ c
 
 
 
-      ! exponential decay distribution with lambda = dist_param (largest at separatrix)a
-      elseif (dist_opt.eq.3) then
+      ! exponential decay distribution with lambda = pfz_dist_param (largest at separatrix)
+      elseif (pfz_dist_opt.eq.3) then
 
          do ir = irsep,irwall
             do id = 1,2
                  dist_fact (ir,id) = dds(idds(ir,id)) 
-     >                        * exp(-sepdist2(idds(ir,id))/dist_param)
+     >                 * exp(-sepdist2(idds(ir,id))/pfz_dist_param(id))
                  dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
      >                           + dist_fact(ir,id)
            end do
@@ -4658,13 +4657,15 @@ c
 
          
       ! linear decay to peak of pressure profile on target
-      elseif (dist_opt.eq.4) then
+      elseif (pfz_dist_opt.eq.4) then
 
          do ir = irsep,irwall
             do id = 1,2
               if (ir.le.maxpress_ir(id)) then 
                  dist_fact (ir,id) = dds(idds(ir,id)) * 
-     >                   (dist_param-sepdist2(idds(ir,id)))/dist_param
+     >             (sepdist2(idds(maxpress_ir(id),id))
+     >                       -sepdist2(idds(ir,id)))
+     >                       /sepdist2(idds(maxpress_ir(id),id))
                  dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
      >                           + dist_fact(ir,id)
               endif
@@ -4673,13 +4674,14 @@ c
 
 
       ! exponential decay to peak of pressure profile on target
-      elseif (dist_opt.eq.5) then
+      elseif (pfz_dist_opt.eq.5) then
 
          do ir = irsep,irwall
             do id = 1,2
               if (ir.le.maxpress_ir(id)) then 
                  dist_fact (ir,id) = dds(idds(ir,id)) 
-     >                        * exp(-sepdist2(idds(ir,id))/dist_param)
+     >                    * exp(-sepdist2(idds(ir,id))
+     >                       /sepdist2(idds(maxpress_ir(id),id)))
                  dist_fact(irwall+1,id) = dist_fact(irwall+1,id) 
      >                           + dist_fact(ir,id)
               endif
@@ -4689,27 +4691,40 @@ c
 
       endif
 
+
       ! normalize distribution 
       do ir = irsep,irwall
          do id = 1,2
-            dist_fact(ir,id) = dist_fact(ir,id)/dist_fact(irwall+1,id)
+
+           if (dist_fact(irwall+1,id).gt.0.0) then   
+              dist_fact(ir,id) = dist_fact(ir,id)/dist_fact(irwall+1,id)
+           else
+              dist_fact(ir,id) = 0.0
+           endif
+
          end do 
       end do 
-
 
       ! distribute pfz fluxes
       do ir = irsep,irwall
 
          do id = 1,2
 
-         g_pfzsol(ir,id) = solpfz_fluxes(2,id,1)
+            if (dds(idds(ir,id)).gt.0.0) then
+              g_pfzsol(ir,id) = solpfz_fluxes(2,id,1)
      >                  *dist_fact(ir,id)/dds(idds(ir,id))
-         pe_pfzsol(ir,id) = solpfz_fluxes(2,id,2)
+              pe_pfzsol(ir,id) = solpfz_fluxes(2,id,2)
      >                  *dist_fact(ir,id)/dds(idds(ir,id))
-         pi_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
+              pi_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
      >                  *dist_fact(ir,id)/dds(idds(ir,id))
-         pr_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
+              pr_pfzsol(ir,id) = solpfz_fluxes(2,id,3)
      >                  *dist_fact(ir,id)/dds(idds(ir,id))
+           else
+              g_pfzsol(ir,id) = 0.0
+              pe_pfzsol(ir,id) = 0.0
+              pi_pfzsol(ir,id) = 0.0
+              pr_pfzsol(ir,id) = 0.0
+          endif
 
        write(6,'(a,2i8,6(1x,g12.5))') 'ADDITIONAL FLUX:',ir,id,
      >     g_pfzsol(ir,id),pe_pfzsol(ir,id), 
@@ -4722,9 +4737,6 @@ c
        end do
 
 
-
-
-         
 !      lambda = 0.01
 !      dist_opt = 1
 

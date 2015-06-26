@@ -1,4 +1,5 @@
       SUBROUTINE INITPLASMA(irstart,irend,ikopt)
+      use debug_options
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -47,11 +48,15 @@ c                CTIb0 = 1.0E02
 c                CNb0  = 1.0E19
 c      ENDIF
 C
+      call pr_trace('PLASMA','START OF INITPLASMA')
+
       DO IR = irstart, irend
 c
         call set_initplasma(ir,ikopt)
 c
       end do  
+c
+      call pr_trace('PLASMA','END OF INITPLASMA')
 c
       return 
       end 
@@ -59,6 +64,7 @@ c
 c
 c
       subroutine sol_plasma(irstart,irend,ikopt)
+      use debug_options
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -101,6 +107,9 @@ C           INNER CONTAIN THE SPECIFIC PLATE INFORMATION. FOR UNIFORM CA
 C           LPDATI CONTAINS THE INFORMATION FOR THE BOTH TARGETS.
 C
 C
+      call pr_trace('PLASMA','START OF SOL_PLASMA')
+c
+
       irlim1 = irstart
 c     
       if (cgridopt.eq.0.or.cgridopt.eq.1.or.cgridopt.eq.3) then
@@ -129,6 +138,7 @@ c
          irlim1 = int(ctestsol)   
          irlim2 = int(ctestsol) 
       endif
+
 c
       IF (CIOPTF.EQ.12.OR.CIOPTF.EQ.13.OR.CIOPTF.EQ.14.OR.CIOPTF.EQ.15
      >    .or.cioptf.eq.16.or.cioptf.eq.17.or.cioptf.eq.18.or.
@@ -140,6 +150,7 @@ C
 C
          CALL soledge(IRlim1,IRLIM2,ikopt)
 c
+
          if (cgridopt.eq.2) then
            irlim1 = irsep2
            IF (CIOPTO.EQ.0.or.ciopto.eq.2.or.
@@ -171,6 +182,7 @@ c
          call sol23_interface(irlim1,irlim2)
 c
       ELSEif (cioptf.eq.24) then
+
 c
          call specplas(irlim1,irlim2,ikopt)
 c
@@ -195,6 +207,7 @@ c
            call Ngrad(irlim1,irlim2,ikopt)
          endif
       endif
+
 c
 c     If specified private plasma is ON - then it calls the 
 c     routine to calculate the private plasma values.
@@ -205,12 +218,16 @@ c
          call thompp(irtrap,nrs,ikopt,ciopto) 
       endif
 c
+      call pr_trace('PLASMA','END OF SOL_PLASMA')
+
+
       return 
       end
 c
 c
 c
       subroutine core_plasma(irstart,irend,ikopt)
+      use debug_options
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -255,6 +272,9 @@ c
 C
 c     Find mid-point of separatrix.      
 c
+
+      call pr_trace('PLASMA','START OF CORE_PLASMA')
+
       ikmid = ikmids(irsep)+1
 c
 c     The following turns off all core option processing.
@@ -629,6 +649,7 @@ c
          kes(nks(ir),ir)   = kes(1,ir)
       end do 
 c
+      call pr_trace('PLASMA','END OF CORE_PLASMA')
 C
 C
       RETURN

@@ -234,6 +234,7 @@ c
 c
       subroutine calcsol_interface (irlim1,irlim2,ikopt)
       use error_handling
+      use debug_options
       use sol22_input
       use sol22_debug
       implicit none
@@ -329,6 +330,12 @@ c
       integer sol22_iter
       data sol22_iter /0/
 c
+c     Temporary local variables until these are loaded in input file
+c
+      integer:: pfz_dist_opt
+      real*8 :: pfz_dist_param(2)
+
+c
 c     TEMPORARY MULTIPLIER
 c
 c      real qesrc_mult
@@ -337,6 +344,8 @@ c
 c     Locals for smoothing
 c
       real temid,timid,nmid,smax,asmexp,tmp
+      
+      call pr_trace('SOLASCV1','START CALCSOL_INTERFACE')
 
 c
 c     Make a call to initialize debugging if it is on
@@ -814,13 +823,22 @@ c
 c
 c     Calculate the target particle and power outfluxes.
 c
+c     Temporarily set pfz_dist_opt and pfz_dist_param until these
+c     are added to the input file
+c
+      pfz_dist_opt = 1
+      pfz_dist_param(1) = sepdist2(idds(irsep+4,1))
+      pfz_dist_param(2) = sepdist2(idds(irsep+4,2))
+c
       call calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
      >                presstarg,gamcor,gamecor,ike2d_start,
-     >                g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol)
+     >                g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
+     >                pfz_dist_opt,pfz_dist_param)
 c
 c     If pin is available
 c     Call routine to calculate GPERP CORection factors
 c
+
       if (pinavail) then
 c
 c        Call routine to print comparison of sources.
@@ -991,6 +1009,7 @@ c
          sgperpend = gperpendf * ringlen
 c
          midnks = ikmids(ir)
+
 c
 c-----------------------------------------------------------------
 c        OUTER TARGET
@@ -1662,6 +1681,7 @@ c   CLOCK2:
               CALL OpenStorageFiles(ir,IKLO,'tmp.dat')
             ENDIF
 c slmod end
+
             call calcsol (spts,npts,errcode,serr,
      >                 te,ti,ne,vb,exp_press,act_press,
      >                 prad,ir,irlim1,
@@ -1672,10 +1692,13 @@ c slmod begin - new
             ENDIF
 c slmod end
 c
+
          endif
 c
 c        Handle Error Condition if Error Switch is set
 c
+
+
          if ((   actswerror.ge.1.0
      >            .and.(errcode.eq.3.or.errcode.eq.4.or.
      >                  errcode.eq.5.or.errcode.eq.6.or.

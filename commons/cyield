@@ -1,7 +1,9 @@
 c     -*-Fortran-*-
 C                                                                       
-      COMMON /CYIELD/ CETH,CETF,CQ,CIDATA,NTARS                               
+      COMMON /CYIELD/ CETH,CETF,CQ,CIDATA,NTARS,
+     >                flux_frac
       save /CYIELD/
-      REAL            CETH(7,12),CETF(7,12),CQ(7,12)                    
+      REAL            CETH(7,12),CETF(7,12),CQ(7,12),
+     >                flux_frac
       integer         ntars
       LOGICAL         CIDATA(7,12)                                      

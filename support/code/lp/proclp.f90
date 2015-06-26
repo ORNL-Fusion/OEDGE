@@ -209,7 +209,7 @@ program proclp
   open(iunit,file=trim(infilename),iostat=ierr)
   write(0,*) 'Opening file:',trim(infilename),' Status = ',ierr
 
-  call read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
+  call read_lp_data_file(iunit,lp_data,tmin,tmax,nlines,ncols,nextra)
 
   ! Identify Inner/outer association of LP data ... based on R-Rsep and PSI
 
@@ -229,6 +229,7 @@ program proclp
 
   call find_free_unit_number(ounit)
 
+  tmins = ''
   exp_tmin = int(log10(tmin))+1
   !write(iform,'(a2,i1,a1)') '(i',exp_tmin,')'
   !write(tmins(1:exp_tmin),form=iform) int(tmin)
@@ -241,6 +242,7 @@ program proclp
 
   write(0,*) 'FORM=',trim(iform),':TMINS=',trim(tmins),':'
 
+  tmaxs = ''
   exp_tmax = int(log10(tmax))+1
   !write(iform,'(a2,i1,a1)') '(i',exp_tmax,')'
   !write(tmaxs(1:exp_tmax),form=iform) int(tmax)
@@ -252,7 +254,7 @@ program proclp
 
   !write(0,*) 'FORM=',trim(iform),':TMAXS=',trim(tmaxs),':'
 
-  write(0,*) 'Times:',trim(tmins),':',trim(tmaxs),':'
+  write(0,'(a,a,a,a,a)') 'Times:',trim(tmins),':',trim(tmaxs),':'
 
   ofilename = ' '
 
