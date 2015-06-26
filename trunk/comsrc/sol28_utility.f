@@ -698,7 +698,16 @@ c        IF (mode.NE.3.AND.mode.NE.4.AND.
         IF (mode.EQ.7.AND.
      .      s.NE.-999.0D0.AND.t.NE.-999.0D0) THEN
           length = DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
-          test=test.AND.DABS(s-t)/t.LT.MAX(0.001,0.001*0.1/length)
+          if (t.ne.0.0.and.length.ne.0.0) then 
+              test=test.AND.DABS(s-t)/t.LT.MAX(0.001,0.001*0.1/length)
+          else
+             write(0,'(a,i6,l4,10(1x,g18.8))') 
+     >                  'WARNING: POINTONLINE: t or length=0',
+     >                      mode,test,t,length,y(2),y(0)
+             write(6,'(a,i6,l4,10(1x,g18.8))')
+     >                  'WARNING: POINTONLINE: t or length=0',
+     >                      mode,test,t,length,y(2),y(0)
+          endif
 c          test=test.AND.DABS(s-t).LT.1000.0D0*DABS(DTOL)
         ENDIF
       ENDIF
