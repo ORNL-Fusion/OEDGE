@@ -122,7 +122,19 @@ c        DO ir = irsep, nrs
           id   = idds(ir,i1)
           p    = CalcPressure(knds(id),kteds(id),ktids(id),kvds(id))
           jsat = GetJsat     (kteds(id),ktids(id),knds(id),kvds(id))
-          mach = kvds(id) / GetCs(kteds(id),ktids(id))
+          
+
+          !
+          ! jdemod - trying to track down a divide by zero error
+          !
+          if (GetCs(kteds(id),ktids(id)).ne.0.0) then
+             mach = kvds(id) / GetCs(kteds(id),ktids(id))
+          else
+             write(0,*) 'WARNING: ANALYSESOLUTION: GetCs=0.0'
+             mach = 0.0
+          endif
+
+
           WRITE(fp,'(1X,I4,I5,2F9.5,1X,1P,2E12.4,0P,2F10.4,1X,1P,'//
      .             'E10.2,0P,F6.2,1P,E12.4,0P,1X,A,2F10.5,2X)')
      .      ir,model,psitarg(ir,1),rho(ir,CELL1),
@@ -165,7 +177,11 @@ c
           isat  = ABS(GetFlux(target,ir))
           gamma = GetGamma   (target,ir)
           qpara = GetHeatFlux(target,ir)
-          WRITE(fp,'(1X,I4,I5,2F9.5,2X,1P,E10.2,0P,2F7.2,2X,'//
+
+          if (rp(id).ne.0.0.and.dds2(id).ne.0.0.and.
+     >       (rho(ir,OUT23)-rho(ir,IN14)).ne.0.0.and.costet(id).ne.0.0)
+     >       then
+            WRITE(fp,'(1X,I4,I5,2F9.5,2X,1P,E10.2,0P,2F7.2,2X,'//
      .             'F7.2,1P,2E10.2,0P,F7.2,2X,F10.5,2X,3F6.2,2X,A)')
      .      ir,model,psitarg(ir,1),rho(ir,CELL1),
      .      jsat,kteds(id),ktids(id),gamma,isat,qpara,
@@ -174,6 +190,18 @@ c
      .      (dds2(id)*costet(id))/(rho(ir,OUT23)-rho(ir,IN14)),
      .      1.0/costet(id),
      .      irtag(ir)
+          else 
+            WRITE(fp,'(1X,I4,I5,2F9.5,2X,1P,E10.2,0P,2F7.2,2X,'//
+     .             'F7.2,1P,2E10.2,0P,F7.2,2X,F10.5,2X,3F6.2,2X,A)')
+     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
+     .      jsat,kteds(id),ktids(id),gamma,isat,qpara,
+     .      rp(id),dds2(id),
+     .      0.0,
+     .      (rho(ir,OUT23)-rho(ir,IN14)),
+     .      costet(id),
+     .      irtag(ir)//' WARNING'
+
+          endif
 
 
           sum_target = sum_target + qpara
@@ -207,8 +235,14 @@ c
      .                        ktibs(ik,ir),kvhs (ik,ir)/qt)
           p2   = CalcPressure(knbs (ik,ir),ktebs(ik,ir),
      .                        ktibs(ik,ir),0.0         )
-          mach = kvhs(ik,ir) / qt / 
+
+          if ( GetCs(ktebs(ik,ir),ktibs(ik,ir)) .ne.0.0) then 
+             mach = kvhs(ik,ir) / qt / 
      .           GetCs(ktebs(ik,ir),ktibs(ik,ir))
+          else
+             write(0,*) 'WARNING: ANALYSESOLUTION: GetCs=0.0'
+             mach = 0.0
+          endif
 
           WRITE(fp,'(1X,I4,I5,1X,F10.4,2F10.4,1P,E12.4,1X,2E12.4,0P,
      .               1X,F10.4,1X,A)')
@@ -233,8 +267,15 @@ c
           p2 = CalcPressure(prp_ne(ir,osm_probe),0.0                 ,
      .                      0.0                 ,dip_v (ir,osm_probe))
 
-          WRITE(fp,'(1X,I4,1P,2E12.4,0P,1X,F12.2,A)')
+          ! jdemod
+          if (p1.ne.0.0) then 
+             WRITE(fp,'(1X,I4,1P,2E12.4,0P,1X,F12.2,A)')
      .      ir,p1,p2,p2/p1*100.0,'% '//irtag(ir)
+             
+          else
+             WRITE(fp,'(1X,I4,1P,2E12.4,0P,1X,F12.2,A)')
+     .      ir,p1,p2,0.0,'% '//irtag(ir)//' WARNING P1=0'
+          endif
         ENDDO
       ENDIF
 c
@@ -276,7 +317,8 @@ c      WRITE(fp,*) 'Density peaks:'
 
         maxs = ksmaxs(ir)
 
-        WRITE(fp,'(2X,I2,2(1X,2(I4,F6.3,1P,E10.2,0P),'//
+        if (maxs.ne.0.0) then 
+          WRITE(fp,'(2X,I2,2(1X,2(I4,F6.3,1P,E10.2,0P),'//
      .           ' A,1X,2F6.2,2X))')
      .    ir,   ik1,      kss(   ik1,ir) /maxs,knbs(   ik1,ir),
      .       maxik1,      kss(maxik1,ir) /maxs,knbs(maxik1,ir),note1,
@@ -284,6 +326,10 @@ c      WRITE(fp,*) 'Density peaks:'
      .          ik2,(maxs-kss(   ik2,ir))/maxs,knbs(   ik2,ir),
      .       maxik2,(maxs-kss(maxik2,ir))/maxs,knbs(maxik2,ir),note2,
      .       ktebs(ik2,ir),ktebs(ik2-1,ir)
+        else
+           write(0,*) 'WARNING:ANALYSESOLUTION: KSMAXS(IR)=0',maxs
+        endif
+
       ENDDO
 c
 c
@@ -324,8 +370,18 @@ c      WRITE(fp,*) 'Continuity:'
 
         partot = parflx + rdum(1) - rdum(2) + rdum(3)
 
-        WRITE(fp,'(1X,2I4,I5,1P,4E12.3,2X,E15.5,0P)')
+        !
+        ! jdemod
+        !
+        if (parflx.ne.0.0) then 
+          WRITE(fp,'(1X,2I4,I5,1P,4E12.3,2X,E15.5,0P)')
      .    ik1,ik2,ir,parflx,rdum(1),-rdum(2),rdum(3),partot/parflx
+        else
+          WRITE(fp,'(1X,2I4,I5,1P,4E12.3,2X,E15.5,0P)')
+     .    ik1,ik2,ir,parflx,rdum(1),-rdum(2),rdum(3),0.0
+
+        endif
+          
       ENDDO
 c
 c     Source accounting:
@@ -407,8 +463,9 @@ c      WRITE(fp,*) 'Full plasma analysis:'
       WRITE(fp, 9) 'GLOBAL','LOW SOL','HIGH SOL','CORE','PFZ','IW'
 9     FORMAT(3X,30X,6A11)
       WRITE(fp,10) 'Continuity      ion/(flx+rec)',
-     .  rdum(17)/rdum(16),rdum( 6)/(rdum( 1)+rdum( 7)),
-     .                    rdum( 8)/(rdum( 2)+rdum( 9))
+     .  rdum(17)/(rdum(16)+EPS10),
+     .  rdum( 6)/(rdum( 1)+rdum( 7)+EPS10),
+     .  rdum( 8)/(rdum( 2)+rdum( 9)+EPS10)
       WRITE(fp,14) 'Ionisation           ion/tot ',
      .  rdum( 6)/(rdum(17)+EPS10),rdum( 8)/(rdum(17)+EPS10),
      .  rdum(12)/(rdum(17)+EPS10),rdum(10)/(rdum(17)+EPS10)
@@ -569,7 +626,7 @@ c...temp
           CALL CalcIntegral3(pinrec,ikbound(ir,IKLO),ikm,ir,rdum(7),2)
           rdum(8) = knbs(ikbound(ir,IKLO),ir) *
      .              kvhs(ikbound(ir,IKLO),ir)
-          rdum(9) = rdum(6) / (rdum(7) - rdum(8))
+          rdum(9) = rdum(6) / (rdum(7) - rdum(8)+EPS10)
 
           WRITE(fp,'(3X,I4,4F10.4,2X,1P,5E10.2,0P,F10.2)')
      .      ir,rdum(1)/(rdum(5)+EPS10),rdum(2)/(rdum(5)+EPS10),
@@ -599,7 +656,7 @@ c...temp
           CALL CalcIntegral3(pinrec,ikm,ikbound(ir,IKHI),ir,rdum(7),2)
           rdum(8) = knbs(ikbound(ir,IKHI),ir) *
      .              kvhs(ikbound(ir,IKHI),ir)
-          rdum(9) = rdum(6) / (rdum(7) + rdum(8))
+          rdum(9) = rdum(6) / (rdum(7) + rdum(8)+EPS10)
 
           WRITE(fp,'(3X,I4,4F10.4,2X,1P,5E10.2,0P,F10.2)')
      .      ir,rdum(1)/(rdum(5)+EPS10),rdum(2)/(rdum(5)+EPS10),
@@ -794,7 +851,8 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
 
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/rdum(1),rdum(3)/rdum(1),rdum(3)/rdum(2)
+     .      rdum(2)/rdum(1),
+     .      rdum(3)/(rdum(1)+EPS10),rdum(3)/(rdum(2)+EPS10)
         ENDIF
       ENDDO
 
@@ -812,7 +870,8 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
 
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/rdum(1),rdum(3)/rdum(1),rdum(3)/rdum(2)
+     .      rdum(2)/rdum(1),
+     .      rdum(3)/(rdum(1)+EPS10),rdum(3)/(rdum(2)+EPS10)
         ENDIF
       ENDDO
 

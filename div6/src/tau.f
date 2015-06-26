@@ -22054,6 +22054,12 @@ c     fp_plasma(ik,in,6) = Te gradient
 c     fp_plasma(ik,in,7) = Ti gradient
 c
 c
+      if (cprint.eq.10) then 
+         write(6,'(a,i6,a,2i6)') 
+     >   'Assigning FP plasma for region : ',
+     >    in,' from ring : ',ir,fp_plasma_opt
+      endif
+c
       do ik = 1,nks(ir)
 c
 c        Peripheral plasma assigned from grid
@@ -22111,6 +22117,8 @@ c
          endif
 c
       end do 
+c
+c
 c
 c     Assign cell geometry data (S-values) as well 
 c
@@ -22176,6 +22184,16 @@ c
          endif
 c
       end do  
+
+      if (cprint.eq.10) then 
+         do ik = 1,nks(ir)
+
+            write(6,'(a,3i6,10(1x,g12.5))') 'FP_PLASMA:',in,
+     >         ir,ik,(fp_plasma(ik,in,id),id=1,7)
+
+         end do
+      endif
+
 
       return 
       end

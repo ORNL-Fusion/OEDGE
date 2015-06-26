@@ -396,6 +396,10 @@ contains
 
     call fp_get_plasma(ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
 
+    if (ti.eq.0.0) then 
+       write(0,'(a,2i6,10(1x,g12.5))') 'FP_SET_PLASMA Ti=0.0',ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi
+    endif
+
     plasma%ne = ne
     plasma%te = te
     plasma%ti = ti
@@ -403,6 +407,7 @@ contains
     plasma%ef = ef
     plasma%tge = tgrade
     plasma%tgi = tgradi
+
 
     !
     ! Update transport coefficients

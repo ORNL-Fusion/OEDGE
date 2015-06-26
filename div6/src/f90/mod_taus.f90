@@ -106,8 +106,12 @@ module taus
 
     RIZSQR = REAL (IZ) * REAL (IZ)
 
-    STAU = ne / (MI * ti**1.5) *RIZSQR
-
+    if (ti.ne.0.0) then 
+       STAU = ne / (MI * ti**1.5) *RIZSQR
+    else
+       write(0,*) 'WARNING: EVAL_TAUS: Ti=0.0'
+       stau = 1.0e10
+    endif
 
     !
     !-----------------------------------------------------------------------
@@ -123,6 +127,10 @@ module taus
     !
 
     KFPS = STAU * ti * FTAUP * 2.0
+
+    if (ave_temp.eq.0.0.or.roottt.eq.0.0.or.rootmi.eq.0.0.or.mb.eq.0.0.or.ti.eq.0.0.or.mi.eq.0.0) then 
+       write(0,'(a,6(1xg18.8))') 'WARNING:EVAL_TAUS: UNEXPECTED 0.0 VALUE:', roottt,rootmi,ave_temp,mb,ti,mi
+    endif
     
     IF     (COLL_OPT.EQ.1.AND.IR.GE.SPEC_RING) THEN
        KFPS = 0.0
