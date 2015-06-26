@@ -844,14 +844,14 @@ C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
 C
       IF (CSPUTOPT.EQ.1) THEN
         CALL SYIELD (MATTAR,MATP,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.2) THEN
         CALL SYLD93 (MATTAR,MATP,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
      >         csputopt.eq.6)THEN
         CALL SYLD96 (MATTAR,MATP,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(mattar,matp)
       ENDIF
 c
@@ -2777,6 +2777,7 @@ c
         write(6,2152) (dvparacnt(in,iz),in=1,6)
         write(6,2152) (dvparanorm(in,iz),in=1,6)
         write(6,2152) (vparanorm(in,iz)/qtim,in=1,6)
+        write(6,2152) (vparastep(in,iz)/qtim,in=1,6)
         if (iz.ne.nizs+1) then
            write(6,2152) (dvmaxv(in,iz)/qtim,in=1,6)
            write(6,2152) (dvminv(in,iz)/qtim,in=1,6)
@@ -7703,7 +7704,7 @@ c
 c     If neither a target nor wall segment has been specified find the wall segment centre
 c     closest to the cell centre of the particle exit.
 c
-      if (cprint.eq.9) then 
+      if (cprint.eq.10) then 
 
          write(6,'(a,7i6,5(1x,g12.5))') 'Update_walldep:',ik,ir,iz,
      >         idt,idw,

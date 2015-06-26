@@ -4470,6 +4470,31 @@ C-----------------------------------------------------------------------
        CALL PRI ('                       EIMP=TB(2+3ZIMP),  ZIMP=',
      >   CBOMBZ)
        CALL PRC ('                       EMAX=EIMP')
+       CALL PRI ('                       BOMBARDING ION OPTION       =',
+     >                                    cbombf)
+       select case (cbombf) 
+          case (1)
+             call prc ('                       ION = H')
+          case (2)
+             call prc ('                       ION = D')
+          case (3)
+             call prc ('                       ION = T')
+          case (4)
+             call prc ('                       ION = He')
+          case (5)
+             call prc ('                       ION = C')
+          case (6)
+             call prc ('                       ION = SELF')
+          case (7)
+             call prc ('                       ION = O')
+          case default
+             call prc ('                       ERROR ION UNDEFINED')
+       end select
+
+       CALL PRI ('                       BOMBARDING ION CHARGE STATE =',
+     >                                    cbombz)
+       CALL PRR ('                       BOMBARDING ION FLUX FRACTION=',
+     >                                    cbomb_frac)
       ELSEIF (CNEUTD.EQ.2) THEN
        CALL PRC ('  SPUTTER OPTION   2 : INITIAL CHEMICAL SPUTTERING SOU
      >RCE ONLY')

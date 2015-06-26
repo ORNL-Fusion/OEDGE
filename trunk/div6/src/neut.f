@@ -322,7 +322,7 @@ c-----------------------------------------------------------------------
 c
 c     Launch first groups 
 c
-      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- FIRST LANUCH'
+      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- FIRST LAUNCH'
       IF (sloutput) WRITE(0,*)    nproda,nprod,cneutb
       if (nproda.gt.0.or.nprod.gt.0) then  
 c
@@ -670,7 +670,7 @@ c-----------------------------------------------------------------------
 c
 c     Launch second batches of neutrals if there are any
 c
-      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- SECOND LANUCH'
+      IF (sloutput) WRITE(0,*) 'DEBUG: NEUT -- SECOND LAUNCH'
       IF (sloutput) WRITE(0,*)    nprod2a,nprod2
       if (nprod2a.gt.0.or.nprod2.gt.0) then 
 c

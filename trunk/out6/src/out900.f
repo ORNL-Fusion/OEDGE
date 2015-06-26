@@ -522,8 +522,15 @@ c
 c
 c
 c...    Temp:
-        iopt_ghost = 1
-
+c
+c     jdemod - setting this breaks the symbol table entry for the other iclass options where it is needed
+c            - try setting only for iclass < 0 (?)   
+        if (iclass.lt.0) then 
+           iopt_ghost = 1
+        else
+           iopt_ghost = 0
+        endif
+c
         IF     (iclass.EQ.-1) THEN
 c...      AMJUEL: 
           DO i1 = 1, nenum

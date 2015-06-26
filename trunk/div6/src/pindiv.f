@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       SUBROUTINE WRTPIN (title,equil,IOUNIT)
+      use debug_options
       IMPLICIT none
       character*(*) title,equil                                 
       INTEGER IOUNIT                                                    
@@ -41,6 +42,8 @@ C
       real       totrec
       DATA       IFIRST/0/  
 C                                                                       
+      call pr_trace('PINDIV','WRTPIN START')
+
       REWIND(IOUNIT)                                                    
 c
 c     SET UP PIN RANDOM NUMBER SEED - CURRENTLY LIMITED TO 6 CHARACTERS
@@ -167,6 +170,9 @@ C
       CALL RZERO(VTE,MAXK)                                              
       CALL RZERO(VR0,MAXK)                                              
       NP = 0                                                            
+
+      call pr_trace('PINDIV','WRTPIN BEFORE PLASMA')
+
       DO 600 IR = 1,NRS                                                 
         NP = NP + NKS(IR)                                               
         DO 620 IK = 1,NKS(IR)                                           
@@ -201,6 +207,9 @@ C
       CALL RZERO(FLUXPX,MAXK)                                           
       CALL RZERO(FLUXPY,MAXK)                                           
       flxout = 0.0
+
+      call pr_trace('PINDIV','WRTPIN BEFORE FLUX')
+
 C     
       DO 640 ID = 1,NDS
          IK = IKDS(ID)
@@ -341,6 +350,9 @@ c      jhpuf2(1) = 1
 c      jhpuf1(2) = -1000
 c      jhpuf2(2) = -1
 c
+
+      call pr_trace('PINDIV','WRTPIN BEFORE WRITE')
+
 C                                                                       
 C     WRITE OUT THE BACKGROUND PLASMA PROFILES FOR THE PIN CODE.        
 C

@@ -277,6 +277,21 @@ c     Set to normal incidence data as default
 c
       extra_sputter_angle = 0.0
 c
+c -----------------------------------------------------------------------
+c
+c     TAG D40 : Flux fraction for alternate bombarding ion sputter 
+c               calculations. Goes with CBOMBF and CBOMBZ to allow for 
+c               specification of trace impurity sputtering in cases
+c               where hydrogenic sputtering is expected to be negligible.
+c
+c               Ideally this should be expanded to allow for 
+c               hydrogen+a specifiable distribution of impurity charge states 
+c
+c               To keep current code functionality the default value for this
+c               specifier is 1.0
+c
+      cbomb_frac = 1.0
+c
 c
 c -----------------------------------------------------------------------
 c

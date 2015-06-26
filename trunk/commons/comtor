@@ -26,7 +26,7 @@ c     >  CPDRFT,CDRFTV,CEIMP,FLUXPTS,FLUXROPT,FLUXINFO,SROOTOPT,CSOPT2,
      >  cflatopt,bgplasopt,nbgplas,mtcopt,kelighi,kelighg,ircore,
      >  vernum,revnum,cneutvel,neut2d_opt,neut2d_vaopt,ngradopt,
 c     >  neut2d_raw,sol22_power_ratio,redefopt,cdrftv_start,cdrftv_end,
-     >  neut2d_raw,sol22_power_ratio,redefopt,
+     >  neut2d_raw,sol22_power_ratio,redefopt,cbomb_frac,
      >  init_pos_opt,override_bg_velocity_opt,sonnet_grid_sub_type
 C                                                                       
       common /comtor2/ cpinopt,citersol,csecsol,cpincom,actpin,         
@@ -154,6 +154,7 @@ c
      > tirat,tirati,ctegcut,ctigcut,czploc,
      > refdist(maxnrs),bgplasopt(2*maxnrs,9),kelighi,kelighg,
      > neut2d_raw(maxnks,maxnrs),sol22_power_ratio(maxnrs,2,3),
+     > cbomb_frac,
      > nalph,nalphi,nrat_used(maxnrs,2),debug_neutv_einmax
 c
       INTEGER CIOPTA,CIOPTB,CIOPTC,CIOPTD,CIOPTE,CIOPTF,CIOPTG,CIOPTH,  

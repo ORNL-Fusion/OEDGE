@@ -7,6 +7,7 @@ module langmuir_probes
 
 
   ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
+  integer,parameter,private ::  timebin   = 1
   integer,parameter,private ::  rbin   = 8
   integer,parameter,private ::  psibin = 9
 
@@ -16,15 +17,37 @@ module langmuir_probes
 
   integer,parameter,private :: outlier_index = 5
 
+  character*3,parameter :: nan = 'NaN'
+  character*7,parameter :: line_form = '(a1024)'
+
+  real,parameter :: psimin_limit = -0.5
+  real,parameter :: psimax_limit =  2.0
+
+
 contains
 
-  subroutine read_lp_data_file(iunit,lp_data,nlines,ncols,nextra)
+  subroutine read_lp_data_file(iunit,lp_data,tmin,tmax,nlines,ncols,nextra)
     implicit none
     integer :: iunit,nlines,ncols,nextra
+    real :: tmin,tmax
+    !
+    ! Locals
+    !
     real, allocatable :: lp_data(:,:)
-    character*512 :: line
-    integer :: ios,line_cnt,ierr,in,it
+    character*1024 :: line
+    integer :: ios,tot_line_cnt,act_line_cnt,cur_line_cnt,ierr,in,it,nan_loc
+    real,allocatable :: tmp_lp_data(:)
 
+
+    write(0,'(a)') 'Reading LP Data file: Lines containing NaN are discarded'
+
+    ! allocate temporary storage
+    if (allocated(tmp_lp_data)) deallocate(tmp_lp_data)
+    allocate(tmp_lp_data(ncols+nextra),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('READ_LP_DATA_FILE:','ERROR ALLOCATING TMP_LP_DATA')
+       stop 
+    endif
 
     ! determine number of lines of data - 2 header lines at beginning assumed
 
@@ -32,20 +55,32 @@ contains
     read(iunit,'(a)') line
     read(iunit,'(a)') line
 
-    line_cnt = 0
+    tot_line_cnt = 0
+    act_line_cnt = 0
+    ios = 0
+
     do while (ios.eq.0) 
 
-       read(iunit,*,iostat=ios)
+       read(iunit,line_form,iostat=ios) line
        if (ios.eq.0) then 
-          line_cnt = line_cnt + 1
+          tot_line_cnt = tot_line_cnt + 1
+          nan_loc=index(line,nan)
+          if (nan_loc.eq.0) then 
+             read(line,*) (tmp_lp_data(it),it=1,ncols)
+             ! filter out invalid PSIn values and take only the desired time window
+             if ((tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+                act_line_cnt =  act_line_cnt + 1
+             endif
+          endif
        endif
 
     end do
 
+    write(0,*) 'Total Lines = ',tot_line_cnt,' Data Lines = ',act_line_cnt
 
     ! Allocate storage
     if (allocated(lp_data)) deallocate(lp_data)
-    allocate(lp_data(line_cnt,ncols+nextra),stat=ierr)
+    allocate(lp_data(act_line_cnt,ncols+nextra),stat=ierr)
     if (ierr.ne.0) then 
        call errmsg('READ_LP_DATA_FILE:','ERROR ALLOCATING LP_DATA')
        stop 
@@ -69,18 +104,38 @@ contains
     ! new version : 9 columns
     !   time(msec)	jsat(A/acm2)	temp(eV)	dens(cm-3)              csq	        probeID	        delrsepin	delrsepout	psin
 
-    do in = 1,line_cnt
-       read(iunit,*,iostat=ios) (lp_data(in,it),it=1,ncols)
+    cur_line_cnt = 0
 
+    do in = 1,tot_line_cnt
+       ! need to filter out and reject data lines that contain NaN quantities
+       ! need to filter out and reject data lines with out of range PSIn values (accept -1, 2)
+       read(iunit,line_form,iostat=ios) line
+       
+       nan_loc=index(line,nan)
 
-       if (lp_data(in,8).gt.0.0.and.lp_data(in,9).lt.1.0) then 
-          write (6,'(a,12(1x,g18.8))') 'INCONSISTENT:RSEPOUT,PSIN:', (lp_data(in,it),it=1,ncols)
+       if (nan_loc.eq.0) then 
+
+          tmp_lp_data = 0.0
+
+          read(line,*,iostat=ios) (tmp_lp_data(it),it=1,ncols)
+
+          if ((tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+
+              cur_line_cnt = cur_line_cnt + 1
+              ! If all the valid lines have already been read then exit
+              if (cur_line_cnt.gt.act_line_cnt) exit
+
+              ! copy over the data
+              lp_data(cur_line_cnt,:) = tmp_lp_data
+
+          endif
        endif
 
     end do
 
-    nlines = line_cnt
+    nlines = act_line_cnt
 
+    write(0,'(a,i8)') 'Finished: Reading LP Data file: nlines=',nlines
 
   end subroutine read_lp_data_file
 
@@ -88,12 +143,20 @@ contains
 
     integer :: nlines,ncols,nextra
     real, allocatable :: lp_data(:,:)
-    real*8 :: r_av,r_cnt
+    real*8 :: r_av,r_cnt,r_av2,r_cnt2
+    real*8 :: max_drsep, min_drsep
+    real*8 :: max_drsep_pfz, min_drsep_pfz
+    real*8 :: max_drsep_sol, min_drsep_sol
 
     integer :: in,psiminind
 
     real :: psimin
     real :: rsplit
+    real*8,parameter:: num_minval = -1e25 
+    real*8,parameter:: num_maxval = 1e25 
+
+
+    write(0,'(a)') 'Flagging Inner/Outer LP Data:'
 
 
     ! NOTE: This algorithm fails with sufficient sweeping ...also may fail for vertical inner target
@@ -102,10 +165,23 @@ contains
     ! Loop through lp data and find the R-Rsep value associated with the minimum PSI value. This should be in the PFZ and should be one of the 
     ! two points defining the location between inner and outer
 
+
+
     psimin = 1e25
     psiminind = 0
     r_cnt = 0.0
     r_av = 0.0
+    r_cnt2 = 0.0
+    r_av2 = 0.0
+    max_drsep = -num_minval
+    max_drsep_pfz = -num_minval
+    max_drsep_sol = -num_minval
+
+    min_drsep = num_maxval
+    min_drsep_pfz = num_maxval
+    min_drsep_sol = num_maxval
+
+
 
 
     if (allocated(lp_data)) then 
@@ -118,16 +194,68 @@ contains
 !             rsplit = lp_data(in,rbin)
 !          endif
 
+          ! Record minimum R value in data in case there is no data inside the PFZ          
+          max_drsep = max(max_drsep,lp_data(in,rbin))
+          min_drsep = min(min_drsep,lp_data(in,rbin))
+
           if (lp_data(in,psibin).lt.1.0) then 
-             r_av = r_av + lp_data(in,rbin)
-             r_cnt = r_cnt + 1.0
+             min_drsep_pfz = min(min_drsep_pfz,lp_data(in,rbin))
+             max_drsep_pfz = max(max_drsep_pfz,lp_data(in,rbin))
+
+!             r_av = r_av + lp_data(in,rbin)
+!             r_cnt = r_cnt + 1.0
+          elseif (lp_data(in,psibin).ge.1.0) then 
+             min_drsep_sol = min(min_drsep_sol,lp_data(in,rbin))
+             max_drsep_sol = max(max_drsep_sol,lp_data(in,rbin))
+
+!             r_av2 = r_av2 + lp_data(in,rbin)
+!             r_cnt2 = r_cnt2 + 1.0
           endif
+
        end do
 
-       rsplit = (r_av/r_cnt)
+
+!       if (r_cnt.ne.0) then 
+!          rsplit = (r_av/r_cnt)
+!       elseif (min_drsep.ge.-0.01.and.max_drsep.gt.0) then 
+!          rsplit = min_drsep
+!       elseif (min_drsep.lt.max_drsep.and.max_drsep.lt.-0.01) then 
+!          rsplit = max_drsep
+!       else 
+!          rsplit = (r_av2/r_cnt2)
+!       endif
+
+
+       write(0,'(a,4g18.8)') 'SEPS:',min_drsep_sol,max_drsep_sol,min_drsep_pfz,max_drsep_pfz
+
+       
+       ! Inner target data is included ...
+       if (min_drsep_sol.lt.min_drsep_pfz) then 
+
+          ! Outer target data is included    
+          if (max_drsep_sol.gt.max_drsep_pfz) then 
+             rsplit = (min_drsep_pfz+max_drsep_pfz)/2.0
+
+          ! Inner only    
+          else
+             rsplit = max_drsep_pfz
+          endif
+             
+       else
+
+          ! Outer target only
+          if (max_drsep_sol.gt.max_drsep_pfz) then 
+             rsplit = min_drsep_pfz
+
+          endif
+
+       endif
+
+       rsplit = -0.04
+
 
        ! rsplit now defines the splitting point between inner and outer - loop through the data and apply flag
-
+       
        write(0,'(a,g12.5)') 'FLAGGING INNER/OUTER: SPLIT R-RSEP VALUE = ',rsplit
 
        do in = 1,nlines
@@ -138,11 +266,16 @@ contains
              lp_data(in,ncols+4) = OUTER
           endif
 
+          ! report inconsistent psi and r values
+          !if ((lp_data(in,rbin)*lp_data(in,psibin)).lt.0.0.and.lp_data(in,ncols+4).eq.OUTER) then 
+          !   write (6,'(a,12(1x,g18.8))') 'INCONSISTENT OUTER:RSEPOUT,PSIN:', (lp_data(cur_line_cnt,it),it=1,ncols)
+          !endif
 
        end do
 
     endif
 
+    write(0,'(a,g18.8)') 'Finished Flagging Inner/Outer LP Data:',rsplit
 
 
   end subroutine flag_lp_data
@@ -176,6 +309,9 @@ contains
     ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
     !rbin = 8
     !psibin = 9
+
+    write(0,'(a)') 'Start Binning LP Data:'
+
 
     !outlier_mult = 3.0
     outlier_cnt = 0
@@ -239,7 +375,6 @@ contains
     ndata = 2
     npts = nbins
 
-
     if (allocated(lp_axis)) deallocate(lp_axis)
     allocate(lp_axis(nbins,nzones),stat=ierr)
     if (ierr.ne.0) then 
@@ -288,10 +423,10 @@ contains
 
         izone = int(lp_data(in,ncols+4))
         if (izone.lt.1.or.izone.gt.2) then
-          write(0,'(i6,1x,3(1x,g18.8),1x,i8,3(1x,g18.8),i10)') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),int(lp_data(in,6)),&
+          write(0,'(i6,1x,3(1x,g18.8),1x,i8,8(1x,g18.8))') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),int(lp_data(in,6)),&
                &lp_data(in,5),lp_data(in,10),lp_data(in,11),lp_data(in,12),lp_data(in,2),lp_data(in,3),lp_data(in,ncols+4)
-        endif
-           
+        endif 
+          
        ! Preaverage each of the possible categories ...
        ! 1. All data
        if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
@@ -352,7 +487,10 @@ contains
              end do
           endif
        endif
+
+
     end do
+
 
     ! calculate pre_average
 
@@ -368,6 +506,7 @@ contains
           end do
        end do
     end do
+
 
     !write(6,'(a)') 'Pre-averages:'
 
@@ -391,8 +530,6 @@ contains
     !      endif
     !   end do
     !end do
-
-
 
 
     ! loop through data and record results 
@@ -572,6 +709,7 @@ contains
 
     end do
 
+    write(0,'(a)') 'Finished Binning LP Data:'
 
 
   end subroutine bin_lp_data

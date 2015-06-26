@@ -448,6 +448,7 @@ contains
 
        ! If an error is found return uninterpolated results
        if (ierr.ne.0) then 
+          call errmsg('Interpolation Error: Quadrant not found:', interpolate_opt)
           ! no interpolation
           ne = knbs(ik,ir)
           te = ktebs(ik,ir)
