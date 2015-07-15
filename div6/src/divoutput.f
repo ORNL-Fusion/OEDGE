@@ -1281,12 +1281,13 @@ c
 c
 c  IPP/01 - Krieger - changed formats for table and added R,Z 
 c
-       call prc('  RING  R       Z      Ne(m**3)    Te(eV)  Ti(eV)'
-     >           //' Vb        Cs        Isat')
+       call prc('  RING    R           Z        Ne(m**3)'//
+     >          '    Te(eV)  Ti(eV)'//
+     >          ' Vb        Cs        Isat')
 c
        do i = irsep,nrs
           write (coment,
-     >           '(2x,i4,1x,f6.3,2x,f6.3,1x,1p,g10.3,0p,1x,
+     >           '(2x,i4,1x,f10.6,2x,f10.6,1x,1p,g10.3,0p,1x,
      >             f7.3,1x,f7.3,1p,3(1x,g9.2))')
      >           i,rp(idds(i,1)),zp(idds(i,1)),
      >           knds(idds(i,1)),kteds(idds(i,1)),
@@ -1320,12 +1321,13 @@ c
 c  IPP/01 - Krieger - changed formats for table and added R,Z 
 c
 
-       call prc('  RING  R       Z      Ne(m**3)    Te(eV)  Ti(eV)'
-     >           //' Vb        Cs        Isat')
+       call prc('  RING    R           Z      '//
+     >          '  Ne(m**3)    Te(eV)  Ti(eV)'//
+     >          ' Vb        Cs        Isat')
 c
        do i = irsep,nrs
           write (coment,
-     >           '(2x,i4,1x,f6.3,2x,f6.3,1x,1p,g10.3,0p,1x,
+     >           '(2x,i4,1x,f10.6,2x,f10.6,1x,1p,g10.3,0p,1x,
      >             f7.3,1x,f7.3,1p,3(1x,g9.2))')
      >           i,rp(idds(i,2)),zp(idds(i,2)),
      >           knds(idds(i,2)),kteds(idds(i,2)),
