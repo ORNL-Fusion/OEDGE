@@ -1191,13 +1191,15 @@ c       call prc(' SUMMARY OF ACTUAL TARGET CONDITIONS:')
 c
        call prr2('   '//INNER//' TARGET (R,Z) = ',rp(idds(irsep,1)),
      >                              zp(idds(irsep,1)))
-       call prc('   RING   Ne (m**3)   Te (eV)  TeCRIT(eV) Ti (eV)'
+       call prc('   RING  ID    R       Z       Ne (m**3)'//
+     >             '   Te (eV)  TeCRIT(eV) Ti (eV)'
      >           //'     Vb         Cs        Isat')
+c
        do i = irsep,nrs
           write (coment,
-     >           '(3x,i4,1x,1p,g12.4,1x,0p,
+     >       '(3x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g12.4,1x,0p,
      >             3(1x,f7.3),1p,3(1x,g10.3))')
-     >           i,
+     >           i,idds(id,1),rp(idds(i,1)),zp(idds(i,1)),
      >           knds(idds(i,1)),kteds(idds(i,1)),
      >           (1.0e-18*knds(idds(i,1))*ksmaxs(i)/2.0
      >            *sqrt(ktids(idds(i,1))))**0.4,
@@ -1221,21 +1223,24 @@ c
 
        call prr2('   '//OUTER//' TARGET (R,Z) = ',rp(idds(irsep,2)),
      >                              zp(idds(irsep,2)))
-       call prc('   RING   Ne (m**3)   Te (eV)  TeCRIT(eV) Ti (eV)'
-     >           //'     Vb         Cs      Isat')
+       call prc('   RING  ID   R         Z        Ne (m**3)'//
+     >             '   Te (eV)  TeCRIT(eV) Ti (eV)'//
+     >             '     Vb         Cs      Isat')
 c
 c       call prc('   RING       Ne (m**3)     Te (eV)    Ti (eV)'
 c     >           //'    Vb              Cs')
 c
        do i = irsep,nrs
           write (coment,
-     >           '(3x,i4,1x,1p,g12.4,1x,0p,
+     >         '(3x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g12.4,1x,0p,
      >             3(1x,f7.3),1p,3(1x,g10.3))')
+c     >           '(3x,i4,1x,1p,g12.4,1x,0p,
+c     >             3(1x,f7.3),1p,3(1x,g10.3))')
 c
 c     >           '(3x,i4,1x,1p,g15.6,0p,1x,1p,
 c     >             2g12.4,0p,1x,g13.5,1x,g13.5)')
 c
-     >           i,
+     >           i,idds(id,2),rp(idds(i,2)),zp(idds(i,2)),
      >           knds(idds(i,2)),kteds(idds(i,2)),
      >           (1.0e-18*knds(idds(i,2))*ksmaxs(i)/2.0
      >            *sqrt(ktids(idds(i,2))))**0.4,
@@ -1245,6 +1250,7 @@ c
      >              knds(idds(i,2))*kvds(idds(i,2))*ech
           call prc(coment)
        end do
+c
 c
        if (nsheath_valo.gt.0) then 
           call prb
@@ -1287,7 +1293,7 @@ c
 c
        do i = irsep,nrs
           write (coment,
-     >           '(2x,i4,1x,f9.5,2x,f9.5,1x,1p,g10.3,0p,1x,
+     >         '(2x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g10.3,0p,1x,
      >             f7.3,1x,f7.3,1p,3(1x,g9.2))')
      >           i,rp(idds(i,1)),zp(idds(i,1)),
      >           knds(idds(i,1)),kteds(idds(i,1)),
