@@ -1,0 +1,25 @@
+c     -*-Fortran-*-
+c
+c    The following common block is used to read in the INEL rate data    
+c
+c     ntev  - number of temperature values - hard coded
+c     nz    - number of charge states - also hard-coded
+c     tevb  - temperatures for rate arrays
+c     rsi   - ionization rate
+c     rre   - recombination rate
+c     rpwr  - radiative power rate
+c     rrcx  - CX recombination rate
+c
+c
+      common /inel/ nz,tevb,rsi,rre,rpwr,rrcx
+      save /inel/
+c
+      integer ntev,nz
+      parameter (ntev=101)
+c
+      real tevb(ntev)
+      real rsi(ntev,0:maxizs-1)
+      real rre(ntev,1:maxizs)
+      real rpwr(ntev,0:maxizs)
+      real rrcx(ntev,1:maxizs)
+c

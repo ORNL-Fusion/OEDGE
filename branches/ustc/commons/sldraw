@@ -1,0 +1,10 @@
+c     -*-Fortran-*-
+c
+      COMMON /DRAWCOM/ plottype,plotnorm,slopt,char,
+     .                 map1x,map2x,map1y,map2y,
+     .                 opt_xscale,opt_yscale
+      save /DRAWCOM/
+      INTEGER          plottype(MAXNGS),plotnorm(MAXNGS),slopt,
+     .                 opt_xscale,opt_yscale
+      REAL             map1x,map2x,map1y,map2y
+      CHARACTER*100    char(30)

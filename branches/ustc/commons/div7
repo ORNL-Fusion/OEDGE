@@ -1,0 +1,28 @@
+c     -*-Fortran-*-
+
+      common /div7c/ 
+     >  veltot,
+     >  dsparanorm,dvparanorm,
+     >  dsparastep,dvparastep,
+     >  vparastep,
+     >  vparanorm,
+     >  dsparacnt,dvparacnt,
+     >  dvmaxv,dvminv, 
+     >  sigma_vel
+      save /div7c/
+
+      real   veltot(maxizs)
+c
+c     Variables to record parallel diffusive steps
+c
+c     Krieger, IPP 12/94
+c
+      double precision dsparanorm(6),dvparanorm(6,maxizs+1)
+      double precision dsparastep(6),dvparastep(6,maxizs+1)
+      double precision vparastep(6,maxizs+1)
+      double precision vparanorm(6,maxizs+1)
+      double precision dsparacnt(6),dvparacnt(6,maxizs+1)
+      double precision dvmaxv(6,maxizs+1),dvminv(6,maxizs+1) 
+c Geier IPP/01      
+      real      sigma_vel
+

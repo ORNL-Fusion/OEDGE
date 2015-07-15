@@ -1,0 +1,34 @@
+c     -*-Fortran-*-
+c
+c     This file contains the values that are passed from DIVIMP
+c     to B2/Eirene. It can be included directly in those source codes 
+c     if the varaible declarations do not overlap.
+c
+c     NOTE: The parametric sizes of these arrays MUST be larger than 
+c           the actual values used in DIVIMP for the specific case or
+c           errors will result due to array bounds overruns. One solution 
+c           is to ensure that the values used here are larger than the
+c           corresponding DIVIMP parameters. 
+c
+c     David Elder, Sept 6, 1994
+c
+      integer dbmaxnrs, dbmaxnks, dbmaxizs
+      parameter (dbmaxnks=100, dbmaxnrs= 50,dbmaxizs=18)
+c
+c     IPP/01 Krieger: Changed dbmaxizs from 18 to 74 (tungsten)
+c
+c      parameter (dbmaxnks=100, dbmaxnrs= 50,dbmaxizs=74)
+c
+c     The following is the declaration of the common block and its contents
+c     that will be passed to B2-Eirene
+c         
+      common /divbra/ dbni, dbti, dbv, dbpowls, dblines
+      save /divbra/
+c
+      double precision dbni(dbmaxnks,dbmaxnrs,-1:dbmaxizs),
+     >                 dbti(dbmaxnks,dbmaxnrs,-1:dbmaxizs),
+     >                 dbv(dbmaxnks,dbmaxnrs,-1:dbmaxizs),
+     >                 dbpowls(dbmaxnks,dbmaxnrs,-1:dbmaxizs),
+     >                 dblines(dbmaxnks,dbmaxnrs,-1:dbmaxizs)
+c
+

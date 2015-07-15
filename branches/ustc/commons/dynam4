@@ -1,0 +1,9 @@
+c     -*-Fortran-*-
+C                                                                       
+      COMMON /DYNAM4/ IMODE,NTS,CSTMAX,DWELTS,DWELFS,CTIMES,LIMS,       
+     >  WALKS                                                           
+      save /DYNAM4/
+      INTEGER IMODE,NTS                                                 
+      REAL CSTMAX,DWELTS(-1:MAXIZS),DWELFS(MAXNTS),                     
+     >  CTIMES(0:MAXNTS+1,-1:MAXIZS),                                     
+     >  LIMS(MAXNKS,MAXNRS,-1:MAXIZS,MAXNTS),WALKS(MAXNWS,2)            

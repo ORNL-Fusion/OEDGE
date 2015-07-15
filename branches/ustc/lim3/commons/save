@@ -1,0 +1,5 @@
+C                                                                               
+      COMMON /SAVE/ R,I,L                                                       
+      REAL          R(9,MAXPUT)                                                 
+      INTEGER       I(9,MAXPUT)                                                 
+      LOGICAL       L(3,MAXPUT)                                                 

@@ -1,0 +1,32 @@
+C                                                                               
+      COMMON /COMT2/  CEYS,CVHYS,CTEMBS,CRNBS,QEDGES,CYSCLS,CFVHXS,             
+     >                QTANS,CFEXZS,CFIZS,CFPS,CFSS,CFTS,CFRCS,CPCHS,            
+     >                CPRCS,CCCFPS,CXAFS,CXBFS,CFCXS,CNHS,CXCFS,                
+     >                QTEMBS,QRNBS,CTOLDS,CYMFPS,CYMFSS,QDISTS,       
+     >                CTEMBSI,QTEMBSI,CVS,CTIGS,CTEGS,CXDPS
+      REAL            CEYS  (MAXQYS),CVHYS (MAXQYS),QDISTS(-MAXQXS:0,2)         
+      REAL            QTEMBS(-MAXQXS:1,2),    QRNBS (-MAXQXS:1,2)               
+      REAL            QTEMBSI(-MAXQXS:1,2) 
+      REAL            QEDGES(-MAXQXS:0,2),    CYSCLS(-MAXQXS:0)                 
+      REAL            QTANS (-MAXQXS:0,2),    CXAFS (-MAXQXS:MAXQXS,3)          
+      REAL            CTEMBS(MAXNXS,-MAXNYS:MAXNYS)                             
+      REAL            CTEMBSI(MAXNXS,-MAXNYS:MAXNYS)
+      REAL            CTEGS(MAXNXS,-MAXNYS:MAXNYS)
+      REAL            CTIGS(MAXNXS,-MAXNYS:MAXNYS)
+      REAL            CRNBS (MAXNXS,-MAXNYS:MAXNYS)                             
+      REAL            CFVHXS(MAXNXS,-MAXNYS:MAXNYS)                             
+      REAL            CFEXZS(MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+      REAL            CFIZS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
+      REAL            CFPS  (MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+      REAL            CFSS  (MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+      REAL            CFTS  (MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+      REAL            CFRCS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
+      REAL            CPCHS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
+      REAL            CPRCS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
+      REAL            CFCXS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
+      REAL            CCCFPS(MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+      REAL            CXBFS (-MAXQXS:MAXQXS,3), CXCFS(-MAXQXS:MAXQXS,3)         
+      REAL            CXDPS (-MAXQXS:MAXQXS,3)
+      REAL            CNHS  (MAXNXS,-MAXNYS:MAXNYS), CYMFPS(-MAXQXS:1,2)        
+      REAL            CTOLDS(MAXNXS,MAXIZS), CYMFSS(-MAXQXS:1,2)                
+      REAL            CVS(-MAXQXS:MAXQXS,2)
