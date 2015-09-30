@@ -1366,10 +1366,11 @@ c
 c        IOPT = 1 = combined Ion + Neutral Deposition
 c             = 2 = ION Deposition
 c             = 3 = NEUTRAL Deposition
-c
+c             = 4 = DIVERTOR LEAKED ION Deposition
+
          call print_deposition(57,cgridopt)
 c
-         if (iopt.lt.1.or.iopt.gt.3) then 
+         if (iopt.lt.1.or.iopt.gt.4) then 
             write(6,'(a,i4)') 
      >           'Plot 811: IOPT value is invalid (not 1,2,3):',iopt
             write(0,'(a,i4)') 
@@ -1385,6 +1386,8 @@ c
             REF='Detailed ION Deposition Plot'
          elseif (iopt.eq.3) then 
             REF='Detailed NEUTRAL Deposition Plot'
+         elseif (iopt.eq.3) then 
+            REF='Detailed ION LEAKAGE Deposition Plot'
          endif
 
          PLANE=' '
@@ -1400,6 +1403,8 @@ c
             totsrc = wallsi(maxpts+1)
          elseif (iopt.eq.3) then 
             totsrc = wallsn(maxpts+1)
+         elseif (iopt.eq.2) then 
+            totsrc = wallsil(maxpts+1)
          endif  
 c
 c        Check for valid totsrc before plotting
@@ -1425,6 +1430,10 @@ c
             write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
      >          'Total NEUT Deposition:',
      >          totsrc,'Particles'
+         elseif (iopt.eq.2) then 
+            write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
+     >          'Total LEAKED ION Dep:',
+     >          totsrc,'Particles'
          endif
 
 c
@@ -1447,7 +1456,7 @@ c
          write (6,*) 'Wall deposition:'
          do in = 1,wallpts
             write (6,'(i5,3(1x,g12.5))') in,wallsn(in),
-     >                                wallsi(in)
+     >                                wallsi(in),wallsil(in)
          end do
          write (6,*) 'Wall refs:',wltrap1,wltrap2,
      >               wlwall1,wlwall2
@@ -1487,6 +1496,13 @@ c              Neutral depostition
 c
                valsts(in,1) =  valsts(in,1)
      >                       + wallsn(in)
+c
+            elseif (iopt.eq.4) then 
+c
+c              LEAKED Ion deposition
+c
+               valsts(in,1) =  valsts(in,1)
+     >                       + wallsil(in)
 c
             endif
 
@@ -1593,6 +1609,8 @@ c-------------------------
             cnames(1)  = 'Ion  Dep'
          elseif (iopt.eq.3) then
             cnames(1)  = 'Neut Dep'
+         elseif (iopt.eq.4) then 
+            cnames(1)  = 'L-IonDep'
          endif
 c
          ylab = 'Fraction of Total'

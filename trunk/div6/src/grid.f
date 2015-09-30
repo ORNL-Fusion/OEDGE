@@ -10286,8 +10286,9 @@ c
       INTEGER id,ik,ir,i1,grid_option,nrings_inner,nrings_outer
       REAL*8  r,delr,L,r1,r2,z1,z2,frac1,frac2,
      .        vessel_radius,brat,frac,r_inner,r_outer,delta
+     .        , delz ! jdemod
 
-      grid_option = 3  ! 7  ! 6
+      grid_option = 8 ! 3  ! 7  ! 6
 
       brat = 1.0
 
@@ -10356,6 +10357,15 @@ c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from fal
           r_outer = 0.03D0     
           delr = (vessel_radius - r_outer)  
           nks(1:maxrings) = 150
+          ! jdemod
+        CASE (8)  ! Rectangular grid
+          vessel_radius = 0.02D0
+          L = 50.0D0
+          r = 0.20D0          
+          z0 = L / 2.0D0              
+          delr = (vessel_radius - r)  
+          maxrings = 50      
+          nks(1:maxrings) = 100         
       ENDSELECT
 
       id = 0
@@ -10379,6 +10389,12 @@ c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from fal
               r1 = r_inner + frac * (r_outer - r_inner)
               r2 = r1 + delta
             ENDIF
+          ELSEif (grid_option.eq.8) then 
+            ! jdemod
+            frac  = DBLE(ir-1) / DBLE(maxrings)
+            delta = r / DBLE(maxrings)
+            r1 = frac * r 
+            r2 = r1 + delta
           ELSE
             frac  = DBLE(ir-1) / DBLE(maxrings)
             delta = r / DBLE(maxrings)
@@ -10387,7 +10403,9 @@ c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from fal
           ENDIF
           IF (ir.EQ.1) r1 = r1 + r0
         ENDIF
-
+c
+c        delz = L/nks(ir)
+c
 C       Krieger IPP/07 - SUN compiler does not know SNGL, replaced by REAL  -strange since SNGL is used elsewhere... -SL
 C       psitarg(ir,1) = ABS(0.5*(SNGL(r1+r2)))
 C       psitarg(ir,2) = ABS(0.5*(SNGL(r1+r2)))
@@ -10398,7 +10416,7 @@ C       psitarg(ir,2) = ABS(0.5*(SNGL(r1+r2)))
 c        WRITE(0,*) 'IR:',ir,psitarg(ir,1)
 
 c       nks(ir) = 100
-
+c
         DO ik = 1, nks(ir)
 
           SELECTCASE (grid_option)
@@ -10422,7 +10440,9 @@ c       nks(ir) = 100
                 delta = L / DBLE(nks(ir)) 
                 z1 = (0.5 - frac) * L + z0
 c                z1 = (1.0 - frac) * L 
+c
                 z2 = z1 - delta       
+c
               ENDIF
             CASE (4:7) ! Target chamber: fancy
               frac1 = DBLE(ik-1) / DBLE(nks(ir)) 
@@ -10431,6 +10451,14 @@ c                z1 = (1.0 - frac) * L
               frac2 = SIGN(.5D0,frac2-.5D0)*(ABS(frac2-.5)/0.5)**1.0+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
+            CASE (8)  
+               ! jdemod
+              IF (.TRUE.) THEN
+                frac = DBLE(ik-1) / DBLE(nks(ir)) 
+                delta = L / DBLE(nks(ir)) 
+                z1 = (1.0 - frac) * L
+                z2 = z1 - delta       
+              ENDIF
           ENDSELECT
 
 c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05

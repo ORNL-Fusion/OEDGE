@@ -5,6 +5,7 @@ c
      >            TNTOTS,FPTARG,acttarg,SPTOTS,sitots,coreouts,
      >            e2dtots,e2dptots,cre2d,cre2dizs,
      >            impurity_content)
+      use divertor_limits
       implicit none 
       include    'params'
       include    'cadas'
@@ -396,6 +397,12 @@ c
            endif
  180     continue
          call prb
+
+c
+c        Print out summary of divertor leakage
+c
+         call print_divertor_leakage(datunit,nizs)
+c
       endif
 c
       CALL PRR ('FRACTION OF IONS ABSORBED                    ',

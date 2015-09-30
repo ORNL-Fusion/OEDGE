@@ -17,6 +17,7 @@ c
       use subgrid_options
       use subgrid
       use ero_interface
+      use divertor_limits
 c slmod begin
       use mod_interface
       use mod_divimp
@@ -184,6 +185,9 @@ c     The following "leakage" variables are used to monitor leakage
 c     along the field lines away from the targets.
 c
       hasleaked = .false.
+      divertor_leaked = .false. 
+      ring_divertor_leaked = .false. 
+
       cleakt    =  0.0
       cleakp    =  1
 c
@@ -406,6 +410,7 @@ c
       CALL RZERO (wallsi, maxpts+1)
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
       call rzero (wallseiz,(maxpts+1) * MAXIZS)
+      CALL RZERO (wallsil, maxpts+1)
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -1045,6 +1050,11 @@ c
         RMAIN  = 0.0
         REXIT  = 0.0
 c
+c       Set ion average ionization temperature to initial temperature for 
+c       injection cases
+c
+        ctemav = ctem1
+c
       ENDIF
 
 c
@@ -1141,6 +1151,9 @@ c
 c       Particle initialization
 c
         hasleaked = .false.
+        divertor_leaked = .false. 
+        ring_divertor_leaked = .false. 
+
         hasleakedcore = .false.
         cleakp = 1
 c
@@ -2923,9 +2936,9 @@ C
 C
 C     Neutrals on Walls - also sum up wall deposition and erosion arrays
 C
-      write(6,'(a,5(1x,f9.2))') 'Walls Start:',
+      write(6,'(a,6(1x,f9.2))') 'Walls Start:',
      >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1)
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
 c
       do 3005 in = 1,wallpts
 c
@@ -2937,6 +2950,7 @@ c
          wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
          wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
          wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         wallsil(maxpts+1) = wallsil(maxpts+1) + wallsil(in)
          
          do iz= 1,nizs
             if (wallsiz(in,iz).gt.0.0) then 
@@ -2949,18 +2963,20 @@ c
      >          'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
      >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs)
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
+     >         wallsil(in)
          else
             write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in)
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         wallsil(in)
          endif
 
 3005  continue
 c
       write(6,'(a,5(1x,f9.2))') 'Walls End:',
      >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1)
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
 
 
 C     K. Schmid 2008 output charge state resolved wall impact information
@@ -2972,18 +2988,23 @@ c              standardized and breaks some compilers so I changed the
 c              repeat value to 100 which should be large enough in most
 c              cases. 
 c
-3006  Format(i5,' ',g12.5,g12.5,100(' ',g12.5))
+3006  Format(i5,' ',g12.5,g12.5,101(' ',g12.5))
 c3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
 c
       if (nizs.le.100) then 
          do in = 1,wallpts
 C        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
 C     >       wallsiz(in, 1:NIZS)
-             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
+
+             write (6,3006) in,wallsn(in),wallsi(in),
+     >              wallsiz(in, 1:NIZS), wallsil(in)
+
          end do
          write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
-     >      wallsiz(maxpts+1, 1:NIZS)
+     >     wallsiz(maxpts+1, 1:NIZS), wallsil(maxpts+1)
+
          write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
+
       else
          call errmsg('ERROR PRINTING CHARGE'//
      >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
@@ -5359,7 +5380,7 @@ c     If the integration point has been specified equal to or less than
 c     zero then this option is turned off - since the integral over the
 c     entire plot range is printed out in th eOUT program.
 c
-      if (cstgrad.le.0.0) return
+      if (cstgrad.le.0.0.or.cstgrad.ge.1.0) return
 c
       call rzero(nt,maxizs*maxnrs)
 c
@@ -7670,6 +7691,7 @@ c
 c
       subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
      >                          eimp)
+      use divertor_limits
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
@@ -7695,7 +7717,7 @@ c
 c     David Elder     Nov 5, 1998
 c
 c     Added a wallsiz array that records the wall impact information in a
-c     charge resolved maner
+c     charge resolved manner
 c
 c     K. Schmid Feb. 2008 and june 2009
       real best,dsq,r,z
@@ -7742,6 +7764,11 @@ c
              endif
 c
              wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+
+             ! jdemod - divertor leakage deposition
+             if (divertor_leaked) then 
+                wallsil(maxpts+1) = wallsil(maxpts+1) + sputy
+             endif
 c
              wallsiz(maxpts+1,iz) = wallsiz(maxpts+1,iz) + sputy
              wallseiz(maxpts+1,iz)= wallseiz(maxpts+1,iz) + eimp * sputy
@@ -7755,6 +7782,11 @@ c
           else
 
              wallsi(ind) = wallsi(ind) + sputy
+             ! jdemod - divertor leakage deposition
+             if (divertor_leaked) then 
+                wallsil(ind) = wallsil(ind) + sputy
+             endif
+
              wallsiz(ind,iz)  = wallsiz(ind,iz) + sputy
 
 c
@@ -7784,6 +7816,13 @@ c
           if (wallindex(idt).ne.0) then
 
              wallsi(wallindex(idt)) = wallsi(wallindex(idt))+ sputy
+
+             ! jdemod - divertor leakage deposition
+             if (divertor_leaked) then 
+                wallsil(wallindex(idt)) = wallsil(wallindex(idt)) +sputy
+             endif
+
+
              wallsiz(wallindex(idt), iz) =
      >            wallsiz(wallindex(idt), iz) + sputy
              wallseiz(wallindex(idt), iz) =
@@ -7819,6 +7858,12 @@ c
        elseif (idw.ge.1.and.idw.le.wallpts) then
 c
              wallsi(idw) = wallsi(idw)+ sputy
+
+             ! jdemod - divertor leakage deposition
+             if (divertor_leaked) then 
+                wallsil(idw) = wallsil(idw) + sputy
+             endif
+
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
              wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
 
@@ -7837,6 +7882,11 @@ c
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
 
           wallsi(maxpts+1) = wallsi(maxpts+1) + sputy
+             ! jdemod - divertor leakage deposition
+          if (divertor_leaked) then 
+             wallsil(maxpts+1) = wallsil(maxpts+1) + sputy
+          endif
+
           wallsiz(maxpts+1, iz) = wallsiz(maxpts+1, iz) + sputy
           wallseiz(maxpts+1, iz) = wallseiz(maxpts+1, iz) + eimp * sputy
 c
