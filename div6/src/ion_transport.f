@@ -408,6 +408,7 @@ c
 c
 c 
       subroutine ion_in_sol(spara,dspara,vpara,dvpara)
+      use divertor_limits
       implicit none
       real  spara,dspara,vpara,dvpara
 c      
@@ -428,6 +429,8 @@ c
       include    'particle_specs'
 c
       include 'hc_global_opts'
+c
+      real tmp_time
 c
       integer flag
 c
@@ -594,6 +597,15 @@ c     >                  smax-cleaks(cleakp),smax,cleakn(cleakp,iz)
               cleakt = cleakt + cist * qtim
            endif
         endif
+c
+c       Use the same mechanism for divertor leakage checks
+c
+        if (checkleak.and.(.not.divertor_leaked)) then 
+           tmp_time = cist * qtim
+           divertor_leaked = check_divertor_limit(sputy,ir,iz,
+     >                                       tmp_time,s)
+        endif
+
 
 
 ! ammod begin.

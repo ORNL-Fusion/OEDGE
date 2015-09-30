@@ -2846,6 +2846,8 @@ c
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
 c
         if (result.lt.0.0) then 
+           if (cprint.gt.10) then 
+
            write(6,'(a,3(1x,g16.8))') 
      >            'SUBROUTINE LAUNCH: WARNING: NEUTRAL INITIAL'//
      >            ' POSITION IS APPARENTLY'//
@@ -2853,6 +2855,7 @@ c
            write (6,'(a,5(1x,i6),5(1x,g13.5))')
      >         'DATA:',iprod,iwstart,id,ik,
      >                ir,r,z,vin,angle,tangnt
+           endif
 
 c           write (6,'(a,i6,3i4,5(1x,g13.5))')
 c     >         'ERROR LAUNCH:',iprod,id,ik,ir,r,z,vmult,cvamult,
@@ -2887,15 +2890,19 @@ c
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
 c
            if (result.ge.0.0) then 
+               if (cprint.gt.10) then 
                write(6,'(a,6(1x,g16.8))') 
      >            'SUBROUTINE LAUNCH: FOLLOWUP STATUS:'//
      >            ' OK : INSIDE AFTER ONE TIMESTEP:',r,z,result
+               endif
                err_ok = err_ok + sputy   
 
            else
+               if (cprint.gt.10) then 
                write(6,'(a,6(1x,g16.8))') 
      >            'SUBROUTINE LAUNCH: FOLLOWUP STATUS:'//
      >            ' ERROR: STILL OUTSIDE AFTER ONE TIMESTEP:',r,z,result
+               endif
 
                err_out = err_out + sputy   
            endif
@@ -3892,9 +3899,12 @@ c
 ! ammod end.	       
 
 
+               if (cprint.gt.10) then 
                WRITE(6,'(a,5(1x,i6),4(1x,g12.5))') 
      >                            ' COLLISION WITH WALL  :',
      >                             INDI,iwstart,id,ik,ir,R,Z
+               endif
+
                GOTO 899
             ENDIF
           ELSEIF (reflect_neut) THEN
@@ -4344,7 +4354,7 @@ c       WRITE(50,*) '     :',r,z,ik,ir,griderr
 c       griderr = incell(ik,ir,r,z)
 c       WRITE(0 ,*) '     :',r,z,ik,ir,griderr
 c       WRITE(50,*) '     :',r,z,ik,ir,griderr
-       WRITE(6,*) 'IFATE:',ifate   ! sltmp
+c       WRITE(6,*) 'IFATE:',ifate   ! sltmp
 c
 c      Record MTC event frequency 
 c

@@ -5197,8 +5197,8 @@ c
 c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
-c slmod begin          
-          if (cprint.ge.1) 
+c slmod begin - jdemod - turned off for most print options
+          if (cprint.gt.10) 
      >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
      >          'REFANG:',reflection_option,sect_index,
      >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg

@@ -8,6 +8,7 @@ c slmod begin
       USE mod_solps
       use mtc
       use bfield
+      use divertor_limits
 c slmod end
       implicit none
       character*(*) title,equil
@@ -813,6 +814,8 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
+c      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid
+c
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
 c...    Generalized grid:
@@ -1012,6 +1015,8 @@ c
 c     End for different grids
 c
       endif
+c
+c
 c
 c---------------------------------------------------------------
 c
@@ -2736,6 +2741,14 @@ c     the moment):
 
 c slmod end
 c
+c     jdemod - at this point the grid has been read in, a connection map has been built, 
+c              and s values along ring calculated
+c            - perform additional analysis of the grid
+c            - identify number of Xpoints ... SN, DN or Asymmetric DN
+c            - label each ring on the grid for region ... CORE, MAIN SOL, INNER SOL, OUTER SOL, PRIM PFZ, SEC PFZ
+c            - calculate the divertor boundaries from polygon surfaces attachd to the Xpoint
+c
+      call calculate_divertor_limit(nizs)
 c
 c-----------------------------------------------------------------------
 c     INTERPLOATE PSIN CORE PROFILE FROM INPUT FILE (IF PRESENT) 
@@ -6091,6 +6104,7 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
      .       indexiradj)
         GOTO 300
       ELSE
+         write (0,*) 'Standard RAUG grid load'
          IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF

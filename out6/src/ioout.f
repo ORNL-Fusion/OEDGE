@@ -2094,6 +2094,9 @@ c
             CALL RINOUT ('R WALLSEI',WALLSE_I,MAXPTS_+1)
          endif
          CALL RINOUT ('R WALLSI',WALLSI,MAXPTS_+1)
+         if (version_code.ge.(6*maxrev+44)) then 
+            CALL RINOUT ('R WALLSI',WALLSIL,MAXPTS_+1)
+         endif
       else 
          CALL RINOUT ('R WALLSN',WALLSN,MAXPTS_)
          CALL RINOUT ('R WALLSE',WALLSE,MAXPTS_)

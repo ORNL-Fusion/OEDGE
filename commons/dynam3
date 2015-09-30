@@ -3,11 +3,12 @@ C
 c     IPP 01/10 - added array wallsiz for charge state resolved
 c     particle exit statistics
 c     jdemod - added wallseiz to get exit energy
+c     add wallsil - to record deposition of divertor leaked particles
 c
       COMMON /DYNAM3/ TIZS,POWLS,LINES,ZEFFS,WALLS,DEPS,NEROS,    
      >   ELIMS,wallsn,hpowls,hlines,sdvs,chemden,chemizs,
      >   ncore, nedge, ntrap,ndivert,nmsol,wallse,wallse_i,wallsi,
-     >   wallsiz,wallseiz	 
+     >   wallsiz,wallseiz,wallsil	 
       save /DYNAM3/
       REAL TIZS(MAXNKS,MAXNRS,-1:MAXIZS),ZEFFS(MAXNKS,MAXNRS,3),        
      >   POWLS(MAXNKS,MAXNRS,-1:MAXIZS),LINES(MAXNKS,MAXNRS,-1:MAXIZS), 
@@ -21,4 +22,5 @@ c
      >   ntrap(maxnks,maxnrs),ndivert(maxnks,maxnrs),
      >   nmsol(maxnks,maxnrs),wallse(maxpts+1),wallse_i(maxpts+1),
      >   wallsi(maxpts+1),wallsiz(maxpts+1,MAXIZS + 1),
-     >   wallseiz(maxpts+1,MAXIZS + 1)
+     >   wallseiz(maxpts+1,MAXIZS + 1),
+     >   wallsil(maxpts+1)

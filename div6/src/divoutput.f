@@ -1199,7 +1199,7 @@ c
           write (coment,
      >       '(3x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g12.4,1x,0p,
      >             3(1x,f7.3),1p,3(1x,g10.3))')
-     >           i,idds(id,1),rp(idds(i,1)),zp(idds(i,1)),
+     >           i,idds(i,1),rp(idds(i,1)),zp(idds(i,1)),
      >           knds(idds(i,1)),kteds(idds(i,1)),
      >           (1.0e-18*knds(idds(i,1))*ksmaxs(i)/2.0
      >            *sqrt(ktids(idds(i,1))))**0.4,
@@ -1240,7 +1240,7 @@ c
 c     >           '(3x,i4,1x,1p,g15.6,0p,1x,1p,
 c     >             2g12.4,0p,1x,g13.5,1x,g13.5)')
 c
-     >           i,idds(id,2),rp(idds(i,2)),zp(idds(i,2)),
+     >           i,idds(i,2),rp(idds(i,2)),zp(idds(i,2)),
      >           knds(idds(i,2)),kteds(idds(i,2)),
      >           (1.0e-18*knds(idds(i,2))*ksmaxs(i)/2.0
      >            *sqrt(ktids(idds(i,2))))**0.4,
@@ -1287,7 +1287,7 @@ c
 c
 c  IPP/01 - Krieger - changed formats for table and added R,Z 
 c
-       call prc('  RING   R          Z        Ne(m**3)'//
+       call prc('  RING  ID   R          Z        Ne(m**3)'//
      >          '    Te(eV)  Ti(eV)'//
      >          ' Vb        Cs        Isat')
 c
@@ -1295,7 +1295,7 @@ c
           write (coment,
      >         '(2x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g10.3,0p,1x,
      >             f7.3,1x,f7.3,1p,3(1x,g9.2))')
-     >           i,rp(idds(i,1)),zp(idds(i,1)),
+     >           i,idds(i,1), rp(idds(i,1)),zp(idds(i,1)),
      >           knds(idds(i,1)),kteds(idds(i,1)),
      >           ktids(idds(i,1)),kvds(idds(i,1)),
      >         SQRT(0.5*EMI*(KTEdS(idds(i,1))+KTIdS(idds(i,1)))
@@ -1327,15 +1327,15 @@ c
 c  IPP/01 - Krieger - changed formats for table and added R,Z 
 c
 
-       call prc('  RING   R          Z      '//
+       call prc('  RING  ID   R          Z      '//
      >          '  Ne(m**3)    Te(eV)  Ti(eV)'//
      >          ' Vb        Cs        Isat')
 c
        do i = irsep,nrs
           write (coment,
-     >           '(2x,i4,1x,f9.5,2x,f9.5,1x,1p,g10.3,0p,1x,
+     >           '(2x,i4,1x,i4,1x,f9.5,2x,f9.5,1x,1p,g10.3,0p,1x,
      >             f7.3,1x,f7.3,1p,3(1x,g9.2))')
-     >           i,rp(idds(i,2)),zp(idds(i,2)),
+     >           i,idds(i,2),rp(idds(i,2)),zp(idds(i,2)),
      >           knds(idds(i,2)),kteds(idds(i,2)),
      >           ktids(idds(i,2)),kvds(idds(i,2)),
      >         SQRT(0.5*EMI*(KTEdS(idds(i,2))+KTIdS(idds(i,2)))

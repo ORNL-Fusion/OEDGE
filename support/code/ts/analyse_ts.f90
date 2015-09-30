@@ -343,7 +343,9 @@ contains
     character*512 :: line
     integer :: line_cnt,in
 
-    integer :: ncols, nextra
+    integer :: ncols, nextra, fileformat,headersize
+    real,allocatable :: line_data(:)
+
 
     write(0,*) 'READ_TS: Reading TS data'
 
@@ -363,6 +365,40 @@ contains
     ! Assume standard format
     ! Read off header
 
+    ! Read header and decide which format of file is being loaded ... 
+    
+    read(fileunit,'(a512)') line
+    rewind(fileunit)
+    if (line(1:4) .eq. 'time') then 
+    ! file format = 2
+    ! 11 data items/line but different
+       ! 1       2      3      4      5     6     7   8    9     10    11
+       !time   lpol    psin   rsep    r     z    den  te  press inner core
+
+
+       fileformat = 2
+       headersize = 1
+
+       ncols = 11
+       nextra = 2
+       ncols_filedata = ncols+nextra
+
+    else
+    ! fileformat = 1
+    !
+    ! up to 11 data items/line
+    ! Psin	Lpol(m)	DeltaR	DeltaZ	Ne()	Te()	Ne*Te(torr)	Time_ms	R(m)	Z(m)	N_lpol/Rsep(m)
+    !  1          2        3       4     5       6         7               8     9       10       11
+
+
+       fileformat = 1
+       headersize = 2
+
+       ncols = 11
+       nextra = 2
+       ncols_filedata = ncols+nextra
+
+    endif
 
     ! prescan for number of lines in the file
 
@@ -378,24 +414,20 @@ contains
 
     write(0,'(a,i7)') 'Read file:'//trim(filename),line_cnt
 
-    ! Reduce count by 2 for header lines
+    ! Reduce count by headersize
 
-    line_cnt = line_cnt -2
+    line_cnt = line_cnt -headersize
 
     ! save number of data lines
     nlines = line_cnt
     nlines_filedata = line_cnt
 
-    ! 10 data items/line
-    ! Psin	Lpol(m)	DeltaR	DeltaZ	Ne()	Te()	Ne*Te(torr)	Time_ms	R(m)	Z(m)	N_lpol/Rsep(m)
-    !  1          2        3       4     5       6         7               8     9       10       11
-    ncols = 11
-    nextra = 2
-    ncols_filedata = ncols+nextra
 
     ! allocate space for elm data as well 
     !allocate(filedata(line_cnt,11),stat=ierr)
     allocate(filedata(line_cnt,ncols_filedata),stat=ierr)
+
+    allocate(line_data(ncols_filedata),stat=ierr)
 
     ! initialize
     filedata = 0.0
@@ -413,8 +445,37 @@ contains
        if (ios.eq.0) then 
           line_cnt = line_cnt +1
           ! read in line of data - 11 data elements
-          if (line_cnt.gt.2) then 
-             read(line,*) (filedata(line_cnt-2,in),in=1,11)
+          if (line_cnt.gt.headersize) then 
+             !read(line,*) (filedata(line_cnt-2,in),in=1,11)
+             read(line,*) (line_data(in),in=1,ncols)
+
+             if (fileformat.eq.1) then 
+                filedata(line_cnt-headersize,:) = line_data
+             elseif (fileformat.eq.2) then 
+                ! psin
+                filedata(line_cnt-headersize,1) = line_data(3)
+                ! lpol
+                filedata(line_cnt-headersize,2) = line_data(2)
+                ! deltar -> inner
+                filedata(line_cnt-headersize,3) = line_data(10)
+                ! deltaz -> core
+                filedata(line_cnt-headersize,4) = line_data(11)
+                ! ne
+                filedata(line_cnt-headersize,5) = line_data(7)
+                ! te
+                filedata(line_cnt-headersize,6) = line_data(8)
+                ! press (ne*Te)
+                filedata(line_cnt-headersize,7) = line_data(9)
+                ! time (ms)
+                filedata(line_cnt-headersize,8) = line_data(1)
+                ! r
+                filedata(line_cnt-headersize,9) = line_data(5)
+                ! z
+                filedata(line_cnt-headersize,10) = line_data(6)
+                ! n_lpol -> rsep
+                filedata(line_cnt-headersize,11) = line_data(4)
+              endif
+
           endif
 
        end if
@@ -437,6 +498,7 @@ contains
 
     write(0,*) 'READ_TS: Reading complete:'
 
+    deallocate(line_data)
 
 
   end subroutine read_ts

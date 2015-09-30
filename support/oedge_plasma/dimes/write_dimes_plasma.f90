@@ -10,7 +10,7 @@ program write_dimes_plasma
   integer :: ierr
   integer :: ir,iz,nr,nz
   integer :: ounit
-  character*256 :: outfilename
+  character*256 :: outfilename,matlab_outfilename
 
   real*8 :: r_offset, z_offset
 
@@ -189,6 +189,7 @@ program write_dimes_plasma
   ! Values chosen here are arbitrary for testing purposes
 
   outfilename = trim(case_name)//'.plasma.dat'
+  matlab_outfilename = trim(case_name)//'.plasma.mat
 
   call find_free_unit_number(ounit)
 
@@ -253,6 +254,14 @@ program write_dimes_plasma
      end do
 
   end do
+
+! write out matlab formatted plasma file
+
+
+
+
+
+
 
 !  write(ounit,*) 
 !  write(ounit,'(a,i10)') 'Ordered by Z',interpolate_option
