@@ -189,7 +189,7 @@ program write_dimes_plasma
   ! Values chosen here are arbitrary for testing purposes
 
   outfilename = trim(case_name)//'.plasma.dat'
-  matlab_outfilename = trim(case_name)//'.plasma.mat
+  matlab_outfilename = trim(case_name)//'.plasma.mat'
 
   call find_free_unit_number(ounit)
 
