@@ -2145,7 +2145,7 @@ C-----------------------------------------------------------------------
          call prc('                       - CALCULATED R,Z WILL'//
      >            ' BE IN CELL')
       ELSEif (rzopt.eq.3) then
-         call prc('  R,Z OPTION        2: MODIFIED GETRZ ROUTINE IS'//
+         call prc('  R,Z OPTION        3: MODIFIED GETRZ ROUTINE IS'//
      >            ' USED TO CALCULATE')
          CALL PRC('                       ACTUAL PARTICLE POSITION')
          call prc('                       - S AND CROSS ARE'//

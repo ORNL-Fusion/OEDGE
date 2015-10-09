@@ -378,12 +378,24 @@ contains
 
        fileformat = 2
        headersize = 1
-
+ 
        ncols = 11
        nextra = 2
        ncols_filedata = ncols+nextra
 
     else
+       read(fileunit,'(a512)') line
+       if (line(1:2).eq.'IN') then
+          ! fileformat = 3
+          ! deal with remap file 
+          ! IN	R	Z	PSIN	RSEP	ne	Te	R_org	Z_org
+          fileformat = 3
+          headersize = 2
+          ncols = 9
+          nextra = 2
+          ncols_filedata = ncols+nextra
+
+       else
     ! fileformat = 1
     !
     ! up to 11 data items/line
@@ -391,19 +403,20 @@ contains
     !  1          2        3       4     5       6         7               8     9       10       11
 
 
-       fileformat = 1
-       headersize = 2
+          fileformat = 1
+          headersize = 2
 
-       ncols = 11
-       nextra = 2
-       ncols_filedata = ncols+nextra
+          ncols = 11
+          nextra = 2
+          ncols_filedata = ncols+nextra
+       endif
 
     endif
 
     ! prescan for number of lines in the file
 
-
     line_cnt = 0
+    rewind (fileunit)
 
     do while (ios.eq.0) 
 
@@ -474,6 +487,29 @@ contains
                 filedata(line_cnt-headersize,10) = line_data(6)
                 ! n_lpol -> rsep
                 filedata(line_cnt-headersize,11) = line_data(4)
+             elseif (fileformat.eq.3) then 
+                ! psin
+                filedata(line_cnt-headersize,1) = line_data(4)
+                ! lpol
+                filedata(line_cnt-headersize,2) = 0.0
+                ! deltar -> re
+                filedata(line_cnt-headersize,3) = line_data(2)
+                ! deltaz -> z
+                filedata(line_cnt-headersize,4) = line_data(3)
+                ! ne
+                filedata(line_cnt-headersize,5) = line_data(6)
+                ! te
+                filedata(line_cnt-headersize,6) = line_data(7)
+                ! press (ne*Te)
+                filedata(line_cnt-headersize,7) = 0.0
+                ! time (ms)
+                filedata(line_cnt-headersize,8) = 0.0
+                ! r
+                filedata(line_cnt-headersize,9) = line_data(8)
+                ! z
+                filedata(line_cnt-headersize,10) = line_data(9)
+                ! n_lpol -> rsep
+                filedata(line_cnt-headersize,11) = line_data(5)
               endif
 
           endif

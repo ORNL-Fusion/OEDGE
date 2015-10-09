@@ -210,6 +210,7 @@ contains
     CHARACTER line*72,tag*3
     integer :: in,ierr
 
+    ierr = 0
 
     !
     !=======================================================================================
@@ -450,6 +451,7 @@ contains
 
     finished = .false.
 
+    ierr =0 
 
     do while (.not.finished)
 

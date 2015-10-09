@@ -310,7 +310,7 @@ contains
     !rbin = 8
     !psibin = 9
 
-    write(0,'(a)') 'Start Binning LP Data:'
+    write(0,'(a,g12.5)') 'Start Binning LP Data:',outlier_mult
 
 
     !outlier_mult = 3.0
@@ -357,6 +357,7 @@ contains
        endif
     end do
 
+    write(0,*) 'Bins:',binopt,deltabin,rbin,psibin,psimax,psimin
 
     ! determine number of R bins
     if (binopt.eq.RBINOPT) then 
@@ -374,6 +375,8 @@ contains
 
     ndata = 2
     npts = nbins
+
+    write(0,*) 'Sizes:',nbins,nzones
 
     if (allocated(lp_axis)) deallocate(lp_axis)
     allocate(lp_axis(nbins,nzones),stat=ierr)
@@ -417,6 +420,7 @@ contains
     endif
     pre_average = 0.0
 
+    write(0,*) 'Starting pre-average:'
 
     ! loop through data and record averages to give a base line for outlier removal
     do in = 1,nlines
@@ -491,7 +495,7 @@ contains
 
     end do
 
-
+    write(0,*) 'Calculate pre-average:'
     ! calculate pre_average
 
     do iz = 1,nzones
@@ -533,6 +537,8 @@ contains
 
 
     ! loop through data and record results 
+    write(0,*) 'Bin Average LP data:'
+
 
     do in = 1,nlines
        ! define zone for averaging
@@ -687,6 +693,7 @@ contains
 
     end do
 
+    write(0,*) 'Finished ELM filtering:'
 
     ! loop through - calculate averages and assign axis values
     do iz = 1,nzones
