@@ -105,8 +105,14 @@ program proclp
 
      elseif (arg_cnt.eq.5) then 
         read(arg,*) chisq_lim
-        write(chisq,'(f5.3)') chisq_lim
-        write(0,*) 'Chisq:',trim(chisq),':'
+        if (chisq_lim.lt.0.0) then
+           write(chisq,'(a)') 'nochi'
+           write(0,*) 'Chisq:',trim(chisq),':'           
+           chisq_lim=1e6
+        else
+           write(chisq,'(f5.3)') chisq_lim
+           write(0,*) 'Chisq:',trim(chisq),':'
+        endif
 
      elseif (arg.eq.'-e') then 
 
@@ -221,6 +227,8 @@ program proclp
   endif
 
   ! analyse and bin the lp_data
+
+  write(0,*) 'Outlier mult:', outlier_mult
 
   call bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
 
