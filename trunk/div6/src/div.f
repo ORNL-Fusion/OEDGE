@@ -3393,10 +3393,12 @@ c
 c
 c     Calculate and print TAUP(Core)
 c
+      tmpncore = 0.0
+      tmpiz = 0.0
       do ir = 1,nrs
          do ik = 1,nks(ir)
-            tmpncore = tmpncore + ncore (ik,ir)
-            tmpiz = tmpiz + tizs (ik,ir,0)
+            tmpncore = tmpncore + ncore(ik,ir)
+            tmpiz = tmpiz + tizs(ik,ir,0)
          end do
       end do
 c
@@ -3925,14 +3927,21 @@ C       ONLY NORMALIZE THE INTEGRATED DATA FOR NOW
 C
         DO 889 IR = 1, NRS
           DO 888 IK = 1, NKS(IR)
-            if (kareas(ik,ir).ne.0.0) then
-               WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1)
-     >                             / KAREAS(IK,IR) * FACTA(0)
-            else
+c
+c     jdemod Oct 2015 - walls actually contains a flux - information
+c          on ions exiting the grid so it makes no sense to 
+c          normalize it by cell area or anthing else. I am 
+c          commenting this out so that walls will contain the 
+c          number of ions exiting the grid at that cell edge. 
+c
+c            if (kareas(ik,ir).ne.0.0) then
 c               WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1)
 c     >                             / KAREAS(IK,IR) * FACTA(0)
-               WALLS(IK,IR,MAXIZS+1) = 0.0
-            endif
+c            else
+c               WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1)
+c     >                             / KAREAS(IK,IR) * FACTA(0)
+c               WALLS(IK,IR,MAXIZS+1) = 0.0
+c            endif
   888     CONTINUE
   889   CONTINUE
 C
