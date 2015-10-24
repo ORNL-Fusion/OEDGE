@@ -730,6 +730,13 @@ c
       write(6,*) 'C TOT - ',totimpcontent(nizs+1),' RATIO = ',
      >              totimpcontent(nizs+1)/totbgcontent
 c
+c 
+c      Print out location specific impurity density profiles
+c
+      call pr_imp_density_profiles(6)
+      
+
+c
 c     Print out background plasma and polygon information
 c
       write (6,
@@ -2775,5 +2782,129 @@ c
 
 
 
+      subroutine pr_imp_density_profiles(iunit)
+      implicit none
+      include 'params'
+      include 'outcom'
+c     
+      include 'cgeom'
+      include 'comtor'
+c     
+      include 'dynam2'
+      include 'dynam3'
+c     
+      include 'printopt' 
+
+      integer iunit
+
+!     print two profiles - near outer midplane defined as Z = Z0 +/- 10cm with R>R0
+!     - top of machine defined as +/- 10cm from the R,Z defined by the 
+!     mid point of the separatrix ring.
+
+      integer ir,in,ik,iz
+      real omp_prof(maxnrs,3)
+      real top_prof(maxnrs,3)
+      real r_mid,z_mid,r_top,z_top
+      real range
+
+      write(0,*) 'Printing impurity density profiles:'
+
+      range = 0.1
+
+      omp_prof = 0.0
+      top_prof = 0.0
+
+      r_mid = r0
+      z_mid = z0
+
+      r_top = rs(nks(irsep)/2,irsep)
+      z_top = zs(nks(irsep)/2,irsep)
+      
+      
+      do ir = 1, irwall
+         do ik = 1,nks(ir)
+
+!     omp
+            if (rs(ik,ir).ge.r_mid.and.
+     >           abs(zs(ik,ir)-z_mid).le.range) then 
+
+               omp_prof(ir,1) = omp_prof(ir,1)+ kareas(ik,ir)
+
+               do iz = 1,nizs
+
+                  omp_prof(ir,2) = omp_prof(ir,2)+ 
+     >                 kareas(ik,ir)* sdlims(ik,ir,iz)
+
+               end do 
+
+            endif
+
+!     "top"
+            if (((xpoint_up.and.zs(ik,ir).lt.z_mid).or.
+     >           (.not.xpoint_up.and.zs(ik,ir).gt.z_mid)).and.
+     >           abs(rs(ik,ir)-r_top).le.range) then 
+
+            top_prof(ir,1) = top_prof(ir,1)+ kareas(ik,ir)
+
+            do iz = 1,nizs
+
+               top_prof(ir,2) = top_prof(ir,2)+ 
+     >              kareas(ik,ir)* sdlims(ik,ir,iz)
+            end do
+
+         endif
+         
+      end do
+      end do
+      
+!     calculate density
+
+      do ir = 1,irwall
+
+         if (omp_prof(ir,1).gt.0.0) then 
+            omp_prof(ir,3) = omp_prof(ir,2)/omp_prof(ir,1)
+         endif 
+
+
+         if (top_prof(ir,1).gt.0.0) then 
+            top_prof(ir,3) = top_prof(ir,2)/top_prof(ir,1)
+         endif 
+
+      end do 
+
+
+
+! write out the tabulated data
+
+      write(iunit,'(a)')  ' Tabulated Impurity Density Profiles:'
+      write(iunit,'(a)')  ' OMP'
+      write(iunit,'(a)')  ' IR        PSIN      AREA'//
+     >     '     CONTENT    DENSITY   DENSITY-ABS'
+
+      do ir = 1,irwall
+
+         if (omp_prof(ir,1).gt.0.0) then 
+            write(iunit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
+     >           (omp_prof(ir,in),in=1,3),omp_prof(ir,3)*absfac
+         endif 
+      end do
+
+
+
+      write(iunit,'(a)')  ' TOP'
+      write(iunit,'(a)')  ' IR        PSIN      AREA'//
+     >     '     CONTENT    DENSITY   DENSITY-ABS'
+
+      do ir = 1,irwall
+
+         if (top_prof(ir,1).gt.0.0) then 
+            write(iunit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
+     >           (top_prof(ir,in),in=1,3),top_prof(ir,3)*absfac
+         endif 
+      end do
+
+
+
+      end                       ! pr_imp_density_profiles
 
 

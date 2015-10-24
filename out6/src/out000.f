@@ -46,7 +46,7 @@ c
 
       integer i,j,k
       integer ix,iy
-      integer ik,ir,iz
+      integer ik,ir,iz,irref,ikref2
       integer jk,jr,jz
       integer id,jd,ii,in
       integer m
@@ -3080,22 +3080,50 @@ c
         WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL rzero (kvals, maxnks*maxngs)
-		write(iplot,*) 'Wall exits - SOL wall ring:', ir
-		write(iplot,'(a)') ' IK  L-Pol.  N'
-        DO IK = 1, NKS(IR)
+c
+        write(iplot,*) 'Wall exits - SOL wall ring:', ir
+        write(iplot,'(a)') ' IK  L-Pol  N   WID   RS  ZS'//
+     >                     '   S   P  WALLS   WALLS-INT'
+c
+c       jdemod: Note that the axis data stored in IR=IRWALL may not be 
+c               correct since the otuermost ring is used for accounting and
+c               may not have polygon data or the polygons may be zero volume.
+c
+c               Use the axis data from one ring inward.
+c
+c     
+        irref = irwall
+c
+        DO IKref2 = 1, NKS(IrRef)
+c
+c         Overwrite IR in loop 
+c
+          ir = irins(ikref2,irref)
+          ik = ikins(ikref2,irref)
+c
           KOUTS(IK) = KPS(IK,IR)
           KWIDS(IK) = 0.0
           IF (IK.GT.1) KWIDS(IK) = 0.5 * (KPS(IK,IR)-KPS(IK-1,IR))
           IF (IK.LT.NKS(IR)) KWIDS(IK) = KWIDS(IK) +
      >                               0.5 * (KPS(IK+1,IR)-KPS(IK,IR))
-          KVALS(IK,1) = WALLS(IK,IR,MAXIZS+1) / kwids(ik)
-          write(iplot,'(1x,i2,1x,f6.3,2x,1p,e12.5)')
-     >        ik, kouts(ik), kvals(ik,1)
+c
+c         jdemod: walls data must still reference actual wall ring
+c
+          KVALS(IK,1) = WALLS(IKref2,IRref,MAXIZS+1) / kwids(ik)
+c
+c         jdemod - print the actual particles out
+c
+          write(iplot,'(1x,i6,1x,f12.5,2x,10(1p,e18.8))')
+     >        ik, kouts(ik), kvals(ik,1),kwids(ik),
+     >        rs(ik,ir),zs(ik,ir),kss(ik,ir),kps(ik,ir), 
+     >                    walls(ikref2,irref,maxizs+1)
         END DO
+        
+
 *       KVALS(1,1) = 0.0
 *       KVALS(NKS(IR),1) = 0.0
-        CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IR),ANLY,
-     >    1,1,KOUTS(1),KOUTS(NKS(IR)),0.,HI,IGNORS,ITEC,AVS,NAVS,
+        CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IRref),ANLY,
+     >    1,1,KOUTS(1),KOUTS(NKS(IRref)),0.,HI,IGNORS,ITEC,AVS,NAVS,
      >    JOB,TITLE,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,2,2,1.0,0)
 c
 c       Trap wall ring
@@ -3105,26 +3133,36 @@ c       Krieger IPP/09 - do this plot only if trap exists
           ELABS(1) = 'N   Nexits '
           XLAB = '   POLOIDAL DIST (M)'
           YLAB = '           '
-          IR = IRTRAP
+          IRref = IRTRAP
           WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
           WRITE (IPLOT,9012) NPLOTS,REF
           CALL rzero (kvals, maxnks*maxngs)
-		  write(iplot,*) 'Wall exits - Trap wall ring:', ir
-		  write(iplot,'(a)') ' IK  L-Pol.  N'
-          DO IK = 1, NKS(IR)
+          write(iplot,*) 'Wall exits - PFZ wall ring:', ir
+          write(iplot,'(a)') ' IK  L-Pol  N   WID   RS  ZS'//
+     >                     '   S   P  WALLS   WALLS-INT'
+          DO IKref2 =  1, NKS(IRref)
+
+          ir = irins(ikref2,irref)
+          ik = ikins(ikref2,irref)
+c
+
             KOUTS(IK) = KPS(IK,IR)
             KWIDS(IK) = 0.0
             IF (IK.GT.1) KWIDS(IK) = 0.5 * (KPS(IK,IR)-KPS(IK-1,IR))
             IF (IK.LT.NKS(IR)) KWIDS(IK) = KWIDS(IK) +
      >                               0.5 * (KPS(IK+1,IR)-KPS(IK,IR))
-            KVALS(IK,1) = WALLS(IK,IR,MAXIZS+1) / kwids(ik)
-            write(iplot,'(1x,i2,1x,f6.3,2x,1p,e12.5)')
-     >        ik, kouts(ik), kvals(ik,1)
+            KVALS(IK,1) = WALLS(IKref2,IRref,MAXIZS+1) / kwids(ik)
+
+            write(iplot,'(1x,i6,1x,f12.5,2x,10(1p,e18.8))')
+     >        ik, kouts(ik), kvals(ik,1),kwids(ik),
+     >        rs(ik,ir),zs(ik,ir),kss(ik,ir),kps(ik,ir), 
+     >                    walls(ikref2,irref,maxizs+1)
+
           END DO
 *         KVALS(1,1) = 0.0
 *         KVALS(NKS(IR),1) = 0.0
-          CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IR),ANLY,
-     >      1,1,KOUTS(1),KOUTS(NKS(IR)),0.,HI,IGNORS,ITEC,AVS,NAVS,
+          CALL DRAW (KOUTS,KWIDS,KVALS,MAXNKS,NKS(IRref),ANLY,
+     >      1,1,KOUTS(1),KOUTS(NKS(IRref)),0.,HI,IGNORS,ITEC,AVS,NAVS,
      >      JOB,TITLE,XLAB,YLAB,ELABS,REF,NVIEW,PLANE,TABLE,2,2,1.0,0)
         endif
 c
