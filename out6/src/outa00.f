@@ -1251,6 +1251,11 @@ c
          ignors(ii) = 1
       end do
 c
+c     Initialize the signal output
+c
+      call setup_signal_output
+
+c
 c     Calculate format string for printing
 c
 c      write(prform,'''(1X,2I3,2F7.3,1P,E8.2,'',i3,''E9.2)''') 2+maxizs

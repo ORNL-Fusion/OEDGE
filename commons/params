@@ -55,7 +55,7 @@ c     >  MAXPTS=1000 ,MAXPLRP=12  ,MSOLPT=100 ,MAXADS=80    ,MAXCH3=300,
 c     >  MAXGXS=401  ,MAXGYS=400  ,MAXIXS=1   ,MAXIYS=1     ,IPINOUT=16,
 c     >  ISECT =128  ,MAXTHE=5000 ,MAXSN=5000 ,MAXSEG=1000  ,INIMOUT=37,
 c slmod end
-     >  MAXPLTS=24  ,MAXNFLA=21  ,maxpiniter=500           ,IPINDAT=15, 
+     >  MAXPLTS=36  ,MAXNFLA=21  ,maxpiniter=500           ,IPINDAT=15, 
      >  MBUFLE =10  ,MBUFX  =10  ,mves=maxpts,
      >  ROOT2 =1.414213562       ,PI=3.141592654,   
      >  RADDEG=57.29577952       ,EMI=1.602192E-19/1.672614E-27  ,  
@@ -119,6 +119,7 @@ c  *21   EIRENE99 - Link to trim.dat    ***    DIVIMP - Additional SOL22 output 
 c   22   DIVIMP - html version of the data file (.html) 
 c   24   DIVIMP - Print-out of PIN data (EIRENE99 or NIMBUS) (.pinprn)
 c   26   OUT - Column formatted print out of specified XY type plots (.grp)
+c   27   OUT - Signal formatted file for plot outputs
 c   28   DIVIMP/NIMBUS - JET hybrid wall data - link to shots/hydrid.dat
 c   30   NIMBUS - NIMBUS archive file - this is presently turned off
 c   31   EIRENE99 - Link to DIVIMP plasma input - unit #17  

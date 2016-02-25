@@ -836,7 +836,7 @@ c                - IDEALLY - this code should only run when the input data is ac
 c
           if (etype.ne.4) then
 c          IF (.TRUE.) THEN
-c            WRITE(0,*) 'CONVERTING PSIN TO R'
+c            WIRTE(0,*) 'CONVERTING PSIN TO R'
 
 c            IF (lblock(i).EQ.2.AND.MOD(REAL(lcount),2.0).EQ.0) THEN 
 c              edata(i1,1) = (edata(i1,1) - (-1.36600006)) *  
@@ -856,8 +856,8 @@ c            xdata(i1) = 1.45
 
           IF (.NOT.outofgrid) THEN
 
-c            write(6,'(a,3i6,l4,3(1x,g12.5))') 'LoadThom:',ik,ir,i1,
-c     >             outofgrid,xdata(i1),edata(i1,1)
+            write(6,'(a,3i6,l4,3(1x,g12.5))') 'LoadThom:',ik,ir,i1,
+     >             outofgrid,xdata(i1),edata(i1,1)
              
             IF (edata(i1,2).NE.0.0.AND.edata(i1,3).NE.0.0) THEN
               nraw = nraw + 1
@@ -6392,6 +6392,189 @@ c          ENDDO
       RETURN
  99   STOP
       END
+
+c subroutine: GetPotential
+c
+c
+c jdemod - same purpose - include target potentials
+c                       - calculate independently from each target since
+c                         the purpose is primarily to calculate drifts
+c                       - will need to look at discrepancies at mid-point
+c                         might be some useful physics or at least 
+c                         inner/outer alignment that can be pulled out
+c
+c Estimate the plasma potential from (an estimate) of the parallel 
+c electric field (KES).
+c
+      SUBROUTINE CalcPotential2
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'cgeom'
+      INCLUDE 'comtor'
+      INCLUDE 'slcom'
+c
+c     jdemod - put the potential and drift variables in the common block driftvel
+c
+c     this routine is for use in DIVIMP for calculating ExB related drifts
+c     Steve's original calcpotential is used in OUT
+c      
+      include 'driftvel'
+c      
+      INTEGER mode,ik,ir
+      REAL    deltas1,deltas2,efield
+
+      real    vpot
+ 
+
+c      STOP 'CALCULATING POTENTIAL: NEED SHEATH DROP INCLUDED!'
+c
+c     jdemod - depending on option chosen the sheath potential is either approximated as 3Te or can be loaded as
+c              a profile from probe data
+c
+c            - assumes below that efield is zero in core - not sure what to do about core plasma potential since 
+c              one would expect a potential discrepancy across the separatrix and pedestal. 
+c
+c
+c     Perform calculation for all SOL rings including PFZ
+c
+      DO ir = irsep, nrs
+         IF (idring(ir).EQ.BOUNDARY) CYCLE
+
+c
+c         jdemod - calculate from each target independently
+c
+c
+c         jdemod - code to calculate the initial potential from LP data would go here
+c
+          osmpot2(0,ir) = -3.0 * kteds(idds(ir,2))
+          vpot = osmpot2(0,ir)
+c
+          DO ik = 1, nks(ir)/2
+c
+c            jdemod - need to increment vpot for both halves of cell but the value 
+c                     assigned to the cell is the centerpoint
+c                   - could interpolate the efield along the field line but I don't think
+c                     it would change the integral between the two cell centers
+c
+             deltas1 = kss(ik,ir) - ksb(ik-1 ,ir)
+             deltas2 = ksb(ik,ir) - kss(ik,ir)
+
+             efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
+c
+c            first half
+c
+             vpot = vpot - efield * deltas1 
+c
+c            assign
+c
+             osmpot2(ik,ir) = vpot
+c
+c            second half
+c
+             vpot = vpot - efield * deltas2
+c               
+             WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,osmpot(ik,ir),
+     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
+     .        efield,vpot
+
+
+          end do
+c
+c         jdemod - code to calculate the initial potential from LP data would go here
+c
+          osmpot2(nks(ir)+1,ir) = -3.0 * kteds(idds(ir,1))
+          vpot = osmpot2(nks(ir)+1,ir)
+
+          DO ik = nks(ir),nks(ir)/2+1,-1
+
+c
+c            jdemod - need to increment vpot for both halves of cell but the value 
+c                     assigned to the cell is the centerpoint
+c                   - could interpolate the efield along the field line but I don't think
+c                     it would change the integral between the two cell centers
+c
+             deltas1 = ksb(ik,ir) - kss(ik,ir)
+             deltas2 = kss(ik,ir) - ksb(ik-1,ir)
+
+             efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
+
+c
+c            first half
+c
+             vpot = vpot - efield * deltas1 
+c
+c            assign
+c
+             osmpot2(ik,ir) = vpot
+c
+c            second half
+c
+             vpot = vpot - efield * deltas2
+c               
+
+             WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,osmpot(ik,ir),
+     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
+     .        efield,vpot
+
+          end do
+
+      ENDDO
+
+
+
+
+
+
+
+
+
+
+
+c
+c         jdemod - run through and calculate the potential at the cell corners
+c                  so that the derivatives can be calculated on a cell by cell
+c                  basis without referring to other cells
+c
+
+c
+c         jdemod - or just calculate the gradients and resulting drifts now
+c                  obtaining the data for each corner might still be desirable(?)
+c                  
+c                - now that osmpot2 is available ... can I use existing interpolation code? 
+c          
+
+
+
+
+
+
+      
+c          DO ik = 1, nks(ir)/2
+c            IF (ik.EQ.1) THEN
+c              deltas = kss(ik,ir) - ksb(0 ,ir)
+c              osmpot(ik,ir+1) = -kes(ik,ir) * deltas
+c            ELSE
+c              deltas = kss(ik,ir) - kss(ik-1,ir)
+c              osmpot(ik,ir+1) = osmpot(ik-1,ir+1) -kes(ik,ir) * deltas
+c            ENDIF
+c          ENDDO
+c          DO ik = nks(ir), nks(ir)/2+1, -1
+c            IF (ik.EQ.1) THEN
+c              deltas = kss(ik,ir) - ksb(0 ,ir)
+c              osmpot(ik,ir+1) = -kes(ik,ir) * deltas
+c            ELSE
+c              deltas = kss(ik,ir) - kss(ik-1,ir)
+c              osmpot(ik,ir+1) = osmpot(ik-1,ir+1) -kes(ik,ir) * deltas
+c            ENDIF
+c          ENDDO
+
+
+      RETURN
+ 99   STOP
+      END
+
+
 c
 c ======================================================================
 c

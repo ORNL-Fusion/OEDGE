@@ -84,16 +84,20 @@ c     Default type is contour plot (option 0) with standard units
 c
       itype = 0
       scalef = 1.0
+
+      if (optval.gt.0.0) then 
+         scalef = optval
+      endif
 c
 c     If IOPT is 2 - then set up for giving units in /m3/s/sr
 c     NOTE: should only use IOPT=2 with appropriate ISELECT values
 c
       if (iopt.eq.2) then 
          itype=3
-         scalef = 1.0 / (4.0 * PI) 
+         scalef = scalef * 1.0 / (4.0 * PI) 
       elseif (iopt.eq.3) then 
          itype=4
-         scalef = 1.0 / (4.0 * PI * 1.0e6) 
+         scalef = scalef * 1.0 / (4.0 * PI * 1.0e6) 
       endif
 
 
@@ -227,6 +231,7 @@ c        Apply scaling factor if needed
 c
          if (scalef.ne.1.0) then 
             tmpplot = tmpplot * scalef
+
          endif
 c
       endif 

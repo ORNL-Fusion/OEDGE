@@ -14,7 +14,7 @@ program proclp
   ! C) Binned by Jsat magnitude and R-Rsep
   !
 
-  character*512 :: infilename,ident,time,ofilename,elm_filename,in_ofilename,out_ofilename
+  character*512 :: infilename,ident,time,ofilename,elm_filename,in_ofilename,out_ofilename,time_filename
 
   integer :: iunit, ounit,ierr
 
@@ -34,10 +34,10 @@ program proclp
   integer,external :: iargc
 
   integer :: arg_cnt
-  logical :: elm_filt,remove_outlier
+  logical :: elm_filt,remove_outlier,time_filt
   real :: outlier_mult
   real :: elm_start_input,elm_end_input, elm_effect_start_input, elm_effect_end_input
-  character*3 :: or_ext
+  character*3 :: or_ext,time_ext
 
 
   ! Set base number of average intervals to 1
@@ -45,8 +45,10 @@ program proclp
   n_elm_fractions = 0
   !
   elm_filt = .false.
+  time_filt = .false.
   remove_outlier = .false.
   or_ext = ''
+  time_ext=''
 
   ! default outlier detection condition > 3 x pre-average
   outlier_mult = 3.0
@@ -105,6 +107,7 @@ program proclp
 
      elseif (arg_cnt.eq.5) then 
         read(arg,*) chisq_lim
+        write(0,*) 'Chisq_lim:',chisq_lim
         if (chisq_lim.lt.0.0) then
            write(chisq,'(a)') 'nochi'
            write(0,*) 'Chisq:',trim(chisq),':'           
@@ -154,6 +157,18 @@ program proclp
         ! bin 
         elm_fractions(5,1) = 0.8
         elm_fractions(5,2) = 0.99
+
+     elseif (arg.eq.'-t') then 
+        time_ext='_tf'
+
+        time_filt = .true.
+        call getarg(arg_cnt,arg)
+        arg_cnt = arg_cnt + 1
+
+        time_filename = trim(arg)
+        write(0,*) 'Time windows file=',trim(time_filename)
+
+        call setup_time_filter(time_filt,time_filename)
 
      elseif (arg.eq.'-or') then 
 
@@ -267,9 +282,9 @@ program proclp
   ofilename = ' '
 
   if (remove_outlier) then 
-     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)
+     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)//trim(time_ext)
   else
-     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)
+     ofilename = 'bin_'//trim(infilename)//'_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(time_ext)
   endif
 
   !ofilename = 'bin_lp_'//tmins(1:exp_tmin)
@@ -335,9 +350,9 @@ program proclp
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
   if (remove_outlier) then 
-     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)//'_'//trim(infilename)
+     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(or_ext)//trim(time_ext)//'_'//trim(infilename)
   else
-     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//'_'//trim(infilename)
+     ofilename = 'lp_rev_'//tmins(1:exp_tmin)//'-'//tmaxs(1:exp_tmax)//'_'//trim(chisq)//trim(time_ext)//'_'//trim(infilename)
   endif
 
   open(ounit,file=ofilename,iostat=ierr)

@@ -10,7 +10,7 @@ c
      >                   gammae,gammai,gamcor,pae,pai,lenmom,
      >                   ceicf,frr,lastm0,machs,vsepmin,
      >                   deltam0,m0res,origm0,ssepmin,ffric,
-     >                   actffric,
+     >                   actffric,actlenmom,
      >                   lastiters,vgradtmp,vgradlast,lammom,
      >                   smom0,ringlen,halfringlen,
      >                   rcxmom,initm0,
@@ -77,7 +77,7 @@ c
      >       lenr,lamr,prad0,gammae,gammai,gamcor,pae,pai,ceicf,
      >       frr,lastm0,deltam0,m0res,origm0,lastiters,pinf0,
      >       vgradtmp,vgradlast,vsepmin,ssepmin,ffric,
-     >       actffric,lammom,
+     >       actffric,actlenmom,lammom,
      >       lenmom,ringlen,halfringlen,
      >       rcxmom,ionsrc(mxspts),smom0,initm0,
      >       snegerr,fnorm,sptscopy(mxspts),intionsrc(mxspts),
@@ -121,7 +121,7 @@ c slmod end
      >       stop_gextra_src,start_gextra_sink,stop_gextra_sink,
      >       gextra_mult,gextra_src,gextra_sink
 c
-      real*8  extffric(mxspts,3)
+      real*8  extffric(mxspts,5)
 c
       real   graphran
 c

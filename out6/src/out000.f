@@ -78,6 +78,8 @@ c
 
       integer i1
 
+      real totsrc,tmpsum(maxnrs),tottmpsum,tmpsumiz
+
 
 
 c...  Temp : looking at location of Thomson data:
@@ -3073,6 +3075,33 @@ c
 c
 c       SOL wall ring
 c
+
+         write(6,*) 'WALLS Integration:'
+         tmpsum = 0.0
+        do ir = 1,nrs
+           do ik = 1,nks(ir)
+              tmpsumiz = 0.0
+              do iz = 1,nizs
+
+                 tmpsumiz = tmpsumiz + walls(ik,ir,iz)
+              end do
+
+              if (tmpsumiz.ne.walls(ik,ir,maxizs+1)) then 
+                 write(6,'(a,2i8,3(1x,g18.8))') 
+     >        'WALLS SUM MISMATCH:',ik,ir,tmpsumiz,walls(ik,ir,maxizs+1)
+              endif 
+              tmpsum(ir) = tmpsum(ir) + tmpsumiz
+              tottmpsum = tottmpsum + tmpsum(ir)
+          end do 
+       end do
+
+       do ir = 1,nrs
+          write(6,'(a,i8,1x,g18.8)') 'WALLS Int:',ir,tmpsum(ir)
+       end do
+       write(6,'(a,i8,1x,g18.8)') 'WALLS Int:',ir,tottmpsum
+
+
+
         ELABS(1) = 'N   Nexits '
         XLAB = '   POLOIDAL DIST (M)'
         YLAB = '           '
@@ -3080,10 +3109,21 @@ c
         WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL rzero (kvals, maxnks*maxngs)
+        
+
 c
-        write(iplot,*) 'Wall exits - SOL wall ring:', ir
+c     
+c       Get total number of particles launched
+c
+        totsrc = (targsrc(3,4) + wallsrc(5,3))
+        if (totsrc.le.1.0) totsrc = 1.0
+c
+        irref = irwall
+
+        write(iplot,'(a,1x,i8,2(1x,g18.8))') 
+     >             ' Wall exits - SOL wall ring:', irref,totsrc,absfac
         write(iplot,'(a)') ' IK  L-Pol  N   WID   RS  ZS'//
-     >                     '   S   P  WALLS   WALLS-INT'
+     >                     '   S   P  WALLS   WALLS-FLUX'
 c
 c       jdemod: Note that the axis data stored in IR=IRWALL may not be 
 c               correct since the otuermost ring is used for accounting and
@@ -3091,8 +3131,6 @@ c               may not have polygon data or the polygons may be zero volume.
 c
 c               Use the axis data from one ring inward.
 c
-c     
-        irref = irwall
 c
         DO IKref2 = 1, NKS(IrRef)
 c
@@ -3116,7 +3154,8 @@ c
           write(iplot,'(1x,i6,1x,f12.5,2x,10(1p,e18.8))')
      >        ik, kouts(ik), kvals(ik,1),kwids(ik),
      >        rs(ik,ir),zs(ik,ir),kss(ik,ir),kps(ik,ir), 
-     >                    walls(ikref2,irref,maxizs+1)
+     >        walls(ikref2,irref,maxizs+1),
+     >        kvals(ik,1)/totsrc*absfac
         END DO
         
 
@@ -3137,13 +3176,16 @@ c       Krieger IPP/09 - do this plot only if trap exists
           WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
           WRITE (IPLOT,9012) NPLOTS,REF
           CALL rzero (kvals, maxnks*maxngs)
-          write(iplot,*) 'Wall exits - PFZ wall ring:', ir
+c
+c
+          write(iplot,'(a,1x,i8,1x,2(1x,g18.8))')
+     >        ' Wall exits - PFZ wall ring:', irref,totsrc,absfac
           write(iplot,'(a)') ' IK  L-Pol  N   WID   RS  ZS'//
-     >                     '   S   P  WALLS   WALLS-INT'
+     >                     '   S   P  WALLS   WALLS-FLUX'
           DO IKref2 =  1, NKS(IRref)
 
-          ir = irins(ikref2,irref)
-          ik = ikins(ikref2,irref)
+          ir = irouts(ikref2,irref)
+          ik = ikouts(ikref2,irref)
 c
 
             KOUTS(IK) = KPS(IK,IR)
@@ -3156,7 +3198,8 @@ c
             write(iplot,'(1x,i6,1x,f12.5,2x,10(1p,e18.8))')
      >        ik, kouts(ik), kvals(ik,1),kwids(ik),
      >        rs(ik,ir),zs(ik,ir),kss(ik,ir),kps(ik,ir), 
-     >                    walls(ikref2,irref,maxizs+1)
+     >                    walls(ikref2,irref,maxizs+1),
+     >        kvals(ik,1)/totsrc*absfac
 
           END DO
 *         KVALS(1,1) = 0.0

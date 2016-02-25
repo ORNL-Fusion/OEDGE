@@ -774,7 +774,7 @@ c...    Generate momentum source:
         
 
 
-          IF (s.LT.lenmom*ringlen) THEN
+          IF (s.LT.actlenmom*ringlen) THEN
             IF (region.EQ.IKLO.AND.osm_model(IKLO,ir).EQ.24.AND.
      .          (iflexopt(6).EQ.20.OR.iflexopt(6).EQ.21.OR.
      .           iflexopt(6).EQ.22.OR.iflexopt(6).EQ.24)) THEN  
@@ -906,6 +906,23 @@ c...prad!
 c...    NOT VALID AT THE MOMENT SINCE THIS RADIATION OPTION IS 
 c       NOT APPLIED WITH THE INITIAL SOLUTION:
 c       osmrad(ik,ir) = radsrc_mult * pinqe(ik,ir)
+c      jdemod - added rectangular radiation source
+      elseif (actswprad.eq.6.0) then 
+         if (s.lt.lamr) then 
+            osmrad(ik,ir) = 0.0
+         elseif (s.lt.lenr) then 
+            ! jdemod
+            ! if it needs the radiation in the cell .. then I am not
+            ! sure what to put in
+            ! Radiation from the entire region is prad0 ... can't put in
+            ! the integral used elsewhere. 
+            ! Closest easy answer is total radiation divided by the distance
+            ! over which it is emitted. 
+            osmrad(ik,ir) =  prad0 /(lenr-lamr)
+         else
+            osmrad(ik,ir) = 0.0
+         endif
+
       ELSE
         IF (rel_opt.NE.0.AND.rel_frac.NE.1.0) 
      .    CALL WN('CalcInitSrc','ACTSWPRAD value not supported')

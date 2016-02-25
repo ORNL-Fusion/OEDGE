@@ -1086,7 +1086,7 @@ c
 c
 c        Initialize the friction parameter for momentum loss options
 c
-         actffric = find_ffric(ir,2)
+         actffric = find_ffric(ir,2,actlenmom)
 c
 c        Initialize major radius and target condition data 
 c
@@ -1989,7 +1989,7 @@ c
 c
 c        Initialize the friction parameter for momentum loss options
 c
-         actffric = find_ffric(ir,1)
+         actffric = find_ffric(ir,1,actlenmom)
 c
 c        Initialize major radius and target condition data 
 c
@@ -3016,12 +3016,13 @@ c
 c
 c
 c
-      real*8 function find_ffric(ir,targid)
+      real*8 function find_ffric(ir,targid,actmomlen)
       implicit none
       integer ir,targid
       include 'params'
       include 'solparams' 
       include 'solcommon'
+      real*8 :: actmomlen
 c
 c     Assign the actual FFRIC values for each ring from the data contained in 
 c     the inputs FFRIC and EXTFFRIC. This option allows for a different
@@ -3030,6 +3031,7 @@ c
       integer in
 c
       find_ffric = ffric
+      actmomlen = lenmom
 c
       if (n_extffric.eq.0) return        
 c
@@ -3038,9 +3040,19 @@ c
          if (ir.eq.int(extffric(in,1))) then 
 c     
             if (targid.eq.2) then 
-               find_ffric = extffric(in,2)
+               if (extffric(in,2).gt.0.0) then 
+                  find_ffric = extffric(in,2)
+               endif
+               if (extffric(in,3).gt.0.0) then 
+                  actmomlen = extffric(in,3)
+               endif
             elseif(targid.eq.1) then 
-               find_ffric = extffric(in,3)
+               if (extffric(in,4).gt.0.0) then 
+                  find_ffric = extffric(in,4)
+               endif
+               if (extffric(in,5).gt.0.0) then 
+                  actmomlen = extffric(in,5)
+               endif
             endif  
              
             return

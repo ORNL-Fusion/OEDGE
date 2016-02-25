@@ -89,12 +89,12 @@ module oedge_plasma_interface
   integer :: nboundary
   integer,allocatable :: boundary_index(:,:)
 
-!
-! Wall data
-!
+  !
+  ! Wall data
+  !
   integer :: nwall,nwall_data
   real*8, allocatable :: walls(:,:)
-  
+
 
   ! The meaning of these will depend on whether cell polygon data or cell center data is being used
   integer :: ik_last,ir_last,iq_last
@@ -105,7 +105,7 @@ module oedge_plasma_interface
      module procedure get_oedge_plasma_base, get_oedge_plasma_grad
 
 
-  end interface
+  end interface get_oedge_plasma
 
 
 
@@ -136,7 +136,7 @@ contains
     ! and the calling routines to be adjusted by a standard offset. Sign conventions remain the
     ! same ... however, the calling routine can then use its own coordinate system if it maps 1:1
     ! other than the location of the origin to the OEDGE coordinate system
-    
+
     r_offset = r_shift
     z_offset = z_shift
 
@@ -235,7 +235,7 @@ contains
     integer :: max_tmp_data
 
     ! boundary cells on the grid are those with indices of ik=0 or nks+1 and those cells for which ikins or ikouts points back to themselves. 
-    
+
     max_tmp_data = 6 * mks + 2 * nrs
 
     call allocate_array(tmp_data,max_tmp_data,3,'TMP_DATA',ierr)
@@ -277,7 +277,7 @@ contains
     boundary_index = 0
 
     ! copy temp data
-    
+
     do in = 1,nboundary
        boundary_index(in,:) = tmp_data(in,:) 
     end do
@@ -297,7 +297,7 @@ contains
     if (allocated(tmp_array)) then 
 
        allocate(transfer_array(tmp_bnd1,tmp_bnd2))
-       
+
        transfer_array = tmp_array
 
        deallocate(tmp_array)
@@ -340,7 +340,7 @@ contains
     integer :: ierr
 
     integer :: ik,ir,iq
-   
+
     ! temporary local variables
 
     real*8, ngrad,tegrad,tigrad
@@ -375,19 +375,19 @@ contains
 
           !if (extrapolate_opt.ge.0) then 
 
-             ! assign values from nearest boundary
-             ne = knbs(ik,ir)
-             te = ktebs(ik,ir)
-             ti = ktibs(ik,ir)
-             vb = kvhs(ik,ir)
-             ef = kes(ik,ir)
-             psin = psifl(ik,ir)
-             btoto = btot(ik,ir)
-             bro = br(ik,ir)
-             bzo = bz(ik,ir)
-             bto = bt(ik,ir)
+          ! assign values from nearest boundary
+          ne = knbs(ik,ir)
+          te = ktebs(ik,ir)
+          ti = ktibs(ik,ir)
+          vb = kvhs(ik,ir)
+          ef = kes(ik,ir)
+          psin = psifl(ik,ir)
+          btoto = btot(ik,ir)
+          bro = br(ik,ir)
+          bzo = bz(ik,ir)
+          bto = bt(ik,ir)
 
-             ierr = 2
+          ierr = 2
 
           !endif
 
@@ -474,8 +474,8 @@ contains
        elseif (interpolate_opt.eq.2) then 
 
 
-       ! This routine uses the proportional location of the test point within the cell relative to the sides of 
-       ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
+          ! This routine uses the proportional location of the test point within the cell relative to the sides of 
+          ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
 
           iq_last = iq
 
@@ -531,23 +531,23 @@ contains
 
           !if (extrapolate_opt.ge.0) then 
 
-             ! assign values from nearest boundary
-             ne = knbs(ik,ir)
-             te = ktebs(ik,ir)
-             ti = ktibs(ik,ir)
-             vb = kvhs(ik,ir)
-             ef = kes(ik,ir)
-             psin = psifl(ik,ir)
-             btoto = btot(ik,ir)
-             bro = br(ik,ir)
-             bzo = bz(ik,ir)
-             bto = bt(ik,ir)
+          ! assign values from nearest boundary
+          ne = knbs(ik,ir)
+          te = ktebs(ik,ir)
+          ti = ktibs(ik,ir)
+          vb = kvhs(ik,ir)
+          ef = kes(ik,ir)
+          psin = psifl(ik,ir)
+          btoto = btot(ik,ir)
+          bro = br(ik,ir)
+          bzo = bz(ik,ir)
+          bto = bt(ik,ir)
 
-             ngrad=negs(ik,ir)
-             tegrad=tegs(ik,ir)
-             tigrad=tigs(ik,ir)
+          ngrad=negs(ik,ir)
+          tegrad=tegs(ik,ir)
+          tigrad=tigs(ik,ir)
 
-             ierr = 2
+          ierr = 2
 
           !endif
 
@@ -581,9 +581,9 @@ contains
        bzo = bz(ik,ir)
        bto = bt(ik,ir)
 
-             ngrad=negs(ik,ir)
-             tegrad=tegs(ik,ir)
-             tigrad=tigs(ik,ir)
+       ngrad=negs(ik,ir)
+       tegrad=tegs(ik,ir)
+       tigrad=tigs(ik,ir)
 
        if (debug_code) then 
           call write_cell_data(ik,ir)
@@ -624,9 +624,9 @@ contains
           bzo = bz(ik,ir)
           bto = bt(ik,ir)
 
-             ngrad=negs(ik,ir)
-             tegrad=tegs(ik,ir)
-             tigrad=tigs(ik,ir)
+          ngrad=negs(ik,ir)
+          tegrad=tegs(ik,ir)
+          tigrad=tigs(ik,ir)
 
 
           if (debug_code) then 
@@ -642,8 +642,8 @@ contains
        elseif (interpolate_opt.eq.2) then 
 
 
-       ! This routine uses the proportional location of the test point within the cell relative to the sides of 
-       ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
+          ! This routine uses the proportional location of the test point within the cell relative to the sides of 
+          ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
 
           iq_last = iq
 
@@ -659,38 +659,38 @@ contains
 
 
 
-subroutine find_nearest_boundary(r,z,ik,ir)
-implicit none
-real*8 :: r,z
-integer :: ik,ir
+  subroutine find_nearest_boundary(r,z,ik,ir)
+    implicit none
+    real*8 :: r,z
+    integer :: ik,ir
 
-real*8 :: dist, mindist
-integer :: ikmin,irmin,in
+    real*8 :: dist, mindist
+    integer :: ikmin,irmin,in
 
-mindist = 1e25
-ikmin = 0
-irmin = 0
+    mindist = 1e25
+    ikmin = 0
+    irmin = 0
 
 
-do in = 1,nboundary
-   ik = boundary_index(in,1)
-   ir = boundary_index(in,2)
+    do in = 1,nboundary
+       ik = boundary_index(in,1)
+       ir = boundary_index(in,2)
 
-   dist = (r-rs(ik,ir))**2 + (z-zs(ik,ir))**2
+       dist = (r-rs(ik,ir))**2 + (z-zs(ik,ir))**2
 
-   if (dist.lt.mindist) then
-      mindist = dist
-      ikmin = ik
-      irmin = ir
-   endif
-end do 
+       if (dist.lt.mindist) then
+          mindist = dist
+          ikmin = ik
+          irmin = ir
+       endif
+    end do
 
-ik = ikmin
-ir = irmin
+    ik = ikmin
+    ir = irmin
 
-return
+    return
 
-end subroutine find_nearest_boundary
+  end subroutine find_nearest_boundary
 
 
 
@@ -871,9 +871,9 @@ end subroutine find_nearest_boundary
        bzo = bz(ik,ir)
        bto = bt(ik,ir)
 
-             ngrad=negs(ik,ir)
-             tegrad=tegs(ik,ir)
-             tigrad=tigs(ik,ir)
+       ngrad=negs(ik,ir)
+       tegrad=tegs(ik,ir)
+       tigrad=tigs(ik,ir)
 
        write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
        write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
@@ -976,7 +976,7 @@ end subroutine find_nearest_boundary
 
     ! Interpolation is based on cell centers - this causes some issues near X-points for certain quadrants.
 
-    
+
     ! Based on the value of iq - the four adjacent cell centers may be identified except at X-points - the problematic conditions can 
     ! be checked by looking for 
     ! 1) irins or irouts of the up or down cells depending on quadrant are not the same
@@ -1365,28 +1365,28 @@ end subroutine find_nearest_boundary
 
 
 
-    subroutine remap_interpolate(nv,quant,ivf)
-      implicit none  
+  subroutine remap_interpolate(nv,quant,ivf)
+    implicit none  
 
-      integer :: nv,ivf
-      real*8  :: quant(nv)
-      integer :: ivlast,ivnext
-      real*8  :: tmpquant(4)
+    integer :: nv,ivf
+    real*8  :: quant(nv)
+    integer :: ivlast,ivnext
+    real*8  :: tmpquant(4)
 
-      ivlast = ivf-1
-      if (ivlast.lt.1) ivlast = 4 
-      ivnext = ivf+1
-      if (ivnext.gt.4) ivnext = 1
+    ivlast = ivf-1
+    if (ivlast.lt.1) ivlast = 4 
+    ivnext = ivf+1
+    if (ivnext.gt.4) ivnext = 1
 
-      tmpquant(mod(ivf-1,4)+1)   = quant(ivf) 
-      tmpquant(mod(1+ivf-1,4)+1) = (quant(ivf) + quant(ivnext))/2.0
-      tmpquant(mod(2+ivf-1,4)+1) = sum(quant) / 4.0 
-      tmpquant(mod(3+ivf-1,4)+1) = (quant(ivf) + quant(ivlast))/2.0
+    tmpquant(mod(ivf-1,4)+1)   = quant(ivf) 
+    tmpquant(mod(1+ivf-1,4)+1) = (quant(ivf) + quant(ivnext))/2.0
+    tmpquant(mod(2+ivf-1,4)+1) = sum(quant) / 4.0 
+    tmpquant(mod(3+ivf-1,4)+1) = (quant(ivf) + quant(ivlast))/2.0
 
-      quant = tmpquant
+    quant = tmpquant
 
-      return
-    end subroutine remap_interpolate
+    return
+  end subroutine remap_interpolate
 
 
 
@@ -1867,7 +1867,7 @@ end subroutine find_nearest_boundary
              !       T part of B-field unit vector
              !
              read (infile,500) ((bt(ik,ir),ik=1,nks(ir)),ir=1,nrs)
-          
+
 
           elseif(buffer(1:6).eq.'WALLS:') then 
              !
@@ -1943,72 +1943,72 @@ end subroutine find_nearest_boundary
 
     integer :: ierr,in
 
-!     WALLPT (IND,1) = R
-!     WALLPT (IND,2) = Z
-!     WALLPT (IND,3) = WEIGHT FACTOR FOR ANTI-CLOCKWISE
-!     WALLPT (IND,4) = WEIGHT FACTOR FOR CLOCKWISE
-!     WALLPT (IND,5) = LENGTH OF 1/2 SEGMENT ANTI-CLOCKWISE
-!     WALLPT (IND,6) = LENGTH OF 1/2 SEGMENT CLOCKWISE
-!     WALLPT (IND,7) = TOTAL LENGTH OF LAUNCH SEGMENT
-!     WALLPT (IND,8) = ANGLE FOR ANTI-CLOCKWISE LAUNCH
-!     WALLPT (IND,9) = ANGLE FOR CLOCKWISE LAUNCH
-!     WALLPT (IND,10) = NET PROBABILITY ANTI-CLOCKWISE
-!     WALLPT (IND,11) = NET PROBABILITY CLOCKWISE
-!     WALLPT (IND,12) = NET PROBABILITY FOR ENTIRE SEGMENT
-!     WALLPT (IND,13) = FINAL PROBABILITY FOR SEGMENT
-!
-!     wallpt (ind,16) = TYPE OF WALL SEGMENT
-!                       1 = Outer Target (JET) - inner for Xpt down
-!                       4 = Inner Target (JET) - outer      "
-!                       7 = Main Wall
-!                       8 = Private Plasma Wall
-!
-!                       9 = Baffle Segment
-!
-!                       These are similar to the quantity in the JVESM
-!                       array associated with the NIMBUS wall
-!                       specification. The difference is that the
-!                       Main Wall is split into Inner and Outer Divertor
-!                       Wall as well as the Main (SOL) Wall - this
-!                      is not done here.
-!
-!     WALLPT (ind,17) = INDEX into the NIMBUS flux data returned
-!                       for each wall segment - ONLY if the NIMBUS
-!                       wall option has been specified. NOTE: if
-!                       the NIMBUS wall has been specified - it is
-!                       still combined with the DIVIMP target polygon
-!                       corners because rounding errors may result in
-!                       small discrepancies between the coordinates.
-!
-!     WALLPT (IND,18) = Index of corresponding target segment if the wall
-!                       segment is also a target segment.
-!
-!     WALLPT (IND,19) = Temperature of wall segment in Kelvin (K)
-!
-!     WALLPT (IND,20) = RSTART
-!     WALLPT (IND,21) = ZSTART
-!     WALLPT (IND,22) = REND
-!     WALLPT (IND,23) = ZEND
-!
-!     wallpt (ind,24) = Used for additional indexing information - used
-!                       as IK knot number for wall and trap wall option 7
-!
-!     wallpt (ind,25) = Value of reflection coefficient - if reflection
-!                       for this segment is turned off the value here
-!                       will be zero. If a positive value is specified
-!                       then regular reflection occurs. If it is negative
-!                       then a PTR (prompt thermal re-emission) type
-!                       reflection is used. The value for this is
-!                       set with the individual YMF's and is read from
-!                      the CYMFS array.
-!
-!     wallpt (ind,26) = IK value of nearest plasma cell to wall segment
-!     wallpt (ind,27) = IR value of nearest plasma cell to wall segment
-!     wallpt (ind,28) = Minimum distance to outermost ring
-!     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
-!     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
-!     wallpt (ind,31) = Plasma density at wall segment
-!     wallpt (ind,32) = Distance along the wall
+    !     WALLPT (IND,1) = R
+    !     WALLPT (IND,2) = Z
+    !     WALLPT (IND,3) = WEIGHT FACTOR FOR ANTI-CLOCKWISE
+    !     WALLPT (IND,4) = WEIGHT FACTOR FOR CLOCKWISE
+    !     WALLPT (IND,5) = LENGTH OF 1/2 SEGMENT ANTI-CLOCKWISE
+    !     WALLPT (IND,6) = LENGTH OF 1/2 SEGMENT CLOCKWISE
+    !     WALLPT (IND,7) = TOTAL LENGTH OF LAUNCH SEGMENT
+    !     WALLPT (IND,8) = ANGLE FOR ANTI-CLOCKWISE LAUNCH
+    !     WALLPT (IND,9) = ANGLE FOR CLOCKWISE LAUNCH
+    !     WALLPT (IND,10) = NET PROBABILITY ANTI-CLOCKWISE
+    !     WALLPT (IND,11) = NET PROBABILITY CLOCKWISE
+    !     WALLPT (IND,12) = NET PROBABILITY FOR ENTIRE SEGMENT
+    !     WALLPT (IND,13) = FINAL PROBABILITY FOR SEGMENT
+    !
+    !     wallpt (ind,16) = TYPE OF WALL SEGMENT
+    !                       1 = Outer Target (JET) - inner for Xpt down
+    !                       4 = Inner Target (JET) - outer      "
+    !                       7 = Main Wall
+    !                       8 = Private Plasma Wall
+    !
+    !                       9 = Baffle Segment
+    !
+    !                       These are similar to the quantity in the JVESM
+    !                       array associated with the NIMBUS wall
+    !                       specification. The difference is that the
+    !                       Main Wall is split into Inner and Outer Divertor
+    !                       Wall as well as the Main (SOL) Wall - this
+    !                      is not done here.
+    !
+    !     WALLPT (ind,17) = INDEX into the NIMBUS flux data returned
+    !                       for each wall segment - ONLY if the NIMBUS
+    !                       wall option has been specified. NOTE: if
+    !                       the NIMBUS wall has been specified - it is
+    !                       still combined with the DIVIMP target polygon
+    !                       corners because rounding errors may result in
+    !                       small discrepancies between the coordinates.
+    !
+    !     WALLPT (IND,18) = Index of corresponding target segment if the wall
+    !                       segment is also a target segment.
+    !
+    !     WALLPT (IND,19) = Temperature of wall segment in Kelvin (K)
+    !
+    !     WALLPT (IND,20) = RSTART
+    !     WALLPT (IND,21) = ZSTART
+    !     WALLPT (IND,22) = REND
+    !     WALLPT (IND,23) = ZEND
+    !
+    !     wallpt (ind,24) = Used for additional indexing information - used
+    !                       as IK knot number for wall and trap wall option 7
+    !
+    !     wallpt (ind,25) = Value of reflection coefficient - if reflection
+    !                       for this segment is turned off the value here
+    !                       will be zero. If a positive value is specified
+    !                       then regular reflection occurs. If it is negative
+    !                       then a PTR (prompt thermal re-emission) type
+    !                       reflection is used. The value for this is
+    !                       set with the individual YMF's and is read from
+    !                      the CYMFS array.
+    !
+    !     wallpt (ind,26) = IK value of nearest plasma cell to wall segment
+    !     wallpt (ind,27) = IR value of nearest plasma cell to wall segment
+    !     wallpt (ind,28) = Minimum distance to outermost ring
+    !     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
+    !     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
+    !     wallpt (ind,31) = Plasma density at wall segment
+    !     wallpt (ind,32) = Distance along the wall
 
 
 
@@ -2400,7 +2400,7 @@ end subroutine find_nearest_boundary
        kvhs(0,ir)  = kvds(id)
        kes(0,ir)   = keds(id)
     end do
-    
+
     ! Fill in ends of core plasma rings
 
     do ir = 1,irsep-1
@@ -2719,7 +2719,7 @@ end subroutine find_nearest_boundary
        if ((lastcp * cp).lt.0.0) then 
           !write(6,'(a,20(1x,g18.8))') 'NOT INPOLY:',r,z,(rvert(is),zvert(is),is=1,4),lastcp,cp
           return 
-       endif 
+       endif
        !
        if (cp.ne.0.0) lastcp = cp  
        !
@@ -2727,7 +2727,7 @@ end subroutine find_nearest_boundary
 
     !write(6,'(a,20(1x,g18.8))') '    INPOLY:',r,z,(rvert(is),zvert(is),is=1,4),lastcp,cp
 
-    
+
     inpoly = .true.
     return
   end function inpoly
@@ -2763,7 +2763,7 @@ end subroutine find_nearest_boundary
     ! Vector formulations dist = norm ( [A-P] - ([A-P]dot N) N ) 
     ! 
 
-    
+
     nd = sqrt((xbeta-xalpha)**2+(zbeta-zalpha)**2)
     nx = (xbeta-xalpha)/nd
     nz = (zbeta-zalpha)/nd

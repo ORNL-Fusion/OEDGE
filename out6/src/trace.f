@@ -592,6 +592,10 @@ c
       if (cgrprint.eq.1) then
          call grprint(as,cs,ia1,ia2,mxxnas,nbs,igs,title,blabs,ref)
       endif
+
+      call write_signal(as,cs,ia1,ia2,mxxnas,nbs,igs,title,
+     >                  blabs,aaxlab,baxlab,ref,view,plane,anly,job)
+
 c slmod begin - new
 c...  Print comments:
       CALL PSPACE (0.0, 1.35, 0.0,1.0)
@@ -691,6 +695,7 @@ c
  110  format (e14.8,',',e14.8)
       return
       end
+
 C
 C
 C
@@ -3121,7 +3126,8 @@ c
 c
 c       Draw each plot using lines if requested
 c
-        if (drawtype(in).eq.1.or.drawtype(in).eq.3) then
+        if (drawtype(in).eq.1.or.drawtype(in).eq.3.or.
+     >      drawtype(in).eq.5) then
 
            call positn(mouts(1,ip,in),mvals(1,ip,in))
 
@@ -3149,6 +3155,25 @@ c
 c
            do ik = 1,pnks(ip,in)
 c
+              call plotnc(mouts(ik,ip,in),mvals(ik,ip,in),
+     >                    marker(drawcount))
+c
+           end do
+c
+        elseif (drawtype(in).eq.4.or.drawtype(in).eq.5) then
+c
+           drawcount = drawcount + 1
+c
+           do ik = 1,pnks(ip,in)
+c
+c          jdemod - some one added the code below which replaced the
+c                   functionality for drawtypes 2 and 3 which were supposed
+c                   to plot a symbol. This broke some plots. I have
+c                   moved the code and created new drawtypes 4 and 5 to 
+c                   support using a box instead of a symbol. The calling code
+c                   that was relying on this change will need to be modified
+c                   wherever it is :)
+c
 
             x1 = mouts(ik,ip,in)
             y1 = mvals(ik,ip,in)
@@ -3160,8 +3185,6 @@ c
      .                  y1+0.008*(PLTMAX-PLTMIN)*xwid/ywid)
 c              call plotnc(mouts(ik,ip,in),mvals(ik,ip,in),
 c     >                    marker(drawcount))
-
-
 c
            end do
 c

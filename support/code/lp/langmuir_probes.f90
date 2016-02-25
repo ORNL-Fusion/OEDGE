@@ -23,6 +23,11 @@ module langmuir_probes
   real,parameter :: psimin_limit = -0.5
   real,parameter :: psimax_limit =  2.0
 
+  ! Time filter variables
+  logical:: filter_times
+  integer :: time_window_cnt 
+  real,allocatable :: time_windows(:,:)
+
 
 contains
 
@@ -68,7 +73,7 @@ contains
           if (nan_loc.eq.0) then 
              read(line,*) (tmp_lp_data(it),it=1,ncols)
              ! filter out invalid PSIn values and take only the desired time window
-             if ((tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+             if (check_time_filter(tmp_lp_data(timebin)).and.(tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
                 act_line_cnt =  act_line_cnt + 1
              endif
           endif
@@ -119,7 +124,7 @@ contains
 
           read(line,*,iostat=ios) (tmp_lp_data(it),it=1,ncols)
 
-          if ((tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+          if (check_time_filter(tmp_lp_data(timebin)).and.(tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
 
               cur_line_cnt = cur_line_cnt + 1
               ! If all the valid lines have already been read then exit
@@ -889,6 +894,113 @@ contains
 
 
   end subroutine filter_lp_data
+
+
+  subroutine setup_time_filter(time_filt,time_filename)
+    use utilities
+    implicit none
+    logical :: time_filt
+    character*(*) :: time_filename
+    character*1024 :: line
+    integer :: iunit,ierr,line_cnt,in,ios
+    real :: t1,t2
+
+
+    filter_times = .true.
+
+    ios = 0
+    ierr = 0
+
+    call find_free_unit_number(iunit)
+
+    open(unit=iunit,file=trim(time_filename),status='old',iostat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('setup_time_filter: problem opening time data file:'//trim(time_filename),ierr)
+       filter_times = .false.
+       return
+    endif
+
+    ! 
+    ! Read in time data
+    !
+    ! first line is shot number followed by any number of time slices
+    !
+
+
+    line_cnt = 0
+
+    do while (ios.eq.0) 
+
+       read(iunit,line_form,iostat=ios) line
+       !write(0,*) 'tw:',trim(line)
+       if (ios.eq.0) then 
+          read(line,*,iostat=ierr) t1,t2
+          if (ierr.eq.0) then 
+             line_cnt = line_cnt + 1
+             !write(0,*) 'twa:',line_cnt,t1,t2
+           endif
+       endif
+          
+    end do
+    
+    if (allocated(time_windows)) deallocate(time_windows)
+    allocate(time_windows(line_cnt,2),stat=ierr)
+    time_window_cnt = line_cnt
+
+    rewind(iunit)
+
+    line_cnt = 0
+    ios = 0
+    ierr = 0
+
+    do while (ios.eq.0) 
+
+       read(iunit,line_form,iostat=ios) line
+       if (ios.eq.0) then 
+          read(line,*,iostat=ierr) t1,t2
+          if (ierr.eq.0) then 
+             line_cnt = line_cnt + 1
+             !write(0,*) 'twb:',line_cnt,t1,t2
+             time_windows(line_cnt,1) = t1
+             time_windows(line_cnt,2) = t2
+           endif
+       endif
+    end do
+
+    close(iunit)
+
+
+    write(0,*) 'Time Window filtering active:'
+    do in=1,time_window_cnt
+       write(0,'(a,i8,2(1x,g12.5))') 'Window: ', in,time_windows(in,1),time_windows(in,2)
+    end do
+
+
+  end subroutine setup_time_filter
+
+
+
+  logical function check_time_filter(time)
+    implicit none
+    real :: time
+    integer :: in
+    
+    if (filter_times.eq. .false.) then 
+       check_time_filter = .true. 
+       return
+    endif
+
+    check_time_filter = .false. 
+
+    do in = 1,time_window_cnt
+       if (time.ge.time_windows(in,1).and.time.le.time_windows(in,2)) then 
+          check_time_filter = .true.
+          return
+       endif
+    end do 
+
+  end function check_time_filter
+    
 
 
 
