@@ -973,6 +973,10 @@ c           The first approximation to this is to use
 c
 c           ds = cross_step * Btor/Bpol
 c
+c           Where Btot = sqrt(Btor**2+Bpol**2)
+c
+c           Bpol = sqrt(Br**2 + Bz**2)
+c
 c           A value of 0 for this option is OFF 
 c                      1 is ON
 c
@@ -994,6 +998,25 @@ c
 c     Default value is S para
 c
       drft_distopt = 0
+c
+c -----------------------------------------------------------------------
+c
+c     TAG T36 to T38 - related to poloidal drift options - T31,T32,T33
+c
+c     Default values for options related to calculating plasma potential
+c     and exb drifts
+c
+c     TAG T36
+c
+      potopt = 0
+c
+c     TAG T37
+c
+      exb_rad_opt = 0
+c
+c     TAG T38
+c
+      exb_pol_opt = 0
 c
 c -----------------------------------------------------------------------
 c

@@ -677,6 +677,7 @@ c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
 
         CALL rzero (mvals,maxnks*maxngs*maxplts)
 c
+        in = 0
 c
         do ip = 1, nplts
 c
@@ -1561,11 +1562,16 @@ c
           endif
 c
           id = idds(ir,2)
-          write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',1,ir,0.0,
+          write(6,'(a,i8,a)') ' ------ RING = ',ir,'  -------'
+          write(6,'(a)') ' IK  IR   S  SMAX-S   NE   TE'//
+     >         '   GA   VB   PRF   PRD   SION   HATM   HMOL'  
+c
+          write(6,'(a,2i4,12(1x,g12.5))') ' DATA:S:',1,ir,0.0,
+     >                  ksmaxs(ir),
      >                  knds(id),kteds(id),
      >                  kvds(id)*knds(id), 
-     >                  kvds(id), mVALS(1,ip,1)
-     >                  
+     >                  kvds(id), mVALS(1,ip,1),
+     >                  mVALS(1,ip,2)
 c
           DO IK = 1, NKS(IR)
 c
@@ -1593,20 +1599,24 @@ c    >                  kvhs(ik,ir),e2dvhs(ik,ir),
 c    >                  ktibs(ik,ir),e2dtibs(ik,ir),
 c     >                  ktebs(ik,ir),e2dtebs(ik,ir)
 c
-            write(6,'(a,2i4,9(1x,g12.5))')  'DATA:',ik,ir,kss(ik,ir),
+            write(6,'(a,2i4,12(1x,g12.5))') ' DATA:M:',ik,ir,kss(ik,ir),
+     >                  ksmaxs(ir)-kss(ik,ir),  
      >                  knbs(ik,ir),ktebs(ik,ir),
      >                  kvhs(ik,ir)/qtim*knbs(ik,ir), 
-     >                  kvhs(ik,ir)/qtim,MVALS(ik+in,ip,1)
-     >                  
+     >                  kvhs(ik,ir)/qtim,MVALS(ik+in,ip,1),
+     >                  MVALS(ik+in,ip,2),
+     >                  pinion(ik,ir),pinatom(ik,ir),pinmol(ik,ir)
 c
 c
           enddo
           id = idds(ir,1)
-          write(6,'(a,2i4,9(1x,g12.5))') 'DATA:',nks(ir),ir,ksmaxs(ir),
+          write(6,'(a,2i4,12(1x,g12.5))') ' DATA:E:',nks(ir),ir,
+     >                  ksmaxs(ir),0.0,
      >                  knds(id),kteds(id),
      >                  kvds(id)*knds(id), 
-     >                  kvds(id),mVALS(nks(ir)+2,ip,1)
-     >                  
+     >                  kvds(id),mVALS(nks(ir)+2,ip,1),
+     >                  mVALS(nks(ir)+2,ip,2)
+                      
           
 
 
@@ -1856,6 +1866,95 @@ c
      >              mdrawtype,0)
 c
       endif
+
+c
+c
+c     727 - Neutral and molecule density
+c
+      if (iref.eq.727) then
+c
+c       Plots of hydrogen atom and molecule density
+c
+c
+        REF = 'H ATOM/MOLECULE DENSITY - PIN'
+c
+        ELABS(1) = 'Hat Hat      '
+        ELABS(2) = 'HmolHmol     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 2
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.723) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'H Atom/Mol - PIN'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'Ionization/Recombination'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            MVALS(IK,ip,1) = pinatom(ik,ir)
+            MVALS(IK,ip,2) = pinmol(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
+
 c
 c
 c

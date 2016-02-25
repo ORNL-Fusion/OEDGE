@@ -1223,7 +1223,7 @@ c
       real s_approx,cross
       integer thom_asgn_opt
 c
-      thom_asgn_opt = 0
+      thom_asgn_opt = 1
 c
       if     (thom_asgn_opt.eq.0.and.print_warning) then 
          write(0,*) 'THOMSON ASSIGNMENT OPTION SET TO 0 -'//
@@ -1242,7 +1242,7 @@ c
       CALL IZero(gndata(1,ind),MAXNRS)
 
 c
-c     jdemod - note - the cell containing the data point is found in the load_thomson_data routine
+c     jdemod - note - the cell containing the data point is found in the LoadThomsonData routine
 c                     using gridpos and stored in ik=raw(in,3) and ir=raw(in,4)
 c                   - if the intersection method originally implemented fails then I think that
 c                     the improved getscross_approx routine should be used to estimate the S coordinate
@@ -1358,6 +1358,7 @@ c...          Data point intersects a cell with higher IK:
                   ydat(num) = raw(in,4+ind)
                 ELSE
                   write(6,*) 'AsgnThomsonData: Error mapping:',cr,cz
+                  write(0,*) 'AsgnThomsonData: Error mapping:',cr,cz
                   CALL ER('AsgnThomsonData','Cannot position data',*99)
                 ENDIF
               ENDIF
@@ -1541,7 +1542,10 @@ c
      .        xsh,ysh,targdat(MAXNDS,5)
 
       INTEGER    MAXTDAT     ,MAXCOLS   ,MAXNPS    ,MAXTYP
-      PARAMETER (MAXTDAT=500,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
+
+c     jdemod - increased maxtdat to allow for larger datasets
+c      PARAMETER (MAXTDAT=500,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
+      PARAMETER (MAXTDAT=2000,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
 c      PARAMETER (MAXTDAT=4000,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
 
       INTEGER thnnraw,ind
@@ -1687,6 +1691,7 @@ c       PLOTTYPE(6) = 7
 c       ngs = 0
 c...   Spagetti - for plotting results from more than one case:
 c 5     CONTINUE
+
 
        IF     (ytype.EQ.1) THEN
          ylab     = 'plasma'
@@ -2520,7 +2525,6 @@ c
 c *** ENDIF ***
 c
 
-
        CALL CustomisePlot(title,xlab,ylab,elabs)
 c
 c
@@ -2630,6 +2634,7 @@ c
 c jdemod
 c
 
+
 c...     Look for Thomson data to plot:
 15       READ(5,'(A80)') graph1
          IF (graph1(8:11).EQ.'Thom'.OR.graph1(8:11).EQ.'THOM'.OR.
@@ -2642,6 +2647,7 @@ c          plottype(ngs) = -55
           BACKSPACE 5
           xsh = 0.0
           ysh = 0.0
+
           CALL LoadThomsonData(thnnraw,thnraw,MAXTDAT,MAXCOLS,xsh,ysh,1)
 c
           ndatasets = ndatasets + 1
@@ -4031,6 +4037,12 @@ c               endif
             end do
        enddo
 c
+c      jdemod - if pltfact is greater than 0.0 - then convert the axis coordinates to mirror image, 
+c               swap data  and change sign of plot fact so that scale is always from 0.0. 
+c
+c
+
+
 
 
        CALL SLDRAWM (MOUTS,MWIDS,MVALS,MAXNPS,pnks,

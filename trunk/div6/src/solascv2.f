@@ -398,7 +398,7 @@ c
          endif
          ptmp = press(soffset,te0,ti0)
 c
-c         write (6,*) 'Smomtmp1:',smomtmp,ptmp
+         write (6,*) 'Smomtmp1:',smomtmp,ptmp
 c
       elseif (actswnmom.eq.9.or.actswnmom.eq.10) then
 c
@@ -676,6 +676,17 @@ c
 c
 c        Calculate Expected pressure
 c
+c
+c         make sure pmomloss set up correctly for call from pressure
+c
+          if (actswnmom.eq.4) then
+             if (actswe2d.eq.0) then
+                smomtmp = pmomloss(spts(i),1,vb(i),te(i),ti(i))
+             else
+                smomtmp = pmomloss(spts(i),1,vb(i),te(i),ti(i))
+             endif
+         endif
+
          exp_press(i) = press(spts(i),te(i),ti(i))
 c
          if (cprint.eq.3.or.cprint.eq.9) then
@@ -2499,6 +2510,7 @@ c
       include 'solparams'
       include 'solswitch'
       include 'solcommon'
+      include 'sol22pmom'
 c
 c     This function will provide the momentum loss
 c     integrated to a point s. The options that depend
@@ -2516,9 +2528,13 @@ c
 c     A value of 0 is a request for an estimate and a value of
 c     1 is an indicator to update the integral.
 c
-      real*8 lasts,lastsmom,lastsrc
-      real*8 src,srci,lastv,vav,lastte,teav,rcxmult,estscx
+c      real*8 :: lasts,lastsmom,lastsrc,lastv,lastte
+      real*8 src,srci,teav,rcxmult,estscx,vav
       external srci,rcxmult,estscx
+      real*8 :: vtmp,te_base
+c
+      logical temp_opt
+
 c
       integer top,bot,mid,in
 c
@@ -2528,27 +2544,32 @@ c
 c
 c     Exit for S = 0
 c
-      if (s.eq.0) return
+      if (s.eq.0) then 
+         lastv = vcur
+         lasts = s
+         lastte = tecur
+         return
+      endif
 c
       if (actswnmom.eq.0.0.or.
      >   (actswnmom.eq.6.0.and.(.not.pinavail))) then
          pmomloss = 0.0
       elseif (actswnmom.eq.1.0.or.
      >   (actswnmom.eq.7.0.and.(.not.pinavail))) then
-         if (s.le.lenmom*ringlen) then
+         if (s.le.actlenmom*ringlen) then
             pmomloss = s * smom0
          else
-            pmomloss = lenmom * ringlen * smom0
+            pmomloss = actlenmom * ringlen * smom0
          endif
       elseif (actswnmom.eq.2.0.or.
      >   (actswnmom.eq.8.0.and.(.not.pinavail))) then
-         if (s.le.lenmom*ringlen) then
+         if (s.le.actlenmom*ringlen) then
             pmomloss = smom0 * lammom * ringlen *
      >              (1.0d0 - exp (-s/(lammom*ringlen)))
          else
             pmomloss = smom0 * lammom * ringlen *
-     >       (1.0d0 - exp (-lenmom/lammom))
-c    >       (1.0d0 - exp (-(lenmom*ringlen)/(lammom*ringlen)))
+     >       (1.0d0 - exp (-actlenmom/lammom))
+c    >       (1.0d0 - exp (-(actlenmom*ringlen)/(lammom*ringlen)))
          endif
       elseif (actswnmom.eq.3.0) then
          pmomloss = smom0 * srci(s)
@@ -2560,7 +2581,19 @@ c
 c
 c        Return an estimate of Smom in the next interval
 c
+         temp_opt=.true.
+         te_base = 10.0
+         
+         if (temp_opt) then 
+            vtmp = -sqrt(2.0*te_base*econv/(mb*mconv))
+         else
+            ! set to absolute so that flow reversal doesn't cause a pressure drop
+            vtmp = -abs(vcur)
+         endif
+
+
          if (opt.eq.0) then
+            
 
             if (s.eq.soffset.or.s.lt.lasts) then
                pmomloss = 0.0
@@ -2573,31 +2606,43 @@ c
             src = srci(s)
 c
             pmomloss = lastsmom
-     >               - mb * mconv * lastv
+     >               - mb * mconv * (vtmp+lastv)/2.0
      >               * rcxmom * rcxmult(lastte)
      >               * (src-lastsrc) * smom_mult
+
 c
 c           This now nees its own return statement to avoid
 c           double multiplication by smom_mult
 c
+c            if (ringnum.eq.17)
+c     >         write(6,'(a,16(1x,g12.5))') ' Mom0:',
+c     >         s,lasts,lastsmom,lastv,vtmp,(vtmp+lastv)/2.0,src,lastsrc,
+c     >          (src-lastsrc),
+c     >          lastte,rcxmom,rcxmult(lastte),
+c     >          pmomloss,
+c     >            - mb * mconv * lastv * rcxmom * (src-lastsrc) 
+c     >             *smom_mult *rcxmult(lastte)
+c
+
             return
 c
          elseif (opt.eq.1) then
 c
-            vav = (vcur + lastv)/2.0
+            vav = (vtmp + lastv)/2.0
             teav = (tecur+lastte)/2.0
 c
             if (s.eq.soffset.or.s.lt.lasts) then
 c
-c               write (6,'(a,6g12.5)') 'lasts:',s,lasts,
-c     >                         lastsrc,lastsmom,lastv,vcur
-c
                lasts = soffset
                lastte = tecur
-               lastv = vcur
+               lastv = vtmp
                lastsmom = 0.0
                lastsrc = 0.0
                pmomloss = 0.0
+
+c               write (6,'(a,10g12.5)') 'Mom lasts:',s,lasts,
+c     >                         lastsrc,lastsmom,lastv,vtmp
+c
                return
             elseif (s.eq.lasts) then
                pmomloss = lastsmom
@@ -2611,13 +2656,16 @@ c
      >               * rcxmom * rcxmult(teav)
      >               * (src-lastsrc) * smom_mult
 c
-c            if (ringnum.eq.6)
-c     >         write(6,'(a,9(1x,g12.5))') ' Mom:',
-c     >          lastsmom,lastv,vcur,vav,src,lastsrc,
-c     >          (src-lastsrc),pmomloss,
-c     >            - mb * mconv * vav * rcxmom * (src-lastsrc)
+c            if (ringnum.eq.17)
+c     >         write(6,'(a,16(1x,g12.5))') ' Mom1:',
+c     >          s,lasts,lastsmom,lastv,vtmp,vav,src,lastsrc,
+c     >          (src-lastsrc),
+c     >          teav,rcxmom,rcxmult(teav),
+c     >          pmomloss,
+c     >            - mb * mconv * vav * rcxmom * rcxmult(teav) 
+c     >            * (src-lastsrc)* smom_mult
 c
-            lastv = vcur
+            lastv = vtmp
             lastte = tecur
             lastsmom = pmomloss
             lasts = s
@@ -2664,6 +2712,11 @@ c     Apply overall multiplier to MOST options - some options exit before
 c     reaching this point.
 c
       pmomloss = pmomloss * smom_mult
+c
+c      if (ringnum.eq.17) 
+c     >     write(6,'(a,16(1x,g12.5))') ' Mom2:',
+c     >        s,lasts,lastsmom,smom0,srci(s),smom_mult,pmomloss
+c
 c
       return
       end
@@ -2874,7 +2927,7 @@ c
      >             (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
          endif
 c
-         pradupdt = radsrc_mult * pradupdt
+c         pradupdt = radsrc_mult * pradupdt
 c
 c
 c     PRAD = RADSRC_MULT * (EXTERNAL RADIATION SOURCE)
@@ -2892,9 +2945,23 @@ c
      >             (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
          endif
 c
-         pradupdt = radsrc_mult * pradupdt
+c         pradupdt = radsrc_mult * pradupdt
 c
+      elseif (actswprad.eq.6.0) then
+c
+c        re-use lamr and lenr for a rectangular radiation source
+c
+         if (s.lt.lamr) then
+            pradupdt = 0.0
+         elseif (s.lt.lenr) then 
+            pradupdt = (s-lamr)/(lenr-lamr)*prad0
+         else
+            pradupdt = prad0
+         endif
       endif
+
+      pradupdt = radsrc_mult * pradupdt
+
 c
       return
       end
@@ -2971,9 +3038,35 @@ c
      >             (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
          endif
 c
-         estprad = radsrc_mult * estprad
+      elseif (actswprad.eq.4.0) then
+
+         call binsearch(s,in)
 c
+         if (in.eq.1) then
+            estprad = (intrad(in) * s / sptscopy(1))
+         else
+            estprad = (
+     >             ( intrad(in-1) +
+     >             ( (intrad(in)-intrad(in-1)) *
+     >             (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+         endif
+c
+      elseif (actswprad.eq.6.0) then
+c
+c        re-use lamr and lenr for a rectangular radiation source
+c
+         if (s.lt.lamr) then
+            estprad = 0.0
+         elseif (s.lt.lenr) then 
+            estprad = (s-lamr)/(lenr-lamr)*prad0
+         else
+            estprad = prad0
+         endif
       endif
+c
+c     apply rad src multiplier
+c
+      estprad = radsrc_mult * estprad
 c
 c      write(6,*) 'estprad:',estprad,lastprad,s,lasts,n,te
 c
@@ -4286,14 +4379,17 @@ c
       if (actswnmom.eq.0.0 ) then
          smom0 = 0.0
       elseif (actswnmom.eq.1.0 ) then
-         smom0 = (pinf/(lenmom * ringlen))*(1.0d0/actffric-1.0d0)
+         smom0 = (pinf/(actlenmom * ringlen))*(1.0d0/actffric-1.0d0)
       elseif (actswnmom.eq.2.0 ) then
          smom0 = (pinf/(lammom * ringlen))*(1.0d0/actffric-1.0d0)
      >           / ( 1.0d0 -
-     >           exp( - (lenmom * ringlen) / (lammom * ringlen)))
+     >           exp( - (actlenmom * ringlen) / (lammom * ringlen)))
       elseif (actswnmom.eq.3.0 ) then
-         smom0 = (pinf/(lenmom * ringlen))*(1.0d0/actffric-1.0d0)
+         smom0 = pinf * (1.0d0/actffric-1.0d0)
      >             * (1.0/srci(halfringlen))
+c        jdemod - removed length division ... it is a bug
+c         smom0 = (pinf/(actlenmom * ringlen))*(1.0d0/actffric-1.0d0)
+c     >             * (1.0/srci(halfringlen))
       elseif (actswnmom.eq.4.0 ) then
          smom0 = 0.0
       elseif (actswnmom.eq.5.0 ) then
@@ -4302,7 +4398,11 @@ c
 c
 c     Calculate base value for radiation function for PRAD option 1.
 c
-      prad0 = frr * (pae + pai) / (lamr * (1.0-exp(-lenr/lamr)))
+      if (actswprad.eq.5) then 
+         prad0 = frr * (pae + pai) / (lenr-lamr)
+      else
+         prad0 = frr * (pae + pai) / (lamr * (1.0-exp(-lenr/lamr)))
+      endif
 c
 c     Caculate integrated radiation loss for Prad option 4
 c

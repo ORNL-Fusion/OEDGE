@@ -1071,8 +1071,12 @@ c
          CALL PRC(SP//'THIS IS THEN BE DISTRIBUTED TO EACH RING AND')
          CALL PRC(SP//'CELL USING VARIOUS MECHANISMS')
 c         call prq(sp//'REGION N ', prad_for_region)
-
-
+      elseif (switch(swprad).eq.6.0) then
+         CALL PRC(S1//'PRAD OPTION   6 : RECTANGULAR'//
+     >                       ' RADIATION SOURCE')
+         CALL PRQ(SP//'END LENGTH OF RADIATION SOURCE     ', LENR)
+         CALL PRQ(SP//'START LENGTH OF RADIATION  SOURCE  ', LAMR)
+         CALL PRQ(SP//'SOURCE STRENGTH FRACTION (FRR)     ', FRR)
       endif
 c
       call prb
@@ -1372,19 +1376,23 @@ c
          CALL PRC(SP//'SMOM = SMOM0    S < L * SMAX        ')
          CALL PRC(SP//'     = 0        S > L * SMAX        ')
          CALL PRC(SP//'SMOM0= PT/(L * SMAX) * (1/FFRIC -1)')
-         CALL PRQ(SP//'L    = ',LENMOM)
          if (n_extffric.eq.0) then 
             CALL PRQ(SP//'FFRIC= ',FFRIC)
+            CALL PRQ(SP//'L    = ',LENMOM)
          else
             CALL PRQ(SP//'DEFAULT FFRIC= ',FFRIC)
+            CALL PRQ(SP//'DEFAULT L    = ',LENMOM)
             call prc(sp//'OVER-RIDDEN BY THE'//
      >                   ' FOLLOWING VALUES ON SPECIFIED RINGS:')
-            call prc(sp//'RING    '//OUTER//'   '//INNER)
+            call prc(sp//'         FFRIC  LENMOM    FFRIC LENMOM')
+            call prc(sp//'RING    '//OUTER//'      '//INNER)
             do in = 1, n_extffric
-               write(coment,'(i4,2x,2(1x,f8.3))') 
-     >            int(extffric(in,1)),extffric(in,2),extffric(in,3)
+               write(coment,'(i4,2x,4(1x,f8.3))') 
+     >            int(extffric(in,1)),extffric(in,2),extffric(in,3),
+     >            extffric(in,4),extffric(in,5)
                call prc(sp//coment)
             end do 
+            call prc(sp//'A VALUE <= 0.0 = DEFAULT')
          end if
 
       elseif (switch(swnmom).eq.2.0) then
@@ -2844,6 +2852,16 @@ c
 c
       call pqs (' Length of radiation source         ', lenr)
       call pqs (' Decay length of radiation  source  ', lamr)
+      call pqs (' Source strength fraction (frr)     ', frr)
+      call pqs (' Strength of radiation source       ', prad0)
+
+      elseif (switch(swprad).eq.6.0) then
+      call prbs
+      call prs ('Radiation Source Characteristics  Prad')
+      call prbs
+c
+      call pqs (' End Length of radiation source     ', lenr)
+      call pqs (' Start length of radiation  source  ', lamr)
       call pqs (' Source strength fraction (frr)     ', frr)
       call pqs (' Strength of radiation source       ', prad0)
 c

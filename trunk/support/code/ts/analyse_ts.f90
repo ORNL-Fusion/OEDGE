@@ -28,7 +28,13 @@ module analyse_ts
   real,allocatable :: profiles(:,:,:)
   real,allocatable :: counts(:,:)
 
-  public :: setup_ts_bins,read_ts,accumulate_ts_data,analyse_print_ts_data,deallocate_ts_data
+  public :: setup_ts_bins,read_ts,accumulate_ts_data,analyse_print_ts_data,deallocate_ts_data,setup_time_filter
+
+  ! Time filter variables
+  logical:: filter_times
+  integer :: time_window_cnt 
+  real,allocatable :: time_windows(:,:)
+
 
 
 contains
@@ -340,7 +346,7 @@ contains
     integer :: ios,ierr
 
     character*(*) :: filename
-    character*512 :: line
+    character*1024 :: line
     integer :: line_cnt,in
 
     integer :: ncols, nextra, fileformat,headersize
@@ -367,8 +373,14 @@ contains
 
     ! Read header and decide which format of file is being loaded ... 
     
-    read(fileunit,'(a512)') line
+    read(fileunit,'(a1024)') line
     rewind(fileunit)
+
+!  Laser pulse t (ms)                Chan               R (m)               Z (m)          EFIT RUNID      EFIT time (ms)                Psin       
+!             Lpol [m]   Lpol_abs/Lpol_xpt            Lpar [m]             Te [eV]         Te err [eV]      ne [x10^20m-3]  ne err [x10^20m-3]          
+!                ChiSq   d_sep,hor,mid [m]         R,remap (m)         Z,remap (m)         0=no, 1=yes
+
+
     if (line(1:4) .eq. 'time') then 
     ! file format = 2
     ! 11 data items/line but different
@@ -382,6 +394,22 @@ contains
        ncols = 11
        nextra = 2
        ncols_filedata = ncols+nextra
+
+    elseif (line(1:27).eq.'Divertor Thomson Scattering') then 
+       fileformat = 4
+       ncols = 19
+       headersize = 15
+       nextra = 2
+       ncols_filedata = ncols+nextra
+!
+!  Laser pulse t (ms)                Chan               R (m)               Z (m)          EFIT RUNID      EFIT time (ms)                Psin       
+!             Lpol [m]   Lpol_abs/Lpol_xpt            Lpar [m]             Te [eV]         Te err [eV]      ne [x10^20m-3]  ne err [x10^20m-3]          
+!                ChiSq   d_sep,hor,mid [m]         R,remap (m)         Z,remap (m)         0=no, 1=yes
+
+!  Laser pulse t (ms)                Chan               R (m)               Z (m)          EFIT RUNID      EFIT time (ms)                Psin  
+!             Lpol [m]   Lpol_abs/Lpol_xpt            Lpar [m]             Te [eV]         Te err [eV]      ne [x10^20m-3]  ne err [x10^20m-3]
+!                ChiSq   d_sep,hor,mid [m]
+
 
     else
        read(fileunit,'(a512)') line
@@ -510,6 +538,29 @@ contains
                 filedata(line_cnt-headersize,10) = line_data(9)
                 ! n_lpol -> rsep
                 filedata(line_cnt-headersize,11) = line_data(5)
+             elseif (fileformat.eq.4) then 
+                ! psin
+                filedata(line_cnt-headersize,1) = line_data(7)
+                ! lpol
+                filedata(line_cnt-headersize,2) = line_data(8)
+                ! deltar -> R,remap
+                filedata(line_cnt-headersize,3) = line_data(17)
+                ! deltaz -> Z,remap
+                filedata(line_cnt-headersize,4) = line_data(18)
+                ! ne
+                filedata(line_cnt-headersize,5) = line_data(13)
+                ! te
+                filedata(line_cnt-headersize,6) = line_data(11)
+                ! press (ne*Te)
+                filedata(line_cnt-headersize,7) = line_data(9)
+                ! time (ms)
+                filedata(line_cnt-headersize,8) = line_data(1)
+                ! r
+                filedata(line_cnt-headersize,9) = line_data(3)
+                ! z
+                filedata(line_cnt-headersize,10) = line_data(4)
+                ! n_lpol -> d_sep,hor,mid
+                filedata(line_cnt-headersize,11) = line_data(16)
               endif
 
           endif
@@ -607,6 +658,114 @@ contains
     if (allocated(counts)) deallocate(counts)
 
   end subroutine deallocate_ts_data
+
+
+  subroutine setup_time_filter(time_filt,time_filename)
+    use utilities
+    implicit none
+    logical :: time_filt
+    character*(*) :: time_filename
+    character*1024 :: line
+    integer :: iunit,ierr,line_cnt,in,ios
+    real :: t1,t2
+
+
+    filter_times = .true.
+
+    ios = 0
+    ierr = 0
+
+    call find_free_unit_number(iunit)
+
+    open(unit=iunit,file=trim(time_filename),status='old',iostat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('setup_time_filter: problem opening time data file:'//trim(time_filename),ierr)
+       filter_times = .false.
+       return
+    endif
+
+    ! 
+    ! Read in time data
+    !
+    ! first line is shot number followed by any number of time slices
+    !
+
+
+    line_cnt = 0
+
+    do while (ios.eq.0) 
+
+       read(iunit,line_form,iostat=ios) line
+       !write(0,*) 'tw:',trim(line)
+       if (ios.eq.0) then 
+          read(line,*,iostat=ierr) t1,t2
+          if (ierr.eq.0) then 
+             line_cnt = line_cnt + 1
+             !write(0,*) 'twa:',line_cnt,t1,t2
+           endif
+       endif
+          
+    end do
+    
+    if (allocated(time_windows)) deallocate(time_windows)
+    allocate(time_windows(line_cnt,2),stat=ierr)
+    time_window_cnt = line_cnt
+
+    rewind(iunit)
+
+    line_cnt = 0
+    ios = 0
+    ierr = 0
+
+    do while (ios.eq.0) 
+
+       read(iunit,line_form,iostat=ios) line
+       if (ios.eq.0) then 
+          read(line,*,iostat=ierr) t1,t2
+          if (ierr.eq.0) then 
+             line_cnt = line_cnt + 1
+             !write(0,*) 'twb:',line_cnt,t1,t2
+             time_windows(line_cnt,1) = t1
+             time_windows(line_cnt,2) = t2
+           endif
+       endif
+    end do
+
+    close(iunit)
+
+
+    write(0,*) 'Time Window filtering active:'
+    do in=1,time_window_cnt
+       write(0,'(a,i8,2(1x,g12.5))') 'Window: ', in,time_windows(in,1),time_windows(in,2)
+    end do
+
+
+  end subroutine setup_time_filter
+
+
+
+  logical function check_time_filter(time)
+    implicit none
+    real :: time
+    integer :: in
+    
+    if (filter_times.eq. .false.) then 
+       check_time_filter = .true. 
+       return
+    endif
+
+    check_time_filter = .false. 
+
+    do in = 1,time_window_cnt
+       if (time.ge.time_windows(in,1).and.time.le.time_windows(in,2)) then 
+          check_time_filter = .true.
+          return
+       endif
+    end do 
+
+  end function check_time_filter
+    
+
 
 
 end module analyse_ts

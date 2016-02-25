@@ -828,7 +828,7 @@ c            CALL PLOTST(maxx+0.005,spot,nums(1:LEN_TRIM(nums)))
 c        CALL PLOTST(maxx+0.010,0.5*(miny+maxy),'T')
 
 
-      ELSEIF (mode.EQ.2) THEN  ! Horizontal scale below plot
+      ELSEIF (mode.EQ.2.or.mode.eq.3) THEN  ! Horizontal scale below plot
         dspot = 0.010 ! for dist = 0.70 987 plots                
 c        dspot = 0.012 ! for dist = 0.80 987 plots                
 c        dspot = 0.0134 
@@ -867,11 +867,19 @@ c...    Box:
         CALL JOIN   (minx,miny)
 c...    Text:
         CALL CTRMAG(12)
-        dscale = 20.0
+c
+        if (mode.eq.2) then 
+           dscale = 20.0
+        elseif (mode.eq.3) then 
+           dscale = 100.0/int(qmax-qmin)
+        endif
+c
         yshift = .FALSE.
         ymove = 0.0
         DO rscale = 100.0, 0.0, -dscale
           qval = qmin + (qmax - qmin) * rscale / 100.0
+c          write(0,*) 'QVAL:',qmin,qmax,rscale,qval
+
 c          qval = qval / qmax
           IF     (qval.GT.-0.999.AND.qval.LT.1.0) THEN
 c          IF     (qmax.GT.0.1.AND.qmax.LE.1.0) THEN
@@ -1190,6 +1198,11 @@ c...  ADAS:
  
       LOGICAL :: reset_origin = .TRUE.
 
+c
+c     jdemod - adding some code to limit exponent range displayed in log plots
+c
+      real tmpa
+      
       SAVE
 
 c      WRITE(0,*) 'DATA:',job
@@ -1726,7 +1739,21 @@ c     ==================================================================
 c...  Scale the data:
       IF (ALLOCATED(cq)) THEN
         IF (scalefact.EQ.-1.0) THEN
-         cq = LOG10(MAX(1.0E-10,cq))
+c
+c          jdemod - allow for a max 10 orders of magnitude in the plot
+c
+c           tmpa = LOG10(MAX(cq))
+c           tmpa = tmpa -10.0
+c
+c         cq = MAX(tmpa,LOG10(MAX(1.0E-10,cq)))
+c           tmpa = MAX(1.0,cq)
+c           tmpa = MAXval(cq)
+c           tmpa = log10(tmpa)
+c          tmpa = tmpa-10.0
+
+         cq = LOG10(MAX(1.0E14,cq))
+c         cq = LOG10(MAX(1.0E-10,cq))
+c
         ELSE
          cq = cq * scalefact
         ENDIF
@@ -1757,6 +1784,14 @@ c...        Decide if the cell is within the viewing range:
           IF (setqmin.AND.qmin.GT.-1.0E-10) qmin = MAX(qmin,0.01*qmax)
         ENDIF
 c        WRITE(0,*) 'QMIN,QMAX:',qmin,qmax
+c
+c     jdemod - set scale range properly for log plots
+c     
+        if (scalefact.eq.-1) then 
+           qmin = int(qmin)
+           qmax = int(qmax)+1
+        endif
+
 
 c...    Draw polygons:
         CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)

@@ -1241,7 +1241,7 @@ c
       elseif (tag(1:3).eq.'282') then  
 c
          CALL RDQARN(extffric,n_extffric,MXSPTS,-MACHHI,MACHHI,.FALSE.,
-     >          -machhi,MACHHI,2,'SET OF MOM-LOSS COEF BY RING',IERR)
+     >          -machhi,MACHHI,4,'SET OF MOM-LOSS COEF BY RING',IERR)
 c
 c     jdemod
 c     TAG 283 - SOL option 22 - reads the value for switch(swppress) 
@@ -1920,13 +1920,63 @@ c
 c     Default value is S para (option 0)
 c
       ELSEIF (tag(1:3).EQ.'T35') THEN
+c
+c     jdemod - I don't really understand commenting this out 
+c            - it defaults to a value of 0 so this will only stop the code 
+c              if the T35 line is in the input file
+c            - other than that I think it works as intended so I am uncommenting
+c              it .. its only purpose is to change the interpretation of other 
+c              inputs
+c
 c slmod begin - *** TEMP ***
-c        CALL ReadI(line,drft_distopt,0,2,'Drift velocity range'//
-c     >                                   ' specification (S,P or Z)')
-        STOP 'OPTION TURNED OFF FOR NOW...'
+        CALL ReadI(line,drft_distopt,0,2,'Drift velocity range'//
+     >                                   ' specification (S,P or Z)')
+c
+c        STOP 'OPTION TURNED OFF FOR NOW...'
 c slmod end
 c
 c        write(0,*) 'READIN: drft_distopt:',drft_distopt
+c
+c
+c
+c -----------------------------------------------------------------------
+c
+c     TAG T36 to T38 - options related to the implementation of 
+c                      impurity exb drifts 
+c
+c     TAG T36 - potopt
+c
+c             - This option is used to determine the method of calculatng
+c               plasma potential
+c             - potopt = 0    Use 3xTe(0) at each target as the floating 
+c                              potential start start point
+c             - potopt = 1    Import LP data listing the measured floating 
+c                              potential ... if imported data not available it 
+c                              defaults to option 0. 
+c
+      ELSEIF (tag(1:3).EQ.'T36') THEN
+        CALL ReadI(line,potopt,0,1,'Option for calculating the floating'
+     >             //' potential')
+c
+c
+c     TAG 37
+c
+c     exb_rad_opt = 0 ... no exb radial drift is applied
+c                 = 1 ... exb radial drift is turned on
+c
+      ELSEIF (tag(1:3).EQ.'T37') THEN
+        CALL ReadI(line,exb_rad_opt,0,1,'ExB radial drift option')
+c
+c
+c     TAG 38
+c
+c     exb_pol_opt = 0 ... no exb poloidal drift is applied
+c                 = 1 ... exb poloidal drift is turned on
+c
+      ELSEIF (tag(1:3).EQ.'T38') THEN
+        CALL ReadI(line,exb_pol_opt,0,1,'ExB poloidal drift option')
+c
+c -----------------------------------------------------------------------
 c
 c
 c -----------------------------------------------------------------------
