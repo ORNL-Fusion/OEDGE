@@ -65,7 +65,11 @@ c     Counter for number of intersections found
 c
       icnt = 0
 c
-      do ir = irsep,irwall-1
+c     jdemod - allow for collection of data from core as well - might help with plots
+c
+      do ir = 1,irwall-1
+c
+c      do ir = irsep,irwall-1
 c
          do ik = 1,nks(ir)
 c
@@ -82,8 +86,7 @@ c
 c
                write(6,'(a,3i4,1p,8(1x,g12.5))') 'OSM1:',ik,ir,icnt,
      >               rsect,zsect,sint,kss(ik,ir),kss2(ik,ir)
-
-               
+              
 c
 c              Assign axis value depending on option
 c
