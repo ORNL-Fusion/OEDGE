@@ -52,6 +52,7 @@ c
       include    'reiser_com'
       include    'line_profile' 
       include    'hc_global_opts'
+      include    'driftvel'
 C
       INTEGER IR,IZ,IT,IN
 c slmod begin 
@@ -555,14 +556,25 @@ c
       call save_subgrid(8)
 
 c
+c     jdemod - March 2016 - version 45
 c
-c     Temporarily Add the following
+c     Write out potential and drift related results
+c     
+      call rinout ('W POT',osmpot2,maxnks*maxnrs)
+      call rinout ('W E_RAD',e_rad,maxnks*maxnrs)
+      call rinout ('W E_POL',e_pol,maxnks*maxnrs)
+      call rinout ('W ExB_R',exb_rad_drft,maxnks*maxnrs)
+      call rinout ('W ExB_P',exb_pol_drft,maxnks*maxnrs)
+c
+c
+c     Temporarily Add the following (?) 
 c
       call rinout ('W FLUXES',fluxes,maxnks*maxnrs*16)
 c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('W LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+c
 c
 c slmod begin - new
       slver = 3.6

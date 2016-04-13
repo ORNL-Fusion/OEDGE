@@ -504,6 +504,7 @@ mvc divimp_aux_data.out $CASENAME.auxdata
 # Core file in case DIVIMP crashed
 mvc core $CASENAME.core
 
+
 #
 # mv fort.25  $DIVRESDIR/$CASENAME.lst.grd
 # mv fort.27  $DIVRESDIR/$CASENAME.cell.grd
@@ -600,6 +601,14 @@ mvc eirtrac $CASENAME.eirtrc
 
 # Out debug file (?) ... a fort.50 from divimp has already been moved - this one could be out
 mvc fort.50 $CASENAME.out.debug
+
+
+# eirene ionization analysis
+mvc eirene_iz_analysis.dat $CASENAME.eiz
+
+# exb source terms over grid
+mvc exb_source_terms.dat $CASENAME.exb
+
 
 
 #

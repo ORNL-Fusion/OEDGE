@@ -2237,6 +2237,109 @@ c
 c
 c
 c
+      logical function inpolydp(r,z,nv,rvert,zvert)
+      implicit none
+      integer ik,ir
+      integer nv,maxvert   
+c      parameter (maxvert=8)
+      real*8 r,z,rvert(nv),zvert(nv)
+c
+c     jdemod - double precision version of inpoly ... everything 
+c              else is the same
+c
+c     INPOLYDP: This function returns a simple YES/NO decision
+c             about whether the point R,Z is in the cell designated
+c             by a set of vertices defined in an ordered fashion.
+c             It takes the cross product
+c             between the vector from the vertex to the test point
+c             and the vector from the vertex to the next
+c             vertex of the polygon. The cross-product must be
+c             the same sign for all vertices - if the
+c             point is outside the polygon it will fail this test
+c             for at least one vertex. (i.e. the cross-product will
+c             change sign) (Suggested solution courtesy
+c             of Ian Youle :-) )
+c
+c             David Elder, Dec 8, 1993
+c
+c             Note: the objectives of the solution method were
+c             simplicity and reasonable computational cost.
+c             This solution avoids the need for square roots
+c             or trigonometric calculations.
+c
+      integer v,nextv
+      real*8 cp,lastcp
+c
+      lastcp = 0.0 
+c
+      inpolydp = .false.
+
+      if (nv.eq.0) return  
+c
+c     Loop through vertices
+c
+      do 10 v = 1,nv
+c
+         if (v.eq.nv) then
+            nextv = 1
+         else
+            nextv = v+1
+         endif
+c
+c        Want the vector cross-product Rx X Rw
+c
+c         vxr = r - rvert(v)
+c         vxz = z - zvert(v)
+c         vwr = rvert(nextv) - rvert(v)
+c         vwz = zvert(nextv) - zvert(v)
+c
+c         cp = vxr*vwz - vxz*vwr
+c
+          cp =    (
+     >     ( (r-rvert(v)) *
+     >       (zvert(nextv)-zvert(v)) )
+     >    -( (z-zvert(v)) *
+     >       (rvert(nextv)-rvert(v)) )
+     >           )
+c
+c         There is a problem for points that should 
+c         lie on the boundary of the cell - i.e. that 
+c         are calculated based on the polygon corners and 
+c         which are mathematically on the polygon surface. 
+c         Numerically, these points can have a cross product
+c         which is close to zero but can vary to either side. 
+c         In order to consider these points in the cell - the 
+c         cross products are set to zero for values less than
+c         a specified limit. In this case the limit is set to 1.0e-7 
+c         for single precision. 
+c
+c         A revised value was determined for double precision variables:
+c         This value was determined by examining the range of cross 
+c         product values generated when sampling 40,000 points 
+c         calculated on a polygon with a scale size of 1.0m. 
+c         The maximum error cross product in this case was 4d-16
+c         So ... using a value of 1.0d-12
+c
+c         D. Elder, March 29, 2016
+c
+          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c
+          if (v.eq.1.and.cp.ne.0.0) lastcp = cp
+c
+c         Look for change in sign of cp  
+c
+          if ((lastcp * cp).lt.0.0) return 
+c
+          if (cp.ne.0.0) lastcp = cp  
+c
+10    continue
+c
+      inpolydp = .true.
+      return
+      end
+c
+c
+c
       logical function inpoly(r,z,nv,rvert,zvert)
       implicit none
       integer ik,ir
@@ -2331,6 +2434,8 @@ c
       inpoly = .true.
       return
       end
+
+
 C
 C  *********************************************************************
 C  *  FINDCHARS: Search for characters                                 *

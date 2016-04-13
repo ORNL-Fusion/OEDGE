@@ -732,9 +732,9 @@ c     option 3 : target E-field calculated from gradients to first cell center
 c                first cell data calculated from gradients to target and to 
 c                second cell
 c
-c     default is option 2        
+c     default is option 3        
 c
-      ofield_targ = 2
+      ofield_targ = 3
 c
 c -----------------------------------------------------------------------
 c

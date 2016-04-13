@@ -5847,6 +5847,34 @@ c
       elseif (cpdrft.ne.0.and.drftvel_machopt.eq.0) then 
          CALL PRR (sp//'DEFAULT FLOW VELOCITY (m/s) = ',CDRFTV)
       endif
+
+
+
+C-----------------------------------------------------------------------
+c     jdemod - add print out for ExB options
+c
+      IF (potopt.EQ.0) THEN
+       CALL PRC ('  POTENTIAL OPT    0 : Target potential is -3Te')
+      ELSEIF (potopt.EQ.1) THEN
+       CALL PRC ('  POTENTIAL OPT    1 : Target potential is loaded'//
+     >           ' from LP Data')
+      endif
+c
+      if (exb_rad_opt.eq.0) then 
+       CALL PRC ('  EXB RADIAL DRIFT 0 : OFF')
+      elseif (exb_rad_opt.eq.1) then 
+       CALL PRC ('  EXB RADIAL DRIFT 1 : ON - Applied to'//
+     >           ' crossfield transport')
+      endif
+c
+      if (exb_pol_opt.eq.0) then 
+       CALL PRC ('  EXB POLOIDAL DRFT 0: OFF')
+      elseif (exb_pol_opt.eq.1) then 
+       CALL PRC ('  EXB POLOIDAL DRFT 0: ON - Applied to'//
+     >           ' parallel transport')
+      endif
+c
+c
 c
 c
       RETURN

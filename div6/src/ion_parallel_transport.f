@@ -35,11 +35,12 @@ c
 c     Local variables
 c     
       real ds_dperpz,ds_pinch
-      real bg_drftvel,imp_drftvel 
+      real bg_drftvel,imp_drftvel,exb_pol_drftvel
 c     
 c     Set ion and/or background drift velocities 
 c     
-      call set_drift_velocity(s,ir,bg_drftvel,imp_drftvel)
+      call set_drift_velocity(s,ik,ir,bg_drftvel,imp_drftvel,
+     >                        exb_pol_drftvel)
 c     
 c     Set up dvpara or dspara depending on options - for collisional diffusive transport
 c     
@@ -158,7 +159,7 @@ c
       slast = s
 c     
       S     = S + VEL + 0.5 * (QUANT+dvpara) + dspara
-     >     + IMP_DRFTVEL + ds_dperpz + ds_pinch
+     >     + IMP_DRFTVEL + exb_pol_drftvel + ds_dperpz + ds_pinch
 c     
       VEL   = VEL + QUANT + dvpara
 c     
@@ -705,15 +706,19 @@ c
 c     
 c     
 c     
-      subroutine set_drift_velocity(s,ir,bg_drftvel,imp_drftvel)
+      subroutine set_drift_velocity(s,ik,ir,bg_drftvel,imp_drftvel,
+     >                              exb_pol_drftvel)
       implicit none
-      real bg_drftvel,imp_drftvel
+      real bg_drftvel,imp_drftvel,exb_pol_drftvel
       include    'params'
 c     
       include    'driftvel'
 c     
       real s
-      integer ir
+      integer ir,ik
+c
+c     jdemod - March 2016 - add exb_pol_drftvel
+c
 c     
 C-----------------------------------------------------------------------
 c     
@@ -726,6 +731,7 @@ c     Assign zero values as default
 c     
       imp_drftvel = 0.0
       bg_drftvel = 0.0
+      exb_pol_drftvel = 0.0
 c     
 c     Replace with assigned values (which may be zero) depending
 c     on options - option 1,3 are direct to the impurity particle -
@@ -746,6 +752,18 @@ c
          imp_drftvel= 0.0
          bg_drftvel = pol_drftv(ir)
       endif
+
+      ! exb poloidal drift option is ON ... this option affects ion motion
+      ! in the poloidal direction perpendicular to the field line. In DIVIMP
+      ! terms this will move a particle onto an adjacent toroidal field
+      ! line at a distance that is either closer to or farther from the target
+      ! depending on the direction of the drift. This essentiall becomes a 
+      ! delta S step for the particle which is affected by the local magnetic
+      ! field ratios. 
+      if (exb_pol_opt .eq. 1) then 
+         exb_pol_drftvel = exb_pol_drft(ik,ir)
+      endif
+
 
 c     
 c     Previous code

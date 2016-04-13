@@ -1778,6 +1778,8 @@ c
       include 'line_profile'
 c
       include 'hc_global_opts'
+      include 'driftvel'
+
 c
       CHARACTER VERSE*5
 C
@@ -2529,7 +2531,14 @@ c
          call reload_subgrid(8)
 
       endif
-
+c
+      if (version_code.ge.6*maxrev+45) then 
+         call rinout ('R POT',osmpot2,maxnks*maxnrs)
+         call rinout ('R E_RAD',e_rad,maxnks*maxnrs)
+         call rinout ('R E_POL',e_pol,maxnks*maxnrs)
+         call rinout ('R ExB_R',exb_rad_drft,maxnks*maxnrs)
+         call rinout ('R ExB_P',exb_pol_drft,maxnks*maxnrs)
+      endif
 c
 c     Temporarily Add the following
 c

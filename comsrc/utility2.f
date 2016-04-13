@@ -6354,16 +6354,6 @@ c...      Calculate from low IK target to high IK target:
 
             ENDIF
 
-
-
-
-
-            WRITE(0,*) 'POT:',ik,ir,osmpot(ik,ir),
-     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
-     .        efield
-          ENDDO
-
-
       
 c          DO ik = 1, nks(ir)/2
 c            IF (ik.EQ.1) THEN
@@ -6385,6 +6375,13 @@ c            ENDIF
 c          ENDDO
 
 
+            WRITE(0,*) 'POT:',ik,ir,osmpot(ik,ir),
+     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
+     .        efield
+          ENDDO
+
+
+
         ENDIF
 
       ENDDO
@@ -6393,7 +6390,7 @@ c          ENDDO
  99   STOP
       END
 
-c subroutine: GetPotential
+c subroutine: CalcPotential2
 c
 c
 c jdemod - same purpose - include target potentials
@@ -6407,173 +6404,838 @@ c Estimate the plasma potential from (an estimate) of the parallel
 c electric field (KES).
 c
       SUBROUTINE CalcPotential2
+      use mod_interpolate
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
       INCLUDE 'comtor'
       INCLUDE 'slcom'
-c
+c     
 c     jdemod - put the potential and drift variables in the common block driftvel
-c
+c     
 c     this routine is for use in DIVIMP for calculating ExB related drifts
 c     Steve's original calcpotential is used in OUT
-c      
+c     
       include 'driftvel'
-c      
+c     
       INTEGER mode,ik,ir
       REAL    deltas1,deltas2,efield
 
       real    vpot
- 
+      real*8 :: rv(4,4),zv(4,4),phiv(4,4),drn,dzn,e_rad_tmp
 
-c      STOP 'CALCULATING POTENTIAL: NEED SHEATH DROP INCLUDED!'
+      real phi1,phi2,ds1,ds2,fact
+      integer irin,ikin,irout,ikout
+      integer ikinu,irinu,ikoutu,iroutu
+      integer ikind,irind,ikoutd,iroutd
+      integer iku,ikd
+      integer id,nc,nv,ic,iv
+
+      
 c
+c     Initialization
+c      
+c     Number of cells and number of vertices
+c
+      nc = 4
+      nv = 4
+      osmpot2 = 0.0
+      e_rad = 0.0
+      e_pol = 0.0
+      exb_rad_drft = 0.0
+      exb_pol_drft = 0.0
+
+c     
 c     jdemod - depending on option chosen the sheath potential is either approximated as 3Te or can be loaded as
-c              a profile from probe data
+c     a profile from probe data
 c
-c            - assumes below that efield is zero in core - not sure what to do about core plasma potential since 
-c              one would expect a potential discrepancy across the separatrix and pedestal. 
+c     NOTE: The code defines the potential as ZERO at the target surface and thus the potential increases going along the ring ... the 
+c           potential at the sheath edge is thus +3Te. 
 c
-c
+c     
+c     - assumes below that efield is zero in core - not sure what to do about core plasma potential since 
+c     one would expect a potential discrepancy across the separatrix and pedestal. 
+c     
+c     
 c     Perform calculation for all SOL rings including PFZ
-c
+c     
+
       DO ir = irsep, nrs
          IF (idring(ir).EQ.BOUNDARY) CYCLE
 
-c
-c         jdemod - calculate from each target independently
-c
-c
-c         jdemod - code to calculate the initial potential from LP data would go here
-c
-          osmpot2(0,ir) = -3.0 * kteds(idds(ir,2))
-          vpot = osmpot2(0,ir)
-c
-          DO ik = 1, nks(ir)/2
-c
-c            jdemod - need to increment vpot for both halves of cell but the value 
-c                     assigned to the cell is the centerpoint
-c                   - could interpolate the efield along the field line but I don't think
-c                     it would change the integral between the two cell centers
-c
-             deltas1 = kss(ik,ir) - ksb(ik-1 ,ir)
-             deltas2 = ksb(ik,ir) - kss(ik,ir)
+c     
+c     jdemod - calculate from each target independently
+c     
+c     
+c     jdemod - code to calculate the initial potential from LP data would go here
+c     
+!         write (6,'(a,i8,a)') '---------------------  ',ir,
+!     >                        '  ---------------------' 
 
-             efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
-c
-c            first half
-c
-             vpot = vpot - efield * deltas1 
-c
-c            assign
-c
-             osmpot2(ik,ir) = vpot
-c
-c            second half
-c
-             vpot = vpot - efield * deltas2
-c               
-             WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,osmpot(ik,ir),
-     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
-     .        efield,vpot
+         osmpot2(0,ir) =  3.0 * kteds(idds(ir,2))
+         vpot = osmpot2(0,ir)
+c     
+         DO ik = 1, ikmids(ir)
+c     
+c     jdemod - need to increment vpot for both halves of cell but the value 
+c     assigned to the cell is the centerpoint
+c     - could interpolate the efield along the field line but I don't think
+c     it would change the integral between the two cell centers
+c     
+            deltas1 = kss(ik,ir) - ksb(ik-1 ,ir)
+            deltas2 = ksb(ik,ir) - kss(ik,ir)
 
+            efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
+c     
+c     first half
+c     
+            vpot = vpot - efield * deltas1 
+c     
+c     assign
+c     
+            osmpot2(ik,ir) = vpot
+c     
+c     second half
+c     
+            vpot = vpot - efield * deltas2
+c     
+!            WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,kss(ik,ir),
+!     .           osmpot2(ik,ir),
+!     .           kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
+!     .           efield,vpot
+!
 
-          end do
-c
-c         jdemod - code to calculate the initial potential from LP data would go here
-c
-          osmpot2(nks(ir)+1,ir) = -3.0 * kteds(idds(ir,1))
-          vpot = osmpot2(nks(ir)+1,ir)
+         end do
+c     
+c     jdemod - code to calculate the initial potential from LP data would go here
+c     
+         write (6,*) 
 
-          DO ik = nks(ir),nks(ir)/2+1,-1
+         osmpot2(nks(ir)+1,ir) = 3.0 * kteds(idds(ir,1))
+         vpot = osmpot2(nks(ir)+1,ir)
 
-c
-c            jdemod - need to increment vpot for both halves of cell but the value 
-c                     assigned to the cell is the centerpoint
-c                   - could interpolate the efield along the field line but I don't think
-c                     it would change the integral between the two cell centers
-c
-             deltas1 = ksb(ik,ir) - kss(ik,ir)
-             deltas2 = kss(ik,ir) - ksb(ik-1,ir)
+         DO ik = nks(ir),ikmids(ir)+1,-1
 
-             efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
+c     
+c     jdemod - need to increment vpot for both halves of cell but the value 
+c     assigned to the cell is the centerpoint
+c     - could interpolate the efield along the field line but I don't think
+c     it would change the integral between the two cell centers
+c     
+            deltas1 = ksb(ik,ir) - kss(ik,ir)
+            deltas2 = kss(ik,ir) - ksb(ik-1,ir)
 
-c
-c            first half
-c
-             vpot = vpot - efield * deltas1 
-c
-c            assign
-c
-             osmpot2(ik,ir) = vpot
-c
-c            second half
-c
-             vpot = vpot - efield * deltas2
-c               
+            efield = kes(ik,ir) / (qtim * qtim * emi / crmi)
 
-             WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,osmpot(ik,ir),
-     .        kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
-     .        efield,vpot
+c     
+c     first half
+c     
+c     Note: Efield has opposite sign on second half ring in order to get 
+c           transport toward the target. Change the sign in the calculation
+c           of potential.
+c
+            vpot = vpot + efield * deltas1 
+c     
+c     assign
+c     
+            osmpot2(ik,ir) = vpot
+c     
+c     second half
+c
+c     Note: Efield has opposite sign on second half ring in order to get 
+c           transport toward the target. Change the sign in the calculation
+c           of potential.
+c     
+            vpot = vpot + efield * deltas2
+c     
 
-          end do
+!            WRITE(6,'(a,2i8,10(1x,g18.8))') 'POT:',ik,ir,kss(ik,ir),
+!     .           osmpot2(ik,ir),
+!     .           kes(ik,ir)/(QTIM * QTIM * EMI / CRMI), 
+!     .           efield,vpot
+
+         end do
 
       ENDDO
 
+c     
+c     jdemod - run through and calculate the potential at the cell corners
+c     so that the derivatives can be calculated on a cell by cell
+c     basis without referring to other cells
+c     
+
+c     
+c     jdemod - or just calculate the gradients and resulting drifts now
+c     obtaining the data for each corner might still be desirable(?)
+c     
+c     - now that osmpot2 is available ... can I use existing interpolation code? 
+c     
+c     These calculations need to go from one end of the ring to the other since the sign
+c     of the gradients is important. 
+c     - for radial drifts (a negative sign is an "inward" toward core or PFZ drift while a
+c     positive value is toward the plasma edge.
+c     - for poloidal drifts ... a negative sign is toward the "inner" target or target 1 while
+c     a postive value is toward the "outer" target or target 2.
+c     
+c     
+c     
+c     1) Calculate grad_phi_poloidal
+c     - take E-field interpolated to upper and lower cell boundaries
+c     - calculate the distance between them using the formula
+c     Need to calculate Btor/Bpol from KBFS which is Btot/Bpol
+c     Btot = sqrt(Bpol**2 + Btor**2)
+c     KBFS**2 = (Bpol**2 + Btor**2) / Bpol**2 = 1 + (Btor/Bpol)**2
+c     Btor/Bpol = sqrt(kbfs**2 -1)
+c     Note: Bpol = sqrt(Br**2 + Bz**2)
+c     
+c     fact = sqrt(kbfs(ik,ir)**2-1.0)
+c     d_pol = deltas / fact = delta_s * Bpol/Btor
+c     
+c     e_pol = -grad_phi_poloidal = (Phi_top_cell - Phi_bot_cell) / d_pol
+c     deltas = ksb(ik,ir)-ksb(ik-1,ir)
+c     
+c     
+      do ir = irsep, nrs
+!         write (6,'(a,i8,a)') '---------------------  ',ir,
+!     >                        '  ---------------------'          
+         do ik = 1,nks(ir)
+            if (ik.eq.1) then 
+               phi1 = osmpot2(0,ir)
+               ds1 = kss(ik,ir)-ksb(0,ir)
+               
+               ds2 = ksb(ik,ir)-kss(ik,ir)
+               phi2 = osmpot2(ik,ir) + 
+     >              (osmpot2(ik+1,ir)-osmpot2(ik,ir)) * 
+     >              ds2/(kss(ik+1,ir)-kss(ik,ir)) 
 
 
+            elseif (ik.eq.nks(ir)) then 
 
+               ds1 =  kss(ik,ir)-ksb(ik-1,ir)
+               phi1 = osmpot2(ik,ir) +
+     >              (osmpot2(ik-1,ir)-osmpot2(ik,ir)) * 
+     >              ds1/(kss(ik,ir)-kss(ik-1,ir)) 
 
+               ds2 = ksb(ik,ir)-kss(ik,ir)
+               phi2 = osmpot2(nks(ir)+1,ir)
 
+            else
+               ds1 =  kss(ik,ir)-ksb(ik-1,ir)
+               phi1 = osmpot2(ik,ir) +
+     >              (osmpot2(ik-1,ir)-osmpot2(ik,ir)) * 
+     >              ds1/(kss(ik,ir)-kss(ik-1,ir)) 
+               
+               ds2 = ksb(ik,ir)-kss(ik,ir)
+               phi2 = osmpot2(ik,ir) + 
+     >              (osmpot2(ik+1,ir)-osmpot2(ik,ir)) * 
+     >              ds2/(kss(ik+1,ir)-kss(ik,ir)) 
+            endif
+            
+            fact = sqrt(kbfs(ik,ir)**2-1.0)
+            if (fact.le.0.0) then 
+               e_pol(ik,ir) = 0.0
+            else
+               e_pol(ik,ir) = -(phi2-phi1)/(ds1+ds2) * fact
+            endif
 
+!            write(6,'(a,2i8,20(1x,g18.8))') 'E_POL:',ik,ir,e_pol(ik,ir),
+!     >           phi2,phi1,ds2,ds1,(ds2+ds1)/fact,fact,ksb(ik-1,ir),
+!     >           kss(ik,ir),ksb(ik,ir),osmpot2(ik,ir)
 
+         enddo
 
+         ! Zero out midpoint where potentials do not match
+         e_pol(ikmids(ir),ir) = 0.0
+         e_pol(ikmids(ir)+1,ir) = 0.0
 
+      enddo
+
+c     
+c     
+c     2) Calculate e_rad = -grad_phi_radial
+c     - This is more complicated
+c     - extract 9 phi points centered on the current cell
+c     - Load the normalize vector for the cell center line [drn,dzn]
+c     - Take the normal vector to this (90 degrees CCW ... [-dzn,drn] ... this defines the direction for interpolation of
+c     grad_phi_radial since the normal vector defines the radial direction to the field line at the cell center.
+c     - Go a small distance along the normal in each direction ... interpolate to get Phi at these locations ... calculate 
+c     the gradient ... grad_phi_radial = (ph1-ph2)/(dx1+dx2) where dx1 and dx2 are the distances from the cell center
+c     along the normal line to the phi interpolation locations. 
+c     - the one requirement is that the interpolation locations must be within the region defined by the 8 adjacent cell centers
+c     no matter what the direction of the cell center normal vector. This means that the distance needs to be resampled
+c     until the test locations lie within the defined cells for interpolation (recursive code?).
+c     - also need to test for degenerate cases or boundary rings where there could be geometry issues. 
+c     - alternatively, could implement a routine to find the cell wall intersections and do the interpolation to that location,
+c     however, in this case the contributions from the other corners of the cell would be left out so it might not be as 
+c     accurate (?) ... should probably use short distances relative to the cells size and rely on the interpolation routines
+c     
+
+      do ir = irsep,nrs
+         do ik = 1,nks(ir)
+            iku = ik+1
+            ikd = ik-1
+            if (ik.eq.1) then 
+               ikd = ik
+            elseif (ik.eq.nks(ir)) then 
+               iku = ik
+            endif
+c
+c           center cell
+c
+            irin = irins(ik,ir)
+            ikin = ikins(ik,ir)
+            irout = irouts(ik,ir)
+            ikout = ikouts(ik,ir)
+c
+c           Next cell up ring  
+c
+            irinu = irins(iku,ir)
+            ikinu = ikins(iku,ir)
+            iroutu = irouts(iku,ir)
+            ikoutu = ikouts(iku,ir)
+c
+c           Last cell down ring
+c
+            irind = irins(ikd,ir)
+            ikind = ikins(ikd,ir)
+            iroutd = irouts(ikd,ir)
+            ikoutd = ikouts(ikd,ir)
+c
+            call get_cell_norm(ik,ir,drn,dzn)
 
 c
-c         jdemod - run through and calculate the potential at the cell corners
-c                  so that the derivatives can be calculated on a cell by cell
-c                  basis without referring to other cells
+c           Deal with cells at targets since rs and zs are
+c           replaced by krb and kzb (cell bounds for first and
+c           last cells). This code should not need modificaiton
+c           for dealing with cells adjacent to core plasma
 c
+            if (ik.eq.1) then 
 
-c
-c         jdemod - or just calculate the gradients and resulting drifts now
-c                  obtaining the data for each corner might still be desirable(?)
-c                  
-c                - now that osmpot2 is available ... can I use existing interpolation code? 
-c          
+c     
+c     Load up an array containing the corner points and potential values for 
+c     each quadrant from the cell center
+c     
+
+! first polygon
+               rv(1,1) = krb(ik-1,ir)
+               zv(1,1) = kzb(ik-1,ir)
+               phiv(1,1) = osmpot2(ik-1,ir)
+               
+               rv(2,1) = krb(ikout-1,irout)
+               zv(2,1) = kzb(ikout-1,irout)
+               phiv(2,1) = osmpot2(ikout-1,irout)
+               
+               rv(3,1) = rs(ikout,irout)
+               zv(3,1) = zs(ikout,irout)
+               phiv(3,1) = osmpot2(ikout,irout)
+
+               rv(4,1) = rs(ik,ir)
+               zv(4,1) = zs(ik,ir)
+               phiv(4,1) = osmpot2(ik,ir)
+
+! second polygon
+
+               rv(1,2) = rs(ik,ir)
+               zv(1,2) = zs(ik,ir)
+               phiv(1,2) = osmpot2(ik,ir)
+
+               rv(2,2) = rs(ikout,irout)
+               zv(2,2) = zs(ikout,irout)
+               phiv(2,2) = osmpot2(ikout,irout)
+
+               rv(3,2) = rs(ikout+1,irout)
+               zv(3,2) = zs(ikout+1,irout)
+               phiv(3,2) = osmpot2(ikout+1,irout)
+
+               rv(4,2) = rs(ik+1,ir)
+               zv(4,2) = zs(ik+1,ir)
+               phiv(4,2) = osmpot2(ik+1,ir)
+
+! third polygon
+
+               rv(1,3) = rs(ikin,irin)
+               zv(1,3) = zs(ikin,irin)
+               phiv(1,3) = osmpot2(ikin,irin)
+
+               rv(2,3) = rs(ik,ir)
+               zv(2,3) = zs(ik,ir)
+               phiv(2,3) = osmpot2(ik,ir)
+
+               rv(3,3) = rs(ik+1,ir)
+               zv(3,3) = zs(ik+1,ir)
+               phiv(3,3) = osmpot2(ik+1,ir)
+
+               rv(4,3) = rs(ikin+1,irin)
+               zv(4,3) = zs(ikin+1,irin)
+               phiv(4,3) = osmpot2(ikin+1,irin)
+
+! fourth polygon
+
+               rv(1,4) = krb(ikin-1,irin)
+               zv(1,4) = kzb(ikin-1,irin)
+               phiv(1,4) = osmpot2(ikin-1,irin)
+               
+               rv(2,4) = krb(ik-1,ir)
+               zv(2,4) = kzb(ik-1,ir)
+               phiv(2,4) = osmpot2(ik-1,ir)
+               
+               rv(3,4) = rs(ik,ir)
+               zv(3,4) = zs(ik,ir)
+               phiv(3,4) = osmpot2(ik,ir)
+
+               rv(4,4) = rs(ikin,irin)
+               zv(4,4) = zs(ikin,irin)
+               phiv(4,4) = osmpot2(ikin,irin)
+c     
+            elseif (ik.eq.nks(ir)) then 
+c     
+c     Load up an array containing the corner points and potential values for 
+c     each quadrant from the cell center
+c     
+
+! first polygon
+               rv(1,1) = rs(ik-1,ir)
+               zv(1,1) = zs(ik-1,ir)
+               phiv(1,1) = osmpot2(ik-1,ir)
+               
+               rv(2,1) = rs(ikout-1,irout)
+               zv(2,1) = zs(ikout-1,irout)
+               phiv(2,1) = osmpot2(ikout-1,irout)
+               
+               rv(3,1) = rs(ikout,irout)
+               zv(3,1) = zs(ikout,irout)
+               phiv(3,1) = osmpot2(ikout,irout)
+
+               rv(4,1) = rs(ik,ir)
+               zv(4,1) = zs(ik,ir)
+               phiv(4,1) = osmpot2(ik,ir)
+
+! second polygon
+
+               rv(1,2) = rs(ik,ir)
+               zv(1,2) = zs(ik,ir)
+               phiv(1,2) = osmpot2(ik,ir)
+
+               rv(2,2) = rs(ikout,irout)
+               zv(2,2) = zs(ikout,irout)
+               phiv(2,2) = osmpot2(ikout,irout)
+
+               rv(3,2) = krb(ikout,irout)
+               zv(3,2) = kzb(ikout,irout)
+               phiv(3,2) = osmpot2(ikout+1,irout)
+
+               rv(4,2) = krb(ik,ir)
+               zv(4,2) = kzb(ik,ir)
+               phiv(4,2) = osmpot2(ik+1,ir)
+
+! third polygon
+
+               rv(1,3) = rs(ikin,irin)
+               zv(1,3) = zs(ikin,irin)
+               phiv(1,3) = osmpot2(ikin,irin)
+
+               rv(2,3) = rs(ik,ir)
+               zv(2,3) = zs(ik,ir)
+               phiv(2,3) = osmpot2(ik,ir)
+
+               rv(3,3) = krb(ik,ir)
+               zv(3,3) = kzb(ik,ir)
+               phiv(3,3) = osmpot2(ik+1,ir)
+
+               rv(4,3) = krb(ikin,irin)
+               zv(4,3) = kzb(ikin,irin)
+               phiv(4,3) = osmpot2(ikin+1,irin)
+
+! fourth polygon
+
+               rv(1,4) = rs(ikin-1,irin)
+               zv(1,4) = zs(ikin-1,irin)
+               phiv(1,4) = osmpot2(ikin-1,irin)
+               
+               rv(2,4) = rs(ik-1,ir)
+               zv(2,4) = zs(ik-1,ir)
+               phiv(2,4) = osmpot2(ik-1,ir)
+               
+               rv(3,4) = rs(ik,ir)
+               zv(3,4) = zs(ik,ir)
+               phiv(3,4) = osmpot2(ik,ir)
+
+               rv(4,4) = rs(ikin,irin)
+               zv(4,4) = zs(ikin,irin)
+               phiv(4,4) = osmpot2(ikin,irin)
+
+
+            else
+
+               ! deal with standard cells on the grid
+               ! first polygon - down and out :) 
+               rv(1,1) = rs(ikd,ir)
+               zv(1,1) = zs(ikd,ir)
+               phiv(1,1) = osmpot2(ikd,ir)
+               
+               rv(2,1) = rs(ikoutd,iroutd)
+               zv(2,1) = zs(ikoutd,iroutd)
+               phiv(2,1) = osmpot2(ikoutd,iroutd)
+               
+               rv(3,1) = rs(ikout,irout)
+               zv(3,1) = zs(ikout,irout)
+               phiv(3,1) = osmpot2(ikout,irout)
+
+               rv(4,1) = rs(ik,ir)
+               zv(4,1) = zs(ik,ir)
+               phiv(4,1) = osmpot2(ik,ir)
+
+               ! second polygon
+               ! up and out
+
+               rv(1,2) = rs(ik,ir)
+               zv(1,2) = zs(ik,ir)
+               phiv(1,2) = osmpot2(ik,ir)
+
+               rv(2,2) = rs(ikout,irout)
+               zv(2,2) = zs(ikout,irout)
+               phiv(2,2) = osmpot2(ikout,irout)
+
+               rv(3,2) = rs(ikoutu,iroutu)
+               zv(3,2) = zs(ikoutu,iroutu)
+               phiv(3,2) = osmpot2(ikoutu,iroutu)
+
+               rv(4,2) = rs(iku,ir)
+               zv(4,2) = zs(iku,ir)
+               phiv(4,2) = osmpot2(iku,ir)
+
+               ! third polygon
+               ! up and in 
+
+               rv(1,3) = rs(ikin,irin)
+               zv(1,3) = zs(ikin,irin)
+               phiv(1,3) = osmpot2(ikin,irin)
+
+               rv(2,3) = rs(ik,ir)
+               zv(2,3) = zs(ik,ir)
+               phiv(2,3) = osmpot2(ik,ir)
+
+               rv(3,3) = rs(iku,ir)
+               zv(3,3) = zs(iku,ir)
+               phiv(3,3) = osmpot2(iku,ir)
+
+               rv(4,3) = rs(ikinu,irinu)
+               zv(4,3) = zs(ikinu,irinu)
+               phiv(4,3) = osmpot2(ikinu,irinu)
+
+               ! fourth polygon
+               ! down and in
+
+               rv(1,4) = rs(ikind,irind)
+               zv(1,4) = zs(ikind,irind)
+               phiv(1,4) = osmpot2(ikind,irind)
+               
+               rv(2,4) = rs(ikd,ir)
+               zv(2,4) = zs(ikd,ir)
+               phiv(2,4) = osmpot2(ikd,ir)
+               
+               rv(3,4) = rs(ik,ir)
+               zv(3,4) = zs(ik,ir)
+               phiv(3,4) = osmpot2(ik,ir)
+
+               rv(4,4) = rs(ikin,irin)
+               zv(4,4) = zs(ikin,irin)
+               phiv(4,4) = osmpot2(ikin,irin)
+
+            endif
+
+            ! make adjustments to phi values for cells that are adjacent to the core
+            ! Need to do more to detect when adjacent to the Xpoint. The cells that 
+            ! are just below and just above the Xpoint need adjustment since the
+            ! code tries to use the center points of inappropriate non-adjacent cells. 
+            ! 
+            ! Adjust osmpot2 values if center cell is adjacent to core
+            !
+            if (irin.lt.irsep) then 
+               ! Need to change the phi values for the "core" elements since they will be zero
+               ! at this point
+
+               ! third polygon
+               ! Set potentials equal to separatrix value
+
+               phiv(1,3) = osmpot2(ik,ir)
+
+               ! fourth polygon
+               ! Set potentials equal to separatrix value
+
+               phiv(4,4) = osmpot2(ik,ir)
+
+            endif
+
+            ! Adjust osmpot2 values if up cell is adjacent to core
+            if (irinu.lt.irsep) then
+               phiv(4,3) = osmpot2(iku,ir)
+            endif
+
+            ! Adjust osmpot2 values if down cell is adjacent to core
+            if (irind.lt.irsep) then 
+               phiv(1,4) = osmpot2(ikd,ir)               
+            endif
 
 
 
+!               do ic = 1,nc
+!                  write(6,'(a,7i8,20(1x,g15.8))') 'CELLS:',
+!     >                 ic,ik,ir,ikin,irin,ikout,irout,
+!     >                 (rv(iv,ic),zv(iv,ic),phiv(iv,ic),iv=1,nv),
+!     >                 rs(ik,ir),zs(ik,ir),drn,dzn,sqrt(drn**2+dzn**2)
+!               end do
 
 
+            call get_e_rad(rv,zv,phiv,drn,dzn,nc,nv,ik,ir,e_rad_tmp,
+     >           dble(rs(ik,ir)),dble(zs(ik,ir)))
 
-      
-c          DO ik = 1, nks(ir)/2
-c            IF (ik.EQ.1) THEN
-c              deltas = kss(ik,ir) - ksb(0 ,ir)
-c              osmpot(ik,ir+1) = -kes(ik,ir) * deltas
-c            ELSE
-c              deltas = kss(ik,ir) - kss(ik-1,ir)
-c              osmpot(ik,ir+1) = osmpot(ik-1,ir+1) -kes(ik,ir) * deltas
-c            ENDIF
-c          ENDDO
-c          DO ik = nks(ir), nks(ir)/2+1, -1
-c            IF (ik.EQ.1) THEN
-c              deltas = kss(ik,ir) - ksb(0 ,ir)
-c              osmpot(ik,ir+1) = -kes(ik,ir) * deltas
-c            ELSE
-c              deltas = kss(ik,ir) - kss(ik-1,ir)
-c              osmpot(ik,ir+1) = osmpot(ik-1,ir+1) -kes(ik,ir) * deltas
-c            ENDIF
-c          ENDDO
+            e_rad(ik,ir) = e_rad_tmp
+
+!            write(6,'(a,2i8,10(1x,g15.8))') 'E_RAD:',ik,ir,e_rad(ik,ir),
+!     >           drn,dzn,rs(ik,ir),zs(ik,ir)
+         end do
+         ! Zero out midpoint where potentials do not match
+         e_rad(ikmids(ir),ir) = 0.0
+         e_rad(ikmids(ir)+1,ir) = 0.0
+
+      end do
+
+c     
+c     Now that the radial and poloidal electric fields have been calculated
+c     Calculate the drifts ... scale the drifts to distances by 
+c     multiplying by the ion time step and applying geometric factors
+c     to the poloidal drift
+c     
+      do ir = irsep,nrs
+         do ik = 1,nks(ir)
+            if (bts(ik,ir).ne.0.0) then 
+! include timestep in radial drift
+
+! project the poloidal drift to S and include timestep
+               fact = sqrt(kbfs(ik,ir)**2-1.0)
+               exb_pol_drft(ik,ir)= e_rad(ik,ir)/bts(ik,ir) 
+     >                                 * fact *qtim
+               exb_rad_drft(ik,ir) = -e_pol(ik,ir)/bts(ik,ir)*qtim
+            endif
+         end do
+
+      end do
+c     
+c     Lets print out everything 
+c     
+      if (cprint.ge.9) then 
+         write(6,'(a)') 'DRIFT INFORMATION:',qtim
+         do ir = irsep,nrs
+            do ik = 1,nks(ir)
+               fact = sqrt(kbfs(ik,ir)**2-1.0)
+
+               write(6,'(2i8,20(1x,g14.6))') ik,ir,
+     >              osmpot2(ik,ir),e_rad(ik,ir),e_pol(ik,ir),
+     >              exb_rad_drft(ik,ir),exb_pol_drft(ik,ir),bts(ik,ir),
+     >              fact
+
+            end do
+         end do
+      endif
 
 
       RETURN
  99   STOP
       END
+c
+c
+c
+      subroutine get_e_rad(rv,zv,phi,drn,dzn,nc,nv,ik,ir,e_rad_tmp,r,z)
+      use mod_interpolate
+      implicit none
+      integer :: nv,nc,ik,ir
+      real*8 :: rv(nv,nc),zv(nv,nc),phi(nv,nc),drn,dzn,r,z,e_rad_tmp
 
+      real :: areas(4)
+
+      real*8 :: rt(2),zt(2),dt(2)
+      integer :: ct(2),ic
+      real*8 :: dist
+      real*8 :: phi1,phi2
+
+      ! calculate the radial electric field for the cell
+
+      e_rad_tmp = 0.0
+
+      ! calculate areas of the cells to detect boundary conditions
+      ! If any of the cell areas are zero then set e_rad = 0.0 since 
+      ! we are on a boundary ring or grid edge
+       do ic = 1,nc
+          areas(ic) = cell_area(rv(:,ic),zv(:,ic),nv)
+          if (areas(ic) .le. 0.0) then
+             write(6,'(a,2i8)') 'Debug: Zero area cells in e_rad'//
+     >                  ' calculation - boundary?', ik,ir
+             e_rad_tmp = 0.0
+             return
+          endif
+       end do
+
+       ! Determine test points ... they must lie along normal and be in one of the 4 cells
+       ! around the point where we are determining the value of -grad_phi_radial
+       
+       ! Note that the vertices 2-3 and 1-4 are parallel to the field lines in the 
+       ! cells passed into this routine. Sides 1-2 and 3-4 go across the field lines
+       ! but may be at almost any angle to the field lines. Cells are non-orthogonal in general.
+
+       ! Perform calculations in double precision. 
+
+       ! Start off using +/- 0.00001m or 0.01mm from the cell center - this should pretty much always 
+       ! lie in the cell. 
+       ! dist = 1.0d-3
+
+       call get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc)
+
+       ! now that we have test points that are guaranteed to be within cells and we have identified
+       ! the cells and distances from the cell center ... calculate the gradient. 
+       ! Note: cell vertices are listed clockwise .. sides 1->2, 3->4 are across the field lines while
+       !       sides 2->3 and 1->4 are parallel to the field lines ... this must match the convention
+       !        used in the interpolation routine. 
+       ! Need to define the sign used. Test point 1 will be along the "positive" direction of the normal
+       ! or "outward" from the cell center while test point 2 is "inward" or along the negative normal direction. 
+       ! e = -grad(phi) ... for now lets use phi2 = phi(test_point_2) ... phi1 = phi(test_point_1)
+       ! e = -grad(phi) = -(phi2-phi1)/(dist1+dist2)
+       ! NOTE: if you consider the positive R axis as the reference line in the outer divertor ... then 
+       !       outward radially in the outer divertor the definition would be ... 
+       !       E-rad = -(phi_outer-phi_inner)/dRad = - (phi1 - phi2)/(dist1+dist2)
+       !       Switch to this definition for now. 
+
+       call cell_interpolate(rt(1),zt(1),phi1,
+     >                       rv(:,ct(1)),zv(:,ct(1)),phi(:,ct(1)))
+       
+       call cell_interpolate(rt(2),zt(2),phi2,
+     >                       rv(:,ct(2)),zv(:,ct(2)),phi(:,ct(2)))
+       
+       dist = dt(1) + dt(2)
+
+       if (dist.le.0.0) then 
+          write(0,*) 'ERROR in get_e_rad: dist = 0.0'
+          e_rad_tmp = 0.0
+       else
+!
+!         Set definiton of E-rad = -(phi1-phi2)/dist
+!         
+!          e_rad_tmp = -(phi2-phi1)/dist
+!
+          e_rad_tmp = -(phi1-phi2)/dist
+       endif
+
+!       write(6,'(a,16x,4(1x,g15.8),i8,4(1x,g15.8),i8,g15.8)') 'E_RAD:',
+!     >      phi1,rt(1),zt(1),dt(1),ct(1),
+!     >      phi2,rt(2),zt(2),dt(2),ct(2),
+!     >      e_rad_tmp
+
+
+       return
+       end
+
+
+      subroutine get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc)
+      implicit none
+      integer nv,nc
+      real*8 :: rv(nv,nc),zv(nv,nc),drn,dzn,r,z
+      real*8 :: rt(2),zt(2),dt(2)
+      integer :: ct(2),found
+      logical :: res            
+
+      real*8 :: dist
+      integer :: npt,ic
+      logical,external :: inpolydp
+      integer :: iv
+
+      found = 0
+      !dist = 0.001d0            ! start with +/- 1mm from center
+      !dist = 0.0001d0            ! start with +/- 0.1mm from center
+      dist = 0.00001d0            ! start with +/- 0.01mm from center
+      ct = 0.0
+      dt = dist
+!      write(6,'(a,20(1x,g14.7))') 'TESTA:',r,z,drn,dzn
+
+
+      do while (found.ne.2)
+         !     need to get two points found within the cells
+         do npt = 1,2
+            rt(npt) = r - (-1)**npt * drn * dist
+            zt(npt) = z - (-1)**npt * dzn * dist
+!            write(6,'(a,2i8,20(1x,g14.7))') 'TESTB:',npt,found,
+!     >           r,z, rt(npt),zt(npt),drn,dzn,dist,(-1)**npt
+
+            do ic = 1,nc
+               res = inpolydp(rt(npt),zt(npt),nv,rv(:,ic),zv(:,ic)) 
+               if (res) then
+                  !     point has been found in polygon
+                  found = found + 1
+                  ct(npt) = ic
+                  dt(npt) = dist                   
+!                  write(6,'(a,2i8,20(1x,g14.7))') 'TESTC:',npt,found,
+!     >                 r,z, rt(npt),zt(npt),ct(npt),
+!     >                 drn,dzn,dist,(-1)**npt
+                  exit
+               endif
+            end do
+         end do
+
+         if (found .ne.2) then
+            found = 0
+            ! reduce dist and try again
+            ! check to see if dist is too small and issue an error message
+            dist = dist * 0.5d0
+            if (dist.lt.1.0d-6) then 
+               write(0,*) 'ERROR finding test points'//
+     >              ' in e_rad calculation: DIST TOO SMALL =',dist
+               write(6,*) 'ERROR finding test points'//
+     >              ' in e_rad calculation: DIST TOO SMALL =',dist
+               do ic = 1,nc
+                  write(0,'(a,i8,20(1x,g14.6))') 'GET_TEST_POINTS:',
+     >                 ic,(rv(iv,ic),zv(iv,ic),iv=1,nv),r,z,dist,
+     >                 rt(1),zt(1),rt(2),zt(2)
+                  write(6,'(a,i8,20(1x,g14.6))') 'GET_TEST_POINTS:',
+     >                 ic,(rv(iv,ic),zv(iv,ic),iv=1,nv),r,z,dist,
+     >                 rt(1),zt(1),rt(2),zt(2)
+               end do
+               stop 'ERROR in GET_TEST_POINTS'
+            endif
+         endif
+      end do
+
+      return 
+      end
+
+
+      subroutine get_cell_norm(ik,ir,drn,dzn)
+      implicit none
+      include 'params'
+      include 'cgeom'
+      integer ik,ir
+      real*8 :: dn
+      real*8 ::  drn,dzn
+      real*8 :: drt, dzt
+
+      ! Find the unit vector normal to the axis of the cell
+
+      drt = krb(ik,ir)-krb(ik-1,ir)
+      dzt = kzb(ik,ir)-kzb(ik-1,ir)
+
+      dn = sqrt(drt**2+dzt**2)
+
+
+      ! Outward normal unit vector from cell center
+
+      drn = -dzt/dn
+      dzn =  drt/dn
+
+!      write(6,'(a,2i4,20(1x,g14.7))') 'Norm:',ik,ir,krb(ik,ir),
+!     >       kzb(ik,ir),krb(ik-1,ir),kzb(ik-1,ir),drn,dzn,drt,dzt,dn
+
+
+      return
+      end
 
 c
 c ======================================================================
