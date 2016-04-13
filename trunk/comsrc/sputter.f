@@ -256,7 +256,7 @@ C
 C
 c      New: pass Te, Ti to yield function; Krieger IPP/97
 c
-       FUNCTION YIELD (MATP,MATT,ENERGY,Te,ti)
+       FUNCTION YIELD(MATP,MATT,ENERGY,Te,ti)
        use eckstein_2002_yield_data
        use eckstein_2007_yield_data
        IMPLICIT none

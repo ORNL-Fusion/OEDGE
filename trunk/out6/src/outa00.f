@@ -823,18 +823,10 @@ c
 
       end do 
 
-
-
-
-
 c
 c     Assign value for number of printable charge states
 c
       prnizs = min(6,nizs)
-
-
-
-
 
 
 C
@@ -967,20 +959,14 @@ c     Print out wall erosion and deposition data.
 c
       call pr_calc_walldep
 c
-c
+c     Print eirene data analysis
 c
       call pr_eirene_analysis
-
-
-
-
-
-
-
-
-
-
-
+c
+c     Print exb analysis
+c
+      call pr_exb_analysis
+c
 
 
       return 
@@ -2376,6 +2362,7 @@ c
 c
 c
       subroutine pr_eirene_analysis
+      use error_handling
       implicit none
       include 'params'
       include 'outcom'
@@ -2428,20 +2415,31 @@ c
       real*8 :: zprof,deltaz
       real*8 :: h_profiles(maxnrs,5)
       real*8 :: tmp_profiles(maxnrs,6)
+
+      integer :: tu,ierr
 c
 c     Print out table of Eirene calcualted Hydrogenic values
 c
-      write(6,*)
-      write(6,'(a)') 'EIRENE Calculated Hydrogenic Quantities'
-      write(6,*)
-      write(6,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
-      write(6,'(a,i6)') 'PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
+      call find_free_unit_number(tu)
+      open(tu,file='eirene_iz_analysis.dat',iostat=ierr)
+
+      if (ierr.ne.0) then 
+         call errmsg('PR_EIRENE_ANALYSIS: Error opening file',ierr)
+         return
+      endif
+
+
+      write(tu,*)
+      write(tu,'(a)') 'EIRENE Calculated Hydrogenic Quantities'
+      write(tu,*)
+      write(tu,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
+      write(tu,'(a,i6)') 'PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
 c
       do ir = 1,nrs
 
-         write(6,*) 
-         write(6,'(a,2x,a,i6)') 'START TARGET:'//OUTER,' RING = ',ir
-         write(6,'(2(2x,a,2x),3x,a,3x,3(4x,a,3x),3x,a,3x,2(6x,a,6x))') 
+         write(tu,*) 
+         write(tu,'(a,2x,a,i6)') 'START TARGET:'//OUTER,' RING = ',ir
+         write(tu,'(2(2x,a,2x),3x,a,3x,3(4x,a,3x),3x,a,3x,2(6x,a,6x))') 
      >   'IK','IR','PINATOM','PINENA','PINMOL','PINENM',
      >   'DELTA-P','R','Z'
 
@@ -2449,7 +2447,7 @@ c
 
          do ik = 1,nks(ir)
 
-            write(6,'(2(1x,i5),1p,7(1x,g12.5))') ik,ir,
+            write(tu,'(2(1x,i5),1p,7(1x,g12.5))') ik,ir,
      >           pinatom(ik,ir),pinena(ik,ir),
      >           pinmol(ik,ir),pinenm(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
      >           rs(ik,ir),zs(ik,ir)
@@ -2461,7 +2459,7 @@ c
 c            tmpsum2= tmpsum2 + tmpsum
 c
 c
-c            write(6,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
+c            write(tu,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
 c     >           krb(ik,ir),kzb(ik,ir),
 c     >           krb(ik-1,ir),kzb(ik-1,ir),rs(ik,ir),zs(ik,ir),
 c     >           kpb(ik,ir)-kpb(ik-1,ir),tmpsum,
@@ -2469,18 +2467,18 @@ c     >           kpb(ik,ir), tmpsum2,ksb(ik,ir),ksb(ik-1,ir)
 c
 
          end do  
-         write(6,'(a)') 'END TARGET:'//INNER
+         write(tu,'(a)') 'END TARGET:'//INNER
 
       end do
 c
 c     Core and pedestal analysis 
 c
-      write(6,*)
-      write(6,'(a)') ' EIRENE Calculated Core Fueling'
-      write(6,*)
-      write(6,'(a,i6)') ' SEPARATRIX RING                      = ',irsep 
-      write(6,'(a,4(1x,g18.8))') ' R0,Z0 :',r0,z0
-      write(6,'(a,4(1x,g18.8))') ' RXP,ZZP :',rxp,zxp
+      write(tu,*)
+      write(tu,'(a)') ' EIRENE Calculated Core Fueling'
+      write(tu,*)
+      write(tu,'(a,i6)')' SEPARATRIX RING                      = ',irsep 
+      write(tu,'(a,4(1x,g18.8))') ' R0,Z0 :',r0,z0
+      write(tu,'(a,4(1x,g18.8))') ' RXP,ZZP :',rxp,zxp
 
       
       ! integrate along the ring and print out the total ionization and scaled ionization
@@ -2504,12 +2502,12 @@ c
       psi1_reg = 0.9
       psi2_reg = 0.95
 
-      write(6,'(a,1x,g12.5)') ' XPT_REGION=Z<Z0,ABS(R-RXP)<= ',
+      write(tu,'(a,1x,g12.5)') ' XPT_REGION=Z<Z0,ABS(R-RXP)<= ',
      >                      xpt_reg
-      write(6,'(a,1x,g12.5)') ' OMP_REGION=R>R0,ABS(Z-Z0)<= ',
+      write(tu,'(a,1x,g12.5)') ' OMP_REGION=R>R0,ABS(Z-Z0)<= ',
      >                      omp_reg
-      write(6,'(a,1x,g12.5)') ' NEAR_SEP_REGION1:PSI> ',psi1_reg
-      write(6,'(a,1x,g12.5)') ' NEAR_SEP_REGION2:PSI> ',psi2_reg
+      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION1:PSI> ',psi1_reg
+      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION2:PSI> ',psi2_reg
 
 
       do ir = 1,nrs
@@ -2641,25 +2639,25 @@ c
          end do
       enddo
 
-      write(6,'(a,g18.8)') ' Total Ionization     :',totsrc
-      write(6,'(a,g18.8)') ' Total Core_Ionization:',totcore
+      write(tu,'(a,g18.8)') ' Total Ionization     :',totsrc
+      write(tu,'(a,g18.8)') ' Total Core_Ionization:',totcore
       if (totsrc.ne.0.) then 
-         write(6,'(a,g18.8)') ' Fraction Core_IZ  :',totcore/totsrc
+         write(tu,'(a,g18.8)') ' Fraction Core_IZ  :',totcore/totsrc
       endif
 
-      write(6,*)
+      write(tu,*)
 
-      write(6,'(a)') ' Core poloidal'//
+      write(tu,'(a)') ' Core poloidal'//
      >               ' ionization distributions'
-      write(6,*)
+      write(tu,*)
 
-      write(6,'(a)') ' IK       KSS    KPS R Z  Total_Den  Total_vol'//
+      write(tu,'(a)') ' IK       KSS    KPS R Z  Total_Den  Total_vol'//
      >               '    NearSEP1_Den   NearSEP1_vol  '//
      >               '    NearSEP2_Den   NearSEP2_vol   Separatrix_area'
                     
       ir = irsep-1
       do ik = 1,nks(irsep-1)-1
-         write(6,'(i8,12(1x,g18.8))') ik,kss(ik,ir),
+         write(tu,'(i8,12(1x,g18.8))') ik,kss(ik,ir),
      >         kps(ik,ir),rs(ik,ir),zs(ik,ir),
      >         totcore_poloidal(ik,1),totcore_poloidal_vol(ik,1),
      >         totcore_poloidal(ik,2),totcore_poloidal_vol(ik,2),
@@ -2667,13 +2665,13 @@ c
      >         totcore_poloidal_area(ik)
       end do
          
-      write(6,*)
+      write(tu,*)
 
-      write(6,'(a)') ' Core radial'//
+      write(tu,'(a)') ' Core radial'//
      >               ' ionization distributions'
-      write(6,*)
+      write(tu,*)
 
-      write(6,'(a)') ' IR       PSIN1   '//
+      write(tu,'(a)') ' IR       PSIN1   '//
      >           '     Total_Density    Total-vol '//
      >           '     OMP_Density      OMP-vol '//
      >           '     XPT_Density      XPT-vol '//
@@ -2683,7 +2681,7 @@ c
 
 
       do ir = 2,irsep-1
-         write(6,'(i8,1x,f13.6,12(1x,g18.8))') ir,
+         write(tu,'(i8,1x,f13.6,12(1x,g18.8))') ir,
      >         psitarg(ir,1),
      >         totcore_radial(ir,1),totcore_radial_vol(ir,1),
      >         totcore_radial(ir,2),totcore_radial_vol(ir,2),
@@ -2765,27 +2763,126 @@ c
 
       ! write out the outer midplane density profiles
 
-      write(6,'(a,f12.5,a,f12.5,a,f12.5)') 
+      write(tu,'(a,f12.5,a,f12.5,a,f12.5)') 
      >                'OUTER MID-PLANE DENSITY PROFILES: R > ',
      >                 r0,' : Z = ',z0,' +/- ',deltaz
-      write(6,'(a)') ' CNT        IR       PSIN1   '//
+      write(tu,'(a)') ' CNT        IR       PSIN1   '//
      >           '     D_Density       D2_Density '//
      >           '     Dioniz_Density   '
 
       do in = 1,profcnt
-         write(6,'(i8,12(1x,g18.8))') in,
+         write(tu,'(i8,12(1x,g18.8))') in,
      >         h_profiles(in,1),h_profiles(in,2),
      >         h_profiles(in,3),h_profiles(in,4),
      >         h_profiles(in,5)
       end do
 
+      close(tu)
 
       ! end of pr_eirene_analysis
       return 
       end
+c
+c
+c
+      subroutine pr_exb_analysis
+      use error_handling
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+      include 'driftvel'
 
+      integer :: ik,ir,id,in
+      integer :: tu   ! temp unit number
+      integer :: ierr
+      character*1024 :: headings
+      real :: efact,fact
+      real :: exb_pol_tmp
+c     
+c     Print out table of ExB related values
+c
+      call find_free_unit_number(tu)
+      open(tu,file='exb_source_terms.dat',iostat=ierr)
 
+      if (ierr.ne.0) then 
+         call errmsg('PR_ExB_ANALYSIS: Error opening file',ierr)
+         return
+      endif
 
+      write(tu,*) 'ExB Analysis'
+
+      headings = ' IK  IR   R   Z   S  S_Lower  S_Upper'//
+     >           ' Cos_out cos_in'//
+     >           '  Btot  Btot/Bpol   FACT    Ne    Te     KES'//
+     >           '  PHI    E-radial   E-poloidal   V-exb-radial'//
+     >           '   V-exb-poloidal  V-exb-poloidal-Spara'
+
+c
+c     Corrective scaling factor for KES 
+c
+      efact =  QTIM * QTIM * EMI / CRMI
+c
+      do ir = irsep, nrs
+         write(tu,'(a)') trim(headings)
+         do ik = 1,nks(ir)
+            if (ik.eq.1) then
+               id = idds(ir,2)
+               ! print first target values - use ik = 0 
+               write(tu,'(1x,2i8,20(1x,g18.8))')
+     >          ik,ir,krb(ik-1,ir),kzb(ik-1,ir),0.0,
+     >          ksb(ik-1,ir),ksb(ik,ir),
+     >          0.0,0.0,
+     >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
+     >          knds(id),kteds(id),keds(id),
+     >          osmpot2(ik-1,ir),0.0,0.0,0.0,0.0,0.0
+
+            endif
+            
+            if ((kbfs(ik,ir)**2-1.0).lt.0.0) then 
+                exb_pol_tmp = 0.0
+            else
+               fact = sqrt(kbfs(ik,ir)**2-1.0)
+               if (fact.ne.0.0) then 
+                  exb_pol_tmp = exb_pol_drft(ik,ir)/fact/qtim
+               else
+                   exb_pol_tmp = 0.0
+               endif
+            endif
+
+            write(tu,'(1x,2i8,20(1x,g18.8))')
+     >          ik,ir,rs(ik,ir),zs(ik,ir),kss(ik,ir),
+     >          ksb(ik-1,ir),ksb(ik,ir),
+     >          cosalo(ik,ir),cosali(ik,ir),
+     >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
+     >          knbs(ik,ir),ktebs(ik,ir),kes(ik,ir)/efact,
+     >          osmpot2(ik,ir),e_rad(ik,ir),e_pol(ik,ir),
+     >          exb_rad_drft(ik,ir)/qtim,exb_pol_tmp,
+     >          exb_pol_drft(ik,ir)/qtim
+
+            if (ik.eq.nks(ir)) then
+               id = idds(ir,1)
+               ! print target values - use nks(ir)+1
+               write(tu,'(1x,2i8,20(1x,g18.8))')
+     >          ik,ir,krb(ik,ir),kzb(ik,ir),ksmaxs(ir),
+     >          ksb(ik-1,ir),ksb(ik,ir),
+     >          0.0,0.0,
+     >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
+     >          knds(id),kteds(id),keds(id),
+     >          osmpot2(ik+1,ir),0.0,0.0,0.0,0.0,0.0
+            endif
+
+         end do
+
+      end do
+
+c
+c     Close the file and free the unit number
+c      
+      close(tu)
+      
+      return
+      end
 
       subroutine pr_imp_density_profiles(iunit)
       implicit none

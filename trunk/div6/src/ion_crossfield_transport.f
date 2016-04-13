@@ -61,6 +61,8 @@ c      real oldtheta,oldcross
       real tmpcross,tmpcross2
       integer iktmp,irtmp,jktmp
 c
+      real exb_rad_drftvel
+c
 c
 c
 
@@ -201,6 +203,7 @@ c
 
 c
 c
+c
 c         Update Cross
 c
 c
@@ -213,7 +216,7 @@ c
              CROSS = CROSS + PINCHVEL
           else
              CROSS = CROSS + SIGN (KPERPS(IK,IR), kprob-ranv(kk))
-     >                      + PINCHVEL
+     >                      + PINCHVEL 
           endif
 c
           tmpran = ranv(kk)
@@ -679,6 +682,17 @@ c         End of cioptj IF statement
 c
        endif
 C
+c      jdemod - all cross updates continue here - add in the radial exb drift term at this point
+c
+c
+       call set_exb_rad_drift(ik,ir,exb_rad_drftvel)
+c
+c     update cross with the exb term
+c
+       cross = cross + exb_rad_drftvel
+c
+
+
           IF (DEBUG_ALL) WRITE (6,1000) 'D2:',IK,IR,S,K,
      >      THETA,SMAX,CROSS,adjust,kprob,
      >      kprob-tmpran,
@@ -1100,9 +1114,30 @@ c
       
       return
       end
+c
+c
+c
 
+      subroutine set_exb_rad_drift(ik,ir,exb_rad_drftvel)
+      implicit none
+      integer :: ik,ir
+      real :: exb_rad_drftvel
+      include 'params'
+      include 'driftvel'
 
+c     assign exb radial drift if the option is ON
+      if (exb_rad_opt .eq. 1) then 
+         ! note the exb_rad_drft is defined so that the drift is "+" for radially outward
+         ! similar to E-rad which is "+" for radially outward. 
+         ! However, the code uses "+" for radially inward transport which requires the 
+         ! sign of the radial drift velocity be changed for particle transport
+         exb_rad_drftvel = -exb_rad_drft(ik,ir)
+      else
+         exb_rad_drftvel = 0.0
+      endif
 
+      return
+      end
 c
 c
 c

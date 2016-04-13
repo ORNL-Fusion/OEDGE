@@ -1952,10 +1952,10 @@ c             - potopt = 0    Use 3xTe(0) at each target as the floating
 c                              potential start start point
 c             - potopt = 1    Import LP data listing the measured floating 
 c                              potential ... if imported data not available it 
-c                              defaults to option 0. 
+c                              defaults to option 0.(not yet implemented) 
 c
       ELSEIF (tag(1:3).EQ.'T36') THEN
-        CALL ReadI(line,potopt,0,1,'Option for calculating the floating'
+        CALL ReadI(line,potopt,0,0,'Option for calculating the floating'
      >             //' potential')
 c
 c

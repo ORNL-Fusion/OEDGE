@@ -495,9 +495,11 @@ c              IPP/08 Krieger - ensure index of nvertp is not zero
                   platco(nplat,3) = 0.5 *(zvertp(4,in)+zvertp(3,in))
 c
                   if (cprint.eq.3.or.cprint.eq.9)
-     >              write(6,'(a,4i5,2g13.6)')
+     >              write(6,'(a,4i5,10(1x,g13.6))')
      >                  'platco: '//inner//':',in,nks(ir)-1,ir,nplat,
-     >                    platco(nplat,2),platco(nplat,3)
+     >                    platco(nplat,2),platco(nplat,3),
+     >                    rvertp(3,in),zvertp(3,in),
+     >                    rvertp(4,in),zvertp(4,in)
 c
                else
                   platco(nplat,2) = 0.5 *(rs(nks(ir),ir)
@@ -515,9 +517,11 @@ c              IPP/08 Krieger - ensure index of nvertp is not zero
                   platco(nplat,5) = 0.5 *(zvertp(2,in)+zvertp(1,in))
 c
                   if (cprint.eq.3.or.cprint.eq.9)
-     >               write(6,'(a,4i5,2g13.6)') 
+     >               write(6,'(a,4i5,10(1x,g13.6))') 
      >                 'platco: '//outer//':',in,2,ir,nplat,
-     >                     platco(nplat,4),platco(nplat,5)
+     >                     platco(nplat,4),platco(nplat,5),
+     >                    rvertp(1,in),zvertp(1,in),
+     >                    rvertp(2,in),zvertp(2,in)
 c
                else
                   platco(nplat,4) = 0.5 *(rs(1,ir)+rs(2,ir))
@@ -3483,6 +3487,15 @@ C-----------------------------------------------------------------------
 c
       call assign_wall_plasma 
 
+c
+c-----------------------------------------------------------------------
+c
+c     Calculate the plasma potential, electric fields and exb related 
+c     drifts
+c
+c-----------------------------------------------------------------------
+c
+      call CalcPotential2
 c
 C
 C-----------------------------------------------------------------------
@@ -8643,11 +8656,16 @@ c
 c      if (ofield.eq.0) then
 c
 c
-      if (ciopto.eq.0.or.ciopto.eq.2.or.
+c     Move ciopto=2 to calculate KES for PFZ too
+c     since parameters can vary along the field 
+c     line which would create an E-field
+c
+c      if (ciopto.eq.0.or.ciopto.eq.2.or.
+      if (ciopto.eq.0.or.
      >    ciopto.eq.3.or.ciopto.eq.4) then
          irlimit = irwall
 c slmod begin
-      elseif (ciopto.eq.1.or.ciopto.eq.5) then
+      elseif (ciopto.eq.1.or.ciopto.eq.2.or.ciopto.eq.5) then
 c
 c      elseif (ciopto.eq.1) then
 c slmod end
@@ -8671,6 +8689,7 @@ c
         DT2 = (KTEBS(1,IR)-KTEdS(idds(ir,2)))
         NB2 = 0.5*(KNBS(1,IR)+KNdS(idds(ir,2)))
 c
+c
 
         if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >      (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
@@ -8688,6 +8707,7 @@ c
            endif
 
 
+
         else
 C
            kes(1,ir) = 0.0
@@ -8696,6 +8716,13 @@ C
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              1,ir,ds1,nb1
         endif
+
+        write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
+     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
+     >          ds2,dp2,dt2,nb2
+
+
 c
 c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
 c           KES(1,IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
@@ -8728,10 +8755,10 @@ c
            if (ofield_targ.eq.1) then 
               KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
               keds(idds(ir,1))= 0.0
-           elseif (ofield_targ.eq.1) then 
+           elseif (ofield_targ.eq.2) then 
               KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
               keds(idds(ir,1)) =  kes(nks(ir),ir)
-           elseif (ofield_targ.eq.1) then 
+           elseif (ofield_targ.eq.3) then 
               KES(nks(ir),IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
               keds(idds(ir,1)) =  (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2)
@@ -8745,6 +8772,14 @@ C
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              nks(ir),ir,ds1,nb1
         endif
+
+        write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
+     >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
+     >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
+     >          knds(idds(ir,1)),kteds(idds(ir,1)),
+     >          kss(nks(ir),ir),ksb(nks(ir),ir),
+     >          ds2,dp2,dt2,nb2
+
 c
 c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
 c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
@@ -8796,7 +8831,16 @@ c
 c
 
 600   CONTINUE
-
+c
+c     Debug
+c
+c
+      do ir = irsep,irwall
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
+     >         kes(ik,ir)
+         end do
+      end do
 c
 c     End of OFIELD if
 c

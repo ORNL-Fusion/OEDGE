@@ -1233,20 +1233,28 @@ c       neutral wall specification proceeds clockwise around the vessel:
 c
 c         jdemod - turn on debugging
 c
-          WRITE(6,'(A,2I8,10(1X,G18.8))') 'WALLS_input:',i1,walln,
-     >     rves(i1),zves(i1),rves(i1+1),zves(i1+1)
-
         ENDDO
 
       ELSE
         CALL ER('BuildNeutralWall','Unrecognized wall options',*99)
       ENDIF
 
+
+c
+c         jdemod - turn on debugging
+c
+      write(6,*) 'Debug information is in <casename>.src - pinout'
+      do i1 = 1,walln
+          WRITE(pinout,'(A,2I8,10(1X,G18.8))') 'WALL_Start:',i1,walln,
+     >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
+      end do
+
           
 c      WRITE(0,*) 'FAILURE FOR FLOATING WALL SURFACES'
 
-      write(6,*) 'Eirnasdat:',eirnasdat
-      
+      write(pinout,*) 'Eirnasdat:',eirnasdat,
+     >                 (eirasdat(i1,1),i1=1,eirnasdat)
+c
      
       DO i1 = 1, eirnasdat
 c       ----------------------------------------------------------------
@@ -1424,6 +1432,8 @@ c...      Automated clipping:
           DO i2 = 1, walln
             WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+            WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
           ENDDO
 c
 c          d_wallr1 = DBLE(wallr1)
@@ -1443,6 +1453,8 @@ c
           DO i2 = 1, walln
             WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+            WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
+     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
           ENDDO
 c...      Wipe the geometry arrays:
           CALL geoClean
@@ -1453,7 +1465,7 @@ c       ----------------------------------------------------------------
 
 c...  Process neutral wall data and remove deleted segments:
 
-c      write(6,'(a,i8)') 'Delete zero length elements:',walln
+      write(pinout,'(a,i8)') 'Delete zero length elements:',walln
 
       i3 = walln
       DO i1 = i3, 1, -1
@@ -1462,7 +1474,7 @@ c      write(6,'(a,i8)') 'Delete zero length elements:',walln
 c
 c     jdemod
 c
-          WRITE(pinout,'(a,i8,10(1x,g18.8))') 'DELETEING:',i1,
+          WRITE(pinout,'(a,i8,10(1x,g18.8))') 'DELETING:',i1,
      >         wallr1(i1,1),wallr1(i1,2),wallz1(i1,1),wallz1(i1,2)
 c
           DO i2 = i1, walln-1
@@ -1503,9 +1515,18 @@ c     a positive integer value corresponding to the ring number:
         wallt (walln  ) = 4
       ENDDO
 
+      do i1 = 1,walln
+          WRITE(pinout,'(A,4I8,10(1X,G18.8))') 'WALL_Mid  :',i1,walln,
+     >     wallc(i1),wallt(i1),
+     >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
+      end do
+
+
 c...  Sequence neutral wall segments (clockwise), starting
 c     at the highest IR index of the low IK index targets that
 c     are still in the divertor proper:
+
+      write(pinout,*) 'GRDNMOD:',grdnmod
 
       IF (grdnmod.NE.0) THEN
         DO ir1 = irsep, irwall-1
@@ -1538,6 +1559,8 @@ c...        No continuous neighbouring segment found, start here:
         ENDDO
       ENDIF
 
+      write(pinout,*) 'IRSTART:',irstart
+
       DO i1 = 1, walln-1
         IF (SQRT((wallr1(i1,1)-wallr1(i1,2))**2 + 
      .           (wallz1(i1,1)-wallz1(i1,2))**2).LT.1.0E-6) 
@@ -1550,11 +1573,6 @@ c       the simulation domain/volume since the center of the plasma is at
 c       R=0.0:
         rstart = rvertp(1,korpg(1,1))
         zstart = zvertp(1,korpg(1,1))
-        
-        ! jdemod
-        write(0,*) 'Rstart,zstart:',rstart,zstart
-
-
       ELSE
         rstart = rvertp(2,korpg(1,irstart))
         zstart = zvertp(2,korpg(1,irstart))
@@ -1584,6 +1602,22 @@ c       R=0.0:
           DO i3 = i1, walln
             IF ((i2.EQ.1.AND.wallc(i3).LE.0).OR.       ! check target segments on first pass
      .          (i2.EQ.2.AND.wallc(i3).GT.0)) CYCLE
+
+
+        IF (i1.EQ.1) THEN
+          WRITE(pinout,*) '  COMPARE:',i1,i3,
+     >            ABS(wallr1(i3,1)-rstart),ABS(wallz1(i3,1)-zstart),
+     >           ABS(wallr1(i3,1)-rstart               ).LT.TOL.AND. 
+     .           ABS(wallz1(i3,1)-zstart               ).LT.TOL
+        ELSE
+          WRITE(pinout,*) '  COMPARE:',i1-1,i3,
+     .           ABS(wallr1(i3,1)-wallr1(MAX(1,i1-1),2)),
+     .           ABS(wallz1(i3,1)-wallz1(MAX(1,i1-1),2)),
+     .           ABS(wallr1(i3,1)-wallr1(MAX(1,i1-1),2)).LT.TOL.AND.
+     .           ABS(wallz1(i3,1)-wallz1(MAX(1,i1-1),2)).LT.TOL
+
+        ENDIF
+
 
             IF ((i1.EQ.1.AND.
      .           ABS(wallr1(i3,1)-rstart               ).LT.TOL.AND. 

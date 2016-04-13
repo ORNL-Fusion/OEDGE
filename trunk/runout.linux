@@ -300,6 +300,13 @@ mvc fort.59 $CASENAME.augdiv_out
 # Core file in case OUT crashed
 mvc core $CASENAME.out.core
 
+# eirene ionization analysis
+mvc eirene_iz_analysis.dat $CASENAME.eiz
+
+# exb source terms over grid
+mvc exb_source_terms.dat $CASENAME.exb
+
+
 #---------------------------------------
 #
 # Move any files starting with $CASENAME 

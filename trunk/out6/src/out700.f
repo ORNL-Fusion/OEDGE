@@ -24,6 +24,7 @@ c      include 'outxy'
 c      include 'cioniz'
 c      include 'reiser' 
 c      include 'printopt' 
+      include 'driftvel'
 c
 c     Local Variables
 c
@@ -1889,7 +1890,7 @@ c
         sctype = iopt
         if (sctype.lt.1.or.sctype.gt.6) sctype = 1
 c
-        IF (IREF.EQ.723) THEN
+        IF (IREF.EQ.727) THEN
           XLAB = '   S  (M)'
           axistype = 1
         ELSE
@@ -1953,6 +1954,439 @@ c
      >              mdrawtype,0)
 c
       endif
+
+
+c
+c     ExB along ring plots
+c     729 - potential (V)
+c     731 - E-radial (V/m)
+c     733 - E-poloidal (V/m)
+c     735 - ExB radial drift (m/s)
+c     737 - ExB poloidal drift (m/s)
+c
+      if (iref.eq.729) then
+c
+c       Plot of Electric potential
+c
+c
+        REF = 'ELECTRIC POTENTIAL (V)'
+c
+        ELABS(1) = 'EpotEpot     '
+c        ELABS(2) = 'HrecHrec     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 1
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.729) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'E potential (V)'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'Epotential'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            MVALS(IK,ip,1) = osmpot2(ik,ir)
+c            MVALS(IK,ip,2) = pinrec(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
+      if (iref.eq.731) then
+c
+c       Plot of E-radial
+c
+c
+        REF = 'Radial Electric Field (V/m)'
+c
+        ELABS(1) = 'EradErad     '
+c        ELABS(2) = 'HrecHrec     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 1
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.731) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'Radial E-field (V/m)'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'E-radial'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            MVALS(IK,ip,1) = e_rad(ik,ir)
+c            MVALS(IK,ip,2) = pinrec(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
+      if (iref.eq.733) then
+c
+c       Plot of E-poloidal
+c
+c
+        REF = 'Poloidal Electric Field (V/m)'
+c
+        ELABS(1) = 'EpolEpol     '
+c        ELABS(2) = 'HrecHrec     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 1
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.733) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'Poloidal E-field (V/m)'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'E-poloidal'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            MVALS(IK,ip,1) = e_pol(ik,ir)
+c            MVALS(IK,ip,2) = pinrec(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
+
+      if (iref.eq.735) then
+c
+c       Plot of ExB radial drift (m/s)
+c
+c
+        REF = 'ExB Radial Drift (m/s)'
+c
+        ELABS(1) = 'VradVrad     '
+c        ELABS(2) = 'HrecHrec     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 1
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.735) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'ExB Radial Drift (m/s)'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'ExB Radial Drift'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            MVALS(IK,ip,1) = exb_rad_drft(ik,ir)/qtim
+c            MVALS(IK,ip,2) = pinrec(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
+
+      if (iref.eq.737) then
+c
+c       Plot of ExB poloidal drift (m/s)
+c
+c
+        REF = 'ExB Poloidal Drift (m/s)'
+c
+        ELABS(1) = 'VpolVpol     '
+c        ELABS(2) = 'HrecHrec     '
+c
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = 1
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.737) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+        YLAB   = 'ExB Poloidal Drift (m/s)'
+c
+        NPLOTS = NPLOTS + 1
+c        WRITE (REF,'(''ALONG RING '',I3,'', K'',F7.4)') IR,KKS(IR)
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        CALL rzero (mvals,maxnks*maxngs*maxplts)
+c
+c
+        write (6,*) 'ExB Poloidal Drift'
+c
+        do ip = 1, nplts
+c
+c         Access ring number and store number of knots info.
+c
+          ir = ringnos(ip)
+c
+c         Set number of points on plots
+c
+          pnks(ip,1) = nks(ir)
+c
+c         Load axis
+c
+          call loadm_axis(mouts,mwids,ir,ip,axistype,0)
+c
+c         Load data
+c
+          DO IK = 1, NKS(IR)
+c
+            fact = sqrt(kbfs(ik,ir)**2-1.0)
+            if (fact.ne.0.0) then 
+               MVALS(IK,ip,1) = exb_pol_drft(ik,ir) / qtim /fact
+            else
+               MVALS(IK,ip,1) = 0.0
+            endif
+c
+c            MVALS(IK,ip,2) = pinrec(IK,IR)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+          enddo
+C
+        enddo
+c
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+      endif
+
 
 
 c

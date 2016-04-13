@@ -3210,7 +3210,7 @@ c     cuts, as appropriate:
 
       IF (debug) THEN
         DO i1 = 1, nlist
-          WRITE(fp,*) 'CLIP LIST:',ilist(i1,1:2),nwall
+          WRITE(fp,*) 'CLIP LISTA:',ilist(i1,1:2),nwall
         ENDDO
       ENDIF
 
@@ -3265,8 +3265,9 @@ c          y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)    see me
           IF (debug) THEN
             WRITE(fp,*) ' --------------------',i2
             WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
-            WRITE(fp,*) ' X,Y1   =',x1,y1
-            WRITE(fp,*) ' X,Y2   =',x2,y2
+            WRITE(fp,*) ' X1,Y1   =',x1,y1
+            WRITE(fp,*) ' X2,Y2   =',x2,y2
+            WRITE(fp,*) ' SX,SY   =',store_x2,store_y2
           ENDIF
 c         Search the wall for intersections:
           s12max = 1.0D+10
@@ -3309,7 +3310,7 @@ c           list (have to complete the wall by hand at the moment):
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,4F14.7)') 
-     .      'CLIP LIST:',ilist(i1,:),clist(i1,:),xlist(i1,:),ylist(i1,:)
+     .     'CLIP LISTB:',ilist(i1,:),clist(i1,:),xlist(i1,:),ylist(i1,:)
         ENDDO
       ENDIF
 
@@ -3591,7 +3592,7 @@ c       Check low index target:
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,
+     .      'CLIP LIST1:',list(i1)%i,list(i1)%t,
      .                   list(i1)%c,list(i1)%m
         ENDDO
       ENDIF
@@ -3643,8 +3644,9 @@ c        y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)    see mess
         IF (debug) THEN
           WRITE(fp,*) ' --------------------'
           WRITE(fp,*) ' OMAP2,4=',obj(iobj)%omap(2),obj(iobj)%omap(4)
-          WRITE(fp,*) ' X,Y1   =',x1,y1
-          WRITE(fp,*) ' X,Y2   =',x2,y2
+          WRITE(fp,*) ' X1,Y1  =',x1,y1
+          WRITE(fp,*) ' X2,Y2  =',x2,y2
+          WRITE(fp,*) ' SX,SY  =',store_x2,store_y2
         ENDIF
 
 c       Search the wall for intersections:
@@ -3699,7 +3701,7 @@ c
       IF (debug) THEN
         DO i1 = 1, nlist
           WRITE(fp,'(A,4I6,2X,2F14.7)') 
-     .      'CLIP LIST:',list(i1)%i,list(i1)%t,list(i1)%c,
+     .      'CLIP LIST2:',list(i1)%i,list(i1)%t,list(i1)%c,
      .                   list(i1)%w,list(i1)%x,list(i1)%y
         ENDDO
       ENDIF

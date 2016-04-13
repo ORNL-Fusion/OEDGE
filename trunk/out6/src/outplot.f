@@ -7687,6 +7687,7 @@ c
       include 'slcom'
       include 'cedge2d'
       include 'adas_data_spec'
+      include 'driftvel'
 c     
       real tmpplot(maxnks,maxnrs)
       integer iselect,istate,nizs,ierr,itype      
@@ -7801,11 +7802,16 @@ c
 c     37 = POWER LOSS (EXCITATION)
 c     38 = POWER LOSS (RECOMBINATION/BREM)
 c     39 = POWER LOSS (TOTAL) 
-c     
-c     
+c
+c     40 = EXB drift related quantities
+c        1 = potential
+c        2 = Radial E-field
+c        3 = Poloidal E-field
+c        4 = ExB Radial drift 
+c        5 = ExB poloidal Drift 
 c     
       integer max_iselect
-      parameter (max_iselect=39)
+      parameter (max_iselect=40)
 c     
 c     
 c     ADAS variables
@@ -7825,7 +7831,7 @@ c
 c     
       real zero_fact
 c     
-      real mfact
+      real mfact,fact
       integer ik,ir,iz,len,lenstr
       external lenstr
 
@@ -8958,10 +8964,63 @@ c
 
          end do 
 
+      elseif (iselect.eq.40) then 
+c
+c         ExB drift related quantities
+c         1 - Potential (phi) (V) 
+c         2 - Radial Efield (V/m)
+c         3 - Poloidal Efield (V/m)
+c         4 - Radial ExB drift (m/s)
+c         5 - Poloidal ExB drift (m/s)
+c     
+c     
+         if (istate.eq.1) then 
+c           Potential
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  tmpplot(ik,ir) = osmpot2(ik,ir)
+               end do
+            end do
+         elseif (istate.eq.2) then 
+c           Radial electric field
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  tmpplot(ik,ir) = e_rad(ik,ir)
+               end do
+            end do
+         elseif (istate.eq.3) then 
+c           Poloidal electric field
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  tmpplot(ik,ir) = e_pol(ik,ir)
+               end do
+            end do
+         elseif (istate.eq.4) then 
+c           Exb Radial drift converted back to m/s by dividing by qtim
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  tmpplot(ik,ir) = exb_rad_drft(ik,ir) / qtim
+               end do
+            end do
+         elseif (istate.eq.5) then 
+c           Exb Poloidal drift converted back to m/s by dividing by qtim
+c           and taking out the geometric factor used to map to 2D
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  fact = sqrt(kbfs(ik,ir)**2-1.0)
+                  if (fact.ne.0.0) then 
+                     tmpplot(ik,ir) = exb_pol_drft(ik,ir) / qtim /fact
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+               end do
+            end do
+         endif
 
+c
+c     End of ISELECT IF
+c
       endif
-
-
 
 
 c     
@@ -9724,10 +9783,29 @@ c         elseif (itype.eq.1) then
 c            ylab = ylab(1:len) // '/M^2)'
 c         endif
 
+      elseif (iselect.eq.40) then 
+c
+c         ExB drift related quantities
+c         1 - Potential (phi) (V) 
+c         2 - Radial Efield (V/m)
+c         3 - Poloidal Efield (V/m)
+c         4 - Radial ExB drift (m/s)
+c         5 - Poloidal ExB drift (m/s)
+c     
+         if (istate.eq.1) then 
+            YLAB = 'E-POTENTIAL (V)'
+         elseif (istate.eq.2) then 
+            YLAB = 'E-RADIAL (V/m)'
+         elseif (istate.eq.3) then 
+            YLAB = 'E-POLOIDAL (V/m)'
+         elseif (istate.eq.4) then 
+            YLAB = 'ExB RADIAL DRIFT (m/s)'
+         elseif (istate.eq.5) then 
+            YLAB = 'ExB POLOIDAL DRIFT (m/s)'
+         endif
+
       endif
 
-c
-c
 c
       return
       end
@@ -10168,6 +10246,27 @@ c            blab = blab(1:len) // '/M^3)'
 c         elseif (itype.eq.1) then 
 c            blab = blab(1:len) // '/M^2)'
 c         endif
+
+      elseif (iselect.eq.40) then 
+c
+c         ExB drift related quantities
+c         1 - Potential (phi) (V) 
+c         2 - Radial Efield (V/m)
+c         3 - Poloidal Efield (V/m)
+c         4 - Radial ExB drift (m/s)
+c         5 - Poloidal ExB drift (m/s)
+c     
+         if (istate.eq.1) then 
+            BLAB = 'E-POTENTIAL (V)'
+         elseif (istate.eq.2) then 
+            BLAB = 'E-RADIAL (V/m)'
+         elseif (istate.eq.3) then 
+            BLAB = 'E-POLOIDAL (V/m)'
+         elseif (istate.eq.4) then 
+            BLAB = 'ExB RADIAL DRIFT (m/s)'
+         elseif (istate.eq.5) then 
+            BLAB = 'ExB POLOIDAL DRIFT (m/s)'
+         endif
 
       endif
 c
