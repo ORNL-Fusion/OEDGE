@@ -2793,12 +2793,20 @@ c
       include 'comtor'
       include 'driftvel'
 
-      integer :: ik,ir,id,in
+      integer :: ik,ir,id,in,in_sep
       integer :: tu   ! temp unit number
       integer :: ierr
       character*1024 :: headings
       real :: efact,fact
       real :: exb_pol_tmp
+c
+c     jdemod - add local arrays for calculating fluxes
+c
+
+      real :: frad(maxnks,maxnrs),fpol(maxnks,maxnrs) 
+      real :: fpol_int_sol(maxnks),fpol_int_pfz(maxnks)
+      real :: frad_int_id(maxnrs), frad_int_od(maxnrs)
+      integer :: ikref_id,ikref_od,ikref_pfz_id,ikref_pfz_od
 c     
 c     Print out table of ExB related values
 c
@@ -2813,10 +2821,12 @@ c
       write(tu,*) 'ExB Analysis'
 
       headings = ' IK  IR   R   Z   S  S_Lower  S_Upper'//
-     >           ' Cos_out cos_in'//
+     >           ' Cos_out cos_in  Dist_in  Dist_out  Tot_width'//
+     >           '  Pol_length '//
      >           '  Btot  Btot/Bpol   FACT    Ne    Te     KES'//
      >           '  PHI    E-radial   E-poloidal   V-exb-radial'//
-     >           '   V-exb-poloidal  V-exb-poloidal-Spara'
+     >           '   V-exb-poloidal  V-exb-poloidal-Spara '//
+     >           '  F-radial  F-poloidal '
 
 c
 c     Corrective scaling factor for KES 
@@ -2826,16 +2836,22 @@ c
       do ir = irsep, nrs
          write(tu,'(a)') trim(headings)
          do ik = 1,nks(ir)
+
+
+
             if (ik.eq.1) then
                id = idds(ir,2)
                ! print first target values - use ik = 0 
-               write(tu,'(1x,2i8,20(1x,g18.8))')
+               write(tu,'(1x,2i8,30(1x,g18.8))')
      >          ik,ir,krb(ik-1,ir),kzb(ik-1,ir),0.0,
      >          ksb(ik-1,ir),ksb(ik,ir),
      >          0.0,0.0,
+     >          0.0,0.0,0.0,
+     >          0.0,          
      >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
      >          knds(id),kteds(id),keds(id),
-     >          osmpot2(ik-1,ir),0.0,0.0,0.0,0.0,0.0
+     >          osmpot2(ik-1,ir),0.0,0.0,0.0,0.0,0.0,
+     >          0.0,0.0
 
             endif
             
@@ -2850,31 +2866,163 @@ c
                endif
             endif
 
-            write(tu,'(1x,2i8,20(1x,g18.8))')
+
+
+            frad(ik,ir) =   knbs(ik,ir)*exb_rad_drft(ik,ir)/qtim*
+     >           (kpb(ik,ir)-kpb(ik-1,ir)) * 2.0 * PI * rs(ik,ir)
+
+            fpol(ik,ir) =   knbs(ik,ir) * exb_pol_tmp *
+     >           (distin(ik,ir)+distout(ik,ir)) * 2.0 * PI * rs(ik,ir)
+
+
+            write(tu,'(1x,2i8,30(1x,g18.8))')
      >          ik,ir,rs(ik,ir),zs(ik,ir),kss(ik,ir),
      >          ksb(ik-1,ir),ksb(ik,ir),
      >          cosalo(ik,ir),cosali(ik,ir),
+     >          distin(ik,ir),distout(ik,ir),
+     >          (distin(ik,ir)+distout(ik,ir)),
+     >          (kpb(ik,ir)-kpb(ik-1,ir)),
      >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
      >          knbs(ik,ir),ktebs(ik,ir),kes(ik,ir)/efact,
      >          osmpot2(ik,ir),e_rad(ik,ir),e_pol(ik,ir),
      >          exb_rad_drft(ik,ir)/qtim,exb_pol_tmp,
-     >          exb_pol_drft(ik,ir)/qtim
+     >          exb_pol_drft(ik,ir)/qtim,
+     >          frad(ik,ir), fpol(ik,ir)
+            
+
 
             if (ik.eq.nks(ir)) then
                id = idds(ir,1)
                ! print target values - use nks(ir)+1
-               write(tu,'(1x,2i8,20(1x,g18.8))')
+               write(tu,'(1x,2i8,30(1x,g18.8))')
      >          ik,ir,krb(ik,ir),kzb(ik,ir),ksmaxs(ir),
      >          ksb(ik-1,ir),ksb(ik,ir),
      >          0.0,0.0,
+     >          0.0,0.0,0.0,
+     >          0.0,          
      >          bts(ik,ir),kbfs(ik,ir),sqrt(kbfs(ik,ir)**2-1.0),
      >          knds(id),kteds(id),keds(id),
-     >          osmpot2(ik+1,ir),0.0,0.0,0.0,0.0,0.0
+     >          osmpot2(ik+1,ir),0.0,0.0,0.0,0.0,0.0,
+     >          0.0,0.0
             endif
 
          end do
 
       end do
+c
+c
+
+c
+c     Calculate integrated flux profiles
+c
+      fpol_int_sol = 0.0
+      fpol_int_pfz = 0.0
+      
+      do ik = 1,nks(irsep)
+         do ir = irsep,irwall-1
+            fpol_int_sol(ik) = fpol_int_sol(ik)+ fpol(ik,ir)
+         end do
+      end do
+
+      do ik = 1,nks(nrs)
+         do ir = irtrap+1,nrs
+            fpol_int_pfz(ik) = fpol_int_pfz(ik)+ fpol(ik,ir)
+         end do
+      end do
+
+      frad_int_id = 0.0
+      frad_int_od = 0.0
+      
+      ikref_id = ikouts(1,irsep-1) -1
+      ikref_od = ikouts(nks(irsep-1)-1,irsep-1) + 1
+
+      ikref_pfz_id = ikins(ikref_id,irsep)
+      ikref_pfz_od = ikins(ikref_od,irsep)
+
+c      write(0,*) 'EXB IKREFS:',ikref_id,ikref_od,
+c     >             ikref_pfz_id,ikref_pfz_od
+
+      do ir = irsep,irwall-1
+         do ik = 1,ikref_id
+            frad_int_id(ir) = frad_int_id(ir)+frad(ik,ir)
+         end do 
+
+         do ik = ikref_od,nks(ir)
+            frad_int_od(ir) = frad_int_od(ir)+frad(ik,ir)
+         end do 
+      end do
+
+      do ir = irtrap+1,nrs
+         do ik = 1,ikref_pfz_id
+            frad_int_id(ir) = frad_int_id(ir)+frad(ik,ir)
+         end do 
+
+         do ik = ikref_pfz_od,nks(ir)
+            frad_int_od(ir) = frad_int_od(ir)+frad(ik,ir)
+         end do 
+      end do
+
+
+c
+c     Write out flux profiles
+c
+      write(tu,*) 
+      write(tu,*) ' EXB_IK_REFERENCES:'
+      write(tu,*) ' INNER_DIVERTOR_MAIN_SOL:',1,ikref_id
+      write(tu,*) ' OUTER_DIVERTOR_MAIN_SOL:',ikref_od,nks(irsep)
+      write(tu,*) ' INNER_DIVERTOR_PFZ:',1,ikref_pfz_id
+      write(tu,*) ' OUTER_DIVERTOR_PFZ:',ikref_pfz_od,nks(nrs)
+      write(tu,*) 
+      write(tu,*) ' Integrated flux profiles'
+      write(tu,*) 
+      write(tu,*) ' Poloidal flux (main SOL)'
+      write(tu,*) 
+      write(tu,'(a)') ' IK  S(m)  P(m)  Rsep(m)  Zsep(m)'//
+     >         ' Fpol(part/s)'
+      ir = irsep
+      do ik = 1,nks(ir)
+         write(tu,'(1x,i8,20(1x,g18.8))') ik,kss(ik,ir),
+     >        kps(ik,ir),rs(ik,ir),zs(ik,ir),fpol_int_sol(ik)
+      end do
+
+      write(tu,*) 
+      write(tu,*) ' Poloidal flux (PFZ)'
+      write(tu,*) 
+      write(tu,'(a)') ' IK  S(m)  P(m)  Rsep(m)  Zsep(m)'//
+     >         ' Fpol(part/s)'
+      ir = nrs
+      do ik = 1,nks(ir)
+         write(tu,'(1x,i8,20(1x,g18.8))') ik,kss(ik,ir),
+     >        kps(ik,ir),rs(ik,ir),zs(ik,ir),fpol_int_pfz(ik)
+      end do
+
+      write(tu,*) 
+      write(tu,*) ' Radial flux (ID and OD including PFZ)'
+      write(tu,*) 
+      write(tu,'(a)') ' IN  IR Rinner(m) Zinner(m) Frad_inner(part/s)'//
+     >         '    Router(m) Zouter(m) Frad_outer(part/s)'
+
+
+      in = 1
+      do ir = irwall-1,irsep,-1
+         write(tu,'(1x,2i8,20(1x,g18.8))') in,ir,
+     >         rp(idds(ir,2)),zp(idds(ir,2)),frad_int_id(ir),
+     >         rp(idds(ir,1)),zp(idds(ir,1)),frad_int_od(ir)
+         in = in+1
+      end do
+
+      in_sep = in-1
+
+      do ir = nrs,irtrap+1,-1
+         write(tu,'(1x,2i8,20(1x,g18.8))') in,ir,
+     >         rp(idds(ir,2)),zp(idds(ir,2)),frad_int_id(ir),
+     >         rp(idds(ir,1)),zp(idds(ir,1)),frad_int_od(ir)
+         in = in+1
+      end do
+
+      write(tu,*) 
+      write(tu,*) ' SEPARATRIX_INDEX:',in_sep
+
 
 c
 c     Close the file and free the unit number

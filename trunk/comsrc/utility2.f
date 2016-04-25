@@ -621,15 +621,17 @@ c
       REAL    a1(*),a2(*),b1(*),b2(*)
       INTEGER n11,n12,n21,n22
 
-      INTEGER i1,i2
+      INTEGER i1,i2, select_opt
 
       DO i2 = n21, n22
         DO i1 = n11, n12
           IF (a1(i1).EQ.a2(i2)) THEN
             IF (b1(i1).NE.0.0.AND.b1(i1).NE.LO) then 
-               WRITE(0,*) 'WARNING MapArray: Overwriting existing value'
-               write(6,'(a,2i6,4(1x,g12.5))') 
-     >           'Maparray overwrite:',i1,i2,a1(i1),a2(i2),b1(i1),b2(i2)
+           WRITE(0,*) 'WARNING MapArray: Overwriting existing value'
+           write(6,'(a,2i6,4(1x,g18.8))') 
+     >        'Maparray overwrite:',i1,i2,a1(i1),a2(i2),b1(i1),b2(i2)
+           write(0,'(a,2i6,4(1x,g18.8))') 
+     >        'Maparray overwrite:',i1,i2,a1(i1),a2(i2),b1(i1),b2(i2)
             endif
             b1(i1) = b2(i2)
           ENDIF
@@ -658,7 +660,7 @@ c
 
       n31 = 1
       n32 = n1
-
+      
       DO i1 = 1, n1
         a3(i1) = a1(i1)
       ENDDO
@@ -6597,6 +6599,9 @@ c     deltas = ksb(ik,ir)-ksb(ik-1,ir)
 c     
 c     
       do ir = irsep, nrs
+         ! Do not calculate E fields for boundary rings
+         if (idring(ir).eq.BOUNDARY) cycle
+
 !         write (6,'(a,i8,a)') '---------------------  ',ir,
 !     >                        '  ---------------------'          
          do ik = 1,nks(ir)
@@ -6672,6 +6677,9 @@ c     accurate (?) ... should probably use short distances relative to the cells
 c     
 
       do ir = irsep,nrs
+         ! Do not calculate E fields for boundary rings
+         if (idring(ir).eq.BOUNDARY) cycle
+
          do ik = 1,nks(ir)
             iku = ik+1
             ikd = ik-1
@@ -6977,6 +6985,45 @@ c
             if (irind.lt.irsep) then 
                phiv(1,4) = osmpot2(ikd,ir)               
             endif
+            
+            ! make adjustments for phi values at the grid edge ... 
+            ! irout = irwall 
+            ! irin  = irtrap 
+            !
+            ! idring(ir) = BOUNDARY 
+            ! Assign the same phi value as cell center when at a boundary 
+            ! ... which gives a zero gradient for boundary side of cell. 
+
+            if (idring(irout).eq.BOUNDARY) then 
+               phiv(3,1) = phiv(4,1)
+               phiv(2,2) = phiv(1,2)
+            endif
+            
+            if (idring(iroutu).eq.BOUNDARY) then 
+               phiv(3,2) = phiv(4,2)
+            endif
+
+            if (idring(iroutd).eq.BOUNDARY) then 
+               phiv(2,1) = phiv(1,1)
+
+            endif
+
+            if (idring(irin).eq.BOUNDARY) then 
+               phiv(1,3) = phiv(2,3)
+               phiv(4,4) = phiv(3,4)
+            endif
+            
+            if (idring(irinu).eq.BOUNDARY) then 
+               phiv(4,3) = phiv(3,3)
+            endif
+
+
+            if (idring(irind).eq.BOUNDARY) then 
+               phiv(1,4) = phiv(2,4)
+            endif
+
+
+
 
 
 

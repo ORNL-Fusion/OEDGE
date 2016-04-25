@@ -2933,52 +2933,12 @@ C
              WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1) +
      >                            WALLS(IK,IR,IZ)
 3000  CONTINUE
-C
-C     Neutrals on Walls - also sum up wall deposition and erosion arrays
-C
-      write(6,'(a,6(1x,f9.2))') 'Walls Start:',
-     >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
-c
-      do 3005 in = 1,wallpts
-c
-c         write (6,'(a,i5,3(1x,g12.5))') 'Wall Dep:',in,
-c     >        wallsn(in),wallsi(in),wallse(in)
-c
-         walltotn = walltotn + wallsn(in)
-         wallse(maxpts+1) = wallse(maxpts+1) + wallse(in)
-         wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
-         wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
-         wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
-         wallsil(maxpts+1) = wallsil(maxpts+1) + wallsil(in)
-         
-         do iz= 1,nizs
-            if (wallsiz(in,iz).gt.0.0) then 
-               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
-            endif
-         enddo
 
-         if (iz.lt.80) then 
-            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
-     >          'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
-     >         wallsil(in)
-         else
-            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         wallsil(in)
-         endif
-
-3005  continue
 c
-      write(6,'(a,5(1x,f9.2))') 'Walls End:',
-     >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
-
-
+c     jdemod - moved the deposition output to a separate routine called
+c              after ABSFAC is calculated
+c            - left Klaus code here for now
+c
 C     K. Schmid 2008 output charge state resolved wall impact information
       write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
      >               wallpts
@@ -4782,6 +4742,14 @@ c
       WRITE(6,*) 'ABSFAC: ',ABSFAC,' PARTS: WSSF ',WSSF,' FTOT ',
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',
      >   TNEUT,'NBASFAC:',nabsfac,'NEUT2D_FYTOT:',neut2d_fytot
+c
+c     jdemod - print out charge state resolved wall deposition data 
+c            - this data can be used as input to another divimp run 
+c              to calculate an impurity sputtered particle source
+c
+      call print_resolved_deposition_data(nizs)
+c
+c
 C slmod begin - t-dep
 c...  Dump the particle distribution to a file:
       IF (opt_div%pstate.EQ.1) THEN
@@ -8921,8 +8889,9 @@ c
       endif
       return
       end
-
-
+c
+c
+c
       subroutine print_sputtering_yields(matt,matp,mb)
       implicit none
 c
@@ -8999,4 +8968,104 @@ c
       end do
 
 
+      end
+c
+c
+      subroutine print_resolved_deposition_data(nizs)
+      use error_handling
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+      include 'div1'
+      include 'dynam3'
+c
+      integer :: nizs
+c
+c     jdemod - Initially I am just going to put the deposition data in a new file
+c              I may move this routine to utility2.f so that the functionality is 
+c              available in both divimp and out assuming all the information is 
+c              transferred in the raw file. 
+c
+c     This print out was moved to a point after absfac values were calculated
+c
+      integer :: ounit,ierr,iz,in
+      character*1024 :: fname
+
+
+
+      fname = 'charge_resolved_deposition_data.txt'
+      call find_free_unit_number(ounit)
+
+      open(unit=ounit,file=trim(fname),iostat=ierr)
+      if (ierr.ne.0) then 
+         call errmsg('PRINT_RESOLVED_DEPOSITION_DATA'//
+     >               ':PROBLEM OPENING FILE = '//trim(fname),ierr)
+      else   
+         ! Write out the charge resolved data
+         ! Include absfac as well as atomic number and mass of impurity
+         ! Include data showing the impurity flux as a fraction of the 
+         ! H flux (?) 
+
+
+c      absfac
+c      absfac_neut
+c      cion
+c      crmi
+
+
+
+         close(ounit)
+      endif
+
+
+c
+c     Leave the output to fort.6 for now
+c
+C
+C     Neutrals on Walls - also sum up wall deposition and erosion arrays
+C
+      write(6,'(a,6(1x,f9.2))') 'Walls Start:',
+     >      wallse(maxpts+1),wallse_i(maxpts+1),
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
+c
+      do 3005 in = 1,wallpts
+c
+c         write (6,'(a,i5,3(1x,g12.5))') 'Wall Dep:',in,
+c     >        wallsn(in),wallsi(in),wallse(in)
+c
+         walltotn = walltotn + wallsn(in)
+         wallse(maxpts+1) = wallse(maxpts+1) + wallse(in)
+         wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
+         wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
+         wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         wallsil(maxpts+1) = wallsil(maxpts+1) + wallsil(in)
+         
+         do iz= 1,nizs
+            if (wallsiz(in,iz).gt.0.0) then 
+               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
+            endif
+         enddo
+
+         if (iz.lt.80) then 
+            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+     >          'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
+     >         wallsil(in)
+         else
+            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         wallsil(in)
+         endif
+
+3005  continue
+c
+      write(6,'(a,5(1x,f9.2))') 'Walls End:',
+     >      wallse(maxpts+1),wallse_i(maxpts+1),
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
+
+      return
       end
