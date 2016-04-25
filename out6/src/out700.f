@@ -83,8 +83,11 @@ c
 c
 c          Make up plot labels for each ring
 c
+c          jdemod - allow for ring numbers with 4 digits - change 'i2' to 'i4'
+c
+
            do ip = 1,nplts
-             write (pltlabs(ip),'(''Ring:'',i2)') ringnos(ip)
+             write (pltlabs(ip),'(''Ring:'',i4)') ringnos(ip)
            end do
 c
         endif

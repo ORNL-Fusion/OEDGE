@@ -1209,7 +1209,7 @@ c
 
       INTEGER CalcPoint
 
-      INTEGER ik,ik1,ir,in,id,num,code,idum1
+      INTEGER ik,ik1,ir,ir1,in,id,num,code,idum1
       LOGICAL incik,decik
       REAL    xdat(MAXNPS),ydat(MAXNPS)
       REAL*8  ar,az,br,bz,cr,cz,t
@@ -1222,6 +1222,7 @@ c     jdemod - variables to support new assignment option
 c
       real s_approx,cross
       integer thom_asgn_opt
+      real :: rand1
 c
       thom_asgn_opt = 1
 c
@@ -1379,7 +1380,7 @@ c             Find approximate S,CROSS location
 c
               call getscross_approx(raw(in,1),raw(in,2),s_approx,cross,
      >                          int(raw(in,3)),int(raw(in,4)))
-
+c
 c              write(6,'(a,2i6,2(1x,f6.1),4(1x,f12.5))') 'TH:',in,num,
 c     >                raw(in,3),raw(in,4),raw(in,1),raw(in,2),
 c     >                s_approx,cross
@@ -1394,9 +1395,25 @@ c            Getting messages from maparray about overwriting data - so nudge xd
 c            I am getting repeating values of s_approx - which can happen for points reasonably
 c            close to each other. 
 c
-             xdat(num) = s_approx  * (1.0 + REAL(num)*1.0E-7)
+c     
+c            jdemod - change this to use a random offset instead and see if that works
+c                   - the axis change in the context of Thomson data should not matter
+c                   - scaling by num also doesn't make much sense
+c
+             call getran(rand1)
+c
+             xdat(num) = dble(s_approx)  * 
+     >                 (1.0d0 + (dble(rand1)-1.0d0) * 1.0d-4)
+c
+c             xdat(num) = s_approx  * (1.0 + REAL(num)*1.0E-7)
 c             xdat(num) = s_approx 
              ydat(num) = raw(in,4+ind)
+
+             ik1 = int(raw(in,3))
+             ir1 = int(raw(in,4))
+c
+c            write(6,'(a,4i8,10(1x,g18.8))') 'XDAT:',num,in,ik1,ir1,
+c     >               xdat(num),ydat(num),rand1
 c
 c           jdemod - endif for thom_asgn_opt
 c
@@ -1426,8 +1443,8 @@ c          ENDIF
           IF (num.GT.0) THEN
             gndata(ir,ind) = 0
 
-
             CALL LoadArray(gxdata(1,ir,ind),gndata(ir,ind),xdat,1,num)
+
             CALL MapArray (gxdata(1,ir,ind),gydata(1,ir,ind),
      .                     1,gndata(ir,ind),
      .                     xdat,ydat,1,num)
@@ -1451,7 +1468,7 @@ c            ENDIF
 
       DO ir = irsep, nrs
         DO ik = 1, gndata(ir,ind)
-          WRITE(6,'(A,3I6,2(1x,G14.4))')
+          WRITE(6,'(A,3I6,2(1x,G18.8))')
      .      ' TMAP    : ',ind,ik,ir,gxdata(ik,ir,ind),gydata(ik,ir,ind)
         ENDDO
       ENDDO

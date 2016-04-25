@@ -2398,7 +2398,7 @@ c
 c
         ipmax = min(nplts,id+pageplots-1)
 c
-        write (6,*)'id:',id,nplts,pageplots,ipmax
+c        write (6,*)'id:',id,nplts,pageplots,ipmax
 c
         do ip = id,ipmax
 c

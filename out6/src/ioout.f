@@ -2186,6 +2186,16 @@ c      CALL RINOUT ('R KFSSMO',KFSSMOD,MAXNKS*MAXNRS)
 c
       CALL RINOUT ('R KINDS ',KINDS ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KOUTDS',KOUTDS,MAXNKS*MAXNRS)
+c
+c     jdemod - load distin and distout ... cross field
+c              widths of cells
+c
+      if (version_code.ge.(6*maxrev+46)) then
+         CALL RINOUT ('R DISTIN',distin ,MAXNKS*MAXNRS)
+         CALL RINOUT ('R DISTOT',distout,MAXNKS*MAXNRS)
+      endif
+c
+
       CALL RINOUT ('R KFORDS',KFORDS,MAXNKS*MAXNRS)
       CALL RINOUT ('R KBACDS',KBACDS,MAXNKS*MAXNRS)
 

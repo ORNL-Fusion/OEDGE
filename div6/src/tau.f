@@ -7146,7 +7146,23 @@ c...        Assign PSIn values for all rings
             ENDDO      
          endif
       endif
-
+c
+c     jdemod
+c
+c     Label specific ring types in the idring array
+c     IDRING was introduced by Steve and is used elsewhere 
+c     but is not consistently loaded since it depends
+c     on grid options or even grid modification options
+c     However, it is a generally useful piece of information
+c     so I am setting it explicitly here for known 
+c     boundary rings
+c     1, irwall, irtrap, irtrap2, irwall2
+c
+      idring(1) = BOUNDARY
+      idring(irwall) = BOUNDARY
+      idring(irwall2) = BOUNDARY
+      idring(irtrap) = BOUNDARY
+      idring(irtrap2) = BOUNDARY
 c     
 c     If it has been specified to read the background plasma
 c     solution from an external file. It is assumed that the
