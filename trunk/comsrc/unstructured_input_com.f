@@ -166,6 +166,16 @@ c
 c
       ELSEIF (tag(1:1).EQ.'K') THEN
         CALL read_ero_unstructured_input(line,tag,fp)
+c
+c Series O
+c     - this tag refers to unstructured input related to OUT
+c     - OUT shares this code with DIVIMP but the initialization routines 
+c       are separate. This does cause some overhead storing variables not 
+c       used in the specific codes but for now this is only 3 reals in 
+c       OUT or about 12 bytes ... revisit later if it becomes an issue
+c
+      elseif (tag(1:1).eq.'O') then 
+         call read_out_unstructured_input(line,tag,fp)
 
 c
 c
@@ -2029,21 +2039,6 @@ c
       ELSEIF (tag(1:3).EQ.'W02') THEN
         CALL ReadR(line,wall_plasma_fact,0.0,HI,
      >                   'Wall Plasma Scaling Factor')
-c
-c -----------------------------------------------------------------------
-c
-c     ADD TAGS RELATED TO OUT - USING SERIES 'O' oooh :) ... for OUT
-c
-c -----------------------------------------------------------------------
-c
-      elseif (tag(1:3).eq.'O01') then 
-c
-c     This option allows the absolute scaling factor for the DIVIMP
-c     run results to be specified in the OUT routine. It's default
-c     value is zero.
-c
-        CALL ReadR(line,new_absfac,0.0,HI,
-     >                   'Imposed ABSFAC in OUT')
 c         
       ELSE
           CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
@@ -2782,6 +2777,77 @@ c
 
 
       RETURN
+99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
+      WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
+      WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
+      WRITE(0    ,'(5X,3A)') 'TAG  = "',tag ,'"'
+      WRITE(0,*) '    DIVIMP HALTED'
+      STOP
+      END
+c
+c ======================================================================
+c
+
+      subroutine read_out_unstructured_input(line,tag,fp)
+      implicit none
+c
+c     READ "O" Series Unstructured input
+c
+c     The Oh is used for OUT related tagged input
+c
+      INTEGER   fp
+      CHARACTER line*72,tag*3
+
+      INCLUDE 'params'
+      include 'slcom'
+      include 'out_unstruc'
+c
+c
+c      
+c
+c -----------------------------------------------------------------------
+c
+c     ADD TAGS RELATED TO OUT - USING SERIES 'O' oooh :) ... for OUT
+c
+c -----------------------------------------------------------------------
+c
+      if (tag(1:3).eq.'O01') then 
+c
+c     new_absfac - use to change scaling of plots from OUT
+c
+c     This option allows the absolute scaling factor for the DIVIMP
+c     run results to be specified in the OUT routine. It's default
+c     value is zero.
+c
+        CALL ReadR(line,new_absfac,0.0,HI,
+     >                   'Imposed ABSFAC in OUT')
+c       
+c     Core fueling code calculates integrated ionization
+c     profiles in the core ... these parameters allow the 
+c     PSIN inner bound of the integration regions to be set
+c     This is used in the pr_eirene_analysis routine
+c     
+      elseif (tag(1:3).eq.'O02') then 
+c
+c        O02 - PSIN bound for calculating core ionization 
+c              profile 1 (psi1_reg)
+c
+        CALL ReadR(line,psi1_reg,0.0,HI,
+     >                   'PSIN bound for core ionization profile 1')
+c
+      elseif (tag(1:3).eq.'O03') then 
+c
+c        O03 - PSIN bound for calculating core ionization 
+c              profile 2 (psi2_reg)
+c
+        CALL ReadR(line,psi2_reg,0.0,HI,
+     >                   'PSIN bound for core ionization profile 2')
+
+
+      ELSE
+          CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
+      ENDIF
+
 99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
       WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
       WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
