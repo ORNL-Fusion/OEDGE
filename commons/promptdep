@@ -7,7 +7,7 @@ c
      >                     mps_energy
       save /prompt_data/
 c
-      real promptdeps(maxnds,6),
+      real promptdeps(maxnds,9),
      >     mps_thickness(maxnrs,2),mps_energy(maxnrs,2)
 c
       integer prompt_depopt

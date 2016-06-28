@@ -4573,9 +4573,20 @@ C-----------------------------------------------------------------------
      >en.')
 c
 c IPP/02 Geier option 7 for sputtering from external flux file      
+c
       ELSEIF (CNEUTD.EQ.7) THEN
        CALL PRC ('  SPUTTER OPTION   7 : SPUTTERING ALONG TARGET BY ION 
      > IMPACT. FLUX TAKEN FROM EXTERNAL FILE.')
+       if (ext_flx_data_src.eq.0) then 
+        call prc('                       GEIER EXTERNAL SOURCE FILE'//
+     >                                   ' FOR AR') 
+
+       elseif (ext_flx_data_src.eq.1) then 
+        call prc('                       CHARGE RESOLVED FLUX AND'//
+     >                                   ' ENERGY DATA FROM A ')
+        call prc('                       PREVIOUS DIVIMP CASE'//
+     >                                  ' IS LOADED')
+       endif
 c
       ELSEIF (CNEUTD.EQ.8) THEN
        CALL PRC ('  SPUTTER OPTION   8 : PHYSICAL SPUTTERING BY WALL PLA
@@ -4865,9 +4876,21 @@ c
      >en.')
 c
 c IPP/02 Geier option 7 for sputtering from external flux file      
+c
       ELSEIF (CNEUTD2.EQ.7) THEN
        CALL PRC ('  SPUTTER OPTION   7 : SPUTTERING ALONG TARGET BY ION 
      > IMPACT. FLUX TAKEN FROM EXTERNAL FILE.')
+       if (ext_flx_data_src.eq.0) then 
+        call prc('                       GEIER EXTERNAL SOURCE FILE'//
+     >                                   ' FOR AR') 
+
+       elseif (ext_flx_data_src.eq.1) then 
+        call prc('                       CHARGE RESOLVED FLUX AND'//
+     >                                   ' ENERGY DATA FROM A ')
+        call prc('                       PREVIOUS DIVIMP CASE'//
+     >                                  ' IS LOADED')
+       endif
+
 c
       ELSEIF (CNEUTD2.EQ.8) THEN
        CALL PRC ('  SUP. SPUTTER OPT 8 : PHYSICAL SPUTTERING BY WALL PLA
@@ -8059,7 +8082,7 @@ c
          write(coment,1030)
          call prc(coment)
 c
-         do ir = irsep,irwall
+         do ir = irsep,nrs
 c
 c           Adjust print-out for INNER/OUTER
 c
@@ -8067,6 +8090,21 @@ c
      >            ktids(idds(ir,1)),knds(idds(ir,1)),teupstream(ir,1),
      >            tiupstream(ir,1),nbupstream(ir,1)
             call prc(coment)
+!            write(coment,1040) ir,outer,kteds(idds(ir,2)),
+!     >            ktids(idds(ir,2)),knds(idds(ir,2)),teupstream(ir,2),
+!     >            tiupstream(ir,2),nbupstream(ir,2)
+!            call prc(coment)
+c
+         end do
+
+         do ir = irsep,nrs
+c
+c           Adjust print-out for INNER/OUTER
+c
+!            write(coment,1040) ir,inner,kteds(idds(ir,1)),
+!     >            ktids(idds(ir,1)),knds(idds(ir,1)),teupstream(ir,1),
+!     >            tiupstream(ir,1),nbupstream(ir,1)
+!            call prc(coment)
             write(coment,1040) ir,outer,kteds(idds(ir,2)),
      >            ktids(idds(ir,2)),knds(idds(ir,2)),teupstream(ir,2),
      >            tiupstream(ir,2),nbupstream(ir,2)

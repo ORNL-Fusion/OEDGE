@@ -27,7 +27,8 @@ c     >  CPDRFT,CDRFTV,CEIMP,FLUXPTS,FLUXROPT,FLUXINFO,SROOTOPT,CSOPT2,
      >  vernum,revnum,cneutvel,neut2d_opt,neut2d_vaopt,ngradopt,
 c     >  neut2d_raw,sol22_power_ratio,redefopt,cdrftv_start,cdrftv_end,
      >  neut2d_raw,sol22_power_ratio,redefopt,cbomb_frac,
-     >  init_pos_opt,override_bg_velocity_opt,sonnet_grid_sub_type
+     >  init_pos_opt,override_bg_velocity_opt,sonnet_grid_sub_type,
+     >  ext_flx_data_src
 C                                                                       
       common /comtor2/ cpinopt,citersol,csecsol,cpincom,actpin,         
      >  ctargopt, platco,wallco,nplat,nwall,           
@@ -186,7 +187,8 @@ c
      >  cfolrec,readaux,cflatopt,
      >  nbgplas,mtcopt,ircore,vernum,revnum,cneutvel,crdivbg,
      >  neut2d_opt,neut2d_vaopt,ngradopt,redefopt,debug_neutv,
-     >  debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type
+     >  debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type,
+     >  ext_flx_data_src
 C                                                                       
       LOGICAL DEBUGN,DEBUGL,virtgrid,wallswch,checkleak,piniter
 C                                                                       
@@ -197,7 +199,14 @@ c...  Variables for line impurity injection (CIOPTE=9):
       COMMON /IMPCOM01/ cxscA,cyscA,cxscB,cyscB
       save /IMPCOM01/
       REAL              cxscA,cyscA,cxscB,cyscB
-c slmod end                                                                        
+c slmod end                                                                     
+
+c
+c     External plasma overlay option common block
+c
+      common /ext_plasma/ external_plasma_overlay,external_plasma_file
+      integer external_plasma_overlay
+      character*1024 external_plasma_file
 c
 c     Include the WALL common block for backward compatibility for now
 c     Need to change later. 

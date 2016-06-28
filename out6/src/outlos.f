@@ -395,6 +395,9 @@ c
          WRITE(ANLY(12:),'(''GEO FACTORS FROM W,D,L'')')
       ELSEIF (ifact.EQ.7) THEN
          WRITE(ANLY(12:),'(''MOD GEO FACTORS FROM W,D,L'')')
+      elseif (ifact.eq.8) then 
+         WRITE(ANLY(12:),'(''SCALEF='',g12.5)') optval
+         mfact = optval
       ENDIF
 c
 c
@@ -936,8 +939,12 @@ C     DON'T PLOT SINGLE LINES OF SIGHT - Just write single numbers to file
 C
       IF (Npts.GT.1) THEN
 c
+          WRITE(iplot,'(a,a,2(a,i4),a,f8.3,a,g12.5,a,g12.5)')
+     >                'RESULT LOS: ',trim(blabs(1)),
+     >                'PLOT =',Iselect,
+     >                ' STATE = ',istate
           do in = 1,npts
-             write(6,*) 'TVALS:',in,touts(in),tvals(in,1),
+             write(iplot,*) 'TVALS:',in,touts(in),tvals(in,1),
      >                                  tvals(in,2)
           end do
 c

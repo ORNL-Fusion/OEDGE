@@ -1915,6 +1915,7 @@ c
       parameter(maxnv=4,maxiter=15)
       real rv(maxnv),zv(maxnv)
       real s_frac,cross_frac,base_frac 
+      character*1024 :: msg
 c
       logical incell
       external incell
@@ -1931,8 +1932,13 @@ c
 c     Dobule check that r,z are actually in this cell - they should be if this routine is called
 c     
       if (.not.incell(ik,ir,r,z)) then 
-         call errmsg('Problem in Position in poly',
-     >                'R,Z does not lie in assigned cell')
+         write(msg,'(2(a,g15.7),2(a,i8))')
+     >     ' R=',r,' Z=',z,' ik=',ik,' ir=',ir
+
+         call errmsg('Problem in Position in poly:'//
+     >                'R,Z does not lie in assigned cell'
+     >                ,trim(msg))
+
          return
       endif
 

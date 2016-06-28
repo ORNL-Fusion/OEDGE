@@ -530,6 +530,10 @@ C
         CALL RVALKR(CVALKR,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >              XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
       ENDIF
+
+c      write(0,'(a,8(1x,g18.8))') 'Contour:',xxmin,xxmax,yymin,yymax,
+c     >              vmin,vmax,minscale,maxscale
+
 c
 c slmod begin
       if (minscale.ne.maxscale) then
@@ -1812,6 +1816,14 @@ c
 c slmod end
       ELSE
 
+c
+c      jdemod - nbr does not seem to be properly set automatically
+c               for broken/extended grids. Need to fix this since
+c               it affects some plot options among other things.
+c
+c       write(0,*) 'SUPIMP2:Select',nbr,cgridopt
+c       nbr =1 
+c
         IR = IRWALL - 1
 c slmod begin
 c...    Changes made to accommodate broken grids (look
@@ -7809,6 +7821,8 @@ c        2 = Radial E-field
 c        3 = Poloidal E-field
 c        4 = ExB Radial drift 
 c        5 = ExB poloidal Drift 
+c        6 = ExB Radial flux (ne x Vexb)
+c        7 = ExB Poloidal flux (ne x Vexb)
 c     
       integer max_iselect
       parameter (max_iselect=40)
@@ -8509,6 +8523,7 @@ c
 c     Scale by MFACT if required
 c     
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c
 c     
 c     BLAB = 'BOLO IMP POW LOSS'
 c     
@@ -8540,12 +8555,14 @@ c
 c     
                   end do
 c     
+
                end do
 c     
             end do   
 
 
          endif
+
 c     
 c----------------------------------------------------------
 c     
@@ -8972,6 +8989,8 @@ c         2 - Radial Efield (V/m)
 c         3 - Poloidal Efield (V/m)
 c         4 - Radial ExB drift (m/s)
 c         5 - Poloidal ExB drift (m/s)
+c         6 - Radial ExB flux   ne x Vexb_rad (/m2/s)
+c         7 - Poloidal ExB flux ne x Vexb_pol (/m2/s)
 c     
 c     
          if (istate.eq.1) then 
@@ -9010,6 +9029,29 @@ c           and taking out the geometric factor used to map to 2D
                   fact = sqrt(kbfs(ik,ir)**2-1.0)
                   if (fact.ne.0.0) then 
                      tmpplot(ik,ir) = exb_pol_drft(ik,ir) / qtim /fact
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+               end do
+            end do
+         elseif (istate.eq.6) then 
+c           radial flux
+c           Exb Radial drift converted back to m/s by dividing by qtim
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  tmpplot(ik,ir) = knbs(ik,ir)*exb_rad_drft(ik,ir)/qtim
+               end do
+            end do
+         elseif (istate.eq.7) then 
+c           poloidal flux
+c           Exb Poloidal drift converted back to m/s by dividing by qtim
+c           and taking out the geometric factor used to map to 2D
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+                  fact = sqrt(kbfs(ik,ir)**2-1.0)
+                  if (fact.ne.0.0) then 
+                     tmpplot(ik,ir) = knbs(ik,ir) * exb_pol_drft(ik,ir) 
+     >                                     / qtim /fact
                   else
                      tmpplot(ik,ir) = 0.0
                   endif
@@ -9791,6 +9833,8 @@ c         2 - Radial Efield (V/m)
 c         3 - Poloidal Efield (V/m)
 c         4 - Radial ExB drift (m/s)
 c         5 - Poloidal ExB drift (m/s)
+c         6 - Radial ExB flux   ne x Vexb_rad (/m2/s)
+c         7 - Poloidal ExB flux ne x Vexb_pol (/m2/s)
 c     
          if (istate.eq.1) then 
             YLAB = 'E-POTENTIAL (V)'
@@ -9802,6 +9846,10 @@ c
             YLAB = 'ExB RADIAL DRIFT (m/s)'
          elseif (istate.eq.5) then 
             YLAB = 'ExB POLOIDAL DRIFT (m/s)'
+         elseif (istate.eq.6) then 
+            YLAB = 'ExB RADIAL FLUX (/m2/s)'
+         elseif (istate.eq.7) then 
+            YLAB = 'ExB POLOIDAL FLUX (/m2/s)'
          endif
 
       endif
@@ -10255,6 +10303,8 @@ c         2 - Radial Efield (V/m)
 c         3 - Poloidal Efield (V/m)
 c         4 - Radial ExB drift (m/s)
 c         5 - Poloidal ExB drift (m/s)
+c         6 - Radial ExB flux   ne x Vexb_rad (/m2/s)
+c         7 - Poloidal ExB flux ne x Vexb_pol (/m2/s)
 c     
          if (istate.eq.1) then 
             BLAB = 'E-POTENTIAL (V)'
@@ -10266,6 +10316,10 @@ c
             BLAB = 'ExB RADIAL DRIFT (m/s)'
          elseif (istate.eq.5) then 
             BLAB = 'ExB POLOIDAL DRIFT (m/s)'
+         elseif (istate.eq.6) then 
+            BLAB = 'ExB RADIAL FLUX (/m2/s)'
+         elseif (istate.eq.7) then 
+            BLAB = 'ExB POLOIDAL FLUX (/m2/s)'
          endif
 
       endif

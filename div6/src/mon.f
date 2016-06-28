@@ -54,7 +54,7 @@ C
 c
       real      tmpval
       real      carea,main_content,div_content,div_reten
-      real      totsum
+      real      totsum,totsum2
 c     IPP/08 Krieger - extended comment string length
       character*256 comment 
 c
@@ -456,8 +456,10 @@ c
       if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then   
 c
          totsum = 0.0 
+         totsum2 = 0.0
          do id = 1,nds
             totsum = totsum + promptdeps(id,1)
+            totsum2 = totsum2 + promptdeps(id,7)
 c
             if (promptdeps(id,1).gt.0.0) then  
                promptdeps(id,2) = promptdeps(id,2) / promptdeps(id,1) 
@@ -465,6 +467,10 @@ c
                promptdeps(id,4) = promptdeps(id,4) / promptdeps(id,1) 
                promptdeps(id,5) = promptdeps(id,5) / promptdeps(id,1) 
             endif 
+c
+            if (promptdeps(id,7).gt.0.0) then  
+               promptdeps(id,8) = promptdeps(id,8) / promptdeps(id,7) 
+            endif
 c
          end do
 c 
@@ -480,15 +486,19 @@ c
      >                'pr_promptdep','0','B')
          CALL PRR('   - NUMBER OF PARTICLES DEPOSITED BY PROMPT'//
      >                     ' DEPOSITION: ',TOTSUM)
+         CALL PRR('   - TOTAL NUMBER OF PARTICLES IN PD CODE   '//
+     >                     '           : ',TOTSUM2)
 c
          IF (TOTSUM.GT.0.0) THEN 
             CALL PRC ('   - ANALYSIS BY TARGET SEGMENT :')
-            call prc ('   TARGET   WEIGHT       SELF      AV-SH '//
+            call prc ('   TARGET   WEIGHT       SELF       AV-SH '//
      >                '       IMPACT'//
-     >                '   AVERAGE DIST     AVERAGE      SHEATH')
-            call prc ('     IND    REDEP        SPUT      V-DROP'//
+     >                '     AVERAGE DIST     AVERAGE     MPS SHEATH'//
+     >                '   WEIGHT    AV IZ DIST    MAX IZ DIST')
+            call prc ('     IND    DEP          SPUT       V-DROP'//
      >                '       ENERGY'//
-     >                '     AT IONIZ    LARMOR RADIUS   THICKNESS')
+     >                '     AT IONIZ(PD) LARMOR RADIUS  THICKNESS'//
+     >                '   LAUNCHED   ALL NEUTRALS   ALL NEUTRALS')
             DO ID = 1,NDS
 c
                i = irds(id)
@@ -503,14 +513,17 @@ c
 c                 IPP/08 Krieger - changed formatting
                   WRITE (COMMENT,'(3X,I4,1X,g12.5,1x,g12.3,
      >                  1x,g12.5,1x,g12.5,
-     >                  3(1x,g12.5))') id,promptdeps(id,1),
+     >                  6(1x,g12.5))')
+     >                  id,promptdeps(id,1),
 c                  WRITE (COMMENT,'(3X,I4,1X,2(1x,F7.2),1x,f6.2,1x,
 c     >                  f9.2,
 c     >                  3(1x,g12.5))') id,promptdeps(id,1),
      >                  promptdeps(id,6),
      >                  promptdeps(id,4),promptdeps(id,5),
      >                  promptdeps(id,2), 
-     >                  promptdeps(id,3),mps_thickness(i,j)
+     >                  promptdeps(id,3),mps_thickness(i,j),
+     >                  promptdeps(id,7), 
+     >                  promptdeps(id,8),promptdeps(id,9)
                   call prc(comment)
 c
                endif

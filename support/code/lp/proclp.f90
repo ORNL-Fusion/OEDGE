@@ -56,7 +56,9 @@ program proclp
 
   ! Initialization for current LP data file format
   ! Add three columns for including additional ELM information
-  ncols  = 9 
+  ! Added floating potential
+  ! ncols  = 9 
+  ncols  = 10 
   ! nextra - extra colums added to lp_data - 3 for ELM data - 1 for inner/outer identifier - 1 for flagging as outlier removed
   nextra = 5
 
@@ -75,6 +77,7 @@ program proclp
 
   if (nargs.lt.3) then 
      write(0,'(a)') 'proclp command usage: proclp <infilename> tmin  tmax  chi_lim -e  <elmtimefilename> -or -om <num>'
+     write(0,'(a)') 'Specifying chi_lim < 0.0 turns off chi filtering on the probe data'
      write(0,'(a)') 'The -e,-or and -om arguments are optional. -or and -om remove outliers.'
      write(0,'(a)') '-om <num> specifies the outlier cutoff <num>*bin_average or both <num>*bin_average and 1/<num>*bin_average for <num> < 0'
      write(0,'(a)') '-r <num> bin in R-Rsep with bin size specifed by <num>'

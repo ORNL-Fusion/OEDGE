@@ -690,6 +690,19 @@ c     interface code. These tags are both initialized and read by routines
 c     contained in the ero_interface module
 c
       call init_ero_unstructured_input
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG N21 : External sputtering flux data source
+c               0 = geier file format for Ar
+c               1 = import divimp charge resolved flux and energy
+c                   data from a previous divimp run
+c
+c     Set the external flux data source to default to DIVIMP - add info in .dat file
+c     in case someone wants to use the limited applicability Geier option
+c     
+      ext_flx_data_src = 1
 c
 c
 c -----------------------------------------------------------------------
@@ -735,6 +748,25 @@ c
 c     default is option 3        
 c
       ofield_targ = 3
+
+c
+c -----------------------------------------------------------------------
+c
+c     TAG P63 : External plasma overlay option
+c               0 = off
+c               1 = on
+c               Default value is 0
+c
+      external_plasma_overlay = 0
+c
+c -----------------------------------------------------------------------
+c
+c     TAG P64 : External plasma overlay file name
+c               - specifies the name of the file to be loaded
+c               - full path required unless rundiv script is modified
+c               Default value is null string
+c
+      external_plasma_file=''
 c
 c -----------------------------------------------------------------------
 c

@@ -346,8 +346,8 @@ contains
 
     if (check_divertor_limit) then 
        divertor_leakage(ir,iz,1) = divertor_leakage(ir,iz,1) + sputy
-       divertor_leakage(ir,iz,2) = divertor_leakage(ir,iz,2) + time
-       divertor_leakage(ir,iz,3) = divertor_leakage(ir,iz,3) + s
+       divertor_leakage(ir,iz,2) = divertor_leakage(ir,iz,2) + time*sputy
+       divertor_leakage(ir,iz,3) = divertor_leakage(ir,iz,3) + s*sputy
        ring_divertor_leaked = ir
     endif
 

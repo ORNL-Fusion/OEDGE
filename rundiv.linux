@@ -302,6 +302,16 @@ if [[ -f  $DIVRESDIR/$6.auxdata ]] then
   ln -s $DIVRESDIR/$6.auxdata $DIVRUNDIR/$CASENAME/divimp_aux_data.dat
 fi  
 #
+# charge_resolved_deposition_data_input.dat contains deposition data from 
+# a previous divimp run
+#
+if [[ -f  $DIVRESDIR/$6.impdep ]] then 
+  echo "Linking ..." $DIVRESDIR/$6.impdep
+  ln -s $DIVRESDIR/$6.impdep $DIVRUNDIR/$CASENAME/charge_resolved_deposition_data_in.dat
+fi  
+
+
+#
 #  A fluid plasma solution is linked to fort.11 - if one is available.
 #
 if [[ -n $4 ]] then     
@@ -500,6 +510,9 @@ mvc divimp_plasma.out $CASENAME.bgp
 
 #  Additional DIVIMP data file - output in a standardized tagged format. 
 mvc divimp_aux_data.out $CASENAME.auxdata
+
+# DIVIMP impurity wall deposition data
+mvc charge_resolved_deposition_data_out.dat $CASENAME.impdep
 
 # Core file in case DIVIMP crashed
 mvc core $CASENAME.core

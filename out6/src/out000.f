@@ -3082,7 +3082,6 @@ c
            do ik = 1,nks(ir)
               tmpsumiz = 0.0
               do iz = 1,nizs
-
                  tmpsumiz = tmpsumiz + walls(ik,ir,iz)
               end do
 
