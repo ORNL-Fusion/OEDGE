@@ -2349,15 +2349,36 @@ c     This routine assigns the default values to any
 c     OUT unstructured input values.The OUT unstructured
 c     input tags start with the letter "O" (oh)
 c
-c      include 'params'
+      include 'params'
 c
       include 'out_unstruc'
 c     
+c------------------------------------------------------
+c
 c     O01 - alternate absolute factor specification 
 c         - this option is deactivated by setting the 
 c           default value to zero.  
 c
       new_absfac=0.0
+c
+c
+c------------------------------------------------------
+c
+c     Core fueling code calculates integrated ionization
+c     profiles in the core ... these parameters allow the 
+c     PSIN inner bound of the integration regions to be set
+c     This is used in the pr_eirene_analysis routine
+c
+c     O02 - PSIN bound for calculating core ionization 
+c           profile 1 (psi1_reg)
+c     O03 - PSIN bound for calculating core ionization 
+c           profile 2 (psi2_reg)
+c
+      psi1_reg = 0.9
+      psi2_reg = 0.95
+
+c
+c------------------------------------------------------
 c
       return
       end
@@ -2386,6 +2407,10 @@ c      include 'cioniz'
 c      include 'reiser' 
       include 'printopt' 
 c
+c     OUT unstructured input
+c
+      include 'out_unstruc'
+c
 c     Local variables
 c
 c
@@ -2396,7 +2421,7 @@ c
       real*8 :: totcore_poloidal_area(maxnks),
      >          totcore_radial_area(maxnrs)
       real*8 :: omp_reg,xpt_reg
-      real*8 :: psi1_reg,psi2_reg
+      !real*8 :: psi1_reg,psi2_reg
       integer :: in
 
       integer :: nr
@@ -2463,8 +2488,8 @@ c
 
       omp_reg = 0.05
       xpt_reg = 0.05
-      psi1_reg = 0.9
-      psi2_reg = 0.95
+      !psi1_reg = 0.9
+      !psi2_reg = 0.95
 
       write(tu,'(a,1x,g12.5)') ' XPT_REGION=Z<Z0_and_ABS(R-RXP)<= ',
      >                      xpt_reg
