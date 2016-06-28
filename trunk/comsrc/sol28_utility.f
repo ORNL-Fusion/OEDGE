@@ -700,13 +700,18 @@ c        IF (mode.NE.3.AND.mode.NE.4.AND.
           length = DSQRT((x(1)-x(0))**2+(y(1)-y(0))**2)
           if (t.ne.0.0.and.length.ne.0.0) then 
               test=test.AND.DABS(s-t)/t.LT.MAX(0.001,0.001*0.1/length)
-          else
-             write(0,'(a,i6,l4,10(1x,g18.8))') 
-     >                  'WARNING: POINTONLINE: t or length=0',
-     >                      mode,test,t,length,y(2),y(0)
-             write(6,'(a,i6,l4,10(1x,g18.8))')
-     >                  'WARNING: POINTONLINE: t or length=0',
-     >                      mode,test,t,length,y(2),y(0)
+c
+c         jdemod - removed warning output 
+c                - it occurs when t=0.0 because y(2) = y(0) 
+c                  and the mode excludes the end points
+c
+c          else
+c             write(0,'(a,i6,l4,10(1x,g18.8))') 
+c     >                  'WARNING: POINTONLINE: t or length=0',
+c     >                      mode,test,t,length,y(2),y(0)
+c             write(6,'(a,i6,l4,10(1x,g18.8))')
+c     >                  'WARNING: POINTONLINE: t or length=0',
+c     >                      mode,test,t,length,y(2),y(0)
           endif
 c          test=test.AND.DABS(s-t).LT.1000.0D0*DABS(DTOL)
         ENDIF

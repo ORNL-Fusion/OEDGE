@@ -733,8 +733,11 @@ c
 c 
 c      Print out location specific impurity density profiles
 c
-      call pr_imp_density_profiles(6)
-      
+      call pr_imp_density_profiles
+c
+c     print out impurity deposition
+c     
+      call print_deposition(cgridopt)
 
 c
 c     Print out background plasma and polygon information
@@ -2417,11 +2420,13 @@ c
       real*8 :: tmp_profiles(maxnrs,6)
 
       integer :: tu,ierr
+
 c
 c     Print out table of Eirene calcualted Hydrogenic values
 c
       call find_free_unit_number(tu)
-      open(tu,file='eirene_iz_analysis.dat',iostat=ierr)
+      open(tu,file='eirene_iz_analysis.dat',iostat=ierr,
+     >     form='formatted')
 
       if (ierr.ne.0) then 
          call errmsg('PR_EIRENE_ANALYSIS: Error opening file',ierr)
@@ -2429,47 +2434,6 @@ c
       endif
 
 
-      write(tu,*)
-      write(tu,'(a)') 'EIRENE Calculated Hydrogenic Quantities'
-      write(tu,*)
-      write(tu,'(a,i6)') 'SEPARATRIX RING                      = ',irsep 
-      write(tu,'(a,i6)') 'PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
-c
-      do ir = 1,nrs
-
-         write(tu,*) 
-         write(tu,'(a,2x,a,i6)') 'START TARGET:'//OUTER,' RING = ',ir
-         write(tu,'(2(2x,a,2x),3x,a,3x,3(4x,a,3x),3x,a,3x,2(6x,a,6x))') 
-     >   'IK','IR','PINATOM','PINENA','PINMOL','PINENM',
-     >   'DELTA-P','R','Z'
-
-         tmpsum2 = 0.0
-
-         do ik = 1,nks(ir)
-
-            write(tu,'(2(1x,i5),1p,7(1x,g12.5))') ik,ir,
-     >           pinatom(ik,ir),pinena(ik,ir),
-     >           pinmol(ik,ir),pinenm(ik,ir),kpb(ik,ir)-kpb(ik-1,ir),
-     >           rs(ik,ir),zs(ik,ir)
-c
-c            tmpsum = 
-c     >           sqrt((krb(ik,ir)-krb(ik-1,ir))**2+
-c     >                (kzb(ik,ir)-kzb(ik-1,ir))**2)
-c
-c            tmpsum2= tmpsum2 + tmpsum
-c
-c
-c            write(tu,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
-c     >           krb(ik,ir),kzb(ik,ir),
-c     >           krb(ik-1,ir),kzb(ik-1,ir),rs(ik,ir),zs(ik,ir),
-c     >           kpb(ik,ir)-kpb(ik-1,ir),tmpsum,
-c     >           kpb(ik,ir), tmpsum2,ksb(ik,ir),ksb(ik-1,ir)
-c
-
-         end do  
-         write(tu,'(a)') 'END TARGET:'//INNER
-
-      end do
 c
 c     Core and pedestal analysis 
 c
@@ -2502,12 +2466,14 @@ c
       psi1_reg = 0.9
       psi2_reg = 0.95
 
-      write(tu,'(a,1x,g12.5)') ' XPT_REGION=Z<Z0,ABS(R-RXP)<= ',
+      write(tu,'(a,1x,g12.5)') ' XPT_REGION=Z<Z0_and_ABS(R-RXP)<= ',
      >                      xpt_reg
-      write(tu,'(a,1x,g12.5)') ' OMP_REGION=R>R0,ABS(Z-Z0)<= ',
+      write(tu,'(a,1x,g12.5)') ' OMP_REGION=R>R0_and_ABS(Z-Z0)<= ',
      >                      omp_reg
-      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION1:PSI> ',psi1_reg
-      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION2:PSI> ',psi2_reg
+      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION1:_PSI_<=1.0'//
+     >                         '_and_PSI_>',psi1_reg
+      write(tu,'(a,1x,g12.5)') ' NEAR_SEP_REGION2:_PSI_<=1.0'//
+     >                         '_and_PSI_>',psi2_reg
 
 
       do ir = 1,nrs
@@ -2646,14 +2612,23 @@ c
       endif
 
       write(tu,*)
+      write(tu,'(a)') ' NOTE: All integrated ionization'//
+     >                ' profile data below is calculated in terms'//
+     >                ' of density (ionization in region/'//
+     >                'volume of region)'
+
+      write(tu,*)
 
       write(tu,'(a)') ' Core poloidal'//
      >               ' ionization distributions'
+      
       write(tu,*)
 
-      write(tu,'(a)') ' IK       KSS    KPS R Z  Total_Den  Total_vol'//
-     >               '    NearSEP1_Den   NearSEP1_vol  '//
-     >               '    NearSEP2_Den   NearSEP2_vol   Separatrix_area'
+      write(tu,'(3x,a,3x,2(8x,a,8x),2(9x,a,9x),6x,a,5x,5x,a,5x
+     >       2(4x,a,4x,4x,a,3x),2x,a,2x)') 
+     >       'IK','KSS','KPS','R','Z','Total_IZ','Total_vol',
+     >       'NearSEP1_IZ','NearSEP1_vol',
+     >       'NearSEP2_IZ','NearSEP2_vol','Separatrix_area'
                     
       ir = irsep-1
       do ik = 1,nks(irsep-1)-1
@@ -2671,13 +2646,16 @@ c
      >               ' ionization distributions'
       write(tu,*)
 
-      write(tu,'(a)') ' IR       PSIN1   '//
-     >           '     Total_Density    Total-vol '//
-     >           '     OMP_Density      OMP-vol '//
-     >           '     XPT_Density      XPT-vol '//
-     >           '    '//OUTER//'_Density '//OUTER//'-vol '//
-     >           '    '//INNER//'_Density '//INNER//'-vol '//
-     >           '    '//'Surface_area'
+      write(tu,'(3x,a,3x,5x,a,5x,6x,a,5x,5x,a,5x,
+     >           2(7x,a,6x,6x,a,6x),
+     >           2(6x,a,5x,5x,a,5x),
+     >           4x,a,3x)')  
+     >           'IR','PSIN','Total_IZ','Total-vol',
+     >           'OMP_IZ','OMP-vol',
+     >           'XPT_IZ','XPT-vol',
+     >           OUTER//'_IZ ',OUTER//'-vol ',
+     >           INNER//'_IZ ',INNER//'-vol ',
+     >           'Surface_area'
 
 
       do ir = 2,irsep-1
@@ -2763,18 +2741,68 @@ c
 
       ! write out the outer midplane density profiles
 
+      write(tu,*)
       write(tu,'(a,f12.5,a,f12.5,a,f12.5)') 
-     >                'OUTER MID-PLANE DENSITY PROFILES: R > ',
+     >                ' OUTER MID-PLANE DENSITY PROFILES: R > ',
      >                 r0,' : Z = ',z0,' +/- ',deltaz
-      write(tu,'(a)') ' CNT        IR       PSIN1   '//
-     >           '     D_Density       D2_Density '//
-     >           '     Dioniz_Density   '
+      write(tu,'(3x,a,2x,9x,a,8x,8x,a,7x,5x,a,5x,5x,a,4x,7x,a,6x)') 
+     >                'CNT','IR','PSIN',
+     >                'D_Density','D2_Density',
+     >                'Dioniz'
 
       do in = 1,profcnt
          write(tu,'(i8,12(1x,g18.8))') in,
      >         h_profiles(in,1),h_profiles(in,2),
      >         h_profiles(in,3),h_profiles(in,4),
      >         h_profiles(in,5)
+      end do
+c
+c
+c
+      write(tu,*)
+      write(tu,'(a)') ' EIRENE Calculated Hydrogenic Quantities'
+      write(tu,*)
+      write(tu,'(a,i6)')' SEPARATRIX RING                      = ',irsep 
+      write(tu,'(a,i6)') ' PFZ RING ADJACENT TO SEPARATRIX RING = ',nrs 
+
+      do ir = 1,nrs
+
+         write(tu,*) 
+c         write(tu,'(a,2x,a,i6)') ' START TARGET:'//OUTER,' RING = ',ir
+         write(tu,'(2(3x,a,2x),6x,a,6x,4(9x,a,9x),
+     >   2(8x,a,8x)  ,6x,a,6x,4(7x,a,6x)  )') 
+     >   'IK','IR','R','Z','S','P',
+     >   'DELTA-P','PSI','VOL',
+     >   'PINATOM','PINENA','PINMOL','PINENM','PINION'
+
+         tmpsum2 = 0.0
+
+         do ik = 1,nks(ir)
+
+            write(tu,'(2(1x,i5),1p,15(1x,g18.8))') ik,ir,
+     >           rs(ik,ir),zs(ik,ir),kss(ik,ir),kps(ik,ir),
+     >           kpb(ik,ir)-kpb(ik-1,ir),
+     >           psifl(ik,ir),kvol2(ik,ir),
+     >           pinatom(ik,ir),pinena(ik,ir),
+     >           pinmol(ik,ir),pinenm(ik,ir),pinion(ik,ir)
+c
+c            tmpsum = 
+c     >           sqrt((krb(ik,ir)-krb(ik-1,ir))**2+
+c     >                (kzb(ik,ir)-kzb(ik-1,ir))**2)
+c
+c            tmpsum2= tmpsum2 + tmpsum
+c
+c
+c            write(tu,'(2(1x,i5),1p,14(1x,g12.5))') ik,ir,
+c     >           krb(ik,ir),kzb(ik,ir),
+c     >           krb(ik-1,ir),kzb(ik-1,ir),rs(ik,ir),zs(ik,ir),
+c     >           kpb(ik,ir)-kpb(ik-1,ir),tmpsum,
+c     >           kpb(ik,ir), tmpsum2,ksb(ik,ir),ksb(ik-1,ir)
+c
+
+         end do  
+c         write(tu,'(a)') 'END TARGET:'//INNER
+
       end do
 
       close(tu)
@@ -3032,7 +3060,7 @@ c
       return
       end
 
-      subroutine pr_imp_density_profiles(iunit)
+      subroutine pr_imp_density_profiles
       implicit none
       include 'params'
       include 'outcom'
@@ -3045,17 +3073,17 @@ c
 c     
       include 'printopt' 
 
-      integer iunit
 
 !     print two profiles - near outer midplane defined as Z = Z0 +/- 10cm with R>R0
 !     - top of machine defined as +/- 10cm from the R,Z defined by the 
 !     mid point of the separatrix ring.
 
-      integer ir,in,ik,iz
+      integer ir,in,ik,iz,ounit
       real omp_prof(maxnrs,3)
       real top_prof(maxnrs,3)
       real r_mid,z_mid,r_top,z_top
       real range
+      character*1024 :: filename
 
       write(0,*) 'Printing impurity density profiles:'
 
@@ -3123,37 +3151,45 @@ c
       end do 
 
 
+!
+!     convert to storing in a separate file
+!
+      filename='upstream_impurity_profiles.dat'
+      call find_free_unit_number(ounit)
+
+      open(ounit,file=trim(filename),form='formatted')
 
 ! write out the tabulated data
 
-      write(iunit,'(a)')  ' Tabulated Impurity Density Profiles:'
-      write(iunit,'(a)')  ' OMP'
-      write(iunit,'(a)')  ' IR        PSIN      AREA'//
+      write(ounit,'(a)')  ' Tabulated Impurity Density Profiles:'
+      write(ounit,'(a)')  ' OMP'
+      write(ounit,'(a)')  ' IR        PSIN      AREA'//
      >     '     CONTENT    DENSITY   DENSITY-ABS'
 
       do ir = 1,irwall
 
          if (omp_prof(ir,1).gt.0.0) then 
-            write(iunit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
+            write(ounit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
      >           (omp_prof(ir,in),in=1,3),omp_prof(ir,3)*absfac
          endif 
       end do
 
 
 
-      write(iunit,'(a)')  ' TOP'
-      write(iunit,'(a)')  ' IR        PSIN      AREA'//
+      write(ounit,'(a)')  ' TOP'
+      write(ounit,'(a)')  ' IR        PSIN      AREA'//
      >     '     CONTENT    DENSITY   DENSITY-ABS'
 
       do ir = 1,irwall
 
          if (top_prof(ir,1).gt.0.0) then 
-            write(iunit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
+            write(ounit,'(1x,i8,5(1x,g18.8))') ir,psitarg(ir,2),
      >           (top_prof(ir,in),in=1,3),top_prof(ir,3)*absfac
          endif 
       end do
 
 
+      close(ounit)
 
       end                       ! pr_imp_density_profiles
 

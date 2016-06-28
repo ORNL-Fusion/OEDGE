@@ -1474,6 +1474,18 @@ c
         CALL ReadI(line,fc_v_interp_opt,0,1,
      >       'Fluid Code Cell Edge Value Interpretation Option')
 c
+c
+c -----------------------------------------------------------------------
+c
+c     TAG N21 : External sputtering flux data source
+c               0 = geier file format for Ar
+c               1 = import divimp charge resolved flux and energy
+c                   data from a previous divimp run
+c
+      elseif(tag(1:3).eq.'N21') then 
+        CALL ReadI(line,ext_flx_data_src,0,1,
+     >       'External sputter flux data source option')
+c
 c -----------------------------------------------------------------------
 c
 c     TAG P60 : Density Gradient Option
@@ -1496,6 +1508,26 @@ c
       ELSEIF (tag(1:3).EQ.'P62') THEN
         CALL ReadI(line,ofield_targ,1,3,
      >                           'Override E-field target')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG P63 : External plasma overlay option
+c               0 = off
+c               1 = on
+c
+      ELSEIF (tag(1:3).EQ.'P63') THEN
+        CALL ReadI(line,external_plasma_overlay,0,1,
+     >                           'External plasma overlay')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG P64 : External plasma overlay file name
+c               - specifies the name of the file to be loaded
+c               - full path required unless rundiv script is modified
+c
+      ELSEIF (tag(1:3).EQ.'P64') THEN
+        CALL ReadC(line,external_plasma_file,
+     >                          'EXTERNAL PLASMA OVERLAY FILE NAME')
 c
 c -----------------------------------------------------------------------
 c

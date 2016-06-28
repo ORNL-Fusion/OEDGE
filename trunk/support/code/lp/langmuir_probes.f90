@@ -7,13 +7,24 @@ module langmuir_probes
 
 
   ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
+  ! vf is in lp_data(in,10)
   integer,parameter,private ::  timebin   = 1
+  integer,parameter,private ::  jsatbin   = 2
+  integer,parameter,private ::  tebin   = 3
+  integer,parameter,private ::  chibin   = 5
+  integer,parameter,private ::  probebin   = 6
   integer,parameter,private ::  rbin   = 8
   integer,parameter,private ::  psibin = 9
+  integer,parameter,private ::  vfbin  = 10
 
   integer,parameter,private ::  nzones = 2
   integer,parameter ::  inner   = 1
   integer,parameter ::  outer   = 2
+
+  integer,parameter,private :: elm_time_col = 1
+  integer,parameter,private :: elm_ref_col = 2
+  integer,parameter,private :: elm_frac_col = 3
+  integer,parameter,private :: zone_col = 4
 
   integer,parameter,private :: outlier_index = 5
 
@@ -108,6 +119,8 @@ contains
     !   time(msec)	jsat(A/cm2)	temp(eV)	dens(cm-3)  		csq		probeID		delrsepin	delzsepin	delrsepout
     ! new version : 9 columns
     !   time(msec)	jsat(A/acm2)	temp(eV)	dens(cm-3)              csq	        probeID	        delrsepin	delrsepout	psin
+    ! new version 2 : 10 columns
+    !   time(msec)	jsat(A/acm2)	temp(eV)	dens(cm-3)              csq	        probeID	        delrsepin	delrsepout	psin    vf(V)
 
     cur_line_cnt = 0
 
@@ -145,7 +158,7 @@ contains
   end subroutine read_lp_data_file
 
   subroutine flag_lp_data(lp_data,nlines,ncols,nextra)
-
+    implicit none
     integer :: nlines,ncols,nextra
     real, allocatable :: lp_data(:,:)
     real*8 :: r_av,r_cnt,r_av2,r_cnt2
@@ -200,18 +213,18 @@ contains
 !          endif
 
           ! Record minimum R value in data in case there is no data inside the PFZ          
-          max_drsep = max(max_drsep,lp_data(in,rbin))
-          min_drsep = min(min_drsep,lp_data(in,rbin))
+          max_drsep = max(max_drsep,dble(lp_data(in,rbin)))
+          min_drsep = min(min_drsep,dble(lp_data(in,rbin)))
 
           if (lp_data(in,psibin).lt.1.0) then 
-             min_drsep_pfz = min(min_drsep_pfz,lp_data(in,rbin))
-             max_drsep_pfz = max(max_drsep_pfz,lp_data(in,rbin))
+             min_drsep_pfz = min(min_drsep_pfz,dble(lp_data(in,rbin)))
+             max_drsep_pfz = max(max_drsep_pfz,dble(lp_data(in,rbin)))
 
 !             r_av = r_av + lp_data(in,rbin)
 !             r_cnt = r_cnt + 1.0
           elseif (lp_data(in,psibin).ge.1.0) then 
-             min_drsep_sol = min(min_drsep_sol,lp_data(in,rbin))
-             max_drsep_sol = max(max_drsep_sol,lp_data(in,rbin))
+             min_drsep_sol = min(min_drsep_sol,dble(lp_data(in,rbin)))
+             max_drsep_sol = max(max_drsep_sol,dble(lp_data(in,rbin)))
 
 !             r_av2 = r_av2 + lp_data(in,rbin)
 !             r_cnt2 = r_cnt2 + 1.0
@@ -266,9 +279,9 @@ contains
        do in = 1,nlines
 
           if (lp_data(in,rbin).lt.rsplit) then
-             lp_data(in,ncols+4) = INNER
+             lp_data(in,ncols+zone_col) = INNER
           else
-             lp_data(in,ncols+4) = OUTER
+             lp_data(in,ncols+zone_col) = OUTER
           endif
 
           ! report inconsistent psi and r values
@@ -314,6 +327,7 @@ contains
     ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
     !rbin = 8
     !psibin = 9
+    !vfbin = 10
 
     write(0,'(a,g12.5)') 'Start Binning LP Data:',outlier_mult
 
@@ -354,7 +368,7 @@ contains
     !
     do in = 1,nlines
        ! correct time window
-       if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
+       if (lp_data(in,timebin).ge.tmin.and.lp_data(in,timebin).le.tmax.and.lp_data(in,chibin).le.chisq_lim) then 
           rmin = min(lp_data(in,rbin),rmin)
           rmax = max(lp_data(in,rbin),rmax)
           psimin = min(lp_data(in,psibin),psimin)
@@ -377,8 +391,8 @@ contains
 
 
     ! allocate storage for processed data
-
-    ndata = 2
+    ! ndata = 3 ... jsat,te,vf
+    ndata = 3
     npts = nbins
 
     write(0,*) 'Sizes:',nbins,nzones
@@ -430,15 +444,15 @@ contains
     ! loop through data and record averages to give a base line for outlier removal
     do in = 1,nlines
 
-        izone = int(lp_data(in,ncols+4))
-        if (izone.lt.1.or.izone.gt.2) then
+        izone = int(lp_data(in,ncols+zone_col))
+        if (izone.ne.INNER.and.izone.ne.OUTER) then
           write(0,'(i6,1x,3(1x,g18.8),1x,i8,8(1x,g18.8))') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),int(lp_data(in,6)),&
                &lp_data(in,5),lp_data(in,10),lp_data(in,11),lp_data(in,12),lp_data(in,2),lp_data(in,3),lp_data(in,ncols+4)
         endif 
           
        ! Preaverage each of the possible categories ...
        ! 1. All data
-       if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
+       if (lp_data(in,timebin).ge.tmin.and.lp_data(in,timebin).le.tmax.and.lp_data(in,chibin).le.chisq_lim) then 
 
           n_av = 1
           ibin = int((lp_data(in,testbin)-testmin)/deltabin) + 1
@@ -446,35 +460,35 @@ contains
           pre_average(ibin,ndata+1,n_av,izone) = pre_average(ibin,ndata+1,n_av,izone) + 1.0
           ! record data sum
           ! jsat
-          pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,2)
+          pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,jsatbin)
           ! te
-          pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,3)
+          pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,tebin)
 
           ! bin over ELM filtered categories
           if (elm_filt) then 
              ! 2,3 ... ELM vs. no-ELM
              ! if ELM reference is greater than 0 then the data point is associated with an ELM
              ! a value less than 0 indicates a point that is in the peripheral region of an ELM 
-             if (lp_data(in,11).gt.0) then 
+             if (lp_data(in,ncols+elm_ref_col).gt.0) then 
                 ! in - ELM
                 n_av = 2
                 ! record data count
                 pre_average(ibin,ndata+1,n_av,izone) = pre_average(ibin,ndata+1,n_av,izone) + 1.0
                 ! record data sum
                 ! jsat
-                pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,2)
+                pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                 ! te
-                pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,3)
-             elseif (lp_data(in,11).eq.0) then
+                pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,tebin)
+             elseif (lp_data(in,ncols+elm_ref_col).eq.0) then
                 ! not in-ELM
                 n_av = 3
                 ! record data count
                 pre_average(ibin,ndata+1,n_av,izone) = pre_average(ibin,ndata+1,n_av,izone) + 1.0
                 ! record data sum
                 ! jsat
-                pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,2)
+                pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                 ! te
-                pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,3)
+                pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,tebin)
              endif
 
 
@@ -483,14 +497,14 @@ contains
              do if = 1,n_elm_fractions
                 n_av = 3 + if
 
-                if (lp_data(in,12).ge.elm_fractions(if,1).and.lp_data(in,12).le.elm_fractions(if,2).and.lp_data(in,11).eq.0) then 
+                if (lp_data(in,ncols+elm_frac_col).ge.elm_fractions(if,1).and.lp_data(in,ncols+elm_frac_col).le.elm_fractions(if,2).and.lp_data(in,ncols+elm_ref_col).eq.0) then 
                    ! record data count
                    pre_average(ibin,ndata+1,n_av,izone) = pre_average(ibin,ndata+1,n_av,izone) + 1.0
                    ! record data sum
                    ! jsat
-                   pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,2)
+                   pre_average(ibin,1,n_av,izone) = pre_average(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                    ! te
-                   pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,3)
+                   pre_average(ibin,2,n_av,izone) = pre_average(ibin,2,n_av,izone) + lp_data(in,tebin)
                 endif
 
              end do
@@ -547,9 +561,9 @@ contains
 
     do in = 1,nlines
        ! define zone for averaging
-       izone = int(lp_data(in,ncols+4))
+       izone = int(lp_data(in,ncols+zone_col))
 
-       if (lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax.and.lp_data(in,5).le.chisq_lim) then 
+       if (lp_data(in,timebin).ge.tmin.and.lp_data(in,timebin).le.tmax.and.lp_data(in,chibin).le.chisq_lim) then 
 
           !ibin = int((lp_data(in,9)-rmin)/deltar) + 1
 
@@ -558,10 +572,10 @@ contains
           n_av = 1
           if (.not.remove_outlier.or.&
                &(remove_outlier.and.&
-               &(((lp_data(in,2).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and. &
-               & (lp_data(in,3).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))      &
-               &.and.((lp_data(in,2).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
-               & (lp_data(in,3).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
+               &(((lp_data(in,jsatbin).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and. &
+               & (lp_data(in,tebin).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))      &
+               &.and.((lp_data(in,jsatbin).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
+               & (lp_data(in,tebin).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
                &  ))) then 
 
 
@@ -570,9 +584,11 @@ contains
              lp_proc_data(ibin,ndata+1,n_av,izone) = lp_proc_data(ibin,ndata+1,n_av,izone) + 1.0
              ! record data sum
              ! jsat
-             lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,2)
+             lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,jsatbin)
              ! te
-             lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,3)
+             lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,tebin)
+             ! te
+             lp_proc_data(ibin,3,n_av,izone) = lp_proc_data(ibin,3,n_av,izone) + lp_data(in,vfbin)
              ! Average of axis values psi and r
              lp_axis_psi(ibin,n_av,izone) = lp_axis_psi(ibin,n_av,izone) + lp_data(in,psibin)
              lp_axis_r(ibin,n_av,izone)   = lp_axis_r(ibin,n_av,izone)   + lp_data(in,rbin)
@@ -590,7 +606,7 @@ contains
              ! 2,3 ... ELM vs. no-ELM
              ! if ELM reference is greater than 0 then the data point is associated with an ELM
              ! a value less than 0 indicates a point that is in the peripheral region of an ELM 
-             if (lp_data(in,11).gt.0) then 
+             if (lp_data(in,ncols+elm_ref_col).gt.0) then 
                 ! in - ELM
                 n_av = 2
                 ! Do not apply outlier removal to in-ELM data since wide scatter is to be expected here
@@ -608,9 +624,11 @@ contains
                 lp_proc_data(ibin,ndata+1,n_av,izone) = lp_proc_data(ibin,ndata+1,n_av,izone) + 1.0
                 ! record data sum
                 ! jsat
-                lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,2)
+                lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                 ! te
-                lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,3)
+                lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,tebin)
+                ! vf
+                lp_proc_data(ibin,3,n_av,izone) = lp_proc_data(ibin,3,n_av,izone) + lp_data(in,vfbin)
                 ! Average of axis values psi and r
                 lp_axis_psi(ibin,n_av,izone) = lp_axis_psi(ibin,n_av,izone) + lp_data(in,psibin)
                 lp_axis_r(ibin,n_av,izone)   = lp_axis_r(ibin,n_av,izone)   + lp_data(in,rbin)
@@ -622,24 +640,26 @@ contains
 
 
 
-             elseif (lp_data(in,11).eq.0) then 
+             elseif (lp_data(in,ncols+elm_ref_col).eq.0) then 
                 ! not associated with an ELM
                 n_av = 3
                 if (.not.remove_outlier.or.&
                      &(remove_outlier.and.&
-                     &(((lp_data(in,2).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and.&
-                     & (lp_data(in,3).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))&
-                     &.and.((lp_data(in,2).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
-                     & (lp_data(in,3).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
+                     &(((lp_data(in,jsatbin).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and.&
+                     & (lp_data(in,tebin).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))&
+                     &.and.((lp_data(in,jsatbin).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
+                     & (lp_data(in,tebin).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
                      &  ))) then 
                    ! Bin average for total ... between ELMs and during ELMs ("during" may not be very useful)
                    ! record data count
                    lp_proc_data(ibin,ndata+1,n_av,izone) = lp_proc_data(ibin,ndata+1,n_av,izone) + 1.0
                    ! record data sum
                    ! jsat
-                   lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,2)
+                   lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                    ! te
-                   lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,3)
+                   lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,tebin)
+                   ! vf
+                   lp_proc_data(ibin,3,n_av,izone) = lp_proc_data(ibin,3,n_av,izone) + lp_data(in,vfbin)
                    ! Average of axis values psi and r
                    lp_axis_psi(ibin,n_av,izone) = lp_axis_psi(ibin,n_av,izone) + lp_data(in,psibin)
                    lp_axis_r(ibin,n_av,izone)   = lp_axis_r(ibin,n_av,izone)   + lp_data(in,rbin)
@@ -656,15 +676,15 @@ contains
              do if = 1,n_elm_fractions
                 n_av = 3 + if
 
-                if (lp_data(in,12).ge.elm_fractions(if,1).and.lp_data(in,12).le.elm_fractions(if,2).and.lp_data(in,11).eq.0) then 
+                if (lp_data(in,ncols+elm_frac_col).ge.elm_fractions(if,1).and.lp_data(in,ncols+elm_frac_col).le.elm_fractions(if,2).and.lp_data(in,ncols+elm_ref_col).eq.0) then 
 
 
                    if (.not.remove_outlier.or.&
                         &(remove_outlier.and.&
-                        &(((lp_data(in,2).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and.&
-                        & (lp_data(in,3).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))&
-                        &.and.((lp_data(in,2).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
-                        & (lp_data(in,3).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
+                        &(((lp_data(in,jsatbin).le.outlier_gt_mult*pre_average(ibin,1,n_av,izone)).and.&
+                        & (lp_data(in,tebin).le.outlier_gt_mult*pre_average(ibin,2,n_av,izone)))&
+                        &.and.((lp_data(in,jsatbin).gt.outlier_lt_mult*pre_average(ibin,1,n_av,izone)).and.&
+                        & (lp_data(in,tebin).gt.outlier_lt_mult*pre_average(ibin,2,n_av,izone)))&
                         &  ))) then 
 
 
@@ -673,9 +693,11 @@ contains
                       lp_proc_data(ibin,ndata+1,n_av,izone) = lp_proc_data(ibin,ndata+1,n_av,izone) + 1.0
                       ! record data sum
                       ! jsat
-                      lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,2)
+                      lp_proc_data(ibin,1,n_av,izone) = lp_proc_data(ibin,1,n_av,izone) + lp_data(in,jsatbin)
                       ! te
-                      lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,3)
+                      lp_proc_data(ibin,2,n_av,izone) = lp_proc_data(ibin,2,n_av,izone) + lp_data(in,tebin)
+                      ! vf
+                      lp_proc_data(ibin,3,n_av,izone) = lp_proc_data(ibin,3,n_av,izone) + lp_data(in,vfbin)
                       ! Average of axis values psi and r
                       lp_axis_psi(ibin,n_av,izone) = lp_axis_psi(ibin,n_av,izone) + lp_data(in,psibin)
                       lp_axis_r(ibin,n_av,izone)   = lp_axis_r(ibin,n_av,izone)   + lp_data(in,rbin)
@@ -707,6 +729,7 @@ contains
              if (lp_proc_data(in,ndata+1,if,iz).gt.0.0) then 
                 lp_proc_data(in,1,if,iz) = lp_proc_data(in,1,if,iz)/lp_proc_data(in,ndata+1,if,iz)
                 lp_proc_data(in,2,if,iz) = lp_proc_data(in,2,if,iz)/lp_proc_data(in,ndata+1,if,iz)
+                lp_proc_data(in,3,if,iz) = lp_proc_data(in,3,if,iz)/lp_proc_data(in,ndata+1,if,iz)
                 lp_axis_psi(in,if,iz) = lp_axis_psi(in,if,iz)/lp_proc_data(in,ndata+1,if,iz)
                 lp_axis_r(in,if,iz) = lp_axis_r(in,if,iz)/lp_proc_data(in,ndata+1,if,iz)
              else
@@ -758,7 +781,7 @@ contains
 
 
     ! print out the processed/binned data
-    ! at the present time this data is  LP_AXIS   LP_PROC_DATA(,1) = Jsat   LP_PROC_DATA(,2) = Te
+    ! at the present time this data is  LP_AXIS   LP_PROC_DATA(,1) = Jsat   LP_PROC_DATA(,2) = Te    LP_PROC_DATA(,3) = floating potential
 
     write(ounit,'(a,a)') 'ID : ',trim(ident)
 
@@ -778,17 +801,17 @@ contains
 
        do iz = start_zone,end_zone
           if (iz.eq.inner) then 
-             write(ounit,'(a)')   'Inner   BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)         Count  '
+             write(ounit,'(a)')   'Inner   BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)      Vf(V)      Count  '
           elseif (iz.eq.outer) then 
-             write(ounit,'(a)')   'Outer   BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)         Count  '
+             write(ounit,'(a)')   'Outer   BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)      Vf(V)      Count  '
           else
-             write(ounit,'(a)')   '        BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)         Count  '
+             write(ounit,'(a)')   '        BIN_coord     R-Rsep(Av)         Psin(Av)            Jsat(A/cm2)          Te(eV)      Vf(V)      Count  '
           endif
 
           do in = 1,npts
              if (lp_proc_data(in,ndata+1,if,iz).gt.0.0) then 
                 write(ounit,'(20(1x,g18.8))') lp_axis(in,iz),lp_axis_r(in,if,iz),lp_axis_psi(in,if,iz),&
-                     lp_proc_data(in,1,if,iz),lp_proc_data(in,2,if,iz),lp_proc_data(in,ndata+1,if,iz)
+                     lp_proc_data(in,1,if,iz),lp_proc_data(in,2,if,iz),lp_proc_data(in,3,if,iz),lp_proc_data(in,ndata+1,if,iz)
              endif
           end do
        end do
@@ -815,13 +838,14 @@ contains
 
     write(ounit,'(a,a)') ' ID : ',trim(ident)
     write(ounit,'(a)')   ' IN            Time(s)              R-Rsep             PSIN           Probe'//&
-         &'       CHISQ     ELM-time              ELM-Index        ELM-frac        Jsat(A/cm2)              Te(eV)       TARG_FLAG    OUT_FLAG'
+         &'       CHISQ     ELM-time              ELM-Index        ELM-frac        Jsat(A/cm2)              Te(eV)    Vf(V)    TARG_FLAG    OUT_FLAG'
 
     do in = 1,nlines
-       if (lp_data(in,5).lt.chisq_lim.and.(lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax).and.(lp_data(in,ncols+outlier_index).eq.0.0)) then 
+       if (lp_data(in,chibin).lt.chisq_lim.and.(lp_data(in,timebin).ge.tmin.and.lp_data(in,timebin).le.tmax).and.(lp_data(in,ncols+outlier_index).eq.0.0)) then 
 
-          write(ounit,'(i6,1x,3(1x,g18.8),1x,i8,6(1x,g18.8),2i10)') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),int(lp_data(in,6)),&
-               &lp_data(in,5),lp_data(in,10),lp_data(in,11),lp_data(in,12),lp_data(in,2),lp_data(in,3),int(lp_data(in,ncols+4)),int(lp_data(in,ncols+outlier_index))
+          write(ounit,'(i6,1x,3(1x,g18.8),1x,i8,7(1x,g18.8),2i10)') in,lp_data(in,timebin),lp_data(in,rbin),lp_data(in,psibin),int(lp_data(in,probebin)),&
+               &lp_data(in,chibin),lp_data(in,ncols+elm_time_col),lp_data(in,ncols+elm_ref_col),lp_data(in,ncols+elm_frac_col),&
+               &lp_data(in,jsatbin),lp_data(in,tebin),lp_data(in,vfbin),int(lp_data(in,ncols+zone_col)),int(lp_data(in,ncols+outlier_index))
        endif
     end do
 
@@ -829,12 +853,13 @@ contains
     write(ounit,'(a,a)') 
     write(ounit,'(a,a,a)') ' ID : ',trim(ident),': OUTLIERS :'
     write(ounit,'(a)')   ' IN            Time(s)              R-Rsep             PSIN           Probe'//&
-         &'       CHISQ     ELM-time              ELM-Index        ELM-frac        Jsat(A/cm2)              Te(eV)       TARG_FLAG   OUT_FLAG'
+         &'       CHISQ     ELM-time              ELM-Index        ELM-frac        Jsat(A/cm2)              Te(eV)     Vf(V)    TARG_FLAG   OUT_FLAG'
     do in = 1,nlines
 
-       if (lp_data(in,5).lt.chisq_lim.and.(lp_data(in,1).ge.tmin.and.lp_data(in,1).le.tmax).and.(lp_data(in,ncols+outlier_index).ne.0.0)) then 
-          write(ounit,'(i6,1x,3(1x,g18.8),1x,i8,6(1x,g18.8),2i10)') in,lp_data(in,1),lp_data(in,8),lp_data(in,9),int(lp_data(in,6)),&
-               &lp_data(in,5),lp_data(in,10),lp_data(in,11),lp_data(in,12),lp_data(in,2),lp_data(in,3),int(lp_data(in,ncols+4)),int(lp_data(in,ncols+outlier_index))
+       if (lp_data(in,chibin).lt.chisq_lim.and.(lp_data(in,timebin).ge.tmin.and.lp_data(in,timebin).le.tmax).and.(lp_data(in,ncols+outlier_index).ne.0.0)) then 
+          write(ounit,'(i6,1x,3(1x,g18.8),1x,i8,7(1x,g18.8),2i10)') in,lp_data(in,timebin),lp_data(in,rbin),lp_data(in,psibin),int(lp_data(in,probebin)),&
+               &lp_data(in,chibin),lp_data(in,ncols+elm_time_col),lp_data(in,ncols+elm_ref_col),lp_data(in,ncols+elm_frac_col),&
+               &lp_data(in,jsatbin),lp_data(in,tebin),lp_data(in,vfbin),int(lp_data(in,ncols+zone_col)),int(lp_data(in,ncols+outlier_index))
        endif
     end do
 
@@ -877,18 +902,18 @@ contains
     ! A positive elmref value is inside the most likely ELM effect window
     do in = 1, nlines
 
-       call get_elm_time(lp_data(in,1),elm_time_offset,elmref,inelm,elmfrac,0)
+       call get_elm_time(lp_data(in,timebin),elm_time_offset,elmref,inelm,elmfrac,0)
 
-       lp_data(in,ncols+1) = elm_time_offset
-       lp_data(in,ncols+2) = 0
+       lp_data(in,ncols+elm_time_col) = elm_time_offset
+       lp_data(in,ncols+elm_ref_col) = 0
 
        if (inelm) then 
-          lp_data(in,ncols+2) = elmref
+          lp_data(in,ncols+elm_ref_col) = elmref
        else
-          lp_data(in,ncols+2) = -elmref
+          lp_data(in,ncols+elm_ref_col) = -elmref
        endif
 
-       lp_data(in,ncols+3) = elmfrac
+       lp_data(in,ncols+elm_frac_col) = elmfrac
 
     end do
 

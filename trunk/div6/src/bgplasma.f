@@ -542,6 +542,15 @@ c
 c     Te is flat for S > Fact * SMAX for each half ring
 c
       call flat_t
+
+c
+c     Overlay a separate interpolated plasma file if one is provided. This is ONLY ne, Te and will not be consistent
+c     with any other plasma options unless some further development is done. This option over-writes the ne and Te by
+c     reading in a file and interpolating for grid cells that lie within the region covered by the file. 
+c
+      if (external_plasma_overlay.eq.1) then 
+         call overlay_plasma
+      endif
 c
 C-----------------------------------------------------------------------
 c     If the OFIELD option has been set to 1 ... over-ride the
@@ -956,6 +965,15 @@ c
 c     Te is flat for S > Fact * SMAX for each half ring
 c
       call flat_t
+
+c
+c     Overlay a separate interpolated plasma file if one is provided. This is ONLY ne, Te and will not be consistent
+c     with any other plasma options unless some further development is done. This option over-writes the ne and Te by
+c     reading in a file and interpolating for grid cells that lie within the region covered by the file. 
+c
+      if (external_plasma_overlay.eq.1) then 
+         call overlay_plasma
+      endif
 c
 C-----------------------------------------------------------------------
 c
@@ -2751,12 +2769,57 @@ c
 
       return
       end
+c
+c
+c
+      subroutine overlay_plasma
+      use error_handling
+      use plasma_overlay
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+      
+! read in the overlay plasma file including array sizes and bounds
+! Loop through grid and for any cell with NON-ZERO values within
+! the region covered - replace the values with the ones interpolated from 
+! the file. This includes target data. This is only done for ne,Te at the
+! present time but the code could be enhanced to interpolate any number
+! of plasma parameters for any kind of plasma solution. 
 
+      integer ierr
+      integer ik,ir,id
+      real r,z
 
+! exit if option is not set
+      if (external_plasma_overlay.ne.1) return
+      
+      call load_plasma_overlay(external_plasma_file,ierr)
 
+      if (ierr.ne.0) return
 
+      ! overlay grid first
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            r = rs(ik,ir)
+            z = zs(ik,ir)
+            call interpolate_overlay(r,z,ktebs(ik,ir),knbs(ik,ir))
+         end do
+      end do
 
+      ! Now do the same for the target values
 
+      do id = 1,nds
+         r = rp(id)
+         z = zp(id)
+         call interpolate_overlay(r,z,kteds(id),knds(id))
+      end do
+
+      ! That should have replaced ALL grid cells in the region
+      ! with data from the DTS fit
+
+      return
+      end
 
 
 

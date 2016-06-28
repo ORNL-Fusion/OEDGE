@@ -1,7 +1,7 @@
-      SUBROUTINE SYIELD (MATT,MATP,CNEUTD,
+      SUBROUTINE SYIELD (MATT,MATP,CNEUTD,ext_flx_data_src,
      >                   CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,cebd)
       IMPLICIT NONE
-      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
+      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,cebd,cbomb_frac
 C
 C  *********************************************************************
@@ -197,7 +197,11 @@ C
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
 
-      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
+         ! Note for the external flux source the material needs to be explicitly set in the 
+         ! input file ... later might want to let the code that reads in the data set the 
+         ! bombarding ion species ... but the choice of bombarding ion species is limited. 
          MATP = CBOMBF
          flux_frac = cbomb_frac
       else
@@ -209,7 +213,8 @@ c
       call prc('TARGET MATERIAL IS     '//TARMAT(MATT))
       call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
 c
-      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
          CALL PRI ('         WITH ZIMP', CBOMBZ)
          CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
       endif
@@ -425,10 +430,10 @@ C  ERROR TRAPPING, OUTSIDE RANGE SET YIELD=0,   E=0 OR E/E0 > 1
 C
 C
 C
-      SUBROUTINE SYLD93(MATT,MATP,CNEUTD,
+      SUBROUTINE SYLD93(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       IMPLICIT NONE
-      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
+      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
 C
 C  *********************************************************************
@@ -616,7 +621,12 @@ C
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
 
-      IF (CNEUTD.EQ.1) then
+c      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
+         ! Note for the external flux source the material needs to be explicitly set in the 
+         ! input file ... later might want to let the code that reads in the data set the 
+         ! bombarding ion species ... but the choice of bombarding ion species is limited. 
          MATP = CBOMBF
          flux_frac = cbomb_frac
       else
@@ -626,7 +636,8 @@ C
       WRITE (7,*) 'TARGET MATERIAL IS     ' , TARMAT(MATT)
       WRITE (7,*) 'BOMBARDING IONS ARE    ' , PLAMAT(MATP)
 
-      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
          CALL PRI ('         WITH ZIMP', CBOMBZ)
          CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
       endif
@@ -682,10 +693,10 @@ C  ERROR TRAPPING, OUTSIDE RANGE SET YIELD=0,   E=0 OR E/E0 > 1
 c
 c
 c
-      SUBROUTINE SYLD96(MATT,MATP,CNEUTD,
+      SUBROUTINE SYLD96(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       IMPLICIT none
-      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB
+      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
 C
 C  *********************************************************************
@@ -902,7 +913,12 @@ C
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
 
-      IF (CNEUTD.EQ.1) then
+c      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
+         ! Note for the external flux source the material needs to be explicitly set in the 
+         ! input file ... later might want to let the code that reads in the data set the 
+         ! bombarding ion species ... but the choice of bombarding ion species is limited. 
          MATP = CBOMBF
          flux_frac = cbomb_frac
       else
@@ -913,7 +929,8 @@ C
       WRITE (7,*) 'BOMBARDING IONS ARE    ' , PLAMAT(MATP)
       
 
-      IF (CNEUTD.EQ.1) then
+      IF (CNEUTD.EQ.1.or.
+     >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
          CALL PRI ('         WITH ZIMP', CBOMBZ)
          CALL PRR ('         ZIMP FLUX FRACTION',flux_frac)
       endif

@@ -1367,8 +1367,8 @@ c        IOPT = 1 = combined Ion + Neutral Deposition
 c             = 2 = ION Deposition
 c             = 3 = NEUTRAL Deposition
 c             = 4 = DIVERTOR LEAKED ION Deposition
-
-         call print_deposition(57,cgridopt)
+c
+c         call print_deposition(57,cgridopt)
 c
          if (iopt.lt.1.or.iopt.gt.4) then 
             write(6,'(a,i4)') 
@@ -3162,12 +3162,13 @@ c
 c
 c
 c
-      subroutine print_deposition(ounit,gridopt)
+      subroutine print_deposition(gridopt)
       implicit none
       include 'params'
       include 'cgeom'
       include 'dynam3'
-      include 'walls_com'
+      include 'comtor'
+c      include 'walls_com'
       include 'printopt'
 c
       integer ounit,gridopt
@@ -3185,6 +3186,15 @@ c     well as erosion information
 c
       integer id,iw,icnt,ocnt
       real den_m2_tor
+      character*1024 :: filename
+c
+c
+      call find_free_unit_number(ounit)
+
+      filename = 'impurity_wall_deposition.dat'
+
+      open(ounit,file=trim(filename),form='formatted')
+
 c
 c     Make sure the wall length coordinate calculation has been done - these need to be moved to a central location for efficiency and the code 
 c     should set a flag indicating it has been run. 
@@ -3214,6 +3224,12 @@ c
 c
 c
       write(ounit,'(a)')
+c
+c
+      write(ounit,'(a,g18.8)') ' ABSFAC_NEUT:',absfac_neut
+      write(ounit,'(a,g18.8)') ' ABSFAC_ION:',absfac
+      write(ounit,'(a,g18.8)') ' TOT_NEUT_DEP:',wallsn(maxpts+1)
+      write(ounit,'(a,g18.8)') ' TOT_ION_DEP:',wallsi(maxpts+1)
 c 
 c     First target - "INNER" for X-point up 
 c
@@ -3234,7 +3250,7 @@ c
 c
          if (dds(id).gt.0.0) then
             den_m2_tor = (wallsi(wallindex(id))+wallsn(wallindex(id)))
-     >                 /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)
+     >          /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)*absfac_neut
          else
             den_m2_tor = 0.0
          endif
@@ -3284,7 +3300,7 @@ c
 c
          if (dds(id).gt.0.0) then
             den_m2_tor = (wallsi(wallindex(id))+wallsn(wallindex(id)))
-     >                 /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)
+     >       /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)*absfac_neut
          else
             den_m2_tor = 0.0
          endif
@@ -3320,9 +3336,9 @@ c
 c
       write(ounit,'(a)')
 c
-      write(ounit,'(a,1x,g18.8)') 'TOTAL ION     DEPOSITION:', 
+      write(ounit,'(a,1x,g18.8)') 'TOTAL_ION_DEPOSITION:', 
      >        wallsi(maxpts+1)
-      write(ounit,'(a,1x,g18.8)') 'TOTAL NEUTRAL DEPOSITION:', 
+      write(ounit,'(a,1x,g18.8)') 'TOTAL_NEUTRAL_DEPOSITION:', 
      >        wallsn(maxpts+1)
 c
       write(ounit,'(a)')
@@ -3344,7 +3360,8 @@ c
 c
          if (wallpt(iw,7).gt.0.0) then
             den_m2_tor = (wallsi(iw)+wallsn(iw))
-     >              /(wallsi(maxpts+1)+wallsn(maxpts+1))/wallpt(iw,7)
+     >       /(wallsi(maxpts+1)+wallsn(maxpts+1))/wallpt(iw,7)
+     >       * absfac_neut
          else
             den_m2_tor = 0.0
          endif
@@ -3360,6 +3377,9 @@ c     Quick code to calculate the distance from the separatrix
 c     at the injection position for each ring in the SOL. 
 c
       call print_specific_sepdist(45)
+
+
+      close(ounit)
 c
 c     Printing formats
 c

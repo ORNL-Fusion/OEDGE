@@ -6407,6 +6407,7 @@ c electric field (KES).
 c
       SUBROUTINE CalcPotential2
       use mod_interpolate
+      use plasma_overlay
       IMPLICIT none
 
       INCLUDE 'params'
@@ -6427,6 +6428,7 @@ c
       real    vpot
       real*8 :: rv(4,4),zv(4,4),phiv(4,4),drn,dzn,e_rad_tmp
 
+      real ormin,ormax,ozmin,ozmax
       real phi1,phi2,ds1,ds2,fact
       integer irin,ikin,irout,ikout
       integer ikinu,irinu,ikoutu,iroutu
@@ -7024,9 +7026,6 @@ c
 
 
 
-
-
-
 !               do ic = 1,nc
 !                  write(6,'(a,7i8,20(1x,g15.8))') 'CELLS:',
 !     >                 ic,ik,ir,ikin,irin,ikout,irout,
@@ -7069,6 +7068,27 @@ c
          end do
 
       end do
+c
+c     If the plasma overlay option is turned on then 
+c     MASK out all of the results calculated except for values
+c     inside the overlay region. 
+c
+      if (external_plasma_overlay.eq.1) then 
+         call get_overlay_limits(ormin,ormax,ozmin,ozmax)
+
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               if (rs(ik,ir).lt.ormin.or.rs(ik,ir).gt.ormax.or.
+     >             zs(ik,ir).lt.ozmin.or.zs(ik,ir).gt.ozmax) then 
+                  osmpot2(ik,ir) = 0.0
+                  e_rad(ik,ir) = 0.0
+                  e_pol(ik,ir) = 0.0
+                  exb_pol_drft(ik,ir) = 0.0
+                  exb_rad_drft(ik,ir) = 0.0
+               end if
+            end do
+         end do
+      endif 
 c     
 c     Lets print out everything 
 c     

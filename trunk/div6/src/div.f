@@ -18,6 +18,7 @@ c
       use subgrid
       use ero_interface
       use divertor_limits
+      use walls_src
 c slmod begin
       use mod_interface
       use mod_divimp
@@ -398,11 +399,14 @@ c
 
 
 c
+c     This should all be updated to just use assignment now that array 
+c     assignment is supported. 
+c
       CALL RZERO (LIMS,   MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       CALL RZERO (ELIMS,  MAXNKS*3*(MAXIZS+2))
       CALL RZERO (DEPS,   MAXNDS*MAXIZS)
       CALL RZERO (NEROS,  MAXNDS*5)
-      call rzero (promptdeps,maxnds*6)
+      call rzero (promptdeps,maxnds*9)
       CALL RZERO (WALLS,  MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (wallsn, maxpts+1)
       CALL RZERO (wallse, maxpts+1)
@@ -848,14 +852,14 @@ C
 C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
 C
       IF (CSPUTOPT.EQ.1) THEN
-        CALL SYIELD (MATTAR,MATP,CNEUTD,
+        CALL SYIELD (MATTAR,MATP,CNEUTD,ext_flx_data_src,
      >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATTAR,MATP,CNEUTD,
+        CALL SYLD93 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
      >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
      >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATTAR,MATP,CNEUTD,
+        CALL SYLD96 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
      >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(mattar,matp)
       ENDIF
@@ -865,7 +869,13 @@ c
       if (cprint.eq.9) then 
          call print_sputtering_yields(mattar,matp,crmb)
       endif
-
+c
+c     For sputter option 7 - load external flux data
+c
+      if ((cneutd.eq.7.or.cneutd2.eq.7).and.ext_flx_data_src.eq.1) then
+         call read_resolved_deposition_data
+         call calc_external_source(maxnds,matp,mattar)
+      endif
 
 C
 C     SET YIELD MULTIPLICATION VALUES SO THAT THEY ARE AVAILABLE
@@ -2937,7 +2947,57 @@ C
 c
 c     jdemod - moved the deposition output to a separate routine called
 c              after ABSFAC is calculated
-c            - left Klaus code here for now
+c
+c     Leave the output to fort.6 for now
+c
+C
+C     Neutrals on Walls - also sum up wall deposition and erosion arrays
+C
+      write(6,'(a,6(1x,f9.2))') 'Walls Start:',
+     >      wallse(maxpts+1),wallse_i(maxpts+1),
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
+c
+      do in = 1,wallpts
+c
+c         write (6,'(a,i5,3(1x,g12.5))') 'Wall Dep:',in,
+c    >        wallsn(in),wallsi(in),wallse(in)
+c
+         walltotn = walltotn + wallsn(in)
+         wallse(maxpts+1) = wallse(maxpts+1) + wallse(in)
+         wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
+         wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
+         wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
+         wallsil(maxpts+1) = wallsil(maxpts+1) + wallsil(in)
+         
+         do iz= 1,nizs
+            if (wallsiz(in,iz).gt.0.0) then 
+               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
+            endif
+         enddo
+
+         if (iz.lt.80) then 
+            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+     >          'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
+     >         wallsil(in)
+         else
+            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >         wallsil(in)
+         endif
+
+      enddo
+c
+c
+c
+      write(6,'(a,5(1x,f9.2))') 'Walls End:',
+     >      wallse(maxpts+1),wallse_i(maxpts+1),
+     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
+
+
 c
 C     K. Schmid 2008 output charge state resolved wall impact information
       write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
@@ -4743,12 +4803,6 @@ c
      >   FTOT,' YEFF ',YEFF,' CSEF ',CSEF,' TATIZ ',TATIZ,' TNEUT ',
      >   TNEUT,'NBASFAC:',nabsfac,'NEUT2D_FYTOT:',neut2d_fytot
 c
-c     jdemod - print out charge state resolved wall deposition data 
-c            - this data can be used as input to another divimp run 
-c              to calculate an impurity sputtered particle source
-c
-      call print_resolved_deposition_data(nizs)
-c
 c
 C slmod begin - t-dep
 c...  Dump the particle distribution to a file:
@@ -5230,6 +5284,14 @@ c
 c     Print out any extra DIVIMP data to be saved from this run
 c
       call wrtdivaux(nizs)
+
+c
+c     jdemod - print out charge state resolved wall deposition data 
+c            - this data can be used as input to another divimp run 
+c              to calculate an impurity sputtered particle source
+c
+      call print_resolved_deposition_data(nizs)
+
 c
       CALL PRB
       CALL PRI ('NUMBER OF NEUTRALS FOLLOWED   ',NINT(TNEUT))
@@ -7471,6 +7533,7 @@ c
 c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
      >                     sheath_drop,rc)
+      use error_handling
       implicit none
       integer ik,ir,rc,id
       real r,z,temi,sheath_drop,riz,massi,sputy
@@ -7518,6 +7581,13 @@ c
       ik_local = ik
       ir_local = ir
 c
+c     For initial ion injection cases it is possible for promptdep
+c     to be called with ir values that do not have corresponding 
+c     target elements (i.e. core injection) ... bypass this check
+c     for these cases. 
+c
+      if (ir.lt.irsep) return
+c
       call gridpos(ik_local,ir_local,r,z,.false.,griderr)
 c
 c     Find nearest target element - assume for now it is closest target
@@ -7536,8 +7606,17 @@ c slmod begin
       getrz_error = .FALSE.
       IF (id.EQ.0) THEN
         getrz_error = .TRUE.
-        WRITE(0,*) 'WARNING promptdep: getrz_confusion, prompt '//
-     .             'redeposition check lost'
+        call errmsg('WARNING promptdep: '//
+     >        'no target element found for ring -'//
+     >        ' promptdep off for this particle :RING=',ir)
+c
+c        jdemod - this could could be activated if initial 
+c                 ionization occurs in the core plasma
+c                 either by injection or very cold SOL plasma
+c               - added a check above to turn off promptdep in
+c                 core - leave this code in case other
+c                 edge cases emerge
+c
 c        WRITE(0,*) 'WHOA! PROBLEM!'
 c        WRITE(0,*) griderr
 c        WRITE(0,*) r,z
@@ -7576,6 +7655,14 @@ c      write(6,*) 'DEBUG PD:',ik,ir,targ_dist,
 c     >           mps_thickness(ir_local,it),larmor_radius,bfield
 c
 c
+      if (.not.getrz_error) then 
+         ! record initial and max ionization statistics 
+         ! for the entire neutral distribution
+         promptdeps(id,7) = promptdeps(id,7)+sputy
+         promptdeps(id,8) = promptdeps(id,8)+sputy*targ_dist
+         promptdeps(id,9) = max(promptdeps(id,9),targ_dist)
+      endif
+
       if (targ_dist.le.mps_thickness(ir_local,it)) then
 c
 c        Redeposition due to MPS effect
@@ -8981,6 +9068,7 @@ c
       include 'dynam3'
 c
       integer :: nizs
+      real :: fluxiz(maxizs)
 c
 c     jdemod - Initially I am just going to put the deposition data in a new file
 c              I may move this routine to utility2.f so that the functionality is 
@@ -8991,10 +9079,10 @@ c     This print out was moved to a point after absfac values were calculated
 c
       integer :: ounit,ierr,iz,in
       character*1024 :: fname
+      real :: scalef
 
 
-
-      fname = 'charge_resolved_deposition_data.txt'
+      fname = 'charge_resolved_deposition_data_out.dat'
       call find_free_unit_number(ounit)
 
       open(unit=ounit,file=trim(fname),iostat=ierr)
@@ -9012,60 +9100,51 @@ c      absfac
 c      absfac_neut
 c      cion
 c      crmi
+         
 
+         if (wallse(maxpts+1).ne.0.0) then 
+            scalef = absfac_neut/wallse(maxpts+1)
+         else 
+            scalef = 1.0
+         endif
 
+         write(ounit,'(a)') '{DIVIMP IMPURITY DEPOSITION OUTPUT}'
+         write(ounit,'(a,1x,g18.8)') '{ABSFAC_ION}',absfac
+         write(ounit,'(a,1x,g18.8)') '{ABSFAC_NEUT}',absfac_neut
+         write(ounit,'(a,1x,g18.8)') '{ATOMIC MASS}',crmi
+         write(ounit,'(a,1x,i12)') '{ATOMIC NUMBER}',cion
+         write(ounit,'(a,1x,i12)') '{CHARGE STATES}',nizs
+         write(ounit,'(a,1x,i12)') '{N WALL}',wallpts
+         write(ounit,'(a)') '# Table of DIVIMP calculated'//
+     >                 ' impurity particle outflux by charge state'
+         write(ounit,'(a)') '# Including flux and average'//
+     >                      ' impact energy (jde)'
+         write(ounit,'(a,10(1x,g18.8))') '{TOTALS}',walltotn,
+     >      wallse(maxpts+1),wallse_i(maxpts+1),wallsi(maxpts+1),
+     >      wallsn(maxpts+1),wallsil(maxpts+1)
+         write(ounit,'(a,1x,g18.8)') '{DATA}'
+
+         do in = 1,wallpts
+            
+            do iz = 1,nizs
+               if (wallpt(in,7).ne.0.0) then 
+                  fluxiz(iz) = wallsiz(in,iz)*scalef/wallpt(in,7)
+               else
+                  fluxiz(iz) = 0.0
+               endif
+            end do
+
+            write(ounit,'(1x,i8,3(1x,f15.7),i8,512(1x,g18.8))') 
+     >        in,
+     >        wallpt(in,1),wallpt(in,2),wallpt(in,7),int(wallpt(in,18)),
+     >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+     >        wallsil(in)
+
+         end do
 
          close(ounit)
       endif
-
-
-c
-c     Leave the output to fort.6 for now
-c
-C
-C     Neutrals on Walls - also sum up wall deposition and erosion arrays
-C
-      write(6,'(a,6(1x,f9.2))') 'Walls Start:',
-     >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
-c
-      do 3005 in = 1,wallpts
-c
-c         write (6,'(a,i5,3(1x,g12.5))') 'Wall Dep:',in,
-c     >        wallsn(in),wallsi(in),wallse(in)
-c
-         walltotn = walltotn + wallsn(in)
-         wallse(maxpts+1) = wallse(maxpts+1) + wallse(in)
-         wallse_i(maxpts+1) = wallse_i(maxpts+1) + wallse_i(in)
-         wallsn(maxpts+1) = wallsn(maxpts+1) + wallsn(in)
-         wallsi(maxpts+1) = wallsi(maxpts+1) + wallsi(in)
-         wallsil(maxpts+1) = wallsil(maxpts+1) + wallsil(in)
-         
-         do iz= 1,nizs
-            if (wallsiz(in,iz).gt.0.0) then 
-               wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
-            endif
-         enddo
-
-         if (iz.lt.80) then 
-            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
-     >          'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
-     >         wallsil(in)
-         else
-            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         wallsil(in)
-         endif
-
-3005  continue
-c
-      write(6,'(a,5(1x,f9.2))') 'Walls End:',
-     >      wallse(maxpts+1),wallse_i(maxpts+1),
-     >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
 
       return
       end

@@ -16974,6 +16974,9 @@ c
       write (of,10)  'ABSFAC:'
       write (of,500) absfac
 c
+      write (of,10)  'ABSFAC_NEUT:'
+      write (of,500) absfac_neut
+c
 c     TOTAL POWLS: Total impurity radiation density
 c                  in each cell
 c        
@@ -17071,6 +17074,11 @@ c
       integer len,lent,lenf,lenstr
       integer fileid
       external lenstr
+      logical :: scalar_flag
+c
+      scalar_flag = .false.
+      if (maxk.eq.1.and.maxr.eq.1.and.minz.eq.1.and.maxz.eq.1) 
+     >          scalar_flag=.true.
 c
 c     Based on the value of the tag - decide which file to open
 c

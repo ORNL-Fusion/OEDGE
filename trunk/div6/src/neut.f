@@ -293,8 +293,15 @@ C
 C
 C---- CALCULATE GAMMA, FACTOR DETERMINING MAXIMUM ENERGY EXCHANGE.
 C
-      GAMMA  = 4.0 * CRMB * CRMI / ((CRMB+CRMI) * (CRMB+CRMI))
-      GAMBL  = GAMMA * (1.0 - GAMMA)
+c     jdemod - impurity sputtering source instead of background  - need to change this - about a 5% difference
+c
+c     Depending on the value of matp ... this affects the bombarding ion mass and thus the gamma factor
+c     GAMBL is only used in neutbatch in calculating the energy limits
+c     Both GAMMA and GAMBL are caluclated independently in the find_thomson_velocity code
+c
+      call calculate_gamma(cneutd,ext_flx_data_src,
+     >                     matp,matt,crmb,crmi,gamma,gambl)
+
 c
 c     CALCULATE values for nproda, nprod, nprod2a, nprod2 based 
 c     on the selected Primary and supplementary launch options and 
@@ -358,7 +365,6 @@ c
                newcneutb = 0
                newcneutc = cneutc
 c
-
 
                call neutbatch(newcneutc,newcneutb,yieldsw,pinsw,
      >                     0,nproda,0,natiza,gambl,
@@ -547,6 +553,9 @@ c
                    if (cneutd.eq.8) then 
                       call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,yieldsw,matp,matt)               
+                   elseif (cneutd.eq.7) then 
+                      call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
+     >                  3,yieldsw,matp,matt)               
                    else
                       IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY B'
                       call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
@@ -848,6 +857,9 @@ c
                if (cneutd2.eq.8) then
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               2,yieldsw,matp,matt)               
+               elseif (cneutd2.eq.7) then
+                  call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
+     >               3,yieldsw,matp,matt)               
                else 
                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY D'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
@@ -4725,6 +4737,7 @@ c
       subroutine tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
 c slmod begin
+      use walls_src
       USE mod_divimp
 c slmod ned
       implicit none
@@ -4749,6 +4762,8 @@ c                   = 1  Use PIN/NIMBUS data
 c                   = 2  Use Wall plasma conditions (not implemented)
 c                   = 3  Use external flux file 
 c                   = 4  Use impurity influx data from PIN/NIMBUS - SL, 24/11/2009
+c
+c            PIN SWITCH is used to define flux sources - either from PIN or from external sources
 c
 c
 c            YIELDSW= 0  Use Physiclal Sputtering Yields
@@ -4978,7 +4993,20 @@ c
 c
 c        Load external flux data array 
 c
-         call calc_extflx_yield(fydata,matt)
+         if (ext_flx_data_src.eq.0) then 
+            ! code from Alex Geier for Ar specific case
+            call calc_extflx_yield(fydata,matt)
+         elseif (ext_flx_data_src.eq.1) then
+            call assign_deposition_data(fydata,maxpts,5,nds,0)
+            ! apply yield multipliers from the input data to the 
+            ! calculated effective yield and flux*yield from the 
+            ! external source
+            do id = 1,nds
+               fydata(id,4) = fydata(id,4) * kmfps(id)
+               fydata(id,5) = fydata(id,5) * kmfps(id)
+            end do
+            
+         endif
 c
 c slmod begin
 c
@@ -5116,6 +5144,8 @@ c
 c
       subroutine wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >               pinsw,yieldsw,matp,matt)               
+      use error_handling
+      use walls_src
 c slmod begin
       use mod_divimp
 c slmod end
@@ -5145,7 +5175,7 @@ c
 c            PINSW  = 0  No PIN/NIMBUS data available 
 c                   = 1  Use PIN/NIMBUS data
 c                   = 2  Use WALL plasma data
-c                   = 3  Use external fluxes (not implemented)
+c                   = 3  Use external fluxes (diivmp source only)
 c                   = 4  Use impurity influx data from PIN/NIMBUS - SL, 24/11/2009
 c
 c            YIELDSW= 0  Use Physical Sputtering Yields
@@ -5261,7 +5291,7 @@ c slmod end
 c
 c     Do proper calculations if PIN/NIMBUS data is available
 c
-      elseif (pinsw.eq.1.or.pinsw.eq.2.or.pinsw.eq.4) then
+      elseif (pinsw.eq.1.or.pinsw.eq.2.or.pinsw.eq.3.or.pinsw.eq.4) then
 c
          if (pinsw.eq.1) then 
 C     
@@ -5463,6 +5493,33 @@ c
               fydata(in,5)=fydata(in,1)*fydata(in,4)
 c
             end do
+
+
+c
+c     -------------------------------------------------------
+c
+c     External fluxes specified and used  
+c
+         elseif (pinsw.eq.3) then 
+c
+c           Load external flux data array 
+c
+           if (ext_flx_data_src.eq.0) then 
+              ! code from Alex Geier for Ar specific case
+              call errmsg('ERROR: NEUT.F: WFY:',
+     >           'GEIER EXTERNAL SOURCE NOT SUPPORTED FOR WALL LAUNCH')
+           elseif (ext_flx_data_src.eq.1) then
+              call assign_deposition_data(fydata,maxpts,5,
+     >                    0,wallpts)
+            ! apply yield multipliers from the input data to the 
+            ! calculated effective yield and flux*yield from the 
+            ! external source
+            do in = 1,wallpts
+               fydata(in,4) = fydata(in,4) * kmfpws(in)
+               fydata(in,5) = fydata(in,5) * kmfpws(in)
+            end do
+            
+         endif
 c
 c slmod begin
          elseif (pinsw.eq.4.and.yieldsw.eq.0) then 
@@ -5611,6 +5668,7 @@ c
      >                     fymap,fyprob,nfymap,fydata)
       use velocity_dist
       use ero_interface
+      use walls_src
       implicit none 
 c
       include    'params'
@@ -5656,7 +5714,7 @@ c
       integer tmpcneutc,tmpcneutb,nprod,ipos,id,iprod,neuttype
       external ipos
       real neutim
-      real emax,wlximax,ran
+      real emax,wlximax,ran,energy
       real x0, y0
       logical nonzero_krmax
 c
@@ -5852,6 +5910,13 @@ c      end do
 
 
 C     
+!     CNEUTD=7 and EXT_FLX_DATA_SRC=1
+!     External source sputter option needs to set the rmaxs(iprod) on 
+!     an individual particle basis since the impacting particle energy
+!     is not known since the sputtering event can be due to a range of charge
+!     states. 
+!
+
       DO IPROD = 1,nneut2
          RAN    = RANVA (IPROD)
 C
@@ -5864,6 +5929,8 @@ c
   485       ID = IPOS (RAN, fyprob, nfymap)
             ID = fyMAP(ID)
 
+            ! find wallindex for target element
+            itmp = wallindex(id)
 
 c            WRITE(0,'(a,5i8,10(1x,g18.8))') 
 c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
@@ -5885,10 +5952,6 @@ c
                X0 = RP(ID)
                Y0 = ZP(ID)
             elseif (cneutf.eq.1) then 
-c
-c              Find launch position along target element. 
-c               
-               itmp = wallindex(id)
 c
 c               write(6,'(a,2i6,5(1x,g12.5))') 'TL1:',id,itmp,rp(id),
 c     >                    wallpt(itmp,1),zp(id),wallpt(itmp,2)
@@ -5922,13 +5985,42 @@ c     >           wallpt(itmp,23)
 
            endif
 
-
 c
-            if (yieldsw.eq.0) then 
-               RMAXS (IPROD+nneut1) = KRMAX(ID)
-            elseif (yieldsw.eq.1) then 
-               RMAXS (IPROD+nneut1) = 1.0
-            endif
+           if (cneutd.eq.7.and.ext_flx_data_src.eq.1) then 
+c
+              call get_imp_energy(energy,itmp)
+
+              if (northopt.eq.0.or.northopt.eq.2) then
+                  EMAX = CEMAXF * (energy * GAMBL - CEBD)
+               elseif (northopt.eq.1.or.northopt.eq.3) then
+                  if (matt.le.ntars) then 
+                     EMAX = CEMAXF*CEBD * (energy
+     >                           /CETH(MATP,MATT) - 1.0)
+                  else
+                     EMAX = CEMAXF * (energy * GAMBL - CEBD)
+                  endif 
+               endif
+c
+               IF (EMAX.GT.0.0) THEN
+                  rmaxs(IPROD+nneut1) = 
+     >                   1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))
+               else 
+                  ! for this case set the limit to 1.0 if there
+                  ! is a problem finding a limit since it is too
+                  ! late to replace this launch
+                  rmaxs(IPROD+nneut1) = 1.0
+                  write(0,'(a,g12.5)')  'WARNING: '//
+     >                   'EXTERNAL FLUX SOURCE: '//
+     >                   'ERROR SETTING RMAX LIMIT', emax
+               ENDIF
+c
+           else
+              if (yieldsw.eq.0) then 
+                 RMAXS (IPROD+nneut1) = KRMAX(ID)
+              elseif (yieldsw.eq.1) then 
+                 RMAXS (IPROD+nneut1) = 1.0
+              endif
+           endif
 C
          ELSEIF (CNEUTB.EQ.1) THEN
 c
@@ -5942,18 +6034,57 @@ C
             NRAND = NRAND + 1
             ID = IPOS(RAN,fyprob,nfymap)
             id = fymap(id)
+
+c
+            ! Add code for physically sputtered 
+            ! external wall source
+           if (cneutd.eq.7.and.ext_flx_data_src.eq.1) then 
+c
+              call get_imp_energy(energy,id)
+
+              if (northopt.eq.0.or.northopt.eq.2) then
+                  EMAX = CEMAXF * (energy * GAMBL - CEBD)
+               elseif (northopt.eq.1.or.northopt.eq.3) then
+                  if (matt.le.ntars) then 
+                     EMAX = CEMAXF*CEBD * (energy
+     >                           /CETH(MATP,MATT) - 1.0)
+                  else
+                     EMAX = CEMAXF * (energy * GAMBL - CEBD)
+                  endif 
+               endif
+c
+               IF (EMAX.GT.0.0) THEN
+                  rmaxs(IPROD+nneut1) = 
+     >                   1.0 / ((1.0+CEBD/EMAX) * (1.0+CEBD/EMAX))
+               else 
+                  ! for this case set the limit to 1.0 if there
+                  ! is a problem finding a limit since it is too
+                  ! late to replace this launch
+                  rmaxs(IPROD+nneut1) = 1.0
+                  write(0,'(a,g12.5)')  'WARNING: '//
+     >                   'EXTERNAL FLUX SOURCE: '//
+     >                   'ERROR SETTING RMAX LIMIT', emax
+               ENDIF
+c
+           else
+
+
 c
 c           Do not limit particle energies for chemical sputtering 
 c
 c slmod begin
-            if (yieldsw.eq.0.and.pinsw.ne.4) then  
+
+              if (yieldsw.eq.0.and.pinsw.ne.4) then  
 c
-c            if (yieldsw.eq.0) then  
+c              if (yieldsw.eq.0) then  
 c slmod end
-               RMAXS (IPROD+nneut1) = krmaxw(id)
-            else
-               RMAXS (IPROD+nneut1) = 1.0
+                 RMAXS (IPROD+nneut1) = krmaxw(id)
+              else
+                 RMAXS (IPROD+nneut1) = 1.0
+              endif
+
             endif
+
 c
             CALL SURAND2 (SEED, 1, RAN)
             NRAND = NRAND + 1
@@ -6713,13 +6844,17 @@ c
          elseif (cneutb.eq.4) then   
 c
             if (cneutd.eq.0.or.cneutd.eq.1.or.
-     >          cneutd.eq.3.or.cneutd.eq.4.or.cneutd.eq.8) then 
+     >          cneutd.eq.3.or.cneutd.eq.4.or.
+     >          cneutd.eq.7.or.cneutd.eq.8) then 
 c
 c              Physical Sputtering On Walls 
 c
                if (cneutd.eq.8) then  
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  2,0,matp,matt)               
+               elseif (cneutd.eq.7) then 
+                  call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
+     >                  3,0,matp,matt)               
                else
                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY G'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
@@ -6788,8 +6923,10 @@ c
 c              Physical Sputtering On targets 
 c     
                if (cneutd2.eq.7) then 
+c                  call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
+c     >                  pinsw,0,matp,matt)               
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
-     >                  pinsw,0,matp,matt)               
+     >                   3,0,matp,matt)               
                else
                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY J'
                   call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
@@ -6838,13 +6975,16 @@ c
 c
             if (cneutd2.eq.0.or.cneutd2.eq.1.or.
      >          cneutd2.eq.3.or.cneutd2.eq.4.or.
-     >          cneutd2.eq.8) then 
+     >          cneutd2.eq.7.or.cneutd2.eq.8) then 
 c
 c              Physical Sputtering On Walls 
 c
                if (cneutd2.eq.8) then 
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  pinsw,0,matp,matt)               
+               elseif (cneutd2.eq.7) then 
+                  call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
+     >                   3,0,matp,matt)               
                else
                   IF (sloutput) WRITE(0,*) 'DEBUG: CALL WFY K'
                   call wfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
@@ -7033,6 +7173,67 @@ c
 c
 c
 c
+      subroutine calculate_gamma(cneutd,ext_flx_data_src,
+     >                          matp,matt,crmb,crmi,gamma1,gambl1)
+      implicit none
+      integer :: matp,matt,cneutd,ext_flx_data_src
+      real :: crmb,crmi,gamma1,gambl1
+
+      real :: massb,massi
+
+      ! calculate gamma values for use in neut ... also gamma values for the 
+      ! common blocks of the find_thomson_velocity routines
+
+      common /thom_ye_params/  eimp,gamma,ebd
+      real*8 eimp,gamma,ebd 
+
+      common /thom_yv_params/  vimp,vgamma,vbd
+      real*8 vimp,vgamma,vbd 
+
+
+      massi = crmi
+      
+      if (cneutd.eq.1.or.(cneutd.eq.7.and.ext_flx_data_src.eq.1)) then 
+         ! only a limited selection of bombarding ions are supported in the sputter code
+         if (matp.eq.1) then 
+            ! hydrogen
+            massb = 1.0
+         elseif (matp.eq.2) then 
+            ! deuterium
+            massb = 2.0
+         elseif (matp.eq.3) then 
+            ! tritium
+            massb = 3.0
+         elseif (matp.eq.4) then 
+            ! helium
+            massb = 4.0
+         elseif (matp.eq.5) then 
+            ! carbon 
+            massb = 12.0
+         elseif (matp.eq.6) then 
+            ! self ... set it to target species mass
+            massb = crmi
+         elseif (matp.eq.7) then 
+            ! oxygen
+            massb = 16.0
+         endif
+
+      else
+         massb = crmb
+      endif
+
+      GAMMA1  = 4.0 * massB * massI / ((massB+massI) * (massB+massI))
+      GAMBL1  = GAMMA1 * (1.0 - GAMMA1)
+
+      ! assign data to Thomson common block entries
+      gamma = gamma1
+      vgamma = gamma1
+
+      return
+      end
+c
+c
+c
       real function find_thompson_velocity(neuttype,id,seed,nrand,
      >                                     thom_opt)
       use error_handling
@@ -7058,6 +7259,10 @@ c      segment or have it stored in a pre-calculated array.
 c     -Option used for physical sputtering only.      
 c     -What about the difference between atom and ion flux physical 
 c      sputtering energies? These are part of Eimpact
+c
+c     Now calculated in the calculate_gamma routine to take into 
+c     account external fluxes of impurities as the primary 
+c     sputtering source
 c     -What is the value of gamma? gamma = 4 (mC*mD) / (mC+mD)**2
 c     
 c      intye_targ(maxnds)
@@ -7150,8 +7355,12 @@ c
 c
 c     Calculate Gamma and vgamma
 c
-      GAMMA  = 4.0 * CRMB * CRMI / ((CRMB+CRMI) * (CRMB+CRMI))
-      vgamma = gamma
+c     These are in a common block and calculation has been moved
+c     to the calculate gamma routine that is called once at the start
+c     of neut
+c  
+c      GAMMA  = 4.0 * CRMB * CRMI / ((CRMB+CRMI) * (CRMB+CRMI))
+c      vgamma = gamma
 c
 c     Calculate Ebd and vbd
 c
