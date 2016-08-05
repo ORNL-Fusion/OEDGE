@@ -6,16 +6,28 @@ module langmuir_probes
   integer,parameter :: PSIBINOPT=1
 
 
-  ! PSI is in lp_data(in,9) and R-Rsep is in LP_DATA(in,8)
+
+  ! Initialization for current LP data file format
+  ! Add three columns for including additional ELM information
+  ! Added floating potential
+  ! ncols  = 9 
+  integer, parameter :: ncols  = 10 
+  ! nextra - extra colums added to lp_data - 3 for ELM data - 1 for inner/outer identifier - 1 for flagging as outlier removed
+  integer, parameter :: nextra = 6
+
+  ! PSI is in lp_data(in,9) and R-Rsep_out is in LP_DATA(in,8)
+  ! R-Rsep_in is in LP_DATA(in,7)
   ! vf is in lp_data(in,10)
-  integer,parameter,private ::  timebin   = 1
-  integer,parameter,private ::  jsatbin   = 2
-  integer,parameter,private ::  tebin   = 3
+  integer,parameter,private ::  timebin  = 1
+  integer,parameter,private ::  jsatbin  = 2
+  integer,parameter,private ::  tebin    = 3
+  integer,parameter,private ::  nebin    = 4
   integer,parameter,private ::  chibin   = 5
-  integer,parameter,private ::  probebin   = 6
-  integer,parameter,private ::  rbin   = 8
-  integer,parameter,private ::  psibin = 9
-  integer,parameter,private ::  vfbin  = 10
+  integer,parameter,private ::  probebin = 6
+  integer,parameter,private ::  irbin    = 7  
+  integer,parameter,private ::  rbin     = 8
+  integer,parameter,private ::  psibin   = 9
+  integer,parameter,private ::  vfbin    = 10
 
   integer,parameter,private ::  nzones = 2
   integer,parameter ::  inner   = 1
@@ -25,14 +37,21 @@ module langmuir_probes
   integer,parameter,private :: elm_ref_col = 2
   integer,parameter,private :: elm_frac_col = 3
   integer,parameter,private :: zone_col = 4
-
   integer,parameter,private :: outlier_index = 5
+  integer,parameter,private :: bin_col = 6
+
+  ! allocate storage for processed data
+  ! ndata = 3 ... jsat,te,vf
+  integer,parameter :: ndata = 3 
 
   character*3,parameter :: nan = 'NaN'
   character*7,parameter :: line_form = '(a1024)'
 
   real,parameter :: psimin_limit = -0.5
   real,parameter :: psimax_limit =  2.0
+  logical,parameter :: test_rlimits = .true.
+  real,parameter :: rdiff_limit =  0.02   ! if the data point is within 0.02m of both strike points then exclude it
+  real,parameter :: r_limit = 0.8         ! if the data point is greater than 0.8 meters from both strike points then exclude it
 
   ! Time filter variables
   logical:: filter_times
@@ -40,11 +59,12 @@ module langmuir_probes
   real,allocatable :: time_windows(:,:)
 
 
+
 contains
 
-  subroutine read_lp_data_file(iunit,lp_data,tmin,tmax,nlines,ncols,nextra)
+  subroutine read_lp_data_file(iunit,lp_data,tmin,tmax,nlines)
     implicit none
-    integer :: iunit,nlines,ncols,nextra
+    integer :: iunit,nlines
     real :: tmin,tmax
     !
     ! Locals
@@ -84,7 +104,7 @@ contains
           if (nan_loc.eq.0) then 
              read(line,*) (tmp_lp_data(it),it=1,ncols)
              ! filter out invalid PSIn values and take only the desired time window
-             if (check_time_filter(tmp_lp_data(timebin)).and.(tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+             if (check_lp_valid(tmp_lp_data,ncols,tmin,tmax)) then 
                 act_line_cnt =  act_line_cnt + 1
              endif
           endif
@@ -137,7 +157,7 @@ contains
 
           read(line,*,iostat=ios) (tmp_lp_data(it),it=1,ncols)
 
-          if (check_time_filter(tmp_lp_data(timebin)).and.(tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.(tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit)) then 
+          if (check_lp_valid(tmp_lp_data,ncols,tmin,tmax)) then 
 
               cur_line_cnt = cur_line_cnt + 1
               ! If all the valid lines have already been read then exit
@@ -157,9 +177,30 @@ contains
 
   end subroutine read_lp_data_file
 
-  subroutine flag_lp_data(lp_data,nlines,ncols,nextra)
+  logical function check_lp_valid(tmp_lp_data,ncols,tmin,tmax)
     implicit none
-    integer :: nlines,ncols,nextra
+    integer :: ncols
+    real :: tmp_lp_data(ncols)
+    real :: tmin,tmax
+
+    check_lp_valid = .false.
+    
+    if (check_time_filter(tmp_lp_data(timebin)).and.&    ! check data point is in requested specific time windows
+        (tmp_lp_data(timebin).ge.tmin.and.tmp_lp_data(timebin).le.tmax).and.& ! check data point in overall time frame
+        (tmp_lp_data(psibin).ge.psimin_limit.and.tmp_lp_data(psibin).le.psimax_limit).and.& ! check data point is within valid range of PSI
+        (test_rlimits.and.&
+         ((abs(tmp_lp_data(irbin)-tmp_lp_data(rbin)).gt.rdiff_limit).and.&   ! check that the del_rsepin and del_rsepout are not the same
+          (abs(tmp_lp_data(irbin)).lt.r_limit).and.(abs(tmp_lp_data(rbin)).lt.r_limit)))&
+       ) then 
+       check_lp_valid = .true.
+    endif
+
+  end function check_lp_valid
+
+
+  subroutine flag_lp_data(lp_data,nlines)
+    implicit none
+    integer :: nlines
     real, allocatable :: lp_data(:,:)
     real*8 :: r_av,r_cnt,r_av2,r_cnt2
     real*8 :: max_drsep, min_drsep
@@ -299,7 +340,7 @@ contains
   end subroutine flag_lp_data
 
 
-  subroutine bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
+  subroutine bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,lp_data,nlines,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
     implicit none
     real,allocatable :: lp_axis_psi(:,:,:), lp_axis_r(:,:,:), lp_proc_data(:,:,:,:) 
     real,allocatable :: lp_axis(:,:)
@@ -307,7 +348,7 @@ contains
     integer n_elm_fractions,n_avs
     real,allocatable :: elm_fractions(:,:)
 
-    integer :: nlines, ncols,ndata,npts,nextra
+    integer :: nlines,npts
     integer :: binopt,izone
     real :: deltabin
     real :: tmin,tmax,chisq_lim
@@ -328,6 +369,12 @@ contains
     !rbin = 8
     !psibin = 9
     !vfbin = 10
+    !
+    ! Adding code to calculate the median as well as the bin average
+    ! - need median of binned data .. inner/outer .. outliers removed and not removed
+    ! 
+
+
 
     write(0,'(a,g12.5)') 'Start Binning LP Data:',outlier_mult
 
@@ -392,7 +439,7 @@ contains
 
     ! allocate storage for processed data
     ! ndata = 3 ... jsat,te,vf
-    ndata = 3
+    !ndata = 3
     npts = nbins
 
     write(0,*) 'Sizes:',nbins,nzones
@@ -456,6 +503,10 @@ contains
 
           n_av = 1
           ibin = int((lp_data(in,testbin)-testmin)/deltabin) + 1
+
+          ! record bin for data point
+          lp_data(in,ncols+bin_col) = ibin
+
           ! record data count
           pre_average(ibin,ndata+1,n_av,izone) = pre_average(ibin,ndata+1,n_av,izone) + 1.0
           ! record data sum
@@ -568,6 +619,11 @@ contains
           !ibin = int((lp_data(in,9)-rmin)/deltar) + 1
 
           ibin = int((lp_data(in,testbin)-testmin)/deltabin) + 1
+
+          ! record bin for data point
+          !lp_data(in,ncols+bin_col) = ibin
+
+
 
           n_av = 1
           if (.not.remove_outlier.or.&
@@ -750,12 +806,12 @@ contains
   end subroutine bin_lp_data
 
 
-  subroutine print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,targ_flag)
+  subroutine print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,targ_flag)
     implicit none
 
     real,allocatable :: lp_axis(:,:),lp_axis_r(:,:,:),lp_axis_psi(:,:,:),lp_proc_data(:,:,:,:),elm_fractions(:,:)
     integer :: n_avs,n_elm_fractions,targ_flag
-    integer :: npts,ndata,ounit,in,if
+    integer :: npts,ounit,in,if
     character*(*) :: ident
     logical elm_filt
 
@@ -820,12 +876,12 @@ contains
   end subroutine print_lp_bin_data
 
 
-  subroutine print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident,tmin,tmax,chisq_lim)
+  subroutine print_lp_data(ounit,lp_data,nlines,ident,tmin,tmax,chisq_lim)
     implicit none
 
     real,allocatable :: lp_data(:,:)
     real :: tmin,tmax,chisq_lim
-    integer :: nlines,ncols,nextra
+    integer :: nlines
     integer :: ounit,in
     character*(*) :: ident
 
@@ -870,10 +926,10 @@ contains
 
 
 
-  subroutine filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
+  subroutine filter_lp_data(elm_filename,lp_data,nlines,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
     use filter_elms
     implicit none
-    integer :: nlines,ncols,nextra
+    integer :: nlines
     character*(*) elm_filename
     real,allocatable :: lp_data(:,:)
     !real lp_data(nlines,ncols+nextra)

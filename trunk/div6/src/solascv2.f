@@ -2912,7 +2912,7 @@ c
          lastprad = pradupdt
          lasts = s
 c
-c     PRAD = QERADSRC_MULT * PINQE
+c     PRAD = RADSRC_MULT * PINQE
 c
       elseif (actswprad.eq.3.0) then
 

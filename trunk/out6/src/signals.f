@@ -32,8 +32,6 @@ c     different cases without incurring a lot of overhead since
 c     one would expect to need this type of collation primarily
 c     for presentations and reports.
 c     
-c     David Elder,   1994 April 19.
-c     
 c     Note!: the routine plot_expt now also adds data to the column data formatted plot file - as a 
 c     result iout must be kept the same in both routines. 
 c     
