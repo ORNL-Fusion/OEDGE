@@ -553,9 +553,17 @@ mvc outout1 $CASENAME.out
 #  .raw complete results file
 mvc fort.8 $CASENAME.raw
 
+#  Erosion/Deposition print out
+#mvc fort.57 $CASENAME.deposition
+
+# Move the signal file to results if one exists
+mvc signal_output.dat $CASENAME.signals
 
 #  Erosion/Deposition print out
-mvc fort.57 $CASENAME.deposition
+mvc impurity_wall_deposition.dat $CASENAME.deposition
+
+#  Upstream impurity profiles print out
+mvc upstream_impurity_profiles.dat $CASENAME.up_imp_prof
 
 # AUG file
 mvc fort.59 $CASENAME.augdiv

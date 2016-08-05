@@ -2374,6 +2374,7 @@ c           profile 1 (psi1_reg)
 c     O03 - PSIN bound for calculating core ionization 
 c           profile 2 (psi2_reg)
 c
+
       psi1_reg = 0.9
       psi2_reg = 0.95
 

@@ -21,7 +21,8 @@ program proclp
   real,allocatable :: lp_data(:,:) ,lp_axis(:,:),lp_proc_data(:,:,:,:),lp_axis_psi(:,:,:),lp_axis_r(:,:,:),elm_fractions(:,:)
 
 
-  integer :: nlines,npts,ndata,ncols,nextra,n_elm_fractions,n_avs
+  !integer :: nlines,npts,ndata,ncols,nextra,n_elm_fractions,n_avs
+  integer :: nlines,npts,n_elm_fractions,n_avs
 
   real :: tmin,tmax,deltabin,chisq_lim
   integer :: binopt
@@ -58,9 +59,9 @@ program proclp
   ! Add three columns for including additional ELM information
   ! Added floating potential
   ! ncols  = 9 
-  ncols  = 10 
+  !ncols  = 10 
   ! nextra - extra colums added to lp_data - 3 for ELM data - 1 for inner/outer identifier - 1 for flagging as outlier removed
-  nextra = 5
+  !nextra = 5
 
 
   ! Set default binning
@@ -233,22 +234,22 @@ program proclp
   open(iunit,file=trim(infilename),iostat=ierr)
   write(0,*) 'Opening file:',trim(infilename),' Status = ',ierr
 
-  call read_lp_data_file(iunit,lp_data,tmin,tmax,nlines,ncols,nextra)
+  call read_lp_data_file(iunit,lp_data,tmin,tmax,nlines)
 
   ! Identify Inner/outer association of LP data ... based on R-Rsep and PSI
 
-  call flag_lp_data(lp_data,nlines,ncols,nextra)
+  call flag_lp_data(lp_data,nlines)
 
   ! Add ELM information to the tabulated LP data
   if (elm_filt) then 
-     call filter_lp_data(elm_filename,lp_data,nlines,ncols,nextra,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
+     call filter_lp_data(elm_filename,lp_data,nlines,elm_start_input,elm_end_input,elm_effect_start_input,elm_effect_end_input)
   endif
 
   ! analyse and bin the lp_data
 
   write(0,*) 'Outlier mult:', outlier_mult
 
-  call bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,ndata,lp_data,nlines,ncols,nextra,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
+  call bin_lp_data(lp_axis,lp_axis_psi,lp_axis_r,lp_proc_data,npts,lp_data,nlines,binopt,deltabin,tmin,tmax,chisq_lim,elm_filt,remove_outlier,outlier_mult,n_avs,n_elm_fractions,elm_fractions)
 
 
   ! OUTPUT
@@ -310,7 +311,7 @@ program proclp
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)
 
-  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,0)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,0)
 
   close(iunit)
   close(ounit)
@@ -325,7 +326,7 @@ program proclp
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)//' INNER'
 
-  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,inner)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,inner)
 
   close(ounit)
 
@@ -340,7 +341,7 @@ program proclp
 
   ident = trim(infilename)//' : '//trim(time)//' : '//'CHISQ < '//trim(chisq)//' OUTER'
 
-  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ndata,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,outer)
+  call print_lp_bin_data(ounit,lp_axis,lp_axis_r,lp_axis_psi,lp_proc_data,npts,ident,n_avs,elm_filt,n_elm_fractions,elm_fractions,outer)
 
   close(ounit)
 
@@ -360,7 +361,7 @@ program proclp
 
   open(ounit,file=ofilename,iostat=ierr)
 
-  call print_lp_data(ounit,lp_data,nlines,ncols,nextra,ident,tmin,tmax,chisq_lim)
+  call print_lp_data(ounit,lp_data,nlines,ident,tmin,tmax,chisq_lim)
 
   close(ounit)
 
