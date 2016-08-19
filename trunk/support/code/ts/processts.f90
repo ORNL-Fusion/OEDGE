@@ -21,15 +21,19 @@ program processts
   character*5 :: chisq
   integer :: exp_tmin,exp_tmax,nargs
   character*512 :: arg
+  character*512 :: time_filename
+  character*3 :: time_ext
+  logical :: time_filt 
 
   real :: psi_min,psi_max
-  integer :: npsi_bins
+  integer :: npsi_bins,arg_cnt
   integer,external :: iargc
 
 
   logical :: elm_filt,remove_outlier
 
   !
+  time_filt = .false.
   elm_filt = .false.
   remove_outlier = .true.
 
