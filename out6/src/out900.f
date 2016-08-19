@@ -491,10 +491,10 @@ c
         ELSEIF (opt_const.EQ.3) THEN
 c...      Density hard coded:
           nenum = 4
-          plotne(1,1) = 1.0E+20
-          plotne(1,2) = 5.0E+20
+          plotne(1,1) = 1.0E+19
+          plotne(1,2) = 1.0E+20
           plotne(1,3) = 1.0E+21
-          plotne(1,4) = 1.5E+21
+          plotne(1,4) = 1.99E+21
           DO i1 = 1, nenum
             DO i2 = 1, tenum
               frac1 =  REAL(i2 - 1) / REAL(tenum - 1)

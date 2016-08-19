@@ -180,7 +180,7 @@ contains
     character*(*) :: ofilename
     logical :: elm_filt
 
-    integer :: in,it,is
+    integer :: in,it,is,cnt
     integer :: ounit,ounit2
 
     character*512 :: ofile1,ofile2,ofile3
@@ -188,6 +188,7 @@ contains
     integer :: ierr
     logical :: res1,res2
 
+    character*8 date
     !  integer :: exp_tmin,exp_tmax
 
     !  character*5 :: tmins,tmaxs
@@ -209,6 +210,8 @@ contains
 
     write(0,*) 'PRINT: Averaging complete:'
 
+
+    call date_and_time(date=date)
 
     ! write out the results
 
@@ -272,7 +275,7 @@ contains
 
     call find_free_unit_number(ounit2) 
 
-    write(0,*) 'Second output:',trim(ofile2),':',ounit2,':'
+    write(0,*) 'Second output:',trim(ofile2)
 
     open(unit=ounit2,file=trim(ofile2),access='sequential',iostat=ierr)
     inquire(unit=ounit2,opened=res1)
@@ -284,6 +287,9 @@ contains
     write(ounit2,'(a,f12.3,a,f12.3,a)') ' Time range = ', start_time ,':',end_time,' ms'
     write(ounit2,'(a)') ' All Data binned:'
     write(ounit2,'(a)') '    PSIN    Rsep       ne        Te     Counts'
+
+    ! convert density to m-3
+    profiles(:,1,1:3) = profiles(:,1,1:3) * 1e20 
 
 
     do in = 1,npsi_bins
@@ -327,6 +333,104 @@ contains
 
     close(ounit2)
     write(0,*) 'Second output complete:'
+
+
+    ! Third output file
+
+
+    write(ofile2,'(a,a,i4,a,i4,a)') trim(ofilename),'_',int(start_time),'-',int(end_time),'-divimp.average'
+
+    call find_free_unit_number(ounit2) 
+
+    write(0,*) 'Third output:',trim(ofile2)
+
+    open(unit=ounit2,file=trim(ofile2),access='sequential',iostat=ierr)
+    inquire(unit=ounit2,opened=res1)
+    inquire(file=trim(ofile2),opened=res2)
+    if (res1.ne.res2) call errmsg('PRINT TS:','CAUTION: Third output file name is not correct')
+
+
+    !write(ounit2,'(a)') ' DIVIMP Thomson Average Analysis'
+    !write(ounit2,'(a,f12.3,a,f12.3,a)') ' Time range = ', start_time ,':',end_time,' ms'
+    !write(ounit2,'(a)') ' All Data binned:'
+    !write(ounit2,'(a)') '    PSIN    Rsep       ne        Te     Counts'
+
+    write(ounit2,'(a)') 'INDEX:' 
+    write(ounit2,'(a)') 'TITLE:'//trim(ofile2)
+    write(ounit2,'(a)') 'DATE: '//trim(date)
+    write(ounit2,'(a)') 'AXIS: 6'
+    write(ounit2,'(a)') 'SCALEF:  1.0'
+    write(ounit2,'(a)') 'UNITS: Psin   Ne(m-3) Te(eV)'
+    write(ounit2,'(a)') 'COUNT:       1'  
+    write(ounit2,'(a)') 'NCOLS:       2'
+
+    cnt = 0
+
+    do in = 1,npsi_bins
+
+       if (counts(in,1).gt.0) then 
+          cnt = cnt + 1
+          write(ounit2,'(i8,7(2x,g12.5))') cnt,psiaxis(in),profiles(in,1,1),profiles(in,2,1)
+       endif
+
+    end do
+
+    if (elm_filt) then 
+       ! print out averaged data related to ELMs if elm filtering performed
+
+       !write(ounit2,*)
+       !write(ounit2,'(a)') ' ELM Data binned +/-1ms:'
+       !write(ounit2,'(a)') '    PSIN     Rsep       ne        Te     Counts'
+
+       write(ounit2,'(a)') 'INDEX:' 
+       write(ounit2,'(a)') 'TITLE:'//trim(ofile2)// 'in ELM (t_elm<+/-1ms)'
+       write(ounit2,'(a)') 'DATE: '//trim(date)
+       write(ounit2,'(a)') 'AXIS: 6'
+       write(ounit2,'(a)') 'SCALEF:  1.0'
+       write(ounit2,'(a)') 'UNITS: Psin   Ne(m-3) Te(eV)'
+       write(ounit2,'(a)') 'COUNT:       1'  
+       write(ounit2,'(a)') 'NCOLS:       2'
+       
+       cnt = 0
+       do in = 1,npsi_bins
+
+          if (counts(in,2).gt.0) then 
+             cnt = cnt+1
+             write(ounit2,'(i8,7(2x,g12.5))') cnt,psiaxis(in),profiles(in,1,2),profiles(in,2,2)
+          endif
+
+       end do
+
+       !write(ounit2,*)
+       !write(ounit2,'(a)') ' Non-ELM Data binned >5ms:'
+       !write(ounit2,'(a)') '    PSIN     Rsep      ne        Te     Counts'
+
+       write(ounit2,'(a)') 'INDEX:' 
+       write(ounit2,'(a)') 'TITLE:'//trim(ofile2)//'no ELM (t_elm>5ms)'
+       write(ounit2,'(a)') 'DATE: '//trim(date)
+       write(ounit2,'(a)') 'AXIS: 6'
+       write(ounit2,'(a)') 'SCALEF:  1.0'
+       write(ounit2,'(a)') 'UNITS: Psin   Ne(m-3) Te(eV)'
+       write(ounit2,'(a)') 'COUNT:       1'  
+       write(ounit2,'(a)') 'NCOLS:       2'
+
+       cnt = 0
+       do in = 1,npsi_bins
+
+          if (counts(in,3).gt.0) then 
+             cnt = cnt+1
+             write(ounit2,'(i8,7(2x,g12.5))') cnt,psiaxis(in),profiles(in,1,3),profiles(in,2,3)
+          endif
+
+       end do
+
+
+    endif
+
+    close(ounit2)
+    write(0,*) 'Third output complete:'
+
+
 
 
 
@@ -666,9 +770,9 @@ contains
     logical :: time_filt
     character*(*) :: time_filename
     character*1024 :: line
+    character*7,parameter :: line_form = '(a1024)'
     integer :: iunit,ierr,line_cnt,in,ios
     real :: t1,t2
-
 
     filter_times = .true.
 
