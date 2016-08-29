@@ -1309,6 +1309,11 @@ c
             axmin = min(z1p,z2p)
             axmax = max(z1p,z2p)
 c
+c        Quick fix for PSI plots looking at SOL
+c
+         elseif (int_type.eq.6) then   
+            axmin = 0.98
+            axmax = 1.5
          endif
 c
 c        Remove RCP data not in plotting range
