@@ -1142,10 +1142,12 @@ c     jdemod - Commented out this debug line - only useful for reporting
 c              that essentially every 10% of ions are complete. 
 c            - not sure why it would have a dependence on grdnmod either
 c
-         if (mod(imp,natiz/10).eq.0) then 
-            perc = int((imp*10)/(natiz/10))
-            write(0,'(a,i3,a,i8)') 
-     >         'Following Ions: ',perc,' % complete. Particle # =',imp
+         if ((natiz/10).gt.0) then 
+            if (mod(imp,natiz/10).eq.0) then 
+               perc = int((imp*10)/(natiz/10))
+               write(0,'(a,i3,a,i8)') 
+     >           'Following Ions: ',perc,' % complete. Particle # =',imp
+            endif
          endif
 c
 c slmod begin

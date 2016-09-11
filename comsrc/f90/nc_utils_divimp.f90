@@ -107,28 +107,28 @@ MODULE nc_utils
 
     PRIVATE
     PUBLIC ::  write_scalar, write_1d_array, write_2d_array, write_3d_array, err_msg, test
-    public ::  open_nc_file,close_nc_file
+!    public ::  open_nc_file,close_nc_file
 
     CHARACTER(len=1024) :: err_msg ! Holder of error messages
     INTEGER :: nc_id
     LOGICAL :: verbose = .true.
 
 
-    interface write_scalar
-       module procedure write_i4_scalar,write_r4_scalar,write_r8_scalar
-    end interface write_scalar
+!    interface write_scalar
+!       module procedure write_i4_scalar,write_r4_scalar,write_r8_scalar
+!    end interface write_scalar
 
-    interface write_1d_array
-       module procedure write_1d_i4_array,write_1d_r4_array,write_1d_r8_array
-    end interface write_1d_array
+!    interface write_1d_array
+!       module procedure write_1d_i4_array,write_1d_r4_array,write_1d_r8_array
+!    end interface write_1d_array
 
-    interface write_2d_array
-       module procedure write_2d_i4_array,write_2d_r4_array,write_2d_r8_array
-    end interface write_2d_array
+!    interface write_2d_array
+!       module procedure write_2d_i4_array,write_2d_r4_array,write_2d_r8_array
+!    end interface write_2d_array
 
-    interface write_3d_array
-       module procedure write_3d_i4_array,write_3d_r4_array,write_3d_r8_array
-    end interface write_3d_array
+!    interface write_3d_array
+!       module procedure write_3d_i4_array,write_3d_r4_array,write_3d_r8_array
+!    end interface write_3d_array
 
 
 
@@ -137,7 +137,7 @@ CONTAINS
   subroutine open_nc_file(filename,debug,ierr)
     ! opens the nc file ... sets nc_id and verbose output/debug
     use error_handling
-    use netcdf, only nf90_open
+    use netcdf, only : nf90_open
     implicit none
     
     character*(*) :: filename
