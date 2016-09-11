@@ -30,6 +30,8 @@ VER_INTEL=ifort
 #
 DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=$(DIVMAIN)/local/include
+
 #
 DIVSRC =$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
@@ -134,7 +136,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=$(COMMONS)
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
 #
 # C-compiler
 #
@@ -159,7 +161,8 @@ CFLAGS= $(OPTC)
 #
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
-LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
+LIBS=  -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
 #
 # Name of target to build
@@ -181,16 +184,16 @@ include OBJECT_LIST
 
 #$(DIVEXT).o:
 #	cp $(DIVSRC)$*$(DIVEXT) $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	rm $*.f
 
 
 $(DIVEXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 $(DIVF90EXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #
@@ -198,38 +201,38 @@ $(DIVF90EXT).o:
 #
 
 %.o: %.f
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 %.o: %.f90
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #.f.o:
 #	rm -f $*.f
 #	rm -f $*.mod
 #	cp $? $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
 
 #.f90.o:
 #	rm -f $*.f90
 #	rm -f $*.mod
 #	cp $? $*.f90
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
 #	$(RM) $*.f90
 
 #$(COMEXT).o:
 #	rm -f $*.f
 #	rm -f $*.mod
 #	cp $? $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
 
 #$(COMF90EXT).o:
 #	rm -f $*.f90
 #	rm -f $*.mod
 #	cp $? $*.f90
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
 #	$(RM) $*.f90
 
 #
