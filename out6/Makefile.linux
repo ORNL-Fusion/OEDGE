@@ -28,6 +28,7 @@ VER_INTEL=ifort
 #
 DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=$(DIVMAIN)/local/include
 #
 OUTSRC =$(DIVMAIN)/out6/src
 OUTF90SRC=$(OUTSRC)/f90
@@ -115,7 +116,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=$(COMMONS)
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
 
 #
 # C-compiler
@@ -143,13 +144,14 @@ CFLAGS= $(OPTC) -I$(IDIR)
 LIB_VER=
 #
 LOCAL_LIB=/usr/local/lib
+LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
 #
 LIB_INC= -L$(LOCAL_LIB)
 LIBSCOL= -lghost$(LIB_VER) -lpostcl$(LIB_VER) -ljpeg
 LIBSBW = -lghost$(LIB_VER) -lpostsc$(LIB_VER) -ljpeg
 LIBSDEF= $(LIBSCOL)
 #
-LIBS=$(LIB_INC) $(LIBSDEF)
+LIBS= -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf $(LIB_INC) $(LIBSDEF)
 #
 # Name of target to build
 #
@@ -172,10 +174,10 @@ include OBJECT_LIST
 #
 
 $(OUTEXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 $(OUTF90EXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #
@@ -183,24 +185,24 @@ $(OUTF90EXT).o:
 #
 
 %.o: %.f
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 %.o: %.f90
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #$(COMEXT).o:
 #	rm -f $*.f
 #	rm -f $*.mod
 #	cp $? $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
 
 #$(COMF90EXT).o:
 #	rm -f $*.f90
 #	rm -f $*.mod
 #	cp $? $*.f90
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
 #	$(RM) $*.f90
 
 $(TARG): $(OBJECTS)
