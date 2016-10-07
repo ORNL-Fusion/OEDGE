@@ -204,10 +204,12 @@ Contains
  
  
        ! Particle is found to be outside the wall boundary.  Find the position and wall segment where it left.
-       Write (Output_Unit_Scratch,'(a,2i4,2f12.7,1p,g12.4,l4)') 'WALL COLL:',Current_Cell,Current_Ring,Current_R,Current_Z,&
+       if (debug_hc) then 
+          Write (Output_Unit_Scratch,'(a,2i4,2f12.7,1p,g12.4,l4)') 'WALL COLL:',Current_Cell,Current_Ring,Current_R,Current_Z,&
                      & Wall_Check_Result, Grid_Error
-       Write (Output_Unit_Scratch,'(13x,i5,4f12.7,1p,7g12.4)') IProd,Last_R,Last_Z, Launch_R, Launch_Z,Current_Velocity_In_R,&
+          Write (Output_Unit_Scratch,'(13x,i5,4f12.7,1p,7g12.4)') IProd,Last_R,Last_Z, Launch_R, Launch_Z,Current_Velocity_In_R,&
                      & Current_Velocity_In_Z,Eq_Total_Ion_Time_Steps
+       endif
 
        ! write(6,'(a,i10,2i6,5g18.10)')  &
        !        'HC_OUTSIDE_NEUTRAL:FIND_WALL_INTERSESCTION-BEFORE:', &

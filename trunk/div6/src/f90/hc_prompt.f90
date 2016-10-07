@@ -183,11 +183,13 @@ Contains
                   & Current_Cell,Current_Ring, &
                   & Current_Velocity_In_R,Current_Velocity_In_Z,Current_S,Current_Cross,hc_v)
  
-             Write (Output_Unit_Scratch,*) 'HC PROMPT ION REFLECTED:',Current_Cell,Current_Ring,Target_Index,Current_R,Current_Z,&
+             if (debug_hc) then
+                Write (Output_Unit_Scratch,*) 'HC PROMPT ION REFLECTED:',Current_Cell,Current_Ring,Target_Index,Current_R,Current_Z,&
                   & Target_Index,ryield, &
                   & Target_Material,Dep_Energy,Sput_Weight,Segment_Normal_Angle,Current_Theta,HC_Temperature,Current_Velocity,&
                   & Current_Angle
- 
+             endif
+
              ! If output is requested, write to files.
              If (hc_evolve_print_option .eq. 1) Then
                 Write (Output_Unit_Evolve,9500) "Prompt ion reflect. NeutType:",NeutType,"Launch:",Launch_Reg,"Vessel:",&
@@ -272,10 +274,12 @@ Contains
                      & Current_Cell,Current_Ring, &
                      & Current_Velocity_In_R,Current_Velocity_In_Z,Current_S,Current_Cross,hc_v)
  
-                Write (Output_Unit_Scratch,*) "HC PROMPT ION SPUTTERED:",Current_Cell,Current_Ring,Target_Index,Current_R,&
+                if (debug_hc) then 
+                   Write (Output_Unit_Scratch,*) "HC PROMPT ION SPUTTERED:",Current_Cell,Current_Ring,Target_Index,Current_R,&
                      & Current_Z,gwallindex(Target_Index),ryield, &
                      & Target_Material,Dep_Energy,Sput_Weight,Segment_Normal_Angle,Current_Theta,HC_Temperature,Current_Velocity,&
                      & Current_Angle
+                endif
  
                 ! If output is requested, write to files.
                 If (hc_evolve_print_option .eq. 1) Then

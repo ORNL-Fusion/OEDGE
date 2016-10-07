@@ -384,9 +384,9 @@ c
 c
                   call findwall(ik,ir,r,z)
 c
-                  write(6,'(a,4i6,2(1x,g12.5))') 'GRIDPOS:'//
-     >                 ' PARTICLE OFF GRID (6):',
-     >                  ikorg,irorg,ik,ir,r,z
+c                  write(6,'(a,4i6,2(1x,g12.5))') 'GRIDPOS:'//
+c     >                 ' PARTICLE OFF GRID (6):',
+c     >                  ikorg,irorg,ik,ir,r,z
 c
 
                endif
@@ -976,6 +976,203 @@ c
       return
       end
 
+c
+c
+c
+      logical function incelldp(ik,ir,rin,zin)
+      implicit none
+      integer ik,ir
+      real rin,zin
+      include 'params'
+      include 'cgeom'
+c
+c     INCELL: This function returns a simple YES/NO decision
+c             about whether the point R,Z is in the cell designated
+c             by IK,IR with a set of vertices defined in an ordered
+c             clockwise fashion. It takes the cross product
+c             between the vector from the vertex to the test point
+c             and the vector from the vertex to the next clockwise
+c             vertex of the polygon. The cross-product must be
+c             the same sign for all vertices - if the
+c             point is outside the polygon it will fail this test
+c             for at least one vertex. (i.e. the cross-product will
+c             be less than zero.) (Suggested solution courtesy
+c             of Ian Youle :-) )
+c
+c             David Elder, Dec 8, 1993
+c
+c             Note: the objectives of the solution method were
+c             simplicity and reasonable computational cost.
+c             This solution avoids the need for square roots
+c             or trigonometric calculations.
+c
+c             Note: in the confined plasma the first and last cells
+c                   are identical. However, S=0 and S=SMAX are at the 
+c                   center of this cell. This causes some inconsistencies
+c                   when calculating particle positions. In order
+c                   to address this - this routine will consder a paricle
+c                   in the first cell on a core ring when it is in the
+c                   second half of the cell and in the last cell of a core
+c                   ring when it is in the first half of the cell. 
+c
+c     Create double precision version of this function 
+c
+      integer k,v,nextv,i,nv,iv
+      real*8 vxr,vxz,vwr,vwz,cp,lastcp
+      real*8 r,z
+c
+      logical inpolydp,res
+      external inpoly
+      real*8 :: rc(4),zc(4)
+c     
+      real*8 :: rv(4),zv(4)
+c
+      lastcp = 0.0
+      r=rin
+      z=zin
+c
+      incelldp = .false.
+      k = korpg(ik,ir)
+      if (k.eq.0) return
+c
+      nv = nvertp(k)
+      if (nv.eq.0) return
+c
+c     copy to dp
+c
+      do iv = 1,nv
+         rv(iv) = rvertp(iv,k)
+         zv(iv) = zvertp(iv,k)
+      end do
+c
+c     loop through cell vertices
+c
+      do v = 1,nv
+         if (v.eq.nv) then
+            nextv = 1
+         else
+            nextv = v+1
+         endif
+c
+c        Want the vector cross-product Rx X Rw
+c
+c         vxr = r - rvertp(v,k)
+c         vxz = z - zvertp(v,k)
+c         vwr = rvertp(nextv,k) - rvertp(v,k)
+c         vwz = zvertp(nextv,k) - zvertp(v,k)
+c
+c         cp = vxr*vwz - vxz*vwr
+c
+c         if (cp.lt.0.0)  return
+c
+c          if (   (
+c     >     ( (r-rvertp(v,k)) *
+c     >       (zvertp(nextv,k)-zvertp(v,k)) )
+c     >    -( (z-zvertp(v,k)) *
+c     >       (rvertp(nextv,k)-rvertp(v,k)) )
+c     >           )
+c     >         .lt.0.0) return
+c
+          cp =    (
+     >     ( (r-rv(v)) *
+     >       (zv(nextv)-zv(v)) )
+     >    -( (z-zv(v)) *
+     >       (rv(nextv)-rv(v)) )
+     >           )
+c
+c         There is a problem for points that should 
+c         lie on the boundary of the cell - i.e. that 
+c         are calculated based on the polygon corners and 
+c         which are mathematically on the polygon surface. 
+c         Numerically, these points can have a cross product
+c         which is close to zero but can vary to either side. 
+c         In order to consider these points in the cell - the 
+c         cross products are set to zero for values less than
+c         a specified limit. In this case the limit is set to 1.0e-7 
+c
+c         This value was determined by examining the range of cross 
+c         product values generated when sampling 50,000 points 
+c         calculated on a polygon with a scale size of 1.0m. 
+c         The maximum error cross product in this case was 6e-8.
+c
+c         D. Elder, Dec 13, 2006
+c
+c         Upon consideration - it might be best to not allow these points
+c         to be considered inside the cell since if they are detected they
+c         can be moved slightly to an appropriate location. 
+c
+c         Use a 1e-12 for double precision - mimic the inpoly routine
+c         - need some sort of margin since points on cell boundaries are still 
+c           generating error messages. 
+c
+          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c
+          if (v.eq.1.and.cp.ne.0.0d0) lastcp = cp
+c
+          if ((lastcp * cp).lt.0.0d0) return
+c
+          if (cp.ne.0.0d0) lastcp = cp
+c
+      end do
+c
+c     Particle has been found in cell
+c
+      incelldp = .true.
+c
+c     Check particles in the first or last cell of core rings
+c     for more accurate assessement.
+c
+      if (ir.lt.irsep.and.
+     >   (ik.eq.1.or.ik.eq.nks(ir))) then 
+c
+c        For a particle found to be in the first or last cell of 
+c        a core ring - need to decide if it is in the first
+c        half or second half and revise incell result accordingly. 
+c
+c        Only the second half of the first cell or the first half
+c        of the last cell should return true
+c
+c
+c        NOTE: Keep in mind that the first and last cells of core
+c              rings are supposed to be identical - if this changes
+c              then this code needs to be modified. 
+c         
+c        Check to see if particle is in the first half of the 
+c        cell - set vertices for call to inpoly.-  
+c         
+c        k was set to cell geometry index at the beginning of this
+c        routine.
+c
+         rc(1) = rv(1)
+         rc(2) = rv(2)
+         rc(3) = (rv(2) + rv(3)) /2.0
+         rc(4) = (rv(1) + rv(4)) /2.0
+c
+         zc(1) = zv(1)
+         zc(2) = zv(2)
+         zc(3) = (zv(2) + zv(3)) /2.0
+         zc(4) = (zv(1) + zv(4)) /2.0
+c
+c        Check to see of point is in first half of cell
+c
+         res = inpolydp(r,z,4,rc,zc)
+c
+c        Change value of incell to false for either of the 
+c        invalid cases
+c        First half and in first cell
+c        Last half and in last cell. 
+c
+c
+         if ((ik.eq.1.and.res).or.
+     >       (ik.eq.nks(ir).and.(.not.res))) then 
+            incelldp = .false.
+         endif
+
+      endif
+
+
+      return
+      end
 
 
 
@@ -1917,8 +2114,8 @@ c
       real s_frac,cross_frac,base_frac 
       character*1024 :: msg
 c
-      logical incell
-      external incell
+      logical incelldp
+      external incelldp
 c
       ierr=0
 
@@ -1931,13 +2128,17 @@ c
 c
 c     Dobule check that r,z are actually in this cell - they should be if this routine is called
 c     
-      if (.not.incell(ik,ir,r,z)) then 
+      if (.not.incelldp(ik,ir,r,z)) then 
          write(msg,'(2(a,g15.7),2(a,i8))')
      >     ' R=',r,' Z=',z,' ik=',ik,' ir=',ir
 
-         call errmsg('Problem in Position in poly:'//
+         call dbgmsg('Problem in getscross_approx:'//
      >                'R,Z does not lie in assigned cell'
      >                ,trim(msg))
+         in = korpg(ik,ir)
+         write(6,'(a,2i5,l4,20(1x,g18.8))') 'GETSC_ERROR:',ik,ir,
+     >             incelldp(ik,ir,r,z),r,z,
+     >             (rvertp(iv,in),zvertp(iv,in),iv=1,4)
 
          return
       endif
@@ -1964,7 +2165,7 @@ c
       cross_frac = 0.0
       base_frac = 1.0
 c      
-c     Call routine to find the fraction along the cell axes of 
+c     Call routine to find tehe fraction along the cell axes of 
 c     given r,z position.  
 c
       call position_in_poly(r,z,nv,rv,zv,
@@ -3450,7 +3651,7 @@ c
      >                TBAC,TFOR,LBAC,
      >                LFOR,RNEW,ZNEW,TNEW,Tnormal,SECT,nrfopt)
       IMPLICIT NONE
-      integer nrfopt
+      integer nrfopt,flag
       REAL*8 R,Z,ROLD,ZOLD,RP,ZP,TFOR,TBAC,LFOR,LBAC,RNEW,
      >       ZNEW,TNEW,tnormal
       REAL ATAN2C
@@ -3504,7 +3705,7 @@ c
          r2 = rp + lfor * cos(tfor)
          z2 = zp + lfor * sin(tfor)
 c
-         CALL INTSECT2DP(r,z,rold,zold,rp,zp,r2,z2,rnew,znew,secti)
+         CALL INTSECT2DP(r,z,rold,zold,rp,zp,r2,z2,rnew,znew,secti,flag)
 c
          IF (SECTI.eq.1) THEN
             sect = .true. 
@@ -3523,7 +3724,7 @@ c
          r2 = rp + lbac * cos(tbac)
          z2 = zp + lbac * sin(tbac)
 c
-         CALL INTSECT2DP(r,z,rold,zold,rp,zp,r2,z2,rnew,znew,secti)
+         CALL INTSECT2DP(r,z,rold,zold,rp,zp,r2,z2,rnew,znew,secti,flag)
 c
          IF (SECTI.eq.1) THEN
             sect=.true.
@@ -3535,10 +3736,13 @@ c
          ENDIF
       ENDIF
 C
-c      WRITE(6,'(a,11f8.3)')  'INTCALC:',R,Z,ROLD,ZOLD,
-c     >              TFOR*180.0/PI,
-c     >              TBAC*180.0/PI,rnew,znew,tnew*180.0/PI,
-c     >              timp*180.0/PI,tnorm*180.0/PI
+      if (flag.ne.0) then 
+         WRITE(6,'(a,2i8,20(1x,g18.8))')  'INTCALC:',flag,secti,
+     >              R,Z,ROLD,ZOLD,
+     >              TFOR*180.0/PI,
+     >              TBAC*180.0/PI,rnew,znew,tnew*180.0/PI,
+     >              timp*180.0/PI,tnorm*180.0/PI
+      endif
 C
 
 c
@@ -3635,7 +3839,7 @@ C     DAVID ELDER , SEPT 23 , 1992
 C
       real*8 TIMP
       real   dz,dr
-      integer secti
+      integer secti,flag
 c
 c     Surface normal angle
 c
@@ -3651,7 +3855,7 @@ c
 c
       timp = atan2c(dz,dr)
 C
-      CALL INTSECT2DP(r,z,rold,zold,rs,zs,re,ze,rnew,znew,secti)
+      CALL INTSECT2DP(r,z,rold,zold,rs,zs,re,ze,rnew,znew,secti,flag)
 c
       IF (SECTI.eq.1) THEN
          sect = .true. 
@@ -3660,11 +3864,13 @@ c
          sect = .false. 
       ENDIF
 C
-c      WRITE(6,'(a,11f8.3)')  'INTCALC:',R,Z,ROLD,ZOLD,
-c     >              TFOR*180.0/PI,
-c     >              TBAC*180.0/PI,rnew,znew,tnew*180.0/PI,
-c     >              timp*180.0/PI,tnorm*180.0/PI
-C
+      if (flag.ne.0) then 
+         WRITE(6,'(a,2i8,20(1x,g18.8))')  'INTCALC2DP:',flag,secti,
+     >              R,Z,ROLD,ZOLD,
+     >              rnew,znew,tnew*180.0/PI,
+     >              timp*180.0/PI,tnorm*180.0/PI
+      endif
+C     
 
       RETURN
       END
@@ -5037,6 +5243,7 @@ c
       real best,dsq,dr,dz,atan2c
       external atan2c
       integer id,start_index,min_index,ind,sect_index
+      integer flag
 c
       real*8 rad,zad,rbd,zbd,rintd,zintd,ref_angd,min_dist
       real*8 ravd,zavd,new_dist
@@ -5159,7 +5366,17 @@ c
       call intsect2dp(rad,zad,rbd,zbd,
      >        dble(wallpt(start_index,20)),dble(wallpt(start_index,21)),
      >        dble(wallpt(start_index,22)),dble(wallpt(start_index,23)),
-     >        rintd,zintd,intersect_result)
+     >        rintd,zintd,intersect_result,flag)
+
+      if (flag.ne.0) then 
+         write(6,'(a,3i8,20(1x,g18.8))') 
+     >        'FIND_WALL_INTERSECTION1:',flag,
+     >        intersect_result,start_index,
+     >        rad,zad,rbd,zbd,
+     >        dble(wallpt(start_index,20)),dble(wallpt(start_index,21)),
+     >        dble(wallpt(start_index,22)),dble(wallpt(start_index,23)),
+     >        rintd,zintd
+      endif
 c
 c     A value of 1 indicates that the appropriate intersection point has been found
 c
@@ -5189,7 +5406,16 @@ c
             call intsect2dp(rad,zad,rbd,zbd,
      >          dble(wallpt(ind,20)),dble(wallpt(ind,21)),
      >          dble(wallpt(ind,22)),dble(wallpt(ind,23)),
-     >          rintd,zintd,intersect_result)
+     >          rintd,zintd,intersect_result,flag)
+            if (flag.ne.0) then 
+               write(6,'(a,3i8,20(1x,g18.8))') 
+     >          'FIND_WALL_INTERSECTION2:',flag,
+     >           intersect_result,ind,
+     >           rad,zad,rbd,zbd,
+     >        dble(wallpt(start_index,20)),dble(wallpt(start_index,21)),
+     >        dble(wallpt(start_index,22)),dble(wallpt(start_index,23)),
+     >           rintd,zintd
+            endif
 c
 c           Exit if intersection is 1
 c
@@ -5224,7 +5450,18 @@ c
             call intsect2dp(rad,zad,rbd,zbd,
      >          dble(wallpt(ind,20)),dble(wallpt(ind,21)),
      >          dble(wallpt(ind,22)),dble(wallpt(ind,23)),
-     >          rintd,zintd,intersect_result)
+     >          rintd,zintd,intersect_result,flag)
+
+            if (flag.ne.0) then 
+               write(6,'(a,3i8,20(1x,g18.8))') 
+     >          'FIND_WALL_INTERSECTION3:',flag,
+     >           intersect_result,ind,
+     >           rad,zad,rbd,zbd,
+     >        dble(wallpt(start_index,20)),dble(wallpt(start_index,21)),
+     >        dble(wallpt(start_index,22)),dble(wallpt(start_index,23)),
+     >           rintd,zintd
+            endif
+
 c
 c           Exit if intersection is 1
 c

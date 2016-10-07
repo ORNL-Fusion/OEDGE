@@ -133,24 +133,57 @@ Contains
     ! External functions.
     Real, External :: ZA02AS ! Timing routine in SysPGI.u6a.
 
+    real :: SHC_init, SStruk_init,MTCStruk_init,SMain_init, SExit_init,SatIZ_init
+    real :: SWallHC_init,MTCWallHC_init,SCent_init,STMax_init, SFail_init, SFP_init
+
+    ! jdemod - for debugging - these are the values originally calculated
+    real :: SHC_org, SStruk_org,MTCStruk_org,SMain_org, SExit_org,SatIZ_org
+    real :: SWallHC_org,MTCWallHC_org,SCent_org,STMax_org, SFail_org, SFP_org
+
+    real :: SHC_alt, SStruk_alt,MTCStruk_alt,SMain_alt, SExit_alt,SatIZ_alt
+    real :: SWallHC_alt,MTCWallHC_alt,SCent_alt,STMax_alt, SFail_alt, SFP_alt
+
+
     write(0,*) 'Running HC_Launch'
     ! Initialize storage.
     Storage = 0.0
 
     ! Initialize output variables.
     NatIZ = 0
+
+    SHC = 0.0
     SSTruk = 0.0
     MTCStruk = 0.0
     SMain = 0.0
     SExit = 0.0
     SatIZ = 0.0
-    SHC = 0.0
     SWallHC = 0.0
     MTCWallHC = 0.0
     SCent = 0.0
     STMax = 0.0
     SFail = 0.0
     SFP = 0.0
+
+    ! jdemod - the HC code uses the same arrays to accumulate all HC data regardless of the sources (the same way DIVIMP
+    !          records impurity information.
+    !        - However, the HC code uses the array data to determine the totals of particles lost to various
+    !          mechanisms. Unfortunately, this makes the code non-reentrant unless the initial values of these are calculated
+    !          and subtracted at the end since the calling code expects values ONLY for the current generation of particles. 
+
+    SHC_init = SUM(HC_Sum_Fragments_Launched(:,1:4)) + SUM(HC_Sum_Fragments_Launched(:,5:8))
+    SStruk_init = SUM ( HC_Num_Striking_Target (:,:))
+    MTCStruk_init = SUM ( HC_MTC_Striking_Target (:,:))
+    SMain_init = SUM ( HC_Num_Enter_Main_Plasma (:,:))
+    SExit_init = SUM ( HC_Tot_Fragments_Exit_Main (:,:))
+    SatIZ_init = SUM(HC_Num_Fragments_Reach_CIon (:))
+    SWallHC_init = SUM ( HC_Num_Reach_Wall (:,:))
+    MTCWallHC_init = SUM ( HC_MTC_Reach_Wall (:,:))
+    SCent_init = SUM ( HC_Num_Reach_Centre (:,:))
+    STMax_init = SUM ( HC_Num_At_TMax (:,:))
+    SFail_init = SUM ( HC_Num_Failed_Launches (:,:))
+    SFP_init = SUM ( HC_RFPTarg (:,:))
+
+
 
     ! Assign values to global variables.  Note these are set here
     ! because they are local variables in DIVIMP.
@@ -226,8 +259,10 @@ Contains
 
 
        !Do IProd = 1, 1000000, 1
-       Write (Output_Unit_Scratch,'(a,1x,i6,1x,a,1x,i6,1x,a,1x,i9)') "Particle #",IProd,"Total particles",NProd-LProd+1,"Starting &
+       if (debug_hc) then 
+          Write (Output_Unit_Scratch,'(a,1x,i6,1x,a,1x,i6,1x,a,1x,i9)') "Particle #",IProd,"Total particles",NProd-LProd+1,"Starting &
             &step", HC_Walk_Count
+       endif
 
        ! Particle transport (?)
 
@@ -312,27 +347,6 @@ Contains
 
 
     !
-    ! jdemod - code not correct for the different DIVIMP launch options - replaced with one
-    !          block. 
-    !
-    ! Note: NeutType 1 and 4 are physically sputtered and should never call HC_Launch.
-    !If (NeutType .eq. 2) Then
-    !   ! Chemically sputtered from target.
-    !   If (HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_1_Pin .and. &
-    !        &   HC_Launch_Reg_Target_2_Dist .eq. HC_Launch_Reg_Target_2_Pin .and. &
-    !        &   HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_2_Dist) Then
-    !      Divide_Region = 4.0
-    !   ElseIf (HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_1_Pin .or. &
-    !        &   HC_Launch_Reg_Target_2_Dist .eq. HC_Launch_Reg_Target_2_Pin) Then
-    !      Divide_Region = 2.0
-    !   Else
-    !      Divide_Region = 1.0
-    !   End If
-    !
-    !   write(0,*) 'HC_LAUNCH Printing:divide_region:',divide_region,HC_Launch_Reg_Target_1_Dist,&
-    !        &HC_Launch_Reg_Target_1_Pin,HC_Launch_Reg_Target_2_Dist,HC_Launch_Reg_Target_2_Pin
-    !
-    !
     !
     !     jdemod
     !
@@ -409,36 +423,35 @@ Contains
 
     ! Total number of fragments launched is the total from launch_regions 1 to 4
     ! plus sputtered particles 
-    SHC = SUM(HC_Sum_Fragments_Launched(:,1:4)) + SUM(HC_Sum_Fragments_Launched(:,5:8))
+    SHC_alt = SUM(HC_Sum_Fragments_Launched(:,1:4)) + SUM(HC_Sum_Fragments_Launched(:,5:8))
 
     ! These variables are supposed to record final fate statistics - meaning what happens to the
     ! particle at the end of its lifetime. This appears to be the case even though the launch_region
     ! is changed while following the particle. 
 
     ! Number reaching the wall
-    SWallHC = SUM ( HC_Num_Reach_Wall (:,:))
+    SWallHC_alt = SUM ( HC_Num_Reach_Wall (:,:))
 
     ! Number reaching the wall after a Momentum Transfer Collision
-    MTCWallHC = SUM ( HC_MTC_Reach_Wall (:,:))
+    MTCWallHC_alt = SUM ( HC_MTC_Reach_Wall (:,:))
 
     ! Number reaching the centre of the plasma
-    SCent = SUM ( HC_Num_Reach_Centre (:,:))
+    SCent_alt = SUM ( HC_Num_Reach_Centre (:,:))
 
     ! Number at Tmax
-    STMax = SUM ( HC_Num_At_TMax (:,:))
-
+    STMax_alt = SUM ( HC_Num_At_TMax (:,:))
 
     ! Number striking target 
-    SStruk = SUM ( HC_Num_Striking_Target (:,:))
+    SStruk_alt = SUM ( HC_Num_Striking_Target (:,:))
 
     ! Number striking target after an MTC 
-    MTCStruk = SUM ( HC_MTC_Striking_Target (:,:))
+    MTCStruk_alt = SUM ( HC_MTC_Striking_Target (:,:))
 
     ! Number of failed launches
-    SFail = SUM ( HC_Num_Failed_Launches (:,:))
+    SFail_alt = SUM ( HC_Num_Failed_Launches (:,:))
 
     ! Number of fragments reaching C+
-    SatIZ = SUM(HC_Num_Fragments_Reach_CIon (:))
+    SatIZ_alt = SUM(HC_Num_Fragments_Reach_CIon (:))
 
 
     !write(0,'(a,10(1x,g12.5))') 'SATIZ:',HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Dist),&
@@ -447,331 +460,402 @@ Contains
     !     &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Pin),Divide_Region,satiz
 
     ! Number entered main plasma
-    SMain = SUM ( HC_Num_Enter_Main_Plasma (:,:))
+    SMain_alt = SUM ( HC_Num_Enter_Main_Plasma (:,:))
 
     ! Number exiting main plasma
-    SExit = SUM ( HC_Tot_Fragments_Exit_Main (:,:))
+    SExit_alt = SUM ( HC_Tot_Fragments_Exit_Main (:,:))
 
     ! Number reaching Far Periphery target
-    SFP = SUM ( HC_RFPTarg (:,:))
+    SFP_alt = SUM ( HC_RFPTarg (:,:))
 
 
+
+
+    ! jdemod - replacing the code below with one block caused errors. Some launch_reg 
+    !          are used for recording reflected and other data that should not be included
+    !          with original sources or losses from original sources. 
     !
-    !      jdemod - original code
-    !
-    !       SHC = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       SWallHC = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       MTCWallHC = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       SCent = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       STMax = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Pin)))/Divide_Region
-    !
-    !       SStruk = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       MTCStruk = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       SFail = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !
-    !       SatIZ = ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Dist)+ &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Pin)+ &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Dist)+ &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Pin))/Divide_Region
-    !
-    !       write(0,'(a,10(1x,g12.5))') 'SATIZ:',HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Dist),&
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Pin), &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Dist), &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Pin),Divide_Region,satiz
-    !            
-    !       SMain = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !       SExit = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !       SFP = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_1_Dist))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_1_Pin))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_2_Dist))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
-    !    ElseIf (NeutType .eq. 3) Then
-    !       ! NeutType indicates target launched and later self-sputtered.  For DIVIMP-HC,
-    !       ! this would be all sputtered particles including those originally from the wall or in FS.
-    ! 
-    !       ! Divide_Region_1 = Target chemical launches
-    !       ! Divide_Region_2 = Wall chemical launches
-    !       ! Divide_Region_3 = FS chemical launches
-    !       Divide_Region = 1.0
-    !       Divide_Region_1 = 1.0
-    !       Divide_Region_2 = 1.0
-    !       Divide_Region_3 = 1.0
-    ! 
-    !       If (HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Target_2 .and. &
-    !            &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Wall .and. &
-    !            &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_FS_Pt .and. &
-    !            &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_FS_2D) Then
-    !          Divide_Region = 5.0
-    !       ElseIf (HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Target_2) Then
-    !          Divide_Region_1 = 2.0
-    !       ElseIf (HC_Launch_Reg_Sput_FS_PT .eq. HC_Launch_Reg_Sput_FS_2D) Then
-    !          Divide_Region_3 = 2.0
-    !       End If
-    ! 
-    !       SHC = ((SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &      (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SWallHC = ((SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	   (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       MTCWallHC = ((SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	     (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SCent = ((SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       STMax = ((SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SStruk = ((SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	  (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       MTCStruk = ((SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	    (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SFail = ((SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SatIZ = (( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Target_1)+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Target_2))/Divide_Region_1+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Wall)/Divide_Region_2+ &
-    !            &	 ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_FS_Pt)+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_FS_2D))/Divide_Region_3)/Divide_Region
-    !       SMain = ((SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SExit = ((SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SFP = ((SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Target_1))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
-    !            &      (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_FS_Pt))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
-    !    ElseIf (NeutType .eq. 5) Then
-    !       ! Chemically sputtered from wall.
-    !       If (HC_Launch_Reg_Wall_Homo .eq. HC_Launch_Reg_Wall_Dist) Then
-    !          Divide_Region = 2.0
-    !       Else
-    !          Divide_Region = 1.0
-    !       End If
-    ! 
-    !       SHC = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SWallHC = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       MTCWallHC = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SCent = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       STMax = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Wall_Homo)))/Divide_Region
-    !       SStruk = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       MTCStruk = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SFail = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SatIZ = (SUM ( HC_Num_Fragments_Reach_CIon (:))+ &
-    !            &	SUM ( HC_Num_Fragments_Reach_CIon (:)))/Divide_Region
-    !       SMain = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SExit = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    !       SFP = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Wall_Homo))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-    ! 
-    !       !write (0,*) "NEUTTYPE HC DATA",HC_Launch_Reg_Wall_Homo,HC_Launch_Reg_Wall_Dist,SatIZ, HC_Num_Fragments_Reach_CIon,Divide_Region
-    ! 
-    !    !ElseIf (NeutType .eq. 0) Then
-    !       ! jdemod - neuttype=0 represents freespace launches - try treating as neuttype=6 for code purposes as seems to be done elsewhere. 
-    !       ! Ion injection case.
-    !       !STMax = NProd - LProd + 1
-    !       !Write (0,*) "Ion Injection:",STMax
-    !    ! jdemod
-    !    ElseIf (NeutType .eq. 6.or.neuttype.eq.0) Then
-    !       ! 2D neutral launched particles in DIVIMP.  For DIVIMP-HC, this includes both
-    !       ! 2D and point launched particles since it is unlikely that both will be used
-    !       ! simultaneously.
-    !       If (HC_Launch_Reg_Free_Space_PT .eq. HC_Launch_Reg_Free_Space_2D) Then
-    !          Divide_Region = 2.0
-    !       Else
-    !          Divide_Region = 1.0
-    !       End If
-    ! 
-    !       SHC = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SWallHC = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       MTCWallHC = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SCent = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       STMax = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SStruk = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       MTCStruk = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SFail = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SatIZ = ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Free_Space_PT)+ &
-    !            &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Free_Space_2D))/Divide_Region
-    !       SMain = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SExit = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !       SFP = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Free_Space_PT))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
-    !    ElseIf (NeutType .eq. 7) Then
-    !       ! NeutType indicates target launched and later reflected.  For DIVIMP-HC,
-    !       ! this would be all reflected particles including those from the wall.
-    ! 
-    !       ! Divide_Region_1 = Target chemical launches
-    !       ! Divide_Region_2 = Wall chemical launches
-    !       ! Divide_Region_3 = FS chemical launches
-    !       Divide_Region = 1.0
-    !       Divide_Region_1 = 1.0
-    !       Divide_Region_2 = 1.0
-    !       Divide_Region_3 = 1.0
-    ! 
-    !       If (HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Target_2 .and. &
-    !            &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Wall .and. &
-    !            &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_FS_Pt .and. &
-    !            &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_FS_2D) Then
-    !          Divide_Region = 5.0
-    !       ElseIf (HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Target_2) Then
-    !          Divide_Region_1 = 2.0
-    !       ElseIf (HC_Launch_Reg_Refl_FS_PT .eq. HC_Launch_Reg_Refl_FS_2D) Then
-    !          Divide_Region_3 = 2.0
-    !       End If
-    ! 
-    !       SHC = ((SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &      (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SWallHC = ((SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	   (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       MTCWallHC = ((SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	     (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SCent = ((SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       STMax = ((SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SStruk = ((SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	  (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       MTCStruk = ((SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	    (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SFail = ((SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SatIZ = (( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Target_1)+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Target_2))/Divide_Region_1+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Wall)/Divide_Region_2+ &
-    !            &	 ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_FS_Pt)+ &
-    !            &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_FS_2D))/Divide_Region_3)/Divide_Region
-    !       SMain = ((SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SExit = ((SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &	 (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !       SFP = ((SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Target_1))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
-    !            &      (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_FS_Pt))+ &
-    !            &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
-    !    Else			
-    !       ! NeutType not allowed.
-    !       Write (Output_Unit_HC_Alert,*) "Error in HC_Batch: NeutType value not allowed in DIVIMP-HC:",NeutType
-    !       Write (Output_Unit_HC_Alert,*) "Program stopping."
-    !       Stop
-    !    End If
+    ! Note: NeutType 1 and 4 are physically sputtered and should never call HC_Launch.
+    If (NeutType .eq. 2) Then
+       ! Chemically sputtered from target.
+       If (HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_1_Pin .and. &
+            &   HC_Launch_Reg_Target_2_Dist .eq. HC_Launch_Reg_Target_2_Pin .and. &
+            &   HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_2_Dist) Then
+          Divide_Region = 4.0
+       ElseIf (HC_Launch_Reg_Target_1_Dist .eq. HC_Launch_Reg_Target_1_Pin .or. &
+            &   HC_Launch_Reg_Target_2_Dist .eq. HC_Launch_Reg_Target_2_Pin) Then
+          Divide_Region = 2.0
+       Else
+          Divide_Region = 1.0
+       End If
+    
+       !write(0,*) 'HC_LAUNCH Printing:divide_region:',divide_region,HC_Launch_Reg_Target_1_Dist,&
+       !     &HC_Launch_Reg_Target_1_Pin,HC_Launch_Reg_Target_2_Dist,HC_Launch_Reg_Target_2_Pin
+        
+          !jdemod - original code
+    
+           SHC_org = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           SWallHC_org = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           MTCWallHC_org = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           SCent_org = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           STMax_org = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Target_1_Pin)))/Divide_Region
+    
+           SStruk_org = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Dist))+ &           
+                &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Pin))+ &            
+                &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Dist))+ &           
+                &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+
+           write(output_unit_scratch,'(a,4i8,20(1x,g18.8))') 'SSTRUK_org:',&
+                & HC_Launch_Reg_Target_1_Dist,HC_Launch_Reg_Target_1_Pin,HC_Launch_Reg_Target_2_Dist,HC_Launch_Reg_Target_2_Pin, divide_region, &
+                &  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Dist)),&
+                &  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Pin )),&
+                &  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Dist)),&
+                &  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)),&
+                &  (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Dist))+ &           
+                &    SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_1_Pin))+ &            
+                &    SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Dist))+ &           
+                &    SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region,&
+                &  SUM ( HC_Num_Striking_Target (:,:))
+
+
+    
+           MTCStruk_org = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           SFail_org = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+    
+           SatIZ_org = ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Dist)+ &
+                &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Pin)+ &
+                &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Dist)+ &
+                &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Pin))/Divide_Region
+    
+           !write(0,'(a,10(1x,g12.5))') 'SATIZ:',HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Dist),&
+           !     &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_1_Pin), &
+           !     &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Dist), &
+           !     &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Target_2_Pin),Divide_Region,satiz
+                
+           SMain_org = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+           SExit_org = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+           SFP_org = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_1_Dist))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_1_Pin))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_2_Dist))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Target_2_Pin)))/Divide_Region
+        ElseIf (NeutType .eq. 3) Then
+           ! NeutType indicates target launched and later self-sputtered.  For DIVIMP-HC,
+           ! this would be all sputtered particles including those originally from the wall or in FS.
+     
+           ! Divide_Region_1 = Target chemical launches
+           ! Divide_Region_2 = Wall chemical launches
+           ! Divide_Region_3 = FS chemical launches
+           Divide_Region = 1.0
+           Divide_Region_1 = 1.0
+           Divide_Region_2 = 1.0
+           Divide_Region_3 = 1.0
+     
+           If (HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Target_2 .and. &
+                &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Wall .and. &
+                &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_FS_Pt .and. &
+                &   HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_FS_2D) Then
+              Divide_Region = 5.0
+           ElseIf (HC_Launch_Reg_Sput_Target_1 .eq. HC_Launch_Reg_Sput_Target_2) Then
+              Divide_Region_1 = 2.0
+           ElseIf (HC_Launch_Reg_Sput_FS_PT .eq. HC_Launch_Reg_Sput_FS_2D) Then
+              Divide_Region_3 = 2.0
+           End If
+     
+           SHC_org = ((SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &      (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SWallHC_org = ((SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	   (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           MTCWallHC_org = ((SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	     (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SCent_org = ((SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           STMax_org = ((SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SStruk_org = ((SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	  (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           MTCStruk_org = ((SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	    (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SFail_org = ((SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SatIZ_org = (( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Target_1)+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Target_2))/Divide_Region_1+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_Wall)/Divide_Region_2+ &
+                &	 ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_FS_Pt)+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Sput_FS_2D))/Divide_Region_3)/Divide_Region
+           SMain_org = ((SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SExit_org = ((SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+           SFP_org = ((SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Target_1))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Target_2)))/Divide_Region_1+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_Wall))/Divide_Region_2+ &
+                &      (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_FS_Pt))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Sput_FS_2D)))/Divide_Region_3)/Divide_Region
+        ElseIf (NeutType .eq. 5) Then
+           ! Chemically sputtered from wall.
+           If (HC_Launch_Reg_Wall_Homo .eq. HC_Launch_Reg_Wall_Dist) Then
+              Divide_Region = 2.0
+           Else
+              Divide_Region = 1.0
+           End If
+     
+           SHC_org = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Wall_Homo))+ &
+                &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SWallHC_org = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           MTCWallHC_org = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SCent_org = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           STMax_org = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Wall_Homo)))/Divide_Region
+           SStruk_org = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           MTCStruk_org = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SFail_org = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SatIZ_org = (SUM ( HC_Num_Fragments_Reach_CIon (:))+ &
+                &	SUM ( HC_Num_Fragments_Reach_CIon (:)))/Divide_Region
+           SMain_org = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SExit_org = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+           SFP_org = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Wall_Homo))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
+     
+           !write (0,*) "NEUTTYPE HC DATA",HC_Launch_Reg_Wall_Homo,HC_Launch_Reg_Wall_Dist,SatIZ, HC_Num_Fragments_Reach_CIon,Divide_Region
+     
+        !ElseIf (NeutType .eq. 0) Then
+           ! jdemod - neuttype=0 represents freespace launches - try treating as neuttype=6 for code purposes as seems to be done elsewhere. 
+           ! Ion injection case.
+           !STMax = NProd - LProd + 1
+           !Write (0,*) "Ion Injection:",STMax
+        ! jdemod
+        ElseIf (NeutType .eq. 6.or.neuttype.eq.0) Then
+           ! 2D neutral launched particles in DIVIMP.  For DIVIMP-HC, this includes both
+           ! 2D and point launched particles since it is unlikely that both will be used
+           ! simultaneously.
+           If (HC_Launch_Reg_Free_Space_PT .eq. HC_Launch_Reg_Free_Space_2D) Then
+              Divide_Region = 2.0
+           Else
+              Divide_Region = 1.0
+           End If
+     
+           SHC_org = (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &     SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SWallHC_org = (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	  SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           MTCWallHC_org = (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	    SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SCent_org = (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           STMax_org = (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SStruk_org = (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	 SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           MTCStruk_org = (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SFail_org = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SatIZ_org = ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Free_Space_PT)+ &
+                &	 HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Free_Space_2D))/Divide_Region
+           SMain_org = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SExit_org = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &	SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+           SFP_org = (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Free_Space_PT))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Free_Space_2D)))/Divide_Region
+        ElseIf (NeutType .eq. 7) Then
+           ! NeutType indicates target launched and later reflected.  For DIVIMP-HC,
+           ! this would be all reflected particles including those from the wall.
+     
+           ! Divide_Region_1 = Target chemical launches
+           ! Divide_Region_2 = Wall chemical launches
+           ! Divide_Region_3 = FS chemical launches
+           Divide_Region = 1.0
+           Divide_Region_1 = 1.0
+           Divide_Region_2 = 1.0
+           Divide_Region_3 = 1.0
+     
+           If (HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Target_2 .and. &
+                &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Wall .and. &
+                &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_FS_Pt .and. &
+                &   HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_FS_2D) Then
+              Divide_Region = 5.0
+           ElseIf (HC_Launch_Reg_Refl_Target_1 .eq. HC_Launch_Reg_Refl_Target_2) Then
+              Divide_Region_1 = 2.0
+           ElseIf (HC_Launch_Reg_Refl_FS_PT .eq. HC_Launch_Reg_Refl_FS_2D) Then
+              Divide_Region_3 = 2.0
+           End If
+     
+           SHC_org = ((SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &      (SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &      SUM ( HC_Sum_Fragments_Launched (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SWallHC_org = ((SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	   (SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	   SUM ( HC_Num_Reach_Wall (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           MTCWallHC_org = ((SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	     (SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	     SUM ( HC_MTC_Reach_Wall (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SCent_org = ((SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	 SUM ( HC_Num_Reach_Centre (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           STMax_org = ((SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	 SUM ( HC_Num_At_TMax (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SStruk_org = ((SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	  (SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	  SUM ( HC_Num_Striking_Target (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           MTCStruk_org = ((SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	    (SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	    SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SFail_org = ((SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	 SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SatIZ_org = (( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Target_1)+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Target_2))/Divide_Region_1+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_Wall)/Divide_Region_2+ &
+                &	 ( HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_FS_Pt)+ &
+                &	  HC_Num_Fragments_Reach_CIon (HC_Launch_Reg_Refl_FS_2D))/Divide_Region_3)/Divide_Region
+           SMain_org = ((SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	 SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SExit_org = ((SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &	 (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &	 SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+           SFP_org = ((SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Target_1))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Target_2)))/Divide_Region_1+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_Wall))/Divide_Region_2+ &
+                &      (SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_FS_Pt))+ &
+                &      SUM ( HC_RFPTarg (:,HC_Launch_Reg_Refl_FS_2D)))/Divide_Region_3)/Divide_Region
+        Else			
+           ! NeutType not allowed.
+           Write (Output_Unit_HC_Alert,*) "Error in HC_Batch: NeutType value not allowed in DIVIMP-HC:",NeutType
+           Write (Output_Unit_HC_Alert,*) "Program stopping."
+           !Stop
+        End If
     ! 
     ! jdemod - end 
     !
 
+
+
+    ! This will give the increment from the current generation. 
+    ! NOTE: Need to verify that the code doesn't double count in some circumstances since there is the 
+    !       definition of Divide_region in the original code. 
+
+    ! jdemod - assign appropriate values to these before paassing back to calling routine - use the _org values
+    !          since they appear to be correctly calculated ... the other methods include reflected and other particles
+    !          that appear to be treated as separate launch regions. 
+
+    !SHC      = SHC      - SHC_init
+    !SSTruk   = SSTruk   - SSTruk_init   
+    !MTCStruk = MTCStruk - MTCStruk_init 
+    !SMain    = SMain    - SMain_init    
+    !SExit    = SExit    - SExit_init    
+    !SatIZ    = SatIZ    - SatIZ_init    
+    !SWallHC  = SWallHC  - SWallHC_init  
+    !MTCWallHC= MTCWallHC- MTCWallHC_init
+    !SCent    = SCent    - SCent_init    
+    !STMax    = STMax    - STMax_init    
+    !SFail    = SFail    - SFail_init    
+    !SFP      = SFP      - SFP_init      
+
+    SHC      =  SHC_org
+    SSTruk   =  SSTruk_org   
+    MTCStruk =  MTCStruk_org 
+    SMain    =  SMain_org    
+    SExit    =  SExit_org    
+    SatIZ    =  SatIZ_org    
+    SWallHC  =  SWallHC_org  
+    MTCWallHC=  MTCWallHC_org
+    SCent    =  SCent_org    
+    STMax    =  STMax_org    
+    SFail    =  SFail_org    
+    SFP      =  SFP_org      
 
 
     ! Output sums as calculated.
@@ -780,17 +864,20 @@ Contains
     Else
        Write (Output_Unit_Scratch,'(A,2I3)') "Self-sputtered HC launch complete. NEUTTYPE, STATUS:",NeutType,Status
     End If
-    Write (Output_Unit_Scratch,*) "SHC:",SHC
-    Write (Output_Unit_Scratch,*) "SWallHC:",SWallHC
-    Write (Output_Unit_Scratch,*) "MTCWallHC:",MTCWallHC
-    Write (Output_Unit_Scratch,*) "SCent:",SCent
-    Write (Output_Unit_Scratch,*) "STMax:",STMax
-    Write (Output_Unit_Scratch,*) "SStruk:",SStruk
-    Write (Output_Unit_Scratch,*) "MTCStruk:",MTCStruk
-    Write (Output_Unit_Scratch,*) "SFail:",SFail
-    Write (Output_Unit_Scratch,*) "SatIZ:",SatIZ
-    Write (Output_Unit_Scratch,*) "SMain:",SMain
-    Write (Output_Unit_Scratch,*) "SExit:",SExit
+    Write (Output_Unit_Scratch,*) "Prod:",nprod-lprod+1
+    Write (Output_Unit_Scratch,'(a,5(1x,g18.8),l6)') "SHC:",SHC, SUM(HC_Sum_Fragments_Launched(:,1:4)), SUM(HC_Sum_Fragments_Launched(:,5:8)),SHC_init, SHC_org, SHC.eq.SHC_org
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SStruk:",SStruk,        SSTruk_init   ,  SSTruk_org   , SSTruk.eq.SSTruk_org  
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "MTCStruk:",MTCStruk,    MTCStruk_init ,  MTCStruk_org , MTCStruk .eq. MTCStruk_org 
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SMain:",SMain,          SMain_init    ,  SMain_org    , SMain    .eq. SMain_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SExit:",SExit,          SExit_init    ,  SExit_org    , SExit    .eq. SExit_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SatIZ:",SatIZ,          SatIZ_init    ,  SatIZ_org    , SatIZ    .eq. SatIZ_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SWallHC:",SWallHC,      SWallHC_init  ,  SWallHC_org  , SWallHC  .eq. SWallHC_org  
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "MTCWallHC:",MTCWallHC,  MTCWallHC_init,  MTCWallHC_org, MTCWallHC.eq. MTCWallHC_org
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SCent:",SCent,          SCent_init    ,  SCent_org    , SCent    .eq. SCent_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "STMax:",STMax,          STMax_init    ,  STMax_org    , STMax    .eq. STMax_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SFail:",SFail,          SFail_init    ,  SFail_org    , SFail    .eq. SFail_org    
+    Write (Output_Unit_Scratch,'(a,3(1x,g18.8),l6)') "SFP:",SFP,              SFP_init      ,  SFP_org      , SFP      .eq. SFP_org      
+
 
     ! Check that all sums are still whole numbers.  If not, there was likely a divide error somewhere.
     ! jdemod - if partial weight particles are in use from sputtering then these may not be whole numbers
@@ -838,6 +925,8 @@ Contains
        If (Launch_Sum .ne. REAL (NProd - LProd + 1)) Then
           Write (Output_Unit_HC_Alert,*) "Warning 2 in HC_Batch: Total particle sums returned from HC_Transport not consistent: ",&
                &REAL (NProd - LProd + 1),Launch_Sum
+          Write (Output_Unit_HC_Alert,'(a,20(1x,g15.5))') "Warning 2 Details:",real(NProd-LProd+1),SWallHC, MTCWallHC, SCent, STMax, SStruk,&
+                                                                             & MTCStruk, SFail, SatIZ, SMain, SExit, SFP, SHC
        End If
     End If
 

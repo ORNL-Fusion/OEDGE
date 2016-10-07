@@ -1429,12 +1429,15 @@ c...      Setup OSM geometry:
           CALL MapRingstoTubes
           CALL DumpData_OSM('output.trouble1','trouble1')
 c...      Automated clipping:
-          DO i2 = 1, walln
-            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+
+          if (cprint.eq.3.or.cprint.eq.9) then 
+            DO i2 = 1, walln
+               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-            WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-          ENDDO
+            ENDDO
+          endif 
 c
 c          d_wallr1 = DBLE(wallr1)
 c          d_wallz1 = DBLE(wallz1)
@@ -1450,12 +1453,14 @@ c          wallz1 = SNGL(d_wallz1)
           wallr1(1:walln,:) = SNGL(d_wallr1(1:walln,:))
           wallz1(1:walln,:) = SNGL(d_wallz1(1:walln,:))           
 c
-          DO i2 = 1, walln
-            WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
-     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-            WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
-     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-          ENDDO
+          if (cprint.eq.3.or.cprint.eq.9) then 
+             DO i2 = 1, walln
+               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
+     .           i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, RETURNED: ',
+     .           i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+             ENDDO
+          endif
 c...      Wipe the geometry arrays:
           CALL geoClean
           CALL osmClean
@@ -1776,20 +1781,22 @@ c     wallpt (ind,31) = Plasma density at wall segment
       wallpts = walln
 
 c      write(0,*) 'BUILDNEUTRALWALL:WALLN:',walln
-      write(6,*) 'BUILDNEUTRALWALL:WALLN:',walln
 
-      do in = 1,walln
+      if (cprint.eq.3.or.cprint.eq.9) then 
+        write(6,*) 'BUILDNEUTRALWALL:WALLN:',walln
+
+         do in = 1,walln
 
 c         write(0,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
 c     >             wallt(in),wallc(in),
 c     >             wallr1(in,1),wallz1(in,1),
 c     >             wallr1(in,2),wallz1(in,2)
-         write(6,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
+            write(6,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
      >             wallt(in),wallc(in),
      >             wallr1(in,1),wallz1(in,1),
      >             wallr1(in,2),wallz1(in,2)
-      end do
-
+         end do
+      ENDIF
 c
       DO in = 1, walln
         r1 = wallr1(in,1)
@@ -2157,10 +2164,12 @@ c...  Assign:
 c      write(0,*) 'BGP:IONWPTS:',ionwpts
       write(6,*) 'BGP:IONWPTS:',ionwpts
 
-      do i1 = 1,ionwpts
-         !write(0,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
-         write(6,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
-      end do
+      if (cprint.eq.3.or.cprint.eq.9) then 
+         do i1 = 1,ionwpts
+            !write(0,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
+            write(6,'(a,i8,10(1x,g18.8))') 'IONW:',i1,riw(i1),ziw(i1)
+         end do
+      endif
 
 c...  Not really sure what this does, but found in IONWALL in WALLS.F, 
 c     seems to setup some work arrays:
@@ -2205,10 +2214,12 @@ c...  Core boundary polygon:
 c      write(0,*) 'BGP:IONCPTS:',ioncpts
       write(6,*) 'BGP:IONCPTS:',ioncpts
 
-      do i1 = 1,ioncpts
-         !write(0,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
-         write(6,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
-      end do
+      if (cprint.eq.3.or.cprint.eq.9) then 
+         do i1 = 1,ioncpts
+            !write(0,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
+            write(6,'(a,i8,10(1x,g18.8))') 'CORW:',i1,rcw(i1),zcw(i1)
+         end do
+      endif
 
       CALL GA15A(IONCPTS,KIND,icWORK,4*MAXPTS,icINDW,MAXPTS,
      >             RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
