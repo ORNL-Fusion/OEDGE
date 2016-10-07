@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       SUBROUTINE DOTARG
+      use debug_options
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
@@ -50,7 +51,12 @@ C     IN THE ARRAY IDDS - THE INNER PLATE IS 1 AND THE OUTER IS 2
 c     The inner plate is assumed to be for IK values = nks(ir) and
 c     the outer plate is for IK values = 1.
 c
-      WRITE(6,*) 'DO TARGETS:'
+      if (cprint.eq.3.or.cprint.eq.9) then 
+         WRITE(6,*) 'DO TARGETS:'
+      endif
+
+      call pr_trace('WALLS','DOTARG START')
+
 c
 c     Target options:
 c     0 - targets at at the last set of real points on each ring. The
@@ -680,7 +686,8 @@ C              ANGLES (THETAS2) OR ABOVE ANGLES (THETAS) : COSTET(ID)
 C
 C  NOTE: There are no plasma polygons defined on virtual rings
 C
-      WRITE(6,9046)
+         if (cprint.eq.3.or.cprint.eq.9) 
+     >         WRITE(6,9046)
 c
 c NOTE: Execute this entire block of code for ID = 1,NDS - don't recalculate the
 c       ID index since it makse no sense to do so - the targets have been defined 
@@ -757,8 +764,9 @@ c
 
            endif
 c
-           WRITE(6,9045) ID, RP(ID), ZP(ID), RADDEG*THETAS(ID),
-     >        RADDEG*THETAS2(ID), DDS(ID), DDS2(ID), COSTET(ID)
+           if (cprint.eq.3.or.cprint.eq.9) 
+     >        WRITE(6,9045) ID, RP(ID), ZP(ID), RADDEG*THETAS(ID),
+     >           RADDEG*THETAS2(ID), DDS(ID), DDS2(ID), COSTET(ID)
 
         end do
 

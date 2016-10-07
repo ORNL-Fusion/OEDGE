@@ -2419,10 +2419,10 @@ c      WRITE(SLOUT,'(4A)') ' ERROR ',routine,': ',message
       END
 
 
-      subroutine intsect2dp(ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect)
+      subroutine intsect2dp(ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect,flag)
       implicit none   
       real*8 ra,za,rb,zb,r1,z1,r2,z2,rint,zint
-      integer sect
+      integer sect,flag
 c
 c     Calculates intersection of two lines and sets flag if the
 c     intersection is between the end points of both line segments.
@@ -2459,6 +2459,7 @@ c
       rint = 0.0
       zint = 0.0
 
+      flag = 0
       sect = 0
 c
 c     Define slopes of lines
@@ -2506,10 +2507,17 @@ c
 c
             write(6,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
      >                     ' COLINEAR-VERTICAL',warnings
-            write(0,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
+
+            if (debug) then 
+               write(0,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
      >                     ' COLINEAR-VERTICAL',warnings
+            endif 
+
             write(6,'(a,12(1x,g18.10))') 'DATA:',ra,za,rb,zb,r1,z1,
      >                                  r2,z2,ma,m1,ba,b1
+            
+c           set flag to 1 for colinear vertical
+            flag = 1
 c
 c           Check for intersection region and return the mid-point of 
 c           the overlap as the intersection point. 
@@ -2551,10 +2559,15 @@ c
                if (ma.eq.0.0) then 
                   write(6,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
      >                         ' COLINEAR-HORIZONTAL',warnings
+                 if (debug) then 
                   write(0,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
      >                         ' COLINEAR-HORIZONTAL',warnings
+                 endif
+
                  write(6,'(a,12(1x,g18.10))') 'DATA:',ra,za,rb,zb,r1,z1,
      >                                                r2,z2,ma,m1,ba,b1
+c                set flag to 2 for colinear horizontal
+                 flag = 2
                else
                   write(6,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
      >                         ' COLINEAR-PARALLEL',warnings
@@ -2562,6 +2575,8 @@ c
      >                         ' COLINEAR-PARALLEL',warnings
                  write(6,'(a,12(1x,g18.10))') 'DATA:',ra,za,rb,zb,r1,z1,
      >                                                r2,z2,ma,m1,ba,b1
+c                set flag to 3 for colinear parallel
+                 flag = 3
                endif
 c
 c              Check for intersection region and return the mid-point of 
@@ -2809,6 +2824,7 @@ c
       implicit none
       include 'params'
       include 'cgeom'
+      include 'comtor'
 c
       real br(maxnks,maxnrs)
       real bz(maxnks,maxnrs)
@@ -2869,9 +2885,10 @@ c
                bt(ik,ir) = bt(ik,ir)/btot
             endif
 c
-            write(6,'(a,2i6,10(1x,g12.5))') 'BFIELD:',ik,ir,
-     >          kbfs(ik,ir),br(ik,ir),bz(ik,ir),bt(ik,ir),btot,
-     >        sqrt(br(ik,ir)**2+bz(ik,ir)**2+bt(ik,ir)**2)
+            if (cprint.eq.3.or.cprint.eq.9) 
+     >        write(6,'(a,2i6,10(1x,g12.5))') 'BFIELD:',ik,ir,
+     >           kbfs(ik,ir),br(ik,ir),bz(ik,ir),bt(ik,ir),btot,
+     >          sqrt(br(ik,ir)**2+bz(ik,ir)**2+bt(ik,ir)**2)
 
          end do
       end do

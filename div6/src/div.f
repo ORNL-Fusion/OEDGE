@@ -1043,7 +1043,11 @@ c
      >             RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,NRAND,
      >             NEUTIM,RFAIL,NYMFS,STATUS)
         IF (NATIZ.EQ.0) GOTO 806
-        WRITE(0,*) 'NEUT:NATIZ: ',NATIZ
+c        WRITE(0,'(a,i8,20(1x,g12.5))') 'NEUT:NATIZ: ',
+c     >            NATIZ,RSTRUK,MTCSTRUK,
+c     >             RMAIN,REXIT,
+c     >             RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX
+
 
       ELSE
         STATUS = 1

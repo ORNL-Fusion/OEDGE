@@ -48,12 +48,12 @@ contains
   end subroutine init_divertor_limits
 
 
-  subroutine calculate_divertor_limit(nizs)
+  subroutine calculate_divertor_limit(nizs,cprint)
     use error_handling
     implicit none
 
-    integer :: nizs
-
+    integer :: nizs,cprint
+    
     ! local variables
     
     integer :: ik,ir,in,ierr
@@ -269,13 +269,15 @@ contains
 
     endif
 
-    write(6,*) 'Divertor Limits:'
+    if (cprint.eq.3.or.cprint.eq.9) then 
+       write(6,*) 'Divertor Limits:'
 
-    do ir = 1,nrs
+       do ir = 1,nrs
 
-       write(6,'(a,i5,3(1x,g18.8))') 'DIVLIM:',ir,divertor_limit(ir,1),divertor_limit(ir,2),ksmaxs(ir)/2.0
+          write(6,'(a,i5,3(1x,g18.8))') 'DIVLIM:',ir,divertor_limit(ir,1),divertor_limit(ir,2),ksmaxs(ir)/2.0
 
-    end do
+       end do
+    endif
 
 !    write(0,*) 'Divertor Limits:'
 !

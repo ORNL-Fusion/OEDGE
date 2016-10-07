@@ -2728,7 +2728,7 @@ Contains
           End If
  
           ! Finally, record H loss to plasma.
-          Write (Output_Unit_Scratch,'(A10,10I4)') "H_DENS:",H_Cell,H_Ring,H_State,Last_HC_Species,Reaction_Number,Cur_HC_Spec
+          !Write (Output_Unit_Scratch,'(A10,10I4)') "H_DENS:",H_Cell,H_Ring,H_State,Last_HC_Species,Reaction_Number,Cur_HC_Spec
           H_Density (H_Cell,H_Ring,H_State) =  H_Density (H_Cell,H_Ring,H_State) + 1.0
  
        Else

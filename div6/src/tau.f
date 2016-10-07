@@ -1671,7 +1671,7 @@ c
             distin(ik,ir) = finds(ik,ir) * kinds(ik,ir) * cosali(ik,ir)
             distout(ik,ir)= foutds(ik,ir)* koutds(ik,ir)* cosalo(ik,ir)
 c
-            if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then 
+            if (cprint.eq.3.or.cprint.eq.9) then 
                write(6,'(a,2i6,10(1x,g12.5))') 'DISTS:', ik,ir,
      >                 distin(ik,ir),distout(ik,ir)
 c
@@ -2752,7 +2752,7 @@ c            - identify number of Xpoints ... SN, DN or Asymmetric DN
 c            - label each ring on the grid for region ... CORE, MAIN SOL, INNER SOL, OUTER SOL, PRIM PFZ, SEC PFZ
 c            - calculate the divertor boundaries from polygon surfaces attachd to the Xpoint
 c
-      call calculate_divertor_limit(nizs)
+      call calculate_divertor_limit(nizs,cprint)
 c
 c-----------------------------------------------------------------------
 c     INTERPLOATE PSIN CORE PROFILE FROM INPUT FILE (IF PRESENT) 
@@ -5927,6 +5927,7 @@ c
 c     
       subroutine raug
       use error_handling
+      use debug_options
 c slmod begin
       use mod_sol28_global
 c slmod end
@@ -6324,7 +6325,7 @@ c     boundary cells have to be ignored/removed before the
 c     grid is shifted to move the second set of boundary cells 
 c     to the targets.    
 c     
-c     write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
+c      write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
 c     
       if (ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)) goto 150
 c     
@@ -6341,7 +6342,7 @@ c
 c     
       endif
 c     
-c     write(6,'(a,3i5)') 'MID   :',ik,ir,in 
+c      write(6,'(a,3i5)') 'MID   :',ik,ir,in 
 c     
 c     
 c     Less than or equal to the cutring is the PFZ/core 
@@ -6365,7 +6366,7 @@ c
          endif
       endif
 c     
-c     write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
+c      write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
 c     write(6,*)  
 c     
       korpg(ik,ir) = in
@@ -6768,15 +6769,17 @@ c slmod end
      >     ik,ir,in,maxrings,
      >     maxkpts
 c     
-      do ir = 1,maxrings+cutring
-         write (6,'(a,5i5)') 'RINGS:',ir,nks(ir),maxrings,cutring
-      end do
-c     
-      do ir = 1,maxrings+cutring
-         do ik = 1,nks(ir)
-            write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
+      if (cprint.eq.9) then 
+         do ir = 1,maxrings+cutring
+            write (6,'(a,5i5)') 'RINGS:',ir,nks(ir),maxrings,cutring
          end do
-      end do
+c     
+         do ir = 1,maxrings+cutring
+            do ik = 1,nks(ir)
+               write (55,'(2g18.10,2i5)') rs(ik,ir),zs(ik,ir), ik,ir
+            end do
+         end do
+      endif
 c
 c     jdemod - Set all cells to default to non-orthogonal
 c
@@ -7141,8 +7144,8 @@ c...        Assign PSIn values for all rings
             DO ir = 1, nrs
                psitarg(ir,2) = psifl(1      ,ir)       
                psitarg(ir,1) = psifl(nks(ir),ir)       
-               write(6,'(a,i8,3(1x,f13.6))') 'PSITARG:',ir,
-     >                 psitarg(ir,1),psitarg(ir,2)
+c               write(6,'(a,i8,3(1x,f13.6))') 'PSITARG:',ir,
+c     >                 psitarg(ir,1),psitarg(ir,2)
             ENDDO      
          endif
       endif
@@ -7183,6 +7186,7 @@ C
       if (cre2d.eq.2.or.cioptf.eq.99.or.
      >     cioptg.eq.99.or.cioptg.eq.90) then
 
+         call pr_trace('TAU:','CALLING B2REPL')
          call b2repl(maxrings,maxkpts,cutring,cutpt1,cutpt2,readaux,
      >        rizb,crmb,cion,ix_cell_offset)
 
@@ -7616,8 +7620,60 @@ c     at the ends. This data manipulation is done in the gfsub3r routine. The
 c     value of mkpts is restored to its original value at the end of this
 c     routine.
 c
-
-
+c
+c     calls to read routine
+c
+c     species densities  (ni)    
+c     poloidal velocity  (uu)    
+c     radial velocity    (vv)   
+c     electron temperature (te) 
+c     ion temperature      (ti)
+c     unknown              (pr)
+c     parallel velocity    (up) (all fluids)
+c     Bthet/Btot ratio     (pit)
+c     unknown              (fnix)
+c     unknown              (fniy)
+c     unknown              (feix)
+c     unkonown             (feiy)
+c     unknown              (feex)
+c     unknown              (feey)
+c
+c
+c SOLPS 5.1 - D3D version - contents of the fort.31 file used to transfer data to EIRENE within B2
+c
+c
+c ion density      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,DNIB(0,0,1))
+c poloidal velocity (derived from fna(,,0,))      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UUB(0,0,1))
+c radial velocity (derived from fna(,,1))\      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,VVB(0,0,1))
+c electron temperature      CALL GFSUB3(31,NX,NY,NDX,NDY,1,TEB(0,0))
+c ion temperature      CALL GFSUB3(31,NX,NY,NDX,NDY,1,TIB(0,0))
+c pressure      CALL GFSUB3(31,NX,NY,NDX,NDY,1,PRB(0,0))
+c parallel velocity (ua(,,,))      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UPB(0,0,1))
+c pitch angle (bx/btot)      CALL GFSUB3(31,NX,NY,NDX,NDY,1,RRB(0,0))
+c poloidal ion flow on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIXB(0,0,1))
+c radial ion flow on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIYB(0,0,1))
+c poloidal ion heat flux on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEIXB(0,0))
+c radial ion heat flux on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEIYB(0,0))
+c poloidal electron heat flux on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEEXB(0,0))
+c radial electron heat flux on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEEYB(0,0))
+c total ion drift velocity in diamagnetic direction      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UUDIAB(0,0,1))
+c total ion drift velocity in radial direction      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,VVDIAB(0,0,1))
+c cell volumes      CALL GFSUB3(31,NX,NY,NDX,NDY,1,VOLB(0,0))
+c magnitude of the magnetic field      CALL GFSUB3(31,NX,NY,NDX,NDY,1,BFELDB(0,0))
+c X-SURFACE MAY BE INCLINED, HENCE: IT MAY RECEIVE A Y-FLUX TOO      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIX_YB(0,0,1))
+c Y-SURFACE MAY BE INCLINED, HENCE: IT MAY RECEIVE A X-FLUX TOO      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIY_XB(0,0,1))
+c electric potential
+c     CALL GFSUB3(31,NX,NY,NDX,NYDD,1,POB(0,0))
+c      write(*,*) 'B2: ',dnib(0,0,1),uub(0,0,1),vvb(0,0,1),
+c     &     teb(0,0),tib(0,0),prb(0,0),upb(0,0,1),rrb(0,0),
+c     &     fnixb(0,0,1),fniyb(0,0,1),
+c     &     feixb(0,0),feiyb(0,0),feexb(0,0),feeyb(0,0),
+c     &     volb(0,0),bfeldb(0,0),fnix_yb(0,0,1),
+c     &     fniy_xb(0,0,1),uudiab(0,0,1),vvdiab(0,0,1),
+c     &     pob(0,0)
+c      write(*,*) 'Background plasma written'
+c      close(31)
+c
 
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -7707,19 +7763,52 @@ c     electron temperature (te)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
+c
+c
+c
+      write(6,'(a)') 'Te tdummy:'
+      do ix = 0,nx
+         do iy = 0,ny 
+            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
+         end do
+      end do
+
+
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
+
 c
-c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
+      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
 c
 c     ion temperature      (ti)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
+
+c
+      write(6,'(a)') 'Ti tdummy:'
+      do ix = 0,nx
+         do iy = 0,ny 
+            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
+         end do
+      end do
+
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
 c
-c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+c
+c
+
+
+      write(6,'(a)') 'NE TE TI: B2REPL'
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+         end do
+      end do
+
 c
 c     unknown              (pr)
 c
@@ -8054,7 +8143,7 @@ c
 c      endif 
 c
 c
-      if (nfla-1.lt.cion) then 
+      if (nfla.gt.1.and.nfla-1.lt.cion) then 
 c
          write(0,*) 'DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
      >                 ' IS NOT IN THE FLUID CODE DATA FILE'
@@ -8299,6 +8388,7 @@ c
       real,allocatable :: dummy_temp(:,:,:)
 c
       integer kard,nx,ny,ndimx,ndimy,ndims,nd1,lim,is,ix,iy,iii
+      integer nxl, nyl
       integer ns,ix_cell_offset
       real dummy(0:ndimx+1,0:ndimy+1,1:ndims)
 c
@@ -8307,18 +8397,32 @@ c
 c     Increase value of nx to account for the two end boundary cells 
 c     that are to be deleted.
 c
+      nxl = nx
+      nyl = ny
+c
+c     Increase value of nx to account for the two end boundary cells 
+c     that are to be deleted.
+c     These are removed later. 
+c
       if (ix_cell_offset.ne.0) then 
 c 
-         nx = nx+2
+         nxl = nx+2
 c
       endif
 c
+c
+c
+      write(6,'(a,4(1x,i8))')
+     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
+     >    nx,ny,ns
+
+c
 c     READ the data from the plasma file
 c
-      nd1 = nx+2
+      nd1 = nxl+2
       lim = (nd1/5)*5 - 4
       do 110 is = 1,ns
-        do 110 iy = 0,ny+1
+        do 110 iy = 0,nyl+1
           do 100 ix = 1,lim,5
              read(kard,910,end=999)
      >                 (dummy(ix-2+iii,iy,is),iii=1,5)
@@ -8340,8 +8444,8 @@ c
 c        Delete end boundary data by moving the array down in ix
 c                    
          do is = 1,ns
-            do iy = 0,ny+1
-               do ix = 0,nx+1
+            do iy = 0,nyl+1
+               do ix = 0,nxl+1
                   dummy(ix,iy,is) = dummy(ix+1,iy,is)
                end do
             end do
@@ -8349,7 +8453,7 @@ c
 c
 c        Restore value of nx to its input value (which did not include the boundary cells)
 c
-         nx = nx -2 
+         nxl = nxl -2 
 c
 c        Move the data in the array so that it is shifted by the amount ix_cell_offset
 c        which will move the embedded boundary cells to the ends of the rows.
@@ -8371,12 +8475,12 @@ c
 c        Copy/move the data
 c
          do is = 1,ns
-            do iy = 0,ny+1
-               do ix = 0,nx+1
+            do iy = 0,nyl+1
+               do ix = 0,nxl+1
 
                   if (ix.le.(ix_cell_offset-1)) then
 
-                     dummy_temp(ix-(ix_cell_offset-1)+nx+1,iy,is) = 
+                     dummy_temp(ix-(ix_cell_offset-1)+nxl+1,iy,is) = 
      >                                        dummy(ix,iy,is)
 
                   else
@@ -8391,9 +8495,11 @@ c
          end do
 
          do is = 1,ns
-            do iy = 0,ny+1
-               do ix = 0,nx+1
+            do iy = 0,nyl+1
+               do ix = 0,nxl+1
                   dummy(ix,iy,is) = dummy_temp(ix,iy,is)
+                  write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+     >                  'Dummy:',ix,iy,is,dummy(ix,iy,is)
                end do
             end do
          end do
@@ -8401,6 +8507,17 @@ c
          deallocate(dummy_temp)
   
       endif 
+
+
+      do is = 1,ns
+         do iy = 0,nyl+1
+            do ix = 0,nxl+1
+               write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+     >               'Dummy:',ix,iy,is,dummy(ix,iy,is)
+            end do
+         end do
+      end do
+
 
       return
  910  format(5(e16.8))
@@ -8728,12 +8845,15 @@ c
 C
            kes(1,ir) = 0.0
            keds(idds(ir,2)) = 0.0
-           write(6,'(a,2i8,4(1x,g12.5))') 
+
+           if (cprint.eq.3.or.cprint.eq.9) 
+     >        write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              1,ir,ds1,nb1
         endif
 
-        write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+        if (cprint.eq.3.or.cprint.eq.9) 
+     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
      >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
      >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
      >          ds2,dp2,dt2,nb2
@@ -8784,12 +8904,15 @@ c
 C
            kes(nks(ir),ir) = 0.0
            keds(idds(ir,1)) = 0.0
-           write(6,'(a,2i8,4(1x,g12.5))') 
+
+        if (cprint.eq.3.or.cprint.eq.9) 
+     >      write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              nks(ir),ir,ds1,nb1
         endif
 
-        write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
+        if (cprint.eq.3.or.cprint.eq.9) 
+     >    write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
      >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
      >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
      >          knds(idds(ir,1)),kteds(idds(ir,1)),
@@ -8828,7 +8951,8 @@ C
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
            else
               kes(1,ir) = 0.0
-              write(6,'(a,2i8,4(1x,g12.5))') 
+              if (cprint.eq.3.or.cprint.eq.9) 
+     >            write(6,'(a,2i8,4(1x,g12.5))') 
      >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
      >              ik,ir,ds1,nb1,ds2,nb2
            endif
@@ -8851,12 +8975,16 @@ c
 c     Debug
 c
 c
-      do ir = irsep,irwall
-         do ik = 1,nks(ir)
-            write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
+      if (cprint.eq.3.or.cprint.eq.9) then
+
+         do ir = irsep,irwall
+            do ik = 1,nks(ir)
+               write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
      >         kes(ik,ir)
+            end do
          end do
-      end do
+
+      endif
 c
 c     End of OFIELD if
 c
@@ -10873,7 +11001,8 @@ c slmod end
 c
 c       Calculate totals for each ring
 c
-        write (6,'(a,3i4,4(1x,g12.5))') 'targflux:',id,ir,ik,
+        if (cprint.eq.3.or.cprint.eq.9)
+     >    write (6,'(a,3i4,4(1x,g12.5))') 'targflux:',id,ir,ik,
      >                             dds2(id),cs,costet(id)
 c
  200  CONTINUE
@@ -20117,7 +20246,8 @@ c
 
 
 
-        write(6,'(a,i6,10(1x,g12.5))') 'TARGFLUX:',id,
+         if (cprint.eq.3.or.cprint.eq.9) 
+     >     write(6,'(a,i6,10(1x,g12.5))') 'TARGFLUX:',id,
      >       dds(id),dds2(id),targfluxdata(id,1,1),
      >       targfluxdata(id,1,2),knds(id),ts,costet(id),
      >       kbfst(ir,in)  
@@ -20199,7 +20329,8 @@ c
 c
 c           Comparing DIVIMP and Eirene fluxes: 
 c
-            write(6,'(a,2i5,1x,f7.3,10(1x,g12.5))') 'D/E WFLUX:',
+            if (cprint.eq.3.or.cprint.eq.9) 
+     >         write(6,'(a,2i5,1x,f7.3,10(1x,g12.5))') 'D/E WFLUX:',
      >           id,nimindex(id),
      >        (targfluxdata(id,1,1)-flxhw8(wallind))
      >                 /targfluxdata(id,1,1)*100.0,
@@ -20309,6 +20440,8 @@ c
 c
 c     Print summary to unit 6 
 c
+      if (cprint.eq.3.or.cprint.eq.9) then 
+
       write(6,'(a)') 'Target Flux Summary:'
       write(6,'(a)') 'TYPE   ID   FLUX          HEAT  '//
      >            '       REC         TOTAL'
@@ -20364,6 +20497,9 @@ c
       write(6,'(a10,4(1x,g12.5))') 'TOT  '//outer,
      >             (targfluxdata(maxnds+3,4,in),in=1,4)
 c
+      endif
+
+
       return
       end 
 
@@ -20666,6 +20802,7 @@ c
 c
 c     Print summary to unit 6 
 c
+      if (cprint.eq.3.or.cprint.eq.9) then 
       write(6,*)
       write(6,'(a)') 'Wall Flux Summary:'
       write(6,'(a)') 'TYPE   ID TARG#  FLUX  '//
@@ -20746,6 +20883,8 @@ c
       write(6,'(a10,1p,4(1x,e12.5))') 'TOT  GRAND',
      >             (wallfluxdata(maxnds+5,4,it),it=1,4)
 c
+      endif
+
       return
       end 
 c
@@ -21640,7 +21779,7 @@ c     Write out the wall distances for debugging:
 c
 c     Main
 c
-      if (cprint.eq.3.or.cprint.ge.9) then
+      if (cprint.eq.3.or.cprint.eq.9) then
 
          do ik = 0,2*fp_cells(fp_main)
 c
@@ -22357,6 +22496,7 @@ c
       implicit none
       include 'params'
       include 'cgeom'
+      include 'comtor'
 c
       integer ik,ir
       real totlen,totdist
@@ -22379,14 +22519,16 @@ c
 c
          end do
 c
-         if (totlen.ne.0.0) then 
+
+         if (cprint.eq.3.or.cprint.eq.9) then 
+           if (totlen.ne.0.0) then 
             write(6,'(a,3x,i6,4(3x,g12.5))') ' AVERAGE SEPDIST IR:',ir,
      >         totdist/totlen,totdist,totlen,len
-         else
+           else
             write(6,'(a,3x,i6,4(3x,g12.5))') ' AVERAGE SEPDIST IR:',ir,
      >         0.0,totdist,totlen,len
-         endif
-
+           endif
+        endif
 c
       end do
 c
@@ -22695,14 +22837,16 @@ C
 
             end do
             
-            write(6,'(a)') 'MAPPING OF INPUT CORE DATA:'//
+            if (cprint.eq.3.and.cprint.eq.9) then 
+              write(6,'(a)') 'MAPPING OF INPUT CORE DATA:'//
      >                     ' COREDAT ASSIGNED DATA:'
 
-            do ir = 1,irsep-1
-               write(6,'(i8,1x,f9.4,10(1x,g13.5))')
-     >             ir,psitarg(ir,1),(coredat(ir,in),in=1,5)
+              do ir = 1,irsep-1
+                 write(6,'(i8,1x,f9.4,10(1x,g13.5))')
+     >               ir,psitarg(ir,1),(coredat(ir,in),in=1,5)
 
-            end do
+              end do
+            endif
 
          endif
 

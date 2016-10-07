@@ -1079,6 +1079,9 @@ c
 c
       write(6,'(a,7g12.5,2i6)') 'NEUT DATA:',rneut,ratiz,rstruk,rexit,
      >                rcent,rfail,rwalln,nprod,nprod2
+      write(6,'(a,7g12.5,2i6)') 'NEUT DATA:',rstruk1,rstruk2,rstruk3,
+     >                            rstruka,rstruk2a
+
 
 
 c
@@ -6268,9 +6271,9 @@ c
      >     SEED,NRAND,NEUTIM,RFAILA,STATUS,MATP,MATT,
      >     neuttype,cneutb,cneutc)
 
-!	   Write (0,*) "DIVIMP Launched chemsput:",
-!     >     RSTRUKA,MTCSTRUKA,RMAINA,REXITA,RATIZA,
-!     >     RNEUTA,RWALLNA,MTCWALLNA,RCENTA,RTMAXA  
+	   Write (6,*) "DIVIMP Launched chemsput:",
+     >     RSTRUKA,MTCSTRUKA,RMAINA,REXITA,RATIZA,
+     >     RNEUTA,RWALLNA,MTCWALLNA,RCENTA,RTMAXA  
 
       ! Additional options may be added here at a later date.   
       
@@ -6286,9 +6289,9 @@ c
      >     RATIZA,RNEUTA,RWALLNA,MTCWALLNA,RCENTA,RTMAXA,
      >     SEED,NRAND,NEUTIM,RFAILA,STATUS,MATP,MATT,neuttype)
 
-!	   Write (0,*) "DIVIMP Launched physsput:",
-!     >     RSTRUKA,MTCSTRUKA,RMAINA,REXITA,RATIZA,
-!     >     RNEUTA,RWALLNA,MTCWALLNA,RCENTA,RTMAXA  
+	   Write (6,*) "DIVIMP Launched physsput:",
+     >     RSTRUKA,MTCSTRUKA,RMAINA,REXITA,RATIZA,
+     >     RNEUTA,RWALLNA,MTCWALLNA,RCENTA,RTMAXA  
 
       End If
 ! ammod end.
