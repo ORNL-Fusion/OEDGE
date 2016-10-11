@@ -1,0 +1,20 @@
+c     -*-Fortran-*-
+c
+c     Colour definitions for use in OUT
+c
+c
+      integer maxncols,maxmarkers
+      parameter(maxncols=255,maxmarkers=8)
+      
+c
+      common /colours/ colour,ncols,defcol,icol,start_col
+      save /colours/
+c
+      integer colour(maxncols),ncols,defcol,icol,col,start_col
+c 
+c     Set up selected markers for plotting
+c
+      integer marker(maxmarkers) 
+c
+      data marker /232,250,224,225,227,248,228,229/
+c
