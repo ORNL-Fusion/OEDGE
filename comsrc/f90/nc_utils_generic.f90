@@ -101,30 +101,109 @@
 ! 
 ! The unit tests for this module are provided at the end of file and can be compiled with
 ! 
-! $FC -I$NETCDF_DIR/include/ -L$NETCDF_DIR/lib -lnetcdff -lnetcdf -DTEST_NC_UTILS -r8 -Wl,-rpath,$NETCDF_DIR/lib nc_utils.F90
+! $FC -I$NETCDF_DIR/include/ -L$NETCDF_DIR/lib -lnetcdff -lnetcdf -o tnc divimp_types.f90 error_handling.f90 nc_utils_generic.f90 testnc.f90
 ! 
-! which produces the executable (probably a.out), which can be run to produce the output
+! which produces the executable 'tnc', which can be run to produce the output
 ! 
-! > ./a.out
-! PASS: Write scalar
-! PASS: Not write scalar 0
-! PASS: Write 1d array
-! PASS: Not write 1d array of zeros
-! PASS: Update 1d array with value*2
-! PASS: Not write 1d array with wrong dimension
-! PASS: Not write 1d array with wrong dimension length
-! PASS: Not write 1d array with wrong size
-! PASS: Not write 2d array of zeros
-! PASS: Write 2d array
-! PASS: Not write 2d array with wrong dimension
-! PASS: Not write 2d array with wrong dimension length
-! PASS: Not write 2d array with wrong size
-! PASS: Not write 2d array to 1d existing variable
-! PASS: Not write 3d array of zeros
-! PASS: Write 3d array
-! PASS: Not write 3d array with wrong dimension
-! PASS: Not write 3d array with wrong dimension length
-! PASS: Not write 3d array with wrong size
+! > ./tnc
+! PASS: Write a text string
+! PASS: Write another test string
+! PASS: Write R8 scalar
+! PASS: Not write R8 scalar 0
+! PASS: Not write R8 scalar 0
+! PASS: Write R4 scalar
+! PASS: Not write scalar R4 0
+! PASS: Write I4scalar
+! PASS: Not write I4 scalar 0
+! PASS: Write R8 1d array
+! PASS: Not write R8 1d array of zeros
+! PASS: Update R8 1d array with value*2
+! PASS: Not overwite R8 1d array with wrong dimension name
+! PASS: Not write R8 1d array with wrong dimension length
+! PASS: Not write R8 1d array with wrong size
+! PASS: Write R4 1d array
+! PASS: Not write R4 1d array of zeros
+! PASS: Update R4 1d array with value*2
+! PASS: Not overwite R4 1d array with wrong dimension name
+! PASS: Not write R4 1d array with wrong dimension length
+! PASS: Not write R4 1d array with wrong size
+! PASS: Write I4 1d array
+! PASS: Not write I4 1d array of zeros
+! PASS: Update I4 1d array with value*2
+! PASS: Not overwite I4 1d array with wrong dimension name
+! PASS: Not write I4 1d array with wrong dimension length
+! PASS: Not write I4 1d array with wrong size
+! PASS: Write R8 2d array
+! PASS: Not write R8 2d array of zeros
+! PASS: Update R8 2d array with value*2
+! PASS: Not overwite R8 2d array with wrong dimension name
+! PASS: Not overwrite R8 2d array with wrong dimension length
+! PASS: Not write R8 2d array with wrong size
+! PASS: Write R4 2d array
+! PASS: Not write R4 2d array of zeros
+! PASS: Update R4 2d array with value*2
+! PASS: Not overwite R4 2d array with wrong dimension name
+! PASS: Not overwrite R4 2d array with wrong dimension length
+! PASS: Not write R4 2d array with wrong size
+! PASS: Write I4 2d array
+! PASS: Not write I4 2d array of zeros
+! PASS: Update I4 2d array with value*2
+! PASS: Not overwite I4 2d array with wrong dimension name
+! PASS: Not overwrite I4 2d array with wrong dimension length
+! PASS: Not write I4 2d array with wrong size
+! PASS: Not write R8 3d array of zeros
+! PASS: Write R8 3d array
+! PASS: Update R8 3d array with value*2
+! PASS: Not overwite R8 3d array with wrong dimension name
+! PASS: Not write R8 3d array with wrong dimension length
+! PASS: Not write R8 3d array with wrong size
+! PASS: Not write R4 3d array of zeros
+! PASS: Write R4 3d array
+! PASS: Update R4 3d array with value*2
+! PASS: Not overwite R4 3d array with wrong dimension name
+! PASS: Not write R4 3d array with wrong dimension length
+! PASS: Not write R4 3d array with wrong size
+! PASS: Not write I4 3d array of zeros
+! PASS: Write I4 3d array
+! PASS: Update I4 3d array with value*2
+! PASS: Not overwite I4 3d array with wrong dimension name
+! PASS: Not write I4 3d array with wrong dimension length
+! PASS: Not write I4 3d array with wrong size
+! PASS: Read a text string
+! PASS: Read another test string
+! PASS: Test string does not exist
+! PASS: Test string too short
+! PASS: READ R8 scalar
+! PASS: READ R4 scalar
+! PASS: READ I4 scalar
+! PASS: READ scalar not found
+! PASS: Read 1d r8 array
+! PASS: Assign zeroes to R8 1D array not found
+! PASS: Not read 1d r8 array with wrong dimension length
+! PASS: Read 1d r4 array
+! PASS: Assign zeroes to R4 1D array not found
+! PASS: Not read 1d r4 array with wrong dimension length
+! PASS: Read 1d i4 array
+! PASS: Assign zeroes to I4 1D array not found
+! PASS: Not read 1d i4 array with wrong dimension length
+! PASS: Read 2d r8 array
+! PASS: Assign zeroes to R8 2D array not found
+! PASS: Not read array - test_2d/10_arr_r8 - not in database
+! PASS: Read 2d r4 array
+! PASS: Assign zeroes to R4 2D array not found
+! PASS: Not read 2d r4 array with wrong dimension length
+! PASS: Read 2d i4 array
+! PASS: Assign zeroes to I4 2D array not found
+! PASS: Not read 2d i4 array with wrong dimension length
+! PASS: Read 3d r8 array
+! PASS: Assign zeroes to R8 3D array not found
+! PASS: Not read 3d r8 array with wrong dimension length
+! PASS: Read 3d r4 array
+! PASS: Assign zeroes to R4 3D array not found
+! PASS: Not read 3d r4 array with wrong dimension length
+! PASS: Read 3d i4 array
+! PASS: Assign zeroes to I4 3D array not found
+! PASS: Not read 3d i4 array with wrong dimension length
 !
 ! SHORT EXAMPLE
 !
@@ -144,7 +223,7 @@
 !   
 ! ier = close_nc_file()
 !
-!
+
 
 
 MODULE nc_utils_generic
@@ -161,6 +240,13 @@ MODULE nc_utils_generic
   INTEGER :: nc_id
   LOGICAL :: verbose = .true.
 
+  !
+  ! Define fixed attribute names
+  !
+
+  character*9, parameter :: longname='long_name'
+  character*5, parameter :: unitsname='units'
+
   ! will not store NEW variables with a zero value to the database
   ! Note that when reading data ... IF zero_check is true then all variables that 
   ! are not found will be assigned a zero value. Probably do the same without the zero_check flag
@@ -169,13 +255,13 @@ MODULE nc_utils_generic
 
 
   interface write_nc
-     write_char_data, write_i4_data, write_r4_data, write_r8_data
+     module procedure write_char_data, write_i4_data, write_r4_data, write_r8_data
      !write_char_data, write_ch_data,write_i4_data, write_r4_data, write_r8_data
   end interface write_nc
 
 
   interface read_nc
-     read_char_data, read_i4_data, read_r4_data, read_r8_data
+     module procedure read_char_data, read_i4_data, read_r4_data, read_r8_data
      !read_char_data, read_ch_data,read_i4_data, read_r4_data, read_r8_data
   end interface read_nc
 
@@ -203,7 +289,10 @@ CONTAINS
     zero_check = .TRUE.
 
     if (present(debug)) verbose = debug
-    if (present(check_zero_flag) zero_check = check_zero_flag
+    if (present(check_zero_flag)) zero_check = check_zero_flag
+
+    ! direct error messages only to stderr ... default is both stderr and stdout i.e. fort.0 and fort.6
+    call set_errmsg_units(0,-1,-1)
 
     ! set default mode_val to READONLY/NOWRITE in case the mode passed in isn't specified
     mode_val = NF90_NOWRITE
@@ -233,23 +322,23 @@ CONTAINS
           ierr = nf90_create(trim(filename),create_mode,nc_id)
 
           if (ierr.ne.nf90_noerr) then 
-             call errmsg('OPEN_NC_FILE: ERROR OPENING:'\\trim(filename)\\': FILE FOR WRITING',ierr)
+             call errmsg('OPEN_NC_FILE: ERROR OPENING:'//trim(filename)//': FILE FOR WRITING',ierr)
              stop 'OPEN_NC_FILE_WRITE_ERROR'
           endif
 
        elseif (mode_val.eq.NF90_NOWRITE) then 
           ! database was expected but could not be opened ... issue an error message and quit
-          call errmsg('OPEN_NC_FILE: ERROR OPENING:'\\trim(filename)\\': FILE FOR READING',ierr)
+          call errmsg('OPEN_NC_FILE: ERROR OPENING:'//trim(filename)//': FILE FOR READING',ierr)
        endif
 
     endif
 
     ! At this point the netcdf database file has been opened either for reading or writing OR the code exited with an error message
     return
-  end subroutine open_nc_file
+  end function open_nc_file
 
 
-  function close_nc_file result (ierr)
+  function close_nc_file () result (ierr)
     use error_handling
     use netcdf, ONLY : nf90_close,nf90_noerr
     implicit none
@@ -259,10 +348,12 @@ CONTAINS
 
     ierr = nf90_close(nc_id)
     if (ierr.ne.nf90_noerr) then 
-       if (verbose) call errmsg('NC_UTILS_DIVIMP: CLOSE_NC_FILE: Error closing file = ',ierr)
+       if (verbose) call errmsg('NC_UTILS_GENERIC: CLOSE_NC_FILE: Error closing file = ',ierr)
     endif
 
-  end subroutine close_nc_file
+    call reset_errmsg_units
+
+  end function close_nc_file
 
 
   !-------------------------------------------------
@@ -278,7 +369,7 @@ CONTAINS
 
     ier = ier_in
     IF ( ier .ne. NF90_NOERR ) THEN
-       IF ( verbose ) call errmsg("NC_UTILS_DIVIMP:"//trim(err_msg),ier)
+       IF ( verbose ) call errmsg("NC_UTILS_GENERIC:"//trim(err_msg),ier)
        !WRITE(*,*) TRIM(err_msg)
     ENDIF
   END FUNCTION handle_nf90_error
@@ -286,12 +377,13 @@ CONTAINS
   FUNCTION check_existing_variable(var_name, var_type, var_id, &
        & dim_ids,dim_vals) RESULT(ier)
     USE netcdf, ONLY : nf90_inquire_variable, NF90_MAX_NAME, &
-         & NF90_MAX_VAR_DIMS, nf90_noerr
+         & NF90_MAX_VAR_DIMS, nf90_noerr, nf90_inquire_dimension
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: var_type, var_id
     CHARACTER(LEN=*), INTENT(IN) :: var_name
     INTEGER, INTENT(IN), DIMENSION(:),optional :: dim_ids, dim_vals
-    CHARACTER(len=NF90_MAX_NAME) :: existing_var_name
+    CHARACTER(len=NF90_MAX_NAME) :: existing_var_name,dim_name
+    integer :: dim_len
     INTEGER ::  existing_type, existing_ndims, ind, ier
     INTEGER, DIMENSION(NF90_MAX_VAR_DIMS) :: existing_dimids
 
@@ -320,7 +412,6 @@ CONTAINS
 
 
     if (present(dim_ids)) then 
-
        ! check if rank of variable matches the expected rank
        IF ( existing_ndims .ne. SIZE(dim_ids) ) THEN
           WRITE(err_msg,*) 'Dimension mismatch for variable ',TRIM(var_name)
@@ -418,15 +509,54 @@ CONTAINS
     if ( ier .ne. nf90_noerr ) RETURN
 
     WRITE(err_msg,*) 'Error adding units attribute',TRIM(units)
-    ier = handle_nf90_error(nf90_put_att(nc_id, var_id, 'units',TRIM(units)))
+    ier = handle_nf90_error(nf90_put_att(nc_id, var_id,unitsname,TRIM(units)))
     IF ( ier .ne. nf90_noerr ) RETURN
 
     WRITE(err_msg,*) 'Error adding long_name attribute',TRIM(long_name)
-    ier = handle_nf90_error(nf90_put_att(nc_id, var_id, 'long_name',TRIM(long_name)))
+    ier = handle_nf90_error(nf90_put_att(nc_id, var_id, longname,TRIM(long_name)))
 
     RETURN
   END FUNCTION add_units_long_name
 
+
+  FUNCTION get_units(var_id, units, fac) RESULT(ier)
+    ! jdemod
+    ! fac is part of an unimplemented automated unit conversion utility
+    ! will leave it in for now but not really needed
+    ! this routine saves units attribute
+    USE netcdf, ONLY : nf90_get_att, nf90_noerr,nf90_inquire_attribute
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: var_id
+    CHARACTER(len=*), INTENT(OUT) :: units
+    REAL*8, INTENT(OUT) :: fac
+    INTEGER :: ier
+
+    character(:),allocatable :: existing_units
+    integer :: unitslen
+
+    ier=nf90_inquire_attribute(nc_id,var_id,unitsname,len=unitslen)
+    if ( ier .ne. nf90_noerr ) RETURN
+
+    !    Not implemented
+    !    CALL convert_mks(units, new_units, fac)
+
+    ier = switch_to_define_mode()
+    if ( ier .ne. nf90_noerr ) RETURN
+
+    if (allocated(existing_units)) deallocate(existing_units)
+    allocate(character(unitslen)::existing_units)
+
+    WRITE(err_msg,*) 'Error getting attribute :',unitsname
+    ier = handle_nf90_error(nf90_get_att(nc_id, var_id,unitsname,existing_units))
+
+    IF ( ier .eq. nf90_noerr ) then 
+       units = existing_units
+    endif
+
+    deallocate(existing_units)
+
+    RETURN
+  END FUNCTION get_units
 
   FUNCTION add_units(var_id, units, fac) RESULT(ier)
     ! jdemod
@@ -446,14 +576,51 @@ CONTAINS
     if ( ier .ne. nf90_noerr ) RETURN
 
     WRITE(err_msg,*) 'Error adding units attribute',TRIM(units)
-    ier = handle_nf90_error(nf90_put_att(nc_id, var_id, 'units',TRIM(units)))
+    ier = handle_nf90_error(nf90_put_att(nc_id, var_id,unitsname,TRIM(units)))
     IF ( ier .ne. nf90_noerr ) RETURN
 
     RETURN
   END FUNCTION add_units
 
 
-  FUNCTION add_long_name(var_id, units, long_name) RESULT(ier)
+  FUNCTION get_long_name(var_id, long_name) RESULT(ier)
+    ! jdemod
+    ! add long name attribute
+    USE netcdf, ONLY : nf90_get_att, nf90_noerr,nf90_inquire_attribute
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: var_id
+    CHARACTER(len=*), INTENT(OUT) :: long_name
+    INTEGER :: ier
+    !    CALL convert_mks(units, new_units, fac)
+
+    character(:),allocatable :: existing_long_name
+    integer :: namelen
+
+    ier=nf90_inquire_attribute(nc_id,var_id,longname,len=namelen)
+    if ( ier .ne. nf90_noerr ) RETURN
+
+    ier = switch_to_define_mode()
+    if ( ier .ne. nf90_noerr ) RETURN
+
+
+    if (allocated(existing_long_name)) deallocate(existing_long_name)
+    allocate(character(namelen)::existing_long_name)
+
+    WRITE(err_msg,*) 'Error getting attribute:',longname
+    ier = handle_nf90_error(nf90_get_att(nc_id, var_id,longname,existing_long_name))
+
+    ! Note - if long_name is too small then fortran truncates the result
+    IF ( ier .eq. nf90_noerr ) then 
+       long_name = existing_long_name
+    endif
+  
+    deallocate(existing_long_name)
+
+    RETURN
+  END FUNCTION get_long_name
+
+
+  FUNCTION add_long_name(var_id, long_name) RESULT(ier)
     ! jdemod
     ! add long name attribute
     USE netcdf, ONLY : nf90_put_att, nf90_noerr
@@ -467,7 +634,7 @@ CONTAINS
     if ( ier .ne. nf90_noerr ) RETURN
 
     WRITE(err_msg,*) 'Error adding long_name attribute',TRIM(long_name)
-    ier = handle_nf90_error(nf90_put_att(nc_id, var_id, 'long_name',TRIM(long_name)))
+    ier = handle_nf90_error(nf90_put_att(nc_id, var_id,longname,TRIM(long_name)))
 
     RETURN
   END FUNCTION add_long_name
@@ -514,6 +681,7 @@ CONTAINS
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
          & nf90_inq_varid, nf90_def_var, NF90_CHAR, nf90_put_var, nf90_max_name
     use error_handling
+
     IMPLICIT NONE
     ! jdemod - parameterize different shape arrays through optional arguments - should let the one routine
     !          handle any size of array
@@ -533,12 +701,14 @@ CONTAINS
     !integer , DIMENSION(:,:,:), optional, INTENT(IN) :: v3d
     !integer , DIMENSION(:,:,:,:), optional, INTENT(IN) :: v4d
 
-    !REAL*8 :: fac
+    REAL*8 :: fac
 
     INTEGER :: dim_id, var_id, ier, d, ndum
     !INTEGER, DIMENSION(ndims) :: dim_ids
     !LOGICAL, DIMENSION(ndims) :: create_dim
+    logical :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
+    integer :: dim_max,dim_val
 
     ! create a unique dim_name by concatentating the _LEN with the var_name
 
@@ -548,7 +718,6 @@ CONTAINS
 
     ! Add or check dimension values
     ! Check for non-scalar values
-
 
     ier = nf90_inq_dimid(nc_id, dim_name, dim_id)
     IF (ier .ne. nf90_noerr) THEN
@@ -592,7 +761,7 @@ CONTAINS
        ! variable exists already ... check that it matches ... if it does then data will be over-written
        ! err_msg set by check_existing_variable
 
-       ier = handle_nf90_error(check_existing_variable(var_name, NF90_CHAR, var_id, dim_id))
+       ier = handle_nf90_error(check_existing_variable(var_name, NF90_CHAR, var_id, (/dim_id/) ))
        IF (ier .ne. nf90_noerr) RETURN
 
     ENDIF
@@ -611,7 +780,7 @@ CONTAINS
     ! add data ... note the lower bounds are assumed to be 1. 
 
     ! Write data to file
-    ier = handle_nf90_error(nf90_put_var(nc_id,var_id,var))
+    ier = handle_nf90_error(nf90_put_var(nc_id,var_id,var(1:dim_val)))
     if ( ier .ne. nf90_noerr ) RETURN
 
   END FUNCTION write_char_data
@@ -662,7 +831,7 @@ CONTAINS
     type_val = NF90_CHAR
     type_str = 'CH'
 
-    include 'nc_write_data_generic.inc'
+    !include 'nc_write_data_generic.f90.inc'
 
     return
 
@@ -708,11 +877,13 @@ CONTAINS
 
     integer :: type_val
     character*2 :: type_str
+    integer :: opt
+
 
     type_val = NF90_INT
     type_str = 'I4'
 
-    include 'nc_write_data_generic.inc'
+    include 'nc_write_data_generic.f90.inc'
 
     return
 
@@ -758,11 +929,12 @@ CONTAINS
 
     integer :: type_val
     character*2 :: type_str
+    integer :: opt
 
     type_val = NF90_FLOAT
     type_str = 'R4'
 
-    include 'nc_write_data_generic.inc'
+    include 'nc_write_data_generic.f90.inc'
 
     return
 
@@ -808,11 +980,12 @@ CONTAINS
 
     integer :: type_val
     character*2 :: type_str
+    integer :: opt
 
     type_val = NF90_DOUBLE
     type_str = 'R8'
 
-    include 'nc_write_data_generic.inc'
+    include 'nc_write_data_generic.f90.inc'
 
     return
 
@@ -831,20 +1004,23 @@ CONTAINS
 
   FUNCTION read_char_data(var_name,var,long_name,units) RESULT(ier)
     ! import netcdf functions
-    USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_CHAR, nf90_put_var, nf90_max_name, nf90_max_var_dims
+    USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_inquire_dimension, &
+         & nf90_inq_varid, NF90_CHAR, nf90_get_var, nf90_max_name, nf90_max_var_dims,nf90_inquire_variable
     use error_handling
+
     IMPLICIT NONE
+
     ! jdemod - parameterize different shape arrays through optional arguments - should let the one routine
     !          handle any size of array
     ! jdemod - fortran interface distinguishes on TYPE only - not rank - so it is not possible to 
     !          generalize the 1D,2D etc routines since they have identical type signatures
 
-    CHARACTER(len=*), INTENT(IN) :: var_name, var
-    ! not used for now ... can be used for additional verification if desired later
-    CHARACTER(len=*), INTENT(IN), optional :: long_name, units
-    !integer, intent(in) :: ndims
+    CHARACTER(len=*), INTENT(IN) :: var_name
+    CHARACTER(len=*), INTENT(OUT) ::     var
+    ! if specified then they are loaded if available
+    CHARACTER(len=*), INTENT(OUT), optional :: long_name, units
 
+    !integer, intent(in) :: ndims
     !CHARACTER(len=*), DIMENSION(ndims), optional :: dim_names
     !INTEGER, INTENT(IN), DIMENSION(ndims), optional :: nd
 
@@ -854,26 +1030,27 @@ CONTAINS
     !integer , DIMENSION(:,:,:), optional, INTENT(IN) :: v3d
     !integer , DIMENSION(:,:,:,:), optional, INTENT(IN) :: v4d
 
-    !REAL*8 :: fac
+    REAL*8 :: fac
 
     INTEGER :: dim_id, var_id, ier, d, ndum
-    INTEGER, DIMENSION(ndims) :: dim_ids
-    LOGICAL, DIMENSION(ndims) :: create_dim
+    !INTEGER, DIMENSION(ndims) :: dim_ids
+    !LOGICAL, DIMENSION(ndims) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
 
-    CHARACTER(len=NF90_MAX_NAME) :: existing_var_name, existing_dim_name
-    INTEGER ::  existing_type, existing_ndims, ind, ier
+    CHARACTER(len=NF90_MAX_NAME) :: existing_name, existing_dim_name
+    INTEGER ::  existing_type, existing_ndims, ind
     INTEGER, DIMENSION(NF90_MAX_VAR_DIMS) :: existing_dimids
     integer :: existing_dim_len
-
+    integer :: dim_max
 
 
     ! initialize to blank
     var = ''
 
     dim_name = trim(var_name)//'_LEN'
+
     dim_max = len(var)
-    dim_val = len_trim(var)
+    !dim_val = len_trim(var)
 
     ! Add or check dimension values
     ! Check for non-scalar values
@@ -884,7 +1061,7 @@ CONTAINS
     ier = nf90_inq_varid(nc_id, var_name, var_id)
 
     if (ier.ne.nf90_noerr) then 
-       if (verbose) call errmsg('NC_UTILS_DIVIMP: READ_CHAR_DATA: ',trim(var_name)//' NOT IN DATASET')
+       if (verbose) call errmsg('NC_UTILS_GENERIC: READ_CHAR_DATA: ',trim(var_name)//' NOT IN DATASET')
        ! Because of the non-stored Zero assumption present in some cases - set all returned variables to zero 
        ! - make sure ier is set so calling routine can deal with possible errors
        var = ''
@@ -893,10 +1070,10 @@ CONTAINS
 
     ! get the dimension (i.e. length) of the string variable
 
-    ier=handle_nf90_error(nf90_inquire_variable(nc_id,var_id,existing_name,existing_type,exisitng_dims,existing_dimids))
+    ier=handle_nf90_error(nf90_inquire_variable(nc_id,var_id,existing_name,existing_type,existing_ndims,existing_dimids))
 
-    if (existing_type.ne_NF90_CHAR.or.existing_dims.ne.1) then 
-       call errmsg('NC_UTILS_DIVIMP: READ TEXT:'//trim(var_name)//' HAS INCORRECT TYPE OR DIMENSIONS',existing_dims)
+    if (existing_type.ne.NF90_CHAR.or.existing_ndims.ne.1) then 
+       if (verbose) call errmsg('NC_UTILS_GENERIC: READ TEXT:'//trim(var_name)//' HAS INCORRECT TYPE OR DIMENSIONS',existing_ndims)
        ier = -1
        return
     endif
@@ -907,8 +1084,8 @@ CONTAINS
     IF (ier .ne. nf90_noerr) RETURN
 
     if (dim_max.lt.existing_dim_len) then
-       call errmsg('NC_UTILS_DIVIMP: INPUT STRING TOO SMALL',existing_dim_len)
-       ier -1
+       if (verbose) call errmsg('NC_UTILS_GENERIC: INPUT STRING TOO SMALL',existing_dim_len)
+       ier = -1
        return
     endif
 
@@ -920,8 +1097,27 @@ CONTAINS
     ! add data ... note the lower bounds are assumed to be 1. 
 
     ! Read data from file
-    ier = handle_nf90_error(nf90_get_var(nc_id,var_id,var))
+    ier = handle_nf90_error(nf90_get_var(nc_id,var_id,var(1:existing_dim_len)))
+
     if ( ier .ne. nf90_noerr ) RETURN
+
+    ! if attributes are requested then load them
+
+    if (present(long_name)) then 
+       ier = handle_nf90_error(get_long_name(var_id,long_name))
+       if (ier.ne.nf90_noerr) then
+          long_name = ''
+       endif
+    endif
+
+    fac = 1.0
+
+    if (present(units)) then 
+       ier = handle_nf90_error(get_units(var_id,units,fac))
+       if (ier.ne.nf90_noerr) then
+          units = ''
+       endif
+    endif
 
   END FUNCTION read_char_data
 
@@ -942,9 +1138,11 @@ CONTAINS
     ! jdemod - fortran interface distinguishes on TYPE only - not rank - so it is not possible to 
     !          generalize the 1D,2D etc routines since they have identical type signatures
 
-    CHARACTER(len=*), INTENT(IN) :: var_name,
-    character(len=*), intent(in),optional :: long_name, units
+    CHARACTER(len=*), INTENT(IN) :: var_name
     integer, intent(in) :: ndims
+    integer :: ier
+
+    character(len=*), optional :: long_name, units
 
     CHARACTER(len=*), DIMENSION(ndims), optional :: dim_names
     INTEGER, INTENT(IN), DIMENSION(ndims), optional :: nd
@@ -972,7 +1170,7 @@ CONTAINS
     type_val = NF90_CHAR
     type_str = 'CH'
 
-    include 'nc_read_data_generic.inc'
+    !include 'nc_read_data_generic.f90.inc'
 
     return
 
@@ -983,7 +1181,7 @@ CONTAINS
   FUNCTION read_i4_data(var_name,ndims,long_name,units,dim_names,nd,v0d,v1d,v2d,v3d,v4d) RESULT(ier)
     ! import netcdf functions
     USE netcdf, ONLY : nf90_noerr, nf90_inquire_variable, &
-         & NF90_INT, nf90_get_var, nf90_max_name
+         & NF90_INT, nf90_get_var, nf90_max_name, nf90_inq_varid
     use error_handling
     IMPLICIT NONE
     ! jdemod - parameterize different shape arrays through optional arguments - should let the one routine
@@ -991,22 +1189,22 @@ CONTAINS
     ! jdemod - fortran interface distinguishes on TYPE only - not rank - so it is not possible to 
     !          generalize the 1D,2D etc routines since they have identical type signatures
 
-    CHARACTER(len=*), INTENT(IN) :: var_name,
-    character(len=*), intent(in),optional :: long_name, units
+    CHARACTER(len=*), INTENT(IN) :: var_name
+    character(len=*), intent(out),optional :: long_name, units
     integer, intent(in) :: ndims
 
     CHARACTER(len=*), DIMENSION(ndims), optional :: dim_names
-    INTEGER, INTENT(IN), DIMENSION(ndims), optional :: nd
+    INTEGER, DIMENSION(ndims), optional :: nd
 
-    INTEGER , optional, INTENT(IN) :: v0d
-    INTEGER , DIMENSION(:), optional, INTENT(IN) :: v1d
-    INTEGER , DIMENSION(:,:), optional, INTENT(IN) :: v2d
-    INTEGER , DIMENSION(:,:,:), optional, INTENT(IN) :: v3d
-    INTEGER , DIMENSION(:,:,:,:), optional, INTENT(IN) :: v4d
+    INTEGER , optional, INTENT(OUT) :: v0d
+    INTEGER , DIMENSION(:), optional, INTENT(OUT) :: v1d
+    INTEGER , DIMENSION(:,:), optional, INTENT(OUT) :: v2d
+    INTEGER , DIMENSION(:,:,:), optional, INTENT(OUT) :: v3d
+    INTEGER , DIMENSION(:,:,:,:), optional, INTENT(OUT) :: v4d
 
     REAL*8 :: fac
 
-    integer :: var_id,ierr
+    integer :: var_id,ier
 
     !INTEGER :: dim_id, var_id, ier
     !INTEGER, DIMENSION(ndims) :: dim_ids
@@ -1018,10 +1216,12 @@ CONTAINS
     integer :: type_val
     character*2 :: type_str
 
+    integer :: opt
+
     type_val = NF90_INT
     type_str = 'I4'
 
-    include 'nc_read_data_generic.inc'
+    include 'nc_read_data_generic.f90.inc'
 
     return
 
@@ -1032,7 +1232,7 @@ CONTAINS
   FUNCTION read_r4_data(var_name,ndims,long_name,units,dim_names,nd,v0d,v1d,v2d,v3d,v4d) RESULT(ier)
     ! import netcdf functions
     USE netcdf, ONLY : nf90_noerr, nf90_inquire_variable, &
-         & NF90_FLOAT, nf90_get_var, nf90_max_name
+         & NF90_FLOAT, nf90_get_var, nf90_max_name, nf90_inq_varid
     use error_handling
     IMPLICIT NONE
     ! jdemod - parameterize different shape arrays through optional arguments - should let the one routine
@@ -1040,22 +1240,22 @@ CONTAINS
     ! jdemod - fortran interface distinguishes on TYPE only - not rank - so it is not possible to 
     !          generalize the 1D,2D etc routines since they have identical type signatures
 
-    CHARACTER(len=*), INTENT(IN) :: var_name,
-    character(len=*), intent(in),optional :: long_name, units
+    CHARACTER(len=*), INTENT(IN) :: var_name
+    character(len=*), intent(out),optional :: long_name, units
     integer, intent(in) :: ndims
 
     CHARACTER(len=*), DIMENSION(ndims), optional :: dim_names
-    INTEGER, INTENT(IN), DIMENSION(ndims), optional :: nd
+    INTEGER, DIMENSION(ndims), optional :: nd
 
-    REAL*4 , optional, INTENT(IN) :: v0d
-    REAL*4 , DIMENSION(:), optional, INTENT(IN) :: v1d
-    REAL*4 , DIMENSION(:,:), optional, INTENT(IN) :: v2d
-    REAL*4 , DIMENSION(:,:,:), optional, INTENT(IN) :: v3d
-    REAL*4 , DIMENSION(:,:,:,:), optional, INTENT(IN) :: v4d
+    REAL*4 , optional, INTENT(OUT) :: v0d
+    REAL*4 , DIMENSION(:), optional, INTENT(OUT) :: v1d
+    REAL*4 , DIMENSION(:,:), optional, INTENT(OUT) :: v2d
+    REAL*4 , DIMENSION(:,:,:), optional, INTENT(OUT) :: v3d
+    REAL*4 , DIMENSION(:,:,:,:), optional, INTENT(OUT) :: v4d
 
     REAL*8 :: fac
 
-    integer :: var_id,ierr
+    integer :: var_id,ier
 
     !INTEGER :: dim_id, var_id, ier
     !INTEGER, DIMENSION(ndims) :: dim_ids
@@ -1067,10 +1267,12 @@ CONTAINS
     integer :: type_val
     character*2 :: type_str
 
+    integer :: opt
+
     type_val = NF90_FLOAT
     type_str = 'R4'
 
-    include 'nc_read_data_generic.inc'
+    include 'nc_read_data_generic.f90.inc'
 
     return
 
@@ -1082,7 +1284,7 @@ CONTAINS
   FUNCTION read_r8_data(var_name,ndims,long_name,units,dim_names,nd,v0d,v1d,v2d,v3d,v4d) RESULT(ier)
     ! import netcdf functions
     USE netcdf, ONLY : nf90_noerr, nf90_inquire_variable, &
-         & NF90_DOUBLE, nf90_get_var, nf90_max_name
+         & NF90_DOUBLE, nf90_get_var, nf90_max_name, nf90_inq_varid
     use error_handling
     IMPLICIT NONE
     ! jdemod - parameterize different shape arrays through optional arguments - should let the one routine
@@ -1090,22 +1292,25 @@ CONTAINS
     ! jdemod - fortran interface distinguishes on TYPE only - not rank - so it is not possible to 
     !          generalize the 1D,2D etc routines since they have identical type signatures
 
-    CHARACTER(len=*), INTENT(IN) :: var_name,
-    character(len=*), intent(in),optional :: long_name, units
+    CHARACTER(len=*), INTENT(IN) :: var_name
+    character(len=*), intent(OUT),optional :: long_name, units
     integer, intent(in) :: ndims
 
     CHARACTER(len=*), DIMENSION(ndims), optional :: dim_names
-    INTEGER, INTENT(IN), DIMENSION(ndims), optional :: nd
+    INTEGER, DIMENSION(ndims), optional :: nd
 
-    REAL*8 , optional, INTENT(IN) :: v0d
-    REAL*8 , DIMENSION(:), optional, INTENT(IN) :: v1d
-    REAL*8 , DIMENSION(:,:), optional, INTENT(IN) :: v2d
-    REAL*8 , DIMENSION(:,:,:), optional, INTENT(IN) :: v3d
-    REAL*8 , DIMENSION(:,:,:,:), optional, INTENT(IN) :: v4d
+    REAL*8 , optional, INTENT(OUT) :: v0d
+    REAL*8 , DIMENSION(:), optional, INTENT(OUT) :: v1d
+    REAL*8 , DIMENSION(:,:), optional, INTENT(OUT) :: v2d
+    REAL*8 , DIMENSION(:,:,:), optional, INTENT(OUT) :: v3d
+    REAL*8 , DIMENSION(:,:,:,:), optional, INTENT(OUT) :: v4d
 
     REAL*8 :: fac
 
-    integer :: var_id,ierr
+    integer :: var_id,ier
+
+    integer :: opt
+
 
     !INTEGER :: dim_id, var_id, ier
     !INTEGER, DIMENSION(ndims) :: dim_ids
@@ -1120,7 +1325,7 @@ CONTAINS
     type_val = NF90_DOUBLE
     type_str = 'R8'
 
-    include 'nc_read_data_generic.inc'
+    include 'nc_read_data_generic.f90.inc'
 
     return
 
@@ -1156,35 +1361,38 @@ CONTAINS
     ENDIF
   END SUBROUTINE test
 
-  subroutine test_nc_utils
+  function test_nc_utils () result(ier)
     USE netcdf, ONLY : nf90_create, nf90_close, nf90_noerr
-    USE nc_utils, ONLY: nc_id, write_1d_array, write_2d_array, test, verbose, write_3d_array, &
-         & write_scalar
+    !USE nc_utils, ONLY: nc_id, write_1d_array, write_2d_array, test, verbose, write_3d_array, write_scalar
     IMPLICIT NONE
+    integer :: ier
+
     INTEGER,PARAMETER :: N = 100, N1=10, N2=8, N3=8
 
     LOGICAL :: exist
     REAL*8 :: scalar_r8,scalar_r8_z,scalar_r8_r
-    REAL*8, DIMENSION(N) :: arr1d_r8, zeroarr1d_r8, arr1d_r8_r
-    REAL*8, DIMENSION(N1,N2) :: arr2d_r8, zeroarr2d_r8, arr2d_r8_r
-    REAL*8, DIMENSION(N1,N2,N3) :: arr3d_r8, zeroarr3d_r8, arr3d_r8_r
+    REAL*8, DIMENSION(N) :: arr1d_r8, zeroarr1d_r8, arr1d_r8_r       ,zeroarr1d_r8_r
+    REAL*8, DIMENSION(N1,N2) :: arr2d_r8, zeroarr2d_r8, arr2d_r8_r   ,zeroarr2d_r8_r
+    REAL*8, DIMENSION(N1,N2,N3) :: arr3d_r8, zeroarr3d_r8, arr3d_r8_r,zeroarr3d_r8_r
 
     REAL*4 :: scalar_r4,scalar_r4_r
-    REAL*4, DIMENSION(N) :: arr1d_r4, zeroarr1d_r4, arr1d_r4_r
-    REAL*4, DIMENSION(N1,N2) :: arr2d_r4, zeroarr2d_r4, arr2d_r4_r
-    REAL*4, DIMENSION(N1,N2,N3) :: arr3d_r4, zeroarr3d_r4, arr2d_r4_r
+    REAL*4, DIMENSION(N) :: arr1d_r4, zeroarr1d_r4, arr1d_r4_r       ,zeroarr1d_r4_r
+    REAL*4, DIMENSION(N1,N2) :: arr2d_r4, zeroarr2d_r4, arr2d_r4_r   ,zeroarr2d_r4_r
+    REAL*4, DIMENSION(N1,N2,N3) :: arr3d_r4, zeroarr3d_r4, arr3d_r4_r,zeroarr3d_r4_r
 
-    integer :: scalar_i4,scalar_i4_r,scalar_i4_nf
-    integer, DIMENSION(N) :: arr1d_i4, zeroarr1d_i4, arr1d_i4_r
-    integer, DIMENSION(N1,N2) :: arr2d_i4, zeroarr2d_i4, arr2d_i4_r
-    integer, DIMENSION(N1,N2,N3) :: arr3d_i4, zeroarr3d_i4, arr3d_i4_r
+    integer :: scalar_i4,scalar_i4_r,scalar_i4_nf_r
+    integer, DIMENSION(N) :: arr1d_i4, zeroarr1d_i4, arr1d_i4_r       ,zeroarr1d_i4_r
+    integer, DIMENSION(N1,N2) :: arr2d_i4, zeroarr2d_i4, arr2d_i4_r   ,zeroarr2d_i4_r
+    integer, DIMENSION(N1,N2,N3) :: arr3d_i4, zeroarr3d_i4, arr3d_i4_r,zeroarr3d_i4_r
 
-    character*40 :: test_string,test_string1,test_string2,test_string_1_r
+    character*40 :: test_string,test_string1,test_string2,test_string_1_r,long_name_r,units_r
     character*30 :: test_string_2_r
     character*6 :: test_string_3_r
     character*10 :: char_array(N1)
 
     CHARACTER(len=*), PARAMETER :: fn = 'test_nc_utils.nc'
+
+    integer :: i,j,k
 
     test_string = fn
 
@@ -1240,7 +1448,7 @@ CONTAINS
 
 
     ! Open nc file 
-    ier = open_nc_file(fn,ier,NC_WRITE,verbose)
+    ier = open_nc_file(fn,NC_WRITE,debug=.false.)
 
     IF ( ier .ne. nf90_noerr ) THEN
        WRITE(*,*) 'Problem opening file', fn
@@ -1249,8 +1457,8 @@ CONTAINS
 
     ! --------------- character ------------------
 
-    CALL test(write_nc('test_text_string','This is a text string','T','test string'), 'Write a text string')
-    CALL test(write_nc('test_text_string2','This is a text string','T',test_string), 'Write another test string')
+    CALL test(write_nc('test_text_string','test_string','This is a text string','T'), 'Write a text string')
+    CALL test(write_nc('test_text_string2',test_string,'This is also a text string','T'), 'Write another test string')
     !CALL test(write_nc('test_text_array',size(shape(char_array))+1,'This is a text array','T',&
     !         &(/'char_len','char_dim1'/),(/len(char_array(1)),size(char_array)/),v2d=char_array), 'Write another test string')
 
@@ -1258,113 +1466,111 @@ CONTAINS
     ! -------------- Scalar ---------------------
 
     ! scalar tests
-    CALL test(write_nc('test_scalar_r8',0,'This is a scalar','W',v0d=scalar_r8), 'Write scalar')
-    CALL test(write_nc('zero_scalar_r8',0,'This is 0','W',v0d=0.0D0), 'Not write scalar 0')
-    CALL test(write_nc('zero_scalar_r8',0,'This is 0','W',v0d=scalar_r8_z), 'Not write scalar 0')
-    CALL test(write_nc('test_scalar_r4',0.'This is a scalar','W',v0d=scalar_r4), 'Write scalar')
-    CALL test(write_nc('zero_scalar_r4',0,'This is 0','W',v0d=0.0D0), 'Not write scalar 0')
-    CALL test(write_nc('test_scalar_i4',0,'This is a scalar','W',v0d=scalar_i4), 'Write scalar')
-    CALL test(write_nc('zero_scalar_i4',0,'This is 0','W',v0d=0.0D0), 'Not write scalar 0')
+    CALL test(write_nc('test_scalar_r8',0,'This is a scalar','W',v0d=scalar_r8), 'Write R8 scalar')
+    CALL test(write_nc('zero_scalar_r8',0,'This is 0','W',v0d=0.0D0), 'Not write R8 scalar 0')
+    CALL test(write_nc('zero_scalar_r8',0,'This is 0','W',v0d=scalar_r8_z), 'Not write R8 scalar 0')
+    CALL test(write_nc('test_scalar_r4',0,'This is a scalar','W',v0d=scalar_r4), 'Write R4 scalar')
+    CALL test(write_nc('zero_scalar_r4',0,'This is 0','W',v0d=0.0D0), 'Not write scalar R4 0')
+    CALL test(write_nc('test_scalar_i4',0,'This is a scalar','W',v0d=scalar_i4), 'Write I4scalar')
+    CALL test(write_nc('zero_scalar_i4',0,'This is 0','W',v0d=0.0D0), 'Not write I4 scalar 0')
 
     ! ----------- 1D ---------------------
 
     ! 1d tests - r8
-    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'This is the long name','-','dim_arr',N,v1d=arr1d_r8),'Write 1d array')
-    CALL test(write_nc('zero_1d_arr_r8',size(shape(zeroarr1d_r8)),'This array is all 0s','-','dim_arr',N,v1d=zeroarr1d_r8),'Not write 1d array of zeros')
-    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'This is the long name','-','dim_arr',N,v1d=arr1d_r8*2),'Update 1d array with value*2')
+    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_r8),'Write R8 1d array')
+    CALL test(write_nc('zero_1d_arr_r8',size(shape(zeroarr1d_r8)),'This array is all 0s','-',['dim_arr'],[N],v1d=zeroarr1d_r8),'Not write R8 1d array of zeros')
+    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_r8*2),'Update R8 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_r8 = arr1d_r8 * 2.0
-    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'arr*10','-','dim_arr2',N,v1d=arr1d_r8*10.0),'Not overwite 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_r8',size(shape(arr1d_r8)),'N/10','-','dim_arr',N/10,v1d=arr1d_r8(1:N/10)),'Not write 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_r8',size(shape(arr1d_r8)),'arr(1:N/10)','-','dim_arr',N,v1d=arr1d_r8(1:N/10)),'Not write 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_r8',size(shape(arr1d_r8)),'arr*10','-',['dim_arr2'],[N],v1d=arr1d_r8*10.0d0),'Not overwite R8 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_r8',size(shape(arr1d_r8)),'N/10','-',['dim_arr'],[N/10],v1d=arr1d_r8(1:N/10)),'Not write R8 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_r8',size(shape(arr1d_r8)),'arr(1:N/10)','-',['dim_arr'],[N],v1d=arr1d_r8(1:N/10)),'Not write R8 1d array with wrong size', .true.)
 
     ! 1d tests - r4
-    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'This is the long name','-','dim_arr',N,v1d=arr1d_r4),'Write 1d array')
-    CALL test(write_nc('zero_1d_arr_r4',size(shape(zeroarr1d_r4)),'This array is all 0s','-','dim_arr',N,v1d=zeroarr1d_r4),'Not write 1d array of zeros')
-    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'This is the long name','-','dim_arr',N,v1d=arr1d_r4*2),'Update 1d array with value*2')
+    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_r4),'Write R4 1d array')
+    CALL test(write_nc('zero_1d_arr_r4',size(shape(zeroarr1d_r4)),'This array is all 0s','-',['dim_arr'],[N],v1d=zeroarr1d_r4),'Not write R4 1d array of zeros')
+    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_r4*2),'Update R4 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_r4 = arr1d_r4 * 2.0
-    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'arr*10','-','dim_arr2',N,v1d=arr1d_r4*10.0),'Not overwite 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_r4',size(shape(arr1d_r4)),'N/10','-','dim_arr',N/10,v1d=arr1d_r4(1:N/10)),'Not write 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_r4',size(shape(arr1d_r4)),'arr(1:N/10)','-','dim_arr',N,v1d=arr1d_r4(1:N/10)),'Not write 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_r4',size(shape(arr1d_r4)),'arr*10','-',['dim_arr2'],[N],v1d=arr1d_r4*10.0),'Not overwite R4 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_r4',size(shape(arr1d_r4)),'N/10','-',['dim_arr'],[N/10],v1d=arr1d_r4(1:N/10)),'Not write R4 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_r4',size(shape(arr1d_r4)),'arr(1:N/10)','-',['dim_arr'],[N],v1d=arr1d_r4(1:N/10)),'Not write R4 1d array with wrong size', .true.)
 
     ! 1d tests - i4
-    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'This is the long name','-','dim_arr',N,v1d=arr1d_i4),'Write 1d array')
-    CALL test(write_nc('zero_1d_arr_i4',size(shape(zeroarr1d_i4)),'This array is all 0s','-','dim_arr',N,v1d=zeroarr1d_i4),'Not write 1d array of zeros')
-    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'This is the long name','-','dim_arr',N,v1d=arr1d_i4*2),'Update 1d array with value*2')
+    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_i4),'Write I4 1d array')
+    CALL test(write_nc('zero_1d_arr_i4',size(shape(zeroarr1d_i4)),'This array is all 0s','-',['dim_arr'],[N],v1d=zeroarr1d_i4),'Not write I4 1d array of zeros')
+    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'This is the long name','-',['dim_arr'],[N],v1d=arr1d_i4*2),'Update I4 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_i4 = arr1d_i4 * 2.0
-    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'arr*10','-','dim_arr2',N,v1d=arr1d_i4*10.0),'Not overwite 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_i4',size(shape(arr1d_i4)),'N/10','-','dim_arr',N/10,v1d=arr1d_i4(1:N/10)),'Not write 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_i4',size(shape(arr1d_i4)),'arr(1:N/10)','-','dim_arr',N,v1d=arr1d_i4(1:N/10)),'Not write 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_i4',size(shape(arr1d_i4)),'arr*10','-',['dim_arr2'],[N],v1d=arr1d_i4*10.0),'Not overwite I4 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_i4',size(shape(arr1d_i4)),'N/10','-',['dim_arr'],[N/10],v1d=arr1d_i4(1:N/10)),'Not write I4 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_i4',size(shape(arr1d_i4)),'arr(1:N/10)','-',['dim_arr'],[N],v1d=arr1d_i4(1:N/10)),'Not write I4 1d array with wrong size', .true.)
 
     ! -------------------- 2D ----------------------
 
     ! 2d tests - r8
-    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8),'Write 2d array')
-    CALL test(write_nc('zero_2d_arr_r8',size(shape(zeroarr2d_r8)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_r8),'Not write 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8*2),'Update 2d array with value*2')
+
+    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8),'Write R8 2d array')
+    CALL test(write_nc('zero_2d_arr_r8',size(shape(zeroarr2d_r8)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_r8),'Not write R8 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8*2.0),'Update R8 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_r8 = arr2d_r8 * 2.0
-    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_r8*10.0),'Not overwite 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_r8',size(shape(arr2d_r8)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_r8),'Not overwrite 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_r8',size(shape(arr2d_r8)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8(1:N1,N2/2)),'Not write 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_r8',size(shape(arr2d_r8)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_r8*10.0),'Not overwite R8 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_r8',size(shape(arr2d_r8)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_r8),'Not overwrite R8 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_r8',size(shape(arr2d_r8)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r8(1:N1,1:N2/2)),'Not write R8 2d array with wrong size', .true.)
 
     ! 2d tests - r4
-    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4),'Write 2d array')
-    CALL test(write_nc('zero_2d_arr_r4',size(shape(zeroarr2d_r4)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_r4),'Not write 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4*2),'Update 2d array with value*2')
+    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4),'Write R4 2d array')
+    CALL test(write_nc('zero_2d_arr_r4',size(shape(zeroarr2d_r4)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_r4),'Not write R4 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4*2),'Update R4 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_r4 = arr2d_r4 * 2.0
-    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_r4*10.0),'Not overwite 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_r4',size(shape(arr2d_r4)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_r4),'Not overwrite 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_r4',size(shape(arr2d_r4)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4(1:N1,N2/2)),'Not write 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_r4',size(shape(arr2d_r4)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_r4*10.0),'Not overwite R4 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_r4',size(shape(arr2d_r4)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_r4),'Not overwrite R4 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_r4',size(shape(arr2d_r4)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_r4(1:N1,1:N2/2)),'Not write R4 2d array with wrong size', .true.)
 
     ! 2d tests - i4
-    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4),'Write 2d array')
-    CALL test(write_nc('zero_2d_arr_i4',size(shape(zeroarr2d_i4)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_i4),'Not write 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4*2),'Update 2d array with value*2')
+    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4),'Write I4 2d array')
+    CALL test(write_nc('zero_2d_arr_i4',size(shape(zeroarr2d_i4)),'This array is all 0s','-',(/'zerodim01','zerodim10'/),(/N1,N2/),v2d=zeroarr2d_i4),'Not write I4 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'This is the long name','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4*2),'Update I4 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_i4 = arr2d_i4 * 2.0
-    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_i4*10.0),'Not overwite 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_i4',size(shape(arr2d_i4)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_i4),'Not overwrite 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_i4',size(shape(arr2d_i4)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4(1:N1,N2/2)),'Not write 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_i4',size(shape(arr2d_i4)),'arr*10','-', (/'dim_arr3','dim_arr4'/),(/N1,N2/),v2d=arr2d_i4*10.0),'Not overwite I4 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_i4',size(shape(arr2d_i4)),'N/10','-', (/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),v2d=arr2d_i4),'Not overwrite I4 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_i4',size(shape(arr2d_i4)),'arr(1:N/10)','-', (/'dim_arr1','dim_arr2'/),(/N1,N2/),v2d=arr2d_i4(1:N1,1:N2/2)),'Not write I4 2d array with wrong size', .true.)
 
 
     !-------------------- 3D -------------------------
 
     ! 3d tests - r8
-    CALL test(write_nc('zero_3d_arr_r8',size(shape(zeroarr3d_r8)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_r8),'Not write 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8),'Write 3d array')
-    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/)'dim_arr',N,v3d=arr3d_r8*2),'Update 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_r8',size(shape(zeroarr3d_r8)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_r8),'Not write R8 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8),'Write R8 3d array')
+    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8*2),'Update R8 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_r8 = arr3d_r8 * 2.0
-    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8*10.0),'Not overwite 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_r8',size(shape(arr3d_r8)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_r8),'Not write 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_r8',size(shape(arr3d_r8)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8(N1,N2/2,N3)),'Not write 3d array with wrong size', .3d.)
+    CALL test(write_nc('test_3d_arr_r8',size(shape(arr3d_r8)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8*10.0),'Not overwite R8 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_r8',size(shape(arr3d_r8)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_r8),'Not write R8 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_r8',size(shape(arr3d_r8)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r8(1:N1,1:N2/2,1:N3)),'Not write R8 3d array with wrong size', .true.)
 
     !  3d tests - r4
-    CALL test(write_nc('zero_3d_arr_r4',size(shape(zeroarr3d_r4)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_r4),'Not write 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4),'Write 3d array')
-    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/)'dim_arr',N,v3d=arr3d_r4*2),'Update 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_r4',size(shape(zeroarr3d_r4)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_r4),'Not write R4 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4),'Write R4 3d array')
+    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4*2),'Update R4 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_r4 = arr3d_r4 * 2.0
-    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4*10.0),'Not overwite 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_r4',size(shape(arr3d_r4)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_r4),'Not write 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_r4',size(shape(arr3d_r4)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4(N1,N2/2,N3)),'Not write 3d array with wrong size', .true.)
+    CALL test(write_nc('test_3d_arr_r4',size(shape(arr3d_r4)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4*10.0),'Not overwite R4 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_r4',size(shape(arr3d_r4)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_r4),'Not write R4 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_r4',size(shape(arr3d_r4)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_r4(1:N1,1:N2/2,1:N3)),'Not write R4 3d array with wrong size', .true.)
 
     !  3d tests - i4
-    CALL test(write_nc('zero_3d_arr_i4',size(shape(zeroarr3d_i4)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_i4),'Not write 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4),'Write 3d array')
-    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/)'dim_arr',N,v3d=arr3d_i4*2),'Update 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_i4',size(shape(zeroarr3d_i4)),'This array is all 0s','kg', (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),v3d=zeroarr3d_i4),'Not write I4 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4),'Write I4 3d array')
+    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'This is the long name','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4*2),'Update I4 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_i4 = arr3d_i4 * 2.0
-    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4*10.0),'Not overwite 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_i4',size(shape(arr3d_i4)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_i4),'Not write 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_i4',size(shape(arr3d_i4)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4(N1,N2/2,N3)),'Not write 3d array with wrong size', .true.)
-
-
-
+    CALL test(write_nc('test_3d_arr_i4',size(shape(arr3d_i4)),'arr*10','kg',(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4*10.0),'Not overwite I4 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_i4',size(shape(arr3d_i4)),'N/10','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),v3d=arr3d_i4),'Not write I4 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_i4',size(shape(arr3d_i4)),'arr(1:N/10)','kg',(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),v3d=arr3d_i4(1:N1,1:N2/2,1:N3)),'Not write I4 3d array with wrong size', .true.)
 
 
     ier = close_nc_file()
@@ -1375,7 +1581,7 @@ CONTAINS
     ! Lets read back and verify the values written
 
     ! re-open file
-    ier = open_nc_file(fn,ier,NC_READONLY,debug=.true.)
+    ier = open_nc_file(fn,NC_READONLY,debug=.false.)
 
     IF ( ier .ne. nf90_noerr ) THEN
        WRITE(*,*) 'Problem opening file for reading:', fn
@@ -1391,7 +1597,7 @@ CONTAINS
     endif
 
     CALL test(read_nc('test_text_string2',test_string_2_r), 'Read another test string')
-    if (trim(test_string_2_r.ne.test_string)) then 
+    if (trim(test_string_2_r).ne.trim(test_string)) then 
        write(0,*) 'READ TEXT FAIL:',trim(test_string_2_r),':',trim(test_string),':'
     endif
 
@@ -1404,17 +1610,17 @@ CONTAINS
     CALL test(read_nc('test_text_string2',test_string_3_r), 'Test string too short',.TRUE.)
 
     ! scalar tests
-    CALL test(read_nc('test_scalar_r8',0,v0d=scalar_r8_r), 'READ scalar')
+    CALL test(read_nc('test_scalar_r8',0,v0d=scalar_r8_r), 'READ R8 scalar')
     if (scalar_r8_r.ne.scalar_r8) then 
        write(0,*) 'ERROR: Scalar R8 not read correctly:',scalar_r8,scalar_r8_r
     endif
 
-    CALL test(read_nc('test_scalar_r4',0,v0d=scalar_r4_r), 'READ scalar')
+    CALL test(read_nc('test_scalar_r4',0,v0d=scalar_r4_r), 'READ R4 scalar')
     if (scalar_r4_r.ne.scalar_r4) then 
        write(0,*) 'ERROR: Scalar R4 not read correctly:',scalar_r4,scalar_r4_r
     endif
 
-    CALL test(read_nc('test_scalar_i4',0,v0d=scalar_i4_r), 'READ scalar')
+    CALL test(read_nc('test_scalar_i4',0,v0d=scalar_i4_r), 'READ I4 scalar')
     if (scalar_i4_r.ne.scalar_i4) then 
        write(0,*) 'ERROR: Scalar i4 not read correctly:',scalar_i4,scalar_i4_r
     endif
@@ -1427,55 +1633,166 @@ CONTAINS
 
 
     ! 1d tests - r8
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d)),'dim_arr',N,v1d=arr1d),&
-         &'Write 1d array')
-    CALL test(read_nc('zero_arr','This array is all 0s','-',size(shape(zeroarr1d)),'dim_arr',N,v1d=zeroarr1d),&
-         &'Not write 1d array of zeros')
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d)),'dim_arr',N,v1d=arr1d*2),&
-         &'Update 1d array with value*2')
-    CALL test(read_nc('test_1d_arr','arr*10','-',size(shape(arr1d)),'dim_arr2',N,v1d=arr1d*10.0),&
-         &'Not write 1d array with wrong dimension', .true.)
-    CALL test(read_nc('test_1d/10_arr','N/10','-',size(shape(arr1d)),'dim_arr',N/10,v1d=arr1d(1:N/10)),&
-         & 'Not write 1d array with wrong dimension length', .true.)
-    CALL test(read_nc('test_1d/10_arr','arr(1:N/10)','-',size(shape(arr1d)),'dim_arr',N,v1d=arr1d(1:N/10)),&
-         & 'Not write 1d array with wrong size', .true.)
+    CALL test(read_nc('test_1d_arr_r8',size(shape(arr1d_r8_r)),long_name_r,units_r,v1d=arr1d_r8_r),'Read 1d r8 array')
+    if (any(arr1d_r8_r(:).ne.arr1d_r8(:))) call errmsg('FAIL: 1D R8 variable not read back correctly')
+    if (verbose) call errmsg('DISPLAY TEST ATTRIBUTE VALUES FOR VAR = '//'test_1d_arr_r8'//':'//trim(long_name_r)//':'//trim(units_r)//':')
+
+    do i = 1,N1
+          if (arr1d_r8_r(i).ne.arr1d_r8(i)) then 
+             write(0,'(a,i4,2(1x,g12.5))') '1D R8 DATA READ MISMATCH:',i,arr1d_r8_r(i),arr1d_r8(i)
+          endif
+    end do
+
+
+    CALL test(read_nc('zero_1d_arr_r8',size(shape(zeroarr1d_r8_r)),v1d=zeroarr1d_r8_r),'Assign zeroes to R8 1D array not found',.true.)
+    if (any(zeroarr1d_r8_r(:).ne.zeroarr1d_r8(:))) call errmsg('FAIL: 1D R8 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_1d_arr_r8',size(shape(arr1d_1d_r8)),v1d=arr1d_r8),'Not overwite 1d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_1d/10_arr_r8',size(shape(arr1d_r8)),v1d=arr1d_r8(1:N/10)),'Not read 1d r8 array with wrong dimension length', .true.)
+
+
 
     ! 1d tests - r4
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d_r4)),'dim_arr',N,v1d=arr1d_r4),&
-         &'Write 1d array')
-    CALL test(read_nc('zero_arr','This array is all 0s','-',size(shape(zeroarr1d_r4)),'dim_arr',N,v1d=zeroarr1d_r4),&
-         &'Not write 1d array of zeros')
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d_r4)),'dim_arr',N,v1d=arr1d_r4*2),&
-         &'Update 1d array with value*2')
-    CALL test(read_nc('test_1d_arr','arr*10','-',size(shape(arr1d_r4)),'dim_arr2',N,v1d=arr1d_r4*10.0),&
-         &'Not write 1d array with wrong dimension', .true.)
-    CALL test(read_nc('test_1d/10_arr','N/10','-',size(shape(arr1d_r4)),'dim_arr',N/10,v1d=arr1d_r4(1:N/10)),&
-         & 'Not write 1d array with wrong dimension length', .true.)
-    CALL test(read_nc('test_1d/10_arr','arr(1:N/10)','-',size(shape(arr1d_r4)),'dim_arr',N,v1d=arr1d_r4(1:N/10)),&
-         & 'Not write 1d array with wrong size', .true.)
+    CALL test(read_nc('test_1d_arr_r4',size(shape(arr1d_r4_r)),v1d=arr1d_r4_r),'Read 1d r4 array')
+    if (any(arr1d_r4_r(:).ne.arr1d_r4(:))) call errmsg('FAIL: 1D R4 variable not read back correctly')
+    do i = 1,N1
+          if (arr1d_r4_r(i).ne.arr1d_r4(i)) then 
+             write(0,'(a,i4,2(1x,g12.5))') '1D R4 DATA READ MISMATCH:',i,arr1d_r4_r(i),arr1d_r4(i)
+          endif
+    end do
 
+
+
+    CALL test(read_nc('zero_1d_arr_r4',size(shape(zeroarr1d_r4_r)),v1d=zeroarr1d_r4_r),'Assign zeroes to R4 1D array not found',.true.)
+    if (any(zeroarr1d_r4_r.ne.zeroarr1d_r4)) call errmsg('FAIL: 1D R4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_1d_arr_r4',size(shape(arr1d_r4)),v1d=arr1d_r4),'Not overwite 1d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_1d/10_arr_r4',size(shape(arr1d_r4)),v1d=arr1d_r4(1:N/10)),'Not read 1d r4 array with wrong dimension length', .true.)
 
     ! 1d tests - i4
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d_i4)),'dim_arr',N,v1d=arr1d_i4),&
-         &'Write 1d array')
-    CALL test(read_nc('zero_arr','This array is all 0s','-',size(shape(zeroarr1d_i4)),'dim_arr',N,v1d=zeroarr1d_i4),&
-         &'Not write 1d array of zeros')
-    CALL test(read_nc('test_1d_arr','This is the long name','-',size(shape(arr1d_i4)),'dim_arr',N,v1d=arr1d_i4*2),&
-         &'Update 1d array with value*2')
-    CALL test(read_nc('test_1d_arr','arr*10','-',size(shape(arr1d_i4)),'dim_arr2',N,v1d=arr1d_i4*10.0),&
-         &'Not write 1d array with wrong dimension', .true.)
-    CALL test(read_nc('test_1d/10_arr','N/10','-',size(shape(arr1d_i4)),'dim_arr',N/10,v1d=arr1d_i4(1:N/10)),&
-         & 'Not write 1d array with wrong dimension length', .true.)
-    CALL test(read_nc('test_1d/10_arr','arr(1:N/10)','-',size(shape(arr1d_i4)),'dim_arr',N,v1d=arr1d_i4(1:N/10)),&
-         & 'Not write 1d array with wrong size', .true.)
+    CALL test(read_nc('test_1d_arr_i4',size(shape(arr1d_i4_r)),v1d=arr1d_i4_r),'Read 1d i4 array')
+    if (any(arr1d_i4_r.ne.arr1d_i4)) call errmsg('FAIL: 1D I4 variable not read back correctly')
+    do i = 1,N1
+          if (arr1d_i4_r(i).ne.arr1d_i4(i)) then 
+             write(0,'(a,i4,2(1x,g12.5))') '1D I4 DATA READ MISMATCH:',i,arr1d_i4_r(i),arr1d_i4(i)
+          endif
+    end do
 
 
 
+    CALL test(read_nc('zero_1d_arr_i4',size(shape(zeroarr1d_i4_r)),v1d=zeroarr1d_i4_r),'Assign zeroes to I4 1D array not found',.true.)
+    if (any(zeroarr1d_i4_r.ne.zeroarr1d_i4)) call errmsg('FAIL: 1D I4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_1d_arr_i4',size(shape(arr1d_i4)),v1d=arr1d_i4),'Not overwite 1d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_1d/10_arr_i4',size(shape(arr1d_i4)),v1d=arr1d_i4(1:N/10)),'Not read 1d i4 array with wrong dimension length', .true.)
 
-    call close_nc_file
 
 
-  END subroutine test_nc_utils
+    ! 2d tests - r8
+    CALL test(read_nc('test_2d_arr_r8',size(shape(arr2d_r8_r)),v2d=arr2d_r8_r),'Read 2d r8 array')
+    if (any(arr2d_r8_r(:,:).ne.arr2d_r8(:,:))) call errmsg('FAIL: 2D R8 variable not read back correctly')
+    do i = 1,N1
+       do j = 1,N2
+          if (arr2d_r8_r(i,j).ne.arr2d_r8(i,j)) then 
+             write(0,'(a,2i4,2(1x,g12.5))') '2D R8 DATA READ MISMATCH:',i,j,arr2d_r8_r(i,j),arr2d_r8(i,j)
+          endif
+       end do
+    end do
+
+
+
+    CALL test(read_nc('zero_2d_arr_r8',size(shape(zeroarr2d_r8_r)),v2d=zeroarr2d_r8_r),'Assign zeroes to R8 2D array not found',.true.)
+    if (any(zeroarr2d_r8_r(:,:).ne.zeroarr2d_r8(:,:))) call errmsg('FAIL: 2D R8 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_2d_arr_r8',size(shape(arr2d_r8_r)),v2d=arr2d_r8),'Not overwite 2d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_2d/10_arr_r8',size(shape(arr2d_r8)),v2d=arr2d_r8_r(1:N1/2,1:N2)),'Not read array - test_2d/10_arr_r8 - not in database', .true.)
+
+    ! 2d tests - r4
+    CALL test(read_nc('test_2d_arr_r4',size(shape(arr2d_r4_r)),v2d=arr2d_r4_r),'Read 2d r4 array')
+    if (any(arr2d_r4_r(:,:).ne.arr2d_r4(:,:))) call errmsg('FAIL: 2D R4 variable not read back correctly')
+    do i = 1,N1
+       do j = 1,N2
+          if (arr2d_r4_r(i,j).ne.arr2d_r4(i,j)) then 
+             write(0,'(a,2i4,2(1x,g12.5))') '2D R4 DATA READ MISMATCH:',i,j,arr2d_r4_r(i,j),arr2d_r4(i,j)
+          endif
+       end do
+    end do
+
+    CALL test(read_nc('zero_2d_arr_r4',size(shape(zeroarr2d_r4_r)),v2d=zeroarr2d_r4_r),'Assign zeroes to R4 2D array not found',.true.)
+    if (any(zeroarr2d_r4_r(:,:).ne.zeroarr2d_r4(:,:))) call errmsg('FAIL: 2D R4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_2d_arr_r4',size(shape(arr2d_r4_r)),v2d=arr2d_r4),'Not overwite 2d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_2d_arr_r4',size(shape(arr2d_r4)),v2d=arr2d_r4_r(1:N1,1:N2/2)),'Not read 2d r4 array with wrong dimension length', .true.)
+
+
+    ! 2d tests - i4
+    CALL test(read_nc('test_2d_arr_i4',size(shape(arr2d_i4_r)),v2d=arr2d_i4_r),'Read 2d i4 array')
+    if (any(arr2d_i4_r(:,:).ne.arr2d_i4(:,:))) call errmsg('FAIL: 2D I4 variable not read back correctly')
+    do i = 1,N1
+       do j = 1,N2
+          if (arr2d_i4_r(i,j).ne.arr2d_i4(i,j)) then 
+             write(0,'(a,2i4,2(1x,g12.5))') '2D I4 DATA READ MISMATCH:',i,j,arr2d_i4_r(i,j),arr2d_i4(i,j)
+          endif
+       end do
+    end do
+
+
+
+    CALL test(read_nc('zero_2d_arr_i4',size(shape(zeroarr2d_i4_r)),v2d=zeroarr2d_i4_r),'Assign zeroes to I4 2D array not found',.true.)
+    if (any(zeroarr2d_i4_r(:,:).ne.zeroarr2d_i4(:,:))) call errmsg('FAIL: 2D I4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_2d_arr_i4',size(shape(arr2d_i4_r)),v2d=arr2d_i4),'Not overwite 2d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_2d_arr_i4',size(shape(arr2d_i4)),v2d=arr2d_i4_r(1:N1/2,1:N2/2)),'Not read 2d i4 array with wrong dimension length', .true.)
+
+
+
+    ! 3d tests - r8
+    CALL test(read_nc('test_3d_arr_r8',size(shape(arr3d_r8_r)),v3d=arr3d_r8_r),'Read 3d r8 array')
+    if (any(arr3d_r8_r(:,:,:).ne.arr3d_r8(:,:,:))) call errmsg('FAIL: 3D R8 variable not read back correctly')
+    do i = 1,N1
+       do j = 1,N2
+          do k = 1,N3
+             if (arr3d_r8_r(i,j,k).ne.arr3d_r8(i,j,k)) then 
+                write(0,'(a,3i4,2(1x,g12.5))') '3D R8 DATA READ MISMATCH:',i,j,k,arr3d_r8_r(i,j,k),arr3d_r8(i,j,k)
+             endif
+          end do
+       end do
+    end do
+
+
+
+    CALL test(read_nc('zero_3d_arr_r8',size(shape(zeroarr3d_r8_r)),v3d=zeroarr3d_r8_r),'Assign zeroes to R8 3D array not found',.true.)
+    if (any(zeroarr3d_r8_r(:,:,:).ne.zeroarr3d_r8(:,:,:))) call errmsg('FAIL: 3D R8 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_3d_arr_r8',size(shape(arr3d_r8_r)),v3d=arr3d_r8),'Not overwite 3d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_3d_arr_r8',size(shape(arr3d_r8)),v3d=arr3d_r8_r(1:N1,1:N2,1:N3/2)),'Not read 3d r8 array with wrong dimension length', .true.)
+
+    ! 3d tests - r4
+    CALL test(read_nc('test_3d_arr_r4',size(shape(arr3d_r4_r)),v3d=arr3d_r4_r),'Read 3d r4 array')
+    if (any(arr3d_r4_r(:,:,:).ne.arr3d_r4(:,:,:))) call errmsg('FAIL: 3D R4 variable not read back correctly')
+
+    CALL test(read_nc('zero_3d_arr_r4',size(shape(zeroarr3d_r4_r)),v3d=zeroarr3d_r4_r),'Assign zeroes to R4 3D array not found',.true.)
+    if (any(zeroarr3d_r4_r(:,:,:).ne.zeroarr3d_r4(:,:,:))) call errmsg('FAIL: 3D R4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_3d_arr_r4',size(shape(arr3d_r4_r)),v3d=arr3d_r4),'Not overwite 3d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_3_arr_r4',size(shape(arr3d_r4)),v3d=arr3d_r4_r(1:N1/2,1:N2,1:N3)),'Not read 3d r4 array with wrong dimension length', .true.)
+
+
+    ! 3d tests - i4
+    CALL test(read_nc('test_3d_arr_i4',size(shape(arr3d_i4_r)),v3d=arr3d_i4_r),'Read 3d i4 array')
+    if (any(arr3d_i4_r(:,:,:).ne.arr3d_i4(:,:,:))) call errmsg('FAIL: 3D I4 variable not read back correctly')
+
+    CALL test(read_nc('zero_3d_arr_i4',size(shape(zeroarr3d_i4_r)),v3d=zeroarr3d_i4_r),'Assign zeroes to I4 3D array not found',.true.)
+    if (any(zeroarr3d_i4_r(:,:,:).ne.zeroarr3d_i4(:,:,:))) call errmsg('FAIL: 3D I4 Zero variable not read back correctly')
+    
+    !CALL test(read_nc('test_3d_arr_i4',size(shape(arr3d_i4_r)),v3d=arr3d_i4),'Not overwite 3d array with wrong dimension name', .true.)
+    CALL test(read_nc('test_3d_arr_i4',size(shape(arr3d_i4)),v3d=arr3d_i4_r(1:N1,1:N2/2,1:N3)),'Not read 3d i4 array with wrong dimension length', .true.)
+
+
+    ier = close_nc_file()
+
+
+  END function test_nc_utils
 
 
 END MODULE nc_utils_generic
