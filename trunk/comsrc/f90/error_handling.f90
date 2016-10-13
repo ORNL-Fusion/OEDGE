@@ -16,7 +16,10 @@ module error_handling
   end interface
 
   integer,private :: err1=0,err2=6,err3=-1
+  integer,private :: deferr1=0,deferr2=6,deferr3=-1
+
   integer,private :: dbg1=6,dbg2=-1,dbg3=-1
+  integer,private :: defdbg1=6,defdbg2=-1,defdbg3=-1
 
   character,public :: error_message_data*512
   character,public :: debug_message_data*512
@@ -46,6 +49,21 @@ contains
     dbg3 = u3
 
   end subroutine set_dbgmsg_units
+
+  subroutine reset_errmsg_units
+    implicit none
+    err1 = deferr1
+    err2 = deferr2
+    err3 = deferr3
+  end subroutine reset_errmsg_units
+
+
+  subroutine reset_dbgmsg_units
+    implicit none
+    dbg1 = defdbg1
+    dbg2 = defdbg2
+    dbg3 = defdbg3
+  end subroutine reset_dbgmsg_units
 
   !
   ! Error message handling routines
