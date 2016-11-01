@@ -9148,6 +9148,11 @@ c      crmi
      >        wallsil(in)
 
          end do
+         in = maxpts+1
+            write(ounit,'(63x,512(1x,g18.8))') 
+     >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+     >        wallsil(in)
 
          close(ounit)
       endif

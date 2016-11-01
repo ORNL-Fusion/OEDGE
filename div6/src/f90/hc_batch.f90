@@ -164,7 +164,10 @@ Contains
     SFail = 0.0
     SFP = 0.0
 
-    ! jdemod - the HC code uses the same arrays to accumulate all HC data regardless of the sources (the same way DIVIMP
+    ! jdemod - Incorrect statements below ... each different kind of launch has storage allocated for accumulating data
+    !          The code then sums only the specific required pieces when scaling at the end. 
+    !
+    !        - the HC code uses the same arrays to accumulate all HC data regardless of the sources (the same way DIVIMP
     !          records impurity information.
     !        - However, the HC code uses the array data to determine the totals of particles lost to various
     !          mechanisms. Unfortunately, this makes the code non-reentrant unless the initial values of these are calculated
@@ -677,8 +680,13 @@ Contains
                 &	   SUM ( HC_MTC_Striking_Target (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
            SFail_org = (SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Homo))+ &
                 &	SUM ( HC_Num_Failed_Launches (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
-           SatIZ_org = (SUM ( HC_Num_Fragments_Reach_CIon (:))+ &
-                &	SUM ( HC_Num_Fragments_Reach_CIon (:)))/Divide_Region
+
+           SatIZ_org = (SUM ( HC_Num_Fragments_Reach_CIon (:HC_Launch_Reg_Wall_Homo))+ &
+                &	SUM ( HC_Num_Fragments_Reach_CIon (:HC_Launch_Reg_Wall_Dist)))/Divide_Region
+
+           !SatIZ_org = (SUM ( HC_Num_Fragments_Reach_CIon (:))+ &
+           !     &	SUM ( HC_Num_Fragments_Reach_CIon (:)))/Divide_Region
+
            SMain_org = (SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Homo))+ &
                 &	SUM ( HC_Num_Enter_Main_Plasma (:,HC_Launch_Reg_Wall_Dist)))/Divide_Region
            SExit_org = (SUM ( HC_Tot_Fragments_Exit_Main (:,HC_Launch_Reg_Wall_Homo))+ &

@@ -1033,22 +1033,44 @@ c
 c
 c -----------------------------------------------------------------------
 c
-c     TAG T36 to T38 - related to poloidal drift options - T31,T32,T33
+c     TAG T36 to T39 - related to radial and poloidal ExB drift options
 c
 c     Default values for options related to calculating plasma potential
 c     and exb drifts
 c
 c     TAG T36
+c             - This option is used to determine the method of calculatng
+c               plasma potential
+c             - potopt = 0    Use 3xTe(0) at each target as the floating 
+c                              potential start start point
+c             - potopt = 1    Import LP data listing the measured floating 
+c                              potential ... if imported data not available it 
+c                              defaults to option 0.(not yet implemented) 
 c
       potopt = 0
 c
 c     TAG T37
+c     exb_rad_opt = 0 ... no exb radial drift is applied
+c                 = 1 ... exb radial drift is turned on
 c
       exb_rad_opt = 0
 c
 c     TAG T38
+c     exb_pol_opt = 0 ... no exb poloidal drift is applied
+c                 = 1 ... exb poloidal drift is turned on
 c
       exb_pol_opt = 0
+c
+c     TAG 39
+c
+c     exb_scale - real number
+c               - the basic function of this is to switch the sign of 
+c                 the ExB drift for cases of forward (+1.0) and reverse (-1.0)
+c                 B-field orientation. However, it can also be used as a scaling
+c                 factor if the drifts are found to be either too large or too 
+c                 small. 
+c
+      exb_scale = 1.0
 c
 c -----------------------------------------------------------------------
 c
