@@ -3242,7 +3242,7 @@ c
 c
       write(ounit,100) 
      >       'ID','IW','R','Z','DDS','SEPDIST','WALLDIST',
-     >       'ION-DEP','NEUT-DEP','DEN/M2-TOR'
+     >       'ION-DEP','NEUT-DEP','DEN/M2-TOR','EROSION'
       
 c
       do id = 1, ndsin
@@ -3267,7 +3267,7 @@ c
      >           rp(id),zp(id),dds(id),sepdist2(id),
      >           wallpt(wallindex(id),32),
      >           wallsi(wallindex(id)),wallsn(wallindex(id)),
-     >           den_m2_tor
+     >           den_m2_tor,wallse(wallindex(id))
 
              else
 
@@ -3276,7 +3276,7 @@ c
      >           rp(id),zp(id),dds(id),-sepdist2(id),
      >           wallpt(wallindex(id),32),
      >           wallsi(wallindex(id)),wallsn(wallindex(id)),
-     >           den_m2_tor
+     >           den_m2_tor,wallse(wallindex(id))
 
              endif
 c
@@ -3317,7 +3317,7 @@ c
      >             rp(id),zp(id),dds(id),sepdist2(id),
      >             wallpt(wallindex(id),32),
      >             wallsi(wallindex(id)),wallsn(wallindex(id)),
-     >             den_m2_tor
+     >             den_m2_tor,wallse(wallindex(id))
 
             else
 
@@ -3326,7 +3326,7 @@ c
      >             rp(id),zp(id),dds(id),-sepdist2(id),
      >             wallpt(wallindex(id),32),
      >             wallsi(wallindex(id)),wallsn(wallindex(id)),
-     >             den_m2_tor
+     >             den_m2_tor,wallse(wallindex(id))
 
             endif
 
@@ -3369,7 +3369,7 @@ c
          write(ounit,300)
      >       iw,int(wallpt(iw,18)),
      >       wallpt(iw,1),wallpt(iw,2),wallpt(iw,7),wallpt(iw,32),
-     >       wallsi(iw),wallsn(iw),den_m2_tor
+     >       wallsi(iw),wallsn(iw),den_m2_tor,wallse(iw)
 c
       end do
 c
@@ -3385,12 +3385,13 @@ c     Printing formats
 c
       ! Labels
       !       'ID','IW','R','Z','DDS','SEPDIST','WALLDIST',
-      !       'ION-DEP','NEUT-DEP','DEN/M2-TOR'
- 100  format(5x,a,5x,a,10x,a,10x,a,8x,a,4x,a,3x,a,8x,a,11x,a,10x,a)
+      !       'ION-DEP','NEUT-DEP','DEN/M2-TOR','EROSION'
+ 100  format(5x,a,5x,a,10x,a,10x,a,8x,a,4x,a,3x,a,8x,a,11x,a,
+     >       10x,a,10x,a)
       ! Target Data
- 200  format(2(1x,i6),5(1x,f10.6),3(1x,g18.8))
+ 200  format(2(1x,i6),5(1x,f10.6),4(1x,g18.8))
       ! Wall data
- 300  format(2(1x,i6),3(1x,f10.6),11x,(1x,f10.6),3(1x,g18.8))
+ 300  format(2(1x,i6),3(1x,f10.6),11x,(1x,f10.6),4(1x,g18.8))
 c
       return
       end

@@ -1983,7 +1983,7 @@ c
 c
 c -----------------------------------------------------------------------
 c
-c     TAG T36 to T38 - options related to the implementation of 
+c     TAG T36 to T39 - options related to the implementation of 
 c                      impurity exb drifts 
 c
 c     TAG T36 - potopt
@@ -2017,6 +2017,19 @@ c                 = 1 ... exb poloidal drift is turned on
 c
       ELSEIF (tag(1:3).EQ.'T38') THEN
         CALL ReadI(line,exb_pol_opt,0,1,'ExB poloidal drift option')
+c
+c     TAG 39
+c
+c     exb_scale - real number
+c               - the basic function of this is to switch the sign of 
+c                 the ExB drift for cases of forward (+1.0) and reverse (-1.0)
+c                 B-field orientation. However, it can also be used as a scaling
+c                 factor if the drifts are found to be either too large or too 
+c                 small. 
+c
+      ELSEIF (tag(1:3).EQ.'T39') THEN
+        CALL ReadR(line,exb_scale,-HI,HI,
+     >                    'ExB scaling factor (usually +/-1.0)')
 c
 c -----------------------------------------------------------------------
 c

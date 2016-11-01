@@ -7788,7 +7788,7 @@ c     3 = CH+(from HC module)
 c     4 = CH (from HC module)
 c     30 = HC - HC State Ionization
 c     istate = specific HC species (ONLY CH So far)
-c     31 = Impurity Ionizations - specified by source charge state
+c     31 = Impurity Ionization - specified by source charge state
 c     
 c     NOTE: Subgrid Iselect values are loaded by the load_subgrid_array routine found in the
 c     subgrid_plots module - these are only listed here for completeness - local code in 
@@ -7823,9 +7823,11 @@ c        4 = ExB Radial drift
 c        5 = ExB poloidal Drift 
 c        6 = ExB Radial flux (ne x Vexb)
 c        7 = ExB Poloidal flux (ne x Vexb)
+c     41 = Impurity Emission - Tungsten WI only for now - using defined SXB function
+c
 c     
       integer max_iselect
-      parameter (max_iselect=40)
+      parameter (max_iselect=41)
 c     
 c     
 c     ADAS variables
@@ -7848,6 +7850,8 @@ c
       real mfact,fact
       integer ik,ir,iz,len,lenstr
       external lenstr
+c
+      real,external :: wi_sxb
 
 c     
 c     Calculating radiative power
@@ -8748,6 +8752,7 @@ c
 c     
 c     Scaling factor 
 c     
+c
          IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
 c     
          do ir = 1,nrs
@@ -9062,8 +9067,43 @@ c           and taking out the geometric factor used to map to 2D
 c
 c     End of ISELECT IF
 c
-      endif
+c     
+c     Tungsten emission data based on TIZS/SXB
+c     
+      elseif (iselect.eq.41) then 
+c     
+c     Tungsten emission using fixed sxb function
+c     
+c
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
 
+                  do iz = 0,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                 tizs(ik,ir,iz) * mfact * 1.0/wi_sxb(ktebs(ik,ir))
+                  end do
+               else
+                  tmpplot(ik,ir) = tizs(ik,ir,istate)*mfact
+     >                             * 1.0/wi_sxb(ktebs(ik,ir))
+c                  if (tizs(ik,ir,istate).gt.0.0) then 
+c                     write(0,'(a,3i6,20(1x,g12.5))')
+c     >                  'SXB:',ik,ir,istate,wi_sxb(ktebs(ik,ir)),
+c     >                   ktebs(ik,ir),tizs(ik,ir,istate),
+c     >                      tmpplot(ik,ir)
+c                  endif
+
+               endif
+c     
+            end do
+c     
+         end do   
+
+      endif
 
 c     
 c     For cells which are exceptionally small compared
@@ -9193,6 +9233,18 @@ c
       return
       end
 c
+c
+c
+      real function wi_sxb(te)
+      implicit none
+      real te
+c
+c     jde - SXB formula for WI obtained from spreadsheet from Tyler Abraams
+c      
+      wi_sxb = 53.1 * (1.0 - 1.04 * exp (-te/22.1))
+      if (wi_sxb.lt.0.0) wi_sxb=0.0
+      return 
+      end
 c
 c
       subroutine load_divdata_targ(iselect,istate,ir,
@@ -9852,6 +9904,11 @@ c
             YLAB = 'ExB POLOIDAL FLUX (/m2/s)'
          endif
 
+      elseif (iselect.eq.41) then   
+
+         write(YLAB,'(''W0 400.6 EMIS.: STATE='',i4,
+     >                ''(PH/M2/S)'')') istate
+ 
       endif
 
 c
@@ -10321,6 +10378,11 @@ c
          elseif (istate.eq.7) then 
             BLAB = 'ExB POLOIDAL FLUX (/m2/s)'
          endif
+
+      elseif (iselect.eq.41) then   
+
+         write(BLAB,'(''W0  W0 400.6:ST='',i4,
+     >                ''(PH/M2/S)'')') istate
 
       endif
 c

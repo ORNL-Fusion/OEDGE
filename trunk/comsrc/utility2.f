@@ -7062,8 +7062,9 @@ c
 ! project the poloidal drift to S and include timestep
                fact = sqrt(kbfs(ik,ir)**2-1.0)
                exb_pol_drft(ik,ir)= e_rad(ik,ir)/bts(ik,ir) 
-     >                                 * fact *qtim
-               exb_rad_drft(ik,ir) = -e_pol(ik,ir)/bts(ik,ir)*qtim
+     >                                 * fact *qtim * exb_scale
+               exb_rad_drft(ik,ir) = -e_pol(ik,ir)/bts(ik,ir)*qtim 
+     >                                 * exb_scale
             endif
          end do
 
