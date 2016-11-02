@@ -5005,10 +5005,10 @@ c
 c
          endif
 c
-         write (6,'(a,i4,1p,10(1x,g12.5))') 'Rconst:',ir,rconst(ir),
-     >                        areasum(ir),
-     >         gradsum,gradsumpos,gradsumneg,gradsumpos/gradsum,
-     >                    gradsumneg/gradsum
+c         write (6,'(a,i4,1p,10(1x,g12.5))') 'Rconst:',ir,rconst(ir),
+c     >                        areasum(ir),
+c     >         gradsum,gradsumpos,gradsumneg,gradsumpos/gradsum,
+c     >                    gradsumneg/gradsum
 c
 c        Calculate a distributed gperp source if that is
 c        required.

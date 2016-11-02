@@ -818,7 +818,7 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
-c      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid
+      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid,grdnmod
 c
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
@@ -6058,7 +6058,9 @@ c
 c     logical nopriv
 c     
 c     Initialization
-c     
+c           
+      call pr_trace('RAUG','RAUG START')
+c
       psifl = 0.0
 c
       ios = 0
@@ -6146,6 +6148,7 @@ c
 c     GEOM:  #rings  #cutring    #knots   #cutpoint1  #cutpoint2
 c     
          read (buffer(6:),*) maxrings,cutring,maxkpts,cutpt1,cutpt2
+         write (0,*) 'GEOM READ:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
 c     Check for existence of private plasma for grid - this process will
 c     INCLUDE the boundary cells in the core.
@@ -6405,6 +6408,9 @@ c
 
  150  continue
 
+      call pr_trace('RAUG','END GRID READ')
+            
+
       if (ir.eq.maxrings.and.ik.eq.maxkpts) then
          nks(ir) = max(nks(ir),max_ikold)
          npolyp = in
@@ -6620,6 +6626,12 @@ c
          end do
 c     
       endif 
+
+c
+c     Grid has been read in ... check
+c
+      call grid_check
+
 
 c     
 c     
