@@ -4826,7 +4826,7 @@ C
         IR = IRDS(ID)
 c
 c       Set target identifier - TARG = 1 = OUTER for SONNET
-c                                          INNER for GRID2D   
+c                                          INNER for GRID2D  
 c                               TARG = 2 = INNER for SONNET
 c                                          OUTER for GRID2D   
         if (ik.gt.nks(ir)/2) then 
@@ -6226,6 +6226,7 @@ c
          neuttype = 6     
 c slmod begin
       elseif (grdnmod.ne.0.and.cneutb.eq.1) then 
+c       jdemod - default neuttype is zero which applies to cneutb =1 without being explicitly set - see neuttype list above
 c...    Is this correct, or was CNEUTB=1 just overlooked? 
         WRITE(0,*) 'WARNING: NOT SURE THIS IS THE CORRECT '//
      .             'NEUTTYPE FOR CNEUTB=1'

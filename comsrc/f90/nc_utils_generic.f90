@@ -233,7 +233,7 @@ MODULE nc_utils_generic
   implicit none
 
   PRIVATE
-  PUBLIC ::  write_nc,read_nc,open_nc_file,test_nc_utils_v2,close_nc_file,NC_WRITE,NC_READONLY
+  PUBLIC ::  write_nc,read_nc,open_nc_file,test_nc_utils_v1,test_nc_utils_v2,close_nc_file,NC_WRITE,NC_READONLY
   !    public ::  open_nc_file,close_nc_file
 
   CHARACTER(len=1024) :: err_msg ! Holder of error messages
@@ -654,6 +654,10 @@ CONTAINS
   END FUNCTION add_long_name
 
 
+  
+
+
+
 
   FUNCTION switch_to_define_mode() RESULT(ier)
     ! switching to define mode will not return an error
@@ -873,17 +877,15 @@ CONTAINS
     !
     ! Local variables
     !
-    CHARACTER(len=10), DIMENSION(1) :: dim_names
-    INTEGER, DIMENSION(1):: nd
+    !CHARACTER(len=10), DIMENSION(1) :: dim_names
+    !INTEGER, DIMENSION(1):: nd
 
     REAL*8 :: fac
 
     INTEGER :: dim_id, var_id, ier, d, ndum
-    INTEGER, DIMENSION(1) :: dim_ids
-    LOGICAL, DIMENSION(1) :: create_dim
-    CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(1) :: check_zero
+    !INTEGER, DIMENSION(1) :: dim_ids
+    !LOGICAL, DIMENSION(1) :: create_dim
+    !CHARACTER(len=nf90_max_name) :: dim_name
 
     integer :: type_val
     character*2 :: type_str
@@ -895,7 +897,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_i4_data
@@ -926,8 +928,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -972,8 +972,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1020,8 +1018,6 @@ CONTAINS
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
 
-    logical, dimension(size(shape(vars))) :: check_zero
-
     integer :: type_val
     character*2 :: type_str
     integer :: opt
@@ -1066,8 +1062,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1161,17 +1155,15 @@ CONTAINS
     !
     ! Local variables
     !
-    CHARACTER(len=10), DIMENSION(1):: dim_names
-    INTEGER, DIMENSION(1) :: nd
+    !CHARACTER(len=10), DIMENSION(1):: dim_names
+    !INTEGER, DIMENSION(1) :: nd
 
     REAL*8 :: fac
 
     INTEGER :: dim_id, var_id, ier, d, ndum
-    INTEGER, DIMENSION(1) :: dim_ids
-    LOGICAL, DIMENSION(1) :: create_dim
-    CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(1) :: check_zero
+    !INTEGER, DIMENSION(1) :: dim_ids
+    !LOGICAL, DIMENSION(1) :: create_dim
+    !CHARACTER(len=nf90_max_name) :: dim_name
 
     integer :: type_val
     character*2 :: type_str
@@ -1183,7 +1175,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_r4_data
@@ -1214,8 +1206,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1260,8 +1250,6 @@ CONTAINS
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
 
-    logical, dimension(size(shape(vars))) :: check_zero
-
     integer :: type_val
     character*2 :: type_str
     integer :: opt
@@ -1305,8 +1293,6 @@ CONTAINS
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
 
-    logical, dimension(size(shape(vars))) :: check_zero
-
     integer :: type_val
     character*2 :: type_str
     integer :: opt
@@ -1349,8 +1335,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1445,17 +1429,15 @@ CONTAINS
     !
     ! Local variables
     !
-    CHARACTER(len=10), DIMENSION(1) :: dim_names
-    INTEGER, DIMENSION(1) :: nd
+    !CHARACTER(len=10), DIMENSION(1) :: dim_names
+    !INTEGER, DIMENSION(1) :: nd
 
     REAL*8 :: fac
 
     INTEGER :: dim_id, var_id, ier, d, ndum
-    INTEGER, DIMENSION(1) :: dim_ids
-    LOGICAL, DIMENSION(1) :: create_dim
-    CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(1) :: check_zero
+    !INTEGER, DIMENSION(1) :: dim_ids
+    !LOGICAL, DIMENSION(1) :: create_dim
+    !CHARACTER(len=nf90_max_name) :: dim_name
 
     integer :: type_val
     character*2 :: type_str
@@ -1467,7 +1449,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_r8_data
@@ -1498,8 +1480,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1544,8 +1524,6 @@ CONTAINS
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
 
-    logical, dimension(size(shape(vars))) :: check_zero
-
     integer :: type_val
     character*2 :: type_str
     integer :: opt
@@ -1588,8 +1566,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1634,8 +1610,6 @@ CONTAINS
     INTEGER, DIMENSION(size(shape(vars))) :: dim_ids
     LOGICAL, DIMENSION(size(shape(vars))) :: create_dim
     CHARACTER(len=nf90_max_name) :: dim_name
-
-    logical, dimension(size(shape(vars))) :: check_zero
 
     integer :: type_val
     character*2 :: type_str
@@ -1877,7 +1851,7 @@ CONTAINS
     !LOGICAL, DIMENSION(ndims) :: create_dim
     !CHARACTER(len=nf90_max_name) :: dim_name
 
-    integer, dimension(ndims) :: arr_shape
+!    integer, dimension(ndims) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -1900,12 +1874,12 @@ CONTAINS
 
   function read_sc_i4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     CHARACTER(len=*), INTENT(IN) :: var_name
-    INTEGER , INTENT(IN) :: vars
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    INTEGER , INTENT(OUT) :: vars
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Dim names and nd are required for everything except scalars
     ! These are still declared since the included code will contain them
@@ -1917,7 +1891,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(1) :: arr_shape
+!    integer, dimension(1) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -1929,25 +1903,25 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_i4_data
 
   function read_1d_i4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    INTEGER , INTENT(IN) :: vars(:)
+    INTEGER , INTENT(OUT) :: vars(:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -1955,7 +1929,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -1963,7 +1937,7 @@ CONTAINS
     character*2 :: rank_str
 
     ! Set the code option based on the array type
-    opt = size(shape(vars))
+    ! opt = size(shape(vars))
     type_val = NF90_INT
     type_str = 'I4'
     rank_str = '1D'
@@ -1975,18 +1949,18 @@ CONTAINS
 
   function read_2d_i4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    INTEGER , INTENT(IN) :: vars(:,:)
+    INTEGER , INTENT(OUT) :: vars(:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -1994,7 +1968,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2014,18 +1988,18 @@ CONTAINS
 
   function read_3d_i4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    INTEGER , INTENT(IN) :: vars(:,:,:)
+    INTEGER , INTENT(OUT) :: vars(:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2033,7 +2007,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2054,18 +2028,18 @@ CONTAINS
 
   function read_4d_i4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_INT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    INTEGER , INTENT(IN) :: vars(:,:,:,:)
+    INTEGER , INTENT(OUT) :: vars(:,:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2073,7 +2047,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2123,12 +2097,12 @@ CONTAINS
 
     REAL*8 :: fac
 
-    integer :: var_id,ier
+    !integer :: var_id,ier
 
-    !INTEGER :: dim_id, var_id, ier
-    !INTEGER, DIMENSION(ndims) :: dim_ids
-    !LOGICAL, DIMENSION(ndims) :: create_dim
-    !CHARACTER(len=nf90_max_name) :: dim_name
+    INTEGER :: dim_id, var_id, ier
+    INTEGER, DIMENSION(ndims) :: dim_ids
+    LOGICAL, DIMENSION(ndims) :: create_dim
+    CHARACTER(len=nf90_max_name) :: dim_name
 
     integer, dimension(ndims) :: arr_shape
 
@@ -2155,12 +2129,12 @@ CONTAINS
 
   function read_sc_r4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*4 , INTENT(IN) :: vars
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    real*4 , INTENT(OUT) :: vars
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Dim names and nd are required for everything except scalars
     ! These are still declared since the included code will contain them
@@ -2172,7 +2146,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(1) :: arr_shape
+!    integer, dimension(1) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2184,7 +2158,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_r4_data
@@ -2192,18 +2166,18 @@ CONTAINS
 
   function read_1d_r4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*4 , INTENT(IN) :: vars(:)
+    real*4 , INTENT(out) :: vars(:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2211,7 +2185,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2233,18 +2207,18 @@ CONTAINS
 
   function read_2d_r4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*4 , INTENT(IN) :: vars(:,:)
+    real*4 , INTENT(out) :: vars(:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2252,7 +2226,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2273,18 +2247,18 @@ CONTAINS
 
   function read_3d_r4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*4 , INTENT(IN) :: vars(:,:,:)
+    real*4 , INTENT(out) :: vars(:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2292,7 +2266,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2313,18 +2287,18 @@ CONTAINS
 
   function read_4d_r4_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_FLOAT, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*4 , INTENT(IN) :: vars(:,:,:,:)
+    real*4 , INTENT(out) :: vars(:,:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2332,7 +2306,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2383,12 +2357,12 @@ CONTAINS
 
     REAL*8 :: fac
 
-    integer :: var_id,ier
+    !integer :: var_id,ier
 
-    !INTEGER :: dim_id, var_id, ier
-    !INTEGER, DIMENSION(ndims) :: dim_ids
-    !LOGICAL, DIMENSION(ndims) :: create_dim
-    !CHARACTER(len=nf90_max_name) :: dim_name
+    INTEGER :: dim_id, var_id, ier
+    INTEGER, DIMENSION(ndims) :: dim_ids
+    LOGICAL, DIMENSION(ndims) :: create_dim
+    CHARACTER(len=nf90_max_name) :: dim_name
 
     integer, dimension(ndims) :: arr_shape
 
@@ -2416,12 +2390,12 @@ CONTAINS
 
   function read_sc_r8_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*8 , INTENT(IN) :: vars
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    real*8 , INTENT(OUT) :: vars
+    CHARACTER(len=*), INTENT(OUT), optional ::  long_name, units
     !
     ! Dim names and nd are required for everything except scalars
     ! These are still declared since the included code will contain them
@@ -2433,7 +2407,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(1) :: arr_shape
+!    integer, dimension(1) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2445,7 +2419,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_r8_data
@@ -2453,18 +2427,18 @@ CONTAINS
 
   function read_1d_r8_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*8 , INTENT(IN) :: vars(:)
+    real*8 , INTENT(out) :: vars(:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2472,7 +2446,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2494,18 +2468,18 @@ CONTAINS
 
   function read_2d_r8_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*8 , INTENT(IN) :: vars(:,:)
+    real*8 , INTENT(out) :: vars(:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2513,7 +2487,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2535,18 +2509,18 @@ CONTAINS
 
   function read_3d_r8_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*8 , INTENT(IN) :: vars(:,:,:)
+    real*8 , INTENT(out) :: vars(:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2554,7 +2528,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2576,18 +2550,18 @@ CONTAINS
 
   function read_4d_r8_data(var_name,vars,long_name,units) RESULT(ier)
     USE netcdf, ONLY : nf90_inq_dimid, nf90_noerr, nf90_def_dim, &
-         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_put_var, nf90_max_name
+         & nf90_inq_varid, nf90_def_var, NF90_DOUBLE, nf90_get_var, nf90_max_name
     use error_handling
     IMPLICIT NONE
     !
     ! Arguments
     !
     CHARACTER(len=*), INTENT(IN) :: var_name
-    real*8 , INTENT(IN) :: vars(:,:,:,:)
+    real*8 , INTENT(out) :: vars(:,:,:,:)
     !
     ! Optional Arguments
     !
-    CHARACTER(len=*), INTENT(IN), optional ::  long_name, units
+    CHARACTER(len=*), INTENT(out), optional ::  long_name, units
     !
     ! Local variables
     !
@@ -2595,7 +2569,7 @@ CONTAINS
     REAL*8 :: fac
 
     INTEGER :: var_id, ier
-    integer, dimension(size(shape(vars))) :: arr_shape
+!    integer, dimension(size(shape(vars))) :: arr_shape
 
     integer :: type_val
     character*2 :: type_str
@@ -2644,15 +2618,15 @@ CONTAINS
 
     REAL*8 :: fac
 
-    integer :: var_id,ier
+    !integer :: var_id,ier
 
     integer :: opt
 
 
-    !INTEGER :: dim_id, var_id, ier
-    !INTEGER, DIMENSION(ndims) :: dim_ids
-    !LOGICAL, DIMENSION(ndims) :: create_dim
-    !CHARACTER(len=nf90_max_name) :: dim_name
+    INTEGER :: dim_id, var_id, ier
+    INTEGER, DIMENSION(ndims) :: dim_ids
+    LOGICAL, DIMENSION(ndims) :: create_dim
+    CHARACTER(len=nf90_max_name) :: dim_name
 
     integer, dimension(ndims) :: arr_shape
 
@@ -2729,7 +2703,7 @@ CONTAINS
     character*6 :: test_string_3_r
     character*10 :: char_array(N1)
 
-    CHARACTER(len=*), PARAMETER :: fn = 'test_nc_utils.nc'
+    CHARACTER(len=*), PARAMETER :: fn = 'test_nc_utils_v1.nc'
 
     integer :: i,j,k
 
@@ -3162,7 +3136,7 @@ CONTAINS
     character*6 :: test_string_3_r
     character*10 :: char_array(N1)
 
-    CHARACTER(len=*), PARAMETER :: fn = 'test_nc_utils.nc'
+    CHARACTER(len=*), PARAMETER :: fn = 'test_nc_utils_v2.nc'
 
     integer :: i,j,k
 
@@ -3249,7 +3223,7 @@ CONTAINS
     ! ----------- 1D ---------------------
 
     ! 1d tests - r8
-    CALL test(write_nc('test_1d_arr_r8',arr1_r8,['dim_arr'],[N],'This is the long name','-'),'Write R8 1d array')
+    CALL test(write_nc('test_1d_arr_r8',arr1d_r8,['dim_arr'],[N],'This is the long name','-'),'Write R8 1d array')
     CALL test(write_nc('zero_1d_arr_r8',zeroarr1d_r8,['dim_arr'],[N],'This array is all 0s','-'),'Not write R8 1d array of zeros')
     CALL test(write_nc('test_1d_arr_r8',arr1d_r8*2.0d0,['dim_arr'],[N],'This is the long name','-'),'Update R8 1d array with value*2')
     ! update arr content for later read comparison
@@ -3467,7 +3441,7 @@ CONTAINS
 
 
     ! 2d tests - r8
-    CALL test(read_nc('test_2d_arr_r8',v2d=arr2d_r8_r),'Read 2d r8 array')
+    CALL test(read_nc('test_2d_arr_r8',arr2d_r8_r),'Read 2d r8 array')
     if (any(arr2d_r8_r(:,:).ne.arr2d_r8(:,:))) call errmsg('FAIL: 2D R8 variable not read back correctly')
     do i = 1,N1
        do j = 1,N2

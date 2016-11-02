@@ -17,11 +17,7 @@
 
     opt = size(shape(vars))
 
-    if (opt.eq.0) then 
-       arr_shape = 0
-    else
-       arr_shape = shape(vars)
-    endif
+    !arr_shape = shape(vars)
 
     ! inquire on variable NAME 
     ! Exit if it is not found
@@ -32,7 +28,6 @@
        ! Because of the non-stored Zero assumption present in some cases - set all returned variables to zero 
        ! - make sure ier is set so calling routine can deal with possible errors
        vars = 0
-
        return
     endif
    
@@ -41,7 +36,7 @@
     !       it becomes impossible to overwrite existing database values with zeroes
     ! This should have checked the name and shape information for var_id
 
-    ier = check_existing_variable(var_name,type_val,var_id,dim_vals=arr_shape)
+    ier = check_existing_variable(var_name,type_val,var_id,dim_vals=shape(vars))
     if (ier.ne.nf90_noerr) return
 
     ! switch to data mode to read the data
@@ -52,7 +47,7 @@
     ! get data ... note the lower bounds are assumed to be 1. 
 
     ! Read data from file
-    ier = handle_nf90_error(nf90_get_var(nc_id,var_id,var))
+    ier = handle_nf90_error(nf90_get_var(nc_id,var_id,vars))
     if ( ier .ne. nf90_noerr ) RETURN
 
     ! if attributes are requested then load them

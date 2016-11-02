@@ -7254,7 +7254,7 @@ c
             ! reduce dist and try again
             ! check to see if dist is too small and issue an error message
             dist = dist * 0.5d0
-            if (dist.lt.1.0d-6) then 
+            if (dist.lt.1.0d-8) then 
                write(0,*) 'ERROR finding test points'//
      >              ' in e_rad calculation: DIST TOO SMALL =',dist
                write(6,*) 'ERROR finding test points'//
