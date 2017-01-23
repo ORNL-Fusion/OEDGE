@@ -12,10 +12,13 @@ fi
 # These should be all that require changing for most installations
 #
 #-------------------------------------
+#
+# NOTE: LD_LIBRARY_PATH is set below (if necessary) after all of the locations are defined
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=$HOME/adas
+export ZEXT=.gz
 #
 VER=pgi
 #
@@ -124,8 +127,15 @@ export EXEDIR=$DIVRUNDIR/$CASENAME
 export DATDIR=$DIVDATDIR
 export OUTDIR=$OUTEXEDIR
 #
-
-
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+#export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+#
+#
 #------------------------------------- 
 #
 #
@@ -273,8 +283,8 @@ fi
 #
 #  CFD OSM files
 #
-if [[ -f  $DIVRESDIR/$5.cfd.gz ]] then 
-  gunzip $DIVRESDIR/$5.cfd.gz
+if [[ -f  $DIVRESDIR/$5.cfd$ZEXT ]] then 
+  gunzip $DIVRESDIR/$5.cfd$ZEXT
 fi
 #
 if [[ -f  $DIVRESDIR/$5.cfd ]] then 
@@ -524,7 +534,7 @@ mvc core $CASENAME.core
 #
 #  Convert the DIVIMP output data file to postscript. 
 #
-a2ps $CASENAME.dat --output=$CASENAME.ps 
+#a2ps $CASENAME.dat --output=$CASENAME.ps 
 #
 # a2ps -nn $DIVRESDIR/$CASENAME.sol > $DIVRESDIR/$CASENAME.sol.ps 
 # mv POSTSCPT.LIS $DIVRESDIR/$CASENAME.sol.psg
@@ -553,8 +563,16 @@ mvc outout1 $CASENAME.out
 #  .raw complete results file
 mvc fort.8 $CASENAME.raw
 
-#  Erosion/Deposition print out
-#mvc fort.57 $CASENAME.deposition
+#
+# Rename the netcdf output if any
+#
+if [[ -f divimp_netcdf_out.nc ]] then
+    # save the compressed version of the nc file
+    # according to the documentation this file can be accessed as 
+    # easily as a regular nc file but takes much less space
+    nccopy -d5 divimp_netcdf_out.nc divimp_netcdf_out_compress.nc
+    mvc divimp_netcdf_out_compress.nc $CASENAME.nc
+fi
 
 # Move the signal file to results if one exists
 mvc signal_output.dat $CASENAME.signals
@@ -630,7 +648,8 @@ mvc eirene_iz_analysis.dat $CASENAME.eiz
 # exb source terms over grid
 mvc exb_source_terms.dat $CASENAME.exb
 
-
+# collector probe analysis
+mvc collector_probe.out $CASENAME.collector_probe
 
 #
 # Move image files if any ...
@@ -888,61 +907,61 @@ rmdir $CASENAME
 
 #-------------------------------
 #
-# Changing to results directory to clean up and compress
+# Changing to results directory to clean up and gzip
 #
 
 cd $DIVRESDIR
 #
-# Compress the larger output files - check for file existence
-#                                    before compressing.
+# Gzip the larger output files - check for file existence
+#                                    before gziping.
 #
 if [[ -f $CASENAME.raw ]] then
-   compress -f -v $CASENAME.raw
+   gzip -f -v $CASENAME.raw
 fi
 # (SL)
 if [[ -f $CASENAME.raw.src ]] then
-   compress -f -v $CASENAME.raw.src
+   gzip -f -v $CASENAME.raw.src
 fi
 if [[ -f $CASENAME.raw.pla ]] then
-   compress -f -v $CASENAME.raw.pla
+   gzip -f -v $CASENAME.raw.pla
 fi
 if [[ -f $CASENAME.raw.geo ]] then
-   compress -f -v $CASENAME.raw.geo
+   gzip -f -v $CASENAME.raw.geo
 fi
 if [[ -f $CASENAME.raw.rel ]] then
-   compress -f -v $CASENAME.raw.rel
+   gzip -f -v $CASENAME.raw.rel
 fi
 #
 if [[ -f $CASENAME.lim ]] then
-   compress -f -v $CASENAME.lim
+   gzip -f -v $CASENAME.lim
 fi
 #
 if [[ -f $CASENAME.sol22 ]] then
-   compress -f -v $CASENAME.sol22
+   gzip -f -v $CASENAME.sol22
 fi
 #
 if [[ -f $CASENAME.sol23 ]] then
-   compress -f -v $CASENAME.sol23
+   gzip -f -v $CASENAME.sol23
 fi
 #
 if [[ -f $CASENAME.out ]] then
-   compress -f -v $CASENAME.out
+   gzip -f -v $CASENAME.out
 fi
 #
 if [[ -f $CASENAME.pinout ]] then
-   compress -f -v $CASENAME.pinout
+   gzip -f -v $CASENAME.pinout
 fi 
 #
 if [[ -f $CASENAME.pinraw ]] then
-   compress -f -v $CASENAME.pinraw
+   gzip -f -v $CASENAME.pinraw
 fi 
 #
 if [[ -f $CASENAME.pinnim ]] then
-   compress -f -v $CASENAME.pinnim
+   gzip -f -v $CASENAME.pinnim
 fi 
 #
 if [[ -f $CASENAME.pinmc ]] then
-   compress -f -v $CASENAME.pinmc
+   gzip -f -v $CASENAME.pinmc
 fi 
 #
 #  Print

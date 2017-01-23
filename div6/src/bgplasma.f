@@ -17,8 +17,9 @@ c
 c
       include 'cioniz'
 c
-      include 'reader'
+c      include 'reader'
 c
+      include 'dynam1'
       include 'dynam5'
 c
       include 'pindata'
@@ -88,6 +89,14 @@ c
       lpinavail = .false.
       litersol = .false.
       liter = .false.
+c
+c     jdemod - init chisq records
+c
+      chisq1 = 0.0
+      chisq2 = 0.0
+      chisq3 = 0.0
+      chisq4 = 0.0
+      chisq5 = 0.0
 c
 c     Zero PIN time accounting variables
 c
@@ -2083,6 +2092,10 @@ C
 C
              DO 363 IK=1,NKS(IR),1
 C
+c
+c            jdemod - chisq doesn't work since it isn't initialized from 
+c                     what I can see 
+c
              IF (IITERSOL.GT.1) THEN
 C
              CHISQ1(IITERSOL-1)=CHISQ1(IITERSOL-1)+(KTEBS(IK,IR)-

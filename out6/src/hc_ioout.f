@@ -2,11 +2,12 @@ c -*-Fortran-*-
 c
 ! ammod begin
 c
-      subroutine global_hc_read_raw_data
+      subroutine global_hc_read_raw_data(version_code,maxrev)
       ! jdemod - comHc is part of HC_init_out_data through HC_out_storage_setup
       !Use ComHC ! HC constants.
       Use HC_Init_Out_Data ! Included to re-set hc_state, hc_density, hc_output, Number_HC_Species.
       implicit none  
+      integer :: version_code,maxrev
 c
 c     jdemod - Reminder - need to bump the DIVIMP version number and add appropriate checks in here
 c              when making changes to what gets passed in the raw file. Some changes (removals) have
@@ -25,8 +26,19 @@ c
      >     Number_HC_Species)
          Call rinout ('R HC_DEN', HC_Density,
      >     maxnks*maxnrs*(Number_HC_Species))
-         Call rinout ('R H_DEN', H_Density,
-     >     maxnks*maxnrs*(Number_H_Species))
+
+         !
+         ! jdemod - H_density was only writing numer_hc_species and not num_h_states
+         !          until 6.47
+         if (version_code.ge.(6*maxrev+47)) then 
+            Call rinout ('R H_DEN', H_Density,
+     >         maxnks*maxnrs*(Num_H_States))
+         else
+            Call rinout ('R H_DEN', H_Density,
+     >          maxnks*maxnrs*(Number_H_Species))
+         endif
+
+
          Call iinout ('R HC_OUT', HC_Output_List,
      >     Number_HC_Species+1)
          Call rinout ('R HC_WLK', HC_Walks,

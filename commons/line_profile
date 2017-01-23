@@ -15,7 +15,7 @@ c
       integer max_lp_bins
       parameter (max_lp_bins=51) 
 
-      common /line_profile_data/ line_profile,mod_line_profile,
+      common /line_profile_data/ line_profile,modified_line_profile,
      >       line_profile_opt,
      >       lp_bin_width,lp_instrument_width,lp_wave,
      >       lp_robs,lp_zobs,lp_theta,lp_dtheta,         
@@ -41,7 +41,7 @@ c     Profile data
 c
       real*8 
      >   line_profile(-max_lp_bins:max_lp_bins),
-     >   mod_line_profile(-max_lp_bins:max_lp_bins)
+     >   modified_line_profile(-max_lp_bins:max_lp_bins)
 c 
 c     ADAS data - specifiers and selectors
 c

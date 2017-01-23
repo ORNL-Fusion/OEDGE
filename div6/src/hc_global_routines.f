@@ -923,8 +923,12 @@ c
      >  Number_HC_Species)
       call dinout ('W HC_DEN', HC_Density,
      >  maxnks*maxnrs*(Number_HC_Species))
+      !
+      ! jdemod - changed last paramter from number_h_species to num_h_states since that 
+      !          is what the array is declared
+      !
       call dinout ('W H_DEN', H_Density,
-     >  maxnks*maxnrs*(Number_H_Species))
+     >  maxnks*maxnrs*(Num_H_States))
       call iinout ('W HC_OUT', HC_Output_List,
      >  Number_HC_Species+1)
       call rinout ('W HC_WLK', HC_Walks,

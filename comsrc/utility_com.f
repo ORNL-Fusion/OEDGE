@@ -55,7 +55,8 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+c                    - added buff_format to common to make buffer size changes easy
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -92,12 +93,12 @@ C
          IERR = 1
 
          call errmsg('RDRAR-READ ERROR',name//mesage)
-         call errmsg('RDRAR-LAST LINE ',buffer)
+         call errmsg('RDRAR-LAST LINE ',trim(buffer))
 
       else
 
          call dbgmsg('RDRAR-READ ERROR',name//mesage)
-         call dbgmsg('RDRAR-LAST LINE ',buffer)
+         call dbgmsg('RDRAR-LAST LINE ',trim(buffer))
 
       endif
 
@@ -176,7 +177,7 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDIARN'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -220,11 +221,11 @@ C
          IERR = 1
 
          call errmsg('RDIARN-READ ERROR',name//mesage)
-         call errmsg('RDIARN-LAST LINE ',buffer)
+         call errmsg('RDIARN-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDIARN-READ ERROR',name//mesage)
-         call dbgmsg('RDIARN-LAST LINE ',buffer)
+         call dbgmsg('RDIARN-LAST LINE ',trim(buffer))
       endif
 
 
@@ -302,7 +303,7 @@ c slmod begin
 c... This 72 character limit has always been annoying, and I can't see
 c    any reason not to increase it since BUFFER*512 is declared
 c    in READER:
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
 c
 c  100 IF (IBUF.EQ.0) READ (5,'(A72)',ERR=9999,END=9999) BUFFER
 c slmod end
@@ -345,7 +346,7 @@ C
  9999 IERR = 1
       WRITE (7,'(1X,2A,3(/1X,A))')
      > 'RDRARN: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
-     > BUFFER(1:72)
+     > trim(buffer)
       RETURN
       END
 C
@@ -385,7 +386,7 @@ C
       R = 0.0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -414,11 +415,11 @@ C
          IERR = 1
 
          call errmsg('RDR-READ ERROR',name//mesage)
-         call errmsg('RDR-LAST LINE ',buffer)
+         call errmsg('RDR-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDR-READ ERROR',name//mesage)
-         call dbgmsg('RDR-LAST LINE ',buffer)
+         call dbgmsg('RDR-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -465,7 +466,7 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -504,11 +505,11 @@ C
          IERR = 1
 
          call errmsg('RDR2-READ ERROR',name//mesage)
-         call errmsg('RDR2-LAST LINE ',buffer)
+         call errmsg('RDR2-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDR2-READ ERROR',name//mesage)
-         call dbgmsg('RDR2-LAST LINE ',buffer)
+         call dbgmsg('RDR2-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -555,7 +556,7 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR3'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -600,11 +601,11 @@ C
          IERR = 1
 
          call errmsg('RDR3-READ ERROR',name//mesage)
-         call errmsg('RDR3-LAST LINE ',buffer)
+         call errmsg('RDR3-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDR3-READ ERROR',name//mesage)
-         call dbgmsg('RDR3-LAST LINE ',buffer)
+         call dbgmsg('RDR3-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -668,7 +669,7 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -705,11 +706,11 @@ C
          IERR = 1
 
          call errmsg('RDQAR-READ ERROR',name//mesage)
-         call errmsg('RDQAR-LAST LINE ',buffer)
+         call errmsg('RDQAR-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDQAR-READ ERROR',name//mesage)
-         call dbgmsg('RDQAR-LAST LINE ',buffer)
+         call dbgmsg('RDQAR-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -779,7 +780,7 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQARN'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -823,11 +824,11 @@ C
          IERR = 1
 
          call errmsg('RDQARN-READ ERROR',name//mesage)
-         call errmsg('RDQARN-LAST LINE ',buffer)
+         call errmsg('RDQARN-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDQARN-READ ERROR',name//mesage)
-         call dbgmsg('RDQARN-LAST LINE ',buffer)
+         call dbgmsg('RDQARN-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -871,7 +872,7 @@ C
       R = 0.0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -900,11 +901,11 @@ C
          IERR = 1
 
          call errmsg('RDQ-READ ERROR',name//mesage)
-         call errmsg('RDQ-LAST LINE ',buffer)
+         call errmsg('RDQ-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDQ-READ ERROR',name//mesage)
-         call dbgmsg('RDQ-LAST LINE ',buffer)
+         call dbgmsg('RDQ-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -951,7 +952,7 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -990,11 +991,11 @@ C
          IERR = 1
 
          call errmsg('RDQ2-READ ERROR',name//mesage)
-         call errmsg('RDQ2-LAST LINE ',buffer)
+         call errmsg('RDQ2-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDQ2-READ ERROR',name//mesage)
-         call dbgmsg('RDQ2-LAST LINE ',buffer)
+         call dbgmsg('RDQ2-LAST LINE ',trim(buffer))
       endif
 
 c
@@ -1045,7 +1046,7 @@ C
       I = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1074,11 +1075,11 @@ C
          IERR = 1
 
          call errmsg('RDI-READ ERROR',name//mesage)
-         call errmsg('RDI-LAST LINE ',buffer)
+         call errmsg('RDI-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDI-READ ERROR',name//mesage)
-         call dbgmsg('RDI-LAST LINE ',buffer)
+         call dbgmsg('RDI-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1124,7 +1125,7 @@ C
       I2 = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1163,11 +1164,11 @@ C
          IERR = 1
 
          call errmsg('RDI2-READ ERROR',name//mesage)
-         call errmsg('RDI2-LAST LINE ',buffer)
+         call errmsg('RDI2-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDI2-READ ERROR',name//mesage)
-         call dbgmsg('RDI2-LAST LINE ',buffer)
+         call dbgmsg('RDI2-LAST LINE ',trim(buffer))
       endif
 c
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1212,7 +1213,7 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ (5,'(A512)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDC'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1234,11 +1235,11 @@ C
          IERR = 1
 
          call errmsg('RDC-READ ERROR',name//mesage)
-         call errmsg('RDC-LAST LINE ',buffer)
+         call errmsg('RDC-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDC-READ ERROR',name//mesage)
-         call dbgmsg('RDC-LAST LINE ',buffer)
+         call dbgmsg('RDC-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1284,7 +1285,7 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ (5,'(A512)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFER'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1307,11 +1308,11 @@ C
          IERR = 1
 
          call errmsg('RDBUFFER-READ ERROR',name//mesage)
-         call errmsg('RDBUFFER-LAST LINE ',buffer)
+         call errmsg('RDBUFFER-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDBUFFER-READ ERROR',name//mesage)
-         call dbgmsg('RDBUFFER-LAST LINE ',buffer)
+         call dbgmsg('RDBUFFER-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1359,7 +1360,7 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ (5,'(A512)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFERX'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1388,11 +1389,11 @@ C
          IERR = 1
 
          call errmsg('RDBUFFERX-READ ERROR',name//mesage)
-         call errmsg('RDBUFFERX-LAST LINE ',buffer)
+         call errmsg('RDBUFFERX-LAST LINE ',trim(buffer))
 
       else
          call dbgmsg('RDBUFFERX-READ ERROR',name//mesage)
-         call dbgmsg('RDBUFFERX-LAST LINE ',buffer)
+         call dbgmsg('RDBUFFERX-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1437,7 +1438,7 @@ c
       nstrings = 0
 c
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (5,'(A256)',ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
       write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDCAR'
 c
       IF (BUFFER(1:1).EQ.'$'.or.buffer(1:1).eq.'c'.or.
@@ -1474,11 +1475,11 @@ c
             IERR = 1
 
             call errmsg('RDCAR-READ ERROR',name//mesage)
-            call errmsg('RDCAR-LAST LINE ',buffer)
+            call errmsg('RDCAR-LAST LINE ',trim(buffer))
  
          else
             call dbgmsg('RDCAR-READ ERROR',name//mesage)
-            call dbgmsg('RDCAR-LAST LINE ',buffer)
+            call dbgmsg('RDCAR-LAST LINE ',trim(buffer))
          endif
 
 
@@ -1490,7 +1491,7 @@ c     >  'LAST LINE READ :-',BUFFER
 
         WRITE (9,'(1X,2A,3(/1X,A))')
      >  'RDCAR: FINISHED READING ',nstrings,NAME,MESAGE,
-     >  'LAST LINE READ :-',BUFFER
+     >  'LAST LINE READ :-',trim(BUFFER)
 
       endif
 c

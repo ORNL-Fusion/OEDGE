@@ -1174,6 +1174,7 @@ c
 c
 c
       subroutine outinit
+      use divimp_netcdf
       implicit none
 
 c
@@ -1216,6 +1217,9 @@ c     Local Variables
 c
       integer ierr
       character*80 graph
+      ! jdemod - size needs to be coordinated with 
+      !          max contents of raw file
+      character*1024 desc
 
 c
 c     Initialization
@@ -1270,7 +1274,7 @@ c
 c     Load case data from RAW data file
 c
 
-      CALL GET (TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 C
 c
 C-----------------------------------------------------------------------
@@ -1386,6 +1390,25 @@ c
       write (6,*) 'ABSFAC       = ',absfac
       write (iplot,*) 'SCALE FACTOR = ',scalef
       write (iplot,*) 'ABSFAC       = ',absfac
+
+
+c
+c     jdemod - if the netcdf output flag has been set at the beginning of the plot
+c              file then write the netcdf file since all the required inputs 
+c              should be available here. 
+c
+C
+C-----------------------------------------------------------------------
+C     GENERATE NETCDF VERSION OF RAW OUTPUT
+C-----------------------------------------------------------------------
+C
+      if (netcdf_opt.eq.1) then 
+          call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
+     >                             FACTA,FACTB,ITER,NITERS)
+         
+      endif
+
+
 c
 c     Set up colors - from dark to light - one for each contour - let
 c     colour 1 be black - use the HSI system from GHOST
@@ -2349,9 +2372,18 @@ c     This routine assigns the default values to any
 c     OUT unstructured input values.The OUT unstructured
 c     input tags start with the letter "O" (oh)
 c
+c     jdemod - it also assigns default values to any other 
+c              unstructured input values shared by DIV and OUT
+c
+c
+c     Note: The netcdf output option A07 from DIVIMP is also supported
+c           since it would be useful to create a netcdf version of the 
+c           raw output from an OUT run
+c
       include 'params'
 c
       include 'out_unstruc'
+      include 'comtor'
 c     
 c------------------------------------------------------
 c
@@ -2378,6 +2410,18 @@ c
       psi1_reg = 0.9
       psi2_reg = 0.95
 
+c
+c -----------------------------------------------------------------------
+c
+c     TAG A07: 
+c
+c
+c     Option to write a netcdf version of the raw data file 
+c     0 = off   1 = 0n .. default OFF
+c
+c
+      netcdf_opt = 0
+c
 c
 c------------------------------------------------------
 c

@@ -1,41 +1,22 @@
   ! -*-Mode:f90-*-
   
-
+  
+  !write(0,'(5a,i8,8(3a,i8))')   'nc_write:',rank_str,':',type_str,':',size(shape(vars)),((':',dim_names(i),'=',nd(i)),i=1,size(nd))  
+  
   ! check for matching shape and non-zero content
   ! NOTE: Check for non-zero content should only be done for NEW variables ... not for existing ones ... otherwise
   !       it becomes impossible to overwrite existing database values with zeroes
-
+  
   ! Set opt based on size of argument (dimensionality)
   ! opt = 0 = scalar
   opt = size(shape(vars))
 
-  !check_zero = vars.eq.0
-
   ! check matching shape
-  !if (opt.gt.0) then 
-     IF ( any(SHAPE(vars) .ne. nd )) THEN
-        IF (verbose)  call errmsg('NC_UTILS_GENERIC: WRITE_'//type_str//'_DATA: ',var_name//': Variable and dimension shape mismatch')
-        ier = nf90_noerr+10
-        RETURN
-     ENDIF
-  !endif
-
-  ! Add or check dimension values
-  ! Check for non-scalar values
-  !if (opt.gt.0) then 
-     DO d = 1,size(nd)
-        dim_name = TRIM(dim_names(d))
-        ier = nf90_inq_dimid(nc_id, dim_name, dim_ids(d))
-        dim_id = dim_ids(d)
-        IF (ier .ne. nf90_noerr) THEN
-           create_dim(d) = .true.
-        ELSE
-           create_dim(d) = .false.
-           ier = handle_nf90_error(check_existing_dimension(dim_id, dim_name, nd(d)))
-           IF (ier .ne. nf90_noerr) RETURN
-        ENDIF
-     ENDDO
-  !endif
+  IF ( any(SHAPE(vars) .ne. nd )) THEN
+     IF (verbose)  call errmsg('NC_UTILS_GENERIC: WRITE_'//type_str//'_DATA: ',var_name//': Variable and dimension shape mismatch')
+     ier = nf90_noerr+10
+     RETURN
+  ENDIF
 
   ! inquire on variable NAME 
   ier = nf90_inq_varid(nc_id, var_name, var_id)
@@ -47,54 +28,50 @@
      if (zero_check) then 
         ! check not all zero
         IF (.not. any(vars.ne.0)) THEN
-           IF (verbose) call errmsg('NC_UTILS_GENERIC: WRITE_'//type_str//'_DATA: ',var_name//' not written to netcdf file because it is all 0')
+           IF (verbose) call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',var_name//' not written to netcdf file because it is all 0',msglvl=1)
            ier = nf90_noerr
            RETURN
         ENDIF
      endif
 
-!     IF (opt.gt.0) then 
-        if (any(create_dim) ) THEN
-        ! Create any required dimensions that are not already in place for non-scalars
-        ier = switch_to_define_mode()
-        IF (ier .ne. nf90_noerr) RETURN
+     ! The create_dims paradigm actually adds more work ... dimensions only need to be checked for new variables ... existing variables can't be 
+     ! put in without dimensions. This will also reduce complexity when trying to deal with cases where dimensions are repeated and needs creating.
+     ! The first instance will create it and the next will check it. 
+     ! Add or check dimension values
+     DO d = 1,size(nd)
+        dim_name = TRIM(dim_names(d))
+        ier = nf90_inq_dimid(nc_id, dim_name, dim_ids(d))
 
-        DO d=1,size(nd)
-           IF (create_dim(d)) THEN
-              ! create dimension
-              dim_name = TRIM(dim_names(d))
-              WRITE(err_msg,*) var_name, ' error creating dimension ', dim_name
-              ! create dimensions in netcdf dataset if they are missing
-              ier = handle_nf90_error(nf90_def_dim(nc_id, dim_name, nd(d), dim_ids(d)))
-              IF (ier .ne. nf90_noerr) RETURN
-
-           ENDIF
-        ENDDO
-        endif 
-!     ENDIF
+        ! makes more sense to just create missing dimensions inline
+        IF (ier .ne. nf90_noerr) THEN
+           ! create dimension  entry
+           ier = switch_to_define_mode()
+           dim_name = TRIM(dim_names(d))
+           WRITE(err_msg,*) var_name, ' error creating dimension ', dim_name
+           ! create dimensions in netcdf dataset if they are missing
+           ier = handle_nf90_error(nf90_def_dim(nc_id, dim_name, nd(d), dim_ids(d)))
+           IF (ier .ne. nf90_noerr) RETURN
+        ELSE
+           ! Check existing dimension matches
+           ier = handle_nf90_error(check_existing_dimension(var_name,dim_ids(d), dim_name, nd(d)))
+           IF (ier .ne. nf90_noerr) RETURN
+        ENDIF
+     ENDDO
 
      ! switch to define mode and add the variable definition
      ier = switch_to_define_mode()
      IF (ier .ne. nf90_noerr) RETURN
 
-     WRITE(err_msg,*) 'Problem creating variable ', var_name
-
-!     if (opt.eq.0) then
-!        ! define scalar
-!        ier = handle_nf90_error(nf90_def_var(nc_id, var_name, type_val, var_id))
-!     else
-        ! define array
-        ier = handle_nf90_error(nf90_def_var(nc_id, var_name, type_val, dim_ids, var_id))
-!     endif
+     WRITE(err_msg,*) 'Problem creating variable ', var_name,' with rank '//rank_str//' and type '//type_str
+     ier = handle_nf90_error(nf90_def_var(nc_id, var_name, type_val, dim_ids, var_id))
 
      IF (ier .ne. nf90_noerr) RETURN
 
   ELSE
      ! variable exists already ... check that it matches ... if it does then data will be over-written
-     ! err_msg set by check_existing_variable
 
-     ! dim_ids should already be a zero length array for scalars
-     ier = handle_nf90_error(check_existing_variable(var_name, type_val, var_id, dim_ids))
+     !ier = handle_nf90_error(check_existing_variable(var_name, type_val, var_id, dim_ids))
+     ier = handle_nf90_error(check_existing_variable(var_name, type_val, var_id, dim_names, nd))
      IF (ier .ne. nf90_noerr) RETURN
 
   ENDIF

@@ -388,13 +388,13 @@ Contains
           HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) = &
                &  HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) + Sput_Weight
        ElseIf (.not.  HC_InDIV .and. Current_Ring .ge.  Inner_SOL_Ring .and. Current_Ring .le.  Inner_Wall_Ring .and. &
-            & ((Current_Z .ge.  Z_X_Point .and.  ReFCT .eq. 1) .or. (Current_Z .le.  Z_X_Point .and.  ReFCT .eq. 0))) then
+            & ((Current_Z .ge.  Z_X_Point .and. hc_xpoint_up) .or. (Current_Z .le.  Z_X_Point .and.  (.not.hc_xpoint_up)))) then
           ! Divertor region
           HC_InDIV = .True.
           HC_Ion_Divertor_Density ( Launch_Cell, Launch_Ring) = &
                &  HC_Ion_Divertor_Density ( Launch_Cell, Launch_Ring) + Sput_Weight
        ElseIf (.not.  HC_InMSOL .and. Current_Ring .ge.  Inner_SOL_Ring .and. Current_Ring .le.  Inner_Wall_Ring .and. &
-            & ((Current_Z .lt.  Z_X_Point .and.  ReFCT .eq. 1) .or. (Current_Z .gt.  Z_X_Point .and.  ReFCT .eq. 0))) Then
+            & ((Current_Z .lt.  Z_X_Point .and.  hc_xpoint_up) .or. (Current_Z .gt.  Z_X_Point .and.  (.not.hc_xpoint_up)))) Then
           ! Main SOL Region.
           HC_InMSOL = .True.
           HC_Ion_MSOL_Density ( Launch_Cell, Launch_Ring) = &
@@ -2006,7 +2006,7 @@ Contains
              HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) = &
                   &  HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) + Sput_Weight
 
-          ElseIf ((Current_Z .ge.  Z_X_Point .and.  ReFCT .eq. 1) .or. (Current_Z .le.  Z_X_Point .and.  ReFCT .eq. 0)) Then
+          ElseIf ((Current_Z .ge.  Z_X_Point .and.  hc_xpoint_up) .or. (Current_Z .le.  Z_X_Point .and.  (.not.hc_xpoint_up))) Then
              ! Divertor region
              HC_InDIV = .True.
 

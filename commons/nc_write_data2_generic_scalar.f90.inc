@@ -21,7 +21,7 @@
      if (zero_check) then 
         ! check not all zero
         IF (vars.eq.0) THEN
-           IF (verbose) call errmsg('NC_UTILS_GENERIC_SCALAR: WRITE_'//type_str//'_DATA: ',var_name//' not written to netcdf file because it is all 0')
+           IF (verbose) call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',var_name//' not written to netcdf file because it is all 0',msglvl=1)
            ier = nf90_noerr
            RETURN
         ENDIF

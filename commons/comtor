@@ -62,7 +62,7 @@ C
      >  rlocnum,zlocnum,nalph,nalphi,crdivbg,ns21i,s21parmi,ns21o,
      >  s21parmo,aux_ns21i,aux_s21parmi,aux_ns21o,aux_s21parmo,
      >  aux_vel21,
-     >  tmachine_opt,write_tran,
+     >  tmachine_opt,write_tran,netcdf_opt,
 c
 c     >  sol23_izlen,sol23_izlam,sol23_izoffset,sol23_momlen,
 c     >  sol23_intopt,sol23_bndcond,sol23_seed,
@@ -180,7 +180,7 @@ c     >  CPDRFT,FLUXPTS,FLUXROPT,SROOTOPT,cpinopt,citersol,csecsol,
      >  rzopt,pdopt,cfdopt,fgradopt,fixtgrad,
      >  rlocnum,zlocnum,
      >  ns21i,ns21o,aux_ns21i,aux_ns21o,init_pos_opt,tmachine_opt,
-     >  write_tran,
+     >  write_tran,netcdf_opt,
 c
 c     >  sol23_intopt,sol23_bndcond,sol23_seed,
 c

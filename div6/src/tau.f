@@ -62,7 +62,7 @@ C
       include 'cedge2d'
       include 'comtor'
       include 'cioniz'
-      include 'reader'
+c      include 'reader'
       include 'dynam5'
       include 'pindata'
       include 'baffles'

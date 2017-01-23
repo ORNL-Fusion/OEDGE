@@ -5,7 +5,9 @@ C
       use subgrid
 c slmod begin
       use mod_divimp
+
 c slmod end
+      use divimp_netcdf
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -61,6 +63,8 @@ c slmod begin
 
       INTEGER      i1,i2,i3,ik,i
       REAL         slver
+
+c
 c slmod end
 C
 c
@@ -216,7 +220,7 @@ c
       CALL RINOUT ('W WALLS ',WALLS ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('W DEPS  ',DEPS  ,MAXNDS*MAXIZS)
       CALL RINOUT ('W NEROS ',NEROS ,MAXNDS*5)
-      CALL RINOUT ('W PRDEPS',PROMPTDEPS,MAXNDS*6)
+      CALL RINOUT ('W PRDEPS',PROMPTDEPS,MAXNDS*9)
 c
       CALL RINOUT ('W WALLSN',WALLSN,MAXPTS+1)
       CALL RINOUT ('W WALLSE',WALLSE,MAXPTS+1)
@@ -269,9 +273,15 @@ C
       CALL RINOUT ('W KKS   ',KKS   ,MAXNRS)
       CALL RINOUT ('W KSS   ',KSS   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W KPS   ',KPS   ,MAXNKS*MAXNRS)
-      CALL RINOUT ('W KNORMS',KNORMS,MAXNKS*MAXNRS)
+
+      ! jdemod - not used at all - must be development leftover
+      !CALL RINOUT ('W KNORMS',KNORMS,MAXNKS*MAXNRS)
+
       CALL RINOUT ('W KPERPS',KPERPS,MAXNKS*MAXNRS)
-      CALL RINOUT ('W KCURVS',KCURVS,MAXNKS*MAXNRS)
+
+      ! jdemod - not used at all - must be development leftover
+      !CALL RINOUT ('W KCURVS',KCURVS,MAXNKS*MAXNRS)
+
       CALL RINOUT ('W KVOLS ',KVOLS ,MAXNKS*MAXNRS)
       CALL RINOUT ('W KAREAS',KAREAS,MAXNKS*MAXNRS)
       CALL RINOUT ('W KTOTAS',KTOTAS,MAXNRS)
@@ -296,9 +306,11 @@ c
       CALL RINOUT ('W KOUTDS',KOUTDS,MAXNKS*MAXNRS)
 c
 c     jdemod - write cross field width of cells - v 46
+c             removed on version 47 since already 
+c             written below
 c
-      CALL RINOUT ('W DISTIN',distin ,MAXNKS*MAXNRS)
-      CALL RINOUT ('W DISTOT',distout,MAXNKS*MAXNRS)
+c      CALL RINOUT ('W DISTIN',distin ,MAXNKS*MAXNRS)
+c      CALL RINOUT ('W DISTOU',distout,MAXNKS*MAXNRS)
 c
       CALL RINOUT ('W KFORDS',KFORDS,MAXNKS*MAXNRS)
       CALL RINOUT ('W KBACDS',KBACDS,MAXNKS*MAXNRS)
@@ -343,8 +355,12 @@ c
       call rinout ('W PSITAR',psitarg,maxnrs*2)
       CALL RINOUT ('W KTEDS ',KTEDS ,MAXNDS)
       CALL RINOUT ('W KTIDS ',KTIDS ,MAXNDS)
-      CALL RINOUT ('W KTI3LS',KTI3LS,MAXNDS)
-      CALL RINOUT ('W KTINJ ',KTINJ ,MAXNDS)
+
+      ! jdemod - these are not used in out at all 
+      !          removed for now
+      !CALL RINOUT ('W KTI3LS',KTI3LS,MAXNDS)
+      !CALL RINOUT ('W KTINJ ',KTINJ ,MAXNDS)
+
       CALL RINOUT ('W KNDS  ',KNDS  ,MAXNDS)
       CALL RINOUT ('W KFEDS ',KFEDS ,MAXNDS)
       CALL RINOUT ('W KFIDS ',KFIDS ,MAXNDS)
@@ -437,7 +453,9 @@ c     NOTE: Not all of wtsource is being read or written - if
 c           this is ever needed both write and read routines
 c           need to be adjusted.
 c
-      call rinout ('W WTSOU ',wtsource,maxpts*maxnrs*4*5)
+c     jdemod - changed wtsou to *6 from *5 in 6.47
+c
+      call rinout ('W WTSOU ',wtsource,maxpts*maxnrs*4*6)
       call rinout ('W WTDEP ',wtdep,maxpts*(maxpts+1)*3)
       call rinout ('W TSOUR ',targsrc,3*4)
       call rinout ('W TLEAK ',targleak,3*4)
@@ -520,11 +538,11 @@ c
 c slmod begin
 c         Descriptor needs to be 8 characters long or generates
 c         a runtime error in R8INOUT. -SL, 07/10/2011
-          CALL R8INOUT ('W LP    ',line_profile,max_lp_bins*2+1)
+          CALL R8INOUT('W LP    ',line_profile,max_lp_bins*2+1)
 c
 c          CALL R8INOUT ('W LP',line_profile,max_lp_bins*2+1)
 c slmod end
-          CALL R8INOUT ('W MOD_LP',mod_line_profile,max_lp_bins*2+1)
+          CALL R8INOUT('W MOD_LP',modified_line_profile,max_lp_bins*2+1)
       endif     
 c
 c     Store the pressure - from SOL option 22
@@ -566,7 +584,7 @@ c     jdemod - March 2016 - version 45
 c
 c     Write out potential and drift related results
 c     
-      call rinout ('W POT',osmpot2,maxnks*maxnrs)
+      call rinout ('W POT',osmpot2,(maxnks+2)*maxnrs)
       call rinout ('W E_RAD',e_rad,maxnks*maxnrs)
       call rinout ('W E_POL',e_pol,maxnks*maxnrs)
       call rinout ('W ExB_R',exb_rad_drft,maxnks*maxnrs)
@@ -729,6 +747,11 @@ c...  6.14 (end of file flag):
       WRITE(8) 123456789
 
 
+      if (netcdf_opt.eq.1) then 
+         call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
+     >                  FACTA,FACTB,ITER,NITERS)
+      endif
+
 
 c slmod end
 c
@@ -775,4 +798,3 @@ c
 
       return
       end
-

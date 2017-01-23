@@ -2951,9 +2951,9 @@ C
       CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
 C
       IF( CNVMF.EQ.0 ) THEN
-          READ(5,'(A72)',ERR=9999,END=9999) BUFFER
-          READ(5,'(A72)',ERR=9999,END=9999) BUFFER
-          READ(5,'(A72)',ERR=9999,END=9999) BUFFER
+          READ(5,buff_format,ERR=9999,END=9999) BUFFER
+          READ(5,buff_format,ERR=9999,END=9999) BUFFER
+          READ(5,buff_format,ERR=9999,END=9999) BUFFER
           RETURN
       END IF
 C
@@ -2963,17 +2963,17 @@ C
 C
       DO 100 I = 1 , CNVMF
 C
-         READ(5,'(A72)',ERR=9999,END=9999) BUFFER
+         READ(5,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
 C
-         READ(5,'(A72)',ERR=9999,END=9999) BUFFER
+         READ(5,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
          IF( CJ0(I).LT.0 ) CJ0(I) = 0
          IF( CJ1(I).LT.0 ) CJ1(I) = 0
 C
-         READ(5,'(A72)',ERR=9999,END=9999) BUFFER
+         READ(5,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I)
      >                                         , CVMF2(I)
@@ -2990,7 +2990,8 @@ C-----------------------------------------------------------------------
 C
  9999 IERR=1
       WRITE(7,'(1X,2A,3(/1X,A))')
-     > 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
+     > 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
+     >      trim(BUFFER)
       RETURN
 C
       END
@@ -4984,7 +4985,7 @@ C     INCLUDE   "READER"
 C
       IERR = 0
       MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (5,'(a512)',ERR=9998,END=9998) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9998,END=9998) BUFFER
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c
@@ -5022,16 +5023,20 @@ c
 C
  9998 IERR = 1
       WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       RETURN
 C
  9999 IERR = 1
       WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       RETURN
       END
 
@@ -5058,7 +5063,7 @@ C     INCLUDE   "READER"
 C
       IERR = 0
       MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (5,'(a512)',ERR=9998,END=9998) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9998,END=9998) BUFFER
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c
@@ -5079,16 +5084,20 @@ c
 C
  9998 IERR = 1
       WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       RETURN
 C
  9999 IERR = 1
       WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
       RETURN
       END
 C

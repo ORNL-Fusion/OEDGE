@@ -5,6 +5,7 @@
       COMMON /READR2/ IBUF                                              
       save /READR2/
 
-      CHARACTER*512 BUFFER                                               
+      CHARACTER*1024 BUFFER                                               
       CHARACTER*80 BUFFER1                                              
+      character*7,parameter :: buff_format = '(A1024)'
       INTEGER IBUF                                                      

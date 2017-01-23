@@ -1311,6 +1311,19 @@ c
 c
         CALL ReadI(line,write_tran,0,1,'TRAN FILE PRINT OPTION')
 c
+c -----------------------------------------------------------------------
+c
+c
+c     TAG A07: 
+c
+      ELSEIF (tag(1:3).EQ.'A07') THEN
+c
+c       Option to write a netcdf version of the raw data file 
+c       0 = off   1 = 0n .. default OFF
+c
+c
+        CALL ReadI(line,netcdf_opt,0,1,'WRITE NETCDF FORMAT RAW OUTPUT')
+c
 c
 c -----------------------------------------------------------------------
 c

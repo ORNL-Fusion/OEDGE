@@ -14,7 +14,7 @@ C     INCLUDE "COMTOR"
 C     INCLUDE "CIONIZ"
       include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c      include 'reader'
 C     INCLUDE "DYNAM5"
       include 'dynam5'
       include 'printopt'
@@ -1406,7 +1406,7 @@ C     INCLUDE "COMTOR"
 C     INCLUDE "CIONIZ"
       include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c      include 'reader'
 C     INCLUDE "DYNAM5"
       include 'dynam5'
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID

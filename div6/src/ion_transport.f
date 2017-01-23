@@ -451,8 +451,8 @@ c
              ntrap(ikstart,irstart) = ntrap(ikstart,irstart) + sputy
 c
           elseif (.not.indiv.and.ir.ge.irsep.and.ir.le.irwall.and. 
-     >             ((z.ge.zxp.and.refct.eq.1).or.
-     >              (z.le.zxp.and.refct.eq.0))) then  
+     >             ((z.ge.zxp.and.xpoint_up).or.
+     >              (z.le.zxp.and.(.not.xpoint_up)))) then  
 c
 c            Divertor region 
 c
@@ -460,8 +460,8 @@ c
              ndivert(ikstart,irstart) = ndivert(ikstart,irstart)+sputy
 c
           elseif (.not.inmsol.and.ir.ge.irsep.and.ir.le.irwall.and. 
-     >             ((z.lt.zxp.and.refct.eq.1).or.
-     >              (z.gt.zxp.and.refct.eq.0))) then  
+     >             ((z.lt.zxp.and.xpoint_up).or.
+     >              (z.gt.zxp.and.(.not.xpoint_up)))) then  
 c
 c            Main SOL Region 
 c

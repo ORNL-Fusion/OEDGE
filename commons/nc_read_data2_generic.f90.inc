@@ -24,7 +24,7 @@
     ier = nf90_inq_varid(nc_id, var_name, var_id)
 
     if (ier.ne.nf90_noerr) then 
-       if (verbose) call errmsg('NC_UTILS_GENERIC: READ_'//rank_str//'_'//type_str//'_DATA: ',trim(var_name)//' NOT IN DATASET')
+       if (verbose) call errmsg('NC_UTILS_GENERIC: READ_'//rank_str//'_'//type_str//'_DATA: ',trim(var_name)//' NOT IN DATASET: ZERO VALUE ASSIGNED',msglvl=1)
        ! Because of the non-stored Zero assumption present in some cases - set all returned variables to zero 
        ! - make sure ier is set so calling routine can deal with possible errors
        vars = 0

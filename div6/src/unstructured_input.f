@@ -214,6 +214,19 @@ c     Written to Unit 41 - 0 = off - 1 = 0n .. default ON
 c
       write_tran = 1
 c
+c
+c -----------------------------------------------------------------------
+c
+c     TAG A07: 
+c
+c
+c     Option to write a netcdf version of the raw data file 
+c     0 = off   1 = 0n .. default OFF
+c
+c
+      netcdf_opt = 0
+c
+c
 c -----------------------------------------------------------------------
 c
 c     TAG C21:
