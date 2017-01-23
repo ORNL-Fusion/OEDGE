@@ -1,6 +1,7 @@
 module ero_plasma
   use error_handling
   use allocate_arrays
+  use utilities
   use oedge_plasma_interface
 
   integer :: specunit
