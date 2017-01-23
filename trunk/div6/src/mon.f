@@ -1548,7 +1548,7 @@ c
 c        Calculate the modified line profile for the 
 c        instrument width. 
 c
-         call dzero(mod_line_profile,2*max_lp_bins+1) 
+         call dzero(modified_line_profile,2*max_lp_bins+1) 
 c
          do in = -max_lp_bins+1, max_lp_bins-1
 c
@@ -1565,13 +1565,13 @@ c
                   instf =  exp(-((lam-lam0)/lp_instrument_width)**2)
                endif
 
-               mod_line_profile(in)=mod_line_profile(in) +
+               modified_line_profile(in)=modified_line_profile(in) +
      >                          line_profile(ii) * instf
 
             end do 
 c
             maxraw = max(maxraw,line_profile(in))
-            maxinst = max(maxinst,mod_line_profile(in))
+            maxinst = max(maxinst,modified_line_profile(in))
 c
         end do
 c
@@ -1585,9 +1585,9 @@ c
         do in =  -max_lp_bins, max_lp_bins
            write(6,'(i5,1x,f10.5,4(1x,g20.12))')
      >             in,in*lp_bin_width,line_profile(in),
-     >             mod_line_profile(in),
+     >             modified_line_profile(in),
      >             line_profile(in)/maxraw,
-     >             mod_line_profile(in)/maxinst
+     >             modified_line_profile(in)/maxinst
         end do
 c 
       endif

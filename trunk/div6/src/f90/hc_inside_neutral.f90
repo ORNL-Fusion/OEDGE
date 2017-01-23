@@ -776,7 +776,7 @@ Contains
                 HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) = &
                      &  HC_Ion_Trap_Density ( Launch_Cell, Launch_Ring) + Sput_Weight
 
-             ElseIf ((Current_Z .ge.  Z_X_Point .and.  ReFCT .eq. 1) .or. (Current_Z .le.  Z_X_Point .and.  ReFCT .eq. 0)) Then
+             ElseIf ((Current_Z .ge.  Z_X_Point .and.  hc_xpoint_up) .or. (Current_Z .le.  Z_X_Point .and.  (.not.hc_xpoint_up))) Then
                 ! Divertor region
                 HC_InDIV = .True.
 

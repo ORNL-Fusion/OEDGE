@@ -29,7 +29,7 @@ C *****************************************************************
 C
       DOUBLE PRECISION ARG1,ARG2,ARG3,ARG4
       double precision n,v
-      INTEGER IR,J,IK,NS,PLATEOPT,IRLIMIT,NSVAL
+      INTEGER IR,J,IK,NS,PLATEOPT,IRLIMIT
       INTEGER IKMID,ikstart,ikend,ikfirst,iklast
       DOUBLE PRECISION DS ,V0,V0I,PINF,PINFI
       DOUBLE PRECISION RCF,RCFI
@@ -81,7 +81,7 @@ c
      >                         ter1a,ter1ai,tir1a,tir1ai,
      >                         ter1b,ter1bi,tir1b,tir1bi
 C
-      NSVAL = MAXSN
+c      NSVAL = MAXSN
 C
 C
        DO 600 IR = IRlim1, IRLIM2

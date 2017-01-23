@@ -233,7 +233,16 @@
 		 Maximum_R = rmax ! Maximum R on grid.
 		 Maximum_Z = zmax ! Maximum Z on grid.
 		 Grid_Error = .false. ! GRIDERR, False means no grid error (written by gridpos).
-		 ReFCT = refct ! Reflection, set in TAU from GRID2D geometry.
+
+                 !
+                 ! jdemod - refct isn't reliable to indicate grid geometry and is being replaced by the xpoint_up
+                 !          value calculated based on grid geometry
+                 !
+                 hc_xpoint_up = xpoint_up ! set the overall grid geometry
+                 ! jdemod
+                 ! note: this doesn't work since the variable names are the same ... the one in scope is 
+                 !       the one found in comtor
+		 hc_ReFCT = refct ! Reflection, set in TAU from GRID2D geometry.
 		 Max_Velocity_Cells_Per_Ring = maxvnks ! MAXVNKS, Used for ion velocity counting.
 		
 	End Subroutine Initialize_Global_Geom_Data

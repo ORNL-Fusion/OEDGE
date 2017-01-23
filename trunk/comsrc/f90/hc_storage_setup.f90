@@ -134,7 +134,10 @@ Module HC_Storage_Setup
   Integer :: Num_Upper_Rings ! NRS
   Integer :: Num_Lower_Rings ! NRS2
   Integer :: Num_Wall_Points !  WALLPTS
-  Integer :: ReFCT ! REFCT
+  ! jdemod - needed to make the name different from the variable in comtor
+  Integer :: hc_ReFCT ! REFCT
+  ! jdemod - switch to using xpoint_up to define grid geometry from refct
+  Logical :: hc_xpoint_up ! xpoint_up
   Integer :: Special_Ring ! IRSPEC
   Integer :: Outer_SOL_Ring ! IRSEP2
   Integer :: Outer_Wall_Ring ! IRWALL2

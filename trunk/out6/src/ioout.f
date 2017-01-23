@@ -1671,6 +1671,67 @@ C
      >               BUFFER
       RETURN
       END
+
+
+
+      SUBROUTINE RDGCOL(graph,r1p,z1p,r2p,z2p,probe_diameter,
+     >                  dperp,ierr)
+      implicit none
+      integer ierr
+      real r1p,z1p,r2p,z2p,probe_diameter, dperp
+      CHARACTER GRAPH*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+c  *  RDGCOL: Read in a second row of graph details for the collector
+c  *          probe specification.
+c  *          R1, Z1, R2, Z2, diameter, dperp
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+      include 'reader'
+      CHARACTER MESAGE*72
+      integer in
+c
+      ierr = 0
+C
+c     Read first line - osm probe parameters
+c
+      MESAGE = 'END OF FILE ON UNIT 5'
+  100 IF (IBUF.EQ.0) READ (5,'(a512)',ERR=9998,END=9998) BUFFER
+      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDGCOL'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c
+c     jdemod - Added so that global plot modifiers could be read from
+c              anywhere. 
+c
+      IF (BUFFER(2:2).EQ.'#') THEN
+        CALL Read_AdditionalPlotData(BUFFER)
+        GOTO 100
+      ENDIF
+C
+      MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,r1p,z1p,r2p,z2p,
+     >                                  probe_diameter,dperp
+c
+
+9997  continue 
+c
+      RETURN
+C
+ 9998 IERR = 1
+      RETURN
+C
+ 9999 IERR = 1
+      WRITE (7,'(1X,2A,3(/1X,A))')
+     >  'RDGCOL: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >               BUFFER
+      RETURN
+      END
+
+
+
 c
 c psmod
 c
@@ -1724,7 +1785,7 @@ c
 c psmod
 c
 c
-      SUBROUTINE GET (TITLE,NIZS,JOB,equil,
+      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
      >                FACTA,FACTB,ITER,NITERS)
       use subgrid
 c slmod begin
@@ -1734,6 +1795,7 @@ c slmod end
 C     INCLUDE   "PARAMS"
       include 'params'
       CHARACTER*(*) TITLE,JOB,equil
+      character*(*) desc
       INTEGER   NIZS,ITER,NITERS
       REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
@@ -1801,8 +1863,8 @@ c     Version control - calculate a unique and always increasing
 c     version code.
 c     Maximum revison number for a given version number is maxrev-1 
 c
-      integer   maxrev,version_code
-      parameter (maxrev=100)
+      integer :: version_code
+      integer,parameter :: maxrev=100
 c slmod begin 
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
@@ -1906,14 +1968,26 @@ c                            equilibrium, shot number and time slice
 c
 c        Added description - not used in OUT so only loaded locally
 c                            for now - can propagate later if req'd 
-
+c
+c         write(0,*) 'version:',version_code
+c
          if (version_code.ge.6*maxrev+23) then 
             READ  (8) tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
+            desc = trim(tmpdesc2)
+c            write(0,*) 'TITLE:',
+c     >                len_trim(tmptitle2),':',trim(tmptitle2),':'
+c            write(0,*) 'DESC :',
+c     >                len_trim(tmpdesc2),':',trim(tmpdesc2),':'
+c            
          elseif (version_code.ge.6*maxrev+10) then 
             READ  (8) tmpTITLE2,tmpdesc,JOB,EQUIL,ISHOT,TSLICE
+            desc = trim(tmpdesc)
          else
             READ  (8) tmpTITLE2,JOB,EQUIL,ISHOT,TSLICE
+            desc = ''
          endif
+c
+c         write(0,*) 'DESC:',len_trim(desc),':',trim(desc),':'
 c
 
 
@@ -2082,7 +2156,9 @@ c...  MAXNDS repair required:
       CALL RINOUT ('R DEPS  ',DEPS  ,MAXNDS_*MAXIZS)
       CALL RINOUT ('R NEROS ',NEROS ,MAXNDS_*5)
 c
-      if (version_code.ge.(5*maxrev+11)) then 
+      if (version_code.ge.(6*maxrev+47)) then 
+         CALL RINOUT ('R PRDEPS',PROMPTDEPS,MAXNDS_*9)
+      elseif (version_code.ge.(5*maxrev+11)) then 
 c...     MAXNDS repair required:
          CALL RINOUT ('R PRDEPS',PROMPTDEPS,MAXNDS_*6)
       elseif (version_code.ge.(5*maxrev+8)) then 
@@ -2161,9 +2237,19 @@ C
       CALL RINOUT ('R KKS   ',KKS   ,MAXNRS)
       CALL RINOUT ('R KSS   ',KSS   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KPS   ',KPS   ,MAXNKS*MAXNRS)
-      CALL RINOUT ('R KNORMS',KNORMS,MAXNKS*MAXNRS)
+
+      ! jdemod - removed as of 6.47 since it does nothing
+      if (version_code.lt.(6*maxrev+47)) then 
+         CALL RINOUT ('R KNORMS',KNORMS,MAXNKS*MAXNRS)
+      endif
+
       CALL RINOUT ('R KPERPS',KPERPS,MAXNKS*MAXNRS)
-      CALL RINOUT ('R KCURVS',KCURVS,MAXNKS*MAXNRS)
+
+      ! jdemod - removed as of 6.47 since it does nothing
+      if (version_code.lt.(6*maxrev+47)) then 
+         CALL RINOUT ('R KCURVS',KCURVS,MAXNKS*MAXNRS)
+      endif
+
       CALL RINOUT ('R KVOLS ',KVOLS ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KAREAS',KAREAS,MAXNKS*MAXNRS)
       CALL RINOUT ('R KTOTAS',KTOTAS,MAXNRS)
@@ -2189,8 +2275,10 @@ c
 c
 c     jdemod - load distin and distout ... cross field
 c              widths of cells
+c            - this was accidentally added since already
+c              written below - removed on version 47
 c
-      if (version_code.ge.(6*maxrev+46)) then
+      if (version_code.eq.(6*maxrev+46)) then
          CALL RINOUT ('R DISTIN',distin ,MAXNKS*MAXNRS)
          CALL RINOUT ('R DISTOT',distout,MAXNKS*MAXNRS)
       endif
@@ -2261,8 +2349,17 @@ c
 c
       CALL RINOUT ('R KTEDS ',KTEDS ,MAXNDS_)
       CALL RINOUT ('R KTIDS ',KTIDS ,MAXNDS_)
-      CALL RINOUT ('R KTI3LS',KTI3LS,MAXNDS_)
-      CALL RINOUT ('R KTINJ ',KTINJ ,MAXNDS_)
+
+
+      !
+      ! jdemod - removed in 6.47 since they are not used
+      !          in OUT at all
+      !
+      if (version_code.lt.(6*maxrev+47)) then 
+         CALL RINOUT ('R KTI3LS',KTI3LS,MAXNDS_)
+         CALL RINOUT ('R KTINJ ',KTINJ ,MAXNDS_)
+      endif
+
       CALL RINOUT ('R KNDS  ',KNDS  ,MAXNDS_)
       CALL RINOUT ('R KFEDS ',KFEDS ,MAXNDS_)
       CALL RINOUT ('R KFIDS ',KFIDS ,MAXNDS_)
@@ -2373,7 +2470,12 @@ c
       call rinout ('R ntrap ',ntrap,maxnks*maxnrs)
       call rinout ('R ndivt ',ndivert,maxnks*maxnrs)
       call rinout ('R nmsol ',nmsol,maxnks*maxnrs)
-      call rinout ('R WTSOU ',wtsource,maxpts_*maxnrs*4*5)
+      
+      if (version_code.ge.(6*maxrev+47)) then 
+         call rinout ('R WTSOU ',wtsource,maxpts_*maxnrs*4*6)
+      else
+         call rinout ('R WTSOU ',wtsource,maxpts_*maxnrs*4*5)
+      endif
 c
       if (version_code.ge.(6*maxrev+24)) then 
          call rinout ('R WTDEP ',wtdep,maxpts_*(maxpts_+1)*3)
@@ -2489,7 +2591,8 @@ c            See not in the corresponding call in DIVSTORE.F. -SL, 07/10/2011
 c
 c             CALL R8INOUT ('R LP',line_profile,max_lp_bins*2+1)
 c slmod end
-             CALL R8INOUT ('R MOD_LP',mod_line_profile,max_lp_bins*2+1)
+             CALL R8INOUT ('R MOD_LP',modified_line_profile,
+     >                                max_lp_bins*2+1)
          endif     
 c
       endif
@@ -2524,7 +2627,7 @@ c
 c
          if (global_hc_follow_option.ne.0) then
 c
-            call global_hc_read_raw_data 
+            call global_hc_read_raw_data(version_code,maxrev)
 c
          endif
 c
@@ -2542,8 +2645,15 @@ c
 
       endif
 c
-      if (version_code.ge.6*maxrev+45) then 
+c     jdemod - osmpot2 was transferred incorrectly - fixed in 6.47
+c
+      if (version_code.ge.6*maxrev+47) then 
+         call rinout ('R POT',osmpot2,(maxnks+2)*maxnrs)
+      elseif (version_code.ge.6*maxrev+45) then 
          call rinout ('R POT',osmpot2,maxnks*maxnrs)
+      endif
+
+      if (version_code.ge.6*maxrev+45) then 
          call rinout ('R E_RAD',e_rad,maxnks*maxnrs)
          call rinout ('R E_POL',e_pol,maxnks*maxnrs)
          call rinout ('R ExB_R',exb_rad_drft,maxnks*maxnrs)

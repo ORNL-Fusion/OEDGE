@@ -80,7 +80,7 @@
            create_dim(d) = .true.
         ELSE
            create_dim(d) = .false.
-           ier = handle_nf90_error(check_existing_dimension(dim_id, dim_name, nd(d)))
+           ier = handle_nf90_error(check_existing_dimension(var_name,dim_id, dim_name, nd(d)))
            IF (ier .ne. nf90_noerr) RETURN
         ENDIF
      ENDDO

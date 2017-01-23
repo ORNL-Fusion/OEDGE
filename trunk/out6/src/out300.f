@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       subroutine out300(iref,graph,iopt,ierr)
+      use mod_collector_probe
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
@@ -54,6 +55,11 @@ c
       real    axmin,axmax
       integer exp_ds, exp_vcalcopt,exp_tcalcopt,exp_dataopt
       real    exp_param, exp_offset,exp_offsets(4)
+c
+c     collector probe
+c
+      real probe_diameter,probe_dperp
+
 c
 c     For LP - line profiles plots - 345, 346
 c
@@ -223,17 +229,31 @@ c
 c
         if (iopt.eq.0) return
 c
-        call rdgrcp(graph3,r1p,z1p,r2p,z2p,int_type,exp_ds,
+        if (iref.eq.361) then 
+
+           call rdgcol(graph3,r1p,z1p,r2p,z2p,probe_diameter,
+     >                 probe_dperp,ierr)
+           if (ierr.ne.0) then
+               WRITE(6,*) 'RDGCOL ERROR READING COLLECTOR'//
+     >                    ' PROBE GRAPH DETAILS'
+               IERR = 0
+               RETURN
+           endif
+           
+        else
+c
+           call rdgrcp(graph3,r1p,z1p,r2p,z2p,int_type,exp_ds,
      >              exp_offsets,exp_dataopt,exp_vcalcopt,
      >              exp_tcalcopt,
      >              exp_param,ierr)
 c
-        exp_offset = exp_offsets(1) 
+           exp_offset = exp_offsets(1) 
 c
-        if (ierr.eq.1) then
-            WRITE(6,*) 'RDGRCP ERROR READING RCP GRAPH DETAILS'
-            IERR = 0
-            RETURN
+           if (ierr.eq.1) then
+               WRITE(6,*) 'RDGRCP ERROR READING RCP GRAPH DETAILS'
+               IERR = 0
+               RETURN
+           endif
         endif
 c
       ELSEIF (IREF.LT.400) THEN
@@ -955,7 +975,7 @@ c
 c
               twids(ip) = lp_bin_width
               tvals(ip,1) = line_profile(in) 
-              tvals(ip,2) = mod_line_profile(in) 
+              tvals(ip,2) = modified_line_profile(in) 
 c
               maxmod = max(maxmod,tvals(ip,2)) 
 c
@@ -1066,7 +1086,8 @@ c
                  if (lp_out.gt.touts(ip)-twids(ip)/2.0.and.
      >               lp_out.le.touts(ip)+twids(ip)/2.0) then 
                      tvals(ip,1) = tvals(ip,1) + line_profile(in)
-                     tvals(ip,2) = tvals(ip,2) + mod_line_profile(in)
+                     tvals(ip,2) = tvals(ip,2) 
+     >                             + modified_line_profile(in)
                      lp_cnt = lp_cnt + 1.0
 c 
                      write(6,'(a,2i5,5(1x,f18.6))') 'LPA:',ip,in,
@@ -1179,7 +1200,7 @@ c
            touts(ip) = in * lp_bin_width + lp_wave
            twids(ip) = lp_bin_width
            tvals(ip,1) = line_profile(in) 
-           tvals(ip,2) = mod_line_profile(in) 
+           tvals(ip,2) = modified_line_profile(in) 
 c
            maxmod = max(maxmod,tvals(ip,2)) 
 c
@@ -2783,6 +2804,16 @@ c
 c
 c--------------------------------------------------------------------
 c
+c        Collector probe estimates
+c
+      elseif (iref.eq.361) then 
+c
+c        model collector probe
+c
+
+         call collector_probe(r1p,z1p,r2p,z2p,probe_diameter,
+     >                        probe_dperp,iopt)
+
 
       ELSEIF (IREF.EQ.391) THEN
 C

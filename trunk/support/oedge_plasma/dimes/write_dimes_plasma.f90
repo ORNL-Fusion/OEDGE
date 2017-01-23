@@ -164,8 +164,24 @@ program write_dimes_plasma
   ! CP OF DIMES ON OEDGE GRID = 1.4821 + 0.019512 = 1.501612
   !
   ! 
-  r_offset = 1.501612
+  !r_offset = 1.501612
+  !z_offset = -1.25
+  !
+  !
+
+  ! 167196 - DIMES tungsten ring exposure experiment
+  ! W ring 1.404 to 1.454
+  ! DIMES from 1.464 to 1.514 with center at 1.489
+  ! Average strike point at 1.422
+  ! Grid strike point at 1.425
+  !
+  ! Center plasma midway between W Ring and DIMES
+  ! R = 1.459 ... which is 1.462 in OEDGE space with strike point at 1.425m
+  !
+
+  r_offset =  1.462
   z_offset = -1.25
+
 
 
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
@@ -197,17 +213,17 @@ program write_dimes_plasma
 
   write(0,'(a)') 'Writing plasma to file:'//trim(outfilename)
 
-  nr = 100
+  nr = 120
   !nz = 0
-  nz = 50
+  nz = 60
 
-  rmin = -0.05
-  rmax = 0.05
+  rmin = -0.06
+  rmax = 0.06
 
   !zmin = 0.0
   !zmax = 0.0
   zmin = 0.0
-  zmax = 0.05
+  zmax = 0.06
 
   if ((rmax.eq.rmin).or.nr.eq.0) then 
      dr=0.0

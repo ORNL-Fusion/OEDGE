@@ -24,6 +24,13 @@ module error_handling
   character,public :: error_message_data*512
   character,public :: debug_message_data*512
 
+  character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']
+  
+  integer,parameter ::  default_msglvl = 3
+  integer,parameter ::  min_msglvl = 1
+  integer,parameter ::  max_msglvl = 4
+
+
 contains
 
   !
@@ -77,9 +84,9 @@ contains
 
     len1 = len_trim(msg)
 
-    if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
-    if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
-    if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+    if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+    if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+    if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
 
 
   end subroutine basemsg
@@ -93,72 +100,104 @@ contains
 
     len1 = len_trim(msg)
 
-    write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1)
+    write(unit,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
 
   end subroutine ubasemsg
 
 
-  subroutine rerrmsg(msg,a,unit)
+  subroutine rerrmsg(msg,a,unit,msglvl)
     implicit none
     character*(*) msg
     real a
-    integer,optional :: unit
+    integer,optional :: unit,msglvl
 
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
 
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
     else
 
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
 
     endif
 
   end subroutine rerrmsg
 
-  subroutine r8errmsg(msg,a,unit)
+  subroutine r8errmsg(msg,a,unit,msglvl)
     implicit none
     character*(*) msg
     real(kind=R8) ::  a
-    integer,optional :: unit
-
+    integer,optional :: unit,msglvl
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
 
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
     else
 
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'VALUE =',a
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
 
     endif
 
   end subroutine r8errmsg
 
-  subroutine r8x2errmsg(msg,a,b,unit)
+  subroutine r8x2errmsg(msg,a,b,unit,msglvl)
     implicit none
     character*(*) msg
     real(kind=R8) ::  a,b
-    integer,optional :: unit
+    integer,optional :: unit,msglvl
 
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
 
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
     if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+       write(unit,'(a,1x,a,1x,a,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
     else
 
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1p,2(1x,g18.8))') 'ERROR:',msg(1:len1),'VALUE =',a,b
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
 
     endif
 
@@ -166,63 +205,97 @@ contains
 
 
 
-  subroutine ierrmsg(msg,a,unit)
+  subroutine ierrmsg(msg,a,unit,msglvl)
     implicit none
     character*(*) msg
     integer a
-    integer,optional :: unit
+    integer,optional :: unit,msglvl
 
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
 
-    if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
     else
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,i10)') 'ERROR:',msg(1:len1),'VALUE =',a
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
     endif
 
   end subroutine ierrmsg
 
-  subroutine cerrmsg(msg,a,unit)
+  subroutine cerrmsg(msg,a,unit,msglvl)
     implicit none
     character*(*) msg,a
-    integer,optional :: unit
+    integer,optional :: unit,msglvl
 
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
     len2 = len_trim(a)
-
-    if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
+    
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
     else
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a)') 'ERROR:',msg(1:len1),'VALUE =',a(1:len2)
+       lvl = default_msglvl
+    endif
+
+   
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
     endif
 
   end subroutine cerrmsg
 
-  subroutine crerrmsg(msg,a,r,unit)
+  subroutine crerrmsg(msg,a,r,unit,msglvl)
     implicit none
     character*(*) msg,a
     real :: r
-    integer,optional :: unit
+    integer,optional :: unit,msglvl
 
     integer len1,len2
+    integer :: lvl
 
     len1 = len_trim(msg)
     len2 = len_trim(a)
 
-    if (present(unit)) then 
-       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
     else
-       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
-       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
-       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'ERROR:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
     endif
 
   end subroutine crerrmsg

@@ -1885,8 +1885,8 @@ c                Particle starting in trap region
 c
                  intrap = .true.
                  ntrap(ikstart,irstart) = ntrap(ikstart,irstart) + sputy
-              elseif ((z.ge.zxp.and.refct.eq.1).or.
-     >                (z.le.zxp.and.refct.eq.0)) then
+              elseif ((z.ge.zxp.and.xpoint_up).or.
+     >                (z.le.zxp.and.(.not.xpoint_up))) then
 c
 c                Divertor region
 c
@@ -3438,12 +3438,12 @@ c
       call prc('FOR NEUTRALS ORIGINATING FROM SIDE 1 and SIDE 2')
       call prb
 c
-      if (refct.eq.1) then
-         call prc('  NOTE: The (R,Z) values listed are for grid')
-         call prc('  coordinates prior to the grid being reflected')
-         call prc('  in the R-axis.')
-      endif
-
+c      if (refct.eq.1) then
+c         call prc('  NOTE: The (R,Z) values listed are for grid')
+c         call prc('  coordinates prior to the grid being reflected')
+c         call prc('  in the R-axis.')
+c      endif
+c
 
       call pr_trace('DIV','PRINT ADDITIONAL SUMMARIES')
 c

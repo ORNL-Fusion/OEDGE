@@ -5,7 +5,7 @@ module allocatable_input_data
 
       !
       ! The purpose of this module is to accumulate declarations of 
-      ! allocatable data as well asroutines to read and manipulate it
+      ! allocatable data as well as routines to read and manipulate it
       !
 
 
