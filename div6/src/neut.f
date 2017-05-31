@@ -2303,11 +2303,16 @@ c          and intial energy of CTEM1.
 c
            fp_VIN = 1.38E4 * SQRT (CTEM1/CRMI)
 c
-           if (fp_plasma_opt.eq.0) then 
+           if (fp_plasma_opt.eq.0.or.fp_plasma_opt.eq.4) then 
+c             Put fp_plasma_opt=4 here for now ... however, this is not
+c             correct since fp_plasma_opt 4 allows for spatial variation
+c             of the plasma in the fp ... so the method used to estimate
+c             lambiz here won't be accurate. 
               fp_lamiz =  fp_vin * kfizs(fp_ik,fp_ir,0) 
               write(6,'(a,3i4,4(1x,g12.5))') 'FP_NEUT:0:',
      >                 iwstart,fp_ik,fp_ir,fp_lamiz
 
+              
            elseif (fp_plasma_opt.eq.1) then 
 c
 c             CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NPTS,TE,NE,SIGMA_V)
@@ -2329,7 +2334,7 @@ c
      >                 iwstart,fp_ik,fp_ir,fp_lamiz,
      >                 fp_sigmav,fp_te,knbs(fp_ik,fp_ir)
 c
-           elseif (fp_plasma_opt.eq.2) then 
+           elseif (fp_plasma_opt.eq.2.or.fp_plasma_opt.eq.3) then 
 c
 c             CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NPTS,TE,NE,SIGMA_V)
 c
@@ -2818,7 +2823,8 @@ c slmod end
           GOTO 899
         ENDIF
 C
-        if (iprod.eq.(iprod/100)*100.or.debugn) then 
+c        if (iprod.eq.(iprod/100)*100.or.debugn) then 
+        if (debugn) then 
 
            write (6,'(a,i6,3i4,5(1x,g13.5))')
      >         'LAUNCH:',iprod,id,ik,ir,r,z,vin,angle,tangnt
@@ -2927,16 +2933,16 @@ c
 c
 c       Write out diagnostic information   
 c
-        if ( status.le.10.and.
-     >      (((nprod-lprod+1).lt.1000).or.
-     >       ((nprod-lprod+1).lt.10000.and.(iprod/10)*10.0.eq.iprod).or.
-     >       ((iprod/100)*100.0.eq.iprod))   ) then 
-           write (6,'(a,2i6,4i4,7(1x,g12.5))') 
-     >                   'NEUT-A:',iprod,lprod+iprod-1,
-     >                       ik,ir,id,is,r,z,vin,xvelf,yvelf,
-     >                       cist
+c        if ( status.le.10.and.
+c     >      (((nprod-lprod+1).lt.1000).or.
+c     >       ((nprod-lprod+1).lt.10000.and.(iprod/10)*10.0.eq.iprod).or.
+c     >       ((iprod/100)*100.0.eq.iprod))   ) then 
+c           write (6,'(a,2i6,4i4,7(1x,g12.5))') 
+c     >                   'NEUT-A:',iprod,lprod+iprod-1,
+c     >                       ik,ir,id,is,r,z,vin,xvelf,yvelf,
+c     >                       cist
 c     >                       ,ZA02AS (1) - STATIM
-        endif 
+c        endif 
 c
 c        if ((lprod+iprod-1).eq.52) then 
 c           debugn = .true.

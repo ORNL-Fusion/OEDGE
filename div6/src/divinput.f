@@ -223,7 +223,7 @@ c
       CALL RDI (CTARGOPT,.TRUE.,0,.TRUE.,6,'TARGET POSITION OPT  ',IERR)
       call rdi (cmiropt, .true.,0,.true.,4,'TARGET MIRROR OPT    ',IERR)
       CALL RDI (CGEOOPT,.TRUE.,-1,.TRUE.,1,'GEOMETRY OPTION      ',IERR)
-      CALL RDI (FPOPT,   .TRUE.,0,.TRUE.,5,'ION PERIPHERY OPT    ',IERR)
+      CALL RDI (FPOPT,   .TRUE.,0,.TRUE.,6,'ION PERIPHERY OPT    ',IERR)
       call rdi (fpropt,.true.,  0,.true.,1,'FP RECYCLE OPT       ',ierr)
       CALL RDI (CPDRFT,.TRUE., 0,.TRUE., 3,'POL. DRIFT OPTION    ',IERR)
 C

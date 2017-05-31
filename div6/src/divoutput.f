@@ -5317,6 +5317,28 @@ c
        call prc ('                       FROM THE EDGE OF THE TARGET')
        endif
 
+      ELSEIF (FPOPT.EQ.6) THEN
+       CALL PRC (sa//'PERIPHERY OPTION 6 :'// 
+     >               ' FAR PERIPHERY MODEL AT GRID EDGE')
+       CALL PRC (sp//'IONS TRACKED BEYOND LAST RING')
+       CALL PRC (sp//'USING FAR PERIPHERY MODEL')
+       CALL PRc (sp//'DISTANCE TO WALLS EXTENDS TO EDGE'//
+     >               ' OF PERIPHERY MESH')
+       CALL PRc (sp//'PARRALLEL TRANSPORT IS ON')
+       call prc (sp//'PERIPHERAL PLASMA IS SPECIFIED BY THE'//
+     >               ' FP_PLASMA OPTION')
+       call prc (sp//'PERIPHERAL GEOMETRY TAKEN FROM LAST REAL RING')
+       CALL PRR (sp//'FP DIFFUSION COEFF  : ',CDPERPFP)
+c
+       if (fpropt.eq.0.or.(fpropt.eq.1.and.cselfs.eq.0)) then
+       call prc ('  FP RECYCLE OPTION 0: IONS ARE LOST AT FP TARGET OR W
+     >ALL IMPACT')
+       elseif (fpropt.eq.1) then
+       call prc ('  FP RECYCLE OPTION 1: FP TARGET AND WALL LOSSES ARE R
+     >EINJECTED')
+       call prc ('                       FROM THE EDGE OF THE TARGET')
+       endif
+
       ENDIF
 C-----------------------------------------------------------------------
       call prb
@@ -5328,7 +5350,7 @@ C-----------------------------------------------------------------------
 c
 c     FP Plasma option ---------------------------------------------
 c
-      if (fpopt.eq.5.or.fp_neut_opt.ne.0) then 
+      if (fpopt.eq.5.or.fpopt.eq.6.or.fp_neut_opt.ne.0) then 
 c
        call prb
        if (fp_plasma_opt.eq.0) then  
@@ -5344,18 +5366,34 @@ c
 c
        elseif (fp_plasma_opt.eq.2) then 
 c
-        call prc('  FP PLASMA OPTION 1 : FP PLASMA SPECIFIED'//
+        call prc('  FP PLASMA OPTION 2 : FP PLASMA SPECIFIED'//
      >          ' GRID CELL') 
         call prr('                       FP TEMPERATURE = ',fp_te)
         call prr('                       FP DENSITY     = ',fp_ne)
 c
        elseif (fp_plasma_opt.eq.3) then 
 c
-        call prc('  FP PLASMA OPTION 1 : FP PLASMA SPECIFIED'//
+        call prc('  FP PLASMA OPTION 3 : FP PLASMA SPECIFIED'//
      >          ' GRID CELL') 
         call prr('                       FP TEMPERATURE = ',fp_te)
         call prr('                       FP DENSITY     = ',fp_ne)
         call prc('                       Vb and E       = 0.0')
+c
+       elseif (fp_plasma_opt.eq.4) then  
+c
+        call prc('  FP PLASMA OPTION 4 : INITIAL PLASMA DATA'//
+     >           ' FROM NEAREST GRID CELL') 
+c
+        call prc('                       FP GRID CELLS SETUP'// 
+     >           ' SEPARATELY FOR EACH RING OF PERIPHERY') 
+        call prc('                       FLOWS ARE TOWARD'// 
+     >           ' NEAREST WALL INTERSECTION USING SIMPLE'//
+     >           ' MODEL') 
+        call prc('                       TEMPERATURES ARE'//
+     >           ' CONSTANT ALONG RING')
+        call prc('                       DENSITY IS'//
+     >           ' CONSTANT ALONG RING')
+        call prc('                       WARNING: EXPERIMENTAL')
 c
        endif
 

@@ -1,5 +1,7 @@
 module mod_fp_transport
 
+  use mod_fp_data
+
   !
   ! This module implements the rules for ion transport in the peripheral plasma region. The options 
   ! implemented are a subset of the transport options supported for the main grid. This module is designed
@@ -24,6 +26,12 @@ module mod_fp_transport
   !
   ! Use specifications for IRWALL and IRTRAP for special conditions within FP? NO - use FP specific arrays 
   !
+  ! Added binning and recording of particle location in FP as a function of ik and radial distance from the edge of the grid. 
+  ! Number of bins in FP is specified and the distance assigned to each is  Max_R_wall_distance/N_R_bins
+  ! This is only a crude approximation in many ways since the plasma is not being changed radially and the geometry is also
+  ! not being properly treated. However, the goal is to obtain a rough estimate of the density profile beyond the grid edge. 
+  ! 
+  !
   ! To do and possible enhancements:
   !
   ! Add change of state code - use a callback? or check for HC vs. normal?
@@ -34,6 +42,10 @@ module mod_fp_transport
   !                   - change of state requires calls to set the particle characteristics including mass if it has changed
   !                     followed by a call to init_taus and eval_taus to set the characteristic times appropriately - it also requires
   !                     a call to the fp_set_tgrad_coeffs routine if the mass or charge has changed. 
+  !
+  !
+  !
+
 
   type particle_characteristics
 
@@ -45,8 +57,10 @@ module mod_fp_transport
      ! real :: r,z
      !
      integer :: ik,ir,iz,istate
+     integer :: fp_bin, last_fp_bin
      real :: mass
      integer :: fp_reg
+     real :: sputy  ! particle weight
 
   end type particle_characteristics
 
@@ -137,6 +151,9 @@ module mod_fp_transport
 
   logical,private :: mod_debug_fp
 
+
+
+
 contains
 
 
@@ -219,7 +236,7 @@ contains
 
 
 
-  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end)
+  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,sputy,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end)
 
     use taus
 
@@ -227,6 +244,7 @@ contains
     real,intent(in) :: s,cross,vel,temi,crmfp,smax
     integer,intent(in) :: ik,ir,iz,istate,fp_reg
     real,intent(in) :: drftv,sdrftv_start,sdrftv_end ! drift velocity for specific far periphery region
+    real,intent(in) :: sputy
 
     !
     ! Initialize transport coefficient routine
@@ -235,7 +253,7 @@ contains
     !
     ! Initialize the particle characteristics
     !
-    call fp_set_particle_data(s,cross,vel,temi,ik,ir,iz,istate,mfp,fp_reg)
+    call fp_set_particle_data(s,cross,vel,temi,ik,ir,iz,istate,mfp,sputy,fp_reg)
 
     !
     ! Initialize transport coefficient routine
@@ -248,13 +266,27 @@ contains
     endif
 
     call init_taus(mb,mfp,fp_rizb,fp_optb,fp_optc,fp_optd,fp_czenh,fp_cizeff,fp_ctemav,fp_irspec,fp_timestep)
+    
+    !
+    ! Record the particle for timestep and density purposes 
+    ! - the particle will be moved and experience one time step in the FP
+    !   even if it immediately steps back out of the FP
+    ! - the particle count is updated after each step is performed
+    !   but the step that brought the particle into the FP
+    !   also needs to be recoreded
+    !
+    !   The call to fp_bin_particle will also load the local plasma for the cell
+    !   if the calculated fp_bin differs from last_fp_bin. 
+    !
+    part%last_fp_bin = 0
+    call fp_bin_particle
 
     !
     ! Initialize the plasma characteristics - this includes setting the transport coefficients with a call to eval_taus
     !
     ! All calls to set_fp_plasma as the particle changes cells will update the transport coefficients
     !
-    call fp_set_plasma(ik,fp_reg)
+    !call fp_set_plasma(part%ik,part%fp_bin,part%fp_reg)
 
     !
     ! Initialize the local conditions
@@ -299,7 +331,7 @@ contains
                wall_impact         = 3,&
                target_impact       = 4)
 
-
+    
 
     !write(6,'(a,4i6,4(1x,g12.5))') 'FP:DEBUG1:',imp,rc,part%ik,part%ir,part%s,part%cross,cistfp
 
@@ -323,9 +355,17 @@ contains
     !     Initialize particle status
     !
     rc=Is_followed
+
+
+    ! update FP time step count - since one time step for a new particle can't exceed the 
+    !                             time step limit this check is omitted here
+    cistfp = cistfp + 1.0
+
+
     !
     !     Loop while particle remains in the periphery
     !
+
     do 
        !
        !        Execute parallel step - recalculate S 
@@ -361,6 +401,10 @@ contains
        !
        !         call fp_check_change_state
        !
+       !
+       ! Record particle location for later calculation of density
+       !
+       call fp_bin_particle
 
        !
        !        Update time step count
@@ -385,72 +429,6 @@ contains
 
 
   end subroutine fp_follow_particle
-
-
-
-  subroutine fp_set_plasma(ik,fp_reg)
-    use taus
-    implicit none
-    integer :: ik,fp_reg
-    real :: ne,te,ti,ef,vb,tgrade,tgradi
-
-    call fp_get_plasma(ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
-
-    if (ti.eq.0.0) then 
-       write(0,'(a,2i6,10(1x,g12.5))') 'FP_SET_PLASMA Ti=0.0',ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi
-    endif
-
-    plasma%ne = ne
-    plasma%te = te
-    plasma%ti = ti
-    plasma%vb = vb
-    plasma%ef = ef
-    plasma%tge = tgrade
-    plasma%tgi = tgradi
-
-
-    !
-    ! Update transport coefficients
-    !
-
-    call eval_taus(part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts)
-
-    if (mod_debug_fp) then 
-       !write(6,'(a,2i6,12g18.10)') 'FP TAUS:',part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts
-       !write(0,'(a,2i6,12g18.10)') 'FP TAUS:',part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts
-    endif
-
-  end subroutine fp_set_plasma
-
-
-
-  subroutine fp_get_plasma(ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
-    use mod_fperiph
-    implicit none
-    integer ik,fp_reg,id
-    real,intent(out) :: ne,te,ti,ef,vb,tgrade,tgradi
-    !
-    !      include 'params'
-    !      include 'fperiph_com'
-    !
-    !     Return the fp plasma for the specified cell
-    !
-    ne = fp_plasma(ik,fp_reg,1)
-    te = fp_plasma(ik,fp_reg,2)
-    ti = fp_plasma(ik,fp_reg,3)
-    vb = fp_plasma(ik,fp_reg,4)
-    ef = fp_plasma(ik,fp_reg,5)
-    tgrade = fp_plasma(ik,fp_reg,6)
-    tgradi = fp_plasma(ik,fp_reg,7)
-
-    if (mod_debug_fp) then 
-       !write(6,'(a,2i6,7g12.5)') 'FP PLASMA:',fp_reg,ik,(fp_plasma(ik,fp_reg,id),id=1,7)
-       !write(0,'(a,2i6,7g12.5)') 'FP PLASMA:',fp_reg,ik,(fp_plasma(ik,fp_reg,id),id=1,7)
-    endif 
-
-  end subroutine fp_get_plasma
-
-
 
 
   subroutine fp_set_tgrad_coefs
@@ -500,10 +478,11 @@ contains
 
 
 
-  subroutine fp_set_particle_data(s,cross,vel,temi,ik,ir,iz,istate,mass,fp_reg)
+  subroutine fp_set_particle_data(s,cross,vel,temi,ik,ir,iz,istate,mass,sputy,fp_reg)
     implicit none
     real,intent(in) :: s,cross,vel,temi,mass
     integer,intent(in) :: ik,ir,iz,istate,fp_reg
+    real,intent(in) :: sputy
 
     part%s = s
     part%cross = cross
@@ -514,6 +493,7 @@ contains
     part%ir = ir
     part%iz = iz
     part%istate=istate
+    part%sputy = sputy
     part%mass = mass
     part%fp_reg = fp_reg
 
@@ -525,10 +505,11 @@ contains
   end subroutine fp_set_particle_data
 
 
-  subroutine fp_get_particle_data(s,cross,vel,temi,ik,ir,iz,istate)
+  subroutine fp_get_particle_data(s,cross,vel,temi,ik,ir,iz,istate,sputy)
     implicit none
     real,intent(out) :: s,cross,vel,temi
     integer,intent(out) :: ik,ir,iz,istate
+    real,intent(out) :: sputy
 
     s = part%s
     cross = part%cross
@@ -538,6 +519,7 @@ contains
     ir = part%ir
     iz = part%iz
     istate = part%istate
+    sputy = part%sputy
 
     if (mod_debug_fp) then 
        write(6,'(a,5i6,10g12.5)') 'FP GET PART:',ik,ir,iz,istate,part%fp_reg,s,cross,vel,temi,part%mass
@@ -831,7 +813,7 @@ contains
     !
     ! Reverse sign of pinchvel for main FP to remain consistent with DIVIMP sign convention
     !
-    if (part%fp_reg.eq.fp_main) pinchvel = -pinchvel
+    if (part%fp_reg.eq.fp_main.or.part%fp_reg.eq.fp_main2) pinchvel = -pinchvel
 
     if (fp_pinchopt.eq.4.and.vr_assigned) then 
        part%CROSS = part%CROSS + PINCHVEL
@@ -1013,6 +995,7 @@ contains
     !     Initialize return code
     !
     rc = 0 
+    test_ik = 0
 
     !
     ! Set local values from module variable to make the code more readable
@@ -1078,7 +1061,7 @@ contains
           !  Update the periphery plasma and transport conditions in the transport module
           !
 
-          call fp_set_plasma(ik,fp_reg)
+          call fp_set_plasma(ik,part%fp_bin,fp_reg)
 
        endif
 
@@ -1147,11 +1130,11 @@ contains
     fp_reg = part%fp_reg
 
     if (cross.lt.0.0) then
-    !
-    !     Cross less than 0.0 - particle returns to grid - later code handles assignment of on grid cross value
-    !
+       !
+       !     Cross less than 0.0 - particle returns to grid - later code handles assignment of on grid cross value
+       !
        rc = 1
-    elseif (cross.gt.min_fp_walldist(ik,fp_reg)) then 
+    elseif (fpopt.eq.5.and.cross.gt.min_fp_walldist(ik,fp_reg)) then 
        !
        !     Particle is close to wall - need to check for wall impact
        !     Calculate walldist at specific S value
@@ -1188,6 +1171,40 @@ contains
 
        endif
 
+    elseif (fpopt.eq.6.and.cross.gt.fp_grid_dist(fp_n_bins+1,fp_reg)) then 
+       !
+       !     Particle has moved off the peripheral grid - assume striking wall
+       !
+       !     Assign exit point based on actual wall even if that wall crosses
+       !     the peripheral mesh. 
+       !
+       if (s.le.fp_s(2*ik-1,fp_reg)) then 
+          direction = -1
+       else
+          direction = 1
+       endif
+       !
+       frac =   (s-fp_s(2*ik-1,fp_reg))  / (fp_s(2*ik-1+direction,fp_reg) - fp_s(2*ik-1,fp_reg))
+
+       !walldist = fp_walldist(2*ik-1,fp_reg) + frac * ( fp_walldist(2*ik-1+direction,fp_reg) -fp_walldist(2*ik-1,fp_reg)) 
+       !
+       !        Check for wall impact
+       !
+       !if (cross.gt.walldist) then
+
+       rc = 3
+       !
+       !           Calculate approximate R,Z of wall intersection
+       !
+       rsect = fp_wallcoords(2*ik-1,fp_reg,1) +  &
+            & frac * ( fp_wallcoords(2*ik-1+direction,fp_reg,1)-fp_wallcoords(2*ik-1,fp_reg,1)) 
+
+       zsect = fp_wallcoords(2*ik-1,fp_reg,2) +  &
+            & frac * ( fp_wallcoords(2*ik-1+direction,fp_reg,2)-fp_wallcoords(2*ik-1,fp_reg,2)) 
+
+
+       ! endif
+
     endif
     !
     !     If cross is within the appropriate region then exit
@@ -1197,10 +1214,176 @@ contains
        write(6,'(a,3i6,12g18.10)') 'FP CHECK  C:',rc,ik,fp_reg,cross,walldist,min_fp_walldist(ik,fp_reg),rsect,zsect
        if (rc.eq.3) then 
           write(6,'(a,2i6,12g18.10)') 'FP WALL    :'
-       endif   
+       endif
     endif
 
   end subroutine fp_check_cross
+
+  subroutine fp_bin_particle
+    use mod_fperiph
+    implicit none
+    integer :: fp_bin
+    ! This routine spatially bins the particle location, assigns a cell and increments the count. 
+
+    ! At least initially all bins are the same spatial width in the FP ... so flux expansion isn't factored in at least initially. 
+
+    !fp_bin = fp_n_bins+1
+
+    part%fp_bin = min(int(part%cross/fp_r_bin_width(part%fp_reg)) + 1,fp_n_bins+1)
+
+    !write(0,'(a,i8,i8,10(1x,g12.5))') 'FP_BIN:',fp_bin,part%fp_reg,part%cross,fp_r_bin_width(part%fp_reg)
+
+    fp_density(part%ik,part%fp_bin,part%iz,part%fp_reg) =  fp_density(part%ik,part%fp_bin,part%iz,part%fp_reg) + part%sputy
+
+    ! update plasma conditions if particle has changed cell
+    if (part%fp_bin.ne.part%last_fp_bin) then
+       call fp_set_plasma(part%ik,part%fp_bin,part%fp_reg)
+    endif
+    part%last_fp_bin = part%fp_bin
+
+
+  end subroutine fp_bin_particle
+
+  subroutine fp_norm_density(nizs,factb)
+    use global_parameters
+    use mod_fperiph
+    use mod_cgeom
+    implicit none
+    integer :: nizs
+    real :: factb(-1:maxizs)
+    integer :: ireg, ik, ir, in, iz
+    real :: fact
+
+    ! if fp_density is not allocated then return from this routine since the 
+    ! fp option is not in use
+    if (.not.allocated(fp_density)) return
+
+
+    do ireg = 1,num_fp_regions
+       ir = fp_rings(ireg)
+       do ik = 1,nks(ir)
+          do in = 1,fp_n_bins+1
+             do iz = 0,nizs
+                if (fp_grid_area(ik,ireg).gt.0.0) then
+                   fact = factb(iz)/fp_grid_area(ik,ireg)
+                else
+                   fact = 0.0 
+                endif
+                fp_density(ik,in,iz,ireg) = fp_density(ik,in,iz,ireg) * fact
+             end do 
+          end do
+       end do
+    end do 
+
+  end subroutine fp_norm_density
+
+  subroutine fp_setup_grid
+    use mod_cgeom
+    use mod_fperiph
+    implicit none
+
+    ! this routine sets up the grid in the fp for estimating local density. This is pretty crude right now since the outermost ring geometry is used.
+    ! However, it has been set up with storage allocated to allow for improvements in the grid algorithm. The problem is that DIVIMP can't generate a real grid extension since it does
+    ! not have the magnetic information required to do so .. anything done here is approximate unless additional information can be loaded from somewhere. 
+    integer :: ierr,ik,ir,in,ireg
+    real :: maxdist
+    real :: cell_width
+
+    call fp_allocate_storage(ierr)
+
+    ! calculate radial width to use for cells
+    ! take median value of wall dists and divide by the number of cells ?
+    ! take maximum value of wall dists and divide by the number of cells ?
+    ! ... in the present work I need the additional grid mostly in the outer midplane region. 
+
+    !
+    ! Calculate cell width
+    !
+
+
+    do ireg = 1,num_fp_regions
+       if (fp_maxdist(ireg).gt.0.0.and.fp_grid_width_opt.eq.0) then 
+          fp_r_bin_width(ireg) = fp_maxdist(ireg)/fp_n_bins
+       elseif (ireg.eq.fp_main.or.ireg.eq.fp_main2) then
+          fp_r_bin_width(ireg) = fpxmaxo/fp_n_bins
+       elseif (ireg.eq.fp_pfz.or.ireg.eq.fp_pfz2) then
+          fp_r_bin_width(ireg) = fpxmaxi/fp_n_bins
+       endif
+
+       !write(0,'(a,2i8,10(1x,g12.5))') 'grid width:',fp_grid_width_opt,ireg,fp_maxdist(ireg),fp_r_bin_width(ireg)
+
+       ! calculate distances from grid edge for middle of each row of cells
+       do in = 1,fp_n_bins+1
+          fp_grid_dist(in,ireg) = (float(in-1) + 0.5) * fp_r_bin_width(ireg)
+          !write(0,'(a,2i8,10(1x,g12.5))') 'FP GRID DIST:',in,ireg,fp_grid_dist(in,ireg)
+       end do
+       !write(0,'(a,2i8,10(1x,g12.5))') 'FP R BIN WIDTH:',ireg,fp_n_bins,fp_maxdist(ireg),fpxmaxo,fpxmaxi,fp_r_bin_width(ireg)
+    end do
+
+    
+
+
+    do ireg = 1,num_fp_regions
+       ir = fp_rings(ireg)
+       ! loop over cells on reference ring
+       do ik = 1,nks(ir)
+          ! calculate "areas"
+          cell_width = distin(ik,ir) + distout(ik,ir)
+          if (cell_width.gt.0.0) then 
+             fp_grid_area(ik,ireg) = kareas(ik,ir) * fp_r_bin_width(ireg)/cell_width
+          else 
+             fp_grid_area(ik,ireg) = 0.0
+          endif
+
+          do in = 1,fp_n_bins+1
+             ! check to see if cell is near wall
+             if (fp_grid_dist(in,ireg).gt.min_fp_walldist(ik,ireg)) then 
+                fp_grid_flag(ik,in,ireg) = 1
+             endif
+             !write(0,'(a,3i8,12(1x,g12.5))') 'FP GRID FLAG:',ik,in,ireg,fp_grid_flag(ik,in,ireg),fp_grid_dist(in,ireg),min_fp_walldist(ik,ireg)
+          enddo
+       enddo
+    enddo
+
+
+  end subroutine fp_setup_grid
+
+
+  subroutine fp_set_plasma(ik,in,fp_reg)
+    use taus
+    implicit none
+    integer :: ik,fp_reg,in
+    real :: ne,te,ti,ef,vb,tgrade,tgradi
+
+    call fp_get_plasma(ik,in,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
+
+    if (ti.eq.0.0) then 
+       write(0,'(a,2i6,10(1x,g12.5))') 'FP_SET_PLASMA Ti=0.0',ik,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi
+    endif
+
+    plasma%ne = ne
+    plasma%te = te
+    plasma%ti = ti
+    plasma%vb = vb
+    plasma%ef = ef
+    plasma%tge = tgrade
+    plasma%tgi = tgradi
+
+
+    !
+    ! Update transport coefficients
+    !
+
+    call eval_taus(part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts)
+
+    if (mod_debug_fp) then 
+       !write(6,'(a,2i6,12g18.10)') 'FP TAUS:',part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts
+       !write(0,'(a,2i6,12g18.10)') 'FP TAUS:',part%ik,part%ir,part%iz,plasma%ne,plasma%ti,lfps,lllfps,lfss,lfts
+    endif
+
+  end subroutine fp_set_plasma
+
+
 
 
 

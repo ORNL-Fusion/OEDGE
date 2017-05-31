@@ -3,7 +3,10 @@ c
       subroutine fp_transport(imp,ik,ir,iz,istate,s,theta,
      >                        cross,vel,temi,
      >                        particle_mass,nrand,
-     >                        cist,cistfp,cstmax,ctemav,rsect,zsect,rc)
+     >                        cist,cistfp,cstmax,ctemav,rsect,zsect,
+     >                        sputy,rc)
+      use error_handling
+      use debug_options
       use mod_fp_transport
       implicit none
       integer ik,ir,iz,istate,rc,imp,nrand
@@ -12,6 +15,7 @@ c
       real cstmax,ctemav
       real*8 cist,cistfp
       real rsect,zsect
+      real sputy
 c
 c
       include 'params'
@@ -76,14 +80,30 @@ c
       integer :: rc4_count = 0
 c
 c      write(6,'(a,i6,10(1x,g12.5)') 'FP:START:',imp,cist
+c
 
+c      call pr_trace('FP_TRANSPORT:','START FOLLOWING FP PARTICLE')
 c
 c     Assign periphery region involved
 c
-      if (ir.le.irwall) then
+c     jdemod - this is a bit of a kludge to attempt to determine which 
+c              periphery the particle exited. IF the exit condition
+c              gives ir=the local boundary ring within 2 then it will
+c              work
+c
+c
+      if (ir.le.irwall.and.ir.ge.irwall-2) then
          fp_reg = fp_main
-      elseif (ir.ge.irtrap) then 
+      elseif (ir.ge.irtrap.and.ir.le.irtrap+2) then 
          fp_reg = fp_pfz
+      elseif (ir.le.irwall2.and.ir.ge.irwall2-2) then
+         fp_reg = fp_main2
+      elseif (ir.ge.irtrap2.and.ir.le.irtrap2+2) then 
+         fp_reg = fp_pfz2
+      else
+         fp_reg = fp_main
+         call errmsg('FP_TRANSPORT: Particle entering the'//
+     >           ' FP not associated with a boundary ring region:',ir)
       endif
 
 c
@@ -93,12 +113,30 @@ c
       fp_ir = fp_rings(fp_reg)
       fp_smax = ksmaxs(fp_ir)
 c
+c     jdemod - make use of cross information to determine initial cross position of particle since setting it to zero 
+c              will make back diffusion to the grid more likely. 
+c
 c     Set fp_cross to zero - all particles start at the edge of the fp and have a 50/50 chance more or less
 c     of immediately diffusing back into the plasma - the former cross value isn't relavent at this point though 
 c     a refinement would be to calculate how far into the fp the particle starts based on its cross coordinate and 
 c     the cell characteristics.
 c
-      fp_cross = 0.0
+c      if (cross.ne.0.0) then 
+c      write(0,'(a,5i6,10(1x,g12.5))') 'FP Entry:', ik,ir,irwall,iz,
+c     >              fp_reg,fp_cross_tmp,
+c     >              cross, s, theta
+c      write(6,'(a,5i6,10(1x,g12.5))') 'FP Entry:', ik,ir,irwall,iz,
+c     >              fp_reg,fp_cross_tmp,
+c     >              cross, s, theta
+c      endif
+
+c
+c     Set the fp_cross value to the absolute value of fp_cross_tmp ... for transport into the PFZ
+c     FP the value of cross > 0.0 while for the main SOL outermost ring cross < 0.0. In the FP, 
+c     cross is positive everywhere. A value < 0 indicates a cross field step back onto the grid. 
+c     fp_cross_tmp is set in ion_crossfield_transport.f
+c
+      fp_cross = abs(fp_cross_tmp)
 c
 c     Set the average neutral temperature for use in some of the
 c     collision options
@@ -112,14 +150,15 @@ c
 c     Added the start and end of the drift region (if any) to the call
 c
       call fp_init_particle(s,fp_cross,vel,temi,ik,fp_ir,
-     >                      iz,istate,fp_reg,particle_mass,fp_smax,
-     >                      fp_flow_velocity(fp_reg),
-     >                      sdrft_start(fp_ir),sdrft_end(fp_ir))
+     >                     iz,istate,sputy,fp_reg,particle_mass,fp_smax,
+     >                     fp_flow_velocity(fp_reg),
+     >                     sdrft_start(fp_ir),sdrft_end(fp_ir))
 c     >                      fp_sdrft_start(fp_reg),fp_sdrft_end(fp_reg))
 
-
+c
       call fp_follow_particle(rc,imp,cist,cistfp,cstmax,
      >                        rsect,zsect,fp_ran_used)
+
 c
 c     Add random numbers used to total
 c
@@ -127,7 +166,7 @@ c
 c
 c     Assign fp results back to particle
 c
-      call fp_get_particle_data(s,cross,vel,temi,ik,ir,iz,istate)
+      call fp_get_particle_data(s,cross,vel,temi,ik,ir,iz,istate,sputy)
 c
 c
 c     Deal with particle status and accounting - set return code
@@ -163,6 +202,15 @@ c
          write(6,'(a,4i6,6g12.5)') 'FP TARG:',rc4_count,
      >               ik,ir,iz,istate,s,cross,fp_flow_velocity(fp_reg)
       endif
+
+c      if (rc.eq.1) then 
+c      write(0,'(a,5i6,10(1x,g12.5))') 'FP Exit :', ik,ir,irwall,iz,
+c     >              fp_reg,fp_cross_tmp,
+c     >              cross, s, theta
+c      write(6,'(a,5i6,10(1x,g12.5))') 'FP Exit :', ik,ir,irwall,iz,
+c     >              fp_reg,fp_cross_tmp,
+c     >              cross, s, theta
+c      endif
 c
 c     Note - the calling code expects the returned particle to be associated with the virtual boundary ring. 
 c     Thus the IR of the particle needs to be mapped to the relavant ring. 
@@ -171,6 +219,10 @@ c
          ir = irwall
       elseif (fp_reg.eq.fp_pfz) then
          ir = irtrap
+      elseif (fp_reg.eq.fp_main2) then 
+         ir = irwall2
+      elseif (fp_reg.eq.fp_pfz2) then
+         ir = irtrap2
       endif
 c
       return 

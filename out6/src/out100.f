@@ -1801,11 +1801,17 @@ c
             TADAS(13) = 17.0
             TADAS(14) = 18.0
             TADAS(15) = 20.0
-            TADAS(16) = 22.0
-            TADAS(17) = 24.0
-            TADAS(18) = 26.0
-            TADAS(19) = 28.0
-            TADAS(20) = 30.0
+c            TADAS(16) = 22.0
+c            TADAS(17) = 24.0
+c            TADAS(18) = 26.0
+c            TADAS(19) = 28.0
+c            TADAS(20) = 30.0
+
+            TADAS(16) = 30.0
+            TADAS(17) = 40.0
+            TADAS(18) = 50.0
+            TADAS(19) = 70.0
+            TADAS(20) =100.0
 
 c            TADAS(1) = 0.5
 c            TADAS(2) = 0.75

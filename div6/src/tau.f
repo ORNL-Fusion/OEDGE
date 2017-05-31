@@ -2471,7 +2471,7 @@ c
             if (cprint.eq.3.or.cprint.eq.9) then
                write (6,'(a,2i4,5g16.8)') 'kprat2:',ir,ik,
      >                 kprat2(ik,ir,1),kprat2(ik,ir,2)
-c     >                 ,inlen,cenlen,outlen
+     >                 ,inlen,cenlen,outlen
             endif
 c
 c           End of ik and ir do loops
@@ -3474,7 +3474,7 @@ c     region.
 c
 c----------------------------------------------------------------------- 
 c
-      if (fpopt.eq.5) then 
+      if (fpopt.eq.5.or.fpopt.eq.6) then 
          call setup_fp
       endif 
 c
@@ -6408,8 +6408,6 @@ c
 
  150  continue
 
-      call pr_trace('RAUG','END GRID READ')
-            
 
       if (ir.eq.maxrings.and.ik.eq.maxkpts) then
          nks(ir) = max(nks(ir),max_ikold)
@@ -6524,12 +6522,17 @@ c
 c     Loop back
 c     
       goto 200
+
 c     
 c     
 c     Continuation point after grid has been read in
 c     
 c     
  300  continue
+
+      call pr_trace('RAUG','END GRID READ')
+            
+
 c     slmod begin
 
       CALL OutputData(86,'300 of RAUG')    
@@ -21692,6 +21695,8 @@ c
 c
 c
       subroutine setup_fp
+      use debug_options
+      use mod_fp_data
       use mod_fp_transport ! fp transport module
       implicit none
       include 'params'
@@ -21711,9 +21716,10 @@ c     The reason for this is so that the collisionality and other transport
 c     coefficients will then be correctly calculated. 
 c 
 c
-      integer ik,ir,in,iv
+      integer ik,ir,in,iv,ireg,ic
       real mindist
       integer fp_irmain,fp_irpfz
+      integer fp_irmain2, fp_irpfz2
 c
       integer id
 c
@@ -21724,9 +21730,27 @@ c              each peripheral region. In this way, values which have been appli
 c              virtual/boundary ring may be selectively applied to the periphery region.
 c              At least initially it is thought that this might be useful for imposing additional flows. 
 c
+      call pr_trace('TAU','BEGIN SETUP_FP')
+
       fp_irmain = irwall-1
       fp_irpfz   = irtrap+1
       
+      ! use set values of irtrap2, irwall2 and nrs2 to determine whether this is a double null grid
+      if (irtrap.ne.irtrap2.and.irwall2.ne.irwall.and.nrs2.ne.nrs) then 
+         ! double null
+         num_fp_regions=4
+         fp_irmain2 = irwall2-1
+         fp_irpfz2 = irtrap2+1
+         write(0,'(a)') 'FP: DOUBLE NULL GRID DETECTED'
+      else
+         ! single null
+         num_fp_regions = 2
+         ! if only single null then assign variables for double null to equal single null values
+         fp_irmain2 = irwall-1
+         fp_irpfz2 = irtrap+1
+         write(0,'(a)') 'FP: SINGLE NULL GRID DETECTED'
+      endif
+
       fp_virt_rings(fp_main) = irwall
       fp_rings(fp_main) = fp_irmain
       fp_cells(fp_main) = nks(fp_irmain)
@@ -21742,32 +21766,70 @@ c     was, like, so easy, but leaving this comment here in case of interest. -SL
         fp_virt_rings(fp_pfz) = irwall
         fp_rings(fp_pfz) = fp_irmain
         fp_cells(fp_pfz) = nks(fp_irmain)
-      else
-        fp_virt_rings(fp_pfz)= irtrap
-        fp_rings(fp_pfz)  = fp_irpfz
-        fp_cells(fp_pfz)  = nks(fp_irpfz)
-      endif
 c
 c      fp_virt_rings(fp_pfz)= irtrap
 c      fp_rings(fp_pfz)  = fp_irpfz
 c      fp_cells(fp_pfz)  = nks(fp_irpfz)
 c slmod end
+      else
+        fp_virt_rings(fp_pfz)= irtrap
+        fp_rings(fp_pfz)  = fp_irpfz
+        fp_cells(fp_pfz)  = nks(fp_irpfz)
+      endif
+
+      if (num_fp_regions.eq.4) then 
+        fp_virt_rings(fp_pfz2)= irtrap2
+        fp_rings(fp_pfz2)  = fp_irpfz2
+        fp_cells(fp_pfz2)  = nks(fp_irpfz2)
+
+        fp_virt_rings(fp_main2) = irwall2
+        fp_rings(fp_main2) = fp_irmain2
+        fp_cells(fp_main2) = nks(fp_irmain2)
+      else
+         ! single null
+        fp_virt_rings(fp_pfz2)= irtrap
+        fp_rings(fp_pfz2)  = fp_irpfz
+        fp_cells(fp_pfz2)  = nks(fp_irpfz)
+
+        fp_virt_rings(fp_main2) = irwall
+        fp_rings(fp_main2) = fp_irmain
+        fp_cells(fp_main2) = nks(fp_irmain)
+      endif
+
+
+c
+c     Do fp wall definition
+c      
+      do in = 1,num_fp_regions
+c
+c        Assign wall data for fp region
+c
+         call assign_fp_wall(in)
+c
+      end do 
+c
+c     Setup far periphery bins for recording particle transport
+c     Since this routine is called only for fp_opt = 5 this should be ok
+c     Setup grid first (although at the moment this is simple and the
+c     plasma and other geometry code does not depend on it ... this may change
+c     so put it early in teh process
+c     
+c     Grid needs the fp_wall to be setup first
+c
+      call fp_setup_grid
 c
 c     Loop over fp regions and set them up
 c
 c     Initialize plasma to 0.0 (F90 assigns the value to the entire array)
 c
       fp_plasma = 0.0
+      fp_grid_plasma = 0.0
 c
-      do in = 1,num_fp_regions
+      do ireg = 1,num_fp_regions
  
 c        Assign plasma and geometry data for fp region
 c     
-         call assign_fp_data(fp_rings(in),in)
-c
-c        Assign wall data for fp region
-c
-         call assign_fp_wall(in)
+         call assign_fp_data(fp_rings(ireg),ireg)
 c
       end do
 c
@@ -21795,20 +21857,68 @@ c
 
          do ik = 0,2*fp_cells(fp_main)
 c
-            write(6,'(a,3i6,3g18.8)') 'FP_WALLDIST: MAIN:',fp_irmain,ik,
+            write(6,'(a,3i6,10(1x,g18.8))') 'FP_WALLDIST: MAIN:',
+     >         fp_irmain,ik,
      >         ik/2+1, fp_walldist(ik,fp_main),
-     >         fp_wallcoords(ik,fp_main,1),fp_wallcoords(ik,fp_main,2)
+     >         min_fp_walldist(ik/2+1,fp_main),
+     >         fp_wallcoords(ik,fp_main,1),fp_wallcoords(ik,fp_main,2),
+     >         rs(fp_irmain,ik/2+1),zs(fp_irmain,ik/2+1),
+     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(fp_irmain,ik/2+1))**2+
+     >           (fp_wallcoords(ik,fp_main,2)-zs(fp_irmain,ik/2+1))**2)  
          enddo
 c
 c        Pfz
 c
          do ik = 1,fp_cells(fp_pfz)
 c
-            write(6,'(a,3i6,3g18.8)') 'FP_WALLDIST: PFZ:',fp_irpfz,ik,
+            write(6,'(a,3i6,10(1x,g18.8))') 'FP_WALLDIST: PFZ:',
+     >         fp_irpfz,ik,
      >         ik/2+1, fp_walldist(ik,fp_pfz),
-     >         fp_wallcoords(ik,fp_pfz,1),fp_wallcoords(ik,fp_pfz,2)
+     >         min_fp_walldist(ik/2+1,fp_main),
+     >         fp_wallcoords(ik,fp_pfz,1),fp_wallcoords(ik,fp_pfz,2),
+     >         rs(fp_irpfz,ik/2+1),zs(fp_irpfz,ik/2+1),
+     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(fp_irpfz,ik/2+1))**2+
+     >              (fp_wallcoords(ik,fp_pfz,2)-zs(fp_irpfz,ik/2+1))**2)  
 c
          enddo
+
+c
+c        Print grid dist
+c
+         do ireg = 1,num_fp_regions
+            ir = fp_rings(ireg)
+
+            do in = 1,fp_n_bins+1
+               write(6,'(a,2i6,6g12.5)') 'FP GRID DIST:',ireg,in,
+     >                 fp_grid_dist(in,ireg)
+            end do
+            
+            do ik = 1,nks(fp_rings(ireg))
+c               write(0,'(a,2i6,100i3)') 'FP GRID FLAG:',ireg,ik,
+c     >                 (fp_grid_flag(ik,in,ireg),in=1,fp_n_bins+1)
+               write(6,'(a,2i6,100i3)') 'FP GRID FLAG:',ireg,ik,
+     >                 (fp_grid_flag(ik,in,ireg),in=1,fp_n_bins+1)
+            end do
+       
+            do ik = 1,nks(fp_rings(ireg))
+c               write(0,'(a,2i6,100g12.5)') 'FP GRID AREA:',ireg,ik,
+c     >                       fp_grid_area(ik,ireg),
+c     >                       fp_r_bin_width(ireg),
+c     >                       distin(ik,ir),
+c     >                       distout(ik,ir),
+c     >                       distin(ik,ir)+distout(ik,ir), 
+c     >                       kareas(ik,ir),
+c     >                       (kps(ik,ir)-kps(ik-1,ir))
+c     >                           *fp_r_bin_width(ireg)
+               write(6,'(a,2i6,100g12.5)') 'FP GRID AREA:',ireg,ik,
+     >                       fp_grid_area(ik,ireg),
+     >                       fp_r_bin_width(ireg),
+     >                       distin(ik,ir),
+     >                       distout(ik,ir),
+     >                       distin(ik,ir)+distout(ik,ir), 
+     >                       kareas(ik,ir)
+            end do
+         end do
 
 c
 c        Print plasma conditions
@@ -21817,6 +21927,16 @@ c
              do ik =1, fp_cells(in)
                write(6,'(a,2i6,7g12.5)') 'FP PLASMA:',in,ik,
      >             (fp_plasma(ik,in,id),id=1,7)
+            end do
+         end do
+
+
+         do in = 1,num_fp_regions
+            do ic = 1,fp_n_bins
+               do ik =1, fp_cells(in)
+                 write(6,'(a,3i6,7g12.5)') 'FP GRID PLASMA:',in,ic,ik,
+     >             (fp_grid_plasma(ik,ic,in,id),id=1,7)
+               end do
             end do
          end do
 
@@ -21837,6 +21957,7 @@ c
      >                    czo,chzo,czenh,cizeff,ctemav,irspec,qtim,
      >                    debug_fp)
 c
+
       return
       end
 c
@@ -21877,11 +21998,12 @@ c
 c     Define the polygon side for which distance data is sought
 c     - this will need to be modified if additional fp regions are added
 c
-      if (ireg.eq.fp_main) then 
+      if (ireg.eq.fp_main.or.ireg.eq.fp_main2) then 
          side = OUTWARD23
-      elseif (ireg.eq.fp_pfz) then 
+      elseif (ireg.eq.fp_pfz.or.ireg.eq.fp_pfz2) then 
          side = INWARD41
       endif
+
 c
 c     Need to loop through fp_vertex = 0 for all ik
 c                          fp_vertex = 1 for ik = 1, nks(ir)-1
@@ -21939,11 +22061,56 @@ c
 c
                endif
 c
-               fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
-     >                                            rs(ik,fp_rings(ireg))
-               fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
-     >                                            zs(ik,fp_rings(ireg))
-
+c              Wall coordinate data is not meaningful in this case
+c
+               if (ipoly.ne.0) then 
+                  ! set wall coordinates from polygon side
+                  if (side.eq.OUTWARD23) then 
+                     if (fp_vertex.eq.-1) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                              rvertp(2,ipoly)
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                              zvertp(2,ipoly)
+                     elseif (fp_vertex.eq.0) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                          (rvertp(2,ipoly)+
+     >                           rvertp(3,ipoly))/2.0
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                          (zvertp(2,ipoly)+
+     >                           zvertp(3,ipoly))/2.0
+                     elseif (fp_vertex.eq.1) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                              rvertp(3,ipoly)
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                              zvertp(3,ipoly)
+                     endif
+                  elseif (side.eq.INWARD41) then 
+                     if (fp_vertex.eq.-1) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                              rvertp(1,ipoly)
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                              zvertp(1,ipoly)
+                     elseif (fp_vertex.eq.0) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                          (rvertp(1,ipoly)+
+     >                           rvertp(4,ipoly))/2.0
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                          (zvertp(1,ipoly)+
+     >                           zvertp(4,ipoly))/2.0
+                     elseif (fp_vertex.eq.1) then 
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                              rvertp(4,ipoly)
+                        fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                              zvertp(4,ipoly)
+                     endif
+                  endif
+               else
+                 fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = 
+     >                                         rs(ik,fp_rings(ireg))
+                 fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = 
+     >                                         zs(ik,fp_rings(ireg))
+               endif
+               
             else
 c
 c               Polygon data exists - look to assign wall data to fp cell
@@ -21984,13 +22151,30 @@ c     Loop through and assign the min_fp_walldist for each cell in the FP
 c     Checks for wall collisions will only occur when Cross exceeds this
 c     value
 c
+      fp_maxdist(ireg) = LO
+
       do ik = 1,nks(ir)
          mindist = HI
          do iv = -1,1
             mindist = min(mindist,fp_walldist(2*ik-1+iv,ireg))
+            fp_maxdist(ireg) = max(fp_maxdist(ireg),
+     >                             fp_walldist(2*ik-1+iv,ireg))
          end do
+
          min_fp_walldist(ik,ireg) = mindist
+
+c         write(6,'(a,2i8,10(1x,g12.5))') 'min_fp_walldist:',ik,ireg,
+c     >                  min_fp_walldist(ik,ireg),mindist,
+c     >     fp_walldist(2*ik-1-1,ireg),fp_walldist(2*ik-1,ireg),
+c     >     fp_walldist(2*ik-1+1,ireg)
+c         write(0,'(a,2i8,10(1x,g12.5))') 'min_fp_walldist:',ik,ireg,
+c     >                  min_fp_walldist(ik,ireg),mindist,
+c     >     fp_walldist(2*ik-1-1,ireg),fp_walldist(2*ik-1,ireg),
+c     >     fp_walldist(2*ik-1+1,ireg)
+         
       end do
+c      write(0,*) 'FP_MAXDIST:',ireg,fp_maxdist(ireg)
+
 c
       return
       end
@@ -22024,6 +22208,8 @@ c
       ir = fp_rings(ireg)
       side2 = mod(side,4)+1 
 c
+c     NOTE: Need to verify that PFZ calculations are correct - no time now - output looks reasonable
+c
       if (fp_vertex.eq.-1) then 
 
          theta1 = fp_theta(ipoly,side) 
@@ -22041,7 +22227,6 @@ c
          ra = (rvertp(side2,ipoly) + rvertp(side,ipoly))/2.0
          za = (zvertp(side2,ipoly) + zvertp(side,ipoly))/2.0
 c
-
       elseif (fp_vertex.eq.1) then 
 
          theta1 = fp_theta(ipoly,side) 
@@ -22060,6 +22245,7 @@ c
       zb = za + scale_len * sin(theta)
 
 c
+c
 c     Assign default values
 c
       if ((xpoint_up.and.ik.le.nks(ir)/2).or.
@@ -22072,6 +22258,8 @@ c
          fp_walldist(2*ik-1+fp_vertex,ireg) = fpxmaxi   
 c
       endif
+
+c
 c
       fp_wallcoords(2*ik-1+fp_vertex,ireg,1) = ra
       fp_wallcoords(2*ik-1+fp_vertex,ireg,2) = za
@@ -22080,6 +22268,8 @@ c     Find closest wall intersection outside the grid.
 c
       call find_wall_intsect(ra,za,rb,zb,rsect,zsect,wdist,
      >                       sect_found)
+
+c
 c
 c     Assign results if intersection found
 c 
@@ -22095,6 +22285,7 @@ c
       dza = zsect-za
       rthet = datan2c(dza,dra)
 
+c
 c
 c      write(0,'(a,5i6,l4,10g18.8)') 'FP WALL:',2*ik-1+fp_vertex,
 c     >   side2,side,
@@ -22209,7 +22400,7 @@ c
 c     Local variables
 c
       real*8 r1,z1,r2,z2,rint,zint,dist
-      integer in,sect
+      integer in,sect,flag
 c
       sect_found = .false.
 c
@@ -22228,7 +22419,7 @@ c
 c
 c        call intersection routine
 c
-         call intsect2dp(ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect)
+         call intsect2dp(ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect,flag)
 c
 c        Check for intersection on both segments
 c              
@@ -22257,9 +22448,10 @@ c
 c
 c
 c
-      subroutine assign_fp_data(ir,in)
+      subroutine assign_fp_data(ir,ireg)
+      use mod_fp_data
       implicit none
-      integer ir,in
+      integer ir,ireg
 c
       include 'params'
       include 'cgeom'
@@ -22273,80 +22465,99 @@ c
       integer ik,id
       real dtebac,dtefor,dtibac,dtifor,dsbac,dsfor
       real fact
+
+      integer :: ic,in,imid,is,ie
+      real :: sstart,send,ne,te,ti,cs,srat
+
 c     
 c     Assign base plasma data  
 c
 c     The fp_plasma array contains the following data:
 c
-c     fp_plasma(ik,in,1) = Ne
-c     fp_plasma(ik,in,2) = Te
-c     fp_plasma(ik,in,3) = Ti
-c     fp_plasma(ik,in,4) = Vb
-c     fp_plasma(ik,in,5) = E
-c     fp_plasma(ik,in,6) = Te gradient
-c     fp_plasma(ik,in,7) = Ti gradient
+c     fp_plasma(ik,ireg,1) = Ne
+c     fp_plasma(ik,ireg,2) = Te
+c     fp_plasma(ik,ireg,3) = Ti
+c     fp_plasma(ik,ireg,4) = Vb
+c     fp_plasma(ik,ireg,5) = E
+c     fp_plasma(ik,ireg,6) = Te gradient
+c     fp_plasma(ik,ireg,7) = Ti gradient
 c
 c
       if (cprint.eq.10) then 
          write(6,'(a,i6,a,2i6)') 
      >   'Assigning FP plasma for region : ',
-     >    in,' from ring : ',ir,fp_plasma_opt
+     >    ireg,' from ring : ',ir,fp_plasma_opt
       endif
 c
       do ik = 1,nks(ir)
 c
 c        Peripheral plasma assigned from grid
 c
-         if (fp_plasma_opt.eq.0) then 
+         if (fp_plasma_opt.eq.0.or.fp_plasma_opt.eq.4) then 
 c
-            fp_plasma(ik,in,1) = knbs(ik,ir)
-            fp_plasma(ik,in,2) = ktebs(ik,ir)
-            fp_plasma(ik,in,3) = ktibs(ik,ir)
-            fp_plasma(ik,in,4) = kvhs(ik,ir)
-            fp_plasma(ik,in,5) = kes(ik,ir)
+            fp_plasma(ik,ireg,1) = knbs(ik,ir)
+            fp_plasma(ik,ireg,2) = ktebs(ik,ir)
+            fp_plasma(ik,ireg,3) = ktibs(ik,ir)
+            fp_plasma(ik,ireg,4) = kvhs(ik,ir)
+            fp_plasma(ik,ireg,5) = kes(ik,ir)
 c
          elseif (fp_plasma_opt.eq.1) then 
 c
 c           Te=Ti=INPUT - rest assigned from ring
 c
-            fp_plasma(ik,in,1) = knbs(ik,ir)
-            fp_plasma(ik,in,2) = fp_te
-            fp_plasma(ik,in,3) = fp_te
-            fp_plasma(ik,in,4) = kvhs(ik,ir)
-            fp_plasma(ik,in,5) = kes(ik,ir)
+            fp_plasma(ik,ireg,1) = knbs(ik,ir)
+            fp_plasma(ik,ireg,2) = fp_te
+            fp_plasma(ik,ireg,3) = fp_te
+            fp_plasma(ik,ireg,4) = kvhs(ik,ir)
+            fp_plasma(ik,ireg,5) = kes(ik,ir)
 c
          elseif (fp_plasma_opt.eq.2) then 
 c
-            fp_plasma(ik,in,1) = fp_ne
-            fp_plasma(ik,in,2) = fp_te
-            fp_plasma(ik,in,3) = fp_te
-            fp_plasma(ik,in,4) = kvhs(ik,ir)
-            fp_plasma(ik,in,5) = kes(ik,ir)
+            fp_plasma(ik,ireg,1) = fp_ne
+            fp_plasma(ik,ireg,2) = fp_te
+            fp_plasma(ik,ireg,3) = fp_te
+            fp_plasma(ik,ireg,4) = kvhs(ik,ir)
+            fp_plasma(ik,ireg,5) = kes(ik,ir)
 c
          elseif (fp_plasma_opt.eq.3) then 
 c
-            fp_plasma(ik,in,1) = fp_ne
-            fp_plasma(ik,in,2) = fp_te
-            fp_plasma(ik,in,3) = fp_te
-            fp_plasma(ik,in,4) = 0.0
-            fp_plasma(ik,in,5) = 0.0
-c
+            fp_plasma(ik,ireg,1) = fp_ne
+            fp_plasma(ik,ireg,2) = fp_te
+            fp_plasma(ik,ireg,3) = fp_te
+            fp_plasma(ik,ireg,4) = 0.0
+            fp_plasma(ik,ireg,5) = 0.0
+
+
          endif
 c
 c        Assign fp_plasma to associated outermost grid rings as well
 c
-         if (in.eq.fp_main) then 
-            knbs(ik,irwall) = fp_plasma(ik,in,1)
-            ktebs(ik,irwall)= fp_plasma(ik,in,2)
-            ktibs(ik,irwall)= fp_plasma(ik,in,3)
-            kvhs(ik,irwall) = fp_plasma(ik,in,4)
-            kes(ik,irwall)  = fp_plasma(ik,in,5)
-         elseif (in.eq.fp_pfz) then
-            knbs(ik,irtrap) = fp_plasma(ik,in,1)
-            ktebs(ik,irtrap)= fp_plasma(ik,in,2)
-            ktibs(ik,irtrap)= fp_plasma(ik,in,3)
-            kvhs(ik,irtrap) = fp_plasma(ik,in,4)
-            kes(ik,irtrap)  = fp_plasma(ik,in,5)
+         if (ireg.eq.fp_main) then 
+            knbs(ik,irwall) = fp_plasma(ik,ireg,1)
+            ktebs(ik,irwall)= fp_plasma(ik,ireg,2)
+            ktibs(ik,irwall)= fp_plasma(ik,ireg,3)
+            kvhs(ik,irwall) = fp_plasma(ik,ireg,4)
+            kes(ik,irwall)  = fp_plasma(ik,ireg,5)
+         elseif (ireg.eq.fp_pfz) then
+            knbs(ik,irtrap) = fp_plasma(ik,ireg,1)
+            ktebs(ik,irtrap)= fp_plasma(ik,ireg,2)
+            ktibs(ik,irtrap)= fp_plasma(ik,ireg,3)
+            kvhs(ik,irtrap) = fp_plasma(ik,ireg,4)
+            kes(ik,irtrap)  = fp_plasma(ik,ireg,5)
+         ! Both irwall2 and irtrap2 should point to virtual boundary 
+         ! rings for double null grids
+         elseif (ireg.eq.fp_main2) then 
+            knbs(ik,irwall2) = fp_plasma(ik,ireg,1)
+            ktebs(ik,irwall2)= fp_plasma(ik,ireg,2)
+            ktibs(ik,irwall2)= fp_plasma(ik,ireg,3)
+            kvhs(ik,irwall2) = fp_plasma(ik,ireg,4)
+            kes(ik,irwall2)  = fp_plasma(ik,ireg,5)
+         elseif (ireg.eq.fp_pfz2) then
+            knbs(ik,irtrap2) = fp_plasma(ik,ireg,1)
+            ktebs(ik,irtrap2)= fp_plasma(ik,ireg,2)
+            ktibs(ik,irtrap2)= fp_plasma(ik,ireg,3)
+            kvhs(ik,irtrap2) = fp_plasma(ik,ireg,4)
+            kes(ik,irtrap2)  = fp_plasma(ik,ireg,5)
          endif
 c
       end do 
@@ -22355,17 +22566,17 @@ c
 c
 c     Assign cell geometry data (S-values) as well 
 c
-c      write(6,'(a,3i6,10(1x,g12.5))') 'FP_S: ',ir,in,nks(ir),ksmaxs(ir)
+c      write(6,'(a,3i6,10(1x,g12.5))') 'FP_S: ',ir,ireg,nks(ir),ksmaxs(ir)
 
       do ik = 1,nks(ir)
 c
-         fp_s(2*ik-1-1,in) = ksb(ik-1,ir)
-         fp_s(2*ik-1,in)   = kss(ik,ir)
-         fp_s(2*ik-1+1,in) = ksb(ik,ir)
+         fp_s(2*ik-1-1,ireg) = ksb(ik-1,ir)
+         fp_s(2*ik-1,ireg)   = kss(ik,ir)
+         fp_s(2*ik-1+1,ireg) = ksb(ik,ir)
 c
 c         write(6,'(a,1i6,3(1x,g12.5)') 'FP_IK:',ik,
-c     >       fp_s(2*ik-1-1,in),fp_s(2*ik-1,in),
-c     >       fp_s(2*ik-1+1,in)
+c     >       fp_s(2*ik-1-1,ireg),fp_s(2*ik-1,ireg),
+c     >       fp_s(2*ik-1+1,ireg)
 c
       end do
 c
@@ -22378,18 +22589,18 @@ c
 c     Calculate gradients for first and last cells 
 c
       ik = 1
-      dtefor = fp_plasma(ik+1,in,2)-fp_plasma(ik,in,2)
-      dtifor = fp_plasma(ik+1,in,3)-fp_plasma(ik,in,3)
-      dsfor = fp_s(2*(ik+1)-1,in) - fp_s(2*ik-1,in)
-      fp_plasma(ik,in,6) = (dtefor/dsfor) * fact * 0.5
-      fp_plasma(ik,in,7) = (dtifor/dsfor) * fact * 0.5     
+      dtefor = fp_plasma(ik+1,ireg,2)-fp_plasma(ik,ireg,2)
+      dtifor = fp_plasma(ik+1,ireg,3)-fp_plasma(ik,ireg,3)
+      dsfor = fp_s(2*(ik+1)-1,ireg) - fp_s(2*ik-1,ireg)
+      fp_plasma(ik,ireg,6) = (dtefor/dsfor) * fact * 0.5
+      fp_plasma(ik,ireg,7) = (dtifor/dsfor) * fact * 0.5     
 c
       ik = nks(ir)
-      dtebac = fp_plasma(ik,in,2)- fp_plasma(ik-1,in,2)
-      dtibac = fp_plasma(ik,in,3)- fp_plasma(ik-1,in,3)
-      dsbac = fp_s(2*ik-1,in) - fp_s(2*(ik-1)-1,in)
-      fp_plasma(ik,in,6) = (dtebac/dsbac) * fact * 0.5
-      fp_plasma(ik,in,7) = (dtibac/dsbac) * fact * 0.5
+      dtebac = fp_plasma(ik,ireg,2)- fp_plasma(ik-1,ireg,2)
+      dtibac = fp_plasma(ik,ireg,3)- fp_plasma(ik-1,ireg,3)
+      dsbac = fp_s(2*ik-1,ireg) - fp_s(2*(ik-1)-1,ireg)
+      fp_plasma(ik,ireg,6) = (dtebac/dsbac) * fact * 0.5
+      fp_plasma(ik,ireg,7) = (dtibac/dsbac) * fact * 0.5
 c
       do ik = 2,nks(ir)-1
 c
@@ -22397,32 +22608,153 @@ c        Zero out the entries where the plasma background is
 c        discontinuous
 c
          if (ik.eq.ikmids(ir).or.ik.eq.ikmids(ir)+1) then
-            fp_plasma(ik,in,6) = 0.0
-            fp_plasma(ik,in,7) = 0.0
+            fp_plasma(ik,ireg,6) = 0.0
+            fp_plasma(ik,ireg,7) = 0.0
          else
 c
 c           Calculate average gradients
 c
-            dtebac = fp_plasma(ik,in,2)- fp_plasma(ik-1,in,2)
-            dtefor = fp_plasma(ik+1,in,2)-fp_plasma(ik,in,2)
+            dtebac = fp_plasma(ik,ireg,2)- fp_plasma(ik-1,ireg,2)
+            dtefor = fp_plasma(ik+1,ireg,2)-fp_plasma(ik,ireg,2)
 
-            dtibac = fp_plasma(ik,in,3)- fp_plasma(ik-1,in,3)
-            dtifor = fp_plasma(ik+1,in,3)-fp_plasma(ik,in,3)
+            dtibac = fp_plasma(ik,ireg,3)- fp_plasma(ik-1,ireg,3)
+            dtifor = fp_plasma(ik+1,ireg,3)-fp_plasma(ik,ireg,3)
 
-            dsbac = fp_s(2*ik-1,in) - fp_s(2*(ik-1)-1,in)
-            dsfor = fp_s(2*(ik+1)-1,in) - fp_s(2*ik-1,in)
+            dsbac = fp_s(2*ik-1,ireg) - fp_s(2*(ik-1)-1,ireg)
+            dsfor = fp_s(2*(ik+1)-1,ireg) - fp_s(2*ik-1,ireg)
 
-            fp_plasma(ik,in,6)=(dtebac/dsbac + dtefor/dsfor)* fact * 0.5
-            fp_plasma(ik,in,7)=(dtibac/dsbac + dtifor/dsfor)* fact * 0.5
+            fp_plasma(ik,ireg,6)=(dtebac/dsbac + dtefor/dsfor)*fact*0.5
+            fp_plasma(ik,ireg,7)=(dtibac/dsbac + dtifor/dsfor)*fact*0.5
          endif
 c
       end do  
+c
+c     Now that base plasma has been calculated - define plasma for all cells
+c     on fp grid
+c     NOTE: plasma is identical radially on fp grid except fp_plasma_opt 4+
+c
+      do ik = 1,nks(ir)
+        do in = 1,fp_n_bins+1
+           fp_grid_plasma(ik,in,ireg,:) = fp_plasma(ik,ireg,:)
+        end do
+      end do
+
+c
+c     If fp_plasma_opt = 4 then modify the plasma conditions on the peripheral grid
+c
+      if (fp_plasma_opt.eq.4) then 
+         !
+         ! temperature and density are kept constant after field lines start hitting the walls
+         ! flows are 0 at midpoint of these regions and reach sound speed as particle go to surfaces
+         ! Efield is set to 0.0 for now since it is expected to be smaller than frictional forces
+         ! This is a very basic and somewhat crude approximation but should account for some of 
+         ! the expected particle losses to surfaces in the FP
+         ! The code uses the fp_grid_flag variable to roughly identify where surfaces are located
+         !
+         do in = 1,fp_n_bins+1
+
+            ! count number of discrete plasma subsections on ring
+
+            ie = 0
+            is = 0
+
+            do ik = 1,nks(ir)
+
+
+               if (fp_grid_flag(ik,in,ireg).eq.1) then 
+                  ! cell is marked as hitting wall 
+                  ! remove forces since parallel
+                  ! transport should not happen here
+                  fp_grid_plasma(ik,in,ireg,4) = 0.0
+                  fp_grid_plasma(ik,in,ireg,5) = 0.0
+                  fp_grid_plasma(ik,in,ireg,6) = 0.0
+                  fp_grid_plasma(ik,in,ireg,7) = 0.0
+               endif
+
+               if (is.eq.0
+     >             .and.fp_grid_flag(ik,in,ireg).eq.0) then 
+                  is = ik
+                  ie = 0
+               elseif (is.ne.0
+     >                 .and.fp_grid_flag(ik,in,ireg).eq.1) then
+                  ie = ik-1
+               elseif (is.ne.0
+     >                 .and.ik.eq.nks(ir)) then
+                  ie = ik
+               endif
+               !
+               ! region found
+               ! 
+               if (is.ne.0.and.ie.ne.0) then 
+                  ! if is = 1 and ie = nks(ir) then do nothing
+                  ! since there are no walls impinging ring in fp
+                  if (is.eq.1.and.ie.eq.nks(ir)) exit
+
+                  ! next special case is a very small region of one 
+                  ! or two cells
+                  if (is.eq.ie.or.(is-ie).eq.1) then 
+                     ! overwrite plasma elements
+                     ! don't change density or temperature
+                     ! zero out temperature gradient/velocity/efield
+                     do ic = is,ie
+                        fp_grid_plasma(ic,in,ireg,4) = 0.0
+                        fp_grid_plasma(ic,in,ireg,5) = 0.0
+                        fp_grid_plasma(ic,in,ireg,6) = 0.0
+                        fp_grid_plasma(ic,in,ireg,7) = 0.0
+                     end do
+                  else
+                     imid = (is+ie)/2
+                     sstart = fp_s(2*is-1,ireg)
+                     send = fp_s(2*ie-1,ireg)
+
+                     if (in.eq.1) then 
+                        ne = fp_grid_plasma(imid,in,ireg,1)
+                        te = fp_grid_plasma(imid,in,ireg,2)
+                        ti = fp_grid_plasma(imid,in,ireg,3)
+                     else
+                        ne = fp_grid_plasma(imid,in-1,ireg,1)
+                        te = fp_grid_plasma(imid,in-1,ireg,2)
+                        ti = fp_grid_plasma(imid,in-1,ireg,3)
+                     endif
+                     CS =9.79E+03 * SQRT(0.5*(TE+TI)*(1.0+RIZB)/CRMB)
+
+                     do ic = is,ie
+                        fp_grid_plasma(ic,in,ireg,1) = ne
+                        fp_grid_plasma(ic,in,ireg,2) = te
+                        fp_grid_plasma(ic,in,ireg,3) = ti
+                        
+                        srat = 2.0*(
+     >                       (fp_s(2*ic-1,ireg)-sstart)/(send-sstart)
+     >                         -0.5)
+                        
+                        ! set velocity to fraction of sound speed 
+                        ! depending on how close to end of region
+                        ! scale by time step
+                        ! zero out the rest
+                        fp_grid_plasma(ic,in,ireg,4) = cs * srat * qtim
+                        fp_grid_plasma(ic,in,ireg,5) = 0.0
+                        fp_grid_plasma(ic,in,ireg,6) = 0.0
+                        fp_grid_plasma(ic,in,ireg,7) = 0.0
+                     end do
+
+                  endif 
+                  ! reset region counters
+                  is = 0
+                  ie = 0
+
+               endif
+            end do
+         end do
+      endif
+
+
+
 
       if (cprint.eq.10) then 
          do ik = 1,nks(ir)
 
-            write(6,'(a,3i6,10(1x,g12.5))') 'FP_PLASMA:',in,
-     >         ir,ik,(fp_plasma(ik,in,id),id=1,7)
+            write(6,'(a,3i6,10(1x,g12.5))') 'FP_PLASMA:',ireg,
+     >         ir,ik,(fp_plasma(ik,ireg,id),id=1,7)
 
          end do
       endif

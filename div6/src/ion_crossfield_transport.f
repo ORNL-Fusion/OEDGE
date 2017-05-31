@@ -1142,6 +1142,7 @@ c
 c
 c
       subroutine do_cfstep(jk,ik,ir,irold,cross,adjust,theta,flag,debug)
+      use mod_fp_data
       implicit none
       integer jk,ik,ir,flag,irold
       real cross,theta,adjust
@@ -1159,6 +1160,7 @@ c
       include    'params'
       include    'comtor'
       include    'cgeom'
+      include    'fperiph_com'
 c
 c     Local variable,ik
 c
@@ -1202,6 +1204,16 @@ c     >                   'ERROR: Particle INWARD transport into'//
 c     >                  ' zero volume ring.',ik,ir,cross,distin(ik,ir),
 c     >                    distout(ik,ir)
 c
+c                jdemod - this condition is an indicator that the particle has
+c                         stepped off the grid edge onto the boundary ring and potentially
+c                         into the periphery. Depending on the options in play it is necessary
+c                         to keep the actual cross location of the particle for 
+c                         initialization of the periphery particle. 
+c                         fp_cross_tmp should always be positive for a position in the FP
+c                         given the current fp transport sign conventions
+c
+                 fp_cross_tmp = cross
+c
                  cross = 0.0     
 c
               else 
@@ -1225,6 +1237,11 @@ c                 write (6,'(a,2i4,1p,4g12.5)')
 c     >                   'ERROR: Particle OUTWARD transport into'//
 c     >                  ' zero volume ring.',ik,ir,cross,distin(ik,ir),
 c     >                    distout(ik,ir)
+c
+c                jdemod - record cross value for use in FP
+c
+                 fp_cross_tmp = cross
+c
                  cross = 0.0     
 c
               else 
@@ -1319,6 +1336,11 @@ c                 write (6,'(a,2i4,1p,4g12.5)')
 c     >                   'ERROR: Particle INWARD transport into'//
 c     >                  ' zero volume ring.',ik,ir,cross,distin(ik,ir),
 c     >                    distout(ik,ir)
+c
+c
+c                jdemod - record cross value for use in FP
+c
+                 fp_cross_tmp = cross
 c
                  cross = 0.0     
 c
@@ -1431,6 +1453,11 @@ c                 write (6,'(a,2i4,1p,4g12.5)')
 c     >                   'ERROR: Particle OUTWARD transport into'//
 c     >                  ' zero volume ring.',ik,ir,cross,distin(ik,ir),
 c     >                    distout(ik,ir)
+c
+c
+c                jdemod - record cross value for use in FP
+c
+                 fp_cross_tmp = cross
 c
                  cross = 0.0     
 c

@@ -54,7 +54,7 @@ c
 c     Local Variables
 c
       integer in,ip,ik,ir,icnt
-      real sint,psin
+      real sint,psin,pint
       real tmp,rsect,zsect
 c
 c     Loop through the main SOL rings starting at the separatrix and the
@@ -74,7 +74,7 @@ c
          do ik = 1,nks(ir)
 c
             call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,
-     >                        sint,psin)
+     >                        sint,pint,psin)
 c
             if (sint.gt.0.0) then
 c
@@ -879,11 +879,11 @@ c
 c
 c
       subroutine find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,
-     >                        sint,psin)
+     >                        sint,pint,psin)
       implicit none
       integer ik,ir
       real r1p,z1p,r2p,z2p,sint
-      real rsect,zsect,psin
+      real rsect,zsect,psin,pint
 c
       include 'params'
       include 'cgeom'
@@ -918,6 +918,10 @@ c
          sint = ((rsect-krb(ik-1,ir))**2+(zsect-kzb(ik-1,ir))**2) /
      >   ((krb(ik,ir)-krb(ik-1,ir))**2+(kzb(ik,ir)-kzb(ik-1,ir))**2)
      >     * (ksb(ik,ir)-ksb(ik-1,ir)) + ksb(ik-1,ir)
+c
+         pint = ((rsect-krb(ik-1,ir))**2+(zsect-kzb(ik-1,ir))**2) /
+     >   ((krb(ik,ir)-krb(ik-1,ir))**2+(kzb(ik,ir)-kzb(ik-1,ir))**2)
+     >     * (kpb(ik,ir)-kpb(ik-1,ir)) + kpb(ik-1,ir)
 c
          if (ik.gt.nks(ir)/2) then 
             psin = psitarg(ir,1)
@@ -1132,7 +1136,7 @@ c
       real psiaxis(maxnrs),psimin,psimax
       real zvals(maxnrs)
       integer icnt,ncnt,in,ic,ir,ik
-      real psin,sint,rsect,zsect
+      real psin,sint,rsect,zsect,pint
       real axisp,axisz
 c
       integer ipos
@@ -1154,7 +1158,7 @@ c
          do ik = 1,nks(ir)
 c
             call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,
-     >                        sint,psin)
+     >                        sint,pint,psin)
 c
             if (sint.gt.0.0) then
 c

@@ -221,10 +221,10 @@ c     TAG A07:
 c
 c
 c     Option to write a netcdf version of the raw data file 
-c     0 = off   1 = 0n .. default OFF
+c     0 = off   1 = 0n .. default ON
 c
 c
-      netcdf_opt = 0
+      netcdf_opt = 1
 c
 c
 c -----------------------------------------------------------------------
@@ -693,6 +693,25 @@ c
 c     Far periphery variable to hold velocity input 
 c
       fp_flow_velocity_input = 0.0
+c
+c------------------------------------------------------------------------ 
+c
+c     TAG I33
+c
+c     Number of radial cells in simple far periphery mesh
+c     
+      fp_n_bins = 20
+c
+c     TAG I34
+c
+c     Defines the option used to choose the width of simple crude
+c     FP mesh
+c     Option 0 = maximum distance from edge cell to wall from 
+c               fp_walldist values
+c     Option 1 = width of grid is specified using fpxmaxo for MAIN and 
+c                fpxmaxi for PFZ
+c
+      fp_grid_width_opt = 0
 c
 c------------------------------------------------------------------------
 c

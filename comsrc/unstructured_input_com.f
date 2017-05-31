@@ -30,7 +30,11 @@ c
       use ero_interface
       IMPLICIT none
 
-      CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
+c
+c     jdemod - cleaning up some of the line length constraints since the inputs really don't need them
+c
+c      CHARACTER line2*(*),LINE*72,TAG*3,coment*72,cdum1*1024
+      CHARACTER line2*(*),LINE*128,TAG*3,cdum1*1024
       REAL      R,vol,z1,version
       INTEGER   I,ir,ierr,i1,i2
 
@@ -95,7 +99,7 @@ c      external vr_pdf_int
       integer in
       real deltav1, deltav2
 c
-      WRITE(line,'(A72)') line2
+      WRITE(line,'(A128)') line2
 
       WRITE(TAG,'(A3)') LINE(3:5)
 
@@ -2136,7 +2140,7 @@ c     READ "G" Series Unstructured input
 c
 
       INTEGER   fp
-      CHARACTER line*72,tag*3
+      CHARACTER line*(*),tag*3
 
       INCLUDE 'params'
       INCLUDE 'slcom'
@@ -2412,7 +2416,7 @@ c     READ "H" Series Unstructured input
 c
 
       INTEGER   fp
-      CHARACTER line*72,tag*3
+      CHARACTER line*(*),tag*3
 
       include 'comtor'
       include 'slcom'
@@ -2706,7 +2710,7 @@ c
 c     READ "I" Series Unstructured input
 c
       INTEGER   fp
-      CHARACTER line*72,tag*3
+      CHARACTER line*(*),tag*3
 
       INCLUDE 'params'
       INCLUDE 'comtor'
@@ -2737,7 +2741,7 @@ c
 c     TAG I26 : FP plasma option
 c
       ELSEIF (tag(1:3).EQ.'I26') THEN
-        CALL ReadI(line,fp_plasma_opt,0,3,
+        CALL ReadI(line,fp_plasma_opt,0,4,
      >             'FP PLASMA OPTION')
 c
 c -----------------------------------------------------------------------
@@ -2779,11 +2783,30 @@ c     TAG I32: FP flow velocity for option 2
 c
 c -----------------------------------------------------------------------
 c
-c     TAG I28: FP density
+c     TAG I33: FP Number of radial bins in FP grid
 c
-      ELSEIF (tag(1:3).EQ.'I28') THEN
-        CALL ReadR(line,fp_ne,0.0,HI,
-     >             'FP Density in m-3')
+      ELSEIF (tag(1:3).EQ.'I33') THEN
+        CALL ReadI(line,fp_n_bins,1,maxnrs,
+     >             'Number of radial bins for FP grid')
+c
+c -----------------------------------------------------------------------
+c
+c     TAG I34: FP Grid width option
+c     
+c     Defines the option used to choose the width of simple crude
+c     FP mesh
+c     Option 0 = maximum distance from edge cell to wall from 
+c               fp_walldist values
+c     Option 1 = width of grid is specified using fpxmaxo for MAIN and 
+c                fpxmaxi for PFZ
+c
+      ELSEIF (tag(1:3).EQ.'I34') THEN
+        CALL ReadI(line,fp_grid_width_opt,0,1,
+     >             'Number of radial bins for FP grid')
+c
+c -----------------------------------------------------------------------
+c
+
 
 c...  REPLACE!
 c
@@ -2822,7 +2845,7 @@ c
 c     The Oh is used for OUT related tagged input
 c
       INTEGER   fp
-      CHARACTER line*72,tag*3
+      CHARACTER line*(*),tag*3
 
       INCLUDE 'params'
       include 'slcom'

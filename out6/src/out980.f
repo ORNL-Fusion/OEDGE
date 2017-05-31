@@ -11,6 +11,7 @@ c
       integer osmvals,osmplots,int_type,i1
       real lvals(maxseg,maxngs),louts(maxseg)
       real r1p,z1p,r2p,z2p,crmb,qtim
+      real pint
 c
 c     OSMPROBE: This routine extract the OSM results from the background
 c               plasma along a specific line intended to model the location
@@ -72,7 +73,7 @@ c
          do ik = 1,nks(ir)
 c
             call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,
-     >                        sint,psin)
+     >                        sint,pint,psin)
 c
             if (sint.gt.0.0) then
 c
