@@ -3,6 +3,8 @@ c
 c     @PROCESS NOOPT
       PROGRAM OUT
       use error_handling
+      use debug_options
+      use mod_fp_data
       implicit none
 C
 C  *********************************************************************
@@ -21,6 +23,12 @@ c
       character*80 graph,label
 c 
       real time,time1,za02as       
+c
+c     Initialize debug tracing
+c
+      call init_trace(0,.false.)
+      call pr_trace('OUTMAIN','BEGIN EXECUTION')
+
 C
 C-----------------------------------------------------------------------
 C     INITIALISATION
@@ -29,6 +37,9 @@ C
       TIME1 = ZA02AS (1)
 
  10   call outinit
+
+      call pr_trace('OUTMAIN','AFTER OUTINIT')
+
 c
 c------------------------------------------------------------------
 c
@@ -37,18 +48,25 @@ c
 c------------------------------------------------------------------
 c
       call global_plotsetup 
+
+      call pr_trace('OUTMAIN','AFTER GLOBAL_PLOTSETUP')
+
 C
 C-----------------------------------------------------------------------
 C     PRINT OUTS
 C-----------------------------------------------------------------------
 C
       call writedata
+
+      call pr_trace('OUTMAIN','AFTER GLOBAL_WRITEDATA')
 c
 C-----------------------------------------------------------------------
 C     HC PLOT INITIALIZATION
 C-----------------------------------------------------------------------
 c
       call global_hc_plot_init(crmb,crmi)
+
+      call pr_trace('OUTMAIN','AFTER HC_PLOT_INIT')
 c
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -199,7 +217,13 @@ C     ___________________________
 C     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
       TIME = ZA02AS (1) - TIME1
 c
+c     Place storage deallocation calls just before end of code
+c
+c     far periphery
+c
+      call fp_deallocate_storage
 
+c
       WRITE (6,'(/,'' OUT: TOTAL TIME USED ='',G11.4,'' SEC'',/)') TIME
       CALL GREND
       STOP

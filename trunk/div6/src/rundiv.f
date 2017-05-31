@@ -7,6 +7,7 @@ c slmod begin
       use mod_divimp
       use ero_interface
 c slmod end
+      use mod_fp_data
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -60,7 +61,6 @@ c
      >  '17TH','18TH','19TH','20TH'/                                    
 c
 c     Set hard-coded global trace debugging options
-c
 c      call init_trace(0,.true.)
       call init_trace(0,.false.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
@@ -530,6 +530,9 @@ c
          CALL ero_cleanup
       endif
 
+      ! Put storage de-allocation calls here - just cleanup since end 
+      ! of execution should get rid of them anyway
+      call fp_deallocate_storage
 
 
       STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'

@@ -1787,10 +1787,12 @@ c
 c
       SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
      >                FACTA,FACTB,ITER,NITERS)
+      use debug_options
       use subgrid
 c slmod begin
       use mod_divimp
 c slmod end
+      use mod_fp_data
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include 'params'
@@ -2659,6 +2661,20 @@ c
          call rinout ('R ExB_R',exb_rad_drft,maxnks*maxnrs)
          call rinout ('R ExB_P',exb_pol_drft,maxnks*maxnrs)
       endif
+
+c
+c     jdemod - version 48 
+c
+c     Add reading of far periphery related quantities
+c     Only fully written if the option is active
+c
+      
+      call pr_trace('GET','BEFORE FP_READ_RAW')
+      if (version_code.ge.6*maxrev+48) then 
+         call fp_read_raw(8,version_code,maxrev)
+      endif
+      call pr_trace('GET','AFTER FP_READ_RAW')
+
 c
 c     Temporarily Add the following
 c

@@ -5,8 +5,8 @@ C
       use subgrid
 c slmod begin
       use mod_divimp
-
 c slmod end
+      use mod_fp_data
       use divimp_netcdf
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
@@ -55,11 +55,17 @@ c
       include    'line_profile' 
       include    'hc_global_opts'
       include    'driftvel'
+
+      ! Add periphery variables
+      !include 'fperiph_com'
+
 C
       INTEGER IR,IZ,IT,IN
 c slmod begin 
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
+
+
 
       INTEGER      i1,i2,i3,ik,i
       REAL         slver
@@ -589,6 +595,14 @@ c
       call rinout ('W E_POL',e_pol,maxnks*maxnrs)
       call rinout ('W ExB_R',exb_rad_drft,maxnks*maxnrs)
       call rinout ('W ExB_P',exb_pol_drft,maxnks*maxnrs)
+c
+c     jdemod - version 48 
+c
+c     Add writing of far periphery related quantities
+c     Only written if the option is active
+c
+      call fp_write_raw(8)
+
 c
 c
 c     Temporarily Add the following (?) 

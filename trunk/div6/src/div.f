@@ -19,6 +19,7 @@ c
       use ero_interface
       use divertor_limits
       use walls_src
+      use mod_fp_transport
 c slmod begin
       use mod_interface
       use mod_divimp
@@ -3223,7 +3224,7 @@ c      call prc ('ION SUMMARY:')
      >          TNTOTS(MAXIZS+1,2)-TNTOTS(0,2))
       CALL PRr0('TOTAL NO OF IONS PLATING ON TARGET       ',TDEP)
 C
-      IF (FPOPT.EQ.3.or.fpopt.eq.5) THEN
+      IF (FPOPT.EQ.3.or.fpopt.eq.5.or.fpopt.eq.6) THEN
 c
         CALL PRC('FAR PERIPHERY OPTION: STATISTICS')
         CALL PRr0('  NUMBER ENTERING FP                     ',
@@ -3911,6 +3912,10 @@ c
 c     Normalize data on the subgrid if it is in use.
 c
       call norm_subgrid(nizs,cneuta,tneut,tatiz,fsrate,qtim)
+c
+c     Normalize the data on the far periphery grid if it is in use
+c
+      call fp_norm_density(nizs,factb)
 c
 c     Void region - number density - no areas involved.
 c
@@ -8751,7 +8756,7 @@ c     >           sdrft_start(ir),sdrft_end(ir),ksmaxs(ir),kpmaxs(ir)
 c
 c     If far periphery transport is active
 c
-      if (fpopt.eq.5) then
+      if (fpopt.eq.5.or.fpopt.eq.6) then
 c
 c     Set up far periphery flow velocity
 c

@@ -901,7 +901,7 @@ c nonorth
 c
 c           Periphery option 3 
 c 
-            ELSEIF ((FPOPT.EQ.3.or.fpopt.eq.5).AND.
+            ELSEIF ((FPOPT.EQ.3.or.fpopt.eq.5.or.fpopt.eq.6).AND.
      >              ((CIONR.EQ.0.or.cionr.eq.2).OR.
      >               (CIONR.EQ.1.AND.
      >          ( (CROSS.LE.0.0.AND.(IR.EQ.IRWALL.or.ir.eq.irwall2))
@@ -958,7 +958,7 @@ c
               rsect  = 0
               zsect  = 0
 c
-              if (fpopt.eq.5) then 
+              if (fpopt.eq.5.or.fpopt.eq.6) then 
 c
 c                For regular ions istate = iz 
 c
@@ -970,7 +970,8 @@ c
                  call fp_transport(imp,ik,ir,iz,istate,s,theta,
      >                        cross,vel,temi,
      >                        crmi,nrand,
-     >                        cist,cistfp,cstmax,ctemav,rsect,zsect,res)
+     >                        cist,cistfp,cstmax,ctemav,rsect,zsect,
+     >                        sputy,res)
 c
 c                If a wall collision has occured then refine the rsect,zsect 
 c                values returned to actual wall locations and determine the ID
@@ -1002,10 +1003,25 @@ c
      >                      qtim,fpdist,fplosstim,DIFFR
 c
               IF (RES.EQ.1) THEN
+c
+c               Particle returns to grid. For FPOPT = 5, the 
+c               cross field location of the particle after
+c               stepping across the boundary is used to determine
+c               the starting position of the particle. 
+c
 C
 C               SET CROSS TO ONE STEP INSIDE THE BOUNDARY.
 C               THIS IS THE POSITION IT WILL HAVE REACHED
 C               IN ORDER TO EXIT THE FPERIPH ROUTINE
+c
+c               jdemod - for fpopt 5 ... proper transport
+c                        across the FP boundary is needed to 
+c                        ensure continuity of the calculated
+c                        density profile so the code here and in
+c                        fp_transport has been modified to make use
+c                        of the actual cross position of the particle
+c                        when moving in and out of the FP. 
+c
 C
                 FPEXIT = FPEXIT + SPUTY
 c
@@ -1028,7 +1044,22 @@ c nonorth
                     endif
 c
                     IK = JK
-                    CROSS = -distout(ik,ir) + KPERPS(IK,IR)
+c
+c                   jdemod - handle return from fpopt 5
+c
+                    if (fpopt.eq.5.or.fpopt.eq.6) then 
+                       ! cross is always negative on return from fpopt 5
+                       if (abs(cross).gt.abs(distout(ik,ir))) then 
+                            write(0,'(a,2i6,10(1x,g12.5)') 
+     >                             'FP RE_ENTRY WARNING:',
+     >                             ik,ir,cross,distout(ik,ir)
+                       endif
+                       CROSS = -distout(ik,ir) - cross
+                    else
+                       CROSS = -distout(ik,ir) + KPERPS(IK,IR)
+                    endif
+
+
  
                   ELSEIF (IR.EQ.IRTRAP.or.ir.eq.irtrap2) THEN
                     JK = IKOUTS(IK,IR)
@@ -1042,7 +1073,20 @@ c nonorth
                     endif
 c
                     IK = JK
-                    CROSS = distin(ik,ir) - KPERPS(IK,IR)
+c
+c                   jdemod - handle return from fpopt 5
+c
+                    if (fpopt.eq.5.or.fpopt.eq.6) then 
+                       ! cross is always negative on return from fpopt 5
+                       if (abs(cross).gt.abs(distin(ik,ir))) then 
+                            write(0,'(a,2i6,10(1x,g12.5)') 
+     >                             'FP RE_ENTRY WARNING:',
+     >                             ik,ir,cross,distin(ik,ir)
+                       endif
+                       CROSS = distin(ik,ir) + cross
+                    else
+                       CROSS = distin(ik,ir) - KPERPS(IK,IR)
+                    endif
                   else
                     write(6,'(a,2i6)')'CHECK_REACHED_GRID_EDGE:ERROR:'//
      >                     'PARTICLE NOT IN WALL RING AT FP EXIT:',ik,ir

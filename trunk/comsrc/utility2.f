@@ -3983,7 +3983,7 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      CHARACTER line*72,tag*(*)
+      CHARACTER line*(*),tag*(*)
       INTEGER fp,ival,imin,imax
       REAL    rval
 
@@ -4022,7 +4022,7 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      CHARACTER line*72,tag*(*)
+      CHARACTER line*(*),tag*(*)
       INTEGER fp,ival,imin,imax
 
       INTEGER i
@@ -4096,7 +4096,7 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      CHARACTER line*72,tag*(*)
+      CHARACTER line*(*),tag*(*)
       INTEGER fp,ival1,ival2,imin,imax
 
       INTEGER i1,i2
@@ -4130,7 +4130,7 @@ c
 
       IMPLICIT none
 
-      CHARACTER line*72,tag*(*)
+      CHARACTER line*(*),tag*(*)
       REAL rval,rmin,rmax
 
       INCLUDE 'params'
@@ -4139,7 +4139,13 @@ c
       REAL r
       CHARACTER comment*72
 
+      write(0,'(a,a,a)') 'LINE:READR:',line,':'
+
+
       READ (line,*,ERR=98,END=98) comment,r
+
+      write(0,'(a,a,a,g18.8)') 'LINE:READR:',comment,':',r
+
 
       IF (r.LT.rmin.OR.r.GT.rmax)
      .  CALL ER('ReadR','Out of bounds: '//line,*99)
@@ -4167,7 +4173,7 @@ c
 
       IMPLICIT none
 
-      CHARACTER line*72,tag*(*)
+      CHARACTER line*(*),tag*(*)
       REAL rval1,rval2,rmin,rmax
 
       INCLUDE 'params'
@@ -4176,7 +4182,14 @@ c
       REAL r1,r2
       CHARACTER comment*72
 
+
+      write(0,'(a,a,a)') 'LINE:READR:',line,':'
+
       READ (line,*,ERR=98,END=98) comment,r1,r2
+
+      write(0,'(a,a,a,2(1x,g18.8))') 'LINE:READR:',comment,':',r1,r2
+
+
 
       IF (r1.LT.rmin.OR.r1.GT.rmax.OR.
      .    r2.LT.rmin.OR.r2.GT.rmax)

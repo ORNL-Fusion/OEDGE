@@ -3,9 +3,12 @@ c
 c     These common blocks contain data relevant to the ion far
 c     periphery options. 
 c
-      integer,parameter ::  num_fp_regions = 2
+      integer,parameter ::  max_num_fp_regions = 4
       integer,parameter ::  fp_main = 1
       integer,parameter ::  fp_pfz  = 2
+      ! Below are to support double null grids and fp option 5
+      integer,parameter ::  fp_main2  = 3
+      integer,parameter ::  fp_pfz2  = 4
 c
       common /fp_com/ FPXMAXO,FPTIMO,fpxmaxi,fptimi,cdperpfp,
      >                fpopt,fpropt
@@ -29,26 +32,30 @@ c
 c
 c
 c 
-      common /fp_data/ fp_plasma,fp_virt_rings,
-     >                 fp_region,fp_s,fp_rings,fp_cells,
+      common /fp_data/ num_fp_regions,fp_plasma,fp_virt_rings,
+     >                 fp_region,fp_n_bins,fp_grid_width_opt,
+     >                 fp_s,fp_rings,fp_cells,
      >                 fp_walldist,min_fp_walldist,
-     >                 fp_wallcoords,fp_flow_velocity
+     >                 fp_wallcoords,fp_flow_velocity,
+     >                 fp_maxdist,fp_cross_tmp
 c     >                ,fp_sdrft_start,fp_sdrft_end
       save /fp_data/
 c
-      integer fp_region,
-     >        fp_virt_rings(num_fp_regions),
-     >        fp_rings(num_fp_regions),
-     >        fp_cells(num_fp_regions)
-      real fp_plasma(maxnks,num_fp_regions,7),
-     >     min_fp_walldist(maxnks,num_fp_regions),
-     >     fp_walldist(0:2*maxnks,num_fp_regions),
-     >     fp_wallcoords(0:2*maxnks,num_fp_regions,2),
-     >     fp_flow_velocity(num_fp_regions)
+      integer num_fp_regions,fp_region,fp_n_bins,
+     >        fp_grid_width_opt,
+     >        fp_virt_rings(max_num_fp_regions),
+     >        fp_rings(max_num_fp_regions),
+     >        fp_cells(max_num_fp_regions)
+      real fp_plasma(maxnks,max_num_fp_regions,7),
+     >     min_fp_walldist(maxnks,max_num_fp_regions),
+     >     fp_walldist(0:2*maxnks,max_num_fp_regions),
+     >     fp_wallcoords(0:2*maxnks,max_num_fp_regions,2),
+     >     fp_flow_velocity(max_num_fp_regions),
+     >     fp_maxdist(max_num_fp_regions),fp_cross_tmp
 c     >    ,fp_sdrft_start(num_fp_regions),
 c     >    ,fp_sdrft_end(num_fp_regions)
       
-      real fp_s(0:2*maxnks,num_fp_regions)
+      real fp_s(0:2*maxnks,max_num_fp_regions)
 c
 c     Hard coded flag for debugging the new fp options
 c

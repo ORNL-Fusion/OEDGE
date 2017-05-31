@@ -38,7 +38,7 @@ contains
     use mod_driftvel
     use mod_diagvel
     use mod_slcom
-
+    use mod_fp_data
 
     implicit none
 
@@ -1026,6 +1026,14 @@ contains
        !c     Added to raw file primarily for use by HC - code
        !c 
     endif
+
+
+    !
+    ! Add far periphery data to netcdf file
+    !
+    call fp_write_netcdf
+    
+
 
     !      call rinout ('W BRATIO',BRATIO,maxnks*maxnrs)
     ierr = write_nc('BRATIO',bratio,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Magnetic field ratio')

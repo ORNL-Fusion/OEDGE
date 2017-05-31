@@ -394,6 +394,7 @@ c
 c
 c 
       subroutine writedata
+      use debug_options
       implicit none
 c
       include 'params'
@@ -433,6 +434,8 @@ c     Temporary variables
 c
       real temppr1(maxnks,maxnrs),temppr2(maxnks,maxnrs)
 
+
+      call pr_trace('WRITEDATA','START WRITEDATA')
 
 c     Print out time dependent data for charge state 1
 c
@@ -734,6 +737,8 @@ c
 c      Print out location specific impurity density profiles
 c
       call pr_imp_density_profiles
+      call pr_trace('WRITEDATA','AFTER PR_IMP_DENSITY_PROFILES')
+
 c
 c     print out impurity deposition
 c     
@@ -1174,6 +1179,7 @@ c
 c
 c
       subroutine outinit
+      use debug_options
       use divimp_netcdf
       implicit none
 
@@ -1221,6 +1227,7 @@ c
       !          max contents of raw file
       character*1024 desc
 
+      call pr_trace('OUTINIT','START OUTINIT')
 c
 c     Initialization
 c
@@ -1247,6 +1254,7 @@ c
 c     Initialize the signal output
 c
       call setup_signal_output
+      call pr_trace('OUTINIT','AFTER SETUP_SIGNAL_OUTPUT')
 
 c
 c     Calculate format string for printing
@@ -1275,6 +1283,8 @@ c     Load case data from RAW data file
 c
 
       CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+
+      call pr_trace('OUTINIT','AFTER GET')
 C
 c
 C-----------------------------------------------------------------------
@@ -1317,6 +1327,9 @@ c
 c     Initialize any unstructured input values
 c
       call init_out_unstruc_input
+
+      call pr_trace('OUTINIT','AFTER INIT_OUT_UNSTRUC_INPUT')
+
 c
 c     READ the input data for the case
 c
@@ -1392,6 +1405,8 @@ c
       write (iplot,*) 'ABSFAC       = ',absfac
 
 
+      call pr_trace('OUTINIT','AFTER INITIAL PLOT INPUT')
+
 c
 c     jdemod - if the netcdf output flag has been set at the beginning of the plot
 c              file then write the netcdf file since all the required inputs 
@@ -1408,6 +1423,7 @@ C
          
       endif
 
+      call pr_trace('OUTINIT','AFTER WRITE NETCDF')
 
 c
 c     Set up colors - from dark to light - one for each contour - let
@@ -3131,6 +3147,7 @@ c
       end
 
       subroutine pr_imp_density_profiles
+      use mod_collector_probe
       implicit none
       include 'params'
       include 'outcom'
@@ -3142,7 +3159,8 @@ c
       include 'dynam3'
 c     
       include 'printopt' 
-
+c
+      include 'fperiph_com'
 
 !     print two profiles - near outer midplane defined as Z = Z0 +/- 10cm with R>R0
 !     - top of machine defined as +/- 10cm from the R,Z defined by the 
@@ -3154,6 +3172,11 @@ c
       real r_mid,z_mid,r_top,z_top
       real range
       character*1024 :: filename
+      real, allocatable :: sol_impdens(:),sol_axis(:)
+      real, allocatable :: ring_axis(:),ring_data(:)
+      integer :: maxnk 
+      logical :: pr_sol_impdens 
+      integer, external :: ipos
 
       write(0,*) 'Printing impurity density profiles:'
 
@@ -3192,17 +3215,17 @@ c
      >           (.not.xpoint_up.and.zs(ik,ir).gt.z_mid)).and.
      >           abs(rs(ik,ir)-r_top).le.range) then 
 
-            top_prof(ir,1) = top_prof(ir,1)+ kareas(ik,ir)
+               top_prof(ir,1) = top_prof(ir,1)+ kareas(ik,ir)
 
-            do iz = 1,nizs
+               do iz = 1,nizs
 
-               top_prof(ir,2) = top_prof(ir,2)+ 
-     >              kareas(ik,ir)* sdlims(ik,ir,iz)
-            end do
+                  top_prof(ir,2) = top_prof(ir,2)+ 
+     >                 kareas(ik,ir)* sdlims(ik,ir,iz)
+               end do
 
-         endif
-         
-      end do
+            endif
+            
+         end do
       end do
       
 !     calculate density
@@ -3221,15 +3244,15 @@ c
       end do 
 
 
-!
+!     
 !     convert to storing in a separate file
-!
+!     
       filename='upstream_impurity_profiles.dat'
       call find_free_unit_number(ounit)
 
       open(ounit,file=trim(filename),form='formatted')
 
-! write out the tabulated data
+!     write out the tabulated data
 
       write(ounit,'(a)')  ' Tabulated Impurity Density Profiles:'
       write(ounit,'(a)')  ' OMP'
@@ -3260,6 +3283,115 @@ c
 
 
       close(ounit)
+
+
+
+
+
+
+
+
+! allocate arrays
+! specify a fixed and normalize along ring length
+! interpolate the density onto the fixed scaling
+! write out the data for each ring (start with PSI value)
+! 
+      pr_sol_impdens = .true.
+      maxnk = 101
+      
+      if (pr_sol_impdens) then 
+
+
+!     write out normalized total impurity density profiles in SOL 
+         filename='sol_impurity_profiles.dat'
+         call find_free_unit_number(ounit)
+
+         open(ounit,file=trim(filename),form='formatted')
+
+!     write out the tabulated data
+
+         write(ounit,'(a)')  ' Tabulated Normalized SOL'//
+     >        ' Impurity Density Profiles:'
+
+         allocate(sol_impdens(maxnk))
+         allocate(sol_axis(maxnk))
+         allocate(ring_axis(maxnks+2))
+         allocate(ring_data(maxnks+2))
+         
+         do in = 1,maxnk
+            sol_axis(in) = real(in-1)/real(maxnk-1)
+         end do
+
+         write(ounit,'(38x,200(1x,g18.8))') 
+     >        (sol_axis(in),in=1,maxnk)
+
+
+         do ir = irsep, irwall-1
+
+            sol_impdens = 0.0
+
+            ring_axis = 0.0
+            ring_data = 0.0         
+            ring_axis(1) = 0.0
+            ring_axis(nks(ir)+2) = 1.0
+            
+            do ik = 1,nks(ir)
+               ring_axis(ik+1) = kps(ik,ir)/kpmaxs(ir)
+               do iz = 0,nizs
+                  ring_data(ik+1) = ring_data(ik+1) 
+     >                            + sdlims(ik,ir,iz)*absfac
+               enddo
+            end do
+            ring_data(1) = ring_data(2)
+            ring_data(nks(ir)+2) = ring_data(nks(ir)+1)
+
+
+! interpolate
+
+            do ik = 1, maxnk
+               
+               in = ipos(sol_axis(ik),ring_axis,nks(ir)+2)
+
+               if (in.le.1) then 
+                  sol_impdens(ik) = ring_data(1)
+               elseif (in.ge.nks(ir)+2) then 
+                  sol_impdens(ik) = ring_data(nks(ir)+2)
+               else
+                  fact = (sol_axis(ik)-ring_axis(in-1))
+     >                 /(ring_axis(in)-ring_axis(in-1))
+                  sol_impdens(ik) = fact * 
+     >                         (ring_data(in)-ring_data(in-1)) 
+     >                       + ring_data(in-1)
+               endif
+
+            end do
+
+            write(ounit,'(201(1x,g18.8))') psitarg(ir,outer_targid),
+     >           middist(ir,outer_targid),
+     >           (sol_impdens(in),in=1,maxnk)
+
+         end do
+
+!     loop over periphery and save the density data for this region too
+!     if fpopt 5 is in use
+
+         if (fpopt.eq.5) then 
+            call write_fp_main_density(ounit,maxnk,nizs,
+     >               sol_axis,sol_impdens,ring_axis,ring_data)
+         endif
+
+
+
+         close(ounit)
+
+
+
+
+      endif
+
+
+
+
 
       end                       ! pr_imp_density_profiles
 
