@@ -4139,9 +4139,6 @@ c
       REAL r
       CHARACTER comment*72
 
-      write(0,'(a,a,a)') 'LINE:READR:',line,':'
-
-
       READ (line,*,ERR=98,END=98) comment,r
 
       write(0,'(a,a,a,g18.8)') 'LINE:READR:',comment,':',r
@@ -4182,14 +4179,7 @@ c
       REAL r1,r2
       CHARACTER comment*72
 
-
-      write(0,'(a,a,a)') 'LINE:READR:',line,':'
-
       READ (line,*,ERR=98,END=98) comment,r1,r2
-
-      write(0,'(a,a,a,2(1x,g18.8))') 'LINE:READR:',comment,':',r1,r2
-
-
 
       IF (r1.LT.rmin.OR.r1.GT.rmax.OR.
      .    r2.LT.rmin.OR.r2.GT.rmax)
