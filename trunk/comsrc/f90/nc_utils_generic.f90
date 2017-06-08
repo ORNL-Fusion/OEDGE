@@ -60,7 +60,7 @@
 !       filename - character - file to be opened
 !       mode - NC_WRITE or NC_READONLY - default NC_READONLY
 !       check_zero_flag - flags whether to check for zero values before storing to netcdf file - default TRUE
-!       debug - logical - sets the verbose flag - default TRUE
+!       debug - logical - sets the verbose flag - default FALSE
 !       ierr     - integer - error return code
 !       [Opens netcdf file for access from module routines]
 !
@@ -243,7 +243,7 @@ MODULE nc_utils_generic
 
   CHARACTER(len=1024) :: err_msg ! Holder of error messages
   INTEGER :: nc_id
-  LOGICAL :: verbose = .true.
+  LOGICAL :: verbose = .false.
 
   !
   ! Define fixed attribute names
@@ -293,7 +293,7 @@ CONTAINS
 
     integer :: mode_val,create_mode
 
-    verbose = .TRUE.
+    verbose = .FALSE.
     zero_check = .TRUE.
 
     if (present(debug)) verbose = debug
