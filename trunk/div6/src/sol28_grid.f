@@ -3476,7 +3476,7 @@ c
       REAL*8 , PARAMETER :: DTOL = 1.0D-07
 
       INTEGER fp,iobj,itube,cind1,cind2,ic,nc,nlist,m,
-     .        i1,i2,i3,swall(nwall),iw,m2,m4
+     .        i1,i2,i3,swall(nwall),iw,m2,m4,in
       LOGICAL debug,cont,add_to_list
       REAL*8  x1,x2,y1,y2,x3,x4,y3,y4,s12,s34,s12max,length,
      .        store_x2,store_y2
@@ -3493,8 +3493,10 @@ c
       ENDTYPE type_list
       TYPE(type_list) :: list(0:MAXNLIST)
 
+      real*8 :: xt,yt
 
       fp = 88
+      !fp = 0
       debug = .TRUE.
 
       CALL DumpData_OSM('output.clipping','Trying to clip grid')
@@ -3546,6 +3548,13 @@ c        write(0,*) '-->',iobj,itube,ic,nc
 
       ENDDO
 
+c
+c     jdemod
+c
+c     List compiled of grid "corners"/target end points
+C     Each target should have 2 end points
+C
+c
 
 c...  Look for tangency points that are not bounded on each side by a target
 c     segment:
@@ -3589,10 +3598,13 @@ c       Check low index target:
 
       ENDDO
 
+
+      ! m controls the direction and cell end for the cut
       IF (debug) THEN
+        write(fp,*) 'OSMclipwalltogrid:'
         DO i1 = 1, nlist
-          WRITE(fp,'(A,4I6)') 
-     .      'CLIP LIST1:',list(i1)%i,list(i1)%t,
+          WRITE(fp,'(A,6I8)') 
+     .      'CLIP LIST1:',i1,nlist,list(i1)%i,list(i1)%t,
      .                   list(i1)%c,list(i1)%m
         ENDDO
       ENDIF
@@ -3614,6 +3626,13 @@ c...  Collect the cuts:
         i1 = i1 + 1
 
         iobj = list(i1)%i
+
+        if (debug) then 
+        do in = 1,4
+           call GetVertex(iobj,in,xt,yt)
+           write(fp,'(a,2i8,4(1x,g18.8))') 'vertices:',iobj,in,xt,yt
+        end do
+        endif
 
         SELECTCASE (list(i1)%m)
           CASE (1)
@@ -3638,8 +3657,8 @@ c       specifications or if the line segment is very short:
         length = DSQRT((x1-x2)**2 + (y1-y2)**2)
         x2 = x1 + MAX(2.0D0,0.1D0 / length) * (x2 - x1)
         y2 = y1 + MAX(2.0D0,0.1D0 / length) * (y2 - y1)
-c        x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)  - removed SL, 26/09/2011
-c        y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)    see message to screen above this loop
+c        x1 = store_x2 + MAX(2.0D0,0.1D0 / length) * (x1 - store_x2)  !- removed SL, 26/09/2011
+c        y1 = store_y2 + MAX(2.0D0,0.1D0 / length) * (y1 - store_y2)  !  see message to screen above this loop
 
         IF (debug) THEN
           WRITE(fp,*) ' --------------------'
@@ -3659,6 +3678,10 @@ c       Search the wall for intersections:
           CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
           IF (debug) THEN
             WRITE(fp,*) '  CALCINTER :-',i1,iw
+            WRITE(fp,*) '    X1,Y1   :',x1,y1
+            WRITE(fp,*) '    X2,Y2   :',x2,y2
+            WRITE(fp,*) '   SX2,SY2  :',store_x2,store_y2
+            write(fp,*) '  -----------'
             WRITE(fp,*) '    S12,34  :',s12,s34
             WRITE(fp,*) '    X3,Y3   :',x3,y3
             WRITE(fp,*) '    X4,Y4   :',x4,y4
@@ -3673,9 +3696,17 @@ c     .        s34.GT.0.0D0.AND.s34.LT.1.0D0.AND.
             list(i1)%s = s34
             list(i1)%x = store_x2
             list(i1)%y = store_y2
-            IF (debug) WRITE(fp,*) '  *** CUT B ***',i1,s12,iw
+            IF (debug) WRITE(fp,*) '  *** CUT B ***',i1,s12,s34,iw
+            ! once cut point is found - exit
+            exit
           ENDIF
         ENDDO
+
+c
+c      Looped through the wall but a cut intersection was not found for some reason
+c      Deleting the cut is not the right thing to do ...
+c
+
         IF (list(i1)%w.EQ.0) THEN
 c...      Problem with this cut pair, so delete them from the 
 c         list (have to complete the wall by hand at the moment):            

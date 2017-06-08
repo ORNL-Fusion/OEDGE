@@ -4141,9 +4141,6 @@ c
 
       READ (line,*,ERR=98,END=98) comment,r
 
-      write(0,'(a,a,a,g18.8)') 'LINE:READR:',comment,':',r
-
-
       IF (r.LT.rmin.OR.r.GT.rmax)
      .  CALL ER('ReadR','Out of bounds: '//line,*99)
 

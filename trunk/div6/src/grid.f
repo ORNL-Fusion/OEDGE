@@ -1666,9 +1666,12 @@ c       R=0.0:
         IF     (i2.EQ.3) THEN
 c...      The next wall segment could not be found:
           CALL ER('BuildNeutralWall','Unable to sequence wall',*99)
+           write(pinout,*) 'Unable to sequence wall:',i1,i2,i3
+
         ELSEIF (wallr1(1,1).EQ.wallr1(i1,2).AND.
      .          wallz1(1,1).EQ.wallz1(i1,2)) THEN
 c...      Wall is closed:
+           write(pinout,*) 'Wall closed:',i1
           walln = i1
           EXIT
         ENDIF
