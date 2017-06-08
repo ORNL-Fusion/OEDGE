@@ -1,5 +1,6 @@
 module divimp_netcdf
   use error_handling
+  use debug_options
   use nc_utils_generic
 
 
@@ -60,6 +61,8 @@ contains
     ! Fortran note: static string array assignments require all elements to have the same length
     !
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','START')
+
     !
     ! jdemod - open the netcdf file for output
     !
@@ -69,6 +72,7 @@ contains
        return
     endif
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER OPEN')
 
     !c slmod end
     !C
@@ -81,6 +85,9 @@ contains
     !c     
     !      write(8) verson
     ierr = write_nc('VERSION',verson,'Code version')
+
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER VERSION')
 
     !c
     !c     Write out the global parameters used to write the file
@@ -99,6 +106,7 @@ contains
     ierr = write_nc('ISHOT',equil,'May be shot')
     ierr = write_nc('TSLICE',equil,'May be time slice')
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER TITLE BLOCK')
 
     !c
     !c     These are fundamental array dimensions ... will be stored 
@@ -153,6 +161,8 @@ contains
     ierr = write_nc('MBUFX',mbufx,'Maximum Number of target elements')
     ierr = write_nc('MVES',mves,'Maximum Number of plots')
     ierr = write_nc('MAXE2DIZS',maxe2dizs,'Maximum Number of impurity charge states')
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 1')
 
     !c     
     !c     Simulation values
@@ -247,6 +257,9 @@ contains
     !ierr = write_nc('CYNEAR',cynear,'Number of plasma solver iterations')
 
 
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 2')
+
     !c     
     !c     Scaling factors  
     !c     
@@ -312,6 +325,10 @@ contains
     ierr = write_nc('IYEARH',iyearh,'ADAS H year')
     ierr = write_nc('USERIDZ',useridz,'ADAS Impurity User ID')
     ierr = write_nc('IYEARZ',iyearz,'ADAS impurity year')
+
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 3')
+
     !c     
     !c     Wall definitions
     !c     
@@ -339,6 +356,7 @@ contains
     ierr = write_nc('ZVES',zves,['MAXPTS'],[maxpts],'Z vessel coordinates','m')
 
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 4')
     !
     ! These are working storage for GA15 ... should not be in raw file in the first place
     ! I would think. 
@@ -436,6 +454,11 @@ contains
     ierr = write_nc('KSB',ksb,['MAXNKSP1','MAXNRS  '],[maxnks+1,maxnrs],'S (parallel) coordinate boundaries for cells (0 to nks(ir)','m')
     !      CALL RINOUT ('W KPB   ',KPB   ,(MAXNKS+1)*MAXNRS)
     ierr = write_nc('KPB',kpb,['MAXNKSP1','MAXNRS  '],[maxnks+1,maxnrs],'Poloidal boundaries of each cell','m')
+
+
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 5')
+
     !c
     !c     The storing of these arrays needed to be customized
     !c     because of a likely size mismatch between the
@@ -773,6 +796,7 @@ contains
     ierr = write_nc('PININF',piniz_info,['MAXNRS','4     '],[maxnrs,4],'PIN ionization and atom content on each ring - total and areal average')
 
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 6')
     !
     !
     !
@@ -856,6 +880,11 @@ contains
     ierr = write_nc('WSOUR',wallsrc,['5','3'],[5,3],'Integrated wall source data')
     !      call rinout ('W WLEAK ',wallleak,5*3)
     ierr = write_nc('WLEAK',wallleak,['5','3'],[5,3],'Integtated leakage data over walls')
+
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 7')
+
+
     !c
     !c     Store any EDGE2D BG data that has been read in
     !c
@@ -999,6 +1028,10 @@ contains
        ierr = write_nc('MOD_LP',modified_line_profile,['2MAX_LP_BINSP1'],[max_lp_bins*2+1],'Modified line profile')
     endif
 
+
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 8')
+
+
     !c
     !c     Store the pressure - from SOL option 22
     !c
@@ -1027,12 +1060,16 @@ contains
        !c 
     endif
 
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER HC')
+
+
 
     !
     ! Add far periphery data to netcdf file
     !
     call fp_write_netcdf
     
+    call pr_trace('WRITE_NETCDF_OUTPUT','AFTER FP')
 
 
     !      call rinout ('W BRATIO',BRATIO,maxnks*maxnrs)
@@ -1397,6 +1434,8 @@ contains
     !      WRITE(8) 123456789
     !ierr = write_nc('123456789',123456789,'')
 
+    
+    call pr_trace('WRITE_NETCDF_OUTPUT','BEFORE CLOSE')
 
 
     !

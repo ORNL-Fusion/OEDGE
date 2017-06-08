@@ -2,6 +2,7 @@ c     -*-Fortran-*-
 C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
+      use debug_options
       use subgrid
 c slmod begin
       use mod_divimp
@@ -69,6 +70,9 @@ c slmod begin
 
       INTEGER      i1,i2,i3,ik,i
       REAL         slver
+
+c
+      call pr_trace('STORE','START')
 
 c
 c slmod end
@@ -761,10 +765,15 @@ c...  6.14 (end of file flag):
       WRITE(8) 123456789
 
 
+      call pr_trace('STORE','AFTER RAW FILE WRITTEN')
+
+
       if (netcdf_opt.eq.1) then 
          call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)
       endif
+
+      call pr_trace('STORE','AFTER NETCDF WRITE')
 
 
 c slmod end
