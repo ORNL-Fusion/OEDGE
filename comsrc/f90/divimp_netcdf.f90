@@ -97,7 +97,7 @@ contains
     !c
     !      WRITE  (8) TITLE,desc,JOB,EQUIL,ISHOT,TSLICE
     
-    write(0,*) 'DESC:',len_trim(desc),':',trim(desc),':'
+    !write(0,*) 'DESC:',len_trim(desc),':',trim(desc),':'
 
     ierr = write_nc('TITLE',title,'Case Title')
     ierr = write_nc('DESC',desc,'Case Description')
