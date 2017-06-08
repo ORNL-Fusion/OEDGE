@@ -451,6 +451,8 @@ c
          call divtrn(nizs,iter,niters,facta,factb,title,job,equil,desc,
      >               jfcb)
       endif
+
+      call pr_trace('RUNDIV','AFTER DIVTRN')
 c
 C-----------------------------------------------------------------------
 C   DUMP RESULTS IN AN EXTERNAL FILE                                    
@@ -517,8 +519,11 @@ c
       WRITE (6,'('' TIME FOLLOWING IONS     (S)   '',G11.4)') IONTIM    
       WRITE (6,'('' TOTAL CPU TIME USED     (S)   '',G11.4)') TOTTIM    
 
+      call pr_trace('RUNDIV','AFTER EPILOGUE')
 
       call create_html(jfcb)
+
+      call pr_trace('RUNDIV','AFTER HTML')
 
       CALL OutputData  (87,'END OF DIVIMP')
       CALL OutputEIRENE(65,'END OF DIVIMP')
@@ -529,7 +534,7 @@ c
       if (ero_opt.ne.0) then 
          CALL ero_cleanup
       endif
-
+ 
       ! Put storage de-allocation calls here - just cleanup since end 
       ! of execution should get rid of them anyway
       call fp_deallocate_storage

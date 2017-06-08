@@ -234,6 +234,7 @@
 MODULE nc_utils_generic
 
   use error_handling
+  use debug_options
 
   implicit none
 
@@ -656,11 +657,6 @@ CONTAINS
   END FUNCTION add_long_name
 
 
-  
-
-
-
-
   FUNCTION switch_to_define_mode() RESULT(ier)
     ! switching to define mode will not return an error
     USE netcdf, ONLY : nf90_redef, nf90_noerr
@@ -743,9 +739,9 @@ CONTAINS
     ! Add or check dimension values
     ! Check for non-scalar values
 
-
     ! inquire on variable NAME 
     ier = nf90_inq_varid(nc_id, var_name, var_id)
+
 
     IF (ier .ne. nf90_noerr) THEN
        ! If the variable is not found 
@@ -772,7 +768,7 @@ CONTAINS
        ier = switch_to_define_mode()
        IF (ier .ne. nf90_noerr) RETURN
 
-       WRITE(err_msg,*) 'Problem creating variable ', var_name,' with rank '//rank_str//' and type '//type_str
+       WRITE(err_msg,*) 'Problem creating variable ', trim(var_name),' with rank '//trim(rank_str)//' and type '//trim(type_str)
        !WRITE(err_msg,*) 'Problem creating variable ', var_name
 
        ! define character array
@@ -790,8 +786,18 @@ CONTAINS
 
     fac = 1.
 
-    ! add units and long name attribute ... may not have anything significant for a character string
-    ier = add_units_long_name(var_id, units, long_name, fac)
+    ! add units and long name attribute if present
+    if (present(units)) then 
+       ier = add_units(var_id,units,fac)
+       if ( ier .ne. nf90_noerr ) RETURN
+    endif
+
+    if (present(long_name)) then 
+       ier = add_long_name(var_id,long_name)
+       if ( ier .ne. nf90_noerr ) RETURN
+    endif
+
+    !ier = add_units_long_name(var_id, units, long_name, fac)
     if ( ier .ne. nf90_noerr ) RETURN
 
     ! switch to data mode to store the data
