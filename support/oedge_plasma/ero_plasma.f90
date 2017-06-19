@@ -448,7 +448,7 @@ contains
        xshift = 0.0
        yshift = 0.0
     elseif (shift_opt.eq.1) then 
-       ! fixed shift of 1cm for each corner
+       ! fixed shift of 1% for each corner
        xshift = 0.01 * xhat
        yshift = 0.01 * yhat
        !write(0,*) 'xhat:',xhat
@@ -486,7 +486,7 @@ contains
     if (override_offsets.eq.1) then 
        ! calculate the offset automatically as the point midway between vertex 1 and vertex 4.
        ! The ERO geometry should start with 0.0 at the minimum R value with the Z axis centered on this side
-      
+       
        roffset = (vert(1,1)+vert(4,1))/2.0
        zoffset = (vert(1,2)+vert(4,2))/2.0
        !write(0,*) 'offsets revised:',override_offsets,roffset,zoffset

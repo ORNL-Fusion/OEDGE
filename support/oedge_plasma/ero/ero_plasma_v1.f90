@@ -377,6 +377,8 @@ contains
     write(0,'(a,10(1x,g12.5))') 'Offset:', xyoffset(1),xyoffset(2)
     write(0,'(a,10(1x,g12.5))') 'Deltas:', delx,dely
     write(0,'(a,10(1x,g12.5))') 'Vert  :', vert(1,1),vert(1,2)
+    write(0,'(a,10(1x,g12.5))') 'xhat  :', xhat(1),xhat(2)
+    write(0,'(a,10(1x,g12.5))') 'yhat  :', yhat(1),yhat(2)
 
 
     ! Allocate storage to hold the ERO output

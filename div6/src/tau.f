@@ -23154,11 +23154,18 @@ C
       !   end do
       !endif
 
+
       if (ncoreprofile.gt.0) then 
          ! fit a core profile entered based on PSIN to the grid ... store in the expected place
          ! and deallocate array. Fill the coredat array with ncoredat = irsep-1 data values         
          ! coredat(ir,2) = 
          if (allocated(coreprofile)) then 
+
+            ! shift the core profiles by the amount specified in delta_psin_core (default value is 0.0)
+            do in = 1,ncoreprofile
+               coreprofile(in,1) = coreprofile(in,1) + delta_psin_core
+            end do
+
 
             ncoredat = irsep-1
 

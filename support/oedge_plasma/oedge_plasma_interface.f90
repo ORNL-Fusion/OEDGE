@@ -921,23 +921,23 @@ contains
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,knbs,ne)
 
-       if (debug_code) then 
-          call debug_interpolate('KNBS:',r,z,irs,iks,e1,e2,f1,f2,knbs,ne)
-       endif
+       !if (debug_code) then 
+       !   call debug_interpolate('KNBS:',r,z,irs,iks,e1,e2,f1,f2,knbs,ne)
+       !endif
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktebs,te)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,ktibs,ti)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kvhs,vb)
 
-       if (debug_code) then 
-          call debug_interpolate('KVHS:',r,z,irs,iks,e1,e2,f1,f2,kvhs,vb)
-       endif
+       !if (debug_code) then 
+       !   call debug_interpolate('KVHS:',r,z,irs,iks,e1,e2,f1,f2,kvhs,vb)
+       !endif
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,kes,ef)
 
-       if (debug_code) then 
-          call debug_interpolate('KES :',r,z,irs,iks,e1,e2,f1,f2,kes,ef)
-       endif
+       !if (debug_code) then 
+       !   call debug_interpolate('KES :',r,z,irs,iks,e1,e2,f1,f2,kes,ef)
+       !endif
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,psifl,psin)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,btot,btoto)
@@ -947,6 +947,9 @@ contains
 
        call assign_interpolate(irs,iks,e1,e2,f1,f2,negs,ngrad)
        call assign_interpolate(irs,iks,e1,e2,f1,f2,tegs,tegrad)
+       if (debug_code) then 
+          call debug_interpolate('TEGS :',r,z,irs,iks,e1,e2,f1,f2,tegs,tegrad)
+       endif
        call assign_interpolate(irs,iks,e1,e2,f1,f2,tigs,tigrad)
 
 
@@ -2302,14 +2305,19 @@ contains
              !
              read (infile,500) (keds(id),id=1,nds)
 
+          elseif (buffer(1:5).eq.'NEGS:') then
+             !
+             !        parallel electron density gradient
+             !
+             read (infile,500) ((negs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
-          elseif (buffer(1:4).eq.'TEGS:') then
+          elseif (buffer(1:5).eq.'TEGS:') then
              !
              !        parallel electron temperature gradient 
              !
              read (infile,500) ((tegs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
-          elseif (buffer(1:4).eq.'TIGS:') then
+          elseif (buffer(1:5).eq.'TIGS:') then
              !
              !        parallel ion temperature gradient
              !
