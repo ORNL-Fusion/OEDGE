@@ -1617,6 +1617,16 @@ c
      >          -machhi,MACHHI,4,'CORE PLASMA PROFILES BY PSIN',
      >          IERR)
 
+c -----------------------------------------------------------------------
+c
+c     TAG Q45 : DELTA PSI VALUE TO SHIFT THE INPUT CORE PROFILE
+c
+      ELSEIF (tag(1:3).EQ.'Q45') THEN
+c
+c     INPUT IS:  DELTA_PSIN_CORE
+c
+        CALL ReadR(line,delta_psin_core,-machhi,machhi,
+     >             'PSIN SHIFT FOR CORE PROFILES')
 c
 c -----------------------------------------------------------------------
 c

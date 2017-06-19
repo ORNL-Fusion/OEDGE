@@ -342,7 +342,7 @@ contains
 
     call find_free_unit_number(ounit2) 
 
-    write(0,*) 'Third output:',trim(ofile2)
+    write(0,'(a,a)') 'Third output:',trim(ofile2)
 
     open(unit=ounit2,file=trim(ofile2),access='sequential',iostat=ierr)
     inquire(unit=ounit2,opened=res1)
@@ -429,6 +429,53 @@ contains
 
     close(ounit2)
     write(0,*) 'Third output complete:'
+
+    ! Fourth output file - usable as input directly to code
+
+    write(ofile2,'(a,a,i4,a,i4,a)') trim(ofilename),'_',int(start_time),'-',int(end_time),'-divimp-input.average'
+
+    call find_free_unit_number(ounit2) 
+
+    write(0,'(a,a)') 'Fourth output:',trim(ofile2)
+
+    open(unit=ounit2,file=trim(ofile2),access='sequential',iostat=ierr)
+    inquire(unit=ounit2,opened=res1)
+    inquire(file=trim(ofile2),opened=res2)
+    if (res1.ne.res2) call errmsg('PRINT TS:','CAUTION: Fourth output file name is not correct')
+
+
+    !write(ounit2,'(a)') ' DIVIMP Thomson Average Analysis'
+    !write(ounit2,'(a,f12.3,a,f12.3,a)') ' Time range = ', start_time ,':',end_time,' ms'
+    !write(ounit2,'(a)') ' All Data binned:'
+    !write(ounit2,'(a)') '    PSIN    Rsep       ne        Te     Counts'
+
+    ! find number of non-zero entries
+    cnt = 0
+
+    do in = 1,npsi_bins
+       if (counts(in,1).gt.0) then 
+          cnt = cnt + 1
+          !write(ounit2,'(i8,7(2x,g12.5))') cnt,psiaxis(in),profiles(in,1,1),profiles(in,2,1)
+       endif
+    end do
+
+    write(ounit2,'(a)')  "'*Q44 ' 'CORE Plasma Data - for Core Options 1,2 and 3'"
+    write(ounit2,'(a)')  "' ' '     (dummy line) '"
+    write(ounit2,'(a,2x,i10)')  "' PSIN , TeB , TiB , NB , Vb : Number of rows - '",     cnt
+
+    do in = 1,npsi_bins
+       if (counts(in,1).gt.0) then 
+          write(ounit2,'(7(2x,g12.5))') psiaxis(in),profiles(in,2,1),profiles(in,2,1),profiles(in,1,1),0.0
+       endif
+
+    end do
+
+
+    write(ounit2,'(a)')  "'*Q45 DELTA PSIN SHIFT for CORE Plasma Data    :'    0.0"
+
+
+    close(ounit2)
+    write(0,*) 'Fourth output complete:'
 
 
 

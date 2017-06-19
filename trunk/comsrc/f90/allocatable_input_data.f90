@@ -17,7 +17,7 @@ module allocatable_input_data
       integer :: ncoreprofile
       real,allocatable :: coreprofile(:,:)
 
-
+      
 
       contains
 

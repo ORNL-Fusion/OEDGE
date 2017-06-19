@@ -837,7 +837,12 @@ c     Data array is allocatable and does not need initialization
 c     (note: use allocatable_data module
 c
       ncoreprofile = 0
-
+c
+c -----------------------------------------------------------------------
+c
+c     TAG Q45 - Shift applied to psin coordinate of core profiles
+c
+      delta_psin_core = 0.0
 c
 c -----------------------------------------------------------------------
 c

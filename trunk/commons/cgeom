@@ -28,7 +28,8 @@ c slmod end
      >  zcouter,zcinner,middist,separatrix_dist,
      >  target_orth_angle,psifl,knes,kpinchs,kpinchs_para,psitarg,
      >  ikmidout_sep,ikmidin_sep,asep,asep_eff,
-     >  asep_tor,asep_tor_eff,targfluxdata,wallfluxdata,wallprad,nopriv
+     >  asep_tor,asep_tor_eff,targfluxdata,wallfluxdata,wallprad,nopriv,
+     >  delta_psin_core
       save /cgeom/
 
 c
@@ -100,7 +101,8 @@ c
      >  zcinner(maxnrs),middist(maxnrs,2),
      >  separatrix_dist(maxnks,maxnrs),asep,asep_eff,
      >  asep_tor,asep_tor_eff,targfluxdata(maxnds+3,4,4),
-     >  wallfluxdata(maxpts+5,4,4),wallprad(maxpts+6,3)
+     >  wallfluxdata(maxpts+5,4,4),wallprad(maxpts+6,3),
+     >  delta_psin_core
 c
       logical xpoint_up,nopriv
 c

@@ -141,26 +141,30 @@ contains
     ierr = write_nc('MAXVMF',maxvmf,'Maximum number of velocity multiplier factors')
 
     ierr = write_nc('MAXTHE',maxthe,'Maximum number of points in line of sight plots')
-    ierr = write_nc('MAXSN',maxsn,'Maximum Rings on a grid')
+
+    ! jdemod - maxsn - not used
+    !ierr = write_nc('MAXSN',maxsn,'Maximum Rings on a grid')
+
     ierr = write_nc('MAXPTS',maxpts,'Maximum Number of target elements')
-    ierr = write_nc('MAXPLRP',maxplrp,'Maximum Number of plots')
-    ierr = write_nc('MSOLPT',msolpt,'Maximum Number of impurity charge states')
-    ierr = write_nc('MAXADS',maxads,'Maximum Number of input values for some arrays')
+    ierr = write_nc('MAXPLRP',maxplrp,'Maximum Number of particular line radiation profiles (OLD)')
 
-    ierr = write_nc('MAXGXS',maxgxs,'Maximum Number of impurity particles to follow')
-    ierr = write_nc('MAXGYS',maxgys,'Maximum Knots on a ring')
+    ierr = write_nc('MSOLPT',msolpt,'Number of points in high resolution SOL profiles')
+    ierr = write_nc('MAXADS',maxads,'Array sizes for ADAS calls')
+
+    ierr = write_nc('MAXGXS',maxgxs,'Maximum X resolution of plotting grid (OLD)')
+    ierr = write_nc('MAXGYS',maxgys,'Maximum Y resolution of plotting grid (OLD)')
     ierr = write_nc('MAXCH3',maxch3,'Maximum Rings on a grid')
-    ierr = write_nc('MAXIXS',maxixs,'Maximum Number of target elements')
-    ierr = write_nc('MAXIYS',maxiys,'Maximum Number of plots')
-    ierr = write_nc('MAXSEG',maxseg,'Maximum Number of impurity charge states')
-    ierr = write_nc('MAXPLTS',maxplts,'Maximum Number of input values for some arrays')
+    ierr = write_nc('MAXIXS',maxixs,'Maximum X resolution of OUT XY grid (OLD)')
+    ierr = write_nc('MAXIYS',maxiys,'Maximum Y resolution of OUT XY grid (OLD)')
+    ierr = write_nc('MAXSEG',maxseg,'Maximum Number of wall segments for H flux arrays')
+    ierr = write_nc('MAXPLTS',maxplts,'Maximum Number of plots in along ring plots in OUT')
 
-    ierr = write_nc('MAXNFLA',maxnfla,'Maximum Number of impurity particles to follow')
-    ierr = write_nc('MAXPINITER',maxpiniter,'Maximum Knots on a ring')
-    ierr = write_nc('MBUFLE',mbufle,'Maximum Rings on a grid')
-    ierr = write_nc('MBUFX',mbufx,'Maximum Number of target elements')
-    ierr = write_nc('MVES',mves,'Maximum Number of plots')
-    ierr = write_nc('MAXE2DIZS',maxe2dizs,'Maximum Number of impurity charge states')
+    ierr = write_nc('MAXNFLA',maxnfla,'Maximum Number of fluids in fluid code solution')
+    ierr = write_nc('MAXPINITER',maxpiniter,'Maximum Number of PIN iterations')
+    ierr = write_nc('MBUFLE',mbufle,'Maximum size for baffle structure arrays (OLD)')
+    ierr = write_nc('MBUFX',mbufx,'Maximum size of another baffle related array (OLD)')
+    ierr = write_nc('MVES',mves,'Maximum Number of vessel wall vertices')
+    ierr = write_nc('MAXE2DIZS',maxe2dizs,'Maximum Number of fluid code charge states')
 
     call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 1')
 
