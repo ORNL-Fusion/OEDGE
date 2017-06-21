@@ -1338,7 +1338,7 @@ contains
     if (trim(out_format).eq.'matlab') then 
        call output_ero_plasma_m
     else
-       call output_ero_plasma
+       call output_ero_plasma_ascii
     endif
 
     return
