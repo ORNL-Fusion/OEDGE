@@ -15,7 +15,7 @@ module ero_plasma
   !
   character*50 ::  erodiv_plasma_fn ='erodiv_plasma.m'
   character*50 ::  erodiv_geometry_fn ='erodiv_geometry.m'
-
+  character*50 ::  out_format = 'ascii_table'
 
   ! options
   integer :: shift_opt=0,override_offsets=0
@@ -103,6 +103,9 @@ contains
        stop 'Spec file not found'
     endif
 
+    ! set the default output format for the ero plasma file to be ascii table 
+    ! the alternative is matlab format. 
+    out_format = 'ascii_table'
 
     ! Loop through specification file looking for tagged data lines
 
@@ -157,6 +160,8 @@ contains
           !   stop 'Unexpected error reading '//trim(erospec_name)
           !endif
 
+       elseif (buffer(1:10).eq.'#OUTFORMAT') then 
+          read(buffer(11:),*) out_format
        endif
 
     end do
@@ -1325,6 +1330,19 @@ contains
 
   end subroutine write_ero_par_file
 
+  subroutine output_ero_plasma
+    implicit none
+    ! Added this routine to allow choosing between output file format as an option without
+    ! re-writing code
+    
+    if (trim(out_format).eq.'matlab') then 
+       call output_ero_plasma_m
+    else
+       call output_ero_plasma
+    endif
+
+    return
+  end subroutine output_ero_plasma
 
 
   subroutine output_ero_plasma_m
@@ -1719,7 +1737,7 @@ contains
 
 
 
-  subroutine output_ero_plasma
+  subroutine output_ero_plasma_ascii
     implicit none
 
     ! file name to be saved as is part of the ero input block
@@ -1750,7 +1768,7 @@ contains
     call ero_plasma_cleanup
 
 
-  end subroutine output_ero_plasma
+  end subroutine output_ero_plasma_ascii
 
 
   subroutine calc_grad(grad_arr,axis,quant)
