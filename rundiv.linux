@@ -583,6 +583,9 @@ mvc impurity_wall_deposition.dat $CASENAME.deposition
 #  Upstream impurity profiles print out
 mvc upstream_impurity_profiles.dat $CASENAME.up_imp_prof
 
+#  Upstream impurity profiles print out
+mvc sol_impurity_profiles.dat $CASENAME.sol_imp_prof
+
 # AUG file
 mvc fort.59 $CASENAME.augdiv
 
