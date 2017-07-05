@@ -5227,7 +5227,7 @@ c
 c        They are only printed for a complete print out situation.
 c
 c
-         if (cprint.eq.9) then
+         if (cprint.eq.10) then
 c
             call print_edge2d_flux_analysis(rconst,gtarg,areasum,ir,
      >               gperpa,oldknbs,grad_oldknbs,srcinteg,recinteg,
@@ -9395,7 +9395,11 @@ c
      >              flux3,flux3/flux2
 c
                if (ik.eq.endik) then
-                  mulfact = ((flux2-flux1)/(0.15*intgrad2)) + 1.0
+                  if (intgrad2.gt.0.0) then 
+                     mulfact = ((flux2-flux1)/(0.15*intgrad2)) + 1.0
+                  else
+                     mulfact = 0.0
+                  endif
                endif
 c
                if (.not.(ik.eq.endik.and.
