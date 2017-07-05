@@ -2813,7 +2813,7 @@ C
          
          write(6,*) 'WALL SEGMENT: IN START,MID,END (R,Z) LEN,TYPE'
          do ind = 1,wallpts
-            write(6,'(a,i5,10(1x,g18.8))') ind,
+            write(6,'(i5,10(1x,g18.8))') ind,
      >          wallpt(ind,20),wallpt(ind,21),
      >          wallpt(ind,1),wallpt(ind,2),
      >          wallpt(ind,22),wallpt(ind,23),
