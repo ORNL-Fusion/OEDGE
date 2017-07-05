@@ -437,6 +437,21 @@ c
 
       call pr_trace('WRITEDATA','START WRITEDATA')
 
+c
+c     Print out wall geometry data
+c
+      write(6,*)
+      write(6,*) 'WALL GEOMETRY:'
+      write(6,*) 'WALL SEGMENT: IN START,MID,END (R,Z) LEN,TYPE'
+      do in = 1,wallpts
+         write(6,'(i8,10(1x,g18.8))') in,
+     >        wallpt(in,20),wallpt(in,21),
+     >        wallpt(in,1),wallpt(in,2),
+     >        wallpt(in,22),wallpt(in,23),
+     >        wallpt(in,7),wallpt(in,16)
+      end do
+      write(6,*)
+c
 c     Print out time dependent data for charge state 1
 c
 c

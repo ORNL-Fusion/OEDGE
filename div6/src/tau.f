@@ -9102,9 +9102,10 @@ c
             cleq(ir,1) = smax/2.0
      >           - ionint2i/ioninti
          endif
-         if (cprint.eq.9)
-     >      write(6,*) 'cleq:',ir,smax/2.0,ionint,ionint2,
-     >          cleq(ir,2) ,ioninti,ionint2i,cleq(ir,1)
+         if (cprint.eq.10)
+     >      write(6,'(a,i8,10(1x,g18.8))') 'cleq:',ir,smax/2.0,
+     >        ionint,ionint2,
+     >        cleq(ir,2) ,ioninti,ionint2i,cleq(ir,1)
 c
 c
 c
@@ -12381,7 +12382,7 @@ c
          tiploss = tiploss + ionploss(ir)
          teploss = teploss + elecploss(ir)
 
-         if (cprint.eq.1.or.cprint.eq.9) then
+         if (cprint.eq.10) then
             write(6,1230) 'Ion :',ir,ionploss(ir),iionploss(ir),
      >           oionploss(ir)
             write(6,1230) 'Elec:',ir,elecploss(ir),ielecploss(ir),
@@ -12467,7 +12468,7 @@ c
          icfqi(ir) = itotqi - inheati(ir) + iionploss(ir)
          ocfqi(ir) = ototqi - ouheati(ir) + oionploss(ir)
 c     
-         if (cprint.eq.1.or.cprint.eq.9) then
+         if (cprint.eq.10) then
 c     
             write(6,2001) 'cf :',ir,cfgam(ir),cfqe(ir),cfqi(ir)
             write(6,2001) 'cfi:',ir,icfgam(ir),icfqe(ir),icfqi(ir)
@@ -13800,7 +13801,8 @@ c
 c     
             end do
 c     
-            write (6,*) 'dptot:',ir,dptoto,dptoti,dptoto+dptoti
+            write (6,'(a,i8,10(1x,g18.8))') 'dptot:',ir,
+     >           dptoto,dptoti,dptoto+dptoti
 c     
 c     This implicitly assumes that the Dperp on the outer ring is
 c     equal to the Dperp on the current ring.
@@ -13967,10 +13969,11 @@ c
 
          endif
 c     
-         if (cprint.eq.1.or.cprint.eq.9) then
-            write (6,*) 'qeout:', qeouto,qeouti,qiouto,qiouti
-            write (6,*) 'qeoutconv:', qeoutconvo,qeoutconvi,
-     >           qioutconvo,qioutconvi
+         if (cprint.eq.10) then
+            write (6,'(a,i8,10(1x,g18.8))') 'qeout:', qeouto,
+     >           qeouti,qiouto,qiouti
+            write (6,'(a,i8,10(1x,g18.8))') 'qeoutconv:', 
+     >           qeoutconvo,qeoutconvi,qioutconvo,qioutconvi
          endif
 c     
 c     
@@ -14059,10 +14062,11 @@ c
 
             end do
 c     
-            if (cprint.eq.1.or.cprint.eq.9) then
-               write (6,*) 'q:',ir,qetoti,qitoti,qetoto,qitoto
-               write (6,*) 'conv:',ir,qeconvi,qeconvo,
-     >              qiconvi,qiconvo
+            if (cprint.eq.10) then
+               write (6,'(a,i8,10(1x,g18.8))') 'q:',ir,qetoti,
+     >              qitoti,qetoto,qitoto
+               write (6,'(a,i8,10(1x,g18.8))') 'conv:',ir,
+     >              qeconvi,qeconvo,qiconvi,qiconvo
             endif
 c     
 c     Calculate the Xperps
@@ -15061,7 +15065,7 @@ c     IPP/08 Krieger - fixed debug output -> writing area,
 c     gradnsep and totcfflux makes only sense if they have been
 c     computed before
 
-            if (cprint.eq.1.or.cprint.eq.9) then
+            if (cprint.eq.10) then
 
                write (6,*) 'CF:',ik,ir,ikin,irin,in,area,gradnsep,
      >              totcfflux,cdperp

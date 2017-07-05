@@ -2807,24 +2807,51 @@ c
 C
 C-----------------------------------------------------------------------
 C
-      if (cprint.eq.3.or.cprint.eq.9) then
+      if (cprint.eq.1.or.cprint.eq.3.or.cprint.eq.9) then
          write (6,*) 'WALL DEFINITION:'
-         write (6,*) 'IND, WLIND, FWLPROB:',nwlind
-         do ik = 1,nwlind
-            WRITE(6,*) 'WLIND:',ik,WLIND(IK),fwlprob(ik)
-         end do
          WRITE(6,*) 'WALLPTS:', WALLPTS
-         WRITE(6,*) 'R,Z,BP1,BP2,L1,L2,LT,A1,A2:'
-         WRITE(6,*) 'PART1:'
-         DO 2500 IND = 1,WALLPTS
-            WRITE(6,'(a,i5,9g13.5)') 'P1:',ind,(WALLPT(IND,IK),IK=1,9)
-            WRITE(6,'(a,5x,9g13.5)') 'P2:',(WALLPT(IND,IK),IK=10,18)
-            WRITE(6,'(a,5x,9g13.5)') 'P3:',(WALLPT(IND,IK),IK=19,25)
- 2500    CONTINUE
-         WRITE(6,*) 'PART2:',PCNT
-         DO 2520 IND = 1,PCNT
-            WRITE(6,*) RW(IND),ZW(IND)
- 2520    CONTINUE
+         
+         write(6,*) 'WALL SEGMENT: IN START,MID,END (R,Z) LEN,TYPE'
+         do ind = 1,wallpts
+            write(6,'(a,i5,10(1x,g18.8))'),ind,
+     >          wallpt(ind,20),wallpt(ind,21),
+     >          wallpt(ind,1),wallpt(ind,2),
+     >          wallpt(ind,22),wallpt(ind,23),
+     >          wallpt(ind,7),wallpt(ind,16)
+         end do
+
+         if (cprint.eq.3.or.cprint.eq.9) then 
+            write(6,*) 'DETAILED WALL DATA:'
+            WRITE(6,*) 'R,Z,BP1,BP2,L1,L2,LT,A1,A2:'
+            WRITE(6,*) 'PART1:'
+            DO 2500 IND = 1,WALLPTS
+               WRITE(6,'(a,i5,10(1x,g18.8))') 'P1:',ind,
+     >              (WALLPT(IND,IK),IK=1,9)
+               WRITE(6,'(a,5x,10(1x,g18.8))') 'P2:',
+     >              (WALLPT(IND,IK),IK=10,19)
+               WRITE(6,'(a,5x,10(1x,g18.8))') 'P3:',
+     >              (WALLPT(IND,IK),IK=20,29)
+               WRITE(6,'(a,5x,10(1x,g18.8))') 'P4:',
+     >              (WALLPT(IND,IK),IK=30,31)
+ 2500       CONTINUE
+         
+            write(6,*) 'WALL POINTS in RW,ZW'
+            WRITE(6,*) 'PART2:',PCNT
+            DO 2520 IND = 1,PCNT
+               WRITE(6,*) RW(IND),ZW(IND)
+ 2520       CONTINUE
+         endif
+
+         if (cprint.eq.9) then 
+            write(6,*) 'BASE PROBABILITY:'
+            write (6,*) 'IND, WLIND, FWLPROB:',nwlind
+            do ik = 1,nwlind
+               WRITE(6,'(a,i8,10(1x,g18.8))') 'WLIND:',ik,
+     >              WLIND(IK),fwlprob(ik)
+            end do
+         endif
+
+
       endif
 C
 C-----------------------------------------------------------------------
