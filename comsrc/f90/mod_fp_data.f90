@@ -180,10 +180,7 @@ contains
           ! fp_cells is in fperiph common block and is not allocated
           call iinout('R FPCELLS',fp_cells,max_num_fp_regions)
 
-          write(0,*) 'READING fp_cells:',max_num_fp_regions,(fp_cells(in),in=1,max_num_fp_regions)
-          write(0,*) 'READING fp_cells:',max_num_fp_regions,(fp_cells(in),in=1,max_num_fp_regions)
-
-
+          write(6,'(a,i8,20(1x,i8)') 'READING fp_cells:',max_num_fp_regions,(fp_cells(in),in=1,max_num_fp_regions)
 
           if (allocated(fp_grid_plasma)) then 
              call rinout('R FPGPLAS',fp_grid_plasma,maxnks*(fp_n_bins+1)*num_fp_regions*7)
@@ -195,8 +192,7 @@ contains
 
        ! write out fp_grid_plasma
 
-       write(0,*) 'WRITING FP PLASMA:',(fp_cells(in),in=1,num_fp_regions)
-       write(6,*) 'WRITING FP PLASMA:',(fp_cells(in),in=1,num_fp_regions)
+       write(6,'(a,20(1x,i8))') 'WRITING FP PLASMA:',(fp_cells(in),in=1,num_fp_regions)
 
          do in = 1,num_fp_regions
              do ik =1, fp_cells(in)
