@@ -3835,13 +3835,6 @@ c            IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF
-
-
-
-c
-
-
-
 c
 c     jdemod
       IF (output) then 
@@ -3988,11 +3981,6 @@ c     jdemod
       endif
 c      IF (output) WRITE(0,*) 'PUTTING GRID TOGETHER'
 
-
-
-
-
-
 c...TMP
       IF (.FALSE.) THEN
         WRITE(0,*) 'CELL IN QUESTION:',i1
@@ -4049,27 +4037,6 @@ c              ENDIF
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
       CALL ALLOC_GRID(MAXNKS,MAXNRS)

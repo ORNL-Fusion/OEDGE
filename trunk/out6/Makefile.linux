@@ -88,6 +88,7 @@ OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo -Mbounds -traceback
 OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTGS= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTG= -g -Mbyteswapio -Mlist
+#OPTO= -O -Mlist -Mbyteswapio -Munroll -traceback
 OPTO= -O -Mlist -Mbyteswapio -Munroll -Mnoframe
 OPTOS= -O -Mlist -Mbyteswapio -Munroll -Mnoframe -Msave
 #OPTO= -O -Mbyteswapio -Mlist -Munroll -Mnoframe
