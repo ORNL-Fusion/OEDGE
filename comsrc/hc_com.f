@@ -44,7 +44,7 @@
 	Integer, Parameter :: Output_Unit_HC_Alert = 67	! Output unit for warning/error file.
 
 	Integer, Parameter :: Output_Unit_Cpos_Pos = 68		! Output unit for initial C+ positions.
-	Integer, Parameter :: Max_Number_Walks = 1000000	! MAXNWS, Number of r,z pairs to store for plotting.
+	Integer, Parameter :: Max_Number_Walks = 10000          ! MAXNWS, Number of r,z pairs to store for plotting.  jdemod - reduce from 1000000 in case of memory limits(?)
 !	Integer, Parameter :: Walks_Record_Freq = 100		! Frequency of r,z pairs to store for plotting. 1=record all points.  100=record every 100th point.
 !       jdemod - walks are useless for analysis unless recorded at every timestep
 	Integer, Parameter :: Walks_Record_Freq = 1		! Frequency of r,z pairs to store for plotting. 1=record all points.  100=record every 100th point.
