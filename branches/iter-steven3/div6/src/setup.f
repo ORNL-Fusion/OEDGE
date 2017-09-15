@@ -71,7 +71,6 @@ c...  Assign B2 data:
 
         DO ik = 1, nks(ir)     
 
-
           IR_LOOP: DO ir1 = 1, numir
             DO ik1 = 1, numik
               IF (divimp_ik(ik,ir).EQ.ikindex(ik1).AND.

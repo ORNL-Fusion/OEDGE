@@ -386,30 +386,98 @@ c              pressure = 2.0 * node(inode)%pe * SNGL(ECH)
       END
 c
 c ======================================================================
+c https://stackoverflow.com/questions/38651487/how-to-detect-whether-a-file-is-formatted-or-unformatted
+c
+c
+c
+      logical function detect_binary(fName)
+c      subroutine detect_format(fName)
+      character(*), intent(in) :: fName
+c      integer, intent(out) :: binary
+      integer :: fId, stat
+      character :: c
+      logical :: formatted
+c      logical,save :: formatted
+
+      logical,save :: first_call = .true.
+
+      if (.not.first_call) then
+        first_call = .false.
+        detect_binary = .not.formatted
+        return
+      endif
+
+      stat = 0
+      formatted = .true. !assume formatted
+      open(newunit=fId,file=fName,status='old',form='unformatted',
+     .     recl=1)
+c       I assume that it fails only on the end of file
+      do while((stat==0).and.formatted)
+        read(fId, iostat=stat) c
+        formatted = formatted.and.( iachar(c)<=127 )
+      end do
+      if(formatted)then
+        write(0,*), trim(fName), ' is a formatted file'
+      else
+        write(0,*), trim(fName), ' is an unformatted file'
+      end if
+      close(fId)
+
+      detect_binary = .not.formatted
+
+      return      
+      end 
+c
+c ======================================================================
 c
       INTEGER FUNCTION GetNumberOfObjects(filename)
       IMPLICIT none
 
       CHARACTER, INTENT(IN) :: filename*(*)
 
-      INTEGER   fp,idum1
+      LOGICAL detect_binary
+
+      INTEGER   fp,idum1,code
+      LOGICAL   binary
       CHARACTER buffer*256,fname*512
+
 
       fname = TRIM(filename)
       IF (TRIM(filename).EQ.'default') fname = 'eirene.transfer'      
 
+
+      binary = detect_binary(fname)
+
+
       fp = 99
-      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-     .     STATUS='OLD',ERR=98)
+      IF (binary) THEN
+        OPEN(UNIT=fp,FILE=TRIM(fname),FORM='UNFORMATTED',
+     .       STATUS='OLD',ERR=98)
+      ELSE
+        OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .       STATUS='OLD',ERR=98)
+      ENDIF
       DO WHILE (.TRUE.)
-        READ(fp,'(A256)',END=10) buffer
-        IF     (buffer(1:16).EQ.'* BULK PARTICLES') THEN
-          READ(fp,*,ERR=97) 
-          READ(fp,*,ERR=97) GetNumberOfObjects
-          CLOSE(fp)
-          RETURN
+        IF (binary) THEN
+          READ(fp,END=10) code
+          IF (code.EQ.-9999911) THEN
+            READ(fp,ERR=97) idum1
+            READ(fp,ERR=97) GetNumberOfObjects
+            write(0,*) 'num obj=',GetNumberOfObjects
+            CLOSE(fp)
+            RETURN
+          ENDIF
+        ELSE
+          READ(fp,'(A256)',END=10) buffer
+          IF (buffer(1:16).EQ.'* BULK PARTICLES') THEN
+            READ(fp,*,ERR=97) 
+            READ(fp,*,ERR=97) GetNumberOfObjects
+            CLOSE(fp)
+            RETURN
+          ENDIF
         ENDIF
       ENDDO
+
 
  10   CALL ER('GetNumberOfObjects','EOF error',*99)
 
@@ -428,6 +496,11 @@ c
       INTEGER fp,i1,i2
       REAL    version
 
+      write(0,*) 'new: deallocating triangle arrays'
+      CALL DEALLOC_VERTEX  
+      CALL DEALLOC_SURFACE 
+      CALL DEALLOC_TRIANGLE
+
       fp = 99
       OPEN(UNIT=fp,FILE='triangles.raw',ACCESS='SEQUENTIAL',
      .     FORM='UNFORMATTED',STATUS='OLD',ERR=98)            
@@ -436,8 +509,8 @@ c
       IF (version.NE.1.0)
      .  CALL ER('LoadTriangles','Unsupporting version',*99)
 
-      CALL ALLOC_VERTEX(nver)
-      CALL ALLOC_SURFACE(nsurface)
+      CALL ALLOC_VERTEX  (nver)
+      CALL ALLOC_SURFACE (nsurface)
       CALL ALLOC_TRIANGLE(ntri)
       READ(fp,ERR=98) (tri(i1),i1=1,ntri)
       READ(fp,ERR=98) ((ver(i1,i2),i2=1,3),i1=1,nver)
@@ -464,17 +537,23 @@ c      USE mod_eirene04
       REAL      tdata(*)
       CHARACTER filename*(*)
 
+      LOGICAL detect_binary
+
       INTEGER GetNumberOfObjects
 
       INTEGER   fp,ntally,ndata,icount,i1,index(20),ntri,
-     .          iblk,iatm,imol,iion,ipho,ilin
-      LOGICAL   output
+     .          iblk,iatm,imol,iion,ipho,ilin,code
+      LOGICAL   output,binary
       REAL      rdum(30),volmin
       CHARACTER buffer*256,fname*512
 
-      REAL, ALLOCATABLE :: tvol(:)      
+      REAL, ALLOCATABLE, SAVE :: tvol(:)      
 
-      output = .FALSE. 
+
+c      STOP 'NEED TO MAKE COMPATIBLE WITH POSSIBLE BINARY FILE D'
+
+
+      output = .TRUE.
 
       IF (output) WRITE(0,*) 'LOADTRIANGLEDATA:',flag1,flag2,flag3
 
@@ -484,16 +563,27 @@ c      tdata = 0.0  ! Initialization... problem, size unknown...
 c...    Load volumes:
         volmin = 1.0E+20
         ntri = GetNumberOfObjects(TRIM(filename))
-        ALLOCATE(tvol(ntri))
-        CALL LoadTriangleData(7,0,4,0,tvol,TRIM(filename))
+        IF (.NOT.ALLOCATED(tvol)) THEN
+          ALLOCATE(tvol(ntri))
+          CALL LoadTriangleData(7,0,4,0,tvol,TRIM(filename))
+        ELSE
+          WRITE(0,*) 'using the saved volume data' 
+        ENDIF
       ENDIF
 
       fname = TRIM(filename)
       IF (TRIM(filename).EQ.'default') fname = 'eirene.transfer'
 
+      binary = detect_binary(fname)
+
       fp = 99
-      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-     .     STATUS='OLD',ERR=98)
+      IF (binary) THEN
+        OPEN(UNIT=fp,FILE=TRIM(fname),FORM='UNFORMATTED',
+     .       STATUS='OLD',ERR=98)
+      ELSE
+        OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .       STATUS='OLD',ERR=98)
+      ENDIF
 
       iblk = 0
       iatm = 0
@@ -501,77 +591,165 @@ c...    Load volumes:
       ipho = 0
       ilin = 0
       DO WHILE (.TRUE.)
-        READ(fp,'(A256)',END=10) buffer
-
-        IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
+        IF (binary) THEN
+          READ(fp,END=10) code
+        ELSE
+          READ(fp,'(A256)',END=10) buffer
+        ENDIF 
+c       ----------------------------------------------------------------
+        IF     ((binary.AND.code.EQ.-9999911).OR.(.NOT.binary.AND.
+     .           buffer(1:22).EQ.'* BULK PARTICLES - VOL')) THEN
+c        IF     (buffer(1:22).EQ.'* BULK PARTICLES - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND bulk particles - vol'
           iblk = iblk + 1
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata                         
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          IF (binary) THEN
+            READ(fp,  ERR=97) ntally
+            READ(fp,  ERR=97) ndata                        
+            READ(fp,  ERR=97) (index(i1),i1=1,ntally)          
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata                         ! Check...
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          ENDIF
+c          READ(fp,*,ERR=97) ntally
+c          READ(fp,*,ERR=97) ndata                         
+c          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.1.AND.flag2.EQ.iblk) tdata(icount)=rdum(flag3)
           ENDDO
-        ELSEIF (buffer(1:22).EQ.'* BULK PARTICLES - SUR') THEN
-        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - VOL') THEN
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
+          IF (flag1.EQ.1) THEN 
+            write(0,*) 'leaving LoadTriangleData very early'
+            EXIT
+          ENDIF
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999912).OR.(.NOT.binary.AND.
+     .          buffer(1:22).EQ.'* BULK PARTICLES - SUR')) THEN
+c        ELSEIF (buffer(1:22).EQ.'* BULK PARTICLES - SUR') THEN
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999921).OR.(.NOT.binary.AND.
+     .          buffer(1:18).EQ.'* TEST ATOMS - VOL')) THEN
+c        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: test atoms - vol'
           iatm = iatm + 1
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata                         
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          IF (binary) THEN
+            READ(fp  ,ERR=97) ntally
+            READ(fp  ,ERR=97) ndata                         
+            READ(fp  ,ERR=97) (index(i1),i1=1,ntally)          
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata                         
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          ENDIF
+c          READ(fp,*,ERR=97) ntally
+c          READ(fp,*,ERR=97) ndata                         
+c          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.2.AND.flag2.EQ.iatm) tdata(icount)=rdum(flag3)
           ENDDO
-        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - SUR') THEN
-        ELSEIF (buffer(1:22).EQ.'* TEST MOLECULES - VOL') THEN
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999922).OR.(.NOT.binary.AND.
+     .          buffer(1:18).EQ.'* TEST ATOMS - SUR')) THEN
+c        ELSEIF (buffer(1:18).EQ.'* TEST ATOMS - SUR') THEN
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999931).OR.(.NOT.binary.AND.
+     .          buffer(1:22).EQ.'* TEST MOLECULES - VOL')) THEN
+c        ELSEIF (buffer(1:22).EQ.'* TEST MOLECULES - VOL') THEN
+c          IF (output) WRITE(0,*) 'FOUND: test molecules - vol'
           imol = imol + 1
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata                         
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          IF (binary) THEN
+            READ(fp  ,ERR=97) ntally
+            READ(fp  ,ERR=97) ndata                         
+            READ(fp  ,ERR=97) (index(i1),i1=1,ntally)          
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata                         
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          ENDIF
+c          READ(fp,*,ERR=97) ntally
+c          READ(fp,*,ERR=97) ndata                         
+c          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.3.AND.flag2.EQ.imol) tdata(icount)=rdum(flag3)
           ENDDO
-        ELSEIF (buffer(1:17).EQ.'* TEST IONS - VOL') THEN
-        ELSEIF (buffer(1:17).EQ.'* TEST IONS - SUR') THEN
-        ELSEIF (buffer(1:20).EQ.'* TEST PHOTONS - VOL') THEN
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999941).OR.(.NOT.binary.AND.
+     .          buffer(1:17).EQ.'* TEST IONS - VOL')) THEN
+c       ----------------------------------------------------------------
+c        ELSEIF (buffer(1:17).EQ.'* TEST IONS - VOL') THEN
+          IF (flag1.EQ.1.OR.flag1.EQ.2.OR.flag1.EQ.3) THEN 
+            write(0,*) 'leaving LoadTriangleData early'
+            EXIT
+          ENDIF
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999942).OR.(.NOT.binary.AND.
+     .          buffer(1:17).EQ.'* TEST IONS - SUR')) THEN
+c        ELSEIF (buffer(1:17).EQ.'* TEST IONS - SUR') THEN
+        ELSEIF ((binary.AND.code.EQ.-9999951).OR.(.NOT.binary.AND.   ! *** not debugged ***
+     .          buffer(1:20).EQ.'* TEST PHOTONS - VOL')) THEN
+c        ELSEIF (buffer(1:20).EQ.'* TEST PHOTONS - VOL') THEN
+          IF (output) WRITE(0,*) 'FOUND: test photons - vol'
           ipho = ipho + 1
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata                         
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          IF (binary) THEN
+            READ(fp  ,ERR=97) ntally
+            READ(fp  ,ERR=97) ndata                         
+            READ(fp  ,ERR=97) (index(i1),i1=1,ntally)          
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata                         
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          ENDIF
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.5.AND.flag2.EQ.ipho) tdata(icount)=rdum(flag3)
           ENDDO
-        ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999961).OR.(.NOT.binary.AND.
+     .          buffer(1:14).EQ.'* LINE EMISSIO')) THEN
+c        ELSEIF (buffer(1:14).EQ.'* LINE EMISSIO') THEN
+          IF (output) WRITE(0,*) 'FOUND: line emission'
           ilin = ilin + 1
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata   
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          IF (binary) THEN
+            READ(fp  ,ERR=97) ntally
+            READ(fp  ,ERR=97) ndata   
+            READ(fp  ,ERR=97) (index(i1),i1=1,ntally)          
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata   
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
+          ENDIF
+c          READ(fp,*,ERR=97) ntally
+c          READ(fp,*,ERR=97) ndata   
+c          READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.6.AND.flag2.EQ.ilin) tdata(icount)=rdum(flag3)
           ENDDO
-
-        ELSEIF (buffer(1:6 ).EQ.'* MISC') THEN
+c       ----------------------------------------------------------------
+        ELSEIF ((binary.AND.code.EQ.-9999971).OR.(.NOT.binary.AND.
+     .          buffer(1:6 ).EQ.'* MISC')) THEN
+c        ELSEIF (buffer(1:6 ).EQ.'* MISC') THEN
 c...      Check volumes:
-          IF (output) WRITE(0,*) 'FOUND: ',buffer(1:12)
-          READ(fp,*,ERR=97) ntally
-          READ(fp,*,ERR=97) ndata   
-          READ(fp,*,ERR=97) (index(i1),i1=1,ntally-1)     ! TEMP WITH THE -1     
+          IF (output) WRITE(0,*) 'FOUND: misc'
+          IF (binary) THEN
+            READ(fp,  ERR=97) ntally
+            READ(fp,  ERR=97) ndata   
+            READ(fp,  ERR=97) (index(i1),i1=1,ntally-1) ! ntally-1)     ! TEMP WITH THE -1     
+          ELSE
+            READ(fp,*,ERR=97) ntally
+            READ(fp,*,ERR=97) ndata   
+            READ(fp,*,ERR=97) (index(i1),i1=1,ntally-1) ! ntally-1)     ! TEMP WITH THE -1     
+          ENDIF
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (flag1.EQ.7) tdata(icount) = rdum(flag3)
             IF (flag1.EQ.7.AND.flag3.EQ.4.AND.rdum(flag3).EQ.0.0) THEN
               WRITE(0,*) 'NULL TRIANGLE VOLUME:',icount
@@ -579,7 +757,11 @@ c...      Check volumes:
 c              tdata(icount)=1.0E+10
             ENDIF
           ENDDO
-        ELSEIF (buffer(1:1 ).EQ.'*') THEN
+          IF (output) WRITE(0,*) 'FOUND: misc - done'
+c       ----------------------------------------------------------------
+        ELSEIF (.NOT.binary.AND.buffer(1:1 ).EQ.'*') THEN
+c        ELSEIF (buffer(1:1 ).EQ.'*') THEN
+c       ----------------------------------------------------------------
         ELSE
 c          CALL ER('LoadTriangleData','Problem with transfer file',*99)
         ENDIF
@@ -595,7 +777,7 @@ c...    Scale by triangle volume:
           tdata(i1) = tdata(i1) / tvol(i1) * 1.0E+06  ! Conversion to m-3
         ENDDO
 c        WRITE(0,*) 'VOLMIN:',volmin
-        IF (ALLOCATED(tvol)) DEALLOCATE(tvol)
+c        IF (ALLOCATED(tvol)) DEALLOCATE(tvol)
       ENDIF
 
       RETURN

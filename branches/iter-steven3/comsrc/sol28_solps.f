@@ -31,6 +31,10 @@ c
       OPEN(UNIT=fp,FILE=TRIM(filename),
      .     ACCESS='SEQUENTIAL',STATUS='OLD',ERR=90)
 
+      shift = 0
+      IF (solps_indexing.EQ.1) shift = -1
+      IF (solps_indexing.EQ.2) shift =  1
+
 c...  First time the routine is called -- as indicated by the 
 c     unallocated MAP_DIVIMP array -- so sniff the file and 
 c     see how large the SOLPS data arrays need to be:
@@ -40,7 +44,7 @@ c     see how large the SOLPS data arrays need to be:
         maxir = 0
         count = 0
         SELECTCASE (solps_data(idata)%format)
-          CASE (1)  ! AK format for i1541
+          CASE (1:2)  ! AK format for i1541
             READ(fp,*)
             READ(fp,*)
             READ(fp,*)
@@ -52,6 +56,8 @@ c     see how large the SOLPS data arrays need to be:
             ENDDO
  10         CONTINUE
             IF (maxik.EQ.1.AND.maxir.EQ.1) maxik = count  ! For Yannick's crap data files
+            maxik = maxik + shift
+            maxir = maxir + shift
             ALLOCATE(solps_ik (maxik*maxir)) 
             ALLOCATE(solps_ir (maxik*maxir)) 
             ALLOCATE(solps_cen(maxik*maxir,2)) 
@@ -74,11 +80,8 @@ c...  Load the data:
       column = solps_data(idata)%column
       count = 0
  
-      shift = 0
-      IF (solps_indexing.EQ.1) shift = -1
-
       SELECTCASE (solps_data(idata)%format)
-        CASE (1) 
+        CASE (1:2) 
           READ(fp,*)
           READ(fp,*)
           READ(fp,*)

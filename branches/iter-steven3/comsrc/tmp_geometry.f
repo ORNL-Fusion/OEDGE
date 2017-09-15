@@ -1899,7 +1899,7 @@ c  c       obj(iobj)% =
 c
 c ======================================================================
 c
-c subroutine: BuildConnectionMap
+c subroutine: BuildConnectionMap_New
 c
 c
       SUBROUTINE BuildConnectionMap_New
@@ -1921,7 +1921,9 @@ c
 
       WRITE(fp,*) '=== BUILDING CONNECTION MAP ==='
 
+c      WRITE(0,*) 'derived quantity 1'
       CALL CalcDerivedQuantity(MODE_SRF_OBJ)
+c      WRITE(0,*) 'derived quantity 2'
       CALL CalcDerivedQuantity(MODE_SRF_SIDE)
 
  
@@ -1947,6 +1949,10 @@ c      WRITE(0,*) 'LIST:',list(1:nlist)
       ENDDO
 
       DO ilist = 1, nlist
+
+c        IF (MOD(ilist,1000).EQ.0)
+c     .      WRITE(0,*) '  ilist,nlist:',ilist,nlist,nobj
+
         iobj = list(ilist)
         DO iside = 1, obj(iobj)%nside         
           isrf = obj(iobj)%iside(iside)   
@@ -1956,7 +1962,7 @@ c      WRITE(0,*) 'LIST:',list(1:nlist)
 c            iobj1  = srf(-isrf)%obj     
 c            iside1 = srf(-isrf)%side    
                                          
-            WRITE(fp,*) '   -D->',iobj,iside,isrf,iobj1,iside1
+c            WRITE(fp,*) '   -D->',iobj,iside,isrf,iobj1,iside1
 
             IF (iobj1 .NE.srf(-isrf)%obj) THEN
               count_srf_obj = count_srf_obj + 1
@@ -1998,6 +2004,8 @@ c              STOP 'BAD SRF_SIDE'
           ENDIF
         ENDDO
       ENDDO
+
+c      WRITE(0,*) '  done'
 
       WRITE(fp,*) '  COUNT_SRF_OBJ   = ',count_srf_obj ,' (DEBUG)'
       WRITE(fp,*) '  COUNT_SRF_SIDE  = ',count_srf_side,' (DEBUG)'

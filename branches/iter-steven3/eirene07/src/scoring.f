@@ -11,6 +11,9 @@ C ===== SOURCE: calc_spectrum.f
       USE CGEOM
       USE CCONA
       USE COMUSR
+c slmod begin
+      USE CTRIG
+c slmod end
 
       IMPLICIT NONE
 
@@ -83,7 +86,7 @@ C ===== SOURCE: calc_spectrum.f
             CASE DEFAULT
               ADD = 0._DP
             END SELECT
-            
+
             EB = E0
 
             IF (EB < ESTIML(ISPC)%PSPC%SPCMIN) THEN
@@ -99,13 +102,16 @@ C ===== SOURCE: calc_spectrum.f
             ESTIML(ISPC)%PSPC%ESP_MAX= MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
             ESTIML(ISPC)%PSPC%IMETSP = 1
 c slmod begin
-
+c            write(0,'(A,3I6,2X,3I6,2X,4I6,2X,1P,E10.2,0P,2F10.3)') 
+c     .              'debug: fuck!',
+c     .        ESTIML(ISPC)%PSPC%ISPCTYP,i,ispc,
+c     .        isc,msurf,ityp,
+c     .        IPOLG,
+c     .        IPOLGN,MRSURF,necke(ipolgn,mrsurf),   ! *** THESE GIVE THE TRIANGLE ***
+c     .        SNGL(ESTIML(ISPC)%PSPC%SPC(I)),
+c     .        SNGL(e0),SNGL(wt)
 c slmod end
-c           write(0,'(A,3I6,1P,E10.2,0P,2F10.3)') 
-c     .                'debug: fuck!',
-c     .                ESTIML(ISPC)%PSPC%ISPCTYP,i,ispc,
-c     .                SNGL(ESTIML(ISPC)%PSPC%SPC(I)),
-c     .                SNGL(e0),SNGL(wt)
+
 
           END IF
         END DO
@@ -140,9 +146,9 @@ c     .                SNGL(e0),SNGL(wt)
               END SELECT
 c slmod begin
 c... Want velocity spectrum, not energy:
-c              EB = VEL
+              EB = VEL
 c
-              EB = E0
+c              EB = E0
 c slmod end
               IF (ESTIML(ISPC)%PSPC%IDIREC > 0) THEN
                 SPCVX = ESTIML(ISPC)%PSPC%SPCVX

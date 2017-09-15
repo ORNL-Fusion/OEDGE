@@ -3913,6 +3913,9 @@ C
       USE CLGIN
       USE COUTAU
       USE CTRIG
+c slmod begin - tet res
+      USE CTETRA
+c slmod end
 
       IMPLICIT NONE
 
@@ -3999,7 +4002,11 @@ C  PRINT SURFACE AREA (NOT FOR "TIME SURFACE")
 1       CONTINUE
 C
 C
-        IF (I.GT.NLIM.AND.LEVGEO.LE.4.AND.NLMPGS.NE.NLIMPS) THEN
+c slmod begin
+        IF (I.GT.NLIM.AND.LEVGEO.LE.5.AND.NLMPGS.NE.NLIMPS) THEN
+c
+c        IF (I.GT.NLIM.AND.LEVGEO.LE.4.AND.NLMPGS.NE.NLIMPS) THEN
+c slmod end
 C
 C  SPATIAL RESOLUTION ON NON DEFAULT STANDARD SURFACE?
           HELP=0.D0
@@ -4095,6 +4102,24 @@ C  TOROIDAL SURFACE
               N1=NTCO+1
               N2=1
               N3=1
+c slmod begin - tet res
+            ELSE IF (LEVGEO.EQ.5) THEN
+              sum1=0.D0
+              ntco=0
+              DO NP=1,4
+                DO NR=1,NTET
+                  IF (INMTIT(NP,NR) == NLIM+ISTS) THEN
+                    MSURFG=NLIM+NSTS+INSPATT(NP,NR)
+                    NTCO=NTCO+1
+                    HELP(NTCO)=HELPP(MSURFG)
+                    SUM1=SUM1+HELPP(MSURFG)
+                  END IF
+                END DO
+              END DO
+              N1=NTCO+1
+              N2=1
+              N3=1
+c slmod end
             END IF
             write (iunout,*) 'test ',sum1
             NTOTAL=N1*N2*N3

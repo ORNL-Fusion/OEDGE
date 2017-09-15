@@ -1289,10 +1289,13 @@ C
         IG     = 1
         NAME = '     TRACK'
 C
+        rmax = 100.0
+
         count = 0
  6500   CONTINUE
         count = count + 1
         DO IW = LW, MAXNWS
+c          write(0,*) 'HWALKS(IW,1)',iw,HWALKS(IW,1),rmax
           IF (HWALKS(IW,1).GE.10.0*RMAX) GOTO 6505
           UW = IW
         ENDDO
@@ -1305,10 +1308,10 @@ C
           WRITE (IPLOT,9012) NPLOTS,REF
           CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >      YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-          IF (count.eq.1) CALL SUPIMP ('SELECT')
+          CALL SUPIMP ('SELECT')
 c          IF (count.eq.1) CALL SUPIMP ('SELECT')
           CALL GRTRAC (HWALKS(LW,1),HWALKS(LW,2),UW-LW+1,NAME,'LINE',0)
-c          CALL FRAME
+          CALL FRAME
           IG = IG + 1
         ENDIF
         LW = UW + 2
@@ -1695,6 +1698,9 @@ c
 c Add ionisation state info here
 c
         READ (GRAPH(38:44),'(I4)') IZ
+
+        write(0,*) 'graph: >'//graph//'<'
+        write(0,*) 'iz:     ',iz
 
         NPLOTS = NPLOTS + 1
 

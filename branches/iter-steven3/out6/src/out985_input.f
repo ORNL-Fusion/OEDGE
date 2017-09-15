@@ -397,8 +397,8 @@ c         --------------------------------------------------------------
                   READ(fp,*) opt%chord_opt(i1),opt%chord_v1(1:3,i1),
      .                                         opt%chord_v2(1:3,i1)
 
-c...              Extend length by 10%:
-                  opt%chord_v2(1:3,i1) =    opt%chord_v1(1:3,i1) + 1.1 * 
+c...              Extend length by 100%:
+                  opt%chord_v2(1:3,i1) =    opt%chord_v1(1:3,i1) + 2.0 * 
      .              (opt%chord_v2(1:3,i1) - opt%chord_v1(1:3,i1))
                 ENDDO
                 READ(fp,*) cdum1,opt%sa_nxbin,opt%sa_nybin,opt%sa_opt,

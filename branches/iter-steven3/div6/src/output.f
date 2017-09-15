@@ -1259,9 +1259,9 @@ c                           twice in the output file but I will leave
 c                           it in during merge in case something depends
 c                           on it. 
 c
-     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5),
 c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
-c     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
           ENDDO
         ENDDO
       ENDIF

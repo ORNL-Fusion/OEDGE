@@ -48,6 +48,7 @@
      .  EIR_MAXNSPECTRA= 100,
      .  EIR_MAXNSUR    = 100,
      .  EIR_MAXNTET    = 100,
+     .  EIR_MAXNGAUGE  = 200,
      .  LSND = 1, USND = 2, UDND = 3, LDND = 4, CDND = 5, LINEAR = 6
 
 
@@ -70,7 +71,6 @@
 
 
       END MODULE mod_sol28_params
-
 !
 ! ======================================================================
 !
@@ -211,6 +211,11 @@ c
         INTEGER   :: data            ! Eirene input file  1=internal, 2=external 
         INTEGER   :: ilspt           ! Sputering option
         INTEGER   :: whipe           ! Reduce the plasma density to very low values (testing mode)
+        INTEGER   :: fluid_grid      ! Representation of the fluid grid in EIRENE, i.e. triangles from fluid grid cells, or treat the fluid grid region as a void
+        INTEGER   :: gas_only        ! Only pass gas puff strata to EIRENE
+
+        INTEGER   :: low_memory      ! Specify whether or not EIRENE should minimize memory use (low_memory=1)
+
 !...    3D:
         INTEGER   :: tet_iliin       ! Reflection property for the toroidal boundary surfaces
 !       Tetrahedral mesh generation:
@@ -228,12 +233,12 @@ c
         REAL*8        :: tet_param1   (EIR_MAXNTET)  !   1st parameter used to specify the angular width
         REAL*8        :: tet_param2   (EIR_MAXNTET)  !   2nd parameter
         REAL*8        :: tet_param3   (EIR_MAXNTET)  !   3rd general purpose parameter
-        CHARACTER*128 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
-        CHARACTER*128 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
+        CHARACTER*256 :: tet_del_hole (EIR_MAXNTET)  !   list of holes to apply to the slice (as listed in the additional surfaces)
+        CHARACTER*256 :: tet_del_zone (EIR_MAXNTET)  !   list of zones to delete from slice (as specified in when setting the void grid)
                                                      ! Tet_type = 3.0, sectors:
-        CHARACTER*128 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
+        CHARACTER*256 :: tet_sec_list (EIR_MAXNTET)  !   list of slices to be included in this sector
                                                      ! Tet_type = 4.0, full grid composite:
-        CHARACTER*128 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
+        CHARACTER*256 :: tet_composite(EIR_MAXNTET)  ! List of sector indices comprising the full grid (tet_type = 4.0)
         REAL          :: tet_offset   (EIR_MAXNTET)  !   angular start location for the grid (-999.0 = symmetric about 0.0)
 !...    Surface properties in EIRENE:
         INTEGER       :: sur_n       
@@ -369,7 +374,21 @@ c...    Strata:
         CHARACTER*128 :: void2_wall(  EIR_MAXNVOID)
         CHARACTER*128 :: void2_add (  EIR_MAXNVOID)
         CHARACTER*128 :: void2_hole(  EIR_MAXNVOID)
-
+!...    Pressure gauge specification:
+        REAL          :: gauge_version
+        INTEGER       :: gauge_n
+        INTEGER       :: gauge_type     (EIR_MAXNGAUGE)
+        REAL          :: gauge_x        (EIR_MAXNGAUGE)
+        REAL          :: gauge_y        (EIR_MAXNGAUGE)
+        REAL          :: gauge_z        (EIR_MAXNGAUGE)
+        REAL          :: gauge_phi      (EIR_MAXNGAUGE)
+        REAL          :: gauge_radius   (EIR_MAXNGAUGE)
+        CHARACTER*128 :: gauge_dupe_dir (EIR_MAXNGAUGE)  ! direction of duplication
+        INTEGER       :: gauge_dupe_n   (EIR_MAXNGAUGE)  ! number of duplicants
+        REAL          :: gauge_dupe_step(EIR_MAXNGAUGE)  ! spacing (m or deg)
+        CHARACTER*128 :: gauge_tag      (EIR_MAXNGAUGE)
+        INTEGER       :: gauge_ind      (2,EIR_MAXNGAUGE*32)
+        REAL          :: gauge_pos      (4,EIR_MAXNGAUGE*32)
       ENDTYPE type_options_eirene
 !
 !     Interpolation nodes:

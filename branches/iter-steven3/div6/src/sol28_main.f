@@ -2112,12 +2112,12 @@ c              WRITE(0,*) '     :',itube,
 c     .                   opt_iteration(iopt)%tube    (1:2)
 
 c              write(0,*) 'checking --- ',itube,
-c     .             CheckIndex(itube,opt_iteration(iopt)%tube),
+c     .             CheckIndex(itube,0,opt_iteration(iopt)%tube),
 c     .             opt_iteration(iopt)%tube
 
               IF (opt%cflukin.GE.opt_iteration(iopt)%iteration(1).AND.
      .            opt%cflukin.LE.opt_iteration(iopt)%iteration(2).AND.
-     .            CheckIndex(itube,opt_iteration(iopt)%tube)) THEN
+     .            CheckIndex(itube,0,opt_iteration(iopt)%tube)) THEN
 c     .            itube      .GE.opt_iteration(iopt)%tube(1)     .AND.
 c     .            itube      .LE.opt_iteration(iopt)%tube(2)) THEN
                 opt_tube = opt_iteration(iopt)

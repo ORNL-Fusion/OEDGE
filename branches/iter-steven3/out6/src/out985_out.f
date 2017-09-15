@@ -231,7 +231,8 @@ c      WRITE(0,*) 'NPLASM:',nplasma
 
       SELECTCASE (obj(iobj)%subtype)
 
-        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
+        CASE (OP_FLUID_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
+c        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  
 c...      Fluid grid:
           ik = obj(iobj)%ik
           ir = obj(iobj)%ir
@@ -328,7 +329,7 @@ c                ENDIF
 
           ENDSELECT
 
-c        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
+        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
 cc...      Eirene grid:
 c          STOP 'NOT READY: OP_EIRENE_GRID'
         CASE (OP_INVERSION_GRID)
@@ -1205,10 +1206,15 @@ c...  For connection map:
       REAL    minphi,maxphi,phi,dphi,y,dy,miny,maxy,GetTetCentre
 
 
+      WRITE(0,*) 'Loading tetrahedron grid',nobj
+       
+
       CALL Wrapper_LoadObjects(TRIM(opt%obj_fname(ielement)),status)
 c      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
       IF (status.NE.0) CALL ER('Wrapper_LoadObjects','Unable '//
      .                         'to find grid file',*99)
+
+
 
 c.... Load all the vertices:
       status = 0
@@ -1225,6 +1231,7 @@ c...  Load all fluid grid tetrahedrons:
       CALL GetNextTet(newobj,-1,-1,-1,status)
       DO WHILE (status.EQ.0) 
         CALL GetNextTet(newobj,nsrf,ielement,option,status)
+
         IF (status.EQ.0) THEN
           DO i1 = 1, newobj%nside
             newsrf%type = SP_PLANAR_POLYGON
@@ -1332,7 +1339,9 @@ c      STOP 'sdfsdf'
       WRITE(0,*) ' NOBJ       = ',nobj
       WRITE(0,*) ' VSUM       = ',vsum(iside,iobj)
       WRITE(0,*) ' VSUM1      = ',vsum(1:4,obj(iobj)%imap(1,iside))
- 99   STOP
+ 99   WRITE(0,*) ' MAX3D      = ',MAX3D
+      WRITE(0,*) ' NOBJ       = ',nobj
+      STOP
       END
 c
 c ====================================================================== 

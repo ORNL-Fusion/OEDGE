@@ -231,6 +231,10 @@ C
      .           NSIGCI, IREAD, NCOPI, NCOPII, NCOPIE, NREAC_ADD,
      .           IPLS, NRC, NRE, NLINES, I2, LL, NB1, NB2, NB3, NS1, 
      .           NS2, NS3, INM1, INM2, INM3, INMDL
+c slmod begin - tet res
+      INTEGER :: NB4, NS4, INM4
+      CHARACTER(256) :: ZEILE2
+c slmod end
       REAL(DP) :: SORIND, SORLIM, DUMM1, ROA, ZAA, ZZA, ZGA, YAA, YYA,
      .            ZIA, YP, XP, YIA, YGA
       LOGICAL :: NLSCL, NLTEST, NLANA, NLDRFT, NLCRR, NLERG, LIDENT,
@@ -506,6 +510,39 @@ c slmod end
               CALL UPPERCASE(ULINE)
             END DO
             IREAD=1
+c slmod begin - tet res
+            IF (.TRUE.) THEN
+              CASENAME='cmod'
+              LL=LEN_TRIM(CASENAME)
+              FILENAME=CASENAME(1:LL) // '.neighbors'
+              OPEN (UNIT=30,FILE=FILENAME,ACCESS='SEQUENTIAL',
+     .              FORM='FORMATTED')
+              ZEILE2='*   '
+              DO WHILE (ZEILE2(1:1) == '*')
+                 READ (30,'(A10)') ZEILE2
+              END DO
+              NGITT=1
+c              write(0,*) 'zeile = ',zeile(1:50)  
+c              write(0,*) 'debug: ntet   = ',ntet
+c              write(0,*) 'debug: ntetra = ',ntetra
+              DO I=1,NTET-1
+                 READ (30,'(A256)') ZEILE2
+c                 IF (i.LT.5.OR.i.GT.64372) 
+c     .             write(0,*) 'zeile2 = ',zeile2(1:70)  
+                 READ (ZEILE2,*) ID, NB1, NS1, INM1,
+     .                               NB2, NS2, INM2, 
+     .                               NB3, NS3, INM3,
+     .                               NB4, NS4, INM4
+                 IF (INM1 /= 0) NGITT = NGITT + 1
+                 IF (INM2 /= 0) NGITT = NGITT + 1
+                 IF (INM3 /= 0) NGITT = NGITT + 1
+                 IF (INM4 /= 0) NGITT = NGITT + 1
+              END DO
+              CLOSE (UNIT=30)
+c              write(0,*) 'debug: ngitt  = ',ngitt
+c              write(0,*) 'debug: ngstal = ',ngstal
+            ENDIF
+c slmod end
           ENDIF
         ELSEIF (INDGRD(1).EQ.6) THEN
 C  IS THERE ONE MORE LINE, OR IS NLPOL THE NEXT VARIABLE
@@ -1048,6 +1085,9 @@ C
      .  '*** 13. DATA FOR ITERATIVE AND TIME DEP. OPTION '
 C
       READ (IUNIN,6666) NPRNLI
+c slmod begin
+      IF (NPRNLI.EQ.999998) NPRNLI = 1E+7
+c slmod end
       IF (NLERG.AND.NPRNLI.LE.0) THEN
 C  NO TIME HORIZON DEFINED, DESPITE NLERG=.TRUE.
 C  THEREFORE: SET A DEFAULT TIME HORIZON HERE
@@ -4846,7 +4886,7 @@ c
 c  search for input block 11a
 1110  READ (IUNIN,'(A72)') ZEILE
       IF (ZEILE(1:1) .EQ. '*') GOTO 1110
-      write(0,*) 'debug:',TRIM(zeile)
+c      write(0,*) 'debug:',TRIM(zeile)
       READ (ZEILE,6665) TRCPLT,TRCHST,TRCNAL,TRCMOD,TRCSIG,
      .                  TRCGRD,TRCSUR,TRCREF,TRCFLE,TRCAMD,
      .                  TRCINT,TRCLST,TRCSOU,TRCREC,TRCTIM,
@@ -5097,6 +5137,9 @@ C
       CALL MASAGE ('*** 13. DATA FOR ITERATIVE AND TIME DEP. OPTION ')
 C
       READ (IUNIN,6666) NPRNLI
+c slmod begin
+      IF (NPRNLI.EQ.999998) NPRNLI = 1E+7
+c slmod end
       WRITE (iunout,*) '        NPRNLI= ',NPRNLI
       CALL LEER(1)
       IF (NLERG.AND.NPRNLI.LE.0) THEN
@@ -8690,6 +8733,21 @@ C
         ENDDO
       ENDDO
 
+c slmod begin - tet res
+      ISTMIN=MINVAL(INMTIT(1:4,1:NTET),MASK=(INMTIT(1:4,1:NTET)/=0))
+      ISTMAX=MAXVAL(INMTIT(1:4,1:NTET),MASK=(INMTIT(1:4,1:NTET)/=0))
+      IC=0
+      DO ISTS=ISTMIN,ISTMAX
+        DO IS=1,4
+          DO IT=1,NTET
+            IF (INMTIT(IS,IT) == ISTS) THEN
+              IC=IC+1
+              INSPATT(IS,IT)=IC
+            END IF
+          END DO
+        END DO
+      END DO
+c slmod end
       IF (IER /= 0) CALL EXIT(1)
 
       itethand = 1

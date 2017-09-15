@@ -19,6 +19,7 @@ c slmod begin
       use mod_interface
       use mod_divimp
       use mod_divimp_tdep
+      use mod_divimp_walldyn
 c slmod end
 c
       implicit none
@@ -87,7 +88,7 @@ c slmod begin - temp
       integer divGetTdepIndex
 
       integer i,fp,load_i
-      real    tdep_rescale(maxizs),tdep_loss
+      real    tdep_rescale(maxizs),tdep_loss,sum1
 c slmod end
 
 c
@@ -391,6 +392,9 @@ c
       CALL RZERO (wallsi, maxpts+1)
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
       call rzero (wallseiz,(maxpts+1) * MAXIZS)
+c slmod begin
+      CALL divWdnAllocate(wallpts,nizs)
+c slmod end
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -1156,6 +1160,11 @@ c
           TEMI  = TEMTIZS(IMP)
           idstart = idatizs(imp,1)
           idtype  = idatizs(imp,2)
+c slmod begin
+c          wdn_i = wdn_index(imp)
+c          write(0,*) 'idstar,wdn_i',idstart,wdn_i
+c          wdn_i = idstart
+c slmod end
 c
 c         Assign starting wall index of particle
 c
@@ -1171,7 +1180,6 @@ c
 c slmod begin - t-dep
           LOAD_I = -1
           IF (TDEP_DATA_EXISTS) THEN
-
 
             NRAND = NRAND + 1
             CALL SURAND2(SEED, 1, RAN)
@@ -1199,7 +1207,6 @@ c              WRITE(0,*) 'Taking a new particle, not an old one...'
 c        WRITE(0,*) '************  what the heck B! **************'
 
             ELSE
-
 
             ENDIF
           ENDIF
@@ -2918,7 +2925,18 @@ c
                wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
             endif
          enddo
-
+c slmod begin
+         j = wallpts + 1
+         do i = 1, wallpts+1
+           wdn(i,j)%n = wdn(i,j)%n + wdn(i,in)%n
+           wdn(i,j)%i = wdn(i,j)%i + wdn(i,in)%i
+           do iz= 1, nizs
+             if (wdn(i,in)%iz(iz).gt.0.0) then 
+               wdn(i,in)%eiz(iz) = wdn(i,in)%eiz(iz) / wdn(i,in)%iz(iz)
+             endif
+           enddo
+         enddo
+c slmod end
          if (iz.lt.80) then 
             write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
      >          'Walls Data:',in,
@@ -2938,7 +2956,7 @@ c
      >      wallsi(maxpts+1),wallsn(maxpts+1)
 
 
-C     K. Schmid 2008 output charge state resolved wall impact information
+C     K. Schmid 2008 output charge state resolved wall impact information - check
       write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
      >               wallpts
 c
@@ -2965,6 +2983,57 @@ c       Adding wall impurity atom flux from EIRENE, if available:
         endif
         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
      >                 wallsiz(maxpts+1, 1:NIZS),-1.0
+
+
+
+      write (SLOUT, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
+     >               wallpts
+      write(SLOUT,*) 'WALLSN:'    
+      do in = 1,wallpts+1
+        write(SLOUT,'(I6,1P,2E10.2,0P)') in,
+     .    wallsn(in),SUM(wdn(1:wallpts+1,in)%n)
+      enddo
+      write(SLOUT,*) 'WALLSI:'
+      do in = 1,wallpts
+        write(SLOUT,'(I6,1P,2E10.2,0P)') in,
+     .    wallsi(in),SUM(wdn(1:wallpts+1,in)%i)
+      enddo
+      write(SLOUT,'(I6,1P,2E10.2,0P,A)') in,
+     .  wallsi(maxpts+1),SUM(wdn(1:wallpts+1,wallpts+1)%i),' last'
+
+      do iz = 1, nizs+1
+
+        write(SLOUT,*) 'WALLSIZ IZ:',iz
+        do in = 1,wallpts
+          sum1 = 0.0
+          do i = 1,wallpts  ! SUM() won't compile
+            sum1 = sum1 + wdn(i,in)%iz(iz)
+          enddo
+          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+     .      wallsiz(in,iz),sum1
+        enddo
+
+c        write(SLOUT,*) 'WALLSEIZ IZ:',iz   ! *** LEFT OFF *** checking that things are OK...
+c        do in = 1,wallpts
+c          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+c     .      wallseiz(in,iz),SUM(wdn(1:wallpts,in)%eiz(iz))
+c        enddo
+
+      enddo
+
+      do i = 1, wallpts+1
+        write(SLOUT,*) 'WALLSIZ:',i
+        do in = 1,wallpts+1
+          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+     .      wdn(i,in)%i,SUM(wdn(i,in)%iz(1:nizs+1)),
+     .      (wdn(i,in)%iz(iz),iz=1,nizs+1)
+        enddo
+        write(SLOUT,*) 'WALLSEIZ:',i
+        do in = 1,wallpts+1
+          write(SLOUT,'(I6,1P,100(2E10.2,2X),0P)') in,
+     .      (wallseiz(in,iz),wdn(i,in)%eiz(iz),iz=1,nizs+1)
+        enddo
+      enddo
 c
 c         do in = 1,wallpts
 cC        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
@@ -2980,7 +3049,7 @@ c slmod end
      >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
       endif
 
-c	  K. Schmid 2013 output charge state resolved impact energies
+c	  K. Schmid 2013 output charge state resolved impact energies - check
 c		the idea is to include the flow velocity contribution to the impact energies 
 c		DIVIMP stores the energy of the particels based on 3 * q * Te + 0.5 * (Mass * VFlow^2) + 2 Ti
 c		in wallseiz(wallidx, iz) for each charge state
@@ -7695,11 +7764,17 @@ c
 c
       subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
      >                          eimp)
+c slmod begin
+      use mod_divimp_walldyn
+c slmod end
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
       integer,intent(in) ::  idt,idw
       real sputy,eimp
+c slmod begin
+      integer i,j
+c slmod end
 c
       include 'params'
       include 'cgeom'
@@ -7722,7 +7797,7 @@ c
 c     Added a wallsiz array that records the wall impact information in a
 c     charge resolved maner
 c
-c     K. Schmid Feb. 2008 and june 2009
+c     K. Schmid Feb. 2008 and june 2009 -check
       real best,dsq,r,z
       integer ind,id
 c
@@ -7776,7 +7851,13 @@ c
                 wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = wallpts + 1
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           else
 
              wallsi(ind) = wallsi(ind) + sputy
@@ -7798,7 +7879,13 @@ c
                 wtdep(iwstart,ind,1) =
      >                    wtdep(iwstart,ind,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = ind
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           endif
 
 c
@@ -7824,7 +7911,13 @@ c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
                 wtdep(iwstart,wallindex(idt),1) =
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = wallindex(idt)
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           else
 
 c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
@@ -7836,7 +7929,6 @@ c
                 wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
-
           endif
 c
 c      Wall segment specified
@@ -7846,7 +7938,6 @@ c
              wallsi(idw) = wallsi(idw)+ sputy
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
              wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
-
 c
 c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
 c
@@ -7856,7 +7947,13 @@ c
                 wtdep(iwstart,idw,1) =
      >                    wtdep(iwstart,idw,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = idw
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
        else
 
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
@@ -7870,7 +7967,13 @@ c
              wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
           endif
-
+c slmod begin
+          i = iwstart
+          j = wallpts + 1 
+          wdn(i,j)%i       = wdn(i,j)%i       + sputy
+          wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+          wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
        endif
 c
 c

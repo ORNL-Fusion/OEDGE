@@ -1444,7 +1444,7 @@ c
       INTEGER FindMidplaneCell
 
       INTEGER ikm,ik,ir,id
-      REAL    rmid
+      REAL    rmid,frac
 
 c...  Check if the grid is connected double-null -- lame, should
 c     really pass the value of CONNECTED from DIVIMP:
@@ -1459,7 +1459,13 @@ c     really pass the value of CONNECTED from DIVIMP:
 
       ikm = FindMidplaneCell(ir)
       id = korpg(ikm,ir)
-      rmid = MAX(rvertp(1,id),rvertp(4,id))
+
+      frac = (z0 - zvertp(1,id)) / (zvertp(4,id) - zvertp(1,id))
+
+      rmid = (1.0 - frac) * rvertp(1,id) + frac * rvertp(4,id)
+c      rmid = MAX(rvertp(1,id),rvertp(4,id))
+
+      write(0,*) 'fucking heell',ikm,id,rmid,ir,frac
 
       IF (.NOT.connected.AND.rmid.LT.rxp) THEN
 c...    Really want the outer midplane radius, but this result
@@ -1561,7 +1567,7 @@ c
       REAL       TOL
       PARAMETER (TOL=1.0D-06)
 
-      debug = .FALSE.
+      debug = .TRUE.
 
       fp = 0
 
@@ -1588,7 +1594,6 @@ c        IF (xin.LT.0.0.and.zin.GT.0.0) phiin = 180.0 - phiin
 c        IF (xin.LT.0.0.and.zin.LT.0.0) phiin = 180.0 + phiin
 c        IF (xin.GT.0.0.and.zin.LT.0.0) phiin = 360.0 - phiin
 c      ENDIF
-
 
       IF (debug) THEN
         WRITE(0,*) 'TRACE  MODE,CHOP : ',mode,chop
@@ -1677,10 +1682,12 @@ c       Find the distance from the point in question to each of the cell sides:
 
 c        WRITE(0,*) ':',t,status
 
-c        WRITE(0,*) 'IK,IR  :',ik,ir
-c        WRITE(0,*) 'AR,AZ  :',ar,az
-c        WRITE(0,*) 'BR,BZ  :',br,bz
-c        WRITE(0,*) 'P1     :',p1(1:2)
+        IF (debug) THEN
+          WRITE(0,*) 'IK,IR  :',ik,ir
+          WRITE(0,*) 'AR,AZ  :',ar,az
+          WRITE(0,*) 'BR,BZ  :',br,bz
+          WRITE(0,*) 'P1     :',p1(1:2)
+        ENDIF
 
         ar = DBLE(rvertp(2,id))
         az = DBLE(zvertp(2,id))
@@ -1692,10 +1699,12 @@ c        WRITE(0,*) 'P1     :',p1(1:2)
 
 c        WRITE(0,*) ':',t,status
 
-c        WRITE(0,*) 'AR,AZ  :',ar,az
-c        WRITE(0,*) 'BR,BZ  :',br,bz
-c        WRITE(0,*) 'P2     :',p2(1:2)
-c        WRITE(0,*) 'RIN,YIN:',rin,yin
+        IF (debug) THEN
+          WRITE(0,*) 'AR,AZ  :',ar,az
+          WRITE(0,*) 'BR,BZ  :',br,bz
+          WRITE(0,*) 'P2     :',p2(1:2)
+          WRITE(0,*) 'RIN,YIN:',rin,yin
+        ENDIF
 
         d1 = DSQRT( (DBLE(rin)-p1(1))**2 + (DBLE(yin)-p1(2))**2 ) 
         d2 = DSQRT( (DBLE(rin)-p2(1))**2 + (DBLE(yin)-p2(2))**2 ) 
@@ -1801,6 +1810,11 @@ c...            Interpolate the field line pitch angle, gives a continuous b-fie
 
       ring = ir
 
+      IF (debug) THEN
+        WRITE(0,*) '  RING  =',ring,irsep
+        WRITE(0,*) '  RFRAC =',rfrac
+      ENDIF 
+
 c...  Work from midplane to low IK target:
       phi = phiin
       DO ik = ikm, 1, -1  ! 1, -1
@@ -1902,6 +1916,10 @@ c     .        (zxp.GT.0.0.AND.v(2,n).GE.zvalmax).OR.
         phi = phi + deltap
       ENDDO
 
+      IF (debug) THEN
+        WRITE(0,*) '  IK    =',ik
+      ENDIF 
+
       origin(1:3) = v(1:3,1)
 
 c...  Swap order of these points, so that they start at the low IK target
@@ -1997,6 +2015,10 @@ c          WRITE(0,*) 'ZVAL2-:',ik,frac2,ike
         IF (finished) EXIT
         phi = phi + deltap
       ENDDO
+
+      IF (debug) THEN
+        WRITE(0,*) '  IK    =',ik,nks(ring)
+      ENDIF 
 
 c      DO i1 = 1, n
 c        WRITE(0,*) '-->',i1,ike,index(i1)
