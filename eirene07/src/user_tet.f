@@ -777,14 +777,17 @@ C ===== SOURCE: outusr.f
 
       INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,IPLS,I1,IADD,IPLSTI,IPLSV,
      .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
-     .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
-     .             ISTRAA,ISTRAE,NEW_ITER, JFEXMN, JFEXMX,MSURFG
+     .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,IOS,
+     .             ISTRAA,ISTRAE,NEW_ITER, JFEXMN, JFEXMX,MSURFG,SHIFT
       INTEGER   :: PROB1,PROB2,IPANU,SAVE_IPANU(100)
-      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
+      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI),BINARY
       REAL*8    :: DDUM(20),RECPAR,RECMOM,RECENG,RECELE,RECADD,EEADD,
      .             SIGNUM,RH2PH2(0:8,0:8),DEF,TEF,RATIO,DEJ,TEI,  
      .             FPRM(6),RCMIN, RCMAX, CONV
-      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
+      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3,TAG*6
+
+      INTEGER  :: ITET
+      REAL(DP) :: PC1(3),PC2(3),PC3(3),PC4(3)
 
 c...  Dynamicallocationize:
       REAL*8  :: CLST(NRAD)
@@ -796,7 +799,9 @@ c      REAL*8  :: CLST(NRAD),ADDV2(7,NRAD)
 c...  Iteration data:
       INTEGER :: ITERNO 
       INTEGER IT,IG,NGAUGE
-      REAL*8 XGAUGE(3),YGAUGE(3),RGAUGE(3),DIST,X1,X2,X3,Y1,Y2,Y3,FACT
+      REAL*8 DIST,X1,X2,X3,Y1,Y2,Y3,FACT
+      REAL*8, ALLOCATABLE :: XGAUGE(:),YGAUGE(:),ZGAUGE(:),RGAUGE(:)
+
       REAL*8, ALLOCATABLE :: XCEN(:),YCEN(:),ZCEN(:),T_VOL(:),
      .                       T_PDENA(:,:,:),T_EDENA(:,:,:),
      .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
@@ -813,7 +818,8 @@ c     .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
       ! TETRAHEDRON
       ntrii = ntet  ! TET diff
 
-
+      BINARY=.TRUE.
+c      BINARY=.FALSE.
 
       OUTPUT1=.TRUE.
       PROB1=10000000
@@ -842,27 +848,33 @@ c      MTRI=COUNT(NOTRI>0)
       WRITE(0,*) 'HERE IN OUTUSR'
 
       FP = 99
-      OPEN(UNIT=FP,FILE='eirene.transfer',ACCESS='SEQUENTIAL',
-     .     STATUS='REPLACE',ERR=98)
+      IF (BINARY) THEN
+        OPEN(UNIT=FP,FILE='eirene.transfer',
+     .       FORM='UNFORMATTED',STATUS='REPLACE',ERR=98)
+      ELSE
+        OPEN(UNIT=FP,FILE='eirene.transfer',ACCESS='SEQUENTIAL',
+     .       STATUS='REPLACE',ERR=98)
+      ENDIF
 
-
-
-      WRITE(FP,80) '* NTRII  :',NTRII,NRAD,MTRI
-      WRITE(FP,80) '* NSTORDR:',NSTORDR
-      WRITE(FP,80) '* NATMI  :',NATMI,NMOLI,NIONI,NPHOTI
-      WRITE(FP,80) '* NPLSI  :',NPLSI
-      WRITE(FP,80) '* MPLSTI :',MPLSTI
-      WRITE(FP,80) '* MPLSV  :',MPLSV
+      IF (BINARY) THEN
+      ELSE
+        WRITE(FP,80) '* NTRII  :',NTRII,NRAD,MTRI
+        WRITE(FP,80) '* NSTORDR:',NSTORDR
+        WRITE(FP,80) '* NATMI  :',NATMI,NMOLI,NIONI,NPHOTI
+        WRITE(FP,80) '* NPLSI  :',NPLSI
+        WRITE(FP,80) '* MPLSTI :',MPLSTI
+        WRITE(FP,80) '* MPLSV  :',MPLSV
+      ENDIF
 
 c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
 
 c...  Determine the number of surfaces:
-      NSIDE = 0 ! TET diff
+      NSIDE = 4 ! TET diff
 
       NSUR=0
       DO IR=1,NTRII  
         DO IS=1,NSIDE
-          IF (INSPAT(IS,IR).NE.0) NSUR=NSUR+1
+          IF (INSPATT(IS,IR).NE.0) NSUR=NSUR+1
         ENDDO
       ENDDO
 c
@@ -883,16 +895,22 @@ c      DO IPLS=1,MIN(NPLSI,1)  ! specifying NITER > 0 when not BGK or photons...
 
         IPLSTI=MPLSTI(IPLS)
         IPLSV =MPLSV (IPLS)
-        ICOUNT=39
+        ICOUNT=1
         ITALLY=16
 
         WRITE(logfp,*) 'COPV:',ipls,lcopv 
         WRITE(logfp,*) 'LCOPV:',lcopv
-
-        WRITE(FP,80) '* BULK PARTICLES - VOLUME TALLIES',IPLS
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (0,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999911
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* BULK PARTICLES - VOLUME TALLIES',IPLS
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         SUMION=0.0D0
         DO IR=1,NTRII
           DDUM=0.0D0
@@ -957,57 +975,83 @@ c...      Plasma quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
 c...    Surfaces fluxes:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=3
-        WRITE(FP,80) '* BULK PARTICLES - SURFACE FLUXES',IPLS
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NSUR
-        WRITE(FP,85) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999912
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NSUR
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* BULK PARTICLES - SURFACE FLUXES',IPLS
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NSUR
+          WRITE(FP,85) (I1,I1=1,ITALLY)
+        ENDIF
         CONV = 1.602176D-19
         DO IR=1,NTRII 
           DO IS=1,NSIDE
-            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            IF (INSPATT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
-            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            MSURFG=NLIM+NSTS+INSPATT(IS,IR)
             DDUM(1)=DBLE(IS)                  ! Side index of the triangle
-            DDUM(2)=POTPL(IPLS,MSURFG)/CONV   ! D+ particle flux (s-1)
-            DDUM(3)=EOTPL(IPLS,MSURFG)/CONV   ! D+ energy flux (eV s-1)
-            ICOUNT=ICOUNT+14
+            IF (NGSTAL.EQ.1) THEN
+              DDUM(2)=POTPL(IPLS,MSURFG)/CONV   ! D+ particle flux (s-1)
+              DDUM(3)=EOTPL(IPLS,MSURFG)/CONV   ! D+ energy flux (eV s-1)
+            ENDIF
+            ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              IF (.NOT.BINARY)
+     .          WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
-            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+            IF (BINARY) THEN
+              WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+            ELSE
+              WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+            ENDIF
           ENDDO
         ENDDO
       ENDDO
  80   FORMAT(A,20(I8))
  81   FORMAT(20(I8))
  82   FORMAT(I8,1P,20(E14.6))
- 83   FORMAT(6X,1P,20(I14))
+ 83   FORMAT(8X,1P,20(I14))
  84   FORMAT(2I8,1P,20(E14.6))
- 85   FORMAT(12X,1P,20(I14))
+ 85   FORMAT(8X,1P,20(I14))
 
       WRITE(logfp,*) 'SUMION:',sumion,sumion*ELCHA  ! *TEMP*
 c
 c     ----------------------------------------------------------------------
 c...  Test atoms:
-      WRITE(logfp,80) '* TEST ATOMS',IATM  ! *TEMP*
+      WRITE(logfp,80) '* TEST ATOMS',NATMI  ! *TEMP*
       DO IATM=1,NATMI
 c...    Volume averaged tallies:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=7
-        WRITE(FP,80) '* TEST ATOMS - VOLUME TALLIES',IATM
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999921
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST ATOMS - VOLUME TALLIES',IATM
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         DO IR=1,NTRII 
           DDUM=0.0D0
           DDUM(1)=PDENA(IATM,IR)*VOL(IR)                 ! Density [particles]
@@ -1020,40 +1064,59 @@ c...    Volume averaged tallies:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
 c...    Surfaces fluxes:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=8
-        WRITE(FP,80) '* TEST ATOMS - SURFACE FLUXES',IATM
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NSUR
-        WRITE(FP,85) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999922
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NSUR
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST ATOMS - SURFACE FLUXES',IATM
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NSUR
+          WRITE(FP,85) (I1,I1=1,ITALLY)
+        ENDIF
         CONV = 1.602176D-19
         DO IR=1,NTRII 
           DO IS=1,NSIDE
-            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            IF (INSPATT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
-            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            MSURFG=NLIM+NSTS+INSPATT(IS,IR)
             DDUM(1)=DBLE(IS)                   ! Side index of the triangle
-            DDUM(2)=POTAT  (IATM,MSURFG)/CONV  ! Incident atom particle flux (s-1)
-            DDUM(3)=EOTAT  (IATM,MSURFG)/CONV  ! Incident atom energy   flux (eV s-1)
-            DDUM(4)=PRFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident atoms     (s-1)
-            DDUM(5)=PRFMAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident mols.     (s-1)
-            DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
-c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
-            DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
-            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! ???
-            ICOUNT=ICOUNT+14
+            IF (NGSTAL.EQ.1) THEN
+              DDUM(2)=POTAT  (IATM,MSURFG)/CONV  ! Incident atom particle flux (s-1)
+              DDUM(3)=EOTAT  (IATM,MSURFG)/CONV  ! Incident atom energy   flux (eV s-1)
+              DDUM(4)=PRFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident atoms     (s-1)
+              DDUM(5)=PRFMAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident mols.     (s-1)
+              DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
+c              DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
+              DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
+              DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! ???
+            ENDIF
+            ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              IF (.NOT.BINARY)
+     .          WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
-            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+            IF (BINARY) THEN
+              WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+            ELSE
+              WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+            ENDIF
           ENDDO
         ENDDO
       ENDDO
@@ -1064,10 +1127,17 @@ c...  Test molecules:
       ITALLY=7
       WRITE(logfp,80) '* TEST MOLECULES',IMOL
       DO IMOL=1,NMOLI
-        WRITE(FP,80) '* TEST MOLECULES - VOLUME TALLIES',IMOL
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999931
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST MOLECULES - VOLUME TALLIES',IMOL
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         DO IR=1,NTRII 
           DDUM=0.0D0
           DDUM(1)=PDENM(IMOL,IR)*VOL(IR)                 ! Density [particles]
@@ -1080,47 +1150,66 @@ c...  Test molecules:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
 c...    Surfaces fluxes:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=8
-        WRITE(FP,80) '* TEST MOLECULES - SURFACE FLUXES',IMOL
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NSUR
-        WRITE(FP,85) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999932
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NSUR
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST MOLECULES - SURFACE FLUXES',IMOL
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NSUR
+          WRITE(FP,85) (I1,I1=1,ITALLY)
+        ENDIF
         CONV = 1.602176D-19
         DO IR=1,NTRII 
           DO IS=1,NSIDE
-            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            IF (INSPATT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
-            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            MSURFG=NLIM+NSTS+INSPATT(IS,IR)
             DDUM(1)=DBLE(IS)                   ! Side index of the triangle
-            DDUM(2)=POTML  (IMOL,MSURFG)/CONV  ! Incident molecule particle flux (s-1)
-            DDUM(3)=EOTML  (IMOL,MSURFG)/CONV  ! Incident molecule energy   flux (eV s-1)
-            DDUM(4)=PRFAML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident atoms     (s-1)
-            DDUM(5)=PRFMML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident mols.     (s-1)
-            DDUM(6)=PRFIML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident test ions (s-1)
-c            DDUM(7)=PRFPHML(IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident photons   (s-1)
-            DDUM(7)=PRFPML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident bulk ions (s-1)
-            DDUM(8)=ERFAML (IMOL,MSURFG)/CONV  ! ???
-            ICOUNT=ICOUNT+14
+            IF (NGSTAL.EQ.1) THEN
+              DDUM(2)=POTML  (IMOL,MSURFG)/CONV  ! Incident molecule particle flux (s-1)
+              DDUM(3)=EOTML  (IMOL,MSURFG)/CONV  ! Incident molecule energy   flux (eV s-1)
+              DDUM(4)=PRFAML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident atoms     (s-1)
+              DDUM(5)=PRFMML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident mols.     (s-1)
+              DDUM(6)=PRFIML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident test ions (s-1)
+c              DDUM(7)=PRFPHML(IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident photons   (s-1)
+              DDUM(7)=PRFPML (IMOL,MSURFG)/CONV  ! Emitted molecule flux from incident bulk ions (s-1)
+              DDUM(8)=ERFAML (IMOL,MSURFG)/CONV  ! ???
+            ENDIF
+            ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              IF (.NOT.BINARY)
+     .          WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
-            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+            IF (BINARY) THEN
+              WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+            ELSE
+              WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+            ENDIF
           ENDDO
         ENDDO
       ENDDO
 c
 c     ----------------------------------------------------------------------
 c...  Test ions:
-      ICOUNT=39
+      ICOUNT=0
       ITALLY=9
 c...  Load rate coefficient data if calculating H2+ from CR-model:
       IF (NIONI.NE.1.OR.NMOLI.NE.1) THEN
@@ -1157,10 +1246,17 @@ c      ENDDO
 c...  Loop over grid elements:
       WRITE(logfp,80) '* TEST IONS - VOLUME TALLIES',IION
       DO IION=1,NIONI
-        WRITE(FP,80) '* TEST IONS - VOLUME TALLIES',IION
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999941
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST IONS - VOLUME TALLIES',IION
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         DO IR=1,NTRII 
           DDUM=0.0D0
 c...      Some work to get n_H2+ from CR-model rates:
@@ -1210,34 +1306,53 @@ c...      Done determining n_H2+, load remaining quantities:
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
 c...    Surfaces fluxes:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=3
-        WRITE(FP,80) '* TEST IONS - SURFACE FLUXES',IION
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NSUR
-        WRITE(FP,85) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999942
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NSUR
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST IONS - SURFACE FLUXES',IION
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NSUR
+          WRITE(FP,85) (I1,I1=1,ITALLY)
+        ENDIF
         CONV = 1.602176D-19
         DO IR=1,NTRII 
           DO IS=1,NSIDE
-            IF (INSPAT(IS,IR).EQ.0) CYCLE
+            IF (INSPATT(IS,IR).EQ.0) CYCLE
             DDUM=0.0D0
 c...        Output:
-            MSURFG=NLIM+NSTS+INSPAT(IS,IR)
+            MSURFG=NLIM+NSTS+INSPATT(IS,IR)
             DDUM(1)=DBLE(IS)                  ! Side index of the triangle
-            DDUM(2)=POTIO(IION,MSURFG)/CONV   ! Ion particle flux (s-1)
-            DDUM(3)=EOTIO(IION,MSURFG)/CONV   ! Ion energy flux (eV s-1)
-            ICOUNT=ICOUNT+14
+            IF (NGSTAL.EQ.1) THEN
+              DDUM(2)=POTIO(IION,MSURFG)/CONV   ! Ion particle flux (s-1)
+              DDUM(3)=EOTIO(IION,MSURFG)/CONV   ! Ion energy flux (eV s-1)
+            ENDIF
+            ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,11X,20(I12))') '*',(I1,I1=1,ITALLY)
+              IF (.NOT.BINARY)
+     .          WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
-            WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+            IF (BINARY) THEN
+              WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+            ELSE
+              WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+            ENDIF
           ENDDO
         ENDDO
       ENDDO
@@ -1247,12 +1362,19 @@ c...  Photons:
       WRITE(logfp,80) '* PHOTONS',NPHOTI
       DO IPHOT=1,NPHOTI
 c...    Volume averaged tallies:
-        ICOUNT=39
+        ICOUNT=0
         ITALLY=3
-        WRITE(FP,80) '* TEST PHOTONS - VOLUME TALLIES',IPHOT
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (I1,I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999951
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* TEST PHOTONS - VOLUME TALLIES',IPHOT
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         DO IR=1,NTRII 
           DDUM=0.0D0
           DDUM(1)=PDENPH(IPHOT,IR)*VOL(IR)                   ! Density [particles]
@@ -1267,16 +1389,21 @@ c          DDUM(7)=EDENPH(IPHOT,IR)/(PDENPH(IPHOT,IR)+EPS10)  ! Energy per parti
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
       ENDDO
 c
 c     ----------------------------------------------------------------------
 c...  Balmer lines:
-      ICOUNT=39
+      ICOUNT=0
       ITALLY=7
 c...  Halpha:
       ADDV=0.0D0
@@ -1286,10 +1413,17 @@ c        DO IADV=1,7
 c          ADDV2(IADV,IR)=ADDV(IADV,IR)  ! Shorthand for this..?
 c        ENDDO
 c      ENDDO
-      WRITE(FP,80) '* LINE EMISSION: HALPHA'
-      WRITE(FP,81) ITALLY
-      WRITE(FP,81) NTRII
-      WRITE(FP,83) (I1,I1=1,ITALLY)
+      IF (BINARY) THEN
+        WRITE(FP   ) -9999961
+        WRITE(FP   ) ITALLY
+        WRITE(FP   ) NTRII
+        WRITE(FP   ) (I1,I1=1,ITALLY)
+      ELSE
+        WRITE(FP,80) '* LINE EMISSION: HALPHA'
+        WRITE(FP,81) ITALLY
+        WRITE(FP,81) NTRII
+        WRITE(FP,83) (I1,I1=1,ITALLY)
+      ENDIF
       DO IR=1,NTRII 
         DDUM=0.0D0
 c        DO IADV=1,7
@@ -1299,17 +1433,22 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+          IF (.NOT.BINARY)
+     .      WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
           IF (DDUM(I1).LT.1.0D-30) DDUM(I1)=1.0D-30
           IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D+30
         ENDDO
-        WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+        ELSE
+          WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+        ENDIF
       ENDDO
 c...  Hgamma:
-      ICOUNT=39
+      ICOUNT=0
       ADDV=0.0D0
       CALL HGAMMA(0,1,2,3,4,5,6)
 c      ADDV2(IADV,IR)=ADDV(IADV,IR)
@@ -1318,10 +1457,17 @@ c        DO IADV=1,6
 c
 c        ENDDO
 c      ENDDO
-      WRITE(FP,80) '* LINE EMISSION: HGAMMA'
-      WRITE(FP,81) ITALLY
-      WRITE(FP,81) NTRII
-      WRITE(FP,83) (I1,I1=1,ITALLY)
+      IF (BINARY) THEN
+        WRITE(FP   ) -9999961
+        WRITE(FP   ) ITALLY
+        WRITE(FP   ) NTRII
+        WRITE(FP   ) (I1,I1=1,ITALLY)
+      ELSE
+        WRITE(FP,80) '* LINE EMISSION: HGAMMA'
+        WRITE(FP,81) ITALLY
+        WRITE(FP,81) NTRII
+        WRITE(FP,83) (I1,I1=1,ITALLY)
+      ENDIF
       DO IR=1,NTRII 
         DDUM=0.0D0
 c        DO IADV=1,6
@@ -1331,14 +1477,19 @@ c        ENDDO
 c...    Output:
         ICOUNT=ICOUNT+1
         IF (ICOUNT.EQ.40) THEN
-          WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+          IF (.NOT.BINARY)
+     .      WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
           ICOUNT=0
         ENDIF
         DO I1=1,ITALLY
           IF (DDUM(I1).LT.1.0D-30) DDUM(I1)=1.0D-30
           IF (DDUM(I1).GT.1.0D+30) DDUM(I1)=1.0D+30
         ENDDO
-        WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
+        IF (BINARY) THEN
+          WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+        ELSE
+          WRITE(FP,82) IR,(     DDUM(I1) ,I1=1,ITALLY)
+        ENDIF
       ENDDO
 c
 c     ----------------------------------------------------------------------
@@ -1346,11 +1497,18 @@ c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
       WRITE(logfp,80) '* MISC'
       IF (.TRUE.) THEN
         ITALLY=13
-        ICOUNT=39
-        WRITE(FP,80) '* MISC'
-        WRITE(FP,81) ITALLY
-        WRITE(FP,81) NTRII
-        WRITE(FP,83) (I1,I1=1,ITALLY)
+        ICOUNT=0
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999971
+          WRITE(FP   ) ITALLY
+          WRITE(FP   ) NTRII
+          WRITE(FP   ) (I1,I1=1,ITALLY)
+        ELSE
+          WRITE(FP,80) '* MISC'
+          WRITE(FP,81) ITALLY
+          WRITE(FP,81) NTRII
+          WRITE(FP,83) (I1,I1=1,ITALLY)
+        ENDIF
         DO IR=1,NTRII 
           DDUM=0.0D0
           DDUM(1) =DBLE(NCLTAL(IR))   ! NCLTAL
@@ -1365,18 +1523,25 @@ c...  Misc. electron data, VOL, VOLTAL? (are they the same?), NCLTAL(IR)=IR?
           DDUM(10)=BZIN(IR)
           DDUM(11)=BFIN(IR)
           IATM=1                      ! *Total* ionisation rate output for IATM=1, assumed to be D...
-          DO IAEI=1,NAEII(IATM)
-            IRDS=LGAEI(IATM,IAEI)
-            IF (ir.EQ.1) WRITE(logfp,*) 'TABDS1:',IAEI,IRDS  ! *TEMP*
-            DDUM(11+IRDS)=DDUM(11+IRDS)+TABDS1(IRDS,IR)
-          ENDDO 
+          IF (NGSTAL.EQ.1) THEN
+            DO IAEI=1,NAEII(IATM)
+              IRDS=LGAEI(IATM,IAEI)
+              IF (ir.EQ.1) WRITE(logfp,*) 'TABDS1:',IAEI,IRDS  ! *TEMP*
+              DDUM(11+IRDS)=DDUM(11+IRDS)+TABDS1(IRDS,IR)
+            ENDDO 
+          ENDIF
 c...      Output:
           ICOUNT=ICOUNT+1
           IF (ICOUNT.EQ.40) THEN
-            WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+            IF (.NOT.BINARY)
+     .        WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
             ICOUNT=0
           ENDIF
-          WRITE(FP,90) IR,(DDUM(I1),I1=1,ITALLY)
+          IF (BINARY) THEN
+            WRITE(FP   ) IR,(SNGL(DDUM(I1)),I1=1,ITALLY)
+          ELSE
+            WRITE(FP,90) IR,(     DDUM(I1) ,I1=1,ITALLY)
+          ENDIF
         ENDDO
       ENDIF
  90   FORMAT(I8,3F12.0,1P,20(E12.4))
@@ -1384,27 +1549,48 @@ c
 c     ----------------------------------------------------------------------
 c...  Particle source:
       WRITE(logfp,80) '* PARTICLE SOURCES'
-      ICOUNT=39
-      WRITE(FP,80) '* PARTICLE SOURCES'
-      WRITE (FP,'(I6)') NSTRAI
+      ICOUNT=0
+      IF (BINARY) THEN
+        WRITE(FP   ) -9999972
+        WRITE(FP   ) NSTRAI
+      ELSE
+        WRITE(FP,80) '* PARTICLE SOURCES'
+        WRITE(FP,'(I6)') NSTRAI
+      ENDIF 
       DO IS=1,NSTRAI
-        WRITE (FP,'(I6,I10,1P,3E14.6,0P)') 
-     .    IS,SAVE_IPANU(IS),FLUXT(IS),PTRASH(IS),ETRASH(IS)
+        IF (BINARY) THEN
+          WRITE(FP)
+     .      IS,SAVE_IPANU(IS),SNGL(FLUXT(IS)),SNGL(PTRASH(IS)),
+     .                        SNGL(ETRASH(IS))
+        ELSE
+          WRITE(FP,'(I6,I10,1P,3E14.6,0P)') 
+     .      IS,SAVE_IPANU(IS),FLUXT(IS),PTRASH(IS),ETRASH(IS)
+        ENDIF
       ENDDO
 c
 c     ----------------------------------------------------------------------
 c...  Pumped fluxes - a bit of a hack, but the easiest way to do things 
 c     at the moment, pulled from output.f:
       WRITE(logfp,80) '* PUMPED FLUX'
-      ICOUNT=39
-      WRITE(FP,80) '* PUMPED FLUX'
+      IF (BINARY) THEN
+        WRITE(FP   ) -9999973
+      ELSE
+        WRITE(FP,80) '* PUMPED FLUX'
+      ENDIF
+      ICOUNT=0
       IF (LSPUMP) THEN
         DO J=1,NLIMPS
           JJ=J
           IF (J.GT.NLIM) JJ=-(J-NLIM)
           DO IS=1,NSPTOT
             IF (SPUMP(IS,J).GT.0.0D0) THEN
-              WRITE (FP,91) JJ,''''//TEXTS(IS)//'''',SPUMP(IS,J)
+              IF (BINARY) THEN
+                TAG=TEXTS(IS)
+                WRITE (FP   ) JJ,TAG,SNGL(SPUMP(IS,J))
+                write(0,*) '>>>>>>>>>',tag,SPUMP(IS,J)
+              ELSE
+                WRITE (FP,91) JJ,''''//TEXTS(IS)//'''',SPUMP(IS,J)
+              ENDIF
             ENDIF
           ENDDO
         ENDDO
@@ -1413,7 +1599,11 @@ c     at the moment, pulled from output.f:
 c
 c ----------------------------------------------------------------------
 c...  End of volume/surface data for sum over strata marker:
-      WRITE(FP,80) '* DONE (SUM OVER STRATA)'
+      IF (BINARY) THEN
+        WRITE(FP   ) -9999999,'......',-999.0
+      ELSE
+        WRITE(FP,80) '* DONE (SUM OVER STRATA)'
+      ENDIF
 c
 c ----------------------------------------------------------------------
 c...  Insert iteration data, if any:
@@ -1421,15 +1611,31 @@ c...  Insert iteration data, if any:
       FACT=ELCHA*0.66667D0*7.502D0*1.0D+06
       WRITE(logfp,80) '* ITERATION DATA'
       WRITE(logfp,*) 'ITERNO?',iterno
-      DO IT=1,ITERNO-1
-        WRITE(FP,80) '* ITERATION DATA',IT
-        WRITE(FP,81) NGAUGE
+      SHIFT=1
+      IF (NTIME.GE.1.AND.NFILEJ.LE.1) SHIFT=0 ! Needed because a time strata with flux=0 is added during the first timestep, which throws things off
+
+      WRITE(0,*) '================'
+      WRITE(0,*) 'SHIFT = ', shift
+      WRITE(0,*) '================'
+
+      DO IT=1,ITERNO-SHIFT
+        IF (BINARY) THEN
+          WRITE(FP   ) -9999974
+          WRITE(FP   ) NGAUGE
+        ELSE
+          WRITE(FP,80) '* ITERATION DATA',IT
+          WRITE(FP,81) NGAUGE
+        ENDIF
         DO IG=1,NGAUGE
-          ICOUNT=39
-          WRITE(FP,80) '*   PRESSURE GAUGE',IG
-          WRITE(FP,81) ITALLY
-          WRITE(FP,81) NSTRAI+1
-          WRITE(FP,83) (I1,I1=1,ITALLY)
+          ICOUNT=0
+          IF (BINARY) THEN
+            WRITE(FP   ) NSTRAI+1
+          ELSE
+            WRITE(FP,80) '*   PRESSURE GAUGE',IG
+            WRITE(FP,81) ITALLY
+            WRITE(FP,81) NSTRAI+1
+            WRITE(FP,83) (I1,I1=1,ITALLY)
+          ENDIF
           DO IS=1,NSTRAI+1
             DDUM=0.0D0
             IF (IS.EQ.NSTRAI+1) THEN
@@ -1456,10 +1662,15 @@ c             Molecules:
 c...        Output:
             ICOUNT=ICOUNT+1
             IF (ICOUNT.EQ.40) THEN
-              WRITE(FP,'(A,5X,20(I14))') '*',(I1,I1=1,ITALLY)
+              IF (.NOT.BINARY)
+     .          WRITE(FP,'(A,5X,20(I14))') '*',(I1,I1=1,ITALLY)
               ICOUNT=0
             ENDIF
-            WRITE(FP,82) IS,(DDUM(I1),I1=1,ITALLY)
+            IF (BINARY) THEN
+              WRITE(FP   ) IS,(SNGL(DDUM(I1)),I1=1,ITALLY)
+            ELSE
+              WRITE(FP,82) IS,(     DDUM(I1) ,I1=1,ITALLY)
+            ENDIF
           ENDDO
         ENDDO
       ENDDO
@@ -1493,7 +1704,7 @@ c            ENDIF
 cc...        Output:
 c            ICOUNT=ICOUNT+1
 c            IF (ICOUNT.EQ.40) THEN
-c              WRITE(FP,'(A,7X,20(I12))') '*',(I1,I1=1,ITALLY)
+c              WRITE(FP,'(A,7X,20(I14))') '*',(I1,I1=1,ITALLY)
 c              ICOUNT=0
 c            ENDIF
 c            WRITE(FP,82) IS,(DDUM(I1),I1=1,ITALLY)
@@ -1503,7 +1714,11 @@ c      ENDDO
 c
 c ----------------------------------------------------------------------
 c...  EOF marker:
-      WRITE(FP,80) '* DONE (FOR GOOD THIS TIME)'
+      IF (BINARY) THEN
+        WRITE(FP   ) 8888
+      ELSE
+        WRITE(FP,80) '* DONE (FOR GOOD THIS TIME)'
+      ENDIF
 
 c...  Clear arrays:
       IF (ALLOCATED(T_VOL  )) DEALLOCATE(T_VOL  )
@@ -1527,43 +1742,103 @@ c      ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER)
 
       ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER,IPANU)
 
-      WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTRII
+      WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTET
       WRITE(logfp,*) 'OUTUS1:',fluxt(istraa)
+
+c      WRITE(0    ,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTET
+c      WRITE(0    ,*) 'OUTUS1:',fluxt(istraa)
 
       SAVE_IPANU(ISTRAA) = IPANU
            
 c...  Calculate the center (or so) of each triangle:
-      ALLOCATE(XCEN(NTRII))
-      ALLOCATE(YCEN(NTRII))
-      ALLOCATE(ZCEN(NTRII))
+      ALLOCATE(XCEN(NTET))
+      ALLOCATE(YCEN(NTET))
+      ALLOCATE(ZCEN(NTET))
       XCEN = 0.0D0
       YCEN = 0.0D0
-      DO IR=1,NTRII 
-        X1=XTRIAN(NECKE(1,IR))
-        Y1=YTRIAN(NECKE(1,IR))
-        X2=XTRIAN(NECKE(2,IR))
-        Y2=YTRIAN(NECKE(2,IR))
-        X3=XTRIAN(NECKE(3,IR))
-        Y3=YTRIAN(NECKE(3,IR))
-C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
-        XCEN(IR)=(X1+X2+X3)/3._DP
-        YCEN(IR)=(Y1+Y2+Y3)/3._DP         
-        ZCEN(IR)=0.0D0
+      ZCEN = 0.0D0
+      DO ITET=1,NTET
+        PC1(1:3)= (/ XTETRA(NTECK(1,ITET)), YTETRA(NTECK(1,ITET)),
+     .               ZTETRA(NTECK(1,ITET)) /)
+        PC2(1:3)= (/ XTETRA(NTECK(2,ITET)), YTETRA(NTECK(2,ITET)),
+     .               ZTETRA(NTECK(2,ITET)) /)
+        PC3(1:3)= (/ XTETRA(NTECK(3,ITET)), YTETRA(NTECK(3,ITET)),
+     .               ZTETRA(NTECK(3,ITET)) /)
+        PC4(1:3)= (/ XTETRA(NTECK(4,ITET)), YTETRA(NTECK(4,ITET)),
+     .               ZTETRA(NTECK(4,ITET)) /)
+
+        XCEN(ITET)=(PC1(1)+PC2(1)+PC3(1)+PC4(1))/4._DP
+        YCEN(ITET)=(PC1(2)+PC2(2)+PC3(2)+PC4(2))/4._DP
+        ZCEN(ITET)=(PC1(3)+PC2(3)+PC3(3)+PC4(3))/4._DP
       ENDDO
 
 c...  Check for triangle centers that are inside the "pressure
 c     gauge" region:
-      NGAUGE = 3
-      XGAUGE(1) =  845.0D0  ! ITER midplane
-      YGAUGE(1) =   62.0D0
-      RGAUGE(1) =    8.0D0
-      XGAUGE(2) =  475.0D0  ! ITER divertor, below dome
-      YGAUGE(2) = -420.0D0
-      RGAUGE(2) =   20.0D0
-      XGAUGE(3) =    4.0D0
-      YGAUGE(3) =   17.5D0
-      RGAUGE(3) =    2.0D0
+      IF (.TRUE.) THEN
 
+        FP = 99
+        OPEN(UNIT=FP,FILE='eirene.gauges',ACCESS='SEQUENTIAL',
+     .       STATUS='OLD',IOSTAT=ios)
+
+        IF (IOS.EQ.0) THEN
+          READ(99,*) NGAUGE
+          ALLOCATE(XGAUGE(NGAUGE))
+          ALLOCATE(YGAUGE(NGAUGE))
+          ALLOCATE(ZGAUGE(NGAUGE))
+          ALLOCATE(RGAUGE(NGAUGE))
+          DO I1=1,NGAUGE
+            READ(FP,*) XGAUGE(I1),YGAUGE(I1),ZGAUGE(I1),RGAUGE(I1)
+c            WRITE(0,*) XGAUGE(I1),YGAUGE(I1),ZGAUGE(I1),RGAUGE(I1)
+          ENDDO
+          CLOSE(FP)
+        ELSE
+          NGAUGE = 1 ! dummy
+          ALLOCATE(XGAUGE(NGAUGE))
+          ALLOCATE(YGAUGE(NGAUGE))
+          ALLOCATE(ZGAUGE(NGAUGE))
+          ALLOCATE(RGAUGE(NGAUGE))
+          XGAUGE(1) =  4.0D0
+          YGAUGE(1) = 56.0D0
+          ZGAUGE(1) = 00.0D0
+          RGAUGE(1) =  2.0D0
+        ENDIF
+
+      ELSE
+        NGAUGE = 3
+        ALLOCATE(XGAUGE(NGAUGE))
+        ALLOCATE(YGAUGE(NGAUGE))
+        ALLOCATE(ZGAUGE(NGAUGE))
+        ALLOCATE(RGAUGE(NGAUGE))
+c        XGAUGE(1) =  845.0D0  ! ITER midplane
+c        YGAUGE(1) =   62.0D0
+c        ZGAUGE(1) =    0.0D0
+c        RGAUGE(1) =    8.0D0
+c        XGAUGE(2) =  475.0D0  ! ITER divertor, below dome
+c        YGAUGE(2) = -420.0D0
+c        ZGAUGE(2) =    0.0D0
+c        RGAUGE(2) =   20.0D0
+c        XGAUGE(3) =    4.0D0
+c        YGAUGE(3) =   17.5D0
+c        ZGAUGE(3) =    0.0D0
+c        RGAUGE(3) =    2.0D0
+        
+        XGAUGE(1) =  4.0D0  !0.04D0
+        YGAUGE(1) = 56.0D0  !0.56D0
+        ZGAUGE(1) = 00.0D0  !0.00D0
+        RGAUGE(1) =  2.0D0  !0.22D0
+          	                
+        XGAUGE(2) = 730.0D0  !0.12D0
+        YGAUGE(2) = 380.0D0  !0.50D0
+        ZGAUGE(2) =  00.0D0  !0.00D0
+        RGAUGE(2) =  20.0D0  !0.22D0
+          	                
+        XGAUGE(3) = 699.3363D0 !15.0D0  !0.15D0
+        YGAUGE(3) = 362.6596D0 !15.0D0  !0.15D0
+        ZGAUGE(3) =  00.0D0  !0.00D0
+        RGAUGE(3) =  10.0D0  !0.22D0
+      ENDIF
+
+        
       IS=ISTRAA
       IT=ITERNO
 
@@ -1575,35 +1850,52 @@ c     gauge" region:
         ALLOCATE(T_EDENA(NSTRAI,NGAUGE,NITER+1))
         ALLOCATE(T_PDENM(NSTRAI,NGAUGE,NITER+1))
         ALLOCATE(T_EDENM(NSTRAI,NGAUGE,NITER+1))
-      ENDIF
 
+c        T_VOL=EPS60 ! bug, SL 29/08/2017      
+        T_PDENA=0.0D0
+        T_EDENA=0.0D0
+        T_PDENM=0.0D0
+        T_EDENM=0.0D0
+c        T_PDENA(IS,1:NGAUGE,IT)=0.0D0
+c        T_EDENA(IS,1:NGAUGE,IT)=0.0D0
+c        T_PDENM(IS,1:NGAUGE,IT)=0.0D0
+c        T_EDENM(IS,1:NGAUGE,IT)=0.0D0
+      ENDIF
       T_VOL=EPS60       
-      T_PDENA(IS,1:NGAUGE,IT)=0.0D0
-      T_EDENA(IS,1:NGAUGE,IT)=0.0D0
-      T_PDENM(IS,1:NGAUGE,IT)=0.0D0
-      T_EDENM(IS,1:NGAUGE,IT)=0.0D0
+
       IMOL=1  ! Not reliable...
       DO IG=1,NGAUGE
-        DO IR=1,NTRII
-          DIST = DSQRT( (XCEN(IR)-XGAUGE(IG))**2 + 
-     .                  (YCEN(IR)-YGAUGE(IG))**2)
+        DO IR=1,NTET
+          DIST = DSQRT((XCEN(IR)-XGAUGE(IG))**2 + 
+     .                 (YCEN(IR)-YGAUGE(IG))**2 +
+     .                 (ZCEN(IR)-ZGAUGE(IG))**2)
+
           IF (DIST.LE.RGAUGE(IG)) THEN
             T_VOL  (   IG   )=T_VOL  (   IG   )+               VOL(IR)
             T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)+PDENA(IMOL,IR)*VOL(IR)
             T_EDENA(IS,IG,IT)=T_EDENA(IS,IG,IT)+EDENA(IMOL,IR)*VOL(IR)
             T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)+PDENM(IMOL,IR)*VOL(IR)
             T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)+EDENM(IMOL,IR)*VOL(IR)
+
+          write(logfp,'(A,2I6,2F12.4,2X,3F12.4)') 'gauge check',
+     .      ig,it,dist,rgauge(ig),xcen(ir),ycen(ir),zcen(ir)
+
           ENDIF
         ENDDO
         T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)/T_VOL(IG)
         T_EDENA(IS,IG,IT)=T_EDENA(IS,IG,IT)/T_VOL(IG)
         T_PDENM(IS,IG,IT)=T_PDENM(IS,IG,IT)/T_VOL(IG)
         T_EDENM(IS,IG,IT)=T_EDENM(IS,IG,IT)/T_VOL(IG)
-        WRITE(logfp,*) 'GAUGE:',IS,IT,IG,
+        WRITE(logfp,'(A,3I6,1P,2E10.2,0P)') 'GAUGE:',IS,IT,IG,
      .                 T_EDENA(IS,IG,IT),T_EDENM(IS,IG,IT)
       ENDDO
 
 c...  Clear arrays:
+      IF (ALLOCATED(XGAUGE)) DEALLOCATE(XGAUGE)
+      IF (ALLOCATED(YGAUGE)) DEALLOCATE(YGAUGE)
+      IF (ALLOCATED(ZGAUGE)) DEALLOCATE(ZGAUGE)
+      IF (ALLOCATED(RGAUGE)) DEALLOCATE(RGAUGE)
+
       IF (ALLOCATED(XCEN)) DEALLOCATE(XCEN)
       IF (ALLOCATED(YCEN)) DEALLOCATE(YCEN)
       IF (ALLOCATED(ZCEN)) DEALLOCATE(ZCEN)
@@ -1612,7 +1904,7 @@ c...  Clear arrays:
 
 c      ENTRY OUTUS1(ISTRAA,ISTRAE,NEW_ITER,IPANU)
 c
-c      WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTRII
+c      WRITE(logfp,*) 'OUTUS1:',ISTRAA,ISTRAE,NEW_ITER,NTET
 c      WRITE(logfp,*) 'OUTUS1:',fluxt(istraa)
 c
 c      SAVE_IPANU(ISTRAA) = IPANU
@@ -1842,6 +2134,13 @@ c slmod end
 c slmod begin - debug
 c          WRITE(0,*) 'FLUX:',istep,inosrc(istep),fl
 c          WRITE(0,*) '    :',iplan(istep),iplen(istep),nbin
+          IF (SCALV(INOSRC(ISTEP)).LT.0.D0) THEN
+c...        Set the flux to a particular value:
+            WRITE(0,*) 'DEBUG: FLUX OVER-RIDE IN PLAUSR',INOSRC(ISTEP)
+            FLUX(INOSRC(ISTEP)) = -SCALV(INOSRC(ISTEP))
+          ENDIF
+          write(0,*) 'flux 1:',INOSRC(ISTEP),FLUX(INOSRC(ISTEP)),
+     .                         SCALV(INOSRC(ISTEP))
 c slmod end
         END IF
       END DO

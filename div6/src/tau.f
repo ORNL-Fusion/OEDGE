@@ -11030,15 +11030,18 @@ c       and reported here -- fix:
           CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
           CALL PRB
           i4 = history(1)%ngauge
-          WRITE(fp,'(3X,A5,5X,20(I8))') 
+          WRITE(fp,'(3X,A5,5X,20(I13))') 
      .      'ITER',(i2,i2=1,i4),(i2,i2=1,i4)
           DO i1 = 1, nhistory
-            i3 = history(i1)%gauge_nstrata
+            i3 = history(i1)%nstrata
+c            i3 = history(i1)%gauge_nstrata
             IF (i1.GT.1) 
-     .        WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .        WRITE(fp,'(3X,A5,5X,20(I16))') 
+c     .        WRITE(fp,'(3X,A5,5X,20(I13))') 
      .          '    ',(i2,i2=1,i4),(i2,i2=1,i4)
             WRITE(fp,'(3X,5X,4X,20(A))') 
-     .        '(E19 m-3)',('        ',i2=1,i4-1),'    (eV)'
+     .        '    (E19 m-3)',('             ',i2=1,i4-1),
+     .        '         (eV)'
             WRITE(fp,92) i1,' atm ',
      .                   history(i1)%gauge_parden_atm(i3,1:i4) / 1.E19,
      .                   history(i1)%gauge_egyden_atm(i3,1:i4) /
@@ -11049,10 +11052,12 @@ c       and reported here -- fix:
      .                   history(i1)%gauge_egyden_mol(i3,1:i4) /
      .                  (history(i1)%gauge_parden_mol(i3,1:i4) + 
      .                   1.0E-10)
- 92         FORMAT(3X,I5,A,20(1X,F7.3))
+ 92         FORMAT(3X,I5,A,20(1X,F15.6))
+c 92         FORMAT(3X,I5,A,20(1X,F12.3))
 c
             WRITE(fp,'(3X,5X,5X,20(A))') 
-     .        ' (mTorr)',('        ',i2=1,i4-1),'    (Pa)'
+     .        '      (mTorr)',('             ',i2=1,i4-1),
+     .        '         (Pa)'
             WRITE(fp,93) i1,' atm ',
      .                   history(i1)%gauge_p_atm(i3,1:i4),
      .                   history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
@@ -11064,7 +11069,8 @@ c
      .                   history(i1)%gauge_p_mol(i3,1:i4)),
      .                  (history(i1)%gauge_p_atm(i3,1:i4) +
      .                   history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
- 93         FORMAT(3X,I5,A,20(1X,F7.3))
+ 93         FORMAT(3X,I5,A,20(1X,F15.6))
+c 93         FORMAT(3X,I5,A,20(1X,F12.3))
 c
           ENDDO
 

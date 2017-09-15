@@ -1723,6 +1723,13 @@ C
           XFACT=(XTIM(ISTRA)-XTIM(ISTRA-1))/XX1
           XPRNLS       =NPRNLI*XFACT+0.5
           NPRNLS(ISTRA)=XPRNLS
+c slmod begin
+c          write(0,*) 'checking fluxt',istra,scalv(istra),fluxt(istra)
+          IF ( SCALV(ISTRA).EQ.-1.0D-10) THEN
+            WRITE(0,*) 'forcing 2 particle tracks at least'
+            NPRNLS(ISTRA)=MAX(NPRNLS(ISTRA),2)
+          ENDIF
+c slmode end 
         ENDDO
 10      ISUM=SUM(NPRNLS(1:NSTRAI))
         IF (ISUM.NE.NPRNLI) THEN
@@ -3710,11 +3717,11 @@ C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
       FLXFAC(ISTR)=0.
 c slmod begin
       WRITE(6,*) 'SCALV=',istr,scalv(istr)
-      WRITE(0,*) 'SCALV=',istr,scalv(istr)
+c      WRITE(0,*) 'SCALV=',istr,scalv(istr)
 
       IF (SCALV(ISTR).LT.0.D0) THEN
 c...    Set the flux to a particular value:
-        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE',ISTR
+        WRITE(0,*) 'DEBUG: FLUX OVER-RIDE IN SET_SCAL_CONST',ISTR
         FLUXT(ISTR)=-SCALV(ISTR)
         IF (WTT.NE.0.D0) FLXFAC(ISTR)=FLUXT(ISTR)/WTT
       ELSEIF (SCALV(ISTR).NE.0.D0) THEN

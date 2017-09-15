@@ -1151,6 +1151,7 @@ C
 c slmod begin
       use mod_interface
       use mod_divimp
+      use mod_divimp_walldyn
 c slmod end
       IMPLICIT NONE
 c
@@ -1580,6 +1581,8 @@ c slmod begin
              wall_flx(i)%launch(wall_nlaunch) = 
      .         wall_flx(i)%launch(wall_nlaunch) + sputys(iprod+lprod-1)
 c             WRITE(0,*) i,wall_nlaunch
+
+c             wdn_index(iprod+lprod-1) = wallindex(id)
 c slmod end
           else 
              write(6,'(a,5i5,3(1x,g12.5))') 'Wallse:Target?:',
@@ -1589,7 +1592,9 @@ c slmod end
              wallse(maxpts+1) = wallse(maxpts+1) 
      >                             +sputys(iprod+lprod-1)
 
-
+c slmod begin
+c             wdn_index(iprod+lprod-1) = wallpts + 1
+c slmod end
           endif
 c
           griderr = .false.
@@ -1610,6 +1615,9 @@ c         Record free space launched neutrals in wallse(maxpts+1) so
 c         the total "erosion" source is available.
 c
           wallse(maxpts+1) = wallse(maxpts+1) + sputys(iprod+lprod-1) 
+c slmod begin
+c          wdn_index(iprod+lprod-1) = wallpts + 1
+c slmod end
 c
 c          IK = IKXYS(IX,IY)
 c          IR = IRXYS(IX,IY)
@@ -1635,6 +1643,9 @@ c
      >              iprod,lprod,
      >              wallindex(id)
              wallse(maxpts+1) = wallse(maxpts+1)+sputys(iprod+lprod-1)
+c slmod begin
+c             wdn_index(iprod+lprod-1) = wallpts + 1
+c slmod end
           else
              wallse(id) = wallse(id) + sputys(iprod+lprod-1)
 c slmod begin
@@ -1650,6 +1661,8 @@ c slmod begin
              wall_flx(i)%launch(wall_nlaunch) = 
      .         wall_flx(i)%launch(wall_nlaunch) + sputys(iprod+lprod-1)
 c             WRITE(0,*) i,wall_nlaunch
+
+c             wdn_index(iprod+lprod-1) = id
 c slmod end
           endif
 
@@ -3555,6 +3568,10 @@ c              Record particles with invalid ID's in total
 c
                if (indi.lt.1.or.indi.gt.wallpts) then 
                   WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                  wdn(iwstart,wallpts+1)%n = 
+     .              wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,maxpts+1,2) = 
@@ -3563,6 +3580,9 @@ c
 c
                else
                   WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                  wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,indi,2) = 
@@ -3662,6 +3682,10 @@ c              Record particles with invalid ID's in total
 c
                if (indi.lt.1.or.indi.gt.wallpts) then 
                   WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                  wdn(iwstart,wallpts+1)%n = 
+     .              wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,maxpts+1,2) = 
@@ -3670,6 +3694,9 @@ c
 c
                else
                   WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                  wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,indi,2) = 
@@ -3719,6 +3746,10 @@ c                Record particles with invalid ID's in total
 c
                  if (indi.lt.1.or.indi.gt.wallpts) then 
                     WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                  wdn(iwstart,wallpts+1)%n = 
+     .              wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,maxpts+1,2) = 
@@ -3727,6 +3758,9 @@ c
 c
                   else
                     WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                    wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,indi,2) = 
@@ -3770,6 +3804,10 @@ c                Record particles with invalid ID's in total
 c
                  if (indi.lt.1.or.indi.gt.wallpts) then 
                     WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                    wdn(iwstart,wallpts+1)%n = 
+     .                wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c 
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,maxpts+1,2) = 
@@ -3778,6 +3816,9 @@ c
 c
                   else
                     WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                    wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,indi,2) = 
@@ -3923,6 +3964,10 @@ c                   Record particles with invalid ID's in total
 c
                     if (indi.lt.1.or.indi.gt.wallpts) then 
                        WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                       wdn(iwstart,wallpts+1)%n = 
+     .                   wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                        if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                           wtdep(iwstart,maxpts+1,2) = 
@@ -3931,6 +3976,9 @@ c
 c
                     else
                        WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                       wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                        if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                           wtdep(iwstart,indi,2) = 
@@ -4083,6 +4131,10 @@ c                  Record particles with invalid ID's in total
 c
                    if (indi.lt.1.or.indi.gt.wallpts) then 
                       WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                      wdn(iwstart,wallpts+1)%n = 
+     .                  wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                       if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                          wtdep(iwstart,maxpts+1,2) = 
@@ -4091,6 +4143,9 @@ c
 c
                    else
                       WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                      wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                       if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                          wtdep(iwstart,indi,2) = 

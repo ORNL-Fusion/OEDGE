@@ -536,6 +536,15 @@ c       ----------------------------------------------------------------
         CASE('EIR WHIPE')
           CALL ReadOptionI(buffer,1,opt_eir%whipe) 
 c       ----------------------------------------------------------------
+        CASE('EIR LOW MEMORY')
+          CALL ReadOptionI(buffer,1,opt_eir%low_memory) 
+c       ----------------------------------------------------------------
+        CASE('EIR FLUID GRID')
+          CALL ReadOptionI(buffer,1,opt_eir%fluid_grid) 
+c       ----------------------------------------------------------------
+        CASE('EIR GAS ONLY')
+          CALL ReadOptionI(buffer,1,opt_eir%gas_only) 
+c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
           READ(buffer(itag+2:itag+4),*) opt_eir%void_version
@@ -598,10 +607,11 @@ c              write(0,*) '>'//TRIM(buffer_array(5))//'<'
               READ(buffer_array(1),*) opt_eir%add_type (i1)
               READ(buffer_array(2),*) opt_eir%add_index(i1)
               SELECTCASE (opt_eir%add_type(i1))
-                CASE(1)
+                CASE(1,3)
                   opt_eir%add_file    (i1) = TRIM(buffer_array(3))
                   opt_eir%add_file_tag(i1) = TRIM(buffer_array(4))
                   opt_eir%add_tag     (i1) = TRIM(buffer_array(5))
+c                  write(0,*) '>'//TRIM(buffer_array(5))//'<'
                 CASE(2)
                   READ(buffer_array( 3),*) opt_eir%add_holex(i1)
                   READ(buffer_array( 4),*) opt_eir%add_holey(i1)
@@ -795,6 +805,29 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)
             READ(buffer_array(13),*) opt_eir%sur_hard  (opt_eir%sur_n)
             READ(buffer_array(14),*) opt_eir%sur_remap (opt_eir%sur_n)
             opt_eir%sur_tag(opt_eir%sur_n) = TRIM(buffer_array(15))
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR GAUGES')
+          opt_eir%gauge_n = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%gauge_n = opt_eir%gauge_n + 1
+            i1 = opt_eir%gauge_n
+            CALL SplitBuffer(buffer,buffer_array) 
+            SELECTCASE (TRIM(buffer_array(1)))
+              CASE ('1')
+                READ(buffer_array(1),*) opt_eir%gauge_type  (i1)     !         
+                READ(buffer_array(2),*) opt_eir%gauge_x     (i1)     !         
+                READ(buffer_array(3),*) opt_eir%gauge_y     (i1)     !         
+                READ(buffer_array(4),*) opt_eir%gauge_phi   (i1)     !         
+                READ(buffer_array(5),*) opt_eir%gauge_radius(i1)     !         
+                opt_eir%gauge_dupe_dir(i1) = TRIM(buffer_array(6))   !         
+                READ(buffer_array(7),*) opt_eir%gauge_dupe_n   (i1)  !         
+                READ(buffer_array(8),*) opt_eir%gauge_dupe_step(i1)  !         
+                opt_eir%gauge_tag(i1) = TRIM(buffer_array(9))        !         
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown gauge TYPE '//
+     .                  'found',*99)
+            ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
        CASE DEFAULT
@@ -1564,6 +1597,8 @@ c      opt_eir%nvoid = 0
       opt_eir%time  = 30
       opt_eir%niter = 0
 
+      opt_eir%low_memory = 0
+
       opt_eir%ntime = 0
       opt_eir%dtimv = 100.0E-06
       opt_eir%time0 = 0.0
@@ -1580,6 +1615,8 @@ c      opt_eir%nvoid = 0
       opt_eir%photons = 0
       opt_eir%opacity = 0
       opt_eir%bgk     = 0
+
+      opt_eir%gas_only = 0
 
       opt_eir%ntorseg = 30
       opt_eir%torfrac = 1.0
@@ -1603,6 +1640,10 @@ c      opt_eir%nvoid = 0
        opt_eir%i2trc  =  0
 
       opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
+
+      opt_eir%fluid_grid = 1  
+
+      opt_eir%gauge_n = 0
 
       eirfp = 88     
       geofp = 88

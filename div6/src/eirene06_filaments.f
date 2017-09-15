@@ -408,7 +408,6 @@ c              scale = 0.020D0
 
             WRITE(0,*) 'resolving... pass=',iloop,scale
 
-
             CALL CalcDerivedQuantity(MODE_OBJ_CENTRE)
 
             DO iobj = 1, nobj                       

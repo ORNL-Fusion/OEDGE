@@ -1460,7 +1460,7 @@ c...  Insert iteration data, if any:
         WRITE(FP,80) '* ITERATION DATA',IT
         WRITE(FP,81) NGAUGE
         DO IG=1,NGAUGE
-          ICOUNT=39
+          ICOUNT=0
           WRITE(FP,80) '*   PRESSURE GAUGE',IG
           WRITE(FP,81) ITALLY
           WRITE(FP,81) NSTRAI+1
@@ -1550,20 +1550,33 @@ C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
       ENDDO
 
 c...  Check for triangle centers that are inside the "pressure
-c     gauge" region:
+c     gauge" region (mm):
       NGAUGE = 4
-      XGAUGE(1) =  845.0D0  ! ITER midplane
-      YGAUGE(1) =   62.0D0
-      RGAUGE(1) =    8.0D0
-      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
-      YGAUGE(2) = -420.0D0
+c      XGAUGE(1) =  845.0D0  ! ITER midplane
+c      YGAUGE(1) =   62.0D0
+c      RGAUGE(1) =    8.0D0
+c      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
+c      YGAUGE(2) = -420.0D0
+c      RGAUGE(2) =   20.0D0
+c      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
+c      YGAUGE(3) = -380.0D0
+c      RGAUGE(3) =   10.0D0
+c      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
+c      YGAUGE(4) = -420.0D0
+c      RGAUGE(4) =   10.0D0
+
+      XGAUGE(1) =  405.0D0  ! ITER inner (HFS) midplane
+      YGAUGE(1) = -100.0D0
+      RGAUGE(1) =   20.0D0
+      XGAUGE(2) =  405.0D0  ! ITER divertor, below dome
+      YGAUGE(2) =  001.0D0
       RGAUGE(2) =   20.0D0
-      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
-      YGAUGE(3) = -380.0D0
-      RGAUGE(3) =   10.0D0
-      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
-      YGAUGE(4) = -420.0D0
-      RGAUGE(4) =   10.0D0
+      XGAUGE(3) =  405.0D0  ! ITER inner PFZ leg
+      YGAUGE(3) =  100.0D0
+      RGAUGE(3) =   20.0D0
+      XGAUGE(4) =  405.0D0  ! ITER outer PFZ leg
+      YGAUGE(4) =  200.0D0
+      RGAUGE(4) =   20.0D0
 
       IS=ISTRAA
       IT=ITERNO

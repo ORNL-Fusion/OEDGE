@@ -1093,7 +1093,9 @@ c...  Clear geometry arrays:
       CALL geoClean
 
       RETURN
- 99   STOP
+ 99   WRITE(0,*) '  TUBE1,2 = ',itube1,itube2
+      WRITE(0,*) '  NTUBE   = ',ntube
+      STOP
       END
 c
 c ======================================================================

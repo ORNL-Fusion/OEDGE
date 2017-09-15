@@ -1755,7 +1755,7 @@ c          READ(fp,*) id,(pvals(k,1),pvals(k,2),k=1,3),xcen,ycen
         ELSE
           BACKSPACE 5
         ENDIF          
-        
+          
 
         DEFCOL = 0
 
@@ -1765,6 +1765,10 @@ c also plot the nimbus wall and pump (if any)
 c
 c       IF available
 c
+
+c       DEFCOL = NCOLS+3
+        IF (.FALSE.) THEN
+
         if (nvesm.ne.0) then
 c
 c         Need to modify this to plot the baffles independently if they
@@ -1809,6 +1813,10 @@ c
           wvals(nves+1,2) = zves(1)
           call grtrac (wvals(1,1),wvals(1,2),nves+1,name,'LINE',-1)
         endif
+
+        ENDIF
+c        DEFCOL = 0
+
 c slmod end
       ELSE
         IR = IRWALL - 1

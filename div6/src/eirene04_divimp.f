@@ -862,7 +862,7 @@ c
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,
      .        iblk,iatm,imol,iion,ipho,ilin,isur
-      LOGICAL goodeof
+      LOGICAL goodeof,binary
       REAL    rdum(30),frac,
      .        sumion,amps,flux
       CHARACTER buffer*256,species*32
@@ -872,6 +872,7 @@ c
       ALLOCATE(tdata(MAXNKS,MAXNRS,5))
       tdata = 0.0
 
+      binary  = .FALSE.
       goodeof = .FALSE.
 
 c      pinion = 0.0   ! TEMP... 
@@ -913,7 +914,7 @@ c      pinrec = 0.0
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (tri(icount)%type.EQ.MAGNETIC_GRID) THEN  
               ik = tri(icount)%index(1)                   ! Should pull these from .transfer
               ir = tri(icount)%index(2)   
@@ -935,7 +936,7 @@ c      pinrec = 0.0
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (tri(icount)%type.EQ.MAGNETIC_GRID) THEN  
               ik = tri(icount)%index(1)                   
               ir = tri(icount)%index(2)   
@@ -953,7 +954,7 @@ c      pinrec = 0.0
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (tri(icount)%type.EQ.MAGNETIC_GRID) THEN  
               ik = tri(icount)%index(1)                   
               ir = tri(icount)%index(2)   
@@ -973,7 +974,7 @@ c      pinrec = 0.0
           READ(fp,*,ERR=97) (index(i1),i1=1,ntally)          
           icount = 0
           DO WHILE (icount.LT.ndata)
-            CALL NextLine(fp,ntally,icount,rdum)
+            CALL NextLine(fp,ntally,icount,rdum,binary)
             IF (tri(icount)%type.EQ.MAGNETIC_GRID) THEN  
               ik = tri(icount)%index(1)                  
               ir = tri(icount)%index(2)   

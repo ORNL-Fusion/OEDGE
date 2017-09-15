@@ -750,7 +750,11 @@ c...  Access data file:
       OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     STATUS='OLD',ERR=98)
 
-      READ(fp,*) buffer
+      DO WHILE (.TRUE.)
+        READ(fp,*) buffer
+        IF (buffer(1:1).NE.'*') EXIT
+      ENDDO
+
       REWIND (fp)
 
       IF (buffer(1:1).EQ.'{') THEN 
