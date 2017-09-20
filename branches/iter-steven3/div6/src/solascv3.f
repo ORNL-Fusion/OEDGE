@@ -162,7 +162,7 @@ c
 c     Read in Edge2d compatibility switch and the subsequent values of
 c     ne, Te and Ti at the centre point of the first cell
 c
-      call rdr(switch(swe2d),.false.,0.0,.false.,0.0, 'mach sw',ierr)
+      call rdr(switch(swe2d),.false.,0.0,.false.,0.0, 'e2d sw',ierr)
       call rdr(switch(swpow),.true.,0.0,.false.,0.0, 'power sw',ierr)
       call rdr(switch(swpowp),.false.,0.0,.false.,0.0, 'pp pow',ierr)
 c
