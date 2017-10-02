@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
 c
       REAL FUNCTION PsinToR(psin,z)

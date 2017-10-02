@@ -4,6 +4,7 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpShinKajita(title9)
+      USE mod_interface
       USE mod_out985
       USE mod_out985_variables
       IMPLICIT none
@@ -20,9 +21,9 @@ c
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
-      INTEGER   ik,ir,fp,ike,ierr,iint,iobj,ik_last,ir_last
+      INTEGER   ik,ir,fp,ike,ierr,iint,iobj,ik_last,ir_last,i
       REAL      fact(100),rdum
-      CHARACTER dummy*1024
+      CHARACTER dummy*1024,file*1024,tag*64
       
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
@@ -108,6 +109,42 @@ c     .                 'ph m-3 s-1')
 
  
       CLOSE(fp)
+
+
+      IF (.TRUE.) THEN 
+c
+c       2D emission data: 
+c       
+        WRITE(file,'(A)') 'idl.divimp_imp_emission'
+        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
+        DO i = 1, opt%int_num
+          CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','n/a')
+          CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','n/a')
+          CALL inPutData(opt%int_charge  (i),'CHARGE','n/a')
+          CALL inPutData(opt%int_database(i),'DATABASE','n/a')
+          CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
+        ENDDO
+
+        DO iobj = 1, nobj
+          IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
+
+          ik = obj(iobj)%ik 
+          ir = obj(iobj)%ir
+          IF (ir.LT.irsep ) ik = ik - 1
+          ir = ir - 1                    ! TUBE is set to the OSM fluid grid system, where
+          IF (ir.GT.irwall) ir = ir - 2  ! the boundary rings are not present
+
+          CALL inPutData(ik,'POS' ,'n/a')
+          CALL inPutData(ir,'TUBE','n/a')
+          DO i = 1, opt%int_num
+            WRITE(tag,'(A,I0.2)') 'SIGNAL_',i
+            CALL inPutData(obj(iobj)%quantity(i),tag,'ph m-3 s-1')
+          ENDDO
+        ENDDO
+        CALL inCloseInterface
+
+      ENDIF
  
       RETURN
 99    STOP
@@ -131,7 +168,7 @@ c
       INCLUDE 'diagvel'
       INCLUDE 'reiser_com'
 
-      INTEGER   iint,iobj,ik,ir
+      INTEGER   iint,iobj,ik,ir,ishift
       CHARACTER tag*7
 
       write(0,*) 'nobj',nobj
@@ -148,8 +185,10 @@ c          write(0,*) 'test 2',obj(iobj)%gsur(1).NE.GT_TC
           IF (iint.EQ.1) THEN
             ik = obj(iobj)%ik            
             ir = obj(iobj)%ir
-            CALL inPutData(obj(iobj)%ik ,'IK' ,'none')            
-            CALL inPutData(obj(iobj)%ir ,'IR' ,'none')            
+            ishift = 1
+            IF (ir.GT.irtrap) ishift = ishift + 2
+            CALL inPutData(ik           ,'CELL','none')            
+            CALL inPutData(ir-ishift    ,'TUBE','none')            
             CALL inPutData(kss(ik,ir)   ,'KSS','m')            
             CALL inPutData(kps(ik,ir)   ,'KPS','m')            
           ENDIF
@@ -192,7 +231,8 @@ c      WRITE(0,*) 'NPLASM:',nplasma
 
       SELECTCASE (obj(iobj)%subtype)
 
-        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
+        CASE (OP_FLUID_GRID)  ! *** PROFILE HACK *** (the OP_EIRENE_GRID)
+c        CASE (OP_FLUID_GRID,OP_EIRENE_GRID)  
 c...      Fluid grid:
           ik = obj(iobj)%ik
           ir = obj(iobj)%ir
@@ -289,7 +329,7 @@ c                ENDIF
 
           ENDSELECT
 
-c        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
+        CASE (OP_EIRENE_GRID)  ! *** PROFILE HACK ***
 cc...      Eirene grid:
 c          STOP 'NOT READY: OP_EIRENE_GRID'
         CASE (OP_INVERSION_GRID)
@@ -317,7 +357,7 @@ c
 
       INTEGER, INTENT(IN) :: iint,ik,ir
       LOGICAL display_warning 
-      REAL    osm(ik,ir),wlngth2
+      REAL    osm(ik,ir),wlngth2,scale
 
       DATA display_warning /.TRUE./
 
@@ -351,10 +391,12 @@ c                 *** TEMP *** get rid of bad D2+ data at high temperatures
                   DO ir1 = 1, ir ! nrs
                     DO ik1 = 1, nks(ir1)
                       IF (ktebs(ik1,ir1).GT.1.0E+3.AND.
-     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
+     .                  pinline(ik1,ir1,4,H_BALPHA).GT.
+     .                  pinline(ik1,ir1,1,H_BALPHA)*10.0) THEN
+c     .                  pinline(ik1,ir1,4,H_BALPHA).GT.1.0E+20) THEN
                         pinline(ik1,ir1,4,H_BALPHA) = 0.0
-c                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
-c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
+                        osm(ik1,ir1)=SUM(pinline(ik1,ir1,1:3,H_BALPHA))+ 
+     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                         IF (display_warning) THEN
                           display_warning = .FALSE.
                           WRITE(0,*)
@@ -366,14 +408,14 @@ c     .                                   pinline(ik1,ir1,5  ,H_BALPHA)
                       ENDIF
                     ENDDO
                   ENDDO
-c                  IF (.NOT.display_warning) THEN
-                  DO ir1 = 1, ir ! nrs
-                    DO ik1 = 1, nks(ir)
-c                     write(0,*) 'debug',ik1,ir1,nrs
-                     osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                  IF (.NOT.display_warning) THEN
+                    DO ir1 = 1, ir ! nrs
+                      DO ik1 = 1, nks(ir)
+c                       write(0,*) 'debug',ik1,ir1,nrs
+                       osm(ik1,ir1) = SUM(pinline(ik1,ir1,1:5,H_BALPHA))
+                      ENDDO
                     ENDDO
-                  ENDDO
-c                  ENDIF
+                  ENDIF
 
                   wlngth2 = 656.3  ! Air
 
@@ -403,7 +445,17 @@ c...      ADAS:
 
           SELECTCASE (za)
             CASE (01002) ! Deuterium
-              STOP 'D ADAS NOT READY'
+              CALL LDADAS(opt%int_z(iint),iz,    ! requested matches what's available...
+     .                    opt%int_adasid(iint),
+     .                    opt%int_adasyr(iint),
+     .                    opt%int_adasex(iint),
+     .                    opt%int_isele (iint),
+     .                    opt%int_iselr (iint),
+     .                    opt%int_iselx (iint),
+     .                    plrpad,wlngth2,ircode) 
+
+                scale = 1.0
+c              STOP 'D ADAS NOT READY'
             CASE DEFAULT
 c...          Check for impurity data:
 c             CALL LDADAS(1,IZMIN,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
@@ -422,7 +474,8 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
      .                      opt%int_iselr (iint),
      .                      opt%int_iselx (iint),
      .                      plrpad,wlngth2,ircode) 
-                wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+                scale = absfac
               ELSE
                 CALL ER('GetFluidGridEmission','Specified charge '//
      .                  'state invalid',*99)
@@ -432,7 +485,9 @@ c              STOP 'PROBLEM WITH ADAS.F THAT I FIXED AND REMOVED'
           IF (ircode.NE.0) 
      .      CALL ER('GetFluidGridEmission','IRCODE.NE.0',*99)
 
-          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * absfac 
+          wlngth2 = wlngth2 / 10.0  ! A to nm... 
+
+          osm(1:ik,1:ir) = plrpad(1:ik,1:ir) * scale
           WRITE(0,*) 'WLNGTH:',wlngth2
 c       ----------------------------------------------------------------
         CASE (3) 
@@ -969,7 +1024,6 @@ c
       TYPE(type_3D_object) :: newobj
       INTEGER, INTENT(IN)  :: nsurface,ielement,option
       INTEGER, INTENT(OUT) :: status
-c      REAL, ALLOCATABLE :: tdata(:)
 
       INTEGER GetSurfaceIndex
       REAL    GetTetCentre
@@ -1098,6 +1152,15 @@ c
 
       CALL LoadObjects(TRIM(fname),status)
 
+
+c...  Dump tetrahedron data to an ASCII file:
+
+
+
+
+
+
+
       RETURN
  99   STOP
       END
@@ -1143,10 +1206,15 @@ c...  For connection map:
       REAL    minphi,maxphi,phi,dphi,y,dy,miny,maxy,GetTetCentre
 
 
+      WRITE(0,*) 'Loading tetrahedron grid',nobj
+       
+
       CALL Wrapper_LoadObjects(TRIM(opt%obj_fname(ielement)),status)
 c      CALL Wrapper_LoadObjects('tetrahedrons.raw',status)
       IF (status.NE.0) CALL ER('Wrapper_LoadObjects','Unable '//
      .                         'to find grid file',*99)
+
+
 
 c.... Load all the vertices:
       status = 0
@@ -1163,6 +1231,7 @@ c...  Load all fluid grid tetrahedrons:
       CALL GetNextTet(newobj,-1,-1,-1,status)
       DO WHILE (status.EQ.0) 
         CALL GetNextTet(newobj,nsrf,ielement,option,status)
+
         IF (status.EQ.0) THEN
           DO i1 = 1, newobj%nside
             newsrf%type = SP_PLANAR_POLYGON
@@ -1270,7 +1339,9 @@ c      STOP 'sdfsdf'
       WRITE(0,*) ' NOBJ       = ',nobj
       WRITE(0,*) ' VSUM       = ',vsum(iside,iobj)
       WRITE(0,*) ' VSUM1      = ',vsum(1:4,obj(iobj)%imap(1,iside))
- 99   STOP
+ 99   WRITE(0,*) ' MAX3D      = ',MAX3D
+      WRITE(0,*) ' NOBJ       = ',nobj
+      STOP
       END
 c
 c ====================================================================== 

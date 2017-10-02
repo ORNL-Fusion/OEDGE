@@ -26,7 +26,8 @@ c
 c
 c     Initialize debug tracing
 c
-      call init_trace(0,.false.)
+c      call init_trace(0,.false.)
+      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
 
 C

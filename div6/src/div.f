@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
      >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
@@ -24,6 +24,7 @@ c slmod begin
       use mod_interface
       use mod_divimp
       use mod_divimp_tdep
+      use mod_divimp_walldyn
 c slmod end
 c
       implicit none
@@ -89,7 +90,10 @@ c
 c slmod begin - temp
       include 'slcom'
 
+      integer divGetTdepIndex
+
       integer i,fp,load_i
+      real    tdep_rescale(maxizs),tdep_loss,sum1
 c slmod end
 
 
@@ -327,6 +331,23 @@ c slmod end
 
       call pr_trace('DIV','AFTER TAU')
 
+c slmod begin
+c...  Sputtering yields were calcualted in divCompileSputteringYields and 
+c     no impurities were producted (i.e. all yields = 0), so short-circuit
+c     the impurity calculation -- can't eliminate it because a subsequent
+c     run in a time-dependent series will need some data to work with, even
+c     if it's not sampled in practice:  -SL, 2014/10/17
+      IF (sputter_ilast.GT.0.AND.nabsfac.EQ.0.999) THEN 
+        nizs  = 1
+        nimps = 10
+        IF (nimps2.NE.0) nimps2 = 10
+        IF (opt_div%pstate.EQ.1) cstmax = 1.0E-7
+
+
+c        WRITE(0,*) '************  what the heck A! **************'
+
+      ENDIF
+c slmod end
 C
 C---- ZERO ARRAYS ETC
 C
@@ -416,6 +437,9 @@ c
       CALL RZERO (wallsiz, (maxpts+1) * MAXIZS)
       call rzero (wallseiz,(maxpts+1) * MAXIZS)
       CALL RZERO (wallsil, maxpts+1)
+c slmod begin
+      CALL divWdnAllocate(wallpts,nizs)
+c slmod end
       CALL RZERO (TNTOTS, (MAXIZS+2)*4)
       CALL RZERO (TIZS,   MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RZERO (ZEFFS,  MAXNKS*MAXNRS*3)
@@ -1071,7 +1095,10 @@ c
         ctemav = ctem1
 c
       ENDIF
-
+c slmod begin
+      IF (OPT_DIV%PSTATE.EQ.1.AND..NOT.ALLOCATED(TDEP_SAVE)) 
+     .  ALLOCATE(TDEP_SAVE(NATIZ))
+c slmod end
 c
       RNEUT1 = RNEUT
       CLLL(-1) = REXIT
@@ -1199,6 +1226,7 @@ C------ SET LOCAL COPIES OF CHARACTERISTIC TIMES DATA, THESE MAY BE
 C------ CHANGED WHEN TEMI CHANGES IF OPTIONS OTHER THAN 0 ARE USED.
 C
         DO 777 IZ = 1, NIZS
+c          write(0,*) 'debug: xxx 1',iz
           XXX(IZ) = ZMAX
           SSS(IZ) = 0.0
           SSSS(IZ)= 0.0
@@ -1234,6 +1262,11 @@ c
           TEMI  = TEMTIZS(IMP)
           idstart = idatizs(imp,1)
           idtype  = idatizs(imp,2)
+c slmod begin
+c          wdn_i = wdn_index(imp)
+c          write(0,*) 'idstar,wdn_i',idstart,wdn_i
+c          wdn_i = idstart
+c slmod end
 c
 c         Assign starting wall index of particle
 c
@@ -1244,8 +1277,42 @@ c
           endif
 c
           cist  = cistizs(imp)
-c
 
+c
+c slmod begin - t-dep
+          LOAD_I = -1
+          IF (TDEP_DATA_EXISTS) THEN
+
+            NRAND = NRAND + 1
+            CALL SURAND2(SEED, 1, RAN)
+
+c            write(0,*) 'checkin',RAN,TDEP_LOAD_FRAC
+
+            IF (RAN.LT.TDEP_LOAD_FRAC) THEN
+
+c              WRITE(0,*) 'Taking a new particle, not an old one...'
+
+              NRAND  = NRAND + 1
+              CALL SURAND2 (SEED, 1, RAN)
+
+              LOAD_I = divGetTdepIndex(RAN)
+              R      = TDEP_LOAD(LOAD_I)%R       ! check
+              Z      = TDEP_LOAD(LOAD_I)%Z       ! check
+              VEL    = TDEP_LOAD(LOAD_I)%VEL     ! check
+              SPUTY  = TDEP_LOAD(LOAD_I)%WEIGHT  ! check
+              TEMI   = TDEP_LOAD(LOAD_I)%TEMP    ! check
+
+              idstart = idatizs(imp,1)     ! not sure
+              idtype  = idatizs(imp,2)     ! not sure
+              iwstart = -1                 ! not sure
+
+c        WRITE(0,*) '************  what the heck B! **************'
+
+            ELSE
+
+            ENDIF
+          ENDIF
+c slmod end
 C
 C------ SELECT INJECTION POINTS FROM INPUT OPTIONS
 C
@@ -1423,40 +1490,50 @@ c
 c
             SPUTY = 1.0
 c slmod begin - t-dep
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c mk begin
+c
+c This bit of code launches impurity ions.  For CIOPTE = 11 we have a
+c source that's a combination of the standard ion injection code and
+c the new code that launches particles by continuing trajectories that
+c were stored during a previous DIVIMP run.
+c
+c Variables:
+c 
+c load_i         - Index of a continued trajectory in the array of continued trajectories.  Search the 
+c                  code for LOAD_I.NE.-1 to find modifications related to the new time-dependent method
+c                  for operating DIVIMP.
+c tdep_load_frac - Very important! This determines the weighting between the source of new particles that 
+c		   appear in this DIVIMP run and the particles that come from continuing trajectories
+c                  stored during a previsous run.
+c
           ELSEIF (CIOPTE.EQ.11) THEN
 c...        Ion injection from both the current source and the source stored
 c           from a previous run:
             LOAD_I = -1
             NRAND = NRAND + 1
             CALL SURAND2(SEED, 1, RAN)
-            write(0,*) 'branch',ran,tdep_load_frac
-            IF (RAN.GT.TDEP_LOAD_FRAC) THEN
-              write(0,*) 'standard'
+c            write(0,*) 'branch',ran,tdep_load_frac
+            IF (.NOT.TDEP_DATA_EXISTS.OR.(RAN.GT.TDEP_LOAD_FRAC)) THEN
+c              write(0,*) 'standard'
               R     = CXSC
               Z     = CYSC
               PORM  = -1.0 * PORM
               VEL   = 9.79E3 * SQRT(CTEM1 / CRMI) * PORM * QTIM
               SPUTY = 1.0
             ELSE
-              NRAND = NRAND + 1
+              NRAND  = NRAND + 1
               CALL SURAND2 (SEED, 1, RAN)
-              LOAD_I =MIN(MAX(1,INT(REAL(TDEP_LOAD_N)*RAN)),TDEP_LOAD_N)
-c... left off: need to sort out setting the charge state, and also the strange initialization of 
-c maxciz from cizsc :
-c jdemod - maxciz is the maximum charge state reached by THIS particle ... so it starts at initial value and gets incremented later
-c          DO 792 JZ = CIZSC, MAXCIZ
-c why would this be done?
-c a bug?
-              R = TDEP_LOAD(LOAD_I)%R
-              Z = TDEP_LOAD(LOAD_I)%Z
-              PORM  = -1.0 * PORM
-              VEL  = TDEP_LOAD(LOAD_I)%VEL
-c should be adjusting sputy, abs
-              SPUTY = TDEP_LOAD(LOAD_I)%WEIGHT
-
-              write(0,*) '_load',load_i,r,z,vel,sputy
-
+              LOAD_I = divGetTdepIndex(RAN)
+              R      = TDEP_LOAD(LOAD_I)%R
+              Z      = TDEP_LOAD(LOAD_I)%Z
+              PORM   = -1.0 * PORM
+              VEL    = TDEP_LOAD(LOAD_I)%VEL
+              SPUTY  = TDEP_LOAD(LOAD_I)%WEIGHT  ! should be adjusting sputy, abs
+c              write(0,*) '_load',load_i,r,z,vel,sputy
             ENDIF
+c mk end
+c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c slmod end
           ENDIF
 c
@@ -1528,15 +1605,14 @@ c       ion injection vs. neutral launch
 c
 c        TEMI   = CTEM1
 c
-c slmod begin
+c slmod begin - t-dep
         IF (LOAD_I.NE.-1) THEN
-          IZ     = NINT(TDEP_LOAD(LOAD_I)%CHARGE)
-          MAXCIZ = IZ         ! not sure about this...
-c
-c         jdemod - maxciz is the maximum charge state reached by this particle and it is incremented 
-c                  as IZ changes ... so should start at IZ. 
-c
-c          MAXCIZ = CIZSC         ! not sure about this...
+c         The ionisation is done because t-dep mode doesn't follow
+c         neutrals at the moment -- something for another day...  -SL, 14/10/2014
+          IF (TDEP_LOAD(LOAD_I)%CHARGE.EQ.0.0) 
+     .      WRITE(0,*) 'WARNING: ARTIFICIAL IONISATION OF A '//
+     .                 'NEUTRAL INHERITED FROM A PREVIOUS RUN'
+          IZ = MAX(1,NINT(TDEP_LOAD(LOAD_I)%CHARGE))  
 c
 c       jdemod - add code for particles launched using ERO distribution 
 c              - can have any initial charge state - neutrals have been handled in neut
@@ -1545,10 +1621,11 @@ c
            iz = nint(launchdat(imp,4))
            maxciz = iz
         ELSE
-          IZ     = CIZSC
-          MAXCIZ = CIZSC
+          IZ = CIZSC
         ENDIF
 
+        MINCIZ = IZ
+        MAXCIZ = IZ
 
         RIZ    = REAL(IZ)
         DSPUTY = DBLE(SPUTY)
@@ -1731,6 +1808,7 @@ c     >              avatiz(m),ratiz
         AVSPOS = AVSPOS + MIN (S, SMAX-S) * SPUTY
         AVSMAX = AVSMAX + SMAX * SPUTY
         AVVPOS = AVVPOS + ABS(VEL)/QTIM * SPUTY
+c        write(0,*) 'debug: xxx 2',iz
         XXX(IZ)= Z
         SSS(IZ)= MIN (S, SMAX-S)
         KKK    = K
@@ -1922,7 +2000,13 @@ c
 c
 c       Check for PROMPT REDEPOSITION of the ORIGINAL ION
 c
-        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
+c slmod begin - t-dep
+        if (load_i.eq.-1.and.
+     .      (prompt_depopt.eq.1.or.prompt_depopt.eq.20)) then
+                              
+c
+c        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
+c slmod end
 c
 c          Check for prompt deposition
 c
@@ -2316,6 +2400,7 @@ c
 c
 c
 c
+c        write(0,*) 'debug: xxx 3',iz
         XXX(IZ) = MIN (XXX(IZ), Z)
         SSS(IZ) = MAX (SSS(IZ), MIN (S,SMAX-S))
         KKK     = KKK + K
@@ -2453,8 +2538,6 @@ c slmod begin - t-dep
 c...       Store the state of the ion so that it can be re-launched in a 
 c          subsequent run:                     
            IF (OPT_DIV%PSTATE.EQ.1) THEN
-             IF (.NOT.ALLOCATED(TDEP_SAVE)) ALLOCATE(TDEP_SAVE(NATIZ))
-
              tdep_save_n = tdep_save_n + 1
              tdep_save(tdep_save_n)%r      = r
              tdep_save(tdep_save_n)%z	   = z
@@ -2486,7 +2569,11 @@ c       Reset time in ionization state IZ
 c
         cistiz = 1.0
 c
-        DO 792 JZ = CIZSC, MAXCIZ
+c slmod begin - t-dep
+        DO 792 JZ = MINCIZ, MAXCIZ
+c
+c        DO 792 JZ = CIZSC, MAXCIZ
+c slmod end
           RIONS(JZ) = RIONS(JZ) + SPUTY
           CXXX (JZ) = CXXX (JZ) + XXX(JZ) * SPUTY
           CSSS (JZ) = CSSS (JZ) + SSS(JZ) * SPUTY
@@ -2748,7 +2835,6 @@ c
 
 
 
-
       WRITE(6,*) 'FINISHED PARTICLES'
 c
 c     Print out the parallel diffusive step characterization.
@@ -2981,7 +3067,18 @@ c
                wallseiz(in,iz) = wallseiz(in,iz)/wallsiz(in,iz)
             endif
          enddo
-
+c slmod begin
+         j = wallpts + 1
+         do i = 1, wallpts+1
+           wdn(i,j)%n = wdn(i,j)%n + wdn(i,in)%n
+           wdn(i,j)%i = wdn(i,j)%i + wdn(i,in)%i
+           do iz= 1, nizs
+             if (wdn(i,in)%iz(iz).gt.0.0) then 
+               wdn(i,in)%eiz(iz) = wdn(i,in)%eiz(iz) / wdn(i,in)%iz(iz)
+             endif
+           enddo
+         enddo
+c slmod end
          if (iz.lt.80) then 
             write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
      >          'Walls Data:',in,
@@ -3005,8 +3102,8 @@ c
      >      wallsi(maxpts+1),wallsn(maxpts+1),wallsil(maxpts+1)
 
 
-c
-C     K. Schmid 2008 output charge state resolved wall impact information
+C     K. Schmid 2008 output charge state resolved wall impact information - check
+
       write (6, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
      >               wallpts
 c
@@ -3019,22 +3116,112 @@ c
 c3006  Format(i5,' ',g12.5,g12.5,<NIZS>(' ',g12.5))
 c
       if (nizs.le.100) then 
-         do in = 1,wallpts
-C        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
-C     >       wallsiz(in, 1:NIZS)
+c slmod begin
+c       Adding wall impurity atom flux from EIRENE, if available:
+        if (allocated(wall_flx)) then
+          do in = 1,wallpts
+c
+c	   jdemod - added wallsil to table as part of merge
+c
+           write(6,3006) in,wallsn(in),wallsi(in),wallsiz(in,1:NIZS),
+     .                   wall_flx(in)%in_par_atm(2,0),
+     .                   wallsil(in)
+          enddo
+        else
+          do in = 1,wallpts
+c
+c	   jdemod - added wallsil(in)
+c
+           write(6,3006) in,wallsn(in),wallsi(in),wallsiz(in,1:NIZS),
+     .                   -1.0, wallsil(in)
+          enddo
+        endif
+        write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+     >                 wallsiz(maxpts+1, 1:NIZS),-1.0,
+     >                 wallsil(maxpts+1)
 
-             write (6,3006) in,wallsn(in),wallsi(in),
-     >              wallsiz(in, 1:NIZS), wallsil(in)
 
-         end do
-         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
-     >     wallsiz(maxpts+1, 1:NIZS), wallsil(maxpts+1)
+      write (SLOUT, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
+     >               wallpts
+      write(SLOUT,*) 'WALLSN:'    
+      do in = 1,wallpts+1
+        write(SLOUT,'(I6,1P,2E10.2,0P)') in,
+     .    wallsn(in),SUM(wdn(1:wallpts+1,in)%n)
+      enddo
+      write(SLOUT,*) 'WALLSI:'
+      do in = 1,wallpts
+        write(SLOUT,'(I6,1P,2E10.2,0P)') in,
+     .    wallsi(in),SUM(wdn(1:wallpts+1,in)%i)
+      enddo
+      write(SLOUT,'(I6,1P,2E10.2,0P,A)') in,
+     .  wallsi(maxpts+1),SUM(wdn(1:wallpts+1,wallpts+1)%i),' last'
+
+      do iz = 1, nizs+1
+
+        write(SLOUT,*) 'WALLSIZ IZ:',iz
+        do in = 1,wallpts
+          sum1 = 0.0
+          do i = 1,wallpts  ! SUM() won't compile
+            sum1 = sum1 + wdn(i,in)%iz(iz)
+          enddo
+          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+     .      wallsiz(in,iz),sum1
+        enddo
+
+c        write(SLOUT,*) 'WALLSEIZ IZ:',iz   ! *** LEFT OFF *** checking that things are OK...
+c        do in = 1,wallpts
+c          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+c     .      wallseiz(in,iz),SUM(wdn(1:wallpts,in)%eiz(iz))
+c        enddo
+
+      enddo
+
+      do i = 1, wallpts+1
+        write(SLOUT,*) 'WALLSIZ:',i
+        do in = 1,wallpts+1
+          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+     .      wdn(i,in)%i,SUM(wdn(i,in)%iz(1:nizs+1)),
+     .      (wdn(i,in)%iz(iz),iz=1,nizs+1)
+        enddo
+        write(SLOUT,*) 'WALLSEIZ:',i
+        do in = 1,wallpts+1
+          write(SLOUT,'(I6,1P,100(2E10.2,2X),0P)') in,
+     .      (wallseiz(in,iz),wdn(i,in)%eiz(iz),iz=1,nizs+1)
+        enddo
+      enddo
+c
+c         do in = 1,wallpts
+cC        write (6,*) in,' ',wallsn(in),' ',wallsi(in),' ',
+cC     >       wallsiz(in, 1:NIZS)
+c             write (6,3006) in,wallsn(in),wallsi(in),wallsiz(in, 1:NIZS)
+c         end do
+c         write (6,3006) -1, wallsn(maxpts+1),wallsi(maxpts+1),
+c     >      wallsiz(maxpts+1, 1:NIZS)
+c slmod end
 
          write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT INFO'
 
       else
          call errmsg('ERROR PRINTING CHARGE'//
      >               ' RESOLVED WALL IMPACT INFO: NIZS > 100')
+      endif
+
+c	  K. Schmid 2013 output charge state resolved impact energies - check
+c		the idea is to include the flow velocity contribution to the impact energies 
+c		DIVIMP stores the energy of the particels based on 3 * q * Te + 0.5 * (Mass * VFlow^2) + 2 Ti
+c		in wallseiz(wallidx, iz) for each charge state
+        write (6, *) 'CHARGE RESOLVED WALL IMPACT ENERGY START: ', NIZS,
+     >               wallpts
+3007  Format(i5,' ',100(' ',g12.5))
+      if (nizs.le.100) then 
+         do in = 1,wallpts
+             write (6,3007) in,wallseiz(in, 1:NIZS)
+         end do
+         write (6,3007) -1, wallseiz(maxpts+1, 1:NIZS)
+         write (6, *) 'END OF CHARGE RESOLVED WALL IMPACT ENERGY'
+      else
+         call errmsg('ERROR PRINTING CHARGE'//
+     >               ' RESOLVED WALL IMPACT ENERGY: NIZS > 100')
       endif
 c
 c     jdemod end
@@ -4102,7 +4289,6 @@ c     ADAS - use ADAS data when ADPAK is not available
 c
       elseif (cdatopt.eq.1.or.cdatopt.eq.2.or.cdatopt.eq.3) then
 c
-C
       DO 1190 IR = 1, NRS
 C
 C---- LOAD POWER DATA ONE RING AT A TIME.
@@ -4787,6 +4973,11 @@ c
             write(6,'(a,10(1x,g12.5))') 'ABSFAC CALCULATION:',
      >               wssf,ftot,yeff,csef,
      >            neut2d_fytot,absfac_ion,absfac_neut
+
+            write(0,'(a,10(1x,g12.5))') 'ABSFAC CALCULATION:',
+     >               wssf,ftot,yeff,csef,
+     >            neut2d_fytot,absfac_ion,absfac_neut
+
 c
 c         else
 c
@@ -4818,6 +5009,9 @@ c
 C slmod begin - t-dep
 c...  Dump the particle distribution to a file:
       IF (opt_div%pstate.EQ.1) THEN
+
+        write(0,*) 'debug: absfac = ',absfac
+
         CALL find_free_unit_number(fp)
         OPEN (UNIT=fp,FILE='raw.divimp_tdep_dist',ACCESS='SEQUENTIAL',
      .        STATUS='REPLACE')
@@ -4825,10 +5019,34 @@ c...  Dump the particle distribution to a file:
         WRITE(fp,'(A)') '{VERSION}'
         WRITE(fp,*    ) 1.0
         WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A,1P,E15.7)') '* sputter_nabsfac=',sputter_nabsfac
+        WRITE(fp,'(A,F15.7   )') '* cpu time       =',timusd
+        WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{DATA RUN}'
-        WRITE(fp,'(1P,E15.7,0P,A)') qtim  ,'  qtim'
-        WRITE(fp,'(1P,E15.7,0P,A)') cstmax,'  cstmax'
-        WRITE(fp,'(1P,E15.7,0P,A)') absfac,'  absfac'
+        WRITE(fp,'(1P,E15.7,0P,A)') qtim       ,'  qtim'
+        WRITE(fp,'(1P,E15.7,0P,A)') cstmax*qtim,'  cstmax'
+        WRITE(fp,'(1P,E15.7,0P,A)') absfac     ,'  absfac'
+        WRITE(fp,'(   F15.2,   A)') avatiz(1)+avatiz(2), 
+     .                              '  ions injected'
+        WRITE(fp,'(   F15.2   ,A)') tdep       ,'  ions to target'
+        WRITE(fp,'(2I6,A)') cizsc,nizs, '     ion balance'
+        DO i = cizsc, nizs
+          tdep_loss = cicabs(i) +  ciclos(i)
+          IF (rions(i).GT.0.0) THEN
+            tdep_rescale(i) = (rions(i) - tdep_loss) / rions(i) 
+          ELSE
+            tdep_rescale(i) = 1.0
+          ENDIF            
+          WRITE(fp,'(I6,5F12.2,F15.7,A)') 
+     .      i, 
+     .      rions (i),    ! number of ions reaching this charge state
+     .      cicabs(i),    ! number of ions absorbed on targets and wall
+     .      cicuts(i),    ! number of ions remaning at time cut-off
+     .      ciclos(i),    ! number of ions "lost"
+     .      rions(i)-cicabs(i)-ciclos(i)-cicuts(i),
+     .      tdep_rescale(i)
+        ENDDO
+
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '{DATA PARTICLE}'
         WRITE(fp,*    ) tdep_save_n
@@ -4845,12 +5063,15 @@ c...  Dump the particle distribution to a file:
      .      tdep_save(i)%vel    ,
      .      tdep_save(i)%charge ,
      .      tdep_save(i)%weight
+c     .      tdep_save(i)%weight*tdep_rescale(NINT(tdep_save(i)%charge))
         ENDDO
         CLOSE(fp)
 c...    Clear memory:
         DEALLOCATE(tdep_save)
         IF (ALLOCATED(tdep_load)) DEALLOCATE(tdep_load)
+        load_i = divGetTdepIndex(-1.0)
       ENDIF
+      IF (ALLOCATED(tdep_save)) ALLOCATE(tdep_save(natiz))
 C slmod end
 C
       DO 1020 IR = 1, NRS
@@ -5278,7 +5499,6 @@ C                     PRINT CLOSING MESSAGES
 C-----------------------------------------------------------------------
 C
       call pr_trace('DIV','CLOSING MESSAGES')
-
 
       IF (NIZS.GT.0)
      >     CALL MONPRI (FACTA(1),VFLUID,NIZS,SDTZS ,sdtzs2,
@@ -7628,12 +7848,13 @@ c               - added a check above to turn off promptdep in
 c                 core - leave this code in case other
 c                 edge cases emerge
 c
-c        WRITE(0,*) 'WHOA! PROBLEM!'
-c        WRITE(0,*) griderr
-c        WRITE(0,*) r,z
-c        WRITE(0,*) ik_local,ir_local
-c        WRITE(0,*) ik,ir
-c        WRITE(0,*) it
+c        WRITE(6,*) 'WARNING promptdep: getrz_confusion, prompt '//
+c     .             'redeposition check lost'
+c        WRITE(6,*) griderr
+c        WRITE(6,*) r,z
+c        WRITE(6,*) ik_local,ir_local
+c        WRITE(6,*) ik,ir
+c        WRITE(6,*) it
         id = idds(irsep,2)
       ENDIF
 c slmod end
@@ -7663,7 +7884,7 @@ c        at full energy.
 c
 c
 c      write(6,*) 'DEBUG PD:',ik,ir,targ_dist,
-c     >           mps_thickness(ir_local,it),larmor_radius,bfield
+c     >           mps_thickness(ir_local,it),larmor_radius,b_field
 c
 c
       if (.not.getrz_error) then 
@@ -7767,11 +7988,17 @@ c
       subroutine update_walldep(ik,ir,iz,idt,idw,iwstart,idtype,sputy,
      >                          eimp)
       use divertor_limits
+c slmod begin
+      use mod_divimp_walldyn
+c slmod end
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
       integer,intent(in) ::  idt,idw
       real sputy,eimp
+c slmod begin
+      integer i,j
+c slmod end
 c
       include 'params'
       include 'cgeom'
@@ -7794,7 +8021,7 @@ c
 c     Added a wallsiz array that records the wall impact information in a
 c     charge resolved manner
 c
-c     K. Schmid Feb. 2008 and june 2009
+c     K. Schmid Feb. 2008 and june 2009 -check
       real best,dsq,r,z
       integer ind,id
 c
@@ -7853,7 +8080,13 @@ c
                 wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = wallpts + 1
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           else
 
              wallsi(ind) = wallsi(ind) + sputy
@@ -7880,7 +8113,13 @@ c
                 wtdep(iwstart,ind,1) =
      >                    wtdep(iwstart,ind,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = ind
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           endif
 
 c
@@ -7913,7 +8152,13 @@ c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
                 wtdep(iwstart,wallindex(idt),1) =
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = wallindex(idt)
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
           else
 
 c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
@@ -7925,7 +8170,6 @@ c
                 wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
              endif
-
           endif
 c
 c      Wall segment specified
@@ -7941,7 +8185,6 @@ c
 
              wallsiz(idw, iz) = wallsiz(idw, iz) + sputy
              wallseiz(idw, iz) = wallseiz(idw, iz) + eimp * sputy
-
 c
 c         write(6,*) 'idw case ind:',idw,' iz: ',iz,' sputy: ', sputy
 c
@@ -7951,7 +8194,13 @@ c
                 wtdep(iwstart,idw,1) =
      >                    wtdep(iwstart,idw,1) + sputy
              endif
-
+c slmod begin
+             i = iwstart
+             j = idw
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
        else
 
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
@@ -7970,7 +8219,13 @@ c
              wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
           endif
-
+c slmod begin
+          i = iwstart
+          j = wallpts + 1 
+          wdn(i,j)%i       = wdn(i,j)%i       + sputy
+          wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+          wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+c slmod end
        endif
 c
 c
@@ -8329,7 +8584,12 @@ c
 c              GOTO 790
 c
             ENDIF
+c slmod begin - t-dep
+            MINCIZ = MIN (MINCIZ, IZ)
             MAXCIZ = MAX (MAXCIZ, IZ)
+c
+c            MAXCIZ = MAX (MAXCIZ, IZ)
+c slmod end
           ENDIF
         ENDIF
 

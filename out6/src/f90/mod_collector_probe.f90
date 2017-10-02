@@ -15,10 +15,13 @@ module mod_collector_probe
 
   public :: collector_probe,write_fp_main_density
 
+  ! axis calculation
+  real :: midplane_axis(maxnrs),rsep_out,rsep_in
+  integer :: iouter,iinner
 
 contains
 
-  subroutine collector_probe(r1p,z1p,r2p,z2p,probe_diameter,dperp,iopt)
+  subroutine collector_probe(r1p,z1p,r2p,z2p,probe_diameter,dperp,axis_opt,iopt)
     use global_parameters
     use error_handling
     use debug_options
@@ -29,7 +32,7 @@ contains
     use mod_fp_data
     implicit none
     real :: r1p,z1p,r2p,z2p,probe_diameter,dperp
-    integer :: iopt
+    integer :: iopt,axis_opt
 
     !
     !Anyway, here is my design for a first order collector probe.
@@ -51,12 +54,17 @@ contains
     !
     ! Gamma_IMP = 1/4 * nIMP * nu * Lcoll * [ -1 + (1 + 8 *alpha / nu**2)]
     !
-
+    !
+    ! Axis options:
+    ! 1 - PSIN
+    ! 2 - R-Rsep_OMP (if available ... for rings that do not reach the OMP this is not available)
+    ! 3 - R-Rsep_probe (R-Rsep at the probe location - measured along the probe assuming perpendicular insertion)
+    !
 
     !
     !     Local Variables
     !
-    integer :: in,ip,ik,ir,icnt
+    integer :: in,ip,ik,ir,icnt,irref
     real :: sint,psin,pint
     real :: tmp,rsect,zsect
     real :: cs
@@ -81,6 +89,12 @@ contains
     impflux = 0.0
     slen = 0.0
 
+    !
+    ! Calculate midplane axis
+    !
+    call calc_axis(midplane_axis,rsep_out,rsep_in,r1p,z1p,r2p,z2p,axis_opt)
+
+    call pr_trace('COLLECTOR_PROBE','AFTER CALC_MIDPLANE_AXIS')
 
     !
     !     Loop through the main SOL rings starting at the separatrix and the
@@ -108,13 +122,13 @@ contains
 
           call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,sint,pint,psin)
 
-          if (sint.gt.0.0) then
+          if (sint.gt.0.0.and.midplane_axis(ir).ne.0.0) then
              !
              !              Increment counter
              !
              icnt = icnt + 1
 
-             !write(0,'(a,3i4,1p,12(1x,g12.5))') 'OSM1:',ik,ir,icnt,rsect,zsect,sint,kss(ik,ir),kss2(ik,ir),ksb(ik-1,ir),ksb(ik,ir)
+             !write(0,'(a,3i4,1p,12(1x,g12.5))') 'OSM1:',ik,ir,icnt,rsect,zsect,sint,kss(ik,ir),kss2(ik,ir),ksb(ik-1,ir),ksb(ik,ir),midplane_axis(ir)
 
              !
              !              Assign axis value depending on option
@@ -127,7 +141,8 @@ contains
 
              ! just use outer target as reference
              local_info(icnt,6) = psitarg(ir,outer_targid)
-             local_info(icnt,7) = middist(ir,outer_targid)
+             !local_info(icnt,7) = middist(ir,outer_targid)
+             local_info(icnt,7) = midplane_axis(ir)
              local_info(icnt,8) = pint
 
              ! distance from end of probe
@@ -337,6 +352,9 @@ contains
 
     end do
 
+
+    call pr_trace('COLLECTOR_PROBE','AFTER REGULAR SOL')
+
     !
     ! Code to add the points from the FP 
     !
@@ -350,16 +368,19 @@ contains
 
        fp_reg = fp_main
 
-       ir = irwall-1
+       !ir = irwall-1
 
        !
        ! Find the intersection with the irwall-1 ring at the grid edge. This is the reference
        ! ring for the initial fp implementation.
        !
+       irref = irwall
+       
        fp_ik = 0
-       do ik = 1,nks(ir)
+       do ik = 1,nks(irref)
+          ir = irins(ik,irref)
 
-          call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,sint,pint,psin)
+          call find_intsect(ik,r1p,z1p,r2p,z2p,rsect,zsect,sint,pint,psin)
           if (sint.gt.0) then 
              fp_ik = ik
              exit
@@ -395,7 +416,8 @@ contains
 
              ! just use outer target as reference
              local_info(icnt,6) = 0.0
-             local_info(icnt,7) = middist(ir,outer_targid) + fp_grid_dist(in,fp_reg)
+             !local_info(icnt,7) = middist(ir,outer_targid) + fp_grid_dist(in,fp_reg)
+             local_info(icnt,7) = midplane_axis(ir) + fp_grid_dist(in,fp_reg)
              local_info(icnt,8) = pint
 
              call fp_get_plasma(fp_ik,in,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
@@ -470,6 +492,9 @@ contains
 
     endif
 
+    call pr_trace('COLLECTOR_PROBE','AFTER PERIPHERY')
+
+
     !
     !  now print out the data and plot it 
     !
@@ -490,7 +515,14 @@ contains
     !
     ngs=3
 
-    XLAB = '   PROBE DISTANCE (M)'
+    if (axis_opt.eq.1) then 
+       XLAB = '   PSIN'
+    elseif (axis_opt.eq.2) then
+       XLAB = '   R-Rsep (OMP-GRID [M])'
+    elseif (axis_opt.eq.3) then 
+       XLAB = '   R-Rsep (Along probe [M])'
+    endif
+
     YLAB = '   IMPURITY FLUX (PART/M2/S)'
     REF  = 'COLLECTOR PROBE IMPURITY FLUX'
     write(anly,'(a,f9.5)')  'DIAM(M) =',probe_diameter
@@ -521,6 +553,7 @@ contains
          JOB,TITLE,XLAB,YLAB,ELABS,REF,NVIEW,PLANE, &
          TABLE,IOPT,2,1.0,0)
 
+    call pr_trace('COLLECTOR_PROBE','AFTER PLOT')
 
     !
     ! Write out all of the collector probe results to a separate file
@@ -559,6 +592,10 @@ contains
     write(outunit,'(a)') 
 
     close(outunit)
+
+    call pr_trace('COLLECTOR_PROBE','END')
+
+
 
   end subroutine collector_probe
 
@@ -801,18 +838,22 @@ contains
     fp_in = 1
     ir = irwall-1
 
-    do ik = 1,nks(ir)
-       !write(0,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=1,10)
-       !write(0,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=11,20)
 
-       write(6,'(a,4i6,3(1x,g12.5),200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,kareas(ik,ir),fp_grid_area(ik,fp_reg),kareas(ik,ir)/fp_grid_area(ik,fp_reg),&
+    if (fpopt.eq.5.or.fpopt.eq.6.and.allocated(fp_density).and.allocated(fp_grid_area)) then 
+
+       do ik = 1,nks(ir)
+          !write(0,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=1,10)
+          !write(0,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=11,20)
+
+          write(6,'(a,4i6,3(1x,g12.5),200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,kareas(ik,ir),fp_grid_area(ik,fp_reg),kareas(ik,ir)/fp_grid_area(ik,fp_reg),&
                    &(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=1,10)
-       write(6,'(a,4i6,3(1x,g12.5),200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,kareas(ik,ir),fp_grid_area(ik,fp_reg),kareas(ik,ir)/fp_grid_area(ik,fp_reg),&
+          write(6,'(a,4i6,3(1x,g12.5),200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,kareas(ik,ir),fp_grid_area(ik,fp_reg),kareas(ik,ir)/fp_grid_area(ik,fp_reg),&
                    &(iz,kareas(ik,ir)*sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg)*fp_grid_area(ik,fp_reg),iz=1,10)
 
-       !write(6,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=11,20)
+          !write(6,'(a,4i6,200(1x,i5,1x,2(1x,g12.5)))') 'Density:',ik,ir,fp_in,fp_reg,(iz,sdlims(ik,ir,iz),fp_density(ik,fp_in,iz,fp_reg),iz=11,20)
 
-    end do
+       end do
+    endif
 
 
   end subroutine print_debug_data
@@ -885,13 +926,190 @@ contains
 
        end do
 
-       write(ounit,'(201(1x,g18.8))') 0.0, middist(ir,outer_targid) + fp_grid_dist(fp_in,fp_reg), (sol_impdens(in),in=1,maxnk)
+       !write(ounit,'(201(1x,g18.8))') 0.0, middist(ir,outer_targid) + fp_grid_dist(fp_in,fp_reg), (sol_impdens(in),in=1,maxnk)
+       write(ounit,'(201(1x,g18.8))') 0.0, midplane_axis(ir) + fp_grid_dist(fp_in,fp_reg), (sol_impdens(in),in=1,maxnk)
 
     end do
 
 
 
   end subroutine write_fp_main_density
+
+
+  subroutine calc_axis(midplane_axis,rsep_out,rsep_in,r1p,z1p,r2p,z2p,axis_opt)
+    use global_parameters
+    use mod_cgeom
+    implicit none
+
+    real :: r1p,z1p,r2p,z2p
+    integer:: axis_opt
+    real :: midplane_axis(maxnrs)
+    real :: rsep_out,rsep_in
+    !
+    !     Note: on extended grids the rings may not be ordered consecutively
+    !           so the usual routine to find midplane coordinates may not be 
+    !           adequate.
+    !
+    !   Revise: -Intersection of the line Z=Z0 with the grid to obtain the
+    !             value of Rmid for any rings intersecting this line.
+    !             -Calculate the value of R at the separatrix
+    !             -Estimate the R-Rsep distance based on these intersection 
+    !              values. 
+    !             -Linearly interpolate in PSI across the separatrix to find
+    !              the value for Rsep_in and Rsep_out
+    !
+    !
+    !     First find Rsep_in and Rsep_out
+    !
+    !     Line segments Z=Z0, R=[RMIN,R0] and R=[R0,RMAX]       
+    !     
+    !
+    !     Check every cell on every ring for an intersection with either 
+    !     the inner or outer midplane line. There should be only one 
+    !     intersection of this type on 
+    !
+    !     Irwall is a boundary ring so do not include it
+    !     if irwall2 > irwall then use it instead 
+    !     Not checking for intersections in the PFZ
+    !
+
+    !
+    !     locals
+    !
+    real*8 :: rcell1,zcell1,rcell2,zcell2
+    real*8 :: rin1,zin1,rin2,zin2
+    real*8 :: rout1,zout1,rout2,zout2
+    real*8 :: rint,zint
+    real :: midplane_psi(maxnrs)
+    integer :: flag,sect
+    integer :: ik,ir,in,ikmid
+
+
+    midplane_axis = 0.0
+    rsep_out = 0.0
+
+    do ir = 1,nrs
+
+       ikmid = nks(ir)/2
+
+       !
+       !        Use grid psi values if available
+       !        Note: the two should be about the same
+       !
+       if (psifl(ikmid,ir).ne.0.0) then 
+          midplane_psi(ir) = psifl(ikmid,ir)
+       else
+          midplane_psi(ir) = psitarg(ir,1)
+       endif
+
+    end do
+
+
+
+
+    ! PSI - does not work for peripheral mesh
+    if (axis_opt.eq.1) then 
+
+       midplane_axis = midplane_psi
+
+
+       ! 2: R-Rsep OMP - rings that do not intersect the outer midplane don't have a value - this can be a problem
+       ! when there are shorter rings below the OMP where the collector probe samples
+       ! 3: R-Rsep along probe location radial to plasma
+    elseif (axis_opt.eq.2.or.axis_opt.eq.3) then 
+       !
+
+       if (axis_opt.eq.2) then 
+
+          rout1 = r0
+          zout1 = z0
+          rout2 = rmax
+          zout2 = z0
+
+          
+       elseif (axis_opt.eq.3) then 
+
+          if (z1p.eq.z2p) then 
+             rout1 = r0
+             zout1 = z1p
+             rout2 = rmax
+             zout2 = z1p
+          elseif (r1p.eq.r2p) then 
+             rout1 = r1p
+             zout1 = z0
+             rout2 = r2p
+             zout2 = zmax
+          else
+             rout1 = r1p
+             zout1 = z1p
+             rout2 = r2p
+             zout2 = z2p
+          endif
+
+       endif
+
+       !
+       !     Loop over entire grid
+       !     midplane coordinates will only exist for rings with intersections
+       !
+       !     Initialize to zero
+       !
+
+       do ir = 1,nrs
+
+          do ik = 1,nks(ir)
+             !
+             !           Define center line of cell
+             !         
+             rcell1= krb(ik-1,ir)
+             zcell1= kzb(ik-1,ir)
+             rcell2= krb(ik,ir)
+             zcell2= kzb(ik,ir)
+
+             !
+             !           Check for intersection with outer midplane
+             !
+             call intsect2dp(rcell1,zcell1,rcell2,zcell2,&
+                  rout1,zout1,rout2,zout2,rint,zint,sect,flag)
+             !
+             !           Intersection between both sets of end points AND non-colinear
+             !           Give outer Rsep value for ring
+             !
+             if (sect.eq.1.and.flag.eq.0) then 
+                midplane_axis(ir) = rint
+             endif
+
+          end do
+
+       end do
+
+       rsep_out = (1.0 - midplane_psi(irsep-1))&
+            /(midplane_psi(irsep)-midplane_psi(irsep-1))&
+            *(midplane_axis(irsep)-midplane_axis(irsep-1))&
+            + midplane_axis(irsep-1)
+
+       do ir = 1,nrs
+          if (midplane_axis(ir).ne.0.0) then 
+             midplane_axis(ir) = midplane_axis(ir) - rsep_out
+          endif
+       end do
+
+    endif
+
+
+
+    do ir = 1,nrs
+       write(6,'(a,3i8,10(1x,g18.8))') 'MIDPLANE_AXIS1:',ir,irsep,axis_opt,midplane_axis(ir),rsep_out
+    end do
+
+
+
+
+
+
+    return
+  end subroutine calc_axis
+
 
 
 

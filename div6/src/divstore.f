@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
      >                  FACTA,FACTB,ITER,NITERS)

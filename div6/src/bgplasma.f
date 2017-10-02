@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       subroutine bgplasma(title,equil)
 c slmod begin
@@ -25,7 +25,8 @@ c
       include 'pindata'
 c slmod begin - new
       include 'slcom'
-
+     
+      INTEGER status
       LOGICAL callsol28,message_reverse
 
       DATA message_reverse /.TRUE./
@@ -720,11 +721,13 @@ c          CALL SaveSolution
           IITERSOL = 2
           IITERPIN = 1
         elseif (citersol.eq.2) then
-          WRITE(0,*) 
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
-          WRITE(0,*) '*********************************************'
-          WRITE(0,*)
+          if (sloutput) then
+            WRITE(0,*) 
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*) '*  WARNING: CITERSOL.EQ.2 logic has changed *'
+            WRITE(0,*) '*********************************************'
+            WRITE(0,*)
+          endif
           IITERSOL = 1
           IITERPIN = 1
         ENDIF 
@@ -1091,6 +1094,14 @@ c slmod begin
 
 c...  Generate some standard analysis on the state of the solution:
       CALL OutputAnalysis
+
+      IF (rel_opt.EQ.1) THEN
+        CALL LoadObjects('osm_geometry.raw',status)
+        IF (status.NE.0) 
+     .    CALL ER('bgplasma','Unable to load geometry data',*99)
+        CALL GenerateOutputFiles(iitersol-1)
+        CALL geoClean
+      ENDIF
 c slmod end
 C
 C-----------------------------------------------------------------------
@@ -1263,14 +1274,17 @@ c...TEMP:
       IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
 
 c...  This is needed, i.e. KNDS is NANQ for some cases:
-      IF (cgridopt.NE.LINEAR_GRID.AND.cgridopt.NE.RIBBON_GRID) THEN
+      IF (.NOT.nopriv.AND.cgridopt.NE.LINEAR_GRID.AND.
+     .                    cgridopt.NE.RIBBON_GRID) THEN
         knds(idds(irwall,1:2)) = 0.0
         knds(idds(irtrap,1:2)) = 0.0
       ENDIF
 c      CALL SaveSolution
 c slmod end
       return
-
+c slmod begin
+99    stop
+c slmod end
       end
 c     
 c     

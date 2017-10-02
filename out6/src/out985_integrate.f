@@ -616,7 +616,7 @@ c...  Decide if the detector is inside or outside the vessel wall:
         vwindex = 2
       ENDIF
 
-c      WRITE(0,*) '------vwindex----',vwindex
+      WRITE(0,*) '------vwindex----',vwindex,opt%ccd  
 
       iobj_hack  = -1
       iobj_hack2 = -1
@@ -670,7 +670,7 @@ c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
         IF ((refcnt.EQ.0.AND.nvwinter.LT.vwindex).OR.
      .      (refcnt.GT.0.AND.nvwinter.LT.1)) THEN
           WRITE(0,*) 'CHORD DOES NOT PASS CORRECTLY THROUGH VESSEL'
-          WRITE(0,*) '  REFCNT=',refcnt
+          WRITE(0,*) '  REFCNT=',refcnt,nvwinter,vwindex
           EXIT
         ELSEIF (refcnt.EQ.0) THEN
 c...      Trim the end of the chord to where the line-of-sight
@@ -903,7 +903,9 @@ c                  ENDIF
 c                  IF (i1.NE.ngbinter) problem_ignored =problem_ignored+1
                  problem_ignored = problem_ignored + 1
 c                  IF (i1.NE.ngbinter) 
-c                  WRITE(0,*) 'PROBLEM IGNORED...',nchord,refcnt
+                  WRITE(0,*) 'PROBLEM IG...',nchord,refcnt,iobj
+                  WRITE(0,*) '             ',obj(iobj)%ik,obj(iobj)%ir
+                  WRITE(0,*) '             ',chord%v1(1:3)
 
                  IF (ref_debug) 
      .             write(6,*) 'refcnt,reflvl=',refcnt,reflvl
@@ -1039,13 +1041,11 @@ c...            *TEMP* (won't work with MPI...)
               IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN  ! Aren't all objects integration volumes here?  Or do floating surfaces pass as well?
 c...            Line-of-sight integral:
 
-
-
-
                 DO iint = 1, MAX(1,opt%int_num)
                   val = chord%weight * obinter(1)%dist * 
      .                  DBLE(obj(iobj)%quantity(iint))
                   chord%integral(iint) = chord%integral(iint) + val
+               
 c     .                                 chord%weight * 
 c     .                                 obinter(1)%dist * 
 c     .                                 DBLE(obj(iobj)%quantity(iint))
@@ -1057,7 +1057,7 @@ c     .                                 DBLE(obj(iobj)%quantity(iint))
      .              obinter(1)%v(1:3),chord%integral(iint)/(4*3.14),
      .              iobj,obj(iobj)%quantity(iint)
 
-                  IF (.NOT..FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
+                  IF (.TRUE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
 c     .    chord_primary%v1(1:3),

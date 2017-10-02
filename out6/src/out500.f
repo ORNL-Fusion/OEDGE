@@ -205,7 +205,16 @@ c           do ik = 1,nks(ir)
 c              cvalsa(ik,ir) = kvhs(ik,ir)/qtim
 c           end do
 c        end do
-c
+
+c       compute mach number
+
+        do ir = 1,nrs
+           do ik = 1,nks(ir)
+              cvalsa(ik,ir) = kvhs(ik,ir)/9.79e3/
+     >                        sqrt((ktebs(ik,ir)+ktibs(ik,ir))/crmb)
+           end do
+        end do
+
         WRITE (IPLOT,9012) NPLOTS,REF
 c
 c        CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
@@ -231,9 +240,10 @@ c
 c
 c         Setup 40 colour plots
 c         
-          call setup_col(41,4)
+          call setup_col(23,4)
 
-          CALL CONTOUR (ICNTR,NGS,KVHS,1,1,1,FT,FP,1.0/qtim,
+c         CALL CONTOUR (ICNTR,NGS,KVHS,1,1,1,FT,FP,1.0/qtim,
+          CALL CONTOUR (ICNTR,NGS,cvalsa,1,1,1,FT,FP,1.0/qtim,
      >                  XOUTS,1,NXS,YOUTS,1,NYS,
      >                  XXMIN,XXMAX,YYMIN,YYMAX,
      >                  nconts,conts,5,minscale,maxscale)

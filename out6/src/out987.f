@@ -187,6 +187,9 @@ c     For surface intersection code:
       TYPE(type_surface  ) :: newsrf
       REAL*8                  newvtx(3,4)
 
+      real za02as,t1
+      external za02as
+
       point_kill = 0
 
       debug = .FALSE.
@@ -197,6 +200,8 @@ c     For surface intersection code:
 
 c..   Count the number of tetrahedrons that bound the surface of interest:
       IF (ntet.EQ.1) THEN 
+        t1 = ZA02AS (1)
+        write(0,*) 'counting bounding tetrahedrons'
         ntet = 0
         DO iobj = 1, nobj
           check_lt = .FALSE.
@@ -234,6 +239,7 @@ c...        The tetrahedron crosses the surface so add it to the list:
           ENDIF 
 c          IF (ntet.EQ.200) RETURN
         ENDDO
+        write(0,*) 'done',ZA02AS(1)-t1,ntet
         RETURN
       ENDIF
 
@@ -288,7 +294,13 @@ c       ----------------------------------------------------------------
 
       pts = 0.0D0
 
+      t1 = ZA02AS (1)
+      write(0,*) 'surface intersection calculation'
+
       DO i1 = 1, ntet
+
+        IF (MOD(i1,ntet/10).EQ.0) write(0,*) 'counting',i1,ntet
+
         iobj = itet(i1)  ! Set index to the next tetrahedron in the list
         npts = 0
      
@@ -374,6 +386,8 @@ c          CALL ER('SpliceTetrahedrons','Incorrect number of points',*99)
         ENDIF
 
       ENDDO
+
+      write(0,*) 'done',ZA02AS(1)-t1,ntet
 
       WRITE(0,*) 'ntet=',ntet
 
@@ -1097,35 +1111,80 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE NextLine(fp1,ntally,icount,rdum)
+      SUBROUTINE NextLine(fp,ntally,icount,rdum,binary)
       IMPLICIT none
 
-      INTEGER   fp,fp1,ntally,icount,i1
+      INTEGER   fp,ntally,icount,i1
+      LOGICAL   binary
       REAL      rdum(*)   
-      CHARACTER buffer*512
-      LOGICAL output
+      CHARACTER buffer*256
 
-c      output = .FALSE.
-c      IF (fp1.EQ.44) THEN
-c        fp = 99
-c        output = .TRUE.
-c      ELSE
-        fp = fp1
-c      ENDIF
+      REAL*8    ddum(ntally)
 
       DO WHILE (.TRUE.) 
-        READ(fp,'(A512)',END=98) buffer               
-c        IF (output) WRITE(0,*) 'BUFFER:',icount,buffer(1:50)
-        IF (buffer(1:1).EQ.'*') CYCLE 
-        READ(buffer,*,ERR=97) icount,(rdum(i1),i1=1,ntally)          
-c        IF (output) WRITE(0,*) 'BUFFER:',icount,buffer(1:50)
+        IF (binary) THEN
+        ELSE
+          READ(fp,'(A256)',END=98) buffer               
+        ENDIF
+        IF (.NOT.binary.AND.buffer(1:1).EQ.'*') CYCLE 
+        IF (binary) THEN
+          READ(fp      ,ERR=97) icount,(rdum(i1),i1=1,ntally)          
+        ELSE
+          READ(buffer,*,ERR=97) icount,(ddum(i1),i1=1,ntally)          
+        ENDIF
+        DO i1 = 1, ntally
+          IF (binary) THEN
+            IF (rdum(i1).GT.1.0D+30) THEN
+              STOP 'NOT SURE WHAT TO DO HERE'
+            ENDIF
+          ELSE
+            IF (ddum(i1).GT.1.0D+30) THEN
+              WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
+     .                   'single precision size limit, setting to zero'
+              rdum(i1) = 0.0
+            ELSE
+              rdum(i1) = SNGL(ddum(i1))
+            ENDIF
+          ENDIF
+        ENDDO
         RETURN
       ENDDO
       
- 97   CALL ER('NextLine','Data format error',*99)
+ 97   WRITE(0,*) 'buffer >'//TRIM(buffer)//'<'
+      CALL ER('NextLine','Data format error',*99)
  98   CALL ER('NextLine','Unexpected end-of-file',*99)
  99   STOP
       END
+
+c      SUBROUTINE NextLine(fp1,ntally,icount,rdum)
+c      IMPLICIT none
+c
+c      INTEGER   fp,fp1,ntally,icount,i1
+c      REAL      rdum(*)   
+c      CHARACTER buffer*512
+c      LOGICAL output
+c
+cc      output = .FALSE.
+cc      IF (fp1.EQ.44) THEN
+cc        fp = 99
+cc        output = .TRUE.
+cc      ELSE
+c        fp = fp1
+cc      ENDIF
+c
+c      DO WHILE (.TRUE.) 
+c        READ(fp,'(A512)',END=98) buffer               
+cc        IF (output) WRITE(0,*) 'BUFFER:',icount,buffer(1:50)
+c        IF (buffer(1:1).EQ.'*') CYCLE 
+c        READ(buffer,*,ERR=97) icount,(rdum(i1),i1=1,ntally)          
+cc        IF (output) WRITE(0,*) 'BUFFER:',icount,buffer(1:50)
+c        RETURN
+c      ENDDO
+c      
+c 97   CALL ER('NextLine','Data format error',*99)
+c 98   CALL ER('NextLine','Unexpected end-of-file',*99)
+c 99   STOP
+c      END
 c
 c ======================================================================
 c
@@ -1203,6 +1262,7 @@ c     jdemod - adding some code to limit exponent range displayed in log plots
 c
       real tmpa
       
+      real za02as,t1
       SAVE
 
 c      WRITE(0,*) 'DATA:',job
@@ -1474,6 +1534,25 @@ c...            Load PLRP data from ADAS:
                 CALL LDADAS(cion,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,
      .                      ISELX,gdata1,Wlngth,IRCODE)
                 WRITE(0,*) 'ADAS DATA:',iz,wlngth,ircode
+
+
+                WRITE(6,*) 'data dump de James'
+                WRITE(6,*) 'wavelength',wlngth/10.0
+
+                write(6,'(2A6,4A11,A)') 
+     .            'cell','ring','s (m)','smax-s (m)','p (m)',
+     .            'pmax-p (m)','  emission (arb.)'
+                DO ir = irsep, nrs
+                  write(6,*) nks(ir)
+                  DO ik = 1, nks(ir)
+                    write(6,'(2I6,4F11.3,1P,E10.2,0P)') 
+     .                ik,ir,
+     .                kss(ik,ir),ksmaxs(ir)-kss(ik,ir),
+     .                kps(ik,ir),kpmaxs(ir)-kps(ik,ir),
+     .                gdata1(ik,ir)
+                  ENDDO
+                ENDDO
+
 c             ----------------------------------------------------------
               ELSEIF (cdum1(8:10).EQ.'Ion'.OR.cdum1(8:10).EQ.'ION'.OR.
      .                cdum1(8:10).EQ.'ion') THEN
@@ -1533,6 +1612,10 @@ c     .                WRITE(0,*) sdlims(1:nks(109),109,iz)
                 DO ir = 2, nrs
                   IF (idring(ir).EQ.BOUNDARY) CYCLE
                   gdata1(1:nks(ir),ir) = sdlims(1:nks(ir),ir,iz)
+c                  write(6,*) 'iz madness',iz
+c                  do ik = 1, nks(ir)
+c                    write(6,*) 'sdlims',sdlims(ik,ir,iz)
+c                  enddo
                 ENDDO
               ENDIF
               gdata => gdata1
@@ -1579,6 +1662,9 @@ c     ==================================================================
           CALL GetTetrahedrons(ntri)
           write(0,*) 'ntri=',ntri
         ENDIF
+
+        t1 = ZA02AS (1)
+        write(0,*) 'loading data' 
 
         ALLOCATE(tdata(ntri+1))
         tdata = 0.0
@@ -1667,6 +1753,8 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
         IF (iopt.EQ.80) CALL LoadTriangleData(2,2,1,1,tdata,'default')  ! He(1|1) density
         IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata,'default')  ! He(2|1)
         IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata,'default')  ! He(2|3)
+
+        write(0,*) 'done',ZA02AS(1)-t1
 
 c...    Load up data:
         IF (tetrahedrons) THEN 

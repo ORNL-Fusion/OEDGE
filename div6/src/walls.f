@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       SUBROUTINE DOTARG
       use debug_options

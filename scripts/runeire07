@@ -1,4 +1,4 @@
-#!/bin/tcsh
+#!/bin/tcsh 
 
   set ITERATION=$1
 
@@ -6,7 +6,10 @@
     echo 'ERROR: No Case name specified - script exiting'
     exit
   endif
-
+  if ( $EXEDIR == "" ) then
+    echo 'ERROR: No DIVIMP execution directory specified - script exiting'
+    exit
+  endif
 
 # setenv PATH ${PATH}:.
 
@@ -136,11 +139,9 @@
 #  mvc fort.15         $EXEDIR/eirene.15
 #  cpc fort.90         $EXEDIR/eirtrac.dat
 
-exit
-
 # Clean
   cd $RUNDIR/cases
-  rm -r -f $CASENAME.eirene
+  rm -r -f $XEIDIR
   cd $EXEDIR
 
 

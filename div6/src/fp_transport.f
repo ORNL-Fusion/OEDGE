@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       subroutine fp_transport(imp,ik,ir,iz,istate,s,theta,
      >                        cross,vel,temi,

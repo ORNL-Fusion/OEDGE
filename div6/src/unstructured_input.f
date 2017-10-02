@@ -129,6 +129,9 @@ c
       use sol22_input
       use ero_interface
       use allocatable_input_data
+c slmod begin
+      use mod_grid
+c slmod end
       implicit none
       
       INCLUDE 'params'
@@ -1144,6 +1147,8 @@ c     TAG 077
 c
 c     Data for additional neutral wall surfaces
 c
+      n_grid_wall = 0  ! related, so sticking here for now... -SL, 15/11/2013
+
       eirnasdat = 1
       eirasdat  = 0.0
       eirasdat(1,1) = 998.0  ! This triggers the automated wall clipping for EIRENE

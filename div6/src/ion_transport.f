@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       subroutine execute_transport_step(seed,nrand,neutim,
      >                                  ero_record_data)

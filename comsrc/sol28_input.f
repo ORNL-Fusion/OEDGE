@@ -46,7 +46,7 @@ c...      Comment or blank line, so continue:
           IF (mode.EQ.WITH_TAG) THEN
 c...        Tag line: 
             EXIT
-          ELSE
+          ELSEIF (mode.NE.DATA_ONLY) THEN
 c...        Tag line was not requested so backup the file position:
             osmGetLine = .FALSE.
             IF (fp.EQ.-1) THEN
@@ -57,7 +57,7 @@ c...        Tag line was not requested so backup the file position:
             EXIT
           ENDIF
         ELSE
-          IF (mode.EQ.NO_TAG) THEN
+          IF (mode.EQ.NO_TAG.OR.mode.EQ.DATA_ONLY) THEN
 c...        Data line found, as requested:
             EXIT
           ELSE
@@ -171,8 +171,8 @@ c
       USE mod_legacy
       IMPLICIT none
 
-      INTEGER, INTENT(IN) :: fp,itag
-      LOGICAL   status
+      INTEGER, INTENT(IN ) :: fp,itag
+      LOGICAL, INTENT(OUT) :: status
       CHARACTER buffer*(*)
 
       INTEGER i
@@ -350,19 +350,19 @@ c      CHARACTER, INTENT(OUT) :: buffer_array*256(*)  ! gfortran
 
       j = 0
       DO i = 1, n
-        IF (buffer(i:i).EQ.' ' .AND.j.GT.0.OR.
-     .      buffer(i:i).EQ.'"' .AND.j.LT.0.OR. 
-     .      buffer(i:i).EQ.''''.AND.j.LT.0) THEN
+        IF (      buffer(i:i) .EQ.' ' .AND.j.GT.0.OR.
+     .      ICHAR(buffer(i:i)).EQ.9   .AND.j.GT.0.OR.          ! 9 is TAB, hopefully... should add a check when the code starts up, if one can be imagined...
+     .            buffer(i:i) .EQ.'"' .AND.j.LT.0.OR. 
+     .            buffer(i:i) .EQ.''''.AND.j.LT.0) THEN
           m = m + 1
-c          WRITE(0,*) '>>>',j,i
           IF (j.LT.0) j = -j + 1
           buffer_array(m) = buffer(j:i-1)
-c          WRITE(0,*) m,buffer(j:i-1)            
           j = 0
         ELSE
-          IF (buffer(i:i).EQ.''''.AND.j.EQ.0) j = -i
-          IF (buffer(i:i).EQ.'"' .AND.j.EQ.0) j = -i
-          IF (buffer(i:i).NE.' ' .AND.j.EQ.0) j =  i
+          IF (      buffer(i:i) .EQ.''''.AND.j.EQ.0) j = -i
+          IF (      buffer(i:i) .EQ.'"' .AND.j.EQ.0) j = -i
+          IF (      buffer(i:i) .NE.' ' .AND.
+     .        ICHAR(buffer(i:i)).NE.9   .AND.j.EQ.0) j =  i    ! 9 is TAB, hopefully...  
         ENDIF
       ENDDO
 
@@ -398,6 +398,9 @@ c
 c       ----------------------------------------------------------------
         CASE('DIV PARTICLE STATE')
           CALL ReadOptionI(buffer,1,opt_div%pstate)
+c       ----------------------------------------------------------------
+        CASE('DIV ITERATIONS')
+          CALL ReadOptionI(buffer,1,opt_div%niter)
 c       ----------------------------------------------------------------
         CASE('DIV RIBBON GRID')
           READ(buffer(itag+2:itag+4),*) version
@@ -460,7 +463,7 @@ c           write(0,*) 'buffer: '//TRIM(buffer)
             READ(buffer_array(1),*) sputter_data(i1)%data_type
             SELECTCASE (sputter_data(i1)%data_type)
 c             ----------------------------------------------------------
-              CASE(1:3,5)
+              CASE(1:3)
                 sputter_data(i1)%case_name = TRIM(buffer_array(2))
                 sputter_data(i1)%extension = TRIM(buffer_array(3))
                 READ(buffer_array(4),*) sputter_data(i1)%fraction
@@ -474,6 +477,11 @@ c             ----------------------------------------------------------
                 sputter_data(i1)%tag = TRIM(buffer_array(6))
                 IF (sputter_data(i1)%fraction.EQ.-1.0) 
      .            sputter_data(i1)%fraction = 100.0
+c             ----------------------------------------------------------
+              CASE(5)
+                sputter_data(i1)%case_name = TRIM(buffer_array(2))
+                sputter_data(i1)%extension = TRIM(buffer_array(3))
+                sputter_data(i1)%tag       = TRIM(buffer_array(5))
 c             ----------------------------------------------------------
               CASE DEFAULT
 c             ----------------------------------------------------------
@@ -527,6 +535,15 @@ c       ----------------------------------------------------------------
 c       ----------------------------------------------------------------
         CASE('EIR WHIPE')
           CALL ReadOptionI(buffer,1,opt_eir%whipe) 
+c       ----------------------------------------------------------------
+        CASE('EIR LOW MEMORY')
+          CALL ReadOptionI(buffer,1,opt_eir%low_memory) 
+c       ----------------------------------------------------------------
+        CASE('EIR FLUID GRID')
+          CALL ReadOptionI(buffer,1,opt_eir%fluid_grid) 
+c       ----------------------------------------------------------------
+        CASE('EIR GAS ONLY')
+          CALL ReadOptionI(buffer,1,opt_eir%gas_only) 
 c       ----------------------------------------------------------------
         CASE('EIR VOID GRID')
           opt_eir%nvoid = 0
@@ -590,10 +607,11 @@ c              write(0,*) '>'//TRIM(buffer_array(5))//'<'
               READ(buffer_array(1),*) opt_eir%add_type (i1)
               READ(buffer_array(2),*) opt_eir%add_index(i1)
               SELECTCASE (opt_eir%add_type(i1))
-                CASE(1)
+                CASE(1,3)
                   opt_eir%add_file    (i1) = TRIM(buffer_array(3))
                   opt_eir%add_file_tag(i1) = TRIM(buffer_array(4))
                   opt_eir%add_tag     (i1) = TRIM(buffer_array(5))
+c                  write(0,*) '>'//TRIM(buffer_array(5))//'<'
                 CASE(2)
                   READ(buffer_array( 3),*) opt_eir%add_holex(i1)
                   READ(buffer_array( 4),*) opt_eir%add_holey(i1)
@@ -607,6 +625,14 @@ c              write(0,*) '>'//TRIM(buffer_array(5))//'<'
      .                'block version',*99)
             ENDIF            
           ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR SEED')
+          CALL ReadOptionI(buffer,1,opt_eir%ninitl) 
+c       ----------------------------------------------------------------
+        CASE('EIR TRACKS')
+          CALL ReadOptionI(buffer,2,idum) 
+          opt_eir%i1trc = idum(1)
+          opt_eir%i2trc = idum(2)
 c       ----------------------------------------------------------------
         CASE('E NEUTRAL SOURCES')
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
@@ -676,8 +702,6 @@ c       ----------------------------------------------------------------
      .        opt_eir%spcmn     (opt_eir%nadspc),  ! Lower bound of energy range for spectrum                                
      .        opt_eir%spcmx     (opt_eir%nadspc),  ! Upper bound                                                             
      .        opt_eir%idirec    (opt_eir%nadspc)   ! If >0 then a projection on a direction is used in the statistics (??)   
-
-
             SELECTCASE (opt_eir%idirec(opt_eir%nadspc)) ! 1=vector for projecting onto, 2=collect cells along a LOS, 3=same, but project onto vector as well
               CASE (0)
               CASE (1)
@@ -781,6 +805,29 @@ c            WRITE(0,*) 'buffer:'//TRIM(buffer)
             READ(buffer_array(13),*) opt_eir%sur_hard  (opt_eir%sur_n)
             READ(buffer_array(14),*) opt_eir%sur_remap (opt_eir%sur_n)
             opt_eir%sur_tag(opt_eir%sur_n) = TRIM(buffer_array(15))
+          ENDDO
+c       ----------------------------------------------------------------
+        CASE('EIR GAUGES')
+          opt_eir%gauge_n = 0
+          DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+            opt_eir%gauge_n = opt_eir%gauge_n + 1
+            i1 = opt_eir%gauge_n
+            CALL SplitBuffer(buffer,buffer_array) 
+            SELECTCASE (TRIM(buffer_array(1)))
+              CASE ('1')
+                READ(buffer_array(1),*) opt_eir%gauge_type  (i1)     !         
+                READ(buffer_array(2),*) opt_eir%gauge_x     (i1)     !         
+                READ(buffer_array(3),*) opt_eir%gauge_y     (i1)     !         
+                READ(buffer_array(4),*) opt_eir%gauge_phi   (i1)     !         
+                READ(buffer_array(5),*) opt_eir%gauge_radius(i1)     !         
+                opt_eir%gauge_dupe_dir(i1) = TRIM(buffer_array(6))   !         
+                READ(buffer_array(7),*) opt_eir%gauge_dupe_n   (i1)  !         
+                READ(buffer_array(8),*) opt_eir%gauge_dupe_step(i1)  !         
+                opt_eir%gauge_tag(i1) = TRIM(buffer_array(9))        !         
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unknown gauge TYPE '//
+     .                  'found',*99)
+            ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
        CASE DEFAULT
@@ -1038,6 +1085,8 @@ c
      .                     solps_data(nsolps_data)%a,
      .                     solps_data(nsolps_data)%charge
           ENDDO
+        CASE('SOLPS LOAD INDEXING')
+          CALL ReadOptionI(buffer,1,solps_indexing)
       CASE DEFAULT
         CALL User_LoadOptions(fp,itag,buffer)
       ENDSELECT 
@@ -1138,10 +1187,11 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
 
       LOGICAL osmGetLine
 
-      INTEGER   i1,sub_option
+      INTEGER   i1,sub_option,n,whats_next
       LOGICAL   node_fit,node_data,ldum1
       REAL      node_type,rdum1,rdum2
       CHARACTER cdum1
+      CHARACTER*256 buffer_array(100)  ! gfortran
       TYPE(type_node) :: node_tmp
 
       status = .TRUE.
@@ -1166,12 +1216,14 @@ c      CHARACTER, INTENT(IN)  :: buffer*(*)
         CASE('S74')
           node_data = .FALSE.
           READ(buffer(itag+2:itag+4),*) opt%s28mode  
+c         --------------------------------------------------------------
           IF    (opt%s28mode.EQ.4.0) THEN
             osmns28 = 0            
             DO WHILE(osmGetLine(fp,buffer,NO_TAG))
               osmns28 = osmns28 + 1
               READ(buffer,*) osms28(osmns28,1:12)
             ENDDO
+c         --------------------------------------------------------------
           ELSEIF (opt%s28mode.EQ.4.1) THEN
             node_fit = .FALSE.
             osmnnode = 0            
@@ -1278,8 +1330,78 @@ c...            Spacer, ignore:
                 CALL ER('LoadMiscOption','Unrecognized node type',*99)
               ENDIF
             ENDDO            
+c         --------------------------------------------------------------
+          ELSEIF (opt%s28mode.EQ.5.0) THEN
+            whats_next = 0
+            n          = 0            
+            DO WHILE(osmGetLine(fp,buffer,NO_TAG))
+
+              CALL SplitBuffer(buffer,buffer_array) 
+
+              IF (buffer_array(1).EQ.'sym') THEN
+
+                node_tmp%s_type       = TRIM(buffer_array(1))
+                node_tmp%s_tube_range = TRIM(buffer_array(2))
+                node_tmp%s_rad_mode   = TRIM(buffer_array(3))
+                node_tmp%s_rad_coord  = TRIM(buffer_array(4))
+                node_tmp%s_rad_exp    = TRIM(buffer_array(5))
+
+                node_tmp%s_par_mode   = TRIM(buffer_array(6))
+                READ(buffer_array(7),*) node_tmp%par_exp
+                READ(buffer_array(8),*) node_tmp%par_set
+
+c               Store individual radial profile exponets if specified:
+                IF (node_tmp%s_rad_exp.EQ.'ind') THEN
+                  READ(buffer_array( 9),*) node_tmp%rad_exp_ne
+                  READ(buffer_array(10),*) node_tmp%rad_exp_v	
+                  READ(buffer_array(11),*) node_tmp%rad_exp_pe
+                  READ(buffer_array(12),*) node_tmp%rad_exp_te
+                  READ(buffer_array(13),*) node_tmp%rad_exp_ti
+                  READ(buffer_array(14),*) node_tmp%rad_exp_epot
+                ENDIF
+
+c               Set a flag so that the subsequent line(s) in the input file
+c               are processed properly:
+
+                IF (node_tmp%s_rad_mode.EQ.'file') THEN
+                  whats_next = 2   
+                ELSE
+                  whats_next = 1
+                ENDIF
+
+              ELSE
+
+                SELECTCASE (whats_next)
+c                 ------------------------------------------------------  
+                  CASE (0) 
+c                 ------------------------------------------------------  
+                  CASE (1)  ! Standard interpolation data     
+                    n = n + 1
+                    osmnode(n) = node_tmp
+                    READ(buffer_array(1),*) osmnode(n)%rad_x
+                    READ(buffer_array(2),*) osmnode(n)%rad_y
+                    READ(buffer_array(3),*) osmnode(n)%ne
+                    READ(buffer_array(4),*) osmnode(n)%v
+                    READ(buffer_array(5),*) osmnode(n)%pe
+                    READ(buffer_array(6),*) osmnode(n)%te
+                    READ(buffer_array(7),*) osmnode(n)%ti(1)
+                    READ(buffer_array(8),*) osmnode(n)%epot
+c                 ------------------------------------------------------  
+                  CASE (2)  ! File 
+                    STOP 'NOT READY YET KDSJGLDSG'
+c                 ------------------------------------------------------  
+                ENDSELECT 
+
+              ENDIF
+
+            ENDDO            
+
+            osmnnode = n
+
+c         --------------------------------------------------------------
           ELSE
             CALL ER('LoadMiscOption','Unrecognized S28MODE value',*99)
+c         --------------------------------------------------------------
           ENDIF
 
 
@@ -1315,6 +1437,7 @@ c
       USE mod_legacy
       USE mod_solps
       USE mod_divimp
+      USE mod_divimp_tdep
       IMPLICIT none
 
       CALL InitializeLegacyVariables
@@ -1474,6 +1597,8 @@ c      opt_eir%nvoid = 0
       opt_eir%time  = 30
       opt_eir%niter = 0
 
+      opt_eir%low_memory = 0
+
       opt_eir%ntime = 0
       opt_eir%dtimv = 100.0E-06
       opt_eir%time0 = 0.0
@@ -1490,6 +1615,8 @@ c      opt_eir%nvoid = 0
       opt_eir%photons = 0
       opt_eir%opacity = 0
       opt_eir%bgk     = 0
+
+      opt_eir%gas_only = 0
 
       opt_eir%ntorseg = 30
       opt_eir%torfrac = 1.0
@@ -1508,7 +1635,15 @@ c      opt_eir%nvoid = 0
       opt_eir%spc_p1 = -999.0
       opt_eir%spc_p2 = -999.0
 
+       opt_eir%ninitl = -1
+       opt_eir%i1trc  =  0
+       opt_eir%i2trc  =  0
+
       opt_eir%whipe   = 0  ! Debugging mode where the plasma density is set to very low values everywhere
+
+      opt_eir%fluid_grid = 1  
+
+      opt_eir%gauge_n = 0
 
       eirfp = 88     
       geofp = 88
@@ -1516,6 +1651,7 @@ c      opt_eir%nvoid = 0
 c...  SOLPS related variables:
       solps_opt = 0
       nsolps_data = 0
+      solps_indexing = 0
       IF (ALLOCATED(solps_data)) DEALLOCATE(solps_data)
       IF (ALLOCATED(map_divimp)) DEALLOCATE(map_divimp)
       IF (ALLOCATED(solps_cen )) DEALLOCATE(solps_cen )
@@ -1538,6 +1674,12 @@ c...  Divimp options:
       opt_div%rib_pol_b_def = 0.1
       opt_div%rib_pol_c_def = 1.0
       opt_div%rib_pol_d_def = 0.1
+
+      opt_div%niter = 0
+
+      tdep_data_exists = .FALSE.
+
+      div_iter = 0
 
 c...  User:
       CALL User_InitializeOptions

@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
 c
       subroutine do_crossfield_step(ik,ir,ikold,irold,kk,s,theta,cross,

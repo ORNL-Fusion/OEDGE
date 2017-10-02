@@ -18,7 +18,7 @@ MODULE MOD_OUT985
   PARAMETER (MAX3DSIDE=6)
 
 
-  INTEGER, PUBLIC, PARAMETER :: MAXNDET = 10,  &
+  INTEGER, PUBLIC, PARAMETER :: MAXNDET = 20,  &
   &                             MAXNCHORD = 1000, &
   &                             MAXNINT = 10,  &
   &                             ALL_OPTIONS = 1,  &
@@ -465,12 +465,14 @@ CONTAINS
   SUBROUTINE Alloc_Surface(memsize,mode)
     INTEGER :: memsize,mode
     TYPE(type_surface), ALLOCATABLE :: tmpsrf(:)
-    INTEGER :: istat
+    INTEGER :: istat,ncall
+    SAVE
     IF     (mode.EQ.MP_INITIALIZE) THEN
       IF (ALLOCATED(srf)) THEN
         WRITE(0,*) 'ERROR ALLOC_SURFACE: SRF ARRAY ALREADY ALLOCATED'
         STOP
       ELSE
+        ncall = 0
         nsrf = 0
         maxsrf = memsize       
         IF (maxsrf.EQ.-1) maxsrf = SRF_SIZESTEP
@@ -485,7 +487,8 @@ CONTAINS
         WRITE(0,*) 'ERROR ALLOC_SURFACE: SRF ARRAY NOT ALLOCATED'
         STOP
       ELSE
-        WRITE(0,*) 'ALLOC_SURFACE: INCREASING SIZE',nsrf
+        ncall = ncall + 1
+        WRITE(0,*) 'ALLOC_SURFACE: INCREASING SIZE',nsrf,ncall
         ALLOCATE(tmpsrf(nsrf),STAT=istat)     
         IF (istat.NE.0) THEN
           WRITE(0,*) 'ERROR ALLOC_SURFACE: BAD TMPSRF'
@@ -494,7 +497,7 @@ CONTAINS
         tmpsrf(1:nsrf) = srf(1:nsrf)
         DEALLOCATE(srf)
         IF (memsize.EQ.-1) THEN
-          maxsrf = maxsrf + SRF_SIZESTEP
+          maxsrf = maxsrf + SRF_SIZESTEP * ncall
         ELSE
           maxsrf = maxsrf + memsize
         ENDIF
@@ -517,12 +520,14 @@ CONTAINS
   SUBROUTINE Alloc_Vertex(memsize,mode)
     INTEGER :: memsize,mode
     REAL*8, ALLOCATABLE :: tmpvtx(:,:)
-    INTEGER :: istat,i1
+    INTEGER :: istat,i1,ncall
+    SAVE
     IF     (mode.EQ.MP_INITIALIZE) THEN
       IF (ALLOCATED(vtx)) THEN
         WRITE(0,*) 'ERROR ALLOC_VERTEX: VTX ARRAY ALREADY ALLOCATED'
         STOP
       ELSE
+        ncall = 0
         nvtx = 0
         maxvtx = memsize       
         IF (maxvtx.EQ.-1) maxvtx = VTX_SIZESTEP
@@ -537,7 +542,8 @@ CONTAINS
         WRITE(0,*) 'ERROR ALLOC_VERTEX: VTX ARRAY NOT ALLOCATED'
         STOP
       ELSE
-        WRITE(0,*) 'ADDVERTEX: INCREASING SIZE',nvtx
+        ncall = ncall + 1
+        WRITE(0,*) 'ADDVERTEX: INCREASING SIZE',nvtx,ncall
         ALLOCATE(tmpvtx(3,nvtx),STAT=istat)     
         IF (istat.NE.0) THEN
           WRITE(0,*) 'ERROR ALLOC_VERTEX: BAD TMPVTX'
@@ -548,7 +554,7 @@ CONTAINS
         ENDDO
         DEALLOCATE(vtx)
         IF (memsize.EQ.-1) THEN
-          maxvtx = maxvtx + VTX_SIZESTEP
+          maxvtx = maxvtx + VTX_SIZESTEP * ncall
         ELSE
           maxvtx = maxvtx + memsize
         ENDIF

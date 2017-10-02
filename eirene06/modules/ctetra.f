@@ -30,7 +30,10 @@
      I  NCOOR, NTET, nr1ori, np2ori, nt3ori, ITETHAND, ntet_collaps
 
       INTEGER, PUBLIC, SAVE :: NCTET1, NCTET2, MCTET1, MCTET2, MCLSTR=0
-
+c slmod begin - tet res
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I INSPATT(:,:)
+c slmod end
       TYPE :: TET_ELEM
         INTEGER :: NOTET
         TYPE(TET_ELEM), POINTER :: NEXT_TET
@@ -58,7 +61,9 @@
       ALLOCATE (RCTET2(NCTET2))
       ALLOCATE (ICTET1(17,NTETRA))
       ALLOCATE (ICTET2(MCTET2))
-
+c slmod begin - tet res
+      ALLOCATE (INSPATT(4,NTETRA))
+c slmod end
       WRITE (55,'(A,T25,I15)')
      .       ' CTETRA ',(40*NTETRA+NCTET2)*8 +
      .                  (17*NTETRA+MCTET2)*4
@@ -96,7 +101,9 @@
       ntet_collaps => ICTET2(7)
 
       CALL INIT_CTETRA
-
+c slmod begin - tet res
+      INSPATT = 0
+c slmod end
       RETURN
       END SUBROUTINE ALLOC_CTETRA
 
@@ -109,7 +116,9 @@
       DEALLOCATE (RCTET2)
       DEALLOCATE (ICTET1)
       DEALLOCATE (ICTET2)
-
+c slmod begin - tet res
+      DEALLOCATE (INSPATT)
+c slmod end
       RETURN
       END SUBROUTINE DEALLOC_CTETRA
 

@@ -5,6 +5,7 @@
 # ----------------------------------------------------------------------
 # Some checks:
 #
+
   if !( -e $DATDIR/$CASENAME.d6i ) then
     echo ERROR: $CASENAME.d6i not found
     exit (1)
@@ -74,6 +75,8 @@
 
 #   Unit 12 is an auxiliary file for the background plasma solution, if required:
     cpc $EQUDIR/$GRIDNAME.$SAVENAME.aux fort.12
+
+
 
 #    (These are for continuing a previous EIRENE run, not often used):
 #    cpc $RESDIR/$SAVENAME.eird10.gz  . 
@@ -186,7 +189,7 @@
 # ----------------------------------------------------------------------
 # Copy magnetic grid files:
 #
-  cp  $EQUDIR/$GRIDNAME fort.4
+  cp  $EQUDIR/$GRIDNAME            fort.4
   cpc $EQUDIR/$GRIDNAME.experiment fort.13
   cpc $EQUDIR/$GRIDNAME.hsp        grid.hsp
 

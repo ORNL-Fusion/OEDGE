@@ -183,6 +183,10 @@ c
            iz2 = iz
         endif
 c
+C       K. Schmid 2012 Dump impurity and background plasma density to ascii file
+        open(99, file='Densities.dat', status='replace')
+        write(6,*) 'Storing Densities.dat'
+        write(99,*) 'IZ, IR, IK, sdlims, knbs -> scalef = ', scalef
         do iz = iz1,iz2
            do ir = 1,nrs
               do ik = 1,nks(ir)
@@ -190,9 +194,13 @@ c
                     plastmp(ik,ir) = plastmp(ik,ir)
      >                    + sdlims(ik,ir,iz)/knbs(ik,ir)
                  endif
+                 write(99,1234) IZ,'',
+     >                IR,'',IK,'',sdlims(ik,ir,iz),'',knbs(ik,ir)
               end do
            end do
         end do
+1234    Format(I4,A1,I4,A1,I4,A1,E12.4,A1,E12.4)
+        close(99)
 c
         CALL CONTOUR (ICNTR,NGS,PLASTMP,1,1,1,FT,FP,scalef,
      >                XOUTS,1,NXS,YOUTS,1,NYS,

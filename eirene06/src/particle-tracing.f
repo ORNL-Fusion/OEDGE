@@ -2114,6 +2114,9 @@ C
       USE COUTAU
       USE CTRIG
       USE CUPD
+c slmod begin - tet res
+      USE CTETRA
+c slmod end
 
       IMPLICIT NONE
 
@@ -2174,6 +2177,11 @@ C  SPATIAL RESOLUTION ON NON DEFAULT STANDARD SURFACE?
         ELSE IF (LEVGEO.EQ.4) THEN
           MSURFG=NLIM+NSTS+INSPAT(IPOLGN,MRSURF)
           FLX=FLXOUT(MSURFG)
+c slmod begin - tet res
+        ELSE IF (LEVGEO.EQ.5) THEN
+          MSURFG=NLIM+NSTS+INSPATT(IPOLGN,MRSURF)
+          FLX=FLXOUT(MSURFG)
+c slmod end
         ELSE
           MSURFG=0
           FLX=FLXOUT(MSURF)
@@ -3353,7 +3361,11 @@ C  PARTICLE CONTINUES FROM SURFACE AND FROM PREVIOUS "STATIC LOOP" ?
      .          CALL STDCOL (ISTS,1,SCOS,*101,*380)
             ELSEIF (LEVGEO.EQ.5) THEN
               ISTS=ABS(INMTIT(IPOLGN,MRSURF))
-C             MSURFG= ??
+c slmod begin - tet res
+              MSURFG=INSPATT(IPOLGN,MRSURF)
+c
+cC             MSURFG= ??
+c slmod end
               IF (ILIIN(ISTS) .NE. 0)
      .          CALL STDCOL (ISTS,1,SCOS,*101,*380)
             ELSEIF (LEVGEO.EQ.6) THEN
@@ -3806,6 +3818,9 @@ C
         IF (NLRAD.AND.ISTS.NE.0) THEN
 !pb          SG=ISIGN(1,NINCX)
           NLSRFX=.TRUE.
+c slmod begin - tet res
+          MSURFG=INSPATT(IPOLGN,MRSURF)
+c slmod end
           IF (LCART) THEN
             VELXS=VELX
             VELYS=VELY
@@ -4441,7 +4456,11 @@ C  PARTICLE CONTINUES FROM SURFACE AND FROM PREVIOUS "STATIC LOOP" ?
      .          CALL STDCOL (ISTS,1,SCOS,*101,*380)
             ELSEIF (LEVGEO.EQ.5) THEN
               ISTS=ABS(INMTIT(IPOLGN,MRSURF))
-C             MSURFG= ??
+c slmod begin - tet res
+              MSURFG=INSPATT(IPOLGN,MRSURF)
+c
+cC             MSURFG= ??
+c slmod end
               IF (ILIIN(ISTS) .NE. 0)
      .          CALL STDCOL (ISTS,1,SCOS,*101,*380)
             ELSEIF (LEVGEO.EQ.6) THEN
@@ -4641,6 +4660,13 @@ C
 C
 c        WRITE(0,*) 'DEBUG: TIMER B 4.00',ztst
       IF (ZTST.GE.1.D30) GOTO 990
+c slmod begin
+      IF (NRCELL.EQ.0) THEN
+        WRITE(0,*) 'PARTICLE SOMEHOW OUTSIDE THE GRID, DEATH'
+        WRITE(6,*) 'PARTICLE SOMEHOW OUTSIDE THE GRID, DEATH'
+        GOTO 990
+      ENDIF
+c slmod end
 C
 C  LOCAL MEAN FREE PATH
 C
@@ -4673,6 +4699,17 @@ C  USE VACUUM VALUES FOR REACTION RATES, MFP, ETC..
         DO 212 J=1,NCOU
           JJ=J
           NCELL=NRCELL+NUPC(J)*NR1P2+NBLCKA
+c slmod begin - debug
+          IF (NCELL.EQ.0) THEN
+            WRITE(0,*) 'In the shit:'
+            WRITE(0,*) '  NRCELL =',NRCELL
+            WRITE(0,*) '  J      =',J  
+            WRITE(0,*) '  NUPC(J)=',NUPC(J)
+            WRITE(0,*) '  NR1P2  =',NR1P2
+            WRITE(0,*) '  NBLCKA =',NBLCKA
+
+          ENDIF
+c slmod end
           IF (ITYP.EQ.0) ZMFP=FPATHPH(NCELL,CFLAG,J,NCOU)
           IF (ITYP.EQ.1) ZMFP=FPATHA (NCELL,CFLAG,J,NCOU)
           IF (ITYP.EQ.2) ZMFP=FPATHM (NCELL,CFLAG,J,NCOU)
@@ -4830,7 +4867,11 @@ c        WRITE(0,*) 'DEBUG: LEV.EQ.5 1.00'
      .                  VELY*PTETY(IPOLGN,MRSURF)+
      .                  VELZ*PTETZ(IPOLGN,MRSURF))
           NLSRFX=.TRUE.
-C         MSURFG= ??
+c slmod begin - tet res
+          MSURFG=INSPATT(IPOLGN,MRSURF)
+c
+cC         MSURFG= ??
+c slmod end
 c          WRITE(0,*) 'DEBUG: LEV.EQ.5 2.00',ILIIN(ISTS)
           IF (ILIIN(ISTS) .NE. 0) CALL STDCOL (ISTS,1,SG,*104,*380)
         ENDIF
@@ -6657,8 +6698,13 @@ C             CHEMICAL SPUTTERING LFUX DEPENDENCE
               MSURFG=NLIM+NSTS+INSPAT(IPOLG,MRSURF)
               FLX=FLXOUT(MSURFG)
             ELSE
-              MSURFG=0
-              FLX=FLXOUT(MSURF)
+c slmod begin - tet res
+              MSURFG=NLIM+NSTS+INSPATT(IPOLG,MRSURF)
+              FLX=FLXOUT(MSURFG)
+c
+c              MSURFG=0
+c              FLX=FLXOUT(MSURF)
+c slmod end
             END IF
           ELSEIF (MSURF.GT.0) THEN
             MSURFG=0
