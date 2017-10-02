@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
 c ======================================================================
 c
@@ -1001,6 +1001,7 @@ c      REAL    tarte,tarti,tarne,tarv,tarflux,tarisat,tarM
 
       IF (photons.EQ.-1) THEN
 c...    Load ionisation data from previous EIRENE call:
+        STOP 'NEED TO MAKE COMPATIBLE WITH POSSIBLE BINARY FILE A'
         CALL LoadTriangleData(7,0,13,0,tdata,'default')  
       ELSE
         tdata = -999.0
@@ -2827,26 +2828,43 @@ c ======================================================================
 c ======================================================================
 c
 c
-      SUBROUTINE NextLine(fp,ntally,icount,rdum)
+      SUBROUTINE NextLine(fp,ntally,icount,rdum,binary)
       IMPLICIT none
 
       INTEGER   fp,ntally,icount,i1
+      LOGICAL   binary
       REAL      rdum(*)   
       CHARACTER buffer*256
 
       REAL*8    ddum(ntally)
 
       DO WHILE (.TRUE.) 
-        READ(fp,'(A256)',END=98) buffer               
-        IF (buffer(1:1).EQ.'*') CYCLE 
-        READ(buffer,*,ERR=97) icount,(ddum(i1),i1=1,ntally)          
+        IF (binary) THEN
+        ELSE
+          READ(fp,'(A256)',END=98) buffer               
+        ENDIF
+        IF (.NOT.binary.AND.buffer(1:1).EQ.'*') CYCLE 
+        IF (binary) THEN
+          READ(fp      ,ERR=97) icount,(rdum(i1),i1=1,ntally)          
+        ELSE
+          READ(buffer,*,ERR=97) icount,(ddum(i1),i1=1,ntally)          
+        ENDIF
         DO i1 = 1, ntally
-          IF (ddum(i1).GT.1.0D+30) THEN
-            WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
-     .                 'single precision size limit, setting to zero'
-            rdum(i1) = 0.0
+          IF (binary) THEN
+            IF (rdum(i1).GT.1.0D+30) THEN
+              WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
+     .                   'single precision size limit, setting to zero'
+              rdum(i1) = 0.0
+c              STOP 'NOT SURE WHAT TO DO HERE'
+            ENDIF
           ELSE
-            rdum(i1) = SNGL(ddum(i1))
+            IF (ddum(i1).GT.1.0D+30) THEN
+              WRITE(0,*) 'WARNING NextLine: EIRENE data beyond '//
+     .                   'single precision size limit, setting to zero'
+              rdum(i1) = 0.0
+            ELSE
+              rdum(i1) = SNGL(ddum(i1))
+            ENDIF
           ENDIF
         ENDDO
         RETURN

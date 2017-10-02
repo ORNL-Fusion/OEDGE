@@ -6435,6 +6435,7 @@ c
       integer ikind,irind,ikoutd,iroutd
       integer iku,ikd
       integer id,nc,nv,ic,iv
+      integer ierr
 
       
 c
@@ -7035,12 +7036,16 @@ c
 
 
             call get_e_rad(rv,zv,phiv,drn,dzn,nc,nv,ik,ir,e_rad_tmp,
-     >           dble(rs(ik,ir)),dble(zs(ik,ir)))
+     >           dble(rs(ik,ir)),dble(zs(ik,ir)),ierr)
 
             e_rad(ik,ir) = e_rad_tmp
 
-!            write(6,'(a,2i8,10(1x,g15.8))') 'E_RAD:',ik,ir,e_rad(ik,ir),
-!     >           drn,dzn,rs(ik,ir),zs(ik,ir)
+            if (ierr.ne.0) then 
+               write(6,'(a,3i8,10(1x,g15.8))') 'E_RAD ERROR:',
+     >           ierr,ik,ir,
+     >           e_rad(ik,ir),
+     >           drn,dzn,rs(ik,ir),zs(ik,ir)
+            endif
          end do
          ! Zero out midpoint where potentials do not match
          e_rad(ikmids(ir),ir) = 0.0
@@ -7115,10 +7120,11 @@ c
 c
 c
 c
-      subroutine get_e_rad(rv,zv,phi,drn,dzn,nc,nv,ik,ir,e_rad_tmp,r,z)
+      subroutine get_e_rad(rv,zv,phi,drn,dzn,nc,nv,ik,ir,e_rad_tmp,r,z,
+     >                     ierr)
       use mod_interpolate
       implicit none
-      integer :: nv,nc,ik,ir
+      integer :: nv,nc,ik,ir,ierr
       real*8 :: rv(nv,nc),zv(nv,nc),phi(nv,nc),drn,dzn,r,z,e_rad_tmp
 
       real :: areas(4)
@@ -7130,6 +7136,7 @@ c
 
       ! calculate the radial electric field for the cell
 
+      ierr = 0
       e_rad_tmp = 0.0
 
       ! calculate areas of the cells to detect boundary conditions
@@ -7158,7 +7165,7 @@ c
        ! lie in the cell. 
        ! dist = 1.0d-3
 
-       call get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc)
+       call get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc,ierr)
 
        ! now that we have test points that are guaranteed to be within cells and we have identified
        ! the cells and distances from the cell center ... calculate the gradient. 
@@ -7174,25 +7181,36 @@ c
        !       E-rad = -(phi_outer-phi_inner)/dRad = - (phi1 - phi2)/(dist1+dist2)
        !       Switch to this definition for now. 
 
-       call cell_interpolate(rt(1),zt(1),phi1,
+       if (ierr.eq.0) then 
+
+          call cell_interpolate(rt(1),zt(1),phi1,
      >                       rv(:,ct(1)),zv(:,ct(1)),phi(:,ct(1)))
        
-       call cell_interpolate(rt(2),zt(2),phi2,
+          call cell_interpolate(rt(2),zt(2),phi2,
      >                       rv(:,ct(2)),zv(:,ct(2)),phi(:,ct(2)))
        
-       dist = dt(1) + dt(2)
+          dist = dt(1) + dt(2)
 
-       if (dist.le.0.0) then 
-          write(0,*) 'ERROR in get_e_rad: dist = 0.0'
-          e_rad_tmp = 0.0
-       else
+          if (dist.le.0.0) then 
+             write(0,*) 'ERROR in get_e_rad: dist = 0.0'
+             e_rad_tmp = 0.0
+          else
 !
-!         Set definiton of E-rad = -(phi1-phi2)/dist
+!            Set definiton of E-rad = -(phi1-phi2)/dist
 !         
-!          e_rad_tmp = -(phi2-phi1)/dist
+!             e_rad_tmp = -(phi2-phi1)/dist
 !
-          e_rad_tmp = -(phi1-phi2)/dist
+             e_rad_tmp = -(phi1-phi2)/dist
+          endif
+!
+!      Problem determining test points for e_rad calculation
+!      - set e_rad returned to 0.0
+!      - this could happen if cells are extremely small or malformed. 
+!
+       else
+          e_rad_tmp = 0.0
        endif
+
 
 !       write(6,'(a,16x,4(1x,g15.8),i8,4(1x,g15.8),i8,g15.8)') 'E_RAD:',
 !     >      phi1,rt(1),zt(1),dt(1),ct(1),
@@ -7204,12 +7222,16 @@ c
        end
 
 
-      subroutine get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc)
+      subroutine get_test_points(rv,zv,r,z,drn,dzn,rt,zt,ct,dt,nv,nc,
+     >                           ierr)
       implicit none
+      !
+      ! Set the return code ierr non-zero if points are not found
+      !
       integer nv,nc
       real*8 :: rv(nv,nc),zv(nv,nc),drn,dzn,r,z
       real*8 :: rt(2),zt(2),dt(2)
-      integer :: ct(2),found
+      integer :: ct(2),found,ierr
       logical :: res            
 
       real*8 :: dist
@@ -7217,6 +7239,7 @@ c
       logical,external :: inpolydp
       integer :: iv
 
+      ierr = 0
       found = 0
       !dist = 0.001d0            ! start with +/- 1mm from center
       !dist = 0.0001d0            ! start with +/- 0.1mm from center
@@ -7255,19 +7278,24 @@ c
             ! check to see if dist is too small and issue an error message
             dist = dist * 0.5d0
             if (dist.lt.1.0d-8) then 
-               write(0,*) 'ERROR finding test points'//
+               write(0,'(a,g18.8)') 'ERROR finding test points'//
      >              ' in e_rad calculation: DIST TOO SMALL =',dist
-               write(6,*) 'ERROR finding test points'//
+               write(6,'(a,g18.8)') 'ERROR finding test points'//
      >              ' in e_rad calculation: DIST TOO SMALL =',dist
                do ic = 1,nc
-                  write(0,'(a,i8,20(1x,g14.6))') 'GET_TEST_POINTS:',
-     >                 ic,(rv(iv,ic),zv(iv,ic),iv=1,nv),r,z,dist,
-     >                 rt(1),zt(1),rt(2),zt(2)
-                  write(6,'(a,i8,20(1x,g14.6))') 'GET_TEST_POINTS:',
+c                  write(0,'(a,i8,20(1x,g18.9))') 'GET_TEST_POINTS:',
+c     >                 ic,(rv(iv,ic),zv(iv,ic),iv=1,nv),r,z,dist,
+c     >                 rt(1),zt(1),rt(2),zt(2)
+                  write(6,'(a,i8,20(1x,g18.9))') 'GET_TEST_POINTS:',
      >                 ic,(rv(iv,ic),zv(iv,ic),iv=1,nv),r,z,dist,
      >                 rt(1),zt(1),rt(2),zt(2)
                end do
-               stop 'ERROR in GET_TEST_POINTS'
+c
+c              dist is too small - set an error code and exit
+c
+               ierr = 1
+               return
+c               stop 'ERROR in GET_TEST_POINTS'
             endif
          endif
       end do

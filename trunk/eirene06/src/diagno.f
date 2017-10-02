@@ -645,7 +645,11 @@ C
           SG=ISIGN(1,NINCX)
           IF (NRCELL == 0) SG = -1.D0
           NLSRFX=.TRUE.
-C         MSURFG= ??
+c slmod begin - tet res
+          MSURFG=INSPATT(IPOLGN,MRSURF)
+c
+cC         MSURFG= ??
+c slmod end
           CALL STDCOL (ISTS,1,SG,*14,*38)
         ENDIF
 C
@@ -967,7 +971,11 @@ C
           SG=ISIGN(1,NINCX)
           IF (NRCELL == 0) SG = -1.D0
           NLSRFX=.TRUE.
-C         MSURFG= ??
+c slmod begin - tet res
+          MSURFG=INSPATT(IPOLGN,MRSURF)
+c
+cC         MSURFG= ??
+c slmod end
           CALL STDCOL (ISTS,1,SG,*104,*380)
         ENDIF
 C

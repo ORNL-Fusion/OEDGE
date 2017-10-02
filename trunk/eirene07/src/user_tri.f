@@ -1039,15 +1039,15 @@ c...    Surfaces fluxes:
 c...        Output:
             MSURFG=NLIM+NSTS+INSPAT(IS,IR)
             DDUM(1)=DBLE(IS)                   ! Side index of the triangle
-            DDUM(2)=POTAT  (IATM,MSURFG)/CONV  ! Incident atom particle flux (s-1)
+            DDUM(2)=POTAT  (IATM,MSURFG)/CONV  ! Incident atom particle flux (   s-1)
             DDUM(3)=EOTAT  (IATM,MSURFG)/CONV  ! Incident atom energy   flux (eV s-1)
 
-            DDUM(4)=PRFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident atoms     (s-1)
-            DDUM(5)=PRFMAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident mols.     (s-1)
-            DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions (s-1)
-c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons   (s-1)
-            DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions (s-1)
-            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! Emitted atom energy flux from incident atoms (eV s-1)
+            DDUM(4)=PRFAAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident atoms            (   s-1)
+            DDUM(5)=PRFMAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident mols.            (   s-1)
+            DDUM(6)=PRFIAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident test ions        (   s-1)
+c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from incident photons          (   s-1)
+            DDUM(7)=PRFPAT (IATM,MSURFG)/CONV  ! Emitted atom flux from incident bulk ions        (   s-1)
+            DDUM(8)=ERFAAT (IATM,MSURFG)/CONV  ! Emitted atom energy flux from incident atoms     (eV s-1)
             DDUM(9)=ERFPAT (IATM,MSURFG)/CONV  ! Emitted atom energy flux from incident bulk ions (eV s-1)
 
             sum_dat(1) = sum_dat(1) + ddum(2) * conv 
@@ -1460,7 +1460,7 @@ c...  Insert iteration data, if any:
         WRITE(FP,80) '* ITERATION DATA',IT
         WRITE(FP,81) NGAUGE
         DO IG=1,NGAUGE
-          ICOUNT=39
+          ICOUNT=0
           WRITE(FP,80) '*   PRESSURE GAUGE',IG
           WRITE(FP,81) ITALLY
           WRITE(FP,81) NSTRAI+1
@@ -1550,20 +1550,33 @@ C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
       ENDDO
 
 c...  Check for triangle centers that are inside the "pressure
-c     gauge" region:
+c     gauge" region (mm):
       NGAUGE = 4
-      XGAUGE(1) =  845.0D0  ! ITER midplane
-      YGAUGE(1) =   62.0D0
-      RGAUGE(1) =    8.0D0
-      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
-      YGAUGE(2) = -420.0D0
+c      XGAUGE(1) =  845.0D0  ! ITER midplane
+c      YGAUGE(1) =   62.0D0
+c      RGAUGE(1) =    8.0D0
+c      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
+c      YGAUGE(2) = -420.0D0
+c      RGAUGE(2) =   20.0D0
+c      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
+c      YGAUGE(3) = -380.0D0
+c      RGAUGE(3) =   10.0D0
+c      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
+c      YGAUGE(4) = -420.0D0
+c      RGAUGE(4) =   10.0D0
+
+      XGAUGE(1) =  405.0D0  ! ITER inner (HFS) midplane
+      YGAUGE(1) = -100.0D0
+      RGAUGE(1) =   20.0D0
+      XGAUGE(2) =  405.0D0  ! ITER divertor, below dome
+      YGAUGE(2) =  001.0D0
       RGAUGE(2) =   20.0D0
-      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
-      YGAUGE(3) = -380.0D0
-      RGAUGE(3) =   10.0D0
-      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
-      YGAUGE(4) = -420.0D0
-      RGAUGE(4) =   10.0D0
+      XGAUGE(3) =  405.0D0  ! ITER inner PFZ leg
+      YGAUGE(3) =  100.0D0
+      RGAUGE(3) =   20.0D0
+      XGAUGE(4) =  405.0D0  ! ITER outer PFZ leg
+      YGAUGE(4) =  200.0D0
+      RGAUGE(4) =   20.0D0
 
       IS=ISTRAA
       IT=ITERNO

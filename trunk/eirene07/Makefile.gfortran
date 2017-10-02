@@ -2,7 +2,8 @@
 .SUFFIXES: .o .f
 
 #F77=/usr/local/pgi/linux86/7.0-5/bin/pgf95
-F77=gfortran44
+#F77=gfortran44
+F77=gfortran
 
 #FFLAGS= -c -fast -tp p6
 #FFLAGS= -c -g -tp athlon

@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       PROGRAM RUNDIV                                                    
       use debug_options

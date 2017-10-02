@@ -928,6 +928,8 @@ C
 C
 C---- PRINT TABLE OF PLRPS VALUES
 C
+     
+
       WRITE(6,'(A)') 'TABLE OF PLRP VALUES:'
       DO 91 IR = 1, NRS
         CALL RZERO (ZSUM, PLRPCNT)
@@ -1957,7 +1959,7 @@ c
       ZLABS(-1)= 'P   PRINEUT'
       ZLABS(0) = ' T  TOTNEUT'
       WRITE (PLABS(-2),'(A7,I4)') '  S SEC',INT(PLAMS(-1))
-      IF (PLRPCNT.GT.0) THEN
+      IF (PLRPCNT.GT.-1) THEN
         DO 35 IZ = -1,PLRPCNT
           IF (PIZS(IZ).EQ.-1) THEN
             WRITE (PLABS(IZ),'(A7,I4)') 'P   PRI',INT(PLAMS(IZ))

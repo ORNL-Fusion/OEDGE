@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c     
       subroutine do_parallel_step(seed,nrand,neutim,
      >                            spara,dspara,vpara,dvpara)

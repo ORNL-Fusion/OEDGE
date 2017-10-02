@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       SUBROUTINE WRTPIN (title,equil,IOUNIT)
       use debug_options

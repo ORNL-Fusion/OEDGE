@@ -116,13 +116,15 @@ c
 c
 c ======================================================================
 c
-      SUBROUTINE GenerateOutputFiles
+      SUBROUTINE GenerateOutputFiles(iitersol)
       USE mod_interface
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_sol28_targets
       USE mod_user
       IMPLICIT none
+  
+      INTEGER, INTENT(IN) :: iitersol
 
       REAL GetCs2,GetCellPressure
 
@@ -130,6 +132,7 @@ c
      .            location,i1,ival(10),itarget
       CHARACTER*7 tag
       CHARACTER*2 target_tag(2)
+      CHARACTER*4 iter
       REAL        val(10),rdum
 
       INTEGER it(ncell),ic(ncell)
@@ -148,6 +151,11 @@ c...  Save solution:
       CALL SaveFluidGridGeometry
       CALL SaveWallGeometry
 
+      IF (iitersol.EQ.-999) THEN 
+        iter = '    '
+      ELSE
+        WRITE(iter,'(A,I3.3)') '_',iitersol 
+      ENDIF
 
 c...  Output files for CORTEX:
 
@@ -159,7 +167,7 @@ c      itube1 = 4
 c      itube2 = 4  ! ntube
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_plasma',ITF_WRITE)
+      CALL inOpenInterface('osm.idl.fluid_plasma'//iter,ITF_WRITE)
 
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
@@ -198,7 +206,7 @@ c...  ------------------------------------------------------------------
       CALL inCloseInterface 
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_sources',ITF_WRITE)
+      CALL inOpenInterface('osm.idl.fluid_sources'//iter,ITF_WRITE)
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
         ic2 = tube(itube)%cell_index(HI)
@@ -224,12 +232,15 @@ c....   Cells centres:
         CALL inPutData(fluid(ic1:ic2,ion)%eneano,'ENE_FIT','?')
         CALL inPutData(fluid(ic1:ic2,ion)%eneusr,'ENE_USR','?')
         CALL inPutData(fluid(ic1:ic2,ion)%enisrc,'ENI_NET','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniion,'ENI_ION','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniano,'ENI_FIT','?')
+        CALL inPutData(fluid(ic1:ic2,ion)%eniusr,'ENI_USR','?')
       ENDDO
       CALL inCloseInterface 
 
 c...  ------------------------------------------------------------------
       IF (ALLOCATED(pin)) THEN
-        CALL inOpenInterface('osm.idl.fluid_eirene',ITF_WRITE)
+        CALL inOpenInterface('osm.idl.fluid_eirene'//iter,ITF_WRITE)
         DO itube = itube1, itube2
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
@@ -254,7 +265,7 @@ c....     Cells centres:
       ENDIF
 c...  ------------------------------------------------------------------
       IF (ALLOCATED(field)) THEN
-        CALL inOpenInterface('osm.idl.fluid_fields',ITF_WRITE)
+        CALL inOpenInterface('osm.idl.fluid_fields'//iter,ITF_WRITE)
         DO itube = itube1, itube2
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
@@ -269,7 +280,7 @@ c....     Cells centres:
         CALL inCloseInterface 
       ENDIF
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.params',ITF_WRITE)
+      CALL inOpenInterface('osm.idl.params'//iter,ITF_WRITE)
       CALL inPutData(2.0,'flupar mass','amu')
       CALL inCloseInterface 
 c
@@ -282,7 +293,7 @@ c     idl.fluid_targets files remain in sync.
 c
       IF (.NOT.ALLOCATED(target)) GOTO 20
 
-      CALL inOpenInterface('osm.idl.fluid_targets',ITF_WRITE)
+      CALL inOpenInterface('osm.idl.fluid_targets'//iter,ITF_WRITE)
 
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
@@ -303,7 +314,7 @@ c
          ENDDO
          IF (itar.EQ.ntarget+1.AND.i1.EQ.target(ntarget)%nlist+1) THEN
            IF (first_call) THEN
-             CALL WN('User_GenerateOutputFiles','Some target group '//
+             CALL WN('GenerateOutputFiles','Some target group '//
      .               'identifiers not found')
              first_call = .FALSE.
            ENDIF
@@ -340,7 +351,7 @@ c         CALL inPutData(tube(itube)%zp(ipos),tag//'Z','m')
  20   CONTINUE
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.osm_nodes',ITF_WRITE)
+      CALL inOpenInterface('osm.idl.osm_nodes'//iter,ITF_WRITE)
       DO itube = 1, ntube
         CALL inPutData(itube             ,'TUBE'  ,'N/A')
         CALL inPutData(store_sopt (itube),'S_OPT' ,'N/A')
@@ -901,6 +912,12 @@ c      write(0,*) 'isep' ,grid%isep
       CALL inPutData(grid%isep,'GRD_ISEP' ,'none')
 c      write(0,*) 'ipfz' ,grid%ipfz
       CALL inPutData(grid%ipfz,'GRD_IPFZ' ,'none')
+
+      CALL inPutData(grid%r0,'GRD_R0','m')
+      CALL inPutData(grid%z0,'GRD_Z0','m')
+
+      CALL inPutData(grid%rxpt,'GRD_RXPT','m')
+      CALL inPutData(grid%zxpt,'GRD_ZXPT','m')
 
       CALL inPutData(ntube             ,'TUBE_N'   ,'none')
       CALL inPutData(tube(1:ntube)%psin,'TUBE_PSIN','none')

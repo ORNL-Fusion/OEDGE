@@ -59,7 +59,7 @@ c
 c     collector probe
 c
       real probe_diameter,probe_dperp
-
+      integer axis_opt
 c
 c     For LP - line profiles plots - 345, 346
 c
@@ -232,7 +232,7 @@ c
         if (iref.eq.361) then 
 
            call rdgcol(graph3,r1p,z1p,r2p,z2p,probe_diameter,
-     >                 probe_dperp,ierr)
+     >                 probe_dperp,axis_opt,ierr)
            if (ierr.ne.0) then
                WRITE(6,*) 'RDGCOL ERROR READING COLLECTOR'//
      >                    ' PROBE GRAPH DETAILS'
@@ -2812,7 +2812,7 @@ c        model collector probe
 c
 
          call collector_probe(r1p,z1p,r2p,z2p,probe_diameter,
-     >                        probe_dperp,iopt)
+     >                        probe_dperp,axis_opt,iopt)
 
 
       ELSEIF (IREF.EQ.391) THEN

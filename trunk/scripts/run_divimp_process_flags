@@ -89,7 +89,6 @@
     setenv EIR15  $1
     shift 
   endif
-
 #
 # ----------------------------------------------------------------------
 # Just run OUT, the post-processing and graphics package:
@@ -98,6 +97,15 @@
   if ( "$1" == "-out" || "$1" == "-o" ) then
     shift 
     setenv OUTONLY yes
+  endif
+#
+# ----------------------------------------------------------------------
+# Just run CORTEX, the IDL-based post-processing and graphics package:
+# 
+  setenv CORTEX_ONLY no
+  if ( "$1" == "-cortex" || "$1" == "-c" ) then
+    shift 
+    setenv CORTEX_ONLY yes
   endif
 #
 # ----------------------------------------------------------------------
@@ -125,7 +133,7 @@
 # ----------------------------------------------------------------------
 # Validate input (weak):
 #
-  if ( $1 == "" || $2 == "" || ($3 == "" && $OUTONLY == "no" ))  then
+  if ( $1 == "" || $2 == "" || ($3 == "" && $OUTONLY == "no"  && $CORTEX_ONLY == "no" ) )  then
     echo "Parameter error"
     exit
   endif

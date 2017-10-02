@@ -1,4 +1,4 @@
-#!/bin/tcsh
+#!/bin/tcsh -x
 #
   alias ls ls
 #
@@ -7,7 +7,6 @@
 # ======================================================================
 #
 source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15
-#
 #
 # ======================================================================
 # SET SHELL VARIABLES
@@ -47,23 +46,15 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Create and enter execution directory:
 #
-#  cd $DIVHOME/cases
-#  if ( -e $CASENAME ) rm -rf $CASENAME
-#  mkdir $CASENAME
-#  cd    $CASENAME
   if ( -e $EXEDIR ) rm -rf $EXEDIR
   mkdir $EXEDIR
   cd    $EXEDIR
-#  echo $QSUB_ID > qsub_id.txt
-#  if ( $QSUB_ID != "none" ) then
-#    ll ../* > ../test.dump
-#    rm ../$QSUB_ID*
-#  endif
 #
 # ----------------------------------------------------------------------
 # Case parameter summary to the screen:
 #
                               echo 
+                              echo  "  Host                : $HOSTNAME"
                               echo  "  DIVIMP case         : $CASENAME"
                               echo  "  Run directory       : $EXEDIR"
                               echo  "  OUT input file      : $OUTNAME"
@@ -79,8 +70,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
                               echo  "    Following photons..."
   endif
   if ( $OUTONLY == "yes")     echo  "  OUT execution only  : yes"
-  if ( $X86_64 )              echo  "  64-bit operation    : yes     "
-
+  if ( $CORTEX_ONLY == "yes") echo  "  CORTEX execution    : yes"
+  if ( $X86_64 )              echo  "  64-bit operation    : yes"
                               echo 
 #
 # ======================================================================
@@ -93,7 +84,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # EXECUTE
 # ======================================================================
 #
-    if ( $OUTONLY == "no" ) then
+    if ( $OUTONLY == "no" && $CORTEX_ONLY == "no" ) then
 #
 #     --------------------------------------------------------------------
 #     Execute DIVIMP:
@@ -101,9 +92,18 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       echo
       echo "  Executing DIVIMP version 6 :" $MYEXT
       echo 
-#      $DIVEXE < fort.5 > divout1
-      nice +2 $DIVEXE < fort.5 > divout1
-#    Xpgdbg $DIVEXE < fort.5 > divout1
+
+
+      divimp_loop:
+
+#        $DIVEXE < fort.5 > divout1
+        nice +2 $DIVEXE < fort.5 > divout1
+#        Xpgdbg $DIVEXE < fort.5 > divout1
+
+      if ( -e divimp_counter ) then
+        mvc raw.divimp_tdep_dist $RESDIR/$CASENAME.raw.divimp_tdep_dist
+        goto divimp_loop
+      endif
 
 #     Process this output now, since these file units conflict with OUT:
       mvc POSTSCPT.LIS old.LIS
@@ -116,7 +116,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #   ----------------------------------------------------------------------
 #   Execute OUT:
 #
-    if       ( $OUTNAME == "none" ) then
+    if       ( $CORTEX_ONLY == "yes" ) then
+    else if  ( $OUTNAME == "none" ) then
       echo "OUT not executed - by request"
     else if !( -e $DATDIR/$OUTNAME.d6o ) then
       echo "OUT not executed - input file $OUTNAME.d6o not found"
@@ -136,6 +137,26 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
       endif
     endif
   endif
+#
+#   ----------------------------------------------------------------------
+#   Execute CORTEX:
+#
+    if       ( $OUTNAME == "none" ) then
+      echo "CORTEX not executed - by request"
+    else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
+      echo "CORTEX not executed - input file $OUTNAME.ctx not found"
+    else if ( $OUTONLY == "yes" ) then
+    else
+      if ( -e $RESDIR/$CASENAME.idl.ps ) rm $RESDIR/$CASENAME.idl.ps
+
+      fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
+
+      if ( -e $RESDIR/$CASENAME.idl.ps && $CORTEX_ONLY == "no" ) mv $RESDIR/$CASENAME.idl.ps .
+
+      if ( $CORTEX_ONLY == "yes" ) goto clean
+    endif
+
+exit
 #
 #
 # ======================================================================
@@ -164,7 +185,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   mvc fort.49      $CASENAME.plt
   mvc outdata.dat  $CASENAME.anl
 
-  if ( $OUTONLY == "yes" ) then
+  if ( $OUTONLY == "yes" || $CORTEX_ONLY == "yes" ) then
     echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES)'
   else
     mvc fort.8           $CASENAME.raw
@@ -179,10 +200,10 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc osm_geometry.raw $CASENAME.raw.ogd
     mvc osm_legacy.raw   $CASENAME.raw.old
 #   Process tetrahedron files:
-    rename ".raw" ".raw.tet" -- tetrahedrons*.raw
-    rename ".raw" ".raw.fil" -- filaments*.raw
-    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet
-    rename "filaments"    "$CASENAME" -- filaments*.raw.fil
+    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
+    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
+    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
+    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null
   endif
 
   mvc fort.90 $CASENAME.osm.log
@@ -208,7 +229,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
   mvc addsur.dat    $CASENAME.addsur
 
-  if ( $OUTONLY == "no" ) then
+  if ( $OUTONLY == "no" && $CORTEX_ONLY == "no" ) then
     mvc triangles.dat       $CASENAME.triangles
     mvc triangles.npco_char $CASENAME.triangles.npco_char
     mvc triangles.elemente  $CASENAME.triangles.elemente
@@ -230,18 +251,19 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME         -- osm.idl.*
-  rename divimp  $CASENAME         -- divimp.* 
-  rename output  $CASENAME.out     -- output.*
-  rename idl     $CASENAME.idl     -- idl.*
-  rename profile $CASENAME.profile -- profile.*      # line-of-sight profiles from RAY
+  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
+  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
+  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
+  rename output  $CASENAME.out     -- output.*      >& /dev/null
+  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
+  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
-  rename ".transfer" ".eir"      -- eirene*.transfer
-  rename ".input"    ".eirdat"   -- eirene*.input
-  rename ".output"   ".eirprn"   -- eirene*.output
-  rename "eirene"    "$CASENAME" -- eirene*.eir*
+  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
+  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
+  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
+  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
 #  mvc eirene.transfer     $CASENAME.eir
 
   mvc eirene.spectra $CASENAME.eir.spectra
@@ -249,15 +271,15 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   cpc core_analysis.dat $CASENAME.dat.midplane
 #  mvc core_analysis.dat ~/idl/lc/$CASENAME.dat
   
-
+#
 # Inversions:
 #
 # ----------------------------------------------------------------------
 # Rename image inversion related files:
 #
-  foreach FILENAME (`ls *.ray.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+#  foreach FILENAME (`ls *.ray.*`)   # handled when processing output. files
+#    mv $FILENAME $CASENAME.$FILENAME
+#  end
 #  foreach FILENAME (`ls *.idl.*`)
 #    mv $FILENAME $CASENAME.$FILENAME
 #  end
@@ -265,9 +287,12 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-  foreach FILENAME (`ls div.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+#  if ( ls div.* ) then 
+    foreach FILENAME (`ls div.*`)
+      mv $FILENAME $CASENAME.$FILENAME
+    end
+#  endif
+#exit
 #
 # ----------------------------------------------------------------------
 # MatLab files:
@@ -277,29 +302,41 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   end
 #
 # ----------------------------------------------------------------------
-# Marie-Helene data files for reflection modelling:
+# Data export files:
 #
   foreach FILENAME (`ls mhf.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
+  foreach FILENAME (`ls skf.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
   foreach FILENAME (`ls akf.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls mrt.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls ero.*`)
+    mv $FILENAME $CASENAME.$FILENAME
+  end
+  foreach FILENAME (`ls tet.*`)
     mv $FILENAME $CASENAME.$FILENAME
   end
 #
 # ----------------------------------------------------------------------
 # Martin O'Mullane files:
 #
-  mv mom $CASENAME.mom
+  mv mom $CASENAME.mom >& /dev/null
 #
 # ----------------------------------------------------------------------
 # Field line traces for ribbon grid:
 #
-  rm -f *.trace.*
+  rm -f *.trace.* >& /dev/null
   foreach FILENAME (`ls trace.*`)
     mv -f $FILENAME $CASENAME.$FILENAME
   end
 #
-  mv *image*.jpg $RESDIR
+  mv *image*.jpg $RESDIR  >& /dev/null
 #
 # ----------------------------------------------------------------------
 # Rename some EIRENE files:
@@ -321,8 +358,8 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Compress large files:
 #
-  if ( $OUTONLY == "yes" ) then
-    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES)'
+  if ( $OUTONLY == "yes" || $CORTEX_ONLY == "yes" ) then
+    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES or CORTEX_ONLY = YES)'
   else
     zipc $CASENAME.raw
     zipc $CASENAME.raw.src
@@ -341,6 +378,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     zipc $CASENAME.raw.osm
     zipc $CASENAME.raw.ogd
     zipc $CASENAME.raw.old
+    mvc raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
   endif
 #  zipc $CASENAME.eir
 #  zipc $CASENAME.pin
@@ -357,13 +395,13 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #
 # Move all files to results directory, replacing any previous results:
 #
-  rm *.A
+  rm *.A  >& /dev/null
 #  zipc *.A
-  rm *.map
+  rm *.map  >& /dev/null
 
-  if ($OUTONLY == "no") rm $RESDIR/$CASENAME.*
+  if ($OUTONLY == "no" && $CORTEX_ONLY == "no") rm $RESDIR/$CASENAME.*
 
-  mv -f $CASENAME.* $RESDIR
+  mv -f $CASENAME.* $RESDIR  >& /dev/null
   chmod u+r $RESDIR/$CASENAME.*
 #
 # ----------------------------------------------------------------------
@@ -381,6 +419,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Clean:
 #
+  clean:
   if ( $CLEAN == "yes" ) then
 #    cd $DIVHOME/cases
 #    rm -r -f $CASENAME

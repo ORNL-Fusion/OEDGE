@@ -309,6 +309,8 @@ c      INTEGER, PARAMETER  :: lout = 6, n = 36, nq = 13, nr = 3, nw = 19
 
       warning = .FALSE.
 
+      f1 = -999.0D0
+
       nr = INT(SQRT(REAL(n)/3.0))
 
       ALLOCATE(lcell(nr,nr))  ! Do this every call...?
@@ -327,7 +329,6 @@ c      WRITE(0,*) 'f:',f
       ELSE
 ! COMPUTE THE MACHINE PRECISION EPS.
         eps = EPSILON(1.0)
-
 ! COMPUTE INTERPOLATION ERRORS AND TEST FOR AGREEMENT IN THE
 !   Q VALUES RETURNED BY QS2VAL AND QS2GRD.
         DO  i = 1, n1
@@ -339,7 +340,7 @@ c      WRITE(0,*) 'f:',f
      .                dx,dy,rmax,rsq,a,q,qx,qy,ier)
           IF     (ier.NE.0) THEN
             IF (ier.EQ.2) THEN
-              WRITE(0,*) 'px,y:',px,py
+c              WRITE(0,*) 'px,y:',px,py
               IF (.NOT.warning) THEN
                 WRITE(0,*) 'WARNING Interpolate: Point(s) outside grid'
                 warning = .TRUE.
@@ -673,6 +674,9 @@ c      DO i1 = 4325, 4325
 
       DO i1 = 1, npixel
 
+c        WRITE(0,*) '---- pixel%v1 ---->',SNGL(pixel(i1)%v1)
+c        WRITE(0,*) '---- pixel%v2 ---->',SNGL(pixel(i1)%v2)
+
 c...    Keep track of which detector the current pixel belongs to:
         IF (i1.GT.opt%det_iend(idet)) THEN
           idet = idet + 1
@@ -768,7 +772,7 @@ c...        Add some brains:
 c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
 
 
-        IF (.NOT..FALSE..AND.   ! *** PROFILE HACK ***
+        IF (.TRUE..AND.   ! *** PROFILE HACK ***
      .      (i1.EQ.opt%det_istart(idet).OR.
      .       i1.EQ.opt%det_iend  (idet).OR.
      .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
@@ -940,7 +944,7 @@ c...  MPI!
 c        CALL inCloseInterface
       ENDIF
 
-      IF (.TRUE.) THEN
+      IF (.FALSE.) THEN
 c...    Write poloidal cross-section information for inversion grid at
 c       the end of .map file:
 
@@ -1043,9 +1047,9 @@ c     .                   DCOS(pixel(i2)%xangle * 3.1415D0 / 180.0D0) *
 c     .                   DCOS(pixel(i2)%yangle * 3.1415D0 / 180.0D0)
  
           ENDDO
-          WRITE(0,*)
-          WRITE(0,*) 'INTEGRAL SUMMATION:',i1,int_sum
-          WRITE(0,*)
+c          WRITE(0,*)
+c          WRITE(0,*) 'INTEGRAL SUMMATION:',i1,int_sum
+c          WRITE(0,*)
         ENDDO
       ENDIF
 
@@ -1249,7 +1253,6 @@ c...  Store index locations of first pixel for this detector:
           pixel(npixel)%nybin    = 1 ! opt%sa_nybin
           pixel(npixel)%v1(1:3)  = opt%chord_v1(1:3,i1)
           pixel(npixel)%v2(1:3)  = opt%chord_v2(1:3,i1)
-
 
           pixel(npixel)%xwidth   = 0.0D0
           pixel(npixel)%ywidth   = 0.0D0
@@ -1710,10 +1713,10 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       CALL DEALLOC_ALL
 
       WRITE(0,*) '  ALLOCATING OBJECTS'
-      MAX3D = 2000000 
+      MAX3D = 10000000 
+c      MAX3D = 4000000 
 c      MAX3D = 500000 
 c      MAX3D = 1500000 
-c      MAX3D = 4000000 
       ALLOCATE(obj(MAX3D))
 
       CALL ALLOC_SURFACE(-1,MP_INITIALIZE)

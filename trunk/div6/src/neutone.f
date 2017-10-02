@@ -1,4 +1,4 @@
-c     -*-Fortran-*-  
+c     -*Fortran*-  
 c
       SUBROUTINE LAUNCH_ONE (IMP,RST,ZST,RIZ,ZIZ,idstart,iwstart,
      >                   rc,temi,
@@ -9,6 +9,9 @@ c
      >                   NEUTIM,SFAIL,neuttype,vout,vrec,RECLOSS)
       use mtc
       use error_handling
+c slmod begin
+      use mod_divimp_walldyn
+c slmod end
       IMPLICIT NONE
 c      real rst,zst,riz,ziz,temi,cisti,sputy
       real rst,zst,riz,ziz,temi,sputy
@@ -446,8 +449,8 @@ c               the centre of the segment:
 
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
-                  write(0,*) '  problem again 3'
-                  write(6,*) '  problem again 3'
+                  write(0,*) '  in trouble again 3'
+                  write(6,*) '  in trouble again 3'
 c                  stop
                 ENDIF 
 
@@ -497,7 +500,9 @@ c                  stop
                  MTCSTRUK = MTCSTRUK + SPUTY
               endif
               IFATE = 4
-c              STOP 'oops'
+
+c              STOP 'darn it'
+
               GOTO 899            
            ENDIF
 
@@ -1014,6 +1019,10 @@ c              Record particles with invalid ID's in total
 c
                if (indi.lt.1.or.indi.gt.wallpts) then 
                   WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                  wdn(iwstart,wallpts+1)%n = 
+     .              wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,maxpts+1,2) = 
@@ -1022,6 +1031,9 @@ c
 c
                else
                   WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                  wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,indi,2) = 
@@ -1099,6 +1111,10 @@ c              Record particles with invalid ID's in total
 c
                if (indi.lt.1.or.indi.gt.wallpts) then 
                   WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                  wdn(iwstart,wallpts+1)%n = 
+     .              wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,maxpts+1,2) = 
@@ -1107,6 +1123,9 @@ c
 c
                else
                   WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                  wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                   if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                      wtdep(iwstart,indi,2) = 
@@ -1143,8 +1162,8 @@ c               the centre of the segment:
 
                 count_relaunch = count_relaunch + 1
                 IF (count_relaunch.EQ.50) THEN
-                  write(0,*) '  problem again'
-                  write(6,*) '  problem again'
+                  write(0,*) '  in trouble again'
+                  write(6,*) '  in trouble again'
 c                  stop
                 ENDIF 
 
@@ -1196,6 +1215,10 @@ c                Record particles with invalid ID's in total
 c
                  if (indi.lt.1.or.indi.gt.wallpts) then 
                     WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                    wdn(iwstart,wallpts+1)%n = 
+     .                 wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,maxpts+1,2) = 
@@ -1204,6 +1227,10 @@ c
 c
                  else
                     WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                    wdn(iwstart,indi)%n = 
+     .                wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,indi,2) = 
@@ -1228,6 +1255,10 @@ c                Record particles with invalid ID's in total
 c
                  if (indi.lt.1.or.indi.gt.wallpts) then 
                     WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                    wdn(iwstart,wallpts+1)%n = 
+     .                wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,maxpts+1,2) = 
@@ -1236,6 +1267,10 @@ c
 c
                  else
                     WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                    wdn(iwstart,indi)%n = 
+     .                wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                     if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                        wtdep(iwstart,indi,2) = 
@@ -1335,8 +1370,8 @@ c                 the centre of the segment:
 	       
                   count_relaunch = count_relaunch + 1
                   IF (count_relaunch.EQ.50) THEN
-                    write(0,*) '  problem again 2'
-                    write(6,*) '  problem again 2'
+                    write(0,*) '  in trouble again 2'
+                    write(6,*) '  in trouble again 2'
 c                    stop
                   ENDIF 
 	       
@@ -1459,6 +1494,10 @@ c                  Record particles with invalid ID's in total
 c
                    if (indi.lt.1.or.indi.gt.wallpts) then 
                       WALLSN(maxpts+1) = WALLSN(maxpts+1) + SPUTY
+c slmod begin
+                      wdn(iwstart,wallpts+1)%n = 
+     .                  wdn(iwstart,wallpts+1)%n + sputy
+c slmod end
 c
                       if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                          wtdep(iwstart,maxpts+1,2) = 
@@ -1467,6 +1506,9 @@ c
 c
                    else
                       WALLSN(INDI) = WALLSN(INDI) + SPUTY
+c slmod begin
+                      wdn(iwstart,indi)%n = wdn(iwstart,indi)%n + sputy
+c slmod end
 c
                       if (iwstart.ge.1.and.iwstart.le.wallpts) then  
                          wtdep(iwstart,indi,2) = 

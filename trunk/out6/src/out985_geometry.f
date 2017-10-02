@@ -287,8 +287,9 @@ c
 
 c...  Project the point and polygon onto the closes plane: 
 
-c      output = .TRUE.
+      output = .FALSE.
 
+      IF (output) WRITE(0,*) '    pointinpoly'
 c
       lastcp = 0.0D0
 c
@@ -370,7 +371,10 @@ c
          IF (status.EQ.1) THEN
             WRITE(0,'(A,2I6,2F12.6)') 'CP:',v,nextv,cp,lastcp
           ENDIF
-c         WRITE(6,'(A,3D18.6)') 'CP:',cp,lastcp,cp*lastcp
+
+         IF (output) 
+     .     WRITE(0,'(A,3D18.6)') '    CP:',cp,lastcp,cp*lastcp
+
 c
           if ((lastcp * cp).lt.0.0D0) GOTO 10
 c
@@ -425,7 +429,7 @@ c      PARAMETER (DTOL=1.0D-12)  ! (DTOL=1.0D-10) ! changed 10/11/2010 -SL
      .        x1,x2,y1,y2,z1,z2,dx12,dy12,dz12,r3,r4,y3,y4,dr34,dy34,
      .        r,y,a,b,c,s(2),t,beta,gamma,b24ac
 
-      fp = 6
+      fp = 0 ! 6
 
       IF (nchord.EQ.-1) THEN
         output = .TRUE.
@@ -433,6 +437,7 @@ c      PARAMETER (DTOL=1.0D-12)  ! (DTOL=1.0D-10) ! changed 10/11/2010 -SL
         output = .FALSE.
       ENDIF
 
+      output = .FALSE.
 
 c...  Provide some scaling that is sensitive to the length of the viewing chord:  Maybe the viewing chord shouldn't shrink?
 c      DTOL2 = 1.0D-09 /    ! *** Hopefully this is strong enough...
@@ -629,6 +634,10 @@ c...            No intersection because ...
 c...    Floating 3D cartesian surface (most general toroidally 
 c       discretized representation):
 
+        IF (output) THEN
+          WRITE(fp,*) '   GENERAL PLANAR SURFACE'    
+        ENDIF 
+
         DO i1 = 1, 3
 c...      Store this?  Certainly...
           IF (obj(iobj)%nside.NE.0) THEN
@@ -692,6 +701,8 @@ c...    This will always be satisfied, unless the chord and surface normal are o
 
         IF (status.EQ.1) WRITE(0,*) 'U:',u
 c        WRITE(6,*) '  u:',u
+
+        IF (output) WRITE(0,*) '   U:',u
 
         IF (u.GT.0.0D0.AND.u.LT.1.0D0+DTOL) THEN
 
@@ -783,7 +794,7 @@ c...  Input:
       DATA trim_fat /.TRUE./
       SAVE
 
-      fp = 6
+      fp = 0 ! 6
 
       ninter = 0
       dinter = 0.0D0

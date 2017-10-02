@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
 c ======================================================================
 c
@@ -112,7 +112,7 @@ c             Reference plasma:
      .                  'data requrested but none available',*99) 
               source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%parano)
             CASE (2)
-c...          Half ring:
+c...          Uniform along the half-tube:
               CALL SpecifyDistribution(target,0,0,1,0.0D0,source,0)
             CASE (3)
 c...          Full ring:
@@ -580,7 +580,7 @@ c
       IMPLICIT none
 
       INTEGER ion, target, ic1, ic2
-      REAL*8  source(icmax)
+      REAL*8  source(icmax),scale
 
       IF (logop.GT.1) WRITE(logfp,*) 'ASSIGNING ENERGY SOURCES: BEGIN'
 
@@ -589,6 +589,9 @@ c
         DO target = LO, HI
           ic1 = icbnd1(target)
           ic2 = icbnd2(target)
+
+c...      Electron energy channel:
+c         ----------------------------------------------------------------
 
 c...      Volume:
 c         ----------------------------------------------------------------
@@ -625,7 +628,7 @@ c             None:
 c             Reference plasma:
               IF (ref_nion.EQ.0) 
      .          CALL ER('AssignEnergySources','Reference plasma '//
-     .                  'data requested but none available',*99) 
+     .                  'data requested but none available (1)',*99) 
               source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%eneion)   
             CASE (2)
 c             PIN:
@@ -633,8 +636,23 @@ c             PIN:
             CASE (3)
 c             Prescribed:
               CALL SpecifyDistribution(target,-2,0,2,0.1D0,source,0) 
-              source = -1.0D+04 * source 
-c              source = -2.25D+07 * source 
+              IF (qe(ictarg(target)).NE.0.0D0) THEN
+c                scale = -8.0D0 * DABS(isat(ictarg(target),ion)) * ECH * 
+c     .                  te(ictarg(target))
+c                WRITE(0,*) 'scale',scale
+c                STOP 
+c                scale = scale * 0.5D0
+c                
+c              ELSE
+c                scale = -1.0D+07
+c                source = -2.25D+07
+               scale = qe(ictarg(target))
+ 
+              ENDIF
+
+c              scale = -2.0D+07
+
+              source = scale * source 
             CASEDEFAULT                                            
               CALL User_VolumeEneIonSource(target,source)          
           ENDSELECT         
@@ -656,11 +674,14 @@ c             None:
 c             Reference plasma:
               IF (ref_nion.EQ.0) 
      .          CALL ER('AssignEnergySources','Reference plasma '//
-     .                  'data requested but none available',*99) 
+     .                  'data requested but none available (2)',*99) 
               source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%eneano) 
             CASE (2)
 c             None, assigned analytically in EvolveTeProfile:          
             CASE (3)
+c             Uniform along the half-tube (over-written in EvolveTeProfile):          
+              CALL SpecifyDistribution(target,0,0,1,0.0D0,source,0)
+            CASE (5)
 c             None, assigned analytically in EvolveTeProfile:          
             CASEDEFAULT                                            
               CALL ER('AssignEnergySources','Bad TE_ANO',*99)
@@ -672,8 +693,96 @@ c...      User defined source:
 c         ----------------------------------------------------------------
           eneusr(ic1:ic2) = 0.0D0
 
+c...      Ion energy channel:
+c         ----------------------------------------------------------------
+
+c...      Volume:
+c         ----------------------------------------------------------------
+
+c...      PINQi:
+          source = 0.0D0
+
+c...      Ionisation:
+          source = 0.0D0
+          SELECTCASE (opt%ti_ion(target))
+            CASE (1000)
+c             Preserve (from a previous iteration):
+              source(ic1:ic2) = eniion(ic1:ic2,ion)               
+            CASE (0)
+c             None:          
+            CASE (1)
+c             Reference plasma:
+              IF (ref_nion.EQ.0) 
+     .          CALL ER('AssignEnergySources','Reference plasma '//
+     .                  'data requested but none available (3)',*99) 
+              source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%eniion)   
+            CASE (2)
+c             PIN:
+              source(ic1:ic2) = DBLE(pin(ic1:ic2,ion)%qi) 
+            CASE (3)
+c             Prescribed:
+              CALL SpecifyDistribution(target,-2,0,2,0.1D0,source,0) 
+              IF (ti(ictarg(target),ion).NE.0.0D0) THEN
+c              IF (te(ictarg(target)).NE.0.0D0) THEN
+c                scale = -8.0D0 * DABS(isat(ictarg(target),ion)) * ECH * 
+c     .                  te(ictarg(target))
+c                WRITE(0,*) 'scale',scale
+c                STOP 
+c                scale = scale * 0.5D0
+c              ELSE
+c                scale = -1.0D+07
+c                source = -2.25D+07
+
+                scale = qi(ictarg(target),ion)
+              ENDIF
+
+c              scale = -1.0D+07
+
+              source = scale * source 
+            CASEDEFAULT                                            
+              CALL User_VolumeEneIonSource(target,source)          
+          ENDSELECT         
+          eniion(ic1:ic2,ion) = source(ic1:ic2)
+
+c...      Cross-field:
+c         ----------------------------------------------------------------
+
+c...      Anomalous:
+c         ----------------------------------------------------------------
+          source = 0.0D0
+          SELECTCASE (opt%ti_ano(target))
+            CASE (1000)
+c             Preserve (from a previous iteration):
+              source(ic1:ic2) = eniano(ic1:ic2,ion)               
+            CASE (0)
+c             None:          
+            CASE (1)
+c             Reference plasma:
+              IF (ref_nion.EQ.0) 
+     .          CALL ER('AssignEnergySources','Reference plasma '//
+     .                  'data requested but none available (4)',*99) 
+              source(ic1:ic2) = DBLE(ref_fluid(ic1:ic2,ion)%eniano) 
+            CASE (2)
+c             None, assigned analytically in EvolveTeProfile:          
+            CASE (3)
+c             Uniform along the half-tube (over-written in EvolveTeProfile):          
+              CALL SpecifyDistribution(target,0,0,1,0.0D0,source,0)
+            CASE (5)
+c             None, assigned analytically in EvolveTeProfile:          
+            CASEDEFAULT                                            
+              CALL ER('AssignEnergySources','Bad TI_ANO',*99)
+c              CALL User_VolumeEneAnoSource(target,source)          
+          ENDSELECT         
+          eniano(ic1:ic2,ion) = source(ic1:ic2)
+
+c...      User defined source:
+c         ----------------------------------------------------------------
+          eniusr(ic1:ic2,ion) = 0.0D0
+
         ENDDO
       ENDDO
+
+      CALL ConserveEnergy
 
       CALL IntegrateSources(3)
 c...
@@ -684,7 +793,87 @@ c...
       WRITE(0,*) '  TE_ANO = ',opt%te_ano(target)
       STOP
       END
+c
+c ======================================================================
+c
+      SUBROUTINE ConserveEnergy
+      USE mod_sol28_params
+      USE mod_sol28_solver
+      IMPLICIT none
 
+      INTEGER ion,target,ict,ic1,ic2
+      LOGICAL debug
+      REAL*8  net(3),integral(10)
+
+      debug = .FALSE.
+
+
+      ion = 1
+      DO target = LO, HI
+        ict = ictarg(target)
+        ic1 = icbnd1(target)
+        ic2 = icbnd2(target)
+
+c...    Scale anomalous electron energy source:
+        SELECTCASE (opt%te_ano(target))
+c         ------------------------------------------------------------
+          CASE (1000)
+c         ------------------------------------------------------------
+          CASE (0)
+c         ------------------------------------------------------------
+          CASE (1)
+c         ------------------------------------------------------------
+          CASE (3)
+c           Half-tube:
+            CALL IntegrateArray(target,enerec(1,ion),0,integral(1))
+            CALL IntegrateArray(target,eneion(1,ion),0,integral(2))
+            net(target) = qe(ict) + integral(1) + integral(2)
+            eneano(ic1:ic2) = -eneano(ic1:ic2) * net(target)
+c         ------------------------------------------------------------
+          CASE (4,5)
+c         ------------------------------------------------------------
+          CASEDEFAULT
+            CALL ER('ConserveEnergy','Unknown TE_ANO option',*99)
+        ENDSELECT
+
+      ENDDO  ! End of TARGET loop
+
+
+      DO ion = 1, nion
+        IF (iontype(ion).NE.ITY_FLUID) CYCLE
+
+        DO target = LO, HI
+          ict = ictarg(target)
+          ic1 = icbnd1(target)
+          ic2 = icbnd2(target)
+
+c...      Scale anomalous ion energy source:
+          SELECTCASE (opt%ti_ano(target))
+c           ------------------------------------------------------------
+            CASE (1000)
+c           ------------------------------------------------------------
+            CASE (0)
+c           ------------------------------------------------------------
+            CASE (1)
+c           ------------------------------------------------------------
+            CASE (3)
+c             Half-tube:
+              CALL IntegrateArray(target,eniion(1,ion),0,integral(1))
+              net(target) = qi(ict,ion) + integral(1)
+              eniano(ic1:ic2,ion) = -eniano(ic1:ic2,ion) * net(target)
+c           ------------------------------------------------------------
+            CASE (4,5)
+c           ------------------------------------------------------------
+            CASEDEFAULT
+              CALL ER('ConserveEnergy','Unknown TI_ANO option',*99)
+          ENDSELECT
+
+        ENDDO  ! End of TARGET loop
+      ENDDO  ! End of ION loop
+
+      RETURN
+ 99   STOP
+      END
 c
 c ====================================================================
 c
@@ -787,41 +976,80 @@ c              WRITE(logfp,*) 'REF ANO:',ref_fluid(1:icmax,ion)%momano
           ENDDO
 c       ----------------------------------------------------------------
         CASE(3)  ! Energy
+
           enesrc = 0.0D0
           eneint = 0.0D0
-          DO ion = 1, nion
-            IF (iontype(ion).NE.ITY_FLUID) CYCLE
-c...        Calculate total electron energy source along the flux tube and
-c           integrate along the field line:
-            enesrc(0      ,1) = enesrc(0      ,1) + 1.0  ! *** WHY IS THIS 1.0 HERE? ***
-            enesrc(icmax+1,1) = enesrc(icmax+1,1) + 1.0
-            enesrc(1:icmax,1) = enesrc(1:icmax,1) + 
+          enisrc = 0.0D0
+          eniint = 0.0D0
+
+          ic1 = ictarg(LO)
+          ic2 = ictarg(HI)
+
+c...      Calculate total electron energy source along the flux tube and
+c         integrate along the field line:
+c
+          ion = 1
+          enesrc(0      ,ion) = qe(ic1)
+          enesrc(icmax+1,ion) = qe(ic2)
+          enesrc(1:icmax,ion) = enesrc(1:icmax,ion) + 
      .                          enerec(1:icmax,ion) +
      .                          eneion(1:icmax,ion) +
      .                          eneano(1:icmax) + 
      .                          eneusr(1:icmax) 
 
-            CALL IntegrateArray(FULL,enesrc(1,1),1,eneint(0,1))
+          CALL IntegrateArray(FULL,enesrc(1,ion),1,eneint(0,ion))
 
-            ic1 = ictarg(LO)
-            ic2 = ictarg(HI)
-            qe(ic1) = -eneint(icmid  ,1)
-            qe(ic2) = -(eneint(TOTAL,1)-eneint(icmid,1))
+c          qe(ic1) = -eneint(icmid  ,ion)
+c          qe(ic2) = -(eneint(TOTAL,ion)-eneint(icmid,ion))
+
+          IF (logop.GT.0) THEN
+            CALL IntegrateArray(FULL,enerec(1,ion),0,integral(1))
+            CALL IntegrateArray(FULL,eneion(1,ion),0,integral(2))
+            CALL IntegrateArray(FULL,eneusr(1    ),0,integral(3))
+            CALL IntegrateArray(FULL,eneano(1    ),0,integral(4))
+            net = qe(ictarg(LO)) + qe(ictarg(HI)) + SUM(integral(1:4))
+            WRITE(logfp,*) 'e-POWER CHECK:',net
+            WRITE(logfp,*) '  qe  :',qe(ic1),qe(ic2)
+            WRITE(logfp,*) '  rec :',integral(1)
+            WRITE(logfp,*) '  ion :',integral(2)
+            WRITE(logfp,*) '  usr :',integral(3)
+            WRITE(logfp,*) '  ano :',integral(4)
+            WRITE(logfp,'(A,1P,E10.2,0P,A)') '  BALANCE:',
+     .        ( enesrc(0,ion)+enesrc(icmax+1,ion)+eneint(TOTAL,ion)) /
+     .        (-enesrc(0,ion)-enesrc(icmax+1,ion)) * 100.0D0, ' %'
+          ENDIF
+
+          DO ion = 1, nion
+            IF (iontype(ion).NE.ITY_FLUID) CYCLE
+
+c...        Calculate total ion energy source along the flux tube and
+c           integrate along the field line:
+c
+            enisrc(0      ,ion) = qi(ic1,ion)
+            enisrc(icmax+1,ion) = qi(ic2,ion)
+            enisrc(1:icmax,ion) = enisrc(1:icmax,ion) + 
+     .                            eniion(1:icmax,ion) +
+     .                            eniano(1:icmax,ion) + 
+     .                            eniusr(1:icmax,ion) 
+
+            CALL IntegrateArray(FULL,enisrc(1,ion),1,eniint(0,ion))
+
+c            qi(ic1,ion) =  -eniint(icmid,ion)
+c            qi(ic2,ion) = -(eniint(TOTAL,ion)-eniint(icmid,ion))
 
             IF (logop.GT.0) THEN
-              WRITE(logfp,*) 'ENERGY CHECK  -targets :',qe(ic1),
-     .                                                  qe(ic2)
-              WRITE(logfp,*) '              -integral:',
-     .                eneint(icmid  ,1),
-     .                eneint(TOTAL,1)-eneint(icmid,1)
-              WRITE(logfp,*) '              -tar+int :',
-     .                qe(0      )+eneint(icmid  ,1),
-     .                qe(icmax+1)+(eneint(TOTAL,1)-eneint(icmid,1))
-              WRITE(logfp,*) '              -tot int :',eneint(TOTAL,1)
-c              WRITE(logfp,*) '    SRC:',enesrc(1:icmax,1)
-c              WRITE(logfp,*) 'ENEION:',eneion(1:icmax,ion)
-c              WRITE(logfp,*) 'ENEANO:',eneano(1:icmax)
-c              WRITE(logfp,*) 'ENEUSR:',eneusr(1:icmax)
+              CALL IntegrateArray(FULL,eniion(1,ion),0,integral(1))
+              CALL IntegrateArray(FULL,eniusr(1,ion),0,integral(2))
+              CALL IntegrateArray(FULL,eniano(1,ion),0,integral(3))
+              net = qi(ic1,ion) + qi(ic2,ion) + SUM(integral(1:3))
+              WRITE(logfp,*) 'i-POWER CHECK:',net,ion
+              WRITE(logfp,*) '  qi  :',qi(ic1,ion),qi(ic2,ion)
+              WRITE(logfp,*) '  ion :',integral(1)
+              WRITE(logfp,*) '  usr :',integral(2)
+              WRITE(logfp,*) '  ano :',integral(3)
+              WRITE(logfp,'(A,1P,E10.2,0P,A)') '  BALANCE:',
+     .          ( enisrc(0,ion)+enisrc(icmax+1,ion)+eniint(TOTAL,ion)) /
+     .          (-enisrc(0,ion)-enisrc(icmax+1,ion)) * 100.0D0, ' %'
             ENDIF
 
           ENDDO

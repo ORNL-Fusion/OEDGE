@@ -1,4 +1,4 @@
-c    -*-Fortran-*- 
+c     -*Fortran*- 
 c
 c ======================================================================
 c
@@ -70,7 +70,6 @@ c...  Assign B2 data:
         array(1:MAXNKS,ir) = -999.0
 
         DO ik = 1, nks(ir)     
-
 
           IR_LOOP: DO ir1 = 1, numir
             DO ik1 = 1, numik
@@ -1276,23 +1275,18 @@ c...Hack job here: Blanking PIN sources at the start of each step! - OPTION FIXE
       ENDIF
       WRITE(PINOUT,*)
 
-
 c...  This call copies the plasma arrays into OLDx2 arrays 
 c     in the OLDPLASMA common block associated with the SOL24 
 c     code.  There has been some duplication of arrays (OLDx in the 
 c     PIN_CFD common block) because the code segments
 c     were developed in parallel, and this should be 
 c     sorted out at some point:
-
       CALL MirrorOldPlasma(ktebs,ktibs,knbs,kvhs)
-
 
 
       IF (rel_opt.NE.2.AND.rel_opt.NE.3.AND.    
      .    (tarshift(IKLO).NE.0.0.OR.tarshift(IKHI).NE.0.0)) 
      .  CALL ShiftTargetData
-
-
 
       RETURN
 99    STOP
@@ -1961,6 +1955,7 @@ c...should be elsewhere
       ENDDO
 
 
+
 c
 c     Initialization:
 c
@@ -1968,7 +1963,6 @@ c
       CALL IZero(ikto2,MAXNRS)
       CALL IZero(ikti2,MAXNRS)
       CALL IZero(virloc,MAXNRS*2)
-
 
 c...  RINGTYPE:
       DO ir = 2, irsep-1
@@ -1986,12 +1980,10 @@ c     PFZ ring:
       IF (cgridopt.NE.LINEAR_GRID.AND.ikouts(1,irsep).NE.0) THEN  ! Check (lame) if the connection map is defined
         DO ir = irsep, irwall-1
           status = .TRUE.
-
           DO ik = 1, nks(ir)
             ik1 = ik
             ir1 = ir
             count = 0
-
             DO WHILE (idring(ir1).NE.BOUNDARY.AND.count.LE.nrs)
               ik2 = ikins(ik1,ir1)
               ir2 = irins(ik1,ir1)
@@ -2011,6 +2003,7 @@ c              IF (ir1.LT.irsep) THEN              ! This scheme is poor!
               CALL WN('SetupGrid','Problem with connection '//
      .                'map when searching for private flux regions')
               WRITE(0,*) '  IK,IR= ',ik,ir
+
               EXIT
             ENDIF
             IF (.NOT.status) EXIT

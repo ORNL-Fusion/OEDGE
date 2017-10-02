@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c
       SUBROUTINE TAUIN1 (title,equil,NIZS,VFLUID)
 c      SUBROUTINE TAUIN1 (NIZS,VFLUID)
@@ -1705,9 +1705,16 @@ c
 c slmod begin
 c...  This does not work with generalized geometry:
 
-      IF (grdnmod.EQ.0) call grid_check
+c      IF (grdnmod.EQ.0) call grid_check
 c
-c      call grid_check
+c      write (0,*) 'grdnmod:',grdnmod
+c
+c     Note: run grid check even for generalized geometry .. change 
+c           grid check to just issue a warning.
+c           General extended grids appear to have one boundary ring
+c           for the entire space. 
+c
+      call grid_check
 c slmod end
 c
 C
@@ -4211,8 +4218,20 @@ c
      >     ctargopt.eq.3.or.ctargopt.eq.5.or.
      >     ctargopt.eq.6)
      >    ) then
-         rrs(2,1) = rp(idds(irins(ik,ir),2))
-         zzs(2,1) = zp(idds(irins(ik,ir),2))
+c slmod begin
+c...     Not sure if this is really correct, but at least it fills
+c        the arrays with a vertex that is in the IRINS direction:
+         if (nopriv.and.ir.eq.irsep) then
+           rrs(2,1) = rvertp(1,korpg(ik,ir))
+           zzs(2,1) = zvertp(1,korpg(ik,ir))
+         else
+           rrs(2,1) = rp(idds(irins(ik,ir),2))
+           zzs(2,1) = zp(idds(irins(ik,ir),2))
+         endif
+c
+c         rrs(2,1) = rp(idds(irins(ik,ir),2))
+c         zzs(2,1) = zp(idds(irins(ik,ir),2))
+c slmod end
          rrs(2,3) = rp(idds(ir,2))
          zzs(2,3) = zp(idds(ir,2))
          rrs(2,5) = rp(idds(irouts(ik,ir),2))
@@ -4224,8 +4243,18 @@ c
      >     ctargopt.eq.3.or.ctargopt.eq.5.or.
      >     ctargopt.eq.6)
      >    ) then
-         rrs(4,1) = rp(idds(irins(ik,ir),1))
-         zzs(4,1) = zp(idds(irins(ik,ir),1))
+c slmod begin
+         if (nopriv.and.ir.eq.irsep) then
+           rrs(4,1) = rvertp(4,korpg(ik,ir))
+           zzs(4,1) = zvertp(4,korpg(ik,ir))
+         else
+           rrs(4,1) = rp(idds(irins(ik,ir),1))
+           zzs(4,1) = zp(idds(irins(ik,ir),1))
+         endif
+c
+c         rrs(4,1) = rp(idds(irins(ik,ir),1))
+c         zzs(4,1) = zp(idds(irins(ik,ir),1))
+c slmod end
          rrs(4,3) = rp(idds(ir,1))
          zzs(4,3) = zp(idds(ir,1))
          rrs(4,5) = rp(idds(irouts(ik,ir),1))
@@ -4242,8 +4271,6 @@ C
 C---- CALCULATE THE FOUR AREAS (SOME MAY BE 0) AND SUM THEM.
 C---- AREA OF 4-SIDED IRREGULAR FIGURE IS THAT OF TWO TRIANGLES.
 C
-
-
       KAREAS(IK,IR) = 0.0
       DO 200 I = 2, 3
        DO 200 J = 2, 3
@@ -4323,7 +4350,7 @@ c slmod begin
         IF     (KAREA2(IK,IR).LT.-1.0E-10) THEN 
           CALL ER('TAUVOL','Malformed cell detected, stopping',*99)       
         ELSEIF (KAREA2(IK,IR).LT.1.0E-06) THEN 
-          IF (WARNING_MESSAGE) THEN
+          IF (SLOUTPUT.AND.WARNING_MESSAGE) THEN
             WRITE(0,*) 'WARNING: Small area cell detected, using '//
      +                 'double precision calculation in TAUVOL'
             WARNING_MESSAGE = .FALSE.
@@ -6632,10 +6659,10 @@ c
 
 c
 c     Grid has been read in ... check
+c     Note: grid checking needs to be done after grid manipulation is finished
 c
-      call grid_check
-
-
+c      call grid_check
+c
 c     
 c     
 c     READ in any additional information at the end of the grid file
@@ -7042,7 +7069,8 @@ c
       r0 = r0/(nks(irtmp)-1)
       z0 = z0/(nks(irtmp)-1)
 c     
-      write (6,*) 'Calculated: rxp,zxp,r0,z0 = ',rxp,zxp,r0,z0
+      write (6,'(a,4(1x,g14.7))') 
+     >             'Calculated: rxp,zxp,r0,z0 = ',rxp,zxp,r0,z0
 c     
 c     
 c     Set up value of KBFS and BTS
@@ -11427,15 +11455,18 @@ c       and reported here -- fix:
           CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
           CALL PRB
           i4 = history(1)%ngauge
-          WRITE(fp,'(3X,A5,5X,20(I8))') 
+          WRITE(fp,'(3X,A5,5X,20(I13))') 
      .      'ITER',(i2,i2=1,i4),(i2,i2=1,i4)
           DO i1 = 1, nhistory
-            i3 = history(i1)%gauge_nstrata
+            i3 = history(i1)%nstrata
+c            i3 = history(i1)%gauge_nstrata
             IF (i1.GT.1) 
-     .        WRITE(fp,'(3X,A5,5X,20(I8))') 
+     .        WRITE(fp,'(3X,A5,5X,20(I16))') 
+c     .        WRITE(fp,'(3X,A5,5X,20(I13))') 
      .          '    ',(i2,i2=1,i4),(i2,i2=1,i4)
             WRITE(fp,'(3X,5X,4X,20(A))') 
-     .        '(E19 m-3)',('        ',i2=1,i4-1),'    (eV)'
+     .        '    (E19 m-3)',('             ',i2=1,i4-1),
+     .        '         (eV)'
             WRITE(fp,92) i1,' atm ',
      .                   history(i1)%gauge_parden_atm(i3,1:i4) / 1.E19,
      .                   history(i1)%gauge_egyden_atm(i3,1:i4) /
@@ -11446,10 +11477,12 @@ c       and reported here -- fix:
      .                   history(i1)%gauge_egyden_mol(i3,1:i4) /
      .                  (history(i1)%gauge_parden_mol(i3,1:i4) + 
      .                   1.0E-10)
- 92         FORMAT(3X,I5,A,20(1X,F7.3))
+ 92         FORMAT(3X,I5,A,20(1X,F15.6))
+c 92         FORMAT(3X,I5,A,20(1X,F12.3))
 c
             WRITE(fp,'(3X,5X,5X,20(A))') 
-     .        ' (mTorr)',('        ',i2=1,i4-1),'    (Pa)'
+     .        '      (mTorr)',('             ',i2=1,i4-1),
+     .        '         (Pa)'
             WRITE(fp,93) i1,' atm ',
      .                   history(i1)%gauge_p_atm(i3,1:i4),
      .                   history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
@@ -11461,7 +11494,8 @@ c
      .                   history(i1)%gauge_p_mol(i3,1:i4)),
      .                  (history(i1)%gauge_p_atm(i3,1:i4) +
      .                   history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
- 93         FORMAT(3X,I5,A,20(1X,F7.3))
+ 93         FORMAT(3X,I5,A,20(1X,F15.6))
+c 93         FORMAT(3X,I5,A,20(1X,F12.3))
 c
           ENDDO
 
@@ -11762,13 +11796,15 @@ c
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
 c     slmod begin
-      IF (sloutput.AND.grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-         WRITE(0,*)
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
-         WRITE(0,*)'-------------------------------------------------'
-         WRITE(0,*)
-         RETURN
+      IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
+        IF (sloutput) THEN
+          WRITE(0,*)
+          WRITE(0,*)'-------------------------------------------------'
+          WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+          WRITE(0,*)'-------------------------------------------------'
+          WRITE(0,*)
+        ENDIF
+        RETURN
       ENDIF
 c     slmod end
 c     
@@ -16603,7 +16639,15 @@ c     file is locally connected to unit 98 and is closed
 c     by the end of the read routine. 
 c
 c slmod begin - new
-      parameter(infile=98)
+c
+c     jdemod - 
+c
+c     -replace with dynamically allocated unit number
+c     -update rundiv script to copy in bg plasma to name below
+c     -keep in mind that file will be replaced at the end of 
+c      the divimp run though the contents should not change.
+c
+c      parameter(infile=98)
 c
 c slmod end
 c
@@ -16611,9 +16655,14 @@ c
       integer ik,ir,id
       integer tmpnrs,tmpnds,tmpirsep
       integer tmpnks(maxnrs)
+      integer ierr
+
+      call find_free_unit_number(infile)
+
 c slmod begin - new
 c...  Open background plasma file:
-      OPEN(UNIT=infile,FILE='divimp_plasma.dat',STATUS='OLD',ERR=2000)
+      OPEN(UNIT=infile,FILE='divimp_plasma.dat',STATUS='OLD',
+     >     IOSTAT=ierr,ERR=2000)
 c slmod end
 c
 c     Initialize the CRE2D flag to indicate that data has been
@@ -16656,7 +16705,7 @@ c
 c
 c
 c
- 20   read(infile,10,end=1000,err=2000) buffer
+ 20   read(infile,10,end=1000,iostat=ierr,err=2000) buffer
 c
       if (buffer(1:4).eq.'NRS:') then
          read (buffer,200) tmpnrs,tmpirsep,tmpnds
@@ -16667,6 +16716,12 @@ c
      >          then
 c
 c           Grid characteristic mismatch - exit program.
+c
+            write (0,*) 'DIVIMP PLASMA FILE DOES NOT MATCH GRID:'
+            write (0,*) 'NRS  :',nrs,tmpnrs
+            write (0,*) 'IRSEP:',irsep,tmpirsep
+            write (0,*) 'NDS  :',nds,tmpnds
+            write (0,*) 'PROGRAM EXITING'
 c
             write (6,*) 'DIVIMP PLASMA FILE DOES NOT MATCH GRID:'
             write (6,*) 'NRS  :',nrs,tmpnrs
@@ -16697,6 +16752,11 @@ c         do ik = 1,nrs
 c slmod end
             if (nks(ir).ne.tmpnks(ir)) then
 
+               write (0,*) 'DIVIMP PLASMA FILE DOES NOT MATCH GRID:'
+               write (0,*) 'IR     :',ir
+               write (0,*) 'NKS(IR):',nks(ir),tmpnks(ir)
+               write (0,*) 'PROGRAM EXITING'
+c
                write (6,*) 'DIVIMP PLASMA FILE DOES NOT MATCH GRID:'
                write (6,*) 'IR     :',ir
                write (6,*) 'NKS(IR):',nks(ir),tmpnks(ir)
@@ -16829,9 +16889,16 @@ c
 c
  2000 continue
 c
-      write (0,*) 'ERROR READING IN DIVIMP PLASMA BACKGROUND:'
-      write (6,*) 'ERROR READING IN DIVIMP PLASMA BACKGROUND:'
-      call prc('ERROR READING IN DIVIMP PLASMA BACKGROUND:')
+      write (0,*) 'ERROR OPENING DIVIMP PLASMA BACKGROUND:',ierr
+      write (6,*) 'ERROR OPENING DIVIMP PLASMA BACKGROUND:',ierr
+      call pri('ERROR OPENING DIVIMP PLASMA BACKGROUND:',ierr)
+      stop
+c
+ 2001 continue
+c
+      write (0,*) 'ERROR READING DIVIMP PLASMA BACKGROUND:',ierr
+      write (6,*) 'ERROR READING DIVIMP PLASMA BACKGROUND:',ierr
+      call pri('ERROR READING DIVIMP PLASMA BACKGROUND:',ierr)
       stop
 c
 c     Formatting
@@ -18469,11 +18536,12 @@ c
 c
          if (cprint.eq.3.or.cprint.eq.9) then
 c
-            write(6,'(a,i5,8(1x,g12.5))') 'MPS:',id,b_field,
+            write(6,'(a,i5,9(1x,g12.5))') 'MPS:',id,b_field,
      >                   mps_thickness(ir,it),mps_energy(ir,it),
      >                   thetas(id),target_orth_angle(id),
      >                   kbfst(ir,it),thetas(id)-target_orth_angle(id),
-     >                   cos(thetas(id)-target_orth_angle(id))
+     >                   cos(thetas(id)-target_orth_angle(id)),
+     >                   bts(ik,ir)
 c
          endif
 c
@@ -18516,21 +18584,193 @@ c
 c
 c
 c
-      subroutine find_midplane
+      subroutine calc_midplane_axis(midplane_axis,rsep_out,rsep_in)
       implicit none
       include 'params'
       include 'cgeom'
 c
+      real :: midplane_axis(maxnrs,5)
+      real :: rsep_out,rsep_in
+c
+c     Note: on extended grids the rings may not be ordered consecutively
+c           so the usual routine to find midplane coordinates may not be 
+c           adequate.
+c
+c     Revise: -Intersection of the line Z=Z0 with the grid to obtain the
+c             value of Rmid for any rings intersecting this line.
+c             -Calculate the value of R at the separatrix
+c             -Estimate the R-Rsep distance based on these intersection 
+c              values. 
+c             -Linearly interpolate in PSI across the separatrix to find
+c              the value for Rsep_in and Rsep_out
+c
+c
+c     First find Rsep_in and Rsep_out
+c
+c     Line segments Z=Z0, R=[RMIN,R0] and R=[R0,RMAX]       
+c     
+c
+c     Check every cell on every ring for an intersection with either 
+c     the inner or outer midplane line. There should be only one 
+c     intersection of this type on 
+c
+c     Irwall is a boundary ring so do not include it
+c     if irwall2 > irwall then use it instead 
+c     Not checking for intersections in the PFZ
+c
+
+c
+c     locals
+c
+      real*8 :: rcell1,zcell1,rcell2,zcell2
+      real*8 :: rin1,zin1,rin2,zin2
+      real*8 :: rout1,zout1,rout2,zout2
+      real*8 :: rint,zint
+      integer :: flag,sect
+      integer :: ik,ir,in,ikmid
+c
+
+c
+c      midplane_axis(ir,1) = PSI
+c      midplane_axis(ir,2) = OUTER_MIDPLANE_R
+c      midplane_axis(ir,3) = INNER_MIDPLANE_R
+c      midplane_axis(ir,4) = abs(OUTER_MIDPLANE_R - RSEP_OUTER) * sign(ir-irsep+0.5) 
+c      midplane_axis(ir,5) = abs(INNER_MIDPLANE_R - RSEP_INNER) * sign(ir-irsep+0.5)
+c
+c      real :: rsep_outer, rsep_inner, midplane_axis(maxnrs,5)
+c
+c     Inner and outer midplane axes
+c
+      rout1 = r0
+      zout1 = z0
+      rout2 = rmax
+      zout2 = z0
+c
+      rin1 = r0
+      zin1 = z0
+      rin2 = rmin
+      zin2 = z0
+c
+c     Loop over entire grid
+c     midplane coordinates will only exist for rings with intersections
+c
+c     Initialize to zero
+c
+      midplane_axis = 0.0
+      rsep_out = 0.0
+      rsep_in = 0.0
+c
+      do ir = 1,nrs
+c
+         ikmid = nks(ir)/2
+c
+c        Use grid psi values if available
+c        Note: the two should be about the same
+c
+         if (psifl(ikmid,ir).ne.0.0) then 
+            midplane_axis(ir,1) = psifl(ikmid,ir)
+         else
+            midplane_axis(ir,1) = psitarg(ir,1)
+         endif
+c
+         do ik = 1,nks(ir)
+c
+c           Define center line of cell
+c         
+            rcell1= krb(ik-1,ir)
+            zcell1= kzb(ik-1,ir)
+            rcell2= krb(ik,ir)
+            zcell2= kzb(ik,ir)
+c
+c           Check for intersection with outer midplane
+c
+            call intsect2dp(rcell1,zcell1,rcell2,zcell2,
+     >                     rout1,zout1,rout2,zout2,rint,zint,sect,flag)
+c
+c           Intersection between both sets of end points AND non-colinear
+c           Give outer Rsep value for ring
+c
+            if (sect.eq.1.and.flag.eq.0) then 
+               midplane_axis(ir,2) = rint
+            endif
+
+c
+c           Check for intersection with inner midplane
+c
+            call intsect2dp(rcell1,zcell1,rcell2,zcell2,
+     >                     rin1,zin1,rin2,zin2,rint,zint,sect,flag)
+c
+c           Intersection between both sets of end points AND non-colinear
+c           Give outer Rsep value for ring
+c
+            if (sect.eq.1.and.flag.eq.0) then 
+               midplane_axis(ir,3) = rint
+            endif
+c
+         end do
+c
+      end do
+c
+c     Linearly interpolate Rsep from PSI (might not be best but PSI=1 is only separatrix reference available)
+c
+      rsep_out = (1.0 - midplane_axis(irsep-1,1))
+     >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
+     >           *(midplane_axis(irsep,2)-midplane_axis(irsep-1,2))
+     >           + midplane_axis(irsep-1,2)
+
+      rsep_in = (1.0 - midplane_axis(irsep-1,1))
+     >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
+     >           *(midplane_axis(irsep,3)-midplane_axis(irsep-1,3))
+     >           + midplane_axis(irsep-1,3)
+c
+c     Calculate R-Rsep
+c
+      do ir = 1,nrs
+         if (midplane_axis(ir,2).ne.0.0) then 
+            midplane_axis(ir,4) = midplane_axis(ir,2) - rsep_out
+         endif
+c
+         if (midplane_axis(ir,3).ne.0.0) then 
+            midplane_axis(ir,5) = rsep_in - midplane_axis(ir,3)  
+         endif
+c
+      end do
+c                  
+      return
+      end
+c
+c
+c
+      subroutine find_midplane
+      implicit none
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+c
+c     Calculate midplane distances
+c
+c
       integer ikmidin,ikmidout,ik,ir,ikmid,oumid,inmid,nr
-      integer ikmidouts(maxnrs),ikmidins(maxnrs)
+      integer ikmidouts(maxnrs),ikmidins(maxnrs),in
+      integer iinner, iouter
 c
       real    dist0min,dist0,middistin,middistout
+c
+      real :: midplane_axis(maxnrs,5),rsep_out,rsep_in
+
+c
+c     Revise this method due to extended grids and other 
+c     possible grid geometries. 
+c
+      call calc_midplane_axis(midplane_axis,rsep_out,rsep_in)
+c
+c     Old calculation method
 c
       do ir = 1,irwall
 c
          ikmid = ikmids(ir)
 C
-C        Outer
+C        Outer ... Inner for Xpoint down
 C
          dist0min = hi
 c
@@ -18542,7 +18782,7 @@ c
            ENDIF
         end do
 C
-C       Inner
+C       Inner ... Outer for Xpoint down
 C
         dist0min = hi
 c
@@ -18625,6 +18865,54 @@ c
          middistin  = middistin  + distout(ikmidins(ir),ir)
 c
       end do
+c
+c     Write out comparison of midplane distance methods
+c
+      if (cprint.eq.9.or.cprint.eq.10) then
+
+         write(6,*) 'MIDPLANE DISTANCE CALCULATION COMPARISON'
+         do ir = 1,nrs
+            write(6,'(a,i10,20(1x,g18.8))')  'MID DIST:',ir,
+     >        (middist(ir,in),in = 1,2),
+     >        rcouter(ir),zcouter(ir),rcinner(ir),zcinner(ir),
+     >        (midplane_axis(ir,in),in=1,5)
+         end do
+         
+      endif
+c
+c     Replace original calculation of middist with the revised values for more
+c     complex grids
+c
+c     The calculation method in calc_midplane_axis is independent of grid configuration
+c     while the previous method here used the standard divimp orientation
+c     1 = inner for Xpoint up, outer for Xpoint down
+c     2 = outer for Xpoint up, inner for Xpoint down
+c     Since divimp grids are organized clockwise and indexing starts at the targets. 
+c
+c     
+c
+c
+      if (xpoint_up) then 
+         iouter=2
+         iinner=3
+      else
+         iouter=3
+         iinner=2
+      endif
+c
+      do ir = 1, nrs
+c
+         rcouter(ir) = midplane_axis(ir,iouter)
+         zcouter(ir) = z0
+         rcinner(ir) = midplane_axis(ir,iinner)
+         zcinner(ir) = z0
+c
+c        1 = inner, 2=outer for Xpoint up
+c
+         middist(ir,1) = midplane_axis(ir,iinner+2)
+         middist(ir,2) = midplane_axis(ir,iouter+2)
+c
+      end do
 c     
 c     Assign midplane distances for the PFZ from equivalent
 c     core flux surfaces for now
@@ -18637,10 +18925,30 @@ c
 
             middist(ir,1) = middist(nr,1)
             middist(ir,2) = middist(nr,2)
+         else
+            write(6,'(a,8i8,20(1x,g18.8))') 
+     >          'PFZ MID DIST: NO CORRERSPONDING RING:',
+     >            ir,nr,irsep,nrs,irtrap
 
          endif
 c
       end do
+
+c
+c
+      if (cprint.eq.9.or.cprint.eq.10) then
+
+         write(6,*) 'MIDPLANE DISTANCE CALCULATION UPDATED'
+         do ir = 1,nrs
+            write(6,'(a,i10,20(1x,g18.8))')  'MID DIST:',ir,
+     >        (middist(ir,in),in = 1,2),
+     >        rcouter(ir),zcouter(ir),rcinner(ir),zcinner(ir),
+     >        (midplane_axis(ir,in),in=1,5)
+         end do
+         
+      endif
+
+
 c
 c
 c
@@ -19460,7 +19768,7 @@ c                    IPP/08 Krieger - ensure index of nvertp is not zero
 c
                             err = err + 1
 c
-                            write(error_comment,'(a,6i5)') 
+                            write(error_comment,'(a,6i10)') 
      >                          'CELL GEOMETRY ERROR: SIDE UP     34:'
      >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
      >                                ik,ir,ik+1,ir,
@@ -19501,7 +19809,7 @@ c                    IPP/08 Krieger - ensure index of nvertp is not zero
 c
                             err = err + 1
 c
-                            write(error_comment,'(a,6i5)') 
+                            write(error_comment,'(a,6i10)') 
      >                           'CELL GEOMETRY ERROR: SIDE DOWN   12:'
      >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',                            
      >                                ik,ir,ik-1,ir,
@@ -19547,7 +19855,7 @@ c
 c
                             err = err + 1
 c
-                            write(error_comment,'(a,6i5)') 
+                            write(error_comment,'(a,6i10)') 
      >                            'CELL GEOMETRY ERROR: SIDE OUTWARD23:'
      >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
      >                                ik,ir,ikn,irn,
@@ -19592,7 +19900,7 @@ c
 c
                             err = err + 1
 c
-                            write(error_comment,'(a,6i5)') 
+                            write(error_comment,'(a,6i10)') 
      >                            'CELL GEOMETRY ERROR: SIDE INWARD 41:'
      >                                //'(IK1,IR1,IK2,IR2,IN1,IN2):',
      >                                ik,ir,ikn,irn,
@@ -19625,10 +19933,17 @@ c
 c
       if (err.ne.0) then 
 
-          write(error_comment,'(a,6i5)') 
+
+          write(0,'(a,6i10)') 
+     >          'WARNING:GEOMETRY ERRORS:MISMATCHED POLYGON SIDES:'//
+     >                   'FOUND ON GRID: COUNT=',err
+          write(0,'(a)') 'THIS WARNING MAY BE EXPECTED'//
+     >            ' IF USING EXTENDED GRIDS: CHECK OUTPUT TO VERIFY'
+
+          write(error_comment,'(a,6i10)') 
      >          'GEOMETRY ERRORS:MISMATCHED POLYGON SIDES:'//
      >                   'FOUND ON GRID: COUNT=',err
-          call errmsg('TAU MODULE: ROUTINE GRID_CHECK',
+          call dbgmsg('TAU MODULE: ROUTINE GRID_CHECK',
      >                  error_comment)
 
       endif
@@ -21033,6 +21348,12 @@ c             - too much computation and may not be useful depending on the
 c               wall intersections calculated.   
 c             - code may also implicitly assume a mostly open geometry 
 c
+c slmod begin
+       WRITE(0,*) '==============================='
+       WRITE(0,*) '=  NOT CALCULATING WALL_PRAD  ='
+       WRITE(0,*) '==============================='
+       RETURN
+c slmod end
        if (cgridopt.eq.RIBBON_GRID) return
 
 c

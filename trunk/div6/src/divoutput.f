@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c     @PROCESS NOOPT
       SUBROUTINE PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
       IMPLICIT none
@@ -570,7 +570,9 @@ c
          endif
 c
          write(coment,
-     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')
+c     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g10.5))') ! jde - coment is 120 characters now .. the reduced formatting interferes with printing some quatities
+c                                                                      ! so it was switched back to the original format
+     >       '(3i4,2(1x,f9.5),1x,f9.6,1x,f9.5,2x,g13.5,3(1x,g12.5))')  ! overflow, i.e. comment is *100, but 101 characters are specified - SL, 07/01/14
      >       id,ikds(id),irds(id),rp(id),zp(id),psitarg(irds(id),in),
      >       dds(id),tmp_bratio,costet(id),
      >       sepdist2(id),middist(irds(id),in)
@@ -637,6 +639,10 @@ c
 c
 c
       SUBROUTINE PR_BG  (NIZS,NIMPS,NIMPS2,nymfs)
+c slmod begin
+      USE mod_sol28
+      USE mod_sol28_global
+c slmod end
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -693,6 +699,16 @@ c
       call pr_bg_options(NIZS,NIMPS,NIMPS2,nymfs)
 c
 C-----------------------------------------------------------------------
+c
+c slmod begin
+c...  Load reference OSM plasma (binary form):
+      IF (opt%osm_load.NE.0) THEN
+        CALL PRB
+        WRITE(datunit,*) 'LOADING OSM FORMAT BACKGROUND PLASMA:'
+        WRITE(datunit,*) '    '//TRIM(opt%f_osm_load)
+        CALL PRB
+      ENDIF
+c slmod end
 c
 c     Print PIN Options
 c

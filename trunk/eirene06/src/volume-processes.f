@@ -2067,6 +2067,31 @@ C
       FPATHM=1.D10
       SIGMAX=0.D0
 C
+c slmod begin
+c 
+c For i-pre-0000c, this has happened twice in a row, a long way into the run (and it didn't happen for the steady-state case, which followed 
+c 430k particles):
+c
+c IPANU:      390000
+c IPANU:      400000
+c IPANU:      410000
+c forrtl: severe (408): fort: (3): Subscript #1 of the array LGVAC has value 0 which is less than the lower bound of 1
+c
+c Image              PC                Routine            Line        Source
+c eirene             0000000000E8DE0A  Unknown               Unknown  Unknown
+c eirene             0000000000E8C985  Unknown               Unknown  Unknown
+c eirene             0000000000E3B8A6  Unknown               Unknown  Unknown
+c eirene             0000000000DEDE55  Unknown               Unknown  Unknown
+c eirene             0000000000DEE2A9  Unknown               Unknown  Unknown
+c eirene             0000000000D261A3  fpathm_                  2070  volume-processes.f
+c eirene             000000000088D37F  folneut_                 4697  particle-tracing.f
+c eirene             0000000000661A66  mcarlo_                  1952  main-routines.f 
+c
+      IF (K.LE.0) THEN 
+        WRITE(0,*) 'ERROR FPATHM: K=0, abandoning MFP data'
+        RETURN
+      ENDIF
+c slmod end
       IF (LGVAC(K,0)) RETURN
 C
 C   LOCAL PLASMA PARAMETERS
@@ -8815,10 +8840,10 @@ C
 C
 C  1ST SECONDARY INDEX
 c slmod begin - debug
-      WRITE(0,*) 'debugging',-1
-      WRITE(0,*) 'ircx =',ircx  
-      WRITE(0,*) 'n1stx=',n1stx(ircx,1)
-      WRITE(0,*) 'iscd1=',iscd1
+c      WRITE(0,*) 'debugging',-1
+c      WRITE(0,*) 'ircx =',ircx  
+c      WRITE(0,*) 'n1stx=',n1stx(ircx,1)
+c      WRITE(0,*) 'iscd1=',iscd1
 c slmod end
       N1STX(IRCX,1)=IDEZ(ISCD1,1,3)
       N1STX(IRCX,2)=IDEZ(ISCD1,3,3)

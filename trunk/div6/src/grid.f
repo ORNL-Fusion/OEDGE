@@ -1,4 +1,4 @@
-c     -*-Fortran-*-
+c     -*Fortran*-
 c ======================================================================
 c ======================================================================
 c
@@ -1136,6 +1136,7 @@ c target segments.  These kinds of modifications are made via the ...
 c array:
 c
       SUBROUTINE BuildNeutralWall
+      USE mod_grid
       USE mod_geometry
       IMPLICIT none
 
@@ -1424,7 +1425,9 @@ c...      Debug: Save data and avoid attempted wall sequencing:
 c...      Leave the loop:
           EXIT
 c       ----------------------------------------------------------------
-        ELSEIF (eirasdat(i1,1).EQ.998.0) THEN
+        ELSEIF (eirasdat(i1,1).EQ.998.0.AND.
+     .          .NOT.(eirnasdat.EQ.1.AND.n_grid_wall.NE.0.AND.cneur.EQ.4  ! Avoid default behaviour if data loaded from the GRID grid file
+     .          )) THEN   
 c...      Setup OSM geometry:
           CALL MapRingstoTubes
           CALL DumpData_OSM('output.trouble1','trouble1')
@@ -3038,8 +3041,10 @@ c...    Assumes that connection map is built:
           virtag(ik,ir) = virtag(ik,irref)
         ENDDO
         IF (ir.GT.irsep) THEN
-          thetat(idds(ir,1)) = thetat(idds(irref,1))
-          thetat(idds(ir,2)) = thetat(idds(irref,2))
+          IF (idds(ir,1).GT.0.AND.idds(irref,1).GT.0) THEN 
+            thetat(idds(ir,1)) = thetat(idds(irref,1))
+            thetat(idds(ir,2)) = thetat(idds(irref,2))
+          ENDIF
         ENDIF
       ENDIF
 
@@ -3063,7 +3068,7 @@ c have to get rid of the ikto/ikti restrictions - in DeleteCell also
 c
 c fix npolyp problem - adding real cells after adding virtual cells
 c will screw things up if npolyp is not incremented with each
-c virtual cell - be that is shitty for multiple calls to EIRENE
+c virtual cell - be that is poor for multiple calls to EIRENE
 c where the korpg index could overflow - need to set aside a bank for
 c for virtual cells that can be reset, and allow enough room for all
 c the real cells that are going to be added
@@ -3222,6 +3227,7 @@ c Should all of these quantities be assigned in this way...?
         bratio(ik,ir) = bratio(ikinf,ir)        
       ENDIF
       kbfs  (ik,ir) = kbfs  (ikinf,ir)
+      bts   (ik,ir) = bts   (ikinf,ir)
       kvhs  (ik,ir) = kvhs  (ikinf,ir)
       knbs  (ik,ir) = knbs  (ikinf,ir)
       knes  (ik,ir) = knes  (ikinf,ir)
@@ -3813,7 +3819,6 @@ c
 
       INTEGER ik1,ik2,ir1,ir2,i1,i2
 
-
       IF (ik1.LT.1.OR.ik1.GT.nks(ir1)+1.OR.
      .    ik2.LT.1.OR.ik2.GT.nks(ir2)+1)
      .  CALL ER('MoveCell','Index out of bounds',*99)
@@ -3823,6 +3828,7 @@ c
       zs    (ik1,ir1) = zs    (ik2,ir2)
       bratio(ik1,ir1) = bratio(ik2,ir2)
       kbfs  (ik1,ir1) = kbfs  (ik2,ir2)
+      bts   (ik1,ir1) = bts   (ik2,ir2)
       kvhs  (ik1,ir1) = kvhs  (ik2,ir2)
       knbs  (ik1,ir1) = knbs  (ik2,ir2)
       knes  (ik1,ir1) = knes  (ik2,ir2)
@@ -4010,10 +4016,12 @@ c     Local variables:
 c
 c Initialize variables:
 c
-      debug = .TRUE.
+      debug = .FALSE.
+c      IF (sloutput) debug = .TRUE.
       STATUS = 0
       i = 0
-c
+
+
 c Find center of main plasma... check if this is done elsewhere...
 c make sure it is done for all grids...
 c
@@ -4080,7 +4088,7 @@ c Check this...
         ENDDO
       ENDDO
       
-      WRITE(0,*) 'GenWallRing: NCELL=',ncell
+c      IF (sloutput) WRITE(0,*) 'GenWallRing: NCELL=',ncell
       IF (ncell+1.GT.2*MAXNKS)
      .  CALL ER('GenWallRing','Array bound violation, increase '//
      .          'MAXNKS',*99)
@@ -4097,9 +4105,9 @@ c...  Adjust WALLTH based on x-point location:
      .    WRITE(0,*) 'BROKEN MAP (NCELL,RCEN,ZCEN,XPTH): ',
      .      ncell,rcen,zcen,xpth
         
-        write(88,*) 'what the fuck',rxp,rcen
-        write(88,*) '             ',zxp,zcen
-        write(88,*) '             ',xpth
+        write(88,*) 'what is happening?',rxp,rcen
+        write(88,*) '                  ',zxp,zcen
+        write(88,*) '                  ',xpth
         DO ii = 1, ncell
           write(88,*) 'wallth:',ii,wallth(ii),wallik(ii),wallir(ii)
         ENDDO
@@ -4250,9 +4258,12 @@ c        ENDDO
         ENDDO
       ENDIF
 
-
-c      CALL DumpGrid('BUMMER MAN')
-
+      IF (ncell.GT.MAXNKS) THEN
+        WRITE(0,*) 'ERROR GenWallRing: IK index out of bounds'
+        WRITE(0,*) 'NCELL =',ncell
+        WRITE(0,*) 'MAXNKS=',maxnks
+        CALL DumpGrid('IK index out of bounds')
+      ENDIF
 
 c...  Assign cell quantities for IR=IRWALL:
       ir = irwall
@@ -10036,6 +10047,7 @@ c
           zs    (ik,ir) = zs    (ik-1,ir)
           bratio(ik,ir) = bratio(ik-1,ir)
           kbfs  (ik,ir) = kbfs  (ik-1,ir)
+          bts   (ik,ir) = bts   (ik-1,ir)
           korpg (ik,ir) = korpg (ik-1,ir)
           IF (ALLOCATED(divimp_ik)) THEN
             divimp_ik(ik,ir) = divimp_ik(ik-1,ir)

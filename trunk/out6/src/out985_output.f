@@ -305,7 +305,8 @@ c...  Input:
 c          DO ir = irsep, irsep+15, 15 ! DIII-D
 c          DO ir = irsep, irsep+19, 20  ! MAST
 c          DO ir = irsep, irsep+29, 29  ! MAST
-          DO ir = irsep, irsep
+c          DO ir = irsep, irsep
+          DO ir = 9, 9
             count = count + 1
             ikm = -1
             rmid = -100.0
@@ -832,13 +833,14 @@ c
       IMPLICIT none
 
       INTEGER option,nsur,MAXSURFACE,MAXPOINTS,status,
-     .        npts(0:MAXSURFACE),hsur(0:MAXSURFACE)
+     .        npts(0:MAXSURFACE),hsur(0:MAXSURFACE),max_srf
       LOGICAL check
       REAL*8  vsur(3,MAXPOINTS,0:MAXSURFACE)
       CHARACTER fname*(*)
 
-      INTEGER iobj,iside,isrf,i1,iobj1
-      REAL*8  phi,phi_max
+      INTEGER   iobj,iside,isrf,i1,iobj1,fp,ierr,isur
+      REAL*8    phi,phi_max
+      CHARACTER dummy*1024
 
       CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
 c      CALL LoadObjects('tetrahedrons.001.raw',status)
@@ -873,8 +875,9 @@ c       ----------------------------------------------------------------
 c       ----------------------------------------------------------------   
         CASE (2)  ! Vessel wall
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=2'
+
           DO iobj = 1, nobj
-c           IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) CYCLE     
+c            IF (grp(obj(iobj)%group)%origin.NE.GRP_VACUUM_GRID) CYCLE     
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
@@ -887,9 +890,9 @@ c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 301 ! -2 ! 301
+     .            hsur(nsur) = 201 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 301 ! -3 ! 301
+     .            hsur(nsur) = 201 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
@@ -897,9 +900,52 @@ c               IF (srf(isrf)%index(IND_SURFACE).EQ.0) CYCLE
                 ENDDO
                 isrf = srf(isrf)%link
                 IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
+
+
               ENDDO
             ENDDO
           ENDDO
+
+          CALL ZA09AS(dummy(1:8))
+          dummy(9:10) = dummy(1:2)  ! Switch to EU format
+          dummy(1:2 ) = dummy(4:5)
+          dummy(4:5 ) = dummy(9:10)
+          dummy(9:10) = '  '
+          CALL ZA08AS(dummy(11:18))
+          CALL CASENAME(dummy(21:),ierr)
+
+          fp = 99
+          OPEN (UNIT=fp,FILE='tri.triangle_wall',ACCESS='SEQUENTIAL',
+     .          STATUS='REPLACE')
+          WRITE(fp,'(A)') '* ITER triangle wall for Svetlana and '//
+     .                    'Ladislas (from OUT)'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
+          WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
+          WRITE(fp,'(A)') '* Version     : 1.0'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A)') '* axes: x = R, z = Z, y according to the'//
+     .                    ' right-hand rule'
+          WRITE(fp,'(A)') '*'
+
+          WRITE(fp,'(A)') '* everything is in metres'
+          WRITE(fp,'(A)') '*'
+          WRITE(fp,'(A8,2X,3(3A12,2X),A4)') '*    Ind',
+     .      'P1x','P1y','P1z',
+     .      'P2x','P2y','P2z',
+     .      'P3x','P3y','P3z','Mat'
+          WRITE(fp,*) nsur
+          DO isur = 1, nsur
+            WRITE(fp,'(I8,2X,3(3F12.7,2X),I4)') 
+     .        isur,
+     .        vsur(1,1,isur),-vsur(3,1,isur),vsur(2,1,isur),
+     .        vsur(1,2,isur),-vsur(3,2,isur),vsur(2,2,isur),
+     .        vsur(1,3,isur),-vsur(3,3,isur),vsur(2,3,isur),
+     .        0
+          ENDDO
+
+
+          CLOSE(fp)
 c       ----------------------------------------------------------------   
         CASE (3)
 c...      Search for tetrahedrons that are close to a particular trajectory:
@@ -981,9 +1027,9 @@ c              isrf = ABS(obj(iobj)%iside(iside))
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 301 ! -2 ! 301
+     .            hsur(nsur) = 101 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 301 ! -3 ! 301
+     .            hsur(nsur) = 101 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
@@ -998,18 +1044,25 @@ c       ----------------------------------------------------------------
         CASE (5)  ! Vessel wall, with toroidal end surfaces taken away, and the top surface...
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=5'
           phi_max = 0.0
+          max_srf = 0
+
           DO iobj = 1, nobj
             DO iside = 1, obj(iobj)%nside
               isrf = obj(iobj)%iside(iside)
               isrf = ABS(isrf)
               IF (obj(iobj)%omap(iside).NE.0) CYCLE
 
-              IF (srf(isrf)%index(IND_SURFACE).NE.33.AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.3 .AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.5 .AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.7 .AND.
-     .            srf(isrf)%index(IND_SURFACE).NE.9 .AND. 
-     .            srf(isrf)%index(IND_SURFACE).NE.11) CYCLE
+              max_srf = MAX(max_srf,srf(isrf)%index(IND_SURFACE))
+
+c             Filter:
+c             IF (srf(isrf)%index(IND_SURFACE).EQ.6) CYCLE
+
+c              IF (srf(isrf)%index(IND_SURFACE).NE.33.AND.
+c     .            srf(isrf)%index(IND_SURFACE).NE.3 .AND.
+c     .            srf(isrf)%index(IND_SURFACE).NE.5 .AND.
+c     .            srf(isrf)%index(IND_SURFACE).NE.7 .AND.
+c     .            srf(isrf)%index(IND_SURFACE).NE.9 .AND. 
+c     .            srf(isrf)%index(IND_SURFACE).NE.11) CYCLE
 
 c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
               DO WHILE (isrf.GT.0)
@@ -1019,35 +1072,38 @@ c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
                 ENDIF
                 nsur = nsur + 1
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID) 
-     .            hsur(nsur) = 100 ! 301 ! -2 ! 301
+     .            hsur(nsur) = 300 ! 400 ! 302 ! 202 ! 202 ! 100 ! 301 ! -2 ! 301
                 IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) 
-     .            hsur(nsur) = 100 ! 301 ! -3 ! 301
+     .            hsur(nsur) = 300 ! 400 ! 302 ! 202 ! 202 ! 100 ! 301 ! -3 ! 301
                 npts(nsur) = srf(isrf)%nvtx
                 IF (npts(nsur).NE.3) STOP 'sdgfsdgsdsd'
                 DO i1 = 1, npts(nsur)
                   vsur(1:3,i1,nsur) = vtx(1:3,srf(isrf)%ivtx(i1))
                 ENDDO
 
-                check = .TRUE.
-                DO i1 = 1, npts(nsur)
-                  phi = DATAN(vsur(3,i1,nsur) / vsur(1,i1,nsur)) * 
-     .                  180.0D0 / 3.141592D0
-                  phi_max = MAX(phi,phi_max)
-                  IF (phi.GT.0.1D0.AND.phi.LT.20.229) check =.FALSE.
-c                IF (phi.LT.0.1D0.OR.phi.GT.24.9D0) nsur = nsur - 1  ! *** HACK ***
-c                WRITE(0,*) 'phi= ',phi
-                ENDDO
-                DO i1 = 1, npts(nsur)
-                  IF (vsur(2,i1,nsur).GT.-2.25D0) check = .TRUE.
-                ENDDO
-                IF (check) nsur = nsur - 1
+c               Filter:
+                IF (.FALSE.) THEN
+                  check = .TRUE.
+                  DO i1 = 1, npts(nsur)
+                    phi = DATAN(vsur(3,i1,nsur) / vsur(1,i1,nsur)) * 
+     .                    180.0D0 / 3.141592D0
+                    phi_max = MAX(phi,phi_max)
+                    IF (phi.GT.0.1D0.AND.phi.LT.20.229) check =.FALSE.  ! filter
+c                  IF (phi.LT.0.1D0.OR.phi.GT.24.9D0) nsur = nsur - 1  ! *** HACK ***
+c                  WRITE(0,*) 'phi= ',phi
+                  ENDDO
+                  DO i1 = 1, npts(nsur)
+                    IF (vsur(2,i1,nsur).GT.-2.25D0) check = .TRUE.
+                  ENDDO
+                  IF (check) nsur = nsur - 1
+                ENDIF
 
                 isrf = srf(isrf)%link
                 IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
               ENDDO
             ENDDO
           ENDDO
-          WRITE(0,*) 'PHI_MAX=',phi_max
+          WRITE(0,*) 'PHI_MAX=',phi_max,max_srf
 c       ----------------------------------------------------------------   
         CASE DEFAULT
           CALL WN('TestTetrahedrons','Unknown option')
@@ -1067,6 +1123,7 @@ c
       USE mod_out985_ribbon
       USE mod_filament
       USE mod_options
+      USE mod_interface
       IMPLICIT none
 
 c...  Input:
@@ -1082,12 +1139,11 @@ c...  Input:
       INCLUDE 'slcom'
 
       INTEGER   MAXSURFACE       ,MAXPOINTS
-c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
-      PARAMETER(MAXSURFACE=500000,MAXPOINTS=10)
+      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
+c      PARAMETER(MAXSURFACE=500000,MAXPOINTS=10)
 
       INTEGER FindMidplaneCell
       REAL    FindSeparatrixRadius
-
 
       INTEGER nsur,iobj,isur,isrf,i1,i2,i3,n1,ipts,ipts1,ipts2,pass,
      .        nx,ny,iadd,
@@ -1097,7 +1153,7 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
       LOGICAL cont,solid
       REAL    XXMIN,XXMAX,YYMIN,YYMAX,theta,theta1,theta2,
      .        xsur(MAXPOINTS),ysur(MAXPOINTS),frac,
-     .        xin,yin,zin,rsep,rhoval,
+     .        xin,yin,zin,rsep,rhoval,xin_step,
      .        xcen,ycen,xnear,ynear,angle(3),delr,dely,delphi
       REAL*8  a(3),b(3),n(3),p1(3,6),p2(3,6),light(3,10),view(3),p3(3),
      .        mat(3,3),deltax,deltay,res,xs1,xs2,ys1,ys2,
@@ -1106,10 +1162,8 @@ c      PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
      .        mindsur,maxdsur,frac1,frac2,limit1,limit2,len1,len2
       CHARACTER fname*512,buffer*2048,cdum1*512
 
-
       INTEGER, ALLOCATABLE :: npts(:),hsur(:),dlist(:),ilist(:)
       REAL*8,  ALLOCATABLE :: csur(:,:),vsur(:,:,:),bsur(:,:),dsur(:)
-
 
       CALL setup_col(16,5)
    
@@ -1301,7 +1355,7 @@ c           ------------------------------------------------------------
                 READ(opt%plots(iplot1),*) cdum1,(idum1,i1=1,3),
      .                                    delr,dely,delphi
                 xin = FindSeparatrixRadius(1) + delr
-                yin = 0.0
+                yin = z0 + 0.0
                 zin = 0.0
                 len1 = 1.0E+20
                 len2 = 1.0E+20
@@ -1309,6 +1363,8 @@ c           ------------------------------------------------------------
                 READ(opt%plots(iplot1),*) cdum1,(idum1,i1=1,3),
      .                                    delr,dely,delphi
                 xin = FindSeparatrixRadius(1) + delr
+                yin = z0
+                zin = 0.0
                 len1 = DBLE(dely)
                 len2 = DBLE(delphi) 
                 sub_option = 4
@@ -1319,8 +1375,65 @@ c           ------------------------------------------------------------
      .                           opt,nobj,obj,
      .                           nsur,npts,hsur,vsur,len1,len2)
               npts(nsur) = 2 ! This appears necessary -- compiler bug? or something naught somewhere...
-              IF (sub_option.EQ.4) THEN
+
+
+
+              IF (.TRUE.) THEN
+
+                i3 = nsur
+
+                sub_option = 4
+                xin = FindSeparatrixRadius(1) 
+                yin = z0 + 0.0
+                zin = 0.0
+                len1 = 1.0E+20
+                len2 = 1.0E+20
+
+                ALLOCATE(ilist(MAXSURFACE))
+
+                xin       = xin + 0.001
+                xin_step  = 0.12597000 - 0.001
+
+                fname = 'idl.field_line_test' 
+                CALL inOpenInterface(TRIM(fname),ITF_WRITE)
+
+                DO i2 = 1, 2  
+
+                  i1 = nsur + 1
+
+                  WRITE(0,*) '------------- xin for field lines',xin,i1
+
+                  CALL GetSchematics(xin,yin,zin,
+     .                               sub_option,MAXSURFACE,MAXPOINTS,
+     .                               icolour,
+     .                               opt,nobj,obj,
+     .                               nsur,npts,hsur,vsur,len1,len2)
+
+                  ilist(i1:nsur) = i2
+
+                  xin = xin + xin_step
+
+                  CALL inPutData(ilist(    i3+1:nsur),'INDEX','NA')
+                  CALL inPutData( vsur(1,1,i3+1:nsur),'X_1','m')
+                  CALL inPutData( vsur(2,1,i3+1:nsur),'Y_1','m')
+                  CALL inPutData(-vsur(3,1,i3+1:nsur),'Z_1','m')
+
+                  CALL inPutData(ilist(         nsur),'INDEX','NA')
+                  CALL inPutData( vsur(1,2,     nsur),'X_1','m')
+                  CALL inPutData( vsur(2,2,     nsur),'Y_1','m')
+                  CALL inPutData(-vsur(3,2,     nsur),'Z_1','m')
+
+                ENDDO
+
+                CALL inCloseInterface
+
+                DEALLOCATE(ilist)
+
+                nsur = i3
+
               ENDIF
+
+
 c           ------------------------------------------------------------
             CASE (003) ! 3D flux-tube
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
@@ -1424,9 +1537,9 @@ c           ------------------------------------------------------------
             CASE (021) ! Test tetrahedrons
               READ(opt%plots(iplot1),*) cdum1,option,sub_option,icolour,
      .                                  fname
-              IF (sub_option.NE.2.AND.
-     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
-c              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+c              IF (sub_option.NE.2.AND.
+c     .            nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
+              IF (nsur_solid.EQ.MAXSURFACE+1) nsur_solid = nsur + 1
               CALL TestTetrahedrons(sub_option,fname,nsur,npts,vsur,
      .                              hsur,MAXSURFACE,MAXPOINTS,status)
               WRITE(0,*) 'NSUR=',nsur
@@ -1513,45 +1626,7 @@ c        WRITE(0,*) 'NPTS:',isur,npts(isur)
       ENDDO
 
 
-      IF (.TRUE.) THEN
-        WRITE(0,*) '    SELECTING'
 
-c...    Decide which surfaces are to be deleted:
-        DO isur = 1, nsur
-          IF (hsur(isur).LT.-1.OR.npts(isur).EQ.2) CYCLE
-
-          IF (MOD(ABS(hsur(isur))/100,10).EQ.1.OR.
-     .        MOD(ABS(hsur(isur))/100,10).EQ.2) CYCLE
-
-          r = DSQRT( csur(1,isur)**2 + csur(3,isur)**2 )
-
-          IF (csur(3,isur).GT.0.01D0) npts(isur) = -999
-
-c          IF (csur(3,isur).GT.0.01D0.AND.                          ! MAST
-c     .        r.GT.0.75.AND.DABS(csur(2,isur)).LT.1.5) THEN        
-c          IF (r.GT.1.20.AND.                                       ! DIII-D
-c     .        csur(2,isur).GT.-1.0.AND.csur(2,isur).LT.1.2) THEN
-c...        Tag for deletion:
-c            npts(isur) = -999
-c          ENDIF
-        ENDDO
-
-c...    Delete:
-        WRITE(0,*) '    DELETING  NSUR:',nsur
-        DO i1 = nsur, 1, -1
-          IF (npts(i1).EQ.-999) THEN
-            DO i2 = i1, nsur-1
-              npts(i2) = npts(i2+1)
-              hsur(i2) = hsur(i2+1)
-              DO i3 = 1, npts(i2)
-                vsur(1:3,i3,i2) = vsur(1:3,i3,i2+1)
-              ENDDO
-            ENDDO
-            nsur = nsur - 1
-          ENDIF
-        ENDDO
-        WRITE(0,*) '              NSUR:',nsur
-      ENDIF
 
 
 c.... Estimate center of surface:
@@ -1642,6 +1717,53 @@ c.... Estimate center of surface:
       ENDDO
 
 
+
+
+      IF (.TRUE.) THEN
+        WRITE(0,*) '    SELECTING'
+
+c...    Decide which surfaces are to be deleted:
+        DO isur = 1, nsur
+          IF (hsur(isur).LT.-1.OR.npts(isur).EQ.2) CYCLE
+
+          IF (MOD(ABS(hsur(isur))/100,10).EQ.1.OR.
+     .        MOD(ABS(hsur(isur))/100,10).EQ.2) CYCLE
+
+          r = DSQRT( csur(1,isur)**2 + csur(3,isur)**2 )
+
+          IF (csur(3,isur).GT.4.5D0) npts(isur) = -999
+c          IF (csur(3,isur).GT.0.01D0) npts(isur) = -999
+
+c          IF (csur(3,isur).GT.0.01D0.AND.                          ! MAST
+c     .        r.GT.0.75.AND.DABS(csur(2,isur)).LT.1.5) THEN        
+c          IF (r.GT.1.20.AND.                                       ! DIII-D
+c     .        csur(2,isur).GT.-1.0.AND.csur(2,isur).LT.1.2) THEN
+c...        Tag for deletion:
+c            npts(isur) = -999
+c          ENDIF
+        ENDDO
+
+c...    Delete:
+        WRITE(0,*) '    DELETING  NSUR:',nsur
+        DO i1 = nsur, 1, -1
+          IF (npts(i1).EQ.-999) THEN
+            DO i2 = i1, nsur-1
+              npts(i2) = npts(i2+1)
+              hsur(i2) = hsur(i2+1)
+              DO i3 = 1, npts(i2)
+                vsur(1:3,i3,i2) = vsur(1:3,i3,i2+1)
+              ENDDO
+            ENDDO
+            nsur = nsur - 1
+          ENDIF
+        ENDDO
+        WRITE(0,*) '              NSUR:',nsur
+      ENDIF
+
+
+
+
+
       IF (.TRUE..OR.solid) THEN
         WRITE(0,*) '    CHECKING VISIBILITY'
 
@@ -1656,6 +1778,8 @@ c...      Surface normal:
           n(1) =  a(2) * b(3) - a(3) * b(2)
           n(2) =  a(3) * b(1) - a(1) * b(3)
           n(3) =  a(1) * b(2) - a(2) * b(1) 
+
+c          write(0,*) n(3),MOD(ABS(hsur(isur))/100,10)
 
           IF (.FALSE.) THEN
 c...        Check if surface is visible from both sides, and if yes, flip the normal if surface
@@ -1672,7 +1796,6 @@ c...        Store normalized surface normal for lighting calculation later on (o
 c          write(0,*) 'check',isur,hsur(isur),
 c     .    MOD(ABS(hsur(isur))/100,10),n(3),npts(isur)
         ENDDO
-
 
 c ***ALSO CLIP BASED ON WHETHER OR NOT THE SURFACE IS BEHIND THE OBSERVER***
 
@@ -2250,7 +2373,7 @@ c          IF (iobj.NE.471.AND.iobj.NE.472.AND.iobj.NE.458) CYCLE  ! *TEMP*
 
           DO isid = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
 
-c             IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c            IF (isid.NE.2) CYCLE
 
@@ -2259,8 +2382,8 @@ c     .          obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE  ! *TEMP*
 
 c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL) CYCLE
-            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
-     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_VESSEL_WALL.AND.
+c     .          obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c              WRITE(6,*) 'BOUNDARY?',obj(iobj)%ik,obj(iobj)%ir
 
@@ -2273,11 +2396,10 @@ c            IF (obj(iobj)%ik.NE.16) CYCLE
             IF (obj(iobj)%type.EQ.OP_INTEGRATION_VOLUME) THEN
               count = count + 
      .                1.0 / REAL(MAX(obj(iobj)%nsur,obj(iobj)%nside))
+
 c              IF (count.GT.100.0) CYCLE
 c              IF (count.GT.15000.0) CYCLE
             ENDIF
-
-c *** NEED TO STORE LINE SEGMENTS AND DELETE DUPLICATES... 
 
             IF (obj(iobj)%nside.NE.0) THEN
               isrf1 = obj(iobj)%iside(isid,1)
@@ -2359,6 +2481,7 @@ c...              Rotate vertices:
 c...            Filter:
                 count = 0.0
 c                IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c                IF (obj(iobj)%imap(1,isid).NE.iobj) CYCLE
 c                WRITE(0,*) 'GO MAN',iobj,isid
                 DO isrf = isrf1, isrf2
                   DO i3 = 1, srf(isrf)%nvtx
@@ -2561,12 +2684,17 @@ c          DO ipixel = 1, npixel
           CALL inCloseInterface
         ENDDO
 
+
+
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
           WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
 c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
 10        FORMAT(A)
 c10        FORMAT(A,I0.2,A)
+
+        wRITE(0,*) 'dumping signal '//TRIM(file)
+
           CALL inOpenInterface(TRIM(file),ITF_WRITE)
           CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
           DO i = 1, opt%int_num
@@ -2576,7 +2704,7 @@ c10        FORMAT(A,I0.2,A)
             CALL inPutData(opt%int_database(i),'DATABASE','n/a')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
-          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
+c          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
 c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
@@ -2593,7 +2721,9 @@ c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
             ENDDO
           ENDDO
           CALL inCloseInterface
+
         ENDDO
+
 
       ENDIF
 
@@ -2609,9 +2739,6 @@ c...    Image:
 
 
         DO idet = 1, opt%ndet
-
-c          CALL FRAME
-
           nxbin = 0
           nybin = 0
           qmin =  0.0
@@ -2848,6 +2975,13 @@ c...        Assign data:
 
           ENDIF
 
+
+          IF (idet.LT.opt%ndet) THEN
+            CALL DrawFRAME
+            CALL FRAME
+          ENDIF
+
+
         ENDDO
       ENDIF
 
@@ -2957,7 +3091,7 @@ c        IF (ALLOCATED(opt%img_image)) DEALLOCATE(opt%img_image)
       ENDIF
 
 
-      IF (.TRUE.) THEN
+      IF (.FALSE.) THEN
 c...    Spectra:
         slopt2 = 1
         iopt_ghost = 1

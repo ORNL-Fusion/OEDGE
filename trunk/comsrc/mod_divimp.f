@@ -3,6 +3,68 @@
 ! ======================================================================
 ! ======================================================================
 !
+      MODULE mod_divimp_walldyn
+      IMPLICIT none
+      SAVE
+      PUBLIC
+!
+!     ------------------------------------------------------------------
+! 
+      TYPE, PUBLIC :: type_walldyn
+
+         REAL*4              :: n       ! neutral redistribution
+         REAL*4              :: i       ! ion redistribution
+         REAL*4, ALLOCATABLE :: iz (:)  ! ion redistribution by charge state
+         REAL*4, ALLOCATABLE :: eiz(:)  ! energy of redistributed ions by charge state
+
+      ENDTYPE type_walldyn
+
+      INTEGER :: wdn_i
+      TYPE(type_walldyn), ALLOCATABLE :: wdn(:,:)
+!
+!     ==================================================================
+!
+      CONTAINS
+!
+!     ------------------------------------------------------------------
+! 
+      SUBROUTINE divWdnAllocate(wallpts,nizs)
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: wallpts,nizs
+
+      INTEGER :: i,j
+
+      IF (ALLOCATED(wdn)) THEN
+        WRITE(0,*) 'ERROR divWdnAllocate: WDN array already allocated'
+        STOP
+      ENDIF
+
+      wdn_i = 1
+      
+      ALLOCATE(wdn(wallpts+1,wallpts+1))
+
+      DO i = 1, wallpts+1
+        DO j = 1, wallpts+1
+          ALLOCATE(wdn(i,j)%iz (nizs+1))
+          ALLOCATE(wdn(i,j)%eiz(nizs+1))
+          wdn(i,j)%n   = 0.0
+          wdn(i,j)%i   = 0.0
+          wdn(i,j)%iz  = 0.0
+          wdn(i,j)%eiz = 0.0
+        END DO
+      END DO
+      RETURN
+
+      END SUBROUTINE divWdnAllocate
+!
+!     ==================================================================
+!
+      END MODULE mod_divimp_walldyn
+!
+! ======================================================================
+! ======================================================================
+!
       MODULE mod_divimp
       IMPLICIT none
       SAVE
@@ -34,6 +96,7 @@
 
          REAL*4 :: em_par_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: em_ene_atm(MAXNATM,0:MAXNSRC)
+         REAL*4 :: em_par_mol(MAXNMOL,0:MAXNSRC)
 
          REAL*4 :: launch(MAXNLAUNCH)
          REAL*4 :: prompt
@@ -45,8 +108,6 @@
      .           wall_nlaunch    
 
       TYPE(type_wall_flux), ALLOCATABLE :: wall_flx(:)
-
-
 
 !     DIVIMP input options:
 !     ------------------------------------------------------------------
@@ -82,9 +143,12 @@
 !         INTEGER       :: nsputter
 !...     Store particle state data:
          INTEGER       :: pstate
+!...     Store particle state data:
+         INTEGER       :: niter               ! number of DIVIMP iterations
       ENDTYPE type_options_divimp
  
       TYPE(type_options_divimp) :: opt_div
+      INTEGER                   :: div_iter
 !
 !     ==================================================================
 !
@@ -129,7 +193,8 @@
       ENDTYPE type_sputter_data
 
       TYPE(type_sputter_data), ALLOCATABLE :: sputter_data(:)
-      INTEGER                              :: sputter_ndata
+      INTEGER :: sputter_ndata,sputter_ilast
+      REAL    :: sputter_nabsfac              ! temporary storage of nabsfac from divCompileSputteringYields
 !
 !     ------------------------------------------------------------------
 ! 
@@ -138,18 +203,31 @@
 !     ==================================================================
 !
       CONTAINS
+!
+!     ------------------------------------------------------------------
+! 
+      SUBROUTINE divClean
+      USE mod_divimp_walldyn
 
-      SUBROUTINE     divClean
-        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+      IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+      IF (ALLOCATED(wdn     )) DEALLOCATE(wdn)
+
       END SUBROUTINE divClean
+!
+!     ------------------------------------------------------------------
+! 
+      SUBROUTINE divInitializeOptions
 
+!      opt_div%nsputter = 0
+      sputter_ndata = 0
+      sputter_ilast = 0
+      sputter_nabsfac = 0.0
+      nymfs_global = 0
 
-      SUBROUTINE     divInitializeOptions
-!        opt_div%nsputter = 0
-        sputter_ndata = 0
-        nymfs_global = 0
       END SUBROUTINE divInitializeOptions
-
+!
+!     ------------------------------------------------------------------
+! 
       END MODULE mod_divimp
 !
 ! ======================================================================
@@ -172,8 +250,6 @@
 !        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
 !      END SUBROUTINE divClean
 
-
-
       END MODULE mod_divimp_cneut
 !
 ! ======================================================================
@@ -187,21 +263,23 @@
 !     ------------------------------------------------------------------
 ! 
       TYPE, PUBLIC :: type_tdep_data
-         REAL      :: r
-         REAL      :: z
-         REAL      :: phi
-         REAL      :: s
-         REAL      :: cross
-         REAL      :: diag
-         REAL      :: temp
-         REAL      :: vel
-         REAL      :: charge
-         REAL      :: weight
+         REAL :: r
+         REAL :: z
+         REAL :: phi
+         REAL :: s
+         REAL :: cross
+         REAL :: diag
+         REAL :: temp
+         REAL :: vel
+         REAL :: charge
+         REAL :: weight
       ENDTYPE type_tdep_data
 !
 !     ------------------------------------------------------------------
 ! 
       INTEGER :: dummy
+
+      LOGICAL :: tdep_data_exists
 
       TYPE(type_tdep_data), ALLOCATABLE :: tdep_save(:)
       INTEGER :: tdep_save_n
@@ -213,8 +291,33 @@
       REAL    :: tdep_load_deltat
       REAL    :: tdep_load_qtim
       REAL    :: tdep_load_frac
+      REAL    :: tdep_load_ions_injected
+      REAL    :: tdep_load_ions_to_target
 
       END MODULE mod_divimp_tdep
+!
+! ======================================================================
+! ======================================================================
+!
+      MODULE mod_divimp_3d
+      IMPLICIT none
+      SAVE
+      PUBLIC
+!
+!     ------------------------------------------------------------------
+! 
+      INTEGER :: cneut_test
+
+!
+!     ==================================================================
+!
+!      CONTAINS
+!
+!      SUBROUTINE     divClean
+!        IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
+!      END SUBROUTINE divClean
+!
+      END MODULE mod_divimp_3d
 !
 ! ======================================================================
 ! ======================================================================

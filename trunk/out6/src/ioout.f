@@ -1675,9 +1675,9 @@ C
 
 
       SUBROUTINE RDGCOL(graph,r1p,z1p,r2p,z2p,probe_diameter,
-     >                  dperp,ierr)
+     >                  dperp,axis_opt,ierr)
       implicit none
-      integer ierr
+      integer ierr,axis_opt
       real r1p,z1p,r2p,z2p,probe_diameter, dperp
       CHARACTER GRAPH*(*)
 C
@@ -1713,7 +1713,8 @@ c
 C
       MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
       READ (BUFFER,*,ERR=9999,END=9999) GRAPH,r1p,z1p,r2p,z2p,
-     >                                  probe_diameter,dperp
+     >                                  probe_diameter,dperp,
+     >                                  axis_opt
 c
 
 9997  continue 
@@ -3083,7 +3084,7 @@ c *TEMP*
       IF (slver.GE.3.6) THEN 
         READ (8) idum1
         IF (idum1.EQ.1) THEN 
-          write(0,*) 'reading wall flux!'
+*         write(0,*) 'reading wall flux!'         ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))

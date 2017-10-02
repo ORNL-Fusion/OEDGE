@@ -2426,7 +2426,20 @@ c      WRITE(SLOUT,'(4A)') ' ERROR ',routine,': ',message
       integer sect,flag
 c
 c     Calculates intersection of two lines and sets flag if the
-c     intersection is between the end points of both line segments.
+c     intersection is due to lines being parallel. 
+c
+c     FLAG:
+c
+c     0 - normal intersection
+c 
+c     1 - lines colinear horizontal
+c
+c     2 - lines colinear vertical
+c
+c     3 - lines colinear parallel
+c
+c
+c     SECT:
 c
 c     Instead of just true and false for the intersection - this 
 c     code has been generalized to 4 return values.

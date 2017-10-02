@@ -26,7 +26,7 @@
       INTEGER, PUBLIC, PARAMETER :: VOID_MAXNSEG  = 1000, 
      .                              VOID_MAXNHOLE = 100 ,
      .                              MAXNHISTORY   = 100 ,
-     .                              MAXNGAUGE     = 20  ,
+     .                              MAXNGAUGE     = 200 ,
      .                              MAXNSTRATA    = 50
 
       END MODULE MOD_EIRENE06_PARAMETERS
@@ -151,8 +151,7 @@ c...    Quantities returned by EIRENE:
 
 !...  Code identifier:
       CHARACTER, PUBLIC :: fluid_code*256
-      
-      
+            
       TYPE(type_surface), PUBLIC, ALLOCATABLE, SAVE :: surface(:)
       
 !...  Fluid code magnetic grid cells:
@@ -190,13 +189,19 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
     
 !...  Block  4 variables:
       INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam,   ! Do I need these "SAVE's"?
-     .                         whipe  
+     .                         whipe, fluid_grid  
       REAL   , PUBLIC, SAVE :: torfrac
     
 !...  Block  6 variables:
       INTEGER, PUBLIC, SAVE :: trim_data
       REAL   , PUBLIC, SAVE :: ermin
+
+!...  Block  7 variables:
+      INTEGER, PUBLIC, SAVE :: gas_n
     
+!...  Block 11 variables:
+      INTEGER, PUBLIC, SAVE :: i1trc,i2trc
+
 !...  Block 13 variables:
       REAL, PUBLIC, SAVE :: dtimv,time0
     
@@ -305,26 +310,25 @@ c
      .                      IND_ISI    = 7   ! Index of the slice specification in the tetrahedron grid specification array
 
 
-      INTEGER, PARAMETER :: IND_STDGRD  = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
-     .                      IND_TARGET  = 2,  ! Target (block 7 stratum in Eirene input file)
-     .                      IND_SURFACE = 3   ! Surface (block 2A non-default surface in Eirene input file)
+      INTEGER, PARAMETER :: IND_STDGRD   = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41
+     .                      IND_TARGET   = 2,  ! Target (block 7 stratum in Eirene input file)
+     .                      IND_SURFACE  = 3,  ! Surface (block 2A non-default surface in Eirene input file)
+     .                      IND_WALL_STD = 4,  ! xVESM wall index
+     .                      IND_WALL_ADD = 5   ! additional surface wall
 
 !     Triangle objects:
       INTEGER, SAVE :: ntry,ntrysrf,ntryvtx
-      TYPE(type_object) , ALLOCATABLE, SAVE :: try(:)
-      TYPE(type_srf)    , ALLOCATABLE, SAVE :: trysrf(:)
-      REAL*8            , ALLOCATABLE, SAVE :: tryvtx(:,:)
-
+      TYPE(type_object), ALLOCATABLE, SAVE :: try(:)
+      TYPE(type_srf)   , ALLOCATABLE, SAVE :: trysrf(:)
+      REAL*8           , ALLOCATABLE, SAVE :: tryvtx(:,:)
 
 !     Surface quantities:
       REAL, ALLOCATABLE, SAVE :: flux(:,:)
-
 
 !     Volume quantities:      
       REAL, ALLOCATABLE, SAVE :: bfield(:,:)
       REAL, ALLOCATABLE, SAVE :: efield(:,:)
       REAL, ALLOCATABLE, SAVE :: plasma(:,:)
-
 
       END MODULE mod_eirene06_locals
 !
@@ -336,19 +340,33 @@ c
        
       PUBLIC
 
-      TYPE, PUBLIC :: type_eirene_history
-        INTEGER :: iiter
-        INTEGER :: ngauge
-        INTEGER :: gauge_nstrata    
-        REAL    :: gauge_vol        (           MAXNGAUGE)  ! [m-3]
-        REAL    :: gauge_p_atm      (MAXNSTRATA,MAXNGAUGE)  ! [mTorr]
-        REAL    :: gauge_p_mol      (MAXNSTRATA,MAXNGAUGE)
-        REAL    :: gauge_parden_atm (MAXNSTRATA,MAXNGAUGE)
-        REAL    :: gauge_parden_mol (MAXNSTRATA,MAXNGAUGE)
-        REAL    :: gauge_egyden_atm (MAXNSTRATA,MAXNGAUGE)
-        REAL    :: gauge_egyden_mol (MAXNSTRATA,MAXNGAUGE)
-      ENDTYPE type_eirene_history
+      TYPE, PUBLIC :: type_eirene_gauge
+        INTEGER       :: ngauge
+        REAL          :: gauge_x    (MAXNGAUGE)  ! 
+        REAL          :: gauge_y    (MAXNGAUGE)  ! 
+        REAL          :: gauge_z    (MAXNGAUGE)  ! 
+        REAL          :: gauge_phi  (MAXNGAUGE)  ! 
+        CHARACTER*128 :: gauge_tag  (MAXNGAUGE)  ! 
+        INTEGER       :: gauge_index(MAXNGAUGE)  ! 
+      ENDTYPE type_eirene_gauge
 
+      TYPE, PUBLIC :: type_eirene_history
+        INTEGER       :: iiter
+        INTEGER       :: ngauge
+        INTEGER       :: nstrata    
+        REAL          :: strata_flux(MAXNSTRATA)  ! Amps
+        REAL          :: strata_lost(MAXNSTRATA)  ! Amps
+        REAL          :: gauge_xyzphi    (4         ,MAXNGAUGE)  ! 
+        CHARACTER*128 :: gauge_tag       (           MAXNGAUGE)  ! 
+        INTEGER       :: gauge_index     (           MAXNGAUGE)  ! 
+        REAL          :: gauge_vol       (           MAXNGAUGE)  ! [m-3]
+        REAL          :: gauge_p_atm     (MAXNSTRATA,MAXNGAUGE)  ! [mTorr]
+        REAL          :: gauge_p_mol     (MAXNSTRATA,MAXNGAUGE)
+        REAL          :: gauge_parden_atm(MAXNSTRATA,MAXNGAUGE)
+        REAL          :: gauge_parden_mol(MAXNSTRATA,MAXNGAUGE)
+        REAL          :: gauge_egyden_atm(MAXNSTRATA,MAXNGAUGE)
+        REAL          :: gauge_egyden_mol(MAXNSTRATA,MAXNGAUGE)
+      ENDTYPE type_eirene_history
 
       INTEGER :: nhistory
       TYPE(type_eirene_history), SAVE :: history(MAXNHISTORY)
