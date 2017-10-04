@@ -19841,8 +19841,12 @@ c                  if (ir.ne.irwall-1) then
 c
                      ikn = ikouts(ik,ir)
                      irn = irouts(ik,ir)
-
-                     testin = korpg(ikn,irn)
+                     
+                     if (ikn.eq.0.or.irn.eq.0) then 
+                        testin = 0
+                     else
+                        testin = korpg(ikn,irn)
+                     endif
 c
 c                    IPP/08 Krieger - ensure index of nvertp is not zero
                      if (testin.ne.0.and.nvertp(max(1,testin)).ne.0.and.
@@ -19886,8 +19890,12 @@ c                  if (ir.ne.2.and.ir.ne.irtrap+1) then
 c
                      ikn = ikins(ik,ir)
                      irn = irins(ik,ir)
-
-                     testin = korpg(ikn,irn)
+                     
+                     if (ikn.eq.0.or.irn.eq.0) then 
+                        testin = 0
+                     else
+                        testin = korpg(ikn,irn)
+                     endif
 c
 c                    IPP/08 Krieger - ensure index of nvertp is not zero
                      if (testin.ne.0.and.nvertp(max(1,testin)).ne.0.and.

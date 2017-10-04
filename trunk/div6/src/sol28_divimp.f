@@ -821,6 +821,7 @@ c
 c ======================================================================
 c
       SUBROUTINE ImportOSMGrid
+      use debug_options
       USE mod_geometry
       USE mod_sol28_global
       USE mod_grid_divimp
@@ -837,6 +838,8 @@ c
       INTEGER        status,n,ic,it,iobj,ik,ir,id,in
       REAL*8         rv(4),zv(4)
       CHARACTER*1024 fname,command
+c
+      call pr_trace('ImportOSMGrid','START')
 
       WRITE(0,*)
       WRITE(0,*) 'IMPORTING OSM GRID -- BTS NEEDS TO BE INCLUDED'
