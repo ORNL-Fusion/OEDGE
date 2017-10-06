@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# This routine simply greps all the DIVIMP source code looking for a string
+#
+#
+
+SRCROOT=$HOME/divimp
+#
+# Source code locations
+#
+export DIVSRCDIR=$SRCROOT/div6/src
+export DIVSRC=$DIVSRCDIR/*.f
+export DIVSRCDIRF90=$DIVSRCDIR/f90
+export DIVSRCF90=$DIVSRCDIRF90/*.f90
+
+export OUTSRCDIR=$SRCROOT/out6/src
+export OUTSRC=$OUTSRCDIR/*.f
+export OUTSRCDIRF90=$OUTSRCDIR/f90
+export OUTSRCF90=$OUTSRCDIRF90/*.f90
+
+export COMSRCDIR=$SRCROOT/comsrc
+export COMSRC=$COMSRCDIR/*.f
+export COMSRCDIRF90=$COMSRCDIR/f90
+
+export COMSRCF90=$COMSRCDIRF90/*.f90
+
+export COMMONSRCDIR=$SRCROOT/commons
+export COMMONSRC=$COMMONSRCDIR/*
+
+#echo $DIVSRC
+#echo $DIVSRCF90
+#echo $OUTSRC
+#echo $DIVSRCF90
+#echo $COMSRC
+#echo $COMSRCF90
+
+echo Searching for: $1
+#
+# Check div sources
+#
+
+grep -i "$1" $DIVSRC
+grep -i "$1" $DIVSRCF90
+
+#
+# Check out sources
+#
+
+#grep -i $1 $OUTSRC
+#grep -i $1 $OUTSRCF90
+
+#
+# Check common Sources
+#
+
+grep -i "$1" $COMSRC
+grep -i "$1" $COMSRCF90
+
+#
+# Check common blocks
+#
+
+#grep -i $1 $COMMONSRC
