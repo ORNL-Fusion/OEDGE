@@ -3339,7 +3339,7 @@ c
             sol_axis(in) = real(in-1)/real(maxnk-1)
          end do
 
-         write(ounit,'(38x,200(1x,g18.8))') 
+         write(ounit,'(46x,200(1x,g18.8))') 
      >        (sol_axis(in),in=1,maxnk)
 
 
@@ -3383,7 +3383,8 @@ c
 
             end do
 
-            write(ounit,'(201(1x,g18.8))') psitarg(ir,outer_targid),
+            write(ounit,'(i8,201(1x,g18.8))') ir,
+     >           psitarg(ir,outer_targid),
      >           middist(ir,outer_targid),
      >           (sol_impdens(in),in=1,maxnk)
 

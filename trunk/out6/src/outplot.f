@@ -513,6 +513,7 @@ C
       REAL    CVALXY(MAXGXS,MAXGYS), CVALKR(MAXNKS,MAXNRS)
       real    tmpconts(maxpts)
       CHARACTER*36 NAME
+      integer cntr_order,start_ngs,end_ngs,step_ngs
 c
       real logtable(21)
       data logtable /0.0e+0, 0.5e-6, 1.0e-6,
@@ -530,6 +531,13 @@ C
         CALL RVALKR(CVALKR,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >              XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
       ENDIF
+
+      cntr_order = 1
+      ! reverse contour order if less than zero
+      if (cntropt.lt.0) then 
+         cntropt = abs(cntropt)
+         cntr_order= -1
+      endif
 
 c      write(0,'(a,8(1x,g18.8))') 'Contour:',xxmin,xxmax,yymin,yymax,
 c     >              vmin,vmax,minscale,maxscale
@@ -649,8 +657,21 @@ c
       endif
 c
 c...dev
-      DO IG = 1,tmpNGS
-c      DO IG = tmpNGS,1,-1
+c jdemod - put contour labels with highest values at top
+c
+c      DO IG = 1,tmpNGS
+c
+      if (cntr_order.eq.1) then 
+         start_ngs = 1
+         end_ngs = tmpngs
+         step_ngs = 1
+      elseif (cntr_order.eq.-1) then 
+         start_ngs = tmpngs
+         end_ngs = 1
+         step_ngs = -1
+      endif
+
+      DO IG = start_ngs,end_ngs,step_ngs
 c
         if (cntropt.eq.4.or.cntropt.eq.5) then
 c
@@ -723,6 +744,10 @@ c...  For toroidal camera plot 972:
       ENDIF
 c slmod end
 
+c
+c`    Reset cntropt sign to value on entry
+c
+      cntropt = cntropt *  cntr_order
 c
 c     moved to end; in case of false color plots, the separatrix
 c     was hidden by the coloring procedures - Krieger IPP/97

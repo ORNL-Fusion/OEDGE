@@ -128,7 +128,7 @@ contains
              !
              icnt = icnt + 1
 
-             !write(0,'(a,3i4,1p,12(1x,g12.5))') 'OSM1:',ik,ir,icnt,rsect,zsect,sint,kss(ik,ir),kss2(ik,ir),ksb(ik-1,ir),ksb(ik,ir),midplane_axis(ir)
+             !write(0,'(a,4i4,1p,12(1x,g12.5))') 'OSM1:',nks(ir),ik,ir,icnt,rsect,zsect,sint,kss(ik,ir),kss2(ik,ir),ksb(ik-1,ir),ksb(ik,ir),midplane_axis(ir)
 
              !
              !              Assign axis value depending on option
@@ -580,14 +580,15 @@ contains
 
     write(outunit,'(a)') ' TOTAL FLUX AND DENSITY SUMMARY:'
     write(outunit,'(a,10(1x,g18.8))') ' ABSFAC:',absfac_neut,absfac
-    write(outunit,'(31(1x,a))') 'INDEX','IK','IR','SINT','RSECT','ZSECT','PSI','ROMP','NE','TE','TI','CS','LCOLL','LEN1','LEN2','LEN3','DIST',&
-               'IMPDENS_'//trim(elabs(1)(1:4)),'IMPDENS_'//trim(elabs(2)(1:4)),'IMPDENS_CENT','IMPFLUX_'//trim(elabs(1)(1:4)),'IMPFLUX_'//trim(elabs(2)(1:4)),'IMPFLUX_CENT','PINT','PMAX'
+    write(outunit,'(32(1x,a))') 'INDEX','IK','IR','SINT','RSECT','ZSECT','PSI','ROMP','NE','TE','TI','CS','LCOLL','LEN1','LEN2','LEN3','DIST',&
+               'IMPDENS_'//trim(elabs(1)(1:4)),'IMPDENS_'//trim(elabs(2)(1:4)),'IMPDENS_CENT','IMPFLUX_'//trim(elabs(1)(1:4)),'IMPFLUX_'//trim(elabs(2)(1:4)),&
+               'IMPFLUX_CENT','PINT','PMAX','SMAX'
     do in = 1,numthe
-       write(outunit,'(i8,30(1x,g12.5))') in,local_info(in,1),local_info(in,2),local_info(in,3),local_info(in,4),local_info(in,5),local_info(in,6),local_info(in,7),&
+       write(outunit,'(i8,31(1x,g12.5))') in,local_info(in,1),local_info(in,2),local_info(in,3),local_info(in,4),local_info(in,5),local_info(in,6),local_info(in,7),&
             local_vals(in,1),local_vals(in,2),local_vals(in,3),local_vals(in,6),&
             lcoll(in),slen(in,1),slen(in,2),slen(in,3),&
             local_outs(in),impdens(maxizs+1,in,1),impdens(maxizs+1,in,2),impdens(maxizs+1,in,3),&
-            impflux(maxizs+1,in,1),impflux(maxizs+1,in,2),impflux(maxizs+1,in,3),local_info(in,8),kpmaxs(int(local_info(in,2)))
+            impflux(maxizs+1,in,1),impflux(maxizs+1,in,2),impflux(maxizs+1,in,3),local_info(in,8),kpmaxs(int(local_info(in,2))),ksmaxs(int(local_info(in,2)))
     end do
     write(outunit,'(a)') 
 

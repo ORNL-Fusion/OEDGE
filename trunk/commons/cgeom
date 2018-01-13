@@ -24,7 +24,9 @@ c slmod end
      >  COSALI,COSALO,COSTET,bratio,RHOG,HRO,HTETA,ksb,kss2,kps2,krb,
      >  OKTEBS,OKTIBS,OKNBS,OKVHS,OKES,nves,rves,zves,areap,kpb,kzb,
      >  ALPH,finds,foutds,ikrefsol,ikrefcore,ikrefpp,tempds,nfla,
-     >  distin,distout,tdistin,tdistout,ikmids,rcouter,rcinner,
+     >  distin,distout,tdistin,tdistout,ikmids,
+     >  n_ik_offsets,ik_offset_data,sol22_halfringlen_opt,
+     >  rcouter,rcinner,
      >  zcouter,zcinner,middist,separatrix_dist,
      >  target_orth_angle,psifl,knes,kpinchs,kpinchs_para,psitarg,
      >  ikmidout_sep,ikmidin_sep,asep,asep_eff,
@@ -58,8 +60,9 @@ c
      >  KORPG(MAXNKS,MAXNRS),REFCT,TAGDV(MAXNKS,MAXNRS),                
      >  IKING(MAXNKS,MAXNRS),IKOUTG(MAXNKS,MAXNRS),IKTI,IKTO,           
      >  irsep2,irwall2,irtrap2,nrs2,ndsin2,ikrefsol,ikrefcore,ikrefpp,
-     >  ndsin3,ikt1,ikt2,nves,nfla,ikmids(maxnrs),ikmidout_sep,
-     >  ikmidin_sep
+     >  ndsin3,ikt1,ikt2,nves,nfla,ikmids(maxnrs),
+     >  ikmidout_sep,ikmidin_sep,n_ik_offsets,sol22_halfringlen_opt
+      
 c                                                
       REAL, TARGET :: 
      >  RMIN,RMAX,ZMIN,ZMAX,R0,Z0,RXP,ZXP,TSLICE,DR,DZ,DTHETG,       
@@ -102,7 +105,7 @@ c
      >  separatrix_dist(maxnks,maxnrs),asep,asep_eff,
      >  asep_tor,asep_tor_eff,targfluxdata(maxnds+3,4,4),
      >  wallfluxdata(maxpts+5,4,4),wallprad(maxpts+6,3),
-     >  delta_psin_core
+     >  delta_psin_core, ik_offset_data(maxnrs,4)
 c
       logical xpoint_up,nopriv
 c

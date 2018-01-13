@@ -2543,24 +2543,8 @@ c              IKMID = IKMIDS(IR) + 1 - be aware of this when
 c              modifying or adding code - check the definition
 c              of IKMID being used in the loacl routine.
 c
-      call izero(ikmids,maxnrs)
+      call calculate_ikmids
 c
-      do ir = 1,nrs
-         smid = ksmaxs(ir)/2.0
-         do ik = 1 ,nks(ir)
-            if (kss(ik,ir).gt.smid) then
-               ikmids(ir) = ik-1
-               goto 365
-            endif
-         end do
-c
- 365     continue
-c
-c         write (6,'(a,3i5,3g14.5)')
-c     >            'IKMIDS:',ir,ik,ikmids(ir),smid,kss(ikmids(ir),ir),
-c     >                          kss(ikmids(ir)-1,ir)
-c
-      end do
 
       call pr_trace('TAU','BEFORE FIND_MIDPLANE')
 c
@@ -3041,7 +3025,7 @@ c       discontinuty, but it's not necessary for SOL28 (and a problem for
 c       some ITER cases I found):
 c
         if (getmodel(3,ir).eq.28) cycle
-c        write(0,*) '****** blanking mid-point grad terms! ******'
+c          write(0,*) '****** blanking mid-point grad terms! ******'
 c slmod end
 c
 c       Fix the mid-point of the ring where the solutions join and force
@@ -17953,6 +17937,116 @@ c
 c
 c
 c
+      subroutine calculate_ikmids
+      implicit none
+      include 'params'
+      include 'comtor'
+      include 'cgeom'
+
+      integer in, ik, ir
+      real :: mid
+      integer,external :: sfind, pfind
+c
+c     Calculate the cell containing the mid-point of each ring
+c     - based on the S-distance between the two targets.
+c     - and based on the distance between cell centres.
+c
+c     CAUTION: This array contains the index of the cell center
+c              immediately less than the S-centre value of the
+c              ring. SOME DIVIMP code uses this as the
+c              mid-point index, other DIVIMP code requires that
+c              IKMID = IKMIDS(IR) + 1 - be aware of this when
+c              modifying or adding code - check the definition
+c              of IKMID being used in the loacl routine.
+
+c
+c this routine supports a number of options for calculating/modifying 
+c the values of ikmids
+c
+c Option 0 - fixed IK offset specified from the ring midpoint +/-
+c Option 1 - fraction of +/-SMAX specified from the ring midpoint
+c Option 2 - fraction of +/-PMAX specified from the ring midpoint
+c
+c The option is specified in the offset input data
+c OPT  IR_START   IR_END    OFFSET_DATA
+c
+
+      ikmids = 0
+
+      do ir = 1,nrs
+         mid = ksmaxs(ir)/2.0
+         ikmids(ir) = sfind(mid,ir)
+         if (mid.lt.kss(ikmids(ir),ir)) then 
+            ikmids(ir)=ikmids(ir)-1
+         end if
+c         write (0,'(a,3i8,6(1xg14.5))')
+c     >         'IKMIDSA:',ir,nks(ir),ikmids(ir),mid,kss(ikmids(ir),ir),
+c     >                          kss(ikmids(ir)-1,ir),ksb(ikmids(ir),ir),
+c     >                          ksb(ikmids(ir)+1,ir),ksmaxs(ir)/2.0
+      end do
+
+      if (n_ik_offsets.ne.0) then
+
+c RECALCULATE IKMIDS FOR SHIFTED RINGS
+         
+         do in = 1, n_ik_offsets
+
+c Assign numerical offset
+            if (ik_offset_data(in,1).eq.0.0) then 
+               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+                  ikmids(ir)= ikmids(ir) + ik_offset_data(in,4)
+               end do
+
+c calculate S offset
+            elseif (ik_offset_data(in,1).eq.1.0) then 
+               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+                  mid = ksmaxs(ir)/2.0 + ik_offset_data(in,4)*ksmaxs(ir)
+                  ikmids(ir) = sfind(mid,ir)
+                  if (mid.lt.kss(ikmids(ir),ir)) then 
+                     ikmids(ir)=ikmids(ir)-1
+                  end if
+               end do
+
+c calculate P offset
+            elseif (ik_offset_data(in,1).eq.2.0) then 
+               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+                  mid = kpmaxs(ir)/2.0 + ik_offset_data(in,4)*kpmaxs(ir)
+                  ikmids(ir) = pfind(mid,ir)
+                  if (mid.lt.kps(ikmids(ir),ir)) then 
+                     ikmids(ir)=ikmids(ir)-1
+                  end if
+               end do
+
+            endif
+            
+         end do
+
+      endif 
+
+      if (cprint.eq.9) then 
+         do ir = 1,nrs
+            write (6,'(a,3i8,6(1x,g14.5))')
+     >        'IKMIDS:',ir,nks(ir),ikmids(ir),kss(ikmids(ir),ir),
+     >        kss(ikmids(ir)-1,ir),ksb(ikmids(ir),ir),
+     >        ksb(ikmids(ir)+1,ir),ksmaxs(ir)/2.0
+         end do
+      endif
+c     
+c      do ir = 1,nrs
+c         write (0,'(a,3i8,6(1xg14.5))')
+c     >            'IKMIDS:',ir,nks(ir),ikmids(ir),kss(ikmids(ir),ir),
+c     >                          kss(ikmids(ir)-1,ir),ksb(ikmids(ir),ir),
+c     >                          ksb(ikmids(ir)+1,ir),ksmaxs(ir)/2.0
+c      end do 
+c     
+c     
+
+
+      return
+      end
+c
+c
+c
       integer function sfind(s,ir)
       implicit none
       real s
@@ -18038,6 +18132,90 @@ c
 c
 c
 c
+      integer function pfind(p,ir)
+      implicit none
+      real p
+      integer ir
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+c
+c     PFIND: This routine finds the IK index of the cell on ring IR
+c            that contains the given P-position. Depending on the
+c            value of PDOPT - it will make different assumptions on
+c            the locations of the cell boundaries. PDOPT=1 is taken to
+c            imply that the ksb arrays are properly filled and
+c            available. PDOPT=0 will simply find the closest KSS value.
+c
+c            David Elder, November 23, 2017
+c
+      integer ik,ikfound
+c
+      if (pdopt.eq.0) then
+c
+c        Find closest KPS
+c
+         do ik = 1,nks(ir)-1
+c
+c           Before first cell
+c
+            if (ik.eq.1.and.p.lt.kps(ik,ir)) then
+               pfind = 1
+               return
+c
+c           After last cell
+c
+            elseif (ik.eq.nks(ir).and.p.gt.kps(ik,ir)) then
+               pfind = nks(ir)
+               return
+c
+c           In one of the intervening cells
+c
+            elseif (p-kps(ik,ir).lt.(kps(ik+1,ir)-kps(ik,ir))) then
+c
+c              Check to make sure that the kps array is properly setup
+c
+               if ((kps(ik+1,ir)-kps(ik,ir)).gt.0.0) then
+                  if ((p-kps(ik,ir)).gt.
+     >               (0.5*(kps(ik+1,ir)-kps(ik,ir)))) then
+                     pfind = ik +1
+                     return
+                  else
+                     pfind = ik
+                     return
+                  endif
+               endif
+            endif
+
+         end do
+
+      elseif (pdopt.eq.1) then
+
+         do ik = 1,nks(ir)
+c
+c           Check to see if S is with the bounds of each bin
+c
+            if ((p-kpb(ik-1,ir)).lt.(kpb(ik,ir)-kpb(ik-1,ir))) then
+               pfind = ik
+               return
+            endif
+
+         end do
+
+      endif
+
+c
+c     Error condition - the code should never reach here
+c
+      call prr ('ERROR IN FUNCTION "PFIND" : ',p)
+      write (6,*) 'ERROR IN FUNCTION "PFIND" : ',p
+      pfind = nks(ir)/2
+c
+      return
+      end
+c
+c
+c
       subroutine set_ikvals(ir,ikstart,ikend,ikopt)
       implicit none
       integer ir,ikstart,ikend,ikopt
@@ -18046,8 +18224,8 @@ c
 c
 c     SET_IKVALS: The purpose of this routine is to
 c                 set the IK values to be used in the
-c                 looping construct in tje calling routine
-c                 based on the oprion specified by IKOPT
+c                 looping construct in the calling routine
+c                 based on the option specified by IKOPT
 c
 c                 IKOPT = 1 - first half of ring (OUTER for JET)
 c                 IKOPT = 2 - second half of ring (INNER for JET)

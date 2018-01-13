@@ -1562,7 +1562,8 @@ c
 
 c     jdemod - increased maxtdat to allow for larger datasets
 c      PARAMETER (MAXTDAT=500,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
-      PARAMETER (MAXTDAT=2000,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
+c     jdemod - up maxnps to 2000 ... add tests to see if this value is exceeded
+      PARAMETER (MAXTDAT=2000,MAXCOLS=10,MAXNPS=2000,MAXTYP=10)
 c      PARAMETER (MAXTDAT=4000,MAXCOLS=10,MAXNPS=1000,MAXTYP=10)
 
       INTEGER thnnraw,ind
@@ -1641,6 +1642,11 @@ c
 
       CALL RSet(avgdat,MAXNKS*MAXNRS,LO)
 
+c
+c     jdemod - this call is an issue for extended grids and possibly others since 
+c              rho is calculated wierdly depending on intersections with r=r0 to r=r0+100.0
+c              which may well not exist at all for some rings on extended grids. 
+c
       CALL CalculateRho 
 c
 c
@@ -2734,8 +2740,12 @@ c
 c
 c                    Write the average data out to unit 6 
 c
-                     write(6,'(a,4i6,(1x,g12.5))') 'TS Averages:',
-     >                        ytype,ind,ik,ir,avdata(ik,ir)
+                     if (avdata(ik,ir).gt.LO) then 
+
+                        write(6,'(a,4i6,2(1x,g12.5))') 'TS Averages:',
+     >                        ytype,ind,ik,ir,kss(ik,ir),avdata(ik,ir)
+                     endif
+
                   end do
                end do
                
@@ -3833,6 +3843,22 @@ c
 c
 c
          write(6,'(a)') 'PLOT DATA:'
+c
+c        jdemod - issue error if individual array 
+c                 dimensions exceeded (won't crash if array
+c                 is big enough but the results can be a mess). 
+c
+         if (ike+inc.gt.maxnps.or.
+     >       ip.gt.maxplts.or.
+     >       ngs.gt.maxngs) then 
+            write(0,'(a,6(a,i8))')
+     >        'OUT966: PLOT ERROR: ARRAY SIZE EXCEEDED:',
+     >        'CELLS (?) = ',ike+inc,' > ',maxnps,
+     >        'PLOT# (?) = ',ip,' > ',maxplts,
+     >        'GRAPHS(?) = ',ngs,' > ',maxngs
+         endif
+c
+c        jdemod
 c
 
          do i1 = 1,ngs

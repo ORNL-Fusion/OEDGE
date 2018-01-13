@@ -1581,12 +1581,18 @@ c
       real scut1,scut2
       external sfind
 c
-      if ((cflatopt.eq.1.or.cflatopt.eq.2).and.ctegcut.gt.0.0) then
+      if ((cflatopt.eq.1.or.cflatopt.eq.2.or.cflatopt.eq.3)
+     >     .and.ctegcut.gt.0.0) then
 c
          do ir = irsep,irwall
 c
-            scut1 = ctegcut * ksmaxs(ir)
-            scut2 = (1.0-ctegcut)*ksmaxs(ir)
+            if (cflatopt.eq.1.or.cflatopt.eq.2) then 
+               scut1 = ctegcut * ksmaxs(ir)
+               scut2 = (1.0-ctegcut)*ksmaxs(ir)
+            elseif (cflatopt.eq.3) then 
+               scut1 = ksb(ikmids(ir),ir) - ctegcut * ksmaxs(ir)
+               scut2 = ksb(ikmids(ir),ir) + ctegcut * ksmaxs(ir)
+            endif
 c
             ikscut1 = sfind(scut1,ir)
             ikscut2 = sfind(scut2,ir)
@@ -1619,12 +1625,18 @@ c
 c
 c     Ti is flat for S > Fact * SMAX for each half ring
 c
-      if ((cflatopt.eq.1.or.cflatopt.eq.2).and.ctigcut.gt.0.0) then
+      if ((cflatopt.eq.1.or.cflatopt.eq.2.or.cflatopt.eq.3)
+     >          .and.ctigcut.gt.0.0) then
 c
          do ir = irsep,irwall
 c
-            scut1 = ctigcut * ksmaxs(ir)
-            scut2 = (1.0-ctigcut)*ksmaxs(ir)
+            if (cflatopt.eq.1.or.cflatopt.eq.2) then 
+               scut1 = ctigcut * ksmaxs(ir)
+               scut2 = (1.0-ctigcut)*ksmaxs(ir)
+            elseif (cflatopt.eq.3) then 
+               scut1 = ksb(ikmids(ir),ir) - ctigcut * ksmaxs(ir)
+               scut2 = ksb(ikmids(ir),ir) + ctigcut * ksmaxs(ir)
+            endif
 c
             ikscut1 = sfind(scut1,ir)
             ikscut2 = sfind(scut2,ir)

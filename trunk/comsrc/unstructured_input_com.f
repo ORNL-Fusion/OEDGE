@@ -2157,7 +2157,7 @@ c
       INCLUDE 'comtor' 
       INCLUDE 'cgeom'  
 
-      INTEGER ierr,i1,i2
+      INTEGER ierr,i1,i2,ir
 
       IF     (TAG(1:3).EQ.'G01') THEN
 c...    Not sure if Dave has reserved G01 already, and the web server is down:
@@ -2388,6 +2388,31 @@ c
 c
 c
 c -----------------------------------------------------------------------
+      ELSEIF (tag(1:3).EQ.'G55') THEN
+c
+c     G55 - read in a list of ikoffsets to move the center of the 
+c           ring for background plasma calculation
+c
+c           n_ikoffsets
+c
+c           option   ir1   ir2    ikoffset  
+c
+          CALL RDRARN(ik_offset_data,n_ik_offsets,MAXNRS,
+     .                -MACHHI,MACHHI,.FALSE.,
+     .                -MACHHI,MACHHI,3,'IK OFFSET DATA',IERR)
+c
+c
+      ELSEIF (tag(1:3).EQ.'G56') THEN
+c
+c     jdemod - sol22_halfringlen_opt = 0 = ringlen/2
+c                                    = 1 = ksb(ikmid,ir)
+c            - the ikmid value should be at ~ 1/2 the ring length     
+c            - note: using option 1 will support calculations that 
+c                    move the midpoint
+c
+        CALL ReadI(line,sol22_halfringlen_opt,0,1,
+     >     'SOL22 half ring length determination option')
+c
       ELSE
         CALL ER('ReadTagSeriesG','Unrecognized tag',*99)
       ENDIF
