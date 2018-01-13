@@ -3754,6 +3754,9 @@ c
       integer in,init_col
       external init_col
 c
+c      write(0,*) 'setup_cols:',n_cols,opt
+
+c
 c     Initialize number of colours and first colour
 c     n_cols = number of colours to initialize
 c     opt    = option to use for colour initialization
@@ -4032,7 +4035,59 @@ c        Select n_cols number of colours - note that the first is always brightr
 c
          call select_fixed_cols(ncols)
 
+
+
+      elseif (opt.eq.7) then 
+c
+C        B2/EIRENE 15-color set  Krieger IPP/97
+c
+         call rgb
+c
+         ncols=16
+c
+         do in=2,ncols
+            colour(in)=ncols-in +2 
+         end do
+c
+c        BrightRed
+         call colset(1.0, 0.0, 0.1, 16)
+c        Red
+         call colset(0.9, 0.25, 0.0, 15)
+c        Orange
+         call colset(1.0, 0.65, 0.0, 14)
+c        Golden
+         call colset(1.0, 0.85, 0.0, 13)
+c        Yellow
+         call colset(1.0, 1.0, 0.0, 12)
+c        GreenYellow
+         call colset(0.7, 1.0, 0.2, 11)
+c        Chartreuse
+         call colset(0.5, 1.0, 0.0, 10)
+c        Green
+         call colset(0.2, 0.9, 0.1, 9)
+c        Aqua
+         call colset(0.0, 0.9, 1.0, 8)
+c        DeepSkyBlue
+         call colset(0.0, 0.75, 1.0, 7)
+c        RoyalBlue
+         call colset(0.25, 0.45, 0.95, 6)
+c        SlateBlue
+         call colset(0.4, 0.35, 0.8, 5)
+c        DarkViolet
+         call colset(0.6, 0.0, 0.8, 4)
+c        Orchid
+         call colset(0.85, 0.45, 0.8, 3)
+c        Lavender
+         call colset(0.8, 0.8, 1.0, 2)
+c
+
+
       endif
+
+
+
+
+
 c
       return
       end

@@ -4483,7 +4483,7 @@ c
       if (pinavail.and.
      >   (actswphelp.eq.2.0.or.actswphelp.eq.3.0)) then
 c
-c        Integrate over Ion energy source term
+c        Integrate over Electron energy source term
 c
          call preint(startn,nptscopy,sptscopy,qesrc,intqe,
      >               qesum,

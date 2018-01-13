@@ -1001,7 +1001,7 @@ c
          spow = spowbeg * ringlen
          spow2= spowlen * ringlen
 c
-         write (6,*) 'SPOW:',spow,spow2
+c         write (6,*) 'SPOW:',spow,spow2
 c
 c        Set up gperp lengths for particle source compensation
 c
@@ -1009,7 +1009,8 @@ c
          sgperpend = gperpendf * ringlen
 c
          midnks = ikmids(ir)
-
+c         write(0,*) 'solascv:midnks:',midnks,ir,sol22_halfringlen_opt
+         
 c
 c-----------------------------------------------------------------
 c        OUTER TARGET
@@ -1078,7 +1079,16 @@ c        Initialize HALF ring length to be used
 c
 c        halfringlen = ksb(midnks,ir)
 c
-         halfringlen  = 0.5d0*ringlen
+         if (sol22_halfringlen_opt.eq.0) then 
+            halfringlen  = 0.5d0*ringlen
+         elseif (sol22_halfringlen_opt.eq.1) then 
+            ! ring midpoint is upper boundary of middle cell just below midpoint
+            halfringlen = ksb(midnks+1,ir)
+c            write(6,'(a,2i8,10(1x,g12.5))') 'Halfringlen1:',
+c     >           midnks,ir,halfringlen,ringlen/2.0
+c            write(0,'(a,2i8,10(1x,g12.5))') 'Halfringlen1:',
+c     >           midnks,ir,halfringlen,ringlen/2.0
+         endif
 c
 c        Initialize the ionization and radiation source lengths
 c
@@ -1981,7 +1991,16 @@ c        Initialize HALF ring length to be used
 c
 c        halfringlen = ksmaxs2(ir) - ksb(midnks,ir)
 c
-         halfringlen  = 0.5d0*ringlen
+         if (sol22_halfringlen_opt.eq.0) then 
+            halfringlen  = 0.5d0*ringlen
+         elseif (sol22_halfringlen_opt.eq.1) then 
+            ! ring midpoint is upper boundary of middle cell just below midpoint
+            halfringlen = ksb(midnks+1,ir)
+c            write(6,'(a,2i8,10(1x,g12.5))') 'Halfringlen2:',
+c     >           midnks,ir,halfringlen,ringlen/2.0
+c            write(0,'(a,2i8,10(1x,g12.5))') 'Halfringlen2:',
+c     >           midnks,ir,halfringlen,ringlen/2.0
+         endif
 c
 c        Initialize the ionization and radiation source lengths
 c

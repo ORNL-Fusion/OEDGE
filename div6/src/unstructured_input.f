@@ -597,7 +597,25 @@ c           0 = CASTEM
 c           1 = RAY
 c
       ribbon_input_format_opt = 1
+c 
+c------------------------------------------------------------------------
 c
+c     G55 - IK offsets
+c
+c     jdemod - ikoffsets to move the center of the ring for 
+c              background plasma calculation
+c
+c     Default for all values is zero
+c
+      n_ik_offsets=0
+      ik_offset_data=0
+c
+c     G56 - SOL22 half ring length option
+c
+c     0 - ringlen/2
+c     1 - ksb(midnks,ir)
+c
+      sol22_halfringlen_opt = 1
 c
 c -----------------------------------------------------------------------
 c

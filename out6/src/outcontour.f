@@ -124,6 +124,8 @@ c
 c     Contour option 6 is used to select a colour scheme but the contouring 
 c     option is the same as 3 so icntr is reset to 3.
 c
+      write(0,*) 'cntr:',icntr,ncntr
+c
       if (icntr.eq.0.or.icntr.eq.2) then
           call setup_col(ncntr+1,2)
       elseif (icntr.eq.1) then 
@@ -140,6 +142,10 @@ c         IPP/09 - Krieger - this should be 3 instead of 2?
           !ncntr = ncntr
           call setup_col(ncntr+1,6)
           icntr = 3
+      elseif (icntr.eq.7) then 
+          !ncntr = ncntr
+          call setup_col(ncntr+1,7)
+          icntr = -3
       endif
 c
 c      write(0,'(a,2i4,6(1x,g12.5))') 'PLOT_CONT:',icntr,ncntr,
@@ -248,7 +254,7 @@ c
          if (allocated(subgrid_zaxis)) deallocate(subgrid_zaxis)
 
 c        IPP/09 - Krieger - should reset colors here
-         call setup_col(ncntr,icntr)
+         call setup_col(ncntr,abs(icntr))
          return 
       endif
 
@@ -446,7 +452,7 @@ c
 c     Return from generalized CONTOUR routine
 c
 c     IPP/09 - Krieger - should reset colors here
-      call setup_col(ncntr,icntr)
+      call setup_col(ncntr,abs(icntr))
       return
 c
 c     Format statements 

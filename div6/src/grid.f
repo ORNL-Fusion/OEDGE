@@ -3000,7 +3000,11 @@ c
       LOGICAL valid
 
       IF (irref.NE.-1) nks(ir) = nks(irref)
-
+c
+c     jdemod - this is not the correct definition for ikmids .. however, 
+c              calculating ikmids requires kss be set properly to get the 
+c              cell immediately before the ring midpoint. 
+c
       ikmids(ir) = nks(ir) / 2
 
 c Need to recalculate quantities... i.e. kss ...

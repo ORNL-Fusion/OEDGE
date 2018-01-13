@@ -138,7 +138,7 @@ c slmod end
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE.,99,'TIB GRADIENT OPTION  ',IERR)
       CALL RDI (CIOPTM,.TRUE., 0,.TRUE., 3,'TEB GRAD COEFF OPTION',IERR)
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 3,'TIB GRAD COEFF OPTION',IERR)
-      call rdi (cflatopt,.true.,0,.true.,2,'Flatten Te,i option',ierr)
+      call rdi (cflatopt,.true.,0,.true.,3,'Flatten Te,i option',ierr)
       call rdr (ctegcut,.FALSE.,0.0,.TRUE.,0.5,'TEB GRAD. CUTOFF',ierr)
       call rdr (ctigcut,.FALSE.,0.0,.TRUE.,0.5,'TIB GRAD. CUTOFF',ierr)
       call rdi (fgradopt,.true.,0,.true.,4,'GRAD FORCE MOD OPTION',ierr)
