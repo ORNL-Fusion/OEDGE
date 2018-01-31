@@ -19,7 +19,7 @@ OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
-LIBS=  -L../libsrc -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS=  -L../local/lib -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
 
 IDIR=
 
