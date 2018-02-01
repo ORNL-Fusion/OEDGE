@@ -79,6 +79,7 @@ ARCH=
 OPTC= -O $(EMU)
 #
 OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+OPTPROF= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk  
 #OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 
 OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds -traceback
 OPTGS1= -g -O -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds -traceback
