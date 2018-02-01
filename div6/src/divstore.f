@@ -216,6 +216,9 @@ c     >          wlwall1,wlwall2,wltrap1,wltrap2,wallpts
 c
 C
 c
+      call pr_trace('STORE','PART 1')
+
+
       WRITE (6,9001) NXS,NYS,NRS,NDS,NIZS,NTS,
      >  MAXNXS,MAXNYS,MAXNRS,MAXNDS,MAXIZS,MAXNTS,
      >  TITLE,JOB,ITER,IMODE,refct,maxseg,nvesm,nvesp
@@ -343,6 +346,8 @@ C
       CALL RINOUT ('W KES   ',KES   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W KVHS  ',KVHS  ,MAXNKS*MAXNRS)
 c
+      call pr_trace('STORE','PART 2')
+c
 c     Average force arrays 
 c
 c
@@ -357,6 +362,7 @@ c
       CALL RINOUT ('W DIFF  ',DIFF  ,MAXNKS*MAXNRS*MAXIZS)
       CALL RINOUT ('W VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
 c
+c
 c     Background data at plates
 c
       CALL RINOUT ('W RP    ',RP    ,MAXNDS)
@@ -370,6 +376,7 @@ c
       !          removed for now
       !CALL RINOUT ('W KTI3LS',KTI3LS,MAXNDS)
       !CALL RINOUT ('W KTINJ ',KTINJ ,MAXNDS)
+c
 
       CALL RINOUT ('W KNDS  ',KNDS  ,MAXNDS)
       CALL RINOUT ('W KFEDS ',KFEDS ,MAXNDS)
@@ -403,11 +410,17 @@ c
 c
 c     Chi Squared data
 c
-      CALL DINOUT ('W CHISQ1',CHISQ1,25)
-      CALL DINOUT ('W CHISQ2',CHISQ2,25)
-      CALL DINOUT ('W CHISQ3',CHISQ3,25)
-      CALL DINOUT ('W CHISQ4',CHISQ4,25)
-      CALL DINOUT ('W CHISQ5',CHISQ5,25)
+      CALL DINOUT ('W CHISQ1',CHISQ1,maxpiniter)
+      CALL DINOUT ('W CHISQ2',CHISQ2,maxpiniter)
+      CALL DINOUT ('W CHISQ3',CHISQ3,maxpiniter)
+      CALL DINOUT ('W CHISQ4',CHISQ4,maxpiniter)
+      CALL DINOUT ('W CHISQ5',CHISQ5,maxpiniter)
+c
+c      CALL DINOUT ('W CHISQ1',CHISQ1,25)
+c      CALL DINOUT ('W CHISQ2',CHISQ2,25)
+c      CALL DINOUT ('W CHISQ3',CHISQ3,25)
+c      CALL DINOUT ('W CHISQ4',CHISQ4,25)
+c      CALL DINOUT ('W CHISQ5',CHISQ5,25)
 C
       CALL RINOUT ('W PINATO',PINATOM ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINION',PINION  ,MAXNKS*MAXNRS)
@@ -421,10 +434,13 @@ C
       CALL RINOUT ('W PINQI ',PINQI   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINQE ',PINQE   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINMP ',PINMP   ,MAXNKS*MAXNRS)
+c
       CALL RINOUT ('W PINVDI',PINVDIST,3*14*MAXNKS*MAXNRS)
       CALL RINOUT ('W PINREC',PINREC  ,MAXNKS*MAXNRS)
 c
       CALL RINOUT ('W PININF',PINIZ_INFO,MAXNRS*4)
+c
+      call pr_trace('STORE','PART 3')
 C
       call rinout ('W RVESM ',RVESM   ,2*MAXSEG)
       call rinout ('W ZVESM ',ZVESM   ,2*MAXSEG)
@@ -507,6 +523,8 @@ c
         endif
 c
       endif
+c
+      call pr_trace('STORE','PART 4')
 C
 c     Store Data related to transport coefficient calculations
 c
@@ -567,6 +585,8 @@ c
 c
 c ammod begin
 c
+      call pr_trace('STORE','PART 5')
+c
       if (global_hc_follow_option.ne.0) then  
 c
 c Write out HC module related quantities 
@@ -616,6 +636,9 @@ c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('W LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+
+
+      call pr_trace('STORE','PART 6')
 c
 c
 c slmod begin - new

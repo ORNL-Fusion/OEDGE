@@ -628,6 +628,8 @@ c
 c
       endif
 c
+c
+c
 c     FOR Radiation option 4 - read in the radiation data from 
 c     a previous DIVIMP run. 
 c
@@ -666,8 +668,7 @@ c     integrate over region to get the appropriate total prad
 c     Note: Pinqe and Pinqi options should be off when this option is used. 
 c
 
-
-
+      call pr_trace('CALCSOL_INTERFACE','BEFORE INIT')
 
 c
 c
@@ -830,6 +831,9 @@ c
       pfz_dist_param(1) = sepdist2(idds(irsep+4,1))
       pfz_dist_param(2) = sepdist2(idds(irsep+4,2))
 c
+      call pr_trace('CALCSOL_INTERFACE','BEFORE CALCFLUXES')
+
+c
       call calcfluxes(gtarg,ionptarg,elecptarg,e2dgtarg,
      >                presstarg,gamcor,gamecor,ike2d_start,
      >                g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
@@ -838,6 +842,7 @@ c
 c     If pin is available
 c     Call routine to calculate GPERP CORection factors
 c
+      call pr_trace('CALCSOL_INTERFACE','BEFORE CALCSOLIZ')
 
       if (pinavail) then
 c
@@ -867,6 +872,8 @@ c     - essentially bypasses SOL 22 COMPLETELY -
 c     Used as a method of iterative PIN testing while still
 c     obtaining the SOL 22 flux debugging information from calcsoliz.
 c
+      call pr_trace('CALCSOL_INTERFACE','BEFORE EDGE2D SAVE')
+
       if (switch(swe2d).eq.4.or.switch(swe2d).eq.5.or.
      >    switch(swe2d).eq.6.or.switch(swe2d).eq.7) then
             do ir = irlim1,irlim2
@@ -884,6 +891,9 @@ c
             return
       endif
 c
+
+      call pr_trace('CALCSOL_INTERFACE','BEFORE RING LOOP')
+
       do ir = irlim1, irlim2
 c
          call set_ikvals(ir,ikstart,ikend,ikopt)
@@ -1020,6 +1030,7 @@ c
 c        Only execute for the selected half-rings - ikopt
 c
          if (ikopt.eq.1.or.ikopt.eq.3) then
+            call pr_trace('CALCSOL_INTERFACE','START OUTER TARGET')
 c
 c        Check for sol22 debug start
 c
@@ -1934,6 +1945,8 @@ c        Only execute for the selected half-rings - ikopt
 c
 
          if (ikopt.eq.2.or.ikopt.eq.3) then
+            call pr_trace('CALCSOL_INTERFACE','START INNER TARGET')
+
 c
 c
 c        Check for sol22 debug start
@@ -2835,6 +2848,7 @@ c           data will be printed if it has been collected
          endif
 
 
+         call pr_trace('CALCSOL_INTERFACE','CALCULATE EFIELD')
 
 C
 C       CALCULATE ELECTRIC FIELD
@@ -3024,6 +3038,7 @@ c
 c
 c     End interface routine
 c
+      call pr_trace('CALCSOL_INTERFACE','BEFORE EXCEL PRINT')
 c
 c     Call routine to print out table of values to file for Excel plotting
 c     (req. by Wojciech Fundamenski)

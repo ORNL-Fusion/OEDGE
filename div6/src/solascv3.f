@@ -4086,6 +4086,7 @@ c
      >                      presstarg,gamcor,gamecor,ike2d_start,
      >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
      >                      pfz_dist_opt,pfz_dist_param)
+      use debug_options
       implicit none
       include 'params'
       include 'solparams'
@@ -4136,6 +4137,8 @@ c
       real n1,te1,ti1,vpe2d,v1e2d,te0
       real mach0o,mach0i,rmeano,rmeani
       real gae,gaio,gaii
+c
+      call pr_trace('SOLASCV3','START CALCFLUXES')
 
 c
 c     Initialization
@@ -4153,14 +4156,22 @@ c
             v0 = -sqrt((kteds(idds(ir,2))+ktids(idds(ir,2)))/crmb
      >             * econv/mconv)
 c
-            mach0o = kvds(idds(ir,2)) / v0
+            if (v0.ne.0.0) then 
+               mach0o = kvds(idds(ir,2)) / v0
+            else
+               mach0o = 1.0
+            endif
 c
 c           Inner
 c
             v0 = -sqrt((kteds(idds(ir,2))+ktids(idds(ir,2)))/crmb
      >             * econv/mconv)
 c
-            mach0i = kvds(idds(ir,1)) / v0
+            if (v0.ne.0.0) then 
+               mach0i = kvds(idds(ir,1)) / v0
+            else
+               mach0i = 1.0
+            endif
 c
          else
             mach0o = 1.0
@@ -4565,6 +4576,7 @@ c
       !
       ! Accumulate data for main SOL and PFZ
       !
+      call pr_trace('CALCFLUXES','BEFORE SOL/PFZ')
 
 
       do id = 1,2
@@ -4617,6 +4629,8 @@ c
       ! find maximum pressure inner and outer
       maxpress=0.0
       maxpress_ir = 0
+
+      call pr_trace('CALCFLUXES','BEFORE PRESSURE')
 
       do ir = irsep,nrs
          do id = 1,2
@@ -4709,6 +4723,7 @@ c
 
       endif
 
+      call pr_trace('CALCFLUXES','BEFORE NORMALIZE')
 
       ! normalize distribution 
       do ir = irsep,irwall
@@ -4754,6 +4769,7 @@ c
 
        end do
 
+       
 
 !      lambda = 0.01
 !      dist_opt = 1
@@ -4777,6 +4793,7 @@ c
    !      dist_fact(ir,1) 
 
 
+      call pr_trace('CALCFLUXES','END CALCFLUXES')
 
 c
       return
@@ -4787,6 +4804,7 @@ c
       subroutine calcsoliz(rconst,recfrac,gtarg,areasum,gperpa,
      >                     oldknbs,grad_oldknbs,ioniz_src,rec_src,
      >                     gperprat,ike2d_start)
+      use debug_options
       implicit none
       include 'params'
       include 'solparams'
@@ -4841,6 +4859,8 @@ c
       real flux_const,endflux
 c
       logical debug
+c
+      call pr_trace('SOLASCV3','START CALCSOLIZ')
 c
 c     Recylcling flux factor
 c
@@ -4984,12 +5004,20 @@ c
 c        Calculate Rconst
 c
          if (switch(swrecom).eq.0.0) then
-            rconst(ir)= - (gtarg(ir,3)+rfact*srcinteg(nks(ir)+1,ir))
+            if (areasum(ir).ne.0.0) then 
+               rconst(ir)= - (gtarg(ir,3)+rfact*srcinteg(nks(ir)+1,ir))
      >                 /areasum(ir)
+            else
+               rconst(ir)= 0.0
+            endif
          elseif (switch(swrecom).eq.1.0.or.switch(swrecom).eq.2) then
-            rconst(ir)= - (gtarg(ir,3)+rfact*srcinteg(nks(ir)+1,ir)
+            if (areasum(ir).ne.0.0) then 
+               rconst(ir)= - (gtarg(ir,3)+rfact*srcinteg(nks(ir)+1,ir)
      >                      - recinteg(nks(ir)+1,ir))
      >                 /areasum(ir)
+            else
+               rconst(ir)= 0.0
+            endif
          endif
 c
 c        Calculate Gperp fraction ratios - for use in Gperp option 7.
@@ -4999,8 +5027,13 @@ c
             if (gradsum.eq.0.0) then
                gperprat(ir)= 100.0
             else
-               gperprat(ir)= max(abs(gradsumpos/gradsum),
+               if (gradsum.ne.0.0) then 
+                  gperprat(ir)= max(abs(gradsumpos/gradsum),
      >                           abs(gradsumneg/gradsum))
+               else
+                  gperprat(ir)= 0.0
+              endif     
+
             endif
 c
          endif
@@ -5025,8 +5058,12 @@ c
 c
 c           Modify RCONST for GPERP term at given DPERP
 c
-            rconst(ir) = - (-rconst(ir)*areasum(ir)+cdperp*gradsum)
+            if (areasum(ir).ne.0.0) then 
+               rconst(ir) = - (-rconst(ir)*areasum(ir)+cdperp*gradsum)
      >                     /areasum(ir)
+            else
+               rconst(ir) = 0.0
+            endif
 c
             intgrad = 0.0
             intgradpos = 0.0
@@ -5140,16 +5177,24 @@ c
                if (switch(swgperp).eq.3.0.or.
      >             switch(swgperpp).eq.3.0)    then
 c
-                  gperpa(ik,ir)=oldknbs(ik,ir)
+                  if (nesum.ne.0.0) then 
+                     gperpa(ik,ir)=oldknbs(ik,ir)
      >                          * rconst(ir)*areasum(ir)
      >                          / nesum
+                  else
+                     gperpa(ik,ir)=0.0
+                  endif
 c
                elseif (switch(swgperp).eq.7.0.or.
      >                 switch(swgperpp).eq.7.0)   then
 c
-                  gperpa(ik,ir)=grad_oldknbs(ik,ir)
+                  if (gradsum.ne.0.0) then 
+                     gperpa(ik,ir)=grad_oldknbs(ik,ir)
      >                          * rconst(ir)*areasum(ir)
      >                          / gradsum
+                  else
+                     gperpa(ik,ir)=0.0
+                  endif
 c
                else
 c
@@ -5279,6 +5324,9 @@ c
          call debugsoliz(rfact)
 
       endif
+
+      call pr_trace('CALCSOLIZ','END CALCSOLIZ')
+
 c
 c     Format statements
 c
@@ -8768,14 +8816,21 @@ c
      >                          e2dareas(ik,ir) * pinrec(ik,ir)
      >                          *rs(ik,ir)/r0
 c
-                ioniz(ir,1,19) = ioniz(ir,1,19) +
+                if (hcorr(ik,ir).ne.0.0) then 
+
+                   ioniz(ir,1,19) = ioniz(ir,1,19) +
      >                  karea2(ik,ir) * pinion(ik,ir) / hcorr(ik,ir)
-                ioniz(ir,1,20) = ioniz(ir,1,20) +
+                   ioniz(ir,1,20) = ioniz(ir,1,20) +
      >                  karea2(ik,ir) * pinion(ik,ir) /hcorr(ik,ir)
      >                          *r0/rs(ik,ir)
-                ioniz(ir,1,21) = ioniz(ir,1,21) +
+                   ioniz(ir,1,21) = ioniz(ir,1,21) +
      >                  karea2(ik,ir) * pinion(ik,ir) /hcorr(ik,ir)
      >                          *rs(ik,ir)/r0
+                else
+                   ioniz(ir,1,19) = 0.0
+                   ioniz(ir,1,20) = 0.0
+                   ioniz(ir,1,21) = 0.0
+                endif
 c
 c
              else
@@ -8835,14 +8890,20 @@ c
      >                          e2dareas(ik,ir) * pinrec(ik,ir)
      >                          *rs(ik,ir)/r0
 c
-                ioniz(ir,2,19) = ioniz(ir,2,19) +
+                if (hcorr(ik,ir).ne.0.0) then 
+                   ioniz(ir,2,19) = ioniz(ir,2,19) +
      >                  karea2(ik,ir) * pinion(ik,ir) / hcorr(ik,ir)
-                ioniz(ir,2,20) = ioniz(ir,2,20) +
+                   ioniz(ir,2,20) = ioniz(ir,2,20) +
      >                  karea2(ik,ir) * pinion(ik,ir) /hcorr(ik,ir)
      >                          *r0/rs(ik,ir)
-                ioniz(ir,2,21) = ioniz(ir,2,21) +
+                   ioniz(ir,2,21) = ioniz(ir,2,21) +
      >                  karea2(ik,ir) * pinion(ik,ir) /hcorr(ik,ir)
      >                          *rs(ik,ir)/r0
+                else
+                   ioniz(ir,2,19) = 0.0
+                   ioniz(ir,2,20) = 0.0
+                   ioniz(ir,2,21) = 0.0
+                endif
 c
              endif
 c
@@ -8918,24 +8979,44 @@ c
       write (6,100)
 c
       write (6,110) 'PIN     :',(sumiz(in,1),in=1,8),1.0
-      write (6,110) 'PIN R0/R:',(sumiz(in,2),in=1,8),
+      
+      if (sumiz(8,1).ne.0.0) then 
+         write (6,110) 'PIN R0/R:',(sumiz(in,2),in=1,8),
      >       sumiz(8,2)/sumiz(8,1)
-      write (6,110) 'PIN R/R0:',(sumiz(in,3),in=1,8),
+
+         write (6,110) 'PIN R/R0:',(sumiz(in,3),in=1,8),
      >       sumiz(8,3)/sumiz(8,1)
-      write (6,110) 'E2D     :',(sumiz(in,4),in=1,8),
+      endif
+
+      if (sumiz(8,1).ne.0.0.and.sumiz(8,2).ne.0.0.and.
+     >    sumiz(8,3).ne.0.0) then 
+         write (6,110) 'E2D     :',(sumiz(in,4),in=1,8),
      >        sumiz(8,4)/sumiz(8,1),sumiz(8,4)/sumiz(8,2),
      >        sumiz(8,4)/sumiz(8,3)
-      write (6,110) 'E2D R0/R:',(sumiz(in,5),in=1,8),
+
+         write (6,110) 'E2D R0/R:',(sumiz(in,5),in=1,8),
      >        sumiz(8,5)/sumiz(8,1),sumiz(8,5)/sumiz(8,2),
      >        sumiz(8,5)/sumiz(8,3)
-      write (6,110) 'E2D R/R0:',(sumiz(in,6),in=1,8),
+
+         write (6,110) 'E2D R/R0:',(sumiz(in,6),in=1,8),
      >        sumiz(8,6)/sumiz(8,1),sumiz(8,6)/sumiz(8,2),
      >        sumiz(8,6)/sumiz(8,3)
+
+      endif
+
+
+
       write (6,110) 'REC     :',(sumiz(in,7),in=1,8),1.0
-      write (6,110) 'REC R0/R:',(sumiz(in,8),in=1,8),
+
+
+
+      if (sumiz(8,7).ne.0.0) then 
+         write (6,110) 'REC R0/R:',(sumiz(in,8),in=1,8),
      >       sumiz(8,8)/sumiz(8,7)
-      write (6,110) 'REC R/R0:',(sumiz(in,9),in=1,8),
+         write (6,110) 'REC R/R0:',(sumiz(in,9),in=1,8),
      >       sumiz(8,9)/sumiz(8,7)
+      endif
+
       write(6,*)
 c
       write (6,*)
@@ -8944,44 +9025,70 @@ c
       write (6,100)
 c
       write (6,110) 'PIN     :',(sumiz(in,10),in=1,8),1.0
-      write (6,110) 'PIN R0/R:',(sumiz(in,11),in=1,8),
-     >       sumiz(8,11)/sumiz(8,10)
-      write (6,110) 'PIN R/R0:',(sumiz(in,12),in=1,8),
-     >       sumiz(8,12)/sumiz(8,10)
 
-      write (6,110) 'E2D     :',(sumiz(in,13),in=1,8),
+
+
+      if (sumiz(8,10).ne.0.0) then 
+         write (6,110) 'PIN R0/R:',(sumiz(in,11),in=1,8),
+     >       sumiz(8,11)/sumiz(8,10)
+         write (6,110) 'PIN R/R0:',(sumiz(in,12),in=1,8),
+     >       sumiz(8,12)/sumiz(8,10)
+      endif
+
+
+      if (sumiz(8,10).ne.0.0.and.sumiz(8,11).ne.0.0.and.
+     >    sumiz(8,12).ne.0.0) then 
+         write (6,110) 'E2D     :',(sumiz(in,13),in=1,8),
      >        sumiz(8,13)/sumiz(8,10),sumiz(8,13)/sumiz(8,11),
      >        sumiz(8,13)/sumiz(8,12)
-      write (6,110) 'E2D R0/R:',(sumiz(in,14),in=1,8),
+         write (6,110) 'E2D R0/R:',(sumiz(in,14),in=1,8),
      >        sumiz(8,14)/sumiz(8,10),sumiz(8,14)/sumiz(8,11),
      >        sumiz(8,14)/sumiz(8,12)
-      write (6,110) 'E2D R/R0:',(sumiz(in,15),in=1,8),
+         write (6,110) 'E2D R/R0:',(sumiz(in,15),in=1,8),
      >        sumiz(8,15)/sumiz(8,10),sumiz(8,15)/sumiz(8,11),
      >        sumiz(8,15)/sumiz(8,12)
+      endif
+
+
+
       write (6,110) 'REC     :',(sumiz(in,16),in=1,8),1.0
-      write (6,110) 'REC R0/R:',(sumiz(in,17),in=1,8),
+
+
+      if (sumiz(8,16).ne.0.0) then 
+         write (6,110) 'REC R0/R:',(sumiz(in,17),in=1,8),
      >       sumiz(8,17)/sumiz(8,16)
-      write (6,110) 'REC R/R0:',(sumiz(in,18),in=1,8),
+         write (6,110) 'REC R/R0:',(sumiz(in,18),in=1,8),
      >       sumiz(8,18)/sumiz(8,16)
+      endif
+
       write(6,*)
       write (6,*) 'Ionization SUMMARY - PIN Areas / HCORR :'
       write (6,*)
       write (6,100)
 
       write (6,110) 'PIN     :',(sumiz(in,19),in=1,8),1.0
-      write (6,110) 'PIN R0/R:',(sumiz(in,20),in=1,8),
+
+
+      if (sumiz(8,19).ne.0.0) then 
+         write (6,110) 'PIN R0/R:',(sumiz(in,20),in=1,8),
      >       sumiz(8,20)/sumiz(8,19)
-      write (6,110) 'PIN R/R0:',(sumiz(in,21),in=1,8),
+         write (6,110) 'PIN R/R0:',(sumiz(in,21),in=1,8),
      >       sumiz(8,21)/sumiz(8,19)
-      write (6,110) 'E2D     :',(sumiz(in,13),in=1,8),
+      endif
+
+
+      if (sumiz(8,19).ne.0.0.and.sumiz(8,20).ne.0.0.and.
+     >    sumiz(8,21).ne.0.0) then 
+         write (6,110) 'E2D     :',(sumiz(in,13),in=1,8),
      >        sumiz(8,13)/sumiz(8,19),sumiz(8,13)/sumiz(8,20),
      >        sumiz(8,13)/sumiz(8,21)
-      write (6,110) 'E2D R0/R:',(sumiz(in,14),in=1,8),
+         write (6,110) 'E2D R0/R:',(sumiz(in,14),in=1,8),
      >        sumiz(8,14)/sumiz(8,19),sumiz(8,14)/sumiz(8,20),
      >        sumiz(8,14)/sumiz(8,21)
-      write (6,110) 'E2D R/R0:',(sumiz(in,15),in=1,8),
+         write (6,110) 'E2D R/R0:',(sumiz(in,15),in=1,8),
      >        sumiz(8,15)/sumiz(8,19),sumiz(8,15)/sumiz(8,20),
      >        sumiz(8,15)/sumiz(8,21)
+      endif
 c
 c
       write (6,*)
@@ -9048,11 +9155,20 @@ c
          write (6,*)
          write (6,*) '     PIN/DIV - Areas'
          write (6,*)
+
+
          write (6,110) 'PIN     :',(ioniz(ir,in,1),in=1,3),1.0
+
+
+      if (ioniz(ir,3,1).ne.0.0) then 
          write (6,110) 'PIN R0/R:',(ioniz(ir,in,2),in=1,3),
      >     ioniz(ir,3,2)/ioniz(ir,3,1)
          write (6,110) 'PIN R/R0:',(ioniz(ir,in,3),in=1,3),
      >     ioniz(ir,3,3)/ioniz(ir,3,1)
+      endif
+
+      if (ioniz(ir,3,1).ne.0.0.and.ioniz(ir,3,2).ne.0.0.and.
+     >    ioniz(ir,3,3).ne.0.0) then 
          write (6,110) 'E2D     :',(ioniz(ir,in,4),in=1,3),
      >     ioniz(ir,3,4)/ioniz(ir,3,1),ioniz(ir,3,4)/ioniz(ir,3,2),
      >     ioniz(ir,3,4)/ioniz(ir,3,3)
@@ -9062,11 +9178,18 @@ c
          write (6,110) 'E2D R/R0:',(ioniz(ir,in,6),in=1,3),
      >     ioniz(ir,3,6)/ioniz(ir,3,1),ioniz(ir,3,6)/ioniz(ir,3,2),
      >     ioniz(ir,3,6)/ioniz(ir,3,3)
+      endif
+
          write (6,110) 'REC     :',(ioniz(ir,in,7),in=1,3),1.0
+
+
+      if (ioniz(ir,3,7).ne.0.0) then 
          write (6,110) 'REC R0/R:',(ioniz(ir,in,8),in=1,3),
      >     ioniz(ir,3,8)/ioniz(ir,3,7)
          write (6,110) 'REC R/R0:',(ioniz(ir,in,9),in=1,3),
      >     ioniz(ir,3,9)/ioniz(ir,3,7)
+      endif
+
          write (6,*)
          write (6,*) '     E2D - Areas         IRCENT=',ircent
          write (6,*)
@@ -9076,10 +9199,17 @@ c
          endif
 
          write (6,110) 'PIN     :',(ioniz(ir,in,10),in=1,3),1.0
+
+
+      if (ioniz(ir,3,10).ne.0.0) then 
          write (6,110) 'PIN R0/R:',(ioniz(ir,in,11),in=1,3),
      >     ioniz(ir,3,11)/ioniz(ir,3,10)
          write (6,110) 'PIN R/R0:',(ioniz(ir,in,12),in=1,3),
      >     ioniz(ir,3,12)/ioniz(ir,3,10)
+      endif
+
+      if (ioniz(ir,3,10).ne.0.0.and.ioniz(ir,3,11).ne.0.0.and.
+     >    ioniz(ir,3,12).ne.0.0) then 
          write (6,110) 'E2D     :',(ioniz(ir,in,13),in=1,3),
      >     ioniz(ir,3,13)/ioniz(ir,3,10),ioniz(ir,3,13)/ioniz(ir,3,11),
      >     ioniz(ir,3,13)/ioniz(ir,3,12)
@@ -9089,33 +9219,22 @@ c
          write (6,110) 'E2D R/R0:',(ioniz(ir,in,15),in=1,3),
      >     ioniz(ir,3,15)/ioniz(ir,3,10),ioniz(ir,3,15)/ioniz(ir,3,11),
      >     ioniz(ir,3,15)/ioniz(ir,3,12)
+      endif
+
          write (6,110) 'REC     :',(ioniz(ir,in,16),in=1,3),1.0
+
+
+      if (ioniz(ir,3,16).ne.0.0) then 
          write (6,110) 'REC R0/R:',(ioniz(ir,in,17),in=1,3),
      >     ioniz(ir,3,17)/ioniz(ir,3,16)
          write (6,110) 'REC R/R0:',(ioniz(ir,in,18),in=1,3),
      >     ioniz(ir,3,18)/ioniz(ir,3,16)
+      endif
+
          write(6,*)
-         write (6,110) 'RUNTOT:',sum1,sum2,sum2/sum1
-c
-c         write (6,*)
-c         write (6,*) '     PIN/HCORR - Areas        '
-c         write (6,*)
-c         write (6,110) 'PIN     :',(ioniz(ir,in,19),in=1,3),1.0
-c         write (6,110) 'PIN R0/R:',(ioniz(ir,in,20),in=1,3),
-c     >     ioniz(ir,3,20)/ioniz(ir,3,19)
-c         write (6,110) 'PIN R/R0:',(ioniz(ir,in,21),in=1,3),
-c     >     ioniz(ir,3,21)/ioniz(ir,3,19)
-c         write (6,110) 'E2D     :',(ioniz(ir,in,13),in=1,3),
-c     >     ioniz(ir,3,13)/ioniz(ir,3,19),ioniz(ir,3,13)/ioniz(ir,3,20),
-c     >     ioniz(ir,3,13)/ioniz(ir,3,21)
-c         write (6,110) 'E2D R0/R:',(ioniz(ir,in,14),in=1,3),
-c     >     ioniz(ir,3,14)/ioniz(ir,3,19),ioniz(ir,3,14)/ioniz(ir,3,20),
-c     >     ioniz(ir,3,14)/ioniz(ir,3,21)
-c         write (6,110) 'E2D R/R0:',(ioniz(ir,in,15),in=1,3),
-c     >     ioniz(ir,3,15)/ioniz(ir,3,19),ioniz(ir,3,15)/ioniz(ir,3,20),
-c     >     ioniz(ir,3,15)/ioniz(ir,3,21)
-c         write(6,*)
-c
+         if (sum1.ne.0.0) then 
+            write (6,110) 'RUNTOT:',sum1,sum2,sum2/sum1
+         endif
 c
       end do
 c
@@ -9126,37 +9245,32 @@ c
       write (6,*)
       write (6,*) 'Total Ratios - PIN/DIV Areas:'
       write (6,*)
-      write (6,'(a,g12.4)')
+
+      if (sumiz(8,1).ne.0.0) then 
+         write (6,'(a,g12.4)')
      >            'E2D  /DIVIMP = ', sumiz(8,4)/sumiz(8,1)
-      write (6,'(a,g12.4)')
+         write (6,'(a,g12.4)')
      >            'E2DR1/DIVIMP = ', sumiz(8,5)/sumiz(8,1)
-      write (6,'(a,g12.4)')
+         write (6,'(a,g12.4)')
      >            'E2DR2/DIVIMP = ', sumiz(8,6)/sumiz(8,1)
+      endif
+
       write(6,*)
       write (6,*)
       write (6,*) 'Total Ratios - E2D Areas:'
       write (6,*)
-      write (6,'(a,g12.4)')
+
+      if (sumiz(8,10).ne.0.0) then 
+
+         write (6,'(a,g12.4)')
      >            'E2D  /DIVIMP = ', sumiz(8,13)/sumiz(8,10)
-      write (6,'(a,g12.4)')
+         write (6,'(a,g12.4)')
      >            'E2DR1/DIVIMP = ', sumiz(8,14)/sumiz(8,10)
-      write (6,'(a,g12.4)')
+         write (6,'(a,g12.4)')
      >            'E2DR2/DIVIMP = ', sumiz(8,15)/sumiz(8,10)
+
+      endif
       write(6,*)
-c
-c      write (6,*) 'E2D Areas and correction factors:'
-c
-c      write (6,*) ' IK   IR   KAREAS     E2D-AREAS   H(K)*DR*DT/R'//
-c     >            '   H(K)'//
-c     >            '     HCORR(K)     '
-c      do ir = 1,nrs
-c         do ik = 1,nks(ir)
-c            write (6,'(i4,1x,i4,1x,8g12.4)') ik,ir,karea2(ik,ir),
-c     >         e2dareas(ik,ir),karea2(ik,ir)/hcorr(ik,ir),
-c     >         hval(ik,ir)*abs(drho(ik,ir)*dthetag(ik,ir))/rs(ik,ir),
-c     >         hval(ik,ir),hcorr(ik,ir)
-c         end do
-c      end do
 c
       write (6,*)
 c
