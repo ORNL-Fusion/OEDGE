@@ -608,7 +608,7 @@ c
 c     Default for all values is zero
 c
       n_ik_offsets=0
-      ik_offset_data=0
+      ik_offset_data=0.0
 c
 c     G56 - SOL22 half ring length option
 c
