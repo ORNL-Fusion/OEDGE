@@ -312,13 +312,16 @@ mvc fort.49 $CASENAME.plta
 mvc fort.56 $CASENAME.probe
 
 # Move the signal file to results if one exists
-mvc signal_output.dat $CASENAME.signals
+mvc signal_output.dat $CASENAME$PLOTEXT.signals
 
 #  Erosion/Deposition print out
 mvc impurity_wall_deposition.dat $CASENAME.deposition
 
 #  Upstream impurity profiles print out
 mvc upstream_impurity_profiles.dat $CASENAME.up_imp_prof
+
+#  Upstream impurity profiles print out
+mvc sol_impurity_profiles.dat $CASENAME.sol_imp_prof
 
 # AUG file
 mvc fort.59 $CASENAME.augdiv_out

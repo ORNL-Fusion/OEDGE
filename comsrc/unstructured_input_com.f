@@ -2395,7 +2395,12 @@ c           ring for background plasma calculation
 c
 c           n_ikoffsets
 c
-c           option   ir1   ir2    ikoffset  
+c           option   ir1   ir2    offset_value
+c
+c           option=0 offset = ik_mids + offset_value (index offset)
+c           option=1 offset = offset_value * SMAX    (fractional offset)
+c           option=2 offset = offset_value * PMAX    (fractional offset)
+c  
 c
           CALL RDRARN(ik_offset_data,n_ik_offsets,MAXNRS,
      .                -MACHHI,MACHHI,.FALSE.,
