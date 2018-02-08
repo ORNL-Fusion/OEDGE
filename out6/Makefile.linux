@@ -225,6 +225,9 @@ $(TARG): $(OBJECTS)
 opt:
 	$(MAKE)  "OPT=$(OPTO)"
 
+opta:
+	$(MAKE)  "OPT=$(OPTOA)"
+
 32bit:
 	$(MAKE)  "OPT=$(OPTO)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
 
