@@ -656,10 +656,22 @@ c
       INCLUDE 'params'
 
       INTEGER i1,i2,n31,n32
-      REAL    curv,curm,a3(MAXGXS)
+c
+c     jdemod - a3 can be too small in some cases
+c              use dynamic allocation
+c
 
+      real,allocatable :: a3(:)
+      REAL    curv,curm
+c      REAL    curv,curm,a3(MAXGXS)
+c
       n31 = 1
       n32 = n1
+c
+c     jdemod - allocate a3 - add an extra in case n1 is zero for some 
+c              reason
+c
+      allocate(a3(n1+1))
       
       DO i1 = 1, n1
         a3(i1) = a1(i1)
@@ -695,6 +707,12 @@ c      ENDDO
           curv   = HI
         ENDIF
       ENDDO
+
+c
+c     jdemod - deallocate a3 
+c
+      deallocate(a3)
+c
 
       RETURN
       END

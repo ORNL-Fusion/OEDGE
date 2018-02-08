@@ -104,6 +104,7 @@ OPTOG= -O -g -Mlist -Mbyteswapio
 # Need base OPTO
 #
 OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
+OPTOA= -fast -Mipa=fast,inline
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=
@@ -252,6 +253,9 @@ $(TARG): $(OBJECTS)
 
 opt:
 	$(MAKE)  "OPT=$(OPTO)"
+
+opta:
+	$(MAKE)  "OPT=$(OPTOA)"
 
 optieee:
 	$(MAKE)  "OPT=$(OPTKO)"
