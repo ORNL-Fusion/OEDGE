@@ -95,7 +95,7 @@ OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk 
 #
 #OPTO= -O -Mlist -Mbyteswapio -Munroll -Mnoframe -mcmodel=medium
 OPTO= -O -Mlist -Mbyteswapio -Munroll -Mnoframe 
-OPTOA= -fast -Mipa=fast,inline
+OPTOA= -fastsse -Mipa=fast,inline
 OPTOS= -O -Mlist -Mbyteswapio -Munroll -Mnoframe -Msave
 #OPTO= -O -Mbyteswapio -Mlist -Munroll -Mnoframe
 OPTS=
