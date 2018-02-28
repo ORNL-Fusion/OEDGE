@@ -1,0 +1,56 @@
+C
+C+ .....................................................................
+C
+C PURPOSE   : SET UP PARAMETERS FOR COMMON BLOCK /CPOLYG/ & /CLINK/
+C
+C PARAMETERS: (I*4) MXG          = MAX. NO. OF POLYGONS ALONG X-DIR.
+C             (I*4) MVES         = MAX. NO. OF POINTS FORMING VESSEL
+C             (I*4) MBUFX        = MAX. NO. OF EXTRA BUFFLES
+C             (I*4) MBUFLE       = MAX. NO. OF POINTS FORMING BUFFLES
+C             (I*4) MYG          = MAX. NO. OF POLYGONS ALONG Y-DIR.
+C             (I*4) MCG  =  MXG  = MAX. OF COLUMNS (RINGS)
+C             (I*4) MRG  =  MYG  = MAX. OF ROWS    (POINTS/RING)
+C             (I*4) MPG          = MAX. NO. OF POLYGONS (ORDINARY)
+C             (I*4) MPGX         = MAX. NO. OF POLYGONS (SPECIAL)
+C             (I*4) MDIM1G       = 1ST DIMENSION OF MARK(,)
+C             (I*4) MDIM2G       = 2ND DIMENSION OF MARK(,)
+C             (I*4) MVMAX        = DIMENSION OF IVMAX()
+C             (I*4) MDIMSE       = DIMENSION OF MPOLYS & MPOLYE
+C             (I*4) MWAL         = MAX. NO. OF INFINITY/WALL LINE PTS
+C             (I*4) MSYM         = MAX. NO. OF CHEMICAL SYMBOLS
+C             (R*8) UDEF         = VALUE FOR UNDEFINED QUANTITIES
+C
+C NOTES     : 1) MRG(NIMBUS) .GE. MPG(CPOLYG) + 2
+C
+C AUTHOR    : J.SPENCE (K1/0/80)  EXT.4865
+C             JET
+C
+C HISTORY   : V1.R1.M0 --- 07/12/98 --- CREATION
+C
+C- .....................................................................
+C
+C
+C............................ PARAMETERS ...............................
+C
+      INTEGER*4      MXG             , MVES
+     *             , MBUFX           , MBUFLE
+     *             , MYG             , MCG             , MRG
+     *             , MPG             , MPGX
+     *             , MDIM1G          , MDIM2G          , MVMAX
+     *             , MDIMSE
+     *             , MWAL , MSYM
+C
+      REAL*8         UDEF
+C
+      PARAMETER(     MXG    = 35     , MVES   = 200
+     *             , MBUFX  = 10     , MBUFLE = 10
+     *             , MYG    = 85     , MCG    = MXG    , MRG    = MYG
+     *             , MPG    = 2997   , MPGX   = 4
+     *             , MDIM1G = 2      , MDIM2G = 2      , MVMAX  = 2
+     *             , MDIMSE = 9
+     *             , MWAL = MVES + 2 , MSYM = 18
+     *             , UDEF = 1.0D+30
+     *         )
+C
+C.......................................................................
+C

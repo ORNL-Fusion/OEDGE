@@ -1,0 +1,4 @@
+c     -*-Fortran-*-
+      COMMON /CRAND/ RANV                                               
+      save /CRAND/
+      REAL RANV(1000*ISECT)                                             

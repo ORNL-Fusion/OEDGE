@@ -1,0 +1,963 @@
+c
+C=======================================================================
+c
+c      PIN VERSION 6.0
+c
+c      PIN version 6.0 is based on the NIMBUS source code from release 
+c      V101298 of the EDGE2D/NIMBUS code. The source code components 
+c      that go into PIN can be found in the EDGE2D source tree at 
+c      JET. Various components are in the following directories.
+c
+c      /u/sim/edge2d/source/defaultn/pf2ds
+c      /u/sim/edge2d/source/defaultn/support
+c      /u/sim/edge2d/source/defaultn/machine
+c      /u/sim/edge2d/source/defaultn/commons
+c
+C=======================================================================
+c
+c      SUBROUTINE PINPGX
+      PROGRAM PINPGX
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C READ GEOMETRY AND PLASMA PROFILES
+C
+      write (6,*) 'PIN EXECUTION: BEGIN'
+c
+      CALL PROFIL
+
+      write (6,*) 'PIN EXECUTION: AFTER PROFIL'
+c
+C
+C CALL THE INTERFACE ROUTINE TO NIMBUS
+C
+
+      CALL INTFAC(0)
+
+      write (6,*) 'PIN EXECUTION: AFTER INTFAC'
+C
+C WRITE THE RESULTS TO FILE FOR PASSING TO DIVIMP
+C
+c
+      CALL GHOST
+
+      write (6,*) 'PIN EXECUTION: EXITING'
+C
+c      RETURN
+c
+      END
+C
+C=======================================================================
+      SUBROUTINE PROFIL
+c      implicit none
+c
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C----------------------
+      INCLUDE (P01)
+      INCLUDE (P02)
+      INCLUDE (C02)
+      INCLUDE (C03)
+      INCLUDE (C04)
+      INCLUDE (C06)
+      INCLUDE (C07)
+      include 'p09'
+      INCLUDE (C09)
+      include (ldh)
+c
+c     DIVIMP PATCH - removed functionality disabled 
+c
+c      include 'divopts'
+c
+c     DIVIMP PATCH
+c
+      include 'chmcint'
+C----------------------
+C
+      INTEGER IFIRST,iz00
+      DATA IFIRST/0/
+C
+      DIMENSION RVMOD(MVESM)  , ZVMOD(MVESM)
+c     &        , RBMOD(MBUFLE) , ZBMOD(MBUFLE)
+     &        , IZVMAX(MVES)
+c
+      character*20 useridh, useridz
+      logical ltag
+c
+      real div_totrec
+c
+c     DIVIMP PATCH
+c
+      integer recsigopt,ipinseed
+c
+c     DIVIMP PATCH
+c
+c     HARD CODE - 1 hydrogenic species and 1 impurity species c
+c
+c     Compare to values in EDGE2D data.f module.
+c
+c     NZS = number of impurities - including EXTRA hydrogenic species
+c     NZSMH = actual count of non-hydrogenic impurities 
+c     NHS  = number of hydrogenic species. 
+c 
+      nzs   = 1
+c      nze2d = 0
+      nzsmh = 1
+      nhs   = 1
+c
+c     DIVIMP PATCH - functionality disabled
+c
+c     Set DIVIMP related options 
+c
+c     redefopt = 1
+c
+c     DIVIMP PATCH
+c
+c     Array element indices for hydrogen and impurities - just so that 
+c     furture changes can be parameterized.
+c
+      izc   = 1
+      ihc   = 1
+C
+c
+      INPROF=17
+      REWIND INPROF
+      read(inprof,117) run
+      read(inprof,118) ishot,fequil
+c
+c  build short equilibrium name, excluding directory name
+c
+      j = 0
+      k = lenstr(fequil)
+   10 i = index(fequil(j+1:k),'/')
+      if (i.ne.0) then
+        j = j + i
+        goto 10
+      endif
+c  remove '.dat' suffix, if it exists
+      i = index(fequil(j+1:k),'.dat')
+      if (i.ne.0) k = j+i
+      xequil = fequil(j+1:k-1)
+c
+      read(inprof,118) ihyear,useridh
+      read(inprof,118) izyear(izc),useridz
+c
+c nimbus only provides for one user id! For now, use the hydrogen
+c UID.  This risks problems for impurity data read by NIMBUS, so
+c beware if USERIDZ.ne.USERIDH!!!
+c
+      userid = useridh
+c
+c because nimbus reads data it doesn't need (CCD,PRC) and which may
+c not be available in the new years, a default year is required
+c
+c
+      idyear = 89
+c
+      READ(INPROF,119) HMASS,FLXOUT,IZ00,isp93
+      read(inprof,120) ihcorr,ihybrid
+      read(inprof,122) phfgal,phfuga,div_totrec
+      read(inprof,124) lpvhpf
+c
+      read(inprof,122) ppcpuf,hpcpuf,tpufh
+c
+      read(inprof,123) jhpuf1(1),jhpuf2(1)
+      read(inprof,123) jhpuf1(2),jhpuf2(2)
+c
+c     Assign all of these values to the new multi-species values.
+c
+      hmass_h(ihc)  = hmass
+      flxout_h(ihc) = flxout
+      iz0(ihc)     = iz00
+      phfgal_h(ihc) = phfgal
+      phfuga_h(ihc) = phfuga
+      lpvhpf_h(ihc) = lpvhpf
+      jhpuf1_h(1,ihc) = jhpuf1(1)
+      jhpuf1_h(2,ihc) = jhpuf1(2)
+      jhpuf2_h(1,ihc) = jhpuf2(1)
+      jhpuf2_h(2,ihc) = jhpuf2(2)
+c
+      write (lout,'(a,l6,5i8)') 'LPVHPF: ',lpvhpf,jhpuf1(1),
+     >                 jhpuf1(2),
+     >                 jhpuf2(1),jhpuf2(2),ihcorr
+
+c
+c     DIVIMP PATCH 
+c
+      read(inprof,'(2i6)') recsigopt,ipinseed
+c
+c     Catch unitialized or unset seed values by setting to the 
+c     NIMBUS default seed of 1 - this is to support calls from
+c     DIVIMP versions that have not added the seed to be passed.
+c     Also - this disallows seed values of 0. 
+c
+      if (ipinseed.eq.0) ipinseed = 1 
+c
+c     DIVIMP PATCH
+c
+c     Format statements 
+c
+ 117  format(a60)
+ 118  format(i6,a)
+ 119  FORMAT(2E12.0,2i3)
+c 119  FORMAT(2E12.4,2i3)
+ 120  format(2(i2))
+ 121  format(2e12.0)
+c 121  format(2e12.4)
+ 122  format(3e12.0)
+c 122  format(3e12.4)
+ 123  format(2i6)
+ 124  format(l6)
+C
+C LOAD EQUILIBRIUM GEOMETRY
+C
+      if (ifirst.eq.0) then
+C   ISAMPL:  (REDUNDANT) SWITCH FOR USING OLD, SYMMETRIC GEOMETRY
+         ISAMPL = 0
+C   NIMP:    NUMBER OF CORE RINGS TO RETAIN (SET HIGH FOR ALL)
+         NIMP = 1000
+c
+c         NIMP = 2
+C   NINOWA:  NUMBER OF SOL RINGS TO DROP
+         NINOWA = 0
+C   KINDP:   PRINT OPTION (0, 1, OR 2 FOR MORE AND MORE OUTPUT)
+         KINDP = 0
+C   LSPRIV:  ALLOW SOURCE (IONISATION) IN PRIVATE REGION
+         LSPRIV = .TRUE.
+C   ITPRIV:  SWITCHES ON PERDENDICULAR TRANSPORT IN TRAP
+C            SET ONE (ROLANDO)
+         ITPRIV = 1
+c
+c   DIVIMP PATCH - variable now passed from DIVIMP
+c
+C   IHCORR:  AREA CORRECTION, SET 1 TO NORMALISE TO POLYGON AREAS
+c         IHCORR = 1
+c         IHCORR = 0
+c
+c   DIVIMP PATCH
+c
+C   LXTARG:  SET .TRUE. TO KEEP ROWS NEAR TARGET (REDUNDANT?)
+         LXTARG = .TRUE.
+C   LTPC1:  REDUNDANT, SET .TRUE.
+         LTPC1 = .TRUE.
+C   SHFACT:  FUDGE FACTOR ON MAGNETIC PITCH, SET 1.0 FOR DEFAULT
+         SHFACT = 1.0
+C   JNOH:    SWITCH FOR ZEROING NEUTRAL HYDROGEN PROFILES
+         JNOH(1) = 1000
+         JNOH(2) = 1000
+C   JNOZ:    SWITCH FOR ZEROING IMPURITY PROFILES
+         JNOZ(1) = 1000
+         JNOZ(2) = 1000
+C   LNBO:    SWITCH FOR DENSITY BOUNDARY CONDITION
+C            NEVER USED ACCORDING TO GERARD
+         LNBO = .FALSE.
+C     
+c         CALL GMTRY(ISAMPL,NIMP,NINOWA,KINDP,ITPRIV,
+c     >              ISHOT,FEQUIL,IHCORR,LXTARG,LTPC1,
+c     >              SHFACT)
+c
+         CALL GMTRY(NIMP,NINOWA,KINDP,
+     >              ISHOT,FEQUIL,IHCORR,LXTARG,
+     >              SHFACT)
+c
+c  If hybrid wall has been requested, read necessary information and
+c  modify the vessel wall
+c
+         write (6,*) 'NVES:',nves
+         do  in = 1,nves
+             write (6,*) 'VES:',in,rves(in),zves(in)
+         end do
+c
+         if (ihybrid.gt.0) then
+           call rdhybd(ihybrid,nves,rvmod,zvmod,rves,zves)
+
+c
+c          DIVIMP PATCH 
+c
+c          call process_hybrid(ihybrid,nves,rvmod,zvmod,rves,zves)
+c
+c          DIVIMP PATCH  
+c
+           call polchg(lout,.true.,nves,rvmod,zvmod,rves,zves)
+         endif
+c
+c Set up IVMAX - code is taken from the end of the data routine in 
+c data.f     
+c
+c FROM DATA.F
+C
+C........................... NIMBUS VESSEL .............................
+C
+      IF( NVES.GT.0 ) THEN
+c
+C..... (03/11/98) FIND INNER & OUTER PEAKS OF VESSEL ABOVE X-POINT......
+c
+          N      = 0      ! NUMBER OF VESSEL PEAKS ABOVE X-POINT
+C
+          DO I   = 1 , NVES
+C
+             IM1 = I - 1
+             IF( IM1.LT.1    ) IM1 = NVES
+C
+             IP1 = I + 1
+             IF( IP1.GT.NVES ) IP1 = 1
+C
+             IF( ZVES(I).GE.ZVES(IM1) .AND. ZVES(I).GE.ZVES(IP1)
+     &           .AND. ZVES(I).GE.ZPX ) THEN
+                 N         = N + 1
+                 IZVMAX(N) = I
+             END IF
+C
+          ENDDO
+C
+          CALL RESETI( IVMAX(1) , MVMAX , 0 )
+C
+          RMIN   = 1.0D+30
+          RMAX   = -RMIN
+C
+          DO K  = 1 , N
+             IV = IZVMAX(K)
+             IF( RVES(IV).GT.RMAX ) THEN
+                 RMAX     = RVES(IV)
+                 IVMAX(1) = IV
+             ENDIF
+             IF( RVES(IV).LT.RMIN ) THEN
+                 RMIN     = RVES(IV)
+                 IVMAX(2) = IV
+             ENDIF
+          ENDDO
+C
+          IF( IVMAX(1).GT.0 )
+     &        WRITE(LOUT,90130) 'OUTER'        , IVMAX(1)
+     &                        , RVES(IVMAX(1)) , ZVES(IVMAX(1))
+          IF( IVMAX(2).GT.0 )
+     &        WRITE(LOUT,90130) 'INNER'        , IVMAX(2)
+     &                        , RVES(IVMAX(2)) , ZVES(IVMAX(2))
+c
+c         Format for previous output.    
+c
+
+90130 FORMAT(/' VESSEL PEAK ON ' , A , ' SURFACE = VESSEL VERTEX #'
+     &      , I3 , ' = (' , 1PE12.4 , ',' , E12.4 , ') ' )
+
+C.......................................................................
+      END IF
+c
+c END OF FROM DATA.F
+C
+c
+c
+c load plasma volume elements (code taken directly from spltup.f)
+c
+      CALL RESETR(DVOL(1,1),MP*6,0.0D0)
+      DO 200 ICOL = 1,NC
+        IF( ITPRIV.LT.0 .AND. ICOL.EQ.NXW )GOTO 220
+        IF( ICOL.EQ.1 .OR. ICOL.EQ.NXW .OR. ICOL.EQ.NXW+1 )GOTO 200
+        JMAX = NJ(ICOL)
+        JMIN = 1
+        DO 180 J = JMIN,JMAX
+          K = KORY(ICOL,J)
+          IT = ITAG(K,4)
+          IF( IT.LT.0 )GOTO 180
+          DY = DTHETA(K)
+          DX = DRHO(K)
+          LTAG = IT.EQ.0 .OR. IT.EQ.4 .OR. IT.EQ.5
+     &          .AND. ITAG(K,2).GT.0
+           IF( LNBO )LTAG = IT.EQ.0
+          IF( LTAG )DVOL(K,1) = H(K)*DX*DY
+          IF( LTAG )DVOL(K,5) = H(K)*DX*DY
+          IF( LTAG )DVOL(K,3) = H(K)*DX*DY
+          IF( LTAG )DVOL(K,4) = H(K)*DX*DY
+  180   CONTINUE
+  200 CONTINUE
+  220 CONTINUE
+c
+         IFIRST = 1
+      endif
+C
+      READ(INPROF,130) (DENEL (K),K=1,NP)
+      READ(INPROF,130) (PREEL (K),K=1,NP)
+      READ(INPROF,130) (DEN   (K),K=1,NP)
+      READ(INPROF,130) (PRE   (K),K=1,NP)
+      READ(INPROF,130) (VTE   (K),K=1,NP)
+      READ(INPROF,130) (VRO   (K),K=1,NP)
+      READ(INPROF,130) (FLUXPX(K,2),K=1,NP)
+      READ(INPROF,130) (FLUXPY(K,2),K=1,NP)
+c 
+c     Copy fluxes to multi-species arrays
+c
+      do k = 1,np
+         den_h(k,ihc)      =  den(k)
+         vte_h(k,ihc)      =  vte(k)
+         fluxpx_h(k,2,ihc) =  fluxpx(k,2)
+         fluxpy_h(k,2,ihc) =  fluxpy(k,2)
+      end do
+c
+c  flux of atoms + ions from last nimbus iteration is also required
+c
+      READ(INPROF,130) (FLUXHW(K,4),K=1,MVESM)
+ 130  FORMAT(6E12.0)
+      REWIND INPROF
+c
+c  some linearisation tricks in intfac require that vte <>0;
+c  set it to a small number to avoid this error
+c
+      do k = 1, np
+         if (abs(vte(k)).lt.1.0e-10) vte(k) = 1.0e-10
+      enddo
+c
+cpr   CALL PRNT2D(DENEL (1),'ELECTRON DENSITY  ( CM(-3) )')
+cpr   CALL PRNT2D(PREEL (1),'ELECTRON PRESSURE ( DYNE CM(-2) )')
+cpr   CALL PRNT2D(DEN   (1),'ION DENSITY  ( CM(-3) )')
+cpr   CALL PRNT2D(PRE   (1),'ION PRESSURE ( DYNE CM(-2) )')
+cpr   CALL PRNT2D(VTE   (1),'PARALLEL ION VELOCITY ( CM/S )')
+cpr   CALL PRNT2D(VRO   (1),'PERPENDICULAR ION VELOCITY ( CM/S )')
+cpr   CALL PRNT2D(FLUXPX(1,1),'PERPENDICULAR ION FLOW ( CM(-1)S(-1) )')
+cpr   CALL PRNT2D(FLUXPY(1,1),'PARALLEL ION FLOW ( CM(-1)S(-1) )')
+C
+C LOAD CONSTANTS IN /CPHYS/ (=C03)
+C
+      TWOPI  = 6.283185D0
+      AMU    = 1.6726D-24
+      CLIGHT = 2.9979D+10
+      ECHARG = 4.8032D-10
+      EV = 1.6022D-12
+C       MASS OF ELECTRON (AMU)
+      HMASSE = 5.4463D-04
+      TRAN = 3./(4.*DSQRT(3.1415D0)*ECHARG**4)*EV**2.5
+C       ELECTRON PARALLEL HEAT CONDUCTIVITY
+      GHEPAR = 3.2/DSQRT(2.0D0*HMASSE*AMU)*TRAN
+C       ION PARALLEL HEAT CONDUCTIVITY
+      GHPAR = 3.9/DSQRT(HMASS*AMU)*TRAN
+C
+C THE ION REFLECTION COEFFICIENT MUST BE ALSO BE SET
+C  - EDGE2D ALLOWS THIS TO CONVERGE TO A STEADY STATE VALUE
+C    JUST SET THEM BOTH TO 1.0 HERE
+C
+      RNCOEF = 1.0
+      RNTIM = 1.0
+c
+c load also the cross section switches for nimbus
+c
+      ixs(1) = 5
+      ixs(2) = 1
+      ixs(3) = 1
+      ixs(4) = 1
+c
+c     DIVIMP PATCH
+c
+      ixs(5) = recsigopt
+c
+c      ixs(5) = 4
+c
+c     DIVIMP PATCH
+c
+      ixs(6) = 1
+c
+c load the sputtering factor which is used in EDGE2D to control
+c total impurity content, here just = 1 to use the 'true' yields
+c
+      spufmc(izc) = 1.0
+
+c
+c     DIVIMP PATCH
+c
+c
+c     Calculate the required pump flux and set other pump fluxes 
+c     EXPLICITLY to zero. Set HEXTRL to be equal to the additional
+c     pumped flux.
+c
+c     Do this at the end of this subroutine so that all the required pieces
+c     are defined.  
+c
+      hcntlr = 0.0 
+      hcntlp = 0.0
+      hpufft = 0.0
+c
+c     Calculate HPUFF
+c 
+      if (hpcpuf.gt.0.0) then 
+c
+        HPUFF = FLXOUT * TWOPI + DIV_TOTREC
+c
+        if ((hpcpuf*phfgal).eq.1.0) then 
+           HPUFF = 0.0
+           write (0,*) 'PUFFING ERROR IN PINPGX - INFINITE HPUFF'
+           stop 1
+        else
+           HPUFF = HPUFF * (HPCPUF*PHFGAL) / (1.0-HPCPUF*PHFGAL) 
+        endif
+c
+      endif 
+c
+c     Deal with PPCPUF
+c
+      if (ppcpuf.gt.0.0) then 
+c
+c       Add an additional flux as a proportion of the target flux.
+c
+        HPUFF = FLXOUT * TWOPI * PPCPUF + HPUFF
+c
+      endif
+c
+c     Assign EXTRA puff of pumped target fraction.
+c
+      HEXTRL = HPUFF + HPUFFT + HCNTLR + HCNTLP
+c
+c     Assign multi-species equivalents
+c
+c      write (0,'(a,5(1x,g12.5))') 'HPUFF:',hpuff,flxout,totrec,
+c     >                    hpcpuf,phfgal,twopi
+c      write (6,'(a,6(1x,g12.5))') 'HPUFF:',hpuff,flxout,totrec,
+c     >                    hpcpuf,phfgal,twopi
+c
+c
+      hextrl_h(ihc) = hextrl
+      hpuff_h(ihc)  = hpuff
+      hpufft_h(ihc) = hpufft
+      hcntlr_h(ihc) = hcntlr
+      hcntlp_h(ihc) = hcntlp
+c
+c     DIVIMP PATCH 
+C
+      RETURN
+      END
+C
+C=======================================================================
+      SUBROUTINE GHOST
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C----------------------
+      INCLUDE (P01)
+      INCLUDE (P02)
+      INCLUDE (C02)
+      INCLUDE (C03)
+      INCLUDE (C04)
+      INCLUDE (C05)
+      INCLUDE (C06)
+      INCLUDE (LDH)
+      include 'chmcint'
+C----------------------
+C
+      INTEGER JVESM(MVESM), KTOT
+C
+      CHARACTER*9 LABEL
+      DATA LABEL/'VDISTJ,II'/
+C
+      REWIND LGHOST
+C
+  110 FORMAT(12I6)
+  120 FORMAT(1P,6E12.4)
+  121 FORMAT(1P,E12.4,I6,1P,E11.3,1P,E11.3,1P,E12.4,I5)
+  122 FORMAT(I7,1P,E14.6,2A)
+  123 FORMAT(A9,I6)
+  124 FORMAT(A9,2I6)
+C
+C  FIRST, A TITLE AND SOME GEOMETRY
+C  - FOR COMPLETENESS; THIS INFO IS NOT READ BY DIVIMP
+C
+      WRITE(LGHOST,122) ISHOT , TSHOT , ' PIN    : ' , RUN(1:40)
+      WRITE(LGHOST,123) 'RMESH:',NP
+      WRITE(LGHOST,120) (RMESH(K),K=1,NP)
+      WRITE(LGHOST,123) 'ZMESH:',NP
+      WRITE(LGHOST,120) (ZMESH(K),K=1,NP)
+      WRITE(LGHOST,124) 'ITAG:',NP,5
+      WRITE(LGHOST,110) ((ITAG(K,L),L=1,5),K=1,NP)
+      WRITE(LGHOST,123) 'NI:',NR
+      WRITE(LGHOST,110) (NI(J),J=1,NR)
+      WRITE(LGHOST,123) 'KORX:'
+      DO 130 J=1,NR
+         IF(NI(J).LE.0) GOTO 130
+         WRITE(LGHOST,110) (KORX(J,I),I=1,NI(J))
+  130 CONTINUE
+      WRITE(LGHOST,124) 'NJ:',NC,NXW
+      WRITE(LGHOST,110) (NJ(I),I=1,NC)
+      WRITE(LGHOST,123) 'KORY:',NC
+      DO 140 I=1,NC
+         IF(NJ(I).LE.0) GOTO 140
+         WRITE(LGHOST,110) (KORY(I,J),J=1,NJ(I))
+  140 CONTINUE
+      WRITE(LGHOST,123) 'RHO:'  ,NP
+      WRITE(LGHOST,120) (RHO(K),K=1,NP)
+      WRITE(LGHOST,123) 'THETA:' ,NP
+      WRITE(LGHOST,120) (THETA(K),K=1,NP)
+      WRITE(LGHOST,123) 'H:',NP
+      WRITE(LGHOST,120) (H(K),K=1,NP)
+      WRITE(LGHOST,123) 'SH:',NP
+      WRITE(LGHOST,120) (SH(K),K=1,NP)
+      WRITE(LGHOST,123) 'HTETA:',NP
+      WRITE(LGHOST,120) (HTETA(K),K=1,NP)
+      WRITE(LGHOST,123) 'HCORR:',NP
+      WRITE(LGHOST,120) (HCORR(K),K=1,NP)
+C
+C  NOW THE NIMBUS RESULTS REQUIRED FOR DIVIMP
+C  - THE FILE IS KEYED, SO THAT THE WRITING ORDER DOESN'T MATTER 
+C
+c  The new INTFAC normalises all the profiles.  In fact, EDGE2D only uses
+c  the profile shape, so the normalisation done follows a complicated
+c  history and should be redone externally - see READPIN.
+c
+c  1) The profiles are normalised to FLXOUT, which itself is the 
+c     ion outflux divided by 2pi, so a factor of 2.pi.FLXOUT is required.
+c  2) The profiles are also normalised to a volume calculated from the 
+c     product of R.AREA without the 2pi, so the 2pi's cancel!
+c  3) The normalisation takes no account of the recombination source,
+c     which is added to the ion outflux in NIMBUS.
+c
+c  NOTE: The fluxes in NIMBUS are normalized by FLXREF which is FLXOUT plus
+c        the amount of puffing. 
+c
+c
+c  For now, since I think we're going to end up renormalising in DIVIMP
+c  anyway (different geometry), just pass the profiles with the first
+c  two corrections above.
+c
+c
+c     All these must be given a species identifier subscript
+c 
+c     ihc - hydrogen = 1 at this time
+c     izc - impurity = 1 at this time
+c
+      WRITE(LGHOST,123) 'SRECYC:',1
+      WRITE(LGHOST,120) SRECYC
+      WRITE(LGHOST,123) 'SRECOM:',1
+      WRITE(LGHOST,120) SRECOM
+      WRITE(LGHOST,123) 'HESCPD:',1
+      WRITE(LGHOST,120) HESCPD(ihc)
+      WRITE(LGHOST,123) 'HESCAL:',1
+      WRITE(LGHOST,120) HESCAL(ihc)
+      WRITE(LGHOST,123) 'ZSPUT :',1
+      WRITE(LGHOST,120) ZSPUT(izc)
+      WRITE(LGHOST,123) 'ZSPUTN:',1
+      WRITE(LGHOST,120) ZSPUTN(izc)
+      WRITE(LGHOST,123) 'ZESCPD:',1
+      WRITE(LGHOST,120) ZESCPD(izc)
+      WRITE(LGHOST,123) 'ZESCAL:',1
+      WRITE(LGHOST,120) ZESCAL(izc)
+      WRITE(LGHOST,123) 'HESCLK:',1
+      WRITE(LGHOST,120) HESCLK(ihc)
+      WRITE(LGHOST,123) 'ZESCLK:',1
+      WRITE(LGHOST,120) ZESCLK(izc)
+      WRITE(LGHOST,123) 'PHFGAL:',1
+      WRITE(LGHOST,120) PHFGAL_h(ihc)
+      WRITE(LGHOST,123) 'PHFUGA:',1
+      WRITE(LGHOST,120) PHFUGA_h(ihc)
+C
+
+c
+c     Originally multiplied by FLXOUT
+c 
+c      WRITE(LGHOST,123) 'PROFA:',NP
+c      WRITE(LGHOST,120) (PROFA_h(K,ihc)*FLXOUT(ihc),K=1,NP)
+c      WRITE(LGHOST,123) 'PROFM:',NP
+c      WRITE(LGHOST,120) (PROFM_h(K,ihc)*FLXOUT(ihc),K=1,NP)
+c      WRITE(LGHOST,123) 'PROFZ:',NP
+c      WRITE(LGHOST,120) (PROFZ(K,izc)*FLXOUT(ihc),K=1,NP)
+c      WRITE(LGHOST,123) 'PROFSN:',NP
+c      WRITE(LGHOST,120) (PROFSN(K)*FLXOUT(ihc),K=1,NP)
+c      WRITE(LGHOST,123) 'PROFHA:',NP
+c      WRITE(LGHOST,120) (PROFHA(K)*FLXOUT,K=1,NP)
+c      WRITE(LGHOST,123) 'PROFSZ:',NP
+c      WRITE(LGHOST,120) (PROFSZ(K)*FLXOUT,K=1,NP)
+C
+c      WRITE(LGHOST,123) 'ENEUTA:',NP
+c      WRITE(LGHOST,120) ( ENEUTA(K) , K = 1 , NP )
+c      WRITE(LGHOST,123) 'ENEUTM:',NP
+c      WRITE(LGHOST,120) ( ENEUTM(K)   , K = 1 , NP )
+c      WRITE(LGHOST,123) 'ENEUTZ:',NP
+c      WRITE(LGHOST,120) ( ENEUTZ(K)   , K = 1 , NP )
+C
+c      WRITE(LGHOST,123) 'PROFQ:',NP
+c      WRITE(LGHOST,120) ( PROFQ(K)*FLXOUT   , K = 1 , NP )
+c      WRITE(LGHOST,123) 'PROFQE:',NP
+c      WRITE(LGHOST,120) ( PROFQE(K)*FLXOUT  , K = 1 , NP )
+c      WRITE(LGHOST,123) 'PROFMP:',NP
+c      WRITE(LGHOST,120) ( PROFMP(K)*FLXOUT  , K = 1 , NP )
+c
+c     Change to multiplication by FLXREF
+c    
+c     Add appropriate hydrogen or impurity subscript for multi-species
+c     arrays
+c
+      WRITE(LGHOST,123) 'PROFA:',NP
+      WRITE(LGHOST,120) (PROFA_h(K,ihc)*FLXREF,K=1,NP)
+      WRITE(LGHOST,123) 'PROFM:',NP
+      WRITE(LGHOST,120) (PROFM_h(K,ihc)*FLXREF,K=1,NP)
+      WRITE(LGHOST,123) 'PROFZ:',NP
+      WRITE(LGHOST,120) (PROFZ(K,izc)*FLXREF,K=1,NP)
+      WRITE(LGHOST,123) 'PROFSN:',NP
+      WRITE(LGHOST,120) (PROFSN_h(K,ihc)*FLXREF,K=1,NP)
+      WRITE(LGHOST,123) 'PROFHA:',NP
+      WRITE(LGHOST,120) (PROFHA(K)*FLXREF,K=1,NP)
+      WRITE(LGHOST,123) 'PROFSZ:',NP
+      WRITE(LGHOST,120) (PROFSZ(K,izc)*FLXREF,K=1,NP)
+C
+      WRITE(LGHOST,123) 'ENEUTA:',NP
+      WRITE(LGHOST,120) ( ENEUTA_h(K,ihc) , K = 1 , NP )
+      WRITE(LGHOST,123) 'ENEUTM:',NP
+      WRITE(LGHOST,120) ( ENEUTM_h(K,ihc)   , K = 1 , NP )
+      WRITE(LGHOST,123) 'ENEUTZ:',NP
+      WRITE(LGHOST,120) ( ENEUTZ(K,izc)   , K = 1 , NP )
+C
+      WRITE(LGHOST,123) 'PROFQ:',NP
+      WRITE(LGHOST,120) ( PROFQ(K)*FLXREF   , K = 1 , NP )
+      WRITE(LGHOST,123) 'PROFQE:',NP
+      WRITE(LGHOST,120) ( PROFQE(K)*FLXREF  , K = 1 , NP )
+      WRITE(LGHOST,123) 'PROFMP:',NP
+      WRITE(LGHOST,120) ( PROFMP(K)*FLXREF  , K = 1 , NP )
+C
+       DO I = 1,14
+         DO J = 1,3
+           WRITE(LABEL(6:6),'(I1)') J
+           WRITE(LABEL(8:9),'(I2.2)') I
+           WRITE(LGHOST,123) LABEL, NP
+           IF (I.EQ.1 .OR. I.EQ.2 .OR. 
+     >         (I.EQ.13.AND.J.EQ.1) .OR. 
+     >         (I.EQ.14.AND.J.LE.2)) THEN
+             WRITE(LGHOST,120) ( HORTON(J,I,K)*FLXREF, K = 1, NP )
+           ELSE
+             WRITE(LGHOST,120) ( HORTON(J,I,K), K = 1, NP )
+           ENDIF
+         ENDDO
+       ENDDO
+C
+C  THE WALL AND PUMP GEOMETRY USED BY NIMBUS IS NOW AVAILABLE
+C
+      WRITE(LGHOST,123) 'NVESM:',NVESM
+      WRITE(LGHOST,123) 'NVESP:',NVESP
+      WRITE(LGHOST,123) 'RVESM1:',NVESM+NVESP
+      WRITE(LGHOST,120) ( RVESM(K,1), K = 1 , NVESM+NVESP )
+      WRITE(LGHOST,123) 'ZVESM1:',NVESM+NVESP
+      WRITE(LGHOST,120) ( ZVESM(K,1), K = 1 , NVESM+NVESP )
+      WRITE(LGHOST,123) 'RVESM2:',NVESM+NVESP
+      WRITE(LGHOST,120) ( RVESM(K,2), K = 1 , NVESM+NVESP )
+      WRITE(LGHOST,123) 'ZVESM2:',NVESM+NVESP
+      WRITE(LGHOST,120) ( ZVESM(K,2), K = 1 , NVESM+NVESP )
+c
+c  pass labels as integers
+c
+      do k = 1, nvesm
+        if (gvesm(k).eq.'OT') then
+          jvesm(k) = 1
+        else if (gvesm(k).eq.'OC') then
+          jvesm(k) = 2
+        else if (gvesm(k).eq.'OD') then
+          jvesm(k) = 3
+        else if (gvesm(k).eq.'IT') then
+          jvesm(k) = 4
+        else if (gvesm(k).eq.'IC') then
+          jvesm(k) = 5
+        else if (gvesm(k).eq.'ID') then
+          jvesm(k) = 6
+        else if (gvesm(k).eq.'MS') then
+          jvesm(k) = 7
+        else if (gvesm(k).eq.'PV') then
+          jvesm(k) = 8
+        else if (gvesm(k).eq.'CB') then
+          jvesm(k) = 9
+        else if (gvesm(k).eq.'BA') then
+          jvesm(k) = 10
+        else
+          jvesm(k) = 0
+        endif
+c
+        write (6,*) 'JVESM:',k,gvesm(k),jvesm(k)  
+c
+      enddo
+      WRITE(LGHOST,123) 'JVESM:',NVESM
+      WRITE(LGHOST,110) ( JVESM(K)  , K = 1 , NVESM )
+C
+C  AT THE MOMENT, WALL QUANTITIES ARE RETURNED FOR THE VESSEL WALL
+C  AND ONE INTEGRATED VALUE FOR ANY BAFFLE (NOT USED IN DIVIMP) BUT
+C  NOT FOR THE PUMP SEGMENTS.  THE WALL QUANTITIES INCLUDE A (REDUNDANT)
+C  AVERAGE R AND Z FOR THE WALL SEGMENT.  JUST WRITE OUT THE VALUES.
+C
+      WRITE(LGHOST,123) 'FLUXHW:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,3), K = 1 , NVESM )
+      WRITE(LGHOST,123) 'FLXHW2:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,4), K = 1 , NVESM )
+      WRITE(LGHOST,123) 'FLXHW3:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,5), K = 1 , NVESM )
+      WRITE(LGHOST,123) 'FLXHW4:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,6), K = 1 , NVESM )
+      WRITE(LGHOST,123) 'FLXHW5:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,7), K = 1 , NVESM )
+      WRITE(LGHOST,123) 'FLXHW6:',NVESM
+      WRITE(LGHOST,120) ( FLUXHW(K,8), K = 1 , NVESM )
+C
+C  TRAJECTORIES OF THE FIRST FEW (USUALLY 10) HISTORIES FROM
+C  NIMBUS ARE AVAILABLE
+C
+      WRITE(LGHOST,123) 'KDEBWR:',IDEBWR
+      WRITE(LGHOST,110) (KDEBWR(I), I = 1, IDEBWR)
+      ktot = 0
+      do i = 1, idebwr
+        ktot = ktot + kdebwr(i)
+      enddo
+      WRITE(LGHOST,123) 'XDEBWR1:', KTOT
+      WRITE(LGHOST,120) ((XDEBWR(I,K,1), K = 1,KDEBWR(I)), I = 1,IDEBWR)
+      WRITE(LGHOST,123) 'XDEBWR2:', KTOT
+      WRITE(LGHOST,120) ((XDEBWR(I,K,2), K = 1,KDEBWR(I)), I = 1,IDEBWR)
+C
+c     write out pump locations
+c
+c      WRITE(LGHOST,123) 'GAUGE1:'
+c      WRITE(LGHOST,120)  XGAUGE(1),YGAUGE(1)
+c      WRITE(LGHOST,123) 'GAUGE2:'
+c      WRITE(LGHOST,120)  XGAUGE(2),YGAUGE(2)
+c
+
+      REWIND LGHOST
+C
+      RETURN
+      END
+C
+c     DIVIMP PATCH - routine to read in hybrid wall if 
+c                    vessel has been redefined.
+c                  - currently not used since such redefinition
+c                    is not possible with the current LINKPG
+c                    implementation
+c
+      subroutine process_hybrid(ihybrid,nves,rvmod,zvmod,
+     >                          zves,rves)
+      implicit none 
+c
+      integer ihybrid, nves,in
+      real*8  rvmod(nves), zvmod(nves), rves(nves), zves(nves)
+c
+c     PROCESS_HYBRID: This routine will call a routine to read
+c                     in a sequence of wall modifications and then 
+c                     adjust those (if necessary) if the wall has
+c                     been redefined.
+c
+      include 'p09' 
+      include 'div_bafdat'
+c
+      real*8  rvmodt(mves),zvmodt(mves)  
+c
+      if (wall_redef.eq.1) then
+c
+         call rdhybd(ihybrid,nvesorg,rvmod,zvmod,
+     >                rvesorg,zvesorg)
+c
+c        Create adjusted modifications for redefined wall
+c
+         do in = 1,nves 
+c
+            if (indref(in).gt.0) then
+c
+               rvmodt(in) = rvmod(indref(in))
+               zvmodt(in) = zvmod(indref(in))
+             else
+               rvmodt(in) = 1.0e30
+               zvmodt(in) = 1.0e30 
+            endif
+         end do 
+c
+c        Copy over to rvmod,zvmod
+c
+         do in = 1,nves
+            rvmod(in) = rvmodt(in)
+            zvmod(in) = zvmodt(in)  
+         enddo
+c
+      else
+c
+         call rdhybd(ihybrid,nves,rvmod,zvmod,rves,zves)
+c
+      endif
+c
+      return
+c
+      end    
+c
+c     DIVIMP PATCH - end of process_hybrid 
+c
+c
+      subroutine rdhybd(ihybrid,nves,rvmod,zvmod,rves,zves)
+      implicit none
+c
+      integer ihybrid, nves
+      real*8  rvmod(nves), zvmod(nves), rves(nves), zves(nves)
+c
+      integer lhybrd, igeom, ngeom, ncoord, i, j, k
+      real*8  coord(4)
+      character buffer*80, string*80
+c
+      data lhybrd/28/
+c
+      rewind(lhybrd)
+c
+c  read number of hybrid geometries availabel in input file
+c
+    5 read(lhybrd,'(a80)') buffer
+      if (buffer(1:1).eq.'C' .or. buffer(1:1).eq.'c') goto 5
+      read(buffer,*) string, ngeom
+c
+c  check that ihybrid has a valid value
+c
+      if (ihybrid.lt.1 .or. ihybrid.gt.ngeom) then
+        write(6,*) ' INVALID VALUE FOR IHYBRID:  ', ihybrid
+        stop 'Fatal error'
+      endif
+c
+      igeom = 1
+c
+c  read number of coordinate pairs for next geometry
+c
+   10 read(lhybrd,'(a80)') buffer
+      if (buffer(1:1).eq.'C' .or. buffer(1:1).eq.'c') goto 10
+      read(buffer,*) string, ncoord
+c
+c  check number of coordinates against nves.  There should be
+c  one less since the unmodified vessel was closed by setting
+c  the last (extra) point equal to the first.
+c
+      if (igeom.eq.ihybrid .and. ncoord.ne.nves-1) then
+        write(6,*) ' INCONSISTENT VALUES FOR NCOORD AND NVES: ',
+     >                ncoord, nves
+        stop 'Fatal error'
+      endif
+c
+c  skip title line
+c
+      read(lhybrd,'(a80)') buffer
+c
+c  read the coordinates one line at a time
+c
+      do i = 1, ncoord
+        read(lhybrd,*) j, (coord(k),k=1,4)
+c
+c  if this is the required geometry, check that unmodified
+c  values are OK and load modifications
+c
+        if (igeom.eq.ihybrid) then
+          do k=1,4
+            coord(k) = coord(k)/10.
+          enddo
+          if ((abs(coord(1)-rves(i)).gt.0.02)
+     >      .and.(coord(3).lt.1.0e30.or.coord(4).lt.1.0e30)) then
+            write(6,*) ' INCONSISTENT R-COORDINATES: ', 
+     >                 i,coord(1),rves(i)
+            stop 'Fatal error'
+          endif
+          if ((abs(coord(2)-zves(i)).gt.0.02)
+     >      .and.(coord(3).lt.1.0e30.or.coord(4).lt.1.0e30)) then
+          write(6,*) ' INCONSISTENT Z-COORDINATES: ', 
+     >                 i,coord(2),zves(i)
+            stop 'Fatal error'
+          endif
+          rvmod(i) = coord(3)
+          zvmod(i) = coord(4)
+        endif
+      enddo
+c
+c  If we haven't got to the required geometry, loop back
+c
+      if (ihybrid.gt.igeom) then
+        igeom = igeom + 1
+        goto 10
+      endif
+c
+      return
+      end
+

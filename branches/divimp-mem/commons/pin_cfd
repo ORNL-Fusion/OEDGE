@@ -1,0 +1,83 @@
+c     -*-Fortran-*-
+c
+      common /pin_cfd/ d2ndr, d2ndr_sm, d2ndr_last,
+     >                 pinmom, pinmom_sm, pinmom_last,
+     >                 pinmom_rec, pinmom_cx, 
+     >                 pinion_sm, pinion_last,
+     >                 pinatom_sm,  pinatom_last,
+     >                 pinmol_sm,  pinmol_last,
+     >                 pinena_sm,  pinena_last,
+     >                 pinqi_sm,  pinqi_last,
+     >                 pinqi_1,  pinqi_2, pinqi_3,
+     >                 pinqi_4,  pinqi_5, pinqi_6,
+     >                 pinqe_1,  pinqe_2,
+     >                 pinqe_sm,  pinqe_last,
+     >                 pinrec_sm, pinrec_last,
+     >     fract4_new, fract2_new, fract3_new, fract1_new, 
+     >     relax4,     relax1, relax2, relax3,
+     >     fract4_old, fract2_old, fract3_old, fract1_old,
+     >                 f_recomb, oldknbs, oldktibs,
+     >                 oldktebs, oldkvhs, old_ne, old_ti,
+     >                 old_te, old_v, old_mach, zhi_sm,
+     >                 fract1_a, fract1_b, 
+     >                 fract2_a, fract2_b, 
+     >                 fract3_a, fract3_b,
+     >                 fract4_a, fract4_b,
+     >      a_sm_s, a_sm_r, a_relax, sum3a, sum3b, sum4a, sum4b,
+     >      fract3, delta3, fract2_pin, fract3_pin, delta2, 
+     >      sum2a, sum2b, sum2c, targ2a, targ2b, targ2c, 
+     >      targ3a, targ3b, targ3c, delta, core4a, core4b, core4c,
+     >      fract4, delta4, fract4_pin, targ4a, targ4b, targ4c,
+     >      core3a, core3b, core3c, rel_min2, rel_min3, rel_min,
+     >      sum1a, sum1b, sum1c, delta1, targ1a, targ1b, targ1c, 
+     >      fract1_pin, err_fl_a, err_fl_b
+      save /pin_cfd/
+c     
+      real d2ndr(maxnks,maxnrs), d2ndr_sm(maxnks,maxnrs) 
+      real d2ndr_last(maxnks,maxnrs), pinmom(maxnks,maxnrs)
+      real pinmom_sm(maxnks,maxnrs),pinmom_last(maxnks,maxnrs),
+     >     pinmom_rec(maxnks,maxnrs), pinmom_cx(maxnks,maxnrs)
+      real pinion_sm(maxnks,maxnrs),pinion_last(maxnks,maxnrs)
+      real pinatom_sm(maxnks,maxnrs),pinatom_last(maxnks,maxnrs)
+      real pinmol_sm(maxnks,maxnrs),pinmol_last(maxnks,maxnrs)
+      real pinena_sm(maxnks,maxnrs),pinena_last(maxnks,maxnrs)
+      real pinqi_sm(maxnks,maxnrs), pinqi_last(maxnks,maxnrs)
+      real pinqi_1(maxnks,maxnrs), pinqi_2(maxnks,maxnrs)
+      real pinqi_3(maxnks,maxnrs), pinqi_4(maxnks,maxnrs)
+      real pinqi_5(maxnks,maxnrs), pinqi_6(maxnks,maxnrs)
+      real pinqe_1(maxnks,maxnrs), pinqe_2(maxnks,maxnrs)    
+      real pinqe_sm(maxnks,maxnrs), pinqe_last(maxnks,maxnrs)
+      real pinrec_sm(maxnks,maxnrs),pinrec_last(maxnks,maxnrs)
+      real fract4_new(maxnrs)
+      real fract2_new(maxnrs), fract3_new(maxnrs), fract1_new(maxnrs) 
+      real relax4(maxnrs)
+      real relax1(maxnrs), relax2(maxnrs), relax3(maxnrs)
+      real fract4_old(maxnrs)
+      real fract2_old(maxnrs), fract3_old(maxnrs), fract1_old(maxnrs) 
+      real f_recomb(maxnrs)
+      real oldknbs(maxnks,maxnrs)
+      real oldktibs(maxnks,maxnrs)
+      real oldktebs(maxnks,maxnrs)
+      real oldkvhs(maxnks,maxnrs)
+      real old_ne(maxnrs,2)
+      real old_ti(maxnrs,2)
+      real old_te(maxnrs,2)
+      real old_v(maxnrs,2)
+      real old_mach(maxnrs,2)
+      real zhi_sm(4,maxnrs)
+      real fract1_a, fract1_b, fract2_a, fract2_b, fract3_a, fract3_b
+      real fract4_a, fract4_b
+      real a_sm_s, a_sm_r, a_relax, sum3a, sum3b, sum3c, 
+     >  fract3, delta3, fract2_pin, fract3_pin, delta2, 
+     >  sum2a, sum2b, sum2c, targ2a, targ2b, targ2c, 
+     >  targ3a, targ3b, targ3c, delta,
+     >  core3a, core3b, core3c, rel_min2, rel_min3, rel_min, 
+     >  sum1a, sum1b, sum1c, 
+     >  delta1, targ1a, targ1b, targ1c, fract1_pin,
+     >  sum4a, sum4b, sum4c, fract4, delta4, fract4_pin,
+     >  targ4a, targ4b, targ4c, core4a, core4b, core4c
+      integer err_fl_a, err_fl_b
+
+
+
+
