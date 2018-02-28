@@ -5,11 +5,12 @@ c
 c subroutine: LoadPIN
 c
       SUBROUTINE LoadPIN
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -727,11 +728,12 @@ c
 c subroutine: SaveSolution
 c
       SUBROUTINE SaveSolution
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -779,11 +781,12 @@ c
 c subroutine: SaveVacuumGrid
 c
       SUBROUTINE ProcessVacuumGrid(mode)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -902,11 +905,12 @@ c
 c subroutine: SaveGeometry
 c
       SUBROUTINE SaveGeometry
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -968,11 +972,12 @@ c
 c subroutine: SavePlasma
 c
       SUBROUTINE SavePlasma
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL    slver
@@ -1038,11 +1043,12 @@ c
 c subroutine: SaveSources
 c
       SUBROUTINE SaveSources
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1099,11 +1105,12 @@ c
 c ... make sure that nlpdati,o is not zero if rel_opt  = 2...
 c
       SUBROUTINE UpdateTargets(iitersol)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1412,11 +1419,12 @@ c subroutine: SetupRelax
 c
 crelax
       SUBROUTINE SetupRelaxation
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER i1,ir,nvac,i2
@@ -1551,13 +1559,14 @@ c
 c  subroutine: MatchProbe
 c
       SUBROUTINE MatchProbe(region,ir,mode,status)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER region,ir,mode,status
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -3778,11 +3787,12 @@ c    profile (converged solution)
 c
 c
       SUBROUTINE EvaluatePowerTerms(region,ir,error,result)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4238,11 +4248,12 @@ c
 c
 c
       SUBROUTINE AssignMockPowerExtent(region,ir)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4817,13 +4828,14 @@ c
 c
 c
       REAL FUNCTION IdentifyFlowReversal(region,ring)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER region,ring
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4897,11 +4909,12 @@ c
 c
 c
       SUBROUTINE FlattenTeProfile(region,ring,status)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -5973,11 +5986,12 @@ c
 c subroutine: RelaxSource
 c
       SUBROUTINE RelaxSource(mode,source,source2,tag)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER SymmetryPoint,GetModel

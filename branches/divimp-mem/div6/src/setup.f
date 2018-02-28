@@ -498,11 +498,12 @@ c subroutine:  InitializeRelaxation
 c
 c
       SUBROUTINE InitializeRelaxation
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER i1,i2,status
@@ -685,11 +686,12 @@ c
 c
 c
       SUBROUTINE ReadWallFlux
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1062,12 +1064,13 @@ c
 c subroutine: SetupIteration
 c
       SUBROUTINE SetupIteration(iitersol)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER region,ir
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -1334,11 +1337,12 @@ c
 c subroutine: InterpolateTargetData
 c
       SUBROUTINE InterpolateTargetData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL GetRelaxationFraction
@@ -1761,11 +1765,12 @@ c
 c
       SUBROUTINE ApplyProbeData
 
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER CalcPoint
@@ -1908,10 +1913,11 @@ c
 c
       SUBROUTINE SetupGrid
 
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -2602,13 +2608,14 @@ c ======================================================================
 c
       SUBROUTINE InitializeVariables
       USE mod_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'slcom'
       INCLUDE 'cgeom'
       include 'cadas'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'  
 

@@ -6000,13 +6000,14 @@ c
 c
 c
       subroutine readcfdbg(irlim1,irlim2)
+      use mod_comtor
       implicit none
 c
       integer irlim1, irlim2, ir1, ir2
       include 'params'
       include 'sol23_com'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
       include 'pindata'
       include 'pin_cfd'
@@ -6356,13 +6357,14 @@ c
 c
 c
       subroutine Te_inv(irlim1,irlim2,ik_mid,flag)
+      use mod_comtor
       implicit none
 c
       integer irlim1, irlim2, ik_mid, flag, ir, ik
       include 'params'
       include 'sol23_com'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
 c
       flag = 0

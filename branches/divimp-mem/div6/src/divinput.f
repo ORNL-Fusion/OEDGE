@@ -6,6 +6,7 @@ c      SUBROUTINE READIN (TITLE,NIZS,NIMPS,NIMPS2,CPULIM,
 c     >                   IERR,NYMFS,NITERS)
       use error_handling
       use ero_interface
+      use mod_comtor
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -25,7 +26,7 @@ C  *********************************************************************
 C
       include    'params'
       include    'cgeom'
-      include    'comtor'
+c      include    'comtor'
       include    'cadas'
       include    'dynam4'
       include    'dynam5'

@@ -1794,6 +1794,10 @@ c slmod begin
       use mod_divimp
 c slmod end
       use mod_fp_data
+      use mod_dynam2
+      use mod_dynam3
+      use mod_cioniz
+      use mod_comtor
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include 'params'
@@ -1811,15 +1815,15 @@ C  *                                   CHRIS FARRELL    MARCH 1989     *
 C  *********************************************************************
 C
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     INCLUDE   "CNEUT2"
       include 'cneut2'
 C     INCLUDE   "CGEOM"
       include 'cgeom'
 C     INCLUDE   "DYNAM2"
-      include 'dynam2'
+c      include 'dynam2'
 C     INCLUDE   "DYNAM3"
-      include 'dynam3'
+c      include 'dynam3'
 C     INCLUDE   "DYNAM4"
       include 'dynam4'
 C     INCLUDE   "PINDATA"
@@ -1835,7 +1839,7 @@ c
 C
       include 'transcoef'
 c
-      include 'cioniz'
+c      include 'cioniz'
 c
       include 'promptdep'
 c
@@ -1916,6 +1920,8 @@ c...  Crap, but needed for backward compatability:
       INTEGER MAXNDS_,MAXPTS_
 
 c...TEMP
+      call pr_trace('IOOUT','START OF GET')
+c
       pincode = -1
 
       eirzaa = -99.0
@@ -1938,6 +1944,9 @@ c
       write(6,*) 'DIVIMP VERSION = ', vernum,
      >           ' REVISION = ',revnum,
      >           ' VERSION CODE = ',version_code
+
+      call pr_trace('IOOUT','GET 1')
+
 C
 c slmod begin
       IF (version_code.GE.6*maxrev+35) THEN
@@ -1963,6 +1972,9 @@ c...      Based on MAXPTS value as of February 26, 2004 for version 6A/35:
         ENDIF
       ENDIF
 c slmod end
+
+      call pr_trace('IOOUT','GET 2')
+
       if (version_code.ge.6*maxrev+6) then 
 c
 c
@@ -2001,6 +2013,9 @@ c       OUT and removing the dependency on having identical parameter
 c       values in both the DIVIMP and OUT compiles
 c     - use this for checking the raw file for now
 c
+
+      call pr_trace('IOOUT','GET 3')
+
       if (version_code.ge.6*maxrev+43) then 
 
          call check_raw_compatibility
@@ -2012,6 +2027,10 @@ c
 
          read(8) ITER,NITERS,NIZS,NTS,CRMB,CRMI,CIZB,CION,IMODE,
      >           NITERSOL
+
+
+      call pr_trace('IOOUT','GET 4')
+
 c
 c        Geometry values 
 c
@@ -2021,6 +2040,9 @@ c
      >           irsep2,irwall2,nrs2,ndsin2,ndsin3,irtrap2,
      >           nves,nvesm,nvesp,inmid,oumid,refct,CIRHR,NPOLYP,
      >           cxnear,cynear
+
+      call pr_trace('IOOUT','GET 5')
+
 c
          CALL IINOUT ('R NKS    ',nks ,maxnrs)
 c
@@ -2055,6 +2077,9 @@ c
 c        Result numbers
 c
          read(8) nleakcore,cleaksn
+
+      call pr_trace('IOOUT','GET 6')
+
 c
 c        ADAS       
 c
@@ -2076,6 +2101,9 @@ c
          CALL RINOUT ('R ZW     ',zw  ,maxpts_)
          CALL RINOUT ('R RVES   ',rves,maxpts_)
          CALL RINOUT ('R ZVES   ',zves,maxpts_)
+
+      call pr_trace('IOOUT','GET 7')
+
 c
 c        GA15 workspace 
 c
@@ -2090,6 +2118,9 @@ c
          CALL RINOUT ('R ICTDUM ',ictdum,maxpts_)
          CALL RINOUT ('R ICXDUM ',icxdum,maxpts_)
          CALL RINOUT ('R ICYDUM ',icydum,maxpts_)
+
+         call pr_trace('IOOUT','GET 8')
+
 c
 c
 c        The following relate to the wall definition as 
@@ -2099,6 +2130,11 @@ c
 c
          title = tmptitle2 
 c
+         call pr_trace('IOOUT','GET 8A')
+         write(0,*) 'wallpts:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
+
+         
+
       else
 c
 c        For older raw files - rewind and re-read the entire first
@@ -2147,18 +2183,46 @@ c
       WRITE (6,9001) NXS,NYS,NRS,NDS,NIZS,NTS,
      >  MAXNXS,MAXNYS,MAXNRS,MAXNDS,MAXIZS,MAXNTS,
      >  TITLE,JOB,ITER,IMODE,refct,maxseg,nvesm,nvesp
+
+      call pr_trace('IOOUT','GET 8B')
+
 c
       CALL RINOUT ('R POWLS ',POWLS ,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      call pr_trace('IOOUT','GET 8C')
+
       CALL RINOUT ('R LINES ',LINES ,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      call pr_trace('IOOUT','GET 8D')
+
       CALL RINOUT ('R HPOWLS',HPOWLS,MAXNKS*MAXNRS*2)
+
+      call pr_trace('IOOUT','GET 8E')
+
       CALL RINOUT ('R HLINES',HLINES,MAXNKS*MAXNRS*2)
+
+      call pr_trace('IOOUT','GET 8F')
+
       CALL RINOUT ('R TIZS  ',TIZS  ,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      call pr_trace('IOOUT','GET 8G')
+
       CALL RINOUT ('R ZEFFS ',ZEFFS ,MAXNKS*MAXNRS*3)
+
+      call pr_trace('IOOUT','GET 8H')
+
       CALL RINOUT ('R WALLS ',WALLS ,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      call pr_trace('IOOUT','GET 8I')
+
+
 c...  MAXNDS repair required:
       CALL RINOUT ('R DEPS  ',DEPS  ,MAXNDS_*MAXIZS)
       CALL RINOUT ('R NEROS ',NEROS ,MAXNDS_*5)
 c
+
+      call pr_trace('IOOUT','GET 9')
+
       if (version_code.ge.(6*maxrev+47)) then 
          CALL RINOUT ('R PRDEPS',PROMPTDEPS,MAXNDS_*9)
       elseif (version_code.ge.(5*maxrev+11)) then 
@@ -2168,6 +2232,9 @@ c...     MAXNDS repair required:
          CALL RINOUT ('R PRDEPS',PROMPTDEPS,MAXNDS_)
       endif  
 c
+      call pr_trace('IOOUT','GET 9A')
+
+      
       if (version_code.ge.(5*maxrev+14)) then 
          CALL RINOUT ('R WALLSN',WALLSN,MAXPTS_+1)
          CALL RINOUT ('R WALLSE',WALLSE,MAXPTS_+1)
@@ -2183,6 +2250,8 @@ c
          CALL RINOUT ('R WALLSE',WALLSE,MAXPTS_)
       endif
 
+      call pr_trace('IOOUT','GET 9B')
+
       if (version_code.ge.(6*maxrev+38)) then 
         CALL RINOUT ('R WALLPT',WALLPT,MAXPTS_*32)
       elseif (version_code.ge.(6*maxrev+1)) then 
@@ -2191,8 +2260,14 @@ c
         CALL RINOUT ('R WALLPT',WALLPT,MAXPTS_*19)
       endif
 c
+
+      call pr_trace('IOOUT','GET 9C')
+
       CALL RINOUT ('R RS    ',RS    ,MAXNKS*MAXNRS)
       CALL RINOUT ('R ZS    ',ZS    ,MAXNKS*MAXNRS)
+
+      call pr_trace('IOOUT','GET 10')
+
 c
 c     More geometry data
 c
@@ -2202,6 +2277,10 @@ c
          CALL RINOUT ('R KPB   ',KPB   ,(MAXNKS+1)*MAXNRS)
 c
       endif
+
+
+      call pr_trace('IOOUT','GET 10A')
+
 c
 c     The storing of these arrays needed to be customized
 c     because of a likely size mismatch between the
@@ -2214,6 +2293,9 @@ c
       CALL IINOUT2 ('R IKXYS ',IKXYS ,MAXNXS,MAXNYS,MAXIXS,MAXIYS)
       CALL IINOUT2 ('R IRXYS ',IRXYS ,MAXNXS,MAXNYS,MAXIXS,MAXIYS)
       CALL IINOUT2 ('R IFXYS ',IFXYS ,MAXNXS,MAXNYS,MAXIXS,MAXIYS)
+
+      call pr_trace('IOOUT','GET 10B')
+
 c
       CALL IINOUT ('R IKDS  ',IKDS  ,MAXNDS_)
       CALL IINOUT ('R IRDS  ',IRDS  ,MAXNDS_)
@@ -2222,17 +2304,26 @@ C
       CALL IINOUT ('R IKOUTS',IKOUTS,MAXNKS*MAXNRS)
       CALL IINOUT ('R IRINS ',IRINS ,MAXNKS*MAXNRS)
       CALL IINOUT ('R IROUTS',IROUTS,MAXNKS*MAXNRS)
+
+      call pr_trace('IOOUT','GET 10C')
+
 C
       CALL IINOUT ('R KORY  ',KORY  ,MAXNKS*MAXNRS)
       CALL IINOUT ('R KORPG ',KORPG ,MAXNKS*MAXNRS)
       CALL IINOUT ('R NVERTP',NVERTP,MAXNKS*MAXNRS)
       CALL RINOUT ('R RVERTP',RVERTP,5*MAXNKS*MAXNRS)
       CALL RINOUT ('R ZVERTP',ZVERTP,5*MAXNKS*MAXNRS)
+
+      call pr_trace('IOOUT','GET 10D')
+
 C
       CALL RINOUT ('R SDLIMS',SDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('R SDTS  ',SDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('R ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('R WALKS ',WALKS ,MAXNWS*2)
+
+      call pr_trace('IOOUT','GET 10E')
+
 c
       call rinout ('R CHEM D',chemden,maxnks*maxnrs)
       call rinout ('R CHEMIZ',chemizs,maxnks*maxnrs)
@@ -2240,6 +2331,9 @@ C
       CALL RINOUT ('R KKS   ',KKS   ,MAXNRS)
       CALL RINOUT ('R KSS   ',KSS   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KPS   ',KPS   ,MAXNKS*MAXNRS)
+
+      call pr_trace('IOOUT','GET 10F')
+
 
       ! jdemod - removed as of 6.47 since it does nothing
       if (version_code.lt.(6*maxrev+47)) then 
@@ -2253,6 +2347,9 @@ C
          CALL RINOUT ('R KCURVS',KCURVS,MAXNKS*MAXNRS)
       endif
 
+      call pr_trace('IOOUT','GET 10G')
+
+
       CALL RINOUT ('R KVOLS ',KVOLS ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KAREAS',KAREAS,MAXNKS*MAXNRS)
       CALL RINOUT ('R KTOTAS',KTOTAS,MAXNRS)
@@ -2261,6 +2358,9 @@ C
       CALL RINOUT ('R KAREA2',KAREA2,MAXNKS*MAXNRS)
       CALL RINOUT ('R KTOTA2',KTOTA2,MAXNRS)
       CALL RINOUT ('R KTOTV2',KTOTV2,MAXNRS)
+
+      call pr_trace('IOOUT','GET 10H')
+
       CALL RINOUT ('R KBFS  ',KBFS  ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KINS  ',KINS  ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KSMAXS',KSMAXS,MAXNRS)
@@ -2275,6 +2375,9 @@ c      CALL RINOUT ('R KFSSMO',KFSSMOD,MAXNKS*MAXNRS)
 c
       CALL RINOUT ('R KINDS ',KINDS ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KOUTDS',KOUTDS,MAXNKS*MAXNRS)
+
+      call pr_trace('IOOUT','GET 11')
+
 c
 c     jdemod - load distin and distout ... cross field
 c              widths of cells
@@ -2314,6 +2417,9 @@ C
       CALL RINOUT ('R KES   ',KES   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KVHS  ',KVHS  ,MAXNKS*MAXNRS)
 c
+
+      call pr_trace('IOOUT','GET 12')
+
       if (version_code.ge.(6*maxrev+7)) then 
 c
 c     Average force arrays 
@@ -2353,6 +2459,7 @@ c
       CALL RINOUT ('R KTEDS ',KTEDS ,MAXNDS_)
       CALL RINOUT ('R KTIDS ',KTIDS ,MAXNDS_)
 
+      call pr_trace('IOOUT','GET 13')
 
       !
       ! jdemod - removed in 6.47 since they are not used
@@ -2430,6 +2537,8 @@ c
 c
       endif  
 C
+      call pr_trace('IOOUT','GET 14')
+
       call rinout ('R RVESM ',RVESM   ,2*MAXSEG)
       call rinout ('R ZVESM ',ZVESM   ,2*MAXSEG)
       call iinout ('R JVESM ',JVESM   ,MAXSEG)
@@ -2465,6 +2574,9 @@ c
 c      write (0,*) 'MAXIMP:',maximp 
 c
       call rinout ('R LEAKPS',cleakpos,maximp*2) 
+
+      call pr_trace('IOOUT','GET 15')
+
 c
 c     More arrays related to leakage results 
 c
@@ -2490,6 +2602,8 @@ c
       call rinout ('R TLEAK ',targleak,3*4)
       call rinout ('R WSOUR ',wallsrc,5*3)
       call rinout ('R WLEAK ',wallleak,5*3)
+
+      call pr_trace('IOOUT','GET 16')
 
 c
 c     READ any EDGE2D BG data that has been saved 
@@ -2574,6 +2688,9 @@ c
       call rinout ('R E2DGNE',e2dgradn,maxnks*maxnrs)
       call rinout ('R E2DGTE',e2dgradte,maxnks*maxnrs)
       call rinout ('R E2DGTI',e2dgradti,maxnks*maxnrs)
+
+      call pr_trace('IOOUT','GET 17')
+
 c
 c     Read in the line profile data if it is present 
 c
@@ -2609,6 +2726,9 @@ c
          call rinout ('R KPRAD',kprad,maxnks*maxnrs)
  
       endif
+
+      call pr_trace('IOOUT','GET 18')
+
 c
 c     Read in HC related data 
 c
@@ -2663,6 +2783,9 @@ c
          call rinout ('R ExB_P',exb_pol_drft,maxnks*maxnrs)
       endif
 
+      call pr_trace('IOOUT','GET 19')
+
+
 c
 c     jdemod - version 48 
 c
@@ -2686,6 +2809,9 @@ c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('R LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+
+
+      call pr_trace('IOOUT','GET 20')
 
 c
 c slmod begin - new
@@ -3144,6 +3270,7 @@ c
 c------------------------------------------------------------------------------------
 c
 
+      call pr_trace('IOOUT','END OF GET')
 
 c
 c

@@ -2,6 +2,8 @@ c     -*-Fortran-*-
 c
       subroutine out300(iref,graph,iopt,ierr)
       use mod_collector_probe
+      use mod_dynam3
+      use mod_comtor
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
@@ -12,10 +14,10 @@ c
 c     Other common blocks
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
-      include 'dynam3'
+c      include 'dynam3'
 c      include 'dynam4'
       include 'pindata'
 c      include 'cadas'

@@ -102,13 +102,14 @@
 	End Subroutine Initialize_State_Prop_Data
 
 	Subroutine Initialize_Global_Prop_Data ()
+                use mod_comtor
 
 		! Every good Fortran 90 program has...
 		Implicit None
 
 		! Included common blocks.
 		Include 'params' ! Required by comtor
-		Include 'comtor' ! Contains czenh,crmb,rizb,qtim,fsrate,crmi,cion,cneutvel,mtcopt,fpropt(COMTOR2),ctargopt,northopt,cdrftv,cdrftv_start,cdrftv_end,cteb0,ctebp,czo,chzo
+		!Include 'comtor' ! Contains czenh,crmb,rizb,qtim,fsrate,crmi,cion,cneutvel,mtcopt,fpropt(COMTOR2),ctargopt,northopt,cdrftv,cdrftv_start,cdrftv_end,cteb0,ctebp,czo,chzo
 		Include 'dynam4' ! Contains nts,cstmax
 		Include 'commv' ! Contains ckkmin,ckkmax
 		Include 'promptdep' ! Contains prompt_depopt
@@ -188,14 +189,14 @@
 	End Subroutine Initialize_Global_Prop_Data
 
 	Subroutine Initialize_Global_Geom_Data ()
-	
+	        use mod_comtor
 		! Every good Fortran 90 program has...
 		Implicit None
 		
 		! Include common blocks.
 		Include 'params' ! Contains maxnrs,maxnks,maxpts,maxnds,isect
 		Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
-		Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
+		!Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
 		Include 'diagvel' ! Contains maxvnks
 
 		! Global geometry properties.
@@ -248,13 +249,14 @@
 	End Subroutine Initialize_Global_Geom_Data
 
 	Subroutine Initialize_DIVIMP_Options_Table
+	        use mod_comtor
 
 		! Every good Fortran 90 program has...
 		Implicit None
 		
 		! Include common blocks.
 		Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
-		Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
+		!Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
 		Include 'diagvel' ! Contains maxvnks
 		Include 'reiser_com' ! Contains cioptr
 		Include 'promptdep' ! Contains prompt_depopt
@@ -563,15 +565,16 @@
 	End Subroutine Initialize_DIVIMP_HC_Data_Table
 
 	Subroutine Initialize_Misc_Data_Table ()
-	
+                use mod_comtor
+                use mod_cneut
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Include common blocks.
 		Include 'params' ! Contains hi, lo, pi, raddeg
-		Include 'cneut' ! Contains xprods, yprods
+		!Include 'cneut' ! Contains xprods, yprods
 		Include 'cgeom' ! Contains rmax
-		Include 'comtor' ! Contains debugn, cstepn
+		!Include 'comtor' ! Contains debugn, cstepn
 		Include 'diagvel' ! Contains debugv
 		
 		 Calc_Hi = HI ! Machine hi value (very big number).

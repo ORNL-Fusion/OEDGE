@@ -237,6 +237,7 @@ c
       use debug_options
       use sol22_input
       use sol22_debug
+      use mod_comtor
       implicit none
       integer irlim1, irlim2,ikopt
 c
@@ -261,7 +262,7 @@ c
 c
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'

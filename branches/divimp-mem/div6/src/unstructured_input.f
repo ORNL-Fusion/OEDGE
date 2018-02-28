@@ -8,9 +8,10 @@ c subroutine: ValidateUnstructuredInput
 c
 c
       SUBROUTINE ValidateUnstructuredInput
+      use mod_comtor
       IMPLICIT none
       include 'params'
-      include 'comtor'
+c      include 'comtor'
 
       INTEGER    MAXTAG
       PARAMETER (MAXTAG=1000) 
@@ -132,6 +133,7 @@ c
 c slmod begin
       use mod_grid
 c slmod end
+      use mod_comtor
       implicit none
       
       INCLUDE 'params'
@@ -139,7 +141,7 @@ c slmod end
       INCLUDE 'slcom'
       INCLUDE 'cgeom'
       include 'cadas'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 c      INCLUDE 'pindata'
       INCLUDE 'cedge2d'  
 

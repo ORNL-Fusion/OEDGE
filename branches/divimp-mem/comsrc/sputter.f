@@ -264,6 +264,7 @@ c
        FUNCTION YIELD(MATP,MATT,ENERGY,Te,ti)
        use eckstein_2002_yield_data
        use eckstein_2007_yield_data
+       use mod_comtor
        IMPLICIT none
        REAL YIELD,ENERGY,X1,X12,X2,te,ti
        INTEGER MATP,MATT
@@ -284,7 +285,7 @@ C     INCLUDE "CYIELD"
       include    'cyield'
 c
       include 'params'
-      include 'comtor'     
+c      include 'comtor'     
 c
       real yld93,yld96,yldtung,yld_be_2002,yld_c_2002
       external yld93,yld96,yldtung,yld_be_2002,yld_c_2002
@@ -987,12 +988,13 @@ c
 c
 c
       real function yldchem96 (e0,tmpdflux,matp,matt,tsurf)
+      use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
 c
 c
 c     YLDCHEM96: This function calculates the chemical sputtering
@@ -1127,13 +1129,14 @@ c
 c
 c
       real function yldchem (e0,tmpdflux,matp,matt,tsurf)
+      use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
 c
       include 'params'
 c
-      include 'comtor'
+c      include 'comtor'
 c
 c     YLDCHEM is being used to access all of the different 
 c     chemical sputtering yield formulae - so that changes

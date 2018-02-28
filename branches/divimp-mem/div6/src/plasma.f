@@ -1,12 +1,13 @@
       SUBROUTINE INITPLASMA(irstart,irend,ikopt)
       use debug_options
+      use mod_comtor
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
 c
       include 'params'
 c
-      include 'comtor'
+c      include 'comtor'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -65,6 +66,7 @@ c
 c
       subroutine sol_plasma(irstart,irend,ikopt)
       use debug_options
+      use mod_comtor
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -73,7 +75,7 @@ c
 c
       include 'cgeom'
 c
-      include 'comtor'
+c      include 'comtor'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -228,6 +230,7 @@ c
 c
       subroutine core_plasma(irstart,irend,ikopt)
       use debug_options
+      use mod_comtor
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -236,7 +239,7 @@ c
 c
       include 'cgeom'
 c
-      include 'comtor'
+c      include 'comtor'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -689,6 +692,7 @@ c
 c
 c
       subroutine NGRAD(IRLIM1,IRLIM2,ikopt)
+      use mod_comtor
       IMPLICIT NONE
       INTEGER IRLIM1,IRLIM2,ikopt
 C     INCLUDE   "PARAMS"
@@ -696,7 +700,7 @@ C     INCLUDE   "PARAMS"
 C     INCLUDE   "CGEOM"
       include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C
 c
 C  *********************************************************************
@@ -792,6 +796,7 @@ c
 c
 c
       SUBROUTINE TGRAD(IRLIM1,IRLIM2,ikopt)
+      use mod_comtor
       IMPLICIT NONE
       INTEGER IRLIM1,IRLIM2,ikopt
 C     INCLUDE   "PARAMS"
@@ -799,7 +804,7 @@ C     INCLUDE   "PARAMS"
 C     INCLUDE   "CGEOM"
       include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C
 c
 C  *********************************************************************
@@ -1104,12 +1109,13 @@ c
 c
 c
       subroutine set_initplasma(ir,ikopt)
+      use mod_comtor
       implicit none
       integer ir,ikopt
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'cedge2d'
 c
 c     SET_INITPLASMA: This routine sets the initial plasma

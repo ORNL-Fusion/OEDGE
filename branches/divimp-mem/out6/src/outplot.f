@@ -60,6 +60,7 @@ C
 C
 C
       SUBROUTINE SUPIMP (OPTION)
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -76,7 +77,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "CGEOM"
       include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -147,6 +148,7 @@ C
 C
 C
       SUBROUTINE SUPIMPOLD (OPTION)
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -163,7 +165,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "CGEOM"
       include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -1386,6 +1388,7 @@ C
 C
 C
       SUBROUTINE SUPIMP2 (OPTION)
+      use mod_comtor
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
@@ -1419,7 +1422,7 @@ C
       include 'cgeom'
       include 'pindata'
 c slmod begin
-      include 'comtor'
+c      include 'comtor'
       include 'colours'
       include 'slcom'
 
@@ -3438,13 +3441,14 @@ c
 c
       subroutine find_reflection(x,y,z,step,couts,
      >                           xnew,ynew,znew,normvect,ierr)
+      use mod_comtor
       implicit none
       real x,y,z
       real xnew,ynew,znew
       integer ierr
       real*8 step,couts(3),normvect(3)
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'grbound'
 c
 c
@@ -4426,6 +4430,7 @@ C
 C
 C
       SUBROUTINE REFLECT
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4455,7 +4460,7 @@ C     INCLUDE "CGEOM"
       include 'cgeom'
 c
       include 'grbound'
-      include 'comtor'
+c      include 'comtor'
       include 'pindata'
       include 'dynam4'
 c
@@ -5315,11 +5320,14 @@ c
 c
 c
       subroutine radproc(nizs,job,pradclev)
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor      
       implicit none
       include    'params'
-      include    'dynam2'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam2'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
 c
       integer nizs
@@ -5770,6 +5778,8 @@ C
 C
       SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -5795,8 +5805,8 @@ C
       include 'params'
       INCLUDE 'cgeom'
       include 'pindata'
-      include 'dynam2'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'comtor'
 C
       INTEGER   CZ,IZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6329,6 +6339,7 @@ C
       SUBROUTINE LDADAS_TIMEDEP(CZ,IZ,IT,ADASID,ADASYR,ADASEX,
      >                  ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6363,7 +6374,7 @@ C
       INCLUDE 'cgeom'
       include 'pindata'
       include 'dynam4'
-      include 'comtor'
+c      include 'comtor'
 C
       INTEGER   CZ,IZ,IT,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6513,6 +6524,8 @@ c      RETURN
 c      END
 c
       SUBROUTINE LDBREM(WAVE,CVALS,IRCODE,nizs)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6537,8 +6550,8 @@ c      INCLUDE (PPPLAS)
 c
       include 'params'
       include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'comtor'
 C
       INTEGER   IRCODE,nizs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6604,6 +6617,8 @@ c
 c
       SUBROUTINE LDBREM_SPEC(WAVE,npairs,den,tbrem,
      >                       brempec,IRCODE)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6628,8 +6643,8 @@ c      INCLUDE (PPPLAS)
 c
       include 'params'
       include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'comtor'
 C
       INTEGER   IRCODE,npairs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6671,6 +6686,8 @@ C
 C
 C
       SUBROUTINE LDBRFF(WAVE,CVALS,IRCODE,nizs)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6693,8 +6710,8 @@ c      INCLUDE (PPPLAS)
 c
       include 'params'
       include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'comtor'
 C
       integer nzs,maxnzs
       parameter(nzs=1,maxnzs=1)
@@ -7719,12 +7736,15 @@ c
       subroutine load_divdata_array(tmpplot,iselect,istate,itype,
      >     ylab,blab,ref,nizs,ierr)
       use error_handling
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       implicit none
       include 'params' 
       include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'dynam3'
+c      include 'comtor'
       include 'pindata'
 c     
       include 'reiser_com'
@@ -9282,12 +9302,15 @@ c
 c
       subroutine load_divdata_targ(iselect,istate,ir,
      >                  start_targ_val,end_targ_val,ierr)
+      use mod_dynam3
+      use mod_comtor
+      use mod_dynam2
       implicit none
       include 'params' 
       include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'dynam3'
+c      include 'comtor'
       include 'pindata'
 c
       include 'reiser_com'

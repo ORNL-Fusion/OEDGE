@@ -3,13 +3,14 @@ c
 c ======================================================================
 c
       SUBROUTINE FindCell(ind0,ind1,irgive,ikcell,ircell)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ind0,ind1,irgive,ikcell(3),ircell(3)
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 
@@ -88,6 +89,7 @@ c
 c ======================================================================
 c
       SUBROUTINE FindS28Parameters_V3(ir,te,ne,nf,s,new)
+      use mod_comtor
       IMPLICIT none
        
       INTEGER ir
@@ -96,7 +98,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL    GetRelaxationFraction
@@ -726,13 +728,14 @@ c
 c 
       SUBROUTINE CalcRadialDrift(ir1)
       USE mod_sol28_old
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir1
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -1205,6 +1208,7 @@ c
 c ======================================================================
 c
       SUBROUTINE FindS28Parameters(ir,te,ne,nf,s,new)
+      use mod_comtor
       IMPLICIT none
        
       INTEGER ir
@@ -1213,7 +1217,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 
@@ -1601,13 +1605,14 @@ c
 c
       SUBROUTINE InitializeRingSOL28(ir,count)
       USE mod_sol28_old
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,count
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slcom_sol28'
@@ -1964,6 +1969,7 @@ c
 c
       SUBROUTINE ParticleConservation(ir,count,machadjust1,machadjust2)
 
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,count,s28ion_,s28cfp_,s28cfpnt_,s28superdet_,s28rec_,
@@ -1973,7 +1979,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'
 c... NEED TO GET THIS OUT OF HERE OR EVENTUALLY TROUBLE WITH _'s
@@ -2685,6 +2691,7 @@ c
 c
 c
       SUBROUTINE CheckLineMatch(ik,ir,linedat,mode,line,tarden)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ik,ir,mode,line
@@ -2693,7 +2700,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slcom_sol28'
@@ -2773,13 +2780,14 @@ c
 c
 c
       SUBROUTINE MomentumConservation(ir,count)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,count
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'
       INCLUDE 'slcom'
@@ -3631,11 +3639,12 @@ c
 c
 c
       SUBROUTINE MachProfile(ir,teprofile)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'slcom_sol28'
 
@@ -3764,13 +3773,14 @@ c
 c ======================================================================
 c
       SUBROUTINE CalcTeProfile(ir,ikflat1,ikflat2,machmode,count)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,ikflat1,ikflat2,machmode,count
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'slcom_sol28'  
   
@@ -4430,6 +4440,8 @@ c
      .   machsuper ,imaginary ,
      .   machsuper1,imaginary1,
      .   machsuper2,imaginary2)
+
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,count,s28te_,s28ti_,s28superdet_
@@ -4438,7 +4450,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'
       INCLUDE 'slcom'
@@ -4960,13 +4972,14 @@ c
 c
       SUBROUTINE SOL28(irs,ire,ikopt)
       USE mod_sol28_old
+      use mod_comtor
       IMPLICIT none
 
       INTEGER irs,ire,ikopt
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'
       INCLUDE 'slcom'

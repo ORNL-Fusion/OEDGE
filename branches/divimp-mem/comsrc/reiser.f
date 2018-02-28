@@ -33,11 +33,12 @@ c     KVHGS(IK,IR)  = The background plasma velocity gradient [unitless]
 c
 c----------------------------------------------------------------------c
 
+      use mod_comtor
       IMPLICIT NONE
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'reiser_com'  
       
       INTEGER  IK,IR,ID
@@ -197,13 +198,14 @@ c           required by the Reiser subroutine: Coulomb_Coll.
 c
 c----------------------------------------------------------------------c             
 c
+      use mod_comtor
       IMPLICIT NONE
 
       INTEGER NIZS
 
       include 'params'
       include 'cgeom'
-      include 'comtor' 
+c      include 'comtor' 
       include 'reiser_com'  
 
       INTEGER IK,IR,IZ
@@ -335,13 +337,14 @@ c     criteria fail.
 c
 c----------------------------------------------------------------------c
 
+      use mod_comtor
       IMPLICIT NONE
 
       INTEGER NIZS
 
       include 'params'
       include 'cgeom'
-      include 'comtor' 
+c      include 'comtor' 
       include 'reiser_com'  
 
       INTEGER IK,IR
@@ -524,11 +527,12 @@ c     value as calculated in the subroutine: GradScaleLengthCheck.
 c
 c----------------------------------------------------------------------c 
 
+      use mod_comtor
       IMPLICIT NONE
       
       include 'params'
       include 'cgeom'
-      include 'comtor' 
+c      include 'comtor' 
       include 'reiser_com'
 
       INTEGER CIOPTION,IKK,IRR
@@ -644,6 +648,7 @@ c     ------------------------------------------------------------     *
 c     Used Functions: Erf                                              *
 c     ------------------------------------------------------------     *
 
+      use mod_comtor
       IMPLICIT NONE
       
       INTEGER IKK,IRR,IZZ,NIZZS
@@ -652,7 +657,7 @@ c     ------------------------------------------------------------     *
       REAL    K11,K12,K13,D11,D12,D13
 
       include 'params'
-      include 'comtor' 
+c      include 'comtor' 
       include 'reiser_com'  
 
       INTEGER i
@@ -1242,11 +1247,12 @@ c     achieved by calling the subroutine: interp_quant.
 c
 c-----------------------------------------------------------------c
 
+      use mod_comtor
       implicit none
       include 'params'
       include 'reiser_com'  
       include 'cgeom'
-      include 'comtor' 
+c      include 'comtor' 
       integer ik,ir,iz,id
       real s, lambda2, vbqtim,targetvb
 
@@ -1349,11 +1355,12 @@ c   to produce 3D-Contour plots.  (Called in TAU.D6A)
 c
 c----------------------------------------------------------------------c
 
+      use mod_comtor
       IMPLICIT NONE
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'reiser_com'
       
       INTEGER  IK,IR
@@ -1455,14 +1462,16 @@ c   it writes the triple-indexed arrays of the impurity density, velocity
 c   and forces acting on them to the .lim file. (Called in DIV.D6A)  
 c
 c----------------------------------------------------------------------c
+      use mod_dynam1
 
+      use mod_comtor
       IMPLICIT NONE
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'reiser_com'
-      include 'dynam1'
+c      include 'dynam1'
       
       INTEGER  IK,IR,IZ,ZZ
 
@@ -1716,13 +1725,14 @@ c     subroutine VEL_DATA. (Called in DIV.D6A)
 c
 c----------------------------------------------------------------------c
 c
+      use mod_dynam1
 
       IMPLICIT NONE
 
       include 'params'
       include 'cgeom'
       include 'reiser_com'
-      include 'dynam1'
+c      include 'dynam1'
 
       REAL J,vel,vmax,vmin
       INTEGER Y(-100:100),K
@@ -1771,13 +1781,14 @@ c     calculated in VEL_DATA above to the .lim file (Called in DIV.D6A)
 c     when SWITCHV = 1 and additionally to the screen when SWITCHV = 2.
 c     
 c----------------------------------------------------------------------c
+      use mod_dynam1
 
       IMPLICIT NONE
 
       include 'params'
       include 'cgeom'
       include 'reiser_com'
-      include 'dynam1'
+c      include 'dynam1'
 
       REAL Vmax,Vmin
       INTEGER Y(-100:100),i,velcount

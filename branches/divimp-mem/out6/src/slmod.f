@@ -8,6 +8,8 @@ c
 c      SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
 c     >                  CVALS,WAVE,IRCODE)
 c
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -33,8 +35,8 @@ C
       include 'params'
       INCLUDE 'cgeom'
       include 'pindata'
-      include 'dynam2'
-      include 'comtor'
+c      include 'dynam2'
+c      include 'comtor'
 C
       REAL      tevals(MAXGXS,MAXNGS),nevals(MAXGXS,MAXNGS)
       INTEGER   tenum,nenum,mode

@@ -131,11 +131,12 @@ c ======================================================================
 c
       SUBROUTINE solps_AssignDIVIMPIndex(ik,ir,is)
       USE     mod_solps
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
       INCLUDE 'cedge2d'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
 
       INTEGER, INTENT(IN ) :: ik,ir

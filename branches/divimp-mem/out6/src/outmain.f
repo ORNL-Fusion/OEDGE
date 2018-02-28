@@ -5,6 +5,8 @@ c     @PROCESS NOOPT
       use error_handling
       use debug_options
       use mod_fp_data
+      use allocate_storage_out
+      use mod_comtor
       implicit none
 C
 C  *********************************************************************
@@ -17,7 +19,7 @@ C  *********************************************************************
 C
       include 'params'
       include 'outcom'
-      include 'comtor'
+c      include 'comtor'
 c
       integer iref,iopt,ierr,i1
       character*80 graph,label
@@ -29,6 +31,11 @@ c
       call init_trace(0,.false.)
 c      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
+c
+c     In future this call may be moved to after the point where
+c     parameters are read in. 
+c
+      call allocate_dynamic_storage
 
 C
 C-----------------------------------------------------------------------
@@ -223,7 +230,10 @@ c
 c     far periphery
 c
       call fp_deallocate_storage
-
+c
+c     Deallocate general dynamic storage
+c      
+      call deallocate_dynamic_storage
 c
       WRITE (6,'(/,'' OUT: TOTAL TIME USED ='',G11.4,'' SEC'',/)') TIME
       CALL GREND

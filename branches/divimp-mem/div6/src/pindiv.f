@@ -2,12 +2,13 @@ c     -*Fortran*-
 c
       SUBROUTINE WRTPIN (title,equil,IOUNIT)
       use debug_options
+      use mod_comtor
       IMPLICIT none
       character*(*) title,equil                                 
       INTEGER IOUNIT                                                    
 c
       include 'params'                                                  
-      include 'comtor'                                                  
+c      include 'comtor'                                                  
       include 'cgeom'                                                   
       include 'dynam4'                                                  
       include 'cadas'                                                  
@@ -445,6 +446,7 @@ C
 C
 C
       SUBROUTINE PINCHK
+      use mod_comtor
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
@@ -455,7 +457,7 @@ C     INCLUDE "CGEOM"
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
       include 'printopt'
 C
 C     PINCHK: THIS ROUTINE TAKES THE IONIZATION DATA FROM PIN AND
@@ -917,13 +919,14 @@ C
 C                                                                       
 C                                                                       
       SUBROUTINE READPIN                                                
+      use mod_comtor
       IMPLICIT NONE                                                     
 C     INCLUDE "PARAMS"                                                  
       include 'params'                                                  
 C     INCLUDE "PINDATA"                                                 
       include 'pindata'                                                 
 C     INCLUDE "COMTOR"                                                  
-      include 'comtor'                                                  
+c      include 'comtor'                                                  
 C     INCLUDE "CGEOM"                                                   
       include 'cgeom'                                                   
 c slmod begin
@@ -1845,11 +1848,12 @@ c
 c
 c
       SUBROUTINE LOADGEO
+      use mod_comtor
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C
 C-----------------------------------------------------------------------
 C

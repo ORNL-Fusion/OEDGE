@@ -3,10 +3,11 @@ c
 c ======================================================================
 c
       SUBROUTINE ShiftInversion(inv,xpt,ypt,ir,direction)
+      use mod_comtor
       IMPLICIT none   
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'comgra'
       INCLUDE 'slcom'
       INCLUDE 'slout'      
@@ -211,10 +212,11 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadInversionData(val,fname,scale,location)
+      use mod_comtor
       IMPLICIT none   
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'comgra'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -431,11 +433,12 @@ c
 c
       SUBROUTINE Plot978(graph,nplots,ref,title,iopt,pltmins,pltmaxs,
      .                   iplot,job)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'

@@ -298,11 +298,12 @@ c
 c
 c
       SUBROUTINE LoadTargetData(graph,targdat,MAXTDAT,MAXCOLS)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'slout'
 
@@ -504,10 +505,11 @@ c
 c
 c
       SUBROUTINE SetPlotComments(iref,job,extra_comments,ncomments,r1)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       include 'cedge2d'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -1191,11 +1193,12 @@ c
 c
       SUBROUTINE AsgnThomsonData(nraw,raw,ind,gxdata,gydata,gndata,
      .                           MAXNPS,MAXTYP,MAXTDAT,MAXCOLS)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -1498,12 +1501,13 @@ c ======================================================================
 c
       SUBROUTINE Plot966(nplts,ringnos,graph,nplots,ref,title,iopt,
      .                   ngrm,pltmins,pltmaxs,pltfact,iplot,job)
+      use mod_comtor
       IMPLICIT none
 
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cedge2d'
       INCLUDE 'colours'

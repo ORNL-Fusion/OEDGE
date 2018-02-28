@@ -28,6 +28,7 @@ c
       use allocatable_input_data
       use sol22_input
       use ero_interface
+      use mod_comtor
       IMPLICIT none
 
 c
@@ -48,7 +49,7 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
       include 'cadas'
-      include 'comtor' 
+c      include 'comtor' 
       include 'cgeom'  
       include 'cedge2d'
 
@@ -2144,6 +2145,7 @@ c
       SUBROUTINE ReadTagSeries_G(tag,line,fp)
       use subgrid_options
       use ribbon_grid_options
+      use mod_comtor
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2154,7 +2156,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'slcom'
-      INCLUDE 'comtor' 
+c      INCLUDE 'comtor' 
       INCLUDE 'cgeom'  
 
       INTEGER ierr,i1,i2,ir
@@ -2450,6 +2452,7 @@ c     Params is included in HC_com and so is not required separately
 c
 c      INCLUDE 'params'
 ! ammod end
+      use mod_comtor
       IMPLICIT none
 c
 c     READ "H" Series Unstructured input
@@ -2458,7 +2461,7 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      include 'comtor'
+c      include 'comtor'
       include 'slcom'
       include 'hc_global_opts'
 
@@ -2745,6 +2748,7 @@ c tag starts with 'I'.
 c
 c
       SUBROUTINE ReadTagSeries_I(line,tag,fp)
+      use mod_comtor
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -2753,7 +2757,7 @@ c
       CHARACTER line*(*),tag*3
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       include 'fperiph_com'
 c

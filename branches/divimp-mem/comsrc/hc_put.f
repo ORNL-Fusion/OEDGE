@@ -100,13 +100,13 @@
 
 	Subroutine pcistizs (Index, Value)
 		! Routine to store (or put) value into cistizs array in CNEUT.
-		
+		use mod_cneut
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -176,13 +176,13 @@
 
 	Subroutine pcstepl (Value)
 		! Routine to store (or put) value into cstepl variable in COMTOR.
-		
+		use mod_comtor
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Real, Intent (In) :: Value
@@ -194,13 +194,14 @@
 
 	Subroutine pdebugl (Value)
 		! Routine to store (or put) value into debugl variable in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Logical, Intent (In) :: Value
@@ -212,13 +213,13 @@
 
 	Subroutine pddts (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into ddts array in DYNAM1.
-		
+		use mod_dynam1
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+		!Include 'params'
+		!Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -234,12 +235,13 @@
 	Subroutine peprods (Index, Value)
 		! Routine to store (or put) value into eprods array in CNEUT.
 		
+		use mod_cneut
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -270,13 +272,14 @@
 	
 	Subroutine peranva (Seed, Random_Numbers_Used)
 		! Put values into external memory block RANV.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -288,13 +291,14 @@
 	
 	Subroutine peranvb (Seed, Random_Numbers_Used)
 		! Put values into external memory block RANVB.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -306,13 +310,14 @@
 
 	Subroutine peranvc (Seed, Random_Numbers_Used)
 		! Put values into external memory block RANVC.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -324,13 +329,14 @@
 
 	Subroutine pidatizs (Index_1, Index_2, Value)
 		! Routine to store (or put) value into idatizs array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -344,13 +350,14 @@
 	
 	Subroutine pidprods (Index, Value)
 		! Routine to store (or put) value into idprods array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -363,13 +370,14 @@
 
 	Subroutine plaunchdat (Index_1, Index_2, Value)
 		! Routine to store (or put) value into launchdat array in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -403,13 +411,14 @@
 	
 	Subroutine pkatizs (Index, Value)
 		! Routine to store (or put) value into katizs array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+                !Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -429,13 +438,14 @@
 
 	Subroutine plfps (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into lfps array in CLOCAL.
+                use mod_clocal
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+		!Include 'params'
+		!Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -450,13 +460,14 @@
 
 	Subroutine plfss (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into lfss array in CLOCAL.
+                use mod_clocal
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+		!Include 'params'
+		!Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -471,13 +482,14 @@
 
 	Subroutine plfts (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into lfts array in CLOCAL.
+                use mod_clocal
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+		!Include 'params'
+		!Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -492,13 +504,14 @@
 
 	Subroutine plllfps (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into lllfps array in CLOCAL.
+                use mod_clocal
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+		!Include 'params'
+		!Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -513,13 +526,14 @@
 
 	Subroutine pltolds (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value into ltolds array in CLOCAL.
+                use mod_clocal
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+		!Include 'params'
+		!Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -553,13 +567,14 @@
 
 	Subroutine pranva (Index, Value)
 		! Routine to store (or put) value into ranva array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -572,13 +587,14 @@
 
 	Subroutine pranvb (Index, Value)
 		! Routine to store (or put) value into ranvb array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -591,13 +607,14 @@
 
 	Subroutine pranvc (Index, Value)
 		! Routine to store (or put) value into ranvc array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -610,13 +627,14 @@
 	
 	Subroutine psatizs (Index, Value)
 		! Routine to store (or put) value into satizs array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -629,13 +647,14 @@
 
 	Subroutine psputys (Index, Value)
 		! Routine to store (or put) value into sputys array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -655,13 +674,14 @@
 
 	Subroutine psnews (Index, Value)
 		! Routine to store (or put) value into snews array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -674,13 +694,14 @@
 
 	Subroutine ptemtizs (Index, Value)
 		! Routine to store (or put) value into temtizs array from CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -693,13 +714,14 @@
 
 	Subroutine ptravel_locations (Index1, Index2, Value)
 		! Routine to store (or put) value into travel_locations array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -713,13 +735,14 @@
 
 	Subroutine pvins (Index, Value)
 		! Routine to store (or put) value into vins array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -759,13 +782,14 @@
 
 	Subroutine pxatizs (Index, Value)
 		! Routine to store (or put) value into xatizs array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -791,13 +815,14 @@
 	
 	Subroutine pxprods (Index, Value)
 		! Routine to store (or put) value into xprods array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -827,13 +852,14 @@
 	
 	Subroutine pyatizs (Index, Value)
 		! Routine to store (or put) value into yatizs array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cneut'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -853,13 +879,14 @@
 
 	Subroutine pyprods (Index, Value)
 		! Routine to store (or put) value into yprods array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -919,13 +946,13 @@
 
 	Subroutine pachemden (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to chemden array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -939,13 +966,13 @@
 
 	Subroutine pachemizs (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to chemizs array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1016,13 +1043,14 @@
 
 	Subroutine pacleakn (Index1, Index2, Value)
 		! Routine to store (or put) value by adding it to cleakn array in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -1037,13 +1065,14 @@
 	
 	Subroutine pacleakpos (Index1, Index2, Value)
 		! Routine to store (or put) value by adding it to cleakpos array in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -1144,13 +1173,13 @@
 
 	Subroutine paddlims (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into elims array in DYNAM1.
-		
+                use mod_dynam1
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+		!Include 'params'
+                !Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1166,13 +1195,13 @@
 
 	Subroutine paddts (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it to ddts array in DYNAM1.
-		
+		use mod_dynam1
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+		!Include 'params'
+		!Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1188,13 +1217,13 @@
 
 	Subroutine paddvoid (Index, Value)
 		! Routine to store (or put) value by adding it to ddvoid array in DYNAM1.
-		
+		use mod_dynam1
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+		!Include 'params'
+		!Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1207,13 +1236,13 @@
 
 	Subroutine padeps (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it into deps array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1249,13 +1278,13 @@
 
 	Subroutine paelims (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into elims array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1356,13 +1385,14 @@
 	Subroutine paionizdat (Index_1, Index_2, Index_3, Index_4, 
      > Index_5, Value)
 		! Routine to store (or put) value by adding it into ionizdat array in COMTOR2.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1424,13 +1454,14 @@
 
 	Subroutine pamtcinf (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to mtcinf array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1445,13 +1476,14 @@
 
 	Subroutine pamtctotcnt (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to mtctotcnt array in CNEUT.
+		use mod_cneut
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+		!Include 'params'
+		!Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1466,13 +1498,13 @@
 
 	Subroutine pancore (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to ncore array in DYNAM3.
-		
+                use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1487,13 +1519,13 @@
 
 	Subroutine pandivert (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to ndivert array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1508,13 +1540,13 @@
 
 	Subroutine panedge (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to nedge array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1529,13 +1561,13 @@
 
 	Subroutine paneros (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to neros array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1550,13 +1582,13 @@
 
 	Subroutine panmsol (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to nmsol array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1571,13 +1603,13 @@
 
 	Subroutine pantrap (Index_1, Index_2, Value)
 		! Routine to store (or put) value by adding it to ntrap array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1613,13 +1645,13 @@
 
 	Subroutine patizs (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into tizs array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1635,13 +1667,13 @@
 
 	Subroutine pawalls (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into walls array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1657,13 +1689,13 @@
 
 	Subroutine pawallse (Index, Value)
 		! Routine to store (or put) value by adding it to wallse array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1676,13 +1708,13 @@
 
 	Subroutine pawallse_i (Index, Value)
 		! Routine to store (or put) value by adding it to wallse_i array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1695,13 +1727,13 @@
 
 	Subroutine pawallsi (Index, Value)
 		! Routine to store (or put) value by adding it to wallsi array in DYNAM3.
-		
+		use mod_dynam3
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1714,13 +1746,13 @@
 
 	Subroutine pawallsn (Index, Value)
 		! Routine to store (or put) value by adding it to wallsn array in DYNAM3.
+		use mod_dynam3
 		
 		! Every good Fortran program has...
 		Implicit None
-		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+		!Include 'params'
+		!Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1733,13 +1765,14 @@
 
 	Subroutine pawtdep (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into wtdep array in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1756,13 +1789,14 @@
 	Subroutine pawtsource (Index_1, Index_2, Index_3, Index_4,
      > Value)
 		! Routine to store (or put) value by adding it into wtsource array in COMTOR.
+		use mod_comtor
 		
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+		!Include 'params'
+		!Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1

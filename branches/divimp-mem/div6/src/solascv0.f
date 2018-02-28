@@ -396,10 +396,12 @@ c
       SUBROUTINE SOL22Output(loopstart,spts,npts,conde,condi,conve,
      .                       convi,pcxv,peiv,phelpiv,pradv,te,ti,ne,
      .                       vb,ga,act_press,pmloss,note)
+
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'solparams'
       INCLUDE 'solcommon'
@@ -490,6 +492,7 @@ c DIVIMP input file.
 c
 c
       SUBROUTINE AssignPP(irlim1,irlim2,ikopt,targ_con_opt)
+      use mod_comtor
       IMPLICIT none
 c
 c     irlim1 - start ring
@@ -500,7 +503,7 @@ c                    =6 - apply plasma values to target
 c
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1019,13 +1022,14 @@ c
 c subroutine: CalcInitRecom
 c
       SUBROUTINE CalcInitRecom(region,ir)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER region,ir
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'cadas'
       INCLUDE 'slcom'

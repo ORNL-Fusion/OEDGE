@@ -6,14 +6,17 @@ c
      >            e2dtots,e2dptots,cre2d,cre2dizs,
      >            impurity_content)
       use divertor_limits
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
       implicit none 
       include    'params'
       include    'cadas'
       include    'commv'
       include    'cgeom'
-      include    'comtor'
-      include    'dynam1'
-      include    'dynam3' 
+c      include    'comtor'
+c      include    'dynam1'
+c      include    'dynam3' 
       include    'promptdep' 
 c
       include    'fperiph_com' 
@@ -1424,11 +1427,13 @@ c
 c
 c
       subroutine write_tmp_data
+      use mod_dynam1
+      use mod_comtor
       implicit none
       include 'params' 
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom' 
-      include 'dynam1'
+c      include 'dynam1'
 c
       integer iktmp,iktmpc
       integer ik,ir

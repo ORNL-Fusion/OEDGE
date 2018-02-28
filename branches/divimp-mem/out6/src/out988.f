@@ -53,13 +53,14 @@ c ======================================================================
 c
       SUBROUTINE Output988(opt)
       USE MOD_OUT988
+      use mod_comtor
       IMPLICIT none
 
       TYPE(type_options988) :: opt
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'
@@ -152,10 +153,11 @@ c
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
       USE MOD_OUT988
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'

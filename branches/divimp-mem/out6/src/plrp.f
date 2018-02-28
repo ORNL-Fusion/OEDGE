@@ -5,10 +5,13 @@ c
 c
 c     ATTENTION: added rizb to parameter list; Krieger, IPP 95
 c
+      use mod_dynam2
+      !use mod_dynam3
+      use mod_cioniz
       IMPLICIT    NONE
       include 'params'                                              
-      include 'dynam2'                                              
-      include 'dynam3'                                              
+c      include 'dynam2'                                              
+c      include 'dynam3'                                              
 c
 c     added cadas to get ADAS usage flag;  Krieger, IPP 95
 c
@@ -64,7 +67,7 @@ C
 C     INCLUDE        "CGEOM"                                            
       include 'cgeom'                                            
 C     INCLUDE        "CIONIZ"                                           
-      include 'cioniz'                                           
+c      include 'cioniz'                                           
 C                                                                       
 C---- PARTICULAR LINE RADIATION DATA                                    
 C---- PARAMETERS NL= NUMBER OF LINES OF DATA IN FOLLOWING TABLE         

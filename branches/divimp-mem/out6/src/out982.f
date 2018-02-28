@@ -2,11 +2,12 @@ c     -*-Fortran-*-
 
 
       SUBROUTINE LoadCameraData(osmtmp,fname,scale)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 c...OSMTMP not looking dynamic here...
@@ -243,11 +244,12 @@ c subroutine: PlotContour
 c
 c
       SUBROUTINE PlotContour
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'
@@ -404,11 +406,12 @@ c subroutine: FilterContour
 c
 c
       SUBROUTINE FilterContour
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'
@@ -784,12 +787,14 @@ c
       SUBROUTINE Plot982(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs,zval)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam2'
+c      INCLUDE 'comtor'
+c      INCLUDE 'dynam2'
       INCLUDE 'cedge2d'
       INCLUDE 'pindata'
       INCLUDE 'comgra'

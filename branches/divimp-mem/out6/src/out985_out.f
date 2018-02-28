@@ -7,15 +7,18 @@ c
       USE mod_interface
       USE mod_out985
       USE mod_out985_variables
+      use mod_dynam3
+      use mod_dynam2
+      use mod_walls_com
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'slout'
       INCLUDE 'comgra'
       INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
+c      INCLUDE 'walls_com'
+c      INCLUDE 'dynam2'
+c      INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -156,14 +159,17 @@ c
       USE mod_interface
       USE mod_out985
       USE mod_out985_variables
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
+c      INCLUDE 'dynam2'
+c      INCLUDE 'dynam3'
       INCLUDE 'outcom'
       INCLUDE 'diagvel'
       INCLUDE 'reiser_com'
@@ -207,16 +213,19 @@ c
       SUBROUTINE AssignPlasmaQuantities(ipla,iint,iobj)
       USE mod_out985
       USE mod_out985_variables
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: ipla,iint,iobj
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
+c      INCLUDE 'dynam2'
+c      INCLUDE 'dynam3'
       INCLUDE 'outcom'
       INCLUDE 'diagvel'
       INCLUDE 'reiser_com'
@@ -353,6 +362,8 @@ c
       SUBROUTINE GetFluidGridEmission(iint,ik,ir,osm,wlngth2)
       USE mod_out985
       USE mod_out985_variables
+      use mod_dynam3
+      use mod_comtor
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: iint,ik,ir
@@ -363,8 +374,8 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam3'
+c      INCLUDE 'comtor'
+c      INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'outcom'
 
@@ -526,11 +537,12 @@ c
 c ====================================================================== 
 c
       LOGICAL FUNCTION CheckInversionCell(mode,x,y)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER mode
@@ -672,13 +684,15 @@ c
 c ====================================================================== 
 c
       SUBROUTINE GetSepDist(mode,x1,x2,distmin)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
-      include 'dynam2'
+c      include 'dynam2'
       INCLUDE 'slcom'
 
       INTEGER mode
@@ -1944,15 +1958,17 @@ c
       SUBROUTINE ProcessMagneticGrid(ielement)
       USE mod_out985
       USE mod_out985_variables
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ielement
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
-      include 'dynam2'
+c      include 'dynam2'
       INCLUDE 'slcom'
 
 

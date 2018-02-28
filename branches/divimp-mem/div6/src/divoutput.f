@@ -1,6 +1,7 @@
 c     -*Fortran*-
 c     @PROCESS NOOPT
       SUBROUTINE PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_comtor
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -13,7 +14,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -140,9 +141,10 @@ c
 c
 c
       subroutine pr_toc
+      use mod_comtor
       implicit none
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -312,6 +314,7 @@ c
 c
       SUBROUTINE PR_GEOM
       use subgrid_options
+      use mod_comtor
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -322,7 +325,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -643,6 +646,8 @@ c slmod begin
       USE mod_sol28
       USE mod_sol28_global
 c slmod end
+      use mod_comtor
+      use mod_cioniz
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -654,10 +659,10 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cadas'
       include    'cgeom'
-      include    'cioniz'
+c      include    'cioniz'
       include    'cedge2d'
       include    'dynam4'
       include    'dynam5'
@@ -1416,6 +1421,7 @@ c
 c slmod begin
       USE mod_divimp
 c slmod end
+      use mod_comtor
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -1427,7 +1433,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -1737,6 +1743,7 @@ c
 c
 c
       SUBROUTINE PR_options (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_comtor
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -1748,7 +1755,7 @@ c
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -1809,6 +1816,7 @@ c
 c
       SUBROUTINE PR_misc_options
 c
+      use mod_comtor
       IMPLICIT none
 c
 C
@@ -1819,7 +1827,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -1911,6 +1919,7 @@ c
 c
       SUBROUTINE PR_geom_options
       use ribbon_grid_options
+      use mod_comtor
       IMPLICIT none
 c
 C
@@ -1921,7 +1930,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -2564,6 +2573,8 @@ c
 c
 c
       SUBROUTINE PR_procdata_options(NIZS)
+      use mod_comtor
+      use mod_cioniz
       IMPLICIT none
 c
       INTEGER NIZS
@@ -2575,10 +2586,10 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cadas'
       include    'cgeom'
-      include    'cioniz'
+c      include    'cioniz'
 c      include    'cedge2d'
 c      include    'dynam4'
 c      include    'dynam5'
@@ -3160,6 +3171,7 @@ c
       SUBROUTINE PR_sim_options(NIZS,NIMPS,NIMPS2,nymfs)
       use eckstein_2002_yield_data
       use eckstein_2007_yield_data
+      use mod_comtor
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -3171,7 +3183,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -5486,6 +5498,7 @@ c
 c
       SUBROUTINE PR_transport_options
 c                (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_comtor
       IMPLICIT none
 c
 c      INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -5499,7 +5512,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -5960,6 +5973,7 @@ c
 c
 c
       SUBROUTINE PR_bg_options(NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_comtor
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -5973,7 +5987,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -8186,6 +8200,7 @@ c
 c
 c
       SUBROUTINE PR_pin_options
+      use mod_comtor
       IMPLICIT none
 c
 C
@@ -8196,7 +8211,7 @@ C
 C***********************************************************************
 C
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'cadas'
       include    'cgeom'
 c      include    'cioniz'
@@ -8553,6 +8568,7 @@ C
 C
 C
       CHARACTER*9 FUNCTION FACTOR (A,OPTION)
+      use mod_comtor
       implicit none
       REAL A,B
       INTEGER OPTION
@@ -8562,7 +8578,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "CGEOM"
       include    'cgeom'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c      include    'comtor'
 C
       B = A
 C
@@ -9287,9 +9303,10 @@ c
 c
 c
       subroutine prtemp
+      use mod_comtor
       implicit none
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
 c
 c     PRTEMP: This routine prints out the wall temperatures that
@@ -9449,10 +9466,11 @@ c
 c
 c
       subroutine pr_heatfluxdata
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'printopt'
 c
 c     PR_HEATFLUXDATA: 
@@ -9550,10 +9568,11 @@ c
 
 
       subroutine pr_targfluxdata
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'printopt'
 c
 c     PR_TARGFLUXDATA: 
@@ -9633,9 +9652,10 @@ c
                 ! selected in input file (H15-H51).
 
       ! Every good Fortran routine has...
+      use mod_comtor
       Implicit none
       
-      Include 'comtor'
+c      Include 'comtor'
       
       ! Declare local variables.
       Integer I

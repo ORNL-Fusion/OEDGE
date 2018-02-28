@@ -9,11 +9,12 @@ c
 c
       subroutine WriteEireneFiles_04
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ik,ir,in1,in2,i1,id,ik1
@@ -158,12 +159,13 @@ c subroutine: DefineEireneSurfaces
 c
       SUBROUTINE DefineEireneSurfaces
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INTEGER region,code
 
       INCLUDE 'params' 
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -627,10 +629,11 @@ c
 c
       SUBROUTINE ProcessFluidGrid
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -852,10 +855,11 @@ c ======================================================================
 c
       SUBROUTINE LoadEireneData_04
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -1256,10 +1260,11 @@ c subroutine: DumpTriangles
 c
       SUBROUTINE DumpTriangles
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 

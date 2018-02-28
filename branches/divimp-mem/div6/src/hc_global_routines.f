@@ -601,8 +601,9 @@ c
 c
       subroutine global_hc_assign_inputs
       use comhc
+      use mod_comtor
       implicit none
-      include 'comtor'
+c      include 'comtor'
 c
 c     For HC input values that can be set to a value requiring the 
 c     assignment of the base DIVIMP input values - these values
@@ -715,10 +716,11 @@ c
       subroutine hc_electric_field_mod(ik,ir,iz,s,local_electric_field)
       use comhc
       Use HC_Utilities ! Sheath E-field calc by Brooks.
+      use mod_comtor
       implicit none
 c
       include 'cgeom'      
-      include 'comtor'
+c      include 'comtor'
 c
       integer ik,ir,iz,id
       real s
@@ -965,6 +967,7 @@ c
       subroutine update_cross(ik,ir,ikold,irold,kk,s,theta,cross,
      >                        adjust,dcross,ckkmin,smax,k,
      >                        nrand,imp,cist,debug)         
+      use mod_comtor
       implicit none 
       integer ik,ir,ikold,irold,kk
       real s,theta,adjust,dcross(4),cross,ckkmin,smax,k
@@ -991,7 +994,7 @@ c
 c*************************************************************************
 c
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
       include    'crand' 
 c
@@ -2088,6 +2091,7 @@ c
 
       !                                 cion,rizb)
 
+      use mod_comtor
       implicit none
       integer ik,ir
       real vr,vz,sputy,r,z
@@ -2099,7 +2103,7 @@ c
       ! CION. 
 
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'line_profile'
       
       

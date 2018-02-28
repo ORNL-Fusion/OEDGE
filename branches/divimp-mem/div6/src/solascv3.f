@@ -215,6 +215,7 @@ c
 c
 c
       subroutine echosol
+      use mod_comtor
       implicit none
 c
 c     This subroutine echoes the input values to standard out - it also
@@ -231,7 +232,7 @@ c
       include 'printopt'
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c slmod begin - new
       INCLUDE 'slcom'
 
@@ -4087,12 +4088,13 @@ c
      >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
      >                      pfz_dist_opt,pfz_dist_param)
       use debug_options
+      use mod_comtor
       implicit none
       include 'params'
       include 'solparams'
       include 'solswitch'
 c
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'
@@ -4805,6 +4807,7 @@ c
      >                     oldknbs,grad_oldknbs,ioniz_src,rec_src,
      >                     gperprat,ike2d_start)
       use debug_options
+      use mod_comtor
       implicit none
       include 'params'
       include 'solparams'
@@ -4820,7 +4823,7 @@ c      include 'solcommon'
       integer ike2d_start
 c
 c
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'
@@ -5346,13 +5349,14 @@ c
 c
 c
       subroutine debugsoliz(rfact)
+      use mod_comtor
       implicit none
       include 'params'
       include 'solparams'
       include 'solswitch'
       real rfact
 c
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'
@@ -7450,9 +7454,10 @@ c
 c     
 c
       real function get_bg_mass()
+      use mod_comtor
       implicit none
       include 'params'
-      include 'comtor'  
+c      include 'comtor'  
 c
 c     GET_BG_MASS: This routine returns the mass of the
 c                  background plasma ions in AMU.  
@@ -8440,11 +8445,12 @@ c
       subroutine detached_plasma(spts,npts,errcode,serr,
      >                           te,ti,ne,vb,ir,swtarg,
      >                           te0,ti0,n0,v0,act_press,mb)
+      use mod_comtor
       implicit none
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
       integer errcode,npts,ir
       real    swtarg
@@ -8719,10 +8725,11 @@ c
 c
 c
       subroutine ioniz_comp
+      use mod_comtor
       implicit none
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'
@@ -9344,6 +9351,7 @@ c
       subroutine print_edge2d_flux_analysis(rconst,gtarg,areasum,ir,
      >               gperpa,oldknbs,grad_oldknbs,srcinteg,recinteg,
      >               ike2d_start)
+      use mod_comtor
       implicit none
       include 'params'
       include 'solparams'
@@ -9357,7 +9365,7 @@ c
       real recinteg (maxnks+3,maxnrs)
 
 c
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
       include 'cedge2d'

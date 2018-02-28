@@ -15,11 +15,12 @@ c
       USE mod_options
       USE mod_geometry
       USE mod_filament
+      use mod_comtor
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: iitersol
@@ -542,9 +543,10 @@ c
       USE mod_eirene06
       USE mod_sol28_io
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params' 
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -1407,10 +1409,11 @@ c
       USE mod_eirene06_locals
       USE mod_eirene06
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -2489,12 +2492,13 @@ c
       USE mod_eirene_history
       USE mod_divimp
       USE mod_options
+      use mod_comtor
       IMPLICIT none
  
       INTEGER, INTENT(IN) :: iitersol,ilspt
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'

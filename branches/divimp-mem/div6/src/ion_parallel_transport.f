@@ -2,6 +2,9 @@ c     -*Fortran*-
 c     
       subroutine do_parallel_step(seed,nrand,neutim,
      >                            spara,dspara,vpara,dvpara)
+      use mod_div6
+      use mod_clocal
+      use mod_comtor
       implicit none
 c     
       real*8 seed 
@@ -10,16 +13,16 @@ c
       integer nrand  
 c     
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'clocal'
+c      include    'clocal'
       include    'reiser_com' 
 c     
       include 'div1'
       include 'div2'
       include 'div3'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c     
       include    'particle_specs'
       include    'driftvel'
@@ -298,13 +301,15 @@ c
 c     
 c     
       real function force_ff(ik,ir,iz,fvh,fvel)
+      use mod_clocal
+      use mod_cioniz
       implicit none
       integer ik,ir,iz
       real fvh,fvel
 c     
       include 'params'
-      include 'clocal'      
-      include 'cioniz'
+c      include 'clocal'      
+c      include 'cioniz'
 c     
       force_FF    = KFSSMOD(IK,IR)  * LFSS(IK,IR,IZ) * (FVH-FVEL)
 c
@@ -314,13 +319,14 @@ c
 c     
 c     
       real function force_fig(ik,ir,iz,s,smax)
+      use mod_comtor
       implicit none
 c     
       integer ik,ir,iz
       real s,smax
 c     
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
 c     
       if (cioptn.eq.3.and.s.gt.cstgrad*smax
@@ -338,13 +344,14 @@ c
 c     
 c     
       real function force_feg(ik,ir,iz,s,smax)
+      use mod_comtor
       implicit none
 c     
       integer ik,ir,iz
       real s,smax
 c     
       include 'params'
-      include 'comtor' 
+c      include 'comtor' 
       include 'cgeom'
 c     
 c     Calculate modifications to forces if any
@@ -398,13 +405,14 @@ c
 c
 c
       real function ds_kpinchs(ik,ir)
+      use mod_comtor
       implicit none
 c
       integer ik,ir
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 
       !
       ! Radial flow options 8 and 9 can result in effective 
@@ -464,9 +472,10 @@ c
 c     
 c     
       subroutine init_dperpz
+      use mod_comtor
       implicit none
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'dperpz'
 c     
 c     Initialize the DperpZ Delta S transport option
@@ -495,13 +504,15 @@ c
 c     
 c     
       subroutine update_parallel
+      use mod_comtor
+      use mod_div6
       implicit none
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
 c     
       include 'div1'
-      include 'div6'
+c      include 'div6'
 c     
       include    'particle_specs'
 
@@ -587,6 +598,8 @@ c
 c     
       subroutine set_collisional_step(seed,nrand,spara,vpara,
      >                                lfps,lllfps)
+      use mod_div6
+      use mod_comtor
       implicit none
 c
 c     Note: Passing variables as arguments make the routine more accessible from
@@ -603,13 +616,13 @@ c
       real lfps,lllfps
 c     
       include    'params'
-      include    'comtor'
+c      include    'comtor'
 c      include    'clocal'
       include    'crand'
       include 'div1'
       include 'div2'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c     
       include    'particle_specs'
 
@@ -799,6 +812,7 @@ c
 c     
 c     
       subroutine check_target_impact(seed,nrand,neutim)
+      use mod_comtor
       implicit none
 c     
       real*8 seed
@@ -806,7 +820,7 @@ c
       real neutim 
 c     
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
 c     
       include 'div1'
@@ -976,6 +990,9 @@ c
 c     
 c     
       subroutine ion_neutral_reflection(seed,nrand,neutim)
+      use mod_dynam3
+      use mod_div6
+      use mod_comtor
       implicit none
 c     
       real*8  seed
@@ -983,11 +1000,11 @@ c
       integer nrand
 c     
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
       include    'cneut2'
 c slmod begin
-      include    'dynam3'
+c      include    'dynam3'
 c slmod end
 c     
       include 'div1'
@@ -995,7 +1012,7 @@ c
       include 'div3'
       include 'div4'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c     
       include    'particle_specs'
 c
@@ -1158,20 +1175,24 @@ c
 c     
 c     
       subroutine struck_target
+      use mod_dynam3
+      use mod_div6
+      use mod_comtor
+      use mod_cneut
       implicit none
       include    'params'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 c     
       include 'div1'
       include 'div2'
       include 'div3'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c     
       include    'particle_specs'
 
@@ -1292,11 +1313,12 @@ c
 c     
 c     
       subroutine save_force_data(dvpara)
+      use mod_comtor
       implicit none
       real dvpara
 c     
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'reiser_com' 
 c     
       include 'div1'

@@ -613,11 +613,12 @@ c
 
       SUBROUTINE WriteInputFile_97
 
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1103,11 +1104,12 @@ c
 c
 c
       SUBROUTINE WriteGeometryFile_97
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER nnks,dimxh,dimyh,nncut,nxcut1,nxcut2
@@ -1250,12 +1252,13 @@ c subroutine: BuildTriangles
 c
       SUBROUTINE BuildTriangles
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
 c DEFUNCT
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 

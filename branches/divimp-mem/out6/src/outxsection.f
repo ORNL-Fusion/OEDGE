@@ -3,12 +3,14 @@
      >                       nizs,job,title,table,avs,navs,iplot,
      >                       nplots)
 c
+      use mod_dynam3
+      use mod_comtor
       implicit none
 c
       include 'params' 
       include 'cgeom'
-      include 'dynam3'
-      include 'comtor'
+c      include 'dynam3'
+c      include 'comtor'
       include 'pindata'
 c
       real r1p,z1p,r2p,z2p 

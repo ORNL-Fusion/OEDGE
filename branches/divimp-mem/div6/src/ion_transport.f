@@ -3,6 +3,8 @@ c
       subroutine execute_transport_step(seed,nrand,neutim,
      >                                  ero_record_data)
       use ero_interface
+      use mod_div6
+      use mod_comtor
       implicit none
 c
       real*8  seed
@@ -11,14 +13,14 @@ c
       logical ero_recorded
 c
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
 c
       include 'div1'
       include 'div3'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c
       include    'particle_specs'
       include    'driftvel'
@@ -130,23 +132,28 @@ c
 c
 c
       subroutine ion_in_main(spara,dspara,vpara,dvpara)
+      use mod_dynam3
+      use mod_div6
+      use mod_clocal
+      use mod_comtor
+      use mod_cneut
       implicit none
       real spara,dspara,vpara,dvpara
 c
       include    'params'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
-      include    'cneut'
-      include    'clocal'
+c      include    'cneut'
+c      include    'clocal'
 c
       include 'div1'
       include 'div2'
       include 'div3'
       include 'div4'
       include 'div5'
-      include 'div6'
+c      include 'div6'
       include 'div7'
 c
       include    'particle_specs'
@@ -409,21 +416,25 @@ c
 c 
       subroutine ion_in_sol(spara,dspara,vpara,dvpara)
       use divertor_limits
+      use mod_dynam3
+      use mod_div6
+      use mod_clocal
+      use mod_comtor
       implicit none
       real  spara,dspara,vpara,dvpara
 c      
       include    'params'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
-      include    'clocal'
+c      include    'clocal'
 c
       include 'div1'
       include 'div2'
       include 'div4'
       include 'div5'
-      include 'div6'
+c      include 'div6'
       include 'div7'
 c
       include    'particle_specs'
@@ -639,9 +650,10 @@ c
 c
 c
       subroutine findrz
+      use mod_comtor
       implicit none
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
 c
       include    'particle_specs'
@@ -669,18 +681,22 @@ c
 
 
       subroutine check_reached_grid_edge(seed,nrand)
+      use mod_dynam3
+      use mod_div6
+      use mod_comtor
+      use mod_cneut
       implicit none
 c 
       real*8 seed
       integer nrand
 c
       include    'params'
-      include    'dynam3'
+c      include    'dynam3'
       include    'dynam4'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
       include    'fperiph_com'
 c
@@ -688,7 +704,7 @@ c
       include 'div2'
       include 'div3'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c
       include    'particle_specs'
 

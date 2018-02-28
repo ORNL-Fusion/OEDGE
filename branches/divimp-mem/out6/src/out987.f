@@ -459,10 +459,11 @@ c
       SUBROUTINE DrawGrid(iopt1)
       USE mod_eirene06_parameters ! 04
       USE mod_eirene06
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'comgra'
       INCLUDE 'colours'
       INCLUDE 'slcom'
@@ -1194,15 +1195,18 @@ c
       USE mod_eirene06_parameters
       USE mod_eirene06 
       USE mod_out985_clean 
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cedge2d'
       INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
+c      INCLUDE 'dynam2'
+c      INCLUDE 'dynam3'
       INCLUDE 'comgra'
       INCLUDE 'colours'
       INCLUDE 'slcom'

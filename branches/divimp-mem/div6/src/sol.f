@@ -1,4 +1,5 @@
       SUBROUTINE SOL(irstart,irend,ikopt)
+      use mod_comtor
       IMPLICIT  NONE
 C
       integer irstart,irend,ikopt
@@ -8,7 +9,7 @@ C     INCLUDE   "PARAMS"
 C     INCLUDE   "CGEOM"
       include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 c
 C
 C  *********************************************************************

@@ -3,10 +3,11 @@ c ======================================================================
 c
       SUBROUTINE LoadEireneData_04
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -408,10 +409,11 @@ c subroutine: DumpTriangles
 c
       SUBROUTINE DumpTriangles
       USE mod_eirene04
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 

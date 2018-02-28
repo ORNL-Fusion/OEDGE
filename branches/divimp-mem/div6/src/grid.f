@@ -21,10 +21,11 @@ c
 c subroutine: ProcessTriangles
 c
       SUBROUTINE ProcessTriangles
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -183,10 +184,11 @@ c
 c subroutine: ReadTriangles
 c
       SUBROUTINE ReadTriangles
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -409,13 +411,14 @@ c
 c subroutine: StructureGrid
 c
       SUBROUTINE StructureGrid(mode)
+      use mod_comtor
       IMPLICIT none
 
 c     Input:
       INTEGER mode
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -534,10 +537,11 @@ c
 c Assume the core is fine... add later...
 c
       SUBROUTINE UnstructureGrid
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -596,11 +600,12 @@ c
 c
 c
       SUBROUTINE AssignNIMBUSWall
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -988,11 +993,12 @@ c ITER grid (proper double-null).
 c
 c
       SUBROUTINE BuildTargets
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1138,11 +1144,12 @@ c
       SUBROUTINE BuildNeutralWall
       USE mod_grid
       USE mod_geometry
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -2043,11 +2050,12 @@ c
 c
       SUBROUTINE BuildGridPolygons
       use error_handling
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'grbound'
       INCLUDE 'slcom'
@@ -2278,10 +2286,11 @@ c
 c
       SUBROUTINE MergeRings(ir)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2335,10 +2344,11 @@ c
 c
       SUBROUTINE AddOuterRing(ir,frac1)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2429,10 +2439,11 @@ c
 c
       SUBROUTINE DupeRing(ir)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2498,13 +2509,14 @@ c subroutine: ExpandGrid
 c
       SUBROUTINE ExpandGrid(ndupe,size_frac,ir_reference) 
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
   
       INTEGER, INTENT(IN) :: ndupe,ir_reference
       REAL   , INTENT(IN) :: size_frac
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2579,10 +2591,11 @@ c Copy ring and cell quantities from one ring to another (existing) ring.
 c
 c
       SUBROUTINE CopyRing(ir1,ir2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2627,10 +2640,11 @@ c
 c
       SUBROUTINE InsertRing(irref,mode,type)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2793,13 +2807,14 @@ c
 c
       SUBROUTINE SplitRing(ir,sposition)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir
       REAL    sposition
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2916,10 +2931,11 @@ c subroutine: DeleteRing
 c
 c
       SUBROUTINE DeleteRing(irref)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -2985,13 +3001,14 @@ c ======================================================================
 c
 c
       SUBROUTINE ResetRing(ir,irref)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER ir,irref
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER FetchKORPG
@@ -3087,6 +3104,7 @@ c
 c
       SUBROUTINE InsertCell(ikcell,ir,mode,type)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 c
 c Input:
@@ -3094,7 +3112,7 @@ c
       INTEGER ikcell,ir,mode,type
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -3410,11 +3428,12 @@ c
 c ======================================================================
 
       SUBROUTINE DeleteCell(ikcell,ir)
-
+      use mod_comtor
+      implicit none
       INTEGER ikcell,ir
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -3483,6 +3502,7 @@ c Make sure that a virtual cell isn't being split...
 c
       SUBROUTINE SplitCell(ikcell,ircell,splitpos,code)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 c
 c Input:
@@ -3494,7 +3514,7 @@ c     Output:
       INTEGER code
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -3813,10 +3833,11 @@ c
 c
       SUBROUTINE MoveCell(ik1,ir1,ik2,ir2)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -3997,11 +4018,12 @@ c
 c subroutine: GenWallRing
 c
       SUBROUTINE GenWallRing
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 c     Functions:
@@ -4337,6 +4359,7 @@ c Currently assumes that core rings are structured...
 c
       SUBROUTINE FindLink(ikcell,ircell,side,iklink,irlink)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
 c     Input:
@@ -4347,7 +4370,7 @@ c     Output:
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL*8     TOL
@@ -4608,11 +4631,12 @@ c jul 9, 97 - need to account for virtual cells with NO POLYGONS
 c
       SUBROUTINE BuildMap
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 c
 c Declare functions:
@@ -4887,11 +4911,12 @@ c
 c 
       LOGICAL FUNCTION SegChk(ik,ir,rvp,zvp,side,nseg,rseg,zseg,
      .                        r,z)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -5278,11 +5303,12 @@ c
 c
       SUBROUTINE ShapeTarget(dataindex,rvp,zvp)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 c     Input:
@@ -5691,11 +5717,12 @@ c subroutine: SequenceTargets
 c
       SUBROUTINE SequenceTargets(nregion1,nlist1,ilist1,
      .                           nregion2,nlist2,ilist2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ir,i1,i2,ir1,ir2,id1,id2,id,
@@ -5918,11 +5945,12 @@ c
 c subroutine: SequenceGrid
 c
       SUBROUTINE SequenceGrid
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL ATAN3C
@@ -6316,13 +6344,14 @@ c
 c
 c
       SUBROUTINE LoadGridData(mode)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER mode
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6495,11 +6524,12 @@ c
 c ======================================================================
 c
       SUBROUTINE DumpGrid(note)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
  
       CHARACTER*(*) note
@@ -6565,11 +6595,12 @@ c
 c
       SUBROUTINE CalcPolDist(ir,pdist,ploc)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ik,ir,id,ilocmax,ikend
@@ -6631,11 +6662,12 @@ c
 c
 c
       SUBROUTINE PoloidalRefinement(ir1,mode,param)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: ir1,mode
@@ -6862,11 +6894,12 @@ c ======================================================================
 c
       REAL*8 FUNCTION VertexDisplacement(id1,iv1,id2,iv2)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
       INTEGER, INTENT(IN) :: id1,id2,iv1,iv2
 
@@ -6894,11 +6927,12 @@ c ======================================================================
 c
       REAL*8 FUNCTION SideLength(id,iside)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
       INTEGER, INTENT(IN) :: id,iside 
 
@@ -6931,11 +6965,12 @@ c ======================================================================
 c
       SUBROUTINE TightenGrid
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER CalcPoint
@@ -7425,11 +7460,12 @@ c
 cc
       SUBROUTINE TailorGrid
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       COMMON /GRID/ iktop,irout,irin
@@ -8223,6 +8259,7 @@ c
       SUBROUTINE ReadGeneralisedGrid(gridunit,ik,ir,
      .                               rshift,zshift,indexiradj)
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
@@ -8230,7 +8267,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -9485,6 +9522,7 @@ c      SUBROUTINE ReadQuasiDoubleNull(gridunit,nopriv,ik,ir,
 c     .                               rshift,zshift,indexiradj)
       SUBROUTINE ReadQuasiDoubleNull(gridunit,ik,ir,
      .                               rshift,zshift,indexiradj)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
@@ -9492,7 +9530,7 @@ c      LOGICAL nopriv
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -9916,11 +9954,12 @@ c
 c
 c
       SUBROUTINE PrepQuasiDoubleNull
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -10088,10 +10127,11 @@ c
 c subroutine: DumpQuadrangles
 c
       SUBROUTINE DumpQuadrangles
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -10339,9 +10379,10 @@ c
 c
 c
       SUBROUTINE BuildLinearGrid
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -10861,9 +10902,10 @@ c
       use ribbon_grid_options
       use error_handling
       use castem_field_line_data
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
