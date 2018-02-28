@@ -4,7 +4,14 @@
 #
 #
 
-SRCROOT=$HOME/divimp
+if [[ $# -eq 1 ]]; then export SRC=divimp;
+else export SRC=$2;
+fi
+
+echo "SEARCHING FOR:" $1  "IN" $SRC
+
+SRCROOT=$HOME/$SRC
+
 #
 # Source code locations
 #
@@ -34,7 +41,7 @@ export COMMONSRC=$COMMONSRCDIR/*
 #echo $COMSRC
 #echo $COMSRCF90
 
-echo Searching for: $1
+#echo Searching for: $1
 
 #
 # Check div sources
