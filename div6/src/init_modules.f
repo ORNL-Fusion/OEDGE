@@ -2,10 +2,11 @@
       use mtc
       use velocity_dist
       use subgrid
+      use mod_comtor
       implicit none
       integer :: nizs
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'hc_global_opts'
 
 c

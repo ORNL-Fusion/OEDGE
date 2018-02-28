@@ -9,6 +9,11 @@ c
      >                 NEUTIM,RFAIL,NYMFS,STATUS)
       use error_handling
       use ero_interface
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       implicit none
       DOUBLE PRECISION SEED
       INTEGER   NRAND,NATIZ,MATT,MATP,NPROD,NYMFS,STATUS,NPROD2
@@ -63,21 +68,21 @@ C
 C     INCLUDE "PARAMS"
       include    'params'
 C     INCLUDE "DYNAM1"
-      include    'dynam1'
+c      include    'dynam1'
 C     INCLUDE "DYNAM3"
-      include    'dynam3'
+c      include    'dynam3'
 C     INCLUDE "DYNAM4"
       include    'dynam4'
 C     INCLUDE "CYIELD"
       include    'cyield'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c      include    'comtor'
 C     INCLUDE "CGEOM"
       include    'cgeom'
 C     INCLUDE "CIONIZ"
-      include    'cioniz'
+c      include    'cioniz'
 C     INCLUDE "CNEUT"
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 c
 c     Include line profile so that initialization may be called if the option is active
@@ -1183,6 +1188,11 @@ c slmod begin
       use mod_divimp_walldyn
 c slmod end
       use ero_interface
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -1246,19 +1256,19 @@ C
 C     INCLUDE    "PARAMS"
       include    'params'
 C     INCLUDE    "DYNAM1"
-      include    'dynam1'
+c      include    'dynam1'
 C     INCLUDE    "DYNAM3"
-      include    'dynam3'
+c      include    'dynam3'
 C     INCLUDE    "DYNAM4"
       include    'dynam4'
 C     INCLUDE    "CGEOM"
       include    'cgeom'
 C     INCLUDE    "COMTOR"
-      include    'comtor'
+c      include    'comtor'
 C     INCLUDE    "CIONIZ"
-      include    'cioniz'
+c      include    'cioniz'
 C     INCLUDE    "CNEUT"
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 C     INCLUDE    "CYIELD"
       include    'cyield'
@@ -4765,6 +4775,7 @@ C
 C
 C
       REAL FUNCTION VLAN (RAN)
+      use mod_comtor
       IMPLICIT NONE
       REAL    RAN
 C
@@ -4776,11 +4787,15 @@ C  *                                                                   *
 C  *                                      C.M.FARRELL   NOVEMBER 1987  *
 C  *                                                                   *
 C  *********************************************************************
+c
+c     jdemod - note this routine doesn't even seem to be called anymore
+c              (10-feb-2018)
+c
 C
 C     INCLUDE "PARAMS"
       include    'params'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c      include    'comtor'
 C
       RAN = MAX (0.0001, MIN (RAN, 0.9999))
 C
@@ -4804,6 +4819,7 @@ c
 c slmod begin
       use walls_src
       USE mod_divimp
+      use mod_comtor
 c slmod ned
       implicit none
       include 'params'
@@ -4814,7 +4830,7 @@ c
       integer matp,matt 
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'pindata'
       include 'cneut2'
 c
@@ -5214,6 +5230,7 @@ c
 c slmod begin
       use mod_divimp
 c slmod end
+      use mod_comtor
       implicit none
       include 'params'
 c
@@ -5223,7 +5240,7 @@ c
       integer matp,matt 
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'pindata'
       include 'cneut2'
       include 'slcom' 
@@ -5723,6 +5740,11 @@ c
       use velocity_dist
       use ero_interface
       use walls_src
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       implicit none 
 c
       include    'params'
@@ -5749,14 +5771,14 @@ c             pinsw   = PIN switch   : 0=no PIN data 1=PIN data available
 c
 c
 c
-      include    'dynam1'
-      include    'dynam3'
+c      include    'dynam1'
+c      include    'dynam3'
       include    'dynam4'
       include    'cyield'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cioniz'
-      include    'cneut'
+c      include    'cioniz'
+c      include    'cneut'
       include    'cneut2'
 c slmod begin
       include    'slcom'
@@ -6391,6 +6413,8 @@ c
 c
 c
       subroutine printfy(fydata,fymap,fyprob,nfy,nfymap,totfydata)
+      use mod_comtor
+      use mod_cneut
       implicit none
       include 'params'
 c
@@ -6399,9 +6423,9 @@ c
       integer nfy,nfymap,fymap(maxpts)
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'pindata'
-      include 'cneut'
+c      include 'cneut'
       include 'cneut2'
       include 'printopt' 
 c
@@ -6582,12 +6606,14 @@ c
 c
 c
       subroutine prep_neut2d
+      use mod_comtor
+      use mod_cneut
       implicit none
 c
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 c
 c
@@ -6674,12 +6700,14 @@ c
 c
       subroutine print_neut2d
       use ero_interface
+      use mod_comtor
+      use mod_cneut
       implicit none
 c
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 c 
 c     PRINT_NEUT2D:
@@ -6804,13 +6832,15 @@ c
 c
       subroutine redistribute_nprod(nproda,nprod,nprod2a,nprod2,
      >                            nprod_neut2d,pinsw,matt,matp)
+      use mod_comtor
+      use mod_cneut
       implicit none
       integer nproda,nprod,nprod2a,nprod2,pinsw,matt,matp
       include    'params'
       include    'cyield'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
 c
 c     REDISTRIBUTE_NPROD:
@@ -7297,13 +7327,14 @@ c
       real function find_thompson_velocity(neuttype,id,seed,nrand,
      >                                     thom_opt)
       use error_handling
+      use mod_comtor
       implicit none 
       integer neuttype,id,nrand,thom_opt
       real*8 seed
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'pindata'
 c
       common /thom_ye_params/  eimp,gamma,ebd

@@ -16,11 +16,12 @@ c  subroutine: WrtEIRENE
 c
       subroutine wrteirene
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c slmod begin
       INCLUDE 'slcom'
 
@@ -1384,11 +1385,12 @@ c
 c  subroutine: ReadEIRE
 c
       subroutine readeire
+      use mod_comtor
 
       implicit none
       include 'params'
       include 'pindata'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
 c slmod begin
       INCLUDE 'slcom'
@@ -3371,11 +3373,12 @@ c     3     3
 cVL  3.0000E+00
 c
       SUBROUTINE WriteInputFile
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4060,11 +4063,12 @@ c
 c
 c
       SUBROUTINE WriteBlock01(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4122,11 +4126,12 @@ c
 c
 c
       SUBROUTINE WriteBlock03b(fp1,fp2,mode)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -5354,11 +5359,12 @@ c
 c
 c
       SUBROUTINE WriteBlock03a(fp1,fp2,mode)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6223,11 +6229,12 @@ c
 c
 c
       SUBROUTINE WriteBlock04(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6415,11 +6422,12 @@ c
 c
 c
       SUBROUTINE WriteBlock05(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6508,11 +6516,12 @@ c
 c
 c
       SUBROUTINE WriteBlock06(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6561,11 +6570,12 @@ c
 c
 c
       SUBROUTINE WriteBlock14(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -6753,11 +6763,12 @@ c
 c
 c
       SUBROUTINE WriteBlock07(fp1,fp2)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -7706,11 +7717,12 @@ c
 c
 c
       SUBROUTINE WriteGeometryFile
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER nnks,dimxh,dimyh,nncut,nxcut1,nxcut2
@@ -8073,11 +8085,12 @@ c
 c
 c
       SUBROUTINE EstimateOpacityMultiplier
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -8329,11 +8342,12 @@ c
 c subroutine: BalanceGrid
 c
       SUBROUTINE BalanceGrid
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER i1,ik,ir,in1,in2,irref,nring
@@ -8420,10 +8434,11 @@ c
 c
 c
       SUBROUTINE DivAddSurface(x,y,z,mode,nlimi3,fp3,colour)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 

@@ -145,11 +145,12 @@ c
 c function: OutsideBreak
 c
       LOGICAL FUNCTION OutsideBreak(ir)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ir
@@ -656,17 +657,18 @@ c
       INCLUDE 'params'
 
       INTEGER i1,i2,n31,n32
+
 c
 c     jdemod - a3 can be too small in some cases
 c              use dynamic allocation
 c
-
       real,allocatable :: a3(:)
       REAL    curv,curm
 c      REAL    curv,curm,a3(MAXGXS)
-c
+
       n31 = 1
       n32 = n1
+
 c
 c     jdemod - allocate a3 - add an extra in case n1 is zero for some 
 c              reason
@@ -713,7 +715,6 @@ c     jdemod - deallocate a3
 c
       deallocate(a3)
 c
-
       RETURN
       END
 
@@ -960,11 +961,12 @@ c
 c subroutine: ReadGeometry
 c
       SUBROUTINE ReadGeometry(fp,error)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1236,11 +1238,12 @@ c
 c subroutine: ReadPlasma
 c
       SUBROUTINE ReadPlasma(fp,error)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1588,11 +1591,12 @@ c
 c subroutine: ReadSources
 c
       SUBROUTINE ReadSources(fp,error)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -2034,10 +2038,11 @@ c
 c     Returns pressure in units of [eV m-3].
 c
       REAL FUNCTION CalcPressure(n,te,ti,v)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
       REAL n,te,ti,v
 
@@ -2075,11 +2080,12 @@ c Need to check LPDATSW, and adjust density accordingly...
 c
 c
       SUBROUTINE InterpolateProbeData(probe)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER probe
@@ -2725,10 +2731,11 @@ c
 c
 c
       REAL FUNCTION GetMach(v,te,ti)
+      !use mod_comtor
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'params'
+c      INCLUDE 'comtor'
 
       REAL te,ti,v
 
@@ -2763,9 +2770,10 @@ c
 c
 c
       REAL FUNCTION GetCs(te,ti)
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       REAL, INTENT(IN) :: te,ti
 
 c     Te,i in eV
@@ -2808,10 +2816,11 @@ c
 c
 c
       REAL FUNCTION GetFlux(region,ring)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -2874,10 +2883,11 @@ c
 c
 c
       REAL FUNCTION GetGamma(region,ring)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -2919,10 +2929,11 @@ c
 c
 c
       REAL FUNCTION GetHeatFlux(region,ring)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -3062,10 +3073,11 @@ c
 c
 c
       REAL FUNCTION GetIonSrc(region,ir,stratum,mode)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -4289,10 +4301,11 @@ c
 c ... CHECK OPTIONS!
 c
       INTEGER FUNCTION SymmetryPoint(ir)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -4392,11 +4405,12 @@ c
 c function: GetModel
 c
       INTEGER FUNCTION GetModel(region,ir)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER region,ir
@@ -4540,11 +4554,12 @@ c direction of increasing major radius).
 c
 c
       SUBROUTINE ShiftTargetData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INCLUDE 'solparams'
@@ -4784,11 +4799,12 @@ c
 c subroutine: OutputMomentumData
 c
       SUBROUTINE OutputMomentumData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -4924,10 +4940,11 @@ c
 c
       SUBROUTINE GetDist(iks,ike,ir,oldquant,tquant,dist,mode1,
      .                           pinavail,tag)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -5070,11 +5087,12 @@ c Should I be working with P or S?  Does it really matter?
 c
       REAL FUNCTION CalcDist(sval1,irval1,mode)
 c      REAL FUNCTION CalcDist(sval1,irval1,quantv,tquantv,mode)
+      use mod_comtor
       IMPLICIT      none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -5805,11 +5823,12 @@ c subroutine: CalcCurvature
 c
 c
       SUBROUTINE CalcCurvature(ik,ir,wid,widi,wido,deltapi,deltapo)
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ik,ir
@@ -5903,13 +5922,14 @@ c from the current implimentation, which uses an estimate of
 c the cell widths (sorry about the run-on sentence).
 c
       REAL FUNCTION StoT(ir,s)
-
+      use mod_comtor
+      implicit none
       REAL    s
       INTEGER ir
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ik
@@ -5995,13 +6015,15 @@ c some liberties around the x-point
 c check that ksb is defined for core rings
 c
       REAL FUNCTION TtoS(ir,thetav)
+      use mod_comtor
+      implicit none
 
       REAL    thetav
       INTEGER ir
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ik
@@ -6087,6 +6109,7 @@ c for ring IR given THETA.
 c
       REAL FUNCTION TtoP(ir,thetav,ik)
 
+      use mod_comtor
       IMPLICIT none
 
 c     Input:
@@ -6098,7 +6121,7 @@ c     Output:
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL p
@@ -6184,11 +6207,12 @@ c subroutine: GetQuant
 c
 c
       SUBROUTINE GetQuant(ir,thetav,density,ik,ir1,quant,tquant,vopt)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 c     Input:
@@ -6334,11 +6358,12 @@ c Estimate the plasma potential from (an estimate) of the parallel
 c electric field (KES).
 c
       SUBROUTINE CalcPotential
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER mode,ik,ir
@@ -6426,11 +6451,12 @@ c
       SUBROUTINE CalcPotential2
       use mod_interpolate
       use plasma_overlay
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 c     
 c     jdemod - put the potential and drift variables in the common block driftvel

@@ -350,12 +350,14 @@ c            blue  = b * REAL(in-1) / REAL(ncols-1)
       SUBROUTINE Plot974(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                  xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                  xouts,youts,nconts,conts,cntropt,n_cols,col_opt)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      include 'dynam2'
+c      INCLUDE 'comtor'
+c      include 'dynam2'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'

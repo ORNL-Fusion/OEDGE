@@ -395,16 +395,19 @@ c
 c 
       subroutine writedata
       use debug_options
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       implicit none
 c
       include 'params'
       include 'outcom'
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c      include 'dynam2'
+c      include 'dynam3'
 c      include 'dynam4'
       include 'pindata'
 c      include 'cadas'
@@ -1014,6 +1017,7 @@ c
 c
 
       subroutine init_plot(iref,graph,iopt)
+      use mod_comtor
       implicit none
       character*(*) graph
       integer iopt,iref
@@ -1021,7 +1025,7 @@ c
       include 'params'
       include 'outcom'
       include 'cgeom' 
-      include 'comtor'      
+c      include 'comtor'      
 c
 c     Local Variables
 c
@@ -1198,6 +1202,7 @@ c
       subroutine outinit
       use debug_options
       use divimp_netcdf
+      use mod_comtor
       implicit none
 
 c
@@ -1208,7 +1213,7 @@ c     Other common blocks
 c
 
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 
 c      include 'cneut2'
 c      include 'dynam2'
@@ -1271,7 +1276,7 @@ c
 c     Initialize the signal output
 c
       call setup_signal_output
-      call pr_trace('OUTINIT','AFTER SETUP_SIGNAL_OUTPUT')
+      call pr_trace('OUTINIT (OUTA00)','AFTER SETUP_SIGNAL_OUTPUT')
 
 c
 c     Calculate format string for printing
@@ -1301,7 +1306,7 @@ c
 
       CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 
-      call pr_trace('OUTINIT','AFTER GET')
+      call pr_trace('OUTINIT (OUTA00)','AFTER GET')
 C
 c
 C-----------------------------------------------------------------------
@@ -1870,6 +1875,7 @@ c slmod begin
       use mod_out985
       use mod_out985_variables
 c slmod end
+      use mod_comtor
       implicit none
 
 c
@@ -1879,7 +1885,7 @@ c
 c     Other common blocks
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
@@ -2141,13 +2147,14 @@ c
 c
 c
       subroutine plotloopinit(iopt,ierr)
+      use mod_comtor
       implicit none
       integer iopt,ierr
 
 c
       include 'params'
       include 'outcom'
-      include 'comtor' 
+c      include 'comtor' 
       include 'adas_data_spec' 
 c
 c     Local Variables
@@ -2361,9 +2368,10 @@ c
 c
 c
       subroutine calc_neutralwall
+      use mod_comtor
       implicit none
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'grbound'
 c
 c     Use the contents of wallpts to construct the neutral wall boundary
@@ -2399,6 +2407,7 @@ c
 c
 c 
       subroutine init_out_unstruc_input
+      use mod_comtor
       implicit none
 c 
 c     This routine assigns the default values to any
@@ -2416,7 +2425,7 @@ c
       include 'params'
 c
       include 'out_unstruc'
-      include 'comtor'
+c      include 'comtor'
 c     
 c------------------------------------------------------
 c
@@ -2465,15 +2474,18 @@ c
 c
       subroutine pr_eirene_analysis
       use error_handling
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       implicit none
       include 'params'
       include 'outcom'
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c      include 'dynam2'
+c      include 'dynam3'
 c      include 'dynam4'
       include 'pindata'
 c      include 'cadas'
@@ -2918,10 +2930,11 @@ c
 c
       subroutine pr_exb_analysis
       use error_handling
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'driftvel'
 
       integer :: ik,ir,id,in,in_sep
@@ -3165,15 +3178,18 @@ c
 
       subroutine pr_imp_density_profiles
       use mod_collector_probe
+      use mod_dynam3
+      use mod_dynam2
+      use mod_comtor
       implicit none
       include 'params'
       include 'outcom'
 c     
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c     
-      include 'dynam2'
-      include 'dynam3'
+c      include 'dynam2'
+c      include 'dynam3'
 c     
       include 'printopt' 
 c

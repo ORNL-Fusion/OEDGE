@@ -10,12 +10,14 @@ c
       SUBROUTINE Plot984(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs,zval)
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam2'
+c      INCLUDE 'comtor'
+c      INCLUDE 'dynam2'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'

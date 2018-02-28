@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       subroutine out900(iref,graph,iopt,ierr)
+      use mod_comtor
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
@@ -11,7 +12,7 @@ c
 c     Other common blocks
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'

@@ -114,11 +114,12 @@ c ======================================================================
 c
       SUBROUTINE Plot990(nplts,ringnos,graph,nplots,ref,title,iopt,
      .                   ngrm,pltmins,pltmaxs,pltfact,iplot)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'
@@ -327,11 +328,12 @@ c     .                          MAXNPS,MAXTYP,MAXTDAT,MAXCOLS)
       SUBROUTINE PlotXXX(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                   xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                   xouts,youts,nconts,conts,cntropt)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'

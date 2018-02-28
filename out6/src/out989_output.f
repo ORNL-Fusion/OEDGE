@@ -29,6 +29,7 @@ c
       USE mod_out989
       USE mod_eirene04
       USE mod_interface
+      use mod_comtor
       IMPLICIT none
 
       TYPE(type_options989) :: opt
@@ -44,7 +45,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'

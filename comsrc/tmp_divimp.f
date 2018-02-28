@@ -91,9 +91,10 @@ c
       SUBROUTINE divLoadRibbonData
       USE mod_sol28_io
       USE mod_divimp
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -835,6 +836,7 @@ c
 c subroutine: CalcTubeDimentions
 c
       SUBROUTINE CalcTubeDimensions(tube_3D_data,dangle)
+      use mod_comtor
       IMPLICIT none
 
 c      SUBROUTINE CalcTubeDimensions(xin,yin,zin,
@@ -848,7 +850,7 @@ c      REAL*8 , INTENT(OUT) :: vsur(3,MAXPOINTS,0:MAXSURFACE)
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL tube_3D_data(5,MAXNKS,MAXNRS),dangle
@@ -1378,11 +1380,12 @@ c
 c subroutine: SelectGridRegoin_DIVIMP
 c
       SUBROUTINE SelectGridRegion_DIVIMP(rhoval,nrings,rings,MAX_IR)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN)  :: MAX_IR
@@ -1432,11 +1435,12 @@ c
 c ======================================================================
 c
       REAL FUNCTION FindSeparatrixRadius(mode)   
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: mode
@@ -1487,11 +1491,12 @@ c
 c ======================================================================
 c
       INTEGER FUNCTION FindMidplaneCell(ir)   
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
       INTEGER, INTENT(IN) :: ir
 

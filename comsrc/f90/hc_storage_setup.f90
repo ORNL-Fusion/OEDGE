@@ -13,6 +13,7 @@
 Module HC_Storage_Setup
 
   Use ComHC ! Access to setup and input values.
+  use debug_options
 
   Implicit None
 
@@ -276,7 +277,10 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Launch_Grid_Error_Moved_Okay ! ERR_OK, Begins just outside the wall boundary, but one step moved it in okay.
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Launch_Grid_Error_Moved_Out ! ERR_OUT, Begins just outside the wall boundary and moving it does not help.	
 
-  Real, Dimension (Max_Impurities,4) :: HC_LaunchDat ! maximp found in comhc.
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_LaunchDat(:,:) ! maximp found in comhc.
 
   !End Type HC_Launch_Diag_Table_Type
 
@@ -370,9 +374,12 @@ Module HC_Storage_Setup
   Real :: Total_Leaked_Core (Number_Regions) ! TOTLEAKCORE
   Logical :: HC_Has_Leaked ! HASLEAKED
   Logical :: HC_Has_Leaked_Core ! HASLEAKEDCORE
-  Real, Dimension (Max_Impurities,Number_Regions,2) :: HC_Leak_Position ! CLEAKPOS
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_Leak_Position(:,:,:) ! CLEAKPOS
   Real :: HC_Leak_Time (Number_Regions) ! CLEAKT
-  Real, Dimension (maxpts,Number_HC_Species+1) :: HC_Leak_Density ! CLEAKN
+  Real, allocatable :: HC_Leak_Density(:,:) ! CLEAKN
   Integer :: HC_Leak_Particles (Number_Regions) ! CLEAKP
 
   ! Far-periphery counting.
@@ -477,9 +484,12 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Temperature_At_Prod ! EATIZ
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Time_To_Prod ! TATIZ
 
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Time_At_Production
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Energy_At_Production
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Kin_E_Add_At_Production
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_Time_At_Production(:,:)
+  Real, allocatable :: HC_Energy_At_Production(:,:)
+  Real, allocatable :: HC_Kin_E_Add_At_Production(:,:)
 
   Real, Dimension (2,2,2,2,5) :: HC_LIonizDat ! lionizdat
 
@@ -588,6 +598,54 @@ Module HC_Storage_Setup
   Integer :: Impurity_Limit ! IMPLIM
   Real :: CPU_Time_Limit ! CPULIM
   !End Type Misc_Data_Table_Type
+
+
+contains
+
+
+subroutine allocate_hc_storage
+use allocate_arrays
+  
+implicit none
+integer :: ierr
+
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+
+    call pr_trace('HC_STORAGE_SETUP','ALLOCATE')
+
+    call allocate_array(HC_LaunchDat,Max_Impurities,4,'HC_LaunchDat',ierr)
+
+    call allocate_array(HC_Leak_Density,maxpts,Number_HC_Species+1,'HC_Leak_Density',ierr)
+    call allocate_array(HC_Leak_Position,Max_Impurities,Number_Regions,2,'HC_Leak_Position',ierr)
+
+    call allocate_array(HC_Time_At_Production,Max_Impurities,Number_HC_Species,'HC_Time_At_Production',ierr)
+    call allocate_array(HC_Energy_At_Production,Max_Impurities,Number_HC_Species,'HC_Energy_At_Production',ierr)
+    call allocate_array(HC_Kin_E_Add_At_Production,Max_Impurities,Number_HC_Species,'HC_Kin_E_Add_At_Production',ierr)
+
+end subroutine allocate_hc_storage
+
+subroutine deallocate_hc_storage
+implicit none
+
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+    call pr_trace('HC_STORAGE_SETUP','DEALLOCATE')
+
+    if (allocated(HC_LaunchDat)) deallocate(HC_LaunchDat)
+
+    if (allocated(HC_Leak_Density)) deallocate(HC_Leak_Density)
+    if (allocated(HC_Leak_Position)) deallocate(HC_Leak_Position)
+
+    if (allocated(HC_Time_At_Production)) deallocate(HC_Time_At_Production)
+    if (allocated(HC_Energy_At_Production)) deallocate(HC_Energy_At_Production)
+    if (allocated(HC_Kin_E_Add_At_Production)) deallocate(HC_Kin_E_Add_At_Production)
+
+end subroutine deallocate_hc_storage
+
+
 
 
 End Module HC_Storage_Setup

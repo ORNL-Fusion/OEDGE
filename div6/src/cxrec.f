@@ -4,6 +4,7 @@ C
 C
       SUBROUTINE CXREC (NIZS,CION,CIOPTI,RIZB,CRMB,CVCX,
      >                  CNHC,CNHO,CLAMHX,CLAMHY,cprint,cpinopt)
+      use mod_cioniz
       IMPLICIT    NONE
       INTEGER     NIZS,CION,CIOPTI,cprint,cpinopt
       REAL        CRMB,CVCX,CNHC,CNHO,CLAMHX,CLAMHY,RIZB
@@ -27,7 +28,7 @@ C  *********************************************************************
 C
       include    'params'
       include    'cgeom'
-      include    'cioniz'
+c      include    'cioniz'
       include    'pindata'
       include    'cedge2d'
       include    'cadas'

@@ -12,10 +12,13 @@ fi
 # These should be all that require changing for most installations
 #
 #-------------------------------------
+#
+# NOTE: LD_LIBRARY_PATH is set below (if necessary) after all of the locations are defined
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=$HOME/adas
+export ZEXT=.gz
 #
 VER=pgi
 #
@@ -36,11 +39,19 @@ VER=pgi
 #            ...
 #
 #
+DIVINSTALLDIR=$HOME
+DIVWRITEDIR=$HOME
 PROGDIR=divimp
 #
-RUNROOT=$HOME/$PROGDIR
-EXEROOT=$HOME/$PROGDIR
-DATAROOT=$HOME/$PROGDIR
+export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$DIVINSTALLDIR/$PROGDIR
+#
+export RUNROOT=$DIVWRITEDIR/$PROGDIR
+export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
+#
+#export RUNROOT=$DIVINSTALLDIR/$PROGDIR
+#export EXEROOT=$DIVINSTALLDIR/$PROGDIR
+#export DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
 #  Loctions of the various DIVIMP files 
 #
@@ -62,8 +73,12 @@ DATAROOT=$HOME/$PROGDIR
 #  EIREXE    - EIRENE executable
 #
 export DIVRUNDIR=$RUNROOT/cases
-export DIVDATDIR=$RUNROOT/data
-export DIVRESDIR=$RUNROOT/results
+export DIVDATDIR=$DATAROOT/data
+export DIVRESDIR=$RESULTSROOT/results
+#
+#export DIVRUNDIR=$RUNROOT/cases
+#export DIVDATDIR=$RUNROOT/data
+#export DIVRESDIR=$RUNROOT/results
 #
 export DIVMAINDIR=$EXEROOT
 export DIVEXEDIR=$EXEROOT/div6
@@ -74,7 +89,7 @@ export EIREXEDIR=$EXEROOT/eirene
 export EIREXE99DIR=$EXEROOT/eirene99
 export EQUDIR=$DATAROOT/shots
 #
-export DIVEXE=$DIVEXEDIR/div6dbg$VER
+export DIVEXE=$DIVEXEDIR/div6O$VER
 export OUTEXE=$OUTEXEDIR/out6O$VER
 export PINEXE=$PINEXEDIR/pin6O
 export PIN5EXE=$PIN5EXEDIR/pin5O
@@ -99,10 +114,11 @@ export EIRDIR=$EXEROOT/eirene07
 #   a common meaning between these scripts and Steve's versions
 # - code has been modified to use DIVMAINDIR if available then DIVHOME
 #
-export DIVHOME=$RUNROOT
+# export DIVHOME=$RUNROOT
 
 # Location of graphics library used by EIRENE:
-export GLI_HOME=$DIVHOME/libsrc
+# export GLI_HOME=$DIVHOME/libsrc
+export GLI_HOME=$EXEROOT/libsrc
 
 # Set local directories:
 export RUNDIR=$RUNROOT
@@ -111,8 +127,15 @@ export EXEDIR=$DIVRUNDIR/$CASENAME
 export DATDIR=$DIVDATDIR
 export OUTDIR=$OUTEXEDIR
 #
-
-
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+#
+#
 #------------------------------------- 
 #
 #
@@ -260,8 +283,8 @@ fi
 #
 #  CFD OSM files
 #
-if [[ -f  $DIVRESDIR/$5.cfd.gz ]] then 
-  gunzip $DIVRESDIR/$5.cfd.gz
+if [[ -f  $DIVRESDIR/$5.cfd$ZEXT ]] then 
+  gunzip $DIVRESDIR/$5.cfd$ZEXT
 fi
 #
 if [[ -f  $DIVRESDIR/$5.cfd ]] then 
@@ -288,6 +311,16 @@ if [[ -f  $DIVRESDIR/$6.auxdata ]] then
   echo "Linking ..." $DIVRESDIR/$6.auxdata
   ln -s $DIVRESDIR/$6.auxdata $DIVRUNDIR/$CASENAME/divimp_aux_data.dat
 fi  
+#
+# charge_resolved_deposition_data_input.dat contains deposition data from 
+# a previous divimp run
+#
+if [[ -f  $DIVRESDIR/$6.impdep ]] then 
+  echo "Linking ..." $DIVRESDIR/$6.impdep
+  ln -s $DIVRESDIR/$6.impdep $DIVRUNDIR/$CASENAME/charge_resolved_deposition_data_in.dat
+fi  
+
+
 #
 #  A fluid plasma solution is linked to fort.11 - if one is available.
 #
@@ -419,7 +452,6 @@ if [[ -f $EIREXE99DIR/$CASENAME.dat ]] then
 else
   ln -s $EIREXE99DIR/eirene99.dat $DIVRUNDIR/$CASENAME/fort.80
 fi
-
 #
 # Copy in DIVEXE
 #
@@ -437,7 +469,9 @@ cp $RUNROOT/comsrc/*.c .
 #
 #  Run DIVIMP - Use optimized version.
 #
-echo Starting DIVIMP ...Debug
+echo Starting DIVIMP DEBUG...  
+#
+#$DIVEXE < fort.5 > divout1
 #
 #
 # Run the local copy of the executable from the debugger
@@ -445,8 +479,7 @@ echo Starting DIVIMP ...Debug
 # Inside the debugger issue the command   run < fort.5 to execute
 # 
 pgdbg div6dbg$VER
-#
-#$DIVEXE < fort.5 > divout1
+
 #
 echo DIVIMP Finished.
 #
@@ -485,6 +518,10 @@ mvc fort.41 $CASENAME.tran
 #  Diagnostic information from THETA module (among others)
 mvc fort.50 $CASENAME.theta
 
+# Summary of transport coefficient extractor numbers for import to excel
+mvc tc_extractor.output $CASENAME.extout
+mvc tc_extractor2.output $CASENAME.extout2
+
 #  Print out for Kevin Erents
 mvc fort.56 $CASENAME.probe
 
@@ -497,14 +534,21 @@ mvc fort.73 $CASENAME.exl23
 #  CFD solution file
 mvc fort.75 $CASENAME.cfd
 
+#  DIVIMP format grid file - if writing one has been requested. 
+mvc divimp_grid.out $CASENAME.grd
+
 #  DIVIMP format background plasma file - if writing one has been requested. 
 mvc divimp_plasma.out $CASENAME.bgp
 
 #  Additional DIVIMP data file - output in a standardized tagged format. 
 mvc divimp_aux_data.out $CASENAME.auxdata
 
+# DIVIMP impurity wall deposition data
+mvc charge_resolved_deposition_data_out.dat $CASENAME.impdep
+
 # Core file in case DIVIMP crashed
 mvc core $CASENAME.core
+
 
 #
 # mv fort.25  $DIVRESDIR/$CASENAME.lst.grd
@@ -512,7 +556,7 @@ mvc core $CASENAME.core
 #
 #  Convert the DIVIMP output data file to postscript. 
 #
-a2ps $CASENAME.dat --output=$CASENAME.ps 
+#a2ps $CASENAME.dat --output=$CASENAME.ps 
 #
 # a2ps -nn $DIVRESDIR/$CASENAME.sol > $DIVRESDIR/$CASENAME.sol.ps 
 # mv POSTSCPT.LIS $DIVRESDIR/$CASENAME.sol.psg
@@ -541,9 +585,28 @@ mvc outout1 $CASENAME.out
 #  .raw complete results file
 mvc fort.8 $CASENAME.raw
 
+#
+# Rename the netcdf output if any
+#
+if [[ -f divimp_netcdf_out.nc ]] then
+    # save the compressed version of the nc file
+    # according to the documentation this file can be accessed as 
+    # easily as a regular nc file but takes much less space
+    nccopy -d5 divimp_netcdf_out.nc divimp_netcdf_out_compress.nc
+    mvc divimp_netcdf_out_compress.nc $CASENAME.nc
+fi
+
+# Move the signal file to results if one exists
+mvc signal_output.dat $CASENAME.signals
 
 #  Erosion/Deposition print out
-mvc fort.57 $CASENAME.deposition
+mvc impurity_wall_deposition.dat $CASENAME.deposition
+
+#  Upstream impurity profiles print out
+mvc upstream_impurity_profiles.dat $CASENAME.up_imp_prof
+
+#  Upstream impurity profiles print out
+mvc sol_impurity_profiles.dat $CASENAME.sol_imp_prof
 
 # AUG file
 mvc fort.59 $CASENAME.augdiv
@@ -565,6 +628,11 @@ mvc fort.26 $CASENAME.grp
 
 #  Special printed listing of some plot information.
 mvc fort.49 $CASENAME.plt
+
+#
+# Target geometry data
+#
+mvc target_geometry.dat $CASENAME.targ-geom
 
 #
 # Save HC output files 
@@ -598,6 +666,15 @@ mvc eirtrac $CASENAME.eirtrc
 # Out debug file (?) ... a fort.50 from divimp has already been moved - this one could be out
 mvc fort.50 $CASENAME.out.debug
 
+
+# eirene ionization analysis
+mvc eirene_iz_analysis.dat $CASENAME.eiz
+
+# exb source terms over grid
+mvc exb_source_terms.dat $CASENAME.exb
+
+# collector probe analysis
+mvc collector_probe.out $CASENAME.collector_probe
 
 #
 # Move image files if any ...
@@ -756,6 +833,7 @@ mvc celldata.dat        $CASENAME.celldata
 
 mvc eirene.transfer     $CASENAME.eir2
 mvc eirene.input        $CASENAME.eirdat2
+mvc eirene.output       $CASENAME.eirout
 
 # apparently an eirene output file
 mvc eirene04.txt $CASENAME.eir04txt
@@ -854,61 +932,61 @@ rmdir $CASENAME
 
 #-------------------------------
 #
-# Changing to results directory to clean up and compress
+# Changing to results directory to clean up and gzip
 #
 
 cd $DIVRESDIR
 #
-# Compress the larger output files - check for file existence
-#                                    before compressing.
+# Gzip the larger output files - check for file existence
+#                                    before gziping.
 #
 if [[ -f $CASENAME.raw ]] then
-   compress -f -v $CASENAME.raw
+   gzip -f -v $CASENAME.raw
 fi
 # (SL)
 if [[ -f $CASENAME.raw.src ]] then
-   compress -f -v $CASENAME.raw.src
+   gzip -f -v $CASENAME.raw.src
 fi
 if [[ -f $CASENAME.raw.pla ]] then
-   compress -f -v $CASENAME.raw.pla
+   gzip -f -v $CASENAME.raw.pla
 fi
 if [[ -f $CASENAME.raw.geo ]] then
-   compress -f -v $CASENAME.raw.geo
+   gzip -f -v $CASENAME.raw.geo
 fi
 if [[ -f $CASENAME.raw.rel ]] then
-   compress -f -v $CASENAME.raw.rel
+   gzip -f -v $CASENAME.raw.rel
 fi
 #
 if [[ -f $CASENAME.lim ]] then
-   compress -f -v $CASENAME.lim
+   gzip -f -v $CASENAME.lim
 fi
 #
 if [[ -f $CASENAME.sol22 ]] then
-   compress -f -v $CASENAME.sol22
+   gzip -f -v $CASENAME.sol22
 fi
 #
 if [[ -f $CASENAME.sol23 ]] then
-   compress -f -v $CASENAME.sol23
+   gzip -f -v $CASENAME.sol23
 fi
 #
 if [[ -f $CASENAME.out ]] then
-   compress -f -v $CASENAME.out
+   gzip -f -v $CASENAME.out
 fi
 #
 if [[ -f $CASENAME.pinout ]] then
-   compress -f -v $CASENAME.pinout
+   gzip -f -v $CASENAME.pinout
 fi 
 #
 if [[ -f $CASENAME.pinraw ]] then
-   compress -f -v $CASENAME.pinraw
+   gzip -f -v $CASENAME.pinraw
 fi 
 #
 if [[ -f $CASENAME.pinnim ]] then
-   compress -f -v $CASENAME.pinnim
+   gzip -f -v $CASENAME.pinnim
 fi 
 #
 if [[ -f $CASENAME.pinmc ]] then
-   compress -f -v $CASENAME.pinmc
+   gzip -f -v $CASENAME.pinmc
 fi 
 #
 #  Print

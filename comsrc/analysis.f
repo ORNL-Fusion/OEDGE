@@ -6,11 +6,12 @@ c
 c ... assumes SetBounds has been called
 c
       SUBROUTINE AnalyseSolution(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'

@@ -3,11 +3,12 @@
       SUBROUTINE Plot972(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                  xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                  xouts,youts,nconts,conts,cntropt,n_cols,col_opt)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'slout'

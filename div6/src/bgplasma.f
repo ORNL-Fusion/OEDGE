@@ -1,10 +1,13 @@
 c     -*Fortran*-
 c
       subroutine bgplasma(title,equil)
-c slmod begin
       use error_handling
+c slmod begin
       USE mod_sol28_global
 c slmod end
+      use mod_dynam1
+      use mod_comtor
+      use mod_cioniz
       implicit none
 C
       include 'params'
@@ -13,13 +16,13 @@ c
 c
       include 'cedge2d'
 c
-      include 'comtor'
+c      include 'comtor'
 c
-      include 'cioniz'
+c      include 'cioniz'
 c
 c      include 'reader'
 c
-      include 'dynam1'
+c      include 'dynam1'
       include 'dynam5'
 c
       include 'pindata'
@@ -1290,11 +1293,12 @@ c
 c     
 c     
       subroutine calcef4(lpinavail)
+      use mod_comtor
       implicit none
       logical lpinavail
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c     
 c     CALCEF4:
 c     
@@ -1562,6 +1566,7 @@ c
 c
 c
       subroutine flat_t
+      use mod_comtor
       implicit none
 c
 c     FLAT_T: If the upstream temperature flattening options are
@@ -1573,7 +1578,7 @@ c
 c
       include 'cgeom'
 c
-      include 'comtor'
+c      include 'comtor'
 c
 c     Local variables
 c
@@ -1676,11 +1681,12 @@ c
 c
 
       subroutine load_bgopts(in)
+      use mod_comtor
       implicit none
       integer in
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
 c
 c     LOAD_BGOPTS: This routine handles all the manipulation of the
 c                  global variables that must be correctly set for
@@ -1828,15 +1834,17 @@ c
 c slmod begin
       USE mod_sol28_global
 c slmod end
+      use mod_dynam1
+      use mod_comtor
       implicit none
       logical lpinopt,litersol,liter,lpinavail
       integer iitersol,tmpcsopt,tmpcioptf,iiterpin
       character*(*) title,equil
 c
       include 'params'
-      include 'dynam1'
+c      include 'dynam1'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       INCLUDE 'slcom'
 c
 c     PINEXE: This routine contains the code that will set up and
@@ -2205,6 +2213,7 @@ c subroutine: MapParameters
 c
 c
       SUBROUTINE MapParameters(ir,type,s,v,n,MAXVAL)
+      use mod_comtor
       IMPLICIT none
        
       INTEGER ir,type,n,MAXVAL
@@ -2212,7 +2221,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER i0,i1,ik,id
@@ -2288,11 +2297,12 @@ c subroutine: PrescribeFlow
 c
 c
       SUBROUTINE PrescribeFlow
+      use mod_comtor
       IMPLICIT none
        
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL GetCs
@@ -2422,11 +2432,12 @@ c slmod end
 c
 c
       subroutine recalculate_bg_velocity(halfopt)
+      use mod_comtor
       implicit none
       integer halfopt
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'pindata'
 c
@@ -2636,11 +2647,12 @@ c
 c
 c
       subroutine set_bg_velocity(velopt)
+      use mod_comtor
       implicit none
       integer velopt
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     SET_BG_VELOCITY:
 c
@@ -2814,10 +2826,11 @@ c
       subroutine overlay_plasma
       use error_handling
       use plasma_overlay
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+!      include 'comtor'
       
 ! read in the overlay plasma file including array sizes and bounds
 ! Loop through grid and for any cell with NON-ZERO values within

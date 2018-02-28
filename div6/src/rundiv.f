@@ -8,6 +8,8 @@ c slmod begin
       use ero_interface
 c slmod end
       use mod_fp_data
+      use allocate_storage_div
+      use mod_comtor
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -21,7 +23,7 @@ C  *********************************************************************
 C                                                                       
       include 'params'                                                  
       include 'cadas'                                                   
-      include 'comtor'                                                  
+c      include 'comtor'                                                  
       include 'cgeom'                                                   
       include 'dynam4'                                                  
       include 'grbound'                                                 
@@ -89,6 +91,10 @@ c
       write (6,*) 'DIVIMP VERSION = ', vernum, ' REVISION = ',revnum
 c
       call pr_trace('RUNDIV','VERSION ASSIGNED')
+c
+c     Dynamic allocation
+c
+      call allocate_dynamic_storage
 c
 C                                                                       
 C-----------------------------------------------------------------------
@@ -539,6 +545,11 @@ c
       ! of execution should get rid of them anyway
       call fp_deallocate_storage
 
+c
+c     Dynamic allocation
+c
+      call deallocate_dynamic_storage
+c
 
       STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'
 
@@ -550,6 +561,8 @@ c
 c
 c
       subroutine wrtdivbra(nizs)
+      use mod_dynam1
+      use mod_dynam3
       implicit none
 c
       integer nizs
@@ -564,8 +577,8 @@ c
 c     David Elder, Sept 6, 1994
 c
       include 'params'
-      include 'dynam1'
-      include 'dynam3' 
+c      include 'dynam1'
+c      include 'dynam3' 
       include 'cgeom'
 c
       include 'divbra'

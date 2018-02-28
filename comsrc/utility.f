@@ -1,13 +1,14 @@
 c     -*-Fortran-*-
 c
       subroutine gridpos(ik,ir,r,z,newinj,outofgrid)
+      use mod_comtor
       implicit none
       integer ik,ir
       real    r,z
       logical newinj,outofgrid
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'grbound'
 c
 c
@@ -1367,12 +1368,13 @@ c
 c
 c
       subroutine position_on_target(r,z,cross,id)
+      use mod_comtor
       implicit none
       integer id 
       real r,z,cross
       include 'params'
       include 'cgeom'
-      include 'comtor'  
+c      include 'comtor'  
 c
 c     POSITION_ON_TARGET: This routine returns an estimate of 
 c                         the actual R,Z location where a 
@@ -1578,6 +1580,7 @@ c
 c ======================================================================
 c
       SUBROUTINE GETRZ(IK,IR,S,CROSS,R,Z,opt)
+      use mod_comtor
       IMPLICIT none 
 
 C     INCLUDE "PARAMS"
@@ -1585,7 +1588,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "CGEOM"
       INCLUDE 'cgeom'
 c     INCLUDE "COMTOR"
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 c
 c     jdemod
 c
@@ -4568,14 +4571,16 @@ c
 c
 c
       subroutine pr_calc_walldep
+      use mod_dynam3
+      use mod_comtor
       implicit none
 c
 c     Adds contributions from wall element wallin - contained in the 
 c     specified region to the totals in walldep.  
 c          
       include 'params'
-      include 'dynam3'
-      include 'comtor' 
+c      include 'dynam3'
+c      include 'comtor' 
       include 'printopt' 
 c
       integer in,ik,start_region
@@ -5221,6 +5226,7 @@ c slmod begin
 c
 c     >                        intersect_logical)
 c slmod end
+      use mod_walls_com
       implicit none
 c
       real ra,za,rb,zb,rint,zint,reflection_angle,intersect_normal
@@ -5233,7 +5239,7 @@ c slmod end
       logical intersect_logical
 c
       include 'params'
-      include 'walls_com'
+c      include 'walls_com'
 c
 c     Centralize the processing of the calculation of wall
 c     intersections. This code is only called when a the 
@@ -5786,13 +5792,14 @@ c
 c
 c     
       subroutine find_nearest_point_on_wall(rsect,zsect,id_out,is_out)
+      use mod_walls_com
       implicit none
 c
       real rsect,zsect
       integer id_out,is_out
 c
       include 'params'
-      include 'walls_com'
+c      include 'walls_com'
 c
 c     FIND_NEAREST_POINT_ON_WALL: This routine scans through the 
 c         segments forming the wall to find a point on the wall 
@@ -5948,6 +5955,7 @@ c
 c
 c
       subroutine calc_wall_length_coordinate(opt)
+      use mod_walls_com
       implicit none
       integer opt
 
@@ -5971,7 +5979,7 @@ c               since the 'mid-plane' is not defined.
 
 c
       include 'params'
-      include 'walls_com'
+c      include 'walls_com'
 c
       integer nw,cnt,cin,in,startin
       real minr,totdist,rminw
@@ -6032,6 +6040,8 @@ c
       do
          cin = startin - cnt
          if (cin.lt.1) cin = cin + wallpts
+         write(0,*) 'CIN:',cin,startin,cnt,wallpts
+
 c
 c        Check if finished wall and complete last wall element 
 c

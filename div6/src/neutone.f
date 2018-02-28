@@ -12,6 +12,11 @@ c
 c slmod begin
       use mod_divimp_walldyn
 c slmod end
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       IMPLICIT NONE
 c      real rst,zst,riz,ziz,temi,cisti,sputy
       real rst,zst,riz,ziz,temi,sputy
@@ -43,13 +48,13 @@ c
 c
 c
       include    'params'
-      include    'dynam1'
-      include    'dynam3'
+c      include    'dynam1'
+c      include    'dynam3'
       include    'dynam4'
       include    'cgeom'
-      include    'comtor'
-      include    'cioniz'
-      include    'cneut'
+c      include    'comtor'
+c      include    'cioniz'
+c      include    'cneut'
       include    'cneut2'
       include    'crand'
       include    'commv' 

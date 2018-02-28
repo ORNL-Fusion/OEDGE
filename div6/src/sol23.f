@@ -1,4 +1,5 @@
       subroutine sol23_interface (irlim1,irlim2)
+      use mod_comtor
       implicit none
       integer irlim1, irlim2
 c
@@ -17,7 +18,7 @@ c
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
       include 'pindata'
       include 'pin_cfd'
@@ -2325,10 +2326,11 @@ c
 c
 c
       subroutine echosol23
+      use mod_comtor
       implicit none
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
 c
 c     ECHOSOL23:
@@ -2444,10 +2446,11 @@ c
 c
 c
       subroutine calctargfluxes(ir)
+      use mod_comtor
       implicit none
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
       include 'cgeom'
 c
@@ -3356,6 +3359,7 @@ c
 c
 c
       subroutine TwoD_momloss(irlim1, irlim2)
+      use mod_comtor
       implicit none
 c
       integer irlim1, irlim2, ik,ir
@@ -3365,7 +3369,7 @@ c
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
       include 'pindata'
       include 'pin_cfd'
@@ -3419,6 +3423,7 @@ c
 c
 c
       subroutine perp_diffusion(d2ndr)
+      use mod_comtor
       implicit none
 c
       include 'params'
@@ -3428,7 +3433,7 @@ c
       real dr_a, dr_b, dr_ab
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
 c
       do ir = irsep,irwall-1
@@ -3490,6 +3495,7 @@ c
 c
 c
       subroutine pinqi_1234(ir1,ir2)
+      use mod_comtor
       implicit none
 c
       integer ir1,ir2
@@ -3499,7 +3505,7 @@ c
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'sol23_input'
       include 'pindata'
       include 'pin_cfd'
@@ -3736,11 +3742,12 @@ c
 c
 c
       subroutine print_sol_excel
+      use mod_comtor
       implicit none
       include 'params'
       include 'sol23_com'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     print_sol_excel: Print out SOL information from SOL22 or 23
 c                      in a format that Wojciech prefers for
@@ -3943,11 +3950,12 @@ c
 c
 c
       subroutine print_e2d_excel
+      use mod_comtor
       implicit none
       include 'params'
       include 'sol23_com'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'cedge2d'
 c
 c     print_sol_excel: Print out SOL information from SOL22 or 23

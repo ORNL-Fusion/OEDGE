@@ -1,0 +1,579 @@
+module mod_comtor
+
+  use debug_options
+  use mod_walls_com
+
+  implicit none
+
+
+
+
+  !     -*-Fortran-*-
+  !                                                                       
+  !      COMMON /COMTOR/ CBPHI ,CXTARG,CHALFA,CRMB  ,CTEB0 ,CIOPTA,CNEUTA, 
+  !     >  CNB0  ,CNBOUT,CNBIN ,CNBT  ,CTWOA ,CTEBIN,CTEBOU,CIOPTB,CNEUTB, 
+  !     >  CSTEPL,CDPERP,CTIBOU,CRMI  ,CXSC  ,DEBUGL,CKMAX ,CIOPTC,CNEUTC, 
+  !     >  CYSC  ,CTEM1 ,CTEM2 ,CEBD  ,CLARMR,CEMAXF,CTIB0 ,CIOPTD,CNEUTD, 
+  !     >  CIZB  ,CION  ,CIZSC ,CTIBIN,DEBUGN,CTRESH,CIZEFF,CIOPTE,CNEUTE, 
+  !     >  CNHC  ,CNHO  ,CLAMHX,CLAMHY,CXNEAR,CYNEAR,CVCX  ,CIOPTF,CNEUTF, 
+  !     >  CPRINT,CSOLEF,CEIN  ,CVHIN ,CSTEPN,CIZSET,CZENH ,CIOPTG,CIOPTI, 
+  !     >  CEOUT ,CVHOUT,CISEED,CDIFOP,CBOMBZ,CYMFS ,CBOMBF,CIOPTH,CIRF  , 
+  !     >  CSEF  ,QTIM  ,FSRATE,RIZB  ,CKMIN ,CRECT ,CSOLVF,CSNORM,cneutd2,
+  !     >  CSTOP ,CKSC  ,IRSPEC,CTIBT ,CTEBT ,CNEUTG,CFL   ,CFS   ,CIOPTJ, 
+  !     >  CPERIP,CFRM  ,CFRMIN,CFRMAX,CKIN  ,CKOUT ,CIOPTK,CIOPTL,CFEBL1, 
+  !     >  CFEBT ,CFIBL1,CFIBT ,CIOPTM,CIOPTN,CFEBL2,CFIBL2,CFEB2 ,CFIB2 , 
+  !     >  ABSFAC, absfac_neut,absfac_ion,
+  !     >  CZO   ,CHZO  ,CNIWA ,TLOSS,CTEBP ,CTIBP ,CPA ,CK0,CNEBP,       
+  !     >  LPDATI,LPDATO,NLPDATI,NLPDATO,CIONR,OFIELD,ceflen,ofield_targ,
+  !     >  NRFOPT,CSOLLS,       
+  !     >  CSOLLR,CSOLPR, CK0I,CIOPTO,CSOPT,CPOPT,CZD,INJIR,INJF1,INJF2,   
+  !     >  CNEUTH,CNEUTI,     
+  !c     >  CPDRFT,CDRFTV,CEIMP,FLUXPTS,FLUXROPT,FLUXINFO,SROOTOPT,CSOPT2,  
+  !     >  CEIMP,FLUXPTS,FLUXROPT,FLUXINFO,SROOTOPT,CSOPT2,  
+  !     >  CNIN,CTEMAV,lpdatsw,ccoreopt,coredat,ncoredat,
+  !     >  rzopt,pdopt,wtsource,wtdep,fgradopt,fgradfact,ceffact,
+  !     >  sdperpref,sdperppp,const_yield,cfolrec,readaux,cvamult,cvrmult,
+  !     >  cflatopt,bgplasopt,nbgplas,mtcopt,kelighi,kelighg,ircore,
+  !     >  vernum,revnum,cneutvel,neut2d_opt,neut2d_vaopt,ngradopt,
+  !c     >  neut2d_raw,sol22_power_ratio,redefopt,cdrftv_start,cdrftv_end,
+  !     >  neut2d_raw,sol22_power_ratio,redefopt,cbomb_frac,
+  !     >  init_pos_opt,override_bg_velocity_opt,sonnet_grid_sub_type,
+  !     >  ext_flx_data_src
+  !C                                                                       
+  !      common /comtor2/ cpinopt,citersol,csecsol,cpincom,actpin,         
+  !     >  ctargopt, platco,wallco,nplat,nwall,           
+  !     >  csollt,cfiz,ctrap,csolfr,cgeoopt,
+  !     >  wallpol,nitersol,cvolopt,cdiffopt,walltemp,nwltemp,
+  !     >  trappol,virtgrid,wallswch,injnum,injprob,injrind,injkind,       
+  !     >  nvaopt,cmaxgens,cirhr,csputopt,extra_sputter_angle,xygrid,
+  !     >  checkleak,                
+  !     >  solte,solti,solne,solvel,solcor,solpr,solprh,solpcx,solpei,     
+  !     >  solph,cgridopt,wallco2,nwall2,kprat,kpsiz,kprat2,
+  !     >  cmiropt,ctimmax,cleq,           
+  !     >  irstold,ikstold,cleaks,cleakn,terat,nrat,qrat,l1rat,l2rat,      
+  !     >  lvrat,nabsfac,cvbl1,cvbm1,cvbl2,cvbm2,cleakt,cleaksn,northopt,  
+  !     >  cmachno,ctargt,cwallt,
+  !     >  cutring,cutpt1,cutpt2,maxrings,maxkpts,cstgrad,ctestsol,
+  !     >  cerr,cserr,teupstream,tiupstream,cneur,cleakpos,nleakcore,
+  !     >  piniter,launchdat,ionizdat,totpintim,cellvals,cwallp,
+  !     >  cteboup,ctiboup,cnboup,dpmethod,dpsuml,dpouter,dpconv,
+  !     >  dpfluxopt,dpavopt,dprcopt,dpsmooth,dpnav,dparea,
+  !     >  dp_pinqe_mult,fluxes,
+  !     >  dpploss,dporth,cosalph,sinalph,dppei,dprec,cdeferr,cdefserr,
+  !     >  ctes1,ctef1,ctes2,ctef2,ctis1,ctif1,ctis2,ctif2,treccut,
+  !     >  cnes1,cnef1,cnes2,cnef2,cvbs1,cvbf1,cvbs2,cvbf2,crecopt,
+  !     >  kpress,kprad,cchemopt,cselfs,s21refsw,
+  !     >  te_mult_i,ti_mult_i,n_mult_i,te_mult_o,ti_mult_o,n_mult_o,
+  !     >  nbupstream,terati,nrati,qrati,l1rati,l2rati,lvrati,
+  !     >  vbmult,vbmulti,crploc,
+  !     >  pincoreiz,pinsoliz,pinppiz,corefv,coreft,corefv2,coreft2,
+  !     >  cfdopt,cdperpt,fixtgrad,targsrc,targleak,
+  !     >  dpxpratio,tirat,tirati,ctegcut,ctigcut,czploc,
+  !     >  rlocnum,zlocnum,nalph,nalphi,crdivbg,ns21i,s21parmi,ns21o,
+  !     >  s21parmo,aux_ns21i,aux_s21parmi,aux_ns21o,aux_s21parmo,
+  !     >  aux_vel21,
+  !     >  tmachine_opt,write_tran,netcdf_opt,
+  !c
+  !c     >  sol23_izlen,sol23_izlam,sol23_izoffset,sol23_momlen,
+  !c     >  sol23_intopt,sol23_bndcond,sol23_seed,
+  !c
+  !     >  refdist,cdeferropt,nrat_used,
+  !     >  debug_neutv,debug_neutv_einmax,debug_neutv_nbins
+  !      save /comtor/
+  !c
+  !      common /shotinfo/ divshotid 
+  !      save /shotinfo/
+  !c
+  !      REAL CBPHI,CHALFA,CRMB,CTEB0,CNB0,CNBOUT,CNBIN,CTWOA,CSOLVF,      
+  !     >  CTEBIN,CTEBOU,CDPERP,CRMI,CXSC,CYSC,CTEM1,CTEM2,CEBD,CEMAXF,    
+  !     >  CTRESH,CNHC,CNHO,CLAMHX,CLAMHY,CXNEAR,CYNEAR,CEIN,CVHIN,CEOUT,  
+  !     >  CVHOUT,CSTEPN,CZENH,CIRF,CSEF,CSOLEF,CVCX,CYMFS(MAXPTS+1,8),
+  !     >  CLARMR,CTIB0,CSTEPL,QTIM,FSRATE,CTIBT,CTIBIN,CFL,CFS,CNBT,CTEBT,      
+  !     >  CXTARG,CKMAX,RIZB,CKMIN,CKSC,CPERIP,CTIBOU,CFRM,CFRMIN,CFRMAX,  
+  !     >  CKIN,CKOUT,CFEBL1,CFEBT,CFIBL1,CFIBT,CSNORM,CFEBL2,CFIBL2,      
+  !     >  CFEB2,CFIB2,ABSFAC,absfac_neut,absfac_ion,
+  !     >  CHZO,TLOSS,CTEBP,CTIBP,CPA,CK0,CK0I,CNEBP,         
+  !     >  LPDATI(MAXINS,4),LPDATO(MAXINS,4),CSOLLS,CSOLLR,CSOLPR,CZD,     
+  !     >  INJF1,INJF2,ctimmax,ctemav,
+  !     >  wallco2(maxpts,2),      
+  !c     >  CDRFTV,CEIMP,FLUXINFO(MAXINS,4),platco(maxnrs,5),
+  !     >  CEIMP,FLUXINFO(MAXINS,4),platco(maxnrs,5),
+  !     >  ctes1,ctef1,ctes2,ctef2,ctis1,ctif1,ctis2,ctif2,treccut,
+  !     >  cnes1,cnef1,cnes2,cnef2,cvbs1,cvbf1,cvbs2,cvbf2,
+  !     >  coredat(maxins,5),kpress(maxnks,maxnrs,2),kprad(maxnks,maxnrs),
+  !     >  fgradfact,
+  !     >  ceflen,ceffact,cdperpt,
+  !     >  sdperpref,sdperppp,
+  !c     >  walltemp(maxpts,3),cdrftv_start,cdrftv_end,s21parmi(maxnrs,10),
+  !     >  walltemp(maxpts,3),s21parmi(maxnrs,10),
+  !     >  s21parmo(maxnrs,10),aux_s21parmi(maxnrs,9),aux_vel21,
+  !     >  aux_s21parmo(maxnrs,9),
+  !c
+  !c     >  sol23_izlen,sol23_izlam,sol23_izoffset,
+  !c     >  sol23_momlen,
+  !c
+  !     >  const_yield,cvamult,cvrmult,cdeferropt(maxnrs,2)
+  !c
+  !      common /pinch_data/ pdf_norm_val,pinchopt,pinch_loc_opt,
+  !     >       pinch_npdf,npdf_data,pinch_pdf,cvpinch,vpinch,
+  !     >       pinch_pdf_data,  
+  !     >       pinch_correlation_time
+  !      save /pinch_data/
+  !
+  !      real    pdf_norm_val
+  !      integer pinchopt,pinch_npdf,pinch_loc_opt,npdf_data
+  !      real    cvpinch,vpinch,pinch_pdf(maxpts,2)
+  !      real    pinch_pdf_data(maxpts,3)
+  !      real    pinch_correlation_time
+  !
+  !c
+  !      common /debug_pinch_data/ d_pinch_v
+  !      save /debug_pinch_data/
+  !
+  !      integer   max_d_pinch_v 
+  !      real      d_pinch_vel 
+  !      parameter (max_d_pinch_v=100,d_pinch_vel=10.0)
+  !      real*8 d_pinch_v(-max_d_pinch_v:max_d_pinch_v)
+  !c
+  !
+  !c
+  !      REAL wallco(maxpts,2),csollt,cfiz,             
+  !     >  csolfr,injprob(maxnks*maxnrs),cleakt,ctestsol,
+  !     >  cleq(maxnrs,2),cleaks(maxpts),cleakn(maxpts,maxizs+1),          
+  !     > cvbl1,cvbm1,cvbl2,cvbm2,cmachno(maxnrs,2),
+  !     > solte(0:maxnks*msolpt+msolpt),solti(0:maxnks*msolpt+msolpt),     
+  !     > solne(0:maxnks*msolpt+msolpt),solvel(0:maxnks*msolpt+msolpt),    
+  !     > solcor(0:maxnks*msolpt+msolpt),solpei(0:maxnks*msolpt+msolpt),   
+  !     > solpr(0:maxnks*msolpt+msolpt),solprh(0:maxnks*msolpt+msolpt),    
+  !     > solpcx(0:maxnks*msolpt+msolpt),solph(0:maxnks*msolpt+msolpt),    
+  !     > CNIN,
+  !     > terat,nrat,qrat,l1rat,l2rat,lvrat,nabsfac,cstgrad,ctargt,
+  !     > tiupstream(maxnrs,2),teupstream(maxnrs,2),cwallt,cwallp,
+  !     > cleakpos(maximp,2),kprat(maxnrs,2),kpsiz(maxnks,maxnrs),
+  !     > kprat2(maxnks,maxnrs,2),launchdat(maximp,5),totpintim,
+  !     > ionizdat(2,2,2,2,5),cellvals(maxnrs,4,2),cserr(maxnrs,2),
+  !     > cteboup,ctiboup,cnboup,fluxes(maxnks,maxnrs,16),
+  !     > cosalph(maxnks,maxnrs),sinalph(maxnks,maxnrs),dppei,dprec,
+  !     > dp_pinqe_mult,
+  !     > te_mult_i,ti_mult_i,n_mult_i,te_mult_o,ti_mult_o,n_mult_o,
+  !     > cdefserr(maxnrs,2),nbupstream(maxnrs,2),crploc,
+  !     > terati,nrati,qrati,l1rati,l2rati,lvrati,vbmult,vbmulti,
+  !     > pincoreiz,pinsoliz,extra_sputter_angle,
+  !     > pinppiz,corefv,coreft,corefv2,coreft2,dpxpratio,
+  !     > wtsource(maxpts,maxnrs,4,6),wtdep(maxpts,maxpts+1,3),
+  !     > targsrc(3,4),targleak(3,4),
+  !     > tirat,tirati,ctegcut,ctigcut,czploc,
+  !     > refdist(maxnrs),bgplasopt(2*maxnrs,9),kelighi,kelighg,
+  !     > neut2d_raw(maxnks,maxnrs),sol22_power_ratio(maxnrs,2,3),
+  !     > cbomb_frac,
+  !     > nalph,nalphi,nrat_used(maxnrs,2),debug_neutv_einmax
+  !c
+  !      INTEGER CIOPTA,CIOPTB,CIOPTC,CIOPTD,CIOPTE,CIOPTF,CIOPTG,CIOPTH,  
+  !     >  CIOPTI,CNEUTA,CNEUTB,CNEUTC,CNEUTD,CNEUTE,CNEUTF,CSTOP,CNEUTG,  
+  !     >  CIZB,CION,CIZSC,CIZEFF,CIZSET,CISEED,CDIFOP,CBOMBF,CBOMBZ,      
+  !     >  CPRINT,CIOPTJ,CIOPTK,CIOPTL,CIOPTM,CIOPTN,IRSPEC,CRECT,CZO,     
+  !     >  CNIWA,CIONR,OFIELD,ofield_targ,
+  !     >  NRFOPT,CIOPTO,CSOPT,CPOPT,LPDATSW,
+  !     >  NLPDATI,NLPDATO,INJIR,CNEUTH,CNEUTI,            
+  !c     >  CPDRFT,FLUXPTS,FLUXROPT,SROOTOPT,cpinopt,citersol,csecsol,      
+  !     >  FLUXPTS,FLUXROPT,SROOTOPT,cpinopt,citersol,csecsol,      
+  !     >  CSOPT2,ctargopt,nplat,nwall,ctrap,cgeoopt,
+  !     >  wallpol(maxpts),trappol,nleakcore,cvolopt,cdiffopt,
+  !     >  injrind(maxnks*maxnrs),injkind(maxnks*maxnrs),injnum,nwall2,    
+  !     >  nvaopt,cmaxgens,cirhr,cgridopt,dpmethod,dpsuml,dpouter,dpconv,
+  !     >  csputopt,cmiropt,nitersol,      
+  !     >  ikstold,irstold,xygrid,cleaksn,northopt,cneutd2,
+  !     >  cutring, cutpt1,cutpt2,maxrings,maxkpts,cneur,cerr(maxnrs,2),
+  !     >  dpfluxopt,dpavopt,dprcopt,dpsmooth,dpnav,dparea,dpploss,dporth,
+  !     >  cdeferr(maxnrs,2),ccoreopt,ncoredat,
+  !     >  cselfs,cchemopt,s21refsw,crecopt,nwltemp,
+  !     >  rzopt,pdopt,cfdopt,fgradopt,fixtgrad,
+  !     >  rlocnum,zlocnum,
+  !     >  ns21i,ns21o,aux_ns21i,aux_ns21o,init_pos_opt,tmachine_opt,
+  !     >  write_tran,netcdf_opt,
+  !c
+  !c     >  sol23_intopt,sol23_bndcond,sol23_seed,
+  !c
+  !     >  cfolrec,readaux,cflatopt,
+  !     >  nbgplas,mtcopt,ircore,vernum,revnum,cneutvel,crdivbg,
+  !     >  neut2d_opt,neut2d_vaopt,ngradopt,redefopt,debug_neutv,
+  !     >  debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type,
+  !     >  ext_flx_data_src
+  !C                                                                       
+  !      LOGICAL DEBUGN,DEBUGL,virtgrid,wallswch,checkleak,piniter
+  !C                                                                       
+  !      CHARACTER*80 cpincom,actpin                                       
+  !      character*10 divshotid
+  !c slmod begin
+  !c...  Variables for line impurity injection (CIOPTE=9):
+  !      COMMON /IMPCOM01/ cxscA,cyscA,cxscB,cyscB
+  !      save /IMPCOM01/
+  !      REAL              cxscA,cyscA,cxscB,cyscB
+  !c slmod end                                                                     
+  !
+  !c
+  !c     External plasma overlay option common block
+  !c
+  !      common /ext_plasma/ external_plasma_overlay,external_plasma_file
+  !      integer external_plasma_overlay
+  !      character*1024 external_plasma_file
+  !c
+  !c     Include the WALL common block for backward compatibility for now
+  !c     Need to change later. 
+  !c                                                                        
+  !      include 'walls_com'
+  !c                                            
+  !
+  !
+  !c     -*-Fortran-*-
+  !c
+  !c     This common block contains data related to the wall 
+  !c     - including geometry and plasma conditions if any
+  !c
+  !c
+  !      integer, parameter :: nwall_data = 32
+  !
+  !      common /wall_data/ wall_plasma_opt,wall_plasma_fact,
+  !     >    WLPROB,NWLPROB,wlpabs,
+  !    >    WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,
+  !     >    wlwall3,wlwall4,wltrap3,wltrap4,
+  !     >    WLIND,NWLIND,FWLPROB,TOTWL,
+  !     >    WALLPT,WALLPTS,
+  !     >    nimindex,wallindex,
+  !     >    wallsrc,wallleak,
+  !     >    pcnt,rw,zw
+  !      save /wall_data/
+  !c
+  !      integer wall_plasma_opt,
+  !     >    NWLPROB,WALLPTS,
+  !     >    WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,
+  !     >    wlwall3,wlwall4,wltrap3,wltrap4,
+  !     >    NWLIND,WLIND(MAXPTS),wlpabs,
+  !     >    nimindex(maxnds),wallindex(maxnds),
+  !     >    pcnt
+  !c
+  !      real wall_plasma_fact,
+  !     >    WALLPT(MAXPTS,nwall_data),
+  !     >    FWLPROB(MAXPTS),TOTWL,
+  !     >    WLPROB(MAXPTS,3),
+  !     >    wallsrc(5,3),wallleak(5,3),
+  !     >    rw(maxpts),zw(maxpts)
+  !c
+
+
+
+
+
+
+  REAL,public:: CBPHI,CHALFA,CRMB,CTEB0,CNB0,CNBOUT,CNBIN,CTWOA,CSOLVF,&
+       CTEBIN,CTEBOU,CDPERP,CRMI,CXSC,CYSC,CTEM1,CTEM2,CEBD,CEMAXF,&    
+       CTRESH,CNHC,CNHO,CLAMHX,CLAMHY,CXNEAR,CYNEAR,CEIN,CVHIN,CEOUT,&  
+       CVHOUT,CSTEPN,CZENH,CIRF,CSEF,CSOLEF,CVCX,&
+       CLARMR,CTIB0,CSTEPL,QTIM,FSRATE,CTIBT,CTIBIN,CFL,CFS,CNBT,CTEBT,&      
+       CXTARG,CKMAX,RIZB,CKMIN,CKSC,CPERIP,CTIBOU,CFRM,CFRMIN,CFRMAX,&  
+       CKIN,CKOUT,CFEBL1,CFEBT,CFIBL1,CFIBT,CSNORM,CFEBL2,CFIBL2,&      
+       CFEB2,CFIB2,ABSFAC,absfac_neut,absfac_ion,&
+       CHZO,TLOSS,CTEBP,CTIBP,CPA,CK0,CK0I,CNEBP,&         
+       CSOLLS,CSOLLR,CSOLPR,CZD,INJF1,INJF2,ctimmax,ctemav,CEIMP,&
+       ctes1,ctef1,ctes2,ctef2,ctis1,ctif1,ctis2,ctif2,treccut,&
+       cnes1,cnef1,cnes2,cnef2,cvbs1,cvbf1,cvbs2,cvbf2,fgradfact,&
+       ceflen,ceffact,cdperpt,sdperpref,sdperppp,aux_vel21,&
+       const_yield,cvamult,cvrmult
+
+  real, allocatable, public :: wallco2(:,:),LPDATI(:,:),LPDATO(:,:),CYMFS(:,:),&      
+       FLUXINFO(:,:),platco(:,:),coredat(:,:),kpress(:,:,:),kprad(:,:),&
+       walltemp(:,:),s21parmi(:,:),s21parmo(:,:),aux_s21parmi(:,:),&
+       aux_s21parmo(:,:),cdeferropt(:,:)
+
+
+  real,public   ::  pdf_norm_val
+  integer,public :: pinchopt,pinch_npdf,pinch_loc_opt,npdf_data
+  real,public    :: cvpinch,vpinch
+  real,public    :: pinch_correlation_time
+
+  real,allocatable,public ::  pinch_pdf_data(:,:),pinch_pdf(:,:)
+
+
+  !integer,public   :: max_d_pinch_v 
+  !real,public      :: d_pinch_vel 
+  integer, parameter,public :: max_d_pinch_v=100
+  real, parameter,public :: d_pinch_vel=10.0
+  real*8,public :: d_pinch_v(-max_d_pinch_v:max_d_pinch_v)
+
+
+
+  REAL,public ::  csollt,cfiz,csolfr,cleakt,ctestsol,cvbl1,cvbm1,cvbl2,cvbm2,&
+       CNIN,terat,nrat,qrat,l1rat,l2rat,lvrat,nabsfac,cstgrad,ctargt,&
+       cwallt,cwallp,totpintim,ionizdat(2,2,2,2,5),cteboup,ctiboup,cnboup,dppei,dprec,&
+       dp_pinqe_mult,te_mult_i,ti_mult_i,n_mult_i,te_mult_o,ti_mult_o,n_mult_o,&
+       crploc,terati,nrati,qrati,l1rati,l2rati,lvrati,vbmult,vbmulti,&
+       pincoreiz,pinsoliz,extra_sputter_angle,pinppiz,corefv,coreft,corefv2,coreft2,dpxpratio,&
+       targsrc(3,4),targleak(3,4),tirat,tirati,ctegcut,ctigcut,czploc,kelighi,kelighg,&
+       cbomb_frac,nalph,nalphi,debug_neutv_einmax
+
+  real,allocatable,public :: wallco(:,:),injprob(:),&
+       cleq(:,:),cleaks(:),cleakn(:,:),cmachno(:,:),&
+       solte(:),solti(:),solne(:),solvel(:),solcor(:),solpei(:),&   
+       solpr(:),solprh(:),solpcx(:),solph(:),&    
+       tiupstream(:,:),teupstream(:,:),cleakpos(:,:),kprat(:,:),kpsiz(:,:),&
+       kprat2(:,:,:),launchdat(:,:),cellvals(:,:,:),cserr(:,:),fluxes(:,:,:),&
+       cosalph(:,:),sinalph(:,:),cdefserr(:,:),nbupstream(:,:),wtsource(:,:,:,:),wtdep(:,:,:),&
+       refdist(:),bgplasopt(:,:),neut2d_raw(:,:),sol22_power_ratio(:,:,:),nrat_used(:,:)
+
+
+  INTEGER,public::  CIOPTA,CIOPTB,CIOPTC,CIOPTD,CIOPTE,CIOPTF,CIOPTG,CIOPTH, &
+       CIOPTI,CNEUTA,CNEUTB,CNEUTC,CNEUTD,CNEUTE,CNEUTF,CSTOP,CNEUTG,&  
+       CIZB,CION,CIZSC,CIZEFF,CIZSET,CISEED,CDIFOP,CBOMBF,CBOMBZ, &     
+       CPRINT,CIOPTJ,CIOPTK,CIOPTL,CIOPTM,CIOPTN,IRSPEC,CRECT,CZO, &    
+       CNIWA,CIONR,OFIELD,ofield_targ,NRFOPT,CIOPTO,CSOPT,CPOPT,LPDATSW,&
+       NLPDATI,NLPDATO,INJIR,CNEUTH,CNEUTI,FLUXPTS,FLUXROPT,SROOTOPT,cpinopt,citersol,csecsol,&
+       CSOPT2,ctargopt,nplat,nwall,ctrap,cgeoopt,trappol,nleakcore,cvolopt,cdiffopt,&
+       injnum,nwall2,nvaopt,cmaxgens,cirhr,cgridopt,dpmethod,dpsuml,dpouter,dpconv,&
+       csputopt,cmiropt,nitersol,ikstold,irstold,xygrid,cleaksn,northopt,cneutd2,&
+       cutring, cutpt1,cutpt2,maxrings,maxkpts,cneur,dpfluxopt,dpavopt,dprcopt,dpsmooth,&
+       dpnav,dparea,dpploss,dporth,ccoreopt,ncoredat,cselfs,cchemopt,s21refsw,crecopt,nwltemp,&
+       rzopt,pdopt,cfdopt,fgradopt,fixtgrad,rlocnum,zlocnum,ns21i,ns21o,aux_ns21i,aux_ns21o,&
+       init_pos_opt,tmachine_opt,write_tran,netcdf_opt,cfolrec,readaux,cflatopt,&
+       nbgplas,mtcopt,ircore,vernum,revnum,cneutvel,crdivbg,neut2d_opt,neut2d_vaopt,ngradopt,&
+       redefopt,debug_neutv,debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type,&
+       ext_flx_data_src
+
+  integer, allocatable, public :: wallpol(:), injrind(:),injkind(:),cerr(:,:), cdeferr(:,:)
+
+
+  LOGICAL,public ::  DEBUGN,DEBUGL,virtgrid,wallswch,checkleak,piniter
+
+  CHARACTER*80, public ::  cpincom,actpin                                       
+  character*10, public ::  divshotid
+
+  ! slmod begin
+  !...  Variables for line impurity injection (CIOPTE=9):
+  !      COMMON /IMPCOM01/ cxscA,cyscA,cxscB,cyscB
+  !      save /IMPCOM01/
+
+  REAL, public :: cxscA,cyscA,cxscB,cyscB
+
+  ! slmod end                                                                     
+
+  !
+  !     External plasma overlay option common block
+  !
+  integer, public ::  external_plasma_overlay
+  character*1024, public ::  external_plasma_file
+  !
+  !     Include the WALL common block for backward compatibility for now
+  !     Need to change later. 
+  !                                                                        
+  !      include 'walls_com'
+  !
+  !
+  !     This common block contains data related to the wall 
+  !     - including geometry and plasma conditions if any
+  !
+  !
+  !integer, parameter,public :: nwall_data = 32
+  !
+  !  integer,public :: wall_plasma_opt,&
+  !       NWLPROB,WALLPTS,WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,&
+  !       wlwall3,wlwall4,wltrap3,wltrap4,NWLIND,wlpabs,pcnt
+  !
+  !  integer, allocatable, public :: WLIND(:),nimindex(:),wallindex(:)
+  !
+  !
+  !  real,public ::  wall_plasma_fact,TOTWL,wallsrc(5,3),wallleak(5,3)
+  !
+  !
+  !  real, allocatable, public :: WALLPT(:,:),FWLPROB(:),WLPROB(:,:),rw(:),zw(:)
+  !
+  !
+
+
+  public :: allocate_comtor,deallocate_comtor
+
+
+contains
+
+  subroutine allocate_comtor
+    use global_parameters
+    use allocate_arrays
+    integer :: ierr
+
+    call pr_trace('MOD_COMTOR','ALLOCATE')
+
+    call allocate_array(wallco2,maxpts,2,'WALLCO2',ierr)
+    call allocate_array(lpdati,maxins,4,'LPDATI',ierr)
+    call allocate_array(lpdato,maxins,4,'LPDATO',ierr)
+
+    call allocate_array(cymfs,maxpts+1,8,'CYMFS',ierr)
+    call allocate_array(fluxinfo,maxins,4,'FLUXINFO',ierr)
+    call allocate_array(platco,maxnrs,5,'PLATCO',ierr)
+
+    call allocate_array(coredat,maxins,5,'COREDAT',ierr)
+    call allocate_array(kpress,maxnks,maxnrs,2,'KPRESS',ierr)
+    call allocate_array(kprad,maxnks,maxnrs,'KPRAD',ierr)
+
+    call allocate_array(walltemp,maxpts,3,'WALLTEMP',ierr)
+    call allocate_array(s21parmi,maxnrs,10,'S21PARMI',ierr)
+    call allocate_array(s21parmo,maxnrs,10,'S21PARMO',ierr)
+
+    call allocate_array(aux_s21parmi,maxnrs,9,'AUX_S21PARMI',ierr)
+    call allocate_array(aux_s21parmo,maxnrs,9,'AUX_S21PARMO',ierr)
+    call allocate_array(cdeferropt,maxnrs,2,'CDEFERROPT',ierr)
+
+    call allocate_array(pinch_pdf_data,maxpts,3,'PINCH_PDF_DATA',ierr)
+    call allocate_array(pinch_pdf,maxpts,2,'PINCH_PDF',ierr)
+
+    call allocate_array(wallco,maxpts,2,'WALLCO',ierr)
+    call allocate_array(injprob,maxnks*maxnrs,'INJPROB',ierr)
+    call allocate_array(cleq,maxnrs,2,'CLEQ',ierr)
+
+    call allocate_array(cleaks,maxpts,'CLEAKS',ierr)
+    call allocate_array(cleakn,maxpts,maxizs+1,'CLEAKN',ierr)
+    call allocate_array(cmachno,maxnrs,2,'CMACHNO',ierr)
+
+    call allocate_array(solte,0,'SOLTE',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solti,0,'SOLTI',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solne,0,'SOLNE',maxnks*msolpt+msolpt,ierr)
+
+    call allocate_array(solvel,0,'SOLVEL',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solcor,0,'SOLCOR',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solpei,0,'SOLPEI',maxnks*msolpt+msolpt,ierr)
+
+    call allocate_array(solpr,0,'SOLPR',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solprh,0,'SOLPRH',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solpcx,0,'SOLPCX',maxnks*msolpt+msolpt,ierr)
+    call allocate_array(solph,0,'SOLPH',maxnks*msolpt+msolpt,ierr)
+
+    call allocate_array(tiupstream,maxnrs,2,'TIUPSTREAM',ierr)
+    call allocate_array(teupstream,maxnrs,2,'TEUPSTREAM',ierr)
+    call allocate_array(nbupstream,maxnrs,2,'NBUPSTREAM',ierr)
+
+    call allocate_array(kprat,maxnrs,2,'KPRAT',ierr)
+    call allocate_array(kprat2,maxnks,maxnrs,2,'KPRAT2',ierr)
+    call allocate_array(kpsiz,maxnks,maxnrs,'KPSIZ',ierr)
+
+    call allocate_array(cleakpos,maximp,2,'CLEAKPOS',ierr)
+    call allocate_array(launchdat,maximp,5,'LAUNCHDAT',ierr)
+
+    call allocate_array(cellvals,maxnrs,4,2,'CELLVALS',ierr)
+
+    call allocate_array(fluxes,maxnks,maxnrs,16,'FLUXES',ierr)
+    call allocate_array(cosalph,maxnks,maxnrs,'COSALPH',ierr)
+    call allocate_array(sinalph,maxnks,maxnrs,'SINALPH',ierr)
+
+    call allocate_array(cserr,maxnrs,2,'CSERR',ierr)
+    call allocate_array(cdefserr,maxnrs,2,'CDEFSERR',ierr)
+
+    call allocate_array(wtsource,1,maxpts,1,maxnrs,1,4,1,6,'WTSOURCE',ierr)
+    call allocate_array(wtdep,maxpts,maxpts+1,3,'WTDEP',ierr)
+
+    call allocate_array(refdist,maxnrs,'REFDIST',ierr)
+    call allocate_array(bgplasopt,2*maxnrs,9,'BGPLASOPT',ierr)
+
+    call allocate_array(neut2d_raw,maxnks,maxnrs,'NEUT2D_RAW',ierr)
+    call allocate_array(sol22_power_ratio,maxnrs,2,3,'SOL22_POWER_RATIO',ierr)
+    call allocate_array(nrat_used,maxnrs,2,'NRAT_USED',ierr)
+
+    call allocate_array(wallpol,maxpts,'WALLPOL',ierr)
+    call allocate_array(injrind,maxnks*maxnrs,'INJRIND',ierr)
+    call allocate_array(injkind,maxnks*maxnrs,'INJKIND',ierr)
+
+    call allocate_array(cerr,maxnrs,2,'CERR',ierr)
+    call allocate_array(cdeferr,maxnrs,2,'CDEFERR',ierr)
+
+    call allocate_walls_com
+
+  end subroutine allocate_comtor
+
+
+  subroutine deallocate_comtor
+    implicit none
+
+    call pr_trace('MOD_COMTOR','DEALLOCATE')
+
+    if (allocated(wallco2)) deallocate(wallco2)
+    if (allocated(lpdati)) deallocate(lpdati)
+    if (allocated(lpdato)) deallocate(lpdato)
+
+    if (allocated(cymfs)) deallocate(cymfs)
+    if (allocated(fluxinfo)) deallocate(fluxinfo)
+    if (allocated(platco)) deallocate(platco)
+
+    if (allocated(coredat)) deallocate(coredat)
+    if (allocated(kpress)) deallocate(kpress)
+    if (allocated(kprad)) deallocate(kprad)
+
+    if (allocated(walltemp)) deallocate(walltemp)
+    if (allocated(s21parmi)) deallocate(s21parmi)
+    if (allocated(s21parmo)) deallocate(s21parmo)
+
+    if (allocated(aux_s21parmi)) deallocate(aux_s21parmi)
+    if (allocated(aux_s21parmo)) deallocate(aux_s21parmo)
+    if (allocated(cdeferropt)) deallocate(cdeferropt)
+
+    if (allocated(pinch_pdf_data)) deallocate(pinch_pdf_data)
+    if (allocated(pinch_pdf)) deallocate(pinch_pdf)
+
+    if (allocated(wallco)) deallocate(wallco)
+    if (allocated(injprob)) deallocate(injprob)
+    if (allocated(cleq)) deallocate(cleq)
+
+    if (allocated(cleaks)) deallocate(cleaks)
+    if (allocated(cleakn)) deallocate(cleakn)
+    if (allocated(cmachno)) deallocate(cmachno)
+
+    if (allocated(solte)) deallocate(solte)
+    if (allocated(solti)) deallocate(solti)
+    if (allocated(solne)) deallocate(solne)
+
+    if (allocated(solvel)) deallocate(solvel)
+    if (allocated(solcor)) deallocate(solcor)
+    if (allocated(solpei)) deallocate(solpei)
+
+    if (allocated(solpr)) deallocate(solpr)
+    if (allocated(solprh)) deallocate(solprh)
+    if (allocated(solpcx)) deallocate(solpcx)
+    if (allocated(solph)) deallocate(solph)
+
+    if (allocated(tiupstream)) deallocate(tiupstream)
+    if (allocated(teupstream)) deallocate(teupstream)
+    if (allocated(nbupstream)) deallocate(nbupstream)
+
+    if (allocated(kprat)) deallocate(kprat)
+    if (allocated(kprat2)) deallocate(kprat2)
+    if (allocated(kpsiz)) deallocate(kpsiz)
+
+    if (allocated(cleakpos)) deallocate(cleakpos)
+    if (allocated(launchdat)) deallocate(launchdat)
+
+    if (allocated(cellvals)) deallocate(cellvals)
+
+    if (allocated(fluxes)) deallocate(fluxes)
+    if (allocated(cosalph)) deallocate(cosalph)
+    if (allocated(sinalph)) deallocate(sinalph)
+
+    if (allocated(cserr)) deallocate(cserr)
+    if (allocated(cdefserr)) deallocate(cdefserr)
+
+    if (allocated(wtsource)) deallocate(wtsource)
+    if (allocated(wtdep)) deallocate(wtdep)
+
+    if (allocated(refdist)) deallocate(refdist)
+    if (allocated(bgplasopt)) deallocate(bgplasopt)
+
+    if (allocated(neut2d_raw)) deallocate(neut2d_raw)
+    if (allocated(sol22_power_ratio)) deallocate(sol22_power_ratio)
+    if (allocated(nrat_used)) deallocate(nrat_used)
+
+    if (allocated(wallpol)) deallocate(wallpol)
+    if (allocated(injrind)) deallocate(injrind)
+    if (allocated(injkind)) deallocate(injkind)
+
+    if (allocated(cerr)) deallocate(cerr)
+    if (allocated(cdeferr)) deallocate(cdeferr)
+
+
+  end subroutine deallocate_comtor
+
+
+end module mod_comtor

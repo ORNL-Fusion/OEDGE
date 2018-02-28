@@ -23,11 +23,12 @@ c slmod end
 c     ------------------------------------------------------------------
 
       subroutine readeire_97
+      use mod_comtor
 
       implicit none
       include 'params'
       include 'pindata'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
 c slmod begin
       INCLUDE 'slcom'
@@ -583,10 +584,11 @@ c
 c
 c
       subroutine wrteirene_97
-
+      use mod_comtor
+      implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c slmod begin
       INCLUDE 'slcom'
 

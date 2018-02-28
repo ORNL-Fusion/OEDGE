@@ -4,11 +4,12 @@ c
 c
       SUBROUTINE Plot986(graph,nplots2,ref,title,iopt,pltmins,pltmaxs,
      .                   iplot,job)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
       INCLUDE 'comgra'

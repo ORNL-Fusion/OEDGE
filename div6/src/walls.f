@@ -2,6 +2,8 @@ c     -*Fortran*-
 c
       SUBROUTINE DOTARG
       use debug_options
+      use mod_comtor
+      use mod_cioniz
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
@@ -10,9 +12,9 @@ C     INCLUDE "CGEOM"
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c      include 'cioniz'
 C     INCLUDE "READER"
 c      include 'reader'
 C     INCLUDE "DYNAM5"
@@ -1394,6 +1396,8 @@ C
 C
 C
       SUBROUTINE DOWALL
+      use mod_comtor
+      use mod_cioniz
       implicit none
 C     INCLUDE "PARAMS"
       include 'params'
@@ -1402,9 +1406,9 @@ C     INCLUDE "CGEOM"
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c      include 'cioniz'
 C     INCLUDE "READER"
 c      include 'reader'
 C     INCLUDE "DYNAM5"
@@ -2673,11 +2677,12 @@ C
 c slmod begin
       USE mod_divimp
 c slmod end
+      use mod_comtor
       implicit none
 C     INCLUDE "PARAMS"
       include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
       INTEGER IK,IND
       REAL    SRCPRB
 C
@@ -2862,11 +2867,12 @@ C
 C
 C
       SUBROUTINE IONWALL
+      use mod_comtor
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
       include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     INCLUDE "CGEOM"
       include 'cgeom'
 c
@@ -3538,10 +3544,11 @@ c
 c
 c
       subroutine dovessel
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c***********************************************************************
 c
@@ -3897,10 +3904,11 @@ c
 c
 c
       subroutine fixwallco
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     FIXWALLCO:
 c
@@ -3962,10 +3970,11 @@ c
 c
 c
       subroutine fixwallco2
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     FIXWALLCO2:
 c
@@ -4017,10 +4026,11 @@ c
 c
 c
       subroutine dotemp
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c slmod begin
       include 'slcom'
 c slmod end

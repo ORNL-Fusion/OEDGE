@@ -1,6 +1,8 @@
 c     -*-Fortran-*-
 c
       subroutine out800(iref,graph,iopt,ierr)
+      use mod_dynam3
+      use mod_comtor
       implicit none
 
       integer iref,iopt,ierr
@@ -12,10 +14,10 @@ c
 c     Other common blocks
 c
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
-      include 'dynam3'
+c      include 'dynam3'
 c      include 'dynam4'
 c      include 'pindata'
 c      include 'cadas'
@@ -2894,10 +2896,12 @@ c
 c
 c
       subroutine load_erodep_data(absfacs,depdata,cmd,fn,nsets)
+      use mod_dynam3
+      use mod_comtor
       implicit none
       include 'params'
-      include 'dynam3'
-      include 'comtor'
+c      include 'dynam3'
+c      include 'comtor'
 c
 c     Arguments
 c
@@ -3025,9 +3029,10 @@ c
 c
 c
       subroutine calc_erodep_scalef(absfacs,depdata,scalef,ierr) 
+      use mod_comtor
       implicit none
       include 'params' 
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
       include 'printopt'
 c     
@@ -3163,11 +3168,13 @@ c
 c
 c
       subroutine print_deposition(gridopt)
+      use mod_dynam3
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'dynam3'
-      include 'comtor'
+c      include 'dynam3'
+c      include 'comtor'
 c      include 'walls_com'
       include 'printopt'
 c
@@ -3447,12 +3454,14 @@ c
 c
 c
       subroutine plot_deposition(iopt,gridopt)
+      use mod_dynam3
+      use mod_walls_com
       implicit none
       integer iopt,gridopt
 
       include 'params'
-      include 'walls_com'
-      include 'dynam3'
+c      include 'walls_com'
+c      include 'dynam3'
       include 'cgeom'
       include 'outcom'
       include 'printopt'
@@ -3646,9 +3655,10 @@ c
 
 
       subroutine setup_pnames(pnames1,pnames2,wlmax,opt)
+      use mod_walls_com
       implicit none
       include 'params'
-      include 'walls_com'
+c      include 'walls_com'
       include 'printopt'
       character*15 pnames1(maxpts),pnames2(maxpts)
       integer wlmax

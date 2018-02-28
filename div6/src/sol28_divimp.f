@@ -93,10 +93,11 @@ c
       USE mod_sol28_io
       USE mod_divimp
       USE mod_divimp_tdep
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cneut2'
 c      INCLUDE 'div5'
 c      INCLUDE 'ppplas'
@@ -825,11 +826,12 @@ c
       USE mod_geometry
       USE mod_sol28_global
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -1134,13 +1136,14 @@ c
       SUBROUTINE AssignNodeValues(itube,nnode,mnode,node)
       USE mod_sol28
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
 
       INTEGER itube,nnode,mnode       
       TYPE(type_node) :: node(*)
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'slcom'
 
@@ -1223,11 +1226,12 @@ c ======================================================================
 c
       SUBROUTINE MapNeutralstoTubes
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1265,10 +1269,11 @@ c ======================================================================
 c
       SUBROUTINE AssignOSMWall
       USE mod_sol28_wall
+      use mod_walls_com
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'walls_com'
+c      INCLUDE 'walls_com'
 
       INTEGER iwall
 
@@ -1301,11 +1306,12 @@ c
       USE mod_sol28_global
       USE mod_grid_divimp
       USE mod_geometry
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -1666,13 +1672,14 @@ c ======================================================================
 c
       SUBROUTINE MapTubestoRings(irstart,irend)
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
  
       INTEGER irstart,irend,cind1,cind2,ike
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ir,itube,ion,in
@@ -1779,6 +1786,7 @@ c
       SUBROUTINE AssignSOL28Nodes_Old(itube,nnode,mnode,node)
       USE mod_sol28
       USE mod_sol28_global
+      use mod_comtor
       IMPLICIT none
 
       INTEGER itube,nnode,mnode       
@@ -1792,7 +1800,7 @@ c      SUBROUTINE FindS28Parameters_V4(ir,te,ne,nf,s,new)
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       REAL    GetRelaxationFraction,GetJsat
@@ -2409,10 +2417,11 @@ c
 c ======================================================================
 c
       SUBROUTINE BuildLinearGrid_OLD
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -3037,6 +3046,7 @@ c
       USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
@@ -3044,7 +3054,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -4326,6 +4336,7 @@ c
       USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INTEGER, INTENT(IN)  :: gridunit
@@ -4334,7 +4345,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
       INCLUDE 'pindata'
 
@@ -4587,11 +4598,12 @@ c
 c
       SUBROUTINE FindGridBreak
       USE mod_grid_divimp
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER i1

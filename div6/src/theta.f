@@ -2,11 +2,12 @@ c     -*Fortran*-
 c ======================================================================
 c
       SUBROUTINE CalcMetricQuickandDirty
+      use mod_comtor
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'slcom'
 
       REAL    CALCTHETA
@@ -243,11 +244,12 @@ c
 c subroutine: RepairMetric
 c
       SUBROUTINE RepairMetric
+      use mod_comtor
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'slcom'
 
       INTEGER ik,ir,ik1,ik3,count
@@ -421,12 +423,13 @@ c
 c ======================================================================
 c
       SUBROUTINE CalcMetric
+      use mod_comtor
 
       IMPLICIT none
 
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'slcom'
 
       REAL    CALCTHETA
@@ -731,12 +734,13 @@ c FUNCTION: CALCTHETA
 c ======================================================================
 c
       REAL FUNCTION CalcTheta(ikcell,ircell)
+      use mod_comtor
 
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 c     Input:
@@ -1126,6 +1130,7 @@ c FUNCTION: EXTTHE(IK1,IR1,IDIR)
 c ======================================================================
 c
       REAL FUNCTION EXTTHE(IK,IR,IDIR)
+      use mod_comtor
 
       INTEGER IK,IR,IDIR
 
@@ -1134,7 +1139,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "CGEOM"
       INCLUDE 'cgeom'
 C     INCLUDE "COMTOR"
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
 
@@ -1256,6 +1261,8 @@ c
 c ======================================================================
 c
       SUBROUTINE GetPoint(ik,ir,p,r,z)
+      use mod_comtor
+      implicit none
 c
 c Input:
 c
@@ -1268,7 +1275,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER id
@@ -1379,11 +1386,14 @@ c
 c ======================================================================
 c
       SUBROUTINE CALCTHETA_Old
+      use mod_comtor
+      use mod_cioniz
+      
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
+c      include 'comtor'
+c      include 'cioniz'
 c      include 'reader'
       include 'dynam5'
 
@@ -1782,13 +1792,14 @@ c FUNCTION: CALTHETA_Old
 c ======================================================================
 c
       REAL FUNCTION CALTHETA_Old(IK,IR,IKRE,IRRE,ISIDE)
+      use mod_comtor
       implicit none
 c     include "params"
       include 'params'
 c     include "cgeom"
       include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c      include 'comtor'
 
       INTEGER  IK,IR,IKRE,IRRE,IKR,IRR,IDR,ISIDE,IV1,IV2,IK1,IK2
 
@@ -1967,6 +1978,7 @@ c FUNCTION: EXTTHE_OLD(IK1,IR1,IDIR)
 c ======================================================================
 c
       REAL FUNCTION EXTTHE_OLD(IK,IR,IDIR)
+      use mod_comtor
       implicit none
       INTEGER IK,IR,IDIR
 
@@ -1975,7 +1987,7 @@ c     include "params"
 c     include "cgeom"
       include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c      include 'comtor'
 
 c      COMMON /SLCOM/ IKBRKS(4,MAXNRS),IKBRKE(4,MAXNRS),NBR,
 c     +               NBREAK(MAXNRS),NBS,IRORG(MAXNRS)
@@ -2086,13 +2098,14 @@ c
 c ======================================================================
 c
       SUBROUTINE GETRZ_Old(IK,IR,S,CROSS,R,Z)
+      use mod_comtor
       implicit none
 c     include "params"
       include 'params'
 c     include "cgeom"
       include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c      include 'comtor'
 c
 c     Local Variables:
 c

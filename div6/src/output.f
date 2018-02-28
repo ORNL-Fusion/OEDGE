@@ -52,11 +52,12 @@ c
 c subroutine: OutputAnalysis
 c
       SUBROUTINE OutputAnalysis
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -192,11 +193,12 @@ c
 c subroutine: OutputBGKData
 c
       SUBROUTINE OutputBGKData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -253,11 +255,12 @@ c
 c subroutine: OutputRecombinationData
 c
       SUBROUTINE OutputRecombinationData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -314,11 +317,12 @@ c
 c subroutine: OutputAdditionalCellData
 c
       SUBROUTINE OutputAdditionalCellData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -388,11 +392,12 @@ c
 c subroutine: OutputLineRadiationData
 c
       SUBROUTINE OutputLineRadiationData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -445,11 +450,12 @@ c
 c subroutine: OutputStratumData
 c
       SUBROUTINE OutputStratumData
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -570,13 +576,14 @@ c
 c     Write out just the grid data for comparisons - including polygons
 c
       SUBROUTINE OutputGrid2(fp,comment)
+      use mod_comtor
       IMPLICIT none
 
       INTEGER   fp
       CHARACTER comment*(*)
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'grbound'
@@ -729,15 +736,17 @@ c subroutine: OuputData
 c
 c
       SUBROUTINE OutputData(fp,comment)
+      use mod_dynam1
+      use mod_comtor
       IMPLICIT none
 
       INTEGER   fp
       CHARACTER comment*(*)
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
-      INCLUDE 'dynam1'
+c      INCLUDE 'dynam1'
       INCLUDE 'pindata'
       INCLUDE 'grbound'
       INCLUDE 'slcom'
@@ -1318,10 +1327,11 @@ c
 c
 c
       SUBROUTINE OutputEIRENE(fp,note)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
@@ -1525,11 +1535,12 @@ c
 c subroutine: OutputOptionInformation
 c
       SUBROUTINE OutputOptionInformation
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'slcom'
 
       INTEGER ii,in,i1,i2,ir,fp
@@ -1671,11 +1682,12 @@ c
 c subroutine: SLOPT01
 c
       SUBROUTINE SLOPT01(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'printopt'
       INCLUDE 'slcom'
 
@@ -1705,11 +1717,12 @@ c subroutine: OutputPressureTable
 c
 c
       SUBROUTINE OutputPressureTable(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'printopt'
       INCLUDE 'slcom'
@@ -1836,11 +1849,12 @@ c subroutine: OutputVacuumCellTable
 c
 c
       SUBROUTINE OutputVacuumCellTable(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'printopt'
       INCLUDE 'slcom'
@@ -2002,11 +2016,12 @@ c
 c
 c
       SUBROUTINE SLOPT02(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'printopt'
       INCLUDE 'slcom'
@@ -2163,11 +2178,12 @@ c
 c
 c
       SUBROUTINE OutputRegionIntegrals(source)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -2212,11 +2228,12 @@ c
 c ======================================================================
 c
       SUBROUTINE ShowStats
+      use mod_comtor
       IMPLICIT   none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 
@@ -2373,11 +2390,12 @@ c
 c
 c
       SUBROUTINE AnalyseContinuity(fp)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 

@@ -1016,13 +1016,14 @@ c
 c
 c
       subroutine calcpsin(r,z,thet,psin,targ)
+      use mod_comtor
       implicit none
       integer targ 
       real r,z,thet,psin
 c
       include 'params'
       include 'cgeom' 
-      include 'comtor'
+c      include 'comtor'
       include 'psin_data'
       include 'grbound'
 c
@@ -1253,13 +1254,14 @@ c
 c
 c
       subroutine calc_psibounds(id,psistart,psimid,psiend,ierr)
+      use mod_comtor
       implicit none
       integer id,ierr
       real psistart,psimid,psiend
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     CALC_PSIBOUNDS: This calculates the PSI values at the target element
 c                     boundaries and at its centre.
@@ -1341,13 +1343,14 @@ c
 c
 c
       real function targ_psival(id,rsect,zsect)
+      use mod_comtor
       implicit none
       integer id,sect
       real rsect,zsect
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c           
 c     TARG_PSIVAL: calculates an approximate value of PSI for 
 c                  an intersection point on a given target element. 

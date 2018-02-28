@@ -2992,11 +2992,12 @@ c
 c subroutine: BuildVacuumGrid
 c
       SUBROUTINE BuildVacuumGrid
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 

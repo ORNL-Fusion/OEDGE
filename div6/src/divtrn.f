@@ -2,6 +2,11 @@ c     -*Fortran*-
 c
       subroutine DIVTRN(nizs,iter,niters,facta,factb,
      >                  title,job,equil,DESC,jfcb)
+      use mod_dynam1
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -18,11 +23,11 @@ C---- DIVIMP COMMON BLOCKS (LOADED BY CALL TO GET)
 C
       include 'params'
       include 'cgeom'
-      include 'comtor'
-      include 'cneut'
-      include 'dynam1'
-      include 'dynam2'
-      include 'dynam3'
+c      include 'comtor'
+c      include 'cneut'
+c      include 'dynam1'
+c      include 'dynam2'
+c      include 'dynam3'
       include 'dynam4'
       include 'pindata'
 C
@@ -117,6 +122,10 @@ C
 C
 C=======================================================================
       SUBROUTINE PPOUT(NIZS,JOB,EQUIL,ITER,desc,jfcb)
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_cneut
       implicit none 
 C
 C***********************************************************************
@@ -147,10 +156,10 @@ C
 C
       include 'params'
       include 'cgeom'
-      include 'comtor'
-      include 'cneut'
-      include 'dynam2'
-      include 'dynam3'
+c      include 'comtor'
+c      include 'cneut'
+c      include 'dynam2'
+c      include 'dynam3'
       include 'dynam4'
       include 'pindata'
       include 'cadas'   
@@ -786,6 +795,7 @@ C
 C
 C=======================================================================
       SUBROUTINE RCONV(NAME,DESC,UNITS,RDATA,RSF,NDATA,ISTAG)
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -815,7 +825,7 @@ C***********************************************************************
 C
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       REAL*4        RDATA(MAXNKS,MAXNRS),RSF
@@ -897,6 +907,7 @@ C
 C
 C=======================================================================
       SUBROUTINE ICONV(NAME,DESC,UNITS,IDATA,ISF,NDATA,ISTAG)
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -926,7 +937,7 @@ C***********************************************************************
 C
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       INTEGER       IDATA(MAXNKS,MAXNRS),ISF
@@ -1001,6 +1012,7 @@ C
 C=======================================================================
       SUBROUTINE RTARG(NAME,DESC,UNITS,RDATA,RTDATA,RSF,NDATA,NTDATA,
      >                 ISTAG)
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -1032,7 +1044,7 @@ C***********************************************************************
 C
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       REAL*4        RDATA(MAXNKS,MAXNRS),RTDATA(MAXNDS),RSF
@@ -1122,6 +1134,7 @@ C
 C=======================================================================
       SUBROUTINE SETGEO(NPL,IOPENL,NXWL,NCL,NROW,JPRGTL,JPLFTL,
      &                  NSEPX,RSEPX,ZSEPX)
+      use mod_comtor
       implicit none
 C
 C***********************************************************************
@@ -1150,7 +1163,7 @@ C
 C***********************************************************************
 C
       INCLUDE 'params'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'cgeom'
 c
 c     Declare the variables passed to SETGEO
@@ -1267,6 +1280,8 @@ C
 C
 C=======================================================================
       SUBROUTINE RSUM(DATA,NIZS,TOTAL)
+      use mod_comtor
+      implicit none
 C
 C***********************************************************************
 C
@@ -1286,7 +1301,7 @@ C
 C***********************************************************************
 C
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
 c
       real data,total 

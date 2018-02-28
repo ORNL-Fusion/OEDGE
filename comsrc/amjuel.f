@@ -69,11 +69,12 @@ c           power loss)
 c
 c
       SUBROUTINE CalcRadiatedPower(array,mode)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
 

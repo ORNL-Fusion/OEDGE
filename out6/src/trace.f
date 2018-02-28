@@ -3624,10 +3624,11 @@ c
 c
 c
       subroutine label_wall
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     LABEL_WALL: The purpose of this subroutine is to place the
 c                 numeric labels for each wall segment on a

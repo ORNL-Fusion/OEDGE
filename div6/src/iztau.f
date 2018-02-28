@@ -4,6 +4,7 @@ C
 C
 c slmod begin
       SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint,nizs)
+      use mod_cioniz
 c
 c      SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint)
 c slmod end
@@ -17,7 +18,7 @@ C     INCLUDE   "CADAS"
 C     INCLUDE   "CNOCO"
       include    'cnoco'
 C     INCLUDE   "CIONIZ"
-      include    'cioniz'
+c      include    'cioniz'
 c
 c     Temporary includes 
 c

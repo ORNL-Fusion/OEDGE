@@ -9,6 +9,10 @@ c slmod begin
 c slmod end
       use mod_fp_data
       use divimp_netcdf
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cioniz
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
       include    'params'
@@ -27,16 +31,16 @@ C  *                                   CHRIS FARRELL    MARCH 1989     *
 C  *********************************************************************
 C
 C     INCLUDE   "COMTOR"
-      include    'comtor'
+c      include    'comtor'
       include    'cadas'
 C     INCLUDE   "CNEUT2"
       include    'cneut2'
 C     INCLUDE   "CGEOM"
       include    'cgeom'
 C     INCLUDE   "DYNAM1"
-      include    'dynam1'
+c      include    'dynam1'
 C     INCLUDE   "DYNAM3"
-      include    'dynam3'
+c      include    'dynam3'
 C     INCLUDE   "DYNAM4"
       include    'dynam4'
 C     INCLUDE   "PINDATA"
@@ -50,7 +54,7 @@ c
 c
       include    'transcoef'
 c
-      include    'cioniz'
+c      include    'cioniz'
       include    'promptdep'
       include    'reiser_com'
       include    'line_profile' 
@@ -817,6 +821,7 @@ C
 C
 C
       subroutine check_ddlim(nizs,num)
+      use mod_dynam1
       implicit none
 c
 c     CHECK_DDLIM: Verifies that all elements of DDLIM contain 
@@ -826,7 +831,7 @@ c
 c
       integer nizs,num
       include 'params'
-      include 'dynam1'
+c      include 'dynam1'
       include 'cgeom'
 c
       integer ik,ir,iz

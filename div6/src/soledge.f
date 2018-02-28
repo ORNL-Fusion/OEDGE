@@ -1,6 +1,7 @@
 c     -*Fortran*-
 c
       SUBROUTINE SOLEDGE(irlim1,irlim2,ikopt)
+      use mod_comtor
       IMPLICIT  NONE
       integer   irlim1,irlim2,ikopt
 C     INCLUDE   "PARAMS"
@@ -8,7 +9,7 @@ C     INCLUDE   "PARAMS"
 C     INCLUDE   "CGEOM"
       include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
       include 'comhr'
 c slmod begin
       INCLUDE 'slcom'
@@ -3250,6 +3251,7 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCPEI(S,ikn,PLATEOPT,ds,IND)
+      use mod_comtor
       IMPLICIT NONE
       DOUBLE PRECISION S,ds
       INTEGER PLATEOPT,IND,ikn
@@ -3268,7 +3270,7 @@ C     INCLUDE "PARAMS"
 C     INCLUDE "PINDATA"
       include 'pindata'
 c
-      include 'comtor'
+c      include 'comtor'
 c
 C     INCLUDE "COMSOL"
       include 'comsol'
@@ -3473,6 +3475,7 @@ C
      >           N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IR,
      >           PAOUT,PAIN)
 C
+      use mod_comtor
       IMPLICIT NONE
       INTEGER SOPT,POPT,IR
       DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
@@ -3485,7 +3488,7 @@ C
 C     INCLUDE "PARAMS"
       include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C     INCLUDE "CGEOM"
       include 'cgeom'
 C     INCLUDE "COMSOL"
@@ -3682,6 +3685,7 @@ C
 C
 C
       SUBROUTINE FLUXRLOOK(IR,FSRC,LMSRC,LNSRC)
+      use mod_comtor
       implicit none
       INTEGER IR
       DOUBLE PRECISION FSRC,LMSRC,LNSRC
@@ -3689,7 +3693,7 @@ C
 C     INCLUDE "PARAMS"
       include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 C
 C     IF THE FLUX RECIRCULATION SOURCE OPTION HAS BEEN SPECIFIED THIS
 C     ROUTINE LOOKS TO SEE IF THE SOURCE STRENGTH MULTIPLIER, FSRC, THE
@@ -3861,6 +3865,7 @@ C
 c
 c
       subroutine calcnv(te,ti,gamma,pinf,n,v)
+      use mod_comtor
       implicit none
       double precision te,ti,gamma,pinf,n,v
 C     INCLUDE   "PARAMS"
@@ -3868,7 +3873,7 @@ C     INCLUDE   "PARAMS"
 C     INCLUDE   "CGEOM"
 C     include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c      include 'comtor'
 c
 c     The purpose of this routine is to extract the
 c     code that calculates the n,v values since it is
@@ -3926,12 +3931,13 @@ c
 c
 c
       subroutine specplas(irlim1,irlim2,ikopt)
+      use mod_comtor
       implicit none
       integer irlim1,irlim2,ikopt
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     SPECPLAS:
 c
@@ -4212,9 +4218,10 @@ c
      >                         ter1a,ter1ai,tir1a,tir1ai,
      >                         ter1b,ter1bi,tir1b,tir1bi)
 c
+      use mod_comtor
       implicit none
       include 'params'
-      include 'comtor' 
+c      include 'comtor' 
 c
       integer ir
       double precision l1r,l1ri,l2r,l2ri,lvr,lvri,

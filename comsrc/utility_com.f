@@ -2835,10 +2835,11 @@ c
 c
 c
       subroutine set_bcomponents(br,bz,bt)
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
       real br(maxnks,maxnrs)
       real bz(maxnks,maxnrs)

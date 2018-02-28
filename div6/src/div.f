@@ -27,6 +27,13 @@ c slmod begin
       use mod_divimp_walldyn
 c slmod end
 c
+      use mod_dynam1
+      use mod_dynam3
+      use mod_div6
+      use mod_clocal
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       implicit none
 c
       include 'params'
@@ -52,18 +59,18 @@ C  *                        DAVID ELDER   (UTIAS)       JAN 1992       *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'dynam1'
-      include    'dynam3'
+c      include    'dynam1'
+c      include    'dynam3'
       include    'dynam4'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cioniz'
+c      include    'cioniz'
       include    'commv'
-      include    'cneut'
+c      include    'cneut'
       include    'cneut2'
       include    'cnoco'
       include    'cadas'
-      include    'clocal'
+c      include    'clocal'
       include    'crand'
       include    'pindata'
       include    'diagvel'
@@ -81,7 +88,7 @@ c
       include 'div3'
       include 'div4'
       include 'div5'
-      include 'div6'
+c      include 'div6'
       include 'div7'
 c
       include    'particle_specs'
@@ -262,8 +269,6 @@ c
       refTMAX     = 0.0
       refFAIL     = 0.0
 c
-      call pr_trace('DIV','1:')
-c
       call rzero (recinf,14*7)
       call rzero (rectotcnt,12)
       call rzero (mtcinf,7*3)
@@ -283,6 +288,10 @@ c
 c     Initialise target mach number array to 1.0's
 c
       call rinit(cmachno,maxnrs*2,1.0)
+
+c
+      call pr_trace('DIV','AFTER INIT:')
+
 C
 C     CALCULATE WSSF FACTOR USED IN THE CALCULATION OF ABSFAC
 C
@@ -386,12 +395,13 @@ c
       debugv = .false.
       if (cstepv.ne.0.0) debugv = .true.
       if (debugv) then
-         call rzero (sdvs,   maxnks*maxnrs*(maxizs+2))
-         call rzero (sdvs2,   maxnks*maxnrs*(maxizs+2))
-         call rzero (sdvs3,   maxnks*maxnrs*maxizs*2)
-         call rzero (sdvb,maxnks*maxnrs)
-         call rzero (velspace, (2*nvel+2)*maxvizs*maxvnks)
-         call rzero (velweight,(2*nvel+2)*maxvizs*maxvnks)
+         ! initialize arrays to zero
+         sdvs = 0.0
+         sdvs2 = 0.0
+         sdvs3 = 0.0
+         sdvb = 0.0
+         velspace = 0.0
+         velweight = 0.0
 c
 c        Set velplate equal to the sound speed on ring 8 at the inner pl
 c        and use this to scale the rest of the distributional analysis.
@@ -491,7 +501,7 @@ c     - launchdat(imp,5) - ERO related - did particle already enter ERO sample v
 c
 c
 
-      call rzero (launchdat, maximp*4)
+      call rzero (launchdat, maximp*5)
 c
 c     See comment in LAUNCH subroutine for information on
 c     contents of ionizdat array and wtsource array.
@@ -1170,10 +1180,10 @@ c sltmp
 
       DO 800  IMP = 1, NATIZ
 c
-c     jdemod - Commented out this debug line - only useful for reporting 
-c              that essentially every 10% of ions are complete. 
-c            - not sure why it would have a dependence on grdnmod either
 c
+c         WRITE(0,*) 'debug imp:',imp,natiz
+
+
          if ((natiz/10).gt.0) then 
             if (mod(imp,natiz/10).eq.0) then 
                perc = int((imp*10)/(natiz/10))
@@ -1181,6 +1191,10 @@ c
      >           'Following Ions: ',perc,' % complete. Particle # =',imp
             endif
          endif
+c
+c     jdemod - Commented out this debug line - only useful for reporting 
+c              that essentially every 10% of ions are complete. 
+c            - not sure why it would have a dependence on grdnmod either
 c
 c slmod begin
 c        IF (.TRUE..AND.grdnmod.NE.0.AND.MOD(imp,natiz/10).EQ.0)
@@ -5620,12 +5634,14 @@ c
 c
 c
       subroutine calcnt (nizs)
+      use mod_dynam1
+      use mod_comtor
       implicit none
       integer nizs
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'cgeom'
-      include 'dynam1'
+c      include 'dynam1'
 c
 c     Calculate total content in each ionization state in the trapped
 c     region - this is used for SFT comparisons and calculation of
@@ -5794,12 +5810,13 @@ c
 c
 c
       subroutine prioniz (isol,ifp,irflct,pionizdat)
+      use mod_comtor
       implicit none
       integer isol, irflct, ifp
       real pionizdat(2,2,2,2,5)
 c
       include 'params'
-      include 'comtor'
+c      include 'comtor'
       include 'fperiph_com'
 c
 c     PRIONIZ:
@@ -5978,6 +5995,7 @@ c
 c
 c
       subroutine probescan
+      use mod_comtor
       implicit none
 c
 c     PROBESCAN: Calculate the background plasma values along
@@ -5988,7 +6006,7 @@ c                horizontal to a JET midplane probe.
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
 c
 c     Local variable
 c
@@ -6710,11 +6728,14 @@ c
 c
 c
       subroutine radproc(nizs,rions,nimps)
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
       implicit none
       include    'params'
-      include    'dynam1'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam1'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
       include    'commv'
 c
@@ -6963,10 +6984,11 @@ c
 c
 c
       subroutine prleakage
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'printopt'
 c
 c     PRLEAKAGE: The purpose of this subroutine is to print out
@@ -7765,6 +7787,7 @@ c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
      >                     sheath_drop,rc)
       use error_handling
+      use mod_comtor
       implicit none
       integer ik,ir,rc,id
       real r,z,temi,sheath_drop,riz,massi,sputy
@@ -7773,7 +7796,7 @@ c     Common blocks
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'promptdep'
 c
 c     PROMPTDEP: This routine estimates if the position (R,Z)
@@ -7991,6 +8014,8 @@ c
 c slmod begin
       use mod_divimp_walldyn
 c slmod end
+      use mod_dynam3
+      use mod_comtor
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
@@ -8002,8 +8027,8 @@ c slmod end
 c
       include 'params'
       include 'cgeom'
-      include 'comtor'
-      include 'dynam3'
+c      include 'comtor'
+c      include 'dynam3'
 c
 c     UPDATE_WALLDEP:
 c
@@ -8300,17 +8325,20 @@ c
 c
 c
       subroutine debug_velocity
+      use mod_dynam3
+      use mod_div6
+      use mod_comtor
       implicit none
       include    'params'
-      include    'dynam3'
-      include    'comtor'
+c      include    'dynam3'
+c      include    'comtor'
       include    'cgeom'
       include    'diagvel'
 c
       include 'div1'
       include 'div2'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c
       include    'particle_specs'
 c
@@ -8353,25 +8381,30 @@ c
 c
 c
       subroutine check_ion_change_state(seed,nrand,neutim,nizs)
+      use mod_dynam3
+      use mod_div6
+      use mod_comtor
+      use mod_cneut
+      use mod_cioniz
       implicit none
       real    neutim
       real*8  seed
       integer nrand,nizs
       include    'params'
-      include    'dynam3'
+c      include    'dynam3'
       include    'dynam4'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cioniz'
+c      include    'cioniz'
       include    'commv'
-      include    'cneut'
+c      include    'cneut'
       include    'crand'
 c
       include 'div1'
       include 'div3'
       include 'div4'
       include 'div5'
-      include 'div6'
+c      include 'div6'
 c
       include    'particle_specs'
 
@@ -8602,11 +8635,12 @@ c
 c
       subroutine check_ion_removal(ifate,kk,ik,ir,iz,cist,cistiz,
      >                             ssss,s,smax,sputy)
+      use mod_cioniz
       implicit none
 c
       include    'params'
       include    'commv'
-      include    'cioniz'
+c      include    'cioniz'
       include    'crand'
 c
       integer ifate,kk,ik,ir,iz
@@ -8645,12 +8679,15 @@ c
 c
 c
       subroutine change_local_values
+      use mod_clocal
+      use mod_cioniz
+      use mod_comtor
       implicit none
       include    'params'
-      include    'comtor'
+c      include    'comtor'
       include    'cgeom'
-      include    'cioniz'
-      include    'clocal'
+c      include    'cioniz'
+c      include    'clocal'
 c
       include 'div1'
       include 'div2'
@@ -8739,10 +8776,11 @@ c
 c
 c
       subroutine setup_drftv
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'driftvel'
       include 'fperiph_com'
 c
@@ -9331,12 +9369,15 @@ c
 c
       subroutine print_resolved_deposition_data(nizs)
       use error_handling
+      use mod_dynam3
+      use mod_comtor
       implicit none
       include 'params'
       include 'cgeom'
-      include 'comtor'
+c      include 'comtor'
       include 'div1'
-      include 'dynam3'
+
+c      include 'dynam3'
 c
       integer :: nizs
       real :: fluxiz(maxizs)

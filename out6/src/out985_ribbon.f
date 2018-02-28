@@ -6,10 +6,11 @@ c
 c subroutine: outCrossSeparatrix
 c
       LOGICAL FUNCTION outCrossSeparatrix(ir,p1,p2)
+      use mod_comtor
       IMPLICIT none
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 
       INTEGER, INTENT(IN) :: ir
       REAL*8 , INTENT(IN) :: p1(2),p2(2)

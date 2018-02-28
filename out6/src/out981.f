@@ -289,11 +289,12 @@ c
       SUBROUTINE Plot981(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
+      use mod_comtor
       IMPLICIT none
 
       INCLUDE 'params'
       INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c      INCLUDE 'comtor'
 c      INCLUDE 'pindata'
       INCLUDE 'comgra'
       INCLUDE 'colours'
