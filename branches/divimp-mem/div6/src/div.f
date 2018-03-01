@@ -7733,26 +7733,26 @@ c
 c
 c     Format statements
 c
- 9050 format('Target-ID:',i4,' Ring:',i4,'  R:',f8.3,'  Z:',f8.3)
- 9051 format('Wall-ID:',i4,'  R:',f8.3,'  Z:',f8.3)
- 9059 format('Wall-ID:',i4,'  R:',f8.3,'  Z:',f8.3,
-     >       4x,'Matching Target-ID:',i4)
+ 9050 format('Target-ID:',i5,' Ring:',i5,'  R:',f9.4,'  Z:',f9.4)
+ 9051 format('Wall-ID:',i5,'  R:',f9.4,'  Z:',f9.4)
+ 9059 format('Wall-ID:',i5,'  R:',f9.4,'  Z:',f9.4,
+     >       4x,'Matching Target-ID:',i5)
 c
- 9052 format('Totals  -Launched:',f8.3,'  Leak:',f8.3,
-     >       '  Prob:',f8.5)
- 9053 format('  Phys  -Launched:',f8.3,'  Leak:',f8.3,
-     >       '  Prob:',f8.5)
- 9054 format('  Chem  -Launched:',f8.3,'  Leak:',f8.3,
-     >       '  Prob:',f8.5)
- 9058 format('  Self  -Launched:',f8.3,'  Leak:',f8.3,
-     >       '  Prob:',f8.5)
+ 9052 format('Totals  -Launched:',f12.3,'  Leak:',f12.3,
+     >       '  Prob:',f9.6)
+ 9053 format('  Phys  -Launched:',f12.3,'  Leak:',f12.3,
+     >       '  Prob:',f9.6)
+ 9054 format('  Chem  -Launched:',f12.3,'  Leak:',f12.3,
+     >       '  Prob:',f9.6)
+ 9058 format('  Self  -Launched:',f12.3,'  Leak:',f12.3,
+     >       '  Prob:',f9.6)
 c
  9055 format(4x,'Ring',7x,'Number',7x,'Average S',5x,
      >       'Leaked to Core',4x,'Av. S Leak')
  9056 format(4x,i4,3x,f13.5,4x,f9.3,4x,f9.3,4x,f9.3)
 c
- 9057 format('    Ring:',i4,'  Num:',f8.3,'  S:',f8.3,
-     > '  Leak:',f8.3,'  Av S:',f8.3)
+ 9057 format('    Ring:',i5,'  Num:',f10.3,'  S:',f10.3,
+     > '  Leak:',f10.3,'  Av S:',f10.3)
 c
 c IPP/08 Krieger - changed format statements
  9060 format(' ',a5,' TARGET:',2(1x,g12.3),2(1x,g12.3))
